@@ -585,8 +585,7 @@ jumpMessageQueueSend(JUMPMessageQueueHandle handle,
     /* Fail if the message is too large to be written atomically,
        i.e., without being interleaved with writes from other
        processes. */
-
-    if (sizeof(messageDataSize) + messageDataSize > PIPE_BUF) {
+    if (messageDataSize > JUMP_MESSAGE_QUEUE_MAX_MESSAGE_SIZE) {
 	*code = JUMP_MQ_BAD_MESSAGE_SIZE;
 	return -1;
     }

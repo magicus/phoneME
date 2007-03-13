@@ -202,12 +202,12 @@ newMessage(void)
     uint8* buffer;
     struct _JUMPMessage* message;
 
-    buffer = calloc(1, MESSAGE_BUFFER_SIZE);
+    buffer = calloc(1, JUMP_MESSAGE_BUFFER_SIZE);
     if (buffer == NULL) {
 	return NULL;
     }
 
-    message = newMessageFromBuffer(buffer, MESSAGE_BUFFER_SIZE);
+    message = newMessageFromBuffer(buffer, JUMP_MESSAGE_BUFFER_SIZE);
     if (message == NULL) {
 	free(buffer);
 	return NULL;
@@ -295,7 +295,6 @@ newMessageFromReceivedBuffer(uint8* buffer, uint32 len,
 static uint32 thisProcessMessageId;
 static int32 thisProcessRequestId;
 
-/* FIXME Assumes buffer is MESSAGE_BUFFER_SIZE. */
 JUMPOutgoingMessage
 jumpMessageNewOutgoingFromBuffer(uint8* buffer, int isResponse,
 				 JUMPMessageStatusCode *code)
@@ -305,7 +304,7 @@ jumpMessageNewOutgoingFromBuffer(uint8* buffer, int isResponse,
     JUMPMessageMark mmarkAfterHeader;
     uint32 messageId;
 
-    message = newMessageFromBuffer(buffer, MESSAGE_BUFFER_SIZE);
+    message = newMessageFromBuffer(buffer, JUMP_MESSAGE_BUFFER_SIZE);
     if (message == NULL) {
 	*code = JUMP_OUT_OF_MEMORY;
 	return NULL;
@@ -990,21 +989,21 @@ doWaitFor(JUMPPlatformCString type, int32 timeout, JUMPMessageStatusCode *code)
 	return NULL;
     }
 
-    buffer = calloc(1, MESSAGE_BUFFER_SIZE);
+    buffer = calloc(1, JUMP_MESSAGE_BUFFER_SIZE);
     if (buffer == NULL) {
 	*code = JUMP_OUT_OF_MEMORY;
 	return NULL;
     }
 
     status = jumpMessageQueueReceive(
-	type, buffer, MESSAGE_BUFFER_SIZE, &mqcode);
+	type, buffer, JUMP_MESSAGE_BUFFER_SIZE, &mqcode);
     if (status == -1) {
 	*code = translateJumpMessageQueueStatusCode(&mqcode);
 	free(buffer);
 	return NULL;
     }
 
-    incoming = newMessageFromReceivedBuffer(buffer, MESSAGE_BUFFER_SIZE, code);
+    incoming = newMessageFromReceivedBuffer(buffer, JUMP_MESSAGE_BUFFER_SIZE, code);
     if (incoming == NULL) {
 	free(buffer);
 	return NULL;
@@ -1164,6 +1163,9 @@ jumpMessageShutdown(void)
 JUMPMessageStatusCode
 jumpMessageStart(void)
 {
+    /* Ensure the porting layer can handle messages of the size we need. */
+    assert(JUMP_MESSAGE_BUFFER_SIZE <= JUMP_MESSAGE_QUEUE_MAX_MESSAGE_SIZE);
+
     return JUMP_SUCCESS;
 }
 

@@ -31,12 +31,18 @@
 
 #include "porting/JUMPTypes.h"
 
-/*
- * FIXME: This should be part of the message porting layer,
- * determining the buffer size to allocate for each incoming message
- * Also, there should be a re-allocation increment, and a maximum.
- */
-#define MESSAGE_BUFFER_SIZE 512
+/* Messages at this level are always JUMP_MESSAGE_BUFFER_SIZE bytes,
+   even though the porting layer allows variable length messages, and
+   possibly longer messages.  Clients can rely on being able to send
+   messages of this length.  There is an assert in jumpMessageStart to
+   ensure JUMP_MESSAGE_BUFFER_SIZE <= JUMP_MESSAGE_QUEUE_MAX_MESSAGE_SIZE.
+
+   JUMP_MESSAGE_BUFFER_SIZE is currently equal to the minimum of any
+   porting layer's JUMP_MESSAGE_QUEUE_MAX_MESSAGE_SIZE.  Reducing it
+   could have consequences for clients, and increasing it would have
+   consequences for porting layers. */
+
+#define JUMP_MESSAGE_BUFFER_SIZE 4092
 
 /**
  * @brief identifies 
@@ -429,6 +435,7 @@ jumpMessageRestart(void);
 /* Raw buffer operations */
 /*
  * Create an outgoing message from a buffer that's been filled elsewhere.
+ * The buffer is assumed to be JUMP_MESSAGE_BUFFER_SIZE bytes.
  * On success, returns the JUMPOutgoingMessage and sets *code to
  * JUMP_SUCCESS.  On failure, returns NULL and sets *code to one
  * JUMP_OUT_OF_MEMORY, JUMP_OVERRUN, or JUMP_NEGATIVE_ARRAY_LENGTH.

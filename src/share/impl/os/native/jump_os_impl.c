@@ -168,20 +168,22 @@ new_outgoing_message_from_byte_array(
     jbyteArray messageBytes,
     jboolean isResponse)
 {
-    jbyte *buffer;
+    jbyte *buffer = NULL;
     jsize length;
     JUMPOutgoingMessage m;
     JUMPMessageStatusCode code;
 
-    buffer = malloc(MESSAGE_BUFFER_SIZE);
-    if (buffer == NULL) {
-	JNU_ThrowOutOfMemoryError(env, "in new_outgoing_message_from_byte_array");
+    length = (*env)->GetArrayLength(env, messageBytes);
+    if (length > JUMP_MESSAGE_BUFFER_SIZE) {
+	JNU_ThrowByName(env, "java/io/IOException",
+			"Maximum message size exceeded.");
 	goto error;
     }
 
-    length = (*env)->GetArrayLength(env, messageBytes);
-    if (length > MESSAGE_BUFFER_SIZE) {
-	length = MESSAGE_BUFFER_SIZE;
+    buffer = malloc(JUMP_MESSAGE_BUFFER_SIZE);
+    if (buffer == NULL) {
+	JNU_ThrowOutOfMemoryError(env, "in new_outgoing_message_from_byte_array");
+	goto error;
     }
 
     (*env)->GetByteArrayRegion(env, messageBytes, 0, length, buffer);
@@ -219,16 +221,12 @@ new_byte_array_from_message(
 {
     jbyteArray retVal;
 
-    /* FIXME: use the actual message size.  Currently the actual
-       message size will always be MESSAGE_BUFFER_SIZE because of
-       how jump_messaging works, but there is schizophrenia between
-       assuming MESSAGE_BUFFER_SIZE, and passing length around. */
-    retVal = (*env)->NewByteArray(env, MESSAGE_BUFFER_SIZE);
+    retVal = (*env)->NewByteArray(env, JUMP_MESSAGE_BUFFER_SIZE);
     if (retVal == NULL) {
 	return NULL;
     }
 
-    (*env)->SetByteArrayRegion(env, retVal, 0, MESSAGE_BUFFER_SIZE,
+    (*env)->SetByteArrayRegion(env, retVal, 0, JUMP_MESSAGE_BUFFER_SIZE,
 			       jumpMessageGetData(message));
     if ((*env)->ExceptionOccurred(env)) {
 	(*env)->DeleteLocalRef(env, retVal);

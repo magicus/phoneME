@@ -37,6 +37,8 @@
  * JUMPPlatformCString        A handle to a platform C string
  */
 
+#include <limits.h>		/* For PIPE_BUF. */
+
 typedef long long int64;
 typedef unsigned long long uint64;
 
@@ -50,5 +52,9 @@ typedef signed char int8;
 typedef unsigned char uint8;
 
 typedef unsigned char* JUMPPlatformCString;
+
+/* Message size is limited to PIPE_BUF to ensure writes are atomic,
+   minus an int to store the message length. */
+#define JUMP_MESSAGE_QUEUE_MAX_MESSAGE_SIZE (PIPE_BUF - sizeof(int))
 
 #endif /* __JUMP_TYPES_MD_H */
