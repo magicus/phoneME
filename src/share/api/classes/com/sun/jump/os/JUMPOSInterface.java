@@ -44,6 +44,14 @@ public abstract class JUMPOSInterface {
             }
         }
     }
+
+    /**
+     * Set testing mode. A "TESTING_MODE" message is sent to the
+     * server.
+     * @param filePrefix tells the server where the stdout and 
+     * stderr output files should go.
+     */
+    public abstract void setTestingMode(String filePrefix);
     
     /**
      * Create a process and return a unique integer ID designating it.

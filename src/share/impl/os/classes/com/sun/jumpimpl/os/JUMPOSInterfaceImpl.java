@@ -36,6 +36,13 @@ public class JUMPOSInterfaceImpl extends JUMPOSInterface {
     }
 
     /**
+     * Set testing mode. A "TESTING_MODE" message is sent to the
+     * server. The 'filePrefix' argument tells the server where
+     * the stdout and stderr output files should go.
+     */
+    public native void setTestingMode(String filePrefix);
+
+    /**
      * Create a process and return a unique integer ID designating it.
      */
     public native int createProcess(String[] args);

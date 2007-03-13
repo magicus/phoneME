@@ -616,3 +616,28 @@ Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_createProcessNative(
     return create_process(env, thisObj, arguments, 1);
 }
 
+JNIEXPORT void JNICALL
+Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_setTestingMode(
+    JNIEnv *env, 
+    jobject thisObj,
+    jstring filePrefix)
+{
+    JUMPPlatformCString type = "mvm/server";
+    JUMPOutgoingMessage outMessage;
+    JUMPAddress targetAddress;
+    JUMPMessageStatusCode code;
+    jboolean isCopy = JNI_FALSE;
+    char *filePrefixStr;
+
+    filePrefixStr = (*env)->GetStringUTFChars(env, filePrefix, &isCopy);
+
+    outMessage = jumpMessageNewOutgoingByType(type, &code);
+    jumpMessageAddInt(outMessage, 2);
+    jumpMessageAddString(outMessage, "TESTING_MODE");
+    jumpMessageAddString(outMessage, filePrefixStr);
+
+    targetAddress.processId = jumpProcessGetServerPid();
+#define TIMEOUT 10000
+    jumpMessageSendSync(targetAddress, outMessage, TIMEOUT, &code);
+    (*env)->ReleaseStringUTFChars(env, filePrefix, filePrefixStr);
+}

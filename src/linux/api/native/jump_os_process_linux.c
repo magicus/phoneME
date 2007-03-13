@@ -67,6 +67,11 @@ jumpProcessGetExecutiveId(void)
     return executivePid;
 }
 
+int jumpProcessGetServerPid()
+{
+    return serverPid;
+}
+
 static void
 dumpMessage(struct _JUMPMessage* mptr, char* intro)
 {
