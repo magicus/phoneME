@@ -43,6 +43,7 @@
 #include <pthread.h>
 
 #include "porting/JUMPMessageQueue.h"
+#include "porting/JUMPProcess.h"
 #include "porting/JUMPThread.h"
 
 #ifdef JUMP_MQ_THREADSAFE
@@ -515,9 +516,7 @@ jumpMessageQueueCreate(JUMPPlatformCString messageType,
 	*code = JUMP_MQ_SUCCESS;
     }
     else {
-	/* FIXME: using getpid() assumes NPTL, i.e., all threads in the
-	   process have the same pid. */
-	jmq = message_queue_create(getpid(), messageType, code, 1);
+	jmq = message_queue_create(jumpProcessGetId(), messageType, code, 1);
 	if (jmq != NULL) {
 	    jmq->useCount = 1;
 	    put_message_queue(jmq);

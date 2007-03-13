@@ -41,9 +41,16 @@ extern int jumpProcessCreate(int argc, char** argv);
 extern int jumpProcessIsAlive(int pid);
 
 /**
- * Returns the process ID of this process.
+ * Returns the process ID of this process as set by jumpProcessSetId().
  */
 extern int jumpProcessGetId(void);
+
+/**
+ * Sets the process ID of this process for jumpProcessGetId() to
+ * return.  This must be called before starting any threads which will
+ * share the process ID.
+ */
+extern void jumpProcessSetId(int pid);
 
 /**
  * Returns the process ID of the executive process.

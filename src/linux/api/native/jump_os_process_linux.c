@@ -32,14 +32,22 @@
 /*
  * Process implementation
  */
+
+static int processId = -1;
+static int executivePid = -1;
+static int serverPid = -1;
+
 int 
 jumpProcessGetId(void)
 {
-    return getpid();
+    return processId;
 }
 
-static int executivePid = -1;
-static int serverPid = -1;
+void
+jumpProcessSetId(int id)
+{
+    processId = id;
+}
 
 void
 jumpProcessSetExecutiveId(int execPid)
