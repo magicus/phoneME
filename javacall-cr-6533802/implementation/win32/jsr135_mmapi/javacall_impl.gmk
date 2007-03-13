@@ -28,7 +28,7 @@ vpath %.c $(JSR_135_DIR)
 
 PORTING_OBJECTS += mmvideo.obj
 PORTING_OBJECTS += mmcamera.obj
-PORTING_OBJECTS += javautil_media.obj
+PORTING_OBJECTS += pngencoder.obj
 
 
 
