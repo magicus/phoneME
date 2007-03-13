@@ -72,7 +72,8 @@ MODULE_SATSA_CRYPTO_JAVA_FILES += \
     $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/NoSuchPaddingException.java \
     $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/ShortBufferException.java \
     $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/SecretKeySpec.java \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/IvParameterSpec.java
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/IvParameterSpec.java \
+    $(JSR_177_DIR)/src/share/crypto/classes/com/sun/satsa/crypto/RSAPublicKey.java
     
 MODULE_SATSA_JCRMI_JAVA_FILES += \
     $(JSR_177_DIR)/src/cldc_application/protocol/jcrmi/classes/com/sun/midp/io/j2me/jcrmi/Protocol.java
