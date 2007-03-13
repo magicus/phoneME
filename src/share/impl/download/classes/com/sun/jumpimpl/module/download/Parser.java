@@ -40,8 +40,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.SAXParser;
 
-public class Parser extends DefaultHandler
-{
+public class Parser extends DefaultHandler {
 
     static SAXParserFactory spf;
 
@@ -51,66 +50,62 @@ public class Parser extends DefaultHandler
     private URL url;
     boolean fastForward = false;
 
-    public Document getDocument()
-    {
+    public Document getDocument() {
         return document;
     }
 
-    public void parse(URL url) throws Exception
-    {
+    public void parse(URL url) throws Exception {
 
         this.url = url;
-        try
-        {
+
+        try {
             InputStream is = null;
-            if ( ( url.getProtocol()).startsWith( "file" ) )
-            {
+
+            if ((url.getProtocol()).startsWith("file")) {
+
                 String fileName = url.getFile();
-                while ( fileName.charAt( 1 ) == '/' )
-                {
-                    fileName = fileName.substring( 1 );
+                while (fileName.charAt(1) == '/') {
+                    fileName = fileName.substring(1);
                 }
-                is = (InputStream)(new FileInputStream( fileName ) );
-            }
-            else
-            {
+                is = (InputStream)(new FileInputStream(fileName));
+
+            } else {
+
                 URLConnection uc = url.openConnection();
                 is = uc.getInputStream();
+
             }
             
-            parse( is );
-        }
-        catch ( Exception e )
-        {
+            parse(is);
+
+        } catch (Exception e) {
             // e.printStackTrace();
             throw e;
         }
+
         return;
     }
   
-    public void parse( InputStream is ) throws Exception
-    {
+    public void parse(InputStream is) throws Exception {
         this.parser = spf.newSAXParser();
-        parser.parse( new InputSource( is ), this );
+        parser.parse(new InputSource(is), this);
         return;
     }
 
     
     // Called once at the beginning of a document
-    public void startDocument()
-    {
+    public void startDocument() {
         currentElement = new Vector();
         return;
     }
 
-    public void endDocument()
-    {
-        if ( currentElement.size() != 0 )
-        {
+    public void endDocument() {
+
+        if (currentElement.size() != 0) {
             if (DownloadModuleFactoryImpl.verbose) {
-                System.out.println( "bogosity! document end with extra elements!" );
-                System.out.println( "currentElement size is " +
-                                    currentElement.size() );
+                System.out.println("bogosity! document end with extra elements!");
+                System.out.println("currentElement size is " +
+                                   currentElement.size());
             }
         }
         return;
@@ -133,95 +128,87 @@ public class Parser extends DefaultHandler
      * @throws SAXException - Any SAX exception, possibly wrapping
      *                        another exception.
      */
-    public void startElement( String uri, String localName,
-                              String qName, Attributes attr )
-      throws SAXException
-    {
+    public void startElement(String uri, String localName,
+                             String qName, Attributes attr)
+      throws SAXException {
   
         if (DownloadModuleFactoryImpl.verbose) {
-            System.out.println( "startEl : uri="+uri+", localname="+localName+
-                                ", qName="+qName );
+            System.out.println("startEl : uri="+uri+", localname="+localName+
+                               ", qName="+qName);
         }
         DocumentElement de = null;
         DocumentElement parent = null;
+
         // The first element we find should be the document
-        if ( currentElement.size() == 0 )
-        {
-            de = new DocumentElement( qName, true, null );
-            document = new Document( qName, de );
-            for ( int i = 0; i < attr.getLength() ; i++ )
-            {
+        if (currentElement.size() == 0) {
+            de = new DocumentElement(qName, true, null);
+            document = new Document(qName, de);
+            for ( int i = 0; i < attr.getLength() ; i++ ) {
                 if (DownloadModuleFactoryImpl.verbose) {
                     System.out.println( "\tattribute: " +
-                                        attr.getQName( i ) + ", value: " +
-                                        attr.getValue( i ) );
+                                        attr.getQName(i) + ", value: " +
+                                        attr.getValue(i));
                 }
-                de.addAttribute( attr.getQName( i ), 
-                                 attr.getValue( i ) );
+                de.addAttribute(attr.getQName(i), 
+                                attr.getValue(i));
             }
-        }
-        else
-        {
+
+        } else {
+
             // We're inside the document. Create a new element
             parent = (DocumentElement)currentElement.elementAt( 
-                                                 currentElement.size() - 1 );
-            de = new DocumentElement( qName, false, parent );
-            for ( int i = 0; i < attr.getLength() ; i++ )
-            {
+                                                 currentElement.size() - 1);
+            de = new DocumentElement(qName, false, parent);
+            for (int i = 0; i < attr.getLength(); i++) {
                 if (DownloadModuleFactoryImpl.verbose) {
                     System.out.println( "\tattribute: " +
-                                        attr.getQName( i ) + ", value: " +
-                                        attr.getValue( i ) );
+                                        attr.getQName(i) + ", value: " +
+                                        attr.getValue(i));
                 }
-                de.addAttribute( attr.getQName( i ), 
-                                 attr.getValue( i ) );
+                de.addAttribute( attr.getQName(i), 
+                                 attr.getValue(i));
             }
         }
         // Add the new element to our vectors
-        if ( parent != null )
-        {
-            parent.addElement( de );
+        if (parent != null) {
+            parent.addElement(de);
         }
-        currentElement.add( de );
+        currentElement.add(de);
         return;
     }
 
     public void characters( char [] ch, int start,
-                            int length ) throws SAXException
-    {
-        if ( fastForward )
-        {
+                            int length ) throws SAXException {
+        if (fastForward) {
             return;
         }
-        ((DocumentElement)currentElement.elementAt( currentElement.size() - 1 )).addCharacters( ch, start, length );
+
+        ((DocumentElement)currentElement.elementAt(currentElement.size() - 1)).addCharacters(ch, start, length);
+
         if (DownloadModuleFactoryImpl.verbose) {
-            System.out.println( "\tcharacters " +
-                                (new String( ch, start, length )).trim() );
+            System.out.println("\tcharacters " +
+                               (new String(ch, start, length)).trim());
         }
         return;
     }
 
-    public void endElement( String namespaceURI, String localName,
-                            String qName ) throws SAXException
-    {
+    public void endElement(String namespaceURI, String localName,
+                           String qName) throws SAXException {
         if (DownloadModuleFactoryImpl.verbose) {
             System.out.println( "endEl : uri=" + namespaceURI + ", localname=" + 
                               localName + ", qName=" + qName );
         }
-        currentElement.removeElementAt( currentElement.size() - 1 );
+        currentElement.removeElementAt(currentElement.size() - 1);
         return;    
     }
   
-    static 
-    {
-        try
-        {
+
+    static {
+        try {
             spf = SAXParserFactory.newInstance();
             //spf.setNamespaceAware( true );
             spf.setValidating( false );
-        }
-        catch( Exception e )
-        {
+        } catch( Exception e ) { 
             e.printStackTrace();
         }
     }

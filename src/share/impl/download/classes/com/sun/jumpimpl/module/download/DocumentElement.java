@@ -33,8 +33,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-class DocumentElement extends DefaultHandler
-{
+class DocumentElement extends DefaultHandler {
     String name = null;
     String nameSpace = null;  // If a Document
     Hashtable attributes = new Hashtable();
@@ -49,62 +48,51 @@ class DocumentElement extends DefaultHandler
     // Accumulate contents
     private CharArrayWriter contents = new CharArrayWriter();
 
-    DocumentElement( String s, boolean isDoc, DocumentElement parent )
-    {
+    DocumentElement(String s, boolean isDoc, DocumentElement parent){
 	name = s;
 	isDocument = isDoc;
         this.parent = parent;
     }
 
-    String getName()
-    {
+    String getName() {
 	return name;
     }
 
-    void setFastForward( boolean trueFalse )
-    {
+    void setFastForward(boolean trueFalse) {
         fastForward = trueFalse;
         return;
     }
 
-    void addAttribute( String attrName, String value )
-    {
-        attributes.put( attrName, value );
+    void addAttribute(String attrName, String value) {
+        attributes.put(attrName, value);
         return;
     }
 
-    String getAttribute( String attrName )
-    {
-	return (String)attributes.get( attrName );
+    String getAttribute(String attrName) {
+	return (String)attributes.get(attrName);
     }
 
-    void addElement( DocumentElement e )
-    {
-	elements.add( e );
+    void addElement(DocumentElement e) {
+	elements.add(e);
 	return;
     }
 
-    String getValue()
-    {
+    String getValue() {
         return contents.toString().trim();
     }
 
-    public String toString()
-    {
+    public String toString() {
         String s = "attributes:\n";
         Enumeration e = attributes.keys();
-        while ( e.hasMoreElements() )
-        {
+        while (e.hasMoreElements()) {
             String attrName = (String)e.nextElement();
-            s += attrName +  " -> " + (String)attributes.get( attrName ) +
+            s += attrName +  " -> " + (String)attributes.get(attrName) +
               "\n";
         }
-        if ( ! elements.isEmpty() )
-        {
+        if (!elements.isEmpty()) {
             s += "elements: [ ";
             e = elements.elements();
-            while ( e.hasMoreElements() )
-            {
+            while (e.hasMoreElements()) {
                 DocumentElement de = (DocumentElement)e.nextElement();
                 s += de.toString();
             }
@@ -115,16 +103,14 @@ class DocumentElement extends DefaultHandler
           "\n" + s + " ]";
     }
 
-    public void addCharacters( char[] ch, int start, int length )
-    {
+    public void addCharacters(char[] ch, int start, int length) {
         // accumulate
-        contents.write( ch, start, length );
+        contents.write(ch, start, length);
         return;
     }
 
-    public void warning( SAXException se )
-    {
-        setFastForward( true );
+    public void warning(SAXException se) {
+        setFastForward(true);
         //        parent.setFastForward( true );
         se.printStackTrace();
         return;

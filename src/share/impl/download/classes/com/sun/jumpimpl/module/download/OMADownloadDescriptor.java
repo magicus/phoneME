@@ -30,8 +30,7 @@ import com.sun.jump.module.download.JUMPDownloadException;
 import java.net.URL;
 import java.net.MalformedURLException;
 
-public class OMADownloadDescriptor extends BaseDownloadDescriptor
-{
+public class OMADownloadDescriptor extends BaseDownloadDescriptor {
     /**
      * A URI (URL) used to provide further
      * information describing the media object.

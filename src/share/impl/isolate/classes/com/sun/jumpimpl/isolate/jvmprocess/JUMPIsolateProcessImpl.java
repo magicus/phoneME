@@ -149,6 +149,9 @@ public class JUMPIsolateProcessImpl
             // Create and register the singleton isolate process
             JUMPIsolateProcessImpl ipi = new JUMPIsolateProcessImpl();
 
+	    // Register the executive before starting the messaging thread
+            ipi.getExecutiveProcess();
+
             JUMPMessageDispatcher d = ipi.getMessageDispatcher();
 
             d.registerHandler("mvm/client", ipi);

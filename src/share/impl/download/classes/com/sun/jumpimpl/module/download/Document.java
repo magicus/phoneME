@@ -37,51 +37,41 @@ package com.sun.jumpimpl.module.download;
 import java.io.CharArrayWriter;
 import java.util.Iterator;
 
-class Document implements Iterator
-{
+class Document implements Iterator {
+
     DocumentElement elementHead = null;
     DocumentElement currentElement = null;
     int currentCount = 0;
 
-    Document( String name, DocumentElement head )
-    {
-	if ( head == null )
-	{
-	    throw new IllegalArgumentException( "Document cannot have no elements." );
+    Document(String name, DocumentElement head) {
+	if (head == null) {
+	    throw new IllegalArgumentException("Document cannot have no elements.");
 	}
 	currentElement = elementHead = head;
     }
 
-    public String toString()
-    {
+    public String toString() {
         String elementStr = elementHead.toString();
         return "document: " + elementHead.name +
 	    elementStr;
     }
 
     // Iterator methods
-    public Iterator getIterator()
-    {
+    public Iterator getIterator() {
 	return this;
     }
 
-    public boolean hasNext()
-    {
+    public boolean hasNext() {
 	return currentElement != null && 
 	     currentCount < currentElement.elements.size();
     }
 
-    public Object next()
-    {
-	return currentElement.elements.elementAt( currentCount++ );
+    public Object next() {
+	return currentElement.elements.elementAt(currentCount++);
     }
 
-    public void remove()
-    {
+    public void remove() {
 	throw new UnsupportedOperationException();
     }
     // End Iterator implementation
 }
-
-  
-

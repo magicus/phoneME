@@ -54,25 +54,24 @@ public class OMAOTADownloadModule //extends GenericDownloadModuleImpl
 
     static String ddMime = "application/vnd.oma.dd+xml";
 
-    public JUMPDownloadDescriptor createDescriptor( String url ) 
+    public JUMPDownloadDescriptor createDescriptor(String url) 
         throws JUMPDownloadException {
 
-      try
-      {
-          URL ddURL = new URL( url );
+      try {
+
+          URL ddURL = new URL(url);
           URLConnection conn = ddURL.openConnection();
-          conn.setRequestProperty( "User-Agent", "CDC/FP 1.1 Appmanager" );
+          conn.setRequestProperty("User-Agent", "CDC/FP 1.1 Appmanager");
 
           String mimeType = conn.getContentType();
 
           if (DownloadModuleFactoryImpl.verbose) {
-              System.err.println( "debug : xlet mimetype is " + mimeType );
+              System.err.println("debug : xlet mimetype is " + mimeType);
           }
 
-          if ( ( mimeType == null) || !mimeType.equalsIgnoreCase( ddMime ) )
-          {
-              throw new JUMPDownloadException( "Content type for the DD URL"+
-                                      "is not "+ ddMime + "\n" + url );
+          if ( (mimeType == null) || !mimeType.equalsIgnoreCase(ddMime)) {
+              throw new JUMPDownloadException("Content type for the DD URL"+
+                                      "is not "+ ddMime + "\n" + url);
           }
 
           // load the descriptor
@@ -83,85 +82,54 @@ public class OMAOTADownloadModule //extends GenericDownloadModuleImpl
 
           // parse the descriptor into Descriptor class.
 
-          OMADownloadDescriptor d = new OMADownloadDescriptor( getSchema(), url );
+          OMADownloadDescriptor d = new OMADownloadDescriptor(getSchema(), url);
 
           Iterator i = dd.getIterator();
 
-          while ( i.hasNext() )
-          {
+          while (i.hasNext()) {
               DocumentElement de = (DocumentElement)i.next();
 
               String ename = de.getName();
               String eval = de.getValue();
 
               if (DownloadModuleFactoryImpl.verbose) {
-                  System.out.println( "ename="+ename+", eval="+eval);
+                  System.out.println("ename="+ename+", eval="+eval);
               }
 
-              if ( "type".equals( ename ) )
-              {
-                  d.setType( eval );
-              }
-              else if ( "size".equals( ename ) )
-              {
-                  d.setSize( Integer.parseInt( eval ) );
-              }
-              else if ( "objectURI".equals( ename ) )
-              {
-                  d.setObjectURI( eval );
-              }
-              else if ( "installNotifyURI".equals( ename ) )
-              {
-                  d.setInstallNotifyURI( eval );
-              }
-              else if ( "nextURL".equals( ename ) )
-              {
-                  d.setNextURI( eval );
-              }
-              else if ( "name".equals( ename ) )
-              {
-                  d.setName( eval );
-              }
-              else if ( "ddx:display".equals( ename ) )
-              {
-                  d.setDisplayName( eval );
-              }
-              else if ( "description".equals( ename ) )
-              {
-                  d.setDescription( eval );
-              }
-              else if ( "vendor".equals( ename ) )
-              {
-                  d.setVendor( eval );
-              }
-              else if ( "infoURL".equals( ename ) )
-              {
-                  d.setInfoURI( eval );
-              }
-              else if ( "iconURI".equals( ename ) )
-              {
-                  d.setIconURI( eval );
-              }
-              else if ( "ddx:object".equals( ename ) )
-              {
-                  extractObjects( d, de );
-              }
-              else if ( "ddx:dependencies".equals( ename ) )
-              {
+              if ("type".equals(ename)) {
+                  d.setType(eval);
+              } else if ("size".equals(ename)) {
+                  d.setSize(Integer.parseInt(eval));
+              } else if ("objectURI".equals(ename)) {
+                  d.setObjectURI(eval);
+              } else if ("installNotifyURI".equals(ename)) {
+                  d.setInstallNotifyURI(eval);
+              } else if ("nextURL".equals(ename)) {
+                  d.setNextURI(eval);
+              } else if ("name".equals(ename)) {
+                  d.setName(eval);
+              } else if ("ddx:display".equals(ename)) {
+                  d.setDisplayName(eval);
+              } else if ("description".equals(ename)) {
+                  d.setDescription(eval);
+              } else if ("vendor".equals(ename)) {
+                  d.setVendor(eval);
+              } else if ("infoURL".equals(ename)) {
+                  d.setInfoURI(eval);
+              } else if ("iconURI".equals(ename)) {
+                  d.setIconURI(eval);
+              } else if ("ddx:object".equals(ename)) {
+                  extractObjects(d, de);
+              } else if ("ddx:dependencies".equals(ename)) {
                   // Currently no dependency support
-              }
-              else if ( "ddx:version".equals( ename ) )
-              {
-                  d.setVersion( eval );
-              }
-              else if ( "ddx:security".equals(ename) ) {
-                  d.setSecurityLevel(eval);
-              }
-              else
-              {
+              } else if ("ddx:version".equals(ename)) {
+                  d.setVersion(eval);
+              } else if ("ddx:security".equals(ename)) { 
+		  d.setSecurityLevel(eval);
+              } else {
                   if (DownloadModuleFactoryImpl.verbose) {
-                      System.out.println( "Warning : unknown OMA tag : " +
-                                          ename );
+                      System.out.println("Warning : unknown OMA tag : " +
+                                          ename);
                   }
               }
           }
@@ -170,30 +138,24 @@ public class OMAOTADownloadModule //extends GenericDownloadModuleImpl
           d.checkOut();
 
           return d;
-      }
-      catch ( SyntaxException e ) {
+
+      } catch (SyntaxException e) {
           e.printStackTrace();
-          throw new JUMPDownloadException( "The descriptor file is invalid" );
-      } 
-      catch ( JUMPDownloadException e )
-      {
+          throw new JUMPDownloadException("The descriptor file is invalid");
+      } catch (JUMPDownloadException e) {
           throw e;
-      }
-      catch ( Throwable e )
-      {
+      } catch (Throwable e) {
           e.printStackTrace();
           throw new JUMPDownloadException( "Unexpected error:"+e.getMessage() );
       }
     }
 
-    private void extractObjects( OMADownloadDescriptor d,
-                                 DocumentElement de )
-        throws Exception
-    {
+    private void extractObjects(OMADownloadDescriptor d,
+                                DocumentElement de)
+        throws Exception {
 
-        if ( de == null )
-        {
-            throw new NullPointerException( "null DocumentElement!" );
+        if (de == null) {
+            throw new NullPointerException("null DocumentElement!");
         }
 
         JUMPApplication ca = null;
@@ -201,17 +163,16 @@ public class OMAOTADownloadModule //extends GenericDownloadModuleImpl
         Vector elementVector = de.elements;
         Vector applications = new Vector();
         
-        for ( int i = 0 ; i < elementVector.size(); i++ )
-        {
+        for (int i = 0 ; i < elementVector.size(); i++) {
             DocumentElement subElement =
-                (DocumentElement)elementVector.get( i );
+                (DocumentElement)elementVector.get(i);
 
             String name = subElement.getName();
-            if ( "ddx:application".equals( name ) )
-            {
-                d.setType( JUMPDownloadDescriptor.TYPE_APPLICATION );
+            if ("ddx:application".equals(name)) {
 
-                String iconpath  = subElement.getAttribute( "icon" ); 
+                d.setType(JUMPDownloadDescriptor.TYPE_APPLICATION);
+
+                String iconpath  = subElement.getAttribute("icon"); 
 
                 // Set the propreties of this application
                 Properties props = new Properties();                
@@ -219,13 +180,13 @@ public class OMAOTADownloadModule //extends GenericDownloadModuleImpl
                 props.setProperty(JUMPApplication.TITLE_KEY, subElement.getAttribute( "name" ));
                 props.setProperty(JUMPApplication.ICONPATH_KEY, iconpath);
                 props.setProperty(JUMPApplication.APPMODEL_KEY, JUMPAppModel.MAIN.getName());
-                applications.add( props );               
-            }
-            else if ( "ddx:xlet".equals( name ) )
-            {
-                d.setType( JUMPDownloadDescriptor.TYPE_APPLICATION );
+                applications.add(props);               
 
-                String iconpath  = subElement.getAttribute( "icon" ); 
+            } else if ("ddx:xlet".equals(name)) {
+
+                d.setType(JUMPDownloadDescriptor.TYPE_APPLICATION);
+
+                String iconpath  = subElement.getAttribute("icon"); 
 
                 // Set the properites of this application
                 Properties props = new Properties();                
@@ -233,55 +194,52 @@ public class OMAOTADownloadModule //extends GenericDownloadModuleImpl
                 props.setProperty(JUMPApplication.TITLE_KEY, subElement.getAttribute( "name" ));
                 props.setProperty(JUMPApplication.ICONPATH_KEY, iconpath);
                 props.setProperty(JUMPApplication.APPMODEL_KEY, JUMPAppModel.XLET.getName()); 
-                applications.add( props );                
-            }
-            else if ( "ddx:daemon".equals( name ) )
-            {
+                applications.add(props);                
+
+            } else if ("ddx:daemon".equals(name)) {
+
                 // Currently unsupported
-            }
-            else if ( "ddx:player".equals( name ) )
-            {
+		
+            } else if ("ddx:player".equals(name)) {
+
                 // Currently unsupported
-            }
-            else if ( "ddx:data".equals( name ) )
-            {
-                d.setType( JUMPDownloadDescriptor.TYPE_DATA );
+		
+            } else if ("ddx:data".equals(name)) {
+
+                d.setType(JUMPDownloadDescriptor.TYPE_DATA);
                 //d.setData( subElement.getAttribute( "mimetype" ),
                 //           subElement.getAttribute( "name" ) );
                 ca = null;
-            }
-            else if ( "ddx:library".equals( name ) )
-            {
-                String type = subElement.getAttribute( "type" );
-                d.setType( JUMPDownloadDescriptor.TYPE_LIBRARY );
+
+            } else if ("ddx:library".equals(name)) {
+
+                String type = subElement.getAttribute("type");
+                d.setType(JUMPDownloadDescriptor.TYPE_LIBRARY);
                 //d.addLibrary( type.equalsIgnoreCase( "java" ) );
                 ca = null;
-            }
-            else if ( "ddx:property".equals( name ) )
-            {
-                if ( ca == null )
-                {
-                    throw new SyntaxException( "property w/o "+
-                                               "application context" );
+
+            } else if ("ddx:property".equals(name)) {
+
+                if (ca == null) {
+                    throw new SyntaxException("property w/o "+
+                                              "application context");
                 }
-                ca.addProperty( subElement.getAttribute( "name" ),
-                                subElement.getAttribute( "value" ) );
-            }
-            else if ( "ddx:mime".equals( name ) )
-            {
+                ca.addProperty(subElement.getAttribute("name"),
+                               subElement.getAttribute("value"));
+
+            } else if ("ddx:mime".equals(name)) {
                 // This allows us to map a mimetype to a
                 // certain application, which will act as a
                 // "player." Currently unsupported.
-            }
-            else if ( "action".equals( name ) )
-            {
+		
+            } else if ("action".equals(name)) {
+
                 // Currently unsupported
-            }
-            else
-            {
+		
+            } else {
                 if (DownloadModuleFactoryImpl.verbose) {
-                    System.out.println( "Warning : unknown object tag " +
-                                         name );
+                    System.out.println("Warning : unknown object tag " +
+                                        name);
                 }
                 ca = null;
             }
@@ -289,66 +247,60 @@ public class OMAOTADownloadModule //extends GenericDownloadModuleImpl
         
         Object appsArray[] = applications.toArray();
         Properties apps[] = new Properties[appsArray.length];
-        for (int i = 0; i < appsArray.length; i++ ) {
+        for (int i = 0; i < appsArray.length; i++) {
             apps[i] = (Properties)appsArray[i];
         }
         d.setApplications(apps);
     }
 
-    public boolean sendNotify( String notifyURL, String statusCode,
-           String statusMsg )
-    {
-        try
-        {
-            if ( (notifyURL == null ) || "".equals( notifyURL ) )
-            {
+    public boolean sendNotify(String notifyURL, String statusCode,
+           String statusMsg) {
+
+        try {
+            if ((notifyURL == null) || "".equals(notifyURL)) {
                 return false;
             }
  
             if (DownloadModuleFactoryImpl.verbose) {
-                System.out.println( "InstallNotifyURL: " + notifyURL );
+                System.out.println("InstallNotifyURL: " + notifyURL);
             }
 
-            URL url = new URL( notifyURL );
+            URL url = new URL(notifyURL);
 
             // Open a connection to the install-notify URL
-            HttpURLConnection huc = ( HttpURLConnection ) url.openConnection();
+            HttpURLConnection huc = (HttpURLConnection) url.openConnection();
 
             // This operation sends a POST request
-            huc.setDoOutput( true );
+            huc.setDoOutput(true);
 
             if (DownloadModuleFactoryImpl.verbose) {
-                System.out.println( "StatusCode=" + statusCode );
-                System.out.println( "StatusMsg=" + statusMsg );
+                System.out.println("StatusCode=" + statusCode);
+                System.out.println("StatusMsg=" + statusMsg);
             }
 
             // Write the status code and message to the URL
             OutputStream os = huc.getOutputStream();
             String content = statusCode + " " + statusMsg;
             byte [] buf = content.getBytes();
-            os.write( buf );
+            os.write(buf);
             os.flush();
             os.close();
 
-            if ( huc.getResponseCode() != HttpURLConnection.HTTP_OK )
-            {
-                throw new JUMPDownloadException( "Http response is not OK "+
-                                        huc.getResponseCode() );
+            if (huc.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                throw new JUMPDownloadException("Http response is not OK "+
+                                        huc.getResponseCode());
             }
 
             huc.disconnect();
 
-        }
-        catch ( Exception e )
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
         return true;
     }
 
-    public String getSchema()
-    {
+    public String getSchema() {
         return "oma";
     }
 }

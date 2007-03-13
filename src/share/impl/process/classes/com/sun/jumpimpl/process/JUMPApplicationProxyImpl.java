@@ -135,7 +135,11 @@ public class JUMPApplicationProxyImpl implements JUMPApplicationProxy {
      * <code>JUMPApplicationProxy</code>.
      **/
     public int getAppState() {
-        throw new UnsupportedOperationException();
+        if (!isolateProxy.isAlive()) {
+		return DESTROYED;
+        }
+
+	return RUNNING;
     }
 
     public String toString() {

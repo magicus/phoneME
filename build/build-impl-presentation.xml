@@ -31,8 +31,8 @@ information or have any questions.
     
     <target name="compile-presentation-module">
         <jump.javac 
-            srcdir="${s.share.impl.dir}/presentation/classes:${s.share.impl.dir}/presentation/simplebasis/classes"            
-            includes="com/sun/jumpimpl/module/presentation/*.java,com/sun/jumpimpl/presentation/simplebasis/*.java"
+            srcdir="${s.share.impl.dir}/presentation/classes:${s.share.impl.dir}/presentation/simplebasis/classes;${s.share.impl.dir}/presentation/autotester/classes"            
+            includes="com/sun/jumpimpl/module/presentation/*.java,com/sun/jumpimpl/presentation/simplebasis/*.java, com/sun/jumpimpl/presentation/autotester/*.java,"
         />    
     </target>
     

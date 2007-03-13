@@ -35,6 +35,31 @@ import com.sun.jump.common.JUMPApplication;
  */
 public interface JUMPApplicationProxy {
 
+    /** 
+     * Application is in loaded state.
+     */
+    public static int LOADED = 1;
+
+    /** 
+     * Application is started and is in active state.
+     */
+    public static int RUNNING = 2;
+
+    /** 
+     * Application is in paused state.
+     */
+    public static int PAUSED = 3;
+
+    /** 
+     * Application is in destroyed state.
+     */
+    public static int DESTROYED = 4;
+
+    /** 
+     * Application state is unknown.
+     */
+    public static int UNKNOWN = -1;
+
     /**
      * Returns the <code>JUMPApplication</code> this proxy is associated with.
      */

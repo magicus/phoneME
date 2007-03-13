@@ -109,7 +109,7 @@ public class IsolateManagerModuleImpl
 	// when it is ready)
 	//
 	// FIXME: what's the right timeout value and where is that stored?
-	isolate.waitForState(JUMPIsolateLifecycleRequest.ISOLATE_STATE_INITIALIZED, 1000L);
+	isolate.waitForState(JUMPIsolateLifecycleRequest.ISOLATE_STATE_INITIALIZED, 5000L);
 
 	//
 	// FIXME!!!! What happens if we time out? We can kill
