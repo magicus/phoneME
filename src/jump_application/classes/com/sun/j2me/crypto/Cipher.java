@@ -107,7 +107,7 @@ public abstract class Cipher {
         try {
             Class cipherClass;
 
-            cipherClass = Class.forName("com.sun.midp.crypto." + alg);
+            cipherClass = Class.forName("com.sun.j2me.crypto." + alg);
             cipher = (Cipher)cipherClass.newInstance();
         } catch (Throwable t) {
             throw new NoSuchAlgorithmException(transformation);
