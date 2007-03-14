@@ -96,7 +96,7 @@ public class JavaAPILister extends LinkerUtil {
     classFileHeader[] = {
 	"#",
 	"# %"+"W%	%"+"E%", // use constant expressions to fool SCCS
-	"# List of visible classes",
+	"# List of classes",
 	"#"
     };
 
@@ -1028,19 +1028,20 @@ public class JavaAPILister extends LinkerUtil {
 	        // malformed command-line argument or file read error
 	        return false;
 	    }
+        }
 
-            /*
-	     * Process classes and collect visible members. We use
-             * the 'fieldtable' and 'methodtable' to store collected
-             * members.
-             */
-            processClasses();
+        if (minput != null || memberOut != null) {
+        /*
+	 * Process classes and collect visible members. We use
+         * the 'fieldtable' and 'methodtable' to store collected
+         * members.
+         */
+        processClasses();
 
-            /*
-             * Sort classes in typeid order
-             */
-            sortClasses();
-	}
+        /*
+         * Sort classes in typeid order
+         */
+        sortClasses();
 
         /*
          * Write filter data into .c file
@@ -1055,6 +1056,7 @@ public class JavaAPILister extends LinkerUtil {
 	 * Write the member .txt file.
 	 */
 	writeMemberFile();
+        }
 
 	/*
 	 * Now if a classlist output is specified do it too.

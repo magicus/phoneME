@@ -22,9 +22,9 @@
 # information or have any questions. 
 #
 
-SUBSYSTEM_MAKE_FILE       = subsystem.gmk
-PROP_INIT_PACKAGE         = com.sun.cdc.config
-PROP_INIT_CLASS           = PropertyInitializer
+SUBSYSTEM_MAKE_FILE      = subsystem.gmk
+JSR_INIT_PACKAGE         = com.sun.cdc.config
+JSR_INIT_CLASS           = Initializer
 
 JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239
 
@@ -55,6 +55,28 @@ JSROP_BUILD_JARS = $(foreach jsr_number,$(INCLUDED_JSROP_NUMBERS),\
 # Variable which is passed to MIDP and blocks JSRs building from MIDP; looks like:
 # USE_JSR_75=false USE_JSR_82=false USE_JSR_120=false ...
 MIDP_JSROP_USE_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),USE_JSR_$(jsr_number)=false)
+
+# Hide all JSROPs from CDC by default
+HIDE_ALL_JSRS ?= true
+
+# Create a list of hidden JSR numbers, which should look like:
+#   75 120 135 ...
+ifeq ($(HIDE_ALL_JSRS),true)
+# All included JSRs are hidden from CDC
+HIDE_JSROP_NUMBERS = $(INCLUDED_JSROP_NUMBERS)
+else
+# Make a list of all JSR HIDE_JSR_<#> setting. It will look something like:
+#   HIDE_JSR_75=true USE_JSR_82= USE_JSR_135=true ...
+HIDE_JSROP_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),\
+                HIDE_JSR_$(jsr_number)=$(HIDE_JSR_$(jsr_number)))
+# Extract the JSR numbers from HIDE_JSROP_FLAGS and form a list
+# of hidden JSR numbers.
+HIDE_JSROP_NUMBERS = $(patsubst HIDE_JSR_%=true,%,\
+                $(filter %true, $(HIDE_JSROP_FLAGS)))
+endif
+
+# The list of JAR jar files we want to hide.
+JSROP_HIDE_JARS = $(subst $(space),:,$(foreach jsr_number,$(HIDE_JSROP_NUMBERS),$(JSROP_LIB_DIR)/jsr$(jsr_number).jar))
 
 # Jump API classpath
 EMPTY =
@@ -253,12 +275,22 @@ include $(JAVACALL_MAKE_FILE)
 endif
 
 CVM_INCLUDES    += $(JSROP_EXTRA_INCLUDES)
-CLASSLIB_DEPS   += $(JSROP_NATIVE_LIBS)
 
 ifeq ($(CVM_PRELOAD_LIB), true)
 CVM_JCC_INPUT   += $(JSROP_JARS)
 CVM_CNI_CLASSES += $(JSROP_CNI_CLASSES)
 CVM_OBJECTS     += $(JSROP_NATIVE_OBJS)
-LINKLIBS_CVM    += $(JSROP_LINKLIBS) -L$(JSROP_LIB_DIR)
+ifneq ($(JAVACALL_LINKLIBS),)
+LINKLIBS_CVM    += $(JAVACALL_LINKLIBS) -L$(JSROP_LIB_DIR)
+endif
+else
+CLASSLIB_DEPS   += $(JSROP_NATIVE_LIBS)
 endif
 
+# CVM_CDCFILTERCONFIG is a list of JSROP classes 
+# that are hidden from CDC applications.
+ifeq ($(CVM_DUAL_STACK), true)
+CVM_CDCFILTERCONFIG = $(CVM_LIBDIR)/CDCRestrictedClasses.txt
+else
+CVM_CDCFILTERCONFIG =
+endif

@@ -165,6 +165,8 @@ public class Connector {
             //throw new IOException(x.toString());
         } catch (ClassNotFoundException x) {
             //throw new IOException(x.toString());
+        } catch (java.security.AccessControlException e) {
+            //Running on a CDC stack, nothing to do here..
         }  finally {
             if (ic == null) {
                 ic = new InternalConnectorImpl();
