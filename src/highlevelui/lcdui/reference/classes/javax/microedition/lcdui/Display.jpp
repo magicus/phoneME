@@ -32,8 +32,11 @@ import javax.microedition.midlet.MIDlet;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.ImplicitlyTrustedClass;
+// #ifndef ENABLE_CDC
 import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
+import javax.microedition.media.control.ToneControl;
+// #endif ENABLE_CDC
 
 // #ifndef ENABLE_CDC
 import com.sun.midp.i18n.Resource;
@@ -1795,19 +1798,23 @@ public class Display {
     boolean playAlertSound(AlertType t) {
 
         if (!paintSuspended && hasForeground) {
+// #ifndef ENABLE_CDC
             // SYNC NOTE: playing tones in parallel is okay, no locking
             // necessary
             try
             {
-                Manager.playTone( t.getMusicalNote(),
-                                  t.getSoundDuration(),
-                                  t.getSoundVolume() );
+                Manager.playTone(ToneControl.C4 + 9 + 3 * t.getType(), 1000, 80);
             }
             catch( MediaException me )
             {
                 return false;
             }
             return true;
+// #else 
+            // SYNC NOTE: playAlertSound is a native method, no locking
+            // necessary
+            return playAlertSound0(displayId, t.getType());
+// #endif ENABLE_CDC
         }
 
         return false;
@@ -2296,6 +2303,18 @@ public class Display {
     static native int getScreenWidth0();
 
     static native int getScreenHeight0();
+
+// #ifdef ENABLE_CDC
+    /**
+     * Play an Alert sound.
+     *
+     * @param displayId The display ID associated with this Display
+     * @param alertType type of alert
+     *
+     * @return <code>true</code>, if sound was played.
+     */
+    private native boolean playAlertSound0(int displayId, int alertType);
+// #endif ENABLE_CDC
 
     /**
      * Plays the vibration if this Display is current and in foreground
