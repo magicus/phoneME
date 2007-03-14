@@ -117,15 +117,16 @@ static_done:
 	addl	$1, %edx
 	shll	$2, %edx	# word address -> byte address
 
-	mov	%edx, 24(%ebp)  # store edx in sz for later use
-	
-	subl	%edx, %esp
+	# NOTE: At this point, %esp is %ebp + 3 pushl i.e. %ebp - 12.  We will
+	#       need to restore #esp to this value later after the call.
+
+	subl	%edx, %esp	# reserve stack space for JNI method args.
 	movl	%esp, %edi
 
-	movl	8(%ebp), %eax	# env
+	movl	8(%ebp), %eax	# copy env to outgoing args[0]
 	movl	%eax, (%edi)
 	addl	$4, %edi
-	movl	%ecx, (%edi)
+	movl	%ecx, (%edi)    # copy jclass or jobject to args[1]
 	addl	$4, %edi
 
 	movl	20(%ebp), %ebx
@@ -198,9 +199,9 @@ object_checked:
 
 args_done:
 	call	*12(%ebp)	# f
-	movl	24(%ebp), %ebx	# sz
-	addl	%ebx, %esp	# pop off arguments.  different from __stdcall
-				# on win32
+	leal	-12(%ebp), %esp	# restore old stack pointer / pop arguments.
+				# works for both __stdcall and cdecl.
+	
 	movl	32(%ebp), %esi	# res
 	xorl	%ecx, %ecx	# c register volatile cross calls - zero it
 	movl	20(%ebp), %ebx	# method signature
