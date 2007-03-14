@@ -33,7 +33,7 @@ ifeq ($(CVM_INCLUDE_MIDP),true)
 -include ../$(TARGET_OS)/defs_midp.mk
 
 
-ifeq ($(AWT_IMPLEMENTATION), gci)
+ifeq ($(CVM_INCLUDE_GCI), true)
     MIDP_PLATFORM = linux_gci
 else
     MIDP_PLATFORM = linux_fb_gcc
