@@ -51,7 +51,7 @@ public class MessageTransportConstants {
      */
 
     /**  DCS: Unicode UCS-2 */
-    public static final int DATAGRAM_PACKET_SIZE = 15000;
+    public static final int DATAGRAM_PACKET_SIZE = 1500;
 
 }
 
