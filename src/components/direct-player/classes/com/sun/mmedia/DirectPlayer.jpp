@@ -47,6 +47,7 @@ import javax.microedition.media.Player;
 import javax.microedition.media.PlayerListener;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.Control;
+import com.sun.mmedia.Configuration;
 
 // #ifndef ABB [
 import javax.microedition.media.control.StopTimeControl;
@@ -568,7 +569,7 @@ public class DirectPlayer extends BasicPlayer
         
         if (type.equals(prefix + vocName)) { // VolumeControl
 
-            if(mimeType.equals("capture://audio"))
+            if(mimeType.equals(Configuration.AUDIO_CAPTURE_LOCATOR))
                 return null;
 
             if (vc == null) {
@@ -593,7 +594,8 @@ public class DirectPlayer extends BasicPlayer
         }
         // #endif ]
         // #ifdef MIDI_CONTROL [
-        if (mimeType == "audio/midi") {
+        if (mimeType.equals(Configuration.MIME_AUDIO_MIDI) || 
+            mimeType.equals(Configuration.MIME_AUDIO_MIDI_2)) {
             if (type.equals(prefix + micName) && SUPPORT_MIDI_CONTROL) {
                 if (midiControl == null) 
                     midiControl = new DirectMIDIControl(this);
