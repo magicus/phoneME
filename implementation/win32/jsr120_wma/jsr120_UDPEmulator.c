@@ -76,17 +76,23 @@ int getIntProp(const char* propName, int defaultValue) {
 static void decodeSmsBuffer(char *buffer, 
     int* encodingType, int* destPortNum, javacall_int64* timeStamp, 
     char** recipientPhone, char** senderPhone, 
-    int* msgLength, char** msg) {
+    int* msgLength, char** msg, int* sourcePortNum) {
 
     char* ptr = buffer;
 
     *encodingType   = *((int*)ptr);  ptr += sizeof(int);
     *destPortNum    = *((int*)ptr);  ptr += sizeof(int);
     *timeStamp      = *((javacall_int64*)ptr); ptr += sizeof(javacall_int64);
+
     *recipientPhone = ptr;           while(*(ptr++) != 0);
     *senderPhone    = ptr;           while(*(ptr++) != 0);
     *msgLength      = *((int*)ptr);  ptr += sizeof(int);
     *msg            = ptr;           ptr += *msgLength;
+
+    *sourcePortNum    = *((int*)ptr);  //ptr += sizeof(int);
+
+    //printf("SMS received: recipientPhone=%s senderPhone=%s destPortNum=%i sourcePortNum=%i msg=%s\n", 
+    //    *recipientPhone, *senderPhone, *destPortNum, *sourcePortNum, *msg);
 
     *ptr = 0;
 }
@@ -97,6 +103,7 @@ char encode_sms_buffer[SMS_BUFF_LENGTH];
 char* encodeSmsBuffer(
     int encodingType, int destPortNum, javacall_int64 timeStamp, 
     const char* recipientPhone, const char* senderPhone, int msgLength, const char* msg,
+    int sourcePortNum,
     int* out_encode_sms_buffer_length) {
 
     char* ptr = encode_sms_buffer;
@@ -108,6 +115,9 @@ char* encodeSmsBuffer(
         return encode_sms_buffer;
     }
 
+    //printf("SMS sending: recipientPhone=%s senderPhone=%s destPortNum=%i sourcePortNum=%i, msg=%s\n", 
+    //    recipientPhone, senderPhone, destPortNum, sourcePortNum, msg);
+
     *((int*)ptr) = encodingType;         ptr += sizeof(int);
     *((int*)ptr) = destPortNum;          ptr += sizeof(int);
     *((javacall_int64*)ptr) = timeStamp; ptr += sizeof(javacall_int64);
@@ -115,6 +125,7 @@ char* encodeSmsBuffer(
     lngth = strlen(senderPhone) + 1;     memcpy(ptr, senderPhone,    lngth); ptr += lngth;
     *((int*)ptr) = msgLength;            ptr += sizeof(int);
     memcpy(ptr, msg, msgLength);         ptr += msgLength;
+    *((int*)ptr) = sourcePortNum;        ptr += sizeof(int);
 
     *out_encode_sms_buffer_length = ptr - encode_sms_buffer;
     return encode_sms_buffer;
@@ -138,6 +149,7 @@ javacall_result process_UDPEmulator_sms_incoming(javacall_handle handle) {
     char*                   msg;
     int                     msgLen;
     int                     destPortNum;
+    int                     sourcePortNum;
     javacall_int64          timeStamp;
     char*                   recipientPhone;
     char*                   senderPhone;
@@ -147,17 +159,19 @@ javacall_result process_UDPEmulator_sms_incoming(javacall_handle handle) {
     ok = javacall_datagram_recvfrom_start(
         handle, pAddress, &port, buffer, length, &pBytesRead, &pContext);
 
-    sourceAddress = (char*)pAddress;  // currently, sourceAddress = 0x0100007f = 127.0.0.1
-    decodeSmsBuffer(buffer, &encodingType_int, &destPortNum, &timeStamp, &recipientPhone, &senderPhone, &msgLen, &msg);
+    sourceAddress = (char*)pAddress; // 127.0.0.1 = 0x0100007f
+    decodeSmsBuffer(buffer, &encodingType_int, &destPortNum, &timeStamp, 
+        &recipientPhone, &senderPhone, &msgLen, &msg, &sourcePortNum);
 
     if (javacall_is_sms_port_registered((unsigned short)destPortNum) != JAVACALL_OK) {
         javacall_print("SMS on unregistered port received!");
         return JAVACALL_FAIL;
     }
+    //printf("SMS received! %i/%i\n", destPortNum, sourcePortNum);
 
-    //encodingType = JAVACALL_SMS_MSG_TYPE_ASCII; //## to do: convert encodingType_int->encodingType
     encodingType = encodingType_int;
-    javanotify_incoming_sms(encodingType, sourceAddress, msg, msgLen, (unsigned short)port, (unsigned short)destPortNum, timeStamp);
+    javanotify_incoming_sms(encodingType, sourceAddress, msg, msgLen, 
+        (unsigned short)sourcePortNum, (unsigned short)destPortNum, timeStamp);
 
     return JAVACALL_OK;
 }
