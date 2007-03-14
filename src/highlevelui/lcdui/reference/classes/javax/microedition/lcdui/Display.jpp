@@ -32,8 +32,11 @@ import javax.microedition.midlet.MIDlet;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.ImplicitlyTrustedClass;
+// #ifndef ENABLE_CDC
 import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
+import javax.microedition.media.control.ToneControl;
+// #endif ENABLE_CDC
 
 // #ifndef ENABLE_CDC
 import com.sun.midp.i18n.Resource;
@@ -1795,18 +1798,18 @@ public class Display {
     boolean playAlertSound(AlertType t) {
 
         if (!paintSuspended && hasForeground) {
+// #ifndef ENABLE_CDC
             // SYNC NOTE: playing tones in parallel is okay, no locking
             // necessary
             try
             {
-                Manager.playTone( t.getMusicalNote(),
-                                  t.getSoundDuration(),
-                                  t.getSoundVolume() );
+                Manager.playTone(ToneControl.C4 + 9 + 3 * t.getType(), 1000, 80);
             }
             catch( MediaException me )
             {
                 return false;
             }
+// #endif ENABLE_CDC
             return true;
         }
 
