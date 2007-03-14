@@ -1809,8 +1809,12 @@ public class Display {
             {
                 return false;
             }
-// #endif ENABLE_CDC
             return true;
+// #else 
+            // SYNC NOTE: playAlertSound is a native method, no locking
+            // necessary
+            return playAlertSound0(displayId, t.getType());
+// #endif ENABLE_CDC
         }
 
         return false;
@@ -2299,6 +2303,18 @@ public class Display {
     static native int getScreenWidth0();
 
     static native int getScreenHeight0();
+
+// #ifndef ENABLE_CDC
+    /**
+     * Play an Alert sound.
+     *
+     * @param displayId The display ID associated with this Display
+     * @param alertType type of alert
+     *
+     * @return <code>true</code>, if sound was played.
+     */
+    private native boolean playAlertSound0(int displayId, int alertType);
+// #endif ENABLE_CDC
 
     /**
      * Plays the vibration if this Display is current and in foreground
