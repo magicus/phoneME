@@ -28,17 +28,21 @@
 #include <time.h>   /* struct timespec */
 #include <pthread.h>
 #include <assert.h>
-#include <JUMPThreadSync.h>
+#include <porting/JUMPTypes.h>
+#include <porting/JUMPThreadSync.h>
 
+/* Internal structure of a mutex */
 struct _JUMPThreadMutex {
     pthread_mutex_t mutex;
 };
 
+/* Internal structure of a condition variable */
 struct _JUMPThreadCond {
     pthread_cond_t condvar;
     struct _JUMPThreadMutex *mutex;
 };
 
+/* Debug stuff */
 #ifndef NDEBUG
 #define PRINT_ERROR(func_,text_,code_)    \
     fprintf(stderr, \
@@ -56,6 +60,7 @@ static char *err2str(int i);
 #define REPORT_ERROR(func_)
 #endif
 
+/* creates a POSIX mutex */
 JUMPThreadMutex jumpThreadMutexCreate() {
     struct _JUMPThreadMutex *m = malloc(sizeof *m);
     int err;
@@ -72,6 +77,7 @@ JUMPThreadMutex jumpThreadMutexCreate() {
     return m;
 }
 
+/* destroys the mutex */
 void jumpThreadMutexDestroy(struct _JUMPThreadMutex *m) {
     int err;
 
@@ -83,6 +89,7 @@ void jumpThreadMutexDestroy(struct _JUMPThreadMutex *m) {
     }
 }
 
+/* locks the mutex */
 int jumpThreadMutexLock(struct _JUMPThreadMutex *m) {
     int err;
     
@@ -94,6 +101,7 @@ int jumpThreadMutexLock(struct _JUMPThreadMutex *m) {
     return JUMP_SYNC_OK;
 }
 
+/* tries to lock the mutex */
 int jumpThreadMutexTrylock(struct _JUMPThreadMutex *m) {
     int err;
     
@@ -105,6 +113,7 @@ int jumpThreadMutexTrylock(struct _JUMPThreadMutex *m) {
     return err == EBUSY ? JUMP_SYNC_WOULD_BLOCK : JUMP_SYNC_OK;
 }
 
+/* unlocks the mutex */
 int jumpThreadMutexUnlock(struct _JUMPThreadMutex *m) {
     int err;
     
@@ -115,6 +124,7 @@ int jumpThreadMutexUnlock(struct _JUMPThreadMutex *m) {
     return err;
 }
 
+/* creates a POSIX condvar */
 JUMPThreadCond jumpThreadCondCreate(struct _JUMPThreadMutex *m) {
     struct _JUMPThreadCond *c = malloc(sizeof *c);
     int err;
@@ -133,10 +143,12 @@ JUMPThreadCond jumpThreadCondCreate(struct _JUMPThreadMutex *m) {
     return c;
 }
 
+/* just returns the saved mutex */
 JUMPThreadMutex jumpThreadCondGetMutex(struct _JUMPThreadCond *c) {
     return c->mutex;
 }
 
+/* destroys the condvar */
 void jumpThreadCondDestroy(struct _JUMPThreadCond *c) {
     int err;
     
@@ -148,12 +160,13 @@ void jumpThreadCondDestroy(struct _JUMPThreadCond *c) {
     }
 }
 
+/* waits for condition. */
+int jumpThreadCondWait(struct _JUMPThreadCond *c, long millis) {
+    int err;
 /* denominators */
 #define milli_denom   ((int64)1000)
 #define micro_denom   (milli_denom * milli_denom)
 #define nano_denom    (milli_denom * milli_denom * milli_denom)
-int jumpThreadCondWait(struct _JUMPThreadCond *c, long millis) {
-    int err;
     
     assert(c != NULL);
     if (millis == 0) {
@@ -161,12 +174,17 @@ int jumpThreadCondWait(struct _JUMPThreadCond *c, long millis) {
     } else {
         struct timespec ts;
         
+        /* 
+         * pthread_cond_timedwait() receives the absolute time, so
+         * we should get current time and add our millis
+         */
         err = clock_gettime(CLOCK_REALTIME, &ts);
         if (err != 0) {
             REPORT_ERROR(clock_gettime);
             return JUMP_SYNC_FAILURE;
         }
         assert(ts.tv_sec > 0);
+        /* calculate the time of deadline */
         ts.tv_sec += millis / milli_denom;
         ts.tv_nsec += (millis % milli_denom) * nano_denom / milli_denom;
         if (ts.tv_nsec > nano_denom) {
@@ -180,11 +198,12 @@ int jumpThreadCondWait(struct _JUMPThreadCond *c, long millis) {
         return JUMP_SYNC_FAILURE;
     }
     return JUMP_SYNC_OK;
-}
 #undef nano_denom
 #undef micro_denom
 #undef milli_denom
+}
 
+/* wakes up a thread that is waiting for the condition */
 int jumpThreadCondSignal(struct _JUMPThreadCond *c) {
     int err;
     
@@ -196,6 +215,7 @@ int jumpThreadCondSignal(struct _JUMPThreadCond *c) {
     return JUMP_SYNC_OK;
 }
 
+/* wakes up a thread that is waiting for the condition */
 int jumpThreadCondBroadcast(struct _JUMPThreadCond *c) {
     int err;
     
@@ -205,8 +225,10 @@ int jumpThreadCondBroadcast(struct _JUMPThreadCond *c) {
     }
     return JUMP_SYNC_OK;
 }
+
 #ifndef NDEBUG
 
+/* gets error's description */
 #define CODE2STR(code_) \
     case code_:\
         return #code_; 
