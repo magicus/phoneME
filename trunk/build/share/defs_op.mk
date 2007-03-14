@@ -287,10 +287,10 @@ else
 CLASSLIB_DEPS   += $(JSROP_NATIVE_LIBS)
 endif
 
-# CVM_CDCFILTERCONFIG is a list of JSROP classes 
+# JSR_RESTRICTED_CLASSLIST is a list of JSROP classes 
 # that are hidden from CDC applications.
 ifeq ($(CVM_DUAL_STACK), true)
-CVM_CDCFILTERCONFIG = $(CVM_LIBDIR)/CDCRestrictedClasses.txt
+JSR_RESTRICTED_CLASSLIST = $(CVM_LIBDIR)/JSRRestrictedClasses.txt
 else
-CVM_CDCFILTERCONFIG =
+JSR_RESTRICTED_CLASSLIST =
 endif
