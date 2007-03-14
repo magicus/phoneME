@@ -35,9 +35,9 @@
 ######################################################################
 
 #####################################################
-JAVACALL_BUILD_DIR    = $(CURDIR)/$(CVM_BUILD_SUBDIR_NAME)/javacall
-JAVACALL_INCLUDES     = -I$(JAVACALL_BUILD_DIR)/inc
 JAVACALL_LIB_NAME     = javacall
+JAVACALL_BUILD_DIR    = $(CURDIR)/$(CVM_BUILD_SUBDIR_NAME)/$(JAVACALL_LIB_NAME)
+JAVACALL_INCLUDE_DIRS = $(JAVACALL_BUILD_DIR)/inc
 ifeq ($(CVM_PRELOAD_LIB),true)
 LIB_EXT = a
 JAVACALL_SHARED_LIB   = false
@@ -52,7 +52,7 @@ JAVACALL_LINKLIBS     = -l$(JAVACALL_LIB_NAME)$(DEBUG_POSTFIX)
 
 JSROP_NATIVE_LIBS    += $(JAVACALL_LIBRARY)
 JSROP_LINKLIBS       += $(JAVACALL_LINKLIBS)
-JSROP_EXTRA_INCLUDES += $(JAVACALL_INCLUDES)
+JSROP_INCLUDE_DIRS   += $(JAVACALL_INCLUDE_DIRS)
 
 source_bundle::
 	$(AT)make -C $(JAVACALL_DIR)/configuration/phoneMEAdvanced/$(JAVACALL_TARGET) \
