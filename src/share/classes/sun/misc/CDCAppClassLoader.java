@@ -25,7 +25,7 @@
 
 /*
  * A classloader that restricts access to any of the class in
- * the CDCRestrictedClasses.txt configuration file. 
+ * the JSRRestrictedClasses.txt configuration file. 
  */
 
 package sun.misc;
@@ -49,7 +49,7 @@ public class CDCAppClassLoader extends URLClassLoader {
     private static boolean getRestrictedClasses() {
         String filename = System.getProperty("java.home") +
                 File.separator + "lib" + File.separator +
-                "CDCRestrictedClasses.txt";
+                "JSRRestrictedClasses.txt";
         BufferedReader in;
 
         try {

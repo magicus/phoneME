@@ -92,9 +92,9 @@ endif
 # Run JavaAPILister to generate the list of classes that are hidden from CDC
 #
 ifeq ($(CVM_DUAL_STACK), true)
-$(CVM_CDCFILTERCONFIG): $(JSROP_JARS)
-	@echo "Generating CDC filter list ..."
-	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister -listapi:input=$(JSROP_HIDE_JARS),cout=$(CVM_CDCFILTERCONFIG)
+$(JSR_RESTRICTED_CLASSLIST): $(JSROP_JARS)
+	@echo "Generating JSR restricted class list ..."
+	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister -listapi:input=$(JSROP_HIDE_JARS),cout=$(JSR_RESTRICTED_CLASSLIST)
 endif
 
 
