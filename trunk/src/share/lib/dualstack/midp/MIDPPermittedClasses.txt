@@ -32,11 +32,9 @@
 #   CVM_INCLUDE_MIDP=true PCSL_DIR=<pcsl_dir>
 #   MIDP_DIR=<midp_dir> J2ME_CLASSLIB=foundation
 #   CVM_DUAL_STACK=true CVM_PRELOAD_LIB=true
-#   CVM_MIDPFILTERINPUT=<cldc_classes_zip>
+#   CVM_MIDPFILTERINPUT=<cldc_classes_zip>:<shared_midp_cdc_classes_zip>
 #   gen_member_filter
 #
-# The output files are generated/javavm/runtime/romjavaMemberFilterData.c,
-# lib/MIDPFilterConfig.txt and lib/MIDPPermittedClasses.txt.
 # If CLDC API is changed, this file needs to be re-generated.
 #
 java.util.Calendar
@@ -120,6 +118,11 @@ javax.microedition.io.OutputConnection
 javax.microedition.io.Datagram
 javax.microedition.io.DatagramConnection
 javax.microedition.io.StreamConnectionNotifier
+java.lang.IllegalStateException
+java.util.Timer
+java.util.TimerTask
+javax.microedition.pki.Certificate
+javax.microedition.pki.CertificateException
 javax.microedition.io.CommConnection
 javax.microedition.io.HttpConnection
 javax.microedition.io.HttpsConnection

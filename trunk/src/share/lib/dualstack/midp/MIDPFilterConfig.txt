@@ -32,11 +32,9 @@
 #   CVM_INCLUDE_MIDP=true PCSL_DIR=<pcsl_dir>
 #   MIDP_DIR=<midp_dir> J2ME_CLASSLIB=foundation
 #   CVM_DUAL_STACK=true CVM_PRELOAD_LIB=true
-#   CVM_MIDPFILTERINPUT=<cldc_classes_zip>
+#   CVM_MIDPFILTERINPUT=<cldc_classes_zip>:<shared_midp_cdc_classes_zip>
 #   gen_member_filter
 #
-# The output files are generated/javavm/runtime/romjavaMemberFilterData.c,
-# lib/MIDPFilterConfig.txt and lib/MIDPPermittedClasses.txt.
 # If CLDC API is changed, this file needs to be re-generated.
 #
 
@@ -1815,6 +1813,111 @@ CLASS javax/microedition/io/StreamConnectionNotifier
 	wait:(JI)V
 	wait:()V
 	close:()V
+
+CLASS java/lang/IllegalStateException
+   METHODS
+	<init>:()V
+	<init>:(Ljava/lang/String;)V
+	getMessage:()Ljava/lang/String;
+	toString:()Ljava/lang/String;
+	printStackTrace:()V
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
+
+CLASS java/util/Timer
+   METHODS
+	<init>:()V
+	schedule:(Ljava/util/TimerTask;J)V
+	schedule:(Ljava/util/TimerTask;Ljava/util/Date;)V
+	schedule:(Ljava/util/TimerTask;JJ)V
+	schedule:(Ljava/util/TimerTask;Ljava/util/Date;J)V
+	scheduleAtFixedRate:(Ljava/util/TimerTask;JJ)V
+	scheduleAtFixedRate:(Ljava/util/TimerTask;Ljava/util/Date;J)V
+	cancel:()V
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
+
+CLASS java/util/TimerTask
+   METHODS
+	<init>:()V
+	run:()V
+	cancel:()Z
+	scheduledExecutionTime:()J
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
+
+CLASS javax/microedition/pki/Certificate
+   METHODS
+	getSubject:()Ljava/lang/String;
+	getIssuer:()Ljava/lang/String;
+	getType:()Ljava/lang/String;
+	getVersion:()Ljava/lang/String;
+	getSigAlgName:()Ljava/lang/String;
+	getNotBefore:()J
+	getNotAfter:()J
+	getSerialNumber:()Ljava/lang/String;
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
+
+CLASS javax/microedition/pki/CertificateException
+   FIELDS
+	BAD_EXTENSIONS:B
+	CERTIFICATE_CHAIN_TOO_LONG:B
+	EXPIRED:B
+	UNAUTHORIZED_INTERMEDIATE_CA:B
+	MISSING_SIGNATURE:B
+	NOT_YET_VALID:B
+	SITENAME_MISMATCH:B
+	UNRECOGNIZED_ISSUER:B
+	UNSUPPORTED_SIGALG:B
+	INAPPROPRIATE_KEY_USAGE:B
+	BROKEN_CHAIN:B
+	ROOT_CA_EXPIRED:B
+	UNSUPPORTED_PUBLIC_KEY_TYPE:B
+	VERIFICATION_FAILED:B
+   METHODS
+	<init>:(Ljavax/microedition/pki/Certificate;B)V
+	<init>:(Ljava/lang/String;Ljavax/microedition/pki/Certificate;B)V
+	getCertificate:()Ljavax/microedition/pki/Certificate;
+	getReason:()B
+	getMessage:()Ljava/lang/String;
+	toString:()Ljava/lang/String;
+	printStackTrace:()V
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 
 CLASS javax/microedition/io/CommConnection
    METHODS
