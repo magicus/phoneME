@@ -86,7 +86,10 @@ public class DynamicProperties {
         while (provKeys.hasMoreElements()) {
             String key = (String)provKeys.nextElement();
             PropertyProvider prov = (PropertyProvider)propProviders.get(key);
-            props.put(key, prov.getValue(key, ((Boolean)provCached.get(prov)).booleanValue()));
+            String value = prov.getValue(key, ((Boolean)provCached.get(prov)).booleanValue());
+            if (value != null) {
+                props.put(key, value);
+            }
         }
     
     }
