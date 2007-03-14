@@ -34,24 +34,10 @@ CVM_FLAGS += \
 
 CVM_DLL_CLEANUP_ACTION = $(CVM_SYMBIAN_CLEANUP_ACTION)
 
-ifeq ($(HOST_OS), Interix)
-DOS2UNIX        = dos2unix.exe
-WIN2POSIX_CMD   = chgpath
-WIN2POSIX       = $(shell chgpath "$(1)")
-POSIX2WIN_CMD   = chgpath
-POSIX2WIN       = $(shell chgpath "$(1)")
-CHKWINPATH      = $(shell test -d "`chgpath \"$(1)\"`" 2>&1 && echo $(1))
+ifeq ($(HOST_DEVICE), Interix)
 CVM_JAVAC       = javac.exe
 CVM_JAVAH       = javah.exe
 CVM_JAR         = jar.exe
-endif
-ifeq ($(HOST_OS), cygwin)
-DOS2UNIX        = dos2unix
-WIN2POSIX_CMD   = cygpath
-WIN2POSIX       = $(shell cygpath '$(1)')
-POSIX2WIN_CMD   = cygpath -w
-POSIX2WIN       = $(shell cygpath -w "$(1)")
-CHKWINPATH      = $(shell ls -d "$(1)" 2>&1)
 endif
 
 ifeq ($(origin EPOCDEVICE), undefined)

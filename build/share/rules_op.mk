@@ -24,16 +24,22 @@
 
 .PHONY: javacall_lib
 
-# generatePropertyInitializer(xmlFiles,generatedDir,initializerPackage,outputFile)
-define generatePropertyInitializer
-	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE)           \
-	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml         \
-	-xsl $(CONFIGURATOR_DIR)/xsl/share/merge.xsl        \
-	-params filesList '$(1)'                            \
-	-out $(2)/properties_merged.xml                     \
-	-xml $(2)/properties_merged.xml                     \
-	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/propertiesJava.xsl \
-	-params packageName $(3)                            \
+ifneq ($(CVM_PRELOAD_LIB), true)
+JSR_NATIVE_LIBS = "$(5)"
+else
+JSR_NATIVE_LIBS = ""
+endif
+
+# generateJSRInitializer(xmlFiles,generatedDir,initializerPackage,outputFile,nativeLibs)
+define generateJSRInitializer
+	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE)              \
+	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml            \
+	-xsl $(CONFIGURATOR_DIR)/xsl/share/merge.xsl           \
+	-params filesList '$(1)'                               \
+	-out $(2)/properties_merged.xml                        \
+	-xml $(2)/properties_merged.xml                        \
+	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/propertiesJava.xsl    \
+	-params packageName $(3) nativeLibs $(JSR_NATIVE_LIBS) \
 	-out $(4)
 endef
 
@@ -81,4 +87,14 @@ javacall_lib: $(JAVACALL_LIBRARY)
 else
 javacall_lib:
 endif
+
+#
+# Run JavaAPILister to generate the list of classes that are hidden from CDC
+#
+ifeq ($(CVM_DUAL_STACK), true)
+$(CVM_CDCFILTERCONFIG): $(JSROP_JARS)
+	@echo "Generating CDC filter list ..."
+	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister -listapi:input=$(JSROP_HIDE_JARS),cout=$(CVM_CDCFILTERCONFIG)
+endif
+
 

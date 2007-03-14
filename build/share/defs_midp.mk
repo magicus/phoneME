@@ -32,10 +32,18 @@ ifeq ($(CVM_INCLUDE_MIDP),true)
 -include ../$(TARGET_CPU_FAMILY)/defs_midp.mk
 -include ../$(TARGET_OS)/defs_midp.mk
 
-# MDIP requires Foundation.
-ifeq ($(J2ME_CLASSLIB), cdc)
-J2ME_CLASSLIB		= foundation
+
+ifeq ($(AWT_IMPLEMENTATION), gci)
+    MIDP_PLATFORM = linux_gci
+else
+    MIDP_PLATFORM = linux_fb_gcc
 endif
+
+# MDIP requires Foundation or basis if build on top of gci
+ifeq ($(J2ME_CLASSLIB), cdc)
+J2ME_CLASSLIB          = foundation
+endif
+
 
 #
 # Target tools directory for compiling both PCSL and MIDP.
@@ -69,8 +77,9 @@ MIDP_DEFS_JCC_MK	= $(MIDP_DIR)/build/common/cdc_vm/defs_cdc.mk
 ifeq ($(wildcard $(MIDP_DEFS_JCC_MK)),)
 $(error MIDP_DIR must point to the MIDP directory: $(MIDP_DIR))
 endif
-MIDP_MAKEFILE_DIR 	?= build/linux_fb_gcc
-MIDP_OUTPUT_DIR	?= $(CVM_MIDP_BUILDDIR)/midp_fb
+
+MIDP_MAKEFILE_DIR 	?= build/$(MIDP_PLATFORM)
+MIDP_OUTPUT_DIR	?= $(CVM_MIDP_BUILDDIR)/midp_$(MIDP_PLATFORM)
 export MIDP_OUTPUT_DIR
 
 USE_SSL			?= false

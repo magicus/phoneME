@@ -334,7 +334,7 @@ Java_java_net_PlainSocketImpl_socketConnect(JNIEnv *env, jobject this,
     }
 
     /* connect */
-    NET_InetAddressToSockaddr(env, iaObj, port, (struct sockaddr *)&him, &len);
+    NET_InetAddressToSockaddr(env, iaObj, port, (struct sockaddr *)&him, &len, JNI_FALSE);
 #ifdef AF_INET6
     if (trafficClass != 0 && ipv6_available()) {
 	NET_SetTrafficClass((struct sockaddr *)&him, trafficClass);
@@ -578,7 +578,7 @@ Java_java_net_PlainSocketImpl_socketBind(JNIEnv *env, jobject this,
     }
 
     /* bind */
-    NET_InetAddressToSockaddr(env, iaObj, localport, (struct sockaddr *)&him, &len);
+    NET_InetAddressToSockaddr(env, iaObj, localport, (struct sockaddr *)&him, &len, JNI_TRUE);
 
     if (NET_Bind(fd, (struct sockaddr *)&him, len) < 0) {
 	if (errno == EADDRINUSE || errno == EADDRNOTAVAIL ||
