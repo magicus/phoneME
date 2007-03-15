@@ -34,6 +34,9 @@ public class MMNativeLibrary {
      *  Load Native MMAPI Library 
      */
      public static void load() {
-        System.loadLibrary("jsr135");
+         try {
+            System.loadLibrary("jsr135");
+         } catch (UnsatisfiedLinkError err) {
+         }
      }
 }
