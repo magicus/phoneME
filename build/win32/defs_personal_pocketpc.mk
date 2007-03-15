@@ -28,9 +28,8 @@
 
 ##### wceCompat library
 
-AWT_CPPFLAGS += -I$(WCECOMPAT_LIB_SRC_DIR) \
+CVM_INCLUDES += -I$(WCECOMPAT_LIB_SRC_DIR) \
 	-I$(CVM_TOP)/src/win32/javavm/runtime
-CCFLAGS += $(AWT_CPPFLAGS)
 
 # by default we don't want PocketPC menu style
 POCKETPC_MENUS = false
