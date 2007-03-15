@@ -286,9 +286,8 @@ runMidlet(int argc, char** commandlineArgs) {
             /* Run by ID */
             suiteId = INTERNAL_SUITE_ID;
 
-            /* IMPL_NOTE: consider handling of other IDs. */
-
-            if (!strcmp(argv[1], "internal") && additionalPath == NULL) {
+            if (strcmp(argv[1], "internal") &&
+                strcmp(argv[1], "-1") && additionalPath == NULL) {
                 /*
                  * If the argument is not a suite ID, it might be a full
                  * path to the midlet suite's jar file.
