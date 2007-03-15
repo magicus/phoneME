@@ -896,7 +896,9 @@ int pushcheckout(char* protocol, int port, char * store) {
             /* The push system should stop monitoring this connection. */
             if (strncmp(p->value, "socket://:", 10) == 0) {
                 pcsl_remove_network_notifier((void*)fd, PCSL_NET_CHECK_ACCEPT);
-            } else if (strncmp(p->value, "datagram://:", 12) == 0) {
+            } else if ((strncmp(p->value, "datagram://:", 12) == 0) ||
+                       (strncmp(p->value, "sip:", 4) == 0) ||
+                       (strncmp(p->value, "sips:", 5) == 0)) {
                 pcsl_remove_network_notifier((void*)fd, PCSL_NET_CHECK_READ);
             }
 
