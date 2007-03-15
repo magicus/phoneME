@@ -38,7 +38,7 @@ import java.io.InterruptedIOException;
  * @see com.sun.midp.ssl.Out
  */ 
 class In extends InputStream {
-    /** Indicates the input stream was closed. */
+    /** Indicates the input stream is closed. */
     private boolean isClosed;
 
     /** Underlying SSL record layer from which bytes are read. */
