@@ -357,6 +357,9 @@ storage_open(char** ppszError, const pcsl_string* filename_str, int ioMode) {
         DEBUGP2F("opening for read only %s\n", filename_str);
         flags |= PCSL_FILE_O_RDONLY;
     } else {
+        // lock the file across processes
+        flags = PCSL_FILE_O_LOCK;
+printf("opening %s\n", filename_str);
         if (!storage_file_exists(filename_str)) {
             flags |= PCSL_FILE_O_CREAT;
         } else if (OPEN_READ_WRITE_TRUNCATE == ioMode) {
