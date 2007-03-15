@@ -97,16 +97,16 @@ int pcsl_file_rmdir(const pcsl_string * dirName);
  * @return size of available space in storage on success,
  *         -1 otherwise.
  */
-long pcsl_file_getfreesize(const pcsl_string * path);
+jlong pcsl_file_getfreesize(const pcsl_string * path);
 
 /**
  * Checks the capacity of the storage.
  * @param path path is the path name of any file within the file system
  * @return size of total space in storage on success, -1 otherwise
  */
-long pcsl_file_gettotalsize(const pcsl_string * path);
+jlong pcsl_file_gettotalsize(const pcsl_string * path);
 
-//-----------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 
 /**
  * Returns value of the attribute for the specified file.

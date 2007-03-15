@@ -37,11 +37,14 @@
 #include <pcsl_memory.h>
 
 /**
+ * @def PCSL_DIR_MAX_NAME_LEN
  * Maximum length of a file name
  */
 #define PCSL_DIR_MAX_NAME_LEN	   256
 
-#define DEFAULT_DIR_CREATION_MODE (0444 | 0222 | 0111)
+#define DEFAULT_DIR_CREATION_MODE  (0444 | 0222 | 0111)
+
+#define UJLONG_MAX  0x7FFFFFFFFFFFFFFF
 
 /**
  * Check if the directory exists in FS storage.
@@ -110,11 +113,11 @@ int pcsl_file_rmdir(const pcsl_string * dirName)
 /**
  * The getFreeSize function checks the available size in storage.
  */
-long pcsl_file_getfreesize(const pcsl_string * path)
+jlong pcsl_file_getfreesize(const pcsl_string * path)
 {
     struct statvfs sbuf;
-    long  freeBytes = -1; /* -1 if the file system is not accessible*/
-    int   status    = -1;
+    jlong  size   = -1; /* -1 if the file system is not accessible */
+    int    status = -1;
     const jbyte * pszPath = pcsl_string_get_utf8_data(path);
 
     if (pszPath == NULL) {
@@ -124,22 +127,22 @@ long pcsl_file_getfreesize(const pcsl_string * path)
     status = statvfs((char*)pszPath, &sbuf);
     if (status == 0)
     {
-        freeBytes = sbuf.f_bsize * sbuf.f_bavail;
+        size = (jlong)(sbuf.f_bsize) * sbuf.f_bavail;
     }
     
     pcsl_string_release_utf8_data(pszPath, path);
 
-    return freeBytes;
+    return (size < 0) ? UJLONG_MAX : size;
 }
 
 /**
  * The getTotalSize function checks the total space in storage.
  */
-long pcsl_file_gettotalsize(const pcsl_string * path)
+jlong pcsl_file_gettotalsize(const pcsl_string * path)
 {
     struct statvfs sbuf;
-    long  totalBytes = -1; /* -1 if the file system is not accessible*/
-    int   status     = -1;
+    jlong  size   = -1; /* -1 if the file system is not accessible */
+    int    status = -1;
     const jbyte * pszPath = pcsl_string_get_utf8_data(path);
 
     if (pszPath == NULL) {
@@ -149,12 +152,12 @@ long pcsl_file_gettotalsize(const pcsl_string * path)
     status = statvfs((char*)pszPath, &sbuf);
     if (status == 0)
     {
-        totalBytes = sbuf.f_bsize * sbuf.f_blocks;
+        size = (jlong)(sbuf.f_bsize) * sbuf.f_blocks;
     }
     
     pcsl_string_release_utf8_data(pszPath, path);
 
-    return totalBytes;
+    return (size < 0) ? UJLONG_MAX : size;
 }
 
 //-----------------------------------------------------------------------------

@@ -41,6 +41,7 @@
 #define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
 #endif
 
+#define UJLONG_MAX 0x7FFFFFFFFFFFFFFF
 
 /**
  * Check if the directory exists in FS storage.
@@ -103,7 +104,7 @@ int pcsl_file_rmdir(const pcsl_string * dirName)
 /**
  * The getFreeSize function checks the available size in storage.
  */
-long pcsl_file_getfreesize(const pcsl_string * path)
+jlong pcsl_file_getfreesize(const pcsl_string * path)
 {
     struct _diskfree_t df;
     struct _stat buf;
@@ -126,13 +127,14 @@ long pcsl_file_getfreesize(const pcsl_string * path)
     }
 
     size = (jlong)(df.avail_clusters) * df.sectors_per_cluster * df.bytes_per_sector;
-    return (size > 0x7FFFFFFFL) ? 0x7FFFFFFFL : (long)size;
+    // note: two overflows can not occur since bytes_per_sector is always small enough
+    return (size < 0) ? UJLONG_MAX : size;
 }
 
 /**
  * The getTotalSize function checks the total space in storage.
  */
-long pcsl_file_gettotalsize(const pcsl_string * path)
+jlong pcsl_file_gettotalsize(const pcsl_string * path)
 {
     struct _diskfree_t df;
     struct _stat buf;
@@ -154,8 +156,9 @@ long pcsl_file_gettotalsize(const pcsl_string * path)
         return -1;
     }
 
-    size = (jlong)(df.total_clusters) * df.sectors_per_cluster * df.bytes_per_sector;
-    return (size > 0x7FFFFFFFL) ? 0x7FFFFFFFL : (long)size;
+    res = (jlong)(df.total_clusters) * df.sectors_per_cluster * df.bytes_per_sector;
+    // note: two overflows can not occur since bytes_per_sector is always small enough
+    return (size < 0) ? UJLONG_MAX : size;
 }
 
 /**
