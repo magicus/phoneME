@@ -32,6 +32,8 @@ JUMP_INCLUDE_DIRS       += \
 
 JUMP_OBJECTS            += \
 	jump_os_win32.o \
+	jump_os_sync_win32.o
 
 JUMP_NATIVE_LIBRARY_OBJECTS            += \
-	jump_os_win32.o
+	jump_os_win32.o \
+	jump_os_sync_win32.o
