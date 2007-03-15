@@ -627,7 +627,7 @@ public class Display {
 
         // #ifdef ENABLE_GCI
         java.security.AccessController.doPrivileged(
-                 new sun.security.action.LoadLibraryAction("gciawt"));
+                 new sun.security.action.LoadLibraryAction("gci"));
         // #endif ENABLE_GCI
     }
 
