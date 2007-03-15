@@ -2062,7 +2062,7 @@ CFLAGS_FDLIB   	= $(CFLAGS) $(CCFLAGS_FDLIB) $(CPPFLAGS)
 CFLAGS_JCS	= 
 
 LINKFLAGS       += -g -Wl,-export-dynamic $(LINK_ARCH_FLAGS)
-LINKLIBS     	+= -lpthread -ldl $(LINK_ARCH_LIBS)
+LINKLIBS     	+= -lpthread -ldl -lrt $(LINK_ARCH_LIBS)
 LINKLIBS_JCS    +=
 
 SO_CCFLAGS   	= $(CCFLAGS_SPEED)
