@@ -306,7 +306,7 @@ public class PKIManager {
                 throw new IllegalArgumentException(
                           "Invalid issuerAndSerialNumber");
             }
-            if (isn.child.next.type != TLV.INTEGER_TYPE) {
+            if (isn.child.next == null || isn.child.next.type != TLV.INTEGER_TYPE) {
                 throw new IllegalArgumentException(
                           "Invalid issuerAndSerialNumber");
             }
@@ -314,7 +314,6 @@ public class PKIManager {
             throw new IllegalArgumentException(
                                       "Invalid issuerAndSerialNumber");
         }
-
         int slotCount = APDUManager.getSlotCount();
 
         while (true) {

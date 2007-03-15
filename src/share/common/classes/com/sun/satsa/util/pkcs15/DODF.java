@@ -125,7 +125,7 @@ public class DODF extends PKCS15File {
                     break;
                 }
                 case DODFTAG_OIDDO: {
-                    oidTLV = typeTLV.child; /* omit the SEQUENCE level */
+                    oidTLV = typeTLV.child.next.next.child.child;
                     OidDo.addElement(oidTLV);
                     break;
                 }
@@ -158,7 +158,7 @@ public class DODF extends PKCS15File {
      * @return TLV contained the required object
      */
     public TLV getOidDoValueTLV(int index) {
-        return ((TLV)OidDo.elementAt(index)).next;
+        return ((TLV)OidDo.elementAt(index)).next.child;
     }
 
 }
