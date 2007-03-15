@@ -38,10 +38,10 @@ ABSTRACTIONS_NATIVES = \
 	bnlib.c
 
 # dirs containing hative header files (.h)
-ABSTRACTIONS_INCLUDES = \
-    -I$(ABSTRACTIONS_DIR)/src/include \
-    -I$(ABSTRACTIONS_DIR)/src/jump_application/native/include \
-    -I$(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_OS)
+ABSTRACTIONS_INCLUDE_DIRS = \
+    $(ABSTRACTIONS_DIR)/src/include \
+    $(ABSTRACTIONS_DIR)/src/jump_application/native/include \
+    $(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_OS)
 
 # start dirs for java source trees
 ABSTRACTIONS_JAVASRCDIRS = \
@@ -110,20 +110,19 @@ endif
 
 #####################################################
 ABSTRACTIONS_NATIVE_OBJS     = $(patsubst %.c,$(CVM_OBJDIR)/%.o,$(ABSTRACTIONS_NATIVES))
-ABSTRACTIONS_CLASSDIR        = $(CVM_BUILD_TOP)/abstracts_classes
-ABSTRACTIONS_JAR             = $(CVM_LIBDIR)/abstractions.jar
 ABSTRACTIONS_LIB_NAME        = abstractions
+ABSTRACTIONS_CLASSDIR        = $(CVM_BUILD_TOP)/$(ABSTRACTIONS_LIB_NAME)/classes
+ABSTRACTIONS_JAR             = $(CVM_LIBDIR)/$(ABSTRACTIONS_LIB_NAME).jar
 ABSTRACTIONS_NATIVE_LIBRARY  = $(CVM_LIBDIR)/$(LIB_PREFIX)$(ABSTRACTIONS_LIB_NAME)$(LIB_POSTFIX)
 
 ifneq ($(CVM_PRELOAD_LIB), true)
 JSROP_LINKLIBS += -l$(ABSTRACTIONS_LIB_NAME)$(DEBUG_POSTFIX)
 endif
 
-CVM_INCLUDES += $(ABSTRACTIONS_INCLUDES)
 CVM_SRCDIRS  += $(ABSTRACTIONS_SRCDIRS)
-
-JSROP_NATIVE_OBJS += $(ABSTRACTIONS_NATIVE_OBJS)
-JSROP_NATIVE_LIBS += $(ABSTRACTIONS_NATIVE_LIBRARY)
+JSROP_INCLUDE_DIRS += $(ABSTRACTIONS_INCLUDE_DIRS)
+JSROP_NATIVE_OBJS  += $(ABSTRACTIONS_NATIVE_OBJS)
+JSROP_NATIVE_LIBS  += $(ABSTRACTIONS_NATIVE_LIBRARY)
 
 CVM_CNI_CLASSES += com.sun.j2me.crypto.ARC4 \
                    com.sun.j2me.crypto.RSA
