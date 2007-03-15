@@ -309,6 +309,13 @@ SUBSYSTEM_JSR_135_NATIVE_FILES += \
 	mm_driver.c 
 endif
 
+# Set BUILTIN_LIBS
+ifneq ($(TARGET_VM),cldc_vm)
+ifeq ($(CVM_STATICLINK_LIBS), true)
+BUILTIN_LIBS += "jsr135"
+endif
+endif
+
 JSR_135_LIB_NAME      = jsr135
 JSR_135_JAR           = $(JSROP_LIB_DIR)/$(JSR_135_LIB_NAME).jar
 JSR_135_NATIVE_LIB    = $(JSROP_LIB_DIR)/$(LIB_PREFIX)$(JSR_135_LIB_NAME)$(LIB_POSTFIX)

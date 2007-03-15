@@ -23,7 +23,7 @@
  *  information or have any questions. 
  */
 package com.sun.mmedia;
-import java.lang.System;
+import java.security.AccessController;
 
 /**
  * Load Native MMAPI Library 
@@ -34,9 +34,7 @@ public class MMNativeLibrary {
      *  Load Native MMAPI Library 
      */
      public static void load() {
-         try {
-            System.loadLibrary("jsr135");
-         } catch (UnsatisfiedLinkError err) {
-         }
+        java.security.AccessController.doPrivileged(
+           new sun.security.action.LoadLibraryAction("jsr135"));
      }
 }
