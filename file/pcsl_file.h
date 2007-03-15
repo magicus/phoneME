@@ -128,6 +128,14 @@ extern "C" {
 
 #define PCSL_FILE_O_APPEND             0x400
 
+/**
+ * If set, the file will be opened in exclusive/nonshared mode and locked.
+ * If another process attempts to open the file before it is closed, the
+ * attempt will fail.
+ */
+
+#define PCSL_FILE_O_LOCK              0x04
+
 /**  
  * Below definitions are for pcsl_file_seek's position parameter 
  */

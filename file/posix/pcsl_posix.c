@@ -75,7 +75,7 @@ int pcsl_file_finalize() {
  */
 int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle)
 {
-    int   fd;
+    int   fd, result;
     int   creationMode = 0;
     const jbyte * pszOsFilename = pcsl_string_get_utf8_data(fileName);
 
@@ -88,6 +88,19 @@ int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle)
     }
 
     fd = open((char*)pszOsFilename, flags, creationMode);
+
+    if (result = lockf(fd, F_TEST, 0) == -1) {
+        /* file is locked by another process */
+        close(fd);
+        return -1;
+    }
+
+    if ((flags & PCSL_FILE_O_LOCK) == PCSL_FILE_O_LOCK) {
+        if (result = lockf(fd, F_TLOCK, 0)  != 0) {
+            close(fd);
+            return -1;
+        }
+    }
 
     pcsl_string_release_utf8_data(pszOsFilename, fileName);
 
@@ -105,6 +118,7 @@ int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle)
  */
 int pcsl_file_close(void *handle) 
 {
+        lockf((int)handle, F_ULOCK, 0);
 	return close((int)handle);
 }
 
