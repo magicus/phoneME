@@ -466,6 +466,7 @@ static void pushsave() {
  * @return 0 for success, OUT_OF_MEM_LEN for out of memory,
  * IO_ERROR_LEN if already registered
  */
+#include <stdio.h>
 int midpAddPushEntry(SuiteIdType suiteId,
                      const pcsl_string * connection,
                      const pcsl_string * midlet,
@@ -562,6 +563,8 @@ int pushadd(char *str) {
     PushEntry *pe;
     int comma;
     char *cp;
+
+printf(">>> Adding push entry: %s\n", str);
 
     /* Count the characters up to the first comma. */
     for (comma = 0, cp = str; *cp; comma++, cp++) {
