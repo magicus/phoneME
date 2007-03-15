@@ -156,7 +156,7 @@ jlong pcsl_file_gettotalsize(const pcsl_string * path)
         return -1;
     }
 
-    res = (jlong)(df.total_clusters) * df.sectors_per_cluster * df.bytes_per_sector;
+    size = (jlong)(df.total_clusters) * df.sectors_per_cluster * df.bytes_per_sector;
     // note: two overflows can not occur since bytes_per_sector is always small enough
     return (size < 0) ? UJLONG_MAX : size;
 }
