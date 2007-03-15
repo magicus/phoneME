@@ -4963,7 +4963,7 @@ void CodeGenerator::load_from_object(Value& result, Value& object, jint offset,
   }
 }
 
-
+#if !ENABLE_CPU_VARIANT
 void CodeGenerator::init_static_array(Value& result JVM_TRAPS) {
   JVM_IGNORE_TRAPS;
   flush_frame(JVM_SINGLE_ARG_CHECK);
@@ -5021,6 +5021,7 @@ void CodeGenerator::init_static_array(Value& result JVM_TRAPS) {
   call_simple_c_runtime(dst_val, (address)jvm_memcpy,
     dst_val, src_val, size_val);
 }
+#endif //!ENABLE_CPU_VARIANT
 
 void CodeGenerator::assign_register(Value& result, Value& op) {
   GUARANTEE(!result.is_present(), "result must not be present");

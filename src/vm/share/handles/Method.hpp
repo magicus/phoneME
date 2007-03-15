@@ -719,6 +719,10 @@ public:
 
   // Iterators for invoking the BytecodeClosure
   void iterate(int begin, int end, BytecodeClosure* blk JVM_TRAPS);
+#if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+  // Iterators for invoking the BytecodeClosure
+  void fix_long_operations();
+#endif 
   void iterate_bytecode(int bci, BytecodeClosure* blk, Bytecodes::Code code
                         JVM_TRAPS);
   void iterate_uncommon_bytecode(int bci, BytecodeClosure* blk JVM_TRAPS);

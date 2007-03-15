@@ -316,12 +316,19 @@ PRODUCT_CONST Bytecodes::BytecodeData Bytecodes::data[] = {
   def(aload_0_fast_agetfield_1  , 2, "bi"   , 0, ""      , NullCheck  | CSE),
   def(aload_0_fast_igetfield_1  , 2, "bi"   , 0, ""      , NullCheck  | CSE),
   def(pop_and_npe_if_null       , 1, "b"    , 0, ""      , NullCheck),
+#if !ENABLE_CPU_VARIANT
   def(init_static_array         , 0, ""     , 0, ""      , None),
+
   def(aload_0_fast_agetfield_4  , 1, "b"    , 0, ""      , Exceptions | CSE),
   def(aload_0_fast_igetfield_4  , 1, "b"    , 0, ""      , Exceptions | CSE),
   def(aload_0_fast_agetfield_8  , 1, "b"    , 0, ""      , Exceptions | CSE),
   def(aload_0_fast_igetfield_8  , 1, "b"    , 0, ""      , Exceptions | CSE),
-
+#elif ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+  def(lload_safe                , 2, "bi"   , 4, "wbii"  , None),
+  def(lstore_safe               , 2, "bi"   , 4, "wbii"  , None),  
+ fdef(dload_safe                , 2, "bi"   , 4, "wbii"  , None),
+ fdef(dstore_safe               , 2, "bi"   , 4, "wbii"  , None),
+#endif
   // IMPL_NOTE: the following fast_init_* bytecodes are used only in SVM ROM image,
   // it'll be good to have appropriate GUARANTEEs or #if !ENABLE_ISOLATES
   def(fast_init_1_putstatic     , 3, "bjj"  , 0, ""      , Exceptions),
@@ -355,11 +362,13 @@ int Bytecodes::wide_length_for(const Method* method, int bci, Code code) {
     int npairs = method->get_java_switch_int(a_bci + wordSize);
     return a_bci + (2 + 2*npairs)*wordSize - bci;
   }
+#if !ENABLE_CPU_VARIANT
   case _init_static_array: {
     int size_factor = 1 << method->get_byte(bci + 1);
     int count = method->get_native_ushort(bci + 2);
     return 4 + size_factor * count;
   }
+#endif //!ENABLE_CPU_VARIANT
   case _wide: {
     return Bytecodes::wide_length_for(method->bytecode_at(bci+1));
   }

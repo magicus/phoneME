@@ -27,7 +27,7 @@
 #include "incls/_precompiled.incl"
 #include "incls/_BytecodeOptimizer.cpp.incl"
 
-#if ENABLE_ROM_GENERATOR && !USE_PRODUCT_BINARY_IMAGE_GENERATOR
+#if ENABLE_ROM_GENERATOR && !USE_PRODUCT_BINARY_IMAGE_GENERATOR && !ENABLE_CPU_VARIANT
 
 /*
 here we are searching for the following pattern:

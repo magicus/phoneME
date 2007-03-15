@@ -119,9 +119,9 @@ class BytecodeCompileClosure: public BytecodeClosure {
   virtual void dup_x2(JVM_SINGLE_ARG_TRAPS);
   virtual void dup2_x2(JVM_SINGLE_ARG_TRAPS);
   virtual void swap(JVM_SINGLE_ARG_TRAPS);
-
+#if !ENABLE_CPU_VARIANT
   virtual void init_static_array(JVM_SINGLE_ARG_TRAPS);
-
+#endif 
   // Branches.
   virtual void branch        (int dest JVM_TRAPS);
   virtual void branch_if     (cond_op cond, int dest JVM_TRAPS);

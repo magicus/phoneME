@@ -323,14 +323,21 @@ class Bytecodes: public AllStatic {
    _aload_0_fast_igetfield_1, // same as aload_0 followed by fast_agetfield_1
 
    _pop_and_npe_if_null, // same as pop and throw NullPointerException if null 
-
+#if !ENABLE_CPU_VARIANT
    _init_static_array, //is used for static array initializing
 
    _aload_0_fast_agetfield_4, // same as aload_0 followed by fast_agetfield #4
    _aload_0_fast_igetfield_4, // same as aload_0 followed by fast_agetfield #4
    _aload_0_fast_agetfield_8, // same as aload_0 followed by fast_agetfield #8
    _aload_0_fast_igetfield_8, // same as aload_0 followed by fast_agetfield #8
-
+#elif ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+   //used to replace ordinary bytecodes for some versions of JAZELLE 
+   //see CR6486596 
+   _lload_safe ,   
+   _lstore_safe,
+   _dload_safe ,
+   _dstore_safe,
+#endif 
    // The following are the same as ones without "init_" prefix
    // but with additional class initialization check.
    // The order of these bytecodes must repeat the order of corresponding
@@ -451,9 +458,12 @@ class Bytecodes: public AllStatic {
   static bool can_decrease_stack(const Code code) {
     return code <= _aload_3 ||
            code == _aload_0_fast_agetfield_1 ||
-           code == _aload_0_fast_igetfield_1 || 
-           (code >=_aload_0_fast_agetfield_4 && 
-           code < _fast_init_1_putstatic);
+           code == _aload_0_fast_igetfield_1 
+#if !ENABLE_CPU_VARIANT
+           || (code >=_aload_0_fast_agetfield_4 && 
+           code < _fast_init_1_putstatic)
+#endif
+           ;
   }
 
   static bool is_kind_of_eliminable(const Code code) {

@@ -899,6 +899,10 @@ void TemplateTable::initialize_fast(SourceMacros* assembler) {
   def_1(Bytecodes::_aload_0_fast_agetfield_1,
         align_code_base,
         bc_aload_0_fast_getfield_1, T_OBJECT);
+  def_0(Bytecodes::_pop_and_npe_if_null,
+        align_code_base,
+        bc_pop_and_npe_if_null);
+#if !ENABLE_CPU_VARIANT  
   def_2(Bytecodes::_aload_0_fast_igetfield_4,
         align_code_base,
         bc_aload_0_fast_getfield_n, T_INT, 4);
@@ -911,12 +915,25 @@ void TemplateTable::initialize_fast(SourceMacros* assembler) {
   def_2(Bytecodes::_aload_0_fast_agetfield_8,
         align_code_base,
         bc_aload_0_fast_getfield_n, T_OBJECT, 8);
-  def_0(Bytecodes::_pop_and_npe_if_null,
-        align_code_base,
-        bc_pop_and_npe_if_null);
   def_0(Bytecodes::_init_static_array,
         align_code_base,
         bc_init_static_array);
+#elif ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND 
+//#if ENABLE_FLOAT
+  def_wide_2(Bytecodes::_dload_safe,
+             align_code_base/* | does_fp*/,
+             bc_load, T_LONG, true);
+  def_wide_2(Bytecodes::_dstore_safe,
+             align_code_base/* | does_fp*/,
+             bc_store, T_LONG, true);
+//#endif //ENABLE_FLOAT
+  def_wide_2(Bytecodes::_lload_safe,
+             align_code_base,
+             bc_load, T_LONG, true);
+  def_wide_2(Bytecodes::_lstore_safe,
+             align_code_base,
+             bc_store, T_LONG, true);
+#endif //!ENABLE_CPU_VARIANT
   def_1(Bytecodes::_fast_invokevirtual,
         align_code_base,
         bc_fast_invoke, false);
@@ -1063,11 +1080,19 @@ void TemplateTable::initialize_duplicates() {
   _duplicates[Bytecodes::_fast_agetfield_1] = Bytecodes::_fast_igetfield_1;
   _duplicates[Bytecodes::_aload_0_fast_agetfield_1] =
                                           Bytecodes::_aload_0_fast_igetfield_1;
+#if !ENABLE_CPU_VARIANT  
   _duplicates[Bytecodes::_aload_0_fast_agetfield_4] =
                                           Bytecodes::_aload_0_fast_igetfield_4;
   _duplicates[Bytecodes::_aload_0_fast_agetfield_8] =
                                           Bytecodes::_aload_0_fast_igetfield_8;
-
+#elif ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+  _duplicates[Bytecodes::_lload_safe]   = Bytecodes::_lload;
+  _duplicates[Bytecodes::_lstore_safe]  = Bytecodes::_lstore;
+  //we use l* bytecodes here cause they are duplicates 
+  // for ordinary d* bytecodes!
+  _duplicates[Bytecodes::_dload_safe]   = Bytecodes::_lload;
+  _duplicates[Bytecodes::_dstore_safe]  = Bytecodes::_lstore;  
+#endif //#if !ENABLE_CPU_VARIANT  
   // The following are all just "quicken"
   _duplicates[Bytecodes::_ldc_w]          = Bytecodes::_ldc;
   _duplicates[Bytecodes::_ldc2_w]         = Bytecodes::_ldc;

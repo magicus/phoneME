@@ -2204,6 +2204,7 @@ void BytecodeCompileClosure::array_check(Value& array, Value& index JVM_TRAPS) {
   }
 }
 
+#if !ENABLE_CPU_VARIANT
 void BytecodeCompileClosure::init_static_array(JVM_SINGLE_ARG_TRAPS) {  
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(init_static_array);
 
@@ -2212,7 +2213,7 @@ void BytecodeCompileClosure::init_static_array(JVM_SINGLE_ARG_TRAPS) {
 
   __ init_static_array(result JVM_CHECK);
 }
-
+#endif //!ENABLE_CPU_VARIANT
 #undef __
 
 void BytecodeCompileClosure::set_default_next_bytecode_index(Method* method,

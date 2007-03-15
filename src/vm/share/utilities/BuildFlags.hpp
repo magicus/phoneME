@@ -155,6 +155,8 @@
 //
 // ENABLE_ARM9_VFP_BUG_WORKAROUND 0,0  Workaround ARM9+VFP hardware feature
 //
+// ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND 0,0  Workaround ARM11 Jazelle hardware bug
+//
 // ENABLE_BRUTE_FORCE_ICACHE_FLUSH 0,0 Generate brute-force code to flush
 //                                    the instruction cache (for platforms
 //                                    without OS support).

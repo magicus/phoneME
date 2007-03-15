@@ -203,12 +203,13 @@ class BytecodeClosure : public StackObj {
   virtual void fast_put_field(BasicType /*field_type*/, int /*field_offset*/
                               JVM_TRAPS) {JVM_IGNORE_TRAPS;}
 
-  virtual void aload_0_fast_get_field_1(BasicType /*field_type*/ JVM_TRAPS);
-  virtual void aload_0_fast_get_field_n(int /*bytecode*/ JVM_TRAPS);
+  virtual void aload_0_fast_get_field_1(BasicType /*field_type*/ JVM_TRAPS);  
   
   virtual void pop_and_npe_if_null(JVM_SINGLE_ARG_TRAPS);
+#if !ENABLE_CPU_VARIANT
+  virtual void aload_0_fast_get_field_n(int /*bytecode*/ JVM_TRAPS);
   virtual void init_static_array(JVM_SINGLE_ARG_TRAPS) {JVM_IGNORE_TRAPS;}
-  
+#endif 
   virtual void uncommon_trap(JVM_SINGLE_ARG_TRAPS) {JVM_IGNORE_TRAPS;}
 
   virtual void illegal_code(JVM_SINGLE_ARG_TRAPS); 

@@ -855,11 +855,12 @@ public:
     // Do nothing. The forward branch will be aborted.
     JVM_IGNORE_TRAPS;
   }
-
+#if !ENABLE_CPU_VARIANT
   virtual void aload_0_fast_get_field_n(int /*bytecode*/ JVM_TRAPS) {
     // Do nothing. The forward branch will be aborted.
     JVM_IGNORE_TRAPS;
   }
+#endif //!ENABLE_CPU_VARIANT
   
 private:  
   void simple_instruction(bool has_exception);

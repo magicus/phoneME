@@ -708,6 +708,7 @@ void bc_pop_and_npe_if_null::generate() {
   dispatch(tos_on_stack);
 }
 
+#if !ENABLE_CPU_VARIANT
 void bc_init_static_array::generate() {
 
   ldrb(tmp1, imm_index(bcp, 1, pre_indexed)); //load log bytes for array type
@@ -741,6 +742,7 @@ void bc_init_static_array::generate() {
   prefetch(1);
   dispatch(tos_interpreter_basic);
 }
+#endif
 
 void bc_pop2::generate() {
   prefetch(1);
@@ -1636,9 +1638,11 @@ void bc_aload_0_fast_getfield_1::generate(BasicType type) {
   fast_access_field(false, false, type, 1, true);
 }
 
+#if !ENABLE_CPU_VARIANT
 void bc_aload_0_fast_getfield_n::generate(BasicType type, int offset) {
   fast_access_field(false, false, type, 0, true, offset);
 }
+#endif
 
 void bc_fast_invokespecial::generate() {
   set_stack_state_to(tos_on_stack);

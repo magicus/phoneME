@@ -415,6 +415,7 @@ void BytecodePrintClosure::print_verbose_static_field(int index JVM_TRAPS) {
   cp.print_entry_on(_st, index JVM_CHECK);
 }
 
+#if !ENABLE_CPU_VARIANT
 void BytecodePrintClosure::init_static_array(JVM_SINGLE_ARG_TRAPS) {
   JVM_IGNORE_TRAPS;
   _st->print("init_static_array ");
@@ -426,5 +427,5 @@ void BytecodePrintClosure::init_static_array(JVM_SINGLE_ARG_TRAPS) {
     _st->print("%d ", method()->get_byte(bci() + 4 + i));
   }
 }
-
+#endif //!ENABLE_CPU_VARIANT
 #endif

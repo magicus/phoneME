@@ -266,6 +266,9 @@ void InstanceClass::verify(JVM_SINGLE_ARG_TRAPS) {
       int len = array().length();
       for (int i=0; i<len; i++) {
         m = array().obj_at(i);
+#if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+        m().fix_long_operations(); //see CR 6486596
+#endif
         if (m().code_size() == 5) {
           m().set_fast_accessor_entry(JVM_SINGLE_ARG_NO_CHECK);
           GUARANTEE(!CURRENT_HAS_PENDING_EXCEPTION, "sanity");

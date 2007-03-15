@@ -582,7 +582,7 @@ ConstantPoolRewriter::create_method_replacement(Method *method JVM_TRAPS) {
   // Line number/offset tables will be messed up
   UsingFastOops fast;
   Method::Fast optimized_method = method->obj();  
-#if !USE_PRODUCT_BINARY_IMAGE_GENERATOR
+#if !USE_PRODUCT_BINARY_IMAGE_GENERATOR && !ENABLE_CPU_VARIANT
   if (OptimizeBytecodes) {        
     optimized_method = _bytecode_optimizer.optimize_bytecodes(method JVM_CHECK_0);
     // The first step of bytecode optimization is made, bytecode indices changed.
@@ -2194,7 +2194,9 @@ void ConstantPoolRewriter::print_statistics(Stream *stream) {
   stream->cr();
   stream->print_cr("[Optimized bytecodes]");
   stream->cr();
+#if !ENABLE_CPU_VARIANT
   _bytecode_optimizer.print_bytecode_statistics(stream);
+#endif
 #else
   (void)stream;
 #endif

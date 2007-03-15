@@ -444,10 +444,12 @@ bool Method::bytecode_inline_filter(bool& has_field_get,
       case Bytecodes::_fast_agetfield_1:
       case Bytecodes::_aload_0_fast_agetfield_1:
       case Bytecodes::_aload_0_fast_igetfield_1:
+#if !ENABLE_CPU_VARIANT
       case Bytecodes::_aload_0_fast_agetfield_4:
       case Bytecodes::_aload_0_fast_igetfield_4:
       case Bytecodes::_aload_0_fast_agetfield_8:
       case Bytecodes::_aload_0_fast_igetfield_8:
+#endif //!ENABLE_CPU_VARIANT
    //is leaf method
       case Bytecodes::_invokevirtual:
       case Bytecodes::_invokespecial:
@@ -1138,6 +1140,7 @@ ReturnOop Method::create_other_endianness(JVM_SINGLE_ARG_TRAPS) {
           bytecode_length = end - bci;
           break;
         }
+#if !ENABLE_CPU_VARIANT
         case Bytecodes::_init_static_array: {
           bytecode_length = Bytecodes::wide_length_for(this, bci, code);
           int size_factor = 1 << get_ubyte(bci + 1);
@@ -1172,6 +1175,7 @@ ReturnOop Method::create_other_endianness(JVM_SINGLE_ARG_TRAPS) {
           }
           break;
         }
+#endif //!ENABLE_CPU_VARIANT
         case Bytecodes::_fast_bputfield: // fall through
         case Bytecodes::_fast_sputfield: // fall through
         case Bytecodes::_fast_iputfield: // fall through
@@ -1230,6 +1234,39 @@ void Method::iterate(int begin, int end, BytecodeClosure* blk JVM_TRAPS) {
     blk->illegal_code(JVM_SINGLE_ARG_THROW);
   }
 }
+
+#if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+void Method::fix_long_operations() {  
+  int bci = 0;
+  //-1 below is small performance optimizations 
+  //we couldn't call get_ubyte(bci+1) for the last bytecode
+  //but also we don't have to do it.
+  int method_size = code_size() - 1;
+  while (bci < method_size) {
+    Bytecodes::Code code = bytecode_at(bci);
+    jubyte idx = get_ubyte(bci+1);
+    if (idx == 0xff) {
+      if (code == Bytecodes::_lload) {
+        bytecode_at_put_raw(bci, Bytecodes::_lload_safe);
+      } else if (code == Bytecodes::_lstore) {
+        bytecode_at_put_raw(bci, Bytecodes::_lstore_safe);
+#if ENABLE_FLOAT
+      } else if (code == Bytecodes::_dload) {
+        bytecode_at_put_raw(bci, Bytecodes::_dload_safe);
+      } else if (code == Bytecodes::_dstore) {
+        bytecode_at_put_raw(bci, Bytecodes::_dstore_safe);
+#endif
+      }
+    }
+    int len = Bytecodes::length_for(code);
+    if (len == 0) {
+      len = Bytecodes::wide_length_for(this, bci, code);
+    }
+    bci += len;
+  }
+}
+#endif 
+
 
 void Method::iterate_push_constant_1(int i, BytecodeClosure* blk JVM_TRAPS) {
   UsingFastOops fast_oops;
@@ -1420,6 +1457,10 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
         break;
 
     case Bytecodes::_lload            :
+#if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+    case Bytecodes::_lload_safe       :
+#endif
+
         blk->load_local(T_LONG, get_ubyte(bci+1) JVM_NO_CHECK);
         break;
     case Bytecodes::_lload_0          : // fall
@@ -1440,6 +1481,9 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
         break;
 
     case Bytecodes::_dload            :
+#if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+    case Bytecodes::_dload_safe       :
+#endif
         blk->load_local(T_DOUBLE, get_ubyte(bci+1) JVM_NO_CHECK);
         break;
     case Bytecodes::_dload_0          : // fall
@@ -1462,6 +1506,9 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
         break;
 
     case Bytecodes::_lstore           :
+#if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+    case Bytecodes::_lstore_safe      :
+#endif
         blk->store_local(T_LONG, get_ubyte(bci+1) JVM_NO_CHECK);
         break;
     case Bytecodes::_lstore_0         : // fall
@@ -1482,6 +1529,9 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
         break;
 
     case Bytecodes::_dstore           :
+#if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+    case Bytecodes::_dstore_safe      :
+#endif
         blk->store_local(T_DOUBLE, get_ubyte(bci+1) JVM_NO_CHECK);
         break;
     case Bytecodes::_dstore_0         : // fall
@@ -1558,9 +1608,11 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
     case Bytecodes::_pop_and_npe_if_null:
         blk->pop_and_npe_if_null(JVM_SINGLE_ARG_NO_CHECK);
         break;
+#if !ENABLE_CPU_VARIANT
     case Bytecodes::_init_static_array:
         blk->init_static_array(JVM_SINGLE_ARG_NO_CHECK);
         break;
+#endif
     case Bytecodes::_pop2            :
         blk->pop2(JVM_SINGLE_ARG_NO_CHECK);
         break;
@@ -1893,12 +1945,14 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
       blk->aload_0_fast_get_field_1(T_OBJECT JVM_NO_CHECK);
       break;
     }
+#if !ENABLE_CPU_VARIANT  
     case Bytecodes::_aload_0_fast_igetfield_4:
     case Bytecodes::_aload_0_fast_agetfield_4:
     case Bytecodes::_aload_0_fast_igetfield_8:
     case Bytecodes::_aload_0_fast_agetfield_8:
       blk->aload_0_fast_get_field_n(code JVM_NO_CHECK);
       break;
+#endif //!ENABLE_CPU_VARIANT  
     case Bytecodes::_fast_invokevirtual:
       blk->fast_invoke_virtual(get_java_ushort(bci+1) JVM_NO_CHECK);
       break;
@@ -2070,6 +2124,10 @@ void Method::iterate_uncommon_bytecode(int bci, BytecodeClosure* blk JVM_TRAPS)
       case Bytecodes::_fload : // fall
       case Bytecodes::_dload : // fall
       case Bytecodes::_aload :
+#if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+      case Bytecodes::_lload_safe: // fall
+      case Bytecodes::_dload_safe: // fall
+#endif
         blk->load_local(local_op_types[code - Bytecodes::_iload],
         get_java_ushort(bci+2) JVM_NO_CHECK);
         break;
@@ -2079,6 +2137,10 @@ void Method::iterate_uncommon_bytecode(int bci, BytecodeClosure* blk JVM_TRAPS)
       case Bytecodes::_fstore: // fall
       case Bytecodes::_dstore: // fall
       case Bytecodes::_astore:
+#if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+      case Bytecodes::_lstore_safe: // fall
+      case Bytecodes::_dstore_safe: // fall
+#endif
         blk->store_local(local_op_types[code - Bytecodes::_istore],
         get_java_ushort(bci+2) JVM_NO_CHECK);
         break;
@@ -2870,6 +2932,9 @@ bool Method::is_snippet_can_be_elminate(jint begin_bci, jint end_bci, int& local
         break;
 
     case Bytecodes::_lload            :
+#if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+    case Bytecodes::_lload_safe       :
+#endif
         local_index = get_ubyte(bci+1);
         break;
     case Bytecodes::_lload_0          : // fall
@@ -2885,6 +2950,9 @@ bool Method::is_snippet_can_be_elminate(jint begin_bci, jint end_bci, int& local
     case Bytecodes::_fload_2          : // fall
     case Bytecodes::_fload_3          :
     case Bytecodes::_dload            :
+#if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+    case Bytecodes::_dload_safe       :
+#endif
     case Bytecodes::_dload_0          : // fall
     case Bytecodes::_dload_1          : // fall
     case Bytecodes::_dload_2          : // fall
@@ -2905,7 +2973,9 @@ bool Method::is_snippet_can_be_elminate(jint begin_bci, jint end_bci, int& local
     case Bytecodes::_anewarray:
     case Bytecodes::_multianewarray:
     case Bytecodes::_pop_and_npe_if_null:
+#if !ENABLE_CPU_VARIANT
     case Bytecodes::_init_static_array:
+#endif //!ENABLE_CPU_VARIANT
     case Bytecodes::_ifeq : // 153
     case Bytecodes::_ifne : // 154
     case Bytecodes::_iflt : // 155
@@ -2994,6 +3064,7 @@ bool Method::is_snippet_can_be_elminate(jint begin_bci, jint end_bci, int& local
       local_index = 0;
       break;
     }
+#if !ENABLE_CPU_VARIANT  
     case Bytecodes::_aload_0_fast_agetfield_4:
     case Bytecodes::_aload_0_fast_igetfield_4: {
       constant_index = 4;
@@ -3006,7 +3077,7 @@ bool Method::is_snippet_can_be_elminate(jint begin_bci, jint end_bci, int& local
       local_index = 0;
       break;
     }
-        
+#endif        
     //add by andy during 2nd on site QA 
    case Bytecodes::_fast_init_1_putstatic:
    case Bytecodes::_fast_init_2_putstatic:
@@ -3095,6 +3166,9 @@ void Method::wipe_out_dirty_recorded_snippet(int bci, Bytecodes::Code code) {
         break;
 
     case Bytecodes::_lstore           :
+#if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+    case Bytecodes::_lstore_safe      :
+#endif
         RegisterAllocator::kill_by_locals(get_ubyte(bci+1));
         break;
     case Bytecodes::_lstore_0         : // fall

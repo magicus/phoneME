@@ -260,7 +260,6 @@ def_template_2 ( bc_fast_getstatic       , BasicType, bool)
 def_template_1 ( bc_fast_putfield        , BasicType     )
 def_template_2 ( bc_fast_getfield        , BasicType, int)
 def_template_1 ( bc_aload_0_fast_getfield_1,BasicType    )
-def_template_2 ( bc_aload_0_fast_getfield_n,BasicType, int)
 def_template_0 ( bc_pop_and_npe_if_null                  )
 def_template_1 ( bc_fast_invoke          , bool          )
 def_template_0 ( bc_fast_invokeinterface                 )
@@ -273,9 +272,12 @@ def_template_0 ( bc_fast_invokespecial                   )
 
 def_template_1 ( bc_load_w       , BasicType     )
 def_template_1 ( bc_store_w      , BasicType     )
-
+#if !ENABLE_CPU_VARIANT
+def_template_2 ( bc_aload_0_fast_getfield_n,BasicType, int)
 def_template_0 ( bc_init_static_array                    )
+#elif ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
 
+#endif //!ENABLE_CPU_VARIANT
 #undef def_template_0
 #undef def_template_1
 

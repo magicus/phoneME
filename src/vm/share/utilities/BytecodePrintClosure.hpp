@@ -144,7 +144,9 @@ class BytecodePrintClosure : public BytecodeClosure {
   void print_verbose_static_method(int index JVM_TRAPS);
   void print_verbose_class(int index JVM_TRAPS);
   void print_verbose_static_field(int index JVM_TRAPS);
+#if !ENABLE_CPU_VARIANT
   virtual void init_static_array(JVM_SINGLE_ARG_TRAPS);
+#endif
  private:
   void print_field_name(int index, int is_static, int is_get JVM_TRAPS);
   Stream* _st;

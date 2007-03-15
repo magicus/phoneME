@@ -69,6 +69,7 @@ void BytecodeClosure::aload_0_fast_get_field_1(BasicType field_type JVM_TRAPS){
   fast_get_field(field_type, offset JVM_CHECK);
 }
 
+#if !ENABLE_CPU_VARIANT
 void BytecodeClosure::aload_0_fast_get_field_n(int bytecode JVM_TRAPS) {
   load_local(T_OBJECT, 0 JVM_CHECK);
 
@@ -80,12 +81,8 @@ void BytecodeClosure::aload_0_fast_get_field_n(int bytecode JVM_TRAPS) {
   int offset = (int)sizes[index];
   fast_get_field(field_type, offset JVM_CHECK);
 }
+#endif
 
 void  BytecodeClosure::pop_and_npe_if_null(JVM_SINGLE_ARG_TRAPS) {
   pop(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
 }
-/*
-void BytecodeClosure::init_static_array(JVM_SINGLE_ARG_TRAPS) {  
-  JVM_IGNORE_TRAPS;
-}
-*/
