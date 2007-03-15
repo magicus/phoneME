@@ -242,8 +242,24 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
     void closeCommon() throws IOException {
         if (!connectionOpen && iStreams == 0 && oStreams == 0) {
             disconnect();
+        } else if (iStreams == 0) {
+            notifyClosedInput();
+        } else if (oStreams == 0) {
+            notifyClosedOutput();
         }
     }
+
+    /**
+     * Notify blocked Java threads waiting for an input data
+     * that all InputStream instances of the connection are closed
+     */
+    protected void notifyClosedInput() {};
+
+    /**
+     * Notify blocked Java threads trying to output data
+     * that all OutputStream instances of the connection are closed 
+     */
+    protected void notifyClosedOutput() {};
 
     /**
      * Check if the connection is open.
