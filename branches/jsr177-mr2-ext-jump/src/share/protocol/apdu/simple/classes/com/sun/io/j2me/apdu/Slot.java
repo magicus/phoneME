@@ -32,7 +32,7 @@ package com.sun.io.j2me.apdu;
 public class Slot {
 
     /** Size of respBuffer. */
-    public static final int respBufferSize = 275; 
+    public static final int respBufferSize = 515; 
     
     /** Slot number. */
     int slot;
