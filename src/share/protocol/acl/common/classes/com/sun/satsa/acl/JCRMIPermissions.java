@@ -52,10 +52,6 @@ public class JCRMIPermissions extends ACLPermissions {
         }
 
         if (type == DISALLOW) {
-            throw new SecurityException("Access denied: " + className +
-                                        " " + method);
-        }
-        if (type == DISALLOW) {
             throw new SecurityException("Access denied");
         }
 
