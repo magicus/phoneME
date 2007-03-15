@@ -103,11 +103,10 @@ int pcsl_file_rmdir(const pcsl_string * dirName)
 /**
  * The getFreeSize function checks the available size in storage.
  */
-long pcsl_file_getfreesize(const pcsl_string * path)
+jlong pcsl_file_getfreesize(const pcsl_string * path)
 {
     struct _diskfree_t df;
     struct _stat buf;
-    jlong size;
     int res;
     const jchar * pszOsFilename = pcsl_string_get_utf16_data(path);
 
@@ -125,18 +124,16 @@ long pcsl_file_getfreesize(const pcsl_string * path)
         return -1;
     }
 
-    size = (jlong)(df.avail_clusters) * df.sectors_per_cluster * df.bytes_per_sector;
-    return (size > 0x7FFFFFFFL) ? 0x7FFFFFFFL : (long)size;
+    return (jlong)(df.avail_clusters) * df.sectors_per_cluster * df.bytes_per_sector;
 }
 
 /**
  * The getTotalSize function checks the total space in storage.
  */
-long pcsl_file_gettotalsize(const pcsl_string * path)
+jlong pcsl_file_gettotalsize(const pcsl_string * path)
 {
     struct _diskfree_t df;
     struct _stat buf;
-    jlong size;
     int res;
     const jchar * pszOsFilename = pcsl_string_get_utf16_data(path);
 
@@ -154,8 +151,7 @@ long pcsl_file_gettotalsize(const pcsl_string * path)
         return -1;
     }
 
-    size = (jlong)(df.total_clusters) * df.sectors_per_cluster * df.bytes_per_sector;
-    return (size > 0x7FFFFFFFL) ? 0x7FFFFFFFL : (long)size;
+    return (jlong)(df.total_clusters) * df.sectors_per_cluster * df.bytes_per_sector;
 }
 
 /**

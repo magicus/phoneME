@@ -95,20 +95,17 @@ void testDirectories() {
  * Tests for pcsl_file_getfreesize() and pcsl_file_gettotalsize().
  */
 void testSizes() {
-    long res;
+    jlong res;
 
     res = pcsl_file_getfreesize(&dir1);
     assertTrue("Querying free size failed", res >= 0);
-    printf("Free bytes on file system: %ld\n", res);
+    printf("Free bytes on file system: %lld\n", res);
     res = pcsl_file_gettotalsize(&dir1);
     assertTrue("Querying total size failed", res >= 0);
-    printf("Total bytes on file system: %ld\n", res);
+    printf("Total bytes on file system: %lld\n", res);
 
     /*
-     * Further testing (counting exact number of bytes) will most likely fail
-     * on a platform with large file system sizes.
-     * E.g. on win32 pcsl_file_getfreesize() returns 0x7FFFFFFF if number of free bytes
-     * on a filesystem exceeds positive limit for "long".
+     * IMPL_NOTE: to do further testing (counting exact number of bytes).
      */
 }
 
