@@ -27,6 +27,8 @@
  * ..\src\com\sun\jsr239\EGL10Impl.java
  */
 
+#include <lcdlf_export.h>
+
 #include <kni.h>
 
 #include <GLES/gl.h>
@@ -722,7 +724,7 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1eglMakeCurrent() {
 					    (EGLSurface)read,
 					    (EGLContext)ctx);
 #ifdef DEBUG
-    printf("eglMakeCurrent(0x%x, 0x%x, 0x%x, 0x%x) = %d\n",
+    printf("eglMakeCurrent(0x%x, 0x%x, 0x%x, 0x%x) = %d\n",  
 	   display, draw, read, ctx, returnValue);
 #endif
     
@@ -885,10 +887,9 @@ eglCopyBuffersWorkaround(EGLDisplay display, EGLSurface surface,
             goto cleanup;
         }
     }
-    
-    glReadPixels(0, 0, pixmap->width, pixmap->height,
-                 GL_RGBA, GL_UNSIGNED_BYTE,
-                 pixmap->pixels);
+
+    glReadPixels(0, 0, pixmap->width, pixmap->height, GL_RGBA,
+                 GL_UNSIGNED_BYTE, pixmap->pixels);
 
 #ifdef DEBUG
     error = glGetError();
@@ -1189,17 +1190,19 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1getImagePixmap() {
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_javax_microedition_khronos_egl_EGL10Impl__1getWindowContents() {
 
-    jint pixmap = KNI_GetParameterAsInt(2);
+    jint deltaHeight = KNI_GetParameterAsInt(2);
+    jint pixmap = KNI_GetParameterAsInt(3);
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(graphicsHandle);
     KNI_GetParameterAsObject(1, graphicsHandle);
 
 #ifdef DEBUG
-    printf("JSR239_getWindowContents(0x%x) = 0x%x\n",
+    printf("JSR239_getWindowContents(0x%x) = 0x%x\n", 
 	   graphicsHandle, pixmap);
 #endif
-    JSR239_getWindowContents(graphicsHandle, (JSR239_Pixmap *)pixmap);
+    JSR239_getWindowContents(graphicsHandle, deltaHeight,
+        (JSR239_Pixmap *)pixmap);
 
     KNI_EndHandles();
     KNI_ReturnVoid();
@@ -1209,8 +1212,9 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1getWindowContents() {
 /* private native void _putWindowContents( Graphics winGraphics , int pixmapPointer ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_javax_microedition_khronos_egl_EGL10Impl__1putWindowContents() {
-    
-    jint pixmap = KNI_GetParameterAsInt(2);
+
+    jint deltaHeight = KNI_GetParameterAsInt(2);
+    jint pixmap = KNI_GetParameterAsInt(3);
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(graphicsHandle);
@@ -1220,8 +1224,25 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1putWindowContents() {
     printf("JSR239_putWindowContents(0x%x, 0x%x)\n",
 	   graphicsHandle, pixmap);
 #endif
-    JSR239_putWindowContents(graphicsHandle, (JSR239_Pixmap *)pixmap, 0);
+    JSR239_putWindowContents(graphicsHandle, deltaHeight,
+        (JSR239_Pixmap *)pixmap, 0);
 
     KNI_EndHandles();
     KNI_ReturnVoid();
+}
+
+/*  private native int _getFullDisplayWidth () ;
+    returns the full display width
+*/
+KNIEXPORT KNI_RETURNTYPE_INT
+Java_javax_microedition_khronos_egl_EGL10Impl__1getFullDisplayWidth() {
+    KNI_ReturnInt(lcdlf_get_screen_width());
+}
+
+/*  private native int _getFullDisplayHeight () ;
+    returns the full display height
+*/
+KNIEXPORT KNI_RETURNTYPE_INT
+Java_javax_microedition_khronos_egl_EGL10Impl__1getFullDisplayHeight() {
+    KNI_ReturnInt(lcdlf_get_screen_height());
 }
