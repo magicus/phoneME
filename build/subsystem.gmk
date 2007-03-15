@@ -263,9 +263,9 @@ SUBSYSTEM_JSR_135_CNI_CLASSES += \
 vpath % $(JSR_135_DIR)/src/share/components/common/png
 vpath % $(JSR_135_DIR)/src/share/components/direct-player/native
 vpath % $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/native/common
-SUBSYSTEM_JSR_135_EXTRA_INCLUDES += \
-	-I$(JSR_135_DIR)/src/$(JSROP_PLATFORM)/native/common \
-	-I$(JSR_135_DIR)/src/share/components/direct-player/native
+SUBSYSTEM_JSR_135_INCLUDE_DIRS += \
+	$(JSR_135_DIR)/src/$(JSROP_PLATFORM)/native/common \
+	$(JSR_135_DIR)/src/share/components/direct-player/native
 SUBSYSTEM_JSR_135_NATIVE_FILES += PNGEncoder.c
 
 #
@@ -299,10 +299,8 @@ endif
 # JUMP Driver support
 ifneq ($(TARGET_VM),cldc_vm)
 vpath % $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/native/jump_driver
-SUBSYSTEM_JSR_135_EXTRA_INCLUDES += \
-   -I$(JSR_135_DIR)/src/$(JSROP_PLATFORM)/native/jump_driver \
-
-CVM_INCLUDES += $(SUBSYSTEM_JSR_135_EXTRA_INCLUDES)
+SUBSYSTEM_JSR_135_INCLUDE_DIRS += \
+   $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/native/jump_driver \
 
 SUBSYSTEM_JSR_135_NATIVE_FILES += \
 	jsr135_jumpdriver.c \
@@ -319,7 +317,7 @@ JSR_135_NATIVE_OBJS   = $(patsubst %.c,$(JSROP_OBJ_DIR)/%.o,$(SUBSYSTEM_JSR_135_
 JSROP_NATIVE_OBJS    += $(JSR_135_NATIVE_OBJS)
 JSROP_CNI_CLASSES    += $(SUBSYSTEM_JSR_135_CNI_CLASSES)
 JSROP_NATIVE_LIBS    += $(JSR_135_NATIVE_LIB)
-JSROP_EXTRA_INCLUDES += $(SUBSYSTEM_JSR_135_EXTRA_INCLUDES)
+JSROP_INCLUDE_DIRS   += $(SUBSYSTEM_JSR_135_INCLUDE_DIRS)
 
 CVM_INCLUDE_JAVACALL  = true
 
