@@ -321,6 +321,32 @@ static char *pushclassname(char *value, int *pLength) {
 }
 
 /**
+ * Adds a network notifier for the given push entry.
+ *
+ * @param pe push entry for which a network notifier should be added
+ */
+static void pushAddNetworkNotifier(PushEntry* pe) {
+    /*
+     * WMA connections have their own notification system.
+     * So add a notifier only if its not WMA connection.
+     */
+    if (!pe->isWMAEntry) {
+        /* Push only needs to know if a socket has data. */
+        if (strncmp(pe->value, "socket://:", 10) == 0) {
+            pcsl_add_network_notifier((void *)pe->fd, PCSL_NET_CHECK_ACCEPT);
+        } else if (strncmp(pe->value, "datagram://:", 12) == 0) {
+            pcsl_add_network_notifier((void *)pe->fd, PCSL_NET_CHECK_READ);
+        }
+#if ENABLE_JSR_180
+        else if ((strncmp(pe->value, "sip:", 4) == 0) ||
+            (strncmp(pe->value, "sips:", 5) == 0)) {
+            pcsl_add_network_notifier((void *)pe->fd, PCSL_NET_CHECK_READ);
+        }
+#endif
+    }
+}
+
+/**
  * Opens the pushregistry files and populate the push memory structures.
  *
  * @param <none>
@@ -627,20 +653,9 @@ int pushadd(char *str) {
     pushlength++;
     pe->state = CHECKED_IN;
 
-    /*
-     * WMA connections have their own notification system
-     * So add a notifier only if its not WMA connection
-     */
-    if(!pe->isWMAEntry) {
-       /* Push only needs to know if a socket has data. */
-        if (strncmp(pe->value, "socket://:", 10) == 0) {
-            pcsl_add_network_notifier((void *)pe->fd, PCSL_NET_CHECK_ACCEPT);
-        } else if (strncmp(pe->value, "datagram://:",12) == 0) {
-            pcsl_add_network_notifier((void *)pe->fd, PCSL_NET_CHECK_READ);
-        }
-    }
-
+    pushAddNetworkNotifier(pe);
     pushsave();
+
     return 0;
 }
 
@@ -881,7 +896,7 @@ int pushcheckout(char* protocol, int port, char * store) {
             /* The push system should stop monitoring this connection. */
             if (strncmp(p->value, "socket://:", 10) == 0) {
                 pcsl_remove_network_notifier((void*)fd, PCSL_NET_CHECK_ACCEPT);
-            } else if (strncmp(p->value, "datagram://:",12) == 0) {
+            } else if (strncmp(p->value, "datagram://:", 12) == 0) {
                 pcsl_remove_network_notifier((void*)fd, PCSL_NET_CHECK_READ);
             }
 
@@ -1043,19 +1058,7 @@ static void pushcheckinentry(PushEntry *pe) {
 
     if (pe->fd != -1) {
         pe->state = CHECKED_IN;
-
-        /*
-         * WMA connections have their own notification system
-         * So add a notifier only if its not WMA connection
-         */
-        if(!pe->isWMAEntry) {
-            /* Push only needs to know if a socket has data. */
-            if (strncmp(pe->value, "socket://:", 10) == 0) {
-                pcsl_add_network_notifier((void *)pe->fd, PCSL_NET_CHECK_ACCEPT);
-            } else if (strncmp(pe->value, "datagram://:",12) == 0) {
-                pcsl_add_network_notifier((void *)pe->fd, PCSL_NET_CHECK_READ);
-            }
-        }
+        pushAddNetworkNotifier(pe);
     }
 }
 
@@ -1256,130 +1259,138 @@ char *pushfindfd(int fd) {
 #endif
             }
 #if ENABLE_JSR_180
-        /* Check for JSR180 SIP/SIPS connections. */
-        else if ((strncmp(pushp->value, "sips:", 5) == 0) ||
-             (strncmp(pushp->value, "sip:", 4) == 0)) {
-          unsigned char *sender = NULL;
-          unsigned char *acceptcontact_type = NULL;
-          unsigned char *required_type = NULL;
-          char *p;
-          char *end = NULL;
-          int required_type_len;
+            /* Check for JSR180 SIP/SIPS connections. */
+            else if ((strncmp(pushp->value, "sips:", 5) == 0) ||
+                     (strncmp(pushp->value, "sip:", 4) == 0)) {
+                unsigned char *sender = NULL;
+                unsigned char *acceptcontact_type = NULL;
+                unsigned char *required_type = NULL;
+                char *p;
+                char *end = NULL;
+                int required_type_len;
 
-               // need revisit - SIP transport=tcp  pushfindfd message reader.
-           /*
-            * Read the SIP datagram and save it til the
-        * application reads it.
-        * This is a one SIP datagram message queue.
-            */
-          pushp->dg = (DatagramEntry*)midpMalloc(sizeof (DatagramEntry));
-          if (pushp->dg == NULL) {
-        pushp->state = temp_state;
-        return NULL;
-          }
+                /* need revisit - SIP transport=tcp pushfindfd message reader */
 
-          status = pcsl_datagram_read_finish(
-             (void *)pushp->fd, ipBytes,
-             &(pushp->dg->senderport), pushp->dg->buffer,
-             MAX_DATAGRAM_LENGTH, &(pushp->dg->length), context);
+                /*
+                 * Read the SIP datagram and save it til the
+                 * application reads it.
+                 * This is a one SIP datagram message queue.
+                 */
+                pushp->dg = (DatagramEntry*)midpMalloc(sizeof (DatagramEntry));
+                if (pushp->dg == NULL) {
+                    pushp->state = temp_state;
+                    return NULL;
+                }
 
-          if (status != PCSL_NET_SUCCESS) {
-          /*
-           * Receive failed - no data available.
-           * cancel the launch pending
-           */
-          midpFree(pushp->dg);
-          pushp->dg = NULL;
-          pushp->state = temp_state;
-          return NULL;
-          }
-          REPORT_INFO1(LC_PROTOCOL,
-                "SIP Push Message: %s",
-                pushp->dg->buffer);
+                status = pcsl_datagram_read_finish(
+                    (void *)pushp->fd, ipBytes,
+                    &(pushp->dg->senderport), pushp->dg->buffer,
+                    MAX_DATAGRAM_LENGTH, &(pushp->dg->length), context);
 
-          /*
-           * SIP Datagram and Socket connections use the SIP
-           * "From header URI" filter. First, extra the sender
-           * from the cached message, then check for a match
-           * with the filter pattern string.
-           */
-          sender = getSipFromHeaderURI((unsigned char *)
-                       pushp->dg->buffer,
-                       pushp->dg->length);
+                if (status != PCSL_NET_SUCCESS) {
+                    /*
+                     * Receive failed - no data available.
+                     * cancel the launch pending
+                     */
+                    midpFree(pushp->dg);
+                    pushp->dg = NULL;
+                    pushp->state = temp_state;
+                    return NULL;
+                }
 
-          if (checksipfilter((unsigned char *)pushp->filter,
-                 sender)) {
+                REPORT_INFO1(LC_PROTOCOL,
+                             "SIP Push Message: %s",
+                             pushp->dg->buffer);
 
-          /*
-           * Check if a media type filter is also needed.
-           */
-          for (p = pushp->value; *p; p++) {
-              if(midp_strncasecmp(p, "type=\"application/", 18) == 0 ){
-              /* Extract just the quoted media type. */
-                  p += 18;
-              for (end = p; *end; end++) {
-                  if (*end == '"') {
-                  /* Found end of media type subfield. */
-                  break;
-                  }
-              }
-              /* Stop scanning after media type subfield is located. */
-              break;
-              }
-          }
+                /*
+                 * SIP Datagram and Socket connections use the SIP
+                 * "From header URI" filter. First, extra the sender
+                 * from the cached message, then check for a match
+                 * with the filter pattern string.
+                 */
+                sender = getSipFromHeaderURI((unsigned char *)
+                                             pushp->dg->buffer,
+                                             pushp->dg->length);
 
-          /*
-           * If a media type tag was specified in the connection URI,
-           * then the message is only dispatched if it contains
-           * an Accept-Contact header with a matching media feature tag.
-           */
-          if (*p != '\0') {
-              required_type_len = end - p;
-              required_type = (unsigned char *)pcsl_mem_malloc(required_type_len + 1);
-              if (required_type != NULL) {
-            strncpy((char *)required_type, p, required_type_len);
-              required_type[required_type_len] = '\0';
-              }
+                if (checksipfilter((unsigned char *)pushp->filter,
+                                   sender)) {
+                    /*
+                     * Check if a media type filter is also needed.
+                     */
+                    for (p = pushp->value; *p; p++) {
+                        if (midp_strncasecmp(
+                                p, "type=\"application/", 18) == 0 ) {
+                            /* Extract just the quoted media type. */
+                            p += 18;
+                            for (end = p; *end; end++) {
+                                if (*end == '"') {
+                                    /* Found end of media type subfield. */
+                                    break;
+                                }
+                            }
+                            /* Stop scanning after media type subfield is located. */
+                            break;
+                        }
+                    }
 
-              /*
-               * Extract the message media type.
-               */
-              acceptcontact_type = getSipAcceptContactType((unsigned char *)
-                                   pushp->dg->buffer,
-                                   pushp->dg->length);
+                    /*
+                     * If a media type tag was specified in the connection URI,
+                     * then the message is only dispatched if it contains
+                     * an Accept-Contact header with a matching media feature
+                     * tag.
+                     */
+                    if (*p != '\0') {
+                        required_type_len = end - p;
+                        required_type = (unsigned char *)
+                            pcsl_mem_malloc(required_type_len + 1);
 
-              if (midp_strcasecmp((char *)required_type,
-                    (char*)acceptcontact_type) ==0) {
+                        if (required_type != NULL) {
+                            strncpy((char *)required_type, p,
+                                    required_type_len);
+                            required_type[required_type_len] = '\0';
+                        }
 
-              REPORT_INFO2(LC_PROTOCOL,
-                    "SIP Push Message Media Type Matched: %s == %s",
-                    required_type,acceptcontact_type);
-              midpFree(sender);
-                  midpFree(acceptcontact_type);
-              midpFree(required_type);
+                        /*
+                         * Extract the message media type.
+                         */
+                        acceptcontact_type = getSipAcceptContactType(
+                            (unsigned char *) pushp->dg->buffer,
+                            pushp->dg->length);
 
-              /* Required type matched. */
-              return midpStrdup(pushp->value);
-              }
-              REPORT_INFO2(LC_PROTOCOL,
-                   "SIP Push Message Media Type Filtered: %s != %s",
-                   required_type,acceptcontact_type);
-              midpFree(required_type);
-          } else {
-              /* No type required. */
-              midpFree(sender);
-              return midpStrdup(pushp->value);
-          }
-          }
-          midpFree(sender);
+                        if (midp_strcasecmp((char *)required_type,
+                                (char*)acceptcontact_type) == 0) {
+                            REPORT_INFO2(LC_PROTOCOL,
+                                "SIP Push Message Media Type Matched: %s == %s",
+                                required_type,acceptcontact_type);
+                            midpFree(sender);
+                            midpFree(acceptcontact_type);
+                            midpFree(required_type);
 
-          /*
-           * Dispose of the filtered push request.
-           * Release any cached datagrams.
-           */
-          pushcheckinentry(pushp);
-          return NULL;
-        }
+                            /* Required type matched. */
+                            return midpStrdup(pushp->value);
+                        }
+
+                        REPORT_INFO2(LC_PROTOCOL,
+                            "SIP Push Message Media Type Filtered: %s != %s",
+                            required_type,acceptcontact_type);
+
+                        midpFree(required_type);
+                    } else {
+                        /* No type required. */
+                        midpFree(sender);
+                        return midpStrdup(pushp->value);
+                    }
+                }
+
+                midpFree(sender);
+
+                /*
+                 * Dispose of the filtered push request.
+                 * Release any cached datagrams.
+                 */
+                pushcheckinentry(pushp);
+                return NULL;
+            }
 #endif
 
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
@@ -1651,14 +1662,7 @@ static int parsePushList(int pushfd, int startListening) {
                                 &(pe->appID), &(pe->isWMAEntry));
                 if (pe->fd != -1) {
                     pe->state = CHECKED_IN;
-                    if(!pe->isWMAEntry) {
-                        /* Push only needs to know if a socket has data. */
-                        if (strncmp(pe->value, "socket://:", 10) == 0) {
-                            pcsl_add_network_notifier((void *)pe->fd, PCSL_NET_CHECK_ACCEPT);
-                        } else if (strncmp(pe->value, "datagram://:",12) == 0) {
-                            pcsl_add_network_notifier((void *)pe->fd, PCSL_NET_CHECK_READ);
-                        }
-                    }
+                    pushAddNetworkNotifier(pe);
                 }
             }
         }
@@ -2113,14 +2117,7 @@ int pushpoll() {
                         "Push network signal on descriptor %x", pe->fd);
 
                     pe->state = CHECKED_IN;
-                    if(!pe->isWMAEntry) {
-                        /* Push only needs to know if a socket has data. */
-                        if (strncmp(pe->value, "socket://:", 10) == 0) {
-                            pcsl_add_network_notifier((void *)pe->fd, PCSL_NET_CHECK_ACCEPT);
-                        } else if (strncmp(pe->value, "datagram://:",12) == 0) {
-                            pcsl_add_network_notifier((void *)pe->fd, PCSL_NET_CHECK_READ);
-                        }
-                    }
+                    pushAddNetworkNotifier(pe);
                 }
             }
 
