@@ -44,8 +44,6 @@
 
 #define DEFAULT_DIR_CREATION_MODE  (0444 | 0222 | 0111)
 
-#define UJLONG_MAX  0x7FFFFFFFFFFFFFFF
-
 /**
  * Check if the directory exists in FS storage.
  */
@@ -132,7 +130,7 @@ jlong pcsl_file_getfreesize(const pcsl_string * path)
     
     pcsl_string_release_utf8_data(pszPath, path);
 
-    return (size < 0) ? UJLONG_MAX : size;
+    return size;
 }
 
 /**
@@ -157,7 +155,7 @@ jlong pcsl_file_gettotalsize(const pcsl_string * path)
     
     pcsl_string_release_utf8_data(pszPath, path);
 
-    return (size < 0) ? UJLONG_MAX : size;
+    return size;
 }
 
 //-----------------------------------------------------------------------------
