@@ -89,13 +89,25 @@ typedef const char* javacall_const_filename_string;
  * @def JAVACALL_MAX_ROOTS_LIST_LENGTH
  * Maximal length of a list of file system roots
  */
-#define JAVACALL_MAX_ROOTS_LIST_LENGTH  512
+#define JAVACALL_MAX_ROOTS_LIST_LENGTH  1024
 
 /**
  * @def JAVACALL_MAX_ROOT_PATH_LENGTH
  * Maximal length of a file system root path
  */
 #define JAVACALL_MAX_ROOT_PATH_LENGTH   256
+
+/**
+ * @def JAVACALL_MAX_LOCALIZED_ROOTS_LIST_LENGTH
+ * Maximal length of a list of localized names of file system roots
+ */
+#define JAVACALL_MAX_LOCALIZED_ROOTS_LIST_LENGTH  1024
+
+/**
+ * @def JAVACALL_MAX_LOCALIZED_DIR_NAME_LENGTH
+ * Maximal length of a localized name of a special directory
+ */
+#define JAVACALL_MAX_LOCALIZED_DIR_NAME_LENGTH    512
 
 /**
  * @}
