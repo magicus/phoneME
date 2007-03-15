@@ -47,7 +47,7 @@
 #endif
 
 /** Maximum number of command line arguments. */
-#define RUNMIDLET_MAX_ARGS 128
+#define RUNMIDLET_MAX_ARGS 32
 
 
 #if ENABLE_MULTIPLE_ISOLATES
