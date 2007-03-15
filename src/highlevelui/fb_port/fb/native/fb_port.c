@@ -249,11 +249,15 @@ void initFrameBuffer() {
 }
 
 /**
-  * Change screen orientation to landscape or portrait,
-  * depending on the current screen mode 
-  */
+ * Change screen orientation to landscape or portrait,
+ * depending on the current screen mode
+ */
 void reverseScreenOrientation() {
-    gxj_rotate_screen_buffer();
+
+    // Whether current Displayable won't repaint the entire screen on
+    // resize event, the artefacts from the old screen content can appear.
+    // That's why the buffer content is not preserved.
+    gxj_rotate_screen_buffer(KNI_FALSE);
 }
 
 /** Initialize frame buffer video device */

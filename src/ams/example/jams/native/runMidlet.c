@@ -44,13 +44,13 @@
 #endif
 
 /** Maximum number of command line arguments. */
-#define RUNMIDLET_MAX_ARGS 128
+#define RUNMIDLET_MAX_ARGS 32
 
 /** Usage text for the run MIDlet executable. */
 static const char* const runUsageText =
 "\n"
 "Usage: runMidlet [<VM args>] [-debug] [-loop] [-classpathext <path>]\n"
-"           (<suite number> | <suite ID>)\n"
+"           (-ordinal <suite number> | <suite ID>)\n"
 "           [<classname of MIDlet to run> [<arg0> [<arg1> [<arg2>]]]]\n"
 "         Run a MIDlet of an installed suite. If the classname\n"
 "         of the MIDlet is not provided and the suite has multiple MIDlets,\n"
@@ -63,14 +63,6 @@ static const char* const runUsageText =
 "  where <suite number> is the number of a suite as displayed by the\n"
 "  listMidlets command, and <suite ID> is the unique ID a suite is \n"
 "  referenced by\n\n";
-
-/*
-void midpReportError(char* pErrorMsg) {
-    REPORT_ERROR1(LC_AMS, "Out of Memory, error %d.",err);
-    JVMSPI_PrintRaw("Out Of Memory\n");
-}
-*/
-
 
 /**
  * Runs a MIDlet from an installed MIDlet suite. This is an example of
@@ -102,6 +94,8 @@ runMidlet(int argc, char** commandlineArgs) {
     char* additionalPath;
     SuiteIdType* pSuites = NULL;
     int numberOfSuites = 0;
+    int ordinalSuiteNumber = -1;
+    char* chSuiteNum = NULL;
 
     JVM_Initialize(); /* It's OK to call this more than once */
 
@@ -116,8 +110,10 @@ runMidlet(int argc, char** commandlineArgs) {
      * if your device can handle command-line arguments.
      */
 
-    /* JVM_ParseOneArg expects commandlineArgs[0] to contain the first actual
-     * parameter */
+    /*
+     * JVM_ParseOneArg expects commandlineArgs[0] to contain the first actual
+     * parameter
+     */
     argc --;
     commandlineArgs ++;
 
@@ -140,6 +136,7 @@ runMidlet(int argc, char** commandlineArgs) {
         fprintf(stderr, "Number of arguments exceeds supported limit\n");
         return -1;
     }
+
     for (i = 0; i < argc; i++) {
         argv[i] = commandlineArgs[i];
     }
@@ -152,10 +149,21 @@ runMidlet(int argc, char** commandlineArgs) {
         repeatMidlet = 1;
     }
 
+    /* run the midlet suite by its ordinal number */
+    if ((chSuiteNum = midpRemoveCommandOption("-ordinal",
+                                              argv, &argc)) != NULL) {
+        /* the format of the string is "number:" */
+        if (sscanf(chSuiteNum, "%d", &ordinalSuiteNumber) != 1) {
+            REPORT_ERROR(LC_AMS, "Invalid suite number format");
+            fprintf(stderr, "Invalid suite number format: %s\n", chSuiteNum);
+            return -1;
+        }
+    }
+
     /* additionalPath gets appended to the classpath */
     additionalPath = midpRemoveCommandOption("-classpathext", argv, &argc);
 
-    if (argc == 1) {
+    if (argc == 1 && ordinalSuiteNumber == -1) {
         REPORT_ERROR(LC_AMS, "Too few arguments given.");
         fprintf(stderr, runUsageText);
         return -1;
@@ -172,6 +180,7 @@ runMidlet(int argc, char** commandlineArgs) {
     if (midpHome == NULL) {
         return -1;
     }
+    
     /* set up midpHome before calling initialize */
     midpSetHomeDir(midpHome);
 
@@ -229,19 +238,9 @@ runMidlet(int argc, char** commandlineArgs) {
             }
         }
 
-        if (onlyDigits) {
-            /* Run by number */
-            int suiteNumber;
-            MIDPError err;
-
-            /* the format of the string is "number:" */
-            if (sscanf(argv[1], "%d", &suiteNumber) != 1) {
-                REPORT_ERROR(LC_AMS, "Invalid suite number format");
-                fprintf(stderr, "Invalid suite number format\n");
-                break;
-            }
-
-            err = midp_get_suite_ids(&pSuites, &numberOfSuites);
+        if (ordinalSuiteNumber != -1 || onlyDigits) {
+            /* load IDs of the installed suites */
+            MIDPError err = midp_get_suite_ids(&pSuites, &numberOfSuites);
             if (err != ALL_OK) {
                 REPORT_ERROR1(LC_AMS, "Error in midp_get_suite_ids(), code %d",
                               err);
@@ -249,22 +248,46 @@ runMidlet(int argc, char** commandlineArgs) {
                         err);
                 break;
             }
+        }
 
-            if (suiteNumber > numberOfSuites || suiteNumber < 1) {
+        if (ordinalSuiteNumber != -1) {
+            /* run the midlet suite by its ordinal number */
+            if (ordinalSuiteNumber > numberOfSuites || ordinalSuiteNumber < 1) {
                 REPORT_ERROR(LC_AMS, "Suite number out of range");
                 fprintf(stderr, "Suite number out of range\n");
                 midp_free_suite_ids(pSuites, numberOfSuites);
                 break;
             }
 
-            suiteId = pSuites[suiteNumber - 1];
+            suiteId = pSuites[ordinalSuiteNumber - 1];
+        } else if (onlyDigits) {
+            /* run the midlet suite by its ID */
+            int i;
+
+            /* the format of the string is "number:" */
+            if (sscanf(argv[1], "%d", &suiteId) != 1) {
+                REPORT_ERROR(LC_AMS, "Invalid suite ID format");
+                fprintf(stderr, "Invalid suite ID format\n");
+                break;
+            }
+
+            for (i = 0; i < numberOfSuites; i++) {
+                if (suiteId == pSuites[i]) {
+                    break;
+                }
+            }
+
+            if (i == numberOfSuites) {
+                REPORT_ERROR(LC_AMS, "Suite with the given ID was not found");
+                fprintf(stderr, "Suite with the given ID was not found\n");
+                break;
+            }
         } else {
             /* Run by ID */
             suiteId = INTERNAL_SUITE_ID;
 
-            /* IMPL_NOTE: consider handling of other IDs. */
-
-            if (strcmp(argv[1], "internal") && additionalPath == NULL) {
+            if (strcmp(argv[1], "internal") &&
+                strcmp(argv[1], "-1") && additionalPath == NULL) {
                 /*
                  * If the argument is not a suite ID, it might be a full
                  * path to the midlet suite's jar file.
@@ -293,8 +316,8 @@ runMidlet(int argc, char** commandlineArgs) {
 
         do {
             status = midp_run_midlet_with_args_cp(suiteId, &classname,
-                                             &arg0, &arg1, &arg2,
-                                             debugOption, additionalPath);
+                                                  &arg0, &arg1, &arg2,
+                                                  debugOption, additionalPath);
         } while (repeatMidlet && status != MIDP_SHUTDOWN_STATUS);
 
         if (pSuites != NULL) {

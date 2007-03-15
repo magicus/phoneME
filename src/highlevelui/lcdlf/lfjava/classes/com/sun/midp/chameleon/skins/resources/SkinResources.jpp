@@ -32,6 +32,7 @@ import com.sun.midp.util.ResourceHandler;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.lcdui.DisplayAccess;
+import com.sun.midp.lcdui.GraphicsAccess;
 import com.sun.midp.io.j2me.storage.File;
 
 
@@ -42,9 +43,7 @@ import com.sun.midp.main.MIDletSuiteUtils;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.Display;
 
-import java.util.*;
 import java.io.*;
 
 /** Utility class for skin resources. */
@@ -83,7 +82,7 @@ public class SkinResources {
      * A special internal reference to a tunnel which will provide
      * package access to Image inside of javax.microedition.lcdui.
      */
-    private static ImageTunnel imageTunnel;
+    private static GraphicsAccess graphicsAccess;
 
     /**
      * Display access helper class.
@@ -105,15 +104,15 @@ public class SkinResources {
     }
 
     /**
-     * This method is called by the Display class to hand out Image
+     * This method is called by the Display class to hand out GraphicsAccess
      * tunnel instance created in the public javax.microedition.lcdui
      * package and needed for romized images loading. 
      *
      * @param tunnel used to get images from the public LCDUI package
      */
-    public static void initImageTunnel(ImageTunnel tunnel) {
-        if (imageTunnel == null) {
-            imageTunnel = tunnel;
+    public static void initGraphicsAccess(GraphicsAccess access) {
+        if (graphicsAccess == null) {
+            graphicsAccess = access;
         }
     }
 
@@ -262,14 +261,14 @@ public class SkinResources {
                 }
 
                 // Try to load the romized image
-                if (Constants.CHAM_ROMIZED_IMAGES && imageTunnel != null) {
+                if (Constants.CHAM_ROMIZED_IMAGES && graphicsAccess != null) {
                     int romIndex = skinData.romizedImageIndexes[imageIdx];
                     if (romIndex != -1) {
                         int imageDataPtr = getRomizedImageDataArrayPtr(
                                 romIndex);
                         int imageDataLength = getRomizedImageDataArrayLength(
                                 romIndex);
-                        image = imageTunnel.getRomizedImage(imageDataPtr, 
+                        image = graphicsAccess.getRomizedImage(imageDataPtr,
                                 imageDataLength);
                     }
                 } 

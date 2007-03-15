@@ -1940,6 +1940,38 @@ public class Graphics {
     }
 
     /**
+     * Retrieve the Graphics context for the given Image and
+     * explicitly set the dimensions of the created context.
+     *
+     * It is possible the Image is bigger than area the Graphics
+     * context should provide access to, e.g. off-screen buffer
+     * created for full screen mode, but used for both normal and
+     * full modes with no resizing.
+     *
+     * @param img The Image to get a Graphics context for
+     * @param width The width of the Graphics context
+     * @param height The height of the Graphics context
+     * @return Graphics Will return a new ImageGraphics object if
+     *                  the Image is non-null.
+     */
+    static Graphics getImageGraphics(Image img, int width, int height) {
+        if (null == img) {
+            throw new NullPointerException();
+        }
+
+        int w = img.getWidth();
+        int h = img.getHeight();
+        if (w > width) { w = width; }
+        if (h > height) { h = height; }
+
+        Graphics g = new Graphics(img.getDrawingSurface());
+        g.img = img;
+        g.setDimensions(w, h);
+        g.reset();
+        return g;
+    }
+
+    /**
      * Retrieve the Graphics context that renders to the 
      * device's display
      *
@@ -2083,6 +2115,24 @@ public class Graphics {
     private int getPixel(int rgb, int gray, boolean isGray) {
         // TODO -add impl
         return rgb;
+    }
+
+    /**
+     * Returns the maximal width available for the clipping
+     * withing this Graphics context
+     * @return The width of the Graphics context
+     */
+    short getMaxWidth() {
+        return maxWidth;
+    }
+
+    /**
+     * Returns the maximal height available for the clipping
+     * withing this Graphics context
+     * @return The height of the Graphics context
+     */
+    short getMaxHeight() {
+        return maxHeight;
     }
 
     /**

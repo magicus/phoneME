@@ -27,7 +27,6 @@ package com.sun.midp.lcdui;
 
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.game.GameCanvas;
 
 import com.sun.midp.configurator.Constants;
@@ -50,10 +49,14 @@ public class GameCanvasLFImpl {
      */
     private Image offscreen_buffer;
 
+    /** Cached reference to GraphicsAccess instance */
+    private GraphicsAccess graphicsAccess;
 
     GameCanvasLFImpl(GameCanvas c) {
         owner = c;
-        offscreen_buffer = Image.createImage(owner.getWidth(),owner.getHeight());
+        graphicsAccess = GameMap.getGraphicsAccess();
+        offscreen_buffer = Image.createImage(
+            owner.getWidth(),owner.getHeight());
     }
 
     /**
@@ -67,28 +70,44 @@ public class GameCanvasLFImpl {
     }
 
     /**
-     * Notify return screen about screen size change
+     * Handle screen size change event to update internal
+     * state of the GameCanvas accordingly
+     *
+     * @param w new screen width
+     * @param h new screen height
      */
-    public void uCallSizeChanged(int w, int h) {
-            offscreen_buffer = Image.createImage(w, h);
+    public void lCallSizeChanged(int w, int h) {
+        // OutOfMemoryError can be thrown
+        graphicsAccess.resizeImage(
+            offscreen_buffer, w, h, true);
     }
 
     /**
      * Obtains the Graphics object for rendering a GameCanvas.  The returned
      * Graphics object renders to the off-screen buffer belonging to this
      * GameCanvas.
+     *
+     * IMPL_NOTE: The dimensions of the Graphics object are explicitly
+     *   set to GameCanvas size, since off-screen buffer larger than
+     *   GameCanvas can be used, while some JSR clients need to translate
+     *   the coordinates regarding the GameCanvas size. 
+     *
      * @return  the Graphics object that renders to current GameCanvas
      */
     public Graphics getGraphics() {
         if (offscreen_buffer != null) {
-            return offscreen_buffer.getGraphics();
+            return graphicsAccess.getImageGraphics(
+                offscreen_buffer, owner.getWidth(), owner.getHeight());
         }
-
-        return null; 
+        
+        return null;
     }
 
-    
-    public void drawImage(Graphics g) {
+    /**
+     * Render the off-screen buffer content to the Graphics object
+     * @param g the Graphics object to render off-screen buffer content
+     */
+    public void drawBuffer(Graphics g) {
         // NullPointerException will be thrown in drawImage if g == null
        if (offscreen_buffer != null) {
             g.drawImage(offscreen_buffer, 0, 0, Graphics.TOP|Graphics.LEFT);
@@ -99,7 +118,7 @@ public class GameCanvasLFImpl {
      *  Flushes the off-screen buffer to the display.
      */
     public void flushGraphics() {
-        DisplayAccess displayAccess = GameMap.get(owner);
+        DisplayAccess displayAccess = GameMap.getDisplayAccess(owner);
         if (displayAccess != null && offscreen_buffer != null) {
 	        displayAccess.flush(owner, offscreen_buffer,
 			      0, 0, owner.getWidth(), owner.getHeight());
@@ -118,7 +137,7 @@ public class GameCanvasLFImpl {
 	        return;
 	    }
 
-        DisplayAccess displayAccess = GameMap.get(owner);
+        DisplayAccess displayAccess = GameMap.getDisplayAccess(owner);
         if (displayAccess != null && offscreen_buffer != null) {
             displayAccess.flush(owner, offscreen_buffer,
     			  x, y,	width, height);
@@ -131,11 +150,10 @@ public class GameCanvasLFImpl {
      * key), or 0 if the GameCanvas is not currently shown.
      */
     public int getKeyStates() {
-        DisplayAccess displayAccess = GameMap.get(owner);
-            if (displayAccess != null) {
-                return displayAccess.getKeyMask();
-            }
+        DisplayAccess displayAccess = GameMap.getDisplayAccess(owner);
+        if (displayAccess != null) {
+            return displayAccess.getKeyMask();
+        }
         return 0;
     }
-
 }

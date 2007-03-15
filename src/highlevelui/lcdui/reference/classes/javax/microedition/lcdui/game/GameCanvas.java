@@ -187,7 +187,7 @@ public abstract class GameCanvas extends Canvas
         super();
         setSuppressKeyEvents((Canvas)this, suppressKeyEvents);
 
-        gameCanvasLF = GameMap.registerTableElement(this); 
+        gameCanvasLF = GameMap.registerGameCanvas(this);
     }
     
 
@@ -297,7 +297,7 @@ public abstract class GameCanvas extends Canvas
      * @throws NullPointerException if <code>g</code> is <code>null</code>
      */
     public void paint(Graphics g) {
-        gameCanvasLF.drawImage(g);
+        gameCanvasLF.drawBuffer(g);
     }
 
     /**
