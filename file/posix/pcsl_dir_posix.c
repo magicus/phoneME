@@ -37,11 +37,14 @@
 #include <pcsl_memory.h>
 
 /**
+ * @def PCSL_DIR_MAX_NAME_LEN
  * Maximum length of a file name
  */
 #define PCSL_DIR_MAX_NAME_LEN	   256
 
-#define DEFAULT_DIR_CREATION_MODE (0444 | 0222 | 0111)
+#define DEFAULT_DIR_CREATION_MODE  (0444 | 0222 | 0111)
+
+#define UJLONG_MAX  0x7FFFFFFFFFFFFFFF
 
 /**
  * Check if the directory exists in FS storage.
@@ -129,7 +132,7 @@ jlong pcsl_file_getfreesize(const pcsl_string * path)
     
     pcsl_string_release_utf8_data(pszPath, path);
 
-    return size;
+    return (size < 0) ? UJLONG_MAX : size;
 }
 
 /**
@@ -154,7 +157,7 @@ jlong pcsl_file_gettotalsize(const pcsl_string * path)
     
     pcsl_string_release_utf8_data(pszPath, path);
 
-    return size;
+    return (size < 0) ? UJLONG_MAX : size;
 }
 
 //-----------------------------------------------------------------------------
