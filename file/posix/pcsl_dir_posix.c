@@ -124,7 +124,7 @@ jlong pcsl_file_getfreesize(const pcsl_string * path)
     status = statvfs((char*)pszPath, &sbuf);
     if (status == 0)
     {
-        size = (jlong)sbuf.f_bsize * sbuf.f_bavail;
+        size = (jlong)(sbuf.f_bsize) * sbuf.f_bavail;
     }
     
     pcsl_string_release_utf8_data(pszPath, path);
@@ -149,7 +149,7 @@ jlong pcsl_file_gettotalsize(const pcsl_string * path)
     status = statvfs((char*)pszPath, &sbuf);
     if (status == 0)
     {
-        size = (jlong)sbuf.f_bsize * sbuf.f_blocks;
+        size = (jlong)(sbuf.f_bsize) * sbuf.f_blocks;
     }
     
     pcsl_string_release_utf8_data(pszPath, path);

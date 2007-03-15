@@ -106,7 +106,7 @@ jlong pcsl_file_getfreesize(const pcsl_string * path);
  */
 jlong pcsl_file_gettotalsize(const pcsl_string * path);
 
-//-----------------------------------------------------------------------------
+/*----------------------------------------------------------------------------*/
 
 /**
  * Returns value of the attribute for the specified file.
