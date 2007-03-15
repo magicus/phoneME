@@ -29,6 +29,7 @@ package com.sun.midp.ssl;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -254,7 +255,9 @@ class Record {
                  * Shutdown the connection.
                  */ 
                 shutdownConnection();
-                return;  // signal end of InputStream
+                throw new InterruptedIOException(
+                    "Server has shutdown the connection");
+
             }
 
             if ((inputData[0] < WARNING) || (inputData[0] > FATAL)) {
@@ -447,6 +450,24 @@ class Record {
         }
     }
 
+    /** Close input stream */
+    void closeInputStream()  {
+        try {
+            in.close();
+        } catch (IOException e) {
+            // ignore
+        }
+    }
+
+    /** Close output stream */
+    void closeOutputStream()  {
+        try {
+            out.close();
+        } catch (IOException e) {
+            // ignore
+        }
+    }
+
     /**
      * Send a close notify and shutdown the TCP connection if needed.
      */
@@ -457,17 +478,8 @@ class Record {
 
         alert(Record.WARNING, Record.CLOSE_NTFY);
         shutdown = true;
-
-        try {
-            try {
-                out.close();
-            } finally {
-                in.close();
-            }
-        } catch (IOException e) {
-            // ignore
-        }
-
+        closeOutputStream();
+        closeInputStream();
     }
 }
 

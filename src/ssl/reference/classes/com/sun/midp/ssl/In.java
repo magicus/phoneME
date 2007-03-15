@@ -38,6 +38,9 @@ import java.io.InterruptedIOException;
  * @see com.sun.midp.ssl.Out
  */ 
 class In extends InputStream {
+    /** Indicates the input stream was closed. */
+    private boolean isClosed;
+
     /** Underlying SSL record layer from which bytes are read. */
     private Record rec;
     
@@ -59,13 +62,13 @@ class In extends InputStream {
      *
      * @exception IOException is thrown, if an I/O error occurs filling the
      * the buffer
-     */ 
+     */
     private void refill(boolean block) throws IOException {
         if (endOfStream) {
-           return;
+            return;
         }
 
-        for (; ; ) {
+        for (; ;) {
             rec.rdRec(block, Record.APP);
             if (rec.plainTextLength == -1) {
                 endOfStream = true;
@@ -78,10 +81,10 @@ class In extends InputStream {
             }
         }
 
-	cnt = rec.plainTextLength;
-	start = 0;
+        cnt = rec.plainTextLength;
+        start = 0;
     }
-    
+
     /**
      * Creates a new In object.
      * <P />
@@ -89,8 +92,8 @@ class In extends InputStream {
      * @param c SSLStreamConnection object this In object is a part of
      */ 
     In(Record r, SSLStreamConnection c) {
-	rec = r;
-	ssc = c;
+        rec = r;
+        ssc = c;
     }
 
     /**
@@ -100,24 +103,25 @@ class In extends InputStream {
      * @return the next byte of data, or -1 if end of stream is reached
      * @exception IOException if an I/O error occurs
      */ 
-    synchronized public int read() throws IOException {
-	int val;
-
-        if (rec == null) {
+    public int read() throws IOException {
+        int val;
+        if (isClosed) {
             throw new InterruptedIOException("Stream closed");
         }
 
-	if (cnt == 0) {
-	    refill(true);
-	    if (cnt == 0) {
-		return -1; // end of stream
+        synchronized(rec) {
+            if (cnt == 0) {
+                refill(true);
+                if (cnt == 0) {
+                    return -1; // end of stream
+                }
             }
-	}
+    
+            val = rec.inputData[start++] & 0xff;
+            cnt--;
+        }
 
-	val = rec.inputData[start++] & 0xff;
-	cnt--;
-
-	return val;
+        return val;
     }
     
     /**
@@ -133,7 +137,7 @@ class In extends InputStream {
      * @exception IOException if an I/O error occurs
      */ 
     public int read(byte[] b) throws IOException {
-	return read(b, 0, b.length);
+	    return read(b, 0, b.length);
     }
 
     /**
@@ -149,35 +153,36 @@ class In extends InputStream {
      * @return number of bytes read
      * @exception IOException if an I/O error occurs
      */ 
-    synchronized public int read(byte[] b, int off, int len)
-	throws IOException {
+    public int read(byte[] b, int off, int len) throws IOException {
 
-	int i = 0;
+        int i = 0;
         int numBytes;
 
-        if (rec == null) {
+        if (isClosed) {
             throw new InterruptedIOException("Stream closed");
         }
 
-	if (cnt == 0) {
-            // Record buffer empty, block until it is refilled.
-	    refill(true);
-	    if (cnt == 0) {
-		return -1; // end of stream
+        synchronized(rec) {
+            if (cnt == 0) {
+                // Record buffer empty, block until it is refilled.
+                refill(true);
+                if (cnt == 0) {
+                    return -1; // end of stream
+                }
             }
-	}
 
-        if (len > cnt) {
-            numBytes = cnt;
-        } else {
-            numBytes = len;
+            if (len > cnt) {
+                numBytes = cnt;
+            } else {
+                numBytes = len;
+            }
+
+            System.arraycopy(rec.inputData, start, b, off, numBytes);
+            start += numBytes;
+            cnt -= numBytes;
         }
-        
-        System.arraycopy(rec.inputData, start, b, off, numBytes);
-        start += numBytes;
-        cnt -= numBytes;
 
-	return numBytes;
+        return numBytes;
     }
 
     /**
@@ -187,12 +192,16 @@ class In extends InputStream {
      * shutting down the connection
      */
     synchronized public void close() throws IOException {
-	if (ssc != null) {
+        if (isClosed) {
+            return;
+        }
+
+        isClosed = true;
+        if (ssc != null) {
             ssc.inputStreamState = SSLStreamConnection.CLOSED;
+            rec.closeInputStream();
             ssc.cleanupIfNeeded();
-	    ssc = null;
-            rec = null;
-	}
+        }
     }
 
     /**
@@ -207,16 +216,17 @@ class In extends InputStream {
      * @exception  IOException  if an I/O error occurs.
      */
     public int available() throws IOException {
-        if (rec == null) {
+        if (isClosed) {
             throw new InterruptedIOException("Stream closed");
         }
 
-	if (cnt == 0) {
-            // The record buffer is empty, try to refill it without blocking.
-	    refill(false);
-	}
-
-        return cnt;
+        synchronized(rec) {
+            if (cnt == 0) {
+                // The record buffer is empty, try to refill it without blocking.
+                refill(false);
+            }
+            return cnt;
+        }
     }
 
     /*
