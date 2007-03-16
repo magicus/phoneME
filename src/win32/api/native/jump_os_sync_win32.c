@@ -248,7 +248,7 @@ int jumpThreadCondSignal(struct _JUMPThreadCond *c) {
     return JUMP_SYNC_OK;
 }
 
-/* wakes up a thread that is waiting for the condition */
+/* wakes up all threads that are waiting for the condition */
 int jumpThreadCondBroadcast(struct _JUMPThreadCond *c) {
     struct WAITING_THREAD *pwt;
     

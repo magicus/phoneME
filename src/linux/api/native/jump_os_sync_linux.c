@@ -193,6 +193,9 @@ int jumpThreadCondWait(struct _JUMPThreadCond *c, long millis) {
         }
         err = pthread_cond_timedwait(&c->condvar, &c->mutex->mutex, &ts);
     }
+    if (err == ETIMEDOUT) {
+        return JUMP_SYNC_TIMEOUT;
+    }
     if (err != 0) {
         REPORT_ERROR(pthread_cond_XXXwait);
         return JUMP_SYNC_FAILURE;
@@ -215,7 +218,7 @@ int jumpThreadCondSignal(struct _JUMPThreadCond *c) {
     return JUMP_SYNC_OK;
 }
 
-/* wakes up a thread that is waiting for the condition */
+/* wakes up all threads that are waiting for the condition */
 int jumpThreadCondBroadcast(struct _JUMPThreadCond *c) {
     int err;
     
