@@ -54,3 +54,9 @@ CVM_TEST_CLASSES  += \
    \
    gunit.image.RefImageNotFoundException \
 
+ANT_LIB_DIR     ?= /usr/share/ant/lib
+ANT_JUNIT_CP     = $(ANT_LIB_DIR)/ant-junit.jar$(PS)$(ANT_LIB_DIR)/ant.jar
+
+GUNIT_CLASSPATH  = $(JUNIT_JARFILE)$(PS)$(CVM_TEST_CLASSESZIP)$(PS)$(CVM_LIBDIR)/basis.jar$(PS)$(ANT_JUNIT_CP) 
+JUNIT_TESTRUNNER = org.apache.tools.ant.taskdefs.optional.junit.JUnitTestRunner
+

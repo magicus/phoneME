@@ -40,18 +40,33 @@ $(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/PackageManager.java: $(CONFIGURATO
 	-params initializers '$(JSR_INITIALIZER_LIST)' \
 	-out $(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/PackageManager.java)
 
+# CDC test classes are built by the 'all' target.
 build-unittests::
-	$(AT)echo "Building CDC unit-tests ..."
+
+cdc-reports-clean:
+	$(AT)$(RM) -rf $(CDC_REPORTS_DIR)
+
+cdc-reports-dir: cdc-reports-clean
+	$(AT)mkdir $(CDC_REPORTS_DIR)
+
+clean:: cdc-reports-clean
+
+# Run CDC tests with ANT's test runner saving reports to $(CDC_REPORTS_DIR)
+GUNIT_CMD=$(foreach test,$(CVM_CDC_TESTS_TORUN), \
+	$(CVM_JAVA) -classpath $(GUNIT_CLASSPATH) \
+	$(JUNIT_TESTRUNNER) $(test) \
+	printsummary=on \
+	haltonfailure=false \
+	formatter=org.apache.tools.ant.taskdefs.optional.junit.PlainJUnitResultFormatter,$(CDC_REPORTS_DIR)/TEST-$(test).txt \
+	formatter=org.apache.tools.ant.taskdefs.optional.junit.XMLJUnitResultFormatter,$(CDC_REPORTS_DIR)/TEST-$(test).xml \
+	haltonerror=false \
+	filtertrace=true && ) true
+
+run-unittests:: cdc-reports-dir
+	$(AT)echo "====> start running CDC unit-tests"	
 	$(check_JUNIT_JAR)
-	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(BUILD_UNITTEST_ANT_OPTIONS) -f build/build.xml only-build-unittests)
-
-
-run-unittests::
-	$(AT)echo "Running CDC unit-tests ..."
-	$(check_JUNIT_JAR)
-	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(RUN_UNITTEST_ANT_OPTIONS) -f build/build.xml only-run-unittests) 
-
-
+	$(AT)$(GUNIT_CMD)
+	$(AT)echo "<==== end running CDC unit-tests"
 
 -include ../share/rules_cdc-commercial.mk
 include ../share/rules_zoneinfo.mk
