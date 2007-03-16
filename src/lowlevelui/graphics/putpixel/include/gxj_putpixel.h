@@ -100,9 +100,9 @@ extern gxj_screen_buffer gxj_system_screen_buffer;
 			     ((( x ) & 0x000000F8) >> 3) )
 
 /** Convert 16-bit (565) color to 24-bit RGB color */
-#define GXJ_RGB16TORGB24(x) (((( x ) << 8) & 0x00F80000) | \
-                             ((( x ) << 5) & 0x0000FC00) | \
-                             ((( x ) << 3) & 0x000000F8) )
+#define GXJ_RGB16TORGB24(x) ( ((x & 0x001F) << 3) | ((x & 0x001C) >> 2) |\
+                              ((x & 0x07E0) << 5) | ((x & 0x0600) >> 1) |\
+                              ((x & 0xF800) << 8) | ((x & 0xE000) << 3) )
 
 /**
  * Extend the 8-bit Alpha value of an ARGB8888 pixel
