@@ -47,6 +47,9 @@ class Out extends OutputStream {
      */
     private static final int MAX_RECORD_SIZE = 2048;
 
+    /** Indicates the output stream is closed. */
+    private boolean isClosed = false;
+
     /** Underlying SSL record layer to which bytes are written. */
     private Record rec;
     /** Handle to current SSL stream connection. */
@@ -98,20 +101,21 @@ class Out extends OutputStream {
      * @exception IOException if I/O error occurs
      */ 
     public void write(byte[] b, int off, int len) throws IOException {
-        int bytesToWrite = MAX_RECORD_SIZE;
-
-        if (rec == null) {
+        if (isClosed) {
             throw new InterruptedIOException("Stream closed");
         }
 
-        while (len > 0) {
-            if (len < bytesToWrite) {
-                bytesToWrite = len;
-            }
+        synchronized(rec) {
+            int bytesToWrite = MAX_RECORD_SIZE;
+            while (len > 0) {
+                if (len < bytesToWrite) {
+                    bytesToWrite = len;
+                }
 
-            rec.wrRec(Record.APP, b, off, bytesToWrite);
-            len -= bytesToWrite;
-            off += bytesToWrite;
+                rec.wrRec(Record.APP, b, off, bytesToWrite);
+                len -= bytesToWrite;
+                off += bytesToWrite;
+            }
         }
     }
 
@@ -122,11 +126,15 @@ class Out extends OutputStream {
      * shutting down the connection
      */
     synchronized public void close() throws IOException {
+        if (isClosed) {
+            return;
+        }
+
+        isClosed = true;
         if (ssc != null) {
             ssc.outputStreamState = SSLStreamConnection.CLOSED;
+            rec.closeOutputStream();
             ssc.cleanupIfNeeded();
-            ssc = null;
-            rec = null;
         }
     }
     
