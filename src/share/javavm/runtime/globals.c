@@ -461,7 +461,7 @@ static const CVMGlobalMethodBlockEntry globalMethodBlocks[] = {
 	CVM_TRUE,  /* static */
 	CVMsystemClass(java_lang_Thread),
         "initAttachedThread",
-	    "(Ljava/lang/ThreadGroup;Ljava/lang/String;IJ)"
+	    "(Ljava/lang/ThreadGroup;Ljava/lang/String;IJZ)"
 	    "Ljava/lang/Thread;",
         &CVMglobals.java_lang_Thread_initAttachedThread
         /* NOTE: java.lang.Thread has a static initializer.  The clinit
