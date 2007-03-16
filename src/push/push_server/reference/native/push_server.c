@@ -1318,7 +1318,7 @@ char *pushfindfd(int fd) {
 #endif
             }
 #if ENABLE_JSR_180
-            /* Check for JSR180 SIP/SIPS connections. */
+            /* Check for JSR180 SIP/SIPS connections (UDP). */
             else if ((strncmp(pushp->value, "sips:", 5) == 0) ||
                      (strncmp(pushp->value, "sip:", 4) == 0)) {
                 unsigned char *sender = NULL;
@@ -1328,32 +1328,6 @@ char *pushfindfd(int fd) {
                 char *end = NULL;
                 int required_type_len;
 
-/*                if (pushIsSocketConnection(pushp->value)) {
-                    status = pcsl_serversocket_accept_start((void*)pushp->fd,
-                        &clientHandle, &context);
-
-                    if (status != PCSL_NET_SUCCESS) {*/
-                        /*
-                         * Receive failed - no data available.
-                         * cancel the launch pending
-                         */
-/*                        REPORT_ERROR1(LC_PUSH,
-                            "(Push) Cannot accept serversocket, errno = %d\n",
-                            pcsl_network_error((void*)pushp->fd));
-                        pushp->state = temp_state;
-                        return NULL;
-                    }
-*/
-                    /* Update the resource count for client sockets */
-/*                    if (midpIncResourceCount(RSC_TYPE_TCP_CLI, 1) == 0) {
-                        REPORT_INFO(LC_PROTOCOL,
-                                    "(Push) Resource limit update error");
-                    }
-
-                    pushp->fdsock = (int)clientHandle;
-                    pcsl_socket_getremoteaddr((void *)pushp->fdsock, ipAddress);
-                } else {
-*/
                 /*
                  * Read the SIP datagram and save it til the
                  * application reads it.
@@ -1380,8 +1354,6 @@ char *pushfindfd(int fd) {
                     pushp->state = temp_state;
                     return NULL;
                 }
-
-//                }
 
                 REPORT_INFO1(LC_PROTOCOL,
                              "SIP Push Message: %s",
@@ -1857,40 +1829,9 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
             *port = atoi(p);
         }
 
+        /* fall down in 'for' bellow */
         p = buffer;
         colon_found = 2;
-
-        // need revisit - SIP transport=tcp open port provessing.
-        /**
-         * Verify that the resource is available well within limit as per
-         * the policy in ResourceLimiter.
-         */
-/*
-        if (midpCheckResourceLimit(RSC_TYPE_UDP, 1) == 0) {
-            REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit exceeded for"
-                                     " datagrams");
-            *fd = -1;
-            exception = (char *)midpIOException;
-        } else {
-            status = pcsl_datagram_open_start(*port, &handle, &context);
-
-            if (status == PCSL_NET_SUCCESS) {
-                *fd = (int) handle;
-*/
-                /* Update the resource count.  */
-/*
-                if (midpIncResourceCount(RSC_TYPE_UDP, 1) == 0) {
-                    REPORT_INFO(LC_PROTOCOL, "(Push)Datagrams: Resource"
-                                             " limit update error");
-                }
-            } else {
-                *fd = -1;
-                exception = (char *)midpIOException;
-            }
-        }
-
-        return;
-*/        
     }
 
 #endif
