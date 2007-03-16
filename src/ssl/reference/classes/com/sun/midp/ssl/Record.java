@@ -255,9 +255,7 @@ class Record {
                  * Shutdown the connection.
                  */ 
                 shutdownConnection();
-                throw new InterruptedIOException(
-                    "Server has shutdown the connection");
-
+                return;  // signal end of InputStream
             }
 
             if ((inputData[0] < WARNING) || (inputData[0] > FATAL)) {
