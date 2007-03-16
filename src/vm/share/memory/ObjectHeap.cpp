@@ -3642,11 +3642,12 @@ ObjectHeap::compiler_area_compute_new_locations ( CompiledMethodDesc* dst ) {
 #endif
       {
         MethodDesc* m = p->method();
+        Method::Raw rm = m;
         GUARANTEE((m->has_compiled_code() &&
-                   p == Method::Raw( m )().compiled_code()) ==
-                  Method::Raw( m )().has_compiled_code( p ), "Sanity");
+                   p == rm().compiled_code()) ==
+                  rm().has_compiled_code( p ), "Sanity");
 
-        if( Method::Raw( m )().has_compiled_code( p ) ) {
+        if( rm().has_compiled_code( p ) ) {
           m->set_execution_entry(entry);
         }
       }
