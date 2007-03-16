@@ -101,7 +101,22 @@ struct JNIInvokeInterface;
 
 typedef struct {
     const struct JNIInvokeInterface * vector;
+
     /* other private data? */
+#ifdef JAVASE
+    /*  Initialization state for JNI routines relating to
+     *  java.nio.DirectBuffers:
+     */
+    volatile CVMBool directBufferSupportInitialized;
+    volatile CVMBool directBufferSupportInitializeFailed;
+    jclass bufferClass;
+    jclass directBufferClass;
+    jclass directByteBufferClass;
+    jmethodID directByteBufferConstructor;
+    jfieldID  directBufferAddressField;
+    jfieldID  bufferCapacityField;
+#endif
+
 } CVMJNIJavaVM;
 
 extern void 
@@ -167,7 +182,7 @@ extern jobject JNICALL CVMjniNewObject(JNIEnv *env, jclass clazz,
 extern jobject JNICALL CVMjniNewObjectV(JNIEnv *env, jclass clazz,
 					jmethodID methodID, va_list args);
 extern jobject JNICALL CVMjniNewObjectA(JNIEnv *env, jclass clazz,
-					jmethodID methodID, jvalue *args);
+					jmethodID methodID, const jvalue *args);
 extern jclass JNICALL CVMjniGetObjectClass(JNIEnv *env, jobject obj);
 extern jboolean JNICALL CVMjniIsInstanceOf(JNIEnv* env, jobject obj,
 					   jclass clazz);
@@ -184,7 +199,7 @@ extern jobject JNICALL CVMjniCallObjectMethodV(JNIEnv *env, jobject obj,
 					       va_list args);
 extern jobject JNICALL CVMjniCallObjectMethodA(JNIEnv *env, jobject obj,
 					       jmethodID methodID,
-					       jvalue *args);
+					       const jvalue *args);
 
 extern jboolean JNICALL CVMjniCallBooleanMethod(JNIEnv *env, jobject obj,
 						jmethodID methodID, ...);
@@ -193,7 +208,7 @@ extern jboolean JNICALL CVMjniCallBooleanMethodV(JNIEnv *env, jobject obj,
 						 va_list args);
 extern jboolean JNICALL CVMjniCallBooleanMethodA(JNIEnv *env, jobject obj,
 						 jmethodID methodID,
-						 jvalue *args);
+						 const jvalue *args);
 
 extern jbyte JNICALL CVMjniCallByteMethod(JNIEnv *env, jobject obj,
 					  jmethodID methodID, ...);
@@ -202,7 +217,7 @@ extern jbyte JNICALL CVMjniCallByteMethodV(JNIEnv *env, jobject obj,
 					   va_list args);
 extern jbyte JNICALL CVMjniCallByteMethodA(JNIEnv *env, jobject obj,
 					   jmethodID methodID,
-					   jvalue *args);
+					   const jvalue *args);
 
 extern jchar JNICALL CVMjniCallCharMethod(JNIEnv *env, jobject obj,
 					  jmethodID methodID, ...);
@@ -211,7 +226,7 @@ extern jchar JNICALL CVMjniCallCharMethodV(JNIEnv *env, jobject obj,
 					   va_list args);
 extern jchar JNICALL CVMjniCallCharMethodA(JNIEnv *env, jobject obj,
 					   jmethodID methodID,
-					   jvalue *args);
+					   const jvalue *args);
 
 extern jshort JNICALL CVMjniCallShortMethod(JNIEnv *env, jobject obj,
 					    jmethodID methodID, ...);
@@ -220,7 +235,7 @@ extern jshort JNICALL CVMjniCallShortMethodV(JNIEnv *env, jobject obj,
 					     va_list args);
 extern jshort JNICALL CVMjniCallShortMethodA(JNIEnv *env, jobject obj,
 					     jmethodID methodID,
-					     jvalue *args);
+					     const jvalue *args);
 
 extern jint JNICALL CVMjniCallIntMethod(JNIEnv *env, jobject obj,
 					jmethodID methodID, ...);
@@ -229,7 +244,7 @@ extern jint JNICALL CVMjniCallIntMethodV(JNIEnv *env, jobject obj,
 					 va_list args);
 extern jint JNICALL CVMjniCallIntMethodA(JNIEnv *env, jobject obj,
 					 jmethodID methodID,
-					 jvalue *args);
+					 const jvalue *args);
 
 extern jlong JNICALL CVMjniCallLongMethod(JNIEnv *env, jobject obj,
 					  jmethodID methodID, ...);
@@ -238,7 +253,7 @@ extern jlong JNICALL CVMjniCallLongMethodV(JNIEnv *env, jobject obj,
 					   va_list args);
 extern jlong JNICALL CVMjniCallLongMethodA(JNIEnv *env, jobject obj,
 					   jmethodID methodID,
-					   jvalue *args);
+					   const jvalue *args);
 
 extern jfloat JNICALL CVMjniCallFloatMethod(JNIEnv *env, jobject obj,
 					    jmethodID methodID, ...);
@@ -247,7 +262,7 @@ extern jfloat JNICALL CVMjniCallFloatMethodV(JNIEnv *env, jobject obj,
 					     va_list args);
 extern jfloat JNICALL CVMjniCallFloatMethodA(JNIEnv *env, jobject obj,
 					     jmethodID methodID,
-					     jvalue *args);
+					     const jvalue *args);
 
 extern jdouble JNICALL CVMjniCallDoubleMethod(JNIEnv *env, jobject obj,
 					      jmethodID methodID, ...);
@@ -256,7 +271,7 @@ extern jdouble JNICALL CVMjniCallDoubleMethodV(JNIEnv *env, jobject obj,
 					       va_list args);
 extern jdouble JNICALL CVMjniCallDoubleMethodA(JNIEnv *env, jobject obj,
 					       jmethodID methodID,
-					       jvalue *args);
+					       const jvalue *args);
 
 extern void JNICALL CVMjniCallVoidMethod(JNIEnv *env, jobject obj,
 					 jmethodID methodID, ...);
@@ -265,7 +280,7 @@ extern void JNICALL CVMjniCallVoidMethodV(JNIEnv *env, jobject obj,
 					  va_list args);
 extern void JNICALL CVMjniCallVoidMethodA(JNIEnv *env, jobject obj,
 					  jmethodID methodID,
-					  jvalue *args);
+					  const jvalue *args);
 
 /*
  * Non-virtual instance method calls
@@ -284,7 +299,7 @@ extern jobject JNICALL CVMjniCallNonvirtualObjectMethodA(JNIEnv *env,
 							 jobject obj,
 							 jclass clazz,
 							 jmethodID methodID,
-							 jvalue *args);
+							 const jvalue *args);
 
 extern jboolean JNICALL CVMjniCallNonvirtualBooleanMethod(JNIEnv *env,
 							  jobject obj,
@@ -300,7 +315,7 @@ extern jboolean JNICALL CVMjniCallNonvirtualBooleanMethodA(JNIEnv *env,
 							   jobject obj,
 							   jclass clazz,
 							   jmethodID methodID,
-							   jvalue *args);
+							   const jvalue *args);
 
 extern jbyte JNICALL CVMjniCallNonvirtualByteMethod(JNIEnv *env,
 						    jobject obj,
@@ -316,7 +331,7 @@ extern jbyte JNICALL CVMjniCallNonvirtualByteMethodA(JNIEnv *env,
 						     jobject obj,
 						     jclass clazz,
 						     jmethodID methodID,
-						     jvalue *args);
+						     const jvalue *args);
 
 extern jchar JNICALL CVMjniCallNonvirtualCharMethod(JNIEnv *env,
 						    jobject obj,
@@ -332,7 +347,7 @@ extern jchar JNICALL CVMjniCallNonvirtualCharMethodA(JNIEnv *env,
 						     jobject obj,
 						     jclass clazz,
 						     jmethodID methodID,
-						     jvalue *args);
+						     const jvalue *args);
 
 extern jshort JNICALL CVMjniCallNonvirtualShortMethod(JNIEnv *env,
 						      jobject obj,
@@ -348,7 +363,7 @@ extern jshort JNICALL CVMjniCallNonvirtualShortMethodA(JNIEnv *env,
 						       jobject obj,
 						       jclass clazz,
 						       jmethodID methodID,
-						       jvalue *args);
+						       const jvalue *args);
 
 extern jint JNICALL CVMjniCallNonvirtualIntMethod(JNIEnv *env,
 						  jobject obj,
@@ -364,7 +379,7 @@ extern jint JNICALL CVMjniCallNonvirtualIntMethodA(JNIEnv *env,
 						   jobject obj,
 						   jclass clazz,
 						   jmethodID methodID,
-						   jvalue *args);
+						   const jvalue *args);
 
 extern jlong JNICALL CVMjniCallNonvirtualLongMethod(JNIEnv *env,
 						    jobject obj,
@@ -380,7 +395,7 @@ extern jlong JNICALL CVMjniCallNonvirtualLongMethodA(JNIEnv *env,
 						     jobject obj,
 						     jclass clazz,
 						     jmethodID methodID,
-						     jvalue *args);
+						     const jvalue *args);
 
 extern jfloat JNICALL CVMjniCallNonvirtualFloatMethod(JNIEnv *env,
 						      jobject obj,
@@ -396,7 +411,7 @@ extern jfloat JNICALL CVMjniCallNonvirtualFloatMethodA(JNIEnv *env,
 						       jobject obj,
 						       jclass clazz,
 						       jmethodID methodID,
-						       jvalue *args);
+						       const jvalue *args);
 
 extern jdouble JNICALL CVMjniCallNonvirtualDoubleMethod(JNIEnv *env,
 							jobject obj,
@@ -412,7 +427,7 @@ extern jdouble JNICALL CVMjniCallNonvirtualDoubleMethodA(JNIEnv *env,
 							 jobject obj,
 							 jclass clazz,
 							 jmethodID methodID,
-							 jvalue *args);
+							 const jvalue *args);
 
 extern void JNICALL CVMjniCallNonvirtualVoidMethod(JNIEnv *env,
 						   jobject obj,
@@ -428,7 +443,7 @@ extern void JNICALL CVMjniCallNonvirtualVoidMethodA(JNIEnv *env,
 						    jobject obj,
 						    jclass clazz,
 						    jmethodID methodID,
-						    jvalue *args);
+						    const jvalue *args);
 
 /*
  * Field setters/getters
@@ -488,7 +503,7 @@ extern jobject JNICALL CVMjniCallStaticObjectMethodV(JNIEnv *env, jclass clazz,
 						     va_list args);
 extern jobject JNICALL CVMjniCallStaticObjectMethodA(JNIEnv *env, jclass clazz,
 						     jmethodID methodID,
-						     jvalue *args);
+						     const jvalue *args);
 
 extern jboolean JNICALL CVMjniCallStaticBooleanMethod(JNIEnv *env,
 						      jclass clazz,
@@ -501,7 +516,7 @@ extern jboolean JNICALL CVMjniCallStaticBooleanMethodV(JNIEnv *env,
 extern jboolean JNICALL CVMjniCallStaticBooleanMethodA(JNIEnv *env,
 						       jclass clazz,
 						       jmethodID methodID,
-						       jvalue *args);
+						       const jvalue *args);
 
 extern jbyte JNICALL CVMjniCallStaticByteMethod(JNIEnv *env, jclass clazz,
 						jmethodID methodID, ...);
@@ -510,7 +525,7 @@ extern jbyte JNICALL CVMjniCallStaticByteMethodV(JNIEnv *env, jclass clazz,
 						 va_list args);
 extern jbyte JNICALL CVMjniCallStaticByteMethodA(JNIEnv *env, jclass clazz,
 						 jmethodID methodID,
-						 jvalue *args);
+						 const jvalue *args);
 
 extern jchar JNICALL CVMjniCallStaticCharMethod(JNIEnv *env, jclass clazz,
 						jmethodID methodID, ...);
@@ -519,7 +534,7 @@ extern jchar JNICALL CVMjniCallStaticCharMethodV(JNIEnv *env, jclass clazz,
 						 va_list args);
 extern jchar JNICALL CVMjniCallStaticCharMethodA(JNIEnv *env, jclass clazz,
 						 jmethodID methodID,
-						 jvalue *args);
+						 const jvalue *args);
 
 extern jshort JNICALL CVMjniCallStaticShortMethod(JNIEnv *env, jclass clazz,
 						  jmethodID methodID, ...);
@@ -528,7 +543,7 @@ extern jshort JNICALL CVMjniCallStaticShortMethodV(JNIEnv *env, jclass clazz,
 						   va_list args);
 extern jshort JNICALL CVMjniCallStaticShortMethodA(JNIEnv *env, jclass clazz,
 						   jmethodID methodID,
-						   jvalue *args);
+						   const jvalue *args);
 
 extern jint JNICALL CVMjniCallStaticIntMethod(JNIEnv *env, jclass clazz,
 					      jmethodID methodID, ...);
@@ -537,7 +552,7 @@ extern jint JNICALL CVMjniCallStaticIntMethodV(JNIEnv *env, jclass clazz,
 					       va_list args);
 extern jint JNICALL CVMjniCallStaticIntMethodA(JNIEnv *env, jclass clazz,
 					       jmethodID methodID,
-					       jvalue *args);
+					       const jvalue *args);
 
 extern jlong JNICALL CVMjniCallStaticLongMethod(JNIEnv *env, jclass clazz,
 						jmethodID methodID, ...);
@@ -546,7 +561,7 @@ extern jlong JNICALL CVMjniCallStaticLongMethodV(JNIEnv *env, jclass clazz,
 						 va_list args);
 extern jlong JNICALL CVMjniCallStaticLongMethodA(JNIEnv *env, jclass clazz,
 						 jmethodID methodID,
-						 jvalue *args);
+						 const jvalue *args);
 
 extern jfloat JNICALL CVMjniCallStaticFloatMethod(JNIEnv *env, jclass clazz,
 						  jmethodID methodID, ...);
@@ -555,7 +570,7 @@ extern jfloat JNICALL CVMjniCallStaticFloatMethodV(JNIEnv *env, jclass clazz,
 						   va_list args);
 extern jfloat JNICALL CVMjniCallStaticFloatMethodA(JNIEnv *env, jclass clazz,
 						   jmethodID methodID,
-						   jvalue *args);
+						   const jvalue *args);
 
 extern jdouble JNICALL CVMjniCallStaticDoubleMethod(JNIEnv *env, jclass clazz,
 						    jmethodID methodID, ...);
@@ -564,7 +579,7 @@ extern jdouble JNICALL CVMjniCallStaticDoubleMethodV(JNIEnv *env, jclass clazz,
 						     va_list args);
 extern jdouble JNICALL CVMjniCallStaticDoubleMethodA(JNIEnv *env, jclass clazz,
 						     jmethodID methodID,
-						     jvalue *args);
+						     const jvalue *args);
 
 extern void JNICALL CVMjniCallStaticVoidMethod(JNIEnv *env, jclass clazz,
 					       jmethodID methodID, ...);
@@ -573,7 +588,7 @@ extern void JNICALL CVMjniCallStaticVoidMethodV(JNIEnv *env, jclass clazz,
 						va_list args);
 extern void JNICALL CVMjniCallStaticVoidMethodA(JNIEnv *env, jclass clazz,
 						jmethodID methodID,
-						jvalue *args);
+						const jvalue *args);
 
 /*
  * Static field access
@@ -750,35 +765,35 @@ extern void JNICALL CVMjniGetDoubleArrayRegion(JNIEnv *env,
 extern void JNICALL CVMjniSetBooleanArrayRegion(JNIEnv *env,
 						jbooleanArray array, 
 						jsize start, jsize len,
-						jboolean *buf);
+						const jboolean *buf);
 extern void JNICALL CVMjniSetByteArrayRegion(JNIEnv *env,
 					     jbyteArray array, 
 					     jsize start, jsize len,
-					     jbyte *buf);
+					     const jbyte *buf);
 extern void JNICALL CVMjniSetCharArrayRegion(JNIEnv *env,
 					     jcharArray array, 
 					     jsize start, jsize len,
-					     jchar *buf);
+					     const jchar *buf);
 extern void JNICALL CVMjniSetShortArrayRegion(JNIEnv *env,
 					      jshortArray array, 
 					      jsize start, jsize len,
-					      jshort *buf);
+					      const jshort *buf);
 extern void JNICALL CVMjniSetIntArrayRegion(JNIEnv *env,
 					    jintArray array, 
 					    jsize start, jsize len,
-					    jint *buf);
+					    const jint *buf);
 extern void JNICALL CVMjniSetLongArrayRegion(JNIEnv *env,
 					     jlongArray array, 
 					     jsize start, jsize len,
-					     jlong *buf);
+					     const jlong *buf);
 extern void JNICALL CVMjniSetFloatArrayRegion(JNIEnv *env,
 					      jfloatArray array, 
 					      jsize start, jsize len,
-					      jfloat *buf);
+					      const jfloat *buf);
 extern void JNICALL CVMjniSetDoubleArrayRegion(JNIEnv *env,
 					       jdoubleArray array, 
 					       jsize start, jsize len,
-					       jdouble *buf);
+					       const jdouble *buf);
 
 extern jint JNICALL CVMjniRegisterNatives(JNIEnv *env, jclass clazz,
 					  const JNINativeMethod *methods,
@@ -805,5 +820,15 @@ extern const jchar* JNICALL CVMjniGetStringCritical(JNIEnv *env,
 extern void JNICALL CVMjniReleaseStringCritical(JNIEnv *env, jstring str,
 						const jchar *chars);
 extern jboolean JNICALL CVMjniExceptionCheck(JNIEnv *env);
+
+/* JNI_VERSION_1_4 additions: */
+extern jobject JNICALL
+CVMjniNewDirectByteBuffer(JNIEnv *env, void* address, jlong capacity);
+
+extern void* JNICALL
+CVMjniGetDirectBufferAddress(JNIEnv *env, jobject buf);
+
+extern jlong JNICALL
+CVMjniGetDirectBufferCapacity(JNIEnv *env, jobject buf);
 
 #endif /* _INCLUDED_JNI_IMPL_H */

@@ -32,7 +32,14 @@
 #ifndef _GCC_32_BIT_JNI_H
 #define _GCC_32_BIT_JNI_H
 
+#ifdef  __cplusplus
+#define JNIEXPORT extern "C"
+#define JNIIMPORT extern "C"
+#else
 #define JNIEXPORT extern
+#define JNIIMPORT extern
+#endif
+
 #define JNICALL
 
 #endif /* _GCC_32_BIT_JNI_H */

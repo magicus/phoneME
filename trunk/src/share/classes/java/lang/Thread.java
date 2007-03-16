@@ -456,7 +456,8 @@ class Thread implements Runnable {
 
     /* CVMjniAttachCurrentThread() invokes this */
     private static Thread initAttachedThread(ThreadGroup group, String name, 
-					     int priority, long eetop) {
+					     int priority, long eetop,
+					     boolean isDaemon) {
 	if (group == null) {
 	    group = mainThreadGroup;
 	}
@@ -464,6 +465,7 @@ class Thread implements Runnable {
 	    name = "Thread-" + nextThreadNum();
 	}
 	Thread attachedThread = new Thread(group, name, priority, eetop);
+	attachedThread.daemon = isDaemon;
 	ThreadRegistry.add(attachedThread);
 	return attachedThread;
     }
