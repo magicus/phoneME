@@ -241,15 +241,11 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
      */
     void closeCommon() throws IOException {
 
-        /* IMPL_NOTE: Whether the connection is open but its I/O streams
-         *   are closed,  we should notify blocked Java threads waiting
-         *   for data on the streams. The implementation is limited to
-         *   notify on close of of all streams of the same direction only,
-         *   though in reality even one stream closing should be notified.
-         *   The limitation is based on the fact the maximal number of
-         *   I/O streams per connection is 1. 
+        /* IMPL_NOTE: Whether the connection is open but its input or
+         *   or output stream is closed, we should notify blocked Java
+         *   threads waiting for data on the stream.
          */
-
+        
         if (!connectionOpen && iStreams == 0 && oStreams == 0) {
             disconnect();
         } else if (iStreams == 0) {
