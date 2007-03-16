@@ -24,6 +24,8 @@
 # information or have any questions. 
 #
 
+LINKLIBS += -lrt
+
 JUMP_SRCDIRS            += \
 	$(JUMP_SRCDIR)/$(TARGET_OS)/api/native \
 
