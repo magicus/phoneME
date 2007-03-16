@@ -1152,7 +1152,6 @@ void ObjectHeap::dispose() {
 
 bool ObjectHeap::create() {
 #if USE_SET_HEAP_LIMIT
-  GUARANTEE(HeapMin <= HeapCapacity, "sanity check");
   HeapMin = HeapCapacity;
 #endif 
 
