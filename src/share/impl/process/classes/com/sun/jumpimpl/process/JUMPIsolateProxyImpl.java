@@ -25,6 +25,7 @@
 package com.sun.jumpimpl.process;
 
 import com.sun.jump.executive.JUMPIsolateProxy;
+import com.sun.jump.common.JUMPWindow;
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.command.JUMPResponse;
 import com.sun.jump.command.JUMPExecutiveLifecycleRequest;
@@ -34,6 +35,7 @@ import com.sun.jump.executive.JUMPExecutive;
 import com.sun.jump.executive.JUMPApplicationProxy;
 import com.sun.jump.command.JUMPIsolateLifecycleRequest;
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIsolateProxy {
     // FIXME: Timeout values should be centralized somewhere
@@ -41,6 +43,7 @@ public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIs
     private int                     isolateId;
     private RequestSenderHelper     requestSender;
     private HashMap                 appIDHash = null;
+    private HashSet                 windows;
     //
     // Isolate state
     //
@@ -157,7 +160,10 @@ public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIs
     }
 
     public JUMPApplicationProxy[] getApps() {
-        Object obj[] = appIDHash.values().toArray();
+        Object obj[];
+        synchronized(this) {
+            obj = appIDHash.values().toArray();
+        }
         JUMPApplicationProxy appProxy[] = new JUMPApplicationProxy[obj.length];
         for (int i = 0; i < obj.length; i++) {
             appProxy[i] = (JUMPApplicationProxy)obj[i];
@@ -165,7 +171,16 @@ public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIs
         return appProxy;
     }
     
-    
+    public JUMPWindow[] getWindows() {
+        synchronized(this) {
+            if(windows == null || windows.size() == 0) {
+                return null;
+            }
+            return (JUMPWindow[])windows.toArray(new JUMPWindow[]{});
+        }
+    }
+
+
     public int
     getIsolateId() {
         return isolateId;
@@ -213,5 +228,19 @@ public class JUMPIsolateProxyImpl extends JUMPProcessProxyImpl implements JUMPIs
 		    return true;
  	}
 	return false;
-    }        
+    }
+
+    public void
+    registerWindow(JUMPWindow w) {
+        if(w == null || w.getIsolate() != this) {
+            throw new IllegalStateException();
+        }
+
+        synchronized(this) {
+            if(windows == null) {
+                windows = new HashSet();
+            }
+            windows.add(w);
+        }
+    }
 }

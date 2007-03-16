@@ -49,6 +49,7 @@ import com.sun.me.gci.windowsystem.event.GCIFocusEventListener;
 import java.awt.GraphicsEnvironment;
 
 import java.util.Vector;
+import java.io.IOException;
 
 
 //
@@ -262,6 +263,9 @@ public class WindowingClient implements JUMPMessageHandler {
                 JUMPExecutiveWindowRequest.MESSAGE_TYPE, this);
         } catch (JUMPMessageDispatcherTypeException dte) {
             dte.printStackTrace();
+            throw new IllegalStateException();
+        } catch (IOException ex) {
+            ex.printStackTrace();
             throw new IllegalStateException();
         }
 

@@ -26,6 +26,7 @@ package com.sun.jump.executive;
 
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.common.JUMPIsolate;
+import com.sun.jump.common.JUMPWindow;
 import com.sun.jump.message.JUMPMessageSender;
 
 /**
@@ -58,4 +59,9 @@ public interface JUMPIsolateProxy extends JUMPIsolate, JUMPMessageSender {
      * Get all application proxies
      */
     public JUMPApplicationProxy[] getApps();
+    
+    /**
+     * Get all <code>JUMPWindow</code>-s running in the <code>JUMPIsolateProxy</code>.
+     */
+    public JUMPWindow[] getWindows();
 }

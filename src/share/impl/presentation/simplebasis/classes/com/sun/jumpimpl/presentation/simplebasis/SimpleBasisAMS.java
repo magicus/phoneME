@@ -74,7 +74,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
     private JUMPApplicationLifecycleModule alm = null;
     private JUMPIsolateManagerModuleFactory lcmf = null;
     private JUMPIsolateManagerModule lcm = null;
-    private JUMPApplication currentApp = null;
+    private JUMPApplicationProxy currentApp = null;
     private Object timeoutObject = null;
     private boolean appWindowDisplayState = false;
     private static final int TIMEOUT_VAL = 2000;
@@ -165,59 +165,6 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         }
     }
 
-    private JUMPWindow getWindowFromApplication(JUMPApplication app) {
-
-        // TBD: very inefficient way to find relationship between 
-        //      JUMPApplication and JUMPWindow based on assumtion that one 
-        //      isolate can run only one JUMPWindow which may change
-        //      once we support MIDP dialogs
-
-        // find isolate running passed in JUMPApplication
-        // (Note: assume that one JUMPApplication canb run only in one isolate)
-        JUMPIsolateProxy appIsolate = null;
-
-        trace("**************** getWindowFromApplication begin ***********************");
-
-        JUMPIsolateProxy isolates[] = lcm.getActiveIsolates();
-        for(int i = 0; i < isolates.length; ++i) {
-            JUMPIsolateProxy isolate = isolates[i];
-
-            JUMPApplicationProxy apps[] = isolate.getApps();
-
-            for(int j = 0; j < apps.length; ++j) {
-                JUMPApplication tmpApp = apps[j].getApplication();
-                if(tmpApp.getId() == app.getId()) {
-                    i = isolates.length;
-                    appIsolate = isolate;
-                    break;
-                }
-            }
-        }
-
-        trace("appIsolate: " + appIsolate);
-        if(appIsolate == null) {
-            // should never happen
-            trace("**************** getWindowFromApplication failed ***********************");
-            return null;
-        }
-
-        JUMPWindow windows[] = wm.getWindows();
-        
-        trace("Length of wm.getWindows(): " + windows.length);
-        for(int i = 0; i != windows.length; ++i) {
-            JUMPWindow window = windows[i];
-            trace("-> Window: " + i + ": " + window);
-
-            if(appIsolate.equals(window.getIsolate())) {
-                trace("**************** getWindowFromApplication ok ***********************");
-                return window;
-            }
-        }
-
-        trace("**************** getWindowFromApplication headless ***********************");
-        return null;
-    }
-    
     public void handleMessage(JUMPMessage message) {
         if (JUMPIsolateWindowRequest.MESSAGE_TYPE.equals(message.getType())) {
             trace("==== MESSAGE RECEIVED: JUMPIsolateWindowRequest.MESSAGE_TYPE");
@@ -249,7 +196,6 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
                     JUMPIsolateLifecycleRequest.fromMessage(message);
             
             int isolateID = cmd.getIsolateId();
-            int appID = cmd.getAppId();
 
             if (JUMPIsolateLifecycleRequest.ID_ISOLATE_DESTROYED.equals
                     (cmd.getCommandId())) {
@@ -259,24 +205,16 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
                 JUMPIsolateProxy isolateProxy = lcm.getIsolate(isolateID);
                 JUMPApplicationProxy apps[] = isolateProxy.getApps();
 
-                JUMPApplication app = null;
-                for(int i = 0; i < apps.length; ++i) {
-                    JUMPApplication tmpApp = apps[i].getApplication();
-                    if(tmpApp.getId() == appID) {
-                        app = tmpApp;
-                        break;
-                    }
-                }
-
-                trace("====== killApp( + " + app + ")");
-                
                 // the killApp(app) call below may not be needed and needs
                 // to undergo testing to see if this is necessary.  In fact,
                 // it may be the case that the 'app' value returned by
                 // window application is null.  If killApp(app) is not needed,
                 // then it should be replaced with a "currentApp = null".
-                if(app != null) {
-                    killApp(app);
+                if(apps != null) {
+                    for(int i = 0; i < apps.length; ++i) {
+                        trace("====== killApp( + " + apps[i].getApplication() + ")");
+                        killApp(apps[i]);
+                    }
                 }
             }
         }
@@ -308,16 +246,16 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         if (currentApp == null) {
             trace("***currentApp is NULL.***");
         } else {
-            trace("*** currentApp -> " + currentApp.getTitle() + " ***");
+            trace("*** currentApp -> " + currentApp.getApplication().getTitle() + " ***");
         }
         if (currentApp != null) {
             pauseApp(currentApp);
             bringWindowToBack(currentApp);
         }
         clearScreen();
-        JUMPApplication apps[] = getRunningApps();
+        JUMPApplicationProxy apps[] = getRunningApps();
         for (int i = 0; i < apps.length; i++) {
-            addScreenButton(apps[i], new SwitchToActionListener(apps[i]), Color.green);
+            addScreenButton(apps[i].getApplication(), new SwitchToActionListener(apps[i]), Color.green);
         }
         refreshScreen();
     }
@@ -333,9 +271,9 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
             bringWindowToBack(currentApp);
         }
         clearScreen();
-        JUMPApplication apps[] = getRunningApps();
+        JUMPApplicationProxy apps[] = getRunningApps();
         for (int i = 0; i < apps.length; i++) {
-            addScreenButton(apps[i], new KillActionListener(apps[i]), Color.red);
+            addScreenButton(apps[i].getApplication(), new KillActionListener(apps[i]), Color.red);
         }
         refreshScreen();
     }
@@ -389,9 +327,9 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
     
     class SwitchToActionListener
             implements ActionListener {
-        JUMPApplication app;
+        JUMPApplicationProxy app;
         
-        public SwitchToActionListener(JUMPApplication app) {
+        public SwitchToActionListener(JUMPApplicationProxy app) {
             this.app = app;
         }
         
@@ -402,9 +340,9 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
     
     class KillActionListener
             implements ActionListener {
-        JUMPApplication app;
+        JUMPApplicationProxy app;
         
-        public KillActionListener(JUMPApplication app) {
+        public KillActionListener(JUMPApplicationProxy app) {
             this.app = app;
         }
         
@@ -515,110 +453,96 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         }
         
         if (appWindowDisplayState) {
-            bringWindowToFront(app);
-            currentApp = app;
+            bringWindowToFront(appProxy);
+            currentApp = appProxy;
         }
         return appProxy;
     }
     
     private void killAllApps() {
-        JUMPApplication apps[] = getRunningApps();
+        JUMPApplicationProxy apps[] = getRunningApps();
         for (int i = 0; i < apps.length; i++) {
             killApp(apps[i]);
         }
     }
     
-    private void killApp(JUMPApplication app) {
+    private void killApp(JUMPApplicationProxy app) {
         destroyApp(app);
         currentApp = null;
     }
     
-    private void bringWindowToFront(JUMPApplication app) {
+    private void bringWindowToFront(JUMPApplicationProxy app) {
         if (app == null) {
             trace("ERROR:  Cannot do a bringWindowToFront... app is null.");
             return;
         }
         
-        JUMPWindow window = getWindowFromApplication(app);
-        wm.setForeground(window);
+        JUMPWindow[] windows = app.getIsolateProxy().getWindows();
+        if(windows != null) {
+            for (int i = 0; i < windows.length; i++) {
+                wm.setForeground(windows[i]);
+            }
+        }
     }
     
-    private void bringWindowToBack(JUMPApplication app) {
+    private void bringWindowToBack(JUMPApplicationProxy app) {
         if (app == null) {
             trace("ERROR:  Cannot do a bringWindowToBack... app is null.");
             return;
         }
-        JUMPWindow window = getWindowFromApplication(app);
-        wm.setBackground(window);
+
+        JUMPWindow[] windows = app.getIsolateProxy().getWindows();
+        if(windows != null) {
+            for (int i = 0; i < windows.length; i++) {
+                wm.setBackground(windows[i]);
+            }
+        }
     }
     
-    private void switchToApp(JUMPApplication app) {
+    private void switchToApp(JUMPApplicationProxy app) {
         resumeApp(app);
         bringWindowToFront(app);
         currentApp = app;
     }
     
-    private void resumeApp(JUMPApplication app) {
+    private void resumeApp(JUMPApplicationProxy app) {
         if (app == null) {
             return;
         }
-        trace("*** Trying to resume: " + app.getTitle());
-        // find app's proxy and resume it
-        JUMPApplicationProxy appProxies[] = alm.getApplications(app);
-        for(int i = 0; i != appProxies.length /* 1 */; ++i) {
-            appProxies[i].resumeApp();
-        }
+        trace("*** Trying to resume: " + app.getApplication().getTitle());
+        app.resumeApp();
     }
     
-    private void destroyApp(JUMPApplication app) {
+    private void destroyApp(JUMPApplicationProxy app) {
         if (app == null) {
             return;
         }
-        trace("*** Trying to kill: " + app.getTitle());
-        // find app's proxy and destroy it's apps
-        JUMPApplicationProxy appProxies[] = alm.getApplications(app);
-        if (appProxies == null) {
-            return;
-        } else {
-            for(int i = 0; i != appProxies.length /* 1 */; ++i) {
-                appProxies[i].destroyApp();
-            }
-        }
+        trace("*** Trying to kill: " + app.getApplication().getTitle());
+        app.destroyApp();
     }
     
-    private void pauseApp(JUMPApplication app) {
+    private void pauseApp(JUMPApplicationProxy app) {
         if (app == null) {
             return;
         }
-        trace("*** Trying to pause: " + app.getTitle());
-        // find app's proxy and resume it
-        JUMPApplicationProxy appProxies[] = alm.getApplications(app);
-        if (appProxies == null) {
-            return;
-        } else {
-            trace("*** alm.getApplications() returns the length: " + appProxies.length);
-            for(int i = 0; i != appProxies.length /* 1 */; ++i) {
-                appProxies[i].pauseApp();
-            }
-        }
+        trace("*** Trying to pause: " + app.getApplication().getTitle());
+        app.pauseApp();
     }
     
-    private JUMPApplication[] getRunningApps() {
+    private JUMPApplicationProxy[] getRunningApps() {
         JUMPIsolateProxy[] ips = lcm.getActiveIsolates();
         Vector appsVector = new Vector();
         for (int i = 0; i < ips.length; i++) {
             JUMPIsolateProxy ip = ips[i];
             JUMPApplicationProxy appProxy[] = ip.getApps();
-            if (appProxy == null) {
-                return null;
-            } else {
+            if (appProxy != null) {
                 for (int j = 0; j < appProxy.length; j++) {
-                    appsVector.add(appProxy[j].getApplication());
+                    appsVector.add(appProxy[j]);
                 }
             }
         }
         
-        return (JUMPApplication[]) appsVector.toArray(new JUMPApplication[]{});
+        return (JUMPApplicationProxy[]) appsVector.toArray(new JUMPApplicationProxy[]{});
     }
     
     private JUMPApplication[] getInstalledApps() {
