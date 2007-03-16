@@ -66,6 +66,8 @@ endif
 
 ifeq ($(USE_DEBUG),true)
 BUILD=debug
+else
+BUILD=nodebug
 endif
 
 BUILD_EXT_debug=_g

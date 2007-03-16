@@ -51,7 +51,7 @@ CXX=cl.exe
 RC=rc.exe
 
 LOCAL_CFLAGS_debug = -Gm -GX -Zi -Od -D_DEBUG -D_MBCS -D_LIB -YX -FD -GZ -W3
-LOCAL_CFLAGS=-ML -GX -O2 -D_MBCS -D_LIB /YX -FD -W3  
+LOCAL_CFLAGS_nodebug=-ML -GX -O2 -D_MBCS -D_LIB /YX -FD -W3  
 
 ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
     define fixcygpath
