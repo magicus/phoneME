@@ -29,7 +29,7 @@ information or have any questions.
   -->
   <target name="build-tests-init" depends="set-properties, set-tools">
     <path id="junit.cp">
-      <pathelement path="${junit3.8.1.jar}"/>
+      <pathelement path="${junit3.8.jar}"/>
     </path>
   </target>
 
