@@ -78,7 +78,7 @@ endif
 
 # Patterns to be included in the binary bundle.
 MIDP_BINARY_BUNDLE_PATTERNS += \
-	$(MIDP_OUTPUT_DIR)/classes.zip \
+	$(MIDP_CLASSES_ZIP) \
 	$(MIDP_OUTPUT_DIR)/lib/* \
 	$(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/* \
 	$(MIDP_OUTPUT_DIR)/appdb/*

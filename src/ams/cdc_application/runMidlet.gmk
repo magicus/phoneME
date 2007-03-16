@@ -66,7 +66,7 @@ $(BINDIR)/runMidlet: $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
 	-Dsun.midp.home.path=${MIDP_OUTPUT_DIR} \
 	-Dmicroedition.profiles=MIDP-2.0 \
 	-Dcom.sun.midp.mainClass.name=com.sun.midp.main.CdcMIDletSuiteLoader \
-	sun.misc.MIDPLauncher -midppath ${MIDP_OUTPUT_DIR}/classes.zip \
+	sun.misc.MIDPLauncher -midppath ${MIDP_CLASSES_ZIP) \
 	'$$*' > $@
 	$(A)chmod a+x $@
 endif
