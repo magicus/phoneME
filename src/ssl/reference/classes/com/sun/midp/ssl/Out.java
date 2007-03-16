@@ -48,7 +48,7 @@ class Out extends OutputStream {
     private static final int MAX_RECORD_SIZE = 2048;
 
     /** Indicates the output stream is closed. */
-    private boolean isClosed;
+    private boolean isClosed = false;
 
     /** Underlying SSL record layer to which bytes are written. */
     private Record rec;

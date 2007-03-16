@@ -39,7 +39,7 @@ import java.io.InterruptedIOException;
  */ 
 class In extends InputStream {
     /** Indicates the input stream is closed. */
-    private boolean isClosed;
+    private boolean isClosed = false;
 
     /** Underlying SSL record layer from which bytes are read. */
     private Record rec;
