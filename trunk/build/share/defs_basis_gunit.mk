@@ -38,4 +38,12 @@ CVM_TEST_CLASSES  += \
    tests.appcontext.FullScreenTest \
    tests.ixcpermission.IxcPermissionTest \
 
+# Tests to run by make run-unittests.
+CVM_CDC_TESTS_TORUN = \
+   tests.appcontext.FocusMgmtTest \
+   tests.ixcpermission.IxcPermissionTest
+   
+# tests.volatileImage.ImageTest is interactive
+# tests.appcontext.FullScreenTest fails
+
 include ../share/defs_gunit.mk

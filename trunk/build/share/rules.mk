@@ -388,11 +388,9 @@ democlasses:: .delete.democlasses.list .report.democlasses.list $(DEMO_CLASS_FIL
 
 .PHONY: build-unittests
 build-unittests::
-	$(AT)echo "Building cdc unit-tests ..."
 
 .PHONY: run-unittests
 run-unittests::
-	$(AT)echo "Running cdc unit-tests ..."
 
 # if jarfilename is specified, put jsrclasses in jar file
 ifeq ($(OP_JAR_FILENAME),)

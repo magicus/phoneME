@@ -68,14 +68,18 @@ $(JUMP_NATIVE_LIBRARY_PATHNAME) :: $(JUMP_NATIVE_LIB_OBJS)
 #
 # JUMP unit testing
 #
-# NOTE: due to quirks of Ant 1.6.x JUnit3.8.1 jar should be added into ant libs
+# NOTE: due to quirks of Ant 1.6.x JUnit3.8.x jar should be added into ant libs
 #
 
-BUILD_UNITTEST_ANT_OPTIONS := $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -Djunit3.8.1.jar=$(JUNIT_JAR)
-RUN_UNITTEST_ANT_OPTIONS := $(BUILD_UNITTEST_ANT_OPTIONS) -lib $(JUNIT_JAR) -Dreports.dir=$(REPORTS_DIR)/jump
+BUILD_UNITTEST_ANT_OPTIONS = $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -Djunit3.8.jar=$(JUNIT_JAR)
+RUN_UNITTEST_ANT_OPTIONS = $(BUILD_UNITTEST_ANT_OPTIONS) -lib $(JUNIT_JAR) -Dreports.dir=$(REPORTS_DIR)/jump
 
 # Provide a default value to JUNIT_JAR if it's not set
+ifdef JUNIT_JARFILE
+JUNIT_JAR ?= $(JUNIT_JARFILE)
+else
 JUNIT_JAR ?= /usr/share/ant/lib/junit.jar
+endif
 
 # Quick check of JUNIT_JAR validity
 define check_JUNIT_JAR
