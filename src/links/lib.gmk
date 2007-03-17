@@ -69,7 +69,7 @@ SUBSYSTEM_LINKS_NATIVE_FILES = \
 # Export information to the rest of the makefile system.
 #
 
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_LINKS_JAVA_FILES)
+$(MIDP_CLASSES_ZIP) :: $(SUBSYSTEM_LINKS_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_LINKS_I3TEST_JAVA_FILES)
