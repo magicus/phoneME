@@ -57,8 +57,6 @@ vpath % $(MIDP_OUTPUT_DIR)
 # list files are removed first.  Evaulation of subsequent dependencies
 # will have the side effect of populating the list files.
 # 
-MIDP_CLASSES_ZIP ?= $(MIDP_OUTPUT_DIR)/classes.zip
-
 $(MIDP_CLASSES_ZIP) ::
 	@echo " ... searching updated .java files" $(LOG)
 	$(remove_filelist)
