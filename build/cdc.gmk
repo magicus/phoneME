@@ -1,0 +1,101 @@
+#
+#   
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+# Adds to global SUBSYSTEMS list
+#
+SUBSYSTEMS += jsr120
+
+#temporary
+#include $(JSR_120_DIR)/build/config/subsystem.gmk
+
+EXTRA_CFLAGS += -DENABLE_CDC 
+CFLAGS += -DENABLE_CDC
+
+CFLAGS += -I/home/bu199574/src/JUMP/javacall-ext-jump/interface/jsr120_wma/ 
+CFLAGS += -I/home/bu199574/src/JUMP/javacall-com-ext-jump/interface/jsr205_wma20/ 
+
+##
+NO_PUSH=true
+
+JSR_120_BUILD_DIR       = $(JSROP_BUILD_DIR)/jsr120
+JSR_120_JAR             = $(JSROP_LIB_DIR)/jsr120.jar
+JSR_120_NATIVE_LIB      = $(JSROP_LIB_DIR)/$(LIB_PREFIX)jsr120$(LIB_POSTFIX)
+JSR_120_NATIVE_OBJS     = $(patsubst %.c,$(JSROP_OBJ_DIR)/%.o,$(SUBSYSTEM_JSR_120_NATIVE_FILES))
+
+JSR_120_GENERATED_DIR     = $(JSR_120_BUILD_DIR)/generated
+JSR_120_PROP_INIT_PACKAGE = $(PROP_INIT_PACKAGE).jsr120
+JSR_120_PROP_INITIALIZER  = $(JSR_120_GENERATED_DIR)/classes/$(subst .,/,$(JSR_120_PROP_INIT_PACKAGE))/$(PROP_INIT_CLASS).java
+
+#temporary
+include $(JSR_120_DIR)/build/config/subsystem.gmk
+
+
+JPP_DEFS             += -DENABLE_JSR_120
+JSROP_NATIVE_OBJS    += $(JSR_120_NATIVE_OBJS)
+JSROP_CNI_CLASSES    += $(SUBSYSTEM_JSR_120_CNI_CLASSES)
+JSROP_NATIVE_LIBS    += $(JSR_120_NATIVE_LIB)
+JSROP_EXTRA_INCLUDES += $(SUBSYSTEM_JSR_120_EXTRA_INCLUDES)
+
+JSROP_INCLUDE_DIRS   += $(SUBSYSTEM_JSR_120_EXTRA_INCLUDES)
+
+CVM_INCLUDE_JAVACALL  = true
+
+PROPERTY_INITIALIZER_LIST += $(JSR_120_PROP_INIT_PACKAGE).$(PROP_INIT_CLASS)
+#SUBSYSTEM_JSR_120_JAVA_FILES += \
+#	$(JSR_120_PROP_INITIALIZER)
+
+$(JSR_120_PROP_INITIALIZER): $(CONFIGURATOR_JAR_FILE)
+	$(call generatePropertyInitializer,$(JSR_120_PROPERTY_FILES),$(JSR_120_GENERATED_DIR),$(JSR_120_PROP_INIT_PACKAGE),$@)
+
+$(JSR_120_JAR):  $(SUBSYSTEM_JSR_120_JAVA_FILES)
+	$(call compileJSRClasses,120)
+
+$(JSR_120_NATIVE_LIB): javacall_lib $(JSR_120_NATIVE_OBJS)
+	@echo "Linking $@"
+	$(AT)$(call makeSharedLibrary, $(JSR_120_NATIVE_OBJS))
+
+# Append JSR 120 source bundle creation to target
+source_bundle:: jsr_120_source_bundle
+
+# Create JSR 120 source in subdir 'jsr120/'
+JSR_120_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr120
+
+# Copy and filter JSR 120 source in JSR_120_SOURCE_OUTPUT_DIR
+jsr_120_source_bundle: $(JSR_120_DIR)
+	@echo " ... JSR 120 source bundle" $(LOG)
+	@$(call source_bundle_filter,$(JSR_120_DIR),$(JSR_120_SOURCE_OUTPUT_DIR),.)
+
+EXTRA_CFLAGS += -DENABLE_JSR_120=1
