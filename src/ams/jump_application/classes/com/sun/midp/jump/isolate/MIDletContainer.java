@@ -113,7 +113,7 @@ public class MIDletContainer extends JUMPAppContainer implements
     private int currentDisplayId;
 
     /** Core initialization of a MIDP environment. */
-    public MIDletContainer() {
+    public MIDletContainer(String midpHome) {
         EventQueue eventQueue;
         DisplayEventProducer displayEventProducer;
         RepaintEventProducer repaintEventProducer;
@@ -121,7 +121,7 @@ public class MIDletContainer extends JUMPAppContainer implements
         ItemEventConsumer itemEventConsumer;
         LCDUIEventListener lcduiEventListener;
 
-        CDCInit.init();
+        CDCInit.init(midpHome);
 
         internalSecurityToken =
             SecurityInitializer.requestToken(new SecurityTrusted());

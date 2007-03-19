@@ -35,7 +35,7 @@
 #
 # Create a libmidp.so for non-ROMized build.
 #
-MIDP_SHARED_LIB = $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
+MIDP_SHARED_LIB ?= $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
 
 MIDP_DEPS += $(MIDP_SHARED_LIB)
 

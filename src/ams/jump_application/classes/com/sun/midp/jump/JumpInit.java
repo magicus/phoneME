@@ -36,27 +36,23 @@ import com.sun.midp.jump.installer.TrustedMIDletSuiteInfo;
  */
 public class JumpInit {
 
-    public static void init() {
+    /*
+     * Initializes the SuiteStorage, and performs a routine to 
+     * register this caller as a trusted midlet.
+     *
+     * @param home path to the MIDP working directory.
+     */
+    public static void init(String midpHome) {
 
 	// First, load the midp natives.   
         try {
             String n = System.getProperty("sun.midp.library.name", "midp");
-            // DEBUG: System.err.println("Loading DLL \"" + n + "\" ...");
             System.loadLibrary(n);
         } catch (UnsatisfiedLinkError err) {}
 
-	/** 
-         * Path to MIDP working directory. 
-         * Default is the property "sun.midp.home.path", the fallback is user.dir.
-        */
-        String userdir = System.getProperty("user.dir", ".");
-        String home = System.getProperty("sun.midp.home.path", userdir);
-        String profile = System.getProperty("microedition.profiles");
-	if (profile == null) 
-            System.setProperty("microedition.profiles", "MIDP-2.1");
 
-        if (!initMidpNativeStates(home)) {
-           throw new RuntimeException("MIDP native initialization failed");
+        if (!initMidpStorage(midpHome)) {
+           throw new RuntimeException("MIDP suite store initialization failed");
         }
 
 	/** 
@@ -65,6 +61,9 @@ public class JumpInit {
 	 * by checking the executing midlet suite's security token.
 	 * See com.sun.midp.jump.installer.TrustedMIDletSuiteInfo for more
 	 * information.
+	 * 
+	 * FIXME: this should go away once the midp-on-cdc starts using
+	 * cdc style permission checking.
 	 **/
 	
         final MIDletStateHandler handler = MIDletStateHandler.getMidletStateHandler();
@@ -89,8 +88,11 @@ public class JumpInit {
      }
   
     /**
-     * Performs native subsystem initialization.
+     * Performs native midp suitestorage initialization.
+     * This method peforms only a subroutine of 
+     * CDCInit.initMidpNativeState(midpHome), by skipping lcdui initialization.
+     * 
      * @param home path to the MIDP working directory.
      */
-    static native boolean initMidpNativeStates(String home);
+    static native boolean initMidpStorage(String midpHome);
 }

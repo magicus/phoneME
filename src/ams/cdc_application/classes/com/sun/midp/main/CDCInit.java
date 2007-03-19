@@ -54,15 +54,6 @@ public class CDCInit {
              */
         }
 
-        /*
-         * In case the normal system properites configration did not set
-         * the profile set it here.
-         */
-        String profile = System.getProperty("microedition.profiles");
-	if (profile == null) {
-            System.setProperty("microedition.profiles", "MIDP-2.1");
-        }
-
         initMidpNativeStates(midpHome);
     }
 
@@ -74,11 +65,14 @@ public class CDCInit {
          * the fallback is user.dir.
          */
         String userdir = System.getProperty("user.dir", ".");
-        userdir+= File.separator + "midp" + File.separator + "midp_fb";
+        userdir+= File.separator + "midp" + File.separator + "midp_linux_gci";
         String home = System.getProperty("sun.midp.home.path", userdir);
-        String lib = System.getProperty("sun.midp.library.name", "midp");
 
-        init(home, lib);
+        init(home);
+    }
+
+    public static void init(String midpHome) {
+        init(midpHome, System.getProperty("sun.midp.library.name", "midp"));
     }
 
     /**

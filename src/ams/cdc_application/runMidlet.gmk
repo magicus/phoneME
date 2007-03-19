@@ -32,6 +32,8 @@
 # other def. (like VPATH)
 ############################################################
 
+MIDP_SHARED_LIB ?= $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
+
 ifeq ($(CVM_PRELOAD_LIB), true)
 #
 # This is a ROMized build. MIDP natives are linked into CVM executable. No
@@ -43,7 +45,6 @@ $(BINDIR)/runMidlet: \
 	@echo " ... creating script  " $@ $(LOG)
 	$(A)echo ${CDC_DIST_DIR}/bin/cvm \
 	-Dsun.midp.home.path=${MIDP_OUTPUT_DIR} \
-	-Dmicroedition.profiles=MIDP-2.0 \
 	-Dcom.sun.midp.mainClass.name=com.sun.midp.main.CdcMIDletSuiteLoader \
 	sun.misc.MIDPLauncher \
 	'$$*' > $@
@@ -52,21 +53,20 @@ else
 #
 # Create a libmidp.so for non-ROMized build.
 #
-$(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX): \
+$(MIDP_SHARED_LIB): \
     $(MIDP_DEPS) $(OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
 	@$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
 	  $(OBJ_FILES) $(LIBS))` $(LOG)
 
-$(BINDIR)/runMidlet: $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
+$(BINDIR)/runMidlet: $(MIDP_SHARED_LIB)
 	@rm -f $@
 	@echo " ... creating script $@ " $(LOG)
 	$(A)echo ${CDC_DIST_DIR}/bin/cvm \
 	-Dsun.midp.library.name=midp$(p) \
 	-Dsun.midp.home.path=${MIDP_OUTPUT_DIR} \
-	-Dmicroedition.profiles=MIDP-2.0 \
 	-Dcom.sun.midp.mainClass.name=com.sun.midp.main.CdcMIDletSuiteLoader \
-	sun.misc.MIDPLauncher -midppath ${MIDP_OUTPUT_DIR}/classes.zip \
+	sun.misc.MIDPLauncher \
 	'$$*' > $@
 	$(A)chmod a+x $@
 endif
