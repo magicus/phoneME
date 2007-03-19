@@ -214,6 +214,13 @@ jumpMessageQueueGetFd(JUMPPlatformCString messageType);
  * Close and destroy all message queues created by the process.
  */
 extern void jumpMessageQueueInterfaceDestroy(void);
+
+/*
+ * Clean up low-level message queues created by the given process.
+ * If the process is still alive as determined by jumpProcessIsAlive(),
+ * silently do nothing.
+ */
+extern void jumpMessageQueueCleanQueuesOf(int cpid);
     
 #if defined __cplusplus 
 }

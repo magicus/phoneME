@@ -38,6 +38,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <limits.h>
+#include <dirent.h>
 /* NOTE: even if JUMP_MQ_THREADSAFE is not defined, we need pthread.h
    for pthread_self(). */
 #include <pthread.h>
@@ -139,7 +140,9 @@ static pthread_mutex_t queue_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 /*
  * This is how message FIFOs are named, based on a pid and a messageType.
  */
-#define JUMP_MQ_PATH_PATTERN "/tmp/jump-mq-%d-%s"
+#define JUMP_MQ_PATH_DIR	"/tmp"
+#define JUMP_MQ_PATH_PREFIX	"jump-mq-%d-"
+#define JUMP_MQ_PATH_PATTERN	JUMP_MQ_PATH_DIR "/" JUMP_MQ_PATH_PREFIX "%s"
 
 /* Puts the jump_message_queue at the head of the list. */
 static void
@@ -960,6 +963,49 @@ jumpMessageQueueInterfaceDestroy(void)
     mutex_unlock(&queue_list_mutex);
 }
 
+void
+jumpMessageQueueCleanQueuesOf(int cpid)
+{
+    char prefix[sizeof(JUMP_MQ_PATH_PREFIX) + 20];
+    int prefixLen;
+    DIR* dir;
+    struct dirent* ptr;
+
+    if (jumpProcessIsAlive(cpid) == 1) {
+	return;
+    }
+
+    prefixLen = snprintf(prefix, sizeof(prefix), JUMP_MQ_PATH_PREFIX, cpid);
+
+    dir = opendir(JUMP_MQ_PATH_DIR);
+    if (dir == NULL) {
+	perror("opendir");
+	return;
+    }
+
+    while ((ptr = readdir(dir)) != NULL) {
+	if (strncmp(ptr->d_name, prefix, prefixLen) == 0) {
+	    char filename[sizeof(JUMP_MQ_PATH_DIR) + 1 + NAME_MAX + 1];
+	    int len;
+
+	    len = snprintf(filename, sizeof(filename),
+			   JUMP_MQ_PATH_DIR "/%s", ptr->d_name);
+	    if (len < 0 || len >= sizeof(filename)) {
+		continue;
+	    }
+
+	    printf("Exiting process %d has message queue %s\n",
+		   cpid, filename);
+	    if (unlink(filename) == -1) {
+		perror("mq file delete");
+	    } else {
+		printf("  removed file %s\n", filename);
+	    }
+	}
+    }
+
+    closedir(dir);
+}
 
 /*
  * The thread porting layer
