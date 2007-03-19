@@ -93,8 +93,8 @@ $(CVMLAUNCHER_MMP) : FORCE
 	$(AT)for s in $(CVM_DEFINES); do \
 		printf "MACRO %s\n" $$s | sed -e 's/-D//g'; \
 	done >> $@
-	$(AT)for s in $(CVM_INCLUDES); do \
-		printf "USERINCLUDE %s\n" $$s | sed -e 's/-I//g'; \
+	$(AT)for s in $(ALL_INCLUDE_DIRS); do \
+		printf "USERINCLUDE %s\n" $$s; \
 	done >> $@
 	$(AT)echo SOURCEPATH ../../src/symbian/bin>> $@
 	$(AT)echo SOURCE java_md.cpp >> $@
@@ -126,8 +126,8 @@ endif
 	$(AT)for s in $(CVM_DEFINES); do \
 		printf "MACRO %s\n" $$s | sed -e 's/-D//g'; \
 	done >> $@
-	$(AT)for s in $(CVM_INCLUDES); do \
-		printf "USERINCLUDE %s\n" $$s | sed -e 's/-I//g'; \
+	$(AT)for s in $(ALL_INCLUDE_DIRS); do \
+		printf "USERINCLUDE %s\n" $$s; \
 	done >> $@
 
 $(CVM_OBJDIR)/%.o: %.cc

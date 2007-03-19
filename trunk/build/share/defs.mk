@@ -1207,7 +1207,7 @@ CVM_SRCDIRS += \
 	$(CVM_SHAREROOT)/javavm/runtime/jit
 endif
 
-# This combiles all the native sourcepaths for the vpath search:
+# This combines all the native sourcepaths for the vpath search:
 # NOTE: PROFILE_SRCDIRS_NATIVE is for profile specific native source files.
 #       CVM_SRCDIR is for VM specific and base configuration native source
 #       files.
@@ -2043,18 +2043,40 @@ ifeq ($(CVM_GCOV), true)
 CCFLAGS   	+= -fprofile-arcs -ftest-coverage
 endif
 
-# PROFILE_INCLUDE_DIRS is a list of profiles specific directories that defines
-# the profile specific include path.  This path should be searched for include
-# files before searching the base configuration include path.
-# CVM_INCLUDE_DIRS is a list of directories that defines the base configuration
-# include path. 
-# This list needs to be converted to a list of compiler parameters, with paths
-# in host form:
-CVM_INCLUDES    += \
-	$(foreach dir,$(PROFILE_INCLUDE_DIRS),-I$(call POSIX2HOST,$(dir))) \
-	$(foreach dir,$(CVM_INCLUDE_DIRS),-I$(call POSIX2HOST,$(dir)))
+# CVM include directories used to be specified with CVM_INCLUDES, and included
+# the -I option. Now they are specified with CVM_INCLUDE_DIRS and do not
+# include the -I option.
+ifdef CVM_INCLUDES
+$(error CVM_INCLUDES is no longer supported. Use CVM_INCLUDE_DIRS and remove the leading "-I".)
+else
+# force an error if referenced in a command line
+CVM_INCLUDES = "Do not reference CVM_INCLUDES"
+endif
 
-CPPFLAGS 	+= $(CVM_DEFINES) $(CVM_INCLUDES)
+# Profile include directories used to be specified with PROFILE_INCLUDES, and 
+# included the -I option. Now they are specified with PROFILE_INCLUDE_DIRS
+# and do not include the -I option.
+ifdef PROFILE_INCLUDES
+$(error PROFILE_INCLUDES is no longer supported. Use PROFILE_INCLUDE_DIRS and remove the leading "-I".)
+else
+# force an error if referenced in a command line
+PROFILE_INCLUDES = "Do not reference PROFILE_INCLUDES"
+endif
+
+# PROFILE_INCLUDE_DIRS is a list of profile specific directories that contains
+# 	the profile specific include paths. These paths should be searched for
+#	include files before searching the base configuration include path.
+# CVM_INCLUDE_DIRS is a list of directories that defines the base configuration
+# 	include path. 
+# ALL_INCLUDE_DIRS combines the above lists. On most platforms it needs to
+# 	be converted to host from before used.
+# ALL_INCLUDE_FLAGS is ALL_INCLUDE_DIRS converted into the compiler
+# 	command line option for C include directories.
+ALL_INCLUDE_DIRS	= $(PROFILE_INCLUDE_DIRS) $(CVM_INCLUDE_DIRS)
+ALL_INCLUDE_FLAGS	= \
+	$(foreach dir,$(ALL_INCLUDE_DIRS),-I$(call POSIX2HOST,$(dir)))
+
+CPPFLAGS 	+= $(CVM_DEFINES) $(ALL_INCLUDE_FLAGS)
 CFLAGS_SPEED   	= $(CFLAGS) $(CCFLAGS_SPEED) $(CPPFLAGS)
 CFLAGS_SPACE   	= $(CFLAGS) $(CCFLAGS_SPACE) $(CPPFLAGS)
 CFLAGS_LOOP    	= $(CFLAGS) $(CCFLAGS_LOOP)  $(CPPFLAGS)

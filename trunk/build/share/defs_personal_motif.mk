@@ -38,7 +38,7 @@ TOOLKIT_CLASS = sun.awt.motif.MToolkit
 #
 # Get the CPP includes and needed for the motif peers
 #
-PROFILE_INCLUDES += -I$(CVM_SHAREROOT)/basis/native/image
+PROFILE_INCLUDE_DIRS += $(CVM_SHAREROOT)/basis/native/image
 
 CLASSLIB_CLASSES += \
 	sun.awt.motif.InputThread \

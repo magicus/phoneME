@@ -205,8 +205,8 @@ endif
 PROFILE_SRCDIRS_NATIVE += \
     $(CVM_SHAREROOT)/personal/native/awt/$(AWT_PEERSET_NAME)/wproxy \
 
-PROFILE_INCLUDES += \
-    -I$(CVM_SHAREROOT)/personal/native/awt/$(AWT_PEERSET_NAME)/wproxy \
+PROFILE_INCLUDE_DIRS += \
+    $(CVM_SHAREROOT)/personal/native/awt/$(AWT_PEERSET_NAME)/wproxy \
 
 # Define restrictions for this AWT implementation.
 

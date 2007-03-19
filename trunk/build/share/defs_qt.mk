@@ -164,9 +164,9 @@ endif
 # Get the CPP includes needed for qt. Note that some distributions
 # put some qt files in /usr/include and the rest in /usr/include/qt.
 #
-PROFILE_INCLUDES += \
-	-I$(QT_TARGET_INCLUDE_DIR) \
-	-I$(QT_TARGET_INCLUDE_DIR)/qt
+PROFILE_INCLUDE_DIRS += \
+	$(QT_TARGET_INCLUDE_DIR) \
+	$(QT_TARGET_INCLUDE_DIR)/qt
 
 # Specify the appropriate QT_LIBRARY
 ifeq ($(QTEMBEDDED), true)
@@ -187,8 +187,8 @@ endif
 #
 ifneq ($(QTEMBEDDED), true)
 # personal and basis needs to have access to the X11 headers.
-  PROFILE_INCLUDES += \
-    -I$(X11_LIB_DIR)/../include \
+  PROFILE_INCLUDE_DIRS += \
+    $(X11_LIB_DIR)/../include \
 
   ifeq ($(QT_VERSION), 3)
     X11_LIBS ?= -L$(X11_LIB_DIR) -lXext -lX11 -lSM -lICE -lXft -lXrender -lXrandr -lXinerama
