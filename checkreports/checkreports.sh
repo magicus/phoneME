@@ -106,10 +106,11 @@ func_generateBriefSum()
     # Cleanup old summary if exist
     [ -w "$BRIEF_SUMMARY" ] && rm "$BRIEF_SUMMARY"
 
-    # For each report file get first 3 lines and append BRIEF_SUMMARY file.
+    # For each report file get first 2 lines and append BRIEF_SUMMARY file.
     for REPORT in `find "$REPORTS_DIR" -name "TEST*.txt"`
     do
-        head -n 3 "$REPORT" >>"$BRIEF_SUMMARY"
+        head -n 2 "$REPORT" >>"$BRIEF_SUMMARY"
+        echo "" >>"$BRIEF_SUMMARY"
     done
     [ -f "$BRIEF_SUMMARY" ] || func_log "Warning: there were no reports found"
 
