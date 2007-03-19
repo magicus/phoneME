@@ -58,8 +58,8 @@ endif
 CVM_SRCDIRS   += \
 	$(CVM_TOP)/src/$(TARGET_OS)-$(TARGET_CPU_FAMILY)/javavm/runtime \
 
-CVM_INCLUDES  += \
-	-I$(CVM_TOP)/src/$(TARGET_OS)-$(TARGET_CPU_FAMILY)
+CVM_INCLUDE_DIRS  += \
+	$(CVM_TOP)/src/$(TARGET_OS)-$(TARGET_CPU_FAMILY)
 
 CVM_TARGETOBJS_SPEED +=	\
 	x86_float_cpu2.o \
@@ -67,5 +67,5 @@ CVM_TARGETOBJS_SPEED +=	\
 CVM_SRCDIRS   += \
 	$(CVM_TOP)/src/win32-x86/javavm/runtime
 
-CVM_INCLUDES  += \
-	-I$(CVM_TOP)/src/win32-x86
+CVM_INCLUDE_DIRS  += \
+	$(CVM_TOP)/src/win32-x86

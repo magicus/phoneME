@@ -52,16 +52,16 @@ CVM_JDWP_TRANSPORT = socket
 #
 # Search path for include files:
 #
-CVM_JDWP_INCLUDES  += \
-        -I$(CVM_SHAREROOT)/javavm/export \
-	-I$(CVM_JDWP_TARGETROOT)/back \
-	-I$(CVM_JDWP_SHAREROOT)/back \
-	-I$(CVM_JDWP_SHAREROOT)/back/export \
-	-I$(CVM_JDWP_SHAREROOT)/back/npt \
-	-I$(CVM_JDWP_SHAREROOT)/back/npt/$(TARGET_OS) \
-	-I$(CVM_JDWP_SHAREROOT)/transport/export \
-	-I$(CVM_JDWP_TARGETROOT)/transport/$(CVM_JDWP_TRANSPORT) \
-	-I$(CVM_JDWP_BUILD_TOP)
+CVM_JDWP_INCLUDE_DIRS  += \
+        $(CVM_SHAREROOT)/javavm/export \
+	$(CVM_JDWP_TARGETROOT)/back \
+	$(CVM_JDWP_SHAREROOT)/back \
+	$(CVM_JDWP_SHAREROOT)/back/export \
+	$(CVM_JDWP_SHAREROOT)/back/npt \
+	$(CVM_JDWP_SHAREROOT)/back/npt/$(TARGET_OS) \
+	$(CVM_JDWP_SHAREROOT)/transport/export \
+	$(CVM_JDWP_TARGETROOT)/transport/$(CVM_JDWP_TRANSPORT) \
+	$(CVM_JDWP_BUILD_TOP)
 
 ifeq ($(CVM_DEBUG), true)
 CVM_JDWP_DEFINES += -DDEBUG
@@ -74,7 +74,7 @@ ifeq ($(JPDA_NO_DLALLOC), true)
 CVM_JDWP_DEFINES += -DJPDA_NO_DLALLOC
 endif
 
-jdwp : CVM_INCLUDES += $(CVM_JDWP_INCLUDES)
+jdwp : CVM_INCLUDE_DIRS += $(CVM_JDWP_INCLUDE_DIRS)
 jdwp : CVM_DEFINES += $(CVM_JDWP_DEFINES)
 
 #

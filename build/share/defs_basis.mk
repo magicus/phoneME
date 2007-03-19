@@ -397,11 +397,11 @@ CLASSLIB_CLASSES += \
 # JUMP specific basis classes
 ifeq ($(CVM_INCLUDE_JUMP), true)
 CLASSLIB_CLASSES += \
-   		sun.mtask.xlet.XletFrame \
-   		sun.mtask.xlet.PXletRunner \
-   		sun.mtask.xlet.PXletStateQueue \
-   		sun.mtask.xlet.PXletManager \
-   		sun.mtask.xlet.PXletContextImpl 
+		sun.mtask.xlet.XletFrame \
+		sun.mtask.xlet.PXletRunner \
+		sun.mtask.xlet.PXletStateQueue \
+		sun.mtask.xlet.PXletManager \
+		sun.mtask.xlet.PXletContextImpl 
 else 
 CLASSLIB_CLASSES += \
                 com.sun.xlet.ixc.ConstantPool \
@@ -538,10 +538,6 @@ CVM_DEMO_CLASSES += \
 	IXCDemo.IXCMain 
 endif
 
-#
-# Stuff to export. Do this before including defs_foundation.mk
-#
-CVM_INCLUDES 		+= $(PROFILE_INCLUDES)
 
 #
 # Unit Tests

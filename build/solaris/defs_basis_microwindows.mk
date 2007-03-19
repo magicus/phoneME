@@ -27,5 +27,5 @@
 # FIXME - The following requires that the host and target be the same.
 # A $(CVM_TOOLS_DIR)/lib installation should be used if CVM_USE_NATIVE_TOOLS
 # is false.
-PROFILE_INCLUDES += -I/usr/X11R6/include -I/usr/local/microwin/include
+PROFILE_INCLUDE_DIRS += /usr/X11R6/include /usr/local/microwin/include
 AWT_LIB_LIBS = -L/usr/local/microwin/lib -lmwengine -lmwdrivers -lmwengine -lmwfonts -L/usr/X11R6/lib -lX11 -L/usr/local/lib -lttf -lpthread -lrt

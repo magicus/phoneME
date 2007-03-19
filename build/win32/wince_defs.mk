@@ -32,8 +32,8 @@ CC_ARCH_FLAGS += -D__STDC__
 MT_DLL_FLAGS =
 MT_EXE_FLAGS =
 
-CVM_INCLUDES  += \
-        -I$(CVM_TARGETROOT)/javavm/include/ansi \
+CVM_INCLUDE_DIRS  += \
+        $(CVM_TARGETROOT)/javavm/include/ansi \
 
 #
 # Support for sending CVMioWrite to OUT.txt and ERR.txt and reading

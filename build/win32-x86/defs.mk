@@ -40,8 +40,8 @@ CVM_TARGETOBJS_SPEED +=	\
 CVM_SRCDIRS   += \
 	$(CVM_TOP)/src/win32-x86/javavm/runtime \
 
-CVM_INCLUDES  += \
-	-I$(CVM_TOP)/src/win32-x86
+CVM_INCLUDE_DIRS  += \
+	$(CVM_TOP)/src/win32-x86
 
 # JIT related options
 ifeq ($(CVM_JIT), true)
