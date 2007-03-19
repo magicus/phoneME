@@ -1093,9 +1093,11 @@ stroker_computeOffset(Pipeline* pipeline, jint x0, jint y0,
     jlong ly = (jlong)y1 - (jlong)y0;
 
     jint dx, dy;
-    if (pipeline->stroker_m00 > 0 &&
-            pipeline->stroker_m00 == pipeline->stroker_m11 &&
-            pipeline->stroker_m01 == 0 && pipeline->stroker_m10 == 0) {
+    if (pipeline->stroker_m00 > 0 
+            && (pipeline->stroker_m00 == pipeline->stroker_m11
+                || pipeline->stroker_m00 == -pipeline->stroker_m11) 
+            && pipeline->stroker_m01 == 0 
+            && pipeline->stroker_m10 == 0) {
         jlong ilen = piscesmath_lhypot(lx, ly);
         if (ilen == 0) {
             dx = dy = 0;
@@ -1106,13 +1108,11 @@ stroker_computeOffset(Pipeline* pipeline, jint x0, jint y0,
     } else {
         jdouble dlx = x1 - x0;
         jdouble dly = y1 - y0;
-        jdouble det = (jdouble)pipeline->stroker_m00*pipeline->stroker_m11 -
-                      (jdouble)pipeline->stroker_m01*pipeline->stroker_m10;
-        jint sdet = (det > 0) ? 1 : -1;
+
         jdouble a = dly*pipeline->stroker_m00 - dlx*pipeline->stroker_m10;
         jdouble b = dly*pipeline->stroker_m01 - dlx*pipeline->stroker_m11;
         jdouble dh = piscesmath_dhypot(a, b);
-        jdouble div = sdet*pipeline->stroker_lineWidth2/(65536.0*dh);
+        jdouble div = pipeline->stroker_lineWidth2/(65536.0*dh);
         jdouble ddx = dly*pipeline->stroker_m00_2_m01_2 -
                       dlx*pipeline->stroker_m00_m10_m01_m11;
         jdouble ddy = dly*pipeline->stroker_m00_m10_m01_m11 -

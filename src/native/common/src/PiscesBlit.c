@@ -472,7 +472,7 @@ blitSrc8888_pre(Renderer *rdr, jint height) {
             if (aval == MAX_ALPHA) {
                 // alpha == 1 (255), thus we can use cval directly
                 intData[iidx] = cval;
-            } else if (aval > 0) {
+            } else {
                 blendSrc8888_pre(&intData[iidx], aval,
                              256 - (*a << aaAlphaShift), 
                              cred, cgreen, cblue);
@@ -530,7 +530,7 @@ blitSrc8888(Renderer *rdr, jint height) {
             aval = alphaMap[*a & 0xff];
             if (aval == MAX_ALPHA) {
                 intData[iidx] = cval;
-            } else if (aval > 0) {
+            } else {
                 blendSrc8888(&intData[iidx], aval, 
                              256 - (*a << aaAlphaShift), 
                              cred, cgreen, cblue);
