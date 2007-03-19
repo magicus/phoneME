@@ -39,11 +39,6 @@ else
     MIDP_PLATFORM = linux_fb_gcc
 endif
 
-# MDIP requires Foundation or basis if build on top of gci
-ifeq ($(J2ME_CLASSLIB), cdc)
-J2ME_CLASSLIB          = foundation
-endif
-
 
 #
 # Target tools directory for compiling both PCSL and MIDP.

@@ -346,6 +346,11 @@ endif
 # Need to initialize J2ME_CLASSLIB before "all" rule below"
 J2ME_CLASSLIB		?= cdc
 
+# MIDP requires at least foundation
+ifeq ($(J2ME_CLASSLIB), cdc)
+J2ME_CLASSLIB          = foundation
+endif
+
 # JUMP requires at least basis
 ifeq ($(CVM_INCLUDE_JUMP),true)
    ifeq ($(J2ME_CLASSLIB), cdc)
