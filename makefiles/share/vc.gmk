@@ -46,7 +46,7 @@ LD=link
 ifeq ($(USE_DEBUG), true)
 CFLAGS= /WX /c /W3 -Zi -Od -MDd
 else
-CFLAGS= /WX /c /W3
+CFLAGS= /WX /c /W3 /MD
 endif
 
 LD_FLAGS=
