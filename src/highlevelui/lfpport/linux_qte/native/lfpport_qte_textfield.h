@@ -87,6 +87,12 @@ protected slots:
      */
     void keyReleaseEvent(QKeyEvent *key);
 
+    /**
+     * Method format phone string
+     * @param s string 
+     */
+    QString getStringForPhoneNumber(QString& s);
+
 public:
     /**
      * Constructor.
@@ -144,6 +150,16 @@ public:
      * @param mark whether the text is marked
      */
     void insertAt(const QString &s, int line, int col, bool mark = FALSE);
+
+    /**
+     * Override QMultLineEdit::backspace to format phone string
+     */
+    void TextFieldBody::backspace();
+
+    /**
+     * Override QMultLineEdit::del to format phone string
+     */
+    void TextFieldBody::del();
 
     /** This text field's input constraints, if any. As discussed in the
      * <i>MIDP Specification</i>, an input constraint makes it easier for
