@@ -26,16 +26,11 @@
  */
 
 #include <stdio.h>
-#include <stddef.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-#include <sys/socket.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -50,12 +45,8 @@
 #include "portlibs/posix/mtask.h"
 
 #include <jump_messaging.h>
-#include <dirent.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
 #include <dlfcn.h>
-/* FIXME: why is this using porting/JUMPMessageQueue.h instead of
-   jump_messaging.h? */
+
 #include "porting/JUMPMessageQueue.h"
 #include "porting/JUMPProcess.h"
 
@@ -327,46 +318,6 @@ printExitStatusString(FILE* out, int status)
     } 
 }
 
-static void
-cleanMessageQueuesOf(int cpid)
-{
-    struct dirent* ptr;
-    DIR* dir;
-    char prefix[40];
-    char filename[60];
-    int prefixLen;
-    
-    snprintf(prefix, 40, "jump-mq-%d-", cpid);
-    prefixLen = strlen(prefix);
-    
-    dir = opendir("/tmp");
-    if (dir == NULL) {
-	perror("opendir");
-	return;
-    }
-    
-    while ((ptr = readdir(dir)) != NULL) {
-  	if (!strcmp(ptr->d_name, ".") || !strcmp(ptr->d_name, "..")) {
-	    continue;
-	}
-	if (!strncmp(ptr->d_name, prefix, prefixLen)) {
-	    key_t k;
-	    int mq;
-	    
-	    snprintf(filename, 60, "/tmp/%s", ptr->d_name);
-	    printf("Exiting process %d has message queue %s\n",
-		   cpid, filename);
-	    if (remove(filename) == -1) {
-		perror("mq file delete");
-		continue;
-	    } else {
-		printf("  removed file %s\n", filename);
-	    }
-	}
-    }
-    closedir(dir);
-}
-
  /*
   * Send executive a lifecycle message indicating that a child has terminated.
   */
@@ -413,10 +364,7 @@ doReapChildren(ServerState* state, int options)
 
 	fprintf(stderr, "Reaping child process %d\n", cpid);
 
-	/* TODO: Should this be part of the porting layer? 
-	   Or is the fact that we are using the mtask.c code indicative
-	   of Linux already? */
-	cleanMessageQueuesOf(cpid);
+	jumpMessageQueueCleanQueuesOf(cpid);
 	
 	printExitStatusString(stderr, status);
 	fprintf(stderr, "\t user time %ld.%02d sec\n",
