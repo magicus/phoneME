@@ -35,7 +35,10 @@ ABSTRACTIONS_NATIVES = \
 	native_crypto.c \
 	internal_props.c \
 	exceptions.c \
-	bnlib.c
+	bnlib.c \
+	shared_memory.c \
+	shared_memory_md.c \
+	jump_events_impl.c
 
 # dirs containing hative header files (.h)
 ABSTRACTIONS_INCLUDE_DIRS = \
@@ -97,16 +100,6 @@ ABSTRACTIONS_CLASSES = \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/Util.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/PRand.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/SecureRandom.java \
-
-ifeq ($(USE_JUMP_SHARED_MEMORY), true)
-ABSTRACTIONS_NATIVES += \
-    shared_memory.c \
-    shared_memory_md.c
-endif
-ifeq ($(USE_JUMP_EVENTS), true)
-ABSTRACTIONS_NATIVES += \
-    jump_events_impl.c
-endif
 
 #####################################################
 ABSTRACTIONS_NATIVE_OBJS     = $(patsubst %.c,$(CVM_OBJDIR)/%.o,$(ABSTRACTIONS_NATIVES))
