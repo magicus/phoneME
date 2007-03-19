@@ -71,6 +71,7 @@ BUILD=nodebug
 endif
 
 BUILD_EXT_debug=_g
+BUILD_EXT_nodebug=
 BUILD_EXT=$(BUILD_EXT_$(BUILD))
 
 ifeq ($(JAVACALL_OUTPUT_DIR),)
