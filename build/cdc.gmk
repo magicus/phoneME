@@ -38,17 +38,14 @@
 #
 SUBSYSTEMS += jsr120
 
-#temporary
-#include $(JSR_120_DIR)/build/config/subsystem.gmk
-
 EXTRA_CFLAGS += -DENABLE_CDC 
 CFLAGS += -DENABLE_CDC
 
-CFLAGS += -I/home/bu199574/src/JUMP/javacall-ext-jump/interface/jsr120_wma/ 
-CFLAGS += -I/home/bu199574/src/JUMP/javacall-com-ext-jump/interface/jsr205_wma20/ 
+CFLAGS += -I$(JAVACALL_DIR)/interface/jsr120_wma/ 
 
 ##
 NO_PUSH=true
+##ENABLE_JUMP=true
 
 JSR_120_BUILD_DIR       = $(JSROP_BUILD_DIR)/jsr120
 JSR_120_JAR             = $(JSROP_LIB_DIR)/jsr120.jar
@@ -86,16 +83,5 @@ $(JSR_120_JAR):  $(SUBSYSTEM_JSR_120_JAVA_FILES)
 $(JSR_120_NATIVE_LIB): javacall_lib $(JSR_120_NATIVE_OBJS)
 	@echo "Linking $@"
 	$(AT)$(call makeSharedLibrary, $(JSR_120_NATIVE_OBJS))
-
-# Append JSR 120 source bundle creation to target
-source_bundle:: jsr_120_source_bundle
-
-# Create JSR 120 source in subdir 'jsr120/'
-JSR_120_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr120
-
-# Copy and filter JSR 120 source in JSR_120_SOURCE_OUTPUT_DIR
-jsr_120_source_bundle: $(JSR_120_DIR)
-	@echo " ... JSR 120 source bundle" $(LOG)
-	@$(call source_bundle_filter,$(JSR_120_DIR),$(JSR_120_SOURCE_OUTPUT_DIR),.)
 
 EXTRA_CFLAGS += -DENABLE_JSR_120=1
