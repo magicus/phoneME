@@ -125,6 +125,8 @@ typedef struct _datagramentry {
   int senderport;
   /** The length of data in the buffer. */
   int length;
+  /** The offset in the buffer where the read pointer is located. */
+  int offs;
   /** The buffer that holds the data of the datagram. */
   char buffer[MAX_DATAGRAM_LENGTH];
 } DatagramEntry;
@@ -149,6 +151,8 @@ typedef struct _pushentry {
   int fd;
   /** The socket to use for the connection. */
   int fdsock;
+  /** The socket that is used when buffering the incoming TCP packet. */
+  int fdAccepted;
   /** Port id to listen to. */
   int port;
   /** MMS application ID. */
@@ -159,8 +163,12 @@ typedef struct _pushentry {
   DatagramEntry *dg;
   /** Flag denoting whether a WMA message has arrived and been cached. */
   jboolean isWMAMessCached;
-  /** Current state of the connection. */
+  /** True if this entry should be handled by WMA rather then by MIDP Push. */
   jboolean isWMAEntry;
+#if ENABLE_JSR_180
+  /** True if this entry is a SIP-entry. */
+  jboolean isSIPEntry;
+#endif
 } PushEntry;
 
 /**
@@ -196,8 +204,7 @@ static PushEntry *pushlist = NULL;
 static AlarmEntry *alarmlist = NULL;
 
 static int pushlength = 0;
-static void pushProcessPort(char *buffer, int *fd, int *port,
-                            char **appID, jboolean *isWMAEntry);
+static void pushProcessPort(char *buffer, PushEntry* pe);
 static int alarmopen();
 static void alarmsave();
 static void pushListFree();
@@ -686,16 +693,22 @@ int pushadd(char *str) {
     pe->state = AVAILABLE;
     pe->fd = -1;
     pe->fdsock = -1;
+    pe->fdAccepted = -1;
     pe->dg = NULL;
     pe->isWMAEntry = KNI_FALSE;
     pe->isWMAMessCached = KNI_FALSE;
     pe->appID = NULL;
+
+#if ENABLE_JSR_180
+    pe->isSIPEntry = KNI_FALSE;
+#endif
+
     /*
 #if ENABLE_JSR_82
     bt_push_register_url(str, NULL, 0);
 #endif
     */
-    pushProcessPort(str, &(pe->fd), &(pe->port), &(pe->appID), &(pe->isWMAEntry));
+    pushProcessPort(str, pe);
     if (pe->fd == -1) {
 #if ENABLE_JSR_82
         bt_push_unregister_url(str);
@@ -822,7 +835,26 @@ static void pushDeleteEntry(PushEntry *p, PushEntry **pPrevNext) {
 }
 
 /**
- *  Fetch the datagram data into a buffer.
+ * Returns the number of buffered bytes for the given socket.
+ *
+ * @param fd handle of the socket
+ * @return number of cached bytes of -1 if none
+ */
+int pushcacheddatasize(int fd) {
+    PushEntry *p;
+
+    for (p = pushlist; p != NULL ; p = p->next) {
+        if ((p->fd == fd && p->dg != NULL) ||
+                (p->fdAccepted == fd && p->dg != NULL)) {
+            return (p->dg->length - p->dg->offs);
+        }
+    }
+
+    return -1;
+}
+
+/**
+ * Fetch the datagram data into a buffer.
  *
  * @param fd The handle of the datagram port
  * @param ip The ip address of the incoming datagram
@@ -838,18 +870,29 @@ int pusheddatagram(int fd, int *ip, int *sndport, char *buf, int len) {
 
     /* Find the entry to pass off the open file descriptor. */
     for (p = pushlist; p != NULL ; p = p->next) {
-        if (p->fd == fd && p->dg != NULL) {
+        if ((p->fd == fd && p->dg != NULL) ||
+                (p->fdAccepted == fd && p->dg != NULL)) {
             /* Return the cached data. */
             *ip = p->dg->ipAddress;
             *sndport = p->dg->senderport;
-            length = p->dg->length;
+
+            length = p->dg->length - p->dg->offs;
             if (length > 0) {
-                memcpy(buf, p->dg->buffer, (len < length? len : length));
+                if (len < length) {
+                    length = len;
+                }
+                memcpy(buf, &p->dg->buffer[p->dg->offs], length);
+                
+                p->dg->offs += length;
             }
 
-            /* Destroy the cached entry after it has been read. */
-            midpFree(p->dg);
-            p->dg = NULL;
+            if (p->dg->offs >= p->dg->length) {
+                p->fdAccepted = -1;
+                /* Destroy the cached entry after it has been read. */
+                midpFree(p->dg);
+                p->dg = NULL;
+            }
+
             return length;
         }
     }
@@ -1150,9 +1193,276 @@ static void pushcleanupentry(PushEntry *p) {
     }
 }
 
+#if ENABLE_JSR_180
+/**
+ * Applies SIP filtering rules on the given push entry.
+ * IMPL_NOTE: it should be moved to JSR 180 workspace.
+ *
+ * @param pushp the push entry to filter
+ *
+ * @return a midlet suite to launch or NULL
+ */
+static char* pushApplySipFilter(PushEntry* pushp) {
+    unsigned char *sender = NULL;
+    unsigned char *acceptcontact_type = NULL;
+    unsigned char *required_type = NULL;
+    char *p;
+    char *end = NULL;
+    int required_type_len;
+
+    /*
+     * SIP Datagram and Socket connections use the SIP
+     * "From header URI" filter. First, extract the sender
+     * from the cached message, then check for a match
+     * with the filter pattern string.
+     */
+    sender = getSipFromHeaderURI((unsigned char *)
+                                 pushp->dg->buffer,
+                                 pushp->dg->length);
+
+    if (checksipfilter((unsigned char *)pushp->filter, sender)) {
+        /*
+         * Check if a media type filter is also needed.
+         */
+        for (p = pushp->value; *p; p++) {
+            if (midp_strncasecmp(
+                    p, "type=\"application/", 18) == 0 ) {
+                /* Extract just the quoted media type. */
+                p += 18;
+                for (end = p; *end; end++) {
+                    if (*end == '"') {
+                        /* Found end of media type subfield. */
+                        break;
+                    }
+                }
+                /* Stop scanning after media type subfield is located. */
+                break;
+            }
+        }
+
+        /*
+         * If a media type tag was specified in the connection URI,
+         * then the message is only dispatched if it contains
+         * an Accept-Contact header with a matching media feature
+         * tag.
+         */
+        if (*p != '\0') {
+            required_type_len = end - p;
+            required_type = (unsigned char *)
+                pcsl_mem_malloc(required_type_len + 1);
+
+            if (required_type != NULL) {
+                strncpy((char *)required_type, p,
+                        required_type_len);
+                required_type[required_type_len] = '\0';
+            }
+
+            /*
+             * Extract the message media type.
+             */
+            acceptcontact_type = getSipAcceptContactType(
+                (unsigned char *) pushp->dg->buffer,
+                pushp->dg->length);
+
+            if (midp_strcasecmp((char *)required_type,
+                    (char*)acceptcontact_type) == 0) {
+                REPORT_INFO2(LC_PROTOCOL,
+                    "SIP Push Message Media Type Matched: %s == %s",
+                    required_type,acceptcontact_type);
+                midpFree(sender);
+                midpFree(acceptcontact_type);
+                midpFree(required_type);
+
+                /* Required type matched. */
+                return midpStrdup(pushp->value);
+            }
+
+            REPORT_INFO2(LC_PROTOCOL,
+                "SIP Push Message Media Type Filtered: %s != %s",
+                required_type,acceptcontact_type);
+
+            midpFree(required_type);
+        } else {
+            /* No type required. */
+            midpFree(sender);
+            return midpStrdup(pushp->value);
+        }
+    }
+
+    midpFree(sender);
+
+    /*
+     * Dispose of the filtered push request.
+     * Release any cached packets.
+     */
+    pushcheckinentry(pushp);
+
+    return NULL;
+}
+#endif
+
+#if ENABLE_SERVER_SOCKET
+/**
+ * Accepts the incoming connection.
+ *
+ * @param pushp push entry with information about the server socket
+ * @param prevState state of the push entry before transition to LAUNCH_PENDING
+ *
+ * @return a midlet suite to launch or NULL
+ */
+static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
+    int status;
+    char ipAddress[MAX_HOST_LENGTH];
+    unsigned char ipBytes[MAX_ADDR_LENGTH];
+    void *clientHandle;
+    void *context;
+
+    /*
+     * accept0() returns a brand new client socket descriptor.
+     * So resource check should be done against a client socket
+     * limit.
+     *
+     * IMPL_NOTE : an IOException should be thrown when the resource
+     * is not available, but since this is not a shared code, only
+     * NULL is returned that would result in returning -1
+     * to getMIDlet0().
+     */
+    if (midpCheckResourceLimit(RSC_TYPE_TCP_CLI, 1) == 0) {
+        REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit exceeded for"
+                                 " TCP client sockets");
+        pushp->fdsock = -1;
+        pushp->state = prevState;
+        return NULL;
+    }
+
+#ifdef ENABLE_JSR_180
+    if (prevState == WAITING_DATA) {
+        pushp->fdAccepted = pushp->fdsock;
+        status = pcsl_socket_read_finish(
+            (void *)pushp->fdsock, pushp->dg->buffer,
+            MAX_DATAGRAM_LENGTH, &(pushp->dg->length),
+            &context);
+
+        if (status != PCSL_NET_SUCCESS) {
+            /*
+             * Receive failed - no data available.
+             * Cancel the launch pending.
+             */
+            REPORT_ERROR1(LC_PUSH,
+            "(Push) Cannot receive data, errno = %d\n",
+                pcsl_network_error((void*)pushp->fdsock));
+            pushp->state = prevState;
+            return NULL;
+        }
+
+        return pushApplySipFilter(pushp);
+    } else
+#endif /* ENABLE_JSR_180 */
+    {
+        /*
+         * For a server socket connection, accept the inbound
+         * socket connection so the end point filter can be checked.
+         */
+        status = pcsl_serversocket_accept_start((void*)pushp->fd,
+            &clientHandle, &context);
+
+        if (status != PCSL_NET_SUCCESS) {
+            /*
+             * Can't accept the connection.
+             * Cancel the launch pending.
+             */
+            REPORT_ERROR1(LC_PUSH,
+                "(Push) Cannot accept serversocket, errno = %d\n",
+                pcsl_network_error((void*)pushp->fd));
+            pushp->state = prevState;
+            return NULL;
+        }
+    }
+
+    /* Update the resource count for client sockets */
+    if (midpIncResourceCount(RSC_TYPE_TCP_CLI, 1) == 0) {
+        REPORT_INFO(LC_PROTOCOL,
+                    "(Push)Resource limit update error");
+    }
+
+    pushp->fdsock = (int)clientHandle;
+
+    pcsl_socket_getremoteaddr((void *)pushp->fdsock, ipAddress);
+
+#if ENABLE_JSR_180
+    if (pushp->isSIPEntry) {
+        pushp->state = WAITING_DATA;
+
+        pushp->dg = (DatagramEntry*) midpMalloc(sizeof (DatagramEntry));
+        if (pushp->dg == NULL) {
+            pushp->state = prevState;
+            return NULL;
+        }
+
+        pushp->dg->offs = 0;
+
+        /* Set the raw IP address */
+        memcpy(&(pushp->dg->ipAddress), ipBytes, MAX_ADDR_LENGTH);
+
+        memset(ipAddress, '\0', MAX_HOST_LENGTH);
+        strcpy(ipAddress, pcsl_inet_ntoa(&ipBytes));
+
+        status = pcsl_socket_read_start(
+            (void *)pushp->fdsock, pushp->dg->buffer,
+            MAX_DATAGRAM_LENGTH, &(pushp->dg->length), &context);
+
+        if (status == PCSL_NET_SUCCESS) {
+            status = pcsl_socket_read_finish(
+                (void *)pushp->fdsock, pushp->dg->buffer,
+                MAX_DATAGRAM_LENGTH, &(pushp->dg->length),
+                &context);
+
+            if (status != PCSL_NET_SUCCESS) {
+                /*
+                 * Receive failed - no data available.
+                 * Cancel the launch pending.
+                 */
+                REPORT_ERROR1(LC_PUSH,
+                    "(Push) Cannot receive data, errno = %d\n",
+                    pcsl_network_error((void*)pushp->fdsock));
+                pushp->state = prevState;
+                return NULL;
+            }
+
+            return pushApplySipFilter(pushp);
+        } if (status == PCSL_NET_WOULDBLOCK) {
+            pcsl_add_network_notifier((void *)pushp->fdsock,
+                PCSL_NET_CHECK_READ);
+            return NULL;
+        } else {
+            midpFree(pushp->dg);
+            pushp->dg = NULL;
+            pushp->state = prevState;
+            return NULL;
+        }
+    } else
+#endif
+    /* Datagram and Socket connections use the IP filter. */
+    /* SIP has its own filtering mechanism applied above. */
+    if (checkfilter(pushp->filter, ipAddress)) {
+        return midpStrdup(pushp->value);
+    }
+
+    /*
+     * Dispose of the filtered push request.
+     * Close any accepted socket not accessed, yet.
+     */
+    pushcheckinentry(pushp);
+    
+    return NULL;
+}
+#endif
+
 /**
  * Lookup the push entry, given a handle.
+ *
  * @param fd The handle to a push connection
+ *
  * @return The full text push entry from the push list
  */
 char *pushfindfd(int fd) {
@@ -1182,7 +1492,7 @@ char *pushfindfd(int fd) {
                 }
             }
 
-            temp_state =  pushp->state;
+            temp_state = pushp->state;
             pushp->state = LAUNCH_PENDING;
 
 #ifdef ENABLE_JSR_82
@@ -1213,6 +1523,8 @@ char *pushfindfd(int fd) {
                     pushp->state = temp_state;
                     return NULL;
                 }
+
+                pushp->dg->offs = 0;
 
                 status = pcsl_datagram_read_finish(
                         (void *)pushp->fd, ipBytes,
@@ -1249,85 +1561,12 @@ char *pushfindfd(int fd) {
                 return NULL;
 #if ENABLE_SERVER_SOCKET
             } else if (pushIsSocketConnection(pushp->value)) {
-                void *clientHandle;
-                void *context;
-                
-                /*
-                 * accept0() returns a brand new client socket descriptor.
-                 * So resource check should be done against a client socket
-                 * limit.
-                 *
-                 * IMPL_NOTE : an IOException should be thrown when the resource
-                 * is not available, but since this is not a shared code, only
-                 * NULL is returned that would result in returning -1
-                 * to getMIDlet0().
-                 */
-                if (midpCheckResourceLimit(RSC_TYPE_TCP_CLI, 1) == 0) {
-                    REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit exceeded for"
-                                             " TCP client sockets");
-                    pushp->fdsock = -1;
-                    pushp->state = temp_state;
-                    return NULL;
-                }
-
-                /*
-                 * For a server socket connection, accept the inbound
-                 * socket connection so the end point filter can be checked.
-                 */
-                status = pcsl_serversocket_accept_start((void*)pushp->fd,
-                    &clientHandle, &context);
-
-                if (status != PCSL_NET_SUCCESS) {
-                    /*
-                     * Receive failed - no data available.
-                     * cancel the launch pending
-                     */
-                    REPORT_ERROR1(LC_PUSH,
-                        "(Push)Cannot accept serversocket, errno = %d\n",
-                        pcsl_network_error((void*)pushp->fd));
-                    pushp->state = temp_state;
-                    return NULL;
-                }
-
-                /* Update the resource count for client sockets */
-                if (midpIncResourceCount(RSC_TYPE_TCP_CLI, 1) == 0) {
-                    REPORT_INFO(LC_PROTOCOL,
-                                "(Push)Resource limit update error");
-                }
-
-                pushp->fdsock = (int)clientHandle;
-
-                pcsl_socket_getremoteaddr((void *)pushp->fdsock, ipAddress);
-
-                /* Datagram and Socket connections use the IP filter. */
-                if (
-#if ENABLE_JSR_180
-                    /* SIP has its own filtering mechanism */
-                    !strncmp(pushp->value, "sip", 3) ||
-#endif
-                        checkfilter(pushp->filter, ipAddress)) {
-                    return midpStrdup(pushp->value);
-                }
-
-                /*
-                 * Dispose of the filtered push request.
-                 * Close any accepted socket not accessed, yet.
-                 */
-                pushcheckinentry(pushp);
-                return NULL;
+                return pushAcceptConnection(pushp, temp_state);
 #endif
             }
 #if ENABLE_JSR_180
             /* Check for JSR180 SIP/SIPS connections (UDP). */
-            else if ((strncmp(pushp->value, "sips:", 5) == 0) ||
-                     (strncmp(pushp->value, "sip:", 4) == 0)) {
-                unsigned char *sender = NULL;
-                unsigned char *acceptcontact_type = NULL;
-                unsigned char *required_type = NULL;
-                char *p;
-                char *end = NULL;
-                int required_type_len;
-
+            else if (pushp->isSIPEntry) {
                 /*
                  * Read the SIP datagram and save it til the
                  * application reads it.
@@ -1338,6 +1577,8 @@ char *pushfindfd(int fd) {
                     pushp->state = temp_state;
                     return NULL;
                 }
+
+                pushp->dg->offs = 0;
 
                 status = pcsl_datagram_read_finish(
                     (void *)pushp->fd, ipBytes,
@@ -1359,94 +1600,7 @@ char *pushfindfd(int fd) {
                              "SIP Push Message: %s",
                              pushp->dg->buffer);
 
-                /*
-                 * SIP Datagram and Socket connections use the SIP
-                 * "From header URI" filter. First, extra the sender
-                 * from the cached message, then check for a match
-                 * with the filter pattern string.
-                 */
-                sender = getSipFromHeaderURI((unsigned char *)
-                                             pushp->dg->buffer,
-                                             pushp->dg->length);
-
-                if (checksipfilter((unsigned char *)pushp->filter,
-                                   sender)) {
-                    /*
-                     * Check if a media type filter is also needed.
-                     */
-                    for (p = pushp->value; *p; p++) {
-                        if (midp_strncasecmp(
-                                p, "type=\"application/", 18) == 0 ) {
-                            /* Extract just the quoted media type. */
-                            p += 18;
-                            for (end = p; *end; end++) {
-                                if (*end == '"') {
-                                    /* Found end of media type subfield. */
-                                    break;
-                                }
-                            }
-                            /* Stop scanning after media type subfield is located. */
-                            break;
-                        }
-                    }
-
-                    /*
-                     * If a media type tag was specified in the connection URI,
-                     * then the message is only dispatched if it contains
-                     * an Accept-Contact header with a matching media feature
-                     * tag.
-                     */
-                    if (*p != '\0') {
-                        required_type_len = end - p;
-                        required_type = (unsigned char *)
-                            pcsl_mem_malloc(required_type_len + 1);
-
-                        if (required_type != NULL) {
-                            strncpy((char *)required_type, p,
-                                    required_type_len);
-                            required_type[required_type_len] = '\0';
-                        }
-
-                        /*
-                         * Extract the message media type.
-                         */
-                        acceptcontact_type = getSipAcceptContactType(
-                            (unsigned char *) pushp->dg->buffer,
-                            pushp->dg->length);
-
-                        if (midp_strcasecmp((char *)required_type,
-                                (char*)acceptcontact_type) == 0) {
-                            REPORT_INFO2(LC_PROTOCOL,
-                                "SIP Push Message Media Type Matched: %s == %s",
-                                required_type,acceptcontact_type);
-                            midpFree(sender);
-                            midpFree(acceptcontact_type);
-                            midpFree(required_type);
-
-                            /* Required type matched. */
-                            return midpStrdup(pushp->value);
-                        }
-
-                        REPORT_INFO2(LC_PROTOCOL,
-                            "SIP Push Message Media Type Filtered: %s != %s",
-                            required_type,acceptcontact_type);
-
-                        midpFree(required_type);
-                    } else {
-                        /* No type required. */
-                        midpFree(sender);
-                        return midpStrdup(pushp->value);
-                    }
-                }
-
-                midpFree(sender);
-
-                /*
-                 * Dispose of the filtered push request.
-                 * Release any cached datagrams.
-                 */
-                pushcheckinentry(pushp);
-                return NULL;
+                return pushApplySipFilter(pushp);
             }
 #endif
 
@@ -1474,7 +1628,7 @@ char *pushfindfd(int fd) {
      * an alarm time. If found, clear the entry so it will
      * not fire again.
      */
-    for (alarmp = alarmlist; alarmp != NULL ; alarmp = alarmtmp) {
+    for (alarmp = alarmlist; alarmp != NULL; alarmp = alarmtmp) {
         alarmtmp = alarmp->next;
         if (alarmp->timerHandle == fd) {
             alarmentry = midpStrdup(alarmp->midlet);
@@ -1491,6 +1645,7 @@ char *pushfindfd(int fd) {
             }
         }
     }
+    
     return NULL;
 }
 
@@ -1666,8 +1821,8 @@ char *pushfindsuite(char *store, int available) {
  * in memory cache representation.
  *
  * @param pushfd file descriptor for reading
- * @param startListening if KNI_TRUE the push system will listen for incoming data
- *    on the push connections.
+ * @param startListening if KNI_TRUE the push system will listen for incoming
+ *                       data on the push connections.
  * @return <tt>0</tt> if successful, <tt>-1</tt> if there was an error opening
  * the push registry file, <tt>-2</tt> if there was a memory allocation failure
  */
@@ -1708,15 +1863,18 @@ static int parsePushList(int pushfd, int startListening) {
             pe->filter = pushfilter(pe->value);
             pe->fd = -1;
             pe->fdsock = -1;
-            pe->state = AVAILABLE ;
+            pe->state = AVAILABLE;
             pe->dg = NULL;
             pe->isWMAEntry = KNI_FALSE;
             pe->isWMAMessCached = KNI_FALSE;
             pe->appID = NULL;
+#if ENABLE_JSR_180
+            pe->isSIPEntry = KNI_FALSE;
+            pe->fdAccepted = -1;
+#endif
 
             if (startListening) {
-                pushProcessPort(buffer, &(pe->fd), &(pe->port),
-                                &(pe->appID), &(pe->isWMAEntry));
+                pushProcessPort(buffer, pe);
                 if (pe->fd != -1) {
                     pe->state = CHECKED_IN;
                     pushAddNetworkNotifier(pe);
@@ -1752,14 +1910,18 @@ static int parsePushList(int pushfd, int startListening) {
  * the connection registry until needed by the
  * application level connection open request.
  *
- * @param buffer A full-text push entry string from the registry
- * @param fd A pointer to a handle. Used to return the open handle
- * @param port A pointer to a portId. Used to return the port to the caller
- * @param appID Application ID
- * @param isWMAEntry Set to KNI_TRUE for a WMA connection, KNI_FALSE otherwise
+ * @param pe push entry; the following fields are used:
+ * <ul>
+ * <li>buffer A full-text push entry string from the registry</li>
+ * <li>fd A pointer to a handle. Used to return the open handle</li>
+ * <li>port A pointer to a portId. Used to return the port to the caller</li>
+ * <li>appID Application ID</li>
+ * <li>isWMAEntry set to KNI_TRUE for a WMA connection, KNI_FALSE otherwise</li>
+ * <li>isSipEntry set to KNI_TRUE for a SIP/SIPS connection,
+                  KNI_FALSE otherwise</li>
+ * </ul>
  */
-static void pushProcessPort(char *buffer, int *fd, int *port,
-                            char **appID, jboolean *isWMAEntry) {
+static void pushProcessPort(char *buffer, PushEntry* pe) {
     char *p;
     int colon_found;
     void *handle;
@@ -1767,15 +1929,17 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
     char *exception = NULL;
     int status;
 
+    if (buffer == NULL || pe == NULL) {
+        return;
+    }
+
     /*
      * Flag that controls port number calculation.
      * Port number is not meaningful for protocols like MMS.
      */
     jboolean calcPort = KNI_TRUE;
 
-    (void)appID;
-
-    *isWMAEntry = KNI_FALSE;
+    pe->isWMAEntry = KNI_FALSE;
 
     /*
      * Open the file descriptor so it can be monitored
@@ -1786,7 +1950,7 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
      */
     p = buffer;
     colon_found = 0;
-    *port = -1;
+    pe->port = -1;
 
 #if ENABLE_JSR_82
     {
@@ -1794,7 +1958,7 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
         if (bt_push_parse_url(buffer, &port, NULL) == BT_RESULT_SUCCESS) {
             bt_handle_t handle = bt_push_start_server(&port);
             if (handle == BT_INVALID_HANDLE) {
-                *fd = -1;
+                pe->fd = -1;
                 return;
             }
             *fd = (int)handle;
@@ -1807,6 +1971,7 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
     /* Check for JSR180 SIP/SIPS connections. */
     if ((strncmp(buffer, "sips:", 5) == 0) ||
             (strncmp(buffer, "sip:", 4) == 0)) {
+        pe->isSIPEntry = KNI_TRUE;
         calcPort = KNI_FALSE;
 
         if (strncmp(buffer, "sips:", 5) == 0) {
@@ -1823,10 +1988,10 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
          */
         if (*p == '*') {
             /* Shared connections must include media. */
-            *port = 5060;
+            pe->port = 5060;
         } else {
             /* Dedicated ports may also include media. */
-            *port = atoi(p);
+            pe->port = atoi(p);
         }
 
         /* fall down in 'for' bellow */
@@ -1846,8 +2011,8 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
 #if ENABLE_JSR_205
             if (isMMSProtocol(buffer)) {
                 calcPort = KNI_FALSE;
-                *port = -1;
-                *appID = getMMSAppID(buffer);
+                pe->port = -1;
+                pe->appID = getMMSAppID(buffer);
             }
 #endif
             /*
@@ -1855,7 +2020,7 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
             * connection string
             */
             if (calcPort) {
-                *port = atoi(p);
+                pe->port = atoi(p);
             }
             
             if (pushIsDatagramConnection(buffer)) {
@@ -1866,20 +2031,21 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
                 if (midpCheckResourceLimit(RSC_TYPE_UDP, 1) == 0) {
                     REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit exceeded for"
                                              " datagrams");
-                    *fd = -1;
+                    pe->fd = -1;
                     exception = (char *)midpIOException;
                 } else {
-                    status = pcsl_datagram_open_start(*port, &handle, &context);
+                    status = pcsl_datagram_open_start(pe->port,
+                                                      &handle, &context);
 
                     if (status == PCSL_NET_SUCCESS) {
-                        *fd = (int) handle;
+                        pe->fd = (int) handle;
                         /* Update the resource count  */
                         if (midpIncResourceCount(RSC_TYPE_UDP, 1) == 0) {
                             REPORT_INFO(LC_PROTOCOL, "(Push)Datagrams: Resource"
                                                      " limit update error");
                         }
                     } else {
-                        *fd = -1;
+                        pe->fd = -1;
                         exception = (char *)midpIOException;
                     }
                 }
@@ -1890,20 +2056,21 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
                  * the policy in ResourceLimiter
                  */
                 if (midpCheckResourceLimit(RSC_TYPE_TCP_SER, 1) == 0) {
-                    REPORT_INFO(LC_PROTOCOL, "Resource limit exceeded"
+                    REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit exceeded"
                                              " for TCP server sockets");
-                    *fd = -1;
+                    pe->fd = -1;
                     exception = (char *)midpIOException;
                 } else {
                     /* Open the server socket */
-                    status = pcsl_serversocket_open(*port, &handle);
+                    status = pcsl_serversocket_open(pe->port, &handle);
 
                     if (status == PCSL_NET_SUCCESS) {
-                        *fd = (int) handle;
+                        pe->fd = (int) handle;
+                        
                         /* Update the resource count  */
                         if (midpIncResourceCount(RSC_TYPE_TCP_SER, 1) == 0) {
-                            REPORT_INFO(LC_PROTOCOL, "TCP Server: Resource"
-                                        " limit update error");
+                            REPORT_INFO(LC_PROTOCOL, "(Push)TCP Server: "
+                                        "Resource limit update error");
                         }
                     } else {
                         /**
@@ -1922,10 +2089,10 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
             } else {
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
                 /* check for sms,cbs or mms connection */
-                wmaPushProcessPort(buffer, fd, *port,
-                    suiteIdFromChars(pushstorage(buffer, 3)), *appID);
-                if (*fd != -1) {
-                    *isWMAEntry = KNI_TRUE;
+                wmaPushProcessPort(buffer, &pe->fd, &pe->port,
+                    suiteIdFromChars(pushstorage(buffer, 3)), &pe->appID);
+                if (pe->fd != -1) {
+                    pe->isWMAEntry = KNI_TRUE;
                 }
 #else
                 midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
@@ -2066,7 +2233,6 @@ static void pushListFree() {
     }
 }
 
-
 /**
  * Find blocking thread for a given socket push handle. Walks through the
  * registry of push entries for a handle that matches the argument. If one is
@@ -2075,7 +2241,7 @@ static void pushListFree() {
  *
  * @param handle The handle to test for in the push registry
  * @return <tt>0</tt> if no entry is found. Otherwise, <tt>handle</tt> is
- *          returned
+ *         returned
  */
 int findPushBlockedHandle(int handle) {
     PushEntry *pushp, *pushtmp;
@@ -2111,7 +2277,8 @@ int findPushTimerBlockedHandle(int handle) {
     for (alarmp = alarmlist; alarmp != NULL ; alarmp = alarmtmp) {
         alarmtmp = alarmp->next;
         ASSERT((alarmp->state == CHECKED_IN) || (alarmp->state == AVAILABLE));
-        /*alarmp->state == AVAILABLE iff timer has been canceled or updated*/
+        
+        /* alarmp->state == AVAILABLE iff timer has been canceled or updated */
         if ((handle == alarmp->timerHandle) && (alarmp->state == CHECKED_IN)) {
             alarmp->state = RECEIVED_EVENT;
 
@@ -2147,14 +2314,12 @@ int pushpoll() {
     /* Find pending network push. */
     if (pushlength > 0 ) {
         for (i = 0, pe = pushlist; i < pushlength && pe != NULL; i++) {
-
             if (pe->state == AVAILABLE) {
                 /*
                  * When pushopen was called the port for this entry was busy,
                  * so try again.
                  */
-                pushProcessPort(pe->value, &(pe->fd), &(pe->port),
-                                &(pe->appID), &(pe->isWMAEntry));
+                pushProcessPort(pe->value, pe);
                 if (pe->fd != -1) {
                     REPORT_INFO1(LC_PUSH,
                         "Push network signal on descriptor %x", pe->fd);
@@ -2164,7 +2329,7 @@ int pushpoll() {
                 }
             }
 
-            if (pe->state == RECEIVED_EVENT) {
+            if (pe->state == RECEIVED_EVENT || pe->state == WAITING_DATA) {
                 return pe->fd;
             }
 
@@ -2444,14 +2609,15 @@ static void alarmstart(AlarmEntry *entry, jlong alarm) {
 
     entry->wakeup = alarm;
     time = alarm - (jlong)midp_getCurrentTime();
+
     if (time >= 0) {
-    /* if not expired, check timer event */
-    entry->state = CHECKED_IN;
-    entry->timerHandle = createTimerHandle((int)entry, time);
+        /* if not expired, check timer event */
+        entry->state = CHECKED_IN;
+        entry->timerHandle = createTimerHandle((int)entry, time);
     } else {
-    /* if expired, flag the timer as triggered */
-    entry->state = RECEIVED_EVENT;
-    entry->timerHandle = 0;
+        /* if expired, flag the timer as triggered */
+        entry->state = RECEIVED_EVENT;
+        entry->timerHandle = 0;
     }
 }
 

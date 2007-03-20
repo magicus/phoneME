@@ -50,14 +50,23 @@ extern "C" {
 /**
  * Defines for the state field of _pushentry and _alarmentry
  */
-#define LAUNCH_PENDING	   (-5)
-#define RECEIVED_EVENT	   (-4)
+#define WAITING_DATA   (-6)
+#define LAUNCH_PENDING (-5)
+#define RECEIVED_EVENT (-4)
 #define CHECKED_IN	   (-3)
 #define CHECKED_OUT	   (-2)
 #define AVAILABLE	   (-1)
 
 /**
- *  Fetch datagram data into a buffer
+ * Returns the number of buffered bytes for the given socket.
+ *
+ * @param fd handle of the socket
+ * @return number of cached bytes of -1 if none
+ */
+int pushcacheddatasize(int fd);
+
+/**
+ * Fetch datagram data into a buffer
  * 
  * @param fd The handle of the datagram port
  * @param ip The IP address of the incoming datagram

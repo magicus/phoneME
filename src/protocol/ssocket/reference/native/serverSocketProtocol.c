@@ -105,7 +105,7 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_open0(void) {
 
         pushReturn = pushcheckout("socket", port,
                                   (char*)midp_suiteid2chars(suiteId));
-
+                                  
         /*
          * pushcheckout() returns -1 if the handle wasn't found, -2 if it's
          * already in use by another suite, otherwise a valid checked-out

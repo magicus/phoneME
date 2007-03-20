@@ -34,6 +34,7 @@
 #include <anc_indicators.h>
 #include <midpError.h>
 #include <push_server_export.h>
+#include <push_server_resource_mgmt.h>
 #include <midp_properties_port.h>
 #include <midp_logging.h>
 #include <midpResourceLimit.h>
@@ -196,7 +197,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_read0(void) {
     int status = PCSL_NET_INVALID;
     void* context = NULL;
     MidpReentryData* info;
-
+    
     length = (int)KNI_GetParameterAsInt(3);
     offset = (int)KNI_GetParameterAsInt(2);
 
@@ -210,8 +211,26 @@ Java_com_sun_midp_io_j2me_socket_Protocol_read0(void) {
     pcslHandle = (void *)(getMidpSocketProtocolPtr(thisObject)->handle);
     iStreams = (int)(getMidpSocketProtocolPtr(thisObject)->iStreams); 
 
-    REPORT_INFO3(LC_PROTOCOL, "socket::read0 o=%d l=%d fd=%d\n", 
+    REPORT_INFO3(LC_PROTOCOL, "socket::read0 o=%d l=%d fd=%d\n",
                  offset, length, (int)pcslHandle);
+
+    if (pcslHandle != INVALID_HANDLE) {
+        int ipAddress;
+        int port;
+
+        /* Check the push cache for a waiting packet. */
+        SNI_BEGIN_RAW_POINTERS;
+        bytesRead = pusheddatagram((int)pcslHandle, &ipAddress, &port,
+                        (char*)&(JavaByteArray(bufferObject)[offset]),
+                        length);
+        SNI_END_RAW_POINTERS;
+
+        if (bytesRead > 0) {
+            printf(">>> Returning %d cached bytes!\n", bytesRead);
+        }
+    }
+
+if (bytesRead <= 0) {
 
     info = (MidpReentryData*)SNI_GetReentryData(NULL);
 
@@ -282,6 +301,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_read0(void) {
     }
 
     ANC_STOP_NETWORK_INDICATOR;
+}
 
     KNI_EndHandles();
     KNI_ReturnInt((jint)bytesRead);
@@ -430,14 +450,20 @@ Java_com_sun_midp_io_j2me_socket_Protocol_available0(void) {
     } else {
         int status;
 
-        status = pcsl_socket_available(pcslHandle, &bytesAvailable);
-        /* status is only PCSL_NET_SUCCESS or PCSL_NET_IOERROR */
-        if (status == PCSL_NET_IOERROR) {
-            bytesAvailable = 0;
-            midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
-                    "IOError %d during socket::available0", 
-                    pcsl_network_error(pcslHandle));
-            KNI_ThrowNew(midpIOException, gKNIBuffer);
+        /* Check the push cache for a waiting packet. */
+        bytesAvailable = pushcacheddatasize((int)pcslHandle);
+        if (bytesAvailable <= 0) {
+            status = pcsl_socket_available(pcslHandle, &bytesAvailable);
+            /* status is only PCSL_NET_SUCCESS or PCSL_NET_IOERROR */
+            if (status == PCSL_NET_IOERROR) {
+                bytesAvailable = 0;
+                midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
+                        "IOError %d during socket::available0",
+                        pcsl_network_error(pcslHandle));
+                KNI_ThrowNew(midpIOException, gKNIBuffer);
+            }
+        } else {
+            printf(">>> Available %d cached bytes\n", bytesAvailable);
         }
     }
 
