@@ -119,6 +119,7 @@ class CldcMIDletStateListener implements MIDletStateListener {
              */
             MIDletSuiteUtils.vmEndStartUp(
                classSecurityToken, MIDletSuiteUtils.getIsolateId());
+            vmInMidletStartMode = false;
         }
     }
 

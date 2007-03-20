@@ -54,7 +54,7 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
         isolateId = MIDletSuiteUtils.getIsolateId();
         amsIsolateId = MIDletSuiteUtils.getAmsIsolateId();
 
-        // Hint VM of startup beginning
+        // Hint VM of startup beginning: system init phase
         MIDletSuiteUtils.vmBeginStartUp(isolateId);
 
         super.init();
@@ -114,6 +114,19 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
 
         TrustedMIDletIcon.initClass(
             displayEventHandler.getTrustedMIDletIcon());
+    }
+
+    /**
+     * Starts MIDlet suite in the prepared environment
+     * Overrides super method to hint VM of system startup
+     * phase is ended 
+     *
+     * @throws Exception can be thrown during execution
+     */
+    protected void startSuite() throws Exception {
+        // Hint VM of startup finish: system init phase 
+        MIDletSuiteUtils.vmEndStartUp(isolateId);
+        super.startSuite();
     }
 
     /**
