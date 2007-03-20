@@ -595,7 +595,8 @@ public class DirectPlayer extends BasicPlayer
         // #endif ]
         // #ifdef MIDI_CONTROL [
         if (mimeType.equals(Configuration.MIME_AUDIO_MIDI) || 
-            mimeType.equals(Configuration.MIME_AUDIO_MIDI_2)) {
+            mimeType.equals(Configuration.MIME_AUDIO_MIDI_2) ||
+            mimeType.equals(Configuration.MIME_AUDIO_SP_MIDI)) {
             if (type.equals(prefix + micName) && SUPPORT_MIDI_CONTROL) {
                 if (midiControl == null) 
                     midiControl = new DirectMIDIControl(this);
