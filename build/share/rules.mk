@@ -743,7 +743,6 @@ clean::
 	rm -rf $(CVM_BUILD_TOP)/.system_properties.c
 	rm -rf .DefaultLocaleList.java
 	rm -rf $(CVM_BUILD_FLAGS_FILE)
-	rm -rf $(CVM_MIDP_BUILDDIR)
 	rm -rf $(BUILDFLAGS_JAVA)
 	rm -rf $(CVM_BUILDTIME_CLASSESDIR) \
 	       $(CVM_TEST_CLASSESDIR) $(CVM_DEMO_CLASSESDIR) *_classes
