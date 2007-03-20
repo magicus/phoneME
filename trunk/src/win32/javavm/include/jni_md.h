@@ -33,6 +33,7 @@
 #define _WIN32_JNI_MD_H
 
 #define JNIEXPORT __declspec(dllexport)
+#define JNIIMPORT __declspec(dllimport)
 #define JNICALL
 
 #define JNI_LIB_PREFIX "lib"
