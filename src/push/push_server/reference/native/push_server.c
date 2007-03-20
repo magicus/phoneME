@@ -1864,6 +1864,7 @@ static int parsePushList(int pushfd, int startListening) {
             pe->filter = pushfilter(pe->value);
             pe->fd = -1;
             pe->fdsock = -1;
+            pe->fdAccepted = -1;
             pe->state = AVAILABLE;
             pe->dg = NULL;
             pe->isWMAEntry = KNI_FALSE;
@@ -1871,7 +1872,6 @@ static int parsePushList(int pushfd, int startListening) {
             pe->appID = NULL;
 #if ENABLE_JSR_180
             pe->isSIPEntry = KNI_FALSE;
-            pe->fdAccepted = -1;
 #endif
 
             if (startListening) {
