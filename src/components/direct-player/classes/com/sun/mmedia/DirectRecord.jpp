@@ -227,6 +227,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
                 }
                 player.sendEvent(PlayerListener.RECORD_STOPPED, new Long(player.getMediaTime()));
     		    recording = false;
+                hasDataToCommit = true;
     	    }
         }
 	}
@@ -255,49 +256,53 @@ public final class DirectRecord implements RecordControl, DirectControls {
         // stop
         stopRecord(false);
 
-        if (1 != nCommit(player.hNative)) {
-            cleanUp();
-            throw new IOException("I/O error occurs during commit");
-        }
+        if( hasDataToCommit )
+        {
 
-        // Get recorded data
-        if (stream != null) {
-            int offset = 0;
-            int getSize = 1024 * 50;    // 50 Kbytes
-            if (httpCon != null) {
-                getSize = 100;          // 100 bytes
-            }
-            dataBuffer = new byte[getSize];
-            int size = nGetRecordedSize(player.hNative);
-
-            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-                Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
-                    "Recorded data size is " + size);
+            if (1 != nCommit(player.hNative)) {
+                cleanUp();
+                throw new IOException("I/O error occurs during commit");
             }
 
-            while (size >= getSize) {
-                if (1 != nGetRecordedData(player.hNative, offset, getSize, dataBuffer)) {
-                    cleanUp();
-                    throw new IOException("I/O error occurs during commit");
+            // Get recorded data
+            if (stream != null) {
+                int offset = 0;
+                int getSize = 1024 * 50;    // 50 Kbytes
+                if (httpCon != null) {
+                    getSize = 100;          // 100 bytes
                 }
-                size -= getSize;
-                offset += getSize;
-                // Write to stream
-                stream.write(dataBuffer);
-                stream.flush();
-            }
+                dataBuffer = new byte[getSize];
+                int size = nGetRecordedSize(player.hNative);
 
-            if (size > 0) {
-                dataBuffer = new byte[size];
-                if (1 != nGetRecordedData(player.hNative, offset, size, dataBuffer)) {
-                    cleanUp();
-                    throw new IOException("I/O error occurs during commit");
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
+                        "Recorded data size is " + size);
                 }
-                stream.write(dataBuffer);
-                stream.flush();
+
+                while (size >= getSize) {
+                    if (1 != nGetRecordedData(player.hNative, offset, getSize, dataBuffer)) {
+                        cleanUp();
+                        throw new IOException("I/O error occurs during commit");
+                    }
+                    size -= getSize;
+                    offset += getSize;
+                    // Write to stream
+                    stream.write(dataBuffer);
+                    stream.flush();
+                }
+
+                if (size > 0) {
+                    dataBuffer = new byte[size];
+                    if (1 != nGetRecordedData(player.hNative, offset, size, dataBuffer)) {
+                        cleanUp();
+                        throw new IOException("I/O error occurs during commit");
+                    }
+                    stream.write(dataBuffer);
+                    stream.flush();
+                }
+            } else if (locator != null && recordingByNative == false) {
+                // Need revisit
             }
-        } else if (locator != null && recordingByNative == false) {
-            // Need revisit
         }
 
         // Release native resources
@@ -317,12 +322,14 @@ public final class DirectRecord implements RecordControl, DirectControls {
         dataBuffer = null;
         locator = null;
         recordingByNative = false;
+        hasDataToCommit = false;
     }
 
     /**
      * Reset the current recording
      */
     public synchronized void reset() throws IOException {
+        hasDataToCommit = false;
         if (player == null)
             return;
 
@@ -523,6 +530,8 @@ public final class DirectRecord implements RecordControl, DirectControls {
     private boolean recordingByNative; // false
     /* Recording data buffer */
     private byte[] dataBuffer;
+
+    private boolean hasDataToCommit=false;
 
 // #ifdef USE_FILE_CONNECTION [
     private FileConnection fileCon;
