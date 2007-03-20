@@ -136,4 +136,7 @@ endif
 
 force_midp_build:
 
+clean::
+	rm -rf $(CVM_MIDP_BUILDDIR)
+
 endif
