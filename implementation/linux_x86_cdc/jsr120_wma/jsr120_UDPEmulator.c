@@ -1,14 +1,33 @@
 /*
  *
- * Copyright 2004 Sun Microsystems, Inc. All rights reserved.
- * SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
  */
 
 /**
  * @file
  *
  * Simple implementation of wma UDP Emulator.
- * The messages supposed to be received from JSR205Tool.jar:
+ * The messages supposed to be received from WMATool.jar:
  * bash-3.1$ java -jar midp/bin/i386/WMATool.jar -send mms://1234:1234 -message "blah" -multipart -verbose
  * bash-3.1$ java -jar midp/bin/i386/WMATool.jar -send sms://1234:1234 -message "blah"
  * To receive message start:
@@ -27,13 +46,13 @@
 #define DEFAULT_CBS_IN_PORT 22200
 #define DEFAULT_MMS_IN_PORT 33300
 
-#define ENABLE_JSR_205  0
+//#define ENABLE_JSR_205  0
 
 javacall_handle smsDatagramSocketHandle = NULL;
 javacall_handle cbsDatagramSocketHandle = NULL;
-//#if (ENABLE_JSR_205)
+#if (ENABLE_JSR_205)
 javacall_handle mmsDatagramSocketHandle = NULL;
-//#endif
+#endif
 
 #include <stdio.h>
 #include <pthread.h>
@@ -231,8 +250,9 @@ javacall_result finalize_wma_emulator() {
 
     close(smsDatagramSocketHandle);
     close(cbsDatagramSocketHandle);
+#if (ENABLE_JSR_205)
     close(mmsDatagramSocketHandle);
-    
+#endif
     return JAVACALL_OK;
 }
 

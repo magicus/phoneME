@@ -1,7 +1,26 @@
 /*
  *
- * Copyright 2004 Sun Microsystems, Inc. All rights reserved.
- * SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
  */
 
 /**
@@ -31,11 +50,11 @@ extern int getIntProp(const char* propName, int defaultValue);
  * send an SMS message
  *
  * Actually 
- *   - sends a datagramm to 11101 port, it can be received by JSR205Tool.jar (used in TCK tests)
+ *   - sends a datagramm to 11101 port, it can be received by WMATool.jar (used in TCK tests)
  *   - writes a message to the console (it is enough for native tests)
  * The address to send datagram is one of the following:
- *   - 127.0.0.1 if JSR_205_DATAGRAM_HOST environment variable is not send
- *   - JSR_205_DATAGRAM_HOST environment variable value (if set).
+ *   - 127.0.0.1 if JSR_120_DATAGRAM_HOST environment variable is not send
+ *   - JSR_120_DATAGRAM_HOST environment variable value (if set).
  *
  * Refer to javacall_sms.h header for complete description.
  */
@@ -58,9 +77,9 @@ int javacall_sms_send(  javacall_sms_encoding    msgType,
     int encodedSMSLength;
     char* encodedSMS;
 
-    char* IP_text = getProp("JSR_205_DATAGRAM_HOST", "127.0.0.1");
-    //JSR205Tool listens on 11101 port, but sends to 11100 port
-    int smsRemotePortNumber = getIntProp("JSR_205_SMS_OUT_PORT", 11101);
+    char* IP_text = getProp("JSR_120_DATAGRAM_HOST", "127.0.0.1");
+    //WMATool listens on 11101 port, but sends to 11100 port
+    int smsRemotePortNumber = getIntProp("JSR_120_SMS_OUT_PORT", 11101);
     printf("javacall: sms_send: %s:%i\n", IP_text, smsRemotePortNumber); fflush(stdout);
     //javacall_network_init_start();
     pAddress = getIPBytes_nonblock(IP_text);

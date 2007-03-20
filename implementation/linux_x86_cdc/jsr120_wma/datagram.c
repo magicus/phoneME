@@ -48,8 +48,6 @@ int tmp_main() {
 
 
     struct hostent *pHost = gethostbyname("localhost");
-    //int pAddrInt = *((int*)pHost->h_addr);
-    //unsigned char *pAddress = (NULL == pHost) ? NULL : (unsigned char *)pAddrInt;
     char *pAddress = pHost->h_addr_list[0];
     int port = 33300;
     char *buffer = "test message";
@@ -88,9 +86,6 @@ javacall_result javacall_datagram_open(int port, javacall_handle *pHandle)
 	return JAVACALL_FAIL;
     }
 
-    //if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-    //    perror("setsockopt");
-    //}
     *pHandle = (javacall_handle)sockfd;
 		
     return JAVACALL_OK;
@@ -139,11 +134,9 @@ int javacall_datagram_recvfrom_start(
     my_addr.sin_family = AF_INET;         // host byte order
     my_addr.sin_port = htons(*port);      // short, network byte order
     my_addr.sin_addr.s_addr = INADDR_ANY; // automatically fill with my IP
-    //memset(&(my_addr.sin_zero), '\0', 8); // zero the rest of the struct
 
     fcntl(sockfd, F_SETFL, O_NONBLOCK);
 
-    //ok = recvfrom(sockfd, buffer, length, 0, (struct sockaddr*)&addr,  &len); 
     ok = recv(sockfd, buffer, length, flags);
 
     if (errno == EWOULDBLOCK) {
@@ -307,7 +300,6 @@ int addUDPSocket(fd_set* fds, int* maxPort, int port) {
 
     *maxPort = (*maxPort > peer.sin6_port) ? *maxPort : peer.sin6_port;
 
-    //tcp_socket = socket(AF_INET, SOCK_STREAM, 0);
     sock = socket(AF_INET6, SOCK_DGRAM, 0);
     if (sock == -1) {
          perror("opening datagram socket");
@@ -358,7 +350,6 @@ void listen_sockets() {
 	
         printf("waiting...\n");
 
-        //select(max, &fds, NULL, NULL, &tv); 
         select(max + 1, &fds, NULL, NULL, NULL);
 
         fd = (FD_ISSET(smsDatagramSocketHandle, &fds)) ? smsDatagramSocketHandle :
@@ -371,6 +362,5 @@ void listen_sockets() {
     //close(smsDatagramSocketHandle);
     //close(cbsDatagramSocketHandle);
     //close(mmsDatagramSocketHandle);
-    //return NULL;
 }
 
