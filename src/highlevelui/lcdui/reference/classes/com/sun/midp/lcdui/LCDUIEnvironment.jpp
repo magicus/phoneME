@@ -33,12 +33,14 @@ import com.sun.me.gci.windowsystem.event.*;
 // #endif ENABLE_GCI
 
 // #ifdef ENABLE_CDC
-import com.sun.midp.main.TrustedMIDletIcon;
-
 import com.sun.midp.events.EventTypes;
 import com.sun.midp.events.NativeEvent;
 import com.sun.midp.configurator.Constants;
 // #endif ENABLE_CDC
+
+// #ifndef ENABLE_JUMP
+import com.sun.midp.main.TrustedMIDletIcon;
+// #endif ENABLE_JUMP
 
 /**
  * Initialize the LCDUI environment.
@@ -125,20 +127,20 @@ public class LCDUIEnvironment {
     public void initSuiteData(boolean isTrusted) {
         displayEventHandler.initSuiteData(isTrusted);
         
-	// #ifdef ENABLE_CDC
+	// #ifndef ENABLE_JUMP
         // Needed by the installer
         TrustedMIDletIcon.initClass(
             displayEventHandler.getTrustedMIDletIcon());
-        // #endif ENABLE_CDC
+        // #endif ENABLE_JUMP
     }
 
     /**   */
     public void closeSuite() {
 
-	// #ifdef ENABLE_CDC
+	// #ifndef ENABLE_JUMP
         // shutdown any preempting
 	displayEventHandler.donePreempting(null);
-	// #endif ENABLE_CDC
+	// #endif ENABLE_JUMP
     }
 
     /**

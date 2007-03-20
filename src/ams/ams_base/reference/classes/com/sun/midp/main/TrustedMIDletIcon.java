@@ -45,7 +45,7 @@ public class TrustedMIDletIcon {
      *
      * @param icon the trusted icon
      */
-    static void initClass(Image icon) {
+    public static void initClass(Image icon) {
         trustedIcon = icon;
     }
     

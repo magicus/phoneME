@@ -1310,7 +1310,7 @@ public class Graphics {
         x += transX;
         y += transY;
 
-        if ((anchor & TOP) == 0) {
+        if ((anchor & LEFT) == 0) {
             int strWidth = currentFont.stringWidth(str);
             if ((anchor & RIGHT) != 0){
                 x -= strWidth;

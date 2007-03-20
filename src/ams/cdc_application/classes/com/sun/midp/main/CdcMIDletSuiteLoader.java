@@ -142,10 +142,6 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
     protected void initSuiteEnvironment() {
         super.initSuiteEnvironment();
 
-        // Needed by the installer
-        TrustedMIDletIcon.initClass(
-            displayEventHandler.getTrustedMIDletIcon());
-
         // Init internal state from the restored command state
         externalAppId = 0;
         midletDisplayName = null;
@@ -177,16 +173,6 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
         }
 
         return suite;
-    }
-
-    /** Overrides suite close logic for the AMS task */
-    protected void closeSuite() {
-        super.closeSuite();
-
-        // shutdown any preempting
-        if (displayEventHandler != null) {
-            displayEventHandler.donePreempting(null);
-        }
     }
 
     /** Gracefully terminates VM with proper return code */
@@ -406,6 +392,8 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      */
     public Displayable registerDisplay(int displayId, String ownerClassName) {
         currentDisplayId = displayId;
+
+        lcduiEnvironment.registerDisplay(currentDisplayId);
         return null;
     }
 

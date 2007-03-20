@@ -85,11 +85,6 @@ public class MIDletContainer extends JUMPAppContainer implements
     /** True, if an app has been started. */
     private boolean appStarted;
 
-    /**
-     * Provides interface for display preemption, creation and other
-     * functionality that can not be publicly added to a javax package.
-     */
-    private DisplayEventHandler displayEventHandler;
 
     /** Stores array of active displays for a MIDlet suite isolate. */
     private DisplayContainer displayContainer;
@@ -115,11 +110,6 @@ public class MIDletContainer extends JUMPAppContainer implements
     /** Core initialization of a MIDP environment. */
     public MIDletContainer() {
         EventQueue eventQueue;
-        DisplayEventProducer displayEventProducer;
-        RepaintEventProducer repaintEventProducer;
-        DisplayEventListener displayEventListener;
-        ItemEventConsumer itemEventConsumer;
-        LCDUIEventListener lcduiEventListener;
 
         CDCInit.init();
 
@@ -132,46 +122,7 @@ public class MIDletContainer extends JUMPAppContainer implements
         eventQueue = EventQueue.getEventQueue(
             internalSecurityToken);
 
-        displayEventHandler =
-            DisplayEventHandlerFactory.getDisplayEventHandler(
-               internalSecurityToken);
-
-        displayEventProducer =
-            new DisplayEventProducer(
-                eventQueue);
-
-        repaintEventProducer =
-            new RepaintEventProducer(
-                eventQueue);
-
-        displayContainer = new DisplayContainer(
-            internalSecurityToken, 0);
-
-        /*
-         * Because the display handler is implemented in a javax
-         * package it cannot created outside of the package, so
-         * we have to get it after the static initializer of display the class
-         * has been run and then hook up its objects.
-         */
-        displayEventHandler.initDisplayEventHandler(
-            displayEventProducer,
-            this,
-            repaintEventProducer,
-            displayContainer);
-
-        displayEventListener = new DisplayEventListener(
-            eventQueue,
-            displayContainer);
-
-        /* Bad style of type casting, but DisplayEventHandlerImpl
-         * implements both DisplayEventHandler & ItemEventConsumer IFs */
-        itemEventConsumer =
-            (ItemEventConsumer)displayEventHandler;
-
-        lcduiEventListener = new LCDUIEventListener(
-            internalSecurityToken,
-            eventQueue,
-            itemEventConsumer);
+	new LCDUIEnvironment(internalSecurityToken, eventQueue, 0, this);
 
         suiteStorage =
             MIDletSuiteStorage.getMIDletSuiteStorage(internalSecurityToken);
@@ -221,7 +172,7 @@ public class MIDletContainer extends JUMPAppContainer implements
                 throw new IllegalStateException("Suite is disabled");
             }
 
-            displayEventHandler.initSuiteData(midletSuite.isTrusted());
+            lcduiEnvironment.initSuiteData(midletSuite.isTrusted());
 
             // set a each arg as property numbered from 0, first arg: "arg-0"
             if (args != null) {

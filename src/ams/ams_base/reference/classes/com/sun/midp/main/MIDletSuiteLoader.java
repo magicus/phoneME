@@ -36,6 +36,7 @@ import com.sun.midp.wma.WMACleanupMonitor;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.i18n.*;
 import com.sun.midp.log.*;
+import com.sun.midp.security.SecurityToken;
 
 /**
  * The first class loaded in VM by midp_run_midlet_with_args to initialize
@@ -136,10 +137,8 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
         MIDletProxyList.initClass(midletProxyList);
 
         // Listen for start MIDlet requests from the other isolates
-        ExecuteMIDletEventListener.startListening(
-            internalSecurityToken,
-            displayEventHandler,
-            eventQueue);
+        ExecuteMIDletEventListener.startListening(internalSecurityToken,
+						  eventQueue);
 
         // Init gloabal systems common for all isolates
         initGlobalSystems();
@@ -271,11 +270,13 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
 
     /**
      * Displays an exception message to user
+     * @param securityToken security token of the displaying System Alert.
      * @param exceptionMsg the message text
      */
-    protected void displayException(String exceptionMsg) {
-        MIDletSuiteUtils.displayException(
-            displayEventHandler, exceptionMsg);
+    protected void displayException(SecurityToken securityToken,
+				    String exceptionMsg) {
+        MIDletSuiteUtils.displayException(internalSecurityToken,
+					  exceptionMsg);
     }
 
     /**
@@ -301,7 +302,7 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
         }
 
         if (disableAlerts == 0) {
-            displayException(errorMsg);
+            displayException(internalSecurityToken, errorMsg);
         }
 
         // Error message is always obtained for logging

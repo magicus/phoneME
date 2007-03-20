@@ -81,44 +81,19 @@ abstract class AbstractMIDletSuiteLoader
      */
     protected MIDletSuite midletSuite;
 
-    // The MIDlet suite environment contains a set of event-related
-    // objects needed for each MIDlet suite execution.
-
     /** Foreground Controller adapter. */
     protected ForegroundController foregroundController;
-
-    /** Event producer for various screen change events. */
-    protected DisplayEventProducer displayEventProducer;
-
-    /**
-     * Provides interface for display preemption, creation and other
-     * functionality that can not be publicly added to a javax package.
-     */
-    protected DisplayEventListener displayEventListener;
-
-    /** Event producer for all repaint events. */
-    protected RepaintEventProducer repaintEventProducer;
 
     /** Stores array of active displays for a MIDlet suite isolate. */
     protected DisplayContainer displayContainer;
 
     /**
-     * Provides interface for display preemption, creation and other
-     * functionality that can not be publicly added to a javax package.
+     * Provides interface to lcdui initialization.
      */
-    protected DisplayEventHandler displayEventHandler;
-
-    /**
-     * Handles item events not associated directly with
-     * particular <code>Display</code>.
-     */
-    protected ItemEventConsumer itemEventConsumer;
+    protected LCDUIEnvironment lcduiEnvironment;
 
     /** Starts and controls MIDlets through the lifecycle states. */
     protected MIDletStateHandler midletStateHandler;
-
-    /** The event listener for LCDUI events. */
-    protected LCDUIEventListener lcduiEventListener;
 
     /**
      * Reports an error detected during MIDlet suite invocation.
@@ -184,46 +159,13 @@ abstract class AbstractMIDletSuiteLoader
      * specific parts
      */
     protected void createSuiteEnvironment() {
-        displayEventHandler =
-            DisplayEventHandlerFactory.getDisplayEventHandler(
-               internalSecurityToken);
+       
+       lcduiEnvironment = new LCDUIEnvironment(internalSecurityToken, 
+					       eventQueue, isolateId, 
+					       foregroundController);
 
-        displayEventProducer =
-            new DisplayEventProducer(
-                eventQueue);
-
-        repaintEventProducer =
-            new RepaintEventProducer(
-                eventQueue);
-
-        displayContainer = new DisplayContainer(
-            internalSecurityToken, isolateId);
-
-        /*
-         * Because the display handler is implemented in a javax
-         * package it cannot created outside of the package, so
-         * we have to get it after the static initializer of display the class
-         * has been run and then hook up its objects.
-         */
-        displayEventHandler.initDisplayEventHandler(
-            displayEventProducer,
-            foregroundController,
-            repaintEventProducer,
-            displayContainer);
-
-        displayEventListener = new DisplayEventListener(
-            eventQueue,
-            displayContainer);
-
-        /* Bad style of type casting, but DisplayEventHandlerImpl
-         * implements both DisplayEventHandler & ItemEventConsumer IFs */
-        itemEventConsumer =
-            (ItemEventConsumer)displayEventHandler;
-
-        lcduiEventListener = new LCDUIEventListener(
-            internalSecurityToken,
-            eventQueue,
-            itemEventConsumer);
+        displayContainer = lcduiEnvironment.getDisplayContainer(
+                           internalSecurityToken);
     }
 
     /**
@@ -234,8 +176,7 @@ abstract class AbstractMIDletSuiteLoader
      * used to initialize any per suite data.
      */
     protected void initSuiteEnvironment() {
-        displayEventHandler.initSuiteData(
-            midletSuite.isTrusted());
+        lcduiEnvironment.initSuiteData(midletSuite.isTrusted());
     }
 
     /**
@@ -265,6 +206,8 @@ abstract class AbstractMIDletSuiteLoader
              * to unlock the suite. */
             midletSuite.close();
         }
+
+        lcduiEnvironment.closeSuite();
     }
 
     /**
@@ -313,23 +256,18 @@ abstract class AbstractMIDletSuiteLoader
 
             /*
              * Prepare MIDlet suite environment, classes that only need
-             * the isolate ID can be create here.
+             * the isolate ID can be created here.
              */
             createSuiteEnvironment();
 
             /* Check to see that all of the core object are created. */
             if (foregroundController == null ||
-                displayEventProducer == null ||
-                repaintEventProducer == null ||
                 displayContainer == null ||
-                displayEventHandler == null ||
-                itemEventConsumer == null ||
-                lcduiEventListener == null ||
                 midletStateHandler == null) {
 
                 throw new
                     RuntimeException("Suite environment not complete.");
-            }
+	    }
 
             // Create suite instance ready for start
             midletSuite = createMIDletSuite();
