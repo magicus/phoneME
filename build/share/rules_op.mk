@@ -57,7 +57,7 @@ define compileJSROP
 	$(JAVAC_CMD)						\
 		-d $(2) \
 		-bootclasspath $(CVM_BUILDTIME_CLASSESDIR) 	\
-		-classpath $(JAVACLASSES_CLASSPATH)$(PS)$(JSROP_JUMP_API)$(PS)$(ABSTRACTIONS_JAR)$(4) \
+		-classpath $(JAVACLASSES_CLASSPATH)$(PS)$(JSROP_JUMP_API)$(PS)$(ABSTRACTIONS_JAR)$(PS)$(4) \
 		$(3)
 endef
 
@@ -73,7 +73,7 @@ endef
 # SUBSYSTEM_JSR_#_JAVA_FILES - list of JSR's java sources paths
 # JSR_#_JAR                  - JSR's jar file path
 define compileJSRClasses
-	$(call compileJSROP,jsr$(1),$(JSR_$(1)_BUILD_DIR)/classes,$(SUBSYSTEM_JSR_$(1)_JAVA_FILES))
+	$(call compileJSROP,jsr$(1),$(JSR_$(1)_BUILD_DIR)/classes,$(SUBSYSTEM_JSR_$(1)_JAVA_FILES),$(JSR_$(1)_EXTRA_CLASSPATH))
 	$(call makeJSROPJar,$(JSR_$(1)_JAR),$(JSR_$(1)_BUILD_DIR)/classes)
 endef
 
