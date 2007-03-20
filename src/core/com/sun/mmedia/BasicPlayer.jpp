@@ -677,7 +677,7 @@ public abstract class BasicPlayer implements Player
         sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
         
         if( !this.hasDataSource && !hasToneSequenceSet )
-	        sendEvent(PlayerListener.END_OF_MEDIA, new Long(0));
+	        sendEvent(PlayerListener.END_OF_MEDIA, new Long(getMediaTime()));
 
         // Finish any pending startup stuff in subclass
         // Typically used to start any threads that might potentially
