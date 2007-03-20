@@ -2569,25 +2569,30 @@ public class Display {
                 int[] reg = new int[4];
                 screenGraphics.getClip(reg);
 
-                int x2 = x + width;
-                int y2 = y + height;
+                int x1 = x;
+                int y1 = y;
+                int anchorX = 0;
+                int anchorY = 0;
 
-                screenGraphics.reset(x, y, x2, y2);
                 // #ifdef ENABLE_CHAMELEON
                 // Draw the off-screen buffer into the area that takes the title
                 // and ticker bar heights into account.
-                screenGraphics.drawImage(offscreen_buffer,
-                                         (Display.this.window).getBodyAnchorX(),
-                                         (Display.this.window).getBodyAnchorY(),
-                                         Graphics.TOP|Graphics.LEFT);
-                // #else
-                screenGraphics.drawImage(offscreen_buffer, 0, 0,
-                                         Graphics.TOP|Graphics.LEFT);
+                anchorX = (Display.this.window).getBodyAnchorX();
+                anchorY = (Display.this.window).getBodyAnchorY();
+                x1 += anchorX;
+                y1 += anchorY;
                 // #endif ENABLE_CHAMELEON
 
+                int x2 = x1 + width;
+                int y2 = y1 + height;
+
+                // set clip area and init graphics
+                screenGraphics.reset(x1, y1, x2, y2);
+                screenGraphics.drawImage(offscreen_buffer,
+                    anchorX, anchorY, Graphics.TOP | Graphics.LEFT);
                 // restore initial clip area
                 screenGraphics.reset(reg[0], reg[1], reg[2], reg[3]);
-                refresh0(displayId, x, y, x2, y2);
+                refresh0(displayId, x1, y1, x2, y2);
             }
         }
 
