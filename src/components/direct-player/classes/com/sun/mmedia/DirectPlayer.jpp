@@ -537,6 +537,12 @@ public class DirectPlayer extends BasicPlayer
      * @return the duration in microseconds or <code>TIME_UNKNOWN</code>
      */
     protected long doGetDuration() {
+		boolean has_capture_locator = ( null != locator ) &&
+			( locator.startsWith( Configuration.AUDIO_CAPTURE_LOCATOR ) 
+			  || locator.startsWith( Configuration.VIDEO_CAPTURE_LOCATOR ) );
+			  
+        if( has_capture_locator ) return TIME_UNKNOWN;
+        
         // for MIDI_DEVICE_LOCATOR -- always 0
 		// for TONE_DEVICE_LOCATOR -- 0 if tone sequence wasn't set
         if( !hasDataSource && !hasToneSequenceSet ) return 0; 
