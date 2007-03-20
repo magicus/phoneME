@@ -41,10 +41,11 @@
  * @{
  */
 
-#ifndef __JAVACALL_JSR211_CHAPI_H
-#define __JAVACALL_JSR211_CHAPI_H
+#ifndef __JAVACALL_JSR211_CHAPI_NATIVE_H
+#define __JAVACALL_JSR211_CHAPI_NATIVE_H
 
 #include <javacall_defs.h>
+#include "javacall_chapi.h"
 #include "javacall_chapi_callbacks.h"
 
 #ifdef __cplusplus
@@ -59,65 +60,18 @@ extern "C" {
  */
 
 /**
- * Content handler fields enumeration.
- * Should match correspondent values in <jsr211_registry.h>
- */
-typedef enum {
-  JAVACALL_CHAPI_FIELD_ID = 0,     /**< Handler ID */
-  JAVACALL_CHAPI_FIELD_FLAG,       /**< Handler flag */
-  JAVACALL_CHAPI_FIELD_SUITE,      /**< Handler suite ID */
-  JAVACALL_CHAPI_FIELD_CLASS,      /**< Handler class */
-  JAVACALL_CHAPI_FIELD_TYPES,      /**< Types supported by a handler */
-  JAVACALL_CHAPI_FIELD_SUFFIXES,   /**< Suffixes supported by a handler */
-  JAVACALL_CHAPI_FIELD_ACTIONS,    /**< Actions supported by a handler */
-  JAVACALL_CHAPI_FIELD_LOCALES,    /**< Locales supported by a handler */
-  JAVACALL_CHAPI_FIELD_ACTION_MAP, /**< Handler action map */
-  JAVACALL_CHAPI_FIELD_ACCESSES,   /**< Access list */
-  JAVACALL_CHAPI_FIELD_COUNT       /**< Total number of fields */
-} javacall_chapi_field;
-
-
-/**
- * Search modes for @link javacall_chapi_get_handler() implementation.
- */
-typedef enum {
-    JAVACALL_CHAPI_SEARCH_EXACT  = 0,   /** Search by exact match with ID */
-    JAVACALL_CHAPI_SEARCH_PREFIX = 1    /** Search by prefix of given value */
-} javacall_chapi_search_flag;
-
-
-/**
- * Invocation parameters for launched platform handlers.
- */
-typedef struct _InvocParams {
-    int                   tid;               /**< The internal transaction id */
-    javacall_utf16_string url;               /**< The URL of the request */
-    javacall_utf16_string type;              /**< The type of the request */
-    javacall_utf16_string action;            /**< The action of the request */
-    javacall_utf16_string invokingAppName;   /**< The invoking name */
-    javacall_utf16_string invokingAuthority; /**< The invoking authority string */
-    javacall_utf16_string username;	        /**< The username provided as credentials */
-    javacall_utf16_string password;	        /**< The password provided as credentials */
-    int                   argsLen;	        /**< The length of the argument array */
-    javacall_utf16_string* args;              /**< The arguments */
-    int                   dataLen;            /**< The length of the data in bytes */
-    void*                 data;               /**< The data; may be NULL */
-} javacall_chapi_invocation;
-
-
-/**
  * Initializes content handler registry.
  *
  * @return JAVACALL_OK if content handler registry initialized successfully
  */
-javacall_result javacall_chapi_initialize(void);
+javacall_result javacall_chapi_native_initialize(void);
 
 /**
  * Finalizes content handler registry.
  *
  * @return JAVACALL_OK if content handler registry finalized successfully
  */
-javacall_result javacall_chapi_finalize(void);
+javacall_result javacall_chapi_native_finalize(void);
 
 /**
  * Stores content handler information into a registry.
@@ -142,7 +96,7 @@ javacall_result javacall_chapi_finalize(void);
  * @param nAccesses length of accesses array
  * @return operation status.
  */
-javacall_result javacall_register_java_handler(
+javacall_result javacall_chapi_native_register_handler(
         const javacall_utf16_string id,
         const javacall_utf16_string suite_id,
         const javacall_utf16_string class_name,
@@ -160,7 +114,7 @@ javacall_result javacall_register_java_handler(
  * @param id content handler ID
  * @return operation status.
  */
-javacall_result javacall_chapi_unregister_handler(
+javacall_result javacall_chapi_native_unregister_handler(
         const javacall_utf16_string id);
 
 /**
@@ -176,7 +130,7 @@ javacall_result javacall_chapi_unregister_handler(
  *  <br>Use the @link javautil_chapi_appendHandler() javautil_chapi_appendHandler function to fill this structure.
  * @return status of the operation
  */
-javacall_result javacall_chapi_find_handler(
+javacall_result javacall_chapi_native_find_handler(
         const javacall_utf16_string caller_id,
         javacall_chapi_field key,
         const javacall_utf16_string value,
@@ -191,7 +145,7 @@ javacall_result javacall_chapi_find_handler(
  * @link javautil_chapi_appendHandler function to fill this structure.
  * @return status of the operation
  */
-javacall_result javacall_chapi_find_for_suite(
+javacall_result javacall_chapi_native_find_for_suite(
                         const javacall_utf16_string suite_id,
                         /*OUT*/ javacall_chapi_result_CH_array result);
 
@@ -207,7 +161,7 @@ javacall_result javacall_chapi_find_for_suite(
  *  <br>Use the @link javautil_chapi_fillHandler() javautil_chapi_fillHandler function to fill this structure.
  * @return status of the operation
  */
-javacall_result javacall_chapi_handler_by_URL(
+javacall_result javacall_chapi_native_handler_by_URL(
         const javacall_utf16_string caller_id,
         const javacall_utf16_string url,
         const javacall_utf16_string action,
@@ -225,7 +179,7 @@ javacall_result javacall_chapi_handler_by_URL(
  *  <br>Use the @link javautil_chapi_appendString() javautil_chapi_appendString function to fill this structure.
  * @return status of the operation
  */
-javacall_result javacall_chapi_get_all(
+javacall_result javacall_chapi_native_get_all(
         const javacall_utf16_string caller_id,
         javacall_chapi_field field, 
         /*OUT*/ javacall_chapi_result_str_array result);
@@ -245,7 +199,7 @@ javacall_result javacall_chapi_get_all(
  *  <br>Use the @link javautil_chapi_fillHandler() javautil_chapi_fillHandler function to fill this structure.
  * @return status of the operation
  */
-javacall_result javacall_chapi_get_handler(
+javacall_result javacall_chapi_native_get_handler(
         const javacall_utf16_string caller_id,
         const javacall_utf16_string id,
         javacall_chapi_search_flag flag,
@@ -263,7 +217,7 @@ javacall_result javacall_chapi_get_handler(
  *  <br>Use the @link javautil_chapi_appendString() javautil_chapi_appendString function to fill this structure.
  * @return status of the operation
  */
-javacall_result javacall_chapi_get_handler_field(
+javacall_result javacall_chapi_native_get_handler_field(
         const javacall_utf16_string id,
         javacall_chapi_field key, 
         /*OUT*/ javacall_chapi_result_str_array result);
@@ -280,7 +234,7 @@ javacall_result javacall_chapi_get_handler_field(
  *
  * @return status of the operation
  */
-javacall_result javacall_chapi_execute_handler(
+javacall_result javacall_chapi_native_execute_handler(
             const javacall_utf16_string id, 
             javacall_chapi_invocation* invoc, 
             /*OUT*/ int* exec_status);
@@ -291,4 +245,4 @@ javacall_result javacall_chapi_execute_handler(
 }
 #endif/*__cplusplus*/
 
-#endif  /* __JAVACALL_JSR211_CHAPI_H */
+#endif  /* __JAVACALL_JSR211_CHAPI_NATIVE_H */
