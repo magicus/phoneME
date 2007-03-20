@@ -224,84 +224,79 @@ Java_com_sun_midp_io_j2me_socket_Protocol_read0(void) {
                         (char*)&(JavaByteArray(bufferObject)[offset]),
                         length);
         SNI_END_RAW_POINTERS;
-
-        if (bytesRead > 0) {
-            printf(">>> Returning %d cached bytes!\n", bytesRead);
-        }
     }
 
-if (bytesRead <= 0) {
+    if (bytesRead <= 0) {
+        info = (MidpReentryData*)SNI_GetReentryData(NULL);
 
-    info = (MidpReentryData*)SNI_GetReentryData(NULL);
+        ANC_START_NETWORK_INDICATOR;
 
-    ANC_START_NETWORK_INDICATOR;
-
-    if (info == NULL) {   /* First invocation */
-        if (INVALID_HANDLE == pcslHandle) {
-            KNI_ThrowNew(midpIOException, "invalid handle during socket::read");
-        } else {
-            ANC_INC_NETWORK_INDICATOR;
-            SNI_BEGIN_RAW_POINTERS;
-            status = pcsl_socket_read_start(pcslHandle, 
-                           (unsigned char*)&(JavaByteArray(bufferObject)[offset]),
-                           length, &bytesRead, &context);
-            SNI_END_RAW_POINTERS;
-        }
-    } else {  /* Reinvocation after unblocking the thread */
-        if (INVALID_HANDLE == pcslHandle || iStreams == 0) {
-            /* connection or its input streams are closed by another thread */
-            KNI_ThrowNew(midpInterruptedIOException, 
-                         "Interrupted IO error during socket::read");
-            ANC_DEC_NETWORK_INDICATOR;
-        } else {
-            if ((void *)info->descriptor != pcslHandle) {
-                REPORT_CRIT2(LC_PROTOCOL, 
-                             "socket::read Handles mismatched 0x%x != 0x%x\n", 
-                             pcslHandle,
-                             info->descriptor);
+        if (info == NULL) {   /* First invocation */
+            if (INVALID_HANDLE == pcslHandle) {
+                KNI_ThrowNew(midpIOException, "invalid handle during socket::read");
+            } else {
+                ANC_INC_NETWORK_INDICATOR;
+                SNI_BEGIN_RAW_POINTERS;
+                status = pcsl_socket_read_start(pcslHandle,
+                               (unsigned char*)&(JavaByteArray(bufferObject)[offset]),
+                               length, &bytesRead, &context);
+                SNI_END_RAW_POINTERS;
             }
-            context = info->pResult;
-            SNI_BEGIN_RAW_POINTERS;
-            status = pcsl_socket_read_finish(pcslHandle, 
-                       (unsigned char*)&(JavaByteArray(bufferObject)[offset]),
-                       length, &bytesRead, context);
-            SNI_END_RAW_POINTERS;
-        }
-    }
-
-    REPORT_INFO1(LC_PROTOCOL, "socket::read0 bytesRead=%d\n", bytesRead);
-
-    if (INVALID_HANDLE != pcslHandle) {
-        if (status == PCSL_NET_SUCCESS) {
-            if (bytesRead == 0) {
-                /* end of stream */
-                bytesRead = -1;
-            }
-            ANC_DEC_NETWORK_INDICATOR;
-        } else {
-            REPORT_INFO1(LC_PROTOCOL, "socket::read error=%d\n", 
-                         pcsl_network_error(pcslHandle));
-
-            if (status == PCSL_NET_WOULDBLOCK) {
-                midp_thread_wait(NETWORK_READ_SIGNAL, (int)pcslHandle, context);
-            } else if (status == PCSL_NET_INTERRUPTED) {
-                midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
-                        "Interrupted IO error %d during socket::read ", 
-                        pcsl_network_error(pcslHandle));
-                KNI_ThrowNew(midpInterruptedIOException, gKNIBuffer);
+        } else {  /* Reinvocation after unblocking the thread */
+            if (INVALID_HANDLE == pcslHandle || iStreams == 0) {
+                /* connection or its input streams are closed by another thread */
+                KNI_ThrowNew(midpInterruptedIOException,
+                             "Interrupted IO error during socket::read");
                 ANC_DEC_NETWORK_INDICATOR;
             } else {
-                midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
-                        "Unknown error %d during socket::read ", 
-                        pcsl_network_error(pcslHandle));
-                KNI_ThrowNew(midpIOException, gKNIBuffer);
-                ANC_DEC_NETWORK_INDICATOR;
+                if ((void *)info->descriptor != pcslHandle) {
+                    REPORT_CRIT2(LC_PROTOCOL,
+                                 "socket::read Handles mismatched 0x%x != 0x%x\n",
+                                 pcslHandle,
+                                 info->descriptor);
+                }
+                context = info->pResult;
+                SNI_BEGIN_RAW_POINTERS;
+                status = pcsl_socket_read_finish(pcslHandle,
+                           (unsigned char*)&(JavaByteArray(bufferObject)[offset]),
+                           length, &bytesRead, context);
+                SNI_END_RAW_POINTERS;
             }
         }
-    }
 
-    ANC_STOP_NETWORK_INDICATOR;
-}
+        REPORT_INFO1(LC_PROTOCOL, "socket::read0 bytesRead=%d\n", bytesRead);
+
+        if (INVALID_HANDLE != pcslHandle) {
+            if (status == PCSL_NET_SUCCESS) {
+                if (bytesRead == 0) {
+                    /* end of stream */
+                    bytesRead = -1;
+                }
+                ANC_DEC_NETWORK_INDICATOR;
+            } else {
+                REPORT_INFO1(LC_PROTOCOL, "socket::read error=%d\n",
+                             pcsl_network_error(pcslHandle));
+
+                if (status == PCSL_NET_WOULDBLOCK) {
+                    midp_thread_wait(NETWORK_READ_SIGNAL, (int)pcslHandle, context);
+                } else if (status == PCSL_NET_INTERRUPTED) {
+                    midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
+                            "Interrupted IO error %d during socket::read ",
+                            pcsl_network_error(pcslHandle));
+                    KNI_ThrowNew(midpInterruptedIOException, gKNIBuffer);
+                    ANC_DEC_NETWORK_INDICATOR;
+                } else {
+                    midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
+                            "Unknown error %d during socket::read ",
+                            pcsl_network_error(pcslHandle));
+                    KNI_ThrowNew(midpIOException, gKNIBuffer);
+                    ANC_DEC_NETWORK_INDICATOR;
+                }
+            }
+        }
+
+        ANC_STOP_NETWORK_INDICATOR;
+    }
 
     KNI_EndHandles();
     KNI_ReturnInt((jint)bytesRead);
