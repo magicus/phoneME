@@ -35,11 +35,9 @@
 #
 # Create a libmidp.so for non-ROMized build.
 #
-MIDP_SHARED_LIB ?= $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
-
-MIDP_DEPS += $(MIDP_SHARED_LIB)
-
+ifneq ($(CVM_PRELOAD_LIB), true)
 $(MIDP_SHARED_LIB): $(OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
 	@$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
 	  $(OBJ_FILES) $(LIBS))` $(LOG) 
+endif
