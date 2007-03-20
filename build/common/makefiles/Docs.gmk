@@ -114,7 +114,7 @@ JAVADOC_FLAGS = \
 JAVADOC_ALL_FLAGS = \
 	-d $(JAVADOC_HTML_ALL_DIR) \
 	-bootclasspath "" \
-	-classpath $(MIDP_OUTPUT_DIR)/classes.zip \
+	-classpath $(MIDP_CLASSES_ZIP) \
 	-private -use \
         -J-mx180m  \
 	-sourcepath $(ALL_SOURCE_PATH) \
@@ -197,13 +197,13 @@ docs_doxy: VERIFY_DOXYGEN_CMD $(DOXYGEN_DIR) $(DOXYGEN_CONFIG_FILE) $(DOXYGEN_SU
 	$(A)echo +++ $(DOXYGEN_CMD) $(DOXYGEN_CONFIG_FILE) $(LOG_ONLY)
 	-@($(DOXYGEN_CMD) $(DOXYGEN_CONFIG_FILE)) $(LOG)
 
-docs_javadoc: $(JAVADOC_HTML_DIR) run_configurator jpp $(JTWI_JAVA_FILES) $(MIDP_OUTPUT_DIR)/classes.zip
+docs_javadoc: $(JAVADOC_HTML_DIR) run_configurator jpp $(JTWI_JAVA_FILES) $(MIDP_CLASSES_ZIP)
 	$(A)echo +++ $(JAVADOC_CMD) $(JAVADOC_FLAGS) $(MIDP_JAVADOC_PACKAGES) $(JTWI_JAVA_FILES) $(LOG_ONLY)
 	$(A)$(JAVADOC_CMD) $(JAVADOC_FLAGS) $(MIDP_JAVADOC_PACKAGES) $(JTWI_JAVA_FILES) $(LOG)
 	$(A)$(remove_filelist) $(LOG)
 	$(A)$(remove_generatedlist) $(LOG)
 
-docs_javadoc_all: $(JAVADOC_HTML_ALL_DIR) run_configurator jpp $(JTWI_JAVA_FILES) $(MIDP_OUTPUT_DIR)/classes.zip
+docs_javadoc_all: $(JAVADOC_HTML_ALL_DIR) run_configurator jpp $(JTWI_JAVA_FILES) $(MIDP_CLASSES_ZIP)
 	$(A)echo +++ $(JAVADOC_CMD) $(JAVADOC_ALL_FLAGS) $(JAVADOC_ALL_PACKAGES) $(JTWI_JAVA_FILES) $(LOG_ONLY)
 	$(A)$(JAVADOC_CMD) $(JAVADOC_ALL_FLAGS) $(JAVADOC_ALL_PACKAGES) $(JTWI_JAVA_FILES) $(LOG)
 	$(A)$(remove_filelist) $(LOG)

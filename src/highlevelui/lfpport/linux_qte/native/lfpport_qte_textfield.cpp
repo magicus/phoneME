@@ -229,10 +229,16 @@ bool TextFieldBody::validate(const QString &s, int line, int col) {
 	  }
 	}
 	break;
-
+    case MIDP_CONSTRAINT_PHONENUMBER:
+      {
+    	QRegExp numbers("^[0-9]*$");
+        if (numbers.match(s) >= 0) {
+            ok = true;
+        }
+    }
+      break;
     case MIDP_CONSTRAINT_ANY:
     case MIDP_CONSTRAINT_EMAILADDR:
-    case MIDP_CONSTRAINT_PHONENUMBER:
     case MIDP_CONSTRAINT_URL:
         ok = true;
         break;
@@ -242,14 +248,114 @@ bool TextFieldBody::validate(const QString &s, int line, int col) {
     return ok;
 }
 
+
+/**
+ * Method format phone string
+ * @param s string
+ */
+QString TextFieldBody::getStringForPhoneNumber(QString& s) {
+    int res = s.find(" ",0);
+    while (res != -1) {
+        s.remove(res,1);
+        res = s.find(" ",0); 
+    }
+    switch (s.length()) {
+        case 5:
+        case 6:
+        case 7:
+            s.insert(3," ");
+            break;
+        case 8:
+        case 9:
+        case 10:
+        case 12:
+        case 13:
+            s.insert(3," ");
+            s.insert(6," ");
+            break;
+        case 11:
+            s.insert(1," ");
+            s.insert(5," ");
+            s.insert(9," ");
+            break;
+      }
+    return s;
+
+}
+
 /** Override to validate constraint against new insertion */
 void TextFieldBody::insertAt(const QString &s, int line, int col,
 			     bool mark) {
+
+    QString str;
  
     if (validate(s, line, col)) {
-	QMultiLineEdit::insertAt(s, line, col, mark);
+         switch ((MidpConstraint)(constraints & MIDP_CONSTRAINT_MASK)) {
+            case MIDP_CONSTRAINT_PHONENUMBER:
+                str = QMultiLineEdit::textLine(line);
+                str.insert(col,s);
+
+                QMultiLineEdit::removeLine(line);
+                str = getStringForPhoneNumber(str);
+
+                QMultiLineEdit::insertAt(str,line,0,mark);
+                QMultiLineEdit::setCursorPosition(line,col + 2,mark);
+            break;
+            default:
+                QMultiLineEdit::insertAt(s, line, col, mark);
+        }
     }
 }
+
+/**
+ * Override QMultLineEdit::backspace to format phone string
+ */
+void TextFieldBody::backspace() {
+
+    QString str;
+
+    int line, col;
+
+    QMultiLineEdit::backspace();
+
+    QMultiLineEdit::getCursorPosition(&line, &col);
+
+    switch ((MidpConstraint)(constraints & MIDP_CONSTRAINT_MASK)) {
+        case MIDP_CONSTRAINT_PHONENUMBER:
+            str = QMultiLineEdit::textLine(line);
+            QMultiLineEdit::removeLine(line);
+
+            str = getStringForPhoneNumber(str);
+
+            QMultiLineEdit::insertAt(str,line,0,FALSE);
+            break;
+    }
+}
+
+/**
+ * Override QMultLineEdit::del to format phone string
+ */
+void TextFieldBody::del() {
+
+    QString str;
+
+    int line, col;
+
+    QMultiLineEdit::del();
+
+    QMultiLineEdit::getCursorPosition(&line, &col);
+
+    switch ((MidpConstraint)(constraints & MIDP_CONSTRAINT_MASK)) {
+        case MIDP_CONSTRAINT_PHONENUMBER:
+            str = QMultiLineEdit::textLine(line);
+            QMultiLineEdit::removeLine(line);
+
+            str = getStringForPhoneNumber(str);
+            QMultiLineEdit::insertAt(str,line,0,FALSE);
+            break;
+    }
+}
+
 
 /** Override to notify Form focus change */
 void TextFieldBody::focusInEvent(QFocusEvent *event) {

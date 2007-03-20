@@ -145,7 +145,7 @@ endif
 
 ROMSTRUCTS_H = $(MIDP_OUTPUT_DIR)/ROMStructs.h
 
-$(ROMSTRUCTS_H): $(MIDP_OUTPUT_DIR)/classes.zip
+$(ROMSTRUCTS_H): $(MIDP_CLASSES_ZIP)
 	@echo "creating $@..."
 	@$(JDK_DIR)/bin/javah -old -bootclasspath $(BTCLASSES_ZIP) \
 		-classpath $^ -o $@ \

@@ -316,8 +316,75 @@ static char *pushclassname(char *value, int *pLength) {
             break;
         }
     }
+    
     *pLength = length;
     return classname;
+}
+
+/**
+ * Checks if the given string represents a datagram connection
+ * or a socket connection.
+ *
+ * @param pBuffer buffer with a string describing the connection
+ * @param checkIfDatagram defines what this function should check: if 1,
+ *                        it should be checked that the given string represents
+ *                        a datagram connection, 0 - a socket connection
+ *
+ * @return 1 if the given buffer represents the given connection type
+ */
+static int pushIsConnectionOfGivenType(const char* pBuffer,
+                                       int checkIfDatagram) {
+    if (pBuffer == NULL) {
+        return 0;
+    }
+
+    if (strncmp(pBuffer, "datagram://:", 12) == 0) {
+        return checkIfDatagram;
+    }
+#if ENABLE_SERVER_SOCKET
+    else if (strncmp(pBuffer, "socket://:", 10) == 0) {
+        return !checkIfDatagram;
+    }
+#endif
+
+#if ENABLE_JSR_180
+    /* Check for JSR180 SIP/SIPS connections. */
+    if ((strncmp(pBuffer, "sips:", 5) == 0) ||
+        (strncmp(pBuffer, "sip:", 4) == 0)) {
+        /*
+         * IMPL_NOTE: the following check is very simplified, but its enough
+         *            for the practical cases.
+         */
+        const char* pTransport = strstr(pBuffer, "transport=tcp");
+        return checkIfDatagram != (pTransport != NULL);
+    }
+#endif
+
+    return 0;
+}
+
+/**
+ * Checks if the given string represents a socket connection.
+ *
+ * @param pBuffer buffer with a string describing the connection
+ *
+ * @return 1 if the given buffer represents a socket connection, 0 otherwise
+ */
+static int pushIsSocketConnection(const char* pBuffer) {
+    int f = pushIsConnectionOfGivenType(pBuffer, 0);
+    return f;
+}
+
+/**
+ * Checks if the given string represents a datagram connection.
+ *
+ * @param pBuffer buffer with a string describing the connection
+ *
+ * @return 1 if the given buffer represents a datagram connection, 0 otherwise
+ */
+static int pushIsDatagramConnection(const char* pBuffer) {
+    int f = pushIsConnectionOfGivenType(pBuffer, 1);
+    return f;
 }
 
 /**
@@ -332,17 +399,11 @@ static void pushAddNetworkNotifier(PushEntry* pe) {
      */
     if (!pe->isWMAEntry) {
         /* Push only needs to know if a socket has data. */
-        if (strncmp(pe->value, "socket://:", 10) == 0) {
+        if (pushIsDatagramConnection(pe->value)) {
+            pcsl_add_network_notifier((void *)pe->fd, PCSL_NET_CHECK_READ);
+        } else if (pushIsSocketConnection(pe->value)) {
             pcsl_add_network_notifier((void *)pe->fd, PCSL_NET_CHECK_ACCEPT);
-        } else if (strncmp(pe->value, "datagram://:", 12) == 0) {
-            pcsl_add_network_notifier((void *)pe->fd, PCSL_NET_CHECK_READ);
         }
-#if ENABLE_JSR_180
-        else if ((strncmp(pe->value, "sip:", 4) == 0) ||
-            (strncmp(pe->value, "sips:", 5) == 0)) {
-            pcsl_add_network_notifier((void *)pe->fd, PCSL_NET_CHECK_READ);
-        }
-#endif
     }
 }
 
@@ -351,7 +412,6 @@ static void pushAddNetworkNotifier(PushEntry* pe) {
  *
  * @param <none>
  * @return <tt>0</tt> for success, non-zero if there is a resource problem
- *
  */
 int pushopen() {
 #if ENABLE_JSR_82
@@ -623,7 +683,7 @@ int pushadd(char *str) {
         return -2;
     }
 
-    pe->state = AVAILABLE ;
+    pe->state = AVAILABLE;
     pe->fd = -1;
     pe->fdsock = -1;
     pe->dg = NULL;
@@ -715,7 +775,7 @@ static void pushDeleteEntry(PushEntry *p, PushEntry **pPrevNext) {
             pushcleanupentry(p);
 
             /* closing will disconnect any socket notifiers */
-            if (strncmp(p->value, "socket://:", 10) == 0) {
+            if (pushIsSocketConnection(p->value)) {
 #if ENABLE_SERVER_SOCKET
                 pcsl_socket_close_start((void*)(p->fd), &context);
                 /* Update the resource count */
@@ -724,7 +784,7 @@ static void pushDeleteEntry(PushEntry *p, PushEntry **pPrevNext) {
                                              " update error");
                 }
 #endif
-            } else if (strncmp(p->value, "datagram://:", 12) == 0) {
+            } else if (pushIsDatagramConnection(p->value)) {
                 pcsl_datagram_close_start((void *)p->fd, &context);
                 /* Update the resource count */
                 if (midpDecResourceCount(RSC_TYPE_UDP, 1) == 0) {
@@ -732,19 +792,6 @@ static void pushDeleteEntry(PushEntry *p, PushEntry **pPrevNext) {
                                              " update error");
                 }
             }
-#if ENABLE_JSR_180
-        /* Check for JSR180 SIP/SIPS connections. */
-        else if ((strncmp(p->value, "sips:", 5) == 0) ||
-             (strncmp(p->value, "sip:", 4) == 0)) {
-                pcsl_datagram_close_start((void *)p->fd, &context);
-                /* Update the resource count */
-                if (midpDecResourceCount(RSC_TYPE_UDP, 1) == 0) {
-                    REPORT_INFO(LC_PROTOCOL, "(Push)Datagram : Resource limit"
-                                             " update error");
-                }
-        }
-
-#endif
         }
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
         /* Check for sms,cbs or mms connection. */
@@ -785,7 +832,7 @@ static void pushDeleteEntry(PushEntry *p, PushEntry **pPrevNext) {
  * @return the length of the datagram data if successful, or <tt>-1</tt>
  *         unsuccessful.
  */
-int pusheddatagram (int fd, int *ip, int *sndport, char *buf, int len) {
+int pusheddatagram(int fd, int *ip, int *sndport, char *buf, int len) {
     PushEntry *p;
     int length = -1;
 
@@ -873,12 +920,14 @@ int pushcheckout(char* protocol, int port, char * store) {
 #if ENABLE_JSR_180
         /*
          * A registered 'sip' connection matches physical 'datagram'
-         * connection.
+         * connection for UDP transport and 'socket' connection for TCP.
          */
         standardProtocol = (p->port == port &&
             (strncmp(p->value, protocol, strlen(protocol)) == 0 ||
                 (strncmp(p->value, "sip", 3) == 0 &&
-                 strncmp("datagram", protocol, strlen(protocol)) == 0)
+                    ((strncmp("datagram", protocol, strlen(protocol)) == 0) ||
+                     (strncmp("socket", protocol, strlen(protocol)) == 0))
+                )
             )
         );
 #else
@@ -891,14 +940,13 @@ int pushcheckout(char* protocol, int port, char * store) {
             if (strcmp(store, p->storagename) != 0) {
                 return -2;
             }
+            
             fd = p->fd;
 
             /* The push system should stop monitoring this connection. */
-            if (strncmp(p->value, "socket://:", 10) == 0) {
+            if (pushIsSocketConnection(p->value)) {
                 pcsl_remove_network_notifier((void*)fd, PCSL_NET_CHECK_ACCEPT);
-            } else if ((strncmp(p->value, "datagram://:", 12) == 0) ||
-                       (strncmp(p->value, "sip:", 4) == 0) ||
-                       (strncmp(p->value, "sips:", 5) == 0)) {
+            } else if (pushIsDatagramConnection(p->value)) {
                 pcsl_remove_network_notifier((void*)fd, PCSL_NET_CHECK_READ);
             }
 
@@ -1055,7 +1103,6 @@ int pushcheckinbyname(char* str) {
  * @param pe The push entry to check in.
  */
 static void pushcheckinentry(PushEntry *pe) {
-
     pushcleanupentry(pe);
 
     if (pe->fd != -1) {
@@ -1116,7 +1163,6 @@ char *pushfindfd(int fd) {
     AlarmEntry *alarmp;
     AlarmEntry *alarmtmp;
     char *alarmentry = NULL;
-    // char *ipnumber = NULL;
     char ipAddress[MAX_HOST_LENGTH];
     int status;
     unsigned char ipBytes[MAX_ADDR_LENGTH];
@@ -1157,7 +1203,7 @@ char *pushfindfd(int fd) {
              * Check the push filter, to see if this connection
              * is acceptable.
              */
-            if (strncmp(pushp->value,"datagram://:", 12) == 0) {
+            if (strncmp(pushp->value, "datagram://:", 12) == 0) {
                 /*
                  * Read the datagram and save it til the application reads it.
                  * This is a one datagram message queue.
@@ -1184,7 +1230,7 @@ char *pushfindfd(int fd) {
                     return NULL;
                 }
 
-                /** Set the raw IP address */
+                /* Set the raw IP address */
                 memcpy(&(pushp->dg->ipAddress), ipBytes, MAX_ADDR_LENGTH);
 
                 memset(ipAddress, '\0', MAX_HOST_LENGTH);
@@ -1194,6 +1240,7 @@ char *pushfindfd(int fd) {
                 if (checkfilter(pushp->filter, ipAddress)) {
                     return midpStrdup(pushp->value);
                 }
+
                 /*
                  * Dispose of the filtered push request.
                  * Release any cached datagrams.
@@ -1201,17 +1248,19 @@ char *pushfindfd(int fd) {
                 pushcheckinentry(pushp);
                 return NULL;
 #if ENABLE_SERVER_SOCKET
-            } else if (strncmp(pushp->value, "socket://:", 10) == 0) {
+            } else if (pushIsSocketConnection(pushp->value)) {
                 void *clientHandle;
                 void *context;
+                
                 /*
-                 * accept0() returns a brand new client socket descriptor
-                 * So resource check should be done against a client socket limit
+                 * accept0() returns a brand new client socket descriptor.
+                 * So resource check should be done against a client socket
+                 * limit.
                  *
                  * IMPL_NOTE : an IOException should be thrown when the resource
                  * is not available, but since this is not a shared code, only
                  * NULL is returned that would result in returning -1
-                 * to getMIDlet0()
+                 * to getMIDlet0().
                  */
                 if (midpCheckResourceLimit(RSC_TYPE_TCP_CLI, 1) == 0) {
                     REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit exceeded for"
@@ -1225,22 +1274,25 @@ char *pushfindfd(int fd) {
                  * For a server socket connection, accept the inbound
                  * socket connection so the end point filter can be checked.
                  */
-                status = pcsl_serversocket_accept_start((void*)pushp->fd, &clientHandle, &context);
+                status = pcsl_serversocket_accept_start((void*)pushp->fd,
+                    &clientHandle, &context);
 
                 if (status != PCSL_NET_SUCCESS) {
                     /*
                      * Receive failed - no data available.
                      * cancel the launch pending
                      */
-                    REPORT_ERROR1(LC_PUSH, "(Push)Cannot accept serversocket, errno = %d\n",
-                                  pcsl_network_error((void*)pushp->fd));
+                    REPORT_ERROR1(LC_PUSH,
+                        "(Push)Cannot accept serversocket, errno = %d\n",
+                        pcsl_network_error((void*)pushp->fd));
                     pushp->state = temp_state;
                     return NULL;
                 }
 
                 /* Update the resource count for client sockets */
                 if (midpIncResourceCount(RSC_TYPE_TCP_CLI, 1) == 0) {
-                    REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit update error");
+                    REPORT_INFO(LC_PROTOCOL,
+                                "(Push)Resource limit update error");
                 }
 
                 pushp->fdsock = (int)clientHandle;
@@ -1248,7 +1300,12 @@ char *pushfindfd(int fd) {
                 pcsl_socket_getremoteaddr((void *)pushp->fdsock, ipAddress);
 
                 /* Datagram and Socket connections use the IP filter. */
-                if (checkfilter(pushp->filter, ipAddress)) {
+                if (
+#if ENABLE_JSR_180
+                    /* SIP has its own filtering mechanism */
+                    !strncmp(pushp->value, "sip", 3) ||
+#endif
+                        checkfilter(pushp->filter, ipAddress)) {
                     return midpStrdup(pushp->value);
                 }
 
@@ -1261,7 +1318,7 @@ char *pushfindfd(int fd) {
 #endif
             }
 #if ENABLE_JSR_180
-            /* Check for JSR180 SIP/SIPS connections. */
+            /* Check for JSR180 SIP/SIPS connections (UDP). */
             else if ((strncmp(pushp->value, "sips:", 5) == 0) ||
                      (strncmp(pushp->value, "sip:", 4) == 0)) {
                 unsigned char *sender = NULL;
@@ -1270,8 +1327,6 @@ char *pushfindfd(int fd) {
                 char *p;
                 char *end = NULL;
                 int required_type_len;
-
-                /* need revisit - SIP transport=tcp pushfindfd message reader */
 
                 /*
                  * Read the SIP datagram and save it til the
@@ -1751,53 +1806,32 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
 #if ENABLE_JSR_180
     /* Check for JSR180 SIP/SIPS connections. */
     if ((strncmp(buffer, "sips:", 5) == 0) ||
-    (strncmp(buffer, "sip:", 4) == 0)) {
-      if (strncmp(buffer, "sips:", 5) == 0) {
-    p += 5;
-      } else {
-    p += 4;
-      }
+            (strncmp(buffer, "sip:", 4) == 0)) {
+        calcPort = KNI_FALSE;
 
-      /*
-       * Example JSR180 connection strings
-       *   sip:5060
-       *   sip:5080;type="application/x-chess"
-       *   sip:*;type="application/x-cannons"
-       */
-      if (*p == '*') {
-    /* Shared connections must include media. */
-    *port = 5060;
-      } else {
-    /* Dedicated ports may also include media. */
-    *port = atoi(p);
-      }
-      // need revisit - SIP transport=tcp open port provessing.
-      /**
-       * Verify that the resource is available well within limit as per
-       * the policy in ResourceLimiter.
-       */
-      if (midpCheckResourceLimit(RSC_TYPE_UDP, 1) == 0) {
-      REPORT_INFO(LC_PROTOCOL, "(Push)Resource limit exceeded for"
-                           " datagrams");
-      *fd = -1;
-      exception = (char *)midpIOException;
-      } else {
-      status = pcsl_datagram_open_start(*port, &handle, &context);
+        if (strncmp(buffer, "sips:", 5) == 0) {
+            p += 5;
+        } else {
+            p += 4;
+        }
 
-      if (status == PCSL_NET_SUCCESS) {
-          *fd = (int) handle;
-          /* Update the resource count.  */
-          if (midpIncResourceCount(RSC_TYPE_UDP, 1) == 0) {
-              REPORT_INFO(LC_PROTOCOL, "(Push)Datagrams: Resource"
-                  " limit update error");
-          }
-      } else {
-          *fd = -1;
-          exception = (char *)midpIOException;
-      }
-      }
+        /*
+         * Example JSR180 connection strings
+         *   sip:5060
+         *   sip:5080;type="application/x-chess"
+         *   sip:*;type="application/x-cannons"
+         */
+        if (*p == '*') {
+            /* Shared connections must include media. */
+            *port = 5060;
+        } else {
+            /* Dedicated ports may also include media. */
+            *port = atoi(p);
+        }
 
-      return;
+        /* fall down in 'for' bellow */
+        p = buffer;
+        colon_found = 2;
     }
 
 #endif
@@ -1807,7 +1841,7 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
             colon_found++ ;
         }
 
-        if(colon_found == 2) {
+        if (colon_found == 2) {
             p++ ;
 #if ENABLE_JSR_205
             if (isMMSProtocol(buffer)) {
@@ -1823,7 +1857,8 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
             if (calcPort) {
                 *port = atoi(p);
             }
-            if(strncmp(buffer,"datagram://:", 12) == 0) {
+            
+            if (pushIsDatagramConnection(buffer)) {
                 /**
                  * Verify that the resource is available well within limit as per
                  * the policy in ResourceLimiter
@@ -1849,14 +1884,14 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
                     }
                 }
 #if ENABLE_SERVER_SOCKET
-            } else if(strncmp(buffer, "socket://:", 10) == 0) {
+            } else if (pushIsSocketConnection(buffer)) {
                 /**
                  * Verify that the resource is available well within limit as per
                  * the policy in ResourceLimiter
                  */
                 if (midpCheckResourceLimit(RSC_TYPE_TCP_SER, 1) == 0) {
                     REPORT_INFO(LC_PROTOCOL, "Resource limit exceeded"
-                                     " for TCP server sockets");
+                                             " for TCP server sockets");
                     *fd = -1;
                     exception = (char *)midpIOException;
                 } else {
@@ -1884,7 +1919,7 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
                     }
                 }
 #endif
-        } else {
+            } else {
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
                 /* check for sms,cbs or mms connection */
                 wmaPushProcessPort(buffer, fd, *port,
@@ -1892,11 +1927,17 @@ static void pushProcessPort(char *buffer, int *fd, int *port,
                 if (*fd != -1) {
                     *isWMAEntry = KNI_TRUE;
                 }
+#else
+                midp_snprintf(gKNIBuffer, KNI_BUFFER_SIZE,
+                              "Error in push::serversocket::open: "
+                              "unknown connection type.\n");
+                REPORT_WARN1(LC_PROTOCOL, "%s\n", gKNIBuffer);
 #endif
             }
             return;
         }
     }
+    
     return;
 }
 

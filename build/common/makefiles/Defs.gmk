@@ -102,6 +102,8 @@ BINDIR       = $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)
 STORAGEDIR   = $(MIDP_OUTPUT_DIR)/appdb
 GENERATED_DIR= $(MIDP_OUTPUT_DIR)/generated
 
+MIDP_CLASSES_ZIP ?= $(MIDP_OUTPUT_DIR)/classes.zip
+
 # Use "_" since it will be used by other modules
 BUILD_COMMON_CONFIG_DIR = $(MIDP_DIR)/build/common/config
 

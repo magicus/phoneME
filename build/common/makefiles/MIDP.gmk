@@ -57,7 +57,7 @@ vpath % $(MIDP_OUTPUT_DIR)
 # list files are removed first.  Evaulation of subsequent dependencies
 # will have the side effect of populating the list files.
 # 
-$(MIDP_OUTPUT_DIR)/classes.zip::
+$(MIDP_CLASSES_ZIP) ::
 	@echo " ... searching updated .java files" $(LOG)
 	$(remove_filelist)
 	$(remove_genfilelist)
@@ -86,7 +86,7 @@ I3_TEST_REPOSITORY_DIR=$(GENERATED_DIR)/classes/com/sun/midp/i3test
 I3_TEST_REPOSITORY_FILE=Repository.java
 I3_TEST_REPOSITORY=$(I3_TEST_REPOSITORY_DIR)/$(I3_TEST_REPOSITORY_FILE)
 
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(JTWI_I3TEST_JAVA_FILES)
+$(MIDP_CLASSES_ZIP) :: $(JTWI_I3TEST_JAVA_FILES)
 	@echo $? >> $(REBUILD_JAVA_LIST)
 	@echo " ... generating I3 test repository " $(LOG)
 	@mkdir -p $(I3_TEST_REPOSITORY_DIR)
@@ -115,7 +115,7 @@ $(MIDP_OUTPUT_DIR)/classes.zip:: $(JTWI_I3TEST_JAVA_FILES)
 	fi
 	@rm -f $(I3_TEMP1) $(I3_TEMP2)
 
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(I3_TEST_REPOSITORY)
+$(MIDP_CLASSES_ZIP):: $(I3_TEST_REPOSITORY)
 	    @echo $(I3_TEST_REPOSITORY) >> $(GENERATED_JAVA_LIST)
 
 endif
@@ -124,7 +124,7 @@ endif
 # Post-Java-Dependency-Search for classes.zip
 # Creates classes.zip
 #
-$(MIDP_OUTPUT_DIR)/classes.zip::$(GENERATED_JAVA_FILES) \
+$(MIDP_CLASSES_ZIP)::$(GENERATED_JAVA_FILES) \
 				$(PREVERIFY_CMD) \
                                 $(CONFIGURATOR_JAR_FILE) \
                                 $(UNCOMPRESSED_VM_CLASSES) \
@@ -136,7 +136,7 @@ $(MIDP_OUTPUT_DIR)/classes.zip::$(GENERATED_JAVA_FILES) \
 	$(remove_filelist)
 	$(remove_genfilelist)
 
-try_build_classes:: $(MIDP_OUTPUT_DIR)/classes.zip
+try_build_classes:: $(MIDP_CLASSES_ZIP)
 
 build_classes:
 	$(A)$(MAKE) try_build_classes

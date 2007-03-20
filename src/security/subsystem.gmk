@@ -94,7 +94,7 @@ ifeq ($(USE_BINARY_CRYPTO), true)
 
   LIBS += $(CRYPTO_LIB)
 
-  $(MIDP_OUTPUT_DIR)/classes.zip::$(CLASSBINDIR)/com/sun/midp/crypto
+  $(MIDP_CLASSES_ZIP) :: $(CLASSBINDIR)/com/sun/midp/crypto
 
   $(CLASSBINDIR)/com/sun/midp/crypto:
 	$(A)cp -fr $(CRYPTO_CLASSES_DIR) $(MIDP_OUTPUT_DIR) $(LOG)

@@ -191,18 +191,18 @@ $(KDP_CMD): $(CLDC_KDP_CMD)
 	@cp -f $< $@ $(LOG)
 	@chmod a+x $@ $(LOG)
 
-$(MIDP_OUTPUT_DIR)/nativeFunctionTable.cpp: $(MIDP_OUTPUT_DIR)/classes.zip \
+$(MIDP_OUTPUT_DIR)/nativeFunctionTable.cpp: $(MIDP_CLASSES_ZIP) \
 					    $(JCC_CMD)
 	@echo " ... generating $@" $(LOG)
 	@echo +++ $(JAVA_CMD) -jar $(JCC_CMD) \
 		-writer CLDC_HI_Natives -o $@ \
-		$(MIDP_OUTPUT_DIR)/classes.zip $(LOG_ONLY)
+		$(MIDP_CLASSES_ZIP) $(LOG_ONLY)
 	@cd $(MIDP_OUTPUT_DIR); \
 	$(JAVA_CMD) -jar $(JCC_CMD) \
 		-writer CLDC_HI_Natives -o $@ \
-		$(MIDP_OUTPUT_DIR)/classes.zip $(LOG)
+		$(MIDP_CLASSES_ZIP) $(LOG)
 
-$(MIDP_OUTPUT_DIR)/ROMImage.cpp: $(MIDP_OUTPUT_DIR)/classes.zip \
+$(MIDP_OUTPUT_DIR)/ROMImage.cpp: $(MIDP_CLASSES_ZIP) \
 				 $(ROMGEN_CMD) \
                                  $(MIDP_DIR)/build/common/config/rom.config
 	@echo " ... generating $@" $(LOG)
@@ -213,14 +213,14 @@ $(MIDP_OUTPUT_DIR)/ROMImage.cpp: $(MIDP_OUTPUT_DIR)/classes.zip \
 	 done
 		
 	@echo	$(ROMGEN_CMD) $(ROMGEN_ARGS) \
-		-cp $(MIDP_OUTPUT_DIR)/classes.zip \
+		-cp $(MIDP_CLASSES_ZIP) \
 		-romize =HeapCapacity96M \
 		$(foreach path, $(ROMGEN_INCLUDE_PATHS), \
 		-romincludepath $(path)) $(LOG)		
 		
 	@cd $(MIDP_OUTPUT_DIR); \
 	$(ROMGEN_CMD) $(ROMGEN_ARGS) \
-		-cp $(MIDP_OUTPUT_DIR)/classes.zip \
+		-cp $(MIDP_CLASSES_ZIP) \
 		-romize =HeapCapacity96M \
 		$(foreach path, $(ROMGEN_INCLUDE_PATHS), \
 		-romincludepath $(path)) $(LOG)
@@ -238,7 +238,7 @@ UNCOMPRESSED_VM_CLASSES += $(CLDC_TEST_REFLECT_CLASS)
 endif
 
 # Uncompress cldc_classes.zip to $(MIDP_OUTPUT_DIR)/classes/ directory
-# to include CLDC classes in $(MIDP_OUTPUT_DIR)/classes.zip
+# to include CLDC classes in $(MIDP_CLASSES_ZIP)
 $(CLDC_JAVA_LANG_OBJECT_CLASS): $(CLDC_CLASSES_ZIP)
 	@if [ '!' -d $(CLASSBINDIR) ]; then \
 		mkdir -p $(CLASSBINDIR); \

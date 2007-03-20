@@ -359,6 +359,38 @@ public class Protocol extends NetworkConnectionBase
     }
 
     /**
+     * Notify blocked Java threads waiting for an input data
+     * that all InputStream instances of the connection are closed
+     */
+    protected void notifyClosedInput() {
+        if (iStreams == 0) {
+            notifyClosedInput0();
+        }
+    };
+
+    /**
+     * Notify blocked Java threads trying to output data
+     * that all OutputStream instances of the connection are closed
+     */
+    protected void notifyClosedOutput() {
+        if (iStreams == 0) {
+            notifyClosedOutput0();
+        }
+    }
+
+    /**
+     * Wake up Java threads waiting for input data on the connection
+     * to let them know all the input streams have been closed 
+     */
+    private native void notifyClosedInput0();
+
+    /**
+     * Wake up Java threads waiting to output data over the connection
+     * to let them know all the output streams have been closed
+     */
+    private native void notifyClosedOutput0();
+
+    /**
      * Disconnect from the server.
      *
      * @exception  IOException  if an I/O error occurs.
