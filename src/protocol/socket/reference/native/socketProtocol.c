@@ -462,8 +462,6 @@ Java_com_sun_midp_io_j2me_socket_Protocol_available0(void) {
                         pcsl_network_error(pcslHandle));
                 KNI_ThrowNew(midpIOException, gKNIBuffer);
             }
-        } else {
-            printf(">>> Available %d cached bytes\n", bytesAvailable);
         }
     }
 

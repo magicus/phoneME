@@ -1313,7 +1313,6 @@ static char* pushApplySipFilter(PushEntry* pushp) {
 static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
     int status;
     char ipAddress[MAX_HOST_LENGTH];
-    unsigned char ipBytes[MAX_ADDR_LENGTH];
     void *clientHandle;
     void *context;
 
@@ -1391,6 +1390,8 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
 
 #if ENABLE_JSR_180
     if (pushp->isSIPEntry) {
+        unsigned char ipBytes[MAX_ADDR_LENGTH];
+
         pushp->state = WAITING_DATA;
 
         pushp->dg = (DatagramEntry*) midpMalloc(sizeof (DatagramEntry));
