@@ -34,18 +34,27 @@ struct WAITING_THREAD {
     DWORD threadId;
     int signaled;
     struct WAITING_THREAD *next;
+    struct WAITING_THREAD *prev;
 };
 
 /* Internal structure of a mutex */
 struct _JUMPThreadMutex {
     CRITICAL_SECTION crit;
+#ifndef NDEBUG
+    int locked;
+#endif
 };
 
 /* Internal structure of a condition variable */
 struct _JUMPThreadCond {
     HANDLE event;
     struct WAITING_THREAD *waiting_list;
+    int num_signaled;
+    struct WAITING_THREAD *last_thread;
     struct _JUMPThreadMutex *mutex;         /* "bound" mutex */
+#ifndef NDEBUG
+    int signaled;
+#endif
 };
 
 /* Debug stuff */
@@ -77,6 +86,9 @@ JUMPThreadMutex jumpThreadMutexCreate() {
     }
     __try {
         InitializeCriticalSection(&m->crit);
+#ifndef NDEBUG
+        m->locked = 0;
+#endif
         return m;
     } __except (_exception_code() == STATUS_NO_MEMORY) {
         assert(m != NULL);
@@ -89,6 +101,7 @@ JUMPThreadMutex jumpThreadMutexCreate() {
 void jumpThreadMutexDestroy(struct _JUMPThreadMutex *m) {
     
     assert(m != NULL);
+    assert(!m->locked);
     DeleteCriticalSection(&m->crit);
     free(m);
 }
@@ -98,6 +111,10 @@ int jumpThreadMutexLock(struct _JUMPThreadMutex *m) {
 
     assert(m != NULL);
     EnterCriticalSection(&m->crit);
+    assert(!m->locked);
+#ifndef NDEBUG
+    m->locked = 1;
+#endif
     return JUMP_SYNC_OK; /* always OK */
 }
 
@@ -106,20 +123,32 @@ int jumpThreadMutexTrylock(struct _JUMPThreadMutex *m) {
     int err = 0;
 
     assert(m != NULL);
+    assert(!m->locked);
+    
     /* old versions of Win32 API don't support "TryEnterCriticalSection" */
 #if _WIN32_WINNT >= 0x0400
     err = TryEnterCriticalSection(&m->crit);
-    return err == 0 ? JUMP_SYNC_WOULD_BLOCK : JUMP_SYNC_OK;
+    if (err == 0) {
+        return JUMP_SYNC_WOULD_BLOCK;
+    }
+#ifndef NDEBUG
+    m->locked = 1;
+#endif
+    return JUMP_SYNC_OK;
 #else
     PRINT_ERROR(TryEnterCriticalSection, "Not supported", 0);
     return JUMP_SYNC_FAILURE;
-#endif
+#endif /* _WIN32_WINNT >= 0x0400 */
 }
 
 /* unlocks the mutex */
 int jumpThreadMutexUnlock(struct _JUMPThreadMutex *m) {
     
     assert(m != NULL);
+    assert(m->locked);
+#ifndef NDEBUG
+    m->locked = 0;
+#endif
     LeaveCriticalSection(&m->crit);
     return JUMP_SYNC_OK; /* always OK */
 }
@@ -143,6 +172,11 @@ JUMPThreadCond jumpThreadCondCreate(struct _JUMPThreadMutex *m) {
     c->event = event;
     c->mutex = m;
     c->waiting_list = NULL;
+    c->last_thread = NULL;
+    c->num_signaled = 0;
+#ifndef NDEBUG
+    c->signaled = 0;
+#endif
     return c;
 }
 
@@ -177,45 +211,55 @@ int jumpThreadCondWait(struct _JUMPThreadCond *c, long millis) {
     DWORD id;
 
     assert(c != NULL);
-    id = GetCurrentThreadId();
-    wt.threadId = id;
+    assert(c->mutex != NULL);
+    assert(c->mutex->locked);
     
+    wt.signaled = 0;
     /* add to the waiting list */
     wt.next = c->waiting_list;
+    wt.prev = NULL;
+    if (c->waiting_list != NULL) {
+        assert(c->waiting_list->prev == NULL);
+        c->waiting_list->prev = &wt;
+    }
     c->waiting_list = &wt;
-    wt.signaled = 0;
+    if (c->last_thread == NULL) {
+        c->last_thread = &wt;
+    }
     do {
         jumpThreadMutexUnlock(c->mutex);
         err = WaitForSingleObject(c->event, (millis == 0 ? INFINITE : millis));
-        if (err != WAIT_TIMEOUT && !wt.signaled) {
-            Sleep(1);
-        }
+        //if (err != WAIT_TIMEOUT && !wt.signaled) {
+        //    Sleep(1);
+        //}
         jumpThreadMutexLock(c->mutex);
     } while (err == WAIT_OBJECT_0 && !wt.signaled);
     
     /* remove from the waiting list */
     assert(c->waiting_list != NULL);
-    if (c->waiting_list->threadId == id) {
-        assert(c->waiting_list == &wt);
-        c->waiting_list = c->waiting_list->next;
+    if (c->waiting_list == &wt) {
+        c->waiting_list = wt.next;
     } else {
-        for (ppwt = c->waiting_list, pwt = c->waiting_list->next; 
-                    pwt != NULL; ppwt = pwt, pwt = pwt->next) {
-            if (pwt->threadId == id) {
-                assert(pwt == &wt);
-                ppwt->next = pwt->next;
-                break;
-            }
+        if (wt.prev != NULL) {
+            wt.prev->next = wt.next;
         }
+    }
+    if (wt.next != NULL) {
+        wt.next->prev = wt.prev;
+    }
+    if (c->last_thread == &wt) {
+        c->last_thread = wt.prev;
+    }
+    
+    if (wt.signaled) {
+        c->num_signaled--;
     }
     
     /* if no signaled thread remain then reset the event */
-    for (pwt = c->waiting_list; pwt != NULL; pwt = pwt->next) {
-        if (pwt->signaled != 0) {
-            break;
-        }
-    }
-    if (pwt == NULL) {
+    if (c->num_signaled == 0) {
+#ifndef NDEBUG
+        c->signaled = 0;
+#endif
         if (!ResetEvent(c->event)) {
             REPORT_ERROR(ResetEvent);
             return JUMP_SYNC_FAILURE;
@@ -235,12 +279,28 @@ int jumpThreadCondWait(struct _JUMPThreadCond *c, long millis) {
 int jumpThreadCondSignal(struct _JUMPThreadCond *c) {
     struct WAITING_THREAD *pwt;
     
-    /* only last waiting thread gets signaled */
-    for (pwt = c->waiting_list; pwt != NULL; pwt = pwt->next) {
-        if (pwt->next == NULL) {
-            pwt->signaled = 1;
-        }
+    assert(c != NULL);
+    assert(c->mutex != NULL);
+    assert(c->mutex->locked);
+    
+    /* if sombody was already signaled just return */
+    if (c->num_signaled > 0) {
+        assert(c->signaled);
+        return JUMP_SYNC_OK;
     }
+    assert(!c->signaled);
+    /* if no waiting threads */
+    if (c->waiting_list == NULL) {
+        return JUMP_SYNC_OK;
+    }
+    /* only last waiting thread gets signaled */
+    assert(c->last_thread != NULL);
+    assert(!c->last_thread->signaled);
+    c->last_thread->signaled = 1;
+    c->num_signaled++;
+#ifndef NDEBUG
+    c->signaled = 1;
+#endif
     if (!SetEvent(c->event)) {
         REPORT_ERROR(SetEvent);
         return JUMP_SYNC_FAILURE;
@@ -254,8 +314,14 @@ int jumpThreadCondBroadcast(struct _JUMPThreadCond *c) {
     
     /* all waiting threads become signaled */
     for (pwt = c->waiting_list; pwt != NULL; pwt = pwt->next) {
-        pwt->signaled = 1;
+        if (!pwt->signaled) {
+            c->num_signaled++;
+            pwt->signaled = 1;
+        }
     }
+#ifndef NDEBUG
+    c->signaled = 1;
+#endif
     if (!SetEvent(c->event)) {
         REPORT_ERROR(SetEvent);
         return JUMP_SYNC_FAILURE;
