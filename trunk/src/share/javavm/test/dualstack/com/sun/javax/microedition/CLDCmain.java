@@ -54,7 +54,7 @@ public class CLDCmain{
 	    } catch (IOException e ){
 		throw new Error("IOException");
 	    }
-	    URLs[i] =  "file://".concat(longname);
+	    URLs[i] =  longname;
 	}
 	return URLs;
     }
