@@ -143,7 +143,7 @@ if [ -z "$PHONEME_DIST" ] ; then
 fi
 
 CVM=$PHONEME_DIST/bin/cvm
-JUMP_LIBDIR=$PHONEME_DIST/jump/lib
+JUMP_LIBDIR=$PHONEME_DIST/lib
 INSTALLER_TOOL_CLASS=com.sun.jumpimpl.module.installer.JUMPInstallerTool
 
 # Set the root of content store if specified
@@ -155,6 +155,6 @@ ARGUMENTS="-ProvisioningServerURL $PROVISIONING_SERVER_URL"
 
 cd $PHONEME_DIST
 
-COMMAND="$CVM $PROPERTIES -cp $JUMP_LIBDIR/executive-jump.jar:$JUMP_LIBDIR/jump.jar:$PHONEME_DIST/midp/midp_fb/classes.zip $INSTALLER_TOOL_CLASS $ARGUMENTS $* "
+COMMAND="$CVM $PROPERTIES -cp $JUMP_LIBDIR/executive-jump.jar:$JUMP_LIBDIR/jump.jar $INSTALLER_TOOL_CLASS $ARGUMENTS $* "
 echo $COMMAND
 $COMMAND
