@@ -285,7 +285,7 @@ disposeNativeImpl(JNIEnv* env, jobject objectHandle) {
 
     if (surface != NULL) {
         surface->cleanup(surface);
-        surface_dispose(&surface->super);
+	my_free(surface);
         (*env)->SetLongField(env, objectHandle, fieldIds[SURFACE_NATIVE_PTR],
                              (jlong)0);
 

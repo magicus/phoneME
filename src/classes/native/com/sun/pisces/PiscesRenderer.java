@@ -42,29 +42,10 @@ public final class PiscesRenderer extends PathSink
     final AbstractSurface surface;
 
     private final NativeFinalizer finalizer;
+    private static final PiscesStaticInitializer staticFinalizer;
         
     static {
-        String strValue;
-        int strokeXBias = 0; // default x bias
-        int strokeYBias = 0; // default y bias
-
-        strValue = Configuration.getProperty("pisces.stroke.xbias");
-        if (strValue != null) {
-            try {
-                strokeXBias = Integer.parseInt(strValue);
-            } catch (NumberFormatException e) {
-            }
-        }
-        
-        strValue = Configuration.getProperty("pisces.stroke.ybias");
-        if (strValue != null) {
-            try {
-                strokeYBias = Integer.parseInt(strValue);
-            } catch (NumberFormatException e) {
-            }
-        }
-
-        staticInitialize(strokeXBias, strokeYBias);
+        staticFinalizer = PiscesStaticInitializer.getInstance();
     }
     
     private void notImplemented() {
@@ -106,9 +87,6 @@ public final class PiscesRenderer extends PathSink
         initialize();
         messageShown = true;
     }
-
-    private static native void staticInitialize(int strokeXBias, 
-            int strokeYBias);
 
     private native void initialize();
     

@@ -30,8 +30,6 @@
 
 #include <PiscesSysutils.h>
 
-static INLINE void surface_dispose(Surface* surface);
-
 static INLINE void surface_setRGB(Surface* dstSurface, jint x, jint y,
                                   jint width, jint height, jint* data,
                                   jint scanLength);
@@ -48,11 +46,6 @@ static void setRGB(jint* src, jint srcScanLength, jint* dst, jint dstScanLength,
 static void drawRGB(jint* src, jint srcScanLength, jint* dst,
                     jint dstScanLength, jint width, jint height,
                     jfloat opacity);
-
-static INLINE void
-surface_dispose(Surface* surface) {
-    my_free(surface);
-}
 
 static INLINE void
 surface_setRGB(Surface* dstSurface, jint x, jint y,

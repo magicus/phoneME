@@ -26,12 +26,9 @@
 
 #include <JPiscesRenderer.h>
 
-#include <PiscesLibrary.h>
 #include <KNIUtil.h>
 #include <JAbstractSurface.h>
 #include <JTransform.h>
-
-#include <PiscesSysutils.h>
 
 #include <PiscesRenderer.inl>
 
@@ -69,25 +66,6 @@ static jfieldID fieldIds[RENDERER_LAST + 1];
 static jboolean fieldIdsInitialized = KNI_FALSE;
 
 static jboolean initializeRendererFieldIds(jobject objectHandle);
-
-KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_PiscesRenderer_staticInitialize() {
-    jint xbias = KNI_GetParameterAsInt(1);
-    jint ybias = KNI_GetParameterAsInt(2);
-
-    piscesutil_setStrokeBias(xbias, ybias);
-
-    if (KNI_TRUE == readAndClearMemErrorFlag()) {
-        KNI_ThrowNew("java/lang/OutOfMemoryError",
-                     "Allocation of internal renderer buffer failed.");
-    } else {
-        if (!pisces_moduleInitialize()) {
-            KNI_ThrowNew("java/lang/IllegalStateException", "");
-        }
-    }
-
-    KNI_ReturnVoid();
-}
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_PiscesRenderer_initialize() {

@@ -55,38 +55,6 @@ Java_com_sun_pisces_NativeFinalizer_initialize() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_NativeFinalizer_0004SurfaceNativeFinalizer_finalize() {
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(objectHandle);
-    KNI_DeclareHandle(guardedHandle);
-
-    KNI_GetThisPointer(objectHandle);
-    KNI_GetObjectField(objectHandle, fieldIds[FINALIZER_GUARDED_OBJ],
-                       guardedHandle);
-
-    surface_finalize(guardedHandle);
-
-    KNI_EndHandles();
-    KNI_ReturnVoid();
-}
-
-KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_NativeFinalizer_0004RendererNativeFinalizer_finalize() {
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(objectHandle);
-    KNI_DeclareHandle(guardedHandle);
-
-    KNI_GetThisPointer(objectHandle);
-    KNI_GetObjectField(objectHandle, fieldIds[FINALIZER_GUARDED_OBJ],
-                       guardedHandle);
-
-    renderer_finalize(guardedHandle);
-
-    KNI_EndHandles();
-    KNI_ReturnVoid();
-}
-
-KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_NativeFinalizer_00024SurfaceNativeFinalizer_finalize() {
     KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);

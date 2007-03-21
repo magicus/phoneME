@@ -315,7 +315,7 @@ surface_finalize(jobject objectHandle) {
 
     if (surface != NULL) {
         surface->cleanup(surface);
-        surface_dispose(&surface->super);
+	my_free(surface);
         KNI_SetLongField(objectHandle, fieldIds[SURFACE_NATIVE_PTR], (jlong)0);
 
         if (KNI_TRUE == readAndClearMemErrorFlag()) {
