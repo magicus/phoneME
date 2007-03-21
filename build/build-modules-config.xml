@@ -61,6 +61,36 @@ import java.io.BufferedInputStream;
 public class JUMPModulesConfig {
     private static Hashtable config;
 
+    private static String
+    getBuildProperty(String buildPropertyValue, String buildPropertyName) {
+        // if ant property is not defined the expression ${prop} is expanded
+        // to itself
+        if(buildPropertyValue.equals("${" + buildPropertyName + "}")) {
+            return null;
+        }
+        return buildPropertyValue;
+    }
+    
+    private static void
+    setMIDPHomeProperty(Hashtable cfg) {
+        String value = (String)cfg.get("sun.midp.home.path");
+        if(value == null) {
+            value = getBuildProperty("${midp_output_dir}", "midp_output_dir");
+        }
+        
+        if(value != null) {
+            if (!value.startsWith("/")) {
+               value = System.getProperty("java.home") + "/" + value;        
+            }
+            cfg.put("sun.midp.home.path", value);
+        }
+    }
+
+    private static void
+    setRuntimeProperties(Hashtable cfg) {
+        setMIDPHomeProperty(cfg);
+    }
+
     public static void
     overrideDefaultConfig(String fname) {
         Properties props = new Properties();
@@ -81,6 +111,7 @@ public class JUMPModulesConfig {
             }
         }
 
+        setRuntimeProperties(props);
         config.putAll(props);
     }
 
@@ -108,6 +139,7 @@ ${modules-config.raw}${ant-property-separator}
         </filterchain>
     </concat>
     <concat destfile="${modules-config-file}.tmp" append="true">
+        setRuntimeProperties(config);
     }
 }
 </concat>

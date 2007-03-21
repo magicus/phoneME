@@ -126,7 +126,4 @@ public class AppContainerImpl extends JUMPAppContainer {
     public void handleMessage(JUMPMessage message) {
     }
 
-    public static JUMPApplication getCurrentApplication() {
-       return currentApp;
-    }
 }

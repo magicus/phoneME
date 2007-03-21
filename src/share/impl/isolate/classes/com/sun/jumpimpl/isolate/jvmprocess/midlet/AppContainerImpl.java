@@ -30,8 +30,11 @@ import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.common.JUMPAppModel;
 
 import com.sun.jump.isolate.jvmprocess.JUMPAppContainer;
+import com.sun.jumpimpl.process.JUMPModulesConfig;
 
 import sun.misc.MIDPConfig;
+
+import java.lang.reflect.Constructor;
 
 /**
  * Application Container for the MIDlet app model.
@@ -54,40 +57,42 @@ public class AppContainerImpl extends JUMPAppContainer {
      */
     public static JUMPAppContainer getInstance() {
         try {
+
             /*
              * The MIDlet container uses classes of the MIDP library, which
              * is only accessible through the MIDPImplementationClassLoader.
              * Hence the MIDlet container needs to be loaded by the MIDP
              * implementation classloader.
-             *
-             * The location MIDP home is the sun.midp.home.path system
-             * property.
-             * The default for MIDP home if sun.midp.home.path is not defined
-             * is "java.home/midp/midp_fb".
-             * The default for MIDP home if sun.midp.home.path and java.home
-             * are not defined is "./midp/midp_fb".
              */
-            String javaHome = System.getProperty("java.home", "."); 
-            String sep = File.separator;
-            String midpHome = System.getProperty("sun.midp.home.path",
-                              javaHome + sep + "midp" + sep + "midp_fb");
-            String midpClasses = midpHome + sep + "classes.zip";
-                     
-            File[] midpFile = new File[]{ new File(midpClasses) };
 
+            /* First, see if anyone created the classloader already */		 
             ClassLoader midpImplementationClassLoader =
-                MIDPConfig.newMIDPImplementationClassLoader(midpFile);
+	       MIDPConfig.getMIDPImplementationClassLoader();
 
+	    if (midpImplementationClassLoader == null) {
+	       String midpJar = (String)
+	  	   JUMPModulesConfig.getProperties().get("jump.midp.classes.zip");
+
+               midpImplementationClassLoader =
+                   MIDPConfig.newMIDPImplementationClassLoader(new String[] { midpJar } );
+            }
+             
             Class clazz =
                 Class.forName("com.sun.midp.jump.isolate.MIDletContainer",
                               true, midpImplementationClassLoader);
 
+	    String midpHome = (String)
+		JUMPModulesConfig.getProperties().get("sun.midp.home.path");
+
+	    Constructor constructor  = clazz.getDeclaredConstructor(
+			    new Class[] {String.class} );
+
             JUMPAppContainer midletContainer =
-                (JUMPAppContainer)clazz.newInstance();
+                (JUMPAppContainer) constructor.newInstance(new Object[] {midpHome});;
 
             return midletContainer;
         } catch (ClassNotFoundException e) {
-            // MIDPConfig not found, not a duel stack platform.
+            // MIDPConfig not found, not a dual stack platform.
         } catch (Throwable e) { 
             // Other unexpected error? Let's report it.
             e.printStackTrace();

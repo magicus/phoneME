@@ -37,6 +37,8 @@ import java.lang.reflect.Method;
 import java.util.Vector;
 import java.util.HashMap;
 
+import sun.misc.MIDPConfig;
+
 /**
  * Factory implementation methods for the installer module
  */
@@ -86,13 +88,9 @@ public class InstallerFactoryImpl extends JUMPInstallerModuleFactory {
               **/   
 
                try {
-                  Class midpConfigClass = Class.forName("sun.misc.MIDPConfig"); 
-                  Method method = midpConfigClass.getMethod(
-                                      "getMIDPImplementationClassLoader", 
-                                       null);
 
                   ClassLoader midpImplementationClassLoader = 
-   		      (ClassLoader) method.invoke(null, null);
+   		      MIDPConfig.getMIDPImplementationClassLoader();
    
    	          if (midpImplementationClassLoader == null) {
    
@@ -100,18 +98,13 @@ public class InstallerFactoryImpl extends JUMPInstallerModuleFactory {
 	              *	Noone had a need to load midp classes yet.
 		      *	Create the classloader using the
 		      *	default location in which sun.misc.MIDPLauncher
-		      *	normally uses.
+		      *	normally uses, unless jump.midp.classes.zip is set.
 		      **/
-
-                     String midpPath = getMidpPath();
-
-   	             File[] midpFile = new File[]{ new File(midpPath) };
-                     method = midpConfigClass.getMethod(
-                                   "newMIDPImplementationClassLoader", 
-                                   new Class[]{ midpFile.getClass() });
+ 
+                     String midpFile = (String) configMap.get("jump.midp.classes.zip");
 
                      midpImplementationClassLoader =
-   	                (ClassLoader)method.invoke(null, new Object[] { midpFile });
+   	                MIDPConfig.newMIDPImplementationClassLoader(new String[]{midpFile});
    	          }   
                   
    	          midletInstaller = (JUMPInstallerModule) 
@@ -122,7 +115,9 @@ public class InstallerFactoryImpl extends JUMPInstallerModuleFactory {
                   }
 
                } catch (ClassNotFoundException e) {
-                  // MIDPConfig not found, not a duel stack platform.
+                  // MIDPConfig or MIDLETInstallerImpl not found. 
+		  // Not a dual stack platform.
+                  e.printStackTrace();
                } catch (Exception e) { 
                   // Other unexpected error? Let's report it.
                   e.printStackTrace();
@@ -141,8 +136,10 @@ public class InstallerFactoryImpl extends JUMPInstallerModuleFactory {
 	try {     
            Class clazz = Class.forName(className, true, loader);
            return clazz.newInstance();
-        } catch (InstantiationException e) { e.printStackTrace(); 
-        } catch (IllegalAccessException e) { e.printStackTrace(); 
+        } catch (InstantiationException e) { 
+	   e.printStackTrace(); 
+        } catch (IllegalAccessException e) { 
+ 	   e.printStackTrace(); 
 	}
 
 	return null;
@@ -260,26 +257,4 @@ public class InstallerFactoryImpl extends JUMPInstallerModuleFactory {
         return Integer.parseInt(getString(key));
     }
 
-    /**
-     * Returns the location of the midp library.
-     * The search order is:
-     * 1. If System property "sun.midp.home.path" is set, use that path.
-     * 2. If the Map config contains "sun.midp.home.path", use that path.
-     * 3. Else, use the default location, which is is ./midp/midp_linux_fb_gcc/classes.zip.
-     */
-    private String getMidpPath() {
-        String midpPath = null;
-	String key = "sun.midp.home.path";
-
-	midpPath = (String) System.getProperty(key, (String) configMap.get(key));
-	if (midpPath == null || midpPath.equals("")) { // use default
-           String javahome = System.getProperty("java.home", ".") + "/midp/midp_linux_fb_gcc"; 
-           midpPath = javahome + "/classes.zip";
-        } else {
-           midpPath = midpPath + "/classes.zip";
-        }
-
-	return midpPath;
-    }
-                     
 }
