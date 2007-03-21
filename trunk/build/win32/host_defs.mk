@@ -45,11 +45,6 @@ LIB_LINK_POSTFIX	= $(DEBUG_POSTFIX).lib
 override GENERATEMAKEFILES = false  
 
 #
-# Location of JDK
-#
-JDK_HOME	?= h:/jdk1.3.1_01
-
-#
 # Specify all the host and target tools. 
 # CC and AS are specific in the win32-<cpu>/defs.mk file.
 #
