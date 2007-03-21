@@ -675,8 +675,12 @@ public abstract class BasicPlayer implements Player
 
         state = STARTED;
         sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
+
+		boolean has_capture_locator = ( null != locator ) &&
+			( locator.startsWith( Configuration.AUDIO_CAPTURE_LOCATOR ) 
+			  || locator.startsWith( Configuration.VIDEO_CAPTURE_LOCATOR ) );
         
-        if( !this.hasDataSource && !hasToneSequenceSet )
+        if( !this.hasDataSource && !hasToneSequenceSet && !has_capture_locator )
 	        sendEvent(PlayerListener.END_OF_MEDIA, new Long(getMediaTime()));
 
         // Finish any pending startup stuff in subclass
