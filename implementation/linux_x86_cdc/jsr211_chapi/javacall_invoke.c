@@ -41,7 +41,7 @@
 typedef void* native_handler_info;
 
 typedef struct _native_invocation_handle_impl {
-	DWORD id;
+	unsigned long id;
 	char* handler_id;
 	char* cmd_line;
 	char *apppath;

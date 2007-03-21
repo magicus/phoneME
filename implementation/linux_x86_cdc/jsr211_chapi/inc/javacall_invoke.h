@@ -46,7 +46,7 @@
 extern "C" {
 #endif/*__cplusplus*/
 
-typedef void* invocation_handle;
+typedef void* native_invocation_handle;
 
 
 #define NATIVE_INVOCATION_STATUS_ERROR 0xFEFEFEFEL
