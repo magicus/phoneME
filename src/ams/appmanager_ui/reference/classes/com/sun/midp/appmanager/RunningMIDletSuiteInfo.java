@@ -202,7 +202,7 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
                 return proxy == midlet;
             }
 
-            if (midletToRun != null) {
+            if (numberOfMidlets == 1 && midletToRun != null) {
                 return midletToRun.equals(midlet.getClassName());
             }
 
