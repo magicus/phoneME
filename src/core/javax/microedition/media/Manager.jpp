@@ -500,6 +500,7 @@ public final class Manager {
     
     private static String DS_ERR = "Cannot create a DataSource for: ";
     private static String PL_ERR = "Cannot create a Player for: ";
+    private static String PL_ERR_SH = "Cannot create a Player: ";
 
     /**
      * This private constructor keeps anyone from actually
@@ -824,7 +825,7 @@ public final class Manager {
 
         if ((type == null) ||
             (className = config.getHandler(type)) == null) {
-            throw new MediaException(PL_ERR + type);
+            throw new MediaException(PL_ERR_SH + "Mime type " + type + " is not supported");
         }
 
         BasicPlayer p = null;
@@ -886,6 +887,9 @@ public final class Manager {
         }
         String contentType = source.getContentType();
         
+        if (contentType == null)
+            throw new MediaException(PL_ERR_SH + "Unknown or unsupported media type");
+
         BasicPlayer p = getPlayerFromType(contentType);
         p.setSource(source);
         
