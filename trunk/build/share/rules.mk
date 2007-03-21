@@ -436,7 +436,7 @@ $(J2ME_CLASSLIB):: jsrclasses
 endif
 $(J2ME_CLASSLIB):: testclasses $(CVM_TEST_CLASSESZIP)
 $(J2ME_CLASSLIB):: democlasses $(CVM_DEMO_CLASSESJAR)
-ifeq ($(CVM_INCLUDE_JUMP), true)
+ifeq ($(USE_JUMP), true)
 $(J2ME_CLASSLIB):: jumptargets
 endif
 $(J2ME_CLASSLIB):: $(JSROP_JARS)
@@ -527,6 +527,7 @@ $(CVM_BUILD_DEFS_MK)::
 	$(AT) echo "J2ME_CLASSLIB = $(J2ME_CLASSLIB)" >> $@
 	$(AT) echo "CVM_MTASK = $(CVM_MTASK)" >> $@
 	$(AT) echo "CVM_INCLUDE_JUMP = $(CVM_INCLUDE_JUMP)" >> $@
+	$(AT) echo "USE_JUMP = $(USE_JUMP)" >> $@
 	$(AT) echo "JUMP_DIR = $(JUMP_DIR)" >> $@
 	$(AT) echo "CVM_PRELOAD_LIB = $(CVM_PRELOAD_LIB)" >> $@
 	$(AT) echo "CCFLAGS_SPEED = $(CCFLAGS_SPEED)" >> $@

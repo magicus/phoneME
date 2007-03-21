@@ -24,7 +24,7 @@
 # information or have any questions. 
 #
 
-ifeq ($(CVM_INCLUDE_MIDP),true)
+ifeq ($(USE_MIDP),true)
 
 # print our configuration
 printconfig::
@@ -132,7 +132,7 @@ $(RUNMIDLET): force_midp_build
 	             MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
 	             $(MIDP_JSROP_USE_FLAGS) \
 	             -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
-ifneq ($(CVM_INCLUDE_JUMP), true)
+ifneq ($(USE_JUMP), true)
 	$(AT)cp $@ $(CVM_BINDIR)
 endif
 	@echo "<==== end building MIDP natives"

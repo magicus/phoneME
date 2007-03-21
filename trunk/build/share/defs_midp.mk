@@ -26,7 +26,7 @@
 
 CVM_MIDP_BUILDDIR	= $(CDC_DIST_DIR)/midp
 
-ifeq ($(CVM_INCLUDE_MIDP),true)
+ifeq ($(USE_MIDP),true)
 
 # Include target specific makefiles first
 -include ../$(TARGET_CPU_FAMILY)/defs_midp.mk

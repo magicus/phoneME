@@ -405,7 +405,7 @@ endif
 # %end lvm
 
 # These need to be romized to keep PMVM happy
-ifeq ($(CVM_INCLUDE_JUMP), true)
+ifeq ($(USE_JUMP), true)
 CVM_BUILDTIME_CLASSES += \
    sun.io.ByteToCharUTF8 \
    java.io.ExpiringCache \
@@ -490,7 +490,7 @@ CLASSLIB_CLASSES += \
    com.sun.cdc.i18n.StreamReader \
    com.sun.cdc.i18n.StreamWriter
 
-ifneq ($(CVM_INCLUDE_JUMP), true)
+ifneq ($(USE_JUMP), true)
 CLASSLIB_CLASSES += \
    sun.io.ByteToCharUTF8 \
    sun.net.www.protocol.jar.Handler \

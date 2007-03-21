@@ -395,7 +395,7 @@ CLASSLIB_CLASSES += \
         java.awt.event.WindowFocusListener \
 
 # JUMP specific basis classes
-ifeq ($(CVM_INCLUDE_JUMP), true)
+ifeq ($(USE_JUMP), true)
 CLASSLIB_CLASSES += \
 		sun.mtask.xlet.XletFrame \
 		sun.mtask.xlet.PXletRunner \
@@ -415,7 +415,7 @@ CLASSLIB_CLASSES += \
 endif
 
 ifeq ($(EXCLUDE_XLET_RUNNER), false)
-ifeq ($(CVM_INCLUDE_JUMP), false)
+ifeq ($(USE_JUMP), false)
 CLASSLIB_CLASSES += \
 		com.sun.xlet.ToplevelFrame \
 		com.sun.xlet.XletClassLoader \
@@ -533,7 +533,7 @@ CVM_DEMO_CLASSES += \
 	IXCDemo.ixcXlets.serverXlet.PlaneImpl \
 	IXCDemo.ixcXlets.serverXlet.PlaneServer 
 
-ifneq ($(CVM_INCLUDE_JUMP), true)
+ifneq ($(USE_JUMP), true)
 CVM_DEMO_CLASSES += \
 	IXCDemo.IXCMain 
 endif

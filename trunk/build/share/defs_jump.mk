@@ -26,7 +26,7 @@
 CVM_ANT 	        ?= ant
 CVM_JUMP_BUILDDIR	= $(CDC_DIST_DIR)/jump
 
-ifeq ($(CVM_INCLUDE_JUMP),true)
+ifeq ($(USE_JUMP),true)
 #
 # JUMP defs
 #
@@ -39,7 +39,7 @@ JUMP_ANT_OPTIONS += -Ddist.dir=$(call POSIX2HOST,$(CVM_JUMP_BUILDDIR)) 	\
 		    -Dcdc.dir=$(call POSIX2HOST,$(CDC_DIST_DIR)) \
 		    -Dbinary.pattern.file=$(BINARYBUNDLE_PATTERN_FILENAME)  
 
-ifeq ($(CVM_INCLUDE_MIDP), true)
+ifeq ($(USE_MIDP), true)
 JUMP_ANT_OPTIONS         += -Dmidp_output_dir=$(subst $(CDC_DIST_DIR)/,,$(MIDP_OUTPUT_DIR))
 endif
 

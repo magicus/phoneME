@@ -95,8 +95,8 @@ endif
 # If any JSR is built include JSROP abstractions building
 ifneq ($(INCLUDED_JSROP_NUMBERS),)
 # Check Jump building
-ifneq ($(CVM_INCLUDE_JUMP), true)
-$(error JSR optional packages require Jump to be supported. CVM_INCLUDE_JUMP must be true.)
+ifneq ($(USE_JUMP), true)
+$(error JSR optional packages require Jump to be supported. USE_JUMP must be true.)
 endif
 
 export ABSTRACTIONS_DIR ?= $(COMPONENTS_DIR)/abstractions
