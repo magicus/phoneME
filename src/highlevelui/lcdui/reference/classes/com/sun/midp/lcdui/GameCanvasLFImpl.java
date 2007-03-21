@@ -43,9 +43,9 @@ public class GameCanvasLFImpl {
     GameCanvas owner;
 
     /**
-     * Currently every GameCanvas has one offscreen buffer can be
-     * optimized so that we put a limit on no of offscreen buffers
-     * an application can have
+     * Currently every GameCanvas has one offscreen buffer 
+     * Can be optimized so that we put a limit on number of 
+     * offscreen buffers an application can have
      */
     private Image offscreenBuffer;
 
