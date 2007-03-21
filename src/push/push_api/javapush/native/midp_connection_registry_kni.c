@@ -187,8 +187,7 @@ KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_checkInByMidlet0) {
     KNI_GetParameterAsObject(2, classNameObj);
 
     SNI_BEGIN_RAW_POINTERS;
-    pushcheckinbymidlet(/*(char*)JavaByteArray(suiteIdObj)*/ suiteId,
-                        (char*)JavaByteArray(classNameObj));
+    pushcheckinbymidlet(suiteId, (char*)JavaByteArray(classNameObj));
     SNI_END_RAW_POINTERS;
 
     KNI_EndHandles();
