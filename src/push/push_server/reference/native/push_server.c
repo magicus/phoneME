@@ -2103,8 +2103,8 @@ static void pushProcessPort(char *buffer, PushEntry* pe) {
             } else {
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
                 /* check for sms,cbs or mms connection */
-                wmaPushProcessPort(buffer, &pe->fd, &pe->port,
-                    suiteIdFromChars(pushstorage(buffer, 3)), &pe->appID);
+                wmaPushProcessPort(buffer, &pe->fd, pe->port,
+                    suiteIdFromChars(pushstorage(buffer, 3)), pe->appID);
                 if (pe->fd != -1) {
                     pe->isWMAEntry = KNI_TRUE;
                 }
