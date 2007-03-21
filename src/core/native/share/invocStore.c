@@ -334,6 +334,7 @@ static jboolean setParamsFromObj(StoredInvoc* invoc,
     do {
         /* On any error break out of this block */
         int len;
+        pcsl_string* args;
     
         KNI_GetObjectField(invocObj, urlFid, tmp1);
         if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->url))
@@ -351,6 +352,15 @@ static jboolean setParamsFromObj(StoredInvoc* invoc,
         if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->ID))
             break;
     
+        if (invoc->args != NULL) {
+            len = invoc->argsLen;
+            args = invoc->args;
+            while (len-- > 0) {
+                pcsl_string_free(args++);
+            }
+            pcsl_mem_free(invoc->args);
+        }
+
         /*
          * Copy the arguments if non-empty.
          * Always keep the pointers safe so invocFree()
@@ -363,7 +373,7 @@ static jboolean setParamsFromObj(StoredInvoc* invoc,
             invoc->args = NULL;
         } else {
             pcsl_string* args;
-            args = (pcsl_string*)pcsl_mem_malloc(len * sizeof(pcsl_string));
+            args = (pcsl_string*)pcsl_mem_calloc(len, sizeof(pcsl_string));
             if (args == NULL)
                 break;
             invoc->argsLen = len;
@@ -374,6 +384,10 @@ static jboolean setParamsFromObj(StoredInvoc* invoc,
                 if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, --args))
                     break;
             }
+        }
+
+        if (invoc->data != NULL) {
+            pcsl_mem_free(invoc->data);
         }
     
         /* Copy any data from the Invocation to malloc's memory. */
@@ -829,6 +843,32 @@ Java_com_sun_midp_content_InvocationStore_setListenNotify0(void) {
 }
 
 /**
+ * The utility allocates memory for StoredInvoc struct and initializes it with
+ * zeroes.
+ * It replaces standard 'calloc'-family function to double-check that allocated
+ * buffer is zeroed.
+ *
+ * @return pointer on zeroed StoredInvoc buffer or NULL if EOM occurs.
+ */
+static void* newStoredInvoc() {
+
+#define STOREDINVOC_N   ((sizeof(StoredInvoc) + sizeof(int) - 1) / sizeof(int))
+#define STOREDINVOC_SIZE    (STOREDINVOC_N * sizeof(int))
+
+    int i;
+    int* buf = (int*) pcsl_mem_malloc(STOREDINVOC_SIZE);
+
+    if (buf != NULL) {
+        for (i = 0; i < STOREDINVOC_N; i++) {
+            buf[i] = 0;
+        }
+    }
+    
+    return buf;
+}
+
+
+/**
  * Implementation of native method to queue a new Invocation.
  * The state of the InvocationImpl is copied to the heap
  * and inserted in the head of the invocation queue.
@@ -858,13 +898,13 @@ Java_com_sun_midp_content_InvocationStore_put0(void) {
     do {
         /* On any error break out of this block */
         /* Allocate a new zero'ed struct to save the values in */
-        invoc = (StoredInvoc*) pcsl_mem_calloc(1, sizeof (StoredInvoc));
+        invoc = (StoredInvoc*) newStoredInvoc();
         if (invoc == NULL) {
             KNI_ThrowNew(midpOutOfMemoryError, 
                                 "InvocationStore_put0 no memory for [invoc]");
             break;
         }
-    
+
         /* Assign a new transaction id and set it */
         invoc->tid = invocNextTid();
         KNI_SetIntField(invocObj, tidFid, invoc->tid);
