@@ -36,6 +36,7 @@ import com.sun.midp.security.ImplicitlyTrustedClass;
 import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.ToneControl;
+import javax.microedition.lcdui.game.GameCanvas;
 // #endif ENABLE_CDC
 
 // #ifndef ENABLE_CDC
@@ -3251,8 +3252,13 @@ class GraphicsAccessImpl implements com.sun.midp.lcdui.GraphicsAccess {
      * @param g The Graphics context
      * @return The width of the Graphics context
      */
-    public short getGraphicsWidth(Graphics g) {
-        return g.getMaxWidth();
+    public int getGraphicsWidth(Graphics g) {
+        Object creator = g.getCreator();
+        if (creator != null && creator instanceof
+                javax.microedition.lcdui.game.GameCanvas) {
+            return ((GameCanvas)creator).getWidth();
+        }
+        return (int)g.getMaxWidth();
     }
 
     /**
@@ -3260,8 +3266,31 @@ class GraphicsAccessImpl implements com.sun.midp.lcdui.GraphicsAccess {
      * @param g The Graphics context
      * @return The height of the Graphics context
      */
-    public short getGraphicsHeight(Graphics g) {
+    public int getGraphicsHeight(Graphics g) {
+        Object creator = g.getCreator();
+        if (creator != null && creator instanceof
+                javax.microedition.lcdui.game.GameCanvas) {
+            return ((GameCanvas)creator).getHeight();
+        }
         return g.getMaxHeight();
+    }
+
+    /**
+     * Get creator of the Graphics object
+     * @param g Graphics object to get creator from
+     * @return Graphics creator reference
+     */
+    public Object getGraphicsCreator(Graphics g) {
+        return g.getCreator();
+    }
+
+    /**
+     * Set the creator of the Graphics object
+     * @param g Graphics object to set creator for
+     * @param creator Graphics creator reference
+     */
+    public void setCreator(Graphics g, Object creator) {
+        g.setCreator(creator);
     }
 
     /**

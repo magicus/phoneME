@@ -108,8 +108,10 @@ public class GameCanvasLFImpl {
      */
     public Graphics getGraphics() {
         if (offscreenBuffer != null) {
-            return graphicsAccess.getImageGraphics(
+            Graphics g = graphicsAccess.getImageGraphics(
                 offscreenBuffer, owner.getWidth(), owner.getHeight());
+            graphicsAccess.setCreator(g, owner);
+            return g;
         }
         
         return null;
