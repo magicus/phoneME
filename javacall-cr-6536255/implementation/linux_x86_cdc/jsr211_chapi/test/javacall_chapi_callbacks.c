@@ -38,9 +38,11 @@
 ***************************************************************/
 
 
-#include "javacall_chapi_callbacks.h"
 #include <string.h>
 #include <stdlib.h>
+
+#include "javacall_chapi_callbacks.h"
+#include <javautil_string.h>
 
 typedef int SuiteIdType;
 
@@ -54,14 +56,6 @@ typedef int SuiteIdType;
 
 #define GET_CH_SIZE(id_size, clas_size) \
     id_size + class_name_size + 5
-
-
-/**
- * String length calculation.
- * In win32 implementation used standart strlen() procedure for wide chars.
- * Parameter 'str' of 'javacall_utf16_string' type (terminated with zero).
- */
-#define CHAPI_STRLEN(str)   wcslen(str)
 
 
 /**
@@ -82,7 +76,7 @@ typedef int SuiteIdType;
  * int sz
  * Result: boolean true if strings are lexically identical.
  */
-#define CHAPI_ISEQUAL_I(str1, str2, sz) (0 == _wcsnicmp((str1), (str2), (sz)))
+#define CHAPI_ISEQUAL_I(str1, str2, sz) (0 == javautil_wcsnicmp((str1), (str2), (sz)))
 
 
 /**
