@@ -38,6 +38,11 @@ BINARYBUNDLE_PATTERN_FILENAME=.binary-pattern
 JUMP_ANT_OPTIONS += -Ddist.dir=$(call POSIX2HOST,$(CVM_JUMP_BUILDDIR)) 	\
 		    -Dcdc.dir=$(call POSIX2HOST,$(CDC_DIST_DIR)) \
 		    -Dbinary.pattern.file=$(BINARYBUNDLE_PATTERN_FILENAME)  
+
+ifeq ($(CVM_INCLUDE_MIDP), true)
+JUMP_ANT_OPTIONS         += -Dmidp_output_dir=$(subst $(CDC_DIST_DIR)/,,$(MIDP_OUTPUT_DIR))
+endif
+
 # The default JUMP component location
 JUMP_DIR		?= $(COMPONENTS_DIR)/jump
 ifeq ($(wildcard $(JUMP_DIR)/build/build.xml),)

@@ -74,9 +74,8 @@ $(error MIDP_DIR must point to the MIDP directory: $(MIDP_DIR))
 endif
 
 MIDP_MAKEFILE_DIR 	?= build/$(MIDP_PLATFORM)
-MIDP_OUTPUT_DIR	?= $(CVM_MIDP_BUILDDIR)/midp_$(MIDP_PLATFORM)
+MIDP_OUTPUT_DIR		?= $(CVM_MIDP_BUILDDIR)/midp_$(MIDP_PLATFORM)
 export MIDP_OUTPUT_DIR
-
 USE_SSL			?= false
 USE_RESTRICTED_CRYPTO	?= false
 VERIFY_BUILD_ENV	?= 
@@ -91,7 +90,19 @@ USE_DEBUG		= true
 endif
 
 MIDP_CLASSESZIP_DEPS	=
-MIDP_CLASSESZIP		?= $(MIDP_OUTPUT_DIR)/classes.zip
+
+# If this is a non-romized build, redirect the location of the 
+# midp classes.zip and libmidp.so to the cdc's build dir.
+# For the romized build, both the java and native would be folded into
+# cvm, but set MIDP_CLASSES_ZIP to default for java compilation
+# rule in rules_midp.mk.
+
+ifneq ($(CVM_PRELOAD_LIB), true)
+MIDP_CLASSES_ZIP	?= $(CVM_LIBDIR_ABS)/midpclasses.zip
+MIDP_SHARED_LIB		?= $(CVM_LIBDIR_ABS)/libmidp$(LIB_POSTFIX)
+else
+MIDP_CLASSES_ZIP	?= $(MIDP_OUTPUT_DIR)/classes.zip
+endif
 
 RUNMIDLET		?= $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/runMidlet
 MIDP_OBJECTS		?= $(MIDP_OUTPUT_DIR)/obj$(DEBUG_POSTFIX)/$(TARGET_CPU)/*.o
@@ -106,7 +117,7 @@ endif
 -include $(MIDP_DEFS_JCC_MK)
 ifeq ($(CVM_PRELOAD_LIB), true)
 # Add MIDP classes to JCC input list so they can be romized.
-CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_CLASSESZIP)
+CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_CLASSES_ZIP)
 
 # Add MIDP CNI classes to CVM_CNI_CLASSES
 CVM_CNI_CLASSES += $(MIDP_CNI_CLASSES)
