@@ -1337,7 +1337,7 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
     }
 
 #ifdef ENABLE_JSR_180
-    if (prevState == WAITING_DATA) {
+    if (prevState == RECEIVED_EVENT && pushp->pCachedData != NULL) {
         pushp->fdAccepted = pushp->fdsock;
         status = pcsl_socket_read_finish(
             (void *)pushp->fdsock, pushp->pCachedData->buffer,
@@ -1350,7 +1350,7 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
              * Cancel the launch pending.
              */
             REPORT_ERROR1(LC_PUSH,
-            "(Push) Cannot receive data, errno = %d\n",
+                "(Push) Cannot receive data, errno = %d\n",
                 pcsl_network_error((void*)pushp->fdsock));
             pushp->state = prevState;
             return NULL;
@@ -1383,7 +1383,7 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
     /* Update the resource count for client sockets */
     if (midpIncResourceCount(RSC_TYPE_TCP_CLI, 1) == 0) {
         REPORT_INFO(LC_PROTOCOL,
-                    "(Push)Resource limit update error");
+                    "(Push) Resource limit update error");
     }
 
     pushp->fdsock = (int)clientHandle;
@@ -2262,9 +2262,10 @@ int findPushBlockedHandle(int handle) {
     if (pushlength > 0 ) {
         for (pushp = pushlist; pushp != NULL; pushp = pushtmp) {
             pushtmp = pushp->next;
-            if (handle == pushp->fd &&
+            if ((handle == pushp->fd &&
                 pushp->state != CHECKED_OUT &&
-                pushp->state != LAUNCH_PENDING) {
+                pushp->state != LAUNCH_PENDING) ||
+                (handle == pushp->fdsock && pushp->state == WAITING_DATA)) {
                     pushp->state = RECEIVED_EVENT;
                     return handle;
             }
@@ -2343,7 +2344,7 @@ int pushpoll() {
                 }
             }
 
-            if (pe->state == RECEIVED_EVENT || pe->state == WAITING_DATA) {
+            if (pe->state == RECEIVED_EVENT) {
                 return pe->fd;
             }
 
