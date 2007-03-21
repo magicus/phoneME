@@ -23,7 +23,6 @@
 #
 
 # Is there a better, centralized location to put the ant tool location?
-CVM_ANT 	        ?= ant
 CVM_JUMP_BUILDDIR	= $(CDC_DIST_DIR)/jump
 
 ifeq ($(USE_JUMP),true)
@@ -50,15 +49,6 @@ $(error JUMP_DIR must point to the JUMP directory: $(JUMP_DIR))
 endif
 JUMP_OUTPUT_DIR         = $(CVM_JUMP_BUILDDIR)/lib
 JUMP_SRCDIR             = $(JUMP_DIR)/src
-
-ifeq ($(USE_VERBOSE_MAKE), true)
-CVM_ANT_OPTIONS         += -v
-else
-CVM_ANT_OPTIONS		+= -q
-endif
-ifneq ($(CVM_DEBUG), true)
-CVM_ANT_OPTIONS         += -Ddebug=false
-endif
 
 #
 # JUMP_DEPENDENCIES defines what needs to be built for jump

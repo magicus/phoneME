@@ -697,6 +697,17 @@ ifeq ($(CVM_STATICLINK_LIBS), true)
 	CVM_DEFINES   += -DCVM_STATICLINK_LIBS
 endif
 
+# Keep ant quiet unless a verbose build is requested. Note, you can set
+# CVM_ANT_OPTIONS=-v or CVM_ANT_OPTIONS=-d on the command line to make
+# ant much more verbose.
+ifneq ($(USE_VERBOSE_MAKE), true)
+CVM_ANT_OPTIONS		+= -q
+endif
+
+ifneq ($(CVM_DEBUG), true)
+CVM_ANT_OPTIONS         += -Ddebug=false
+endif
+
 ifeq ($(CDC_10),true)
 CVM_DEFINES += -DCDC_10
 endif
@@ -2003,6 +2014,7 @@ endif
 BISON		?= $(CVM_HOST_TOOLS_PREFIX)bison
 ZIP             ?= zip
 UNZIP           ?= unzip
+CVM_ANT         ?= ant
 
 #######################################################################
 # Build tool options:
