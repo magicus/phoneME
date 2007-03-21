@@ -66,17 +66,17 @@ extern "C" {
 int pushcacheddatasize(int fd);
 
 /**
- * Fetch datagram data into a buffer
- * 
- * @param fd The handle of the datagram port
- * @param ip The IP address of the incoming datagram
+ * Fetch the buffered datagram or TCP packet into a buffer.
+ *
+ * @param fd The handle of the socket from which the packet was received
+ * @param ip The ip address of the incoming datagram
  * @param sndport The port from which the data was sent
  * @param buf A pointer to a buffer into which the data should be copied
  * @param len The size of buf
- * @return the length of the datagram data if successful, or <tt>-1</tt>
- *         unsuccessful.
+ * @return the length of the returned data if successful, or <tt>-1</tt>
+ *         if unsuccessful.
  */
-int pusheddatagram(int fd, int* ip, int* sndport, char* buf, int len);
+int pushgetcachedpacket(int fd, int* ip, int* sndport, char* buf, int len);
 
 /**
  * Check out the handle for the requested server socket.

@@ -220,9 +220,8 @@ Java_com_sun_midp_io_j2me_socket_Protocol_read0(void) {
 
         /* Check the push cache for a waiting packet. */
         SNI_BEGIN_RAW_POINTERS;
-        bytesRead = pusheddatagram((int)pcslHandle, &ipAddress, &port,
-                        (char*)&(JavaByteArray(bufferObject)[offset]),
-                        length);
+        bytesRead = pushgetcachedpacket((int)pcslHandle, &ipAddress, &port,
+            (char*)&(JavaByteArray(bufferObject)[offset]), length);
         SNI_END_RAW_POINTERS;
     }
 

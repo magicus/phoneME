@@ -83,9 +83,9 @@
 #include <midpUtilKni.h>
 #endif
 
-#ifndef MAX_DATAGRAM_LENGTH
-#define MAX_DATAGRAM_LENGTH 1500
-#endif /* MAX_DATAGRAM_LENGTH */
+#ifndef MAX_CACHED_DATA_SIZE
+#define MAX_CACHED_DATA_SIZE 1500
+#endif /* MAX_CACHED_DATA_SIZE */
 
 /** For build a parameter string. */
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(COMMA_STRING)
@@ -114,22 +114,22 @@ static char *errStr = NULL;
 #define MAX_LINE 512
 
 /**
- * The internal representation of a datagram. Datagrams read by the
- * push mechanism are buffered in the push registry for use by the
- * midlet after it is invoked by push.
+ * The internal representation of a datagram or TCP packet.
+ * Datagrams read by the push mechanism are buffered in the push
+ * registry for use by the midlet after it is invoked by push.
  */
-typedef struct _datagramentry {
+typedef struct _packetentry {
   /** The IP Address of the sender. */
   int ipAddress;
-  /** The port ID on which the datagram was received. */
+  /** The port ID on which the packet was received. */
   int senderport;
   /** The length of data in the buffer. */
   int length;
   /** The offset in the buffer where the read pointer is located. */
   int offs;
   /** The buffer that holds the data of the datagram. */
-  char buffer[MAX_DATAGRAM_LENGTH];
-} DatagramEntry;
+  char buffer[MAX_CACHED_DATA_SIZE];
+} PacketEntry;
 
 /**
  * The internal representation of an entry in the Push Registry list. When
@@ -159,8 +159,8 @@ typedef struct _pushentry {
   char *appID;
   /** Current state of the connection. */
   int state;
-  /** Pointers for datagrams that have already arrived. */
-  DatagramEntry *dg;
+  /** Pointers for packets that have already arrived. */
+  PacketEntry *pCachedData;
   /** Flag denoting whether a WMA message has arrived and been cached. */
   jboolean isWMAMessCached;
   /** True if this entry should be handled by WMA rather then by MIDP Push. */
@@ -694,7 +694,7 @@ int pushadd(char *str) {
     pe->fd = -1;
     pe->fdsock = -1;
     pe->fdAccepted = -1;
-    pe->dg = NULL;
+    pe->pCachedData = NULL;
     pe->isWMAEntry = KNI_FALSE;
     pe->isWMAMessCached = KNI_FALSE;
     pe->appID = NULL;
@@ -844,9 +844,9 @@ int pushcacheddatasize(int fd) {
     PushEntry *p;
 
     for (p = pushlist; p != NULL ; p = p->next) {
-        if ((p->fd == fd && p->dg != NULL) ||
-                (p->fdAccepted == fd && p->dg != NULL)) {
-            return (p->dg->length - p->dg->offs);
+        if ((p->fd == fd && p->pCachedData != NULL) ||
+                (p->fdAccepted == fd && p->pCachedData != NULL)) {
+            return (p->pCachedData->length - p->pCachedData->offs);
         }
     }
 
@@ -854,43 +854,45 @@ int pushcacheddatasize(int fd) {
 }
 
 /**
- * Fetch the datagram data into a buffer.
+ * Fetch the buffered datagram or TCP packet into a buffer.
  *
- * @param fd The handle of the datagram port
+ * @param fd The handle of the socket from which the packet was received
  * @param ip The ip address of the incoming datagram
  * @param sndport The port from which the data was sent
  * @param buf A pointer to a buffer into which the data should be copied
  * @param len The size of buf
- * @return the length of the datagram data if successful, or <tt>-1</tt>
- *         unsuccessful.
+ * @return the length of the returned data if successful, or <tt>-1</tt>
+ *         if unsuccessful.
  */
-int pusheddatagram(int fd, int *ip, int *sndport, char *buf, int len) {
+int pushgetcachedpacket(int fd, int *ip, int *sndport, char *buf, int len) {
     PushEntry *p;
     int length = -1;
 
     /* Find the entry to pass off the open file descriptor. */
-    for (p = pushlist; p != NULL ; p = p->next) {
-        if ((p->fd == fd && p->dg != NULL) ||
-                (p->fdAccepted == fd && p->dg != NULL)) {
+    for (p = pushlist; p != NULL; p = p->next) {
+        if (((p->fd == fd && p->fdAccepted == -1) || (p->fdAccepted == fd)) &&
+                (p->pCachedData != NULL)) {
             /* Return the cached data. */
-            *ip = p->dg->ipAddress;
-            *sndport = p->dg->senderport;
+            *ip = p->pCachedData->ipAddress;
+            *sndport = p->pCachedData->senderport;
 
-            length = p->dg->length - p->dg->offs;
+            length = p->pCachedData->length - p->pCachedData->offs;
             if (length > 0) {
                 if (len < length) {
                     length = len;
                 }
-                memcpy(buf, &p->dg->buffer[p->dg->offs], length);
+
+                memcpy(buf, &p->pCachedData->buffer[p->pCachedData->offs],
+                       length);
                 
-                p->dg->offs += length;
+                p->pCachedData->offs += length;
             }
 
-            if (p->dg->offs >= p->dg->length) {
+            if (p->pCachedData->offs >= p->pCachedData->length) {
                 p->fdAccepted = -1;
                 /* Destroy the cached entry after it has been read. */
-                midpFree(p->dg);
-                p->dg = NULL;
+                midpFree(p->pCachedData);
+                p->pCachedData = NULL;
             }
 
             return length;
@@ -1187,9 +1189,9 @@ static void pushcleanupentry(PushEntry *p) {
     }
 
     /* Remove the cached datagram (if any). */
-    if (p->dg != NULL) {
-        midpFree(p->dg);
-        p->dg = NULL;
+    if (p->pCachedData != NULL) {
+        midpFree(p->pCachedData);
+        p->pCachedData = NULL;
     }
 }
 
@@ -1217,8 +1219,8 @@ static char* pushApplySipFilter(PushEntry* pushp) {
      * with the filter pattern string.
      */
     sender = getSipFromHeaderURI((unsigned char *)
-                                 pushp->dg->buffer,
-                                 pushp->dg->length);
+                                 pushp->pCachedData->buffer,
+                                 pushp->pCachedData->length);
 
     if (checksipfilter((unsigned char *)pushp->filter, sender)) {
         /*
@@ -1261,8 +1263,8 @@ static char* pushApplySipFilter(PushEntry* pushp) {
              * Extract the message media type.
              */
             acceptcontact_type = getSipAcceptContactType(
-                (unsigned char *) pushp->dg->buffer,
-                pushp->dg->length);
+                (unsigned char *) pushp->pCachedData->buffer,
+                pushp->pCachedData->length);
 
             if (midp_strcasecmp((char *)required_type,
                     (char*)acceptcontact_type) == 0) {
@@ -1338,8 +1340,8 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
     if (prevState == WAITING_DATA) {
         pushp->fdAccepted = pushp->fdsock;
         status = pcsl_socket_read_finish(
-            (void *)pushp->fdsock, pushp->dg->buffer,
-            MAX_DATAGRAM_LENGTH, &(pushp->dg->length),
+            (void *)pushp->fdsock, pushp->pCachedData->buffer,
+            MAX_CACHED_DATA_SIZE, &(pushp->pCachedData->length),
             &context);
 
         if (status != PCSL_NET_SUCCESS) {
@@ -1394,28 +1396,28 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
 
         pushp->state = WAITING_DATA;
 
-        pushp->dg = (DatagramEntry*) midpMalloc(sizeof (DatagramEntry));
-        if (pushp->dg == NULL) {
+        pushp->pCachedData = (PacketEntry*) midpMalloc(sizeof (PacketEntry));
+        if (pushp->pCachedData == NULL) {
             pushp->state = prevState;
             return NULL;
         }
 
-        pushp->dg->offs = 0;
+        pushp->pCachedData->offs = 0;
 
         /* Set the raw IP address */
-        memcpy(&(pushp->dg->ipAddress), ipBytes, MAX_ADDR_LENGTH);
+        memcpy(&(pushp->pCachedData->ipAddress), ipBytes, MAX_ADDR_LENGTH);
 
         memset(ipAddress, '\0', MAX_HOST_LENGTH);
         strcpy(ipAddress, pcsl_inet_ntoa(&ipBytes));
 
         status = pcsl_socket_read_start(
-            (void *)pushp->fdsock, pushp->dg->buffer,
-            MAX_DATAGRAM_LENGTH, &(pushp->dg->length), &context);
+            (void *)pushp->fdsock, pushp->pCachedData->buffer,
+            MAX_CACHED_DATA_SIZE, &(pushp->pCachedData->length), &context);
 
         if (status == PCSL_NET_SUCCESS) {
             status = pcsl_socket_read_finish(
-                (void *)pushp->fdsock, pushp->dg->buffer,
-                MAX_DATAGRAM_LENGTH, &(pushp->dg->length),
+                (void *)pushp->fdsock, pushp->pCachedData->buffer,
+                MAX_CACHED_DATA_SIZE, &(pushp->pCachedData->length),
                 &context);
 
             if (status != PCSL_NET_SUCCESS) {
@@ -1436,8 +1438,8 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
                 PCSL_NET_CHECK_READ);
             return NULL;
         } else {
-            midpFree(pushp->dg);
-            pushp->dg = NULL;
+            midpFree(pushp->pCachedData);
+            pushp->pCachedData = NULL;
             pushp->state = prevState;
             return NULL;
         }
@@ -1519,32 +1521,38 @@ char *pushfindfd(int fd) {
                  * Read the datagram and save it til the application reads it.
                  * This is a one datagram message queue.
                  */
-                pushp->dg = (DatagramEntry*)midpMalloc(sizeof (DatagramEntry));
-                if (pushp->dg == NULL) {
+                pushp->pCachedData = (PacketEntry*)
+                    midpMalloc(sizeof (PacketEntry));
+                if (pushp->pCachedData == NULL) {
                     pushp->state = temp_state;
                     return NULL;
                 }
 
-                pushp->dg->offs = 0;
+                pushp->pCachedData->offs = 0;
 
                 status = pcsl_datagram_read_finish(
-                        (void *)pushp->fd, ipBytes,
-                        &(pushp->dg->senderport), pushp->dg->buffer,
-                        MAX_DATAGRAM_LENGTH, &(pushp->dg->length), context);
+                        (void *)pushp->fd,
+                        ipBytes,
+                        &(pushp->pCachedData->senderport),
+                        pushp->pCachedData->buffer,
+                        MAX_CACHED_DATA_SIZE,
+                        &(pushp->pCachedData->length),
+                        context);
 
                 if (status != PCSL_NET_SUCCESS) {
                     /*
                      * Receive failed - no data available.
                      * cancel the launch pending
                      */
-                    midpFree(pushp->dg);
-                    pushp->dg = NULL;
+                    midpFree(pushp->pCachedData);
+                    pushp->pCachedData = NULL;
                     pushp->state = temp_state;
                     return NULL;
                 }
 
                 /* Set the raw IP address */
-                memcpy(&(pushp->dg->ipAddress), ipBytes, MAX_ADDR_LENGTH);
+                memcpy(&(pushp->pCachedData->ipAddress),
+                       ipBytes, MAX_ADDR_LENGTH);
 
                 memset(ipAddress, '\0', MAX_HOST_LENGTH);
                 strcpy(ipAddress, pcsl_inet_ntoa(&ipBytes));
@@ -1573,33 +1581,38 @@ char *pushfindfd(int fd) {
                  * application reads it.
                  * This is a one SIP datagram message queue.
                  */
-                pushp->dg = (DatagramEntry*)midpMalloc(sizeof (DatagramEntry));
-                if (pushp->dg == NULL) {
+                pushp->pCachedData = (PacketEntry*)
+                    midpMalloc(sizeof (PacketEntry));
+                if (pushp->pCachedData == NULL) {
                     pushp->state = temp_state;
                     return NULL;
                 }
 
-                pushp->dg->offs = 0;
+                pushp->pCachedData->offs = 0;
 
                 status = pcsl_datagram_read_finish(
-                    (void *)pushp->fd, ipBytes,
-                    &(pushp->dg->senderport), pushp->dg->buffer,
-                    MAX_DATAGRAM_LENGTH, &(pushp->dg->length), context);
+                    (void *)pushp->fd,
+                    ipBytes,
+                    &(pushp->pCachedData->senderport),
+                    pushp->pCachedData->buffer,
+                    MAX_CACHED_DATA_SIZE,
+                    &(pushp->pCachedData->length),
+                    context);
 
                 if (status != PCSL_NET_SUCCESS) {
                     /*
                      * Receive failed - no data available.
                      * cancel the launch pending
                      */
-                    midpFree(pushp->dg);
-                    pushp->dg = NULL;
+                    midpFree(pushp->pCachedData);
+                    pushp->pCachedData = NULL;
                     pushp->state = temp_state;
                     return NULL;
                 }
 
                 REPORT_INFO1(LC_PROTOCOL,
                              "SIP Push Message: %s",
-                             pushp->dg->buffer);
+                             pushp->pCachedData->buffer);
 
                 return pushApplySipFilter(pushp);
             }
@@ -1791,7 +1804,7 @@ char *pushfindsuite(char *store, int available) {
              * or a cache datagram.
              */
             if (available && (p->fd != -1)) {
-                if ((p->fdsock == -1) && (p->dg == NULL) &&
+                if ((p->fdsock == -1) && (p->pCachedData == NULL) &&
                     (!p->isWMAMessCached)) {
                     midpFree(ret);
                     ret = NULL;
@@ -1866,7 +1879,7 @@ static int parsePushList(int pushfd, int startListening) {
             pe->fdsock = -1;
             pe->fdAccepted = -1;
             pe->state = AVAILABLE;
-            pe->dg = NULL;
+            pe->pCachedData = NULL;
             pe->isWMAEntry = KNI_FALSE;
             pe->isWMAMessCached = KNI_FALSE;
             pe->appID = NULL;

@@ -191,7 +191,8 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_close0(void) {
     info = (MidpReentryData*)SNI_GetReentryData(NULL);
     if (info == NULL) {
         /* initial invocation */
-        serverSocketHandle = getMidpServerSocketProtocolPtr(thisObject)->nativeHandle;
+        serverSocketHandle =
+            getMidpServerSocketProtocolPtr(thisObject)->nativeHandle;
 
         /*
          * If serverSocketHandle is invalid, the socket has already been closed,
@@ -209,7 +210,8 @@ Java_com_sun_midp_io_j2me_serversocket_Socket_close0(void) {
              * IMPL NOTE: how to do resource accounting for the push case?
              */
             if (pushcheckin(serverSocketHandle) == -1) {
-                status = pcsl_socket_close_start((void*)serverSocketHandle, &context);
+                status = pcsl_socket_close_start((void*)serverSocketHandle,
+                                                 &context);
 
                 /* Server socket should be monitored for read events only */
                 midp_thread_signal(NETWORK_READ_SIGNAL, serverSocketHandle, 0);

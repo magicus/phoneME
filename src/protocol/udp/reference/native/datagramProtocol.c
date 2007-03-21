@@ -328,15 +328,14 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_receive0(void) {
         /*
          * Check the push cache for a waiting datagram.
          *
-         * If pusheddatagram() returns -1 [IMPL NOTE: the code checks for less
-         * than zero; which is correct?], we need to read a datagram
-         * ourselves. Otherwise, pusheddatagram() has returned a waiting
+         * If pushgetcachedpacket() returns -1 [IMPL NOTE: the code checks for
+         * less than zero; which is correct?], we need to read a datagram
+         * ourselves. Otherwise, pushgetcachedpacket() has returned a waiting
          * datagram and has set ipAddress and port to valid values.
          */
         SNI_BEGIN_RAW_POINTERS;
-        bytesReceived = pusheddatagram((int)socketHandle, &ipAddress, &port,
-                           (char*)&(JavaByteArray(bufferObject)[offset]),
-                           length);
+        bytesReceived = pushgetcachedpacket((int)socketHandle, &ipAddress,
+            &port, (char*)&(JavaByteArray(bufferObject)[offset]), length);
         SNI_END_RAW_POINTERS;
 
         if (bytesReceived < 0) {
