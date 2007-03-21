@@ -40,6 +40,8 @@ TARGET_CCC = $(TARGET_CC)
 
 WIN_LINKLIBS += wininet.lib
 
+WIN32_PLATFORM ?= win32
+
 #
 # Platform source directory
 #
