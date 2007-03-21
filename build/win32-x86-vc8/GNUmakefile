@@ -40,25 +40,4 @@ CVM_JIT_USE_FP_HARDWARE = false
 # Disable CVM_JIT_REGISTER_LOCALS for x86 for now.
 CVM_JIT_REGISTER_LOCALS ?= false
 
-# Description of the VC 2003 win32 platform.
-# The following are all for the benefit of win32/defs.mk
-VS8_DIR			?= C:/Program Files/Microsoft Visual Studio 8
-VS8_PATH		= $(call WIN2POSIX,$(VS8_DIR))
-VC_DIR			= $(VS8_DIR)/VC
-VC_PATH			= $(VS8_PATH)/VC
-PLATFORM_SDK_DIR	= C:/Program Files/Microsoft Platform SDK
-PLATFORM_SDK_PATH	= $(call WIN2POSIX,$(PLATFORM_SDK_DIR))
-PLATFORM_TOOLS_PATH	= $(VC_PATH)/Bin
-COMMON_TOOLS_PATH	= $(PLATFORM_SDK_PATH)/Bin
-
 include ../share/top.mk
-
-LIB     := $(VC_DIR)/lib;$(PLATFORM_SDK_DIR)/lib
-INCLUDE := $(VC_DIR)/include;$(PLATFORM_SDK_DIR)/include
-PATH    := $(PLATFORM_TOOLS_PATH):$(VS8_PATH)/Common7/IDE:$(PATH)
-
-export LIB
-export INCLUDE
-export PATH
-
-LINK_CMD += ; mt.exe -manifest $@.manifest "-outputresource:$@;\#2"
