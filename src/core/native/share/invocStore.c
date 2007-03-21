@@ -859,7 +859,7 @@ static void* newStoredInvoc() {
     int* buf = (int*) pcsl_mem_malloc(STOREDINVOC_SIZE);
 
     if (buf != NULL) {
-        for (i = 0; i < STOREDINVOC_N; i++) {
+        for (i = 0; i < (int)STOREDINVOC_N; i++) {
             buf[i] = 0;
         }
     }
