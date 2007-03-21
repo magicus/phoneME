@@ -409,6 +409,7 @@ public abstract class BasicPlayer implements Player
     }
 
     protected boolean hasDataSource = true;
+    protected boolean hasToneSequenceSet = false;
 
     /**
      * Subclasses need to implement this to realize
@@ -559,24 +560,21 @@ public abstract class BasicPlayer implements Player
                 // do nothing...
             }
         }
-        
-        if (getDuration() == 0) {
-            /* just start and stop without any actions */
-            sendEvent(PlayerListener.STARTED, new Long(0));
-            sendEvent(PlayerListener.END_OF_MEDIA, new Long(0));
-        } else {
-            if (!doStart()) {
-                throw new MediaException("start");
-            }
 
-            state = STARTED;
-            sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
-
-            // Finish any pending startup stuff in subclass
-            // Typically used to start any threads that might potentially
-            // generate events before the STARTED event is delivered
-            doPostStart();
+        if (!doStart()) {
+            throw new MediaException("start");
         }
+
+        state = STARTED;
+        sendEvent(PlayerListener.STARTED, new Long(getMediaTime()));
+        
+        if( !this.hasDataSource && !hasToneSequenceSet )
+	        sendEvent(PlayerListener.END_OF_MEDIA, new Long(getMediaTime()));
+
+        // Finish any pending startup stuff in subclass
+        // Typically used to start any threads that might potentially
+        // generate events before the STARTED event is delivered
+        doPostStart();
     }
 
 
@@ -1190,10 +1188,10 @@ public abstract class BasicPlayer implements Player
                 this.hasDataSource = false;
             }
             // #ifndef ABB [
-            else if (locator.equals(Configuration.AUDIO_CAPTURE_LOCATOR)) {
+            else if (locator.startsWith(Configuration.AUDIO_CAPTURE_LOCATOR)) {
                 this.hasDataSource = false;
             }
-            else if (locator.equals(Configuration.VIDEO_CAPTURE_LOCATOR)) {
+            else if (locator.startsWith(Configuration.VIDEO_CAPTURE_LOCATOR)) {
                 this.hasDataSource = false;
             }
             else if (locator.equals(Manager.MIDI_DEVICE_LOCATOR)) {

@@ -31,10 +31,104 @@ import javax.microedition.media.Control;
  *
  */
 public abstract class Configuration {
+
     /**
-     * MPEG4 mime type.
+     * Tone sequence mime type.
      */
-    public final static String MIME_VIDEO_MPEG4 = "video/mpeg4";
+    public final static String MIME_AUDIO_TONE = "audio/x-tone-seq";
+
+    /**
+     * MIME_AUDI_AMR NB mime type.
+     */
+    public final static String MIME_AUDIO_WAV = "audio/x-wav";
+    public final static String MIME_AUDIO_WAV_2 = "audio/wav";
+
+    /**
+     * MIME_AUDI_AMR mime type
+     */
+    public final static String MIME_AUDIO_AMR = "audio/amr";
+
+    /**
+     * MIME_AUDI_AMR WB mime type.
+     */
+    public final static String MIME_AUDIO_AMR_WB = "audio/amr-wb";
+
+    /**
+     * MIME_AUDIO_MIDI mime type.
+     */
+    public final static String MIME_AUDIO_MIDI = "audio/midi";
+    public final static String MIME_AUDIO_MIDI_2 = "audio/mid";
+
+    /**
+     * SP-MIME_AUDIO_MIDI mime type.
+     */
+    public static final String MIME_AUDIO_SP_MIDI = "audio/sp-midi";
+
+    /**
+     * MIME_AUDIO_MP3 mime type
+     */
+    public final static String MIME_AUDIO_MP3 = "audio/mpeg";
+    public final static String MIME_AUDIO_MP3_2 = "audio/mp3";
+
+    /**
+     * MP4 audio type
+     */
+    public final static String MIME_AUDIO_MP4 = "audio/mp4";
+    public final static String MIME_AUDIO_MP4_2 = "audio/mp4a-latm";
+
+    /**
+     * MIME_AUDIO_AAC audio type
+     */
+    public final static String MIME_AUDIO_AAC = "audio/aac";
+
+    /**
+     * MIME_AUDIO_QCELP audio type
+     */
+    public final static String MIME_AUDIO_QCELP = "audio/qcelp";
+    public final static String MIME_AUDIO_QCELP_2 = "audio/vnd.qcelp";
+
+    /**
+     * GIF mime type.
+     */
+    public final static String MIME_IMAGE_GIF = "image/gif";
+
+    /**
+     * PNG mime type.
+     */
+    public final static String MIME_IMAGE_PNG = "image/png";
+
+    /**
+     * JPEG mime type.
+     */
+    public final static String MIME_IMAGE_JPEG = "image/jpeg";
+
+    /**
+     * Raw image mime type.
+     */
+    public final static String MIME_IMAGE_RAW = "image/raw";
+
+
+    /**
+     * 3GPP video mime type
+     */
+    public final static String MIME_VIDEO_3GPP = "video/3gpp";
+    public final static String MIME_VIDEO_3GPP_2 = "video/3gpp2";
+
+    /**
+     * MPEG video mime type
+     */
+    public final static String MIME_VIDEO_MPEG = "video/mpeg";
+
+    /**
+     * MPEG4 video mime type
+     */
+    public final static String MIME_VIDEO_MPEG4 = "video/mp4";
+
+    public final static String TONE_DEVICE_LOCATOR = javax.microedition.media.Manager.TONE_DEVICE_LOCATOR; //"device://tone";
+    public final static String MIDI_DEVICE_LOCATOR = javax.microedition.media.Manager.MIDI_DEVICE_LOCATOR; //"device://midi";
+    public final static String RADIO_CAPTURE_LOCATOR = "capture://radio";
+    public final static String AUDIO_CAPTURE_LOCATOR = "capture://audio";
+    public final static String VIDEO_CAPTURE_LOCATOR = "capture://video";
 
     /**
      * A hash table of the protocol and content handlers.
@@ -61,12 +155,6 @@ public abstract class Configuration {
      *  otherwise false
      */
     protected static boolean nativeLooping = false;
-    
-    public final static  String TONE_DEVICE_LOCATOR = javax.microedition.media.Manager.TONE_DEVICE_LOCATOR; //"device://tone";
-    public final static String MIDI_DEVICE_LOCATOR = javax.microedition.media.Manager.MIDI_DEVICE_LOCATOR; //"device://midi";
-    public final static String RADIO_CAPTURE_LOCATOR = "capture://radio";
-    public final static String AUDIO_CAPTURE_LOCATOR = "capture://audio";
-    public final static String VIDEO_CAPTURE_LOCATOR = "capture://video";
     
     protected Hashtable properties;
     
@@ -110,7 +198,7 @@ public abstract class Configuration {
      */
     public abstract String[] getSupportedProtocols(String content_types);
 
-// #ifdef ENABLE_AMMS [
+// #ifdef ENABLE_JSR_234 [
     public abstract String[] getSupportedMediaProcessorInputTypes();
 
     public abstract String[] getSupportedSoundSource3DPlayerTypes();
@@ -120,7 +208,7 @@ public abstract class Configuration {
 
     public abstract void setProperty(String key, String value);
 
-// #ifdef ENABLE_AMMS [
+// #ifdef ENABLE_JSR_234 [
     /**
      * Gets the audio renderer.
      *
@@ -214,9 +302,9 @@ public abstract class Configuration {
      */
     public static Configuration getConfiguration() {
         if (config != null) return config;
-
+    
         String className = System.getProperty("mmapi-configuration");
-       
+        
         if (className != null) {        
             try {
                 // ... try and instantiate the configuration class ...
