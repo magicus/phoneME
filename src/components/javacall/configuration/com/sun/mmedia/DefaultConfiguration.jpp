@@ -169,7 +169,6 @@ public class DefaultConfiguration extends Configuration {
                 MIME_AUDIO_TONE,
             // Optional formats
                 MIME_AUDIO_AMR,
-                MIME_AUDIO_AMR_WB,
                 MIME_AUDIO_MIDI,
                 MIME_AUDIO_MIDI_2,
                 MIME_AUDIO_SP_MIDI,
@@ -204,7 +203,6 @@ public class DefaultConfiguration extends Configuration {
             return new String[]{
                 MIME_AUDIO_TONE,
                 MIME_AUDIO_AMR,
-                MIME_AUDIO_AMR_WB,
                 MIME_AUDIO_MIDI,
                 MIME_AUDIO_MIDI_2,
                 MIME_AUDIO_SP_MIDI,
@@ -230,7 +228,6 @@ public class DefaultConfiguration extends Configuration {
             return new String[]{
                 MIME_AUDIO_TONE,
                 MIME_AUDIO_AMR,
-                MIME_AUDIO_AMR_WB,                
                 MIME_AUDIO_MIDI,
                 MIME_AUDIO_MIDI_2,
                 MIME_AUDIO_SP_MIDI,
@@ -255,7 +252,6 @@ public class DefaultConfiguration extends Configuration {
         if (protocol.equals("rtsp")) {
             return new String[]{
                 MIME_AUDIO_AMR,
-                MIME_AUDIO_AMR_WB,                
 //                MIME_AUDIO_MP3,
 //                MIME_AUDIO_MP3_2,
 //                MIME_AUDIO_MP4,
@@ -340,8 +336,7 @@ public class DefaultConfiguration extends Configuration {
                 };
         }
 
-        if (content_type.equals(MIME_AUDIO_AMR) ||
-            content_type.equals(MIME_AUDIO_AMR_WB)) {
+        if (content_type.equals(MIME_AUDIO_AMR)) {
             return new String[]{
                 "http",
             // #ifdef USE_FILE_CONNECTION [
