@@ -274,6 +274,11 @@ endif
 include $(JAVACALL_MAKE_FILE)
 endif
 
+#Variable containing all JSROP components output dirs
+JSROP_OUTPUT_DIRS = $(foreach jsr_number,$(JSROP_NUMBERS),\
+          $(JSR_$(jsr_number)_BUILD_DIR)) $(JAVACALL_BUILD_DIR) \
+          $(ABSTRACTIONS_BUILD_DIR)
+
 CVM_INCLUDE_DIRS+= $(JSROP_INCLUDE_DIRS)
 
 ifeq ($(CVM_PRELOAD_LIB), true)
