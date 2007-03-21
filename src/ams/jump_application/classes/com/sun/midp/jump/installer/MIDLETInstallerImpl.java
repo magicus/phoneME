@@ -51,7 +51,6 @@ public class MIDLETInstallerImpl implements JUMPInstallerModule {
     static JUMPInstallerInterface     installer = null;
     static StorageAccessInterface     suiteStore = null;
 
-    private static String midpProfileKey = "microedition.profiles";
     private static String midpHomeKey    = "sun.midp.home.path";
 
     public void unload() {
@@ -59,37 +58,9 @@ public class MIDLETInstallerImpl implements JUMPInstallerModule {
     
     public void load(Map map) {
 
-        // Check for some system properties and set them if there's no default.
-        // Need to do this before initializing MIDletSuiteStorageAccessor.
- 
-        // For "microedition.profiles" value.
-        // Set the property with the module configuration data if the value is provided.
-        // Else, check if the property is already set, and if not, set default.
-        String profilename = (String) map.get(midpProfileKey);
-	if (profilename != null) {
-            System.setProperty(midpProfileKey, profilename);
-        } else {
-            profilename = System.getProperty(midpProfileKey);
-            if (profilename == null || profilename.equals("") ) {
-               System.setProperty(midpProfileKey, "MIDP-2.0"); // Default
-            }
-	}     
-
-        // For "sun.midp.home.path" value.
-        // Set the property with the configuration data if the value is provided.
-        // Else, check if the property is already set, and if not, set default.
         String homeDir = (String) map.get(midpHomeKey);
-	if (homeDir != null) {
-            System.setProperty(midpHomeKey, homeDir);
-        } else {
-            homeDir = System.getProperty(midpHomeKey);
-            if (homeDir == null || homeDir.equals("") ) {
-               String javahome = System.getProperty("java.home", ".");
-               System.setProperty(midpHomeKey, javahome + "/midp/midp_fb"); // Default
-            }
-        }
 
-        JumpInit.init();
+        JumpInit.init(homeDir);
 
         installer = new JUMPFileInstaller();
 
