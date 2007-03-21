@@ -2120,6 +2120,15 @@ JAVA_CMD	= $(CVM_JAVA)
 #
 JAVA_CLASSPATH += $(LIB_CLASSESDIR)
 
+# locate the tools component
+export TOOLS_DIR ?= $(COMPONENTS_DIR)/tools
+ifeq ($(wildcard $(TOOLS_DIR)/tools.gmk),)
+$(error TOOLS_DIR must point to the shared tools directory: $(TOOLS_DIR))
+endif
+
+# include tools component makefile
+include $(TOOLS_DIR)/tools.gmk
+
 #
 # Include target makfiles last.
 #
@@ -2133,14 +2142,6 @@ JAVA_CLASSPATH += $(LIB_CLASSESDIR)
 -include ../$(TARGET_OS)/defs.mk
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)/defs.mk
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs.mk
-
-export TOOLS_DIR ?= $(COMPONENTS_DIR)/tools
-ifeq ($(wildcard $(TOOLS_DIR)/tools.gmk),)
-$(error TOOLS_DIR must point to the shared tools directory: $(TOOLS_DIR))
-endif
-
-# Include external shared tools
-include $(TOOLS_DIR)/tools.gmk
 
 # Root directory for unittests reports
 REPORTS_DIR ?= $(call POSIX2HOST,$(CDC_DIST_DIR)/reports)

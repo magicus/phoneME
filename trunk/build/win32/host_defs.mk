@@ -56,7 +56,7 @@ TARGET_AR_UPDATE	= true $(TARGET_AR_CREATE)
 
 # Override the default TARGET_CC_VERSION, since it relies on the gcc
 # -dumpversion and -dumpmachine options.
-TARGET_CC_VERSION ?= $(shell $(TARGET_CC) 2>&1 | grep -i version)
+TARGET_CC_VERSION ?= $(shell PATH="$(PATH)"; $(TARGET_CC) 2>&1 | grep -i version)
 
 #
 # Compiler and linker flags
