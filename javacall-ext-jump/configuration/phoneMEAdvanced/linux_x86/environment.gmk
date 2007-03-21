@@ -57,7 +57,7 @@ SOURCE_OUTPUT_LIST += $(JSR_177_JC_IMPL_PATH)/$(JSR_177_JC_DIR) javacall/impleme
 endif
 
 #Specify list of utility objects necessary for the build
-UTILITIES += 
+UTILITIES += javautil_unicode
 
 #Compile options that are not common for all configurations can be specified in
 #SPECIFIC_DEFINITIONS variable
