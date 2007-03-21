@@ -329,6 +329,8 @@ void TextFieldBody::backspace() {
 
             QMultiLineEdit::insertAt(str,line,0,FALSE);
             break;
+        default:
+            break;
     }
 }
 
@@ -352,6 +354,8 @@ void TextFieldBody::del() {
 
             str = getStringForPhoneNumber(str);
             QMultiLineEdit::insertAt(str,line,0,FALSE);
+            break;
+        default:
             break;
     }
 }
