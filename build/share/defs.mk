@@ -268,14 +268,20 @@ CVM_LVM                 ?= false
 CVM_CSTACKANALYSIS	?= false
 CVM_TIMESTAMPING	?= true
 CVM_INCLUDE_COMMCONNECTION ?= false
-CVM_INCLUDE_MIDP	?= false
-CVM_INCLUDE_JUMP	?= false
-ifeq ($(CVM_INCLUDE_MIDP), true)
+USE_MIDP	?= false
+USE_JUMP	?= false
+
+# Some makefiles still reference CVM_INCLUDE_MIDP and CVM_INCLUDE_JUMP,
+# so give them proper values until they are cleaned up.
+CVM_INCLUDE_MIDP ?= $(USE_MIDP)
+CVM_INCLUDE_JUMP ?= $(USE_JUMP)
+
+ifeq ($(USE_MIDP), true)
   override CVM_KNI        = true
   override CVM_DUAL_STACK = true
 else
   CVM_KNI                 ?= false
-  ifeq ($(CVM_INCLUDE_JUMP), true)
+  ifeq ($(USE_JUMP), true)
     override CVM_DUAL_STACK = true
   else
     CVM_DUAL_STACK          ?= false
@@ -745,8 +751,8 @@ CVM_FLAGS += \
 	CVM_TEST_GENERATION_GC \
 	CVM_TIMESTAMPING \
 	CVM_INCLUDE_COMMCONNECTION \
-	CVM_INCLUDE_MIDP \
-	CVM_INCLUDE_JUMP \
+	USE_MIDP \
+	USE_JUMP \
 	CVM_DUAL_STACK \
 	CVM_SPLIT_VERIFY \
 	CVM_KNI \
@@ -909,10 +915,10 @@ CVM_TRACE_JIT_CLEANUP_ACTION           = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_INCLUDE_COMMCONNECTION_CLEANUP_ACTION        = \
 	$(CVM_DEFAULT_CLEANUP_ACTION)    \
 	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
-CVM_INCLUDE_MIDP_CLEANUP_ACTION        = \
+USE_MIDP_CLEANUP_ACTION        = \
 	$(CVM_DEFAULT_CLEANUP_ACTION)    \
 	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
-CVM_INCLUDE_JUMP_CLEANUP_ACTION        = \
+USE_JUMP_CLEANUP_ACTION        = \
 	$(CVM_DEFAULT_CLEANUP_ACTION)    \
 	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
 CVM_DUAL_STACK_CLEANUP_ACTION          = $(CVM_DEFAULT_CLEANUP_ACTION)
@@ -1019,7 +1025,7 @@ endif
 # Object and data files needed for dual stack support
 #
 ifeq ($(CVM_DUAL_STACK), true)
-ifeq ($(CVM_INCLUDE_MIDP), true)
+ifeq ($(USE_MIDP), true)
     # The MIDP version include all CLDC classes plus 8 additional
     # javax/micro/microeditional/io/* classes.
     CVM_MIDPDIR           = $(CVM_TOP)/src/share/lib/dualstack/midp
