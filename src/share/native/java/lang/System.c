@@ -155,10 +155,11 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
     PUTPROP_ForPlatformCString(props, "user.dir", sprops.user_dir);  
 
     /* CLDC properties */
+    // FIXME: this should go into the midp component.
     PUTPROP(props, "microedition.configuration", "CLDC-1.1");
     PUTPROP(props, "microedition.platform", "j2me");
     PUTPROP(props, "microedition.encoding", "ISO-8859-1");
-    PUTPROP(props, "microedition.profiles", "");
+    PUTPROP(props, "microedition.profiles", "MIDP-2.1");
 
     /* Generic Connection Framework (GCF) CommConnection property */
     PUTPROP(props, "microedition.commports", sprops.commports);
@@ -174,6 +175,7 @@ JNIEXPORT jobject JNICALL
 Java_java_lang_System_initCldcMidpProperties(JNIEnv *env, jclass cla,
                                          jobject midpProps)
 {
+// FIXME: this should go into the midp component.
 #ifndef CVM_DUAL_STACK
     return NULL;
 #else
@@ -186,7 +188,7 @@ Java_java_lang_System_initCldcMidpProperties(JNIEnv *env, jclass cla,
         PUTPROP(midpProps, "microedition.configuration", "CLDC-1.1");
         PUTPROP(midpProps, "microedition.platform", "j2me");
         PUTPROP(midpProps, "microedition.encoding", "ISO-8859-1");
-        PUTPROP(midpProps, "microedition.profiles", "MIDP-2.0");
+        PUTPROP(midpProps, "microedition.profiles", "MIDP-2.1");
         PUTPROP(midpProps, "microedition.locale", "en-US");
     }
     return midpProps;
