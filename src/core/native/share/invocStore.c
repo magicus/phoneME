@@ -352,32 +352,37 @@ static jboolean setParamsFromObj(StoredInvoc* invoc,
         if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(tmp1, &invoc->ID))
             break;
     
-        if (invoc->args != NULL) {
-            len = invoc->argsLen;
-            args = invoc->args;
-            while (len-- > 0) {
-                pcsl_string_free(args++);
-            }
-            pcsl_mem_free(invoc->args);
-        }
-
         /*
          * Copy the arguments if non-empty.
          * Always keep the pointers safe so invocFree()
          * can function correctly.
          */
         KNI_GetObjectField(invocObj, argumentsFid, tmp2);
-        len = (KNI_IsNullHandle(tmp2)? 0: KNI_GetArrayLength(tmp2));
-        if (len <= 0) {
-            invoc->argsLen = 0;
-            invoc->args = NULL;
-        } else {
-            pcsl_string* args;
-            args = (pcsl_string*)pcsl_mem_calloc(len, sizeof(pcsl_string));
-            if (args == NULL)
-                break;
-            invoc->argsLen = len;
+        len = invoc->argsLen;
+        invoc->argsLen = (KNI_IsNullHandle(tmp2)? 0: KNI_GetArrayLength(tmp2));
+
+        if (len != invoc->argsLen) {
+            if (invoc->args != NULL) {
+                args = invoc->args;
+                while (len-- > 0) {
+                    pcsl_string_free(args++);
+                }
+                pcsl_mem_free(invoc->args);
+            }
+            len = invoc->argsLen;
+            if (len > 0) {
+                args = (pcsl_string*)pcsl_mem_calloc(len, sizeof(pcsl_string));
+                if (args == NULL)
+                    break;
+            } else {
+                args = NULL;
+            }
             invoc->args = args;
+        } else {
+            args = invoc->args;
+        }
+
+        if (len > 0) {
             args += len;
             while (len-- > 0) {
                 KNI_GetObjectArrayElement(tmp2, len, tmp1);
@@ -385,24 +390,27 @@ static jboolean setParamsFromObj(StoredInvoc* invoc,
                     break;
             }
         }
-
-        if (invoc->data != NULL) {
-            pcsl_mem_free(invoc->data);
-        }
     
         /* Copy any data from the Invocation to malloc's memory. */
         KNI_GetObjectField(invocObj, dataFid, tmp2);
         len = (KNI_IsNullHandle(tmp2)? 0: KNI_GetArrayLength(tmp2));
-        if (len <= 0) {
-            invoc->data = NULL;
-            invoc->dataLen = 0;
-        } else {
-            invoc->data = pcsl_mem_malloc(len);
-            if (invoc->data == NULL)
-                break;
-    
-            KNI_GetRawArrayRegion(tmp2, 0, len, invoc->data);
+
+        if (invoc->dataLen != len) {
+            if (invoc->data != NULL) {
+                pcsl_mem_free(invoc->data);
+            }
+            if (len > 0) {
+                invoc->data = pcsl_mem_malloc(len);
+                if (invoc->data == NULL)
+                    break;
+            } else {
+                invoc->data = NULL;
+            }
             invoc->dataLen = len;
+        }
+        
+        if (len > 0) {
+            KNI_GetRawArrayRegion(tmp2, 0, len, invoc->data);
         }
     
         /* Clear to indicate everything worked. */
