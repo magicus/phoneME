@@ -144,34 +144,6 @@ static HMENU buildSkinsMenu(void);
 static void destroySkinsMenu(void);
 #endif // SKINS_MENU_SUPPORTED
 
-/* BackLight top bar position parameters */
-/*
-#define BkliteTop_xposition     0
-#define BkliteTop_yposition     113
-#define BkliteTop_width         241
-#define BkliteTop_height        18
-*/
-/* BackLight bottom bar position parameters */
-/*
-#define BkliteBottom_xposition  0
-#define BkliteBottom_yposition  339
-#define BkliteBottom_width      241
-#define BkliteBottom_height     6
-*/
-/* BackLight left bar position parameters */
-/*
-#define BkliteLeft_xposition    0
-#define BkliteLeft_yposition    131
-#define BkliteLeft_width        30
-#define BkliteLeft_height       208
-*/
-/* BackLight right bar position parameters */
-/*
-#define BkliteRight_xposition   210
-#define BkliteRight_yposition   131
-#define BkliteRight_width       31
-#define BkliteRight_height      208
-*/
 /* thread safety */
 static int tlsId;
 
@@ -220,19 +192,6 @@ static HFONT            fonts[3][3][8];
 //static HBITMAP          LED_off_Image;
 
 static HBITMAP          hPhoneBitmap;
-//static HBITMAP          topbar_Image;
-
-/* The bits of the BackLight images */
-/*
-static HBITMAP          bklite_Top_Image;
-static HBITMAP          bklite_Bottom_Image;
-static HBITMAP          bklite_Left_Image;
-static HBITMAP          bklite_Right_Image;
-*/
-
-//static int topBarHeight;
-//static int bottomBarHeight;
-//static int paintHeight; //expared?
 
 static javacall_bool reverse_orientation;
 
@@ -1248,7 +1207,7 @@ void CreateEmulatorWindow() {
                         /* window made smaller to hide the external
                            screen part since it's not in use for now 
                         */
-                        (width/2),                 /* initial x size          */
+                        (width),                 /* initial x size          */
                         (height),               /* initial y size          */
                         NULL,                 /* parent window handle    */
                         hMenu,                /* window menu handle      */
@@ -1725,6 +1684,12 @@ javacall_bool javacall_lcd_reverse_orientation() {
                 JAVACALL_TRUE : JAVACALL_FALSE;
         }
       }
+//tmp
+    {
+        int tmp = VRam.h;
+        VRam.h = VRam.w;
+        VRam.w = tmp;
+    }
       return reverse_orientation;
 }
  
