@@ -692,6 +692,14 @@ public class Display {
                                                     HEIGHT);
         // #endif ENABLE_GCI
 
+        /**
+         * Sets this Display as creator of screen Graphics instance to
+         * provide internal Graphics users with extended information
+         * on the instance. Graphics has not enough information on its
+         * own for such complex users as e.g. JSR239.
+         */
+        screenGraphics.setCreator(this);
+
         // #ifdef ENABLE_CHAMELEON
         graphicsQ = new CGraphicsQ();
         cham_tunnel = new ChameleonTunnel();
@@ -3193,90 +3201,4 @@ public class Display {
     LiveTracer liveTracer = new LiveTracer();
 
     // #endif ENABLE_I3_TEST
-}
-
-/**
- * Class to access extended Image and Graphics functionality needed to
- * Chameleon, GameCanvas or to some other clients not satisified with 
- * public API
- */
-class GraphicsAccessImpl implements com.sun.midp.lcdui.GraphicsAccess {
-
-    // #ifdef ENABLE_CHAMELEON
-    /**
-     * Return a romized image resource based on the identifier.
-     *
-     * @param imageDataArrayPtr native pointer to image data as Java int
-     * @param imageDataArrayLength length of image data array
-     * @return the romized Image, null if the identifier was invalid
-     *         or the Image did not exist.
-     */
-    public Image getRomizedImage(int imageDataArrayPtr,
-            int imageDataArrayLength) {
-        
-        return Image.getRomizedImage(
-            imageDataArrayPtr, imageDataArrayLength);
-    }
-    // #endif
-
-    /**
-     * Resize Image optionally saving its content clipped according
-     * to the new geometry
-     *
-     * @param image image to resize
-     * @param width new image width
-     * @param height new image height
-     * @param keepContent true of image content should be kept
-     */
-    public void resizeImage(Image image,
-            int width, int height, boolean keepContent) {
-        image.resize(width, height, keepContent);
-    }
-
-    /**
-     * Creates a new <code>Graphics</code> object that renders to this
-     * image and explicitly sets the Graphics object dimensions.
-     *
-     * @param image The Image to get a Graphics context for
-     * @param width The width of the Graphics context
-     * @param height The height of the Graphics context
-     * @return a <code>Graphics</code> object with this image as its destination
-     */
-    public Graphics getImageGraphics(Image image, int width, int height) {
-        return Graphics.getImageGraphics(image, width, height);
-    }
-
-    /**
-     * Get maximal width of the Graphics context
-     * @param g The Graphics context
-     * @return The width of the Graphics context
-     */
-    public short getGraphicsWidth(Graphics g) {
-        return g.getMaxWidth();
-    }
-
-    /**
-     * Get maximal height of the Graphics context
-     * @param g The Graphics context
-     * @return The height of the Graphics context
-     */
-    public short getGraphicsHeight(Graphics g) {
-        return g.getMaxHeight();
-    }
-
-    /**
-     * Get screen width regarding the rotation mode
-     * @return screen width in pixels
-     */
-    public int getScreenWidth() {
-        return Display.WIDTH;
-    }
-
-    /**
-     * Get screen height regarding the rotation mode
-     * @return screen height in pixels
-     */
-    public int getScreenHeight() {
-        return Display.HEIGHT;
-    }
 }

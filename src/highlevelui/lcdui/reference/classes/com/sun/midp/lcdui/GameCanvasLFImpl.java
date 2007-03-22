@@ -29,8 +29,6 @@ import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.game.GameCanvas;
 
-import com.sun.midp.configurator.Constants;
-
 
 /**
 * This is the look &amp; feel implementation for GameCanvas.
@@ -108,8 +106,10 @@ public class GameCanvasLFImpl {
      */
     public Graphics getGraphics() {
         if (offscreenBuffer != null) {
-            return graphicsAccess.getImageGraphics(
+            Graphics g = graphicsAccess.getImageGraphics(
                 offscreenBuffer, owner.getWidth(), owner.getHeight());
+            graphicsAccess.setGraphicsCreator(g, owner);
+            return g;
         }
         
         return null;
