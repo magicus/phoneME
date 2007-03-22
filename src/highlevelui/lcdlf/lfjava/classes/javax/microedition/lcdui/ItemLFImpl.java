@@ -863,8 +863,8 @@ abstract class ItemLFImpl implements ItemLF {
              (itemWasPressed && (hasFocus || item.owner.numCommands <= 1))) {
             //should check the x,y is in item's content area
             uCallKeyPressed(Constants.KEYCODE_SELECT);
-            itemWasPressed = false;
         }
+        itemWasPressed = false;
     }
     
     /**
