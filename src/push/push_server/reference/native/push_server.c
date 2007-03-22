@@ -1942,16 +1942,15 @@ static void pushProcessPort(char *buffer, PushEntry* pe) {
     void *context = NULL;
     char *exception = NULL;
     int status;
-
-    if (buffer == NULL || pe == NULL) {
-        return;
-    }
-
     /*
      * Flag that controls port number calculation.
      * Port number is not meaningful for protocols like MMS.
      */
     jboolean calcPort = KNI_TRUE;
+
+    if (buffer == NULL || pe == NULL) {
+        return;
+    }
 
     pe->isWMAEntry = KNI_FALSE;
 
