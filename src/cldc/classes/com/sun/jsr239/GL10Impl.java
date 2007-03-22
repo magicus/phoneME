@@ -1291,26 +1291,22 @@ public class GL10Impl implements GL10, GL10Ext {
     void checkBounds(int last) {
         for (int ptr = VERTEX_POINTER; ptr <= WEIGHT_POINTER; ptr++) {
             if (pointerEnabled[ptr]) {
-                int size, type, stride, offset, remaining;
+                final int remaining = (pointerBuffer[ptr] != null)
+                        ? pointerRemaining[ptr]
+                        : getBufferSize(GL11.GL_ARRAY_BUFFER);
+                final int size = pointerSize[ptr];
+                final int type = pointerType[ptr];
+                final int offset = pointerOffset[ptr];
+                final int sizeOfType = GLConfiguration.sizeOfType(type);
+                final int stride = pointerStride[ptr] == 0 ? sizeOfType :
+                        pointerStride[ptr];
+                final int elementSize = size * sizeOfType;
 
-                if (pointerBuffer[ptr] != null) {
-                    remaining = pointerRemaining[ptr];
-                } else {
-                    remaining = getBufferSize(GL11.GL_ARRAY_BUFFER);
-                }
-                size = pointerSize[ptr];
-                type = pointerType[ptr];
-                stride = pointerStride[ptr];
-                offset = pointerOffset[ptr];
-                    
-                int elementSize = size*GLConfiguration.sizeOfType(type);
-                
-                int lastByte =
-                    offset + last*(elementSize + stride) + elementSize;
-                
+                final int lastByte = offset + last * stride + elementSize;
+
                 if (lastByte > remaining) {
-                    throw new ArrayIndexOutOfBoundsException("" +
-                                                             lastByte);
+                    throw new ArrayIndexOutOfBoundsException(
+                            String.valueOf(lastByte));
                 }
             }
         }
@@ -1662,7 +1658,7 @@ public class GL10Impl implements GL10, GL10Ext {
         qflush();
 
         int[] iparams = new int[length];
-        IglGetBooleanv(pname, iparams, offset, length);
+        IglGetBooleanv(pname, iparams, 0, length);
         for (int i = 0; i < length; i++) {
             params[offset + i] = (iparams[i] == 1);
         }

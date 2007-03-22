@@ -251,8 +251,7 @@ CONVERT_565_TO_8888(jshort rgb) {
 
 void
 copyFromScreenBuffer(JSR239_Pixmap *dst, void *sbuffer,
-                     int clip_x, int clip_y, int width, int height,
-                     int deltaHeight) {
+                     int clip_x, int clip_y, int width, int height) {
 
     unsigned char *dstPtr;
 #if GET_DEPTH == 16
@@ -289,9 +288,6 @@ copyFromScreenBuffer(JSR239_Pixmap *dst, void *sbuffer,
 
     dstPtr = (unsigned char *)dst->pixels +
         dst->stride*clip_y + dst->pixelBytes*clip_x;
-
-    dstPtr += dst->stride * deltaHeight;
-    height -= deltaHeight;
 
     for (y = 0; y < height; y++) {
         for (x = 0; x < width; x++) {
@@ -412,7 +408,7 @@ CONVERT_8888_TO_565(jint argb) {
 }
 
 void
-copyToScreenBuffer(JSR239_Pixmap *src, jint deltaHeight, jint flipY) {
+copyToScreenBuffer(JSR239_Pixmap *src, jint flipY) {
 
     jint width = src->width;
     jint height= src->height;
@@ -459,9 +455,6 @@ copyToScreenBuffer(JSR239_Pixmap *src, jint deltaHeight, jint flipY) {
     srcPtr = (unsigned char *)src->pixels +
       (flipY ? src->stride*(height - 1) : 0);
     sstride = flipY ? -src->stride : src->stride;
-
-    srcPtr += sstride * deltaHeight;
-    height -= deltaHeight;    
 
 #if PUT_DEPTH == 16
     dstPtr16 = (jshort *)src->screen_buffer;

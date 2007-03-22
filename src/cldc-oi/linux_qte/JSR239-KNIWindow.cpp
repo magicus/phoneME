@@ -75,8 +75,7 @@ static QPixmap* getGraphicsBuffer(jobject graphicsHandle) {
 
 extern "C"
 void
-JSR239_getWindowContents(jobject graphicsHandle, jint deltaHeight,
-    JSR239_Pixmap *dst) {
+JSR239_getWindowContents(jobject graphicsHandle, JSR239_Pixmap *dst) {
 
     QPixmap* pixmap;
     void* src;
@@ -111,8 +110,7 @@ JSR239_getWindowContents(jobject graphicsHandle, jint deltaHeight,
         src = (void*)pixmap->scanLine(0);
 
         /* IMPL_NOTE: get clip sizes into account. */
-        copyFromScreenBuffer(dst, src, 0, 0, dst->width, dst->height,
-            deltaHeight);
+        copyFromScreenBuffer(dst, src, 0, 0, dst->width, dst->height);
     }
 
 #ifdef DEBUG
@@ -126,9 +124,8 @@ JSR239_getWindowContents(jobject graphicsHandle, jint deltaHeight,
 
 extern "C"
 void
-JSR239_putWindowContents(jobject graphicsHandle,
-                         jint delta_height,
-                         JSR239_Pixmap *src, jint flipY) {
+JSR239_putWindowContents(jobject graphicsHandle, JSR239_Pixmap *src,
+                         jint flipY) {
 
     void* s;
     void* d;
@@ -148,34 +145,42 @@ JSR239_putWindowContents(jobject graphicsHandle,
                "instanceof Graphics!\n");
 #endif
     } else {
+        const jint bytes_for_depth = 2;
+        const jint bits_per_byte = 8;
+        jint min_height;
+
         pixmap = getGraphicsBuffer(graphicsHandle);
+
+        min_height = (pixmap->height() > src->height) ? src->height :
+            pixmap->height();
 
 #ifdef DEBUG
         printf("JSR239_putWindowContent: pixmap=%p\n", pixmap);
-        printf("  pixmap Bpp = %d\n",  pixmap->depth()/8);
+        printf("  pixmap Bpp = %d\n",  pixmap->depth()/bits_per_byte);
         printf("  pixmap width  = %d\n", pixmap->width());
         printf("  pixmap height = %d\n", pixmap->height());
         printf("  src Bpp = %d\n", src->pixelBytes);
         printf("  src width = %d\n", src->width);
         printf("  src height = %d\n", src->height);
+        printf("  min height = %d\n", min_height);
 #endif
 
         /* IMPL_NOTE: get clip sizes into account. */
-        copyToScreenBuffer(src, delta_height, flipY);
+        copyToScreenBuffer(src, flipY);
 
         /* src->screen_buffer is an output of copyToScreenBuffer function. */
         s = (void*)src->screen_buffer;
         d = (void*)pixmap->scanLine(0);
 
         if ((pixmap->width() != src->width) ||
-            (pixmap->height() != src->height) || (pixmap->depth()/8 != 2)) { 
+            (pixmap->depth() != bits_per_byte * bytes_for_depth)) {
 #ifdef DEBUG
             printf("JSR239: offscreen buffer data is incorrect.\n");
 #endif
         } else {
             /* Source data must be in 16bit 565 format. */
             JSR239_memcpy(
-                d, s, pixmap->width() * pixmap->height() * pixmap->depth()/8); 
+                d, s, pixmap->width() * min_height * bytes_for_depth);
         }
     }
 

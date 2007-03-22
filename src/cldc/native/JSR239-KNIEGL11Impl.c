@@ -27,8 +27,6 @@
  * ..\src\com\sun\jsr239\EGL10Impl.java
  */
 
-#include <lcdlf_export.h>
-
 #include <kni.h>
 
 #include <GLES/gl.h>
@@ -724,7 +722,7 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1eglMakeCurrent() {
 					    (EGLSurface)read,
 					    (EGLContext)ctx);
 #ifdef DEBUG
-    printf("eglMakeCurrent(0x%x, 0x%x, 0x%x, 0x%x) = %d\n",  
+    printf("eglMakeCurrent(0x%x, 0x%x, 0x%x, 0x%x) = %d\n",
 	   display, draw, read, ctx, returnValue);
 #endif
     
@@ -917,59 +915,57 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1eglCopyBuffers() {
     EGLSurface surface = (EGLSurface) KNI_GetParameterAsInt(2);
     jint width = KNI_GetParameterAsInt(4);
     jint height = KNI_GetParameterAsInt(5);
-    jint flip = 0;
+    JSR239_Pixmap* pixmap;
 
-    JSR239_Pixmap *pixmap = (JSR239_Pixmap *) 0;
-    EGLBoolean returnValue = EGL_FALSE;
+    // eglCopyBuffers copies the EGL surface color buffer to a native pixmap.
+    // As the native pixmaps the Graphics opbject are used. Thus eglCopyBuffers
+    // can not be used as the destination buffer can be of a different size as
+    // the source surface. In these case call to eglCopyBuffers may lead to
+    // the memory corruption.
+    // Of course it is more efficient ot use eglCopyBuffers instead of workaround
+    // with glReadPixels, but we should do additional checks to do it safely.
+
+    // Let glReadPixels return the data in the following format: 
+    const jint bytesPerPixel = 4;
     
+    // for data type for glReadPixels we use GL_UNSIGNED_BYTE, one
+    // byte for each component
+    const jint alphaSize = 8;
+    const jint redSize = 8;
+    const jint greenSize = 8;
+    const jint blueSize = 8;
+
     KNI_StartHandles(1);
     KNI_DeclareHandle(graphicsHandle);
     KNI_GetParameterAsObject(3, graphicsHandle);
 
-    returnValue = (jint)eglCopyBuffers((EGLDisplay) display,
-                                       (EGLSurface) surface,
-                                       (NativePixmapType) pixmap);
+    pixmap = JSR239_getImagePixmap(graphicsHandle, width, height,
+                                   bytesPerPixel,
+                                   alphaSize, redSize, greenSize, blueSize);
 
-#ifdef DEBUG
-    printf("eglCopyBuffers(0x%x, 0x%x, 0x%x) = %d\n",
-           display, surface, pixmap, returnValue);
-#endif
-        
-    /* Workaround - use glReadPixels if eglCopyBuffers fails. */
-    if (returnValue == EGL_FALSE) {
-    
-        pixmap = JSR239_getImagePixmap(graphicsHandle,
-                                   width, height,
-                                   4, 8, 8, 8, 8);
-        if (!pixmap) {
-            KNI_ThrowNew("java.lang.OutOfMemoryException", "eglCopyBuffers");
-            goto exit;
-        }
-    
-        // Enforce RGBA order of glReadPixels
-        pixmap->aOffset = 24;
-        pixmap->bOffset = 16;
-        pixmap->gOffset = 8;
-        pixmap->rOffset = 0;
-    
-        returnValue = eglCopyBuffersWorkaround((EGLDisplay) display,
-                                               (EGLSurface) surface,
-                                               pixmap);
-        flip = 1;
-    }
-    
-    if (returnValue == EGL_TRUE) {
-        JSR239_putWindowContents(graphicsHandle, pixmap, flip);
+    if (!pixmap) {
+        KNI_ThrowNew("java.lang.OutOfMemoryException", "eglCopyBuffers");
+        goto exit;
     }
 
-    if (pixmap) {
-        JSR239_destroyPixmap(pixmap);
-    }
+    // Enforce RGBA order of glReadPixels
+    pixmap->aOffset = redSize + greenSize + blueSize;
+    pixmap->bOffset = greenSize + blueSize;
+    pixmap->gOffset = blueSize;
+    pixmap->rOffset = 0;
 
+    eglCopyBuffersWorkaround((EGLDisplay)display, (EGLSurface)surface, pixmap);
+
+    // glReadPixels returns pixel data from the color buffer, starting with the
+    // pixel whose lower left corner is at location (x, y), into client memory
+    // starting at location pixels. Thus we should flip the data returned by
+    // glReadPixels
+    JSR239_putWindowContents(graphicsHandle, pixmap, 1 /*should do flip*/);
+    JSR239_destroyPixmap(pixmap);
+    
  exit:
-        
     KNI_EndHandles();
-    KNI_ReturnInt((jint)returnValue);
+    KNI_ReturnInt(EGL_TRUE);
 }
 
 /*  private native int _eglSurfaceAttrib ( int display , int surface , int attribute , int value ) ; */
@@ -1190,19 +1186,17 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1getImagePixmap() {
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_javax_microedition_khronos_egl_EGL10Impl__1getWindowContents() {
 
-    jint deltaHeight = KNI_GetParameterAsInt(2);
-    jint pixmap = KNI_GetParameterAsInt(3);
+    jint pixmap = KNI_GetParameterAsInt(2);
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(graphicsHandle);
     KNI_GetParameterAsObject(1, graphicsHandle);
 
 #ifdef DEBUG
-    printf("JSR239_getWindowContents(0x%x) = 0x%x\n", 
+    printf("JSR239_getWindowContents(0x%x) = 0x%x\n",
 	   graphicsHandle, pixmap);
 #endif
-    JSR239_getWindowContents(graphicsHandle, deltaHeight,
-        (JSR239_Pixmap *)pixmap);
+    JSR239_getWindowContents(graphicsHandle, (JSR239_Pixmap *)pixmap);
 
     KNI_EndHandles();
     KNI_ReturnVoid();
@@ -1212,9 +1206,8 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1getWindowContents() {
 /* private native void _putWindowContents( Graphics winGraphics , int pixmapPointer ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_javax_microedition_khronos_egl_EGL10Impl__1putWindowContents() {
-
-    jint deltaHeight = KNI_GetParameterAsInt(2);
-    jint pixmap = KNI_GetParameterAsInt(3);
+    
+    jint pixmap = KNI_GetParameterAsInt(2);
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(graphicsHandle);
@@ -1224,25 +1217,8 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1putWindowContents() {
     printf("JSR239_putWindowContents(0x%x, 0x%x)\n",
 	   graphicsHandle, pixmap);
 #endif
-    JSR239_putWindowContents(graphicsHandle, deltaHeight,
-        (JSR239_Pixmap *)pixmap, 0);
+    JSR239_putWindowContents(graphicsHandle, (JSR239_Pixmap *)pixmap, 0);
 
     KNI_EndHandles();
     KNI_ReturnVoid();
-}
-
-/*  private native int _getFullDisplayWidth () ;
-    returns the full display width
-*/
-KNIEXPORT KNI_RETURNTYPE_INT
-Java_javax_microedition_khronos_egl_EGL10Impl__1getFullDisplayWidth() {
-    KNI_ReturnInt(lcdlf_get_screen_width());
-}
-
-/*  private native int _getFullDisplayHeight () ;
-    returns the full display height
-*/
-KNIEXPORT KNI_RETURNTYPE_INT
-Java_javax_microedition_khronos_egl_EGL10Impl__1getFullDisplayHeight() {
-    KNI_ReturnInt(lcdlf_get_screen_height());
 }

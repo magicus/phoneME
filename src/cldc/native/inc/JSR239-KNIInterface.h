@@ -81,18 +81,16 @@ void JSR239_destroyPixmap(JSR239_Pixmap *pixmap);
 
 /* Window content */
 
-void JSR239_getWindowContents(jobject winGraphicsHandle, jint deltaHeight,
-                              JSR239_Pixmap *dst);
-void JSR239_putWindowContents(jobject target, jint delta_height,
-                              JSR239_Pixmap *src, jint flipY);
+void JSR239_getWindowContents(jobject winGraphicsHandle, JSR239_Pixmap *dst);
+void JSR239_putWindowContents(jobject winGraphicsHandle, JSR239_Pixmap *src,
+                              jint flipY);
 
 /* Screem buffer */
 
 void copyFromScreenBuffer(JSR239_Pixmap *dst, void *sbuffer,
-                     int clip_x, int clip_y, int width, int height,
-                     int deltaHeight);
+                     int clip_x, int clip_y, int width, int height);
 void
-copyToScreenBuffer(JSR239_Pixmap *src, jint deltaHeight, jint flipY);
+copyToScreenBuffer(JSR239_Pixmap *src, jint flipY);
 
 /* Memory management */
 

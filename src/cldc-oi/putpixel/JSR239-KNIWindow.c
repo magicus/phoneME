@@ -60,8 +60,7 @@ static gxj_pixel_type* getGraphicsBuffer(jobject graphicsHandle) {
 /* Copy MIDP screen buffer */
 
 void
-JSR239_getWindowContents(jobject graphicsHandle, jint deltaHeight,
-    JSR239_Pixmap *dst) {
+JSR239_getWindowContents(jobject graphicsHandle, JSR239_Pixmap *dst) {
 
     void* src;
 
@@ -90,8 +89,7 @@ JSR239_getWindowContents(jobject graphicsHandle, jint deltaHeight,
         src = (void*)getGraphicsBuffer(graphicsHandle);
 
         /* IMPL_NOTE: get clip sizes into account. */
-        copyFromScreenBuffer(dst, src, 0, 0, dst->width, dst->height,
-            deltaHeight);
+        copyFromScreenBuffer(dst, src, 0, 0, dst->width, dst->height);
     }
 
 #ifdef DEBUG
@@ -103,9 +101,8 @@ JSR239_getWindowContents(jobject graphicsHandle, jint deltaHeight,
 
 /* Copy engine buffer back to MIDP */
 void
-JSR239_putWindowContents(jobject graphicsHandle,
-                         jint delta_height,
-                         JSR239_Pixmap *src, jint flipY) {
+JSR239_putWindowContents(jobject graphicsHandle, JSR239_Pixmap *src,
+                         jint flipY) {
 
     void* s;
     void* d;
@@ -124,22 +121,41 @@ JSR239_putWindowContents(jobject graphicsHandle,
                "instanceof Graphics!\n");
 #endif
     } else {
+        gxj_screen_buffer sbuf;
+        gxj_screen_buffer* gimg;
+
+        // Obtain the dimensions of the destination.
+        jint dest_width = lcdlf_get_screen_width();
+        jint dest_height = lcdlf_get_screen_height();
+
+        jint min_height = 0;
+        
+        gimg = GXJ_GET_GRAPHICS_SCREEN_BUFFER(graphicsHandle, &sbuf);
+        if (gimg != NULL) {
+            dest_width = gimg->width;
+            dest_height= gimg->height;
+        }
+
 #ifdef DEBUG
-        printf("JSR239_putWindowContents:\n"); 
+        printf("JSR239_putWindowContent:\n");
+        printf("  dst width  = %d\n", dest_width);
+        printf("  dst height = %d\n", dest_height);
         printf("  src Bpp    = %d\n", src->pixelBytes);
         printf("  src width  = %d\n", src->width);
         printf("  src height = %d\n", src->height);
+        printf("  min height = %d\n", min_height);
 #endif
 
         /* IMPL_NOTE: get clip sizes into account. */
-        copyToScreenBuffer(src, delta_height, flipY);
+        copyToScreenBuffer(src, flipY);
 
         /* src->screen_buffer is an output of copyToScreenBuffer function. */
         s = (void*)src->screen_buffer;
         d = (void*)getGraphicsBuffer(graphicsHandle);
 
-        if ((src->width  > lcdlf_get_screen_width()) ||  
-            (src->height > lcdlf_get_screen_height())|| 
+        min_height = (dest_height > src->height) ? src->height : dest_height;
+
+        if ((src->width  != dest_width) ||
             (sizeof(gxj_pixel_type) != 2)) {
 #ifdef DEBUG
         printf("JSR239: offscreen buffer data is incorrect.\n");
@@ -147,7 +163,7 @@ JSR239_putWindowContents(jobject graphicsHandle,
         } else {
             /* Source data must be in 16bit 565 format. */
             JSR239_memcpy(d, s,
-                src->width * src->height * sizeof(gxj_pixel_type)); 
+                dest_width * min_height * sizeof(gxj_pixel_type));
         }
     }
 
