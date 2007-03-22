@@ -100,8 +100,7 @@ ifeq ($(TARGET_VM), cldc_vm)
 	@chmod +x $@
 	@echo
 	@echo "" >> $@
-	@echo "dir usertest$(g)$(BAT) > nul" >> $@
-	@echo "echo %ERRORLEVEL%" >> $@
+	@echo "dir usertest$(g)$(BAT) 1> nul 2>nul" >> $@
 	@echo "if ERRORLEVEL 1 goto :go_inside" >> $@
 	@echo "goto :run_it" >> $@
 	@echo "" >> $@
