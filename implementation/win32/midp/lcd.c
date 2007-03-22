@@ -756,6 +756,27 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 javanotify_shutdown();
                 return 0;
 
+            case KEY_ROTATE:
+                if(iMsg == WM_LBUTTONUP) {
+                    return 0;
+                }
+                javanotify_rotation();
+                return 0;
+
+            case KEY_HOME:
+                if(iMsg == WM_LBUTTONUP) {
+                    return 0;
+                }
+                javanotify_switch_to_ams();
+                return 0;
+
+            case KEY_SELECTAPP:
+                if(iMsg == WM_LBUTTONUP) {
+                    return 0;
+                }
+                javanotify_select_foreground_app();
+                return 0;
+
             default:
                     /* Handle the simulated key events. */
                 switch(iMsg) {
