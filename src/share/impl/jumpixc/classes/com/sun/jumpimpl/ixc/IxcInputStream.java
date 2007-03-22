@@ -34,6 +34,8 @@ import java.rmi.Remote;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+import java.lang.reflect.Array;
+
 import javax.microedition.xlet.XletContext;
 import javax.microedition.xlet.ixc.IxcRegistry;
 import javax.microedition.xlet.ixc.StubException;
@@ -46,20 +48,19 @@ public class IxcInputStream extends ObjectInputStream {
 
    XletContext context;
 
-   //IxcInputStream(InputStream in, ClassLoader loader) 
-   IxcInputStream(InputStream in, XletContext context, boolean isAppManager) 
+   IxcInputStream(InputStream in, XletContext context, boolean isExecutiveVM) 
       throws IOException {
       super(in);
       this.context = context;
 
       /*** 
-       * isAppManager value indicates that this IxcInputStream is used
+       * isExecutiveVM value indicates that this IxcInputStream is used
        * for the central JumpExecIxcRegistry's input stream.
        * In thie JumpExecIxcRegistry, we don't want to be converting
        * Remote object to a stub or vice versa, but just record incoming
        * RemoteRef objects.
       **/
-      if (!isAppManager) {
+      if (!isExecutiveVM) {
          AccessController.doPrivileged(new PrivilegedAction() {
             public Object run() {
                enableResolveObject(true);
@@ -86,10 +87,30 @@ public class IxcInputStream extends ObjectInputStream {
       }
    }
 
+   protected Object resolveObject(Object obj) 
+	      throws IOException {
+
+      if (!obj.getClass().isArray()) {
+         return resolveSingleObject(obj);
+      }
+
+      int loop = Array.getLength(obj);
+      for (int i = 0; i < loop; i++) {
+         Object nextObject = Array.get(obj, i);
+         Object converted = resolveSingleObject(nextObject);
+         if (nextObject != converted) {
+            Array.set(obj, i, converted);
+         }
+      }
+
+      return obj;
+   }
+
+
    // If the incoming object is a RemoteRef, inspect it's origin. 
    // If this VM is the exporter, return the original remote object,
    // else record it as an import and return a generated stub instead.
-   protected Object resolveObject(Object obj) 
+   private Object resolveSingleObject(Object obj) 
       throws IOException { 
 
       Object nextObject = obj;

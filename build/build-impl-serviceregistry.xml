@@ -37,6 +37,7 @@ information or have any questions.
              srcdir="${s.share.impl.dir}/serviceregistry/classes">
            <include name="com/sun/jumpimpl/ixc/*.java" />
            <include name="com/sun/jumpimpl/module/serviceregistry/*.java" />
+           <include name="com/sun/jumpimpl/client/module/serviceregistry/*.java" />
       </jump.javac>
   </target>
 

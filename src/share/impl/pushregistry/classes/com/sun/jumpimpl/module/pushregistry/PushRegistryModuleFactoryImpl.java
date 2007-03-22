@@ -30,8 +30,8 @@ import com.sun.jump.module.contentstore.JUMPContentStore;
 import com.sun.jump.module.contentstore.JUMPStore;
 import com.sun.jump.module.contentstore.JUMPStoreHandle;
 import com.sun.jump.module.contentstore.JUMPStoreFactory;
-import com.sun.jump.module.serviceregistry.JUMPServiceRegistry;
-import com.sun.jump.module.serviceregistry.JUMPServiceRegistryFactory;
+import com.sun.jump.module.serviceregistry.JUMPServiceRegistryModule;
+import com.sun.jump.module.serviceregistry.JUMPServiceRegistryModuleFactory;
 import com.sun.jumpimpl.module.pushregistry.MIDP.MIDPPushRegistry;
 import com.sun.jumpimpl.module.pushregistry.persistence.Store;
 import com.sun.jumpimpl.module.pushregistry.persistence.StoreOperationManager;
@@ -57,25 +57,26 @@ final class PushSystem {
         store = new Store(storeManager);
 
         midpPushRegistry = new MIDPPushRegistry(store);
-        getJUMPServiceRegistry().registerService(MIDP_IXC_URI, midpPushRegistry);
+        getJUMPServiceRegistryModule().registerService(MIDP_IXC_URI, midpPushRegistry);
         // TBD: installation interface
     }
 
     /**
      * Gets a reference to service registry for IXC.
      *
-     * @return <code>JUMPServiceRegistry</code> instance
+     * @return <code>JUMPServiceRegistryModule</code> instance
      */
-    private JUMPServiceRegistry getJUMPServiceRegistry() {
-        return JUMPServiceRegistryFactory
+    private JUMPServiceRegistryModule getJUMPServiceRegistryModule() {
+        return JUMPServiceRegistryModuleFactory
                 .getInstance()
-                .getModule(getClass().getClassLoader());
+                .getModule();
+                //.getModule(getClass().getClassLoader());
     }
 
     void close() {
         // Best effort service unregistration...
         try {
-            getJUMPServiceRegistry().unregisterService(MIDP_IXC_URI);
+            getJUMPServiceRegistryModule().unregisterService(MIDP_IXC_URI);
         } catch (AccessException ex) {
             logError("failed to unbound IXC MIDP interface");
         } catch (NotBoundException ex) {

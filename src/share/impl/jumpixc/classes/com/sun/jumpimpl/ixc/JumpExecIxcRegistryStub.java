@@ -49,7 +49,7 @@ public final class JumpExecIxcRegistryStub extends StubObject
               new RemoteObjectType(JumpExecIxcRegistryRemote.class);
 
            thisRef = new RemoteRef(ExportedObject.newObjectID(),
-                           ConnectionReceiver.getAppManagerPort(),
+                           ConnectionReceiver.getExecVMServicePort(),
                            Utils.getMtaskServerID(),
                            type.getRemoteInterfaceNames(),
                            type.getMethodIDsAslongs());

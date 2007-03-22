@@ -30,9 +30,9 @@ import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModuleFactory;
 import com.sun.jump.module.lifecycle.JUMPApplicationLifecycleModule;
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.executive.JUMPApplicationProxy;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Vector;
 
 public class OneLiveOnlyApplicationLifecycleModule
         implements JUMPApplicationLifecycleModule {
@@ -114,7 +114,7 @@ public class OneLiveOnlyApplicationLifecycleModule
      * Can be found by iterating over mapAppToAppProxy.
      */
     public JUMPApplicationProxy[] getApplications() {
-        Vector v =  (Vector)mapAppToAppProxy.values();
+        Collection v =  mapAppToAppProxy.values();
         if (v == null) {
             return null;
         } else {

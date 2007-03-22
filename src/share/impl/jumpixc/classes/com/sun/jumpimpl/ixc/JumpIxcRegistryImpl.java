@@ -49,7 +49,7 @@ public class JumpIxcRegistryImpl extends IxcRegistry {
     // The 'name' Strings binded by this IxcRegistry
     private ArrayList exportedNames;
     
-    // The stub for the AppManager's IxcRegistry
+    // The stub for the Executive's IxcRegistry
     JumpExecIxcRegistryStub amHandler; 
 
     // This Xlet's AccessControlContext snapshot
@@ -64,11 +64,11 @@ public class JumpIxcRegistryImpl extends IxcRegistry {
            IxcRegistry regis = (IxcRegistry)ixcRegistries.get(context);
            if (regis != null) return regis;
 
-           boolean isAppManager = isAppManagerVM();
+           boolean isExecutiveVM = isExecutiveVM();
 
-           if (isAppManager) {
+           if (isExecutiveVM) {
 
-              // This is running in the AppManager VM.  Create an instance
+              // This is running in the Executive VM.  Create an instance
               // of ServiceRegistry instead of a regular JumpIxcRegistryImpl.
               try {
                  Class c = Class.forName("com.sun.jumpimpl.ixc.JumpExecServiceRegistry");
@@ -93,22 +93,10 @@ public class JumpIxcRegistryImpl extends IxcRegistry {
        }
     }
 
-    private static boolean isAppManagerVM() {
-
+    public static boolean isExecutiveVM() {
        return (Utils.getMtaskServerID() == Utils.getMtaskClientID() &&
                Utils.getMtaskServerID() != -1) ; 
 
-    /**
-     *   ExportedObject obj =
-     *       ExportedObject.findExportedObject(ExportedObject.startingObjectID);
-     *                                                                                
-     *   if (obj == null)
-     *        return false;
-     *                                                                               
-     *    String remoteClassName = obj.remoteObject.getClass().getName();
-     *                                                                                
-     *    return (remoteClassName.indexOf("JumpExecIxcRegistry") != -1);
-     **/
     }
 
     protected JumpIxcRegistryImpl(XletContext context) {
@@ -249,7 +237,7 @@ public class JumpIxcRegistryImpl extends IxcRegistry {
                  throw (StubException)re;
  
               // Else inspect what happened in the
-              // AppManager VM
+              // Executive VM
               Throwable e = re.getCause(); 
             
               if (e instanceof StubException) 

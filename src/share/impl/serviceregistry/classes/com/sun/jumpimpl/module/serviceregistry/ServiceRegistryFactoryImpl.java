@@ -24,56 +24,57 @@
 
 package com.sun.jumpimpl.module.serviceregistry;
 
-import com.sun.jump.module.serviceregistry.JUMPServiceRegistryFactory;
-import com.sun.jump.module.serviceregistry.JUMPServiceRegistry;
+import com.sun.jump.executive.JUMPExecutive;
+import com.sun.jump.module.serviceregistry.JUMPServiceRegistryModuleFactory;
+import com.sun.jump.module.serviceregistry.JUMPServiceRegistryModule;
 
 import java.util.Map;
 import java.util.HashMap;
 
 import javax.microedition.xlet.ixc.IxcRegistry;
-import com.sun.jumpimpl.ixc.JumpExecServiceRegistry; 
+import com.sun.jumpimpl.ixc.JumpExecIxcRegistryWrapper; 
 import com.sun.jumpimpl.ixc.JumpExecIxcRegistry; 
 import com.sun.jumpimpl.ixc.XletContextFactory;
 
-public class ServiceRegistryFactoryImpl extends JUMPServiceRegistryFactory {
+public class ServiceRegistryFactoryImpl extends JUMPServiceRegistryModuleFactory {
 
    Map initdata;
-   HashMap modules = new HashMap(); // IxcRegistry, ServiceModule
+   JUMPServiceRegistryModule module;
 
    public void load(Map map) {
       initdata = map;
 
+      int portNumber;
+
       // If the system property is not set and the value is passed in as 
-      // the parameter, set the property.  
-      if (System.getProperty("serviceregistry.ixcport") == null) {
-         String serverPortNumber = (String) map.get("serviceregistry.ixcport");
-         if (serverPortNumber != null) {
-            System.setProperty("serviceregistry.ixcport", serverPortNumber); 
-         }
+      // the parameter, set the property, else generate the port number
+      // based on the Executive VM's process ID.
+      //
+      String serverPortNumber = System.getProperty("jump.serviceregistry.port", null);
+      if (serverPortNumber == null) {
+         serverPortNumber = (String) map.get("jump.serviceregistry.port");
       }
 
-      JumpExecIxcRegistry.getRegistry(XletContextFactory.getXletContext(null));
+      portNumber = (serverPortNumber == null) ? 
+	            JUMPExecutive.getInstance().getProcessId() + 1 :
+	            Integer.parseInt(serverPortNumber);
+
+      JumpExecIxcRegistry.startExecVMService(portNumber);
    }
 
    public void unload() {
    }
 
-   public JUMPServiceRegistry getModule(ClassLoader loader) {
+   public synchronized JUMPServiceRegistryModule getModule() {
   
-      IxcRegistry regis = 
-          JumpExecServiceRegistry.getRegistry(XletContextFactory.getXletContext(loader));
-   
-      return getServiceRegistryModule(regis); 
-   }
+      if (module == null)   {
+         ClassLoader loader = ClassLoader.getSystemClassLoader();
 
-   private synchronized JUMPServiceRegistry getServiceRegistryModule(IxcRegistry regis) {
-      JUMPServiceRegistry registryModule = (JUMPServiceRegistry)modules.get(regis);
-
-      if (registryModule == null) {
-           registryModule = new ServiceRegistryImpl(regis);
-           registryModule.load(initdata);
-           modules.put(regis, registryModule);
+         IxcRegistry regis = 
+             JumpExecIxcRegistryWrapper.getRegistry(XletContextFactory.getXletContext(loader));
+         module = new ServiceRegistryImpl(regis);
       }
-      return registryModule;
+
+      return module;
    }
 }

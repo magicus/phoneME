@@ -1,5 +1,5 @@
 /*
- * @(#)JumpExecServiceRegistry.java	1.3 06/09/06
+ * @(#)JumpExecIxcRegistryWrapper.java	1.3 06/09/06
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -47,28 +47,24 @@ import com.sun.jumpimpl.ixc.RemoteRef;
  * or Socket connection.
  */
 
-public class JumpExecServiceRegistry extends IxcRegistry {
+public class JumpExecIxcRegistryWrapper extends IxcRegistry {
  
-    private static JumpExecServiceRegistry serviceRegistry;
+    private static JumpExecIxcRegistryWrapper serviceRegistry;
     private JumpExecIxcRegistry mainRegistry;
     private XletContext context;
 
     // The 'name' Strings binded by this IxcRegistry
     private ArrayList exportedNames;
 
-    protected JumpExecServiceRegistry(XletContext context) {
-       super();
+    protected JumpExecIxcRegistryWrapper(XletContext context) {
        this.context = context;
-
-       // This will start up the master JumpExecIxcRegistry if it hasn't been.
-       mainRegistry = (JumpExecIxcRegistry) JumpExecIxcRegistry.getRegistry(context);
-
        exportedNames = new ArrayList();
+       mainRegistry = JumpExecIxcRegistry.getJumpExecIxcRegistry();
     }
 
     public static IxcRegistry getRegistry(XletContext context) {
        if (serviceRegistry == null) 
-          serviceRegistry = new JumpExecServiceRegistry(context);
+          serviceRegistry = new JumpExecIxcRegistryWrapper(context);
 
        return serviceRegistry;
     }
