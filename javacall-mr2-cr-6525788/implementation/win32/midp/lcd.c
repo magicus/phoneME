@@ -295,7 +295,6 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
  */
 javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen) {
 
-printf("full screen %d\r\n", (int)useFullScreen);
     inFullScreenMode = useFullScreen;
     /*
      At the moment we draw top bar only if
@@ -863,6 +862,10 @@ void getBitmapSize(HBITMAP img, int* width, int* height){
 
 }
 
+/**
+ * Loads bitmap for specified skin if necessary and fetches
+ * bitmap dimentions.
+ */
 HBITMAP loadBitmap(ESkin* skin, int* width, int* height) {
 
     if (NULL == skin) {
@@ -870,7 +873,8 @@ HBITMAP loadBitmap(ESkin* skin, int* width, int* height) {
     }
 
     if (NULL == skin->hBitmap) {
-        skin->hBitmap = (HBITMAP) LoadImage (GetModuleHandle(NULL), MAKEINTRESOURCE(skin->resourceID), IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR);
+        skin->hBitmap = (HBITMAP) LoadImage (GetModuleHandle(NULL), MAKEINTRESOURCE(skin->resourceID), 
+            IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR);
         if (skin->hBitmap == 0) {
             printf("Cannot load skin image from resources.\n");
             return NULL;
@@ -920,7 +924,7 @@ static void resizeScreenBuffer(int w, int h) {
 }
 
 /**
- * Sets current skin
+ * Set current skin
  */
 static void setCurrentSkin(ESkin* newSkin) {
     if (NULL == newSkin) {
@@ -1253,7 +1257,12 @@ static int mapKey(WPARAM wParam, LPARAM lParam) {
 }
 
 /**
- *
+ * Utility function to request logical screen to be painted
+ * to the physical screen.
+ * @param x1 top-left x coordinate of the area to refresh
+ * @param y1 top-left y coordinate of the area to refresh
+ * @param x2 bottom-right x coordinate of the area to refresh
+ * @param y2 bottom-right y coordinate of the area to refresh
  */
 static void RefreshScreenNormal(int x1, int y1, int x2, int y2) {
     int x;
@@ -1366,7 +1375,11 @@ static void RefreshScreenNormal(int x1, int y1, int x2, int y2) {
 }
 
  
+/**
+ * Changes diplay orientation
+ */
 javacall_bool javacall_lcd_reverse_orientation() {
+
     reverse_orientation = !reverse_orientation;    
     if (reverse_orientation) {
         setCurrentSkin(&HSkin);
@@ -1381,18 +1394,28 @@ javacall_bool javacall_lcd_reverse_orientation() {
     return reverse_orientation;
 }
  
+/**
+ * Returns diplay orientation
+ */
 javacall_bool javacall_lcd_get_reverse_orientation() {
+
      return reverse_orientation;
 }
 
+/**
+ * Returns available diplay width
+ */
 int javacall_lcd_get_screen_width() {
+
     return currentSkin->displayRect.width;
 }
-  
-int javacall_lcd_get_screen_height() {
-printf("reqested height orient = %d, topBarOn = %d,  h = %d\r\n", 
-(int)reverse_orientation, (int)topBarOn, currentSkin->displayRect.height);
-    return topBarOn ? (currentSkin->displayRect.height - topBarHeight) : currentSkin->displayRect.height;
 
+/**
+ * Returns available diplay height
+ */
+int javacall_lcd_get_screen_height() {
+
+    return topBarOn ? (currentSkin->displayRect.height - topBarHeight) : 
+        currentSkin->displayRect.height;
 }
 
