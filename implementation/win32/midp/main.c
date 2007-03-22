@@ -79,8 +79,8 @@ LRESULT CALLBACK main_dlgproc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 HANDLE lifecycle_shutdown_event;
 
 DWORD WINAPI ThreadProc( LPVOID lpParam ) {
-     CreateEmulatorWindow();
      javacall_lcd_init();
+     CreateEmulatorWindow();
      JavaTask();
      SetEvent(lifecycle_shutdown_event);
      javacall_print("Done JavaTask\n");

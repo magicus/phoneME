@@ -46,35 +46,11 @@
 
 
 #include "lcd.h"
+#include "skins.h"
 #include "local_defs.h"
 
-#include "res/resource.h"
-
-#define SKINS_MENU_SUPPORTED
-
-#define NUMBEROF(x) (sizeof(x)/sizeof(x[0]))
-
-
-/*
-#define MAX_SOFTBUTTON_CHARS   12
-
-#define MENUBAR_BORDER_HEIGHT  2
-#define ARROWS_WIDTH           7
-#define ARROWS_HEIGHT          7
-#define ARROWS_GAP             1
-#define BOTTOM_BAR_HEIGHT (MENUBAR_BORDER_HEIGHT + ARROWS_HEIGHT + \
-    ARROWS_GAP + ARROWS_HEIGHT + MENUBAR_BORDER_HEIGHT)
-*/
 
 #define UNTRANSLATED_SCREEN_BITMAP (void*)0xffffffff
-
-//#define VERT_X   (currentSkin->displayX + (DISPLAY_WIDTH/2) - 4)
-//#define UP_Y     (y_offset + paintHeight + MENUBAR_BORDER_HEIGHT)
-
-                   /* y of the up arrow */
-//#define DOWN_Y   (UP_Y + ARROWS_GAP + ARROWS_HEIGHT)
-
-                   /* y of the down arrow */
 
 #define CHECK_RETURN(expr) (expr) ? (void)0 : (void)printf( "%s returned error (%s:%d)\n", #expr, __FILE__, __LINE__)
 
@@ -85,16 +61,6 @@
 
 
 static HBITMAP getBitmapDCtmp = NULL;
-/*
-typedef unsigned short unicode;
-typedef struct {
-    int     num;
-    unicode label[MAX_SOFTBUTTON_CHARS];
-} SoftButtonLabel;
-
-static SoftButtonLabel llabel;
-static SoftButtonLabel rlabel;
-*/
 
 typedef struct _mbs {
     HBITMAP bitmap;
@@ -107,13 +73,6 @@ typedef struct _mbs {
     char prop;
 } myBitmapStruct;
 
-/* Network Indicator position parameters */
-/*
-#define LED_xposition  17
-#define LED_yposition  82
-#define LED_width      20
-#define LED_height     20
-*/
 #define INSIDE(_x, _y, _r)                              \
     ((_x >= (_r).x) && (_x < ((_r).x + (_r).width)) &&  \
      (_y >= (_r).y) && (_y < ((_r).y + (_r).height)))
@@ -171,10 +130,6 @@ static SBuffer VRAM = {NULL, 0, 0};
 
 static javacall_bool initialized = JAVACALL_FALSE;
 static javacall_bool inFullScreenMode;
-/* static javacall_bool requestedFullScreenMode; */
-/* static javacall_bool drawTrustedMIDletIcon; */
-/* static javacall_bool bkliteImageCreated = JAVACALL_FALSE; */
-/* static javacall_bool isBklite_on = JAVACALL_FALSE; */
 
 static int backgroundColor = RGB(182, 182, 170); /* This a win32 color value */
 static int foregroundColor = RGB(0,0,0); /* This a win32 color value */
@@ -189,28 +144,9 @@ static HDC hMemDC = NULL;
 static TEXTMETRIC    fixed_tm, tm;
 static HFONT            fonts[3][3][8];
 
-/* The bits of the Network Indicator images */
-//static HBITMAP          LED_on_Image;
-//static HBITMAP          LED_off_Image;
-
 static HBITMAP          hPhoneBitmap;
 
 static javacall_bool reverse_orientation;
-
-/* key definitons */
-typedef struct _Rectangle {
-    int x;
-    int y;
-    int width;
-    int height;
-} XRectangle;
-
-typedef struct {
-    javacall_key button;
-    XRectangle bounds;
-    char *name;
-} WKey;
-
 
 /*
  IMPL NOTE: top bar at the moment is available only as raw data
@@ -222,108 +158,7 @@ static int topBarHeight = 12;//_topbar_dib_data.hdr.biHeight; //11
 static int topBarWidth = 240;//_topbar_dib_data.hdr.biWidth;
 static javacall_bool topBarOn = JAVACALL_TRUE;
 
-/*
-// Defines screen size
-#define DISPLAY_WIDTH          240//180
-#define DISPLAY_HEIGHT         320//(198 + TOP_BAR_HEIGHT)
-// This (x,y) coordinate pair refers to the offset of the upper
-// left corner of the display screen within the MIDP phone handset
-// graphic window
-#define X_SCREEN_OFFSET        61
-#define Y_SCREEN_OFFSET        75
-*/
-
-typedef struct {
-   /*
-    * Display bounds
-    */
-    XRectangle displayRect;
-    /*
-     * Key mapping
-     */
-    const WKey* Keys;
-    /*
-     * Number of keys
-     */
-    int keyCnt;
-
-    /*
-     * Emulator skin bitmap resource ID
-     */
-    int resourceID;
-    /*
-     * Emulator skin bitmap
-     */
-    HBITMAP hBitmap;
-
-} ESkin;
-
-
-#define KEY_POWER  (JAVACALL_KEY_GAME_RIGHT - 100)
-#define KEY_END    (JAVACALL_KEY_GAME_RIGHT - 101)
-#define KEY_SEND   (JAVACALL_KEY_GAME_RIGHT - 102)
-
-/**
- * Do not alter the sequence of this
- * without modifying the one in .cpp
- */
-
-const static WKey VKeys[] = {
-#ifdef NO_POWER_BUTTON
-{KEY_POWER,    {-10, -10,  1,  1}, "POWER"},
-#else
-{KEY_POWER,    {160, 59, 24, 24}, "POWER"},
-#endif
-
-//#define USE_SWAP_SOFTBUTTON
-#ifndef USE_SWAP_SOFTBUTTON // !USE_SWAP_SOFTBUTTON 
-{JAVACALL_KEY_SOFT1,    {78, 420, 40, 35}, "SOFT1"},//
-{JAVACALL_KEY_SOFT2,    {241, 424, 40, 35}, "SOFT2"},//
-#else // USE_SWAP_SOFTBUTTON 
-{JAVACALL_KEY_SOFT2,    {78, 420, 40, 35}, "SOFT2"},//
-{JAVACALL_KEY_SOFT1,    {241, 424, 40, 35}, "SOFT1"},//
-#endif
-
-{JAVACALL_KEY_UP,       {169, 421, 24, 9}, "UP"},//
-{JAVACALL_KEY_DOWN,     {169, 454, 24, 9}, "DOWN"},//
-{JAVACALL_KEY_LEFT,     {132, 431, 9, 24}, "LEFT"},//
-{JAVACALL_KEY_RIGHT,    {218, 431, 9, 24}, "RIGHT"},//
-{JAVACALL_KEY_SELECT,   {162, 434, 39, 15}, "SELECT"},//
-
-{JAVACALL_KEY_SEND,     {60, 454, 51, 31}, "SEND"},//
-{KEY_END,               {253, 454, 51, 31}, "END"},//
-{JAVACALL_KEY_CLEAR,    {150, 478, 60, 28}, "CLEAR"},//
-
-{JAVACALL_KEY_1,        {64, 500, 60, 29}, "1"},//
-{JAVACALL_KEY_2,        {146, 519, 70, 26}, "2"},//
-{JAVACALL_KEY_3,        {237, 500, 60, 29}, "3"},//
-{JAVACALL_KEY_4,        {66, 534, 60, 29}, "4"},//
-{JAVACALL_KEY_5,        {146, 554, 70, 26}, "5"},//
-{JAVACALL_KEY_6,        {233, 537, 60, 29}, "6"},//
-{JAVACALL_KEY_7,        {68, 569, 60, 29}, "7"},//
-{JAVACALL_KEY_8,        {146, 591, 70, 26}, "8"},//
-{JAVACALL_KEY_9,        {234, 575, 60, 29}, "9"},//
-{JAVACALL_KEY_ASTERISK, {73, 610, 60, 29}, "*"},//
-{JAVACALL_KEY_0,        {146, 628, 70, 26}, "0"},//
-{JAVACALL_KEY_POUND,    {228, 612, 60, 29}, "#"},//
-
-};
-
-static ESkin VSkin = {
-    {61, 75, 240, 320}, //displayRect
-    VKeys,
-    NUMBEROF(VKeys),
-    IDB_BITMAP_PHONE, //resource ID
-    NULL //hBitmap
-};
-
-static ESkin HSkin = {
-    {61, 75, 320, 240}, //displayRect
-    NULL, 0,
-    IDB_BITMAP_PHONE, //resource ID
-    NULL //hBitmap
-};
-
+/* current skin*/
 static ESkin* currentSkin;// = VSkin;
 
 
@@ -342,8 +177,6 @@ javacall_result javacall_lcd_init(void) {
 	printf("init begins\n");
 
     if(!initialized) {
-        /* set up the offsets for non-full screen mode */
-        //setUpOffsets(JAVACALL_FALSE);
         reverse_orientation = JAVACALL_FALSE;
         inFullScreenMode = JAVACALL_FALSE;
         penAreDragging = JAVACALL_FALSE;
@@ -1058,24 +891,8 @@ void getBitmapSize(HBITMAP img, int* width, int* height){
     }
 
 }
-HBITMAP loadBitmap(char* path, int* width, int* height){
-    HBITMAP hBitmap;
 
-    hBitmap = (HBITMAP) LoadImage (GetModuleHandle(NULL), path, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-    if (NULL == hBitmap) {
-        printf("Cannot load background image from %s. Using default.\n",path);
-        hBitmap = (HBITMAP) LoadImage (GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_PHONE), IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR);
-    }
-    if (hBitmap == 0) {
-        printf("Cannot load background image from resources.\n");
-        return NULL;
-    }
-    getBitmapSize(hBitmap, width, height);
-    return hBitmap;
-}
-
-HBITMAP getSkinHBitmap(ESkin* skin, int* width, int* height) {
-printf("getSkinHBitmap\n");
+HBITMAP loadBitmap(ESkin* skin, int* width, int* height) {
 
     if (NULL == skin) {
         return NULL;
@@ -1087,9 +904,9 @@ printf("getSkinHBitmap\n");
             printf("Cannot load skin image from resources.\n");
             return NULL;
         }
-      getBitmapSize(skin->hBitmap, width, height);
     }
-
+    getBitmapSize(skin->hBitmap, width, height);
+ 
     return skin->hBitmap;
 }
 
@@ -1144,7 +961,19 @@ static void setCurrentSkin(ESkin* newSkin) {
 
     resizeScreenBuffer(currentSkin->displayRect.width, 
         currentSkin->displayRect.height);
+    /* update skin image */
+    {
+        int w, h;
+        RECT r;
+        GetWindowRect(hMainWindow, &r);
+        hPhoneBitmap = loadBitmap(currentSkin, &w, &h);
+        printf("[setCurrentSkin] Window size %dx%d\n", w, h);
+        if (hPhoneBitmap != NULL) {
+            MoveWindow(hMainWindow, r.left, r.top, w, h, TRUE);
+        }
+    }
 }
+
 
 /**
  * Create the menu
@@ -1209,16 +1038,6 @@ void CreateEmulatorWindow() {
     int width = 0;//REMREM = EMULATOR_WIDTH;
     int height = 0; //REMREM = EMULATOR_HEIGHT;
     static char caption[32];
-
-    setCurrentSkin(&VSkin);
-    printf("CreateEmulatorWindow started, skin copied\n");
-
-    hPhoneBitmap = getSkinHBitmap(currentSkin, &width, &height);//loadBitmap("phone.bmp",&width,&height);
-
-    printf("[CreateEmulatorWindow] Window size %dx%d\n",width, height);
-    sprintf(caption, "+%d Sun Anycall", _phonenum);
-
-    (void) javacall_lcd_init();
     
     wndclass.cbSize        = sizeof (wndclass) ;
     wndclass.style         = CS_HREDRAW | CS_VREDRAW ;
@@ -1240,23 +1059,24 @@ void CreateEmulatorWindow() {
     if(hMenu != NULL) height += 24;
 #endif
 
+    sprintf(caption, "+%d Sun Anycall", _phonenum);
+
     hwnd = CreateWindow(szAppName,            /* window class name       */
                         caption,              /* window caption          */
                         WS_OVERLAPPEDWINDOW & /* window style; disable   */
                         (~WS_MAXIMIZEBOX),    /* the 'maximize' button   */
                         50,        /* initial x position      */
                         30,        /* initial y position      */
-                        /* window made smaller to hide the external
-                           screen part since it's not in use for now 
-                        */
-                        (width),                 /* initial x size          */
-                        (height),               /* initial y size          */
+                        (0),                 /* initial x size          */
+                        (0),               /* initial y size          */
                         NULL,                 /* parent window handle    */
                         hMenu,                /* window menu handle      */
                         hInstance,            /* program instance handle */
                         NULL);                /* creation parameters     */
 
     hMainWindow = hwnd;
+
+    setCurrentSkin(&VSkin);
 
     /* colors chosen to match those used in topbar.h */
     whitePixel = 0xffffff;
@@ -1575,18 +1395,18 @@ static void RefreshScreenNormal(int x1, int y1, int x2, int y2) {
 
  
 javacall_bool javacall_lcd_reverse_orientation() {
-      reverse_orientation = !reverse_orientation;    
-      if (reverse_orientation) {
+    reverse_orientation = !reverse_orientation;    
+    if (reverse_orientation) {
         setCurrentSkin(&HSkin);
         topBarOn = JAVACALL_FALSE;
-      } else {
+    } else {
         setCurrentSkin(&VSkin);
         if (!inFullScreenMode) {
             topBarOn = (topBarWidth == currentSkin->displayRect.width) ? 
                 JAVACALL_TRUE : JAVACALL_FALSE;
         }
-      }
-      return reverse_orientation;
+    }
+    return reverse_orientation;
 }
  
 javacall_bool javacall_lcd_get_reverse_orientation() {
