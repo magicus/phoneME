@@ -1686,9 +1686,9 @@ javacall_bool javacall_lcd_reverse_orientation() {
       }
 //tmp
     {
-        int tmp = VRam.h;
-        VRam.h = VRam.w;
-        VRam.w = tmp;
+        int tmp = VRAM.height;
+        VRAM.height = VRAM.width;
+        VRAM.width = tmp;
     }
       return reverse_orientation;
 }
