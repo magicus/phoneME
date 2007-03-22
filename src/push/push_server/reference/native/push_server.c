@@ -1974,7 +1974,7 @@ static void pushProcessPort(char *buffer, PushEntry* pe) {
                 pe->fd = -1;
                 return;
             }
-            *fd = (int)handle;
+            pe->fd = (int)handle;
             return;
         }
     }
