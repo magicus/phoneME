@@ -29,8 +29,6 @@ import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.game.GameCanvas;
 
-import com.sun.midp.configurator.Constants;
-
 
 /**
 * This is the look &amp; feel implementation for GameCanvas.
@@ -43,30 +41,37 @@ public class GameCanvasLFImpl {
     GameCanvas owner;
 
     /**
-     * currently every GameCanvas has one offscreen buffer
-     * can be optimized so that we put a limit on no of offscreen buffers
-     * an application can have
+     * Currently every GameCanvas has one offscreen buffer 
+     * Can be optimized so that we put a limit on number of 
+     * offscreen buffers an application can have
      */
-    private Image offscreen_buffer;
+    private Image offscreenBuffer;
 
     /** Cached reference to GraphicsAccess instance */
     private GraphicsAccess graphicsAccess;
 
+    /**
+     * Create new implementation instance for the given GameCanvas
+     * @param c GameCanvas instance to create the implementation for
+     */ 
     GameCanvasLFImpl(GameCanvas c) {
         owner = c;
         graphicsAccess = GameMap.getGraphicsAccess();
-        offscreen_buffer = Image.createImage(
-            owner.getWidth(),owner.getHeight());
-    }
 
-    /**
-     * return offscreen buffer
-     * @return offscreen buffer
-     * @param w    width of displayable area available to the application
-     * @param h  - height of the displayable area available to the application
-     */
-    public Image getBuffer(int w, int h) {
-        return offscreen_buffer;
+
+        /* IMPL_NOTE: The initial off-screen buffer has the same width
+         *   and height as the entire screen. Further resizing will not
+         *   cause memory reallocation until new geometry is bigger than
+         *   the current one. Screen rotation is one of the cases the
+         *   reallocation is needed.
+         *
+         *   User can override the methods getWidth() and getHeight() of
+         *   GameCanvas, so they should not be used for off-screen buffer
+         *   initial allocation.
+         */
+        offscreenBuffer = Image.createImage(
+            graphicsAccess.getScreenWidth(),
+            graphicsAccess.getScreenHeight());
     }
 
     /**
@@ -77,9 +82,14 @@ public class GameCanvasLFImpl {
      * @param h new screen height
      */
     public void lCallSizeChanged(int w, int h) {
-        // OutOfMemoryError can be thrown
-        graphicsAccess.resizeImage(
-            offscreen_buffer, w, h, true);
+        // Resize off-screen buffer in the case it is not big enough only
+        if (w > offscreenBuffer.getWidth() ||
+                h > offscreenBuffer.getHeight()) {
+
+            // OutOfMemoryError can be thrown
+            graphicsAccess.resizeImage(
+                offscreenBuffer, w, h, true);
+        }
     }
 
     /**
@@ -95,9 +105,11 @@ public class GameCanvasLFImpl {
      * @return  the Graphics object that renders to current GameCanvas
      */
     public Graphics getGraphics() {
-        if (offscreen_buffer != null) {
-            return graphicsAccess.getImageGraphics(
-                offscreen_buffer, owner.getWidth(), owner.getHeight());
+        if (offscreenBuffer != null) {
+            Graphics g = graphicsAccess.getImageGraphics(
+                offscreenBuffer, owner.getWidth(), owner.getHeight());
+            graphicsAccess.setGraphicsCreator(g, owner);
+            return g;
         }
         
         return null;
@@ -109,18 +121,20 @@ public class GameCanvasLFImpl {
      */
     public void drawBuffer(Graphics g) {
         // NullPointerException will be thrown in drawImage if g == null
-       if (offscreen_buffer != null) {
-            g.drawImage(offscreen_buffer, 0, 0, Graphics.TOP|Graphics.LEFT);
+       if (offscreenBuffer != null) {
+            g.drawImage(offscreenBuffer, 0, 0,
+                Graphics.TOP | Graphics.LEFT);
        }
     }
 
     /**
-     *  Flushes the off-screen buffer to the display.
+     * Flushes the off-screen buffer to the display. The size
+     * of the flushed area is equal to the size of the GameCanvas.
      */
     public void flushGraphics() {
         DisplayAccess displayAccess = GameMap.getDisplayAccess(owner);
-        if (displayAccess != null && offscreen_buffer != null) {
-	        displayAccess.flush(owner, offscreen_buffer,
+        if (displayAccess != null && offscreenBuffer != null) {
+	        displayAccess.flush(owner, offscreenBuffer,
 			      0, 0, owner.getWidth(), owner.getHeight());
         }
     }
@@ -138,8 +152,8 @@ public class GameCanvasLFImpl {
 	    }
 
         DisplayAccess displayAccess = GameMap.getDisplayAccess(owner);
-        if (displayAccess != null && offscreen_buffer != null) {
-            displayAccess.flush(owner, offscreen_buffer,
+        if (displayAccess != null && offscreenBuffer != null) {
+            displayAccess.flush(owner, offscreenBuffer,
     			  x, y,	width, height);
         }
     }

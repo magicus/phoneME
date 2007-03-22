@@ -128,9 +128,9 @@ int pushdel(char *str, char *store) {
  * @return the length of the datagram data if successful, or <tt>-1</tt>
  *         unsuccessful.
  */
-int pusheddatagram (int fd, int *ip, int *sndport, char *buf, int len) {
+int pushgetcachedpacket(int fd, int *ip, int *sndport, char *buf, int len) {
     /* need revisit */
-    REPORT_WARN(LC_PUSH, "pusheddatagram : Stubbed out.");
+    REPORT_WARN(LC_PUSH, "pushgetcachedpacket : Stubbed out.");
     (void)fd;
     (void)ip;
     (void)sndport;
