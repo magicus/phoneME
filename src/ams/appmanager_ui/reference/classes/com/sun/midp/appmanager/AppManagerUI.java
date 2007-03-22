@@ -1537,21 +1537,6 @@ class AppManagerUI extends Form
         }
 
         /**
-         * Called by the system when a pointer up action
-         * The <code>(x,y)</code> coordinates are relative to the origin
-         * of the item.
-         * @param x the x coordinate of the pointer up
-         * @param y the x coordinate of the pointer up
-         *
-         */
-        protected void pointerReleased(int x, int y) {
-            if (owner != null && default_command != null) {
-                owner.commandAction(default_command, this);
-            }
-        }
-
-
-        /**
          * Handles traversal out. This method is called when this
          * MidletCustomItem looses focus.
          */
