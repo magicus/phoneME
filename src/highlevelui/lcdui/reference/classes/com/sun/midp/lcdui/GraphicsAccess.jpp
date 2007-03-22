@@ -98,7 +98,7 @@ public interface GraphicsAccess {
      * @param g Graphics object to set creator for
      * @param creator Graphics creator reference
      */
-    void setCreator(Graphics g, Object creator);
+    void setGraphicsCreator(Graphics g, Object creator);
 
     /**
      * Get screen width regarding the rotation mode

@@ -692,6 +692,8 @@ public class Display {
                                                     HEIGHT);
         // #endif ENABLE_GCI
 
+        screenGraphics.setCreator(this);
+
         // #ifdef ENABLE_CHAMELEON
         graphicsQ = new CGraphicsQ();
         cham_tunnel = new ChameleonTunnel();
