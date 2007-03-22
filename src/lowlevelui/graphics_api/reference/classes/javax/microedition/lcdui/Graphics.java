@@ -1937,5 +1937,35 @@ public class Graphics {
     short getMaxHeight() {
         return maxHeight;
     }
+
+    /**
+     * The creator of this Graphics instance
+     *
+     * IMPL_NOTE: The information about Graphics object creator is
+     *   needed to JSRs (e.g. JSR239) that are given with Graphics
+     *   instance and has no further information on its creator changes,
+     *   e.g. of resizing, but at the same time should be able to paint
+     *   properly into this Graphics.
+     */
+    private Object creator = null;
+
+    /**
+     * Returns the creator of this Graphics object
+     * @return Graphics creator reference
+     */
+    synchronized Object getCreator() {
+        return creator;
+    }
+
+    /**
+     * Sets the creator of this Graphics object
+     * @param creator the reference to creator of this Graphics object
+     */
+    synchronized void setCreator(Object creator) {
+        // Ignore repeated attempts to set creator
+        if (this.creator == null) {
+            this.creator = creator;
+        }
+    }
     
 } // class Graphics
