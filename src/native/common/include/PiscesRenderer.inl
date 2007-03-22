@@ -1380,11 +1380,6 @@ endRenderingImpl(Renderer* rdr) {
                         x0, y0, x1, y1,
                         rdr->_cred, rdr->_cgreen, rdr->_cblue);
 
-        /* Check for error in memory allocation */
-        if (XNI_TRUE == readMemErrorFlag()) {
-            return;
-        }
-
         rdr->_bboxX0 = x0 >> rdr->_SUBPIXEL_LG_POSITIONS_X;
         rdr->_bboxY0 = y0 >> rdr->_SUBPIXEL_LG_POSITIONS_Y;
         rdr->_bboxX1 = (x1 + rdr->_SUBPIXEL_POSITIONS_X - 1) >>
@@ -1452,11 +1447,6 @@ endRenderingImpl(Renderer* rdr) {
             }
 
             computeCrossingsForEdge(rdr, index, bminY, bmaxY);
-            /* Check for error in memory allocation */
-            if (XNI_TRUE == readMemErrorFlag()) {
-                return;
-            }
-
         }
 
         computeBounds(rdr);
@@ -1509,10 +1499,6 @@ computeCrossingsForEdge(Renderer *rdr, jint index,
     lx = (jlong)(y - iy0)*dx/dy + ix0;
     addCrossing(rdr, y >> rdr->_YSHIFT, (jint)(lx >> rdr->_XSHIFT), 
                 orientation);
-    /* Check for error in memory allocation */
-    if (XNI_TRUE == readMemErrorFlag()) {
-        return;
-    }
 
     y += rdr->_YSTEP;
     if (y > maxY) {
@@ -1524,10 +1510,6 @@ computeCrossingsForEdge(Renderer *rdr, jint index,
         lx += xstep;
         addCrossing(rdr, y >> rdr->_YSHIFT, (jint)(lx >> rdr->_XSHIFT), 
                     orientation);
-        /* Check for error in memory allocation */
-        if (XNI_TRUE == readMemErrorFlag()) {
-            return;
-        }
     }
 }
 
