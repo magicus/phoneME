@@ -85,23 +85,8 @@ public class CdcMIDletLoader implements MIDletLoader {
         }
 
         /* Use MIDletClassLoader to load the main midlet class. */
-        // Until the GCF part of the build is refactored we will
-        // not use the MIDletClassLoader, so HTTP will work.
-        //MIDletClassLoader  midletClassLoader =
-        //    MIDPConfig.newMIDletClassLoader(jars);          
-
-        URL[] urls = new URL[jars.length];
-        for (int i = 0; i < jars.length; i++) {
-            try {
-            urls[i] = new URL("file://" + jars[i]);
-            } catch (MalformedURLException e) {
-                System.out.println("malformed url");
-                throw new RuntimeException(e.getMessage());
-            }
-        }
-
-        URLClassLoader midletClassLoader =
-            new URLClassLoader(urls, this.getClass().getClassLoader());
+        MIDletClassLoader  midletClassLoader =
+            MIDPConfig.newMIDletClassLoader(jars);          
 
         midletClass = midletClassLoader.loadClass(className);
 

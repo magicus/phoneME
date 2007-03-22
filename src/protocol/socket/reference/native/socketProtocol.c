@@ -190,6 +190,7 @@ KNIEXPORT KNI_RETURNTYPE_INT
 Java_com_sun_midp_io_j2me_socket_Protocol_read0(void) {
     int length;
     int offset;
+    int iStreams;
     void *pcslHandle;
     int bytesRead = -1;
     int status = PCSL_NET_INVALID;
@@ -207,6 +208,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_read0(void) {
     KNI_GetParameterAsObject(1, bufferObject);
     
     pcslHandle = (void *)(getMidpSocketProtocolPtr(thisObject)->handle);
+    iStreams = (int)(getMidpSocketProtocolPtr(thisObject)->iStreams); 
 
     REPORT_INFO3(LC_PROTOCOL, "socket::read0 o=%d l=%d fd=%d\n", 
                  offset, length, (int)pcslHandle);
@@ -227,8 +229,8 @@ Java_com_sun_midp_io_j2me_socket_Protocol_read0(void) {
             SNI_END_RAW_POINTERS;
         }
     } else {  /* Reinvocation after unblocking the thread */
-        if (INVALID_HANDLE == pcslHandle) {
-            /* closed by another thread */
+        if (INVALID_HANDLE == pcslHandle || iStreams == 0) {
+            /* connection or its input streams are closed by another thread */
             KNI_ThrowNew(midpInterruptedIOException, 
                          "Interrupted IO error during socket::read");
             ANC_DEC_NETWORK_INDICATOR;
@@ -304,6 +306,7 @@ KNIEXPORT KNI_RETURNTYPE_INT
 Java_com_sun_midp_io_j2me_socket_Protocol_write0(void) { 
     int length;
     int offset;
+    int oStreams;
     void *pcslHandle;
     int bytesWritten = 0;
     int status = PCSL_NET_INVALID;
@@ -321,6 +324,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_write0(void) {
     KNI_GetParameterAsObject(1, bufferObject);
 
     pcslHandle = (void *)(getMidpSocketProtocolPtr(thisObject)->handle);
+    oStreams = (int)(getMidpSocketProtocolPtr(thisObject)->oStreams);
 
     REPORT_INFO3(LC_PROTOCOL, "socket::write0 o=%d l=%d fd=%d\n", 
                  offset, length, pcslHandle);
@@ -342,8 +346,8 @@ Java_com_sun_midp_io_j2me_socket_Protocol_write0(void) {
             SNI_END_RAW_POINTERS;
         }
     } else { /* Reinvocation after unblocking the thread */
-        if (INVALID_HANDLE == pcslHandle) {
-            /* closed by another thread */
+        if (INVALID_HANDLE == pcslHandle || oStreams == 0) {
+            /* connection or its output streams are closed by another thread */
             KNI_ThrowNew(midpInterruptedIOException, 
                          "Interrupted IO error during socket::read");
             ANC_DEC_NETWORK_INDICATOR;
@@ -848,5 +852,61 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_io_NetworkConnectionBase_initializeInternal(void) {
     ANC_INIT_NETWORK_INDICATOR;
     pcsl_network_init();
+    KNI_ReturnVoid();
+}
+
+/**
+ * Notify blocked threads thar all input streams of the socket
+ * connection are closed by some other thread.
+ * <p>
+ * Java declaration:
+ * <pre>
+ *     notifyClosedInput0(V)V
+ * </pre>
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_midp_io_j2me_socket_Protocol_notifyClosedInput0(void) {
+    void *pcslHandle;
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(thisObject);
+    KNI_GetThisPointer(thisObject);
+
+    pcslHandle = (void *)(getMidpSocketProtocolPtr(thisObject)->handle);
+    if (INVALID_HANDLE == pcslHandle) {
+        KNI_ThrowNew(midpIOException,
+            "invalid handle during socket::notifyClosedInput");
+    } else {
+        midp_thread_signal(NETWORK_READ_SIGNAL, (int)pcslHandle, 0);
+    }
+
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+
+/**
+ * Notify blocked threads thar all output streams of the socket
+ * connection are closed by some other thread.
+ * <p>
+ * Java declaration:
+ * <pre>
+ *     notifyClosedOutput0(V)V
+ * </pre>
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_midp_io_j2me_socket_Protocol_notifyClosedOutput0(void) {
+    void *pcslHandle;
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(thisObject);
+    KNI_GetThisPointer(thisObject);
+
+    pcslHandle = (void *)(getMidpSocketProtocolPtr(thisObject)->handle);
+    if (INVALID_HANDLE == pcslHandle) {
+        KNI_ThrowNew(midpIOException,
+            "invalid handle during socket::notifyClosedOutput");
+    } else {
+        midp_thread_signal(NETWORK_WRITE_SIGNAL, (int)pcslHandle, 0);
+    }
+
+    KNI_EndHandles();
     KNI_ReturnVoid();
 }

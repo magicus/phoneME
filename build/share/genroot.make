@@ -117,10 +117,10 @@ sanity:
 	    echo '==========================================================';\
 	    exit -1; \
 	fi
-	@if test ! -f $(MIDP_OUTPUT_DIR)/classes.zip; then \
+	@if test ! -f $(MIDP_CLASSES_ZIP); then \
 	    echo '==========================================================';\
 	    echo 'MIDP_OUTPUT_DIR must be set, such that you can access';\
-	    echo '$$(MIDP_OUTPUT_DIR)/classes.zip';\
+	    echo '$$(MIDP_CLASSES_ZIP)';\
 	    echo 'See build documentation';\
 	    echo '==========================================================';\
 	    exit -1; \

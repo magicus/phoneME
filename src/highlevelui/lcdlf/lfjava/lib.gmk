@@ -204,13 +204,17 @@ endef
 ifeq ($(USE_I3_TEST), true)
 SUBSYSTEM_LCDLF_I3TEST_JAVA_FILES += \
     $(LCDLF_J_DIR)/i3test/javax/microedition/lcdui/TestItemLFImplLDoInternalLayout.java \
-    $(LCDLF_J_DIR)/i3test/javax/microedition/lcdui/TestCanvasSizing.java \
     $(LCDLF_J_DIR)/i3test/javax/microedition/lcdui/TestCommandSorting.java \
     $(LCDLF_J_DIR)/i3test/javax/microedition/lcdui/TestTextFieldInput.java \
     $(LCDLF_J_DIR)/i3test/javax/microedition/lcdui/TestIsShown.java \
     $(LCDLF_J_DIR)/i3test/javax/microedition/lcdui/Test6254765.java \
     $(LCDLF_J_DIR)/i3test/com/sun/midp/chameleon/input/TestNativeInputMode.java  
 #    $(LCDLF_J_DIR)/i3test/javax/microedition/lcdui/TestSizeChanged.java \
+
+ifneq ($(TARGET_PLATFORM), javacall)
+SUBSYSTEM_LCDLF_I3TEST_JAVA_FILES += \
+    $(LCDLF_J_DIR)/i3test/javax/microedition/lcdui/TestCanvasSizing.java
+endif
 
 endif
 
