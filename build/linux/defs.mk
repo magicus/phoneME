@@ -79,13 +79,16 @@ CVM_TARGETOBJS_SPACE += \
 	memory_md.o \
 
 #
-# On linux, CVM_INCLUDE_JUMP=true if and only if CVM_MTASK=true
+# On linux, USE_JUMP=true if and only if CVM_MTASK=true
 #
-ifeq ($(CVM_INCLUDE_JUMP), true)
+ifeq ($(USE_JUMP), true)
 override CVM_MTASK	= true
 endif
 ifeq ($(CVM_MTASK), true)
-override CVM_INCLUDE_JUMP = true
+ifneq ($(USE_JUMP), true)
+# It is too late to force USE_JUMP=true at this point, so produce an error.
+$(error CVM_MTASK=true requires USE_JUMP=true)
+endif
 endif
 
 ifeq ($(CVM_MTASK), true)

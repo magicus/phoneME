@@ -45,11 +45,6 @@ LIB_LINK_POSTFIX	= $(DEBUG_POSTFIX).lib
 override GENERATEMAKEFILES = false  
 
 #
-# Location of JDK
-#
-JDK_HOME	?= h:/jdk1.3.1_01
-
-#
 # Specify all the host and target tools. 
 # CC and AS are specific in the win32-<cpu>/defs.mk file.
 #
@@ -61,7 +56,7 @@ TARGET_AR_UPDATE	= true $(TARGET_AR_CREATE)
 
 # Override the default TARGET_CC_VERSION, since it relies on the gcc
 # -dumpversion and -dumpmachine options.
-TARGET_CC_VERSION ?= $(shell $(TARGET_CC) 2>&1 | grep -i version)
+TARGET_CC_VERSION ?= $(shell PATH="$(PATH)"; $(TARGET_CC) 2>&1 | grep -i version)
 
 #
 # Compiler and linker flags

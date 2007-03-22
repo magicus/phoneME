@@ -23,10 +23,9 @@
 #
 
 # Is there a better, centralized location to put the ant tool location?
-CVM_ANT 	        ?= ant
 CVM_JUMP_BUILDDIR	= $(CDC_DIST_DIR)/jump
 
-ifeq ($(CVM_INCLUDE_JUMP),true)
+ifeq ($(USE_JUMP),true)
 #
 # JUMP defs
 #
@@ -38,6 +37,11 @@ BINARYBUNDLE_PATTERN_FILENAME=.binary-pattern
 JUMP_ANT_OPTIONS += -Ddist.dir=$(call POSIX2HOST,$(CVM_JUMP_BUILDDIR)) 	\
 		    -Dcdc.dir=$(call POSIX2HOST,$(CDC_DIST_DIR)) \
 		    -Dbinary.pattern.file=$(BINARYBUNDLE_PATTERN_FILENAME)  
+
+ifeq ($(USE_MIDP), true)
+JUMP_ANT_OPTIONS         += -Dmidp_output_dir=$(subst $(CDC_DIST_DIR)/,,$(MIDP_OUTPUT_DIR))
+endif
+
 # The default JUMP component location
 JUMP_DIR		?= $(COMPONENTS_DIR)/jump
 ifeq ($(wildcard $(JUMP_DIR)/build/build.xml),)
@@ -45,15 +49,6 @@ $(error JUMP_DIR must point to the JUMP directory: $(JUMP_DIR))
 endif
 JUMP_OUTPUT_DIR         = $(CVM_JUMP_BUILDDIR)/lib
 JUMP_SRCDIR             = $(JUMP_DIR)/src
-
-ifeq ($(USE_VERBOSE_MAKE), true)
-CVM_ANT_OPTIONS         += -v
-else
-CVM_ANT_OPTIONS		+= -q
-endif
-ifneq ($(CVM_DEBUG), true)
-CVM_ANT_OPTIONS         += -Ddebug=false
-endif
 
 #
 # JUMP_DEPENDENCIES defines what needs to be built for jump

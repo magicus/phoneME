@@ -436,7 +436,7 @@ $(J2ME_CLASSLIB):: jsrclasses
 endif
 $(J2ME_CLASSLIB):: testclasses $(CVM_TEST_CLASSESZIP)
 $(J2ME_CLASSLIB):: democlasses $(CVM_DEMO_CLASSESJAR)
-ifeq ($(CVM_INCLUDE_JUMP), true)
+ifeq ($(USE_JUMP), true)
 $(J2ME_CLASSLIB):: jumptargets
 endif
 $(J2ME_CLASSLIB):: $(JSROP_JARS)
@@ -527,6 +527,7 @@ $(CVM_BUILD_DEFS_MK)::
 	$(AT) echo "J2ME_CLASSLIB = $(J2ME_CLASSLIB)" >> $@
 	$(AT) echo "CVM_MTASK = $(CVM_MTASK)" >> $@
 	$(AT) echo "CVM_INCLUDE_JUMP = $(CVM_INCLUDE_JUMP)" >> $@
+	$(AT) echo "USE_JUMP = $(USE_JUMP)" >> $@
 	$(AT) echo "JUMP_DIR = $(JUMP_DIR)" >> $@
 	$(AT) echo "CVM_PRELOAD_LIB = $(CVM_PRELOAD_LIB)" >> $@
 	$(AT) echo "CCFLAGS_SPEED = $(CCFLAGS_SPEED)" >> $@
@@ -743,7 +744,6 @@ clean::
 	rm -rf $(CVM_BUILD_TOP)/.system_properties.c
 	rm -rf .DefaultLocaleList.java
 	rm -rf $(CVM_BUILD_FLAGS_FILE)
-	rm -rf $(CVM_MIDP_BUILDDIR)
 	rm -rf $(BUILDFLAGS_JAVA)
 	rm -rf $(CVM_BUILDTIME_CLASSESDIR) \
 	       $(CVM_TEST_CLASSESDIR) $(CVM_DEMO_CLASSESDIR) *_classes

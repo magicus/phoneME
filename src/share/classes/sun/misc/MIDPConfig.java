@@ -48,6 +48,11 @@ class MIDPConfig{
     /* The MemberFilter */
     private static MemberFilter memberFilter;
 
+    /* The default location of midp library zip */
+    private static String defaultMidpJarPath =  
+	    System.getProperty("java.home") + File.separator +
+	    "lib" + File.separator + "midpclasses.zip";
+
     public static String MIDPVersion = "2.0";
     public static String CLDCVersion = "1.1";
     /*
@@ -161,18 +166,35 @@ class MIDPConfig{
         }
 
 	String permittedClasses[];
-	URL midpBase[] = new URL[midpJarNames.length];
 	PermissionCollection perms = new Permissions();
-	for (int i=0; i<midpJarNames.length; i++){
-	    try {
-		midpBase[i] = new URL("file://".concat(midpJarNames[i]));
-	    }catch(java.io.IOException e){
-		// DEBUG System.err.println("initMidpImplementation URL Creation:");
-		e.printStackTrace();
-		// END DEBUG
-		return null;
-	    }
+	Vector urls = new Vector();
+        for (int i=0; i<midpJarNames.length; i++){
+           try {
+              File file = new File(midpJarNames[i]);
+	      if (file.exists()) {
+	         urls.add(file.toURL());
+              }
+	   }catch(NullPointerException e){
+	   }catch(java.io.IOException e){
+	      e.printStackTrace();
+	   }
 	}
+
+	URL[] midpBase = (URL[]) urls.toArray(new URL[0]);
+ 
+	if (midpBase == null || midpBase.length == 0) {
+           /* Either the parameter was bad or didn't get passed in.  Use default.  */
+           midpBase = new URL[1];
+	   try {
+	      midpBase[0] = new URL("file://".concat(defaultMidpJarPath));
+           }catch(java.io.IOException e){
+	      // DEBUG System.err.println("initMidpImplementation URL Creation:");
+	      e.printStackTrace();
+	      // END DEBUG
+	      return null;
+           }
+        } 
+
 	perms.add(new java.security.AllPermission());
 	//DEBUG System.out.println("Constructing MIDPImplementationClassLoader with permissions "+perms);
 	permittedClasses = getPermittedClasses();
@@ -203,18 +225,31 @@ class MIDPConfig{
                 "The MIDPImplementationClassLoader is already created");
         }
 
-        URL urls[] = new URL[files.length];
 	String permittedClasses[];
         PermissionCollection perms = new Permissions();
 
+        URL urls[] = new URL[files.length];
         for (int i = 0; i < files.length; i++) {
             try {
                 urls[i] = files[i].toURL();
             } catch (MalformedURLException e) {
                 e.printStackTrace();
-                return null;
+                urls = null;
+		break;
             }
         }
+	if (urls == null || urls.length == 0) {
+           /* Either the parameter was bad or didn't get passed in.  Use default.  */
+           urls = new URL[1];
+	   try {
+	      urls[0] = new URL("file://".concat(defaultMidpJarPath));
+           }catch(java.io.IOException e){
+	      // DEBUG System.err.println("initMidpImplementation URL Creation:");
+	      e.printStackTrace();
+	      // END DEBUG
+	      return null;
+           }
+        } 
 
 	perms.add(new java.security.AllPermission());
 	//DEBUG System.out.println(

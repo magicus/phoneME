@@ -95,8 +95,8 @@ endif
 # If any JSR is built include JSROP abstractions building
 ifneq ($(INCLUDED_JSROP_NUMBERS),)
 # Check Jump building
-ifneq ($(CVM_INCLUDE_JUMP), true)
-$(error JSR optional packages require Jump to be supported. CVM_INCLUDE_JUMP must be true.)
+ifneq ($(USE_JUMP), true)
+$(error JSR optional packages require Jump to be supported. USE_JUMP must be true.)
 endif
 
 export ABSTRACTIONS_DIR ?= $(COMPONENTS_DIR)/abstractions
@@ -273,6 +273,11 @@ $(error JAVACALL_DIR must point to a directory containing javacall implementatio
 endif
 include $(JAVACALL_MAKE_FILE)
 endif
+
+#Variable containing all JSROP components output dirs
+JSROP_OUTPUT_DIRS = $(foreach jsr_number,$(JSROP_NUMBERS),\
+          $(JSR_$(jsr_number)_BUILD_DIR)) $(JAVACALL_BUILD_DIR) \
+          $(ABSTRACTIONS_BUILD_DIR)
 
 CVM_INCLUDE_DIRS+= $(JSROP_INCLUDE_DIRS)
 
