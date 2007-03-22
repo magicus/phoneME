@@ -29,7 +29,6 @@ import com.sun.jsr239.*;
 import com.sun.midp.lcdui.GameMap;
 
 import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.game.GameCanvas;
 
 import java.util.Hashtable;
 
@@ -84,8 +83,10 @@ class EGL10Impl implements EGL10 {
                                int width, int height);
     native void _destroyPixmap(int pixmapPtr);
     native void _getWindowContents(Graphics winGraphics,
+                                   int deltaHeight,
                                    int pixmapPointer);
-    native void _putWindowContents(Graphics winGraphics,
+    native void _putWindowContents(Graphics target,
+                                   int deltaHeight,
                                    int pixmapPointer);
     native int _eglCreateWindowSurface(int display,
                                        int config,
@@ -125,7 +126,8 @@ class EGL10Impl implements EGL10 {
     native int _eglCopyBuffers(int display,
                                int surface,
                                Graphics target,
-                               int width, int height);
+                               int width, int height,
+                               int deltaHeight);
     native int _eglSurfaceAttrib(int display,
                                  int surface,
                                  int attribute,
@@ -137,6 +139,9 @@ class EGL10Impl implements EGL10 {
                                    int surface,
                                    int buffer);
     native int _eglSwapInterval(int display, int interval);
+
+    private native int _getFullDisplayWidth();
+    private native int _getFullDisplayHeight();
 
     public static EGL10Impl getInstance() {
         return theInstance;
@@ -370,8 +375,8 @@ class EGL10Impl implements EGL10 {
 
         Graphics winGraphics = (Graphics)win;
 
-        int width = GameMap.getGraphicsAccess().getGraphicsWidth(winGraphics);
-        int height = GameMap.getGraphicsAccess().getGraphicsHeight(winGraphics);
+        int width = _getFullDisplayWidth();
+        int height = _getFullDisplayHeight();
 
         int displayId = ((EGLDisplayImpl)display).nativeId();
         int configId = ((EGLConfigImpl)config).nativeId();
@@ -751,7 +756,7 @@ class EGL10Impl implements EGL10 {
                 // Add the new context to the thread map
                 GL10Impl.contextsByThread.put(currentThread, context);
             }
-	}
+    }
 
 	return retVal == EGL_TRUE;
     }
@@ -824,8 +829,12 @@ class EGL10Impl implements EGL10 {
         EGLSurfaceImpl currentDrawSurface = cimpl.getDrawSurface();
 
         if (currentDrawSurface != null) {
-            _putWindowContents(currentDrawSurface.getTarget(),
-                               currentDrawSurface.getPixmapPointer());
+            Graphics targetGraphics = currentDrawSurface.getTarget();
+            int deltaHeight = _getFullDisplayHeight() -
+                    GameMap.getGraphicsAccess().getGraphicsHeight(targetGraphics);
+            _putWindowContents(targetGraphics,
+                    deltaHeight,
+                    currentDrawSurface.getPixmapPointer());
         } else {
             // Do nothing
         }
@@ -840,7 +849,11 @@ class EGL10Impl implements EGL10 {
             EGLSurfaceImpl currentDrawSurface = cimpl.getDrawSurface();
 
             if (currentDrawSurface != null) {
-                _getWindowContents(currentDrawSurface.getTarget(),
+                Graphics targetGraphics = currentDrawSurface.getTarget();
+                int deltaHeight = _getFullDisplayHeight() -
+                        GameMap.getGraphicsAccess().getGraphicsHeight(targetGraphics);
+                _getWindowContents(targetGraphics,
+                                   deltaHeight,
                                    currentDrawSurface.getPixmapPointer());
             } else {
                 // Do nothing
@@ -890,11 +903,19 @@ class EGL10Impl implements EGL10 {
         GL10Impl.grabContext();
         
         EGLSurfaceImpl surf = (EGLSurfaceImpl)surface;
-	boolean retval = EGL_TRUE ==
+
+        EGLContextImpl cimpl = (EGLContextImpl) eglGetCurrentContext();
+        EGLSurfaceImpl currentDrawSurface = cimpl.getDrawSurface();
+        Graphics targetGraphics = currentDrawSurface.getTarget();
+        int deltaHeight = _getFullDisplayHeight() -
+                GameMap.getGraphicsAccess().getGraphicsHeight(targetGraphics);
+
+        boolean retval = EGL_TRUE ==
 	    _eglCopyBuffers(((EGLDisplayImpl)display).nativeId(),
 			    surf.nativeId(),
 			    imageGraphics,
-                            surf.getWidth(), surf.getHeight());
+                surf.getWidth(), surf.getHeight(),
+                deltaHeight);
         return retval;
     }
 
