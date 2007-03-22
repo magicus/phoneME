@@ -174,7 +174,6 @@ javacall_bool penAreDragging = JAVACALL_FALSE;
  * @return <tt>1</tt> on success, <tt>0</tt> on failure
  */
 javacall_result javacall_lcd_init(void) {
-	printf("init begins\n");
 
     if(!initialized) {
         reverse_orientation = JAVACALL_FALSE;
@@ -197,7 +196,7 @@ javacall_result javacall_lcd_init(void) {
  * @retval JAVACALL_FAIL    fail
  */
 javacall_result javacall_lcd_finalize(void) {
-printf("KRIS: finalize\n");
+
     if(initialized) {
         /* Clean up thread local data */
         void* ptr = (void*) TlsGetValue(tlsId);
@@ -212,9 +211,7 @@ printf("KRIS: finalize\n");
     if(VRAM.hdc != NULL) {
         VRAM.height = 0;
         VRAM.width = 0;
-printf("KRIS: before free VRAM\n");
         free(VRAM.hdc);
-printf("KRIS: after free VRAM\n");
         VRAM.hdc = NULL;
     }
     if(hPhantomWindow != NULL) {
@@ -321,14 +318,9 @@ printf("full screen %d\r\n", (int)useFullScreen);
  * @return <tt>1</tt> on success, <tt>0</tt> on failure or invalid screen
  */
 javacall_result javacall_lcd_flush() {
-/*
-    if (reverse_orientation) { 
-//        RefreshScreenRotate(0, 0, currentSkin->displayRect.height, currentSkin->displayRect.width); 
-        RefreshScreenNormal(0, 0, currentSkin->displayRect.height, currentSkin->displayRect.width); 
-    } else { 
-*/
-        RefreshScreenNormal(0, 0, currentSkin->displayRect.width, currentSkin->displayRect.height); 
-  //  } 
+
+    RefreshScreenNormal(0, 0, currentSkin->displayRect.width, currentSkin->displayRect.height); 
+
     return JAVACALL_OK;
 }
 
@@ -350,15 +342,7 @@ javacall_result javacall_lcd_flush() {
 javacall_result /*OPTIONAL*/ javacall_lcd_flush_partial(int ystart,
                                                         int yend) {
 
-    //RefreshScreen(0,ystart, DISPLAY_WIDTH, yend);
-/*
-    if (reverse_orientation) {         
-         //RefreshScreenRotate(0, 0, currentSkin->displayRect.height, currentSkin->displayRect.width); 
-         RefreshScreenNormal(0, 0, currentSkin->displayRect.height, currentSkin->displayRect.width); 
-    } else { 
-*/
-         RefreshScreenNormal(0, 0, currentSkin->displayRect.width, currentSkin->displayRect.height); 
-//    }
+    RefreshScreenNormal(0, 0, currentSkin->displayRect.width, currentSkin->displayRect.height); 
 
     return JAVACALL_OK;
 }
@@ -408,29 +392,6 @@ static void InitializePhantomWindow() {
 
     hPhantomWindow = hwnd;
 }
-/*
-static void setUpOffsets(int fullscreen) {
-    switch(fullscreen) {
-    case 1:
-        topBarHeight    = 0; // full screen mode includes the top bar.
-        bottomBarHeight = 0;
-        break;
-    case 0:
-        topBarHeight    = TOP_BAR_HEIGHT;
-        bottomBarHeight = BOTTOM_BAR_HEIGHT;
-        break;
-    }
-
-    //paintHeight = (DISPLAY_HEIGHT - (topBarHeight + bottomBarHeight));
-
-    if (reverse_orientation) {
-        currentSkin->displayY = Y_SCREEN_OFFSET;
-    } else {
-        currentSkin->displayY = Y_SCREEN_OFFSET + topBarHeight;
-    }
-    
-}
-*/
 
 /**
  *
@@ -735,17 +696,9 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
         midpScreen_bounds.height = topBarOn ? currentSkin->displayRect.height : 
             (currentSkin->displayRect.height - topBarHeight);
         /* coordinates of event in MIDP Screen coordinate system */
-/*
-        if (reverse_orientation) {
-            midpX = currentSkin->displayRect.height + currentSkin->displayRect.y - y;
-            midpY = x - currentSkin->displayRect.x;
-        } else {
-*/
-            midpX = x - currentSkin->displayRect.x;
-            midpY = y - currentSkin->displayRect.y - (topBarOn ? topBarHeight : 0);
- //       }
+        midpX = x - currentSkin->displayRect.x;
+        midpY = y - currentSkin->displayRect.y - (topBarOn ? topBarHeight : 0);
         
-
         if(iMsg == WM_LBUTTONDOWN && INSIDE(x, y, midpScreen_bounds) ) {
             penAreDragging = JAVACALL_TRUE;
             SetCapture(hwnd);
@@ -776,7 +729,6 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
         }
 #endif
 
-printf("KRIS: going to check keys, number %d, %d, %d\n", currentSkin->keyCnt, sizeof(*(currentSkin->Keys)), sizeof(currentSkin->Keys));
         for(i = 0; i < currentSkin->keyCnt; ++i) {
             if(!(INSIDE(x, y, currentSkin->Keys[i].bounds))) {
                 continue;
@@ -878,8 +830,6 @@ printf("KRIS: going to check keys, number %d, %d, %d\n", currentSkin->keyCnt, si
 /**
  *
  */
-
-
 void getBitmapSize(HBITMAP img, int* width, int* height){
     BITMAPINFO bitmapInfo=        {{sizeof(BITMAPINFOHEADER)}};
     GetDIBits(GetDC(NULL),img,1,0,0,&bitmapInfo,DIB_RGB_COLORS);
@@ -931,7 +881,6 @@ static void setupMutex() {
  * Resizes the screen back buffer
  */
 static void resizeScreenBuffer(int w, int h) {
-printf("KRIS: resizeScreenBuffer, %dx%d\n", w, h);
     if(VRAM.hdc != NULL) {
         if (VRAM.width * VRAM.height != w * h) {
             free(VRAM.hdc);
@@ -939,7 +888,6 @@ printf("KRIS: resizeScreenBuffer, %dx%d\n", w, h);
         }
     }
     if(VRAM.hdc == NULL) {
-printf("KRIS: allocating ScreenBuffer, %dx%d\n", w, h);
         VRAM.hdc = (javacall_pixel*)malloc(w*h*sizeof(javacall_pixel));
     }
     if(VRAM.hdc == NULL) {
@@ -950,6 +898,9 @@ printf("KRIS: allocating ScreenBuffer, %dx%d\n", w, h);
     VRAM.height = h;
 }
 
+/**
+ * Sets current skin
+ */
 static void setCurrentSkin(ESkin* newSkin) {
     if (NULL == newSkin) {
         printf("failed to change emulator skin\n");    
