@@ -79,40 +79,40 @@ const static WKey VKeys[] = {
 #ifdef NO_POWER_BUTTON
 {KEY_POWER,    {-10, -10,  1,  1}, "POWER"},
 #else
-{KEY_POWER,    {160, 59, 24, 24}, "POWER"},
+{KEY_POWER,    {281, 48, 19, 19}, "POWER"},
 #endif
 
 //#define USE_SWAP_SOFTBUTTON
 #ifndef USE_SWAP_SOFTBUTTON // !USE_SWAP_SOFTBUTTON 
-{JAVACALL_KEY_SOFT1,    {78, 420, 40, 35}, "SOFT1"},//
-{JAVACALL_KEY_SOFT2,    {241, 424, 40, 35}, "SOFT2"},//
+{JAVACALL_KEY_SOFT1,    {54, 418, 79, 18}, "SOFT1"},//
+{JAVACALL_KEY_SOFT2,    {221, 418, 78, 18}, "SOFT2"},//
 #else // USE_SWAP_SOFTBUTTON 
-{JAVACALL_KEY_SOFT2,    {78, 420, 40, 35}, "SOFT2"},//
-{JAVACALL_KEY_SOFT1,    {241, 424, 40, 35}, "SOFT1"},//
+{JAVACALL_KEY_SOFT2,    {54, 418, 79, 18}, "SOFT2"},//
+{JAVACALL_KEY_SOFT1,    {221, 418, 78, 18}, "SOFT1"},//
 #endif
 
-{JAVACALL_KEY_UP,       {169, 421, 24, 9}, "UP"},//
-{JAVACALL_KEY_DOWN,     {169, 454, 24, 9}, "DOWN"},//
-{JAVACALL_KEY_LEFT,     {132, 431, 9, 24}, "LEFT"},//
-{JAVACALL_KEY_RIGHT,    {218, 431, 9, 24}, "RIGHT"},//
-{JAVACALL_KEY_SELECT,   {162, 434, 39, 15}, "SELECT"},//
+{JAVACALL_KEY_UP,       {154, 439, 43, 16}, "UP"},//
+{JAVACALL_KEY_DOWN,     {154, 504, 43, 16}, "DOWN"},//
+{JAVACALL_KEY_LEFT,     {137, 457, 16, 45}, "LEFT"},//
+{JAVACALL_KEY_RIGHT,    {199, 457, 15, 45}, "RIGHT"},//
+{JAVACALL_KEY_SELECT,   {157, 460, 37, 39}, "SELECT"},//
 
-{JAVACALL_KEY_SEND,     {60, 454, 51, 31}, "SEND"},//
-{KEY_END,               {253, 454, 51, 31}, "END"},//
-{JAVACALL_KEY_CLEAR,    {150, 478, 60, 28}, "CLEAR"},//
+{JAVACALL_KEY_SEND,     {55, 450, 76, 26}, "SEND"},//
+{KEY_END,               {220, 450, 76, 26}, "END"},//
+{JAVACALL_KEY_CLEAR,    {220, 482, 76, 26}, "CLEAR"},//
 
-{JAVACALL_KEY_1,        {64, 500, 60, 29}, "1"},//
-{JAVACALL_KEY_2,        {146, 519, 70, 26}, "2"},//
-{JAVACALL_KEY_3,        {237, 500, 60, 29}, "3"},//
-{JAVACALL_KEY_4,        {66, 534, 60, 29}, "4"},//
-{JAVACALL_KEY_5,        {146, 554, 70, 26}, "5"},//
-{JAVACALL_KEY_6,        {233, 537, 60, 29}, "6"},//
-{JAVACALL_KEY_7,        {68, 569, 60, 29}, "7"},//
-{JAVACALL_KEY_8,        {146, 591, 70, 26}, "8"},//
-{JAVACALL_KEY_9,        {234, 575, 60, 29}, "9"},//
-{JAVACALL_KEY_ASTERISK, {73, 610, 60, 29}, "*"},//
-{JAVACALL_KEY_0,        {146, 628, 70, 26}, "0"},//
-{JAVACALL_KEY_POUND,    {228, 612, 60, 29}, "#"},//
+{JAVACALL_KEY_1,        {55, 526, 76, 31}, "1"},//
+{JAVACALL_KEY_2,        {138, 526, 76, 31}, "2"},//
+{JAVACALL_KEY_3,        {221, 526, 76, 31}, "3"},//
+{JAVACALL_KEY_4,        {55, 560, 76, 31}, "4"},//
+{JAVACALL_KEY_5,        {138, 560, 76, 31}, "5"},//
+{JAVACALL_KEY_6,        {221, 560, 76, 31}, "6"},//
+{JAVACALL_KEY_7,        {55, 594, 76, 31}, "7"},//
+{JAVACALL_KEY_8,        {138, 594, 76, 31}, "8"},//
+{JAVACALL_KEY_9,        {221, 594, 76, 31}, "9"},//
+{JAVACALL_KEY_ASTERISK, {55, 628, 76, 31}, "*"},//
+{JAVACALL_KEY_0,        {138, 628, 76, 31}, "0"},//
+{JAVACALL_KEY_POUND,    {221, 628, 76, 31}, "#"},//
 
 };
 
