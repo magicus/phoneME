@@ -95,6 +95,11 @@ ifeq ($(TARGET_VM), cldc_vm)
 	@echo "" >> $@
 
   $(BINDIR)/../../runPhoneME$(g).bat: $(SUBSYSTEM_AMS_DIR)/example/jams/batch/runPhoneME$(BAT)
+	@echo " ... installing $@"
+	@cp -f $< $@
+	@chmod +x $@
+	@echo
+	@echo "" >> $@
 	@echo "dir usertest$(g)$(BAT) > nul" >> $@
 	@echo "echo %ERRORLEVEL%" >> $@
 	@echo "if ERRORLEVEL 1 goto :go_inside" >> $@
