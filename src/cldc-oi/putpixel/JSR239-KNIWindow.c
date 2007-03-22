@@ -60,7 +60,8 @@ static gxj_pixel_type* getGraphicsBuffer(jobject graphicsHandle) {
 /* Copy MIDP screen buffer */
 
 void
-JSR239_getWindowContents(jobject graphicsHandle, JSR239_Pixmap *dst) {
+JSR239_getWindowContents(jobject graphicsHandle, jint deltaHeight,
+    JSR239_Pixmap *dst) {
 
     void* src;
 
@@ -89,7 +90,8 @@ JSR239_getWindowContents(jobject graphicsHandle, JSR239_Pixmap *dst) {
         src = (void*)getGraphicsBuffer(graphicsHandle);
 
         /* IMPL_NOTE: get clip sizes into account. */
-        copyFromScreenBuffer(dst, src, 0, 0, dst->width, dst->height);
+        copyFromScreenBuffer(dst, src, 0, 0, dst->width, dst->height,
+            deltaHeight);
     }
 
 #ifdef DEBUG
@@ -101,8 +103,9 @@ JSR239_getWindowContents(jobject graphicsHandle, JSR239_Pixmap *dst) {
 
 /* Copy engine buffer back to MIDP */
 void
-JSR239_putWindowContents(jobject graphicsHandle, JSR239_Pixmap *src,
-                         jint flipY) {
+JSR239_putWindowContents(jobject graphicsHandle,
+                         jint delta_height,
+                         JSR239_Pixmap *src, jint flipY) {
 
     void* s;
     void* d;
@@ -137,9 +140,7 @@ JSR239_putWindowContents(jobject graphicsHandle, JSR239_Pixmap *src,
         }
 
 #ifdef DEBUG
-        printf("JSR239_putWindowContent:\n");
-        printf("  dst width  = %d\n", dest_width);
-        printf("  dst height = %d\n", dest_height);
+        printf("JSR239_putWindowContents:\n"); 
         printf("  src Bpp    = %d\n", src->pixelBytes);
         printf("  src width  = %d\n", src->width);
         printf("  src height = %d\n", src->height);
@@ -147,7 +148,7 @@ JSR239_putWindowContents(jobject graphicsHandle, JSR239_Pixmap *src,
 #endif
 
         /* IMPL_NOTE: get clip sizes into account. */
-        copyToScreenBuffer(src, flipY);
+        copyToScreenBuffer(src, delta_height, flipY);
 
         /* src->screen_buffer is an output of copyToScreenBuffer function. */
         s = (void*)src->screen_buffer;
