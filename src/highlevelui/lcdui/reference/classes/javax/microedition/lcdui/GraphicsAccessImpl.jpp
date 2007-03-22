@@ -92,14 +92,16 @@ class GraphicsAccessImpl implements com.sun.midp.lcdui.GraphicsAccess {
      */
     public int getGraphicsWidth(Graphics g) {
         Object creator = g.getCreator();
-        // #ifdef ENABLE_CHAMELEON
-        if (creator instanceof Display) {
-            MIDPWindow window = ((Display)creator).getWindow();
-            return window.getBodyAnchorX() + window.getBodyWidth();
-        }
-        // #endif
-        if (creator instanceof GameCanvas) {
-            return ((GameCanvas)creator).getWidth();
+        if (creator != null) {
+            // #ifdef ENABLE_CHAMELEON
+            if (creator instanceof Display) {
+                MIDPWindow window = ((Display)creator).getWindow();
+                return window.getBodyAnchorX() + window.getBodyWidth();
+            }
+            // #endif
+            if (creator instanceof GameCanvas) {
+                return ((GameCanvas)creator).getWidth();
+            }
         }
         return (int)g.getMaxWidth();
     }
