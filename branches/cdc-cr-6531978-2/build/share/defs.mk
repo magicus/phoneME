@@ -268,14 +268,20 @@ CVM_LVM                 ?= false
 CVM_CSTACKANALYSIS	?= false
 CVM_TIMESTAMPING	?= true
 CVM_INCLUDE_COMMCONNECTION ?= false
-CVM_INCLUDE_MIDP	?= false
-CVM_INCLUDE_JUMP	?= false
-ifeq ($(CVM_INCLUDE_MIDP), true)
+USE_MIDP	?= false
+USE_JUMP	?= false
+
+# Some makefiles still reference CVM_INCLUDE_MIDP and CVM_INCLUDE_JUMP,
+# so give them proper values until they are cleaned up.
+CVM_INCLUDE_MIDP ?= $(USE_MIDP)
+CVM_INCLUDE_JUMP ?= $(USE_JUMP)
+
+ifeq ($(USE_MIDP), true)
   override CVM_KNI        = true
   override CVM_DUAL_STACK = true
 else
   CVM_KNI                 ?= false
-  ifeq ($(CVM_INCLUDE_JUMP), true)
+  ifeq ($(USE_JUMP), true)
     override CVM_DUAL_STACK = true
   else
     CVM_DUAL_STACK          ?= false
@@ -691,6 +697,17 @@ ifeq ($(CVM_STATICLINK_LIBS), true)
 	CVM_DEFINES   += -DCVM_STATICLINK_LIBS
 endif
 
+# Keep ant quiet unless a verbose build is requested. Note, you can set
+# CVM_ANT_OPTIONS=-v or CVM_ANT_OPTIONS=-d on the command line to make
+# ant much more verbose.
+ifneq ($(USE_VERBOSE_MAKE), true)
+CVM_ANT_OPTIONS		+= -q
+endif
+
+ifneq ($(CVM_DEBUG), true)
+CVM_ANT_OPTIONS         += -Ddebug=false
+endif
+
 ifeq ($(CDC_10),true)
 CVM_DEFINES += -DCDC_10
 endif
@@ -745,8 +762,8 @@ CVM_FLAGS += \
 	CVM_TEST_GENERATION_GC \
 	CVM_TIMESTAMPING \
 	CVM_INCLUDE_COMMCONNECTION \
-	CVM_INCLUDE_MIDP \
-	CVM_INCLUDE_JUMP \
+	USE_MIDP \
+	USE_JUMP \
 	CVM_DUAL_STACK \
 	CVM_SPLIT_VERIFY \
 	CVM_KNI \
@@ -909,10 +926,10 @@ CVM_TRACE_JIT_CLEANUP_ACTION           = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_INCLUDE_COMMCONNECTION_CLEANUP_ACTION        = \
 	$(CVM_DEFAULT_CLEANUP_ACTION)    \
 	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
-CVM_INCLUDE_MIDP_CLEANUP_ACTION        = \
+USE_MIDP_CLEANUP_ACTION        = \
 	$(CVM_DEFAULT_CLEANUP_ACTION)    \
 	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
-CVM_INCLUDE_JUMP_CLEANUP_ACTION        = \
+USE_JUMP_CLEANUP_ACTION        = \
 	$(CVM_DEFAULT_CLEANUP_ACTION)    \
 	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
 CVM_DUAL_STACK_CLEANUP_ACTION          = $(CVM_DEFAULT_CLEANUP_ACTION)
@@ -1019,7 +1036,7 @@ endif
 # Object and data files needed for dual stack support
 #
 ifeq ($(CVM_DUAL_STACK), true)
-ifeq ($(CVM_INCLUDE_MIDP), true)
+ifeq ($(USE_MIDP), true)
     # The MIDP version include all CLDC classes plus 8 additional
     # javax/micro/microeditional/io/* classes.
     CVM_MIDPDIR           = $(CVM_TOP)/src/share/lib/dualstack/midp
@@ -1997,6 +2014,7 @@ endif
 BISON		?= $(CVM_HOST_TOOLS_PREFIX)bison
 ZIP             ?= zip
 UNZIP           ?= unzip
+CVM_ANT         ?= ant
 
 #######################################################################
 # Build tool options:
@@ -2114,6 +2132,15 @@ JAVA_CMD	= $(CVM_JAVA)
 #
 JAVA_CLASSPATH += $(LIB_CLASSESDIR)
 
+# locate the tools component
+export TOOLS_DIR ?= $(COMPONENTS_DIR)/tools
+ifeq ($(wildcard $(TOOLS_DIR)/tools.gmk),)
+$(error TOOLS_DIR must point to the shared tools directory: $(TOOLS_DIR))
+endif
+
+# include tools component makefile
+include $(TOOLS_DIR)/tools.gmk
+
 #
 # Include target makfiles last.
 #
@@ -2127,14 +2154,6 @@ JAVA_CLASSPATH += $(LIB_CLASSESDIR)
 -include ../$(TARGET_OS)/defs.mk
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)/defs.mk
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs.mk
-
-export TOOLS_DIR ?= $(COMPONENTS_DIR)/tools
-ifeq ($(wildcard $(TOOLS_DIR)/tools.gmk),)
-$(error TOOLS_DIR must point to the shared tools directory: $(TOOLS_DIR))
-endif
-
-# Include external shared tools
-include $(TOOLS_DIR)/tools.gmk
 
 # Root directory for unittests reports
 REPORTS_DIR ?= $(call POSIX2HOST,$(CDC_DIST_DIR)/reports)

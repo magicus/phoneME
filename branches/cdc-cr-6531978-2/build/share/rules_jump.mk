@@ -24,7 +24,7 @@
 # information or have any questions. 
 #
 
-ifeq ($(CVM_INCLUDE_JUMP),true)
+ifeq ($(USE_JUMP),true)
 
 # print our configuration
 printconfig::

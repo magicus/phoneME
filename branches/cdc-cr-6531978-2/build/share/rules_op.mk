@@ -97,4 +97,5 @@ $(JSR_RESTRICTED_CLASSLIST): $(JSROP_JARS)
 	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister -listapi:input=$(JSROP_HIDE_JARS),cout=$(JSR_RESTRICTED_CLASSLIST)
 endif
 
-
+clean::
+	$(AT)rm -rf $(JSROP_OUTPUT_DIRS)

@@ -343,6 +343,17 @@ ifeq ($(CVM_REBUILD),true)
 -include $(CVM_BUILD_FLAGS_FILE)
 endif
 
+# Handle deprecated uses of CVM_INCLUDE_MIDP and CVM_INCLUDE_JUMP here
+# since we rely on the proper setting of USE_MIDP and USE_JUMP just below.
+ifdef CVM_INCLUDE_MIDP
+$(warning CVM_INCLUDE_MIDP is deprecated. Use USE_MIDP instead.)
+USE_MIDP = $(CVM_INCLUDE_MIDP)
+endif
+ifdef CVM_INCLUDE_JUMP
+$(warning CVM_INCLUDE_JUMP is deprecated. Use USE_JUMP instead.)
+USE_JUMP = $(CVM_INCLUDE_JUMP)
+endif
+
 # Need to initialize J2ME_CLASSLIB before "all" rule below"
 J2ME_CLASSLIB		?= cdc
 
@@ -354,14 +365,14 @@ ifeq ($(CVM_INCLUDE_MIDP),true)
 endif
 
 # JUMP requires at least basis
-ifeq ($(CVM_INCLUDE_JUMP),true)
+ifeq ($(USE_JUMP),true)
    ifeq ($(J2ME_CLASSLIB), cdc)
       override J2ME_CLASSLIB = basis
    endif
    ifeq ($(J2ME_CLASSLIB), foundation)
       override J2ME_CLASSLIB = basis
    endif
-endif   # CVM_INCLUDE_JUMP
+endif   # USE_JUMP
 
 # The "all" rule below must come before pulling in any makefiles with rules
 all:: printconfig checkconfig $(J2ME_CLASSLIB) tools
