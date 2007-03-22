@@ -692,6 +692,12 @@ public class Display {
                                                     HEIGHT);
         // #endif ENABLE_GCI
 
+        /**
+         * Sets this Display as creator of screen Graphics instance to
+         * provide internal Graphics users with extended information
+         * on the instance. Graphics has not enough information on its
+         * own for such complex users as e.g. JSR239.
+         */
         screenGraphics.setCreator(this);
 
         // #ifdef ENABLE_CHAMELEON
