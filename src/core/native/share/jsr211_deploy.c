@@ -161,7 +161,7 @@ static jsr211_result installHandler(int n) {
     JSR211_content_handler ch = JSR211_CONTENT_HANDLER_INITIALIZER;
     char *ptr = rowHandlers[n];
     jsr211_result status = JSR211_FAILED;
-    int anm_num;    // buffer for actionname map length
+    int anm_num = 0;    // buffer for actionname map length
 
 /*
  *  Fill up CH data:
