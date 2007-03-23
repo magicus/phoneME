@@ -46,15 +46,25 @@ else # ifneq ($(FILTER_OBJECTS)x,x)
 PORTING_OBJECTS+=$(TEMP)
 endif # ifneq ($(FILTER_OBJECTS)x,x)
 
+NOTIFIER_OBJECTS=$(patsubst %.c,%.o,$(NOTIFIER_SOURCE))
+
 ifneq ($(UTILITIES)x, x)
 UTILITY_OBJECTS=$(addsuffix .o,$(UTILITIES))
 endif
 
 AR_EXTRACT_VERBOSE = xv
 
-javacall_lib: $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).$(LIB_EXTENSION)
-
 CFLAGS+= -I$(JAVACALL_OUTPUT_INCLUDE_DIR)
+
+ifeq ($(USE_JUMP),true)
+ifneq ($(NOTIFIER_OBJECTS)x,x)
+CFLAGS+=$(foreach dir,$(EXTRA_INCLUDE_DIRS), -I$(dir))
+EXTRA_LDFLAGS+=-lnotifiers -L$(JAVACALL_OUTPUT_LIB_DIR)
+NOTIFIERS_LIB=$(JAVACALL_OUTPUT_LIB_DIR)/libnotifiers$(BUILD_EXT).$(LIB_EXTENSION)
+endif
+endif
+
+javacall_lib: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).$(LIB_EXTENSION)
 
 $(JAVACALL_OUTPUT_OBJ_DIR)/%.o: %.c
 	@echo "...compiling: $@"
@@ -65,7 +75,7 @@ $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).so: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS)) \
 	$(SPECIFIC_OBJECTS)
 	@echo "...Generating Library: $@"
-	$(CC) $(LDFLAGS) -shared -o $@ $^
+	$(CC) $(LDFLAGS) $(EXTRA_LDFLAGS) -shared -o $@ $^
 
 $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).a: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \
@@ -74,3 +84,12 @@ $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).a: \
 	@echo "...Generating Library: $@"
 	$(AR) $(ARFLAGS) $@ $^
 
+$(JAVACALL_OUTPUT_LIB_DIR)/libnotifiers$(BUILD_EXT).so: \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
+	@echo "...Generating Library: $@"
+	$(CC) $(LDFLAGS) -l$(EXTRA_LIBNAME) -L$(EXTRA_LIBPATH) -shared -o $@ $^
+
+$(JAVACALL_OUTPUT_LIB_DIR)/libnotifiers$(BUILD_EXT).a: \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
+	@echo "...Generating Library: $@"
+	$(AR) $(ARFLAGS) $@ $^
