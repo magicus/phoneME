@@ -2024,15 +2024,14 @@ public class Display {
      *        all the space available to the content of the current
      *        Displayable (including command area and any other status bars);
      *        False - otherwise
-     * @return <code>true</code>, if the <code>Display</code> sizes may change.
      */
-    boolean lSetFullScreen(boolean wantFullScnMode) {
+    void lSetFullScreen(boolean wantFullScnMode) {
 
         if (!screenModeKnown) {
             screenModeKnown = true;
         } else if (lastFullScnMode == wantFullScnMode) {
             // we already asked for that kind of screen mode
-            return false;
+            return;
         }
         lastFullScnMode = wantFullScnMode;
 
@@ -2051,7 +2050,6 @@ public class Display {
         // This call will not result in any call into application code
         window.setFullScreen(wantFullScnMode);
         // #endif ENABLE_CHAMELEON
-        return true;
     }
 
     /**                                                              `

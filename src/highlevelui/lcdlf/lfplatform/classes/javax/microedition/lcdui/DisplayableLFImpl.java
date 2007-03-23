@@ -61,9 +61,8 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      */
     DisplayableLFImpl(Displayable d) {
         owner = d;
-        // complex to create Displayable with a full screen mode set
-        width  = Constants.NORMALWIDTH;
-        height = Constants.NORMALHEIGHT;
+        width  = Display.WIDTH;
+        height = Display.HEIGHT;
     }
     
     /**
@@ -254,34 +253,32 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      *             without title, ticker, etc.; <code>false</code> otherwise 
      */
     public void uSetFullScreenMode(boolean mode) {
-        boolean sizeChanged = false;
+
+        boolean requestRepaint = false;
 
         synchronized (Display.LCDUILock) {
 
             if (lIsShown()) {
                 // currentDisplay is not null when lIsShown is true
-                if (currentDisplay.lSetFullScreen(mode)) {
-                    if (mode) {
-                        setTicker(null);
-                    } else if (owner.ticker != null) {
-                        setTicker(owner.ticker);
-                    }
-                    updateCommandSet();
-                    sizeChanged = true;
+                currentDisplay.lSetFullScreen(mode);
+                if (mode) {
+                    setTicker(null);
+                } else if (owner.ticker != null) {
+                    setTicker(owner.ticker);
                 }
+                updateCommandSet();
+                requestRepaint = true;
             }
         }
+        // This may call into app code, so do it outside LCDUILock
+        uCallSizeChanged(Display.WIDTH, Display.HEIGHT);
 
-        if (sizeChanged) {
-            // This may call into app code, so do it outside LCDUILock
-            uCallSizeChanged(Display.WIDTH, Display.HEIGHT);
-
-            // app's sizeChanged has to be called before repaint
-            synchronized (Display.LCDUILock) {
+        // app's sizeChanged has to be called before repaint
+        synchronized (Display.LCDUILock) {
+            if (requestRepaint) {
                 lRequestPaint();
             }
         }
-
     }
 
 
@@ -295,22 +292,28 @@ abstract class DisplayableLFImpl implements DisplayableLF {
         boolean copyDefferedSizeChange;
 
         synchronized (Display.LCDUILock) {
-            // currentDisplay is not null when lIsShown is true
-            if (currentDisplay.lSetFullScreen(owner.isInFullScreenMode)) {
-                if (owner.isInFullScreenMode) {
-                    setTicker(null);
-                } else if (owner.ticker != null) {
-                    setTicker(owner.ticker);
-                }
-                copyDefferedSizeChange = true;
-            } else {
-                copyDefferedSizeChange = defferedSizeChange;
+            // Assure correct screen mode
+            currentDisplay.lSetFullScreen(owner.isInFullScreenMode);
+            // display dimentions may change as the resulr of lSetFullScreen
+            width = Display.WIDTH;
+            height = Display.HEIGHT;
+            if (owner.isInFullScreenMode) {
+                setTicker(null);
+            } else if (owner.ticker != null) {
+                setTicker(owner.ticker);
             }
+            copyDefferedSizeChange = defferedSizeChange;
             defferedSizeChange = false;
         }
 
         if (copyDefferedSizeChange) {
-            uCallSizeChanged(Display.WIDTH, Display.HEIGHT);
+            synchronized (Display.calloutLock) { 
+                try { 
+                    owner.sizeChanged(width, height); 
+                } catch (Throwable t) {
+                    Display.handleThrowable(t); 
+                } 
+             }
         }
 
         synchronized (Display.LCDUILock) {
@@ -515,6 +518,7 @@ abstract class DisplayableLFImpl implements DisplayableLF {
             }
 
         }
+System.err.println("uCallSizeChanged, " + w +"x"+ h + "defferedSizeChange = "+defferedSizeChange +", this = " + this);
 
         if (!copyDefferedSizeChange) {
             synchronized (Display.calloutLock) {
