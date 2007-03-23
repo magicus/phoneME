@@ -140,6 +140,7 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/Configuration.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/GraphicsSurfaceDestination.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/NativeFinalizer.java \
+            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesFinalizer.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesLibrary.java
 
     ifdef PISCES_JAVA_SURFACE_SUPPORT
@@ -182,6 +183,7 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
                 JGraphicsSurfaceDestination.c \
                 JNativeSurface.c \
                 JNativeFinalizer.c \
+		JPiscesFinalizer.c \
                 JPiscesRenderer.c \
                 JTransform.c \
                 KNIUtil.c
