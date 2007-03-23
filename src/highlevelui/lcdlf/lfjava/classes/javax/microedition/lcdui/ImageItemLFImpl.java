@@ -86,8 +86,7 @@ class ImageItemLFImpl extends ItemLFImpl implements ImageItemLF {
         if ((imgItem.numCommands >= 1) && (appearanceMode == Item.PLAIN)) {
             appearanceMode = imgItem.appearanceMode == Item.BUTTON ?
                              Item.BUTTON : Item.HYPERLINK;
-            drawsTraversalIndicator = true; 
-            lRequestInvalidate(true, true);           
+            lRequestInvalidate(true, true);
         }
     }
 
@@ -103,7 +102,6 @@ class ImageItemLFImpl extends ItemLFImpl implements ImageItemLF {
         // default to Plain if there are not commands
         if (imgItem.numCommands < 1) {
             appearanceMode = Item.PLAIN;
-            drawsTraversalIndicator = false;
             lRequestInvalidate(true, true);            
         }
     }

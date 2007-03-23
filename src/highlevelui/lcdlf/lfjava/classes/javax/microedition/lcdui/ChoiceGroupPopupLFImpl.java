@@ -125,12 +125,6 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                 ChoiceGroupSkin.COLOR_BG);
         }
 
-        if (hasFocus && !popupLayer.isPopupOpen()) {
-            // hilight the background
-            g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
-            g.fillRect(2, 2, width - 3, height - 3);
-        }
-
         // draw icon
         if (ChoiceGroupSkin.IMAGE_BUTTON_ICON != null) {
             int w = ChoiceGroupSkin.IMAGE_BUTTON_ICON.getWidth();

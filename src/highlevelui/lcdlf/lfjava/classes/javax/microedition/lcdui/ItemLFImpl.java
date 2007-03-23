@@ -1368,7 +1368,7 @@ abstract class ItemLFImpl implements ItemLF {
      * changing appearance, requiring no external traversal indicator
      */
 
-    boolean drawsTraversalIndicator = false;
+    boolean drawsTraversalIndicator = true;
 
     /**
      * A constant used to indicate that Item sizes have to be recalculated.
