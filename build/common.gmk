@@ -36,8 +36,9 @@ javacall_common: create_output_dirs copy_include_files
 PREFIX_true=1
 
 #Form list of objects
-VPATH+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)))
+VPATH+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR))))
 PORTING_SOURCE+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)/*.c))))
+NOTIFIER_SOURCE+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR)/*.c))))
 
 
 #From list of header files
