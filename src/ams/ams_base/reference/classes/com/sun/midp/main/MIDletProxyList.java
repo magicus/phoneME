@@ -484,7 +484,6 @@ public class MIDletProxyList
                                      MIDletProxyListListener.MIDLET_STATE);
 
         setForegroundMIDlet(displayController.midletPaused(midletProxy));
-        notifyIfAllPaused();
     }
 
     /**
