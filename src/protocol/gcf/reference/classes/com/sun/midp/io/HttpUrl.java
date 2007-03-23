@@ -249,7 +249,7 @@ public class HttpUrl {
                                             startOfPort,
                                             endOfPort));
 
-                    if (port <= 0) {
+                    if (port < 0) {
                         throw new
                             IllegalArgumentException("invalid port format");
                     }
