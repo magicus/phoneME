@@ -53,6 +53,10 @@ public final class JSRInitializer {
         com.sun.midp.jsr211.Initializer.init();
 // #endif
 
+// #ifdef ENABLE_JSR_226
+        com.sun.pisces.PiscesFinalizer.init();
+// #endif
+
 // #ifdef ENABLE_JSR_229
         com.sun.midp.jsr229.Initializer.init();
 // #endif
