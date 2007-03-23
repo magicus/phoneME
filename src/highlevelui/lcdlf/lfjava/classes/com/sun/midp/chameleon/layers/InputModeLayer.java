@@ -27,6 +27,7 @@
 package com.sun.midp.chameleon.layers;
 
 import javax.microedition.lcdui.*;
+import com.sun.midp.chameleon.skins.InputModeSkin;
 
 /**
  * The InputModeLayer is a very simple overlay that displays to
@@ -48,10 +49,10 @@ public class InputModeLayer extends PopupLayer {
     
     public InputModeLayer() {
         super();
-        setBackground(null, 0xA3E2F8);
+        setBackground(InputModeSkin.IMAGE_BG, InputModeSkin.COLOR_BG);
         this.supportsInput = false;
         anchor = new int[2];
-        stringHeight = Font.getDefaultFont().getHeight();        
+        stringHeight = InputModeSkin.FONT.getHeight();        
     }
     
     /**
@@ -63,7 +64,7 @@ public class InputModeLayer extends PopupLayer {
     public void setDisplayMode(String mode) {
         if (this.mode != mode) {
             this.mode = mode;
-            stringWidth = Font.getDefaultFont().stringWidth(mode);
+            stringWidth = InputModeSkin.FONT.stringWidth(mode);
             updateLocation();
         }
     }
@@ -97,20 +98,20 @@ public class InputModeLayer extends PopupLayer {
     
     public void paintBody(Graphics g) {
         if (mode != null) {
-            g.setFont(Font.getDefaultFont());
-            g.setColor(0);
-            g.drawString(mode, 3, 0, Graphics.LEFT | Graphics.TOP);
+            g.setFont(InputModeSkin.FONT);
+            g.setColor(InputModeSkin.COLOR_FG);
+            g.drawString(mode, InputModeSkin.MARGIN, 0, Graphics.LEFT | Graphics.TOP);
         }
-        g.setColor(0x336699);
+        g.setColor(InputModeSkin.COLOR_BDR);
         g.drawRect(0, 0, bounds[W] - 1, bounds[H] - 1);
-        g.setColor(0);
+        g.setColor(InputModeSkin.COLOR_FG);
     }
     
     protected void updateLocation() {
         super.setBounds(
-            anchor[X] - stringWidth - 6,
+            anchor[X] - stringWidth - InputModeSkin.MARGIN * 2,
             anchor[Y], 
-            stringWidth + 6, 
+            stringWidth + InputModeSkin.MARGIN * 2, 
             stringHeight);
         requestRepaint();
     }

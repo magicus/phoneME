@@ -119,6 +119,7 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/TitleSkin.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/TickerSkin.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/PTISkin.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/InputModeSkin.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/ScrollIndSkin.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/SoftButtonSkin.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/MenuSkin.java \
@@ -155,6 +156,7 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/TitleResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/TickerResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/PTIResources.java \
+    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/InputModeResources.java \
     $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesConstants.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/AlertLayer.java \

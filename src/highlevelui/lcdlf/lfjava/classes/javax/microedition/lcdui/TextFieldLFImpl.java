@@ -45,6 +45,7 @@ import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.TextFieldSkin;
 import com.sun.midp.chameleon.skins.resources.TextFieldResources;
 import com.sun.midp.chameleon.skins.resources.PTIResources;
+import com.sun.midp.chameleon.skins.resources.InputModeResources;
 import com.sun.midp.configurator.Constants;
 
 
@@ -158,6 +159,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         
         TextFieldResources.load();
         PTIResources.load();
+        InputModeResources.load();
         
         this.tf = tf;
         
