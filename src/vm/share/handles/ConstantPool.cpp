@@ -647,29 +647,33 @@ void ConstantPool::resolve_invoke_interface_at(InstanceClass *sender_class,
     
     if( implementing_class_id >= 0) { //single implementing class
       InstanceClass::Raw implement_cls = Universe::class_from_id(implementing_class_id);        
-        named_method = implement_cls().lookup_method(&method_name, 
+      Method::Raw implementing_method = implement_cls().lookup_method(&method_name, 
                                                    &method_signature);  
-      if (named_method.is_null()) {
+      if (implementing_method.is_null()) {
         SHOULD_NOT_REACH_HERE();//implementing class MUST have such method
-      } else {        
-        resolved_static_method_at_put(index, &named_method);
+      } else {
+        if (implementing_method().is_public() && !implementing_method().is_static()) {
+          resolved_static_method_at_put(index, &implementing_method);
+          return;
+        }
       }
     } else if (direct_implementing_class_id >= 0) { //single direct implementing class
         InstanceClass::Raw implement_cls = Universe::class_from_id(direct_implementing_class_id);        
-        named_method = implement_cls().lookup_method(&method_name, 
+        Method::Raw implementing_method = implement_cls().lookup_method(&method_name, 
                                                    &method_signature);
-        if (named_method.is_null()) {
+        if (implementing_method.is_null()) {
           SHOULD_NOT_REACH_HERE();//implementing class MUST have such method
         } else {
-          resolve_method_ref(index, &implement_cls, &named_method JVM_CHECK);
+          if (implementing_method().is_public() && !implementing_method().is_static()) {
+            resolve_method_ref(index, &implement_cls, &implementing_method JVM_CHECK);
+            return;
+          }
         }
-    } else
+    }
 #endif  
-    {
-      BasicType return_type = method_signature().return_type();
-      resolved_interface_method_at_put(index, (jushort) itable_index, 
-                                     (jushort) interface_class_id, return_type);
-    }                                            
+    BasicType return_type = method_signature().return_type();
+    resolved_interface_method_at_put(index, (jushort) itable_index, 
+                                     (jushort) interface_class_id, return_type);                                                
   }
 }
 
