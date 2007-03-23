@@ -32,7 +32,9 @@
 #define IDI_ICON1                       101
 #define IDD_DIALOG_START_TCK            102
 #define IDD_DIALOG_DEBUG_LEVELS         103
-#define IDB_BITMAP_PHONE                104
+#define IDB_BITMAP_PHONE_V              105
+#define IDB_BITMAP_PHONE_H              106
+
 #define IDC_CHECK_TRUSTED               1000
 #define IDC_EDIT_TCK_URL                1001
 
