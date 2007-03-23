@@ -612,6 +612,7 @@ write_suites_data(char** ppszError) {
         MAX_VAR_SUITE_DATA_LEN);
     buffer = pcsl_mem_malloc(bufferLen);
     if (buffer == NULL) {
+        pcsl_string_free(&suitesDataFile);
         return OUT_OF_MEMORY;
     }
 
