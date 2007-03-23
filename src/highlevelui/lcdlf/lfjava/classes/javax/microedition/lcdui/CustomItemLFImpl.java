@@ -46,7 +46,6 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
     CustomItemLFImpl(CustomItem ci) {
         super(ci);
         customItem = ci;
-        drawsTraversalIndicator = true;
     }
 
     // **********************************************************
