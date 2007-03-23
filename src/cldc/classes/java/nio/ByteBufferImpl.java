@@ -32,7 +32,6 @@ import com.sun.jsr239.GLConfiguration;
 class ByteBufferImpl extends ByteBuffer {
     
     static native int _allocNative(int capacity);
-    static native void _freeNative(int address);
 
     static native void _copyBytes(int srcAddress,
                                   int dstAddress,
@@ -65,6 +64,8 @@ class ByteBufferImpl extends ByteBuffer {
     static native void _putFloat(int address, float value);
     static native void _putFloats(int address,
                                   float[] dst, int offset, int length);
+
+    native private void finalize();
 
     ByteBufferImpl(int capacity, byte[] array, int arrayOffset) {
 	this.array = array;

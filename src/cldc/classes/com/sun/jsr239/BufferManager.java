@@ -76,23 +76,6 @@ public class BufferManager {
         }
     }
 
-    public static native void _freeNative(int address);
-
-    // Clean up all unreferenced native buffers
-    public static synchronized void gc() {
-        Enumeration enu = bufferWeakReferences.keys();
-        while (enu.hasMoreElements()) {
-            WeakReference wref = (WeakReference)enu.nextElement();
-            if (wref.get() == null) {
-                Object o = bufferWeakReferences.get(wref);
-                bufferWeakReferences.remove(wref);
-
-                int pointer = ((Integer)o).intValue();
-                _freeNative(pointer);
-            }
-        }
-    }
-
     public static native void _getBytes(int address,
                                         byte[] dst, int offset, int length);
 
