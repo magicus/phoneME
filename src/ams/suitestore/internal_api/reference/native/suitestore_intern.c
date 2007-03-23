@@ -602,7 +602,9 @@ write_suites_data(char** ppszError) {
 
     if (!g_numberOfSuites) {
         /* truncate the file with the list of the installed suites */
-        return write_file(ppszError, &suitesDataFile, buffer, 0);
+        status = write_file(ppszError, &suitesDataFile, buffer, 0);
+        pcsl_string_free(&suitesDataFile);
+        return status;        
     }
 
     /* allocate a buffer where the information about all suites will be saved */
@@ -610,6 +612,7 @@ write_suites_data(char** ppszError) {
         MAX_VAR_SUITE_DATA_LEN);
     buffer = pcsl_mem_malloc(bufferLen);
     if (buffer == NULL) {
+        pcsl_string_free(&suitesDataFile);
         return OUT_OF_MEMORY;
     }
 
