@@ -1,35 +1,38 @@
 <?xml version="1.0"?>
-<!-- 
+<!--
 Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License version
-2 only, as published by the Free Software Foundation. 
+2 only, as published by the Free Software Foundation.
 
 This program is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 General Public License version 2 for more details (a copy is
-included at /legal/license.txt). 
+included at /legal/license.txt).
 
 You should have received a copy of the GNU General Public License
 version 2 along with this work; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-02110-1301 USA 
+02110-1301 USA
 
 Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 Clara, CA 95054 or visit www.sun.com if you need additional
-information or have any questions. 
+information or have any questions.
 -->
 <project name="Build and run test classes" basedir=".">
 
   <!--
     Contains targets for compiling and running test classes
   -->
+  <property name = "midpclasses.zip" value = "${cdc.dir}/lib/midpclasses.zip"/>
+
   <target name="build-tests-init" depends="set-properties, set-tools">
     <path id="junit.cp">
       <pathelement path="${junit3.8.jar}"/>
+      <pathelement path="${midpclasses.zip}"/>
     </path>
   </target>
 
@@ -46,13 +49,14 @@ information or have any questions.
   </target>
 
   <target name="build-unittests" depends="build-impl, only-build-unittests"/>
-  
+
   <property name="reports.dir" value="${cdc.dir}/reports/jump"/>
 
   <target name="only-run-unittests-anyway" depends="clean-reports">
     <mkdir dir="${reports.dir}"/>
     <junit showoutput="true" fork="true" jvm="${cdc.dir}/bin/cvm">
       <classpath>
+        <pathelement path="${midpclasses.zip}"/>
         <pathelement path="${d.classes.dir}"/>
         <pathelement path="${ant.library.dir}/xercesImpl.jar"/>
         <pathelement path="${ant.library.dir}/xml-apis.jar"/>
@@ -66,7 +70,7 @@ information or have any questions.
       </batchtest>
     </junit>
   </target>
-  
+
   <target name="print-unittests-result" if="unittest.verbose" depends="only-run-unittests-anyway">
     <concat>
         <fileset dir="${reports.dir}" includes="TEST-*.txt"/>

@@ -22,7 +22,7 @@
  * information or have any questions.
  */
 
-package com.sun.jumpimpl.module.pushregistry.persistence;
+package com.sun.midp.jump.push.executive.persistence;
 
 import com.sun.jump.module.contentstore.InMemoryContentStore;
 import com.sun.jump.module.contentstore.JUMPStoreHandle;

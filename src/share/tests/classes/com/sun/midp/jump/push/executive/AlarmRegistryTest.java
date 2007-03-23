@@ -22,11 +22,12 @@
  * information or have any questions.
  */
 
-package com.sun.jumpimpl.module.pushregistry;
+package com.sun.midp.jump.push.executive;
 
-import com.sun.jumpimpl.module.pushregistry.persistence.StoreUtils;
+import com.sun.midp.jump.push.executive.persistence.StoreUtils;
 import junit.framework.*;
-import com.sun.jumpimpl.module.pushregistry.persistence.Store;
+import com.sun.midp.jump.push.executive.persistence.Store;
+import com.sun.midp.jump.push.executive.LifecycleAdapter;
 import java.io.IOException;
 import java.util.Map;
 import javax.microedition.io.ConnectionNotFoundException;
@@ -41,7 +42,7 @@ public final class AlarmRegistryTest extends TestCase {
         return StoreUtils.createInMemoryPushStore();
     }
 
-    private static class DummyLauncher implements AlarmRegistry.LifecycleAdapter {
+    private static class DummyLauncher implements LifecycleAdapter {
         public void launchMidlet(final int midletSuiteID, final String midlet) { }
 
         static AlarmRegistry createAlarmRegistry() throws IOException {
@@ -119,7 +120,7 @@ public final class AlarmRegistryTest extends TestCase {
         final String MIDLET = "com.sun.Foo";
 
         final State state = new State();
-        final AlarmRegistry alarmRegistry = new AlarmRegistry(createStore(), new AlarmRegistry.LifecycleAdapter() {
+        final AlarmRegistry alarmRegistry = new AlarmRegistry(createStore(), new LifecycleAdapter() {
            public void launchMidlet(final int midletSuiteID, final String midlet) {
                synchronized (state) {
                    state.secondInvocation = state.hasBeenFired;
@@ -143,7 +144,7 @@ public final class AlarmRegistryTest extends TestCase {
 
     private static class FiredChecker {
         boolean hasBeenFired = false;
-        final AlarmRegistry.LifecycleAdapter lifecycleAdapter;
+        final LifecycleAdapter lifecycleAdapter;
         final int midletSuiteID;
         final String midlet;
         final AlarmRegistry alarmRegistry;
@@ -164,8 +165,8 @@ public final class AlarmRegistryTest extends TestCase {
             this.alarmRegistry = new AlarmRegistry(store, lifecycleAdapter);
         }
 
-        AlarmRegistry.LifecycleAdapter createLifecycleAdapter() {
-            return new AlarmRegistry.LifecycleAdapter() {
+        LifecycleAdapter createLifecycleAdapter() {
+            return new LifecycleAdapter() {
                 public void launchMidlet(final int id, final String m) {
                     if ((midletSuiteID == id) && (midlet.equals(m))) {
                         hasBeenFired = true;

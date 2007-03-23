@@ -24,7 +24,7 @@
 
 package com.sun.jump.module.contentstore;
 
-import com.sun.jumpimpl.module.pushregistry.persistence.StoreOperationManager;
+import com.sun.midp.jump.push.executive.persistence.StoreOperationManager;
 import java.io.IOException;
 import java.util.Map;
 
