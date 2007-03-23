@@ -311,7 +311,7 @@ public class DirectPlayer extends BasicPlayer
             throw new MediaException("Unable to prefetch - can't acquire device");
         }
         if (nPcmAudioPlayback(hNative)) {
-            AudioTunnel.start();
+            AudioTunnel.getInstance().start();
         }
     }
 
@@ -467,7 +467,7 @@ public class DirectPlayer extends BasicPlayer
         // release device
         nReleaseDevice(hNative);
         if (nPcmAudioPlayback(hNative)) {
-            AudioTunnel.stop();
+            AudioTunnel.getInstance().stop();
         }
         // To support streaming
         isFirstStart = true;

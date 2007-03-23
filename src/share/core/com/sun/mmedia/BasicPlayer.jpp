@@ -282,8 +282,6 @@ public abstract class BasicPlayer implements Player
 
         // Set event listener
         new MMEventListener();
-        // Set audioTunnel to Driver
-        new AudioTunnel();
 
     }
 

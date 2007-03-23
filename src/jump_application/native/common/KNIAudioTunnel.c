@@ -84,11 +84,14 @@ static void my_sleep(CVMExecEnv *ee, long millis) {
 /*  protected native int nInit (int isolatedId) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_AudioTunnel_nInit) {
+    int ret = 0;
     isolateId = KNI_GetParameterAsInt(1);
-    jumpMessageStart();
-    jsr135_create_tunnel(isolateId);
-    jsr135_get_pcmctl(&pcm_channels, &pcm_bits, &pcm_rate);
-    KNI_ReturnInt(0);
+    if (jsr135_create_tunnel(isolateId) == 0) {
+        jsr135_get_pcmctl(&pcm_channels, &pcm_bits, &pcm_rate);
+    } else {
+        ret = -1;
+    }
+    KNI_ReturnInt(ret);
 }
 
 /*  protected native int nPlayBack () ; */
@@ -163,7 +166,6 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_AudioTunnel_nStop) {
     isolateId = KNI_GetParameterAsInt(1);
     jsr135_destroy_tunnel(isolateId);
-    jumpMessageShutdown();
     KNI_ReturnInt(0);
 }
 

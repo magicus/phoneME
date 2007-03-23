@@ -49,8 +49,7 @@ public class NativeTonePlayer implements TonePlayer {
          throws MediaException {
         
         // Set audioTunnel to Driver
-        new AudioTunnel();
-        AudioTunnel.start(3000);
+        AudioTunnel.getInstance().start(3000);
 
         if (false == nPlayTone(note, duration, volume)) {
             throw new MediaException("can't play tone");
