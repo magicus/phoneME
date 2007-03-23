@@ -129,14 +129,6 @@ public class IsolateManagerModuleImpl
     }
 
     /**
-     * Create new native process
-     */
-    public JUMPProcessProxy newProcess() {
-        System.err.println("***IsolateManagerModuleImpl newProcess() unimplemented**");
-        return null;
-    }
-    
-    /**
      * Register existing native process
      */
     public void registerProcess(JUMPProcessProxy process) {
