@@ -518,8 +518,6 @@ abstract class DisplayableLFImpl implements DisplayableLF {
             }
 
         }
-System.err.println("uCallSizeChanged, " + w +"x"+ h + "defferedSizeChange = "+defferedSizeChange +", this = " + this);
-
         if (!copyDefferedSizeChange) {
             synchronized (Display.calloutLock) {
                 try {
