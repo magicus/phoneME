@@ -713,6 +713,39 @@
             Comment="Right scrolling indicator for PTI bar"/>
 
   <!--
+     Input Mode Indicator properties indentifiers    
+  -->
+  <constant Type="int"
+            Name="INPUT_MODE_MARGIN"
+            Comment="The text margin in Input Mode Indicator (in pixels)."/>
+            
+  <constant Type="int"
+            Name="INPUT_MODE_COLOR_BG"
+            Comment="The background fill color for this pti bar if its 
+                     background image isn't specified or cannot be loaded."/>
+
+  <constant Type="int"
+            Name="INPUT_MODE_COLOR_FG"
+            Comment="The foreground color for rendering the text of this 
+                     Input Mode Indicator."/>
+            
+  <constant Type="int"
+            Name="INPUT_MODE_COLOR_BDR"
+            Comment="The color of the background of this Input Mode Indicator."/>
+
+  <constant Type="int"
+            Name="INPUT_MODE_FONT"
+            Comment="The font to render the text of this Input Mode Indicator."/>
+            
+  <constant Type="int"
+            Name="INPUT_MODE_IMAGE_BG"
+            Comment="These images are used to render a background for the 
+                     Input Mode Indicator. 
+            
+                     If isn't specified or cannot be loaded, solid fill color
+                     is used instead of background image."/>
+
+  <!--
      Title bar properties indentifiers    
   -->                    
   <constant Type="int"

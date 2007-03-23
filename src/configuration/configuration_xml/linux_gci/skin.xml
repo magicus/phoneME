@@ -331,6 +331,32 @@
     Romized="false"/>
 
   <integer
+        Key="INPUT_MODE_COLOR_BG"
+      Value="0xA3E2F8"/>
+
+  <integer
+        Key="INPUT_MODE_COLOR_BDR"
+      Value="0x336699"/>
+
+  <integer
+        Key="INPUT_MODE_COLOR_FG"
+      Value="0x000000"/>
+
+  <composite_image
+        Key="INPUT_MODE_IMAGE_BG"
+      Value=""
+     Pieces="3"
+     Romized="false"/>
+
+  <integer
+        Key="INPUT_MODE_MARGIN"
+      Value="3"/>
+
+  <font
+        Key="INPUT_MODE_FONT"
+      Value="FontResources.SYS_B_S"/>
+
+  <integer
         Key="PTI_HEIGHT"
       Value="17"/>
   

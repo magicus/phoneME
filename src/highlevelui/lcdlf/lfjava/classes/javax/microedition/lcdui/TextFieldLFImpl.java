@@ -45,6 +45,7 @@ import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.TextFieldSkin;
 import com.sun.midp.chameleon.skins.resources.TextFieldResources;
 import com.sun.midp.chameleon.skins.resources.PTIResources;
+import com.sun.midp.chameleon.skins.resources.InputModeResources;
 import com.sun.midp.configurator.Constants;
 
 
@@ -158,6 +159,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         
         TextFieldResources.load();
         PTIResources.load();
+        InputModeResources.load();
         
         this.tf = tf;
         
@@ -470,18 +472,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
                     TextFieldSkin.COLOR_BG_UE);
             }
         }
-        
-        // NOTE: for uneditable textfields that gain focus,
-        // we're simply inverting their fg/bg color values
-        // from the skin
-        
-        // draw hilight box if TextField has focus
-        if (hasFocus) {
-            g.setColor(editable ? ScreenSkin.COLOR_BG_HL : 
-                TextFieldSkin.COLOR_FG_UE);
-            g.fillRect(2, 2, width - 3, height - 3); 
-        }
-        
+
         // We need to translate by 1 more pixel horizontally 
         // to reserve space for cursor in the empty textfield
         g.setClip(TextFieldSkin.PAD_H, TextFieldSkin.PAD_V,
