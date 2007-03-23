@@ -506,6 +506,7 @@ public class SkinResources {
         // load the rest of resources
         if (loadAll) {
             PTIResources.load();
+            InputModeResources.load();
             BusyCursorResources.load();
             ChoiceGroupResources.load();
             DateEditorResources.load();
