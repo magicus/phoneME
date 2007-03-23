@@ -43,6 +43,7 @@ import com.sun.midp.log.LogChannels;
 
 import com.sun.mmedia.DefaultConfiguration;
 import com.sun.mmedia.DirectVolume;
+import com.sun.mmedia.PlayerStateSubscriber;
 import javax.microedition.media.Player;
 import javax.microedition.media.PlayerListener;
 import javax.microedition.media.MediaException;
@@ -70,6 +71,8 @@ public class DirectPlayer extends BasicPlayer
     // #else ][
     protected final static boolean debug = false;
     // #endif ]    
+
+	public PlayerStateSubscriber state_subscriber = null;
 
     // Temp buffer shared by all of Player from the same isolate
     private final static int BUFFER_SIZE = 1024 * 50;
@@ -263,6 +266,9 @@ public class DirectPlayer extends BasicPlayer
         if (0 == hNative) {
             throw new MediaException("Unable to realize - initialize fail");
         }
+
+		if( null != state_subscriber )
+			state_subscriber.PlayerRealized( this );
 
         // Do buffering
         if (true == needBuffering && true == nIsNeedBuffering(hNative)) {

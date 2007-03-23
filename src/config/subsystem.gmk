@@ -146,7 +146,8 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/DirectVolume.java \
     $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/NativeTonePlayer.java \
     $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/DirectControls.java \
-    $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/NativeTonePlayer.java
+    $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/NativeTonePlayer.java \
+    $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/PlayerStateSubscriber.java
 endif
 
 ifeq ($(DIRECT_MIDI_CONTROL), true)
