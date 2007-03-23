@@ -264,22 +264,22 @@ javacall_result finalize_wma_emulator() {
 
 /**
  * Checks if the handle is of wma_emulator sockets.
- *   returns JAVACALL_FAIL for mismatch
- *   returns JAVACALL_OK for proper sockets and processes the emulation
+ *   returns JAVACALL_FALSE for mismatch
+ *   returns JAVACALL_TRUE for proper sockets and processes the emulation
  */
 javacall_result try_process_wma_emulator(javacall_handle handle) {
     if (handle == smsDatagramSocketHandle) {
         process_UDPEmulator_sms_incoming(handle);
-        return JAVACALL_OK;
+        return JAVACALL_TRUE;
     }
     if (handle == cbsDatagramSocketHandle) {
         process_UDPEmulator_cbs_incoming(handle);
-        return JAVACALL_OK;
+        return JAVACALL_TRUE;
     }
 #if (ENABLE_JSR_205)
     if (handle == mmsDatagramSocketHandle) {
         process_UDPEmulator_mms_incoming(handle);
-        return JAVACALL_OK;
+        return JAVACALL_TRUE;
     }
 #endif
     return JAVACALL_FALSE;
