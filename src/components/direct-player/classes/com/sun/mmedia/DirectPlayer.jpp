@@ -49,6 +49,7 @@ import javax.microedition.media.PlayerListener;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.Control;
 import com.sun.mmedia.Configuration;
+import com.sun.mmedia.protocol.BasicDS;
 
 // #ifndef ABB [
 import javax.microedition.media.control.StopTimeControl;
@@ -272,7 +273,7 @@ public class DirectPlayer extends BasicPlayer
 
         // Do buffering
         if (true == needBuffering && true == nIsNeedBuffering(hNative)) {
-            if (-1 == readAndBuffering(remained)) {
+            if (-1 == readAndBuffering(remained, 1)) {
                 throw new MediaException("Unable to realize - buffering fail");
             }
         }
@@ -656,12 +657,42 @@ public class DirectPlayer extends BasicPlayer
     }
 
     /**
+     * Make additional processing of the first block (header)
+     * 
+     * @param  Source buffer
+     * @param  Length of the source buffer
+     */
+    private void processHeader(byte[] buffer, int length) {
+        if (source != null) {
+            // Additional check to differentiate sp-midi and midi
+            String mimeType = source.getContentType();
+            BasicDS ds = (BasicDS)source;
+            if ((ds != null) && mimeType.equals(Configuration.MIME_AUDIO_MIDI)) {
+                final int MAX_SP_MIDI_SEARCH = 512;
+                int maxSearch = length - 5;
+                if (maxSearch > MAX_SP_MIDI_SEARCH)
+                    maxSearch = MAX_SP_MIDI_SEARCH;
+                    
+                for (int i = 0; i < maxSearch; i++) 
+                    if ((buffer[i] == (byte)0xF0) &&  
+                        (buffer[i + 2] == (byte)0x7F) &&
+                        (buffer[i + 4] == (byte)0x0B) &&
+                        (buffer[i + 5] == (byte)0x01)) {
+                        ds.setContentType(Configuration.MIME_AUDIO_SP_MIDI);
+                        return;
+                    }
+                
+            }
+        }
+    }
+    
+    /**
      * Read bytes from stream and do buffering
      * 
      * @param   Bytes to read
      * @return  Actual read bytes or -1 if error occured
      */
-    private int readAndBuffering(long length) {
+    private int readAndBuffering(long length, int headerProcessingCnt) {
         if (debug) System.out.println("[direct] DirectPlayer.readAndBuffering " + length);
 
         int actualRead = 0;
@@ -686,6 +717,12 @@ public class DirectPlayer extends BasicPlayer
                 if (debug) System.out.println("[direct] readAndBuffering IOException");
                 return -1;
             }
+            
+            if (headerProcessingCnt > 0) {
+                processHeader(buffer, ret);
+                headerProcessingCnt--;
+            }
+                
             if (ret == -1) {
                 if (debug) System.out.println("[direct] stream.read return -1");
                 nBuffering(hNative, buffer, -1);
