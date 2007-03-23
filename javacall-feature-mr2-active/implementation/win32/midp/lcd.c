@@ -46,47 +46,11 @@
 
 
 #include "lcd.h"
+#include "skins.h"
 #include "local_defs.h"
 
-#include "res/resource.h"
 
-#define SKINS_MENU_SUPPORTED
-
-#define NUMBEROF(x) (sizeof(x)/sizeof(x[0]))
-
-#define TOP_BAR_HEIGHT         11
-
-/*
- * Defines screen size
- */
-#define DISPLAY_WIDTH          240//180
-#define DISPLAY_HEIGHT         320//(198 + TOP_BAR_HEIGHT)
-
-/*
- * This (x,y) coordinate pair refers to the offset of the upper
- * left corner of the display screen within the MIDP phone handset
- * graphic window
- */
-#define X_SCREEN_OFFSET        61
-#define Y_SCREEN_OFFSET        75
-
-#define MAX_SOFTBUTTON_CHARS   12
-
-#define MENUBAR_BORDER_HEIGHT  2
-#define ARROWS_WIDTH           7
-#define ARROWS_HEIGHT          7
-#define ARROWS_GAP             1
-#define BOTTOM_BAR_HEIGHT (MENUBAR_BORDER_HEIGHT + ARROWS_HEIGHT + \
-    ARROWS_GAP + ARROWS_HEIGHT + MENUBAR_BORDER_HEIGHT)
 #define UNTRANSLATED_SCREEN_BITMAP (void*)0xffffffff
-
-#define VERT_X   (x_offset + (DISPLAY_WIDTH/2) - 4)
-#define UP_Y     (y_offset + paintHeight + MENUBAR_BORDER_HEIGHT)
-
-                   /* y of the up arrow */
-#define DOWN_Y   (UP_Y + ARROWS_GAP + ARROWS_HEIGHT)
-
-                   /* y of the down arrow */
 
 #define CHECK_RETURN(expr) (expr) ? (void)0 : (void)printf( "%s returned error (%s:%d)\n", #expr, __FILE__, __LINE__)
 
@@ -95,16 +59,8 @@
 
 #define MD_KEY_HOME (KEY_MACHINE_DEP)
 
+
 static HBITMAP getBitmapDCtmp = NULL;
-
-typedef unsigned short unicode;
-typedef struct {
-    int     num;
-    unicode label[MAX_SOFTBUTTON_CHARS];
-} SoftButtonLabel;
-
-static SoftButtonLabel llabel;
-static SoftButtonLabel rlabel;
 
 typedef struct _mbs {
     HBITMAP bitmap;
@@ -116,12 +72,6 @@ typedef struct _mbs {
     unsigned char *imageMask;
     char prop;
 } myBitmapStruct;
-
-/* Network Indicator position parameters */
-#define LED_xposition  17
-#define LED_yposition  82
-#define LED_width      20
-#define LED_height     20
 
 #define INSIDE(_x, _y, _r)                              \
     ((_x >= (_r).x) && (_x < ((_r).x + (_r).width)) &&  \
@@ -136,16 +86,15 @@ static void releaseBitmapDC(HDC hdcMem);
 static void DrawBitmap(HDC hdc, HBITMAP hBitmap, int x, int y, int rop);
 static HDC getBitmapDC(void *imageData);
 static HPEN setPen(HDC hdc, int pixel, int dotted);
-static void setUpOffsets(int fullscreen);
-static void CreateBacklight(HDC hdc);
-static void DrawMenuBarBorder(HDC myhdc);
-static void drawEmulatorScreen(javacall_bool fullscreen);
+//static void DrawMenuBarBorder(HDC myhdc);
+//static void drawEmulatorScreen(javacall_bool fullscreen);
        void CreateEmulatorWindow();
+/*
 static void paintVerticalScroll(HDC hdc, int scrollPosition,
                                 int scrollProportion);
+*/
 static void invalidateLCDScreen(int x1, int y1, int x2, int y2);
-static void RefreshScreenNormal(int x1, int y1, int x2, int y2);  
-static void RefreshScreenRotate(int x1, int y1, int x2, int y2);
+static void RefreshScreen(int x1, int y1, int x2, int y2);  
 static int mapKey(WPARAM wParam, LPARAM lParam);
 
 #ifdef SKINS_MENU_SUPPORTED
@@ -153,29 +102,8 @@ static HMENU buildSkinsMenu(void);
 static void destroySkinsMenu(void);
 #endif // SKINS_MENU_SUPPORTED
 
-/* BackLight top bar position parameters */
-#define BkliteTop_xposition     0
-#define BkliteTop_yposition     113
-#define BkliteTop_width         241
-#define BkliteTop_height        18
-
-/* BackLight bottom bar position parameters */
-#define BkliteBottom_xposition  0
-#define BkliteBottom_yposition  339
-#define BkliteBottom_width      241
-#define BkliteBottom_height     6
-
-/* BackLight left bar position parameters */
-#define BkliteLeft_xposition    0
-#define BkliteLeft_yposition    131
-#define BkliteLeft_width        30
-#define BkliteLeft_height       208
-
-/* BackLight right bar position parameters */
-#define BkliteRight_xposition   210
-#define BkliteRight_yposition   131
-#define BkliteRight_width       31
-#define BkliteRight_height      208
+static HMENU hMenuExtended = NULL;
+static HMENU hMenuExtendedSub = NULL;
 
 /* thread safety */
 static int tlsId;
@@ -194,18 +122,16 @@ HBRUSH  BACKGROUND_BRUSH, FOREGROUND_BRUSH;
 HPEN    BACKGROUND_PEN, FOREGROUND_PEN;
 
 /* This is logical LCDUI putpixel screen buffer. */
-static struct {
+typedef struct {
     javacall_pixel* hdc;
     int width;
     int height;
-} VRAM;
+} SBuffer;
+
+static SBuffer VRAM = {NULL, 0, 0};
 
 static javacall_bool initialized = JAVACALL_FALSE;
 static javacall_bool inFullScreenMode;
-/* static javacall_bool requestedFullScreenMode; */
-/* static javacall_bool drawTrustedMIDletIcon; */
-/* static javacall_bool bkliteImageCreated = JAVACALL_FALSE; */
-/* static javacall_bool isBklite_on = JAVACALL_FALSE; */
 
 static int backgroundColor = RGB(182, 182, 170); /* This a win32 color value */
 static int foregroundColor = RGB(0,0,0); /* This a win32 color value */
@@ -220,94 +146,23 @@ static HDC hMemDC = NULL;
 static TEXTMETRIC    fixed_tm, tm;
 static HFONT            fonts[3][3][8];
 
-/* The bits of the Network Indicator images */
-static HBITMAP          LED_on_Image;
-static HBITMAP          LED_off_Image;
-
 static HBITMAP          hPhoneBitmap;
-static HBITMAP          topbar_Image;
-
-/* The bits of the BackLight images */
-static HBITMAP          bklite_Top_Image;
-static HBITMAP          bklite_Bottom_Image;
-static HBITMAP          bklite_Left_Image;
-static HBITMAP          bklite_Right_Image;
-
-static int topBarHeight;
-static int bottomBarHeight;
-static int paintHeight;
-static int x_offset = X_SCREEN_OFFSET;
-static int y_offset;
 
 static javacall_bool reverse_orientation;
 
-/* key definitons */
-typedef struct _Rectangle {
-    int x;
-    int y;
-    int width;
-    int height;
-} XRectangle;
-
-typedef struct {
-    javacall_key button;
-    XRectangle bounds;
-    char *name;
-} WKey;
-
-#define KEY_POWER  (JAVACALL_KEY_GAME_RIGHT - 100)
-#define KEY_END    (JAVACALL_KEY_GAME_RIGHT - 101)
-#define KEY_SEND   (JAVACALL_KEY_GAME_RIGHT - 102)
-
-/**
- * Do not alter the sequence of this
- * without modifying the one in .cpp
+/*
+ IMPL NOTE: top bar at the moment is available only as raw data
+ of fixed width & height and thus available only for displays
+ with the same width. Scaleable top bar will be implemented and
+ then those constants will become expared.
  */
-const static WKey Keys[] = {
-#ifdef NO_POWER_BUTTON
+static int topBarHeight = 12;//_topbar_dib_data.hdr.biHeight; //11
+static int topBarWidth = 240;//_topbar_dib_data.hdr.biWidth;
+static javacall_bool topBarOn = JAVACALL_TRUE;
 
-    /*
-     * Add -DNO_POWER_BUTTON to the Makefile if you want to disable
-     * the power button during user testing.
-     */
-{KEY_POWER,    {-10, -10,  1,  1}, "POWER"},
-#else
-{KEY_POWER,    {160, 59, 24, 24}, "POWER"},
-#endif
+/* current skin*/
+static ESkin* currentSkin;// = VSkin;
 
-//#define USE_SWAP_SOFTBUTTON
-#ifndef USE_SWAP_SOFTBUTTON /* !USE_SWAP_SOFTBUTTON */
-{JAVACALL_KEY_SOFT1,    {78, 420, 40, 35}, "SOFT1"},//
-{JAVACALL_KEY_SOFT2,    {241, 424, 40, 35}, "SOFT2"},//
-#else /* USE_SWAP_SOFTBUTTON */
-{JAVACALL_KEY_SOFT2,    {78, 420, 40, 35}, "SOFT2"},//
-{JAVACALL_KEY_SOFT1,    {241, 424, 40, 35}, "SOFT1"},//
-#endif
-
-{JAVACALL_KEY_UP,       {169, 421, 24, 9}, "UP"},//
-{JAVACALL_KEY_DOWN,     {169, 454, 24, 9}, "DOWN"},//
-{JAVACALL_KEY_LEFT,     {132, 431, 9, 24}, "LEFT"},//
-{JAVACALL_KEY_RIGHT,    {218, 431, 9, 24}, "RIGHT"},//
-{JAVACALL_KEY_SELECT,   {162, 434, 39, 15}, "SELECT"},//
-
-{JAVACALL_KEY_SEND,     {60, 454, 51, 31}, "SEND"},//
-{KEY_END,               {253, 454, 51, 31}, "END"},//
-{JAVACALL_KEY_CLEAR,    {150, 478, 60, 28}, "CLEAR"},//
-
-{JAVACALL_KEY_1,        {64, 500, 60, 29}, "1"},//
-{JAVACALL_KEY_2,        {146, 519, 70, 26}, "2"},//
-{JAVACALL_KEY_3,        {237, 500, 60, 29}, "3"},//
-{JAVACALL_KEY_4,        {66, 534, 60, 29}, "4"},//
-{JAVACALL_KEY_5,        {146, 554, 70, 26}, "5"},//
-{JAVACALL_KEY_6,        {233, 537, 60, 29}, "6"},//
-{JAVACALL_KEY_7,        {68, 569, 60, 29}, "7"},//
-{JAVACALL_KEY_8,        {146, 591, 70, 26}, "8"},//
-{JAVACALL_KEY_9,        {234, 575, 60, 29}, "9"},//
-{JAVACALL_KEY_ASTERISK, {73, 610, 60, 29}, "*"},//
-{JAVACALL_KEY_0,        {146, 628, 70, 26}, "0"},//
-{JAVACALL_KEY_POUND,    {228, 612, 60, 29}, "#"},//
-
-};
 
 /* global variables to record the midpScreen window inside the win32 main window */
 XRectangle midpScreen_bounds;
@@ -321,9 +176,9 @@ javacall_bool penAreDragging = JAVACALL_FALSE;
  * @return <tt>1</tt> on success, <tt>0</tt> on failure
  */
 javacall_result javacall_lcd_init(void) {
+
     if(!initialized) {
-        /* set up the offsets for non-full screen mode */
-        setUpOffsets(JAVACALL_FALSE);
+        reverse_orientation = JAVACALL_FALSE;
         inFullScreenMode = JAVACALL_FALSE;
         penAreDragging = JAVACALL_FALSE;
         initialized = JAVACALL_TRUE;
@@ -343,6 +198,7 @@ javacall_result javacall_lcd_init(void) {
  * @retval JAVACALL_FAIL    fail
  */
 javacall_result javacall_lcd_finalize(void) {
+
     if(initialized) {
         /* Clean up thread local data */
         void* ptr = (void*) TlsGetValue(tlsId);
@@ -355,6 +211,8 @@ javacall_result javacall_lcd_finalize(void) {
     }
     
     if(VRAM.hdc != NULL) {
+        VRAM.height = 0;
+        VRAM.width = 0;
         free(VRAM.hdc);
         VRAM.hdc = NULL;
     }
@@ -404,21 +262,18 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
                                         int* screenHeight,
                                         javacall_lcd_color_encoding_type* colorEncoding) {
     if(JAVACALL_TRUE == initialized) {
+        int yOffset = topBarOn ? topBarHeight : 0;
         if(screenWidth) {
-            *screenWidth = javacall_lcd_get_screen_width();
+            *screenWidth = VRAM.width;
         }
         if(screenHeight) {
-            *screenHeight = javacall_lcd_get_screen_height();
+            *screenHeight = VRAM.height - yOffset;
         }
         if(colorEncoding) {
             *colorEncoding = JAVACALL_LCD_COLOR_RGB565;
         }
 
-        if(inFullScreenMode || reverse_orientation) {
-            return VRAM.hdc;
-        } else {			
-            return VRAM.hdc + javacall_lcd_get_screen_width()*TOP_BAR_HEIGHT;
-        }
+        return VRAM.hdc + yOffset * VRAM.width;
     }
 
     return NULL;
@@ -443,6 +298,16 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
 javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen) {
 
     inFullScreenMode = useFullScreen;
+    /*
+     At the moment we draw top bar only if
+     display width and top bar width are equal
+    */
+    if(inFullScreenMode) {
+        topBarOn = JAVACALL_FALSE;
+    } else {
+        topBarOn = (currentSkin->displayRect.width == topBarWidth) ?
+            JAVACALL_TRUE : JAVACALL_FALSE;
+    }
     return JAVACALL_OK;
 }
 
@@ -454,11 +319,9 @@ javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen) {
  * @return <tt>1</tt> on success, <tt>0</tt> on failure or invalid screen
  */
 javacall_result javacall_lcd_flush() {
-    if (reverse_orientation) { 
-        RefreshScreenRotate(0, 0, DISPLAY_HEIGHT, DISPLAY_WIDTH); 
-    } else { 
-        RefreshScreenNormal(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT); 
-    } 
+
+    RefreshScreen(0, 0, currentSkin->displayRect.width, currentSkin->displayRect.height); 
+
     return JAVACALL_OK;
 }
 
@@ -480,12 +343,7 @@ javacall_result javacall_lcd_flush() {
 javacall_result /*OPTIONAL*/ javacall_lcd_flush_partial(int ystart,
                                                         int yend) {
 
-    //RefreshScreen(0,ystart, DISPLAY_WIDTH, yend);
-    if (reverse_orientation) {         
-         RefreshScreenRotate(0,0, DISPLAY_HEIGHT, DISPLAY_WIDTH); 
-    } else { 
-         RefreshScreenNormal(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT); 
-    }
+    RefreshScreen(0, 0, currentSkin->displayRect.width, currentSkin->displayRect.height); 
 
     return JAVACALL_OK;
 }
@@ -534,28 +392,6 @@ static void InitializePhantomWindow() {
                          NULL);                   /* creation parameters     */
 
     hPhantomWindow = hwnd;
-}
-
-static void setUpOffsets(int fullscreen) {
-    switch(fullscreen) {
-    case 1:
-        topBarHeight    = 0; // full screen mode includes the top bar.
-        bottomBarHeight = 0;
-        break;
-    case 0:
-        topBarHeight    = TOP_BAR_HEIGHT;
-        bottomBarHeight = BOTTOM_BAR_HEIGHT;
-        break;
-    }
-
-    paintHeight = (DISPLAY_HEIGHT - (topBarHeight + bottomBarHeight));
-
-    if (reverse_orientation) {
-        y_offset = Y_SCREEN_OFFSET;
-    } else {
-        y_offset = Y_SCREEN_OFFSET + topBarHeight;
-    }
-    
 }
 
 /**
@@ -691,6 +527,7 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
     int opttarget;
     int optname;
     int optsize = sizeof(optname);
+    int midpX, midpY;
 
     switch(iMsg) {
 
@@ -798,7 +635,8 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 break;
             /* F3 key used for rotation. */ 
             } else if(VK_F3 == wParam) {                 
-                    javanotify_rotation();
+                javanotify_rotation();
+                break;
             }
         }
     case WM_KEYUP:
@@ -853,19 +691,19 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
  **/
 #define ENABLE_PEN_EVENT_NOTIFICATION 1    
 #ifdef ENABLE_PEN_EVENT_NOTIFICATION        
-        midpScreen_bounds.x = x_offset;
-        midpScreen_bounds.y = y_offset;
-        midpScreen_bounds.width = VRAM.width;
-        midpScreen_bounds.height = (inFullScreenMode? VRAM.height: VRAM.height - TOP_BAR_HEIGHT);
-
+        midpScreen_bounds.x = currentSkin->displayRect.x;
+        midpScreen_bounds.y = currentSkin->displayRect.y;
+        midpScreen_bounds.width = currentSkin->displayRect.width;
+        midpScreen_bounds.height = topBarOn ? currentSkin->displayRect.height : 
+            (currentSkin->displayRect.height - topBarHeight);
+        /* coordinates of event in MIDP Screen coordinate system */
+        midpX = x - currentSkin->displayRect.x;
+        midpY = y - currentSkin->displayRect.y - (topBarOn ? topBarHeight : 0);
+        
         if(iMsg == WM_LBUTTONDOWN && INSIDE(x, y, midpScreen_bounds) ) {
             penAreDragging = JAVACALL_TRUE;
             SetCapture(hwnd);
-            if (reverse_orientation) {
-                javanotify_pen_event(javacall_lcd_get_screen_width() - y + y_offset, x - x_offset, JAVACALL_PENPRESSED);                                
-            } else {
-                javanotify_pen_event(x-x_offset, y-y_offset, JAVACALL_PENPRESSED);
-            }
+            javanotify_pen_event(midpX, midpY, JAVACALL_PENPRESSED);                                
             return 0;
         }
         if(iMsg == WM_LBUTTONUP && (INSIDE(x, y, midpScreen_bounds) ||  penAreDragging == JAVACALL_TRUE)) {
@@ -873,20 +711,12 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 penAreDragging = JAVACALL_FALSE;
                 ReleaseCapture();
             }
-            if (reverse_orientation) {
-                javanotify_pen_event(javacall_lcd_get_screen_width() - y + y_offset, x - x_offset, JAVACALL_PENRELEASED);                
-            } else {
-                javanotify_pen_event(x-x_offset, y-y_offset, JAVACALL_PENRELEASED);
-            }
+            javanotify_pen_event(midpX, midpY, JAVACALL_PENRELEASED);                
             return 0;
         }
         if(iMsg == WM_MOUSEMOVE) {
             if(penAreDragging == JAVACALL_TRUE) {                
-                if (reverse_orientation) {
-                    javanotify_pen_event(javacall_lcd_get_screen_width() - y + y_offset, x - x_offset, JAVACALL_PENDRAGGED);                
-                } else {
-                    javanotify_pen_event(x-x_offset, y-y_offset, JAVACALL_PENDRAGGED);
-                }
+                javanotify_pen_event(midpX, midpY, JAVACALL_PENDRAGGED);
             }
             return 0;
         }
@@ -900,8 +730,8 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
         }
 #endif
 
-        for(i = 0; i < NUMBEROF(Keys); ++i) {
-            if(!(INSIDE(x, y, Keys[i].bounds))) {
+        for(i = 0; i < currentSkin->keyCnt; ++i) {
+            if(!(INSIDE(x, y, currentSkin->Keys[i].bounds))) {
                 continue;
             }
 
@@ -911,7 +741,7 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 MessageBeep(MB_OK);
             }
 #endif
-            switch(Keys[i].button) {
+            switch(currentSkin->Keys[i].button) {
             case KEY_POWER:
                 if(iMsg == WM_LBUTTONUP) {
                     return 0;
@@ -927,15 +757,36 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
                 javanotify_shutdown();
                 return 0;
 
+            case KEY_ROTATE:
+                if(iMsg == WM_LBUTTONUP) {
+                    return 0;
+                }
+                javanotify_rotation();
+                return 0;
+
+            case KEY_HOME:
+                if(iMsg == WM_LBUTTONUP) {
+                    return 0;
+                }
+                javanotify_switch_to_ams();
+                return 0;
+
+            case KEY_SELECTAPP:
+                if(iMsg == WM_LBUTTONUP) {
+                    return 0;
+                }
+                javanotify_select_foreground_app();
+                return 0;
+
             default:
                     /* Handle the simulated key events. */
                 switch(iMsg) {
                 case WM_LBUTTONDOWN:
-                    javanotify_key_event((javacall_key)Keys[i].button, JAVACALL_KEYPRESSED);
+                    javanotify_key_event((javacall_key)currentSkin->Keys[i].button, JAVACALL_KEYPRESSED);
                     return 0;
 
                 case WM_LBUTTONUP:
-                    javanotify_key_event((javacall_key)Keys[i].button, JAVACALL_KEYRELEASED);
+                    javanotify_key_event((javacall_key)currentSkin->Keys[i].button, JAVACALL_KEYRELEASED);
                     return 0;
 
                 default:
@@ -1001,8 +852,6 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 /**
  *
  */
-
-
 void getBitmapSize(HBITMAP img, int* width, int* height){
     BITMAPINFO bitmapInfo=        {{sizeof(BITMAPINFOHEADER)}};
     GetDIBits(GetDC(NULL),img,1,0,0,&bitmapInfo,DIB_RGB_COLORS);
@@ -1010,24 +859,32 @@ void getBitmapSize(HBITMAP img, int* width, int* height){
         *width=bitmapInfo.bmiHeader.biWidth;
     }
     if (height!=NULL) {
-        *height=bitmapInfo.bmiHeader.biHeight+28;
+        *height=bitmapInfo.bmiHeader.biHeight;
     }
 
 }
-HBITMAP loadBitmap(char* path, int* width, int* height){
-    HBITMAP hBitmap;
 
-    hBitmap = (HBITMAP) LoadImage (GetModuleHandle(NULL), path, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-    if (NULL == hBitmap) {
-        printf("Cannot load background image from %s. Using default.\n",path);
-        hBitmap = (HBITMAP) LoadImage (GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_PHONE), IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR);
-    }
-    if (hBitmap == 0) {
-        printf("Cannot load background image from resources.\n");
+/**
+ * Loads bitmap for specified skin if necessary and fetches
+ * bitmap dimentions.
+ */
+HBITMAP loadBitmap(ESkin* skin, int* width, int* height) {
+
+    if (NULL == skin) {
         return NULL;
     }
-    getBitmapSize(hBitmap, width, height);
-    return hBitmap;
+
+    if (NULL == skin->hBitmap) {
+        skin->hBitmap = (HBITMAP) LoadImage (GetModuleHandle(NULL), MAKEINTRESOURCE(skin->resourceID), 
+            IMAGE_BITMAP, 0, 0, LR_DEFAULTCOLOR);
+        if (skin->hBitmap == 0) {
+            printf("Cannot load skin image from resources.\n");
+            return NULL;
+        }
+    }
+    getBitmapSize(skin->hBitmap, width, height);
+ 
+    return skin->hBitmap;
 }
 
 
@@ -1048,23 +905,67 @@ static void setupMutex() {
 }
 
 /**
- * Initializes the screen back buffer
+ * Resizes the screen back buffer
  */
-static void initScreenBuffer(int w, int h) {
-    VRAM.width = javacall_lcd_get_screen_width(); 
-    VRAM.height = DISPLAY_HEIGHT;
-    VRAM.hdc = (javacall_pixel*)malloc(w*h*sizeof(javacall_pixel));
+static void resizeScreenBuffer(int w, int h) {
+    if(VRAM.hdc != NULL) {
+        if (VRAM.width * VRAM.height != w * h) {
+            free(VRAM.hdc);
+            VRAM.hdc = NULL;
+        }
+    }
     if(VRAM.hdc == NULL) {
-        javacall_print("initScreenBuffer: VRAM allocation failed");
+        VRAM.hdc = (javacall_pixel*)malloc(w*h*sizeof(javacall_pixel));
+    }
+    if(VRAM.hdc == NULL) {
+        javacall_print("resizeScreenBuffer: VRAM allocation failed");
+    }
+
+    VRAM.width = w; 
+    VRAM.height = h;
+}
+
+/**
+ * Set current skin
+ */
+static void setCurrentSkin(ESkin* newSkin) {
+    if (NULL == newSkin) {
+        printf("failed to change emulator skin\n");    
+    }
+    currentSkin = newSkin;
+
+    if(inFullScreenMode) {
+        topBarOn = JAVACALL_FALSE;
+    } else {
+        topBarOn = (currentSkin->displayRect.width == topBarWidth) ?
+            JAVACALL_TRUE : JAVACALL_FALSE;
+    }
+
+    resizeScreenBuffer(currentSkin->displayRect.width, 
+        currentSkin->displayRect.height);
+    /* update skin image */
+    {
+        int w, h;
+        RECT wr, r;
+        GetWindowRect(hMainWindow, &wr);
+        GetClientRect(hMainWindow, &r);
+        hPhoneBitmap = loadBitmap(currentSkin, &w, &h);
+        r.bottom = r.top + h;
+        r.right = r.left + w;
+        AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW & (~WS_MAXIMIZEBOX), 
+            NULL != hMenuExtended);
+        if (hPhoneBitmap != NULL) {
+            MoveWindow(hMainWindow, wr.left, wr.top, 
+                r.right - r.left, r.bottom - r.top, TRUE);
+        }
     }
 }
+
 
 /**
  * Create the menu
  */
 #ifdef SKINS_MENU_SUPPORTED
-static HMENU hMenuExtended = NULL;
-static HMENU hMenuExtendedSub = NULL;
 
 HMENU buildSkinsMenu(void) {
     BOOL ok;
@@ -1119,15 +1020,7 @@ void CreateEmulatorWindow() {
     static WORD graybits[] = {0xaaaa, 0x5555, 0xaaaa, 0x5555,
         0xaaaa, 0x5555, 0xaaaa, 0x5555};
 
-    unsigned int width ;//REMREM = EMULATOR_WIDTH;
-    unsigned int height; //REMREM = EMULATOR_HEIGHT;
     static char caption[32];
-
-    hPhoneBitmap = loadBitmap("phone.bmp",&width,&height);
-    printf("[CreateEmulatorWindow] Window size %dx%d\n",width, height);
-    sprintf(caption, "+%d Sun Anycall", _phonenum);
-
-    (void) javacall_lcd_init();
     
     wndclass.cbSize        = sizeof (wndclass) ;
     wndclass.style         = CS_HREDRAW | CS_VREDRAW ;
@@ -1145,9 +1038,9 @@ void CreateEmulatorWindow() {
     RegisterClassEx (&wndclass) ;
 #ifdef SKINS_MENU_SUPPORTED
     hMenu = buildSkinsMenu();
-
-    if(hMenu != NULL) height += 24;
 #endif
+
+    sprintf(caption, "+%d Sun Anycall", _phonenum);
 
     hwnd = CreateWindow(szAppName,            /* window class name       */
                         caption,              /* window caption          */
@@ -1155,11 +1048,8 @@ void CreateEmulatorWindow() {
                         (~WS_MAXIMIZEBOX),    /* the 'maximize' button   */
                         50,        /* initial x position      */
                         30,        /* initial y position      */
-                        /* window made smaller to hide the external
-                           screen part since it's not in use for now 
-                        */
-                        (width/2),                 /* initial x size          */
-                        (height),               /* initial y size          */
+                        0,                 /* initial x size          */
+                        0,               /* initial y size          */
                         NULL,                 /* parent window handle    */
                         hMenu,                /* window menu handle      */
                         hInstance,            /* program instance handle */
@@ -1167,8 +1057,7 @@ void CreateEmulatorWindow() {
 
     hMainWindow = hwnd;
 
-    /* create back buffer from mutable image, include the bottom bar. */
-    initScreenBuffer(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+    setCurrentSkin(&VSkin);
 
     /* colors chosen to match those used in topbar.h */
     whitePixel = 0xffffff;
@@ -1229,7 +1118,7 @@ static HDC getBitmapDC(void *imageData) {
 
     if(imageData == NULL) {
         CHECK_RETURN(getBitmapDCtmp = SelectObject(hMemDC, hPhoneBitmap));
-        SetWindowOrgEx(hMemDC, -x_offset, -(Y_SCREEN_OFFSET), NULL);
+        SetWindowOrgEx(hMemDC, -currentSkin->displayRect.x, -currentSkin->displayRect.y, NULL);
     } else if(imageData == UNTRANSLATED_SCREEN_BITMAP) {
         CHECK_RETURN(getBitmapDCtmp = SelectObject(hMemDC, hPhoneBitmap));
     } else {
@@ -1289,26 +1178,6 @@ static void DrawBitmap(HDC hdc, HBITMAP hBitmap, int x, int y, int rop) {
  *
  */
 static void invalidateLCDScreen(int x1, int y1, int x2, int y2) {
-    /*
-    RECT r;
-
-    if (x1 < x2) {
-        r.left = x1 + x_offset;
-        r.right = x2 + x_offset;
-    } else {
-        r.left = x2 + x_offset;
-        r.right = x1 + x_offset;
-    }
-    if (y1 < y2) {
-        r.top = y1 + y_offset;
-        r.bottom = y2 + y_offset;
-    } else {
-        r.top = y2 + y_offset;
-        r.bottom = y1 + y_offset;
-    }
-
-    InvalidateRect(hMainWindow, &r, JAVACALL_TRUE);
-    */
     /* Invalidate entire screen */
     InvalidateRect(hMainWindow, NULL, JAVACALL_FALSE);
 
@@ -1393,9 +1262,14 @@ static int mapKey(WPARAM wParam, LPARAM lParam) {
 }
 
 /**
- *
+ * Utility function to request logical screen to be painted
+ * to the physical screen.
+ * @param x1 top-left x coordinate of the area to refresh
+ * @param y1 top-left y coordinate of the area to refresh
+ * @param x2 bottom-right x coordinate of the area to refresh
+ * @param y2 bottom-right y coordinate of the area to refresh
  */
-static void RefreshScreenNormal(int x1, int y1, int x2, int y2) {
+static void RefreshScreen(int x1, int y1, int x2, int y2) {
     int x;
     int y;
     int width;
@@ -1458,13 +1332,13 @@ static void RefreshScreenNormal(int x1, int y1, int x2, int y2) {
 
     hdcMem = CreateCompatibleDC(hdc);
   
-    if(!inFullScreenMode) {
+    if (topBarOn) {
         unsigned char* raw_image = (unsigned char*)(_topbar_dib_data.info);
-        for(count=(TOP_BAR_HEIGHT*DISPLAY_WIDTH-1); count >=0 ; count--) {
+        for(count = (topBarHeight * topBarWidth - 1); count >= 0 ; count--) {
             unsigned int r,g,b;
-            r=*raw_image++;
-            g=*raw_image++;
-            b=*raw_image++;
+            r = *raw_image++;
+            g = *raw_image++;
+            b = *raw_image++;
             VRAM.hdc[count] = RGB2PIXELTYPE(r,g,b);
         }
     }
@@ -1505,157 +1379,43 @@ static void RefreshScreenNormal(int x1, int y1, int x2, int y2) {
     UpdateWindow(hMainWindow);
 }
 
+ 
 /**
-  * Utility function to request logical screen to be painted
-  * to the physical screen when screen is in rotated mode. 
-  * @param x1 top-left x coordinate of the area to refresh
-  * @param y1 top-left y coordinate of the area to refresh
-  * @param x2 bottom-right x coordinate of the area to refresh
-  * @param y2 bottom-right y coordinate of the area to refresh
-  */
-  void RefreshScreenRotate(int x1, int y1, int x2, int y2) {
-    int x;
-    int y;
-    int width;
-    int height;    
-    javacall_pixel* pixels = VRAM.hdc;
-    javacall_pixel pixel;
-    int r;
-    int g;
-    int b;
-    unsigned char *destBits;
-    unsigned char *destPtr;
-    int count;
-  
-    HDC            hdcMem;
-    HBITMAP        destHBmp;
-    BITMAPINFO     bi;
-    HGDIOBJ        oobj;
-    HDC hdc;
-      
-    if (x1 < 0) {
-        x1 = 0;
-    }
- 
-    if (y1 < 0) {
-        y1 = 0;
-    }
-  
-    if (x2 <= x1 || y2 <= y1) {
-        return;
-    }
-  
-    if (x2 > VRAM.width) {
-        x2 = VRAM.width;
-    }
-  
-    if (y2 > VRAM.height) {
-        y2 = VRAM.height;
-    }    
-  
-    x = x1;
-    y = y1;
-    width = x2 - x1;
-    height = y2 - y1;
-  
-    bi.bmiHeader.biSize          = sizeof(bi.bmiHeader);
-    bi.bmiHeader.biWidth         = height;
-    bi.bmiHeader.biHeight        = -width;
-    bi.bmiHeader.biPlanes        = 1;
-    bi.bmiHeader.biBitCount      = sizeof (long) * 8;
-    bi.bmiHeader.biCompression   = BI_RGB;
-    bi.bmiHeader.biSizeImage     = width * height * sizeof (long);
-    bi.bmiHeader.biXPelsPerMeter = 0;
-    bi.bmiHeader.biYPelsPerMeter = 0;
-    bi.bmiHeader.biClrUsed       = 0;
-    bi.bmiHeader.biClrImportant  = 0;
-  
-    hdc = getBitmapDC(NULL);
-  
-    hdcMem = CreateCompatibleDC(hdc);
- 
-      
-  
-    destHBmp = CreateDIBSection (hdcMem, &bi, DIB_RGB_COLORS, &destBits,
-                                   NULL, 0);
-  
-    if (destBits != NULL) {
-        oobj = SelectObject(hdcMem, destHBmp);
-  
-        SelectObject(hdcMem, oobj);
-  
-        destPtr = destBits;
- 
-        //pixels += (TOP_BAR_HEIGHT*DISPLAY_WIDTH-1) + x2-1 + y1 * javacall_lcd_get_screen_width();
-
-		pixels +=  x2-1 + y1 * javacall_lcd_get_screen_width();
-  
-        for (x = x2; x > x1; x--) {
-  
-        int y;
- 
-        for (y = y1; y < y2; y++) {            
-             r = GET_RED_FROM_PIXEL(*pixels);
-             g = GET_GREEN_FROM_PIXEL(*pixels);
-             b = GET_BLUE_FROM_PIXEL(*pixels);            
-             *destPtr++ = b;
-             *destPtr++ = g;
-             *destPtr++ = r;            
-             destPtr += sizeof(long) - 3*sizeof(*destPtr);
-             pixels += javacall_lcd_get_screen_width();
-        }
-        pixels += -1 - height * javacall_lcd_get_screen_width();         
-  
-      }    
- 
-      SetDIBitsToDevice(hdc, y, javacall_lcd_get_screen_width() - width - x, height, width, 0, 0, 0,
-                           width, destBits, &bi, DIB_RGB_COLORS);
- }
-  
-      DeleteObject(oobj);
-      DeleteObject(destHBmp);
-      DeleteDC(hdcMem);
-      releaseBitmapDC(hdc);
-  
-      invalidateLCDScreen(x1, y1, x1 + height, y1 + width);
-      UpdateWindow(hMainWindow);
-  }
- 
- 
- 
+ * Changes display orientation
+ */
 javacall_bool javacall_lcd_reverse_orientation() {
-      reverse_orientation = !reverse_orientation;    
-      if (reverse_orientation) {
-        y_offset = Y_SCREEN_OFFSET;
-      } else {
-        y_offset = Y_SCREEN_OFFSET + topBarHeight;
-      }
-      VRAM.width = javacall_lcd_get_screen_width();
-      VRAM.height = DISPLAY_HEIGHT;
-      return reverse_orientation;
+
+    reverse_orientation = !reverse_orientation;    
+    if (reverse_orientation) {
+        setCurrentSkin(&HSkin);
+    } else {
+        setCurrentSkin(&VSkin);
+    }
+    return reverse_orientation;
 }
  
+/**
+ * Returns display orientation
+ */
 javacall_bool javacall_lcd_get_reverse_orientation() {
+
      return reverse_orientation;
 }
-  
-int javacall_lcd_get_screen_height() {
-     if (reverse_orientation) {
-         return DISPLAY_WIDTH;
-     } else {
-         if(inFullScreenMode) {
-          return DISPLAY_HEIGHT;
-         } else {
-          return DISPLAY_HEIGHT - TOP_BAR_HEIGHT;
-         }
-     }
-}
-  
+
+/**
+ * Returns available display width
+ */
 int javacall_lcd_get_screen_width() {
-     if (reverse_orientation) {
-         return DISPLAY_HEIGHT;
-     } else {
-         return DISPLAY_WIDTH;
-     }
+
+    return currentSkin->displayRect.width;
+}
+
+/**
+ * Returns available display height
+ */
+int javacall_lcd_get_screen_height() {
+
+    return topBarOn ? (currentSkin->displayRect.height - topBarHeight) : 
+        currentSkin->displayRect.height;
 }
 
