@@ -1510,18 +1510,7 @@ class AppManagerUI extends Form
                                    int viewportWidth, int viewportHeight,
                                    int visRect_inout[]) {
             // entirely visible and hasFocus
-            if (hasFocus) {
-                // entirely visible and has focus => transfer focus
-                if (visRect_inout[0] <= 0 && visRect_inout[1] <= 0 &&
-                    visRect_inout[0] + viewportWidth >= width &&
-                    visRect_inout[1] + viewportHeight >= height) {
-                    return false;
-                }
-
-                // we assume that item is not wider or taller than viewport
-                // and scrolling within the item is not an option
-
-            } else {
+            if (!hasFocus) {
                 hasFocus = true;
                 lastSelectedMsi = this.msi;
             }
@@ -1533,7 +1522,7 @@ class AppManagerUI extends Form
 
             startScroll();
 
-            return true;
+            return false;
         }
 
         /**
