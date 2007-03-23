@@ -42,7 +42,7 @@
 #include <stdlib.h>
 
 #include "javacall_chapi_callbacks.h"
-#include <javautil_string.h>
+#include <javautil_unicode.h>
 
 typedef int SuiteIdType;
 
@@ -76,7 +76,11 @@ typedef int SuiteIdType;
  * int sz
  * Result: boolean true if strings are lexically identical.
  */
-#define CHAPI_ISEQUAL_I(str1, str2, sz) (0 == javautil_wcsnicmp((str1), (str2), (sz)))
+int CHAPI_ISEQUAL_I(javacall_const_utf16_string str1, javacall_const_utf16_string str2, int sz){
+	int result=1;
+	javautil_unicode_nicmp((str1), (str2), (sz), &result);
+	return !result;
+}
 
 
 /**

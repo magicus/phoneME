@@ -43,6 +43,7 @@ extern "C" {
 #define ERROR_ACCESS_DENIED	-5L
 #define ERROR_NO_MORE_ELEMENTS 259L
 #define ERROR_BUFFER_TOO_SMALL 234L
+#define ERROR_IO_FAILURE -12L
 
 
 
@@ -50,6 +51,33 @@ typedef struct _registry_value_pair {
 	const unsigned short* key;
 	const unsigned short* value;
 } registry_value_pair;
+
+//init api
+int init_registry();
+
+//clean
+int finalize_registry();
+
+
+/**
+ * Lock access to native handlers database
+ *
+ * @return JAVACALL_OK if lock aquired JAVACALL_FAIL otherwise
+ */
+int handlerdb_global_lock(int allow_read);
+
+/**
+ * Unlock access to native handlers database
+ *
+ */
+void handlerdb_global_unlock(void);
+
+/**
+ * Unlock access to native handlers database
+ *
+ */
+int handlerdb_is_modified(long lastread);
+
 
 
 //register handler

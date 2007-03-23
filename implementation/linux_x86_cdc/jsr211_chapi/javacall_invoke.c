@@ -31,6 +31,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <process.h>
 #include <pthread.h>
 
@@ -98,8 +99,9 @@ void native_handler_exec_cleanup_monitor(native_invocation_handle invoc){
 
 
 
-native_invocation_handle native_handler_exec_invoke(const char* handler_id, const char* action, const char* url){
+native_invocation_handle native_handler_exec_invoke(const unsigned short* content_handler_id, const char* action, const char* url){
 	native_invocation_handle_impl* invoc=0;
 	return invoc;
 }
+
 

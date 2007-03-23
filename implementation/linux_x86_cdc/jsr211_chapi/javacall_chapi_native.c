@@ -45,7 +45,7 @@
  * @return JAVACALL_OK if content handler registry initialized successfully
  */
 javacall_result javacall_chapi_native_initialize(void){
-	return JAVACALL_OK;
+	return init_registry();
 }
 
 /**
@@ -54,7 +54,7 @@ javacall_result javacall_chapi_native_initialize(void){
  * @return JAVACALL_OK if content handler registry finalized successfully
  */
 javacall_result javacall_chapi_native_finalize(void){
-	return JAVACALL_OK;
+	return finalize_registry();
 }
 
 /**

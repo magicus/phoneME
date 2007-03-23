@@ -10,21 +10,21 @@ int main(int argc, char* argv[])
 	const unsigned short* content_handler_friendly_name = L"Moya Classnaya Programma";
 	const unsigned short* suite_id=L"1";
 	const unsigned short* class_name=L"com.sun.blablabla";
-	const unsigned short* types[] = {L"blyam/blyam-blyam",L"bluem/bluem-bluem",L"audio/wav"};
+	const unsigned short* types[] = {L"blam/blam-blam",L"bluem/bluem-bluem",L"audio/wav"};
 	int nTypes = sizeof(types)/sizeof(types[0]);
 
-	const unsigned short* suffixes[] = {L".blya",L".blue"};
+	const unsigned short* suffixes[] = {L".bla",L".blu"};
 	int nSuffixes = sizeof(suffixes)/sizeof(suffixes[0]);
 
-	const unsigned short* actions[] = {L"open",L"close",L"view",L"play",L"grock"};
+	const unsigned short* actions[] = {L"open",L"close",L"view",L"edit",L"grock"};
 	int nActions = sizeof(actions)/sizeof(actions[0]);
 	
 	const unsigned short* locales[] = {L"en-US",L"ru-RU"};
 	int nLocales = sizeof(locales)/sizeof(locales[0]);
 	
 	const unsigned short* action_names[]  = {
-		L"open",L"close",L"view",L"play",L"grock",
-		L"otkr",L"zakr",L"smotr",L"igraty",L"grokaty"
+		L"open",L"close",L"view",L"edit",L"grock",
+		L"otkr",L"zakr",L"smotr",L"redact",L"grokaty"
 	};
 	int nActionNames = sizeof(action_names)/sizeof(action_names[0]);
 
@@ -36,6 +36,8 @@ int main(int argc, char* argv[])
 		{L"key2",L"value2"}
 	};
 	int nKeys = sizeof(additional_keys)/sizeof(additional_keys[0]);
+
+	init_registry();
 	
 	register_handler(
         content_handler_id,
@@ -59,6 +61,7 @@ int main(int argc, char* argv[])
 
 	pos=0;
 	len = 255;
+	content_handler_id = L"text/html";
 	while (!enum_actions(content_handler_id,&pos,buf,&len)){
 		wprintf(L"%s\n",buf);
 		len = 255;
