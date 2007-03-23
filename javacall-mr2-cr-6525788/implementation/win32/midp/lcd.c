@@ -86,22 +86,24 @@ static void releaseBitmapDC(HDC hdcMem);
 static void DrawBitmap(HDC hdc, HBITMAP hBitmap, int x, int y, int rop);
 static HDC getBitmapDC(void *imageData);
 static HPEN setPen(HDC hdc, int pixel, int dotted);
-//static void setUpOffsets(int fullscreen);
-//static void CreateBacklight(HDC hdc);
-static void DrawMenuBarBorder(HDC myhdc);
-static void drawEmulatorScreen(javacall_bool fullscreen);
+//static void DrawMenuBarBorder(HDC myhdc);
+//static void drawEmulatorScreen(javacall_bool fullscreen);
        void CreateEmulatorWindow();
+/*
 static void paintVerticalScroll(HDC hdc, int scrollPosition,
                                 int scrollProportion);
+*/
 static void invalidateLCDScreen(int x1, int y1, int x2, int y2);
-static void RefreshScreenNormal(int x1, int y1, int x2, int y2);  
-static void RefreshScreenRotate(int x1, int y1, int x2, int y2);
+static void RefreshScreen(int x1, int y1, int x2, int y2);  
 static int mapKey(WPARAM wParam, LPARAM lParam);
 
 #ifdef SKINS_MENU_SUPPORTED
 static HMENU buildSkinsMenu(void);
 static void destroySkinsMenu(void);
 #endif // SKINS_MENU_SUPPORTED
+
+static HMENU hMenuExtended = NULL;
+static HMENU hMenuExtendedSub = NULL;
 
 /* thread safety */
 static int tlsId;
@@ -318,7 +320,7 @@ javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen) {
  */
 javacall_result javacall_lcd_flush() {
 
-    RefreshScreenNormal(0, 0, currentSkin->displayRect.width, currentSkin->displayRect.height); 
+    RefreshScreen(0, 0, currentSkin->displayRect.width, currentSkin->displayRect.height); 
 
     return JAVACALL_OK;
 }
@@ -341,7 +343,7 @@ javacall_result javacall_lcd_flush() {
 javacall_result /*OPTIONAL*/ javacall_lcd_flush_partial(int ystart,
                                                         int yend) {
 
-    RefreshScreenNormal(0, 0, currentSkin->displayRect.width, currentSkin->displayRect.height); 
+    RefreshScreen(0, 0, currentSkin->displayRect.width, currentSkin->displayRect.height); 
 
     return JAVACALL_OK;
 }
@@ -857,7 +859,7 @@ void getBitmapSize(HBITMAP img, int* width, int* height){
         *width=bitmapInfo.bmiHeader.biWidth;
     }
     if (height!=NULL) {
-        *height=bitmapInfo.bmiHeader.biHeight+28;
+        *height=bitmapInfo.bmiHeader.biHeight;
     }
 
 }
@@ -932,20 +934,29 @@ static void setCurrentSkin(ESkin* newSkin) {
     }
     currentSkin = newSkin;
 
-    topBarOn = (currentSkin->displayRect.width == topBarWidth) ? 
-          JAVACALL_TRUE : JAVACALL_FALSE;
+    if(inFullScreenMode) {
+        topBarOn = JAVACALL_FALSE;
+    } else {
+        topBarOn = (currentSkin->displayRect.width == topBarWidth) ?
+            JAVACALL_TRUE : JAVACALL_FALSE;
+    }
 
     resizeScreenBuffer(currentSkin->displayRect.width, 
         currentSkin->displayRect.height);
     /* update skin image */
     {
         int w, h;
-        RECT r;
-        GetWindowRect(hMainWindow, &r);
+        RECT wr, r;
+        GetWindowRect(hMainWindow, &wr);
+        GetClientRect(hMainWindow, &r);
         hPhoneBitmap = loadBitmap(currentSkin, &w, &h);
-        printf("[setCurrentSkin] Window size %dx%d\n", w, h);
+        r.bottom = r.top + h;
+        r.right = r.left + w;
+        AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW & (~WS_MAXIMIZEBOX), 
+            NULL != hMenuExtended);
         if (hPhoneBitmap != NULL) {
-            MoveWindow(hMainWindow, r.left, r.top, w, h, TRUE);
+            MoveWindow(hMainWindow, wr.left, wr.top, 
+                r.right - r.left, r.bottom - r.top, TRUE);
         }
     }
 }
@@ -955,8 +966,6 @@ static void setCurrentSkin(ESkin* newSkin) {
  * Create the menu
  */
 #ifdef SKINS_MENU_SUPPORTED
-static HMENU hMenuExtended = NULL;
-static HMENU hMenuExtendedSub = NULL;
 
 HMENU buildSkinsMenu(void) {
     BOOL ok;
@@ -1011,8 +1020,6 @@ void CreateEmulatorWindow() {
     static WORD graybits[] = {0xaaaa, 0x5555, 0xaaaa, 0x5555,
         0xaaaa, 0x5555, 0xaaaa, 0x5555};
 
-    int width = 0;//REMREM = EMULATOR_WIDTH;
-    int height = 0; //REMREM = EMULATOR_HEIGHT;
     static char caption[32];
     
     wndclass.cbSize        = sizeof (wndclass) ;
@@ -1031,8 +1038,6 @@ void CreateEmulatorWindow() {
     RegisterClassEx (&wndclass) ;
 #ifdef SKINS_MENU_SUPPORTED
     hMenu = buildSkinsMenu();
-
-    if(hMenu != NULL) height += 24;
 #endif
 
     sprintf(caption, "+%d Sun Anycall", _phonenum);
@@ -1043,8 +1048,8 @@ void CreateEmulatorWindow() {
                         (~WS_MAXIMIZEBOX),    /* the 'maximize' button   */
                         50,        /* initial x position      */
                         30,        /* initial y position      */
-                        (0),                 /* initial x size          */
-                        (0),               /* initial y size          */
+                        0,                 /* initial x size          */
+                        0,               /* initial y size          */
                         NULL,                 /* parent window handle    */
                         hMenu,                /* window menu handle      */
                         hInstance,            /* program instance handle */
@@ -1264,7 +1269,7 @@ static int mapKey(WPARAM wParam, LPARAM lParam) {
  * @param x2 bottom-right x coordinate of the area to refresh
  * @param y2 bottom-right y coordinate of the area to refresh
  */
-static void RefreshScreenNormal(int x1, int y1, int x2, int y2) {
+static void RefreshScreen(int x1, int y1, int x2, int y2) {
     int x;
     int y;
     int width;
@@ -1376,26 +1381,21 @@ static void RefreshScreenNormal(int x1, int y1, int x2, int y2) {
 
  
 /**
- * Changes diplay orientation
+ * Changes display orientation
  */
 javacall_bool javacall_lcd_reverse_orientation() {
 
     reverse_orientation = !reverse_orientation;    
     if (reverse_orientation) {
         setCurrentSkin(&HSkin);
-        topBarOn = JAVACALL_FALSE;
     } else {
         setCurrentSkin(&VSkin);
-        if (!inFullScreenMode) {
-            topBarOn = (topBarWidth == currentSkin->displayRect.width) ? 
-                JAVACALL_TRUE : JAVACALL_FALSE;
-        }
     }
     return reverse_orientation;
 }
  
 /**
- * Returns diplay orientation
+ * Returns display orientation
  */
 javacall_bool javacall_lcd_get_reverse_orientation() {
 
@@ -1403,7 +1403,7 @@ javacall_bool javacall_lcd_get_reverse_orientation() {
 }
 
 /**
- * Returns available diplay width
+ * Returns available display width
  */
 int javacall_lcd_get_screen_width() {
 
@@ -1411,7 +1411,7 @@ int javacall_lcd_get_screen_width() {
 }
 
 /**
- * Returns available diplay height
+ * Returns available display height
  */
 int javacall_lcd_get_screen_height() {
 
