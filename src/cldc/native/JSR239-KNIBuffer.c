@@ -26,6 +26,8 @@
 
 #include <kni.h>
 #include "JSR239-KNIInterface.h"
+#include <commonKNIMacros.h>
+#include <ROMStructs.h>
 
 #undef DEBUG
 
@@ -48,21 +50,6 @@ Java_java_nio_ByteBufferImpl__1allocNative() {
 #endif
 
     KNI_ReturnInt(returnValue);
-}
-
-/*  static native void _freeNative ( int address ) ; */
-KNIEXPORT KNI_RETURNTYPE_VOID
-Java_java_nio_ByteBufferImpl__1freeNative() {
-
-    jint address = KNI_GetParameterAsInt(1);
-
-    JSR239_free((void *) address);
-#ifdef DEBUG
-    printf("_freeNative freed data at %p\n", address);
-    fflush(stdout);
-#endif
-
-    KNI_ReturnVoid();
 }
 
 /*  static native void _copyBytes ( int srcAddress , int dstAddress , int bytes ) ; */
@@ -412,21 +399,6 @@ Java_java_nio_ByteBufferImpl__1putFloats() {
 
 /* BufferManager */
 
-/*  static native void _freeNative ( int address ) ; */
-KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_BufferManager__1freeNative() {
-
-    jint address = KNI_GetParameterAsInt(1);
-
-    JSR239_free((void *) address);
-#ifdef DEBUG
-    printf("_freeNative freed data at %p\n", address);
-    fflush(stdout);
-#endif
-
-    KNI_ReturnVoid();
-}
-
 /*  static native void _getBytes ( int address , byte [ ] dst , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_jsr239_BufferManager__1getBytes() {
@@ -449,3 +421,32 @@ Java_com_sun_jsr239_BufferManager__1getBytes() {
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
+
+/* native private void finalize();*/
+/* Macro to retrieve C structure representation of an Object */
+typedef struct Java_java_nio_ByteBufferImpl _byte_buffer_impl;
+
+#define getByteBuffer(handle) (unhand(_byte_buffer_impl,(handle)))
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_java_nio_ByteBufferImpl_finalize() {
+    _byte_buffer_impl* buffer;
+    void* native_buffer_address;
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(thisObject);
+    KNI_GetThisPointer(thisObject);
+
+    buffer = getByteBuffer(thisObject);
+    native_buffer_address = (void*)buffer->arrayOffset;
+
+    if (native_buffer_address) {
+        JSR239_free(native_buffer_address);
+    }
+
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+#undef getByteBuffer
+
+

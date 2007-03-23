@@ -580,9 +580,6 @@ public class GL10Impl implements GL10, GL10Ext {
         _execute(queue, index);
         index = 0;
 
-        // Check for orphaned Buffer contents
-        BufferManager.gc();
-
         // Ensure GL does not starve other threads
         Thread.yield();
     }
