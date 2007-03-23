@@ -40,9 +40,9 @@
 #include <fcntl.h>
 #include <io.h>
 
+
 #include "javacall_chapi.h"
 #include "javacall_chapi_native.h"
-#include "javautil_string.h"
 
 
 /* Attention! Win32 specific implementation! */
@@ -462,9 +462,7 @@ static javacall_result regOpen(REG* reg, javacall_bool readOnly) {
 			return JAVACALL_IO_ERROR;
 		}
 	}  else {
-		_lseek(reg->file,0,SEEK_END);
-		reg->fsize = _tell(reg->file);
-		_lseek(reg->file,0,SEEK_SET);
+		reg->fsize = _filelength(reg->file);
 		reg->cur = 0;
 		reg->hsize = 0;
 	}

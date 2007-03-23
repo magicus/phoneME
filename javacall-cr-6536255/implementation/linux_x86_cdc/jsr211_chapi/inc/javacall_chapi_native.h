@@ -73,6 +73,7 @@ javacall_result javacall_chapi_native_initialize(void);
  */
 javacall_result javacall_chapi_native_finalize(void);
 
+
 /**
  * Stores content handler information into a registry.
  *

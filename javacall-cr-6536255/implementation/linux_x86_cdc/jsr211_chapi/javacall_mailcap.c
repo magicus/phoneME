@@ -33,11 +33,17 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <io.h>
+#include <fcntl.h>
+//#include <wchar.h>
 #include <memory.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 
 #define DATABASE_INCREASE_SIZE 128
-#define MAX_BUFFER 128
+#define MAX_BUFFER 512
 
 #define TYPE_INFO_COMPOSETYPED 0x1
 #define TYPE_INFO_NEEDSTERMINAL 0x2
@@ -76,6 +82,12 @@ static int get_icon_path(char* buffer){
 
 
 #define INFO_INC 128
+
+
+char* mailcaps_fname = 0;
+const char* java_invoker = "${VM_INVOKER}";
+const char* java_type = "application/x-javame-content-handler";
+
 mailcap_type_info** g_infos = 0;
 int g_infos_used;
 int g_infos_allocated;
@@ -86,10 +98,16 @@ const char* COMPOSE = "compose";
 const char* OPEN = "open";
 const char* NEW = "new";
 
+#define CHAPI_READ 1
+#define CHAPI_WRITE 2
+#define CHAPI_APPEND 3
 
 #define chricmp(a,b) (((a>='A' && a<='Z') ? a+('a'-'A'): a) == ((b>='A' && b<='Z') ? b+('a'-'A'): b))
 
-static int wasicmp(const short* ws, const char* s){
+int open_db(int* file, int flag);
+void close_db(int file);
+
+static int wasiequal(const short* ws, const char* s){
 	while (*ws && *s && chricmp(*ws,*s)){
 		++ws;
 		++s;
@@ -140,12 +158,12 @@ static void pop_info(){
 *   reads new not empty not commented line from file
 *	line and max_size should not be zero
 **/
-static int get_line(char* line, int max_size, FILE* f){
-	long pos = ftell(f);
-	int i,count=0;
-	while ((i=fgetc(f))!=EOF){
+static int get_line(char* line, int max_size, int f){
+	long pos = _tell(f);
+	int i=0,count=0;
+	while (_read(f,&i,1)==1){
 		if ((char)i=='#'){
-			while ((i=fgetc(f))!=EOF && (char)i!='\n');
+			while (_read(f,&i,1)==1 && (char)i!='\n');
 		}
 		if ((char)i!='\n' && (char)i!='\r') break;
 	}
@@ -153,53 +171,60 @@ static int get_line(char* line, int max_size, FILE* f){
 		if ((char)i=='\n') break;
 		if (count>=max_size-1) {
 			//buffer too small return
-			fseek(f,pos,SEEK_SET);
+			_lseek(f,pos,SEEK_SET);
 			return -1;
 		}
 		line[count++]=(char)i;
-		i=fgetc(f);
+		if (_read(f,&i,1)!=1) break;
 	};
 	line[count]=0;
 	return count;
 }
 
-//reads value that ends by ';' or end of line, returns allocated value and buffer position after token found
-static char* read_value(const char* line,const char** end){
-	int pos1,pos2,p=0,quot=0, dquot=0;
-	char* buf;
-	while (line[p] && (line[p]==' ' || line[p]=='\t')) ++p; //trim left
-	pos1 = pos2 = p;
-	while (line[p]){
-		if (line[p]==';' && !quot && !dquot){p++;break;}
-		if (line[p]=='\''&& !dquot){ quot = !quot;}
-		if (line[p]=='\"'&& !quot){ dquot = !dquot;}
-		if (line[p]!=' ' && line[p]!='\t') pos2=p; //trim right
-		++p;
-	}
-	if (end) *end = &line[p];
-	buf = malloc(pos2-pos1+2);
-	if (buf){
-		memcpy(buf, &line[pos1], pos2-pos1+1);
-		buf[pos2-pos1+1]=0;
-	}
-	return buf;
-}
 
-//find next key in line that ends on : or ;
-static int next_key(const char* line,const char** kstart,const char** kend, const char** tokenend){
-	int p=0,quot=0,dquot=0,pos2=0;
+//find next tooken that ends on ; and can contain key and value separated by =
+static int next_key(const char* line,const char** kstart,const char** kend, const char** valstart,const char** valend, const char** tokenend){
+	int p=0,quot=0,dquot=0,endword=0;
 	while (line[p] && (line[p]==' ' || line[p]=='\t')) ++p; //trim left
 	if(!line[p]) return 0;
-	pos2=p;
+	endword=p;
 	if (kstart) *kstart = &line[p];
+	if (kend) *kend = &line[p];
+	if (valstart) *valstart = 0;
+	if (valend) *valstart = 0;
+
 	while (line[p]){
-		if (line[p]==';' || line[p]==':'&& !quot && !dquot){p++;break;}
+		if (line[p]=='=' && !quot && !dquot){ // value found
+			if (kend) *kend = &line[endword];
+			while (line[p] && (line[p]==' ' || line[p]=='\t')) ++p; //trim left
+			if (valstart) *valstart = &line[p];
+			if (valend) *valend = &line[p];
+			endword=p;
+			while (line[p]){
+				if (line[p]==';' && !quot && !dquot){
+					if (valend) *valend = &line[endword];
+					p++;
+					break;
+				}
+				if (line[p]=='\''&& !dquot){ quot = !quot;}
+				if (line[p]=='\"'&& !quot){ dquot = !dquot;}
+				if (line[p]!=' ' && line[p]!='\t') endword=p; //trim right
+				++p;
+			}
+			break;
+		}
+		if (line[p]==';' && !quot && !dquot){
+			if (kend) *kend = &line[endword];
+			if (valstart) *valstart = 0;
+			if (valend) *valend = 0;
+			p++;break;
+		}
 		if (line[p]=='\'' && !dquot){ quot = !quot;}
 		if (line[p]=='\"'&& !quot){ dquot = !dquot;}
-		if (line[p]!=' ' && line[p]!='\t') pos2=p; //trim right
+		if (line[p]!=' ' && line[p]!='\t') endword=p; //trim right
 		++p;
 	}
-	if (kend) *kend = &line[pos2];
+
 	if (tokenend) *tokenend = &line[p];
 	return 1;
 }
@@ -269,13 +294,13 @@ static int extract_handler(const char* command,char** handler, char** params){
 	*handler = malloc(len+1);
 	if (!*handler) return ERROR_NO_MEMORY;
 	memcpy(*handler,start,len);
-	*handler[len]=0;
+	(*handler)[len]=0;
 
 	while (*c && (*c==' ' || *c=='\t')) ++c; //trim left
-	start = c;
+	start = end = c;
 
 	while (*c){
-		if (!((*c==' ' || *c=='\t'))) end=c; //trim right
+		if ((*c!=' ' && *c!='\t')) end=c; //trim right
 		c++;
 	}
 
@@ -283,7 +308,7 @@ static int extract_handler(const char* command,char** handler, char** params){
 	*params = malloc(len+1);
 	if (!*params) return ERROR_NO_MEMORY;
 	memcpy(*params,start,len);
-	*params[len]=0;
+	(*params)[len]=0;
 
 	return 0;
 }
@@ -311,13 +336,25 @@ static int duplicate_info(mailcap_type_info* src_info, int action, const char* c
 	return 0;
 }
 
+static char* substring(const char* str_begin, const char* str_end){
+	int len;
+	char* buf;
+	if (!str_begin) return 0;
+	len = str_end - str_begin + 1;
+	buf = malloc(len+1);
+	if (!buf) return 0;
+	memcpy(buf,str_begin,len);
+	buf[len]=0;
+	return buf;
+}
+
 
 //read mime-type handlers information from mailcaps file according to rfc1343
-static int read_caps(const char* path){
-	char* p, *pv, *pe;
+static int read_caps(){
+	char* p, *ks, *ke, *vs, *ve;
 	char *edit=0, *print=0, *compose=0, *command;
 	mailcap_type_info* info = 0;
-	FILE* f;
+	int f;
 	char* line;
 	int length = MAX_BUFFER;
 	int res = ERROR_NO_MEMORY;
@@ -325,7 +362,7 @@ static int read_caps(const char* path){
 	line = malloc(length);
 	if (!line) return ERROR_NO_MEMORY;
 
-	f=fopen(path,"r");
+	open_db(&f,CHAPI_READ);
 	if (!f) {
 		free(line);
 		return -1;
@@ -333,7 +370,7 @@ static int read_caps(const char* path){
 
 	while ((res=get_line(line,length,f))){
 
-		if (res < 0){ //buffer too small
+		if (res < 0) { //buffer too small
 			length*=2;
 			free(line);
 			line = malloc(length);
@@ -344,29 +381,32 @@ static int read_caps(const char* path){
 		p = line;
 		info = new_info();
 		if (!info) break;
-		info->type=read_value(p,&p);
+
+		if (!next_key(p,&ks,&ke,0,0,&p)) break;
+		info->type=substring(ks,ke);
 		if (!info->type) break;
 
-		command=read_value(p,&p);
+		if (!next_key(p,&ks,&ke,0,0,&p)) break;
+		command=substring(ks,ke);
 		if (!command) break;
-		if (extract_handler(command,&info->handler,&info->params)) break;
 
+		if (extract_handler(command,&info->handler,&info->params)) break;
 
 		info->flag=TYPE_INFO_ACTION_VIEW;
 
-		while ((next_key(p,&p,&pe,&pv))){
-			if (match(p, pe,"edit")) {edit = read_value(pv,&p);continue;}
-			if (match(p, pe,"print")) {print = read_value(pv,&p);continue;}
-			if (match(p, pe,"compose")) {compose = read_value(pv,&p);continue;}
+		while ((next_key(p,&ks,&ke,&vs,&ve,&p))){
+			if (match(ks, ke,"edit")) {edit = substring(vs,ve);continue;}
+			if (match(ks, ke,"print")) {print = substring(vs,ve);continue;}
+			if (match(ks, ke,"compose")) {compose = substring(vs,ve);continue;}
 
-			if (match(p, pe,"description")) {info->description = read_value(pv,&p);continue;}
-			if (match(p, pe,"test")) {info->test = read_value(pv,&p);continue;}
-			if (match(p, pe,"nametemplate")) {info->nametemplate = read_value(pv,&p);continue;}
-			if (match(p, pe,"composetyped")) {info->flag |= TYPE_INFO_COMPOSETYPED; continue;}
-			if (match(p, pe,"needsterminal")) {info->flag |= TYPE_INFO_NEEDSTERMINAL; continue;}
-			if (match(p, pe,"copiousoutput")) {info->flag |= TYPE_INFO_COPIOUSOUTPUT; continue;}
-			if (match(p, pe,"textualnewlines")) {info->flag |= TYPE_INFO_TEXTUALNEWLINES; continue;}
-			if (match(p, pe,"x-java")) {info->flag |= TYPE_INFO_JAVA_HANDLER;continue;}
+			if (match(ks, ke,"description")) {info->description = substring(vs,ve);continue;}
+			if (match(ks, ke,"test")) {info->test = substring(vs,ve);continue;}
+			if (match(ks, ke,"nametemplate")) {info->nametemplate = substring(vs,ve);continue;}
+			if (match(ks, ke,"composetyped")) {info->flag |= TYPE_INFO_COMPOSETYPED; continue;}
+			if (match(ks, ke,"needsterminal")) {info->flag |= TYPE_INFO_NEEDSTERMINAL; continue;}
+			if (match(ks, ke,"copiousoutput")) {info->flag |= TYPE_INFO_COPIOUSOUTPUT; continue;}
+			if (match(ks, ke,"textualnewlines")) {info->flag |= TYPE_INFO_TEXTUALNEWLINES; continue;}
+			if (match(ks, ke,"x-java")) {info->flag |= TYPE_INFO_JAVA_HANDLER;continue;}
 		}
 		if (command) free(command);
 		if (edit) {duplicate_info(info,TYPE_INFO_ACTION_EDIT,edit);free(edit);}
@@ -376,9 +416,10 @@ static int read_caps(const char* path){
 }
 if (info) pop_info();
 if (line) free(line);
-fclose(f);
+close_db(f);
 return 0;
 }
+
 
 
 static int copy_string(const char* str, /*OUT*/ short*  buffer, int* length){
@@ -422,19 +463,92 @@ static int type_fits(const short* type, mailcap_type_info* info){
 
 static int has_action(const short* action, mailcap_type_info* info){
 	if (!info) return 0;
-	if (!action || !*action || !wasicmp(action,VIEW) || !wasicmp(action,"open")) return ((info->flag & TYPE_INFO_ACTION_VIEW) !=0);
-	if (!wasicmp(action,EDIT)) return ((info->flag & TYPE_INFO_ACTION_EDIT) !=0);
-	if (!wasicmp(action,COMPOSE) || !wasicmp(action,"new")) return ((info->flag & TYPE_INFO_ACTION_COMPOSE) !=0);
-	if (!wasicmp(action,PRINT)) return ((info->flag & TYPE_INFO_ACTION_PRINT) !=0);
+	if (!action || !*action || wasiequal(action,VIEW) || wasiequal(action,"open")) return ((info->flag & TYPE_INFO_ACTION_VIEW) !=0);
+	if (wasiequal(action,EDIT)) return ((info->flag & TYPE_INFO_ACTION_EDIT) !=0);
+	if (wasiequal(action,COMPOSE) || wasiequal(action,"new")) return ((info->flag & TYPE_INFO_ACTION_COMPOSE) !=0);
+	if (wasiequal(action,PRINT)) return ((info->flag & TYPE_INFO_ACTION_PRINT) !=0);
 	return 0;
 }
 
+static int file_exists(const char* fname){
+	int file = _open(fname,_O_RDONLY);
+	if (file){
+		_close(file);
+		return 1;
+	}
+	return 0;
+}
+
+static int open_db(int* file, int flag){
+	if (flag == CHAPI_READ) {
+		handlerdb_global_lock(1);
+		*file = _open(mailcaps_fname,_O_RDONLY);
+	} else 	if (flag == CHAPI_WRITE) {
+		handlerdb_global_lock(0);
+		*file = _open(mailcaps_fname,_O_RDWR);
+	} else if (flag == CHAPI_APPEND){
+		handlerdb_global_lock(0);
+		*file = _open(mailcaps_fname, _O_RDWR | _O_APPEND | _O_CREAT, _S_IWRITE);
+	} else 
+		return ERROR_BAD_PARAMS;
+
+	if (*file<0) {
+		handlerdb_global_unlock();
+		return ERROR_IO_FAILURE;
+	}
+
+	return 0;
+}
+
+
+static void close_db(int file){
+	if (file) _close(file);
+	handlerdb_global_unlock();
+}
+
+/**********************************************************************************************************************/
+/**
+/**	Functions implemented by platform
+/**
+/**********************************************************************************************************************/
+
+
+/**
+ * Lock access to native handlers database
+ *
+ * @return JAVACALL_OK if lock aquired JAVACALL_FAIL otherwise
+ */
+int handlerdb_global_lock(int allow_read){
+	//if (!allow_read) lock_read_locker();
+	//lock_write_locker();
+	return 0;
+}
+
+/**
+ * Unlock access to native handlers database
+ *
+ */
+void handlerdb_global_unlock(void){
+	//unlock_read_locker();
+	//unlock_write_locker();
+}
+
+/**
+ * Check native database was modified since time pointed in lastread
+ *
+ */
+int handlerdb_is_modified(long lastread){
+	struct _stat st;
+	_stat(mailcaps_fname,&st);
+	return (st.st_mtime > (time_t)lastread);
+}
 
 /**********************************************************************************************************************/
 /**
 /**	PUBLIC API
 /**
 /**********************************************************************************************************************/
+
 
 /* try to load
 	query MAILCAPS environment variable, if empty try to load:
@@ -445,24 +559,50 @@ static int has_action(const short* action, mailcap_type_info* info){
    6. `/usr/local/etc/mailcap' 
 */
 
-int init(){
-	int res;
+int init_registry(){
 	char buf[MAX_BUFFER];
-	char* path = getenv("MAILCAPS");
+	
+	while (1){
+		char* path = getenv("MAILCAPS");
+		if (path) {
+			mailcaps_fname = path;
+			break;
+		}
 
-	if (path)
-		res=read_caps(buf);
+		mailcaps_fname = "./mailcap";
+		if (file_exists(mailcaps_fname)) break;
 
-	if (res){
 		sprintf(buf,"%s/.mailcap",getenv("HOME"));
-		res=read_caps(buf);
+		if (file_exists(buf)) {
+			mailcaps_fname = buf;
+			break;
+		}
+
+		mailcaps_fname = "/mailcap";
+		if (file_exists(mailcaps_fname)) break;
+
+		mailcaps_fname = "/etc/mailcap";
+		if (file_exists(mailcaps_fname)) break;
+
+		mailcaps_fname = "/usr/etc/mailcap";
+		if (file_exists(mailcaps_fname)) break;
+
+		mailcaps_fname = "/usr/local/etc/mailcap";
+		if (file_exists(mailcaps_fname)) break;
+
+		mailcaps_fname = buf;
 	}
 
-	if (res) res=read_caps("/mailcap");	
-	if (res) res=read_caps("/etc/mailcap");
-	if (res) res=read_caps("/usr/etc/mailcap");
-	if (res) res=read_caps("/usr/local/etc/mailcap");
-	return res;
+	mailcaps_fname = strdup(mailcaps_fname);
+
+	read_caps();
+	return 0;
+}
+
+int finalize_registry(){
+	if (mailcaps_fname) free(mailcaps_fname);
+	mailcaps_fname = 0;
+	return 0;
 }
 
 //register handler
@@ -481,7 +621,63 @@ int register_handler(
 		const registry_value_pair* additional_keys, int nKeys,
 		const unsigned short* default_icon_path){
 
-	return ERROR_ACCESS_DENIED;
+	int result;
+	int file=0,len;
+	int itype,iact;
+	char buf[MAX_BUFFER],*b;
+
+	result = open_db(&file,CHAPI_APPEND);
+	if (result != 0) return result;
+
+	for (itype=0;itype<nTypes || !nTypes;itype++){
+		b=buf;
+
+		if (!nTypes) 
+			b += sprintf(b,"%s;",java_type);
+		else 
+			b += sprintf(b,"%S;",types[itype]);
+		
+		b += sprintf(b,"%s -suite \'%S\' -class \'%S\' \'%%s\';",java_invoker,suite_id,class_name);
+		b += sprintf(b,"test=test -n \"$DISPLAY\";");
+		if (content_handler_friendly_name){
+			b += sprintf(b,"description=%S Document;",content_handler_friendly_name);
+		}
+		if (nSuffixes && nSuffixes>itype){
+			b += sprintf(b,"nametemplate=%%s%S;",suffixes[itype]);
+		}
+		for (iact=0;iact<nActionNames;iact++){
+			const short* action = action_names[iact];
+			const char* taction;
+
+			if (wasiequal(action,EDIT)) {
+				taction=EDIT;
+			} else if (wasiequal(action,COMPOSE)){
+					taction=COMPOSE;
+			} else if (wasiequal(action,PRINT)){
+					taction=PRINT;
+			} else {
+				continue;
+			}
+
+			b += sprintf(b,"%s=%s -suite \'%S\' -class \'%S\' -action %S \'%%s\';",
+							taction,java_invoker,suite_id,class_name,action);
+			
+		}
+		
+	
+
+		b += sprintf(b,"x-java;\n");
+
+		len=b-buf;
+		if (_write(file,buf,len)!=len) {
+			result = ERROR_IO_FAILURE;
+			break;
+		}
+		if (!nTypes) break;
+	}
+
+	close_db(file);
+	return result;
 }
 
 
@@ -547,13 +743,13 @@ int enum_handlers_by_action(const unsigned short* action, int* pos_id, /*OUT*/ s
 
 	if (!g_infos) return result;
 		
-	if (!action || !*action || wasicmp(action,VIEW) || wasicmp(action,"open")) searched_action = TYPE_INFO_ACTION_VIEW;
+	if (!action || !*action || wasiequal(action,VIEW) || wasiequal(action,"open")) searched_action = TYPE_INFO_ACTION_VIEW;
 	else
-	if (wasicmp(action,EDIT)) searched_action = TYPE_INFO_ACTION_EDIT;
+	if (wasiequal(action,EDIT)) searched_action = TYPE_INFO_ACTION_EDIT;
 	else
-	if (wasicmp(action,PRINT)) searched_action = TYPE_INFO_ACTION_PRINT;
+	if (wasiequal(action,PRINT)) searched_action = TYPE_INFO_ACTION_PRINT;
 	else
-	if (wasicmp(action,COMPOSE) || wasicmp(action,"new")) searched_action = TYPE_INFO_ACTION_COMPOSE;
+	if (wasiequal(action,COMPOSE) || wasiequal(action,"new")) searched_action = TYPE_INFO_ACTION_COMPOSE;
 
 	if (!searched_action) return ERROR_NO_MORE_ELEMENTS;
 
@@ -586,7 +782,7 @@ int enum_actions(const unsigned short* content_handler_id, /*OUT*/ int* pos_id, 
 	//only 4 actions suported
 	if (actions_found==TYPE_INFO_ACTION_MASK) return ERROR_NO_MORE_ELEMENTS;
 
-	while (index < g_infos_used){
+	for (;index < g_infos_used;++index){
 		if (id_match(g_infos[index],content_handler_id)){
 			if (!(actions_found & g_infos[index]->flag & TYPE_INFO_ACTION_MASK)){
 				const char* action;
@@ -693,13 +889,13 @@ int is_action_supported(const unsigned short* content_handler_id, const unsigned
 	int searched_action,i;
 	mailcap_type_info* info;
 
-	if (!action || !*action || wasicmp(action,VIEW) || wasicmp(action,OPEN)) searched_action = TYPE_INFO_ACTION_VIEW;
+	if (!action || !*action || wasiequal(action,VIEW) || wasiequal(action,OPEN)) searched_action = TYPE_INFO_ACTION_VIEW;
 	else
-	if (wasicmp(action,EDIT)) searched_action = TYPE_INFO_ACTION_EDIT;
+	if (wasiequal(action,EDIT)) searched_action = TYPE_INFO_ACTION_EDIT;
 	else
-	if (wasicmp(action,PRINT)) searched_action = TYPE_INFO_ACTION_PRINT;
+	if (wasiequal(action,PRINT)) searched_action = TYPE_INFO_ACTION_PRINT;
 	else
-	if (wasicmp(action,COMPOSE) || wasicmp(action,NEW)) searched_action = TYPE_INFO_ACTION_COMPOSE;
+	if (wasiequal(action,COMPOSE) || wasiequal(action,NEW)) searched_action = TYPE_INFO_ACTION_COMPOSE;
 
 	for (i=0;i<g_infos_used;++i){
 		if (id_match(g_infos[i],content_handler_id)){
