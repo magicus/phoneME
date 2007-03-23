@@ -134,9 +134,6 @@ class StringItemLFImpl extends ItemLFImpl implements StringItemLF {
         if ((strItem.numCommands >= 1) && (appearanceMode == Item.PLAIN)) {
             appearanceMode = strItem.appearanceMode == Item.BUTTON ?
                              Item.BUTTON : Item.HYPERLINK;
-	    if (appearanceMode == Item.BUTTON) {
-            drawsTraversalIndicator = true;
-	    }
             lRequestInvalidate(true, true);
         }
 
@@ -156,7 +153,6 @@ class StringItemLFImpl extends ItemLFImpl implements StringItemLF {
         // default to PLAIN appearance if there are no commands left
         if (strItem.numCommands < 1) {
             appearanceMode = Item.PLAIN;
-            drawsTraversalIndicator = false; // not needed for plain strings
             lRequestInvalidate(true, true);
         }
 
@@ -369,14 +365,9 @@ class StringItemLFImpl extends ItemLFImpl implements StringItemLF {
 
         int mode = Text.NORMAL;
         if (appearanceMode == Item.HYPERLINK) {
+            mode = Text.HYPERLINK;
             if (hasFocus) {
-                mode = Text.HYPERLINK | Text.INVERT;
-                g.setColor(StringItemSkin.COLOR_BG_LINK_FOCUS);
-                g.fillRect(xOffset, 0, 
-                           width - xOffset, strItem.font.getHeight());
-                // IMPL NOTE: finish painting the rest of background highlight
-            } else {
-                mode = Text.HYPERLINK;
+                mode |= Text.INVERT;
             }
         }
 
@@ -403,28 +394,28 @@ class StringItemLFImpl extends ItemLFImpl implements StringItemLF {
 
         if (StringItemSkin.IMAGE_BUTTON == null) {
             CGraphicsUtil.draw2ColorBorder(g, 0, 0,
-                                           contentBounds[WIDTH], 
-                                           contentBounds[HEIGHT], 
-                                           hasFocus, 
-                                           StringItemSkin.COLOR_BORDER_DK, 
+                                           contentBounds[WIDTH],
+                                           contentBounds[HEIGHT],
+                                           hasFocus,
+                                           StringItemSkin.COLOR_BORDER_DK,
                                            StringItemSkin.COLOR_BORDER_LT,
                                            StringItemSkin.BUTTON_BORDER_W);
         } else {
             CGraphicsUtil.draw9pcsBackground(g, 0, 1,
-                                     contentBounds[WIDTH], 
+                                     contentBounds[WIDTH],
                                      contentBounds[HEIGHT],
                                      StringItemSkin.IMAGE_BUTTON);
         }
-        
-        g.translate(StringItemSkin.PAD_BUTTON_H, 
+
+        g.translate(StringItemSkin.PAD_BUTTON_H,
                     StringItemSkin.PAD_BUTTON_V);
-        Text.paint(g, strItem.str, strItem.font, 
-                   getForeground(appearanceMode), 
+        Text.paint(g, strItem.str, strItem.font,
+                   getForeground(appearanceMode),
                    getForegroundHilight(appearanceMode),
                    contentBounds[WIDTH] - (2 * StringItemSkin.PAD_BUTTON_H),
                    contentBounds[HEIGHT] - (2 * StringItemSkin.PAD_BUTTON_V),
                    0, Text.TRUNCATE, null);
-        g.translate(-StringItemSkin.PAD_BUTTON_H, 
+        g.translate(-StringItemSkin.PAD_BUTTON_H,
                     -StringItemSkin.PAD_BUTTON_V);
     }
 
