@@ -42,7 +42,7 @@ ABSTRACTIONS_NATIVES = \
 
 # dirs containing hative header files (.h)
 ABSTRACTIONS_INCLUDE_DIRS = \
-    $(ABSTRACTIONS_DIR)/src/include \
+    $(ABSTRACTIONS_DIR)/src/share/include \
     $(ABSTRACTIONS_DIR)/src/jump_application/native/include \
     $(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_OS)
 

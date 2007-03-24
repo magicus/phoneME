@@ -36,7 +36,7 @@ JSROP_ABSTRACTS_LINKLIBS =
 
 # dirs containing hative header files (.h)
 JSROP_ABSTRACTS_INCLUDES = \
-    -I$(JSROP_ABSTRACTS_DIR)/src/include \
+    -I$(JSROP_ABSTRACTS_DIR)/src/share/include \
     -I$(JSROP_ABSTRACTS_DIR)/src/cldc_application/native/include \
     -I$(JSROP_ABSTRACTS_DIR)/src/cldc_application/native/$(TARGET_PLATFORM)
 
