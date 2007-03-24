@@ -355,6 +355,11 @@ ifeq ($(JSR_177_APDU_PLATFORM_API),simulator)
         $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_simulator.xml
 endif
 
+ifeq ($(JSR_177_APDU_PLATFORM_API),real)
+    JSR_177_PROPERTY_FILES += \
+        $(INTERNAL_JSR_177_CONFIG_DIR)/common/properties_jsr177_real.xml
+endif
+
 ifeq ($(JSR_177_APDU_MANAGER),carddevice)
     ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
         JSR_177_PROPERTY_FILES += \
