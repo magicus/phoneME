@@ -12,7 +12,7 @@
 <properties>
 <!-- Internal properties (visible via Configuration.getProperty() -->
     <property Key="sun.storage.path0"
-        Value="/tmp"
+        Value="."
         Scope="internal"
         Comment="Path to internal storage"/>
 </properties>

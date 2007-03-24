@@ -66,12 +66,11 @@ public class FileAccess {
      *         storage.
      */
     public static String getStorageRoot(int storageId) {
-        String storagePath = Configuration.getProperty("sun.storage.path" + storageId);
-        if (storagePath == null || storagePath.equals("")) { // use default
-            storagePath = System.getProperty("java.home", ".");            
+        String storagePath = Configuration.getProperty("sun.storage.path" + storageId) + File.separator;
+        if (storagePath == null || storagePath.equals("")) {
+            throw new UnsupportedOperationException("\"sun.storage.path" + storageId + "\" property is not set");            
         }
-        
-        storagePath = storagePath + "/";
+
         return storagePath;
     }
 
