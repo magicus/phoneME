@@ -25,6 +25,9 @@
  */
 package com.sun.midp.chameleon.input;
 
+import com.sun.midp.log.Logging;
+import com.sun.midp.log.LogChannels;
+
 import java.util.Vector;
 import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
@@ -273,7 +276,10 @@ public class BasicTextInputSession implements
      * characters to the buffer.
      */
     public void endSession() {
-        log("[BTIS.endSession]");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[BTIS.endSession]");
+        }
 
         if (currentMode != null) {
             endInputMode(currentMode);
@@ -304,7 +310,10 @@ public class BasicTextInputSession implements
      */
     public void clear(int num) {
         if (num == 0) {
-            log("WARNING: BasicTextInput.clear calld with 0");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "WARNING: BasicTextInput.clear calld with 0");
+            }
             return;
         }
         textComponent.clear(num);
@@ -329,19 +338,28 @@ public class BasicTextInputSession implements
      * InputMode or possibly some other InputMode.
      */
     public void inputModeCompleted() {
-        log("[Basic.inputModeCompleted()] >>> ");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[Basic.inputModeCompleted()] >>> ");
+        }
         try {
             if (currentMode != null) {
-                log("[Basic.inputModeCompleted()] !=null");
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                        "[Basic.inputModeCompleted()] !=null");
+                }
                 endInputMode(currentMode);
                 setInputMode(null);
-            }        
+            }
             // Select a suitable InputMode
             selectInputMode();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        log("[Basic.inputModeCompleted()] <<<< ");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[Basic.inputModeCompleted()] <<<< ");
+        }
     }
 
     // ******* End InputModeMediator Interface *******
@@ -363,11 +381,17 @@ public class BasicTextInputSession implements
 	InputMode newMode = null;
        
         if (stickyMode != null && stickyMode.supportsConstraints(constraints)) {
-            log("[BTIS.selectInputMode] setting mode to sticky:" +
-                stickyMode.getName());
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "[BTIS.selectInputMode] setting mode to sticky:" +
+                        stickyMode.getName());
+            }
             newMode = stickyMode;
         } else {
-            log("[BTIS.selectInputMode] not setting mode to sticky");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "[BTIS.selectInputMode] not setting mode to sticky");
+            }
             for (int i = 0; i < inputModeSet.length; i++) {
                 if (inputModeSet[i].supportsConstraints(constraints)) {
                     boolean[][] map = inputModeSet[i].getIsConstraintsMap();
@@ -449,15 +473,6 @@ public class BasicTextInputSession implements
      */
     public boolean isSymbol(char c) {
         return SymbolInputMode.isSymbol(c);
-    }
-
-
-    /**
-     * Print the debug message 
-     * @param s debug message
-     */
-    private void log(String s) {
-        //        System.out.println(s);
     }
 
     /**

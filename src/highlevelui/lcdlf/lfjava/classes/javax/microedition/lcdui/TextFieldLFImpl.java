@@ -573,44 +573,47 @@ class TextFieldLFImpl extends ItemLFImpl implements
                                    int constraints,
                                    TextCursor cursor,
                                    boolean modifyCursor) {
-        log("[tf.getDisplayString]");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[tf.getDisplayString]");
+        }
         DynamicCharacterArray out = new DynamicCharacterArray(dca.length() + 1);
 
         int index = cursor == null ? dca.length() : cursor.index;
-        
+
         if ((constraints & TextField.PASSWORD) == TextField.PASSWORD) {
             index = getStringForPassword(dca, constraints, index, opChar, out);
         } else { // not password
             out.insert(dca.toCharArray(), 0, dca.length(), 0);
 
             switch (constraints & TextField.CONSTRAINT_MASK) {
-            case TextField.PHONENUMBER:
-                index = getStringForPhoneNumber(dca, index, opChar, out);
-                break;
-            case TextField.DECIMAL:
-                index = getStringForDecimal(dca, index, opChar, out);
-                break;
-            case TextField.NUMERIC:
-                index = getStringForNumeric(dca, index, opChar, out);
-                break;
-            case TextField.EMAILADDR:
-            case TextField.URL:
-            case TextField.ANY:
-                if (opChar > 0 && dca.length() < tf.getMaxSize()) {
-                    out.insert(index++, opChar);
-                }
-                break;
-            default:
-                // for safety/completeness.
-                Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI,
-                               "TextFieldLFImpl: constraints=" + constraints);
-                if (opChar > 0 && dca.length() < tf.getMaxSize()) {
-                    out.insert(index++, opChar);
-                }
-                break;
+                case TextField.PHONENUMBER:
+                    index = getStringForPhoneNumber(dca, index, opChar, out);
+                    break;
+                case TextField.DECIMAL:
+                    index = getStringForDecimal(dca, index, opChar, out);
+                    break;
+                case TextField.NUMERIC:
+                    index = getStringForNumeric(dca, index, opChar, out);
+                    break;
+                case TextField.EMAILADDR:
+                case TextField.URL:
+                case TextField.ANY:
+                    if (opChar > 0 && dca.length() < tf.getMaxSize()) {
+                        out.insert(index++, opChar);
+                    }
+                    break;
+                default:
+                    // for safety/completeness.
+                    Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI,
+                        "TextFieldLFImpl: constraints=" + constraints);
+                    if (opChar > 0 && dca.length() < tf.getMaxSize()) {
+                        out.insert(index++, opChar);
+                    }
+                    break;
             }
         }
-        
+
         if (out == null) {
             out = dca;
         }
@@ -619,7 +622,10 @@ class TextFieldLFImpl extends ItemLFImpl implements
             cursor.index = index;
         }
 
-        log("[TF.getDisplayString] getMatchList:");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[TF.getDisplayString] getMatchList:");
+        }
         pt_matches = inputSession.getMatchList();
 
         return out.toString();
@@ -918,22 +924,25 @@ class TextFieldLFImpl extends ItemLFImpl implements
             return;
         }
 
-        log("TF.commit:: " + input);
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "TF.commit:: " + input);
+        }
 
         synchronized (Display.LCDUILock) {
             try {
                 cursor.visible = true;
                 DynamicCharacterArray in = tf.buffer;
-                
-                TextCursor newCursor =  new TextCursor(cursor);
+
+                TextCursor newCursor = new TextCursor(cursor);
                 for (int i = 0; i < input.length(); i++) {
                     String str = getDisplayString(in, input.charAt(i),
-                                                  tf.constraints,
-                                                  newCursor, true);
+                        tf.constraints,
+                        newCursor, true);
                     in = new DynamicCharacterArray(str);
                 }
-                
-               
+
+
                 if (bufferedTheSameAsDisplayed(tf.constraints)) {
                     if (lValidate(in, tf.constraints)) {
                         tf.delete(0, tf.buffer.length());
@@ -945,7 +954,8 @@ class TextFieldLFImpl extends ItemLFImpl implements
                     tf.insert(input, cursor.index);
                     tf.notifyStateChanged();
                 }
-            } catch (Exception ignore) { }
+            } catch (Exception ignore) {
+            }
         }
     }
 
@@ -1117,7 +1127,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         synchronized (Display.LCDUILock) {
             // IMPL NOTE: add back in the phone dial support after defining
             // more system keys like 'send'
-        
+
             if (KeyConverter.getSystemKey(keyCode) ==
                 EventConstants.SYSTEM_KEY_SEND) {
                 if ((getConstraints() & TextField.CONSTRAINT_MASK)
@@ -1126,23 +1136,32 @@ class TextFieldLFImpl extends ItemLFImpl implements
                 }
                 return;
             }
-            
+
             if (!editable) {
                 // play sound
                 AlertType.WARNING.playSound(getCurrentDisplay());
                 return;
             }
-            
+
             int key;
-            log("TF.processKey keyCode = " + keyCode +
-                " longPress = " + theSameKey);
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "TF.processKey keyCode = " + keyCode +
+                        " longPress = " + theSameKey);
+            }
             if ((key = inputSession.processKey(keyCode, theSameKey)) ==
                 InputMode.KEYCODE_NONE) {
                 // This means the key wasn't handled by the InputMode
-                log("[TF.uCallKeyPressed] returned KEYCODE_NONE");
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                        "[TF.uCallKeyPressed] returned KEYCODE_NONE");
+                }
                 handleClearKey(keyCode, theSameKey);
             } else if (key != InputMode.KEYCODE_INVISIBLE) {
-                log("[TF.uCallKeyPressed] returned key = " + key);
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                        "[TF.uCallKeyPressed] returned key = " + key);
+                }
 
                 cursor.visible = true;
                 lRequestPaint();
@@ -1289,13 +1308,19 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * @param keyCode the key the timer is started for   
      */
     protected synchronized void setTimerKey(int keyCode) {
-        log("[setTimerKey] for " + keyCode);
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[setTimerKey] for " + keyCode);
+        }
         TimerKey timer = new TimerKey(keyCode);
         if (!timers.contains(timer)) {
             try {
                 timer.start();
             } catch (IllegalStateException e) {
-                log("Exception caught in setTimer");
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                        "Exception caught in setTimer");
+                }
                 cancelTimerKey(keyCode);
             }
         }
@@ -1306,11 +1331,14 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * @param keyCode key the timer is canceled for
      */
     protected synchronized void cancelTimerKey(int keyCode) {
-        log("[cancelTimerKey] for " + keyCode);
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[cancelTimerKey] for " + keyCode);
+        }
         TimerKey timer = new TimerKey(keyCode);
         int idx = timers.indexOf(timer);
         if (idx != -1) {
-            ((TimerKey)timers.elementAt(idx)).stop();
+            ((TimerKey) timers.elementAt(idx)).stop();
         }
     }
 
@@ -1748,14 +1776,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
     }
 
     /**
-     * Print debug message
-     * @param s debug message
-     */
-    void log(String s) {
-        //        System.out.println(s);
-    }
-
-    /**
      * Show predictive text popup dialog 
      * @param keyCode key code
      * @param cursor text cursor
@@ -1764,14 +1784,23 @@ class TextFieldLFImpl extends ItemLFImpl implements
      */
     protected void showPTPopup(int keyCode, TextCursor cursor,
                                int width, int height) {
-        log("[ showPTPopup] " + keyCode + "," + cursor +
-            "," + width + "," + height);
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[ showPTPopup] " + keyCode + "," + cursor +
+                    "," + width + "," + height);
+        }
         if (pt_matches.length > 1) { // show layer 
-            log("[showPTPopup]    pt_matches.length =" + pt_matches.length);
-            pt_popup.setList(pt_matches); 
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "[showPTPopup]    pt_matches.length =" + pt_matches.length);
+            }
+            pt_popup.setList(pt_matches);
             showPTILayer();
         } else { // hide layer
-            log("[hidePTPopup]    pt_matches=0");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "[hidePTPopup]    pt_matches=0");
+            }
             hidePTILayer();
         }
     }
@@ -1783,7 +1812,10 @@ class TextFieldLFImpl extends ItemLFImpl implements
     protected void showPTILayer() {
         Display d = getCurrentDisplay();
         if (!pt_popupOpen && d != null) {
-            log("[showPTPopup] showing");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "[showPTPopup] showing");
+            }
             d.showPopup(pt_popup);
             pt_popupOpen = true;
             lRequestInvalidate(true, true);
@@ -1796,7 +1828,10 @@ class TextFieldLFImpl extends ItemLFImpl implements
     protected void hidePTILayer() {
         Display d = getCurrentDisplay();
         if (pt_popupOpen && d != null) {
-            log("[showPTPopup] hiding");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "[showPTPopup] hiding");
+            }
             d.hidePopup(pt_popup);
             pt_popupOpen = false;
             lRequestInvalidate(true, true);

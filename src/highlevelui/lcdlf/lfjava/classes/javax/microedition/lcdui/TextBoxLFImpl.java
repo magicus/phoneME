@@ -380,14 +380,6 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
     }
 
     /**
-     * Pring debug message 
-     * @param s debug message
-     */
-    void log(String s) {
-        //        System.out.println(s);
-    }
-
-    /**
      * Get character index at the pointer position
      *
      * @param x pointer x coordinate
