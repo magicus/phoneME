@@ -192,14 +192,15 @@ public class BodyLayer extends CLayer
      */
     public boolean setVerticalScroll(int scrollPosition, int scrollProportion) {
         if (scrollInd != null && owner != null)  {
+            boolean changed = scrollInd.isVisible();
             scrollInd.setVerticalScroll(scrollPosition, scrollProportion);
             if (scrollInd.isVisible()) {
-                owner.addLayer(scrollInd);
-            } else {
-                owner.removeLayer(scrollInd);
+                changed = owner.addLayer(scrollInd);
             }
-            owner.resize();
-            return true;
+            if (changed) {
+                owner.resize();
+                return true;
+            }
         }
         return false;
     }
