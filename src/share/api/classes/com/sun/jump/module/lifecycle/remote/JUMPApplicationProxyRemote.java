@@ -69,5 +69,5 @@ public interface JUMPApplicationProxyRemote extends Remote {
      * Returns the state of the application associated with this 
      * <code>JUMPApplicationProxy</code>.
      **/
-    public int getAppState();
+    public int getAppState() throws RemoteException;
 }

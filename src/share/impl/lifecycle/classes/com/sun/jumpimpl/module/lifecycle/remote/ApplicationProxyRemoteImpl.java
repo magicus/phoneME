@@ -87,7 +87,7 @@ public class ApplicationProxyRemoteImpl implements JUMPApplicationProxyRemote {
      * Returns the state of the application associated with this 
      * <code>JUMPApplicationProxy</code>.
      **/
-    public int getAppState() {
+    public int getAppState() throws RemoteException {
        return appProxy.getAppState();
     }
 }

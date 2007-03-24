@@ -142,7 +142,7 @@ public class Utils {
     private static int mtaskServerID = -1;
     private static int mtaskClientID = -1;
 
-    static int getMtaskServerID() {
+    public static int getMtaskServerID() {
 
        if (mtaskServerID == -1) {
           try {

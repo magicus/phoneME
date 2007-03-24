@@ -87,30 +87,10 @@ public class IxcInputStream extends ObjectInputStream {
       }
    }
 
-   protected Object resolveObject(Object obj) 
-	      throws IOException {
-
-      if (!obj.getClass().isArray()) {
-         return resolveSingleObject(obj);
-      }
-
-      int loop = Array.getLength(obj);
-      for (int i = 0; i < loop; i++) {
-         Object nextObject = Array.get(obj, i);
-         Object converted = resolveSingleObject(nextObject);
-         if (nextObject != converted) {
-            Array.set(obj, i, converted);
-         }
-      }
-
-      return obj;
-   }
-
-
    // If the incoming object is a RemoteRef, inspect it's origin. 
    // If this VM is the exporter, return the original remote object,
    // else record it as an import and return a generated stub instead.
-   private Object resolveSingleObject(Object obj) 
+   protected Object resolveObject(Object obj) 
       throws IOException { 
 
       Object nextObject = obj;

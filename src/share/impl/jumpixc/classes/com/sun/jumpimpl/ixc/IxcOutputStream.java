@@ -69,26 +69,6 @@ public class IxcOutputStream extends ObjectOutputStream {
    protected Object replaceObject(Object obj) 
       throws IOException { 
 
-      if (!obj.getClass().isArray()) {
-         return replaceSingleObject(obj);
-      }
-
-      int loop = Array.getLength(obj);
-      for (int i = 0; i < loop; i++) {
-         Object nextObject = Array.get(obj, i);
-	 Object converted = replaceSingleObject(nextObject);
-	 if (nextObject != converted) {
-             Array.set(obj, i, converted);
-         }
-      }
-
-      return obj;
-   }
-
-
-   private Object replaceSingleObject(Object obj) 
-      throws IOException { 
-
       Object nextObject = obj;
 
       if (nextObject instanceof Remote) { 

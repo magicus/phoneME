@@ -30,12 +30,12 @@ information or have any questions.
       <jump.javac
              srcdir="${s.share.impl.dir}/jumpixc/classes">
            <include name="com/sun/jumpimpl/ixc/*.java" />
+           <include name="com/sun/jumpimpl/ixc/executive/*.java" />
       </jump.javac>
 
       <!-- executive specific ixc files and service registry files -->
       <jump.javac
              srcdir="${s.share.impl.dir}/serviceregistry/classes">
-           <include name="com/sun/jumpimpl/ixc/*.java" />
            <include name="com/sun/jumpimpl/module/serviceregistry/*.java" />
            <include name="com/sun/jumpimpl/client/module/serviceregistry/*.java" />
       </jump.javac>

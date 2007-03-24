@@ -23,7 +23,7 @@
  *
  */
 
-package com.sun.jumpimpl.ixc;
+package com.sun.jumpimpl.ixc.executive;
 
 import java.rmi.*;
 import java.net.ServerSocket;
@@ -45,6 +45,7 @@ import com.sun.jumpimpl.ixc.JumpExecIxcRegistryRemote;
 import com.sun.jumpimpl.ixc.ConnectionReceiver;
 import com.sun.jumpimpl.ixc.ExportedObject;
 import com.sun.jumpimpl.ixc.RemoteRef;
+import com.sun.jumpimpl.ixc.Utils;
 import com.sun.jumpimpl.ixc.XletContextFactory;
 
 /*

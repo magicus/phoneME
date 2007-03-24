@@ -50,10 +50,4 @@ public interface JUMPApplicationLifecycleModuleRemote extends Remote {
     public JUMPApplicationProxyRemote launchApplication(JUMPApplication app,
             String args[]) throws RemoteException ;
     
-    /**
-     * Returns any running application instances for this lifecycle module
-     */
-    public JUMPApplicationProxyRemote[] getApplications()
-	    throws RemoteException;
-    
 }

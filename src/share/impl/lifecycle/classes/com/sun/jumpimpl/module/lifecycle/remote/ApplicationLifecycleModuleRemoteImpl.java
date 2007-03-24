@@ -77,25 +77,14 @@ public class ApplicationLifecycleModuleRemoteImpl
      */
     public JUMPApplicationProxyRemote launchApplication(JUMPApplication app,
             String args[]) throws RemoteException {
+
        JUMPApplicationProxy proxy = lifecycleModule.launchApplication(app, args);
+
+       if (proxy == null) {
+           System.err.println("Launching failed, " + app);
+           return null;
+       } 
+	     
        return new ApplicationProxyRemoteImpl(proxy);
     }
-    
-    /**
-     * Returns any running application instances for this lifecycle module
-     */
-    public JUMPApplicationProxyRemote[] getApplications() 
-	    throws RemoteException {
-
-       JUMPApplicationProxy[] proxies = lifecycleModule.getApplications();
-       JUMPApplicationProxyRemote[] remoteProxies 
-	               = new JUMPApplicationProxyRemote[proxies.length];
-
-       for (int i = 0; i < proxies.length; i++) {
-          remoteProxies[i] = new ApplicationProxyRemoteImpl(proxies[i]);
-       }
-
-       return remoteProxies;
-    }
-    
 }

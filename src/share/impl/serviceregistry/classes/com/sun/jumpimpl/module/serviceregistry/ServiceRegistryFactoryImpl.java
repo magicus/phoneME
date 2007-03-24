@@ -32,9 +32,10 @@ import java.util.Map;
 import java.util.HashMap;
 
 import javax.microedition.xlet.ixc.IxcRegistry;
-import com.sun.jumpimpl.ixc.JumpExecIxcRegistryWrapper; 
-import com.sun.jumpimpl.ixc.JumpExecIxcRegistry; 
+
 import com.sun.jumpimpl.ixc.XletContextFactory;
+import com.sun.jumpimpl.ixc.executive.JumpExecIxcRegistryWrapper; 
+import com.sun.jumpimpl.ixc.executive.JumpExecIxcRegistry; 
 
 public class ServiceRegistryFactoryImpl extends JUMPServiceRegistryModuleFactory {
 

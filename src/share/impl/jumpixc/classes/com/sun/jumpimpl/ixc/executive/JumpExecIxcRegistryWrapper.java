@@ -25,7 +25,7 @@
  *
  */
 
-package com.sun.jumpimpl.ixc;
+package com.sun.jumpimpl.ixc.executive;
 
 import java.rmi.*;
 import java.util.Arrays;

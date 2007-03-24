@@ -85,6 +85,7 @@ public class AppContainerImpl extends JUMPAppContainer {
 			  new URL[] {classPath.toURL()}, null);
 
 	  try {
+
 	     Class [] args1 = {new String[0].getClass()};
 	     Object [] args2 = {mainArgs};
 
@@ -105,7 +106,7 @@ public class AppContainerImpl extends JUMPAppContainer {
 	       return -1;
        }
 
-       return 1; // only one app per isolate
+       return Integer.parseInt(app.getProperty(JUMPApplication.ID_KEY));
     }
     
     public void pauseApp(int appId) {
