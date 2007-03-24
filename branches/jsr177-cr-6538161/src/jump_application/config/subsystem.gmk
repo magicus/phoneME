@@ -1,0 +1,129 @@
+#
+#   
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+######################################################################
+
+# Source files for the ( satsa ) module
+#
+MODULE_SATSA_JCRMI_JAVA_FILES += \
+    $(JSR_177_DIR)/src/jump_application/protocol/jcrmi/classes/com/sun/cdc/io/j2me/jcrmi/Protocol.java
+
+MODULE_SATSA_APDU_JAVA_FILES += \
+    $(JSR_177_DIR)/src/jump_application/protocol/apdu/classes/com/sun/cdc/io/j2me/apdu/Protocol.java
+    
+ifneq ($(USE_SECOP),true)
+MODULE_SATSA_CRYPTO_JAVA_FILES += \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/BadPaddingException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/Cipher.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/IllegalBlockSizeException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/NoSuchPaddingException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/ShortBufferException.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/SecretKeySpec.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/IvParameterSpec.java \
+    $(JSR_177_DIR)/src/share/crypto/classes/com/sun/satsa/crypto/RSAPublicKey.java
+endif
+
+MODULE_SATSA_CRYPTO_JAVA_FILES += \
+    $(JSR_177_DIR)/src/jump_application/satsa/classes/com/sun/j2me/crypto/MD2.java \
+
+# Source files for security package
+#
+ifneq ($(USE_SECOP),true)
+DO_SECURITY_PROVIDER_FILTERING = true
+CVM_PROPS_SRC = $(JSR_177_DIR)/src/jump_application/satsa/java.security
+
+SECURITY_PROVIDERS += \
+    sun.security.provider.Sun \
+    com.sun.j2me.crypto.SunSATSA
+
+MODULE_SATSA_CRYPTO_JAVA_FILES += \
+    $(JSR_177_DIR)/src/jump_application/satsa/classes/com/sun/j2me/crypto/SunSATSA.java \
+    $(JSR_177_DIR)/src/jump_application/satsa/classes/com/sun/j2me/crypto/RSAKeyFactory.java \
+    $(JSR_177_DIR)/src/jump_application/satsa/classes/com/sun/j2me/crypto/MD5RSASignature.java \
+    $(JSR_177_DIR)/src/jump_application/satsa/classes/com/sun/j2me/crypto/SHA1RSASignature.java \
+    $(JSR_177_DIR)/src/jump_application/satsa/classes/com/sun/j2me/crypto/RSASignature.java
+else
+SECURITY_PROVIDERS += \
+    com.sun.satsa.crypto.SunSATSA
+
+MODULE_SATSA_CRYPTO_JAVA_FILES += \
+    $(JSR_177_DIR)/src/jump_application/satsa/classes/com/sun/satsa/crypto/SunSATSA.java
+
+endif
+
+# Define APDU sources which depend on options
+#
+# JSR_177_APDU_MANAGER=simple
+ifeq ($(JSR_177_APDU_MANAGER),simple)
+vpath % $(JSR_177_DIR)/src/jump_application/protocol/apdu/simple/native
+endif
+
+# JSR_177_APDU_MANAGER=carddevice & JSR_177_APDU_CARDDEVICE=platformcarddevice
+ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
+vpath % $(JSR_177_DIR)/src/jump_application/protocol/apdu/native
+endif
+
+#Generating property initializer
+#
+JSR_177_GENERATED_DIR = $(JSR_177_BUILD_DIR)/generated
+JSR_177_INIT_PACKAGE  = $(JSR_INIT_PACKAGE).jsr177
+JSR_177_INITIALIZER   = $(JSR_177_GENERATED_DIR)/classes/$(subst .,/,$(JSR_177_INIT_PACKAGE))/$(JSR_INIT_CLASS).java
+
+JSR_INITIALIZER_LIST += $(JSR_177_INIT_PACKAGE).$(JSR_INIT_CLASS)
+MODULE_SATSA_COMMON_JAVA_FILES += \
+    $(JSR_177_INITIALIZER)
+
+$(JSR_177_INITIALIZER): $(CONFIGURATOR_JAR_FILE)
+	$(call generateJSRInitializer,$(JSR_177_PROPERTY_FILES),$(JSR_177_GENERATED_DIR),$(JSR_177_INIT_PACKAGE),$@,$(JSR_177_LIB_NAME))
+
+# Java card constants
+#
+JAVACARD_CLASSES = $(JSR_177_BUILD_DIR)/javacard_classes
+
+# Tools and applets
+#
+ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
+TOOLS = $(JAVACARD_CLASSES) $(BINDIR) $(JCRMIC_TOOL) $(SIM_TOOL)
+
+PATHSEP ?= $(PS)
+JAVA_CMD ?= $(CVM_JAVA)
+JAVAC ?= $(CVM_JAVAC)
+else
+TOOLS = $(JAVACARD_CLASSES) $(BINDIR) $(JCRMIC_TOOL)
+endif
+
+BINDIR=$(JSR_177_BUILD_DIR)/bin
+$(BINDIR):
+	@echo " ... creating directories" $@
+	$(AT)mkdir -p $@
