@@ -84,18 +84,21 @@ static void my_sleep(CVMExecEnv *ee, long millis) {
 /*  protected native int nInit (int isolatedId) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_AudioTunnel_nInit) {
+    int ret = 0;
     isolateId = KNI_GetParameterAsInt(1);
-    jumpMessageStart();
-    jsr135_create_tunnel(isolateId);
-    jsr135_get_pcmctl(&pcm_channels, &pcm_bits, &pcm_rate);
-    KNI_ReturnInt(0);
+    if (jsr135_create_tunnel(isolateId) == 0) {
+        jsr135_get_pcmctl(&pcm_channels, &pcm_bits, &pcm_rate);
+    } else {
+        ret = -1;
+    }
+    KNI_ReturnInt(ret);
 }
 
 /*  protected native int nPlayBack () ; */
 CNIResultCode
 CNIcom_sun_mmedia_AudioTunnel_nPlayBack(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb) {
-    jint len;
+    jint len, tlen;
     jint free_len;
     jint playSize;
     do {
@@ -126,22 +129,25 @@ CNIcom_sun_mmedia_AudioTunnel_nPlayBack(CVMExecEnv* ee, CVMStackVal32 *arguments
         }
         
         /* get Playback data */
-        CVMsharedMemUnlock(tunnelDescr.shMem);
         CVMD_gcSafeExec(ee, {
             LockAudioMutex();
-            len = javacall_media_get_pcmaudio(isolateId, tunnelDescr.memPtr+(*tunnelDescr.writePtr), free_len);
+            len = 0;
+            do {
+            tlen = javacall_media_get_pcmaudio(isolateId, tunnelDescr.memPtr+(*tunnelDescr.writePtr), free_len);
+            if (tlen > 0) {
+                (*tunnelDescr.writePtr) += tlen;
+                (*tunnelDescr.playSize) += tlen;
+                if ((*tunnelDescr.writePtr) == tunnelDescr.size) {
+                    (*tunnelDescr.writePtr) = 0;
+                }
+                len += tlen;
+                free_len -= tlen;
+            }
+            } while (tlen > 0 && free_len > 0);
             UnlockAudioMutex();
         })
-                
-        if (len > 0) {
-            CVMsharedMemLock(tunnelDescr.shMem);
-            (*tunnelDescr.writePtr) += len;
-            (*tunnelDescr.playSize) += len;
-            if ((*tunnelDescr.writePtr) == tunnelDescr.size) {
-                (*tunnelDescr.writePtr) = 0;
-            }
-            CVMsharedMemUnlock(tunnelDescr.shMem);
-        }
+
+        CVMsharedMemUnlock(tunnelDescr.shMem);
         CVMD_gcSafeExec(ee, {
             CVMthreadYield();
         })
@@ -160,7 +166,6 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_AudioTunnel_nStop) {
     isolateId = KNI_GetParameterAsInt(1);
     jsr135_destroy_tunnel(isolateId);
-    jumpMessageShutdown();
     KNI_ReturnInt(0);
 }
 

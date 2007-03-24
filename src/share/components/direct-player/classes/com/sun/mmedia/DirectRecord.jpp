@@ -204,6 +204,8 @@ public final class DirectRecord implements RecordControl, DirectControls {
             } else {
                 player.sendEvent(PlayerListener.RECORD_ERROR, new String("Can't start recording"));
             }
+        } else {
+            suspended = true;
         }
 	}
 
@@ -381,6 +383,18 @@ public final class DirectRecord implements RecordControl, DirectControls {
     }
     
     ///////////////////////////////////////////////////////////////
+
+	public synchronized void recordSizeLimitReached()
+	{
+		System.out.println( "[drecord] received RSL" );
+		try
+		{
+			commit();
+		}
+		catch( java.io.IOException e )
+		{
+		}
+	}
 
     // Is recording suspended by player?
     private boolean suspended = false;

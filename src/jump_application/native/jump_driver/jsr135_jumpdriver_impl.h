@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-#define MM_SHMEM_SIZE   10*1024
+#define MM_SHMEM_SIZE   50*1024
     
 #define MAX_SUPPORTED_ISOLATES 10
 typedef struct {

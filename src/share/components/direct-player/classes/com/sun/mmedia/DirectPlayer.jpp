@@ -48,6 +48,7 @@ import javax.microedition.media.Player;
 import javax.microedition.media.PlayerListener;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.Control;
+import com.sun.mmedia.Configuration;
 
 // #ifndef ABB [
 import javax.microedition.media.control.StopTimeControl;
@@ -310,13 +311,25 @@ public class DirectPlayer extends BasicPlayer
             throw new MediaException("Unable to prefetch - can't acquire device");
         }
         if (nPcmAudioPlayback(hNative)) {
-            AudioTunnel.start();
+            AudioTunnel.getInstance().start();
         }
     }
 
     /**
      * Overrides from BasicPlayer
      */
+
+    // #ifdef RECORD [
+	protected void doReceiveRSL()
+	{
+		System.out.println( "[direct] received RSL" );
+		
+        if (recordControl != null) {
+            recordControl.recordSizeLimitReached();
+        }
+	}
+    // #endif ]
+	
     protected void doPostStart() {
         if (vc != null) {
             vc.setToThisPlayerLevel();     /* set to this player's volume level */
@@ -332,8 +345,9 @@ public class DirectPlayer extends BasicPlayer
             if (stopTimer != null) {
                 stopTimer.cancel();
             }
+            long currentTime = doGetMediaTime();
             stopTimer = new Timer();
-            stopTimer.schedule(new StopTimeController(), stopTime / 1000);
+            stopTimer.schedule(new StopTimeController(), stopTime / 1000 - currentTime / 1000 );
         }
         // #endif ]
 
@@ -450,11 +464,10 @@ public class DirectPlayer extends BasicPlayer
      */
     protected void doDeallocate() {
         if (debug) System.out.println("[direct] DirectPlayer.doDeallocate");
-
         // release device
         nReleaseDevice(hNative);
         if (nPcmAudioPlayback(hNative)) {
-            AudioTunnel.stop();
+            AudioTunnel.getInstance().stop();
         }
         // To support streaming
         isFirstStart = true;
@@ -516,12 +529,13 @@ public class DirectPlayer extends BasicPlayer
      * @exception MediaException Thrown if the media time cannot be set.
      */
     protected long doSetMediaTime(long now) throws MediaException {
-        if (now <= 0) {
-            now = 0;
-        } else {
-            now /= 1000;
-        }
-        int ret = nSetMediaTime(hNative, now);
+        if (now <= 0) now = 0;
+        
+        long dur = doGetDuration();
+
+		if (TIME_UNKNOWN != dur && now > dur) now = dur;
+        
+        int ret = nSetMediaTime(hNative, now/1000);
         if (ret == -1) {
             throw new MediaException("media time cannot be set");
         }                
@@ -535,16 +549,13 @@ public class DirectPlayer extends BasicPlayer
      * @return the duration in microseconds or <code>TIME_UNKNOWN</code>
      */
     protected long doGetDuration() {
+        // for MIDI_DEVICE_LOCATOR -- always 0
+		// for TONE_DEVICE_LOCATOR -- 0 if tone sequence wasn't set
+        if( !hasDataSource && !hasToneSequenceSet ) return 0; 
+        
         int ret = nGetDuration(hNative);
         if (ret != TIME_UNKNOWN) {
             return (ret * 1000);    
-        } else {
-            if (locator != null) {
-                if (locator.equals(Manager.TONE_DEVICE_LOCATOR) || 
-                    locator.equals(Manager.MIDI_DEVICE_LOCATOR)) {
-                    return 0;
-                }
-            }
         }
         return ret;
     }
@@ -570,7 +581,7 @@ public class DirectPlayer extends BasicPlayer
         
         if (type.equals(prefix + vocName)) { // VolumeControl
 
-            if(mimeType.equals("capture://audio"))
+            if(mimeType.equals(Configuration.AUDIO_CAPTURE_LOCATOR))
                 return null;
 
             if (vc == null) {
@@ -595,7 +606,9 @@ public class DirectPlayer extends BasicPlayer
         }
         // #endif ]
         // #ifdef MIDI_CONTROL [
-        if (mimeType == "audio/midi") {
+        if (mimeType.equals(Configuration.MIME_AUDIO_MIDI) || 
+            mimeType.equals(Configuration.MIME_AUDIO_MIDI_2) ||
+            mimeType.equals(Configuration.MIME_AUDIO_SP_MIDI)) {
             if (type.equals(prefix + micName) && SUPPORT_MIDI_CONTROL) {
                 if (midiControl == null) 
                     midiControl = new DirectMIDIControl(this);
@@ -708,6 +721,25 @@ public class DirectPlayer extends BasicPlayer
                         "Exception during set time by stop timer");
                 }
 */
+                /* IMPL_NOTE: Timer used to execute this code uses system time,
+                              which is not exactly in sync with media time, both
+                              may change in relatively large increments. That's 
+                              why we must wait here for media time to actually pass
+                              stop-time point.
+                */
+
+				long mt  = doGetMediaTime();
+				long dur = doGetDuration();
+	            
+	            while( mt < stopTime && mt < dur ) {
+					try	{
+						java.lang.Thread.sleep( 10 );
+					} catch( InterruptedException e ) {
+						// just skip it
+					}
+					
+					mt = doGetMediaTime();
+				}
 
                 try {
                     doPreStop();

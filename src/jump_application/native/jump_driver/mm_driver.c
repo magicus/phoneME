@@ -47,6 +47,5 @@ void jsr135DriverMain(int argc, char **argv) {
     } while (0 == close_driver);
 
     sleep(1);
-    
     jumpMessageShutdown();
 }

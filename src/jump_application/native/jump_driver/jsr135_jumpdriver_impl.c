@@ -114,8 +114,6 @@ int jsr135_open_tunnel(int isolateId) {
     return ret;
 }
 
-extern int close_driver;
-
 int jsr135_close_tunnel(int isolateId) {
 
     int idx = MAX_SUPPORTED_ISOLATES;
@@ -144,7 +142,6 @@ int jsr135_close_tunnel(int isolateId) {
     
     UNLOCK_MIXER_MUTEX
 
-    close_driver = 1;
     return ret;
 }
 
@@ -152,11 +149,6 @@ static int pcm_channels;
 static int pcm_bits;
 static int pcm_rate;
 static int pcm_bytes;
-/*
-static long sampletime(int sample_len) {
-    return (sample_len / ((pcm_rate * pcm_channels * (pcm_bits/8)) / 1000));
-}
-*/
 int jsr135_get_pcmctl(int *channels, int* bits, int* rate) {
 
     int ret = -1;
@@ -248,8 +240,7 @@ int jsr135_mixer_stop(int isolateId) {
 
 int loop = 1;
 
-#define MAX_BUFFER_SIZE 4*1024
-static char buffer[MAX_BUFFER_SIZE];
+static char buffer[MM_SHMEM_SIZE];
 static short *bfr16 = (short *)buffer;
 static char *bfr8 = (char *)buffer;
 
@@ -267,7 +258,7 @@ static void pcmaudio_mixer(void *args) {
 
             if (numTunnels > 0) {
                 numActivePlayers = 0;
-                realLen = MAX_BUFFER_SIZE;
+                realLen = MM_SHMEM_SIZE;
                 for (i=0; i<numTunnels; i++) {
                     CVMsharedMemLock(tunnelDescr[i].shMem);
                     if ((*tunnelDescr[i].playSize)>0) {
@@ -322,8 +313,7 @@ static void pcmaudio_mixer(void *args) {
                         usleep(wait_ms/2);
                     }
                 } else {
-//                    CVMthreadYield();
-                    usleep(100);
+                    CVMthreadYield();
                 }
             } 
             UNLOCK_MIXER_MUTEX

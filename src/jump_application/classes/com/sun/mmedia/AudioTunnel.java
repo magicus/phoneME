@@ -31,10 +31,10 @@ import com.sun.j2me.app.AppIsolate;
  */
 public class AudioTunnel {
 
-    private static TunnelThread tunnelThread = null;
-    private static int num_open_players = 0;
-    private static boolean pcmdev_acquired = false;
-    private static long toneStopTime = 0;
+    private TunnelThread tunnelThread = null;
+    private int num_open_players = 0;
+    private boolean pcmdev_acquired = false;
+    private static AudioTunnel tunnel = null;
 
     native static int nInit(int isolateId);
     native static int nPlayBack(int isolateId);
@@ -43,29 +43,37 @@ public class AudioTunnel {
     native static int nStartMixer(int isolateId);
     native static int nStopMixer(int isolateId);
 
-    public AudioTunnel() {
-        if (tunnelThread == null) {
-            nInit(AppIsolate.getIsolateId());
-            tunnelThread = new TunnelThread();
-        }
+    private AudioTunnel() {
+            if (nInit(AppIsolate.getIsolateId()) == 0) {
+                tunnelThread = new TunnelThread();
+                nStartMixer(AppIsolate.getIsolateId());
+                pcmdev_acquired = true;
+            }
     }
     
+    synchronized static AudioTunnel getInstance() {
+        if (tunnel == null) {
+            tunnel = new AudioTunnel();
+        } else if(!tunnel.pcmdev_acquired) {
+            try {
+                tunnel.tunnelThread.join();
+            } catch(InterruptedException e) {}
+            tunnel = null;
+            tunnel = new AudioTunnel();
+        }
+        return tunnel;
+    }
     
-    static void start() {
+    void start() {
         if (tunnelThread != null) {
             synchronized (tunnelThread) {
                 num_open_players++;
-                if (num_open_players == 1) {
-                    nStartMixer(AppIsolate.getIsolateId());
-                    pcmdev_acquired = true;
-                }
-          
                 tunnelThread.notify();
             }
         }
     }
     
-    static void stop() {
+    void stop() {
         if (tunnelThread != null) {
             synchronized (tunnelThread) {
                 if (num_open_players > 0) {
@@ -75,17 +83,12 @@ public class AudioTunnel {
         }
     }
 
-    static void start(long delay) {
-        if (tunnelThread != null) {
-            if (num_open_players == 0) {
-                toneStopTime = System.currentTimeMillis()+ delay;
-                nStartMixer(AppIsolate.getIsolateId());
-                pcmdev_acquired = true;
-            }
-        }
+    protected void finalize() {
+		num_open_players = 0;
     }
 
     private class TunnelThread extends Thread {
+        private boolean terminate = false;
         public TunnelThread() {
             setPriority(Thread.MAX_PRIORITY);
             start();
@@ -93,30 +96,42 @@ public class AudioTunnel {
 
         public void run() {
             int s;
-            do {
+            long stopTime = 0;
+            while(!terminate) {
                 while (pcmdev_acquired) {
                     s = nPlayBack(AppIsolate.getIsolateId());
                     if(s > 0) {
                         try{Thread.sleep(s);}catch(Exception e){}
-                    }
-                    synchronized (this) {
-                        if (num_open_players == 0 && pcmdev_acquired == true) {
-                            if (toneStopTime < System.currentTimeMillis()) {
-                                nStopMixer(AppIsolate.getIsolateId());
-                                pcmdev_acquired = false;
-                                toneStopTime = 0;
+                        stopTime = 0;
+                    } else {
+                        synchronized (this) {
+                            if (num_open_players == 0 && pcmdev_acquired == true) {
+                                if (stopTime == 0) {
+                                    stopTime = System.currentTimeMillis() + 5000; /* 5 sec */
+                                } else if (stopTime < System.currentTimeMillis()) {
+                                    nStopMixer(AppIsolate.getIsolateId());
+                                    pcmdev_acquired = false;
+                                    stopTime = 0;
+                                }
                             }
                         }
                     }
                 }
-                synchronized (this) {
-                    try {wait(1000); } catch (Exception ex) {};
+                if (num_open_players == 0) {
+                    terminate = true;
+                    nStop(AppIsolate.getIsolateId());
+                } else {
+                    synchronized (this) {
+                        try {wait(1000); } catch (Exception ex) {};
+                    }
                 }
-            } while(true);
+            };
         }
+
         protected void finalize() {
-            nStop(AppIsolate.getIsolateId());
+            num_open_players = 0;
         }
+		
     } 
     
 }
