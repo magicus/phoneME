@@ -31,8 +31,9 @@ import javax.microedition.midlet.MIDlet;
 
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
-import com.sun.midp.security.Permissions;
 import com.sun.midp.security.ImplicitlyTrustedClass;
+import javax.microedition.media.Manager;
+import javax.microedition.media.MediaException;
 
 // #ifndef ENABLE_CDC
 import com.sun.midp.i18n.Resource;
@@ -48,8 +49,8 @@ import com.sun.midp.util.ResourceHandler;
 // #ifdef ENABLE_CHAMELEON
 import com.sun.midp.chameleon.MIDPWindow;
 import com.sun.midp.chameleon.CGraphicsQ;
-import com.sun.midp.chameleon.layers.PopupLayer;
 import com.sun.midp.chameleon.ChamDisplayTunnel;
+import com.sun.midp.chameleon.layers.PopupLayer;
 import com.sun.midp.chameleon.skins.ChoiceGroupSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.resources.*;
@@ -61,6 +62,8 @@ import com.sun.midp.util.LiveTracer;
 // #endif ENABLE_I3_TEST
 
 // #ifdef ENABLE_GCI
+import java.security.*;
+
 import com.sun.me.gci.windowsystem.GCIGraphicsEnvironment;
 import com.sun.me.gci.windowsystem.GCIDisplay;
 import com.sun.me.gci.windowsystem.GCIScreenWidget;
@@ -447,7 +450,7 @@ public class Display {
     ForegroundController foregroundController;
 
     /** Display event handler with private methods. */
-    /* private */ static DisplayEventHandlerImpl displayEventHandlerImpl;
+    static DisplayEventHandlerImpl displayEventHandlerImpl;
 
     /**
      * <code>true</code>, if the <code>Display</code> is the foreground
@@ -539,10 +542,10 @@ public class Display {
 
     /** Chameleon graphics queue */
     private CGraphicsQ graphicsQ;
-
-    /** Chameleon tunnel to romized Image constructor */
-    private static ChamImageTunnel chamImageTunnel;
     // #endif ENABLE_CHAMELEON
+
+    /** Accessor to extended Image API needed for Chameleon and GameCanvas */
+    private static GraphicsAccessImpl graphicsAccessor;
 
     /**
      * <code>True</code> if a system screen, like menu, is up.
@@ -584,10 +587,11 @@ public class Display {
         WIDTH               = getScreenWidth0();
         HEIGHT              = getScreenHeight0();
 
+        graphicsAccessor = new GraphicsAccessImpl();
+        GameMap.registerGraphicsAccess(graphicsAccessor);
+    
         // #ifdef ENABLE_CHAMELEON
-
-        chamImageTunnel = new ChamImageTunnel();
-        SkinResources.initImageTunnel(chamImageTunnel);
+        SkinResources.initGraphicsAccess(graphicsAccessor);
         SkinResources.setScreenSize(WIDTH, HEIGHT);
 
         // IMPL_NOTE: In the MVM mode it's important to do the first
@@ -617,6 +621,11 @@ public class Display {
                                    Command.HELP, 3);
         aboutCommand.setInternalID(EventConstants.ABOUT_REQUESTED);
         // #endif ENABLE_CDC
+
+        // #ifdef ENABLE_GCI
+        java.security.AccessController.doPrivileged(
+                 new sun.security.action.LoadLibraryAction("gciawt"));
+        // #endif ENABLE_GCI
     }
 
 
@@ -664,14 +673,15 @@ public class Display {
         }
 
         // #ifdef ENABLE_GCI
-        GCIDisplay gciDisplay = 
+        GCIDisplay gciDisplay =
             GCIGraphicsEnvironment.getInstance().getDefaultDisplay();
-        GCIScreenWidget gciScreenWidget = 
-            gciDisplay.createScreenWidget(0, 0, WIDTH, HEIGHT, this);
+        gciScreenWidget = gciDisplay.createScreenWidget(0, 0, 
+	                                                WIDTH, HEIGHT, 
+                                                        null, null);
         screenGraphics = Graphics.getScreenGraphics(displayId,
-                                                    WIDTH,
-                                                    HEIGHT, 
-	               gciScreenWidget.getDrawingSurface());
+                                                    WIDTH, HEIGHT, 
+	                      gciScreenWidget.getDrawingSurface());
+
         // #else
 
         screenGraphics = Graphics.getScreenGraphics(displayId,
@@ -1785,9 +1795,19 @@ public class Display {
     boolean playAlertSound(AlertType t) {
 
         if (!paintSuspended && hasForeground) {
-            // SYNC NOTE: playAlertSound is a native method, no locking
+            // SYNC NOTE: playing tones in parallel is okay, no locking
             // necessary
-            return playAlertSound0(displayId, t.getType());
+            try
+            {
+                Manager.playTone( t.getMusicalNote(),
+                                  t.getSoundDuration(),
+                                  t.getSoundVolume() );
+            }
+            catch( MediaException me )
+            {
+                return false;
+            }
+            return true;
         }
 
         return false;
@@ -2276,16 +2296,6 @@ public class Display {
     static native int getScreenWidth0();
 
     static native int getScreenHeight0();
-
-    /**
-     * Play an Alert sound.
-     *
-     * @param displayId The display ID associated with this Display
-     * @param alertType type of alert
-     *
-     * @return <code>true</code>, if sound was played.
-     */
-    private native boolean playAlertSound0(int displayId, int alertType);
 
     /**
      * Plays the vibration if this Display is current and in foreground
@@ -3047,6 +3057,12 @@ public class Display {
 
                 gainedForeground0(displayId);
 
+                // #ifdef ENABLE_GCI
+                gciScreenWidget.setPeerEventTarget(currentCopy);
+                gciScreenWidget.show();
+
+                // #endif ENABLE_GCI
+
                 // #ifndef ENABLE_CHAMELEON
                 // NOTE: Chameleon does not need to do any screen erasing
                 // because its paint engine will automatically clear
@@ -3155,18 +3171,72 @@ public class Display {
     // #endif ENABLE_I3_TEST
 }
 
-// #ifdef ENABLE_CHAMELEON
 /**
- * ************* Class for Chameleon Image access
+ * Class to access extended Image and Graphics functionality needed to
+ * Chameleon, GameCanvas or to some other clients not satisified with 
+ * public API
  */
-class ChamImageTunnel implements
-    com.sun.midp.chameleon.skins.resources.ImageTunnel
-{
+class GraphicsAccessImpl implements com.sun.midp.lcdui.GraphicsAccess {
 
+    // #ifdef ENABLE_CHAMELEON
+    /**
+     * Return a romized image resource based on the identifier.
+     *
+     * @param imageDataArrayPtr native pointer to image data as Java int
+     * @param imageDataArrayLength length of image data array
+     * @return the romized Image, null if the identifier was invalid
+     *         or the Image did not exist.
+     */
     public Image getRomizedImage(int imageDataArrayPtr,
             int imageDataArrayLength) {
-        return Image.getRomizedImage(imageDataArrayPtr, imageDataArrayLength);
+        
+        return Image.getRomizedImage(
+            imageDataArrayPtr, imageDataArrayLength);
+    }
+    // #endif
+
+    /**
+     * Resize Image optionally saving its content clipped according
+     * to the new geometry
+     *
+     * @param image image to resize
+     * @param width new image width
+     * @param height new image height
+     * @param keepContent true of image content should be kept
+     */
+    public void resizeImage(Image image,
+            int width, int height, boolean keepContent) {
+        image.resize(width, height, keepContent);
+    }
+
+    /**
+     * Creates a new <code>Graphics</code> object that renders to this
+     * image and explicitly sets the Graphics object dimensions.
+     *
+     * @param image The Image to get a Graphics context for
+     * @param width The width of the Graphics context
+     * @param height The height of the Graphics context
+     * @return a <code>Graphics</code> object with this image as its destination
+     */
+    public Graphics getImageGraphics(Image image, int width, int height) {
+        return Graphics.getImageGraphics(image, width, height);
+    }
+
+    /**
+     * Get maximal width of the Graphics context
+     * @param g The Graphics context
+     * @return The width of the Graphics context
+     */
+    public short getGraphicsWidth(Graphics g) {
+        return g.getMaxWidth();
+    }
+
+    /**
+     * Get maximal height of the Graphics context
+     * @param g The Graphics context
+     * @return The height of the Graphics context
+     */
+    public short getGraphicsHeight(Graphics g) {
+        return g.getMaxHeight();
     }
 }
-// #endif
-

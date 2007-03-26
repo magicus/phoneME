@@ -1,7 +1,5 @@
 /*
- *   
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -23,28 +21,12 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */
+package com.sun.mmedia;
 
-#include <anc_audio.h>
-#include <midp_logging.h>
+import javax.microedition.lcdui.Graphics;
 
-/**
- * @file
- *
- * Common file to hold simple audio implementation.
- */
-
-/**
- * Simple sound playing implementation for Alert.
- * On most of the ports, play a beeping sound for types:
- * SOUND_WARNING, SOUND_ERROR and SOUND_ALARM.
- */
-jboolean anc_play_sound(int soundType)
-{
-    REPORT_CALL_TRACE1(LC_HIGHUI, "LF:STUB:anc_play_sound(%d)\n", soundType);
-
-    /* Suppress unused parameter warning */
-    (void)soundType;
-
-    // Not yet implemented
-    return KNI_FALSE;
+public interface MIDPVideoPainter {
+    void paintVideo(Graphics g);
+    void showVideo();
+    void hideVideo();
 }

@@ -40,7 +40,7 @@
  * both for Java and platform widget
  */
 extern "C"
-jboolean anc_play_sound(int soundType)
+jboolean anc_play_sound(AncSoundType soundType)
 {
     REPORT_CALL_TRACE1(LC_HIGHUI, "LF:STUB:anc_play_sound(%d)\n", soundType);
 

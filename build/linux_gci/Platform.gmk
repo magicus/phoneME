@@ -36,11 +36,11 @@ HOST_CPU		= i386
 HOST_COMPILER		= gcc
 
 # Definition of platform to run on
-TARGET_PLATFORM		= gci
+TARGET_PLATFORM		= linux_gci
 TARGET_OS		= linux
 TARGET_CPU		= i386
 TARGET_COMPILER		= gcc
-TARGET_VM		= cldc_vm
+TARGET_VM		= cdc_vm
 TARGET_DEVICE		= x86
 
 

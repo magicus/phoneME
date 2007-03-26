@@ -191,10 +191,14 @@ class AlertLFImpl extends ScreenLFImpl implements AlertLF {
      * (3) repaint contents
      */
     public void uCallInvalidate() {
+        boolean wasModal = maxScroll > 0 || alert.numCommands > 1;
+
         super.uCallInvalidate();
         
         synchronized (Display.LCDUILock) {
-            lSetTimeout(alert.getTimeout());
+            if (wasModal != lIsModal()) {
+                lSetTimeout(alert.getTimeout());
+            }
             lRequestPaint();
         }
         

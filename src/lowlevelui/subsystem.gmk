@@ -50,7 +50,7 @@ SUBSYSTEM_LOWUI_DIR = $(SUBSYSTEM_DIR)/lowlevelui
 ifeq ($(PLATFORM), linux_qte)
     SUBSYSTEM_GRAPHICS_MODULES = platform_graphics
 else
-    ifneq ($(PLATFORM), gci)
+    ifneq ($(PLATFORM), linux_gci)
       ifeq ($(PLATFORM), stubs)
           ifndef SUBSYSTEM_GRAPHICS_MODULES
               SUBSYSTEM_GRAPHICS_MODULES = platform_graphics
@@ -67,7 +67,7 @@ endif
 # Description: graphics utility functions
 #####################################################################
 
-ifneq ($(PLATFORM), gci)
+ifneq ($(PLATFORM), linux_gci)
 include $(SUBSYSTEM_LOWUI_DIR)/graphics_util/$(LIB_MAKE_FILE)
 
 

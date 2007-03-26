@@ -470,24 +470,24 @@ HWND win32app_get_window_handle() {
  * If 'active' is KNI_TRUE, the BackLight is drawn.
  * If 'active' is KNI_FALSE, the BackLight is erased.
  */
-jboolean drawBackLight(int mode) {
+jboolean drawBackLight(AncBacklightState mode) {
 
     HDC hdc = GetDC(hMainWindow);
     jboolean result = KNI_FALSE;
 
-    if (mode == BACKLIGHT_IS_SUPPORTED) {
+    if (mode == ANC_BACKLIGHT_SUPPORTED) {
         result = KNI_TRUE;
     }
     else {
         CreateBacklight(hdc);
-        if ((mode == BACKLIGHT_ON) || 
-            (mode == BACKLIGHT_TOGGLE && isBklite_on == KNI_FALSE)) {
+        if ((mode == ANC_BACKLIGHT_ON) || 
+            (mode == ANC_BACKLIGHT_TOGGLE && isBklite_on == KNI_FALSE)) {
             isBklite_on = KNI_TRUE;
             DrawBitmap(hdc, hPhoneLightBitmap, 0, 0, SRCCOPY);
             invalidateLCDScreen(0, 0, get_screen_width(), get_screen_height());
             result = KNI_TRUE;
-        } else if ((mode == BACKLIGHT_OFF) ||
-                  (mode == BACKLIGHT_TOGGLE && isBklite_on == KNI_TRUE)){
+        } else if ((mode == ANC_BACKLIGHT_OFF) ||
+                  (mode == ANC_BACKLIGHT_TOGGLE && isBklite_on == KNI_TRUE)){
             if (isBklite_on) {
                 isBklite_on = KNI_FALSE;
                 InvalidateRect(hMainWindow, NULL, KNI_TRUE);

@@ -605,10 +605,25 @@ public class Image {
 				 int imageDataArrayLength) {
 	// TODO -add impl
 	return null;
-
     }
 
     /**
+     * Returns <code>ImageData</code> associated with this 
+     * <code>Image</code>.
+     *
+     * @return The <code>ImageData </code> associated with this 
+     * <code>Image</code>.
+     */
+    ImageData getImageData() {
+	return null;
+    }
+
+    /**
+     * Returns <code>GCIDrawingSurface</code> associated with this 
+     * <code>Image</code>.
+     *
+     * @return The <code>GCIDrawingSurface</code> associated with this 
+     * <code>Image</code>.
      */
     GCIDrawingSurface getDrawingSurface() {
 	return gciDrawingSurface;
@@ -641,4 +656,12 @@ public class Image {
 								  height,
 					GCIDrawingSurface.FORMAT_ARGB_8888);
     }
+}
+
+/**
+ * This a dummy ImageData - a work around till ChoiceGroup.java
+ * sets imageData per its element. Once that logic is moved to 
+ * platform_widget ChoiceGroupLFImpl.java ImageData class can be removed.
+ */
+class ImageData {
 }

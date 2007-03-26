@@ -47,7 +47,6 @@ vpath % $(LCDUI_DIR)/reference/native
 # Native files for the library
 #
 SUBSYSTEM_LCDUI_NATIVE_FILES += \
-    lcdui_audio.c \
     lcdui_game.c \
     lcdui_indicators.c \
     lcdui_input.c \
@@ -59,11 +58,16 @@ SUBSYSTEM_LCDUI_NATIVE_FILES += \
 $(GENERATED_DIR)/classes/javax/microedition/lcdui/Display.java: $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Display.jpp
 	@$(call runjpp,$^,$@)
 
+$(GENERATED_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.java: $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.jpp
+	@$(call runjpp,$^,$@)
+
 # Java files for the library
 #
 SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(GENERATED_DIR)/classes/javax/microedition/lcdui/Display.java \
+    $(GENERATED_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameMap.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/CommandAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/TextPolicy.java \

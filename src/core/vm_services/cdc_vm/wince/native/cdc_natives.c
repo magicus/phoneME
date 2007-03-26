@@ -42,8 +42,7 @@ static MidpReentryData newSignal;
 static MidpEvent newMidpEvent;
 
 static void initCDCEvents();
-// in midp_msgQueue_md.c
-void handleKey(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent);
+
 
 KNIEXPORT KNI_RETURNTYPE_LONG
 JVM_JavaMilliSeconds() {

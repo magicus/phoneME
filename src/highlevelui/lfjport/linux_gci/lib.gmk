@@ -1,5 +1,5 @@
 #
-#   
+#
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -25,28 +25,12 @@
 #
 ######################################################################
 #
-# Library Makefile
+# LFJPORT Java Look and Feel Porting
 #
 ######################################################################
 
-# Name of the library
-ANC_STUB_NAME = highlevelui/annunciator/gci
-ANC_STUB_DIR = $(SUBSYSTEM_DIR)/$(ANC_STUB_NAME)
+vpath % $(SUBSYSTEM_LFJPORT_DIR)/linux_gci/native
 
-# Add to library set for this build
-LIB_SET += $(ANC_STUB_NAME)
+SUBSYSTEM_LCDLF_NATIVE_FILES += \
+    lfjport_gci_export.c
 
-# Export include files
-# SUBSYSTEM_ANNUNCIATOR_EXTRA_INCLUDES += -I$(ANC_STUB_DIR)/include
-
-# Native files for the library
-#
-SUBSYSTEM_ANNUNCIATOR_NATIVE_FILES += \
-    anc_gci_audio.c \
-    anc_gci_indicator.c \
-    anc_gci_pauseresume.c \
-    anc_gci_vibrate.c
-
-# Source code path for the library
-#
-vpath % $(ANC_STUB_DIR)/native

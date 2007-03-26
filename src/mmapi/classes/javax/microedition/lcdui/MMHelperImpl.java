@@ -26,43 +26,98 @@
 
 package javax.microedition.lcdui;
 
+import com.sun.mmedia.MIDPVideoPainter;
+import com.sun.mmedia.MMHelper;
+import java.util.Vector;
+
 /**
- * This is a helper class to communicate with the MMAPI video players.
- * This is a stub class which will be replaced by an MMAPI version when
- * the video subsystem is enabled.
+ * This is a helper class to communicate between the LCDUI canvas and
+ * the MMAPI video players. 
  */
-final class MMHelperImpl {
+final class MMHelperImpl extends MMHelper {
+
+    private static MMHelperImpl instance = null;
+    
+    /**
+     * Single use constructor. Cannot be instantiated twice. The instance
+     * object is held by Canvas as well as MIDPVideoPainter implementation.
+     */
+    public MMHelperImpl() {
+        if (instance != null) {
+            throw new RuntimeException("Cannot instantiate MMHelperImpl twice");
+        }
+        MMHelper.setMMHelper(this);
+        instance = this;
+    }
 
     /**
      * Returns the only instance of this class.
      * @return the instance of this class
      */
     static MMHelperImpl getInstance() {
-	return null;
+        return instance;
     }
 
     /**
-     * Calls paint on the video players that are drawing to the canvas.
-     * @param video The Video painter implementation
-     * @param g The Graphics object of the current paint call
+     * Informs the player to draw into Graphics <code>g</code>
+     *
+     * @param video The video player which should be repainted.
+     * @param g The graphics object to pass to the video player.
      */
-    void paintVideo(Object video, Graphics g) {
-        // Stub
+    synchronized void paintVideo(Object video, Graphics g) {
+        MIDPVideoPainter vp = (MIDPVideoPainter)video;
+        vp.paintVideo(g);
     }
-
+    
     /**
      * Notify video renderers that canvas becomes visible.
      * @param video The video painter which is shown.
      */
-    void showVideo(Object video) {
-        // Stub
+    synchronized void showVideo(Object video) {
+        MIDPVideoPainter vp = (MIDPVideoPainter)video;
+        vp.showVideo();
     }
 
     /**
      * Notify video renderers that canvas becomes invisible.
      * @param video The video painter which is hidden.
      */
-    void hideVideo(Object video) {
-        // Stub
+    synchronized void hideVideo(Object video) {
+        MIDPVideoPainter vp = (MIDPVideoPainter)video;
+        vp.hideVideo();
     }
+
+    /****************************************************************
+     * MMHelper implementation
+     ****************************************************************/
+
+    /**
+     * Registers a video control (which implements MIDPVideoPainter) with
+     * the corresponding Canvas where the video is to show up.
+     */
+    public void registerPlayer(Canvas c, MIDPVideoPainter vp) {
+        ((CanvasLFImpl)c.canvasLF).addEmbeddedVideo(vp);
+    }
+
+    /**
+     * Unregisters a video control so that it doesn't get paint callbacks
+     * anymore after the player is closed. This also reduces load on the
+     * Canvas repaint mechanism.
+     */
+    public synchronized void unregisterPlayer(Canvas c, MIDPVideoPainter vp) {
+        ((CanvasLFImpl)c.canvasLF).removeEmbeddedVideo(vp);
+    }
+
+    /**
+     * Get Display being used for Item painting. Platform-dependent.
+     */
+    public Display getItemDisplay(Item item) {
+        Display display = null;
+
+        if (item.owner == null)
+            return null;
+
+        return item.owner.getLF().lGetCurrentDisplay();
+    }    
+
 }

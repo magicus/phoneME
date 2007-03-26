@@ -138,7 +138,7 @@ MIDP_ROMSTRUCTS_CLASSES += \
 	com.sun.midp.io.j2me.storage.RandomAccessStream \
 	javax.microedition.lcdui.game.GameCanvas
 
-ifneq ($(PLATFORM),gci)
+ifneq ($(PLATFORM), linux_gci)
 MIDP_ROMSTRUCTS_CLASSES += \
 	javax.microedition.lcdui.ImageData
 endif

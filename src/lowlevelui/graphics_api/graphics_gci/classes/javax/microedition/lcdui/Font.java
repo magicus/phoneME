@@ -187,17 +187,17 @@ public final class Font {
      */
     public static Font getFont(int fontSpecifier) {
 
-	Font font;
+        Font font;
 
-	switch (fontSpecifier) {
-	case FONT_STATIC_TEXT: 
-	case FONT_INPUT_TEXT:
-	    font = getDefaultFont();
-	    break;
-	default:
-	    throw new IllegalArgumentException();
-	}
-	return font;
+        switch (fontSpecifier) {
+        case FONT_STATIC_TEXT: 
+        case FONT_INPUT_TEXT:
+            font = getDefaultFont();
+            break;
+        default:
+            throw new IllegalArgumentException();
+        }
+        return font;
     }
 
     /**
@@ -212,12 +212,16 @@ public final class Font {
         style = inp_style;
         size  = inp_size;
 
-	// TODO mapping of face, style, size
-	gciFont = GCIFontEnvironment.getInstance().getFont("Times", 
-							   inp_style,
-							   12);
-					 // (inp_style & STYLE_UNDERLINED)!=0,
-					 //	   false);
+        // TODO mapping of face, style, size
+        gciFont = GCIFontEnvironment.getInstance().getFont("Courier", 
+                                                           inp_style,
+                                                           12,
+                                                           isUnderlined(),
+                                                           false);
+
+        baseline = gciFont.getMaxAscent();
+        glyphHeight = baseline + gciFont.getMaxDescent();
+        height = glyphHeight + gciFont.getLeading();
     }
 
     /**
@@ -397,7 +401,7 @@ public final class Font {
      * @return the total advance width (a non-negative value)
      */
     public int charWidth(char ch) {
-	return gciFont.getStringWidth(new String(new char[]{ch}));
+        return gciFont.getStringWidth(new String(new char[]{ch}));
     }
 
     /**
@@ -428,15 +432,15 @@ public final class Font {
      */
     public int charsWidth(char[] ch, int offset, int length) {
         if (ch == null) {
-	    throw new NullPointerException();
-	}
+            throw new NullPointerException();
+        }
 
-	try {
-	    String strToRender = new String(ch, offset, length);
-	    return gciFont.getStringWidth(strToRender);
-	} catch (IndexOutOfBoundsException i) {
-	    throw new ArrayIndexOutOfBoundsException();
-	}
+        try {
+            String strToRender = new String(ch, offset, length);
+            return gciFont.getStringWidth(strToRender);
+        } catch (IndexOutOfBoundsException i) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
     }
 
     /**
@@ -454,9 +458,9 @@ public final class Font {
      */
     public int stringWidth(java.lang.String str) {
         if (str == null) {
-	    throw new NullPointerException();
-	}
-	return gciFont.getStringWidth(str);
+            throw new NullPointerException();
+        }
+        return gciFont.getStringWidth(str);
     }
 
     /**
@@ -488,14 +492,26 @@ public final class Font {
      */
     public int substringWidth(String str, int offset, int len) {
         try {
-	    // This will generate NullPointerException
-	    String strToRender = str.substring(offset, offset + len);
-	    return gciFont.getStringWidth(strToRender);
-	} catch (IndexOutOfBoundsException i) {
-	    throw new StringIndexOutOfBoundsException();
-	}
+            // This will generate NullPointerException
+            String strToRender = str.substring(offset, offset + len);
+            return gciFont.getStringWidth(strToRender);
+        } catch (IndexOutOfBoundsException i) {
+            throw new StringIndexOutOfBoundsException();
+        }
     }
 
+
+    /**
+     * Gets the standard height of a line of text in this font. 
+     * This extra space (leading) occurs below  the text is not included
+     * in this value.
+     * @return standard height of a line of text in this font (a 
+     * non-negative value)
+     */
+    int getMaxGlyphHeight() {
+        // SYNC NOTE: return of atomic value, no locking necessary
+        return glyphHeight;
+    }
 
     // private implementation //
 
@@ -509,6 +525,8 @@ public final class Font {
     private int baseline;
     /** The height of this Font */
     private int height;
+    /** The height without leading of this Font */
+    private int glyphHeight;
 
     /** GCI Font mapping */
     GCIFont gciFont;

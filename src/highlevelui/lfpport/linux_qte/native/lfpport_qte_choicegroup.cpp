@@ -262,6 +262,9 @@ void ChoiceButton::keyPressEvent(QKeyEvent *keyEvent) {
     ChoiceButtonBoxBody *qGroup = (ChoiceButtonBoxBody *)QButton::parentWidget();
 
     switch(keyEvent->key()) {
+#ifdef QT_KEYPAD_MODE
+        case Qt::Key_Select:
+#endif
     case Qt::Key_Return:
     {
         if (isExclusive) { // radio button

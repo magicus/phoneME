@@ -37,18 +37,28 @@
 /**
  * Simple sound playing implementation for Alert.
  * On most of the ports, play a beeping sound for types:
- * SOUND_WARNING, SOUND_ERROR and SOUND_ALARM.
+ * ANC_SOUND_WARNING, ANC_SOUND_ERROR and ANC_SOUND_ALARM.
  */
-jboolean anc_play_sound(int soundType)
+jboolean anc_play_sound(AncSoundType soundType)
 {
     javacall_audible_tone_type jatt;
 
     switch (soundType) {
-    case SOUND_INFO:         jatt = JAVACALL_AUDIBLE_TONE_INFO;         break;
-    case SOUND_WARNING:      jatt = JAVACALL_AUDIBLE_TONE_WARNING;      break;
-    case SOUND_ERROR:        jatt = JAVACALL_AUDIBLE_TONE_ERROR;        break;
-    case SOUND_ALARM:        jatt = JAVACALL_AUDIBLE_TONE_ALARM;        break;
-    case SOUND_CONFIRMATION: jatt = JAVACALL_AUDIBLE_TONE_CONFIRMATION; break;
+    case ANC_SOUND_INFO:         
+        jatt = JAVACALL_AUDIBLE_TONE_INFO;
+        break;
+    case ANC_SOUND_WARNING:
+        jatt = JAVACALL_AUDIBLE_TONE_WARNING;
+        break;
+    case ANC_SOUND_ERROR:
+        jatt = JAVACALL_AUDIBLE_TONE_ERROR;
+        break;
+    case ANC_SOUND_ALARM:
+        jatt = JAVACALL_AUDIBLE_TONE_ALARM;
+        break;
+    case ANC_SOUND_CONFIRMATION:
+        jatt = JAVACALL_AUDIBLE_TONE_CONFIRMATION;
+        break;
     default:
         return KNI_FALSE;
     };

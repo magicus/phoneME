@@ -156,7 +156,6 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/TickerResources.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/PTIResources.java \
     $(GENERATED_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResources.java \
-    $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/ImageTunnel.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/skins/resources/SkinResourcesConstants.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/AlertLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/TitleLayer.java \
@@ -237,6 +236,6 @@ $(OBJ_DIR)/lfj_image_rom.o: $(GENERATED_DIR)/lfj_image_rom.c
 # Define Jpp
 JPP_DEFS += -DENABLE_CHAMELEON
 
-ifeq ($(PLATFORM), gci)
+ifeq ($(PLATFORM), linux_gci)
   JPP_DEFS += -DENABLE_GCI
 endif

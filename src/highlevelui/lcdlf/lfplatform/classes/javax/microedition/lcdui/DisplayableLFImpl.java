@@ -28,11 +28,10 @@ package javax.microedition.lcdui;
 
 /* import  javax.microedition.lcdui.KeyConverter; */
 
-import java.util.Timer;
-import java.util.TimerTask;
 import javax.microedition.lcdui.game.GameCanvas;
 import com.sun.midp.lcdui.EventConstants;
 import com.sun.midp.lcdui.GameMap;
+import com.sun.midp.lcdui.GameCanvasLFImpl;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.configurator.Constants;
@@ -357,7 +356,7 @@ abstract class DisplayableLFImpl implements DisplayableLF {
         // set Game key event flag based on value passed in
         // GameCanvas constructor.
         if (owner instanceof GameCanvas) {
-            GameMap.register(owner, currentDisplay.accessor);
+            GameMap.registerDisplayAccess(owner, currentDisplay.accessor);
             stickyKeyMask = currentKeyMask = 0;
         } else {
             // set the keymask to -1 when
@@ -493,6 +492,14 @@ abstract class DisplayableLFImpl implements DisplayableLF {
         boolean copyDefferedSizeChange;
 
         synchronized (Display.LCDUILock) {
+            if (owner instanceof GameCanvas) {
+                GameCanvasLFImpl gameCanvasLF =
+                    GameMap.getGameCanvasImpl((GameCanvas)owner);
+                if (gameCanvasLF != null) {
+                    gameCanvasLF.lCallSizeChanged(w, h);
+                }
+            }
+
             // If there is no Display, or if this Displayable is not
             // currently visible, we simply record the fact that the
             // size has changed
