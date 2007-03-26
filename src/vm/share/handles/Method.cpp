@@ -3078,7 +3078,6 @@ bool Method::is_snippet_can_be_elminate(jint begin_bci, jint end_bci, int& local
       break;
     }
 #endif        
-    //add by andy during 2nd on site QA 
    case Bytecodes::_fast_init_1_putstatic:
    case Bytecodes::_fast_init_2_putstatic:
    case Bytecodes::_fast_init_a_putstatic:
