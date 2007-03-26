@@ -652,25 +652,31 @@ public class MIDPWindow extends CWindow {
      * titles, tickers, fullscreen mode, etc. change state.
      */
     public void resize() {
-        super.resize();
+        // Cache a few often used layers for faster access
+        CLayer bodyLayer = mainLayers[BODY_LAYER];
+        CLayer titleLayer = mainLayers[TITLE_LAYER];
+        CLayer tickerLayer = mainLayers[TICKER_LAYER];
+        CLayer buttonLayer = mainLayers[BTN_LAYER];
 
-        int oldHeight = mainLayers[BODY_LAYER].bounds[H];
-        int oldWidth = mainLayers[BODY_LAYER].bounds[W];
+        int oldHeight = bodyLayer.bounds[H];
+        int oldWidth = bodyLayer.bounds[W];
+
+        super.resize();
 
         switch (screenMode) {
             case FULL_SCR_MODE:
                 // TODO: scroll arrows (bar? ) indicator has to be hidden?
-                mainLayers[TITLE_LAYER].visible = false;
-                mainLayers[TICKER_LAYER].visible = false;
-                mainLayers[BTN_LAYER].visible = 
-                    ((SoftButtonLayer)mainLayers[BTN_LAYER]).isInteractive();
+                titleLayer.visible = false;
+                tickerLayer.visible = false;
+                buttonLayer.visible =
+                    ((SoftButtonLayer)buttonLayer).isInteractive();
                 break;
             case NORMAL_MODE:
-                mainLayers[TITLE_LAYER].visible = 
-                    (((TitleLayer)mainLayers[TITLE_LAYER]).getTitle() != null);
-                mainLayers[TICKER_LAYER].visible = 
-                    (((TickerLayer)mainLayers[TICKER_LAYER]).getText() != null);
-                mainLayers[BTN_LAYER].visible = true;
+                titleLayer.visible =
+                    (((TitleLayer)titleLayer).getTitle() != null);
+                tickerLayer.visible =
+                    (((TickerLayer)tickerLayer).getText() != null);
+                buttonLayer.visible = true;
                 break;
             default:
                 Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI,
@@ -679,13 +685,14 @@ public class MIDPWindow extends CWindow {
         }
 
         for (int i = 0; i < LAST_LAYER; i++) {
-            if (mainLayers[i] != null) {
-                mainLayers[i].update(mainLayers);
+            CLayer l = mainLayers[i];
+            if (l != null && l.visible) {
+                l.update(mainLayers);
             }
         }
 
-        if (mainLayers[BODY_LAYER].bounds[W] != oldWidth ||
-            mainLayers[BODY_LAYER].bounds[H] != oldHeight) {
+        if (bodyLayer.bounds[W] != oldWidth ||
+                bodyLayer.bounds[H] != oldHeight) {
             setDirty();
             sizeChangedOccured = true;
         }
