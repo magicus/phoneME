@@ -820,7 +820,7 @@ class EGL10Impl implements EGL10 {
 	// Ensure all queued commands have been submitted to the GL
 
         EGLContextImpl cimpl = (EGLContextImpl)eglGetCurrentContext();
-	GL currGL = cimpl.getGL();
+    GL currGL = cimpl.getGL();
 	((GL10Impl)currGL).qflush();
 
         GL10Impl.grabContext();
@@ -829,9 +829,18 @@ class EGL10Impl implements EGL10 {
         EGLSurfaceImpl currentDrawSurface = cimpl.getDrawSurface();
 
         if (currentDrawSurface != null) {
-            Graphics targetGraphics = currentDrawSurface.getTarget();
-            int deltaHeight = _getFullDisplayHeight() -
-                    GameMap.getGraphicsAccess().getGraphicsHeight(targetGraphics);
+            final Graphics targetGraphics = currentDrawSurface.getTarget();
+            // Creator is null if Graphics is obtained from Image.
+            // In case of Image there are no manus and hence no
+            // shift is required.
+            final Object creator = (targetGraphics != null) ?
+              GameMap.getGraphicsAccess().getGraphicsCreator(
+                      targetGraphics) : null;
+            int deltaHeight = 0;
+            if (creator != null) {
+                deltaHeight = _getFullDisplayHeight() -
+                 GameMap.getGraphicsAccess().getGraphicsHeight(targetGraphics);
+            }
             _putWindowContents(targetGraphics,
                     deltaHeight,
                     currentDrawSurface.getPixmapPointer());
@@ -845,15 +854,24 @@ class EGL10Impl implements EGL10 {
     public synchronized boolean eglWaitNative(int engine,
                                               Object bindTarget) {
         EGLContextImpl cimpl = (EGLContextImpl)eglGetCurrentContext();
+        // IMPL_NOTE: should we really check for cimpl == null here?
         if (cimpl != null) {
             EGLSurfaceImpl currentDrawSurface = cimpl.getDrawSurface();
 
             if (currentDrawSurface != null) {
                 Graphics targetGraphics = currentDrawSurface.getTarget();
-                int deltaHeight = _getFullDisplayHeight() -
+                // Creator is null if Graphics is obtained from Image.
+                // In case of Image there are no manus and hence no
+                // shift is required.
+                Object creator = (targetGraphics != null) ?
+                  GameMap.getGraphicsAccess().getGraphicsCreator(
+                          targetGraphics) : null;
+                int deltaHeight = 0;
+                if (creator != null) {
+                    deltaHeight = _getFullDisplayHeight() -
                         GameMap.getGraphicsAccess().getGraphicsHeight(targetGraphics);
-                _getWindowContents(targetGraphics,
-                                   deltaHeight,
+                }
+                _getWindowContents(targetGraphics, deltaHeight,
                                    currentDrawSurface.getPixmapPointer());
             } else {
                 // Do nothing
@@ -904,18 +922,22 @@ class EGL10Impl implements EGL10 {
         
         EGLSurfaceImpl surf = (EGLSurfaceImpl)surface;
 
-        EGLContextImpl cimpl = (EGLContextImpl) eglGetCurrentContext();
-        EGLSurfaceImpl currentDrawSurface = cimpl.getDrawSurface();
-        Graphics targetGraphics = currentDrawSurface.getTarget();
-        int deltaHeight = _getFullDisplayHeight() -
+        final Graphics targetGraphics = surf.getTarget();
+        // Creator is null if Graphics is obtained from Image.
+        // In case of Image there are no manus and hence no
+        // shift is required.
+        final Object creator = (targetGraphics != null) ?
+                GameMap.getGraphicsAccess().getGraphicsCreator(
+                    targetGraphics) : null;
+        int deltaHeight = 0;
+        if (creator != null) {
+            deltaHeight = _getFullDisplayHeight() -
                 GameMap.getGraphicsAccess().getGraphicsHeight(targetGraphics);
-
+        }
         boolean retval = EGL_TRUE ==
-	    _eglCopyBuffers(((EGLDisplayImpl)display).nativeId(),
-			    surf.nativeId(),
-			    imageGraphics,
-                surf.getWidth(), surf.getHeight(),
-                deltaHeight);
+            _eglCopyBuffers(((EGLDisplayImpl)display).nativeId(),
+                    surf.nativeId(), imageGraphics,
+                    surf.getWidth(), surf.getHeight(), deltaHeight);
         return retval;
     }
 
