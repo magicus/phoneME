@@ -96,12 +96,12 @@ public class FileAccess {
     }
 
     public void disconnect() throws IOException {
-        if (outputStream instanceof InputStream) {
-            ((InputStream)outputStream).close();
+        if (inputStream instanceof InputStream) {
+            ((InputStream)inputStream).close();
         }
 
-        if (inputStream instanceof DataOutputStream) {
-            ((DataOutputStream)inputStream).close();
+        if (outputStream instanceof DataOutputStream) {
+            ((DataOutputStream)outputStream).close();
         }
     }
 
