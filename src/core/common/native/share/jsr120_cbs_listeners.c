@@ -67,10 +67,14 @@ static JVMSPI_ThreadID jsr120_cbs_get_blocked_thread_from_handle(long handle,
 static WMA_STATUS jsr120_cbs_is_msgID_registered(jchar msgID,
     ListElement *listeners);
 static WMA_STATUS jsr120_cbs_register_msgID(jchar msgID, SuiteIdType msid,
-    cbs_listener_t* listener, void* userData, ListElement **listeners);
+    cbs_listener_t* listener, void* userData, ListElement **listeners,
+    jboolean registerWithPlatform);
 static WMA_STATUS jsr120_cbs_unregister_msgID(jchar msgID,
-    cbs_listener_t* listener, ListElement **listeners);
+    cbs_listener_t* listener, ListElement **listeners,
+    jboolean unregisterWithPlatform);
 static void jsr120_cbs_delete_all_msgs(SuiteIdType msid, ListElement* head);
+static WMA_STATUS jsr120_cbs_is_msgID_registered_by_msid(jchar msgID,
+    ListElement *listeners, SuiteIdType msid);
 
 /**
  * Invoke registered listeners that match the msgID specified in the CBS
@@ -142,23 +146,51 @@ WMA_STATUS jsr120_cbs_is_midlet_msgID_registered(jchar msgID) {
     return jsr120_cbs_is_msgID_registered(msgID, cbs_midlet_listeners);
 }
 
+/**
+ * Check if an message ID is currently registered for given message identifier
+ *
+ * @param msgID the message ID to check
+ * @param listeners List of listeners in which to check
+ * @param msid suite id to check for
+ *
+ * @return <code>WMA_OK</code> if a given application is listening for this ID,
+ *         <code>WMA_ERR</code> otherwise
+ *
+ */
+WMA_STATUS jsr120_cbs_is_msgID_registered_by_msid(jchar msgID,
+    ListElement *listeners, SuiteIdType msid) {
+
+    ListElement *entry = jsr120_list_get_by_number(listeners, msgID);
+    
+    return entry != NULL && entry->msid == msid ? WMA_OK : WMA_ERR;
+}
+
 /*
  * See jsr120_cbs_listeners.h for documentation
  */
 WMA_STATUS jsr120_cbs_register_midlet_msgID(jchar msgID,
     SuiteIdType msid, jint handle) {
 
+    jboolean isPushRegistered = jsr120_cbs_is_msgID_registered_by_msid(
+        msgID, cbs_push_listeners, msid) == WMA_OK;
+
     return jsr120_cbs_register_msgID(msgID, msid, jsr120_cbs_midlet_listener,
-        (void *)handle, &cbs_midlet_listeners);
+                                     (void *)handle, &cbs_midlet_listeners,
+                                     !isPushRegistered);
 }
 
 /*
  * See jsr120_cbs_listeners.h for documentation
  */
 WMA_STATUS jsr120_cbs_unregister_midlet_msgID(jchar msgID) {
-
+    /*
+     * As there was open connection push can be registered only for current suite
+     * thus no need to check for suite ID
+     */
+    jboolean hasNoPushRegistration = jsr120_cbs_is_push_msgID_registered(msgID) == WMA_ERR;
+    
     return jsr120_cbs_unregister_msgID(msgID, jsr120_cbs_midlet_listener,
-        &cbs_midlet_listeners);
+                                       &cbs_midlet_listeners, hasNoPushRegistration);
 }
 
 /*
@@ -174,16 +206,27 @@ WMA_STATUS jsr120_cbs_is_push_msgID_registered(jchar msgID) {
 WMA_STATUS jsr120_cbs_register_push_msgID(jchar msgID, SuiteIdType msid,
     jint handle) {
 
+    jboolean isMIDletRegistered = jsr120_cbs_is_msgID_registered_by_msid(
+        msgID, cbs_midlet_listeners, msid) == WMA_OK;
+
+
     return jsr120_cbs_register_msgID(msgID, msid, jsr120_cbs_push_listener,
-        (void *)handle, &cbs_push_listeners);
+                                     (void *)handle, &cbs_push_listeners,
+                                     !isMIDletRegistered);
 }
 
 /*
  * See jsr120_cbs_listeners.h for documentation
  */
 WMA_STATUS jsr120_cbs_unregister_push_msgID(jchar msgID) {
+    /*
+     * As there was push push registration connection can be open only for current suite
+     * thus no need to check for suite ID
+     */
+    jboolean hasNoConnection = jsr120_cbs_is_midlet_msgID_registered(msgID) == WMA_ERR;
+
     return jsr120_cbs_unregister_msgID(msgID, jsr120_cbs_push_listener,
-        &cbs_push_listeners);
+                                       &cbs_push_listeners, hasNoConnection);
 }
 
 /*
@@ -310,13 +353,16 @@ static WMA_STATUS jsr120_cbs_push_listener(CbsMessage* message, void* userData)
  */
 static WMA_STATUS jsr120_cbs_register_msgID(jchar msgID,
     SuiteIdType msid, cbs_listener_t* listener, void* userData,
-    ListElement **listeners) {
+    ListElement **listeners, jboolean registerWithPlatform) {
 
     /* Assume no success in registering the message ID. */
     WMA_STATUS ok = WMA_ERR;
 
     if (jsr120_cbs_is_msgID_registered(msgID, *listeners) == WMA_ERR) {
-	ok = jsr120_add_cbs_listening_msgID(msgID);
+        ok = WMA_OK;
+        if (registerWithPlatform) {
+            ok = jsr120_add_cbs_listening_msgID(msgID);
+        }
 	jsr120_list_new_by_number(listeners, msgID, msid, userData, (void*)listener);
     }
 
@@ -337,7 +383,8 @@ static WMA_STATUS jsr120_cbs_register_msgID(jchar msgID,
  *     otherwise.
  */
 static WMA_STATUS jsr120_cbs_unregister_msgID(jchar msgID,
-    cbs_listener_t* listener, ListElement **listeners) {
+    cbs_listener_t* listener, ListElement **listeners,
+    jboolean unregisterWithPlatform) {
 
     /* Assume no success in unregistering the message ID */
     WMA_STATUS ok = WMA_ERR;
@@ -345,7 +392,8 @@ static WMA_STATUS jsr120_cbs_unregister_msgID(jchar msgID,
     if (jsr120_cbs_is_msgID_registered(msgID, *listeners) == WMA_OK) {
 
 	jsr120_list_unregister_by_number(listeners, msgID, (void*)listener);
-	if (jsr120_cbs_is_msgID_registered(msgID, *listeners) == WMA_ERR) {
+	if (jsr120_cbs_is_msgID_registered(msgID, *listeners) == WMA_ERR &&
+            unregisterWithPlatform) {
             ok = jsr120_remove_cbs_listening_msgID(msgID);
 	}
 

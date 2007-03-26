@@ -139,8 +139,8 @@ public class Protocol extends ProtocolBase {
     /**	 DCS: Unicode UCS-2 */
     protected static final int GSM_UCS2 = 2;
 
-    /** Indicates connection being closed */
-    protected boolean isBeingClosed = false;
+    /** Used to protect read-modify operation on open */
+    protected Object closeLock = new Object();
 
     /** Creates a message connection protocol handler. */
     public Protocol() {
@@ -592,7 +592,7 @@ public class Protocol extends ProtocolBase {
      *
      * @exception IOException  if an I/O error occurs
      */
-    public synchronized void close() throws IOException {
+    public void close() throws IOException {
         /*
          * Set m_iport to 0, in order to quit out of the while loop
          * in the receiver thread.
@@ -603,40 +603,43 @@ public class Protocol extends ProtocolBase {
 
         System.out.println("Protocol.close()");
 
-        if (!isBeingClosed) {
+        synchronized (closeLock) {
+            if (open) {
+                /*
+                 * Reset open flag early to prevent receive0 executed by
+                 * concurrent thread to operate on partially closed
+                 * connection
+                 */
+                open = false;
 
-            isBeingClosed = true;
-            /*
-             * last connection closing
-             */
-            close0(save_iport, connHandle, 1);
+                close0(save_iport, connHandle, 1);
 
-            setMessageListener(null);
+                setMessageListener(null);
 
-            /*
-             * Reset handle and other params to default
-             * values. Multiple calls to close() are allowed
-             * by the spec and the resetting would prevent any
-             * strange behaviour.
-             */
-            connHandle = 0;
-            open = false;
-            host = null;
-            m_mode = 0;
+                /*
+                 * Reset handle and other params to default
+                 * values. Multiple calls to close() are allowed
+                 * by the spec and the resetting would prevent any
+                 * strange behaviour.
+                 */
+                connHandle = 0;
+                host = null;
+                m_mode = 0;
 
-            /*
-             * Remove this connection from the list of open
-             * connections.
-             */
-            int len = openconnections.size();
-            for (int i = 0; i < len; i++) {
-                if (openconnections.elementAt(i) == this) {
-                    openconnections.removeElementAt(i);
-                    break;
+                /*
+                 * Remove this connection from the list of open
+                 * connections.
+                 */
+                int len = openconnections.size();
+                for (int i = 0; i < len; i++) {
+                    if (openconnections.elementAt(i) == this) {
+                        openconnections.removeElementAt(i);
+                        break;
+                    }
                 }
-            }
 
-            open_count--;
+                open_count--;
+            }
         }
     }
 
@@ -1000,12 +1003,12 @@ public class Protocol extends ProtocolBase {
      * @return number of bytes sent
      * @exception IOException  if an I/O error occurs
      */
-    static private native int send0(int handle,
-                                    int type,
-                                    String host,
-				    int destPort,
-				    int sourcePort,
-				    byte[] message) throws IOException;
+    private native int send0(int handle,
+                             int type,
+                             String host,
+                             int destPort,
+                             int sourcePort,
+                             byte[] message) throws IOException;
 
     /**
      * Receives SMS message
@@ -1017,8 +1020,8 @@ public class Protocol extends ProtocolBase {
      * @return number of bytes received
      * @exception IOException  if an I/O error occurs
      */
-    static private native int receive0(int port, int msid, int handle,
-			       SMSPacket smsPacket) throws IOException;
+    private native int receive0(int port, int msid, int handle,
+                                SMSPacket smsPacket) throws IOException;
 
     /**
      * Waits until message available

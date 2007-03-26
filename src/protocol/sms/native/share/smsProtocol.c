@@ -248,7 +248,7 @@ Java_com_sun_midp_io_j2me_sms_Protocol_send0(void) {
     void *pdContext = NULL;
     jsr120_sms_message_state_data *messageStateData = NULL;
     jint bytesSent;
-    jboolean isBeingClosed;
+    jboolean open;
 
     KNI_StartHandles(4);
 
@@ -256,9 +256,9 @@ Java_com_sun_midp_io_j2me_sms_Protocol_send0(void) {
     KNI_DeclareHandle(thisClass);
     KNI_GetThisPointer(this);
     KNI_GetObjectClass(this, thisClass);
-    isBeingClosed = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "isBeingClosed", "Z"));
+    open = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
     
-    if (!isBeingClosed) { /* No close in progress */
+    if (open) { /* No close in progress */
         KNI_DeclareHandle(messageBuffer);
         KNI_DeclareHandle(address);
 
@@ -383,7 +383,7 @@ Java_com_sun_midp_io_j2me_sms_Protocol_receive0(void) {
     SmsMessage *psmsData = NULL;
     /* The midlet suite name for this connection. */
     SuiteIdType msid = UNUSED_SUITE_ID;
-    jboolean isBeingClosed;
+    jboolean open;
 
     KNI_StartHandles(6);
 
@@ -391,9 +391,9 @@ Java_com_sun_midp_io_j2me_sms_Protocol_receive0(void) {
     KNI_DeclareHandle(thisClass);
     KNI_GetThisPointer(this);
     KNI_GetObjectClass(this, thisClass);
-    isBeingClosed = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "isBeingClosed", "Z"));
+    open = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
 
-    if (!isBeingClosed) { /* No close in progress */
+    if (open) { /* No close in progress */
         KNI_DeclareHandle(messageClazz);
         KNI_DeclareHandle(messageObject);
         KNI_DeclareHandle(addressArray);
@@ -526,7 +526,7 @@ Java_com_sun_midp_io_j2me_sms_Protocol_waitUntilMessageAvailable0(void) {
     int handle;
     int messageLength = -1;
     SmsMessage *pSMSData = NULL;
-    jboolean isBeingClosed;
+    jboolean open;
 
     KNI_StartHandles(1);
 
@@ -534,9 +534,9 @@ Java_com_sun_midp_io_j2me_sms_Protocol_waitUntilMessageAvailable0(void) {
     KNI_DeclareHandle(thisClass);
     KNI_GetThisPointer(this);
     KNI_GetObjectClass(this, thisClass);
-    isBeingClosed = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "isBeingClosed", "Z"));
+    open = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
 
-    if (!isBeingClosed) { /* No close in progress */
+    if (open) { /* No close in progress */
         port = KNI_GetParameterAsInt(1);
         handle = KNI_GetParameterAsInt(2);
 
@@ -647,7 +647,7 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_io_j2me_sms_Protocol_finalize(void) {
     int port;
     int handle;
-    jboolean isBeingClosed;
+    jboolean open;
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(this);
@@ -655,9 +655,9 @@ Java_com_sun_midp_io_j2me_sms_Protocol_finalize(void) {
 
     KNI_GetThisPointer(this);
     KNI_GetObjectClass(this, thisClass);
-    isBeingClosed = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "isBeingClosed", "Z"));
+    open = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
 
-    if (!isBeingClosed) {
+    if (open) {
         port = KNI_GetIntField(this, KNI_GetFieldID(thisClass, "m_iport", "I"));
         handle = KNI_GetIntField(this, KNI_GetFieldID(thisClass, "connHandle", "I"));
 

@@ -297,7 +297,9 @@ public abstract class ProtocolBase implements MessageConnection,
         /*
          * Make sure the connection is still open.
 	 */
-        ensureOpen();
+        if (listener != null) {
+            ensureOpen();
+        }
 
         /*
          * Check if we have permission to recieve.

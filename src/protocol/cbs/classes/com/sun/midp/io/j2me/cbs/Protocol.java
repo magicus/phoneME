@@ -72,6 +72,9 @@ public class Protocol extends ProtocolBase {
     /**  DCS: Unicode UCS-2 */
     protected static final int GSM_UCS2 = 2;
 
+    /** Used to protect read-modify operation on open */
+    protected Object closeLock = new Object();
+
     /** Creates a message connection protocol handler. */
     public Protocol() {
         super();
@@ -177,9 +180,9 @@ public class Protocol extends ProtocolBase {
      *
      * @exception IOException  if an I/O error occurs
      */
-    static private synchronized native int receive0(int port, int msid,
-                                                    int handle,
-                                   CBSPacket cbsPacket) throws IOException;
+    private native int receive0(int port, int msid,
+                                int handle,
+                                CBSPacket cbsPacket) throws IOException;
 
     /**
      * Waits until message available
@@ -475,28 +478,37 @@ public class Protocol extends ProtocolBase {
         int save_imsgid = m_imsgid;
         m_imsgid = 0;
 
-        /* Close the connection and unregister the application ID. */
-        close0(save_imsgid, connHandle, 1);
+        synchronized (closeLock) {
+            if (open) {
+                /*
+                 * Reset open flag early to prevent receive0 executed by
+                 * concurrent thread to operate on partially closed
+                 * connection
+                 */
+                open = false;
+                /* Close the connection and unregister the application ID. */
+                close0(save_imsgid, connHandle, 1);
 
-        setMessageListener(null);
+                setMessageListener(null);
 
-        /*
-         * Reset handle and other params to default
-         * values. Multiple calls to close() are allowed
-         * by the spec and the resetting would prevent any
-         * strange behaviour.
-         */
-        connHandle = 0;
-        open = false;
-        m_mode = 0;
+                /*
+                 * Reset handle and other params to default
+                 * values. Multiple calls to close() are allowed
+                 * by the spec and the resetting would prevent any
+                 * strange behaviour.
+                 */
+                connHandle = 0;
+                m_mode = 0;
 
-        /*
-         * Remove this connection from the list of open connections.
-         */
-        for (int i = 0, n = openConnections.size(); i < n; i++) {
-            if (openConnections.elementAt(i) == this) {
-                openConnections.removeElementAt(i);
-                break;
+                /*
+                 * Remove this connection from the list of open connections.
+                 */
+                for (int i = 0, n = openConnections.size(); i < n; i++) {
+                    if (openConnections.elementAt(i) == this) {
+                        openConnections.removeElementAt(i);
+                        break;
+                    }
+                }
             }
         }
     }
@@ -720,6 +732,11 @@ public class Protocol extends ProtocolBase {
 
         return this;
     }
+
+    /**
+     * Native finalizer
+     */
+    private native void finalize();
 
 }
 
