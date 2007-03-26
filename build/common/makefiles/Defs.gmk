@@ -102,6 +102,8 @@ BINDIR       = $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)
 STORAGEDIR   = $(MIDP_OUTPUT_DIR)/appdb
 GENERATED_DIR= $(MIDP_OUTPUT_DIR)/generated
 
+MIDP_CLASSES_ZIP ?= $(MIDP_OUTPUT_DIR)/classes.zip
+
 # Use "_" since it will be used by other modules
 BUILD_COMMON_CONFIG_DIR = $(MIDP_DIR)/build/common/config
 
@@ -333,6 +335,7 @@ OBJ_FILES += $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(filter %.cpp,$(JTWI_NATIVE_FILES)
 #
 override REBUILD_JAVA_LIST=$(MIDP_OUTPUT_DIR)/javalist.txt
 override GENERATED_JAVA_LIST=$(MIDP_OUTPUT_DIR)/genjavalist.txt
+override ALL_JAVA_LIST=$(MIDP_OUTPUT_DIR)/alljavalist.txt
 
 # Add changed java files to REBUILD_JAVA_LIST
 # Some subsystems have no Java files. The dependency on classes.zip
@@ -343,7 +346,7 @@ override GENERATED_JAVA_LIST=$(MIDP_OUTPUT_DIR)/genjavalist.txt
 # This is not guaranteed to help in all cases, but at least reduce the 
 # possibility of it happening.
 define appendjavafiles
-    @if [ $(words $?) -gt 200 ]; then \
+    @if [ $(words $^) -gt 200 ]; then \
         echo "ERROR: Java files list exceeds 200 words limit."; \
         echo "To increase the limit, edit appendjavafiles variable definition in Defs.gmk"; \
         exit 1; \
@@ -355,6 +358,14 @@ define appendjavafiles
     @_javalist="$(wordlist 101,200,$?)"; ( \
     if [ -n "$$_javalist" ]; then \
         echo "$$_javalist" >> $(REBUILD_JAVA_LIST); \
+    fi )
+    @_javalist="$(wordlist 1,100,$^)"; ( \
+    if [ -n "$$_javalist" ]; then \
+        echo "$$_javalist" >> $(ALL_JAVA_LIST); \
+    fi )
+    @_javalist="$(wordlist 101,200,$^)"; ( \
+    if [ -n "$$_javalist" ]; then \
+        echo "$$_javalist" >> $(ALL_JAVA_LIST); \
     fi )
 endef
 
@@ -431,6 +442,10 @@ endef
 #
 define remove_filelist
 	-@(rm -f $(REBUILD_JAVA_LIST)) $(LOG)
+endef
+
+define remove_allfilelist
+	-@(rm -f $(ALL_JAVA_LIST)) $(LOG)
 endef
 
 # Macro to clean up generated file list
