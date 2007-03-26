@@ -28,10 +28,10 @@ import java.rmi.*;
 import java.rmi.registry.Registry;
 
 /* 
- * A remote interface implemented by JumpExecIxcRegistry.
+ * A remote interface implemented by JUMPExecIxcRegistry.
  */
 
-public interface JumpExecIxcRegistryRemote extends Registry {
+public interface JUMPExecIxcRegistryRemote extends Registry {
    void notifyObjectImport(int importingXletID, Remote ref)   
       throws RemoteException;
    Remote lookupWithXletID(String name, int importingXletID)   

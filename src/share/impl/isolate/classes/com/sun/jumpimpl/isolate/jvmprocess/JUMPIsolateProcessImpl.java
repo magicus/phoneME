@@ -51,6 +51,13 @@ import com.sun.jump.command.JUMPResponse;
 import com.sun.jump.command.JUMPResponseInteger;
 import com.sun.jump.message.JUMPMessageHandler;
 import com.sun.jumpimpl.client.module.windowing.WindowingIsolateClient;
+import com.sun.jumpimpl.client.module.serviceregistry.ServiceRegistryClient;
+
+import java.rmi.Remote;
+import java.rmi.NotBoundException;
+import javax.microedition.xlet.XletContext;
+import javax.microedition.xlet.ixc.IxcRegistry;
+import com.sun.jumpimpl.ixc.XletContextFactory;
 
 import sun.misc.ThreadRegistry;
 
@@ -69,6 +76,7 @@ public class JUMPIsolateProcessImpl
     private JUMPAppModel            appModel;
     private JUMPAppContainer        appContainer;
     private WindowingIsolateClient  windowing;
+    private ServiceRegistryClient   serviceRegistry;
 
     protected JUMPIsolateProcessImpl() {
 	super();
@@ -323,5 +331,17 @@ public class JUMPIsolateProcessImpl
 					    
 	rsh.sendRequestAsync(e, req);
     }
-    
+
+    /**
+     * Returns a remote service.
+     */
+    public Remote getRemoteService(Class remoteInterface) {
+        synchronized(this) {
+           if (serviceRegistry == null) {
+               serviceRegistry = new ServiceRegistryClient();		     
+	   }
+        }
+
+	return serviceRegistry.getRemoteService(remoteInterface.getName());
+    }
 }

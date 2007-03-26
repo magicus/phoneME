@@ -38,9 +38,9 @@ import javax.microedition.xlet.XletContext;
 import javax.microedition.xlet.UnavailableContainerException;
 import javax.microedition.xlet.ixc.*;
 
-public class JumpIxcRegistryImpl extends IxcRegistry {
+public class JUMPIxcRegistryImpl extends IxcRegistry {
   
-    // <XletContext, JumpIxcRegistryImpl>  
+    // <XletContext, JUMPIxcRegistryImpl>  
     static HashMap ixcRegistries = new HashMap();
 
     // This IxcRegistry's XletContext
@@ -49,7 +49,7 @@ public class JumpIxcRegistryImpl extends IxcRegistry {
     // The 'name' Strings binded by this IxcRegistry
     private ArrayList exportedNames;
     
-    // The stub for the AppManager's IxcRegistry
+    // The stub for the Executive's IxcRegistry
     JumpExecIxcRegistryStub amHandler; 
 
     // This Xlet's AccessControlContext snapshot
@@ -62,56 +62,23 @@ public class JumpIxcRegistryImpl extends IxcRegistry {
 
        synchronized(ixcRegistries) {
            IxcRegistry regis = (IxcRegistry)ixcRegistries.get(context);
-           if (regis != null) return regis;
 
-           boolean isAppManager = isAppManagerVM();
-
-           if (isAppManager) {
-
-              // This is running in the AppManager VM.  Create an instance
-              // of ServiceRegistry instead of a regular JumpIxcRegistryImpl.
-              try {
-                 Class c = Class.forName("com.sun.jumpimpl.ixc.JumpExecServiceRegistry");
-                 Method m = c.getMethod("getRegistry",
-                 new Class[] { javax.microedition.xlet.XletContext.class });
-                 regis = (IxcRegistry) m.invoke(null, new Object[] { context } );
-
-              } catch (Exception e) {
-                 e.printStackTrace();
-              } 
-
-           } else {
-
-              regis = new JumpIxcRegistryImpl(context);
-
-           }
-
-           if (regis != null)
+           if (regis == null) {
+              regis = new JUMPIxcRegistryImpl(context);
               ixcRegistries.put(context, regis);
+           }
 
            return regis;
        }
     }
 
-    private static boolean isAppManagerVM() {
-
+    public static boolean isExecutiveVM() {
        return (Utils.getMtaskServerID() == Utils.getMtaskClientID() &&
                Utils.getMtaskServerID() != -1) ; 
 
-    /**
-     *   ExportedObject obj =
-     *       ExportedObject.findExportedObject(ExportedObject.startingObjectID);
-     *                                                                                
-     *   if (obj == null)
-     *        return false;
-     *                                                                               
-     *    String remoteClassName = obj.remoteObject.getClass().getName();
-     *                                                                                
-     *    return (remoteClassName.indexOf("JumpExecIxcRegistry") != -1);
-     **/
     }
 
-    protected JumpIxcRegistryImpl(XletContext context) {
+    protected JUMPIxcRegistryImpl(XletContext context) {
         super();
         this.context = context;
         this.amHandler = new JumpExecIxcRegistryStub(context);
@@ -249,7 +216,7 @@ public class JumpIxcRegistryImpl extends IxcRegistry {
                  throw (StubException)re;
  
               // Else inspect what happened in the
-              // AppManager VM
+              // Executive VM
               Throwable e = re.getCause(); 
             
               if (e instanceof StubException) 

@@ -105,7 +105,7 @@ public class AppContainerImpl extends JUMPAppContainer {
 	       return -1;
        }
 
-       return 1; // only one app per isolate
+       return Integer.parseInt(app.getProperty(JUMPApplication.ID_KEY));
     }
     
     public void pauseApp(int appId) {
