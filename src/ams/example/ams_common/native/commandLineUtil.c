@@ -68,7 +68,7 @@ char* midpRemoveCommandOption(char* pszFlag, char* apszArgs[], int* pArgc) {
     for (i = 0; i < (len - 1); i++) {
         if (strcmp(pszFlag, apszArgs[i]) == 0) {
             result = apszArgs[i + 1];
-	    break;
+	        break;
         }
     }
 
@@ -103,7 +103,7 @@ char* midpRemoveOptionFlag(char* pszFlag, char* apszArgs[], int* pArgc) {
     for (i = 0; i < len; i++) {
         if (strcmp(pszFlag, apszArgs[i]) == 0) {
             result = apszArgs[i];
-	    break;
+	        break;
         }
     }
 

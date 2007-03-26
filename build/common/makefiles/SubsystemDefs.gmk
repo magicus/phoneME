@@ -40,12 +40,12 @@ include $(JWC_WORK_SPACE)/build/common/makefiles/Subsystems.gmk
 $(SUBSYSTEM_CONFIGURATION_MERGED_FILE): $(CONFIGURATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_DEP_FILES)
 	$(merge_configurations)
 
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(L10N_GENERATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
+$(MIDP_CLASSES_ZIP):: $(L10N_GENERATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
 	$(generate_configuration)
 
 # rules for generating romized skin files
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SKINROMIZATION_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
+$(MIDP_CLASSES_ZIP):: $(SKINROMIZATION_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
 	$(romize_skin)
 	$(copy_lcdlf_resources)
 
@@ -72,7 +72,7 @@ run_skinromizer:: $(SKINROMIZATION_JAR_FILE) run_configurator
 #######################################################################
 # Configuration
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_CONFIGURATION_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_CONFIGURATION_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_CONFIGURATION_I3TEST_JAVA_FILES)
@@ -85,7 +85,7 @@ EXTRA_CFLAGS		+= $(SUBSYSTEM_CONFIGURATION_EXTRA_CFLAGS)
 #######################################################################
 # Core group
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_CORE_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_CORE_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_CORE_I3TEST_JAVA_FILES)
@@ -99,7 +99,7 @@ EXTRA_CFLAGS		+= $(SUBSYSTEM_CORE_EXTRA_CFLAGS)
 
 # Events
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_EVENTS_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_EVENTS_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_EVENTS_I3TEST_JAVA_FILES)
@@ -113,7 +113,7 @@ EXTRA_CFLAGS		+= $(SUBSYSTEM_EVENTS_EXTRA_CFLAGS)
 #######################################################################
 # AMS
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_AMS_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_AMS_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_AMS_I3TEST_JAVA_FILES)
@@ -127,7 +127,7 @@ EXTRA_CFLAGS		+= $(SUBSYSTEM_AMS_EXTRA_CFLAGS)
 #######################################################################
 # Push
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_PUSH_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_PUSH_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_PUSH_I3TEST_JAVA_FILES)
@@ -141,7 +141,7 @@ EXTRA_CFLAGS		+= $(SUBSYSTEM_PUSH_EXTRA_CFLAGS)
 #######################################################################
 # I18N
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_I18N_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_I18N_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_I18N_I3TEST_JAVA_FILES)
@@ -155,7 +155,7 @@ EXTRA_CFLAGS		+= $(SUBSYSTEM_I18N_EXTRA_CFLAGS)
 
 # Hightlevel ui
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_HIGHUI_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_HIGHUI_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_HIGHUI_I3TEST_JAVA_FILES)
@@ -168,7 +168,7 @@ EXTRA_CFLAGS		+= $(SUBSYSTEM_HIGHUI_EXTRA_CFLAGS)
 #######################################################################
 # Low level ui
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_LOWLEVELUI_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_LOWLEVELUI_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_LOWLEVELUI_I3TEST_JAVA_FILES)
@@ -182,7 +182,7 @@ EXTRA_CFLAGS		+= $(SUBSYSTEM_LOWLEVELUI_EXTRA_CFLAGS)
 #######################################################################
 # RMS
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_RMS_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_RMS_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_RMS_I3TEST_JAVA_FILES)
@@ -193,7 +193,7 @@ EXTRA_CFLAGS		+= $(SUBSYSTEM_RMS_EXTRA_CFLAGS)
 ######################################################################
 # Security
 ######################################################################
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_SECURITY_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_SECURITY_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_SECURITY_I3TEST_JAVA_FILES)
@@ -204,7 +204,7 @@ EXTRA_CFLAGS		+= $(SUBSYSTEM_SECURITY_EXTRA_CFLAGS)
 #######################################################################
 # PROTOCOL
 #######################################################################
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_PROTOCOL_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_PROTOCOL_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_PROTOCOL_I3TEST_JAVA_FILES)
@@ -224,7 +224,7 @@ endif
 ifeq ($(USE_QA_TESTS), true)
 # QA TESTS: portability etc.
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_PORTABILITY_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_PORTABILITY_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_NATIVE_FILES	+= $(SUBSYSTEM_PORTABILITY_NATIVE_FILES)
@@ -234,7 +234,7 @@ endif
 ifeq ($(USE_I3_TEST), true)
 # I3 tests
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_TEST_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_TEST_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_TEST_I3TEST_JAVA_FILES)
@@ -247,7 +247,7 @@ endif
 ifeq ($(USE_ROMIZED_DEMOS), true)
 # Demos
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_DEMOS_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_DEMOS_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_DEMOS_I3TEST_JAVA_FILES)
@@ -256,7 +256,7 @@ endif
 ifeq ($(USE_PORTING_DEMOS), true)
 # Porting Demos
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_PORTING_DEMOS_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_PORTING_DEMOS_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_PORTING_DEMOS_I3TEST_JAVA_FILES)
@@ -266,7 +266,7 @@ endif
 # internal mmapi package (used in absence of jsr135, jsr234 or abb)
 #######################################################################
 
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_MMAPI_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_MMAPI_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_MMAPI_I3TEST_JAVA_FILES)
@@ -283,7 +283,7 @@ LIBS			+= $(SUBSYSTEM_MMAPI_LIBS)
 ifeq ($(USE_JSR_177), true)
 # JSR 177 SATSA
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_SATSA_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_SATSA_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_SATSA_I3TEST_JAVA_FILES)
@@ -293,7 +293,7 @@ endif
 ifeq ($(USE_JSR_172), true)
 # JSR 172 WSS
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_172_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_JSR_172_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_172_I3TEST_JAVA_FILES)
@@ -303,7 +303,7 @@ endif
 ifeq ($(USE_JSR_226), true)
 # JSR 226 SVG
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_226_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_JSR_226_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_226_I3TEST_JAVA_FILES)
@@ -313,7 +313,7 @@ endif
 ifeq ($(USE_PISCES), true)
 # Pisces 2D Renderer
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_PISCES_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_PISCES_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_PISCES_I3TEST_JAVA_FILES)
@@ -324,7 +324,7 @@ endif
 ifeq ($(USE_JSR_75), true)
 # JSR 75 PDA
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_75_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_JSR_75_JAVA_FILES)
 	$(appendjavafiles)
 
  JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_75_I3TEST_JAVA_FILES)
@@ -336,7 +336,7 @@ endif
 ifeq ($(USE_JSR_211), true)
 # JSR 211 CHAPI
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_211_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_JSR_211_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_211_I3TEST_JAVA_FILES)
@@ -347,7 +347,7 @@ endif
 ifeq ($(USE_JSR_135), true)
 # JSR 135 MMAPI
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_135_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_JSR_135_JAVA_FILES)
 	$(appendjavafiles)
 JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_135_NATIVE_FILES)
 endif
@@ -355,7 +355,7 @@ endif
 ifeq ($(USE_JSR_234), true)
 # JSR 234 AMMS
 #
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_234_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_JSR_234_JAVA_FILES)
 	$(appendjavafiles)
 JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_234_NATIVE_FILES)
 endif
@@ -369,7 +369,7 @@ ifneq ($(USE_JSR_234), true)
 ifneq ($(USE_JSR_135), true)
 ifneq ($(USE_MIDP_ABB), true)
 
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_MEDIA_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_MEDIA_JAVA_FILES)
 	$(appendjavafiles)
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_MEDIA_I3TEST_JAVA_FILES)

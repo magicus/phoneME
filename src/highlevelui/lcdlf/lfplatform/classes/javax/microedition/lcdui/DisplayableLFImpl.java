@@ -61,9 +61,8 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      */
     DisplayableLFImpl(Displayable d) {
         owner = d;
-        // complex to create Displayable with a full screen mode set
-        width  = Constants.NORMALWIDTH;
-        height = Constants.NORMALHEIGHT;
+        width  = Display.WIDTH;
+        height = Display.HEIGHT;
     }
     
     /**
@@ -255,16 +254,13 @@ abstract class DisplayableLFImpl implements DisplayableLF {
      */
     public void uSetFullScreenMode(boolean mode) {
 
-        int widthCopy, heightCopy;
         boolean requestRepaint = false;
-
 
         synchronized (Display.LCDUILock) {
 
             if (lIsShown()) {
                 // currentDisplay is not null when lIsShown is true
                 currentDisplay.lSetFullScreen(mode);
-                
                 if (mode) {
                     setTicker(null);
                 } else if (owner.ticker != null) {
@@ -273,13 +269,9 @@ abstract class DisplayableLFImpl implements DisplayableLF {
                 updateCommandSet();
                 requestRepaint = true;
             }
-
-            widthCopy = Display.getScreenWidth0(); 
-            heightCopy = Display.getScreenHeight0();
         }
-
         // This may call into app code, so do it outside LCDUILock
-        uCallSizeChanged(widthCopy, heightCopy);
+        uCallSizeChanged(Display.WIDTH, Display.HEIGHT);
 
         // app's sizeChanged has to be called before repaint
         synchronized (Display.LCDUILock) {
@@ -300,23 +292,30 @@ abstract class DisplayableLFImpl implements DisplayableLF {
         boolean copyDefferedSizeChange;
 
         synchronized (Display.LCDUILock) {
-
             // Assure correct screen mode
             currentDisplay.lSetFullScreen(owner.isInFullScreenMode);
+            // display dimentions may change as the resulr of lSetFullScreen
+            width = Display.WIDTH;
+            height = Display.HEIGHT;
+            if (owner.isInFullScreenMode) {
+                setTicker(null);
+            } else if (owner.ticker != null) {
+                setTicker(owner.ticker);
+            }
             copyDefferedSizeChange = defferedSizeChange;
             defferedSizeChange = false;
-
         }
 
-            if (copyDefferedSizeChange) {
-                synchronized (Display.calloutLock) {
-                    try {
-                        owner.sizeChanged(width, height);
-                    } catch (Throwable t) {
-                        Display.handleThrowable(t);
-                    }
-                }
-            }
+        if (copyDefferedSizeChange) {
+            synchronized (Display.calloutLock) { 
+                try { 
+                    owner.sizeChanged(width, height); 
+                } catch (Throwable t) {
+                    Display.handleThrowable(t); 
+                } 
+             }
+        }
+
         synchronized (Display.LCDUILock) {
             // Do the internal show preparation
             lCallShow();
@@ -512,15 +511,13 @@ abstract class DisplayableLFImpl implements DisplayableLF {
              * Canvas now, rather than later
              */
 
-            width = Display.getScreenWidth0();
-            height = Display.getScreenHeight0();
-
+            width = w;
+            height = h;
             if (!defferedSizeChange) {
                 lRequestInvalidate();
             }
 
         }
-
         if (!copyDefferedSizeChange) {
             synchronized (Display.calloutLock) {
                 try {

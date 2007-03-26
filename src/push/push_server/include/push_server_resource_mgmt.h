@@ -50,24 +50,33 @@ extern "C" {
 /**
  * Defines for the state field of _pushentry and _alarmentry
  */
-#define LAUNCH_PENDING	   (-5)
-#define RECEIVED_EVENT	   (-4)
+#define WAITING_DATA   (-6)
+#define LAUNCH_PENDING (-5)
+#define RECEIVED_EVENT (-4)
 #define CHECKED_IN	   (-3)
 #define CHECKED_OUT	   (-2)
 #define AVAILABLE	   (-1)
 
 /**
- *  Fetch datagram data into a buffer
- * 
- * @param fd The handle of the datagram port
- * @param ip The IP address of the incoming datagram
+ * Returns the number of buffered bytes for the given socket.
+ *
+ * @param fd handle of the socket
+ * @return number of cached bytes of -1 if none
+ */
+int pushcacheddatasize(int fd);
+
+/**
+ * Fetch the buffered datagram or TCP packet into a buffer.
+ *
+ * @param fd The handle of the socket from which the packet was received
+ * @param ip The ip address of the incoming datagram
  * @param sndport The port from which the data was sent
  * @param buf A pointer to a buffer into which the data should be copied
  * @param len The size of buf
- * @return the length of the datagram data if successful, or <tt>-1</tt>
- *         unsuccessful.
+ * @return the length of the returned data if successful, or <tt>-1</tt>
+ *         if unsuccessful.
  */
-int pusheddatagram(int fd, int* ip, int* sndport, char* buf, int len);
+int pushgetcachedpacket(int fd, int* ip, int* sndport, char* buf, int len);
 
 /**
  * Check out the handle for the requested server socket.

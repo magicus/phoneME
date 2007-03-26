@@ -100,7 +100,7 @@ include $(SUBSYSTEM_LOWUI_DIR)/graphics_api/$(LIB_MAKE_FILE)
 
 
 ####################################################################
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_GRAPHICSUTIL_JAVA_FILES)
+$(MIDP_CLASSES_ZIP) :: $(SUBSYSTEM_GRAPHICSUTIL_JAVA_FILES)
 	$(appendjavafiles)
 
 SUBSYSTEM_LOWLEVELUI_JAVA_FILES = \

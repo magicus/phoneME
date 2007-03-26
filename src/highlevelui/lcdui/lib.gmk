@@ -53,18 +53,30 @@ SUBSYSTEM_LCDUI_NATIVE_FILES += \
     lcdui_display.c \
     lcdui_vibrate.c
 
+ifneq ($(TARGET_VM), cldc_vm)
+SUBSYSTEM_LCDUI_NATIVE_FILES += \
+    lcdui_audio.c
+endif
+
 # Jpp files that need pre-processing
 #
-$(GENERATED_DIR)/classes/javax/microedition/lcdui/Display.java: $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Display.jpp
+$(GENERATED_DIR)/classes/javax/microedition/lcdui/Display.java: \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Display.jpp
 	@$(call runjpp,$^,$@)
 
-$(GENERATED_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.java: $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.jpp
+$(GENERATED_DIR)/classes/javax/microedition/lcdui/GraphicsAccessImpl.java: \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/GraphicsAccessImpl.jpp
+	@$(call runjpp,$^,$@)
+
+$(GENERATED_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.java: \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.jpp
 	@$(call runjpp,$^,$@)
 
 # Java files for the library
 #
 SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(GENERATED_DIR)/classes/javax/microedition/lcdui/Display.java \
+    $(GENERATED_DIR)/classes/javax/microedition/lcdui/GraphicsAccessImpl.java \
     $(GENERATED_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameMap.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.java \

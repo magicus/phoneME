@@ -46,7 +46,6 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
     CustomItemLFImpl(CustomItem ci) {
         super(ci);
         customItem = ci;
-        drawsTraversalIndicator = true;
     }
 
     // **********************************************************
@@ -558,9 +557,15 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
      * @see #getInteractionModes
      */
     void uCallPointerPressed(int x, int y) {
+        synchronized (Display.LCDUILock) {
+            if (hasFocus) {
+                itemWasPressed = true;
+            }
+        } // synchronized
+        
         try {
             synchronized (Display.calloutLock) {
-                customItem.pointerPressed(x - contentBounds[X] - 
+                customItem.pointerPressed(x - contentBounds[X] -
                                           ScreenSkin.PAD_FORM_ITEMS, 
                                           y - contentBounds[Y] -
                                           ScreenSkin.PAD_FORM_ITEMS);
@@ -579,12 +584,25 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
      * @see #getInteractionModes
      */
     void uCallPointerReleased(int x, int y) {
+        boolean handled = false;
+        synchronized (Display.LCDUILock) {
+            ItemCommandListener cl = customItem.commandListener;
+            Command defaultCmd = customItem.defaultCommand;
+            if ((cl != null) && (defaultCmd != null) && itemWasPressed) {
+                cl.commandAction(defaultCmd, customItem);
+                handled = true; 
+            }
+            itemWasPressed = false;
+        } // synchronized
+        
         try {
             synchronized (Display.calloutLock) {
-                customItem.pointerReleased(x - contentBounds[X] -
-                                           ScreenSkin.PAD_FORM_ITEMS, 
-                                           y - contentBounds[Y] -
-                                           ScreenSkin.PAD_FORM_ITEMS);
+                if (!handled) {
+                    customItem.pointerReleased(x - contentBounds[X] - 
+                                               ScreenSkin.PAD_FORM_ITEMS, 
+                                               y - contentBounds[Y] -
+                                               ScreenSkin.PAD_FORM_ITEMS);
+                }
             }
         } catch (Throwable thr) {
             Display.handleThrowable(thr);

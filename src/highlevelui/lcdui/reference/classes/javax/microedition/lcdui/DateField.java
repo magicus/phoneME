@@ -300,11 +300,11 @@ public class DateField extends Item {
                 //    and the date portion of the DateField is set 
                 //    to 1/1/1970.
                 //
-                // Currently we are using the first approach.
-                initialized =
-                    (currentDate.get(Calendar.YEAR)  == 1970) &&
-                    (currentDate.get(Calendar.MONTH) == Calendar.JANUARY)
-                    && (currentDate.get(Calendar.DATE)   == 1);
+                // Currently we are using the second approach.
+                    currentDate.set(Calendar.YEAR, 1970);
+                    currentDate.set(Calendar.MONTH, Calendar.JANUARY);
+                    currentDate.set(Calendar.DATE, 1);
+                    initialized = true;
             } else {
                 // Currently spec does not prohibit from losing
                 // irrelevant for that mode information
@@ -316,12 +316,12 @@ public class DateField extends Item {
                 // hours and minutes.
                 if (mode == DATE) {
                     currentDate.set(Calendar.HOUR, 0);
-		    currentDate.set(Calendar.HOUR_OF_DAY, 0);
+		            currentDate.set(Calendar.HOUR_OF_DAY, 0);
                     currentDate.set(Calendar.MINUTE, 0);
                 }
                 initialized = true;
             }
-            
+
             // always ignore seconds and milliseconds
             currentDate.set(Calendar.SECOND, 0);
             currentDate.set(Calendar.MILLISECOND, 0);

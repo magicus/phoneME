@@ -1427,6 +1427,32 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_nativeStoreSuite) {
         status = midp_store_suite(&installInfo, &suiteSettings, &suiteData);
     }
 
+    /* cleanup */
+    if (installInfo.authPathLen > 0 && installInfo.authPath_as != NULL) {
+        int i;
+        for (i = 0; i < installInfo.authPathLen; i++) {
+            pcsl_string_free(&installInfo.authPath_as[i]);
+        }
+        midpFree((void*)installInfo.authPath_as);
+    }
+
+    if (suiteSettings.permissionsLen > 0 &&
+            suiteSettings.pPermissions != NULL) {
+        midpFree((void*)suiteSettings.pPermissions);
+    }
+
+    if (!pcsl_string_is_null(&installInfo.jadUrl_s) &&
+            installInfo.jadProps.pStringArr != NULL) {
+        free_pcsl_string_list(installInfo.jadProps.pStringArr,
+                              installInfo.jadProps.numberOfProperties);
+    }
+
+    if (installInfo.jarProps.pStringArr != NULL) {
+        free_pcsl_string_list(installInfo.jarProps.pStringArr,
+                              installInfo.jarProps.numberOfProperties);
+    }
+
+    /* throw an exception if an error occured */
     if (status != ALL_OK && !exceptionThrown) {
         if (status == OUT_OF_MEMORY) {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);

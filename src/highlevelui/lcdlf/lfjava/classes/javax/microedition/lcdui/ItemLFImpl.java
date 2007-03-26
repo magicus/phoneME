@@ -863,8 +863,8 @@ abstract class ItemLFImpl implements ItemLF {
              (itemWasPressed && (hasFocus || item.owner.numCommands <= 1))) {
             //should check the x,y is in item's content area
             uCallKeyPressed(Constants.KEYCODE_SELECT);
-            itemWasPressed = false;
         }
+        itemWasPressed = false;
     }
     
     /**
@@ -1368,7 +1368,7 @@ abstract class ItemLFImpl implements ItemLF {
      * changing appearance, requiring no external traversal indicator
      */
 
-    boolean drawsTraversalIndicator = false;
+    boolean drawsTraversalIndicator = true;
 
     /**
      * A constant used to indicate that Item sizes have to be recalculated.

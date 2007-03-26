@@ -233,6 +233,13 @@ class SkinProperty {
         new SkinProperty("pti.left_arrow", "pti.left_arrow", "PTI_LEFT_ARROW", IMAGE_T), 
         new SkinProperty("pti.right_arrow", "pti.right_arrow", "PTI_RIGHT_ARROW", IMAGE_T), 
 
+        new SkinProperty("inputmode.margin", "-1", "INPUT_MODE_MARGIN", INT_T), 
+        new SkinProperty("inputmode.color_bg", "-1", "INPUT_MODE_COLOR_BG", INT_T), 
+        new SkinProperty("inputmode.color_fg", "-1", "INPUT_MODE_COLOR_FG", INT_T), 
+        new SkinProperty("inputmode.color_bdr", "-1", "INPUT_MODE_COLOR_BDR", INT_T), 
+        new SkinProperty("inputmode.font", "500", "INPUT_MODE_FONT", FONT_T), 
+        new SkinProperty("inputmode.image_bg", "inputmode.image_bg", "INPUT_MODE_IMAGE_BG", C_IMAGE_T), 
+
         new SkinProperty("title.height", "-1", "TITLE_HEIGHT", INT_T), 
         new SkinProperty("title.margin", "-1", "TITLE_MARGIN", INT_T), 
         new SkinProperty("title.text_align_x", "-1", "TITLE_TEXT_ALIGN_X", INT_T), 
