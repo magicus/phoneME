@@ -87,6 +87,14 @@ void MScreen::slotTimeoutImpl() {
 
     ms = vm_suspended ? SR_RESUME_CHECK_TIMEOUT : JVM_TimeSlice();
 
+    /* There is a testing mode with VM running while entire stack is
+     * considered to be suspended. Next invocation shold be scheduled
+     * to SR_RESUME_CHECK_TIMEOUT in this case.
+     */
+    if (midp_getSRState() == SR_SUSPENDED) {
+        ms = SR_RESUME_CHECK_TIMEOUT;
+    }
+
     /* Let the VM run for some time */
     if (ms <= -2) {
         /*
