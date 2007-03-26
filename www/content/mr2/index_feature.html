@@ -1,0 +1,280 @@
+<head>
+<title>Getting Started with phoneME Feature Software (MR2)</title>
+<style type="text/css">
+<!--
+.style3 {color: #e76f00}
+-->
+</style>
+</head>
+<body> 
+<div id="projecthome" class="app">
+<HR>
+<h1 class="style3">Getting Started with phoneME Feature Software</h1> 
+
+<p>
+<a href="./download_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<p>
+
+This guide contains the following sections:
+<p>
+<ul>
+<li><A HREF="download_feature.html">Downloading phoneME Feature Software Source Code</A>
+<li><A HREF="begin_feature.html">Before You Begin</A>
+<li><A HREF="buildenv_feature.html">Setting Up Your Build Environment</A>
+<li><A HREF="javacall_feature.html">Building the JavaCall Porting Layer</A>
+<li><A HREF="pcsl_feature.html">Building a PCSL Reference Port</A>
+<li><A HREF="cldc_feature.html">Building a CLDC Reference Port</A>
+<li><A HREF="client_feature.html">Building a phoneME Feature Software Reference Port</A>
+<!-- <li><A HREF="options_feature.html">Default Build Configuration Options</A> -->
+</ul>
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="intro"></a><h3>Introduction</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+This guide contains information for building and running the phoneME&#153; Feature software, 
+an optimized Java&#153; ME stack based on Milestone Release 2 (MR2) of the phoneME Feature 
+software project. 
+<p>
+This guide allows you to take the following general steps:
+<p>
+<UL>
+<LI>Set up and configure your Linux/i386 or Win32/i386 build environment.</LI> 
+<LI>Build a default version of the JavaCall porting layer (Win32/i386 only), PCSL libraries, 
+CLDC, and phoneME Feature software binaries.</LI>
+<LI>Run the phoneME Feature software on your default platform.</LI>
+<LI>Find additional information about phoneME Feature software.</LI>
+</UL>
+<p>
+<b>NOTE:</b> This document is part of the MR2 development release version of phoneME Feature 
+software. The instructions have not been verified or tested.  The contents will continue to 
+change as development moves forward. For a stable, unchanging version (except for bug fixes), 
+see the <a href="https://phoneme.dev.java.net/content/phoneme_feature_r1.html"> MR1 release</a>
+of the phoneME Feature project. 
+<p>
+
+
+<!-- _______ The Following Sections Transferred In from Before You Begin _____ -->       
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="intro"></a><h3>Build Requirements</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+When building the phoneME Feature software, the machine where you setup your build
+environment and carry out the build instructions is called your <i>build platform</i>.
+The build platform is the machine where source code is installed, the compilers are run,
+and executable code is built. This executable code is then installed and run on a
+<i>target platform</i>.
+<P>
+The phoneME Feature software supports the following build platforms:
+<P>
+<UL>
+<LI><a href="#linux_req">Linux/i386</LI></a>
+<LI><a href="#win_req">Win32/i386</LI></a>
+<P>
+</UL>
+<P>
+The phoneME Feature software supports the following target platforms:
+<P>
+<UL>
+<LI>Linux/ARM (Texas Instruments P2SAMPLE64-V6 board)</LI>
+<LI>Linux/i386 (emulation mode only)</LI>
+<LI>Windows/i386 (emulation mode only)</LI>
+</UL>
+<P>
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="linux_req"></a><strong>Requirements for Building on a Linux/i386 Platform</strong>
+<!-- END SECTION HEAD -->
+
+<p>
+To properly build executables for the Linux/i386 and Linux/ARM target platform,
+a Linux/i386 build platform must meet the following requirements:
+<P>
+<UL>
+<LI>Red Hat Linux distribution version 7.2 - 9.0</LI>
+<LI>Java 2 Platform, Standard Edition (J2SE&#153;) Development Kit (JDK&#153;) version 1.4.2</LI>
+<LI>GNU Make version 3.79.1 or later</LI>
+<LI>GNU Cross Compiler (GCC) 3.4.6 or later</LI>
+<LI>Trolltech QT Toolkit, version 3</LI>
+</ul>
+<p>
+The following software is optional:
+<p>
+<ul>
+<LI>Doxygen version 1.4.1 (used to build PCSL API documentation)
+<!-- <LI>Development Kit for the Java Card&#153; Platform 2.2.1 (used to build JSR 177 only) -->
+</UL>
+<p>
+For more information on aquiring and installing these linux/i386 build platform tools, 
+see <a href="./buildenv_feature.html#linux_setup"> Setting Up the linux/i386 Build 
+Environment</a>.
+<p>
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="win_req"></a><strong>Requirements for Building on a Win32/i386 Platform</strong>
+<!-- END SECTION HEAD -->
+<p>
+
+A Win32/i386 build-target platform must meet the following requirements:
+<p>
+<ul>
+<li>Windows 2000 or Windows XP
+<li>JDK version 1.4.2
+<!-- <li>GNU Make version 3.79.1 or later -->
+<li>Microsoft Visual C++ (MSVC++) Professional Version 6.0 or higher (or Visual
+Studio .NET 2003 or later)
+<!-- <li>Microsoft Processor Pack 5, version 6.15 or later -->
+<li>Cyg4Me version 1.1 (a version of Cygwin for building Java ME technology.  Cyg4Me contains 
+GNU Make 3.79.1.)
+</ul>
+<p>
+The following software is optional:
+<p>
+<ul>
+<li>Doxygen version 1.4.1 (used to build PCSL API documentation)
+<!-- <li>Development Kit for the Java Card Platform 2.2.1 (used to build JSR 177 only) -->
+</ul>
+<p>
+For more information on aquiring and installing these win32/i386 build platform tools, 
+see <a href="./buildenv_feature.html#win_setup"> Setting Up the win32/i386 Build 
+Environment</a>.
+
+<!-- _________ This Section Blocked Out, Pending Decision about Website Placement _____ --> 
+
+<!-- BEGIN SECTION HEAD 
+<hr noshade="noshade" size="1">
+<a name="in"></a><h3>What's in This Release</h3>
+END SECTION HEAD  -->
+<p>
+
+<!--
+The phoneME Feature software contains the following software features and components:
+<p>
+<UL>
+<LI>Support for Texas Instruments P2SAMPLE64-V6 reference platform (P2 board)</LI>
+<LI>Multitasking capabilities and support for multiple, simultaneous applications
+(MIDlets)</LI>
+<LI>Customizable user interface (skin) using Chameleon Adaptive User Interface
+Technology (AUIT) and XML</LI>
+<LI>Full or partial implementations for the following Java Specification Request (JSR)
+optional packages:</LI>
+<UL>
+<LI>Connected Limited Device Configuration (CLDC) 1.0 (JSR 30) and 1.1. (JSR 139)</LI>
+<LI>Mobile Information Device Profile (MIDP) 1.0 (JSR 37) and 2.1 (JSR 118)</LI>
+<LI>Java Wireless Messaging (WMA) 1.1 (JSR 120) and 2.0 (JSR 205)</LI>
+<LI>Personal Information Management (PIM) and FileConnection (JSR 75)</LI>
+<LI>Java APIs for Bluetooth Wireless Technology (JSR 82)</LI>
+<LI>Mobile Media API (JSR 135)</LI>
+<LI>J2ME&#153; Web Services (JSR 172)</LI>
+<LI>Security and Trust Services API (SATSA) (JSR 177)</LI>
+<LI>Location API for J2ME (JSR 179)</LI>
+<LI>Session Initiation Protocol (SIP) API for J2ME (JSR 180)</LI>
+(*) <LI>Mobile 3D Graphics API for J2ME (JSR 184)</LI> 
+<LI>Java Technology for the Wireless Industry (JSR 185)</LI>
+<LI>Content Handler API (JSR 211)</LI>
+<LI>Scalable 2D Vector Graphics API for J2ME (JSR 226)</LI>
+<LI>Payment API (JSR 229)</LI>
+(*) <LI>Advanced Mulitimedia Supplements (JSR 234)</LI> 
+<LI>Mobile Internationalization API (JSR 238)</LI>
+<LI>Java Binding for the OpenGL&#153; ES API (JSR 239)</LI>
+</UL>
+(*) <LI>Native Application Management API</LI>
+(*) <LI>Native Resource Management API</LI> 
+</UL>
+<p>
+-->
+
+
+<!-- _______ This Section Blocked Out, Pending Decision about Website Placement _____ -->
+
+<!-- BEGIN SECTION HEAD
+<hr noshade="noshade" size="1">
+<a name="not_in"></a><h3>What's Not in This Release</h3>
+END SECTION HEAD  -->
+<p>
+
+<!-- 
+The following software components are not included in the phoneME Feature software release:
+<p>
+<UL>
+<LI>Mobile 3D Graphics API (JSR 184)</LI>
+<LI>Audio functionality in MIDP 2.0 (JSR 118), Mobile Media APIs (JSR 135), and Java
+Technology for the Wireless Industry (JSR 185) implementations</LI>
+</UL>
+<p>
+-->
+
+<!-- _________ This Section Transferred to Before You Begin ________________ -->
+
+<!-- BEGIN SECTION HEAD 
+<hr noshade="noshade" size="1">
+<a name="docs"></a><h3>Document Notes and Conventions</h3>
+END SECTION HEAD  -->
+<p>
+
+<!--
+For your ease of use, this guide uses the following conventions and assumptions:
+<p>
+<ul>
+<li>The document variable <code><i>InstallDir</i></code> means "the location where you 
+have installed the phoneME Feature software."  For example, if you install the phoneME 
+Feature software into the directory <code>/home/chocolate/phoneME_feature</code>, changing 
+directory to <code><i>InstallDir</i>/midp</code> means to change directory to 
+<code>/home/chocolate/phoneME_feature/midp</code>. 
+<p>
+<li>For all procedures and examples carried out on the Linux platform, the Bash shell 
+is assumed.  If you are not using the Bash shell, be sure to enter variables and commands
+for the shell you are using.  
+<p>
+<li>For all procedures and examples carried out on the Windows platform, the use of Cygwin
+(Cyg4Me) is assumed.  Instructions for installing Cyg4Me are provided 
+<a href="./buildenv_feature.html#cyg4me">here</a>.
+<p>
+<li>In general, for additional information on any topic presented in this document, see the
+<a href="http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/pdf-html/build-guide/index.html">
+ <i>Sun Java Wireless Client Build Guide</i></a>.  If additional information is found in some 
+other document, that document is mentioned.
+</ul>
+-->
+
+<!-- _________________________________________________________________ -->
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="docs"></a><h3>Commercial Documentation</h3>
+<!-- END SECTION HEAD  -->
+<p>
+
+This guide provides only the minimal information needed to set up, build, and run the
+phoneME Feature software quickly, using only the default settings for each implementation.
+<p>
+In general, for additional information on any topic presented in this document, see the
+<a href="http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/pdf-html/build-guide/index.html">
+<i>Sun Java Wireless Client Build Guide</i></a>. 
+<p>
+For more information about other phoneME Feature software topics, including porting, 
+multitasking, using Adaptive User Interface technology, and others, see the 
+<a href="http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/index.html">
+ commercial documentation set</a>.
+<pre>
+
+
+</pre>
+
+
+<a href="./download_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<p>
+
+
+<!-- =============================== END PAGE BODY ================================= --> 
+
+</div>

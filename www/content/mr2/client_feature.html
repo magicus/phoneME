@@ -1,0 +1,679 @@
+<head>
+<title>Getting Started with phoneME Feature Software (MR2)</title>
+<style type="text/css">
+<!--
+.style3 {color: #e76f00}
+-->
+</style>
+</head>
+<body>
+<div id="projecthome" class="app">
+<HR>
+<h1 class="style3">Building a phoneME Feature Software Reference Port</h1> 
+
+<p>
+<a href="./index_feature.html">first</a> | <a href="./cldc_feature.html">prev</a> 
+<!-- | <a href="./options_feature.html">next-last</a> 
+| <a href="./options_feature.html">last</a> --> 
+<p>
+
+The phoneME Feature software is an Open Source version of Sun Microsystems' commercial 
+implementation, the Sun Java Wireless Client software, version 2.0.  The commercial 
+version is based upon, and incorporates code from, the Open Source MR2 version of phoneME 
+Feature software.  The phoneME Feature software is built on top of CLDC, an Open Source 
+version of Sun Microsystems' Connected limited Device Configuration, HotSpot Implementation, 
+version 2.0.
+<P>
+This document has the following sections:
+<p>
+<ul>
+<li><a href="#linux">Building phoneME Feature Software on a Linux/i386 Build Platform</a>
+<li><a href="#win32">Building phoneME Feature Software on a Win32/i386 Build Platform</a>
+<!-- <li><a href="#run_phoneme">Running phoneME Feature Software</a> -->
+<li><a href="#phoneme_docs">Building phoneME Feature Software Documentation</a>
+</ul>
+<p>
+
+For proper building and performance, your system must meet the 
+requirements provided in <A HREF="begin_feature.html">Before You Begin</A>
+<P>
+<b>Note:</b> This document is part of the MR2 development release version of phoneME Feature
+software. The instructions have not been verified or tested.  The contents will continue to
+change as development moves forward.
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="linux"></a><h3>Building phoneME Feature Software on a Linux/i386 Build Platform</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+This section provides basic instructions for building a default configuration of the phoneME 
+Feature software for Linux/i386 and Linux/ARM target platforms. 
+<p>
+
+<a name="set_linux_var"></a>
+<strong>Setting Variables for a Linux/i386 Build Platform</strong>
+<P>
+To build phoneME Feature software on a Linux/i386 build platform, you must set the 
+environment variables shown in <A HREF="#table5-1">TABLE 5-1</A>. 
+<P>
+
+<A NAME="table5-1"></A>
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000"
+CELLPADDING=5 CELLSPACING=0>
+<CAPTION> <b>TABLE 5-1</b> Linux Platform Environment Variables</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead">Name
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead">Description
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473772"></A><KBD CLASS="Filename-Command">
+MIDP_DIR</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473774"></A>The top-level MIDP directory. For example,
+<code>MIDP_DIR=$HOME/midp</code>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474801"></A><KBD Class="Filename-Command">
+MIDP_OUTPUT_DIR<KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAMe="pgfId-474803"></A>Location where output from building
+phoneME Feature is stored. For example, <code>MIDP_OUTPUT_DIR=$BUILD_OUTPUT_DIR/midp</code>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><KBD>CLDC_DIST_DIR</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText">Required for building phoneME Feature software. Must point to the 
+location of CLDC software build output. For example: 
+<kbd>CLDC_DIST_DIR=$BUILD_OUTPUT_DIR/cldc/linux_i386/dist.
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><KBD>TARGET_CPU</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText">Must be set for the platform you are building on. For example,
+<kbd>TARGET_CPU=i386.
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474801"></A><KBD Class="Filename-Command">
+USE_MULTIPLE_ISOLATES<KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAMe="pgfId-474803"></A>Required for phoneME Feature to 
+support multitasking.  Must be set to <code>true</code>.  
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474801"></A><KBD Class="Filename-Command">
+USE_PCSL<KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAMe="pgfId-474803"></A>Required for phoneME Feature to 
+pick up PCSL libraries.  Must be set to <code>true</code>.
+</P>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+
+<a name="both"></a>
+<strong>Setting Environment Variables for Both Linux/i386 and Linux/ARM Target Platforms
+</strong>
+<p>
+The following variables should be set as system variables, to build both Linux/i386 and 
+Linux/ARM target platforms:
+<p>
+<ul>
+<KBD>$ export MIDP_DIR=$HOME/midp</KBD>
+<br>
+<KBD>$ export MIDP_OUTPUT_DIR=$BUILD_0UTPUT_DIR/midp</KBD>
+</ul>
+<p>
+
+
+<a name="build_linux_i386"></a>
+<strong>Building for a Linux/i386 Target Platform</strong>
+<p>
+
+<OL>
+<LI>Change to the default phoneME Feature software build directory for the Linux/i386
+target platform.</LI>
+<p>
+<KBD>$ cd $HOME/midp/build/linux_fb_gcc</KBD>
+<p>
+
+<!--
+<LI>Set build-specific phoneME Feature build environment variables, as shown here:
+<p>
+<KBD>$ export CLDC_DIST_DIR=$BUILD_OUTPUT_DIR/cldc/linux_i386/dist</KBD>
+<p>
+-->
+
+<LI>Use <KBD>make</KBD> to build phoneME Feature software, by specifying the <code>i386</code> 
+target CPU, picking up PCSL libraries, enabling multitasking capabilities, and pointing to the 
+CLDC output directory for the Linux/i386 target platform.
+<P>
+<KBD>$ make TARGET_CPU=i386 USE_PCSL=true USE_MULTIPLE_ISOLATES=true 
+CLDC_DIST_DIR=$BUILD_OUTPUT_DIR/cldc/linux_i386/dist</KBD>
+<p>
+The generated output for the Linux/i386 target platform is found in the following location:
+<p>
+<KBD>$BUILD_OUTPUT_DIR/midp/bin/i386</KBD>
+</OL>
+<p>
+
+
+<a name="build_linux_arm"></a>
+<strong>Building for a Linux/ARM Target Platform</strong>
+<p>
+
+<OL>
+<LI>Change to the default phoneME Feature software build directory for the Linux/ARM
+target platform.</LI>
+<p>
+<KBD>$ cd $HOME/midp/build/linux_qte_gcc</KBD>
+<p>
+<LI>Use <KBD>make</KBD> to build phoneME Feature software, by specifying the <code>arm</code>
+target CPU, picking up PCSL libraries, enabling multitasking capabilities, pointing to the CLDC 
+output directory for the Linux/ARM target platform, and using MontaVista development tools.
+<P>
+<KBD>$ make TARGET_CPU=arm USE_PCSL=true USE_MULTIPLE_ISOLATES=true
+CLDC_DIST_DIR=$BUILD_OUTPUT_DIR/cldc/linux_arm/dist GNU_TOOLS_DIR=$MONTAVISTA</KBD>
+<p>
+<b>Note:</b> In the above command line, the variable <code>$MONTAVISTA</code> is a shortcut
+for a much longer command string, as described <a href="./buildenv_feature.html#montavista">
+here</a>.
+<p>
+The generated output for the Linux/i386 target platform is found in the following location:
+<p>
+<KBD>$BUILD_OUTPUT_DIR/midp/bin/arm</KBD>
+</OL>
+<p>
+
+
+<a name="usertest"></a>
+<strong>Running <em>usertest</em> on a Linux/i386 <!-- or Linux/ARM --> Target Platform</strong>
+<p>
+Once you have built an implementation of phoneME Feature software, you can quickly run a 
+MIDlet using the frame buffer (<code>fb</code>) graphics provided by the QT Toolkit:
+<p>
+<ol>
+<li>Change directory to the following location:
+<p>
+For a Linux/i386 target platform:
+<p>
+<KBD>$ cd $BUILD_OUTPUT_DIR/midp/bin/i386</code>
+<p>
+For a Linux/ARM target platform:
+<p>
+<KBD>$ cd $BUILD_OUTPUT_DIR/midp/bin/arm</code>
+<p>
+<li>Type <code>./usertest</code>
+<p>
+This launches the frame buffer graphics window.
+</ol>
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="win32"></a><h3>Building phoneME Feature Software on a Win32/i386 Build Platform</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+This section provides basicn instructions for building a default phoneME Feature software 
+configuration of Win32/i386 and Javacall/i386 target platforms.
+<p>
+
+
+<a name="set_win_var"></a>
+<strong>Setting Variables for a Win32/i386 Build Platform</strong>
+<p>
+
+To properly build the phoneME Feature software on a Windows platform, you must set the
+environment variables shown in <a href="#table5-2">TABLE 5-2</A>. 
+<P>
+
+<a name="table5-2"></a>
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000"
+CELLPADDING=5 CELLSPACING=0>
+<CAPTION> <b>TABLE 5-2</b> Win32/i386 Platform Environment Variables</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-473082"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-473084"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474018"></A><KBD CLASS="Filename-Command">MIDP_DIR</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474020"></A>The top-level MIDP directory. For example,
+<code>MIDP_DIR=%HOME%/midp</code>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474809"></A><kbd class="filename-command">
+MIDP_OUTPUT_DIR</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474811"></A>Location where the output from
+building phoneME Feature is stored. For example,
+<code>MIDP_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/midp</code>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474036"></A><KBD>CLDC_DIST_DIR</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474041"></A>Required for building phoneME Feature
+software. Must point to the location of CLDC software build output. For example:
+<kbd>CLDC_DIST_DIR=%BUILD_OUTPUT_DIR%/cldc/javacall_i386/dist
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474036"></A><KBD>TARGET_CPU</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474041"></A>Must be set for the platform you are
+building on.  For example, <kbd>TARGET_CPU=i386</kbd>. (If you are building the
+JavaCall porting layer, this variable is also set to <kbd>i386</kbd>.)
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474801"></A><KBD Class="Filename-Command">
+USE_MULTIPLE_ISOLATES<KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAMe="pgfId-474803"></A>Required for phoneME Feature to
+support multitasking.  Must be set to <code>true</code>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474801"></A><KBD Class="Filename-Command">
+USE_PCSL<KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAMe="pgfId-474803"></A>Required for phoneME Feature to
+pick up PCSL libraries.  Must be set to <code>true</code>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474018"></A><KBD CLASS="Filename-Command">
+JAVACALL_PLATFORM</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474020"></A>If you have previously built the
+JavaCall porting layer, use this variable to define it as your platform.  For
+example, <code>JAVACALL_PLATFORM=javacall_i386_vc</code>.
+<p>
+<b>Note:</b> If you have not built an implementation of JavaCall, do not set this
+variable.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474809"></A><kbd class="filename-command">
+JAVACALL_OUTPUT_DIR</kbd>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474811"></A>Indicates the location where JavaCall
+output is stored. For example, <code>JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall</code>.
+<p>
+<b>Note:</b> If you have previously built the JavaCall porting layer, this
+variable should already be set.  If you have not built a JavaCall implementation, do
+not set this variable.
+</P>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+
+<a name="win_both"></a>
+<strong>Setting Environment Variables for Both Win32/i386 and Javacall/i386 Target Platforms
+</strong>
+<p>
+
+If you are building phoneME Feature software for either the Win32/i386 or Javacall/i386 target 
+platforms, set the following variables as shown here:
+<p>
+<ul>
+<KBD>$ set MIDP_DIR=%HOME%/midp</KBD>
+<br>
+<KBD>$ set MIDP_OUTPUT_DIR=%BUILD_0UTPUT_DIR%/midp</KBD>
+</ul>
+<p>
+
+
+<!--
+If you are building phoneME Feature software for the Win32/i386 platform, set phoneME Feature
+build environment variables as shown here:
+<P>
+<ul>
+<KBD>$ set TARGET_CPU=win32_i386</KBD>
+<br>
+<KBD>$ set CLDC_DIST_DIR=%BUILD_OUTPUT_DIR%/cldc/win32_i386_vc/dist</KBD>
+<br>
+<KBD>$ set MIDP_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/midp/win32_i386</KBD>
+</ul>
+<p>
+If you are building phoneME Feature software for the JavaCall platform, set phoneME Feature
+build environment variables as shown here:
+<P>
+<ul>
+<KBD>$ set TARGET_CPU=javacall_i386</KBD>
+<br>
+<KBD>$ set CLDC_DIST_DIR=%BUILD_OUTPUT_DIR%/cldc/javacall_i386_vc/dist</KBD>
+<br>
+<KBD>$ set MIDP_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/midp/javacall_i386</KBD>
+<br>
+<KBD>$ set JAVACALL_PLATFORM=javacall_i386_vc</KBD>
+</ul>
+<p>
+-->
+
+<a name="build_win"></a>
+<strong>Building for a Win32/i386 Target Platform</strong>
+<p>
+<OL>
+<LI>Change to the default phoneME Feature build directory for the Win32/i386 target 
+platform.</LI>
+<P>
+<KBD>$ cd %HOME%/midp/build/win32</KBD>
+<P>
+<LI>Set build-specific environment variables as shown here:
+<P>
+<KBD>$ set CLDC_DIST_DIR=%BUILD_OUTPUT_DIR%/cldc/win32_i386_vc/dist</KBD>
+<p>
+<LI>Mount the phoneME Feature software <KBD>midp</KBD> directory at the root level.</LI>
+<P>
+For example, if you installed the phoneME Feature software in <KBD>C:&#92;jwc1.1.3</KBD>, 
+use the following command:
+<P>
+<KBD>mount C:&#92;jwc1.1.3&#92;midp /jwc1.1.3/midp</KBD>
+<P>
+<LI>Use <KBD>make</KBD> to build a reference port of the phoneME Feature software, by 
+specifying the <code>i386</code> target CPU, picking up PCSL libraries, and enabling 
+multitasking capabilities, as shown here. 
+<P>
+<KBD>$ make TARGET_CPU=i386 USE_PCSL USE_MULTIPLE_ISOLATES=true</KBD>
+<P>
+The generated output for the Win32/i386 target platform is found in the following location:
+<p>
+<KBD>%BUILD_OUTPUT_DIR%/midp/bin/i386
+<P>
+</OL>
+<p>
+
+
+<a name="build_javacall"></a>
+<strong>Building for a Javacall/i386 Target Platform</strong>
+<p>
+<OL>
+<LI>Change to the default phoneME Feature build directory for the Javacall/i386 target
+platform.</LI>
+<P>
+<KBD>$ cd %HOME%/midp/build/javacall</KBD>
+<P>
+<LI>Set build-specific environment variables as shown here:
+<P>
+<KBD>$ set CLDC_DIST_DIR=%BUILD_OUTPUT_DIR%/cldc/javacall_i386_vc/dist</KBD>
+<p>
+<b>Note:</b> If you have previously built the Javacall porting layer for PCSL and CLDC,
+the <code>JAVACALL_PLATFORM</code> and <code>JAVACALL_OUTPUT_DIR</code> environment variables
+should already be set.  If not, set them as shown here:
+<p>
+<KBD>$ set JAVACALL_PLATFORM=javacall_i386_vc</KBD>
+<br>
+<KBD>$ set JAVACALL_OUTPUT_DIR=%BUILD-OUTPUT_DIR%/javacall</KBD>
+<pi>
+<LI>Mount the phoneME Feature software <KBD>midp</KBD> directory at the root level.</LI>
+<P>
+For example, if you installed the phoneME Feature software in <KBD>C:&#92;jwc1.1.3</KBD>,
+use the following command:
+<P>
+<KBD>mount C:&#92;jwc1.1.3&#92;midp /jwc1.1.3/midp</KBD>
+<P>
+<LI>Use <KBD>make</KBD> to build a reference port of the phoneME Feature software, by
+specifying the <code>i386</code> target CPU, picking up PCSL libraries, and enabling
+multitasking capabilities, as shown here.
+<P>
+<KBD>$ make TARGET_CPU=i386 USE_PCSL USE_MULTIPLE_ISOLATES=true</KBD>
+<P>
+The generated output for the Javacall/i386 target platform is found in the following location:
+<p>
+<KBD>%BUILD_OUTPUT_DIR%/midp/bin/javacall
+<P>
+</OL>
+<p>
+
+
+<a name="win_usertest"></a>
+<strong>Running <em>usertest</em> on a Win32/i386 Platform</strong>  
+<p>
+Once you have built an implementation of phoneME Feature software, you can quickly run a 
+MIDlet using the Win32/i386 emulator.
+
+<!--
+The phoneME Feature software allows you to run a MIDlet in emulation mode on the 
+Win32/i386 platform to test the success of your build.  To run the phoneME Feature
+emulated device, do the following:
+-->
+<p>
+<ol>
+<li>Change directory to the following directory.
+<p>
+$ <KBD>cd %BUILD_OUTPUT_DIR%/midp/bin/i386</KBD>
+<p>
+<li>Type <code>usertest</code>
+<p>
+This displays the phoneME Feature emulation device.
+</ol>   
+
+
+<!--
+<a name="install_midlet"></a>
+<strong>Installing a MIDlet Suite</strong>
+<p>
+For end users, the Over the Air (OTA) installer is used to install a MIDlet suite by 
+clicking on the graphical link to a Java Application Descriptor (JAD) or Java Archive 
+(JAR) file. For developers, a shell script is provided, called <KBD>installMidlet</KBD>
+that runs the OTA Installer from the command line. The <KBD>installMidlet</KBD> script 
+is located in the directory <KBD>$MIDP_OUTPUT_DIR/bin/<EM CLASS="Emphasis">cpu</EM></KBD>.
+<P>
+<OL>
+<LI>Change to the directory containing the <KBD>installMidlet</KBD> script.</LI>
+<P>
+For example, on a Linux/ARM platform, change to the following directory:
+<P>
+<KBD>$ cd $MIDP_OUTPUT_DIR/bin/</KBD>arm
+<P>
+<LI>To run the <KBD>installMidlet</KBD> script, enter the following in a command 
+line:</LI>
+<P>
+<KBD>$ installMidlet <I>url</I></KBD>
+<P>
+The argument <EM>url</EM> indicates the URL of a JAD or a JAR file. The MIDlet suite 
+is installed from this URL.
+<P>
+<B>Note:</B> The OTA installer used by the phoneME Feature software uses only the 
+HTTP and HTTPS protocols to install MIDlet suites.
+</OL>
+For more information on the OTA installer and <KBD>installMIDlet</KBD> subcommands, 
+see the 
+<a href="http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/pdf-html/tools/index.html">
+<EM>Sun Java Wireless Client Tools Guide</EM>.
+<P>
+
+<a name="run_midlet"></a>
+<strong>Using the <em>runMidlet</em> Command</strong>
+<p>
+
+The <KBD>runMidlet</KBD> application is built by default when you run the 
+<KBD>make all</KBD> command to build the phoneME Feature software. The 
+<KBD>runMidlet</KBD> script is located in the directory 
+<KBD>$MIDP_OUTPUT_DIR/bin/<EM>cpu</EM></KBD>.
+<P>
+Several arguments can be used with the <KBD>runMidlet</KBD> command, but this guide
+describes only two. For a complete list of arguments for <KBD>runMidlet</KBD>, see 
+the <a href="http://java.sun.com/javame/reference/docs/sjwc-1.1.3-web/pdf-html/tools/index.html">
+<EM>Sun Java Wireless Client Tools Guide</EM></a>.
+<P>
+<OL>
+<LI>Change to the directory that contains the <KBD>runMidlet</KBD> script.</LI>
+<P>
+For example, on a Linux/ARM platform, change to the following directory:
+<P>
+<KBD>$ cd $MIDP_OUTPUT_DIR/bin/arm</KBD>
+<P>
+<LI>Enter the following in a command line:
+<P>
+<KBD>$ runMidlet <I>suiteNumber</I> | <I>suiteID </I></KBD>
+<P>
+The <KBD>runMidlet</KBD> command takes the argument <I>suiteNumber</I> | <I>suiteID</I>, 
+which is the number or storage identifier given to the MIDlet suite when it was installed.
+</OL>
+<p>
+
+<a name="remove_midlet"></a>
+<strong>Removing an Installed MIDlet Suite</strong>
+<p>
+
+To remove one or all MIDlet suites installed in your phoneME Feature software 
+environment, use the <KBD>removeMidlet</KBD> command. The <KBD>removeMidlet</KBD> 
+script is located in the directory <KBD>$MIDP_OUTPUT_DIR/bin/<EM>cpu</EM></KBD>.
+<P>
+<OL>
+<LI>Change to the directory that contains the <KBD>removeMidlet</KBD> script.</LI>
+<P>
+For example, on a Linux/ARM platform, change to the following directory:
+<P>
+<KBD>$ cd $MIDP_OUTPUT_DIR/bin/arm</KBD>
+<P>
+<LI>To run the <KBD>removeMIDlet</KBD> command, enter the following in a command 
+line:</LI>
+<P>
+<KBD>$ removeMidlet ( <I>suiteNumber</I> | <I>suiteID</I> | all ) </KBD>
+<P>
+The <KBD>removeMidlet</KBD> command takes the argument <I>suiteNumber</I> | 
+<I>suiteID</I>, which is the number or storage identifier given to the MIDlet suite 
+when it was installed.
+<P>
+The argument <KBD>all</KBD> requests that all MIDlet suites be removed.
+</OL>
+<p>
+-->
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="phoneme_docs"></a><h3>Building phoneME Feature Software Documentation</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+You can create HTML API documents for phoneME Feature software from porting interfaces.
+To do this for the phoneME Feature software, use the <KBD>make docs_html</KBD> build
+target.
+<P>
+
+<a name="javadoc"></a>
+<strong>Generating Javadoc Tool Documentation</strong>
+<p>
+
+Building Javadoc tool documentation is the same for both Linux/i386 and Win32/i386 
+platforms.
+<P>
+<OL>
+<LI>Change to the default build directory for your target platform. For example, 
+this could be the Linux/i386 target platform, as shown here.</LI>
+<P>
+<KBD>$ cd $HOME/midp/build/linux_i386</KBD>
+<P>
+<LI>Build Javadoc tool HTML documentation.</LI>
+<P>
+<KBD>$ make docs_html</KBD>
+<P>
+The generated HTML documents are put in the following directory:
+<P>
+<KBD>$MIDP_OUTPUT_DIR/doc/javadoc/html</KBD>
+<P>
+</OL>
+<p>
+
+<a name="view_docs"></a>
+<strong>Viewing phoneME Feature Software Documents</strong>
+<P>
+Use any browser to display the Javadoc output file at the following URL:
+<P>
+<KBD>file://$MIDP_OUTPUT_DIR/doc/javadoc/html/index.html</KBD>
+<pre>
+
+
+</pre>
+<a href="./index_feature.html">first</a> | <a href="./cldc_feature.html">prev</a> 
+<!-- | <a href="./options_feature.html">next-last</a>  -->
+<p>
+
+
+<!-- =================================== END PAGE BODY ================== -->
+
+</div>

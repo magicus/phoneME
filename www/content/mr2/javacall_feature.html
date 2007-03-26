@@ -1,0 +1,206 @@
+<head>
+<title>Getting Started with phoneME Feature Software (MR2)</title>
+<style type="text/css">
+<!--
+.style3 {color: #e76f00}
+-->
+</style>
+</head>
+<body>
+<div id="projecthome" class="app">
+<HR>
+<h1 class="style3">Building the JavaCall Porting Layer (Win32_i386 Only)</h1> 
+
+<!-- END PAGE TITLE -->
+<p>
+<a href="./index_feature.html">first</a> | <a href="./buildenv_feature.html">prev</a> | 
+<a href="./pcsl_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<p>
+
+The JavaCall porting layer provides a uniform set of APIs that improve and simplify the 
+phoneME Feature software porting process.   
+<p>
+<b>Note:</b> The JavaCall porting layer is <b>optional</b> and available <em>only</em> 
+on the Win32/i386 platform.
+<p>
+
+To build a default implementation of the JavaCall porting layer, you take the following 
+general steps:
+<p>
+<UL>
+<LI>Set environment variables for your platform</LI>
+<LI>Run <KBD CLASS="Filename-Command">make</KBD> to build the JavaCall implementation</LI>
+</UL>
+<P>
+<b>Note:</b> This document is part of the MR2 development release version of phoneME Feature
+software. The instructions have not been verified or tested.  The contents will continue to
+change as development moves forward.
+<p>
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="javacall_var"></a><h3>Setting JavaCall Environment Variables</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+JavaCall has two environment variables that can be set, as shown in 
+<a href="#table2-1">Table 2-1</a>. 
+<P>
+<b>Note:</b> Make note of the values you choose for these variables. When executing the
+build procedures for PCSL, CLDC, and the phoneME Feature software client, you must set
+corresponding values.
+<P>
+
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000"
+CELLPADDING=5 CELLSPACING=0>
+<A NAME="table2-1"></A>
+<CAPTION><b>TABLE 2-1</b> JavaCall Environment Variables</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-485154"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-485156"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>JAVACALL_INCLUDE_DIR</KBD>
+<P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Specifies the location of the JavaCall header files in the source directory.  For example, 
+<code>JAVACALL_INCLUDE_DIR=%HOME%/javacall/include</code>.
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>JAVACALL_OUTPUT_DIR</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Defines the directory where the build system puts its output (for example, object 
+files and libraries).  For example, 
+<code>JAVACALL_OUTPUT_DIR=%BUILD_OUPUT_DIR%/javacall</code>	
+<p>
+<b>Note:</b> This is an optional variable. If it is not specified, the JavaCall build
+system sets the output directory for you.
+<P>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+
+<!--
+To set <KBD>JAVACALL_INCLUDE_DIR</KBD> and <KBD>JAVACALL_OUTPUT_DIR</KBD> as Windows 
+system variables, enter the following commands:
+<P>
+<ul>
+<KBD>$ set JAVACALL_INCLUDE_DIR=%HOME%/javacall/include</KBD>
+<br>
+<KBD>$ set JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall</KBD>
+</ul>
+-->
+<P>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="build_pcsl"></a><h3>Building JavaCall</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+To build an implementation of the JavaCall porting layer, take the following steps:
+<p>
+
+<OL>
+<LI>Set JavaCall environment variables, as shown here.
+<p>
+<KBD>$ set JAVACALL_INCLUDE_DIR=%HOME%/javacall/include</KBD>
+<br>
+<KBD>$ set JAVACALL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/javacall</KBD>
+<P>
+<LI>Change to the JavaCall build directory.</LI>
+<P>
+<KBD>$ cd %HOME%/javacall/src/win32/build</KBD>
+<P>
+<LI>Run the <KBD>make</KBD> command.</LI>
+<P>
+<KBD>$ make</KBD>
+</OL>
+<P>
+When the <KBD>make</KBD> command has successfully completed, the JavaCall build output 
+is found in the following directory:
+<P>
+<UL>
+<KBD>%JAVACALL_OUTPUT_DIR%/javacall_i386</KBD>
+</UL>
+
+<!--
+BEGIN SECTION HEAD 
+<hr noshade="noshade" size="1">
+<a name="pcsl_docs"></a><h3>Building PCSL Documentation</h3>
+END SECTION HEAD 
+<p>
+
+If you installed the Doxygen tool (from <KBD><A HREF="http://www.doxygen.org">
+http://www.doxygen.org</A></KBD>), you can create HTML documents from porting 
+interfaces. To do this for PCSL, use the <KBD>make doc</KBD> build target. The 
+documents are put in the directory <KBD>$PCSL_OUTPUT_DIR/doc/doxygen/html</KBD>.
+<P>
+<b>Note:</b> The build system assumes that the Doxygen executable is 
+<KBD>/usr/bin/doxygen</KBD>. If your executable is in a different location, edit 
+the <KBD>Docs.gmk</KBD> file in the directory 
+<I>InstallDir</I><KBD>/pcsl/makefiles/share</KBD> (where 
+<EM>InstallDir</EM> is the location of your phoneME Feature software).
+<P> -->
+<!-- <Set the <KBD>DOXYGEN_CMD</KBD> variable to the appropriate value. -->
+<p>
+
+<!-- 
+<strong>Generating Doxygen Documentation</strong>
+<P>
+The following procedure for building Doxygen documentation is the same for both 
+Linux and Windows build platforms.
+<P>
+<OL>
+<LI>Change to the PCSL directory:</LI>
+<P>
+<KBD>$ cd </KBD><I>InstallDir</I><KBD>/pcsl</KBD>
+<P>
+<LI>Run the <KBD>make doc</KBD> command:</LI>
+<P>
+<KBD>$ make doc</KBD>
+</OL>
+<p> -->
+
+<!-- 
+<strong>Viewing PCSL Documents</strong>
+<P> 
+Use any browser to display the Doxygen output file at the following URL:
+<P>
+<KBD>file://$PCSL_OUTPUT_DIR/doc/doxygen/html/index.html</KBD>
+-->
+
+<pre>
+
+
+</pre>
+<a href="./index_feature.html">first</a> | <a href="./buildenv_feature.html">prev</a> |
+<a href="./pcsl_feature.html">next</a> | <a href="./client_feature.html">last</a>
+ 
+<p>
+
+
+<!-- =================================== END PAGE BODY ================== -->
+
+</div>

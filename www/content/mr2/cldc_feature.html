@@ -1,0 +1,486 @@
+<head>
+<title>Getting Started with phoneME Feature Software (MR2)</title>
+<style type="text/css">
+<!--
+.style3 {color: #e76f00}
+-->
+</style>
+</head>
+<body>
+<div id="projecthome" class="app">
+<HR>
+<h1 class="style3">Building a CLDC Reference Port</h1> 
+
+<p>
+<a href="./index_feature.html">first</a> | <a href="./pcsl_feature.html">prev</a> | 
+<a href="./client_feature.html">next-last</a> 
+<!-- | <a href="./options_feature.html">last</a> --> 
+<p>
+
+CLDC software is an OSS community version of Sun Microsystems' Connected Limited 
+Device Configuration HotSpot&#153; Implementation virtual machine. Although 
+primarily created from the same shared code base, Sun Microsystems' commercial 
+product might not fully and accurately represent the OSS source base, due to 
+licensing and other legal restrictions.
+<P>
+This document has the following sections:
+<p>
+<ul>
+<li><a href="#linux">Building CLDC Software on a Linux/i386 Build Platform</a></li>
+<li><a href="#win32">Building CLDC Software on a Win32/i386 Build Platform</a></li>
+<li><a href="#build_docs">Building CLDC Documentation</a></li>
+</ul>
+<p> 
+For more information about building and running CLDC, see 
+<a href="http://java.sun.com/javame/reference/docs/cldc-hi-1.1.3-web/index.html">
+CLDC HotSpot Implementation software documentation</a>.
+<p>
+<b>Note:</b> This document is part of the MR2 development release version of phoneME Feature
+software. The instructions have not been verified or tested.  The contents will continue to
+change as development moves forward.
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="linux"></a><h3>Building CLDC Software on a Linux/i386 Build Platform</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+This section desccribes how to build a default implemenation of the CLDC software. 
+A successful build of CLDC is required to build the phoneME Feature software client. 
+<p>
+
+<a name="set_linux_var"></a>
+<strong>Setting Variables for a Linux/i386 Build Platform</strong>
+<P>
+To properly build CLDC software on a Linux/i386 build platform, you must set the 
+environment variables shown in <A HREF="#table4-1">TABLE 4-1</A>. 
+<p>
+
+<!--
+For more information 
+on setting other Linux build environment variables, see 
+<A HREF="./buildenv_feature.html#linux_setup"> Setting Up the Linux/i386 Build Environment</A>.
+-->
+
+<A NAME="table4-1"></A>
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000" 
+CELLPADDING=5 CELLSPACING=0>
+<CAPTION> <b>TABLE 4-1</b> Linux/i386 Build Platform Environment Variables</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-474025"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-474027"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474029"></A><KBD>JVMWorkSpace</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474034"></A>The location of your CLDC software 
+source code directory. For example, 
+<KBD>JVMWorksSpace=$HOME/cldc</KBD>.  
+<br>
+<b>Note:</b> This variable is set the same for both Linux/i386 and Linux/ARM target 
+builds.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474036"></A><KBD>JVMBuildSpace</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474041"></A>The location of your CLDC software 
+build output. For example, 
+<KBD>JVMBuildSpace=$BUILD_OUTPUT_DIR/cldc</KBD>.
+<br>
+<b>Note:</b> This variable is set the same for both Linux/i386 and Linux/ARM target
+builds.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474047"></A><KBD>ENABLE_PCSL</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474049"></A>Required for building CLDC with 
+the PCSL software component. Must be set to <KBD CLASS="Filename-Command">true</KBD>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474051"></A><KBD>ENABLE_ISOLATES</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-474053"></A>Required for building a CLDC 
+implementation with multitasking capability. Must be set to 
+<KBD CLASS="Filename-Command">true</KBD>.  If not explicitly set to <code>true</code>, 
+the build defaults to <code>false</code> and CLDC is built without multitasking capability. 
+</P>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+
+Building a default version of the CLDC software creates the executable <KBD>cldc_vm</KBD>,
+for both Linux/i386 and Linux/ARM target platforms. 
+<p>
+
+
+<a name="set_vars"></a>
+<strong>Setting Build Environment Variables for Both Target Platforms</strong>
+<p>
+The primary CLDC environment variables, <code>$JVMWorkSpace</code> and 
+<code>$JVMBuildSpace</code>, are set once, as system variables, for both Linux/i386 and 
+Linux/ARM target platforms, as shown here. 
+<ul>
+<KBD>$ export JVMWorksSpace=$HOME/cldc</KBD>
+<br>
+<KBD>$ export JVMBuildSpace=$BUILD_OUTPUT_DIR/cldc</KBD>
+<p>
+</ul>
+<b>Note:</b> The variables <code>ENABLE_PCSL</code> and <code>ENABLE_ISOLATES</code>
+are set on the <code>make</code> command line, as shown below.
+<p>
+
+
+<a name="build_linux_i386"></a>
+<strong>Building CLDC for a Linux/i386 Target Platform</strong>
+<p>
+<OL>
+<LI>Change directory to <KBD>$JVMWorkSpace/build/linux_i386</KBD>.
+<p>
+<KBD>$ cd $JVMWorkSpace/build/linux_i386</KBD>
+<p>
+<LI>Run the <KBD>make</KBD> command to build CLDC software, to include PCSL libraries,
+and to enable multiasking capabilities, as shown here.
+<P>
+<KBD>$ make ENABLE_PCSL=true ENABLE_ISOLATES=true</KBD>
+<P>
+The generated CLDC output is found under <KBD>$JVMBuildSpace/linux_i386/dist</KBD>.
+</OL>
+<p>
+
+
+<a name="build_linux_arm"></a>
+<strong>Building CLDC for a Linux/ARM Target Platform</strong>
+<p>
+
+<OL>
+<LI>Change directory to <KBD>$JVMWorkSpace/build/linux_arm</KBD>.
+<p>
+<KBD>$ cd $JVMWorkSpace/build/linux_arm</KBD>
+<p>
+<LI>Run the <KBD>make</KBD> command to build CLDC software, to include PCSL libraries,
+to enable multitasking capabilities, and to call MontaVista development tools, as shown here.
+<p>
+<KBD>$ make ENABLE_PCSL=true ENABLE_ISOLATES=true GNU_TOOLS_DIR=$MONTAVISTA</KBD>
+<p>
+<b>Note:</b> In the above command line, the variable <code>$MONTAVISTA</code> is a shortcut
+for a much longer command string, as described <a href="./buildenv_feature.html#montavista">
+here</a>.
+<p>
+The generated CLDC output is found under <KBD>$JVMBuildSpace/linux_arm/dist</KBD>
+</OL>
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="win32"></a><h3>Building CLDC Software on a Win32/i386 Build Platform</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+To properly build the CLDC software on a Windows platform, you must set the environment
+variables shown in <a href="#table4-2">TABLE 4-2</A>. 
+<P>
+
+<a name="table4-2"></a>
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000"
+CELLPADDING=5 CELLSPACING=0>
+<CAPTION> <b>TABLE 4-2</b> Win32/i386 Build Platform Environment Variables</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-473082"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-473084"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473089"></A><KBD>JVMWorkSpace</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473092"></A>The location of your CLDC software
+source code workspace.  For example,
+<KBD>JVMWorksSpace=<em>InstallDir</em>/cldc</KBD>.
+<br>
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473197"></A><KBD>JVMBuildSpace</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473199"></A>The location of your CLDC software
+build output. For example,
+<KBD>JVMBuildSpace=$BUILD_OUTPUT_DIR/cldc</KBD>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473736"></A><KBD>ENABLE_PCSL</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473738"></A>Required for building the phoneME
+Feature software. Must be set to <KBD>true</KBD>.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473732"></A><KBD>ENABLE_ISOLATES</KBD>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="TableText"><A NAME="pgfId-473734"></A>Required for building a CLDC implementation
+with multitasking capability. Must be set to <KBD>true</KBD>.  If not explicitly set to
+<code>true</code>, the build defaults to <code>false</code> and CLDC is built without
+multitasking capability.
+</P>
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>JAVACALL_OUTPUT_DIR</KBD> <P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+If you are building a JavaCall implementation (Win32 only), this specifies the location
+of the JavaCall output.
+<p>
+<b>Note:</b> If you have previously built JavaCall, this variable should already be set.
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+
+Building a default version of CLDC creates the CLDC software executable 
+<KBD>cldc_vm.exe</KBD>, for both the Win32/i386 and Javacall/i386 target platforms.  
+<P>
+
+
+<a name="win_vars">
+<strong>Setting Win32/i386 Build Environment Variables for Both Target Platforms</strong>
+<p>
+Set CLDC build environment variables as shown here:
+<P>
+<ul>
+<KBD>$ set JVMWorksSpace=%HOME%/cldc</KBD>
+<br>
+<KBD>$ set JVMBuildSpace=%BUILD_OUTPUT_DIR%/cldc</KBD>
+<p>
+</ul>
+<p>
+<b>Note:</b> The variables <code>ENABLE_PCSL</code> and <code>ENABLE_ISOLATES</code>
+are set on the <code>make</code> command line, as shown below.
+<p>
+
+
+<a name="build_win"></a>
+<strong>Building CLDC for a Win32/i386 Target Platform</strong>
+<P>
+<OL>
+<LI>Change directory to <KBD>%JVMWorkSpace%/build/win32_i386</KBD>.
+<p>
+<KBD>$ cd %JVMWorkSpace%/build/win32_i386</KBD>
+<p>
+<LI>Run the <KBD>make</KBD> command to build the CLDC software, to include the PCSL
+libraries, and to enable multitasking capabilities, as shown here.
+<P>
+<KBD>$ make ENABLE_PCSL=true ENABLE_ISOLATES=true</KBD>
+<P>
+The generated CLDC output is found under <KBD>%JVMBuildSpace%/build/win32_i386/dist</KBD>.
+</OL>
+<p>
+
+
+<a name="build_win"></a>
+<strong>Building CLDC for a Javacall/i386 Target Platform</strong>
+<P>
+<OL>
+<LI>Change directory to <KBD>%JVMWorkSpace%/build/javacall_i386_vc</KBD>.
+<p>
+<KBD>$ cd %JVMWorkSpace%/build/javacall_i386_vc</KBD>
+<p>
+<b>Note:</b> If you have previously built the Javacall porting layer for PCSL, the 
+<code>JAVACALL_PLATFORM</code> and <code>JAVACALL_OUTPUT_DIR</code> environment variables
+should already be set.  If not, set them as shown here:
+<p>
+<KBD>$ set JAVACALL_PLATFORM=javacall_i386_vc</KBD>
+<br>
+<KBD>$ set JAVACALL_OUTPUT_DIR=%BUILD-OUTPUT_DIR%/javacall</KBD>
+<p>
+<LI>Run the <KBD>make</KBD> command to build the CLDC software, to include the PCSL
+libraries, and to enable multitasking capabilities, as shown here.
+<P>
+<KBD>$ make ENABLE_PCSL=true ENABLE_ISOLATES=true</KBD>
+<P>
+The generated CLDC output is found under <KBD>%JVMBuildSpace%/build/javacall_i386/dist</KBD>.
+</OL>
+<p>
+
+
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="running"></a><h3>Running CLDC Software</h3>
+<!-- END SECTION HEAD -->
+<p>
+Once you build the CLDC software, you can invoke it from the command line
+to run a class compiled from the Java programming language. The path to the
+executable depends on the target platform (operating system and processor) for
+which you build the software.
+<P>
+
+
+<a name="run_linux"></a>
+<strong>Running CLDC on a Linux/i386 or Linux/ARM Target Platform</strong>
+<p>
+<OL>
+<LI>Change to the CLDC build space for your target platform:</LI>
+<P>
+On a Linux/i386 target platform, change to:
+<p>
+<KBD>$ cd $JVMBuildSpace/linux_i386/dist</KBD>
+<p>
+On a Linux/ARM target platform, change to:
+<p>
+<KBD>$ cd $JVMBuildSpace/linux_arm/dist</KBD>
+<P>
+<LI>Enter the following command:</LI>
+<P>
+<KBD>$ bin/cldc_vm -classpath</KBD>
+<EM>location-of-compiled-applications</EM><KBD>/classes</KBD> <EM>classname</EM>
+<p>
+For example, to run the <code>HelloWorld</code> application, the command string
+could be:
+<p>
+<code>$ bin/cldc_vm -classpath /src/classes HelloWorld</code>
+</OL>
+<p>
+
+
+<a name="run_win"></a>
+<strong>Running CLDC on a Win32/i386 or Javacall/i386 Target Platform</strong>
+<p>
+<OL>
+<LI>Change to the CLDC build space for the Win32/i386 platform:</LI>
+<P>
+On a win32/i386 target platform, change to:
+<p>
+<KBD>$ cd %JVMBuildSpace%/win32_i386/dist</KBD>
+<P>
+On a Javacall/i386 target platform, change to:
+<p>
+<KBD>$ cd %JVMBuildSpace%/javacall_i386/dist</KBD>
+<p>
+<LI>Enter the following command:</LI>
+<P>
+<KBD>$ bin/cldc_vm.exe -classpath</KBD>
+<EM>location-of-compiled-applications</EM><KBD>/classes</KBD> <EM>classname</EM>
+<p>
+For example, to run the <code>HelloWorld</code> application, the command string
+could be:
+<p>
+<code>$ bin/cldc_vm -classpath C:/src/classes HelloWorld</code>
+</OL>
+<p>
+
+
+
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="build_docs"></a><h3>Building CLDC Documentation</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+You can create HTML documents from CLDC porting interfaces. To do this for the
+CLDC software, use the <KBD>make docs_html</KBD> build target.
+<P>
+
+<a name="javadoc"></a>
+<strong>Generating Javadoc Tool Documentation</strong>
+<P>
+Building Javadoc tool documentation is the same for both Linux/i386 and Win32/i386 
+build platforms.
+<P>
+<OL>
+<LI>Change to the default build directory for your build platform. For example, this 
+could be a Linux/i386 platform, as shown here.</LI>
+<P>
+<KBD>$ cd $JVMWorkSpace/build/linux_i386</KBD>
+<P>
+<LI>Build Javadoc tool HTML documentation.</LI>
+<P>
+<KBD>$ make docs_html</KBD>
+<P>
+The generated HTML documents are put in the following directory:
+<P>
+<KBD>$JVMBuildSpace/doc/javadoc/html</KBD>
+</OL>
+<p>
+
+<a name="view_javadoc"></a>
+<strong>Viewing phoneME Feature Documents</strong>
+<P>
+Use any browser to display the Javadoc tool output file at the following URL:
+<P>
+<KBD>file://$JVMBuildSpace/doc/javadoc/html/index.html</KBD>
+<pre>
+
+
+</pre>
+<a href="./index_feature.html">first</a> | <a href="./pcsl_feature.html">prev</a> |
+<a href="./client_feature.html">next-last</a> 
+<!-- | <a href="./options_feature.html">last</a>  -->
+<p>
+
+
+
+<!-- =================================== END PAGE BODY ================== -->
+
+</div>

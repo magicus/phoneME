@@ -1,0 +1,462 @@
+<head>
+<title>Getting Started with phoneME Feature Software (MR2)</title>
+<style type="text/css">
+<!--
+.style3 {color: #e76f00}
+-->
+</style>
+</head>
+<body>
+<div id="projecthome" class="app">
+<HR>
+<h1 class="style3">Building a PCSL Reference Port</h1> 
+
+<p>
+<a href="./index_feature.html">first</a> | <a href="./javacall_feature.html">prev</a> | 
+<a href="./cldc_feature.html">next</a> | <a href="./client_feature.html">last</a> 
+<p>
+
+This document contains instructions for building a PCSL reference port. It has the 
+following sections:
+<p>
+<ul>
+<li><a href="#linux">Building PCSL Software on a Linux/i386 Build Platform</a>
+<li><a href="#win32">Building PCSL Software on a Win32/i386 Build Platform</a> 
+<li><a href="#pcsl_docs">Building PCSL Documentation</a>
+</ul>
+<p>
+
+PCSL libraries are used to build CLDC and the phoneME Feature software client.  PCSL contains 
+several individual services, including File, Network, Memory and Print.  Follow the procedures 
+in this section to build a default PCSL reference port containing libraries, tools, tests, and 
+documentation bundles for the following target platforms:
+<P>
+<ul>
+<li><a href="#linux_i386">Linux/i386</a>
+<li><a href="#linux_arm">Linux/ARM</a>
+<li><a href="#win_i386">Win32/i386</a>
+</ul>
+<b>Note:</b> Although each PCSL service can be individually built, this document describes how 
+to build the full PCSL only. 
+<p>
+<b>Note:</b> This document is part of the MR2 development release version of phoneME Feature
+software. The instructions have not been verified or tested.  The contents will continue to
+change as development moves forward.
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="linux"></a><h3>Building PCSL Software on a Linux/i386 Build Platform</h3>
+<!-- END SECTION HEAD -->
+<p>
+This section describes how to build PCSL on the Linux/i386 build platform, for both Linux/i386 
+and Linux/ARM target platforms, as shown in <a href="#table3-1">Table 3-1</a>. 
+<P>
+<b>Note:</b> Make a note of the values you choose for these variables. When building
+the CLDC and phoneME Feature software client, you must set corresponding values.
+<P>
+
+<a name="linux_env"></a>
+<strong>Setting PCSL Environment Variables on a Linux/i386 Build Platform</strong>
+<p>
+
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000"
+CELLPADDING=5 CELLSPACING=0>
+<A NAME="table3-1"></A>
+<CAPTION><b>TABLE 3-1</b> PCSL Environment Variables for Linux/i386</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-485154"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-485156"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>PCSL_PLATFORM</KBD>
+<P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Identifies the target operating system, the target CPU, and the compiler that the 
+build system uses to create the PCSL library. Its value has the form 
+<I>os_cpu_compiler</I>. 
+<p>
+For example, if you are building PCSL on a Linux/i386 build platform to run on a 
+Linux/i386 target platform, the value of this variable is <code>linux_i386_gcc</code>; 
+if building on a Linux/i386 build platform to run on a Linux/ARM target platform, 
+the value of this variable is <code>linux_arm_gcc</code>. 
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>PCSL_OUTPUT_DIR</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Specifies the location where the build system puts PCSL output. For example, this 
+could be <KBD>$BUILD_OUTPUT_DIR</KBD>/pcsl, with <code>$BUILD_OUTPUT_DIR</code> being 
+the directory you defined for build output at the beginning of this guide.  
+<p>
+<b>Note:</b> In order for the CLDC and phoneME Feature software build processes to
+find PCSL output, <code>PCSL_OUTPUT_DIR</code> <EM>must</EM> be set as a system 
+variable, not on the <code>make</code> command line.
+<p>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>NETWORK_MODULE</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Defines the transport package used to communicate between PCSL and other components in 
+phoneME Feature software. Must be set to <code>bsd/generic</code> to build the Linux/i386
+target and to <code>bsd/qte</code> to build the Linux/ARM target.  
+<p>
+</TBODY>
+</TABLE>
+<p>
+
+<!-- 
+Set PCSL build environment variables for the Linux/i386 build platform as shown here:
+<p>
+<ul>
+<KBD>$ export PCSL_PLATFORM=linux_i386_gcc</KBD>
+<br>
+<KBD>$ export PCSL_OUTPUT_DIR=$BUILD_OUTPUT_DIR/pcsl</KBD>
+<br>
+<KBD>$ export NETWORK_MODULE=bsd/generic</KBD>
+</ul>
+-->
+<p>
+When building on the Linux/i386 build platform, you can build only for the 
+<a href="#i386">Linux/i386</a> target platform, only for the 
+<a href="#arm">Linux/ARM</a> target platform, or for both target platforms.  
+If you build for both target platforms, either one can be built first.
+<p>
+
+<!--
+<b>Note:</b> If you build for both target platforms, you must reset the variables
+for the second target platform, as described in the procedure for that platform.
+-->
+<p>
+
+<strong>Setting a Build Variable for Both Target Platforms</strong>
+<p>
+The following variable is set once, as a system variable, for building both Linux/i386 
+and Linux/ARM target platforms.  
+<p>
+<ul>
+<KBD>$ export PCSL_OUTPUT_DIR=$BUILD_OUTPUT_DIR/pcsl</KBD>
+</ul>
+<p> 
+
+
+<a name="i386"></a>
+<strong>Building for a Linux/i386 Target Platform</strong>
+<p>
+
+<OL>
+<li>Change to the PCSL directory.</li>
+<P>
+<code>$ cd $HOME/pcsl</code>
+<p>
+<li>Run the <code>make</code> command. Set the <code>PCSL_PLATFORM</code> and 
+<code>NETWORK_MODULE</code> variables on the command line, as shown here.
+<P>
+<code>$ make PCSL_PLATFORM=linux_i386_gcc NETWORK_MODULE=bsd/generic
+<p>
+The generated PCSL output is found under <code>$BUILD_OUTPUT_DIR/pcsl</code>. 
+</OL>
+<p>
+
+<a name="arm"></a>
+<strong>Building for a Linux/ARM Target Platform</strong>
+<p>
+
+<OL>
+<li>Change to the PCSL directory.</li>
+<P>
+<code>$ cd $HOME/pcsl</code>
+<p>
+<li>Run the <code>make</code> command. Set the <code>PCSL_PLATFORM</code>,
+<code>NETWORK_MODULE</code>, and <code>GNU_TOOLS_DIR</code> variables on the command 
+line, as shown here.
+<P>
+<code>$ make PCSL_PLATFORM=linux_arm_gcc NETWORK_MODULE=bsd/qte GNU_TOOLS_DIR=$MONTAVISTA 
+<!-- GNU_TOOLS_DIR=/opt/montavista/cee/devkit/arm/v4t_le/armv4tl-hardhat/linux</code> -->
+<p>
+<b>Note:</b> In the above command line, the variable <code>$MONTAVISTA</code> is a shortcut
+for a much longer command string, as described <a href="./buildenv_feature.html#montavista">
+here</a>.
+<p>
+The generated PCSL output is found under <code>$BUILD_OUTPUT_DIR/pcsl</code>.
+</OL>
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="win32"></a><h3>Building PCSL Software on a Win32/i386 Build Platform</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+<!--
+Unlike the Linux_i386 build platform, where you may choose to build for both the Linux_i386 
+and Linux/ARM target platforms, on the Win32/i386 build platform, you will choose to build 
+for only one target platform.  This is because JavaCall is a porting layer with its own APIs,
+designed to make it easier to port the phoneME Feature software to a variety of potential 
+hardware devices.  Building for the JavaCall porting layer still allows your software to be 
+run in emulation mode on the Win32/i386.
+--> 
+
+This section describes how to build PCSL on the Win32/i386 build platform, for both Win32/i386
+and Javacall/i386 target platforms, as shown in <a href="#table3-1">Table 3-1</a>.
+<P>
+<b>Note:</b> Make a note of the values you choose for these variables. When building
+the CLDC and phoneME Feature software client, you must set corresponding values.
+<P>
+
+
+<a name="win_env"></a>
+<strong>Setting PCSL Environment Variables for a Win32/i386 Build Platform</strong>
+<p>
+
+<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000"
+CELLPADDING=5 CELLSPACING=0>
+<A NAME="table3-2"></A>
+<CAPTION><b>TABLE 3-2</b> PCSL Environment Variables for Win32/i386</CAPTION>
+<THEAD>
+<TR>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-485154"></A>Name
+</P>
+</TH>
+<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
+<P CLASS="TableHead"><A NAME="pgfId-485156"></A>Description
+</P>
+</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>PCSL_PLATFORM</KBD>
+<P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Identifies the target operating system, the target CPU, and the compiler that the
+build system uses to create the PCSL library. Its value has the form
+<I>os_cpu_compiler</I>.
+<p>
+If building on a Win32/i386 build platform for a Win32/i386 target platform, the
+value of this variable is <code>win32_i386_vc</code>; if building on a Win32/i386
+build platform for a JavaCall porting layer platform, the value of this variable
+is <code>javacall_i386_vc</code>.  (The <code>vc</code> indicates the Microsoft
+Visual Studio compiler.)
+</TD>
+</TR>
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>PCSL_OUTPUT_DIR</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Specifies the location where the build system puts PCSL output. For example,  this
+could be <KBD>%BUILD_OUTPUT_DIR%</KBD>/pcsl, with <code>%BUILD_OUTPUT_DIR%</code> being
+the directory you defined for build output at the beginning of this guide.
+<p>
+<b>Note:</b> In order for the CLDC and phoneME Feature software build processes to
+find PCSL output, <code>PCSL_OUTPUT_DIR</code> <EM>must</EM> be set as a system
+variable, not on the <code>make</code> command line.
+<p>
+
+<!--
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>NETWORK_MODULE</KBD>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+Defines the transport package used to communicate between PCSL and other components in
+phoneME Feature software. Must be set to <code>bsd/generic</code>.
+<p>
+</TR>
+-->
+
+<TR>
+<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
+<P>
+<KBD>JAVACALL_OUTPUT_DIR</KBD> <P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P>
+If you are building a JavaCall implementation (on a Win32/i386 build platform only), 
+this specifies the location of the JavaCall output.
+<p>
+<b>Note:</b> If you have previously built JavaCall, this variable should already be set.
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<p>
+
+
+<a name="win_i386"></a>
+<strong>Building for a Win32/i386 Target Platform</strong>
+<P>
+<OL>
+<LI>Mount the phoneME Feature software's PCSL directory.</LI>
+<P>
+For example, if you installed the phoneME Feature software in 
+<KBD>C:&#92;jwc1.1.3</KBD>, use this command:
+<P>
+<KBD>$ mount C:&#92;jwc1.1.3&#92;pcsl /jwc1.1.3/pcsl</KBD>
+<P>
+<li>Set environment variables for the Win32/i386 target platform.
+<p>
+<KBD>$ set PCSL_PLATFORM=win32_i386_vc</KBD>
+<br>
+<KBD>$ set PCSL_OUTPUT_DIR=%BUILD_OUTPUT_DIR%/pcsl
+<p>
+<P>
+<LI>Change directory to the PCSL directory.</LI>
+<P>
+<KBD>$ cd %HOME%/pcsl</KBD>
+<P>
+<LI>Run the <KBD>make</KBD> command.</LI>
+<P>
+<KBD>$ </KBD>make</KBD>
+<P>
+The <KBD>make</KBD> command creates several directories, including <code>lib</code> 
+and <code>inc</code>, in the following location:
+<P>
+<KBD>%PCSL_OUTPUT_DIR%/win32_i386</KBD>
+</OL>
+
+
+<a name="javacall_i386"></a>
+<strong>Building for a Javacall/i386 Target Platform</strong>
+<P>
+To build PCSL for the JavaCall platform, follow the steps shown here:
+<OL>
+
+<!--
+<LI>Mount the phoneME Feature software's PCSL directory.</LI>
+<P>
+For example, if you installed the phoneME Feature software in
+<KBD>C:&#92;jwc1.1.3</KBD>, use this command:
+<P>
+<KBD>$ mount C:&#92;jwc1.1.3&#92;pcsl /jwc1.1.3/pcsl</KBD>
+<P>
+-->
+
+<LI>Change directory to the PCSL directory.</LI>
+<P>
+<KBD>$ cd %HOME%/pcsl</KBD>
+<P>
+<b>Note:</b> If you have previously built the Javacall porting layer, the 
+<code>JAVACALL_PLATFORM</code> and <code>JAVACALL_OUTPUT_DIR</code> environment variables
+should already be set.  If not, set them as shown here:
+<p>
+<KBD>$ set JAVACALL_PLATFORM=javacall_i386_vc</KBD>
+<br>
+<KBD>$ set JAVACALL_OUTPUT_DIR=%BUILD-OUTPUT_DIR%/javacall</KBD>
+<p>
+<LI>Run the <KBD>make</KBD> command.</LI>
+<P>
+<KBD>$ </KBD>make</KBD>
+<P>
+The <KBD>make</KBD> command creates several directories, including <code>lib</code>
+and <code>inc</code>, in the following location:
+<P>
+<KBD>%PCSL_OUTPUT_DIR%/javacall_i386</KBD>
+<P>
+</OL>
+
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="pcsl_docs"></a><h3>Building PCSL Documentation</h3>
+<!-- END SECTION HEAD -->
+<p>
+To build Doxygen API documentation in HTML format from PCSL porting interfaces, 
+you must install the Doxygen tool.  It can be acquired from:
+<p>
+<KBD><A HREF="http://www.doxygen.org">http://www.doxygen.org</A></KBD> 
+<p>
+To build documentation for PCSL, use the build target <KBD>make doc</KBD>. The 
+generated HTML documents are put in the directory 
+<KBD>$PCSL_OUTPUT_DIR/doc/doxygen/html</KBD>.
+<P>
+<!-- <b>Note:</b> The build system assumes that the Doxygen executable is 
+<KBD>/usr/bin/doxygen</KBD>. If your executable is in a different location, 
+use the <code>DOXYGEN_CMD</code> variable to define a new location.  For 
+example, on a Linux/i386 platform:
+<p>
+<KBD>$ export DOXYGEN_CMD=i<em>doxygen_output</em>
+<p>
+where <em>doxygen_output</em> is the new location of your Doxygen output.
+<p> -->
+
+<strong>Generating Doxygen Documentation</strong>
+<P>
+The following procedure for building Doxygen documentation is the same for both 
+Linux and Windows build platforms.
+<P>
+<OL>
+<LI>Change to the PCSL directory:</LI>
+<P>
+<KBD>$ cd $HOME/pcsl</KBD>
+<P>
+<LI>Run the <KBD>make doc</KBD> command:</LI>
+<P>
+<KBD>$ make doc</KBD>
+<p>
+
+<P>
+<b>Note:</b> The build system assumes that the Doxygen executable is in the 
+directory <KBD>/usr/bin/doxygen</KBD>. If your executable is installed in a 
+different location, use the <code>DOXYGEN_CMD</code> variable to define the 
+new location.  For example:
+<p>
+<KBD>$ make DOXYGEN_CMD=<em>doxygen_dir</em> doc</KBD>
+<p>
+where <em>doxygen_dir</em> is the location of your Doxygen executable.
+<p>
+</OL>
+
+
+<strong>Viewing PCSL Documents</strong>
+<P> 
+Use any browser to display the Doxygen output file at the following URL:
+<P>
+<KBD>file://$PCSL_OUTPUT_DIR/doc/doxygen/html/index.html</KBD>
+<pre>
+
+
+
+</pre>
+<a href="./index_feature.html">first</a> | <a href="./javacall_feature.html">prev</a> |
+<a href="./cldc_feature.html">next</a> | <a href="./client_feature.html">last</a>
+ 
+<p>
+
+
+<!-- =================================== END PAGE BODY ================== -->
+
+</div>
