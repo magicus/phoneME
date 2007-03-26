@@ -51,8 +51,8 @@ public class IxcOutputStream extends ObjectOutputStream {
 
       /***
        * isExecutiveVM value indicates that this IxcOutputStream is used
-       * for the central JumpExecIxcRegistry's output stream.
-       * In the JumpExecIxcRegistry, we don't want to be converting
+       * for the central JUMPExecIxcRegistry's output stream.
+       * In the JUMPExecIxcRegistry, we don't want to be converting
        * Remote object to a RemoteRef, but just write out outgoing
        * RemoteRef objects.
       **/
