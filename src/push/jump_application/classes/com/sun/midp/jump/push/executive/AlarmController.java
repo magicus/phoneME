@@ -35,7 +35,7 @@ import java.util.TimerTask;
 import javax.microedition.io.ConnectionNotFoundException;
 
 /**
- * Registry that manages alarms.
+ * Controller that manages alarms.
  *
  * <p>
  * IMPORTANT_NOTE:  As this class uses <code>Store</code> to keep
@@ -44,7 +44,7 @@ import javax.microedition.io.ConnectionNotFoundException;
  *  methods of this class get invoked.
  * <p>
  */
-public final class AlarmRegistry {
+public final class AlarmController {
 
     /** Timer to track alarms. */
     private final Timer timer;
@@ -59,7 +59,7 @@ public final class AlarmRegistry {
     private final LifecycleAdapter lifecycleAdapter;
 
     /**
-     * Constructs an alarm registry.
+     * Constructs an alarm controller.
      *
      * <p>
      * NOTE: both <code>store</code> and <code>lifecycleAdapter</code>
@@ -73,7 +73,7 @@ public final class AlarmRegistry {
      * @param lifecycleAdapter adapter to launch <code>MIDlet</code>
      * (cannot be <code>null</code>)
      */
-    public AlarmRegistry(
+    public AlarmController(
             final Store store,
             final LifecycleAdapter lifecycleAdapter) {
         this.timer = new Timer();
@@ -173,7 +173,7 @@ public final class AlarmRegistry {
     }
 
     /**
-     * Disposes an alarm registry.
+     * Disposes an alarm controller.
      *
      * <p>
      * NOTE: This method is needed as <code>Timer</code> creates non daemon thread
@@ -181,7 +181,7 @@ public final class AlarmRegistry {
      * </p>
      *
      * <p>
-     * NOTE: after <code>AlarmRegistry</code> is disposed, attempt to perform
+     * NOTE: after <code>AlarmController</code> is disposed, attempt to perform
      *  any alarms related activity on it leads to undefined behaviour.
      * </p>
      */
@@ -215,7 +215,7 @@ public final class AlarmRegistry {
 
         /** Implements interface's method. */
         public void run() {
-            synchronized (AlarmRegistry.this) {
+            synchronized (AlarmController.this) {
                 if (canceled) {
                     return;
                 }

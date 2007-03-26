@@ -24,7 +24,7 @@
 
 package com.sun.midp.jump.push.executive.MIDP;
 
-import com.sun.midp.jump.push.executive.AlarmRegistry;
+import com.sun.midp.jump.push.executive.AlarmController;
 import com.sun.midp.jump.push.executive.JUMPConnectionInfo;
 import com.sun.midp.jump.push.executive.LifecycleAdapter;
 import com.sun.midp.jump.push.executive.persistence.Store;
@@ -40,17 +40,18 @@ public final class MIDPPushRegistry implements JUMPPushRegistry {
     /** Reference to a store. */
     private final Store store;
 
-    /** Alarm registry to use. */
-    private final AlarmRegistry alarmRegistry;
+    /** Alarm controller to use. */
+    private final AlarmController alarmController;
 
     /**
-     * Creats a registry.
+     * Creates a registry.
      *
      * @param store Store to use
      */
     public MIDPPushRegistry(final Store store) {
         this.store = store;
-        this.alarmRegistry = new AlarmRegistry(store, new LifecycleAdapter() {
+        this.alarmController = new AlarmController(store,
+                new LifecycleAdapter() {
             public void launchMidlet(final int midletSuiteID, final String midlet) {
                 // TBD: implement soft launch
             }
@@ -119,6 +120,6 @@ public final class MIDPPushRegistry implements JUMPPushRegistry {
             final String midlet,
             final long time)
                 throws RemoteException, ConnectionNotFoundException  {
-        return alarmRegistry.registerAlarm(midletSuiteId, midlet, time);
+        return alarmController.registerAlarm(midletSuiteId, midlet, time);
     }
 }

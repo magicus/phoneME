@@ -70,7 +70,7 @@ MIDP_JAVADOC_ALL += \
     $(shell echo $(SUBSYSTEM_JUMP_PUSH_PACKAGES) | tr ' ' $(PATHSEP))
 
 SUBSYSTEM_JUMP_PUSH_JAVA_FILES = \
-    $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/AlarmRegistry.java \
+    $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/AlarmController.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/ConnectionController.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/JUMPConnectionInfo.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/LifecycleAdapter.java \
