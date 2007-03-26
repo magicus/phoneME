@@ -89,7 +89,6 @@ Java_com_sun_midp_io_j2me_sms_Protocol_open0(void) {
     /* The midlet suite name for this connection. */
     SuiteIdType msid = UNUSED_SUITE_ID;
 
-    printf("Protocol.open0\n");
     port = KNI_GetParameterAsInt(3);
 
     /* When port is 0 then return else continue */
@@ -207,8 +206,6 @@ Java_com_sun_midp_io_j2me_sms_Protocol_close0(void) {
 
     /** Deregistration flag. */
     int deRegister;
-
-    printf("Protocol.close0\n");
 
     port = KNI_GetParameterAsInt(1);
     handle = KNI_GetParameterAsInt(2);

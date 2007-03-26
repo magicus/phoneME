@@ -139,9 +139,6 @@ public class Protocol extends ProtocolBase {
     /**	 DCS: Unicode UCS-2 */
     protected static final int GSM_UCS2 = 2;
 
-    /** Used to protect read-modify operation on open */
-    protected Object closeLock = new Object();
-
     /** Creates a message connection protocol handler. */
     public Protocol() {
         super();
@@ -601,8 +598,6 @@ public class Protocol extends ProtocolBase {
 
 	m_iport = 0;
 
-        System.out.println("Protocol.close()");
-
         synchronized (closeLock) {
             if (open) {
                 /*
@@ -903,7 +898,6 @@ public class Protocol extends ProtocolBase {
 	openconnections.addElement(this);
 	url = name;
 
-        System.out.println("Protocol.openPrimInternal()");
 	try {
             connHandle = open0(host, midletSuite.getID(), m_iport);
 	} catch (IOException ioexcep) {

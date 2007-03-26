@@ -72,9 +72,6 @@ public class Protocol extends ProtocolBase {
     /**  DCS: Unicode UCS-2 */
     protected static final int GSM_UCS2 = 2;
 
-    /** Used to protect read-modify operation on open */
-    protected Object closeLock = new Object();
-
     /** Creates a message connection protocol handler. */
     public Protocol() {
         super();

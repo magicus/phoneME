@@ -147,6 +147,9 @@ public abstract class ProtocolBase implements MessageConnection,
     /** Listener thread. */
     Thread m_listenerThread = null;
 
+    /** Used to protect read-modify operation on open field during close() */
+    protected Object closeLock = new Object();
+
     /**
      * Indicates whether a trusted application is allowed to open the
      * message connection. Set to true if the permission check passes.

@@ -129,7 +129,7 @@ Java_com_sun_midp_io_j2me_cbs_Protocol_open0(void) {
  * Internal helper function implementing connection close routine
  *
  * @param port The port associated with this connection.
- * @param handle The handle of the open SMS message connection.
+ * @param handle The handle of the open CBS message connection.
  * @param deRegister Deregistration os the port when parameter is 1.
  */
 static void closeConnection(int msgID, int handle, int deRegister) {
