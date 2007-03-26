@@ -48,6 +48,9 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
     /** Open count */
     int opens = 0;
 
+    /** IPv6 address */
+    boolean ipv6 = false;
+
     /**
      * Open the connection
      */
@@ -93,7 +96,7 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
 
             if(colon != -1) {
                /* Strip off the protocol name */
-               nameOrIP = name.substring(0, colon);
+                nameOrIP = parseHostName(name, colon);
                /* Host name should not contain reserved characters specified in RFC 2396 */
                if ((nameOrIP.indexOf('/') != -1) || (nameOrIP.indexOf('@') != -1) || (nameOrIP.indexOf('?') != -1) ||  (nameOrIP.indexOf(';') != -1)) {
                        throw new IllegalArgumentException("hostname " + nameOrIP + " cannot contain \"?\" , \"@\" , \";\", \":\", or \"/\" character.");
@@ -113,8 +116,13 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
             }
 
             /* Get the port number */
-            port = Integer.parseInt(name.substring(colon+1));
-            
+            if (ipv6) {
+                int lastColon = name.lastIndexOf(":");
+                port = Integer.parseInt(name.substring(lastColon+1));
+            } else {
+                port = Integer.parseInt(name.substring(colon+1));
+            }
+
             checkMIDPPermission(nameOrIP, port);
             /* Open the socket */
             socket = new Socket(nameOrIP, port);
@@ -133,6 +141,29 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
      */
     public void open(Socket socket) throws IOException {
         this.socket = socket;
+    }
+
+
+    private String parseHostName(String connection, int colon) {
+        if (connection.indexOf("::") > 0) {
+            return parseIPv6Address(connection, colon);
+        } else {
+            return parseIPv4Address(connection, colon);
+        }
+    }
+
+
+    private String parseIPv4Address(String name, int colon) {
+        return name.substring(0, colon);
+    }
+
+
+    private String parseIPv6Address(String address, int colon) {
+        ipv6 = true;
+        int lastIndexOfColon = address.lastIndexOf(":");
+        if ((address.indexOf("::") > address.indexOf(".")) && (address.indexOf(".")>0) ) 
+            throw new IllegalArgumentException("invalid host name " + address);
+        return address.substring(0, lastIndexOfColon);
     }
 
     /**
