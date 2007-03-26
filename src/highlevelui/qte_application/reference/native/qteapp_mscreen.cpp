@@ -27,7 +27,9 @@
  */
 
 #include <qteapp_mscreen.h>
+#include <qteapp_export.h>
 #include <suspend_resume.h>
+#include <jvm.h>
 
 MScreen::MScreen() {
     vm_suspended = false;
@@ -66,4 +68,43 @@ void MScreen::pauseAll() {
  */
 void MScreen::activateAll() {
     midp_resume();
+}
+
+/**
+ * Implementation of slotTimeout() shared between distinct ports.
+ * IMPL_NOTE: due to MOC restrictions slotTimeout() is defined in
+ *            subclasses that inherit from QWidget indirectly.
+ */
+void MScreen::slotTimeoutImpl() {
+    jlong ms;
+
+    if (vm_stopped) {
+        return;
+    }
+
+    /* check and align stack suspend/resume state */
+    midp_checkAndResume();
+
+    ms = vm_suspended ? SR_RESUME_CHECK_TIMEOUT : JVM_TimeSlice();
+
+    /* Let the VM run for some time */
+    if (ms <= -2) {
+        /*
+         * JVM_Stop was called. Avoid call JVM_TimeSlice again until
+         * startVM is called.
+         */
+        vm_stopped = true;
+        qteapp_get_application()->exit_loop();
+    } else if (ms == -1) {
+        /*
+         * Wait forever -- we probably have a thread blocked on IO or GUI.
+         * No need to set up timer from here
+         */
+    } else {
+        if (ms > 0x7fffffff) {
+            vm_slicer.start(0x7fffffff, TRUE);
+        } else {
+            vm_slicer.start((int)(ms & 0x7fffffff), TRUE);
+        }
+    }
 }
