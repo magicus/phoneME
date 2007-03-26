@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.File;
 import javax.microedition.io.Connector;
+import com.sun.j2me.main.Configuration;
 
 /**
  * Provides abstraction for working with files
@@ -39,7 +40,8 @@ import javax.microedition.io.Connector;
 public class FileAccess {
     
     private String name;
-    private Object stream;
+    private Object outputStream;
+    private Object inputStream;
 
     public static int INTERNAL_STORAGE_ID = 0;
     
@@ -64,7 +66,12 @@ public class FileAccess {
      *         storage.
      */
     public static String getStorageRoot(int storageId) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        String storagePath = Configuration.getProperty("sun.storage.path" + storageId) + File.separator;
+        if (storagePath == null || storagePath.equals("")) {
+            throw new UnsupportedOperationException("\"sun.storage.path" + storageId + "\" property is not set");            
+        }
+
+        return storagePath;
     }
 
     public static FileAccess getInstance(String fileName) {
@@ -74,12 +81,13 @@ public class FileAccess {
     public void connect(int accessType) throws IOException {
         File file = new File(name);
         try {
-            if (accessType == Connector.READ) {
-                stream = new FileInputStream(file);
+            if ((accessType == Connector.READ)||(accessType == Connector.READ_WRITE)) {
+                inputStream = new FileInputStream(file);
             }
-            else if (accessType == Connector.WRITE) {
+            
+            if ((accessType == Connector.WRITE)||(accessType == Connector.READ_WRITE)) {
                 FileOutputStream outStream = new FileOutputStream(file);
-                stream = new DataOutputStream(outStream);
+                outputStream = new DataOutputStream(outStream);
             }
         }
         catch(FileNotFoundException fnfe) {
@@ -88,20 +96,21 @@ public class FileAccess {
     }
 
     public void disconnect() throws IOException {
-        if (stream instanceof InputStream) {
-            ((InputStream)stream).close();
+        if (inputStream instanceof InputStream) {
+            ((InputStream)inputStream).close();
         }
-        else if (stream instanceof DataOutputStream) {
-            ((DataOutputStream)stream).close();
+
+        if (outputStream instanceof DataOutputStream) {
+            ((DataOutputStream)outputStream).close();
         }
     }
 
     public InputStream openInputStream() {
-        return stream instanceof InputStream ? (InputStream) stream : null;
+        return inputStream instanceof InputStream ? (InputStream)inputStream : null;
     }
 
     public DataOutputStream openDataOutputStream() {
-        return stream instanceof DataOutputStream ? (DataOutputStream) stream : null;
+        return outputStream instanceof DataOutputStream ? (DataOutputStream)outputStream : null;
     }
 
     public void truncate(int i) {

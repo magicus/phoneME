@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "configuration.dtd">
+<!--
+   
+
+  Copyright 1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+-->
+<!-- System-independent abstractions properties -->
+<configuration>
+<properties>
+<!-- Internal properties (visible via Configuration.getProperty() -->
+    <property Key="sun.storage.path0"
+        Value="."
+        Scope="internal"
+        Comment="Path to internal storage"/>
+</properties>
+</configuration>
