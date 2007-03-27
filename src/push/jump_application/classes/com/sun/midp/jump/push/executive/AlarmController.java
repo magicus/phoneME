@@ -126,9 +126,9 @@ final class AlarmController {
             final int midletSuiteID,
             final String midlet,
             final long time) throws ConnectionNotFoundException {
-        final MIDPApp midletInfo = new MIDPApp(midletSuiteID, midlet);
+        final MIDPApp midpApp = new MIDPApp(midletSuiteID, midlet);
 
-        final AlarmTask oldTask = (AlarmTask) alarms.get(midletInfo);
+        final AlarmTask oldTask = (AlarmTask) alarms.get(midpApp);
         long oldTime = 0L;
         if (oldTask != null) {
             oldTime = oldTask.scheduledExecutionTime();
@@ -145,7 +145,7 @@ final class AlarmController {
             throw new ConnectionNotFoundException();
         }
 
-        scheduleAlarm(midletInfo, time);
+        scheduleAlarm(midpApp, time);
 
         return oldTime;
     }
