@@ -301,12 +301,9 @@ final class ConnectionController {
      * </p>
      */
     final class ReservationHandler implements DataAvailableListener {
-        /** <code>MIDlet</code> suite ID of reservation. */
-        private final int midletSuiteID;
-
-        /** <code>MIDlet</code> class name of reservation. */
-        private final String midlet;
-
+        /** Reservation's app. */
+        private final MIDPApp midpApp;
+        
         /** Connection name. */
         private final String connectionName;
 
@@ -317,7 +314,7 @@ final class ConnectionController {
         private final ConnectionReservation connectionReservation;
 
         /** Cancelation status. */
-        private boolean canceled = false;
+        private boolean cancelled = false;
 
         /**
          * Creates a handler and reserves the connection.
@@ -336,8 +333,7 @@ final class ConnectionController {
                 final int midletSuiteID, final String midlet,
                 final ReservationDescriptor reservationDescriptor)
                     throws IOException {
-            this.midletSuiteID = midletSuiteID;
-            this.midlet = midlet;
+            this.midpApp = new MIDPApp(midletSuiteID, midlet);
 
             this.connectionName = reservationDescriptor.getConnectionName();
             this.filter = reservationDescriptor.getFilter();
@@ -352,7 +348,7 @@ final class ConnectionController {
          * @return <code>MIDlet</code> suite ID
          */
         int getSuiteId() {
-            return midletSuiteID;
+            return midpApp.midletSuiteID;
         }
 
         /**
@@ -361,7 +357,7 @@ final class ConnectionController {
          * @return <code>MIDlet</code> class name
          */
         String getMidlet() {
-            return midlet;
+            return midpApp.midlet;
         }
 
         /**
@@ -386,7 +382,7 @@ final class ConnectionController {
          * Cancels reservation.
          */
         void cancel() {
-            canceled = true;
+            cancelled = true;
             connectionReservation.cancel();
         }
 
@@ -402,11 +398,12 @@ final class ConnectionController {
         /** {@inheritDoc} */
         public void dataAvailable() {
             synchronized (ConnectionController.this) {
-                if (canceled) {
+                if (cancelled) {
                     return;
                 }
 
-                lifecycleAdapter.launchMidlet(midletSuiteID, midlet);
+                lifecycleAdapter.launchMidlet(
+                        midpApp.midletSuiteID, midpApp.midlet);
             }
         }
     }
