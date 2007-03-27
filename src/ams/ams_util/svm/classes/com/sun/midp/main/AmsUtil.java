@@ -27,6 +27,7 @@
 package com.sun.midp.main;
 
 import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
 /** Implements utilities that are different for SVM and MVM modes. */
@@ -89,7 +90,16 @@ public class AmsUtil {
             String profileName) {
 
         if (id != MIDletSuite.UNUSED_SUITE_ID) {
-            if (midletProxyList.isMidletInList(id, midlet)) {
+
+            // The MIDlet running already shoudln't be started again.
+            // Each started MIDlet has matching MIDletProxy instance
+            // created on MIDLET_CREATED_NOTIFICATION event. In SVM mode
+            // the event system is not used for MIDlet execution, so
+            // MIDletProxy can not exist yet for a MIDlet just started.
+            // Instead of MIDletProxyList browsing the MIDletStateHandler
+            // is checked for the running MIDlet.
+
+            if (MIDletStateHandler.getMidletStateHandler().isRunning(midlet)) {
                 // No need to exit, MIDlet already loaded
                 return false;
             }
