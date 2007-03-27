@@ -58,8 +58,8 @@ public final class ConnectionController {
     /** Lifecycle adapter implementation. */
     private final LifecycleAdapter lifecycleAdapter;
 
-    /** Internal connection database. */
-    private final Database database;
+    /** Current reservations. */
+    private final Reservations reservations;
 
     /**
      * Creates an instance.
@@ -80,7 +80,7 @@ public final class ConnectionController {
         this.store = store;
         this.reservationDescriptorFactory = reservationDescriptorFactory;
         this.lifecycleAdapter = lifecycleAdapter;
-        this.database = new Database();
+        this.reservations = new Reservations();
 
         reserveConnectionsFromStore();
     }
@@ -122,7 +122,7 @@ public final class ConnectionController {
          * need to unregister registered connection first
          */
         final ReservationHandler previous =
-                database.queryByConnection(connectionName);
+                reservations.queryByConnection(connectionName);
         if (previous != null) {
             if (previous.getSuiteId() != midletSuiteID) {
                 // Already registered for another suite, fail quickly
@@ -146,7 +146,7 @@ public final class ConnectionController {
             throw ioex; // rethrow IOException
         }
 
-        database.add(reservationHandler);
+        reservations.add(reservationHandler);
     }
 
     /**
@@ -173,7 +173,7 @@ public final class ConnectionController {
             final String connection) throws
                 SecurityException {
         final ReservationHandler reservationHandler =
-                database.queryByConnection(connection);
+                reservations.queryByConnection(connection);
 
         if (reservationHandler == null) {
             // Connection hasn't been registered
@@ -209,7 +209,7 @@ public final class ConnectionController {
                 reservationHandler.getFilter());
         store.removeConnection(reservationHandler.getSuiteId(), info);
         reservationHandler.cancel();
-        database.remove(reservationHandler);
+        reservations.remove(reservationHandler);
     }
 
     /**
@@ -231,7 +231,7 @@ public final class ConnectionController {
             final boolean available) {
         final Vector result = new Vector();
 
-        final Iterator it = database.queryBySuiteID(midletSuiteID);
+        final Iterator it = reservations.queryBySuiteID(midletSuiteID);
         while (it.hasNext()) {
             final ReservationHandler handler = (ReservationHandler) it.next();
             if ((!available) || handler.hasAvailableData()) {
@@ -411,10 +411,8 @@ public final class ConnectionController {
         }
     }
 
-    /**
-     * Internal database that manages needed mappings.
-     */
-    static final class Database {
+    /** Internal structure that manages needed mappings. */
+    static final class Reservations {
         /** Mappings from connection to reservations. */
         private final HashMap connection2data = new HashMap();
 
@@ -422,7 +420,7 @@ public final class ConnectionController {
         private final HashMap suiteId2data = new HashMap();
 
         /**
-         * Adds a reservation into database.
+         * Adds a reservation into reservations.
          *
          * @param reservationHandler reservation to add
          */
@@ -442,7 +440,7 @@ public final class ConnectionController {
         }
 
         /**
-         * Removes a reservation from database.
+         * Removes a reservation from reservations.
          *
          * @param reservationHandler reservation to remove
          */
@@ -453,11 +451,10 @@ public final class ConnectionController {
         }
 
         /**
-         * Queries the database by the connection.
+         * Queries the reservations by the connection.
          *
          * @param connection connection to query by
          * (cannot be <code>null</code>)
-         *
          * @return reservation (<code>null</code> if absent)
          */
         ReservationHandler queryByConnection(final String connection) {
@@ -465,10 +462,9 @@ public final class ConnectionController {
         }
 
         /**
-         * Queries the database by the suite id.
+         * Queries the reservations by the suite id.
          *
          * @param midletSuiteID <code>MIDlet</code> suite ID to query by
-         *
          * @return iterator of <code>ReservationHandler</code>s
          * (cannot be <code>null</code>)
          */
