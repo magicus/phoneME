@@ -75,6 +75,7 @@ SUBSYSTEM_JUMP_PUSH_JAVA_FILES = \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/JUMPConnectionInfo.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/LifecycleAdapter.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/MIDPContainerInterfaceImpl.java \
+    $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/MIDPApp.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/PushRegistry.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/PushRegistryModuleFactoryImpl.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/ota/OTAPushRegistry.java \

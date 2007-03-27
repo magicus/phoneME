@@ -87,12 +87,14 @@ final class AlarmController {
      */
     public synchronized void readAlarms() {
         store.listAlarms(new Store.AlarmsConsumer() {
-            public void consume(final int midletSuiteID, final Map suiteAlarms) {
-                for (Iterator it = suiteAlarms.entrySet().iterator(); it.hasNext();) {
+            public void consume(
+                    final int midletSuiteID, final Map suiteAlarms) {
+                for (Iterator it = suiteAlarms.entrySet().iterator();
+                                                            it.hasNext();) {
                     final Map.Entry entry = (Map.Entry) it.next();
                     final String midlet = (String) entry.getKey();
                     final Long time = (Long) entry.getValue();
-                    scheduleAlarm(new MIDletInfo(midletSuiteID, midlet),
+                    scheduleAlarm(new MIDPApp(midletSuiteID, midlet),
                             time.longValue());
                 }
             }
@@ -124,7 +126,7 @@ final class AlarmController {
             final int midletSuiteID,
             final String midlet,
             final long time) throws ConnectionNotFoundException {
-        final MIDletInfo midletInfo = new MIDletInfo(midletSuiteID, midlet);
+        final MIDPApp midletInfo = new MIDPApp(midletSuiteID, midlet);
 
         final AlarmTask oldTask = (AlarmTask) alarms.get(midletInfo);
         long oldTime = 0L;
@@ -162,11 +164,11 @@ final class AlarmController {
     public synchronized void removeSuiteAlarms(final int midletSuiteID) {
         for (Iterator it = alarms.entrySet().iterator(); it.hasNext();) {
             final Map.Entry entry = (Map.Entry) it.next();
-            final MIDletInfo midletInfo = (MIDletInfo) entry.getKey();
-            if (midletInfo.midletSuiteID == midletSuiteID) {
+            final MIDPApp midpApp = (MIDPApp) entry.getKey();
+            if (midpApp.midletSuiteID == midletSuiteID) {
                 // No need to care about retval
                 ((AlarmTask) entry.getValue()).cancel();
-                removeAlarmFromStore(midletInfo);
+                removeAlarmFromStore(midpApp);
                 it.remove();
             }
         }
@@ -176,8 +178,8 @@ final class AlarmController {
      * Disposes an alarm controller.
      *
      * <p>
-     * NOTE: This method is needed as <code>Timer</code> creates non daemon thread
-     * which would prevent the app from exit.
+     * NOTE: This method is needed as <code>Timer</code> creates
+     * non daemon thread which would prevent the app from exit.
      * </p>
      *
      * <p>
@@ -199,36 +201,36 @@ final class AlarmController {
      */
     private class AlarmTask extends TimerTask {
         /** <code>MIDlet</code> to run. */
-        final MIDletInfo midletInfo;
+        final MIDPApp midpApp;
 
         /** Cancelation status. */
-        boolean canceled = false;
+        boolean cancelled = false;
 
         /**
-         * Creates a new instance, originally not canceled.
+         * Creates a new instance, originally not cancelled.
          *
-         * @param midletInfo <code>MIDlet</code> to create task for
+         * @param midpApp <code>MIDlet</code> to create task for
          */
-        AlarmTask(final MIDletInfo midletInfo) {
-            this.midletInfo = midletInfo;
+        AlarmTask(final MIDPApp midpApp) {
+            this.midpApp = midpApp;
         }
 
-        /** Implements interface's method. */
+        /** {@inheritDoc} */
         public void run() {
             synchronized (AlarmController.this) {
-                if (canceled) {
+                if (cancelled) {
                     return;
                 }
 
-                lifecycleAdapter.launchMidlet(midletInfo.midletSuiteID,
-                        midletInfo.midlet);
-                removeAlarm(midletInfo);
+                lifecycleAdapter.launchMidlet(midpApp.midletSuiteID,
+                        midpApp.midlet);
+                removeAlarm(midpApp);
             }
         }
 
-        /** Overrides canceling. */
+        /** {@inheritDoc} */
         public boolean cancel() {
-            canceled = true;
+            cancelled = true;
             return super.cancel();
         }
     }
@@ -236,13 +238,13 @@ final class AlarmController {
     /**
      * Scheduleds an alarm.
      *
-     * @param midletInfo registration info
+     * @param midpApp application to register alarm for
      * @param time alarm time
      */
-    private void scheduleAlarm(final MIDletInfo midletInfo, final long time) {
+    private void scheduleAlarm(final MIDPApp midpApp, final long time) {
         final Date date = new Date(time);
-        final AlarmTask newTask = new AlarmTask(midletInfo);
-        alarms.put(midletInfo, newTask);
+        final AlarmTask newTask = new AlarmTask(midpApp);
+        alarms.put(midpApp, newTask);
         timer.schedule(newTask, date);
         /*
          * RFC: according to <code>Timer</code> spec, <quote>if the time is in
@@ -254,78 +256,38 @@ final class AlarmController {
     /**
      * Removes an alarm associated info.
      *
-     * @param midletInfo defines <code>MIDlet</code> to remove alarm for
+     * @param midpApp application to remove alarm for
      */
-    private void removeAlarm(final MIDletInfo midletInfo) {
-        alarms.remove(midletInfo);
-        removeAlarmFromStore(midletInfo);
+    private void removeAlarm(final MIDPApp midpApp) {
+        alarms.remove(midpApp);
+        removeAlarmFromStore(midpApp);
     }
 
     /**
      * Removes an alarm from persistent store.
      *
-     * @param midletInfo defines <code>MIDlet</code> to remove alarm for
+     * @param midpApp application to remove alarm for
      */
-    private void removeAlarmFromStore(final MIDletInfo midletInfo) {
+    private void removeAlarmFromStore(final MIDPApp midpApp) {
         try {
-            store.removeAlarm(midletInfo.midletSuiteID, midletInfo.midlet);
-        } catch (IOException _) {
-            // The best thing I can do
+            store.removeAlarm(midpApp.midletSuiteID, midpApp.midlet);
+        } catch (IOException ioex) {
+            logError("Failed to remove alarm info from the persistent store: "
+                    + ioex);
         }
     }
 
-    /** Unique identification for <code>MIDlet</code>. */
-    private static final class MIDletInfo {
-        /*
-         * Might go away if better way to bundle both <code>MIDlet suite</code>
-         * and <code>MIDlet</code> class name into one piece of data will be
-         * found (e.g. appId, but there might be some complications with
-         * persistent store and install/uninstall).
-         *
-         * And most probably such class can be shared.
-         */
-
-        /** <code>MIDlet suite</code> ID. */
-        public final int midletSuiteID;
-
-        /** <code>MIDlet</code> class name. */
-        public final String midlet;
-
-        /**
-         * Constructs an instance.
-         *
-         * @param midletSuiteID <code>MIDlet suite</code> ID
-         * @param midlet <code>MIDlet</code> class name
-         */
-        public MIDletInfo(final int midletSuiteID, final String midlet) {
-            this.midletSuiteID = midletSuiteID;
-            this.midlet = midlet;
-        }
-
-        /**
-         * Implements <code>Object.hashCode</code>.
-         *
-         * @return hash code
-         */
-        public int hashCode() {
-            return midletSuiteID + midlet.hashCode();
-        }
-
-        /**
-         * Implements <code>Object.equals</code>.
-         *
-         * @param obj object to compare with
-         *
-         * @return <code>true</code> iff equal
-         */
-        public boolean equals(final Object obj) {
-            if (!(obj instanceof MIDletInfo)) {
-                return false;
-            }
-
-            final MIDletInfo rhs = (MIDletInfo) obj;
-            return (midletSuiteID == rhs.midletSuiteID)
-                && midlet.equals(rhs.midlet);
-        }
+    /**
+     * Logs error message.
+     *
+     * <p>
+     * TBD: common logging
+     * </p>
+     *
+     * @param message message to log
+     */
+    private static void logError(final String message) {
+        System.err.println("ERROR [" + AlarmController.class.getName() + "]: "
+                + message);
     }
 }
