@@ -40,8 +40,9 @@ import java.rmi.AccessException;
  * in the form of lightweight remote method invocation (RMI).
  */
 
-public interface JUMPServiceRegistryModule extends JUMPModule {
+public interface JUMPServiceRegistry extends JUMPModule {
 
+    
     /**
      * Registers a service under a given name to the registry, and make it
      * available for other JUMP processes.
@@ -69,7 +70,7 @@ public interface JUMPServiceRegistryModule extends JUMPModule {
      * @throws NotBoundException if the name is not found in this registry.
      * @throws RemoteException if the service retrieval fails.
      **/
-     public Remote getService(String name) throws NotBoundException, RemoteException;
+     public Remote lookup(String name) throws NotBoundException, RemoteException;
 
     /**
      * Provides a list of service names currently available in this registry.

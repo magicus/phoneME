@@ -83,15 +83,7 @@ public class AppContainerImpl extends JUMPAppContainer {
 	  xletManager.postInitXlet();
 	  xletManager.postStartXlet();
 
-	  // Loop until active, destroyed or unknown.  No better way to wait...
-	  while (xletManager.getState() != 3 &&
-	         xletManager.getState() != 4 &&
-	         xletManager.getState() != 0) {
-
-             try {
-                Thread.sleep(500);
-             } catch (InterruptedException e) {}
-          }
+          // FIXME: xlet manager calls are asynchronous.  Do we want to wait here?
 
 	  currentApp = app;
 
@@ -100,7 +92,7 @@ public class AppContainerImpl extends JUMPAppContainer {
 	       return -1;
        } 
 
-       return Integer.parseInt(app.getProperty(JUMPApplication.ID_KEY));
+       return 1; // only one xlet per isolate
     }
     
     public void pauseApp(int appId) {

@@ -25,8 +25,7 @@
 package com.sun.jumpimpl.module.serviceregistry;
 
 import com.sun.jump.module.JUMPModule;
-import com.sun.jumpimpl.process.JUMPModulesConfig;
-import com.sun.jump.module.serviceregistry.JUMPServiceRegistryModule;
+import com.sun.jump.module.serviceregistry.JUMPServiceRegistry;
 
 import java.rmi.Remote;
 import java.rmi.AlreadyBoundException;
@@ -39,7 +38,7 @@ import javax.microedition.xlet.ixc.StubException;
 
 import java.util.Map;
 
-public class ServiceRegistryImpl implements JUMPServiceRegistryModule {
+public class ServiceRegistryImpl implements JUMPServiceRegistry {
     
     public void load(Map map) {}
     public void unload() {}
@@ -79,7 +78,7 @@ public class ServiceRegistryImpl implements JUMPServiceRegistryModule {
      *
      * @throws NotBoundException if the name is not found in this registry.
      **/
-     public Remote getService(String name) throws NotBoundException, RemoteException {
+     public Remote lookup(String name) throws NotBoundException, RemoteException {
           return registry.lookup(name);
      }
 

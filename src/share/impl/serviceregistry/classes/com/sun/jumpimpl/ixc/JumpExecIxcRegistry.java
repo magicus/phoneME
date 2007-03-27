@@ -23,7 +23,7 @@
  *
  */
 
-package com.sun.jumpimpl.ixc.executive;
+package com.sun.jumpimpl.ixc;
 
 import java.rmi.*;
 import java.net.ServerSocket;
@@ -45,27 +45,11 @@ import com.sun.jumpimpl.ixc.JumpExecIxcRegistryRemote;
 import com.sun.jumpimpl.ixc.ConnectionReceiver;
 import com.sun.jumpimpl.ixc.ExportedObject;
 import com.sun.jumpimpl.ixc.RemoteRef;
-import com.sun.jumpimpl.ixc.Utils;
-import com.sun.jumpimpl.ixc.XletContextFactory;
 
-/*
- * This is the main, master IxcRegistry that is created in the Executive VM and
- * exported as a Remote service itself.  The client VMs use JumpIxcRegistryImpl
- * as it's IxcRegistry class and invokes methods essential for IXC, such as bind, 
- * lookup, list, etc. Underneath the cover, JumpIxcRegistryImpl has a stub to 
- * this JumpExecIxcRegistry and invokes those method calls as a remote method 
- * invocation to this JumpExecIxcRegistry.  Therefore this class serves as a single
- * database of all the registered Remote objects among the Executive VM and all the 
- * client VMs.
- *
- * The remote methods in this class (the methods defined in 
- * JumpExecIxcRegistryRemote and it's superinterface, java.rmi.registry.Registry)
- * is expected to be called remotely and should not be invoked directly on this class.
- * If you need to use these remote methods in the executive VM, call them through 
- * JumpExecIxcRegistryWrapper to avoid false import/export of the remote object.
- */
+//import com.sun.appmanager.mtask.TaskListener;
+
 public class JumpExecIxcRegistry extends IxcRegistry 
-            implements JumpExecIxcRegistryRemote { 
+            implements JumpExecIxcRegistryRemote { // , TaskListener {
  
     int jumpExecMasterAppId;
 
@@ -75,56 +59,34 @@ public class JumpExecIxcRegistry extends IxcRegistry
     // <RemoteRef, HashSet of imported xlet IDs>
     private HashMap importedObjects    = new HashMap(); 
 
-    private static JumpExecIxcRegistry registry;
+    static JumpExecIxcRegistry registry;
 
-    /*
-     * Creats and starts the JumpExecIxcRegistry to be used for the Client VMs.
-     * 
-     * @param portNumber the server socket port number which this JumpExecIxcRegistry
-     *  listens to for the incoming ixc requests.
-     */
-    private JumpExecIxcRegistry(int portNumber) {
+    //private RegistryListUpdater updater = new RegistryListUpdater();
 
+    private JumpExecIxcRegistry(XletContext context) {
        try {
-           ConnectionReceiver.setExecVMServicePort(portNumber);
+          //Automatically export this to be available for the children
+          ExportedObject.registerExportedObject(this, context);
 
-	   /* 
-	    * Use the system classloader to mark this registry.  This classloader
-	    * would later be used for loading the stub classes for the remote objects.
-	    */
-           ClassLoader loader = ClassLoader.getSystemClassLoader();
-           XletContext context = XletContextFactory.getXletContext(loader);
+          //Start ServerSocket
+          ConnectionReceiver.startAppManagerSocket();
 
-            /* Automatically export this registry to be available for the client VMs */
-           ExportedObject.registerExportedObject(this, context);
+          jumpExecMasterAppId = Utils.getMtaskServerID();
 
-	   /* Now let's start listening to the incoming requests. */
-           ConnectionReceiver.startExecVMService();
-
-	   /* 
-	    * Remember the Exec VM's process ID.  This number would be used
-	    * to keep track of the stubs the Executive VM imports,
-	    * which is needed to count the number of references left for the 
-	    * exported objects for cleanup.
-	    */
-           jumpExecMasterAppId = Utils.getMtaskServerID();
-
+          //new Thread(updater).start(); 
+         
        } catch (Exception e) {
           System.out.println("Cannot export JumpExecIxcRegistry!!" + e);
           return;   
        }
     }
 
-    public static synchronized void startExecVMService(int portNumber) {
-	 registry = new JumpExecIxcRegistry(portNumber);
-    }
-
-    public static synchronized JumpExecIxcRegistry getJumpExecIxcRegistry() {
-         if (registry == null) {
-            throw new InternalError("JumpExecIxcRegistry hasn't been created."); 
-         }
-
-	 return registry;
+    public static IxcRegistry getRegistry(XletContext context) {
+       if (registry == null) {
+          registry = new JumpExecIxcRegistry(context);
+       }
+ 
+       return registry;
     }
 
     public Remote lookup(String name)  

@@ -31,8 +31,8 @@ import com.sun.jump.common.JUMPProcess;
 import com.sun.jump.common.JUMPIsolate;
 import com.sun.jump.common.JUMPProcessProxy;
 import com.sun.jump.message.JUMPMessagingService;
+//import java.rmi.Remote;
 import java.util.Map;
-import java.rmi.Remote;
 
 /**
  * <code>JVMIsolateVM</code> encapsulates an isolate that is implemented
@@ -60,9 +60,9 @@ public abstract class JUMPIsolateProcess
         }
     }
     
-    public Remote getRemoteService(Class remoteInterface) {
-        return null;      
-    }
+    //public Remote getRemoteService(String serviceName) {
+    //  return null;
+    //}
     
     /**
      * Returns the executive process interface so that the Isolate

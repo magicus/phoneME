@@ -29,21 +29,21 @@ package com.sun.jump.module.serviceregistry;
 import com.sun.jump.module.JUMPModuleFactory;
 
 /**
- * <code>JUMPServiceRegistryModuleFactory</code> is a factory for <code>JUMPServiceRegistryModule</code>.
+ * <code>JUMPServiceRegistryFactory</code> is a factory for <code>JUMPServiceRegistry</code>.
  */
-public abstract class JUMPServiceRegistryModuleFactory extends JUMPModuleFactory {
+public abstract class JUMPServiceRegistryFactory extends JUMPModuleFactory {
     
-    private static JUMPServiceRegistryModuleFactory INSTANCE = null;
+    private static JUMPServiceRegistryFactory INSTANCE = null;
     
-    public static JUMPServiceRegistryModuleFactory getInstance() {
+    public static JUMPServiceRegistryFactory getInstance() {
         return INSTANCE;
     }
     
     /**
-     * Creates a new instance of JUMPServiceRegistryModuleFactory
+     * Creates a new instance of JUMPServiceRegistryFactory
      */
-    protected JUMPServiceRegistryModuleFactory() {
-        synchronized (JUMPServiceRegistryModuleFactory.class){
+    protected JUMPServiceRegistryFactory() {
+        synchronized (JUMPServiceRegistryFactory.class){
             if ( INSTANCE == null ) {
                 INSTANCE = this;
             }
@@ -51,7 +51,11 @@ public abstract class JUMPServiceRegistryModuleFactory extends JUMPModuleFactory
     }
     
     /**
-     * Returns the <code>JUMPServiceRegistryModule</code>.
+     * Returns the <code>JUMPServiceRegistry</code> for the ClassLoader passed in.
+     * 
+     * @param loader the classloader to use for the service registry
+     *        when loading new stub objects.
+     * @throws java.lang.NullPointerException if the ClassLoader is null.
      */
-    public abstract JUMPServiceRegistryModule getModule();
+    public abstract JUMPServiceRegistry getModule(ClassLoader loader);
 }
