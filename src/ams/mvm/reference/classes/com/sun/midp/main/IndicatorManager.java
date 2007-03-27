@@ -105,7 +105,7 @@ public class IndicatorManager implements MIDletProxyListListener {
      * @param midlet The proxy of the MIDlet being removed
      */
     public void midletRemoved(MIDletProxy midlet) {
-        // IndicatorManager does not care if midlet is removed
+        setHomeIconState(midletProxyList.isAlertWaitingInBackground());
     }
 
     /**
