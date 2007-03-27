@@ -73,7 +73,7 @@ void MScreen::activateAll() {
 /**
  * Implementation of slotTimeout() shared between distinct ports.
  * IMPL_NOTE: due to MOC restrictions slotTimeout() is defined in
- *            subclasses that inherit from QWidget indirectly.
+ *            subclasses that inherit from QWidget directly.
  */
 void MScreen::slotTimeoutImpl() {
     jlong ms;
