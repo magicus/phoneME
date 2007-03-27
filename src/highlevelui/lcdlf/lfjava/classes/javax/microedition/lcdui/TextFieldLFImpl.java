@@ -484,10 +484,10 @@ class TextFieldLFImpl extends ItemLFImpl implements
         int clr;
         if (hasFocus) {
             clr = (editable ? ScreenSkin.COLOR_FG_HL : 
-                TextFieldSkin.COLOR_BG_UE);
+                   ScreenSkin.COLOR_FG_HL);
         } else {
             clr = (editable ? TextFieldSkin.COLOR_FG :
-                TextFieldSkin.COLOR_FG_UE);
+                   TextFieldSkin.COLOR_FG_UE);
         }
         
         xScrollOffset = paint(g, tf.buffer,
