@@ -147,6 +147,9 @@ public abstract class ProtocolBase implements MessageConnection,
     /** Listener thread. */
     Thread m_listenerThread = null;
 
+    /** Used to protect read-modify operation on open field during close() */
+    protected Object closeLock = new Object();
+
     /**
      * Indicates whether a trusted application is allowed to open the
      * message connection. Set to true if the permission check passes.
@@ -294,17 +297,16 @@ public abstract class ProtocolBase implements MessageConnection,
                                                      throws IOException {
 
         boolean needStopReceiver = false;
-        /*
-         * Make sure the connection is still open.
-	 */
-        if (listener != null) {
-            ensureOpen();
-        }
 
-        /*
-         * Check if we have permission to recieve.
-	 */
         if (listener != null) {
+            /*
+             * Make sure the connection is still open.
+             */
+            ensureOpen();
+
+            /*
+             * Check if we have permission to recieve.
+             */
             checkReceivePermission();
 
             /*

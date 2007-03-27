@@ -51,7 +51,7 @@ void jsr120_cbs_message_arrival_notifier(CbsMessage* message);
  * @return <code>WMA_OK</code> if the message identifier is registered;
  *     <code>WMA_ERR</code>, otherwise.
  */
-WMA_STATUS jsr120_cbs_is_midlet_msgID_registered(jchar msgID);
+WMA_STATUS jsr120_cbs_is_midlet_listener_registered(jchar msgID);
 
 /**
  * Registers the CBS message identifier for the calling MIDlet.
@@ -63,7 +63,7 @@ WMA_STATUS jsr120_cbs_is_midlet_msgID_registered(jchar msgID);
  * @return <code>WMA_OK</code> if the message identifier is registered;
  *     <code>WMA_ERR</code>, otherwise.
  */
-WMA_STATUS jsr120_cbs_register_midlet_msgID(jchar msgID,
+WMA_STATUS jsr120_cbs_register_midlet_listener(jchar msgID,
     SuiteIdType msid, jint handle);
 
 /**
@@ -74,7 +74,7 @@ WMA_STATUS jsr120_cbs_register_midlet_msgID(jchar msgID,
  * @return <code>WMA_OK</code> if the message identifier is unregistered;
  *     <code>WMA_ERR</code>, otherwise.
  */
-WMA_STATUS jsr120_cbs_unregister_midlet_msgID(jchar msgID);
+WMA_STATUS jsr120_cbs_unregister_midlet_listener(jchar msgID);
 
 /**
  * Checks whether the CBS message identifier has been registered by the push
@@ -85,7 +85,7 @@ WMA_STATUS jsr120_cbs_unregister_midlet_msgID(jchar msgID);
  * @return <code>WMA_OK</code> if the message identifier is registered;
  *     <code>WMA_ERR</code>, otherwise.
  */
-WMA_STATUS jsr120_cbs_is_push_msgID_registered(jchar msgID);
+WMA_STATUS jsr120_cbs_is_push_listener_registered(jchar msgID);
 
 /**
  * Registers the CBS message identifier with the push registry.
@@ -97,7 +97,7 @@ WMA_STATUS jsr120_cbs_is_push_msgID_registered(jchar msgID);
  * @return <code>WMA_OK</code> if the message identifier is registered;
  *     <code>WMA_ERR</code>, otherwise.
  */
-WMA_STATUS jsr120_cbs_register_push_msgID(jchar msgID, SuiteIdType msid,
+WMA_STATUS jsr120_cbs_register_push_listener(jchar msgID, SuiteIdType msid,
     jint handle);
 
 /**
@@ -108,7 +108,7 @@ WMA_STATUS jsr120_cbs_register_push_msgID(jchar msgID, SuiteIdType msid,
  * @return <code>WMA_OK</code> if the message identifier is unregistered;
  *     <code>WMA_ERR</code>, otherwise.
  */
-WMA_STATUS jsr120_cbs_unregister_push_msgID(jchar msgID);
+WMA_STATUS jsr120_cbs_unregister_push_listener(jchar msgID);
 
 /**
  * Unblocks the thread that matches the specified handle
