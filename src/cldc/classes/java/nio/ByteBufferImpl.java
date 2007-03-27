@@ -67,15 +67,17 @@ class ByteBufferImpl extends ByteBuffer {
 
     native private void finalize();
 
-    ByteBufferImpl(int capacity, byte[] array, int arrayOffset) {
-	this.array = array;
-	this.arrayOffset = arrayOffset;
-	
-	this.capacity = capacity;
-	this.limit = capacity;
-	this.position = 0;
-	
-	this.isDirect = array == null;
+    ByteBufferImpl(int capacity, byte[] array, int arrayOffset,
+                   ByteBuffer directParent) {
+        this.array = array;
+        this.arrayOffset = arrayOffset;
+
+        this.capacity = capacity;
+        this.limit = capacity;
+        this.position = 0;
+
+        this.isDirect = array == null;
+        this.directParent = directParent;
     }
 
     public FloatBuffer asFloatBuffer() {
@@ -303,7 +305,7 @@ class ByteBufferImpl extends ByteBuffer {
     
     public ByteBuffer slice() {
         return new ByteBufferImpl(limit - position, array,
-                                  arrayOffset + position);
+                arrayOffset + position, this);
     }
 
     public boolean isDirect() {
