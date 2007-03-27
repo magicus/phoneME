@@ -35,8 +35,6 @@
 #include <midpNativeThread.h>
 #include <midpPauseResume.h>
 
-#include <stdio.h>
-
 /** Suspendable resource that reprsents the VM. */
 VM vm = { KNI_FALSE };
 
@@ -139,33 +137,27 @@ void midp_suspend() {
 
     switch (sr_state) {
     case SR_ACTIVE:
-printf(">>> midp_suspend(), state = SR_ACTIVE\n");
         sr_state = SR_SUSPENDING;
 
         if (getMidpInitLevel() >= VM_LEVEL) {
             MidpEvent event;
             MIDP_EVENT_INITIALIZE(event)
             event.type = PAUSE_ALL_EVENT;
-printf(">>> midp_suspend(): sending PAUSE_ALL_EVENT\n");
             midpStoreEventAndSignalAms(event);
         } else {
-printf(">>> midp_suspend(): suspending resources\n");
             suspend_resources();
         }
         break;
     case SR_RESUMING:
-printf(">>> midp_suspend(), state = SR_RESUMING\n");
         sr_state = SR_SUSPENDING;
         break;
     default:
-printf(">>> midp_suspend(), other state (%d)\n", sr_state);
         break;
     }
 }
 
 void resume_java() {
     if (getMidpInitLevel() >= VM_LEVEL) {
-printf(">>> resuming java...\n");
         MidpEvent event;
         MIDP_EVENT_INITIALIZE(event);
         event.type = ACTIVATE_ALL_EVENT;
@@ -181,17 +173,14 @@ void midp_resume() {
 
     switch (sr_state) {
     case SR_SUSPENDED:
-printf(">>> midp_resume(), state = SR_SUSPENDED\n");
         resume_resources();
         resume_java();
         break;
     case SR_SUSPENDING:
-printf(">>> midp_resume(), state = SR_SUSPENDING\n");
         sr_state = SR_RESUMING;
         break;
 
     default:
-printf(">>> midp_resume(), other state (%d)\n", sr_state);
         break;
     }
 }
@@ -259,8 +248,6 @@ void sr_initSystem() {
 void sr_repairSystem() {
     REPORT_INFO(LC_LIFECYCLE, "sr_repairSystem()");
 
-printf(">>> sr_repairSystem()\n");
-
     switch (sr_state) {
     case SR_RESUMING:
         sr_state = SR_ACTIVE;
@@ -295,7 +282,6 @@ jboolean midp_checkAndResume() {
     REPORT_INFO(LC_LIFECYCLE, "midp_checkAndResume()");
 
     if (SR_SUSPENDED == sr_state && midp_checkResumeRequest()) {
-printf(">>> midp_checkAndResume(): resuming\n");
         midp_resume();
         res = KNI_TRUE;
     }
@@ -307,7 +293,6 @@ jboolean midp_waitWhileSuspended() {
     jboolean ret = KNI_FALSE;
 
     while (SR_SUSPENDED == midp_getSRState()) {
-printf(">>> midp_waitWhileSuspended()\n");
         ret = KNI_TRUE;
         midp_checkAndResume();
 
