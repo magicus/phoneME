@@ -139,9 +139,9 @@ Java_com_sun_midp_io_j2me_sms_Protocol_open0(void) {
             if (host == NULL) {
 
                 /* register SMS port with SMS pool */
-                if (jsr120_is_sms_midlet_port_registered((jchar)port) == WMA_ERR) {
+                if (jsr120_is_sms_midlet_listener_registered((jchar)port) == WMA_ERR) {
 
-                    if (jsr120_register_sms_midlet_port((jchar)port,
+                    if (jsr120_register_sms_midlet_listener((jchar)port,
                                                         msid,
                                                         handle) == WMA_ERR) {
 
@@ -180,7 +180,7 @@ static void closeConnection(int port, int handle, int deRegister) {
 
         if (deRegister) {
             /** unregister SMS port from SMS pool */
-            jsr120_unregister_sms_midlet_port((jchar)port);
+            jsr120_unregister_sms_midlet_listener((jchar)port);
 
             /* Release the handle associated with this connection. */
             pcsl_mem_free((void *)handle);
@@ -245,7 +245,7 @@ Java_com_sun_midp_io_j2me_sms_Protocol_send0(void) {
     void *pdContext = NULL;
     jsr120_sms_message_state_data *messageStateData = NULL;
     jint bytesSent;
-    jboolean open;
+    jboolean isOpen;
 
     KNI_StartHandles(4);
 
@@ -253,9 +253,9 @@ Java_com_sun_midp_io_j2me_sms_Protocol_send0(void) {
     KNI_DeclareHandle(thisClass);
     KNI_GetThisPointer(this);
     KNI_GetObjectClass(this, thisClass);
-    open = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
+    isOpen = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
     
-    if (open) { /* No close in progress */
+    if (isOpen) { /* No close in progress */
         KNI_DeclareHandle(messageBuffer);
         KNI_DeclareHandle(address);
 
@@ -380,7 +380,7 @@ Java_com_sun_midp_io_j2me_sms_Protocol_receive0(void) {
     SmsMessage *psmsData = NULL;
     /* The midlet suite name for this connection. */
     SuiteIdType msid = UNUSED_SUITE_ID;
-    jboolean open;
+    jboolean isOpen;
 
     KNI_StartHandles(6);
 
@@ -388,9 +388,9 @@ Java_com_sun_midp_io_j2me_sms_Protocol_receive0(void) {
     KNI_DeclareHandle(thisClass);
     KNI_GetThisPointer(this);
     KNI_GetObjectClass(this, thisClass);
-    open = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
+    isOpen = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
 
-    if (open) { /* No close in progress */
+    if (isOpen) { /* No close in progress */
         KNI_DeclareHandle(messageClazz);
         KNI_DeclareHandle(messageObject);
         KNI_DeclareHandle(addressArray);
@@ -523,7 +523,7 @@ Java_com_sun_midp_io_j2me_sms_Protocol_waitUntilMessageAvailable0(void) {
     int handle;
     int messageLength = -1;
     SmsMessage *pSMSData = NULL;
-    jboolean open;
+    jboolean isOpen;
 
     KNI_StartHandles(1);
 
@@ -531,9 +531,9 @@ Java_com_sun_midp_io_j2me_sms_Protocol_waitUntilMessageAvailable0(void) {
     KNI_DeclareHandle(thisClass);
     KNI_GetThisPointer(this);
     KNI_GetObjectClass(this, thisClass);
-    open = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
+    isOpen = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
 
-    if (open) { /* No close in progress */
+    if (isOpen) { /* No close in progress */
         port = KNI_GetParameterAsInt(1);
         handle = KNI_GetParameterAsInt(2);
 
@@ -644,7 +644,7 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_io_j2me_sms_Protocol_finalize(void) {
     int port;
     int handle;
-    jboolean open;
+    jboolean isOpen;
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(this);
@@ -652,9 +652,9 @@ Java_com_sun_midp_io_j2me_sms_Protocol_finalize(void) {
 
     KNI_GetThisPointer(this);
     KNI_GetObjectClass(this, thisClass);
-    open = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
+    isOpen = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
 
-    if (open) {
+    if (isOpen) {
         port = KNI_GetIntField(this, KNI_GetFieldID(thisClass, "m_iport", "I"));
         handle = KNI_GetIntField(this, KNI_GetFieldID(thisClass, "connHandle", "I"));
 

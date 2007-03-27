@@ -297,17 +297,16 @@ public abstract class ProtocolBase implements MessageConnection,
                                                      throws IOException {
 
         boolean needStopReceiver = false;
-        /*
-         * Make sure the connection is still open.
-	 */
-        if (listener != null) {
-            ensureOpen();
-        }
 
-        /*
-         * Check if we have permission to recieve.
-	 */
         if (listener != null) {
+            /*
+             * Make sure the connection is still open.
+             */
+            ensureOpen();
+
+            /*
+             * Check if we have permission to recieve.
+             */
             checkReceivePermission();
 
             /*

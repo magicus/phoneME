@@ -98,7 +98,7 @@ Java_com_sun_midp_io_j2me_cbs_Protocol_open0(void) {
 
         do {
             /* Register the message ID with the message pool. */
-            if (jsr120_cbs_is_midlet_msgID_registered((jchar)msgID) == WMA_ERR) {
+            if (jsr120_cbs_is_midlet_listener_registered((jchar)msgID) == WMA_ERR) {
 
                 /* Fetch a unique handle that identifies this CBS communication session. */
                 handle = (int)(pcsl_mem_malloc(1));
@@ -108,7 +108,7 @@ Java_com_sun_midp_io_j2me_cbs_Protocol_open0(void) {
                     break;
                 }
 
-                status = jsr120_cbs_register_midlet_msgID((jchar)msgID, msid,
+                status = jsr120_cbs_register_midlet_listener((jchar)msgID, msid,
                                                           handle);
                 if (status == WMA_ERR) {
                     KNI_ThrowNew(midpIOException, "Port already in use.");
@@ -141,7 +141,7 @@ static void closeConnection(int msgID, int handle, int deRegister) {
 
         if (deRegister) {
             /* Unregister the CBS port from the CBS pool. */
-            jsr120_cbs_unregister_midlet_msgID((jchar)msgID);
+            jsr120_cbs_unregister_midlet_listener((jchar)msgID);
 
             /* Release the handle associated with this connection. */
             pcsl_mem_free((void *)handle);
@@ -208,7 +208,7 @@ Java_com_sun_midp_io_j2me_cbs_Protocol_receive0(void) {
     SuiteIdType msid = UNUSED_SUITE_ID;
 
     /* Mirror for ProtocolBase.open field */
-    jboolean open;
+    jboolean isOpen;
 
     KNI_StartHandles(5);
 
@@ -216,9 +216,9 @@ Java_com_sun_midp_io_j2me_cbs_Protocol_receive0(void) {
     KNI_DeclareHandle(thisClass);
     KNI_GetThisPointer(this);
     KNI_GetObjectClass(this, thisClass);
-    open = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
+    isOpen = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
 
-    if (open) { /* No close in progress */
+    if (isOpen) { /* No close in progress */
 
         /* This is the handle to the serialized CBSPacket class fields. */
         KNI_DeclareHandle(messageClazz);
@@ -372,7 +372,7 @@ Java_com_sun_midp_io_j2me_cbs_Protocol_waitUntilMessageAvailable0(void) {
     int msgID;
     int handle;
     int messageLength = -1;
-    jboolean open;
+    jboolean isOpen;
 
     /* Pointer to CBS message data. */
     CbsMessage* pCbsData = NULL;
@@ -383,9 +383,9 @@ Java_com_sun_midp_io_j2me_cbs_Protocol_waitUntilMessageAvailable0(void) {
     KNI_DeclareHandle(thisClass);
     KNI_GetThisPointer(this);
     KNI_GetObjectClass(this, thisClass);
-    open = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
+    isOpen = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
 
-    if (open) { /* No close in progress */
+    if (isOpen) { /* No close in progress */
         msgID = KNI_GetParameterAsInt(1);
         handle = KNI_GetParameterAsInt(2);
 
@@ -463,7 +463,7 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_io_j2me_cbs_Protocol_finalize(void) {
     int msgID;
     int handle;
-    jboolean open;
+    jboolean isOpen;
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(this);
@@ -471,9 +471,9 @@ Java_com_sun_midp_io_j2me_cbs_Protocol_finalize(void) {
 
     KNI_GetThisPointer(this);
     KNI_GetObjectClass(this, thisClass);
-    open = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
+    isOpen = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
 
-    if (open) {
+    if (isOpen) {
         msgID = KNI_GetIntField(this, KNI_GetFieldID(thisClass, "m_imsgid", "I"));
         handle = KNI_GetIntField(this, KNI_GetFieldID(thisClass, "connHandle", "I"));
 

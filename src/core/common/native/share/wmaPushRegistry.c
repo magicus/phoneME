@@ -212,7 +212,7 @@ static int registerSMSEntry(int port, SuiteIdType msid) {
     int handle = -1;
 
     /* register SMS port */
-    if (jsr120_is_sms_push_port_registered((jchar)port) == WMA_ERR) {
+    if (jsr120_is_sms_push_listener_registered((jchar)port) == WMA_ERR) {
 
 	/* Get a unique handle that will identify this SMS "session" */
 	handle = (int)(pcsl_mem_malloc(1));
@@ -221,7 +221,7 @@ static int registerSMSEntry(int port, SuiteIdType msid) {
             return -1;
 	}
 
-        if (jsr120_register_sms_push_port((jchar)port,
+        if (jsr120_register_sms_push_listener((jchar)port,
                                           msid,
                                           handle) == WMA_ERR) {
 	    return -1;
@@ -237,7 +237,7 @@ static int registerSMSEntry(int port, SuiteIdType msid) {
 static void unregisterSMSEntry(int port, int handle) {
 
     /** unregister SMS port from SMS pool */
-    jsr120_unregister_sms_push_port((jchar)port);
+    jsr120_unregister_sms_push_listener((jchar)port);
 
     /* Release the handle associated with this connection. */
     pcsl_mem_free((void *)handle);
@@ -249,7 +249,7 @@ static int registerCBSEntry(int msgID, SuiteIdType msid) {
     int handle = -1;
 
     /* register CBS message ID */
-    if (jsr120_cbs_is_push_msgID_registered((jchar)msgID) == WMA_ERR) {
+    if (jsr120_cbs_is_push_listener_registered((jchar)msgID) == WMA_ERR) {
 
 	/* Get a unique handle that will identify this CBS "session" */
 	handle = (int)(pcsl_mem_malloc(1));
@@ -258,7 +258,7 @@ static int registerCBSEntry(int msgID, SuiteIdType msid) {
             return -1;
 	}
 
-        if (jsr120_cbs_register_push_msgID((jchar)msgID,
+        if (jsr120_cbs_register_push_listener((jchar)msgID,
                                            msid,
                                            handle) == WMA_ERR) {
 	    return -1;
@@ -274,7 +274,7 @@ static int registerCBSEntry(int msgID, SuiteIdType msid) {
 static void unregisterCBSEntry(int msgID, int handle) {
 
     /** unregister CBS msg ID from CBS pool */
-    jsr120_cbs_unregister_push_msgID((jchar)msgID);
+    jsr120_cbs_unregister_push_listener((jchar)msgID);
 
     /* Release the handle associated with this connection. */
     pcsl_mem_free((void *)handle);
@@ -289,7 +289,7 @@ static int registerMMSEntry(unsigned char *appID,
 
     /* register MMS message ID */
     if (appID != NULL) {
-        if (jsr205_mms_is_push_appID_registered(appID) == WMA_ERR) {
+        if (jsr205_mms_is_push_listener_registered(appID) == WMA_ERR) {
 
 	    /* Get a unique handle that will identify this MMS "session" */
             handle = (int)(pcsl_mem_malloc(1));
@@ -298,9 +298,9 @@ static int registerMMSEntry(unsigned char *appID,
                 return -1;
 	    }
 
-            if (jsr205_mms_register_push_appID(appID,
-                                               msid,
-                                               handle) == WMA_ERR) {
+            if (jsr205_mms_register_push_listener(appID,
+                                                  msid,
+                                                  handle) == WMA_ERR) {
 	        return -1;
             }
         } else {
@@ -316,7 +316,7 @@ static void unregisterMMSEntry(unsigned char *appID, int handle) {
 
     /** unregister MMS app ID from MMS pool */
     if (appID != NULL) {
-        jsr205_mms_unregister_push_appID(appID);
+        jsr205_mms_unregister_push_listener(appID);
     }
 
     /* Release the handle associated with this connection. */
