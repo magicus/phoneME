@@ -382,7 +382,7 @@ void ConstantPoolRewriter::rewrite_line_number_tables(Method *old_method,
     LineNumberTable::Fast line_num_table;
     LocalVariableTable::Fast local_var_table;
     bool can_compress = compress_if_possible;
-    bool need_table = false;
+    bool need_table = !compress_if_possible;
     if (!line_var_table.is_null()) {
       line_num_table = line_var_table().line_number_table();
     }
@@ -421,7 +421,7 @@ void ConstantPoolRewriter::rewrite_line_number_tables(Method *old_method,
       local_var_table = line_var_table().local_variable_table();
     }
     can_compress = compress_if_possible;
-    need_table = false;
+    need_table = !compress_if_possible;
     if (!line_var_table.is_null() && !local_var_table.is_null()) {
       int i;
       int num_entries = local_var_table().count();
