@@ -42,7 +42,6 @@
 #include <qpixmap.h>
 #include <qrect.h>
 #include <qwidgetstack.h>
-#include <qtimer.h>
 
 extern "C" {
 #include <midpEvents.h>
@@ -201,7 +200,9 @@ public:
 
 public slots:
     /**
-     * IMPL_NOTE:Document slotTimeout
+     * Invoked when a timeslice is granted.
+     * Passes control to VM for this time slice and schedules
+     * next invocation.
      */
     void slotTimeout();
 
@@ -266,21 +267,11 @@ private:
      * Document force_refresh
      */
     bool     force_refresh;
-    /**
-     * Document vm_slicer
-     */
-    QTimer   vm_slicer;  /* Timer used for VM scheduling */
 
     /**
      * Document *vbl
      */
     QVBoxLayout *vbl;
-
-    /**
-     * A flag to avoid performing any more timer processing after
-     * JVM_TimeSlice returns -2.
-     */
-    bool vm_stopped;
 
     /*
      * Define total amount of display available for MIDP.
