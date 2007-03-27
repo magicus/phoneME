@@ -163,14 +163,14 @@ abstract class ItemLFImpl implements ItemLF {
      * overriding is the ChoiceGroupPopupLFImpl.  
      */
     boolean itemContainsPointer(int x, int y) {
-        int contentX = bounds[X] + contentBounds[X];
-        int contentY = bounds[Y] + contentBounds[Y];
+        int contentX = bounds[X] + contentBounds[X] + ScreenSkin.PAD_FORM_ITEMS - 2;
+        int contentY = bounds[Y] + contentBounds[Y] + ScreenSkin.PAD_FORM_ITEMS - 2;
 
         int myX = x - contentX;
         int myY = y - contentY;
 
-        return (myX >= 0 && myX <= contentBounds[WIDTH] &&
-                myY >= 0 && myY <= contentBounds[HEIGHT]);
+        return (myX >= 0 && myX <= contentBounds[WIDTH] + ScreenSkin.PAD_FORM_ITEMS - 2 &&
+                myY >= 0 && myY <= contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2);
     }
 
     
@@ -1067,7 +1067,7 @@ abstract class ItemLFImpl implements ItemLF {
 
         // Clip the dirty region to only include the item
         // g.clipRect(tX, tY, bounds[WIDTH], bounds[HEIGHT]);
-        
+
         // "inner" bounds
         g.clipRect(tX, tY, 
                    getInnerBounds(WIDTH),
@@ -1136,12 +1136,11 @@ abstract class ItemLFImpl implements ItemLF {
         
         // NTS: This may need to special case StringItem?
         g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
-        
 
         g.drawRect(x + contentBounds[X] + ScreenSkin.PAD_FORM_ITEMS - 2,
-                   y + contentBounds[Y] + ScreenSkin.PAD_FORM_ITEMS - 2, 
-                   contentBounds[WIDTH] + 3,
-                   contentBounds[HEIGHT] + 3);
+                   y + contentBounds[Y] + ScreenSkin.PAD_FORM_ITEMS - 2,
+                   contentBounds[WIDTH] + ScreenSkin.PAD_FORM_ITEMS - 2,
+                   contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2);
     }
     
 
