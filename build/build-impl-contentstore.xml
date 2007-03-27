@@ -32,16 +32,15 @@ information or have any questions.
   </target>
 
   <target name="generate-contentstore-root"> 
-       <property file="modules-config.properties"/>
 
-       <mkdir dir="${cdc.dir}/${contentstore.root}"/>
-       <chmod dir="${cdc.dir}/${contentstore.root}" perm="go+w" />
+       <mkdir dir="${cdc.dir}/${contentstore.root.default}"/>
+       <chmod dir="${cdc.dir}/${contentstore.root.default}" perm="go+w" />
 
        <!-- Generate a file to include the content store directory to 
             the binary bundle.  The content of this file is added to the 
             BINARY_BUNDLE_PATTERN in the cdc's defs_jump.mk.   -->
 
-       <echo file="${d.gen.dir}/${binary.pattern.file}">${contentstore.root}</echo>     
+       <echo file="${d.gen.dir}/${binary.pattern.file}">${contentstore.root.default}</echo>     
 
   </target>
 

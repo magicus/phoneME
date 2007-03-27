@@ -108,21 +108,10 @@ information or have any questions.
   </target>
 
   <target name="clean" depends="clean-reports">
-      <property file="modules-config.properties"/>
-      <property name="data.dir" value="${cdc.dir}/${contentstore.root}"/>
+      <property name="data.dir" value="${cdc.dir}/${contentstore.root.default}"/>
 
       <delete dir="${dist.dir}"/>
       <delete quiet="true" dir="${data.dir}"/>
-      <available file="${data.dir}" type="dir" property="deletion.failed"/>
-      <antcall target="delete-as-root">
-          <param name="data.dir" value="${data.dir}"/>
-      </antcall>
-  </target>
-
-  <target name="delete-as-root" if="deletion.failed">
-      <exec executable="sudo">
-         <arg line="rm -rf ${data.dir}"/>
-      </exec>
   </target>
 
     <!--

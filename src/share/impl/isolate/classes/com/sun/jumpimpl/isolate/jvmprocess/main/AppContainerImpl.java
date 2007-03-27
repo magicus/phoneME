@@ -35,6 +35,8 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.net.MalformedURLException;
+import java.util.StringTokenizer;
 import sun.misc.CDCAppClassLoader;
 
 /*
@@ -72,25 +74,37 @@ public class AppContainerImpl extends JUMPAppContainer {
        try {
 
           String className = app.getProperty(INITIAL_CLASS_KEY);
-          String contentStoreDir = System.getProperty("contentstore.root");
-          if (contentStoreDir == null) {
-              contentStoreDir = (String) JUMPIsolateProcess.getInstance().getConfig().get("contentstore.root");
-          }                                
-	  File classPath = new File(System.getProperty("java.home") + 
-                  File.separator + contentStoreDir +
-                  File.separator + app.getProperty(CLASSPATH_KEY));
+          String classPath = app.getProperty(CLASSPATH_KEY);
 
+	  StringTokenizer st = new StringTokenizer(classPath, File.pathSeparator); 
+	  int count = st.countTokens();
+	  URL[] pathArray = new URL[count];
+
+	  count = 0;
+
+	  while (st.hasMoreTokens()) {
+             try {		   
+	        pathArray[count++] = new URL("file", "", st.nextToken());
+	     } catch (MalformedURLException e) {	 
+		System.err.println("Caught: " + e);
+	        pathArray[count] = null;
+             }
+	  }
 
 	  CDCAppClassLoader loader = new CDCAppClassLoader(
-			  new URL[] {classPath.toURL()}, null);
+			  pathArray, null);
 
 	  try {
 	     Class [] args1 = {new String[0].getClass()};
-	     Object [] args2 = {mainArgs};
+
+	     // Main app typically expect zero length array for the main(Str[]) 
+	     // parameter, instead of null. 
+	     String [] args2 = (mainArgs == null)? new String[0] : mainArgs;
 
 	     Class mainClass = loader.loadClass(className);
 	     Method mainMethod = mainClass.getMethod("main", args1);
-	     mainMethod.invoke(null, args2);
+	     mainMethod.invoke(null, new Object[]{args2});
+
 	  } catch (InvocationTargetException i) {
              throw i.getTargetException();
           }

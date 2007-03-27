@@ -119,7 +119,7 @@ public class XLETApplication extends JUMPApplication {
      *         the downloaded content.
      */
     public URL getIconPath() {
-        String file = repositoryDir + REPOSITORY_ICONS_DIRNAME + '/' + getProperty(ICONPATH_KEY);
+        String file = getProperty(ICONPATH_KEY);
         URL url = null;
         try {
             url = new URL("file", null, file);

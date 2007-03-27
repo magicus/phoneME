@@ -33,6 +33,7 @@ import com.sun.jump.message.JUMPMessageHandler;
 import sun.mtask.xlet.PXletManager;
 import java.io.IOException;
 import java.io.File;
+import java.util.StringTokenizer;
 
 /*
  * Application Container for the xlet app model.
@@ -71,15 +72,19 @@ public class AppContainerImpl extends JUMPAppContainer {
        try {
 
           String className = app.getProperty(INITIAL_CLASS_KEY);
-          String contentStoreDir = System.getProperty("contentstore.root");
-          if (contentStoreDir == null) {
-              contentStoreDir = (String) JUMPIsolateProcess.getInstance().getConfig().get("contentstore.root");
-          }                
-          String classPath = (System.getProperty("java.home") + File.separator + 
-		contentStoreDir + File.separator + app.getProperty(CLASSPATH_KEY));
+          String classPath = app.getProperty(CLASSPATH_KEY);
+
+	  StringTokenizer st = new StringTokenizer(classPath, File.pathSeparator);
+	  int count = st.countTokens();
+          String[] pathArray = new String[count];
+          count = 0;
+
+          while (st.hasMoreTokens()) {
+                 pathArray[count++] = st.nextToken();
+          }
 
           xletManager = PXletManager.createXlet(className, 
-		       null, null, new String[]{classPath}, args);
+		       null, null, pathArray, args);
 	  xletManager.postInitXlet();
 	  xletManager.postStartXlet();
 

@@ -204,9 +204,6 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             repositoryDir = "./";
         }
         
-        repositoryDir =  System.getProperty("java.home", "./") +
-                '/' + repositoryDir;
-        
         // Get the store handle from the JUMPContentStoreSubClass.
         storeHandle = openStore(true);
         
@@ -414,7 +411,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             appProperties.setProperty(DESCRIPTOR_BUNDLENAME_KEY, bundleName);
             appProperties.setProperty(DESCRIPTOR_APPMODEL_KEY, app.getProperty("JUMPApplication_appModel"));
             appProperties.setProperty(getInstallerInitialClassKey(), app.getProperty(getPropertyInstallerInitialClassKey()));
-            appProperties.setProperty(DESCRIPTOR_JARPATH_KEY, jarPath.substring(repositoryDir.length()));
+            appProperties.setProperty(DESCRIPTOR_JARPATH_KEY, jarPath);
             appProperties.setProperty(DESCRIPTOR_TITLE_KEY, appTitle);
             if (iconPath != null) {
                 appProperties.setProperty(DESCRIPTOR_ICON_KEY, iconPath);
@@ -665,7 +662,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             fos.write(buffer);
             fos.close();
             
-            return iconFilePath.substring(iconsDir.length());
+            return iconFilePath;
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -741,6 +738,12 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
     private boolean createAppDescriptor(String descriptorPath, Properties props) {
         
         JUMPData propData = new JUMPData(props);
+
+	// Convert the paths to the relative path from the content store root,
+	// we don't want to store the absolute path to the persistant store
+	removeContentStorePath(props, DESCRIPTOR_ICON_KEY);
+	removeContentStorePath(props, DESCRIPTOR_JARPATH_KEY);
+
         try {
             storeHandle.createDataNode(descriptorPath, propData);
         } catch (RuntimeException re) {
@@ -786,6 +789,10 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         if (appType == null || !appType.equals(getInstallerAppModel().getName())) {
             return null;
         }
+
+	// Convert back the path to the absolute path
+	addContentStorePath(appDescriptorProps, DESCRIPTOR_ICON_KEY);
+	addContentStorePath(appDescriptorProps, DESCRIPTOR_JARPATH_KEY);
         
         // Now, obtain the values for specific keys
         String classPath = (String)appDescriptorProps.getProperty("path");
@@ -834,6 +841,31 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         return module;
     }
     
+    /**
+     * Removes the content store dir path from the property represented by the key.
+     * Used when creating .app file from the JUMPApplication properties list,
+     * so that .app file in the content sore will not have a full path to store, 
+     * allowing the store to be moved from one location to another.
+     */
+    private void removeContentStorePath(Properties props, String key) {
+        String value = (String) props.remove(key);
+	if (value == null) return; 
+        props.put(key, value.substring(repositoryDir.length()));
+    }
+     
+    /**
+     * Prepends the content store dir path to the property represented by the key.
+     * Used when creating JUMPApplication properties from the .app file
+     * in the content store, so that the JUMPApplication created have 
+     * proper absolute path corresponding to the current run's contentstore 
+     * root location.
+     */
+    private void addContentStorePath(Properties props, String key) {
+        String value = (String) props.remove(key);
+	if (value == null) return; 
+        props.put(key, repositoryDir + value);
+    }
+
     /**
      * Create an instance of JUMPApplication
      * @param bundle Name of application bundle that this application belongs to

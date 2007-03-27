@@ -142,7 +142,7 @@ public class FileStoreImpl extends JUMPStore {
    String root; // The real path to the store root.
 
    protected void setStoreRoot(String root) {
-      File file = new File(System.getProperty("java.home") + File.separator + root);
+      File file = new File(root);
       if (file.exists()) {
           this.root = file.getAbsolutePath();
           return;

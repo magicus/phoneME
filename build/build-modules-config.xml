@@ -49,14 +49,14 @@ information or have any questions.
 
 package com.sun.jumpimpl.process;
 
-import java.util.Map;
 import java.util.Hashtable;
+import java.util.Map;
 import java.util.Properties;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.FileInputStream;
 import java.io.BufferedInputStream;
-
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.IOException;
 
 public class JUMPModulesConfig {
     private static Hashtable config;
@@ -79,7 +79,7 @@ public class JUMPModulesConfig {
         }
         
         if(value != null) {
-            if (!value.startsWith("/")) {
+            if (!new File(value).isAbsolute()) {
                value = System.getProperty("java.home") + "/" + value;        
             }
             cfg.put("sun.midp.home.path", value);
@@ -87,8 +87,28 @@ public class JUMPModulesConfig {
     }
 
     private static void
+    setContentStoreRootProperty(Hashtable cfg) {
+        String value = (String)cfg.get("contentstore.root");
+
+        if(value != null) {
+            return;
+        }
+        
+        value = getBuildProperty("${contentstore.root.default}", 
+                                 "contentstore.root.default");
+
+        if (!new File(value).isAbsolute()) {
+            value = System.getProperty("java.home") + "/" + value;        
+        }
+
+        cfg.put("contentstore.root", value);
+    }
+
+
+    private static void
     setRuntimeProperties(Hashtable cfg) {
         setMIDPHomeProperty(cfg);
+        setContentStoreRootProperty(cfg);
     }
 
     public static void

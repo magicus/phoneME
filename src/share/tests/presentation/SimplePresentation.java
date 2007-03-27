@@ -38,8 +38,8 @@ import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.common.JUMPAppModel;
 import com.sun.jump.executive.JUMPApplicationProxy;
 import com.sun.jump.executive.JUMPIsolateProxy;
-import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModule;
-import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModuleFactory;
+import com.sun.jump.module.lifecycle.JUMPApplicationLifecycleModule;
+import com.sun.jump.module.lifecycle.JUMPApplicationLifecycleModuleFactory;
 
 public class SimplePresentation implements JUMPPresentationModule {
    public void load(Map map) {}
@@ -49,29 +49,23 @@ public class SimplePresentation implements JUMPPresentationModule {
    public void start() {
 
       // For simplicity, just create a JUMPApp off the fly. 
-      // Classpath is relative to the content store root.
       JUMPApplication app = new JUMPApplication("", null, JUMPAppModel.MAIN, 1);
-      app.addProperty("MAINApplication_classpath", "../democlasses.jar");
+      app.addProperty("MAINApplication_classpath", System.getProperty("java.home") + "/democlasses.jar");
       app.addProperty("MAINApplication_initialClass", "basis.DemoFrame");
 
       // Application argument 
       String[] args = { "-d", "basis.demos.ColorDemo" };  
 
       // Let's create an isolate
-      JUMPIsolateManagerModule lcm =
-            JUMPIsolateManagerModuleFactory.getInstance().getModule();
-      JUMPIsolateProxy ip = lcm.newIsolate(app.getAppType());
 
-      if (ip == null) {
-         System.out.println("Error starting an isolate");
-	 return;
-      } 
+      JUMPApplicationLifecycleModule lcm =
+           JUMPApplicationLifecycleModuleFactory.getInstance().getModule(
+           JUMPApplicationLifecycleModuleFactory.POLICY_ONE_LIVE_INSTANCE_ONLY);
 
-      System.out.println("*** New isolate created="+ip);
       System.out.println("*** Isolate trying to launch: " + app.getProperty("MAINApplication_initialClass") + "...");
 
       // Launch an app in the isolate
-      JUMPApplicationProxy appProxy = ip.startApp(app, args);
+      JUMPApplicationProxy appProxy = lcm.launchApplication(app, args);
 
       if (appProxy != null)
          System.out.println("*** Application  launched");
