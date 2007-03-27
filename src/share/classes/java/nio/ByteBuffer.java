@@ -262,6 +262,19 @@ public abstract class ByteBuffer extends Buffer implements Comparable {
     boolean disposed = false;
 
     /**
+     * Buffers created by <code>allocateDirect</code> have an
+     * accosiated buffer allocated in the native Heap. A user may
+     * create a slice <code>Buffer</code> from a direct "parent"
+     * <code>Buffer</code> (<code>Buffer.slice()</code>). The "slice" and
+     * "parent" <code>Buffer</code> share the same native buffer. Native
+     * buffer is released when the parent <code>Buffer</code> is collected.
+     * <code>directParent</code> is a reference from slice object to the
+     * parent. It guarantees that parent object is collected (and shared 
+     * buffer is released) only after all its slice objects are collected.
+     */
+    Buffer directParent;
+
+    /**
      * Constructs a new <code>ByteBuffer</code>.
      */
     ByteBuffer() {}
@@ -285,9 +298,10 @@ public abstract class ByteBuffer extends Buffer implements Comparable {
         if (capacity < 0) {
             throw new IllegalArgumentException();
         }
-	int nativeAddress = ByteBufferImpl._allocNative(capacity);
+	    int nativeAddress = ByteBufferImpl._allocNative(capacity);
 
-        ByteBuffer buf = new ByteBufferImpl(capacity, null, nativeAddress);
+        ByteBuffer buf = new ByteBufferImpl(capacity, null, nativeAddress,
+            null /*directParent is null if direct buffer is a parent itself*/);
 
         // Record the address of this buffer along with a weak
         // reference; if the weak reference becomes null,
@@ -330,7 +344,8 @@ public abstract class ByteBuffer extends Buffer implements Comparable {
 	    throw new IndexOutOfBoundsException();
         }
 
-        ByteBufferImpl bbi = new ByteBufferImpl(array.length, array, 0);
+        ByteBufferImpl bbi = new ByteBufferImpl(array.length, array, 0,
+            null /*directParent is null for all nondirect buffers*/);
         bbi.position(offset);
         bbi.limit(offset + length);
         return bbi;
