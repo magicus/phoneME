@@ -89,6 +89,13 @@ int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle)
 
     fd = open((char*)pszOsFilename, flags, creationMode);
 
+    pcsl_string_release_utf8_data(pszOsFilename, fileName);
+
+    if (fd < 0) {
+        *handle = NULL;
+        return -1;
+    }
+
     if (result = lockf(fd, F_TEST, 0) == -1) {
         /* file is locked by another process */
         close(fd);
@@ -100,13 +107,6 @@ int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle)
             close(fd);
             return -1;
         }
-    }
-
-    pcsl_string_release_utf8_data(pszOsFilename, fileName);
-
-    if (fd < 0) {
-        *handle = NULL;
-        return -1;
     }
 
     *handle = (void *)fd;
