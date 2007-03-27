@@ -34,6 +34,7 @@ import com.sun.midp.security.SecurityToken;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
+import com.sun.midp.suspend.SuspendSystem;
 
 /**
  * The MIDletStateHandler starts and controls MIDlets through the lifecycle
@@ -470,7 +471,7 @@ public class MIDletStateHandler {
                     }
                 }
 
-                /** perform work that may block outside of "this" */
+                 /** perform work that may block outside of "this" */
                 switch (state) {
                 case MIDletPeer.ACTIVE_PENDING:
                     try {

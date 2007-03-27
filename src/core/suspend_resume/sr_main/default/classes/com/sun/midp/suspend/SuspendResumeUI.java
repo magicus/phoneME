@@ -64,7 +64,6 @@ class SuspendResumeUI {
 
             AlertTimer.start();
 
-
             CommandListener ignoring = new CommandListener() {
                 public void commandAction(Command c, Displayable d) {}
             };
@@ -150,11 +149,11 @@ class AlertTimer extends Timer implements SuspendDependency {
         }
 
         final AlertTimer timer = new AlertTimer();
-        SuspendSystem.getInstance().addSuspendDependency(timer);
+        SuspendSystem.getInstance(null).addSuspendDependency(timer);
 
         TimerTask removeDep = new TimerTask() {
             public void run() {
-                SuspendSystem.getInstance().removeSuspendDependency(timer);
+                SuspendSystem.getInstance(null).removeSuspendDependency(timer);
             }
         };
 

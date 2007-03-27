@@ -220,6 +220,7 @@ public class MIDletControllerEventProducer {
      */
     public void sendMIDletActiveNotifyEvent(int midletSuiteId,
                                             String midletClassName) {
+System.out.println("sending MIDLET_ACTIVE_NOTIFICATION");
         sendEvent(midletActiveEvent, midletSuiteId, midletClassName);
     }
     /**
@@ -230,6 +231,7 @@ public class MIDletControllerEventProducer {
      */
     public void sendMIDletPauseNotifyEvent(int midletSuiteId,
                                            String midletClassName) {
+System.out.println("sending MIDLET_PAUSE_NOTIFICATION");
         sendEvent(midletPausedEvent, midletSuiteId, midletClassName);
     }
     /**
@@ -250,6 +252,7 @@ public class MIDletControllerEventProducer {
      */
     public void sendMIDletResumeRequest(int midletSuiteId,
                                         String midletClassName) {
+System.out.println("sending MIDLET_RESUME_REQUEST");        
         sendEvent(new NativeEvent(EventTypes.MIDLET_RESUME_REQUEST),
                   midletSuiteId, midletClassName);
     }

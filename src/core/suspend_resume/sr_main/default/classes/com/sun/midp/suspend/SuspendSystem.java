@@ -29,6 +29,9 @@ package com.sun.midp.suspend;
 import com.sun.midp.main.*;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
+import com.sun.midp.midlet.MIDletStateHandler;
+import com.sun.midp.midlet.MIDletSuite;
+
 import java.util.Vector;
 
 /**
@@ -215,16 +218,14 @@ public class SuspendSystem extends AbstractSubsystem {
      * @return the singleton instance
      */
     public static SuspendSystem getInstance(SecurityToken token) {
-        token.checkIfPermissionAllowed(Permissions.MIDP);
-        return instance;
-    }
+        if (token != null) {
+            token.checkIfPermissionAllowed(Permissions.MIDP);
+        } else {
+            MIDletSuite midletSuite = MIDletStateHandler.
+                getMidletStateHandler().getMIDletSuite();
+            midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        }
 
-    /**
-     * Retrieves the singleton instance. The method is only available from
-     * this restricted package.
-     * @return the singleton instance
-     */
-    static SuspendSystem getInstance() {
         return instance;
     }
 

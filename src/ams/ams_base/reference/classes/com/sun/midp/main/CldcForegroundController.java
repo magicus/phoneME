@@ -73,6 +73,7 @@ class CldcForegroundController implements ForegroundController {
      * @param isAlert true if the current displayable is an Alert
      */
     public void requestForeground(int displayId, boolean isAlert) {
+System.out.println("request FOREGROUND");        
         midletControllerEventProducer.
             sendDisplayForegroundRequestEvent(displayId, isAlert);
     }
