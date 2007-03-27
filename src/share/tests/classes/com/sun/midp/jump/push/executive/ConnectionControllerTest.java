@@ -28,7 +28,6 @@ import com.sun.midp.push.gcf.PermissionCallback;
 import com.sun.midp.push.gcf.ReservationDescriptorFactory;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Vector;
 import junit.framework.*;
 import com.sun.midp.push.gcf.ConnectionReservation;
 import com.sun.midp.push.gcf.DataAvailableListener;
@@ -196,12 +195,7 @@ public final class ConnectionControllerTest extends TestCase {
 
     private ConnectionController createConnectionController(
             final Store store) {
-        /*
-         * IMPL_NOTE: stricktly speaking, <code>null</code>
-         * lifecycle adapters are prohibited, but they work currnently
-         * unless invoked
-         */
-        return createConnectionController(store, null);
+        return createConnectionController(store, new ListingLifecycleAdapter());
     }
 
     private ConnectionController.ReservationHandler
@@ -723,42 +717,6 @@ public final class ConnectionControllerTest extends TestCase {
         checkSingletonConnectionList(cc, midletSuiteId, connection);
     }
 
-    private static final class App {
-        final int midletSuiteID;
-        final String midlet;
-
-        App(final int midletSuiteID, final String midlet) {
-            this.midletSuiteID = midletSuiteID;
-            this.midlet = midlet;
-        }
-
-        /** {@inheritDoc} */
-        public boolean equals(Object obj) {
-            if (!(obj instanceof App)) {
-                return false;
-            }
-
-            final App rhs = (App) obj;
-            return (midletSuiteID == rhs.midletSuiteID)
-                && (midlet.equals(rhs.midlet));
-        }
-
-        /** {@inheritDoc} */
-        public int hashCode() {
-            return (midletSuiteID << 7) + midlet.hashCode();
-        }
-    }
-
-    private static final class ListingLifecycleAdapter
-            implements LifecycleAdapter {
-
-        Vector apps = new Vector();
-
-        public void launchMidlet(final int midletSuiteID, final String midlet) {
-            apps.add(new App(midletSuiteID, midlet));
-        }
-    }
-
     public void testDataAvailableListener() throws IOException {
         final int midletSuiteId = 123;
         final String midlet = "com.sun.Foo";
@@ -784,10 +742,8 @@ public final class ConnectionControllerTest extends TestCase {
         } catch (InterruptedException ie) {
             fail("Unexpected InterruptedException: " + ie);
         }
-
-        final Vector apps = lifecycleAdapter.apps;
-        assertEquals(1, apps.size());
-        assertEquals(new App(midletSuiteId, midlet), apps.get(0));
+        
+        assertTrue(lifecycleAdapter.hasBeenInvokedOnceFor(midletSuiteId, midlet));
     }
 
     public void testConcurrentCancellation() throws IOException {
@@ -824,18 +780,17 @@ public final class ConnectionControllerTest extends TestCase {
             fail("Unexpected InterruptedException: " + ie);
         }
 
-        final Vector apps = lifecycleAdapter.apps;
-        assertTrue(apps.isEmpty());
+        assertTrue(lifecycleAdapter.hasNotBeenInvoked());
     }
 
     private static final class Registration {
-        private final App app;
+        private final MIDPApp app;
         private final String connection;
         private final String filter;
 
         Registration(final int midletSuiteId, final String midlet,
                 final String connection, final String filter) {
-            this.app = new App(midletSuiteId, midlet);
+            this.app = new MIDPApp(midletSuiteId, midlet);
             this.connection = connection;
             this.filter = filter;
         }
