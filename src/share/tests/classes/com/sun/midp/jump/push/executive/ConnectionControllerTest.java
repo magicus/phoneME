@@ -255,11 +255,11 @@ public final class ConnectionControllerTest extends TestCase {
                 createFakeReservationHandler(
                     midletSuiteId, midlet, connection, filter);
 
-        final ConnectionController.Database db =
-                new ConnectionController.Database();
-        db.add(h);
+        final ConnectionController.Reservations reservations =
+                new ConnectionController.Reservations();
+        reservations.add(h);
 
-        assertSame(h, db.queryByConnection(connection));
+        assertSame(h, reservations.queryByConnection(connection));
     }
 
     public void testQueryByConnectionMissing() throws IOException {
@@ -272,11 +272,11 @@ public final class ConnectionControllerTest extends TestCase {
                 createFakeReservationHandler(
                     midletSuiteId, midlet, connection, filter);
 
-        final ConnectionController.Database db =
-                new ConnectionController.Database();
-        db.add(h);
+        final ConnectionController.Reservations reservations =
+                new ConnectionController.Reservations();
+        reservations.add(h);
 
-        assertNull(db.queryByConnection(connection + "qux"));
+        assertNull(reservations.queryByConnection(connection + "qux"));
     }
 
     public void testQueryBySuite() throws IOException {
@@ -289,11 +289,11 @@ public final class ConnectionControllerTest extends TestCase {
                 createFakeReservationHandler(
                     midletSuiteId, midlet, connection, filter);
 
-        final ConnectionController.Database db =
-                new ConnectionController.Database();
-        db.add(h);
+        final ConnectionController.Reservations reservations =
+                new ConnectionController.Reservations();
+        reservations.add(h);
 
-        final Iterator it = db.queryBySuiteID(midletSuiteId);
+        final Iterator it = reservations.queryBySuiteID(midletSuiteId);
         assertTrue(it.hasNext());
         assertSame(h, it.next());
         assertFalse(it.hasNext());
@@ -309,19 +309,19 @@ public final class ConnectionControllerTest extends TestCase {
                 createFakeReservationHandler(
                     midletSuiteId, midlet, connection, filter);
 
-        final ConnectionController.Database db =
-                new ConnectionController.Database();
-        db.add(h);
+        final ConnectionController.Reservations reservations =
+                new ConnectionController.Reservations();
+        reservations.add(h);
 
-        assertFalse(db.queryBySuiteID(midletSuiteId + 1).hasNext());
+        assertFalse(reservations.queryBySuiteID(midletSuiteId + 1).hasNext());
     }
 
-    public void testEmptyDatabase() {
-        final ConnectionController.Database db =
-                new ConnectionController.Database();
+    public void testEmptyReservations() {
+        final ConnectionController.Reservations reservations =
+                new ConnectionController.Reservations();
 
-        assertNull(db.queryByConnection("foo://bar"));
-        assertFalse(db.queryBySuiteID(13).hasNext());
+        assertNull(reservations.queryByConnection("foo://bar"));
+        assertFalse(reservations.queryBySuiteID(13).hasNext());
     }
 
     public void testAddAndRemove() throws IOException {
@@ -334,14 +334,14 @@ public final class ConnectionControllerTest extends TestCase {
                 createFakeReservationHandler(
                     midletSuiteId, midlet, connection, filter);
 
-        final ConnectionController.Database db =
-                new ConnectionController.Database();
-        db.add(h);
-        db.remove(h);
+        final ConnectionController.Reservations reservations =
+                new ConnectionController.Reservations();
+        reservations.add(h);
+        reservations.remove(h);
 
-        final Iterator it = db.queryBySuiteID(midletSuiteId);
-        assertNull(db.queryByConnection(connection));
-        assertFalse(db.queryBySuiteID(midletSuiteId).hasNext());
+        assertNull(reservations.queryByConnection(connection));
+        final Iterator it = reservations.queryBySuiteID(midletSuiteId);
+        assertFalse(it.hasNext());
     }
 
     private void checkStoreEmpty(final Store store) {
