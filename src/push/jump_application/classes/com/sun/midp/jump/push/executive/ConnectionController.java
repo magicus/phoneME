@@ -44,7 +44,7 @@ import javax.microedition.io.ConnectionNotFoundException;
  * TODO: system startup registration
  * TODO: mass operation for installation/uninstalltion (queries by suite id)
  */
-public final class ConnectionController {
+final class ConnectionController {
     /** Store to save connection info. */
     private final Store store;
 

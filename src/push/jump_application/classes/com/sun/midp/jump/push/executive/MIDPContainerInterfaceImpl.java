@@ -37,7 +37,7 @@ import javax.microedition.io.ConnectionNotFoundException;
  * Implementation of
  *  {@link com.sun.midp.jump.push.executive.remote.MIDPContainerInterface}
  */
-public final class MIDPContainerInterfaceImpl implements MIDPContainerInterface {
+final class MIDPContainerInterfaceImpl implements MIDPContainerInterface {
     /** Reference to a store. */
     private final Store store;
 

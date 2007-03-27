@@ -44,7 +44,7 @@ import javax.microedition.io.ConnectionNotFoundException;
  *  methods of this class get invoked.
  * <p>
  */
-public final class AlarmController {
+final class AlarmController {
 
     /** Timer to track alarms. */
     private final Timer timer;

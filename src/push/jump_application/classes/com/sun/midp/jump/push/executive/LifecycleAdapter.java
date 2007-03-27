@@ -25,7 +25,7 @@
 package com.sun.midp.jump.push.executive;
 
 /** Lifecycle management adapter interface. */
-public interface LifecycleAdapter {
+interface LifecycleAdapter {
     /**
      * Launches the given <code>MIDlet</code>.
      *
