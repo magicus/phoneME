@@ -440,7 +440,7 @@ Java_java_nio_ByteBufferImpl_finalize() {
     buffer = getByteBuffer(thisObject);
     native_buffer_address = (void*)buffer->arrayOffset;
 
-    if (native_buffer_address && KNI_IsNullHandle(&buffer->directParent)) {        
+    if (native_buffer_address && !buffer->directParent) {        
         JSR239_free(native_buffer_address);
     }
 
