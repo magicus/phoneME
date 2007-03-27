@@ -120,6 +120,20 @@ public class BodyLayer extends CLayer
     }
 
     /**
+     * Add this layer's entire area to be marked for repaint. Any pending
+     * dirty regions will be cleared and the entire layer will be painted
+     * on the next repaint.
+     * TODO: need to be removed as soon as removeLayer algorithm
+     * takes into account layers interaction
+     */
+    public void addDirtyRegion() {
+        super.addDirtyRegion();
+        if (scrollInd != null) {
+            scrollInd.addDirtyRegion();
+        }
+    } 
+
+    /**
      * Mark this layer as being dirty. By default, this would also mark the
      * containing window (if there is one) as being dirty as well. However,
      * this parent class behavior is overridden in BodyLayer so as to not 
@@ -189,7 +203,6 @@ public class BodyLayer extends CLayer
 
             if (scrollChanged) {
                 int w = scrollInd.bounds[W];
-                scrollInd.addDirtyRegion();
                 bounds[W] += scrollVisible? -w: +w;
                 addDirtyRegion();
                 return true;
