@@ -484,10 +484,10 @@ class TextFieldLFImpl extends ItemLFImpl implements
         int clr;
         if (hasFocus) {
             clr = (editable ? ScreenSkin.COLOR_FG_HL : 
-                TextFieldSkin.COLOR_BG_UE);
+                   ScreenSkin.COLOR_FG_HL);
         } else {
             clr = (editable ? TextFieldSkin.COLOR_FG :
-                TextFieldSkin.COLOR_FG_UE);
+                   TextFieldSkin.COLOR_FG_UE);
         }
         
         xScrollOffset = paint(g, tf.buffer,
@@ -789,6 +789,26 @@ class TextFieldLFImpl extends ItemLFImpl implements
             out.insert(index++, opChar);
         }
         return index;
+    }
+
+    /**
+     * Called by the system to indicate the size available to this Item
+     * has changed
+     *
+     * @param w the new width of the item's content area
+     * @param h the new height of the item's content area
+     */
+    void uCallSizeChanged(int w, int h) {
+        super.uCallSizeChanged(w, h);
+        synchronized (Display.LCDUILock) {
+            xScrollOffset = 0;
+            
+            if (textScrollPainter != null) { 
+                stopScroll();
+            }
+
+            startScroll();
+        }
     }
 
     /**
