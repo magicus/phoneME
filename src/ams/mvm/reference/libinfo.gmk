@@ -32,7 +32,7 @@ LIB_JAVA_FILES= \
     com/sun/midp/main/IndicatorManager.java \
     com/sun/midp/main/MIDletExecuteEventProducer.java \
     com/sun/midp/main/MVMDisplayController.java \
-    com/sun/midp/main/StartMIDletMonitor.java
+    com/sun/midp/main/MVMStartMIDletMonitor.java
 
 #
 # IMPL_NOTE: remove when decoupling is complete

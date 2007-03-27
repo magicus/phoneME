@@ -47,6 +47,8 @@ public class AmsUtil {
             MIDletControllerEventProducer theMidletControllerEventProducer) {
 
         midletProxyList = theMIDletProxyList;
+        StartMIDletMonitor.initClass(theMIDletProxyList,
+            StartMIDletEntry.getFactory());
     }
 
     /**
@@ -89,8 +91,8 @@ public class AmsUtil {
             String profileName) {
 
         if (id != MIDletSuite.UNUSED_SUITE_ID) {
-            if (midletProxyList.isMidletInList(id, midlet)) {
-                // No need to exit, MIDlet already loaded
+            if (StartMIDletMonitor.okToStart(id, midlet) == null) {
+                // No need to queue new execution, MIDlet already running
                 return false;
             }
         }

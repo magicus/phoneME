@@ -74,7 +74,8 @@ public class AmsUtil {
         midletControllerEventProducer = theMidletControllerEventProducer;
 
         IsolateMonitor.initClass(theMIDletProxyList);
-        StartMIDletMonitor.initClass(theMIDletProxyList);
+        StartMIDletMonitor.initClass(theMIDletProxyList,
+            MVMStartMIDletEntry.getFactory());
     }
 
     /**
@@ -247,7 +248,7 @@ public class AmsUtil {
         }
 
         try {
-            StartMIDletMonitor app = StartMIDletMonitor.okToStart(id, midlet);
+            StartMIDletEntry app = StartMIDletMonitor.okToStart(id, midlet);
             if (app == null) {
                 // Isolate is already running; don't start it again
                 return null;
@@ -256,7 +257,7 @@ public class AmsUtil {
             isolate =
                 new Isolate("com.sun.midp.main.AppIsolateMIDletSuiteLoader",
                     args, classpath, classpathext);
-            app.setIsolate(isolate);
+            ((MVMStartMIDletEntry)app).setIsolate(isolate);
         } catch (Throwable t) {
             t.printStackTrace();
             throw new RuntimeException("Can't create Isolate****");

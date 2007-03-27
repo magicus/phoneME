@@ -41,6 +41,8 @@ LIB_JAVA_FILES= \
     com/sun/midp/main/MIDletProxyListListener.java \
     com/sun/midp/main/AbstractMIDletSuiteLoader.java \
     com/sun/midp/main/MIDletSuiteLoader.java \
+    com/sun/midp/main/StartMIDletMonitor.java \
+    com/sun/midp/main/StartMIDletEntry.java \
     com/sun/midp/main/MIDletSuiteUtils.java
 
 LIB_NATIVE_FILES= \

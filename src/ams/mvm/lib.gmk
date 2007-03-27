@@ -54,4 +54,4 @@ SUBSYSTEM_AMS_JAVA_FILES += \
         $(MVM_DIR)/classes/com/sun/midp/main/MVMDisplayController.java \
         $(MVM_DIR)/classes/com/sun/midp/main/IsolateMonitor.java \
         $(MVM_DIR)/classes/com/sun/midp/main/IsolateMonitorListener.java \
-        $(MVM_DIR)/classes/com/sun/midp/main/StartMIDletMonitor.java
+        $(MVM_DIR)/classes/com/sun/midp/main/MVMStartMIDletEntry.java
