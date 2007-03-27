@@ -792,6 +792,26 @@ class TextFieldLFImpl extends ItemLFImpl implements
     }
 
     /**
+     * Called by the system to indicate the size available to this Item
+     * has changed
+     *
+     * @param w the new width of the item's content area
+     * @param h the new height of the item's content area
+     */
+    void uCallSizeChanged(int w, int h) {
+        super.uCallSizeChanged(w, h);
+        synchronized (Display.LCDUILock) {
+            xScrollOffset = 0;
+            
+            if (textScrollPainter != null) { 
+                stopScroll();
+            }
+
+            startScroll();
+        }
+    }
+
+    /**
      * Paint the text, scrolling left or right when necessary.
      * (A TextField may only be one line hight)
      *
