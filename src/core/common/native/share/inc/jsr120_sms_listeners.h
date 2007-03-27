@@ -61,7 +61,7 @@ void jsr120_sms_message_sent_notifier();
  *                 <code>WMA_ERR</code> otherwise.
  *
  */
-WMA_STATUS jsr120_is_sms_midlet_port_registered(jchar port);
+WMA_STATUS jsr120_is_sms_midlet_listener_registered(jchar port);
 
 /**
  * Registers the specified SMS port for the calling midlet
@@ -73,7 +73,7 @@ WMA_STATUS jsr120_is_sms_midlet_port_registered(jchar port);
  * @result returns <code>WMA_OK</code> if port is registered,
  *                 <code>WMA_ERR</code> otherwise.
  */
-WMA_STATUS jsr120_register_sms_midlet_port(jchar port,
+WMA_STATUS jsr120_register_sms_midlet_listener(jchar port,
                         SuiteIdType msid, jint handle);
 
 /**
@@ -84,7 +84,7 @@ WMA_STATUS jsr120_register_sms_midlet_port(jchar port,
  * @result returns <code>WMA_OK</code> if port is unregistered,
  *                 <code>WMA_ERR</code> otherwise.
  */
-WMA_STATUS jsr120_unregister_sms_midlet_port(jchar port);
+WMA_STATUS jsr120_unregister_sms_midlet_listener(jchar port);
 
 /**
  * Checks whether the specified port has been registered by the
@@ -96,7 +96,7 @@ WMA_STATUS jsr120_unregister_sms_midlet_port(jchar port);
  *                 <code>WMA_ERR</code> otherwise.
  *
  */
-WMA_STATUS jsr120_is_sms_push_port_registered(jchar port);
+WMA_STATUS jsr120_is_sms_push_listener_registered(jchar port);
 
 /**
  * Registers the specified SMS port for the Push registry
@@ -108,7 +108,7 @@ WMA_STATUS jsr120_is_sms_push_port_registered(jchar port);
  * @result returns <code>WMA_OK</code> if port is registered,
  *                 <code>WMA_ERR</code> otherwise.
  */
-WMA_STATUS jsr120_register_sms_push_port(jchar port,
+WMA_STATUS jsr120_register_sms_push_listener(jchar port,
                      SuiteIdType msid, jint handle);
 
 /**
@@ -119,7 +119,7 @@ WMA_STATUS jsr120_register_sms_push_port(jchar port,
  * @result returns <code>WMA_OK</code> if port is unregistered,
  *                 <code>WMA_ERR</code> otherwise.
  */
-WMA_STATUS jsr120_unregister_sms_push_port(jchar port);
+WMA_STATUS jsr120_unregister_sms_push_listener(jchar port);
 
 /**
  * Unblocks the thread that matches the specified handle

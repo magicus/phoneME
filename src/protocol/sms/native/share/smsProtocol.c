@@ -68,8 +68,6 @@ typedef struct {
     void *pdContext;
 } jsr120_sms_message_state_data;
 
-/** Close flag. */
-static int isClosed = 0;
 
 /**
  * Opens an SMS connection.
@@ -90,9 +88,6 @@ Java_com_sun_midp_io_j2me_sms_Protocol_open0(void) {
     unsigned char* host = NULL;
     /* The midlet suite name for this connection. */
     SuiteIdType msid = UNUSED_SUITE_ID;
-
-    /* Set closed flag to false */
-    isClosed = 0;
 
     port = KNI_GetParameterAsInt(3);
 
@@ -144,9 +139,9 @@ Java_com_sun_midp_io_j2me_sms_Protocol_open0(void) {
             if (host == NULL) {
 
                 /* register SMS port with SMS pool */
-                if (jsr120_is_sms_midlet_port_registered((jchar)port) == WMA_ERR) {
+                if (jsr120_is_sms_midlet_listener_registered((jchar)port) == WMA_ERR) {
 
-                    if (jsr120_register_sms_midlet_port((jchar)port,
+                    if (jsr120_register_sms_midlet_listener((jchar)port,
                                                         msid,
                                                         handle) == WMA_ERR) {
 
@@ -170,6 +165,31 @@ Java_com_sun_midp_io_j2me_sms_Protocol_open0(void) {
 }
 
 /**
+ * Internal helper function implementing connection close routine
+ *
+ * @param port The port associated with this connection.
+ * @param handle The handle of the open SMS message connection.
+ * @param deRegister Deregistration os the port when parameter is 1.
+ */
+static void closeConnection(int port, int handle, int deRegister) {
+
+    if (port > 0 && handle != 0) {
+
+        /** unblock any blocked threads */
+        jsr120_sms_unblock_thread((jint)handle, WMA_SMS_READ_SIGNAL);
+
+        if (deRegister) {
+            /** unregister SMS port from SMS pool */
+            jsr120_unregister_sms_midlet_listener((jchar)port);
+
+            /* Release the handle associated with this connection. */
+            pcsl_mem_free((void *)handle);
+        }
+
+    }
+}
+
+/**
  * Closes an open SMS connection.
  *
  * @param port The port associated with this connection.
@@ -187,27 +207,11 @@ Java_com_sun_midp_io_j2me_sms_Protocol_close0(void) {
     /** Deregistration flag. */
     int deRegister;
 
-    /* Set closed flag to true */
-    isClosed = 1;
-
     port = KNI_GetParameterAsInt(1);
     handle = KNI_GetParameterAsInt(2);
     deRegister = KNI_GetParameterAsInt(3);
 
-    if (port > 0 && handle != 0) {
-
-        /** unblock any blocked threads */
-        jsr120_sms_unblock_thread((jint)handle, WMA_SMS_READ_SIGNAL);
-
-        if (deRegister) {
-            /** unregister SMS port from SMS pool */
-            jsr120_unregister_sms_midlet_port((jchar)port);
-
-            /* Release the handle associated with this connection. */
-            pcsl_mem_free((void *)handle);
-        }
-
-    }
+    closeConnection(port, handle, deRegister);
 
     KNI_ReturnInt(status);
 }
@@ -241,9 +245,17 @@ Java_com_sun_midp_io_j2me_sms_Protocol_send0(void) {
     void *pdContext = NULL;
     jsr120_sms_message_state_data *messageStateData = NULL;
     jint bytesSent;
+    jboolean isOpen;
 
-    if (!isClosed) { /* No close in progress */
-        KNI_StartHandles(2);
+    KNI_StartHandles(4);
+
+    KNI_DeclareHandle(this);
+    KNI_DeclareHandle(thisClass);
+    KNI_GetThisPointer(this);
+    KNI_GetObjectClass(this, thisClass);
+    isOpen = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
+    
+    if (isOpen) { /* No close in progress */
         KNI_DeclareHandle(messageBuffer);
         KNI_DeclareHandle(address);
 
@@ -344,9 +356,10 @@ Java_com_sun_midp_io_j2me_sms_Protocol_send0(void) {
             pcsl_mem_free(pMessageBuffer);
             pcsl_mem_free(pAddress);
         }
-
-        KNI_EndHandles();
     }
+
+    KNI_EndHandles();
+
     KNI_ReturnInt(0); /* currently ignored. */
 }
 
@@ -367,9 +380,17 @@ Java_com_sun_midp_io_j2me_sms_Protocol_receive0(void) {
     SmsMessage *psmsData = NULL;
     /* The midlet suite name for this connection. */
     SuiteIdType msid = UNUSED_SUITE_ID;
+    jboolean isOpen;
 
-    if (!isClosed) { /* No close in progress */
-        KNI_StartHandles(4);
+    KNI_StartHandles(6);
+
+    KNI_DeclareHandle(this);
+    KNI_DeclareHandle(thisClass);
+    KNI_GetThisPointer(this);
+    KNI_GetObjectClass(this, thisClass);
+    isOpen = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
+
+    if (isOpen) { /* No close in progress */
         KNI_DeclareHandle(messageClazz);
         KNI_DeclareHandle(messageObject);
         KNI_DeclareHandle(addressArray);
@@ -480,9 +501,10 @@ Java_com_sun_midp_io_j2me_sms_Protocol_receive0(void) {
         } while (0);
 
         jsr120_sms_delete_msg(psmsData);
-
-        KNI_EndHandles();
     }
+
+    KNI_EndHandles();
+
     KNI_ReturnInt(messageLength);
 }
 
@@ -501,8 +523,17 @@ Java_com_sun_midp_io_j2me_sms_Protocol_waitUntilMessageAvailable0(void) {
     int handle;
     int messageLength = -1;
     SmsMessage *pSMSData = NULL;
+    jboolean isOpen;
 
-    if (!isClosed) { /* No close in progress */
+    KNI_StartHandles(1);
+
+    KNI_DeclareHandle(this);
+    KNI_DeclareHandle(thisClass);
+    KNI_GetThisPointer(this);
+    KNI_GetObjectClass(this, thisClass);
+    isOpen = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
+
+    if (isOpen) { /* No close in progress */
         port = KNI_GetParameterAsInt(1);
         handle = KNI_GetParameterAsInt(2);
 
@@ -536,6 +567,9 @@ Java_com_sun_midp_io_j2me_sms_Protocol_waitUntilMessageAvailable0(void) {
             }
         }
     }
+
+    KNI_EndHandles();
+
     KNI_ReturnInt(messageLength);
 }
 
@@ -608,13 +642,24 @@ Java_com_sun_midp_io_j2me_sms_Protocol_numberOfSegments0(void) {
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_io_j2me_sms_Protocol_finalize(void) {
+    int port;
+    int handle;
+    jboolean isOpen;
 
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(instance);
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(this);
+    KNI_DeclareHandle(thisClass);
 
-    KNI_GetThisPointer(instance);
+    KNI_GetThisPointer(this);
+    KNI_GetObjectClass(this, thisClass);
+    isOpen = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "open", "Z"));
 
-//    REPORT_ERROR(LC_WMA, "Stubbed out: Java_com_sun_midp_io_j2me_sms_Protocol_finalize");
+    if (isOpen) {
+        port = KNI_GetIntField(this, KNI_GetFieldID(thisClass, "m_iport", "I"));
+        handle = KNI_GetIntField(this, KNI_GetFieldID(thisClass, "connHandle", "I"));
+
+        closeConnection(port, handle, 1);
+    }
 
     KNI_EndHandles();
 

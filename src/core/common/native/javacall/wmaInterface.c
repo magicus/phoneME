@@ -84,6 +84,7 @@ jboolean jsr120_check_signal(midpSignalType signalType, int fd) {
     case WMA_CBS_READ_SIGNAL:
     {
         CbsMessage* cbs = (CbsMessage*)fd;
+        pushsetcachedflag("cbs://:", cbs->msgID);
         jsr120_cbs_pool_add_msg(cbs);
         return KNI_TRUE;
     }
