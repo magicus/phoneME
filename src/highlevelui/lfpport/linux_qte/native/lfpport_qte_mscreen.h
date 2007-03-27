@@ -45,7 +45,6 @@
 #include <qrect.h>
 #include <qmetaobject.h>
 #include <qpushbutton.h>
-#include <qtimer.h>
 #include <qscrollview.h>
 #include <midpEvents.h>
 
@@ -233,7 +232,9 @@ public:
 
 public slots:
     /**
-     * Called when VM time slice is granted.
+     * Invoked when a timeslice is granted.
+     * Passes control to VM for this time slice and schedules
+     * next invokation.
      */
     void slotTimeout();
 
@@ -291,17 +292,6 @@ private:
      * Document force_refresh
      */
     bool     force_refresh;
-
-    /**
-     * Timer to request time slice for VM.
-     */
-    QTimer   vm_slicer;
-
-    /**
-     * A flag to avoid performing any more timer processing after
-     * JVM_TimeSlice returns -2.
-     */
-    bool vm_stopped;
 
     /**
      * Size of a normal screen.
