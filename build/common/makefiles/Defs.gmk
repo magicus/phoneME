@@ -104,12 +104,6 @@ GENERATED_DIR= $(MIDP_OUTPUT_DIR)/generated
 
 MIDP_CLASSES_ZIP ?= $(MIDP_OUTPUT_DIR)/classes.zip
 
-ifeq ($(TARGET_VM), cdc_vm)
-   ifneq ($(CVM_PRELOAD_LIB), true)
-      MIDP_SHARED_LIB ?= $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
-   endif
-endif
-
 # Use "_" since it will be used by other modules
 BUILD_COMMON_CONFIG_DIR = $(MIDP_DIR)/build/common/config
 

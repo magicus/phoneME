@@ -42,11 +42,11 @@ LIB_SET += $(PUSH_GCF_LIB)
 # Common settings
 #
 
-PUSH_GCF_CLASSES_DIR = $(SUBSYSTEM_PUSH_DIR)/$(PUSH_GCF_LIB)/classes
+CLASSES_DIR = $(SUBSYSTEM_PUSH_DIR)/$(PUSH_GCF_LIB)/classes
 
-PUSH_GCF_API_PACKAGE = com.sun.midp.push.gcf
+API_PACKAGE = com.sun.midp.push.gcf
 
-PUSH_GCF_API_PACKAGE_DIR=$(PUSH_GCF_CLASSES_DIR)/$(shell echo $(PUSH_GCF_API_PACKAGE) | tr '.' '/')
+API_PACKAGE_DIR=$(CLASSES_DIR)/$(shell echo $(API_PACKAGE) | tr '.' '/')
 
 # Classes and files
 #
@@ -57,21 +57,21 @@ SUBSYSTEM_PUSH_GCF_EXTRA_INCLUDES =
 
 # Javadoc settings
 #
-LIB_PUSH_GCF_SOURCEPATH = $(PUSH_GCF_CLASSES_DIR)
+LIB_PUSH_GCF_SOURCEPATH = $(CLASSES_DIR)
 
 SUBSYSTEM_PUSH_GCF_PACKAGES = \
-    $(PUSH_GCF_API_PACKAGE)
+    $(API_PACKAGE)
 
 MIDP_JAVADOC_ALL += \
     -group "Push-GCF interfaces" \
     $(shell echo $(SUBSYSTEM_PUSH_GCF_PACKAGES) | tr ' ' $(PATHSEP))
 
 SUBSYSTEM_PUSH_GCF_JAVA_FILES += \
-    $(PUSH_GCF_API_PACKAGE_DIR)/ConnectionReservation.java \
-    $(PUSH_GCF_API_PACKAGE_DIR)/DataAvailableListener.java \
-    $(PUSH_GCF_API_PACKAGE_DIR)/PermissionCallback.java \
-    $(PUSH_GCF_API_PACKAGE_DIR)/ReservationDescriptor.java \
-    $(PUSH_GCF_API_PACKAGE_DIR)/ReservationDescriptorFactory.java
+    $(API_PACKAGE_DIR)/ConnectionReservation.java \
+    $(API_PACKAGE_DIR)/DataAvailableListener.java \
+    $(API_PACKAGE_DIR)/PermissionCallback.java \
+    $(API_PACKAGE_DIR)/ReservationDescriptor.java \
+    $(API_PACKAGE_DIR)/ReservationDescriptorFactory.java
 
 ifeq ($(USE_I3_TEST), true)
     SUBSYSTEM_PUSH_GCF_I3TEST_JAVA_FILES =

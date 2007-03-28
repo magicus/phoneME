@@ -221,18 +221,7 @@ endif
 endif
 
 # File names of romized Chameleon images
-ifndef CHAMELEON_QA_IMAGE_ROMIZATION_OVERRIDE
-	# Normal case: the list of romized images comes from skin XML file
-	CHAM_ROMIZED_IMAGE_FILES = $(addprefix $(LIBDIR)/,$(shell cat $(SUBSYSTEM_CONFIGURATION_CHAMROM_LIST_FILE)))
-else
-	# QA hack case
-	ifeq ($(CHAMELEON_QA_IMAGE_ROMIZATION_OVERRIDE),all)
-		CHAM_SKIN_RESOURCES_FILES_LIST = $(notdir $(wildcard $(SUBSYSTEM_LCDLF_SKIN_RESOURCES_DIR)/*.png))
-		CHAM_ROMIZED_IMAGE_FILES = $(addprefix $(LIBDIR)/,$(CHAM_SKIN_RESOURCES_FILES_LIST))
-	else
-		CHAM_ROMIZED_IMAGE_FILES = 
-	endif
-endif
+CHAM_ROMIZED_IMAGE_FILES = $(addprefix $(LIBDIR)/,$(shell cat $(SUBSYSTEM_CONFIGURATION_CHAMROM_LIST_FILE)))
 
 # Copy images to /lib
 define copy_lcdlf_resources

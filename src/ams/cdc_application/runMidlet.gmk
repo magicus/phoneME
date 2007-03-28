@@ -43,6 +43,7 @@ $(BINDIR)/runMidlet: \
 	@echo " ... creating script  " $@ $(LOG)
 	$(A)echo ${CDC_DIST_DIR}/bin/cvm \
 	-Dsun.midp.home.path=${MIDP_OUTPUT_DIR} \
+	-Dmicroedition.profiles=MIDP-2.0 \
 	-Dcom.sun.midp.mainClass.name=com.sun.midp.main.CdcMIDletSuiteLoader \
 	sun.misc.MIDPLauncher \
 	'$$*' > $@
@@ -51,20 +52,21 @@ else
 #
 # Create a libmidp.so for non-ROMized build.
 #
-$(MIDP_SHARED_LIB): \
+$(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX): \
     $(MIDP_DEPS) $(OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
 	@$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
 	  $(OBJ_FILES) $(LIBS))` $(LOG)
 
-$(BINDIR)/runMidlet: $(MIDP_SHARED_LIB)
+$(BINDIR)/runMidlet: $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
 	@rm -f $@
 	@echo " ... creating script $@ " $(LOG)
 	$(A)echo ${CDC_DIST_DIR}/bin/cvm \
 	-Dsun.midp.library.name=midp$(p) \
 	-Dsun.midp.home.path=${MIDP_OUTPUT_DIR} \
+	-Dmicroedition.profiles=MIDP-2.0 \
 	-Dcom.sun.midp.mainClass.name=com.sun.midp.main.CdcMIDletSuiteLoader \
-	sun.misc.MIDPLauncher \
+	sun.misc.MIDPLauncher -midppath ${MIDP_CLASSES_ZIP} \
 	'$$*' > $@
 	$(A)chmod a+x $@
 endif

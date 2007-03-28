@@ -200,12 +200,6 @@ $(LIBDIR)/internal.config $(LIBDIR)/system.config: $(LIBDIR) $(SUBSYSTEM_CONFIGU
 	-(chmod +w $@) $(LOG)
 endif
 
-ifeq ($(TARGET_VM), cdc_vm)
-   ifneq ($(CVM_PRELOAD_LIB), true)
-      MIDP_DEPS += $(MIDP_SHARED_LIB)
-   endif
-endif
-
 # All object files
 #
 # Note: we need explicit rules for all generated C source files because they are

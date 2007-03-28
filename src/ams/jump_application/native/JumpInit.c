@@ -36,7 +36,7 @@
  */
 
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_midp_jump_JumpInit_initMidpStorage) {
+KNIDECL(com_sun_midp_jump_JumpInit_initMidpNativeStates) {
     jchar jbuff[1024];
     char cbuff[1024];
     int max = sizeof(cbuff) - 1;
