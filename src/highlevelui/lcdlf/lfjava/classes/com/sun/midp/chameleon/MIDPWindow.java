@@ -507,10 +507,17 @@ public class MIDPWindow extends CWindow {
      * @return true if set vertical scroll occues
      */
     public boolean setVerticalScroll(int scrollPosition, int scrollProportion) {
-        CLayer scrollable = mainLayers[ALERT_LAYER].isVisible() ?
-            mainLayers[ALERT_LAYER] : mainLayers[BODY_LAYER];
-        
-        return ((BodyLayer)scrollable).setVerticalScroll(scrollPosition, scrollProportion);
+        if (mainLayers[ALERT_LAYER].isVisible()) {
+            return ((BodyLayer)mainLayers[ALERT_LAYER]).setVerticalScroll(
+                scrollPosition, scrollProportion);
+        }
+        if (((BodyLayer)mainLayers[BODY_LAYER]).setVerticalScroll(
+                scrollPosition, scrollProportion)) {
+            setDirty();
+            sizeChangedOccured = true;
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -652,6 +659,8 @@ public class MIDPWindow extends CWindow {
      * titles, tickers, fullscreen mode, etc. change state.
      */
     public void resize() {
+        super.resize();
+
         // Cache a few often used layers for faster access
         CLayer bodyLayer = mainLayers[BODY_LAYER];
         CLayer titleLayer = mainLayers[TITLE_LAYER];
@@ -660,9 +669,6 @@ public class MIDPWindow extends CWindow {
 
         int oldHeight = bodyLayer.bounds[H];
         int oldWidth = bodyLayer.bounds[W];
-
-        super.resize();
-
         switch (screenMode) {
             case FULL_SCR_MODE:
                 // TODO: scroll arrows (bar? ) indicator has to be hidden?
@@ -697,7 +703,7 @@ public class MIDPWindow extends CWindow {
             sizeChangedOccured = true;
         }
     }
-    
+
     /**
      * Internal method to clear all current popups. This occurs if a
      * change of displayable occurs, as all popups are treated as belonging
