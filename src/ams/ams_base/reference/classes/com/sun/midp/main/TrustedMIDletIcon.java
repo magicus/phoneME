@@ -33,6 +33,13 @@ import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.security.Permissions;
 
+import com.sun.midp.util.ResourceHandler;
+
+import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.SecurityInitializer;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+
+
 /**
  * This holds the trusted MIDlet icon.
  */
@@ -41,14 +48,16 @@ public class TrustedMIDletIcon {
     private static Image trustedIcon;
 
     /**
-     * Initialize trusted icon class.
-     *
-     * @param icon the trusted icon
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
      */
-    static void initClass(Image icon) {
-        trustedIcon = icon;
-    }
-    
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
+
+    /** Security token to allow access to implementation APIs */
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
+
     /**
      * Get the Image of the trusted icon for this Display.
      * Only callers with the internal AMS permission can use this method.
@@ -63,8 +72,18 @@ public class TrustedMIDletIcon {
             MIDletStateHandler.getMidletStateHandler();
 
         MIDletSuite suite = midletStateHandler.getMIDletSuite();
-
         suite.checkIfPermissionAllowed(Permissions.AMS);
+
+        if (trustedIcon == null) {
+            byte[] imageData = ResourceHandler.getSystemImageResource(
+                    classSecurityToken, "trustedmidlet_icon");
+            if (imageData != null) {
+                trustedIcon = Image.createImage(imageData, 0, imageData.length);
+            } else {
+                // Use a empty immutable image as placeholder
+                trustedIcon = Image.createImage(Image.createImage(16, 16));
+            }
+        }
 
         return trustedIcon;
     }

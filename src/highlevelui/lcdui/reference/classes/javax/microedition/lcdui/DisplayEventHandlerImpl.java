@@ -242,18 +242,6 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
         }
     }
 
-
-    /**
-     * Get the Image of the trusted icon for this Display.
-     * Only callers with the internal MIDP permission can use this method.
-     * DisplayEventHandler I/F method.
-     *
-     * @return an Image of the trusted icon.
-     */
-    public Image getTrustedMIDletIcon() {
-        return Display.getSystemImage("trustedmidlet_icon.png");
-    }
-
     /**
      * Called by event delivery to process an Item state change.
      * ItemEventConsumer I/F method.

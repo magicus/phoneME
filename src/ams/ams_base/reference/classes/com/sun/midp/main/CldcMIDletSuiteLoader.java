@@ -111,9 +111,6 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
      */
     protected void initSuiteEnvironment() {
         super.initSuiteEnvironment();
-
-        TrustedMIDletIcon.initClass(
-            displayEventHandler.getTrustedMIDletIcon());
     }
 
     /**
