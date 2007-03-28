@@ -174,8 +174,8 @@ public class SuspendSystem extends AbstractSubsystem {
             } else if (reason == MIDletProxyListListener.MIDLET_STATE &&
                     amsMidlet &&
                     midlet.getMidletState() == MIDletProxy.MIDLET_ACTIVE) {
-                /* An AMS midlet has been activated, checking if it is a result
-                 * abnormal midlet termination during suspend.
+                /* An AMS midlet has been activated, checking if it is a
+                 * result of abnormal midlet termination during suspend.
                  */
                 alertIfAllMidletsKilled();
             }
