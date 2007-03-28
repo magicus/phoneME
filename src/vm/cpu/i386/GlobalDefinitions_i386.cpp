@@ -49,6 +49,7 @@ address         _compiler_stack_limit      = NULL;
 int             _rt_timer_ticks            = 0;
 address         _primordial_sp             = NULL;
 OopDesc*        _interned_string_near_addr = NULL;
+OopDesc**       _persistent_handles_addr   = NULL;
 char*           _jvm_quick_native_exception =NULL;
 int             _jvm_in_quick_native_method =0;
 
