@@ -29,9 +29,6 @@ package javax.microedition.lcdui;
 /* This is used to implement the communication between MIDlet and Display */
 import javax.microedition.midlet.MIDlet;
 
-import com.sun.midp.security.SecurityToken;
-import com.sun.midp.security.SecurityInitializer;
-import com.sun.midp.security.ImplicitlyTrustedClass;
 // #ifndef ENABLE_CDC
 import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
@@ -563,17 +560,6 @@ public class Display {
 
     /** Current active queue for serially repainted operations. */
     private static java.util.Vector currentQueue = queue1;
-
-    /**
-     * Inner class to request security token from SecurityInitializer.
-     * SecurityInitializer should be able to check this inner class name.
-     */
-    static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {};
-
-    /** Security token to allow access to implementation APIs */
-    private static SecurityToken classSecurityToken =
-        SecurityInitializer.requestToken(new SecurityTrusted());
 
     // #ifdef ENABLE_GCI	
     /** GCIDisplay that incapsulates information about the display device */
@@ -2167,31 +2153,6 @@ public class Display {
         return hasForeground
             && !paintSuspended
             && (current == d);
-    }
-
-    /**
-     * Create an ImmutableImage from the named system icon resource.
-     * The icons are stored in the configuration directory ($MIDP_HOME/lib).
-     * If the named resource can not be found a placeholder
-     * image is used instead.
-     * @param imageName name of the image
-     * @return a new ImmutableImage
-     * @throws IllegalArgumentException if imageName contains a "/" or "\\",
-     *        or imageName is null or imageName is empty
-     */
-    static Image getSystemImage(String imageName) {
-        byte[] imageData = ResourceHandler.getAmsResource(
-                               classSecurityToken, imageName + ".raw");
-        if (imageData == null) {
-            imageData = ResourceHandler.getAmsResource(
-                               classSecurityToken, imageName + ".png");
-        }
-        if (imageData != null) {
-            return Image.createImage(imageData, 0, imageData.length);
-        } else {
-            // Use a empty immutable image as placeholder
-            return Image.createImage(Image.createImage(16, 16));
-        }
     }
 
     /**

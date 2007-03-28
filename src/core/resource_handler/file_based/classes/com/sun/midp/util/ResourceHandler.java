@@ -75,6 +75,29 @@ public class ResourceHandler {
     }
 
     /**
+     * Load a system image resource from the system and return it as 
+     * a byte array. The images are stored in the configuration 
+     * directory ($MIDP_HOME/lib).
+     *
+     * @param token the SecurityToken to use to grant permission to
+     *              execute this method.
+     * @param imageName name of the image
+     * @return a byte[] containing the resource retrieved from the
+     *         system. null if the resource could not be found.
+     * @throws IllegalArgumentException if imageName contains a "/" or "\\",
+     *        or imageName is null or imageName is empty
+     */
+    public static byte[] getSystemImageResource(SecurityToken token, 
+                    String imageName) {
+        byte[] imageData = getAmsResource(token, imageName + ".raw");
+        if (imageData == null) {
+            imageData = getAmsResource(token, imageName + ".png");
+        }
+        
+        return imageData;
+    }   
+
+    /**
      * Load a resource from the system and return it as a byte array.
      * This method is used to load system level resources, such as
      * images, sounds, properties, etc.
