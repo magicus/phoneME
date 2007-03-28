@@ -374,9 +374,7 @@ public class MIDletProxy implements SuspendDependency {
      * a MIDlet paused event to the proxy list.
      */
     public void pauseMidlet() {
-System.out.println(">>> midletState = " + midletState + ", id = " + suiteId);        
         if (midletState != MIDLET_DESTROYED) {
-//        if (midletState == MIDLET_ACTIVE) {
             midletEventProducer.sendMIDletPauseEvent(isolateId, className);
         }
     }

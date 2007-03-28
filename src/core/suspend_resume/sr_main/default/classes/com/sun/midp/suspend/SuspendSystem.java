@@ -230,6 +230,15 @@ public class SuspendSystem extends AbstractSubsystem {
     }
 
     /**
+     * Retrieves the singleton instance. The method is only available from
+     * this restricted package.
+     * @return the singleton instance
+     */
+    static SuspendSystem getInstance() { 
+        return instance;
+    }
+
+    /**
      * Constructs an instance.
      */
     private SuspendSystem() {}

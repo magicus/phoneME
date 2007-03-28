@@ -149,11 +149,11 @@ class AlertTimer extends Timer implements SuspendDependency {
         }
 
         final AlertTimer timer = new AlertTimer();
-        SuspendSystem.getInstance(null).addSuspendDependency(timer);
+        SuspendSystem.getInstance().addSuspendDependency(timer);
 
         TimerTask removeDep = new TimerTask() {
             public void run() {
-                SuspendSystem.getInstance(null).removeSuspendDependency(timer);
+                SuspendSystem.getInstance().removeSuspendDependency(timer);
             }
         };
 

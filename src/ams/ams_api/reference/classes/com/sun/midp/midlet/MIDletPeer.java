@@ -33,7 +33,6 @@ import javax.microedition.midlet.MIDletStateChangeException;
 
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
-import com.sun.midp.suspend.SuspendSystem;
 
 
 /**

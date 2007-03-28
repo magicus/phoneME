@@ -34,7 +34,6 @@ import com.sun.midp.security.SecurityToken;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
-import com.sun.midp.suspend.SuspendSystem;
 
 /**
  * The MIDletStateHandler starts and controls MIDlets through the lifecycle
