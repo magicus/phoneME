@@ -48,6 +48,8 @@ import com.sun.satsa.util.Utils;
 import javacard.framework.*;
 import javacard.framework.service.ServiceException;
 
+import com.sun.j2me.main.Configuration;
+
 /**
  * JCRMI connection to card application.
  */
@@ -254,10 +256,16 @@ public class Protocol
                Integer.parseInt(URL.substring(slotIndex, AIDIndex), 16);
 
         // prepare selection APDU
-
         offset = 0;
-// IMPL_NOTE: if the card does not support JC2.2 you must use: putInt(0x00a40400); 
-        putInt(0x00a40410);  // selection APDU header
+
+        // IMPL_NOTE: For JavaCard 2.1 compliant cards jcrmi emulation is used.
+        String jcVersion = Configuration.getProperty("com.sun.javacard.version");
+        if ((jcVersion.equals("2.1"))||(jcVersion.startsWith("2.1."))) {
+            putInt(0x00a40400);  // selection APDU header
+        }
+        else {
+            putInt(0x00a40410);  // selection APDU header
+        }
         offset++;           // length
 
         // parse for AID
