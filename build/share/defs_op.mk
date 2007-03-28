@@ -75,8 +75,11 @@ HIDE_JSROP_NUMBERS = $(patsubst HIDE_JSR_%=true,%,\
                 $(filter %true, $(HIDE_JSROP_FLAGS)))
 endif
 
-# The list of JAR jar files we want to hide.
+# The list of JSR jar files we want to hide.
 JSROP_HIDE_JARS = $(subst $(space),:,$(foreach jsr_number,$(HIDE_JSROP_NUMBERS),$(JSROP_LIB_DIR)/jsr$(jsr_number).jar))
+
+# The list of all used JSR jar files
+JSROP_JARS_LIST = $(subst $(space),:,$(JSROP_JARS))
 
 # Generate constants classes list for the given xml file
 # generateConstantList(generatedDirectory, constantsXmlFile)
@@ -302,10 +305,16 @@ else
 CLASSLIB_DEPS   += $(JSROP_NATIVE_LIBS)
 endif
 
-# JSR_RESTRICTED_CLASSLIST is a list of JSROP classes 
-# that are hidden from CDC applications.
 ifeq ($(CVM_DUAL_STACK), true)
-JSR_RESTRICTED_CLASSLIST = $(CVM_LIBDIR)/JSRRestrictedClasses.txt
-else
-JSR_RESTRICTED_CLASSLIST =
+# JSR_CDCRESTRICTED_CLASSLIST is a list of JSROP classes 
+# that are hidden from CDC applications.
+JSR_CDCRESTRICTED_CLASSLIST = $(CVM_LIBDIR)/JSRRestrictedClasses.txt
+# JSR_CDCRESTRICTED_CLASSLIST is a list of JSROP classes
+# that are accessible from midlets. JSR_CDCRESTRICTED_CLASSLIST and
+# JSR_CDCRESTRICTED_CLASSLIST don't always contain the same classes
+# depending on which JSRs are hidden from CDC.
+JSR_MIDPPERMITTED_CLASSLIST = $(CVM_BUILD_TOP)/.jsrmidppermittedclasses
+# CVM_MIDPCLASSLIST_FILES are the files that contain MIDP permitted
+# classes.
+CVM_MIDPCLASSLIST_FILES += $(JSR_MIDPPERMITTED_CLASSLIST)
 endif
