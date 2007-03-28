@@ -39,3 +39,5 @@ J2ME_PRODUCT_NAME	= phoneME Advanced
 J2ME_BUILD_VERSION	= $(CVM_BUILD_VERSION)
 J2ME_BUILD_ID		= $(CVM_BUILD_ID)
 
+# override with commercial versioning if present
+-include ../share/id_cdc-com.mk
