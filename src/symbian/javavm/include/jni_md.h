@@ -37,8 +37,10 @@
 #else /* gcc */
 #ifdef __cplusplus
 #define JNIEXPORT extern "C" EXPORT_C
+#define JNIIMPORT extern "C" IMPORT_C 
 #else /* C++ */
 #define JNIEXPORT EXPORT_C
+#define JNIIMPORT IMPORT_C
 #endif /* C++ */
 #ifndef JNICALL
 #define JNICALL

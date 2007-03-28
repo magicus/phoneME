@@ -23,7 +23,7 @@
 #
 # @(#)ppc03_defs.mk	1.2 06/10/10
 #
-# defs for PocketPC 2002 target
+# defs for PocketPC 2003 target
 #
 
 # Must use DOS path for SDK_DIR with no quotes.

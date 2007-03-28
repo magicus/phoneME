@@ -25,7 +25,20 @@
 #
 
 ifeq ($(USE_GCI), true)
-ifneq ($(J2ME_CLASSLIB), basis)
+ifeq ($(J2ME_CLASSLIB), basis)
+
+#
+# For basis, definitions of defs_basis.mk are used instead
+#
+
+ifneq ($(AWT_IMPLEMENTATION), gci)
+   override AWT_IMPLEMENTATION = gci
+   override AWT_IMPLEMENTATION_DIR = $(GCI_DIR)
+endif
+
+endif
+
+#else
 
 GCI_DIR                ?= $(COMPONENTS_DIR)/gci
 
@@ -34,23 +47,13 @@ include $(GCI_DIR)/build/share/defs.mk
 GCI_LIB_NAME ?= gci
 GCI_LIBDIR ?= $(CVM_LIBDIR)
 
-ifneq ($(CVM_STATICLINK_LIBS), true)
-GCI_LIB_PATHNAME  = $(GCI_LIBDIR)/$(LIB_PREFIX)$(GCI_LIB_NAME)$(LIB_POSTFIX)
-endif
-
-ifneq ($(CVM_STATICLINK_LIBS), true)
-CLASSLIB_DEPS += $(GCI_LIB_PATHNAME)
-endif
-
 ifeq ($(CVM_STATICLINK_LIBS), true)
-CVM_OBJECTS += $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(GCI_LIB_OBJS))
+  CVM_OBJECTS += $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(GCI_LIB_OBJS))
+  BUILTIN_LIBS += $(GCI_LIB_NAME)
+else
+  GCI_LIB_PATHNAME  = $(GCI_LIBDIR)/$(LIB_PREFIX)$(GCI_LIB_NAME)$(LIB_POSTFIX)
+  CLASSLIB_DEPS += $(GCI_LIB_PATHNAME)
 endif
-
-
-ifeq ($(CVM_STATICLINK_LIBS), true)
-BUILTIN_LIBS += $(GCI_LIB_NAME)
-endif
-
 
 CVM_FLAGS += GCI_IMPLEMENTATION
 
@@ -61,21 +64,12 @@ GCI_IMPLEMENTATION_CLEANUP_ACTION += \
         btclasses*
 endif
 
-
 #
 # Finally, modify CVM variables wth GCI items
 #
 PROFILE_SRCDIRS         += $(GCI_SRCDIRS)
 CVM_SRCDIRS             += $(GCI_SRCDIRS_NATIVE)
-CVM_INCLUDES            += $(GCI_INCLUDES)
 CVM_INCLUDE_DIRS        += $(GCI_INCLUDE_DIRS)
 
-else
-#
-# Basis
-#
-override AWT_IMPLEMENTATION = gci
-override AWT_IMPLEMENTATION_DIR = $(GCI_DIR)
-
-endif
-endif
+#endif # J2ME_CLASSLIB
+endif # USE_GCI

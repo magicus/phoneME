@@ -86,16 +86,37 @@ public class Protocol extends ConnectionBase implements DatagramConnection,UDPDa
         if(colon == 0) {
             return null;
         } else {
-            return name.substring(0, colon);
+            return parseHostName(name, colon);
         }
     }
+
+    
+    protected static String parseHostName(String connection, int colon) {
+        if (connection.indexOf("::") >= 0) {
+            return parseIPv6Address(connection, colon);
+        } else {
+            return parseIPv4Address(connection, colon);
+        }
+    }
+
+
+    protected static String parseIPv4Address(String name, int colon) {
+        return name.substring(0, colon);
+    }
+
+
+    protected static String parseIPv6Address(String address, int colon) {
+        int lastIndexOfColon = address.lastIndexOf(":");
+        return address.substring(0, lastIndexOfColon);
+    }
+    
 
     /**
      * Local function to get the port number from a string
      */
     protected static int getPort(String name) throws IOException, NumberFormatException {
         /* Look for the : */
-        int colon = name.indexOf(':');
+        int colon = name.lastIndexOf(':');
 
         if(colon < 0) {
             throw new IllegalArgumentException("No ':' in protocol name "+name);
@@ -343,7 +364,13 @@ public class Protocol extends ConnectionBase implements DatagramConnection,UDPDa
             } catch(IOException x) {
                 throw new RuntimeException("IOException in datagram::newDatagram");
             }
-        } 
+        } else {
+           try {
+             dg.setAddress("datagram://:"+port);
+           } catch(IOException x) {
+             throw new RuntimeException("IOException in datagram::newDatagram");
+           }
+        }
         return dg;
     }
 

@@ -24,6 +24,9 @@
 # @(#)GNUmakefile	1.4 06/10/10
 #
 CVM_DEFINES 		+= -D_i386_ -D_386
+# Fix some annoying C4996 warnings introduced with VC8
+CVM_DEFINES 		+= \
+	-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE
 ASM_ARCH_FLAGS		= -c
 CC_ARCH_FLAGS   	=
 CC_ARCH_FLAGS_FDLIB	= /Op

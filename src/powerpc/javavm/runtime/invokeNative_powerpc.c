@@ -33,8 +33,7 @@
 #include "javavm/include/interpreter.h"
 
 /* TODO: This should really be written in assembler for better performance
- * and safer stack usage. See other TODO below regarding an assert
- * that sometimes happens.
+ * and safer stack usage.
  */
 
 /*
@@ -68,13 +67,23 @@ CVMjniInvokeNative(void * env, void * nativeCode, CVMUint32 * args,
  * of the remaining args.
  * We can't use gcc's alloca() because it's broken (wrong resulting stack
  * pointer alignment).
+ *
+ * We need room for argSize words of parameters, plus 2 extra words for the
+ * saved SP and RetPC. We also need to keep the stack 16-byte aligned, thus
+ * we round the number of words up to a 4 word boundary.
+ *
+ * Note we need to be somewhat pessimistic with argsSize since it does not
+ * take into account the need to align 64-bit arguments. At worse this
+ * alignment will require an extra argSize/3 words.
  */
 #define init_parameter_list_area(curp)					\
 	if (curp == NULL) {						\
-		register CVMInt32 size = -(((argsSize + 2) / 3) << 4);	\
-		asm volatile("lwz %0,0(%%r1)" : "=r" (curp));		\
-		asm volatile("stwux %0,%%r1,%1" : : "r" (curp), "r" (size)); \
-		asm volatile("addi %0,%%r1,8" : "=r" (curp));		\
+	    CVMInt32 maxArgWords = argsSize + 2 + argsSize/3;		\
+	    register CVMInt32 size =					\
+		-(((maxArgWords + 3) & ~3) << 2);			\
+	    asm volatile("lwz %0,0(%%r1)" : "=r" (curp));		\
+	    asm volatile("stwux %0,%%r1,%1" : : "r" (curp), "r" (size)); \
+	    asm volatile("addi %0,%%r1,8" : "=r" (curp));		\
 	}
 
 #ifdef _SOFT_FLOAT
@@ -219,16 +228,13 @@ CVMjniInvokeNative(void * env, void * nativeCode, CVMUint32 * args,
 		sig >>= 4;
 	}
 
-#if 0
-	/* TODO: this assert happens sometimes when doing optimized debug
-	 * builds, but it does not appear to be fatal. CVMjniInvokeNative
-	 * should really be written in assembler.
-	 */
+#ifdef CVM_DEBUG_ASSERTS
+	/* Make sure curp did not overrun the stack */
 	if (curp != NULL) {
-		int stack_space_left = 8 + (char *)__builtin_frame_address(0) - (char *)curp;
-		CVMassert(stack_space_left >= 0);
+	    int stack_space_left = saveFp - (CVMUint32)curp;
+	    CVMassert(stack_space_left >= 0);
 	}
-#endif /* CVM_DEBUG */
+#endif
 
 	CVMassert(argsSize == 0);
 

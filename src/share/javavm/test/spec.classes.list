@@ -1,7 +1,7 @@
 #
 # @(#)spec.classes.list	1.5 06/10/25
 #
-# Copyright  2006  Sun Microsystems, Inc. All rights reserved.
+# Copyright  2006 Sun Microsystems, Inc. All rights reserved.
 #
 spec.benchmarks._209_db.Database
 spec.benchmarks._209_db.Entry

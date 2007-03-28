@@ -996,9 +996,21 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         int n = buf.indexOf(':');
         if (n < 0) n = buf.indexOf('/');
         if (n < 0) n = buf.length();
-        String token = buf.substring(0, n);
-        index += n;
-        return token;
+        
+        if (buf.indexOf("::") > 0) {
+            return parseIPv6Address(buf, n);
+        } else {
+            /* parse IPv4 Address */
+            String token = buf.substring(0, n);
+            index += n;
+            return token;
+        }
+    }
+
+    private String parseIPv6Address(String address, int colon) {
+        int lastIndexOfColon = address.lastIndexOf(":");
+        index += lastIndexOfColon;
+        return address.substring(0, lastIndexOfColon);
     }
 
     private int parsePort() throws IOException {
