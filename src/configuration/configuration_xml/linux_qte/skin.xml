@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+        Stylesheet for presenting nicely formatted content of this skin XML 
+        file in Web browser. That is, just open this skin file in your Web 
+        browser to get more visual view of it.
+-->
+<?xml-stylesheet type="text/xsl" href="../share/chameleon/skin.xsl"?> 
 <!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
 <!--
-        	
+            
 
         Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER

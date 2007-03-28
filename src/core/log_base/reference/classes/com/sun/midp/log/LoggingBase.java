@@ -175,7 +175,7 @@ public class LoggingBase {
      *                (when <code>condition</code> is false.
      */
     public static void assertTrue(boolean condition, String message) {
-        if (condition) {
+        if (!condition) {
             report(Logging.ERROR, LogChannels.LC_NONE, "ASSERT FAILED: "
             + message);
         }

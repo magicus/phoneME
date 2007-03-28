@@ -75,7 +75,7 @@ static SuspendableResource *sr_resources = NULL;
  * Empty procedure to be used as default one in case when no action is
  * required to suspend or resume a resource.
  */
-SuspendResumeProc   SR_EMPTY_PROC = NULL;
+SuspendResumeProc SR_EMPTY_PROC = NULL;
 
 /** Returns current java stack state. */
 SRState midp_getSRState() {

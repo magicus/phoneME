@@ -83,6 +83,9 @@ public class MIDletProxy implements SuspendDependency {
      */
     private int midletState;
 
+    /** Indicates that the midlet was just created. */
+    boolean wasNotActive;
+
     /** True if the MIDlet want's its Display in the foreground. */
     private boolean wantsForegroundState;
 
@@ -147,6 +150,7 @@ public class MIDletProxy implements SuspendDependency {
         className = theClassName;
         displayName = theDisplayName;
         midletState = theMidletState;
+        wasNotActive = true;
     }
 
     /**
@@ -356,6 +360,7 @@ public class MIDletProxy implements SuspendDependency {
      */
     public void activateMidlet() {
         if (midletState != MIDLET_DESTROYED) {
+            wasNotActive = false;
             midletEventProducer.sendMIDletActivateEvent(isolateId, className);
         }
     }

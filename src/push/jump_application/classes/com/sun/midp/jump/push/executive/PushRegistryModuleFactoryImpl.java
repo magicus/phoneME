@@ -32,7 +32,6 @@ import com.sun.jump.module.contentstore.JUMPStoreHandle;
 import com.sun.jump.module.contentstore.JUMPStoreFactory;
 import com.sun.jump.module.serviceregistry.JUMPServiceRegistry;
 import com.sun.jump.module.serviceregistry.JUMPServiceRegistryFactory;
-import com.sun.midp.jump.push.executive.MIDP.MIDPPushRegistry;
 import com.sun.midp.jump.push.executive.persistence.Store;
 import com.sun.midp.jump.push.executive.persistence.StoreOperationManager;
 import java.io.IOException;
@@ -50,14 +49,15 @@ final class PushSystem {
     final static private String MIDP_IXC_URI = "push/midp";
 
     /** MIDP container service provider instance. */
-    final MIDPPushRegistry midpPushRegistry;
+    final MIDPContainerInterfaceImpl midpContainerInterfaceImpl;
 
     PushSystem(final StoreOperationManager storeManager)
             throws IOException, RemoteException, AlreadyBoundException {
         store = new Store(storeManager);
 
-        midpPushRegistry = new MIDPPushRegistry(store);
-        getJUMPServiceRegistry().registerService(MIDP_IXC_URI, midpPushRegistry);
+        midpContainerInterfaceImpl = new MIDPContainerInterfaceImpl(store);
+        getJUMPServiceRegistry()
+            .registerService(MIDP_IXC_URI, midpContainerInterfaceImpl);
         // TBD: installation interface
     }
 

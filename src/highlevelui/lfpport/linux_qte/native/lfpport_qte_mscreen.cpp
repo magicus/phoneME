@@ -27,7 +27,6 @@
  */
 
 #include <kni.h>
-#include <jvm.h>
 #include <jvmspi.h>
 #include <sni.h>
 
@@ -54,7 +53,6 @@
 #include <midpEventUtil.h>
 #include <lfpport_font.h>
 #include <lfp_registry.h>
-#include <suspend_resume.h>
 
 #include <qteapp_key.h>
 #include "lfpport_qte_mscreen.h"
@@ -497,31 +495,7 @@ void PlatformMScreen::setNextVMTimeSlice(int millis) {
 }
 
 void PlatformMScreen::slotTimeout() {
-    jlong ms;
-
-    if (vm_stopped) {
-        return;
-    }
-
-    // check and align stack suspend/resume state
-    midp_checkAndResume();
-
-    ms = vm_suspended ? SR_RESUME_CHECK_TIMEOUT : JVM_TimeSlice();
-
-    /* Let the VM run for some time */
-    if (ms <= -2) {
-        vm_stopped = true;
-        qteapp_get_application()->exit_loop();
-    } else if (ms == -1) {
-        /* Wait forever -- we probably have a thread blocked on IO or GUI.
-         * No need to set up timer from here */
-    } else {
-        if (ms > 0x7fffffff) {
-            vm_slicer.start(0x7fffffff, TRUE);
-        } else {
-            vm_slicer.start((int)(ms & 0x7fffffff), TRUE);
-        }
-    }
+    slotTimeoutImpl();
 }
 
 /**

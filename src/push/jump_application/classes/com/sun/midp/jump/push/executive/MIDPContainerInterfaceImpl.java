@@ -22,103 +22,65 @@
  * information or have any questions.
  */
 
-package com.sun.midp.jump.push.executive.MIDP;
+package com.sun.midp.jump.push.executive;
 
-import com.sun.midp.jump.push.executive.AlarmRegistry;
+import com.sun.midp.jump.push.executive.AlarmController;
 import com.sun.midp.jump.push.executive.JUMPConnectionInfo;
 import com.sun.midp.jump.push.executive.LifecycleAdapter;
 import com.sun.midp.jump.push.executive.persistence.Store;
+import com.sun.midp.jump.push.executive.remote.MIDPContainerInterface;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import javax.microedition.io.ConnectionNotFoundException;
 
 /**
  * Implementation of
- *  <code>com.sun.jump.module.pushregistry.MIDP.JUMPPushRegistry</code>.
+ *  {@link com.sun.midp.jump.push.executive.remote.MIDPContainerInterface}
  */
-public final class MIDPPushRegistry implements JUMPPushRegistry {
+final class MIDPContainerInterfaceImpl implements MIDPContainerInterface {
     /** Reference to a store. */
     private final Store store;
 
-    /** Alarm registry to use. */
-    private final AlarmRegistry alarmRegistry;
+    /** Alarm controller to use. */
+    private final AlarmController alarmController;
 
     /**
-     * Creats a registry.
+     * Creates an implementation.
      *
      * @param store Store to use
      */
-    public MIDPPushRegistry(final Store store) {
+    public MIDPContainerInterfaceImpl(final Store store) {
         this.store = store;
-        this.alarmRegistry = new AlarmRegistry(store, new LifecycleAdapter() {
+        this.alarmController = new AlarmController(store,
+                new LifecycleAdapter() {
             public void launchMidlet(final int midletSuiteID, final String midlet) {
                 // TBD: implement soft launch
             }
         });
     }
 
-    /**
-     * Unregisters previously registered connection.
-     *
-     * @param midletSuiteId <code>MIDlet suite</code> to touch
-     * @param connection Connection to unregister
-     *
-     * @return <code>true</code> if succeed, <code>false</code> otherwise
-     *
-     * @throws RemoteException as requested by RMI spec.
-     */
+    /** {@inheritDoc} */
     public boolean unregisterConnection(
             final int midletSuiteId,
             final JUMPConnectionInfo connection) throws RemoteException {
-        try {
-            store.removeConnection(midletSuiteId, connection);
-        } catch (IOException _) {
-            return false;
-        }
-        return true;
+        // TBD: Implement
+        return false;
     }
 
-    /**
-     * Registers previously registered connection.
-     *
-     * @param midletSuiteId <code>MIDlet suite</code> to touch
-     * @param connection Connection to register
-     *
-     * @return <code>true</code> if succeed, <code>false</code> otherwise
-     *
-     * @throws RemoteException as requested by RMI spec.
-     */
+    /** {@inheritDoc} */
     public boolean registerConnection(
             final int midletSuiteId,
             final JUMPConnectionInfo connection) throws RemoteException {
-        try {
-            store.addConnection(midletSuiteId, connection);
-        } catch (IOException _) {
-            return false;
-        }
-        return true;
+        // TBD: Implement
+        return false;
     }
 
-    /**
-     * Implements the corresponding interface method.
-     *
-     * @param midletSuiteId ID of <code>MIDlet suite</code> to unregister
-     *  connection for
-     *
-     * @param midlet <code>MIDlet</code> class name
-     *
-     * @param time alarm time
-     *
-     * @return time of previous registered (but not fired) alarm or 0
-     *
-     * @throws RemoteException as requested by RMI spec.
-     * @throws ConnectionNotFoundException if it's impossible to register alarm
-     */
+    /** {@inheritDoc} */
     public long registerAlarm(
             final int midletSuiteId,
             final String midlet,
             final long time)
                 throws RemoteException, ConnectionNotFoundException  {
-        return alarmRegistry.registerAlarm(midletSuiteId, midlet, time);
+        return alarmController.registerAlarm(midletSuiteId, midlet, time);
     }
 }

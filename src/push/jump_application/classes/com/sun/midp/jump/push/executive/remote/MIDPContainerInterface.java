@@ -22,7 +22,7 @@
  * information or have any questions.
  */
 
-package com.sun.midp.jump.push.executive.MIDP;
+package com.sun.midp.jump.push.executive.remote;
 
 import com.sun.midp.jump.push.executive.JUMPConnectionInfo;
 import java.rmi.Remote;
@@ -30,15 +30,9 @@ import java.rmi.RemoteException;
 import javax.microedition.io.ConnectionNotFoundException;
 
 /**
- * PushRegistry system interface for MIDP system.
- *
- * <p>
- * There would be a way in <code>MIDlet</code> container process to obtain
- * a singleton implementing this interface.  This singleton would
- * hide behind the scene all IPC.
- * </p>
+ * Remote interface for MIDP container.
  */
-public interface JUMPPushRegistry extends Remote {
+public interface MIDPContainerInterface extends Remote {
     /**
      * Registers new PushRegistry connection.
      *

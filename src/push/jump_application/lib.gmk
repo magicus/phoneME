@@ -61,28 +61,29 @@ LIB_JAVA_PUSH_SOURCEPATH = $(JUMP_PUSH_CLASSES_DIR)
 
 SUBSYSTEM_JUMP_PUSH_PACKAGES = \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE) \
-    $(JUMP_PUSH_EXECUTIVE_PACKAGE).MIDP \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE).ota \
-    $(JUMP_PUSH_EXECUTIVE_PACKAGE).persistence
+    $(JUMP_PUSH_EXECUTIVE_PACKAGE).persistence \
+    $(JUMP_PUSH_EXECUTIVE_PACKAGE).remote
 
 MIDP_JAVADOC_ALL += \
     -group "JUMP Push implementation" \
     $(shell echo $(SUBSYSTEM_JUMP_PUSH_PACKAGES) | tr ' ' $(PATHSEP))
 
 SUBSYSTEM_JUMP_PUSH_JAVA_FILES = \
-    $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/AlarmRegistry.java \
+    $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/AlarmController.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/ConnectionController.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/JUMPConnectionInfo.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/LifecycleAdapter.java \
+    $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/MIDPContainerInterfaceImpl.java \
+    $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/MIDPApp.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/PushRegistry.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/PushRegistryModuleFactoryImpl.java \
-    $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/MIDP/MIDPPushRegistry.java \
-    $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/MIDP/JUMPPushRegistry.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/ota/OTAPushRegistry.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/ota/JUMPPushRegistry.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/persistence/AppSuiteDataStore.java \
     $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/persistence/Store.java \
-    $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/persistence/StoreOperationManager.java
+    $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/persistence/StoreOperationManager.java \
+    $(JUMP_PUSH_EXECUTIVE_PACKAGE_DIR)/remote/MIDPContainerInterface.java
 
 ifeq ($(USE_I3_TEST), true)
     SUBSYSTEM_JUMP_PUSH_I3TEST_JAVA_FILES =

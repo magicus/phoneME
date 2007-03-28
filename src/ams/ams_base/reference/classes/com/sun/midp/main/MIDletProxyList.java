@@ -401,7 +401,6 @@ public class MIDletProxyList
             removeMidletProxy(midletProxy);
         }
 
-
         /* MIDlet's are constructed in PAUSED state. */
         midletProxy = new MIDletProxy(this,
             midletExternalAppId,
@@ -410,6 +409,15 @@ public class MIDletProxyList
             midletClassName,
             midletDisplayName,
             MIDletProxy.MIDLET_PAUSED);
+
+        int suspendResumeState = SuspendSystem.getInstance(null).getState();
+        
+        if ((suspendResumeState == SuspendSystem.SUSPENDED) ||
+                (suspendResumeState == SuspendSystem.SUSPENDING)) {
+            MIDletProxyUtils.terminateMIDletIsolate(midletProxy, this);
+            midletProxy = null;
+            return;
+        }
 
         midletProxies.addElement(midletProxy);
 
@@ -606,7 +614,6 @@ public class MIDletProxyList
         }
     }
 
-
     /**
      * Process a PAUSE_ALL_EVENT.
      * MIDletControllerEventConsumer I/F method.
@@ -617,9 +624,13 @@ public class MIDletProxyList
 
             for (int i = midletProxies.size() - 1; i >= 0; i--) {
                 current = (MIDletProxy)midletProxies.elementAt(i);
-                SuspendSystem.getInstance(classSecurityToken).
-                        addSuspendDependency(current);
-                current.pauseMidlet();
+                if (!current.wasNotActive) {
+                    SuspendSystem.getInstance(classSecurityToken).
+                            addSuspendDependency(current);
+                    current.pauseMidlet();
+                } else {
+                    MIDletProxyUtils.terminateMIDletIsolate(current, this);
+                }
             }
         }
 
@@ -1052,9 +1063,9 @@ public class MIDletProxyList
         if (foregroundMidlet != null &&
             (foregroundMidlet.getMidletState() !=
             MIDletProxy.MIDLET_DESTROYED)) {
-	    /*
-	     * Background MIDlet will run with a lower priority
-	     */
+	        /*
+	         * Background MIDlet will run with a lower priority
+	         */
             MIDletProxyUtils.minPriority(foregroundMidlet);
             foregroundMidlet.notifyMIDletHasForeground(false);
         }
@@ -1073,9 +1084,9 @@ public class MIDletProxyList
             // This call with a true parameter will set the alertWaiting field.
             foregroundMidlet.notifyMIDletHasForeground(true);
 
-	    /*
-	     * Foreground MIDlet will run with a normal priority
-	     */
+           /*
+            * Foreground MIDlet will run with a normal priority
+            */
             MIDletProxyUtils.normalPriority(foregroundMidlet);
 
             notifyListenersOfProxyUpdate(foregroundMidlet,

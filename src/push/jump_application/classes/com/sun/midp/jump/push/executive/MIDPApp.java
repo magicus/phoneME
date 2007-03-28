@@ -24,29 +24,44 @@
 
 package com.sun.midp.jump.push.executive;
 
-/** Lifecycle management adapter interface. */
-interface LifecycleAdapter {
+/**
+ * Unique identification for <code>MIDlet</code> application.
+ *
+ * <p>
+ * Simple, structure like class.
+ * </p>
+ */
+final class MIDPApp {
+    /** <code>MIDlet</code> suite ID. */
+    public final int midletSuiteID;
+
+    /** <code>MIDlet</code> class name. */
+    public final String midlet;
+
     /**
-     * Launches the given <code>MIDlet</code>.
+     * Constructs an instance.
      *
-     * <p>
-     * NOTE: implementation should be thread-safe as several
-     * invocations of the method can be performed in parallel.
-     * </p>
-     *
-     * <p>
-     * NOTE: this method can be invoked for already running
-     * <code>MIDlets</code>.
-     * </p>
-     *
-     * <p>
-     * NOTE: as long as this method executes, callbacks might
-     * be blocked and thus new events won't be processed.  Therefore
-     * this method should return as soon as possible.
-     * </p>
-     *
-     * @param midletSuiteID <code>MIDlet</code> suite ID
+     * @param midletSuiteID <code>MIDlet suite</code> ID
      * @param midlet <code>MIDlet</code> class name
      */
-    void launchMidlet(int midletSuiteID, String midlet);
+    public MIDPApp(final int midletSuiteID, final String midlet) {
+        this.midletSuiteID = midletSuiteID;
+        this.midlet = midlet;
+    }
+
+    /** {@inheritDoc} */
+    public int hashCode() {
+        return (midletSuiteID << 3) + midlet.hashCode();
+    }
+
+    /** {@inheritDoc} */
+    public boolean equals(final Object obj) {
+        if (!(obj instanceof MIDPApp)) {
+            return false;
+        }
+
+        final MIDPApp rhs = (MIDPApp) obj;
+        return (midletSuiteID == rhs.midletSuiteID)
+            && midlet.equals(rhs.midlet);
+    }
 }
