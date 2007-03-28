@@ -692,9 +692,11 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 #define ENABLE_PEN_EVENT_NOTIFICATION 1    
 #ifdef ENABLE_PEN_EVENT_NOTIFICATION        
         midpScreen_bounds.x = currentSkin->displayRect.x;
-        midpScreen_bounds.y = currentSkin->displayRect.y;
+        midpScreen_bounds.y = currentSkin->displayRect.y + 
+            (topBarOn ? topBarHeight : 0);
         midpScreen_bounds.width = currentSkin->displayRect.width;
-        midpScreen_bounds.height = currentSkin->displayRect.height;
+        midpScreen_bounds.height = currentSkin->displayRect.height - 
+            (topBarOn ? topBarHeight : 0);
         /* coordinates of event in MIDP Screen coordinate system */
         midpX = x - currentSkin->displayRect.x;
         midpY = y - currentSkin->displayRect.y - (topBarOn ? topBarHeight : 0);
