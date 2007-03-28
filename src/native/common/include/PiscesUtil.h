@@ -122,6 +122,7 @@
         PISCESfree(array); \
     } \
     array = my_malloc(type, (maxLen)); \
+    array##_length = (maxLen); \
   } \
 } while (0)
 
