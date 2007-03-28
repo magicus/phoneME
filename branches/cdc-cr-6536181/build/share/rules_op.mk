@@ -43,6 +43,27 @@ define generateJSRInitializer
 	-out $(4)
 endef
 
+# Generate constants classes list for the given xml file
+# generateConstantList(generatedDirectory, constantsXmlFile)
+define generateConstantList
+	$(shell mkdir -p $(1); \
+	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE) \
+	-xml $(2) \
+	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantClasses.xsl \
+	-out $(1)/.constant.class.list; \
+    cat $(1)/.constant.class.list )
+endef
+
+# Generate constant classes
+# generateConstantClasses(constantsXmlFile, constantsClassList, generatedDirectory)
+define generateConstantClasses
+	$(foreach class, $(2), \
+	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE) \
+	-xml $(1) \
+	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantsJava.xsl \
+	-params packageName $(class) \
+	-out $(3)/classes/$(subst .,/,$(class)).java; )
+endef
 
 # Macro to pre-process Jpp file into Java file
 # runjpp(<input_jpp_file>, <output_java_file>)
