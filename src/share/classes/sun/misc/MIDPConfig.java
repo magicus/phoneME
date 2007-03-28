@@ -45,6 +45,8 @@ public final
 class MIDPConfig{
     /* The MIDP library classloader */
     private static MIDPImplementationClassLoader midpImplCL;
+    /* The midlet classloader */
+    private static MIDletClassLoader midletCL;
     /* The MemberFilter */
     private static MemberFilter memberFilter;
 
@@ -334,6 +336,11 @@ class MIDPConfig{
 
     }
 
+    public static MIDletClassLoader
+    getMIDletClassLoader() {
+        return midletCL;
+    }
+
     /*
      * This version allows the caller to specify a set of permissions.
      * This is less useful than the usual version, which grants the permissions
@@ -344,8 +351,12 @@ class MIDPConfig{
 	String midPath[], MemberFilter mf, PermissionCollection perms,
 	MIDPImplementationClassLoader implClassLdr)
     {
+        if (midletCL != null) {
+            throw new InternalError(
+                "The MIDletClassLoader is already created");
+        }
+
 	URL midJarURL[];
-	MIDletClassLoader myClassLoader;
 	int nComponents = midPath.length;
 
 	midJarURL = new URL[nComponents];
@@ -359,10 +370,10 @@ class MIDPConfig{
 	    return null;
 	}
 	//DEBUG  System.out.println("Constructing MIDletClassLoader with permissions "+perms);
-	myClassLoader = new MIDletClassLoader(midJarURL, systemPackages,
-					      perms, mf, implClassLdr);
+	midletCL = new MIDletClassLoader(midJarURL, systemPackages,
+					 perms, mf, implClassLdr);
 
-	return myClassLoader;
+	return midletCL;
     }
 
     /*
