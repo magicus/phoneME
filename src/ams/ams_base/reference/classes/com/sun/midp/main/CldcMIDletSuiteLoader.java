@@ -105,17 +105,6 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
     }
 
     /**
-     * Does all initialization for already created objects of a MIDlet suite 
-     * environment. Subclasses can also extend the initialization with 
-     * various global system initializations needed for all suites. 
-     */ 
-    protected void initSuiteEnvironment() { 
-        super.initSuiteEnvironment(); 
-        
-        TrustedMIDletIcon.initClass(lcduiEnvironment.getTrustedMIDletIcon()); 
-    }
-
-    /**
      * Starts MIDlet suite in the prepared environment
      * Overrides super method to hint VM of system startup
      * phase is ended 

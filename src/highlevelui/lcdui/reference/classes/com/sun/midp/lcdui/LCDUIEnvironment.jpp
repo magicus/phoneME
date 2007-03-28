@@ -129,30 +129,6 @@ public class LCDUIEnvironment {
         displayEventHandler.setTrustedState(isTrusted);
     }
 
-   /**
-    * Gets the Image of the trusted icon.
-    * Only callers with the internal AMS permission can use this method.
-    *
-    * @return an Image of the trusted icon.
-    *
-    * @exception SecurityException if the suite calling does not have the
-    * the AMS permission
-    */
-    public Image getTrustedMIDletIcon() {
-        return displayEventHandler.getTrustedMIDletIcon();
-    } 
-
-    /**
-     * Called to register a newly create Display. This method must
-     * be called before the other methods can be called.
-     *
-     * @param displayId ID of the Display
-     */
-    public void registerDisplay(int displayId) {
-	currentDisplayId = displayId;
-    }
-
-
     /** Stores array of active displays for a MIDlet suite isolate. */
     private DisplayContainer displayContainer;
 

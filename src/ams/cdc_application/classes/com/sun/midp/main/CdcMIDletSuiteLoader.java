@@ -142,9 +142,6 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
     protected void initSuiteEnvironment() {
         super.initSuiteEnvironment();
 
-        // Needed by the installer 
-        TrustedMIDletIcon.initClass(lcduiEnvironment.getTrustedMIDletIcon());
-
         // Init internal state from the restored command state
         externalAppId = 0;
         midletDisplayName = null;
@@ -396,7 +393,6 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
     public Displayable registerDisplay(int displayId, String ownerClassName) {
         currentDisplayId = displayId;
 
-        lcduiEnvironment.registerDisplay(currentDisplayId);
         return null;
     }
 
