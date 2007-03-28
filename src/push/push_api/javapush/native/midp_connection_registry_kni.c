@@ -172,7 +172,7 @@ KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_checkInByHandle0) {
  * Native connection registry method to check in connections that are in
  * launch pending state for a specific MIDlet.
  *
- * @param suiteId Suite ID of the MIDlet as zero terminated ASCII byte array
+ * @param suiteId Suite ID of the MIDlet
  * @param className Class name of the MIDlet as zero terminated ASCII byte
  *                  array
  */
@@ -485,7 +485,7 @@ KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_getEntry0) {
  * <p>
  * Java declaration:
  * <pre>
- *     delAllForSuite0(Ljava/lang/String;)V
+ *     delAllForSuite0(I)V
  * </pre>
  *
  * @param suiteID The MIDlet Suite ID.

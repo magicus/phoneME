@@ -64,7 +64,6 @@ class SuspendResumeUI {
 
             AlertTimer.start();
 
-
             CommandListener ignoring = new CommandListener() {
                 public void commandAction(Command c, Displayable d) {}
             };

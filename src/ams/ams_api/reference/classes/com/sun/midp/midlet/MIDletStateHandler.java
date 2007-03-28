@@ -475,7 +475,7 @@ public class MIDletStateHandler {
                     }
                 }
 
-                /** perform work that may block outside of "this" */
+                 /** perform work that may block outside of "this" */
                 switch (state) {
                 case MIDletPeer.ACTIVE_PENDING:
                     try {
