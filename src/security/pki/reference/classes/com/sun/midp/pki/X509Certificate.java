@@ -1039,7 +1039,7 @@ public class X509Certificate implements Certificate {
             } else if (res.sigAlg == MD5_RSA) {            
                 md = MessageDigest.getInstance("MD5");
             } else if (res.sigAlg == SHA1_RSA) {
-                md = MessageDigest.getInstance("SHA");
+                md = MessageDigest.getInstance("SHA-1");
             }
                  
             if (md != null) {
