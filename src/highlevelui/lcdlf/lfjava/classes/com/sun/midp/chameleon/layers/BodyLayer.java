@@ -131,8 +131,8 @@ public class BodyLayer extends CLayer
         if (scrollInd != null) {
             scrollInd.addDirtyRegion();
         }
-    }
-    
+    } 
+
     /**
      * Mark this layer as being dirty. By default, this would also mark the
      * containing window (if there is one) as being dirty as well. However,
@@ -188,18 +188,25 @@ public class BodyLayer extends CLayer
      *
      * @param scrollPosition vertical scroll position.
      * @param scrollProportion vertical scroll proportion.
-     * @return true if set vertical scroll occues
+     * @return true if set vertical scroll occures
      */
     public boolean setVerticalScroll(int scrollPosition, int scrollProportion) {
         if (scrollInd != null && owner != null)  {
+            boolean scrollChanged = scrollInd.isVisible();
             scrollInd.setVerticalScroll(scrollPosition, scrollProportion);
-            if (scrollInd.isVisible()) {
-                owner.addLayer(scrollInd);
-            } else {
-                owner.removeLayer(scrollInd);
+            boolean scrollVisible = scrollInd.isVisible();
+
+            if (scrollVisible) {
+                scrollChanged = owner.addLayer(scrollInd) ||
+                    !scrollChanged;
             }
-            owner.resize();
-            return true;
+
+            if (scrollChanged) {
+                int w = scrollInd.bounds[W];
+                bounds[W] += scrollVisible? -w: +w;
+                addDirtyRegion();
+                return true;
+            }
         }
         return false;
     }
