@@ -403,7 +403,7 @@ public class ACEntry {
         r.checkWord("id");
         int id = r.readByte();
         Integer[] commands = new Integer[ACLPermissions.CMD_COUNT];
-        t = t.setChild(TLV.createOctetString(Utils.shortToBytes(id))).
+        t = t.setChild(TLV.createOctetString(new byte[] { (byte)id })).
             setNext(new TLV(CONTEXT_CONSTRUCTED_0));
         TLV ts = t;
         ts = ts.setChild(new TLV(TLV.NULL_TYPE));
@@ -445,7 +445,7 @@ public class ACEntry {
         r.checkWord("id");
         int id = r.readByte();
         String[] commands = new String[ACLPermissions.CMD_COUNT];
-        t = t.setChild(TLV.createOctetString(Utils.shortToBytes(id))).
+        t = t.setChild(TLV.createOctetString(new byte[] { (byte)id })).
             setNext(new TLV(CONTEXT_CONSTRUCTED_1));
         TLV ts = t;
         ts = ts.setChild(new TLV(TLV.NULL_TYPE));

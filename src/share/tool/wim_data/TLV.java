@@ -233,8 +233,6 @@ public class TLV {
      * @return new TLV object
      */
     public static TLV createInteger(byte[] data) {
-        // todo unnecessary 0 can be prepended to positive integer
-        // for safety - remove
         return new TLV(INTEGER_TYPE, data);
     }
 

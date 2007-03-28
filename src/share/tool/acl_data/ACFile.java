@@ -168,7 +168,6 @@ public class ACFile {
         TLV pattr_p = TLV.createSequence();
         pattr_p.setChild(pattr);
         addFile(AODF, pattr.getValue());
-        System.out.println("OK!");
     }
 
     /**

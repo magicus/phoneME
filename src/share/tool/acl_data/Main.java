@@ -38,7 +38,8 @@ public class Main {
     /** ACL root DF. */
     short[] ACLDF         = {0x3f00, 0x5016}; // MUST be long name
     /** Output directory */
-    private String OUT_DIR = "./output/";
+    private String outputDataDir = "./output/";
+    private String outputFilesDir = "./output/files/";
 
     /** File system. */
     FileSystem fs;
@@ -62,7 +63,15 @@ public class Main {
             System.err.println("No file");
         }
         try {
-            generateJavaData(generateFiles(args));
+            if (args.length >= 2) {
+                outputDataDir = args[1];
+            }
+
+            if (args.length >= 3) {
+                outputFilesDir = args[2];
+            }
+
+            generateJavaData(generateFiles(args[0]));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -83,16 +92,14 @@ public class Main {
         short[] outname;
         fs = new FileSystem(ACLDF);
 
-        src = new PrintStream(new FileOutputStream(OUT_DIR+"Data.java"));
+        src = new PrintStream(new FileOutputStream(outputDataDir + "Data.java"));
 
         src.print("/*\n" +
                   " *   \n" +
                   " *\n" +
-                  " * Copyright 2005 Sun Microsystems, " +
-                                             "Inc. All rights reserved.\n" +
-                  " * SUN PROPRIETARY/CONFIDENTIAL. " +
-                                      "Use is subject to license terms.\n" +
-                  " */\n\n");
+                  " * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.\n" +
+                  " * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER\n" +  
+                  " *\n */\n\n");
         src.print("package com.sun.satsa.aclapplet;\n\n" +
                   "/**\n" +
                   " * This class contains file system.\n */\n" +
@@ -100,13 +107,12 @@ public class Main {
 
         for (int i = 0; i < inl.size(); i++) {
             fname = (String)inl.elementAt(i);
-            System.out.println(fname);
+            System.out.println(" ... generating " + fname);
             if (fname == null) {
                 break;
             }
             outname = Utils.stringToShorts(fname.substring(
-                                                (OUT_DIR+"files/").length()));
-            System.out.println(fname.substring((OUT_DIR+"files/").length()));
+                                                (outputFilesDir).length()));
             FileInputStream in = new FileInputStream(fname);
             byte[] b = new byte[in.available()];
             in.read(b);
@@ -122,9 +128,6 @@ public class Main {
         src.println("}");
 
         src.close();
-
-        System.out.println("Ok.");
-
     }
 
     /**
@@ -132,9 +135,8 @@ public class Main {
      * @param args input file.
      * @return vector of generated files.
      */
-    Vector generateFiles(String[] args) {
-        System.out.println(args[0]);
-        ACFile file = ACFile.load(args[0], OUT_DIR+"files/");
+    Vector generateFiles(String args) {
+        ACFile file = ACFile.load(args, outputFilesDir);
         try {
             file.createODF();
             file.createDODF();

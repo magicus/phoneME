@@ -670,7 +670,6 @@ public class TLV {
     }
 
     /**
-     * TODO delete
      * Prints the a TLV structure, recursing down for constructed types.
      * @param out output stream
      * @param level what level this TLV is at

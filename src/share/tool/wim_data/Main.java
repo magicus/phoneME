@@ -89,13 +89,13 @@ public class Main {
 
     /** Pre-generated key pairs. */
     Key[] Keys = {
-        new Key("NR key 1",             1, true,  5,
+        new Key("NR key 1",             512, 1, true,  5,
                 new short[] {0x5301}, new short[] {0x5281}, PINs),
-        new Key("NR key 2",             2, true,  7,
+        new Key("NR key 2",             512, 2, true,  7,
                 new short[] {0x5302}, new short[] {0x5282}, PINs),
-        new Key("Authentication key 1", 0, false, 8,
+        new Key("Authentication key 1", 512, 0, false, 8,
                 new short[] {0x5303}, new short[] {0x5283}, PINs),
-        new Key("Authentication key 2", 0, false, 20,
+        new Key("Authentication key 2", 512, 0, false, 20,
                 new short[] {0x5304}, new short[] {0x5284}, PINs)
     };
 
@@ -130,12 +130,16 @@ public class Main {
     /** Stream for results. */
     PrintStream src;
 
+    /** Output directory */
+    private String outputDataDir = "./output/";
+    private String outputDir = "./output/";
+
     /**
      * Main entry point.
      * @param args command line arguments
      */
     public static void main(String[] args) throws Exception {
-        new Main().run();
+        new Main().run(args);
     }
 
     /**
@@ -145,27 +149,35 @@ public class Main {
      * @throws IOException if this exception occurs
      * @throws NoSuchAlgorithmException if this exception occurs
      */
-    public void run() throws KeyStoreException, CertificateException,
+    public void run(String[] args) throws KeyStoreException, CertificateException,
             IOException, NoSuchAlgorithmException {
+        
+        if (args.length >= 1) {
+            outputDataDir = args[0];
+        }
+
+        if (args.length >= 2) {
+            outputDir = args[1];
+        }
 
         fs = new FileSystem(WIMDF);
         fs.addFile(PINDF, FileSystem.PIN, null);
 
-        log = new PrintStream(new FileOutputStream("listing.txt"));
-        src = new PrintStream(new FileOutputStream("Data.java"));
+        log = new PrintStream(new FileOutputStream(outputDir + "listing.txt"));
+        src = new PrintStream(new FileOutputStream(outputDataDir + "Data.java"));
 
-        src.print("/*\n * @(#)Main.java	1.2 04/06/04 1.2\n *\n" +
-        " * Copyright (c) 2004 Sun Microsystems, Inc.  All " +
-                "rights reserved.\n" +
-        " * PROPRIETARY/CONFIDENTIAL\n * Use is subject to license " +
-                "terms.\n" +
-        " */\n\npackage com.sun.satsa.pkiapplet;\n\n/**\n" +
-        " * This class contains WIM PINs, private keys and file " +
-                "system.\n" +
-        " */\npublic class Data {\n\n    /** Identifier for RSA generic " +
-                "SE. */\n" +
-        "    static final byte WIM_GENERIC_RSA_ID = " + WIM_GENERIC_RSA_ID +
-        ";\n\n");
+        src.print("/*\n" +
+                  " *   \n" +
+                  " *\n" +
+                  " * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.\n" +
+                  " * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER\n" +  
+                  " *\n */\n\npackage com.sun.satsa.pkiapplet;\n\n/**\n" +
+                  " * This class contains WIM PINs, private keys and file " +
+                  "system.\n" +
+                  " */\npublic class Data {\n\n    /** Identifier for RSA generic " +
+                  "SE. */\n" +
+                  "    static final byte WIM_GENERIC_RSA_ID = " + WIM_GENERIC_RSA_ID +
+                  ";\n\n");
 
         src.println("    /** The number of keys that can be generated. " +
                 "*/\n    static short freeKeySlots = " + freeKeySlots +
@@ -210,8 +222,6 @@ public class Main {
 
         log.close();
         src.close();
-
-        System.out.println("Ok.");
     }
 
     /**
@@ -805,6 +815,8 @@ public class Main {
                 offset++;
                 len--;
             }
+            short keyLen = (short)(len * 8);
+            out.writeShort(keyLen);
             out.writeShort(len);
             out.write(x, offset, len);
 
@@ -843,7 +855,7 @@ public class Main {
         short FileId = newFileID;
         for (int i = 0; i < freeKeySlots; i++) {
 
-            Key k = new Key("New key " + (i + 1), 0, true, newKeyID + i,
+            Key k = new Key("New key " + (i + 1), 1024, 0, true, newKeyID + i,
                 new short[] {FileId},
                 new short[] {(short) (FileId + 1)}, PINs);
             FileId += 2;

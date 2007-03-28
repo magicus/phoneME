@@ -100,10 +100,12 @@ JAVACARD_CLASSES = $(MIDP_OUTPUT_DIR)/javacard_classes
 # Tools and applets
 #
 ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
-all_tools :: $(JAVACARD_CLASSES) $(BINDIR) $(JCRMIC_TOOL) $(SIM_TOOL)
+all_tools :: $(JAVACARD_CLASSES) $(BINDIR) $(JCRMIC_TOOL) $(ACL_DATA_DIRS) \
+             $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java $(SIM_TOOL)
 JAVAC ?= JAVAC_CMD
 else
-all_tools :: $(JAVACARD_CLASSES) $(BINDIR) $(JCRMIC_TOOL)
+all_tools :: $(JAVACARD_CLASSES) $(BINDIR) $(JCRMIC_TOOL) $(ACL_DATA_DIRS) \
+             $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java 
 endif
 
 # Include jsr 177 properties in Configuration

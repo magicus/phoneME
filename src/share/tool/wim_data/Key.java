@@ -52,6 +52,9 @@ class Key {
      */
     boolean nonRepudiation;
 
+    /** Length of the key. */
+    int keyLen;
+
     /** Private key identifier. */
     int id;
 
@@ -72,6 +75,7 @@ class Key {
     /**
      * Constructor.
      * @param label private key label
+     * @param len length of key
      * @param pinIndex pin index in PINs array
      * @param nonRepudiation is it non-repudiation key?
      * @param id private key identifier
@@ -79,10 +83,11 @@ class Key {
      * @param PrivatePath path to file with private key
      * @param PINs PIN objectd defined for this WIM
      */
-    Key(String label, int pinIndex, boolean nonRepudiation, int id,
+    Key(String label, int len, int pinIndex, boolean nonRepudiation, int id,
         short[] PublicPath, short[] PrivatePath, PIN[] PINs) {
 
         this.label = label;
+        this.keyLen = len;
         this.pinIndex = pinIndex;
         pinId = PINs[pinIndex].id;
         this.nonRepudiation = nonRepudiation;
@@ -99,7 +104,7 @@ class Key {
     void init() throws NoSuchAlgorithmException {
 
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-        kpg.initialize(512);
+        kpg.initialize(keyLen);
         KeyPair kp = kpg.generateKeyPair();
 
         priv = (RSAPrivateKey) kp.getPrivate();
@@ -132,13 +137,13 @@ class Key {
         t.setChild(TLV.createOctetString(hash)).
                 setNext(new TLV(TLV.BITSTRING_TYPE,
                         nonRepudiation ? new byte[] {6, 00, 0x40} :
-                new byte[] {5, 0x20})).
+                new byte[] {6, 0x20, 0x00})).
                 setNext(TLV.createInteger(id));
 
         t.setNext(new TLV(0xa1)).       // private RSA key attrs
           setChild(TLV.createSequence()).
           setChild(Utils.createPath(PrivatePath)).
-          setNext(TLV.createInteger(512)).
+          setNext(TLV.createInteger(keyLen)).
           setNext(TLV.createInteger(algorithmId));
 
         return prk;
@@ -163,7 +168,7 @@ class Key {
         t.setNext(new TLV(0xa1)).   // public RSA key attrs
           setChild(TLV.createSequence()).
           setChild(Utils.createPath(PublicPath)).
-          setNext(TLV.createInteger(512));
+          setNext(TLV.createInteger(keyLen));
 
         return puk;
     }
