@@ -447,7 +447,10 @@ $(J2ME_CLASSLIB):: $(CVM_BINDIR)/$(CVM)
 ifeq ($(CDC_10),true)
 $(J2ME_CLASSLIB):: $(CVM_TZDATAFILE)
 endif
-$(J2ME_CLASSLIB):: $(CVM_MIMEDATAFILE) $(CVM_PROPS_BUILD) $(CVM_POLICY_BUILD) $(CVM_MIDPFILTERCONFIG) $(CVM_MIDPCLASSLIST) $(JSR_RESTRICTED_CLASSLIST)
+$(J2ME_CLASSLIB):: $(CVM_MIMEDATAFILE) $(CVM_PROPS_BUILD) $(CVM_POLICY_BUILD)
+ifeq ($(CVM_DUAL_STACK), true)
+$(J2ME_CLASSLIB):: $(CVM_MIDPFILTERCONFIG) $(CVM_MIDPCLASSLIST) $(JSR_CDCRESTRICTED_CLASSLIST)
+endif
 
 #####################################
 # make empty.mk depend on CVM_SRCDIRS
@@ -876,12 +879,11 @@ ifneq ($(CVM_MIDPFILTERCONFIG), )
 $(CVM_MIDPFILTERCONFIG): $(CVM_MIDPDIR)/MIDPFilterConfig.txt
 	@echo "Updating MIDPFilterConfig...";
 	@cp -f $< $@;
-	@echo "<<<Finished copying $@";
 
-$(CVM_MIDPCLASSLIST): $(CVM_MIDPDIR)/MIDPPermittedClasses.txt
+$(CVM_MIDPCLASSLIST): $(CVM_MIDPCLASSLIST_FILES)
 	@echo "Updating MIDPPermittedClasses...";
-	@cp -f $< $@;
-	@echo "<<<Finished copying $@";
+	$(AT)rm -rf $@
+	$(AT)cat $^ > $@
 endif
 
 ###############################################
