@@ -83,6 +83,7 @@ extern "C" {
 
   address         _primordial_sp             = NULL;
   OopDesc*        _interned_string_near_addr = NULL;
+  OopDesc**       _persistent_handles_addr   = NULL;
 
 #if ENABLE_ISOLATES
   OopDesc*        _current_task;
