@@ -69,6 +69,7 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         if (myInfo == null) {
             myInfo = new TextInfo(4); // IMPL NOTE: add initial size to skin
         }
+        drawsTraversalIndicator = false;
     }
 
     // *****************************************************
