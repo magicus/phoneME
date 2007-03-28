@@ -161,10 +161,4 @@ public class LCDUIEnvironment {
      * functionality that can not be publicly added to a javax package.
      */
     private DisplayEventHandler displayEventHandler;
-
-    private int currentDisplayId;
-
-// #ifdef ENABLE_GCI
-
-
 }

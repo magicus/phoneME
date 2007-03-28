@@ -33,9 +33,7 @@ import javax.microedition.midlet.MIDlet;
 import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.ToneControl;
-// #endif ENABLE_CDC
 
-// #ifndef ENABLE_CDC
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 // #endif ENABLE_CDC
