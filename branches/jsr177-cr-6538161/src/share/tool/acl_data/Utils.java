@@ -42,68 +42,13 @@ import java.io.PrintStream;
 public class Utils {
 
     /** UTF-8 encoding name. */
-//    public static final String utf8 = "UTF_8";
     public static final String utf8 = "UTF-8";
-//    public static final String utf8 = "UTF8";
 
     /** Hexadecimal digits. */
     private static char[] hc = {
         '0', '1', '2', '3', '4', '5', '6', '7',
         '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
     };
-
-    /*
-     * TODO delete
-    /**
-     * Converts a subsequence of bytes in a byte array into a
-     * corresponding string of hexadecimal digits, each separated by a ":".
-     *
-     * @param b byte array containing the bytes to be converted
-     * @param off starting offset of the byte subsequence inside b
-     * @param len number of bytes to be converted
-     * @param max print a single "+" instead of the bytes after max,
-     *        -1 for no max.
-     * @return a string of corresponding hexadecimal digits or
-     * an error string
-     * /
-    public static String hexEncode(byte[] b, int off, int len, int max) {
-        char[] r;
-        int v;
-        int i;
-        int j;
-
-        if ((b == null) || (len == 0)) {
-            return "";
-        }
-
-        if ((off < 0) || (len < 0)) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-
-        r = new char[len * 3];
-
-        for (i = 0, j = 0; ; ) {
-            v = b[off + i] & 0xff;
-            r[j++] = hc[v >>> 4];
-            r[j++] = hc[v & 0x0f];
-
-            i++;
-            if (i >= len) {
-                break;
-            }
-
-            if (i == max) {
-                r[j++] = ' ';
-                r[j++] = '+';
-                break;
-            }
-
-            r[j++] = ':';
-        }
-
-        return (new String(r, 0, j));
-    }
-*/
 
     /**
      * Returns hex value for given sequence of bytes.
@@ -376,26 +321,6 @@ public class Utils {
         }
     }
 
-    /**
-     * TODO delete
-     * Prints byte array.
-     * @param buffer the array
-     * /
-    static void print(byte[] buffer) {
-        System.out.println(Utils.hexEncode(buffer, 0, buffer.length, 99999));
-    }
-
-    /**
-     * Prints array of short
-     * @param buffer the array
-     * @param size number of elements to print
-     * /
-    static void print(short[] buffer, int size) {
-        for (int i = 0; i < size; i++) {
-            System.out.print(Integer.toHexString(buffer[i] & 0xffff));
-        }
-    }
-*/
     /**
      * Returns byte array which contains encoded short value.
      * @param i the value
