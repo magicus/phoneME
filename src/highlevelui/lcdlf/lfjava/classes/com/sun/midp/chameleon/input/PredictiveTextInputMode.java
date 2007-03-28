@@ -30,6 +30,8 @@ import com.sun.midp.lcdui.*;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
+import com.sun.midp.log.LogChannels;
+import com.sun.midp.log.Logging;
 
 /**
  * An InputMode instance which processes the numeric 0-9 keys
@@ -81,14 +83,6 @@ public class PredictiveTextInputMode implements InputMode {
         clear();
     }
     
-    /**
-     * Print the debug message 
-     * @param str debug message
-     */
-    private void log(String str) {
-        //        System.out.println(str +" part = "+part);
-    }
-              
     /**
      * This method is called to determine if this InputMode supports
      * the given text input constraints. The semantics of the constraints
@@ -161,7 +155,10 @@ public class PredictiveTextInputMode implements InputMode {
      */
     public void beginInput(InputModeMediator mediator, String inputSubset,
                            int constraints) {
-        log("[*** beginInput]");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[*** beginInput]");
+        }
         validateState(false);
         this.mediator = mediator;
         // need to re-init dictionary every time because the language/locale
@@ -175,10 +172,13 @@ public class PredictiveTextInputMode implements InputMode {
      * to begin a new input session.
      */
     public void endInput() {
-        log("********[endInput]");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "********[endInput]");
+        }
         validateState(true);
         this.mediator = null;
-        clear();        
+        clear();
     }
 
     /**
@@ -204,7 +204,10 @@ public class PredictiveTextInputMode implements InputMode {
      * Clear the iterator
      */
     public void clear() {
-        log("[clear]");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[clear]");
+        }
         diff.clear();
         part = "";
         iterator.reset();
@@ -225,7 +228,10 @@ public class PredictiveTextInputMode implements InputMode {
      * this key has not been displayed
      */
     public int processKey(int keyCode, boolean longPress) {
-        log("[PT.processKey] keyCode = " + keyCode);
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[PT.processKey] keyCode = " + keyCode);
+        }
 
         int ret = KEYCODE_NONE;
         boolean gotoNextState = true;
@@ -233,42 +239,57 @@ public class PredictiveTextInputMode implements InputMode {
         boolean needFinishWord = false;
 
         validateState(true);
-                       
+
         if (mediator != null && mediator.isClearKey(keyCode)) {
             if (longPress) {
-                log("         **isClearALL**");
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                        "         **isClearALL**");
+                }
                 clear();
                 gotoNextState = false;
             } else {
-                log("         **isClearOne**");
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                        "         **isClearOne**");
+                }
                 if (part.length() <= 1) {
                     clear();
                     gotoNextState = false;
                     //                    return KEYCODE_NONE;
                 } else {
-                    log("           part.length()>1");
+                    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                        Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                            "           part.length()>1");
+                    }
                     iterator.prevLevel();
                     part = getNextMatch();
                     // part=part.substring(0, part.length()-1);
                     // diff.stateModified(part);
                     ret = KEYCODE_INVISIBLE;
                 }
-            }   
+            }
         } else if (longPress) {
-            log("         **longPress**");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "         **longPress**");
+            }
             needFinishWord = true;
             if (isValidKey(keyCode)) {
                 // if (part.length()>0) {
                 // }
-                part = part.substring(0, part.length()-1) +
-                    String.valueOf((char)keyCode);
+                part = part.substring(0, part.length() - 1) +
+                    String.valueOf((char) keyCode);
             }
             needClear = true;
         } else if (isNextOption(keyCode)) {
             /**
              * 2. handle '#' (show next completion option) case 
              */
-            log("         **isNextOption**");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "         **isNextOption**");
+            }
 
             if (part.length() == 0) {
                 gotoNextState = false;
@@ -276,16 +297,25 @@ public class PredictiveTextInputMode implements InputMode {
                 part = getNextMatch();
             }
         } else if (isPrevOption(keyCode)) {
-            log("         **isPrev**");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "         **isPrev**");
+            }
             part = getPrevMatch();
         } else if (isKeyMapChange(keyCode)) {
-            log("         **isKeyMapChange**");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "         **isKeyMapChange**");
+            }
             /**
              * 3. handle '*' (key map change) case 
              */
             nextCapsMode();
         } else if (isWhiteSpace(keyCode)) {
-            log("         **isWhiteSpace**");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "         **isWhiteSpace**");
+            }
             /**
              * 4. handle whitespace  
              */
@@ -298,11 +328,17 @@ public class PredictiveTextInputMode implements InputMode {
             /**
              * 5. handle standard '2'-'9' keys
              */
-            log("         **is key to process**");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "         **is key to process**");
+            }
             if (isValidKey(keyCode)) {
                 processKeyCode(keyCode);
             } else {
-                log("invalid key, returning KEYCODE_NONE.");
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                        "invalid key, returning KEYCODE_NONE.");
+                }
                 gotoNextState = false;
             }
         }
@@ -342,21 +378,30 @@ public class PredictiveTextInputMode implements InputMode {
      *
      * @param keyCode char in range '0'-'9','#', '*'
      */
-    void processKeyCode(int keyCode) { 
-        log("[processKeyCode] keyCode="+keyCode);
+    void processKeyCode(int keyCode) {
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[processKeyCode] keyCode=" + keyCode);
+        }
         iterator.nextLevel(keyCode);
         if (iterator.hasNext()) {
-            log("iterator.hasNext = true");
             part = iterator.next();
-            log("iterator part");
-            log("     :) [processKeyCode] iterator.hasNext: part="+part);
-        } else {   
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "iterator.hasNext = true\n" +
+                    "iterator part\n" +
+                    "     :) [processKeyCode] iterator.hasNext: part=" + part);
+            }
+        } else {
             // ignore the key
             // part=part+keyCode2Char(keyCode);
             // IMPL NOTE: Consider a better solution: maybe jump to standard mode?
-            log("XXXXXXXXXXXXXXXXXXXXXXXXXXX\n\n" +
-                ":( [processKeyCode] !iterator.hasNext part="+part);
-            log("XXXXXXXXXXXXXXXXXXXXXXXXX");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "XXXXXXXXXXXXXXXXXXXXXXXXXXX\n\n" +
+                    ":( [processKeyCode] !iterator.hasNext part=" + part + "\n" +
+                    "XXXXXXXXXXXXXXXXXXXXXXXXX");
+            }
         }
         part = modifyCaps(part);
     }
@@ -458,19 +503,28 @@ public class PredictiveTextInputMode implements InputMode {
     public String getNextMatch() {
         String retStr = null;
         if (part == null || part.length() == 0) {
-            log("[getNextMatch] <<< returning null");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "[getNextMatch] <<< returning null");
+            }
             return null;
         }
 
         if (!iterator.hasNext()) {
-            log("     [getNextMatch] rewinding..."); 
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "     [getNextMatch] rewinding...");
+            }
             iterator.resetNext();
         }
         if (iterator.hasNext()) {
             retStr = iterator.next();
             retStr = modifyCaps(retStr);
         }
-        log("[getNextMatch] <<< returning " + retStr);
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[getNextMatch] <<< returning " + retStr);
+        }
         return retStr;
     }
 
@@ -484,22 +538,31 @@ public class PredictiveTextInputMode implements InputMode {
      *         input thus far, or 'null' if no pending input is available
      */
     public String getPrevMatch() {
-        log("getPrevMatch");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "getPrevMatch");
+        }
         String prevMatch = "";
         String match = "";
         int num;
         if (part == null || part.length() == 0 ||
             (prevMatch = match = getNextMatch()) == null) {
-            log("[getPrevMatch] <<< returning empty str");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "[getPrevMatch] <<< returning empty str");
+            }
             return prevMatch;
-        }               
+        }
 
         while (match.compareTo(part) != 0) {
             prevMatch = match;
             match = getNextMatch();
         }
 
-        log("[getPrevMatch] <<< returning "+ prevMatch);
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[getPrevMatch] <<< returning " + prevMatch);
+        }
         return prevMatch;
 
     }
@@ -527,22 +590,31 @@ public class PredictiveTextInputMode implements InputMode {
         String[] ret = null;
         
         if (part == null || part.length() <= 0) {
-            log("getMatchList returning empty array");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "getMatchList returning empty array");
+            }
             ret = new String[0];
         } else {
             int num = 0;
             String[] matches = new String[MAX_MATCHES];
             String match = part;
-            
+
             do {
-                log("    [getMatchList()] got nother match: "+match);
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                        "    [getMatchList()] got nother match: " + match);
+                }
                 matches[num] = match;
                 num++;
             } while (num < MAX_MATCHES &&
-                     (match = getNextMatch()) != null &&
-                     match.compareTo(part) != 0);
-            
-            log("getMatchList returning array of size "+num);
+                (match = getNextMatch()) != null &&
+                match.compareTo(part) != 0);
+
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "getMatchList returning array of size " + num);
+            }
             ret = new String[num];
             System.arraycopy(matches, 0, ret, 0, num);
         }
@@ -559,13 +631,16 @@ public class PredictiveTextInputMode implements InputMode {
      * @param activeOperation true if any operation is active otherwise false.
      */
     protected void validateState(boolean activeOperation) {
-        log("[validateState]");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[validateState]");
+        }
         if (activeOperation && this.mediator == null) {
             throw new IllegalStateException(
-            "Illegal operation on an input session already in progress");
+                "Illegal operation on an input session already in progress");
         } else if (!activeOperation && this.mediator != null) {
             throw new IllegalStateException(
-            "Illegal operation on an input session which is not in progress");
+                "Illegal operation on an input session which is not in progress");
         }
     }
 
@@ -579,8 +654,11 @@ public class PredictiveTextInputMode implements InputMode {
         }
         part = modifyCaps(part);
         mediator.subInputModeChanged();
-        log("[nextCapsMode] capsMode = " + capsMode + ", " +
-            CAPS_MODES_LABELS[capsMode]);
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[nextCapsMode] capsMode = " + capsMode + ", " +
+                    CAPS_MODES_LABELS[capsMode]);
+        }
     }
     
 
@@ -624,7 +702,10 @@ public class PredictiveTextInputMode implements InputMode {
          * @param modified new string 
          */
         public void stateModified(String modified) {
-            log("[stateModified] state = " + state);
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "[stateModified] state = " + state);
+            }
             state = modified;
         }
 
@@ -639,21 +720,36 @@ public class PredictiveTextInputMode implements InputMode {
          * @param nextState sets next state
          */
         public void nextState(String nextState) {
-            log("[nextState] nextState = " + nextState + "(length = " +
-                nextState.length() + ") state=" + state + "(length=" +
-                state.length() + ")");
-         
-            if (mediator != null) {
-                log("           resending all");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "[nextState] nextState = " + nextState + "(length = " +
+                        nextState.length() + ") state=" + state + "(length=" +
+                        state.length() + ")");
+            }
 
-                log("clearing " + state + ": " + state.length() + " chars");
+            if (mediator != null) {
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                        "           resending all");
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                        "clearing " + state + ": " + state.length() + " chars");
+                }
                 mediator.clear(state.length());
-                log("         commiting "+ nextState);
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                        "         commiting " + nextState);
+                }
                 mediator.commit(nextState);
-                log("[resendAll] <<<<");
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                        "[resendAll] <<<<");
+                }
                 state = nextState;
             }
-            log("[nextState] <<<<");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "[nextState] <<<<");
+            }
         }
     }
     /** this mode is not set as default. So the map is initialoized by false */

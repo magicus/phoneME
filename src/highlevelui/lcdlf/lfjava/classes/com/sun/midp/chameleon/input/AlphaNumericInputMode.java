@@ -29,6 +29,8 @@ import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.TextField;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
+import com.sun.midp.log.Logging;
+import com.sun.midp.log.LogChannels;
 
 
 /**
@@ -156,7 +158,10 @@ public class AlphaNumericInputMode extends BasicInputMode {
      * Set the next capital mode for this input method
      */
     protected void nextCapsMode() {
-        log("[A.nextCapsMode]");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[A.nextCapsMode]");
+        }
         capsModePointer++;
         if (capsModePointer == CAPS_MODES.length) {
             capsModePointer = 0;

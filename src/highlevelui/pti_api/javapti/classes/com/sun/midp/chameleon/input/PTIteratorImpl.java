@@ -30,6 +30,9 @@ import com.sun.midp.io.Util;
 import javax.microedition.lcdui.Canvas;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
+import com.sun.midp.log.Logging;
+import com.sun.midp.log.LogChannels;
+
 import java.util.Vector;
 
 
@@ -167,25 +170,23 @@ public class PTIteratorImpl implements PTIterator {
      *
      * @return next element in the iteration.
      *
-     * @exception NoSuchElementException iteration has no more elements.
+     * @exception java.util.NoSuchElementException iteration has no more elements.
      */
     public String next() {
-        log("[iter.nextCompletionOption] >>");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[iter.nextCompletionOption] >>");
+        }
         String ret = null;
-        
+
         ret = getList()[selected++];
-        log("[iter.next] : " + ret);
+
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[iter.next] : " + ret);
+        }
         return ret;
     }
-
-    /**
-     * Prints the debug message
-     * @param str debug message
-     */
-    static void log(String str) {
-        //        System.out.println(str);
-    }
-
 
     /**
      * Get the list of matches. The list is cached until the word is decreased/
@@ -203,7 +204,10 @@ public class PTIteratorImpl implements PTIterator {
             } 
             for (int j = 0; j < next.length; j++) {
                 list[j] = base + next[j];
-                log("[getList] next = " + list[j]);
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                        "[getList] next = " + list[j]);
+                }
             }
         }
         return list;

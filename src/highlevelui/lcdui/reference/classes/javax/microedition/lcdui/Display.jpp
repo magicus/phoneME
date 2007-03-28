@@ -1777,8 +1777,8 @@ public class Display {
         return window.setVerticalScroll(scrollPosition, scrollProportion);
         // #else
         // Does nothing since Platform Form widget manages
-	// scrolling internally
-	return false;
+	    // scrolling internally
+	    return false;
         // #endif ENABLE_CHAMELEON
     }
 
