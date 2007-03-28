@@ -29,6 +29,7 @@ import com.sun.midp.i3test.TestCase;
 
 
 public class TestNativeInputMode extends TestCase {
+
     /**
      * Overridden from TestCase parent. This method will kick off each
      * individual test
@@ -47,54 +48,67 @@ public class TestNativeInputMode extends TestCase {
         System.out.println(";");
         */
         int [] ci = InputModeFactory.getInputModeIds();
-        for (int i=0;i<ci.length;i++) {
-            System.out.print("'"+ci[i]+"' ");
+        if (getVerbose()) {
+            for (int i=0;i<ci.length;i++) {
+                System.out.print("'"+ci[i]+"' ");
+            }
+            System.out.println(";");
         }
-        System.out.println(";");
 
         NativeInputMode nim = new NativeInputMode();
         nim.initialize(1);
 
-        System.out.println("map:");
+        info("map:");
         boolean[][] ismap = nim.getIsConstraintsMap();
-        for (int j=0; j<ismap.length; j++) {
-            for (int i=0; i<ismap[j].length; i++) {
-                System.out.print(" "+(ismap[j][i]?"t":"f"));
+        if (getVerbose()) {
+            for (int j=0; j<ismap.length; j++) {
+                for (int i=0; i<ismap[j].length; i++) {
+                    System.out.print(" "+(ismap[j][i]?"t":"f"));
+                }
+                System.out.println(" ");
             }
-            System.out.println(" ");
+            System.out.println(";");
         }
-        System.out.println(";");
 
-        System.out.println("id "+nim.id);
-        System.out.println("supportsConstraints "+nim.supportsConstraints(0));
-        System.out.println("getName() "+nim.getName());
-        System.out.println("getCommandName() "+nim.getCommandName());
+        assertEquals("id ",1,nim.id);
+        assertTrue("supportsConstraints ",true==nim.supportsConstraints(0));
+        assertNotNull("getName() "+nim.getName(),nim.getName());
+        assertNotNull("getCommandName() "+nim.getCommandName(),nim.getCommandName());
         nim.beginInput(null,"",0);
-        System.out.println("processKey "+nim.processKey(1,true));
-        System.out.println("getPendingChar ["+nim.getPendingChar()+"]");
-        System.out.println("getNextMatch "+nim.getNextMatch());
-        System.out.println("hasMoreMatches "+nim.hasMoreMatches());
+        assertEquals("processKey ",0,nim.processKey(1,true));
+        assertEquals("getPendingChar ",0,nim.getPendingChar());
+        assertEquals("getNextMatch ","",nim.getNextMatch());
+        assertFalse("hasMoreMatches ",nim.hasMoreMatches());
         String [] ml = nim.getMatchList();
+        assertEquals("getMatchList().length ",0,nim.getMatchList().length);
+        if(getVerbose()) {
             System.out.print("getMatchList() ");
-        for (int i=0;i<nim.getMatchList().length;i++) {
-            System.out.print("'"+ml[i]+"' ");
+            for (int i=0;i<nim.getMatchList().length;i++) {
+                System.out.print("'"+ml[i]+"' ");
+            }
+            System.out.println(";");
         }
-        System.out.println(";");
-        System.out.println("endInput");
-        nim.endInput();
-        System.out.println("endInput ok");
+
+        try {
+            nim.endInput();
+            assertTrue("endInput successful ",true);
+        } catch (Throwable e) {
+            fail("unexpected throwable "+e);
+            e.printStackTrace();
+        }
 
         InputMode[] ims = InputModeFactory.createInputModes();
-        for (int i=0;i<ims.length;i++) {
-            System.out.print(" "+ims[i]+" ");
+        if (getVerbose()) {
+            for (int i=0;i<ims.length;i++) {
+                System.out.print(" "+ims[i]+" ");
+            }
+            System.out.println(";");
         }
-        System.out.println(";");
     }
     public void runTests() throws Throwable {
 
         try {
 	
-	System.out.println("======runtests====");
 	    declare("test");
 	    
 	    

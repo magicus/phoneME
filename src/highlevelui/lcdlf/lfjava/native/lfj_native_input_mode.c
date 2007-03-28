@@ -34,8 +34,6 @@
 
 #define numElems(x) sizeof(x)/sizeof(x[0])
 
-#include <stdio.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -58,7 +56,6 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_chameleon_input_NativeInputMode_initialize) {
     int rc = 0;
     jint id = KNI_GetParameterAsInt(1);
-    printf("contructor id=%i\n",id);
 
     KNI_StartHandles(3);
     KNI_DeclareHandle(thisObject);
