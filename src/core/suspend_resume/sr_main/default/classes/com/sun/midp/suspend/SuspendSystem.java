@@ -223,7 +223,10 @@ public class SuspendSystem extends AbstractSubsystem {
         } else {
             MIDletSuite midletSuite = MIDletStateHandler.
                 getMidletStateHandler().getMIDletSuite();
-            midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+            // if a MIDlet suite is null, assume the JAM is calling.
+            if (midletSuite != null) {
+                midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+            }
         }
 
         return instance;
