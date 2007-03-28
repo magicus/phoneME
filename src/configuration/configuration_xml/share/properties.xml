@@ -166,6 +166,10 @@
 		Value="1.0" 
 		Scope="system"
 		Comment="JWTI version number."/>
+  <property Key="microedition.msa.version"
+                Value="1.0"
+                Scope="system"
+                Comment="MSA version number."/>
 
   <!-- CLDC implementation parameters -->
   <!-- use MIDP protocol implementations -->
