@@ -1120,6 +1120,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         uEnsureResourceAndRequestedSizes();
 
         ItemLFImpl[] itemsCopy = null;
+        int itemsCopyCount = 0;
         int traverseIndexCopy = -1;
 
         // Layout
@@ -1152,6 +1153,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             } 
 
             itemsCopy = new ItemLFImpl[numOfLFs];
+            itemsCopyCount = numOfLFs;
             System.arraycopy(itemLFs, 0, itemsCopy, 0, numOfLFs);
             traverseIndexCopy = traverseIndex;
             itemsModified = false;
@@ -1183,11 +1185,11 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             updateCommandSet();
         }
 
-        for (int index = 0; index < numOfLFs; index++) {
-            if (itemLFs[index].sizeChanged) {
-                itemLFs[index].uCallSizeChanged(itemLFs[index].bounds[WIDTH],
-                        itemLFs[index].bounds[HEIGHT]);
-                itemLFs[index].sizeChanged = false;
+        for (int index = 0; index < itemsCopyCount; index++) {
+            if (itemsCopy[index].sizeChanged) {
+                itemsCopy[index].uCallSizeChanged(itemsCopy[index].bounds[WIDTH],
+                        itemsCopy[index].bounds[HEIGHT]);
+                itemsCopy[index].sizeChanged = false;
             }
         }
     }
@@ -1888,6 +1890,11 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
                     break;
                 }
             }
+        }
+
+        // item not found
+        if (index==-1) {
+            return;
         }
 
         itemLF = itemLFs[index];
