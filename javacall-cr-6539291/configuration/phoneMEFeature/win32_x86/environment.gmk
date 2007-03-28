@@ -105,6 +105,12 @@ endif
 #explicitly via vpath directive
 vpath %.rc $(MIDP_JC_IMPL_PATH)/midp/res
 
+ifeq ($(RESOURCE_IMAGES_DIR),)
+RESOURCE_IMAGES_DIR=$(MIDP_JC_IMPL_PATH)/midp/res/images
+else
+SOURCE_CLEANUP_LIST += javacall/implementation/win32/midp/res/images 
+endif
+
 # NEED REVISIT: provide pure solution without hidden dependencies
 ifeq ($(ENABLE_HIDDEN_DEP_FEATURES),true)
 SPECIFIC_DEFINITIONS+=-DENABLE_HIDDEN_DEP_FEATURES
