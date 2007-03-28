@@ -179,7 +179,6 @@ public class MIDletProxyList
      * @param  eventQueue reference to the event queue
      */
     MIDletProxyList(EventQueue eventQueue) {
-
         displayController = new DisplayController(this);
 
         /* register event listener for events processed by MIDletProxyList */
@@ -410,8 +409,9 @@ public class MIDletProxyList
             midletDisplayName,
             MIDletProxy.MIDLET_PAUSED);
 
-        int suspendResumeState = SuspendSystem.getInstance(null).getState();
-        
+        int suspendResumeState =
+                SuspendSystem.getInstance(classSecurityToken).getState();
+
         if ((suspendResumeState == SuspendSystem.SUSPENDED) ||
                 (suspendResumeState == SuspendSystem.SUSPENDING)) {
             MIDletProxyUtils.terminateMIDletIsolate(midletProxy, this);
@@ -1063,9 +1063,9 @@ public class MIDletProxyList
         if (foregroundMidlet != null &&
             (foregroundMidlet.getMidletState() !=
             MIDletProxy.MIDLET_DESTROYED)) {
-	        /*
-	         * Background MIDlet will run with a lower priority
-	         */
+            /*
+             * Background MIDlet will run with a lower priority
+             */
             MIDletProxyUtils.minPriority(foregroundMidlet);
             foregroundMidlet.notifyMIDletHasForeground(false);
         }

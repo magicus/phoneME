@@ -389,7 +389,7 @@ class DisplayController {
     MIDletProxy foregroundMidletChanging(MIDletProxy midlet) {
         MIDletProxy preempting;
 
-	    if (midlet == null) {
+        if (midlet == null) {
             return null;
         }
 
