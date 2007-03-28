@@ -130,7 +130,7 @@ define make_source_bundle
 			fi ;\
 		done ; \
 		for path in $(2) ; do \
-			echo $(SOURCE_OUTPUT_DIR)/$$path; rm -rf $(SOURCE_OUTPUT_DIR)/$$path ; \
+			rm -rf $(SOURCE_OUTPUT_DIR)/$$path ; \
 		done
 endef
 
