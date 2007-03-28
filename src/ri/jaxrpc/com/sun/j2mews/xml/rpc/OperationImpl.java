@@ -247,8 +247,7 @@ public class OperationImpl extends Operation {
         Object result = null;
         int attempts = 0;
         // Maximal number of "Object moved" http responses that we will handle
-//        final int maxAttempts = Constants.MAX_REDIRECT_ATTEMPTS;
-        final int maxAttempts = 10;
+        final int maxAttempts = Constants.MAX_REDIRECT_ATTEMPTS;
 
         try {
             do {
