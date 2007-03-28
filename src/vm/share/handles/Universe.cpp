@@ -657,6 +657,7 @@ bool Universe::bootstrap_with_rom(const JvmPathChar* classpath) {
   waiting->set_global_next(waiting);
 
   _interned_string_near_addr = (OopDesc *)interned_string_near()->obj();
+  _persistent_handles_addr = persistent_handles;
   StackmapGenerator::initialize(_gc_stackmap_size JVM_MUST_SUCCEED);
   
   // Allocate task list and the system Task object
@@ -921,6 +922,7 @@ bool Universe::bootstrap_without_rom(const JvmPathChar* classpath) {
     *interned_string_near() = string_near;
     _interned_string_near_addr = string_near;
   }
+  _persistent_handles_addr = persistent_handles;
 #if ENABLE_CLDC_11
   WeakReference::verify_fields();
 #endif

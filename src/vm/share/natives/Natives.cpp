@@ -1208,9 +1208,11 @@ void Java_java_lang_Object_wait(JVM_SINGLE_ARG_TRAPS) {
 }
 
 jint Java_java_lang_String_hashCode() {
-  String::Raw this_obj = GET_PARAMETER_AS_OOP(0);
+//  String::Raw this_obj = GET_PARAMETER_AS_OOP(0);
 
-  return this_obj().hash();
+//  return this_obj().hash();
+  KNI_ThrowNew("java/lang/Error", NULL);
+  return 0;
 }
 
 jint Java_java_lang_String_lastIndexOf__I() {

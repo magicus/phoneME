@@ -4139,6 +4139,29 @@ void CodeGenerator::invoke(const Method* method,
       mov(tmp, zero);
       set_jvm_in_quick_native_method(tmp);
 #endif
+
+      {
+        Label ok;
+        get_jvm_quick_native_exception(tmp);
+        cmp(tmp, zero);
+        b(ok, eq);
+
+        get_persistent_handles_addr(r0);
+        ldr(r0, imm_index(r0, Universe::quick_native_throw_method_index * 
+                          BytesPerWord));
+        int code_offset = code_size(); // current pc
+        add(lr, pc, imm_rotate(0,0));
+        ldr_using_gp(pc, (address)&gp_interpreter_method_entry_ptr);
+        write_call_info(size_of_parameters JVM_CHECK);
+        // Patch the "add" instruction to make lr point 
+        // at following instruction
+        if (!has_overflown_compiled_method()) {
+          *(int *)addr_at(code_offset) |= imm(code_size() - code_offset - 8);
+        }
+
+        bind(ok);
+      }
+
       is_native = true;
     } else {
       address target = method->execution_entry();
