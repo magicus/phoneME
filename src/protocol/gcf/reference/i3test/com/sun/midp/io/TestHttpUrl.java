@@ -42,6 +42,7 @@ public class TestHttpUrl extends TestCase {
     void testAbsUrl() {
         HttpUrl url;
 
+        info("scheme://machine.domain:8080/path?query#fragment");
         url = new HttpUrl("scheme://machine.domain:8080/path?query#fragment");
         assertEquals("scheme", "scheme", url.scheme);
         assertEquals("authority", "machine.domain:8080", url.authority);
@@ -53,6 +54,7 @@ public class TestHttpUrl extends TestCase {
         assertEquals("query", "query", url.query);
         assertEquals("fragment", "fragment", url.fragment);
 
+        info("scheme://machine.domain:8080/path?query#");
         url = new HttpUrl("scheme://machine.domain:8080/path?query#");
         assertEquals("scheme", "scheme", url.scheme);
         assertEquals("authority", "machine.domain:8080", url.authority);
@@ -64,6 +66,7 @@ public class TestHttpUrl extends TestCase {
         assertEquals("query", "query", url.query);
         assertEquals("fragment", null, url.fragment);
 
+        info("scheme://machine.domain:8080/path");
         url = new HttpUrl("scheme://machine.domain:8080/path");
         assertEquals("scheme", "scheme", url.scheme);
         assertEquals("authority", "machine.domain:8080", url.authority);
@@ -75,6 +78,7 @@ public class TestHttpUrl extends TestCase {
         assertEquals("query", null, url.query);
         assertEquals("fragment", null, url.fragment);
 
+        info("scheme://machine.domain:8080/");
         url = new HttpUrl("scheme://machine.domain:8080/");
         assertEquals("scheme", "scheme", url.scheme);
         assertEquals("authority", "machine.domain:8080", url.authority);
@@ -86,6 +90,7 @@ public class TestHttpUrl extends TestCase {
         assertEquals("query", null, url.query);
         assertEquals("fragment", null, url.fragment);
 
+        info("scheme://machine.domain:8080");
         url = new HttpUrl("scheme://machine.domain:8080");
         assertEquals("scheme", "scheme", url.scheme);
         assertEquals("authority", "machine.domain:8080", url.authority);
@@ -97,6 +102,7 @@ public class TestHttpUrl extends TestCase {
         assertEquals("query", null, url.query);
         assertEquals("fragment", null, url.fragment);
 
+        info("scheme://machine.domain");
         url = new HttpUrl("scheme://machine.domain");
         assertEquals("scheme", "scheme", url.scheme);
         assertEquals("authority", "machine.domain", url.authority);
@@ -108,6 +114,7 @@ public class TestHttpUrl extends TestCase {
         assertEquals("query", null, url.query);
         assertEquals("fragment", null, url.fragment);
 
+        info("scheme://machine");
         url = new HttpUrl("scheme://machine");
         assertEquals("scheme", "scheme", url.scheme);
         assertEquals("authority", "machine", url.authority);
@@ -119,6 +126,7 @@ public class TestHttpUrl extends TestCase {
         assertEquals("query", null, url.query);
         assertEquals("fragment", null, url.fragment);
 
+        info("scheme://");
         url = new HttpUrl("scheme://");
         assertEquals("scheme", "scheme", url.scheme);
         assertEquals("authority", null, url.authority);
@@ -130,24 +138,28 @@ public class TestHttpUrl extends TestCase {
         assertEquals("query", null, url.query);
         assertEquals("fragment", null, url.fragment);
 
+        info("scheme://machine.subdomain.domain");
         url = new HttpUrl("scheme://machine.subdomain.domain");
         assertEquals("authority", "machine.subdomain.domain", url.authority);
         assertEquals("host", "machine.subdomain.domain", url.host);
         assertEquals("machine name", "machine", url.machine);
         assertEquals("domain", "subdomain.domain", url.domain);
 
+        info("scheme://123.domain");
         url = new HttpUrl("scheme://123.domain");
         assertEquals("authority", "123.domain", url.authority);
         assertEquals("host", "123.domain", url.host);
         assertEquals("machine name", "123", url.machine);
         assertEquals("domain", "domain", url.domain);
 
-        url = new HttpUrl("scheme://1234.");
-        assertEquals("authority", "1234.", url.authority);
-        assertEquals("host", "1234.", url.host);
-        assertEquals("machine name", "1234", url.machine);
+        info("scheme://1234.5678.901.2345");
+        url = new HttpUrl("scheme://1234.5678.901.2345");
+        assertEquals("authority", "1234.5678.901.2345", url.authority);
+        assertEquals("host", "1234.5678.901.2345", url.host);
+        assertEquals("machine name", null, url.machine);
         assertEquals("domain", null, url.domain);
 
+        info("scheme://123");
         url = new HttpUrl("scheme://1234");
         assertEquals("authority", "1234", url.authority);
         assertEquals("host", "1234", url.host);
@@ -155,6 +167,7 @@ public class TestHttpUrl extends TestCase {
         assertEquals("domain", null, url.domain);
 
         // IP v4 address
+        info("scheme://123.123");
         url = new HttpUrl("scheme://123.123");
         assertEquals("authority", "123.123", url.authority);
         assertEquals("host", "123.123", url.host);
@@ -162,12 +175,14 @@ public class TestHttpUrl extends TestCase {
         assertEquals("domain", null, url.domain);
 
         // IP v6 address
+        info("scheme://[123]");
         url = new HttpUrl("scheme://[123]");
         assertEquals("authority", "[123]", url.authority);
         assertEquals("host", "[123]", url.host);
         assertEquals("machine name", null, url.machine);
         assertEquals("domain", null, url.domain);
 
+        info("scheme://authority/");
         url = new HttpUrl("scheme://authority/");
         assertEquals("path", "/", url.path);
     }
