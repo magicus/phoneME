@@ -123,11 +123,14 @@ define make_source_bundle
 				if [ -d "$$FROM/.svn" ]; then \
 					svn export --force -q $$FROM $(SOURCE_OUTPUT_DIR)/$$path/`basename $$FROM` ; \
 				else \
-					 cp -rf $$FROM $(SOURCE_OUTPUT_DIR)/$$path ; \
+					cp -rf $$FROM $(SOURCE_OUTPUT_DIR)/$$path ; \
 				fi ; \
 				FROM=; \
 			else FROM=$$path ; \
 			fi ;\
+		done ; \
+		for path in $(2) ; do \
+			echo $(SOURCE_OUTPUT_DIR)/$$path; rm -rf $(SOURCE_OUTPUT_DIR)/$$path ; \
 		done
 endef
 
@@ -136,6 +139,6 @@ SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/interface/javacall_defs.h javacall/interfa
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/build javacall
 
 source_bundle:: SOURCE_OUTPUT_DIR
-	@echo  ... javacall source bundle;
-	@$(call make_source_bundle, $(SOURCE_OUTPUT_LIST))
+	@echo  ... javacall source bundle; 
+	@$(call make_source_bundle, $(SOURCE_OUTPUT_LIST), $(SOURCE_CLEANUP_LIST))
 
