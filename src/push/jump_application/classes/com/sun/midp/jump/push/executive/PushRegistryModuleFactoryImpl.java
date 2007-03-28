@@ -24,76 +24,23 @@
 
 package com.sun.midp.jump.push.executive;
 
-import com.sun.jump.module.JUMPModule;
-import com.sun.jump.module.JUMPModuleFactory;
 import com.sun.jump.module.contentstore.JUMPContentStore;
 import com.sun.jump.module.contentstore.JUMPStore;
 import com.sun.jump.module.contentstore.JUMPStoreHandle;
 import com.sun.jump.module.contentstore.JUMPStoreFactory;
 import com.sun.jump.module.serviceregistry.JUMPServiceRegistry;
 import com.sun.jump.module.serviceregistry.JUMPServiceRegistryFactory;
+import com.sun.midp.jump.push.executive.ota.InstallerInterface;
 import com.sun.midp.jump.push.executive.persistence.Store;
 import com.sun.midp.jump.push.executive.persistence.StoreOperationManager;
+import com.sun.midp.jump.push.share.Configuration;
+import com.sun.midp.push.gcf.ReservationDescriptorFactory;
 import java.io.IOException;
 import java.rmi.AccessException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Map;
-
-final class PushSystem {
-    /** Push-specific view of persistent store. */
-    final Store store;
-
-    /** IXC resource URI. */
-    final static private String MIDP_IXC_URI = "push/midp";
-
-    /** MIDP container service provider instance. */
-    final MIDPContainerInterfaceImpl midpContainerInterfaceImpl;
-
-    PushSystem(final StoreOperationManager storeManager)
-            throws IOException, RemoteException, AlreadyBoundException {
-        store = new Store(storeManager);
-
-        midpContainerInterfaceImpl = new MIDPContainerInterfaceImpl(store);
-        getJUMPServiceRegistry()
-            .registerService(MIDP_IXC_URI, midpContainerInterfaceImpl);
-        // TBD: installation interface
-    }
-
-    /**
-     * Gets a reference to service registry for IXC.
-     *
-     * @return <code>JUMPServiceRegistry</code> instance
-     */
-    private JUMPServiceRegistry getJUMPServiceRegistry() {
-        return JUMPServiceRegistryFactory
-                .getInstance()
-                .getModule(getClass().getClassLoader());
-    }
-
-    void close() {
-        // Best effort service unregistration...
-        try {
-            getJUMPServiceRegistry().unregisterService(MIDP_IXC_URI);
-        } catch (AccessException ex) {
-            logError("failed to unbound IXC MIDP interface");
-        } catch (NotBoundException ex) {
-            logError("failed to unbound IXC MIDP interface");
-        }
-    }
-
-    /**
-     * Logs an error message.
-     *
-     * TBD: common logging mechanism.
-     *
-     * @param msg message to log
-     */
-    private static void logError(final String msg) {
-        System.err.println("[error in " + PushSystem.class + "]: " + msg);
-    }
-}
 
 final class PushContentStore
         extends JUMPContentStore
@@ -118,10 +65,58 @@ final class PushContentStore
     }
 }
 
-final class PushModule implements JUMPModule {
+final class PushModule implements JUMPPushModule {
+
+    final static class PushSystem {
+        private final InstallerInterface installerInterfaceImpl;
+
+        PushSystem(final StoreOperationManager storeManager)
+                throws IOException, RemoteException, AlreadyBoundException {
+            final Store store = new Store(storeManager);
+
+            final ReservationDescriptorFactory reservationDescriptorFactory =
+                    Configuration.getReservationDescriptorFactory();
+
+            final PushController pushController = new PushController(
+                    store, reservationDescriptorFactory);
+
+            final MIDPContainerInterfaceImpl midpContainerInterfaceImpl =
+                    new MIDPContainerInterfaceImpl(pushController);
+            getJUMPServiceRegistry().registerService(
+                    Configuration.MIDP_CONTAINER_INTERFACE_IXC_URI,
+                    midpContainerInterfaceImpl);
+
+            installerInterfaceImpl = new InstallerInterfaceImpl(pushController,
+                    reservationDescriptorFactory);
+        }
+
+        /**
+         * Gets a reference to service registry for IXC.
+         *
+         * @return <code>JUMPServiceRegistry</code> instance
+         */
+        private JUMPServiceRegistry getJUMPServiceRegistry() {
+            return JUMPServiceRegistryFactory
+                    .getInstance()
+                    .getModule(getClass().getClassLoader());
+        }
+
+        void close() {
+            // Best effort service unregistration...
+            try {
+                getJUMPServiceRegistry().unregisterService(
+                        Configuration.MIDP_CONTAINER_INTERFACE_IXC_URI);
+            } catch (AccessException ex) {
+                logError("failed to unbound IXC MIDP interface");
+            } catch (NotBoundException ex) {
+                logError("failed to unbound IXC MIDP interface");
+            }
+        }
+    }
 
     private PushSystem pushSystem = null;
 
+    /** {@inheritDoc} */
     public void load(final Map map) {
         // assert pushSystem == null; // I hope we cannot get to load's without unload
         final PushContentStore contentStore = new PushContentStore();
@@ -138,6 +133,7 @@ final class PushModule implements JUMPModule {
         }
     }
 
+    /** {@inheritDoc} */
     public void unload() {
         pushSystem.close();
         pushSystem = null;
@@ -153,6 +149,11 @@ final class PushModule implements JUMPModule {
     private static void logError(final String msg) {
         System.err.println("[error in " + PushModule.class + "]: " + msg);
     }
+
+    /** {@inheritDoc} */
+    public InstallerInterface getInstallerInterfaceImpl() {
+        return pushSystem.installerInterfaceImpl;
+    }
 }
 
 /**
@@ -161,14 +162,21 @@ final class PushModule implements JUMPModule {
  * IMPL_NOTE: as currently PushRegistry module has no public
  *  API the factory is used for initialization only.
  */
-public class PushRegistryModuleFactoryImpl extends JUMPModuleFactory {
-    PushModule pushModule = new PushModule();
+public final class PushRegistryModuleFactoryImpl extends JUMPPushModuleFactory {
+    private final JUMPPushModule pushModule = new PushModule();
 
+    /** {@inheritDoc} */
     public void load(final Map map) {
         pushModule.load(map);
     }
 
+    /** {@inheritDoc} */
     public void unload() {
         pushModule.unload();
+    }
+
+    /** {@inheritDoc} */
+    public JUMPPushModule getPushModule() {
+        return pushModule;
     }
 }

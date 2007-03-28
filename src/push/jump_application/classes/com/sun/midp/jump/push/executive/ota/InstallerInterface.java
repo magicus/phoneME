@@ -25,33 +25,22 @@
 package com.sun.midp.jump.push.executive.ota;
 
 import com.sun.midp.jump.push.executive.JUMPConnectionInfo;
+import java.io.IOException;
+import javax.microedition.io.ConnectionNotFoundException;
 
-/**
- * PushRegsitry system interface for OTA system.
- *
- * <p>
- * There would be a way in OTA system to obtain a singleton
- * implementing this interface.  This singleton would
- * hide behind the scene all IPC (as OTA is supposed to run
- * in a separate process).
- * </p>
- */
-public interface JUMPPushRegistry {
+/** Push services exposed to installer system. */
+public interface InstallerInterface {
     /**
-     * Install PushRegistry connections.
-     *
-     * <p>
-     * Install connections for a <code>MIDlet suite</code> being installed on
-     * the system.
-     * </p>
+     * Installs connections.
      *
      * <p>
      * If connection installation succeeds, these connections are disabled (i.e.
-     * events on these connections won't lead to <code>MIDlet suite</code>
+     * events on these connections won't lead to <code>MIDlet</code> suite
      * activation.)  To enable connections one should use
      * <code>enableConnections</code> method.  If for any reason installation of
      * the suite fails, one MUST call <code>uninstallConnections</code> to
      * uninstall connections before invoking <code>enableConnections</code>.
+     * </p>
      *
      * <p>
      * <strong>Precondition</strong>: <code>midletSuiteId</code> MUST
@@ -70,24 +59,27 @@ public interface JUMPPushRegistry {
      *  connections for
      * @param connections Connections to install
      *
-     * @return <code>true</code> if connection can be installed (i.e. there is
-     *  no conflicts), <code>false</code> otherwise
+     * @throws ConnectionNotFoundException
+     * @throws SecurityException
      */
-    boolean installConnections(int midletSuiteId,
-            JUMPConnectionInfo[] connections);
+    void installConnections(int midletSuiteId,
+            JUMPConnectionInfo[] connections)
+                throws  ConnectionNotFoundException, IOException,
+                        SecurityException;
 
     /**
-     * Enable PushRegistry connections.
+     * Enables connections.
      *
      * <p>
-     * Enable previously installed PushRegistry connections.  That means that
-     * from now on <code>MIDlet suite</code> can be activated by PushRegistry
+     * Enable previously installed connections.  That means that
+     * from now on <code>MIDlet suite</code> can be activated by Push
      * system.
      * </p>
      *
      * <p>
      * If for any reason connections cannot be enabled, <code>false</code> is
      * returned and connections are automatically <em>uninstalled</em>.
+     * </p>
      *
      * <p>
      * <strong>Precondition</strong>: connections for this suite should have
@@ -103,11 +95,7 @@ public interface JUMPPushRegistry {
     boolean enableConnections(int midletSuiteId);
 
     /**
-     * Uninstall PushRegistry connections.
-     *
-     * <p>
-     * Uninstall previously installed PushRegistry connections.
-     * </p>
+     * Uninstalls connections.
      *
      * <p>
      * <strong>Precondition</strong>: connections for this suite should have
@@ -116,9 +104,6 @@ public interface JUMPPushRegistry {
      *
      * @param midletSuiteId ID of <code>MIDlet suite</code> to uninstall
      *  connections of
-     *
-     * @return <code>true</code> if connections has been uninstalled,
-     *  <code>false</code> otherwise
      */
-    boolean uninstallConnections(int midletSuiteId);
+    void uninstallConnections(int midletSuiteId);
 }

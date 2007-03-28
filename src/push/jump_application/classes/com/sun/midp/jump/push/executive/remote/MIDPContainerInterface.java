@@ -24,95 +24,75 @@
 
 package com.sun.midp.jump.push.executive.remote;
 
-import com.sun.midp.jump.push.executive.JUMPConnectionInfo;
+import com.sun.midp.jump.push.share.JUMPReservationDescriptor;
+import java.io.IOException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import javax.microedition.io.ConnectionNotFoundException;
 
-/**
- * Remote interface for MIDP container.
- */
+/** Remote interface for MIDP container. */
 public interface MIDPContainerInterface extends Remote {
     /**
-     * Registers new PushRegistry connection.
+     * Registers connection reservation.
      *
      * <p>
-     * Informs executive on registration of new PushRegistry connection
-     * (to be called, e.g., from
-     * <code>JUMPPushRegistry.registerConnection</code> method).
-     * </p>
-     *
-     * <p>
-     * <strong>Precondition</strong>: <code>connection</code> MUST not have been
-     * already registered (it should be easy to check with connection locks).
-     * </p>
-     *
-     * <p>
-     * <strong>NB</strong>: locking/unlocking of the connections isn't
-     * performed, it's callee who should do it.
+     * <code>midletSuiteId</code> and <code>midlet</code> should refer
+     * to valid <code>MIDlet</code>.
      * </p>
      *
      * @param midletSuiteId ID of <code>MIDlet suite</code> to register
      *  connection for
-     * @param connection Connection to register
      *
-     * @return <code>true</code> if connection has been registered,
-     * <code>false</code> otherwise.
+     * @param midlet <code>MIDlet</code> class name to reserve connection for
+     * (cannot be <code>null</code>)
      *
+     * @param reservationDescriptor reservation descriptor
+     * (cannot be <code>null</code>)
+     *
+     * @throws IOException if connection cannot be reserved for the app
      * @throws RemoteException as requested by RMI spec.
      */
-    boolean registerConnection(int midletSuiteId,
-            JUMPConnectionInfo connection) throws RemoteException;
+    void registerConnection(int midletSuiteId, String midlet,
+            JUMPReservationDescriptor reservationDescriptor)
+                throws IOException, RemoteException;
 
     /**
-     * Unregisters PushRegistry connection.
-     *
-     * <p>
-     * It's way to inform executive on unregistration of PushRegistry connection
-     * (to be called, e.g., from
-     * <code>JUMPPushRegistry.unregisterConnection</code> method).
-     * </p>
+     * Unregisters connection.
      *
      * <p>
      * <strong>Precondition</strong>: <code>connection</code> MUST have been
      * already registered.
      * </p>
      *
-     * <p>
-     * <strong>NB</strong>: locking/unlocking of the connections isn't
-     * performed, it's callee who should do it.
-     * </p>
-     *
      * @param midletSuiteId ID of <code>MIDlet suite</code> to unregister
      *  connection for
-     * @param connection Connection to unregister
      *
-     * @return <code>true</code> if connection has been unregistered,
+     * @param connectionName connection to unregister
+     * (cannot be <code>null</code>)
+     *
+     * @return <code>true</code> if the unregistration was successful,
      * <code>false</code> otherwise.
      *
+     * @throws SecurityException if the connection was registered by
+     * another <code>MIDlet</code>  suite
      * @throws RemoteException as requested by RMI spec.
      */
     boolean unregisterConnection(int midletSuiteId,
-            JUMPConnectionInfo connection) throws RemoteException;
+            String connectionName) throws SecurityException, RemoteException;
 
     /**
      * Registers an alarm.
      *
-     * This method is an internal counterpart of <code>PushRegistry.registerAlarm</code>
-     * method.
-     *
      * <p>
-     * NOTE: <code>midletSuiteId</code> and <code>midlet</code> parameters should
-     *  refer to valid entities (that is, e.g., <code>midlet</code> should be the name
-     *  of the <code>MIDlet</code> from the <code>midletSuiteId</code> suite).
-     *  No checks are performed and incorrect values would lead to undefined
-     *  behaviour.
+     * <code>midletSuiteId</code> and <code>midlet</code> should refer
+     * to valid <code>MIDlet</code>.
      * </p>
      *
-     * @param midletSuiteId ID of <code>MIDlet suite</code> to unregister
-     *  connection for
+     * @param midletSuiteId ID of <code>MIDlet suite</code> to register
+     *  an alarm for
      *
-     * @param midlet <code>MIDlet</code> class name
+     * @param midlet <code>MIDlet</code> class name to register an alarm for
+     * (cannot be <code>null</code>)
      *
      * @param time alarm time
      *

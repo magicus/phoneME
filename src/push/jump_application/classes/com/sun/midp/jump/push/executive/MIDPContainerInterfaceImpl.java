@@ -24,55 +24,40 @@
 
 package com.sun.midp.jump.push.executive;
 
-import com.sun.midp.jump.push.executive.AlarmController;
-import com.sun.midp.jump.push.executive.JUMPConnectionInfo;
-import com.sun.midp.jump.push.executive.LifecycleAdapter;
-import com.sun.midp.jump.push.executive.persistence.Store;
 import com.sun.midp.jump.push.executive.remote.MIDPContainerInterface;
+import com.sun.midp.jump.push.share.JUMPReservationDescriptor;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import javax.microedition.io.ConnectionNotFoundException;
 
-/**
- * Implementation of
- *  {@link com.sun.midp.jump.push.executive.remote.MIDPContainerInterface}
- */
+/** Small wrapper class. */
 final class MIDPContainerInterfaceImpl implements MIDPContainerInterface {
-    /** Reference to a store. */
-    private final Store store;
-
-    /** Alarm controller to use. */
-    private final AlarmController alarmController;
+    /** Push controller. */
+    private final PushController pushController;
 
     /**
-     * Creates an implementation.
+     * Creates a wrapper.
      *
-     * @param store Store to use
+     * @param pushController push controller to use
      */
-    public MIDPContainerInterfaceImpl(final Store store) {
-        this.store = store;
-        this.alarmController = new AlarmController(store,
-                new LifecycleAdapter() {
-            public void launchMidlet(final int midletSuiteID, final String midlet) {
-                // TBD: implement soft launch
-            }
-        });
+    public MIDPContainerInterfaceImpl(final PushController pushController) {
+        this.pushController = pushController;
     }
 
     /** {@inheritDoc} */
-    public boolean unregisterConnection(
-            final int midletSuiteId,
-            final JUMPConnectionInfo connection) throws RemoteException {
-        // TBD: Implement
-        return false;
+    public void registerConnection(final int midletSuiteId, final String midlet,
+            final JUMPReservationDescriptor reservationDescriptor)
+                throws IOException, RemoteException {
+        pushController.registerConnection(
+                midletSuiteId, midlet, reservationDescriptor);
     }
 
     /** {@inheritDoc} */
-    public boolean registerConnection(
-            final int midletSuiteId,
-            final JUMPConnectionInfo connection) throws RemoteException {
-        // TBD: Implement
-        return false;
+    public boolean unregisterConnection(final int midletSuiteId,
+            final String connectionName)
+                throws SecurityException, RemoteException {
+        return pushController.unregisterConnection(
+                midletSuiteId, connectionName);
     }
 
     /** {@inheritDoc} */
@@ -81,6 +66,6 @@ final class MIDPContainerInterfaceImpl implements MIDPContainerInterface {
             final String midlet,
             final long time)
                 throws RemoteException, ConnectionNotFoundException  {
-        return alarmController.registerAlarm(midletSuiteId, midlet, time);
+        return pushController.registerAlarm(midletSuiteId, midlet, time);
     }
 }

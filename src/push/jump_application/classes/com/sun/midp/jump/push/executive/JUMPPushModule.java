@@ -22,29 +22,18 @@
  * information or have any questions.
  */
 
-package com.sun.midp.jump.push.executive.ota;
+package com.sun.midp.jump.push.executive;
 
-import com.sun.midp.jump.push.executive.JUMPConnectionInfo;
-import com.sun.midp.jump.push.executive.persistence.Store;
+import com.sun.jump.module.JUMPModule;
+import com.sun.midp.jump.push.executive.ota.InstallerInterface;
 
-final class OTAPushRegistry implements JUMPPushRegistry {
-    private final Store store;
-
-    OTAPushRegistry(final Store store) {
-        this.store = store;
-    }
-
-    public boolean installConnections(
-            final int midletSuiteId,
-            final JUMPConnectionInfo[] connections) {
-        return false;
-    }
-
-    public boolean uninstallConnections(final int midletSuiteId) {
-        return false;
-    }
-
-    public boolean enableConnections(final int midletSuiteId) {
-        return false;
-    }
+public interface JUMPPushModule extends JUMPModule {
+    /**
+     * Gets an instance implementing <code>InstallerInterface</code>
+     * interface.
+     *
+     * @return an instance implementing <code>InstallerInterface</code>
+     * interface (cannot be <code>null</code>)
+     */
+    InstallerInterface getInstallerInterfaceImpl();
 }

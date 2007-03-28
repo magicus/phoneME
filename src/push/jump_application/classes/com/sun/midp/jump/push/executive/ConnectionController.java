@@ -31,6 +31,7 @@ import com.sun.midp.jump.push.executive.persistence.Store;
 import com.sun.midp.push.gcf.PermissionCallback;
 import com.sun.midp.push.gcf.ReservationDescriptorFactory;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -231,7 +232,8 @@ final class ConnectionController {
             final boolean available) {
         final Vector result = new Vector();
 
-        final Iterator it = reservations.queryBySuiteID(midletSuiteID);
+        final Iterator it = reservations
+                .queryBySuiteID(midletSuiteID).iterator();
         while (it.hasNext()) {
             final ReservationHandler handler = (ReservationHandler) it.next();
             if ((!available) || handler.hasAvailableData()) {
@@ -239,6 +241,35 @@ final class ConnectionController {
             }
         }
         return (String[]) result.toArray(new String[result.size()]);
+    }
+
+    /**
+     * Removes connections for the given suite.
+     *
+     * <p>
+     * NOTE: <code>midletSuiteID</code> must refer to valid installed
+     *  <code>MIDlet</code> suite.  However, it might refer to the
+     *  suite without connections.
+     * </p>
+     *
+     * @param midletSuiteID ID of the suite to remove connections for
+     */
+    public synchronized void removeSuiteConnections(final int midletSuiteID) {
+        /*
+         * IMPL_NOTE: one shouldn't remove and iterate in same time.
+         * The solution is to copy first.  It's safe for method is synchronized.
+         */
+        final Collection rs = reservations.queryBySuiteID(midletSuiteID);
+        final ReservationHandler [] handlers =
+                new ReservationHandler [rs.size()];
+        rs.toArray(handlers);
+        for (int i = 0; i < handlers.length; i++) {
+            try {
+                removeRegistration(handlers[i]);
+            } catch (IOException ioex) {
+                // TBD: logging
+            }
+        }
     }
 
     /**
@@ -303,7 +334,7 @@ final class ConnectionController {
     final class ReservationHandler implements DataAvailableListener {
         /** Reservation's app. */
         private final MIDPApp midpApp;
-        
+
         /** Connection name. */
         private final String connectionName;
 
@@ -462,12 +493,12 @@ final class ConnectionController {
          * Queries the reservations by the suite id.
          *
          * @param midletSuiteID <code>MIDlet</code> suite ID to query by
-         * @return iterator of <code>ReservationHandler</code>s
+         * @return collection of <code>ReservationHandler</code>s
          * (cannot be <code>null</code>)
          */
-        Iterator queryBySuiteID(final int midletSuiteID) {
+        Collection queryBySuiteID(final int midletSuiteID) {
             final Set data = getData(midletSuiteID);
-            return ((data == null) ? new HashSet() : data).iterator();
+            return (data == null) ? new HashSet() : data;
         }
 
         /**
