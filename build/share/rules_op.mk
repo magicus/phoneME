@@ -43,16 +43,6 @@ define generateJSRInitializer
 	-out $(4)
 endef
 
-# Generate constants classes list for the given xml file
-# generateConstantList(generatedDirectory, constantsXmlFile)
-define generateConstantList
-	$($(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE) \
-	-xml $(2) \
-	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantClasses.xsl \
-	-out $(1)/.constant.class.list; \
-    cat $(1)/.constant.class.list )
-endef
-
 # Generate constant classes
 # generateConstantClasses(constantsXmlFile, constantsClassList, generatedDirectory)
 define generateConstantClasses
@@ -60,7 +50,7 @@ define generateConstantClasses
 	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE) \
 	-xml $(1) \
 	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantsJava.xsl \
-	-params packageName $(class) \
+	-params fullClassName $(class) \
 	-out $(3)/classes/$(subst .,/,$(class)).java; )
 endef
 
