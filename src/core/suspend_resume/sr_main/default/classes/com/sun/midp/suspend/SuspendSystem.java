@@ -166,11 +166,21 @@ public class SuspendSystem extends AbstractSubsystem {
          * @param reason kind of changes that took place, see
          */
         public void midletUpdated(MIDletProxy midlet, int reason) {
+            boolean amsMidlet =
+                (MIDletSuiteUtils.getAmsIsolateId() == midlet.getIsolateId());
+
             if (reason == MIDletProxyListListener.RESOURCES_SUSPENDED) {
-                if (MIDletSuiteUtils.getAmsIsolateId() != midlet.getIsolateId()) {
+                if (!amsMidlet) {
                     midletPaused = true;
                 }
                 removeSuspendDependency(midlet);
+            } else if (reason == MIDletProxyListListener.MIDLET_STATE &&
+                    amsMidlet &&
+                    midlet.getMidletState() == MIDletProxy.MIDLET_ACTIVE) {
+                /* An AMS midlet has been activated, checking if it is a
+                 * result of abnormal midlet termination during suspend.
+                 */
+                alertIfAllMidletsKilled();
             }
         }
 
@@ -188,13 +198,9 @@ public class SuspendSystem extends AbstractSubsystem {
         }
 
         /**
-         * Called from the proxy list to notify of new MIDlet appearance.
+         * Not used. MIDletProxyListListener interface method.
          */
-        public void midletAdded(MIDletProxy midlet) {
-            if (MIDletSuiteUtils.getAmsIsolateId() == midlet.getIsolateId()) {
-                alertIfAllMidletsKilled();
-            }
-        }
+        public void midletAdded(MIDletProxy midlet) {}
 
         /**
          * Not used. MIDletProxyListListener interface method.
