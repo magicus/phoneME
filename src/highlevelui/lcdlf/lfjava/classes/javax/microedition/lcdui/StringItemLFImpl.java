@@ -80,16 +80,16 @@ class StringItemLFImpl extends ItemLFImpl implements StringItemLF {
         // ItemLFImpl
         if (appearanceMode == Item.BUTTON) {
             return super.lGetPreferredWidth(h);
-        } 
+        }
         
         // In PLAIN and HYPERLINK modes label and content string are
         // almost concatenated together and wrapped together
         // (if both are not empty there is a horizontal padding between them)
 
-        int size[] = contentBounds; 
-        Text.getTwoStringsSize(size, strItem.label, strItem.str, 
-            ScreenSkin.FONT_LABEL, 
-            strItem.font, lGetAvailableWidth(), 
+        int size[] = contentBounds;
+        Text.getTwoStringsSize(size, strItem.label, strItem.str,
+            ScreenSkin.FONT_LABEL,
+            strItem.font, lGetAvailableWidth(),
             getHorizontalPad());
         return size[WIDTH];
     }
@@ -103,22 +103,24 @@ class StringItemLFImpl extends ItemLFImpl implements StringItemLF {
      */
     public int lGetPreferredHeight(int w) {
 
-        // In BUTTON mode internal layout and sizing is done in
+        // In BUTTON and HIPERLINK  mode internal layout and sizing is done in
         // ItemLFImpl
-        if (appearanceMode == Item.BUTTON) {
+        if (appearanceMode == Item.BUTTON || appearanceMode == Item.HYPERLINK) {
             return super.lGetPreferredHeight(w);
         }
 
         // In PLAIN and HYPERLINK modes label and content string are
         // almost concatenated together and wrapped together
         // (almost because there is a horizontal padding between them)
-	int size[] = contentBounds; 
-	Text.getTwoStringsSize(size, strItem.label, strItem.str, 
-			       ScreenSkin.FONT_LABEL, 
-			       strItem.font,
-			       w == -1 ? lGetAvailableWidth() : w, 
-			       getHorizontalPad());
-	return size[HEIGHT];
+        int size[] = contentBounds;
+
+        Text.getTwoStringsSize(size, strItem.label, strItem.str,
+                ScreenSkin.FONT_LABEL,
+                strItem.font,
+                w == -1 ? lGetAvailableWidth() : w,
+                getHorizontalPad());
+        
+        return size[HEIGHT];
     }
 
     /**
@@ -246,11 +248,15 @@ class StringItemLFImpl extends ItemLFImpl implements StringItemLF {
      */
     void lGetContentSize(int size[], int w) {
 
-        // BUTTON appearance internal layout
-        Text.getSizeForWidth(size, w - (2 * StringItemSkin.PAD_BUTTON_H), 
+        if (appearanceMode == Item.HYPERLINK) {
+            Text.getSizeForWidth(size, w,
                              strItem.str, strItem.font, 0);
-        size[WIDTH] = size[WIDTH] + (2 * StringItemSkin.PAD_BUTTON_H);
-        size[HEIGHT] = strItem.font.getHeight() + 
+        } else {
+            Text.getSizeForWidth(size, w - (2 * StringItemSkin.PAD_BUTTON_H),
+                             strItem.str, strItem.font, 0);
+            size[WIDTH] = size[WIDTH] + (2 * StringItemSkin.PAD_BUTTON_H);            
+        }
+        size[HEIGHT] = strItem.font.getHeight() +
             (2 * StringItemSkin.PAD_BUTTON_V);
     }
 
@@ -338,24 +344,25 @@ class StringItemLFImpl extends ItemLFImpl implements StringItemLF {
     void lCallPaint(Graphics g, int width, int height) {
         // In BUTTON mode internal layout and painting is done through
         // ItemLFImpl
-        if (appearanceMode == Item.BUTTON) {
+        if (appearanceMode == Item.BUTTON || appearanceMode == Item.HYPERLINK) {
             super.lCallPaint(g, width, height);
             return;
         }
 
         // **************** Hyperlink and Plain *********************
+
         lGetLabelSize(labelBounds, width);
-        
+
         int xOffset = 0;
         int yOffset = 0;
-        
+
         if (labelBounds[HEIGHT] > 0) {
             Font lFont = ScreenSkin.FONT_LABEL;
-            xOffset = Text.paint(g, strItem.label, lFont, 
+            xOffset = Text.paint(g, strItem.label, lFont,
                                  ScreenSkin.COLOR_FG, 0,
-                                 width, labelBounds[HEIGHT], 
+                                 width, labelBounds[HEIGHT],
                                  0, Text.NORMAL, null);
-            
+
             if (xOffset > 0) {
                 xOffset += getHorizontalPad();
             }
@@ -363,18 +370,10 @@ class StringItemLFImpl extends ItemLFImpl implements StringItemLF {
             g.translate(0, yOffset);
         }
 
-        int mode = Text.NORMAL;
-        if (appearanceMode == Item.HYPERLINK) {
-            mode = Text.HYPERLINK;
-            if (hasFocus) {
-                mode |= Text.INVERT;
-            }
-        }
-
         Text.paint(g, strItem.str, strItem.font,
                    getForeground(appearanceMode),
                    getForegroundHilight(appearanceMode),
-                   width, height - yOffset, xOffset, mode, null);
+                   width, height - yOffset, xOffset, Text.NORMAL, null);
 
         g.translate(0, -yOffset);
            
@@ -389,34 +388,50 @@ class StringItemLFImpl extends ItemLFImpl implements StringItemLF {
      */
     void lPaintContent(Graphics g, int width, int height) {
 
-        // ********************* BUTTON Appearance ******************
+        // ********************* BUTTON and HYPERLINK Appearance ******************
         // Graphics is translated to content's top left corner
+        switch (appearanceMode) {
+            case Item.HYPERLINK: {
+                int mode = Text.HYPERLINK;
+                if (hasFocus) {
+                    mode |= Text.INVERT;
+                }
 
-        if (StringItemSkin.IMAGE_BUTTON == null) {
-            CGraphicsUtil.draw2ColorBorder(g, 0, 0,
-                                           contentBounds[WIDTH],
-                                           contentBounds[HEIGHT],
-                                           hasFocus,
-                                           StringItemSkin.COLOR_BORDER_DK,
-                                           StringItemSkin.COLOR_BORDER_LT,
-                                           StringItemSkin.BUTTON_BORDER_W);
-        } else {
-            CGraphicsUtil.draw9pcsBackground(g, 0, 1,
-                                     contentBounds[WIDTH],
-                                     contentBounds[HEIGHT],
-                                     StringItemSkin.IMAGE_BUTTON);
+                Text.paint(g, strItem.str, strItem.font,
+                        getForeground(appearanceMode),
+                        getForegroundHilight(appearanceMode),
+                        contentBounds[WIDTH], contentBounds[HEIGHT], contentBounds[X], mode, null);
+            }
+            break;
+            case Item.BUTTON: {
+                if (StringItemSkin.IMAGE_BUTTON == null) {
+                    CGraphicsUtil.draw2ColorBorder(g, 0, 0,
+                            contentBounds[WIDTH],
+                            contentBounds[HEIGHT],
+                            hasFocus,
+                            StringItemSkin.COLOR_BORDER_DK,
+                            StringItemSkin.COLOR_BORDER_LT,
+                            StringItemSkin.BUTTON_BORDER_W);
+                } else {
+                    CGraphicsUtil.draw9pcsBackground(g, 0, 1,
+                            contentBounds[WIDTH],
+                            contentBounds[HEIGHT],
+                            StringItemSkin.IMAGE_BUTTON);
+                }
+
+                g.translate(StringItemSkin.PAD_BUTTON_H,
+                        StringItemSkin.PAD_BUTTON_V);
+                Text.paint(g, strItem.str, strItem.font,
+                        getForeground(appearanceMode),
+                        getForegroundHilight(appearanceMode),
+                        contentBounds[WIDTH] - (2 * StringItemSkin.PAD_BUTTON_H),
+                        contentBounds[HEIGHT] - (2 * StringItemSkin.PAD_BUTTON_V),
+                        0, Text.TRUNCATE, null);
+                g.translate(-StringItemSkin.PAD_BUTTON_H,
+                        -StringItemSkin.PAD_BUTTON_V);
+
+            }
         }
-
-        g.translate(StringItemSkin.PAD_BUTTON_H,
-                    StringItemSkin.PAD_BUTTON_V);
-        Text.paint(g, strItem.str, strItem.font,
-                   getForeground(appearanceMode),
-                   getForegroundHilight(appearanceMode),
-                   contentBounds[WIDTH] - (2 * StringItemSkin.PAD_BUTTON_H),
-                   contentBounds[HEIGHT] - (2 * StringItemSkin.PAD_BUTTON_V),
-                   0, Text.TRUNCATE, null);
-        g.translate(-StringItemSkin.PAD_BUTTON_H,
-                    -StringItemSkin.PAD_BUTTON_V);
     }
 
     /**
