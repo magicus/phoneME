@@ -113,7 +113,7 @@ PRODUCT_NAME        = phoneME Feature VM
 endif
 
 ifndef RELEASE_VERSION
-RELEASE_VERSION     = 1.1
+RELEASE_VERSION     = 1.2
 endif
 
 ifndef BUILD_VERSION
