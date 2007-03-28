@@ -78,6 +78,16 @@ endif
 # The list of JAR jar files we want to hide.
 JSROP_HIDE_JARS = $(subst $(space),:,$(foreach jsr_number,$(HIDE_JSROP_NUMBERS),$(JSROP_LIB_DIR)/jsr$(jsr_number).jar))
 
+# Generate constants classes list for the given xml file
+# generateConstantList(generatedDirectory, constantsXmlFile)
+define generateConstantList
+	$(shell $(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE) \
+	-xml $(2) \
+	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantClasses.xsl \
+	-out $(1)/.constant.class.list; \
+    cat $(1)/.constant.class.list )
+endef
+
 # Jump API classpath
 EMPTY =
 ONESPACE = $(EMPTY) $(EMPTY)
