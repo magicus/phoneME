@@ -46,10 +46,8 @@ public class TestInterruptedIO extends TestCase implements Runnable {
      * resolve yourself.
      */
     static private final String otherSideUri =
-            "socket://mail-emea.sun.com:80";
             //"socket://www.sun.com:80";
-            //"socket://localhost:80";
-            //"socket://host.domain:80";
+            "socket://localhost:80";
 
     /** SocketConnection being tested. */
     SocketConnection connection;

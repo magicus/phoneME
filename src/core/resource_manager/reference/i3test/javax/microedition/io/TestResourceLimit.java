@@ -45,9 +45,8 @@ public class TestResourceLimit extends TestCase {
      * resolve yourself.
      */
     static private final String otherSideUri =
-            "socket://mail-emea.sun.com:80";
             //"socket://www.sun.com:80";
-            //"socket://localhost:80";
+            "socket://localhost:80";
 
     /**
      * Test for TCP client resource limit check
