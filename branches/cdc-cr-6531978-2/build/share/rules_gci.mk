@@ -24,11 +24,7 @@
 # information or have any questions. 
 #
 
-
-
-
 ifeq ($(USE_GCI), true)
-ifneq ($(J2ME_CLASSLIB), basis)
 
 # print our configuration
 printconfig::
@@ -54,12 +50,8 @@ endif
 # If we are preloading or statically linking the profile, then we must link
 # against the libraries that the profile requires (like X11 or QT libraries).
 #
-ifeq ($(CVM_PRELOAD_LIB), true)
-LINKLIBS += $(GCI_LIB_LIBS)
-else
 ifeq ($(CVM_STATICLINK_LIBS), true)
 LINKLIBS += $(GCI_LIB_LIBS)
-endif
 endif
 
 #
@@ -74,8 +66,4 @@ LINKLIBS += \
 endif
 endif
 
-source_bundle::
-	@echo " ... gci source bundle"
-
-endif
-endif
+endif # USE_GCI

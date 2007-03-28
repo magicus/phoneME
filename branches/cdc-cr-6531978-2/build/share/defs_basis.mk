@@ -35,8 +35,11 @@
 # override anything that defs_personal.mk may have set.  Wait until after we
 # check the target-specific makefiles to set this
 #
-AWT_IMPLEMENTATION ?= qt
-AWT_IMPLEMENTATION_DIR ?= ../..
+
+ifeq ($(AWT_IMPLEMENTATION), gci)
+   USE_GCI = true
+   GCI_DIR = $(AWT_IMPLEMENTATION_DIR)
+endif # AWT_IMPLEMENTATION
 
 #
 # Include awt implementation makefiles for the profile.
