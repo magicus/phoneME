@@ -396,7 +396,7 @@
         Key="PTI_IMAGE_BG"
       Value="pti.image_bg"
      Pieces="3"
-    Romized="true"/>
+    Romized="false"/>
 
   <image
         Key="PTI_LEFT_ARROW"

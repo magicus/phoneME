@@ -84,7 +84,7 @@
   <image
         Key="SCREEN_IMAGE_WASH"
       Value="screen.image_wash"
-    Romized="true"/>
+    Romized="false"/>
 
   <image
         Key="SCREEN_IMAGE_BG"
@@ -163,12 +163,12 @@
   <image
         Key="SCROLL_IMAGE_UP"
       Value="scroll.image_up"
-    Romized="true"/>
+    Romized="false"/>
 
   <image
         Key="SCROLL_IMAGE_DN"
       Value="scroll.image_dn"
-    Romized="true"/>
+    Romized="false"/>
 
   <integer
         Key="SCROLL_COLOR_AU_BG"
@@ -193,12 +193,12 @@
   <image
         Key="SCROLL_IMAGE_AU_UP"
       Value="scroll.image_au_up"
-    Romized="true"/>
+    Romized="false"/>
 
   <image
         Key="SCROLL_IMAGE_AU_DN"
       Value="scroll.image_au_dn"
-    Romized="true"/>
+    Romized="false"/>
 
   <integer
         Key="SOFTBTN_HEIGHT"
@@ -264,19 +264,19 @@
         Key="SOFTBTN_IMAGE_BG"
       Value="softbtn.image_bg"
      Pieces="3"
-    Romized="true"/>
+    Romized="false"/>
 
   <composite_image
         Key="SOFTBTN_IMAGE_MU_BG"
       Value="softbtn.image_mu_bg"
      Pieces="3"
-    Romized="true"/>
+    Romized="false"/>
 
   <composite_image
         Key="SOFTBTN_IMAGE_AU_BG"
       Value="softbtn.image_au_bg"
      Pieces="3"
-    Romized="true"/>
+    Romized="false"/>
 
   <integer
         Key="TICKER_HEIGHT"
@@ -326,7 +326,7 @@
         Key="TICKER_IMAGE_BG"
       Value="ticker.image_bg"
      Pieces="3"
-    Romized="true"/>
+    Romized="false"/>
 
   <composite_image
         Key="TICKER_IMAGE_AU_BG"
@@ -396,7 +396,7 @@
         Key="PTI_IMAGE_BG"
       Value="pti.image_bg"
      Pieces="3"
-    Romized="true"/>
+    Romized="false"/>
 
   <image
         Key="PTI_LEFT_ARROW"
@@ -444,7 +444,7 @@
         Key="TITLE_IMAGE_BG"
       Value="title.image_bg"
      Pieces="3"
-    Romized="true"/>
+    Romized="false"/>
 
   <integer
         Key="ALERT_WIDTH"
@@ -978,18 +978,18 @@
   <image
         Key="IMAGEITEM_IMAGE_LNK_H"
       Value="imageitem.image_lnk_h"
-    Romized="true"/>
+    Romized="false"/>
 
   <image
         Key="IMAGEITEM_IMAGE_LNK_V"
       Value="imageitem.image_lnk_v"
-    Romized="true"/>
+    Romized="false"/>
 
   <composite_image
         Key="IMAGEITEM_IMAGE_BUTTON"
       Value="imageitem.image_btn"
      Pieces="9"
-    Romized="true"/>
+    Romized="false"/>
 
   <integer
         Key="MENU_WIDTH"
