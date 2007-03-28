@@ -14,21 +14,22 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
         like images, are stored in default location.
 -->
 
+<xsl:variable name="skinResourcesDir" select="'../../../highlevelui/lcdlf/lfjava/resource/skin/'"/>
 <xsl:variable name="constfile" select="document('skin_constants.xml')"/>
-
 
 <xsl:template match="/">
 <html>
 
 <!-- <link href="./styles.css" rel="stylesheet" type="text/css" /> -->
 
-<!-- We need a way to show that an image is taking precedence
-over a color, and thus mark the color as "not currently used".  
-E.g SCREEN_IMAGE_BG overrides SCREEN_COLOR_BG
+<!-- 
+    We need a way to show that an image is taking precedence
+    over a color, and thus mark the color as "not currently used".  
+    E.g SCREEN_IMAGE_BG overrides SCREEN_COLOR_BG
 -->
 
- <body bgcolor="#F3FAE9">
-   <h1>Adaptive User Interface Technology</h1>
+<body bgcolor="#F3FAE9">
+<h1>Adaptive User Interface Technology</h1>
 
 <i>Tip: Hover over Name to see Description</i>
 
@@ -139,7 +140,7 @@ E.g SCREEN_IMAGE_BG overrides SCREEN_COLOR_BG
         <td> 
             <img>
             <xsl:attribute name="src">
-                <xsl:value-of select="concat('../../../highlevelui/lcdlf/lfjava/resource/skin/',@Value,'.png')"/>
+                <xsl:value-of select="concat($skinResourcesDir,@Value,'.png')"/>
             </xsl:attribute>
             </img> 
         </td>
@@ -302,7 +303,7 @@ E.g SCREEN_IMAGE_BG overrides SCREEN_COLOR_BG
         <td><xsl:value-of select="concat(@Value,$count - 1,'.png')"/> </td> 
         <td>
             <img>
-            <xsl:attribute name="src"> <xsl:value-of select="concat('../../../highlevelui/lcdlf/lfjava/resource/skin/',@Value,$count - 1,'.png')"/>
+            <xsl:attribute name="src"> <xsl:value-of select="concat($skinResourcesDir,@Value,$count - 1,'.png')"/>
             </xsl:attribute>
             </img>
         </td>
@@ -321,16 +322,17 @@ E.g SCREEN_IMAGE_BG overrides SCREEN_COLOR_BG
 
 <xsl:template name="tooltip">  
 <xsl:param name="lookup"/>
-    <td>
+    <td><a>
+    <xsl:attribute name="href">javascript: alert("
+<xsl:value-of select="normalize-space($constfile//constant[@Name=$lookup]/@Comment)"/>
+"); </xsl:attribute>
+<!--
     <xsl:attribute name="title">
-        <xsl:for-each select="$constfile//constant">
-            <xsl:if test="@Name = $lookup">
-                <xsl:value-of select="normalize-space(@Comment)"/>
-            </xsl:if>
-        </xsl:for-each>
-    </xsl:attribute> 
-    <xsl:value-of select="@Key"/>
-    </td>
+        <xsl:value-of select="normalize-space($constfile//constant[@Name=$lookup]/@Comment)"/>
+    </xsl:attribute>
+-->
+    <xsl:value-of select="@Key" />
+</a></td>
 </xsl:template>
 
 <!-- 
@@ -338,15 +340,10 @@ E.g SCREEN_IMAGE_BG overrides SCREEN_COLOR_BG
     a table cell for description
     instead of a tooltip 
 -->
-
 <xsl:template name="description">  
 <xsl:param name="lookup"/>
     <td>
-    <xsl:for-each select="$constfile//constant">
-        <xsl:if test="@Name = $lookup">
-            <xsl:value-of select="normalize-space(@Comment)"/>
-        </xsl:if>
-    </xsl:for-each>
+<xsl:value-of select="normalize-space($constfile//constant[@Name=$lookup]/@Comment)"/>
     </td>
 </xsl:template>
 
@@ -355,7 +352,7 @@ E.g SCREEN_IMAGE_BG overrides SCREEN_COLOR_BG
 <xsl:param name="to" />
     <xsl:if test="$from &lt;= $to">
     <img>
-        <xsl:attribute name="src"> <xsl:value-of select="concat('../../../highlevelui/lcdlf/lfjava/resource/skin/',@Value,$from,'.png')"/>
+        <xsl:attribute name="src"> <xsl:value-of select="concat($skinResourcesDir,@Value,$from,'.png')"/>
         </xsl:attribute>
     </img>
         <xsl:call-template name="compositeImagePieces">
