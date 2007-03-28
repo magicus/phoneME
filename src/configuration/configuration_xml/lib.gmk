@@ -45,6 +45,7 @@ SUBSYSTEM_CONFIGURATION_FILES_LIST = files.lst
 
 SUBSYSTEM_CONFIGURATION_DEVICE_FILES_LIST = files_$(TARGET_DEVICE).lst
 
+
 # directory containing XSL files used to transform XML files 
 # into .c, .h, and .java files
 INT_XSL_DIR = \
@@ -121,8 +122,10 @@ else
 INT_XML_FILES += $(INT_XML_DIR)/constants_open.xml
 endif
 
+SUBSYSTEM_CONFIGURATION_SKIN_XML_FILE = $(INT_XML_DIR)/skin.xml
+
 # Skin description input file
-INT_XML_FILES += $(INT_XML_DIR)/skin.xml
+INT_XML_FILES += $(SUBSYSTEM_CONFIGURATION_SKIN_XML_FILE)
 
 # Command for invoking transformer
 INT_INVOKE_TRANSFORMER = \
