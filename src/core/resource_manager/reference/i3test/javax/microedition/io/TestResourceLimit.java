@@ -35,6 +35,19 @@ import com.sun.midp.configurator.Constants;
  */
 
 public class TestResourceLimit extends TestCase {
+    /**
+     * URI to which the test will try to open connections.
+     * Use any URI visible from your network, for example,
+     * "socket://www.sun.com:80" will do in most cases;
+     * "socket://localhost:80" will do if your computer is
+     * running an http server. Please, contact your network
+     * administrator if you have a problem that you cannot
+     * resolve yourself.
+     */
+    static private final String otherSideUri =
+            "socket://mail-emea.sun.com:80";
+            //"socket://www.sun.com:80";
+            //"socket://localhost:80";
 
     /**
      * Test for TCP client resource limit check
@@ -47,21 +60,26 @@ public class TestResourceLimit extends TestCase {
             new SocketConnection[Constants.TCP_CLI_AMS_LIMIT+1];
 
         try {
-            // Setup 
+            // Setup
             while (openCount < Constants.TCP_CLI_AMS_LIMIT) {
                 sc[openCount] = (SocketConnection) Connector.open(
-                                    "socket://www.sun.com:80");
-                openCount++; 
+                        otherSideUri);
+                openCount++;
             }
 
             // Actual Test
             try {
                 sc[openCount] = (SocketConnection) Connector.open(
-                                "socket://www.sun.com:80");
+                        otherSideUri);
                 openCount++;
             } catch (java.io.IOException io) {
                 exceptionThrown = true;
-            } 
+            }
+        } catch (ConnectionNotFoundException cnfe) {
+            fail("Exception while opening "+otherSideUri+": "+cnfe.getMessage()+
+                 ".  If the host name cannot be resolved, you may " +
+                 "need to change the i3test source to use a host name that" +
+                 " is visible from your network.");
         } finally {
             // Cleanup
             for (int i = 0; i < openCount; i++) {
@@ -76,7 +94,7 @@ public class TestResourceLimit extends TestCase {
             }
         }
 
-        assertTrue(exceptionThrown);
+        assertTrue("expected exception thrown?",exceptionThrown);
     }
 
     /**
