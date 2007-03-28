@@ -81,12 +81,8 @@ endif
 # If we are preloading or statically linking the profile, then we must link
 # against the libraries that the profile requires (like X11 or QT libraries).
 #
-ifeq ($(CVM_PRELOAD_LIB), true)
-LINKLIBS += $(AWT_LIB_LIBS) $(JPEG_LIB_LIBS)
-else
 ifeq ($(CVM_STATICLINK_LIBS), true)
 LINKLIBS += $(AWT_LIB_LIBS) $(JPEG_LIB_LIBS)
-endif
 endif
 
 #
