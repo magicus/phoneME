@@ -34,6 +34,7 @@ import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
+import com.sun.midp.midlet.MIDletSuite;
 
 
 /** Simple attribute storage for MIDlet suites */
@@ -94,7 +95,6 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
     /**
      * Constructs a RunningMIDletSuiteInfo from MIDletSuiteInfo.
      *
-     * @param itheID ID the system has for this suite
      * @param info MIDletSuiteInfo reference
      * @param mss the midletSuite storage
      */
@@ -134,7 +134,7 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
     /**
      * Gets suite icon either from image cache, or from the suite jar.
      *
-     * @param suiteId the suite id that system has for this suite
+     * @param theID the suite id that system has for this suite
      * @param iconName the name of the file where the icon is
      *     stored in the JAR
      * @param mss The midletSuite storage
@@ -202,7 +202,9 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
                 return proxy == midlet;
             }
 
-            if (numberOfMidlets == 1 && midletToRun != null) {
+            if ((numberOfMidlets == 1 ||
+                 suiteId == MIDletSuite.INTERNAL_SUITE_ID) &&
+                    midletToRun != null) {
                 return midletToRun.equals(midlet.getClassName());
             }
 

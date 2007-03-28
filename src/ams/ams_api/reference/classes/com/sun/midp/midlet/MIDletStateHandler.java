@@ -112,6 +112,8 @@ public class MIDletStateHandler {
     /** New MIDlet peer waiting for the next MIDlet created to claim it. */
     private static MIDletPeer newMidletPeer;
 
+    /** MIDlet peer for MIDlet being constructed but not registered yet. */
+    private MIDletPeer underConstructionPeer;
 
     /**
      * Construct a new MIDletStateHandler object.
@@ -318,6 +320,9 @@ public class MIDletStateHandler {
             // Add it to the end of the list
             midlets[nmidlets++] = state;
 
+            // MIDlet peer is registered now
+            underConstructionPeer = null;
+
             this.notify();
         }
     }
@@ -470,7 +475,7 @@ public class MIDletStateHandler {
                     }
                 }
 
-                /** perform work that may block outside of "this" */
+                 /** perform work that may block outside of "this" */
                 switch (state) {
                 case MIDletPeer.ACTIVE_PENDING:
                     try {
@@ -580,17 +585,23 @@ public class MIDletStateHandler {
     public boolean isRunning(String name) {
         boolean found = false;
         synchronized (this) {
-            for (int i = 0; i < nmidlets; i++) {
-                if (midlets[i].getMIDlet().getClass().getName().equals(name)) {
-                    // found only if has not been destroyed
-                    found = (midlets[i].getState() != MIDletPeer.DESTROYED);
-                    break;
+            if (underConstructionPeer != null &&
+                    underConstructionPeer.getMIDlet().
+                        getClass().getName().equals(name)) {
+                found = true;
+            } else {
+                for (int i = 0; i < nmidlets; i++) {
+                    if (midlets[i].getMIDlet().
+                            getClass().getName().equals(name)) {
+                        // found only if has not been destroyed
+                        found = (midlets[i].getState() != MIDletPeer.DESTROYED);
+                        break;
+                    }
                 }
             }
         }
         return found;
     }
-
 
     /**
      * Gets MIDlet event consumer of the named <code>MIDlet</code>.
@@ -706,7 +717,6 @@ public class MIDletStateHandler {
            ClassNotFoundException, InstantiationException,
            IllegalAccessException {
         MIDlet midlet = null;
-        MIDletPeer localMidletPeerRef;
 
         synchronized (createMIDletLock) {
             /*
@@ -718,13 +728,7 @@ public class MIDletStateHandler {
             }
 
             newMidletPeer = new MIDletPeer();
-
-            /*
-             * newMidlet peer will be set to null by the MIDlet class
-             * constructor to close the creation window. Save a reference
-             * in case the peer has to be destroyed.
-             */
-            localMidletPeerRef = newMidletPeer;
+            underConstructionPeer = newMidletPeer;
             try {
                 /*
                  * We can send a MIDlet create event because the peer that

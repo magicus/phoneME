@@ -229,6 +229,21 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         lRequestInvalidate(true, true);
     }
 
+
+    /**
+     * Notify this itemLF that its owner screen has changed.
+     * Clear internal state if its new owner is null.
+     *
+     * @param oldOwner old owner screen before this change. New owner
+     *                 can be found in Item model.
+     */
+    public void lSetOwner(Screen oldOwner) {
+        super.lSetOwner(oldOwner);
+        if (item.owner != null && item.owner instanceof List) {
+            drawsTraversalIndicator = false;
+        }
+    }
+
     /**
      * Notifies L&F that an element was selected/deselected in the 
      * corresponding ChoiceGroup.

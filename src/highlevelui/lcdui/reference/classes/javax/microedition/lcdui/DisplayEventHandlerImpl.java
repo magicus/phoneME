@@ -110,14 +110,14 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
     }
 
     /**
-     * Initialize per suite data of the display event handler.
+     * Sets the trusted state of the display event handler.
      * DisplayEventHandler I/F method.
      *
      * @param drawTrustedIcon true, to draw the trusted icon in the upper
      *                status bar for every display of this suite
      */
-    public void initSuiteData(boolean drawTrustedIcon) {
-        Display.initSuiteData(drawTrustedIcon);
+    public void setTrustedState(boolean drawTrustedIcon) {
+        Display.setTrustedState(drawTrustedIcon);
     }
 
     /**
@@ -240,18 +240,6 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
                 this.notify();
             }
         }
-    }
-
-
-    /**
-     * Get the Image of the trusted icon for this Display.
-     * Only callers with the internal MIDP permission can use this method.
-     * DisplayEventHandler I/F method.
-     *
-     * @return an Image of the trusted icon.
-     */
-    public Image getTrustedMIDletIcon() {
-        return Display.getSystemImage("trustedmidlet_icon.png");
     }
 
     /**

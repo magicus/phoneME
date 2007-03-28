@@ -107,7 +107,7 @@ public class MIDletSuiteUtils {
     /**
      * Display an exception to the user.
      *
-     * @param securityToken security token of the displaying System Alert.
+     * @param securityToken security token for displaying System Alert.
      * @param exceptionMsg exception message
      */
     static void displayException(SecurityToken securityToken,

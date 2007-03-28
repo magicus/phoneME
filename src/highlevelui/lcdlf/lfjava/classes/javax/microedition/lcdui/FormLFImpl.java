@@ -156,6 +156,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             }
         }
 
+        // item not found
+        if (index==-1) {
+            return;
+        }
+        
         itemLF = itemLFs[index];
 
         if (index != traverseIndex) {
@@ -906,6 +911,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         uEnsureRequestedSizes();
 
         ItemLFImpl[] itemsCopy = null;
+        int itemsCopyCount = 0;
         int traverseIndexCopy = -1;
         
         synchronized (Display.LCDUILock) {
@@ -945,6 +951,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             
             
             itemsCopy = new ItemLFImpl[numOfLFs];
+            itemsCopyCount = numOfLFs;
             System.arraycopy(itemLFs, 0, itemsCopy, 0, numOfLFs);
             traverseIndexCopy = traverseIndex;
             itemsModified = false;
@@ -962,11 +969,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             updateCommandSet();
         }
 
-        for (int index = 0; index < numOfLFs; index++) {
-            if (itemLFs[index].sizeChanged) {
-                itemLFs[index].uCallSizeChanged(itemLFs[index].getInnerBounds(WIDTH),
-                        itemLFs[index].getInnerBounds(HEIGHT));
-                itemLFs[index].sizeChanged = false;
+        for (int index = 0; index < itemsCopyCount; index++) {
+            if (itemsCopy[index].sizeChanged) {
+                itemsCopy[index].uCallSizeChanged(itemsCopy[index].getInnerBounds(WIDTH),
+                        itemsCopy[index].getInnerBounds(HEIGHT));
+                itemsCopy[index].sizeChanged = false;
             }
         }
     }
@@ -994,7 +1001,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         }
         
         uHideShowItems(itemsCopy); 
-        
+
         // The result of an invalidate() call
         if (traverseIndexCopy != -1 && dir == CustomItem.NONE) {
             itemTraverse = 

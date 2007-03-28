@@ -598,6 +598,8 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                 // command action
                 processCommand(soft2[0]);
             }
+        } else {
+            setInteractive(false);
         }
     }
 

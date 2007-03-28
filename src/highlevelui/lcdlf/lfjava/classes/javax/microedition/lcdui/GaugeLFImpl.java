@@ -75,6 +75,7 @@ class GaugeLFImpl extends ItemLFImpl implements GaugeLF {
         }
         
         percentLoc = new int[2];
+        drawsTraversalIndicator = false;
     }
 
 

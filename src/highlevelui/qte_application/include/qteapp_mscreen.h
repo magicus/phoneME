@@ -38,6 +38,7 @@
 
 #include <java_types.h>
 #include <qpainter.h>
+#include <qtimer.h>
 
 /**
  * The MScreen class maps to a Java platform widget-based drawing
@@ -205,11 +206,27 @@ protected:
     MScreen();
 
     /**
+     * Implementation of slotTimeout() shared between distinct ports.
+     * The slotTimeout() methods are defined in subclasses.
+     */
+    void slotTimeoutImpl();
+
+    /**
      * A flag to determine whether the VM is currently suspended
      * (should not receive time slices).
      */
     bool vm_suspended;
 
+    /**
+     * A flag to avoid performing any more timer processing after
+     * JVM_TimeSlice returns -2.
+     */
+    bool vm_stopped;
+
+    /**
+     * Timer to request time slice for VM.
+     */
+    QTimer   vm_slicer;
 };
 
 /* @} */

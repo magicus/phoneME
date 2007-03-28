@@ -172,7 +172,7 @@ public class MIDletContainer extends JUMPAppContainer implements
                 throw new IllegalStateException("Suite is disabled");
             }
 
-            lcduiEnvironment.initSuiteData(midletSuite.isTrusted());
+            lcduiEnvironment.setTrustedState(midletSuite.isTrusted());
 
             // set a each arg as property numbered from 0, first arg: "arg-0"
             if (args != null) {

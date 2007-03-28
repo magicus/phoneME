@@ -26,21 +26,12 @@ package com.sun.midp.lcdui;
 
 import com.sun.midp.security.*;
 import com.sun.midp.events.EventQueue;
+import javax.microedition.lcdui.Image;
 
 // #ifdef ENABLE_GCI
 import com.sun.me.gci.windowsystem.*;
 import com.sun.me.gci.windowsystem.event.*;
 // #endif ENABLE_GCI
-
-// #ifdef ENABLE_CDC
-import com.sun.midp.events.EventTypes;
-import com.sun.midp.events.NativeEvent;
-import com.sun.midp.configurator.Constants;
-// #endif ENABLE_CDC
-
-// #ifndef ENABLE_JUMP
-import com.sun.midp.main.TrustedMIDletIcon;
-// #endif ENABLE_JUMP
 
 /**
  * Initialize the LCDUI environment.
@@ -92,7 +83,8 @@ public class LCDUIEnvironment {
             displayContainer);
 
         /* Bad style of type casting, but DisplayEventHandlerImpl
-         * implements both DisplayEventHandler & ItemEventConsumer IFs */
+         * implements both DisplayEventHandler & ItemEventConsumer IFs 
+         */
         LCDUIEventListener lcduiEventListener = new LCDUIEventListener(
             internalSecurityToken,
             eventQueue,
@@ -115,33 +107,40 @@ public class LCDUIEnvironment {
      *
      * @return DisplayContainer
      */
-    public DisplayContainer getDisplayContainer(SecurityToken token) {
-        token.checkIfPermissionAllowed(Permissions.MIDP);
-
+    public DisplayContainer getDisplayContainer() {
 	return displayContainer;
     }
 
-
-    /**
+    /** 
+     * Called during system shutdown.  
      */
-    public void initSuiteData(boolean isTrusted) {
-        displayEventHandler.initSuiteData(isTrusted);
-        
-	// #ifndef ENABLE_JUMP
-        // Needed by the installer
-        TrustedMIDletIcon.initClass(
-            displayEventHandler.getTrustedMIDletIcon());
-        // #endif ENABLE_JUMP
-    }
+    public void shutDown() {
 
-    /**   */
-    public void closeSuite() {
-
-	// #ifndef ENABLE_JUMP
         // shutdown any preempting
 	displayEventHandler.donePreempting(null);
-	// #endif ENABLE_JUMP
     }
+
+    /**
+     * Sets the trusted state based on the passed in boolean.
+     *
+     * @param isTrusted if true state is set to trusted.
+     */
+    public void setTrustedState(boolean isTrusted) {
+        displayEventHandler.setTrustedState(isTrusted);
+    }
+
+   /**
+    * Gets the Image of the trusted icon.
+    * Only callers with the internal AMS permission can use this method.
+    *
+    * @return an Image of the trusted icon.
+    *
+    * @exception SecurityException if the suite calling does not have the
+    * the AMS permission
+    */
+    public Image getTrustedMIDletIcon() {
+        return displayEventHandler.getTrustedMIDletIcon();
+    } 
 
     /**
      * Called to register a newly create Display. This method must
@@ -166,135 +165,6 @@ public class LCDUIEnvironment {
     private int currentDisplayId;
 
 // #ifdef ENABLE_GCI
-class GCIEventListener implements 
-    GCIKeyEventListener, GCIPointerEventListener {
 
-    /** Preallocate KeyEvent */
-    final NativeEvent keyEvent;
-
-    /** Preallocate Pointer Event */
-    final NativeEvent pointerEvent;
-
-    /** Cached reference to the MIDP event queue. */
-    private EventQueue eventQueue;
-
-    /**
-     * The constructor for the GCIEventListener that 
-     * gets key and pointer events from GCI,
-     * does translate to LCDUI input events and posts them to 
-     * LCDUI event queue.
-     *
-     * @param eventQueue the event queue
-     */
-    GCIEventListener(EventQueue eventQueue) {
-        this.eventQueue = eventQueue;
-        keyEvent = new NativeEvent(EventTypes.KEY_EVENT);
-        pointerEvent = new NativeEvent(EventTypes.PEN_EVENT);
-    }
-
-    /** 
-     * Called when GCIKeyEvent is received. It will translate
-     * the event into a corresponding MIDP NativeEvent and post
-     * it to the event queue.
-     *
-     * @param event instance of GCIKeyEvent
-     */
-    public boolean keyEventReceived(GCIKeyEvent event) {
-
-        int type = 0;
-        int keyCode = event.getKeyCode();
-        int keyChar = event .getKeyChar();
-
-        switch (event.getID()) {
-            case GCIKeyEvent.KEY_PRESSED:
-                type = EventConstants.PRESSED;
-                break;
-
-            case GCIKeyEvent.KEY_RELEASED:
-                type = EventConstants.RELEASED;
-                break;
-   
-            default:
-                return false;
-        }
-
-        boolean foundKeyCode = false;
-        for (int i = keyMappingTable.length - 1; i >= 0; i--) {
-	    if (keyCode == keyMappingTable[i][1]) {
-		keyCode = keyMappingTable[i][0];
-                foundKeyCode = true; 
-	    }
-
-	}
-
-        if (!foundKeyCode &&
-	    (keyCode == GCIKeyEvent.VK_UNDEFINED ||
-	     keyChar == GCIKeyEvent.CHAR_UNDEFINED)) {
-
-	    return false;
-	}
-
-        keyEvent.intParam1 = type;
-        keyEvent.intParam2 = keyCode;
-        keyEvent.intParam4 = currentDisplayId;
-        eventQueue.post(keyEvent);
-
-        return true;
-    }
-
-    /** 
-     * Called when GCIPointerEvent is received. It will translate
-     * the event into a corresponding MIDP NativeEvent and post
-     * it to the event queue.
-     *
-     * @param event instance of GCIPointerEvent
-     */
-    public boolean pointerEventReceived(GCIPointerEvent event) {
-        int id = event.getID();
-        int x = event.getX();
-        int y = event.getY();
-        int button = event.getButton();
-        int modifiers = event.getModifiers();
-        long when = System.currentTimeMillis();
-
-        int type = 0;
-
-        switch (event.getID()) {
-            case GCIPointerEvent.POINTER_PRESSED:
-                type = EventConstants.PRESSED;
-                break;
-
-            case GCIPointerEvent.POINTER_RELEASED:
-                type = EventConstants.RELEASED;
-                break;
-
-            case GCIPointerEvent.POINTER_MOVED:
-                type = EventConstants.DRAGGED;
-                break;
-
-            default:
-                return false;
-        }
-
-        pointerEvent.intParam1 = type;
-        pointerEvent.intParam2 = event.getX();
-        pointerEvent.intParam3 = event.getY();
-        pointerEvent.intParam4 = currentDisplayId;
-        eventQueue.post(pointerEvent);
-	
-        return true;
-    }
-
-/** Table used to key mapping */
-int keyMappingTable[][] = {
-    {Constants.KEYCODE_UP,                38},
-    {Constants.KEYCODE_DOWN,              40},
-    {Constants.KEYCODE_LEFT,              37},
-    {Constants.KEYCODE_RIGHT,             39},
-    {Constants.KEYCODE_SELECT,            10}
-};
-
-}
-// #endif ENABLE_GCI
 
 }

@@ -90,21 +90,10 @@ public interface DisplayEventHandler {
         DisplayContainer theDisplayContainer);
     
     /**
-     * Initialize per suite data of the display event handler.
+     * Sets the trusted state of the display event handler.
      *
      * @param drawTrustedIcon true, to draw the trusted icon in the upper
      *                status bar for every display of this suite
      */
-    void initSuiteData(boolean drawTrustedIcon);
-
-    /**
-     * Get the Image of the trusted icon for this Display.
-     * Only callers with the internal AMS permission can use this method.
-     *
-     * @return an Image of the trusted icon.
-     *
-     * @exception SecurityException if the suite calling does not have the
-     * the AMS permission
-     */
-    public Image getTrustedMIDletIcon();
+    void setTrustedState(boolean drawTrustedIcon);
 }

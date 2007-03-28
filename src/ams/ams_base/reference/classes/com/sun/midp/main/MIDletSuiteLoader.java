@@ -270,7 +270,7 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
 
     /**
      * Displays an exception message to user
-     * @param securityToken security token of the displaying System Alert.
+     * @param securityToken security token for displaying System Alert.
      * @param exceptionMsg the message text
      */
     protected void displayException(SecurityToken securityToken,

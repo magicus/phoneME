@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+        Stylesheet for presenting nicely formatted content of this skin XML 
+        file in Web browser. That is, just open this skin file in your Web 
+        browser to get more visual view of it.
+-->
+<?xml-stylesheet type="text/xsl" href="../share/chameleon/skin.xsl"?>
 <!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
 <!--
         	
@@ -329,6 +335,32 @@
       Value="ticker.image_au_bg"
      Pieces="3"
     Romized="false"/>
+
+  <integer
+        Key="INPUT_MODE_COLOR_BG"
+      Value="0xA3E2F8"/>
+
+  <integer
+        Key="INPUT_MODE_COLOR_BDR"
+      Value="0x336699"/>
+
+  <integer
+        Key="INPUT_MODE_COLOR_FG"
+      Value="0x000000"/>
+
+  <composite_image
+        Key="INPUT_MODE_IMAGE_BG"
+      Value=""
+     Pieces="3"
+     Romized="false"/>
+
+  <integer
+        Key="INPUT_MODE_MARGIN"
+      Value="3"/>
+
+  <font
+        Key="INPUT_MODE_FONT"
+      Value="FontResources.SYS_B_S"/>
 
   <integer
         Key="PTI_HEIGHT"

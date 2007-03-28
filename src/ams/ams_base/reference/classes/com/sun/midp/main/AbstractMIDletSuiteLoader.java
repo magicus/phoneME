@@ -88,7 +88,7 @@ abstract class AbstractMIDletSuiteLoader
     protected DisplayContainer displayContainer;
 
     /**
-     * Provides interface to lcdui initialization.
+     * Provides interface to lcdui environment.
      */
     protected LCDUIEnvironment lcduiEnvironment;
 
@@ -164,8 +164,7 @@ abstract class AbstractMIDletSuiteLoader
 					       eventQueue, isolateId, 
 					       foregroundController);
 
-        displayContainer = lcduiEnvironment.getDisplayContainer(
-                           internalSecurityToken);
+        displayContainer = lcduiEnvironment.getDisplayContainer();
     }
 
     /**
@@ -176,7 +175,7 @@ abstract class AbstractMIDletSuiteLoader
      * used to initialize any per suite data.
      */
     protected void initSuiteEnvironment() {
-        lcduiEnvironment.initSuiteData(midletSuite.isTrusted());
+        lcduiEnvironment.setTrustedState(midletSuite.isTrusted());
     }
 
     /**
@@ -207,7 +206,7 @@ abstract class AbstractMIDletSuiteLoader
             midletSuite.close();
         }
 
-        lcduiEnvironment.closeSuite();
+        lcduiEnvironment.shutDown();
     }
 
     /**

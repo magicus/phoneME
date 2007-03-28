@@ -225,13 +225,7 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
                 DateFieldSkin.COLOR_BORDER,
                 DateFieldSkin.COLOR_BORDER_SHD, 
                 DateFieldSkin.COLOR_BG);
-        }
-        
-        if (hasFocus && !editor.isPopupOpen()) {
-            // hilight the background
-            g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
-            g.fillRect(1, 2, width - 2, height - 3);
-        } 
+        }       
                     
         // draw icon
         int iconWidth = 0;

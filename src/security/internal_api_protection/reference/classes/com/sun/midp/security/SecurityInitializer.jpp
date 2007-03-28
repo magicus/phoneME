@@ -143,13 +143,14 @@ public final class SecurityInitializer {
         "com.sun.midp.main.NativeAppManagerPeer$SecurityTrusted",
         // #endif ENABLE_NATIVE_AMS
 
-        // IMPL_NOTE: The initialization of Display will forward on the
-        //   initialization to Chameleon's SkinResources if Chameleon
-        //   is being used
-        "javax.microedition.lcdui.Display$SecurityTrusted",
+        "jcom.sun.midp.main.TrustedMIDletIcon$SecurityTrusted",
 
         // #ifdef ENABLE_CHAMELEON
         "com.sun.midp.chameleon.skins.resources.SkinResources$SecurityTrusted",
+        // #endif ENABLE_CHAMELEON
+
+        // #ifndef ENABLE_CHAMELEON
+        "javax.microedition.lcdui.AlertLFImpl$SecurityTrusted",
         // #endif ENABLE_CHAMELEON
 
         "javax.microedition.rms.RecordStore$SecurityTrusted",

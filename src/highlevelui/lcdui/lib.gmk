@@ -138,6 +138,11 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/ItemCommandListener.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/DisplayEventHandlerImpl.java
 
+ifeq ($(TARGET_PLATFORM), linux_gci)
+SUBSYSTEM_LCDUI_JAVA_FILES += \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GCIEventListener.java
+endif
+
 # I3 Test file for this library
 #
 # IMPL NOTE:
