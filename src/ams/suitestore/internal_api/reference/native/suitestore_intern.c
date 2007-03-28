@@ -1146,7 +1146,22 @@ remove_from_suite_list_and_save(SuiteIdType suiteId) {
             }
 
             /* free the memory allocated for the entry */
+            if (pData->jarHashLen && pData->varSuiteData.pJarHash) {
+                pcsl_mem_free(pData->varSuiteData.pJarHash);
+            }
+
+            pcsl_string_free(&pData->varSuiteData.midletClassName);
+            pcsl_string_free(&pData->varSuiteData.displayName);
+            pcsl_string_free(&pData->varSuiteData.iconName);
+            pcsl_string_free(&pData->varSuiteData.suiteVendor);
+            pcsl_string_free(&pData->varSuiteData.suiteName);
+            pcsl_string_free(&pData->varSuiteData.pathToJar);
+            pcsl_string_free(&pData->varSuiteData.pathToSettings);
+
             pcsl_mem_free(pData);
+            /* the memory was freed */
+
+            /* decrease the number of the installed suites */
             g_numberOfSuites--;
 
             /* save the modified list into _suites.dat */
