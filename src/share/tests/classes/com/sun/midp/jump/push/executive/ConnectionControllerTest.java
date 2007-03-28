@@ -27,6 +27,7 @@ package com.sun.midp.jump.push.executive;
 import com.sun.midp.push.gcf.PermissionCallback;
 import com.sun.midp.push.gcf.ReservationDescriptorFactory;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import junit.framework.*;
 import com.sun.midp.push.gcf.ConnectionReservation;
@@ -287,10 +288,9 @@ public final class ConnectionControllerTest extends TestCase {
                 new ConnectionController.Reservations();
         reservations.add(h);
 
-        final Iterator it = reservations.queryBySuiteID(midletSuiteId);
-        assertTrue(it.hasNext());
-        assertSame(h, it.next());
-        assertFalse(it.hasNext());
+        final Collection c = reservations.queryBySuiteID(midletSuiteId);
+        assertEquals(1, c.size());
+        assertSame(h, c.iterator().next());
     }
 
     public void testQueryBySuiteMissing() throws IOException {
@@ -307,7 +307,7 @@ public final class ConnectionControllerTest extends TestCase {
                 new ConnectionController.Reservations();
         reservations.add(h);
 
-        assertFalse(reservations.queryBySuiteID(midletSuiteId + 1).hasNext());
+        assertTrue(reservations.queryBySuiteID(midletSuiteId + 1).isEmpty());
     }
 
     public void testEmptyReservations() {
@@ -315,7 +315,7 @@ public final class ConnectionControllerTest extends TestCase {
                 new ConnectionController.Reservations();
 
         assertNull(reservations.queryByConnection("foo://bar"));
-        assertFalse(reservations.queryBySuiteID(13).hasNext());
+        assertTrue(reservations.queryBySuiteID(13).isEmpty());
     }
 
     public void testAddAndRemove() throws IOException {
@@ -334,8 +334,7 @@ public final class ConnectionControllerTest extends TestCase {
         reservations.remove(h);
 
         assertNull(reservations.queryByConnection(connection));
-        final Iterator it = reservations.queryBySuiteID(midletSuiteId);
-        assertFalse(it.hasNext());
+        assertTrue(reservations.queryBySuiteID(midletSuiteId).isEmpty());
     }
 
     private void checkStoreEmpty(final Store store) {
@@ -742,7 +741,7 @@ public final class ConnectionControllerTest extends TestCase {
         } catch (InterruptedException ie) {
             fail("Unexpected InterruptedException: " + ie);
         }
-        
+
         assertTrue(lifecycleAdapter.hasBeenInvokedOnceFor(midletSuiteId, midlet));
     }
 
@@ -776,6 +775,100 @@ public final class ConnectionControllerTest extends TestCase {
         }
         try {
             t.join();
+        } catch (InterruptedException ie) {
+            fail("Unexpected InterruptedException: " + ie);
+        }
+
+        assertTrue(lifecycleAdapter.hasNotBeenInvoked());
+    }
+
+    public void testUninstallSuiteWithNoConnections() throws IOException {
+        final Store store = createStore();
+        final ConnectionController cc = createConnectionController(store);
+        cc.removeSuiteConnections(239);
+        checkStoreEmpty(store);
+    }
+
+    public void testUninstallWithTwoConnections() throws IOException {
+        final int midletSuiteId = 123;
+
+        final String midlet1 = "com.sun.Foo";
+        final String midlet2 = "com.sun.Bar";
+
+        final String connection1 = "foo://bar";
+        final String filter1 = "*.123";
+        final MockReservationDescriptor descriptor1 =
+                new MockReservationDescriptor(connection1, filter1);
+
+        final String connection2 = "foo://qux";
+        final String filter2 = "*.*";
+        final MockReservationDescriptor descriptor2 =
+                new MockReservationDescriptor(connection2, filter2);
+
+        final Store store = createStore();
+
+        final ListingLifecycleAdapter lifecycleAdapter =
+                new ListingLifecycleAdapter();
+
+        final ConnectionController cc =
+                createConnectionController(store, lifecycleAdapter);
+
+        cc.registerConnection(midletSuiteId, midlet1, descriptor1);
+        cc.registerConnection(midletSuiteId, midlet2, descriptor2);
+        cc.removeSuiteConnections(midletSuiteId);
+
+        assertTrue(descriptor1.connectionReservation.isCancelled);
+        assertTrue(descriptor2.connectionReservation.isCancelled);
+
+        assertFalse(cc.unregisterConnection(midletSuiteId, connection1));
+        assertFalse(cc.unregisterConnection(midletSuiteId, connection2));
+
+        assertEquals(0, cc.listConnections(midletSuiteId, false).length);
+
+        checkStoreEmpty(store);
+    }
+
+    public void testConcurrentCancellationAndUninstall() throws IOException {
+        final int midletSuiteId = 123;
+
+        final String midlet1 = "com.sun.Foo";
+        final String midlet2 = "com.sun.Bar";
+
+        final String connection1 = "foo://bar";
+        final String filter1 = "*.123";
+        final MockReservationDescriptor descriptor1 =
+                new MockReservationDescriptor(connection1, filter1);
+
+        final String connection2 = "foo://qux";
+        final String filter2 = "*.*";
+        final MockReservationDescriptor descriptor2 =
+                new MockReservationDescriptor(connection2, filter2);
+
+        final Store store = createStore();
+
+        final ListingLifecycleAdapter lifecycleAdapter =
+                new ListingLifecycleAdapter();
+
+        final ConnectionController cc =
+                createConnectionController(store, lifecycleAdapter);
+
+        cc.registerConnection(midletSuiteId, midlet1, descriptor1);
+        cc.registerConnection(midletSuiteId, midlet2, descriptor2);
+
+        final DelayableThread t1 = descriptor1.connectionReservation.pingThread();
+        final DelayableThread t2 = descriptor2.connectionReservation.pingThread();
+
+        synchronized (t1.lock) {
+            synchronized (t2.lock) {
+                // start the threads first...
+                t1.start(); t2.start();
+                // ...but before listeners starts, uninstall the suite...
+                cc.removeSuiteConnections(midletSuiteId);
+                // ...now let listeners proceed
+            }
+        }
+        try {
+            t1.join(); t2.join();
         } catch (InterruptedException ie) {
             fail("Unexpected InterruptedException: " + ie);
         }
