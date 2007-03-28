@@ -88,6 +88,10 @@ static void drawChar(gxj_screen_buffer *sbuf, jchar c0,
     unsigned long const firstPixelIndex = c * fontHeight * fontWidth;
     unsigned char const * const mapend = fontbitmap + mapLen;
 
+    int destWidth = sbuf->width;
+    gxj_pixel_type *dest = sbuf->pixelData + y*destWidth + x;
+    int destInc = destWidth - xLimit + xSource;
+
     pixelIndex = firstPixelIndex + (ySource * fontWidth) + xSource;
     pixelIndexLineInc = fontWidth - (xLimit - xSource);
     byteIndex = pixelIndex / 8;
@@ -97,9 +101,15 @@ static void drawChar(gxj_screen_buffer *sbuf, jchar c0,
     yDestLimit = y + yLimit - ySource;
     xDestLimit = x + xLimit - xSource;
 
+    // The clipping should be applied here already, so
+    // we use optimal access to destination buffer with
+    // no extra checks
+
     if (fontbitmap < mapend) {
-        for (yDest = y; yDest < yDestLimit; yDest++, bitOffset+=pixelIndexLineInc) {
-            for (xDest = x; xDest < xDestLimit; xDest++, bitOffset++) {
+        for (yDest = y; yDest < yDestLimit;
+                yDest++, bitOffset+=pixelIndexLineInc, dest += destInc) {
+            for (xDest = x; xDest < xDestLimit;
+                    xDest++, bitOffset++, dest++) {
                 if (bitOffset >= 8) {
                     fontbitmap += bitOffset / 8;
                     if (fontbitmap >= mapend) {
@@ -111,7 +121,7 @@ static void drawChar(gxj_screen_buffer *sbuf, jchar c0,
 
                 /* we don't draw "background" pixels, only foreground */
                 if ((bitmapByte & BitMask[bitOffset]) != 0) {
-                    PRIMDRAWPIXEL(sbuf, pixelColor, xDest, yDest);
+                    *dest = pixelColor;
                 }
             }
         }
