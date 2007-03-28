@@ -29,8 +29,6 @@ package com.sun.midp.suspend;
 import com.sun.midp.main.*;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
-import com.sun.midp.midlet.MIDletStateHandler;
-import com.sun.midp.midlet.MIDletSuite;
 
 import java.util.Vector;
 
@@ -224,17 +222,7 @@ public class SuspendSystem extends AbstractSubsystem {
      * @return the singleton instance
      */
     public static SuspendSystem getInstance(SecurityToken token) {
-        if (token != null) {
-            token.checkIfPermissionAllowed(Permissions.MIDP);
-        } else {
-            MIDletSuite midletSuite = MIDletStateHandler.
-                getMidletStateHandler().getMIDletSuite();
-            // if a MIDlet suite is null, assume the JAM is calling.
-            if (midletSuite != null) {
-                midletSuite.checkIfPermissionAllowed(Permissions.AMS);
-            }
-        }
-
+        token.checkIfPermissionAllowed(Permissions.MIDP);
         return instance;
     }
 
@@ -243,7 +231,7 @@ public class SuspendSystem extends AbstractSubsystem {
      * this restricted package.
      * @return the singleton instance
      */
-    static SuspendSystem getInstance() { 
+    static SuspendSystem getInstance() {
         return instance;
     }
 
