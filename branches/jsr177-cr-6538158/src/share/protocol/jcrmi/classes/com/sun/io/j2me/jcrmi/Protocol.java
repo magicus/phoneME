@@ -258,8 +258,9 @@ public class Protocol
         // prepare selection APDU
         offset = 0;
 
+        // IMPL_NOTE: For JavaCard 2.1 compliant cards jcrmi emulation is used.
         String jcVersion = Configuration.getProperty("com.sun.javacard.version");
-        if (jcVersion.startsWith("2.1")) {
+        if ((jcVersion.equals("2.1"))||(jcVersion.startsWith("2.1."))) {
             putInt(0x00a40400);  // selection APDU header
         }
         else {
