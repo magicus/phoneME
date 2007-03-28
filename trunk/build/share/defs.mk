@@ -2141,6 +2141,14 @@ endif
 # include tools component makefile
 include $(TOOLS_DIR)/tools.gmk
 
+# Locate the cdc-com component
+ifeq ($(USE_CDC_COM),true)
+CDC_COM_DIR ?= $(COMPONENTS_DIR)/cdc-com
+ifeq ($(wildcard $(CDC_COM_DIR)/build/share/id_cdc-com.mk),)
+$(error CDC_COM_DIR must point to a directory containing the cdc-com sources: $(CDC_COM_DIR))
+endif
+endif
+
 #
 # Include target makfiles last.
 #
