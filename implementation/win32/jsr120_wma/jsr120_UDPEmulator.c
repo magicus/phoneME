@@ -73,7 +73,7 @@ int getIntProp(const char* propName, int defaultValue) {
     return value ? atoi(value) : defaultValue;
 }
 
-char* getStrProp(const char* propName, const char* defaultValue) {
+const char* getStrProp(const char* propName, const char* defaultValue) {
     char* value = getenv(propName);
     return value ? value : defaultValue;
 }
