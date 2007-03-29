@@ -4129,16 +4129,15 @@ void CodeGenerator::invoke(const Method* method,
         mov(tmp, zero);
         set_kni_parameter_base(tmp);
       }
-#ifdef AZZERT
+
       mov(tmp, one);
       set_jvm_in_quick_native_method(tmp);
-#endif
+
       Value result(T_INT);      // this is a lie.  But vcall wants something
       vcall_simple_c_runtime(result, (address)native_code, NULL);
-#ifdef AZZERT
+
       mov(tmp, zero);
       set_jvm_in_quick_native_method(tmp);
-#endif
 
       {
         Label ok;
