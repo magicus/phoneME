@@ -191,7 +191,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         if (isInteractive != interactive) {
             isInteractive = interactive;
             if (owner instanceof MIDPWindow) {
-                ((MIDPWindow)owner).updateLayout();
+                ((MIDPWindow)owner).onSoftButtonInteractive(isInteractive);
             }
         }
     }
