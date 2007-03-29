@@ -319,15 +319,15 @@ JC_PKI_APPLET_PATH=com/sun/satsa/pkiapplet
 JC_PKI_APPLET_SOURCES = \
     $(JSR_177_DIR)/src/share/tool/javacard/$(JC_PKI_APPLET_PATH)/Parser.java \
     $(JSR_177_DIR)/src/share/tool/javacard/$(JC_PKI_APPLET_PATH)/PKIApplet.java \
-    $(JSR_177_DIR)/src/share/tool/javacard/$(JC_PKI_APPLET_PATH)/Data.java \
-    $(JSR_177_DIR)/src/share/tool/javacard/$(JC_PKI_APPLET_PATH)/File.java
+    $(JSR_177_DIR)/src/share/tool/javacard/$(JC_PKI_APPLET_PATH)/File.java \
+    $(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)/Data.java
 
 JC_ACL_APPLET_PATH=com/sun/satsa/aclapplet
 JC_ACL_APPLET_SOURCES = \
     $(JSR_177_DIR)/src/share/tool/javacard/$(JC_ACL_APPLET_PATH)/Parser.java \
     $(JSR_177_DIR)/src/share/tool/javacard/$(JC_ACL_APPLET_PATH)/ACLApplet.java \
-    $(JSR_177_DIR)/src/share/tool/javacard/$(JC_ACL_APPLET_PATH)/Data.java \
-    $(JSR_177_DIR)/src/share/tool/javacard/$(JC_ACL_APPLET_PATH)/File.java
+    $(JSR_177_DIR)/src/share/tool/javacard/$(JC_ACL_APPLET_PATH)/File.java \
+    $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java
 
 # Determines what option we have made and set it
 # to some variable that global makefile recognize
@@ -437,6 +437,7 @@ ROMGEN_CFG_FILES     += satsa_rom.cfg
 # Definition for the build directory
 #
 JSR_177_BUILD_DIR       = $(JSROP_BUILD_DIR)/jsr177
+JSR_177_GENERATED_DIR   = $(JSR_177_BUILD_DIR)/generated
 
 ifeq ($(TARGET_VM), cldc)
 include $(JSR_177_DIR)/src/cldc_application/config/subsystem.gmk
@@ -446,6 +447,9 @@ endif
 
 # Tools and applets
 #
+
+# jcrmic tool
+#
 $(JCRMIC_TOOL): $(JCRMIC_SOURCES)
 	@echo " ..." $@
 	$(AT)$(JAVAC_CMD) -d $(JAVACARD_CLASSES) $(JCRMIC_SOURCES)
@@ -453,8 +457,72 @@ $(JCRMIC_TOOL): $(JCRMIC_SOURCES)
 	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/jcrmic/$(JCRMIC_MANIFEST_FILE) $(JAVACARD_CLASSES)/$(JCRMIC_MANIFEST_FILE)
 	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAR_CMD) cfm $(JCRMIC_ARCHIVE) $(JCRMIC_MANIFEST_FILE) com/sun/satsa/jcrmic )
 	$(AT)mv $(JAVACARD_CLASSES)/$(JCRMIC_ARCHIVE) $(BINDIR)/$(JCRMIC_ARCHIVE)
+	
+# acl_data tool
+#
+ACL_DATA_DIR = $(JSR_177_BUILD_DIR)/acl_data
+ACL_DATA_CLASSES = $(ACL_DATA_DIR)/classes
+
+ifeq ($(wildcard $(JSR_177_DIR)/src/share/tool/acl_data/acl_0),)
+    $(error ACL input text file 'acl_0' have to be placed into $(JSR_177_DIR)/src/share/tool/acl_data directory)
+endif
+
+ACL_DATA_DIRS = $(ACL_DATA_DIR)/files $(ACL_DATA_DIR)/classes $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)
+$(ACL_DATA_DIRS): 
+	@echo " ... creating directories" $@
+	$(AT)mkdir -p $@
+
+ACL_DATA_SOURCES =                                              \
+    $(JSR_177_DIR)/src/share/tool/acl_data/ACEntry.java         \
+    $(JSR_177_DIR)/src/share/tool/acl_data/ACLFileReader.java   \
+    $(JSR_177_DIR)/src/share/tool/acl_data/Main.java            \
+    $(JSR_177_DIR)/src/share/tool/acl_data/PINData.java         \
+    $(JSR_177_DIR)/src/share/tool/acl_data/TLVException.java    \
+    $(JSR_177_DIR)/src/share/tool/acl_data/ACFile.java          \
+    $(JSR_177_DIR)/src/share/tool/acl_data/ACList.java          \
+    $(JSR_177_DIR)/src/share/tool/acl_data/JCRMIPermission.java \
+    $(JSR_177_DIR)/src/share/tool/acl_data/Print.java           \
+    $(JSR_177_DIR)/src/share/tool/acl_data/TLV.java             \
+    $(JSR_177_DIR)/src/share/tool/acl_data/ACLPermissions.java  \
+    $(JSR_177_DIR)/src/share/tool/acl_data/FileSystem.java      \
+    $(JSR_177_DIR)/src/share/tool/acl_data/Location.java        \
+    $(JSR_177_DIR)/src/share/tool/acl_data/PINAttributes.java   \
+    $(JSR_177_DIR)/src/share/tool/acl_data/Utils.java
+
+$(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java: $(JSR_177_DIR)/src/share/tool/acl_data/acl_0
+	@echo " ... generating " $@
+	$(AT)$(JAVAC) -source 1.4 -encoding utf-8 -d $(ACL_DATA_CLASSES) -classpath $(ACL_DATA_CLASSES) $(ACL_DATA_SOURCES)
+	$(AT)$(JAVA_CMD) -classpath $(ACL_DATA_CLASSES) acl_data.Main $(JSR_177_DIR)/src/share/tool/acl_data/acl_0 \
+	$(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/ $(ACL_DATA_DIR)/files/
+	$(AT)$(JAVA_CMD) -classpath $(ACL_DATA_CLASSES) acl_data.Print $(ACL_DATA_DIR)/files/* > $(ACL_DATA_DIR)/files.txt
 
 ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
+# wim_data tool
+#
+WIM_DATA_DIR = $(JSR_177_BUILD_DIR)/wim_data
+WIM_DATA_CLASSES = $(WIM_DATA_DIR)/classes
+
+WIM_DATA_DIRS = $(WIM_DATA_DIR)/classes $(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)
+$(WIM_DATA_DIRS): 
+	@echo " ... creating directories" $@
+	$(AT)mkdir -p $@
+
+WIM_DATA_SOURCES =                                         \
+    $(JSR_177_DIR)/src/share/tool/wim_data/FileSystem.java \
+    $(JSR_177_DIR)/src/share/tool/wim_data/Key.java        \
+    $(JSR_177_DIR)/src/share/tool/wim_data/Main.java       \
+    $(JSR_177_DIR)/src/share/tool/wim_data/PIN.java        \
+    $(JSR_177_DIR)/src/share/tool/wim_data/TLV.java        \
+    $(JSR_177_DIR)/src/share/tool/wim_data/Utils.java
+    
+$(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)/Data.java: $(JSR_177_DIR)/src/share/tool/wim_data/Main.java
+	@echo " ... generating " $@
+	$(AT)$(JAVAC) -source 1.4 -encoding utf-8 -d $(WIM_DATA_CLASSES) -classpath $(WIM_DATA_CLASSES) $(WIM_DATA_SOURCES)
+	$(AT)$(JAVA_CMD) -classpath $(WIM_DATA_CLASSES) wim_data.Main $(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)/ \
+	$(WIM_DATA_DIR)/	
+
+# simulator tool
+#
 APPLETS_LIST = toolkit   \
                gsmapplet \
                satapplet \
@@ -470,9 +538,9 @@ $(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.cap: $(SIM_TOOLKIT_SOUR
 
 TOOLKIT_EXP=$(JAVACARD_CLASSES)/api_export_files/$(SIM_TOOLKIT_PATH)/javacard/toolkit.exp
 TOOLKIT_CLASSES=$(foreach class,$(subst .java,.class,$(notdir $(SIM_TOOLKIT_SOURCES))),$(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/$(class))
-$(JAVACARD_CLASSES)/$(JC_SAT_APPLET_PATH)/javacard/satapplet.cap: $(JC_SAT_APPLET_SOURCES) $(TOOLKIT_CLASSES) $(TOOLKIT_EXP)
+$(JAVACARD_CLASSES)/$(JC_SAT_APPLET_PATH)/javacard/satapplet.cap: $(ACL_DATA_DIRS) $(JC_SAT_APPLET_SOURCES) $(TOOLKIT_CLASSES) $(TOOLKIT_EXP)
 $(JAVACARD_CLASSES)/$(JC_GSM_APPLET_PATH)/javacard/gsmapplet.cap: $(JC_GSM_APPLET_SOURCES) $(TOOLKIT_CLASSES) $(TOOLKIT_EXP)
-$(JAVACARD_CLASSES)/$(JC_PKI_APPLET_PATH)/javacard/pkiapplet.cap: $(JC_PKI_APPLET_SOURCES)
+$(JAVACARD_CLASSES)/$(JC_PKI_APPLET_PATH)/javacard/pkiapplet.cap: $(WIM_DATA_DIRS) $(JC_PKI_APPLET_SOURCES)
 $(JAVACARD_CLASSES)/$(JC_ACL_APPLET_PATH)/javacard/aclapplet.cap: $(JC_ACL_APPLET_SOURCES)
 
 SCRS = $(foreach app, $(APPLETS_LIST), $(JAVACARD_CLASSES)/$(app).scr)
