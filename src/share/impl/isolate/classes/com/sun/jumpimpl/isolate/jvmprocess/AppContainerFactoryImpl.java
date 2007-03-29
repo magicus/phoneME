@@ -27,6 +27,7 @@ package com.sun.jumpimpl.isolate.jvmprocess;
 import com.sun.jump.common.JUMPAppModel;
 import com.sun.jump.isolate.jvmprocess.JUMPIsolateProcess;
 import com.sun.jump.isolate.jvmprocess.JUMPAppContainer;
+import com.sun.jump.isolate.jvmprocess.JUMPAppContainerContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -40,7 +41,8 @@ public class AppContainerFactoryImpl {
    private static String CONTAINER_CLASSNAME   = "AppContainerImpl";
    private static String FACTORY_METHODNAME  = "getInstance";
 
-   public JUMPAppContainer getAppContainer(JUMPAppModel model) {
+   public JUMPAppContainer getAppContainer(JUMPAppModel model,
+                                           JUMPAppContainerContext context) {
       
        String defaultPackageName = PREFIX + "." + model.toString();
 
@@ -60,9 +62,10 @@ public class AppContainerFactoryImpl {
        try { 
           Class clazz = Class.forName(fullClassName);
 
-          Method m = clazz.getMethod(FACTORY_METHODNAME, new Class[0]);
+          Method m = clazz.getMethod(FACTORY_METHODNAME,
+                        new Class[] {JUMPAppContainerContext.class});
 
-          return (JUMPAppContainer) m.invoke(null, new Object[0]);
+          return (JUMPAppContainer) m.invoke(null, new Object[] {context});
 
        } catch (ClassNotFoundException e) {
           System.out.println(fullClassName + " not found");

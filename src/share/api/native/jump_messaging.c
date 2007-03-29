@@ -1107,9 +1107,9 @@ void
 jumpMessageUnblock(JUMPPlatformCString messageType,
 		   JUMPMessageStatusCode* code)
 {
-    assert(jumpMessagingInitialized != 0);
-
     JUMPMessageQueueStatusCode mqcode;
+
+    assert(jumpMessagingInitialized != 0);
 
     jumpMessageQueueUnblock(messageType, &mqcode);
     *code = translateJumpMessageQueueStatusCode(&mqcode);

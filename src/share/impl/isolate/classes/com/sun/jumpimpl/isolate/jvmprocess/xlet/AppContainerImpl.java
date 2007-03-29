@@ -26,6 +26,7 @@ package com.sun.jumpimpl.isolate.jvmprocess.xlet;
 
 import com.sun.jump.isolate.jvmprocess.JUMPIsolateProcess;
 import com.sun.jump.isolate.jvmprocess.JUMPAppContainer;
+import com.sun.jump.isolate.jvmprocess.JUMPAppContainerContext;
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.message.JUMPMessage;
 import com.sun.jump.message.JUMPMessageHandler;
@@ -46,7 +47,8 @@ import java.util.StringTokenizer;
 
 public class AppContainerImpl extends JUMPAppContainer {
 
-   public static JUMPAppContainer getInstance() {
+   public static JUMPAppContainer
+       getInstance(JUMPAppContainerContext context) {
 	   return new AppContainerImpl(); 
    }
 

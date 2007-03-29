@@ -26,6 +26,7 @@ package com.sun.jumpimpl.isolate.jvmprocess.main;
 
 import com.sun.jump.isolate.jvmprocess.JUMPIsolateProcess;
 import com.sun.jump.isolate.jvmprocess.JUMPAppContainer;
+import com.sun.jump.isolate.jvmprocess.JUMPAppContainerContext;
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.message.JUMPMessage;
 import com.sun.jump.message.JUMPMessageHandler;
@@ -50,7 +51,8 @@ import sun.misc.CDCAppClassLoader;
 
 public class AppContainerImpl extends JUMPAppContainer {
 
-   public static JUMPAppContainer getInstance() {
+   public static JUMPAppContainer
+       getInstance(JUMPAppContainerContext context) {
 	   return new AppContainerImpl(); 
    }
 
