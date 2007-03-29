@@ -39,7 +39,7 @@
 #ifndef _ASM
 
 #define CVMatomicCompareAndSwap(a, n, o)			\
-    (CVMAddr)InterlockedCompareExchange((PVOID*)(a), (PVOID)(n), (PVOID)(o))
+    (CVMAddr)InterlockedCompareExchange((LONG volatile*)(a), (LONG)(n), (LONG)(o))
 
 #define CVMatomicSwap(a, n)	\
     (CVMAddr)InterlockedExchange((LPLONG)(a), (LONG)(n))

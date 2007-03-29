@@ -3036,8 +3036,8 @@ InitLocalVarAddress(CVMJITCompilationContext* con,
      * Taken from  reloadLocal(con, rx->loadOpcode[rp->size-1], rp):
      * Locals are located just before the frame ptr; this is a negative offset 
      */
-    frameOffset = -((con->numberLocalWords - l->localNo) *
-	sizeof(CVMJavaVal32));
+    frameOffset = 
+	-(int)((con->numberLocalWords - l->localNo) * sizeof(CVMJavaVal32));
     frameReg = CVMCPU_JFP_REG;
 
     /* Make sure we're within the addressing range: */
@@ -7192,7 +7192,7 @@ resolveConstant(CVMJITCompilationContext *con, CVMJITIRNodePtr thisNode,
      */
     CVMJITaddCodegenComment((con, "load cachedConstant"));
     CVMCPUemitMemoryReferencePCRelative(con, CVMCPU_LDR32_OPCODE,
-					destRegNo, -sizeof(CVMUint32));
+					destRegNo, -(int)sizeof(CVMUint32));
 
     /* Occupy the target register with the resolved value: */
     CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, thisNode);
