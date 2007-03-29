@@ -50,6 +50,13 @@ import com.sun.jump.command.JUMPResponse;
 import com.sun.jump.command.JUMPResponseInteger;
 import com.sun.jump.message.JUMPMessageHandler;
 import com.sun.jumpimpl.client.module.windowing.WindowingIsolateClient;
+import com.sun.jumpimpl.client.module.serviceregistry.ServiceRegistryClient;
+
+import java.rmi.Remote;
+import java.rmi.NotBoundException;
+import javax.microedition.xlet.XletContext;
+import javax.microedition.xlet.ixc.IxcRegistry;
+import com.sun.jumpimpl.ixc.XletContextFactory;
 
 import sun.misc.ThreadRegistry;
 
@@ -69,6 +76,7 @@ public class JUMPIsolateProcessImpl
     private JUMPAppModel            appModel;
     private JUMPAppContainer        appContainer;
     private WindowingIsolateClient  windowing;
+    private ServiceRegistryClient   serviceRegistry;
     private Object stateChangeMutex = new Object();
     private boolean dispatchingStateChange;
     private boolean exitAfterStateChange;
@@ -157,6 +165,8 @@ public class JUMPIsolateProcessImpl
             JUMPMessageDispatcher d = ipi.getMessageDispatcher();
 
             d.registerHandler("mvm/client", ipi);
+            // FIXME: should go away once Ixc is on messaging
+            d.registerHandler("mvm/ixc", ipi);
 
             JUMPAppModel appModel = JUMPAppModel.fromName(args[0]);
             if (appModel == null) {
@@ -235,11 +245,17 @@ public class JUMPIsolateProcessImpl
             } else if (
                     id.equals(JUMPExecutiveLifecycleRequest.ID_DESTROY_APP)) {
                 responseMessage = handleDestroyAppMessage(in);
+            } else if (
+                id.equals(com.sun.jumpimpl.ixc.IxcMessage.ID_PORT)) {
+                // Tell the isolate about the ixc port.
+                // FIXME: should go away once ixc is on messaging.
+                responseMessage = handleIxcMessage(in);
             } else {
                 responseMessage = handleUnknownMessage(in);
             }
 
             in.getSender().sendResponseMessage(responseMessage);
+
         } catch (Throwable e) {
             e.printStackTrace();
         } finally {
@@ -292,6 +308,13 @@ public class JUMPIsolateProcessImpl
 	rsh.sendRequestAsync(e, req);
     }
 
+    /**
+     * Returns a remote service.
+     */
+    public Remote getRemoteService(Class remoteInterface) {
+	return serviceRegistry.getRemoteService(remoteInterface.getName());
+    }
+
     private JUMPOutgoingMessage handleStartAppMessage(JUMPMessage in) {
         JUMPExecutiveLifecycleRequest elr = (JUMPExecutiveLifecycleRequest)
             JUMPExecutiveLifecycleRequest.fromMessage(in);
@@ -311,7 +334,7 @@ public class JUMPIsolateProcessImpl
 
         // Now wrap this appid in a message and return it
         JUMPResponseInteger resp;
-        if (appId < 0) {
+        if (appId > 0) {
             resp = new JUMPResponseInteger(in.getType(), 
                                            JUMPResponseInteger.ID_SUCCESS,
                                            appId);
@@ -389,5 +412,22 @@ public class JUMPIsolateProcessImpl
         JUMPOutgoingMessage out = newOutgoingMessage(in);
         out.addUTFArray(new String[] {"SUCCESS"});
         return out;
+    }
+
+    /**
+     * Extract port number from the message and tell it to the 
+     * service registry client.
+     * FIXME: should be removed once ixc is on messaging.
+     */
+    private JUMPOutgoingMessage handleIxcMessage(JUMPMessage in) {
+        JUMPCommand message = JUMPCommand.fromMessage(in, 
+                                  com.sun.jumpimpl.ixc.IxcMessage.class);
+
+        int port = Integer.parseInt(message.getCommandData()[0]);
+ 
+        serviceRegistry = new ServiceRegistryClient(port);
+
+        JUMPResponse resp = new JUMPResponse(in.getType(), JUMPResponseInteger.ID_SUCCESS);
+        return resp.toMessageInResponseTo(in, this);
     }
 }

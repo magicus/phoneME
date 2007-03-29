@@ -24,16 +24,21 @@
 
 package com.sun.jumpimpl.ixc;
 
-import java.rmi.*;
-import java.rmi.registry.Registry;
+import com.sun.jump.command.JUMPRequest;
 
-/* 
- * A remote interface implemented by JumpExecIxcRegistry.
+/**
+ * A message type to broadcast ixc port number from
+ * the executive to the isolates.
  */
 
-public interface JumpExecIxcRegistryRemote extends Registry {
-   void notifyObjectImport(int importingXletID, Remote ref)   
-      throws RemoteException;
-   Remote lookupWithXletID(String name, int importingXletID)   
-      throws RemoteException, NotBoundException, AccessException;
+public class IxcMessage extends JUMPRequest {
+
+    public static final String messageType = "mvm/ixc";
+    public static final String ID_PORT = "port";
+
+    public IxcMessage() {}
+
+    public IxcMessage(int portNumber) { 
+       super(messageType, ID_PORT, new String[] {Integer.toString(portNumber)}); 
+    }
 }

@@ -33,44 +33,51 @@ import javax.microedition.xlet.XletContext;
 import javax.microedition.xlet.ixc.StubException;
 
 /* 
- * A pre-generated Stub class for JumpExecIxcRegistry.
+ * A pre-generated Stub class for JUMPExecIxcRegistry.
  * Clinet VMs use this class to talk with master IxcRegistry.
  */
 
-public final class JumpExecIxcRegistryStub extends StubObject 
-                                  implements JumpExecIxcRegistryRemote {
+public final class JUMPExecIxcRegistryStub extends StubObject 
+                                  implements JUMPExecIxcRegistryRemote {
 
     static RemoteRef thisRef;
     static HashMap methodIDsByName = new HashMap();
 
-    static {
-        try {
-           RemoteObjectType type = 
-              new RemoteObjectType(JumpExecIxcRegistryRemote.class);
+    static private boolean isInitialized = false;
+    private static RemoteRef initialize() {
+        if (!isInitialized) {
+           isInitialized = true;
+           try {
+              RemoteObjectType type = 
+                 new RemoteObjectType(JUMPExecIxcRegistryRemote.class);
 
-           thisRef = new RemoteRef(ExportedObject.newObjectID(),
-                           ConnectionReceiver.getAppManagerPort(),
-                           Utils.getMtaskServerID(),
-                           type.getRemoteInterfaceNames(),
-                           type.getMethodIDsAslongs());
+              thisRef = new RemoteRef(ExportedObject.newObjectID(),
+                              ConnectionReceiver.getExecVMServicePort(),
+                              Utils.getMtaskServerID(),
+                              type.getRemoteInterfaceNames(),
+                              type.getMethodIDsAslongs());
 
 
-           Iterator iterator = type.methodsByID.keySet().iterator();
-           while (iterator.hasNext()) {
-              Long id = (Long) iterator.next(); 
-              Method m = (Method) type.methodsByID.get(id);
-              methodIDsByName.put(m.getName(), id);
+              Iterator iterator = type.methodsByID.keySet().iterator();
+              while (iterator.hasNext()) {
+                 Long id = (Long) iterator.next(); 
+                 Method m = (Method) type.methodsByID.get(id);
+                 methodIDsByName.put(m.getName(), id);
+              }
+
+
+           } catch (RemoteException e) {
+              System.err.println("Fatal error in starting IXC");
+              throw new RuntimeException(e.getCause());
            }
-
-        } catch (RemoteException e) {
-           System.err.println("Fatal error in starting IXC");
-           throw new RuntimeException(e.getCause());
         }
+
+        return thisRef;
     }
 
-    public JumpExecIxcRegistryStub(XletContext context) {
+    public JUMPExecIxcRegistryStub(XletContext context) {
         // Arguments are of RemoteRef and XletContext, for it's ClassLoader.
-        super(thisRef, context);
+        super(initialize(), context);
     }
 
     public long getMethodID(String s) {

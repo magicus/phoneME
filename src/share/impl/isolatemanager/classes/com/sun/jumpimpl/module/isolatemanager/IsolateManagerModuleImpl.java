@@ -104,12 +104,19 @@ public class IsolateManagerModuleImpl
         JUMPIsolateProxyImpl isolate =
 	    JUMPIsolateProxyImpl.registerIsolate(pid);
         isolates.add(isolate);
+
 	//
 	// Wait until isolate is initialized (it will send us a message
 	// when it is ready)
 	//
 	// FIXME: what's the right timeout value and where is that stored?
 	isolate.waitForState(JUMPIsolateLifecycleRequest.ISOLATE_STATE_INITIALIZED, 5000L);
+
+        // Tell the isolate about the ixc port.
+        // FIXME: should go away once ixc is on messaging.
+        rsh.sendRequest(isolate,
+               new com.sun.jumpimpl.ixc.IxcMessage(
+               com.sun.jumpimpl.ixc.ConnectionReceiver.getExecVMServicePort()));
 
 	//
 	// FIXME!!!! What happens if we time out? We can kill

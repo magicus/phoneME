@@ -22,15 +22,17 @@ Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 Clara, CA 95054 or visit www.sun.com if you need additional
 information or have any questions.
 -->
-<project basedir="." default="compile-serviceregistry" name="jump-impl-serviceregistry">
+<project basedir="." default="compile-jumpixc" name="jump-impl-jumpixc">
 
-  <target name="compile-serviceregistry">
-      <!-- executive specific ixc files and service registry files -->
+  <target name="compile-jumpixc">
+
+      <!-- shared IXC files -->
       <jump.javac
-             srcdir="${s.share.impl.dir}/serviceregistry/classes">
-           <include name="com/sun/jumpimpl/module/serviceregistry/*.java" />
-           <include name="com/sun/jumpimpl/client/module/serviceregistry/*.java" />
+             srcdir="${s.share.impl.dir}/jumpixc/classes">
+           <include name="com/sun/jumpimpl/ixc/*.java" />
+           <include name="com/sun/jumpimpl/ixc/executive/*.java" />
       </jump.javac>
+
   </target>
 
 </project>

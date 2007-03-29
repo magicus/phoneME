@@ -26,6 +26,7 @@ package com.sun.jumpimpl.module.lifecycle;
 
 import com.sun.jump.module.lifecycle.JUMPApplicationLifecycleModule;
 import com.sun.jump.module.lifecycle.JUMPApplicationLifecycleModuleFactory;
+import com.sun.jumpimpl.module.lifecycle.remote.ApplicationLifecycleModuleRemoteImpl;
 import java.util.Map;
 
 public class ApplicationLifecycleModuleFactoryImpl extends JUMPApplicationLifecycleModuleFactory {
@@ -35,6 +36,18 @@ public class ApplicationLifecycleModuleFactoryImpl extends JUMPApplicationLifecy
    
    public void load(Map config) {
        this.config = config;
+
+       boolean shouldExport = 
+	  new Boolean((String)config.get("lifecycle.remote.export")).booleanValue();
+
+       System.out.println("lifecycle.remote.export boolean" + shouldExport);
+
+       if (shouldExport) {
+	  JUMPApplicationLifecycleModule module = 
+	       getModule(POLICY_ONE_LIVE_INSTANCE_ONLY);
+
+	  new ApplicationLifecycleModuleRemoteImpl(module);
+       }
    }
 
    public void unload() {
@@ -56,7 +69,6 @@ public class ApplicationLifecycleModuleFactoryImpl extends JUMPApplicationLifecy
    public JUMPApplicationLifecycleModule getModule(String policy) {
         if (policy.equals(JUMPApplicationLifecycleModuleFactory.POLICY_ONE_LIVE_INSTANCE_ONLY))
 	    return getOneLiveOnly();
-
-        return null;
+return null;
    }
 }

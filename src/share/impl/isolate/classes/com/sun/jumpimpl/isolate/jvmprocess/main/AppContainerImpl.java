@@ -97,6 +97,7 @@ public class AppContainerImpl extends JUMPAppContainer {
 			  pathArray, null);
 
 	  try {
+
 	     Class [] args1 = {new String[0].getClass()};
 
 	     // Main app typically expect zero length array for the main(Str[]) 
@@ -121,7 +122,7 @@ public class AppContainerImpl extends JUMPAppContainer {
 	       return -1;
        }
 
-       return 1; // only one app per isolate
+       return Integer.parseInt(app.getProperty(JUMPApplication.ID_KEY));
     }
     
     public void pauseApp(int appId) {

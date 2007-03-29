@@ -90,7 +90,7 @@ public class AppContainerImpl extends JUMPAppContainer {
 	  xletManager.postInitXlet();
 	  xletManager.postStartXlet();
 
-          // FIXME: xlet manager calls are asynchronous.  Do we want to wait here?
+          // FIXME: xlet manager calls are asynchronous, need to wait. 
 
 	  currentApp = app;
 
@@ -99,7 +99,7 @@ public class AppContainerImpl extends JUMPAppContainer {
 	       return -1;
        } 
 
-       return 1; // only one xlet per isolate
+       return Integer.parseInt(app.getProperty(JUMPApplication.ID_KEY));
     }
     
     public void pauseApp(int appId) {
