@@ -638,6 +638,7 @@ add_to_suite_list_and_save(MidletSuiteData* pMsd) {
         pPrev = NULL;
         pMsd->nextEntry = pExistingSuite->nextEntry;
 
+        /* finding the entry preceding the pExistingSuite */
         while (pData != NULL) {
             if (pData->suiteId == pMsd->suiteId) {
                 break;
@@ -646,8 +647,8 @@ add_to_suite_list_and_save(MidletSuiteData* pMsd) {
             pData = pData->nextEntry;
         }
 
-        if (!pPrev) {
-            /* the first entry */
+        if (pPrev == NULL) {
+            /* pExistingSuite is the first entry in the list */
             g_pSuitesData = pMsd;
         } else {
             pPrev->nextEntry = pMsd;
