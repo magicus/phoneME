@@ -74,6 +74,9 @@ public class TestConnectionSuspend extends TestCase {
 
         assertTrue("negative write2", !client.canWrite());
         assertTrue("negative read2", !server.canRead());
+
+        client.closeAll();
+        server.closeAll();
     }
 }
 
@@ -85,6 +88,13 @@ abstract class Side implements Runnable {
     private String error;
     static final int port = 33133;
 
+    void closeAll() {
+        try {
+            conn.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     abstract StreamConnection connect() throws IOException;
 
@@ -148,10 +158,20 @@ abstract class Side implements Runnable {
 }
 
 class ServerSide extends Side {
+    StreamConnectionNotifier notif;
+
     StreamConnection connect() throws IOException {
-        StreamConnectionNotifier notif = (StreamConnectionNotifier)
+        notif = (StreamConnectionNotifier)
                 Connector.open("socket://:" + port);
         return notif.acceptAndOpen();
+    }
+    void closeAll() {
+        try {
+            notif.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        super.closeAll();
     }
 }
 
