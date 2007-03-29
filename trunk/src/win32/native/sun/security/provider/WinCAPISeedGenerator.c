@@ -67,9 +67,21 @@ JNIEXPORT jboolean JNICALL Java_sun_security_provider_NativeSeedGenerator_native
 	return result;
     }
 
-    acquireContext = (CryptAcquireContextType)GetProcAddress(lib, "CryptAcquireContextA");
-    genRandom = (CryptGenRandomType)GetProcAddress(lib, "CryptGenRandom");
-    releaseContext = (CryptReleaseContextType)GetProcAddress(lib, "CryptReleaseContext");
+#ifdef UNDER_CE
+    acquireContext = (CryptAcquireContextType)
+	GetProcAddress(lib, TEXT("CryptAcquireContextA"));
+    genRandom = (CryptGenRandomType)
+	GetProcAddress(lib, TEXT("CryptGenRandom"));
+    releaseContext = (CryptReleaseContextType)
+	GetProcAddress(lib, TEXT("CryptReleaseContext"));
+#else
+    acquireContext = (CryptAcquireContextType)
+	GetProcAddress(lib, "CryptAcquireContextA");
+    genRandom = (CryptGenRandomType)
+	GetProcAddress(lib, "CryptGenRandom");
+    releaseContext = (CryptReleaseContextType)
+	GetProcAddress(lib, "CryptReleaseContext");
+#endif
 
     if (acquireContext == NULL || genRandom == NULL || releaseContext == NULL) {
 	FreeLibrary(lib);
