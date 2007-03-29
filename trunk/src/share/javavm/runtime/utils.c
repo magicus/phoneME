@@ -954,14 +954,21 @@ CVMformatStringVaList(char* buf, size_t bufSize, const char* format,
 	}
 	case 'O': {
 	    CVMObject*           directObj = va_arg(ap, CVMObject*);
+	    CVMInt32 hashValue = 0;
 	    const CVMClassBlock* cb = CVMobjectGetClass(directObj);
 	    CVMClassTypeID       tid = CVMcbClassName(cb);
 	    /* "12" is to leave room for the "@%#x" used for the
 	     * object address. */
 	    CVMclassname2String(tid, tmp, (int)(bufSize - 12));
 	    l = strlen(tmp);
-	    result = sprintf(tmp+l, "@%#x",
-		CVMobjectGetHashNoSet(ee, directObj));
+	    if (CVMD_isgcUnsafe(ee)) {
+		hashValue = CVMobjectGetHashNoSet(ee, directObj);
+	    } else {
+		CVMD_gcUnsafeExec(ee, {
+		    hashValue = CVMobjectGetHashNoSet(ee, directObj);
+		});
+	    }
+	    result = sprintf(tmp+l, "@%#x", hashValue);
 	    goto copy_string;
 	}
 	case 'I': {
