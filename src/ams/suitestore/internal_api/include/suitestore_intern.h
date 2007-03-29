@@ -81,6 +81,13 @@ MIDPError suite_storage_init_impl();
 void suite_storage_cleanup_impl();
 
 /**
+ * Frees the memory occupied by the given MidletSuiteData structure.
+ *
+ * @param pData MidletSuiteData entry to be freed
+ */
+void free_suite_data_entry(MidletSuiteData* pData);
+
+/**
  * Gets the storage root for a MIDlet suite by ID.
  * Free the data of the string returned with pcsl_string_free().
  *

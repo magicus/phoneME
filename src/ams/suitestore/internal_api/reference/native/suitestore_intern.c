@@ -171,6 +171,30 @@ suite_storage_init_impl() {
 }
 
 /**
+ * Frees the memory occupied by the given MidletSuiteData structure.
+ *
+ * @param pData MidletSuiteData entry to be freed
+ */
+void
+free_suite_data_entry(MidletSuiteData* pData) {
+    if (pData != NULL) {
+        if ((pData->jarHashLen > 0) && pData->varSuiteData.pJarHash) {
+            pcsl_mem_free(pData->varSuiteData.pJarHash);
+        }
+
+        pcsl_string_free(&pData->varSuiteData.midletClassName);
+        pcsl_string_free(&pData->varSuiteData.displayName);
+        pcsl_string_free(&pData->varSuiteData.iconName);
+        pcsl_string_free(&pData->varSuiteData.suiteVendor);
+        pcsl_string_free(&pData->varSuiteData.suiteName);
+        pcsl_string_free(&pData->varSuiteData.pathToJar);
+        pcsl_string_free(&pData->varSuiteData.pathToSettings);
+
+        pcsl_mem_free(pData);
+    }
+}
+
+/**
  * Resets any persistent resources allocated by MIDlet suite storage functions.
  * This wrapper is used to hide global variables from the suitestore_common
  * library.
@@ -185,9 +209,16 @@ suite_storage_cleanup_impl() {
     remove_all_storage_lock();
 
     suite_remove_all_listeners();
+    
+    if (g_isSuitesDataLoaded) {
+        MidletSuiteData* pData = g_pSuitesData;
 
-    if (g_isSuitesDataLoaded && g_pSuitesData != NULL) {
-        pcsl_mem_free(g_pSuitesData);
+        /* free each midlet suite entry */
+        while (pData != NULL) {
+            MidletSuiteData* pTmp = pData->nextEntry;
+            free_suite_data_entry(pData);
+            pData = pTmp;
+        }
     }
 
     g_pSuitesData        = NULL;
@@ -1146,20 +1177,7 @@ remove_from_suite_list_and_save(SuiteIdType suiteId) {
             }
 
             /* free the memory allocated for the entry */
-            if (pData->jarHashLen && pData->varSuiteData.pJarHash) {
-                pcsl_mem_free(pData->varSuiteData.pJarHash);
-            }
-
-            pcsl_string_free(&pData->varSuiteData.midletClassName);
-            pcsl_string_free(&pData->varSuiteData.displayName);
-            pcsl_string_free(&pData->varSuiteData.iconName);
-            pcsl_string_free(&pData->varSuiteData.suiteVendor);
-            pcsl_string_free(&pData->varSuiteData.suiteName);
-            pcsl_string_free(&pData->varSuiteData.pathToJar);
-            pcsl_string_free(&pData->varSuiteData.pathToSettings);
-
-            pcsl_mem_free(pData);
-            /* the memory was freed */
+            free_suite_data_entry(pData);
 
             /* decrease the number of the installed suites */
             g_numberOfSuites--;
