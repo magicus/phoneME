@@ -831,7 +831,7 @@ prepareJNative(char *procName, char *soLibName)
     char *libName;
     JUMPMessageQueueStatusCode code = 0;
     unsigned char *type; 
-    void *symbol;
+    void *symbol = NULL;
 
     /*
      * trying to find native method.
@@ -862,11 +862,9 @@ prepareJNative(char *procName, char *soLibName)
 	if (dsoHandle != NULL) {
 	    symbol = dlsym(dsoHandle, procName);
 	    /* FIXME: should we do "dlclose()" somewhere? */
-	} else {
-	    fprintf(stderr, "MTASK: Can't find lib: %s\n", soLibName);
-	    return NULL;
 	}
-    } else {
+    } 
+    if (symbol == NULL) {
 	symbol = dlsym(RTLD_DEFAULT, procName);
     }
 
