@@ -4057,6 +4057,8 @@ enum {
     ADVANCE(2);
   BYTECODE_IMPL_END
 
+#if !ENABLE_CPU_VARIANT
+
   BYTECODE_IMPL(aload_0_fast_igetfield_1)
     aload(0);
     bc_impl_fast_igetfield_1();
@@ -4099,11 +4101,6 @@ enum {
     ADVANCE(1);
   BYTECODE_IMPL_END
 
-  BYTECODE_IMPL(pop_and_npe_if_null)
-    NULL_CHECK(OBJ_POP());
-    ADVANCE(1);
-  BYTECODE_IMPL_END
-
   BYTECODE_IMPL(init_static_array)
     address ref = OBJ_PEEK(0);
     NULL_CHECK(ref);
@@ -4116,6 +4113,35 @@ enum {
     }
     jvm_memcpy(ref + Array::base_offset(), (g_jpc + 4), count * size_factor);
     ADVANCE(4 + size_factor * count);
+  BYTECODE_IMPL_END
+
+#elif ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+
+  BYTECODE_IMPL(lload_safe)
+    lload(GET_BYTE(0));
+    ADVANCE(2);
+  BYTECODE_IMPL_END
+
+  BYTECODE_IMPL(lstore_safe)
+    lstore(GET_BYTE(0));
+    ADVANCE(2);
+  BYTECODE_IMPL_END
+
+  BYTECODE_IMPL(dload_safe)
+    dload(GET_BYTE(0));
+    ADVANCE(2);
+  BYTECODE_IMPL_END
+
+  BYTECODE_IMPL(dstore_safe)
+    dstore(GET_BYTE(0));
+    ADVANCE(2);
+  BYTECODE_IMPL_END
+
+#endif
+
+  BYTECODE_IMPL(pop_and_npe_if_null)
+    NULL_CHECK(OBJ_POP());
+    ADVANCE(1);
   BYTECODE_IMPL_END
 
   END_BYTECODES
@@ -4389,14 +4415,22 @@ static void init_dispatch_table() {
   DEF_BC(fast_invokespecial);
   DEF_BC(fast_igetfield_1);
   DEF_BC(fast_agetfield_1);
+#if !ENABLE_CPU_VARIANT
   DEF_BC(aload_0_fast_igetfield_1);
   DEF_BC(aload_0_fast_igetfield_4);
   DEF_BC(aload_0_fast_igetfield_8);
   DEF_BC(aload_0_fast_agetfield_1);
   DEF_BC(aload_0_fast_agetfield_4);
   DEF_BC(aload_0_fast_agetfield_8);
-  DEF_BC(pop_and_npe_if_null);
   DEF_BC(init_static_array);
+#elif ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
+  //used to replace ordinary bytecodes for some versions of JAZELLE 
+  DEF_BC(lload_safe);
+  DEF_BC(lstore_safe);
+  DEF_BC(dload_safe);
+  DEF_BC(dstore_safe);
+#endif 
+  DEF_BC(pop_and_npe_if_null);
   DEF_BC(fast_init_1_putstatic);
   DEF_BC(fast_init_2_putstatic);
   DEF_BC(fast_init_a_putstatic);
