@@ -634,9 +634,26 @@ add_to_suite_list_and_save(MidletSuiteData* pMsd) {
         g_numberOfSuites++;
     } else {
         /* if the suite with such ID already exists, overwrite it */
-        MidletSuiteData* pTmp = pExistingSuite->nextEntry;
-        *pExistingSuite = *pMsd;
-        pExistingSuite->nextEntry = pTmp;
+        MidletSuiteData* pData = g_pSuitesData;
+        pPrev = NULL;
+        pMsd->nextEntry = pExistingSuite->nextEntry;
+
+        while (pData != NULL) {
+            if (pData->suiteId == pMsd->suiteId) {
+                break;
+            }
+            pPrev = pData;
+            pData = pData->nextEntry;
+        }
+
+        if (!pPrev) {
+            /* the first entry */
+            g_pSuitesData = pMsd;
+        } else {
+            pPrev->nextEntry = pMsd;
+        }
+
+        free_suite_data_entry(pExistingSuite);
     }
 
     status = write_suites_data(&pszError);
