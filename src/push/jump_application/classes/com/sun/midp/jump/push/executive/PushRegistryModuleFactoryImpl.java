@@ -28,8 +28,8 @@ import com.sun.jump.module.contentstore.JUMPContentStore;
 import com.sun.jump.module.contentstore.JUMPStore;
 import com.sun.jump.module.contentstore.JUMPStoreHandle;
 import com.sun.jump.module.contentstore.JUMPStoreFactory;
-import com.sun.jump.module.serviceregistry.JUMPServiceRegistry;
-import com.sun.jump.module.serviceregistry.JUMPServiceRegistryFactory;
+import com.sun.jump.module.serviceregistry.JUMPServiceRegistryModule;
+import com.sun.jump.module.serviceregistry.JUMPServiceRegistryModuleFactory;
 import com.sun.midp.jump.push.executive.ota.InstallerInterface;
 import com.sun.midp.jump.push.executive.persistence.Store;
 import com.sun.midp.jump.push.executive.persistence.StoreOperationManager;
@@ -93,12 +93,12 @@ final class PushModule implements JUMPPushModule {
         /**
          * Gets a reference to service registry for IXC.
          *
-         * @return <code>JUMPServiceRegistry</code> instance
+         * @return <code>JUMPServiceRegistryModule</code> instance
          */
-        private JUMPServiceRegistry getJUMPServiceRegistry() {
-            return JUMPServiceRegistryFactory
+        private JUMPServiceRegistryModule getJUMPServiceRegistry() {
+            return JUMPServiceRegistryModuleFactory
                     .getInstance()
-                    .getModule(getClass().getClassLoader());
+                    .getModule();
         }
 
         void close() {
