@@ -213,7 +213,7 @@ suite_storage_cleanup_impl() {
     if (g_isSuitesDataLoaded) {
         MidletSuiteData* pData = g_pSuitesData;
 
-        /* try to find a suite */
+        /* free each midlet suite entry */
         while (pData != NULL) {
             MidletSuiteData* pTmp = pData->nextEntry;
             free_suite_data_entry(pData);
