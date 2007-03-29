@@ -178,7 +178,7 @@ suite_storage_init_impl() {
 void
 free_suite_data_entry(MidletSuiteData* pData) {
     if (pData != NULL) {
-        if (pData->jarHashLen && pData->varSuiteData.pJarHash) {
+        if ((pData->jarHashLen > 0) && pData->varSuiteData.pJarHash) {
             pcsl_mem_free(pData->varSuiteData.pJarHash);
         }
 
