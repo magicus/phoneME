@@ -707,6 +707,18 @@ final class ConnectionRegistry
     }
 
     /**
+     * Loads application class given its name.
+     *
+     * @param className name of class to load
+     * @return instance of class
+     * @throws ClassNotFoundException if the class cannot be located
+     */
+    static Class loadApplicationClass(final String className)
+            throws ClassNotFoundException {
+        return Class.forName(className);
+    }
+
+    /**
       * Converts <code>MIDlet</code> suite ID into a string.
       *
       * @param suiteId <code>MIDlet</code> suite to convert ID of
@@ -716,7 +728,7 @@ final class ConnectionRegistry
         // assert storage != null; // Listener should be started before
         return storage.suiteIdToString(suiteId);
     }
-      
+
     /**
       * Converts <code>MIDlet</code> suite ID into a string.
       *
@@ -727,7 +739,7 @@ final class ConnectionRegistry
         // assert midletSuite != null;
         return suiteIdToString(midletSuite.getID());
     }
-      
+
     /**
      * Native connection registry add connection function.
      * @param connection string to register
