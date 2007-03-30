@@ -25,6 +25,28 @@
 #
 ######################################################################
 
+#
+# Classes that exist in both CDC and MIDP. The class implementations
+# are provided by CDC.
+#
+MIDP_CDC_SHARED_CLASSES += \
+	java/lang/IllegalStateException \
+	java/util/Timer \
+	java/util/TimerTask \
+	javax/microedition/pki/Certificate \
+	javax/microedition/pki/CertificateException \
+	javax/microedition/io/CommConnection \
+	javax/microedition/io/HttpConnection \
+	javax/microedition/io/HttpsConnection \
+	javax/microedition/io/SecureConnection \
+	javax/microedition/io/SecurityInfo \
+	javax/microedition/io/ServerSocketConnection \
+	javax/microedition/io/SocketConnection \
+	javax/microedition/io/UDPDatagramConnection
+
+MIDP_CDC_SHARED_CLASS_FILES = \
+	$(foreach class,$(MIDP_CDC_SHARED_CLASSES),$(class).class)
+
 # Classes that have CNI methods.
 MIDP_CNI_CLASSES += \
         com.sun.cdc.i18n.j2me.Conv \
