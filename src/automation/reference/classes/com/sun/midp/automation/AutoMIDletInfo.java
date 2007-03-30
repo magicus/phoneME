@@ -27,6 +27,7 @@
 package com.sun.midp.automation;
 
 import com.sun.midp.main.*;
+import com.sun.cldc.isolate.*;
 
 /**
  * Some info associated with AutoMIDletImpl
@@ -40,6 +41,9 @@ class AutoMIDletInfo {
 
     /** When MIDlet is running: corresponding MIDletProxy */
     MIDletProxy midletProxy;
+
+    /** When MIDlet is running: corresponding Isolate */
+    Isolate midletIsolate;
 
     /** When MIDlet is running: corresponding AutoMIDletImpl */
     AutoMIDletImpl midlet;
@@ -63,6 +67,7 @@ class AutoMIDletInfo {
         this.suiteID = suiteID;
         this.midletClassName = midletClassName;
         this.midletProxy = null;
+        this.midletIsolate = null;
         this.midlet = null;
         this.startError = false;
         this.startErrorCode = 0;
