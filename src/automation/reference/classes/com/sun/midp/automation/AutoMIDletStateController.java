@@ -30,6 +30,7 @@ import java.util.*;
 import com.sun.midp.main.*;
 import com.sun.midp.events.*;
 import com.sun.midp.configurator.Constants;
+import com.sun.cldc.isolate.*;
 
 /**
  * Class controlling states of the MIDlets
@@ -105,7 +106,7 @@ final class AutoMIDletStateController
 
             // initiate MIDlet starting
             // IMPL_NOTE: add passing of memory quotas and VM profile name
-            AmsUtil.startMidletInNewIsolate(
+            Isolate isolate = AmsUtil.startMidletInNewIsolate(
                     suiteID, midletClassName, midletName,
                     arg1, arg2, arg3);
 
@@ -182,6 +183,7 @@ final class AutoMIDletStateController
             } else {
                 midlet = new AutoMIDletImpl(midletDescriptor);
                 info.midlet = midlet;
+                info.midletIsolate = isolate;
             }
         }
 
@@ -223,6 +225,41 @@ final class AutoMIDletStateController
         return stateController;
     }
 
+    /**
+     * Called when a MIDlet Isolate has exited.
+     *
+     * @param midletProxy The proxy of the MIDlet being added
+     */  
+    void isolateExited(MIDletProxy midletProxy) {
+        synchronized (midletsInfo) {
+            AutoMIDletInfo info = midletsInfo.findMIDletInfo(midletProxy);
+            if (info != null) {
+                AutoMIDletImpl midlet = info.midlet;
+                if (midlet != null) {
+                    midlet.stateChanged(AutoMIDletLifeCycleState.DESTROYED);
+                }
+
+                // remove MIDlet info from our list as well
+                midletsInfo.removeFromList(info);
+            }
+        }
+    }
+
+    /**
+     * Start notifier thread that will wait for the MIDlet's isolate to exit.
+     *
+     * @param proxy proxy of MIDlet
+     */
+    private void startNotificationThread(AutoMIDletInfo info) {
+        IsolateExitNotifier notifier = new IsolateExitNotifier();
+
+        notifier.midletProxy = info.midletProxy;
+        notifier.midletIsolate = info.midletIsolate;
+        notifier.parent = this;
+
+        new Thread(notifier).start();
+    }
+    
 
     /**
      * MIDletProxyListListener interface implementation
@@ -238,6 +275,7 @@ final class AutoMIDletStateController
             AutoMIDletInfo info = midletsInfo.findMIDletInfo(midletProxy);
             if (info != null) {
                 info.midletProxy = midletProxy;
+
                 // notify waiter that MIDlet has been created
                 midletsInfo.notify();
             }
@@ -278,15 +316,11 @@ final class AutoMIDletStateController
      * @param midletProxy The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midletProxy) {
-        AutoMIDletInfo info = midletsInfo.findMIDletInfo(midletProxy);
-        if (info != null) {
-            AutoMIDletImpl midlet = info.midlet;
-            if (midlet != null) {
-                midlet.stateChanged(AutoMIDletLifeCycleState.DESTROYED);
+        synchronized (midletsInfo) {
+            AutoMIDletInfo info = midletsInfo.findMIDletInfo(midletProxy);
+            if (info != null) {
+                startNotificationThread(info);
             }
-
-            // remove MIDlet info from our list as well
-            midletsInfo.removeFromList(info);
         }
     }
 
@@ -316,4 +350,25 @@ final class AutoMIDletStateController
         }
     }
 
+}
+
+/**
+ * Waits for an isolate to terminate and then notifies the native app
+ * manager.
+ */
+final class IsolateExitNotifier implements Runnable {
+    /** MIDlet information. */
+    MIDletProxy midletProxy;
+
+    /** Isolate of the MIDlet. */
+    Isolate midletIsolate;
+
+    /** Parent to notify */
+    AutoMIDletStateController parent;
+
+    /** Performs this classes function. */
+    public void run() {
+        midletIsolate.waitForExit();
+        parent.isolateExited(midletProxy);
+    }
 }
