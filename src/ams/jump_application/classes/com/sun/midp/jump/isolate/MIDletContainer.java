@@ -92,6 +92,11 @@ public class MIDletContainer extends JUMPAppContainer implements
     /** Reference to the suite storage. */
     private MIDletSuiteStorage suiteStorage;
 
+    /**
+     * Provides interface to lcdui environment.
+     */
+    protected LCDUIEnvironment lcduiEnvironment;
+
     /** Starts and controls MIDlets through the lifecycle states. */
     private MIDletStateHandler midletStateHandler;
 
@@ -122,7 +127,8 @@ public class MIDletContainer extends JUMPAppContainer implements
         eventQueue = EventQueue.getEventQueue(
             internalSecurityToken);
 
-	new LCDUIEnvironment(internalSecurityToken, eventQueue, 0, this);
+        lcduiEnvironment = new LCDUIEnvironment(internalSecurityToken, 
+                                                eventQueue, 0, this);
 
         suiteStorage =
             MIDletSuiteStorage.getMIDletSuiteStorage(internalSecurityToken);
