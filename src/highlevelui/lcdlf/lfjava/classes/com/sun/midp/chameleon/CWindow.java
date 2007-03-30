@@ -546,9 +546,10 @@ public abstract class CWindow {
         g.setClip(bounds[X], bounds[Y], bounds[W], bounds[H]);
 
         synchronized (layers) {
-            sweepAndMarkLayers();
-            paintLayers(g, refreshQ);
+            layersCopy = new CLayersList(layers);
         }
+        sweepAndMarkLayers();
+        paintLayers(g, refreshQ);
 
         // We restore the original clip. The original font, color, etc.
         // have already been restored

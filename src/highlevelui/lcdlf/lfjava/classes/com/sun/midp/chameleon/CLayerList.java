@@ -40,6 +40,18 @@ class CLayerList {
         bottom = null;
     }
 
+    CLayerList(CLayerList list) {
+        CLayerElement upper = null, current;
+        for (CLayerElement x = list.top; x != null; x = x.getLower()) {
+            current = new CLayerElement(x.getLayer(), null, upper);
+            if (top == null)
+                top = current;
+            else
+                upper.lower = current;
+            upper = current;
+        }
+    }
+
     /**
      * Find UI layer instance in the list
      * @param layer the instance to search in the list for
