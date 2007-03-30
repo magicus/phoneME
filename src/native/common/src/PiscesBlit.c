@@ -90,7 +90,6 @@ fillRectSrcOver(Renderer* rdr,
     jint RECT_CORNER_ALPHA_SHIFT  = ALPHA_SHIFT -
                                     (rdr->_SUBPIXEL_LG_POSITIONS_X + 
                                      rdr->_SUBPIXEL_LG_POSITIONS_Y);
-
     // IMPL NOTE : to fix warning : unused parameter
     (void) scrOrient;
 
@@ -100,6 +99,7 @@ fillRectSrcOver(Renderer* rdr,
     } else {
         x0 += rdr->_SUBPIXEL_POSITIONS_X;
     }
+
     xmask_r = x1 & rdr->_SUBPIXEL_MASK_X;
 
     ymask_t = rdr->_SUBPIXEL_POSITIONS_X - (y0 & rdr->_SUBPIXEL_MASK_X);
@@ -160,28 +160,14 @@ fillRectSrcOver(Renderer* rdr,
                 offset += imageScanlineStride;
             }
         } else if (imageType == TYPE_USHORT_565_RGB) {
-            unsigned short *sd = (unsigned short *)(shortData + offset);
-            unsigned int cval = (shortVal << 16) | shortVal;
-
-            for (j = height; j > 0; j--) {
-                int cnt = width;
-                int sdoff = 0;
-
-                if (cnt & 0x01) {
-                    *(unsigned short *)(sd + sdoff) = shortVal;
-                    sdoff += imagePixelStride;
-                    cnt--;
+            for (j = 0; j < height; j++) {
+                int iidx = offset;
+                for (i = 0; i < width; i++) {
+                    shortData[iidx] = shortVal;
+                    iidx += imagePixelStride;
                 }
-
-                while (cnt) {
-                    *(unsigned int *)(sd + sdoff) = cval;
-                    sdoff += 2 * imagePixelStride;
-                    cnt -= 2;
-                }
-
-                sd += imageScanlineStride;
+                offset += imageScanlineStride;
             }
-
         } else if (imageType == TYPE_BYTE_GRAY) {
             for (j = 0; j < height; j++) {
                 int iidx = offset;

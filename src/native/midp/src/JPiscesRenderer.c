@@ -130,6 +130,46 @@ Java_com_sun_pisces_PiscesRenderer_initialize() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_pisces_PiscesRenderer_connect() {
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(objectHandle);
+    KNI_DeclareHandle(surfaceHandle);
+
+    Renderer* rdr;
+    Surface* surface;
+
+    KNI_GetThisPointer(objectHandle);
+
+    if (initializeRendererFieldIds(objectHandle)) {
+        KNI_GetObjectField(objectHandle, fieldIds[RENDERER_SURFACE], 
+                           surfaceHandle);
+        surface = &surface_get(surfaceHandle)->super;
+
+        ACQUIRE_SURFACE(surface, surfaceHandle);
+        rdr = (Renderer *) KNI_GetLongField(objectHandle, fieldIds[RENDERER_NATIVE_PTR]);
+        if(rdr != NULL)
+            renderer_connectSurface(rdr, surface);
+            
+        RELEASE_SURFACE(surface, surfaceHandle);
+
+        //    KNI_registerCleanup(objectHandle, disposeNativeImpl);
+
+        if (KNI_TRUE == readAndClearMemErrorFlag()) {
+            KNI_ThrowNew("java/lang/OutOfMemoryError",
+                         "Allocation of internal renderer buffer failed.");
+        }
+
+    } else {
+        KNI_ThrowNew("java/lang/IllegalStateException", "");
+    }
+
+    // don't do anything here (see the throw above)!
+
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_PiscesRenderer_nativeFinalize() {
     KNI_StartHandles(1);
     KNI_DeclareHandle(objectHandle);
@@ -214,7 +254,9 @@ Java_com_sun_pisces_PiscesRenderer_endRendering() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+
     renderer_endRendering(rdr);
+
     RELEASE_SURFACE(surface, surfaceHandle);
 
     if (KNI_TRUE == readAndClearMemErrorFlag()) {

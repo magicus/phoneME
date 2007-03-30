@@ -23,15 +23,16 @@
  * information or have any questions. 
  */
 
-
 package com.sun.pisces;
 
+import javax.microedition.lcdui.Graphics;
+
 public final class NativeSurface extends AbstractSurface {
-    public NativeSurface(int width, int height) {
-        this(TYPE_INT_ARGB, width, height);
+    public NativeSurface(int width, int height, Graphics g) {
+        this(TYPE_INT_ARGB, width, height, g);
     }
 
-    public NativeSurface(int dataType, int width, int height) {
+    public NativeSurface(int dataType, int width, int height, Graphics g) {
         switch (dataType) {
             case TYPE_INT_RGB:
                 break;
@@ -42,8 +43,8 @@ public final class NativeSurface extends AbstractSurface {
                         + " for " + NativeSurface.class.getName());
         }
     
-        initialize(dataType, width, height);
+        initialize(dataType, width, height, g);
     }
 
-    private native void initialize(int dataType, int width, int height);
+    private native void initialize(int dataType, int width, int height, Graphics g);
 }

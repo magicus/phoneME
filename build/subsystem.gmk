@@ -140,7 +140,8 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/Configuration.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/GraphicsSurfaceDestination.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/NativeFinalizer.java \
-            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesLibrary.java
+            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesLibrary.java \
+            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/GraphicsSurface.java 
 
     ifdef PISCES_JAVA_SURFACE_SUPPORT
         INTERNAL_PISCES_JAVA_FILES += \
@@ -184,7 +185,8 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
                 JNativeFinalizer.c \
                 JPiscesRenderer.c \
                 JTransform.c \
-                KNIUtil.c
+                KNIUtil.c \
+                JGraphicsSurface.c
 
     # Specify romizer configuration file for the jsr
     # and path where the file is located
