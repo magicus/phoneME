@@ -852,7 +852,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
 
         int newXOffset = 0;
         
-        g.setClip(0, 0, w, h);
+        g.clipRect(0, 0, w, h);
 
         if (opChar != 0) {
             cursor = new TextCursor(cursor);
