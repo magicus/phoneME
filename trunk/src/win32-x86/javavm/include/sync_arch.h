@@ -42,7 +42,7 @@
     (CVMAddr)InterlockedCompareExchange((LONG volatile*)(a), (LONG)(n), (LONG)(o))
 
 #define CVMatomicSwap(a, n)	\
-    (CVMAddr)InterlockedExchange((LPLONG)(a), (LONG)(n))
+    (CVMAddr)InterlockedExchange((LONG volatile*)(a), (LONG)(n))
 
 #include "javavm/include/sync_cpu.h"
 
