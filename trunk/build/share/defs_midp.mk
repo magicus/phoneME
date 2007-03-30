@@ -68,8 +68,8 @@ PCSL_MAKE_OPTIONS 	?=
 export JDK_DIR		= $(JDK_HOME)
 TARGET_VM		= cdc_vm
 MIDP_DIR		?= $(COMPONENTS_DIR)/midp
-MIDP_DEFS_JCC_MK	= $(MIDP_DIR)/build/common/cdc_vm/defs_cdc.mk
-ifeq ($(wildcard $(MIDP_DEFS_JCC_MK)),)
+MIDP_DEFS_CDC_MK	= $(MIDP_DIR)/build/common/cdc_vm/defs_cdc.mk
+ifeq ($(wildcard $(MIDP_DEFS_CDC_MK)),)
 $(error MIDP_DIR must point to the MIDP directory: $(MIDP_DIR))
 endif
 
@@ -104,6 +104,15 @@ else
 MIDP_CLASSES_ZIP	?= $(MIDP_OUTPUT_DIR)/classes.zip
 endif
 
+# A separate zip file that contains shared MIDP
+# and CDC classes. These classes are public MIDP classes,
+# but not in MIDP_CLASSES_ZIP. Instead they are provided
+# by CDC. The separate zip file is not used for runtime
+# and it should not be added to the bootclasspath or
+# midp library path. It is used for the MIDP signature
+# test only.
+MIDP_CDC_SHARED_CLASSES_ZIP 	?= $(CVM_LIBDIR_ABS)/midpcdcclasses.zip
+
 RUNMIDLET		?= $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/runMidlet
 MIDP_OBJECTS		?= $(MIDP_OUTPUT_DIR)/obj$(DEBUG_POSTFIX)/$(TARGET_CPU)/*.o
 ifeq ($(CVM_PRELOAD_LIB), true)
@@ -114,7 +123,7 @@ MIDP_LIBS 		?= \
 LINKLIBS 		+= $(MIDP_LIBS)
 endif
 
--include $(MIDP_DEFS_JCC_MK)
+-include $(MIDP_DEFS_CDC_MK)
 ifeq ($(CVM_PRELOAD_LIB), true)
 # Add MIDP classes to JCC input list so they can be romized.
 CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_CLASSES_ZIP)

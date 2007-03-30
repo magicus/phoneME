@@ -137,6 +137,28 @@ ifneq ($(USE_JUMP), true)
 endif
 	@echo "<==== end building MIDP natives"
 
+#
+# Create a separate zip file that contains shared MIDP
+# and CDC classes. These classes are public MIDP classes,
+# but not in MIDP_CLASSES_ZIP. Instead they are provided
+# by CDC. The separate zip file is not used for runtime
+# and it should not be added to the bootclasspath or
+# midp library path. It is used for the MIDP signature
+# test only.
+#
+# MIDP_CDC_SHARED_CLASS_FILES is defined in $(MIDP_DEFS_CDC_MK).
+#
+$(CVM_BINDIR)/$(CVM):: $(MIDP_CDC_SHARED_CLASSES_ZIP)
+
+$(MIDP_CDC_SHARED_CLASSES_ZIP): $(CVM_BUILDTIME_CLASSESZIP) $(LIB_CLASSESJAR)
+	@echo ... $@
+	$(AT)cd $(CVM_BUILDTIME_CLASSESDIR); \
+		$(ZIP) -r -q $@ $(MIDP_CDC_SHARED_CLASS_FILES)
+ifneq ($(CVM_PRELOAD_LIB), true)
+	$(AT)cd $(LIB_CLASSESDIR); \
+		$(ZIP) -r -q $@ $(MIDP_CDC_SHARED_CLASS_FILES)
+endif
+
 force_midp_build:
 
 clean::
