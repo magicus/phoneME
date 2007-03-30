@@ -24,6 +24,31 @@
 # information or have any questions. 
 #
 
+#####################################
+#  Check for obsolete definitions that may have been made by defs files.
+#####################################
+
+
+# CVM include directories used to be specified with CVM_INCLUDES, and included
+# the -I option. Now they are specified with CVM_INCLUDE_DIRS and do not
+# include the -I option.
+ifdef CVM_INCLUDES
+$(error CVM_INCLUDES is no longer supported. Use CVM_INCLUDE_DIRS and remove the leading "-I".)
+else
+# force an error if referenced in a command line
+CVM_INCLUDES = "Do not reference CVM_INCLUDES"
+endif
+
+# Profile include directories used to be specified with PROFILE_INCLUDES, and 
+# included the -I option. Now they are specified with PROFILE_INCLUDE_DIRS
+# and do not include the -I option.
+ifdef PROFILE_INCLUDES
+$(error PROFILE_INCLUDES is no longer supported. Use PROFILE_INCLUDE_DIRS and remove the leading "-I".)
+else
+# force an error if referenced in a command line
+PROFILE_INCLUDES = "Do not reference PROFILE_INCLUDES"
+endif
+
 #
 #  Common makefile rules
 #
