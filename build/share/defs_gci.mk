@@ -24,21 +24,25 @@
 # information or have any questions. 
 #
 
+#
+# Translate Basis AWT definitions to GCI ones
+#
+ifeq ($(AWT_IMPLEMENTATION), gci)
+   USE_GCI = true
+   GCI_DIR = $(AWT_IMPLEMENTATION_DIR)
+endif
+
 ifeq ($(USE_GCI), true)
+
 ifeq ($(J2ME_CLASSLIB), basis)
-
 #
-# For basis, definitions of defs_basis.mk are used instead
+# Define AWT_IMPLEMENTATION to be GCI-based
 #
-
 ifneq ($(AWT_IMPLEMENTATION), gci)
    override AWT_IMPLEMENTATION = gci
    override AWT_IMPLEMENTATION_DIR = $(GCI_DIR)
 endif
-
-endif
-
-#else
+endif # J2ME_CLASSLIB
 
 GCI_DIR                ?= $(COMPONENTS_DIR)/gci
 
@@ -71,5 +75,4 @@ PROFILE_SRCDIRS         += $(GCI_SRCDIRS)
 CVM_SRCDIRS             += $(GCI_SRCDIRS_NATIVE)
 CVM_INCLUDE_DIRS        += $(GCI_INCLUDE_DIRS)
 
-#endif # J2ME_CLASSLIB
 endif # USE_GCI
