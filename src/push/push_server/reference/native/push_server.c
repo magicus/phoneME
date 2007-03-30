@@ -1186,6 +1186,7 @@ static void pushcleanupentry(PushEntry *p) {
         }
 #endif
         p->fdsock = -1;
+        p->fdAccepted = -1;
     }
 
     /* Remove the cached datagram (if any). */
@@ -1266,8 +1267,9 @@ static char* pushApplySipFilter(PushEntry* pushp) {
                 (unsigned char *) pushp->pCachedData->buffer,
                 pushp->pCachedData->length);
 
-            if (midp_strcasecmp((char *)required_type,
-                    (char*)acceptcontact_type) == 0) {
+            if (acceptcontact_type != NULL &&
+                    midp_strcasecmp((char *)required_type,
+                                    (char*)acceptcontact_type) == 0) {
                 REPORT_INFO2(LC_PROTOCOL,
                     "SIP Push Message Media Type Matched: %s == %s",
                     required_type,acceptcontact_type);
@@ -1281,7 +1283,7 @@ static char* pushApplySipFilter(PushEntry* pushp) {
 
             REPORT_INFO2(LC_PROTOCOL,
                 "SIP Push Message Media Type Filtered: %s != %s",
-                required_type,acceptcontact_type);
+                required_type, acceptcontact_type);
 
             midpFree(required_type);
         } else {
@@ -1352,7 +1354,7 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
             REPORT_ERROR1(LC_PUSH,
                 "(Push) Cannot receive data, errno = %d\n",
                 pcsl_network_error((void*)pushp->fdsock));
-            pushp->state = prevState;
+            pushcheckinentry(pushp);
             return NULL;
         }
 
@@ -1375,7 +1377,7 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
             REPORT_ERROR1(LC_PUSH,
                 "(Push) Cannot accept serversocket, errno = %d\n",
                 pcsl_network_error((void*)pushp->fd));
-            pushp->state = prevState;
+            pushcheckinentry(pushp);
             return NULL;
         }
     }
@@ -1398,7 +1400,7 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
 
         pushp->pCachedData = (PacketEntry*) midpMalloc(sizeof (PacketEntry));
         if (pushp->pCachedData == NULL) {
-            pushp->state = prevState;
+            pushcheckinentry(pushp);
             return NULL;
         }
 
@@ -1428,7 +1430,7 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
                 REPORT_ERROR1(LC_PUSH,
                     "(Push) Cannot receive data, errno = %d\n",
                     pcsl_network_error((void*)pushp->fdsock));
-                pushp->state = prevState;
+                pushcheckinentry(pushp);
                 return NULL;
             }
 
@@ -1438,9 +1440,7 @@ static char* pushAcceptConnection(PushEntry* pushp, int prevState) {
                 PCSL_NET_CHECK_READ);
             return NULL;
         } else {
-            midpFree(pushp->pCachedData);
-            pushp->pCachedData = NULL;
-            pushp->state = prevState;
+            pushcheckinentry(pushp);
             return NULL;
         }
     } else
@@ -1494,7 +1494,7 @@ char *pushfindfd(int fd) {
                     return NULL;
                 }
             }
-
+            
             temp_state = pushp->state;
             pushp->state = LAUNCH_PENDING;
 
