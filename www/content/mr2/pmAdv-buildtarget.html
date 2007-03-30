@@ -1,10 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html><head>
 
+
  <link rel="stylesheet" type="text/css" href="how-to2_files/print.html" media="print">
- <script src="how-to2_files/tigris.html" type="text/javascript"></script>
- <!-- ------- ORIGINAL CODE --------------------------- -->
- <!--<head>
+ <script src="how-to2_files/tigris.html" type="text/javascript"></script><!-- ------- ORIGINAL CODE --------------------------- --><!--<head>
  <style type="text/css"> 
  /* <![CDATA[ */
  @import "/branding/css/tigris.css";
@@ -12,14 +11,16 @@
  /* ]]> */
  </style>
  <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
- <script src="/branding/scripts/tigris.js" type="text/javascript"></script> -->
+ <script src="/branding/scripts/tigris.js" type="text/javascript"></script> --><title>Getting Started: Target Devices</title>
+ 
+ 
 
 
   
-                                                     <title>Getting Started: Build Target Devices</title>
- <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
- <meta http-equiv="Content-Style-Type" content="text/css" />
- <meta name="version" content="3.5.1.19.8" />
+                                                     
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+ <meta http-equiv="Content-Style-Type" content="text/css">
+ <meta name="version" content="3.5.1.19.8">
  <style type="text/css">
 <!--
 a:link {
@@ -35,13 +36,10 @@ a:active {
 	text-decoration: none;
 }
 -->
-</style></head>
- 
- 
-<body  class="composite">
+</style></head><body class="composite">
   
-<table border="0" cellspacing="0" cellpadding="4" width="100%" id="main">
-<tr>
+<table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
+<tbody><tr>
  <td id="midcol">
  
  
@@ -55,32 +53,32 @@ a:active {
  
 <!--BEGIN * PAGE TITLE -->
 <div id="projecthome" class="app"> 
-<h1><font color="#E76F00">CDC Build System: Target Devices</font></h1>
+<h1 class="style3">CDC Build System: Target Devices</h1>
 <!--END * PAGE TITLE -->
 <p>
 The previous section showed how to use a host Linux x86/PC
 to build and test phoneME Advanced MR1.
 Here we'll show how to use the CDC build system to generate
 executable versions of the CDC Java runtime environment for different target devices.
-<p>
+</p><p>
 As a technology, phoneME Advanced can address a variety of target devices.
 So in this section we will describe the common features of these target devices
 to help with understanding what kinds of devices phoneME Advanced is appropriate for.
 Later, we'll describe how to setup the build system for two example target devices.
 
-<hr size="1" noshade>
-<a name="TargetFeatures"><h2>Common Target Device Features</h2></a>
+</p><hr noshade="noshade" size="1">
+<a name="TargetFeatures"><h4>Common Target Device Features</h4></a>
 <p>
 Target devices for phoneME Advanced technology
 are sometimes called resource-constrained devices.
 The table below describes some of the main features of these target devices:
-<p>
-<blockquote>
-<table border="0" cellspacing="0" cellpadding="0" bgcolor="#333366" width="50%">
+</p><p>
+</p><blockquote>
+<table bgcolor="#333366" border="0" cellpadding="0" cellspacing="0" width="50%">
   <tbody>
     <tr>
       <td>
-      <table width="100%" border="0" cellspacing="1" cellpadding="3">
+      <table border="0" cellpadding="3" cellspacing="1" width="100%">
         <tbody>
         <tr>
           <th><font color="#ffffff" size="-1"><b>Category</b></font></th>
@@ -90,7 +88,7 @@ The table below describes some of the main features of these target devices:
           <td>CPU</td><td>32-bit RISC w/ MMU.</td>
         </tr>
         <tr bgcolor="#ffffff" valign="top">
-          <td rowspan=4 valign=top>OS</td>
+          <td rowspan="4" valign="top">OS</td>
           <td>ANSI standard library.</td>
         </tr>
         <tr bgcolor="#ffffff" valign="top">
@@ -118,13 +116,13 @@ vary too much to quote a helpful statistic.
 However, it may be useful to note that
 phoneME Advanced was designed to execute out of ROM
 for memory-constrained applications.
-<p>
+</p><p>
 These requirements are described in greater detail in the
 <a href="http://java.sun.com/javame/reference/docs/cdc_porting_guide.pdf">
 <i>CDC Porting Guide</i></a>.
 
-<hr size="1" noshade>
-<a name="TargetTools"><h2>Target Build Tool Requirements</h2></a>
+</p><hr noshade="noshade" size="1">
+<a name="TargetTools"><h4>Target Build Tool Requirements</h4></a>
 <p>
 Like the host build tools,
 the target build tools can be discovered by the CDC build system
@@ -132,13 +130,13 @@ with the <tt>CVM_TARGET_TOOLS_PREFIX</tt>.
 This build system variable helps
 identify the required target build tools
 described in the following table:
-<p>
-<blockquote>
-<table border="0" cellspacing="0" cellpadding="0" bgcolor="#333366" width="50%">
+</p><p>
+</p><blockquote>
+<table bgcolor="#333366" border="0" cellpadding="0" cellspacing="0" width="50%">
   <tbody>
     <tr>
       <td>
-      <table width="100%" border="0" cellspacing="1" cellpadding="3">
+      <table border="0" cellpadding="3" cellspacing="1" width="100%">
         <tbody>
         <tr>
           <th><font color="#ffffff" size="-1"><b>Description</b></font></th>
@@ -173,7 +171,7 @@ described in the following table:
 In some cases, these tools can be combined.
 For example, with the Linux x86/PC example in the host build section,
 <tt>gcc</tt> takes on the role of the C compiler, the assembler and the linker.
-<p>
+</p><p>
 When building phoneME Advanced for a new target platform,
 you must first acquire target build tools that are appropriate
 for the target platform.
@@ -183,16 +181,16 @@ this requirement can be satisfied
 with a cross-compiler toolchain based on <tt>gcc</tt> and <tt>binutils</tt>.
 The examples below are based on that approach,
 but for some platforms you'll need to get these tools from a board vendor or partner.
-<p>
+</p><p>
 <b>NOTE:</b>
 The CDC build system has been tested
 with several recent versions of the GCC compiler,
 especially 4.x and 3.x.
 
-<hr size="1" noshade>
-<a name="TargetNotes"><h2>Target Device Notes</h2></a>
+</p><hr noshade="noshade" size="1">
+<a name="TargetNotes"><h4>Target Device Notes</h4></a>
 <p>
-<blockquote>
+</p><blockquote>
 <b>Note:</b>
 The phoneME Advanced MR2 technology has been built and tested
 with Linux/x86 as well as several target devices.
@@ -204,23 +202,23 @@ Each target device for phoneME Advanced technology
 reflects an OS/CPU combination
 that requires certain resources
 from the target platform development environment:
-<p>
-<ul>
+</p><p>
+</p><ul>
 <li>
 A compatible target compiler.
 <p>
-<li>
+</p></li><li>
 Target system libraries and header files.
 <p>
-<li>
+</p></li><li>
 <i>[Optional]</i>
 A target-specific version of the
 <a href="http://www.trolltech.com/products/qt">Qt</a>
 library and header files.
 <p>
-<li>
+</p></li><li>
 A set of UNIX build utilities compatible with the CDC build system.
-</ul>
+</li></ul>
 <p>
 The first two of these requirements
 are usually provided by the device vendor.
@@ -237,9 +235,10 @@ are described in the Qt reference documentation.
 Finally,
 the UNIX utilities needed by the CDC build system
 are provided by most current Linux distributions like
-<a href="http://www.ubuntu.com">Ubuntu</a>.
-<p>
+<a href="http://www.ubuntu.com/">Ubuntu</a>.
+</p><p>
 The source code layout and build system procedures
 for target devices are described in the
 <a href="http://java.sun.com/javame/reference/docs/cdc_build_system.pdf">
 <i>CDC Build System Guide</i></a>.
+</p></div></td></tr></tbody></table></body></html>
