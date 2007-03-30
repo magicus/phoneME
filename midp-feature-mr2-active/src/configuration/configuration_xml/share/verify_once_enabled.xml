@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
+<!--
+        	
+
+        Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+-->
+<configuration>
+<constants>
+<constant_class Package="com.sun.midp.configurator" Name="Constants" Scope="public">
+  <constant Type="boolean"
+            Name="VERIFY_ONCE"
+            Value="true"
+            Comment="Force verification of all MIDlet suite classes to be done only once during the suite installation"/>
+  <constant Type="boolean"
+            Name="VERIFY_SUITE_HASH"
+            Value="true"
+            Comment="Defines whether suite JAR should be checked for changes since the suite installation."/>
+  <constant Type="String"
+            Name="VERIFY_HASH_RESOURCENAME"
+            Value="Verify-Hash"
+            NativeOnly="true"
+            Comment="Resource name to save the suite hash on classes preverification"/>
+  <constant Type="String"
+            Name="SUITE_VERIFIER_MIDLET"
+            Value="com.sun.midp.installer.SuiteVerifier"
+            Comment="Name of the system MIDlet to verify MIDlet suite classes"/>
+ </constant_class>
+</constants>
+</configuration>
