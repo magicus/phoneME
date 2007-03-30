@@ -76,8 +76,6 @@ public final class PushFactoryImpl extends JUMPModuleFactory {
         final ClassLoader cl = MIDPConfig.getMIDPImplementationClassLoader();
         if (cl == null) {
             logError("failed to fetch MIDP class loader, got null instead");
-            // TBD: should go away later on
-            return MIDPConfig.newMIDPImplementationClassLoader(new File [] {});
         }
         return cl;
     }
