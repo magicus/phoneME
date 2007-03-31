@@ -171,7 +171,7 @@ interface, using the remote service interface as a key. For example:
 <pre>
 import com.sun.jump.module.lifecycle.remote.JUMPLifeCycleModuleRemote;
 
-java.rmi.Remote remoteLifecyleInterface = JUMPLifeCycleModuleRemote.class;
+java.lang.Class remoteLifecyleInterface = JUMPLifeCycleModuleRemote.class;
 java.rmi.Remote mod =
     JUMPIsolateProcess.getRemoteService(remoteLifecycleInterface);
 JUMPLifeCycleModuleRemote rlifecycle = (JUMPLifeCycleModuleRemote)mod;
@@ -194,7 +194,7 @@ What follows is a list of modules, with local and remote interfaces:
 <tr>
     <td width=33%>JUMP isolate lifecyle module</td>
     <td>{@link com.sun.jump.module.lifecycle}</td>
-    <td>No remote interfaces (yet)</td>
+    <td>{@link com.sun.jump.module.lifecycle.remote}</td>
 </tr>
 </table>
 

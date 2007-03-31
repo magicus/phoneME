@@ -334,7 +334,7 @@ public class JUMPIsolateProcessImpl
 
         // Now wrap this appid in a message and return it
         JUMPResponseInteger resp;
-        if (appId > 0) {
+        if (appId >= 0) {
             resp = new JUMPResponseInteger(in.getType(), 
                                            JUMPResponseInteger.ID_SUCCESS,
                                            appId);

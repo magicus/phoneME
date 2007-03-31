@@ -24,8 +24,6 @@
 
 package com.sun.jumpimpl.module.serviceregistry;
 
-import com.sun.jump.module.JUMPModule;
-import com.sun.jumpimpl.process.JUMPModulesConfig;
 import com.sun.jump.module.serviceregistry.JUMPServiceRegistryModule;
 
 import java.rmi.Remote;

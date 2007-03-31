@@ -62,9 +62,9 @@ import com.sun.jumpimpl.ixc.XletContextFactory;
  * JUMPExecIxcRegistryRemote and it's superinterface, java.rmi.registry.Registry)
  * is expected to be called remotely and should not be invoked directly on this class.
  * If you need to use these remote methods in the executive VM, call them through 
- * JumpExecIxcRegistryWrapper to avoid false import/export of the remote object.
+ * JUMPExecIxcRegistryWrapper to avoid false import/export of the remote object.
  */
-public class JumpExecIxcRegistry extends IxcRegistry 
+public class JUMPExecIxcRegistry extends IxcRegistry 
             implements JUMPExecIxcRegistryRemote { 
  
     private int jumpExecMasterAppId;
@@ -76,12 +76,12 @@ public class JumpExecIxcRegistry extends IxcRegistry
     // <RemoteRef, HashSet of imported xlet IDs>
     private HashMap importedObjects    = new HashMap(); 
 
-    private static JumpExecIxcRegistry registry;
+    private static JUMPExecIxcRegistry registry;
 
     /*
-     * Creats and starts the JumpExecIxcRegistry to be used for the Client VMs.
+     * Creats and starts the JUMPExecIxcRegistry to be used for the Client VMs.
      */
-    private JumpExecIxcRegistry() {
+    private JUMPExecIxcRegistry() {
 
        try {
 	   /* 
@@ -106,21 +106,21 @@ public class JumpExecIxcRegistry extends IxcRegistry
            jumpExecMasterAppId = Utils.getMtaskServerID();
 
        } catch (Exception e) {
-          System.out.println("Cannot export JumpExecIxcRegistry!!" + e);
+          System.out.println("Cannot export JUMPExecIxcRegistry!!" + e);
           return;   
        }
     }
 
     public static synchronized void startExecVMService() {
          if (registry != null) {
-            throw new InternalError("JumpExecIxcRegistry has already been created."); 
+            throw new InternalError("JUMPExecIxcRegistry has already been created."); 
          }
-	 registry = new JumpExecIxcRegistry();
+	 registry = new JUMPExecIxcRegistry();
     }
 
-    public static synchronized JumpExecIxcRegistry getJumpExecIxcRegistry() {
+    public static synchronized JUMPExecIxcRegistry getJUMPExecIxcRegistry() {
          if (registry == null) {
-            throw new InternalError("JumpExecIxcRegistry hasn't been created."); 
+            throw new InternalError("JUMPExecIxcRegistry hasn't been created."); 
          }
 
 	 return registry;
@@ -194,7 +194,7 @@ public class JumpExecIxcRegistry extends IxcRegistry
 
     public void unbindAll() {
         // Unbind all the objects exported by this guy.
-        System.out.println("@@@JumpExecIxcRegistry.unbindAll() not implemented");
+        System.out.println("@@@JUMPExecIxcRegistry.unbindAll() not implemented");
     }
 
    public void notifyObjectImport(int importingXletID, Remote ref) {
@@ -222,7 +222,7 @@ public class JumpExecIxcRegistry extends IxcRegistry
    }
 
 
-   // JumpExecAppControllerListener's handler for 
+   // JUMPExecAppControllerListener's handler for 
    // AppManager's task_killed events.
    public void taskEvent(String appID, int what) {
       //Need to implement using JUMP APIs
@@ -232,7 +232,7 @@ public class JumpExecIxcRegistry extends IxcRegistry
    }
 
 /* 
- * A thread that updates the JumpExecAppRegistry's registered/
+ * A thread that updates JUMPExecAppRegistry's 
  * imported remote object data structure in response to the
  * client died notification from the master mvm VM.
 */

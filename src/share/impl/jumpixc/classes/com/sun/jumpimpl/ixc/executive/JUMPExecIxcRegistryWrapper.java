@@ -43,28 +43,28 @@ import com.sun.jumpimpl.ixc.RemoteRef;
 
 /*
  * Special purpose IxcRegistry for the Executive VM only.
- * Talks with JumpExecIxcRegistry directly without serialization 
+ * Talks with JUMPExecIxcRegistry directly without serialization 
  * or Socket connection.
  */
 
-public class JumpExecIxcRegistryWrapper extends IxcRegistry {
+public class JUMPExecIxcRegistryWrapper extends IxcRegistry {
  
-    private static JumpExecIxcRegistryWrapper serviceRegistry;
-    private JumpExecIxcRegistry mainRegistry;
+    private static JUMPExecIxcRegistryWrapper serviceRegistry;
+    private JUMPExecIxcRegistry mainRegistry;
     private XletContext context;
 
     // The 'name' Strings binded by this IxcRegistry
     private ArrayList exportedNames;
 
-    protected JumpExecIxcRegistryWrapper(XletContext context) {
+    protected JUMPExecIxcRegistryWrapper(XletContext context) {
        this.context = context;
        exportedNames = new ArrayList();
-       mainRegistry = JumpExecIxcRegistry.getJumpExecIxcRegistry();
+       mainRegistry = JUMPExecIxcRegistry.getJUMPExecIxcRegistry();
     }
 
     public static IxcRegistry getRegistry(XletContext context) {
        if (serviceRegistry == null) 
-          serviceRegistry = new JumpExecIxcRegistryWrapper(context);
+          serviceRegistry = new JUMPExecIxcRegistryWrapper(context);
 
        return serviceRegistry;
     }

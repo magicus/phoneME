@@ -34,8 +34,8 @@ import java.util.HashMap;
 import javax.microedition.xlet.ixc.IxcRegistry;
 
 import com.sun.jumpimpl.ixc.XletContextFactory;
-import com.sun.jumpimpl.ixc.executive.JumpExecIxcRegistryWrapper; 
-import com.sun.jumpimpl.ixc.executive.JumpExecIxcRegistry; 
+import com.sun.jumpimpl.ixc.executive.JUMPExecIxcRegistryWrapper; 
+import com.sun.jumpimpl.ixc.executive.JUMPExecIxcRegistry; 
 
 public class ServiceRegistryFactoryImpl extends JUMPServiceRegistryModuleFactory {
 
@@ -45,7 +45,7 @@ public class ServiceRegistryFactoryImpl extends JUMPServiceRegistryModuleFactory
    public void load(Map map) {
       initdata = map;
 
-      JumpExecIxcRegistry.startExecVMService();
+      JUMPExecIxcRegistry.startExecVMService();
    }
 
    public void unload() {
@@ -57,7 +57,7 @@ public class ServiceRegistryFactoryImpl extends JUMPServiceRegistryModuleFactory
          ClassLoader loader = ClassLoader.getSystemClassLoader();
 
          IxcRegistry regis = 
-             JumpExecIxcRegistryWrapper.getRegistry(XletContextFactory.getXletContext(loader));
+             JUMPExecIxcRegistryWrapper.getRegistry(XletContextFactory.getXletContext(loader));
          module = new ServiceRegistryImpl(regis);
       }
 

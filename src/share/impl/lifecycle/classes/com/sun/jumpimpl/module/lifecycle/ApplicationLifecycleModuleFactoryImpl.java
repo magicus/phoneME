@@ -40,8 +40,6 @@ public class ApplicationLifecycleModuleFactoryImpl extends JUMPApplicationLifecy
        boolean shouldExport = 
 	  new Boolean((String)config.get("lifecycle.remote.export")).booleanValue();
 
-       System.out.println("lifecycle.remote.export boolean" + shouldExport);
-
        if (shouldExport) {
 	  JUMPApplicationLifecycleModule module = 
 	       getModule(POLICY_ONE_LIVE_INSTANCE_ONLY);

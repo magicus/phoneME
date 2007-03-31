@@ -46,8 +46,7 @@ public class ServiceRegistryClient {
 
        /*
 	* First set the port number that the executive VM's registry is 
-	* accepting connection at. If it's provided in map config,  
-	* ust that, else the agreement is to use Executive process id + 1 | 1024.
+	* accepting connection at. 
 	* 
 	* FIXME: this port number setup should go away once IXC is on messaging.
 	*/
