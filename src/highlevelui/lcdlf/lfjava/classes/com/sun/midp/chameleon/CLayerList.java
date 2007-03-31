@@ -33,11 +33,13 @@ package com.sun.midp.chameleon;
 class CLayerList {
     protected CLayerElement top;
     protected CLayerElement bottom;
+    protected int count;
 
     /** Construct empty layers list */
     CLayerList() {
         top = null;
         bottom = null;
+        count = 0;
     }
 
     /**
@@ -66,6 +68,7 @@ class CLayerList {
         top = le;
         if (bottom == null)
             bottom = le;
+        count ++;
         return le;
     }
 
@@ -111,6 +114,7 @@ class CLayerList {
 
         // Clear links to neighbour layers
         le.upper = le.lower = null;
+        count --;
     }
 
     /**
@@ -127,5 +131,13 @@ class CLayerList {
      */
     CLayerElement getBottom() {
         return bottom;
+    }
+
+    /**
+     * Get number of layers in the list
+     * @return number of list elements
+     */
+    int size() {
+        return count;
     }
 }
