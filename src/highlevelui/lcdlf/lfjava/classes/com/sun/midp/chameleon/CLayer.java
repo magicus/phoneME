@@ -42,7 +42,13 @@ public class CLayer {
     
     /** Array holding a bounding rectangle of an area needing repainting. */
     protected int[] dirtyBounds;
-    
+
+    /** Copy of the layer bounds needed to unlock the layers for painting */
+    protected int[] boundsCopy;
+
+    /** Copy of the dirty bounds needed to unlock the layers for painting */
+    protected int[] dirtyBoundsCopy;
+
     /** Flag indicating if this layer has a transparent background or not. */
     protected boolean transparent;
     
@@ -200,6 +206,8 @@ public class CLayer {
         bounds[H] = ScreenSkin.HEIGHT;
         
         dirtyBounds = new int[4];
+        dirtyBoundsCopy = new int[4];
+        boundsCopy = new int[4];
         cleanDirtyRegions();
         
         // IMPL_NOTE : center the background image by default
@@ -700,6 +708,24 @@ public class CLayer {
         return res;
     }
 
+    /**
+     * Copy bounds of the layer to use them on dirty layers painting
+     * when the layers are not locked for changes from other threads
+     */
+    void copyLayerBounds() {
+        if (dirtyBounds[X] == -1) {
+            // Whole layer is dirty
+            dirtyBoundsCopy[X] = 0;
+            dirtyBoundsCopy[Y] = 0;
+            dirtyBoundsCopy[W] = bounds[W];
+            dirtyBoundsCopy[H] = bounds[H];
+        } else {
+            System.arraycopy(
+                dirtyBounds, 0, dirtyBoundsCopy, 0, 4);
+        }
+        System.arraycopy(
+            bounds, 0, boundsCopy, 0, 4);
+    }
 
     /**
      * Request a repaint for the entire contents of this layer.
