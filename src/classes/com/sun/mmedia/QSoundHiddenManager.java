@@ -39,16 +39,21 @@ class QSoundHiddenManager {
         int gmMIDIPeer = 0;
         
         gmPeer = nInitQSound();
+	if( gmPeer == 0 )
+	{
+		throw new RuntimeException( "Audio Renderer fatal error" );
+	}
         
         renderThread = new QSoundRenderThread(gmPeer);
         renderThread.start();  
 
-        try {
-            gmMIDIPeer = nInitQSoundMIDI(gmPeer);
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
+        gmMIDIPeer = nInitQSoundMIDI(gmPeer);
+	if( gmMIDIPeer == 0 )
+	{
+		throw new RuntimeException( "MIDI Renderer fatal error" );
+	}
         
+
         myGeneralPlayerContainer = new QSoundGlobalEffectModule(gmPeer, gmMIDIPeer);
 
     };
