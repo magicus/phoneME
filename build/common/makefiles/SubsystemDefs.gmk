@@ -55,7 +55,8 @@ $(MIDP_CLASSES_ZIP):: $(SKINROMIZATION_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGE
 # need to run this unconditionally; it should always be run based on
 # out-of-date prerequisites.
 #
-run_configurator:: $(L10N_GENERATOR_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
+run_configurator:: $(L10N_GENERATOR_JAR_FILE)
+	$(merge_configurations)
 	$(generate_configuration)
 
 # The rule for running skin romization tool unconditionally
