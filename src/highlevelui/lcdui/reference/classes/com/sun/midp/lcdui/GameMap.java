@@ -52,9 +52,10 @@ public class GameMap {
     static private GraphicsAccess graphicsAccess;
 
     /**
-     * Map contains pairs of GameCanvas and GameCanvasLFImpl
+     * The GameAccess tunnel instance handed out from
+     * javax.microedition.lcdui.game package
      */
-    private static Hashtable gameCanvasImpl = new Hashtable();
+    static private GameAccess gameAccess;
 
     /**
      * Lock to ensure synchronized access to the displayable
@@ -91,34 +92,27 @@ public class GameMap {
     }
 
     /**
-     * Associates the given GameCanvas and GameCanvasLFImpl.
-     *
-     * @param c The GameCanvas to store
+     * Register given game package accessor instance
+     * @param gameAccess implementation of the GameAccess interface
      */
-    public static GameCanvasLFImpl registerGameCanvas(GameCanvas c) {
-        GameCanvasLFImpl gameCanvasLF = new GameCanvasLFImpl(c);
-        synchronized(lock) {
-            if (!gameCanvasImpl.containsKey(c)) {
-                gameCanvasImpl.put(c, gameCanvasLF);
-                return gameCanvasLF;
-            }
+    public static void registerGameAccess(GameAccess gameAccess) {
+        synchronized (lock) {
+            GameMap.gameAccess = gameAccess;
         }
-        return null;
     }
 
     /**
      * Gets the GameCanvasLFImpl object for this GameCanvas.
      * @param c The GameCanvas to get the GameCanvasLFImpl for
-     * @return GameCanvasLFImpl
+     * @return GameCanvasLFImpl, or null if there is no accessor to game package
      */
     public static GameCanvasLFImpl getGameCanvasImpl(GameCanvas c) {
         synchronized (lock) {
-            if (gameCanvasImpl.containsKey(c)) {
-                return (GameCanvasLFImpl) gameCanvasImpl.get(c);
-            } else {
-                return null;
+            if (gameAccess != null) {
+                return gameAccess.getGameCanvasLFImpl(c);
             }
         }
+        return null;
     }
 
     /**
