@@ -333,9 +333,13 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
     boolean lCallTraverse(int dir, int viewportWidth, int viewportHeight,
                           int[] visRect) 
     {
-
         super.lCallTraverse(dir, viewportWidth, viewportHeight, visRect);
-        
+
+        visRect[X] = 0;
+        visRect[Y] = 0;
+        visRect[HEIGHT] = bounds[HEIGHT];
+        visRect[WIDTH] = bounds[WIDTH];
+
         if (!editor.isPopupOpen()) {
             if (!traversedIn) {
                 traversedIn = true;
