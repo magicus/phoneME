@@ -25,6 +25,7 @@
 package javax.microedition.khronos.egl;
 
 import java.util.Hashtable;
+import java.lang.ref.WeakReference;
 
 /**
  * A class encapsulating an EGL configuration.
@@ -37,7 +38,7 @@ final class EGLConfigImpl extends EGLConfig {
     public EGLConfigImpl(int nativeId) {
         synchronized (byId) {
             this.nativeId = nativeId;
-            byId.put(new Integer(nativeId), this);
+            byId.put(new Integer(nativeId), new WeakReference(this));
         }
     }
     
@@ -47,16 +48,18 @@ final class EGLConfigImpl extends EGLConfig {
 
     // Need revisit - require a token for security
     public static EGLConfigImpl getInstance(int nativeId) {
-	synchronized (byId) {
-	    Object o = byId.get(new Integer(nativeId));
-	    if (o == null) {
-		return new EGLConfigImpl(nativeId);
-	    } else {
-		return (EGLConfigImpl)o;
-	    }
-	}
+        synchronized (byId) {
+            WeakReference ref = (WeakReference)byId.get(new Integer(nativeId));
+            EGLConfigImpl config = ref != null ?
+                    (EGLConfigImpl)ref.get() : null;
+            if (config == null) {
+                return new EGLConfigImpl(nativeId);
+            } else {
+                return config;
+            }
+        }
     }
-    
+
     public String toString() {
 	return "EGLConfigImpl[" + nativeId + "]";
     }

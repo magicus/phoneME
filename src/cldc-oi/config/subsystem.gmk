@@ -136,6 +136,7 @@ MODULE_JSR_239_COM_SUN_JSR239_JAVA_FILES += \
     ${JSR_239_CLDC_IMPL_JAVA_DIR}/com/sun/jsr239/Errors.java \
     ${JSR_239_CLDC_IMPL_JAVA_DIR}/com/sun/jsr239/GL10Impl.java \
     ${JSR_239_CLDC_IMPL_JAVA_DIR}/com/sun/jsr239/GL11Impl.java \
+    ${JSR_239_CLDC_IMPL_JAVA_DIR}/com/sun/jsr239/ContextAccess.java \
     ${JSR_239_CLDC_IMPL_JAVA_DIR}/com/sun/jsr239/GLConfiguration.java
 
 # EGL Impl classes

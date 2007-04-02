@@ -26,10 +26,14 @@ package javax.microedition.khronos.egl;
 
 import javax.microedition.khronos.opengles.GL;
 import java.util.Hashtable;
+import java.lang.ref.WeakReference;
 
-import com.sun.jsr239.*;
+import com.sun.jsr239.ContextAccess;
+import com.sun.jsr239.GLConfiguration;
+import com.sun.jsr239.GL10Impl;
+import com.sun.jsr239.GL11Impl;
 
-final class EGLContextImpl extends EGLContext {
+final class EGLContextImpl extends EGLContext implements ContextAccess {
     
     private static final Hashtable byId = new Hashtable(); 
 
@@ -38,14 +42,14 @@ final class EGLContextImpl extends EGLContext {
 
     private Thread boundThread = null;
     private EGLDisplayImpl display = null;
-    private EGLSurfaceImpl drawSurface = null;
-    private EGLSurfaceImpl readSurface = null;
+    private EGLSurface drawSurface = null;
+    private EGLSurface readSurface = null;
     private boolean destroyed = false;
 
     public EGLContextImpl(int nativeId) {
         synchronized (byId) {
             this.nativeId = nativeId;
-            byId.put(new Integer(nativeId), this);
+            byId.put(new Integer(nativeId), new WeakReference(this));
         }
     }
 
@@ -61,7 +65,7 @@ final class EGLContextImpl extends EGLContext {
         this.boundThread = boundThread;
     }
 
-    public EGLDisplayImpl getDisplay() {
+    public EGLDisplay getDisplay() {
         return display;
     }
 
@@ -69,7 +73,7 @@ final class EGLContextImpl extends EGLContext {
         this.display = display;
     }
 
-    public EGLSurfaceImpl getDrawSurface() {
+    public EGLSurface getDrawSurface() {
         return drawSurface;
     }
 
@@ -77,8 +81,12 @@ final class EGLContextImpl extends EGLContext {
         this.drawSurface = drawSurface;
     }
 
-    public EGLSurfaceImpl getReadSurface() {
+    public EGLSurface getReadSurface() {
         return readSurface;
+    }
+
+    EGLSurfaceImpl getDrawSurfaceImpl() {
+        return (EGLSurfaceImpl)getDrawSurface();
     }
 
     public void setReadSurface(EGLSurfaceImpl readSurface) {
@@ -94,14 +102,16 @@ final class EGLContextImpl extends EGLContext {
     }
 
     public static EGLContextImpl getInstance(int nativeId) {
-	synchronized (byId) {
-	    Object o = byId.get(new Integer(nativeId));
-	    if (o == null) {
-		return new EGLContextImpl(nativeId);
-	    } else {
-		return (EGLContextImpl)o;
-	    }
-	}
+        synchronized (byId) {
+            WeakReference ref = (WeakReference)byId.get(new Integer(nativeId));
+            EGLContextImpl context = ref != null ?
+                    (EGLContextImpl)ref.get() : null;
+            if (context == null) {
+                return new EGLContextImpl(nativeId);
+            } else {
+                return context;
+            }
+        }
     }
 
     public GL getGL() {
