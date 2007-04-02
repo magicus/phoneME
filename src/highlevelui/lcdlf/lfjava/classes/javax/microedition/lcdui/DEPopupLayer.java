@@ -372,6 +372,11 @@ class DEPopupLayer extends ScrollablePopupLayer {
         updateScrollIndicator();
     }
 
+    /** Change location of the popup layer*/
+    public void setLocation() {
+
+    }
+
     /**
      * hide current popup
      */

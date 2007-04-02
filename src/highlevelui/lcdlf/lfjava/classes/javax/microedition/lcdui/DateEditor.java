@@ -109,6 +109,7 @@ class DateEditor extends PopupLayer implements CommandListener {
 
         setCommands(commands);
         setCommandListener(this);
+        sizeChanged = true;
         isIitialized = true;
     }
 
@@ -560,6 +561,26 @@ class DateEditor extends PopupLayer implements CommandListener {
         minutesPopup = new DEPopupLayer(this, minutes, selectedIndex, true);
     }
 
+    /**
+     * Set month popup location using upper left corner coordinate of the
+     * DateEditor layer in corrdinate system of the owner window
+     *
+     * @param x x-coordinate of the upper left corner of DateEditor
+     * @param y y-coordinate of the upper left corner of DateEditor
+     */
+    protected void setMonthPopupLocation(int x, int y) {
+        int w = DateEditorSkin.IMAGE_MONTH_BG.getWidth();
+        int h = DateEditorSkin.IMAGE_MONTH_BG.getHeight();
+        monthPopup.setElementSize(
+            w - 4, DateEditorSkin.FONT_POPUPS.getHeight());
+        monthPopup.setBounds(x, y + h, w, DateEditorSkin.HEIGHT_POPUPS);
+        monthPopup.updateScrollIndicator();
+
+        month_bounds[X] = x - this.bounds[X];
+        month_bounds[Y] = y - this.bounds[Y];
+        month_bounds[W]= w;
+        month_bounds[H]= h;
+    }
 
     /**
      * Draw the date components.
@@ -581,17 +602,6 @@ class DateEditor extends PopupLayer implements CommandListener {
                 g.setColor(DateEditorSkin.COLOR_TRAVERSE_IND);
                 g.drawRect(-2, -2, w + 3, h + 3);
             }
-            month_bounds[X] = g.getTranslateX() - this.bounds[X];
-            month_bounds[Y] = g.getTranslateY() - this.bounds[Y];
-            month_bounds[W]= w;
-            month_bounds[H]= h;
-            
-            monthPopup.setElementSize(
-                w - 4, DateEditorSkin.FONT_POPUPS.getHeight());
-            monthPopup.setBounds(g.getTranslateX(),
-                                 g.getTranslateY() + h,
-                                 w, DateEditorSkin.HEIGHT_POPUPS);
-            monthPopup.updateScrollIndicator();
         }
         g.setFont(DateEditorSkin.FONT_POPUPS);
         g.setColor(0);
@@ -1324,7 +1334,9 @@ class DateEditor extends PopupLayer implements CommandListener {
     }
 
     public void callSizeChanged() {
-        if (monthPopup != null) monthPopup.updateScrollIndicator();
+        if (monthPopup != null) {
+            setMonthPopupLocation(bounds[X], bounds[Y]);
+        }
         if (yearPopup != null) yearPopup.updateScrollIndicator();
         if (hoursPopup != null) hoursPopup.updateScrollIndicator();
         if (minutesPopup != null) minutesPopup.updateScrollIndicator();        

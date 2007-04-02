@@ -188,5 +188,19 @@ public class DisplayEventProducer {
         eventQueue.post(
             LCDUIEvent.createItemEvent(src, LCDUIEvent.ITEM_SIZE_REFRESH));
     }
+
+    /**
+     *
+     */
+    /**
+     * Called to schedule a serial callback of a Runnable object passed
+     * into Display's callSerially() method.
+     *
+     * @param d The Display
+     */
+    public void sendScreenRepaintEvent(DisplayEventConsumer d) {
+        eventQueue.post(
+            LCDUIEvent.createScreenRepaintEvent(d));
+    }
 }
 

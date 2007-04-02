@@ -73,6 +73,7 @@ public class LCDUIEventListener implements EventListener {
          * decode their fields. 
          */
         eventQueue.registerEventListener(EventTypes.SCREEN_CHANGE_EVENT, this);
+        eventQueue.registerEventListener(EventTypes.SCREEN_REPAINT_EVENT, this);
         eventQueue.registerEventListener(EventTypes.INVALIDATE_EVENT, this);
         eventQueue.registerEventListener(EventTypes.ITEM_EVENT, this);
         eventQueue.registerEventListener(EventTypes.CALL_SERIALLY_EVENT, this);
@@ -121,6 +122,15 @@ public class LCDUIEventListener implements EventListener {
              * Assumed that target consumer is not null.
              */
             lcduiEvent.display.handleScreenChangeEvent(lcduiEvent.nextScreen);
+            return;
+
+        case EventTypes.SCREEN_REPAINT_EVENT:
+            /*
+             * Target DisplayEventConsumer is obtained directly
+             * from event field.
+             * Assumed that target consumer is not null.
+             */
+            lcduiEvent.display.handleScreenRepaintEvent();
             return;
 
         case EventTypes.INVALIDATE_EVENT:

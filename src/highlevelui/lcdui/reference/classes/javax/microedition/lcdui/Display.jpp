@@ -1558,6 +1558,15 @@ public class Display {
     }
 
     /**
+     * Posts an event to repaint the screen.
+     */
+    void requestScreenRepaint() {
+        displayEventProducer.sendScreenRepaintEvent(consumer);
+    }
+
+
+
+    /**
      * Called by <code>DisplayEventConsumer</code> when screen change event
      * needs to be processed.
      * Registers a new <code>DisplayableLF</code> object to this
@@ -2950,6 +2959,18 @@ public class Display {
         }
 
         /**
+         * Called by event delivery when a screen change needs to occur.
+         * DisplayEventConsumer I/F method.
+         */
+        public void handleScreenRepaintEvent() {
+            // #ifdef ENABLE_CHAMELEON
+            System.out.println("REQUEST REPAINT");
+            window.setAllDirty();
+            callPaint(0,0,Display.WIDTH,Display.HEIGHT, null);
+            // #endif
+        }
+
+        /**
          * Called by event delivery when size of screen was changed.
          */
         public void handleRotationEvent() {
@@ -2961,14 +2982,38 @@ public class Display {
             screenGraphics.setDimensions(Display.WIDTH, Display.HEIGHT);
             screenGraphics.reset();
             // #ifdef ENABLE_CHAMELEON
-                SkinResources.adjustScreen();
-                window.resize();
-                callPaint(0,0,Display.WIDTH,Display.HEIGHT, null);
+            SkinResources.adjustScreen();
+
+            MIDPWindow windowCopy;
+            DisplayableLF currentCopy;
+            synchronized (LCDUILock) {
+                windowCopy = window;
+                currentCopy = Display.this.current;
+            }
+
+            windowCopy.resize();
+            if (currentCopy != null) {
+                currentCopy.uCallInvalidate();
+            }
+
+            callPaint(0,0,Display.WIDTH,Display.HEIGHT, null);
+
+            System.out.println("CALL PAINT");
+            try {Thread.sleep(2000);} catch(InterruptedException ie) {};
+
+            // IMPL_NOTE: Currently many paint() methods of UI widgets
+            //   contain not only painting logic, but the logic to
+            //   resize and to do layout for their subbordinated items.
+            //   As soon this logic will be refactored from the paint()
+            //   methods, the request for full screen repaint will be
+            //   removed.
+            requestScreenRepaint();
+            
             // #else
-                DisplayableLF currentCopy = getCurrent().displayableLF;
-                if (currentCopy != null) {
-                    currentCopy.uCallSizeChanged(Display.WIDTH, Display.HEIGHT);
-                }
+            DisplayableLF currentCopy = getCurrent().displayableLF;
+            if (currentCopy != null) {
+                currentCopy.uCallSizeChanged(Display.WIDTH, Display.HEIGHT);
+            }
             // #endif ENABLE_CHAMELEON
 
         }

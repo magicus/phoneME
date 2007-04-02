@@ -542,6 +542,26 @@ public abstract class CWindow {
     }
 
     /**
+     * Sets all visible layers to dirty state.
+     * The method is needed on system events like screen rotation,
+     * when generic layers system is not capabel to properly analyze
+     * layers changes, e.g. of move/resize kind. It could be fixed in
+     * the future and this method will be out of use. 
+     */
+    public void setAllDirty() {
+        synchronized(layers) {
+            CLayer l;
+            for (CLayerElement le = layers.getBottom();
+                    le != null; le = le.getUpper()) {
+                l = le.getLayer();
+                if (l.visible) {
+                    l.addDirtyRegion();
+                } // if
+            } // for
+        } // synchronized
+    }
+
+    /**
      * Paint this window. This method should not generally be overridden by
      * subclasses. This method carefully stores the clip, translation, and
      * color before calling into subclasses. The graphics context should be
