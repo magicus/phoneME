@@ -24,16 +24,9 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.content;
+package com.sun.j2me.content;
 
-import javax.microedition.content.ContentHandler;
-import javax.microedition.content.ContentHandlerServer;
-import javax.microedition.content.RequestListener;
-import javax.microedition.content.ActionNameMap;
-import javax.microedition.content.Invocation;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import javax.microedition.content.*;
 
 /**
  * The internal structure of a registered content handler.
@@ -943,5 +936,10 @@ public class ContentHandlerImpl implements ContentHandler {
             }
             sb.append(strings[i]);
         }
+    }
+
+    protected String[] getAccesses() {
+        /** TODO: initialize 'access' array only for server instances */
+        return null;
     }
 }

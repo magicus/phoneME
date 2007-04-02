@@ -292,8 +292,8 @@ public class Registry {
      *  <li> @link unregister()
      * </ul>
      */
-    private static final RegistryFactory factory =
-                                new RegistryFactory(new Registry());
+    private static final RegistryImpl.RegistryFactory factory =
+                        new RegistryImpl.RegistryFactory(new Registry());
 
     /** The reference to the RegistryImpl with the real implementation. */
     private RegistryImpl impl;
