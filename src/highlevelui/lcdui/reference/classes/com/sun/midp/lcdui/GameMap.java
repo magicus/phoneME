@@ -107,10 +107,8 @@ public class GameMap {
      * @return GameCanvasLFImpl, or null if there is no accessor to game package
      */
     public static GameCanvasLFImpl getGameCanvasImpl(GameCanvas c) {
-        synchronized (lock) {
-            if (gameAccess != null) {
-                return gameAccess.getGameCanvasLFImpl(c);
-            }
+        if (gameAccess != null) {
+            return gameAccess.getGameCanvasLFImpl(c);
         }
         return null;
     }
