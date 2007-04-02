@@ -66,6 +66,16 @@ public abstract class CWindow {
      */
     protected CLayerList layers;
 
+
+    /** The number of dirty layers to repaint */
+    protected int dirtyCount;
+
+    /** Initial maximal number of the dirty layers */
+    protected int dirtyMaxCount = 10;
+
+    /** Layers replication to not keep the lock on painting */
+    protected CLayer[] dirtyLayers = new CLayer[dirtyMaxCount];
+
     /**
      * Background layer of this window, should be the bottom most layer
      * of the window, can be invisible for transparent windows. 
@@ -438,10 +448,47 @@ public abstract class CWindow {
             le = le.getLower();
         }
     }
-    
+
+    /**
+     * Copy dirty layer references to array for further painting.
+     * The copying is needed to not keep lock on layers list when
+     * layers painting will happen.
+     */
+    private void copyDirtyLayers() {
+        if (CGraphicsQ.DEBUG) {
+            System.err.println("[Copy dirty layers]");
+        }
+        CLayer l;
+        dirtyCount = 0;
+        int layersCount = layers.size();
+        // Heuristics to increase array for copied dirty layers
+        if (layersCount > dirtyMaxCount) {
+            dirtyMaxCount += layersCount;
+            dirtyLayers = new CLayer[dirtyMaxCount];
+        }
+        // Copy dirty layer references
+        for (CLayerElement le = layers.getBottom();
+                le != null; le = le.getUpper()) {
+            l = le.getLayer();
+            if (l.visible && l.isDirty()) {
+                l.copyLayerBounds();
+                dirtyLayers[dirtyCount++] = l;
+
+            } else { // !(visible && dirty)
+                if (CGraphicsQ.DEBUG) {
+                    System.err.println("Skip Layer: " + l);
+                }
+            } // if
+        } // for
+
+    }
+
     /**
      * Second Pass: We sweep through the layers from the bottom to
      * the top and paint each one that is marked as dirty
+     *
+     * Note, that the painting for copied layers is done here to
+     * not hold the layers lock during the painting.
      *
      * @param g The graphics object to use to paint this window.
      * @param refreshQ The custom queue which holds the set of refresh
@@ -452,61 +499,45 @@ public abstract class CWindow {
             System.err.println("[Paint dirty layers]");
         }
 
-        CLayer l;
-        for (CLayerElement le = layers.getBottom();
-                le != null; le = le.getUpper()) {
-            l = le.getLayer();
-            if (l.visible && l.isDirty()) {
+        for (int i = 0; i < dirtyCount; i++) {
+            CLayer l = dirtyLayers[i];
 
-                // Prepare relative dirty region coordinates
-                // of the current layer
-                int dx, dy, dw, dh;
-                if (l.dirtyBounds[X] == -1) {
-                    // Whole layer is dirty
-                    dx = 0; dy = 0;
-                    dw = l.bounds[W];
-                    dh = l.bounds[H];
-                } else {
-                    dx = l.dirtyBounds[X];
-                    dy = l.dirtyBounds[Y];
-                    dw = l.dirtyBounds[W];
-                    dh = l.dirtyBounds[H];
-                }
+            // Prepare relative dirty region coordinates
+            // of the current layer
+            int dx = l.dirtyBoundsCopy[X];
+            int dy = l.dirtyBoundsCopy[Y];
+            int dw = l.dirtyBoundsCopy[W];
+            int dh = l.dirtyBoundsCopy[H];
 
-                // Before we call into the layer to paint, we
-                // translate the graphics context into the layer's
-                // coordinate space
-                g.translate(l.bounds[X], l.bounds[Y]);
+            // Before we call into the layer to paint, we
+            // translate the graphics context into the layer's
+            // coordinate space
+            g.translate(l.boundsCopy[X], l.boundsCopy[Y]);
 
-                if (CGraphicsQ.DEBUG) {
-                    System.err.println("Painting Layer: " + l);
-                    System.err.println("\tClip: " +
-                        dx + ", " + dy + ", " + dw + ", " + dh);
-                }
+            if (CGraphicsQ.DEBUG) {
+                System.err.println("Painting Layer: " + l);
+                System.err.println("\tClip: " +
+                    dx + ", " + dy + ", " + dw + ", " + dh);
+            }
 
-                // Clip the graphics to only contain the dirty region of
-                // the layer (if the dirty region isn't set, clip to the
-                // whole layer contents).
-                g.clipRect(dx, dy, dw, dh);
-                refreshQ.queueRefresh(
-                    l.bounds[X] + dx, l.bounds[Y] + dy, dw, dh);
-                l.paint(g);
+            // Clip the graphics to only contain the dirty region of
+            // the layer (if the dirty region isn't set, clip to the
+            // whole layer contents).
+            g.clipRect(dx, dy, dw, dh);
+            refreshQ.queueRefresh(
+                l.boundsCopy[X] + dx, l.boundsCopy[Y] + dy, dw, dh);
+            l.paint(g);
 
-                // We restore our graphics context to prepare
-                // for the next layer
-                g.translate(-g.getTranslateX(), -g.getTranslateY());
-                g.translate(tranX, tranY);
+            // We restore our graphics context to prepare
+            // for the next layer
+            g.translate(-g.getTranslateX(), -g.getTranslateY());
+            g.translate(tranX, tranY);
 
-                // We reset our clip to this window's bounds again.
-                g.setClip(bounds[X], bounds[Y], bounds[W], bounds[H]);
+            // We reset our clip to this window's bounds again.
+            g.setClip(bounds[X], bounds[Y], bounds[W], bounds[H]);
 
-                g.setFont(font);
-                g.setColor(color);
-            } else { // !(visible && dirty)
-                if (CGraphicsQ.DEBUG) {
-                    System.err.println("Skip Layer: " + l);
-                }
-            } // if
+            g.setFont(font);
+            g.setColor(color);
         } // for
     }
 
@@ -547,8 +578,9 @@ public abstract class CWindow {
 
         synchronized (layers) {
             sweepAndMarkLayers();
-            paintLayers(g, refreshQ);
+            copyDirtyLayers();
         }
+        paintLayers(g, refreshQ);
 
         // We restore the original clip. The original font, color, etc.
         // have already been restored
