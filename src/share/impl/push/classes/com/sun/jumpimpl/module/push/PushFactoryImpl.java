@@ -25,7 +25,6 @@
 package com.sun.jumpimpl.module.push;
 
 import com.sun.jump.module.JUMPModuleFactory;
-import java.io.File;
 import java.util.Map;
 import sun.misc.MIDPConfig;
 
@@ -39,7 +38,7 @@ public final class PushFactoryImpl extends JUMPModuleFactory {
     private JUMPModuleFactory pushModuleFactory = null;
 
     /** {@inheritDoc} */
-    public void load(Map map) {
+    public void load(final Map map) {
         try {
             final Class cls = loadMIDPClass(FACTORY_CLASS_NAME);
             pushModuleFactory = (JUMPModuleFactory) (cls.newInstance());
@@ -56,8 +55,8 @@ public final class PushFactoryImpl extends JUMPModuleFactory {
     /** {@inheritDoc} */
     public void unload() {
         if (pushModuleFactory == null) {
-            throw new IllegalStateException("attempt to unload push module" +
-                    " before load");
+            throw new IllegalStateException("attempt to unload push module"
+                    + " before load");
         }
         pushModuleFactory.unload();
         pushModuleFactory = null;

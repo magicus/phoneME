@@ -27,7 +27,7 @@ information or have any questions.
   <target name="compile-push">
       <jump.javac
              srcdir="${s.share.impl.dir}/push/classes">
-           <include name="com/sun/jumpimpl/module/push/**.java" />
+           <include name="com/sun/jumpimpl/module/push/**/*.java" />
       </jump.javac>
   </target>
 
