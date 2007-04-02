@@ -247,6 +247,7 @@ public class DateField extends Item {
      * @see #getInputMode
      */
     public void setInputMode(int mode) {
+
         if ((mode != DATE) && (mode != TIME) && (mode != DATE_TIME)) {
             throw new IllegalArgumentException("Invalid input mode");
         }
@@ -282,29 +283,22 @@ public class DateField extends Item {
      * @param date the date value to set to.
      */
     void setDateImpl(java.util.Date date) {
+
         if (date == null) {
             initialized = false;
         } else {
             currentDate.setTime(date);
             
             if (mode == TIME) {
-                // NOTE:
-                // It is unclear from the spec what should happen 
-                // when DateField with TIME mode is set to
-                // a value that is on a day other than 1/1/1970.
-                //
-                // Two possible interpretations of the spec are:
-                // 1. DateField is put into the "uninitialized" state; or
-                // 2. The time portion of the DateField is set to the 
-                //    time-of-day portion of the Date object passed in, 
-                //    and the date portion of the DateField is set 
-                //    to 1/1/1970.
-                //
-                // Currently we are using the second approach.
+
+                if (currentDate.getTime().getTime() >= 24*60*60*1000) {
+                    initialized = false;
+                } else {
                     currentDate.set(Calendar.YEAR, 1970);
                     currentDate.set(Calendar.MONTH, Calendar.JANUARY);
                     currentDate.set(Calendar.DATE, 1);
                     initialized = true;
+                }
             } else {
                 // Currently spec does not prohibit from losing
                 // irrelevant for that mode information
