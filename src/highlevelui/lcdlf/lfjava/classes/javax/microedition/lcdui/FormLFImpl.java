@@ -1485,14 +1485,16 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         // Call traverse() outside LCDUILock
         if (item.uCallTraverse(dir,
                                viewport[WIDTH], viewport[HEIGHT], visRect)) {
-            // Since visRect is sent to the Item in its own coordinate
-            // space, we translate it back into the overall Form's
-            // coordinate space
-            visRect[X] += item.bounds[X];
-            visRect[Y] += item.bounds[Y];
 
             ret = true;
         }
+
+        // Since visRect is sent to the Item in its own coordinate
+        // space, we translate it back into the overall Form's
+        // coordinate space
+        visRect[X] += item.bounds[X];
+        visRect[Y] += item.bounds[Y];
+
         return ret;
     }
     
@@ -1570,7 +1572,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         // current page
         int nextIndex = 
                 getNextInteractiveItem(itemsCopy, dir, traverseIndexCopy);
-        
+
         if (nextIndex != -1) {
             // NOTE: In traverse(), if there is a "next" interactive
             // item, there must have been a "first" interactive item
@@ -1621,7 +1623,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                     itemsCopy[traverseIndexCopy].uRequestPaint();
                 }
             }
-            
+
             // There is a special case when traversing to the very last
             // item on a Form
             if (traverseIndexCopy == (itemsCopy.length - 1) && 
@@ -1853,7 +1855,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             viewable[Y] = bounds[Y];
             return true;
         }
-        
+
         switch (dir) {
             case Canvas.LEFT:
             case Canvas.UP:
@@ -2160,7 +2162,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
 
     /**
      * When a Form calls an Item's traverse() method, it passes in
-     * an in-out int[] that represents the Item's internal traversal
+     * an in-out int[] that represents the Item's traversal
      * bounds. This gets cached in the visRect variable
      */
     int[] visRect;
