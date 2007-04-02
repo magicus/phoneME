@@ -30,7 +30,8 @@ import com.sun.midp.lcdui.GameMap;
 
 import javax.microedition.lcdui.Graphics;
 
-import java.util.Hashtable;
+import java.lang.ref.WeakReference;
+import java.util.Enumeration;
 
 class EGL10Impl implements EGL10 {
 
@@ -50,10 +51,6 @@ class EGL10Impl implements EGL10 {
     static final int STRATEGY_USE_WINDOW = 0;
     static final int STRATEGY_USE_PIXMAP = 1;
     static final int STRATEGY_USE_PBUFFER = 2;
-
-    // Ensure references exist to all Java objects that wrap native
-    // objects.
-    static Hashtable references = new Hashtable();
 
     native int _eglGetError();
     native int _eglGetDisplay(int displayID);
@@ -142,6 +139,8 @@ class EGL10Impl implements EGL10 {
 
     private native int _getFullDisplayWidth();
     private native int _getFullDisplayHeight();
+
+    private native int _garbageCollect(boolean fullGC);
 
     public static EGL10Impl getInstance() {
         return theInstance;
@@ -349,6 +348,32 @@ class EGL10Impl implements EGL10 {
         return retval;
     }
 
+    private int createWindowPixmap(int displayId, int configId,
+                                   Graphics winGraphics,
+                                   int width, int height) {
+        int pixmapPointer;
+
+        // Duplicate mutable image contents
+        try {
+            pixmapPointer  = _getWindowPixmap(displayId, configId,
+                             winGraphics, width, height);
+
+        } catch(OutOfMemoryError e) {
+            _garbageCollect(false);
+
+            try {
+                pixmapPointer  = _getWindowPixmap(displayId, configId,
+                                 winGraphics, width, height);
+            } catch(OutOfMemoryError e2) {
+                _garbageCollect(true);
+
+                pixmapPointer  = _getWindowPixmap(displayId, configId,
+                                 winGraphics, width, height);
+            }
+        }
+        return pixmapPointer;
+    }
+
     public synchronized EGLSurface eglCreateWindowSurface(EGLDisplay display,
                                                           EGLConfig config,
                                                           Object win,
@@ -391,16 +416,16 @@ class EGL10Impl implements EGL10 {
 					attrib_list);
 	    surface = EGLSurfaceImpl.getInstance(surf, width, height);
 	} else if (strategy == STRATEGY_USE_PIXMAP) {
-	    int pixmapPointer =
-                _getWindowPixmap(displayId, configId,
-                                 winGraphics, width, height);
-	    int surf =
+        int pixmapPointer = createWindowPixmap(displayId, configId,
+                                               winGraphics,
+                                               width, height);
+        int surf =
 		_eglCreatePixmapSurface(displayId, configId,
 					pixmapPointer,
 					attrib_list);
 	    surface = EGLSurfaceImpl.getInstance(surf, width, height);
 	    surface.setPixmapPointer(pixmapPointer);
-	} else if (strategy == STRATEGY_USE_PBUFFER) {
+    } else if (strategy == STRATEGY_USE_PBUFFER) {
         int attrib_size = (attrib_list != null) ? attrib_list.length : 0;
         int[] new_attrib_list = new int[attrib_size + 5];
 
@@ -434,13 +459,36 @@ class EGL10Impl implements EGL10 {
 	}
 
 	surface.setTarget(winGraphics);
-
-	// Ensure a Java reference to the surface exists
-	references.put(surface, surface);
-
 	return surface;
     }
-    
+
+
+    private int createImagePixmap(int displayId, int configId,
+                                  Graphics imageGraphics,
+                                  int width, int height) {
+        int pixmapPointer;
+
+        // Duplicate mutable image contents
+        try {
+            pixmapPointer  = _getImagePixmap(displayId, configId,
+                             imageGraphics, width, height);
+
+        } catch(OutOfMemoryError e) {
+            _garbageCollect(false);
+
+            try {
+                pixmapPointer  = _getImagePixmap(displayId, configId,
+                                 imageGraphics, width, height);
+            } catch(OutOfMemoryError e2) {
+                _garbageCollect(true);
+
+                pixmapPointer  = _getImagePixmap(displayId, configId,
+                                 imageGraphics, width, height);
+            }
+        }
+        return pixmapPointer;
+    }
+
     public synchronized EGLSurface eglCreatePixmapSurface(EGLDisplay display,
                                                           EGLConfig config,
                                                           Object pixmap,
@@ -475,9 +523,10 @@ class EGL10Impl implements EGL10 {
 	    throwIAE(Errors.EGL_ATTRIBS_NOT_TERMINATED);
 	}
 
-	int pixmapPointer = _getImagePixmap(displayId, configId,
-                                            imageGraphics, width, height);
-	int surf =
+	int pixmapPointer = createImagePixmap(displayId, configId,
+                                          imageGraphics, width, height);
+
+    int surf =
 	    _eglCreatePixmapSurface(displayId, configId,
 				    pixmapPointer,
 				    attrib_list);
@@ -485,9 +534,6 @@ class EGL10Impl implements EGL10 {
             EGLSurfaceImpl.getInstance(surf, width, height);
 	surface.setPixmapPointer(pixmapPointer);
 	surface.setTarget(imageGraphics);
-
-	// Ensure a Java reference to the surface exists
-	references.put(surface, surface);
 
 	return surface;
     }
@@ -535,44 +581,40 @@ class EGL10Impl implements EGL10 {
 	    EGLSurfaceImpl surface =
                 EGLSurfaceImpl.getInstance(surf, width, height);
 
-	    // Ensure a Java reference to the surface exists	
-	    references.put(surface, surface);
-
 	    return surface;
 	} else {
 	    return EGL_NO_SURFACE;
 	}
     }
-    
+
     public synchronized boolean eglDestroySurface(EGLDisplay display,
                                                   EGLSurface surface) {
-	if (display == null) {
-	    throwIAE(Errors.EGL_DISPLAY_NULL);
-	}
-	if (surface == null) {
-	    throwIAE(Errors.EGL_SURFACE_NULL);
-	}
-        
-        EGLDisplayImpl disp = (EGLDisplayImpl)display;
-        EGLSurfaceImpl surf = (EGLSurfaceImpl)surface;
+        if (display == null) {
+            throwIAE(Errors.EGL_DISPLAY_NULL);
+        }
+        if (surface == null) {
+            throwIAE(Errors.EGL_SURFACE_NULL);
+        }
 
-	boolean success = EGL_TRUE ==
-	    _eglDestroySurface(disp.nativeId(), surf.nativeId());
-	
-	if (success) {
+        EGLDisplayImpl disp = (EGLDisplayImpl) display;
+        EGLSurfaceImpl surf = (EGLSurfaceImpl) surface;
+
+        boolean success = EGL_TRUE ==
+                _eglDestroySurface(disp.nativeId(), surf.nativeId());
+
+        if (success) {
             int pixmapPtr = surf.getPixmapPointer();
             if (pixmapPtr != 0) {
                 _destroyPixmap(pixmapPtr);
                 surf.setPixmapPointer(0);
             }
 
-	    surf.dispose();
-	    references.remove(surface);
-	}
-	
-	return success;
+            surf.dispose();
+        }
+
+        return success;
     }
-    
+
     public synchronized boolean eglQuerySurface(EGLDisplay display,
                                                 EGLSurface surface,
                                                 int attribute,
@@ -627,11 +669,8 @@ class EGL10Impl implements EGL10 {
 			      ((EGLContextImpl)share_context).nativeId(),
 			      attrib_list);
 
-	if (contextID != 0) { // EGL_NO_CONTEXT
+    if (contextID != 0) { // EGL_NO_CONTEXT
 	    EGLContextImpl context = EGLContextImpl.getInstance(contextID);
-
-	    // Ensure a Java reference to the context exists
-	    references.put(context, context);
 
 	    return context;
 	} else {
@@ -671,7 +710,6 @@ class EGL10Impl implements EGL10 {
                                    ((EGLContextImpl)context).nativeId());
             if (success) {
                 ((EGLContextImpl)context).dispose();
-                references.remove(context);
             }
         }
 
@@ -705,8 +743,8 @@ class EGL10Impl implements EGL10 {
 			    ((EGLSurfaceImpl)draw).nativeId(),
 			    ((EGLSurfaceImpl)read).nativeId(),
 			    ((EGLContextImpl)context).nativeId());
-
-	if (retVal == EGL_TRUE) {
+        
+    if (retVal == EGL_TRUE) {
             Thread currentThread = Thread.currentThread();
             GL10Impl.currentContext = context;
 
@@ -731,11 +769,6 @@ class EGL10Impl implements EGL10 {
                     ocimpl.setDrawSurface(null);
                     ocimpl.setReadSurface(null);
 
-                    GL10Impl.boundThreadByContext.remove(ocimpl);
-                    GL10Impl.displayByContext.remove(ocimpl);
-                    GL10Impl.drawSurfaceByContext.remove(ocimpl);
-                    GL10Impl.readSurfaceByContext.remove(ocimpl);
-
                     // Remove the old context from the thread map
                     GL10Impl.contextsByThread.remove(currentThread);
                 }
@@ -748,11 +781,6 @@ class EGL10Impl implements EGL10 {
                 cimpl.setDrawSurface((EGLSurfaceImpl)draw);
                 cimpl.setReadSurface((EGLSurfaceImpl)read);
 
-                GL10Impl.boundThreadByContext.put(cimpl, currentThread);
-                GL10Impl.displayByContext.put(cimpl, display);
-                GL10Impl.drawSurfaceByContext.put(cimpl, draw);
-                GL10Impl.readSurfaceByContext.put(cimpl, read);
-
                 // Add the new context to the thread map
                 GL10Impl.contextsByThread.put(currentThread, context);
             }
@@ -763,9 +791,9 @@ class EGL10Impl implements EGL10 {
     
     public synchronized EGLContext eglGetCurrentContext() {
         Thread currentThread = Thread.currentThread();	
-        Object context =
-            GL10Impl.contextsByThread.get(currentThread);
-        return (context == null) ? EGL_NO_CONTEXT : (EGLContext)context;
+        EGLContext context =
+            (EGLContext)GL10Impl.contextsByThread.get(currentThread);
+        return (context == null) ? EGL_NO_CONTEXT : context;
     }
     
     public synchronized EGLSurface eglGetCurrentSurface(int readdraw) {
@@ -826,7 +854,7 @@ class EGL10Impl implements EGL10 {
         GL10Impl.grabContext();
  	boolean returnValue = EGL_TRUE == _eglWaitGL();
 
-        EGLSurfaceImpl currentDrawSurface = cimpl.getDrawSurface();
+        EGLSurfaceImpl currentDrawSurface = cimpl.getDrawSurfaceImpl();
 
         if (currentDrawSurface != null) {
             final Graphics targetGraphics = currentDrawSurface.getTarget();
@@ -856,7 +884,7 @@ class EGL10Impl implements EGL10 {
         EGLContextImpl cimpl = (EGLContextImpl)eglGetCurrentContext();
         // IMPL_NOTE: should we really check for cimpl == null here?
         if (cimpl != null) {
-            EGLSurfaceImpl currentDrawSurface = cimpl.getDrawSurface();
+            EGLSurfaceImpl currentDrawSurface = cimpl.getDrawSurfaceImpl();
 
             if (currentDrawSurface != null) {
                 Graphics targetGraphics = currentDrawSurface.getTarget();
@@ -934,10 +962,32 @@ class EGL10Impl implements EGL10 {
             deltaHeight = _getFullDisplayHeight() -
                 GameMap.getGraphicsAccess().getGraphicsHeight(targetGraphics);
         }
-        boolean retval = EGL_TRUE ==
-            _eglCopyBuffers(((EGLDisplayImpl)display).nativeId(),
-                    surf.nativeId(), imageGraphics,
-                    surf.getWidth(), surf.getHeight(), deltaHeight);
+        int pixmapPointer;
+
+        boolean retval;
+        // Duplicate mutable image contents
+        try {
+            retval = EGL_TRUE ==
+                _eglCopyBuffers(((EGLDisplayImpl)display).nativeId(),
+                        surf.nativeId(), imageGraphics,
+                        surf.getWidth(), surf.getHeight(), deltaHeight);
+        } catch(OutOfMemoryError e) {
+            _garbageCollect(false);
+
+            try {
+                retval = EGL_TRUE ==
+                    _eglCopyBuffers(((EGLDisplayImpl)display).nativeId(),
+                            surf.nativeId(), imageGraphics,
+                            surf.getWidth(), surf.getHeight(), deltaHeight);
+            } catch(OutOfMemoryError e2) {
+                _garbageCollect(true);
+
+                retval = EGL_TRUE ==
+                    _eglCopyBuffers(((EGLDisplayImpl)display).nativeId(),
+                            surf.nativeId(), imageGraphics,
+                            surf.getWidth(), surf.getHeight(), deltaHeight);
+            }
+        }
         return retval;
     }
 

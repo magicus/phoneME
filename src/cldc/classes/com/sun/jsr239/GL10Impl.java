@@ -37,6 +37,10 @@ public class GL10Impl implements GL10, GL10Ext {
 
     static EGL10 egl = (EGL10)EGLContext.getEGL();
 
+    /**
+     * <code>context</code> is the context the GL10
+     * is created for. 
+     */
     EGLContext context = null;
 
     int pixelStorePackAlignment = 4;
@@ -828,7 +832,8 @@ public class GL10Impl implements GL10, GL10Ext {
     }
 
     void checkThread() {
-        Thread boundThread = (Thread)boundThreadByContext.get(context);
+
+        Thread boundThread = ((ContextAccess)context).getBoundThread();
         if (Thread.currentThread() != boundThread) {
             throw new IllegalStateException("GL call from improper thread");
         }
@@ -839,20 +844,16 @@ public class GL10Impl implements GL10, GL10Ext {
     // singleThreaded is false, this variable has no meaning.
     public static EGLContext currentContext = EGL10.EGL_NO_CONTEXT;
 
+    /**
+     * IMPL_NOTE: <code>contextsByThread</code> may lead to the Java memory
+     * leaks (when a thread dies, an associated context will not be ever
+     * collected). As the possible workaround the following solution can be
+     * used: a private <code>Hashtable</code> member can be added for class
+     * <code>Thread</code> to keep a reference to the context. In this case
+     * the life span of a context will not be longer then that of a thread.
+     */
     // Map Thread -> EGLContext
     public static Hashtable contextsByThread = new Hashtable();
-
-    // Map EGLContext -> Thread
-    public static Hashtable boundThreadByContext = new Hashtable();
-
-    // Map EGLContext -> EGLDisplay
-    public static Hashtable displayByContext = new Hashtable();
-
-    // Map EGLContext -> EGLSurface for reading
-    public static Hashtable readSurfaceByContext = new Hashtable();
-
-    // Map EGLContext -> EGLSurface for drawing
-    public static Hashtable drawSurfaceByContext = new Hashtable();
 
     // Current cull face mode for CR 6401385 workaround
     public int cullFaceMode = GL_BACK;
@@ -868,20 +869,23 @@ public class GL10Impl implements GL10, GL10Ext {
         }
 
         // Locate the desired context for this Java thread
-        Thread currentThread = Thread.currentThread();	
-        EGLContext context = (EGLContext)contextsByThread.get(currentThread); 
-        if (context == currentContext) {
+        Thread currentThread = Thread.currentThread();
+        EGLContext newContext =
+                (EGLContext)contextsByThread.get(currentThread); 
+        if (newContext == GL10Impl.currentContext) {
             return;
         }
 
-        if (context != null) {
-            EGLDisplay display = (EGLDisplay)displayByContext.get(context);
-            EGLSurface draw = (EGLSurface)drawSurfaceByContext.get(context);
-            EGLSurface read = (EGLSurface)readSurfaceByContext.get(context);
+        if (newContext != null) {
+            EGLDisplay display = ((ContextAccess) newContext).getDisplay();
 
-            egl.eglMakeCurrent(display, draw, read, context);
+            EGLSurface draw = ((ContextAccess) newContext).getDrawSurface();
 
-            currentContext = context;
+            EGLSurface read = ((ContextAccess) newContext).getReadSurface();
+
+            egl.eglMakeCurrent(display, draw, read, newContext);
+
+            GL10Impl.currentContext = newContext;
         }
     }
 
