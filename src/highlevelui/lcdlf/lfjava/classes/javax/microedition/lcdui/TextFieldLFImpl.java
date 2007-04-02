@@ -475,7 +475,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
 
         // We need to translate by 1 more pixel horizontally 
         // to reserve space for cursor in the empty textfield
-        g.setClip(TextFieldSkin.PAD_H, TextFieldSkin.PAD_V,
+        g.clipRect(TextFieldSkin.PAD_H, TextFieldSkin.PAD_V,
             width - (2 * TextFieldSkin.PAD_H),
             height - (2 * TextFieldSkin.PAD_V));
         g.translate(TextFieldSkin.PAD_H + 1, 
@@ -852,7 +852,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
 
         int newXOffset = 0;
         
-        g.setClip(0, 0, w, h);
+        g.clipRect(0, 0, w, h);
 
         if (opChar != 0) {
             cursor = new TextCursor(cursor);
