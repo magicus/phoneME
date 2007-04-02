@@ -73,14 +73,14 @@ public class MIDPWindow extends CWindow {
     ChamDisplayTunnel tunnel;
 
     /** Cached typed references to the namded layers */
-    private static WashLayer washLayer;
-    private static WashLayer alertWashLayer;
-    private static AlertLayer alertLayer;
-    private static TitleLayer titleLayer;
-    private static TickerLayer tickerLayer;
-    private static BodyLayer bodyLayer;
-    private static SoftButtonLayer buttonLayer;
-    private static PTILayer ptiLayer;
+    private WashLayer washLayer;
+    private WashLayer alertWashLayer;
+    private AlertLayer alertLayer;
+    private TitleLayer titleLayer;
+    private TickerLayer tickerLayer;
+    private BodyLayer bodyLayer;
+    private SoftButtonLayer buttonLayer;
+    private PTILayer ptiLayer;
 
     // layout modes
     /**
