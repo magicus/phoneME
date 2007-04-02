@@ -1,10 +1,11 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html><head>
 
-
            
  <link rel="stylesheet" type="text/css" href="how-to2_files/print.html" media="print">
- <script src="how-to2_files/tigris.html" type="text/javascript"></script><!-- ------- ORIGINAL CODE --------------------------- --><!--<head>
+ <script src="how-to2_files/tigris.html" type="text/javascript"></script>
+ <!-- ------- ORIGINAL CODE --------------------------- -->
+ <!--<head>
  <style type="text/css"> 
  /* <![CDATA[ */
  @import "/branding/css/tigris.css";
@@ -12,16 +13,14 @@
  /* ]]> */
  </style>
  <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
- <script src="/branding/scripts/tigris.js" type="text/javascript"></script> --><title>Getting Started: Getting the Project Source Code</title>
- 
- 
+ <script src="/branding/scripts/tigris.js" type="text/javascript"></script> -->
 
 
   
-                                                     
- <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
- <meta http-equiv="Content-Style-Type" content="text/css">
- <meta name="version" content="3.5.1.19.8">
+                                                     <title>Getting Started: Getting the Project Source Code</title>
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+ <meta http-equiv="Content-Style-Type" content="text/css" />
+ <meta name="version" content="3.5.1.19.8" />
  <style type="text/css">
 <!--
 a:link {
@@ -37,10 +36,13 @@ a:active {
 	text-decoration: none;
 }
 -->
-</style></head><body class="composite">
+</style></head>
+ 
+ 
+<body  class="composite">
   
-<table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
-<tbody><tr>
+<table border="0" cellspacing="0" cellpadding="4" width="100%" id="main">
+<tr>
  <td id="midcol">
  
  
@@ -54,23 +56,23 @@ a:active {
  
 <!--BEGIN * PAGE TITLE -->
 <div id="projecthome" class="app"> 
-<h1 class="style3">Getting the Project Source Code</h1>
+<h1><font color="#E76F00">Getting the Project Source Code</font></h1>
 <!--END * PAGE TITLE -->
 <p>
-</p><p>
-    </p><ul>
-    <li><a href="file:///C:/Documents%20and%20Settings/Admin/Desktop/gs/pmAdv-download.html#Download">Download the Project Source Code Bundle</a>
+<p>
+    <ul>
+    <li><a href="pmAdv-download.html#Download">Download the Project Source Code Bundle</a>
     <p>
-    </p></li><li><a href="file:///C:/Documents%20and%20Settings/Admin/Desktop/gs/pmAdv-download.html#Checkout">Checkout the Project Source Code Repository</a>
+    <li><a href="pmAdv-download.html#Checkout">Checkout the Project Source Code Repository</a>
     <p>
-    </p><ul>
-    <li><a href="file:///C:/Documents%20and%20Settings/Admin/Desktop/gs/pmAdv-download.html#OtherComponents">Other Components in the Project Source Code Repository</a>
+    <ul>
+    <li><a href="pmAdv-download.html#OtherComponents">Other Components in the Project Source Code Repository</a>
     <p>
-    </p></li><li><a href="file:///C:/Documents%20and%20Settings/Admin/Desktop/gs/pmAdv-download.html#Update">Update the Project Source Code</a>
-    </li></ul>
+    <li><a href="pmAdv-download.html#Update">Update the Project Source Code</a>
+    </ul>
     <p>
-    </p></li><li><a href="file:///C:/Documents%20and%20Settings/Admin/Desktop/gs/pmAdv-download.html#Browse">Browse the Project Source Code</a>
-    </li></ul>
+    <li><a href="pmAdv-download.html#Browse">Browse the Project Source Code</a>
+    </ul>
 
 <p>
 You can start with the phoneME Advanced technology
@@ -82,8 +84,8 @@ or
 Another way to review the source code is browse the
 <a href="https://phoneme.dev.java.net/source/browse/phoneme">
 Software Configuration Management (SCM)</a> system.
-
-</p><p>
+</ul>
+<p>
 <b>Note:</b>
 MR2 represents the next major release of the phoneME Advanced project
 and is under <b>active</b> development.
@@ -94,16 +96,17 @@ see
 phoneME Advanced MR1</a>.
 
 <a name="Download"><h3>Download the Project Source Code Bundle</h3></a>
-</p><p>
+<p>
 Start by creating a directory to contain the project source code.
 Then download the the <tt>zip</tt> bundle from the 
 <a href="https://phoneme.dev.java.net/downloads_page.html">
 phoneME Project Downloads</a> page and unpack the <tt>zip</tt> bundle.
 The name of the <tt>zip</tt> bundle will be something like
 <tt>phoneme_advanced-mr2-rel-src-<i>buildnum</i>-<i>date</i>.zip</tt>.
-</p><p>
-</p><blockquote>
-<pre>% mkdir phoneme-advanced-mr2
+<p>
+<blockquote>
+<pre>
+% mkdir phoneme-advanced-mr2
 % cd phoneme-advanced-mr2
 % wget http://download.java.net/mobileembedded/phoneme/advanced/<i>bundle</i>.zip
 % unzip <i>bundle</i>.zip
@@ -128,20 +131,21 @@ Real development is supported through the
 Subversion repository</a>.
 
 <a name="Checkout"><h3>Checkout the Project Source Code Repository</h3></a>
-</p><p>
+<p>
 The project source code repository is modularly organized into larger pieces
 called <b>components</b> that can be managed independently.
 The main benefit of this modularity is that components
 can be shared between phoneME Feature and phoneME Advanced
 or among the various optional packages.
-</p><p>
+<p>
 The minimal set of components needed to build CDC
 are <tt>cdc</tt> and <tt>tools</tt>.
 So start by checking out these components
-with a <a href="http://subversion.tigris.org/">Subversion</a> client:
-</p><p>
-</p><blockquote>
-<pre>% mkdir -p phoneme-advanced-mr2/cdc
+with a <a href="http://subversion.tigris.org">Subversion</a> client:
+<p>
+<blockquote>
+<pre>
+% mkdir -p phoneme-advanced-mr2/cdc
 % svn checkout https://phoneme.dev.java.net/svn/phoneme/components/cdc/trunk phoneme-advanced-mr2/cdc
 
 % mkdir -p phoneme-advanced-mr2/tools
@@ -150,35 +154,36 @@ with a <a href="http://subversion.tigris.org/">Subversion</a> client:
 </blockquote>
 <p>
 To check out a working copy of the repository,
-you'll need a <a href="http://java.net/">java.net</a> account
-because the <a href="http://subversion.tigris.org/">Subversion</a> client
+you'll need a <a href="http://java.net">java.net</a> account
+because the <a href="http://subversion.tigris.org">Subversion</a> client
 requires authentication with the
 <a href="https://phoneme.dev.java.net/source/browse/phoneme/components/cdc">
 Subversion repository</a> server.
-</p><p>
-</p><blockquote>
-<pre>Authentication realm: <https: phoneme.dev.java.net:443=""> CollabNet SCM Repository
+<p>
+<blockquote>
+<pre>
+Authentication realm: <https://phoneme.dev.java.net:443> CollabNet SCM Repository
     Username: <i>duke</i>
     Password for '<i>duke</i>':
-</https:></pre>
+</pre>
 </blockquote>
 <p>
 
 <a name="OtherComponents"><h4>Other Components in the Project Source Code Repository</h4></a>
-</p><p>
+<p>
 The project source code repository is constantly evolving,
 but the table below describes
 the components that are currently available.
 The URL for each component is
 <tt>https://phoneme.dev.java.net/svn/phoneme/components/<i>name</i>/trunk</tt>.
 
-</p><p>
-</p><blockquote>
-<table bgcolor="#333366" border="0" cellpadding="0" cellspacing="0" width="60%">
+<p>
+<blockquote>
+<table border="0" cellspacing="0" cellpadding="0" bgcolor="#333366" width="60%">
   <tbody>
     <tr>
       <td>
-      <table border="0" cellpadding="3" cellspacing="1" width="100%">
+      <table width="100%" border="0" cellspacing="1" cellpadding="3">
         <tbody>
         <tr>
           <th><font color="#ffffff" size="-1"><b>Component</b></font></th>
@@ -226,14 +231,15 @@ The URL for each component is
 You can update your copy of the project source code repository
 to keep it in sync with the latest changes on the project site.
 For example,
-</p><p>
-</p><blockquote>
-<pre>% cd phoneme-advanced-mr2/cdc
+<p>
+<blockquote>
+<pre>
+% cd phoneme-advanced-mr2/cdc
 % svn update
 </pre>
 </blockquote>
 
-<hr noshade="noshade" size="1">
+<hr size="1" noshade>
 <a name="Browse"><h3>Browse the Project Source Code</h3></a>
 <p>
 Once you've downloaded the project source code,
@@ -241,25 +247,25 @@ you may want to explore and see how it's structured.
 The <tt>phoneme-advanced-mr2/components</tt> directory
 contains the components that you've selected:
 <tt>cdc</tt> and <tt>tools</tt>.
-</p><p>
+<p>
 <tt>cdc</tt> contains three main directory hierarchies:
-</p><p>
-</p><ul>
+<p>
+<ul>
 <li>
 <tt>build</tt> contains the CDC build system which is a set of makefiles
 and scripts for building the CDC Java runtime environment
 with different build options and for different platforms.
 <p>
-</p></li><li>
+<li>
 <tt>src</tt> contains the source code hierarchy including platform-independent source code and target-specific source code.
 <p>
-</p></li><li>
+<li>
 <tt>test</tt> contains test programs.
-</li></ul>
+</ul>
 <p>
 <tt>tools</tt> contains build scripts and tools
 shared by the all of the components.
-</p><p>
+<p>
 See the
 <a href="http://java.sun.com/javame/reference/docs/cdc_build_system.pdf">
 <i>CDC Build System Guide</i></a>
@@ -269,4 +275,3 @@ and the
 <i>CDC Porting Guide</i></a>
 for more information about the structure of the source code hierarchy.
 
-</p></div></td></tr></tbody></table></body></html>

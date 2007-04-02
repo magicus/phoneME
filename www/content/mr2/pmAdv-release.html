@@ -2,9 +2,10 @@
 <html><head>
 
 
-
  <link rel="stylesheet" type="text/css" href="how-to2_files/print.html" media="print">
- <script src="how-to2_files/tigris.html" type="text/javascript"></script><!-- ------- ORIGINAL CODE --------------------------- --><!--<head>
+ <script src="how-to2_files/tigris.html" type="text/javascript"></script>
+ <!-- ------- ORIGINAL CODE --------------------------- -->
+ <!--<head>
  <style type="text/css"> 
  /* <![CDATA[ */
  @import "/branding/css/tigris.css";
@@ -12,16 +13,16 @@
  /* ]]> */
  </style>
  <link rel="stylesheet" type="text/css" href="/branding/css/print.css" media="print" />
- <script src="/branding/scripts/tigris.js" type="text/javascript"></script> --><title>phoneME Advanced MR2: Release Notes</title>
- 
- 
+ <script src="/branding/scripts/tigris.js" type="text/javascript"></script> -->
 
 
   
-                                                     
- <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
- <meta http-equiv="Content-Style-Type" content="text/css">
- <meta name="version" content="3.5.1.19.8">
+                                                     <title>
+        phoneME Advanced MR2: Release Notes
+    </title>
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+ <meta http-equiv="Content-Style-Type" content="text/css" />
+ <meta name="version" content="3.5.1.19.8" />
  <style type="text/css">
 <!--
 a:link {
@@ -37,10 +38,13 @@ a:active {
 	text-decoration: none;
 }
 -->
-</style></head><body class="composite">
+</style></head>
+ 
+ 
+<body  class="composite">
   
-<table id="main" border="0" cellpadding="4" cellspacing="0" width="100%">
-<tbody><tr>
+<table border="0" cellspacing="0" cellpadding="4" width="100%" id="main">
+<tr>
  <td id="midcol">
  
  
@@ -53,7 +57,7 @@ a:active {
  
 <!--BEGIN * PAGE TITLE -->
 <div id="projecthome" class="app"> 
-<h1 class="style3"><i>phoneME Advanced</i> MR2 Release Notes</h1>
+<h1><font color="#E76F00"><i>phoneME Advanced</i> MR2 Release Notes</font></h1>
 <!--END * PAGE TITLE -->
 
 <p>
@@ -63,35 +67,35 @@ We are using <b>promoted builds</b> as minor checkpoints
 to show progress as this open source project evolves.
 These promoted builds will become more frequent
 as we do more of the project development in the open.
-</p><p>
-</p><hr noshade="noshade" size="1">
-<h3><tt>b14</tt> Promoted Build - March 8, 2007</h3><p>
-</p><p>
-</p><h4>Features</h4>
 <p>
-</p><ul>
+<hr size="1" noshade>
+<h3><tt>b14</tt> Promoted Build - March 8, 2007</h3><p>
+<p>
+<h4>Features</h4>
+<p>
+<ul>
 <li>
 MIDP 2.1 on CDC.
 <p>
-</p></li><li>
+<li>
 Initial framework and start of functionality for an application managment system.
 <p>
-</p></li><li>
+<li>
 Configurable build system
 that supports pluggable optional package implementations.
 <p>
-</p></li><li>
+<li>
 MMAPI optional package (JSR 135) implementation demonstrates this pluggability.
-</li></ul>
+</ul>
 <p>
-</p><h4>Qt Embedded</h4>
+<h4>Qt Embedded</h4>
 <p>
 The long term architectural goal of <b>both</b> phoneME projects
 is to provide a framework for supporting both MIDP and optional packages
 that can be shared between the two projects.
 The GUI support layer for this architecture is called GCI
 and it will be based on DirectFB.
-</p><p>
+<p>
 The current build does not yet use GCI or DirectFB.
 Instead it uses the Qt Embedded GUI support layer.
 This allows us to demonstrate more framework functionality
@@ -99,23 +103,23 @@ but it is still incomplete.
 The current plan is to continue to support Qt Embedded in the future,
 though DirectFB/GCI will get more development and Q/A attention.
 
-</p><hr noshade="noshade" size="1">
+<hr size="1" noshade>
 <h3><tt>b02</tt> Promoted Build - December 2, 2006</h3>
 
 <h4>Features</h4>
 <p>
 phoneME Advanced MR2 software is an optimized Java ME stack with full support for CDC and its profiles.
-</p><p>
-</p><ul>
+<p>
+<ul>
 <li>
 Connected Device Configuration, version 1.1.2
 <p>
-</p></li><li>
+<li>
 Foundation Profile, version 1.1.2
 <p>
-</p></li><li>
+<li>
 Personal Basis Profile, version 1.1.2
-</li></ul>
+</ul>
 <p>
 phoneME Advanced MR2 is in the early stages of development.
 This <b>development</b> release of MR2 represents the basic foundation
@@ -125,8 +129,8 @@ and direction of phoneME Advanced technology,
 see the phoneME Advanced MR2 Software
 <a href="https://phoneme.dev.java.net/content/phoneme_advanced_r2.html">
 Release Description</a>.
-</p><p>
-</p><h4>Binary Archives</h4>
+<p>
+<h4>Binary Archives</h4>
 <p>
 As a convenience,
 phoneME Advanced releases provide prebuilt binary Zip archives in the 
@@ -134,9 +138,10 @@ phoneME Advanced releases provide prebuilt binary Zip archives in the
 phoneME Project Downloads</a> page.
 The distribution archive actually contains two sub-archives,
 each of which contains an executable CDC Java runtime environment for Linux/x86.
-</p><p>
-</p><blockquote>
-<pre>% mkdir phoneme-advanced-<i>rel</i>
+<p>
+<blockquote>
+<pre>
+% mkdir phoneme-advanced-<i>rel</i>
 % cd phoneme-advanced-<i>rel</i>
 % unzip phoneme_advanced-<i>rel</i>-bin-b06-linux-<i>date</i>.zip
 Archive:  phoneme_advanced-<i>rel</i>-bin-b06-linux-<i>date</i>.zip
@@ -145,9 +150,10 @@ Archive:  phoneme_advanced-<i>rel</i>-bin-b06-linux-<i>date</i>.zip
 </blockquote>
 <p>
 Then unpack one of these archives:
-</p><p>
-</p><blockquote>
-<pre>% mkdir PBP
+<p>
+<blockquote>
+<pre>
+% mkdir PBP
 % mv phoneme_advanced-<i>rel</i>-pbp-bin-b06-linux-<i>date</i>.zip PBP
 % cd PBP
 % unzip phoneme_advanced-<i>rel</i>-pbp-bin-b06-linux-<i>date</i>.zip PBP
@@ -155,27 +161,29 @@ Then unpack one of these archives:
 </blockquote>
 <p>
 See
-<a href="file:///C:/Documents%20and%20Settings/Admin/Desktop/gs/pmAdv-buildhost.html">CDC Build System: Host Environment</a>
+<a href="pmAdv-buildhost.html">CDC Build System: Host Environment</a>
 and the 
 <a href="http://java.sun.com/javame/reference/docs/cdc_runtime_guide.pdf">
 <i>CDC Runtime Guide</i></a>,
 for information how to use the CDC Java runtime environment.
 
-</p><h4>Known Issues</h4>
+<h4>Known Issues</h4>
 <p>
 <b>The font path may need to be explicitly set on openSUSE 10.1 systems.</b>
 To check the font path on the openSUSE 10.1 system, use the following command:
-</p><p>
-</p><blockquote>
-<pre>% xset q
+<p>
+<blockquote>
+<pre>
+% xset q
 </pre>
 </blockquote>
 <p>
 To able to display correctly on an openSUSE 10.1 system
 the font path should at least contain the following:
-</p><p>
-</p><blockquote>
-<pre>/usr/X11R6/lib/X11/fonts/misc:unscaled
+<p>
+<blockquote>
+<pre>
+/usr/X11R6/lib/X11/fonts/misc:unscaled
 /usr/X11R6/lib/X11/fonts/75dpi
 /usr/X11R6/lib/X11/fonts/uni
 /usr/X11R6/lib/X11/fonts/truetype/
@@ -183,9 +191,9 @@ the font path should at least contain the following:
 </blockquote>
 <p>
 To set the font path
-</p><p>
-</p><blockquote>
-<pre>% xset +fp <path>
-</path></pre>
+<p>
+<blockquote>
+<pre>
+% xset +fp <Path>
+</pre>
 </blockquote>
-</div></td></tr></tbody></table></body></html>

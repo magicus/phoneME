@@ -56,7 +56,7 @@ a:active {
  
 <!--BEGIN * PAGE TITLE -->
 <div id="projecthome" class="app"> 
-<h1 class="style3">CDC Build System: Host Environment</h1>
+<h1><font color="#E76F00">CDC Build System: Host Environment</font></h1>
 <!--END * PAGE TITLE -->
 <p>
 Once you have downloaded the source code
@@ -133,9 +133,9 @@ for information on how to build executable versions
 of the CDC Java runtime environment for various embedded target devices.
 
 <hr size="1" noshade>
-<a name="Setup"><h4>Build System Setup</h4></a>
+<a name="Setup"><h3>Build System Setup</h3></a>
 <p>
-<a name="SetupLinuxPackages"><h5>Install the Linux Build Tool Packages</h5></a>
+<a name="SetupLinuxPackages"><h4>Install the Linux Build Tool Packages</h5></a>
 <p>
 <blockquote>
 <b>Note:</b>
@@ -217,7 +217,7 @@ In particular,
 So it may in some cases be necessary to use the <tt>-fpermissive</tt> flag
 or downgrade to an earlier compiler version.
 
-<a name="SetupJavaTools"><h5>Install the Java Build Tools</h5></a>
+<a name="SetupJavaTools"><h4>Install the Java Build Tools</h4></a>
 <p>
 Download and install the
 <a href="http://java.sun.com/j2se/1.4.2/download.html">Java SE SDK</a>,
@@ -231,7 +231,7 @@ We have only tested and run the CDC build system
 with the Java developer tools provided by Sun.
 
 <hr size="1" noshade>
-<a name="Simple"><h4>A Simple Example Build: CDC</h4></a>
+<a name="Simple"><h3>A Simple Example Build: CDC</h3></a>
 <p>
 Once you've set up the CDC build system
 by installing the necessary build tools in the default locations,
@@ -248,7 +248,7 @@ The simplest build target is CDC without any profile.
 This is a "headless" implementation
 that we'll use to run a basic <tt>HelloWorld</tt> application.
 
-<a name="SimpleBuild"><h5>Build the Executable</h5></a>
+<a name="SimpleBuild"><h4>Build the Executable</h4></a>
 <p>
 The CDC build system is launched with a single <tt>make</tt> command.
 <p>
@@ -312,7 +312,7 @@ The first step is to look at the definitions of variables:
 </table>
 </blockquote>
 
-<a name="SimpleTest"><h5>Test the Executable</h5></a>
+<a name="SimpleTest"><h4>Test the Executable</h4></a>
 <p>
 When the build process completes successfully
 it generates an executable CDC Java runtime environment.
@@ -329,7 +329,7 @@ Here is the command-line for running a simple test application.
 </pre>
 </blockquote>
 
-<a name="BuildOptions"><h5>More Build Options</h5></a>
+<a name="BuildOptions"><h4>More Build Options</h4></a>
 <p>
 The CDC build system includes many build options and targets:
 <p>
@@ -379,7 +379,7 @@ The
 provides tables that describe each build option.
 
 <hr size="1" noshade>
-<a name="SimpleFP"><h4>Building Foundation Profile</h4></a>
+<a name="SimpleFP"><h3>Building Foundation Profile</h3></a>
 <p>
 Foundation Profile (FP)
 is a more complete API specification for headless devices.
@@ -398,7 +398,7 @@ Here is the command-line for running a test application.
 </blockquote>
 
 <hr size="1" noshade>
-<a name="PBP"><h4>Building Personal Basis Profile</h4></a>
+<a name="PBP"><h3>uilding Personal Basis Profile</h3></a>
 <p>
 The CDC build system has many <b>build options</b>
 for building versions of the CDC Java runtime environment
@@ -416,7 +416,7 @@ with a PBP implementation based on the
 <a href="http://www.trolltech.com/products/qt">Qt</a>
 GUI framework.
 
-<a name="PBPSetup"><h5>Setup the Build System</h5></a>
+<a name="PBPSetup"><h4>Setup the Build System</h4></a>
 <p>
 The build system requirements for PBP are the same as the
 <a href="pmAdv-buildhost.html#SetupLinuxPackages">base requirements</a>
@@ -455,7 +455,7 @@ development libraries.
 </table>
 </blockquote>
 
-<a name="PBPBuild"><h5>Build the Executable</h5></a>
+<a name="PBPBuild"><h4>Build the Executable</h4></a>
 <p>
 Building PBP requires a few additional build options.
 You can put these <tt>make</tt> variables
@@ -504,7 +504,7 @@ or add them to the <tt>GNUmakefile</tt>.
 </table>
 </blockquote>
 
-<a name="PBPTest"><h5>Test the Executable</h5></a>
+<a name="PBPTest"><h4>Test the Executable</h4></a>
 <p>
 Here is the command-line for running a PBP test application.
 <p>
@@ -515,13 +515,13 @@ Here is the command-line for running a PBP test application.
 </blockquote>
 
 <hr size="1" noshade>
-<a name="MIDP"><h4>Building MIDP</h4></a>
+<a name="MIDP"><h3>Building MIDP</h3></a>
 <p>
 phoneME Advanced MR2 includes the first release of MIDP on CDC technology
 and a lot of work has been done to make the build systems and implementations
 compatible and sharable.
 
-<a name="MIDPSetup"><h5>Setup the Build System</h5></a>
+<a name="MIDPSetup"><h4>Setup the Build System</h4></a>
 <p>
 <ol>
 <li>
@@ -573,7 +573,7 @@ notes in the phoneME Advanced twiki.
 </blockquote>
 </ol>
 
-<a name="MIDPBuild"><h5>Build the Executable</h5></a>
+<a name="MIDPBuild"><h4>Build the Executable</h4></a>
 <p>
 Use the following build options:
 <blockquote>
@@ -610,7 +610,7 @@ Use the following build options:
 </table>
 </blockquote>
 
-<a name="MIDPTest"><h5>Test the Executable</h5></a>
+<a name="MIDPTest"><h4>Test the Executable</h4></a>
 <p>
 <b>Note:</b>
 This test procedure is based on using the <tt>qvfb</tt> virtual framebuffer.
@@ -653,14 +653,14 @@ $CDCTARGET/bin/cvm \
 </ol>
 
 <hr size="1" noshade>
-<a name="AMS"><h4>Building AMS</h4></a>
+<a name="AMS"><h3>Building AMS</h3></a>
 <p>
 phoneME Advanced MR2 includes the a new application management system.
 The AMS shown here is really a sample AMS to demonstrate this capability.
 A real AMS would include a better presentation layer and perhaps
 integration with a native AMS layer.
 
-<a name="AMSSetup"><h5>Setup the Build System</h5></a>
+<a name="AMSSetup"><h4>Setup the Build System</h4></a>
 <p>
 <ol>
 <li>
@@ -705,7 +705,7 @@ from the project source code repository.</b>
 </blockquote>
 </ol>
 
-<a name="AMSBuild"><h5>Build the Executable</h5></a>
+<a name="AMSBuild"><h4>Build the Executable</h4></a>
 <p>
 Use the following build options:
 <blockquote>
@@ -743,12 +743,12 @@ Use the following build options:
 </table>
 </blockquote>
 
-<a name="AMSTest"><h5>Test the Executable</h5></a>
+<a name="AMSTest"><h4>Test the Executable</h4></a>
 <p>
 TBD.
 
 <hr size="1" noshade>
-<a name="OP"><h4>Building an Optional Package</h4></a>
+<a name="OP"><h3>Building an Optional Package</h3></a>
 <p>
 phoneME Advanced MR2 includes support for several optional packages.
 The effort to integrate these optional packages
@@ -757,7 +757,7 @@ in the phoneME Feature and phoneME Advanced projects is under way.
 The example optional package here (<tt>jsr135</tt>)
 is really a placeholder to demonstrate build system functionality.
 
-<a name="OPSetup"><h5>Setup the Build System</h5></a>
+<a name="OPSetup"><h4>Setup the Build System</h4></a>
 <p>
 <b>Checkout the <tt>abstractions</tt> component
 and any optional package component
@@ -770,7 +770,7 @@ from the project source code repository.</b>
 </pre>
 </blockquote>
 
-<a name="OPBuild"><h5>Build the Executable</h5></a>
+<a name="OPBuild"><h4>Build the Executable</h4></a>
 <p>
 Use the following build options:
 <blockquote>
@@ -803,7 +803,7 @@ Use the following build options:
 </table>
 </blockquote>
 
-<a name="OPTest"><h5>Test the Executable</h5></a>
+<a name="OPTest"><h4>Test the Executable</h4></a>
 <p>
 TBD
 
