@@ -965,7 +965,32 @@ class GaugeLFImpl extends ItemLFImpl implements GaugeLF {
 
         // the percentage symbol
         drawPercentage(g, ProgressBarSkin.IMAGE_PERCENTS, value);           
-    }               
+    }
+
+
+    /**
+     * Called by the system to traverse this DateField.
+     *
+     * @param dir the direction of traversal
+     * @param viewportWidth the width of the container's viewport
+     * @param viewportHeight the height of the container's viewport
+     * @param visRect passes the visible rectangle into the method, and
+     * returns the updated traversal rectangle from the method
+     * @return true if internal traversal had occurred, false if traversal
+     * should proceed out
+     */
+    boolean lCallTraverse(int dir, int viewportWidth, int viewportHeight,
+                          int[] visRect)
+    {
+        boolean res = super.lCallTraverse(dir, viewportWidth, viewportHeight, visRect);
+
+        visRect[X] = 0;
+        visRect[Y] = 0;
+        visRect[HEIGHT] = bounds[HEIGHT];
+        visRect[WIDTH] = bounds[WIDTH];
+        return res;
+
+    }
                
     
     /**

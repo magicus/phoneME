@@ -226,6 +226,11 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
             // traverses
             if (popupLayer.isPopupOpen()) {
                 ret = super.lCallTraverse(dir, viewportWidth, viewportHeight, visRect);
+            } else {
+                 visRect[X] = 0;
+                 visRect[Y] = 0;
+                 visRect[HEIGHT] = bounds[HEIGHT];
+                 visRect[WIDTH] = bounds[WIDTH];
             }
         }
         
