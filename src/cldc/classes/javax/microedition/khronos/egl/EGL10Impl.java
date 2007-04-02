@@ -419,10 +419,6 @@ class EGL10Impl implements EGL10 {
         int pixmapPointer = createWindowPixmap(displayId, configId,
                                                winGraphics,
                                                width, height);
-        if (pixmapPointer == 0) {
-            throw new OutOfMemoryError(Errors.EGL_PIXMAP_OUT_OF_MEMORY);
-        }
-
         int surf =
 		_eglCreatePixmapSurface(displayId, configId,
 					pixmapPointer,
@@ -529,9 +525,6 @@ class EGL10Impl implements EGL10 {
 
 	int pixmapPointer = createImagePixmap(displayId, configId,
                                           imageGraphics, width, height);
-        if (pixmapPointer == 0) {
-            throw new OutOfMemoryError(Errors.EGL_PIXMAP_OUT_OF_MEMORY);
-        }
 
     int surf =
 	    _eglCreatePixmapSurface(displayId, configId,
