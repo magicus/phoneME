@@ -54,7 +54,7 @@ public class GameCanvasLFImpl {
      * Create new implementation instance for the given GameCanvas
      * @param c GameCanvas instance to create the implementation for
      */ 
-    GameCanvasLFImpl(GameCanvas c) {
+    public GameCanvasLFImpl(GameCanvas c) {
         owner = c;
         graphicsAccess = GameMap.getGraphicsAccess();
 
