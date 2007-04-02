@@ -26,6 +26,7 @@ package javax.microedition.khronos.egl;
 
 import javax.microedition.lcdui.Graphics;
 import java.util.Hashtable;
+import java.lang.ref.WeakReference;
 
 /**
  * A class encapsulating an EGL surface.
@@ -52,24 +53,28 @@ final class EGLSurfaceImpl extends EGLSurface {
             this.nativeId = nativeId;
             this.width = width;
             this.height = height;
-            byId.put(new Integer(nativeId), this);
+            byId.put(new Integer(nativeId), new WeakReference(this));
         }
     }
 
+    private native void finalize();
+    
     public int nativeId() {
 	return nativeId;
     }
 
     public static EGLSurfaceImpl getInstance(int nativeId,
                                              int width, int height) {
-	synchronized (byId) {
-	    Object o = byId.get(new Integer(nativeId));
-	    if (o == null) {
-		return new EGLSurfaceImpl(nativeId, width, height);
-	    } else {
-		return (EGLSurfaceImpl)o;
-	    }
-	}
+        synchronized (byId) {
+            WeakReference ref = (WeakReference)byId.get(new Integer(nativeId));
+            EGLSurfaceImpl surface = ref != null ?
+                    (EGLSurfaceImpl)ref.get() : null;
+            if (surface == null) {
+                return new EGLSurfaceImpl(nativeId, width, height);
+            } else {
+                return surface;
+            }
+        }
     }
 
     public static EGLSurfaceImpl getInstance(int nativeId) {

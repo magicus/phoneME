@@ -32,6 +32,10 @@
 #include <kni.h>
 
 #include <GLES/gl.h>
+#include <commonKNIMacros.h>
+#include <ROMStructs.h>
+
+#include <jvm.h>
 
 /*
  * If HYBRID_VERSION is defined and equals 3 then include egl.h from EGL 
@@ -1118,6 +1122,10 @@ Java_javax_microedition_khronos_egl_EGL10Impl__1getWindowPixmap() {
                                     (jint)greenSize,
                                     (jint)blueSize,
                                     (jint)alphaSize);
+    if (pixmap == 0) {
+        KNI_ThrowNew("java/lang/OutOfMemoryError",
+            "Error creating window pixmap");
+    }
     returnValue = (jint) pixmap;
 
 #ifdef DEBUG
@@ -1246,3 +1254,52 @@ KNIEXPORT KNI_RETURNTYPE_INT
 Java_javax_microedition_khronos_egl_EGL10Impl__1getFullDisplayHeight() {
     KNI_ReturnInt(lcdlf_get_screen_height());
 }
+
+/**
+ * Garbage collect any zombie Objects to free up their resources.
+ * <p>
+ * Java declaration:
+ * <pre>
+ *     garbageCollect(Z)V
+ * </pre>
+ *
+ * @param fullGC boolean indicating whether to do a full GC or not
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+Java_javax_microedition_khronos_egl_EGL10Impl__1garbageCollect() {
+    jboolean doFullGC = KNI_GetParameterAsBoolean(1);
+
+    if (doFullGC == KNI_TRUE) {
+        JVM_GarbageCollect(0, 0);
+    } else {
+        JVM_GarbageCollect(JVM_COLLECT_YOUNG_SPACE_ONLY, 0);
+    }
+
+    KNI_ReturnVoid();
+}
+
+/* native private void finalize();*/
+/* Macro to retrieve C structure representation of an Object */
+typedef struct Java_javax_microedition_khronos_egl_EGLSurfaceImpl 
+	_eglsurface_impl;
+
+#define GET_EGL_SURFACE(handle) (unhand(_eglsurface_impl,(handle)))
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_javax_microedition_khronos_egl_EGLSurfaceImpl_finalize() {
+    _eglsurface_impl* surface;
+    jint pixmap_pointer;
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(thisObject);
+    KNI_GetThisPointer(thisObject);
+
+    surface = GET_EGL_SURFACE(thisObject);
+    pixmap_pointer = surface->pixmapPointer;
+
+    JSR239_destroyPixmap((JSR239_Pixmap *)pixmap_pointer);
+
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+}
+#undef GET_EGL_SURFACE

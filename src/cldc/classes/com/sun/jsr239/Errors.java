@@ -34,6 +34,9 @@ public final class Errors {
     public static final String EGL_DISPLAY_NULL =
         "display == null";
 
+    public static final String EGL_PIXMAP_OUT_OF_MEMORY =
+        "operation failed due to out of memory error";    
+
     public static final String EGL_MAJOR_MINOR_SHORT =
         "major_minor != null && major_minor.length < 2";
 

@@ -25,6 +25,7 @@
 package javax.microedition.khronos.egl;
 
 import java.util.Hashtable;
+import java.lang.ref.WeakReference;
 
 /**
  * A class encapsulating an EGL display.  An <code>EGLDisplay</code>
@@ -38,7 +39,7 @@ final class EGLDisplayImpl extends EGLDisplay {
     public EGLDisplayImpl(int nativeId) {
         synchronized (byId) {
             this.nativeId = nativeId;
-            byId.put(new Integer(nativeId), this);
+            byId.put(new Integer(nativeId), new WeakReference(this));
         }
     }
 
@@ -47,14 +48,16 @@ final class EGLDisplayImpl extends EGLDisplay {
     }
 
     public static EGLDisplayImpl getInstance(int nativeId) {
-	synchronized (byId) {
-	    Object o = byId.get(new Integer(nativeId));
-	    if (o == null) {
-		return new EGLDisplayImpl(nativeId);
-	    } else {
-		return (EGLDisplayImpl)o;
-	    }
-	}
+        synchronized (byId) {
+            WeakReference ref = (WeakReference)byId.get(new Integer(nativeId));
+            EGLDisplayImpl display = ref != null ?
+                    (EGLDisplayImpl)ref.get() : null;
+            if (display == null) {
+                return new EGLDisplayImpl(nativeId);
+            } else {
+                return display;
+            }
+        }
     }
 
     public String toString() {
