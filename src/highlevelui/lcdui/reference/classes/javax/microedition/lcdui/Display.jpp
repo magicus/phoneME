@@ -1748,7 +1748,7 @@ public class Display {
             updateCommandSet();
 
         } // synchronized
-        
+
 
         // SYNC NOTE: The implementation of dsPaint() could call
         // out to MIDlet's paint() function. So we have to call it
@@ -1813,7 +1813,7 @@ public class Display {
                 return false;
             }
             return true;
-// #else 
+// #else
             // SYNC NOTE: playAlertSound is a native method, no locking
             // necessary
             return playAlertSound0(displayId, t.getType());
@@ -2423,9 +2423,9 @@ public class Display {
                 currentCopy.uCallSizeChanged(w, h);
             }
         }
-        
+
         /**
-         * This method is used by Chameleon to invoke 
+         * This method is used by Chameleon to invoke
          * Displayable.uCallScrollContent() method.
          *
          * @param scrollType scrollType
@@ -2437,7 +2437,7 @@ public class Display {
                 currentCopy.uCallScrollContent(scrollType, thumbPosition);
             }
         }
-        
+
         /**
          * Updates the scroll indicator.
          */
@@ -2477,7 +2477,7 @@ public class Display {
         public int getDisplayWidth() {
           return Display.WIDTH;
         }
-    
+
         /**
         * Called to get current display height.
         * @return Display height.
@@ -2964,7 +2964,6 @@ public class Display {
          */
         public void handleScreenRepaintEvent() {
             // #ifdef ENABLE_CHAMELEON
-            System.out.println("REQUEST REPAINT");
             window.setAllDirty();
             callPaint(0,0,Display.WIDTH,Display.HEIGHT, null);
             // #endif
@@ -2998,9 +2997,6 @@ public class Display {
 
             callPaint(0,0,Display.WIDTH,Display.HEIGHT, null);
 
-            System.out.println("CALL PAINT");
-            try {Thread.sleep(2000);} catch(InterruptedException ie) {};
-
             // IMPL_NOTE: Currently many paint() methods of UI widgets
             //   contain not only painting logic, but the logic to
             //   resize and to do layout for their subbordinated items.
@@ -3008,7 +3004,7 @@ public class Display {
             //   methods, the request for full screen repaint will be
             //   removed.
             requestScreenRepaint();
-            
+
             // #else
             DisplayableLF currentCopy = getCurrent().displayableLF;
             if (currentCopy != null) {
