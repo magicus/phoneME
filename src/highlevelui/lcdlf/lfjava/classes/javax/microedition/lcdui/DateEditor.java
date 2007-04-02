@@ -569,6 +569,13 @@ class DateEditor extends PopupLayer implements CommandListener {
      * @param y y-coordinate of the upper left corner of DateEditor
      */
     protected void setMonthPopupLocation(int x, int y) {
+
+        nextX = (mode == DateField.DATE) ? 10 : 4;
+        nextY = 5;
+
+        x += nextX;
+        y += nextY;
+
         int w = DateEditorSkin.IMAGE_MONTH_BG.getWidth();
         int h = DateEditorSkin.IMAGE_MONTH_BG.getHeight();
         monthPopup.setElementSize(
