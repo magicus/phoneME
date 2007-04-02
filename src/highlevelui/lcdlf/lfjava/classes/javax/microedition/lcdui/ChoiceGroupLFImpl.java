@@ -515,8 +515,9 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
      * @param x the x coordinate of the pointer
      * @param y the y coordinate of the pointer
      * @return the index of choice item
-     */
+     */      
     int getIndexByPointer(int x, int y) {
+
         int id = -1;
         if (cg.numOfEls > 0) {
             //if pointer was dragged outside the item.
@@ -524,8 +525,8 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                 x <= contentBounds[X] + contentBounds[WIDTH] &&
                 contentBounds[Y] <= y &&
                 y <= contentBounds[Y] + contentBounds[HEIGHT]) { 
-                int visY = contentBounds[Y] + ScreenSkin.PAD_FORM_ITEMS;
-                for (int i = 0; i < cg.numOfEls; i++) { 
+                int visY = contentBounds[Y];
+                for (int i = 0; i < cg.numOfEls; i++) {
                     visY += elHeights[i];
                     if (visY >= y) {
                         id = i;
