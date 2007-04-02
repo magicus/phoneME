@@ -2995,14 +2995,12 @@ public class Display {
                 currentCopy.uCallInvalidate();
             }
 
-            callPaint(0,0,Display.WIDTH,Display.HEIGHT, null);
-
-            // IMPL_NOTE: Currently many paint() methods of UI widgets
-            //   contain not only painting logic, but the logic to
-            //   resize and to do layout for their subbordinated items.
-            //   As soon this logic will be refactored from the paint()
-            //   methods, the request for full screen repaint will be
-            //   removed.
+            // IMPL_NOTE: The entire screen repaint is requested instead
+            //   of usual repaint of the current Displayable over callPaint().
+            //   It is done so because various layers can logically belong
+            //   to the Displayable, but be beyond of its area. For instance,
+            //   date editor popup dialogs can intersect with soft buttons
+            //   layer, thus require repaint for all layers involved.
             requestScreenRepaint();
 
             // #else
