@@ -286,7 +286,7 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
         }
 
         // we clip in case our text is too long
-        g.setClip(DateFieldSkin.PAD_H, DateFieldSkin.PAD_V,
+        g.clipRect(DateFieldSkin.PAD_H, DateFieldSkin.PAD_V,
             width - (2 * DateFieldSkin.PAD_H) - iconWidth,
             height - (2 * DateFieldSkin.PAD_V));
 
