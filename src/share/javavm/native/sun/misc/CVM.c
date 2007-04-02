@@ -600,6 +600,9 @@ CNIsun_misc_CVM_throwLocalException(CVMExecEnv* ee,
 }
 
 #ifdef CVM_DUAL_STACK
+/* 
+ * Check if the classloader is one of the MIDP dual-stack classloaders.
+ */
 CVMBool
 CVMclassloaderIsCLDCClassLoader(CVMExecEnv *ee,
                                 CVMClassLoaderICell* loaderICell)
@@ -607,11 +610,18 @@ CVMclassloaderIsCLDCClassLoader(CVMExecEnv *ee,
     if (loaderICell != NULL) {
         CVMClassBlock* loaderCB = CVMobjectGetClass(
                                   CVMID_icellDirect(ee, loaderICell));
+        CVMClassTypeID loaderID = CVMcbClassName(loaderCB);
         const char *midletLoaderName = "sun/misc/MIDletClassLoader";
+        const char *midpImplLoaderName = "sun/misc/MIDPImplementationClassLoader";
         CVMClassTypeID MIDletClassLoaderID =
             CVMtypeidLookupClassID(ee, midletLoaderName, 
                                    strlen(midletLoaderName));
-        if (CVMcbClassName(loaderCB) == MIDletClassLoaderID ){
+        CVMClassTypeID MIDPImplClassLoaderID = 
+	    CVMtypeidLookupClassID(ee,midpImplLoaderName,
+				   strlen(midpImplLoaderName));
+
+        if (loaderID == MIDletClassLoaderID ||
+            loaderID == MIDPImplClassLoaderID){
             return CVM_TRUE;
         } else {
             return CVM_FALSE;
