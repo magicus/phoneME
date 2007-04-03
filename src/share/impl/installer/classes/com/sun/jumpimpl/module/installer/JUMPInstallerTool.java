@@ -197,18 +197,18 @@ public class JUMPInstallerTool {
         
         repository = System.getProperty(repositoryProperty);
         if (repository != null) {
-           // test setup, make a repository root
-           File file = new File(repository);
-           if (!file.exists()) {
-               System.out.println("ERROR: " + repository + " directory not found.");
-               return false;
-           }
+            // test setup, make a repository root
+            File file = new File(repository);
+            if (!file.exists()) {
+                System.out.println("ERROR: " + repository + " directory not found.");
+                return false;
+            }
         }
         
         if (JUMPExecutive.getInstance() == null) {
             JUMPModuleFactory factory = null;
             factory = new com.sun.jumpimpl.module.installer.InstallerFactoryImpl();
-            factory.load(com.sun.jumpimpl.process.JUMPModulesConfig.getProperties());            
+            factory.load(com.sun.jumpimpl.process.JUMPModulesConfig.getProperties());
             factory = new com.sun.jumpimpl.module.contentstore.StoreFactoryImpl();
             factory.load(com.sun.jumpimpl.process.JUMPModulesConfig.getProperties());
             factory = new com.sun.jumpimpl.module.download.DownloadModuleFactoryImpl();
@@ -251,12 +251,64 @@ public class JUMPInstallerTool {
             doUninstall(true);
         } else if (Command.equals("uninstall_all")) {
             doUninstall(false);
+        } else if (Command.equals("info")) {
+            doInfo();
         }
     }
     
     private void error() {
-        System.out.println("ERROR: Could not install.  Please run with -debug for more information.");
+        System.out.println("ERROR: Could not install.");
+        if (!this.Verbose) {
+            System.out.println("==> Please run with -verbose for more information.");
+        }
     }
+    
+    private void doInfo() {
+        System.out.println("");
+        System.out.println("---------------------------------");
+        System.out.println("Applications Within Content Store");
+        System.out.println("---------------------------------");
+        System.out.println("");
+        
+        JUMPInstallerModule installers[] = JUMPInstallerModuleFactory.getInstance().getAllInstallers();
+        
+        int numApps = 0;
+        
+        for (int i = 0; i < installers.length; i++) {
+            
+            JUMPContent[] content = installers[i].getInstalled();
+            if (content != null) {
+                for(int j = 0; j < content.length; j++) {
+                    numApps++;
+                    JUMPApplication app = (JUMPApplication)content[j];
+                    System.out.println("App #" + numApps + ": " + app.getTitle());
+                    JUMPAppModel model = app.getAppType();
+                    if (model == JUMPAppModel.XLET) {
+                        XLETApplication xlet = (XLETApplication)app;
+                        System.out.println("  Bundle: " + xlet.getBundle());
+                        System.out.println("     Jar: " + xlet.getClasspath());
+                        System.out.println("      ID: " + xlet.getId());
+                        System.out.println("    Icon: " + xlet.getIconPath());
+                        System.out.println("   Model: " + JUMPAppModel.XLET.toString());
+                    } else if (model == JUMPAppModel.MAIN) {
+                        MAINApplication main = (MAINApplication)app;
+                        System.out.println("  Bundle: " + main.getBundle());
+                        System.out.println("     Jar: " + main.getClasspath());
+                        System.out.println("      ID: " + main.getId());
+                        System.out.println("    Icon: " + main.getIconPath());
+                        System.out.println("   Model: " + JUMPAppModel.MAIN.toString());                        
+                    } else if (model == JUMPAppModel.MIDLET) {
+                        
+                    }
+                    
+                    System.out.println("");
+                }
+            }
+        }
+        
+        System.out.println("");
+    }
+    
     
     private void doInstall(String url, String uri, String protocol) {
         JUMPDownloadModule module = null;
@@ -307,11 +359,16 @@ public class JUMPInstallerTool {
     }
     
     private void install(URL url[], JUMPDownloadDescriptor desc[]) {
+        
         if (url.length != desc.length) {
             System.err.println("ERROR: Number of URLs to install does not equal the number of given download descriptors.");
+            error();
+            return;
         }
         for (int i = 0; i < url.length; i++) {
             if (desc != null && url != null) {
+                System.out.println("");
+                System.out.println("==> Installing: " + desc[i].getName());
                 Properties apps[] = desc[i].getApplications();
                 if (apps == null) {
                     trace("ERROR: Could not install. Descriptor contains no information on application.");
@@ -335,13 +392,15 @@ public class JUMPInstallerTool {
                 JUMPContent installedApps[] = installer.install(url[i], desc[i]);
                 if (installedApps != null) {
                     // Print installed apps.
-                    for(int j = 0; j < apps.length; j++) {
-                        System.out.println("Installed : " + ((JUMPApplication)installedApps[j]).getTitle());
+                    for(int j = 0; j < installedApps.length; j++) {
+                        System.out.println("Application Installed: " + ((JUMPApplication)installedApps[j]).getTitle());
                     }
                 } else {
-                    trace("ERROR: install(" + url.toString() + ", " + desc + ") returned null.");
-                    System.out.println("No applications were installed for: " + url.toString() + ".");
+                    System.out.println("ERROR: No applications were installed for: " + desc[i].getName() + ".");
+                    error();
                 }
+                System.out.println("==> Finished Installing: " + desc[i].getName());
+                System.out.println("");
             }
         }
     }
@@ -363,10 +422,12 @@ public class JUMPInstallerTool {
     private void uninstall(JUMPApplication[] apps) {
         if (apps == null) {
             trace("ERROR: No apps specified to uninstall.");
+            error();
             return;
         }
         for (int i = 0; i < apps.length; i++) {
-            trace("Trying to uninstall: " + apps[i].getTitle());
+            System.out.println("");
+            System.out.println("==> Uninstalling: " + apps[i].getTitle());
             if (apps[i] == null) {
                 System.out.println("ERROR: " + apps[i].getTitle() + " not found in content store.");
             } else {
@@ -380,6 +441,8 @@ public class JUMPInstallerTool {
                 }
                 installer.uninstall(apps[i]);
             }
+            System.out.println("==> Finished Uninstalling: " + apps[i].getTitle());
+            System.out.println("");
         }
     }
     
@@ -565,7 +628,7 @@ public class JUMPInstallerTool {
                 System.err.println("ERROR: A provisioning URL needs to be specified.");
                 System.exit(0);
             }
-
+            
             // Check if we're using an apache-based server
             if (provisioningServerURL.endsWith("showbundles.py")) {
                 HashMap applist = new OTADiscovery().discover(provisioningServerURL);
@@ -619,7 +682,7 @@ public class JUMPInstallerTool {
         void nonInteractiveDownload(String[] downloads, String[] downloadNames) {
             for (int i = 0; i < downloads.length; i++) {
                 trace("Downloading: " + downloadNames[i]);
-                doDownload(downloads[i]);
+                doDownload(downloadNames[i], downloads[i]);
             }
         }
         
@@ -664,16 +727,16 @@ public class JUMPInstallerTool {
             }
             
             System.out.println( chosenDownload + ": " + downloads[ chosenDownload ] );
-            boolean rv = doDownload(downloads[chosenDownload]);
+            boolean rv = doDownload(downloadNames[chosenDownload], downloads[chosenDownload]);
         }
         
-        private boolean doDownload(String uri) {
+        private boolean doDownload(String name, String uri) {
             // Initiate a download. We've specified ourselves
             // as the handler of the data.
             if (uri.endsWith(".dd")) {
-                startDownload( uri, JUMPDownloadModuleFactory.PROTOCOL_OMA_OTA);
+                startDownload(name, uri, JUMPDownloadModuleFactory.PROTOCOL_OMA_OTA);
             } else if (uri.endsWith(".jad")) {
-                startDownload(uri, JUMPDownloadModuleFactory.PROTOCOL_MIDP_OTA);
+                startDownload(name, uri, JUMPDownloadModuleFactory.PROTOCOL_MIDP_OTA);
             } else {
                 System.out.println("ERROR: Unknown URI type: " + uri);
                 System.exit(0);
@@ -693,19 +756,22 @@ public class JUMPInstallerTool {
             
             // Some resolution
             if ( ! downloadFinished ) {
-                System.out.println( "Download failed!" );
+                trace( "Download failed!" );
                 return false;
             } else {
-                System.out.println( "Download succeeded!" );
+                trace( "Download succeeded!" );
                 return true;
             }
         }
         
-        void startDownload( String uri, String protocol ) {
+        void startDownload(String name, String uri, String protocol) {
             downloadFinished = false;
             downloadAborted = false;
             
-            System.out.println( "Creating descriptor for " + uri );
+            System.out.println("");
+            System.out.println("==> Downloading: " + name);
+            
+            trace( "Creating descriptor for " + uri );
             
             JUMPDownloadModule module =
                     JUMPDownloadModuleFactory.getInstance().getModule(protocol);
@@ -713,28 +779,37 @@ public class JUMPInstallerTool {
             try {
                 
                 JUMPDownloadDescriptor descriptor = module.createDescriptor( uri );
-                descriptorVector.add(descriptor);
+                if (descriptor == null) {
+                    System.out.println("Descriptor is NULL");
+                    System.exit(0);
+                }
                 
                 JUMPDownloader downloader = module.createDownloader(descriptor);
-                
                 JUMPDownloadDestination destination = new DownloadDestinationImpl(descriptor);
                 
                 // Trigger the download
                 URL url = downloader.start( destination );
-                urlVector.add(url);
-                System.out.println( "Download returns " + url);
+                trace( "Download returns url: " + url);
                 
                 downloadFinished = true;
+                
+                descriptorVector.add(descriptor);
+                urlVector.add(url);
             } catch ( JUMPDownloadException o ) {
-                System.out.println( "Download failed for " + uri +
-                        ": " + o.getMessage() );
-                o.printStackTrace();
+                System.out.println( "Download failed for " + uri);
+                if (Verbose) {
+                    o.printStackTrace();
+                }
                 downloadAborted = true;
             } catch ( Exception o ) {
-                System.out.println( "Download failed for " + uri +
-                        ": " + o.getMessage() );
-                o.printStackTrace();
+                System.out.println( "Download failed for " + uri);
+                if (Verbose) {
+                    o.printStackTrace();
+                }
                 downloadAborted = true;
+            } finally {
+                System.out.println("==> Finished Downloading: " + name);
+                System.out.println("");
             }
         }
     }

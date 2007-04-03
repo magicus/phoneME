@@ -1,22 +1,22 @@
 /*
  * Portions Copyright  2000-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -66,11 +66,12 @@ import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.RGBImageFilter;
 
 public class SimpleBasisAMSImageButton
-        extends Component implements FocusListener, KeyListener {
+        extends Component implements FocusListener, MouseListener {
     
     public static final int UNPRESSED = 0;
     public static final int DEPRESSED = 1;
@@ -99,6 +100,7 @@ public class SimpleBasisAMSImageButton
     private Font currentFont = null;
     private boolean textShadow = false;
     private boolean mousedown = false;
+    private boolean lastFocused = false;
     
     /**
      * Constructs an SimpleBasisAMSImageButton
@@ -107,14 +109,14 @@ public class SimpleBasisAMSImageButton
         tracker = new MediaTracker(this);
         setUnpressedBorder(defaultUnpressedBorder);
         setDepressedBorder(defaultArmedBorder);
-        enableEvents(AWTEvent.MOUSE_EVENT_MASK);
+        //enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
         addFocusListener(this);
-        addKeyListener(this);
+        addMouseListener(this);
     }
     
     /**
      * Constructs an SimpleBasisAMSImageButton with the given image.
-     * 
+     *
      * @param image         the image for all states of the button
      *                      (until other images are assigned)
      */
@@ -130,40 +132,45 @@ public class SimpleBasisAMSImageButton
     
     public SimpleBasisAMSImageButton(Image image, String label) {
         this(image);
-        setLabel(label);
+        setLabel(label);     
     }
     
-    private void trace(String str) {
-        if (false) {
-            System.out.println(str);
-        }
-    }
-    
-    public void keyPressed(KeyEvent e) {
-        int keyCode = e.getKeyCode();
-        trace("button keyPressed: " + keyCode);
-    }
-    
-    public void keyReleased(KeyEvent e) {
-        trace("keyReleased: " + e.getKeyCode());
-    }
-    
-    public void keyTyped(KeyEvent e) {
-        trace("keyTyped: " + e.getKeyCode());
+//    private void trace(String str) {
+//        if (SimpleBasisAMS.verbose) {
+//            System.out.println(str);
+//        }
+//    }
+        
+    public void doAction() {
+        ActionEvent ae = new ActionEvent(this,
+                ActionEvent.ACTION_PERFORMED,
+                "");
+        actionListener.actionPerformed(ae);
     }
     
     public boolean isFocusable() {
         return true;
     }
     
+    public boolean isEnabled() {
+        return true;
+    }
+    
+    public boolean lastFocused() {
+        return lastFocused;
+    }
+    
     public void focusGained(FocusEvent e) {
-//        paintBorders = true;
+        //paintBorders = true;
         repaint();
+        SimpleBasisAMS.trace("BUTTON: " + label + " focusGained!!!");
+        lastFocused = true;
     }
     
     public void focusLost(FocusEvent e) {
-//        paintBorders = false;
+        //paintBorders = false;
         repaint();
+        SimpleBasisAMS.trace("BUTTON: " + label + " focusLost!!!");
     }
     
     /*
@@ -530,16 +537,17 @@ public class SimpleBasisAMSImageButton
     public void paint(Graphics g) {
         
         Dimension size = getSize();
-        Color color = getForeground();
-        g.setColor(color);
+        if (hasFocus()) {
+            g.setColor(Color.black);
+        } else {
+            g.setColor(getForeground());
+        }
         g.fillRect(0, 0, size.width, size.height);
         
         try {
-            trace("Here 1");
             if (!tracker.checkID(buttonState)) {
                 tracker.waitForID(buttonState);
             }
-            trace("Here 2");
             if (!tracker.isErrorID(buttonState)) {
                 Insets insets = borders[buttonState].getInsets();
                 if (images[buttonState] != null) {
@@ -551,9 +559,8 @@ public class SimpleBasisAMSImageButton
                     int y = insets.top +
                             ( ( (size.height - (insets.top + insets.bottom)) -
                             imageHeight) / 2) - 5;
-                    g.drawImage(images[buttonState], x, y, this);                    
+                    g.drawImage(images[buttonState], x, y, this);
                 }
-                trace("Here 3");
                 // for label
                 if (label != null) {
                     FontMetrics fm = null;
@@ -566,12 +573,8 @@ public class SimpleBasisAMSImageButton
                     }
                     
                     int width = (int) fm.stringWidth(label);
-                    trace("Here 4");
                     if (labelX == -1) {
                         labelX = ( (size.width - width) / 2);
-                        trace(label + " button w: " + size.width +
-                                " str w: " + width + " x: " +
-                                labelX);
                         if (labelX < 0) {
                             labelX = 0;
                         }
@@ -587,7 +590,6 @@ public class SimpleBasisAMSImageButton
                     
                     g.setColor(textColor);
                     if (labelDisplay) {
-                        trace("Here 5");
                         if (textShadow) {
                             drawTextShadowString(g, label, labelX, labelY);
                         } else {
@@ -599,7 +601,6 @@ public class SimpleBasisAMSImageButton
             }
         } catch (InterruptedException ie) {
         }
-        trace("Here 6");
         if (paintBorders) {
             borders[buttonState].paint(g, getBackground(), 0, 0, size.width,
                     size.height);
@@ -691,13 +692,29 @@ public class SimpleBasisAMSImageButton
     
     public synchronized void removeActionListener(ActionListener l) {
         actionListener = AWTEventMulticaster.remove(actionListener, l);
-    }
+    }    
     
     /*
         public synchronized ActionListener getActionListener() {
             return actionListener;
         }
      */
+
+    public void mouseClicked(MouseEvent e) {
+        requestFocusInWindow();
+    }
+
+    public void mousePressed(MouseEvent e) {
+    }
+
+    public void mouseReleased(MouseEvent e) {
+    }
+
+    public void mouseEntered(MouseEvent e) {
+    }
+
+    public void mouseExited(MouseEvent e) {
+    }
     
 }
 

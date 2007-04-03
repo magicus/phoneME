@@ -72,15 +72,48 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pay
                     <location>src/share/impl/installer/classes</location>
                 </source-folder>
                 <source-folder>
+                    <label>classes_impl_presentation</label>
+                    <type>java</type>
+                    <location>src/share/impl/presentation/classes</location>
+                </source-folder>
+                <source-folder>
+                    <label>classes_impl_executive</label>
+                    <type>java</type>
+                    <location>src/share/impl/executive/classes</location>
+                </source-folder>
+                <source-folder>
+                    <label>classes_impl_lifecycle</label>
+                    <type>java</type>
+                    <location>src/share/impl/lifecycle/classes</location>
+                </source-folder>
+                <source-folder>
+                    <label>classes_impl_windowing</label>
+                    <type>java</type>
+                    <location>src/share/impl/windowing/classes</location>
+                </source-folder>
+                <source-folder>
+                    <label>classes_impl_isolate</label>
+                    <type>java</type>
+                    <location>src/share/impl/isolate/classes</location>
+                </source-folder>
+                <source-folder>
+                    <label>simplebasis pmode</label>
+                    <type>java</type>
+                    <location>src/share/impl/presentation/simplebasis/classes</location>
+                </source-folder>
+                <source-folder>
                     <label>native_api</label>
                     <type>java</type>
                     <location>src/share/api/native</location>
                 </source-folder>
                 <source-folder>
-                    <label>classes_tests</label>
+                    <label>src/share/tests/installer</label>
                     <type>java</type>
-                    <location>src/share/tests/classes</location>
+                    <location>src/share/tests/installer</location>
                 </source-folder>
+                <build-folder>
+                    <location>/micro/people/macdaddy/ws/oss/cyclops-oss/trunk/build/linux-x86-suse/jump-gci/lib</location>
+                </build-folder>
             </folders>
             <ide-actions>
                 <action name="build">
@@ -104,16 +137,20 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pay
                     <script>${ant.script}</script>
                     <target>run-unittests</target>
                 </action>
+                <action name="debug">
+                    <script>nbproject/ide-file-targets.xml</script>
+                    <target>debug-nb</target>
+                </action>
             </ide-actions>
             <export>
                 <type>jar</type>
-                <location>dist/lib/jump-api.jar</location>
+                <location>../../cyclops-oss/trunk/build/linux-x86-suse/jump-gci/lib/executive-jump.jar</location>
                 <script>${ant.script}</script>
                 <build-target>all</build-target>
             </export>
             <export>
                 <type>jar</type>
-                <location>dist/lib/jump-impl.jar</location>
+                <location>../../cyclops-oss/trunk/build/linux-x86-suse/jump-gci/lib/jump.jar</location>
                 <script>${ant.script}</script>
                 <build-target>all</build-target>
             </export>
@@ -140,12 +177,36 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pay
                         <location>src/share/impl/installer/classes</location>
                     </source-folder>
                     <source-folder style="packages">
+                        <label>classes_impl_presentation</label>
+                        <location>src/share/impl/presentation/classes</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>classes_impl_executive</label>
+                        <location>src/share/impl/executive/classes</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>classes_impl_lifecycle</label>
+                        <location>src/share/impl/lifecycle/classes</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>classes_impl_windowing</label>
+                        <location>src/share/impl/windowing/classes</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>classes_impl_isolate</label>
+                        <location>src/share/impl/isolate/classes</location>
+                    </source-folder>
+                    <source-folder style="packages">
+                        <label>simplebasis pmode</label>
+                        <location>src/share/impl/presentation/simplebasis/classes</location>
+                    </source-folder>
+                    <source-folder style="packages">
                         <label>native_api</label>
                         <location>src/share/api/native</location>
                     </source-folder>
                     <source-folder style="packages">
-                        <label>classes_tests</label>
-                        <location>src/share/tests/classes</location>
+                        <label>src/share/tests/installer</label>
+                        <location>src/share/tests/installer</location>
                     </source-folder>
                     <source-file>
                         <location>${ant.script}</location>
@@ -157,6 +218,7 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pay
                     <ide-action name="clean"/>
                     <ide-action name="rebuild"/>
                     <ide-action name="test"/>
+                    <ide-action name="debug"/>
                 </context-menu>
             </view>
             <subprojects/>
@@ -164,44 +226,21 @@ marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pay
         <java-data xmlns="http://www.netbeans.org/ns/freeform-project-java/2">
             <compilation-unit>
                 <package-root>src/share/api/classes</package-root>
-                <built-to>dist/lib/jump-api.jar</built-to>
-                <built-to>dist/lib/jump-impl.jar</built-to>
-                <source-level>1.4</source-level>
-            </compilation-unit>
-            <compilation-unit>
                 <package-root>src/share/impl/contentstore/classes</package-root>
-                <built-to>dist/lib/jump-api.jar</built-to>
-                <built-to>dist/lib/jump-impl.jar</built-to>
-                <source-level>1.4</source-level>
-            </compilation-unit>
-            <compilation-unit>
                 <package-root>src/share/impl/pushregistry/classes</package-root>
-                <built-to>dist/lib/jump-api.jar</built-to>
-                <built-to>dist/lib/jump-impl.jar</built-to>
-                <source-level>1.4</source-level>
-            </compilation-unit>
-            <compilation-unit>
                 <package-root>src/share/impl/download/classes</package-root>
-                <built-to>dist/lib/jump-api.jar</built-to>
-                <built-to>dist/lib/jump-impl.jar</built-to>
-                <source-level>1.4</source-level>
-            </compilation-unit>
-            <compilation-unit>
                 <package-root>src/share/impl/installer/classes</package-root>
-                <built-to>dist/lib/jump-api.jar</built-to>
-                <built-to>dist/lib/jump-impl.jar</built-to>
-                <source-level>1.4</source-level>
-            </compilation-unit>
-            <compilation-unit>
+                <package-root>src/share/impl/presentation/classes</package-root>
+                <package-root>src/share/impl/executive/classes</package-root>
+                <package-root>src/share/impl/lifecycle/classes</package-root>
+                <package-root>src/share/impl/windowing/classes</package-root>
+                <package-root>src/share/impl/isolate/classes</package-root>
+                <package-root>src/share/impl/presentation/simplebasis/classes</package-root>
                 <package-root>src/share/api/native</package-root>
-                <built-to>dist/lib/jump-api.jar</built-to>
-                <built-to>dist/lib/jump-impl.jar</built-to>
-                <source-level>1.4</source-level>
-            </compilation-unit>
-            <compilation-unit>
-                <package-root>src/share/tests/classes</package-root>
-                <unit-tests/>
-                <classpath mode="compile">dist/lib/jump-api.jar:dist/lib/jump-impl.jar</classpath>
+                <package-root>src/share/tests/installer</package-root>
+                <classpath mode="compile">../../cyclops-oss/trunk/build/linux-x86-suse/jump-gci/lib/executive-jump.jar:../../cyclops-oss/trunk/build/linux-x86-suse/jump-gci/lib/jump.jar</classpath>
+                <built-to>../../cyclops-oss/trunk/build/linux-x86-suse/jump-gci/lib/executive-jump.jar</built-to>
+                <built-to>../../cyclops-oss/trunk/build/linux-x86-suse/jump-gci/lib/jump.jar</built-to>
                 <source-level>1.4</source-level>
             </compilation-unit>
         </java-data>

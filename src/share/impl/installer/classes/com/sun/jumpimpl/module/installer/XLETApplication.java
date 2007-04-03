@@ -42,7 +42,7 @@ public class XLETApplication extends JUMPApplication {
     public static final String CLASSPATH_KEY = "XLETApplication_classpath";
     public static final String BUNDLE_KEY = "XLETApplication_bundle";
     public static final String INITIAL_CLASS_KEY = "XLETApplication_initialClass";
-    private String repositoryDir = null;
+    private String contentStoreDir = null;
     
     /**
      * Create an instance of an application.
@@ -53,11 +53,11 @@ public class XLETApplication extends JUMPApplication {
      * @param title The application's title, can be null
      * @param iconPath The location of the application's icon in, can be null
      */
-    public XLETApplication(String repositoryDir, String bundle, String clazz, URL classpath, String title,
+    public XLETApplication(String contentStoreDir, String bundle, String clazz, URL classpath, String title,
             URL iconPath, int id) {
         
         super(title, iconPath, JUMPAppModel.XLET, id);
-        this.repositoryDir = repositoryDir;
+        this.contentStoreDir = contentStoreDir;
         addProperty(INITIAL_CLASS_KEY, clazz);
         if (classpath != null) {
             addProperty(CLASSPATH_KEY, classpath.getFile());

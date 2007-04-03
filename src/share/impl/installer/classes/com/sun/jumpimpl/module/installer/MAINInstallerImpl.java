@@ -51,7 +51,7 @@ public class MAINInstallerImpl extends XLETInstallerImpl implements JUMPInstalle
      */
     protected JUMPApplication createJUMPApplicationObject(String bundle,
             String clazz, URL classPathURL, String title, URL iconPathURL, int id) {
-        return new MAINApplication(repositoryDir, bundle, clazz, classPathURL, title, iconPathURL, id);
+        return new MAINApplication(contentStoreDir, bundle, clazz, classPathURL, title, iconPathURL, id);
     }
     
     /**
