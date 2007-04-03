@@ -1398,10 +1398,18 @@ class DateEditor extends PopupLayer implements CommandListener {
     }
 
     public void callSizeChanged() {
-        if (monthPopup != null)   { setMonthPopupLocation();   }
-        if (yearPopup != null)    { setYearPopupLocation();    }
-        if (hoursPopup != null)   { setHoursPopupLocation();   }
-        if (minutesPopup != null) { setMinutesPopupLocation(); }
+        if (monthPopup != null && monthPopup.open) {
+            setMonthPopupLocation();
+        }
+        if (yearPopup != null && yearPopup.open) {
+            setYearPopupLocation();
+        }
+        if (hoursPopup != null && hoursPopup.open) {
+            setHoursPopupLocation();
+        }
+        if (minutesPopup != null && minutesPopup.open) {
+            setMinutesPopupLocation();
+        }
     }
 
     // *********** attributes ************* //
