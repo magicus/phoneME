@@ -102,16 +102,16 @@ public class SMSMessageConnection extends PropLoader
          * configuration file.
          */
 
-        clientHost = getProp("localhost", "JSR_205_DATAGRAM_HOST",
+        clientHost = getProp("localhost", "JSR_120_DATAGRAM_HOST",
             "connections.prop", "DatagramHost");
         
-        portOut = getIntProp(11100, "JSR_205_SMS_OUT_PORT",
+        portOut = getIntProp(11100, "JSR_120_SMS_OUT_PORT",
             "connections.prop", "SMSDatagramPortOut");
 
-        portIn = getIntProp(11101, "JSR_205_SMS_PORT",
+        portIn = getIntProp(11101, "JSR_120_SMS_PORT",
             "connections.prop", "SMSDatagramPortIn");
 
-        phoneNumber = getProp("+5551234", "JSR_205_PHONE_NUMBER",
+        phoneNumber = getProp("+5551234", "JSR_120_PHONE_NUMBER",
             "connections.prop", "PhoneNumber");
                 
     }
