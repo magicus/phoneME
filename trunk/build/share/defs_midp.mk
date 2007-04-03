@@ -104,15 +104,6 @@ else
 MIDP_CLASSES_ZIP	?= $(MIDP_OUTPUT_DIR)/classes.zip
 endif
 
-# A separate zip file that contains shared MIDP
-# and CDC classes. These classes are public MIDP classes,
-# but not in MIDP_CLASSES_ZIP. Instead they are provided
-# by CDC. The separate zip file is not used for runtime
-# and it should not be added to the bootclasspath or
-# midp library path. It is used for the MIDP signature
-# test only.
-MIDP_CDC_SHARED_CLASSES_ZIP 	?= $(CVM_LIBDIR_ABS)/midpcdcclasses.zip
-
 RUNMIDLET		?= $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/runMidlet
 MIDP_OBJECTS		?= $(MIDP_OUTPUT_DIR)/obj$(DEBUG_POSTFIX)/$(TARGET_CPU)/*.o
 ifeq ($(CVM_PRELOAD_LIB), true)
