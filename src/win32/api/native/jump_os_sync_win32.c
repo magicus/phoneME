@@ -49,7 +49,7 @@ struct _JUMPThreadMutex {
 struct _JUMPThreadCond {
     HANDLE event;
     struct WAITING_THREAD *waiting_list;
-    int num_signaled;
+    int num_waiting;
     struct WAITING_THREAD *last_thread;
     struct _JUMPThreadMutex *mutex;         /* "bound" mutex */
 #ifndef NDEBUG
@@ -69,6 +69,8 @@ struct _JUMPThreadCond {
     PRINT_ERROR(func_,err2str(errCode_),errCode_); \
 } while (0)
 
+static void remove_from_queue(struct _JUMPThreadCond *c, 
+                              struct WAITING_THREAD *wt);
 static char *err2str(int i);
 
 #else
@@ -173,7 +175,7 @@ JUMPThreadCond jumpThreadCondCreate(struct _JUMPThreadMutex *m) {
     c->mutex = m;
     c->waiting_list = NULL;
     c->last_thread = NULL;
-    c->num_signaled = 0;
+    c->num_waiting = 0;
 #ifndef NDEBUG
     c->signaled = 0;
 #endif
@@ -227,36 +229,22 @@ int jumpThreadCondWait(struct _JUMPThreadCond *c, long millis) {
         c->last_thread = &wt;
     }
     do {
+        c->num_waiting++;
         jumpThreadMutexUnlock(c->mutex);
         err = WaitForSingleObject(c->event, (millis == 0 ? INFINITE : millis));
         //if (err != WAIT_TIMEOUT && !wt.signaled) {
         //    Sleep(1);
         //}
         jumpThreadMutexLock(c->mutex);
+        c->num_waiting--;
     } while (err == WAIT_OBJECT_0 && !wt.signaled);
     
-    /* remove from the waiting list */
-    assert(c->waiting_list != NULL);
-    if (c->waiting_list == &wt) {
-        c->waiting_list = wt.next;
-    } else {
-        if (wt.prev != NULL) {
-            wt.prev->next = wt.next;
-        }
+    /* remove from the waiting list if a timeout or an error */
+    if (!wt.signaled) {
+        remove_from_queue(c, &wt);
     }
-    if (wt.next != NULL) {
-        wt.next->prev = wt.prev;
-    }
-    if (c->last_thread == &wt) {
-        c->last_thread = wt.prev;
-    }
-    
-    if (wt.signaled) {
-        c->num_signaled--;
-    }
-    
     /* if no signaled thread remain then reset the event */
-    if (c->num_signaled == 0) {
+    if (c->num_waiting == 0) {
 #ifndef NDEBUG
         c->signaled = 0;
 #endif
@@ -275,6 +263,26 @@ int jumpThreadCondWait(struct _JUMPThreadCond *c, long millis) {
     return JUMP_SYNC_OK;
 }
 
+static void remove_from_queue(struct _JUMPThreadCond *c, 
+                              struct WAITING_THREAD *wt) {
+    assert(c->waiting_list != NULL);
+    if (c->waiting_list == wt) {
+        c->waiting_list = wt->next;
+    } else {
+        if (wt->prev != NULL) {
+            wt->prev->next = wt->next;
+        }
+    }
+    if (wt->next != NULL) {
+        wt->next->prev = wt->prev;
+    }
+    if (c->last_thread == wt) {
+        c->last_thread = wt->prev;
+    }
+    
+}
+
+
 /* wakes up a thread that is waiting for the condition */
 int jumpThreadCondSignal(struct _JUMPThreadCond *c) {
     struct WAITING_THREAD *pwt;
@@ -283,12 +291,6 @@ int jumpThreadCondSignal(struct _JUMPThreadCond *c) {
     assert(c->mutex != NULL);
     assert(c->mutex->locked);
     
-    /* if sombody was already signaled just return */
-    if (c->num_signaled > 0) {
-        assert(c->signaled);
-        return JUMP_SYNC_OK;
-    }
-    assert(!c->signaled);
     /* if no waiting threads */
     if (c->waiting_list == NULL) {
         return JUMP_SYNC_OK;
@@ -297,7 +299,7 @@ int jumpThreadCondSignal(struct _JUMPThreadCond *c) {
     assert(c->last_thread != NULL);
     assert(!c->last_thread->signaled);
     c->last_thread->signaled = 1;
-    c->num_signaled++;
+    remove_from_queue(c, c->last_thread);
 #ifndef NDEBUG
     c->signaled = 1;
 #endif
@@ -312,13 +314,21 @@ int jumpThreadCondSignal(struct _JUMPThreadCond *c) {
 int jumpThreadCondBroadcast(struct _JUMPThreadCond *c) {
     struct WAITING_THREAD *pwt;
     
+    assert(c != NULL);
+    assert(c->mutex != NULL);
+    assert(c->mutex->locked);
+    
+    /* if no waiting threads */
+    if (c->waiting_list == NULL) {
+        return JUMP_SYNC_OK;
+    }
     /* all waiting threads become signaled */
     for (pwt = c->waiting_list; pwt != NULL; pwt = pwt->next) {
-        if (!pwt->signaled) {
-            c->num_signaled++;
-            pwt->signaled = 1;
-        }
+        assert(!pwt->signaled);
+        pwt->signaled = 1;
     }
+    c->waiting_list = NULL;
+    c->last_thread = NULL;
 #ifndef NDEBUG
     c->signaled = 1;
 #endif
