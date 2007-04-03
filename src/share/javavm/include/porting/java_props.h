@@ -61,7 +61,18 @@ typedef struct {
     const char *cpu_endian;            /* endianness of platform */
     const char *commports;	       /* comma-delimited list of available
 					  comm (serial) ports */
-    
+
+#ifdef JAVASE    
+    const char *util_prefs_PreferencesFactory; /* system's Preferences Factory */
+
+    const char *data_model;           /* 32 or 64 bit data model */
+ 
+    const char *patch_level;          /* patches/service packs installed */
+
+    const char *country;
+    const char *variant;
+#endif
+
 } java_props_t;
 
 /*
