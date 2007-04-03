@@ -145,6 +145,7 @@ public abstract class CWindow {
                     layers.addLayer(layer);
                     layer.addDirtyRegion();
                     requestRepaint();
+                    layer.addNotify();
                     return true;
                 }
             }
@@ -180,6 +181,7 @@ public abstract class CWindow {
                     layer.owner = null;
                     requestRepaint();
                     layers.removeLayerElement(le);
+                    layer.removeNotify(this);
                     return true;
                 }
             }
@@ -204,6 +206,10 @@ public abstract class CWindow {
             for (CLayerElement le = layers.getTop();
                     le != null; le = le.getLower()) {
                 layer = le.getLayer();
+                if (layer.supportsInput)
+                    System.out.println("keyInput for " + layer);
+
+
                 if (layer.supportsInput &&
                         layer.keyInput(type, keyCode))
                 {
@@ -237,6 +243,8 @@ public abstract class CWindow {
                 if (layer.visible && layer.supportsInput &&
                     layer.handlePoint(x, y))
                 {
+                    System.out.println("pointerInput for " + layer);
+
                     // If the layer is visible, supports input, and
                     // contains the point of the pointer press, we translate
                     // the point into the layer's coordinate space and
