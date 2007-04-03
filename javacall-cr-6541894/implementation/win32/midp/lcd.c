@@ -1007,7 +1007,7 @@ static void destroySkinsMenu(void) {
 }
 #endif // SKINS_MENU_SUPPORTED
 
-extern int _phonenum;
+extern char* _phonenum;
 /**
  * Create Emulator Window
  */
@@ -1040,7 +1040,7 @@ void CreateEmulatorWindow() {
 #ifdef SKINS_MENU_SUPPORTED
     hMenu = buildSkinsMenu();
 #endif
-    sprintf(caption, "+%d Sun Anycall", _phonenum);
+    sprintf(caption, "%s Sun Anycall", _phonenum);
 
     hwnd = CreateWindow(szAppName,            /* window class name       */
                         caption,              /* window caption          */
