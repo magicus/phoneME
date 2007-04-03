@@ -77,7 +77,6 @@ class DateEditor extends PopupLayer implements CommandListener {
         calendar_bounds = new int[]{-1,-1,0,0};
         ampm_bounds = new int[]{-1,-1,0,0};
 
-
         selectedDate = hilightedDate = editDate.get(Calendar.DATE);
 
         if (editDate.get(Calendar.AM_PM) == Calendar.AM) {
@@ -107,6 +106,16 @@ class DateEditor extends PopupLayer implements CommandListener {
                 break;
         }
 
+        // Set invariant mode dependent anchors for date-time elements
+        month_anchor = new int[] { (mode == DateField.DATE)? 10: 4, 5 };
+        year_anchor = new int[] { month_anchor[X] + 45, month_anchor[Y] };
+        hours_anchor = new int[] { timeComponentsOffset +
+            ((mode == DateField.TIME)? 17: 0), ((mode == DateField.TIME)? 10: 5) };
+        minutes_anchor = new int[] { hours_anchor[X] + 34, hours_anchor[Y] };
+        calendar_achor = new int[] { (mode == DateField.DATE)? 10: 4, 29 };
+        ampm_anchor = new int[] { timeComponentsOffset +
+            ((mode == DateField.TIME)? 15: 0), 29 };
+        
         setCommands(commands);
         setCommandListener(this);
         sizeChanged = true;
@@ -192,7 +201,6 @@ class DateEditor extends PopupLayer implements CommandListener {
                 break;
             case DateField.DATE_TIME:
                 drawDateComponents(g);
-                g.translate(timeComponentsOffset, 0);
                 drawTimeComponents(g);
                 break;
             default:
@@ -564,14 +572,11 @@ class DateEditor extends PopupLayer implements CommandListener {
 
     /**
      * Set month popup location using upper left corner coordinate of the
-     * DateEditor layer in corrdinate system of the owner window
-     *
-     * @param x x-coordinate of the upper left corner of DateEditor
-     * @param y y-coordinate of the upper left corner of DateEditor
+     * DateEditor layer and relative coordinates of the popup anchor.
      */
-    protected void setMonthPopupLocation(int x, int y) {
-        x += (mode == DateField.DATE) ? 10 : 4;
-        y += 5;
+    protected void setMonthPopupLocation() {
+        int x = bounds[X] + month_anchor[X];
+        int y = bounds[Y] + month_anchor[Y];
 
         int w = DateEditorSkin.IMAGE_MONTH_BG.getWidth();
         int h = DateEditorSkin.IMAGE_MONTH_BG.getHeight();
@@ -588,14 +593,11 @@ class DateEditor extends PopupLayer implements CommandListener {
 
     /**
      * Set year popup location using upper left corner coordinate of the
-     * DateEditor layer in corrdinate system of the owner window
-     *
-     * @param x x-coordinate of the upper left corner of DateEditor
-     * @param y y-coordinate of the upper left corner of DateEditor
+     * DateEditor layer and relative coordinates of the popup anchor.
      */
-    protected void setYearPopupLocation(int x, int y) {
-        x += ((mode == DateField.DATE) ? 10 : 4) + 45;
-        y += 5;
+    protected void setYearPopupLocation() {
+        int x = bounds[X] + year_anchor[X];
+        int y = bounds[Y] + year_anchor[Y];
 
         int w = DateEditorSkin.IMAGE_YEAR_BG.getWidth();
         int h = DateEditorSkin.IMAGE_YEAR_BG.getHeight();
@@ -612,18 +614,14 @@ class DateEditor extends PopupLayer implements CommandListener {
 
     /**
      * Set hours popup location using upper left corner coordinate of the
-     * DateEditor layer in corrdinate system of the owner window
-     *
-     * @param x x-coordinate of the upper left corner of DateEditor
-     * @param y y-coordinate of the upper left corner of DateEditor
+     * DateEditor layer and relative coordinates of the popup anchor.
      */
-    protected void setHoursPopupLocation(int x, int y) {
-        x += timeComponentsOffset + ((mode == DateField.TIME) ? 17 : 0);
-        y += (mode == DateField.TIME) ? 10 : 5;
+    protected void setHoursPopupLocation() {
+        int x = bounds[X] + hours_anchor[X];
+        int y = bounds[Y] + hours_anchor[Y];
 
         int w = DateEditorSkin.IMAGE_TIME_BG.getWidth();
         int h = DateEditorSkin.IMAGE_TIME_BG.getHeight();
-
         hours_bounds[X] = x - this.bounds[X];
         hours_bounds[Y] = y - this.bounds[Y];
         hours_bounds[W]= w;
@@ -637,18 +635,14 @@ class DateEditor extends PopupLayer implements CommandListener {
 
     /**
      * Set minutes popup location using upper left corner coordinate of the
-     * DateEditor layer in corrdinate system of the owner window
-     *
-     * @param x x-coordinate of the upper left corner of DateEditor
-     * @param y y-coordinate of the upper left corner of DateEditor
+     * DateEditor layer and relative coordinates of the popup anchor.
      */
-    protected void setMinutesPopupLocation(int x, int y) {
-        x += timeComponentsOffset + ((mode == DateField.TIME) ? 17 : 0) + 34;
-        y += (mode == DateField.TIME) ? 10 : 5;
+    protected void setMinutesPopupLocation() {
+        int x = bounds[X] + minutes_anchor[X];
+        int y = bounds[Y] + minutes_anchor[Y];
 
         int w = DateEditorSkin.IMAGE_TIME_BG.getWidth();
         int h = DateEditorSkin.IMAGE_TIME_BG.getHeight();
-
         minutes_bounds[X] = x - this.bounds[X];
         minutes_bounds[Y] = y - this.bounds[Y];
         minutes_bounds[W]= w;
@@ -761,20 +755,17 @@ class DateEditor extends PopupLayer implements CommandListener {
      * @param g The Graphics object to paint to
      */
     protected void drawDateComponents(Graphics g) {
-        nextX = (mode == DateField.DATE) ? 10 : 4;
-        nextY = 5;
-
-        g.translate(nextX, nextY);
+        g.translate(month_anchor[X], month_anchor[Y]);
         drawMonthComponent(g);
+        g.translate(-month_anchor[X], -month_anchor[Y]);
 
-        g.translate(45, 0);
+        g.translate(year_anchor[X], year_anchor[Y]);
         drawYearComonent(g);
-        g.translate(-nextX - 45, -nextY);
+        g.translate(-year_anchor[X], -year_anchor[Y]);
         
-        int x = (mode == DateField.DATE) ? 10 : 4;
-        g.translate(x, 29);
+        g.translate(calendar_achor[X], calendar_achor[Y]);
         paintCalendar(g);
-        g.translate(-x, -29);
+        g.translate(-calendar_achor[X], -calendar_achor[Y]);
     }
 
     /**
@@ -782,20 +773,17 @@ class DateEditor extends PopupLayer implements CommandListener {
      * @param g The Graphics object to paint to
      */
     protected void drawTimeComponents(Graphics g) {
-        nextX = (mode == DateField.TIME) ? 17 : 0;
-        nextY = (mode == DateField.TIME) ? 10 : 5;
-
-        g.translate(nextX, nextY);
+        g.translate(hours_anchor[X], hours_anchor[Y]);
         drawHoursComponent(g);
+        g.translate(-hours_anchor[X], -hours_anchor[Y]);
 
-        g.translate(34, 0);
+        g.translate(minutes_anchor[X], minutes_anchor[Y]);
         drawMinutesComponent(g);
-        g.translate(-nextX - 34, -nextY);
+        g.translate(-minutes_anchor[X], -minutes_anchor[Y]);
 
-        nextX = (mode == DateField.TIME) ? 15 : 0;
-        nextY = 29;
-        g.translate(nextX, nextY);
+        g.translate(ampm_anchor[X], ampm_anchor[Y]);
         paintAmPm(g);
+        g.translate(-ampm_anchor[X], -ampm_anchor[Y]);
     }
 
     /**
@@ -999,6 +987,7 @@ class DateEditor extends PopupLayer implements CommandListener {
 
             case MONTH_POPUP:
                 if (!monthPopup.open) {
+                    setMonthPopupLocation();
                     monthPopup.show(sLF);
                     done = true;
                 } else {
@@ -1016,6 +1005,7 @@ class DateEditor extends PopupLayer implements CommandListener {
                 break;
             case YEAR_POPUP:
                 if (!yearPopup.open) {
+                    setYearPopupLocation();
                     yearPopup.show(sLF);
                     done = true;
                 } else {
@@ -1047,6 +1037,7 @@ class DateEditor extends PopupLayer implements CommandListener {
                 break;
             case HOURS_POPUP:
                 if (!hoursPopup.open) {
+                    setHoursPopupLocation();
                     hoursPopup.show(sLF);
                     done = true;
                 } else {
@@ -1062,6 +1053,7 @@ class DateEditor extends PopupLayer implements CommandListener {
                 break;
             case MINUTES_POPUP:
                 if (!minutesPopup.open) {
+                    setMinutesPopupLocation();
                     minutesPopup.show(sLF);
                     done = true;
                 } else {
@@ -1406,12 +1398,10 @@ class DateEditor extends PopupLayer implements CommandListener {
     }
 
     public void callSizeChanged() {
-        int x = bounds[X];
-        int y = bounds[Y];
-        if (monthPopup != null)   { setMonthPopupLocation(x, y);   }
-        if (yearPopup != null)    { setYearPopupLocation(x, y);    }
-        if (hoursPopup != null)   { setHoursPopupLocation(x, y);   }
-        if (minutesPopup != null) { setMinutesPopupLocation(x, y); }
+        if (monthPopup != null)   { setMonthPopupLocation();   }
+        if (yearPopup != null)    { setYearPopupLocation();    }
+        if (hoursPopup != null)   { setHoursPopupLocation();   }
+        if (minutesPopup != null) { setMinutesPopupLocation(); }
     }
 
     // *********** attributes ************* //
@@ -1716,6 +1706,14 @@ class DateEditor extends PopupLayer implements CommandListener {
     private int minutes_bounds[];
     private int calendar_bounds[];
     private int ampm_bounds[];
+
+    /* coordinates of the date-time components relative from DateEditor area*/
+    private int month_anchor[];
+    private int year_anchor[];
+    private int hours_anchor[];
+    private int minutes_anchor[];
+    private int calendar_achor[];
+    private int ampm_anchor[];
 
     /*date index at pressed, may be valid value or invalid value 0*/
     private int pressedDate;
