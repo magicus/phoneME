@@ -73,6 +73,11 @@ int getIntProp(const char* propName, int defaultValue) {
     return value ? atoi(value) : defaultValue;
 }
 
+const char* getStrProp(const char* propName, const char* defaultValue) {
+    char* value = getenv(propName);
+    return value ? value : defaultValue;
+}
+
 static void decodeSmsBuffer(char *buffer, 
     int* encodingType, int* destPortNum, javacall_int64* timeStamp, 
     char** recipientPhone, char** senderPhone, 
@@ -193,11 +198,11 @@ javacall_result process_UDPEmulator_cbs_incoming(javacall_handle handle) {
     ok = javacall_datagram_recvfrom_start(
         handle, pAddress, &port, buffer, length, &pBytesRead, &pContext);
 
-    if (pBytesRead > 12) {
+    if (pBytesRead >= 12) {
         msgType = *(int*)buffer;
         msgID   = (unsigned short)*(int*)(buffer+4);
         msgBufferLen  = *(int*)(buffer+8);
-        msgBuffer = buffer+12;
+        msgBuffer = (pBytesRead > 12) ? buffer+12 : NULL;
     } else {
         javacall_print("bad cbs package received");
     }

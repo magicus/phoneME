@@ -43,6 +43,7 @@ extern char* getIPBytes_nonblock(char *hostname);
 
 extern char* getProp(const char* propName, char* defaultValue);
 extern int getIntProp(const char* propName, int defaultValue);
+extern const char* getStrProp(const char* propName, const char* defaultValue);
 
 /**
  * send an SMS message
@@ -71,7 +72,7 @@ int javacall_sms_send(  javacall_sms_encoding    msgType,
 
     javacall_int64 timeStamp = 0;
     const char* recipientPhone = destAddress;
-    char* senderPhone = "+1234567";
+    const char* senderPhone = getStrProp("JSR_120_PHONE_NUMBER", "+1234567");
     int encodedSMSLength;
     char* encodedSMS;
 
