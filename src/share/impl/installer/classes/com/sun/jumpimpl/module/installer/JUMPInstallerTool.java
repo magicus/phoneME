@@ -60,7 +60,7 @@ import java.util.Vector;
  * features as development continues.
  *
  * The current supported commands are:
- *    list, install, install_all, uninstall, uninstall_all
+ *    list, info, install, install_all, uninstall, uninstall_all
  *
  * The commands install and uninstall will provide the user with an interactive
  * way to choose files to be installed or uninstalled.  The command install_all
@@ -72,7 +72,7 @@ import java.util.Vector;
  *     <system properties> is optional, but it should be known that contentstore.root
  *         can be overridden here if desired.
  *         For example, -Dcontentstore.root=<repository dir> can be specified
- *     <command> can currently be list, install, install_all, uninstall, and uninstall_all
+ *     <command> can currently be list, info, install, install_all, uninstall, and uninstall_all
  *     <options>
  *        -verbose:  print debugging messages
  *
@@ -285,20 +285,38 @@ public class JUMPInstallerTool {
                     JUMPAppModel model = app.getAppType();
                     if (model == JUMPAppModel.XLET) {
                         XLETApplication xlet = (XLETApplication)app;
-                        System.out.println("  Bundle: " + xlet.getBundle());
-                        System.out.println("     Jar: " + xlet.getClasspath());
-                        System.out.println("      ID: " + xlet.getId());
-                        System.out.println("    Icon: " + xlet.getIconPath());
-                        System.out.println("   Model: " + JUMPAppModel.XLET.toString());
+                        System.out.println("    Bundle: " + xlet.getBundle());
+                        System.out.println("       Jar: " + xlet.getClasspath());
+                        System.out.println("Install ID: " + xlet.getId());
+                        URL iconPath = xlet.getIconPath();
+                        if (iconPath == null) {
+                            System.out.println("      Icon: <none>");
+                        } else {
+                            System.out.println("      Icon: " + iconPath.getFile());
+                        }
+                        System.out.println("     Model: " + JUMPAppModel.XLET.toString());
                     } else if (model == JUMPAppModel.MAIN) {
                         MAINApplication main = (MAINApplication)app;
-                        System.out.println("  Bundle: " + main.getBundle());
-                        System.out.println("     Jar: " + main.getClasspath());
-                        System.out.println("      ID: " + main.getId());
-                        System.out.println("    Icon: " + main.getIconPath());
-                        System.out.println("   Model: " + JUMPAppModel.MAIN.toString());                        
+                        System.out.println("    Bundle: " + main.getBundle());
+                        System.out.println("       Jar: " + main.getClasspath());
+                        System.out.println("Install ID: " + main.getId());
+                        URL iconPath = main.getIconPath();
+                        if (iconPath == null) {
+                            System.out.println("      Icon: <none>");
+                        } else {
+                            System.out.println("      Icon: " + iconPath.getFile());
+                        }
+                        System.out.println("     Model: " + JUMPAppModel.MAIN.toString());
                     } else if (model == JUMPAppModel.MIDLET) {
-                        
+                        System.out.println("  Suite ID: " + app.getProperty("MIDletApplication_suiteid"));
+                        System.out.println("Install ID: " + app.getId());
+                        URL iconPath = app.getIconPath();
+                        if (iconPath == null) {
+                            System.out.println("      Icon: <none>");
+                        } else {
+                            System.out.println("      Icon: " + iconPath.getFile());
+                        }
+                        System.out.println("     Model: " + JUMPAppModel.MAIN.toString());
                     }
                     
                     System.out.println("");
