@@ -160,17 +160,26 @@ public class BodyLayer extends CLayer
             scrollInd != null && scrollInd.scrollable != this ||
             scrollInd != null && scrollInd.listener != this) {
             if (scrollInd != null) {
+                boolean vis = scrollInd.isVisible();
                 scrollInd.setScrollable(null);
                 scrollInd.setListener(null);
+
+                if (owner != null) {
+                    if (owner.removeLayer(scrollInd) && vis) {
+                        bounds[W] += scrollInd.bounds[W];
+                        addDirtyRegion();
+                    }
+                }
             }
-            if (owner != null) {
-                owner.removeLayer(scrollInd);
-            }
-            
+             
             scrollInd = newScrollInd;
             if (scrollInd != null) {
                 scrollInd.setScrollable(this);
                 scrollInd.setListener(this);
+
+                if (owner != null) {
+                    owner.addLayer(scrollInd);
+                }
             }
         }
         updateScrollIndicator();        
@@ -191,17 +200,13 @@ public class BodyLayer extends CLayer
      * @return true if set vertical scroll occures
      */
     public boolean setVerticalScroll(int scrollPosition, int scrollProportion) {
-        if (scrollInd != null && owner != null)  {
+        if (scrollInd != null)  {
             boolean scrollChanged = scrollInd.isVisible();
             scrollInd.setVerticalScroll(scrollPosition, scrollProportion);
             boolean scrollVisible = scrollInd.isVisible();
 
-            if (scrollVisible) {
-                scrollChanged = owner.addLayer(scrollInd) ||
-                    !scrollChanged;
-            }
-
-            if (scrollChanged) {
+            if (scrollChanged != scrollVisible) {
+                scrollInd.setBounds();
                 int w = scrollInd.bounds[W];
                 bounds[W] += scrollVisible? -w: +w;
                 addDirtyRegion();
