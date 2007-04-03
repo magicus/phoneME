@@ -91,6 +91,11 @@ define generateConstantList
     cat $(1)/.constant.class.list )
 endef
 
+#Define for getting string list from a file without comments
+define readStringList
+	$(shell cat $(1) | grep -v "\#")
+endef
+
 # Jump API classpath
 EMPTY =
 ONESPACE = $(EMPTY) $(EMPTY)

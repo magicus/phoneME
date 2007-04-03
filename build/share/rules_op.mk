@@ -98,6 +98,11 @@ else
 javacall_lib:
 endif
 
+$(J2ME_CLASSLIB):: jsrop_api_classes
+
+jsrop_api_classes: $(CVM_MIDPCLASSLIST)
+	@echo $(JSROP_API_CLASSES) | tr ' ' '\n' >> $(CVM_MIDPCLASSLIST)
+
 ifeq ($(CVM_DUAL_STACK), true)
 #
 # Run JavaAPILister to generate the list of classes that are 
