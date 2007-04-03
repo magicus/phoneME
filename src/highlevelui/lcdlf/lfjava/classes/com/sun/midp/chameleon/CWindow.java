@@ -145,6 +145,7 @@ public abstract class CWindow {
                     layers.addLayer(layer);
                     layer.addDirtyRegion();
                     requestRepaint();
+                    layer.addNotify();
                     return true;
                 }
             }
@@ -180,6 +181,7 @@ public abstract class CWindow {
                     layer.owner = null;
                     requestRepaint();
                     layers.removeLayerElement(le);
+                    layer.removeNotify(this);
                     return true;
                 }
             }
