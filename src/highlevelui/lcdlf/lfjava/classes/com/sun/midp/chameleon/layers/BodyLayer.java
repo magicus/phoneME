@@ -155,6 +155,33 @@ public class BodyLayer extends CLayer
         tunnel.callScrollContent(scrollType, thumbPosition);
     }
 
+    /**
+     * Called by CWindow to notify the layer that is has been 
+     * added to the active stack. 
+     */
+    public void addNotify() {
+        if (scrollInd != null && owner != null) {
+            if (owner.addLayer(scrollInd)) {
+                updateScrollIndicator();    
+            }    
+        }
+    }
+
+    /**
+     * Called by CWindow to notify the layer that is has been 
+     * removed from the active stack. 
+     * @param owner an instance of CWindow this layer has been removed from 
+     */
+    public void removeNotify(CWindow owner) {
+        if (scrollInd != null && owner != null) {
+            if (owner.removeLayer(scrollInd) && scrollInd.isVisible()) {
+                bounds[W] += scrollInd.bounds[W];
+                addDirtyRegion();
+            }
+        }
+     }
+
+
     public void setScrollInd(ScrollIndLayer newScrollInd) {
         if (scrollInd != newScrollInd ||
             scrollInd != null && scrollInd.scrollable != this ||
