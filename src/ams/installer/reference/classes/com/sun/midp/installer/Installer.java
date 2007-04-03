@@ -1128,7 +1128,7 @@ public abstract class Installer {
                 long waitTime = 1000 -
                     (System.currentTimeMillis() - state.startTime);
 
-                if (waitTime > 0) {
+                if (waitTime > 0 && waitTime <= 1000) {
                     Thread.sleep(waitTime);
                 }
             } catch (InterruptedException ie) {
