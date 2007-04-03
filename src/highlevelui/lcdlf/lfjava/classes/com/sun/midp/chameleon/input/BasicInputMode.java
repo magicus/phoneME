@@ -28,6 +28,8 @@ import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.TextField;
 import javax.microedition.lcdui.Displayable;
 import com.sun.midp.i18n.*;
+import com.sun.midp.log.Logging;
+import com.sun.midp.log.LogChannels;
 
 
 /**
@@ -116,7 +118,10 @@ abstract class BasicInputMode implements InputMode, Runnable {
      */
     public void beginInput(InputModeMediator mediator,
                            String inputSubset, int constraints) {
-        log("[basic.beginInput] >>");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[basic.beginInput] >>");
+        }
         validateState(false);
         this.mediator = mediator;
         this.constraints = constraints & TextField.CONSTRAINT_MASK;
@@ -124,7 +129,10 @@ abstract class BasicInputMode implements InputMode, Runnable {
         startTimer();
         setInputSubset(inputSubset);
         setKeyMap(constraints, false);
-        log("[basic.beginInput] <<");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[basic.beginInput] <<");
+        }
     }
 
     /**
@@ -239,7 +247,10 @@ abstract class BasicInputMode implements InputMode, Runnable {
                 keyCode == Canvas.RIGHT || 
                 keyCode == Canvas.UP ||
                 keyCode == Canvas.DOWN) {
-                log("[processKey] got clear or arrow. lastKey="+lastKey);
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                        "[processKey] got clear or arrow. lastKey=" + lastKey);
+                }
                 completeInputMode(true);
             } else {
 
@@ -286,7 +297,10 @@ abstract class BasicInputMode implements InputMode, Runnable {
             }            
         } else {
             ret = InputMode.KEYCODE_INVISIBLE;
-            log("[processKey] returning KEYCODE_INVISIBLE");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "[processKey] returning KEYCODE_INVISIBLE");
+            }
         }
         return ret;
     }
@@ -311,7 +325,10 @@ abstract class BasicInputMode implements InputMode, Runnable {
             (longPress && 
              lastKey != keyCode && 
              lastKey != -1)) {
-            log("INVALID KEY");
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "INVALID KEY");
+            }
             return false;
         }
         return true;
@@ -393,10 +410,13 @@ abstract class BasicInputMode implements InputMode, Runnable {
      * to begin a new input session.
      */
     public void endInput() {
-        log("[basic.endInput]");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[basic.endInput]");
+        }
         validateState(true);
         this.mediator = null;
-        clickCount = 0;        
+        clickCount = 0;
         lastKey = -1;
 
         stopTimer();
@@ -417,16 +437,20 @@ abstract class BasicInputMode implements InputMode, Runnable {
      * state of the commitChar boolean).
      */
     public void run() {
-        log("[run] sessionIsLive="+sessionIsLive+" commitChar="+commitChar);
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[run] sessionIsLive=" + sessionIsLive + " commitChar=" + commitChar);
+        }
         // We initially block until the first key press is processed
         if (!sessionIsLive) {
             try {
                 synchronized (this) {
                     wait();
                 }
-            } catch (Throwable t) { } // ignore interruptions
+            } catch (Throwable t) {
+            } // ignore interruptions
         }
-        
+
         while (sessionIsLive) {
             try {
                 synchronized (this) {
@@ -437,8 +461,9 @@ abstract class BasicInputMode implements InputMode, Runnable {
                     commitChar = true;
                     wait(KEY_COMMIT_TIMEOUT);
                 }
-            } catch (Throwable t) { } // ignore any exceptions here
-            
+            } catch (Throwable t) {
+            } // ignore any exceptions here
+
             if (sessionIsLive && commitChar) {
                 completeInputMode(true);
             }
@@ -474,11 +499,17 @@ abstract class BasicInputMode implements InputMode, Runnable {
             char c;
             // log("[basic.getPendingCharInternal] lastKey=" + lastKey);
             if (lastKey == -1 || clickCount <= 0) {
-                log("[getPendingCharInternal] returning KEYCODE_NONE");
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                        "[getPendingCharInternal] returning KEYCODE_NONE");
+                }
             } else {
                 chars = getCharOptions(lastKey);
                 if (chars == null) {
-                    log("[getPendingCharInternal] returning KEYCODE_NONE");
+                    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                        Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                            "[getPendingCharInternal] returning KEYCODE_NONE");
+                    }
                 } else {
                     if (clickCount > chars.length) {
                         clickCount = 1;
@@ -487,9 +518,12 @@ abstract class BasicInputMode implements InputMode, Runnable {
                     if (chars.length > 0) {
                         pendingChar = chars[clickCount - 1];
                     }
-                     
+
                     hasMoreMatches = true;
-                    log("[getPendingCharInternal] returning " + pendingChar);
+                    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                        Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                            "[getPendingCharInternal] returning " + pendingChar);
+                    }
                 }
             }
         }
@@ -520,8 +554,11 @@ abstract class BasicInputMode implements InputMode, Runnable {
      */
     public char getPendingChar() {
         int code = getPendingCharInternal();
-        char c = code == KEYCODE_NONE ? 0 : (char)code;
-        log("[getPendingChar] returning "+c);
+        char c = code == KEYCODE_NONE ? 0 : (char) code;
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[getPendingChar] returning " + c);
+        }
         return c;
     }
 
@@ -544,13 +581,19 @@ abstract class BasicInputMode implements InputMode, Runnable {
     protected boolean commitPendingChar() {
         boolean committed = false;
         int c = getPendingCharInternal();
-        log("[commitPendingChar] getPendingChar="+c);
-        if (c != KEYCODE_NONE) {
-            log("[commitPendingChar] commiting "+String.valueOf((char)c));
-            committed = true;
-            mediator.commit(String.valueOf((char)c));
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[commitPendingChar] getPendingChar=" + c);
         }
-        
+        if (c != KEYCODE_NONE) {
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                    "[commitPendingChar] commiting " + String.valueOf((char) c));
+            }
+            committed = true;
+            mediator.commit(String.valueOf((char) c));
+        }
+
         lastKey = -1;
         clickCount = 0;
         pendingChar = KEYCODE_NONE;
@@ -564,25 +607,19 @@ abstract class BasicInputMode implements InputMode, Runnable {
      * @param commit true if the char is accepted, false if the char is rejected
      */
     protected void completeInputMode(boolean commit) {
-        log("[Basic.completeInputMode] commit = " + commit);
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[Basic.completeInputMode] commit = " + commit);
+        }
         if (commit) {
             commitPendingChar();
         }
- 
-        clickCount = 0;        
+
+        clickCount = 0;
         lastKey = -1;
 
         stopTimer();
         startTimer();
-    }
-
-    
-    /**
-     * Print the debug message 
-     * @param str debug message
-     */
-    protected void log(String str) {
-        //        System.out.println(str);
     }
 
     /** 

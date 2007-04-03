@@ -646,4 +646,21 @@ public abstract class TestCase {
         errorAssertWithoutTest = 0;
         errorTestWithoutAssert = 0;
     }
+
+    /**
+     * If in verbose mode, print information.
+     */
+    public void info(String s) {
+        if (verbose) {
+            p(".# "+s);
+        }
+    }
+
+    /**
+     * Reads the verbose flag.
+     * @return true if in verbose mode
+     */
+    protected boolean getVerbose() {
+        return verbose;
+    }
 }

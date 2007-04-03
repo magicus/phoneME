@@ -403,9 +403,13 @@ class DateEditor extends PopupLayer implements CommandListener {
     public void commandAction(Command cmd, Displayable s) {
         
         lf.uCallKeyPressed(Constants.KEYCODE_SELECT);
-        
+
         if (cmd == set) {
-            lf.saveDate(editDate.getTime());
+            if (mode == DateField.TIME) {
+                lf.saveDate(new Date(editDate.getTime().getTime() % (24*60*60*1000)));
+            } else {
+                lf.saveDate(editDate.getTime());
+            }
         }
             
         // SYNC NOTE: Move the call to the application's

@@ -81,7 +81,6 @@ SUBSYSTEM_JUMP_PUSH_JAVA_FILES = \
     $(JUMP_PUSH_PACKAGE_DIR)/executive/MIDPContainerInterfaceImpl.java \
     $(JUMP_PUSH_PACKAGE_DIR)/executive/MIDPApp.java \
     $(JUMP_PUSH_PACKAGE_DIR)/executive/PushController.java \
-    $(JUMP_PUSH_PACKAGE_DIR)/executive/PushRegistry.java \
     $(JUMP_PUSH_PACKAGE_DIR)/executive/PushRegistryModuleFactoryImpl.java \
     $(JUMP_PUSH_PACKAGE_DIR)/executive/ota/InstallerInterface.java \
     $(JUMP_PUSH_PACKAGE_DIR)/executive/persistence/AppSuiteDataStore.java \

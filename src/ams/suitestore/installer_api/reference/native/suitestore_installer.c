@@ -448,6 +448,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
             &pMsd->varSuiteData.pathToJar);
 
         if (status != ALL_OK) {
+            pcsl_mem_free(pMsd);        
             if (pszError != NULL) {
                 storageFreeError(pszError);
             }
@@ -555,7 +556,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
  * @param ppszError pointer to character string pointer to accept an error
  * @param suiteId ID of the suite
  * @param storageId ID of the storage where the jar should be saved
- * @param jarName filename of the temporary Jar
+ * @param pJarName filename of the temporary Jar
  * @param pNewFileName [out] permanent filename of the suite's jar.
  * May point to the same string as jarName, in this case this string
  * will be freed before storing the new value.
@@ -565,7 +566,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
  */
 static MIDPError
 store_jar(char** ppszError, SuiteIdType suiteId, StorageIdType storageId,
-          const pcsl_string* jarName, pcsl_string* pNewFileName) {
+          const pcsl_string* pJarName, pcsl_string* pNewFileName) {
     MIDPError status;
     pcsl_string filename = PCSL_STRING_NULL;
 
@@ -578,7 +579,7 @@ store_jar(char** ppszError, SuiteIdType suiteId, StorageIdType storageId,
     }
 
     *ppszError = NULL;
-    storage_rename_file(ppszError, jarName, &filename);
+    storage_rename_file(ppszError, pJarName, &filename);
 
     if (*ppszError != NULL) {
         pcsl_string_free(&filename);
@@ -589,7 +590,7 @@ store_jar(char** ppszError, SuiteIdType suiteId, StorageIdType storageId,
      * If source and destination points to the same location, release
      * the string before saving a new value.
      */
-    if (pNewFileName == jarName) {
+    if (pNewFileName == pJarName) {
         pcsl_string_free(pNewFileName);
     }
 
@@ -633,9 +634,27 @@ add_to_suite_list_and_save(MidletSuiteData* pMsd) {
         g_numberOfSuites++;
     } else {
         /* if the suite with such ID already exists, overwrite it */
-        MidletSuiteData* pTmp = pExistingSuite->nextEntry;
-        *pExistingSuite = *pMsd;
-        pExistingSuite->nextEntry = pTmp;
+        MidletSuiteData* pData = g_pSuitesData;
+        pPrev = NULL;
+        pMsd->nextEntry = pExistingSuite->nextEntry;
+
+        /* finding the entry preceding the pExistingSuite */
+        while (pData != NULL) {
+            if (pData->suiteId == pMsd->suiteId) {
+                break;
+            }
+            pPrev = pData;
+            pData = pData->nextEntry;
+        }
+
+        if (pPrev == NULL) {
+            /* pExistingSuite is the first entry in the list */
+            g_pSuitesData = pMsd;
+        } else {
+            pPrev->nextEntry = pMsd;
+        }
+
+        free_suite_data_entry(pExistingSuite);
     }
 
     status = write_suites_data(&pszError);

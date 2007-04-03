@@ -248,12 +248,6 @@ abstract class AbstractMIDletSuiteLoader
         init();
 
         try {
-            // Regard resource policy for the suite task
-            if (!allocateReservedResources()) {
-                reportError(Constants.MIDLET_RESOURCE_LIMIT);
-                return;
-            }
-
             /*
              * Prepare MIDlet suite environment, classes that only need
              * the isolate ID can be created here.
@@ -268,6 +262,12 @@ abstract class AbstractMIDletSuiteLoader
                 throw new
                     RuntimeException("Suite environment not complete.");
 	    }
+
+            // Regard resource policy for the suite task
+            if (!allocateReservedResources()) {
+                reportError(Constants.MIDLET_RESOURCE_LIMIT);
+                return;
+            }          
 
             // Create suite instance ready for start
             midletSuite = createMIDletSuite();

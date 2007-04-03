@@ -68,38 +68,61 @@ static void drawChar(gxj_screen_buffer *sbuf, jchar c0,
 		     int xSource, int ySource, int xLimit, int yLimit,
 		     pfontbitmap* pfonts,
 		     int fontWidth, int fontHeight) {
-    int i;
-    int j;
     int xDest;
     int yDest;
+    int xDestLimit;
+    int yDestLimit;
     unsigned long byteIndex;
     int bitOffset;
     unsigned long pixelIndex;
+    unsigned long pixelIndexLineInc;
     unsigned char bitmapByte;
-    unsigned char const * const fontbitmap
-        = selectFontBitmap(c0,pfonts) + FONT_DATA;
-    jchar const c = (c0 & 0xff)  - fontbitmap[FONT_CODE_FIRST_LOW-FONT_DATA];
+    unsigned char const * fontbitmap =
+        selectFontBitmap(c0,pfonts) + FONT_DATA;
+    jchar const c = (c0 & 0xff) -
+        fontbitmap[FONT_CODE_FIRST_LOW-FONT_DATA];
     unsigned long mapLen =
         ((fontbitmap[FONT_CODE_LAST_LOW-FONT_DATA]
         - fontbitmap[FONT_CODE_FIRST_LOW-FONT_DATA]
         + 1) * fontWidth * fontHeight + 7) >> 3;
     unsigned long const firstPixelIndex = c * fontHeight * fontWidth;
+    unsigned char const * const mapend = fontbitmap + mapLen;
 
-    for (yDest = y, i = ySource; i < yLimit; i++, yDest++) {
-        for (xDest = x, j = xSource; j < xLimit; j++, xDest++) {
-            pixelIndex = firstPixelIndex + (i * fontWidth) + j;
-            byteIndex = pixelIndex / 8;
+    int destWidth = sbuf->width;
+    gxj_pixel_type *dest = sbuf->pixelData + y*destWidth + x;
+    int destInc = destWidth - xLimit + xSource;
 
-            if (byteIndex >= mapLen) {
-                break;
-            }
+    pixelIndex = firstPixelIndex + (ySource * fontWidth) + xSource;
+    pixelIndexLineInc = fontWidth - (xLimit - xSource);
+    byteIndex = pixelIndex / 8;
+    fontbitmap += byteIndex;
+    bitOffset = pixelIndex % 8;
+    bitmapByte = *fontbitmap;
+    yDestLimit = y + yLimit - ySource;
+    xDestLimit = x + xLimit - xSource;
 
-            bitmapByte = fontbitmap[byteIndex];
-            bitOffset = pixelIndex % 8;
+    // The clipping should be applied here already, so
+    // we use optimal access to destination buffer with
+    // no extra checks
 
-            /* we don't draw "background" pixels, only foreground */
-            if ((bitmapByte & BitMask[bitOffset]) != 0) {
-                PRIMDRAWPIXEL(sbuf, pixelColor, xDest, yDest);
+    if (fontbitmap < mapend) {
+        for (yDest = y; yDest < yDestLimit;
+                yDest++, bitOffset+=pixelIndexLineInc, dest += destInc) {
+            for (xDest = x; xDest < xDestLimit;
+                    xDest++, bitOffset++, dest++) {
+                if (bitOffset >= 8) {
+                    fontbitmap += bitOffset / 8;
+                    if (fontbitmap >= mapend) {
+                        break;
+                    }
+                    bitOffset %= 8;
+                    bitmapByte = *fontbitmap;
+                }
+
+                /* we don't draw "background" pixels, only foreground */
+                if ((bitmapByte & BitMask[bitOffset]) != 0) {
+                    *dest = pixelColor;
+                }
             }
         }
     }

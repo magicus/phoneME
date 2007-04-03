@@ -29,8 +29,6 @@ package com.sun.midp.suspend;
 import com.sun.midp.main.*;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
-import com.sun.midp.midlet.MIDletStateHandler;
-import com.sun.midp.midlet.MIDletSuite;
 
 import java.util.Vector;
 
@@ -166,11 +164,21 @@ public class SuspendSystem extends AbstractSubsystem {
          * @param reason kind of changes that took place, see
          */
         public void midletUpdated(MIDletProxy midlet, int reason) {
+            boolean amsMidlet =
+                (MIDletSuiteUtils.getAmsIsolateId() == midlet.getIsolateId());
+
             if (reason == MIDletProxyListListener.RESOURCES_SUSPENDED) {
-                if (MIDletSuiteUtils.getAmsIsolateId() != midlet.getIsolateId()) {
+                if (!amsMidlet) {
                     midletPaused = true;
                 }
                 removeSuspendDependency(midlet);
+            } else if (reason == MIDletProxyListListener.MIDLET_STATE &&
+                    amsMidlet &&
+                    midlet.getMidletState() == MIDletProxy.MIDLET_ACTIVE) {
+                /* An AMS midlet has been activated, checking if it is a
+                 * result of abnormal midlet termination during suspend.
+                 */
+                alertIfAllMidletsKilled();
             }
         }
 
@@ -188,13 +196,9 @@ public class SuspendSystem extends AbstractSubsystem {
         }
 
         /**
-         * Called from the proxy list to notify of new MIDlet appearance.
+         * Not used. MIDletProxyListListener interface method.
          */
-        public void midletAdded(MIDletProxy midlet) {
-            if (MIDletSuiteUtils.getAmsIsolateId() == midlet.getIsolateId()) {
-                alertIfAllMidletsKilled();
-            }
-        }
+        public void midletAdded(MIDletProxy midlet) {}
 
         /**
          * Not used. MIDletProxyListListener interface method.
@@ -218,17 +222,7 @@ public class SuspendSystem extends AbstractSubsystem {
      * @return the singleton instance
      */
     public static SuspendSystem getInstance(SecurityToken token) {
-        if (token != null) {
-            token.checkIfPermissionAllowed(Permissions.MIDP);
-        } else {
-            MIDletSuite midletSuite = MIDletStateHandler.
-                getMidletStateHandler().getMIDletSuite();
-            // if a MIDlet suite is null, assume the JAM is calling.
-            if (midletSuite != null) {
-                midletSuite.checkIfPermissionAllowed(Permissions.AMS);
-            }
-        }
-
+        token.checkIfPermissionAllowed(Permissions.MIDP);
         return instance;
     }
 
@@ -237,7 +231,7 @@ public class SuspendSystem extends AbstractSubsystem {
      * this restricted package.
      * @return the singleton instance
      */
-    static SuspendSystem getInstance() { 
+    static SuspendSystem getInstance() {
         return instance;
     }
 

@@ -39,6 +39,7 @@ import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.common.JUMPAppModel;
 
 import com.sun.jump.isolate.jvmprocess.JUMPAppContainer;
+import com.sun.jump.isolate.jvmprocess.JUMPAppContainerContext;
 import com.sun.jump.isolate.jvmprocess.JUMPIsolateProcess;
 
 import com.sun.midp.events.EventQueue;
@@ -112,11 +113,16 @@ public class MIDletContainer extends JUMPAppContainer implements
     /** Holds the ID of the current display, for preempting purposes. */
     private int currentDisplayId;
 
+    /** Provides methods to signal app state changes. */
+    private JUMPAppContainerContext appContext;
+
     /** Core initialization of a MIDP environment. */
-    public MIDletContainer(String midpHome) {
+    public MIDletContainer(JUMPAppContainerContext context) {
         EventQueue eventQueue;
 
-        CDCInit.init(midpHome);
+        CDCInit.init(context.getConfigProperty("sun.midp.home.path"));
+
+        appContext = context;
 
         internalSecurityToken =
             SecurityInitializer.requestToken(new SecurityTrusted());
@@ -300,7 +306,7 @@ public class MIDletContainer extends JUMPAppContainer implements
         } catch (Throwable t) {
             t.printStackTrace();
         } finally {
-            System.exit(0);
+            appContext.terminateIsolate();
         }
     }
 

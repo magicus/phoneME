@@ -1828,6 +1828,9 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      *         in the given direction.
      */
     boolean uCallItemTraverse(ItemLFImpl item, int dir) {
+
+        boolean ret = false;
+
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_FORM_LAYOUT,
@@ -1856,16 +1859,16 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
                 }
             }
 
-            // Since visRect is sent to the Item in its own coordinate
-            // space, we translate it back into the overall Form's
-            // coordinate space
-            visRect[X] += item.bounds[X];
-            visRect[Y] += item.bounds[Y];
-
-            return true;
+            ret = true;
         }
-        
-        return false;
+
+        // Since visRect is sent to the Item in its own coordinate
+        // space, we translate it back into the overall Form's
+        // coordinate space
+        visRect[X] += item.bounds[X];
+        visRect[Y] += item.bounds[Y];
+
+        return ret;
     }
 
     /**
@@ -2298,7 +2301,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 
     /**
      * When a Form calls an Item's traverse() method, it passes in
-     * an in-out int[] that represents the Item's internal traversal
+     * an in-out int[] that represents the Item's traversal
      * bounds. This gets cached in the visRect variable
      */
     int[] visRect;

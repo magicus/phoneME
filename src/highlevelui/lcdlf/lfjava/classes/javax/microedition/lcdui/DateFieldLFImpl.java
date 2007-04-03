@@ -286,7 +286,7 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
         }
 
         // we clip in case our text is too long
-        g.setClip(DateFieldSkin.PAD_H, DateFieldSkin.PAD_V,
+        g.clipRect(DateFieldSkin.PAD_H, DateFieldSkin.PAD_V,
             width - (2 * DateFieldSkin.PAD_H) - iconWidth,
             height - (2 * DateFieldSkin.PAD_V));
 
@@ -333,9 +333,13 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
     boolean lCallTraverse(int dir, int viewportWidth, int viewportHeight,
                           int[] visRect) 
     {
-
         super.lCallTraverse(dir, viewportWidth, viewportHeight, visRect);
-        
+
+        visRect[X] = 0;
+        visRect[Y] = 0;
+        visRect[HEIGHT] = bounds[HEIGHT];
+        visRect[WIDTH] = bounds[WIDTH];
+
         if (!editor.isPopupOpen()) {
             if (!traversedIn) {
                 traversedIn = true;

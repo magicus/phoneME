@@ -26,6 +26,8 @@
 
 package com.sun.midp.chameleon.input;
 import com.sun.midp.io.Util;
+import com.sun.midp.log.LogChannels;
+import com.sun.midp.log.Logging;
 
 /** 
  * Implements PTIterator using machine-dependent KNI interface.
@@ -70,7 +72,10 @@ public class PTIteratorImpl implements PTIterator {
      * @return true is valid, false otherwise
      */
     public boolean isValid() {
-        log("isValid = " + (handle != 0));
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "isValid = " + (handle != 0));
+        }
         return handle > 0;
     }
     
@@ -128,29 +133,26 @@ public class PTIteratorImpl implements PTIterator {
      * @exception NoSuchElementException iteration has no more elements.
      */
     public String next() {
-        log("[iter.nextCompletionOption] >>");
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[iter.nextCompletionOption] >>");
+        }
         String ret = null;
-        
+
         if (isValid()) {
             ret = ptNextCompletionOption0(handle, entry.length);
         }
-        
+
         if (ret == null)
             ret = "";
 
-        log("[iter.nextCompletionOption] : " + ret);
+        if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
+                "[iter.nextCompletionOption] : " + ret);
+        }
 
         return ret;
     }
-
-    /**
-     * Prints the debug message
-     * @param str debug message
-     */
-    static void log(String str) {
-        //        System.out.println(str);
-    }
-
 
     /** 
      * NATIVE CODE

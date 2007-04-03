@@ -54,7 +54,7 @@ public class GameCanvasLFImpl {
      * Create new implementation instance for the given GameCanvas
      * @param c GameCanvas instance to create the implementation for
      */ 
-    GameCanvasLFImpl(GameCanvas c) {
+    public GameCanvasLFImpl(GameCanvas c) {
         owner = c;
         graphicsAccess = GameMap.getGraphicsAccess();
 
@@ -100,14 +100,21 @@ public class GameCanvasLFImpl {
      * IMPL_NOTE: The dimensions of the Graphics object are explicitly
      *   set to GameCanvas size, since off-screen buffer larger than
      *   GameCanvas can be used, while some JSR clients need to translate
-     *   the coordinates regarding the GameCanvas size. 
+     *   the coordinates regarding the GameCanvas size.
+     *       Anyway if GameCanvas has zero width or height, the Graphics
+     *   dimensions are set to entire off-screen buffer.
      *
      * @return  the Graphics object that renders to current GameCanvas
      */
     public Graphics getGraphics() {
         if (offscreenBuffer != null) {
-            Graphics g = graphicsAccess.getImageGraphics(
-                offscreenBuffer, owner.getWidth(), owner.getHeight());
+            int w = owner.getWidth();
+            int h = owner.getHeight();
+            
+            Graphics g = ((w <= 0) || (h <= 0)) ?
+                offscreenBuffer.getGraphics() :
+                graphicsAccess.getImageGraphics(offscreenBuffer, w, h);
+
             graphicsAccess.setGraphicsCreator(g, owner);
             return g;
         }

@@ -79,6 +79,7 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(GENERATED_DIR)/classes/javax/microedition/lcdui/GraphicsAccessImpl.java \
     $(GENERATED_DIR)/classes/com/sun/midp/lcdui/GraphicsAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameMap.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/GameCanvasLFImpl.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/CommandAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayAccess.java \
@@ -106,6 +107,7 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/SystemAlert.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/LayerManager.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/GameCanvas.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/GameAccessImpl.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/Layer.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/KeyConverter.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Canvas.java \

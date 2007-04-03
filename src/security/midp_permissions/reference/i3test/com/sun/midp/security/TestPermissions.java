@@ -66,17 +66,20 @@ public class TestPermissions extends TestCase {
               Permissions.forDomain(Permissions.UNIDENTIFIED_DOMAIN_BINDING);
         int push = temp[Permissions.CUR_LEVELS][Permissions.PUSH];
 
-        assertTrue(Permissions.ONESHOT !=
-                   temp[Permissions.CUR_LEVELS][Permissions.HTTPS]);
+        assertFalse("default permission level for HTTPS is ONESHOT",
+                    Permissions.ONESHOT !=
+                    temp[Permissions.CUR_LEVELS][Permissions.HTTPS]);
 
         Permissions.setPermissionGroup(temp[Permissions.CUR_LEVELS],
                                        Permissions.HTTP,
-                                       Permissions.ONESHOT);
+                                       Permissions.SESSION);
 
-        assertEquals(Permissions.ONESHOT,
+        assertEquals("changed HTTP permissions, HTTPS permissions must also change",
+                     Permissions.SESSION,
                      temp[Permissions.CUR_LEVELS][Permissions.HTTPS]);
 
-        assertEquals(push,
+        assertEquals("but PUSH permissions must not change",
+                     push,
                      temp[Permissions.CUR_LEVELS][Permissions.PUSH]);
     }
 

@@ -28,6 +28,7 @@ import java.io.IOException;
 import javax.microedition.io.ConnectionNotFoundException;
 
 import com.sun.midp.midlet.MIDletSuite;
+import sun.misc.MIDPConfig;
 
 /**
  * JUMP Implementation of ConnectionRegistry.
@@ -190,5 +191,36 @@ final class ConnectionRegistry {
             throws ClassNotFoundException, ConnectionNotFoundException {
         // As we cannot register connections for now...
         throw new ConnectionNotFoundException();
+    }
+
+    /**
+     * Loads application class given its name.
+     *
+     * @param className name of class to load
+     * @return instance of class
+     * @throws ClassNotFoundException if the class cannot be located
+     */
+    static Class loadApplicationClass(final String className)
+            throws ClassNotFoundException {
+        final ClassLoader appClassLoader = MIDPConfig.getMIDletClassLoader();
+        if (appClassLoader == null) {
+            /* IMPL_NOTE: that might happen if this method is invoked
+             * before the MIDlet app has started and class loader
+             * hasn't been created yet
+             */
+            logWarning("application class loader is null");
+        }
+        return Class.forName(className, true, appClassLoader);
+    }
+
+    /**
+     * Logs warning message.
+     *
+     * @param message message to log
+     */
+    private static void logWarning(final String message) {
+        // TBD: proper logging
+        System.err.println("[warning, " + ConnectionRegistry.class.getName()
+            + "]: " + message);
     }
 }

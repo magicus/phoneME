@@ -131,8 +131,8 @@ public class BodyLayer extends CLayer
         if (scrollInd != null) {
             scrollInd.addDirtyRegion();
         }
-    }
-    
+    } 
+
     /**
      * Mark this layer as being dirty. By default, this would also mark the
      * containing window (if there is one) as being dirty as well. However,
@@ -155,22 +155,57 @@ public class BodyLayer extends CLayer
         tunnel.callScrollContent(scrollType, thumbPosition);
     }
 
+    /**
+     * Called by CWindow to notify the layer that is has been 
+     * added to the active stack. 
+     */
+    public void addNotify() {
+        if (scrollInd != null && owner != null) {
+            if (owner.addLayer(scrollInd)) {
+                updateScrollIndicator();    
+            }    
+        }
+    }
+
+    /**
+     * Called by CWindow to notify the layer that is has been 
+     * removed from the active stack. 
+     * @param owner an instance of CWindow this layer has been removed from 
+     */
+    public void removeNotify(CWindow owner) {
+        if (scrollInd != null && owner != null) {
+            if (owner.removeLayer(scrollInd) && scrollInd.isVisible()) {
+                bounds[W] += scrollInd.bounds[W];
+            }
+        }
+     }
+
+
     public void setScrollInd(ScrollIndLayer newScrollInd) {
         if (scrollInd != newScrollInd ||
             scrollInd != null && scrollInd.scrollable != this ||
             scrollInd != null && scrollInd.listener != this) {
             if (scrollInd != null) {
+                boolean vis = scrollInd.isVisible();
                 scrollInd.setScrollable(null);
                 scrollInd.setListener(null);
+
+                if (owner != null) {
+                    if (owner.removeLayer(scrollInd) && vis) {
+                        bounds[W] += scrollInd.bounds[W];
+                        addDirtyRegion();
+                    }
+                }
             }
-            if (owner != null) {
-                owner.removeLayer(scrollInd);
-            }
-            
+             
             scrollInd = newScrollInd;
             if (scrollInd != null) {
                 scrollInd.setScrollable(this);
                 scrollInd.setListener(this);
+
+                if (owner != null) {
+                    owner.addLayer(scrollInd);
+                }
             }
         }
         updateScrollIndicator();        
@@ -188,18 +223,23 @@ public class BodyLayer extends CLayer
      *
      * @param scrollPosition vertical scroll position.
      * @param scrollProportion vertical scroll proportion.
-     * @return true if set vertical scroll occues
+     * @return true if set vertical scroll occures
      */
     public boolean setVerticalScroll(int scrollPosition, int scrollProportion) {
-        if (scrollInd != null && owner != null)  {
+        if (scrollInd != null)  {
+            boolean wasVisible = scrollInd.isVisible();
             scrollInd.setVerticalScroll(scrollPosition, scrollProportion);
-            if (scrollInd.isVisible()) {
-                owner.addLayer(scrollInd);
-            } else {
-                owner.removeLayer(scrollInd);
+            boolean scrollVisible = scrollInd.isVisible();
+
+            if (wasVisible != scrollVisible) {
+                if (scrollVisible) {
+                    scrollInd.setBounds();
+                }
+                int w = scrollInd.bounds[W];
+                bounds[W] += scrollVisible? -w: +w;
+                addDirtyRegion();
+                return true;
             }
-            owner.resize();
-            return true;
         }
         return false;
     }
