@@ -48,11 +48,11 @@ extern int getIntProp(const char* propName, int defaultValue);
  * send an SMS message
  *
  * Actually 
- *   - sends a datagramm to 11101 port, it can be received by JSR205Tool.jar (used in TCK tests)
+ *   - sends a datagramm to 11101 port, it can be received by WMATool.jar (used in TCK tests)
  *   - writes a message to the console (it is enough for native tests)
  * The address to send datagram is one of the following:
- *   - 127.0.0.1 if JSR_205_DATAGRAM_HOST environment variable is not send
- *   - JSR_205_DATAGRAM_HOST environment variable value (if set).
+ *   - 127.0.0.1 if JSR_120_DATAGRAM_HOST environment variable is not send
+ *   - JSR_120_DATAGRAM_HOST environment variable value (if set).
  *
  * Refer to javacall_sms.h header for complete description.
  */
@@ -75,9 +75,9 @@ int javacall_sms_send(  javacall_sms_encoding    msgType,
     int encodedSMSLength;
     char* encodedSMS;
 
-    char* IP_text = getProp("JSR_205_DATAGRAM_HOST", "127.0.0.1");
-    //JSR205Tool listens on 11101 port, but sends to 11100 port
-    int smsRemotePortNumber = getIntProp("JSR_205_SMS_OUT_PORT", 11101);
+    char* IP_text = getProp("JSR_120_DATAGRAM_HOST", "127.0.0.1");
+    //WMATool listens on 11101 port, but sends to 11100 port
+    int smsRemotePortNumber = getIntProp("JSR_120_SMS_OUT_PORT", 11101);
 
     javacall_network_init_start();
     pAddress = getIPBytes_nonblock(IP_text);
