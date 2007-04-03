@@ -159,10 +159,11 @@ abstract class AbstractMIDletSuiteLoader
      * specific parts
      */
     protected void createSuiteEnvironment() {
-       
-       lcduiEnvironment = new LCDUIEnvironment(internalSecurityToken, 
-					       eventQueue, isolateId, 
-					       foregroundController);
+
+	if (lcduiEnvironment == null) {
+	    throw new
+		RuntimeException("Suite environment not complete.");
+	}
 
         displayContainer = lcduiEnvironment.getDisplayContainer();
     }

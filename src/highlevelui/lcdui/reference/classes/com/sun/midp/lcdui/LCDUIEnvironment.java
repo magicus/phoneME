@@ -28,11 +28,6 @@ import com.sun.midp.security.*;
 import com.sun.midp.events.EventQueue;
 import javax.microedition.lcdui.Image;
 
-// #ifdef ENABLE_GCI
-import com.sun.me.gci.windowsystem.*;
-import com.sun.me.gci.windowsystem.event.*;
-// #endif ENABLE_GCI
-
 /**
  * Initialize the LCDUI environment.
  */
@@ -89,17 +84,6 @@ public class LCDUIEnvironment {
             internalSecurityToken,
             eventQueue,
             (ItemEventConsumer)displayEventHandler);
-
-	// #ifdef ENABLE_GCI
-            GCIGraphicsEnvironment gciEnv = 
-                GCIGraphicsEnvironment.getInstance();
-            GCIEventManager gciEvMgr = gciEnv.getEventManager();
-            gciEvMgr.startEventLoop();
-
-            GCIEventListener gciEvLst = new GCIEventListener(eventQueue);
-            gciEvMgr.setKeyListener(gciEvLst);
-            gciEvMgr.setPointerListener(gciEvLst);
-	// #endif ENABLE_GCI
     }
 
     /**

@@ -116,6 +116,10 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
     protected void createSuiteEnvironment() {
         foregroundController = this;
 
+        lcduiEnvironment = new LCDUIEnvironmentForCDC(internalSecurityToken, 
+						      eventQueue, isolateId, 
+						      foregroundController);
+
         // creates display container, needs foregroundController
         super.createSuiteEnvironment();
 

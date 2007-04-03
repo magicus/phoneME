@@ -77,6 +77,10 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
         foregroundController = new CldcForegroundController(
             midletControllerEventProducer);
 
+	lcduiEnvironment = new LCDUIEnvironment(internalSecurityToken, 
+						eventQueue, isolateId, 
+						foregroundController);
+
         // creates display container, needs foregroundController
         super.createSuiteEnvironment();
 
