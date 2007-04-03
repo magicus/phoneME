@@ -610,58 +610,6 @@ class DateEditor extends PopupLayer implements CommandListener {
         yearPopup.updateScrollIndicator();
     }
 
-
-    /**
-     * Draw the date components.
-     *
-     * @param g The Graphics object to paint to
-     */
-    protected void drawDateComponents(Graphics g) {
-
-        nextX = (mode == DateField.DATE) ? 10 : 4;
-        nextY = 5;
-
-        g.translate(nextX, nextY);
-        if (DateEditorSkin.IMAGE_MONTH_BG != null) {
-            g.drawImage(DateEditorSkin.IMAGE_MONTH_BG, 0, 0,
-                        Graphics.LEFT | Graphics.TOP);
-            int w = DateEditorSkin.IMAGE_MONTH_BG.getWidth();
-            int h = DateEditorSkin.IMAGE_MONTH_BG.getHeight();
-            if (focusOn == MONTH_POPUP) {
-                g.setColor(DateEditorSkin.COLOR_TRAVERSE_IND);
-                g.drawRect(-2, -2, w + 3, h + 3);
-            }
-        }
-        g.setFont(DateEditorSkin.FONT_POPUPS);
-        g.setColor(0);
-        g.drawString(MONTHS[editDate.get(Calendar.MONTH)],
-                     4, 0, Graphics.LEFT | Graphics.TOP);
-
-        g.translate(45, 0);
-        if (DateEditorSkin.IMAGE_YEAR_BG != null) {
-            g.drawImage(DateEditorSkin.IMAGE_YEAR_BG, 0, 0,
-                        Graphics.LEFT | Graphics.TOP);
-            int w = DateEditorSkin.IMAGE_YEAR_BG.getWidth();
-            int h = DateEditorSkin.IMAGE_YEAR_BG.getHeight();
-            if (focusOn == YEAR_POPUP) {
-                g.setColor(DateEditorSkin.COLOR_TRAVERSE_IND);
-                g.drawRect(-2, -2, w + 3, h + 3);
-            }
-        }
-
-        g.setFont(DateEditorSkin.FONT_POPUPS);
-        g.setColor(0);
-        g.drawString(Integer.toString(editDate.get(Calendar.YEAR)),
-                     4, 0, Graphics.LEFT | Graphics.TOP);
-        g.translate(-nextX - 45, -nextY);
-
-        int x = (mode == DateField.DATE) ? 10 : 4;
-        g.translate(x, 29);
-        paintCalendar(g);
-        g.translate(-x, -29);
-    }
-
-
     /**
      * Set hours popup location using upper left corner coordinate of the
      * DateEditor layer in corrdinate system of the owner window
@@ -713,15 +661,53 @@ class DateEditor extends PopupLayer implements CommandListener {
     }
 
     /**
-     * Draw the time components.
-     *
+     * Draws month popup content.
      * @param g The Graphics object to paint to
      */
-    protected void drawTimeComponents(Graphics g) {
-        nextX = (mode == DateField.TIME) ? 17 : 0;
-        nextY = (mode == DateField.TIME) ? 10 : 5;
+    protected void drawMonthComponent(Graphics g) {
+        if (DateEditorSkin.IMAGE_MONTH_BG != null) {
+            g.drawImage(DateEditorSkin.IMAGE_MONTH_BG, 0, 0,
+                        Graphics.LEFT | Graphics.TOP);
+            int w = DateEditorSkin.IMAGE_MONTH_BG.getWidth();
+            int h = DateEditorSkin.IMAGE_MONTH_BG.getHeight();
+            if (focusOn == MONTH_POPUP) {
+                g.setColor(DateEditorSkin.COLOR_TRAVERSE_IND);
+                g.drawRect(-2, -2, w + 3, h + 3);
+            }
+        }
+        g.setFont(DateEditorSkin.FONT_POPUPS);
+        g.setColor(0);
+        g.drawString(MONTHS[editDate.get(Calendar.MONTH)],
+                     4, 0, Graphics.LEFT | Graphics.TOP);
+    }
 
-        g.translate(nextX, nextY);
+    /**
+     * Draws year popup content.
+     * @param g The Graphics object to paint to
+     */
+    protected void drawYearComonent(Graphics g) {
+        if (DateEditorSkin.IMAGE_YEAR_BG != null) {
+            g.drawImage(DateEditorSkin.IMAGE_YEAR_BG, 0, 0,
+                        Graphics.LEFT | Graphics.TOP);
+            int w = DateEditorSkin.IMAGE_YEAR_BG.getWidth();
+            int h = DateEditorSkin.IMAGE_YEAR_BG.getHeight();
+            if (focusOn == YEAR_POPUP) {
+                g.setColor(DateEditorSkin.COLOR_TRAVERSE_IND);
+                g.drawRect(-2, -2, w + 3, h + 3);
+            }
+        }
+
+        g.setFont(DateEditorSkin.FONT_POPUPS);
+        g.setColor(0);
+        g.drawString(Integer.toString(editDate.get(Calendar.YEAR)),
+                     4, 0, Graphics.LEFT | Graphics.TOP);
+    }
+
+    /**
+     * Draws hours popup content.
+     * @param g The Graphics object to paint to
+     */
+    protected void drawHoursComponent(Graphics g) {
         if (DateEditorSkin.IMAGE_TIME_BG != null) {
             g.drawImage(DateEditorSkin.IMAGE_TIME_BG, 0, 0,
                         Graphics.LEFT | Graphics.TOP);
@@ -746,8 +732,13 @@ class DateEditor extends PopupLayer implements CommandListener {
 
         g.drawString(DateFieldLFImpl.twoDigits(hour),
                      3, 0, Graphics.LEFT | Graphics.TOP);
+    }
 
-        g.translate(34, 0);
+    /**
+     * Draws minutes popup content.
+     * @param g The Graphics object to paint to
+     */
+    protected void drawMinutesComponent(Graphics g) {
         if (DateEditorSkin.IMAGE_TIME_BG != null) {
             g.drawImage(DateEditorSkin.IMAGE_TIME_BG, 0, 0,
                         Graphics.LEFT | Graphics.TOP);
@@ -763,7 +754,42 @@ class DateEditor extends PopupLayer implements CommandListener {
         g.setColor(0);
         g.drawString(DateFieldLFImpl.twoDigits(editDate.get(Calendar.MINUTE)),
                      3, 0, Graphics.LEFT | Graphics.TOP);
+   }
 
+    /**
+     * Draw the date components.
+     * @param g The Graphics object to paint to
+     */
+    protected void drawDateComponents(Graphics g) {
+        nextX = (mode == DateField.DATE) ? 10 : 4;
+        nextY = 5;
+
+        g.translate(nextX, nextY);
+        drawMonthComponent(g);
+
+        g.translate(45, 0);
+        drawYearComonent(g);
+        g.translate(-nextX - 45, -nextY);
+        
+        int x = (mode == DateField.DATE) ? 10 : 4;
+        g.translate(x, 29);
+        paintCalendar(g);
+        g.translate(-x, -29);
+    }
+
+    /**
+     * Draw the time components.
+     * @param g The Graphics object to paint to
+     */
+    protected void drawTimeComponents(Graphics g) {
+        nextX = (mode == DateField.TIME) ? 17 : 0;
+        nextY = (mode == DateField.TIME) ? 10 : 5;
+
+        g.translate(nextX, nextY);
+        drawHoursComponent(g);
+
+        g.translate(34, 0);
+        drawMinutesComponent(g);
         g.translate(-nextX - 34, -nextY);
 
         nextX = (mode == DateField.TIME) ? 15 : 0;
@@ -774,7 +800,6 @@ class DateEditor extends PopupLayer implements CommandListener {
 
     /**
      * Paint the Calendar.
-     *
      * @param g The Graphics context to paint to
      */
     protected void paintCalendar(Graphics g) {
