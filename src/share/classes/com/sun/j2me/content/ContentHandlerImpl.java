@@ -26,14 +26,10 @@
 
 package com.sun.j2me.content;
 
-import javax.microedition.content.ContentHandler;
-import javax.microedition.content.ContentHandlerServer;
-import javax.microedition.content.RequestListener;
 import javax.microedition.content.ActionNameMap;
+import javax.microedition.content.ContentHandler;
 import javax.microedition.content.Invocation;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import javax.microedition.content.RequestListener;
 
 /**
  * The internal structure of a registered content handler.

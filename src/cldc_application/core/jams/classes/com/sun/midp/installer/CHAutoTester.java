@@ -24,27 +24,9 @@
  * information or have any questions. 
  */
 
-package com.sun.j2me.installer;
+package com.sun.midp.installer;
 
-import java.io.*;
-
-import javax.microedition.rms.*;
-
-import com.sun.midp.i18n.Resource;
-
-import com.sun.midp.i18n.ResourceConstants;
-import com.sun.midp.installer.InstallListener;
-import com.sun.midp.installer.InstallState;
-
-import com.sun.midp.main.MIDletSuiteLoader;
-
-import com.sun.midp.midlet.MIDletStateHandler;
-
-import com.sun.midp.midletsuite.MIDletInfo;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
-
-import com.sun.midp.log.Logging;
-import com.sun.midp.log.LogChannels;
 
 /**
  * Installs/Updates a test suite for CHAPI, runs the first MIDlet 

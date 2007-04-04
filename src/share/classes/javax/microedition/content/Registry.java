@@ -28,15 +28,12 @@ package javax.microedition.content;
 
 import java.io.IOException;
 
-import com.sun.j2me.content.RegistryImpl;
-import com.sun.j2me.content.InvocationImpl;
 import com.sun.j2me.content.ContentHandlerImpl;
-
-import com.sun.midp.security.SecurityToken;
-import com.sun.midp.security.SecurityInitializer;
+import com.sun.j2me.content.InvocationImpl;
+import com.sun.j2me.content.RegistryImpl;
 import com.sun.midp.security.ImplicitlyTrustedClass;
-
-import java.util.Vector;
+import com.sun.midp.security.SecurityInitializer;
+import com.sun.midp.security.SecurityToken;
 
 /**
  * The <tt>Registry</tt> provides method to invoke,

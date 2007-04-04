@@ -26,16 +26,14 @@
 
 package com.sun.j2me.content;
 
-import javax.microedition.content.Registry;
-import javax.microedition.content.Invocation;
+import java.io.IOException;
+
 import javax.microedition.content.ContentHandler;
 import javax.microedition.content.ContentHandlerException;
-
-import java.io.IOException;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-
+import javax.microedition.content.Invocation;
+import javax.microedition.content.Registry;
 import javax.microedition.io.Connection;
+import javax.microedition.io.ConnectionNotFoundException;
 import javax.microedition.io.Connector;
 import javax.microedition.io.HttpConnection;
 

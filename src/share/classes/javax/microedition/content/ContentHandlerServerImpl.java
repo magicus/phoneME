@@ -26,18 +26,8 @@
 
 package javax.microedition.content;
 
-import javax.microedition.content.ContentHandlerServer;
-import javax.microedition.content.ActionNameMap;
-import javax.microedition.content.Invocation;
-import javax.microedition.content.RequestListener;
-
 import com.sun.j2me.content.ContentHandlerImpl;
 import com.sun.j2me.content.InvocationImpl;
-
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 
 /**
  * The internal structure of a registered content handler.

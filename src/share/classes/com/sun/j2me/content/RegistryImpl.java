@@ -26,21 +26,20 @@
 
 package com.sun.j2me.content;
 
-import com.sun.midp.io.HttpUrl;
+import java.io.IOException;
+import java.util.Hashtable;
 
-import com.sun.midp.security.SecurityInitializer;
-import com.sun.midp.security.SecurityToken;
-import com.sun.midp.security.ImplicitlyTrustedClass;
+import javax.microedition.content.ActionNameMap;
+import javax.microedition.content.ContentHandler;
+import javax.microedition.content.ContentHandlerException;
+import javax.microedition.content.Invocation;
+import javax.microedition.content.Registry;
+import javax.microedition.content.ResponseListener;
 
 import com.sun.midp.midlet.MIDletSuite;
-
-import java.io.IOException;
-
-import java.util.Hashtable;
-import java.util.Vector;
-
-import javax.microedition.content.*;
-import javax.microedition.io.Connector;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+import com.sun.midp.security.SecurityInitializer;
+import com.sun.midp.security.SecurityToken;
 
 /**
  * Implementation of Content Handler registry.  It maintains
