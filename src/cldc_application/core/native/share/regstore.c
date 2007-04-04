@@ -549,7 +549,7 @@ static void result2string(_JSR211_INTERNAL_RESULT_BUFFER_* buf, jstring str) {
  *  private native boolean register0(ContentHandlerImpl contentHandler);
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_content_RegistryStore_register0(void) {
+Java_com_sun_j2me_content_RegistryStore_register0(void) {
     int res = KNI_OK;
     JSR211_content_handler handler = JSR211_CONTENT_HANDLER_INITIALIZER;
 
@@ -591,7 +591,7 @@ Java_com_sun_midp_content_RegistryStore_register0(void) {
  *  private native boolean unregister(String handlerId);
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_content_RegistryStore_unregister0(void) {
+Java_com_sun_j2me_content_RegistryStore_unregister0(void) {
     int ret = KNI_FALSE;
     pcsl_string id = PCSL_STRING_NULL_INITIALIZER;
 
@@ -625,7 +625,7 @@ Java_com_sun_midp_content_RegistryStore_unregister0(void) {
  *                                      String value);
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_midp_content_RegistryStore_findHandler0(void) {
+Java_com_sun_j2me_content_RegistryStore_findHandler0(void) {
     pcsl_string callerId = PCSL_STRING_NULL_INITIALIZER;
     jsr211_field searchBy;
     pcsl_string value = PCSL_STRING_NULL_INITIALIZER;
@@ -662,7 +662,7 @@ Java_com_sun_midp_content_RegistryStore_findHandler0(void) {
  *   private native String forSuite0(int suiteId);
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_midp_content_RegistryStore_forSuite0(void) {
+Java_com_sun_j2me_content_RegistryStore_forSuite0(void) {
     JSR211_RESULT_CHARRAY result = _JSR211_RESULT_INITIALIZER_;
     SuiteIdType suiteId;
 
@@ -681,7 +681,7 @@ Java_com_sun_midp_content_RegistryStore_forSuite0(void) {
  *  private native String getByURL0(String callerId, String url, String action);
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_midp_content_RegistryStore_getByURL0(void) {
+Java_com_sun_j2me_content_RegistryStore_getByURL0(void) {
     pcsl_string callerId = PCSL_STRING_NULL_INITIALIZER;
     pcsl_string url = PCSL_STRING_NULL_INITIALIZER;
     pcsl_string action = PCSL_STRING_NULL_INITIALIZER;
@@ -721,7 +721,7 @@ Java_com_sun_midp_content_RegistryStore_getByURL0(void) {
  *   private native String getValues0(String callerId, int searchBy);
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_midp_content_RegistryStore_getValues0(void) {
+Java_com_sun_j2me_content_RegistryStore_getValues0(void) {
     jsr211_field searchBy;
     pcsl_string callerId = PCSL_STRING_NULL_INITIALIZER;
     JSR211_RESULT_STRARRAY result = _JSR211_RESULT_INITIALIZER_;
@@ -752,7 +752,7 @@ Java_com_sun_midp_content_RegistryStore_getValues0(void) {
   * private native String getHandler0(String callerId, String id, int mode);
   */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_midp_content_RegistryStore_getHandler0(void) {
+Java_com_sun_j2me_content_RegistryStore_getHandler0(void) {
     int mode;
     pcsl_string callerId = PCSL_STRING_NULL_INITIALIZER;
     pcsl_string id = PCSL_STRING_NULL_INITIALIZER;
@@ -788,7 +788,7 @@ Java_com_sun_midp_content_RegistryStore_getHandler0(void) {
  *     private native String loadFieldValues0(String handlerId, int fieldId);
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_midp_content_RegistryStore_loadFieldValues0(void) {
+Java_com_sun_j2me_content_RegistryStore_loadFieldValues0(void) {
     int fieldId;
     pcsl_string id = PCSL_STRING_NULL_INITIALIZER;
     JSR211_RESULT_STRARRAY result = _JSR211_RESULT_INITIALIZER_;
@@ -816,7 +816,7 @@ Java_com_sun_midp_content_RegistryStore_loadFieldValues0(void) {
  * private native int launch0(String handlerId);
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_content_RegistryStore_launch0(void) {
+Java_com_sun_j2me_content_RegistryStore_launch0(void) {
     pcsl_string id = PCSL_STRING_NULL_INITIALIZER;
     jsr211_launch_result result;
 
@@ -842,7 +842,7 @@ Java_com_sun_midp_content_RegistryStore_launch0(void) {
  * private native static boolean init();
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_content_RegistryStore_init(void) {
+Java_com_sun_j2me_content_RegistryStore_init(void) {
     jboolean ret = KNI_TRUE;
 
     if (initialized < 0) {
@@ -870,7 +870,7 @@ Java_com_sun_midp_content_RegistryStore_init(void) {
  * @param this The <code>RegistryStore</code> Object to be finalized.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_content_RegistryStore_finalize() {
+Java_com_sun_j2me_content_RegistryStore_finalize() {
 
     initialized--;
 

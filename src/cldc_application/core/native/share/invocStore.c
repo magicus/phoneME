@@ -419,7 +419,7 @@ static jboolean setParamsFromObj(StoredInvoc* invoc,
  * @see StoredInvoc
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_content_InvocationStore_get0(void) {
+Java_com_sun_j2me_content_InvocationStore_get0(void) {
     int ret = 0;          /* return value = nothing matched */
     KNI_StartHandles(4);
     KNI_DeclareHandle(obj);      /* multipurpose handle */
@@ -681,7 +681,7 @@ static int copyOut(StoredInvoc *invoc, int mode,
  *  the same MIDlet suiteId and classname; false is returne dotherwise
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_content_InvocationStore_listen0(void) {
+Java_com_sun_j2me_content_InvocationStore_listen0(void) {
     StoredLink* match = NULL;
     SuiteIdType desiredSuiteId;
     pcsl_string desiredClassname = PCSL_STRING_NULL_INITIALIZER;
@@ -755,7 +755,7 @@ Java_com_sun_midp_content_InvocationStore_listen0(void) {
  * @param mode one of {@link #MODE_LREQUEST}, {@link #MODE_LRESPONSE}
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_content_InvocationStore_setListenNotify0(void) {
+Java_com_sun_j2me_content_InvocationStore_setListenNotify0(void) {
     StoredLink* link;
     StoredInvoc* invoc;
     SuiteIdType desiredSuiteId;
@@ -843,7 +843,7 @@ Java_com_sun_midp_content_InvocationStore_setListenNotify0(void) {
  * @see #invocQueue
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_content_InvocationStore_put0(void) {
+Java_com_sun_j2me_content_InvocationStore_put0(void) {
     StoredInvoc* invoc = NULL;
 
     KNI_StartHandles(4);
@@ -949,7 +949,7 @@ Java_com_sun_midp_content_InvocationStore_put0(void) {
  * @see #invocQueue
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_content_InvocationStore_setStatus0(void) {
+Java_com_sun_j2me_content_InvocationStore_setStatus0(void) {
     StoredLink* link;
     StoredInvoc* invoc;
     int tid;
@@ -1041,7 +1041,7 @@ Java_com_sun_midp_content_InvocationStore_setStatus0(void) {
  * @see #invocQueue
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_content_InvocationStore_setParams0(void) {
+Java_com_sun_j2me_content_InvocationStore_setParams0(void) {
     StoredLink* link;
     StoredInvoc* invoc;
     int tid;
@@ -1087,7 +1087,7 @@ Java_com_sun_midp_content_InvocationStore_setParams0(void) {
  * @see #invocQueue
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_content_InvocationStore_setCleanup0(void) {
+Java_com_sun_j2me_content_InvocationStore_setCleanup0(void) {
     StoredLink* link;
     StoredInvoc* invoc;
     SuiteIdType desiredSuiteId;
@@ -1152,7 +1152,7 @@ Java_com_sun_midp_content_InvocationStore_setCleanup0(void) {
  * need to restart function calls.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_midp_content_InvocationStore_cancel0(void) {
+Java_com_sun_j2me_content_InvocationStore_cancel0(void) {
     unblockWaitingThreads(STATUS_CANCELLED);
     KNI_ReturnVoid();
 }
@@ -1162,7 +1162,7 @@ Java_com_sun_midp_content_InvocationStore_cancel0(void) {
  * @return the size of the queue.
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_midp_content_InvocationStore_size0(void) {
+Java_com_sun_j2me_content_InvocationStore_size0(void) {
     StoredLink* link;
     int size = 0;
 
