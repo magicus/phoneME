@@ -32,7 +32,7 @@ extern "C" {
 
 #define REPORT_INFO(ch, msg) \
     CVMdebugPrintf(("REPORT: <channel:%d> ", ch)); \
-    CVMdebugPrintf(msg); \
+    CVMdebugPrintf((msg)); \
     CVMdebugPrintf(((const char *)"\n")); 
 #define REPORT_INFO1(ch, msg, p1) \
     CVMdebugPrintf(("REPORT: <channel:%d> ", ch)); \
