@@ -26,7 +26,7 @@
 
 package javax.microedition.content;
 
-import com.sun.midp.content.InvocationImpl;
+import com.sun.j2me.content.InvocationImpl;
 
 import java.io.IOException;
 import javax.microedition.io.Connection;

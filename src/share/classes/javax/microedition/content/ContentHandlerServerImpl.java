@@ -31,8 +31,8 @@ import javax.microedition.content.ActionNameMap;
 import javax.microedition.content.Invocation;
 import javax.microedition.content.RequestListener;
 
-import com.sun.midp.content.ContentHandlerImpl;
-import com.sun.midp.content.InvocationImpl;
+import com.sun.j2me.content.ContentHandlerImpl;
+import com.sun.j2me.content.InvocationImpl;
 
 import java.io.EOFException;
 import java.io.IOException;

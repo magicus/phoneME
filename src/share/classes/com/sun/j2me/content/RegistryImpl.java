@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.content;
+package com.sun.j2me.content;
 
 import com.sun.midp.io.HttpUrl;
 
@@ -287,7 +287,7 @@ public final class RegistryImpl {
      * @param suiteId the MIDletSuite to cleanup after
      * @param classname the application class to cleanup
      */
-    static void cleanup(int suiteId, String classname) {
+    public static void cleanup(int suiteId, String classname) {
         InvocationImpl invoc = null;
         while ((invoc =
                 InvocationStore.getCleanup(suiteId, classname)) != null) {

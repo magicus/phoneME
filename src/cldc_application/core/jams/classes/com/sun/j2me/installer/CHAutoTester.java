@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.installer;
+package com.sun.j2me.installer;
 
 import java.io.*;
 
@@ -33,6 +33,8 @@ import javax.microedition.rms.*;
 import com.sun.midp.i18n.Resource;
 
 import com.sun.midp.i18n.ResourceConstants;
+import com.sun.midp.installer.InstallListener;
+import com.sun.midp.installer.InstallState;
 
 import com.sun.midp.main.MIDletSuiteLoader;
 

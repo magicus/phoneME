@@ -26,27 +26,25 @@
 
 package com.sun.midp.content;
 
+import javax.microedition.content.ContentHandlerException;
+import javax.microedition.content.ContentHandlerServer;
+import javax.microedition.content.Invocation;
+import javax.microedition.content.Registry;
 import javax.microedition.midlet.MIDlet;
 
-import javax.microedition.content.Registry;
-import javax.microedition.content.ContentHandler;
-import javax.microedition.content.ContentHandlerServer;
-import javax.microedition.content.ContentHandlerException;
-import javax.microedition.content.Invocation;
-
-import com.sun.midp.installer.Installer;
+import com.sun.j2me.content.AppBundleProxy;
+import com.sun.j2me.content.AppProxy;
+import com.sun.j2me.content.InvocationImpl;
+import com.sun.j2me.content.InvocationStore;
+import com.sun.j2me.content.RegistryImpl;
+import com.sun.j2me.content.RegistryInstaller;
 import com.sun.midp.installer.InstallState;
+import com.sun.midp.installer.Installer;
 import com.sun.midp.installer.InvalidJadException;
-
-import com.sun.midp.midlet.MIDletSuite;
-
 import com.sun.midp.main.MIDletProxy;
 import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.MIDletProxyListListener;
-
-import java.util.Vector;
-
-import com.sun.midp.log.Logging;
+import com.sun.midp.midlet.MIDletSuite;
 
 /**
  * Handle all of the details of installing ContentHandlers.

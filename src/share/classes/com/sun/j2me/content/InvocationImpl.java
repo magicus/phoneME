@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.content;
+package com.sun.j2me.content;
 
 import javax.microedition.content.Registry;
 import javax.microedition.content.Invocation;
@@ -479,7 +479,7 @@ public final class InvocationImpl {
      * If none, find the most recently queued Invocation that is
      * a response.
      */
-    static void invokeNext() {
+    public static void invokeNext() {
         InvocationImpl invoc = null;
         int tid;
 

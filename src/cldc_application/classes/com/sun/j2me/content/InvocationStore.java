@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.content;
+package com.sun.j2me.content;
 
 import com.sun.midp.midlet.MIDletSuite;
 
@@ -41,7 +41,7 @@ import com.sun.midp.midlet.MIDletSuite;
  * unblock it at a later time. The implementation does not poll for
  * requests but blocks, if requested, until it is unblocked.
  */
-class InvocationStore {
+public class InvocationStore {
 
     /**
      * The count of cancel requests; access is not synchronized because
@@ -397,7 +397,7 @@ class InvocationStore {
      *   cleanup at exit
      */
 
-    static void setCleanup(int suiteId, String classname, boolean cleanup) {
+    public static void setCleanup(int suiteId, String classname, boolean cleanup) {
         if (AppProxy.LOG_INFO) {
             AppProxy.getCurrent().logInfo("Store setCleanup: " + classname +
                                           ": " + cleanup);

@@ -28,9 +28,9 @@ package javax.microedition.content;
 
 import java.io.IOException;
 
-import com.sun.midp.content.RegistryImpl;
-import com.sun.midp.content.InvocationImpl;
-import com.sun.midp.content.ContentHandlerImpl;
+import com.sun.j2me.content.RegistryImpl;
+import com.sun.j2me.content.InvocationImpl;
+import com.sun.j2me.content.ContentHandlerImpl;
 
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;

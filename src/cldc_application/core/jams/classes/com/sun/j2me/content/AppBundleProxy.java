@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.content;
+package com.sun.j2me.content;
 
 import com.sun.midp.installer.InstallState;
 import com.sun.midp.installer.Installer;
@@ -36,7 +36,7 @@ import com.sun.midp.midlet.MIDletSuite;
  * Used by the RegistryImpl to parse and extract content handler
  * registrations.
  */
-class AppBundleProxy extends AppProxy {
+public class AppBundleProxy extends AppProxy {
     /** The installer with access to the archive. */
     private Installer installer;
 
@@ -59,7 +59,7 @@ class AppBundleProxy extends AppProxy {
      * @exception IllegalArgumentException if classname is not
      *  a valid application
      */
-    AppBundleProxy(Installer installer, 
+    public AppBundleProxy(Installer installer, 
 		      InstallState state, 
 		      MIDletSuite msuite,
 		      String authority)

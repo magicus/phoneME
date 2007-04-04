@@ -26,7 +26,7 @@
 
 package javax.microedition.content;
 
-import com.sun.midp.content.ContentHandlerImpl;
+import com.sun.j2me.content.ContentHandlerImpl;
 
 /**
  * An <code>ActionNameMap</code> provides a mapping between

@@ -26,7 +26,7 @@
 
 package javax.microedition.content;
 
-import com.sun.midp.content.RegistryImpl;
+import com.sun.j2me.content.RegistryImpl;
 
 /**
  * A <tt>ContentHandler</tt> provides the details of a

@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.content;
+package com.sun.j2me.content;
 
 import java.util.Vector;
 import java.util.Enumeration;
@@ -38,7 +38,7 @@ import com.sun.midp.installer.InvalidJadException;
  * Support for parsing attributes and installing from the
  * manifest or application descriptors.
  */
-final class RegistryInstaller {
+public final class RegistryInstaller {
     /** Attribute prefix for ContentHandler attributes. */
     private static final String CH_PREFIX = "MicroEdition-Handler-";
 
@@ -76,7 +76,7 @@ final class RegistryInstaller {
      * @exception ClassNotFoundException if an application class cannot be found
      * @exception SecurityException if not allowed to register
      */
-    int preInstall(AppProxy appl)
+    public int preInstall(AppProxy appl)
         throws ContentHandlerException, ClassNotFoundException
     {
         int i, j, sz;
@@ -389,7 +389,7 @@ final class RegistryInstaller {
      * @exception InvalidJadException if there is a content handlers
      * IDs conflict
      */
-    void install() {
+    public void install() {
         int i, sz;
 
         // Remove static and conflicted handlers.
@@ -421,7 +421,7 @@ final class RegistryInstaller {
      * @param update flag indicated whether the given suite is about remove or
      * update
      */
-    static void uninstallAll(int suiteId, boolean update) {
+    public static void uninstallAll(int suiteId, boolean update) {
         ContentHandlerImpl[] chs = RegistryStore.forSuite(suiteId);
         for (int i = 0; i < chs.length; i++) {
             if (!update || chs[i].registrationMethod == 

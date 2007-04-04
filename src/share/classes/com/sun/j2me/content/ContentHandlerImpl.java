@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.content;
+package com.sun.j2me.content;
 
 import javax.microedition.content.ContentHandler;
 import javax.microedition.content.ContentHandlerServer;

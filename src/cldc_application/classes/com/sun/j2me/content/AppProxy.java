@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.content;
+package com.sun.j2me.content;
 
 import java.util.Vector;
 import java.util.Hashtable;
@@ -95,7 +95,7 @@ import com.sun.midp.io.Util;
  * <
  * </ul>
  */
-class AppProxy {
+public class AppProxy {
     /** This class has a different security domain than the MIDlet suite */
     private static SecurityToken classSecurityToken;
 
@@ -164,7 +164,7 @@ class AppProxy {
      * Gets the AppProxy for the currently running application.
      * @return the current application.
      */
-    static AppProxy getCurrent() {
+    public static AppProxy getCurrent() {
         synchronized (mutex) {
             if (currentApp == null) {
                 MIDletStateHandler mh =
@@ -617,7 +617,7 @@ class AppProxy {
      * Log an information message to the system logger for this AppProxy.
      * @param msg a message to write to the log.
      */
-    void logInfo(String msg) {
+    public void logInfo(String msg) {
         if (LOG_INFO) {
             System.out.println(">> " + threadID() + ": " + msg);
         }
