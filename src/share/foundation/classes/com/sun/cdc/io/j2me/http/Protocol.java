@@ -996,9 +996,16 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         int n = buf.indexOf(':');
         if (n < 0) n = buf.indexOf('/');
         if (n < 0) n = buf.length();
+
+        int beginIndex = buf.indexOf("[");
+        int endIndex = buf.indexOf("]");
         
-        if (buf.indexOf("::") > 0) {
-            return parseIPv6Address(buf, n);
+        /* IPv6 addresses are enclosed within [] */
+        if (beginIndex > endIndex) {
+            throw new IllegalArgumentException("invalid host name " + buf);
+        }
+        if ((beginIndex ==0) && (endIndex >0)) {
+            return parseIPv6Address(buf, endIndex);
         } else {
             /* parse IPv4 Address */
             String token = buf.substring(0, n);
@@ -1007,10 +1014,10 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         }
     }
 
-    private String parseIPv6Address(String address, int colon) {
-        int lastIndexOfColon = address.lastIndexOf(":");
-        index += lastIndexOfColon;
-        return address.substring(0, lastIndexOfColon);
+    private String parseIPv6Address(String address, int closing) {
+        index += closing+1;
+        /* beginning '[' and closing ']' should be included in the hostname*/
+        return address.substring(0, closing+1);
     }
 
     private int parsePort() throws IOException {

@@ -92,7 +92,8 @@ public class Protocol extends ConnectionBase implements DatagramConnection,UDPDa
 
     
     protected static String parseHostName(String connection, int colon) {
-        if (connection.indexOf("::") >= 0) {
+        /* IPv6 addresses are enclosed within [] */
+        if ((connection.indexOf("[") == 0) && (connection.indexOf("]") > 0)) {
             return parseIPv6Address(connection, colon);
         } else {
             return parseIPv4Address(connection, colon);
@@ -106,8 +107,9 @@ public class Protocol extends ConnectionBase implements DatagramConnection,UDPDa
 
 
     protected static String parseIPv6Address(String address, int colon) {
-        int lastIndexOfColon = address.lastIndexOf(":");
-        return address.substring(0, lastIndexOfColon);
+        int closing = address.indexOf("]");
+        /* beginning '[' and closing ']' should be included in the hostname*/
+        return address.substring(0, closing+1);
     }
     
 
