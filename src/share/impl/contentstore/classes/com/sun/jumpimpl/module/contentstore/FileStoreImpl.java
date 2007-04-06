@@ -100,7 +100,7 @@ public class FileStoreImpl extends JUMPStore {
 
              if (!file.isHidden()) {  // Don't make a node for hidden system files
                 JUMPData dataObject = readFromFile(file, name);
-                JUMPNode node = new JUMPNodeDataImpl(uri, name, dataObject);
+                JUMPNode node = new JUMPNodeDataImpl(name, uri, dataObject);
                 return node;
              }
 
