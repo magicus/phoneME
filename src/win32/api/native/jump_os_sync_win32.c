@@ -49,11 +49,16 @@ struct _JUMPThreadMutex {
 struct _JUMPThreadCond {
     HANDLE event;
     struct WAITING_THREAD *waiting_list;
+    int num_signaled;
     int num_waiting;
     struct WAITING_THREAD *last_thread;
     struct _JUMPThreadMutex *mutex;         /* "bound" mutex */
 #ifndef NDEBUG
     int signaled;
+    long spurious_sum;
+    long spurious_cnt;
+    long qlen_sum;
+    long qlen_cnt;
 #endif
 };
 
@@ -175,9 +180,14 @@ JUMPThreadCond jumpThreadCondCreate(struct _JUMPThreadMutex *m) {
     c->mutex = m;
     c->waiting_list = NULL;
     c->last_thread = NULL;
+    c->num_signaled = 0;
     c->num_waiting = 0;
 #ifndef NDEBUG
     c->signaled = 0;
+    c->spurious_sum = 0;
+    c->spurious_cnt = 0;
+    c->qlen_sum = 0;
+    c->qlen_cnt = 0;
 #endif
     return c;
 }
@@ -193,9 +203,20 @@ JUMPThreadMutex jumpThreadCondGetMutex(struct _JUMPThreadCond *c) {
 void jumpThreadCondDestroy(struct _JUMPThreadCond *c) {
     assert(c != NULL);
     assert(c->waiting_list == NULL);
+    assert(c->num_signaled == 0);
     if (!CloseHandle(c->event)) {
         REPORT_ERROR(CloseHandle);
     }
+#ifndef NDEBUG
+    fprintf(stderr, "Wakeup stats: %ld spurious per %ld proper (%g avg)\n", 
+        c->spurious_sum, c->spurious_cnt, 
+        (c->spurious_cnt == 0 ? 
+            (double)0 : (double)c->spurious_sum / c->spurious_cnt));
+    fprintf(stderr, "Average length of queue: %g (%ld/%ld)\n", 
+        (c->qlen_cnt == 0 ? 
+            (double)0 : (double)c->qlen_sum / c->qlen_cnt),
+        c->qlen_sum, c->qlen_cnt);
+#endif
     free(c);
 }
 
@@ -211,6 +232,9 @@ int jumpThreadCondWait(struct _JUMPThreadCond *c, long millis) {
     struct WAITING_THREAD wt;
     struct WAITING_THREAD *pwt, *ppwt;
     DWORD id;
+#ifndef NDEBUG
+    long num_spurious = 0;
+#endif
 
     assert(c != NULL);
     assert(c->mutex != NULL);
@@ -237,14 +261,25 @@ int jumpThreadCondWait(struct _JUMPThreadCond *c, long millis) {
         //}
         jumpThreadMutexLock(c->mutex);
         c->num_waiting--;
+#ifndef NDEBUG
+        if (err == WAIT_OBJECT_0 && !wt.signaled) {
+            num_spurious ++;
+        }
+#endif
     } while (err == WAIT_OBJECT_0 && !wt.signaled);
     
+#ifndef NDEBUG
+    c->spurious_sum += num_spurious;
+    c->spurious_cnt ++;
+#endif
     /* remove from the waiting list if a timeout or an error */
     if (!wt.signaled) {
         remove_from_queue(c, &wt);
+    } else {
+        c->num_signaled--;
     }
     /* if no signaled thread remain then reset the event */
-    if (c->num_waiting == 0) {
+    if (c->num_signaled == 0) {
 #ifndef NDEBUG
         c->signaled = 0;
 #endif
@@ -291,6 +326,12 @@ int jumpThreadCondSignal(struct _JUMPThreadCond *c) {
     assert(c->mutex != NULL);
     assert(c->mutex->locked);
     
+#ifndef NDEBUG
+    for (pwt = c->waiting_list; pwt != NULL; pwt = pwt->next) {
+        c->qlen_sum ++;
+    }
+    c->qlen_cnt ++;
+#endif
     /* if no waiting threads */
     if (c->waiting_list == NULL) {
         return JUMP_SYNC_OK;
@@ -299,6 +340,7 @@ int jumpThreadCondSignal(struct _JUMPThreadCond *c) {
     assert(c->last_thread != NULL);
     assert(!c->last_thread->signaled);
     c->last_thread->signaled = 1;
+    c->num_signaled++;
     remove_from_queue(c, c->last_thread);
 #ifndef NDEBUG
     c->signaled = 1;
@@ -318,6 +360,13 @@ int jumpThreadCondBroadcast(struct _JUMPThreadCond *c) {
     assert(c->mutex != NULL);
     assert(c->mutex->locked);
     
+#ifndef NDEBUG
+    for (pwt = c->waiting_list; pwt != NULL; pwt = pwt->next) {
+        c->qlen_sum ++;
+    }
+    c->qlen_cnt ++;
+#endif
+
     /* if no waiting threads */
     if (c->waiting_list == NULL) {
         return JUMP_SYNC_OK;
@@ -326,6 +375,7 @@ int jumpThreadCondBroadcast(struct _JUMPThreadCond *c) {
     for (pwt = c->waiting_list; pwt != NULL; pwt = pwt->next) {
         assert(!pwt->signaled);
         pwt->signaled = 1;
+        c->num_signaled++;
     }
     c->waiting_list = NULL;
     c->last_thread = NULL;
