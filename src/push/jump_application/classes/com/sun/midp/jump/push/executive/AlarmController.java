@@ -80,12 +80,14 @@ final class AlarmController {
         this.alarms = new HashMap();
         this.store = store;
         this.lifecycleAdapter = lifecycleAdapter;
+
+        readAlarmsFromStore();
     }
 
     /**
      * Reads alarms from the persistent store and registers them.
      */
-    public synchronized void readAlarms() {
+    private synchronized void readAlarmsFromStore() {
         store.listAlarms(new Store.AlarmsConsumer() {
             public void consume(
                     final int midletSuiteID, final Map suiteAlarms) {
