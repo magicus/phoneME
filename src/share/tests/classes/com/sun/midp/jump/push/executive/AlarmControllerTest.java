@@ -314,7 +314,6 @@ public final class AlarmControllerTest extends TestCase {
         store.addAlarm(MIDLET_SUITE_ID, MIDLET, time);
 
         final FiredChecker firedChecker = new FiredChecker(store, MIDLET_SUITE_ID, MIDLET);
-        firedChecker.alarmController.readAlarms();
 
         Thread.sleep(3*(time - System.currentTimeMillis()));
         firedChecker.alarmController.dispose();
@@ -330,7 +329,6 @@ public final class AlarmControllerTest extends TestCase {
         store.addAlarm(MIDLET_SUITE_ID, MIDLET, time);
 
         final FiredChecker firedChecker = new FiredChecker(store, MIDLET_SUITE_ID, MIDLET);
-        firedChecker.alarmController.readAlarms();
 
         Thread.sleep(101L); // just a small delta
         firedChecker.alarmController.dispose();
