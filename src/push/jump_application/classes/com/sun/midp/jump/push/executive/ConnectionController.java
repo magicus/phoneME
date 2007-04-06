@@ -39,12 +39,7 @@ import java.util.Set;
 import java.util.Vector;
 import javax.microedition.io.ConnectionNotFoundException;
 
-/**
- * Push connection controller.
- *
- * TODO: system startup registration
- * TODO: mass operation for installation/uninstalltion (queries by suite id)
- */
+/** Push connection controller. */
 final class ConnectionController {
     /** Store to save connection info. */
     private final Store store;
@@ -123,7 +118,7 @@ final class ConnectionController {
          * need to unregister registered connection first
          */
         final ReservationHandler previous =
-                reservations.queryByConnection(connectionName);
+                reservations.queryByConnectionName(connectionName);
         if (previous != null) {
             if (previous.getSuiteId() != midletSuiteID) {
                 // Already registered for another suite, fail quickly
@@ -160,7 +155,7 @@ final class ConnectionController {
      *
      * @param midletSuiteID <code>MIDlet</code> suite ID
      *
-     * @param connection connection to unregister
+     * @param connectionName connection to unregister
      * (cannot be <code>null</code>)
      *
      * @return <code>true</code> if the unregistration was successful,
@@ -171,10 +166,10 @@ final class ConnectionController {
      */
     public synchronized boolean  unregisterConnection(
             final int midletSuiteID,
-            final String connection) throws
+            final String connectionName) throws
                 SecurityException {
         final ReservationHandler reservationHandler =
-                reservations.queryByConnection(connection);
+                reservations.queryByConnectionName(connectionName);
 
         if (reservationHandler == null) {
             // Connection hasn't been registered
@@ -241,6 +236,56 @@ final class ConnectionController {
             }
         }
         return (String[]) result.toArray(new String[result.size()]);
+    }
+
+    /**
+     * Fetches the <code>MIDlet</code> by the connection.
+     *
+     * @param midletSuiteID <code>MIDlet</code> suite ID to query for
+     *
+     * @param connectionName connectionName as passed into
+     * {@link #registerConnection}
+     * (cannot be <code>null</code>)
+     *
+     * @return <code>MIDlet</code> associated with <code>connectionName</code>
+     * or <code>null</code> if there is no appropriate association
+     */
+    public synchronized String getMIDlet(
+            final int midletSuiteID, final String connectionName) {
+        final ReservationHandler reservationHandler =
+                reservations.queryByConnectionName(connectionName);
+
+        if ((reservationHandler == null)
+            || (reservationHandler.getSuiteId() != midletSuiteID)) {
+            return null;
+        }
+
+        return reservationHandler.getMidlet();
+    }
+
+    /**
+     * Fetches the filter by the connection.
+     *
+     * @param midletSuiteID <code>MIDlet</code> suite ID to query for
+     *
+     * @param connectionName connectionName as passed into
+     * {@link #registerConnection}
+     * (cannot be <code>null</code>)
+     *
+     * @return filter associated with <code>connectionName</code> or
+     * <code>null</code> if there is no appropriate association
+     */
+    public synchronized String getFilter(
+            final int midletSuiteID, final String connectionName) {
+        final ReservationHandler reservationHandler =
+                reservations.queryByConnectionName(connectionName);
+
+        if ((reservationHandler == null)
+            || (reservationHandler.getSuiteId() != midletSuiteID)) {
+            return null;
+        }
+
+        return reservationHandler.getFilter();
     }
 
     /**
@@ -481,12 +526,13 @@ final class ConnectionController {
         /**
          * Queries the reservations by the connection.
          *
-         * @param connection connection to query by
+         * @param connectionName name of connection to query by
          * (cannot be <code>null</code>)
+         *
          * @return reservation (<code>null</code> if absent)
          */
-        ReservationHandler queryByConnection(final String connection) {
-            return (ReservationHandler) connection2data.get(connection);
+        ReservationHandler queryByConnectionName(final String connectionName) {
+            return (ReservationHandler) connection2data.get(connectionName);
         }
 
         /**

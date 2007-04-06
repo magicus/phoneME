@@ -112,7 +112,7 @@ final class PushController {
      *
      * @param midletSuiteID <code>MIDlet</code> suite ID
      *
-     * @param connection connection to unregister
+     * @param connectionName connection to unregister
      * (cannot be <code>null</code>)
      *
      * @return <code>true</code> if the unregistration was successful,
@@ -123,10 +123,10 @@ final class PushController {
      */
     public synchronized boolean  unregisterConnection(
             final int midletSuiteID,
-            final String connection) throws
+            final String connectionName) throws
                 SecurityException {
         return connectionController.unregisterConnection(
-                midletSuiteID, connection);
+                midletSuiteID, connectionName);
     }
 
     /**
@@ -147,6 +147,40 @@ final class PushController {
             final int midletSuiteID,
             final boolean available) {
         return connectionController.listConnections(midletSuiteID, available);
+    }
+
+    /**
+     * Fetches the <code>MIDlet</code> by the connection.
+     *
+     * @param midletSuiteID <code>MIDlet</code> suite ID to query for
+     *
+     * @param connectionName connectionName as passed into
+     * {@link #registerConnection}
+     * (cannot be <code>null</code>)
+     *
+     * @return <code>MIDlet</code> associated with <code>connectionName</code>
+     * or <code>null</code> if there is no appropriate association
+     */
+    public synchronized String getMIDlet(
+            final int midletSuiteID, final String connectionName) {
+        return connectionController.getMIDlet(midletSuiteID, connectionName);
+    }
+
+    /**
+     * Fetches the filter by the connection.
+     *
+     * @param midletSuiteID <code>MIDlet</code> suite ID to query for
+     *
+     * @param connectionName connectionName as passed into
+     * {@link #registerConnection}
+     * (cannot be <code>null</code>)
+     *
+     * @return filter associated with <code>connectionName</code> or
+     * <code>null</code> if there is no appropriate association
+     */
+    public synchronized String getFilter(
+            final int midletSuiteID, final String connectionName) {
+        return connectionController.getFilter(midletSuiteID, connectionName);
     }
 
     /**

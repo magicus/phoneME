@@ -81,6 +81,40 @@ public interface MIDPContainerInterface extends Remote {
             String connectionName) throws SecurityException, RemoteException;
 
     /**
+     * Fetches the <code>MIDlet</code> by the connection.
+     *
+     * @param midletSuiteID <code>MIDlet</code> suite ID to query for
+     *
+     * @param connectionName connection as passed into
+     * {@link #registerConnection}
+     * (cannot be <code>null</code>)
+     *
+     * @return <code>MIDlet</code> associated with <code>connection</code> or
+     * <code>null</code> if there is no appropriate association
+     *
+     * @throws RemoteException as requested by RMI spec.
+     */
+    String getMIDlet(int midletSuiteID, String connectionName)
+        throws RemoteException;
+
+    /**
+     * Fetches the filter by the connection.
+     *
+     * @param midletSuiteID <code>MIDlet</code> suite ID to query for
+     *
+     * @param connectionName connection as passed into
+     * {@link #registerConnection}
+     * (cannot be <code>null</code>)
+     *
+     * @return filter associated with <code>connection</code> or
+     * <code>null</code> if there is no appropriate association
+     *
+     * @throws RemoteException as requested by RMI spec.
+     */
+    String getFilter(int midletSuiteID, String connectionName)
+        throws RemoteException;
+
+    /**
      * Registers an alarm.
      *
      * <p>
