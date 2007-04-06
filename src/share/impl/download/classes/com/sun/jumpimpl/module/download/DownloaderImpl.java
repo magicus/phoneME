@@ -100,6 +100,20 @@ class DownloaderImpl implements JUMPDownloader {
  
     }
 
+    private String encode(String url) {
+        // Change spaces to %20
+        String encodedURL = "";
+        for (int i = 0; i < url.length(); i++) {
+            char c = url.charAt(i);
+            if (c == ' ') {
+                encodedURL += "%20";
+            } else {
+                encodedURL += c;
+            }
+        }
+        return encodedURL;
+    }
+    
     public boolean startDownload( String url, String nfUri,
                                 int size, JUMPDownloadDestination store
                                 ) throws JUMPDownloadException {
@@ -114,16 +128,16 @@ class DownloaderImpl implements JUMPDownloader {
             {
                 gran = report.getGranularity();
             }
-
-            URL objectUrl = new URL( url );
+                       
+            URL objectUrl = new URL( encode(url) );
     
             if ( report != null )
             {
                 report.updatePercent(0);
-            }
-            
+            }            
+
             URLConnection conn = objectUrl.openConnection();
-    
+             
             if ( ( ( HttpURLConnection )conn ).getResponseCode() !=
                      HttpURLConnection.HTTP_OK )
             {
@@ -133,7 +147,7 @@ class DownloaderImpl implements JUMPDownloader {
                                 "Can't process server response" );
                 }
             
-                throw new JUMPDownloadException( "Http response is not OK: "+
+                throw new JUMPDownloadException( "Bad Http response code: "+
                              ( (HttpURLConnection )conn ).getResponseCode() );
             }
     

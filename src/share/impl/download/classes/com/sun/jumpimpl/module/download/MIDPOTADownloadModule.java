@@ -40,6 +40,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
@@ -63,6 +64,20 @@ implements JUMPDownloadModule {
         return new DownloaderImpl(descriptor);
     }
 
+    private String encode(String url) {
+        // Change spaces to %20
+        String encodedURL = "";
+        for (int i = 0; i < url.length(); i++) {
+            char c = url.charAt(i);
+            if (c == ' ') {
+                encodedURL += "%20";
+            } else {
+                encodedURL += c;
+            }
+        }
+        return encodedURL;
+    }
+        
     public JUMPDownloadDescriptor createDescriptor(String url)
         throws JUMPDownloadException {
 
@@ -71,13 +86,13 @@ implements JUMPDownloadModule {
         try
         {
 
-            URL jadURL = new URL(url);
+            URL jadURL = new URL(encode(url));
 
             URLConnection conn = jadURL.openConnection();
 
             if (((HttpURLConnection)conn).getResponseCode() 
 			    != HttpURLConnection.HTTP_OK) {
-                throw new JUMPDownloadException("Http response isn't OK "+
+                throw new JUMPDownloadException("Bad Http response code: "+
                           ((HttpURLConnection)conn).getResponseCode());
             }
 
@@ -257,7 +272,7 @@ implements JUMPDownloadModule {
             os.close();
 
             if (huc.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                throw new JUMPDownloadException("Http response is not OK "+
+                throw new JUMPDownloadException("Bad Http response code: "+
                                         huc.getResponseCode());
             } else {
                 if (DownloadModuleFactoryImpl.verbose) {

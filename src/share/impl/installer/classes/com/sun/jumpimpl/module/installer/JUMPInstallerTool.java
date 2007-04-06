@@ -1,6 +1,4 @@
 /*
- * %W% %E%
- *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
@@ -158,9 +156,14 @@ public class JUMPInstallerTool {
         this.DescriptorURI = (String)hash.get("DescriptorURI");
         this.Protocol = (String)hash.get("Protocol");
         
-        trace("JUMPInstallerTool Settings:");
-        trace("    Command: " + Command);
-        trace(    "ProvisioningServerURL: " + ProvisioningServer);
+        trace("");
+        trace("=============================================");
+        trace("JUMPInstallerTool Settings");
+        trace("--------------------------");
+        trace("");
+        trace("   Command: " + Command);
+        trace("App Server: " + ProvisioningServer);
+        trace("=============================================");
         trace("");
         
         if (!setup()) {
@@ -386,7 +389,7 @@ public class JUMPInstallerTool {
         for (int i = 0; i < url.length; i++) {
             if (desc != null && url != null) {
                 System.out.println("");
-                System.out.println("==> Installing: " + desc[i].getName());
+                System.out.println("==> Installing: " + desc[i].getName() + " from: " + url[i].toString());
                 Properties apps[] = desc[i].getApplications();
                 if (apps == null) {
                     trace("ERROR: Could not install. Descriptor contains no information on application.");
@@ -400,7 +403,6 @@ public class JUMPInstallerTool {
                 } else if (appType.equals("main")) {
                     installer = createInstaller(JUMPAppModel.MAIN);
                 } else if (appType.equals("midlet")) {
-                    //System.out.println("NOTE: MIDP installations are currently not supported.");
                     installer = createInstaller(JUMPAppModel.MIDLET);
                 } else {
                     trace("ERROR: Unknown application type: " + appType);
@@ -443,6 +445,7 @@ public class JUMPInstallerTool {
             error();
             return;
         }
+        
         for (int i = 0; i < apps.length; i++) {
             System.out.println("");
             System.out.println("==> Uninstalling: " + apps[i].getTitle());
@@ -466,6 +469,7 @@ public class JUMPInstallerTool {
     
     
     private void userInteractiveUninstall() {
+        System.setProperty("jump.installer.interactive", "true");
         
         JUMPInstallerModule installers[] = JUMPInstallerModuleFactory.getInstance().getAllInstallers();
         
@@ -494,37 +498,9 @@ public class JUMPInstallerTool {
             System.out.println( "(" + i + "): " + ((JUMPApplication)apps[i]).getTitle());
         }
         
-        int chosenUninstall = -1;
-        
-        while ( true ) {
-            System.out.print( "Enter choice (-1 to exit) [-1]: " );
-            BufferedReader in =
-                    new BufferedReader( new InputStreamReader( System.in ) );
-            String answer;
-            
-            try {
-                answer = in.readLine();
-            } catch ( java.io.IOException ioe ) {
-                continue;
-            }
-            
-            if ( "".equals( answer ) ) {
-                break;
-            }
-            
-            try {
-                chosenUninstall = Integer.parseInt( answer );
-                break;
-            } catch ( Exception e ) {
-                e.printStackTrace();
-                // bad input
-            }
-        }
-        
-        // If no valid choice, quit
-        if ( chosenUninstall < 0 ) {
-            System.exit( 0 );
-        }
+        String message = "Enter choice (-1 to exit) [-1]: ";
+        String choice = Utilities.promptUser(message);
+        int chosenUninstall = Integer.parseInt(choice);
         
         System.out.println( chosenUninstall );
         
@@ -536,29 +512,23 @@ public class JUMPInstallerTool {
     }
     
     private void nonInteractiveUninstall() {
+        System.setProperty("jump.installer.interactive", "false");
         
         JUMPInstallerModule installers[] = JUMPInstallerModuleFactory.getInstance().getAllInstallers();
         
-        Vector appsVector = new Vector();
-        
-        // Get all of the apps
-        for (int i = 0, totalApps = 0; i < installers.length; i++) {
+        for (int i = 0; i < installers.length; i++) {
             JUMPContent[] content = installers[i].getInstalled();
-            if (content != null) {
-                for(int j = 0; j < content.length; j++) {
-                    appsVector.add(totalApps, content[j]);
-                    totalApps++;
+            while (content != null && content.length > 0) {
+                if (content[0] != null) {
+                    System.out.println("");
+                    System.out.println("==> Uninstalling: " + ((JUMPApplication)content[0]).getTitle());
+                    installers[i].uninstall(content[0]);
+                    System.out.println("==> Finished Uninstalling: " + ((JUMPApplication)content[0]).getTitle());
+                    System.out.println("");
                 }
+                content = installers[i].getInstalled();
             }
         }
-        
-        if (appsVector.size() == 0) {
-            System.out.println("No applications are installed in the content store.");
-            return;
-        }
-        
-        JUMPApplication[] apps = (JUMPApplication[])appsVector.toArray(new JUMPApplication[]{});
-        uninstall(apps);
     }
     
     private void doList() {
@@ -711,34 +681,9 @@ public class JUMPInstallerTool {
             for (int i = 0; i < downloadNames.length ; i++ ) {
                 System.out.println( "(" + i + "): " + downloadNames[ i ] );
             }
-            
-            int chosenDownload = -1;
-            
-            while ( true ) {
-                System.out.print( "Enter choice (-1 to exit) [-1]: " );
-                BufferedReader in =
-                        new BufferedReader( new InputStreamReader( System.in ) );
-                String answer;
-                
-                try {
-                    answer = in.readLine();
-                } catch ( java.io.IOException ioe ) {
-                    continue;
-                }
-                
-                if ( "".equals( answer ) ) {
-                    break;
-                }
-                
-                try {
-                    chosenDownload = Integer.parseInt( answer );
-                    break;
-                } catch ( Exception e ) {
-                    e.printStackTrace();
-                    // bad input
-                }
-            }
-            
+            String message = "Enter choice (-1 to exit) [-1]: ";
+            String choice = Utilities.promptUser(message);
+            int chosenDownload = Integer.parseInt(choice);
             // If no valid choice, quit
             if ( chosenDownload < 0 ) {
                 System.exit( 0 );
@@ -798,7 +743,7 @@ public class JUMPInstallerTool {
                 
                 JUMPDownloadDescriptor descriptor = module.createDescriptor( uri );
                 if (descriptor == null) {
-                    System.out.println("Descriptor is NULL");
+                    System.out.println("ERROR: Returned descriptor is NULL for " + uri);
                     System.exit(0);
                 }
                 

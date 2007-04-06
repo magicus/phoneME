@@ -48,15 +48,12 @@ import com.sun.jump.module.windowing.JUMPWindowingModuleFactory;
 import java.awt.AWTEvent;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Image;
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
@@ -184,28 +181,27 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         }
         
         public void focusGained(FocusEvent e) {
-            trace("--> Command Container has Focus!!!");
             transferFocus();
         }
         
         public void focusLost(FocusEvent e) {
-            trace("--> Command Container lost Focus!!!");
         }
         
         public void keyTyped(KeyEvent e) {
-            trace("--> CommandContainer keyTyped: " + e.toString());
         }
         
-        public void keyPressed(KeyEvent e) {
-            trace("--> CommandContainer keyPressed: " + e.toString());
+        public void keyPressed(KeyEvent e) {;
         }
         
         public void keyReleased(KeyEvent e) {
-            trace("--> CommandContainer Released: " + e.toString());
         }
     }
     
     private boolean setup() {
+        
+        // the loading of apps will happen in its own thread
+        LoadAppsThread loadAppsThread = new LoadAppsThread();
+        loadAppsThread.start();
         
         frame = new Frame();
         frame.setLayout(new BorderLayout());
@@ -236,6 +232,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         
         JUMPExecutive e = JUMPExecutive.getInstance();
         JUMPMessageDispatcher md = e.getMessageDispatcher();
+        
         try {
             md.registerHandler(JUMPIsolateWindowRequest.MESSAGE_TYPE, this);
             md.registerHandler(JUMPIsolateLifecycleRequest.MESSAGE_TYPE, this);
@@ -244,20 +241,27 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-        
-        JUMPApplication apps[] = getInstalledApps();
-        applicationsScreenButtons = new SimpleBasisAMSImageButton[apps.length];
-        for (int i = 0; i < apps.length; i++) {
-            applicationsScreenButtons[i] = createScreenButton(apps[i], new LaunchAppActionListener(apps[i]), Color.yellow);
+
+        try {
+            loadAppsThread.join();
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
         }
-        
-//        try {
-//            Toolkit.getDefaultToolkit().addAWTEventListener(new AMSEventListener(), AWTEvent.FOCUS_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
-//        } catch (Exception ex) {
-//            ex.printStackTrace();
-//        }
-        
         return true;
+    }
+    
+    class LoadAppsThread extends Thread {
+        
+        public LoadAppsThread() {
+            
+        }
+        public void run() {
+            JUMPApplication apps[] = getInstalledApps();
+            applicationsScreenButtons = new SimpleBasisAMSImageButton[apps.length];
+            for (int i = 0; i < apps.length; i++) {
+                applicationsScreenButtons[i] = createScreenButton(apps[i], new LaunchAppActionListener(apps[i]), Color.yellow);
+            }
+        }
     }
     
     class LaunchThread extends Thread {
@@ -360,14 +364,6 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         refreshScreen();
     }
     
-    public class AMSEventListener implements AWTEventListener {
-        
-        public void eventDispatched(AWTEvent e) {
-            System.out.println("Event: " + e.toString());
-//            KeyEvent k = (KeyEvent) e;
-//            System.out.println("KeyEvent: " + k.toString());
-        }
-    }
     private void pageUp() {
         if (CURRENT_SCREEN == APPLICATIONS_SCREEN) {
             // Determine if there is possibly more icons to display
@@ -488,6 +484,8 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         }
         
         public void keyPressed(KeyEvent e) {
+            System.out.println("KeyEvent: " + e.toString());
+            
             int keyCode = e.getKeyCode();
             System.out.println(button.getLabel() + " screen button KeyEvent: " + e.toString());
             System.out.println(button.getLabel() + " screen button keyTyped: " + keyCode);
@@ -500,7 +498,11 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
             } else if (keyCode == KeyEvent.VK_ENTER) {
                 button.doAction();
             } else if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_LEFT ) {
-                button.transferFocusBackward();
+                if (e.getComponent() == screenContainer.getComponent(0)) {
+                    commandContainer.requestFocusInWindow();
+                } else {
+                    button.transferFocusBackward();
+                }
             } else if (keyCode == KeyEvent.VK_DOWN | keyCode == KeyEvent.VK_RIGHT) {
                 button.transferFocus();
             }
@@ -521,24 +523,17 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         
         public void keyPressed(KeyEvent e) {
             int keyCode = e.getKeyCode();
-            System.out.println(button.getLabel() + " command button KeyEvent: " + e.toString());
-            System.out.println(button.getLabel() + " command button keyTyped: " + keyCode);
-            
             if (keyCode == KeyEvent.VK_PAGE_UP || keyCode == KeyEvent.VK_F1) {
-                System.out.println("*** PAGE UP ***");
                 pageUp();
             } else if (keyCode == KeyEvent.VK_PAGE_DOWN || keyCode == KeyEvent.VK_F2) {
-                System.out.println("*** PAGE DOWN ***");
                 pageDown();
             } else if (keyCode == KeyEvent.VK_ENTER) {
                 button.doAction();
-            } else if (keyCode == KeyEvent.VK_DOWN) {
+            } else if (keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_UP) {
                 screenContainer.requestFocusInWindow();
             } else if (keyCode == KeyEvent.VK_LEFT) {
                 button.transferFocusBackward();
-                //button.transferFocus();
             } else if (keyCode == KeyEvent.VK_RIGHT) {
-                //button.transferFocusUpCycle();
                 button.transferFocus();
             }
         }
@@ -597,7 +592,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         for (int i = 0; i < apps.length; i++) {
             killScreenButtons[i] = createScreenButton(apps[i].getApplication(), new KillActionListener(apps[i]), Color.red);
         }
-        int firstPositionIndex = switchToScreenPageNumber * SCREEN_DISPLAY_ICONS;
+        int firstPositionIndex = killScreenPageNumber * SCREEN_DISPLAY_ICONS;
         for (int i = firstPositionIndex;
         i < (killScreenPageNumber * SCREEN_DISPLAY_ICONS + SCREEN_DISPLAY_ICONS) ; i++) {
             if (i < killScreenButtons.length) {
@@ -829,7 +824,6 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
             button.setTextShadow(true);
             button.addActionListener(action);
             
-            //screenContainer.add(button);
         } else {
             button = new SimpleBasisAMSImageButton();
             if (button == null) {
