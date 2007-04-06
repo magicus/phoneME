@@ -24,7 +24,11 @@
 
 package com.sun.midp.io.j2me.push;
 
+import com.sun.jump.isolate.jvmprocess.JUMPIsolateProcess;
+import com.sun.midp.jump.push.executive.remote.MIDPContainerInterface;
+import com.sun.midp.jump.push.share.Configuration;
 import java.io.IOException;
+import java.rmi.RemoteException;
 import javax.microedition.io.ConnectionNotFoundException;
 
 import com.sun.midp.midlet.MIDletSuite;
@@ -38,6 +42,45 @@ final class ConnectionRegistry {
      * Hides constructor.
      */
     private ConnectionRegistry() { }
+
+    /** Internal helper to access remote interface. */
+    private static class RemoteInterfaceHelper {
+        /**
+         * Reference to remote interface.
+         *
+         * <p>
+         * This instance is created on demand.
+         * </p>
+         */
+        private MIDPContainerInterface ifc = null;
+
+        /**
+         * Gets a reference to remote interface.
+         *
+         * @return a reference to remote interface
+         * (cannot be <code>null</code>)
+         */
+        MIDPContainerInterface getRemoteInterface() {
+            if (ifc != null) {
+                return ifc;
+            }
+
+            ifc = (MIDPContainerInterface) JUMPIsolateProcess.getInstance()
+                .getRemoteService(
+                    Configuration.MIDP_CONTAINER_INTERFACE_IXC_URI);
+
+            if (ifc == null) {
+                throw new RuntimeException(
+                        "failed to obtain remote push interface");
+            }
+
+            return ifc;
+        }
+    }
+
+    /** Remote interface helper. */
+    private static final RemoteInterfaceHelper remoteInterfaceHelper =
+            new RemoteInterfaceHelper();
 
     /**
      * Registers a connection.
@@ -76,7 +119,8 @@ final class ConnectionRegistry {
      * @param filter a connection URL string indicating which senders
      *  are allowed to cause the MIDlet to be launched
      *
-     * @throws IllegalArgumentException if connection or filter string is not valid
+     * @throws IllegalArgumentException if connection or filter string
+     * is not valid
      * @throws ConnectionNotFoundException if PushRegistry doesn't support
      *  this kind of connections
      */
@@ -189,8 +233,14 @@ final class ConnectionRegistry {
             final String midlet,
             final long time)
             throws ClassNotFoundException, ConnectionNotFoundException {
-        // As we cannot register connections for now...
-        throw new ConnectionNotFoundException();
+        try {
+            return remoteInterfaceHelper
+                    .getRemoteInterface()
+                    .registerAlarm(midletSuite.getID(), midlet, time);
+        } catch (RemoteException re) {
+            // The only thing we can do:
+            throw new ConnectionNotFoundException("IXC failure: " + re);
+        }
     }
 
     /**
