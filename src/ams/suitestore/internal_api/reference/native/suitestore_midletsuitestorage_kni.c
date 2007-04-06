@@ -1498,7 +1498,17 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMIDletSuiteInfoImpl0) {
     KNI_GetObjectClass(msi, clazz);
 
     do {
-        MidletSuiteData *pData = get_suite_data(suiteId);
+        char *pszError = NULL;
+        MidletSuiteData *pData = NULL;
+
+        /* Ensure that suite data are read */
+        status = read_suites_data(&pszError);
+        storageFreeError(pszError);
+        if (status != ALL_OK) {
+            break;
+        }
+
+        pData = get_suite_data(suiteId);
         if (!pData) {
             status = NOT_FOUND;
             break;
