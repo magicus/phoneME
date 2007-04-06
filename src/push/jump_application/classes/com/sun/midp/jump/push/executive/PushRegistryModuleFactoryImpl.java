@@ -68,7 +68,11 @@ final class PushContentStore
 final class PushModule implements JUMPPushModule {
 
     final static class PushSystem {
+        /** Installer-to-Push interface impl. */
         private final InstallerInterface installerInterfaceImpl;
+
+        /** Push controller instance. */
+        private final PushController pushController;
 
         PushSystem(final StoreOperationManager storeManager)
                 throws IOException, RemoteException, AlreadyBoundException {
@@ -77,7 +81,7 @@ final class PushModule implements JUMPPushModule {
             final ReservationDescriptorFactory reservationDescriptorFactory =
                     Configuration.getReservationDescriptorFactory();
 
-            final PushController pushController = new PushController(
+            pushController = new PushController(
                     store, reservationDescriptorFactory);
 
             final MIDPContainerInterfaceImpl midpContainerInterfaceImpl =
@@ -111,6 +115,8 @@ final class PushModule implements JUMPPushModule {
             } catch (NotBoundException ex) {
                 logError("failed to unbound IXC MIDP interface");
             }
+
+            pushController.dispose();
         }
     }
 

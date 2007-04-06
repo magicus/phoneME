@@ -121,7 +121,7 @@ final class PushController {
      * @throws SecurityException if the connection was registered by
      * another <code>MIDlet</code>  suite
      */
-    public synchronized boolean  unregisterConnection(
+    public boolean  unregisterConnection(
             final int midletSuiteID,
             final String connectionName) throws
                 SecurityException {
@@ -143,7 +143,7 @@ final class PushController {
      * is represented by the generic connection <em>protocol</em>,
      * <em>host</em> and <em>port</em> number identification
      */
-    public synchronized String[] listConnections(
+    public String[] listConnections(
             final int midletSuiteID,
             final boolean available) {
         return connectionController.listConnections(midletSuiteID, available);
@@ -228,5 +228,16 @@ final class PushController {
     public void removeSuiteInfo(final int midletSuiteID) {
         alarmController.removeSuiteAlarms(midletSuiteID);
         connectionController.removeSuiteConnections(midletSuiteID);
+    }
+
+    /**
+     * Disposes the controller.
+     *
+     * <p>
+     * This method needs to be called when closing the system.
+     * </p>
+     */
+    public void dispose() {
+        alarmController.dispose();
     }
 }
