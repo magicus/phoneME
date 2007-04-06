@@ -58,6 +58,7 @@ import javax.microedition.xlet.XletContext;
 import javax.microedition.xlet.ixc.IxcRegistry;
 import com.sun.jumpimpl.ixc.XletContextFactory;
 
+import sun.misc.MIDPConfig;
 import sun.misc.ThreadRegistry;
 
 import java.util.Map;
@@ -308,11 +309,9 @@ public class JUMPIsolateProcessImpl
 	rsh.sendRequestAsync(e, req);
     }
 
-    /**
-     * Returns a remote service.
-     */
-    public Remote getRemoteService(Class remoteInterface) {
-	return serviceRegistry.getRemoteService(remoteInterface.getName());
+    /** {@inheritDoc} */
+    public Remote getRemoteService(String name) {
+        return serviceRegistry.getRemoteService(name);
     }
 
     private JUMPOutgoingMessage handleStartAppMessage(JUMPMessage in) {
@@ -415,6 +414,35 @@ public class JUMPIsolateProcessImpl
     }
 
     /**
+     * Fetches class loader to use for implementation classes in IXC.
+     *
+     * @return class loader to use
+     */
+    private ClassLoader getImplClassLoader() {
+        /*
+         * IMPL_NOTE: a hack!  What we're trying to achieve is to
+         * find out a class loader for IXC used in implementation classes.
+         * For MIDP container MIDPConfig should return proper class loader.
+         * For non MIDP container MIDPConfig is assumed to return null and
+         * it is substituted with proper class loader.
+         *
+         * Better solution could be to have separate implemenations for
+         * different isolate types (main, xlet, midlet)
+         */
+        /*
+         * NOTE: cannot relaibly use getClass().getClassLoader() as currently
+         * JUMPIsolateProcessImpl is loaded by bootstrap class loader.
+         */
+        final ClassLoader cl = sun.misc.MIDPConfig.getMIDPImplementationClassLoader();
+        if (cl != null) {
+            // MIDP container case
+            return cl;
+        }
+        // Main/xlet case
+        return ClassLoader.getSystemClassLoader();
+    }
+
+    /**
      * Extract port number from the message and tell it to the 
      * service registry client.
      * FIXME: should be removed once ixc is on messaging.
@@ -425,7 +453,7 @@ public class JUMPIsolateProcessImpl
 
         int port = Integer.parseInt(message.getCommandData()[0]);
  
-        serviceRegistry = new ServiceRegistryClient(port);
+        serviceRegistry = new ServiceRegistryClient(getImplClassLoader(), port);
 
         JUMPResponse resp = new JUMPResponse(in.getType(), JUMPResponseInteger.ID_SUCCESS);
         return resp.toMessageInResponseTo(in, this);
