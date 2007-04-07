@@ -42,7 +42,12 @@ public class ServiceRegistryClient {
 
     IxcRegistry registry;
 
-    public ServiceRegistryClient(int portNumber) {
+    /**
+     *
+     * @param classloader class loader to use
+     */
+    public ServiceRegistryClient(
+            ClassLoader classloader, int portNumber) {
 
        /*
 	* First set the port number that the executive VM's registry is 
@@ -58,7 +63,6 @@ public class ServiceRegistryClient {
 	* Use the system classloader to get the registry.  This classloader
 	* would later be used for loading the stub classes for the remote objects.
 	*/
-       ClassLoader classloader = ClassLoader.getSystemClassLoader();
        XletContext context = XletContextFactory.getXletContext(classloader);
 
        registry = IxcRegistry.getRegistry(context);

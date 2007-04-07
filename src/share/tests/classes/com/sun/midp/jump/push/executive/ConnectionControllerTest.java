@@ -254,7 +254,7 @@ public final class ConnectionControllerTest extends TestCase {
                 new ConnectionController.Reservations();
         reservations.add(h);
 
-        assertSame(h, reservations.queryByConnection(connection));
+        assertSame(h, reservations.queryByConnectionName(connection));
     }
 
     public void testQueryByConnectionMissing() throws IOException {
@@ -271,7 +271,7 @@ public final class ConnectionControllerTest extends TestCase {
                 new ConnectionController.Reservations();
         reservations.add(h);
 
-        assertNull(reservations.queryByConnection(connection + "qux"));
+        assertNull(reservations.queryByConnectionName(connection + "qux"));
     }
 
     public void testQueryBySuite() throws IOException {
@@ -314,7 +314,7 @@ public final class ConnectionControllerTest extends TestCase {
         final ConnectionController.Reservations reservations =
                 new ConnectionController.Reservations();
 
-        assertNull(reservations.queryByConnection("foo://bar"));
+        assertNull(reservations.queryByConnectionName("foo://bar"));
         assertTrue(reservations.queryBySuiteID(13).isEmpty());
     }
 
@@ -333,7 +333,7 @@ public final class ConnectionControllerTest extends TestCase {
         reservations.add(h);
         reservations.remove(h);
 
-        assertNull(reservations.queryByConnection(connection));
+        assertNull(reservations.queryByConnectionName(connection));
         assertTrue(reservations.queryBySuiteID(midletSuiteId).isEmpty());
     }
 
@@ -392,6 +392,8 @@ public final class ConnectionControllerTest extends TestCase {
         checkStoreHasSingleRecord(store,
                 midletSuiteId, midlet, connection, filter);
         checkSingletonConnectionList(cc, midletSuiteId, connection);
+        assertEquals(midlet, cc.getMIDlet(midletSuiteId, connection));
+        assertEquals(filter, cc.getFilter(midletSuiteId, connection));
     }
 
     public void testReregistration() throws IOException {
@@ -423,6 +425,8 @@ public final class ConnectionControllerTest extends TestCase {
         checkStoreHasSingleRecord(store,
                 midletSuiteId, midlet, connection, filter2);
         checkSingletonConnectionList(cc, midletSuiteId, connection);
+        assertEquals(midlet, cc.getMIDlet(midletSuiteId, connection));
+        assertEquals(filter2, cc.getFilter(midletSuiteId, connection));
     }
 
     public void testReregistrationOfAnotherSuite() throws IOException {
@@ -463,8 +467,12 @@ public final class ConnectionControllerTest extends TestCase {
                 midletSuiteId, midlet, connection, filter);
 
         checkSingletonConnectionList(cc, midletSuiteId, connection);
+        assertEquals(midlet, cc.getMIDlet(midletSuiteId, connection));
+        assertEquals(filter, cc.getFilter(midletSuiteId, connection));
 
         assertEquals(0, cc.listConnections(midletSuiteId2, false).length);
+        assertNull(cc.getMIDlet(midletSuiteId2, connection));
+        assertNull(cc.getFilter(midletSuiteId2, connection));
     }
 
     public void testReregistrationOfAnotherMIDlet() throws IOException {
@@ -497,6 +505,8 @@ public final class ConnectionControllerTest extends TestCase {
         checkStoreHasSingleRecord(store,
                 midletSuiteId, midlet2, connection, filter);
         checkSingletonConnectionList(cc, midletSuiteId, connection);
+        assertEquals(midlet2, cc.getMIDlet(midletSuiteId, connection));
+        assertEquals(filter, cc.getFilter(midletSuiteId, connection));
     }
 
     public void testRegistrationOfFailingReservation() throws IOException {
@@ -537,6 +547,8 @@ public final class ConnectionControllerTest extends TestCase {
 
         checkStoreEmpty(store);
         assertEquals(0, cc.listConnections(midletSuiteId, false).length);
+        assertNull(cc.getMIDlet(midletSuiteId, connection));
+        assertNull(cc.getFilter(midletSuiteId, connection));
     }
 
     public void testListConnectionsAll() throws IOException {
@@ -639,6 +651,8 @@ public final class ConnectionControllerTest extends TestCase {
 
         checkStoreEmpty(store);
         assertEquals(0, cc.listConnections(midletSuiteId, false).length);
+        assertNull(cc.getMIDlet(midletSuiteId, connection));
+        assertNull(cc.getFilter(midletSuiteId, connection));
     }
 
     public void testUnregisterRegisteredConnection() throws IOException {
@@ -660,6 +674,8 @@ public final class ConnectionControllerTest extends TestCase {
         assertTrue(descriptor.connectionReservation.isCancelled);
         checkStoreEmpty(store);
         assertEquals(0, cc.listConnections(midletSuiteId, false).length);
+        assertNull(cc.getMIDlet(midletSuiteId, connection));
+        assertNull(cc.getFilter(midletSuiteId, connection));
     }
 
     public void testUnregisterNotRegisteredConnection() throws IOException {
@@ -684,6 +700,8 @@ public final class ConnectionControllerTest extends TestCase {
         checkStoreHasSingleRecord(store,
                 midletSuiteId, midlet, connection, filter);
         checkSingletonConnectionList(cc, midletSuiteId, connection);
+        assertEquals(midlet, cc.getMIDlet(midletSuiteId, connection));
+        assertEquals(filter, cc.getFilter(midletSuiteId, connection));
     }
 
     public void testUnregisterOtherSuiteConnection() throws IOException {
@@ -714,6 +732,8 @@ public final class ConnectionControllerTest extends TestCase {
         checkStoreHasSingleRecord(store,
                 midletSuiteId, midlet, connection, filter);
         checkSingletonConnectionList(cc, midletSuiteId, connection);
+        assertEquals(midlet, cc.getMIDlet(midletSuiteId, connection));
+        assertEquals(filter, cc.getFilter(midletSuiteId, connection));
     }
 
     public void testDataAvailableListener() throws IOException {
@@ -824,6 +844,10 @@ public final class ConnectionControllerTest extends TestCase {
         assertFalse(cc.unregisterConnection(midletSuiteId, connection2));
 
         assertEquals(0, cc.listConnections(midletSuiteId, false).length);
+        assertNull(cc.getMIDlet(midletSuiteId, connection1));
+        assertNull(cc.getFilter(midletSuiteId, connection1));
+        assertNull(cc.getMIDlet(midletSuiteId, connection2));
+        assertNull(cc.getFilter(midletSuiteId, connection2));
 
         checkStoreEmpty(store);
     }
@@ -912,10 +936,6 @@ public final class ConnectionControllerTest extends TestCase {
         final ConnectionController cc =
                 createConnectionController(store, lifecycleAdapter);
 
-        /*
-         * IMPL_NOTE: Unfortunately, listConnections doesn't return information
-         *  about filter and midlet, so test is somewhat incomplete
-         */
         final String [] suite1cns = cc.listConnections(suiteId1, false);
         assertEquals(
                 new HashSet(Arrays.asList(suite1cns)),
@@ -928,5 +948,41 @@ public final class ConnectionControllerTest extends TestCase {
         assertTrue(Arrays.equals(
                 suite2cns,
                 new String [] { registrations[1].connection }));
+
+        // And now check both MIDlets and filters
+        for (int i = 0; i < registrations.length; i++) {
+            final Registration r = registrations[i];
+            final int id = r.app.midletSuiteID;
+            final String c = r.connection;
+            assertEquals(r.app.midlet,  cc.getMIDlet(id, c));
+            assertEquals(r.filter,      cc.getFilter(id, c));
+        }
+    }
+
+    public void testAccessorsForAnotherSuite() throws IOException {
+        final int midletSuiteId = 123;
+        final String midlet = "com.sun.Foo";
+        final String connection = "foo://bar";
+        final String filter = "*.123";
+
+        final int midletSuiteId2 = 1001 - midletSuiteId;
+
+        final ConnectionController cc = createConnectionController(createStore());
+
+        cc.registerConnection(midletSuiteId, midlet,
+                new MockReservationDescriptor(connection, filter));
+
+        assertNull(cc.getMIDlet(midletSuiteId2, connection));
+        assertNull(cc.getFilter(midletSuiteId2, connection));
+    }
+
+    public void testAccessorsForUnregistered() throws IOException {
+        final int midletSuiteId = 123;
+        final String connection = "foo://bar";
+
+        final ConnectionController cc = createConnectionController(createStore());
+
+        assertNull(cc.getMIDlet(midletSuiteId, connection));
+        assertNull(cc.getFilter(midletSuiteId, connection));
     }
 }
