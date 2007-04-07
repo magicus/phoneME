@@ -262,16 +262,16 @@ void RelocationWriter::emit_vsf(jint code_offset, VirtualStackFrame* frame) {
   // Emit list of mapped registers with encoded SP difference
   const int sp_delta = frame->stack_pointer() - frame->virtual_stack_pointer();
   if (sp_delta >= max_sp_delta) {
-    emit_ushort(reg_list | (max_sp_delta << sp_shift));
-    emit_ushort((jushort)sp_delta);
+    emit_ushort(jushort(reg_list | (max_sp_delta << sp_shift)));
+    emit_ushort(jushort(sp_delta));
   } else if (sp_delta >= 0) {
     // in most cases Virtual SP is very close to Real SP
-    emit_ushort(reg_list | (sp_delta << sp_shift));
+    emit_ushort(jushort(reg_list | (sp_delta << sp_shift)));
   } else if (-sp_delta < max_sp_delta) {
-    emit_ushort(reg_list | sp_negative | ((-sp_delta) << sp_shift));
+    emit_ushort(jushort(reg_list | sp_negative | ((-sp_delta) << sp_shift)));
   } else {
-    emit_ushort(reg_list | sp_negative | (max_sp_delta << sp_shift));
-    emit_ushort((jushort)(-sp_delta));
+    emit_ushort(jushort(reg_list | sp_negative | (max_sp_delta << sp_shift)));
+    emit_ushort(jushort(-sp_delta));
   }
   if (reg_list == 0) {
     // optimization for the case when there are no mapped registers

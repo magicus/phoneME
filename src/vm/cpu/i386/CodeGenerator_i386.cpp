@@ -383,9 +383,9 @@ void CodeGenerator::method_entry(Method* method JVM_TRAPS) {
     if (method->access_flags().is_static()) {
       comment("Static method. Synchronize on the class");
 
-      UsingFastOops fast_oops;
       // Get the class mirror object.
 #if ENABLE_ISOLATES
+      UsingFastOops fast_oops;
       InstanceClass::Fast klass = method->holder();
       Value klass_value(T_OBJECT);
       klass_value.set_obj(&klass);
@@ -398,8 +398,8 @@ void CodeGenerator::method_entry(Method* method JVM_TRAPS) {
       movl(eax, Address(klass_value.lo_register(),
                         TaskMirror::real_java_mirror_offset()));
 #else
-      JavaClass::Fast klass = method->holder();
-      Instance::Fast mirror = klass().java_mirror();
+      JavaClass::Raw klass = method->holder();
+      Instance::Raw mirror = klass().java_mirror();
       comment("Static method. Synchronize on the class mirror object");
       movl(eax, &mirror);
 #endif

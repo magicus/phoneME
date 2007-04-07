@@ -129,11 +129,11 @@ bool CompilationQueueElement::compile(JVM_SINGLE_ARG_TRAPS) {
      CompilationContinuation::cast(this)->compile(JVM_SINGLE_ARG_CHECK_(true));
     // IMPL_NOTE: need to revisit for inlining
     if (!Compiler::is_inlining()) {
-      // could add !is_suspended()  && if problem happens
-      if (   finished ) {
-          //if the CompliationConinuation is suspended, we skiped the schedule stage
-          Compiler::current()->schedule_current_cc( Compiler::current()->
-          code_generator()->compiled_method()  JVM_CHECK_(true));
+      // could add !is_suspended() && if problem happens
+      if( finished ) {
+        //if the CompliationConinuation is suspended, we skiped the schedule stage
+        Compiler::current()->schedule_current_cc( Compiler::current()->
+          code_generator()->compiled_method() JVM_CHECK_(true));
       }
     }
 #else
@@ -883,7 +883,7 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
   }
 }
 
-address ThrowExceptionStub::exception_thrower() {
+address ThrowExceptionStub::exception_thrower( void ) const {
   static const address addresses[number_of_runtime_exceptions] = {
     (address)null_pointer_exception,
     (address)array_index_out_of_bounds_exception,

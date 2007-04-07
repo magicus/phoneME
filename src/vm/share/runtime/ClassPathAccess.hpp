@@ -31,30 +31,15 @@
 
 class ClassPathAccess : public AllStatic {
 public:
-  /**
-   * Read the given entry from the system classpath.
-   */
-  static ReturnOop open_entry(Symbol* entry_name, bool is_class_file
-                              JVM_TRAPS);
-  /**
-   * Tries to read the given entry from the given classpath segment.
-   */
-  static ReturnOop open_entry_from_file(Symbol* entry_name, bool is_class_file, FilePath* path
-                              JVM_TRAPS);
-                              
+  // Read the given entry from the system classpath.
+  static ReturnOop open_entry(Symbol* entry_name, const bool is_class_file
+                                                                JVM_TRAPS);                              
 private:
-
-#if ENABLE_ROM_GENERATOR
-  static void check_classpath_for_romizer(Symbol* entry_name JVM_TRAPS);
-#endif
-
-  static ReturnOop open_jar_entry(JarFileParser *parser,
-                                  Symbol * entry_name,
-                                  bool is_class_file JVM_TRAPS);
+  static ReturnOop open_entry(Symbol* entry_name, const bool is_class_file,
+                                              OopDesc* classpath JVM_TRAPS);
+  static ReturnOop open_jar_entry(JarFileParser *parser, Symbol * entry_name,
+                                  const bool is_class_file JVM_TRAPS);
   static ReturnOop open_local_file(PathChar* path_name, Symbol * entry_name,
-                                   bool is_class_file JVM_TRAPS);
-
-  enum {
-    NAME_BUFFER_SIZE = 270
-  };
+                                  const bool is_class_file JVM_TRAPS);
+  enum { NAME_BUFFER_SIZE = 270 };
 };

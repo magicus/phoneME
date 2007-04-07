@@ -318,7 +318,6 @@ PRODUCT_CONST Bytecodes::BytecodeData Bytecodes::data[] = {
   def(pop_and_npe_if_null       , 1, "b"    , 0, ""      , NullCheck),
 #if !ENABLE_CPU_VARIANT
   def(init_static_array         , 0, ""     , 0, ""      , None),
-
   def(aload_0_fast_agetfield_4  , 1, "b"    , 0, ""      , Exceptions | CSE),
   def(aload_0_fast_igetfield_4  , 1, "b"    , 0, ""      , Exceptions | CSE),
   def(aload_0_fast_agetfield_8  , 1, "b"    , 0, ""      , Exceptions | CSE),

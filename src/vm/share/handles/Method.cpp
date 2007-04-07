@@ -1267,7 +1267,6 @@ void Method::fix_long_operations() {
 }
 #endif 
 
-
 void Method::iterate_push_constant_1(int i, BytecodeClosure* blk JVM_TRAPS) {
   UsingFastOops fast_oops;
   ConstantPool::Fast c = constants();
@@ -1307,90 +1306,16 @@ void Method::iterate_push_constant_2(int i, BytecodeClosure* blk JVM_TRAPS) {
   }
 }
 
-const BasicType array_op_types[]  = {
-  T_INT,  T_LONG,  T_FLOAT,  T_DOUBLE, T_OBJECT, T_BYTE,   T_CHAR,   T_SHORT
-};
-const BasicType field_op_types[]  = {
-  T_BYTE, T_SHORT, T_INT,    T_LONG,   T_FLOAT,  T_DOUBLE, T_OBJECT, T_CHAR
-};
-const BasicType local_op_types[]  = {
-  T_INT,  T_LONG,  T_FLOAT,  T_DOUBLE, T_OBJECT
-};
-const BasicType invoke_op_types[] = {
-  T_VOID, T_INT,   T_LONG,   T_FLOAT,  T_DOUBLE, T_OBJECT
-};
-const BytecodeClosure::cond_op branch_if_op_types[] = {
-  BytecodeClosure::eq,
-  BytecodeClosure::ne,
-  BytecodeClosure::lt,
-  BytecodeClosure::ge,
-  BytecodeClosure::gt,
-  BytecodeClosure::le
-};
-
-#define BINARY_OP_TYPE(a, b, c, d) c, d
-
-static const jubyte binary_op_types[] = {
-  BINARY_OP_TYPE(0x60, iadd,  T_INT,     BytecodeClosure::bin_add),
-  BINARY_OP_TYPE(0x61, ladd,  T_LONG,    BytecodeClosure::bin_add),
-  BINARY_OP_TYPE(0x62, fadd,  T_FLOAT,   BytecodeClosure::bin_add),
-  BINARY_OP_TYPE(0x63, dadd,  T_DOUBLE,  BytecodeClosure::bin_add),
-  BINARY_OP_TYPE(0x64, isub,  T_INT,     BytecodeClosure::bin_sub),
-  BINARY_OP_TYPE(0x65, lsub,  T_LONG,    BytecodeClosure::bin_sub),
-  BINARY_OP_TYPE(0x66, fsub,  T_FLOAT,   BytecodeClosure::bin_sub),
-  BINARY_OP_TYPE(0x67, dsub,  T_DOUBLE,  BytecodeClosure::bin_sub),
-  BINARY_OP_TYPE(0x68, imul,  T_INT,     BytecodeClosure::bin_mul),
-  BINARY_OP_TYPE(0x69, lmul,  T_LONG,    BytecodeClosure::bin_mul),
-  BINARY_OP_TYPE(0x6a, fmul,  T_FLOAT,   BytecodeClosure::bin_mul),
-  BINARY_OP_TYPE(0x6b, dmul,  T_DOUBLE,  BytecodeClosure::bin_mul),
-  BINARY_OP_TYPE(0x6c, idiv,  T_INT,     BytecodeClosure::bin_div),
-  BINARY_OP_TYPE(0x6d, ldiv,  T_LONG,    BytecodeClosure::bin_div),
-  BINARY_OP_TYPE(0x6e, fdiv,  T_FLOAT,   BytecodeClosure::bin_div),
-  BINARY_OP_TYPE(0x6f, ddiv,  T_DOUBLE,  BytecodeClosure::bin_div),
-  BINARY_OP_TYPE(0x70, irem,  T_INT,     BytecodeClosure::bin_rem),
-  BINARY_OP_TYPE(0x71, lrem,  T_LONG,    BytecodeClosure::bin_rem),
-  BINARY_OP_TYPE(0x72, frem,  T_FLOAT,   BytecodeClosure::bin_rem),
-  BINARY_OP_TYPE(0x73, drem,  T_DOUBLE,  BytecodeClosure::bin_rem),
-  BINARY_OP_TYPE(0x74, ineg,  T_ILLEGAL, 0),
-  BINARY_OP_TYPE(0x75, lneg,  T_ILLEGAL, 0),
-  BINARY_OP_TYPE(0x76, fneg,  T_ILLEGAL, 0),
-  BINARY_OP_TYPE(0x77, dneg,  T_ILLEGAL, 0),
-  BINARY_OP_TYPE(0x78, ishl,  T_INT,     BytecodeClosure::bin_shl),
-  BINARY_OP_TYPE(0x79, lshl,  T_LONG,    BytecodeClosure::bin_shl),
-  BINARY_OP_TYPE(0x7a, ishr,  T_INT,     BytecodeClosure::bin_shr),
-  BINARY_OP_TYPE(0x7b, lshr,  T_LONG,    BytecodeClosure::bin_shr),
-  BINARY_OP_TYPE(0x7c, iushr, T_INT,     BytecodeClosure::bin_ushr),
-  BINARY_OP_TYPE(0x7d, lushr, T_LONG,    BytecodeClosure::bin_ushr),
-  BINARY_OP_TYPE(0x7e, iand,  T_INT,     BytecodeClosure::bin_and),
-  BINARY_OP_TYPE(0x7f, land,  T_LONG,    BytecodeClosure::bin_and),
-  BINARY_OP_TYPE(0x80, ior,   T_INT,     BytecodeClosure::bin_or),
-  BINARY_OP_TYPE(0x81, lor,   T_LONG,    BytecodeClosure::bin_or),
-  BINARY_OP_TYPE(0x82, ixor,  T_INT,     BytecodeClosure::bin_xor),
-  BINARY_OP_TYPE(0x83, lxor,  T_LONG,    BytecodeClosure::bin_xor)
-};
-
-#define CONVERT_OP_TYPE(a, b, c, d) c, d
-
-static const jubyte convert_op_types[] = {
-  CONVERT_OP_TYPE(0x85, i2l, T_INT,    T_LONG),
-  CONVERT_OP_TYPE(0x86, i2f, T_INT,    T_FLOAT),
-  CONVERT_OP_TYPE(0x87, i2d, T_INT,    T_DOUBLE),
-  CONVERT_OP_TYPE(0x88, l2i, T_LONG,   T_INT),
-  CONVERT_OP_TYPE(0x89, l2f, T_LONG,   T_FLOAT),
-  CONVERT_OP_TYPE(0x8a, l2d, T_LONG,   T_DOUBLE),
-  CONVERT_OP_TYPE(0x8b, f2i, T_FLOAT,  T_INT),
-  CONVERT_OP_TYPE(0x8c, f2l, T_FLOAT,  T_LONG),
-  CONVERT_OP_TYPE(0x8d, f2d, T_FLOAT,  T_DOUBLE),
-  CONVERT_OP_TYPE(0x8e, d2i, T_DOUBLE, T_INT),
-  CONVERT_OP_TYPE(0x8f, d2l, T_DOUBLE, T_LONG),
-  CONVERT_OP_TYPE(0x90, d2f, T_DOUBLE, T_FLOAT),
-  CONVERT_OP_TYPE(0x91, i2b, T_INT,    T_BYTE),
-  CONVERT_OP_TYPE(0x92, i2c, T_INT,    T_CHAR),
-  CONVERT_OP_TYPE(0x93, i2s, T_INT,    T_SHORT),
-};
-
 void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
-                              Bytecodes::Code code JVM_TRAPS) {
+                              Bytecodes::Code code JVM_TRAPS)
+{
+  static const BasicType array_op_types[]  = {
+    T_INT,  T_LONG,  T_FLOAT,  T_DOUBLE, T_OBJECT, T_BYTE,   T_CHAR,   T_SHORT
+  };
+  static const BasicType field_op_types[]  = {
+    T_BYTE, T_SHORT, T_INT,    T_LONG,   T_FLOAT,  T_DOUBLE, T_OBJECT, T_CHAR
+  };
+
   blk->set_bytecode(bci);
   blk->bytecode_prolog(JVM_SINGLE_ARG_CHECK);
 
@@ -1410,173 +1335,167 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
       iterate_push_constant_2(get_java_ushort(bci+1), blk JVM_NO_CHECK);
       break;
 
-    case Bytecodes::_aconst_null:
-      { UsingFastOops fast_oops;
-        // This could possibly be a raw oops, since we don't really care
-        // about a NULL oop being GC'ed!
-        Oop::Fast obj;
-        blk->push_obj(&obj JVM_NO_CHECK);
-      }
+    case Bytecodes::_aconst_null: {
+      Oop::Raw obj;
+      blk->push_obj(&obj JVM_NO_CHECK);
       break;
+    }
 
     case Bytecodes::_iconst_m1        : // fall
     case Bytecodes::_iconst_2         : // fall
     case Bytecodes::_iconst_3         : // fall
     case Bytecodes::_iconst_4         : // fall
     case Bytecodes::_iconst_5         :
-        blk->push_int(code - Bytecodes::_iconst_0 JVM_NO_CHECK);
-        break;
+      blk->push_int(code - Bytecodes::_iconst_0 JVM_NO_CHECK);
+      break;
 
     case Bytecodes::_lconst_0         :
-        blk->push_long(0 JVM_NO_CHECK);
-        break;
+      blk->push_long(0 JVM_NO_CHECK);
+      break;
     case Bytecodes::_lconst_1         :
-        blk->push_long(1 JVM_NO_CHECK);
-        break;
+      blk->push_long(1 JVM_NO_CHECK);
+      break;
     case Bytecodes::_fconst_0         :
-        blk->push_float(0.0F JVM_NO_CHECK);
-        break;
+      blk->push_float(0.0F JVM_NO_CHECK);
+      break;
     case Bytecodes::_fconst_1         :
-        blk->push_float(1.0F JVM_NO_CHECK);
-        break;
+      blk->push_float(1.0F JVM_NO_CHECK);
+      break;
     case Bytecodes::_fconst_2         :
-        blk->push_float(2.0F JVM_NO_CHECK);
-        break;
+      blk->push_float(2.0F JVM_NO_CHECK);
+      break;
     case Bytecodes::_dconst_0         :
-        blk->push_double(0.0 JVM_NO_CHECK);
-        break;
+      blk->push_double(0.0 JVM_NO_CHECK);
+      break;
     case Bytecodes::_dconst_1         :
-        blk->push_double(1.0 JVM_NO_CHECK);
-        break;
+      blk->push_double(1.0 JVM_NO_CHECK);
+      break;
 
     case Bytecodes::_iload_0          : // fall
     case Bytecodes::_iload_1          : // fall
     case Bytecodes::_iload_2          : // fall
     case Bytecodes::_iload_3          :
-        blk->load_local(T_INT, code - Bytecodes::_iload_0 JVM_NO_CHECK);
-        break;
+      blk->load_local(T_INT, code - Bytecodes::_iload_0 JVM_NO_CHECK);
+      break;
 
     case Bytecodes::_lload            :
 #if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
     case Bytecodes::_lload_safe       :
 #endif
-
-        blk->load_local(T_LONG, get_ubyte(bci+1) JVM_NO_CHECK);
-        break;
+      blk->load_local(T_LONG, get_ubyte(bci+1) JVM_NO_CHECK);
+      break;
     case Bytecodes::_lload_0          : // fall
     case Bytecodes::_lload_1          : // fall
     case Bytecodes::_lload_2          : // fall
     case Bytecodes::_lload_3          :
-        blk->load_local(T_LONG, code - Bytecodes::_lload_0 JVM_NO_CHECK);
-        break;
+      blk->load_local(T_LONG, code - Bytecodes::_lload_0 JVM_NO_CHECK);
+      break;
 
     case Bytecodes::_fload            :
-        blk->load_local(T_FLOAT, get_ubyte(bci+1) JVM_NO_CHECK);
-        break;
+      blk->load_local(T_FLOAT, get_ubyte(bci+1) JVM_NO_CHECK);
+      break;
     case Bytecodes::_fload_0          : // fall
     case Bytecodes::_fload_1          : // fall
     case Bytecodes::_fload_2          : // fall
     case Bytecodes::_fload_3          :
-        blk->load_local(T_FLOAT, code - Bytecodes::_fload_0 JVM_NO_CHECK);
-        break;
+      blk->load_local(T_FLOAT, code - Bytecodes::_fload_0 JVM_NO_CHECK);
+      break;
 
     case Bytecodes::_dload            :
 #if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
     case Bytecodes::_dload_safe       :
 #endif
-        blk->load_local(T_DOUBLE, get_ubyte(bci+1) JVM_NO_CHECK);
-        break;
+      blk->load_local(T_DOUBLE, get_ubyte(bci+1) JVM_NO_CHECK);
+      break;
     case Bytecodes::_dload_0          : // fall
     case Bytecodes::_dload_1          : // fall
     case Bytecodes::_dload_2          : // fall
     case Bytecodes::_dload_3          :
-        blk->load_local(T_DOUBLE, code - Bytecodes::_dload_0 JVM_NO_CHECK);
-        break;
+      blk->load_local(T_DOUBLE, code - Bytecodes::_dload_0 JVM_NO_CHECK);
+      break;
 
     case Bytecodes::_aload_2          : // fall
     case Bytecodes::_aload_3          :
-        blk->load_local(T_OBJECT, code - Bytecodes::_aload_0 JVM_NO_CHECK);
-        break;
+      blk->load_local(T_OBJECT, code - Bytecodes::_aload_0 JVM_NO_CHECK);
+      break;
 
     case Bytecodes::_istore_0         : // fall
     case Bytecodes::_istore_1         : // fall
     case Bytecodes::_istore_2         : // fall
     case Bytecodes::_istore_3         :
-        blk->store_local(T_INT, code - Bytecodes::_istore_0 JVM_NO_CHECK);
-        break;
+      blk->store_local(T_INT, code - Bytecodes::_istore_0 JVM_NO_CHECK);
+      break;
 
     case Bytecodes::_lstore           :
 #if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
     case Bytecodes::_lstore_safe      :
 #endif
-        blk->store_local(T_LONG, get_ubyte(bci+1) JVM_NO_CHECK);
-        break;
+      blk->store_local(T_LONG, get_ubyte(bci+1) JVM_NO_CHECK);
+      break;
     case Bytecodes::_lstore_0         : // fall
     case Bytecodes::_lstore_1         : // fall
     case Bytecodes::_lstore_2         : // fall
     case Bytecodes::_lstore_3         :
-        blk->store_local(T_LONG, code - Bytecodes::_lstore_0 JVM_NO_CHECK);
-        break;
+      blk->store_local(T_LONG, code - Bytecodes::_lstore_0 JVM_NO_CHECK);
+      break;
 
     case Bytecodes::_fstore           :
-        blk->store_local(T_FLOAT, get_ubyte(bci+1) JVM_NO_CHECK);
-        break;
+      blk->store_local(T_FLOAT, get_ubyte(bci+1) JVM_NO_CHECK);
+      break;
     case Bytecodes::_fstore_0         : // fall
     case Bytecodes::_fstore_1         : // fall
     case Bytecodes::_fstore_2         : // fall
     case Bytecodes::_fstore_3         :
-        blk->store_local(T_FLOAT, code - Bytecodes::_fstore_0 JVM_NO_CHECK);
-        break;
+      blk->store_local(T_FLOAT, code - Bytecodes::_fstore_0 JVM_NO_CHECK);
+      break;
 
     case Bytecodes::_dstore           :
 #if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
     case Bytecodes::_dstore_safe      :
 #endif
-        blk->store_local(T_DOUBLE, get_ubyte(bci+1) JVM_NO_CHECK);
-        break;
+      blk->store_local(T_DOUBLE, get_ubyte(bci+1) JVM_NO_CHECK);
+      break;
     case Bytecodes::_dstore_0         : // fall
     case Bytecodes::_dstore_1         : // fall
     case Bytecodes::_dstore_2         : // fall
     case Bytecodes::_dstore_3         :
-        blk->store_local(T_DOUBLE, code - Bytecodes::_dstore_0 JVM_NO_CHECK);
-        break;
+      blk->store_local(T_DOUBLE, code - Bytecodes::_dstore_0 JVM_NO_CHECK);
+      break;
 
     case Bytecodes::_astore           :
-        blk->store_local(T_OBJECT, get_ubyte(bci+1) JVM_NO_CHECK);
-        break;
+      blk->store_local(T_OBJECT, get_ubyte(bci+1) JVM_NO_CHECK);
+      break;
     case Bytecodes::_astore_0         : // fall
     case Bytecodes::_astore_1         : // fall
     case Bytecodes::_astore_2         : // fall
     case Bytecodes::_astore_3         :
-        blk->store_local(T_OBJECT, code - Bytecodes::_astore_0 JVM_NO_CHECK);
-        break;
-
-    case Bytecodes::_iinc:
-      {
-        int index = get_ubyte(bci+1);
-        jint offset = get_byte(bci+2);
-        blk->increment_local_int(index, offset JVM_NO_CHECK);
-      }
+      blk->store_local(T_OBJECT, code - Bytecodes::_astore_0 JVM_NO_CHECK);
       break;
 
+    case Bytecodes::_iinc: {
+      const int index = get_ubyte(bci+1);
+      const jint offset = get_byte(bci+2);
+      blk->increment_local_int(index, offset JVM_NO_CHECK);
+      break;
+    }
+
     case Bytecodes::_newarray:
-        blk->new_basic_array(get_ubyte(bci+1) JVM_NO_CHECK);
-        break;
+      blk->new_basic_array(get_ubyte(bci+1) JVM_NO_CHECK);
+      break;
     case Bytecodes::_anewarray:
       blk->new_object_array(get_java_ushort(bci+1) JVM_NO_CHECK);
       break;
 
-    case Bytecodes::_multianewarray:
-      {
-        int klass_index = get_java_ushort(bci + 1);
-        int nof_dims = get_ubyte(bci+3);
-        blk->new_multi_array(klass_index, nof_dims JVM_NO_CHECK);
-      }
+    case Bytecodes::_multianewarray: {
+      const int klass_index = get_java_ushort(bci + 1);
+      const int nof_dims = get_ubyte(bci+3);
+      blk->new_multi_array(klass_index, nof_dims JVM_NO_CHECK);
       break;
+    }
 
     case Bytecodes::_arraylength     :
-        blk->array_length(JVM_SINGLE_ARG_NO_CHECK);
-        break;
+      blk->array_length(JVM_SINGLE_ARG_NO_CHECK);
+      break;
 
     case Bytecodes::_iaload          : // fall
     case Bytecodes::_laload          : // fall
@@ -1586,8 +1505,8 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
     case Bytecodes::_baload          : // fall
     case Bytecodes::_caload          : // fall
     case Bytecodes::_saload          :
-        blk->load_array(array_op_types[code - Bytecodes::_iaload] JVM_NO_CHECK);
-        break;
+      blk->load_array(array_op_types[code - Bytecodes::_iaload] JVM_NO_CHECK);
+      break;
 
     case Bytecodes::_lastore         : // fall
     case Bytecodes::_fastore         : // fall
@@ -1596,44 +1515,44 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
     case Bytecodes::_bastore         : // fall
     case Bytecodes::_castore         : // fall
     case Bytecodes::_sastore         :
-        blk->store_array(array_op_types[code - Bytecodes::_iastore] JVM_NO_CHECK);
-        break;
+      blk->store_array(array_op_types[code - Bytecodes::_iastore] JVM_NO_CHECK);
+      break;
 
     case Bytecodes::_nop             :
-        blk->nop(JVM_SINGLE_ARG_NO_CHECK);
-        break;
+      blk->nop(JVM_SINGLE_ARG_NO_CHECK);
+      break;
     case Bytecodes::_pop             :
-        blk->pop(JVM_SINGLE_ARG_NO_CHECK);
-        break;
+      blk->pop(JVM_SINGLE_ARG_NO_CHECK);
+      break;
     case Bytecodes::_pop_and_npe_if_null:
-        blk->pop_and_npe_if_null(JVM_SINGLE_ARG_NO_CHECK);
-        break;
+      blk->pop_and_npe_if_null(JVM_SINGLE_ARG_NO_CHECK);
+      break;
 #if !ENABLE_CPU_VARIANT
     case Bytecodes::_init_static_array:
-        blk->init_static_array(JVM_SINGLE_ARG_NO_CHECK);
-        break;
+      blk->init_static_array(JVM_SINGLE_ARG_NO_CHECK);
+      break;
 #endif
     case Bytecodes::_pop2            :
-        blk->pop2(JVM_SINGLE_ARG_NO_CHECK);
-        break;
+      blk->pop2(JVM_SINGLE_ARG_NO_CHECK);
+      break;
     case Bytecodes::_dup2            :
-        blk->dup2(JVM_SINGLE_ARG_NO_CHECK);
-        break;
+      blk->dup2(JVM_SINGLE_ARG_NO_CHECK);
+      break;
     case Bytecodes::_dup_x1          :
-        blk->dup_x1(JVM_SINGLE_ARG_NO_CHECK);
-        break;
+      blk->dup_x1(JVM_SINGLE_ARG_NO_CHECK);
+      break;
     case Bytecodes::_dup2_x1         :
-        blk->dup2_x1(JVM_SINGLE_ARG_NO_CHECK);
-        break;
+      blk->dup2_x1(JVM_SINGLE_ARG_NO_CHECK);
+      break;
     case Bytecodes::_dup_x2          :
-        blk->dup_x2(JVM_SINGLE_ARG_NO_CHECK);
-        break;
+      blk->dup_x2(JVM_SINGLE_ARG_NO_CHECK);
+      break;
     case Bytecodes::_dup2_x2         :
-        blk->dup2_x2(JVM_SINGLE_ARG_NO_CHECK);
-        break;
+      blk->dup2_x2(JVM_SINGLE_ARG_NO_CHECK);
+      break;
     case Bytecodes::_swap            :
-        blk->swap (JVM_SINGLE_ARG_NO_CHECK);
-        break;
+      blk->swap (JVM_SINGLE_ARG_NO_CHECK);
+      break;
 
     case Bytecodes::_ladd:
     case Bytecodes::_fadd:
@@ -1665,25 +1584,64 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
     case Bytecodes::_ior:
     case Bytecodes::_lor:
     case Bytecodes::_ixor:
-    case Bytecodes::_lxor:
-      {
-        int i = (code - Bytecodes::_iadd) * 2;
-        blk->binary((BasicType)binary_op_types[i],
-                    (BytecodeClosure::binary_op)binary_op_types[i+1]
-                    JVM_NO_CHECK);
-      }
+    case Bytecodes::_lxor: {
+      #define BINARY_OP_TYPE(a, b, c, d) c, d
+      static const jubyte binary_op_types[] = {
+	BINARY_OP_TYPE(0x60, iadd,  T_INT,     BytecodeClosure::bin_add),
+	BINARY_OP_TYPE(0x61, ladd,  T_LONG,    BytecodeClosure::bin_add),
+	BINARY_OP_TYPE(0x62, fadd,  T_FLOAT,   BytecodeClosure::bin_add),
+	BINARY_OP_TYPE(0x63, dadd,  T_DOUBLE,  BytecodeClosure::bin_add),
+	BINARY_OP_TYPE(0x64, isub,  T_INT,     BytecodeClosure::bin_sub),
+	BINARY_OP_TYPE(0x65, lsub,  T_LONG,    BytecodeClosure::bin_sub),
+	BINARY_OP_TYPE(0x66, fsub,  T_FLOAT,   BytecodeClosure::bin_sub),
+	BINARY_OP_TYPE(0x67, dsub,  T_DOUBLE,  BytecodeClosure::bin_sub),
+	BINARY_OP_TYPE(0x68, imul,  T_INT,     BytecodeClosure::bin_mul),
+	BINARY_OP_TYPE(0x69, lmul,  T_LONG,    BytecodeClosure::bin_mul),
+	BINARY_OP_TYPE(0x6a, fmul,  T_FLOAT,   BytecodeClosure::bin_mul),
+	BINARY_OP_TYPE(0x6b, dmul,  T_DOUBLE,  BytecodeClosure::bin_mul),
+	BINARY_OP_TYPE(0x6c, idiv,  T_INT,     BytecodeClosure::bin_div),
+	BINARY_OP_TYPE(0x6d, ldiv,  T_LONG,    BytecodeClosure::bin_div),
+	BINARY_OP_TYPE(0x6e, fdiv,  T_FLOAT,   BytecodeClosure::bin_div),
+	BINARY_OP_TYPE(0x6f, ddiv,  T_DOUBLE,  BytecodeClosure::bin_div),
+	BINARY_OP_TYPE(0x70, irem,  T_INT,     BytecodeClosure::bin_rem),
+	BINARY_OP_TYPE(0x71, lrem,  T_LONG,    BytecodeClosure::bin_rem),
+	BINARY_OP_TYPE(0x72, frem,  T_FLOAT,   BytecodeClosure::bin_rem),
+	BINARY_OP_TYPE(0x73, drem,  T_DOUBLE,  BytecodeClosure::bin_rem),
+	BINARY_OP_TYPE(0x74, ineg,  T_ILLEGAL, 0),
+	BINARY_OP_TYPE(0x75, lneg,  T_ILLEGAL, 0),
+	BINARY_OP_TYPE(0x76, fneg,  T_ILLEGAL, 0),
+	BINARY_OP_TYPE(0x77, dneg,  T_ILLEGAL, 0),
+	BINARY_OP_TYPE(0x78, ishl,  T_INT,     BytecodeClosure::bin_shl),
+	BINARY_OP_TYPE(0x79, lshl,  T_LONG,    BytecodeClosure::bin_shl),
+	BINARY_OP_TYPE(0x7a, ishr,  T_INT,     BytecodeClosure::bin_shr),
+	BINARY_OP_TYPE(0x7b, lshr,  T_LONG,    BytecodeClosure::bin_shr),
+	BINARY_OP_TYPE(0x7c, iushr, T_INT,     BytecodeClosure::bin_ushr),
+	BINARY_OP_TYPE(0x7d, lushr, T_LONG,    BytecodeClosure::bin_ushr),
+	BINARY_OP_TYPE(0x7e, iand,  T_INT,     BytecodeClosure::bin_and),
+	BINARY_OP_TYPE(0x7f, land,  T_LONG,    BytecodeClosure::bin_and),
+	BINARY_OP_TYPE(0x80, ior,   T_INT,     BytecodeClosure::bin_or),
+	BINARY_OP_TYPE(0x81, lor,   T_LONG,    BytecodeClosure::bin_or),
+	BINARY_OP_TYPE(0x82, ixor,  T_INT,     BytecodeClosure::bin_xor),
+	BINARY_OP_TYPE(0x83, lxor,  T_LONG,    BytecodeClosure::bin_xor)
+      };
+      #undef BINARY_OP_TYPE
+
+      const int i = (code - Bytecodes::_iadd) * 2;
+      blk->binary(BasicType(binary_op_types[i]),
+                  BytecodeClosure::binary_op(binary_op_types[i+1])
+                  JVM_NO_CHECK);
       break;
+    }
 
     case Bytecodes::_ineg:
     case Bytecodes::_lneg:
     case Bytecodes::_fneg:
-    case Bytecodes::_dneg:
-      {
-        static const jubyte table[] = {T_INT, T_LONG, T_FLOAT, T_DOUBLE};
-        BasicType type = (BasicType)table[code - Bytecodes::_ineg];
-        blk->neg(type JVM_NO_CHECK);
-      }
+    case Bytecodes::_dneg: {
+      static const jubyte table[] = {T_INT, T_LONG, T_FLOAT, T_DOUBLE};
+      BasicType type = (BasicType)table[code - Bytecodes::_ineg];
+      blk->neg(type JVM_NO_CHECK);
       break;
+    }
 
     case Bytecodes::_i2l:
     case Bytecodes::_i2f:
@@ -1699,13 +1657,32 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
     case Bytecodes::_d2f:
     case Bytecodes::_i2b:
     case Bytecodes::_i2c:
-    case Bytecodes::_i2s:
-      {
-        int i = (code - Bytecodes::_i2l) * 2;
-        blk->convert((BasicType)convert_op_types[i],
-                     (BasicType)convert_op_types[i+1]   JVM_NO_CHECK);
-      }
+    case Bytecodes::_i2s: {
+      #define CONVERT_OP_TYPE(a, b, c, d) c, d
+      static const jubyte convert_op_types[] = {
+	CONVERT_OP_TYPE(0x85, i2l, T_INT,    T_LONG),
+	CONVERT_OP_TYPE(0x86, i2f, T_INT,    T_FLOAT),
+	CONVERT_OP_TYPE(0x87, i2d, T_INT,    T_DOUBLE),
+	CONVERT_OP_TYPE(0x88, l2i, T_LONG,   T_INT),
+	CONVERT_OP_TYPE(0x89, l2f, T_LONG,   T_FLOAT),
+	CONVERT_OP_TYPE(0x8a, l2d, T_LONG,   T_DOUBLE),
+	CONVERT_OP_TYPE(0x8b, f2i, T_FLOAT,  T_INT),
+	CONVERT_OP_TYPE(0x8c, f2l, T_FLOAT,  T_LONG),
+	CONVERT_OP_TYPE(0x8d, f2d, T_FLOAT,  T_DOUBLE),
+	CONVERT_OP_TYPE(0x8e, d2i, T_DOUBLE, T_INT),
+	CONVERT_OP_TYPE(0x8f, d2l, T_DOUBLE, T_LONG),
+	CONVERT_OP_TYPE(0x90, d2f, T_DOUBLE, T_FLOAT),
+	CONVERT_OP_TYPE(0x91, i2b, T_INT,    T_BYTE),
+	CONVERT_OP_TYPE(0x92, i2c, T_INT,    T_CHAR),
+	CONVERT_OP_TYPE(0x93, i2s, T_INT,    T_SHORT),
+      };
+      #undef CONVERT_OP_TYPE
+
+      const int i = (code - Bytecodes::_i2l) * 2;
+      blk->convert((BasicType)convert_op_types[i],
+                   (BasicType)convert_op_types[i+1] JVM_NO_CHECK);
       break;
+    }
 
     case Bytecodes::_ifeq : // 153
     case Bytecodes::_ifne : // 154
@@ -1714,19 +1691,20 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
     case Bytecodes::_ifgt : // 157
     case Bytecodes::_ifle : // 158
       {
-        BytecodeClosure::cond_op op = (BytecodeClosure::cond_op)
-          (BytecodeClosure::eq + code - Bytecodes::_ifeq);
+        const BytecodeClosure::cond_op op = BytecodeClosure::cond_op
+          (code - Bytecodes::_ifeq + BytecodeClosure::eq);
         blk->branch_if(op,  bci + get_java_short(bci+1) JVM_NO_CHECK);
       }
       break;
-    case Bytecodes::_ifnull          :
-        blk->branch_if(BytecodeClosure::null, bci + get_java_short(bci+1)
-                       JVM_NO_CHECK);
-        break;
-    case Bytecodes::_ifnonnull       :
-        blk->branch_if(BytecodeClosure::nonnull, bci + get_java_short(bci+1)
-                       JVM_NO_CHECK);
-        break;
+
+    case Bytecodes::_ifnull   :
+    case Bytecodes::_ifnonnull:
+      {
+        const BytecodeClosure::cond_op op = BytecodeClosure::cond_op
+          (code - Bytecodes::_ifnull + BytecodeClosure::null);
+        blk->branch_if( op, bci + get_java_short(bci+1) JVM_NO_CHECK );
+      }
+      break;
 
     case Bytecodes::_if_icmpeq:  // 159
     case Bytecodes::_if_icmpne:  // 160
@@ -1735,8 +1713,8 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
     case Bytecodes::_if_icmpgt:  // 163
     case Bytecodes::_if_icmple:  // 164
       {
-        BytecodeClosure::cond_op op = (BytecodeClosure::cond_op)
-          (BytecodeClosure::eq + code - Bytecodes::_if_icmpeq);
+        const BytecodeClosure::cond_op op = BytecodeClosure::cond_op
+          (code - Bytecodes::_if_icmpeq + BytecodeClosure::eq);
         blk->branch_if_icmp(op, bci + get_java_short(bci+1) JVM_NO_CHECK);
       }
       break;
@@ -1754,40 +1732,35 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
           T_DOUBLE, BytecodeClosure::lt,
           T_DOUBLE, BytecodeClosure::gt,
         };
-        int i = (code - Bytecodes::_lcmp) * 2;
-        blk->compare((BasicType)table[i],
-                     (BytecodeClosure::cond_op)table[i+1] JVM_NO_CHECK);
+        const int i = (code - Bytecodes::_lcmp) * 2;
+        blk->compare(BasicType(table[i]),
+                     BytecodeClosure::cond_op(table[i+1]) JVM_NO_CHECK);
       }
       break;
 
-    case Bytecodes::_if_acmpeq       :
-        blk->branch_if_acmp(BytecodeClosure::eq, bci + get_java_short(bci+1)
-                            JVM_NO_CHECK);
-        break;
-    case Bytecodes::_if_acmpne       :
-        blk->branch_if_acmp(BytecodeClosure::ne, bci + get_java_short(bci+1)
-                            JVM_NO_CHECK);
-        break;
-
+    case Bytecodes::_if_acmpeq:
+    case Bytecodes::_if_acmpne: {
+      const BytecodeClosure::cond_op op = BytecodeClosure::cond_op
+        (code - Bytecodes::_if_acmpeq + BytecodeClosure::eq);
+      blk->branch_if_acmp(op, bci + get_java_short(bci+1) JVM_NO_CHECK);
+      break;
+    }
     case Bytecodes::_goto_w          :
-        blk->branch(bci + get_java_int(bci+1)   JVM_NO_CHECK);
-        break;
+      blk->branch(bci + get_java_int(bci+1) JVM_NO_CHECK);
+      break;
 
     case Bytecodes::_ireturn:
     case Bytecodes::_lreturn:
     case Bytecodes::_freturn:
     case Bytecodes::_dreturn:
     case Bytecodes::_areturn:
-    case Bytecodes::_return:
-      {
-        static const jubyte table[] = {
-          T_INT, T_LONG, T_FLOAT, T_DOUBLE, T_OBJECT, T_VOID
-        };
-        blk->return_op((BasicType)(table[code-Bytecodes::_ireturn])
-                       JVM_NO_CHECK);
-      }
+    case Bytecodes::_return: {
+      static const jubyte table[] = {
+        T_INT, T_LONG, T_FLOAT, T_DOUBLE, T_OBJECT, T_VOID
+      };
+      blk->return_op(BasicType(table[code-Bytecodes::_ireturn]) JVM_NO_CHECK);
       break;
-
+    }
     case Bytecodes::_putfield:
       blk->put_field(get_java_ushort(bci+1) JVM_NO_CHECK);
       break;
@@ -1804,14 +1777,12 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
       blk->fast_invoke_special(get_java_ushort(bci+1) JVM_NO_CHECK);
       break;
 
-    case Bytecodes::_invokeinterface:
-      {
-        int i = get_java_ushort(bci+1);
-        int n = get_ubyte(bci+3);
-        blk->invoke_interface(i, n JVM_NO_CHECK);
-      }
+    case Bytecodes::_invokeinterface: {
+      const int i = get_java_ushort(bci+1);
+      const int n = get_ubyte(bci+3);
+      blk->invoke_interface(i, n JVM_NO_CHECK);
       break;
-
+    }
     case Bytecodes::_athrow:
       blk->throw_exception(JVM_SINGLE_ARG_NO_CHECK);
       break;
@@ -1920,8 +1891,7 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
       BasicType type = field_op_types[code - Bytecodes::_fast_bgetfield];
       int offset = ENABLE_NATIVE_ORDER_REWRITING ? get_native_ushort(bci+1)
                                                  : get_java_ushort(bci+1);
-
-      if (::byte_size_for(type) >= BytesPerWord) {
+      if (byte_size_for(type) >= BytesPerWord) {
         offset *= BytesPerWord;
       }
       blk->fast_get_field(type, offset JVM_NO_CHECK);
@@ -2068,53 +2038,38 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
     blk->push_int(get_byte(bci+1) JVM_NO_CHECK);
     break;
 
-  default:
-    iterate_uncommon_bytecode(bci, blk JVM_NO_CHECK);
-    break;
-  }
-
-  // JVM_NO_CHECK is used instead of JVM_CHECK in the above switch statement.
-  // For that reason an explicit exception check is needed here.
-  if (CURRENT_HAS_PENDING_EXCEPTION) {
-    blk->handle_exception(JVM_SINGLE_ARG_CHECK);
-  }
-
-  blk->bytecode_epilog(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
-}
-
-void Method::iterate_uncommon_bytecode(int bci, BytecodeClosure* blk JVM_TRAPS)
-{
-  Bytecodes::Code code = bytecode_at(bci);
-  switch (code) {
   case Bytecodes::_tableswitch:
     {
-      int aligned_index = align_size_up(bci + 1, sizeof(jint));
-      int default_dest  = bci + get_java_switch_int(aligned_index + 0);
-      int low           = get_java_switch_int(aligned_index + 4);
-      int high          = get_java_switch_int(aligned_index + 8);
+      const int aligned_index = align_size_up(bci + 1, sizeof(jint));
+      const int default_dest  = bci + get_java_switch_int(aligned_index + 0);
+      const int low           = get_java_switch_int(aligned_index + 4);
+      const int high          = get_java_switch_int(aligned_index + 8);
       blk->table_switch(aligned_index, default_dest, low, high JVM_NO_CHECK);
     }
     break;
 
   case Bytecodes::_lookupswitch:
     {
-      int aligned_index = align_size_up(bci + 1, sizeof(jint));
-      int default_dest  = bci + get_java_switch_int(aligned_index + 0);
-      int num_of_pairs  = get_java_switch_int(aligned_index + 4);
-      blk->lookup_switch(aligned_index, default_dest, num_of_pairs
-                         JVM_NO_CHECK);
+      const int aligned_index = align_size_up(bci + 1, sizeof(jint));
+      const int default_dest  = bci + get_java_switch_int(aligned_index + 0);
+      const int num_of_pairs  = get_java_switch_int(aligned_index + 4);
+      blk->lookup_switch(aligned_index, default_dest,num_of_pairs JVM_NO_CHECK);
     }
     break;
 
   case Bytecodes::_wide:
     {
+      static const BasicType local_op_types[]  = {
+	T_INT,  T_LONG,  T_FLOAT,  T_DOUBLE, T_OBJECT
+      };
+
       code = bytecode_at(bci + 1);
       switch (code) {
 
       case Bytecodes::_iinc :
         {
-          jint index  = get_java_ushort(bci+2);
-          jint offset = get_java_short(bci+4);
+          const jint index  = get_java_ushort(bci+2);
+          const jint offset = get_java_short(bci+4);
           blk->increment_local_int(index, offset JVM_NO_CHECK);
         }
         break;
@@ -2151,11 +2106,18 @@ void Method::iterate_uncommon_bytecode(int bci, BytecodeClosure* blk JVM_TRAPS)
       }
     }
     break;
-
   default:
     blk->illegal_code(JVM_SINGLE_ARG_NO_CHECK);
     break;
   }
+
+  // JVM_NO_CHECK is used instead of JVM_CHECK in the above switch statement.
+  // For that reason an explicit exception check is needed here.
+  if (CURRENT_HAS_PENDING_EXCEPTION) {
+    blk->handle_exception(JVM_SINGLE_ARG_CHECK);
+  }
+
+  blk->bytecode_epilog(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
 }
 
 void Method::set_default_entry(bool check_impossible_flag) {

@@ -1671,7 +1671,6 @@ void BytecodeCompileClosure::do_direct_invoke(Method * callee,
           
         if (must_do_null_check) {
           Value receiver(T_OBJECT);
-          Assembler::Condition cond;
           frame()->receiver(receiver, callee->size_of_parameters());
           // IMPL_NOTE: use maybe_null_check_1/2 on ARM
           code_generator()->maybe_null_check(receiver JVM_CHECK);

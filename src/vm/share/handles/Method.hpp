@@ -403,7 +403,7 @@ public:
     GUARANTEE(native_code_offset() % BytesPerWord == 0, "bad native alignment");
     *(address *)field_base(native_code_offset()) = code;
   }
-  address get_native_code() const { 
+  address get_native_code( void ) const { 
     return *(address *)field_base(native_code_offset());
   }
 
@@ -414,7 +414,7 @@ public:
                   "misuse of overloaded field");
     *(address *)field_base(quick_native_code_offset()) = code;
   }
-  address get_quick_native_code() const { 
+  address get_quick_native_code( void ) const { 
     GUARANTEE(GenerateROMImage || is_quick_native(),
               "misuse of overloaded field");
     return *(address *)field_base(quick_native_code_offset());
@@ -437,25 +437,19 @@ public:
     }
   }
 
-  void byte_at_put(jint bci, jint value) {
+  void byte_at_put(const jint bci, const jint value) {
     ubyte_field_put(bc_offset_for(bci), (jubyte) value);
   }
 
-  Bytecodes::Code bytecode_at_raw(jint bci)
-  {
-    return (Bytecodes::Code) ubyte_field(bc_offset_for(bci));
+  Bytecodes::Code bytecode_at_raw(const jint bci) const {
+    return Bytecodes::Code( ubyte_at( bci ) );
   }
 
-  Bytecodes::Code bytecode_at(const jint bci) const {
-    if (_debugger_active) {
-      if ((Bytecodes::Code)ubyte_field(bc_offset_for(bci)) == Bytecodes::_breakpoint) {
-        return VMEvent::get_verifier_breakpoint_opcode(this, bci);
-      } else {
-        return (Bytecodes::Code) ubyte_field(bc_offset_for(bci));
-      }
-    } else {
-      return (Bytecodes::Code) ubyte_field(bc_offset_for(bci));
-    }
+  Bytecodes::Code bytecode_at( const jint bci ) const {
+    const Bytecodes::Code code = bytecode_at_raw( bci );
+    return _debugger_active && code == Bytecodes::_breakpoint
+           ? VMEvent::get_verifier_breakpoint_opcode(this, bci)
+           : code;
   }
 
   // Returns the handler bci for a given exception class and a given bytecode
@@ -470,13 +464,13 @@ public:
   // return the handler bci.  Otherwise, return -1
   jint exception_handler_if_first_is_any(jint bci);
 
-  bool is_local(int index) const {
+  bool is_local( const int index ) const {
     return (0 <= index && index < max_locals());
   }
 
   // Accessors for indices
 
-  jubyte  ubyte_at(jint bci) {
+  jubyte ubyte_at( const jint bci ) const {
     return ubyte_field(bc_offset_for(bci));
   }
 
@@ -725,7 +719,6 @@ public:
 #endif 
   void iterate_bytecode(int bci, BytecodeClosure* blk, Bytecodes::Code code
                         JVM_TRAPS);
-  void iterate_uncommon_bytecode(int bci, BytecodeClosure* blk JVM_TRAPS);
 
 #if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR || \
        ENABLE_PERFORMANCE_COUNTERS || ENABLE_JVMPI_PROFILE

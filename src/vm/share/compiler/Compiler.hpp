@@ -418,7 +418,7 @@ class Compiler: public StackObj {
   }
 
   // Entry counts accessor.
-  int entry_count_for(const jint bci)  {
+  int entry_count_for(const jint bci) {
     return entry_counts_table()->ubyte_at(bci);
   }
 
@@ -445,13 +445,13 @@ class Compiler: public StackObj {
   }
 
   // Entry accessor.
-  ReturnOop entry_for(const jint bci)  {
+  ReturnOop entry_for(const jint bci) {
     return entry_table()->obj_at(bci);
   }
   void set_entry_for(const jint bci, Entry* entry) {
     entry_table()->obj_at_put(bci, entry);
   }
-  bool has_entry_for(const jint bci)  {
+  bool has_entry_for(const jint bci) {
     return entry_for(bci) != NULL;
   }
 

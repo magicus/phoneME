@@ -193,32 +193,32 @@ public:
     int_field_put(register_1_offset(), value);
   }
 
-  jint info() {
+  jint info(void) const {
     return int_field(info_offset());
   }
   void set_info(jint value) {
     int_field_put(info_offset(), value);
   }
-  bool is_suspended() {
+  bool is_suspended(void) const {
     return bool_field(is_suspended_offset());
   }
   void set_is_suspended(bool value) {
     bool_field_put(is_suspended_offset(), CAST_TO_JBOOLEAN(value));
   }
-  bool entry_has_been_bound() {
+  bool entry_has_been_bound(void) const {
     return bool_field(entry_has_been_bound_offset());
   }
   void set_entry_has_been_bound(bool value) {
     bool_field_put(entry_has_been_bound_offset(), CAST_TO_JBOOLEAN(value));
   }
-  jint code_size_before() {
+  jint code_size_before(void) const {
     return int_field(code_size_before_offset());
   }
   void set_code_size_before(jint value) {
     int_field_put(code_size_before_offset(), value);
   }
 
-  ReturnOop next() { return obj_field(next_offset()); }
+  ReturnOop next(void) const { return obj_field(next_offset()); }
 
   void set_next(CompilationQueueElement* value) {
     obj_field_put(next_offset(), value);
@@ -249,18 +249,26 @@ class CompilationContinuation: public CompilationQueueElement {
      cc_flag_forward_branch_target = 8
   };
 
-  void set_need_osr_entry() { set_info(info() | cc_flag_need_osr_entry); }
-  bool need_osr_entry()     { return (info() & cc_flag_need_osr_entry) != 0; }
+  void set_need_osr_entry( void ) {
+    set_info(info() | cc_flag_need_osr_entry);
+  }
+  bool need_osr_entry( void ) const {
+    return (info() & cc_flag_need_osr_entry) != 0;
+  }
 
-  void set_is_exception_handler() { 
+  void set_is_exception_handler( void ) { 
     set_info(info() | cc_flag_is_exception_handler);
   }
-  bool is_exception_handler() {
+  bool is_exception_handler( void ) const {
     return (info() & cc_flag_is_exception_handler) != 0;
   }
 
-  void set_run_immediately() { set_info(info() | cc_flag_run_immediately); }
-  bool run_immediately()     { return (info() & cc_flag_run_immediately) != 0;}
+  void set_run_immediately( void ) {
+    set_info(info() | cc_flag_run_immediately);
+  }
+  bool run_immediately( void ) const {
+    return (info() & cc_flag_run_immediately) != 0;
+  }
 
   void set_forward_branch_target() { 
     set_info(info() | cc_flag_forward_branch_target); 
@@ -299,19 +307,19 @@ protected:
   static ReturnOop allocate_or_share(RuntimeException rte JVM_TRAPS);
 
 private:
-  address exception_thrower();
+  address exception_thrower( void ) const;
 
   void set_rte(RuntimeException rte) {
     GUARANTEE(info() == 0, "Only set rte once");
     set_info((jint)rte);
   }
-  RuntimeException get_rte()  {
-    return (RuntimeException)(info() & ~0x80000000);
+  RuntimeException get_rte( void ) const {
+    return RuntimeException(info() & ~0x80000000);
   }
 
 public:
-  void set_is_persistent() { set_info(info() | 0x80000000); }
-  bool is_persistent()  { return info() < 0; }
+  void set_is_persistent( void ) { set_info(info() | 0x80000000); }
+  bool is_persistent    ( void ) const { return info() < 0; }
 
   // Throw an exception.
   void compile(JVM_SINGLE_ARG_TRAPS);

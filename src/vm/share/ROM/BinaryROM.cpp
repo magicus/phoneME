@@ -1083,7 +1083,9 @@ bool ROM::link_dynamic(Task* task, FilePath* unicode_file JVM_TRAPS) {
     bun->fixup();    
   }
 
+#if ENABLE_LIB_IMAGES && ENABLE_ISOLATES
   int global_bundle_id;
+#endif
   {
     // The effect of this block would be undone in Task::link_dynamic()
     // if we fail later on.

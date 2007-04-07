@@ -1138,6 +1138,8 @@
 #endif
 #endif
 
+#define USE_OPTIMIZE_COMPARE_AND_CONDITIONAL_BRANCH 0
+
 //
 // USE_EMBEDDED_VTABLE_BITMAP      Embed a vtable bitmap in JavaClassDesc,
 //                                 one bit per virtual method to mark
