@@ -1635,7 +1635,6 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMIDletSuiteIcon0) {
             KNI_SetRawArrayRegion(iconBytesArray, 0,
                 length, (jbyte *)buffer);
         }
-        midpFree(buffer);
     }
     RELEASE_PCSL_STRING_PARAMETER
 
