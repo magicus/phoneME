@@ -56,6 +56,11 @@ import com.sun.midp.main.MIDletSuiteVerifier;
 import com.sun.midp.util.Properties;
 import com.sun.midp.configurator.Constants;
 
+// #ifdef ENABLE_JSR_82
+import com.sun.midp.jsr082.bluetooth.BluetoothStack;
+// #endif
+
+
 /**
  * Implements the required MIDletSuite functionality needed by the
  * system.
@@ -324,6 +329,7 @@ public final class MIDletSuiteImpl implements MIDletSuite {
         String currentName;
         boolean interruptOk;
         boolean settingsChanged = false;
+        String extraValue = null;
 
         guaranteeMIDletSuiteLocked("permissionToInterrupt");
         suiteSettings.load();
@@ -349,14 +355,37 @@ public final class MIDletSuiteImpl implements MIDletSuite {
             if (connection == null) {
                 question = temp.getAlarmInterruptQuestion();
             } else {
-                question = temp.getPushInterruptQuestion();
+// #ifdef ENABLE_JSR_82
+                if (isBluetoothUrl0(connection)) {
+                    question = temp.getPushDevInterruptQuestion();
+                    extraValue = 
+                        BluetoothStack.getInstance().askFriendlyNameSync(
+                            getInpAddr0());
+                } else {
+// #endif
+                    question = temp.getPushInterruptQuestion();
+// #ifdef ENABLE_JSR_82
+                }
+// #endif
             }
 
             currentName = temp.getSuiteNameForInterrupt();
         } else {
             // Use the internal MIDlet question
-            question = ResourceConstants.
+// #ifdef ENABLE_JSR_82
+            if (isBluetoothUrl0(connection)) {
+                question = ResourceConstants.
+                           AMS_MIDLETSUITEIMPL_PUSH_DEV_INTERRUPT_QUESTION;
+                extraValue = 
+                    BluetoothStack.getInstance().askFriendlyNameSync(
+                        getInpAddr0());
+            } else {
+// #endif
+                question = ResourceConstants.
                            AMS_MIDLETSUITELDR_PUSH_INTERRUPT_QUESTION;
+// #ifdef ENABLE_JSR_82
+            }
+// #endif
 
             currentName = Resource.getString
                 (ResourceConstants.AMS_MIDLETSUITEIMPL_CURR_APP);
@@ -367,7 +396,7 @@ public final class MIDletSuiteImpl implements MIDletSuite {
                           classSecurityToken, isTrusted(),
                           ResourceConstants.AMS_MIDLETSUITEIMPL_INTRPT_QUE,
                           question,
-                          name, currentName, null);
+                          name, currentName, extraValue);
             switch (suiteSettings.getPushInterruptSetting()) {
             case Permissions.BLANKET:
                 if (interruptOk) {
@@ -501,6 +530,39 @@ public final class MIDletSuiteImpl implements MIDletSuite {
         return
          ResourceConstants.AMS_MIDLETSUITEIMPL_PUSH_INTERRUPT_QUESTION;
     }
+
+// #ifdef ENABLE_JSR_82
+    /**
+     * Gets the Push interrupt question the should be used when
+     * interrupting this suite by JSR82 push MIDlet.
+     * <p>
+     * The question will have %2 where this suite name should be and
+     * a %1 where the current suite name should be.
+     *
+     * @return push interrupt question with device friendly name
+     */
+    private int getPushDevInterruptQuestion() {
+        return
+         ResourceConstants.AMS_MIDLETSUITEIMPL_PUSH_DEV_INTERRUPT_QUESTION;
+    }
+
+    /**
+     * Checks is the input connection is bluetooth.
+     *
+     * @param conn input connection string
+     *
+     * @return true when input connection is bluetooth
+     */
+    private native boolean isBluetoothUrl0(String conn);
+
+    /**
+     * Gets bluetooth address from last incomming push connection.
+     *
+     * @return bluetooth address
+     */
+    private native String getInpAddr0();
+
+// #endif
 
     /**
      * Gets the installation information of this suite.
