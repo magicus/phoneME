@@ -136,9 +136,22 @@ if [ -z "$CDC_SUBDIR" ] ; then
     export CDC_SUBDIR=jump
 fi
 
+### Try to determine a default build platform.
+### This is just a simple way to determine it.
+### This should be adjusted to fit more platforms.
+if [ -z "$DEFAULT_LINUX_PLATFORM" ] ; then
+  tmp=`uname -a | awk '{ print $3 }' | grep generic`
+  if [ "$tmp" != "" ] ; then
+    DEFAULT_LINUX_PLATFORM=linux-x86-generic
+  else
+    DEFAULT_LINUX_PLATFORM=linux-x86-suse  
+  fi
+fi
+
 if [ -z "$PHONEME_DIST" ] ; then
     if [ "$PHONEME_PLATFORM" = "i686" ] ; then
-        export PHONEME_DIST=$PHONEME_DIR/build/linux-x86-suse/$CDC_SUBDIR
+
+        export PHONEME_DIST=$PHONEME_DIR/build/$DEFAULT_LINUX_PLATFORM/$CDC_SUBDIR
     fi
 fi
 

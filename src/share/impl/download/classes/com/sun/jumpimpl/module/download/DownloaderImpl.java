@@ -98,6 +98,20 @@ class DownloaderImpl implements JUMPDownloader {
         return null;
  
     }
+    
+    private String encode(String url) {
+        // Change spaces to %20
+        String encodedURL = "";
+        for (int i = 0; i < url.length(); i++) {
+            char c = url.charAt(i);
+            if (c == ' ') {
+                encodedURL += "%20";
+            } else {
+                encodedURL += c;
+            }
+        }
+        return encodedURL;
+    }    
 
     public boolean startDownload( String url, String nfUri,
                                 int size, JUMPDownloadDestination store
@@ -114,7 +128,7 @@ class DownloaderImpl implements JUMPDownloader {
                 gran = report.getGranularity();
             }
 
-            URL objectUrl = new URL( url );
+            URL objectUrl = new URL( encode(url) );
     
             if ( report != null )
             {
