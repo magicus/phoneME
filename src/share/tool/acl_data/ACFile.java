@@ -149,7 +149,6 @@ public class ACFile {
             acf.child = acf.child.next;
             TLV acf_p = TLV.createSequence();
             acf_p.setChild(acf);
-            System.out.println("file " + Integer.toHexString(acl.getNum()));
             addFile(acl.getNum(), acf_p.child.getValue());
         }
         acif.child = acif.child.next;
