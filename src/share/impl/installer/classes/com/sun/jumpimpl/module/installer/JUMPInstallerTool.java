@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This program is free software; you can redistribute it and/or
@@ -156,6 +156,9 @@ public class JUMPInstallerTool {
         this.DescriptorURI = (String)hash.get("DescriptorURI");
         this.Protocol = (String)hash.get("Protocol");
         
+        trace("JUMPInstallerTool Settings:");
+        trace("    Command: " + Command);
+        trace("    ProvisioningServerURL: " + ProvisioningServer);
         trace("");
         trace("=============================================");
         trace("JUMPInstallerTool Settings");
@@ -230,7 +233,8 @@ public class JUMPInstallerTool {
         } else if (type == JUMPAppModel.XLET) {
             module = JUMPInstallerModuleFactory.getInstance().getModule(JUMPAppModel.XLET);
         } else if (type == JUMPAppModel.MIDLET) {
-            module = JUMPInstallerModuleFactory.getInstance().getModule(JUMPAppModel.MIDLET);     }
+            module = JUMPInstallerModuleFactory.getInstance().getModule(JUMPAppModel.MIDLET);
+        }
         
         if (module == null)  {
             return null;
@@ -617,22 +621,8 @@ public class JUMPInstallerTool {
                 System.exit(0);
             }
             
-            // Check if we're using an apache-based server
-            if (provisioningServerURL.endsWith("showbundles.py")) {
-                HashMap applist = new OTADiscovery().discover(provisioningServerURL);
-                
-                downloads = new String[ applist.size() ];
-                downloadNames = new String[ applist.size() ];
-                
-                int i = 0;
-                for ( Iterator e = applist.keySet().iterator(); e.hasNext(); ) {
-                    String s = (String)e.next();
-                    downloads[ i ] = s;
-                    downloadNames[ i ] = (String)applist.get( s );
-                    i++;
-                }
-                // Check if we're using a JSR 124 server
-            } else if (provisioningServerURL.endsWith("ri-test")) {
+            // Check if we're using a JSR 124 server
+            if (provisioningServerURL.endsWith("ri-test")) {
                 
                 HashMap applistOMA = new OTADiscovery().discover(provisioningServerURL + "/" + omaSubDirectory);
                 HashMap applistMIDP = new OTADiscovery().discover(provisioningServerURL + "/" + midpSubDirectory);
@@ -655,8 +645,19 @@ public class JUMPInstallerTool {
                     i++;
                 }
             } else {
-                System.out.println("ERROR:  Bad Provisioning Server URL: " + provisioningServerURL);
-                System.exit(0);
+                // we're using an apache-based server
+                HashMap applist = new OTADiscovery().discover(provisioningServerURL);
+                
+                downloads = new String[ applist.size() ];
+                downloadNames = new String[ applist.size() ];
+                
+                int i = 0;
+                for ( Iterator e = applist.keySet().iterator(); e.hasNext(); ) {
+                    String s = (String)e.next();
+                    downloads[ i ] = s;
+                    downloadNames[ i ] = (String)applist.get( s );
+                    i++;
+                }
             }
             
             if (userInteractive) {
