@@ -51,6 +51,11 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
     suitestore_common.c \
     suitestore_listeners.c
 
+ifeq ($(USE_ICON_CACHE), true)
+SUBSYSTEM_AMS_NATIVE_FILES += \
+    suitestore_icon_cache.c
+endif    
+
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
     -I$(COMMON_API_DIR)/include \
     -I$(COMMON_API_DIR)/reference/native

@@ -41,6 +41,14 @@
 #include <suitestore_rms.h>
 #include <suitestore_kni_util.h>
 
+#if ENABLE_ICON_CACHE
+#include <suitestore_icon_cache.h>
+#endif
+
+#if ENABLE_IMAGE_CACHE
+#include <imageCache.h>
+#endif
+
 #if ENABLE_MONET
 #if VERIFY_ONCE
 #error Contradictory build settings: ENABLE_MONET=true and VERIFY_ONCE=true.
@@ -1531,4 +1539,111 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMIDletSuiteInfoImpl0) {
     }
 
     KNI_ReturnVoid();
+}
+
+/**
+ * Loads image data of a suite icon from the image cache.
+ * <p>
+ * Java declaration:
+ * <pre>
+ *     byte[] loadCachedIcon0(String suiteId, String iconName);
+ * </pre>
+ *
+ * @param suiteId the suite Id
+ * @param iconName the name of the image resource
+ * @return Java byte[] object with icon data,
+ *     or NULL if the data wasn't found in the cache
+ */
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_loadCachedIcon0) {
+#if ENABLE_IMAGE_CACHE
+    SuiteIdType suiteID;
+    int length;
+    unsigned char *buffer = NULL;
+
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(iconBytesArray);
+    suiteID = KNI_GetParameterAsInt(1);
+
+    GET_PARAMETER_AS_PCSL_STRING(2, iconName)
+    length = loadImageFromCache(suiteID, &iconName, &buffer);
+    if (length != -1 && buffer != NULL) {
+
+        /* Create byte array object to return as result */
+        SNI_NewArray(SNI_BYTE_ARRAY, length, iconBytesArray);
+        if (KNI_IsNullHandle(iconBytesArray)) {
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+        } else {
+            KNI_SetRawArrayRegion(iconBytesArray, 0,
+                length, (jbyte *)buffer);
+        }
+        midpFree(buffer);
+    }
+    RELEASE_PCSL_STRING_PARAMETER
+
+    KNI_EndHandlesAndReturnObject(iconBytesArray);
+#else
+    return NULL;
+#endif
+}
+
+/**
+ * Loads the cached icons from the permanent storage into memory.
+ *
+ * @return status code (ALL_OK = 0 if no errors)
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_loadSuitesIcons0) {
+#if ENABLE_ICON_CACHE
+    MIDPError status = midp_load_suites_icons();
+    KNI_ReturnInt(status);
+#else
+    KNI_ReturnInt(ALL_OK);
+#endif
+}
+
+/**
+ * Retrieves the cached icon from the icon cache.
+ *
+ * @param suiteId unique identifier of the suite
+ * @param iconName the name of the icon to retrieve
+ *
+ * @return cached image data if available, otherwise null
+ */
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMIDletSuiteIcon0) {
+#if ENABLE_ICON_CACHE
+    SuiteIdType suiteID;
+    int length;
+    unsigned char *buffer = NULL;
+    MIDPError status;
+
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(iconBytesArray);
+    suiteID = KNI_GetParameterAsInt(1);
+
+    GET_PARAMETER_AS_PCSL_STRING(2, iconName)
+
+    status = midp_get_suite_icon(suiteID, &iconName, &buffer, &length);
+
+    if (status == ALL_OK && length != -1 && buffer != NULL) {
+        /* Create byte array object to return as result */
+        SNI_NewArray(SNI_BYTE_ARRAY, length, iconBytesArray);
+        if (KNI_IsNullHandle(iconBytesArray)) {
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+        } else {
+            KNI_SetRawArrayRegion(iconBytesArray, 0,
+                length, (jbyte *)buffer);
+        }
+        midpFree(buffer);
+    }
+    RELEASE_PCSL_STRING_PARAMETER
+
+    KNI_EndHandlesAndReturnObject(iconBytesArray);
+#else
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(iconBytesArray);
+    KNI_ReleaseHandle(iconBytesArray);
+    KNI_EndHandlesAndReturnObject(iconBytesArray);
+#endif
 }

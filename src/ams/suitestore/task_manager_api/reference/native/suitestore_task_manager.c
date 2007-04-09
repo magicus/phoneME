@@ -49,6 +49,10 @@
 #include <suitestore_otanotifier_db.h>
 #include <suitestore_listeners.h>
 
+#if ENABLE_ICON_CACHE
+#include <suitestore_icon_cache.h>
+#endif
+
 static MIDPError change_enabled_state(SuiteIdType suiteId, jboolean enabled);
 
 /* ------------------------------------------------------------ */
@@ -342,6 +346,10 @@ midp_remove_suite(SuiteIdType suiteId) {
             status = IO_ERROR;
             break;
         }
+
+#if ENABLE_ICON_CACHE
+        midp_remove_suite_icons(suiteId);
+#endif        
 
         for (;;) {
             rc = storage_get_next_file_in_iterator(&suiteRoot,
