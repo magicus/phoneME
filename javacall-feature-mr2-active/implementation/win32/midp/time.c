@@ -211,5 +211,5 @@ javacall_time_seconds /*OPTIONAL*/ javacall_time_get_seconds_since_1970(void){
  */
 javacall_time_milliseconds /*OPTIONAL*/ javacall_time_get_clock_milliseconds(void){
 
-    return clock()*1000/CLOCKS_PER_SEC;
+    return (javacall_time_milliseconds) (((javacall_int64)clock())*1000/CLOCKS_PER_SEC);
 }
