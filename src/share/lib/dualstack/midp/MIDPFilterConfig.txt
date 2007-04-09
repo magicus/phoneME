@@ -21,8 +21,6 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions. 
 #
-#
-# %W%	%E%
 # List of visible class members
 #
 #
@@ -1814,22 +1812,6 @@ CLASS javax/microedition/io/StreamConnectionNotifier
 	wait:()V
 	close:()V
 
-CLASS java/lang/IllegalStateException
-   METHODS
-	<init>:()V
-	<init>:(Ljava/lang/String;)V
-	getMessage:()Ljava/lang/String;
-	toString:()Ljava/lang/String;
-	printStackTrace:()V
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
-
 CLASS java/util/Timer
    METHODS
 	<init>:()V
@@ -1860,6 +1842,22 @@ CLASS java/util/TimerTask
 	hashCode:()I
 	equals:(Ljava/lang/Object;)Z
 	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
+
+CLASS java/lang/IllegalStateException
+   METHODS
+	<init>:()V
+	<init>:(Ljava/lang/String;)V
+	getMessage:()Ljava/lang/String;
+	toString:()Ljava/lang/String;
+	printStackTrace:()V
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
 	notify:()V
 	notifyAll:()V
 	wait:(J)V
@@ -2063,6 +2061,22 @@ CLASS javax/microedition/io/HttpsConnection
 	openOutputStream:()Ljava/io/OutputStream;
 	openDataOutputStream:()Ljava/io/DataOutputStream;
 
+CLASS javax/microedition/io/SecurityInfo
+   METHODS
+	getServerCertificate:()Ljavax/microedition/pki/Certificate;
+	getProtocolVersion:()Ljava/lang/String;
+	getProtocolName:()Ljava/lang/String;
+	getCipherSuite:()Ljava/lang/String;
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
+
 CLASS javax/microedition/io/SecureConnection
    METHODS
 	getSecurityInfo:()Ljavax/microedition/io/SecurityInfo;
@@ -2086,38 +2100,6 @@ CLASS javax/microedition/io/SecureConnection
 	close:()V
 	openOutputStream:()Ljava/io/OutputStream;
 	openDataOutputStream:()Ljava/io/DataOutputStream;
-
-CLASS javax/microedition/io/SecurityInfo
-   METHODS
-	getServerCertificate:()Ljavax/microedition/pki/Certificate;
-	getProtocolVersion:()Ljava/lang/String;
-	getProtocolName:()Ljava/lang/String;
-	getCipherSuite:()Ljava/lang/String;
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
-
-CLASS javax/microedition/io/ServerSocketConnection
-   METHODS
-	getLocalAddress:()Ljava/lang/String;
-	getLocalPort:()I
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
-	acceptAndOpen:()Ljavax/microedition/io/StreamConnection;
-	close:()V
 
 CLASS javax/microedition/io/SocketConnection
    FIELDS
@@ -2147,6 +2129,22 @@ CLASS javax/microedition/io/SocketConnection
 	close:()V
 	openOutputStream:()Ljava/io/OutputStream;
 	openDataOutputStream:()Ljava/io/DataOutputStream;
+
+CLASS javax/microedition/io/ServerSocketConnection
+   METHODS
+	getLocalAddress:()Ljava/lang/String;
+	getLocalPort:()I
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
+	acceptAndOpen:()Ljavax/microedition/io/StreamConnection;
+	close:()V
 
 CLASS javax/microedition/io/UDPDatagramConnection
    METHODS

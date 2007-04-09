@@ -38,9 +38,12 @@
  * within the scope in which they're used.
  */
 #define SET_FD(fd, fid) (*env)->SetIntField(env, \
-		    (*env)->GetObjectField(env, thisObj, fid),JNI_STATIC(java_io_FileDescriptor, IO_fd_fdID), fd)
+	                    (*env)->GetObjectField(env, thisObj, (fid)), \
+			    JNI_STATIC(java_io_FileDescriptor, IO_fd_fdID), fd)
+
 #define GET_FD(fid) (*env)->GetIntField(env, \
-		    (*env)->GetObjectField(env, thisObj, fid), JNI_STATIC(java_io_FileDescriptor, IO_fd_fdID))
+			 (*env)->GetObjectField(env, thisObj, (fid)), \
+			 JNI_STATIC(java_io_FileDescriptor, IO_fd_fdID))
 
 
 /*

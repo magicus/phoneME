@@ -57,7 +57,7 @@ public abstract class IxcRegistry implements Registry {
     static Method  getRegistryImplMethod = null;
 
     static String svmIxcRegistryName = "com.sun.xlet.ixc.IxcRegistryImpl"; 
-    static String mvmIxcRegistryName = "com.sun.jumpimpl.ixc.JumpIxcRegistryImpl";
+    static String mvmIxcRegistryName = "com.sun.jumpimpl.ixc.JUMPIxcRegistryImpl";
 
     /**
      * Returns the Inter-Xlet Communication registry.

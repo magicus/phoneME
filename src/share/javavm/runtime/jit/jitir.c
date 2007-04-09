@@ -3006,7 +3006,7 @@ isInlinable(CVMJITCompilationContext* con, CVMMethodBlock* targetMb)
 		(float)jgs->maxAllowedInliningDepth;
 	}
 	maxInliningCodeLength = jgs->maxInliningCodeLength -
-	    jgs->maxInliningCodeLength * inlineDepthRatio;
+	    (int)(jgs->maxInliningCodeLength * inlineDepthRatio);
 	/* always allow at least jgs->minInliningCodeLength */
 	if (maxInliningCodeLength < jgs->minInliningCodeLength) {
 	    maxInliningCodeLength = jgs->minInliningCodeLength;

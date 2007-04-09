@@ -39,12 +39,10 @@ ifeq ($(J2ME_CLASSLIB), basis)
 # Define AWT_IMPLEMENTATION to be GCI-based
 #
 ifneq ($(AWT_IMPLEMENTATION), gci)
-    $(warning AWT_IMPLEMENTATION should be set to gci when USE_GCI=true. \
-              Any other value set will be overridden.)
+    override AWT_IMPLEMENTATION = gci
+    override AWT_IMPLEMENTATION_DIR = $(GCI_DIR)
 endif
 
-override AWT_IMPLEMENTATION = gci
-override AWT_IMPLEMENTATION_DIR = $(GCI_DIR)
 
 endif # J2ME_CLASSLIB
 

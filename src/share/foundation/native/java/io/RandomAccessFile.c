@@ -59,45 +59,50 @@ Java_java_io_RandomAccessFile_initIDs(JNIEnv *env, jclass fdClass) {
 
 JNIEXPORT void JNICALL
 Java_java_io_RandomAccessFile_open(JNIEnv *env,
-				   jobject this, jstring path, jint mode)
+				   jobject thisObj, jstring path, jint mode)
 {
     int flags = 0;
     if (mode & java_io_RandomAccessFile_O_RDONLY)
 	flags = O_RDONLY;
     else if (mode & java_io_RandomAccessFile_O_RDWR) {
 	flags = O_RDWR | O_CREAT;
-        // NOTE: We don't need to support these modes
-        // as we don't support nio in CDC
-        /*
+        /* NOTE: We don't need to support these modes
+	   as we don't support nio in CDC: */
+#ifdef JAVASE
 	if (mode & java_io_RandomAccessFile_O_SYNC)
 	    flags |= O_SYNC;
 	else if (mode & java_io_RandomAccessFile_O_DSYNC)
 	    flags |= O_DSYNC;
-        */
+#endif
     }
-    fileOpen(env, this, path, JNI_STATIC(java_io_RandomAccessFile, raf_fd), flags);
+    fileOpen(env, thisObj, path, JNI_STATIC(java_io_RandomAccessFile, raf_fd),
+	     flags);
 }
 
 JNIEXPORT jint JNICALL
-Java_java_io_RandomAccessFile_read(JNIEnv *env, jobject this) {
-    return readSingle(env, this, JNI_STATIC(java_io_RandomAccessFile, raf_fd));
+Java_java_io_RandomAccessFile_read(JNIEnv *env, jobject thisObj) {
+    return readSingle(env, thisObj,
+		      JNI_STATIC(java_io_RandomAccessFile, raf_fd));
 }
 
 JNIEXPORT jint JNICALL
 Java_java_io_RandomAccessFile_readBytes(JNIEnv *env,
-    jobject this, jbyteArray bytes, jint off, jint len) {
-    return readBytes(env, this, bytes, off, len, JNI_STATIC(java_io_RandomAccessFile, raf_fd)); 
+    jobject thisObj, jbyteArray bytes, jint off, jint len) {
+    return readBytes(env, thisObj, bytes, off, len,
+		     JNI_STATIC(java_io_RandomAccessFile, raf_fd));
 }
 
 JNIEXPORT void JNICALL
-Java_java_io_RandomAccessFile_write(JNIEnv *env, jobject this, jint byte) {
-    writeSingle(env, this, byte, JNI_STATIC(java_io_RandomAccessFile, raf_fd));
+Java_java_io_RandomAccessFile_write(JNIEnv *env, jobject thisObj, jint byte) {
+    writeSingle(env, thisObj, byte,
+		JNI_STATIC(java_io_RandomAccessFile, raf_fd));
 }
 
 JNIEXPORT void JNICALL
 Java_java_io_RandomAccessFile_writeBytes(JNIEnv *env,
-    jobject this, jbyteArray bytes, jint off, jint len) {
-    writeBytes(env, this, bytes, off, len, JNI_STATIC(java_io_RandomAccessFile, raf_fd)); 
+    jobject thisObj, jbyteArray bytes, jint off, jint len) {
+    writeBytes(env, thisObj, bytes, off, len,
+	       JNI_STATIC(java_io_RandomAccessFile, raf_fd));
 }
 
 JNIEXPORT jlong JNICALL
