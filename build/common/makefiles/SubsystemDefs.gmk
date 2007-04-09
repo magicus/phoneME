@@ -49,10 +49,17 @@ $(MIDP_CLASSES_ZIP):: $(SKINROMIZATION_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGE
 	$(romize_skin)
 	$(copy_lcdlf_resources)
 
+# The rule for merging configurations unconditionally.
+# We need a separate rule to expand (merge_configurations)
+# before expanding (generate_configuration).
+# We do not rely on (SUBSYSTEM_CONFIGURATION_MERGED_FILE) because
+# some xml configuration files may be specified via the command line.
+merge_configurations_uncond:: $(CONFIGURATOR_JAR_FILE)
+	$(merge_configurations)
+
 # The rule for running the Configurator unconditionally, used by other
 # things such as docs_html.
-run_configurator:: $(L10N_GENERATOR_JAR_FILE)
-	$(merge_configurations)
+run_configurator:: $(L10N_GENERATOR_JAR_FILE) merge_configurations_uncond
 	$(generate_configuration)
 
 # The rule for running skin romization tool unconditionally

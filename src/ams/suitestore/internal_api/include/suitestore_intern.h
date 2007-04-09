@@ -51,6 +51,11 @@ extern "C" {
 #endif
 
 /*
+ * Macro to align the given value on 4-bytes boundary.
+ */
+#define SUITESTORE_ALIGN_4(x) ( (((x)+3) >> 2) << 2 )
+
+/*
  * Number of files to check in check_for_corrupted_suite()
  * and for midp_get_suite_storage_size() Task Manager API function.
  */
@@ -64,6 +69,38 @@ extern int g_numberOfSuites;
 
 /** List of structures with the information about the installed suites. */
 extern MidletSuiteData* g_pSuitesData;
+
+/**
+ * Reads the given file into the given buffer.
+ * File contents is read as one piece.
+ *
+ * @param ppszError pointer to character string pointer to accept an error
+ * @param fileName file to read
+ * @param outBuffer buffer where the file contents should be stored
+ * @param outBufferLen length of the outBuffer
+ *
+ * @return status code (ALL_OK if there was no errors)
+ */
+MIDPError
+read_file(char** ppszError, const pcsl_string* fileName,
+          char** outBuffer, long* outBufferLen);
+
+/**
+ * Writes the contents of the given buffer into the given file.
+ *
+ * Note that if the length of the input buffer is zero or less,
+ * the file will be truncated.
+ *
+ * @param ppszError pointer to character string pointer to accept an error
+ * @param fileName file to write
+ * @param inBuffer buffer with data that will be stored
+ * @param inBufferLen length of the inBuffer
+ *
+ * @return status code (ALL_OK if there was no errors)
+ */
+MIDPError
+write_file(char** ppszError, const pcsl_string* fileName,
+           char* inBuffer, long inBufferLen);
 
 /**
  * Initializes the subsystem. This wrapper is used to hide

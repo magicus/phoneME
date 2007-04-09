@@ -61,6 +61,11 @@
             NativeOnly="true"
             Comment="Name of the file with the basic information about the installed suites."/>
  <constant Type="String"
+            Name="ICON_CACHE_FILENAME"
+            Value="_icons.dat"
+            NativeOnly="true"
+            Comment="Name of the file with the cached icons."/>
+ <constant Type="String"
             Name="INSTALL_NOTIFY_PROP"
             Value="MIDlet-Install-Notify"
             NativeOnly="true"

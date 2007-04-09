@@ -20,7 +20,7 @@
 <!-- Package javax.microedition.lcdui -->
   <constant Type="boolean"
             Name="CHAM_USE_IMAGES"
-            Value="true"
+            Value="false"
             Comment="When false, Chameleon will not even attempt to load images for the UI."/>
   <constant Type="boolean"
             Name="CHAM_ROMIZED_IMAGES"
@@ -128,7 +128,7 @@
             Comment="key select code (internal)"/>
   <constant Type="boolean"
             Name="MEASURE_STARTUP"
-            Value="false" 
+            Value="true" 
             Comment="Turn on/off startup time measurement printouts."/>
 <!-- Memory limits -->
   <constant Type="int"
