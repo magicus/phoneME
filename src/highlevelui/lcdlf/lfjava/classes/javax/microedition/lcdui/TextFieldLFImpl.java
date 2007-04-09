@@ -798,6 +798,24 @@ class TextFieldLFImpl extends ItemLFImpl implements
     }
 
     /**
+     * Called by the system to indicate the content has been scrolled
+     * inside of the form
+     *
+     * @param newViewportX the new width of the viewport of the screen
+     * @param newViewportY the new height of the viewport of the screen
+     */
+    public void uCallScrollChanged(int newViewportX, int newViewportY) {
+        synchronized (Display.LCDUILock) {
+            if (hasFocus && inputModeIndicator.getDisplayMode() != null) {
+                // move input mode indicator because its location depends on 
+                // the item width and item location
+                moveInputModeIndicator();
+            }
+        }
+    }
+
+
+    /**
      * Called by the system to indicate the size available to this Item
      * has changed
      *
@@ -814,6 +832,11 @@ class TextFieldLFImpl extends ItemLFImpl implements
             }
 
             startScroll();
+            // move input mode indicator because its location depends on 
+            // the item width and item location
+            if (hasFocus && inputModeIndicator.getDisplayMode() != null) {
+                moveInputModeIndicator();
+            }
         }
     }
 
@@ -875,14 +898,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
                             constraints, cursor, true);
         }
 
-        
-        // We'll double check our anchor point in case the Form
-        // has scrolled and we need to update our InputModeLayer's
-        // location on the screen   
-        if (hasFocus) {
-            moveInputModeIndicator();
-        }
-        
         showPTPopup((int)0, cursor, w, h);
         return newXOffset;
     }
@@ -1443,6 +1458,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         if (showIMPopup) {
             if (inputModeIndicator.getDisplayMode() != null) {
                 getCurrentDisplay().showPopup(inputModeIndicator);
+                moveInputModeIndicator();
                 showIMPopup = false;
             }
         }
@@ -1617,7 +1633,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * Move input mode indicator
      */
     void moveInputModeIndicator() {  
-
         int[] anchor = getInputModeAnchor();
         if (inputModeAnchor[0] != anchor[0] ||
             inputModeAnchor[1] != anchor[1] ||
@@ -1626,7 +1641,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         {
             inputModeAnchor = anchor;
             inputModeIndicator.setAnchor(
-                inputModeAnchor[0],
+                                         inputModeAnchor[0],
                 inputModeAnchor[1],
                 inputModeAnchor[2],
                 inputModeAnchor[3]);

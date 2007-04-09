@@ -479,11 +479,6 @@ public class Display {
     /** Cached reference to Active Displays Container. */
     private static DisplayContainer displayContainer;
 
-    // #ifndef ENABLE_CDC
-    /** About abstract command. */
-    private static Command aboutCommand;
-    // #endif ENABLE_CDC
-
     /** Device <code>Graphics</code> associated with this Display. */
     private Graphics screenGraphics;
 
@@ -604,12 +599,6 @@ public class Display {
         DisplayEventHandlerFactory.SetDisplayEventHandlerImpl(
                                    displayEventHandlerImpl);
         deviceAccess = new DisplayDeviceAccess();
-
-        // #ifndef ENABLE_CDC
-        aboutCommand = new Command(Resource.getString(ResourceConstants.ABOUT),
-                                   Command.HELP, 3);
-        aboutCommand.setInternalID(EventConstants.ABOUT_REQUESTED);
-        // #endif ENABLE_CDC
 
         // #ifdef ENABLE_GCI
         java.security.AccessController.doPrivileged(
@@ -2111,22 +2100,6 @@ public class Display {
             screenCommands[i].setInternalID(i);
         }
 
-        // #ifndef ENABLE_CDC
-        // Piggy back AboutBox command to all Displayable except Alert
-        if (!(d instanceof Alert)) {
-            if (screenCommands == null) {
-                screenCommands = new Command[1];
-            } else if (screenCommands.length == screenComCount) {
-                screenCommands = new Command[screenComCount+1];
-                System.arraycopy(d.commands, 0, screenCommands, 0,
-                                 d.numCommands);
-            }
-
-            screenCommands[screenComCount] = aboutCommand;
-            screenComCount++;
-        }
-        // #endif ENABLE_CDC
-
         // Item commands
         Item curItem = (current instanceof FormLF)
                             ? ((FormLF)current).lGetCurrentItem()
@@ -2229,23 +2202,6 @@ public class Display {
 
         q.removeAllElements();
     }
-
-    // #ifndef ENABLE_CDC
-    /**
-     * Show about box as a preempting alert.
-     */
-    private void showAboutBox() {
-
-        // Shows About Box as a preempting Alert
-        SystemAlert about = new SystemAlert(displayEventHandlerImpl,
-                                            aboutCommand.getLabel(),
-          Resource.getString(ResourceConstants.AMS_PROJECT_NAME) + "\n\n"
-          + Resource.getString(ResourceConstants.AMS_COPYRIGHT_LONG),
-                               null, null);
-
-        about.run();
-    }
-    // #endif ENABLE_CDC
 
     // #ifdef ENABLE_CHAMELEON
     /**
@@ -2824,14 +2780,6 @@ public class Display {
             Command c = null;
             Displayable currentDisplayable = null;
             Item curItem = null;
-
-            // #ifndef ENABLE_CDC
-            // Check for About box command
-            if (cmdId == EventConstants.ABOUT_REQUESTED) {
-                showAboutBox();
-                return;
-            }
-            // #endif ENABLE_CDC
 
             synchronized (LCDUILock) {
                 if (current == null) {

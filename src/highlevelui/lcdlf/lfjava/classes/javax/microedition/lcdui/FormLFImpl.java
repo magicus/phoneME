@@ -1087,6 +1087,27 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
     }
     
     /**
+     * Notify the form that the content has been scrolled 
+     * Form should notify all items. 
+     */
+    void scrollChanged() {
+        ItemLFImpl[] itemsCopy = null;
+        int itemsCopyCount = 0;
+        int newX, newY;
+        synchronized (Display.LCDUILock) {
+            itemsCopy = new ItemLFImpl[numOfLFs];
+            itemsCopyCount = numOfLFs;
+            System.arraycopy(itemLFs, 0, itemsCopy, 0, numOfLFs);
+            newX = viewable[X];
+            newY = viewable[Y];
+        } // synchronized
+        
+        for (int index = 0; index < itemsCopyCount; index++) {
+            itemsCopy[index].uCallScrollChanged(newX, newY);
+        }
+    }
+
+    /**
      * Synchronizes itemLFs[] array with itemsCopy[] array, 
      * as well as traverseIndex with traverseIndexCopy & nextIndex. 
      *
@@ -2028,6 +2049,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         } else {
             super.setVerticalScroll();
         }
+        scrollChanged();
     }
     
     

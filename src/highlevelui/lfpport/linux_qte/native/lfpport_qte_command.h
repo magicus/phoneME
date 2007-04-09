@@ -52,7 +52,7 @@
 
 /** Label to be used for the header of the Help menu of abstract
  * commands. Abstract commands of type <tt>HELP</tt> appear on this menu. */
-#define HELP_MENUITEM_TEXT	"&Help"
+#define HELP_MENUITEM_TEXT     "&Help"
 
 
 #ifdef QT_KEYPAD_MODE

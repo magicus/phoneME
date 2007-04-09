@@ -108,12 +108,13 @@ public class InputModeLayer extends PopupLayer {
     }
     
     protected void updateLocation() {
-        super.setBounds(
-            anchor[X] - stringWidth - InputModeSkin.MARGIN * 2,
-            anchor[Y], 
-            stringWidth + InputModeSkin.MARGIN * 2, 
-            stringHeight);
-        requestRepaint();
+        if (owner != null) {
+            owner.relocateLayer(this,                 
+                            anchor[X] - stringWidth - InputModeSkin.MARGIN * 2,
+                            anchor[Y], 
+                            stringWidth + InputModeSkin.MARGIN * 2, 
+                            stringHeight);
+        }
     }
 }
 
