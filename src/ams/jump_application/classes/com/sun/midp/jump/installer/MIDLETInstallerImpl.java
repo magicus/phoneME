@@ -162,6 +162,29 @@ public class MIDLETInstallerImpl implements JUMPInstallerModule {
     }
 
     /**
+     * Converts a pair suite id and midlet class name into
+     * <code>MIDletApplication</code>.
+     *
+     * @param midletSuiteId <code>MIDlet</code> suite ID
+     * @param midletClassName name of <code>MIDlet</code> class
+     *
+     * @return instance of <code>MIDletApplication</code> or <code>null</code>
+     *  if there is no matching instance
+     */
+    public MIDletApplication getMIDletApplication(
+            final int midletSuiteId, final String midletClassName) {
+        final MIDletApplication [] apps = (MIDletApplication [])
+            suiteStore.convertToMIDletApplications(midletSuiteId);
+        for (int i = 0; i < apps.length; i++) {
+            final MIDletApplication app = apps[i];
+            if (app.getMIDletClassName().equals(midletClassName)) {
+                return app;
+            }
+        }
+        return null;
+    }
+   
+    /**
      * Handles an installer exceptions.
      *
      * @param ex exception to handle
