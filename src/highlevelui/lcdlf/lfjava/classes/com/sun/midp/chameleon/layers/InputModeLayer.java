@@ -65,7 +65,13 @@ public class InputModeLayer extends PopupLayer {
         if (this.mode != mode) {
             this.mode = mode;
             stringWidth = InputModeSkin.FONT.stringWidth(mode);
-            updateLocation();
+            // if the location is not changed just repain the content of the layer
+            // because the mode has been changed and should be renewed anyway. If the 
+            // relocation happend repaint is not needed because it is done in content 
+            // of relocation procedure
+            if (!updateLocation()) {
+                requestRepaint();
+            }
         }
     }
     
@@ -107,14 +113,16 @@ public class InputModeLayer extends PopupLayer {
         g.setColor(InputModeSkin.COLOR_FG);
     }
     
-    protected void updateLocation() {
+    protected boolean updateLocation() {
+        boolean ret = false;
         if (owner != null) {
-            owner.relocateLayer(this,                 
+            ret = owner.relocateLayer(this,                 
                             anchor[X] - stringWidth - InputModeSkin.MARGIN * 2,
                             anchor[Y], 
                             stringWidth + InputModeSkin.MARGIN * 2, 
                             stringHeight);
         }
+        return ret;
     }
 }
 
