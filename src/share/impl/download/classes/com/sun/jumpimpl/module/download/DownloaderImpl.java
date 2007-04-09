@@ -1,6 +1,5 @@
-
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This program is free software; you can redistribute it and/or
@@ -123,16 +122,17 @@ class DownloaderImpl implements JUMPDownloader {
             }
             
             URLConnection conn = objectUrl.openConnection();
-    
-            if ( ( ( HttpURLConnection )conn ).getResponseCode() !=
-                     HttpURLConnection.HTTP_OK )
+            
+            if (objectUrl.getProtocol().equals("http") &&
+                ( ( HttpURLConnection )conn ).getResponseCode() !=
+                         HttpURLConnection.HTTP_OK )
             {
                 if ( nfUri != null )
                 {
                     sendNotify( nfUri, ST_LOADERERROR,
                                 "Can't process server response" );
                 }
-            
+                
                 throw new JUMPDownloadException( "Http response is not OK: "+
                              ( (HttpURLConnection )conn ).getResponseCode() );
             }

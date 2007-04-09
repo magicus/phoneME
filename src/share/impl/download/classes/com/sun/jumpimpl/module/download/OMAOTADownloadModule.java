@@ -69,9 +69,10 @@ public class OMAOTADownloadModule //extends GenericDownloadModuleImpl
               System.err.println("debug : xlet mimetype is " + mimeType);
           }
 
-          if ( (mimeType == null) || !mimeType.equalsIgnoreCase(ddMime)) {
+          if (!ddURL.getProtocol().equals("file") &&
+                  (mimeType == null || !mimeType.equalsIgnoreCase(ddMime))) {
               throw new JUMPDownloadException("Content type for the DD URL"+
-                                      "is not "+ ddMime + "\n" + url);
+                                      " is not "+ ddMime + "\n" + url);
           }
 
           // load the descriptor

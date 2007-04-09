@@ -74,9 +74,9 @@ implements JUMPDownloadModule {
             URL jadURL = new URL(url);
 
             URLConnection conn = jadURL.openConnection();
-
-            if (((HttpURLConnection)conn).getResponseCode() 
-			    != HttpURLConnection.HTTP_OK) {
+            if (jadURL.getProtocol().equals("http") &&
+                ((HttpURLConnection)conn).getResponseCode() 
+                                != HttpURLConnection.HTTP_OK) {
                 throw new JUMPDownloadException("Http response isn't OK "+
                           ((HttpURLConnection)conn).getResponseCode());
             }
@@ -86,10 +86,11 @@ implements JUMPDownloadModule {
             if (DownloadModuleFactoryImpl.verbose) {
                 System.err.println("debug : jad mimetype is " + mimeType);
             }
-        
-            if ((mimeType == null) || !mimeType.equalsIgnoreCase(jadMime)) {
+            
+            if (!jadURL.getProtocol().equals("file") && 
+                        (mimeType == null || !mimeType.equalsIgnoreCase(jadMime))) {
               throw new JUMPDownloadException("Content type for the JAD URL" +
-                                      "is not " + jadMime + "\n" + url);
+                                      " is not " + jadMime + "\n" + url);
             }
 
 	    /**
@@ -172,7 +173,7 @@ implements JUMPDownloadModule {
                 int idx1 = val.indexOf(',');
                 int idx2 = val.lastIndexOf(',');
                 if ((idx1 < 0) || (idx1 == idx2)) {
-                   throw new JUMPDownloadException("Invalid midlet reference"+val);
+                   throw new JUMPDownloadException("Invalid midlet reference "+val);
                 }
 
                 String classname = val.substring(0, idx1);
