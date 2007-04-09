@@ -175,6 +175,11 @@ static void closeConnection(int port, int handle, int deRegister) {
 
     if (port > 0 && handle != 0) {
 
+        SmsMessage* lostMessage;
+        while (lostMessage = jsr120_sms_pool_retrieve_next_msg(port)) {
+            jsr120_sms_delete_msg(lostMessage);
+        }
+
         /** unblock any blocked threads */
         jsr120_sms_unblock_thread((jint)handle, WMA_SMS_READ_SIGNAL);
 
