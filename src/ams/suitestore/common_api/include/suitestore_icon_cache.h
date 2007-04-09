@@ -51,24 +51,32 @@ typedef struct _iconCacheHeader {
     /** Number of free entries in the file. */
     int numberOfFreeEntries;
     /*
+     * The following variable-length data are located in the file
+     * immediately after this structure:
+     *
      * numberOfEntries x IconCacheEntry
      */
 } IconCacheHeader;
 
-/** A header of the file containing the cached icons. */
+/** A structure representing a cached icon in the file. */
 typedef struct _iconCacheEntry {
-     /** True if this entry is free, false otherwise. */
-     int isFree;
-     /** ID of the suite which the icon belongs to. */
-     SuiteIdType suiteId;
-     /** Length of the icon's binary data. */
-     int imageDataLength;
-     /** Length of the icon's name, in bytes. */
-     jint nameLength;
-     /* UTF16 string with the icon's name. */
-     /* jchar* pImageName; */
-     /* Icon's binary data. */
-     /* unsigned char* pImageData; */
+    /** True if this entry is free, false otherwise. */
+    int isFree;
+    /** ID of the suite which the icon belongs to. */
+    SuiteIdType suiteId;
+    /** Length of the icon's binary data. */
+    int imageDataLength;
+    /** Length of the icon's name, in bytes. */
+    jint nameLength;
+    /*
+     * The following variable-length data are located in the file
+     * immediately after this structure:
+     *
+     * UTF16 string with the icon's name.
+     * jchar* pImageName;
+     * Icon's binary data.
+     * unsigned char* pImageData;
+     */
 } IconCacheEntry;
 
 /** A structure describing a cached image loaded into memory. */
