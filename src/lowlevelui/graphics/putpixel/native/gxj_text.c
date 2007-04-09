@@ -265,15 +265,15 @@ gx_draw_chars(jint pixel, const jshort *clip,
         n -= diff/fontWidth;
     }
 
+    diff = (yDest + fontHeight) - clipY2;
+    if (diff > 0) {
+        yLimit -= diff;
+    }
+
     diff = clipY1 - yDest;
     if (diff > 0) {
         yCharSource += diff;
         yDest += diff;
-    }
-
-    diff = (yDest + fontHeight) - clipY2;
-    if (diff > 0) {
-        yLimit -= diff;
     }
 
     if (width <= 0 || yCharSource >= yLimit || nCharsToSkip >= n) {

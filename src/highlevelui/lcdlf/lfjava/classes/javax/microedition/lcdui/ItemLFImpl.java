@@ -1104,7 +1104,7 @@ abstract class ItemLFImpl implements ItemLF {
                            "  [I] draw border? hasFocus="+hasFocus);
         }
         
-        if (drawsTraversalIndicator && hasFocus) {
+        if (drawsTraversalIndicator && hasFocus && (contentBounds[HEIGHT] > 0)) {
             g.clipRect(bounds[X] + trX,
                        bounds[Y] + trY,
                        bounds[WIDTH],
@@ -1136,11 +1136,10 @@ abstract class ItemLFImpl implements ItemLF {
         
         // NTS: This may need to special case StringItem?
         g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
-
         g.drawRect(x + contentBounds[X] + ScreenSkin.PAD_FORM_ITEMS - 2,
-                   y + contentBounds[Y] + ScreenSkin.PAD_FORM_ITEMS - 2,
-                   contentBounds[WIDTH] + ScreenSkin.PAD_FORM_ITEMS - 2,
-                   contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2);
+                y + contentBounds[Y] + ScreenSkin.PAD_FORM_ITEMS - 2,
+                contentBounds[WIDTH] + ScreenSkin.PAD_FORM_ITEMS - 2,
+                contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2);
     }
     
 
