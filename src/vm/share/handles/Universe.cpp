@@ -977,6 +977,8 @@ bool Universe::bootstrap_without_rom(const JvmPathChar* classpath) {
   // Now we have loaded java.lang.Class update the existing classes with
   // java_mirror
 #if ENABLE_ISOLATES
+  // Class char[][] is used during Monet conversion to copy classpath.
+  char_array_class()->get_array_class(2 JVM_CHECK_0);
   load_root_class(isolate_class(), Symbols::com_sun_cldc_isolate_Isolate());  
   Task::init_first_task(JVM_SINGLE_ARG_CHECK_0);
   Task::setup_mirrors(JVM_SINGLE_ARG_CHECK_0);
@@ -2247,6 +2249,7 @@ void Universe::create_first_task(const JvmPathChar* classpath JVM_TRAPS) {
     classpath, fn_strlen(classpath) JVM_CHECK);
   ObjArray::Raw cp = setup_classpath(&path JVM_CHECK);
   Task::current()->set_app_classpath(cp());
+  Task::current()->set_sys_classpath(Universe::empty_obj_array()->obj());
 }
 
 /*
