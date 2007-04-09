@@ -159,7 +159,7 @@ ifeq ($(ENABLE_ISOLATES), true)
 	@touch $@ 
 ifeq ($(os_family), linux)
 	@cp $(JVMWorkSpace)/src/tests/dynamic_natives/lib.c $(DYN_NATIVES_DIR) 
-	@gcc -fPIC -I$(BuildSpace)/linux_i386/dist/include/ -DLINUX -c dyn_natives/lib.c  -o dyn_natives/lib.obj
+	@gcc -fPIC -I$(DIST_DIR)/include/ -DLINUX -c dyn_natives/lib.c  -o dyn_natives/lib.obj
 	@gcc -shared -o dyn_natives/lib.so dyn_natives/lib.obj
 endif
 endif
