@@ -87,6 +87,16 @@ public abstract class AbstractSubsystem implements Subsystem {
     }
     
     /**
+     * Unregisters a subsystem this one depends on.
+     * @param s subsystem this one depends on.
+     */
+    public void unregisterSubsystem(Subsystem s) {
+        synchronized (subsystems) {
+            subsystems.removeElement(s);
+        }
+    }
+
+    /**
      * If the current state is <code>SUSPENDED</code>, changes the state to
      * <code>RESUMING</code>, performs object-specific activation
      * operations and then changes the state to <code>ACTIVE</code>.

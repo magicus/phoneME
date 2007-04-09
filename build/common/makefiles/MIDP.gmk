@@ -246,4 +246,4 @@ midp: $(MIDP_DEPS) $(MIDP_RESOURCES)
 
 # Phonies to avoid accidents.
 #
-.PHONY: all midp clean run_configurator ams_resources rom FORCE
+.PHONY: all midp clean run_configurator merge_configurations_uncond ams_resources rom FORCE

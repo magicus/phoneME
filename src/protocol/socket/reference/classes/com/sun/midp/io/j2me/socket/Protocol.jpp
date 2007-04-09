@@ -105,8 +105,6 @@ public class Protocol extends NetworkConnectionBase
     public Protocol() {
         // use the default buffer size
         super(bufferSize);
-        NetworkSubsystem.getInstance(classSecurityToken).
-                registerSubsystem(this);
     }
 
     /**
@@ -278,6 +276,9 @@ public class Protocol extends NetworkConnectionBase
         }
 
         open0(ipBytes, port);
+
+        NetworkSubsystem.getInstance(classSecurityToken).
+                registerSubsystem(this);
     }
 
     /**
@@ -417,6 +418,9 @@ public class Protocol extends NetworkConnectionBase
         } catch (IOException ioe) {
             // ignore
         }
+        
+        NetworkSubsystem.getInstance(classSecurityToken).
+                unregisterSubsystem(this);        
     }
 
     /**
