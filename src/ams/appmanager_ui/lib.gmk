@@ -58,14 +58,4 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/RunningMIDletSuiteInfo.java \
     $(APPMANAGER_UI_DIR)/classes/com/sun/midp/appmanager/CaManager.java
 
-# vpath for sub-system
-#
-vpath % \
-    $(APPMANAGER_UI_DIR)/native
-
-## Native files for common module
-#
-SUBSYSTEM_AMS_NATIVE_FILES += \
-    runningmidletsuiteinfo_kni.c
-
 

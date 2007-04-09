@@ -70,6 +70,9 @@
 #                    convert them to a platform native representation, 
 #                    and cache the converted image for faster loading
 #                    at runtime of the MIDlet.
+# USE_ICON_CACHE   - Store icons of all installed midlet suites in one
+#                    file that will be read during the system startup
+#                    to speed up displaying the icons in the AMS.
 # USE_JAVA_DEBUGGER - Include the CLDC debugger hooks to communicate
 #                  with an external proxy agent. (default value is false)
 # USE_JAVA_PROFILER  - Compile MIDP with the VMs Java profiler
@@ -187,6 +190,12 @@ ifeq ($(USE_IMAGE_CACHE), true)
    EXTRA_CFLAGS += -DENABLE_IMAGE_CACHE=1
 else
    EXTRA_CFLAGS += -DENABLE_IMAGE_CACHE=0
+endif
+
+ifeq ($(USE_ICON_CACHE), true)
+   EXTRA_CFLAGS += -DENABLE_ICON_CACHE=1
+else
+   EXTRA_CFLAGS += -DENABLE_ICON_CACHE=0
 endif
 
 ifeq ($(USE_I3_TEST), true)

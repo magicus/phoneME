@@ -131,8 +131,6 @@
  */
 #include <suitestore_task_manager.h>
 
-#define ALIGN_4(x) ( (((x)+3) >> 2) << 2 )
-
 /** Cache of the last suite the exists function found. */
 SuiteIdType g_lastSuiteExistsID = UNUSED_SUITE_ID;
 
@@ -279,7 +277,7 @@ free_suites_data() {
 
     while (pData != NULL) {
         pNextData = pData->nextEntry;
-        pcsl_mem_free(pData);
+        free_suite_data_entry(pData);
         pData = pNextData;
     }
 
@@ -324,7 +322,7 @@ get_suite_data(SuiteIdType suiteId) {
  *
  * @return status code (ALL_OK if there was no errors)
  */
-static MIDPError
+MIDPError
 read_file(char** ppszError, const pcsl_string* fileName,
           char** outBuffer, long* outBufferLen) {
     int handle, status = ALL_OK;
@@ -395,7 +393,7 @@ read_file(char** ppszError, const pcsl_string* fileName,
  *
  * @return status code (ALL_OK if there was no errors)
  */
-static MIDPError
+MIDPError
 write_file(char** ppszError, const pcsl_string* fileName,
            char* inBuffer, long inBufferLen) {
     int handle, status = ALL_OK;
@@ -555,7 +553,7 @@ read_suites_data(char** ppszError) {
                  *     strLen = *(jint*)&buffer[pos];
                  * on RISC CPUs.
                  */
-                pos = ALIGN_4(pos);
+                pos = SUITESTORE_ALIGN_4(pos);
                 strLen = *(jint*)&buffer[pos];
                 ADJUST_POS_IN_BUF(pos, bufferLen, sizeof(jint));
 
@@ -689,7 +687,7 @@ write_suites_data(char** ppszError) {
                  *     *(jint*)&buffer[pos] = strLen;
                  * on RISC CPUs.
                  */
-                pos = ALIGN_4(pos);
+                pos = SUITESTORE_ALIGN_4(pos);
                 *(jint*)&buffer[pos] = strLen;
                 ADJUST_POS_IN_BUF(pos, bufferLen, sizeof(jint));
 
