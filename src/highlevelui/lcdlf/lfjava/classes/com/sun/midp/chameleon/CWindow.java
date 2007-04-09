@@ -145,7 +145,7 @@ public abstract class CWindow {
                     layers.addLayer(layer);
                     layer.addDirtyRegion();
                     requestRepaint();
-                    layer.addNotify();
+                    layer.addNotify(); 
                     return true;
                 }
             }
@@ -164,25 +164,53 @@ public abstract class CWindow {
      * @return true if successful, false otherwise
      */
     public boolean removeLayer(CLayer layer) {
-        if (layer != null) {
-            if (CGraphicsQ.DEBUG) {
-                System.err.println("Remove Layer: " + layer);
+        synchronized (layers) {
+            CLayerElement le = sweepLayer(layer);
+            if (le != null) {
+                if (CGraphicsQ.DEBUG) {
+                    System.err.println("Remove Layer: " + layer);
+                }
+                layer.owner = null;
+                requestRepaint();
+                layers.removeLayerElement(le);
+                layer.removeNotify(this); 
+                return true;
             }
-            synchronized (layers) {
-                CLayerElement le = layers.find(layer);
-                if (le != null) {
-                    // IMPL NOTE: when a layer gets removed (or has its setVisible(false))
-                    // called, the parent window must loop through all the other
-                    // layers and mark them as dirty if they intersect with the
-                    // layer being removed (or having its visibility changed).
-                    layer.addDirtyRegion();
-                    sweepAndMarkDirtyLayer(le, true);
+        }
+        return false;
+    }
 
-                    layer.owner = null;
-                    requestRepaint();
-                    layers.removeLayerElement(le);
-                    layer.removeNotify(this);
-                    return true;
+    /**
+     * Move layer to anotger location
+     * @param newBounds new bounds for this layer 
+     * @param x New 'x' coordinate of the layer's origin
+     * @param y New 'y' coordinate of the layer's origin
+     * @param w New width of the layer
+     * @param h New height of the layer
+
+     * @return true if successful, false otherwise
+     */
+    public boolean relocateLayer(CLayer layer, int x, int y, int w, int h) {
+        if (layer != null) {
+            synchronized (layers) {
+                if (sweepLayer(layer) != null) {
+                    if (CGraphicsQ.DEBUG) {
+                        System.err.println("Relocate Layer: " + layer);
+                    }
+                    int[] oldBounds = { 
+                                layer.bounds[X],
+                                layer.bounds[Y],
+                                layer.bounds[W],
+                                layer.bounds[H] };
+
+                    if (oldBounds[X] != x || oldBounds[Y] != y ||
+                        oldBounds[W] != w || oldBounds[H] != h) {
+                        layer.setBounds(x, y, w, h);
+                        layer.addDirtyRegion();
+                        requestRepaint();
+                        layer.relocateNotify(oldBounds); 
+                        return true;
+                    }
                 }
             }
         }
@@ -308,6 +336,36 @@ public abstract class CWindow {
                     l.bounds[W], l.bounds[H]);
             }
         }
+    }
+
+    /**
+     * Update dirty regions of all visible layers in the stack regarding
+     * the entire area of the given layer as being dirty. The method is
+     * needed to perform layer move/resize/remove opertion, since other
+     * layers should be informed of changed area.
+     *
+     * @param layer the layer whose area should be reported as dirty to
+     *   other stack layers
+     */
+    CLayerElement sweepLayer(CLayer layer) {
+        if (layer != null) {
+            if (CGraphicsQ.DEBUG) {
+                System.err.println("Sweep Layer: " + layer);
+            }
+            synchronized (layers) {
+                CLayerElement le = layers.find(layer);
+                if (le != null) {
+                    // IMPL NOTE: when a layer gets removed (or has its setVisible(false))
+                    // called, the parent window must loop through all the other
+                    // layers and mark them as dirty if they intersect with the
+                    // layer being removed (or having its visibility changed).
+                    layer.addDirtyRegion();
+                    sweepAndMarkDirtyLayer(le, true);
+                    return le;
+                }
+            }
+        }
+        return null;
     }
 
     /**

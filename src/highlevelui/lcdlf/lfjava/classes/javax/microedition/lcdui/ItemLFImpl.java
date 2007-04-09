@@ -254,6 +254,7 @@ abstract class ItemLFImpl implements ItemLF {
      * @param oldOwner old owner screen before this change. New owner 
      *                 can be found in Item model.
      */
+
     public void lSetOwner(Screen oldOwner) {
         if (item.owner == null) {
             // Hide it
@@ -272,6 +273,17 @@ abstract class ItemLFImpl implements ItemLF {
             actualBoundsInvalid[HEIGHT] = true;
             hasFocus = false;
         }
+    }
+
+    /**
+     * Called by the system to indicate the content has been scrolled
+     * inside of the form
+     *
+     * @param w the new width of the viewport of the screen
+     * @param h the new height of the viewport of the screen
+     */
+    public void uCallScrollChanged(int newViewportX, int newViewportY) {
+        // do nothing by default. 
     }
 
     /**
@@ -1136,10 +1148,11 @@ abstract class ItemLFImpl implements ItemLF {
         
         // NTS: This may need to special case StringItem?
         g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
+
         g.drawRect(x + contentBounds[X] + ScreenSkin.PAD_FORM_ITEMS - 2,
-                y + contentBounds[Y] + ScreenSkin.PAD_FORM_ITEMS - 2,
-                contentBounds[WIDTH] + ScreenSkin.PAD_FORM_ITEMS - 2,
-                contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2);
+                   y + contentBounds[Y] + ScreenSkin.PAD_FORM_ITEMS - 2,
+                   contentBounds[WIDTH] + ScreenSkin.PAD_FORM_ITEMS - 2,
+                   contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2);
     }
     
 
