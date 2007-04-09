@@ -142,7 +142,7 @@ CVMgetJavaProperties(java_props_t *sprops)
 	}
 
 #ifdef ARCH
-	strcpy(name.machine, ARCH, sizeof(name.machine));
+	strncpy(name.machine, ARCH, sizeof(name.machine));
 	name.machine[sizeof(name.machine)] = '\0'; /* in case of overflow */
 #else
 	{

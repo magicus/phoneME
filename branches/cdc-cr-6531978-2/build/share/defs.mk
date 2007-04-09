@@ -1053,6 +1053,7 @@ endif
 	$(CVM_ROM_MEMBER_FILTER)
     CVM_MIDPFILTERCONFIG  = $(CVM_LIBDIR)/MIDPFilterConfig.txt
     CVM_MIDPCLASSLIST     = $(CVM_LIBDIR)/MIDPPermittedClasses.txt
+    CVM_MIDPCLASSLIST_FILES += $(CVM_MIDPDIR)/MIDPPermittedClasses.txt
     CVM_MIDPFILTERCONFIGINPUT = $(CVM_MIDPDIR)/MIDPFilterConfig.txt
 
 #
@@ -1162,6 +1163,7 @@ endif
 
 CVM_TESTCLASSES_SRCDIR    = $(CVM_SHAREROOT)/javavm/test
 CVM_CLDCCLASSES_SRCDIR    = $(CVM_SHAREROOT)/classes/cldc
+CVM_VMIMPLCLASSES_SRCDIR  = $(CVM_SHAREROOT)/javavm/classes
 CVM_SHAREDCLASSES_SRCDIR  = $(CVM_SHAREROOT)/classes
 CVM_TARGETCLASSES_SRCDIR  = $(CVM_TARGETROOT)/classes
 
@@ -2064,26 +2066,6 @@ endif
 
 ifeq ($(CVM_GCOV), true)
 CCFLAGS   	+= -fprofile-arcs -ftest-coverage
-endif
-
-# CVM include directories used to be specified with CVM_INCLUDES, and included
-# the -I option. Now they are specified with CVM_INCLUDE_DIRS and do not
-# include the -I option.
-ifdef CVM_INCLUDES
-$(error CVM_INCLUDES is no longer supported. Use CVM_INCLUDE_DIRS and remove the leading "-I".)
-else
-# force an error if referenced in a command line
-CVM_INCLUDES = "Do not reference CVM_INCLUDES"
-endif
-
-# Profile include directories used to be specified with PROFILE_INCLUDES, and 
-# included the -I option. Now they are specified with PROFILE_INCLUDE_DIRS
-# and do not include the -I option.
-ifdef PROFILE_INCLUDES
-$(error PROFILE_INCLUDES is no longer supported. Use PROFILE_INCLUDE_DIRS and remove the leading "-I".)
-else
-# force an error if referenced in a command line
-PROFILE_INCLUDES = "Do not reference PROFILE_INCLUDES"
 endif
 
 # PROFILE_INCLUDE_DIRS is a list of profile specific directories that contains

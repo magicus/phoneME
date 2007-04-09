@@ -547,7 +547,7 @@ CVMpreloaderInit()
 		 */
 		if (CVMcbMethodCount(mcb) < 256) {
 		    CVMassert(mb == 
-			      CVMcbMethodSlot(mcb, CVMmbMethodIndex(mb)));
+			      CVMcbMethodSlot(mcb,(short)CVMmbMethodIndex(mb)));
 		}
 	    }
 	}

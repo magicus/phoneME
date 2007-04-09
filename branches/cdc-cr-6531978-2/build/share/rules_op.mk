@@ -98,13 +98,28 @@ else
 javacall_lib:
 endif
 
-#
-# Run JavaAPILister to generate the list of classes that are hidden from CDC
-#
 ifeq ($(CVM_DUAL_STACK), true)
-$(JSR_RESTRICTED_CLASSLIST): $(JSROP_JARS)
+#
+# Run JavaAPILister to generate the list of classes that are 
+# hidden from CDC.
+#
+$(JSR_CDCRESTRICTED_CLASSLIST): $(JSROP_JARS)
 	@echo "Generating JSR restricted class list ..."
-	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister -listapi:input=$(JSROP_HIDE_JARS),cout=$(JSR_RESTRICTED_CLASSLIST)
+	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister \
+	    -listapi:include=java/*,include=javax/*,input=$(JSROP_HIDE_JARS),cout=$(JSR_CDCRESTRICTED_CLASSLIST)
+
+#
+# Generate a list of all JSR classes. These classes will be
+# add to the $(CVM_MIDPCLASSLIST) to allow accessing from
+# midlets. The JSROP classes don't need to be added to 
+# $(CVM_MIDPFILTERCONFIG) and ROMized member filter because 
+# there is no restrictions for midlets to accessing the JSROP 
+# class' public members.
+#
+$(JSR_MIDPPERMITTED_CLASSLIST): $(JSROP_JARS)
+	@echo "Generating MIDP permitted JSR class list ...";
+	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister \
+	    -listapi:include=java/*,include=javax/*,input=$(JSROP_JARS_LIST),cout=$(JSR_MIDPPERMITTED_CLASSLIST)
 endif
 
 clean::

@@ -145,8 +145,15 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
 
 
     private String parseHostName(String connection, int colon) {
-        if (connection.indexOf("::") > 0) {
-            return parseIPv6Address(connection, colon);
+        /* IPv6 addresses are enclosed within [] */
+        int beginIndex = connection.indexOf("[");
+        int endIndex = connection.indexOf("]");
+        
+        if (beginIndex > endIndex) {
+            throw new IllegalArgumentException("invalid host name " + connection);
+        }
+        if ((beginIndex ==0) && (endIndex >0)) {
+            return parseIPv6Address(connection, endIndex);
         } else {
             return parseIPv4Address(connection, colon);
         }
@@ -158,12 +165,10 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
     }
 
 
-    private String parseIPv6Address(String address, int colon) {
+    private String parseIPv6Address(String address, int closing) {
         ipv6 = true;
-        int lastIndexOfColon = address.lastIndexOf(":");
-        if ((address.indexOf("::") > address.indexOf(".")) && (address.indexOf(".")>0) ) 
-            throw new IllegalArgumentException("invalid host name " + address);
-        return address.substring(0, lastIndexOfColon);
+        /* beginning '[' and closing ']' should be included in the hostname*/
+        return address.substring(0, closing+1);
     }
 
     /**

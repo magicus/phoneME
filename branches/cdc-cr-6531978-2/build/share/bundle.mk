@@ -533,13 +533,13 @@ FEATURE_LIST_WITH_VALUES += \
 	$(foreach feature,$(strip $(FEATURE_LIST)), "$(feature)=$($(feature))")
 
 
-ifneq (USE_VERBOSE_MAKE), true)
+ifneq ($(USE_VERBOSE_MAKE), true)
 SVN_QUIET_CHECKOUT = -q
 endif
 
 lib-src: src.zip
 src.zip::
-ifeq (USE_VERBOSE_MAKE), true)
+ifeq ($(USE_VERBOSE_MAKE), true)
 	@echo ">>>FLAGS:"
 	@echo "	SRC_BUNDLE_APPEND_REVISION = $(SRC_BUNDLE_APPEND_REVISION)"
 	@echo "	SRC_BUNDLE_NAME		= $(SRC_BUNDLE_NAME)"
@@ -605,7 +605,7 @@ endif
 	$(AT)rm -rf $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
 endif
 
-ifeq (USE_VERBOSE_MAKE), true)
+ifeq ($(USE_VERBOSE_MAKE), true)
 	@echo "<<<Finished "$@" ..." ;
 endif
 
