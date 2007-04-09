@@ -40,19 +40,32 @@
 #include <suitestore_intern.h>
 #include <suitestore_icon_cache.h>
 
+/**
+ * Maximal number of free entries allowed in the file containing the cache until
+ * it is compacted (i.e. rewritten without free entries).
+ */
 #define MAX_FREE_ENTRIES 10
+
+/**
+ * A number of additional free entries that will be allocated in
+ * g_pIconCache array to avoid memory reallocations when a new
+ * icon is added into the cache.  
+ */
 #define RESERVED_CACHE_ENTRIES_NUM 10
 
-/** */
+/**
+ * An array of IconCache structures representing
+ * the icon cache in the memory.
+ */
 static IconCache* g_pIconCache = NULL;
 
-/** */
+/** A flag indicating if the icon cache is loaded from file into memory. */
 static int g_iconsLoaded = 0;
 
-/** */
+/** Number of currently occupied entries in the g_pIconCache array. */
 static int g_numberOfIcons = 0;
 
-/** */
+/** Number of entries currently allocated in the g_pIconCache array. */
 static int g_numberOfEntries = 0;
 
 #define ADJUST_POS_IN_BUF(pos, bufferLen, n) \
@@ -403,8 +416,8 @@ void midp_free_suites_icons() {
  * @param suiteId ID of the suite which the icon belongs to
  * @param pIconName the icon's name
  * @param ppImageData   [out] pointer to a place where the pointer to the
- *                            newly allocated buffer with the retrieved
- *                            icon's bytes will be saved
+ *                            area inside the cache where the icon's
+ *                            bytes are located will be saved
  * @param pImageDataLen [out] pointer to a place where the length of the
  *                            retrieved data will be saved
  *
@@ -427,9 +440,6 @@ midp_get_suite_icon(SuiteIdType suiteId, const pcsl_string* pIconName,
 
     *pImageDataLen = pIconCache->pInfo[0].imageDataLength;
     *ppImageData   = pIconCache->pInfo[0].pImageData;
-
-    // *ppImageData = (unsigned char*)pcsl_mem_malloc(pIconCache->pInfo[0].imageDataLength);
-    // memcpy(*ppImageData, pIconCache->pInfo[0].pImageData, *pImageDataLen);
 
     return ALL_OK;
 }

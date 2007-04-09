@@ -71,29 +71,29 @@ typedef struct _iconCacheEntry {
      /* unsigned char* pImageData; */
 } IconCacheEntry;
 
-/** */
+/** A structure describing a cached image loaded into memory. */
 typedef struct _cachedImageInfo {
     /** True if this entry is free, false otherwise. */
     int isFree;
-    /** */
+    /** The name of the cached icon. */
     pcsl_string imageName;
     /** -1 if unknown */
     unsigned long entryOffsetInFile;
     /** Length of the icon's binary data. */
     int imageDataLength;
-    /** */
+    /** Pointer to the image bytes */
     unsigned char* pImageData;
     /** Pointer to the next entry in the linked list. */
     /* struct _cachedImageInfo* nextEntry; */
 } CachedImageInfo;
 
-/** */
+/** A structure described all images cached for the particular suite. */
 typedef struct _iconCache {
-    /** */
+    /** Unique ID identifying the suite. */
     SuiteIdType suiteId;
-    /** */
+    /** Number of used entries in pInfo array. */
     int numberOfCachedImages;
-    /** */
+    /** Array of structures describing the cached images. */
     CachedImageInfo pInfo[MAX_CACHE_ENTRIES_PER_SUITE];
 } IconCache;
 
@@ -116,8 +116,8 @@ void midp_free_suites_icons();
  * @param suiteId ID of the suite which the icon belongs to
  * @param pIconName the icon's name
  * @param ppImageData   [out] pointer to a place where the pointer to the
- *                            newly allocated buffer with the retrieved
- *                            icon's bytes will be saved
+ *                            area inside the cache where the icon's
+ *                            bytes are located will be saved
  * @param pImageDataLen [out] pointer to a place where the length of the
  *                            retrieved data will be saved
  *
