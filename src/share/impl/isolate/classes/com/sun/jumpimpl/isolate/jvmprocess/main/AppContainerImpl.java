@@ -86,7 +86,7 @@ public class AppContainerImpl extends JUMPAppContainer {
 
 	  while (st.hasMoreTokens()) {
              try {		   
-	        pathArray[count++] = new URL("file", "", st.nextToken());
+	        pathArray[count++] = new File(st.nextToken()).toURL();
 	     } catch (MalformedURLException e) {	 
 		System.err.println("Caught: " + e);
 	        pathArray[count] = null;
