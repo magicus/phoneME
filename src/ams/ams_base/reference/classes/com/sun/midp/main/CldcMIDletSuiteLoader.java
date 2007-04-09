@@ -77,6 +77,10 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
         foregroundController = new CldcForegroundController(
             midletControllerEventProducer);
 
+	lcduiEnvironment = new LCDUIEnvironment(internalSecurityToken, 
+						eventQueue, isolateId, 
+						foregroundController);
+
         // creates display container, needs foregroundController
         super.createSuiteEnvironment();
 
@@ -102,15 +106,6 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
             internalSecurityToken,
             midletStateHandler,
             eventQueue);
-    }
-
-    /**
-     * Does all initialization for already created objects of a MIDlet suite
-     * environment. Subclasses can also extend the initialization with
-     * various global system initializations needed for all suites.
-     */
-    protected void initSuiteEnvironment() {
-        super.initSuiteEnvironment();
     }
 
     /**
@@ -151,15 +146,6 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
         }
 
         return suite;
-    }
-
-    protected void closeSuite() {
-        super.closeSuite();
-
-        // shutdown any preempting
-        if (displayEventHandler != null) {
-            displayEventHandler.donePreempting(null);
-        }
     }
 
     /**

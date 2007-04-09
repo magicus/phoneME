@@ -32,6 +32,9 @@ import com.sun.midp.events.EventQueue;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
+import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.Permissions;
+
 /**
  * Display a preempting alert and wait for the user to acknowledge it.
  */
@@ -74,6 +77,30 @@ public class SystemAlert extends Alert
 
         this.displayEventHandler = displayEventHandler;
 
+    }
+
+    /**
+     * Construct an <code>SystemAlert</code>.
+     *
+     * @param securityToken The <tt>SecurityToken</tt> 
+     * @param title The title of the <tt>Alert</tt>
+     * @param text The text of the <tt>Alert</tt>
+     * @param image An <tt>Image</tt> to display on the <tt>Alert</tt>
+     * @param type The <tt>Alert</tt> type
+     */
+    public SystemAlert(SecurityToken securityToken,
+                       String title, String text,
+                       Image image, AlertType type) {
+
+        super(title, text, image, type);
+
+	securityToken.checkIfPermissionAllowed(Permissions.MIDP);
+        this.displayEventHandler = 
+	    DisplayEventHandlerFactory.getDisplayEventHandler(securityToken);
+
+        setTimeout(Alert.FOREVER);
+
+        super.setCommandListener(this);
     }
 
     /** Waits for the user to acknowledge the alert. */

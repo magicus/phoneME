@@ -107,14 +107,15 @@ public class MIDletSuiteUtils {
     /**
      * Display an exception to the user.
      *
-     * @param handler display event handler to draw displays
+     * @param securityToken security token for displaying System Alert.
      * @param exceptionMsg exception message
      */
-    static void displayException(DisplayEventHandler handler,
-            String exceptionMsg) {
+    static void displayException(SecurityToken securityToken,
+				 String exceptionMsg) {
 
-        SystemAlert alert = new SystemAlert(
-            handler, "Exception", exceptionMsg, null, AlertType.ERROR);
+        SystemAlert alert = new SystemAlert(securityToken, "Exception", 
+					    exceptionMsg, null, 
+					    AlertType.ERROR);
         alert.run();
         alert.waitForUser();
     }

@@ -95,6 +95,7 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/RepaintEvent.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/RepaintEventProducer.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEventListener.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEnvironment.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/PhoneDial.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayContainer.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventHandler.java \

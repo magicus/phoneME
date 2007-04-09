@@ -143,6 +143,15 @@ else
     endif
 endif
 
+#####################################################################
+# LCDUI for CDC Subsystem
+# Description: CDC UI
+#####################################################################
+
+ifeq ($(TARGET_VM), cdc_vm)
+include $(SUBSYSTEM_HIGHUI_DIR)/cdcui/lib.gmk
+endif
+
 ########################################################################
 # Javadoc
 ########################################################################
@@ -233,3 +242,9 @@ endif
 #
 SUBSYSTEM_HIGHUI_NATIVE_FILES	+= $(SUBSYSTEM_APP_NATIVE_FILES)
 SUBSYSTEM_HIGHUI_EXTRA_INCLUDES	+= $(SUBSYSTEM_APP_EXTRA_INCLUDES)
+
+# CDC UI
+#
+ifeq ($(TARGET_VM), cdc_vm)
+SUBSYSTEM_HIGHUI_JAVA_FILES     += $(SUBSYSTEM_CDCUI_JAVA_FILES)
+endif

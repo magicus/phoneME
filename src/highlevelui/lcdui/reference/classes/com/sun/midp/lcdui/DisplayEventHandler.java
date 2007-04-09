@@ -90,10 +90,10 @@ public interface DisplayEventHandler {
         DisplayContainer theDisplayContainer);
     
     /**
-     * Initialize per suite data of the display event handler.
+     * Sets the trusted state of the display event handler.
      *
      * @param drawTrustedIcon true, to draw the trusted icon in the upper
      *                status bar for every display of this suite
      */
-    void initSuiteData(boolean drawTrustedIcon);
+    void setTrustedState(boolean drawTrustedIcon);
 }
