@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
+<!--
+        	
+
+        Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+-->
+<configuration>
+<constants>
+<constant_class Package="com.sun.midp.configurator" Name="Constants" Scope="public">
+
+  <constant Type="int"
+            Name="GAMECANVAS_FULLWIDTH"
+            Value="176"
+            Comment="(Fixed) full display width"/>
+  <constant Type="int"
+            Name="GAMECANVAS_FULLHEIGHT"
+            Value="180" 
+            Comment="(Fixed) full display height"/>
+
+  <constant Type="int"
+            Name="CHAM_WIDTH"
+            Value="176"
+            Comment="(Chameleon Only) display width (QVA PocketPC)"/>
+  <constant Type="int"
+            Name="CHAM_HEIGHT"
+            Value="180"
+            Comment="(Chameleon Only) display height (QVA PocketPC)"/>
+  <constant Type="int"
+            Name="CHAM_FULLHEIGHT"
+            Value="180"
+            Comment="(Chameleon Only) full display height (QVA PocketPC)"/>
+
+  <constant Type="int"
+            Name="FULLWIDTH"
+            Value="176"
+            Comment="(Fixed) full display width"/>
+  <constant Type="int"
+            Name="FULLHEIGHT"
+            Value="180" 
+            Comment="(Fixed) full display height"/>
+  <constant Type="int"
+            Name="NORMALWIDTH"
+            Value="176" 
+            Comment="(Fixed) normal width"/>
+  <constant Type="int"
+            Name="NORMALHEIGHT"
+            Value="180" 
+            Comment="(Fixed) normal height"/>
+
+  <constant Type="int"
+            Name="JWC_WINCE_SMARTPHONE"
+            Value="1"
+            Comment="Specify whether we are building for smartphone"/>
+  <constant Type="int"
+            Name="JWC_WINCE_TITLE_HEIGHT"
+            Value="20"
+            Comment="Height of the WinCE title at the top of LCD"/>
+  <constant Type="int"
+            Name="JWC_WINCE_MENU_HEIGHT"
+            Value="20"
+            Comment="Height of the WinCE menu at the bottom of LCD"/>
+
+  <constant Type="int"
+            Name="AMS_ITEM_WIDTH"
+            Value="150"
+            Comment="Width of item in AMS screen"/>
+</constant_class>
+</constants>
+</configuration>
