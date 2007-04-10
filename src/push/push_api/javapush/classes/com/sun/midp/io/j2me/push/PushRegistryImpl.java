@@ -153,8 +153,10 @@ public final class PushRegistryImpl {
             final String filter)
             throws ClassNotFoundException,
                 ConnectionNotFoundException, IOException {
-
-        final Connection c = Connection.parse(connection);
+        // Quick check of connection to be spec complaint
+        if (connection == null) {
+            throw new IllegalArgumentException("connection is null");
+        }
 
         // Quick check of filter to be spec complaint
         if (filter == null) {
@@ -173,13 +175,6 @@ public final class PushRegistryImpl {
          */
         checkMidlet(midletSuite, midlet);
         /*
-         * IMPL_NOTE: as checkRegistration will need to parse
-         *  connection and filter anyway, it might be a good
-         *  idea to save the results
-         */
-        ConnectionRegistry.checkRegistration(c, midlet, filter);
-
-        /*
          * Check permissions.
          */
         try {
@@ -189,7 +184,8 @@ public final class PushRegistryImpl {
                 "Interrupted while trying to ask the user permission");
         }
 
-        ConnectionRegistry.registerConnection(midletSuite, c, midlet, filter);
+        ConnectionRegistry.registerConnection(
+                midletSuite, connection, midlet, filter);
     }
 
     /**

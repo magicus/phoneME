@@ -27,11 +27,15 @@ package com.sun.midp.io.j2me.push;
 import com.sun.jump.isolate.jvmprocess.JUMPIsolateProcess;
 import com.sun.midp.jump.push.executive.remote.MIDPContainerInterface;
 import com.sun.midp.jump.push.share.Configuration;
+import com.sun.midp.jump.push.share.JUMPReservationDescriptor;
+import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.push.gcf.PermissionCallback;
+import com.sun.midp.push.gcf.ReservationDescriptor;
+
 import java.io.IOException;
 import java.rmi.RemoteException;
 import javax.microedition.io.ConnectionNotFoundException;
 
-import com.sun.midp.midlet.MIDletSuite;
 import sun.misc.MIDPConfig;
 
 /**
@@ -101,36 +105,34 @@ final class ConnectionRegistry {
      */
     public static void registerConnection(
             final MIDletSuite midletSuite,
-            final Connection connection,
+            final String connection,
             final String midlet,
             final String filter) throws ClassNotFoundException, IOException {
+        final PermissionCallback permissionCallback = new PermissionCallback() {
+            public void checkForPermission(
+                    final String permissionName,
+                    final String resource, final String extraValue)
+                        throws SecurityException {
+                // TBD: implement
+            }
+        };
+
+        final ReservationDescriptor descriptor = Configuration
+                .getReservationDescriptorFactory()
+                .getDescriptor(connection, filter, permissionCallback);
+        JUMPReservationDescriptor jd = null;
+        try {
+            jd = (JUMPReservationDescriptor) descriptor;
+        } catch (ClassCastException cce) {
+            throw new ConnectionNotFoundException(
+                    "protocol isn't supported by jump");
+        }
+        // TBD: IXC call
+
         /*
          * Should never get here currently as <code>checkRegistration</code>
          * should abort registration earlier
          */
-    }
-
-    /**
-     * Check the registration arguments.
-     *
-     * @param connection connection to check
-     * @param midlet  class name of the <code>MIDlet</code> to be launched,
-     *  when new external data is available
-     * @param filter a connection URL string indicating which senders
-     *  are allowed to cause the MIDlet to be launched
-     *
-     * @throws IllegalArgumentException if connection or filter string
-     * is not valid
-     * @throws ConnectionNotFoundException if PushRegistry doesn't support
-     *  this kind of connections
-     */
-    static void checkRegistration(
-            final Connection connection,
-            final String midlet,
-            final String filter)
-            throws ConnectionNotFoundException {
-        // No implemented connections so far
-        throw new ConnectionNotFoundException();
     }
 
     /**

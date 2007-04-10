@@ -366,11 +366,12 @@ final class ConnectionRegistry
      * @see #unregisterConnection
      */
     public static void registerConnection(MIDletSuite midletSuite,
-            Connection connection, String midlet, String filter)
+            String connection, String midlet, String filter)
         throws ClassNotFoundException, IOException {
 
+        checkRegistration(connection, midlet, filter);
         registerConnectionInternal(midletSuite,
-                            connection.getConnection(), midlet, filter, true);
+                            connection, midlet, filter, true);
     }
 
     /**
@@ -385,11 +386,11 @@ final class ConnectionRegistry
      * @exception ConnectionNotFoundException if PushRegistry doesn't support
      *               this kind of connections
      */
-    static void checkRegistration(Connection connection, String midlet,
+    static void checkRegistration(String connection, String midlet,
                                   String filter)
                                   throws ConnectionNotFoundException {
-        final String c = connection.getConnection();
-        ProtocolPush.getInstance(c).checkRegistration(c, midlet, filter);
+        ProtocolPush.getInstance(connection)
+            .checkRegistration(connection, midlet, filter);
     }
 
     /**
