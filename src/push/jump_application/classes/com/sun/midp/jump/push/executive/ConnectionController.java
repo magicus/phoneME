@@ -318,6 +318,27 @@ final class ConnectionController {
     }
 
     /**
+     * Disposes a connection controller.
+     *
+     * <p>
+     * Cancels all the reservations and callbacks.
+     * </p>
+     *
+     * <p>
+     * The only thing one MUST do with disposed
+     * <code>ConnectionController</code> is to garbage-collect it.
+     * </p>
+     */
+    public synchronized void dispose() {
+        for (Iterator it = reservations.getAllReservations().iterator();
+                it.hasNext();) {
+            final ReservationHandler rh = (ReservationHandler) it.next();
+            rh.cancel();
+        }
+        reservations.clear();
+    }
+
+    /**
      * Noop permission callback for startup connection reservation.
      *
      * IMPL_NOTE: hopefully will go away when we'll get rid of
@@ -545,6 +566,23 @@ final class ConnectionController {
         Collection queryBySuiteID(final int midletSuiteID) {
             final Set data = getData(midletSuiteID);
             return (data == null) ? new HashSet() : data;
+        }
+
+        /**
+         * Gets all the reservations.
+         *
+         * @return collection of reservations
+         */
+        Collection getAllReservations() {
+            return connection2data.values();
+        }
+
+        /**
+         * Clears all the reservations.
+         */
+        void clear() {
+            connection2data.clear();
+            suiteId2data.clear();
         }
 
         /**

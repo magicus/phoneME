@@ -282,5 +282,6 @@ final class PushController {
      */
     public void dispose() {
         alarmController.dispose();
+        connectionController.dispose();
     }
 }
