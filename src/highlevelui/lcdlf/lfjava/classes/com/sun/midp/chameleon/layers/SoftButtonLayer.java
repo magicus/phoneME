@@ -829,12 +829,13 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                     break;
             }
             buttony = SoftButtonSkin.BUTTON_ANCHOR_Y[i];
-            //buttonh = SoftButtonSkin.FONT.getHeight();
+
             g.translate(buttonx, buttony);
 
             Text.drawTruncStringShadowed(g, labels[i], SoftButtonSkin.FONT,
                     SoftButtonSkin.COLOR_FG, SoftButtonSkin.COLOR_FG_SHD,
                     SoftButtonSkin.BUTTON_SHD_ALIGN, buttonw);
+            g.translate(-buttonx, -buttony);
         }
     }
 
