@@ -399,12 +399,21 @@ Java_java_net_NetworkInterface_init(JNIEnv *env, jclass cls)
      */
     h = LoadLibrary(_T("iphlpapi.dll"));
     if (h != NULL) {
+#ifdef UNDER_CE
+	GetIpAddrTable_fn = 
+	    (int (PASCAL FAR *)())GetProcAddress(h, TEXT("GetIpAddrTable"));
+	GetIfTable_fn = 
+	    (int (PASCAL FAR *)())GetProcAddress(h, TEXT("GetIfTable"));
+	GetFriendlyIfIndex_fn = 
+	    (int (PASCAL FAR *)())GetProcAddress(h, TEXT("GetFriendlyIfIndex"));
+#else
 	GetIpAddrTable_fn = 
 	    (int (PASCAL FAR *)())GetProcAddress(h, "GetIpAddrTable");
 	GetIfTable_fn = 
 	    (int (PASCAL FAR *)())GetProcAddress(h, "GetIfTable");
 	GetFriendlyIfIndex_fn = 
 	    (int (PASCAL FAR *)())GetProcAddress(h, "GetFriendlyIfIndex");
+#endif
     }
     if (GetIpAddrTable_fn == NULL ||
 	GetIfTable_fn == NULL ||

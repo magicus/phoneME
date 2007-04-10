@@ -43,6 +43,10 @@
 #ifdef CVM_JIT
 #include "javavm/include/porting/jit/ccm.h"
 #endif
+
+#ifdef CVM_HW
+#include "include/hw.h"
+#endif
 #ifdef CVM_DEBUG_ASSERTS
 
 static void
@@ -543,7 +547,7 @@ CVMpreloaderInit()
 		 */
 		if (CVMcbMethodCount(mcb) < 256) {
 		    CVMassert(mb == 
-			      CVMcbMethodSlot(mcb, CVMmbMethodIndex(mb)));
+			      CVMcbMethodSlot(mcb,(short)CVMmbMethodIndex(mb)));
 		}
 	    }
 	}
@@ -646,6 +650,11 @@ CVMpreloaderDisambiguateAllMethods(CVMExecEnv* ee)
 		if ( CVMjmdFlags(jmd) & CVM_JMD_MAY_NEED_REWRITE ){
 		    switch (CVMstackmapDisambiguate(ee, mb, CVM_TRUE)) {
 			case CVM_MAP_SUCCESS:
+#ifdef CVM_HW
+			    CVMhwFlushCache(CVMmbJavaCode(mb),
+					    CVMmbJavaCode(mb)
+					    + CVMmbCodeLength(mb));
+#endif
 			    break;
 			case CVM_MAP_OUT_OF_MEMORY:
 			    CVMconsolePrintf(
@@ -1016,7 +1025,7 @@ CVMBool CVMpreloaderIsPreloadedObject(CVMObject *obj)
 }
 #endif
 
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 /* Purpose: Iterate over all preloaded objects and calls Call callback() on
             each preloaded object. */
 /* Returns: CVM_FALSE if exiting due to an abortion (i.e. the callback

@@ -389,6 +389,9 @@ struct CVMOwnedMonitor {
      */
     volatile CVMAddr count;   /* Lock re-entry count. */
 #endif
+#ifdef CVM_JVMTI
+    CVMFrame *frame;          /* Current frame at time of lock */
+#endif
 };
 
 /* Purpose: Run all monitor scavengers. */

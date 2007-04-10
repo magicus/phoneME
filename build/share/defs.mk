@@ -32,6 +32,8 @@ empty:=
 comma:= ,
 space:= $(empty) $(empty)
 
+ABSPATH = $(shell cd $(1); echo `pwd`)
+
 #
 # Setup HOST_OS, HOST_CPU_FAMILY, and HOST_DEVICE. These are used
 # to assist in locating the proper tools to use.
@@ -83,16 +85,18 @@ endif
 
 # Windows host support
 ifeq ($(findstring CYGWIN, $(UNAME_OS)), CYGWIN)
-HOST_OS 	?= cygwin
+HOST_OS 	?= win32
 HOST_CPU_FAMILY ?= $(shell uname -m)
-HOST_DEVICE	?= win32
+HOST_DEVICE	?= cygwin
+USE_CYGWIN	?= true
 endif
 
 ifeq ($(UNAME_OS), Interix)
-HOST_OS		?= $(UNAME_OS)
+HOST_OS		?= win32
 HOST_CPU_FAMILY ?= $(shell uname -m)
-HOST_DEVICE	?= win32
+HOST_DEVICE	?= $(UNAME_OS)
 TOOL_WHICH	?= PATH="$(PATH)" whence "$(1)"
+USE_INTERIX	?= true
 endif
 
 ifeq ($(HOST_OS),)
@@ -138,11 +142,11 @@ endif
 #
 # Use bash on win32, since the Cygwin sh doesn't work for us.
 #
-ifeq ($(HOST_OS), cygwin)
+ifeq ($(HOST_DEVICE), cygwin)
 SHELL	= bash
 endif
 
-ifeq ($(HOST_OS), Interix)
+ifeq ($(HOST_DEVICE), Interix)
 SHELL	= ksh
 endif
 
@@ -156,8 +160,10 @@ CVM_TARGET	= $(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)
 
 # COMPONENTS_DIR is the directory that all the components are located in,
 # such as midp, pcsl, and jump. It is used for providing default locations
-# for directories like MIDP_DIR and JUMP_DIR.
-COMPONENTS_DIR     ?= $(call POSIX2HOST,$(shell cd ../../..; echo `pwd`))
+# for directories like MIDP_DIR and JUMP_DIR. It must be an absolute path.
+ifndef COMPONENTS_DIR
+COMPONENTS_DIR     := $(call ABSPATH, ../../..)
+endif
 
 # Set overriding values:
 
@@ -262,14 +268,24 @@ CVM_LVM                 ?= false
 CVM_CSTACKANALYSIS	?= false
 CVM_TIMESTAMPING	?= true
 CVM_INCLUDE_COMMCONNECTION ?= false
-CVM_INCLUDE_MIDP	?= false
-CVM_INCLUDE_JUMP	?= false
-ifeq ($(CVM_INCLUDE_MIDP), true)
-override CVM_KNI        = true
-override CVM_DUAL_STACK = true
+USE_MIDP	?= false
+USE_JUMP	?= false
+
+# Some makefiles still reference CVM_INCLUDE_MIDP and CVM_INCLUDE_JUMP,
+# so give them proper values until they are cleaned up.
+CVM_INCLUDE_MIDP ?= $(USE_MIDP)
+CVM_INCLUDE_JUMP ?= $(USE_JUMP)
+
+ifeq ($(USE_MIDP), true)
+  override CVM_KNI        = true
+  override CVM_DUAL_STACK = true
 else
-CVM_KNI                 ?= false
-CVM_DUAL_STACK          ?= false
+  CVM_KNI                 ?= false
+  ifeq ($(USE_JUMP), true)
+    override CVM_DUAL_STACK = true
+  else
+    CVM_DUAL_STACK          ?= false
+  endif
 endif
 CVM_SPLIT_VERIFY	?= false
 
@@ -341,9 +357,13 @@ LIB_POSTFIX = $(DEBUG_POSTFIX).so
 #
 # All build directories relative to CVM_BUILD_TOP
 #
-CVM_TOP       = ../..
-CVM_BUILD_TOP = $(CVM_TOP)/build/$(CVM_TARGET)/$(CVM_BUILD_SUBDIR_NAME)
-CVM_LIBDIR = $(CVM_BUILD_TOP)/lib
+CVM_TOP       := ../..
+CVM_BUILD_TOP := $(CVM_TOP)/build/$(CVM_TARGET)/$(CVM_BUILD_SUBDIR_NAME)
+CVM_LIBDIR    := $(CVM_BUILD_TOP)/lib
+
+CVM_TOP_ABS	  := $(call ABSPATH,$(CVM_TOP))
+CVM_BUILD_TOP_ABS := $(CVM_TOP_ABS)/build/$(CVM_TARGET)/$(CVM_BUILD_SUBDIR_NAME)
+CVM_LIBDIR_ABS    := $(CVM_BUILD_TOP_ABS)/lib
 
 # Optional Package names
 ifneq ($(strip $(OPT_PKGS)),)
@@ -568,12 +588,6 @@ endif
 ifeq ($(CVM_DYNAMIC_LINKING), true)
 	CVM_DEFINES      += -DCVM_DYNAMIC_LINKING
 endif
-ifeq ($(USE_VERBOSE_MAKE), false)
-	AT=@
-	MAKE_NO_PRINT_DIRECTORY=--no-print-directory
-else
-	AT=
-endif
 ifeq ($(CVM_JIT), true)
 	CVM_DEFINES   += -DCVM_JIT
 endif
@@ -683,6 +697,17 @@ ifeq ($(CVM_STATICLINK_LIBS), true)
 	CVM_DEFINES   += -DCVM_STATICLINK_LIBS
 endif
 
+# Keep ant quiet unless a verbose build is requested. Note, you can set
+# CVM_ANT_OPTIONS=-v or CVM_ANT_OPTIONS=-d on the command line to make
+# ant much more verbose.
+ifneq ($(USE_VERBOSE_MAKE), true)
+CVM_ANT_OPTIONS		+= -q
+endif
+
+ifneq ($(CVM_DEBUG), true)
+CVM_ANT_OPTIONS         += -Ddebug=false
+endif
+
 ifeq ($(CDC_10),true)
 CVM_DEFINES += -DCDC_10
 endif
@@ -737,8 +762,8 @@ CVM_FLAGS += \
 	CVM_TEST_GENERATION_GC \
 	CVM_TIMESTAMPING \
 	CVM_INCLUDE_COMMCONNECTION \
-	CVM_INCLUDE_MIDP \
-	CVM_INCLUDE_JUMP \
+	USE_MIDP \
+	USE_JUMP \
 	CVM_DUAL_STACK \
 	CVM_SPLIT_VERIFY \
 	CVM_KNI \
@@ -901,10 +926,10 @@ CVM_TRACE_JIT_CLEANUP_ACTION           = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_INCLUDE_COMMCONNECTION_CLEANUP_ACTION        = \
 	$(CVM_DEFAULT_CLEANUP_ACTION)    \
 	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
-CVM_INCLUDE_MIDP_CLEANUP_ACTION        = \
+USE_MIDP_CLEANUP_ACTION        = \
 	$(CVM_DEFAULT_CLEANUP_ACTION)    \
 	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
-CVM_INCLUDE_JUMP_CLEANUP_ACTION        = \
+USE_JUMP_CLEANUP_ACTION        = \
 	$(CVM_DEFAULT_CLEANUP_ACTION)    \
 	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
 CVM_DUAL_STACK_CLEANUP_ACTION          = $(CVM_DEFAULT_CLEANUP_ACTION)
@@ -1011,27 +1036,41 @@ endif
 # Object and data files needed for dual stack support
 #
 ifeq ($(CVM_DUAL_STACK), true)
-ifeq ($(CVM_INCLUDE_MIDP), true)
-    CVM_MIDPDIR           = $(CVM_TOP)/src/share/lib/dualstack/midp
+ifeq ($(USE_MIDP), true)
     # The MIDP version include all CLDC classes plus 8 additional
     # javax/micro/microeditional/io/* classes.
-    CVM_ROM_MEMBER_FILTER = romjavaMIDPMemberFilterData.o
+    CVM_MIDPDIR           = $(CVM_TOP)/src/share/lib/dualstack/midp
 else
     CVM_MIDPDIR           = $(CVM_TOP)/src/share/lib/dualstack/cldc
-    CVM_ROM_MEMBER_FILTER = romjavaCLDCMemberFilterData.o
 endif
     CVM_SHAREOBJS_SPACE  += \
 	MemberFilter.o      \
 	$(CVM_ROM_MEMBER_FILTER)
     CVM_MIDPFILTERCONFIG  = $(CVM_LIBDIR)/MIDPFilterConfig.txt
     CVM_MIDPCLASSLIST     = $(CVM_LIBDIR)/MIDPPermittedClasses.txt
+    CVM_MIDPCLASSLIST_FILES += $(CVM_MIDPDIR)/MIDPPermittedClasses.txt
+    CVM_MIDPFILTERCONFIGINPUT = $(CVM_MIDPDIR)/MIDPFilterConfig.txt
 
 #
 # JavaAPILister related defs for generating dualstack
 # filter
 #
 ifneq ($(CVM_MIDPFILTERINPUT),)
-CVM_JCC_INPUT	+= -listapi:include=java/*,include=javax/*,input=$(CVM_MIDPFILTERINPUT),mout=$(CVM_MIDPFILTERCONFIG),cout=$(CVM_MIDPCLASSLIST)
+# CVM_MIDPFILTERINPUT should be jar files that contains classes.
+# The jar files are the input of JavaAPILister. The output of  
+# JavaAPILister are:
+# - romjavaMemberFilterData.c (ROMized member filter data)
+# - a list of visible class and their members (mout)
+# - a list of visible classes (cout)
+CVM_JCC_APILISTER_OPTIONS	+= -listapi:include=java/*,include=javax/*,input=$(CVM_MIDPFILTERINPUT),mout=$(CVM_MIDPFILTERCONFIG),cout=$(CVM_MIDPCLASSLIST)
+else
+# if CVM_MIDPFILTERINPUT is not set, we use the 'mout' output file
+# as the input. 'mout' is generated by JavaAPILister when input
+# jar files are given. 'mout' contains a list of visible classes 
+# and their members. JavaAPILister parse the input list and creates
+# romjavaMemberFilterData.c, which contains the ROMized member 
+# filter data.
+CVM_JCC_APILISTER_OPTIONS	+= -listapi:minput=$(CVM_MIDPFILTERCONFIGINPUT)
 endif
 endif
 
@@ -1070,13 +1109,13 @@ CVM_DEMO_CLASSESDIR	 = $(CVM_BUILD_TOP)/democlasses
 CVM_SHAREROOT  		 = $(CVM_TOP)/src/share
 
 # Full path for current build directory
-CDC_CUR_DIR	:= $(shell pwd)
+CDC_CUR_DIR	:= $(call ABSPATH,.)
 # Full path for the cdc component directory
-export CDC_DIR	:= $(shell cd $(CDC_CUR_DIR)/../../; echo `pwd`)
+export CDC_DIR	:= $(CVM_TOP_ABS)
 # directory where cdc build is located.
-export CDC_DIST_DIR	= $(CDC_CUR_DIR)/$(CVM_BUILD_SUBDIR_NAME)
+export CDC_DIST_DIR := $(CVM_BUILD_TOP_ABS)
 # Directory where javadocs, source bundles, and binary bundle get installed.
-INSTALLDIR	= $(CDC_DIR)/install
+INSTALLDIR	:= $(CVM_TOP_ABS)/install
 
 #
 # Full path name for Binary Bundle
@@ -1119,6 +1158,7 @@ endif
 
 CVM_TESTCLASSES_SRCDIR    = $(CVM_SHAREROOT)/javavm/test
 CVM_CLDCCLASSES_SRCDIR    = $(CVM_SHAREROOT)/classes/cldc
+CVM_VMIMPLCLASSES_SRCDIR  = $(CVM_SHAREROOT)/javavm/classes
 CVM_SHAREDCLASSES_SRCDIR  = $(CVM_SHAREROOT)/classes
 CVM_TARGETCLASSES_SRCDIR  = $(CVM_TARGETROOT)/classes
 
@@ -1186,8 +1226,17 @@ CVM_SRCDIRS += \
 	$(CVM_SHAREROOT)/javavm/runtime/jit
 endif
 
+# This combines all the native sourcepaths for the vpath search:
+# NOTE: PROFILE_SRCDIRS_NATIVE is for profile specific native source files.
+#       CVM_SRCDIR is for VM specific and base configuration native source
+#       files.
+CVM_ALL_NATIVE_SRCDIRS = \
+    $(PROFILE_SRCDIRS_NATIVE) $(CVM_SRCDIRS)
+
+
 # This is for compatibility with the rmi makefiles,
 # which still use PROFILE_SRCDIR
+# NOTE: PROFILE_SRCDIR is for Java source files.
 PROFILE_SRCDIR = $(PROFILE_SRCDIRS)
 
 #
@@ -1339,6 +1388,10 @@ CVM_CNI_CLASSES += sun.io.ByteToCharISO8859_1 \
 
 ifeq ($(CVM_JVMPI), true)
 CVM_CNI_CLASSES += sun.misc.CVMJVMPI
+endif
+
+ifeq ($(CVM_JVMTI), true)
+CVM_CNI_CLASSES += sun.misc.CVMJVMTI
 endif
 
 ifeq ($(CVM_INSPECTOR), true)
@@ -1727,6 +1780,7 @@ CVM_SHAREOBJS_SPACE += \
 	jvmtiEnv.o \
 	jvmtiExport.o \
 	jvmti_jni.o \
+	jvmtiDumper.o \
 	bag.o
 endif
 
@@ -1926,18 +1980,14 @@ CVM_JAVA		?= $(CVM_JAVA_TOOLS_PREFIX)java
 CVM_JAVADOC		?= $(CVM_JAVA_TOOLS_PREFIX)javadoc
 CVM_JAR			?= $(CVM_JAVA_TOOLS_PREFIX)jar
 
-ifeq ($(HOST_DEVICE), win32)
-JDK_PATH_SEP ?= ;
-else
-JDK_PATH_SEP ?= :
-endif
-
 JAVAC_OPTIONS +=  -J-Xms32m -J-Xmx128m -encoding iso8859-1
 ifeq ($(CDC_10),true)
-JAVAC_OPTIONS += -target 1.3
+JAVAC_SOURCE_TARGET_OPTIONS ?= -target 1.3
 else
-JAVAC_OPTIONS += -source 1.4 -target 1.4
+JAVAC_SOURCE_TARGET_OPTIONS ?= -source 1.4 -target 1.4
 endif
+JAVAC_OPTIONS += $(JAVAC_SOURCE_TARGET_OPTIONS)
+
 #
 # Location of source for scripts and Java source files used during the build
 #
@@ -1971,6 +2021,7 @@ endif
 BISON		?= $(CVM_HOST_TOOLS_PREFIX)bison
 ZIP             ?= zip
 UNZIP           ?= unzip
+CVM_ANT         ?= ant
 
 #######################################################################
 # Build tool options:
@@ -2017,12 +2068,20 @@ ifeq ($(CVM_GCOV), true)
 CCFLAGS   	+= -fprofile-arcs -ftest-coverage
 endif
 
-# CVM_INCLUDE_DIRS is a list of directories. This list needs to be
-# converted to a list of compiler parameters, with paths in host form:
-CVM_INCLUDES    += \
-	$(foreach dir,$(CVM_INCLUDE_DIRS),-I$(call POSIX2HOST,$(dir)))
+# PROFILE_INCLUDE_DIRS is a list of profile specific directories that contains
+# 	the profile specific include paths. These paths should be searched for
+#	include files before searching the base configuration include path.
+# CVM_INCLUDE_DIRS is a list of directories that defines the base configuration
+# 	include path. 
+# ALL_INCLUDE_DIRS combines the above lists. On most platforms it needs to
+# 	be converted to host from before used.
+# ALL_INCLUDE_FLAGS is ALL_INCLUDE_DIRS converted into the compiler
+# 	command line option for C include directories.
+ALL_INCLUDE_DIRS	= $(PROFILE_INCLUDE_DIRS) $(CVM_INCLUDE_DIRS)
+ALL_INCLUDE_FLAGS	= \
+	$(foreach dir,$(ALL_INCLUDE_DIRS),-I$(call POSIX2HOST,$(dir)))
 
-CPPFLAGS 	+= $(CVM_DEFINES) $(CVM_INCLUDES)
+CPPFLAGS 	+= $(CVM_DEFINES) $(ALL_INCLUDE_FLAGS)
 CFLAGS_SPEED   	= $(CFLAGS) $(CCFLAGS_SPEED) $(CPPFLAGS)
 CFLAGS_SPACE   	= $(CFLAGS) $(CCFLAGS_SPACE) $(CPPFLAGS)
 CFLAGS_LOOP    	= $(CFLAGS) $(CCFLAGS_LOOP)  $(CPPFLAGS)
@@ -2052,20 +2111,31 @@ SO_ASM_CMD 	= $(ASM_CMD)
 SO_CC_CMD   	= $(AT)$(TARGET_CC) $(SO_CFLAGS) -o $@ $<
 SO_LINK_CMD 	= $(AT)$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $^
 JAVAC_CMD	= $(CVM_JAVAC) $(JAVAC_OPTIONS)
+JAR_CMD		= $(CVM_JAR)
+JAVA_CMD	= $(CVM_JAVA)
 
 #
 # Standard classpath for libclasses compilation
 #
 JAVA_CLASSPATH += $(LIB_CLASSESDIR)
 
-#
-# Functions for converting between host paths and POSIX paths
-# For POSIX platforms, this is a no-op
-#
-HOST2POSIX = $(1)
-POSIX2HOST = $(1)
+# locate the tools component
+export TOOLS_DIR ?= $(COMPONENTS_DIR)/tools
+ifeq ($(wildcard $(TOOLS_DIR)/tools.gmk),)
+$(error TOOLS_DIR must point to the shared tools directory: $(TOOLS_DIR))
+endif
 
-MPOSIX2HOST = $(foreach element,$(1),$(call POSIX2HOST,$(element)))
+# include tools component makefile
+include $(TOOLS_DIR)/tools.gmk
+
+# Locate the cdc-com component
+ifeq ($(USE_CDC_COM),true)
+CDC_COM_DIR ?= $(COMPONENTS_DIR)/cdc-com
+ifeq ($(wildcard $(CDC_COM_DIR)/build/share/id_cdc-com.mk),)
+$(error CDC_COM_DIR must point to a directory containing the cdc-com sources: $(CDC_COM_DIR))
+endif
+endif
+
 #
 # Include target makfiles last.
 #
@@ -2080,11 +2150,5 @@ MPOSIX2HOST = $(foreach element,$(1),$(call POSIX2HOST,$(element)))
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)/defs.mk
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs.mk
 
-export TOOLS_DIR ?= $(COMPONENTS_DIR)/tools
-ifeq ($(wildcard $(TOOLS_DIR)/tools.gmk),)
-$(error TOOLS_DIR must point to the shared tools directory: $(TOOLS_DIR))
-endif
-
-# Include external shared tools
-include $(TOOLS_DIR)/tools.gmk
-
+# Root directory for unittests reports
+REPORTS_DIR ?= $(call POSIX2HOST,$(CDC_DIST_DIR)/reports)

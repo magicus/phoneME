@@ -105,6 +105,9 @@ public class DatagramObject extends UniversalOutputStream implements Datagram {
         DatagramObject ref = (DatagramObject)reference;
 	host = ref.host;
 	port = ref.port;
+        /* check to see if the host and port are valid values */
+        if (host == null || port == -1) 
+           throw new IllegalArgumentException("invalid host or port number");
 	dgram.setAddress(ref.dgram.getAddress());
 	dgram.setPort(port);
     }
@@ -114,7 +117,7 @@ public class DatagramObject extends UniversalOutputStream implements Datagram {
         if (buffer == null) {
 	    throw new IllegalArgumentException("NULL buffer");
 	}
-	if (offset > buffer.length) {
+	if (offset > buffer.length || len > buffer.length ) {
 	    throw new IllegalArgumentException("offset past length of buffer");
 	}
         dgram.setData(buffer, offset, len);
@@ -122,6 +125,10 @@ public class DatagramObject extends UniversalOutputStream implements Datagram {
     }
 
     public void setLength(int len) {
+        /* The length of the datagram should not exceed the length of the data buffer length */
+        if (len > dgram.getData().length ) {
+	    throw new IllegalArgumentException("length past length of buffer");
+	}
         dgram.setLength(len);
     }
 

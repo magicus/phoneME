@@ -53,7 +53,7 @@ MICROWIN        ?= $(CVM_TOOLS_DIR)/lib/$(CVM_TARGET)/usr/microwin
 FREETYPE_CONFIG ?= $(MICROWIN)/freetype-config
 endif
 
-PROFILE_INCLUDES += -I$(MICROWIN)
+PROFILE_INCLUDE_DIRS += $(MICROWIN)
 AWT_LIB_LIBS ?= -L$(MICROWIN) -lmwengine `$(FREETYPE_CONFIG) --libs` -L/usr/X11R6/lib -lX11 -lpthread
 
 #
@@ -73,8 +73,8 @@ CVM_BUILDDIRS 	  += $(CVM_FONTSDIR)
 #
 PROFILE_SRCDIRS_NATIVE += \
 	$(CVM_SHAREROOT)/basis/native/awt/$(AWT_IMPLEMENTATION)
-PROFILE_INCLUDES  += \
-	-I$(CVM_SHAREROOT)/basis/native/awt/$(AWT_IMPLEMENTATION)
+PROFILE_INCLUDE_DIRS  += \
+	$(CVM_SHAREROOT)/basis/native/awt/$(AWT_IMPLEMENTATION)
 
 #
 # microwindows shared class directories

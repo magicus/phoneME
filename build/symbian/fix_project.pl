@@ -29,30 +29,27 @@
 # change the generate makefile. See comments below to see what we
 # need to do.
 
-$SYMBIAN_ROOT        = shift @ARGV;
-$BuildSpace        = shift @ARGV;
-$SYMBIAN_PLATFORM  = shift @ARGV;
-$CVM		   = shift @ARGV;
+$SYMBIAN_ROOT      = shift;
+$BuildSpace        = shift;
+$SYMBIAN_PLATFORM  = shift;
+$CVM               = shift;
 
 # change to unix slash, and clean trailing /
-$_ = $SYMBIAN_ROOT;
-s/\\/\//g;
-s/\/+$//g;
-$SYMBIAN_ROOT = $_;
+$SYMBIAN_ROOT =~ s:\\:/:g;
+$SYMBIAN_ROOT =~ s:/+$::g;
 
-# Trim leading dirve name from BuildSpace
-$_ = $BuildSpace;
-s/^[A-Za-z]:\///g;
-$BuildSpace0 = $_;
+# Trim leading drive name from BuildSpace
+$BuildSpace =~ s@^[A-Za-z]:/@@g;
 
-$BUILD_DIR  = "$SYMBIAN_ROOT/epoc32/build/$BuildSpace0/$CVM/$SYMBIAN_PLATFORM";
+$BUILD_DIR  = "$SYMBIAN_ROOT/epoc32/build/$BuildSpace/$CVM/$SYMBIAN_PLATFORM";
 $MAKEFILE   = "$BUILD_DIR/$CVM.$SYMBIAN_PLATFORM";
 
-system("cp $MAKEFILE $MAKEFILE.orig");
-open(IN,  "$MAKEFILE.orig");
-open(OUT, ">$MAKEFILE");
-
-$last_line_was_fp = 0;
+system("cp $MAKEFILE $MAKEFILE.orig") == 0
+    or die "cp $MAKEFILE $MAKEFILE.orig failed.\n";
+open(IN,  "$MAKEFILE.orig")
+    or die "Can't open $MAKEFILE.orig for reading: $!.\n";
+open(OUT, ">$MAKEFILE")
+    or die "Can't open $MAKEFILE for writing: $!.\n";
 
 while ($_ = <IN>) {
     if (($SYMBIAN_PLATFORM eq "wins") || ($SYMBIAN_PLATFORM eq "winc")) {
@@ -69,24 +66,24 @@ while ($_ = <IN>) {
     # include path is specified by -J, and user include path is specified
     # by -I. Fix the generated makefile here.
     if (($SYMBIAN_PLATFORM eq "armv5")) {
-        s/-J (.*\\src\\share)/-I $1/g;
-        s/-J (.*\\src\\share\\javavm\\export)/-I $1/g;
-        s/-J (.*\\src\\share\\native\\common)/-I $1/g;
-        s/-J (.*\\src\\share\\native\\java\\lang)/-I $1/g;
-        s/-J (.*\\src\\share\\native\\java\\lang\\fdlibm\\include)/-I $1/g;
-        s/-J (.*\\src\\share\\native\\java\\net)/-I $1/g;
-        s/-J (.*\\src\\share\\native\\java\\io)/-I $1/g;
-        s/-J (.*\\src\\share\\native\\java\\java\\util\\zip)/-I $1/g;
-        s/-J (.*\\src\\share\\native\\java\\java\\util\\zip\\zlib-1.1.3)/-I $1/g;
-        s/-J (.*\\src\\arm)/-I $1/g;
-        s/-J (.*\\src)/-I $1/g;
-        s/-J (.*\\src\\symbian)/-I $1/g;
-        s/-J (.*\\src\\symbian\\native\\java\\net)/-I $1/g;
-        s/-J (.*\\src\\symbian\\native\\common)/-I $1/g;
-        s/-J (.*\\src\\symbian\\native\\cdc)/-I $1/g;
-        s/-J (.*\\src\\symbian-arm)/-I $1/g;
-        s/-J (.*\\build)/-I $1/g;
-        s/-J (.*\\build.*\\generated\\jni)/-I $1/g;
+        s/-J(?= \S*\\src\\share )/-I/g;
+        s/-J(?= \S*\\build\\symbian-arm-\w+ )/-I/g;
+        s/-J(?= \S*\\src\\share\\javavm\\export )/-I/g;
+        s/-J(?= \S*\\src\\share\\native\\common )/-I/g;
+        s/-J(?= \S*\\src\\share\\native\\java\\lang )/-I/g;
+        s/-J(?= \S*\\src\\share\\native\\java\\lang\\fdlibm\\include )/-I/g;
+        s/-J(?= \S*\\src\\share\\native\\java\\net )/-I/g;
+        s/-J(?= \S*\\src\\share\\native\\java\\io )/-I/g;
+        s/-J(?= \S*\\src\\share\\native\\java\\util\\zip )/-I/g;
+        s/-J(?= \S*\\src\\share\\native\\java\\util\\zip\\zlib-1.1.3 )/-I/g;
+        s/-J(?= \S*\\build\\symbian-arm-\w+\\generated\\jni )/-I/g;
+        s/-J(?= \S*\\src\\arm )/-I/g;
+        s/-J(?= \S*\\src )/-I/g;
+        s/-J(?= \S*\\src\\symbian )/-I/g;
+        s/-J(?= \S*\\src\\symbian\\native\\java\\net )/-I/g;
+        s/-J(?= \S*\\src\\symbian\\native\\common )/-I/g;
+        s/-J(?= \S*\\src\\symbian\\native\\cdc )/-I/g;
+        s/-J(?= \S*\\src\\symbian-arm )/-I/g;
     }
 
     print OUT $_;

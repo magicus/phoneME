@@ -27,6 +27,14 @@
 
 #include "javavm/include/porting/time.h"
 
+#ifdef CVM_JVMTI
+CVMInt64
+CVMtimeNanosecs(void)
+{
+    return (CVMInt64)(CVMtimeMillis() * 1000000);
+}
+#endif
+
 CVMInt64
 CVMtimeMillis(void)
 {

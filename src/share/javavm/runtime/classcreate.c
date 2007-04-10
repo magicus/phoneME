@@ -49,6 +49,9 @@
 #ifdef CVM_JVMPI
 #include "javavm/include/jvmpi_impl.h"
 #endif
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmtiExport.h"
+#endif
 #ifdef CVM_JIT
 #include "javavm/include/jit/jitmemory.h"
 #include "javavm/include/porting/jit/ccm.h"
@@ -85,7 +88,8 @@
 
 CVMClassICell*
 CVMdefineClass(CVMExecEnv* ee, const char *name, CVMClassLoaderICell* loader,
-		const CVMUint8* buf, CVMUint32 bufLen, CVMObjectICell* pd)
+	       const CVMUint8* buf, CVMUint32 bufLen, CVMObjectICell* pd,
+	       CVMBool isRedefine)
 
 {
 #ifndef CVM_CLASSLOADING
@@ -113,7 +117,8 @@ CVMdefineClass(CVMExecEnv* ee, const char *name, CVMClassLoaderICell* loader,
     }
 
     classGlobalRoot = 
-	CVMclassCreateInternalClass(ee, buf, bufLen, loader, name, NULL);
+	CVMclassCreateInternalClass(ee, buf, bufLen, loader, name, NULL,
+				    isRedefine);
     if (classGlobalRoot == NULL) {
 	CVMjniDeleteLocalRef(CVMexecEnv2JniEnv(ee), resultCell);
 	if (pdCell != NULL) {
@@ -738,7 +743,7 @@ static void
 CVMlimitHandler(CVMExecEnv* ee, CICcontext* context, char* comment);
 
 static CVMClassBlock*
-CVMallocClassSpace(CVMExecEnv* ee, CICcontext* context);
+CVMallocClassSpace(CVMExecEnv* ee, CICcontext* context, CVMBool isRedefine);
 
 /* Purpose: Creates an CVMClassBlock out of the array of bytes passed to it. */
 /* Parameters: externalClass - the buffer.
@@ -751,7 +756,8 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 			    CVMUint32 classSize, 
 			    CVMClassLoaderICell* loader, 
 			    const char* classname,
-			    const char* dirNameOrZipFileName)
+			    const char* dirNameOrZipFileName,
+			    CVMBool isRedefine)
 {
     CVMClassBlock*   cb;
     CVMConstantPool* cp;
@@ -762,15 +768,37 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
     CICcontext *context = &context_block;
     CVMUint8 *buffer = (CVMUint8 *) externalClass;
     CVMInt32 bufferLength = classSize;
+#ifdef CVM_JVMTI
+    CVMUint8 *new_buffer = NULL;
+    CVMInt32 new_bufferLength = 0;
+    volatile CVMBool jvmtiBufferWasReplaced = CVM_FALSE;
+#endif
 #ifdef CVM_DUAL_STACK
     extern CVMBool
     CVMclassloaderIsCLDCClassLoader(CVMExecEnv *ee,
                                     CVMClassLoaderICell* loader);
     CVMBool isCLDCClass;
 #endif
-
 #ifdef CVM_JVMPI
     volatile CVMBool bufferWasReplaced = CVM_FALSE;
+#endif
+#ifdef CVM_JVMTI
+    if (jvmti_should_post_class_file_load_hook()) {
+	/* At this point in time we don't have a classblock or
+	 * a protection domain so we pass NULL
+	 */
+	CVMjvmtiPostClassLoadHookEvent(NULL, loader, classname,
+				       NULL, bufferLength, buffer,
+				       &new_bufferLength, &new_buffer);
+	if (new_buffer != NULL) {
+	    /* class was replaced with new one */
+            jvmtiBufferWasReplaced = CVM_TRUE;
+	    buffer = new_buffer;
+	    bufferLength = new_bufferLength;
+	}
+    }
+#endif
+#ifdef CVM_JVMPI
 
     if (CVMjvmpiEventClassLoadHookIsEnabled()) {
         CVMjvmpiPostClassLoadHookEvent(&buffer, &bufferLength,
@@ -914,7 +942,7 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
         goto doCleanup;
     }
 
-    cb = CVMallocClassSpace(ee, context);
+    cb = CVMallocClassSpace(ee, context, isRedefine);
 
     /* not in ROM, no <clinit> */
     CVMassert(!CVMcbIsInROM(cb));
@@ -927,7 +955,6 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
     if (context->oldClassRoot == NULL) {
 	CVMexceptionHandler(ee, context);
     }
-
     /*
      * This assignment is just temporary until CVMclassAddToLoadedClasses()
      * creates a new ClassLoader global root for the class loader.
@@ -940,9 +967,11 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 	CVMcbCheckedExceptions(cb) = (CVMUint16*)
 	    (context->mainSpace + context->offset.main.excs);
     }
-    CVMcbStatics(cb) = (CVMJavaVal32*) 
-	(context->mainSpace + context->offset.staticFields);
-    CVMcbNumStaticRefs(cb) = context->size.staticRefFields;
+    if (!isRedefine) {
+	CVMcbStatics(cb) = (CVMJavaVal32*) 
+	    (context->mainSpace + context->offset.staticFields);
+	CVMcbNumStaticRefs(cb) = context->size.staticRefFields;
+    }
 
     /* Set up the context */
     context->ptr = buffer;
@@ -1181,7 +1210,10 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 	    /* All methods get this at first */
 	    CVMmbJitInvoker(mb) = (void*)CVMCCMletInterpreterDoInvoke;
 #endif
-
+#ifdef CVM_JVMTI
+	    /* Obsolete method bit depends on bit 0 being unused */
+	    CVMassert(((CVMUint32)mb & 3) == 0);
+#endif
 	    cpIdx = get2bytes(context);
 	    methodName = CVMcpGetUtf8(utf8Cp, cpIdx);
 	    cpIdx = get2bytes(context);
@@ -1301,24 +1333,33 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 	}
     }
 
+#ifdef CVM_JVMTI
     /*
-     * Add the class to our class database and let the class loader know 
-     * about the class.
+     * In JVMTI case, we check to see if we are redefining a class.
+     * If so, we don't add it to the class lists just yet.  Caller of
+     * this function will do the housekeeping instead.
      */
-    if (!CVMclassAddToLoadedClasses(ee, cb, context->oldClassRoot)) {
-	CVMID_freeGlobalRoot(ee, context->oldClassRoot);
-	context->oldClassRoot = NULL;
+    if (!isRedefine)
+#endif
+    {
 	/*
-	 * If the new Class global root was never setup then we are
-	 * responsible for freeing the class.
+	 * Add the class to our class database and let the class loader know 
+	 * about the class.
 	 */
-	if (CVMcbJavaInstance(cb) == NULL) {
-	    CVMexceptionHandler(ee, context);
-	} else {
-            goto doCleanup; /* exception already thrown */
+	if (!CVMclassAddToLoadedClasses(ee, cb, context->oldClassRoot)) {
+	    CVMID_freeGlobalRoot(ee, context->oldClassRoot);
+	    context->oldClassRoot = NULL;
+	    /*
+	     * If the new Class global root was never setup then we are
+	     * responsible for freeing the class.
+	     */
+	    if (CVMcbJavaInstance(cb) == NULL) {
+		CVMexceptionHandler(ee, context);
+	    } else {
+		goto doCleanup; /* exception already thrown */
+	    }
 	}
     }
-
     /* 
      * The class is loaded and verified to be structually correct.
      * From this point on the responsibility of freeing malloc'ed
@@ -1336,6 +1377,11 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
         free(buffer);
     }
 #endif
+#ifdef CVM_JVMTI
+    if (jvmtiBufferWasReplaced) {
+	CVMjvmtiDeallocate(new_buffer);
+    }
+#endif
     return context->oldClassRoot;
 
     /* This is where the above code jumps to clean-up before exiting: */
@@ -1343,6 +1389,11 @@ doCleanup:
 #ifdef CVM_JVMPI
     if (bufferWasReplaced) {
         free(buffer);
+    }
+#endif
+#ifdef CVM_JVMTI
+    if (jvmtiBufferWasReplaced) {
+	CVMjvmtiDeallocate(new_buffer);
     }
 #endif
     return NULL;
@@ -1438,7 +1489,7 @@ CVMlimitHandler(CVMExecEnv* ee, CICcontext *context, char* comment)
 }
 
 static CVMClassBlock*
-CVMallocClassSpace(CVMExecEnv* ee, CICcontext *context)
+CVMallocClassSpace(CVMExecEnv* ee, CICcontext *context, CVMBool isRedefine)
 {
     unsigned int offset = 0;
     int numberOfJmd;
@@ -1541,14 +1592,15 @@ CVMallocClassSpace(CVMExecEnv* ee, CICcontext *context)
     offset += sizeof(CVMClassBlock*) * ((255 + context->size.fields) / 256) +
 	      sizeof(CVMFieldBlock) * context->size.fields;
     
-    /* CVMClassBlock.statics */
-    context->offset.staticFields = offset;
-    /*
-     * Just use the same type as multiplier here that is used
-     * for 'statics' in the union 'staticsX' in CVMClassBlock.
-     */
-    offset += sizeof(CVMJavaVal32) * context->size.staticFields;
-
+    if (!isRedefine) {
+	/* CVMClassBlock.statics */
+	context->offset.staticFields = offset;
+	/*
+	 * Just use the same type as multiplier here that is used
+	 * for 'statics' in the union 'staticsX' in CVMClassBlock.
+	 */
+	offset += sizeof(CVMJavaVal32) * context->size.staticFields;
+    }
     /* CVMClassBlock.checkedExceptions */
     context->offset.main.excs = offset;
     offset += (sizeof(CVMUint16) * 

@@ -30,10 +30,10 @@ CVM_SRCDIRS += \
 	$(CVM_SHAREROOT)/javavm/test/GCTest/IndirectMem/Csrc \
 	$(CVM_SHAREROOT)/javavm/test/GCTest/RootScans/Csrc
 
-CVM_INCLUDES  += \
-	-I$(CVM_SHAREROOT)/javavm/test/GCTest/DirectMem/Include \
-	-I$(CVM_SHAREROOT)/javavm/test/GCTest/IndirectMem/Include \
-	-I$(CVM_SHAREROOT)/javavm/test/GCTest/RootScans/Include
+CVM_INCLUDE_DIRS  += \
+	$(CVM_SHAREROOT)/javavm/test/GCTest/DirectMem/Include \
+	$(CVM_SHAREROOT)/javavm/test/GCTest/IndirectMem/Include \
+	$(CVM_SHAREROOT)/javavm/test/GCTest/RootScans/Include
 
 CVM_SHAREOBJS += \
          libGC.o \

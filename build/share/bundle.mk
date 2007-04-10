@@ -49,6 +49,8 @@
 #   INCLUDE_KNI(false): Include support for KNI methods
 #   INCLUDE_COMMCONNECTION(true): Include CommConnection support.
 #   INCLUDE_MTASK: true for oi build. false for ri builds.
+#   USE_CDC_COM(false): set true for commericial source bundles
+#   CDC_COM_DIR: directory of cdc-com component
 #
 # BUNDLE_PORTS lists all the ports to include in the source bundle using
 # the format <os>-<cpu>-<device>. Wildcards are supported, but you must
@@ -77,8 +79,11 @@ empty:=
 comma:= ,
 space:= $(empty) $(empty)
 
-CVM_TOP 	?= ../..
-INSTALLDIR	= $(CVM_TOP)/install
+ABSPATH 	= $(shell cd $(1); echo `pwd`)
+
+CVM_TOP		:= ../..
+CVM_TOP_ABS	:= $(call ABSPATH,$(CVM_TOP))
+INSTALLDIR	:= $(CVM_TOP_ABS)/install
 ZIP		= zip
 
 USE_VERBOSE_MAKE	= false
@@ -528,13 +533,13 @@ FEATURE_LIST_WITH_VALUES += \
 	$(foreach feature,$(strip $(FEATURE_LIST)), "$(feature)=$($(feature))")
 
 
-ifneq (USE_VERBOSE_MAKE), true)
+ifneq ($(USE_VERBOSE_MAKE), true)
 SVN_QUIET_CHECKOUT = -q
 endif
 
 lib-src: src.zip
 src.zip::
-ifeq (USE_VERBOSE_MAKE), true)
+ifeq ($(USE_VERBOSE_MAKE), true)
 	@echo ">>>FLAGS:"
 	@echo "	SRC_BUNDLE_APPEND_REVISION = $(SRC_BUNDLE_APPEND_REVISION)"
 	@echo "	SRC_BUNDLE_NAME		= $(SRC_BUNDLE_NAME)"
@@ -576,11 +581,31 @@ else
 			  $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)/legal
 endif
 	$(AT)(cd $(INSTALLDIR); \
-	 $(ZIP) -r -q - $(BUNDLE_INCLUDE_LIST) \
-		-x $(EXCLUDE_PATTERNS)) \
-		> $(INSTALLDIR)/$(SRC_BUNDLE_NAME).zip;
+	 $(ZIP) -r -q \
+		$(INSTALLDIR)/$(SRC_BUNDLE_NAME).zip \
+		$(BUNDLE_INCLUDE_LIST) -x $(EXCLUDE_PATTERNS))
 	$(AT)rm -rf $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
-ifeq (USE_VERBOSE_MAKE), true)
+
+ifeq ($(USE_CDC_COM),true)
+	$(AT)mkdir -p $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)/build/share
+# copy id_cdc-com.mk so it can be added to the zip file
+	$(AT)cp $(CDC_COM_DIR)/build/share/id_cdc-com.mk \
+		$(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)/build/share
+# copy cdc-com version of defs_qt.mk so it can be added to the zip file
+ifeq ($(findstring defs_qt.mk,$(BUILDDIR_PATTERNS)),defs_qt.mk)
+	$(AT)cp $(CDC_COM_DIR)/build/share/defs_qt.mk \
+		$(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)/build/share
+endif
+# Add the commercial files to the zip file
+	$(AT)(cd $(INSTALLDIR); \
+	      $(ZIP) -r -q \
+		$(INSTALLDIR)/$(SRC_BUNDLE_NAME).zip \
+		$(SRC_BUNDLE_DIRNAME)/build/share/id_cdc-com.mk \
+		$(SRC_BUNDLE_DIRNAME)/build/share/defs_qt.mk)
+	$(AT)rm -rf $(INSTALLDIR)/$(SRC_BUNDLE_DIRNAME)
+endif
+
+ifeq ($(USE_VERBOSE_MAKE), true)
 	@echo "<<<Finished "$@" ..." ;
 endif
 

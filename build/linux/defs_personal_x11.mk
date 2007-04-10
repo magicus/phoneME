@@ -27,5 +27,5 @@
 # FIXME - The following requires that the host and target be the same.
 # A $(CVM_TOOLS_DIR)/lib installation should be used if CVM_USE_NATIVE_TOOLS
 # is false.
-PROFILE_INCLUDES += -I/usr/X11R6/include
+PROFILE_INCLUDE_DIRS += /usr/X11R6/include
 AWT_LIB_LIBS += -L/usr/X11R6/lib -lX11

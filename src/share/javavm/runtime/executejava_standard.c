@@ -59,6 +59,10 @@
 #include "javavm/include/jit_common.h"
 #endif
 
+#ifdef CVM_HW
+#include "include/hw.h"
+#endif
+
 /*
  * The following macros are used to define how opcode dispatching is
  * done. The are all described immediately below and defined a bit later
@@ -115,6 +119,15 @@
  */
 #ifdef CVM_USELABELS
 #define CVM_PREFETCH_OPCODE
+#endif
+
+/*
+ * For hardware execution we can't prefetch since we don't know where the
+ * hardware will leave the pc.  And for now, we use a loop instead of labels.
+ */
+#ifdef CVM_HW
+#undef CVM_PREFETCH_OPCODE
+#undef CVM_USELABELS
 #endif
 
 /*
@@ -375,26 +388,53 @@ CVMdumpStats()
    breakpoint opcode to get inserted at the current PC to allow the
    debugger to coalesce single-step events. Therefore, we need to
    refetch the opcode after calling out to JVMTI. */
-#define JVMTI_SINGLE_STEPPING()					   \
-{									\
-    if (ee->jvmtiSingleStepping && CVMjvmtiThreadEventsEnabled(ee)) {	\
-	DECACHE_PC();						   	\
-	DECACHE_TOS();						   	\
-	CVMD_gcSafeExec(ee, {					   	\
-	    CVMjvmtiNotifyDebuggerOfSingleStep(ee, pc);			\
-	});								\
+
+#define JVMTI_PROCESS_POP_FRAME()					\
+    if (ee->_jvmti_event_enabled._enabled_bits & NEED_FRAME_POP_BIT) {	\
+	OPCODE_DECL;							\
+      do {								\
+	ee->_jvmti_event_enabled._enabled_bits &= ~NEED_FRAME_POP_BIT;	\
+	CACHE_FRAME();							\
+	CACHE_TOS();							\
+	CACHE_PC();							\
+	topOfStack += CVMmbArgsSize(frame->mb);				\
+	locals = CVMframeLocals(frame);					\
+	cp = CVMframeCp(frame);						\
+	FETCH_NEXT_OPCODE(0);						\
+	if (ee->jvmtiSingleStepping && CVMjvmtiThreadEventsEnabled(ee)) { \
+	    DECACHE_TOS();						\
+	    CVMD_gcSafeExec(ee, {					\
+		    CVMjvmtiPostSingleStepEvent(ee, pc);		\
+		});							\
+	}								\
+      } while (ee->_jvmti_event_enabled._enabled_bits & NEED_FRAME_POP_BIT); \
 	/* Refetch opcode. See above. */				\
 	FETCH_NEXT_OPCODE(0);      					\
-    }									\
-}
+	DISPATCH_OPCODE();						\
+    }
+
+#define JVMTI_SINGLE_STEPPING()						\
+    {									\
+	if (ee->jvmtiSingleStepping && CVMjvmtiThreadEventsEnabled(ee)) { \
+	    DECACHE_PC();						\
+	    DECACHE_TOS();						\
+	    CVMD_gcSafeExec(ee, {					\
+		    CVMjvmtiPostSingleStepEvent(ee, pc);		\
+		});							\
+	    JVMTI_PROCESS_POP_FRAME();				\
+	    /* Refetch opcode. See above. */				\
+	    FETCH_NEXT_OPCODE(0);      					\
+	}								\
+    }
 
 #define JVMTI_WATCHING_FIELD_ACCESS(location)				\
     if (CVMglobals.jvmtiWatchingFieldAccess) {				\
 	DECACHE_PC();							\
 	DECACHE_TOS();							\
 	CVMD_gcSafeExec(ee, {						\
-	    CVMjvmtiNotifyDebuggerOfFieldAccess(ee, location, fb);	\
+		CVMjvmtiPostFieldAccessEvent(ee, location, fb);		\
 	});								\
+	JVMTI_PROCESS_POP_FRAME();					\
     }
 
 #define JVMTI_WATCHING_FIELD_MODIFICATION(location, isDoubleWord, isRef)      \
@@ -415,16 +455,50 @@ CVMdumpStats()
 	   val.i = STACK_INT(-1);					      \
        }								      \
        CVMD_gcSafeExec(ee, {						      \
-	   CVMjvmtiNotifyDebuggerOfFieldModification(			      \
-	       ee, location, fb, val);					      \
+	       CVMjvmtiPostFieldModificationEvent(ee, location, fb, val); \
+	   });								\
+       JVMTI_PROCESS_POP_FRAME(); 					\
+   }
+
+#define JVMTI_WATCHING_FIELD_ACCESS_NO_POP(location)			\
+    if (CVMglobals.jvmtiWatchingFieldAccess) {				\
+	DECACHE_PC();							\
+	DECACHE_TOS();							\
+	CVMD_gcSafeExec(ee, {						\
+		CVMjvmtiPostFieldAccessEvent(ee, location, fb);		\
+	});								\
+    }
+
+#define JVMTI_WATCHING_FIELD_MODIFICATION_NO_POP(location, isDoubleWord, isRef) \
+   if (CVMglobals.jvmtiWatchingFieldModification) {			      \
+       jvalue val;							      \
+       DECACHE_PC();							      \
+       DECACHE_TOS();							      \
+       if (isDoubleWord) {						      \
+	   CVMassert(CVMfbIsDoubleWord(fb));				      \
+	   if (CVMtypeidGetType(CVMfbNameAndTypeID(fb)) == CVM_TYPEID_LONG) { \
+	       val.j = CVMjvm2Long(&STACK_INFO(-2).raw);		      \
+	   } else /* CVM_TYPEID_DOUBLE */ {				      \
+	       val.d = CVMjvm2Double(&STACK_INFO(-2).raw);		      \
+	   }								      \
+       } else if (isRef) {						      \
+	   val.l = &STACK_ICELL(-1);					      \
+       } else {								      \
+	   val.i = STACK_INT(-1);					      \
+       }								      \
+       CVMD_gcSafeExec(ee, {						      \
+	       CVMjvmtiPostFieldModificationEvent(ee, location, fb, val);     \
        });								      \
    }
+
 
 #else
 #define JVMTI_SINGLE_STEPPING()
 #define JVMTI_WATCHING_FIELD_ACCESS(location)
+#define JVMTI_WATCHING_FIELD_ACCESS_NO_POP(location)
 #define JVMTI_WATCHING_FIELD_MODIFICATION(location, isDoubleWord, isRef)
-
+#define JVMTI_WATCHING_FIELD_MODIFICATION_NO_POP(location, isDoubleWord, isRef)
+#define JVMTI_PROCESS_FRAME_POP(ee)
 #endif
 
 #ifdef CVM_JVMPI
@@ -1207,7 +1281,7 @@ CVMgetfield_quick_wHelper(CVMExecEnv* ee, CVMFrame* frame,
 	return NULL;
     }
     fb = CVMcpGetFb(cp, GET_INDEX(pc+1));
-    JVMTI_WATCHING_FIELD_ACCESS(&STACK_ICELL(-1));
+    JVMTI_WATCHING_FIELD_ACCESS_NO_POP(&STACK_ICELL(-1));
     if (CVMfbIsDoubleWord(fb)) {
         /* For volatile type */
         if (CVMfbIs(fb, VOLATILE)) {
@@ -1248,7 +1322,7 @@ CVMputfield_quick_wHelper(CVMExecEnv* ee, CVMFrame* frame,
 	if (directObj == NULL) {
 	    return NULL;
 	}
-	JVMTI_WATCHING_FIELD_MODIFICATION(&STACK_ICELL(-3),
+	JVMTI_WATCHING_FIELD_MODIFICATION_NO_POP(&STACK_ICELL(-3),
 					  CVM_TRUE, CVM_FALSE);
         /* For volatile type */
         if (CVMfbIs(fb, VOLATILE)) {
@@ -1267,7 +1341,7 @@ CVMputfield_quick_wHelper(CVMExecEnv* ee, CVMFrame* frame,
 	if (directObj == NULL) {
 	    return NULL;
 	}
-	JVMTI_WATCHING_FIELD_MODIFICATION(&STACK_ICELL(-2),
+	JVMTI_WATCHING_FIELD_MODIFICATION_NO_POP(&STACK_ICELL(-2),
 					  CVM_FALSE, CVMfbIsRef(fb));
 	if (CVMfbIsRef(fb)) {
 	    CVMD_fieldWriteRef(directObj, CVMfbOffset(fb), STACK_OBJECT(-1));
@@ -1366,6 +1440,10 @@ CVMwideHelper(CVMExecEnv* ee, CVMSlotVal32* locals, CVMFrame* frame)
     DECACHE_TOS();
     return needRequestCheck;
 }
+
+#ifdef CVM_HW
+#include "include/hw/executejava_standard1.i"
+#endif
 
 /* 
  * CVMmemCopy64 is used in conjunction with the 'raw' field of struct
@@ -1583,6 +1661,9 @@ new_transition:
     while (1)
 #endif
     {
+#ifdef CVM_HW
+	CVMhwExecute(ee, &pc, &topOfStack, locals, cp);
+#endif
 #ifndef CVM_PREFETCH_OPCODE
 	opcode = *pc;
 #endif
@@ -2642,6 +2723,16 @@ new_transition:
 	    CVMD_gcSafeExec(ee, {
 		newOpcode = CVMjvmtiGetBreakpointOpcode(ee, pc, notify);
 	    });
+	    if (ee->_jvmti_event_enabled._enabled_bits & NEED_FRAME_POP_BIT) {
+		ee->_jvmti_event_enabled._enabled_bits &= ~NEED_FRAME_POP_BIT;
+		CACHE_FRAME();
+		CACHE_TOS();
+		CACHE_PC();
+		topOfStack += CVMmbArgsSize(frame->mb);
+		locals = CVMframeLocals(frame);
+		cp = CVMframeCp(frame);
+		CONTINUE;
+	    }
 #if defined(CVM_USELABELS)
 	    nextLabel = opclabels[newOpcode];
 	    DISPATCH_OPCODE();
@@ -3274,7 +3365,7 @@ new_transition:
 		    /* Since the stack expanded, we need to set locals
 		     * to the new frame minus the number of locals.
 		     * Also, we need to copy the arguments, which
-		     * topOfStack points to, to the new locals area.
+		     * topofstack points to, to the new locals area.
 		     */
 		    locals = (CVMSlotVal32*)frame - CVMjmdMaxLocals(jmd);
 		    memcpy((void*)locals, (void*)topOfStack,
@@ -3365,7 +3456,7 @@ new_transition:
 		    DECACHE_PC();
 		    DECACHE_TOS();
 		    CVMD_gcSafeExec(ee, {
-			CVMjvmtiNotifyDebuggerOfFramePush(ee);
+			CVMjvmtiPostFramePushEvent(ee);
 		    });
 		}
 #endif
@@ -3396,9 +3487,13 @@ new_transition:
 		CNINativeMethod *f = (CNINativeMethod *)CVMmbNativeCode(mb);
 
 		TRACE_FRAMELESS_METHOD_CALL(frame, mb0, CVM_FALSE);
-
+#ifdef CVM_JVMTI
+		ee->threadState = CVM_THREAD_IN_NATIVE;
+#endif
 		ret = (*f)(ee, topOfStack, &mb);
-
+#ifdef CVM_JVMTI
+		ee->threadState &= ~CVM_THREAD_IN_NATIVE;
+#endif
 		TRACE_FRAMELESS_METHOD_RETURN(mb0, frame);
 
 		/* 
@@ -3599,7 +3694,7 @@ new_transition:
 #ifdef CVM_JVMTI
 		if (CVMjvmtiEventsEnabled()) {
 		  CVMD_gcSafeExec(ee, {
-                CVMjvmtiNotifyDebuggerOfException(ee, pc,
+                CVMjvmtiPostExceptionEvent(ee, pc,
 				(CVMlocalExceptionOccurred(ee) ?
 			     CVMlocalExceptionICell(ee) :
 			     CVMremoteExceptionICell(ee)));
@@ -3655,8 +3750,8 @@ new_transition:
 	    if (CVMjvmtiEventsEnabled()) {
                 DECACHE_TOS();
 		CVMD_gcSafeExec(ee, {
-		    CVMjvmtiNotifyDebuggerOfExceptionCatch(ee, pc,
-							   &STACK_ICELL(-1));
+		    CVMjvmtiPostExceptionCatchEvent(ee, pc,
+						    &STACK_ICELL(-1));
 		});
 	    }
 #endif
@@ -4022,6 +4117,18 @@ handle_jit_osr:
 	{
 	    topOfStack = CVMgetfield_quick_wHelper(ee, frame, topOfStack, 
 						   cp, pc);
+#ifdef CVM_JVMTI
+	    if (ee->_jvmti_event_enabled._enabled_bits & NEED_FRAME_POP_BIT) {
+		ee->_jvmti_event_enabled._enabled_bits &= ~NEED_FRAME_POP_BIT;
+		CACHE_FRAME();
+		CACHE_TOS();
+		CACHE_PC();
+		topOfStack += CVMmbArgsSize(frame->mb);
+		locals = CVMframeLocals(frame);
+		cp = CVMframeCp(frame);
+		CONTINUE;
+	    }
+#endif
 	    if (topOfStack == NULL) {
 		goto null_pointer_exception;
 	    }
@@ -4032,6 +4139,18 @@ handle_jit_osr:
 	{
 	    topOfStack = CVMputfield_quick_wHelper(ee, frame, topOfStack,
 						   cp, pc);
+#ifdef CVM_JVMTI
+	    if (ee->_jvmti_event_enabled._enabled_bits & NEED_FRAME_POP_BIT) {
+		ee->_jvmti_event_enabled._enabled_bits &= ~NEED_FRAME_POP_BIT;
+		CACHE_FRAME();
+		CACHE_TOS();
+		CACHE_PC();
+		topOfStack += CVMmbArgsSize(frame->mb);
+		locals = CVMframeLocals(frame);
+		cp = CVMframeCp(frame);
+		CONTINUE;
+	    }
+#endif
 	    if (topOfStack == NULL) {
 		goto null_pointer_exception;
 	    }
@@ -4055,6 +4174,15 @@ handle_jit_osr:
 	    CACHE_TOS();
 	    CONTINUE;
         }
+
+	CASE_ND(opc_prefix)
+	{
+#ifdef CVM_HW
+#include "include/hw/executejava_standard2.i"
+#else
+	    goto unimplemented_opcode;
+#endif
+	}
 
     handle_pending_request:
 	{

@@ -51,7 +51,7 @@
 int CVMassertHook(const char *filename, int lineno, const char *expr);
 #define CVMassert(expression) \
     ((void)((expression) || CVMassertHook(__FILE__, __LINE__, #expression) || \
-           (CVMsystemPanic("CVMassertHook returned"), 0)))
+	    (CVMsystemPanic("CVMassertHook returned"), 0)))
 #define CVMwithAssertsOnly(x) x
 #else
 #define CVMassert(expression) ((void)0)

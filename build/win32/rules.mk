@@ -45,7 +45,7 @@ printconfig::
 
 # Get the supported CPU from the compiler
 COMPILER_CPU0 := $(shell  \
-	$(TARGET_CC) 2>&1 | \
+	PATH="$(PATH)"; $(TARGET_CC) 2>&1 | \
 	grep " for " | \
 	sed -e 's/.* for \(.*\)/\1/')
 
@@ -57,7 +57,7 @@ COMPILER_CPU := $(patsubst MIPS%,mips,$(COMPILER_CPU))
 
 # Make sure the compiler supports the TARGET_CPU_FAMILY
 ifneq ($(findstring $(TARGET_CPU_FAMILY),$(COMPILER_CPU)),$(TARGET_CPU_FAMILY))
-CVM_COMPILER_INCOMPATIBLE ?= true
+CVM_COMPILER_INCOMPATIBLE = true
 endif
 checkconfig::
 ifeq ($(CVM_COMPILER_INCOMPATIBLE),true)
@@ -67,7 +67,7 @@ ifeq ($(CVM_COMPILER_INCOMPATIBLE),true)
 	@echo "PLATFORM, or PLATFORM_OS. Fix these in the GNUmakefile or on "
 	@echo "the make command line. If you want to turn off this check, set"
 	@echo "CVM_COMPILER_INCOMPATIBLE=false on the make command line"
-	@echo "or in the GNUmakefile""
+	@echo "or in the GNUmakefile"
 	@echo "   TARGET_CPU_FAMILY: $(TARGET_CPU_FAMILY)"
 	@echo "   TARGET_CC CPU:     $(COMPILER_CPU0)"
 	exit 2

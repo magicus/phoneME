@@ -55,6 +55,10 @@
 #include "javavm/include/jit/jitstats.h"
 #include "javavm/include/jit/jitdebug.h"
 
+#ifdef CVM_HW
+#include "include/hw.h"
+#endif
+
 /*#define CVM_DEBUG_RUNTIME_CHECK_ELIMINATION*/
 /*#define LOCALREF_INFO_REFINEMENT_DEBUGGING*/
 
@@ -3002,7 +3006,7 @@ isInlinable(CVMJITCompilationContext* con, CVMMethodBlock* targetMb)
 		(float)jgs->maxAllowedInliningDepth;
 	}
 	maxInliningCodeLength = jgs->maxInliningCodeLength -
-	    jgs->maxInliningCodeLength * inlineDepthRatio;
+	    (int)(jgs->maxInliningCodeLength * inlineDepthRatio);
 	/* always allow at least jgs->minInliningCodeLength */
 	if (maxInliningCodeLength < jgs->minInliningCodeLength) {
 	    maxInliningCodeLength = jgs->minInliningCodeLength;
@@ -3429,6 +3433,11 @@ always_inline_short_methods:
 	    CVMtraceJITInliningExec(reason = "has jsr/ret opcode");
             goto not_inlinable;
         }
+
+#ifdef CVM_HW
+#include "include/hw/jitir1.i"
+	    break;
+#endif
 
 	default: break; /* The rest are not an obstacle to inlining */
 	}
@@ -5793,6 +5802,11 @@ translateRange(CVMJITCompilationContext* con,
             }/* end of switch */
 	    break;
         }/* end of opc_wide */
+
+#ifdef CVM_HW
+#include "include/hw/jitir2.i"
+	    break;
+#endif
 
        /* negate the value on the top of the stack */
        /* Conversion operations */

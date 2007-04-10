@@ -79,8 +79,8 @@ AWT_PEERSET_CLEANUP_ACTION = \
 PROFILE_SRCDIRS_NATIVE += \
 	$(CVM_SHAREROOT)/personal/native/awt/$(AWT_PEERSET_NAME)
 
-PROFILE_INCLUDES += \
-	-I$(CVM_SHAREROOT)/personal/native/awt/$(AWT_PEERSET_NAME)
+PROFILE_INCLUDE_DIRS += \
+	$(CVM_SHAREROOT)/personal/native/awt/$(AWT_PEERSET_NAME)
 
 AWT_LIB_OBJS += \
 	PeerBasedToolkit.o

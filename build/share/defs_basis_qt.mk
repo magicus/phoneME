@@ -37,8 +37,8 @@ TOOLKIT_CLASS = java.awt.QtToolkit
 #
 PROFILE_SRCDIRS_NATIVE += \
         $(CVM_SHAREROOT)/basis/native/awt/$(AWT_IMPLEMENTATION)
-PROFILE_INCLUDES  += \
-        -I$(CVM_SHAREROOT)/basis/native/awt/$(AWT_IMPLEMENTATION)
+PROFILE_INCLUDE_DIRS  += \
+        $(CVM_SHAREROOT)/basis/native/awt/$(AWT_IMPLEMENTATION)
 #
 # microwindows shared class directories
 #

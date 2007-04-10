@@ -37,7 +37,14 @@
 #include "javavm/include/jit/jitasmconstants.h"
 #include "javavm/include/porting/jit/jit.h"
 
-	SET_SECTION_EXEC(ccmallocators_cpu)
+/*
+ * NOTE: Some linker such as the ARM RVCT (v2.2) linker sorts 
+ *	 sections by attributes and section name. To make sure
+ *	 the CCM copied code in the same order as they are included
+ *	 in ccmcodecachecopy_cpu.S, we need to name the sections
+ *	 in alphabetical order.
+ */
+	SET_SECTION_EXEC(s2_ccmallocators_cpu)
 
 /*
  * Entry point for allocating an object. The cb is the only argument and

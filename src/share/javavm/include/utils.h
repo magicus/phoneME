@@ -95,7 +95,8 @@ CVMrestoreDebugFlags(CVMInt32 flags, CVMInt32 oldvalue);
  * Trace I/O
  */
 #ifdef CVM_TRACE
-#define CVMtrace(flags, x) \
+    extern int __jvmti_prep;
+#define CVMtrace(flags, x)   \
     (CVMcheckDebugFlags(flags) != 0 ? CVMconsolePrintf x : (void)0)
 #define CVMtraceExec(flags, x) \
     if (CVMcheckDebugFlags(flags) != 0) x
@@ -128,6 +129,7 @@ CVMrestoreDebugFlags(CVMInt32 flags, CVMInt32 oldvalue);
 #define CVMtraceWeakrefs(x)	CVMtrace(CVM_DEBUGFLAG(TRACE_WEAKREFS), x)
 #define CVMtraceClassUnloading(x) CVMtrace(CVM_DEBUGFLAG(TRACE_CLASSUNLOAD), x)
 #define CVMtraceClassLink(x)    CVMtrace(CVM_DEBUGFLAG(TRACE_CLASSLINK), x)
+#define CVMtraceJVMTI(x)        CVMtrace(CVM_DEBUGFLAG(TRACE_JVMTI), x)
 
 #ifdef CVM_LVM /* %begin lvm */
 #define CVMtraceLVM(x)          CVMtrace(CVM_DEBUGFLAG(TRACE_LVM), x)

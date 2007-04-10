@@ -315,7 +315,7 @@ NET_AllocSockaddr(struct sockaddr **him, int *len) {
 }
 
 void
-NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr *him, int *len) {
+NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr *him, int *len, jboolean isLocalAddr) {
 #ifdef AF_INET6
     if (ipv6_available()) {
 	struct sockaddr_in6 *him6 = (struct sockaddr_in6 *)him;
@@ -389,10 +389,14 @@ NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr 
     		if (uname(&sysinfo) == 0) {
     		    sysinfo.release[3] = '\0';
     		    if (strcmp(sysinfo.release, "2.2") != 0) {
-		 	scope_id = getDefaultIPv6Interface( &(him6->sin6_addr) );
-	                (*env)->SetIntField(env, iaObj, scopeID, scope_id);
-		    }
-		}
+				  if (isLocalAddr) {
+					scope_id = getDefaultIPv6Interface( &(him6->sin6_addr) );
+				  } else {
+					scope_id = getDefaultIPv6Interface( &(him6->sin6_addr) );
+				  }
+				  (*env)->SetIntField(env, iaObj, scopeID, scope_id);
+				}
+			}
 	    }
 
 	    /*

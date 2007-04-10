@@ -25,7 +25,6 @@
  * information or have any questions.
  */
 
-/* $Id: //bas2/vmc/dev3/src/x86/javavm/runtime/jit/jitemitter_cpu.c#7 $ */
 #include "javavm/include/defs.h"
 #include "javavm/include/objects.h"
 #include "javavm/include/utils.h"
@@ -6350,3 +6349,25 @@ CVMCPUemitAtomicCompareAndSwap(CVMJITCompilationContext* con,
 
 #endif
 #endif /* CVMJIT_SIMPLE_SYNC_METHODS */
+
+/* Purpose: Emits a constantpool dump with a branch around it if needed. */
+void
+CVMX86emitConstantPoolDumpWithBranchAroundIfNeeded(
+    CVMJITCompilationContext* con)
+{
+    if (CVMJITcpoolNeedDump(con)) {
+        CVMInt32 startPC = CVMJITcbufGetLogicalPC(con);
+        CVMInt32 endPC;
+
+	CVMJITaddCodegenComment((con, "branch over constant pool dump"));
+        CVMCPUemitBranch(con, startPC, CVMCPU_COND_AL);
+        CVMJITdumpRuntimeConstantPool(con, CVM_TRUE);
+        endPC = CVMJITcbufGetLogicalPC(con);
+
+        /* Emit branch around the constant pool dump: */
+        CVMJITcbufPushFixup(con, startPC);
+	CVMJITaddCodegenComment((con, "branch over constant pool dump"));
+        CVMCPUemitBranch(con, endPC, CVMCPU_COND_AL);
+        CVMJITcbufPop(con);
+    }
+}

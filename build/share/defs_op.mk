@@ -22,9 +22,9 @@
 # information or have any questions. 
 #
 
-SUBSYSTEM_MAKE_FILE       = subsystem.gmk
-PROP_INIT_PACKAGE         = com.sun.cdc.config
-PROP_INIT_CLASS           = PropertyInitializer
+SUBSYSTEM_MAKE_FILE      = subsystem.gmk
+JSR_INIT_PACKAGE         = com.sun.cdc.config
+JSR_INIT_CLASS           = Initializer
 
 JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239
 
@@ -56,6 +56,41 @@ JSROP_BUILD_JARS = $(foreach jsr_number,$(INCLUDED_JSROP_NUMBERS),\
 # USE_JSR_75=false USE_JSR_82=false USE_JSR_120=false ...
 MIDP_JSROP_USE_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),USE_JSR_$(jsr_number)=false)
 
+# Hide all JSROPs from CDC by default
+HIDE_ALL_JSRS ?= true
+
+# Create a list of hidden JSR numbers, which should look like:
+#   75 120 135 ...
+ifeq ($(HIDE_ALL_JSRS),true)
+# All included JSRs are hidden from CDC
+HIDE_JSROP_NUMBERS = $(INCLUDED_JSROP_NUMBERS)
+else
+# Make a list of all JSR HIDE_JSR_<#> setting. It will look something like:
+#   HIDE_JSR_75=true USE_JSR_82= USE_JSR_135=true ...
+HIDE_JSROP_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),\
+                HIDE_JSR_$(jsr_number)=$(HIDE_JSR_$(jsr_number)))
+# Extract the JSR numbers from HIDE_JSROP_FLAGS and form a list
+# of hidden JSR numbers.
+HIDE_JSROP_NUMBERS = $(patsubst HIDE_JSR_%=true,%,\
+                $(filter %true, $(HIDE_JSROP_FLAGS)))
+endif
+
+# The list of JSR jar files we want to hide.
+JSROP_HIDE_JARS = $(subst $(space),:,$(foreach jsr_number,$(HIDE_JSROP_NUMBERS),$(JSROP_LIB_DIR)/jsr$(jsr_number).jar))
+
+# The list of all used JSR jar files
+JSROP_JARS_LIST = $(subst $(space),:,$(JSROP_JARS))
+
+# Generate constants classes list for the given xml file
+# generateConstantList(generatedDirectory, constantsXmlFile)
+define generateConstantList
+	$(shell $(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE) \
+	-xml $(2) \
+	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantClasses.xsl \
+	-out $(1)/.constant.class.list; \
+    cat $(1)/.constant.class.list )
+endef
+
 # Jump API classpath
 EMPTY =
 ONESPACE = $(EMPTY) $(EMPTY)
@@ -70,11 +105,11 @@ endif
 include $(SECOP_DIR)/build/share/$(SUBSYSTEM_MAKE_FILE)
 endif
 
-# If any JSR is built include JSROP abstractions and Javacall building
-ifneq ($(JSROP_BUILD_JARS),)
+# If any JSR is built include JSROP abstractions building
+ifneq ($(INCLUDED_JSROP_NUMBERS),)
 # Check Jump building
-ifneq ($(CVM_INCLUDE_JUMP), true)
-$(error JSR optional packages require Jump to be supported. CVM_INCLUDE_JUMP must be true.)
+ifneq ($(USE_JUMP), true)
+$(error JSR optional packages require Jump to be supported. USE_JUMP must be true.)
 endif
 
 export ABSTRACTIONS_DIR ?= $(COMPONENTS_DIR)/abstractions
@@ -252,13 +287,34 @@ endif
 include $(JAVACALL_MAKE_FILE)
 endif
 
-CVM_INCLUDES    += $(JSROP_EXTRA_INCLUDES)
+#Variable containing all JSROP components output dirs
+JSROP_OUTPUT_DIRS = $(foreach jsr_number,$(JSROP_NUMBERS),\
+          $(JSR_$(jsr_number)_BUILD_DIR)) $(JAVACALL_BUILD_DIR) \
+          $(ABSTRACTIONS_BUILD_DIR)
+
+CVM_INCLUDE_DIRS+= $(JSROP_INCLUDE_DIRS)
 
 ifeq ($(CVM_PRELOAD_LIB), true)
 CVM_JCC_INPUT   += $(JSROP_JARS)
 CVM_CNI_CLASSES += $(JSROP_CNI_CLASSES)
 CVM_OBJECTS     += $(JSROP_NATIVE_OBJS)
+ifneq ($(JAVACALL_LINKLIBS),)
+LINKLIBS_CVM    += $(JAVACALL_LINKLIBS) -L$(JSROP_LIB_DIR)
+endif
 else
 CLASSLIB_DEPS   += $(JSROP_NATIVE_LIBS)
 endif
 
+ifeq ($(CVM_DUAL_STACK), true)
+# JSR_CDCRESTRICTED_CLASSLIST is a list of JSROP classes 
+# that are hidden from CDC applications.
+JSR_CDCRESTRICTED_CLASSLIST = $(CVM_LIBDIR)/JSRRestrictedClasses.txt
+# JSR_CDCRESTRICTED_CLASSLIST is a list of JSROP classes
+# that are accessible from midlets. JSR_CDCRESTRICTED_CLASSLIST and
+# JSR_CDCRESTRICTED_CLASSLIST don't always contain the same classes
+# depending on which JSRs are hidden from CDC.
+JSR_MIDPPERMITTED_CLASSLIST = $(CVM_BUILD_TOP)/.jsrmidppermittedclasses
+# CVM_MIDPCLASSLIST_FILES are the files that contain MIDP permitted
+# classes.
+CVM_MIDPCLASSLIST_FILES += $(JSR_MIDPPERMITTED_CLASSLIST)
+endif

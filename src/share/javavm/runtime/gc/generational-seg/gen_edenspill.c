@@ -49,6 +49,9 @@
 
 #include "javavm/include/porting/system.h"
 
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmtiExport.h"
+#endif
 
 #ifdef CVM_JVMPI
 #include "javavm/include/jvmpi_impl.h"
@@ -647,7 +650,7 @@ verifyGeneration(CVMGeneration* gen, CVMExecEnv* ee, CVMGCOptions* gcOpts)
 }
 #endif
 
-#if defined(CVM_DEBUG) || defined(CVM_JVMPI)
+#if defined(CVM_DEBUG) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 static CVMBool iterateGen(CVMGeneration* gen, CVMExecEnv* ee,
 			  CVMObjectCallbackFunc callback,
 			  void* callbackData)
@@ -955,13 +958,21 @@ sweep(CVMGenEdenSpillGeneration* thisGen,
 		    forwardingAddress += objSize / 4;
 		    
 		}
-#ifdef CVM_JVMPI
 	    } else {
+#ifdef CVM_JVMPI
 		/* Object not marked. Count as dead. */
-		extern CVMUint32 liveObjectCount;
 		if (CVMjvmpiEventObjectFreeIsEnabled()) {
 		    CVMjvmpiPostObjectFreeEvent(currObj);
 		}
+#endif
+#ifdef CVM_JVMTI
+		/* Object not marked. Count as dead. */
+		if (jvmti_should_post_object_free()) {
+		    CVMjvmtiPostObjectFreeEvent(currObj);
+		}
+#endif
+#ifdef CVM_JVMPI
+		extern CVMUint32 liveObjectCount;
 		liveObjectCount--;
 #endif
 	    }

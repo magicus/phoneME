@@ -168,8 +168,10 @@ static const CVMCCMCodeCacheCopyEntry ccmCodeCacheCopyEntries[] = {
 #ifndef CVMCCM_DISABLE_ARM_CVM_SYSTEM_IDENTITYHASHCODE_INTRINSIC
     ENTRY(CVMCCMARMintrinsic_java_lang_System_identityHashCodeGlue)
 #endif
+#ifndef CVM_JIT_CCM_USE_C_SYNC_HELPER
     ENTRY(CVMCCMARMintrinsic_java_lang_Object_hashCodeGlue)
     ENTRY(CVMCCMARMintrinsic_java_lang_String_hashCodeGlue)
+#endif
 #ifdef IAI_IMPLEMENT_INDEXOF_IN_ASSEMBLY
     ENTRY(CVMCCMintrinsic_java_lang_String_indexOf_II)
     ENTRY(CVMCCMintrinsic_java_lang_String_indexOf_I)

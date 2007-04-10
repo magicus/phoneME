@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
+#include <sys/times.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <dlfcn.h>
@@ -43,11 +44,24 @@
 #include <malloc.h>
 #include <sched.h>
 #include <javavm/include/utils.h>
-
+#ifdef CVM_JVMTI
+#include "javavm/include/porting/time.h"
+#endif
 #ifdef CVM_JIT
 #include "javavm/include/porting/jit/jit.h"
 #include "javavm/include/globals.h"
 #endif
+
+CVMInt64 CVMgetClockTicks() {
+    return sysconf(_SC_CLK_TCK);
+}
+
+CVMInt64 CVMgetCpuTime() {
+    struct tms ticks;
+
+    times(&ticks);
+    return ticks.tms_utime + ticks.tms_stime;
+}
 
 CVMBool CVMinitVMTargetGlobalState()
 {
@@ -150,6 +164,9 @@ CVMBool CVMinitStaticState()
     /*
      * Initialize the static state for this address space
      */
+#ifdef CVM_JVMTI
+    clock_init();
+#endif
     if (!POSIXthreadInitStaticState()) {
 #ifdef CVM_DEBUG
 	fprintf(stderr, "POSIXthreadInitStaticState failed\n");

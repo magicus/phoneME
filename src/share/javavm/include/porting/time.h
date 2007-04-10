@@ -37,8 +37,12 @@
 /*
  * Return time in milliseconds, as defined by System.currentTimeMillis()
  */
-
 CVMInt64 CVMtimeMillis(void);
+
+#ifdef CVM_JVMTI
+void clock_init(void);
+CVMInt64 CVMtimeNanosecs(void);
+#endif
 
 #include CVM_HDR_TIME_H
 

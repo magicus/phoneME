@@ -41,7 +41,14 @@
  */
 
 #ifdef CVM_JIT_COPY_CCMCODE_TO_CODECACHE
-	SET_SECTION_EXEC(ccminvokers_cpu)
+/*
+ * NOTE: Some linker such as the ARM RVCT (v2.2) linker sorts 
+ *	 sections by attributes and section name. To make sure
+ *	 the CCM copied code in the same order as they are included
+ *	 in ccmcodecachecopy_cpu.S, we need to name the sections
+ *	 in alphabetical order.
+ */
+	SET_SECTION_EXEC(s3_ccminvokers_cpu)
 #else
 	SET_SECTION_EXEC_WRITE
 #endif
@@ -54,6 +61,7 @@
 
 	ENTRY( CVMCCMinvokeNonstaticSyncMethodHelper )
 ENTRY1( CVMCCMinvokeNonstaticSyncMethodHelper )
+LABEL(CVMCCMinvokeNonstaticSyncMethodHelperLocal)
 	/* r0 = mb 
 	 * r1 = CVMObjectICell* of object to sync on. 
 	 *
@@ -203,6 +211,7 @@ LABEL(jfp_set)
 
 	ENTRY( CVMARMgcPatchPointAtInvoke )
 ENTRY1( CVMARMgcPatchPointAtInvoke )
+LABEL(CVMARMgcPatchPointAtInvokeLocal)
 	/* GC check - gc will patch at this location when a rendezvous is 
 	 * needed. See ccmGcPatchPoints in jitinit_cpu.c. The patch will 
 	 * be a "b CVMARMhandleGCAtInvoke" 
@@ -272,7 +281,7 @@ ENTRY1( CVMARMhandleGCAtInvoke)
 	 */
         ldrb r2, [r1, #OFFSET_CVMMethodBlock_accessFlagsX]
         tst  r2, #CONSTANT_METHOD_ACC_SYNCHRONIZED
-        beq  CVMARMgcPatchPointAtInvoke
+        beq  CVMARMgcPatchPointAtInvokeLocal
 
 	/* Restore receiverObjX in new frame */
 	ldr r0, [r0, #OFFSET_CVMExecEnv_miscICell]	/* r0 = &miscICell */
@@ -286,7 +295,7 @@ ENTRY1( CVMARMhandleGCAtInvoke)
 	/* reload the ee. The frame flush needs it at the return point */
 	ldr  r0, [sp, #OFFSET_CVMCCExecEnv_ee]		/* r0 = ee */
 
-	b CVMARMgcPatchPointAtInvoke
+	b CVMARMgcPatchPointAtInvokeLocal
 
 LABEL(_fastLockAcquireMicrolock)
 	mov	ORIG_LR, lr
@@ -348,6 +357,7 @@ LABEL(_fastTryLockFailed)
 #define ORIG_LR         r10
 
  ENTRY( CVMCCMinvokeNonstaticSyncMethodHelper ) 
+LABEL(CVMCCMinvokeNonstaticSyncMethodHelperLocal) 
 	; r0 = mb
 	; r1 = CVMObjectICell* of object to sync on.
 	;
@@ -551,6 +561,7 @@ _fastlockSuccess
 
 
  ENTRY( CVMARMgcPatchPointAtInvoke ) 
+LABEL(CVMARMgcPatchPointAtInvokeLocal)
 	; GC check - gc will patch at this location when a rendezvous is
 	; needed. See ccmGcPatchPoints in jitinit_cpu.c. The patch will
 	; be a "b CVMARMhandleGCAtInvoke"
@@ -612,7 +623,7 @@ _fastlockSuccess
 	;
         ldrb r2, [r1, #OFFSET_CVMMethodBlock_accessFlagsX]
         tst  r2, #CONSTANT_METHOD_ACC_SYNCHRONIZED
-        beq  CVMARMgcPatchPointAtInvoke
+        beq  CVMARMgcPatchPointAtInvokeLocal
 
 	; Restore receiverObjX in new frame
 	ldr r0, [r0, #OFFSET_CVMExecEnv_miscICell]	; r0 = &miscICell
@@ -626,7 +637,7 @@ _fastlockSuccess
 	; reload the ee. The frame flush needs it at the return point
 	ldr  r0, [sp, #OFFSET_CVMCCExecEnv_ee]		; r0 = ee
 
-	b CVMARMgcPatchPointAtInvoke
+	b CVMARMgcPatchPointAtInvokeLocal
 
 	SET_SIZE( CVMCCMinvokeNonstaticSyncMethodHelper )
 
@@ -666,7 +677,7 @@ ENTRY1( CVMCCMinvokeStaticSyncMethodHelper )
 	/* r1 needs to be set to the icell of the object to lock */
 
 	ldr	r1, [r1, #OFFSET_CVMClassBlock_javaInstanceX]
-	b	CVMCCMinvokeNonstaticSyncMethodHelper
+	b	CVMCCMinvokeNonstaticSyncMethodHelperLocal
 
 	SET_SIZE( CVMCCMinvokeStaticSyncMethodHelper )
 

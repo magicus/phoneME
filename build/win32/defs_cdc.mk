@@ -24,8 +24,6 @@
 # @(#)defs_cdc.mk	1.15 06/10/10
 #
 
-WIN32_PLATFORM ?= win32
-
 #
 # win32 is currently not supported, but include FileURLMapper
 # in CVM_BUILDTIME_CLASSES to parallel identical changes in

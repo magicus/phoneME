@@ -27,21 +27,9 @@
 #  Makefile rules specific to the Personal Profile for PocketPC.
 #
 vpath %.rc $(AWT_PEERSET_SRC_DIR)
-vpath %.cpp $(AWT_PEERSET_SRC_DIR)
 
 $(CVM_OBJDIR)/%.RES: %.rc
 	$(AT)echo "...Compiling pocketpcawt resource file: $@"
 	$(RC_RULE)
 
-$(CVM_OBJDIR)/%.o: %.cpp
-	@echo "...EVC++ compiling: $@"
-	$(CCC_CMD_SPEED)
-
-ifeq ($(GENERATEMAKEFILES), true)
-	$(AT)$(TARGET_CC) $(CCDEPEND) $(AWT_CPPFLAGS) $(CFLAGS) $< \
-		2> /dev/null | sed 's!$*\.o!$(dir $@)&!g' > $(@:.o=.d)
-endif
-ifeq ($(CVM_CSTACKANALYSIS), true)
-	$(AT)$(TARGET_CC) -S $(CCFLAGS) $(AWT_CPPFLAGS) $(CFLAGS) -o $(@:.o=.asm) $<
-endif
 
