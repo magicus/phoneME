@@ -630,49 +630,48 @@ JarFileParser::filtered_do_next_entries(JvmNameFilterProc entry_filter_proc,
     // If find_entry succeeded, centralHeader contains the central directory  
     // header for the found entry.
     unsigned char *cenp = (unsigned char *)raw_current_entry()->centralHeader;
-
     name_length = CENNAM(cenp);
 
     if (name_length >= MAX_ENTRY_NAME) {
       return -1;
-    } else {
-      {
-        UsingFastOops fast_oops;
-        BufferedFile::Fast bf = buffered_file();
-        if (bf().get_bytes((address)entry_name, name_length) != name_length) {
-          return -1;
-        }
-      }
-
-      entry_name[name_length] = '\0';
-
-      if (((entry_filter_proc == NULL) || 
-           (entry_filter_proc(entry_name, caller_data) == KNI_TRUE)) &&
-          (do_jar_entry_proc != NULL)) {
-        UsingFastOops fast_oops;
-        Buffer::Fast buffer = load_entry(JVM_SINGLE_ARG_CHECK_0);
-        if (buffer.is_null()) {
-          return -1;
-        }
- 
-        if (do_jar_entry_proc((char*)entry_name, buffer().data(), 
-                              buffer().length(), caller_data) == KNI_FALSE) {
-          return 0;
-        }
-      }
-
-      total_size += raw_current_entry()->length;
     }
+
+    // Save the next offset as entry_filter_proc may move raw_current_entry()
+    juint nextCenOffset = raw_current_entry()->nextCenOffset +
+                          CENHDRSIZ + name_length + CENEXT(cenp) + CENCOM(cenp);
+
+    {
+      UsingFastOops fast_oops;
+      BufferedFile::Fast bf = buffered_file();
+      if (bf().get_bytes((address)entry_name, name_length) != name_length) {
+        return -1;
+      }
+    }
+    entry_name[name_length] = '\0';
+
+    if (((entry_filter_proc == NULL) || 
+         (entry_filter_proc(entry_name, caller_data) == KNI_TRUE)) &&
+        (do_jar_entry_proc != NULL)) {
+      UsingFastOops fast_oops;
+      Buffer::Fast buffer = load_entry(JVM_SINGLE_ARG_CHECK_0);
+      if (buffer.is_null()) {
+        return -1;
+      }
+
+      if (do_jar_entry_proc((char*)entry_name, buffer().data(), 
+                            buffer().length(), caller_data) == KNI_FALSE) {
+        return 0;
+      }
+    }
+
+    total_size += raw_current_entry()->length;
 
     if (CURRENT_HAS_PENDING_EXCEPTION) {
       // if entry_filter_proc returned NULL, check for exception
       return -1;
     }
-    // raw_current_entry() may be moved by entry_filter_proc or
-    // do_jar_entry_proc(), Must reload it after every iteration.
-    cenp = (unsigned char *)raw_current_entry()->centralHeader;
-    raw_current_entry()->nextCenOffset += 
-      CENHDRSIZ + name_length + CENEXT(cenp) + CENCOM(cenp);
+
+    raw_current_entry()->nextCenOffset = nextCenOffset;
   }
 
   // If we reached the end of JAR return 0.
