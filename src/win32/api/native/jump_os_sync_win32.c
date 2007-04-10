@@ -50,7 +50,6 @@ struct _JUMPThreadCond {
     HANDLE event;
     struct WAITING_THREAD *waiting_list;
     int num_signaled;
-    int num_waiting;
     struct WAITING_THREAD *last_thread;
     struct _JUMPThreadMutex *mutex;         /* "bound" mutex */
 #ifndef NDEBUG
@@ -74,14 +73,14 @@ struct _JUMPThreadCond {
     PRINT_ERROR(func_,err2str(errCode_),errCode_); \
 } while (0)
 
-static void remove_from_queue(struct _JUMPThreadCond *c, 
-                              struct WAITING_THREAD *wt);
 static char *err2str(int i);
 
 #else
 #define PRINT_ERROR(func_,text_,code_)
 #define REPORT_ERROR(func_)
 #endif
+static void remove_from_queue(struct _JUMPThreadCond *c, 
+                              struct WAITING_THREAD *wt);
 
 /* creates a mutex. We will use "CriticalSection" as a mutex */
 JUMPThreadMutex jumpThreadMutexCreate() {
@@ -181,7 +180,6 @@ JUMPThreadCond jumpThreadCondCreate(struct _JUMPThreadMutex *m) {
     c->waiting_list = NULL;
     c->last_thread = NULL;
     c->num_signaled = 0;
-    c->num_waiting = 0;
 #ifndef NDEBUG
     c->signaled = 0;
     c->spurious_sum = 0;
@@ -253,14 +251,12 @@ int jumpThreadCondWait(struct _JUMPThreadCond *c, long millis) {
         c->last_thread = &wt;
     }
     do {
-        c->num_waiting++;
         jumpThreadMutexUnlock(c->mutex);
         err = WaitForSingleObject(c->event, (millis == 0 ? INFINITE : millis));
         //if (err != WAIT_TIMEOUT && !wt.signaled) {
         //    Sleep(1);
         //}
         jumpThreadMutexLock(c->mutex);
-        c->num_waiting--;
 #ifndef NDEBUG
         if (err == WAIT_OBJECT_0 && !wt.signaled) {
             num_spurious ++;
