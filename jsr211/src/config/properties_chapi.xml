@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "configuration.dtd">
+<!--  
+     Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+     DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+-->
+<!-- CHAPI PROPERTIES required by the specification -->
+<configuration>
+<properties>
+<!-- SYSTEM PROPERTIES -->
+<!-- Visible from System.getProperty() -->
+<property Key="microedition.chapi.version" 
+	  Value="1.0" 
+	  Scope="system"/>
+</properties>
+</configuration>
