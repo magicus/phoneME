@@ -52,6 +52,5 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/InstallState.java \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/InvalidJadException.java \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/JadProperties.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/JarReader.java \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/ManifestProperties.java \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/SuiteDownloadInfo.java

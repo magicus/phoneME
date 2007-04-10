@@ -33,7 +33,6 @@ LIB_JAVA_FILES= \
     com/sun/midp/installer/InstallState.java \
     com/sun/midp/installer/InvalidJadException.java \
     com/sun/midp/installer/JadProperties.java \
-    com/sun/midp/installer/JarReader.java \
     com/sun/midp/installer/ManifestProperties.java \
     com/sun/midp/installer/SuiteDownloadInfo.java
 

@@ -32,7 +32,6 @@ import com.sun.midp.installer.ManifestProperties;
 import com.sun.midp.installer.OtaNotifier;
 import com.sun.midp.installer.InstallState;
 import com.sun.midp.installer.VerifierImpl;
-import com.sun.midp.installer.JarReader;
 
 import java.util.Vector;
 
@@ -53,6 +52,7 @@ import com.sun.midp.main.MIDletAppImageGenerator;
 import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 
+import com.sun.midp.midletsuite.JarReader;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 import com.sun.midp.midletsuite.MIDletSuiteImpl;
 import com.sun.midp.midletsuite.MIDletInfo;

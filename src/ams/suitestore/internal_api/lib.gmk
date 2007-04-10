@@ -53,6 +53,7 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/MIDletSuiteCorruptedException.java \
     $(GENERATED_DIR)/classes/com/sun/midp/midletsuite/MIDletSuiteImpl.java \
     $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/MIDletSuiteStorage.java \
+    $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/JarReader.java \
     $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/installer/InternalMIDletSuiteImpl.java
 
 ifeq ($(USE_I3_TEST), true)
