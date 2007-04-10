@@ -45,14 +45,7 @@ import com.sun.midp.main.MIDletAppImageGenerator;
 import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 
-import com.sun.midp.midletsuite.MIDletSuiteStorage;
-import com.sun.midp.midletsuite.MIDletSuiteImpl;
-import com.sun.midp.midletsuite.MIDletInfo;
-import com.sun.midp.midletsuite.MIDletSuiteInfo;
-import com.sun.midp.midletsuite.InstallInfo;
-import com.sun.midp.midletsuite.SuiteSettings;
-import com.sun.midp.midletsuite.MIDletSuiteLockedException;
-import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
+import com.sun.midp.midletsuite.*;
 
 import com.sun.midp.io.HttpUrl;
 import com.sun.midp.io.Util;

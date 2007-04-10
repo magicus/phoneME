@@ -70,7 +70,8 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
     suitestore_midletsuitestorage_kni.c \
     suitestore_otanotifier_db.c \
     suitestore_otanotifier_kni.c \
-    suitestore_verify_hash.c
+    suitestore_verify_hash.c \
+    JarReader.c
 
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
     -I$(INTERNAL_API_DIR)/include \

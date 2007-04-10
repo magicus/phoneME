@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.installer;
+package com.sun.midp.midletsuite;
 
 import java.lang.String;
 
@@ -35,8 +35,6 @@ import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
-
-import com.sun.midp.io.Util;
 
 /**
  * This class provides a Java API for reading an entry from a Jar file stored

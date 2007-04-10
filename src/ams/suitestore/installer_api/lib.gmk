@@ -48,7 +48,9 @@ vpath % $(INSTALLER_API_DIR)/reference/native
 
 # Native files for the ( common ) module
 SUBSYSTEM_AMS_NATIVE_FILES += \
-    suitestore_installer.c
+    suitestore_installer.c \
+    jar.c \
+    midpJar.c
 
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
     -I$(INSTALLER_API_DIR)/include \

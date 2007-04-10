@@ -44,7 +44,6 @@ import com.sun.midp.rms.RecordStoreImpl;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
-import com.sun.midp.installer.JarReader;
 
 /**
  * This class manages the persistent data for MIDlet suites.
