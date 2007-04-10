@@ -95,7 +95,7 @@ public class InvocationStore {
      * @see #getResponse
      */
     static void put(InvocationImpl invoc) {
-        if (invoc.suiteId == MIDletSuite.UNUSED_SUITE_ID ||
+        if (invoc.storageId == MIDletSuite.UNUSED_SUITE_ID ||
                 invoc.classname == null) {
             throw new NullPointerException();
         }
@@ -126,7 +126,7 @@ public class InvocationStore {
         if (suiteId == MIDletSuite.UNUSED_SUITE_ID || classname == null) {
             throw new NullPointerException();
         }
-        invoc.suiteId = suiteId;
+        invoc.storageId = suiteId;
         invoc.classname = classname;
 
         return get(invoc, MODE_REQUEST, shouldBlock);
@@ -150,7 +150,7 @@ public class InvocationStore {
     static InvocationImpl getResponse(InvocationImpl invoc,
                                       int suiteId, String classname,
                                       boolean shouldBlock) {
-        invoc.suiteId = suiteId;
+        invoc.storageId = suiteId;
         invoc.classname = classname;
 
 	return get(invoc, MODE_RESPONSE, shouldBlock);
@@ -183,7 +183,7 @@ public class InvocationStore {
      */
     static InvocationImpl getCleanup(int suiteId, String classname) {
         InvocationImpl invoc = new InvocationImpl();
-        invoc.suiteId = suiteId;
+        invoc.storageId = suiteId;
         invoc.classname = classname;
 
 	return get(invoc, MODE_CLEANUP, false);
@@ -211,7 +211,7 @@ public class InvocationStore {
                 mode = MODE_TID_NEXT;
             }
         }
-        invoc.suiteId = MIDletSuite.UNUSED_SUITE_ID;
+        invoc.storageId = MIDletSuite.UNUSED_SUITE_ID;
         invoc.classname = null;
         invoc.tid = tid;
         return get(invoc, mode, false);
@@ -242,7 +242,7 @@ public class InvocationStore {
 
 	int s = 0;
 	int oldCancelCount = cancelCount;
-	while ((s = get0(invoc, invoc.suiteId, invoc.classname,
+	while ((s = get0(invoc, invoc.storageId, invoc.classname,
 			 mode, shouldBlock)) != 1) {
 	    if (s == -1) {
 		/*

@@ -24,20 +24,19 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.content;
+package com.sun.j2me.content;
 
 import javax.microedition.content.ContentHandlerException;
 import javax.microedition.content.ContentHandlerServer;
 import javax.microedition.content.Invocation;
 import javax.microedition.content.Registry;
+
+import com.sun.midp.security.SecurityInitializer;
+import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+
 import javax.microedition.midlet.MIDlet;
 
-import com.sun.j2me.content.AppBundleProxy;
-import com.sun.j2me.content.AppProxy;
-import com.sun.j2me.content.InvocationImpl;
-import com.sun.j2me.content.InvocationStore;
-import com.sun.j2me.content.RegistryImpl;
-import com.sun.j2me.content.RegistryInstaller;
 import com.sun.midp.installer.InstallState;
 import com.sun.midp.installer.Installer;
 import com.sun.midp.installer.InvalidJadException;
@@ -45,6 +44,8 @@ import com.sun.midp.main.MIDletProxy;
 import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.MIDletProxyListListener;
 import com.sun.midp.midlet.MIDletSuite;
+
+import com.sun.midp.content.CHManager;
 
 /**
  * Handle all of the details of installing ContentHandlers.
@@ -62,9 +63,26 @@ import com.sun.midp.midlet.MIDletSuite;
  * MIDP stack is BUILT with CHAPI.
  */
 public class CHManagerImpl
-    extends com.sun.midp.content.CHManager
+    extends CHManager
     implements MIDletProxyListListener
 {
+
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {};
+
+    static {
+        SecurityToken classSecurityToken =
+                SecurityInitializer.requestToken(new SecurityTrusted());
+        CHManager.setCHManager(classSecurityToken, new CHManagerImpl());
+        AppProxy.setSecurityToken(classSecurityToken);
+    }
+
+
+
     /** Installed handlers accumulator. */
     private RegistryInstaller regInstaller;
 
@@ -79,7 +97,8 @@ public class CHManagerImpl
      * Always initialize the Access to the Registry as if the
      * GraphicalInstaller is running.
      */
-    public CHManagerImpl() {
+    private CHManagerImpl() {
+        super();
     }
 
     /**

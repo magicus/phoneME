@@ -783,9 +783,9 @@ public class ContentHandlerImpl implements ContentHandler {
             InvocationStore.getRequest(storageId, classname, wait);
         if (invoc != null) {
             // Keep track of number of requests delivered to the application
-            AppProxy.requestForeground(invoc.invokingSuiteId,
+            AppProxy.requestForeground(invoc.invokingStorageId,
                                        invoc.invokingClassname,
-                                       invoc.suiteId,
+                                       invoc.storageId,
                                        invoc.classname);
             invoc.invocation = invocation;
         }

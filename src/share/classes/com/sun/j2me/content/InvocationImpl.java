@@ -37,7 +37,6 @@ import javax.microedition.io.ConnectionNotFoundException;
 import javax.microedition.io.Connector;
 import javax.microedition.io.HttpConnection;
 
-import com.sun.midp.midlet.MIDletSuite;
 
 /**
  * Implementation of Invocation class.
@@ -101,7 +100,7 @@ public final class InvocationImpl {
     int tid;
 
     /** The MIDlet suite that should handle this Invocation. */
-    int suiteId;
+    int storageId;
 
     /** The classname of the MIDlet to deliver to. */
     String classname;
@@ -123,7 +122,7 @@ public final class InvocationImpl {
     String invokingID;
 
     /** The MIDlet suite of the invoking application. */
-    int invokingSuiteId;
+    int invokingStorageId;
 
     /** The classname in the invoking MIDlet suite for the response. */
     String invokingClassname;
@@ -426,7 +425,7 @@ public final class InvocationImpl {
         // Fill information about the target content handler.
         setStatus(Invocation.INIT);
         setID(handler.ID);
-        suiteId = handler.storageId;
+        storageId = handler.storageId;
         classname = handler.classname;
 
         // Queue this Invocation
@@ -443,7 +442,7 @@ public final class InvocationImpl {
             } else {
                 try {
                     AppProxy appl = AppProxy.getCurrent().
-                        forApp(suiteId, classname);
+                        forApp(storageId, classname);
                     shouldExit = appl.launch(handler.getAppName());
                     // Set the status of this Invocation to WAITING
                     status = Invocation.WAITING;
@@ -487,11 +486,11 @@ public final class InvocationImpl {
             if (invoc.status == Invocation.INIT) {
                 AppProxy.getCurrent().logInfo("invokeNext has request: " +
                                               invoc);
-                if (invoc.suiteId != MIDletSuite.UNUSED_SUITE_ID &&
+                if (invoc.storageId != AppProxy.INVALID_STORAGE_ID &&
                         invoc.classname != null) {
                     try {
                         AppProxy appl = AppProxy.getCurrent().
-                            forApp(invoc.suiteId, invoc.classname);
+                            forApp(invoc.storageId, invoc.classname);
                         appl.launch("Application");
                         return;
                     } catch (ClassNotFoundException cnfe) {
@@ -519,11 +518,11 @@ public final class InvocationImpl {
             } else if (invoc.status == Invocation.ERROR) {
                 AppProxy.getCurrent().logInfo("invokeNext has response: " +
                                               invoc);
-                if (invoc.suiteId != MIDletSuite.UNUSED_SUITE_ID &&
+                if (invoc.storageId != AppProxy.INVALID_STORAGE_ID &&
                         invoc.classname != null) {
                     try {
                         AppProxy appl = AppProxy.getCurrent().
-                            forApp(invoc.suiteId, invoc.classname);
+                            forApp(invoc.storageId, invoc.classname);
                         appl.launch("Application");
                         return;
                     } catch (ClassNotFoundException cnfe) {
@@ -577,14 +576,14 @@ public final class InvocationImpl {
             // Launch the target application if necessary.
             try {
                 AppProxy appl = AppProxy.getCurrent().
-                    forApp(suiteId, classname);
+                    forApp(storageId, classname);
                 return appl.launch(invokingAppName);
             } catch (ClassNotFoundException cnfe) {
                 AppProxy.getCurrent().logInfo(
                         "Unable to launch invoking application "
                         + invokingAppName + "; classname = "
                         + classname + " from suite = "
-                        + suiteId);
+                        + storageId);
             }
         }
         return false;
@@ -718,7 +717,7 @@ public final class InvocationImpl {
                 conn = Connector.open(url);
                 if (conn instanceof HttpConnection) {
                     HttpConnection httpc = (HttpConnection)conn;
-                    httpc.setRequestMethod(httpc.HEAD);
+                    httpc.setRequestMethod(HttpConnection.HEAD);
 
                     // Get the response code
                     rc = httpc.getResponseCode();

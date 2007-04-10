@@ -95,7 +95,7 @@ import com.sun.midp.io.Util;
  * <
  * </ul>
  */
-public class AppProxy {
+class AppProxy {
     /** This class has a different security domain than the MIDlet suite */
     private static SecurityToken classSecurityToken;
 
@@ -147,6 +147,8 @@ public class AppProxy {
 
     /** MIDlet property for the suite vendor. */
     static final String VENDOR_PROP        = "MIDlet-Vendor";
+    
+    static final int INVALID_STORAGE_ID = MIDletSuite.UNUSED_SUITE_ID;
 
     /**
      * Sets the security token used for priveleged operations.
@@ -154,6 +156,9 @@ public class AppProxy {
      * @param token a Security token
      */
     static void setSecurityToken(SecurityToken token) {
+        if (token == null) {
+            throw new NullPointerException();
+        }
         if (classSecurityToken != null) {
             throw new SecurityException();
         }
@@ -164,7 +169,7 @@ public class AppProxy {
      * Gets the AppProxy for the currently running application.
      * @return the current application.
      */
-    public static AppProxy getCurrent() {
+    static AppProxy getCurrent() {
         synchronized (mutex) {
             if (currentApp == null) {
                 MIDletStateHandler mh =
@@ -617,7 +622,7 @@ public class AppProxy {
      * Log an information message to the system logger for this AppProxy.
      * @param msg a message to write to the log.
      */
-    public void logInfo(String msg) {
+    void logInfo(String msg) {
         if (LOG_INFO) {
             System.out.println(">> " + threadID() + ": " + msg);
         }
