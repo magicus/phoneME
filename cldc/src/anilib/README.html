@@ -1,0 +1,174 @@
+<!--
+
+ Copyright  2006 Sun Microsystems, Inc.  All rights reserved.  
+ 
+ Sun Microsystems, Inc. has intellectual property rights relating to
+ technology embodied in the product that is described in this
+ document. In particular, and without limitation, these intellectual
+ property rights may include one or more of the U.S. patents listed at
+ http://www.sun.com/patents and one or more additional patents or
+ pending patent applications in the U.S. and in other countries. 
+ 
+ U.S. Government Rights - Commercial software. Government users are
+ subject to the Sun Microsystems, Inc. standard license agreement and
+ applicable provisions of the FAR and its supplements.   
+ 
+ Use is subject to license terms.  
+ 
+ This distribution may include materials developed by third
+ parties. Sun, Sun Microsystems, the Sun logo and Java, phoneME, J2ME, JDK,
+ Javadoc, HotSpot, and Solaris are trademarks or registered trademarks
+ of Sun Microsystems, Inc. in the U.S. and other countries.   
+ 
+ UNIX is a registered trademark in the U.S. and other countries,
+ exclusively licensed through X/Open Company, Ltd. 
+ 
+ Copyright  2006 Sun Microsystems, Inc. Tous droits reserves.
+ 
+ Sun Microsystems, Inc. detient les droits de propriete intellectuels
+ relatifs a la technologie incorporee dans le produit qui est decrit
+ dans ce document. En particulier, et ce sans limitation, ces droits de
+ propriete intellectuelle peuvent inclure un ou plus des brevets
+ americains listes a l'adresse http://www.sun.com/patents et un ou les
+ brevets supplementaires ou les applications de brevet en attente aux
+ Etats - Unis et dans les autres pays. 
+ 
+ L'utilisation est soumise aux termes du contrat de licence.
+ 
+ Cette distribution peut comprendre des composants developpes par des
+ tierces parties. Sun,  Sun Microsystems,  le logo Sun et Java,  phoneME, J2ME,
+ JDK,  Javadoc,  HotSpot, et Solaris  sont des marques de fabrique ou
+ des marques deposees de Sun Microsystems, Inc. aux Etats-Unis et dans
+ d'autres pays. 
+ 
+ UNIX est une marque deposee aux Etats-Unis et dans d'autres pays et
+ licenciee exlusivement par X/Open Company, Ltd. 
+
+-->
+<title>ANILib -- Asynchronous Native Interface Library</title>
+<h1>ANILib -- Asynchronous Native Interface Library</h1>
+
+<blockquote>
+
+    ANILib, the Asynchronous Native Interface Library, is an add-on
+    package for this Virtual Machine. It provides
+    an API for using native threads in this VM for executing
+    long running native methods. <p>
+
+    ANILib was previously included as an bundled component of this VM.
+    In this release, we have separated out the ANILib
+    functionality into a separate package to improve maintainability
+    and achieve a more modular software design.
+
+</blockquote>
+
+<h2>Version Information</h2>
+
+<blockquote>
+
+    This is version 1.0.1 of ANILib.
+
+</blockquote>
+
+<h2>Build Instructions</h2>
+
+<blockquote>
+
+    This version of ANILib has built-in support for 3 platforms: <p>
+
+    <ul>
+      <li> <code>win32_i386</code>
+      <li> <code>linux_i386</code>
+      <li> <code>linux_arm</code>
+    </ul>
+    <p>    
+
+    The source code has been structured so that it will be easy to add
+    support for other platforms. <p>
+
+    To build ANILib for your selected platform, you need to follow
+    these steps. (Note the instructions assumes you're building for
+    <code>linux_i386</code>.) <p>
+
+    <ol>
+      <li> First, you need to build the VM. This can be done
+           by setting up the <code>JVMWorkSpace</code> environment
+           variable, and then executing the <code>gnumake</code>
+           command inside
+           <code>$(JVMWorkSpace)/build/linux_i386</code>. <p>
+
+      <li> Change to the <code>build/linux_i386</code> subdirectory of 
+           the ANILib source distribution, and execute the
+           <code>gnumake</code> command. This produces the following
+           output files: <p>
+           
+           <ul>
+             <li> <code>build/linux_i386/product/cldc_vm_ani</code>
+             <li> <code>build/linux_i386/product/libani.a</code>
+             <li> <code>build/linux_i386/test_classes/SocketTest.class</code>
+           </ul>
+
+           <p>
+
+      <li> By default, the <code>product</code> variant of ANILib is
+           produced. If you wish to build for other variants, please use
+           commands such as: <p>
+
+           <ul>
+             <li> <code>gnumake BUILD=debug</code>
+             <li> <code>gnumake BUILD=release</code>
+             <li> <code>gnumake BUILD=product</code>
+           </ul>
+
+
+</blockquote>
+
+<h2>Running Test Programs</h2>
+
+<blockquote>
+
+    ANILib comes with a sample program, <code>SocketTest</code>, which
+    tests the capabilities of a sample socket protocol. To Execute it,
+    try these commands:
+
+    <blockquote><code>
+    cd build/linux_i386<br>
+    ./product/cldc_vm_ani -cp test_classes SocketTest -host www.sun.com
+    </code></blockquote>
+
+    Please read the comments in <a
+    href="src/tests/SocketTest.java"><code>src/tests/SocketTest.java</code></a>
+    for a complete list of options provided by SocketTest for testing
+    different features in ANILib.
+
+</blockquote>
+
+<h2>Linking with ANILib</h2>
+
+<blockquote>
+
+    To use the <code>ANI_XXX()</code> functions exported by ANILib,
+    simply link with <code>libani.a</code> (or <code>ani.lib</code>
+    for the <code>win32_i386</code> platform). <p>
+
+</blockquote>
+
+<h2>Changes from Previous Version</h2>
+
+<blockquote>
+
+    This version of ANILib adds a new API function,
+    <code>ANI_Initialize()</code>, which must be called before you use
+    any other ANI functions. <p>
+
+    Also, when your program is about exit, please call
+    <code>ANI_Dispose()</code> to free up resources allocated by
+    ANILib. <p>
+
+    When compiling your code, please use the <a
+    href="src/share/ani.h"><code>src/share/ani.h</code></a> header
+    file included in this ANILib source distribution. <p>
+
+</blockquote>
+
+<hr>

@@ -1,0 +1,28 @@
+/*
+ *
+ * Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ */
+
+//======================================================================
+#include "windows.h"                 // Windows stuff
+#include "aygshell.h"                // Pocket PC stuff
+#include "resources.h"               // Program-specific stuff
+
+//----------------------------------------------------------------------
+// Icons and bitmaps
+//
+// ID_ICON      ICON   "HelloSP.ico"    // Program icon
+
+ID_MENU RCDATA
+BEGIN
+    0,
+    1,
+    I_IMAGENONE, IDM_EXIT, TBSTATE_ENABLED, 
+                 TBSTYLE_BUTTON | TBSTYLE_AUTOSIZE, IDS_EXIT, 0, NOMENU,
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_EXIT     "Exit"
+END

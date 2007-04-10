@@ -1,0 +1,104 @@
+Copyright  2006 Sun Microsystems, Inc.  All rights reserved.  
+
+Sun Microsystems, Inc. has intellectual property rights relating to
+technology embodied in the product that is described in this
+document. In particular, and without limitation, these intellectual
+property rights may include one or more of the U.S. patents listed at
+http://www.sun.com/patents and one or more additional patents or
+pending patent applications in the U.S. and in other countries. 
+
+U.S. Government Rights - Commercial software. Government users are
+subject to the Sun Microsystems, Inc. standard license agreement and
+applicable provisions of the FAR and its supplements.   
+
+Use is subject to license terms.  
+
+This distribution may include materials developed by third
+parties. Sun, Sun Microsystems, the Sun logo and Java, phoneME, J2ME, JDK,
+Javadoc, HotSpot, and Solaris are trademarks or registered trademarks
+of Sun Microsystems, Inc. in the U.S. and other countries.   
+
+UNIX is a registered trademark in the U.S. and other countries,
+exclusively licensed through X/Open Company, Ltd. 
+
+Copyright  2006 Sun Microsystems, Inc. Tous droits reserves.
+
+Sun Microsystems, Inc. detient les droits de propriete intellectuels
+relatifs a la technologie incorporee dans le produit qui est decrit
+dans ce document. En particulier, et ce sans limitation, ces droits de
+propriete intellectuelle peuvent inclure un ou plus des brevets
+americains listes a l'adresse http://www.sun.com/patents et un ou les
+brevets supplementaires ou les applications de brevet en attente aux
+Etats - Unis et dans les autres pays. 
+
+L'utilisation est soumise aux termes du contrat de licence.
+
+Cette distribution peut comprendre des composants developpes par des
+tierces parties. Sun,  Sun Microsystems,  le logo Sun et Java,  phoneME, J2ME,
+JDK,  Javadoc,  HotSpot, et Solaris  sont des marques de fabrique ou
+des marques deposees de Sun Microsystems, Inc. aux Etats-Unis et dans
+d'autres pays. 
+
+UNIX est une marque deposee aux Etats-Unis et dans d'autres pays et
+licenciee exlusivement par X/Open Company, Ltd. 
+----------------------------------------------------------------------
+
+
+
+
+   RVDS 2.2 VFP Support
+
+
+
+
+   This document describes how to build and run the VM with Vector
+   Floating Point (VFP) with RVDS 2.2.
+
+1. Download the VFP support code from ARM   
+
+   http://www.arm.com/support/vfp_support_code.html
+   http://www.arm.com/pdfs/AN133A_RVDS_VFP.zip
+
+2. The VFP support source files can be found in the Examples/vfp_init
+   and Examples/vfp_support directories. Copy the list of file below
+   into ${JVMWorkSpace}/src/vm/os/ads/vfp/
+
+   controlbuffer.c
+   fpinit.c
+   sldummy.s
+   vfpfptrap.s
+   vfpsubarch.s
+   controlbuffer.h
+   slundef.h
+   vfpinit.s
+   vfpundef.c
+   controlbuffer_h.s
+   tlundef.s
+   vfpsubarch.h
+   vfpwrapper.s
+
+3. Note that this VM source code package already contains the
+   file $(JVMWorkSpace)/src/vm/os/ads/vfp/setup_vfp.script with the
+   following content:
+
+   $vector_catch = %RusPDAifE
+  
+   This is the script to set up the FPU when you run the VM on the
+   ARMulator.
+
+4. Building the VM with VFP support
+
+   cd ${JVMWorkSpace}/build/ads_arm
+   make ENABLE_SOFT_FLOAT=false ENABLE_RVDS=true \
+        JVM_FPU_FLAGS="--fpmode ieee_no_fenv --fpu vfpv2"
+
+   There are various options that you can use the setup the fpu. See
+   section 2.1 in the ARM Application Note 133 for more information.
+
+5. Running the VM in RVDS2.2 ARMulator:
+
+   armsd -cpu ARM10200E \
+       -SC ${JVMWorkSpace}/src/vm/os/ads/vfp/setupvfp.script \
+       -exec cldc_vm.axf +FlushCache -cp <classpath> <mainclass>
+
+  
