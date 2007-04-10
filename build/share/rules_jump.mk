@@ -31,7 +31,7 @@ printconfig::
 	@echo "JUMP_DIR           = $(JUMP_DIR)"
 
 .PHONY: jumptargets force_jump_build
-jumptargets: force_jump_build
+jumptargets: force_jump_build $(CVM_BINDIR)/runjump
 
 $(CVM_BUILD_DEFS_MK)::
 	$(AT) echo updating $@ [from rules_jump.mk]
@@ -53,6 +53,15 @@ force_jump_build: $(JUMP_DEPENDENCIES)
                 $(JUMP_EXECUTIVE_BOOTCLASSESZIP) \
                 $(CVM_LIBDIR)
 	@echo  "<==== done building jump api's and implementation"
+
+$(CVM_BINDIR)/runjump: $(JUMP_SCRIPTS_DIR)/runjump
+ifneq ($(CVM_PRELOAD_LIB), true)
+	$(AT)JUMP_JSROP_JARS=`echo $(JSROP_JARS) | sed -e "s, *$(CVM_BUILD_TOP),:\\$$PHONEME_DIST,g"`;\
+	sed -e "s,^ *SERVER_JARFILE=.*$$,&$$JUMP_JSROP_JARS," $^ > $@
+else
+	$(AT)cp $^ $@
+endif
+	$(AT)chmod 755 $@
 
 .PHONY: javadoc-api
 javadoc-api:
