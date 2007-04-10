@@ -137,7 +137,7 @@ public final class PushRegistryInternal {
 
             PushRegistryImpl.checkMidletRegistered(midletSuite, midlet);
 
-            ConnectionRegistry.checkRegistration(Connection.parse(connection), midlet, filter);
+            ConnectionRegistry.checkRegistration(connection, midlet, filter);
         }
 
         ConnectionRegistry.registerConnectionInternal(
