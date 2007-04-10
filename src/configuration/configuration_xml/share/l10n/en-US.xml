@@ -602,6 +602,8 @@
                 Value="Is it OK to Automatically Start?"/>
 <localized_string Key="AMS_MIDLETSUITEIMPL_PUSH_INTERRUPT_QUESTION"
                 Value="Information is arriving for %1. Is it OK for %1 to start up and receive this information? The currently running application will exit.&#010;&#010;Is it OK to start up?"/>
+<localized_string Key="AMS_MIDLETSUITEIMPL_PUSH_DEV_INTERRUPT_QUESTION"
+                Value="Information is arriving from device %3, for %1. Is it OK for %1 to start up and receive this information? The currently running application will exit.&#010;&#010;Is it OK to start up?"/>
 <localized_string Key="AMS_MIDLETSUITELDR_MIDLETSUITE_NOTFOUND"
                 Value="The MIDlet suite was not found."/>
 <localized_string Key="AMS_MIDLETSUITELDR_PUSH_INTERRUPT_QUESTION"

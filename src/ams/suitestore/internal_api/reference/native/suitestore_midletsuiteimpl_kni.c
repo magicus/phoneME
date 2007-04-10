@@ -27,12 +27,17 @@
 #include <string.h>
 #include <kni.h>
 
+#include <midpMalloc.h>
 #include <midpError.h>
 #include <midpUtilKni.h>
 #include <pcsl_string.h>
 
 #include <suitestore_locks.h>
 #include <suitestore_intern.h>
+
+#if ENABLE_JSR_82
+#include "btPush.h"
+#endif
 
 /**
  * Native method int lockMIDletSuite(int) of
@@ -121,3 +126,44 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteImpl_finalize) {
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
+
+#if ENABLE_JSR_82
+/**
+ * Checks is the input connection is bluetooth.
+ *
+ * @param conn input connection string
+ *
+ * @return true when input connection is bluetooth
+ */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteImpl_isBluetoothUrl0) {
+    int retValue;
+    MidpString wsUrl;
+    char *szUrl;
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(conn);
+    KNI_GetParameterAsObject(1, conn);
+    wsUrl = midpNewString(conn);
+    szUrl = midpJcharsToChars(wsUrl);
+    retValue = bt_is_bluetooth_url(szUrl);
+    midpFree(szUrl);
+    MIDP_FREE_STRING(wsUrl);
+    KNI_EndHandles();
+    KNI_ReturnBoolean(retValue);
+}
+
+/**
+ * Gets bluetooth address from last incomming push connection.
+ *
+ * @return bluetooth address
+ */
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteImpl_getInpAddr0) {
+    unsigned char address[2 * BT_ADDRESS_SIZE + 1];
+    getFriendlyAddr(getInpAddress(), address);
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(stringHandle);
+    KNI_NewStringUTF(address, stringHandle);
+    KNI_EndHandlesAndReturnObject(stringHandle);
+}
+#endif

@@ -902,6 +902,9 @@
             Name="AMS_MIDLETSUITEIMPL_PUSH_INTERRUPT_QUESTION"
             Comment="AMS: Interrupt dialog title for push"/>
   <constant Type="int"
+            Name="AMS_MIDLETSUITEIMPL_PUSH_DEV_INTERRUPT_QUESTION"
+            Comment="AMS: Interrupt dialog title for bluetooth push"/>
+  <constant Type="int"
             Name="AMS_MIDLETSUITELDR_MIDLETSUITE_NOTFOUND"
             Comment="AMS: com.sun.midp.main.MIDletSuiteLoader"/>
   <constant Type="int"
