@@ -49,6 +49,7 @@ $(error JUMP_DIR must point to the JUMP directory: $(JUMP_DIR))
 endif
 JUMP_OUTPUT_DIR         = $(CVM_JUMP_BUILDDIR)/lib
 JUMP_SRCDIR             = $(JUMP_DIR)/src
+JUMP_SCRIPTS_DIR        = $(JUMP_DIR)/tools/scripts
 
 #
 # JUMP_DEPENDENCIES defines what needs to be built for jump
