@@ -240,6 +240,23 @@ public final class ConnectionControllerTest extends TestCase {
         assertEquals(filter, h.getFilter());
     }
 
+    private void assertSetsEqual(
+            final Object [] expected, final Collection actual) {
+        assertEquals(new HashSet(Arrays.asList(expected)), new HashSet(actual));
+    }
+
+    private void assertSetsEqual(
+            final Object [] expected, final Object [] actual) {
+        assertSetsEqual(expected, Arrays.asList(actual));
+    }
+
+    private void checkCollectionHasSingleHandler(
+            final Collection reservations,
+            final ConnectionController.ReservationHandler handler) {
+        assertEquals(1, reservations.size());
+        assertSame(handler, reservations.iterator().next());
+    }
+
     public void testQueryByConnection() throws IOException {
         final int midletSuiteId = 123;
         final String midlet = "com.sun.Foo";
@@ -255,6 +272,7 @@ public final class ConnectionControllerTest extends TestCase {
         reservations.add(h);
 
         assertSame(h, reservations.queryByConnectionName(connection));
+        checkCollectionHasSingleHandler(reservations.getAllReservations(), h);
     }
 
     public void testQueryByConnectionMissing() throws IOException {
@@ -272,6 +290,7 @@ public final class ConnectionControllerTest extends TestCase {
         reservations.add(h);
 
         assertNull(reservations.queryByConnectionName(connection + "qux"));
+        checkCollectionHasSingleHandler(reservations.getAllReservations(), h);
     }
 
     public void testQueryBySuite() throws IOException {
@@ -288,9 +307,9 @@ public final class ConnectionControllerTest extends TestCase {
                 new ConnectionController.Reservations();
         reservations.add(h);
 
-        final Collection c = reservations.queryBySuiteID(midletSuiteId);
-        assertEquals(1, c.size());
-        assertSame(h, c.iterator().next());
+        checkCollectionHasSingleHandler(
+                reservations.queryBySuiteID(midletSuiteId), h);
+        checkCollectionHasSingleHandler(reservations.getAllReservations(), h);
     }
 
     public void testQueryBySuiteMissing() throws IOException {
@@ -308,6 +327,7 @@ public final class ConnectionControllerTest extends TestCase {
         reservations.add(h);
 
         assertTrue(reservations.queryBySuiteID(midletSuiteId + 1).isEmpty());
+        checkCollectionHasSingleHandler(reservations.getAllReservations(), h);
     }
 
     public void testEmptyReservations() {
@@ -316,6 +336,7 @@ public final class ConnectionControllerTest extends TestCase {
 
         assertNull(reservations.queryByConnectionName("foo://bar"));
         assertTrue(reservations.queryBySuiteID(13).isEmpty());
+        assertTrue(reservations.getAllReservations().isEmpty());
     }
 
     public void testAddAndRemove() throws IOException {
@@ -335,6 +356,72 @@ public final class ConnectionControllerTest extends TestCase {
 
         assertNull(reservations.queryByConnectionName(connection));
         assertTrue(reservations.queryBySuiteID(midletSuiteId).isEmpty());
+        assertTrue(reservations.getAllReservations().isEmpty());
+    }
+
+    public void testTwoHandlersReservations() throws IOException {
+        final int midletSuiteId1 = 123;
+        final String midlet1 = "com.sun.Foo";
+        final String connection1 = "foo://bar";
+        final String filter1 = "*.123";
+
+        final ConnectionController.ReservationHandler h1 =
+                createFakeReservationHandler(
+                    midletSuiteId1, midlet1, connection1, filter1);
+
+        final int midletSuiteId2 = 321;
+        final String midlet2 = "com.sun.Bar";
+        final String connection2 = "qux://bar";
+        final String filter2 = "*";
+
+        final ConnectionController.ReservationHandler h2 =
+                createFakeReservationHandler(
+                    midletSuiteId2, midlet2, connection2, filter2);
+
+        final ConnectionController.Reservations reservations =
+                new ConnectionController.Reservations();
+        reservations.add(h1);
+        reservations.add(h2);
+
+        assertSame(h1, reservations.queryByConnectionName(connection1));
+        assertSame(h2, reservations.queryByConnectionName(connection2));
+        checkCollectionHasSingleHandler(
+                reservations.queryBySuiteID(midletSuiteId1), h1);
+        checkCollectionHasSingleHandler(
+                reservations.queryBySuiteID(midletSuiteId2), h2);
+        assertSetsEqual(new Object [] {h1, h2}, reservations.getAllReservations());
+    }
+
+    public void testClear() throws IOException {
+        final int midletSuiteId1 = 123;
+        final String midlet1 = "com.sun.Foo";
+        final String connection1 = "foo://bar";
+        final String filter1 = "*.123";
+
+        final ConnectionController.ReservationHandler h1 =
+                createFakeReservationHandler(
+                    midletSuiteId1, midlet1, connection1, filter1);
+
+        final int midletSuiteId2 = 321;
+        final String midlet2 = "com.sun.Bar";
+        final String connection2 = "qux://bar";
+        final String filter2 = "*";
+
+        final ConnectionController.ReservationHandler h2 =
+                createFakeReservationHandler(
+                    midletSuiteId2, midlet2, connection2, filter2);
+
+        final ConnectionController.Reservations reservations =
+                new ConnectionController.Reservations();
+        reservations.add(h1);
+        reservations.add(h2);
+        reservations.clear();
+
+        assertNull(reservations.queryByConnectionName(connection1));
+        assertNull(reservations.queryByConnectionName(connection2));
+        assertTrue(reservations.queryBySuiteID(midletSuiteId1).isEmpty());
+        assertTrue(reservations.queryBySuiteID(midletSuiteId2).isEmpty());
+        assertTrue(reservations.getAllReservations().isEmpty());
     }
 
     private void checkStoreEmpty(final Store store) {
@@ -583,12 +670,9 @@ public final class ConnectionControllerTest extends TestCase {
         cc.registerConnection(midletSuiteId2, midlet1,
                 new MockReservationDescriptor(connection4, filter4));
 
-        final String [] suite1cns = cc.listConnections(midletSuiteId1, false);
-        final Set expected = new HashSet(Arrays.asList(new String [] {
-            connection3, connection2, connection1
-        }));
-        final Set actual = new HashSet(Arrays.asList(suite1cns));
-        assertEquals(expected, actual);
+        assertSetsEqual(
+                new String [] { connection1, connection2, connection3 },
+                cc.listConnections(midletSuiteId1, false));
 
         final String [] suite2cns = cc.listConnections(midletSuiteId2, false);
         assertEquals(1, suite2cns.length);
@@ -629,13 +713,9 @@ public final class ConnectionControllerTest extends TestCase {
         descriptor2.connectionReservation.hasAvailableData_ = false;
         descriptor3.connectionReservation.hasAvailableData_ = true;
 
-        final String [] cns = cc.listConnections(midletSuiteId, true);
-
-        final Set expected = new HashSet(Arrays.asList(new String [] {
-            connection3, connection1
-        }));
-        final Set actual = new HashSet(Arrays.asList(cns));
-        assertEquals(expected, actual);
+        assertSetsEqual(
+                new String [] { connection1, connection3 },
+                cc.listConnections(midletSuiteId, true));
     }
 
     public void testUnregisterConnectionInEmptyController() throws IOException {
@@ -900,6 +980,156 @@ public final class ConnectionControllerTest extends TestCase {
         assertTrue(lifecycleAdapter.hasNotBeenInvoked());
     }
 
+    private void assertSetsEqualDeep(
+            final Object [] expected, final Object [] actual) {
+        /**
+         * IMPL_NOTE: haven't found better way yet.  Technically
+         * speaking it's not even quite correct: imho there is
+         * no guarantees that "same" hash sets will produce same
+         * toArray's, but chances are high, really
+         */
+        final HashSet e = new HashSet(Arrays.asList(expected));
+        final HashSet a = new HashSet(Arrays.asList(actual));
+        Arrays.equals(e.toArray(), a.toArray());
+    }
+
+    public void testStateAfterDispose() throws IOException {
+        final int midletSuiteId1 = 123;
+
+        final String midlet1 = "com.sun.Foo";
+        final String connection1 = "foo://bar";
+        final String filter1 = "*.123";
+        final MockReservationDescriptor descriptor1 =
+                new MockReservationDescriptor(connection1, filter1);
+
+        final String midlet2 = "com.sun.Bar";
+        final String connection2 = "foo://qux";
+        final String filter2 = "*.*";
+        final MockReservationDescriptor descriptor2 =
+                new MockReservationDescriptor(connection2, filter2);
+
+        final int midletSuiteId2 = midletSuiteId1 + 17;
+
+        final String midlet3 = "com.sun.Qux";
+        final String connection3 = "foo4://bar";
+        final String filter3 = "4.*.123";
+        final MockReservationDescriptor descriptor3 =
+                new MockReservationDescriptor(connection3, filter3);
+
+        final Store store = createStore();
+
+        final ConnectionController cc =
+                createConnectionController(store);
+
+        cc.registerConnection(midletSuiteId1, midlet1, descriptor1);
+        cc.registerConnection(midletSuiteId1, midlet2, descriptor2);
+        cc.registerConnection(midletSuiteId2, midlet3, descriptor3);
+        cc.dispose();
+
+        // Check that reservations have been canceled
+        assertTrue(descriptor1.connectionReservation.isCancelled);
+        assertTrue(descriptor2.connectionReservation.isCancelled);
+        assertTrue(descriptor3.connectionReservation.isCancelled);
+
+        // Check that there is nothing registered
+        assertNull(cc.getMIDlet(midletSuiteId1, connection1));
+        assertNull(cc.getFilter(midletSuiteId1, connection1));
+
+        assertNull(cc.getMIDlet(midletSuiteId1, connection2));
+        assertNull(cc.getFilter(midletSuiteId1, connection2));
+
+        assertEquals(0, cc.listConnections(midletSuiteId1, false).length);
+
+        assertNull(cc.getMIDlet(midletSuiteId2, connection3));
+        assertNull(cc.getFilter(midletSuiteId2, connection3));
+
+        assertEquals(0, cc.listConnections(midletSuiteId2, false).length);
+
+        // But check that all the connections reside in the persistent store
+        store.listConnections(new Store.ConnectionsConsumer() {
+            public void consume(
+                    final int id, final JUMPConnectionInfo [] infos) {
+                switch (id) {
+                case midletSuiteId1:
+                    assertSetsEqualDeep(new JUMPConnectionInfo [] {
+                        new JUMPConnectionInfo(midlet1, connection1, filter1),
+                        new JUMPConnectionInfo(midlet2, connection2, filter2),
+                    }, infos);
+                    break;
+
+                case midletSuiteId2:
+                    assertSetsEqualDeep(new JUMPConnectionInfo [] {
+                        new JUMPConnectionInfo(midlet3, connection3, filter3),
+                    }, infos);
+                    break;
+
+                default:
+                    fail("Unexpected suite id");
+                }
+            }
+        });
+    }
+
+    public void testDisposeCancellation() throws IOException {
+        final int midletSuiteId1 = 123;
+
+        final String midlet1 = "com.sun.Foo";
+        final String connection1 = "foo://bar";
+        final String filter1 = "*.123";
+        final MockReservationDescriptor descriptor1 =
+                new MockReservationDescriptor(connection1, filter1);
+
+        final String midlet2 = "com.sun.Bar";
+        final String connection2 = "foo://qux";
+        final String filter2 = "*.*";
+        final MockReservationDescriptor descriptor2 =
+                new MockReservationDescriptor(connection2, filter2);
+
+        final int midletSuiteId2 = midletSuiteId1 + 17;
+
+        final String midlet3 = "com.sun.Qux";
+        final String connection3 = "foo4://bar";
+        final String filter3 = "4.*.123";
+        final MockReservationDescriptor descriptor3 =
+                new MockReservationDescriptor(connection3, filter3);
+
+        final Store store = createStore();
+
+        final ListingLifecycleAdapter lifecycleAdapter =
+                new ListingLifecycleAdapter();
+
+        final ConnectionController cc =
+                createConnectionController(store, lifecycleAdapter);
+
+        cc.registerConnection(midletSuiteId1, midlet1, descriptor1);
+        cc.registerConnection(midletSuiteId1, midlet2, descriptor2);
+        cc.registerConnection(midletSuiteId2, midlet3, descriptor3);
+
+        final DelayableThread t1 = descriptor1.connectionReservation.pingThread();
+        final DelayableThread t2 = descriptor2.connectionReservation.pingThread();
+        final DelayableThread t3 = descriptor3.connectionReservation.pingThread();
+
+        synchronized (t1.lock) {
+            synchronized (t2.lock) {
+                synchronized (t3.lock) {
+                    // start the threads first...
+                    t1.start(); t2.start(); t3.start();
+                    // ...but before listeners starts, dispose the controller...
+                    cc.dispose();
+                    // ...now let listeners proceed
+                }
+            }
+        }
+        try {
+            t1.join(); t2.join(); t3.join();
+        } catch (InterruptedException ie) {
+            fail("Unexpected InterruptedException: " + ie);
+        }
+
+        // Check that nothing has been launched
+        assertTrue(lifecycleAdapter.hasNotBeenInvoked());
+    }
+
     private static final class Registration {
         private final MIDPApp app;
         private final String connection;
@@ -936,18 +1166,15 @@ public final class ConnectionControllerTest extends TestCase {
         final ConnectionController cc =
                 createConnectionController(store, lifecycleAdapter);
 
-        final String [] suite1cns = cc.listConnections(suiteId1, false);
-        assertEquals(
-                new HashSet(Arrays.asList(suite1cns)),
-                new HashSet(Arrays.asList(new String [] {
+        assertSetsEqual(
+                new String [] {
                     registrations[0].connection,
                     registrations[2].connection,
-        })));
-
-        final String [] suite2cns = cc.listConnections(suiteId2, false);
-        assertTrue(Arrays.equals(
-                suite2cns,
-                new String [] { registrations[1].connection }));
+                }, cc.listConnections(suiteId1, false));
+        assertSetsEqual(
+                new String [] {
+                    registrations[1].connection,
+                }, cc.listConnections(suiteId2, false));
 
         // And now check both MIDlets and filters
         for (int i = 0; i < registrations.length; i++) {
