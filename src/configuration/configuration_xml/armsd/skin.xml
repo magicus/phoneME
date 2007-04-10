@@ -1346,7 +1346,7 @@
 
   <integer_seq
         Key="SOFTBTN_BUTTON_ANCHOR_Y"
-      Value="0,0"/>
+      Value="1,1"/>
 
 </skin_properties>
 </skin>
