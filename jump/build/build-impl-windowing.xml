@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<!--
+Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License version
+2 only, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License version 2 for more details (a copy is
+included at /legal/license.txt).
+
+You should have received a copy of the GNU General Public License
+version 2 along with this work; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301 USA
+
+Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+Clara, CA 95054 or visit www.sun.com if you need additional
+information or have any questions.
+-->
+<project basedir="." default="compile-windowing-module" name="jump-impl-windowing">
+
+    <available
+        file="com/sun/me/gci/windowsystem/GCIGraphicsEnvironment.class"
+        type="file"
+        filepath="${cdc.dir}/basis_classes"
+        property="gci.classes.available"/>
+
+    <target name="make-excludes" unless="gci.classes.available">
+        <echo message="WARNING: GCI classes are not available, windowing module will not work!"/>
+
+        <patternset id="excludes">
+            <exclude name="**/WindowingIsolateModule.java"/>
+            <exclude name="**/GraphicsEnvironment.java"/>
+        </patternset>
+    </target>
+    <target name="no-excludes" if="gci.classes.available">
+        <patternset id="excludes"/>
+    </target>
+
+    <target name="compile-windowing-module" depends="make-excludes,no-excludes">
+        <jump.javac srcdir="${s.share.impl.dir}/windowing/classes">
+            <include name="com/sun/jumpimpl/module/windowing/*.java"/>
+            <patternset refid="excludes"/>
+        </jump.javac>
+    </target>
+
+</project>
