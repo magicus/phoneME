@@ -695,10 +695,9 @@ void CodeGenerator::conditional_jump(BytecodeClosure::cond_op condition,
     Label fall_through;
     conditional_jump_do(BytecodeClosure::negate(condition), fall_through);
     COMPILER_COMMENT(("Creating continuation for fallthrough to bci = %d",
-                      bci() + Bytecodes::length_for(method(), bci())));
+                      next_bci() ));
     CompilationContinuation::insert(
-                        bci() + Bytecodes::length_for(method(), bci()),
-                        fall_through JVM_CHECK);
+                      next_bci(), fall_through JVM_CHECK);
     branch(destination JVM_NO_CHECK_AT_BOTTOM);
   } else {
     Label branch_taken;
@@ -894,9 +893,9 @@ bool ForwardBranchOptimizer::run(Method* method, CodeGenerator* cg,
   _cg    = cg;
 
   for (int i = 0; bci < _final_bci; i++) {
-    _next_bci = bci + Bytecodes::length_for(method, bci);
+    _next_bci = method->next_bci(bci);
     _next_state = Abort;
-    Bytecodes::Code code = method->bytecode_at(bci);
+    const Bytecodes::Code code = method->bytecode_at(bci);
     method->iterate_bytecode(bci, this, code JVM_CHECK_0);
     bci = _next_bci;
     if ((_state = _next_state) == Abort) {
@@ -1122,7 +1121,7 @@ void ForwardBranchOptimizer::return_op(BasicType /*kind*/ JVM_TRAPS) {
     switch(_state) { 
       case Load: case LoadEtc:
         _next_state = LoadEtcReturn;
-        _final_bci = method()->code_size();
+        _final_bci = method_size();
         _etc_length = _next_bci - _etc_false_start;
         break;
     }
@@ -1154,7 +1153,7 @@ void ForwardBranchOptimizer::show_comments(int bci, int end) {
       FixedArrayOutputStream output;
       method()->print_bytecodes(&output, bci);
       _cg->comment(output.array());
-      bci += Bytecodes::length_for(method(), bci);
+      bci = next_bci(bci);
     }
   }
 }

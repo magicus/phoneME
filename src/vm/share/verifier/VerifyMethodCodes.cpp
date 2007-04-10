@@ -322,7 +322,7 @@ void VerifyMethodCodes::bytecode_prolog(JVM_SINGLE_ARG_TRAPS) {
 
 #ifndef PRODUCT
   if (TraceVerifier || TraceVerifierByteCodes) {
-    Bytecodes::Code opcode = method()->bytecode_at(bci());
+    const Bytecodes::Code opcode = current_bytecode();
     const char* bytecode = Bytecodes::name(opcode);
     tty->print_cr("Verifying bci==%d, %s", bci(), bytecode);
   }
@@ -913,8 +913,8 @@ void VerifyMethodCodes::handle_invoker(int index, int /*num_of_args*/,
         // This is for is a call to <init> that is made to an object that
         // has just been created with a NEW bytecode.
         int new_bci = DECODE_NEWOBJECT(receiver_kind);
-        Bytecodes::Code new_code = method()->bytecode_at(new_bci);
-        if (new_bci > (method()->code_size() - 3) || (new_code != Bytecodes::_new)) {
+        const Bytecodes::Code new_code = bytecode_at(new_bci);
+        if( new_bci > (method_size() - 3) || (new_code != Bytecodes::_new) ) {
           VFY_ERROR(ve_expect_new);
         }
         // Get the pool index after the NEW bytecode and check that

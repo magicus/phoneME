@@ -1650,7 +1650,7 @@ public:
 
   virtual void bytecode_prolog(JVM_SINGLE_ARG_TRAPS) {
     JVM_IGNORE_TRAPS;
-    _code = method()->bytecode_at(bci());
+    _code = current_bytecode();
   }
 
   virtual void handle_exception(JVM_SINGLE_ARG_TRAPS) {

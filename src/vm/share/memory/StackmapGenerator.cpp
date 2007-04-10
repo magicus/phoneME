@@ -587,8 +587,8 @@ ReturnOop StackmapGenerator::generate_stackmap(StackmapList* method_stackmaps,
   // abstract interpret till GC point
 #if ENABLE_ROM_GENERATOR
   while(gc_bci > gc_block_bci && !aborted()) { 
-    Bytecodes::Code code = method->bytecode_at(gc_block_bci);
-    int next_bci = gc_block_bci + Bytecodes::length_for(method, gc_block_bci);
+    const Bytecodes::Code code = method->bytecode_at(gc_block_bci);
+    const int next_bci = method->next_bci(gc_block_bci);
     if (next_bci <= gc_bci) {
       method->iterate_bytecode(gc_block_bci, this, code 
                                 JVM_MUST_SUCCEED);

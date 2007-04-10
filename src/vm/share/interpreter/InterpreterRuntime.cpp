@@ -308,7 +308,7 @@ extern "C" {
     klass().check_access_by(&sender_class, ErrorOnFailure JVM_CHECK_0);
 
     // Rewrite the bytecode if necessary.
-    Bytecodes::Code bc = method().bytecode_at(bci);
+    const Bytecodes::Code bc = method().bytecode_at(bci);
     if (bc == Bytecodes::_anewarray) {
       if (method().may_be_quickened()) {
         method().bytecode_at_put(bci, Bytecodes::_fast_anewarray);
@@ -403,7 +403,7 @@ extern "C" {
     Oop::Fast object = frame.expression_at(0)->as_obj();
 
     // Rewrite the bytecode if necessary.
-    Bytecodes::Code bc = method().bytecode_at(bci);
+    const Bytecodes::Code bc = method().bytecode_at(bci);
     if (bc == Bytecodes::_instanceof) {
       if (method().may_be_quickened()) {
         method().bytecode_at_put(bci, Bytecodes::_fast_instanceof);
@@ -441,7 +441,7 @@ extern "C" {
     Oop::Fast object = frame.expression_at(0)->as_obj();
 
     // Rewrite the bytecode if necessary.
-    Bytecodes::Code bc = method().bytecode_at(bci);
+    const Bytecodes::Code bc = method().bytecode_at(bci);
     if (bc == Bytecodes::_checkcast) {
       if (method().may_be_quickened()) {
         method().bytecode_at_put(bci, Bytecodes::_fast_checkcast);
@@ -751,7 +751,7 @@ extern "C" {
 
     InstanceClass::Fast sender_class = method.holder();
     ConstantPool::Fast cp = method.constants();
-    Bytecodes::Code bc = method.bytecode_at(bci);
+    const Bytecodes::Code bc = method.bytecode_at(bci);
     Bytecodes::Code quicken_bc;
 
     switch (bc) {

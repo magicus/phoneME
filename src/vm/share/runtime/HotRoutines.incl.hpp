@@ -105,14 +105,10 @@ void oop_write_barrier(OopDesc** addr, OopDesc* value) {
 
 #if USE_HOT_ROUTINES
 int Bytecodes::length_for(const Method* method, const int bci) {
-  Code code = method->bytecode_at(bci);
+  const Code code = method->bytecode_at(bci);
   check(code);
-  int size = Bytecodes::length_for(code);
-  if (size != 0) {
-    return size;
-  } else {
-    return wide_length_for(method, bci, code);
-  }
+  const int size = length_for(code);
+  return size ? size : wide_length_for(method, bci, code);
 }
 #endif
 

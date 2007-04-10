@@ -524,10 +524,10 @@ bool ROMInliner::zero_bci_is_branch_target(Method* method) {
   register int bci = 0;
 
   while (bcptr < bcend) {
-    Bytecodes::Code code = (Bytecodes::Code)(*bcptr);
+    const Bytecodes::Code code = (Bytecodes::Code)(*bcptr);
     GUARANTEE(code >= 0, "sanity: unsigned value");
 
-    int length = Bytecodes::length_for(method, bci);
+    const int length = method->bytecode_length_for(bci);
 
     switch (code) {
     case Bytecodes::_ifeq:
@@ -770,7 +770,7 @@ bool ROMInliner::try_inline_static_getter(Method* caller, Method* callee,
     SHOULD_NOT_REACH_HERE();
   }
 
-  GUARANTEE(Bytecodes::length_for(caller, bci_in_caller) == 3, "sanity");
+  GUARANTEE(caller->bytecode_length_for(bci_in_caller) == 3, "sanity");
   caller->bytecode_at_put_raw(bci_in_caller, get_bc);
   caller->put_java_ushort(bci_in_caller+1, caller_cpindex);
   return true;

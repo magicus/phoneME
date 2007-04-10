@@ -83,7 +83,7 @@ class BytecodeClosure : public StackObj {
   // BytecodeClosure::verify() because other parts of the system depend
   // on the order.
   enum binary_op {
-      bin_add = 0,
+      bin_add,
       bin_sub,
       bin_mul,
       bin_div,
@@ -101,7 +101,7 @@ class BytecodeClosure : public StackObj {
   };
 
   enum unary_op {
-      una_neg = 0,
+      una_neg,
       una_abs  // Used for inlining Math.abs
   };
 
@@ -189,9 +189,9 @@ class BytecodeClosure : public StackObj {
   virtual void monitor_exit(JVM_SINGLE_ARG_TRAPS)        {JVM_IGNORE_TRAPS;}
 
   // Accessor to locate method and bci
-  Method*       method() const { return &((Method&)_method);   }
-  ConstantPool* cp()     const { return &((ConstantPool&)_cp); }
-  int           bci()    const { return _bci;    }
+  Method*       method	(void) const { return &((Method&)_method);    }
+  ConstantPool* cp	(void) const { return &((ConstantPool&)_cp);  }
+  int           bci	(void) const { return _bci;		      }
 
   // Extra methods for handling fast bytecodes that are hard to revert.
   virtual void fast_invoke_virtual(int /*index*/ JVM_TRAPS) {JVM_IGNORE_TRAPS;}
@@ -223,8 +223,42 @@ class BytecodeClosure : public StackObj {
   }
 
   // Setter for method and bytecode index.
-  void set_bytecode(int bci) {
-    _bci    = bci;
+  void set_bytecode(const int bci) {
+    _bci = bci;
+  }
+
+  static Bytecodes::Code bytecode_at( const Method* method, const jint bci ) {
+    return method->bytecode_at( bci );
+  }
+  Bytecodes::Code bytecode_at( const jint bci ) const {
+    return bytecode_at( method(), bci );
+  }
+  Bytecodes::Code current_bytecode( void ) const {
+    return bytecode_at( bci() );
+  }
+
+  static int bytecode_length_for( const Method* method, const jint bci ) {
+    return method->bytecode_length_for( bci );
+  }
+  int bytecode_length_for( const jint bci ) const {
+    return bytecode_length_for( method(), bci );
+  }
+  int current_bytecode_length( void ) const {
+    return bytecode_length_for( bci() );
+  }
+
+  static int next_bci( const Method* method, const jint bci ) {
+    return method->next_bci( bci );
+  }
+  int next_bci( const jint bci ) const {
+    return next_bci( method(), bci );
+  }
+
+  static int method_size( const Method* method ) {
+    return method->code_size();
+  }
+  int method_size( void ) const {
+    return method_size( method() );
   }
 
   void initialize(Method* method);

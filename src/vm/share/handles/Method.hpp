@@ -452,6 +452,14 @@ public:
            : code;
   }
 
+  int bytecode_length_for( const int bci ) const {
+    return Bytecodes::length_for( this, bci );
+  }
+
+  int next_bci( const int bci ) const {
+    return bci + bytecode_length_for( bci );
+  }
+
   // Returns the handler bci for a given exception class and a given bytecode
   // index. Returns -1 if no handler is available.
   jint exception_handler_bci_for(JavaClass* exception_class,
@@ -753,8 +761,8 @@ public:
     print_bytecodes(st, 0, code_size());
   }
 
-  void print_bytecodes(Stream* st, int bci) {
-    int end = bci + Bytecodes::length_for(this, bci);
+  void print_bytecodes(Stream* st, const int bci) {
+    const int end = next_bci( bci );
     print_bytecodes(st, bci, end, false, false);
   }
 

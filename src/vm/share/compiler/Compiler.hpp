@@ -773,13 +773,13 @@ class Compiler: public StackObj {
 
   ReturnOop allocate_and_compile( const int compiled_code_factor JVM_TRAPS );
 
-  inline void check_free_space        ( JVM_SINGLE_ARG_TRAPS ) const;
+  inline void check_free_space ( JVM_SINGLE_ARG_TRAPS ) const;
   void internal_compile        ( JVM_SINGLE_ARG_TRAPS );
   void begin_compile           ( JVM_SINGLE_ARG_TRAPS );
   void suspend                 ( void );
   void restore_and_compile     ( JVM_SINGLE_ARG_TRAPS );
   void optimize_code           ( JVM_SINGLE_ARG_TRAPS );
-  void setup_for_compile       ( Method::Attributes& attributes JVM_TRAPS );
+  void setup_for_compile( const Method::Attributes& attributes JVM_TRAPS );
 
   void process_compilation_queue ( JVM_SINGLE_ARG_TRAPS );
   static void terminate ( OopDesc* result );

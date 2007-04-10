@@ -352,9 +352,9 @@ bool Method::bytecode_inline_filter(bool& has_field_get,
   register jubyte *bcend = bcptr + code_size();
   register int bci = 0;
   while (bcptr < bcend) {
-    Bytecodes::Code code = (Bytecodes::Code)(*bcptr);
+    const Bytecodes::Code code = (Bytecodes::Code)(*bcptr);
     GUARANTEE(code >= 0, "sanity: unsigned value");
-    int length = Bytecodes::length_for(this, bci);
+    const int length = bytecode_length_for(bci);
 
     switch (code) {
     // byte code may throw exception
@@ -1062,7 +1062,7 @@ void Method::check_bytecodes(JVM_SINGLE_ARG_TRAPS) {
           }
           break;
         }
-        if ((bytecode_length = Bytecodes::length_for(this, bci)) == -1) {
+        if ((bytecode_length = bytecode_length_for(bci)) == -1) {
           goto error;
         }
       }
@@ -1216,7 +1216,7 @@ void Method::set_impossible_to_compile() {
 void Method::iterate(int begin, int end, BytecodeClosure* blk JVM_TRAPS) {
   int bci = begin;
   while (bci < end) {
-    Bytecodes::Code code = bytecode_at(bci);
+    const Bytecodes::Code code = bytecode_at(bci);
 
     // Note: we may potentially iterate a bytecode whose end is past <end>,
     // but this would be caught by the illegal_code() check below. That
@@ -2274,7 +2274,7 @@ void Method::compute_attributes(Attributes& attributes JVM_TRAPS) const {
         const Bytecodes::Code code = Bytecodes::Code(*bcptr);
         GUARANTEE(code >= 0, "sanity: unsigned value");
 
-        const int length = Bytecodes::length_for(this, bci);
+        const int length = bytecode_length_for(bci);
 
         switch (code) {
           case Bytecodes::_ifeq:

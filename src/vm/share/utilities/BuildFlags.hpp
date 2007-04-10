@@ -1122,11 +1122,7 @@
 // USE_FP_RESULT_IN_VFP_REGISTER      Return floating point retult in VFP 
 //                                    registers. 
 //
-#if ENABLE_ARM_VFP
-#define USE_FP_RESULT_IN_VFP_REGISTER 1
-#else
-#define USE_FP_RESULT_IN_VFP_REGISTER 0
-#endif
+#define USE_FP_RESULT_IN_VFP_REGISTER (ENABLE_ARM_VFP)
 
 //
 // ENABLE_ARM9_VFP_BUG_WORKAROUND  Workaround for ARM9 + VFP hardware bugs
@@ -1138,15 +1134,9 @@
 #endif
 #endif
 
-#define USE_OPTIMIZE_COMPARE_AND_CONDITIONAL_BRANCH 0
-
 //
 // USE_EMBEDDED_VTABLE_BITMAP      Embed a vtable bitmap in JavaClassDesc,
 //                                 one bit per virtual method to mark
 //                                 overridden methods
 //
-#if ENABLE_COMPILER && ENABLE_INLINE
-#define USE_EMBEDDED_VTABLE_BITMAP 1
-#else
-#define USE_EMBEDDED_VTABLE_BITMAP 0
-#endif
+#define USE_EMBEDDED_VTABLE_BITMAP (ENABLE_COMPILER && ENABLE_INLINE)

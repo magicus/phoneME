@@ -68,7 +68,7 @@ void BytecodePrintClosure::bytecode_prolog(JVM_SINGLE_ARG_TRAPS) {
     }
   }
   _st->print("%3d: ", bci());
-  Bytecodes::Code code = method()->bytecode_at(bci());
+  const Bytecodes::Code code (current_bytecode());
   _st->print(_verbose ? "[ %-25s ] " : "%s ", Bytecodes::name(code));
 }
 
@@ -107,7 +107,7 @@ void BytecodePrintClosure::push_obj(Oop* value JVM_TRAPS) {
 void BytecodePrintClosure::load_local(BasicType kind, int index JVM_TRAPS) {
   JVM_IGNORE_TRAPS;
   (void)kind;
-  Bytecodes::Code code = method()->bytecode_at(bci());
+  const Bytecodes::Code code( current_bytecode() );
   switch (code) {
     case Bytecodes::_aload_0_fast_igetfield_1:
     case Bytecodes::_aload_0_fast_agetfield_1:
@@ -115,7 +115,7 @@ void BytecodePrintClosure::load_local(BasicType kind, int index JVM_TRAPS) {
       return;
   }
 
-  if (Bytecodes::length_for(method(), bci()) > 1) { 
+  if (current_bytecode_length() > 1) { 
     // Don't need to print out index for bytecodes of length 1
     _st->print("#%d", index); 
   }
@@ -124,7 +124,7 @@ void BytecodePrintClosure::load_local(BasicType kind, int index JVM_TRAPS) {
 void BytecodePrintClosure::store_local(BasicType kind, int index JVM_TRAPS) {
   JVM_IGNORE_TRAPS;
   (void)kind;
-  if (Bytecodes::length_for(method(), bci()) > 1) { 
+  if( current_bytecode_length() > 1 ) { 
     // Don't need to print out index for bytecodes of length 1
     _st->print("#%d", index); 
   }

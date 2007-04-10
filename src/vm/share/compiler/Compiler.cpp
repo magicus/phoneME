@@ -551,7 +551,7 @@ ReturnOop Compiler::compile(Method* method, int active_bci JVM_TRAPS) {
   return result();
 }
 
-inline void Compiler::setup_for_compile( Method::Attributes& attributes
+inline void Compiler::setup_for_compile( const Method::Attributes& attributes
                                          JVM_TRAPS ) {
   // Mark the compiler as being outside any loops.
   mark_as_outside_loop();
@@ -560,21 +560,19 @@ inline void Compiler::setup_for_compile( Method::Attributes& attributes
   BytecodeCompileClosure::set_jump_from_bci(0);
 #endif
   
-  { 
-    Compiler::set_entry_counts_table( attributes.entry_counts );
-    Compiler::set_bci_flags_table( attributes.bci_flags );
+  Compiler::set_entry_counts_table( attributes.entry_counts );
+  Compiler::set_bci_flags_table( attributes.bci_flags );
 
-    Compiler::set_num_stack_lock_words(
-      attributes.num_locks * 
-      ((BytesPerWord + StackLock::size()) / sizeof(jobject)));
+  Compiler::set_num_stack_lock_words(
+    attributes.num_locks * 
+    ((BytesPerWord + StackLock::size()) / sizeof(jobject)));
 
 #if ENABLE_NPCE && ENABLE_INTERNAL_CODE_OPTIMIZER
-    Compiler::set_codes_can_throw_null_point_exception(
-      attributes.num_bytecodes_can_throw_npe << 1);
+  Compiler::set_codes_can_throw_null_point_exception(
+    attributes.num_bytecodes_can_throw_npe << 1);
 #endif
 
-    Compiler::set_has_loops( attributes.has_loops );
-  }
+  Compiler::set_has_loops( attributes.has_loops );
 
   { // Allocate object array for the entry table
     OopDesc* p = Universe::new_obj_array_in_compiler_area(
@@ -585,22 +583,18 @@ inline void Compiler::setup_for_compile( Method::Attributes& attributes
 
 inline void Compiler::begin_compile( JVM_SINGLE_ARG_TRAPS ) {
   Method::Attributes attributes;
-  const Method * const mthd = method();
-
+  const Method* const mthd = method();
   mthd->compute_attributes( attributes JVM_CHECK );
 
   Compiler::setup_for_compile( attributes JVM_CHECK );
-
-  if( OmitLeafMethodFrames && (!ENABLE_WTK_PROFILER || TestCompiler) &&
-      !attributes.can_throw_exceptions &&
-      !attributes.has_loops && 
-      mthd->max_execution_stack_count() <= 4 && 
-      mthd->code_size() <= 20 &&
-      !mthd->uses_monitors() ) {
-    Compiler::set_omit_stack_frame( true );
-  } else {
-    Compiler::set_omit_stack_frame( false );
-  }
+  Compiler::set_omit_stack_frame( 
+    OmitLeafMethodFrames &&
+    (!ENABLE_WTK_PROFILER || TestCompiler) &&
+    !attributes.can_throw_exceptions &&
+    !attributes.has_loops && 
+    mthd->max_execution_stack_count() <= 4 && 
+    mthd->code_size() <= 20 &&
+    !mthd->uses_monitors() );
 
   {// Instantiate a virtual stack frame for this method.    
     OopDesc* p = VirtualStackFrame::create(method() JVM_CHECK);

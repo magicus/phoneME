@@ -218,18 +218,17 @@ class BytecodeCompileClosure: public BytecodeClosure {
 
   // Accessors for the next bytecode index.
   int _next_bytecode_index;
-  int  next_bytecode_index()       const { return _next_bytecode_index; }
-  void set_next_bytecode_index(int bci)  { _next_bytecode_index = bci;  }
-  void set_default_next_bytecode_index(Method* method, jint bci);
+  int  next_bytecode_index    (void) const { return _next_bytecode_index; }
+  void set_next_bytecode_index(const int bci) { _next_bytecode_index = bci; }
 
   bool is_compilation_done()   const { return next_bytecode_index() == -1;  }
   void terminate_compilation()       { set_next_bytecode_index(-1);         }
 
   // Accessor for the stack frame.
-  inline VirtualStackFrame* frame() const;
+  inline VirtualStackFrame* frame     ( void ) const;
 
   // Accessors for the code generator used to do the compilation.
-  inline CodeGenerator* code_generator() const;
+  inline CodeGenerator* code_generator( void ) const;
 
   friend class CodeGenerator;
   friend class ForwardBranchOptimizer;
@@ -238,6 +237,11 @@ class BytecodeCompileClosure: public BytecodeClosure {
   void frame_pop(Value& value);
 
 private:
+  // If next bytecode can be read ahead, returns its index, otherwise -1
+  int get_next_bci( void ) const;
+
+  void set_default_next_bytecode_index(const jint bci);
+
   void throw_null_pointer_exception(JVM_SINGLE_ARG_TRAPS);
   void array_check(Value& array, Value& index JVM_TRAPS);
 

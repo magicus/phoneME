@@ -410,7 +410,7 @@ void JavaFrame::deoptimize(const Method * callee) {
       (address)invoke5_deoptimization_entry_4,
     };
 
-    Bytecodes::Code bc = method().bytecode_at(bci);
+    const Bytecodes::Code bc = method().bytecode_at(bci);
     GUARANTEE(bc == Bytecodes::_invokevirtual || 
               bc == Bytecodes::_invokespecial || 
               bc == Bytecodes::_invokestatic  ||
