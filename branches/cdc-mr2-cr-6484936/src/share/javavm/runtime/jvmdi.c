@@ -53,6 +53,10 @@
 
 #include "javavm/include/jvmdi_impl.h"
 
+#ifdef CVM_HW
+#include "include/hw.h"
+#endif
+
 /* %comment: k001 */
 
 
@@ -1137,6 +1141,9 @@ clear_bkpt(JNIEnv *env, struct bkpt *bp)
 {
     CVMassert(*(bp->pc) == opc_breakpoint);
     *(bp->pc) = (CVMUint8)(bp->opcode);
+#ifdef CVM_HW
+    CVMhwFlushCache(bp->pc, bp->pc + 1);
+#endif
     
     /* 
      * De-reference the enclosing class so that it's GC 
@@ -2706,6 +2713,9 @@ jvmdi_SetBreakpoint(jclass clazz, jmethodID method,
                 /* Keep a reference to the class to prevent gc */
                 bp->classRef = classRef;
                 *pc = opc_breakpoint;
+#ifdef CVM_HW
+                CVMhwFlushCache(pc, pc + 1);
+#endif
                 err = JVMDI_ERROR_NONE;
             }
         }

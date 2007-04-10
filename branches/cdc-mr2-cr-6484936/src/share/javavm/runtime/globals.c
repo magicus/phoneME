@@ -127,8 +127,13 @@ void** const CVMJITcodeCacheDecompileStart =
  */
 #define CVM_MIN_WEAK_GLOBALROOTS_STACKCHUNK_SIZE \
     CVM_MIN_GLOBALROOTS_STACKCHUNK_SIZE
+#ifdef CVM_JVMTI
+#define CVM_MAX_WEAK_GLOBALROOTS_STACK_SIZE      \
+    CVM_MAX_GLOBALROOTS_STACK_SIZE * 4
+#else
 #define CVM_MAX_WEAK_GLOBALROOTS_STACK_SIZE      \
     CVM_MAX_GLOBALROOTS_STACK_SIZE
+#endif
 #define CVM_INITIAL_WEAK_GLOBALROOTS_STACK_SIZE   \
     CVM_INITIAL_GLOBALROOTS_STACK_SIZE
 
@@ -202,7 +207,7 @@ static const CVMGlobalSysMutexEntry globalSysMutexes[] = {
        with those accesses it would need to have a higher rank (less
        importance) than this one. */
 #ifdef CVM_JVMTI
-    CVM_SYSMUTEX_ENTRY(debuggerLock, "debugger lock"),
+    CVM_SYSMUTEX_ENTRY(jvmtiLock, "jvmti lock"),
 #endif
     /*
      * All of these are "leaf" mutexes except during gc and during
@@ -213,10 +218,10 @@ static const CVMGlobalSysMutexEntry globalSysMutexes[] = {
     CVM_SYSMUTEX_ENTRY(typeidLock, "typeid lock"),
     CVM_SYSMUTEX_ENTRY(syncLock, "fast sync lock"),
     CVM_SYSMUTEX_ENTRY(internLock, "intern table lock"),
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
     CVM_SYSMUTEX_ENTRY(gcLockerLock, "gc locker lock"),
 #endif
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
     CVM_SYSMUTEX_ENTRY(jvmpiSyncLock, "jvmpi sync lock"),
 #endif
 #ifdef CVM_TIMESTAMPING
@@ -461,7 +466,7 @@ static const CVMGlobalMethodBlockEntry globalMethodBlocks[] = {
 	CVM_TRUE,  /* static */
 	CVMsystemClass(java_lang_Thread),
         "initAttachedThread",
-	    "(Ljava/lang/ThreadGroup;Ljava/lang/String;IJ)"
+	    "(Ljava/lang/ThreadGroup;Ljava/lang/String;IJZ)"
 	    "Ljava/lang/Thread;",
         &CVMglobals.java_lang_Thread_initAttachedThread
         /* NOTE: java.lang.Thread has a static initializer.  The clinit
@@ -803,8 +808,8 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
        This mutates the global JNI vector which later gets pointed to
        by the various execution environments. */
 #ifdef CVM_JVMTI
-    gs->jvmtiDebuggingEnabled = options->debugging;
-    if (gs->jvmtiDebuggingEnabled) {
+    gs->jvmtiEnabled = options->debugging;
+    if (gs->jvmtiEnabled) {
 	CVMjvmtiInstrumentJNINativeInterface();
     }
 #endif    

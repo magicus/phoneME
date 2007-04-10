@@ -947,6 +947,14 @@ new_mb:
 		});
 #endif
 		if (CVMmbIs(mb, SYNCHRONIZED)) {
+#ifdef CVM_JVMTI
+		    /* No events during this delicate phase of creating
+		     * a frame */
+		    jlong thread_bits;
+		    thread_bits = jvmti_get_thread_event_enabled(ee);
+		    jvmti_set_should_post_any_thread_event(ee,
+				thread_bits & ~THREAD_FILTERED_EVENT_BITS);
+#endif
                     /* The method is sync, so lock the object. */
                     /* %comment l002 */
                     if (!CVMfastTryLock(ee,
@@ -956,12 +964,19 @@ new_mb:
                             CVMthrowOutOfMemoryError(ee, NULL);
 			    CVMassert(frameSanity(frame, topOfStack));
  			    ee->invokeMb = NULL;
+#ifdef CVM_JVMTI
+			    jvmti_set_should_post_any_thread_event(ee,
+							     thread_bits);
+#endif
                            return CVM_COMPILED_EXCEPTION;
 			}
                     }
 		    CVMID_icellAssignDirect(ee,
 			&CVMframeReceiverObj(frame, Compiled),
 			receiverObjICell);
+#ifdef CVM_JVMTI
+		    jvmti_set_should_post_any_thread_event(ee, thread_bits);
+#endif
 		}
 
 		DECACHE_FRAME();

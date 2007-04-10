@@ -24,7 +24,6 @@
 // information or have any questions. 
 //
 
-// $Id: //bas2/vmc/dev3/src/x86/javavm/runtime/jit/jitfloatgrammarrules.jcs#1 $
 // Optional floating-point grammar rules for processors with
 // floating-point hardware.
 //

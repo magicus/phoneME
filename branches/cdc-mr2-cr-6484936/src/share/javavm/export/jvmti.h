@@ -642,6 +642,8 @@ typedef void (JNICALL *jvmtiExtensionEvent)
 
 
     /* Structure Types */
+
+
 struct bkpt {
     CVMUint8* pc;      /* key - must be first */
     CVMUint8 opcode;   /* opcode to restore */
@@ -1916,22 +1918,8 @@ struct _jvmtiEnv {
     const jvmtiInterface_1 *functions;
 };
 
-jint CVMcreateJvmti(JavaVM *interfaces_vm, void **penv);
-jvmtiError initializeJVMTI();
 
 
-  /* Tag stuff */
-
-#define HASH_SLOT_COUNT 1531    /* Check size of RefNode.refSlot if you change this */
-#define ALL_REFS -1
-
-#define OBJECT_ID(node) (node ? (jlong)node->seqNum : NULL_OBJECT_ID)
-
-typedef struct TagNode {
-    jlong tag;                  /* opaque tag */
-    jobject      ref;           /* could be strong or weak */
-    struct TagNode *next;       /* next RefNode* in bucket chain */
-} TagNode;
 
 #ifdef __cplusplus
 } /* extern "C" */

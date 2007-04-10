@@ -624,6 +624,11 @@ CVMmsSweep()
                     }
                     liveObjectCount--;
 #endif
+#ifdef CVM_JVMTI
+                    if (jvmti_should_post_object_free()) {
+                        CVMjvmtiPostObjectFreeEvent(heapPtr);
+                    }
+#endif
 		    /* 
 		     * Add it to the free list.
 		     * We are going to clear the boundaries bits all
@@ -798,7 +803,7 @@ CVMgcimplDoGC(CVMExecEnv* ee, CVMUint32 numBytes)
 
     gcOpts.isUpdatingObjectPointers = CVM_TRUE;
     gcOpts.discoverWeakReferences = CVM_FALSE;
-#if defined(CVM_DEBUG) || defined(CVM_JVMPI)
+#if defined(CVM_DEBUG) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
     gcOpts.isProfilingPass = CVM_FALSE;
 #endif
     currGcOpts = &gcOpts;
@@ -896,7 +901,7 @@ CVMgcimplAllocObject(CVMExecEnv* ee, CVMUint32 numBytes)
     return allocatedObj;
 }
 
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
 /* Purpose: Posts the JVMPI_EVENT_ARENA_NEW events for the GC specific
             implementation. */
 /* NOTE: This function is necessary to compensate for the fact that
@@ -1010,7 +1015,7 @@ CVMgcimplTimeOfLastMajorGC()
     return lastMajorGCTime;
 }
 
-#if defined(CVM_DEBUG) || defined(CVM_JVMPI)
+#if defined(CVM_DEBUG) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 
 /*
  * Heap iteration. Call (*callback)() on each object in the heap.

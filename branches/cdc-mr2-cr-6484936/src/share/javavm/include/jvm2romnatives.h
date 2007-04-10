@@ -78,6 +78,7 @@
 #endif
 
 #define JVM_CurrentTimeMillis	 Java_java_lang_System_currentTimeMillis
+#define JVM_NanoTime    	 Java_java_lang_System_nanoTime
 #define JVM_ArrayCopy		 Java_java_lang_System_arraycopy
 #define JVM_InitializeCompiler	 Java_java_lang_Compiler_initialize
 #define JVM_CompileClass	 Java_java_lang_Compiler_compileClass

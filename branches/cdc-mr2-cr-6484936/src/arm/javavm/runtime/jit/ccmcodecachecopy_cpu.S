@@ -53,7 +53,9 @@
 	IMPORT CVMCCMruntimeMonitorExit
 	IMPORT CVMCCMruntimeRunClassInitializer
 	IMPORT CVMJITflushCache
+#ifndef CVM_JIT_CCM_USE_C_SYNC_HELPER
         IMPORT CVMmicrolockLockImpl
+#endif
 	IMPORT CVMCCMruntimeGCRendezvous
 	IMPORT CVMCCMruntimeThrowClass
 	IMPORT CVMCCMruntimeThrowObject
@@ -83,7 +85,14 @@
 #include "javavm/include/asmmacros_cpu.h"
 #include "javavm/include/jit/jitasmconstants.h"
 
-	SET_SECTION_EXEC(ccmcodecachecopy_cpu)
+/*
+ * NOTE: Some linker such as the ARM RVCT (v2.2) linker sorts 
+ *	 sections by attributes and section name. To make sure
+ *	 the CCM copied code in the same order as they are included
+ *	 in ccmcodecachecopy_cpu.S, we need to name the sections
+ *	 in alphabetical order.
+ */
+	SET_SECTION_EXEC(s0_ccmcodecachecopy_cpu)
 
 
 /*************************************************************************

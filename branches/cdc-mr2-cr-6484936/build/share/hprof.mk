@@ -46,11 +46,11 @@ CVM_HPROF_BUILDDIRS += \
 #
 # Search path for include files:
 #
-CVM_HPROF_INCLUDES  += \
-        -I$(CVM_HPROF_SHAREROOT) \
-        -I$(CVM_HPROF_TARGETROOT)
+CVM_HPROF_INCLUDE_DIRS  += \
+        $(CVM_HPROF_SHAREROOT) \
+        $(CVM_HPROF_TARGETROOT)
 
-hprof : CVM_INCLUDES += $(CVM_HPROF_INCLUDES)
+hprof : CVM_INCLUDE_DIRS += $(CVM_HPROF_INCLUDE_DIRS)
 
 #
 # List of object files to build:

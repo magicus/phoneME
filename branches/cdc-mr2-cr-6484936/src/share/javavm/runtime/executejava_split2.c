@@ -369,7 +369,7 @@ CVMdumpStats()
 	DECACHE_PC(frame);						\
 	DECACHE_TOS(frame);						\
 	CVMD_gcSafeExec(ee, {						\
-	    CVMjvmtiNotifyDebuggerOfSingleStep(ee, pc);			\
+	    CVMjvmtiPostSingleStepEvent(ee, pc);			\
 	});								\
 	/* Refetch opcode. See above. */				\
 	opcodeVar = *pc;						\
@@ -382,7 +382,7 @@ CVMdumpStats()
 	DECACHE_PC(frame);						\
 	DECACHE_TOS(frame);						\
 	CVMD_gcSafeExec(ee, {						\
-	    CVMjvmtiNotifyDebuggerOfFieldAccess(ee, location, fb);	\
+		CVMjvmtiPostFieldAccessEvent(ee, location, fb);		\
 	});								\
     }
 
@@ -404,8 +404,7 @@ CVMdumpStats()
 	   val.i = STACK_INT(-1);					      \
        }								      \
        CVMD_gcSafeExec(ee, {						      \
-	   CVMjvmtiNotifyDebuggerOfFieldModification(			      \
-	       ee, location, fb, val);					      \
+	       CVMjvmtiPostFieldModificationEvent(ee, location, fb, val);     \
        });								      \
    }
 
@@ -2355,7 +2354,7 @@ return_to_compiled:
 		DECACHE_PC(frame);
 		DECACHE_TOS(frame);
 		CVMD_gcSafeExec(ee, {
-		    CVMjvmtiNotifyDebuggerOfFramePush(ee);
+		    CVMjvmtiPostFramePushEvent(ee);
 		});
 	    }
 #endif

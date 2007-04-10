@@ -600,6 +600,9 @@ CNIsun_misc_CVM_throwLocalException(CVMExecEnv* ee,
 }
 
 #ifdef CVM_DUAL_STACK
+/* 
+ * Check if the classloader is one of the MIDP dual-stack classloaders.
+ */
 CVMBool
 CVMclassloaderIsCLDCClassLoader(CVMExecEnv *ee,
                                 CVMClassLoaderICell* loaderICell)
@@ -607,11 +610,18 @@ CVMclassloaderIsCLDCClassLoader(CVMExecEnv *ee,
     if (loaderICell != NULL) {
         CVMClassBlock* loaderCB = CVMobjectGetClass(
                                   CVMID_icellDirect(ee, loaderICell));
+        CVMClassTypeID loaderID = CVMcbClassName(loaderCB);
         const char *midletLoaderName = "sun/misc/MIDletClassLoader";
+        const char *midpImplLoaderName = "sun/misc/MIDPImplementationClassLoader";
         CVMClassTypeID MIDletClassLoaderID =
             CVMtypeidLookupClassID(ee, midletLoaderName, 
                                    strlen(midletLoaderName));
-        if (CVMcbClassName(loaderCB) == MIDletClassLoaderID ){
+        CVMClassTypeID MIDPImplClassLoaderID = 
+	    CVMtypeidLookupClassID(ee,midpImplLoaderName,
+				   strlen(midpImplLoaderName));
+
+        if (loaderID == MIDletClassLoaderID ||
+            loaderID == MIDPImplClassLoaderID){
             return CVM_TRUE;
         } else {
             return CVM_FALSE;
@@ -1268,7 +1278,7 @@ CNIsun_misc_CVM_xdebugSet(CVMExecEnv* ee, CVMStackVal32 *arguments,
      * NOTE: JVMTI doesn't use -Xdebug so this is actually set in
      * jvmtiEnv.c CVMcreateJvmti()
      */
-    CVMglobals.jvmtiDebuggingEnabled = CVM_TRUE;
+    CVMglobals.jvmtiEnabled = CVM_TRUE;
     CVMjvmtiInstrumentJNINativeInterface();
     arguments[0].j.i = CVM_TRUE;
 #endif
@@ -1326,6 +1336,19 @@ CNIsun_misc_CVM_00024Preloader_registerClassLoader0(CVMExecEnv* ee,
 	&arguments[1].j.r /* cl */
     );
     return CNI_VOID;
+}
+
+CNIResultCode
+CNIsun_misc_CVM_nanoTime(CVMExecEnv* ee, CVMStackVal32 *arguments, CVMMethodBlock **p_mb)
+{
+    jlong time;
+#ifdef CVM_JVMTI
+    time = CVMtimeNanosecs();
+#else
+    time = (jlong)(((CVMInt64)CVMtimeMillis()) * 1000000);
+#endif
+    CVMlong2Jvm((CVMAddr*)&arguments[0].j, time);
+    return CNI_DOUBLE;
 }
 
 #if 1

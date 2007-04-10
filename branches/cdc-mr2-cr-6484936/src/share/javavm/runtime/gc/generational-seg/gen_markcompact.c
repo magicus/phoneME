@@ -49,7 +49,6 @@
 
 #include "javavm/include/porting/system.h"
 
-
 #ifdef CVM_JVMPI
 #include "javavm/include/jvmpi_impl.h"
 #endif
@@ -679,7 +678,7 @@ verifyGeneration(CVMGeneration* gen, CVMExecEnv* ee, CVMGCOptions* gcOpts)
 }
 #endif
 
-#if defined(CVM_DEBUG) || defined(CVM_JVMPI)
+#if defined(CVM_DEBUG) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 static CVMBool iterateSegList(CVMExecEnv* ee,
 			      CVMGenSegment* segBase,
 			      CVMObjectCallbackFunc callback,
@@ -975,14 +974,21 @@ sweep(CVMGenMarkCompactGeneration* thisGen,
 		 * which is 64 bit aware
 		 */
 	        *headerAddr = (CVMAddr)curr ;
-        #ifdef CVM_JVMPI
             } else {
-                extern CVMUint32 liveObjectCount;
+#ifdef CVM_JVMPI
                 if (CVMjvmpiEventObjectFreeIsEnabled()) {
                     CVMjvmpiPostObjectFreeEvent(currObj);
                 }
+#endif
+#ifdef CVM_JVMPI
+                if (jvmti_should_post_object_free()) {
+                    CVMjvmtiPostObjectFreeEvent(currObj);
+                }
+#endif
+#ifdef CVM_JVMPI
+                extern CVMUint32 liveObjectCount;
                 liveObjectCount--;
-        #endif
+#endif
             }
             continue ;
         }
@@ -1041,12 +1047,19 @@ sweep(CVMGenMarkCompactGeneration* thisGen,
 		*headerAddr = (CVMAddr)forwardingAddress;
 		/* Pretend to have copied this live object! */
 		forwardingAddress += objSize / 4;
-#ifdef CVM_JVMPI
 	    } else {
-		extern CVMUint32 liveObjectCount;
+#ifdef CVM_JVMPI
 		if (CVMjvmpiEventObjectFreeIsEnabled()) {
 		    CVMjvmpiPostObjectFreeEvent(currObj);
 		}
+#endif
+#ifdef CVM_JVMTI
+		if (jvmti_should_post_object_free()) {
+		    CVMjvmtiPostObjectFreeEvent(currObj);
+		}
+#endif
+#ifdef CVM_JVMPI
+		extern CVMUint32 liveObjectCount;
 		liveObjectCount--;
 #endif
 	    }

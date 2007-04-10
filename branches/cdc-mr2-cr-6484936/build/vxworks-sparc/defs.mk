@@ -30,8 +30,8 @@ CVM_TARGETOBJS_OTHER += \
 	atomic_sparc.o \
 	invokeNative_sparc.o \
 
-CVM_INCLUDES  += \
-	-I$(CVM_TOP)/src/$(TARGET_OS)-$(TARGET_CPU_FAMILY)
+CVM_INCLUDE_DIRS  += \
+	$(CVM_TOP)/src/$(TARGET_OS)-$(TARGET_CPU_FAMILY)
 
 #
 # JIT related settings

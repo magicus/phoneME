@@ -29,6 +29,7 @@
 #ifndef _JAVA_JVMTIENV_H_
 #define _JAVA_JVMTIENV_H_
 
+
 enum {
     JVMTI_INTERNAL_CAPABILITY_COUNT = 39
 };
@@ -41,6 +42,8 @@ typedef enum {
   TOTAL_MAX_EVENT_TYPE_VAL = JVMTI_MAX_EVENT_TYPE_VAL
 } jvmtiExtEvent;
 
+#define CVM_NEED_FRAME_POP (JVMTI_MAX_EVENT_TYPE_VAL + 1)
+
 /*
  * The complete range of events is EXT_MIN_EVENT_TYPE_VAL to 
  * JVMTI_MAX_EVENT_TYPE_VAL (inclusive and contiguous).
@@ -49,6 +52,17 @@ typedef enum {
 typedef struct {
   jvmtiExtensionEvent ClassUnload;
 } jvmtiExtEventCallbacks;
+
+/* Tag stuff */
+
+#define HASH_SLOT_COUNT 1531    /* Check size of RefNode.refSlot if you change this */
+#define ALL_REFS -1
+
+typedef struct TagNode {
+    jlong tag;                  /* opaque tag */
+    jobject      ref;           /* could be strong or weak */
+    struct TagNode *next;       /* next RefNode* in bucket chain */
+} TagNode;
 
 typedef struct {
   jlong tag;                  /* opaque tag */
@@ -65,7 +79,29 @@ typedef struct {
   jlong _enabled_bits;
 } JvmtiEventEnabled;
 
-typedef struct {
+typedef struct visit_stack {
+    CVMObject **stack_base;
+    CVMObject **stack_ptr;
+    jvmtiEnv *jvmti_env;
+    int stack_size;
+} jvmtiVisitStack;
+
+#define VISIT_STACK_INIT 4096
+#define VISIT_STACK_INCR 1024
+
+typedef struct dumpContext {
+    jint heap_filter;
+    jclass klass;
+    const jvmtiHeapCallbacks *callbacks;
+    const void *user_data;
+    CVMExecEnv *ee;
+    JNIEnv *env;
+    CVMFrame  *frame;
+    jint frame_count;
+    CVMObjectICell *icell;
+} jvmtiDumpContext;
+
+typedef struct _JvmtiEnvEventEnable{
 
   /* user set global event enablement indexed by jvmtiEvent   */
   JvmtiEventEnabled _event_user_enabled;
@@ -110,5 +146,11 @@ typedef struct _JvmtiEnv {
 }JvmtiEnv;
 
 jint CVMdestroyJvmti(JvmtiEnv *env);
-
+jvmtiError jvmtiVisitStackPush(CVMObject *obj);
+jvmtiError jvmtiVisitStackPop(CVMObject **obj);
+CVMBool jvmtiVisitStackEmpty();
+void jvmtiCleanupMarked();
+void jvmti_recompute_enabled(JvmtiEnvEventEnable *);
+jlong jvmti_recompute_thread_enabled(CVMExecEnv *ee, JvmtiEnvEventEnable *);
+CVMClassBlock* CVMjvmtiObject2Class(CVMExecEnv *ee, jclass clazz);
 #endif /* !_JAVA_JVMTIENV_H_ */

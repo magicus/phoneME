@@ -24,6 +24,31 @@
 # information or have any questions. 
 #
 
+#####################################
+#  Check for obsolete definitions that may have been made by defs files.
+#####################################
+
+
+# CVM include directories used to be specified with CVM_INCLUDES, and included
+# the -I option. Now they are specified with CVM_INCLUDE_DIRS and do not
+# include the -I option.
+ifdef CVM_INCLUDES
+$(error CVM_INCLUDES is no longer supported. Use CVM_INCLUDE_DIRS and remove the leading "-I".)
+else
+# force an error if referenced in a command line
+CVM_INCLUDES = "Do not reference CVM_INCLUDES"
+endif
+
+# Profile include directories used to be specified with PROFILE_INCLUDES, and 
+# included the -I option. Now they are specified with PROFILE_INCLUDE_DIRS
+# and do not include the -I option.
+ifdef PROFILE_INCLUDES
+$(error PROFILE_INCLUDES is no longer supported. Use PROFILE_INCLUDE_DIRS and remove the leading "-I".)
+else
+# force an error if referenced in a command line
+PROFILE_INCLUDES = "Do not reference PROFILE_INCLUDES"
+endif
+
 #
 #  Common makefile rules
 #
@@ -175,6 +200,7 @@ endif
 # Allow profile classes to override all others.
 #
 JAVA_SRCDIRS += \
+	$(PROFILE_VMIMPLCLASSES_SRCDIR) $(CVM_VMIMPLCLASSES_SRCDIR) \
 	$(OPT_PKGS_SRCPATH) $(PROFILE_SRCDIRS) \
 	$(CVM_SHAREDCLASSES_SRCDIR) $(CVM_TARGETCLASSES_SRCDIR) \
 	$(CVM_CLDCCLASSES_SRCDIR) \
@@ -206,18 +232,22 @@ endif
 # Build various lists of classes to be compiled
 #
 
+# buildClassesList(classesTarget,classesList,class)
+define buildClassesList
+	@echo $(call POSIX2HOST,$(3)) >>$(CVM_BUILD_TOP)/$(2)
+	@touch $(CVM_BUILD_TOP)/$(1)
+endef
+
 # Non-preloaded classes except for test classes
 ifneq ($(CVM_PRELOAD_LIB), true)
 $(LIB_CLASSESDIR)/%.class: %.java
-	@echo $(call POSIX2HOST,$?) >>$(CVM_BUILD_TOP)/.libclasses.list
 	@echo $(subst /,.,$*) >>$(CVM_BUILD_TOP)/.javahclasses.list
-	@touch $(CVM_BUILD_TOP)/.libclasses 
+	$(call buildClassesList,.libclasses,.libclasses.list,$?)
 endif
 
 # preloaded classes except for test classes
 $(CVM_BUILDTIME_CLASSESDIR)/%.class: %.java
-	@echo $(call POSIX2HOST,$?) >>$(CVM_BUILD_TOP)/.btclasses.list
-	@touch $(CVM_BUILD_TOP)/.btclasses
+	$(call buildClassesList,.btclasses,.btclasses.list,$?)
 
 # TODO: Build a jsr jar file and have a rule that makes the jar file
 # dependent on all the source files, and builds a list of files to
@@ -236,13 +266,11 @@ $(CVM_BUILDTIME_CLASSESDIR)/%.class: %.java
 
 # Test classes
 $(CVM_TEST_CLASSESDIR)/%.class: %.java
-	@echo $(call POSIX2HOST,$?) >>$(CVM_BUILD_TOP)/.testclasses.list
-	@touch $(CVM_BUILD_TOP)/.testclasses
+	$(call buildClassesList,.testclasses,.testclasses.list,$?)
 
 # demo classes
 $(CVM_DEMO_CLASSESDIR)/%.class: %.java
-	@echo $(call POSIX2HOST,$?) >>$(CVM_BUILD_TOP)/.democlasses.list
-	@touch $(CVM_BUILD_TOP)/.democlasses
+	$(call buildClassesList,.democlasses,.democlasses.list,$?)
 
 #
 # Convert the class lists to names of class files so they can be javac'd.
@@ -267,22 +295,26 @@ TEST_CLASS_FILES = \
 DEMO_CLASS0 = $(subst .,/,$(CVM_DEMO_CLASSES))
 DEMO_CLASS_FILES = $(patsubst %,$(CVM_DEMO_CLASSESDIR)/%.class,$(DEMO_CLASS0))
 
-PS := "$(JDK_PATH_SEP)"
-
 # Convert list of Java source directories to colon-separated paths
 JAVACLASSES_SRCPATH = \
-	$(subst $(space),$(PS),$(call MPOSIX2HOST,$(strip $(JAVA_SRCDIRS))))
+	$(subst $(space),$(PS),$(call POSIX2HOST,$(strip $(JAVA_SRCDIRS))))
 TESTCLASSES_SRCPATH = \
-	$(subst $(space),$(PS),$(call MPOSIX2HOST,$(strip $(CVM_TESTCLASSES_SRCDIRS))))
+	$(subst $(space),$(PS),$(call POSIX2HOST,$(strip $(CVM_TESTCLASSES_SRCDIRS))))
 CVM_DEMOCLASSES_SRCPATH = \
-	$(subst $(space),$(PS),$(call MPOSIX2HOST,$(strip $(CVM_DEMOCLASSES_SRCDIRS))))
+	$(subst $(space),$(PS),$(call POSIX2HOST,$(strip $(CVM_DEMOCLASSES_SRCDIRS))))
 
 # Convert list of classpath entries to colon-separated path
 JAVACLASSES_CLASSPATH = $(subst $(space),$(PS),$(strip $(JAVA_CLASSPATH)))
 
 # CR 6214008
 # Convert list of OPT_PKGS classpath entries to colon-separated path
-OPTPKGS_CLASSPATH = $(subst $(space),$(PS),$(strip $(OPT_PKGS_CLASSPATH)))
+# Note, if empty then don't bother, or POSIX2HOST will result in a cygpath
+# error message.
+ifneq ($(OPT_PKGS_CLASSPATH),)
+OPTPKGS_CLASSPATH0 = $(strip $(OPT_PKGS_CLASSPATH))
+OPTPKGS_CLASSPATH1 = $(call POSIX2HOST,$(OPTPKGS_CLASSPATH0))
+OPTPKGS_CLASSPATH  = $(subst $(space),$(PS),$(OPTPKGS_CLASSPATH1))
+endif
 
 # Convert list of jar files to colon-separated path
 TEST_JARFILES = $(subst $(space),$(PS),$(strip $(CVM_TEST_JARFILES)))
@@ -382,11 +414,9 @@ democlasses:: .delete.democlasses.list .report.democlasses.list $(DEMO_CLASS_FIL
 
 .PHONY: build-unittests
 build-unittests::
-	$(AT)echo "Building cdc unit-tests ..."
 
 .PHONY: run-unittests
 run-unittests::
-	$(AT)echo "Running cdc unit-tests ..."
 
 # if jarfilename is specified, put jsrclasses in jar file
 ifeq ($(OP_JAR_FILENAME),)
@@ -432,7 +462,7 @@ $(J2ME_CLASSLIB):: jsrclasses
 endif
 $(J2ME_CLASSLIB):: testclasses $(CVM_TEST_CLASSESZIP)
 $(J2ME_CLASSLIB):: democlasses $(CVM_DEMO_CLASSESJAR)
-ifeq ($(CVM_INCLUDE_JUMP), true)
+ifeq ($(USE_JUMP), true)
 $(J2ME_CLASSLIB):: jumptargets
 endif
 $(J2ME_CLASSLIB):: $(JSROP_JARS)
@@ -443,7 +473,10 @@ $(J2ME_CLASSLIB):: $(CVM_BINDIR)/$(CVM)
 ifeq ($(CDC_10),true)
 $(J2ME_CLASSLIB):: $(CVM_TZDATAFILE)
 endif
-$(J2ME_CLASSLIB):: $(CVM_MIMEDATAFILE) $(CVM_PROPS_BUILD) $(CVM_POLICY_BUILD) $(CVM_MIDPFILTERCONFIG) $(CVM_MIDPCLASSLIST)
+$(J2ME_CLASSLIB):: $(CVM_MIMEDATAFILE) $(CVM_PROPS_BUILD) $(CVM_POLICY_BUILD)
+ifeq ($(CVM_DUAL_STACK), true)
+$(J2ME_CLASSLIB):: $(CVM_MIDPFILTERCONFIG) $(CVM_MIDPCLASSLIST) $(JSR_CDCRESTRICTED_CLASSLIST)
+endif
 
 #####################################
 # make empty.mk depend on CVM_SRCDIRS
@@ -523,6 +556,7 @@ $(CVM_BUILD_DEFS_MK)::
 	$(AT) echo "J2ME_CLASSLIB = $(J2ME_CLASSLIB)" >> $@
 	$(AT) echo "CVM_MTASK = $(CVM_MTASK)" >> $@
 	$(AT) echo "CVM_INCLUDE_JUMP = $(CVM_INCLUDE_JUMP)" >> $@
+	$(AT) echo "USE_JUMP = $(USE_JUMP)" >> $@
 	$(AT) echo "JUMP_DIR = $(JUMP_DIR)" >> $@
 	$(AT) echo "CVM_PRELOAD_LIB = $(CVM_PRELOAD_LIB)" >> $@
 	$(AT) echo "CCFLAGS_SPEED = $(CCFLAGS_SPEED)" >> $@
@@ -581,10 +615,10 @@ $(CVM_BUILDDIRS):
 # vpath
 #
 ifneq ($(CVM_TOOLS_BUILD), true)
-vpath %.c	$(CVM_SRCDIRS)
-vpath %.cc 	$(CVM_SRCDIRS)
-vpath %.cpp 	$(CVM_SRCDIRS)
-vpath %.S 	$(CVM_SRCDIRS)
+vpath %.c	$(CVM_ALL_NATIVE_SRCDIRS)
+vpath %.cc 	$(CVM_ALL_NATIVE_SRCDIRS)
+vpath %.cpp 	$(CVM_ALL_NATIVE_SRCDIRS)
+vpath %.S 	$(CVM_ALL_NATIVE_SRCDIRS)
 endif
 
 #
@@ -616,26 +650,26 @@ $(CVM_OBJECTS_LOOP): COMPILE_FLAVOR = LOOP
 
 ifneq ($(CVM_PROVIDE_TARGET_RULES), true)
 $(CVM_OBJDIR)/%.o: %.cc
-	@echo "c++ $@"
+	@echo "c++ $<"
 	$(CCC_CMD_$(COMPILE_FLAVOR))
 	$(GENERATEMAKEFILES_CMD)
 	$(CSTACKANALYSIS_CMD)
 
 $(CVM_OBJDIR)/%.o: %.cpp
-	@echo "c++ $@"
+	@echo "c++ $<"
 	$(CCC_CMD_$(COMPILE_FLAVOR))
 	$(GENERATEMAKEFILES_CMD)
 	$(CSTACKANALYSIS_CMD)
 
 $(CVM_OBJDIR)/%.o: %.c
-	@echo "cc  $@"
+	@echo "cc  $<"
 	$(CC_CMD_$(COMPILE_FLAVOR))
 	$(GENERATEMAKEFILES_CMD)
 	$(CSTACKANALYSIS_CMD)
 
 
 $(CVM_OBJDIR)/%.o: %.S
-	@echo "as  $@"
+	@echo "as  $<"
 	$(ASM_CMD)
 ifeq ($(GENERATEMAKEFILES), true)
 	@$(TARGET_CC) $(ASM_ARCH_FLAGS) $(CCDEPEND) $(CPPFLAGS) $< \
@@ -656,7 +690,7 @@ CVM_FDLIB	  = $(CVM_OBJDIR)/fdlibm.a
 
 ifneq ($(CVM_PROVIDE_TARGET_RULES), true)
 $(CVM_FDLIB_FILES): $(CVM_OBJDIR)/%.o: $(CVM_FDLIBM_SRCDIR)/%.c
-	@echo "cc  $@"
+	@echo "cc  $<"
 	$(CC_CMD_FDLIB)
 ifeq ($(GENERATEMAKEFILES), true)
 	@$(TARGET_CC) $(CC_ARCH_FLAGS) $(CCDEPEND) $(CPPFLAGS) $< \
@@ -719,7 +753,7 @@ $(CVM_BINDIR)/$(CVM) :: .generate.system_properties.c
 ifneq ($(CVM_PROVIDE_TARGET_RULES), true)
 $(CVM_BINDIR)/$(CVM) :: $(CVM_OBJECTS) $(CVM_OBJDIR)/$(CVM_ROMJAVA_O) $(CVM_FDLIB) $(CVM_SHA1OBJ)
 	@echo "Linking $@"
-	$(LINK_CMD)
+	$(LINK_CMD) $(LINKLIBS_CVM)
 	@echo "Done Linking $@"
 endif
 
@@ -734,15 +768,11 @@ clean::
 ifeq ($(CVM_REBUILD), true)
 clean::
 	rm -rf $(INSTALLDIR)
-	rm -rf $(CVM_BUILD_TOP)/.libclasses
-	rm -rf $(CVM_BUILD_TOP)/.btclasses 
-	rm -rf $(CVM_BUILD_TOP)/.testclasses
-	rm -rf $(CVM_BUILD_TOP)/.democlasses
+	rm -rf $(CVM_BUILD_TOP)/.*classes
 	rm -rf $(CVM_BUILD_TOP)/.*.list
 	rm -rf $(CVM_BUILD_TOP)/.system_properties.c
 	rm -rf .DefaultLocaleList.java
 	rm -rf $(CVM_BUILD_FLAGS_FILE)
-	rm -rf $(CVM_MIDP_BUILDDIR)
 	rm -rf $(BUILDFLAGS_JAVA)
 	rm -rf $(CVM_BUILDTIME_CLASSESDIR) \
 	       $(CVM_TEST_CLASSESDIR) $(CVM_DEMO_CLASSESDIR) *_classes
@@ -875,12 +905,11 @@ ifneq ($(CVM_MIDPFILTERCONFIG), )
 $(CVM_MIDPFILTERCONFIG): $(CVM_MIDPDIR)/MIDPFilterConfig.txt
 	@echo "Updating MIDPFilterConfig...";
 	@cp -f $< $@;
-	@echo "<<<Finished copying $@";
 
-$(CVM_MIDPCLASSLIST): $(CVM_MIDPDIR)/MIDPPermittedClasses.txt
+$(CVM_MIDPCLASSLIST): $(CVM_MIDPCLASSLIST_FILES)
 	@echo "Updating MIDPPermittedClasses...";
-	@cp -f $< $@;
-	@echo "<<<Finished copying $@";
+	$(AT)rm -rf $@
+	$(AT)cat $^ > $@
 endif
 
 ###############################################
@@ -1042,7 +1071,7 @@ ifeq ($(MAKELEVEL), 0)
 
 ifeq ($(CVM_JIT),true)
 ifeq ($(CVM_JVMTI),true)
-$(error JVMTI is not supported in JIT builds. Use CVM_JIT=false.)
+$(warning JVMTI debugging is not supported in JIT'd code.  Compiler is turned off if connected to a debugger)
 endif
 ifeq ($(CVM_JVMPI),true)
 $(warning JVMPI is not fully supported in JIT builds. Programs may not behave properly.)
@@ -1136,7 +1165,7 @@ endif
 #
 
 # The following can all be set on the make command line
-SOURCE_OUTPUT_DIR	=  $(INSTALLDIR)/$(J2ME_BUILD_VERSION)
+SOURCE_OUTPUT_DIR	= $(INSTALLDIR)/$(J2ME_BUILD_VERSION)
 CDC_SOURCE_OUTPUT_SUBDIR= cdc
 INCLUDE_JIT		= $(CVM_JIT)
 INCLUDE_MTASK		= $(CVM_MTASK)
@@ -1164,6 +1193,8 @@ BUNDLE_FLAGS += SRC_BUNDLE_DIRNAME=$(SRC_BUNDLE_DIRNAME)
 BUNDLE_FLAGS += SRC_BUNDLE_APPEND_REVISION=$(SRC_BUNDLE_APPEND_REVISION)
 BUNDLE_FLAGS += SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)
 BUNDLE_FLAGS += JAVAME_LEGAL_DIR=$(JAVAME_LEGAL_DIR)
+BUNDLE_FLAGS += USE_CDC_COM=$(USE_CDC_COM)
+BUNDLE_FLAGS += CDC_COM_DIR=$(CDC_COM_DIR)
 BUNDLE_FLAGS += USE_VERBOSE_MAKE=$(USE_VERBOSE_MAKE)
 BUNDLE_FLAGS += AT=$(AT)
 

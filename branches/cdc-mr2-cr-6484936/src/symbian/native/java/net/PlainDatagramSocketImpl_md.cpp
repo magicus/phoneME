@@ -355,7 +355,7 @@ Java_java_net_PlainDatagramSocketImpl_bind(JNIEnv *env, jobject thisObj,
     }
     
     /* bind - pick a port number for local addr*/
-    NET_InetAddressToSockaddr(env, iaObj, localport, &him, &len);
+    NET_InetAddressToSockaddr(env, iaObj, localport, &him, &len, JNI_TRUE);
 
     RPeekSocket *s = (RPeekSocket *)fd;
 
@@ -417,7 +417,7 @@ Java_java_net_PlainDatagramSocketImpl_connect0(JNIEnv *env, jobject thisObj,
 	return;
     }
 
-    NET_InetAddressToSockaddr(env, address, port, (struct sockaddr *)&rmtaddr, &len);
+    NET_InetAddressToSockaddr(env, address, port, (struct sockaddr *)&rmtaddr, &len, JNI_FALSE);
 
     RPeekSocket *s = (RPeekSocket *)fd;
     TRequestStatus rs = 1;
@@ -516,7 +516,7 @@ Java_java_net_PlainDatagramSocketImpl_send(JNIEnv *env, jobject thisObj,
 	rmtaddrP = 0;
     } else {
 	packetPort = (*env)->GetIntField(env, packet, dp_portID);
-	NET_InetAddressToSockaddr(env, packetAddress, packetPort, (struct sockaddr *)&rmtaddr, &len);
+	NET_InetAddressToSockaddr(env, packetAddress, packetPort, (struct sockaddr *)&rmtaddr, &len, JNI_FALSE);
     }
 
     if (packetBufferLen > MAX_BUFFER_LEN) {

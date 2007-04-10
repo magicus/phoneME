@@ -49,11 +49,11 @@ CVM_SRCDIRS   += \
 	$(CVM_TARGETROOT)/native/java/io \
 	$(CVM_TARGETROOT)/native/java/net \
 
-CVM_INCLUDES  += \
-	-I$(CVM_TOP)/src \
-	-I$(CVM_TARGETROOT) \
-	-I$(CVM_TARGETROOT)/native/java/net \
-	-I$(CVM_TARGETROOT)/native/common \
+CVM_INCLUDE_DIRS  += \
+	$(CVM_TOP)/src \
+	$(CVM_TARGETROOT) \
+	$(CVM_TARGETROOT)/native/java/net \
+	$(CVM_TARGETROOT)/native/common \
 
 #
 # Platform specific objects
@@ -79,13 +79,16 @@ CVM_TARGETOBJS_SPACE += \
 	memory_md.o \
 
 #
-# On linux, CVM_INCLUDE_JUMP=true if and only if CVM_MTASK=true
+# On linux, USE_JUMP=true if and only if CVM_MTASK=true
 #
-ifeq ($(CVM_INCLUDE_JUMP), true)
+ifeq ($(USE_JUMP), true)
 override CVM_MTASK	= true
 endif
 ifeq ($(CVM_MTASK), true)
-override CVM_INCLUDE_JUMP = true
+ifneq ($(USE_JUMP), true)
+# It is too late to force USE_JUMP=true at this point, so produce an error.
+$(error CVM_MTASK=true requires USE_JUMP=true)
+endif
 endif
 
 ifeq ($(CVM_MTASK), true)

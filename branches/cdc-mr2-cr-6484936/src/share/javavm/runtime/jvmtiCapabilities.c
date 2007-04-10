@@ -96,14 +96,16 @@ jvmtiCapabilities init_always_capabilities() {
   jc.can_get_line_numbers = 1;
   /*  jc.can_get_synthetic_attribute = 1; */
   jc.can_get_monitor_info = 1;
-  jc.can_get_constant_pool = 1;
+  /*  jc.can_get_constant_pool = 1; */
   jc.can_generate_monitor_events = 1;
-  /*
   jc.can_generate_garbage_collection_events = 1;
   jc.can_generate_compiled_method_load_events = 1;
   jc.can_generate_native_method_bind_events = 1;
   jc.can_generate_vm_object_alloc_events = 1;
   jc.can_redefine_classes = 1;
+  jc.can_get_current_thread_cpu_time = 1;
+  jc.can_get_thread_cpu_time = 1;
+  /*
   jc.can_retransform_classes = 1;
   jc.can_set_native_method_prefix = 1;
   */
@@ -130,9 +132,9 @@ jvmtiCapabilities init_onload_capabilities() {
   jc.can_get_owned_monitor_info = 1;
   jc.can_get_owned_monitor_stack_depth_info = 1;
   jc.can_get_current_contended_monitor = 1;
+  jc.can_tag_objects = 1;
   /* jc.can_get_monitor_info = 1; */
-  /*  jc.can_tag_objects = 1; */
-  /*  jc.can_generate_object_free_events = 1; */
+  jc.can_generate_object_free_events = 1;
   return jc;
 }
 
@@ -286,8 +288,8 @@ void update() {
     JvmtiExport::set_all_dependencies_are_recorded(true);
   }
   */
-  set_can_get_source_debug_extension(avail.can_get_source_debug_extension);
-  set_can_examine_or_deopt_anywhere(
+  jvmti_set_can_get_source_debug_extension(avail.can_get_source_debug_extension);
+  jvmti_set_can_examine_or_deopt_anywhere(
     avail.can_generate_breakpoint_events ||
     interp_events || 
     avail.can_redefine_classes ||
@@ -297,38 +299,38 @@ void update() {
     avail.can_get_current_contended_monitor ||
     avail.can_get_monitor_info ||
     avail.can_get_owned_monitor_stack_depth_info);
-  set_can_maintain_original_method_order(avail.can_maintain_original_method_order);
-  set_can_post_interpreter_events(interp_events);
-  set_can_hotswap_or_post_breakpoint(
+  jvmti_set_can_maintain_original_method_order(avail.can_maintain_original_method_order);
+  jvmti_set_can_post_interpreter_events(interp_events);
+  jvmti_set_can_hotswap_or_post_breakpoint(
     avail.can_generate_breakpoint_events ||
     avail.can_redefine_classes ||
     avail.can_retransform_classes);
-  set_can_modify_any_class(
+  jvmti_set_can_modify_any_class(
     avail.can_generate_breakpoint_events ||
     avail.can_retransform_classes || /* NOTE: remove when there is support for redefine with class sharing */
     avail.can_retransform_any_class   ||
     avail.can_redefine_classes ||  /* NOTE: remove when there is support for redefine with class sharing */
     avail.can_redefine_any_class ||
     avail.can_generate_all_class_hook_events);
-  set_can_walk_any_space(
+  jvmti_set_can_walk_any_space(
                          avail.can_tag_objects);  /* NOTE: remove when IterateOverReachableObjects supports class sharing */
-  set_can_access_local_variables(
+  jvmti_set_can_access_local_variables(
     avail.can_access_local_variables  ||
     avail.can_redefine_classes ||
     avail.can_retransform_classes);
-  set_can_post_exceptions(
+  jvmti_set_can_post_exceptions(
     avail.can_generate_exception_events ||
     avail.can_generate_frame_pop_events ||
     avail.can_generate_method_exit_events);
-  set_can_post_breakpoint(avail.can_generate_breakpoint_events);
-  set_can_post_field_access(avail.can_generate_field_access_events);
-  set_can_post_field_modification(avail.can_generate_field_modification_events);
-  set_can_post_method_entry(avail.can_generate_method_entry_events);
-  set_can_post_method_exit(avail.can_generate_method_exit_events ||
+  jvmti_set_can_post_breakpoint(avail.can_generate_breakpoint_events);
+  jvmti_set_can_post_field_access(avail.can_generate_field_access_events);
+  jvmti_set_can_post_field_modification(avail.can_generate_field_modification_events);
+  jvmti_set_can_post_method_entry(avail.can_generate_method_entry_events);
+  jvmti_set_can_post_method_exit(avail.can_generate_method_exit_events ||
                                         avail.can_generate_frame_pop_events);
-  set_can_pop_frame(avail.can_pop_frame);
-  set_can_force_early_return(avail.can_force_early_return);
-  set_should_clean_up_heap_objects(avail.can_generate_breakpoint_events);
+  jvmti_set_can_pop_frame(avail.can_pop_frame);
+  jvmti_set_can_force_early_return(avail.can_force_early_return);
+  jvmti_set_should_clean_up_heap_objects(avail.can_generate_breakpoint_events);
 }
 
 jvmtiError add_capabilities(const jvmtiCapabilities *current,

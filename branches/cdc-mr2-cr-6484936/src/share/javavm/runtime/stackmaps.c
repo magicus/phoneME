@@ -51,6 +51,10 @@
 #include "javavm/include/jvmtiExport.h"
 #endif
 
+#ifdef CVM_HW
+#include "include/hw.h"
+#endif
+
 #ifdef CVM_DEBUG
 static int CVMstackmapVerboseDebug = 0;
 #endif
@@ -287,6 +291,9 @@ getOpcodeLength(CVMStackmapContext* con, CVMUint8* pc)
 	*pc = instr;
 	opLen = CVMopcodeGetLength(pc);
 	*pc = opc_breakpoint;
+#ifdef CVM_HW
+	CVMhwFlushCache(pc, pc + 1);
+#endif
     } else {
 	opLen = CVMopcodeGetLength(pc);
     }
@@ -306,7 +313,16 @@ CVMstackmapInitializeContext(CVMExecEnv* ee, CVMStackmapContext* con,
     con->ee        = ee;
     con->mb        = mb;
     con->cb        = CVMmbClassBlock(mb);
-    con->cp        = CVMcbConstantPool(con->cb);
+#ifdef CVM_JVMTI
+    if (CVMmbIsObsolete(mb)) {
+	con->cp        = CVMmbConstantPool(mb);
+    } else {
+#else
+    {
+#endif
+	/* Matching else from above */
+	con->cp        = CVMcbConstantPool(con->cb);
+    }
     con->jmd       = jmd;
     con->code      = CVMjmdCode(jmd);
     con->codeLen   = CVMjmdCodeLength(jmd);
@@ -2477,6 +2493,12 @@ CVMstackmapInterpretOne(CVMStackmapContext* con,
 	    CVMassert(topOfStack >= pc[2]);
 	    topOfStack -= pc[2]; /* Discard args */
 	    break;
+
+#ifdef CVM_HW
+#include "include/hw/stackmaps.i"
+	    break;
+#endif
+
         case opc_breakpoint:
 #ifdef CVM_JVMTI
 	    /* Must get the original byte-code and re-do */

@@ -24,19 +24,35 @@
 
 .PHONY: javacall_lib
 
-# generatePropertyInitializer(xmlFiles,generatedDir,initializerPackage,outputFile)
-define generatePropertyInitializer
-	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE)           \
-	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml         \
-	-xsl $(CONFIGURATOR_DIR)/xsl/share/merge.xsl        \
-	-params filesList '$(1)'                            \
-	-out $(2)/properties_merged.xml                     \
-	-xml $(2)/properties_merged.xml                     \
-	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/propertiesJava.xsl \
-	-params packageName $(3)                            \
+ifneq ($(CVM_PRELOAD_LIB), true)
+JSR_NATIVE_LIBS = "$(5)"
+else
+JSR_NATIVE_LIBS = ""
+endif
+
+# generateJSRInitializer(xmlFiles,generatedDir,initializerPackage,outputFile,nativeLibs)
+define generateJSRInitializer
+	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE)              \
+	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml            \
+	-xsl $(CONFIGURATOR_DIR)/xsl/share/merge.xsl           \
+	-params filesList '$(1)'                               \
+	-out $(2)/properties_merged.xml                        \
+	-xml $(2)/properties_merged.xml                        \
+	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/propertiesJava.xsl    \
+	-params packageName $(3) nativeLibs $(JSR_NATIVE_LIBS) \
 	-out $(4)
 endef
 
+# Generate constant classes
+# generateConstantClasses(constantsXmlFile, constantsClassList, generatedDirectory)
+define generateConstantClasses
+	$(foreach class, $(2), \
+	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE) \
+	-xml $(1) \
+	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantsJava.xsl \
+	-params fullClassName $(class) \
+	-out $(3)/classes/$(subst .,/,$(class)).java; )
+endef
 
 # Macro to pre-process Jpp file into Java file
 # runjpp(<input_jpp_file>, <output_java_file>)
@@ -44,14 +60,14 @@ define runjpp
     $(CVM_JAVA) -classpath $(TOOLS_OUTPUT_DIR) Jpp $(JPP_DEFS) -o $(2) $(1)
 endef
 
-# compileJSROP(dir,JSROPDIR,FILES,EXTRA_CLASSPATH)
+# compileJSROP(jsrXXX,distDir,FILES,EXTRA_CLASSPATH)
 define compileJSROP
 	@echo "Compiling "$(1)" classes...";			\
-	mkdir -p $(2)/classes;			\
+	mkdir -p $(2);			\
 	$(JAVAC_CMD)						\
-		-d $(2)/classes \
+		-d $(2) \
 		-bootclasspath $(CVM_BUILDTIME_CLASSESDIR) 	\
-		-classpath $(JAVACLASSES_CLASSPATH)$(PS)$(JSROP_JUMP_API)$(PS)$(ABSTRACTIONS_JAR)$(PS)$(MIDP_CLASSESZIP)$(4) \
+		-classpath $(JAVACLASSES_CLASSPATH)$(PS)$(JSROP_JUMP_API)$(PS)$(ABSTRACTIONS_JAR)$(4) \
 		$(3)
 endef
 
@@ -61,19 +77,19 @@ define makeJSROPJar
 	$(CVM_JAR) cf $(1) -C $(2) .;
 endef
 
-# compileJSRClasses(jsrNumber,additionalClasspath)
+# compileJSRClasses(jsrNumber)
 # The following variables MUST BE defined
 # JSR_#_BUILD_DIR            - path to JSR's build directory
 # SUBSYSTEM_JSR_#_JAVA_FILES - list of JSR's java sources paths
 # JSR_#_JAR                  - JSR's jar file path
 define compileJSRClasses
-	$(call compileJSROP,jsr$(1),$(JSR_$(1)_BUILD_DIR),$(SUBSYSTEM_JSR_$(1)_JAVA_FILES),$(2))
+	$(call compileJSROP,jsr$(1),$(JSR_$(1)_BUILD_DIR)/classes,$(SUBSYSTEM_JSR_$(1)_JAVA_FILES))
 	$(call makeJSROPJar,$(JSR_$(1)_JAR),$(JSR_$(1)_BUILD_DIR)/classes)
 endef
 
 #Command for building shared libraries
 define makeSharedLibrary
-	$(TARGET_LD) $(LDFLAGS) -shared -o $@ $(1) $(JSROP_LINKLIBS) -L$(JSROP_LIB_DIR)
+	$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $(1) $(JSROP_LINKLIBS) -L$(JSROP_LIB_DIR)
 endef
 
 ifeq ($(CVM_INCLUDE_JAVACALL), true)
@@ -82,3 +98,29 @@ else
 javacall_lib:
 endif
 
+ifeq ($(CVM_DUAL_STACK), true)
+#
+# Run JavaAPILister to generate the list of classes that are 
+# hidden from CDC.
+#
+$(JSR_CDCRESTRICTED_CLASSLIST): $(JSROP_JARS)
+	@echo "Generating JSR restricted class list ..."
+	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister \
+	    -listapi:include=java/*,include=javax/*,input=$(JSROP_HIDE_JARS),cout=$(JSR_CDCRESTRICTED_CLASSLIST)
+
+#
+# Generate a list of all JSR classes. These classes will be
+# add to the $(CVM_MIDPCLASSLIST) to allow accessing from
+# midlets. The JSROP classes don't need to be added to 
+# $(CVM_MIDPFILTERCONFIG) and ROMized member filter because 
+# there is no restrictions for midlets to accessing the JSROP 
+# class' public members.
+#
+$(JSR_MIDPPERMITTED_CLASSLIST): $(JSROP_JARS)
+	@echo "Generating MIDP permitted JSR class list ...";
+	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister \
+	    -listapi:include=java/*,include=javax/*,input=$(JSROP_JARS_LIST),cout=$(JSR_MIDPPERMITTED_CLASSLIST)
+endif
+
+clean::
+	$(AT)rm -rf $(JSROP_OUTPUT_DIRS)

@@ -43,6 +43,7 @@
  * Initialize platform-specific per-VM global state
  */
 
+extern CVMInt64 CVMgetClockTicks();
 extern CVMBool CVMinitVMTargetGlobalState();
 extern void CVMdestroyVMTargetGlobalState();
 

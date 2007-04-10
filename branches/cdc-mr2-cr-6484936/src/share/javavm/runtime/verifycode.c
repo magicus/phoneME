@@ -107,6 +107,10 @@ CVMopcodeGetLengthWithBoundsCheckVariable(const unsigned char* iStream,
 	    }
 	    break;
 	}
+#ifdef CVM_HW
+#include "include/hw/verifycode.i"
+	    break;
+#endif
 	default:
 	    break;
     }

@@ -47,6 +47,10 @@
 
 #include "javavm/include/gc/generational-seg/gen_eden.h"
 
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmtiExport.h"
+#endif
+
 #ifdef CVM_JVMPI
 #include "javavm/include/jvmpi_impl.h"
 #endif
@@ -326,7 +330,7 @@ CVMgenEdenVerifyGeneration(CVMGeneration* gen, CVMExecEnv* ee, CVMGCOptions* gcO
 }
 #endif
 
-#if defined(CVM_DEBUG) || defined(CVM_JVMPI)
+#if defined(CVM_DEBUG) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 static CVMBool iterateGen(CVMGeneration* gen, CVMExecEnv* ee,
 			  CVMObjectCallbackFunc callback,
 			  void* callbackData)
@@ -712,7 +716,7 @@ CVMgenEdenRefIsLive(CVMObject** refPtr, void* data)
     return !CVMgenEdenInEden(thisGen, ref) || CVMobjectMarked(ref);
 }
 
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined (CVM_JVMTI)
 /* Purpose: Scan over freed objects. */
 static void
 CVMgenEdenScanFreedObjects(CVMGeneration *thisGen, CVMExecEnv *ee)
@@ -745,11 +749,18 @@ CVMgenEdenScanFreedObjects(CVMGeneration *thisGen, CVMExecEnv *ee)
 
         /* Notify the profiler of an object which is about to be GC'ed: */
         if (collected) {
+#ifdef CVM_JVMPI
             extern CVMUint32 liveObjectCount;
             if (CVMjvmpiEventObjectFreeIsEnabled()) {
                 CVMjvmpiPostObjectFreeEvent(obj);
             }
             liveObjectCount--;
+#endif
+#ifdef CVM_JVMTI
+            if (jvmti_should_post_object_free()) {
+                CVMjvmtiPostObjectFreeEvent(obj);
+            }
+#endif
             CVMtraceGcCollect(("GC: Freed object=0x%x, size=%d, class=%C\n",
                                obj, objSize, objCb));
         }

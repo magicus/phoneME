@@ -42,7 +42,14 @@
 #define OR4(x,y,z,p)	((x) | (y) | (z) | (p))
 #endif
 
-	SET_SECTION_EXEC(ccmmath_cpu)
+/*
+ * NOTE: Some linker such as the ARM RVCT (v2.2) linker sorts 
+ *	 sections by attributes and section name. To make sure
+ *	 the CCM copied code in the same order as they are included
+ *	 in ccmcodecachecopy_cpu.S, we need to name the sections
+ *	 in alphabetical order.
+ */
+	SET_SECTION_EXEC(s4_ccmmath_cpu)
 
 /*************************************
  * Float helpers start here!

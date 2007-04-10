@@ -272,6 +272,15 @@ CVMXrunHandleArgument(CVMXrunTable* Xrun_table, JNIEnv* env, char* arg)
         /* %comment: rt018 */
         (*onLoadFunc)(vm, optionsPtr, NULL);
     }
+    /* Because JVMTI is both debugging and profiling we want the 
+     * compiler enabled for profiling but not debugging.  If the library
+     * name contains 'jdwp' we set a flag so the compiler doesn't run
+     */
+#ifdef CVM_JVMTI
+    if (strstr(libraryNamePtr, "jdwp") != NULL) {
+	CVMjvmtiSetDebuggerConnected(CVM_TRUE);
+    }
+#endif
 
     result = CVM_TRUE;
 

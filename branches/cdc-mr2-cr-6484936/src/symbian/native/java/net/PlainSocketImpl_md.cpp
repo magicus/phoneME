@@ -241,7 +241,7 @@ Java_java_net_PlainSocketImpl_socketConnect(JNIEnv *env, jobject thisObj,
     /* connect */
     RLockingSocket *s = (RLockingSocket *)fd;
 
-    NET_InetAddressToSockaddr(env, iaObj, port, (struct sockaddr *)&him, &len);
+    NET_InetAddressToSockaddr(env, iaObj, port, (struct sockaddr *)&him, &len, JNI_FALSE);
     if (trafficClass != 0) {
 	s->SetOpt(KSoIpTOS, KSolInetIp, trafficClass);
     }
@@ -384,7 +384,7 @@ Java_java_net_PlainSocketImpl_socketBind(JNIEnv *env, jobject thisObj,
     }
 
     /* bind */
-    NET_InetAddressToSockaddr(env, iaObj, localport, (struct sockaddr *)&him, &len);
+    NET_InetAddressToSockaddr(env, iaObj, localport, (struct sockaddr *)&him, &len, JNI_TRUE);
 
     RLockingSocket *s = (RLockingSocket *)fd;
     TInt err = s->Bind(him.ia);

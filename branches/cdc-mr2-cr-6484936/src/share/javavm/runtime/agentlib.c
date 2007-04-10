@@ -47,43 +47,43 @@
  * Initialize or append to existing table
  */
 CVMBool CVMAgentInitTable(CVMAgentTable *table, 
-			 CVMInt32 numAgentArguments)
+			  CVMInt32 numAgentArguments)
 {
-  if (table->elemCnt > 0) {
+    if (table->elemCnt > 0) {
 	CVMAgentItem* newTable;
 	CVMUint32 newNumArgs = table->elemCnt + numAgentArguments;
 	
 	CVMassert(table->table != NULL);
 	newTable = (CVMAgentItem *)calloc(newNumArgs, sizeof(CVMAgentItem));
 	if (newTable == NULL) {
-      return CVM_FALSE;
-    }
+	    return CVM_FALSE;
+	}
 	memcpy(newTable, table->table, table->elemCnt * sizeof(CVMAgentItem));
 	free(table->table);
 	table->table = newTable;
 	table->elemIdx = table->elemCnt;
 	table->elemCnt = newNumArgs;
-  } else {
+    } else {
 	CVMAgentItem* newTable;
 
 	CVMassert(table->elemCnt == 0);
 	CVMassert(table->elemIdx == 0);
 	CVMassert(table->table == NULL);
 	newTable = (CVMAgentItem *)calloc(numAgentArguments, 
-                                      sizeof(CVMAgentItem));
+					  sizeof(CVMAgentItem));
 	if (newTable == NULL) {
-      return CVM_FALSE;
-    }
+	    return CVM_FALSE;
+	}
 	table->table = newTable;
 	table->elemIdx = 0;
 	table->elemCnt = numAgentArguments;
-  }
+    }
 	
-  return CVM_TRUE;
+    return CVM_TRUE;
 }
 
 void CVMAgentAppendToTable(CVMAgentTable *table,
-			  void *libHandle, Agent_OnUnload_t fptr) 
+			   void *libHandle, Agent_OnUnload_t fptr) 
 {
     CVMassert(table->elemIdx < table->elemCnt);
     table->table[table->elemIdx].libHandle = libHandle;
@@ -98,25 +98,25 @@ void CVMAgentAppendToTable(CVMAgentTable *table,
  */
 void CVMAgentProcessTable(CVMAgentTable *Agent_table, JNIEnv *env, JavaVM *vm)
 {
-  CVMAgentItem *itemPtr = Agent_table->table;
-  CVMInt32 i = 0;
+    CVMAgentItem *itemPtr = Agent_table->table;
+    CVMInt32 i = 0;
 
-  if (Agent_table->elemCnt == 0) {
-    return;
-  }
-  while (i < Agent_table->elemCnt) {
+    if (Agent_table->elemCnt == 0) {
+	return;
+    }
+    while (i < Agent_table->elemCnt) {
 	Agent_OnUnload_t Agent_OnUnload = itemPtr[i].onUnloadFunc;
 	void*libHandle = itemPtr[i++].libHandle;
 	/* call Agent_OnUnload function if any */
 	if (Agent_OnUnload != NULL) {
-      (*Agent_OnUnload)(vm);
+	    (*Agent_OnUnload)(vm);
 	}
 
 	/* delete native library object ref */
 	CVMassert(libHandle != NULL);
-    CVMdynlinkClose(libHandle);
-  }
-  free(Agent_table->table);
+	CVMdynlinkClose(libHandle);
+    }
+    free(Agent_table->table);
 }
 
 /* This takes in the entire -agentlib string and takes care of 
@@ -138,90 +138,97 @@ CVMBool
 CVMAgentHandleArgument(CVMAgentTable* Agent_table, JNIEnv* env,
                        CVMAgentlibArg_t* arg)
 {
-  char buffer[CVM_PATH_MAXLEN];
-  char* libraryNamePtr;
-  char* separatorPtr;
-  char* optionsPtr;
-  void * nativeLibrary = NULL;
-  Agent_OnLoad_t onLoadFunc;
-  Agent_OnUnload_t onUnloadFunc;
-  JavaVM* vm;
-  CVMBool result = CVM_FALSE;
-  const CVMProperties *sprops;
+    char buffer[CVM_PATH_MAXLEN];
+    char* libraryNamePtr;
+    char* separatorPtr;
+    char* optionsPtr;
+    void * nativeLibrary = NULL;
+    Agent_OnLoad_t onLoadFunc;
+    Agent_OnUnload_t onUnloadFunc;
+    JavaVM* vm;
+    CVMBool result = CVM_FALSE;
+    const CVMProperties *sprops;
 
-  sprops = CVMgetProperties();
-  /* must be in the form -agentlib: or -agentpath: */
-  separatorPtr = strchr(arg->str, ':');
-  if (separatorPtr == NULL) {
-    CVMconsolePrintf("Malformed library name\n");
-    goto done;
-  }
-  libraryNamePtr = separatorPtr + 1;
-  if (*libraryNamePtr == '\0') {
-    CVMconsolePrintf("Missing library name\n");
-    goto done;
-  }
-  optionsPtr = strchr(libraryNamePtr, '=');
-  if (optionsPtr != NULL) {
-    *optionsPtr++ = '\0';
-  }
-  if (arg->is_absolute) {
-    nativeLibrary = CVMdynlinkOpen((const void*)libraryNamePtr);
-  } else {
-    CVMdynlinkbuildLibName(buffer, sizeof(buffer), sprops->dll_dir,
-        libraryNamePtr);
-    if (*buffer == '\0') {
-      return CVM_FALSE;
+    sprops = CVMgetProperties();
+    /* must be in the form -agentlib: or -agentpath: */
+    separatorPtr = strchr(arg->str, ':');
+    if (separatorPtr == NULL) {
+	CVMconsolePrintf("Malformed library name\n");
+	goto done;
     }
-    nativeLibrary = CVMdynlinkOpen(buffer);
+    libraryNamePtr = separatorPtr + 1;
+    if (*libraryNamePtr == '\0') {
+	CVMconsolePrintf("Missing library name\n");
+	goto done;
+    }
+    optionsPtr = strchr(libraryNamePtr, '=');
+    if (optionsPtr != NULL) {
+	*optionsPtr++ = '\0';
+    }
+    if (arg->is_absolute) {
+	nativeLibrary = CVMdynlinkOpen((const void*)libraryNamePtr);
+    } else {
+	CVMdynlinkbuildLibName(buffer, sizeof(buffer), sprops->dll_dir,
+			       libraryNamePtr);
+	if (*buffer == '\0') {
+	    return CVM_FALSE;
+	}
+	nativeLibrary = CVMdynlinkOpen(buffer);
+	if (nativeLibrary == NULL) {
+	    /* Try local directory */
+	    char ns[1] = {0};
+	    CVMdynlinkbuildLibName(buffer, sizeof(buffer), ns, libraryNamePtr);
+	    nativeLibrary = CVMdynlinkOpen(buffer);
+	}
+    }
     if (nativeLibrary == NULL) {
-      /* Try local directory */
-      char ns[1] = {0};
-      CVMdynlinkbuildLibName(buffer, sizeof(buffer), ns, libraryNamePtr);
-      nativeLibrary = CVMdynlinkOpen(buffer);
+	return CVM_FALSE;
     }
-  }
-  if (nativeLibrary == NULL) {
-    return CVM_FALSE;
-  }
 
-  /* Look up Agent_OnLoad symbol */
-  onLoadFunc = (Agent_OnLoad_t)CVMdynlinkSym(nativeLibrary,
-                                                   "Agent_OnLoad");
-  if (onLoadFunc == NULL) {
-    CVMconsolePrintf("Could not find Agent_OnLoad of helper library "
-                     "for argument %s\n", arg->str);
-    goto done;
-  }
-  /* Look up Agent_OnUnload symbol
-   * Store away NativeLibrary object ref and function pointer for calling
-   * Agent_onUnload.
+    /* Look up Agent_OnLoad symbol */
+    onLoadFunc = (Agent_OnLoad_t)CVMdynlinkSym(nativeLibrary,
+					       "Agent_OnLoad");
+    if (onLoadFunc == NULL) {
+	CVMconsolePrintf("Could not find Agent_OnLoad of helper library "
+			 "for argument %s\n", arg->str);
+	goto done;
+    }
+    /* Look up Agent_OnUnload symbol
+     * Store away NativeLibrary object ref and function pointer for calling
+     * Agent_onUnload.
      */
-  onUnloadFunc = (Agent_OnUnload_t)CVMdynlinkSym(nativeLibrary,
-                                                       "Agent_OnUnload");
-  if (onUnloadFunc == NULL) {
-    CVMconsolePrintf("Could not find Agent_OnUnload of helper library "
-                     "for argument %s\n", arg->str);
-    goto done;
-  }
-  CVMAgentAppendToTable(Agent_table, nativeLibrary, onUnloadFunc);
+    onUnloadFunc = (Agent_OnUnload_t)CVMdynlinkSym(nativeLibrary,
+						   "Agent_OnUnload");
+    if (onUnloadFunc != NULL) {
+	CVMAgentAppendToTable(Agent_table, nativeLibrary, onUnloadFunc);
+    } else {
+	CVMconsolePrintf("Could not find Agent_OnUnload of helper library "
+			 "for argument %s\n", arg->str);
+    }
 
-  /* Call Agent_OnLoad after the lookup and store away
-   * of Agent_OnUnload so we won't call Agent_OnUnload 
-   * at VM shutdown if Agent_OnLoad was never called.
-   * This also avoid a failure after createing the globalRef,
-   * after adding entry to the Agent table, and after
-   * calling the Agent_OnLoad function.
-   */
-  if (onLoadFunc != NULL) {
-    (*env)->GetJavaVM(env, &vm);
-    /* %comment: rt018 */
-    (*onLoadFunc)(vm, optionsPtr, NULL);
-  }
+    /* Call Agent_OnLoad after the lookup and store away
+     * of Agent_OnUnload so we won't call Agent_OnUnload 
+     * at VM shutdown if Agent_OnLoad was never called.
+     * This also avoid a failure after createing the globalRef,
+     * after adding entry to the Agent table, and after
+     * calling the Agent_OnLoad function.
+     */
+    if (onLoadFunc != NULL) {
+	(*env)->GetJavaVM(env, &vm);
+	/* %comment: rt018 */
+	(*onLoadFunc)(vm, optionsPtr, NULL);
+    }
+    /* Because JVMTI is both debugging and profiling we want the 
+     * compiler enabled for profiling but not debugging.  If the library
+     * name contains 'jdwp' we set a flag so the compiler doesn't run
+     */
+    if (strstr(libraryNamePtr, "jdwp") != NULL) {
+	CVMjvmtiSetDebuggerConnected(CVM_TRUE);
+    }
 
-  result = CVM_TRUE;
+    result = CVM_TRUE;
 
-  done:
-  return result; 
+ done:
+    return result; 
 }
 

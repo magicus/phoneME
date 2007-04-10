@@ -143,7 +143,34 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
 
     /* Java2D properties */
     PUTPROP(props, "java.awt.graphicsenv", sprops.graphics_env);
+#ifdef JAVASE
+    PUTPROP_ForPlatformCString(props, "sun.java2d.fontpath", sprops.font_dir);
+    /* Preferences properties */
+    PUTPROP(props, "java.util.prefs.PreferencesFactory", sprops.util_prefs_PreferencesFactory);
+
+    /* data model */
+    if (sizeof(char *) == 4) {
+        sprops.data_model = "32";
+    } else if (sizeof(char *) == 8) {
+        sprops.data_model = "64";
+    } else {
+        sprops.data_model = "unknown";
+    }
+    PUTPROP(props, "sun.arch.data.model", sprops.data_model);
+
+    /* patch level */
+    PUTPROP(props, "sun.os.patch.level", sprops.patch_level);
+
+    if (sprops.country) {
+        PUTPROP(props, "user.country", sprops.country);
+    }
+    if (sprops.variant) {
+        PUTPROP(props, "user.variant", sprops.variant);
+    }
+
+#else
     PUTPROP_ForPlatformCString(props, "java.awt.fonts", sprops.font_dir);
+#endif
 
     PUTPROP_ForPlatformCString(props, "java.io.tmpdir", sprops.tmp_dir);
 
@@ -155,10 +182,11 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
     PUTPROP_ForPlatformCString(props, "user.dir", sprops.user_dir);  
 
     /* CLDC properties */
+    // FIXME: this should go into the midp component.
     PUTPROP(props, "microedition.configuration", "CLDC-1.1");
     PUTPROP(props, "microedition.platform", "j2me");
     PUTPROP(props, "microedition.encoding", "ISO-8859-1");
-    PUTPROP(props, "microedition.profiles", "");
+    PUTPROP(props, "microedition.profiles", "MIDP-2.1");
 
     /* Generic Connection Framework (GCF) CommConnection property */
     PUTPROP(props, "microedition.commports", sprops.commports);
@@ -174,6 +202,7 @@ JNIEXPORT jobject JNICALL
 Java_java_lang_System_initCldcMidpProperties(JNIEnv *env, jclass cla,
                                          jobject midpProps)
 {
+// FIXME: this should go into the midp component.
 #ifndef CVM_DUAL_STACK
     return NULL;
 #else
@@ -186,7 +215,7 @@ Java_java_lang_System_initCldcMidpProperties(JNIEnv *env, jclass cla,
         PUTPROP(midpProps, "microedition.configuration", "CLDC-1.1");
         PUTPROP(midpProps, "microedition.platform", "j2me");
         PUTPROP(midpProps, "microedition.encoding", "ISO-8859-1");
-        PUTPROP(midpProps, "microedition.profiles", "MIDP-2.0");
+        PUTPROP(midpProps, "microedition.profiles", "MIDP-2.1");
         PUTPROP(midpProps, "microedition.locale", "en-US");
     }
     return midpProps;
@@ -263,9 +292,11 @@ Java_java_lang_System_mapLibraryName(JNIEnv *env, jclass ign, jstring libname)
     cpchars(chars, JNI_LIB_PREFIX, prefix_len);
     (*env)->GetStringRegion(env, libname, 0, len, chars + prefix_len);
     len += prefix_len;
+#ifndef JAVASE
 #ifdef CVM_DEBUG
     chars[len++] = '_';
     chars[len++] = 'g';
+#endif
 #endif
     cpchars(chars + len, JNI_LIB_SUFFIX, suffix_len);
     len += suffix_len;

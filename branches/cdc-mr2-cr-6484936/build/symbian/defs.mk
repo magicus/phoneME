@@ -34,24 +34,10 @@ CVM_FLAGS += \
 
 CVM_DLL_CLEANUP_ACTION = $(CVM_SYMBIAN_CLEANUP_ACTION)
 
-ifeq ($(HOST_OS), Interix)
-DOS2UNIX        = dos2unix.exe
-WIN2POSIX_CMD   = chgpath
-WIN2POSIX       = $(shell chgpath "$(1)")
-POSIX2WIN_CMD   = chgpath
-POSIX2WIN       = $(shell chgpath "$(1)")
-CHKWINPATH      = $(shell test -d "`chgpath \"$(1)\"`" 2>&1 && echo $(1))
+ifeq ($(HOST_DEVICE), Interix)
 CVM_JAVAC       = javac.exe
 CVM_JAVAH       = javah.exe
 CVM_JAR         = jar.exe
-endif
-ifeq ($(HOST_OS), cygwin)
-DOS2UNIX        = dos2unix
-WIN2POSIX_CMD   = cygpath
-WIN2POSIX       = $(shell cygpath '$(1)')
-POSIX2WIN_CMD   = cygpath -w
-POSIX2WIN       = $(shell cygpath -w "$(1)")
-CHKWINPATH      = $(shell ls -d "$(1)" 2>&1)
 endif
 
 ifeq ($(origin EPOCDEVICE), undefined)
@@ -72,7 +58,7 @@ SYMBIAN_DEVICES_PATH = $(SYMBIAN_PERL_PATH):$(SYMBIAN_TOOLS_PATH)
 SYMBIAN_ENV_CMD := env PATH="$(SYMBIAN_DEVICES_PATH):$$PATH"
 
 SYMBIAN_ROOT := $(shell $(SYMBIAN_ENV_CMD) sh ../symbian/root.sh $(SYMBIAN_DEVICE))
-SYMBIAN_ROOT_U := $(call WIN2POSIX,$(SYMBIAN_ROOT))
+SYMBIAN_ROOT_U := $(call WIN2POSIX,'$(SYMBIAN_ROOT)')
 
 # Environment for a specific SYMBIAN_DEVICE
 EPOC = $(SYMBIAN_ROOT)/epoc32
@@ -125,12 +111,12 @@ CVM_SRCDIRS   += \
 	$(CVM_TARGETROOT)/native/common \
 	$(CVM_TARGETROOT)/native/com/sun/cdc/io/j2me/comm \
 
-CVM_INCLUDES  += \
-	-I$(CVM_TOP)/src \
-	-I$(CVM_TARGETROOT) \
-	-I$(CVM_TARGETROOT)/native/java/net \
-	-I$(CVM_TARGETROOT)/native/common \
-	-I$(CVM_TARGETROOT)/native/$(J2ME_CLASSLIB) \
+CVM_INCLUDE_DIRS  += \
+	$(CVM_TOP)/src \
+	$(CVM_TARGETROOT) \
+	$(CVM_TARGETROOT)/native/java/net \
+	$(CVM_TARGETROOT)/native/common \
+	$(CVM_TARGETROOT)/native/$(J2ME_CLASSLIB) \
 
 #
 # Platform specific objects

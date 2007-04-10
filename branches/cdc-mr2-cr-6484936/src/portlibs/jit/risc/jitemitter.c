@@ -39,6 +39,7 @@
 #include "javavm/include/jit/jitcontext.h"
 #include "javavm/include/jit/jitcodebuffer.h"
 #include "javavm/include/jit/jitcomments.h"
+#include "javavm/include/jit/jitconstantpool.h"
 #include "javavm/include/jit/jitirnode.h"
 #include "portlibs/jit/risc/include/porting/jitriscemitter.h"
 #include "portlibs/jit/risc/include/porting/ccmrisc.h"
@@ -561,3 +562,25 @@ CVMCPUCCALLpinArg(CVMJITCompilationContext *con,
 
 #endif /* !CVMCPU_HAVE_PLATFORM_SPECIFIC_C_CALL_CONVENTION &&
           !CVMCPU_ALLOW_C_ARGS_BEYOND_MAX_ARG_REGS */
+
+/* Purpose: Emits a constantpool dump with a branch around it if needed. */
+void
+CVMRISCemitConstantPoolDumpWithBranchAroundIfNeeded(
+    CVMJITCompilationContext* con)
+{
+    if (CVMJITcpoolNeedDump(con)) {
+        CVMInt32 startPC = CVMJITcbufGetLogicalPC(con);
+        CVMInt32 endPC;
+
+	CVMJITaddCodegenComment((con, "branch over constant pool dump"));
+        CVMCPUemitBranch(con, startPC, CVMCPU_COND_AL);
+        CVMJITdumpRuntimeConstantPool(con, CVM_TRUE);
+        endPC = CVMJITcbufGetLogicalPC(con);
+
+        /* Emit branch around the constant pool dump: */
+        CVMJITcbufPushFixup(con, startPC);
+	CVMJITaddCodegenComment((con, "branch over constant pool dump"));
+        CVMCPUemitBranch(con, endPC, CVMCPU_COND_AL);
+        CVMJITcbufPop(con);
+    }
+}

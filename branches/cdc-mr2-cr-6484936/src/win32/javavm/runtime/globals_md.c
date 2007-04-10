@@ -55,6 +55,9 @@ CVMBool CVMinitVMTargetGlobalState()
     /*
      * Initialize the target global state pointed to by 'target'.
      */
+#ifdef CVM_JVMTI
+    clock_init();
+#endif
 #ifdef CVMJIT_TRAP_BASED_GC_CHECKS
     /*
      * Setup gcTrapAddr to point CVMJIT_MAX_GCTRAPADDR_WORD_OFFSET

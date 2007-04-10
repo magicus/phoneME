@@ -379,6 +379,7 @@ _fastlockSuccess:
 #endif
 
 ENTRY( CVMPPCgcPatchPointAtInvoke ) 
+CVMPPCgcPatchPointAtInvokeLocal:
 	# GC check - gc will patch at this location when a rendezvous is
 	# needed. See ccmGcPatchPoints in jitinit_cpu.c. The patch will
 	# be a "b CVMPPChandleGCAtInvoke"
@@ -438,7 +439,7 @@ notSync:
 	 */
         lbz	r0, OFFSET_CVMMethodBlock_accessFlagsX(r4)
         andi.	r0, r0, CONSTANT_METHOD_ACC_SYNCHRONIZED
-        beq	SYM_NAME(CVMPPCgcPatchPointAtInvoke)
+        beq	CVMPPCgcPatchPointAtInvokeLocal
 
 	# Restore receiverObjX in new frame
 	lwz	r5, OFFSET_CVMExecEnv_miscICell(EE)	/* r5 = &miscICell */
@@ -449,7 +450,7 @@ notSync:
 	li	r4, 0
 	stw	r4, 0(r5)
 
-	b	SYM_NAME(CVMPPCgcPatchPointAtInvoke)
+	b	CVMPPCgcPatchPointAtInvokeLocal
 
 
 #undef MB

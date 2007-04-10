@@ -26,21 +26,18 @@
  */
 
 #include <stdio.h>
-#include <stddef.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-#include <sys/socket.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
+#include <sys/select.h>
+#include <errno.h>
 
 #include "javavm/export/jni.h"
 #include "javavm/export/cvm.h"
@@ -48,14 +45,21 @@
 #include "portlibs/posix/mtask.h"
 
 #include <jump_messaging.h>
-#include <dirent.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
 #include <dlfcn.h>
+
 #include "porting/JUMPMessageQueue.h"
 #include "porting/JUMPProcess.h"
 
 #include "zip_util.h"
+
+/* A non-blocking pipe that child() uses to notify the main loop. */
+
+static int child_pipe_write;
+static int child_pipe_read;
+
+/* Fd that main loop messages will arrive on. */
+
+static int message_fd;
 
 /*
  * Free (argc, argv[]) set
@@ -151,7 +155,7 @@ typedef struct _TaskRec {
 /* Single process for the mtask server, so these globals are OK */
 static int numTasks = 0;
 static TaskRec* taskList = NULL;
-static int reapChildrenFlag = 0;
+static volatile int reapChildrenFlag = 0;
 
 static int executivePid = -1;
 static int amExecutive = 0;
@@ -163,9 +167,13 @@ static char* executiveTestingModeFilePrefixSnapshot = NULL;
 static void child(int sig)
 {
     int pid = getpid();
+    char buffer = 'A';
 
     fprintf(stderr, "Received SIGCHLD in PID=%d\n", pid);
     reapChildrenFlag = 1;
+
+    /* Non-blocking write, just ignore any error. */
+    write(child_pipe_write, &buffer, 1);
 }
 
 static void 
@@ -310,44 +318,24 @@ printExitStatusString(FILE* out, int status)
     } 
 }
 
+ /*
+  * Send executive a lifecycle message indicating that a child has terminated.
+  */
 static void
-cleanMessageQueuesOf(int cpid)
-{
-    struct dirent* ptr;
-    DIR* dir;
-    char prefix[40];
-    char filename[60];
-    int prefixLen;
-    
-    snprintf(prefix, 40, "jump-mq-%d-", cpid);
-    prefixLen = strlen(prefix);
-    
-    dir = opendir("/tmp");
-    if (dir == NULL) {
-	perror("opendir");
-	return;
-    }
-    
-    while ((ptr = readdir(dir)) != NULL) {
-  	if (!strcmp(ptr->d_name, ".") || !strcmp(ptr->d_name, "..")) {
-	    continue;
-	}
-	if (!strncmp(ptr->d_name, prefix, prefixLen)) {
-	    key_t k;
-	    int mq;
-	    
-	    snprintf(filename, 60, "/tmp/%s", ptr->d_name);
-	    printf("Exiting process %d has message queue %s\n",
-		   cpid, filename);
-	    if (remove(filename) == -1) {
-		perror("mq file delete");
-		continue;
-	    } else {
-		printf("  removed file %s\n", filename);
-	    }
-	}
-    }
-    closedir(dir);
+notifyTermination(int cpid) {
+    JUMPOutgoingMessage message;
+    JUMPAddress executiveAddr;
+    JUMPMessageStatusCode statusCode;
+
+    message = jumpMessageNewOutgoingByType("mvm/lifecycle", &statusCode);
+    jumpMessageAddString(message, "IsolateDestroyed"); /* ID_ISOLATE_DESTROYED */
+    jumpMessageAddInt(message, 0); /* String[] data length */
+    jumpMessageAddInt(message, cpid); /* isolateId */
+    jumpMessageAddInt(message, 0);    /* appID */
+    executiveAddr.processId = executivePid;
+
+    jumpMessageSendAsync(executiveAddr, message, &statusCode);
+    jumpMessageFreeOutgoing(message);
 }
 
 /*
@@ -366,15 +354,17 @@ doReapChildren(ServerState* state, int options)
     while ((cpid = wait3(&status, options, &ru)) > 0) {
 	int exitcodefd;
 
+        /* Notify the executive about the isolate termination */
+	if (cpid != executivePid) {
+           notifyTermination(cpid);
+	} 
+
 	/* This had better be one of ours */
 	assert((executivePid == cpid) || (findTaskFromPid(cpid) != NULL));
 
 	fprintf(stderr, "Reaping child process %d\n", cpid);
 
-	/* TODO: Should this be part of the porting layer? 
-	   Or is the fact that we are using the mtask.c code indicative
-	   of Linux already? */
-	cleanMessageQueuesOf(cpid);
+	jumpMessageQueueCleanQueuesOf(cpid);
 	
 	printExitStatusString(stderr, status);
 	fprintf(stderr, "\t user time %ld.%02d sec\n",
@@ -574,7 +564,7 @@ dumpTasksAsResponse(JUMPMessage command, int all)
     TaskRec* task;
     int numTasks = 0;
     
-    m = jumpMessageNewOutgoingByRequest(command);
+    m = jumpMessageNewOutgoingByRequest(command, &code);
 
     jumpMessageMarkSet(&mark, m);
     jumpMessageAddInt(m, numTasks);
@@ -697,14 +687,86 @@ oneString(JUMPMessage m)
     return string;
 }
 
+/* Returns a JUMPMessage when there is a message to process.  There
+   may also be children to deal with.  Returns (JUMPMessage)-1
+   when there is no message but there may be children to deal with.
+   Returns NULL on error. */
 static JUMPMessage
 readRequestMessage()
 {
-    JUMPMessage in;
-    
-    in = jumpMessageWaitFor("mvm/server", 0);
-    dumpMessage(in, "Server received:");
-    return in;
+    fd_set readfds;
+
+    /* Wait for a possible message or a child notification, or abort
+       on error. */
+
+    while (1) {
+	int fds;
+	int status;
+
+	FD_ZERO(&readfds);
+	fds = 0;
+
+	FD_SET(message_fd, &readfds);
+	if (message_fd > fds) {
+	    fds = message_fd;
+	}
+
+	FD_SET(child_pipe_read, &readfds);
+	if (child_pipe_read > fds) {
+	    fds = child_pipe_read;
+	}
+
+	status = select(fds + 1, &readfds, NULL, NULL, NULL);
+	if (status == -1) {
+	    if (errno == EINTR) {
+		continue;
+	    }
+	    return NULL;
+	}
+	if (status == 0) {
+	    continue;
+	}
+	break;
+    }
+
+    if (FD_ISSET(child_pipe_read, &readfds)) {
+	/* Clear bytes from the pipe. */
+	while (1) {
+	    /* 24 is just a smallish buffer size; there's nothing
+	       special about it.  Since we read in a loop it could be
+	       1, but using a slightly larger buffer allows us to read
+	       multiple bytes at once, should there be any. */
+	    char buffer[24];
+	    int status = read(child_pipe_read, buffer, sizeof(buffer));
+	    if (status == -1) {
+		if (errno == EINTR) {
+		    continue;
+		}
+		if (errno == EAGAIN) {
+		    break;
+		}
+		return NULL;
+	    }
+	    if (status == 0) {
+		/* EOF, this should never happen, something is broken. */
+		return NULL;
+	    }
+	}
+    }
+
+    if (FD_ISSET(message_fd, &readfds)) {
+	JUMPMessage in;
+	JUMPMessageStatusCode code;
+
+	/* There's a message so this should not block. */
+	in = jumpMessageWaitFor("mvm/server", 0, &code);
+	if (in != NULL) {
+	    dumpMessage(in, "Server received:");
+	}
+	return in;
+    }
+
+    return (JUMPMessage) -1;
 }
 
 /*
@@ -718,7 +780,7 @@ respondWith(JUMPMessage command, char* str)
     JUMPMessageStatusCode code;
     JUMPPlatformCString strs[1];
     
-    m = jumpMessageNewOutgoingByRequest(command);
+    m = jumpMessageNewOutgoingByRequest(command, &code);
     strs[0] = (JUMPPlatformCString)str;
     jumpMessageAddStringArray(m, strs, 1);
     jumpMessageSendAsyncResponse(m, &code);
@@ -756,6 +818,97 @@ tokenizeArgs(JUMPMessage m, int* argc, char*** argv)
 }
 
 /*
+ * Make some preparations for launching a native process:
+ * 1) Load a shared library (if needed).
+ * 2) Find a symbol in the shared library.
+ * 3) Create incoming message queue.
+ * Returns NULL in case of error, the address of the symbol otherwise
+ */
+static void *
+prepareJNative(char *procName, char *soLibName)
+{
+    void *dsoHandle;
+    char *libName;
+    JUMPMessageQueueStatusCode code = 0;
+    unsigned char *type; 
+    void *symbol;
+
+    /*
+     * trying to find native method.
+     * If the lib name is "main" then
+     * we have to look for the symbol
+     * in the main binary module.
+     */
+    if (strcmp(soLibName, "main")) {
+	/* making a library name */
+	libName = malloc(strlen(soLibName) + 
+	    3 /*lib*/ + 3 /*.so*/ +
+#ifdef CVM_DEBUG
+	    2 /*_g*/ +
+#endif
+	    1 /*'\0'*/);
+	if (libName == NULL) {
+	    fprintf(stderr, "MTASK: No memory for lib name\n");
+	    return NULL;
+	}
+	strcpy(libName, "lib");
+	strcat(libName, soLibName);
+#ifdef CVM_DEBUG
+	strcat(libName, "_g");
+#endif
+	strcat(libName, ".so");
+	dsoHandle = dlopen(libName, RTLD_LAZY);
+	free(libName);
+	if (dsoHandle != NULL) {
+	    symbol = dlsym(dsoHandle, procName);
+	    /* FIXME: should we do "dlclose()" somewhere? */
+	} else {
+	    fprintf(stderr, "MTASK: Can't find lib: %s\n", soLibName);
+	    return NULL;
+	}
+    } else {
+	symbol = dlsym(RTLD_DEFAULT, procName);
+    }
+
+    if (symbol == NULL) { /* method hasn't been found */
+	fprintf(stderr, 
+	    "MTASK: Can't find symbol '%s' in library %s\n", 
+	    procName, soLibName);
+	return NULL;
+    }
+#define MSGPREFIX_NATIVE "native"
+    /*
+     * creating the message queue for our process.
+     * It must be created before the launcher received 
+     * successful result
+     */
+
+    /* allocate memory for queue's name */
+    type = malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(procName));
+    if (type == NULL) {
+	fprintf(stderr, "MTASK: No memory for queue name\n");
+	return NULL;
+    }
+
+    /* making queue name */
+    strcpy((char*)type, (char*)MSGPREFIX_NATIVE);
+    strcat((char*)type, "/");
+    strcat((char*)type, procName); 
+
+    /* we trying to create a queue named "native/<procName>" */
+    jumpMessageQueueCreate(type, &code);
+    if (code != JUMP_MQ_SUCCESS) {
+	fprintf(stderr, 
+	    "MTASK: Can't create message queue %s\n", type);
+	free(type);
+	return NULL;
+    }
+
+    free(type);
+    return symbol;
+}
+
+/*
  * A JVM server. Sleep waiting for new requests. As new ones come in,
  * fork off a process to handle each and go back to sleep. 
  *
@@ -789,7 +942,6 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	    /* local variable that will keep pointer to native's main() */
 	    void (*nativeMain)(int argc, char **argv) = NULL;
 
-	    tokenizeArgs(command, &argc, &argv);
 	    /*
 	     * Check for children to reap before each command
 	     * is executed 
@@ -799,7 +951,14 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 		childrenExited = 1; 
 		reapChildren(state);
 	    }
-    
+	    if (command == (JUMPMessage) -1) {
+		/* There was no message, just a child notification. */
+		command = readRequestMessage();
+		continue;
+	    }
+
+	    tokenizeArgs(command, &argc, &argv);
+
 	    if (!strcmp(argv[0], "JEXIT")) {
 		respondWith(command, "YES");
 		jumpMessageShutdown();
@@ -1066,6 +1225,11 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 	    if ((pid = fork()) == 0) {
 		int mypid = getpid();
 
+		/* Remember the pid of our process for compatibility
+		   with non-Posix compliant systems on which getpid()
+		   returns a thread id. */
+		jumpProcessSetId(mypid);
+
 		/* Make sure each launched process knows the id of the
 		   executive */
                 if (amExecutive) {
@@ -1116,44 +1280,7 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 #endif               
 		if (!strcmp(argv[0], "JNATIVE")) { /* we are launching 
 						      a native process */
-		    /* trying to find native method */
-		    void *dsoHandle;
-		    char *libName;
-
-		    /*
-		     * If the lib name is "main" then
-		     * we have to look for the symbol
-		     * in the main binary module.
-		     */
-		    if (strcmp(argv[2], "main")) {
-			libName = malloc(strlen(argv[2]) + 
-			    3 /*lib*/ + 3 /*.so*/ +
-#ifdef CVM_DEBUG
-			    2 /*_g*/ +
-#endif
-			    1 /*'\0'*/);
-			assert(libName != NULL);
-			strcpy(libName, "lib");
-			strcat(libName, argv[2]);
-#ifdef CVM_DEBUG
-			strcat(libName, "_g");
-#endif
-			strcat(libName, ".so");
-			dsoHandle = dlopen(libName, RTLD_LAZY);
-			free(libName);
-			if (dsoHandle != NULL) {
-			    nativeMain = dlsym(dsoHandle, argv[1]);
-			    /* FIXME: should we do "dlclose()" somewhere? */
-			} else {
-			    fprintf(stderr, "MTASK: Cannot find lib: %s\n", argv[2]);
-			}
-		    } else {
-			nativeMain = dlsym(RTLD_DEFAULT, argv[1]);
-		    }
-
-		    if (nativeMain == NULL) { /* method hasn't been found */
-                        fprintf(stderr, 
-			    "MTASK: Cannot find symbol '%s' in library %s\n", argv[1], argv[2]);
+		    if ((nativeMain = prepareJNative(argv[1], argv[2])) == NULL) {
 			respondWith(command, JNATIVE_USAGE);
 			jumpMessageFree(command);
 			freeArgs(argc, argv);
@@ -1161,27 +1288,6 @@ waitForNextRequest(JNIEnv* env, ServerState* state)
 			argv = NULL;
 			exit(1);
 		    }
-#define MSGPREFIX_NATIVE "native"
-		    /* creating the message queue for our process.
-		     * It must be created before the launcher received 
-		     * successful result
-		     */
-		    JUMPMessageQueueStatusCode code = 0;
-		    /* allocate memory for queue's name */
-		    unsigned char *type = 
-		        malloc(strlen(MSGPREFIX_NATIVE) + 2 + strlen(argv[1]));
-		    /* FIXME: make sure that the string is allocated */
-		    assert(type != NULL);
-
-		    strcpy((char*)type, (char*)MSGPREFIX_NATIVE);
-		    strcat((char*)type, "/");
-		    strcat((char*)type, argv[1]); /* cat the name of process */
-		    /* we trying to create a queue named "native/<processName>" */
-		    jumpMessageQueueCreate(type, &code);
-
-		    /* FIXME: return error code if creation fails */
-		    assert(code == JUMP_MQ_SUCCESS);
-		    free(type);
 		}
 		
 		/* First, make sure that the child PID is communicated
@@ -1310,8 +1416,50 @@ MTASKserverInitialize(ServerState* state,
 {    
     const char* clist = CVMgetParsedSubOption(serverOpts, "initClasses");
     const char* mlist = CVMgetParsedSubOption(serverOpts, "precompileMethods");
+
+    /* Remember the pid of our process for compatibility with
+       non-Posix compliant systems on which getpid() returns a thread id. */
+    jumpProcessSetId(getpid());
     
     jumpMessageStart();
+
+    {
+	/* FIXME: check the return code. */
+	JUMPMessageStatusCode code;
+	jumpMessageRegisterDirect("mvm/server", &code);
+    }
+
+    /* Create a non-blocking pipe for child() to notify the main loop. */
+    {
+	int pipes[2];
+	int i;
+
+	if (pipe(pipes) == -1) {
+	    goto error;
+	}
+
+	for ( i = 0; i < 2; i++) {
+	    int fl;
+
+	    fl = fcntl(pipes[i], F_GETFL);
+	    if (fl == -1) {
+		goto error;
+	    }
+
+	    fl |= O_NONBLOCK;
+	    if (fcntl(pipes[i], F_SETFL, fl) == -1) {
+		goto error;
+	    }
+	}
+
+	child_pipe_read = pipes[0];
+	child_pipe_write = pipes[1];
+    }
+
+    message_fd = jumpMessageGetFd("mvm/server");
+    if (message_fd == -1) {
+	goto error;
+    }
     
     /*
      * Set these up while server is being initialized.

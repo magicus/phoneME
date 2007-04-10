@@ -310,6 +310,7 @@ struct CVMClassBlock {
 #endif
 
 /* Only the classloader and the above macros should use these macros. */
+/* JVMTI RedefineClass API uses these as well */
 #define CVMcbMethods(cb)            ((cb)->methodsX)
 #define CVMcbFields(cb)             ((cb)->fieldsX)
 
@@ -728,7 +729,32 @@ struct CVMMethodBlock {
 #define CVMJIT_MAX_INVOKE_COST  65535   /* The maximum for invokeCost */
 #endif
     CVMMethodBlockImmutable immutX;
+#ifdef CVM_JVMTI
+    /*
+     * Bit 0 used as a flag for obsolete method
+     */
+    CVMUint32 jvmti_methodID;
+    CVMConstantPool* oldConstantpool;
+#endif
 };
+
+#ifdef CVM_JVMTI
+#define CVM_METHOD_OBSOLETE 1
+#define CVMmbMethodID(mb)						\
+    ((jmethodID)((mb) == NULL ? 0 :					\
+		 (((mb)->jvmti_methodID == 0) ? (CVMUint32)(mb) :	\
+		  CVMmbMethodFromID((mb)->jvmti_methodID))))
+#define CVMmbMethodFromID(id)			\
+    ((CVMUint32)id & ~CVM_METHOD_OBSOLETE)
+
+#define CVMmbIsObsolete(mb)				\
+    (((mb)->jvmti_methodID & 1) == CVM_METHOD_OBSOLETE)
+
+#define CVMmbSetObsolete(mb)					\
+    ((mb)->jvmti_methodID = (mb)->jvmti_methodID | CVM_METHOD_OBSOLETE)
+#define CVMmbConstantPool(mb)			\
+    ((CVMassert(CVMmbIsObsolete(mb)), (mb)->oldConstantpool))
+#endif
 
 #define CVMmbIsMiranda(mb)						\
     (CVMmbInvokerIdx(mb) == CVM_INVOKE_NONPUBLIC_MIRANDA_METHOD ||	\
@@ -1394,12 +1420,12 @@ enum {
 			     code)					\
     {									\
         CVM_INIT_METHODBLOCK_JIT_FIELDS(inv)				\
-        0,								\
 	{ CVM_INIT_METHODBLOCK_CB_FIELD(cb)    				\
         nameAndTypeID, methodTableIndex,				\
 	argsSize, invokerIdx,						\
 	accessFlags, methodIndex,					\
-	checkedExceptionsOffset, {(CVMJavaMethodDescriptor*)code} }	\
+	checkedExceptionsOffset, {(CVMJavaMethodDescriptor*)code} },    \
+	0								\
     }
 
 #define CVM_INIT_METHODBLOCK_IMMUTABLE(cb, 				\
@@ -1567,7 +1593,9 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 			    CVMUint32 classSize, 
 			    CVMClassLoaderICell* loader, 
 			    const char* classname,
-			    const char* dirNameOrZipFileName);
+			    const char* dirNameOrZipFileName,
+			    CVMBool isRedefine);
+
 #endif
 
 /*
@@ -1652,7 +1680,7 @@ CVMclassVerificationSpecToEncoding(char* verifySpec);
  */
 #ifdef CVM_CLASSLOADING
 extern CVMBool
-CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb);
+CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine);
 #endif
 
 /*
@@ -1677,7 +1705,8 @@ CVMclassInitNoCRecursion(CVMExecEnv* ee, CVMClassBlock* cb,
  */
 extern CVMClassICell*
 CVMdefineClass(CVMExecEnv* ee, const char *name, CVMClassLoaderICell* loader,
-	       const CVMUint8* buf, CVMUint32 bufLen, CVMObjectICell* pd);
+	       const CVMUint8* buf, CVMUint32 bufLen, CVMObjectICell* pd,
+	       CVMBool isRedefine);
 
 /*
  * CVMclassCreateArrayClass - creates a fake array class. Needed for any
@@ -1904,6 +1933,10 @@ typedef struct {
     char*                pathString;
     CVMBool              initialized;
 } CVMClassPath;
+
+extern CVMBool
+CVMclassPathInit(JNIEnv* env, CVMClassPath* path, char* additionalPathString,
+	      CVMBool doNotFailWhenPathNotFound, CVMBool initJavaSide);
 
 /*
  * Obtain the system class loader (initialize the cache if not yet done)

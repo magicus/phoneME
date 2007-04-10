@@ -36,6 +36,58 @@
 #define FT2INT64(ft) \
         ((CVMInt64)(ft).dwHighDateTime << 32 | (CVMInt64)(ft).dwLowDateTime)
 
+#ifdef CVM_JVMTI
+
+#define NANOS_PER_SEC         1000000000L
+#define NANOS_PER_MILLISEC    1000000
+
+static int    has_performance_count = 0;
+static int    has_super_clock = 0;
+static CVMInt64 initial_performance_count;
+static CVMInt64 performance_frequency;
+static CVMInt64 multiplier;
+ 
+void clock_init() {
+    LARGE_INTEGER count;
+    if (QueryPerformanceFrequency(&count)) {
+ 	has_performance_count = 1;
+ 	performance_frequency = count.QuadPart;
+ 	if (performance_frequency > NANOS_PER_SEC) {
+ 	    /* super high speed clock > 1GHz */
+ 	    has_super_clock = 1;
+ 	    multiplier = performance_frequency / NANOS_PER_SEC;
+ 	} else {
+ 	    multiplier = NANOS_PER_SEC / performance_frequency;
+ 	}
+ 	QueryPerformanceCounter(&count);
+ 	initial_performance_count = count.QuadPart;
+    }
+}
+ 
+ 
+CVMInt64
+CVMtimeNanosecs(void)
+{
+    if (!has_performance_count) { 
+ 	return CVMtimeMillis() * NANOS_PER_MILLISEC; // the best we can do.
+    } else {
+ 	LARGE_INTEGER current_count;  
+ 	CVMInt64 current;
+ 	CVMInt64 mult;
+ 	CVMInt64 time;
+ 	QueryPerformanceCounter(&current_count);
+ 	current = current_count.QuadPart;
+ 	mult = multiplier;
+ 	if (!has_super_clock) {
+ 	    time = current * multiplier;
+ 	} else {
+ 	    time = current / multiplier;
+ 	}
+ 	return time;
+    }
+}
+#endif
+
 CVMInt64
 CVMtimeMillis(void)
 {

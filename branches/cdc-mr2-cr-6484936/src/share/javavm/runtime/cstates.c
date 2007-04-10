@@ -33,6 +33,9 @@
 #ifdef CVM_JIT
 #include "javavm/include/porting/jit/jit.h"
 #endif
+#ifdef CVM_HW
+#include "include/hw.h"
+#endif
 
 CVMBool
 CVMcsInit(CVMCState *cs, const char *nm, CVMUint8 rank)
@@ -156,6 +159,9 @@ CVMcsReachConsistentState(CVMExecEnv *ee, CVMCStateID csID)
 #endif
 #endif
 
+#ifdef CVM_HW
+    CVMhwRequestConsistentState();
+#endif
 
     {
 	CVMBool interrupted = CVM_FALSE;
@@ -204,6 +210,10 @@ CVMcsResumeConsistentState(CVMExecEnv *ee, CVMCStateID csID)
 	CVMJITdisableRendezvousCalls(ee);
     }
 #endif
+#endif
+
+#ifdef CVM_HW
+    CVMhwReleaseConsistentState();
 #endif
 
     CVMcondvarNotifyAll(&cs->resumeCV);

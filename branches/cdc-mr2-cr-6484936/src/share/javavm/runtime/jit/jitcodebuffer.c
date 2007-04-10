@@ -53,6 +53,7 @@
 #include "javavm/include/jit/jitirblock.h"
 #include "javavm/include/jit/jitcodebuffer.h"
 #include "javavm/include/jit/jitconstantpool.h"
+#include "javavm/include/jit/jitmemory.h"
 
 #include "javavm/include/porting/jit/jit.h"
 #include "javavm/include/porting/io.h"
@@ -175,7 +176,18 @@ CVMJITcbufAllocate(CVMJITCompilationContext* con, CVMSize extraSpace)
     if (bufSizeEstimate > 0xffff ||  
 	bufSizeEstimate > jgs->maxCompiledMethodSize)
     {
-	CVMJITlimitExceeded(con, "Method is too big");
+	const char formatStr[] =
+	    "Method is too big: estimated size=%d allowed=%d";
+
+	/* Max int is only 10 digits.  Allow 2 10-digit numbers for the sizes
+	   plus 1 char for '\0': */
+	int length = sizeof(formatStr) + 10 + 10 + 1;
+	char *msg = CVMJITmemNew(con, JIT_ALLOC_DEBUGGING, length);
+	CVMUint32 limit = 0xffff < jgs->maxCompiledMethodSize ?
+	                  0xffff : jgs->maxCompiledMethodSize;
+
+	sprintf(msg, formatStr, bufSizeEstimate, limit);
+	CVMJITlimitExceeded(con, msg);
     }
 
     /* Start with the last possible instruction in this buffer (sort of

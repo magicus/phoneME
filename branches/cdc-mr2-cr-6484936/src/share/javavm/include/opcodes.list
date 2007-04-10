@@ -351,3 +351,5 @@ new_checkinit_quick          	3 -     A   GC,EXC,QUICK new_quick 0 0 0
 new_quick          	3 -     A  GC,EXC,QUICK new_quick  0 0 0 
 anewarray_quick    	3 I     A  GC,EXC,QUICK anewarray_quick 0 0 0 
 multianewarray_quick    4 ?     A  GC,EXC,QUICK multianewarray_quick 0 0 0 
+
+prefix	        	0 -     -   -	prefix 0 0 0 /* prefix operation.   */

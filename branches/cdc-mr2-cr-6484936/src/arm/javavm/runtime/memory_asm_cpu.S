@@ -31,7 +31,14 @@
 #include "javavm/include/asmmacros_cpu.h"
 #include "javavm/include/iai_opt_config.h"
 
-	SET_SECTION_EXEC(memory_asm_cpu)
+/*
+ * NOTE: Some linker such as the ARM RVCT (v2.2) linker sorts 
+ *	 sections by attributes and section name. To make sure
+ *	 the CCM copied code in the same order as they are included
+ *	 in ccmcodecachecopy_cpu.S, we need to name the sections
+ *	 in alphabetical order.
+ */
+	SET_SECTION_EXEC(s6_memory_asm_cpu)
 
 	ENTRY (CVMARMmemmove8Bit)
 ENTRY1(CVMARMmemmove8Bit)

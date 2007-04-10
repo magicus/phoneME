@@ -55,6 +55,10 @@
 #ifdef CVM_JIT
 #include "javavm/include/jit/jitcodebuffer.h"
 #endif
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmtiDumper.h"
+#include "javavm/include/jvmtiExport.h"
+#endif
 #ifdef CVM_JVMPI
 #include "javavm/include/jvmpi_impl.h"
 #endif
@@ -808,7 +812,7 @@ CVMclassScanSystemClassCallback(CVMExecEnv* ee, CVMClassBlock* cb, void* opts)
     CVMClassScanOptions* options = (CVMClassScanOptions*)opts;
     if (CVMcbClassLoader(cb) == NULL) {
 	/* This makes sure a class is not scanned in a cycle */
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
         {
             CVMGCOptions *gcOpts = options->gcOpts;
             if (gcOpts->isProfilingPass) {
@@ -1174,7 +1178,7 @@ CVMgcScanRoots(CVMExecEnv *ee, CVMGCOptions* gcOpts,
                     info->data = data;
                 }
                 (*CVMframeScanners[frame->type])(ee, frame, chunk, callback,
-                               &interpreterStackData, gcOpts);
+			        &interpreterStackData, gcOpts);
 		interpreterStackData.prevFrame = frame;
             });
         });
@@ -1374,6 +1378,14 @@ CVMgcStopTheWorldAndGCSafePostAction(CVMExecEnv *ee, void *data,
     }
     CVMjvmpiResetGCWasStarted();
 #endif
+#ifdef CVM_JVMTI
+    if (jvmti_should_post_garbage_collection_finish() &&
+	CVMjvmtiGCWasStarted()) {
+        CVMjvmtiPostGCFinishEvent();
+    }
+    CVMjvmtiResetGCWasStarted();
+    CVMjvmtiTagRehash();
+#endif
 
     /* After GC is done and before we allow all threads to become unsafe
        again, i.e. here, take this opportunity to scavenge and deflate
@@ -1461,6 +1473,15 @@ stopTheWorldAndGCSafe(CVMExecEnv* ee, CVMUint32 numBytes,
             CVMjvmpiPostGCStartEvent();
         }
         CVMjvmpiSetGCWasStarted();
+    }
+#endif
+#ifdef CVM_JVMTI
+    /* Ditto above comment  */
+    if (!CVMgcLockerIsActive(&CVMjvmtiRec()->gcLocker)) {
+        if (jvmti_should_post_garbage_collection_start()) {
+            CVMjvmtiPostGCStartEvent();
+        }
+        CVMjvmtiSetGCWasStarted();
     }
 #endif
 
@@ -1631,11 +1652,11 @@ void CVMgcLockerUnlock(CVMGCLocker *self, CVMExecEnv *current_ee)
     }
 }
 
-#endif /* defined(CVM_INSPECTOR) || defined(CVM_JVMPI) */
+#endif /* defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI) */
 
 /*===========================================================================*/
 
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 
 /*
  * Scan objects in contiguous range, and do per-object callback in support
@@ -1668,7 +1689,7 @@ CVMgcScanObjectRange(CVMExecEnv* ee, CVMUint32* base, CVMUint32* top,
     return CVM_TRUE; /* Complete scan DONE. */
 }
 
-#endif /* defined(CVM_INSPECTOR) || defined(CVM_JVMPI) */
+#endif /* defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)*/
 
 #ifdef CVM_JVMPI
 

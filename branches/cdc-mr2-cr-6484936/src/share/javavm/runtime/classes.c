@@ -257,11 +257,16 @@ CVMclassGetFieldBlock(const CVMClassBlock* cb, const CVMFieldTypeID tid,
     while (cb0 != NULL) {
 	fb = CVMclassprivateReturnDeclaredFieldInClass(cb0, tid);
 	if (fb != NULL) {
+	    /* JavaSE allows JNI access to private fields */
+#ifndef JAVASE
 	    if (CVMfbIs(fb, PRIVATE) && cb0 != cb) {
 		return NULL;
 	    } else {
 		return fb;
 	    }
+#else
+            return fb;
+#endif
 	}
 
 	/* We're still here! Keep searching. */

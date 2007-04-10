@@ -191,7 +191,7 @@ main(int argc, const char** argv)
 	    targetpid, testingprefix);
 
     if (testingprefix != NULL) {
-	outMessage = jumpMessageNewOutgoingByType((char*)messageType);
+	outMessage = jumpMessageNewOutgoingByType((char*)messageType, &code);
     
 	jumpMessageAddInt(outMessage, 2);
 	jumpMessageAddString(outMessage, "TESTING_MODE");
@@ -207,7 +207,7 @@ main(int argc, const char** argv)
 	jumpMessageFreeOutgoing(outMessage);
     }
 
-    outMessage = jumpMessageNewOutgoingByType((char*)messageType);
+    outMessage = jumpMessageNewOutgoingByType((char*)messageType, &code);
     numWords = 0;
     
     jumpMessageMarkSet(&mark, outMessage);

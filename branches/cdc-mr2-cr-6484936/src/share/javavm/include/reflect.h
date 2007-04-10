@@ -49,7 +49,7 @@ CVMreflectEnsureInitialized(CVMExecEnv* ee, CVMClassBlock* cb);
 #ifdef CVM_CLASSLOADING
 #define	CVMreflectEnsureLinked(ee, cb)			\
 if (!CVMcbCheckRuntimeFlag(cb, LINKED)) {		\
-    if (!CVMclassLink(ee, cb)) {			\
+    if (!CVMclassLink(ee, cb, CVM_FALSE)) {		\
 	return;						\
     }							\
     CVMassert(CVMcbCheckRuntimeFlag(cb, LINKED));	\

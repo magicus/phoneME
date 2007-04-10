@@ -324,7 +324,7 @@ CVMmonEnter(CVMExecEnv *ee, CVMObjMonitor *mon)
 	    */
 	    CVMunboost(ee, mon);
 	    CVMassert(!mon->boost);
-	    CVMprofiledMonitorEnterUnsafe(&mon->mon, ee);
+	    CVMprofiledMonitorEnterUnsafe(&mon->mon, ee, CVM_TRUE);
 	} else {
 	    /* This is the case where we discovered a contended enter and
 	       inflated the monitor.  We therefore need to boost the thread
@@ -335,11 +335,11 @@ CVMmonEnter(CVMExecEnv *ee, CVMObjMonitor *mon)
 	    CVMprofiledMonitorContendedEnterUnsafe(&mon->mon, ee);
 	}
     } else {
-	CVMprofiledMonitorEnterUnsafe(&mon->mon, ee);
+	CVMprofiledMonitorEnterUnsafe(&mon->mon, ee, CVM_TRUE);
     }
     CVMassert(!mon->boost);
 #else
-    CVMprofiledMonitorEnterUnsafe(&mon->mon, ee);
+    CVMprofiledMonitorEnterUnsafe(&mon->mon, ee, CVM_TRUE);
 #endif
 
     ee->objLockCurrent = NULL;
@@ -399,6 +399,9 @@ static void CVMmonitorAttachObjMonitor2OwnedMonitor(CVMExecEnv *ee,
 #ifdef CVM_DEBUG
     o->state = CVM_OWNEDMON_OWNED;
     mon->owner = o;
+#endif
+#ifdef CVM_JVMTI
+    o->frame = CVMeeGetCurrentFrame(ee);
 #endif
     o->object = mon->obj;
     o->u.heavy.mon = mon;
@@ -515,6 +518,9 @@ CVMfastTryLock(CVMExecEnv* ee, CVMObject* obj)
 	ee->objLocksFreeOwned = o->next;
 
 	o->next = ee->objLocksOwned;
+#ifdef CVM_JVMTI
+	o->frame = CVMeeGetCurrentFrame(ee);
+#endif
 	ee->objLocksOwned = o;
 
 	return CVM_TRUE;
@@ -1065,6 +1071,9 @@ CVMobjectInflate(CVMExecEnv *ee, CVMObjectICell* indirectObj)
 #ifdef CVM_DEBUG
 	    mon->owner = o;
 #endif
+#ifdef CVM_JVMTI
+	    o->frame = CVMeeGetCurrentFrame(ee);
+#endif
 	    o->type = CVM_OWNEDMON_HEAVY;
             o->object = mon->obj;
 	    o->u.heavy.mon = mon;
@@ -1316,6 +1325,9 @@ CVMprivateUnlock(CVMExecEnv *ee, CVMObjMonitor *mon)
 	    o->u.fast.bits = 0;
 	    o->object = NULL;
 	    mon->owner = NULL;
+#endif
+#ifdef CVM_JVMTI
+	    o->frame = NULL;
 #endif
             /* Add the released CVMOwnedMonitor back to the ee's free list: */
 	    o->next = ee->objLocksFreeOwned;
@@ -1629,6 +1641,9 @@ CVMfastTryUnlock(CVMExecEnv* ee, CVMObject* obj)
 	    o->state = CVM_OWNEDMON_FREE;
 	    o->u.fast.bits = 0;
 	    o->object = NULL;
+#endif
+#ifdef CVM_JVMTI
+	    o->frame = NULL;
 #endif
             /* Add the released CVMOwnedMonitor record back on to the free list: */
 	    o->next = ee->objLocksFreeOwned;
@@ -2075,7 +2090,7 @@ CVMobjMonitorInit(CVMExecEnv *ee, CVMObjMonitor *m, CVMExecEnv *owner,
     if (CVMprofiledMonitorInit(&m->mon, owner, count,
 	CVM_LOCKTYPE_OBJ_MONITOR))
     {
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
         CVMProfiledMonitor **firstPtr = &CVMglobals.objMonitorList;
         CVMProfiledMonitor *mon = CVMcastObjMonitor2ProfiledMonitor(m);
         CVMsysMutexLock(ee, &CVMglobals.jvmpiSyncLock);
@@ -2101,7 +2116,7 @@ CVMobjMonitorInit(CVMExecEnv *ee, CVMObjMonitor *m, CVMExecEnv *owner,
 void CVMobjMonitorDestroy(CVMObjMonitor *self)
 {
     CVMProfiledMonitor *mon = CVMcastObjMonitor2ProfiledMonitor(self);
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
     CVMExecEnv *ee = CVMgetEE();
 
     CVMassert(CVMD_isgcSafe(ee));
@@ -2132,6 +2147,9 @@ CVMownedMonitorInit(CVMOwnedMonitor *m, CVMExecEnv *owner)
 #ifdef CVM_DEBUG
     m->state = CVM_OWNEDMON_FREE;
     m->magic = CVM_OWNEDMON_MAGIC;
+#endif
+#ifdef CVM_JVMTI
+    m->frame = NULL;
 #endif
 }
 
@@ -2329,6 +2347,9 @@ CVMmonitorScavengeFast(CVMExecEnv *ee)
             o->state = CVM_OWNEDMON_FREE;
             o->u.fast.bits = 0;
 #endif
+#ifdef CVM_JVMTI
+	    o->frame = NULL;
+#endif
             /* Add the released CVMOwnedMonitor record back on to the free list: */
             o->next = ee->objLocksFreeOwned;
             ee->objLocksFreeOwned = o;
@@ -2473,6 +2494,9 @@ CVMmonitorScavengeUnbound(CVMExecEnv *ee)
                 o->u.fast.bits = 0;
                 o->object = NULL;
                 mon->owner = NULL;
+#endif
+#ifdef CVM_JVMTI
+		o->frame = NULL;
 #endif
                 /* Add the released CVMOwnedMonitor back on to the free list: */
                 o->next = ee->objLocksFreeOwned;

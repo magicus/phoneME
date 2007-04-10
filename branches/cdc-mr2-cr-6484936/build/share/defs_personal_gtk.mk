@@ -54,9 +54,9 @@ ifdef GTK_DEFAULT_FONT
 endif
 
 #
-# Get the CPP includes for gtk
+# Get the gtk include directories.
 #
-PROFILE_INCLUDES += $(shell $(GTK_CONFIG) --cflags)
+PROFILE_INCLUDE_DIRS += $(patsubst -I%,%,$(shell $(GTK_CONFIG) --cflags))
 
 CLASSLIB_CLASSES += \
 	sun.awt.gtk.GButtonPeer \

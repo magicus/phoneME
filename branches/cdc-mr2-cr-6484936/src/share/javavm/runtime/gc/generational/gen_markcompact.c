@@ -49,6 +49,9 @@
 
 #include "javavm/include/porting/system.h"
 #include "javavm/include/porting/ansi/setjmp.h"
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmtiExport.h"
+#endif
 
 #ifdef CVM_JVMPI
 #include "javavm/include/jvmpi_impl.h"
@@ -319,7 +322,7 @@ scanObjectsInRange(CVMExecEnv* ee, CVMGCOptions* gcOpts,
     CVMassert(curr == top); /* This had better be exact */
 }
 
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 
 void CVMgcReplaceWithPlaceHolderObject(CVMObject *currObj, CVMUint32 objSize)
 {
@@ -388,11 +391,18 @@ scanObjectsInYoungGenRange(CVMGenMarkCompactGeneration* thisGen,
 	} else {
 #ifdef CVM_JVMPI
 	    {
-	        extern CVMUint32 liveObjectCount;
-                if (CVMjvmpiEventObjectFreeIsEnabled()) {
+		extern CVMUint32 liveObjectCount;
+		if (CVMjvmpiEventObjectFreeIsEnabled()) {
                     CVMjvmpiPostObjectFreeEvent(currObj);
                 }
-                liveObjectCount--;
+		liveObjectCount--;
+	    }
+#endif
+#ifdef CVM_JVMTI
+	    {
+                if (jvmti_should_post_object_free()) {
+                    CVMjvmtiPostObjectFreeEvent(currObj);
+                }
 	    }
 #endif
 #ifdef CVM_INSPECTOR
@@ -858,11 +868,18 @@ sweep(CVMGenMarkCompactGeneration* thisGen, CVMUint32* base, CVMUint32* top)
         } else {
 #ifdef CVM_JVMPI
 	    {
-	        extern CVMUint32 liveObjectCount;
+		extern CVMUint32 liveObjectCount;
                 if (CVMjvmpiEventObjectFreeIsEnabled()) {
                     CVMjvmpiPostObjectFreeEvent(currObj);
                 }
-                liveObjectCount--;
+		liveObjectCount--;
+	    }
+#endif
+#ifdef CVM_JVMTI
+	    {
+                if (jvmti_should_post_object_free()) {
+                    CVMjvmtiPostObjectFreeEvent(currObj);
+                }
 	    }
 #endif
 #ifdef CVM_INSPECTOR

@@ -28,6 +28,8 @@
 
 AWT_PEERSET_SRC_DIR = $(CVM_SHAREROOT)/personal/native/awt/$(AWT_PEERSET)
 
+PROFILE_SRCDIRS_NATIVE += AWT_PEERSET_SRC_DIR
+
 TOOLKIT_CLASS = sun.awt.pocketpc.PPCToolkit
 GRAPHICS_ENV_CLASS = sun.awt.pocketpc.PPCGraphicsEnvironment
 

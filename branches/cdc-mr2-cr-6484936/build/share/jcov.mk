@@ -44,11 +44,11 @@ CVM_JCOV_BUILDDIRS += \
 #
 # Search path for include files:
 #
-CVM_JCOV_INCLUDES  += \
-        -I$(CVM_JCOV_SHAREROOT) \
-        -I$(CVM_JCOV_TARGETROOT)
+CVM_JCOV_INCLUDE_DIRS  += \
+        $(CVM_JCOV_SHAREROOT) \
+        $(CVM_JCOV_TARGETROOT)
 
-jcov : CVM_INCLUDES += $(CVM_JCOV_INCLUDES)
+jcov : CVM_INCLUDE_DIRS += $(CVM_JCOV_INCLUDE_DIRS)
 
 #
 # List of object files to build:

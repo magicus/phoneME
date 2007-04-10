@@ -45,8 +45,8 @@ jvmti_jni_Get##Result##Field(JNIEnv *env, jobject obj, jfieldID fieldID) \
     CVMFieldBlock* fb = fieldID; \
     ReturnType result; \
     if (CVMglobals.jvmtiWatchingFieldAccess) { \
-        CVMjvmtiNotifyDebuggerOfFieldAccess(CVMjniEnv2ExecEnv(env), \
-                                            obj, fb); \
+        CVMjvmtiPostFieldAccessEvent(CVMjniEnv2ExecEnv(env), \
+				     obj, fb);		     \
     } \
     result = CVMjniGet##Result##Field(env,obj,fieldID); \
     return result; \
@@ -71,7 +71,7 @@ jvmti_jni_Set##Result##Field(JNIEnv *env, jobject obj, jfieldID fieldID, \
     if (CVMglobals.jvmtiWatchingFieldModification) { \
         jvalue jval; \
         jval.JValueField = value; \
-        CVMjvmtiNotifyDebuggerOfFieldModification(CVMjniEnv2ExecEnv(env), \
+        CVMjvmtiPostFieldModificationEvent(CVMjniEnv2ExecEnv(env), \
                                                   obj, fb, jval); \
     } \
     CVMjniSet##Result##Field(env,obj,fieldID,value); \
@@ -93,12 +93,12 @@ jvmti_jni_GetStatic##Result##Field(JNIEnv *env, jclass clazz, jfieldID fieldID) 
 { \
     CVMFieldBlock* fb = fieldID; \
     ReturnType result; \
-    if (CVMglobals.jvmtiWatchingFieldAccess) { \
-        CVMjvmtiNotifyDebuggerOfFieldAccess(CVMjniEnv2ExecEnv(env), \
-					    NULL, fb); \
-    } \
+    if (CVMglobals.jvmtiWatchingFieldAccess) {			\
+        CVMjvmtiPostFieldAccessEvent(CVMjniEnv2ExecEnv(env),	\
+				     NULL, fb);			\
+    }								\
     result = CVMjniGetStatic##Result##Field(env,clazz,fieldID); \
-    return result; \
+    return result;						\
 }
 
 WRAPPER_GETSTATICFIELD(jobject,Object,(fb->signature[0] == 'L' || fb->signature[0] == '['))
@@ -120,7 +120,7 @@ jvmti_jni_SetStatic##Result##Field(JNIEnv *env, jclass clazz, jfieldID fieldID, 
     if (CVMglobals.jvmtiWatchingFieldModification) { \
         jvalue jval; \
         jval.JValueField = value; \
-        CVMjvmtiNotifyDebuggerOfFieldModification(CVMjniEnv2ExecEnv(env), \
+        CVMjvmtiPostFieldModificationEvent(CVMjniEnv2ExecEnv(env), \
 						  NULL, fb, jval); \
     } \
     CVMjniSetStatic##Result##Field(env,clazz,fieldID,value); \

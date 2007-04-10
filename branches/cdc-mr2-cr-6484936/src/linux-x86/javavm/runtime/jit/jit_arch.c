@@ -24,7 +24,6 @@
  * information or have any questions. 
  */
 
-/* $Id: //bas2/vmc/dev3/src/linux-x86/javavm/runtime/jit/jit_arch.c#3 $ */
 #include "javavm/include/defs.h"
 #include "javavm/include/objects.h"
 

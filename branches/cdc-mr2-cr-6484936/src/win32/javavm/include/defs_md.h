@@ -133,5 +133,7 @@ typedef double		CVMfloat64;
 typedef CVMUint32 CVMSize;
 
 #endif
+#define CONST64(x)  (x ## i64)
+#define UCONST64(x) ((uint64_t)CONST64(x))
 
 #endif /* _WIN32_DEFS_MD_H */

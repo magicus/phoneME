@@ -52,10 +52,21 @@
 #endif
 
 #define CVMJAVAPKG "java/lang/"
-
+/*
+ * Conveniently, these bits correspond to JVMTI_THREAD_STATE_XXX bits
+ */
 typedef enum {
-    CVM_THREAD_RUNNING = 0x0,
-    CVM_THREAD_SUSPENDED = 0x100
+    CVM_THREAD_RUNNING               = 0x0,
+    CVM_THREAD_TERMINATED            = 0x2,
+    CVM_THREAD_WAITING_INDEFINITE    = 0x10,
+    CVM_THREAD_WAITING_TIMEOUT       = 0x20,
+    CVM_THREAD_SLEEPING              = 0x40,
+    CVM_THREAD_WAITING               = 0x80,
+    CVM_THREAD_OBJECT_WAIT           = 0x100,
+    CVM_THREAD_BLOCKED_MONITOR_ENTER = 0x400,
+    CVM_THREAD_SUSPENDED             = 0x100000,
+    CVM_THREAD_INTERRUPTED           = 0x200000,
+    CVM_THREAD_IN_NATIVE             = 0x400000
 } CVMThreadState;
 
 /*
@@ -218,14 +229,18 @@ struct CVMExecEnv {
 #ifdef CVM_JVMTI
     CVMBool debugEventsEnabled;
     CVMBool jvmtiSingleStepping;
-    JvmtiEventEnabled _jvmtiThreadEventEnabled;
+    JvmtiEventEnabled _jvmti_user_event_enabled;
+    JvmtiEventEnabled _jvmti_event_enabled;
     /* NOTE: first pass at JVMTI support has only one global environment */
     /*   JvmtiEnv *_jvmti_env; */
+    void *jvmtiProfilerData;    /* JVMTI Profiler thread-local data. */
 #endif
 #ifdef CVM_JVMPI
+    void *jvmpiProfilerData;    /* JVMPI Profiler thread-local data. */
+#endif
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
     CVMProfiledMonitor *blockingLockEntryMonitor;
     CVMProfiledMonitor *blockingWaitMonitor;
-    void *jvmpiProfilerData;    /* JVMPI Profiler thread-local data. */
     CVMBool hasRun;     /* Has this thread run since its last suspension? */
 #endif
 
@@ -829,6 +844,16 @@ typedef struct {
     CVMFrame *prevFrame;
     void *callbackData;
 } CVMInterpreterStackData;
+
+/*
+ * Get the stackmap entry for a frame. If (*missingStackMapOK), a NULL entry
+ * is normal.
+ */
+
+extern CVMStackMapEntry*
+getStackmapEntry(CVMExecEnv *frameEE, CVMFrame *frame,
+                 CVMJavaMethodDescriptor *jmd, CVMStackMaps *stackmaps,
+                 CVMBool *missingStackmapOK);
 
 /*
  * Find the innermost exception handler for a PC, for stackmap purposes only.

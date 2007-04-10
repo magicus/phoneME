@@ -52,7 +52,6 @@ import java.util.Vector;
 import java.io.IOException;
 import java.io.File;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.net.MalformedURLException;
 import java.lang.reflect.Constructor;
 import java.rmi.AccessException;
@@ -60,6 +59,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.security.PrivilegedActionException;
+import sun.misc.CDCAppClassLoader;
 
 import com.sun.xlet.XletLifecycleHandler;
 
@@ -368,8 +368,8 @@ public class PXletManager implements XletLifecycleHandler {
            }
         }
 
-        PXletClassLoader cl = new PXletClassLoader((URL[])v.toArray(new URL[0]), 
-			      ClassLoader.getSystemClassLoader());
+        PXletClassLoader cl = new PXletClassLoader(
+            (URL[])v.toArray(new URL[0]), null);
 
         try {
             return new PXletManager(cl, laf, lafTheme, mainClass, args);
@@ -423,7 +423,7 @@ public class PXletManager implements XletLifecycleHandler {
     }
 }
 
-class PXletClassLoader extends URLClassLoader {
+class PXletClassLoader extends CDCAppClassLoader {
     public PXletClassLoader(URL[] urls, ClassLoader parent) {
        super(urls, parent);
     }

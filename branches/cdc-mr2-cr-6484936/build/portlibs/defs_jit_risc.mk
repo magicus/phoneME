@@ -85,8 +85,8 @@ CVM_SRCDIRS   += \
 	$(CVM_TOP)/src/$(TARGET_CPU_FAMILY)/javavm/runtime/jit \
 	$(CVM_TOP)/src/portlibs/jit/risc
 
-CVM_INCLUDES  += \
-	-I$(CVM_TOP)/src/portlibs/jit/risc
+CVM_INCLUDE_DIRS  += \
+	$(CVM_TOP)/src/portlibs/jit/risc
 
 #
 # JCS input files. Besides needing shared and cpu specific versions, they

@@ -40,21 +40,4 @@ CVM_JIT_USE_FP_HARDWARE = false
 # Disable CVM_JIT_REGISTER_LOCALS for x86 for now.
 CVM_JIT_REGISTER_LOCALS ?= false
 
-# Description of the VC 2003 win32 platform.
-# The following are all for the benefit of win32/defs.mk
-SDK_DIR			?= C:/Program Files/Microsoft Visual Studio .NET 2003/Vc7
-VC_PATH			= $(call WIN2POSIX,$(SDK_DIR))
-PLATFORM_SDK_DIR	?= C:/Program Files/Microsoft Platform SDK
-PLATFORM_SDK_PATH 	= $(call WIN2POSIX,$(PLATFORM_SDK_DIR))
-PLATFORM_TOOLS_PATH	= $(VC_PATH)/Bin
-COMMON_TOOLS_PATH	= $(PLATFORM_SDK_PATH)/Bin
-
 include ../share/top.mk
-
-LIB     := $(SDK_DIR)/lib;$(PLATFORM_SDK_DIR)/lib
-INCLUDE := $(SDK_DIR)/include;$(PLATFORM_SDK_DIR)/include
-PATH    := $(PLATFORM_TOOLS_PATH):$(VC_PATH)/IDE:$(PATH)
-
-export LIB
-export INCLUDE
-export PATH

@@ -78,6 +78,9 @@
 #include "javavm/include/ccee.h"
 #endif
 
+#ifdef CVM_HW
+#include "include/hw.h"
+#endif
 
 #ifdef CVM_TRACE
 #define MAX_TRACE_INDENT_DEPTH  15
@@ -719,7 +722,7 @@ CVMfindInnermostHandlerFor(CVMJavaMethodDescriptor* jmd, CVMUint8* pc)
          which we want to get a stackmap.  It is not necessarily the CVMExecEnv
          of the self (i.e. currently executing) thread.
 */
-static CVMStackMapEntry*
+CVMStackMapEntry*
 getStackmapEntry(CVMExecEnv *frameEE, CVMFrame *frame,
                  CVMJavaMethodDescriptor *jmd, CVMStackMaps *stackmaps,
                  CVMBool *missingStackmapOK)
@@ -1074,8 +1077,16 @@ CVMgcSafeFindPCForException(CVMExecEnv* ee, CVMFrameIterator* iter,
 	CVMUint16 pcTarget = 
 	    (CVMUint16)(pc - CVMjmdCode(jmd)); /* offset from start of code */
 	CVMClassBlock*  cb = CVMmbClassBlock(mb);
-	CVMConstantPool* cp = CVMcbConstantPool(cb);
-	
+	CVMConstantPool* cp;
+#ifdef CVM_JVMTI
+	if (CVMmbIsObsolete(mb)) {
+	    cp        = CVMmbConstantPool(mb);
+	} else {
+#else
+	{
+#endif
+	    cp = CVMcbConstantPool(cb);
+	}	
 	/* Check each exception handler to see if the pc is in its range */
 	for (; eh < ehEnd; eh++) { 
 	    if (eh->startpc <= pcTarget && pcTarget < eh->endpc) { 
@@ -1288,7 +1299,7 @@ CVMgcUnsafeHandleException(CVMExecEnv* ee, CVMFrame* frame,
 	    by the return value. */
 	if (CVMjvmtiThreadEventsEnabled(ee)) {
 	    CVMD_gcSafeExec(ee, {
-            CVMjvmtiNotifyDebuggerOfFramePop(ee, CVM_TRUE, (jlong)0);
+		    CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_TRUE, (jlong)0);
 	    });
 	}
 #endif
@@ -1745,7 +1756,10 @@ again:
 	   appearing in the stack frame.  Need to set it to the proper
 	   topOfStack value if we ever support JVMPI or JVMTI with JITed
 	   code. */
-	CVMassert(CVM_FALSE);
+	/* NOTE: Test for debugging active before asserting */
+	if (CVMjvmtiDebuggerConnected()) {
+	    CVMassert(CVM_FALSE);
+	}
 #endif
     }
 #endif
@@ -2462,6 +2476,9 @@ CVMopcodeGetLengthVariable(const CVMUint8* iStream)
 		    return -1; /* invalid instruction */
 	    }
 	}
+#ifdef CVM_HW
+#include "include/hw/interpreter.i"
+#endif
     default:
 	return -1; /* I don't know this bytecode! */
     }
@@ -2656,7 +2673,7 @@ CVMlocksForGCAcquire(CVMExecEnv* ee)
     CVMsysMutexLock(ee, &CVMglobals.threadLock);
     CVMsysMutexLock(ee, &CVMglobals.classTableLock);
 #ifdef CVM_JVMTI
-    CVMsysMutexLock(ee, &CVMglobals.debuggerLock),
+    CVMsysMutexLock(ee, &CVMglobals.jvmtiLock),
 #endif
     CVMsysMutexLock(ee, &CVMglobals.globalRootsLock);
     CVMsysMutexLock(ee, &CVMglobals.weakGlobalRootsLock);
@@ -2680,7 +2697,7 @@ CVMlocksForGCRelease(CVMExecEnv* ee)
     CVMsysMutexUnlock(ee, &CVMglobals.weakGlobalRootsLock);
     CVMsysMutexUnlock(ee, &CVMglobals.globalRootsLock);
 #ifdef CVM_JVMTI
-    CVMsysMutexUnlock(ee, &CVMglobals.debuggerLock),
+    CVMsysMutexUnlock(ee, &CVMglobals.jvmtiLock),
 #endif
     CVMsysMutexUnlock(ee, &CVMglobals.classTableLock);
     CVMsysMutexUnlock(ee, &CVMglobals.threadLock);
@@ -3142,6 +3159,17 @@ CVMlookupNativeMethodCode(CVMExecEnv* ee, CVMMethodBlock* mb)
      * may already have been done by another thread racing with us,
      * but doing it a 2nd time is harmless so no locking is required.
      */
+#ifdef CVM_JVMTI
+    {
+	CVMUint8* new_nativeCode = NULL;
+	if (jvmti_should_post_native_method_bind()) {
+	    CVMjvmtiPostNativeMethodBind(ee, mb, nativeCode, &new_nativeCode);
+	    if (new_nativeCode != NULL) {
+		nativeCode = new_nativeCode;
+	    }
+	}
+    }
+#endif
     CVMmbNativeCode(mb) = nativeCode;
     if (mangleType == CVM_MangleMethodName_CNI_SHORT) {
 	CVMmbInvokerIdx(mb) = CVM_INVOKE_CNI_METHOD;
@@ -3255,7 +3283,7 @@ CVMexit(int status)
     CVMpostThreadExitEvents(ee);
 #ifdef CVM_JVMTI
     if (CVMjvmtiEventsEnabled()) {
-	CVMjvmtiNotifyDebuggerOfVmExit(ee);
+	CVMjvmtiPostVmExitEvent(ee);
 	ee->debugEventsEnabled = CVM_FALSE;
     }
 #endif
@@ -3417,6 +3445,7 @@ CVMwaitForAllThreads(CVMExecEnv *ee)
 }
 
 #ifdef CVM_DEBUG_ASSERTS
+int __forceSystemPanic__ = 1;
 int
 CVMassertHook(const char *filename, int lineno, const char *expr) {
     CVMconsolePrintf("Assertion failed at line %d in %s: %s\n",
@@ -3440,11 +3469,12 @@ CVMassertHook(const char *filename, int lineno, const char *expr) {
 
     /* %comment l028 */
     /* Force a segmentation fault to cause a crash: */
-    {
-        int *ptr = (int *)0x1;
-        CVMconsolePrintf("%d\n", *ptr);
+    if (__forceSystemPanic__ != 0) {
+	int *ptr = (int *)0x1;
+	CVMconsolePrintf("%d\n", *ptr);
+	return 0;
     }
-    return 0;
+    return 1;
 }
 #endif /* CVM_DEBUG_ASSERTS */
 
@@ -3997,15 +4027,13 @@ CVMregisterReturnEvent(CVMExecEnv *ee, CVMUint8* pc,
     	
 #ifdef CVM_JVMTI
       if (jvmtiThreadEventsEnabled) {
-	CVMID_localrootBeginGcUnsafe(ee) {
-	  CVMID_localrootDeclareGcUnsafe(CVMObjectICell, __result);
-	  CVMID_icellAssignDirect(ee, __result, resultCell);
-
-	    CVMD_gcSafeExec(ee, {
-            CVMjvmtiNotifyDebuggerOfFramePop(ee, CVM_FALSE,
-                                             (jlong)((jint)resultCell));
-          });
-	} CVMID_localrootEndGcUnsafe();
+	  CVMD_gcSafeExec(ee, {
+ 	    if (return_opcode == opc_areturn) {
+		CVMjvmtiPostFramePopEvent(ee, CVM_TRUE, CVM_FALSE, 0L);
+	    } else {
+		CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE, (jlong)*(int*)resultCell);
+	    }
+	      });
       }
 #endif
 #ifdef CVM_JVMPI
@@ -4131,7 +4159,7 @@ CVMinvokeJNIHelper(CVMExecEnv *ee, CVMMethodBlock *mb)
     /* %comment k001 */
     if (CVMjvmtiThreadEventsEnabled(ee)) {
 	CVMD_gcSafeExec(ee, {
-	    CVMjvmtiNotifyDebuggerOfFramePush(ee);
+	    CVMjvmtiPostFramePushEvent(ee);
 	});
     }
 #endif
@@ -4167,10 +4195,42 @@ CVMinvokeJNIHelper(CVMExecEnv *ee, CVMMethodBlock *mb)
 	local variable slots should have been overwritten
 	by the return value. */
     if (CVMjvmtiThreadEventsEnabled(ee)) {
-	CVMD_gcSafeExec(ee, {
-      CVMjvmtiNotifyDebuggerOfFramePop(ee, CVM_FALSE,
-               (jlong)returnCode);
-	});
+		jlong longValue;
+		switch (returnCode) {
+		case 0:
+		    CVMD_gcSafeExec(ee, {
+			    CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE,
+						      0L);
+			});
+		    break;
+		case 1:
+		    CVMD_gcSafeExec(ee, {
+			    CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE,
+					      (jlong)*(int*)&returnValue.i);
+			});
+		    break;
+		case 2:
+		    CVMmemCopy64(&longValue, returnValue.jni.v64);
+		    CVMD_gcSafeExec(ee, {
+			    CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE,
+						      longValue);
+			});
+		    break;
+		case -1:
+		    CVMassert(CVMID_icellIsNull(CVMmiscICell(ee)));
+		    {
+			CVMObjectICell *o = returnValue.o;
+			if (o != 0) {
+			    CVMID_icellAssignDirect(ee, CVMmiscICell(ee), o);
+			}
+			CVMD_gcSafeExec(ee, {
+				CVMjvmtiPostFramePopEvent(ee, CVM_TRUE,
+							  CVM_FALSE, 0L);
+			    });
+			CVMID_icellSetNull(CVMmiscICell(ee));
+		    }
+		    break;
+		}
     }
 #endif
 #ifdef CVM_JVMPI
@@ -4525,8 +4585,9 @@ CVMpostThreadStartEvents(CVMExecEnv *ee)
        implementing RunDebugThread/CreateSystemThread to ensure the
        events get generated. */
 
-    if (CVMjvmtiEventsEnabled()) {
-	CVMjvmtiNotifyDebuggerOfThreadStart(ee, CVMcurrentThreadICell(ee));
+    if (jvmti_should_post_thread_life() &&
+	CVMjvmtiGetPhase() == JVMTI_PHASE_LIVE) {
+	CVMjvmtiPostThreadStartEvent(ee, CVMcurrentThreadICell(ee));
     }
 #endif
 
@@ -4542,7 +4603,7 @@ CVMpostThreadExitEvents(CVMExecEnv *ee)
     if (!ee->hasPostedExitEvents) {
 #ifdef CVM_JVMTI
 	if (CVMjvmtiEventsEnabled()) {
-	    CVMjvmtiNotifyDebuggerOfThreadEnd(ee, CVMcurrentThreadICell(ee));
+	    CVMjvmtiPostThreadEndEvent(ee, CVMcurrentThreadICell(ee));
 	}
 #endif
 

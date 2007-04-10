@@ -38,7 +38,8 @@ ifeq ($(SYMBIAN_PLATFORM), armv5)
 #
 # Preprocess the *.S files.
 #
-ASM_COMMAND = armcc $(CVM_DEFINES) $(CVM_INCLUDES) -E $(1) > $(CVM_DERIVEDROOT)/javavm/runtime/$(2)0.S; \
+ASM_COMMAND = armcc $(CVM_DEFINES) $(ALL_INCLUDE_FLAGS) -E $(1)\
+		    > $(CVM_DERIVEDROOT)/javavm/runtime/$(2)0.S; \
               echo SOURCEPATH $(CVM_DERIVEDROOT)/javavm/runtime >> $(CVM_MMP); \
 	      echo SOURCE $(2)0.S >> $(CVM_MMP)
 $(CVMEXT_LIB) : $(CVMEXT_LIB_DEPS)

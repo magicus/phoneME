@@ -35,8 +35,8 @@ CVM_TARGETOBJS_OTHER += \
 CVM_SRCDIRS   += \
 	$(CVM_TOP)/src/$(TARGET_CPU_FAMILY)/javavm/runtime
 
-CVM_INCLUDES  += \
-	-I$(CVM_TOP)/src/$(TARGET_CPU_FAMILY)
+CVM_INCLUDE_DIRS  += \
+	$(CVM_TOP)/src/$(TARGET_CPU_FAMILY)
 
 #
 # JIT related settings
@@ -68,4 +68,15 @@ endif
 
 include  ../portlibs/defs_jit_risc.mk
 
+endif
+
+#
+# Hardware settings.
+#
+
+ifdef HW_DIR
+  ifeq ($(wildcard $(HW_DIR)/build/subsystem.gmk),)
+    $(error HW_DIR must point to a HW directory)
+  endif
+  include $(HW_DIR)/build/subsystem.gmk
 endif
