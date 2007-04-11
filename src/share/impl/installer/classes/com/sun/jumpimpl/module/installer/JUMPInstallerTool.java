@@ -323,7 +323,7 @@ public class JUMPInstallerTool {
                         } else {
                             System.out.println("      Icon: " + iconPath.getFile());
                         }
-                        System.out.println("     Model: " + JUMPAppModel.MAIN.toString());
+                        System.out.println("     Model: " + JUMPAppModel.MIDLET.toString());
                     }
                     
                     System.out.println("");
