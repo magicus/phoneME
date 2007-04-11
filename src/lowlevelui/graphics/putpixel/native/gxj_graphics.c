@@ -76,6 +76,40 @@ gx_copy_area(const jshort *clip,
 		   x_src, y_src, 0);
 }
 
+static char premultiplyAlpha(char C, char A) {
+    // formula: Cs = Csr * As
+    return (char)(((int)(C&0xff))*(A&0xff)/0xff);
+}
+
+static char addPremulColorsSrcOver(char Cs, char As, char Cd) {
+    // formula: Cr = Cs + Cd*(1-As)
+    // Note: the result is equal or less than 0xff (overflow is impossible)
+    return (char)(((int)(Cs&0xff)) + ((int)(Cd&0xff))*(0xff-(As&0xff))/0xff);
+}
+
+static char addColors(char Csr, char As, char Cdr, char Ad) {
+      char Cs = premultiplyAlpha(Csr, As);
+      char Cd = premultiplyAlpha(Cdr, Ad);
+      return addPremulColorsSrcOver(Cs, As, Cd);
+}
+
+static int alphaComposition(int src, int dst) {
+      char As = (char)(src >> 24);
+      char Ad = (char)(dst >> 24);      
+      char Rsr = (char)(src >> 16);
+      char Rdr = (char)(dst >> 16);     
+      char Gsr = (char)(src >> 8);
+      char Gdr = (char)(dst >> 8);
+      char Bsr = (char)src;
+      char Bdr = (char)dst;
+      
+      char Rr = addColors(Rsr, As, Rdr, Ad);
+      char Gr = addColors(Gsr, As, Gdr, Ad);
+      char Br = addColors(Bsr, As, Bdr, Ad);
+      
+      return 0xff000000 | (((Rr&0xff) << 16) & 0xff0000) | (((Gr&0xff) << 8) & 0xff00) | (Br&0xff);
+}
+
 /** Draw image in RGB format */
 void
 gx_draw_rgb(const jshort *clip,
@@ -109,12 +143,12 @@ gx_draw_rgb(const jshort *clip,
 
         if (b >= clipY2) return;
         if (b <  clipY1) continue;
-
+	
         for (a = x; a < x + width; a++) {
 
             int value = rgbData[offset + (a - x) + dataRowIndex];
             int idx = sbufRowIndex + a;
-
+	    
             if (a >= clipX2) break;
             if (a < clipX1) {
                 // JAVA_TRACE("drawRGB:A OutOfBounds %d   %d %d %d %d\n", idx,
@@ -124,13 +158,9 @@ gx_draw_rgb(const jshort *clip,
                 if (!processAlpha || ((value & 0xff000000) == 0xff000000)) {
                     sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
                 } else {
-                    unsigned int xA =
-                        GXJ_XAAA8888_FROM_ARGB8888((unsigned int)value);
-                    unsigned int XAInv =
-                        (unsigned int)(((unsigned int)(0xFFFFFFFF)) - xA);
-                    sbuf->pixelData[idx] =
-                        GXJ_RGB24TORGB16((xA & value) |
-                            (XAInv & GXJ_RGB16TORGB24(sbuf->pixelData[idx])));
+		    int background = GXJ_RGB16TORGB24(sbuf->pixelData[idx]) | 0xff000000;
+		    int composition = alphaComposition(value, background);
+		    sbuf->pixelData[idx] = GXJ_RGB24TORGB16(composition);
                 }
             }
         } /* loop by rgb data columns */
