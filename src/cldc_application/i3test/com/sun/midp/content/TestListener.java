@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.content;
+package com.sun.j2me.content;
 
 import com.sun.midp.i3test.TestCase;
 

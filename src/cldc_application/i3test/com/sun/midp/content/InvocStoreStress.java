@@ -24,14 +24,14 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.content;
+package com.sun.j2me.content;
 
 import com.sun.midp.i3test.TestCase;
 
 import java.util.Random;
 
-import com.sun.midp.content.InvocationStore;
-import com.sun.midp.content.InvocationImpl;
+import com.sun.j2me.content.InvocationStore;
+import com.sun.j2me.content.InvocationImpl;
 
 import javax.microedition.content.Invocation;
 

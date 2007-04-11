@@ -24,7 +24,7 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.content;
+package com.sun.j2me.content;
 
 import com.sun.midp.i3test.TestCase;
 
@@ -129,7 +129,7 @@ public class TestInvocStore extends ExtendedTestCase {
     }
 
     /**
-     * Verify that each field of an {@link com.sun.midp.content.InvocationImpl}
+     * Verify that each field of an {@link com.sun.j2me.content.InvocationImpl}
      * can be set,
      * put into the store and retrieved and verified.
      * The only test is if the field is saved and restored
@@ -212,7 +212,7 @@ public class TestInvocStore extends ExtendedTestCase {
 
     /**
      * Verify that each field of an
-     * {@link com.sun.midp.content.InvocationImpl} can be set,
+     * {@link com.sun.j2me.content.InvocationImpl} can be set,
      * put into the store and retrieved and verified.
      * The only test is if the field is saved and restored
      * correctly for values of <code>null</code> and <code>non-null</code>.
@@ -401,8 +401,8 @@ public class TestInvocStore extends ExtendedTestCase {
 
     /**
      * Test that the selection based on request/response values works.
-     * Both the {@link com.sun.midp.content.InvocationStore#get} and
-     * {@link com.sun.midp.content.InvocationStore#listen}
+     * Both the {@link com.sun.j2me.content.InvocationStore#get} and
+     * {@link com.sun.j2me.content.InvocationStore#listen}
      * are tested at the same time.
      * Every status is put into the queue and then the response
      * status values are retrieved and verified. Then the active
@@ -555,7 +555,7 @@ public class TestInvocStore extends ExtendedTestCase {
 
         /*
 	 * Create one of each status and Verify that they can be
-	 * found by {@link com.sun.midp.content.InvocationStore#getByTid}.
+	 * found by {@link com.sun.j2me.content.InvocationStore#getByTid}.
 	 * GetByTid does not remove or modify the Invocations.
 	 */
 	InvocationImpl[] invoc = genEachStatus();

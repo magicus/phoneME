@@ -55,7 +55,7 @@ static jint initialized = -1;
 
 /** Classes fields */
 
-/** com.sun.midp.content.ContentHandlerImpl internal fields */
+/** com.sun.j2me.content.ContentHandlerImpl internal fields */
 static jfieldID chImplId = 0;       // ID,
              // also it is an uninitiaized state indicator
 
@@ -75,7 +75,7 @@ static jfieldID anMapActionnames;   // [] actionnames
 
 /**
  * Retrieves fields IDs for classes:
- * <BR> <code>com.sun.midp.content.ContentHandlerImpl</code> and
+ * <BR> <code>com.sun.j2me.content.ContentHandlerImpl</code> and
  * <BR> <code>javax.microedition.content.ActionNameMap</code>
  * @return KNI_OK - if successfully get all fields, KNI_ERR - otherwise
  */
@@ -92,7 +92,7 @@ static int initializeFields() {
 
     do {
         // 1. initialize ContentHandlerImpl fields
-        KNI_FindClass("com/sun/midp/content/ContentHandlerImpl", clObj);
+        KNI_FindClass("com/sun/j2me/content/ContentHandlerImpl", clObj);
         chImplId =          KNI_GetFieldID(clObj,  "ID", STRING_TYPE);
         chImplSuiteId =     KNI_GetFieldID(clObj,  "storageId", "I");
         chImplClassname =   KNI_GetFieldID(clObj,  "classname", STRING_TYPE);
