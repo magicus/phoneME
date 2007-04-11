@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "./configuration.dtd">
+<!--
+
+
+        Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+-->
+
+<configuration>
+<constants>
+
+<!--
+    Indentifiers for Suite Storage subsystem
+-->
+<constant_class Package="com.sun.midp.configurator" Name="Constants" Scope="public"
+    Comment="/** Indentifiers for the MIDP Storage subsystem */">
+ <constant Type="int"
+            Name="INTERNAL_STORAGE_ID"
+            Value="0"
+            NativeOnly="false"
+            Comment="Storage ID for the internal storage."/>
+ <constant Type="int"
+            Name="UNUSED_STORAGE_ID"
+            Value="(-1)"
+            NativeOnly="false"
+            Comment="Unused storage ID."/>
+</constant_class>
+
+</constants>
+</configuration>
