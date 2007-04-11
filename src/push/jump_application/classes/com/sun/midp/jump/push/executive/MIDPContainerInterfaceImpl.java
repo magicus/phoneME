@@ -61,6 +61,13 @@ final class MIDPContainerInterfaceImpl implements MIDPContainerInterface {
     }
 
     /** {@inheritDoc} */
+    public String [] listConnections(final int midletSuiteId,
+            final boolean available)
+                throws RemoteException {
+        return pushController.listConnections(midletSuiteId, available);
+    }
+
+    /** {@inheritDoc} */
     public String getMIDlet(
             final int midletSuiteID, final String connectionName)
                 throws RemoteException {
