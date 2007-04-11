@@ -33,12 +33,12 @@
 #
 #For 'midp' USE_MIDP and MIDP_JC_IMPL_PATH variables are used
 
-JSR_LIST = JSR_135 JSR_177
+JSR_LIST = JSR_120 JSR_135 JSR_177
 
 USE_MIDP=false
 
+JSR_120_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/linux_x86_cdc
 JSR_135_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/linux_x86_cdc
-
 JSR_177_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/linux_x86_cdc_simu
 
 #For each project location for basic definitions shall be specified
@@ -47,6 +47,10 @@ JAVACALL_PLATFORM_DEFS_DIR=$(JAVACALL_DIR)/implementation/linux_x86_cdc
 
 SOURCE_OUTPUT_LIST += $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h javacall/implementation/linux_x86_cdc
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/phoneMEAdvanced/linux_x86 javacall/configuration/phoneMEAdvanced
+
+ifeq ($(USE_JSR_120),true)
+SOURCE_OUTPUT_LIST += $(JSR_120_JC_IMPL_PATH)/$(JSR_120_JC_DIR) javacall/implementation/linux_x86_cdc
+endif
 
 ifeq ($(USE_JSR_135),true)
 SOURCE_OUTPUT_LIST += $(JSR_135_JC_IMPL_PATH)/$(JSR_135_JC_DIR) javacall/implementation/linux_x86_cdc
