@@ -29,6 +29,12 @@ package javax.microedition.lcdui;
 /* This is used to implement the communication between MIDlet and Display */
 import javax.microedition.midlet.MIDlet;
 
+import com.sun.midp.lcdui.DisplayFactory;
+
+import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.SecurityInitializer;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+
 // #ifndef ENABLE_CDC
 import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
@@ -463,6 +469,17 @@ public class Display {
  * ************* private member variables
  */
 
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {}
+
+    /** Security token to allow access to implementation APIs */
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
+
     /** Device Access manager. */
     private static DisplayDeviceAccess deviceAccess;
 
@@ -615,6 +632,16 @@ public class Display {
         java.security.AccessController.doPrivileged(
                  new sun.security.action.LoadLibraryAction("gci"));
         // #endif ENABLE_GCI
+
+        DisplayStaticAccess displayStaticAccess = 
+            new DisplayStaticAccess () {
+                public Display getDisplay(String owner) {
+                    return Display.getDisplay(owner);
+                }
+            };
+
+        DisplayFactory.setStaticDisplayAccess(classSecurityToken, 
+                                              displayStaticAccess);
     }
 
 
@@ -747,16 +774,7 @@ public class Display {
      * @throws NullPointerException if <code>m</code> is <code>null</code>
      */
     public static Display getDisplay(MIDlet m) {
-        String owner = m.getClass().getName();
-        DisplayAccess da = displayContainer.findDisplayByOwner(owner);
-
-        if (da != null) {
-            return da.getDisplay();
-        }
-
-        Display display = new Display(owner);
-
-        return display;
+        return getDisplay(m.getClass().getName());
     }
 
     /**
@@ -1431,6 +1449,28 @@ public class Display {
 /*
  * ************* package private methods
  */
+    /**
+     * Gets the <code>Display</code> object by owner name.
+     *
+     * @param owner name of the owner of the display, the owner can be
+     * 
+     * @return the display object that application can use for its user
+     * interface
+     *
+     * @throws NullPointerException if <code>owner</code> is <code>null</code>
+     */
+    static Display getDisplay(String owner) {
+        DisplayAccess da = displayContainer.findDisplayByOwner(owner);
+
+        if (da != null) {
+            return da.getDisplay();
+        }
+
+        Display display = new Display(owner);
+
+        return display;
+    }
+
     // #ifdef ENABLE_CHAMELEON
     void lSetTitle(DisplayableLF d, String title) {
         if (isShown(d)) {
