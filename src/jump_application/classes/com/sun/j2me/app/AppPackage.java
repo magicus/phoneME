@@ -45,7 +45,10 @@ public class AppPackage {
     public int getId() {
         return 0;
     }
-    
+
+    /** Unused ID */
+    public static final int UNUSED_APP_ID = -1;
+
     /**
      * Returns permission status for the specified permission
      *
