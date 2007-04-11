@@ -76,6 +76,25 @@ import com.sun.midp.security.SecurityToken;
 public class CHManager {
     /** The CHManager instance for this application context. */
     private static CHManager manager;
+    
+    static final String implClass = "com.sun.j2me.content.CHManagerImpl";
+    static {
+        try {
+            Class.forName(implClass);
+        } catch(Throwable t) {
+            // Class might not be found -- it's OK.
+        }
+    }
+
+    public static void setCHManager(SecurityToken classSecurityToken, CHManager imp) {
+
+        if (manager != null) {
+            throw new SecurityException(
+                    "CHManager implementation might be set only once.");
+        }
+
+        manager = imp;
+    }
 
     /**
      * Creates a new instance of CHInstaller.
@@ -94,6 +113,7 @@ public class CHManager {
      * @exception SecurityException if the token or suite is not allowed
      */
     public static CHManager getManager(SecurityToken token) {
+
         if (token != null) {
             token.checkIfPermissionAllowed(Permissions.MIDP);
         } else {
@@ -105,13 +125,7 @@ public class CHManager {
         }
 
 	if (manager == null) {
-	    try {
-		Class cl = Class.forName("com.sun.midp.content.CHManagerImpl");
-		manager = (CHManager)cl.newInstance();
-	    } catch (Exception t) {
-		// No real ContentHandler manager is available, return a noop
 		manager = new CHManager();
-	    }
 	}
 	return manager;
     }

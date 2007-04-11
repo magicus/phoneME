@@ -210,8 +210,7 @@ public final class SecurityInitializer {
         // #endif ENABLE_JSR_226
 
         // #ifdef ENABLE_JSR211
-        "javax.microedition.content.Registry$SecurityTrusted",
-        "com.sun.midp.content.RegistryImpl$SecurityTrusted",
+        "com.sun.j2me.content.CHManagerImpl$SecurityTrusted",
         // #endif ENABLE_JSR211
 
         // Pass the security token to the i3 test framework.
