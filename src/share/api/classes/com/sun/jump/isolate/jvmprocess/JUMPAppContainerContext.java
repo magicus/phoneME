@@ -30,6 +30,10 @@ package com.sun.jump.isolate.jvmprocess;
  * a container to discover information about its environment, as well
  * as a way to signal <code>JUMPApplication</code> state changes.
  *
+ * The implementation of the <code>JUMPAppContainerContext</code> should
+ * start off a non-daemon thread to ensure the process will not naturally die
+ * before the application's startApp() method is invoked.
+ *
  * @see <code>com.sun.jump.isolate.jvmprocess.JUMPAppContainer</code>
  */
 public interface JUMPAppContainerContext {
@@ -92,4 +96,9 @@ public interface JUMPAppContainerContext {
      * Called to terminate the isolate gracefully.
      */
     void terminateIsolate();
+
+    /**
+     * Called to terminate the non-daemon thread running in this context.
+     */
+    void terminateKeepAliveThread();
 }

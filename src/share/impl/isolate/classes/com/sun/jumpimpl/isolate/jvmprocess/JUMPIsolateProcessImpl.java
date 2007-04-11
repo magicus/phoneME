@@ -81,6 +81,7 @@ public class JUMPIsolateProcessImpl
     private Object stateChangeMutex = new Object();
     private boolean dispatchingStateChange;
     private boolean exitAfterStateChange;
+    private final KeepAliveMonitor keepAliveMonitor = new KeepAliveMonitor();
 
     protected JUMPIsolateProcessImpl() {
 	super();
@@ -183,8 +184,9 @@ public class JUMPIsolateProcessImpl
             //
             ipi.reportIsolateInitialized();
 
-            // Now we are ready. Drop off and let the message listener thread
-            // keep this JVM alive.
+            // Keep around the main thread  
+            ipi.keepAliveMonitor.startWaiting();
+
 	} catch (Throwable e) {
 	    e.printStackTrace();
 	    System.exit(-1);
@@ -458,4 +460,29 @@ public class JUMPIsolateProcessImpl
         JUMPResponse resp = new JUMPResponse(in.getType(), JUMPResponseInteger.ID_SUCCESS);
         return resp.toMessageInResponseTo(in, this);
     }
+
+    public void terminateKeepAliveThread() {
+       keepAliveMonitor.terminate();
+    }
+
+    static class KeepAliveMonitor {
+        private boolean keepAlive = true;
+        public synchronized void startWaiting() {
+           while (keepAlive) {
+              try {
+                  this.wait();
+              } catch (InterruptedException e){
+                  /*
+                   * Ignore InterruptedException and continue with the loop.
+                   * This thread should exit only if terminate() is invoked.
+                   */
+              }
+           }
+        }
+          
+        public synchronized void terminate() {
+           keepAlive = false; 
+           this.notifyAll();
+        }
+     }
 }

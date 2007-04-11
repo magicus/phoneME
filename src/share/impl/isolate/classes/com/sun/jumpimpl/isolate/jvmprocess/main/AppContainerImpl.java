@@ -49,23 +49,27 @@ import sun.misc.CDCAppClassLoader;
  * and after jump impl.
  */
 
-public class AppContainerImpl extends JUMPAppContainer {
+public class AppContainerImpl extends JUMPAppContainer implements Runnable {
+
+   private JUMPAppContainerContext context;
 
    public static JUMPAppContainer
        getInstance(JUMPAppContainerContext context) {
-	   return new AppContainerImpl(); 
+	   return new AppContainerImpl(context); 
    }
 
    public static final String CLASSPATH_KEY = "MAINApplication_classpath";
    public static final String INITIAL_CLASS_KEY = "MAINApplication_initialClass";
 
    private static JUMPApplication currentApp = null;
+   private String[] args;
 
     /**
      * Creates a new instance of JUMPAppContainer
      * For main app, there is only one per vm - ignore appId.
      */
-    public AppContainerImpl() {
+    public AppContainerImpl(JUMPAppContainerContext context) {
+         this.context = context;
     }
     
     /**
@@ -73,10 +77,26 @@ public class AppContainerImpl extends JUMPAppContainer {
      */
     public int startApp(JUMPApplication app, String[] mainArgs) {
 
-       try {
+         currentApp = app;
+         args = mainArgs;
+       
+         Thread t = new Thread(this);
+         t.setDaemon(false);
+         t.start();
 
-          String className = app.getProperty(INITIAL_CLASS_KEY);
-          String classPath = app.getProperty(CLASSPATH_KEY);
+         context.terminateKeepAliveThread();
+
+         return Integer.parseInt(app.getProperty(JUMPApplication.ID_KEY));
+    }
+
+    /**
+     * Invokes the application's main() method.
+     */
+    public void run() {
+
+       try {
+          String className = currentApp.getProperty(INITIAL_CLASS_KEY);
+          String classPath = currentApp.getProperty(CLASSPATH_KEY);
 
 	  StringTokenizer st = new StringTokenizer(classPath, File.pathSeparator); 
 	  int count = st.countTokens();
@@ -102,7 +122,7 @@ public class AppContainerImpl extends JUMPAppContainer {
 
 	     // Main app typically expect zero length array for the main(Str[]) 
 	     // parameter, instead of null. 
-	     String [] args2 = (mainArgs == null)? new String[0] : mainArgs;
+	     String [] args2 = (args == null)? new String[0] : args;
 
 	     Class mainClass = loader.loadClass(className);
 	     Method mainMethod = mainClass.getMethod("main", args1);
@@ -112,17 +132,13 @@ public class AppContainerImpl extends JUMPAppContainer {
              throw i.getTargetException();
           }
 
-	  currentApp = app;
-
        } catch (Throwable e) {
 	       if (e instanceof Error)
 		       throw (Error) e;
 
 	       e.printStackTrace();
-	       return -1;
        }
 
-       return Integer.parseInt(app.getProperty(JUMPApplication.ID_KEY));
     }
     
     public void pauseApp(int appId) {
@@ -136,8 +152,9 @@ public class AppContainerImpl extends JUMPAppContainer {
     public void destroyApp(int appId, boolean force) {
        System.out.println("Main AppContainer destroying " + currentApp);
 
-       // FIXME: How do I kill myself?
        currentApp = null;
+
+       context.terminateIsolate();
     }
     
     public void handleMessage(JUMPMessage message) {
