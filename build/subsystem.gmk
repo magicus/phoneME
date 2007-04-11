@@ -33,7 +33,7 @@
 #
 SUBSYSTEMS += chapi
 
-ifeq ($(TARGET_VM),cldc)
+ifeq ($(TARGET_VM),cldc_vm)
 JSR211_PLATFORM = cldc_application
 else
 JSR211_PLATFORM = jump_application

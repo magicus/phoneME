@@ -29,7 +29,6 @@
 #
 #####################################################################
 
-
 # Project speficic definitions
 ifndef PROJECT_JSR_211_DIR
 PROJECT_JSR_211_DIR=$(JSR_211_DIR)
