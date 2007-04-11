@@ -374,7 +374,7 @@ public class Protocol extends ProtocolBase {
              * Time to wake up receive thread.
              */
                 // Pick up the CBS message from the message pool.
-            length = receive0(m_imsgid, appPackage.getID(),
+            length = receive0(m_imsgid, appPackage.getId(),
                               connHandle, cbsPacket);
 
             if (length < 0) {
@@ -701,7 +701,7 @@ public class Protocol extends ProtocolBase {
         }
 
         try {
-            connHandle = open0(m_imsgid, appPackage.getID());
+            connHandle = open0(m_imsgid, appPackage.getId());
         } catch (IOException ioexcep) {
             m_mode = 0;
             throw new IOException("Unable to open CBS connection.");

@@ -325,7 +325,7 @@ public class Protocol extends ProtocolBase {
              * Time to wake up receive thread.
              */
             // Pick up the SMS message from the message pool.
-            length = receive0(m_iport, appPackage.getID(),
+            length = receive0(m_iport, appPackage.getId(),
                               connHandle, smsPacket);
 
 	    if (length >= 0) {
@@ -903,7 +903,7 @@ public class Protocol extends ProtocolBase {
 	url = name;
 
 	try {
-            connHandle = open0(host, appPackage.getID(), m_iport);
+            connHandle = open0(host, appPackage.getId(), m_iport);
 	} catch (IOException ioexcep) {
 	    m_mode = 0;
 	    throw new IOException("SMS connection cannot be opened");

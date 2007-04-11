@@ -72,15 +72,15 @@ SUBSYSTEM_PROTOCOL_MODULES += sms cbs
 
 # Jpp files that need pre-processing
 #
-$(GENERATED_DIR)/classes/javax/wireless/messaging/MessageConnection.java: \
+$(JSR_120_GENERATED_DIR)/classes/javax/wireless/messaging/MessageConnection.java: \
         $(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/MessageConnection.jpp
 	@$(call runjpp,$^,$@)
 
-$(GENERATED_DIR)/classes/com/sun/wma/TCKTest.java: \
+$(JSR_120_GENERATED_DIR)/classes/com/sun/wma/TCKTest.java: \
     $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/wma/TCKTest.jpp
 	@$(call runjpp,$^,$@)
 
-$(GENERATED_DIR)/classes/com/sun/tck/wma/MessageConnector.java: \
+$(JSR_120_GENERATED_DIR)/classes/com/sun/tck/wma/MessageConnector.java: \
     $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/MessageConnector.jpp
 	@$(call runjpp,$^,$@)
 
@@ -88,7 +88,7 @@ $(GENERATED_DIR)/classes/com/sun/tck/wma/MessageConnector.java: \
 #
 MODULE_JSR_120_COMMON_JAVA_FILES = \
     $(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/MessageListener.java \
-    $(GENERATED_DIR)/classes/javax/wireless/messaging/MessageConnection.java \
+    $(JSR_120_GENERATED_DIR)/classes/javax/wireless/messaging/MessageConnection.java \
     $(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/Message.java \
     $(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/BinaryMessage.java \
     $(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/TextMessage.java 
@@ -147,13 +147,13 @@ MODULE_JSR_120_CBS_JAVA_FILES = \
 # Java files for the (wmatool) module
 #
 MODULE_TOOL_WMATOOL_JAVA_FILES = \
-    $(GENERATED_DIR)/classes/com/sun/wma/TCKTest.java \
+    $(JSR_120_GENERATED_DIR)/classes/com/sun/wma/TCKTest.java \
     $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/wma/api/server/CBSServer.java \
     $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/BinaryMessage.java \
     $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/Connector.java \
     $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/Message.java \
     $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/MessageConnection.java \
-    $(GENERATED_DIR)/classes/com/sun/tck/wma/MessageConnector.java \
+    $(JSR_120_GENERATED_DIR)/classes/com/sun/tck/wma/MessageConnector.java \
     $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/MessageTransportConstants.java \
     $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/TextMessage.java \
     $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/PropLoader.java \
@@ -180,9 +180,9 @@ vpath % $(JSR_120_DIR)/src/jump_application/core/common/native/
 endif
 
 SUBSYSTEM_JSR_120_EXTRA_INCLUDES = \
-    -I$(JSR_120_DIR)/src/share/protocol/sms/native/share/inc \
-    -I$(JSR_120_DIR)/src/share/protocol/cbs/native/share/inc \
-    -I$(JSR_120_DIR)/src/share/core/common/native/share/inc
+    $(JSR_120_DIR)/src/share/protocol/sms/native/share/inc \
+    $(JSR_120_DIR)/src/share/protocol/cbs/native/share/inc \
+    $(JSR_120_DIR)/src/share/core/common/native/share/inc
 
 SUBSYSTEM_JSR_120_NATIVE_FILES += \
     bytePackUnpack.c \
@@ -246,8 +246,8 @@ endif
 
 #################################################################
 # Add java files to classes.zip
-$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_120_JAVA_FILES)
-	$(appendjavafiles)
+#$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_120_JAVA_FILES)
+#	$(appendjavafiles)
 
 # Internal paths for jsr 120 module
 #
@@ -265,7 +265,6 @@ endif
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_120_I3TEST_JAVA_FILES)
 JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_120_NATIVE_FILES)
 EXTRA_INCLUDES		+= $(SUBSYSTEM_JSR_120_EXTRA_INCLUDES)
-CVM_INCLUDES += $(SUBSYSTEM_JSR_205_EXTRA_INCLUDES)
 #################################################################
 
 WMATOOL_MAIN_CLASS = com.sun.wma.TCKTest
