@@ -1,0 +1,23 @@
+COPYRIGHT-01: Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+COPYRIGHT-02: DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+COPYRIGHT-03: 
+COPYRIGHT-04: This program is free software; you can redistribute it and/or
+COPYRIGHT-05: modify it under the terms of the GNU General Public License version
+COPYRIGHT-06: 2 only, as published by the Free Software Foundation. 
+COPYRIGHT-07: 
+COPYRIGHT-08: This program is distributed in the hope that it will be useful, but
+COPYRIGHT-09: WITHOUT ANY WARRANTY; without even the implied warranty of
+COPYRIGHT-10: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+COPYRIGHT-11: General Public License version 2 for more details (a copy is
+COPYRIGHT-12: included at /legal/license.txt). 
+COPYRIGHT-13: 
+COPYRIGHT-14: You should have received a copy of the GNU General Public License
+COPYRIGHT-15: version 2 along with this work; if not, write to the Free Software
+COPYRIGHT-16: Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+COPYRIGHT-17: 02110-1301 USA 
+COPYRIGHT-18: 
+COPYRIGHT-19: Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+COPYRIGHT-20: Clara, CA 95054 or visit www.sun.com if you need additional
+COPYRIGHT-21: information or have any questions. 
+Manifest-Version: 1.0
+Main-Class: personal.DemoFrame
