@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!--
+
+  @(#)package.html	1.6			06/10/25
+
+Copyright 2006 Sun Microsystems, Inc. All rights reserved.
+
+Sun Microsystems, Inc. has intellectual property rights relating to technology
+embodied in the product that is described in this document. In particular, and
+without limitation, these intellectual property rights may include one or more
+of the U.S. patents listed at http://www.sun.com/patents and one or more
+additional patents or pending patent applications in the U.S. and in other
+countries.
+U.S. Government Rights - Commercial software. Government users are subject to
+the Sun Microsystems, Inc. standard license agreement and applicable provisions
+of the FAR and its supplements.
+
+Use is subject to license terms.
+
+This distribution may include materials developed by third parties.Sun, Sun
+Microsystems, phoneME and Java are trademarks or registered trademarks of Sun
+Microsystems, Inc. in the U.S. and other countries.
+
+
+Copyright 2006 Sun Microsystems, Inc. Tous droits réservés.
+
+Sun Microsystems, Inc. détient les droits de propriété intellectuels relatifs à
+la technologie incorporée dans le produit qui est décrit dans ce document. En
+particulier, et ce sans limitation, ces droits de propriété intellectuelle
+peuvent inclure un ou plus des brevets américains listés à l'adresse
+http://www.sun.com/patents et un ou les brevets supplémentaires ou les
+applications de brevet en attente aux Etats - Unis et dans les autres pays.
+
+L'utilisation est soumise aux termes du contrat de licence.
+
+Cette distribution peut comprendre des composants développés par des tierces
+parties.
+
+Sun, Sun Microsystems, phoneME et Java sont des marques de fabrique ou des
+marques déposées de Sun Microsystems, Inc. aux Etats-Unis et dans d'autres pays.
+-->
+
+</head>
+<body bgcolor="white">
+
+Provides the classes and interfaces for the security framework.
+This includes classes that implement an easily configurable,
+fine-grained access control security architecture.
+This package also supports
+the generation and storage of cryptographic public key pairs,
+as well as a number of exportable cryptographic operations
+including those for message digest and signature generation.  Finally,
+this package provides classes that support signed/guarded objects
+and secure random number generation.
+
+Many of the classes provided in this package (the cryptographic
+and secure random number generator classes in particular) are
+provider-based.  The class itself defines a programming interface
+to which applications may write.  The implementations themselves may
+then be written by independent third-party vendors and plugged
+in seamlessly as needed.  Therefore application developers may
+take advantage of any number of provider-based implementations
+without having to add or rewrite code.
+
+<h2>Package Specification</h2>
+
+<ul>
+  <li>PKCS8: Private-Key Information Standard, Version 1.2, November 1993
+</ul>
+
+<h2>Related Documentation</h2>
+
+For further documentation, please see:
+<ul>
+   <LI><a href="../../../guide/security/spec/security-spec.doc.html"><b>
+Security Architecture</b></a>
+
+   <LI><a href="../../../guide/security/CryptoSpec.html"><b>
+Cryptography Architecture</b></a>
+
+   <LI><a href="../../../guide/security/HowToImplAProvider.html"><b>
+How to Implement a Provider
+for the Java Cryptography Architecture</b></a>
+
+   <LI><a href="../../../guide/security/PolicyFiles.html"><b>Default Policy Implementation and Policy File Syntax</b></a>
+
+   <LI><a href="../../../guide/security/permissions.html"><b>
+Policy Permissions</b></a>
+
+   <LI><a href="../../../guide/security/SecurityToolsSummary.html"><b>
+Security Tools Summary</b></a>
+
+   <LI><b>keytool</b>
+(<a href="../../../tooldocs/solaris/keytool.html">for Solaris</a>) (<a href="../../../tooldocs/win32/keytool.html">for Windows</a>)
+
+   <LI><b>jarsigner</b>
+(<a href="../../../tooldocs/solaris/jarsigner.html">for Solaris</a>) (<a href="../../../tooldocs/win32/jarsigner.html">for Windows</a>)
+
+</ul>
+
+@since JDK1.1
+</body>
+</html>
