@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE configuration SYSTEM "../configuration.dtd">
+<!--
+
+  Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+-->
+<configuration>
+<localized_strings Package="com.sun.midp.l10n" 
+    Name="LocalizedStringsBase" 
+    KeysClass="com.sun.midp.i18n.ResourceConstants" >
+<localized_string Key="AMS_PROJECT_NAME"
+                Value="phoneME Feature project"/>
+<localized_string Key="AMS_PROJECT_NAME_SHORT"
+                Value="phoneME Feature"/>
+</localized_strings>
+</configuration>
