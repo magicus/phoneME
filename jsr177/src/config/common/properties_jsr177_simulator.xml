@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "../common/configuration.dtd">
+<!--
+      
+
+    Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+    DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+-->
+
+<configuration>
+<properties>
+    <property Key="com.sun.midp.io.j2me.apdu.hostsandports"
+        Value="jcemulhost:9025,jcemulhost:9026"
+        Scope="internal"
+        Comment="Socket connection ports for JavaCard emulator."/>
+</properties>
+</configuration>
