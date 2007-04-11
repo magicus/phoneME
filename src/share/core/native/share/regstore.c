@@ -79,7 +79,7 @@ static jfieldID anMapActionnames;   // [] actionnames
  * <BR> <code>javax.microedition.content.ActionNameMap</code>
  * @return KNI_OK - if successfully get all fields, KNI_ERR - otherwise
  */
-static int initializeFields() {
+static int initializeFields(KNIDECLARGS jobject chObj) {
     static const char* STRING_TYPE = "Ljava/lang/String;";
     static const char* S_ARRAY_TYPE = "[Ljava/lang/String;";
     static const char* ANM_ARRAY_TYPE = 
@@ -92,7 +92,7 @@ static int initializeFields() {
 
     do {
         // 1. initialize ContentHandlerImpl fields
-        KNI_FindClass("com/sun/j2me/content/ContentHandlerImpl", clObj);
+        KNI_GetObjectClass(chObj, clObj);
         chImplId =          KNI_GetFieldID(clObj,  "ID", STRING_TYPE);
         chImplSuiteId =     KNI_GetFieldID(clObj,  "storageId", "I");
         chImplClassname =   KNI_GetFieldID(clObj,  "classname", STRING_TYPE);
@@ -158,7 +158,7 @@ static int initializeFields() {
  * @return number of retrieved strings
  * <BR>KNI_ENOMEM - indicates memory allocation error
  */
-static int getStringArray(jobjectArray arrObj, pcsl_string** arrPtr) {
+static int getStringArray(KNIDECLARGS jobjectArray arrObj, pcsl_string** arrPtr) {
     int i, n = 0;
     pcsl_string* arr;
 
@@ -273,7 +273,7 @@ static int fillActionMap(jobject o, JSR211_content_handler* handler) {
  * @return KNI_OK - if successfully get all fields, 
  * KNI_ERR or KNI_ENOMEM - otherwise
  */
-static int fillHandlerData(jobject o, JSR211_content_handler* handler) {
+static int fillHandlerData(KNIDECLARGS jobject o, JSR211_content_handler* handler) {
     int ret;    // returned result code
     KNI_StartHandles(1);
     KNI_DeclareHandle(fldObj);   // field object
@@ -306,7 +306,7 @@ static int fillHandlerData(jobject o, JSR211_content_handler* handler) {
 
         // types
         KNI_GetObjectField(o, chImplTypes, fldObj);
-        handler->type_num = getStringArray(fldObj, &(handler->types));
+        handler->type_num = getStringArray(KNIPASSARGS fldObj, &(handler->types));
         if (handler->type_num < 0) {
             ret = KNI_ENOMEM;
             break;
@@ -314,7 +314,7 @@ static int fillHandlerData(jobject o, JSR211_content_handler* handler) {
 
         // suffixes        
         KNI_GetObjectField(o, chImplSuffixes, fldObj);
-        handler->suff_num = getStringArray(fldObj, &(handler->suffixes));
+        handler->suff_num = getStringArray(KNIPASSARGS fldObj, &(handler->suffixes));
         if (handler->suff_num < 0) {
             ret = KNI_ENOMEM;
             break;
@@ -322,7 +322,7 @@ static int fillHandlerData(jobject o, JSR211_content_handler* handler) {
 
         // actions
         KNI_GetObjectField(o, chImplActions, fldObj);
-        handler->act_num = getStringArray(fldObj, &(handler->actions));
+        handler->act_num = getStringArray(KNIPASSARGS fldObj, &(handler->actions));
         if (handler->act_num < 0) {
             ret = KNI_ENOMEM;
             break;
@@ -339,7 +339,7 @@ static int fillHandlerData(jobject o, JSR211_content_handler* handler) {
 
         // accesses
         KNI_GetObjectField(o, chImplAccesses, fldObj);
-        handler->access_num = getStringArray(fldObj, &(handler->accesses));
+        handler->access_num = getStringArray(KNIPASSARGS fldObj, &(handler->accesses));
         if (handler->access_num < 0) {
             ret = KNI_ENOMEM;
             break;
@@ -532,7 +532,7 @@ jsr211_result jsr211_fillStringArray(const pcsl_string* strArr, int length,
  * It is safe to call this function after detecting out-of-memory error
  * provided that buf is set to _JSR211_RESULT_INITIALIZER_
  */
-static void result2string(_JSR211_INTERNAL_RESULT_BUFFER_* buf, jstring str) {
+static void result2string(KNIDECLARGS _JSR211_INTERNAL_RESULT_BUFFER_* buf, jstring str) {
     if (buf->len > 0 && buf->buf != NULL) {
         KNI_NewString(buf->buf, buf->len, str);
         pcsl_mem_free(buf->buf);
@@ -549,7 +549,7 @@ static void result2string(_JSR211_INTERNAL_RESULT_BUFFER_* buf, jstring str) {
  *  private native boolean register0(ContentHandlerImpl contentHandler);
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_j2me_content_RegistryStore_register0(void) {
+KNIDECL(com_sun_j2me_content_RegistryStore_register0) {
     int res = KNI_OK;
     JSR211_content_handler handler = JSR211_CONTENT_HANDLER_INITIALIZER;
 
@@ -559,7 +559,7 @@ Java_com_sun_j2me_content_RegistryStore_register0(void) {
 
     do {
         if (chImplId == 0) {
-            res = initializeFields();
+            res = initializeFields(KNIPASSARGS chObj);
             if (res != KNI_OK) {
                 KNI_ThrowNew(midpRuntimeException, 
                         "Can't initialize JSR211 class fields");
@@ -567,7 +567,7 @@ Java_com_sun_j2me_content_RegistryStore_register0(void) {
             }
         }
 
-        res = fillHandlerData(chObj, &handler);
+        res = fillHandlerData(KNIPASSARGS chObj, &handler);
         if (res != KNI_OK) {
             if (res == KNI_ENOMEM) {
                 KNI_ThrowNew(midpOutOfMemoryError, 
@@ -591,7 +591,7 @@ Java_com_sun_j2me_content_RegistryStore_register0(void) {
  *  private native boolean unregister(String handlerId);
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_j2me_content_RegistryStore_unregister0(void) {
+KNIDECL(com_sun_j2me_content_RegistryStore_unregister0) {
     int ret = KNI_FALSE;
     pcsl_string id = PCSL_STRING_NULL_INITIALIZER;
 
@@ -625,7 +625,7 @@ Java_com_sun_j2me_content_RegistryStore_unregister0(void) {
  *                                      String value);
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_j2me_content_RegistryStore_findHandler0(void) {
+KNIDECL(com_sun_j2me_content_RegistryStore_findHandler0) {
     pcsl_string callerId = PCSL_STRING_NULL_INITIALIZER;
     jsr211_field searchBy;
     pcsl_string value = PCSL_STRING_NULL_INITIALIZER;
@@ -652,7 +652,7 @@ Java_com_sun_j2me_content_RegistryStore_findHandler0(void) {
 
     pcsl_string_free(&value);
     pcsl_string_free(&callerId);
-    result2string((_JSR211_INTERNAL_RESULT_BUFFER_*)&result, valueObj);
+    result2string(KNIPASSARGS (_JSR211_INTERNAL_RESULT_BUFFER_*)&result, valueObj);
 
     KNI_EndHandlesAndReturnObject(valueObj);
 }
@@ -662,7 +662,7 @@ Java_com_sun_j2me_content_RegistryStore_findHandler0(void) {
  *   private native String forSuite0(int suiteId);
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_j2me_content_RegistryStore_forSuite0(void) {
+KNIDECL(com_sun_j2me_content_RegistryStore_forSuite0) {
     JSR211_RESULT_CHARRAY result = _JSR211_RESULT_INITIALIZER_;
     SuiteIdType suiteId;
 
@@ -671,7 +671,7 @@ Java_com_sun_j2me_content_RegistryStore_forSuite0(void) {
 
     suiteId = (jsr211_field) KNI_GetParameterAsInt(1);
     jsr211_find_for_suite(suiteId, &result);
-    result2string((_JSR211_INTERNAL_RESULT_BUFFER_*)&result, strObj);
+    result2string(KNIPASSARGS (_JSR211_INTERNAL_RESULT_BUFFER_*)&result, strObj);
 
     KNI_EndHandlesAndReturnObject(strObj);
 }
@@ -681,7 +681,7 @@ Java_com_sun_j2me_content_RegistryStore_forSuite0(void) {
  *  private native String getByURL0(String callerId, String url, String action);
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_j2me_content_RegistryStore_getByURL0(void) {
+KNIDECL(com_sun_j2me_content_RegistryStore_getByURL0) {
     pcsl_string callerId = PCSL_STRING_NULL_INITIALIZER;
     pcsl_string url = PCSL_STRING_NULL_INITIALIZER;
     pcsl_string action = PCSL_STRING_NULL_INITIALIZER;
@@ -711,7 +711,7 @@ Java_com_sun_j2me_content_RegistryStore_getByURL0(void) {
     pcsl_string_free(&action);
     pcsl_string_free(&url);
     pcsl_string_free(&callerId);
-    result2string((_JSR211_INTERNAL_RESULT_BUFFER_*)&result, resultObj);
+    result2string(KNIPASSARGS (_JSR211_INTERNAL_RESULT_BUFFER_*)&result, resultObj);
 
     KNI_EndHandlesAndReturnObject(resultObj);
 }
@@ -742,7 +742,7 @@ Java_com_sun_j2me_content_RegistryStore_getValues0(void) {
     } while (0);
 
     pcsl_string_free(&callerId);
-    result2string((_JSR211_INTERNAL_RESULT_BUFFER_*)&result, strObj);
+    result2string(KNIPASSARGS (_JSR211_INTERNAL_RESULT_BUFFER_*)&result, strObj);
 
     KNI_EndHandlesAndReturnObject(strObj);
 }
@@ -752,7 +752,7 @@ Java_com_sun_j2me_content_RegistryStore_getValues0(void) {
   * private native String getHandler0(String callerId, String id, int mode);
   */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_j2me_content_RegistryStore_getHandler0(void) {
+KNIDECL(com_sun_j2me_content_RegistryStore_getHandler0) {
     int mode;
     pcsl_string callerId = PCSL_STRING_NULL_INITIALIZER;
     pcsl_string id = PCSL_STRING_NULL_INITIALIZER;
@@ -778,7 +778,7 @@ Java_com_sun_j2me_content_RegistryStore_getHandler0(void) {
 
     pcsl_string_free(&callerId);
     pcsl_string_free(&id);
-    result2string((_JSR211_INTERNAL_RESULT_BUFFER_*)&handler, handlerObj);
+    result2string(KNIPASSARGS (_JSR211_INTERNAL_RESULT_BUFFER_*)&handler, handlerObj);
 
     KNI_EndHandlesAndReturnObject(handlerObj);
 }
@@ -788,7 +788,7 @@ Java_com_sun_j2me_content_RegistryStore_getHandler0(void) {
  *     private native String loadFieldValues0(String handlerId, int fieldId);
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_j2me_content_RegistryStore_loadFieldValues0(void) {
+KNIDECL(com_sun_j2me_content_RegistryStore_loadFieldValues0) {
     int fieldId;
     pcsl_string id = PCSL_STRING_NULL_INITIALIZER;
     JSR211_RESULT_STRARRAY result = _JSR211_RESULT_INITIALIZER_;
@@ -801,7 +801,7 @@ Java_com_sun_j2me_content_RegistryStore_loadFieldValues0(void) {
         fieldId = KNI_GetParameterAsInt(2);
         jsr211_get_handler_field(&id, fieldId, &result);
         pcsl_string_free(&id);
-        result2string((_JSR211_INTERNAL_RESULT_BUFFER_*)&result, strObj);
+        result2string(KNIPASSARGS (_JSR211_INTERNAL_RESULT_BUFFER_*)&result, strObj);
     } else {
         KNI_ThrowNew(midpOutOfMemoryError, 
                    "RegistryStore_loadFieldValues0 no memory for handler ID");
@@ -816,7 +816,7 @@ Java_com_sun_j2me_content_RegistryStore_loadFieldValues0(void) {
  * private native int launch0(String handlerId);
  */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_j2me_content_RegistryStore_launch0(void) {
+KNIDECL(com_sun_j2me_content_RegistryStore_launch0) {
     pcsl_string id = PCSL_STRING_NULL_INITIALIZER;
     jsr211_launch_result result;
 
@@ -842,7 +842,7 @@ Java_com_sun_j2me_content_RegistryStore_launch0(void) {
  * private native static boolean init();
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_j2me_content_RegistryStore_init(void) {
+KNIDECL(com_sun_j2me_content_RegistryStore_init) {
     jboolean ret = KNI_TRUE;
 
     if (initialized < 0) {
@@ -870,7 +870,7 @@ Java_com_sun_j2me_content_RegistryStore_init(void) {
  * @param this The <code>RegistryStore</code> Object to be finalized.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_j2me_content_RegistryStore_finalize() {
+KNIDECL(com_sun_j2me_content_RegistryStore_finalize) {
 
     initialized--;
 
