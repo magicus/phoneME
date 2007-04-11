@@ -33,10 +33,10 @@
 #
 SUBSYSTEMS += chapi
 
-ifeq ($(TARGET_VM),jump_vm)
-JSR211_PLATFORM = jump_application
-else
+ifeq ($(TARGET_VM),cldc)
 JSR211_PLATFORM = cldc_application
+else
+JSR211_PLATFORM = jump_application
 endif 
 
 include $(JSR_211_DIR)/build/$(JSR211_PLATFORM)/subsystem.gmk
