@@ -1903,6 +1903,9 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 }
                 if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
                     viewable[Y] = viewable[HEIGHT] - viewport[HEIGHT];
+                    if (viewable[Y] < 0) {
+                         viewable[Y] = 0;
+                    }
                 }
                 return true;
             default:
