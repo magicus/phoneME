@@ -1,0 +1,29 @@
+# Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+# Font parameters:
+        
+# width height ascent descent leading
+@ 9 14 11 3 0
+# high_byte first_code_low_byte last_code_low_byte
+% 20 ac ac
+#----------
+: 20ac
+#----------
+         .
+         .
+    ***  .
+   *   * .
+  *      .
+ ******  .
+  *      .
+ ******  .
+  *      .
+   *   * .
+    ***  .
+         .
+         .
+         .
+#----------
+
+
