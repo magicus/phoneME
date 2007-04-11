@@ -1,0 +1,100 @@
+#
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+#
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+############################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+############################################################
+
+# Local module directory
+CDC_AMS_DIR = $(SUBSYSTEM_AMS_DIR)/cdc_application
+
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(CDC_AMS_DIR)/classes
+
+# Java files for the sub-system
+SUBSYSTEM_AMS_JAVA_FILES += \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/content/CHManager.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/installer/OtaNotifier.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CDCInit.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcMIDletLoader.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcMIDletSuiteLoader.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletAppImageGenerator.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java
+
+vpath % $(CDC_AMS_DIR)/native
+
+SUBSYSTEM_AMS_NATIVE_FILES += \
+   CdcMIDletSuiteLoader.c
+
+ifdef INCLUDE_SHELL_SCRIPTS
+  ifeq ($(CVM_PRELOAD_LIB), true)
+  #
+  # This is a ROMized build. MIDP natives are linked into CVM executable. No
+  # need to create a separate libmidp.so.
+  #
+  $(BINDIR)/runMidlet: $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
+	@rm -f $@
+	@echo " ... creating script  " $@ $(LOG)
+	$(A)echo ${CDC_DIST_DIR}/bin/cvm \
+	-Dsun.midp.home.path=${MIDP_OUTPUT_DIR} \
+	-Dmicroedition.profiles=MIDP-2.0 \
+	-Dcom.sun.midp.mainClass.name=com.sun.midp.main.CdcMIDletSuiteLoader \
+	sun.misc.MIDPLauncher \
+	'$$*' > $@
+	$(A)chmod a+x $@
+  else
+  #
+  # Create a libmidp.so for non-ROMized build.
+  #
+  $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX): \
+    $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
+	@echo " ... linking $@ " $(LOG)
+	@$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
+	  $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES) $(LIBS))` $(LOG)
+
+  $(BINDIR)/runMidlet: $(BINDIR)/libmidp$(g)$(p)$(SHARED_LIB_SUFFIX)
+	@rm -f $@
+	@echo " ... creating script $@ " $(LOG)
+	$(A)echo ${CDC_DIST_DIR}/bin/cvm \
+	-Dsun.midp.library.name=midp$(p) \
+	-Dsun.midp.home.path=${MIDP_OUTPUT_DIR} \
+	-Dmicroedition.profiles=MIDP-2.0 \
+	-Dcom.sun.midp.mainClass.name=com.sun.midp.main.CdcMIDletSuiteLoader \
+	sun.misc.MIDPLauncher -midppath ${MIDP_OUTPUT_DIR}/classes.zip \
+	'$$*' > $@
+	$(A)chmod a+x $@
+  endif
+
+  SUBSYSTEM_AMS_EXECUTABLES += \
+    $(BINDIR)/runMidlet \
+    $(BINDIR)/autotest.sh \
+    $(BINDIR)/installMidlet
+endif
+

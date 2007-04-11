@@ -1,0 +1,142 @@
+#
+#  
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+######################################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+######################################################################
+
+# Adds to local variable and  to global SUBSYSTEMS list
+#
+SUBSYSTEM_NAME = ams
+SUBSYSTEMS += $(SUBSYSTEM_NAME)
+
+ifeq ($(USE_NATIVE_AMS), true)
+SUBSYSTEM_AMS_MODULES = nams
+else
+SUBSYSTEM_AMS_MODULES = jams
+endif
+
+SUBSYSTEM_AMS_DIR = $(SUBSYSTEM_DIR)/ams
+PROJECT_SUBSYSTEM_AMS_DIR = $(PROJECT_SUBSYSTEM_DIR)/ams
+
+SUBSYSTEM_AMS_PACKAGES = \
+    javax.microedition.midlet \
+    com.sun.midp.main \
+    com.sun.midp.midlet \
+    com.sun.midp.midletsuite \
+    com.sun.midp.installer 
+
+ifeq ($(TARGET_VM), cldc_vm)
+SUBSYSTEM_AMS_PACKAGES += \
+    com.sun.midp.appmanager
+endif
+
+# echo $(MIDP_JAVADOC_PACKAGES) | tr ' ' '\n' | sort | uniq
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_AMS_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES += $(SUBSYSTEM_AMS_PACKAGES)
+
+MIDP_JAVADOC_ALL += \
+    -group "AMS Libraries" \
+    $(shell echo $(SUBSYSTEM_AMS_PACKAGES) | tr ' ' $(PATHSEP))
+
+
+# Initialize a variable containing a list of Java files for the module
+SUBSYSTEM_AMS_JAVA_FILES =
+
+# Initialize a variable containing a list of directories where to find
+# AMS-specific include files
+SUBSYSTEM_AMS_EXTRA_INCLUDES =
+
+# i3 tests
+ifeq ($(USE_I3_TEST), true)
+SUBSYSTEM_AMS_I3TEST_JAVA_FILES =
+endif
+
+# AppManagerUI depends on jams (AppManager)
+
+include $(SUBSYSTEM_AMS_DIR)/ams_api/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/ams_base/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/midlet_suite_info/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/suitestore/subsystem.gmk
+
+ifneq ($(CVM_INCLUDE_JUMP), true)
+   include $(SUBSYSTEM_AMS_DIR)/ota/lib.gmk
+   include $(SUBSYSTEM_AMS_DIR)/installer/lib.gmk
+endif
+
+ifeq ($(TARGET_VM), cldc_vm)
+include $(SUBSYSTEM_AMS_DIR)/ams_util/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/ams_jsr_interface/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/app_image_gen_base/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/app_image_gen/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/autotester_base/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/autotester/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/platform_request/lib.gmk
+
+ifeq ($(USE_NATIVE_AMS), false)
+    include $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources/lib.gmk
+    include $(SUBSYSTEM_AMS_DIR)/appmanager_ui/lib.gmk
+endif
+
+# Add VM mode specific common files
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+include $(SUBSYSTEM_AMS_DIR)/mvm/lib.gmk
+endif
+
+# Defines for (jams/nams) module
+include $(SUBSYSTEM_AMS_DIR)/$(SUBSYSTEM_AMS_MODULES)/lib.gmk
+endif
+
+# Examples
+ifneq ($(CVM_INCLUDE_JUMP), true)
+ifneq ($(TARGET_PLATFORM), stubs)
+include $(SUBSYSTEM_AMS_DIR)/example/$(SUBSYSTEM_AMS_MODULES)/lib.gmk
+else
+ifeq ($(SUBSYSTEM_AMS_MODULES), jams)
+include $(SUBSYSTEM_AMS_DIR)/example/$(SUBSYSTEM_AMS_MODULES)/lib.gmk
+endif
+endif
+
+ifeq ($(SUBSYSTEM_AMS_MODULES), jams)
+include $(SUBSYSTEM_AMS_DIR)/example/$(SUBSYSTEM_AMS_MODULES)_port/lib.gmk
+endif
+endif
+
+# CDC specific files
+ifeq ($(TARGET_VM), cdc_vm)
+   ifeq ($(CVM_INCLUDE_JUMP), true)
+      include $(SUBSYSTEM_AMS_DIR)/jump_application/lib.gmk
+   else
+      include $(SUBSYSTEM_AMS_DIR)/cdc_application/lib.gmk
+   endif
+endif
+
