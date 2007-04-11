@@ -127,12 +127,13 @@ final class ConnectionRegistry {
             throw new ConnectionNotFoundException(
                     "protocol isn't supported by jump");
         }
-        // TBD: IXC call
 
         /*
-         * Should never get here currently as <code>checkRegistration</code>
-         * should abort registration earlier
+         * IMPL_NOTE: as <code>RemoteException</code> is a subclass
+         * of <code>IOException</code>, it's ok to let it out
          */
+        getRemoteInterface()
+            .registerConnection(midletSuite.getID(), midlet, jd);
     }
 
     /**
@@ -152,8 +153,13 @@ final class ConnectionRegistry {
     public static boolean unregisterConnection(
             final MIDletSuite midletSuite,
             final String connection) {
-        // As we cannot register connections, we cannot unregister them as well
-        return false;
+        try {
+            return getRemoteInterface()
+                .unregisterConnection(midletSuite.getID(), connection);
+        } catch (RemoteException re) {
+            // Return reasonable default value
+            return false;
+        }
     }
 
     /**
@@ -173,8 +179,13 @@ final class ConnectionRegistry {
     public static String [] listConnections(
             final MIDletSuite midletSuite,
             final boolean available) {
-        // No connections so far
-        return new String [0];
+        try {
+            return getRemoteInterface()
+                .listConnections(midletSuite.getID(), available);
+        } catch (RemoteException re) {
+            // Return reasonable default value
+            return new String [0];
+        }
     }
 
     /**
@@ -185,13 +196,22 @@ final class ConnectionRegistry {
      * <code>javax.microedition.io.PushRegistry.getMIDlet</code>
      * </p>
      *
+     * @param midletSuite <code>MIDlet</code> suite to fetch info for
+     * (cannot be <code>null</code>)
+     *
      * @param connection Connection to look <code>MIDlet</code> for
      *
      * @return <code>MIDlet</code> name
      */
-    public static String getMIDlet(final String connection) {
-        // As we cannot register connections for now...
-        return null;
+    public static String getMIDlet(
+            final MIDletSuite midletSuite, final String connection) {
+        try {
+            return getRemoteInterface()
+                .getMIDlet(midletSuite.getID(), connection);
+        } catch (RemoteException re) {
+            // Return reasonable default value
+            return null;
+        }
     }
 
     /**
@@ -202,13 +222,22 @@ final class ConnectionRegistry {
      * <code>javax.microedition.io.PushRegistry.getFilter</code>
      * </p>
      *
+     * @param midletSuite <code>MIDlet</code> suite to fetch info for
+     * (cannot be <code>null</code>)
+     *
      * @param connection Connection to look a filter for
      *
      * @return Filter
      */
-    public static String getFilter(final String connection) {
-        // As we cannot register connections for now...
-        return null;
+    public static String getFilter(
+            final MIDletSuite midletSuite, final String connection) {
+        try {
+            return getRemoteInterface()
+                .getFilter(midletSuite.getID(), connection);
+        } catch (RemoteException re) {
+            // Return reasonable default value
+            return null;
+        }
     }
 
     /**
@@ -236,11 +265,10 @@ final class ConnectionRegistry {
             final long time)
             throws ClassNotFoundException, ConnectionNotFoundException {
         try {
-            return remoteInterfaceHelper
-                    .getRemoteInterface()
-                    .registerAlarm(midletSuite.getID(), midlet, time);
+            return getRemoteInterface()
+                .registerAlarm(midletSuite.getID(), midlet, time);
         } catch (RemoteException re) {
-            // The only thing we can do:
+            // Rethrow it as CNFE---best thing that can be done
             throw new ConnectionNotFoundException("IXC failure: " + re);
         }
     }
@@ -263,6 +291,15 @@ final class ConnectionRegistry {
             logWarning("application class loader is null");
         }
         return Class.forName(className, true, appClassLoader);
+    }
+
+    /**
+     * Fetches remote interafce to talk to the executive.
+     *
+     * @return remote interface instance (cannot be <code>null</code>)
+     */
+    private static MIDPContainerInterface getRemoteInterface() {
+        return remoteInterfaceHelper.getRemoteInterface();
     }
 
     /**

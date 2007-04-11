@@ -137,6 +137,8 @@ public class MIDletContainer extends JUMPAppContainer implements
         lcduiEnvironment = new LCDUIEnvironmentForCDC(internalSecurityToken, 
 						      eventQueue, 0, this);
 
+        displayContainer = lcduiEnvironment.getDisplayContainer();
+
         suiteStorage =
             MIDletSuiteStorage.getMIDletSuiteStorage(internalSecurityToken);
 

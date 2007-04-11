@@ -254,7 +254,12 @@ public final class PushRegistryImpl {
             return null;
         }
 
-        return ConnectionRegistry.getMIDlet(connection);
+        final MIDletSuite midletSuite = getMIDletSuite();
+        if (midletSuite == null) {
+            throw new IllegalStateException("Not in a MIDlet context");
+        }
+
+        return ConnectionRegistry.getMIDlet(midletSuite, connection);
     }
 
     /**
@@ -277,7 +282,12 @@ public final class PushRegistryImpl {
             return null;
         }
 
-        return ConnectionRegistry.getFilter(connection);
+        final MIDletSuite midletSuite = getMIDletSuite();
+        if (midletSuite == null) {
+            throw new IllegalStateException("Not in a MIDlet context");
+        }
+
+        return ConnectionRegistry.getFilter(midletSuite, connection);
     }
 
     /**
