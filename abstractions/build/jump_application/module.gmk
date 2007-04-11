@@ -1,0 +1,160 @@
+#
+#   
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+# dirs containing native source files
+ABSTRACTIONS_SRCDIRS = \
+	$(ABSTRACTIONS_DIR)/src/jump_application/native/share \
+  	$(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_OS)
+
+# names of native source files (like 'file.c')
+ABSTRACTIONS_NATIVES = \
+	KNIAppIsolate.c \
+	native_crypto.c \
+	internal_props.c \
+	exceptions.c \
+	bnlib.c
+
+# dirs containing hative header files (.h)
+ABSTRACTIONS_INCLUDES = \
+    -I$(ABSTRACTIONS_DIR)/src/include \
+    -I$(ABSTRACTIONS_DIR)/src/jump_application/native/include \
+    -I$(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_OS)
+
+# start dirs for java source trees
+ABSTRACTIONS_JAVASRCDIRS = \
+        $(ABSTRACTIONS_DIR)/src/jump_application/classes
+
+# classes
+ABSTRACTIONS_CLASSES = \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/app/AppPackage.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/app/AppIsolate.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/app/AppModel.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/log/LogChannels.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/log/Logging.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/main/Configuration.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/PIMPermission.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/Permission.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/FileConnectionPermission.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/SatsaPermission.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/io/Base64.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseInterface.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseAdapter.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/io/FileAccess.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/io/PrivilegedConnector.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/ResourceConstants.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/dialog/Dialog.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/dialog/MessageDialog.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/Cipher.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchPaddingException.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchAlgorithmException.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/InvalidKeyException.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/InvalidAlgorithmParameterException.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/ShortBufferException.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/BadPaddingException.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/IllegalBlockSizeException.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/DES.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/AES_ECB.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/DES_ECB.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/ARC4.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/DES_CBC.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/RSA.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/RSAKey.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/RSAPrivateKey.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/RSAPublicKey.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/SecretKey.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/BlockCipherBase.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/DESEDE.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/AES.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/AES_CBC.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/Padder.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/PKCS5Padding.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/IvParameter.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/CryptoParameter.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/Util.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/PRand.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/SecureRandom.java \
+
+ifeq ($(USE_JUMP_SHARED_MEMORY), true)
+ABSTRACTIONS_NATIVES += \
+    shared_memory.c \
+    shared_memory_md.c
+endif
+ifeq ($(USE_JUMP_EVENTS), true)
+ABSTRACTIONS_NATIVES += \
+    jump_events_impl.c
+endif
+
+#####################################################
+ABSTRACTIONS_NATIVE_OBJS     = $(patsubst %.c,$(CVM_OBJDIR)/%.o,$(ABSTRACTIONS_NATIVES))
+ABSTRACTIONS_CLASSDIR        = $(CVM_BUILD_TOP)/abstracts_classes
+ABSTRACTIONS_JAR             = $(CVM_LIBDIR)/abstractions.jar
+ABSTRACTIONS_LIB_NAME        = abstractions
+ABSTRACTIONS_NATIVE_LIBRARY  = $(CVM_LIBDIR)/$(LIB_PREFIX)$(ABSTRACTIONS_LIB_NAME)$(LIB_POSTFIX)
+
+ifneq ($(CVM_PRELOAD_LIB), true)
+JSROP_LINKLIBS += -l$(ABSTRACTIONS_LIB_NAME)$(DEBUG_POSTFIX)
+endif
+
+CVM_INCLUDES += $(ABSTRACTIONS_INCLUDES)
+CVM_SRCDIRS  += $(ABSTRACTIONS_SRCDIRS)
+
+JSROP_NATIVE_OBJS += $(ABSTRACTIONS_NATIVE_OBJS)
+JSROP_NATIVE_LIBS += $(ABSTRACTIONS_NATIVE_LIBRARY)
+
+CVM_CNI_CLASSES += com.sun.j2me.crypto.ARC4 \
+                   com.sun.j2me.crypto.RSA
+
+$(ABSTRACTIONS_JAR): $(ABSTRACTIONS_CLASSES) $(MIDP_CLASSESZIP)
+	@echo "Compiling JSROP abstractions classes..."
+	$(AT)mkdir -p $(ABSTRACTIONS_CLASSDIR)
+	$(AT)$(JAVAC_CMD)						\
+		-d $(ABSTRACTIONS_CLASSDIR)			\
+		-bootclasspath $(CVM_BUILDTIME_CLASSESDIR) 	\
+		-classpath $(JAVACLASSES_CLASSPATH)$(PS)$(MIDP_CLASSESZIP)\
+		$(ABSTRACTIONS_CLASSES)
+	$(AT)$(CVM_JAR) cf $@ -C $(ABSTRACTIONS_CLASSDIR) .
+
+$(ABSTRACTIONS_NATIVE_LIBRARY) :: $(ABSTRACTIONS_NATIVE_OBJS)
+	@echo "Linking $@"
+	$(SO_LINK_CMD)
+
+printconfig::
+	@echo "ABSTRACTIONS_DIR      = $(ABSTRACTIONS_DIR)"
+	@echo "ABSTRACTIONS_INCLUDES = $(ABSTRACTIONS_INCLUDES)"
+
+# Append abstractions source bundle creation to target
+source_bundle:: abstractions_source_bundle
+
+# Create abstractions source in subdir
+ABSTRACTIONS_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/abstractions
+
+# Copy and filter abstractions source in ABSTRACTIONS_SOURCE_OUTPUT_DIR
+abstractions_source_bundle: $(ABSTRACTIONS_DIR)
+	@echo " ... abstractions source bundle" $(LOG)
+	@$(call source_bundle_filter,$(ABSTRACTIONS_DIR),$(ABSTRACTIONS_SOURCE_OUTPUT_DIR),src build)
+
+
