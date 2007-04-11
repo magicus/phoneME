@@ -24,8 +24,8 @@
  * information or have any questions. 
  */
 
-#ifndef _GXJ_INTERN_IMAGE_DECODE_H_
-#define _GXJ_INTERN_IMAGE_DECODE_H_
+#ifndef _IMGDCD_INTERN_IMAGE_DECODE_H_
+#define _IMGDCD_INTERN_IMAGE_DECODE_H_
 
 /**
  * IMPL_NOTE:Document this typedef
@@ -78,4 +78,4 @@ get_decoded_png_imagesize(imageSrcPtr src, int* width, int *height);
 extern bool
 decode_png_image(imageSrcPtr src, imageDstPtr dst);
 
-#endif /* _GXJ_INTERN_IMAGE_DECODE_H_ */
+#endif /* _IMGDCD_INTERN_IMAGE_DECODE_H_ */

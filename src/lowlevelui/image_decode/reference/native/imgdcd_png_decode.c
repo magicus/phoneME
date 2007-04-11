@@ -30,7 +30,7 @@
 #include <pcsl_memory.h>
 #include <midp_logging.h>
 
-#include "gxj_intern_image_decode.h"
+#include "imgdcd_intern_image_decode.h"
 
 #define IHDR_CHUNK 0x49484452
 #define PLTE_CHUNK 0x504C5445
