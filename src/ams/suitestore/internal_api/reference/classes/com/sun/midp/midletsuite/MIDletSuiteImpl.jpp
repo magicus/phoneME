@@ -346,50 +346,29 @@ public final class MIDletSuiteImpl implements MIDletSuite {
 
         /* Any other cases require prompting the user. */
 
-        name = getSuiteNameForInterrupt();
+        name = getSuiteNameForInterrupt(this);
 
         // The currently running suite controls what question to ask.
         current = MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-        if (current instanceof MIDletSuiteImpl) {
-            MIDletSuiteImpl temp = (MIDletSuiteImpl)current;
-            if (connection == null) {
-                question = temp.getAlarmInterruptQuestion();
-            } else {
-// #ifdef ENABLE_JSR_82
-                if (isBluetoothUrl0(connection)) {
-                    question = temp.getPushDevInterruptQuestion();
-                    extraValue = 
-                        BluetoothStack.getInstance().askFriendlyNameSync(
-                            getInpAddr0());
-                } else {
-// #endif
-                    question = temp.getPushInterruptQuestion();
-// #ifdef ENABLE_JSR_82
-                }
-// #endif
-            }
 
-            currentName = temp.getSuiteNameForInterrupt();
+        if (connection == null) {
+            question = getAlarmInterruptQuestion(current);
         } else {
-            // Use the internal MIDlet question
 // #ifdef ENABLE_JSR_82
             if (isBluetoothUrl0(connection)) {
-                question = ResourceConstants.
-                           AMS_MIDLETSUITEIMPL_PUSH_DEV_INTERRUPT_QUESTION;
+                question = getPushDevInterruptQuestion(current);
                 extraValue = 
                     BluetoothStack.getInstance().askFriendlyNameSync(
-                        getInpAddr0());
+                            getInpAddr0());
             } else {
 // #endif
-                question = ResourceConstants.
-                           AMS_MIDLETSUITELDR_PUSH_INTERRUPT_QUESTION;
+                question = getPushInterruptQuestion(current);
 // #ifdef ENABLE_JSR_82
             }
 // #endif
-
-            currentName = Resource.getString
-                (ResourceConstants.AMS_MIDLETSUITEIMPL_CURR_APP);
         }
+
+        currentName = getSuiteNameForInterrupt(current);
 
         try {
             interruptOk = SecurityHandler.askUserForPermission(
@@ -524,11 +503,22 @@ public final class MIDletSuiteImpl implements MIDletSuite {
      * The question will have %2 where this suite name should be and
      * a %1 where the current suite name should be.
      *
+     * @param MIDletSuite The suite to be interrupted
+     *
      * @return push interrupt question
      */
-    private int getPushInterruptQuestion() {
-        return
-         ResourceConstants.AMS_MIDLETSUITEIMPL_PUSH_INTERRUPT_QUESTION;
+    private static int getPushInterruptQuestion(MIDletSuite suite) {
+        int question;
+        
+        if (suite instanceof MIDletSuiteImpl) {
+            question = ResourceConstants.
+                AMS_MIDLETSUITEIMPL_PUSH_INTERRUPT_QUESTION;
+        } else {
+            question = ResourceConstants.
+                AMS_MIDLETSUITELDR_PUSH_INTERRUPT_QUESTION;
+        }
+
+        return question;
     }
 
 // #ifdef ENABLE_JSR_82
@@ -539,11 +529,22 @@ public final class MIDletSuiteImpl implements MIDletSuite {
      * The question will have %2 where this suite name should be and
      * a %1 where the current suite name should be.
      *
+     * @param MIDletSuite The suite to be interrupted
+     *
      * @return push interrupt question with device friendly name
      */
-    private int getPushDevInterruptQuestion() {
-        return
-         ResourceConstants.AMS_MIDLETSUITEIMPL_PUSH_DEV_INTERRUPT_QUESTION;
+    private static int getPushDevInterruptQuestion(MIDletSuite suite) {
+        int question;
+
+        if (suite instanceof MIDletSuiteImpl) {
+            question = ResourceConstants.
+                AMS_MIDLETSUITEIMPL_PUSH_DEV_INTERRUPT_QUESTION;
+        } else {
+            question = ResourceConstants.
+                AMS_MIDLETSUITEIMPL_PUSH_DEV_INTERRUPT_QUESTION;
+        }
+
+        return question;
     }
 
     /**
@@ -582,20 +583,43 @@ public final class MIDletSuiteImpl implements MIDletSuite {
      * The question will have %2 where this suite name should be and
      * a %1 where the current suite name should be.
      *
+     * @param MIDletSuite The suite to be interrupted
+     *
      * @return alarm interrupt question
      */
-    private int getAlarmInterruptQuestion() {
-        return
-         ResourceConstants.AMS_MIDLETSUITEIMPL_PUSH_INTERRUPT_QUESTION;
+    private static int getAlarmInterruptQuestion(MIDletSuite suite) {
+        int question;
+
+        if (suite instanceof MIDletSuiteImpl) {
+            question = ResourceConstants.
+                AMS_MIDLETSUITEIMPL_PUSH_INTERRUPT_QUESTION;
+        } else {
+            question = ResourceConstants.
+                AMS_MIDLETSUITELDR_PUSH_INTERRUPT_QUESTION;
+        }
+
+        return question;
+                
     }
 
     /**
      * Gets the suite name for interruption purposes.
      *
+     * @param MIDletSuite The suite to be interrupted
+     *
      * @return name for interrupt question
      */
-    private String getSuiteNameForInterrupt() {
-        return getProperty(SUITE_NAME_PROP);
+    private String getSuiteNameForInterrupt(MIDletSuite suite) {
+        String name;
+
+        if (suite instanceof MIDletSuiteImpl) {
+            name = ((MIDletSuiteImpl)suite).getProperty(SUITE_NAME_PROP);
+        } else {
+            name = Resource.getString
+                (ResourceConstants.AMS_MIDLETSUITEIMPL_CURR_APP);
+        }
+
+        return name;
     }
 
     /**
