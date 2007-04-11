@@ -1,0 +1,82 @@
+#
+#  
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+######################################################################
+#
+# Generic compiler specific defines
+# MIDP specific directories and libraries defines are in vc-jtwi.gmk
+#
+######################################################################
+ifndef _VC_GMK_
+_VC_GMK_	=
+
+# Suffix
+LIB_SUFFIX      = .lib
+SHARED_LIB_SUFFIX = .dll
+OBJ_SUFFIX      = obj
+
+# GCC 
+USE_GCC		= false
+
+# Same defines when used as either TARGET or HOST COMPILER
+CC		= cl
+CPP		= cl
+CC_OUTPUT	= -Fo
+
+LD		= link
+LD_OUTPUT	= -out:
+LINKER_OUTPUT	= $(LD_OUTPUT)
+LIBS		+= user32.lib gdi32.lib kernel32.lib winmm.lib wsock32.lib vfw32.lib
+
+
+LD_FLAGS 	+= -nologo -subsystem:console -machine:i386 -MAP \
+		  -incremental:no -verbose:LIB -nodefaultlib:libc.lib
+
+CREATE_LIB      = lib
+LIB_OUTPUT      = /OUT:
+
+ASM		= "$(_MASM_DIR$(MASM_DIR))$(MASM_DIR)/ml"
+ASM_FLAGS	+= /nologo /c /coff /Zi
+ASM_OUTPUT	= -Fo
+
+ifeq ($(USE_DEBUG), true)
+
+DEBUG_CFLAGS 	+= -Zi -Od -MDd
+LD_FLAGS 	+= -debug 
+# Force use of debug libraries
+LD_FLAGS	+= -nodefaultlib:msvcrt.lib msvcrtd.lib
+
+else
+
+# flags inherited from the VM
+EXTRA_CFLAGS 	+= -Ox -GB -Os -Gy -GF -MD
+LD_FLAGS 	+= -merge:CODESEGMENT=.text -merge:DATASEGMENT=.data \
+		   -opt:REF -opt:ICF,8
+# Force use of non-debug libraries
+LD_FLAGS 	+= -nodefaultlib:msvcrtd.lib msvcrt.lib
+
+endif
+
+endif

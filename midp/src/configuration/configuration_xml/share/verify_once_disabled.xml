@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
+<!--
+        	
+
+        Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+-->
+<configuration>
+<constants>
+<constant_class Package="com.sun.midp.configurator" Name="Constants" Scope="public">
+  <constant Type="boolean"
+            Name="VERIFY_ONCE"
+            Value="false"
+            Comment="Force verification of all MIDlet suite classes to be done only once during the suite installation"/>
+  <constant Type="boolean"
+	    Name="VERIFY_SUITE_HASH"
+	    Value="false"
+	    Comment="Defines whether suite JAR should be checked for changes since the suite installation."/>
+  <constant Type="String"
+            Name="SUITE_VERIFIER_MIDLET"
+            JavaOnly="true"
+            Value=""
+            Comment="Name of the system MIDlet to verify MIDlet suite classes"/>
+</constant_class>
+</constants>
+</configuration>
