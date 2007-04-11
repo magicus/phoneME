@@ -290,7 +290,8 @@ gx_draw_chars(jint pixel, const jshort *clip,
             startWidth = fontWidth - xStart;
             xLimit = fontWidth;
         } else {
-            startWidth = xLimit = width;
+            startWidth = width;
+            xLimit = xStart + width;
         }
 
         /* Clipped, draw the right part of the first char. */
