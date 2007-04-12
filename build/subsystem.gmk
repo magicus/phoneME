@@ -119,6 +119,10 @@ $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/DirectRecord.java: \
   $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectRecord.jpp
 	@$(call runjpp,$^,$@)
 
+$(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/MMEventListener.java: \
+  $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/classes/com/sun/mmedia/MMEventListener.jpp
+	@$(call runjpp,$^,$@)
+
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/Player.java \
     $(JSR_135_GENERATED_DIR)/classes/javax/microedition/media/PlayerListener.java \
@@ -136,7 +140,9 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/AudioRenderer.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/TonePlayer.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/LocatorParser.java \
-    $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/classes/com/sun/mmedia/MMEventListener.java \
+    $(JSR_135_GENERATED_DIR)/classes/com/sun/mmedia/MMEventListener.java \
+    $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/classes/com/sun/mmedia/AudioTunnel.java \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/NativeTonePlayer.java 
 
 # Permission verifier
 SUBSYSTEM_JSR_135_JAVA_FILES += \
@@ -151,7 +157,11 @@ ifeq ($(TARGET_VM),cldc_vm)
 SUBSYSTEM_JSR_135_JAVA_FILES += $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/classes/com/sun/mmedia/MediaEventConsumer.java
 SUBSYSTEM_JSR_135_JAVA_FILES += $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/classes/com/sun/mmedia/MediaTunnel.java
 endif
+
 ifneq ($(ABB), true)
+# 
+# Full JSR135 components
+#
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/TimeBase.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/protocol/DataSource.java \
@@ -167,14 +177,11 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/StopTimeControl.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/TempoControl.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/VideoControl.java \
-    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/VideoRenderer.java \
-    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/NativeTonePlayer.java 
-
-SUBSYSTEM_JSR_135_JAVA_FILES += \
-    $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/classes/com/sun/mmedia/AudioTunnel.java
-endif
-
-ifeq ($(ABB), true)
+    $(JSR_135_DIR)/src/share/core/com/sun/mmedia/VideoRenderer.java 
+else 
+# 
+# ABB only components
+#
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/DataSource.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/protocol/SourceStream.java \
@@ -194,7 +201,6 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectMIDI.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectMIDIControl.java
 endif
-
 
 # 
 # Indirect video player
@@ -219,9 +225,8 @@ ifneq ($(TARGET_VM),cldc_vm)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/AWTVideoRenderer.java
 endif
-
 endif
-    
+
 #
 # Direct video player
 #
@@ -244,7 +249,6 @@ SUBSYSTEM_JSR_135_NATIVE_FILES += \
 	KNIDirectRecord.c
 endif
 
-
 SUBSYSTEM_JSR_135_CNI_CLASSES += \
     com.sun.mmedia.AudioTunnel \
     com.sun.mmedia.DirectMIDIControl \
@@ -253,7 +257,6 @@ SUBSYSTEM_JSR_135_CNI_CLASSES += \
     com.sun.mmedia.DirectVolume \
     com.sun.mmedia.MMEventListener \
     com.sun.mmedia.NativeTonePlayer \
-    
 
 #
 # Native

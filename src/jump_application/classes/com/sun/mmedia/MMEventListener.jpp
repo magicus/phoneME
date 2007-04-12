@@ -61,10 +61,11 @@ class MMEventListener {
                                         case MMNativeEventImpl.EOM_EVENT:
                                             p.sendEvent(PlayerListener.END_OF_MEDIA, new Long(event.value));
                                         break;
+// #ifndef ABB [
                                         case MMNativeEventImpl.RSL_EVENT:
-
                                             p.sendEvent(PlayerListener.RECORD_STOPPED, new Long(event.value));
                                             break;
+// #endif ]
                                     }
                                     Thread.yield();
                                 }

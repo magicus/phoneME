@@ -355,9 +355,11 @@ public class DefaultConfiguration extends Configuration {
             // device://tone
             if (locator.equals(Manager.TONE_DEVICE_LOCATOR)) {
                 return DefaultConfiguration.MIME_AUDIO_TONE;
+// #ifdef MIDI_CONTROL [
             // device://midi
             } else if (locator.equals(Manager.MIDI_DEVICE_LOCATOR)) {
                 return DefaultConfiguration.MIME_AUDIO_MIDI;
+// #endif ]
             // capture://audio
             } else if (locator.equals(Configuration.AUDIO_CAPTURE_LOCATOR)) {
                 return DefaultConfiguration.MIME_AUDIO_WAV;
@@ -603,6 +605,7 @@ public class DefaultConfiguration extends Configuration {
 
 // #endif ]    
 
+// #ifndef ABB [ 
     /**
      * Gets the video renderer.
      *
@@ -617,6 +620,7 @@ public class DefaultConfiguration extends Configuration {
         return null;
     // #endif ]
     }
+// #endif ]
 
     /**
      *  Gets the tonePlayer attribute of the DefaultConfiguration object
