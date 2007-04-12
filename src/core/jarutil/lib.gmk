@@ -1,5 +1,5 @@
 #
-#  
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,6 +24,7 @@
 # information or have any questions. 
 #
 ######################################################################
+#
 # Module's Component Configuration file
 #
 # Remember: It is up to the module itself to impose rules of
@@ -32,24 +33,29 @@
 # other def. (like VPATH)
 ######################################################################
 
-INSTALLER_API_LIB = installer_api
-LIB_SET += $(INSTALLER_API_LIB)
+JARUTIL_LIB = jarutil
+LIB_SET += $(JARUTIL_LIB)
 
-INSTALLER_API_DIR = $(SUBSYSTEM_SUITESTORE_DIR)/$(INSTALLER_API_LIB)
+SUBSYSTEM_JARUTIL_DIR = $(SUBSYSTEM_CORE_DIR)/$(JARUTIL_LIB)
 
-SUBSYSTEM_AMS_SOURCEPATH += $(INSTALLER_API_DIR)/reference/classes$(PATHSEP)$(INSTALLER_API_DIR)/classes
+############################################################
+# Java files under JARUTIL subsystem
+############################################################
 
-ifeq ($(USE_I3_TEST), true)
-SUBSYSTEM_AMS_I3TEST_JAVA_FILES += 
-endif
+SUBSYSTEM_JARUTIL_JAVA_FILES += \
+    $(SUBSYSTEM_JARUTIL_DIR)/reference/classes/com/sun/midp/jarutil/JarReader.java
 
-# vpath for ( common ) module 
-vpath % $(INSTALLER_API_DIR)/reference/native
+############################################################
+# Native files under JARUTIL subsystem
+############################################################
 
-# Native files for the ( common ) module
-SUBSYSTEM_AMS_NATIVE_FILES += \
-    suitestore_installer.c
+SUBSYSTEM_JARUTIL_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_JARUTIL_DIR)/include
 
-SUBSYSTEM_AMS_EXTRA_INCLUDES += \
-    -I$(INSTALLER_API_DIR)/include \
-    -I$(INSTALLER_API_DIR)/reference/native
+vpath % $(SUBSYSTEM_JARUTIL_DIR)/reference/native
+
+SUBSYSTEM_JARUTIL_NATIVE_FILES += \
+    jar.c \
+    midpJar.c \
+    JarReader.c
+

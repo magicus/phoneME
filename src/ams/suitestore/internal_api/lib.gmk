@@ -53,7 +53,6 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/MIDletSuiteCorruptedException.java \
     $(GENERATED_DIR)/classes/com/sun/midp/midletsuite/MIDletSuiteImpl.java \
     $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/MIDletSuiteStorage.java \
-    $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/midletsuite/JarReader.java \
     $(INTERNAL_API_DIR)/reference/classes/com/sun/midp/installer/InternalMIDletSuiteImpl.java
 
 ifeq ($(USE_I3_TEST), true)
@@ -71,8 +70,7 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
     suitestore_midletsuitestorage_kni.c \
     suitestore_otanotifier_db.c \
     suitestore_otanotifier_kni.c \
-    suitestore_verify_hash.c \
-    JarReader.c
+    suitestore_verify_hash.c
 
 SUBSYSTEM_AMS_EXTRA_INCLUDES += \
     -I$(INTERNAL_API_DIR)/include \

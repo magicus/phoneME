@@ -24,14 +24,11 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.midletsuite;
+package com.sun.midp.jarutil;
 
 import java.lang.String;
 
 import java.io.IOException;
-
-import com.sun.midp.midlet.MIDletStateHandler;
-import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
@@ -62,14 +59,10 @@ public class JarReader {
                                String jarFilePath, String entryName)
             throws IOException {
 
-        if (securityToken == null) {
-            MIDletStateHandler midletStateHandler =
-                MIDletStateHandler.getMidletStateHandler();
-            MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
-
-            midletSuite.checkIfPermissionAllowed(Permissions.AMS);
-        } else {
+        if (securityToken != null) {
             securityToken.checkIfPermissionAllowed(Permissions.AMS);
+        } else {
+            throw new SecurityException(SecurityToken.STD_EX_MSG);
         }
 
         if (entryName.charAt(0) == '/') { 
@@ -81,28 +74,6 @@ public class JarReader {
         }
 
         return readJarEntry0(jarFilePath, entryName);
-    }
-
-    /**
-     * Returns the content of the given entry in the JAR file on the
-     * file system given by jarFilePath.
-     *
-     * @param jarFilePath file pathname of the JAR file to read. May
-     *          be a relative pathname.
-     * @param entryName name of the entry to return.
-     *
-     * @return the content of the given entry in a byte array or null if
-     *          the entry was not found
-     *
-     * @exception IOException if JAR is corrupt or not found
-     * @exception IOException if the entry does not exist.
-     * @exception SecurityException if the caller does not have permission
-     *   to install software.
-     */
-    public static byte[] readJarEntry(String jarFilePath, String entryName)
-            throws IOException {
-
-        return readJarEntry(null, jarFilePath, entryName);
     }
 
     /**

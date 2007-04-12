@@ -39,10 +39,7 @@ LIB_JAVA_FILES= \
 LIB_C_FILES= \
     fileInstallerShared.c \
     jadParser.c \
-    jar.c \
-    JarReader.c \
-    manifestParser.c \
-    midpJar.c
+    manifestParser.c
 
 #
 # IMPL_NOTE: remove when decoupling is complete

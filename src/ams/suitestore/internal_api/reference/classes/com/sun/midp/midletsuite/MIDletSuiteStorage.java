@@ -36,6 +36,7 @@ import com.sun.midp.midlet.MIDletStateHandler;
 
 import com.sun.midp.content.CHManager;
 
+import com.sun.midp.jarutil.JarReader;
 import com.sun.midp.util.Properties;
 
 import com.sun.midp.configurator.Constants;
@@ -226,7 +227,7 @@ public class MIDletSuiteStorage {
 
             if (iconBytes == null) {
                 /* Search for icon in the suite JAR */
-                iconBytes = JarReader.readJarEntry(
+                iconBytes = JarReader.readJarEntry(classSecurityToken,
                     getMidletSuiteJarPath(suiteId), iconName);
             }
         } catch (Exception e) {

@@ -48,7 +48,7 @@
  * @throw IOException if JAR is corrupt or not found
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-KNIDECL(com_sun_midp_midletsuite_JarReader_readJarEntry0) {
+KNIDECL(com_sun_midp_jarutil_JarReader_readJarEntry0) {
     int error;
     void* jarHandle;
     long sizeOfEntry;
