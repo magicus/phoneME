@@ -205,11 +205,10 @@ public abstract class ProtocolBase implements MessageConnection,
      * @return a <code>Message</code> object.
      * @exception java.io.IOException if an error occurs while receiving a
      *     message.
-     * @exception java.io.InterruptedIOException if this
-     *     <code>MessageConnection</code> object is closed during this receive
-     *     method call.
-     * @exception java.lang.SecurityException if the application does not have
-     *      permission to receive messages using the given port number.
+     * @exception java.io.InterruptedIOException if during this method call this
+     *     <code>MessageConnection</code> object is closed.
+     * @exception java.lang.SecurityException if the application doesn't have
+     *      permission to receive messages on the given port.
      */
     public abstract Message receive() throws IOException;
 
@@ -221,17 +220,17 @@ public abstract class ProtocolBase implements MessageConnection,
      * @param     dmsg a <code>Message</code> object
      * @exception java.io.IOException if the message could not be sent or
      *     because of network failure
-     * @exception java.lang.IllegalArgumentException if the message is
-     *     incomplete or contains invalid information. This exception is also
-     *     thrown if the payload of the message exceeds the maximum length for
-     *     the given messaging protocol.
-     * @exception java.io.InterruptedIOException if a timeout occurs while
-     *     either trying to send the message or if this <code>Connection</code>
-     *     object is closed during this <code>send</code> operation.
+     * @exception java.lang.IllegalArgumentException if the message contains
+     *     invalid information or is incomplete, or the message's payload
+     *     exceeds the maximal length for the given protocol.
+     * @exception java.io.InterruptedIOException either if this
+     *     <code>Connection</code> object is closed during the execution of this
+     *     <code>send</code> method or if a timeout occurs while trying to send
+     *     the message.
      * @exception java.lang.NullPointerException if the parameter is
      *     <code>null</code>.
-     * @exception java.lang.SecurityException if the application does not have
-     *      permission to send the message.
+     * @exception java.lang.SecurityException if the application doesn't have
+     *      permission for sending the message.
      */
     public abstract void send(Message dmsg) throws IOException;
 
@@ -268,11 +267,10 @@ public abstract class ProtocolBase implements MessageConnection,
      * The platform will notify this listener object when a message has been
      * received to this <code>MessageConnection</code>.
      * </p>
-     * <p>If there are incoming messages in the queue of this
-     * <code>MessageConnection</code> that have not been retrieved by the
-     * the application prior to calling this method, the newly
-     * registered listener object will be notified immediately once
-     * for each such incoming message in the queue.
+     * <p>If the queue of this <code>MessageConnection</code> contains some
+     * incoming messages that the application haven't read before the call
+     * of this method, the newly registered listener will be notified
+     * immediately exactly once for each such message in the queue.
      * </p>
      * <p>There can be at most one listener object registered for
      * a <code>MessageConnection</code> object at any given point in time.
@@ -289,12 +287,12 @@ public abstract class ProtocolBase implements MessageConnection,
      * @exception java.lang.SecurityException if the application does not
      *         have a permission to receive messages using the given port
      *         number
-     * @exception java.io.IOException if the connection has been closed,
-     *         or if an attempt is made to register a listener on
-     *         a client connection
+     * @exception java.io.IOException if it is requested to register
+     *            a listener on a client connection or if the connection
+     *            has been closed
      */
     public void setMessageListener(MessageListener listener)
-                                                     throws IOException {
+            throws IOException {
 
         boolean needStopReceiver = false;
 
@@ -312,10 +310,10 @@ public abstract class ProtocolBase implements MessageConnection,
             /*
              * Don't let the application waste time listening on a client
              * connection, which can not be used for receive operations.
-	     */
+	         */
             if (host != null && host.length() > 0) {
                 throw new IOException("Cannot listen on client connection");
-	    }
+            }
         }
 
         synchronized (this) {

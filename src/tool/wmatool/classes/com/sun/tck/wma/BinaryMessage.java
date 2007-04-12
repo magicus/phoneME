@@ -28,52 +28,35 @@ package com.sun.tck.wma;
 
 /** 
  * An interface representing a binary message.
- * <p>
- * This is a subinterface of  {@link Message Message} which contains methods to
- * get and set the binary data payload. The <code>setPayloadData()</code> method
- * sets the value of the payload in the data container without any checking
- * whether the value is valid in any way. Methods for manipulating the address
- * portion of the message are inherited from <code>Message</code>.
- * <p>
- * Object instances implementing this interface are just containers for the data
- * that is passed in. 
  */
-
 public interface BinaryMessage extends Message {
 
     /** 
-     * Returns the message payload data as an array
-     * of bytes.
+     * Returns an array of bytes representing the payload data
+     * of the message, or <code>null</code> if it isn't set.
      * 
-     * <p>Returns <code>null</code>, if the payload for the message 
-     * is not set.
-     * </p>
-     * <p>The returned byte array is a reference to the 
-     * byte array of this message and the same reference
-     * is returned for all calls to this method made before the
-     * next call to <code>setPayloadData</code>.
+     * <p>A reference to the byte array of this binary message
+     * is returned. It is the same for all calls to this method
+     * made before <code>setPayloadData</code> is called the
+     * next time.
      *
-     * @return the payload data of this message, or
-     * <code>null</code> if the data has not been set 
+     * @return <code>null</code> if the data hasn't been set,
+     *         or this message's payload data
      * @see #setPayloadData
      */
     public byte[] getPayloadData();
 
     /**
-     * Sets the payload data of this message. The payload may
+     * Sets the payload data of this binary message. It may
      * be set to <code>null</code>.
-     * <p>Setting the payload using this method only sets the 
-     * reference to the byte array. Changes made to the contents
-     * of the byte array subsequently affect the contents of this
-     * <code>BinaryMessage</code> object. Therefore, applications
-     * shouldn't reuse this byte array before the message is sent and the
-     * <code>MessageConnection.send</code> method returns.
+     * <p>This method actually sets the reference to the byte array.
+     * Changes made to this array subsequently affect this
+     * <code>BinaryMessage</code> object's contents. Therefore, this array
+     * should not be reused by the applications until the message is sent and
+     * <code>MessageConnection.send</code> returned.
      * </p>
-     * @param data payload data as a byte array
+     * @param data payload data represented as a byte array
      * @see #getPayloadData
      */
     public void setPayloadData(byte[] data);
-
 }
-
-

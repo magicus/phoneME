@@ -27,85 +27,50 @@
 package com.sun.tck.wma;
 
 /** 
- * This the base interface for derived interfaces
- * that represent various types of messages. This package is 
- * designed to work with <code>Message</code> objects that
- * may contain different elements depending on the underlying
- * messaging protocol. This is different from <code>Datagram</code>s that
- * are assumed always to be just blocks of binary data.
- * An adapter specification for a given messaging protocol
- * may define further interfaces derived from the <code>Message</code>
- * interfaces included in this generic specification.
- * 
- * <p>
- * The wireless messaging protocols that are accessed
- * via this API are typically of store-and-forward nature,
- * unlike network layer datagrams. Thus, the messages will
- * usually reach the recipient, even if the recipient is not
- * connected at the time of sending the message. This may
- * happen a significant time later if the recipient is 
- * disconnected for a long time. Sending, and possibly also
- * receiving, these wireless messages, typically involves
- * a financial cost to the end user that cannot be neglected. Therefore,
- * applications should not send many messages unnecessarily. 
- * </p>
- * <p>This interface contains the functionality common 
- * to all messages. Concrete object instances representing 
- * a message will typically implement other (sub)interfaces
- * providing access to the content and other information in 
- * the message which is dependent on the type of the message.
- * </p>
- * <p>Object instances implementing this interface are just
- * containers for the data that is passed in. The <code>setAddress()</code>
- * method just sets the value of the address in the 
- * data container without any checking whether the value
- * is valid in any way.
- * </p>
+ * This is the base interface for derived interfaces
+ * representing various types of messages.
  */
-
 public interface Message {
 
     /**
-     * Returns the address associated with this message.
+     * Returns the address that this message is associated with.
      * 
-     * <p>If this is a message to be sent, this address
-     * is the address of the recipient.
+     * <p>If this object represents a message to be sent, this address
+     * is the recipient's address.
      * </p>
-     * <p>If this is a message that has been received,
-     * this address is the sender's address.
+     * <p>If this object represents a message has been received, this address
+     * is the address of the sender.
      * </p>
-     * <p>Returns <code>null</code>, if the address for the message 
-     * is not set.
+     * <p>If the address for the message isn't set, <code>null</code>
+     * is returned.
      * </p>
-     * <p><strong>Note</strong>: This design allows sending responses
-     * to a received message easily by reusing the 
-     * same <code>Message</code> object and just replacing the 
-     * payload. The address field can normally be
-     * kept untouched (unless the used messaging protocol
-     * requires some special handling of the address).
+     * <p><strong>Note</strong>: Sending responses to a received message
+     * is allowed easily by this design through reusing the same
+     * <code>Message</code> object with the replaced payload.
+     * Unless a special processing of the address is required by the mesaging
+     * protocol that is used, the address field can be left untouched.
      * </p>
-     * @return the address of this message, or <code>null</code>
-     * if the address is not set
+     * @return <code>null</code> if the address isn't set, or this message's
+     *         address. 
      * @see #setAddress(String)
      */
     public String getAddress();
 
     /**
-     * Sets the address associated with this message,
-     * that is, the address returned by the <code>getAddress</code> method.
-     * The address may be set to <code>null</code>.
+     * Sets the address that this message is associated with,
+     * i.e., the address that <code>getAddress</code> method returns.
+     * <code>null</code> is allowed as an address.
      * @param addr address for the message
      * @see #getAddress()
      */
-    public void setAddress(String addr);  
+    public void setAddress(String addr);
 
     /**
-     * Returns the timestamp indicating when this message has been
+     * Returns the timestamp that indicates when this message has been
      * sent. 
-     * @return <code>Date</code> indicating the timestamp in the message or
-     *         <code>null</code> if the timestamp is not set or
-     *         if the time information is not available in the underlying
-     *         protocol message.
+     * @return  <code>null</code> either if the timestamp isn't set or
+     *         it isn't available in the underlying protocol message,
+     *         or <code>Date</code> that indicates the timestamp in the message.
      */
     public java.util.Date getTimestamp();
 
