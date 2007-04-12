@@ -25,6 +25,8 @@
 package com.sun.midp.jump.midletsuite;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 
 import com.sun.midp.midletsuite.MIDletInfo;
@@ -110,9 +112,24 @@ public class MIDletSuiteStorageAccessor
            this.suiteInfo = suiteInfo;
 
            midletApplications = new ArrayList(midletInfos.length);
-           for (int i = 0; i < midletInfos.length; i++) {
+           for (int i = 0; i < midletInfos.length; i++) {              
+               String jarfile[] = storage.getMidletSuiteClassPath(suiteInfo.suiteId);
+               URL iconURL = null;
+               if (jarfile[0] != null & midletInfos[i].icon != null) {
+                   String iconURLfile = null;
+                   if (midletInfos[i].icon.startsWith("/")) {
+                       iconURLfile = "jar:file://" + jarfile[0] + "!/" + midletInfos[i].icon.substring(1);
+                   } else {
+                       iconURLfile = "jar:file://" + jarfile[0] + "!/" + midletInfos[i].icon;
+                   }
+                   try {
+                       iconURL = new URL(iconURLfile);
+                   } catch (MalformedURLException ex) {
+                       ex.printStackTrace();
+                   }
+               }
                MIDletApplication app = new MIDletApplication(midletInfos[i].name,
-                          null, suiteInfo.suiteId, midletInfos[i].classname, (i+1)); 
+                          iconURL, suiteInfo.suiteId, midletInfos[i].classname, (i+1)); 
                midletApplications.add(i, app);
            }
 

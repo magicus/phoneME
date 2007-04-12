@@ -24,6 +24,7 @@
 
 package com.sun.midp.jump;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import com.sun.jump.common.JUMPAppModel;
 import com.sun.jump.common.JUMPApplication;
@@ -82,4 +83,17 @@ public class MIDletApplication extends JUMPApplication {
     public static int convertToSuiteID(int applicationID) {
         return (applicationID >> 8);
     }
+    
+    public URL getIconPath() {
+        String file = getProperty(ICONPATH_KEY);
+        URL url = null;
+        if (file == null) {
+            return null;
+        }        
+        try {
+            url = new URL("jar", "", file);            
+        } catch (MalformedURLException ex) {
+        }
+        return url;
+    }    
 }
