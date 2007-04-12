@@ -124,12 +124,11 @@
 #
 # Name:  QVFB_WIDTH
 # Desc:  For running with Qtopia's qvfb
-# Dflt:  640
+# Dflt:  240
 #
 # Name:  QWS_HEIGHT
 # Desc:  For running with Qtopia's qvfb
-# Dflt:  442
-# Note:  if QVFB_HEIGHT is 480, qvfb fails (reason currently unknown)
+# Dflt:  320
 #
 
 WHOAMI=`whoami`
@@ -306,11 +305,10 @@ if [ "$USE_QVFB" = "true" ]; then
     export QTDIR=$QTOPIA_HOME
     export USE_DASH_QWS=true
     if [ -z "$QVFB_WIDTH" ] ; then
-       export QVFB_WIDTH=640
+       export QVFB_WIDTH=240
     fi
-    ### if QVFB_HEIGHT is 480, qvfb fails... don't know why.  442 works.
     if [ -z "$QVFB_HEIGHT" ] ; then
-        export QVFB_HEIGHT=442
+        export QVFB_HEIGHT=320
     fi
     export LD_LIBRARY_PATH=$QTDIR/lib:$PHONEME_DIST/lib
 else
@@ -595,7 +593,7 @@ if [ "$DO_CVMC" = "true" ] ; then
     if [ $SERVER_PID != "" ] ; then
         echo ""
         shift
-        CVMC_COMMAND="$CVMC $*"
+        CVMC_COMMAND="$CVMC -target $SERVER_PID $*"
         echo "CVMC command: $CVMC_COMMAND"
         echo ""
   
