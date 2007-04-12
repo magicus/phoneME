@@ -31,11 +31,6 @@ else
 ABB = false
 
 #
-# Always ON
-#
-DIRECT_PLAYER = true
-
-#
 # If you want to support VideoControl, turn on DIRECT_VIDEO_PLAYER option
 #
 DIRECT_VIDEO_PLAYER = false
@@ -56,6 +51,7 @@ DIRECT_MIDI_CONTROL = true
 # If you want to support RecordControl, turn on DIRECT_RECORD option
 #
 DIRECT_RECORD = true
+
 endif
 
 #
