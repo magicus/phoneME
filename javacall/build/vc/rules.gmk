@@ -1,0 +1,98 @@
+#   
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+.PHONY: all pre_target local_vc post_target
+
+all: pre_target javacall_common local_vc post_target 
+
+ifeq ($(JAVACALL_DIR),)
+$(error JAVACALL_DIR is not set.)
+endif
+
+include $(JAVACALL_DIR)/build/common.gmk
+
+TEMP=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
+ifneq ($(FILTER_OBJECTS)x,x)
+PORTING_OBJECTS+=$(filter-out $(FILTER_OBJECTS),$(TEMP))
+else # ifneq ($(FILTER_OBJECTS)x,x)
+PORTING_OBJECTS+=$(TEMP)
+endif # ifneq ($(FILTER_OBJECTS)x,x)
+
+ifneq ($(UTILITIES)x, x)
+UTILITY_OBJECTS=$(addsuffix .obj,$(UTILITIES))
+endif
+
+local_vc: $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib
+
+CC=cl.exe
+CXX=cl.exe
+RC=rc.exe
+
+LOCAL_CFLAGS_debug = -MDd -Gm -GX -Zi -Od -D_DEBUG -D_MBCS -D_LIB -YX -FD -GZ -W3
+LOCAL_CFLAGS_nodebug = -MD -GX -O2 -D_MBCS -D_LIB /YX -FD -W3  
+
+ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
+    define fixcygpath
+    echo $(1)
+    endef
+else
+    define fixcygpath
+    echo $(1) | xargs -n1 cygpath -m
+    endef
+endif
+
+CXXFLAGS=-nologo $(LOCAL_CFLAGS_$(BUILD))
+CFLAGS=-nologo $(LOCAL_CFLAGS_$(BUILD))
+CPPFLAGS+= -I`$(call fixcygpath, $(JAVACALL_OUTPUT_INCLUDE_DIR))`
+CPPFLAGS+= $(SPECIFIC_DEFINITIONS)
+
+ADDITIONAL_RC_INCLUDE_DIRS += $(RESOURCE_IMAGES_DIR) 
+RCFLAGS += $(foreach dir,$(ADDITIONAL_RC_INCLUDE_DIRS),/i`$(call fixcygpath, $(dir))`) 
+
+AR=lib.exe 
+ARFLAGS=-nologo -MACHINE:X86
+
+OUTPUT_OPTION=-Fo`$(call fixcygpath, $@)` \
+              -Fp$(JAVACALL_OUTPUT_OBJ_DIR)/javacall \
+              -Fd$(JAVACALL_OUTPUT_OBJ_DIR)/javacall
+
+$(JAVACALL_OUTPUT_LIB_DIR)/%.res: %.rc
+	@echo "...compiling resources ... "
+	@$(RC) $(RCFLAGS) /l 0x409 /d "NDEBUG" /fo`$(call fixcygpath, $@)` `$(call fixcygpath, $<)`
+
+$(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.cpp
+	@echo -n "...compiling: "
+	@$(COMPILE.cc) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
+
+$(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
+	@echo -n "...compiling: "
+	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
+
+$(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \
+	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS)) \
+	$(SPECIFIC_OBJECTS)
+	@echo "...Generating Library: $@"
+	@$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
