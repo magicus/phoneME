@@ -201,7 +201,7 @@ public class MIDletContainer extends JUMPAppContainer implements
 
             midletClassName = MIDletApplication.getMIDletClassName(app);
 
-            //FIXME: This asynchronous call should be synchronous.
+            // IMPL_NOTE: This asynchronous call should be synchronous.
             new Thread(this).start();
         } catch (Exception e) {
             e.printStackTrace();
@@ -229,7 +229,7 @@ public class MIDletContainer extends JUMPAppContainer implements
                 return;
             }
 
-            //FIXME: This asynchronous call should be synchronous.
+            // IMPL_NOTE: This asynchronous call should be synchronous.
             mec.handleMIDletPauseEvent();
         } catch (Exception e) {
             e.printStackTrace();
@@ -253,7 +253,7 @@ public class MIDletContainer extends JUMPAppContainer implements
                 return;
             }
 
-            //FIXME: This asynchronous call should be synchronous.
+            // IMPL_NOTE: This asynchronous call should be synchronous.
             mec.handleMIDletActivateEvent();
 
         } catch (Exception e) {
@@ -273,7 +273,7 @@ public class MIDletContainer extends JUMPAppContainer implements
      * @param force if false, give the app the option of not being destroyed
      */    
     public void destroyApp(int appId, boolean force) {
-        //Impl note: force=false is not supported.
+        // IMPL_NOTE: force=false is not supported.
         try {
             MIDletEventConsumer mec =
                 midletStateHandler.getMIDletEventConsumer(
@@ -283,7 +283,7 @@ public class MIDletContainer extends JUMPAppContainer implements
                 return;
             }
 
-            //FIXME: This asynchronous call should be synchronous.
+            // IMPL_NOTE: This asynchronous call should be synchronous.
             mec.handleMIDletDestroyEvent();
 
         } catch (Exception e) {
@@ -385,7 +385,7 @@ public class MIDletContainer extends JUMPAppContainer implements
      * @param className class name of the MIDlet
      */
     public void midletPausedItself(MIDletSuite suite, String className) {
-        // Impl note: The JUMPApplication API does not support this.
+        // IMPL_NOTE: The JUMPApplication API does not support this.
     }
 
     /**
@@ -398,7 +398,7 @@ public class MIDletContainer extends JUMPAppContainer implements
         MIDletEventConsumer mec =
             midletStateHandler.getMIDletEventConsumer(internalSecurityToken,
                                                       className);
-        // Impl note: The JUMPApplication API does not support this.
+        // IMPL_NOTE: The JUMPApplication API does not support this.
         if (mec == null) {
             return;
         }
@@ -414,7 +414,7 @@ public class MIDletContainer extends JUMPAppContainer implements
      * @param className class name of the MIDlet
      */
     public void midletDestroyed(MIDletSuite suite, String className) {
-        // Impl note: The JUMPApplication API does not support this.
+        // IMPL_NOTE: The JUMPApplication API does not support this.
     }
 
     // ForegroundController

@@ -71,8 +71,8 @@ import com.sun.midp.io.j2me.storage.File;
 
 import com.sun.midp.rms.RecordStoreFactory;
 
-//FIXME: sync with cldc installer for CHManager dependency
-//import com.sun.midp.content.CHManager;
+// IMPL_NOTE: sync with cldc installer for CHManager dependency
+// import com.sun.midp.content.CHManager;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -281,8 +281,8 @@ public abstract class JUMPInstaller {
         state.removeRMS = removeRMS;
         state.nextStep = 1;
         state.listener = installListener;
-        //FIXME: sync with cldc installer for CHManager dependency
-        //state.chmanager = CHManager.getManager(null);
+        // IMPL_NOTE: sync with cldc installer for CHManager dependency
+        // state.chmanager = CHManager.getManager(null);
         state.storageId = storageId;
 
         return performInstall();
@@ -1075,7 +1075,7 @@ public abstract class JUMPInstaller {
             checkConfiguration();
             matchProfile();
 
-        //FIXME: sync with cldc installer for CHManager dependency
+        // IMPL_NOTE: sync with cldc installer for CHManager dependency
          /**
         *    try {
         *         state.chmanager.preInstall(this,
@@ -1134,8 +1134,8 @@ public abstract class JUMPInstaller {
             registerPushConnections();
 
             /** Do the Content Handler registration updates now */
-            //FIXME: sync with cldc installer for CHManager dependency
-            //state.chmanager.install();
+            // IMPL_NOTE: sync with cldc installer for CHManager dependency
+            // state.chmanager.install();
 
             /*
              * Store suite will remove the suite including push connections,
