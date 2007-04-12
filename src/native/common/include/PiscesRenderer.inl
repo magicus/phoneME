@@ -125,6 +125,7 @@ static INLINE void renderer_setComposite(Renderer* rdr, jint compositeRule,
                                          jfloat alpha);
 static INLINE void renderer_setColor(Renderer* rdr, jint red, jint green,
                                      jint blue, jint alpha);
+/* Temporary gradient support removal
 static INLINE void renderer_setLinearGradient(Renderer* rdr, jint x0, jint y0,
         jint x1, jint y1, jint* colors,
         Transform6 *transform);
@@ -132,6 +133,7 @@ static INLINE void renderer_setRadialGradient(Renderer* rdr, jint cx, jint cy,
         jint fx, jint fy, jint radius,
         jint* colors,
         Transform6 *transform);
+*/
 static INLINE void renderer_setTexture(Renderer* rdr, jint* data, jint width,
                                        jint height, jboolean repeat,
                                        const Transform6* transform);
@@ -414,6 +416,7 @@ renderer_setTransform(Renderer* rdr, const Transform6* transform) {
     pisces_transform_assign(&rdr->_transform, transform);
 
     /* Let's assign the same transformation to fills, too.*/ 
+/* Temporary gradient support removal
     if (rdr->_paintMode == PAINT_LINEAR_GRADIENT) {
         /*   pisces_transform_assign(&compoundTransform, &rdr->_transform);
            pisces_transform_multiply(&compoundTransform, 
@@ -445,7 +448,7 @@ renderer_setTransform(Renderer* rdr, const Transform6* transform) {
            rdr->_lg_mx = (jlong)(65536.0f*(a00*fdx + a10*fdy)/flensq);
            rdr->_lg_my = (jlong)(65536.0f*(a01*fdx + a11*fdy)/flensq);
            rdr->_lg_b = (jlong)(65536.0f*(a02*fdx + a12*fdy - t)/flensq);
-         */
+         * /
     } else if (rdr->_paintMode == PAINT_RADIAL_GRADIENT) {
         /*  pisces_transform_assign(&compoundTransform, &rdr->_transform);
           pisces_transform_multiply(&compoundTransform, 
@@ -456,8 +459,8 @@ renderer_setTransform(Renderer* rdr, const Transform6* transform) {
           pisces_transform_invert(&compoundTransform);
           pisces_transform_assign(&rdr->_gradient_inverse_transform, 
                                   &compoundTransform);
-        */
-    } else if (rdr->_paintMode == PAINT_TEXTURE) {
+        * /
+   /* } else*/ if (rdr->_paintMode == PAINT_TEXTURE) {
         pisces_transform_assign(&compoundTransform, &rdr->_transform);
         pisces_transform_multiply(&compoundTransform, &rdr->_paint_transform);
         pisces_transform_invert(&compoundTransform);
@@ -600,6 +603,7 @@ renderer_setComposite(Renderer* rdr, jint compositeRule, jfloat alpha) {
     }
 }
 
+/* Temporary gradient support removal
 static INLINE void
 renderer_setLinearGradient(Renderer* rdr,
                            jint x0, jint y0, jint x1, jint y1,
@@ -691,7 +695,7 @@ renderer_setRadialGradient(Renderer* rdr,
     setPaintMode(rdr, PAINT_RADIAL_GRADIENT);
     memcpy(rdr->_gradient_colors, colors, GRADIENT_MAP_SIZE*sizeof(jint));
 }
-
+*/
 static INLINE void
 renderer_setTexture(Renderer* rdr, jint* data, jint width, jint height,
                     jboolean repeat, const Transform6* transform) {
@@ -1168,6 +1172,7 @@ updateCompositeDependedRoutines(Renderer* rdr) {
 static void
 updatePaintDependedRoutines(Renderer* rdr) {
     switch (rdr->_paintMode) {
+/* Temporary gradient support removal
         case PAINT_LINEAR_GRADIENT:
             rdr->_genPaint = genLinearGradientPaint;
             rdr->_emitRows = rdr->_bl_PT;
@@ -1176,6 +1181,7 @@ updatePaintDependedRoutines(Renderer* rdr) {
             rdr->_genPaint = genRadialGradientPaint;
             rdr->_emitRows = rdr->_bl_PT;
             break;
+*/
         case PAINT_TEXTURE:
             rdr->_genPaint = genTexturePaint;
             rdr->_emitRows = rdr->_bl_PT;

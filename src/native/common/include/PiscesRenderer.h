@@ -121,12 +121,16 @@
  * @see setTexture
  */  
 #define PAINT_FLAT_COLOR 0
+/* Temporary gradient support removal
 #define PAINT_LINEAR_GRADIENT 1
 #define PAINT_RADIAL_GRADIENT 2
+*/
 #define PAINT_TEXTURE 3
 
+/* Temporary gradient support removal
 #define LG_GRADIENT_MAP_SIZE 8
 #define GRADIENT_MAP_SIZE (1 << LG_GRADIENT_MAP_SIZE)
+*/
 
 #define DEFAULT_INDICES_SIZE (8*292)
 #define DEFAULT_CROSSINGS_SIZE (8*292*4)
@@ -157,9 +161,12 @@
  * fill is repeated with period given by start,end distance. You can imagine 
  * this as if you'd put mirror to end point (line).
  */
+
+/* Temporary gradient support removal
 #define CYCLE_NONE 0
 #define CYCLE_REPEAT 1
 #define CYCLE_REFLECT 2
+*/
 
 /**
  * \struct _Renderer 
@@ -184,6 +191,7 @@ typedef struct _Renderer {
     jint _ored, _ogreen, _oblue, _oalpha;
 
     // Gradient paint
+ /* Temporary gradient support removal
     jint _lgradient_x0; /// 
     jint _lgradient_y0;
     jint _lgradient_x1;
@@ -197,22 +205,22 @@ typedef struct _Renderer {
     jfloat _lgradient_fx1;
     jfloat _lgradient_fy1;
 
-    /* Gradient delta for one pixel step in X */
+    /* Gradient delta for one pixel step in X * /
     jfloat _lgradient_dgdx;
-    /* Gradient delta for one pixel step in Y */
+    /* Gradient delta for one pixel step in Y * /
     jfloat _lgradient_dgdy;
 
     /*
      * Color and alpha for gradient value g is located in
      * color map at index (int)(g*scale + bias)
-     */
+     * /
     jfloat _lgradient_scale;
     jfloat _lgradient_bias;
 
     jint _lgradient_color_565[GRADIENT_MAP_SIZE];
     jint _lgradient_color_888[GRADIENT_MAP_SIZE];
     jint _lgradient_color_8  [GRADIENT_MAP_SIZE];
-
+*/
     // Antialiasing
     /**    
      * @var jint _SUBPIXEL_LG_POSITIONS_X 
@@ -378,6 +386,7 @@ typedef struct _Renderer {
     // Paint transform
     Transform6 _paint_transform;
 
+/* Temporary gradient support removal
     // Gradient transform
     Transform6 _gradient_transform;
     Transform6 _gradient_inverse_transform;
@@ -392,7 +401,7 @@ typedef struct _Renderer {
     // Gradient color map
     jint _gradient_colors[GRADIENT_MAP_SIZE];
     jint _gradient_cycleMethod;
-
+*/
     // X crossing tables
     jint *_crossings;
     jint _crossings_length;

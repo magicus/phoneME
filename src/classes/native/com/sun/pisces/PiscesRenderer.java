@@ -151,11 +151,12 @@ public final class PiscesRenderer extends PathSink
 
     public native void setComposite(int compositeRule, float alpha);
 
+/* Temporary gradient support removal
     int[] gcm_fractions = null;
     int[] gcm_rgba = null;
     int gcm_cycleMethod = -1;
     GradientColorMap gradientColorMap = null;
-    
+*/    
     private boolean arraysDiffer(int[] a, int[] b) {
         if (a == null) {
             return true;
@@ -180,6 +181,7 @@ public final class PiscesRenderer extends PathSink
         return dst;
     }
     
+/* Temporary gradient support removal
     private void setGradientColorMap(int[] fractions, int[] rgba,
                                      int cycleMethod) {
         if (fractions.length != rgba.length) {
@@ -202,15 +204,18 @@ public final class PiscesRenderer extends PathSink
                                               int[] colors,
                                               int cycleMethod,
                                               Transform6 gradientTransform);
-
+*/
     public void setLinearGradient(int x0, int y0, int x1, int y1,
                                   int[] fractions, int[] rgba,
                                   int cycleMethod,
                                   Transform6 gradientTransform) {
+        notImplemented(); 
+/* Temporary gradient support removal
         setGradientColorMap(fractions, rgba, cycleMethod);
         setLinearGradientImpl(x0, y0, x1, y1,
                               gradientColorMap.colors, cycleMethod,
                               gradientTransform);
+*/
     }
 
     /**
@@ -230,27 +235,34 @@ public final class PiscesRenderer extends PathSink
     public void setLinearGradient(int x0, int y0, int color0, 
                                   int x1, int y1, int color1,
                                   int cycleMethod) {
+        notImplemented();                                  
+/* Temporary gradient support removal
       int[] fractions = {0x0000, 0x10000};
       int[] rgba = {color0, color1};
       Transform6 ident = new Transform6(1 << 16, 0, 0, 1 << 16, 0, 0);
       setLinearGradient(x0, y0, x1, y1, fractions, rgba, cycleMethod, ident);
+*/
     }
 
+/* Temporary gradient support removal
     private native void setRadialGradientImpl(int cx, int cy, int fx, int fy,
                                               int radius,
                                               int[] colors,
                                               int cycleMethod,
                                               Transform6 gradientTransform);
-
+*/
     public void setRadialGradient(int cx, int cy, int fx, int fy,
                                   int radius,
                                   int[] fractions, int[] rgba,
                                   int cycleMethod,
                                   Transform6 gradientTransform) {
+        notImplemented();                                  
+/* Temporary gradient support removal
         setGradientColorMap(fractions, rgba, cycleMethod);
         setRadialGradientImpl(cx, cy, fx, fy, radius,
                               gradientColorMap.colors, cycleMethod,
                               gradientTransform);
+*/
     }
 
     public void setTextureOpacity(float opacity) {

@@ -89,14 +89,11 @@ INTERNAL_PISCES_COMMON_CLASSES_DIR := $(INTERNAL_PISCES_DIR)/src/classes/common
 INTERNAL_PISCES_JAVA_FILES := \
         $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/Dasher.java \
         $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/Flattener.java \
-        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/GradientColorMap.java \
-        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/GZIPInputStream.java \
         $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/LineSink.java \
         $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/Paint.java \
         $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/PathSink.java \
         $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/PathSource.java \
         $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/PathStore.java \
-        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/PiscesFont.java \
         $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/PiscesMath.java \
         $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/RendererBase.java \
         $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/Stroker.java \
@@ -105,6 +102,13 @@ INTERNAL_PISCES_JAVA_FILES := \
         $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/Transform4.java \
         $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/Transformer.java
 
+#        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/GZIPInputStream.java \
+#        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/PiscesFont.java \
+
+# Temporary gradient removal
+#        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/GradientColorMap.java \
+        
+        
 ifeq ($(SUBSYSTEM_PISCES_MODULES), pure_java)
     INTERNAL_PISCES_JAVA_CLASSES_DIR := \
             $(INTERNAL_PISCES_DIR)/src/classes/java

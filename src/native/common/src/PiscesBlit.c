@@ -1241,6 +1241,7 @@ blitSrcOver8(Renderer *rdr, jint height) {
     }
 }
 
+/* Temporary gradient support removal
 static jint
 pad(jint ifrac, jint cycleMethod) {
     switch (cycleMethod) {
@@ -1409,7 +1410,7 @@ genRadialGradientPaint(Renderer *rdr, jint height) {
         paintOffset += width;
     }
 }
-
+*/
 void
 genTexturePaint(Renderer *rdr, jint height) {
     jint j;

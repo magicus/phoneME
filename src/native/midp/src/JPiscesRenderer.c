@@ -625,6 +625,7 @@ Java_com_sun_pisces_PiscesRenderer_setTextureImpl() {
     KNI_ReturnVoid();
 }
 
+/* Temporary gradient support removal
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_PiscesRenderer_setLinearGradientImpl() {
     KNI_StartHandles(3);
@@ -706,7 +707,7 @@ Java_com_sun_pisces_PiscesRenderer_setRadialGradientImpl() {
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
-
+*/
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_PiscesRenderer_setAntialiasing() {
     KNI_StartHandles(1);

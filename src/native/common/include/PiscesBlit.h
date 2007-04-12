@@ -60,8 +60,10 @@ void fillRectSrcOver(Renderer* rdr,
                      jint x0, jint y0, jint x1, jint y1,
                      jint cred, jint cgreen, jint cblue);
 
+/* Temporary gradient support removal
 void genLinearGradientPaint(Renderer *rdr, jint height);
 void genRadialGradientPaint(Renderer *rdr, jint height);
+*/
 void genTexturePaint(Renderer *rdr, jint height);
 
 void blitSrc888(Renderer *rdr, jint height);
