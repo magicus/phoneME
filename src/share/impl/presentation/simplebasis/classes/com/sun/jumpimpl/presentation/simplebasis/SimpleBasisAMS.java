@@ -201,7 +201,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         
         commandContainer = new CommandContainer();
         
-        commandContainer.setLayout(new GridLayout(1, 5));
+        commandContainer.setLayout(new GridLayout(1, 0));
         addCommandButton("Apps", commandContainer, new ApplicationsScreenActionListener());
         addCommandButton("Switch", commandContainer, new SwitchToScreenActionListener());
         addCommandButton("Kill", commandContainer, new KillScreenActionListener());
@@ -326,16 +326,16 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         }
     }
     
-    private void displayDialog(String str, ActionListener okActionListener,
+    public void displayDialog(String str, ActionListener okActionListener,
             ActionListener cancelActionListener) {
         trace("ENTERING DIALOG SCREEN");
         if (currentApp != null) {
             pauseApp(currentApp);
             bringWindowToBack(currentApp);
         }
-        Container helpContainer = new Container();
-        helpContainer.setBackground(Color.white);
-        helpContainer.setLayout(new BorderLayout());
+        Container dialogContainer = new Container();
+        dialogContainer.setBackground(Color.white);
+        dialogContainer.setLayout(new BorderLayout());
         
         final String displayStr = str;
         Container textContainer = new Container() {
@@ -351,10 +351,10 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         addDialogButton("OK", buttonContainer, okActionListener);
         addDialogButton("Cancel", buttonContainer, cancelActionListener);
         
-        helpContainer.add(textContainer, BorderLayout.CENTER);
-        helpContainer.add(buttonContainer, BorderLayout.SOUTH);
+        dialogContainer.add(textContainer, BorderLayout.CENTER);
+        dialogContainer.add(buttonContainer, BorderLayout.SOUTH);
         
-        screenContainer.add(helpContainer);
+        screenContainer.add(dialogContainer);
         refreshScreen();
     }
     
@@ -447,7 +447,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
     /**
      * Display the screen containing application icons.
      */
-    public void doApplicationsScreen() {
+    private void doApplicationsScreen() {
         trace("ENTERING SCREEN: APPLICATIONS");
         if (currentApp != null) {
             pauseApp(currentApp);
@@ -477,7 +477,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         public void keyTyped(KeyEvent e) {
         }
         
-        public void keyPressed(KeyEvent e) {            
+        public void keyPressed(KeyEvent e) {
             int keyCode = e.getKeyCode();
             if (keyCode == KeyEvent.VK_PAGE_UP || keyCode == KeyEvent.VK_F1) {
                 pageUp();
@@ -534,7 +534,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
      * Display the switch-to screen, consisting of icons
      * pertaining to currently running applications.
      */
-    public void doSwitchToScreen() {
+    private void doSwitchToScreen() {
         trace("ENTERING SCREEN: SWITCH");
         if (currentApp == null) {
             trace("*** currentApp is NULL. ***");
@@ -568,7 +568,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
      * Display the kill screen, consisting of icons pertaining to currently
      * running applications that can be killed .
      */
-    public void doKillScreen() {
+    private void doKillScreen() {
         trace("ENTERING SCREEN: KILL");
         if (currentApp != null) {
             pauseApp(currentApp);
@@ -592,14 +592,13 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         refreshScreen();
         CURRENT_SCREEN = KILL_SCREEN;
     }
-    
-    public void doHelpScreen() {
+        
+    private void doHelpScreen() {
         trace("ENTERING SCREEN: KILL");
         if (currentApp != null) {
             pauseApp(currentApp);
             bringWindowToBack(currentApp);
         }
-        clearScreen();
         Container helpContainer = new Container() {
             public void paint(Graphics g) {
                 super.paint(g);
@@ -609,8 +608,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
             }
         };
         helpContainer.setBackground(Color.white);
-        screenContainer.add(helpContainer);
-        refreshScreen();
+        showScreen(helpContainer);
         CURRENT_SCREEN = HELP_SCREEN;
     }
     
@@ -695,6 +693,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         
         public void actionPerformed(ActionEvent e) {
             killApp(app);
+            doKillScreen();
         }
     }
     
@@ -727,15 +726,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         button.setForeground(Color.blue);
         button.setTextShadow(true);
         button.setPaintBorders(true);
-        
-        String str = null;
-        if (label.trim().length() > MAX_TITLE_CHARS) {
-            str = label.trim().substring(0, MAX_TITLE_CHARS - 3);
-            str += "...";
-        } else {
-            str = label.trim();
-        }
-        button.setLabel(str);
+        button.setLabel(label);
         
         CommandButtonsKeyListener keyListener = new CommandButtonsKeyListener(button);
         button.addKeyListener(keyListener);
@@ -755,15 +746,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         button.setForeground(Color.blue);
         button.setTextShadow(true);
         button.setPaintBorders(true);
-        
-        String str = null;
-        if (label.trim().length() > MAX_TITLE_CHARS) {
-            str = label.trim().substring(0, MAX_TITLE_CHARS - 3);
-            str += "...";
-        } else {
-            str = label.trim();
-        }
-        button.setLabel(str);
+        button.setLabel(label);
         
         container.add(button);
         return button;
@@ -778,11 +761,17 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         commandContainer.repaint();
     }
     
-    private void clearScreen() {
+    public void clearScreen() {
         screenContainer.removeAll();
     }
     
-    private void refreshScreen() {
+    public void showScreen(Container container) {
+        clearScreen();
+        screenContainer.add(container);
+        refreshScreen();
+    }
+    
+    public void refreshScreen() {
         screenContainer.validate();
         screenContainer.repaint();
     }
@@ -801,15 +790,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
                 return null;
             }
             
-            // Trim strings that are too long to fit.
-            String str = null;
-            if (app.getTitle().trim().length() > MAX_TITLE_CHARS) {
-                str = app.getTitle().trim().substring(0, MAX_TITLE_CHARS - 3);
-                str += "...";
-            } else {
-                str = app.getTitle().trim();
-            }
-            button.setLabel(str);
+            button.setLabel(app.getTitle().trim());
             button.setTextShadow(true);
             button.addActionListener(action);
             

@@ -321,7 +321,11 @@ public class JUMPInstallerTool {
                         if (iconPath == null) {
                             System.out.println("      Icon: <none>");
                         } else {
-                            System.out.println("      Icon: " + iconPath.getFile());
+                            if (iconPath.getProtocol().equals("jar")) {
+                                System.out.println("      Icon: jar:" + iconPath.getFile());
+                            } else {
+                                System.out.println("      Icon: " + iconPath.getFile());
+                            }
                         }
                         System.out.println("     Model: " + JUMPAppModel.MIDLET.toString());
                     }

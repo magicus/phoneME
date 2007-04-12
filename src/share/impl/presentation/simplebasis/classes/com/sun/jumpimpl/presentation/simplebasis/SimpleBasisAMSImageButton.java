@@ -62,8 +62,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.FilteredImageSource;
@@ -108,7 +106,6 @@ public class SimpleBasisAMSImageButton
         tracker = new MediaTracker(this);
         setUnpressedBorder(defaultUnpressedBorder);
         setDepressedBorder(defaultArmedBorder);
-        //enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
         addFocusListener(this);
         addMouseListener(this);
     }
@@ -131,7 +128,7 @@ public class SimpleBasisAMSImageButton
     
     public SimpleBasisAMSImageButton(Image image, String label) {
         this(image);
-        setLabel(label);     
+        setLabel(label);
     }
     
     public void doAction() {
@@ -534,7 +531,7 @@ public class SimpleBasisAMSImageButton
             g.setColor(getForeground());
         }
         g.fillRect(0, 0, size.width, size.height);
-        
+                
         try {
             if (!tracker.checkID(buttonState)) {
                 tracker.waitForID(buttonState);
@@ -552,51 +549,70 @@ public class SimpleBasisAMSImageButton
                             imageHeight) / 2) - 5;
                     g.drawImage(images[buttonState], x, y, this);
                 }
-                // for label
-                if (label != null) {
-                    FontMetrics fm = null;
-                    if (currentFont != null) {
-                        g.setFont(currentFont);
-                        fm = getFontMetrics(currentFont);
-                    } else {
-                        g.setFont(defaultFont);
-                        fm = getFontMetrics(defaultFont);
-                    }
-                    
-                    int width = (int) fm.stringWidth(label);
-                    if (labelX == -1) {
-                        labelX = ( (size.width - width) / 2);
-                        if (labelX < 0) {
-                            labelX = 0;
-                        }
-                    }
-                    if (labelY == -1) {
-                        int height = (int) fm.getHeight();
-                        if (images[buttonState] != null) {
-                            labelY = (int) (size.height - 5);
-                        } else {
-                            labelY = (int) (size.height / 2) + (height / 2) ;
-                        }
-                    }
-                    
-                    g.setColor(textColor);
-                    if (labelDisplay) {
-                        if (textShadow) {
-                            drawTextShadowString(g, label, labelX, labelY);
-                        } else {
-                            g.drawString(label, labelX, labelY);
-                        }
-                    }
-                }
-                
+            } else {
+                trace("ERROR: Invalid image used for button: " + label);
             }
-        } catch (InterruptedException ie) {
+        } catch (Exception e) {
+            trace(e.getMessage());
         }
+        
+        // for label
+        if (label != null) {
+            FontMetrics fm = null;
+            if (currentFont != null) {
+                g.setFont(currentFont);
+                fm = getFontMetrics(currentFont);
+            } else {
+                g.setFont(defaultFont);
+                fm = getFontMetrics(defaultFont);
+            }
+            
+            int width = (int) fm.stringWidth(label);
+            String displayLabel = label;
+            String tmpLabel = null;
+            while (width > size.width) {
+                displayLabel = displayLabel.substring(0, displayLabel.length() - 1);
+                tmpLabel = displayLabel + "...";
+                width = (int) fm.stringWidth(tmpLabel);
+            }
+            
+            if (tmpLabel != null) {
+                displayLabel = tmpLabel;
+            }
+            
+            int height = (int) fm.getHeight();
+            if (labelX == -1) {
+                labelX = ( (size.width - width) / 2);
+                if (labelX < 0) {
+                    labelX = 0;
+                }
+            }
+            if (labelY == -1) {
+                if (images[buttonState] != null && !tracker.isErrorID(buttonState)) {
+                    labelY = (int) (size.height - 5);
+                } else {
+                    labelY = (int) (size.height / 2) + (height / 2) ;
+                }
+            }
+            
+            g.setColor(textColor);
+            if (labelDisplay) {
+                if (textShadow) {
+                    drawTextShadowString(g, displayLabel, labelX, labelY);
+                } else {
+                    g.drawString(displayLabel, labelX, labelY);
+                }
+            }
+        }
+        
         if (paintBorders) {
             borders[buttonState].paint(g, getBackground(), 0, 0, size.width,
                     size.height);
         }
-        
+    }
+    
+    private void trace(String str) {
+        SimpleBasisAMS.trace(str);
     }
     
     private void drawTextShadowString(Graphics g, String str, int x, int y) {
@@ -683,27 +699,27 @@ public class SimpleBasisAMSImageButton
     
     public synchronized void removeActionListener(ActionListener l) {
         actionListener = AWTEventMulticaster.remove(actionListener, l);
-    }    
+    }
     
     /*
         public synchronized ActionListener getActionListener() {
             return actionListener;
         }
      */
-
+    
     public void mouseClicked(MouseEvent e) {
         requestFocusInWindow();
     }
-
+    
     public void mousePressed(MouseEvent e) {
     }
-
+    
     public void mouseReleased(MouseEvent e) {
     }
-
+    
     public void mouseEntered(MouseEvent e) {
     }
-
+    
     public void mouseExited(MouseEvent e) {
     }
     
