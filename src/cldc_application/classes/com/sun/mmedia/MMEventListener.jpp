@@ -76,6 +76,7 @@ class MMEventListener implements EventListener {
             BasicPlayer.sendExternalVolumeChanged(PlayerListener.VOLUME_CHANGED, nevt.intParam2);
             break;
 
+// #ifndef ABB [
         case EventTypes.MM_RECORD_LIMIT_EVENT:
             // Need revisit
             break;
@@ -107,6 +108,7 @@ class MMEventListener implements EventListener {
                 p.sendEvent(PlayerListener.RECORD_ERROR, new String("Unexpected Media Error"));
             }
             break;
+// #endif ]
         }
     }
 }

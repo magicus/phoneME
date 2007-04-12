@@ -388,7 +388,7 @@ public class DirectPlayer extends BasicPlayer
         }
         } else {
             if (restartPosition != Player.TIME_UNKNOWN) {
-                if (debug) System.out.println("[direct] Start from stoped position: " + stopTime);
+                if (debug) System.out.println("[direct] Start from stoped position: " + restartPosition);
                 nSetMediaTime(hNative, restartPosition);
                 restartPosition = Player.TIME_UNKNOWN;
             }

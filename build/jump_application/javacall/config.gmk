@@ -23,14 +23,12 @@
 # information or have any questions. 
 
 #
-# Not ABB. Full MMAPI.
+# ABB setting.
 #
+ifeq ($(USE_ABB),true)
+ABB = true
+else
 ABB = false
-
-#
-# Always ON
-#
-DIRECT_PLAYER = true
 
 #
 # If you want to support VideoControl, turn on DIRECT_VIDEO_PLAYER option
@@ -53,6 +51,13 @@ DIRECT_MIDI_CONTROL = true
 # If you want to support RecordControl, turn on DIRECT_RECORD option
 #
 DIRECT_RECORD = true
+
+endif
+
+#
+# Always ON
+#
+DIRECT_PLAYER = true
 
 #
 # If you want to support file:// protocol, turn on USE_FILE_CONNECTION option
