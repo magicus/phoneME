@@ -91,16 +91,16 @@ public class FileStoreImpl extends JUMPStore {
           //       jumpNodeLists.put(uri, node);
           //   }
           //}
-          return new JUMPNodeListImpl("list", uri);
+          return new JUMPNodeListImpl(uri);
       }  else {    
     
           try {
              File file = uriToDataFile(uri);
-             String name = getDataNodeName(uri);
+             String name = getNodeName(uri);
 
              if (!file.isHidden()) {  // Don't make a node for hidden system files
                 JUMPData dataObject = readFromFile(file, name);
-                JUMPNode node = new JUMPNodeDataImpl(name, uri, dataObject);
+                JUMPNode node = new JUMPNodeDataImpl(uri, dataObject);
                 return node;
              }
 
@@ -155,7 +155,7 @@ public class FileStoreImpl extends JUMPStore {
 
    protected File uriToDataFile(String uri) {
       String absolutePath = convertToAbsolutePath(uri, true);
-      return new File(absolutePath + File.separatorChar + getDataNodeName(uri));
+      return new File(absolutePath + File.separatorChar + getNodeName(uri));
    }
 
    protected File uriToListFile(String uri) {
@@ -163,7 +163,7 @@ public class FileStoreImpl extends JUMPStore {
       return new File(absolutePath);
    }
 
-   private String getDataNodeName(String uri) {
+   private String getNodeName(String uri) {
       return uri.substring(uri.lastIndexOf(File.separatorChar) + 1);
    }
 
@@ -263,41 +263,36 @@ public class FileStoreImpl extends JUMPStore {
 
     class JUMPNodeDataImpl implements JUMPNode.Data {
        JUMPData data;
-       String name;
        String uri;
 
-       JUMPNodeDataImpl(String name, String uri, JUMPData data) {
-          this.name = name;
+       JUMPNodeDataImpl(String uri, JUMPData data) {
           this.uri = uri;
           this.data = data;
        }
 
        public boolean containsData() { return true; }
-       public String getName() { return name; }
+       public String getName() { return getNodeName(uri); }
        public String getURI() { return uri; }
        public JUMPData getData() { return data; } 
        public String toString() { 
-          return "JUMPNode.Data (" + name + "," + uri + "," + data + ")"; 
+          return "JUMPNode.Data (" + uri + "," + data + ")"; 
        }
        public boolean equals(Object obj) {
           if (!(obj instanceof JUMPNode.Data)) return false;
           JUMPNode.Data other = (JUMPNode.Data) obj; 
-          return (name.equals(other.getName()) 
-                  && uri.equals(other.getURI()) 
+          return (uri.equals(other.getURI()) 
                   && data.equals(other.getData()));
        }
     }
 
     class JUMPNodeListImpl implements JUMPNode.List {
-       String name;
        String uri;
        ArrayList children;
-       JUMPNodeListImpl(String name, String uri) {
-          this.name = name;
+       JUMPNodeListImpl(String uri) {
           this.uri = uri;
        }
        public boolean containsData() { return false; }
-       public String getName() { return name; }
+       public String getName() { return getNodeName(uri); }
        public String getURI() { return uri; }
        public Iterator getChildren() { 
           //if (children == null) {  // should we cache?  What if dir content changes? 
@@ -315,12 +310,12 @@ public class FileStoreImpl extends JUMPStore {
           return children.iterator();
        }
        public String toString() { 
-          return "JUMPNode.List (" + name + "," + uri + ")"; 
+          return "JUMPNode.List (" + uri +")"; 
        }
        public boolean equals(Object obj) {
           if (!(obj instanceof JUMPNode.List)) return false;
           JUMPNode.List other = (JUMPNode.List) obj; 
-          return (name.equals(other.getName()) && uri.equals(other.getURI()));
+          return (uri.equals(other.getURI()));
        }
     }
 } 
