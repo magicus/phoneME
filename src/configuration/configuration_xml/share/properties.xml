@@ -151,6 +151,21 @@
   <property Key="mms"
 	    Value="com.sun.midp.io.j2me.mms.ProtocolPushImpl"
 	    Scope="internal"/>				
+  <property Key="btspp"
+	    Value="com.sun.midp.jsr82.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="btl2cap"
+	    Value="com.sun.midp.jsr82.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="btgoep"
+	    Value="com.sun.midp.jsr82.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="irdaobex"
+	    Value="com.sun.midp.jsr82.ProtocolPushImpl"
+	    Scope="internal"/>				
+  <property Key="tcpobex"
+	    Value="com.sun.midp.jsr82.ProtocolPushImpl"
+	    Scope="internal"/>				
 <!-- SYSTEM PROPERTIES -->
 <!-- Visible from System.getProperty() -->
 
