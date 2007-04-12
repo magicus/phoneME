@@ -155,7 +155,13 @@ public class DefaultConfiguration extends Configuration {
         
     }
 
+	// IMPL_NOTE: the following implementation is a temporary solution.
+	// we should later switch to getting the whole set of type/protocol pairs
+	// from underlying javacall.
 
+	protected native boolean nIsAmrSupported();
+	protected native boolean nIsJtsSupported();
+	
     /**
      *  Gets the supportedContentTypes attribute of the DefaultConfiguration object
      *
@@ -164,30 +170,35 @@ public class DefaultConfiguration extends Configuration {
      */
     public String[] getSupportedContentTypes(String protocol) {
         if (protocol == null) {
-            return new String[]{
-            // Mandatory support
-                MIME_AUDIO_TONE,
-            // Optional formats
-                MIME_AUDIO_AMR,
-                MIME_AUDIO_MIDI,
-                MIME_AUDIO_MIDI_2,
-                MIME_AUDIO_SP_MIDI,
-                MIME_AUDIO_WAV,
-                MIME_AUDIO_WAV_2,
-//                MIME_AUDIO_MP3,
-//                MIME_AUDIO_MP3_2,
-//                MIME_AUDIO_QCELP,
-//                MIME_AUDIO_QCELP_2,
-//                MIME_AUDIO_MP4,
-//                MIME_AUDIO_MP4_2,
-//                MIME_AUDIO_AAC,
-//                MIME_IMAGE_JPEG,
-//                MIME_VIDEO_3GPP,
-//                MIME_VIDEO_3GPP_2,
-//                MIME_VIDEO_MPEG,
-//                MIME_VIDEO_MPEG4,
-                MIME_IMAGE_GIF
-            };
+			if( nIsAmrSupported() )
+			{			
+				return new String[]{
+					// Mandatory support
+					MIME_AUDIO_TONE,
+					// Optional formats
+					MIME_AUDIO_AMR,
+					MIME_AUDIO_MIDI,
+					MIME_AUDIO_MIDI_2,
+					MIME_AUDIO_SP_MIDI,
+					MIME_AUDIO_WAV,
+					MIME_AUDIO_WAV_2,
+					MIME_IMAGE_GIF
+					};
+			}
+			else
+			{
+				return new String[]{
+					// Mandatory support
+					MIME_AUDIO_TONE,
+					// Optional formats
+					MIME_AUDIO_MIDI,
+					MIME_AUDIO_MIDI_2,
+					MIME_AUDIO_SP_MIDI,
+					MIME_AUDIO_WAV,
+					MIME_AUDIO_WAV_2,
+					MIME_IMAGE_GIF
+					};
+			}
         }
 
         if (protocol.equals("device")) {
@@ -200,68 +211,72 @@ public class DefaultConfiguration extends Configuration {
         }
 
         if (protocol.equals("http")) {
-            return new String[]{
-                MIME_AUDIO_TONE,
-                MIME_AUDIO_AMR,
-                MIME_AUDIO_MIDI,
-                MIME_AUDIO_MIDI_2,
-                MIME_AUDIO_SP_MIDI,
-                MIME_AUDIO_WAV,
-                MIME_AUDIO_WAV_2,
-//                MIME_AUDIO_MP3,
-//                MIME_AUDIO_MP3_2,
-//                MIME_AUDIO_QCELP,
-//                MIME_AUDIO_QCELP_2,
-//                MIME_AUDIO_MP4,
-//                MIME_AUDIO_MP4_2,
-//                MIME_AUDIO_AAC,
-//                MIME_VIDEO_3GPP,
-//                MIME_VIDEO_3GPP_2,
-//                MIME_VIDEO_MPEG,
-//                MIME_VIDEO_MPEG4,
-                MIME_IMAGE_GIF
-            };
+			if( nIsAmrSupported() && nIsJtsSupported() )
+			{			
+				return new String[]{
+					MIME_AUDIO_TONE,
+					MIME_AUDIO_AMR,
+					MIME_AUDIO_MIDI,
+					MIME_AUDIO_MIDI_2,
+					MIME_AUDIO_SP_MIDI,
+					MIME_AUDIO_WAV,
+					MIME_AUDIO_WAV_2,
+					MIME_IMAGE_GIF
+					};
+			}
+			else
+			{
+				return new String[]{
+					MIME_AUDIO_MIDI,
+					MIME_AUDIO_MIDI_2,
+					MIME_AUDIO_SP_MIDI,
+					MIME_AUDIO_WAV,
+					MIME_AUDIO_WAV_2,
+					MIME_IMAGE_GIF
+					};
+			}
         }
 
     // #ifdef USE_FILE_CONNECTION [
         if (protocol.equals("file")) {
-            return new String[]{
-                MIME_AUDIO_TONE,
-                MIME_AUDIO_AMR,
-                MIME_AUDIO_MIDI,
-                MIME_AUDIO_MIDI_2,
-                MIME_AUDIO_SP_MIDI,
-                MIME_AUDIO_WAV,
-                MIME_AUDIO_WAV_2,
-//                MIME_AUDIO_MP3,
-//                MIME_AUDIO_MP3_2,
-//                MIME_AUDIO_QCELP,
-//                MIME_AUDIO_QCELP_2,
-//                MIME_AUDIO_MP4,
-//                MIME_AUDIO_MP4_2,
-//                MIME_AUDIO_AAC,
-//                MIME_VIDEO_3GPP,
-//                MIME_VIDEO_3GPP_2,
-//                MIME_VIDEO_MPEG,
-//                MIME_VIDEO_MPEG4,
-                MIME_IMAGE_GIF
-                };
+			if( nIsAmrSupported() && nIsJtsSupported() )
+			{			
+				return new String[]{
+					MIME_AUDIO_TONE,
+					MIME_AUDIO_AMR,
+					MIME_AUDIO_MIDI,
+					MIME_AUDIO_MIDI_2,
+					MIME_AUDIO_SP_MIDI,
+					MIME_AUDIO_WAV,
+					MIME_AUDIO_WAV_2,
+					MIME_IMAGE_GIF
+					};
+			}
+			else
+			{
+				return new String[]{
+					MIME_AUDIO_MIDI,
+					MIME_AUDIO_MIDI_2,
+					MIME_AUDIO_SP_MIDI,
+					MIME_AUDIO_WAV,
+					MIME_AUDIO_WAV_2,
+					MIME_IMAGE_GIF
+					};
+			}
         }
     // #endif ]
 
         if (protocol.equals("rtsp")) {
-            return new String[]{
-                MIME_AUDIO_AMR,
-//                MIME_AUDIO_MP3,
-//                MIME_AUDIO_MP3_2,
-//                MIME_AUDIO_MP4,
-//                MIME_AUDIO_MP4_2,
-//                MIME_AUDIO_AAC,
-//                MIME_VIDEO_3GPP,
-//                MIME_VIDEO_3GPP_2,
-//                MIME_VIDEO_MPEG,
-//                MIME_VIDEO_MPEG4
-                };
+			if( nIsAmrSupported() )
+			{
+				return new String[]{
+					MIME_AUDIO_AMR,
+					};
+			}
+			else
+			{
+				return new String[ 0 ];
+			}
         }        
 
         if (protocol.equals("capture")) {
@@ -327,16 +342,23 @@ public class DefaultConfiguration extends Configuration {
         }
 
         if (content_type.equals(MIME_AUDIO_TONE)) {
-            return new String[]{
-                "device",
-                "http",
-            // #ifdef USE_FILE_CONNECTION [
-                "file",
-            // #endif ]
-                };
+			if( nIsJtsSupported() )
+			{
+				return new String[]{
+					"device",
+					"http",
+					// #ifdef USE_FILE_CONNECTION [
+	                "file",
+			        // #endif ]
+					};
+			}
+			else
+			{
+				return new String[]{ "device" };
+			}
         }
 
-        if (content_type.equals(MIME_AUDIO_AMR)) {
+        if (content_type.equals(MIME_AUDIO_AMR) && nIsAmrSupported() ) {
             return new String[]{
                 "http",
             // #ifdef USE_FILE_CONNECTION [

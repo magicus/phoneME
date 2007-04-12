@@ -1243,24 +1243,22 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         }
 
         /**
-         * Seek to a given video frame.
-         * The media time of the <code>Player</code> will be updated
-         * to reflect the new position set.
+         * Performs a seek to a video frame with given number.
+         * <code>Player</code> media time is updated and reflects
+         * the new position.
          * <p>
-         * This method can be called on a stopped or started
-         * <code>Player</code>.
+         * This method can be called regardless of whether the
+         * <code>Player</code> is started or stopped.
          * If the <code>Player</code> is
-         * in the <i>Started</i> state, this method may cause the
-         * <code>Player</code> to change states.  If that happens, the
-         * appropriate transition events will be posted by
-         * the <code>Player</code> when its state changes.
+         * in the <i>Started</i> state, state changes may occur.
+         * In this case, the corresponding transition events are posted.
          * <p>
-         * If the given frame number is less than the first or larger
-         * than the last frame number in the media, <code>seek</code>
-         * will jump to either the first or the last frame respectively.
+         * If the given frame number is outside the media frame number
+         * range, <code>seek</code> will stop on the first or the last
+         * frame respectively.
          *
          * @param frameNumber the frame to seek to.
-         * @return the actual frame that the Player has seeked to.
+         * @return the actual frame number set.
          */
         public int seek(int frameNumber) {
             active = true;
