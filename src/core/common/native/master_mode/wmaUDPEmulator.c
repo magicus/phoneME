@@ -1036,6 +1036,9 @@ WMA_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr,
     }
 #endif
 
+    if (appID == NULL) appID = "";
+    if (replyToAppID == NULL) replyToAppID = "";
+
     if (*pContext == NULL) {
         context = (jsr120_udp_emulator_context *)pcsl_mem_malloc(sizeof(*context));
         if (context == NULL)
@@ -1053,12 +1056,8 @@ WMA_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr,
          */
         context->totalLength = strlen(fromAddr) + 1 +
             strlen(appID) + 1 +
-            /* strlen(replyToAppID) */ + 1 +
+            strlen(replyToAppID) + 1 +
             sizeof(int) + msgLen;
-        if (replyToAppID != NULL) {
-            /* Include only the text. The terminator has been accounted for. */
-            context->totalLength += strlen(replyToAppID);
-        }
         buffer = (char*)pcsl_mem_malloc(context->totalLength);
         if (buffer == NULL) {
             pcsl_mem_free(context);
