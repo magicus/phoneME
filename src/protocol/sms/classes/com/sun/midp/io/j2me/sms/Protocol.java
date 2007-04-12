@@ -191,21 +191,21 @@ public class Protocol extends ProtocolBase {
      */
 
     /**
-     * Constructs a new message object of a text or binary type. When the
-     * <code>TEXT_MESSAGE</code> constant is passed in, the created
-     * object implements the <code>TextMessage</code> interface.
-     * When the <code>BINARY_MESSAGE</code> constant is passed in, the
-     * created object implements the <code>BinaryMessage</code>
-     * interface.
+     * Constructs a new message object of a text or binary type.
+     * If the <code>TEXT_MESSAGE</code> constant is passed in, the
+     * <code>TextMessage</code> interface is implemented by the created object.
+     * If the <code>BINARY_MESSAGE</code> constant is passed in, the
+     * <code>BinaryMessage</code> interface is implemented by the created
+     * object.
      * <p>
      * If this method is called in a sending mode, a new <code>Message</code>
      * object is requested from the connection. For example:
      * <p>
      * <code>Message msg = conn.newMessage(TEXT_MESSAGE);</code>
      * <p>
-     * The newly created <code>Message</code> does not have the destination
-     * address set. It must be set by the application before
-     * the message is sent.
+     * The <code>Message</code> object that was created doesn't have the
+     * destination address set. It's the application's responsibility to set it
+     * before the message is sent.
      * <p>
      * If this method is called in receiving mode, the
      * <code>Message</code> object does have
@@ -244,12 +244,11 @@ public class Protocol extends ProtocolBase {
     /**
      * Constructs a new message object of a text or binary type and specifies
      * a destination address.
-     * When the
-     * <code>TEXT_MESSAGE</code> constant is passed in, the created
-     * object implements the <code>TextMessage</code> interface.
-     * When the <code>BINARY_MESSAGE</code> constant is passed in, the
-     * created object implements the <code>BinaryMessage</code>
-     * interface.
+     * If the <code>TEXT_MESSAGE</code> constant is passed in, the
+     * <code>TextMessage</code> interface is implemented by the created object.
+     * If the <code>BINARY_MESSAGE</code> constant is passed in, the
+     * <code>BinaryMessage</code> interface is implemented by the created
+     * object.
      * <p>
      * The destination address <code>addr</code> has the following format:
      * </p>
@@ -510,19 +509,18 @@ public class Protocol extends ProtocolBase {
      * it will only calculate the number of protocol segments
      * needed for sending it.
      * </p>
-     * <p>This method will calculate the number of segments
-     * needed when this message is split into the protocol
-     * segments using the appropriate features of the underlying protocol.
-     * This method does not take into account possible limitations
-     * of the implementation that may limit the number of
-     * segments that can be sent using this feature. These
-     * limitations are protocol specific and are documented
-     * with the adapter definition for that protocol.
+     * <p>This method calculates the number of segments required
+     * when this message is split into the protocol segments
+     * utilizing the underlying protocol's features.
+     * Possible implementation's limitations that may limit the number of
+     * segments that can be sent using it are not taken into account. These
+     * limitations are protocol specific. They are documented
+     * with that protocol's adapter definition.
      * </p>
      * @param msg the message to be used for the calculation
-     * @return number of protocol segments needed for sending the message.
-     *     Returns <code>0</code> if the <code>Message</code> object cannot be
-     *     sent using the underlying protocol.
+     * @return number of protocol segments required to send the message.
+     *     If the <code>Message</code> object can't be sent using
+     *     the underlying protocol, <code>0</code> is returned.
      */
     public int numberOfSegments(Message msg) {
 

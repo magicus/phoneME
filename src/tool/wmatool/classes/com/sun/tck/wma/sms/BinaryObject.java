@@ -45,41 +45,37 @@ public class BinaryObject extends MessageObject implements BinaryMessage {
 	super(MessageConnection.BINARY_MESSAGE, addr);
     }
 
-    /** 
-     * Returns the message payload data as an array
-     * of bytes.
-     * 
-     * <p>Returns <code>null</code>, if the payload for the message 
-     * is not set.
-     * </p>
-     * <p>The returned byte array is a reference to the 
-     * byte array of this message and the same reference
-     * is returned for all calls to this method made before the
-     * next call to <code>setPayloadData</code>.
+    /**
+     * Returns an array of bytes representing the payload data
+     * of the message, or <code>null</code> if it isn't set.
      *
-     * @return the payload data of this message, or
-     * <code>null</code> if the data has not been set 
+     * <p>A reference to the byte array of this binary message
+     * is returned. It is the same for all calls to this method
+     * made before <code>setPayloadData</code> is called the
+     * next time.
+     *
+     * @return <code>null</code> if the data hasn't been set,
+     *         or this message's payload data
      * @see #setPayloadData
      */
     public byte[] getPayloadData() {
-	return buffer;
+        return buffer;
     }
 
     /**
-     * Sets the payload data of this message. The payload may
+     * Sets the payload data of this binary message. It may
      * be set to <code>null</code>.
-     * <p>Setting the payload using this method only sets the 
-     * reference to the byte array. Changes made to the contents
-     * of the byte array subsequently affect the contents of this
-     * <code>BinaryMessage</code> object. Therefore, applications
-     * shouldn't reuse this byte array before the message is sent and the
-     * <code>MessageConnection.send</code> method returns.
+     * <p>This method actually sets the reference to the byte array.
+     * Changes made to this array subsequently affect this
+     * <code>BinaryMessage</code> object's contents. Therefore, this array
+     * should not be reused by the applications until the message is sent and
+     * <code>MessageConnection.send</code> returned.
      * </p>
-     * @param data payload data as a byte array
+     * @param data payload data represented as a byte array
      * @see #getPayloadData
      */
     public void setPayloadData(byte[] data) {
-	buffer = data;
+        buffer = data;
     }
 
 }
