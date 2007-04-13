@@ -129,16 +129,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
     private int imageDataLength;
     private int lzwCodeSize;
 
-    /**
-     * Retrieves the specified control object for the
-     * GIF Player. The following controls are currently
-     * implemented: VideoControl, FramePositioningControl
-     * and RateControl and StopTimeControl.
-     *
-     * @param  type       the requested control type.
-     * @return            the control object if available,
-     *                    otherwise null.
-     */
     protected Control doGetControl(String type) {
         if (type.startsWith(BasicPlayer.pkgName)) {
             
@@ -174,11 +164,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         return duration;
     }
 
-    /**
-     * Retrieves the current media time.
-     *
-     * @return    the media time in microseconds.
-     */
     protected long doGetMediaTime() {
         long mediaTime;
 
@@ -196,13 +181,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         return mediaTime;       
     }
 
-    /**
-     * Sets the media time of the GIF Player.
-     *
-     * @param  now the new media time.
-     * @exception MediaException thrown if setMediaTime fails.
-     * @return the new media time in microseconds.
-     */
     protected long doSetMediaTime(long now) throws MediaException {
         if (seekType == NOT_SEEKABLE)
             throw new MediaException("stream not seekable");
@@ -246,13 +224,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         return now;
     }
 
-    /**
-     * Realizes the GIF Player.
-     * 
-     * @see                      Player#realize()
-     * @exception MediaException Thrown if the <code>Player</code> cannot
-     *                           be realized.
-     */
     protected void doRealize() throws MediaException {          
         duration = TIME_UNKNOWN;
         frameCount = 0;
@@ -285,13 +256,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
 
     }
 
-    /**
-     * Prefetches the GIF Player.
-     * 
-     * @see                      Player#prefetch()
-     * @exception MediaException Thrown if the <code>Player</code> cannot
-     *                           be prefetched.
-     */
     protected void doPrefetch() throws MediaException {
         if (referenceFrame == null)
             referenceFrame = new int[videoWidth * videoHeight];
@@ -318,13 +282,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         }
     }
     
-    /**
-     * Starts the GIF Player.
-     * 
-     * @see       Player#start()
-     * @return    true, if the player was started successfully,
-     *            otherwise false.
-     */
     protected boolean doStart() {
         if (duration == 0) { // e.g. for non-animated GIFs
             new Thread(new Runnable() {
@@ -368,13 +325,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         return true;
     }
 
-    /**
-     * Stops the GIF Player.
-     * 
-     * @see                      Player#stop()
-     * @exception MediaException Thrown if the <code>Player</code> cannot
-     *                           be stoppped.     
-     */
     protected void doStop() throws MediaException {
         if (stopped) return;    
 
@@ -393,11 +343,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         }
     }
 
-    /**
-     * Deallocates the GIF Player.
-     * 
-     * @see   Player#deallocate()
-     */
     protected void doDeallocate() {
         playThreadFinished();
         
@@ -405,11 +350,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         referenceFrame = null;
     }
 
-    /**
-     * Closes the GIF Player.
-     * 
-     * @see   Player#close()
-     */
     protected void doClose() {
         done = true;
 
@@ -423,9 +363,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         imageData = null;
     }
 
-    /**
-     * The run method driving the play thread.
-     */
     public void run() {
         done = false;
         
@@ -471,10 +408,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         }
     }
 
-
-    /**
-     * Stops the GIF player when the stop time has been reached.
-     */
     private void stopTimeReached() {
         // stop the player
         mediaTimeOffset = doGetMediaTime();
@@ -507,9 +440,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         }
     }
     
-    /**
-     * Returns the duration in microseconds.
-     */
     private long getDuration(int frameCount) {
         long duration = 0;
          
@@ -530,11 +460,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         return interval;    
     }
 
-    /**
-     * Maps media time to the corresponding frame.
-     *
-     * Returns the frame number.
-     */
     private int timeToFrame(long mediaTime) {
         int frame = 0;
 
@@ -554,11 +479,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         return frame;
     }
 
-    /**
-     * Maps a frame to the corresponding media time.
-     *
-     * Returns the time in microseconds.
-     */
     private long frameToTime(int frameNumber) {
         long elapsedTime = 0;
 
@@ -574,9 +494,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         return elapsedTime;
     }
 
-    /**
-     * Decodes and renders a GIF Frame.
-     */
     private void processFrame() {
         // the media time in milliseconds
         long mediaTime = doGetMediaTime() / 1000;
@@ -663,10 +580,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         }
     }
     
-    /*
-     * Rewinds the stream to the position of the first frame
-     * to be able to read it again
-     */
     private void seekFirstFrame() throws IOException {
         if (seekType == RANDOM_ACCESSIBLE) {
             // seek to the beginning of the first frame
@@ -684,18 +597,11 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             imageDecoder.decodeImage(lzwCodeSize, imageDataLength, imageData, referenceFrame);
     }
 
-    /**
-     * Renders a frame.
-     */
     private void renderFrame() {
         if (referenceFrame != null)
             videoRenderer.render(referenceFrame);
     }
     
-    /**
-     * Scans the input stream for GIF frames and builds a table
-     * of frame durations.
-     */
     private void scanFrames() throws MediaException {       
         //System.out.println("scanFrames at pos " + stream.tell());
         frameCount = 0;
@@ -741,12 +647,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         }
     }
 
-    /**
-     * Reads data from the stream object and constructs a GIF frame.
-     *
-     * @return  true if the frame was read successfully, 
-     *          otherwise false.
-     */    
     private boolean getFrame() {            
         //System.out.println("getFrame at pos " + stream.tell());
 
@@ -786,14 +686,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         return false;
     }
 
-    /**
-     * Parses the GIF header.
-     *
-     * @return    true, if the header was parsed successfully
-     *            and the the GIF signature and version are
-     *            correct,
-     *            otherwise false.
-     */
     private boolean parseHeader() {
         //System.out.println("parseHeader at pos " + stream.tell());
 
@@ -817,11 +709,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         return parseLogicalScreenDescriptor();
     }
 
-    /**
-     *  Description of the Method
-     *
-     * @param  bin  Description of the Parameter
-     */
     private boolean parseLogicalScreenDescriptor() {
         //System.out.println("parseLogicalScreenDescriptor at pos " + stream.tell());
 
@@ -880,14 +767,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         return true;
     }
 
-    /**
-     * Reads a 16-bit unsigned short value from data starting
-     * at the specified offset.
-     *
-     * @param data   the byte array
-     * @param offset offset into the byte array
-     * @return       the short value
-     */
     private int readShort(byte data[], int offset) {
         int lo = data[offset] & 0xff;
         int hi = data[offset + 1] & 0xff;
@@ -895,11 +774,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         return lo + (hi << 8);
     }
 
-    /**
-     * Reads a 16-bit unsigned short value from the source stream.
-     *
-     * @return       the short value
-     */
     private int readShort() {
         int val = 0;
 
@@ -914,14 +788,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         return val;
     }
 
-    /**
-     * Parses the Image Descriptor.
-     *
-     * Each image in the Data Stream is composed of an Image Descriptor, 
-     * an optional Local Color Table, and the image data. Each image must 
-     * fit within the boundaries of the Logical Screen, as defined in the 
-     * Logical Screen Descriptor.
-     */
     private void parseImageDescriptor(boolean scan) {
         //System.out.println("parseImageDescriptor at pos " + stream.tell());
         byte [] imageDescriptor = new byte[9];
@@ -980,17 +846,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         parseImageData();
     }
 
-    /**
-     * Parses the Image Data.
-     *
-     * The image data for a table based image consists of a sequence of 
-     * sub-blocks, of size at most 255 bytes each, containing an index 
-     * into the active color table, for each pixel in the image. Pixel 
-     * indices are in order of left to right and from top to bottom. Each 
-     * index must be within the range of the size of the active color 
-     * table, starting at 0. The sequence of indices is encoded using the 
-     * LZW Algorithm with variable-length code.
-     */
     private void parseImageData() {
         //System.out.println("parseImageData at pos " + stream.tell());
         int idx = 0;
@@ -1027,10 +882,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         //System.out.println("parsed image data bytes: " + idx);
     }
 
-    /**
-     * Parses the Plain Text Extension.
-     *
-     */
     private void parsePlainTextExtension() {
         try {
             // block size
@@ -1077,10 +928,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         }
     }
 
-    /**
-     * Parses the Control Extension.
-     *
-     */
     private void parseControlExtension(boolean scan) {
         //System.out.println("parseControlExtension at pos " + stream.tell());
         try {
@@ -1101,10 +948,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         }
     }
 
-    /**
-     * Parses the Application Extension.
-     *
-     */
     private void parseApplicationExtension() {
         //System.out.println("parseApplicationExtension at pos " + stream.tell());
         try {
@@ -1136,10 +979,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         }
     }
 
-    /**
-     * Parses the Comment Extension.
-     *
-     */
     private void parseCommentExtension() {
         //System.out.println("parseCommentExtension at pos " + stream.tell());
         try {
@@ -1158,10 +997,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         }
     }
 
-    /**
-     * Parses the Graphic Control Extension.
-     *
-     */
     private void parseGraphicControlExtension(boolean scan) {
         //System.out.println("parseGraphicControlExtension at pos " + stream.tell());
         
@@ -1207,16 +1042,8 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         //int terminator = graphicControl[5] & 0xff;
     }
 
-
-    /** 
-     * A byte array designed to hold one byte of data.
-     * see: readUnsignedByte().
-     */
     private byte[] oneByte = new byte[1];
 
-    /**
-     * Reads one byte from the source stream.
-     */
     private int readUnsignedByte() throws IOException {
         if (stream.read(oneByte, 0, 1) == -1)
             throw new IOException();
@@ -1224,10 +1051,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         return oneByte[0] & 0xff;
     }
 
-    /**
-     * Inner class implementing the frame positioning control interface.
-     * 
-     */
     class FramePosCtrl implements FramePositioningControl {
         /**
          * indicates whether the frame positioning control
@@ -1242,24 +1065,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             active = false;
         }
 
-        /**
-         * Performs a seek to a video frame with given number.
-         * <code>Player</code> media time is updated and reflects
-         * the new position.
-         * <p>
-         * This method can be called regardless of whether the
-         * <code>Player</code> is started or stopped.
-         * If the <code>Player</code> is
-         * in the <i>Started</i> state, state changes may occur.
-         * In this case, the corresponding transition events are posted.
-         * <p>
-         * If the given frame number is outside the media frame number
-         * range, <code>seek</code> will stop on the first or the last
-         * frame respectively.
-         *
-         * @param frameNumber the frame to seek to.
-         * @return the actual frame number set.
-         */
         public int seek(int frameNumber)
         {
             active = true;
@@ -1289,35 +1094,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             return frameNumber;
         }
 
-
-        /**
-         * Skip a given number of frames from the current position.
-         * The media time of the <code>Player</code> will be updated to
-         * reflect the new position set.
-         * <p>
-         * This method can be called on a stopped or started 
-         * <code>Player</code>.
-         *
-         * If the <code>Player</code> is in the <i>Started</i> state,
-         * the current position is changing.  Hence,
-         * the frame actually skipped to will not be exact.
-         * <p>
-         * If the <code>Player</code> is
-         * in the <i>Started</i> state, this method may cause the
-         * <code>Player</code> to change states.  If that happens, the
-         * appropriate transition events will be posted.
-         * <p>
-         * If the given <code>framesToSkip</code> will cause the position to
-         * extend beyond the first or last frame, <code>skip</code> will
-         * jump to the first or last frame respectively.
-         *
-         * @param framesToSkip the number of frames to skip from the current
-         * position.  If framesToSkip is positive, it will seek forward
-         * by framesToSkip number of frames.  If framesToSkip is negative,
-         * it will seek backward by framesToSkip number of frames.
-         * e.g. skip(-1) will seek backward one frame.
-         * @return the actual number of frames skipped.
-         */
         public int skip(int framesToSkip) {
             active = true;
 
@@ -1360,15 +1136,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             return frames_skipped;
         }
 
-        /**
-         * Converts the given frame number to the corresponding media time.
-         * The method only performs the calculations. It does not
-         * position the media to the given frame.
-         *
-         * @param frameNumber the input frame number for the conversion.
-         * @return the converted media time in microseconds for the 
-         * given frame. If the conversion fails, -1 is returned.
-         */
         public long mapFrameToTime(int frameNumber) {
             if (frameNumber < 0 || frameNumber >= frameTimes.size()) {
                 return -1;
@@ -1377,22 +1144,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             return (long) (frameToTime(frameNumber) * rateControl.getRate() / 100000L);
         }
 
-        /**
-         * Converts the given media time to the corresponding frame number.
-         * The method only performs the calculations.  It does not
-         * position the media to the given media time.
-         * <p>
-         * The frame returned is the nearest frame that has a media time
-         * less than or equal to the given media time.
-         * <p>
-         * <code>mapTimeToFrame(0)</code> must not fail and must
-         * return the frame number of the first frame.
-         *
-         * @param mediaTime the input media time for the
-         * conversion in microseconds.
-         * @return the converted frame number for the given media time.
-         * If the conversion fails, -1 is returned.
-         */
         public int mapTimeToFrame(long mediaTime) {         
             if (mediaTime < 0 || mediaTime > duration) {
                 return -1;
@@ -1408,10 +1159,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         }
     }
 
-    /**
-     * Inner class implementing the rate control interface.
-     * 
-     */
     class RateCtrl implements RateControl {
         /* the playback rate in 1000 times the percentage of the
          * actual rate.
@@ -1424,41 +1171,10 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
         /* the maximum playback rate */
         private final int MAX_PLAYBACK_RATE = 200000; // 200%
 
-
-        /**
-         * The constructor of RateCtrl.
-         */
         RateCtrl() {
             rate = 100000; // normal speed, 100%
         }
 
-        /**
-         * Sets the playback rate.
-         *
-         * The specified rate is 1000 times the percentage of the
-         * actual rate. For example, to play back at twice the speed, specify
-         * a rate of 200'000.<p>
-         *
-         * The <code>setRate</code> method returns the actual rate set by the
-         * <code>Player</code>.  <code>Player</code> should set their rate
-         * as close to the requested
-         * value as possible, but are not required to set the rate to the exact
-         * value of any argument other than 100'000. A <code>Player</code>
-         * is only guaranteed to set
-         * its rate exactly to 100'000.
-         * If the given rate is less than <code>getMinRate</code>
-         * or greater than <code>getMaxRate</code>,
-         * the rate will be adjusted to the minimum or maximum
-         * supported rate respectively.
-         * <p>
-         * If the <code>Player</code> is already
-         * started, <code>setRate</code> will immediately take effect.
-         *
-         * @param millirate The playback rate to set. The rate is given in
-         *        a &quot;milli-percentage&quot; value.
-         * @return The actual rate set in &quot;milli-percentage&quot;.
-         * @see #getRate
-         */
         public int setRate(int millirate) {         
             if (millirate < MIN_PLAYBACK_RATE) {
                 rate = MIN_PLAYBACK_RATE;
@@ -1471,30 +1187,14 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             return rate;
         }
 
-        /**
-         * Gets the current playback rate.
-         *
-         * @return the current playback rate in &quot;milli-percentage&quot;.
-         * @see #setRate
-         */
         public int getRate() {
             return rate;
         }
 
-        /**
-         * Gets the maximum playback rate supported by the <code>Player</code>.
-         *
-         * @return the maximum rate in &quot;milli-percentage&quot;.
-         */     
         public int getMaxRate() {
             return MAX_PLAYBACK_RATE;
         }
         
-        /**
-         * Gets the minimum playback rate supported by the <code>Player</code>.
-         *
-         * @return the minimum rate in &quot;milli-percentage&quot;.
-         */
         public int getMinRate() {
             return MIN_PLAYBACK_RATE;
         }
