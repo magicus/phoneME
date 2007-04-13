@@ -194,6 +194,9 @@ create_process(char **cmd_args, int argc, char** argv)
     /* FIXME: Must have central location for timeout values */
 #define TIMEOUT 10000
     response = jumpMessageSendSync(targetAddress, outMessage, TIMEOUT, &code);
+    if (response == NULL) {
+        return -1;
+    }
     dumpMessage(response, "Command response:");
     return getChildPid(response);
 }

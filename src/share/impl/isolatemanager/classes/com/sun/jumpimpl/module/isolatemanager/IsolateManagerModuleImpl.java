@@ -101,6 +101,11 @@ public class IsolateManagerModuleImpl
 	// only one isolate object for each pid.
 	//
         int pid = JUMPOSInterface.getInstance().createProcess(args);
+        if (pid == -1) {
+	    /* failed to create process */
+            throw new RuntimeException("Failed to the isolate process");
+        }
+
         JUMPIsolateProxyImpl isolate =
 	    JUMPIsolateProxyImpl.registerIsolate(pid);
         isolates.add(isolate);
