@@ -94,6 +94,10 @@ public abstract class JUMPAppContainer implements JUMPMessageHandler {
      * <p>
      * The method must not return until the application is has responded
      * to state change according the application model of the container.
+     * <p>
+     * This method should not catch unchecked exceptions, so that caller
+     * can report a failure back to the executive and then the executive may
+     * issue a destroyApp request.
      *
      * @param appId runtime ID of the application assigned by startApp    
      */
@@ -113,6 +117,10 @@ public abstract class JUMPAppContainer implements JUMPMessageHandler {
      * <p>
      * The method must not return until the application is has responded
      * to state change according the application model of the container.
+     * <p>
+     * This method should not catch unchecked exceptions, so that caller
+     * can report a failure back to the executive and then the executive may
+     * issue a destroyApp request.
      *
      * @param appId runtime ID of the application assigned by startApp    
      */

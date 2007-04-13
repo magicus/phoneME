@@ -357,11 +357,18 @@ public class JUMPIsolateProcessImpl
             JUMPExecutiveLifecycleRequest.fromMessage(in);
         String[] args = elr.getArgs();
         int appID = Integer.parseInt(args[0]);
-        System.err.println("PAUSE_APP("+appID+")");
-        appContainer.pauseApp(appID);
+        String responseId;
 
-        JUMPResponse resp =
-            new JUMPResponse(in.getType(), JUMPResponseInteger.ID_SUCCESS);
+        System.err.println("PAUSE_APP("+appID+")");
+
+        try {
+            appContainer.pauseApp(appID);
+            responseId = JUMPResponseInteger.ID_SUCCESS;
+        } catch (Throwable t) {
+            responseId = JUMPResponseInteger.ID_FAILURE;
+        }
+
+        JUMPResponse resp = new JUMPResponse(in.getType(), responseId);
         
         return resp.toMessageInResponseTo(in, this);
     }
@@ -371,11 +378,18 @@ public class JUMPIsolateProcessImpl
             JUMPExecutiveLifecycleRequest.fromMessage(in);
         String[] args = elr.getArgs();
         int appID = Integer.parseInt(args[0]);
-        System.err.println("RESUME_APP("+appID+")");
-        appContainer.resumeApp(appID);
+        String responseId;
 
-        JUMPResponse resp =
-            new JUMPResponse(in.getType(), JUMPResponseInteger.ID_SUCCESS);
+        System.err.println("RESUME_APP("+appID+")");
+
+        try {
+            appContainer.resumeApp(appID);
+            responseId = JUMPResponseInteger.ID_SUCCESS;
+        } catch (Throwable t) {
+            responseId = JUMPResponseInteger.ID_FAILURE;
+        }
+
+        JUMPResponse resp = new JUMPResponse(in.getType(), responseId);
 
         return resp.toMessageInResponseTo(in, this);
     }
@@ -391,7 +405,7 @@ public class JUMPIsolateProcessImpl
 
         try {
             appContainer.destroyApp(appID, unconditional);
-        } catch (RuntimeException e) {
+        } catch (Throwable t) {
             responseCode = JUMPResponseInteger.ID_FAILURE;
         }
 
