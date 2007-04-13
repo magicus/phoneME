@@ -60,7 +60,17 @@ include $(SUBSYSTEM_DIR)/configuration/$(SUBSYSTEM_MAKE_FILE)
 # Description: Application Manager System
 #####################################################################
 
-include $(SUBSYSTEM_DIR)/ams/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(TARGET_VM), cldc_vm)
+  include $(SUBSYSTEM_DIR)/ams/$(SUBSYSTEM_MAKE_FILE)
+else
+  ifeq ($(TARGET_VM), cdc_vm)
+    ifeq ($(CVM_INCLUDE_JUMP), true)
+      include $(SUBSYSTEM_DIR)/ams/jump_application/$(SUBSYSTEM_MAKE_FILE)
+    else
+      include $(SUBSYSTEM_DIR)/ams/cdc_application/$(SUBSYSTEM_MAKE_FILE)
+    endif
+  endif
+endif
 
 #####################################################################
 # Core Group
