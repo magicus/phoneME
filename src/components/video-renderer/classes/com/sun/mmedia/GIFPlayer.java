@@ -1065,6 +1065,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             active = false;
         }
 
+
         public int seek(int frameNumber)
         {
             active = true;
