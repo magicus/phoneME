@@ -37,8 +37,8 @@ import com.sun.midp.security.SecurityToken;
 
 /**
  * MIDletPeer maintains the current state of the MIDlet and forwards updates
- * to it.  It contains references to the MIDlet itself and to its
- * corresponding Display instance.  Control methods (startApp, destroyApp,
+ * to it.  It contains a reference to the MIDlet itself.
+ * Control methods (startApp, destroyApp,
  * pauseApp) defined here are invoked on the MIDlet object via the
  * MIDletTunnel.
  * <p>
@@ -69,12 +69,12 @@ public class MIDletPeer implements MIDletEventConsumer {
     public static final int ACTIVE = 1;
 
     /**
-     * State of the MIDlet when resumed by the display manager
+     * State of the MIDlet when resumed by the AMS
      */
     static final int ACTIVE_PENDING = 2;
 
     /**
-     * State of the MIDlet when paused by the display manager
+     * State of the MIDlet when paused by the AMS
      */
     static final int PAUSE_PENDING = 3;
 
@@ -286,7 +286,6 @@ public class MIDletPeer implements MIDletEventConsumer {
      * called.  Even in the paused state the application may handle
      * asynchronous events such as timers or callbacks.
      */
-
     public final void resumeRequest() {
         midletStateListener.resumeRequest(getMIDletSuite(),
             getMIDlet().getClass().getName());

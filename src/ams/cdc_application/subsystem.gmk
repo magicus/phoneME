@@ -32,6 +32,21 @@
 # other def. (like VPATH)
 ############################################################
 
+include $(SUBSYSTEM_DIR)/ams/ams_common.gmk
+
+SUBSYSTEM_AMS_PACKAGES += \
+    com.sun.midp.main \
+    com.sun.midp.midlet \
+    com.sun.midp.midletsuite \
+    com.sun.midp.installer 
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_AMS_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES += $(SUBSYSTEM_AMS_PACKAGES)
+
+MIDP_JAVADOC_ALL += \
+    -group "AMS Libraries" \
+    $(shell echo $(SUBSYSTEM_AMS_PACKAGES) | tr ' ' $(PATHSEP))
+
 include $(SUBSYSTEM_AMS_DIR)/ams_api/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/ams_base/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/installer/lib.gmk
@@ -39,6 +54,7 @@ include $(SUBSYSTEM_AMS_DIR)/ota/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/midlet_suite_info/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/suitestore/subsystem.gmk
 include $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/example/subsystem.gmk
 
 # Local module directory
 CDC_AMS_DIR = $(SUBSYSTEM_AMS_DIR)/cdc_application
