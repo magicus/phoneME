@@ -965,6 +965,16 @@ class TextFieldLFImpl extends ItemLFImpl implements
         return EventConstants.SYSTEM_KEY_CLEAR ==
             KeyConverter.getSystemKey(keyCode);        
     }
+    /**
+     * Returns true if the keyCode is used as 'enter' (user types in \n)
+     * ('select' plays the role of 'enter' in some input modes).
+     *
+     * @param keyCode key code
+     * @return true if key code is the one for newline, false otherwise
+     */
+    public boolean isNewlineKey(int keyCode) {
+        return false;
+    }
 
     /**
      * Commit the given input to this TextInputComponent's buffer.

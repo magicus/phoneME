@@ -83,6 +83,10 @@ public class NativeInputMode implements InputMode {
      *  tells the executeMediatorCommand function
      * to perform the mediator.getAvailableSize() function */
     private final int MEDIATOR_GETAVAILABLESIZE = 6;
+    /** this value, when stored as stateArgs[STATE_FUNC_TOKEN],
+     *  tells the executeMediatorCommand function
+     * to perform the mediator.isNewlineKey(int) function */
+    private final static int MEDIATOR_ISNEWLINEKEY = 7;
 
     /** constructor; the real initialization is done
      * in the initialize(int) function */
@@ -275,6 +279,12 @@ public class NativeInputMode implements InputMode {
                 break;
             case MEDIATOR_GETAVAILABLESIZE:
                 stateArgs[STATE_CALLBACK_RES] = mediator.getAvailableSize();
+                break;
+            case MEDIATOR_ISNEWLINEKEY:
+                {
+                    boolean res = mediator.isNewlineKey(stateArgs[STATE_INT_ARG]);
+                    stateArgs[STATE_CALLBACK_RES] = res ? 1 : 0;
+                }
                 break;
         }
         stateArgs[STATE_FUNC_TOKEN] = MEDIATOR_NOOP;
