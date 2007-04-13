@@ -171,43 +171,75 @@ public class DefaultConfiguration extends Configuration {
     public String[] getSupportedContentTypes(String protocol) {
         if (protocol == null) {
 			if( nIsAmrSupported() )
-			{			
-				return new String[]{
-					// Mandatory support
-					MIME_AUDIO_TONE,
-					// Optional formats
-					MIME_AUDIO_AMR,
-					MIME_AUDIO_MIDI,
-					MIME_AUDIO_MIDI_2,
-					MIME_AUDIO_SP_MIDI,
-					MIME_AUDIO_WAV,
-					MIME_AUDIO_WAV_2,
-					MIME_IMAGE_GIF
+			{
+				if( nIsJtsSupported() )
+				{
+					return new String[]{
+						MIME_AUDIO_TONE,
+						MIME_AUDIO_AMR,
+						MIME_AUDIO_MIDI,
+						MIME_AUDIO_MIDI_2,
+						MIME_AUDIO_SP_MIDI,
+						MIME_AUDIO_WAV,
+						MIME_AUDIO_WAV_2,
+						MIME_IMAGE_GIF
 					};
+				}
+				else
+				{
+					return new String[]{
+						MIME_AUDIO_AMR,
+						MIME_AUDIO_MIDI,
+						MIME_AUDIO_MIDI_2,
+						MIME_AUDIO_SP_MIDI,
+						MIME_AUDIO_WAV,
+						MIME_AUDIO_WAV_2,
+						MIME_IMAGE_GIF
+					};
+				}
 			}
 			else
 			{
-				return new String[]{
-					// Mandatory support
-					MIME_AUDIO_TONE,
-					// Optional formats
-					MIME_AUDIO_MIDI,
-					MIME_AUDIO_MIDI_2,
-					MIME_AUDIO_SP_MIDI,
-					MIME_AUDIO_WAV,
-					MIME_AUDIO_WAV_2,
-					MIME_IMAGE_GIF
-					};
+				if( nIsJtsSupported() )
+				{
+					return new String[]{
+						MIME_AUDIO_TONE,
+						MIME_AUDIO_MIDI,
+						MIME_AUDIO_MIDI_2,
+						MIME_AUDIO_SP_MIDI,
+						MIME_AUDIO_WAV,
+						MIME_AUDIO_WAV_2,
+						MIME_IMAGE_GIF
+						};
+				}
+				else
+				{
+					return new String[]{
+						MIME_AUDIO_MIDI,
+						MIME_AUDIO_MIDI_2,
+						MIME_AUDIO_SP_MIDI,
+						MIME_AUDIO_WAV,
+						MIME_AUDIO_WAV_2,
+						MIME_IMAGE_GIF
+						};
+				}
 			}
         }
 
         if (protocol.equals("device")) {
-            return new String[]{
-            // Mandatory support
-                MIME_AUDIO_TONE,
-            // Optional formats
-                MIME_AUDIO_MIDI
-            };
+			if( nIsJtsSupported() )
+			{
+				return new String[]{
+					MIME_AUDIO_TONE,
+					MIME_AUDIO_MIDI
+				};
+			}
+			else
+			{
+				return new String[]{
+					MIME_AUDIO_MIDI
+				};
+			}
         }
 
         if (protocol.equals("http")) {
