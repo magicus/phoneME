@@ -41,6 +41,7 @@ import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Map;
+import javax.microedition.io.ConnectionNotFoundException;
 
 final class PushContentStore
         extends JUMPContentStore
@@ -74,10 +75,8 @@ final class PushModule implements JUMPPushModule {
         /** Push controller instance. */
         private final PushController pushController;
 
-        PushSystem(final StoreOperationManager storeManager)
+        PushSystem(final Store store)
                 throws IOException, RemoteException, AlreadyBoundException {
-            final Store store = new Store(storeManager);
-
             final ReservationDescriptorFactory reservationDescriptorFactory =
                     Configuration.getReservationDescriptorFactory();
 
@@ -125,11 +124,8 @@ final class PushModule implements JUMPPushModule {
     /** {@inheritDoc} */
     public void load(final Map map) {
         // assert pushSystem == null; // I hope we cannot get to load's without unload
-        final PushContentStore contentStore = new PushContentStore();
-        final StoreOperationManager storeOperationManager =
-                new StoreOperationManager(contentStore);
         try {
-            pushSystem = new PushSystem(storeOperationManager);
+            pushSystem = new PushSystem(createStore());
         } catch (AlreadyBoundException ex) {
             logError("Failed to read push persistent data: " + ex);
             throw new RuntimeException("Failed to load Push module", ex);
@@ -146,6 +142,20 @@ final class PushModule implements JUMPPushModule {
     }
 
     /**
+     * Creates a store to be used by push.
+     *
+     * @return store to operate on (cannot be <code>null</code>)
+     *
+     * @throws IOException if store cannot be created
+     */
+    private static Store createStore() throws IOException {
+        final PushContentStore contentStore = new PushContentStore();
+        final StoreOperationManager storeOperationManager =
+                new StoreOperationManager(contentStore);
+        return new Store(storeOperationManager);
+    }
+
+    /**
      * Logs an error message.
      *
      * TBD: common logging mechanism.
@@ -159,6 +169,44 @@ final class PushModule implements JUMPPushModule {
     /** {@inheritDoc} */
     public InstallerInterface getInstallerInterfaceImpl() {
         return pushSystem.installerInterfaceImpl;
+    }
+
+    private InstallerInterface standaloneInstaller = null;
+
+    public InstallerInterface getStandaloneInstallerInterfaceImpl() {
+        if (standaloneInstaller != null) {
+            return standaloneInstaller;
+        }
+
+        try {
+            final Store store = createStore();
+
+            standaloneInstaller = new InstallerInterface() {
+                public void installConnections(
+                        final int midletSuiteId,
+                        final JUMPConnectionInfo[] connections)
+                            throws  ConnectionNotFoundException,
+                                    IOException, SecurityException {
+                    if (connections.length > 0) {
+                        throw new RuntimeException("cannot install static " +
+                                "push registrations in standalone mode");
+                    }
+                }
+
+                public void uninstallConnections(final int midletSuiteId) {
+                    try {
+                        store.removeSuiteData(midletSuiteId);
+                    } catch (IOException ex) {
+                        logError("failed to uninstall suite registrations: " + ex);
+                    }
+                }
+            };
+
+            return standaloneInstaller;
+        } catch (IOException ioex) {
+            logError("failed to create store");
+            throw new RuntimeException("failed to create store");
+        }
     }
 }
 

@@ -29,6 +29,8 @@ import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.module.download.JUMPDownloadDescriptor;
 import com.sun.jump.common.JUMPContent;
 import com.sun.jump.module.installer.JUMPInstallerModule;
+import com.sun.midp.jump.push.executive.JUMPPushModuleFactory;
+import com.sun.midp.jump.push.executive.PushRegistryModuleFactoryImpl;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -190,7 +192,21 @@ public class MIDLETInstallerImpl implements JUMPInstallerModule {
                 }
             }
         }
-        suiteStore.remove(midlet.getMIDletSuiteID());
+
+        int midletSuiteId = midlet.getMIDletSuiteID();
+        suiteStore.remove(midletSuiteId);
+        /**
+         * IMPL_NOTE: temporal hack
+         *
+         * Better approach is to find out installer interface to use
+         * at construction time
+         */
+        new PushRegistryModuleFactoryImpl(); // just to init it
+        JUMPPushModuleFactory
+                .getInstance()
+                .getPushModule()
+                .getStandaloneInstallerInterfaceImpl()
+                .uninstallConnections(midletSuiteId);
     }
     
     /**

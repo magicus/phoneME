@@ -36,4 +36,13 @@ public interface JUMPPushModule extends JUMPModule {
      * interface (cannot be <code>null</code>)
      */
     InstallerInterface getInstallerInterfaceImpl();
+
+    /**
+     * Gets an instance implementing <code>InstallerInterface</code>
+     * interface for stand-alone installer.
+     *
+     * @return an instance implementing <code>InstallerInterface</code>
+     * interface (cannot be <code>null</code>)
+     */
+    InstallerInterface getStandaloneInstallerInterfaceImpl();
 }

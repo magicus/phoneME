@@ -271,6 +271,25 @@ public final class Store {
         connectionsStore.removeSuiteData(midletSuiteID);
     }
 
+    /**
+     * Removes all the data associated with the suite.
+     *
+     * <p>
+     * To be used by standalone uninstaller.
+     * </p>
+     *
+     * @param midletSuiteID ID of <code>MIDlet suite</code> to remove
+     *   connections for
+     *
+     * @throws IOException if the content store failed
+     */
+    public synchronized void removeSuiteData(final int midletSuiteID)
+            throws IOException {
+        // TBD: unittests
+        removeConnections(midletSuiteID);
+        alarmsStore.removeSuiteData(midletSuiteID);
+    }
+
     /** Alarms lister. */
     public static interface AlarmsConsumer {
         /**
