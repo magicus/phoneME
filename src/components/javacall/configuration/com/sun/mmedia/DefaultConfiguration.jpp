@@ -172,7 +172,7 @@ public class DefaultConfiguration extends Configuration {
         if (protocol == null) {
 			if( nIsAmrSupported() )
 			{
-				if( nIsToneSupported() )
+				if( nIsJtsSupported() )
 				{
 					return new String[]{
 						MIME_AUDIO_TONE,
@@ -200,7 +200,7 @@ public class DefaultConfiguration extends Configuration {
 			}
 			else
 			{
-				if( nIsToneSupported() )
+				if( nIsJtsSupported() )
 				{
 					return new String[]{
 						MIME_AUDIO_TONE,
@@ -227,7 +227,7 @@ public class DefaultConfiguration extends Configuration {
         }
 
         if (protocol.equals("device")) {
-			if( nIsToneSupported() )
+			if( nIsJtsSupported() )
 			{
 				return new String[]{
 					MIME_AUDIO_TONE,
