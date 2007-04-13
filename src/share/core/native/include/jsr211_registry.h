@@ -50,7 +50,7 @@
  *  <PRE>
  *  jsr211_result jsr211_someFunction(..., JSR211_RESULT_STRARRAY* result) {
  *      jsr211_result status;   
- *      pcsl_string *buffer;
+ *      jchar* *buffer;
  *      int n;
  *      n = <determine number of selected strings>
  *      buffer = <allocate memory for n strings>
@@ -67,8 +67,7 @@
 #ifndef _JSR211_REGISTRY_H_
 #define _JSR211_REGISTRY_H_
 
-#include <pcsl_string.h>
-#include <suitestore_common.h>
+#include <suiteid.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -142,34 +141,34 @@ typedef enum {
  */
 typedef struct {
                       
-  pcsl_string        id;         /**< Content handler ID */
+  jchar*        id;         /**< Content handler ID */
   SuiteIdType        suite_id;   /**< Storage where the handler is */
-  pcsl_string        class_name; /**< Content handler class name */
+  jchar*        class_name; /**< Content handler class name */
   jsr211_flag        flag;       /**< Flag for registered content handlers. */
   int                type_num;   /**< Number of types */
-  pcsl_string*       types;      /**< The types that are supported by this 
+  jchar**       types;      /**< The types that are supported by this 
                                         content handler */
   int                suff_num;   /**< Number of suffixes */
-  pcsl_string*       suffixes;   /**< The suffixes of URLs that are supported 
+  jchar**       suffixes;   /**< The suffixes of URLs that are supported 
                                         by this content handler */
   int                act_num;    /**< Number of actions */
-  pcsl_string*       actions;    /**< The actions that are supported by this 
+  jchar**       actions;    /**< The actions that are supported by this 
                                         content handler */
   int                locale_num; /**< Number of locales */
-  pcsl_string*       locales;    /**< The locales that are supported by this 
+  jchar**       locales;    /**< The locales that are supported by this 
                                         content handler */
-  pcsl_string*       action_map; /**< The action names that are defined by 
+  jchar**       action_map; /**< The action names that are defined by 
                                         this content handler;
                                         size is act_num x locale_num  */
   int                access_num; /**< Number of accesses */
-  pcsl_string*       accesses;   /**< The accessRestrictions for this 
+  jchar**       accesses;   /**< The accessRestrictions for this 
                                         ContentHandler */
 } JSR211_content_handler;
 
 #define JSR211_CONTENT_HANDLER_INITIALIZER   {        \
-    PCSL_STRING_NULL_INITIALIZER,   /* id         */  \
+    jchar*_NULL_INITIALIZER,   /* id         */  \
     0,                              /* suite_id   */  \
-    PCSL_STRING_NULL_INITIALIZER,   /* class_name */  \
+    jchar*_NULL_INITIALIZER,   /* class_name */  \
     0,                              /* flag       */  \
     0,                              /* type_num   */  \
     NULL,                           /* types      */  \
@@ -199,9 +198,9 @@ typedef struct {
  * result.
  */
 typedef struct {
-  pcsl_string        id;         /**< Content handler ID */
+  jchar*        id;         /**< Content handler ID */
   SuiteIdType        suite_id;   /**< Storage where the handler is */
-  pcsl_string        class_name; /**< Content handler class name */
+  jchar*        class_name; /**< Content handler class name */
   jsr211_flag        flag;       /**< Flag for registered 
                                         content handlers. */
 } JSR211_CH;
@@ -250,7 +249,7 @@ jsr211_result jsr211_fillHandlerArray(const JSR211_CH* handlerArray, int length,
  * @param result output result structure.
  * @return operation status.
  */
-jsr211_result jsr211_fillStringArray(const pcsl_string* strArray, int length,
+jsr211_result jsr211_fillStringArray(const jchar** strArray, int length,
                                     /*OUT*/ JSR211_RESULT_STRARRAY* result);
 
 /**
@@ -282,7 +281,7 @@ jsr211_result jsr211_register_handler(const JSR211_content_handler* handler);
  * @param handler_id content handler ID
  * @return JSR211_OK if content handler unregistered successfully
  */
-jsr211_result jsr211_unregister_handler(const pcsl_string* handler_id);
+jsr211_result jsr211_unregister_handler(const jchar** handler_id);
 
 /**
  * Searches content handler using specified key and value.
@@ -297,8 +296,8 @@ jsr211_result jsr211_unregister_handler(const pcsl_string* handler_id);
  *  <br>Use @link jsr211_fillHandlerArray function to fill this structure.
  * @return status of the operation
  */
-jsr211_result jsr211_find_handler(const pcsl_string* caller_id,
-                        jsr211_field key, const pcsl_string* value,
+jsr211_result jsr211_find_handler(const jchar** caller_id,
+                        jsr211_field key, const jchar** value,
                         /*OUT*/ JSR211_RESULT_CHARRAY* result);
 
 /**
@@ -323,8 +322,8 @@ jsr211_result jsr211_find_for_suite(SuiteIdType suiteId,
  *  <br>Use @link jsr211_fillHandler function to fill this structure.
  * @return JSR211_OK if the appropriate handler found
  */
-jsr211_result jsr211_handler_by_URL(const pcsl_string* caller_id, 
-                        const pcsl_string* url, const pcsl_string* action, 
+jsr211_result jsr211_handler_by_URL(const jchar** caller_id, 
+                        const jchar** url, const jchar** action, 
                         /*OUT*/ JSR211_RESULT_CH* handler);
 
 /**
@@ -339,7 +338,7 @@ jsr211_result jsr211_handler_by_URL(const pcsl_string* caller_id,
  *  <br>Use @link jsr211_fillStringArray function to fill this structure.
  * @return status of the operation
  */
-jsr211_result jsr211_get_all(const pcsl_string* caller_id, jsr211_field field,
+jsr211_result jsr211_get_all(const jchar** caller_id, jsr211_field field,
                         /*OUT*/ JSR211_RESULT_STRARRAY* result);
 
 /**
@@ -357,8 +356,8 @@ jsr211_result jsr211_get_all(const pcsl_string* caller_id, jsr211_field field,
  *  <br>Use @link jsr211_fillHandler function to fill this structure.
  * @return status of the operation
  */
-jsr211_result jsr211_get_handler(const pcsl_string* caller_id, 
-                        const pcsl_string* id, jsr211_search_flag mode,
+jsr211_result jsr211_get_handler(const jchar** caller_id, 
+                        const jchar** id, jsr211_search_flag mode,
                         /*OUT*/ JSR211_RESULT_CH* handler);
 
 /**
@@ -373,7 +372,7 @@ jsr211_result jsr211_get_handler(const pcsl_string* caller_id,
  *  <br>Use @link jsr211_fillStringArray function to fill this structure.
  * @return status of the operation
  */
-jsr211_result jsr211_get_handler_field(const pcsl_string* id, jsr211_field field_id, 
+jsr211_result jsr211_get_handler_field(const jchar** id, jsr211_field field_id, 
                         /*OUT*/ JSR211_RESULT_STRARRAY* result);
 
 /**
@@ -386,7 +385,7 @@ jsr211_result jsr211_get_handler_field(const pcsl_string* id, jsr211_field field
  * <li> other code from the enum according to error codition
  * </ul>
  */
-jsr211_launch_result jsr211_execute_handler(const pcsl_string* handler_id);
+jsr211_launch_result jsr211_execute_handler(const jchar** handler_id);
 
 /**
  * Checks whether the internal handlers, if any, are installed.

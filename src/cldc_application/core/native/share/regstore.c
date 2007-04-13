@@ -43,7 +43,8 @@
 #include <midpServices.h>
 #include <midpMalloc.h>
 #include <midpStorage.h>
-#include <suitestore_common.h>
+
+#include <suiteid.h>
 
 #include <pcsl_memory.h>
 
