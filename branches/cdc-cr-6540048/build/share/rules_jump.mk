@@ -56,8 +56,7 @@ force_jump_build: $(JUMP_DEPENDENCIES)
 
 $(CVM_BINDIR)/runjump: $(JUMP_SCRIPTS_DIR)/runjump
 ifneq ($(CVM_PRELOAD_LIB), true)
-	$(AT)JUMP_JSROP_JARS=`echo $(JSROP_JARS) | sed -e "s, *$(CVM_BUILD_TOP),:\\$$PHONEME_DIST,g"`;\
-	sed -e "s,^ *SERVER_JARFILE=.*$$,&$$JUMP_JSROP_JARS," $^ > $@
+	$(AT)sed -e "s,^ *SERVER_JARFILE=.*$$,&$(JUMP_JSROP_JARS)," $^ > $@
 else
 	$(AT)cp $^ $@
 endif
