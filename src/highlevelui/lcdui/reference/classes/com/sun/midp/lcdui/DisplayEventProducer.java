@@ -188,5 +188,15 @@ public class DisplayEventProducer {
         eventQueue.post(
             LCDUIEvent.createItemEvent(src, LCDUIEvent.ITEM_SIZE_REFRESH));
     }
+
+    /**
+     * Schedules a call to repaint entire screen content.
+     *
+     * @param d The Display
+     */
+    public void sendScreenRepaintEvent(DisplayEventConsumer d) {
+        eventQueue.post(
+            LCDUIEvent.createScreenRepaintEvent(d));
+    }
 }
 

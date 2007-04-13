@@ -363,7 +363,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_write0(void) {
         if (INVALID_HANDLE == pcslHandle || oStreams == 0) {
             /* connection or its output streams are closed by another thread */
             KNI_ThrowNew(midpInterruptedIOException, 
-                         "Interrupted IO error during socket::read");
+                         "Interrupted IO error during socket::write");
             ANC_DEC_NETWORK_INDICATOR;
         } else {
             if ((void *)info->descriptor != pcslHandle) {
@@ -890,10 +890,10 @@ Java_com_sun_midp_io_j2me_socket_Protocol_notifyClosedInput0(void) {
     KNI_GetThisPointer(thisObject);
 
     pcslHandle = (void *)(getMidpSocketProtocolPtr(thisObject)->handle);
-    if (INVALID_HANDLE == pcslHandle) {
-        KNI_ThrowNew(midpIOException,
-            "invalid handle during socket::notifyClosedInput");
-    } else {
+    /* Invalid handle means that entire socket connecton is closed
+     * and all the blocked threads have alredy been notified.
+     */
+    if (INVALID_HANDLE != pcslHandle) {
         midp_thread_signal(NETWORK_READ_SIGNAL, (int)pcslHandle, 0);
     }
 
@@ -918,10 +918,10 @@ Java_com_sun_midp_io_j2me_socket_Protocol_notifyClosedOutput0(void) {
     KNI_GetThisPointer(thisObject);
 
     pcslHandle = (void *)(getMidpSocketProtocolPtr(thisObject)->handle);
-    if (INVALID_HANDLE == pcslHandle) {
-        KNI_ThrowNew(midpIOException,
-            "invalid handle during socket::notifyClosedOutput");
-    } else {
+    /* Invalid handle means that entire socket connecton is closed
+     * and all the blocked threads have alredy been notified.
+     */
+    if (INVALID_HANDLE != pcslHandle) {
         midp_thread_signal(NETWORK_WRITE_SIGNAL, (int)pcslHandle, 0);
     }
 

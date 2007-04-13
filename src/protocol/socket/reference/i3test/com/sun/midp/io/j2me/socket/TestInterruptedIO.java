@@ -39,7 +39,8 @@ public class TestInterruptedIO extends TestCase implements Runnable {
     /**
      * URI to which the test will try to open connections.
      * Use any URI visible from your network, for example,
-     * "socket://www.sun.com:80" will do in most cases;
+     * "socket://www.sun.com:80" will do in most cases
+     * (but only if you do not need a proxy to connect to it);
      * "socket://localhost:80" will do if your computer is
      * running an http server. Please, contact your network
      * administrator if you have a problem that you cannot
@@ -105,18 +106,18 @@ public class TestInterruptedIO extends TestCase implements Runnable {
             connection = (SocketConnection)Connector.open(otherSideUri);
             //OutputStream os = connection.openOutputStream();
             //os.write("GET /midlets/midlet.jad HTTP/1.0\n\n".getBytes());
-        } catch (IOException ioe) {
-            assertNull("Exception during socket open", ioe);
-        }
-        
-        assertNotNull("Verify socket open", connection);
-        if (null == connection) {
+        } catch(ConnectionNotFoundException cnfe) {
             fail("Could not open connection to "+otherSideUri+
                  ".  If the host name cannot be resolved, you may " +
                  "need to change the i3test source to use a host name that" +
                  " is visible from your network.");
             return false;
+        } catch (IOException ioe) {
+            assertNull("Exception during socket open", ioe);
+            return false;
         }
+        
+        assertNotNull("Verify socket open", connection);
 
         // Launch a thread which would be blocked for some I/O operation
         // for above socket connection

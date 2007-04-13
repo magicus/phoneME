@@ -116,6 +116,10 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
     protected void createSuiteEnvironment() {
         foregroundController = this;
 
+        lcduiEnvironment = new LCDUIEnvironmentForCDC(internalSecurityToken, 
+						      eventQueue, isolateId, 
+						      foregroundController);
+
         // creates display container, needs foregroundController
         super.createSuiteEnvironment();
 
@@ -173,16 +177,6 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
         }
 
         return suite;
-    }
-
-    /** Overrides suite close logic for the AMS task */
-    protected void closeSuite() {
-        super.closeSuite();
-
-        // shutdown any preempting
-        if (displayEventHandler != null) {
-            displayEventHandler.donePreempting(null);
-        }
     }
 
     /** Gracefully terminates VM with proper return code */
@@ -402,6 +396,7 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      */
     public Displayable registerDisplay(int displayId, String ownerClassName) {
         currentDisplayId = displayId;
+
         return null;
     }
 

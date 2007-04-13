@@ -129,6 +129,9 @@ extern "C" {
 /** JSR-234 event */ 
 #define AMMS_EVENT                      46
 
+/** The event to repaint entire screen */
+#define SCREEN_REPAINT_EVENT            47
+
 /** @} */
 
 /**

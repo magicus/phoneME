@@ -163,7 +163,7 @@ midpInitializeUI(void) {
     }
 #endif
 
-    // FIXME if (pushopen() != 0) {
+    // IMPL_NOTE if (pushopen() != 0) {
     //    return -1;
     //}
 
@@ -178,7 +178,7 @@ static void
 midpFinalizeUI(void) {
     lcdlf_ui_finalize();
 
-    //FIXME: pushclose();
+    //IMPL_NOTE: pushclose();
     finalizeCommandState();
 
     //FinalizeEvents();
@@ -355,7 +355,7 @@ static void setControlStringField(KNIDECLARGS jobject objectHandle,
     if (str->length> 0) {
         str->data = (jchar*)midpMalloc(str->length * sizeof(jchar));
         if (str->data == NULL) {
-            str->length = 0; // FIXME: throw out of memory
+            str->length = 0; // IMPL_NOTE: throw out of memory
         } else {
             KNI_GetStringRegion(stringObj, 0, str->length, str->data);
         }
@@ -683,7 +683,7 @@ KNIDECL(com_sun_midp_events_EventQueue_sendShutdownEvent) {
     KNI_ReturnVoid();
 }
 
-/* FIXME removed
+/* IMPL_NOTE removed
 DUMMY(lockStorage)
 DUMMY(lock_storage)
 DUMMY(unlockStorage)
@@ -701,7 +701,7 @@ DUMMY(midpStoreEventAndSignalForeground)
 
 int getCurrentIsolateId() {return 0;}
 
-/* FIXME - removed duplicate
+/* IMPL_NOTE - removed duplicate
  * int midpGetAmsIsolateId() {return 0;}
  * DUMMY(midp_getCurrentThreadId)
  */

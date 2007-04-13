@@ -254,6 +254,7 @@ abstract class ItemLFImpl implements ItemLF {
      * @param oldOwner old owner screen before this change. New owner 
      *                 can be found in Item model.
      */
+
     public void lSetOwner(Screen oldOwner) {
         if (item.owner == null) {
             // Hide it
@@ -272,6 +273,17 @@ abstract class ItemLFImpl implements ItemLF {
             actualBoundsInvalid[HEIGHT] = true;
             hasFocus = false;
         }
+    }
+
+    /**
+     * Called by the system to indicate the content has been scrolled
+     * inside of the form
+     *
+     * @param w the new width of the viewport of the screen
+     * @param h the new height of the viewport of the screen
+     */
+    public void uCallScrollChanged(int newViewportX, int newViewportY) {
+        // do nothing by default. 
     }
 
     /**
@@ -1104,7 +1116,7 @@ abstract class ItemLFImpl implements ItemLF {
                            "  [I] draw border? hasFocus="+hasFocus);
         }
         
-        if (drawsTraversalIndicator && hasFocus) {
+        if (drawsTraversalIndicator && hasFocus && (contentBounds[HEIGHT] > 0)) {
             g.clipRect(bounds[X] + trX,
                        bounds[Y] + trY,
                        bounds[WIDTH],

@@ -503,6 +503,20 @@ public class MIDPWindow extends CWindow {
     }
 
     /**
+     * Called by soft button layer when interactive state of it
+     * has been changed
+     *
+     * @param interactive if soft buttons are currently interactive.
+     */
+    public void onSoftButtonInteractive(boolean interactive) {
+        if (FULL_SCR_MODE == screenMode) {
+            // IMPL NOTES: in full screen mode  we hide/show soft button layer 
+            // depending on its interactiveness, so we should update layout
+            updateLayout();
+        }
+    }
+
+    /**
      * Returns true if the point lies in the bounds of commnad layer
      * @param x the "x" coordinate of the point
      * @param y the "y" coordinate of the point

@@ -267,17 +267,10 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
                             constraints, cursor, true);
         }
         
-        // We'll double check our anchor point in case the Form
-        // has scrolled and we need to update our InputModeLayer's
-        // location on the screen
-        if (hasFocus) {
-            moveInputModeIndicator();
-        }
-
         // has to be moved to correct place. It's incorrect to change 
         // the layer's dirty bounds in paint context 
         showPTPopup((int)0, cursor, w, h);
-    }    
+    } 
 
     /**
      * Sets the content size in the passed in array.

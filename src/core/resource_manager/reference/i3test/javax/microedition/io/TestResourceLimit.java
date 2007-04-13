@@ -30,6 +30,8 @@ import javax.microedition.rms.RecordStore;
 import javax.microedition.rms.RecordStoreException;
 import com.sun.midp.configurator.Constants;
 
+import java.io.IOException;
+
 /**
  * Unit tests for resource limit checks
  */
@@ -38,7 +40,8 @@ public class TestResourceLimit extends TestCase {
     /**
      * URI to which the test will try to open connections.
      * Use any URI visible from your network, for example,
-     * "socket://www.sun.com:80" will do in most cases;
+     * "socket://www.sun.com:80" will do in most cases
+     * (but only if you do not need a proxy to connect to it);
      * "socket://localhost:80" will do if your computer is
      * running an http server. Please, contact your network
      * administrator if you have a problem that you cannot
@@ -79,6 +82,7 @@ public class TestResourceLimit extends TestCase {
                  ".  If the host name cannot be resolved, you may " +
                  "need to change the i3test source to use a host name that" +
                  " is visible from your network.");
+            return;
         } finally {
             // Cleanup
             for (int i = 0; i < openCount; i++) {
@@ -112,8 +116,18 @@ public class TestResourceLimit extends TestCase {
             while (openCount < Constants.TCP_SER_AMS_LIMIT) {
                 String s = "socket://:" + Integer.toString(localServerPort + 
 														   openCount);
-                sc[openCount] = (ServerSocketConnection) Connector.open(s);
-                openCount++; 
+                try {
+                    sc[openCount] = (ServerSocketConnection) Connector.open(s);
+                    openCount++;
+                } catch (IOException e) {
+                    fail("error opening "+s+" (of " +
+                            Constants.TCP_SER_AMS_LIMIT +
+                            " ServerSocketConnections) " +
+                            "-- Probably, some connections were open before" +
+                            " starting the test");
+                    e.printStackTrace();
+                    return; // performs "finally"
+                }
             }
 
             // Actual Test

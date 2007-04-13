@@ -95,6 +95,7 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/RepaintEvent.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/RepaintEventProducer.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEventListener.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/LCDUIEnvironment.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/PhoneDial.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayContainer.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayEventHandler.java \
@@ -104,6 +105,8 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayDeviceAccess.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/ForegroundController.java \
     $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/SystemAlert.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayStaticAccess.java \
+    $(LCDUI_CLASSES_DIR)/classes/com/sun/midp/lcdui/DisplayFactory.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/LayerManager.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/GameCanvas.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/GameAccessImpl.java \
@@ -164,5 +167,6 @@ SUBSYSTEM_LCDUI_I3TEST_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestThree.java \
     $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestKeyConverter.java \
     $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestNewSetCurrent.java \
-    $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/game/TestSprite.java
+    $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/game/TestSprite.java \
+    $(LCDUI_CLASSES_DIR)/i3test/com/sun/midp/lcdui/TestDisplayFactory.java
 endif

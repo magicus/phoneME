@@ -49,9 +49,6 @@ class ExecuteMIDletEventListener implements EventListener, Runnable {
     /** An internal security token. */
     private static SecurityToken classSecurityToken;
 
-    /** The controller of Displays.  */
-    private static DisplayEventHandler displayEventHandler;
-
     /** External app ID of an installed suite to execute. */
     private int externalAppId;
 
@@ -78,15 +75,12 @@ class ExecuteMIDletEventListener implements EventListener, Runnable {
      * Start listening for execute MIDlet events.
      *
      * @param token security token for initilaization
-     * @param theDisplayEventHandler display event handler
      * @param eventQueue event queue to work with
      *
      */
     static void startListening(SecurityToken token,
-        DisplayEventHandler theDisplayEventHandler,
         EventQueue eventQueue) {
         classSecurityToken = token;
-        displayEventHandler = theDisplayEventHandler;
         eventQueue.registerEventListener(EventTypes.EXECUTE_MIDLET_EVENT,
                                   new ExecuteMIDletEventListener());
     }
@@ -190,7 +184,7 @@ class ExecuteMIDletEventListener implements EventListener, Runnable {
                     "Exception calling MIDletSuiteLoader.execute");
             }
 
-            MIDletSuiteUtils.displayException(displayEventHandler,
+            MIDletSuiteUtils.displayException(classSecurityToken,
                  Resource.getString(
                  ResourceConstants.AMS_MIDLETSUITELDR_CANT_EXE_NEXT_MIDLET) +
                              "\n\n" + t.getMessage());

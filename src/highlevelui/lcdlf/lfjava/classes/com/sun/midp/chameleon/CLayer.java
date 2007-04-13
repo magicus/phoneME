@@ -868,24 +868,32 @@ public class CLayer {
     }
 
     /**
-     * Called by CWindow to notify the layer that is has been 
-     * added to the active stack. By default this method do nothing. 
-     * This method could be re-implemented by particular layer  to 
-     * do some specific action as soon as it's added to the stack 
-     */
-    public void addNotify() {};
-
+     * Called by CWindow to notify the layer that is has been  
+     * added to the active stack. By default this method do nothing.  
+     * This method could be re-implemented by particular layer  to  
+     * do some specific action as soon as it's added to the stack  
+     */ 
+    public void addNotify() {}; 
+    
+    /** 
+     * Called by CWindow to notify the layer that is has been  
+     * removed from the active stack. By default this method do nothing.  
+     * This method could be re-implemented by particular layer  to  
+     * do some specific action as soon as it's removed from the stack  
+     * @param owner an instance of CWindow this layer has been removed from  
+     */ 
+    public void removeNotify(CWindow owner) {}; 
+    
     /**
-     * Called by CWindow to notify the layer that is has been 
-     * removed from the active stack. By default this method do nothing. 
-     * This method could be re-implemented by particular layer  to 
-     * do some specific action as soon as it's removed from the stack 
-     * @param owner an instance of CWindow this layer has been removed from 
-     */
-    public void removeNotify(CWindow owner) {};
-
-
-    /**
+     * Called by CWindow to notify the layer that is has been  
+     * moved to another location. By default this method do nothing.  
+     * This method could be re-implemented by particular layer  to  
+     * do some specific action as soon as it's moved
+     * @param oldBounds original bounds of this layer before it has been moved
+     */ 
+    public void relocateNotify(int[] oldBounds) {}; 
+    
+    /** 
      * Get the layer details including
      * its bound and dirty region information
      *

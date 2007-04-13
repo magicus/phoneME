@@ -98,7 +98,7 @@ public class MIDletStateHandler {
     private MIDletPeer[] midlets;
     /** current number of MIDlets [0..n-1]. */
     private int nmidlets;
-    /**  next index to be scanned by selectForeground. */
+    /** next index to be scanned by selectByPriority. */
     private int scanIndex;
 
     /** The event handler of all MIDlets in an Isolate. */
@@ -363,11 +363,6 @@ public class MIDletStateHandler {
      * Runs MIDlets until there are none.
      * Handle any pending state transitions of any MIDlet.
      * If there are none, wait for transitions.
-     * If there is no foreground MIDlet select one that is ACTIVE and
-     * has setCurrent != null.
-     * <p>
-     * If the foreground MIDlet changes from the ACTIVE_FOREGROUND state
-     * it automatically looses the foreground and and new one is selected.
      *
      * @param exceptionHandler the handler for midlet execution exceptions.
      * @param aMidletSuite the current midlet suite

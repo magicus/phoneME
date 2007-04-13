@@ -366,11 +366,12 @@ final class ConnectionRegistry
      * @see #unregisterConnection
      */
     public static void registerConnection(MIDletSuite midletSuite,
-            Connection connection, String midlet, String filter)
+            String connection, String midlet, String filter)
         throws ClassNotFoundException, IOException {
 
+        checkRegistration(connection, midlet, filter);
         registerConnectionInternal(midletSuite,
-                            connection.getConnection(), midlet, filter, true);
+                            connection, midlet, filter, true);
     }
 
     /**
@@ -385,11 +386,11 @@ final class ConnectionRegistry
      * @exception ConnectionNotFoundException if PushRegistry doesn't support
      *               this kind of connections
      */
-    static void checkRegistration(Connection connection, String midlet,
+    static void checkRegistration(String connection, String midlet,
                                   String filter)
                                   throws ConnectionNotFoundException {
-        final String c = connection.getConnection();
-        ProtocolPush.getInstance(c).checkRegistration(c, midlet, filter);
+        ProtocolPush.getInstance(connection)
+            .checkRegistration(connection, midlet, filter);
     }
 
     /**
@@ -605,6 +606,7 @@ final class ConnectionRegistry
     /**
      * Retrieve the registered <code>MIDlet</code> for a requested connection.
      *
+     * @param midletSuite suite to fetch class name for
      * @param connection generic connection <em>protocol</em>, <em>host</em>
      *              and <em>port number</em>
      *              (optional parameters may be included
@@ -615,7 +617,7 @@ final class ConnectionRegistry
      *              registered
      * @see #registerConnection
      */
-    public static String getMIDlet(String connection) {
+    public static String getMIDlet(MIDletSuite midletSuite, String connection) {
 
         String midlet = null;
         byte[] asciiConn = Util.toCString(connection);
@@ -640,6 +642,7 @@ final class ConnectionRegistry
     /**
      * Retrieve the registered filter for a requested connection.
      *
+     * @param midletSuite suite to fetch filter for
      * @param connection generic connection <em>protocol</em>, <em>host</em>
      *              and <em>port number</em>
      *              (optional parameters may be included
@@ -650,7 +653,7 @@ final class ConnectionRegistry
      *              registered
      * @see #registerConnection
      */
-    public static String getFilter(String connection) {
+    public static String getFilter(MIDletSuite midletSuite, String connection) {
 
         String filter = null;
         byte[] asciiConn = Util.toCString(connection);
@@ -707,6 +710,18 @@ final class ConnectionRegistry
     }
 
     /**
+     * Loads application class given its name.
+     *
+     * @param className name of class to load
+     * @return instance of class
+     * @throws ClassNotFoundException if the class cannot be located
+     */
+    static Class loadApplicationClass(final String className)
+            throws ClassNotFoundException {
+        return Class.forName(className);
+    }
+
+    /**
       * Converts <code>MIDlet</code> suite ID into a string.
       *
       * @param suiteId <code>MIDlet</code> suite to convert ID of
@@ -716,7 +731,7 @@ final class ConnectionRegistry
         // assert storage != null; // Listener should be started before
         return storage.suiteIdToString(suiteId);
     }
-      
+
     /**
       * Converts <code>MIDlet</code> suite ID into a string.
       *
@@ -727,7 +742,7 @@ final class ConnectionRegistry
         // assert midletSuite != null;
         return suiteIdToString(midletSuite.getID());
     }
-      
+
     /**
      * Native connection registry add connection function.
      * @param connection string to register

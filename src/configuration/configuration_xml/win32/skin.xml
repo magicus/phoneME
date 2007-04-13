@@ -9,8 +9,27 @@
 <!--
         	
 
-        Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+        Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
         DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+        
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation. 
+        
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt). 
+        
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA 
+        
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions. 
 -->
 <configuration>
 <skin>
@@ -86,7 +105,7 @@
   <image
         Key="SCREEN_IMAGE_WASH"
       Value="screen.image_wash"
-    Romized="false"/>
+    Romized="true"/>
 
   <image
         Key="SCREEN_IMAGE_BG"
@@ -163,12 +182,12 @@
   <image
         Key="SCROLL_IMAGE_UP"
       Value="scroll.image_up"
-    Romized="false"/>
+    Romized="true"/>
 
   <image
         Key="SCROLL_IMAGE_DN"
       Value="scroll.image_dn"
-    Romized="false"/>
+    Romized="true"/>
 
   <integer
         Key="SCROLL_COLOR_AU_BG"
@@ -193,12 +212,12 @@
   <image
         Key="SCROLL_IMAGE_AU_UP"
       Value="scroll.image_au_up"
-    Romized="false"/>
+    Romized="true"/>
 
   <image
         Key="SCROLL_IMAGE_AU_DN"
       Value="scroll.image_au_dn"
-    Romized="false"/>
+    Romized="true"/>
 
   <integer
         Key="SOFTBTN_HEIGHT"
@@ -264,19 +283,19 @@
         Key="SOFTBTN_IMAGE_BG"
       Value="softbtn.image_bg"
      Pieces="3"
-    Romized="false"/>
+    Romized="true"/>
 
   <composite_image
         Key="SOFTBTN_IMAGE_MU_BG"
       Value="softbtn.image_mu_bg"
      Pieces="3"
-    Romized="false"/>
+    Romized="true"/>
 
   <composite_image
         Key="SOFTBTN_IMAGE_AU_BG"
       Value="softbtn.image_au_bg"
      Pieces="3"
-    Romized="false"/>
+    Romized="true"/>
 
   <integer
         Key="TICKER_HEIGHT"
@@ -326,7 +345,7 @@
         Key="TICKER_IMAGE_BG"
       Value="ticker.image_bg"
      Pieces="3"
-    Romized="false"/>
+    Romized="true"/>
 
   <composite_image
         Key="TICKER_IMAGE_AU_BG"
@@ -396,7 +415,7 @@
         Key="PTI_IMAGE_BG"
       Value="pti.image_bg"
      Pieces="3"
-    Romized="false"/>
+    Romized="true"/>
 
   <image
         Key="PTI_LEFT_ARROW"
@@ -444,7 +463,7 @@
         Key="TITLE_IMAGE_BG"
       Value="title.image_bg"
      Pieces="3"
-    Romized="false"/>
+    Romized="true"/>
 
   <integer
         Key="ALERT_WIDTH"
@@ -978,18 +997,18 @@
   <image
         Key="IMAGEITEM_IMAGE_LNK_H"
       Value="imageitem.image_lnk_h"
-    Romized="false"/>
+    Romized="true"/>
 
   <image
         Key="IMAGEITEM_IMAGE_LNK_V"
       Value="imageitem.image_lnk_v"
-    Romized="false"/>
+    Romized="true"/>
 
   <composite_image
         Key="IMAGEITEM_IMAGE_BUTTON"
       Value="imageitem.image_btn"
      Pieces="9"
-    Romized="false"/>
+    Romized="true"/>
 
   <integer
         Key="MENU_WIDTH"
@@ -1346,7 +1365,7 @@
 
   <integer_seq
         Key="SOFTBTN_BUTTON_ANCHOR_Y"
-      Value="0,0"/>
+      Value="2,2"/>
 
 </skin_properties>
 </skin>

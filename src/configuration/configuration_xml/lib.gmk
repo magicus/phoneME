@@ -45,6 +45,7 @@ SUBSYSTEM_CONFIGURATION_FILES_LIST = files.lst
 
 SUBSYSTEM_CONFIGURATION_DEVICE_FILES_LIST = files_$(TARGET_DEVICE).lst
 
+
 # directory containing XSL files used to transform XML files 
 # into .c, .h, and .java files
 INT_XSL_DIR = \

@@ -67,6 +67,8 @@ class LCDUIEvent extends Event {
     /** Constant specifying that an ITEM_EVENT requests a size refresh. */
     static final int ITEM_SIZE_REFRESH = 1;
 
+
+
     /**
      * Construct an event that has no parameters.
      *
@@ -110,6 +112,19 @@ class LCDUIEvent extends Event {
         LCDUIEvent e = new LCDUIEvent(EventTypes.ITEM_EVENT);
         e.changedItem = src;
         e.minorCode = minor;
+        return e;
+    }
+
+    /**
+     * Create a screen repaint event.
+     *
+     * @param display parent Display of the Displayable
+     * @return initialized event
+     */
+    static LCDUIEvent createScreenRepaintEvent(
+        DisplayEventConsumer display) {
+        LCDUIEvent e = new LCDUIEvent(EventTypes.SCREEN_REPAINT_EVENT);
+        e.display = display;
         return e;
     }
 

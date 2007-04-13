@@ -306,5 +306,7 @@ public final class EventTypes {
 
     /** Major ID for AMMS  event */ 
     public static final int AMMS_EVENT  = 46;
-    
+
+    /** The event to repaint entire screen*/
+    public static final int SCREEN_REPAINT_EVENT = 47;
 }

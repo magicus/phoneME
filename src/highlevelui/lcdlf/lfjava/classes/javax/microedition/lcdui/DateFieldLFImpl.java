@@ -31,15 +31,12 @@ import java.util.Date;
 
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
-import com.sun.midp.lcdui.Text;
-import com.sun.midp.lcdui.*;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.*;
 import com.sun.midp.chameleon.skins.DateFieldSkin;
 import com.sun.midp.chameleon.skins.resources.DateFieldResources;
 import com.sun.midp.chameleon.skins.DateEditorSkin;
 import com.sun.midp.chameleon.skins.resources.DateEditorResources;
-import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
@@ -300,7 +297,7 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
         
         g.translate(-DateFieldSkin.PAD_H, -DateFieldSkin.PAD_V);
         if (editor.isPopupOpen() && editor.isSizeChanged()) {
-            setLocation();
+            setPopupLocation();
         }
     }
 
@@ -373,7 +370,7 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
         
         synchronized (Display.LCDUILock) {
             if (!editor.isPopupOpen()) {
-                setLocation();
+                setPopupLocation();
                 editor.show();
             } else {
                 editor.hideAllPopups();
@@ -386,7 +383,7 @@ class DateFieldLFImpl extends ItemLFImpl implements DateFieldLF {
     /**
      * Set location of popup layer
      */
-    private void setLocation() {
+    private void setPopupLocation() {
         ScreenLFImpl sLF = (ScreenLFImpl)df.owner.getLF();
         // decide where to show popup: above, below or in
         // the middle of the screen (if both above/below don't

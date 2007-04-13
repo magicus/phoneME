@@ -56,13 +56,10 @@ int QPopupMenuExt::insertItemTrunc( const QString & text0, int id) {
 CommandManager::CommandManager(QWidget *parent)
     : QMenuBar(parent)
 {
-    actionMenu	= new QPopupMenuExt(parent);
-    goMenu	= new QPopupMenuExt(parent);
-    helpMenu	= new QPopupMenuExt(parent);
+    actionMenu = new QPopupMenuExt(parent);
+    goMenu = new QPopupMenuExt(parent);
+    helpMenu = new QPopupMenuExt(parent);
 
-    // Always have 'about' in help menu
-    insertItem(HELP_MENUITEM_TEXT, helpMenu);
-    
     // Listen on menu item selection
     connect(actionMenu, SIGNAL(activated(int)), SLOT(commandActivated(int)));
     connect(goMenu, SIGNAL(activated(int)), SLOT(commandActivated(int)));
@@ -107,9 +104,9 @@ MidpError CommandManager::setCommands(MidpCommand* cmds, int numOfCmds) {
     MidpError err = KNI_OK;
     int i = count()-1;
 
-    // Remove any popup menu before Help
-    for (i--; i >= 0; i--) {
-	removeItemAt(0);
+    // Remove any popup menu
+    for (; i >= 0; i--) {
+	    removeItemAt(0);
     }
 
     // Clear existing popup menu content
@@ -154,7 +151,9 @@ MidpError CommandManager::setCommands(MidpCommand* cmds, int numOfCmds) {
     if (actionMenu->count() > 0) {
 	    insertItem(ACTION_MENUITEM_TEXT, actionMenu, -1, 0);
     }
-
+    if (helpMenu->count() > 0) {
+        insertItem(HELP_MENUITEM_TEXT, helpMenu, -1, 0);
+    }
     return err;
 }
 

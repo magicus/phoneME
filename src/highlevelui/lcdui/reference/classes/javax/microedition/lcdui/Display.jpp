@@ -29,13 +29,17 @@ package javax.microedition.lcdui;
 /* This is used to implement the communication between MIDlet and Display */
 import javax.microedition.midlet.MIDlet;
 
+import com.sun.midp.lcdui.DisplayFactory;
+
+import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.SecurityInitializer;
+import com.sun.midp.security.ImplicitlyTrustedClass;
+
 // #ifndef ENABLE_CDC
 import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.ToneControl;
-// #endif ENABLE_CDC
 
-// #ifndef ENABLE_CDC
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 // #endif ENABLE_CDC
@@ -463,6 +467,17 @@ public class Display {
  * ************* private member variables
  */
 
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements ImplicitlyTrustedClass {}
+
+    /** Security token to allow access to implementation APIs */
+    private static SecurityToken classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
+
     /** Device Access manager. */
     private static DisplayDeviceAccess deviceAccess;
 
@@ -478,11 +493,6 @@ public class Display {
 
     /** Cached reference to Active Displays Container. */
     private static DisplayContainer displayContainer;
-
-    // #ifndef ENABLE_CDC
-    /** About abstract command. */
-    private static Command aboutCommand;
-    // #endif ENABLE_CDC
 
     /** Device <code>Graphics</code> associated with this Display. */
     private Graphics screenGraphics;
@@ -605,16 +615,20 @@ public class Display {
                                    displayEventHandlerImpl);
         deviceAccess = new DisplayDeviceAccess();
 
-        // #ifndef ENABLE_CDC
-        aboutCommand = new Command(Resource.getString(ResourceConstants.ABOUT),
-                                   Command.HELP, 3);
-        aboutCommand.setInternalID(EventConstants.ABOUT_REQUESTED);
-        // #endif ENABLE_CDC
-
         // #ifdef ENABLE_GCI
         java.security.AccessController.doPrivileged(
                  new sun.security.action.LoadLibraryAction("gci"));
         // #endif ENABLE_GCI
+
+        DisplayStaticAccess displayStaticAccess = 
+            new DisplayStaticAccess () {
+                public Display getDisplay(String owner) {
+                    return Display.getDisplay(owner);
+                }
+            };
+
+        DisplayFactory.setStaticDisplayAccess(classSecurityToken, 
+                                              displayStaticAccess);
     }
 
 
@@ -723,13 +737,13 @@ public class Display {
     }
 
     /**
-     * Initialize per suite data of the display class. Shall be called only
+     * Sets the trusted state of the display class. Shall be called only
      * from displayEventHandlerImpl initialization methods.
      *
      * @param drawTrustedIcon true, to draw the trusted icon in the upper
      *                status bar for every display of this suite
      */
-    static void initSuiteData(boolean drawTrustedIcon) {
+    static void setTrustedState(boolean drawTrustedIcon) {
         drawSuiteTrustedIcon = drawTrustedIcon;
     }
 
@@ -747,16 +761,7 @@ public class Display {
      * @throws NullPointerException if <code>m</code> is <code>null</code>
      */
     public static Display getDisplay(MIDlet m) {
-        String owner = m.getClass().getName();
-        DisplayAccess da = displayContainer.findDisplayByOwner(owner);
-
-        if (da != null) {
-            return da.getDisplay();
-        }
-
-        Display display = new Display(owner);
-
-        return display;
+        return getDisplay(m.getClass().getName());
     }
 
     /**
@@ -1431,6 +1436,28 @@ public class Display {
 /*
  * ************* package private methods
  */
+    /**
+     * Gets the <code>Display</code> object by owner name.
+     *
+     * @param owner name of the owner of the display, the owner can be
+     * 
+     * @return the display object that application can use for its user
+     * interface
+     *
+     * @throws NullPointerException if <code>owner</code> is <code>null</code>
+     */
+    static Display getDisplay(String owner) {
+        DisplayAccess da = displayContainer.findDisplayByOwner(owner);
+
+        if (da != null) {
+            return da.getDisplay();
+        }
+
+        Display display = new Display(owner);
+
+        return display;
+    }
+
     // #ifdef ENABLE_CHAMELEON
     void lSetTitle(DisplayableLF d, String title) {
         if (isShown(d)) {
@@ -1556,6 +1583,15 @@ public class Display {
         pendingCurrent = nextDisplayable.displayableLF;
         displayEventProducer.sendScreenChangeEvent(consumer, nextDisplayable);
     }
+
+    /**
+     * Posts an event to repaint the screen.
+     */
+    void requestScreenRepaint() {
+        displayEventProducer.sendScreenRepaintEvent(consumer);
+    }
+
+
 
     /**
      * Called by <code>DisplayEventConsumer</code> when screen change event
@@ -1739,7 +1775,7 @@ public class Display {
             updateCommandSet();
 
         } // synchronized
-        
+
 
         // SYNC NOTE: The implementation of dsPaint() could call
         // out to MIDlet's paint() function. So we have to call it
@@ -1804,7 +1840,7 @@ public class Display {
                 return false;
             }
             return true;
-// #else 
+// #else
             // SYNC NOTE: playAlertSound is a native method, no locking
             // necessary
             return playAlertSound0(displayId, t.getType());
@@ -2102,22 +2138,6 @@ public class Display {
             screenCommands[i].setInternalID(i);
         }
 
-        // #ifndef ENABLE_CDC
-        // Piggy back AboutBox command to all Displayable except Alert
-        if (!(d instanceof Alert)) {
-            if (screenCommands == null) {
-                screenCommands = new Command[1];
-            } else if (screenCommands.length == screenComCount) {
-                screenCommands = new Command[screenComCount+1];
-                System.arraycopy(d.commands, 0, screenCommands, 0,
-                                 d.numCommands);
-            }
-
-            screenCommands[screenComCount] = aboutCommand;
-            screenComCount++;
-        }
-        // #endif ENABLE_CDC
-
         // Item commands
         Item curItem = (current instanceof FormLF)
                             ? ((FormLF)current).lGetCurrentItem()
@@ -2220,23 +2240,6 @@ public class Display {
 
         q.removeAllElements();
     }
-
-    // #ifndef ENABLE_CDC
-    /**
-     * Show about box as a preempting alert.
-     */
-    private void showAboutBox() {
-
-        // Shows About Box as a preempting Alert
-        SystemAlert about = new SystemAlert(displayEventHandlerImpl,
-                                            aboutCommand.getLabel(),
-          Resource.getString(ResourceConstants.AMS_PROJECT_NAME) + "\n\n"
-          + Resource.getString(ResourceConstants.AMS_COPYRIGHT_LONG),
-                               null, null);
-
-        about.run();
-    }
-    // #endif ENABLE_CDC
 
     // #ifdef ENABLE_CHAMELEON
     /**
@@ -2414,9 +2417,9 @@ public class Display {
                 currentCopy.uCallSizeChanged(w, h);
             }
         }
-        
+
         /**
-         * This method is used by Chameleon to invoke 
+         * This method is used by Chameleon to invoke
          * Displayable.uCallScrollContent() method.
          *
          * @param scrollType scrollType
@@ -2428,7 +2431,7 @@ public class Display {
                 currentCopy.uCallScrollContent(scrollType, thumbPosition);
             }
         }
-        
+
         /**
          * Updates the scroll indicator.
          */
@@ -2468,7 +2471,7 @@ public class Display {
         public int getDisplayWidth() {
           return Display.WIDTH;
         }
-    
+
         /**
         * Called to get current display height.
         * @return Display height.
@@ -2816,14 +2819,6 @@ public class Display {
             Displayable currentDisplayable = null;
             Item curItem = null;
 
-            // #ifndef ENABLE_CDC
-            // Check for About box command
-            if (cmdId == EventConstants.ABOUT_REQUESTED) {
-                showAboutBox();
-                return;
-            }
-            // #endif ENABLE_CDC
-
             synchronized (LCDUILock) {
                 if (current == null) {
                     return;
@@ -2950,6 +2945,17 @@ public class Display {
         }
 
         /**
+         * Called by event delivery when the entire screen repaint is needed.
+         * DisplayEventConsumer I/F method.
+         */
+        public void handleScreenRepaintEvent() {
+            // #ifdef ENABLE_CHAMELEON
+            window.setAllDirty();
+            callPaint(0,0,Display.WIDTH,Display.HEIGHT, null);
+            // #endif
+        }
+
+        /**
          * Called by event delivery when size of screen was changed.
          */
         public void handleRotationEvent() {
@@ -2961,14 +2967,33 @@ public class Display {
             screenGraphics.setDimensions(Display.WIDTH, Display.HEIGHT);
             screenGraphics.reset();
             // #ifdef ENABLE_CHAMELEON
-                SkinResources.adjustScreen();
-                window.resize();
-                callPaint(0,0,Display.WIDTH,Display.HEIGHT, null);
+            SkinResources.adjustScreen();
+
+            MIDPWindow windowCopy;
+            DisplayableLF currentCopy;
+            synchronized (LCDUILock) {
+                windowCopy = window;
+                currentCopy = Display.this.current;
+            }
+
+            windowCopy.resize();
+            if (currentCopy != null) {
+                currentCopy.uCallInvalidate();
+            }
+
+            // IMPL_NOTE: The entire screen repaint is requested instead
+            //   of usual repaint of the current Displayable over callPaint().
+            //   It is done so because various layers can logically belong
+            //   to the Displayable, but be beyond of its area. For instance,
+            //   date editor popup dialogs can intersect with soft buttons
+            //   layer, thus require repaint for all layers involved.
+            requestScreenRepaint();
+
             // #else
-                DisplayableLF currentCopy = getCurrent().displayableLF;
-                if (currentCopy != null) {
-                    currentCopy.uCallSizeChanged(Display.WIDTH, Display.HEIGHT);
-                }
+            DisplayableLF currentCopy = getCurrent().displayableLF;
+            if (currentCopy != null) {
+                currentCopy.uCallSizeChanged(Display.WIDTH, Display.HEIGHT);
+            }
             // #endif ENABLE_CHAMELEON
 
         }
@@ -3051,7 +3076,7 @@ public class Display {
                 gainedForeground0(displayId);
 
                 // #ifdef ENABLE_GCI
-                gciScreenWidget.setPeerEventTarget(currentCopy);
+                gciScreenWidget.setPeerEventTarget(accessor);
                 gciScreenWidget.show();
 
                 // #endif ENABLE_GCI

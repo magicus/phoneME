@@ -217,6 +217,7 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
      */
     protected void closeInputStream() throws IOException {
         iStreams--;
+        notifyClosedInput();
         closeCommon();
     }
 
@@ -230,6 +231,7 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
      */
     protected void closeOutputStream() throws IOException {
         oStreams--;
+        notifyClosedOutput();
         closeCommon();
     }
 
@@ -240,18 +242,8 @@ public abstract class ConnectionBaseAdapter implements ConnectionBaseInterface,
      *                          connection.
      */
     void closeCommon() throws IOException {
-
-        /* IMPL_NOTE: Whether the connection is open but its input or
-         *   or output stream is closed, we should notify blocked Java
-         *   threads waiting for data on the stream.
-         */
-        
         if (!connectionOpen && iStreams == 0 && oStreams == 0) {
             disconnect();
-        } else if (iStreams == 0) {
-            notifyClosedInput();
-        } else if (oStreams == 0) {
-            notifyClosedOutput();
         }
     }
 

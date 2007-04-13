@@ -97,12 +97,20 @@ class SplashScreen extends Canvas {
         if (timeoutTimer  == null) {
             timeoutTimer = new Timer();
         }
-        splashScreen = 
-            GraphicalInstaller.getImageFromInternalStorage("splash_screen_" 
-            + getWidth() + "x" + getHeight());
 
         timerTask = new TimeoutTask();
         timeoutTimer.schedule(timerTask, 2000);
+    }
+
+    /**
+     * This method is called when available area of 
+     * the Displayable has been changed.
+     */
+    protected  void  sizeChanged(int w, int h) {
+        splashScreen = 
+            GraphicalInstaller.getImageFromInternalStorage("splash_screen_" 
+            + getWidth() + "x" + getHeight());
+        
     }
 
     /**

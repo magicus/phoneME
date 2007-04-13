@@ -51,6 +51,10 @@
 #include <suitestore_installer.h>
 #include <suitestore_task_manager.h>
 
+#if ENABLE_ICON_CACHE
+#include <suitestore_icon_cache.h>
+#endif
+
 /* Description of these internal functions can be found bellow in the code. */
 static MIDPError store_install_properties(SuiteIdType suiteId,
     const MidpProperties* pJadProps, const MidpProperties* pJarProps);
@@ -399,6 +403,8 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
     char* pszError;
     lockStorageList *node;
     SuiteIdType suiteId;
+    unsigned char* pIconData = NULL;
+    int iconBufLen = -1;
 
     if (pInstallInfo == NULL || pSuiteSettings == NULL || pSuiteData == NULL) {
         return BAD_PARAMS;
@@ -532,7 +538,20 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
 
 #if ENABLE_IMAGE_CACHE
         createImageCache(suiteId, pMsd->storageId);
+
+        iconBufLen = loadImageFromCache(suiteId, &pMsd->varSuiteData.iconName,
+                                        &pIconData);
+#else
+        /* IMPL_NOTE: the entry must be read using midpGetJarEntry(). */
+        iconBufLen = -1;
 #endif
+
+#if ENABLE_ICON_CACHE
+        if (iconBufLen > 0) {
+            midp_add_suite_icon(suiteId, &pMsd->varSuiteData.iconName,
+                                pIconData, iconBufLen);
+        }
+#endif        
     } while (0);
 
     if (status != ALL_OK) {
