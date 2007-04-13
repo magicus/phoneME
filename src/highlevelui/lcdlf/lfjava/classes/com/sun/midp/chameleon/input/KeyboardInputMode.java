@@ -25,10 +25,8 @@
  */
 package com.sun.midp.chameleon.input;
 
-import javax.microedition.lcdui.Canvas;
-import javax.microedition.lcdui.Display;
-import javax.microedition.lcdui.Displayable;
-import javax.microedition.lcdui.TextField;
+import javax.microedition.lcdui.*;
+
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 
@@ -131,11 +129,14 @@ public class KeyboardInputMode implements InputMode {
     public int processKey(int keyCode, boolean longPress) {
         int ret = KEYCODE_NONE;
         validateState(true);
-        // if the key is printable one 
+        // if the key is printable one
         if (mediator != null &&
-            !longPress &&
-            keyCode >= ' ' && keyCode < 127) {
-            mediator.commit("" + (char)keyCode);
+            !longPress) {
+            if( keyCode >= ' ' && keyCode < 127) {
+                mediator.commit("" + (char)keyCode);
+            } else if ( mediator.isNewlineKey(keyCode)) {
+                mediator.commit("\n");
+            }
         }
         return ret;
     }

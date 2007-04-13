@@ -91,7 +91,7 @@ public class TextPolicy {
      * @return true if this is a valid string
      */
     private static boolean checkEmail(String array) {
-        return true;
+        return array.indexOf('\n')==-1;
     }
 
     /**
@@ -158,7 +158,7 @@ public class TextPolicy {
      * @return true if this is a valid string
      */
     private static boolean checkURL(String array) {
-        return true;
+        return array.indexOf('\n')==-1;
     }
 
     /**

@@ -26,13 +26,7 @@
 
 package javax.microedition.lcdui;
 
-import com.sun.midp.lcdui.PhoneDial;
-
-import com.sun.midp.lcdui.DynamicCharacterArray;
-import com.sun.midp.lcdui.Text;
-import com.sun.midp.lcdui.TextCursor;
-import com.sun.midp.lcdui.TextInfo;
-import com.sun.midp.lcdui.TextPolicy;
+import com.sun.midp.lcdui.*;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
@@ -646,6 +640,18 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
             getCurrentDisplay().getWindow().getBodyAnchorY(),
             sLF.viewport[HEIGHT] - space - 4,                    
             space};
+    }
+
+    /**
+     * Returns true if the keyCode is used as 'enter' (user types in \n)
+     * ('select' plays the role of 'enter' in some input modes).
+     *
+     * @param keyCode key code
+     * @return true if key code is the one for newline, false otherwise
+     */
+    public boolean isNewlineKey(int keyCode) {
+        return EventConstants.SYSTEM_KEY_SELECT ==
+            KeyConverter.getSystemKey(keyCode);
     }
 
 

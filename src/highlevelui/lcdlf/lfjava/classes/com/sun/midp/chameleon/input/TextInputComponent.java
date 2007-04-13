@@ -92,7 +92,16 @@ public interface TextInputComponent {
     /**
      * Returns true if the keyCode is used as 'clear'
      * @param keyCode key code
-     * @return true if keu code is Clear one, false otherwise
+     * @return true if key code is Clear one, false otherwise
      */
     public boolean isClearKey(int keyCode);
+
+    /**
+     * Returns true if the keyCode is used as 'enter' (user types in \n)
+     * ('select' plays the role of 'enter' in some input modes).
+     *
+     * @param keyCode key code
+     * @return true if key code is the one for newline, false otherwise
+     */
+    boolean isNewlineKey(int keyCode);
 }
