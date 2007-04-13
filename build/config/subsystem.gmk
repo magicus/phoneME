@@ -311,15 +311,16 @@ clean_tools::
 	-@(rm -fr $(WMATOOL_JAR_FILE)) $(LOG)
 
 # Append JSR120 source bundle creation to target
-source_bundle:: jsr_120_source_bundle
+#source_bundle:: jsr_120_source_bundle
 
 # Create JSR120 source in subdir 'jsr120/'
-JSR_120_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr120
+#JSR_120_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr120
 
+# Valid for midp build only
 # Copy and filter JSR120 source in JSR_120_SOURCE_OUTPUT_DIR
-jsr_120_source_bundle: SOURCE_OUTPUT_DIR
-	@echo " ... JSR 120 source bundle" $(LOG)
-	@$(call re_src_filter,$(JSR_120_DIR),$(JSR_120_SOURCE_OUTPUT_DIR),src)
+#jsr_120_source_bundle: SOURCE_OUTPUT_DIR
+#	@echo " ... JSR 120 source bundle" $(LOG)
+#	@$(call re_src_filter,$(JSR_120_DIR),$(JSR_120_SOURCE_OUTPUT_DIR),src)
 
 DOXYGEN_INPUT_LIST += \
 	$(JSR_120_DIR)/src/share/protocol/cbs/native/share/inc/jsr120_cbs_protocol.h \
