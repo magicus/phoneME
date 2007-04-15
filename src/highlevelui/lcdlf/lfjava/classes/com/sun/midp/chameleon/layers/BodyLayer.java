@@ -43,7 +43,12 @@ public class BodyLayer extends CLayer
      * in case not all content can fit on the menu.
      */
     protected ScrollIndLayer scrollInd;
-    
+
+    /**
+     * The flag indicates whether the layer is overlapped by any
+     * higher visible layer in the owner window stack
+     */
+    protected boolean overlapped;
     
     ChamDisplayTunnel tunnel;
 
@@ -75,6 +80,7 @@ public class BodyLayer extends CLayer
         super(bgImage, bgColor);
         this.tunnel = tunnel;
         this.visible = false;
+        this.overlapped = false;
 
         setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
     }
@@ -96,6 +102,7 @@ public class BodyLayer extends CLayer
         super(bgImage, bgColor);
         this.tunnel = tunnel;
         this.visible = false;
+        this.overlapped = false;
         setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
     }
 
@@ -117,6 +124,24 @@ public class BodyLayer extends CLayer
                 updateScrollIndicator();
             }
         }
+    }
+
+    /**
+     * Inform the layer whether it is overlapped by a higher visible
+     * layer within the owner window stack.
+     * @param overlapped true if overlapped, false otherwise
+     */
+    public void setOverlapped(boolean overlapped) {
+        this.overlapped = overlapped;
+    }
+
+    /**
+     * Checks whether the layer is overlapped by a higher visible
+     * layer in the owner window stack
+     * @return true if overlapped, false otherwise
+     */
+    public boolean isOverlapped() {
+        return overlapped;
     }
 
     /**

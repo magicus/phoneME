@@ -622,7 +622,19 @@ public class MIDPWindow extends CWindow {
             }
         }
         super.paint(g, refreshQ);
+
+        /** Check body layer overlapped state for the future repaints */
+        for (CLayerElement le = layers.getTop();
+                le != null; le = le.getLower()){
+            CLayer l = le.getLayer();
+            if (l.isVisible()) {
+                bodyLayer.setOverlapped(l != bodyLayer);
+                break;
+            }
+        }
     }
+
+
 
     /**
      * This method is an optimization which allows Display to bypass
@@ -641,9 +653,9 @@ public class MIDPWindow extends CWindow {
         // dirty state of the owner window, however it is not enough
         // to bypass the Chameleon paint engine. Body layer holding
         // the Canvas should be opaque and be not overlapped with
-        // any visible higher layer also. The check for overlapping
-        // is to be added later.
-        if (super.dirty || !bodyLayer.opaque) {
+        // any visible higher layer also.
+        if (super.dirty || !bodyLayer.opaque ||
+                bodyLayer.isOverlapped()) {
             return false;
         }
 
