@@ -136,7 +136,7 @@ $(MIDP_CLASSES_ZIP)::$(GENERATED_JAVA_FILES) \
 	$(compilefiles)
 	$(remove_filelist)
 	$(remove_genfilelist)
-	$(remove_allfilelist)
+#	$(remove_allfilelist)
 
 try_build_classes:: $(MIDP_CLASSES_ZIP)
 
@@ -240,9 +240,10 @@ clean::
 midp: $(MIDP_DEPS) $(MIDP_RESOURCES)
 
 clean_nbproject:
-	-@rm $(MIDP_OUTPUT_DIR)/phoneme.properties
+	@-rm $(MIDP_CLASSES_ZIP)
+	@-rm $(MIDP_OUTPUT_DIR)/phoneme.properties
 
-nbproject: $(MIDP_OUTPUT_DIR)/classes.zip clean_nbproject
+nbproject: clean_nbproject run_configurator jpp $(JTWI_JAVA_FILES) $(MIDP_CLASSES_ZIP)
 	@echo " ... writing list of java source directories" $(LOG)
 #	@echo $(foreach path,$(subst ;, ,$(JAVADOC_ALL_SOURCEPATH)),$(shell echo `$(call fixcygpath,$(path))` >> $(MIDP_OUTPUT_DIR)/phoneme.properties))
 #	@cat $(MIDP_OUTPUT_DIR)/phoneme.properties | sed s/'\\'/'\\\\'/mg > $(MIDP_OUTPUT_DIR)/phoneme2.properties
