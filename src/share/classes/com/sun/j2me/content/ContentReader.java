@@ -206,8 +206,8 @@ class ContentReader {
      * @return properly formated basic authentication credential
      */
     private static String formatAuthCredentials(String username,
-                                                String password) {
-        byte[] data = new byte[username.length() + password.length() + 1];
+                                                char[] password) {
+        byte[] data = new byte[username.length() + password.length + 1];
         int j = 0;
 
         for (int i = 0; i < username.length(); i++, j++) {
@@ -218,7 +218,7 @@ class ContentReader {
         j++;
 
         for (int i = 0; i < password.length(); i++, j++) {
-            data[j] = (byte)password.charAt(i);
+            data[j] = (byte)password[i];
         }
 
         return "Basic " + Base64.encode(data, 0, data.length);
