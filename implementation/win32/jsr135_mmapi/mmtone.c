@@ -70,17 +70,12 @@ static DWORD WINAPI tone_jts_player(void* pArg)
     static long volume = 100;   /* to reserve last volume */
 
     int i;
-    int length;
     long note;
     tone_handle* pHandle = (tone_handle*)pArg;
     long duration, totalDuration = pHandle->currentTime;
-    /* Tone data is integer array */
     char* pTone = pHandle->pToneBuffer;
 
-    /* Bytes to integer size */
-    length = pHandle->toneDataSize / sizeof(int);
-    
-    for(i = pHandle->offset; i < length; i += 2) {
+    for(i = pHandle->offset; i < pHandle->toneDataSize; i += 2) {
         /* JTS playing stopped by external force */
         if (JAVACALL_TRUE == pHandle->stopPlaying) {
             /* Store stopped offset to start from stopped position later */
