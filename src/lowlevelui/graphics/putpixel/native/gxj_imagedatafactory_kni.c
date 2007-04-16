@@ -34,7 +34,10 @@
 
 #include <gx_image.h>
 #include <gxutl_image.h>
+#include <gxutl_image_errorcodes.h>
 #include <gxutl_graphics.h>
+
+#include <imgdcd_image_util.h>
 
 #include <gxj_putpixel.h>
 #include "gxj_intern_graphics.h"
@@ -160,7 +163,10 @@ MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
 	    sbuf.alphaData = rawBuffer->data + pixelSize;
 
 	    rawBuffer->hasAlpha = decode_png(srcBuffer, length,
-					     &sbuf, &creationError);
+					     sbuf.width, sbuf.height,
+        				  (imgdcd_pixel_type *)sbuf.pixelData, 
+					  (imgdcd_alpha_type*)sbuf.alphaData,
+					     &creationError);
 	    if (!rawBuffer->hasAlpha) {
 		sbuf.alphaData = NULL;
 		alphaSize = 0; /* Exclude alpha data */
@@ -170,7 +176,11 @@ MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
 
 	    rawBuffer->hasAlpha = KNI_FALSE;
 
-	    decode_jpeg(srcBuffer, length, &sbuf, &creationError);
+	    decode_jpeg(srcBuffer, length,
+			sbuf.width, sbuf.height,
+		      	(imgdcd_pixel_type *)sbuf.pixelData,
+			(imgdcd_alpha_type *)sbuf.alphaData,
+			&creationError);
 	}
 
 	if (GXUTL_NATIVE_IMAGE_NO_ERROR != creationError) {
@@ -509,7 +519,11 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadPNG) {
     /* assert
      * (imagedata.pixelData != NULL && imagedata.alphaData != NULL)
      */
-    status = decode_png((srcBuffer + offset), length, &image, &creationError);
+    status = decode_png((srcBuffer + offset), length,
+			image.width, image.height,
+			(imgdcd_pixel_type *)image.pixelData,
+			(imgdcd_alpha_type *)image.alphaData,
+			&creationError);
 
     if (GXUTL_NATIVE_IMAGE_NO_ERROR != creationError) {
         KNI_ThrowNew(midpIllegalArgumentException, NULL);
@@ -579,7 +593,11 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadJPEG) {
     /* assert
      * (imagedata.pixelData != NULL)
      */
-    decode_jpeg((srcBuffer + offset), length, &image, &creationError);
+    decode_jpeg((srcBuffer + offset), length,
+		image.width, image.height, 
+		(imgdcd_pixel_type *)image.pixelData,
+		(imgdcd_alpha_type *)image.alphaData, 
+		&creationError);
 
     if (GXUTL_NATIVE_IMAGE_NO_ERROR != creationError) {
         KNI_ThrowNew(midpIllegalArgumentException, NULL);

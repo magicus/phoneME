@@ -27,7 +27,7 @@
 #ifndef _IMGDCD_IMAGE_H_
 #define _IMGDCD_IMAGE_H_
 
-#include <gxj_putpixel.h>
+#include <gxutl_image_errorcodes.h>
 
 /**
  * @file
@@ -40,6 +40,17 @@
 extern "C" {
 #endif
 
+
+/**
+ * 16-bit pixel.
+ * The color encoding used in pixels is 565, that is,
+ * 5+6+5=16 bits for red, green, blue.
+ */
+typedef unsigned short imgdcd_pixel_type;
+
+/** 8-bit alpha */
+typedef unsigned char imgdcd_alpha_type;
+
 /**
  * Decodes the given input data into a storage format used by immutable
  * images.  The input data should be a PNG image.
@@ -49,9 +60,12 @@ extern "C" {
  *  @param creationErrorPtr pointer to the status of the decoding
  *         process. This function sets creationErrorPtr's value.
  */
-extern int decode_png(unsigned char* srcBuffer, int length, 
-		      gxj_screen_buffer *image,
-		      gxutl_native_image_error_codes* creationErrorPtr);
+int decode_png(unsigned char* srcBuffer, int length, 
+	       int  width, int height,
+	       imgdcd_pixel_type *pixelData, 
+	       imgdcd_alpha_type *alphaData,
+	       gxutl_native_image_error_codes* creationErrorPtr);
+  
 
 /**
  * Decodes the given input data into a storage format used by
@@ -62,9 +76,11 @@ extern int decode_png(unsigned char* srcBuffer, int length,
  *  @param creationErrorPtr pointer to the status of the decoding
  *         process. This function sets creationErrorPtr's value.
  */
-extern void decode_jpeg(unsigned char* srcBuffer, int length, 
-			gxj_screen_buffer *image,
-			gxutl_native_image_error_codes* creationErrorPtr);
+void decode_jpeg (unsigned char* srcBuffer, int length,
+		  int width, int height,
+		  imgdcd_pixel_type *pixelData, 
+		  imgdcd_alpha_type *alphaData,
+		  gxutl_native_image_error_codes* creationErrorPtr);
 
 
 

@@ -54,34 +54,6 @@ void copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest,
 		      jint transform);
 
 /**
- * Decodes the given input data into a storage format used by immutable
- * images.  The input data should be a PNG image.
- * 
- *  @param srcBuffer input data to be decoded.
- *  @param length length of the input data.
- *  @param creationErrorPtr pointer to the status of the decoding
- *         process. This function sets creationErrorPtr's value.
- */
-int 
-decode_png(unsigned char* srcBuffer, int length, 
-	   gxj_screen_buffer *image,
-	   gxutl_native_image_error_codes* creationErrorPtr);
-
-/**
- * Decodes the given input data into a storage format used by 
- * images.  The input data should be a JPEG image.
- * 
- *  @param srcBuffer input data to be decoded.
- *  @param length length of the input data.
- *  @param creationErrorPtr pointer to the status of the decoding
- *         process. This function sets creationErrorPtr's value.
- */
-void
-decode_jpeg(unsigned char* srcBuffer, int length, 
-	   gxj_screen_buffer *image,
-	   gxutl_native_image_error_codes* creationErrorPtr);
-
-/**
  * Renders the contents of the specified mutable image
  * onto the destination specified.
  *

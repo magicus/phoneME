@@ -29,7 +29,7 @@
 #include <midpMalloc.h>
 #include <midp_logging.h>
 
-#include <gxj_putpixel.h>
+#include <imgdcd_image_util.h>
 #include "imgdcd_intern_image_decode.h"
 
 #if ENABLE_JPEG
@@ -40,9 +40,18 @@
 #define CT_COLOR    0x02
 #define CT_ALPHA    0x04
 
+/** Convert pre-masked triplet r, g, b to 16 bit pixel. */
+#define IMGDCD_RGB2PIXEL(r, g, b) ( b +(g << 5)+ (r << 11) )
+
 typedef struct _imgDst {
   imageDstData   super;
-  gxj_screen_buffer*           vdc;
+
+  // gxj_screen_buffer*           vdc;
+  int width;
+  int height;
+  imgdcd_pixel_type *pixelData;
+  imgdcd_alpha_type *alphaData;
+
   jboolean       hasAlpha;
   jboolean       hasColorMap;
   jboolean       hasTransMap;
@@ -131,20 +140,21 @@ setImageSize(imageDstPtr self, int width, int height) {
     REPORT_CALL_TRACE(LC_LOWUI,
                       "LF:STUB:setImageSize()\n");
 
-    if (p->vdc->pixelData == NULL) {
-        p->vdc->width = width;
-        p->vdc->height = height;
+    if (p->pixelData == NULL) {
+        p->width = width;
+        p->height = height;
 
-        p->vdc->pixelData = (gxj_pixel_type *)midpMalloc(width*height*sizeof(gxj_pixel_type));
+        p->pixelData = (imgdcd_pixel_type *)
+	    midpMalloc(width*height*sizeof(imgdcd_pixel_type));
     } else {
-        if (p->vdc->width != width || p->vdc->height != height) {
+        if (p->width != width || p->height != height) {
             /* JAVA_TRACE("IMAGE DIMENSION IS INCORRECT!!\n"); */
         }
     }
 
-    if (p->vdc->alphaData == NULL) {
-        p->vdc->alphaData = (unsigned char *)
-            midpMalloc(width*height*sizeof(unsigned char));
+    if (p->alphaData == NULL) {
+        p->alphaData = (imgdcd_alpha_type *)
+            midpMalloc(width*height*sizeof(imgdcd_alpha_type));
     }
 }
 
@@ -164,13 +174,13 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
   REPORT_CALL_TRACE(LC_LOWUI,
                     "LF:STUB:sendPixelsColor()\n");
 
-  if (p->vdc->pixelData == NULL || p->vdc->alphaData == NULL) {
+  if (p->pixelData == NULL || p->alphaData == NULL) {
     return;
   }
 
   if ((pixelType == CT_COLOR) ||              /* color triplet */
       (pixelType == (CT_COLOR | CT_ALPHA))) { /* color triplet with alpha */
-    for (x = 0; x < p->vdc->width; ++x) {
+    for (x = 0; x < p->width; ++x) {
       int r = pixels[0] >> 3;
       int g = pixels[1] >> 2;
       int b = pixels[2] >> 3;
@@ -185,15 +195,15 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
       }
       pixels += 3;
 
-      // p->vdc->pixelData[y*p->vdc->width + x] = (r<<16) + (g<<8) + b;
-      p->vdc->pixelData[y*p->vdc->width + x] = GXJ_RGB2PIXEL(r, g, b);
-      p->vdc->alphaData[y*p->vdc->width + x] = alpha;
+      // p->pixelData[y*p->width + x] = (r<<16) + (g<<8) + b;
+      p->pixelData[y*p->width + x] = IMGDCD_RGB2PIXEL(r, g, b);
+      p->alphaData[y*p->width + x] = alpha;
       if (alpha != 0xff) {
           p->hasAlpha = KNI_TRUE;
       }
     }
   } else { /* indexed color */
-    for (x = 0; x < p->vdc->width; ++x) {
+    for (x = 0; x < p->width; ++x) {
       int cmapIndex = *pixels++;
 
       int color = p->cmap[cmapIndex];
@@ -218,9 +228,9 @@ sendPixelsColor(imageDstPtr self, int y, uchar *pixels, int pixelType) {
         }
       }
 
-      // p->vdc->pixelData[y*p->vdc->width + x] = (r<<16) + (g<<8) + b;
-      p->vdc->pixelData[y*p->vdc->width + x] = GXJ_RGB2PIXEL(r, g, b);
-      p->vdc->alphaData[y*p->vdc->width + x] = alpha;
+      // p->pixelData[y*p->width + x] = (r<<16) + (g<<8) + b;
+      p->pixelData[y*p->width + x] = IMGDCD_RGB2PIXEL(r, g, b);
+      p->alphaData[y*p->width + x] = alpha;
       if (alpha != 0xff) {
           p->hasAlpha = KNI_TRUE;
       }
@@ -245,9 +255,14 @@ initImageDst(_imageDstPtr p) {
   p->super.setTransMap      = setImageTransparencyMap;
   p->super.setSize          = setImageSize;
   p->super.sendPixels       = sendPixelsColor;
+
+  p->width                  = 0;
+  p->height                 = 0;
+  p->pixelData              = NULL;
+  p->alphaData              = NULL;
+
   p->hasColorMap            = KNI_FALSE;
   p->hasTransMap            = KNI_FALSE;
-  p->vdc                    = NULL;
   p->hasAlpha               = KNI_FALSE;
 }
 
@@ -263,22 +278,33 @@ initImageDst(_imageDstPtr p) {
  */
 int
 decode_png
-(unsigned char* srcBuffer, int length, gxj_screen_buffer *image,
+(unsigned char* srcBuffer, int length, 
+ int width, int height,
+ imgdcd_pixel_type *pixelData, 
+ imgdcd_alpha_type *alphaData,
  gxutl_native_image_error_codes* creationErrorPtr) {
 
     _imageDstData dstData;
     imageSrcPtr src = NULL;
 
+    (void)pixelData;
     REPORT_CALL_TRACE(LC_LOWUI,
                      "LF:decode_PNG()\n");
 
     /* Create the image from the buffered data */
     initImageDst(&dstData);
 
-    dstData.vdc = image;
-    /* what about (image->pixelData == NULL &&
-                   image->width > 0 &&
-                   image->height > 0) ? */
+    
+    dstData.width = width;
+    dstData.height = height;
+    
+    dstData.pixelData = pixelData;
+    dstData.alphaData = alphaData;
+    
+    /* what about (pixelData == NULL &&
+                   width > 0 &&
+                   height > 0) ? */
+
     if ((src = create_imagesrc_from_data((char **)(void*)&srcBuffer,
                                              length)) == NULL) {
       *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
@@ -298,7 +324,9 @@ decode_png
 }
 
 #if ENABLE_JPEG
-#define RGB565_PIXEL_SIZE sizeof(gxj_pixel_type)
+#define RGB565_PIXEL_SIZE sizeof(imgdcd_pixel_type)
+
+
 /**
  * TBD:
  * a). use imageSrcPtr & imageDstPtr instead of direct array pointers
@@ -351,7 +379,9 @@ static int decode_jpeg_image(char* inData, int inDataLen,
 void
 decode_jpeg
 (unsigned char* srcBuffer, int length,
- gxj_screen_buffer *image,
+ int width, int height,
+ imgdcd_pixel_type*pixelData, 
+ imgdcd_alpha_type *alphaData,
  gxutl_native_image_error_codes* creationErrorPtr) {
 
 #if ENABLE_JPEG
@@ -360,20 +390,22 @@ decode_jpeg
 
     REPORT_CALL_TRACE(LC_LOWUI,
                      "LF:decodeJPEG()\n");
-
     /* Create the image from the buffered data */
     initImageDst(&dstData);
 
-    dstData.vdc = image;
-    /* what about (image->pixelData == NULL &&
-                   image->width > 0 &&
-                   image->height > 0) ? */
-    if (image->pixelData == NULL) {
+    dstData.width = width;
+    dstData.height = height;
+    dstData.pixelData = pixelData;
+    dstData.alphaData = alphaData;
+
+    /* what about (pixelData == NULL &&
+                   width > 0 &&
+                   height > 0) ? */
+    if (pixelData == NULL) {
         ((imageDstPtr)&dstData)->setSize(
-            ((imageDstPtr)&dstData), image->width, image->height);
+            ((imageDstPtr)&dstData), width, height);
         /*
-        image->pixelData = pcsl_mem_malloc(
-            image->width * image->height * RGB565_PIXEL_SIZE);
+         pixelData = pcsl_mem_malloc(width * height * RGB565_PIXEL_SIZE);
         */
     }
 
@@ -381,8 +413,7 @@ decode_jpeg
         length)) == NULL) {
         *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
     } else if (decode_jpeg_image((char*)srcBuffer, length,
-        (char*)(image->pixelData),
-        image->width, image->height) != FALSE) {
+        (char*)(pixelData), width, height) != FALSE) {
         *creationErrorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
     } else {
         *creationErrorPtr = GXUTL_NATIVE_IMAGE_DECODING_ERROR;
@@ -395,7 +426,8 @@ decode_jpeg
 #else
     (void)srcBuffer;
     (void)length;
-    (void)image;
+    (void)width; (void) height; 
+    (void)pixelData; (void) alphaData;
     *creationErrorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 #endif
 }
