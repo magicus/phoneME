@@ -48,6 +48,7 @@ information or have any questions.
   <property name="api.jar.suffix" value="-jump-api.jar"/>
   <property name="impl.jar.suffix" value="-jump-impl.jar"/>
 
+  <property name="user.build.properties" value="user.build.properties"/>
   <!-- 
       JUMP classes that should be in the bootclasspath of a mvm server.
   -->
@@ -57,7 +58,6 @@ information or have any questions.
       of a cvmc command launching executive.
   -->
   <property name="executive-jump.jar" value="${d.lib.dir}/executive-jump.jar"/>
-
 
   <property name="debug" value="true"/>
 
@@ -78,7 +78,7 @@ information or have any questions.
   </target>
 
   <target name="set-properties" depends="define-preset-bases">
-     <property file="user.build.properties"/>
+     <property file="${user.build.properties}"/>
      <property file="build.properties"/>
   </target>
 
