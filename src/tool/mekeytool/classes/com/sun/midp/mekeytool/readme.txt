@@ -1,6 +1,6 @@
 	
 
-Copyright  2006 Sun Microsystems, Inc. All rights reserved.
+Copyright  2007  Sun Microsystems, Inc. All rights reserved.
 
 
 j2se_test_keystore.bin is a java.security.keystore created with the
