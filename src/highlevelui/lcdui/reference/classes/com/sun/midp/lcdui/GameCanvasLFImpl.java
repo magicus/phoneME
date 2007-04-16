@@ -154,14 +154,25 @@ public class GameCanvasLFImpl {
      * @param height the height of the region to be flushed
      */
     public void flushGraphics(int x, int y, int width, int height) {
-        if (width < 1 || height < 1) {
-	        return;
-	    }
+        // check the region bounds 
+        int diff = 0;
+        if (x < 0) x = 0;
+        if (y < 0) y = 0;
+        
+        diff = x + width - owner.getWidth();
+        if (diff > 0) width -= diff;
 
+        diff = y + height - owner.getHeight();
+        if (diff > 0) height -= diff;
+        
+        if (width < 1 || height < 1) {
+            return;
+        }
+        
         DisplayAccess displayAccess = GameMap.getDisplayAccess(owner);
         if (displayAccess != null && offscreenBuffer != null) {
             displayAccess.flush(owner, offscreenBuffer,
-    			  x, y,	width, height);
+                                x, y,	width, height);
         }
     }
 

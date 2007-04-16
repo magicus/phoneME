@@ -478,7 +478,7 @@ public class BasicTextInputSession implements
     /**
      * Returns true if the keyCode is used as 'clear'
      * @param keyCode key code
-     * @return true if keu code is Clear one, false otherwise
+     * @return true if key code is Clear one, false otherwise
      */
     public boolean isClearKey(int keyCode) {
         return textComponent != null &&
@@ -492,6 +492,18 @@ public class BasicTextInputSession implements
      */
     public int getAvailableSize() {
         return textComponent != null ? textComponent.getAvailableSize() : 0;
+    }
+
+    /**
+     * Returns true if the keyCode is used as 'enter' (user types in \n)
+     * ('select' plays the role of 'enter' in some input modes).
+     *
+     * @param keyCode key code
+     * @return true if key code is the one for newline, false otherwise
+     */
+    public boolean isNewlineKey(int keyCode) {
+        return textComponent != null &&
+            textComponent.isNewlineKey(keyCode);
     }
 }
 

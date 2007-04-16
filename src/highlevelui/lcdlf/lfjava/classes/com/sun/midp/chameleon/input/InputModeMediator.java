@@ -67,7 +67,7 @@ public interface InputModeMediator {
     /**
      * Returns true if the keyCode is used as 'clear'
      * @param keyCode key code
-     * @return true if keu code is Clear one, false otherwise
+     * @return true if key code is Clear one, false otherwise
      */
     public boolean isClearKey(int keyCode);
 
@@ -76,5 +76,13 @@ public interface InputModeMediator {
      * stored in this <code>TextInputComponent</code>.
      * @return available size in characters
      */
-    public int getAvailableSize(); 
+    public int getAvailableSize();
+
+    /**
+     * Returns true if the keyCode is used as 'enter' (user types in \n)
+     * ('select' plays the role of 'enter' in some input modes).
+     * @param keyCode key code
+     * @return true if key code is the one for newline, false otherwise
+     */
+    public boolean isNewlineKey(int keyCode);
 }

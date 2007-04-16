@@ -115,7 +115,8 @@ public class DisplayEventListener implements EventListener {
             case EventTypes.KEY_EVENT:
                 if (nativeEvent.intParam1 == EventConstants.IME) {
                     dc.handleInputMethodEvent(nativeEvent.stringParam1);
-                } if (Logging.REPORT_LEVEL < Constants.LOG_DISABLED && 
+                }
+                if (Logging.REPORT_LEVEL < Constants.LOG_DISABLED &&
                       nativeEvent.intParam2 == EventConstants.DEBUG_TRACE1) {
                     // This is a special VM hook to print all stacks
                     if (nativeEvent.intParam1 == EventConstants.PRESSED) {

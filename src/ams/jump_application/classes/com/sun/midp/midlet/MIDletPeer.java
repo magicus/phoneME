@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -36,9 +34,9 @@ import com.sun.midp.security.SecurityToken;
 
 
 /**
- * MIDletPeer maintains the current state of the MIDlet and forwards updates
- * to it.  It contains a reference to the MIDlet itself.
- * Control methods (startApp, destroyApp,
+ * MIDletPeer forwards updates
+ * to a MIDlet. It contains references to the MIDlet itself and to its
+ * corresponding.  Control methods (startApp, destroyApp,
  * pauseApp) defined here are invoked on the MIDlet object via the
  * MIDletTunnel.
  * <p>
@@ -49,50 +47,9 @@ import com.sun.midp.security.SecurityToken;
  * of changes by waiting on the midletStateHandler.
  */
 
-public class MIDletPeer implements MIDletEventConsumer {
-    /*
-     * Implementation state; the states are in priority order.
-     * That is, a higher number indicates a preference to be
-     * selected for activating sooner.  This allows the MIDlet state handler
-     * to make one pass over the known MIDlets and pick the
-     * "best" MIDlet to activate.
-     */
-
-    /**
-     * State of the MIDlet is Paused; it should be quiescent
-     */
-    public static final int PAUSED = 0;
-
-    /**
-     * State of the MIDlet is Active
-     */
-    public static final int ACTIVE = 1;
-
-    /**
-     * State of the MIDlet when resumed by the AMS
-     */
-    static final int ACTIVE_PENDING = 2;
-
-    /**
-     * State of the MIDlet when paused by the AMS
-     */
-    static final int PAUSE_PENDING = 3;
-
-    /**
-     * State of the MIDlet with destroy pending
-     */
-    static final int DESTROY_PENDING = 4;
-
-    /**
-     * State of the MIDlet is Destroyed
-     */
-    public static final int DESTROYED = 5;
-
+public class MIDletPeer {
     /** The controller of MIDlets. */
     private static MIDletStateHandler midletStateHandler;
-
-    /** The call when a MIDlet's state changes. */
-    private static MIDletStateListener midletStateListener;
 
     /** Handles platform requests. */
     private static PlatformRequest platformRequest;
@@ -110,11 +67,9 @@ public class MIDletPeer implements MIDletEventConsumer {
      */
     static void initClass(
         MIDletStateHandler theMIDletStateHandler,
-        MIDletStateListener theMIDletStateListener,
         PlatformRequest thePlatformRequestHandler) {
 
         midletStateHandler = theMIDletStateHandler;
-        midletStateListener = theMIDletStateListener;
         platformRequest = thePlatformRequestHandler;
     }
 
@@ -144,12 +99,7 @@ public class MIDletPeer implements MIDletEventConsumer {
     }
 
     /**
-     * The applications current state.
-     */
-    private int state;
-
-    /**
-     * The MIDlet for which this is the state.
+     * The MIDlet for which this is the peer.
      */
     protected MIDlet midlet;
 
@@ -161,7 +111,6 @@ public class MIDletPeer implements MIDletEventConsumer {
      * newMidletState.
      */
     MIDletPeer() {
-        state = ACTIVE_PENDING;        // So it will be made active soon
     }
 
     /**
@@ -223,10 +172,7 @@ public class MIDletPeer implements MIDletEventConsumer {
      *
      */
     public final void notifyDestroyed() {
-        synchronized (midletStateHandler) {
-            state = DESTROYED;
-            midletStateHandler.notify();
-        }
+        midletStateHandler.midletDestroyed();
     }
 
     /**
@@ -244,23 +190,7 @@ public class MIDletPeer implements MIDletEventConsumer {
      * called to request it to destroy itself.
      */
     public final void notifyPaused() {
-        int oldState;
-
-        synchronized (midletStateHandler) {
-            oldState = state;
-
-            /*
-             * do not notify the midletStateHandler,
-             * since there is nothing to do
-             */
-            setStateWithoutNotify(PAUSED);
-        }
-
-        // do work after releasing the lock
-        if (oldState == ACTIVE) {
-            midletStateListener.midletPausedItself(getMIDletSuite(),
-                getMIDlet().getClass().getName());
-        }
+        midletStateHandler.midletPaused();
     }
 
     /**
@@ -287,8 +217,7 @@ public class MIDletPeer implements MIDletEventConsumer {
      * asynchronous events such as timers or callbacks.
      */
     public final void resumeRequest() {
-        midletStateListener.resumeRequest(getMIDletSuite(),
-            getMIDlet().getClass().getName());
+        midletStateHandler.resumeRequest();
     }
 
     /**
@@ -365,21 +294,6 @@ public class MIDletPeer implements MIDletEventConsumer {
     }
 
     /**
-     * Change the state and notify.
-     * Check to make sure the new state makes sense.
-     * Changes to the status are protected by the midletStateHandler.
-     * Any change to the state notifies the midletStateHandler.
-     *
-     * @param newState new state of the MIDlet
-     */
-    void setState(int newState) {
-        synchronized (midletStateHandler) {
-            setStateWithoutNotify(newState);
-            midletStateHandler.notify();
-        }
-    }
-
-    /**
      * Get the status of the specified permission.
      * If no API on the device defines the specific permission
      * requested then it must be reported as denied.
@@ -392,107 +306,5 @@ public class MIDletPeer implements MIDletEventConsumer {
      */
     public int checkPermission(String permission) {
         return getMIDletSuite().checkPermission(permission);
-    }
-
-    /**
-     * Change the state without notifying the MIDletStateHandler.
-     * Check to make sure the new state makes sense.
-     * <p>
-     * To be called only by the MIDletStateHandler or MIDletState while holding
-     * the lock on midletStateHandler.
-     *
-     * @param newState new state of the MIDlet
-     */
-    void setStateWithoutNotify(int newState) {
-        switch (state) {
-        case DESTROYED:
-            // can't set any thing else
-            return;
-
-        case DESTROY_PENDING:
-            if (newState != DESTROYED) {
-                // can only set DESTROYED
-                return;
-            }
-
-            break;
-
-        case PAUSED:
-            if (newState == PAUSE_PENDING) {
-                // already paused by app
-                return;
-            }
-
-            break;
-
-        case PAUSE_PENDING:
-            if (newState == ACTIVE_PENDING) {
-                /*
-                 * pausedApp has not been called so the state
-                 * can be set to active to cancel the pending pauseApp.
-                 */
-                state = ACTIVE;
-                return;
-            }
-
-            break;
-
-        case ACTIVE:
-            if (newState == ACTIVE_PENDING) {
-                // already active
-                return;
-            }
-
-            break;
-
-        case ACTIVE_PENDING:
-            if (newState == PAUSE_PENDING) {
-                /*
-                 * startApp has not been called so the state
-                 * can be set to paused to cancel the pending startApp.
-                 */
-                state = PAUSED;
-                return;
-            }
-
-            break;
-        }
-
-        state = newState;
-    }
-
-    /**
-     * Get the state.
-     *
-     * @return current state of the MIDlet.
-     */
-    int getState() {
-        synchronized (midletStateHandler) {
-            return state;
-        }
-    }
-
-    /**
-     * Pause a MIDlet.
-     * MIDletEventConsumer I/F method.
-     */
-    public void handleMIDletPauseEvent() {
-        setState(MIDletPeer.PAUSE_PENDING);
-    }
-
-    /**
-     * Activate a MIDlet.
-     * MIDletEventConsumer I/F method.
-     */
-    public void handleMIDletActivateEvent() {
-        setState(MIDletPeer.ACTIVE_PENDING);
-    }
-
-    /**
-     * Destroy a MIDlet.
-     * MIDletEventConsumer I/F method.
-     */
-    public void handleMIDletDestroyEvent() {
-        setState(MIDletPeer.DESTROY_PENDING);
     }
 }
