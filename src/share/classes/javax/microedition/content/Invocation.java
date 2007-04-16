@@ -30,7 +30,6 @@ import java.io.IOException;
 
 import javax.microedition.io.Connection;
 import javax.microedition.io.ConnectionNotFoundException;
-import javax.microedition.io.Connector;
 
 import com.sun.j2me.content.InvocationImpl;
 
@@ -644,10 +643,7 @@ public final class Invocation {
     public Connection open(boolean timeouts)
         throws IOException, SecurityException
     {
-	String url = getURL();
-	url.length();		// Throw NPE if null
-        Connection conn = Connector.open(url, Connector.READ, timeouts);
-        return conn;
+        return invocImpl.open(timeouts);
     }    
 
     /**

@@ -45,7 +45,6 @@ $(JSR_211_DIR)/src/share/classes$(PATHSEP)$(JSR_211_DIR)/src/jump_application/cl
 
 JSR_211_PACKAGES = \
    com.sun.j2me.content \
-   com.sun.midp.content \
    javax.microedition.content
 
 JAVADOC_ALL_SOURCEPATH += $(JSR_211_SOURCEPATH)
@@ -104,6 +103,7 @@ INTERNAL_JSR_211_JAVA_FILES := \
     $(INTERNAL_JSR_211_DIR)/javax/microedition/content/ResponseListener.java \
     $(INTERNAL_JSR_211_DIR)/javax/microedition/content/Registry.java \
     $(INTERNAL_JSR_211_DIR)/com/sun/j2me/content/ContentHandlerImpl.java \
+    $(INTERNAL_JSR_211_DIR)/com/sun/j2me/content/ContentReader.java \
     $(INTERNAL_JSR_211_DIR)/com/sun/j2me/content/RegistryImpl.java \
     $(INTERNAL_JSR_211_DIR)/com/sun/j2me/content/RequestListenerImpl.java \
     $(INTERNAL_JSR_211_DIR)/com/sun/j2me/content/ResponseListenerImpl.java \
@@ -112,43 +112,9 @@ INTERNAL_JSR_211_JAVA_FILES := \
     $(INTERNAL_JSR_211_JUMP_DIR)/com/sun/j2me/content/InvocationStore.java \
     $(INTERNAL_JSR_211_JUMP_DIR)/com/sun/j2me/content/AppProxy.java 
 
-#INTERNAL_JSR_211_CLASS_FILES := \
-#$(subst $(INTERNAL_JSR_211_DIR),$(MIDP_MAKE_DIR)/classes,\
-#$(INTERNAL_JSR_211_JAVA_FILES:java=class))
-
-INTERNAL_JSR_211_CLASS_FILES := \
-    $(MIDP_MAKE_DIR)/classes/javax/microedition/content/ContentHandlerServer.class \
-    $(MIDP_MAKE_DIR)/classes/javax/microedition/content/ContentHandlerException.class \
-    $(MIDP_MAKE_DIR)/classes/javax/microedition/content/ActionNameMap.class \
-    $(MIDP_MAKE_DIR)/classes/javax/microedition/content/ContentHandlerServerImpl.class \
-    $(MIDP_MAKE_DIR)/classes/javax/microedition/content/ContentHandler.class \
-    $(MIDP_MAKE_DIR)/classes/javax/microedition/content/Invocation.class \
-    $(MIDP_MAKE_DIR)/classes/javax/microedition/content/RequestListener.class \
-    $(MIDP_MAKE_DIR)/classes/javax/microedition/content/ResponseListener.class \
-    $(MIDP_MAKE_DIR)/classes/javax/microedition/content/Registry.class \
-    $(MIDP_MAKE_DIR)/classes/com/sun/j2me/content/ContentHandlerImpl.class \
-    $(MIDP_MAKE_DIR)/classes/com/sun/j2me/content/RegistryImpl.class \
-    $(MIDP_MAKE_DIR)/classes/com/sun/j2me/content/RequestListenerImpl.class \
-    $(MIDP_MAKE_DIR)/classes/com/sun/j2me/content/ResponseListenerImpl.class \
-    $(MIDP_MAKE_DIR)/classes/com/sun/j2me/content/InvocationImpl.class \
-    $(MIDP_MAKE_DIR)/classes/com/sun/j2me/content/RegistryStore.class \
-    $(MIDP_MAKE_DIR)/classes/com/sun/j2me/content/InvocationStore.class \
-    $(MIDP_MAKE_DIR)/classes/com/sun/j2me/content/AppProxy.class 
-
-
-
-$(INTERNAL_JSR_211_CLASS_FILES): $(MIDP_MAKE_DIR)/classes/%.class : \
-                                 $(INTERNAL_JSR_211_DIR)/%.java $(INTERNAL_JSR_211_JUMP_DIR)/%.java
-	@echo $< >> $(GENERATED_FILE_LIST)
-
-
-
 # All of them together to provide to main makefile
 #
-SUBSYSTEM_JSR_211_CLASS_FILES = $(INTERNAL_JSR_211_CLASS_FILES) 
 SUBSYSTEM_JSR_211_JAVA_FILES  = $(INTERNAL_JSR_211_JAVA_FILES) 
-
-SUBSYSTEM_JSR211_CNI_CLASSES  = $(INTERNAL_JSR_211_DIR)/com/sun/j2me/content/RegistryStore.java
 
 # Native files for the ( chapi ) subsystem
 #
@@ -192,8 +158,6 @@ chapi_source_bundle: JSR_211_DIR SOURCE_OUTPUT_DIR
 ##################################################################
 # JUMP required variables
 ##################################################################
-
-JSROP_CNI_CLASSES    += $(SUBSYSTEM_JSR211_CNI_CLASSES)
 
 SUBSYSTEM_JSR_211_INCLUDE_DIRS += \
     $(JSROP_ABSTRACTS_DIR)/include \

@@ -33,8 +33,6 @@ import javax.microedition.content.ContentHandlerException;
 import javax.microedition.content.Invocation;
 import javax.microedition.content.Registry;
 import javax.microedition.io.Connection;
-import javax.microedition.io.ConnectionNotFoundException;
-import javax.microedition.io.Connector;
 import javax.microedition.io.HttpConnection;
 
 
@@ -94,7 +92,7 @@ public final class InvocationImpl {
     String username;
 
     /** The password in case it is needed for authentication. */
-    String password;
+    char[] password;
 
     /** Transaction Identifier. */
     int tid;
@@ -618,8 +616,12 @@ public final class InvocationImpl {
     public Connection open(boolean timeouts)
         throws IOException
     {
-        Connection conn = Connector.open(getURL(), Connector.READ, timeouts);
-        return conn;
+        if (url == null) {
+            throw new NullPointerException();
+        }
+
+        ContentReader reader = new ContentReader(url, username, password);
+        return reader.open(timeouts);
     }
 
     /**
@@ -630,7 +632,7 @@ public final class InvocationImpl {
      */
     public void setCredentials(String username, char[] password) {
         this.username = username;
-        this.password = (password == null) ? null : new String(password);
+        this.password = password;
 
     }
 
@@ -701,75 +703,22 @@ public final class InvocationImpl {
         if (type != null) {
             return type;
         }
-        if (url == null) {
-            // No URL to examine, leave the type null
-            throw new ContentHandlerException(
-                                "URL is null",
-                                ContentHandlerException.TYPE_UNKNOWN);
+
+        if (url != null) {
+            ContentReader reader = new ContentReader(url, username, password);
+            String type = reader.findType();
+            if (type != null) {
+                this.type = type;
+                return type;
+            }
+        } else if (data.length > 0) {
+            // TODO: try to determine type by data signature
         }
 
-        // Open a connection to the content.
-        Connection conn = null;
-        int rc = 0;
-        try {
-            while (true) {
-                // Loop to enable redirects.
-                conn = Connector.open(url);
-                if (conn instanceof HttpConnection) {
-                    HttpConnection httpc = (HttpConnection)conn;
-                    httpc.setRequestMethod(HttpConnection.HEAD);
-
-                    // Get the response code
-                    rc = httpc.getResponseCode();
-                    if (rc == HttpConnection.HTTP_OK) {
-                        type = httpc.getType();
-                        if (type != null) {
-                            // Check for and remove any parameters (rfc2616)
-                            int ndx = type.indexOf(';');
-                            if (ndx >= 0) {
-                                type = type.substring(0, ndx);
-                            }
-                            type = type.trim();
-                        }
-                        if (type == null || type.length() == 0) {
-                            type = null;
-                            throw new ContentHandlerException(
-                                "unable to determine type",
+        throw new ContentHandlerException(
+                "Can not determine the content type",
                                 ContentHandlerException.TYPE_UNKNOWN);
-                        }
-                        break;
-                    } else if (rc == HttpConnection.HTTP_TEMP_REDIRECT ||
-                               rc == HttpConnection.HTTP_MOVED_TEMP ||
-                               rc == HttpConnection.HTTP_MOVED_PERM) {
-                        // Get the new location and close the connection
-                        url = httpc.getHeaderField("location");
-
-                        conn.close();
-                        conn = null;
-                        continue; // restart with the new url
-                    } else {
-                        throw new IOException("http status: " + rc);
-                    }
-                } else {
-                    // Not HTTP, this isn't going to work
-                    // TBD: Check suffixes
-                    throw new ContentHandlerException(
-                                "URL scheme not supported",
-                                ContentHandlerException.TYPE_UNKNOWN);
-                }
-            }
-
-        } finally {
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (Exception ex) {
-                }
-            }
-        }
-        return type;
     }
-
 
     /**
      * Returns the previous Invocation linked to this
