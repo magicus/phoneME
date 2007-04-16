@@ -155,10 +155,12 @@ public final class DirectTone extends DirectPlayer implements ToneControl {
             throw new IllegalStateException("cannot set seq after prefetched");
        
         if(sequence == null) throw new IllegalArgumentException("null sequence");
+        if (sequence.length == 0) throw new IllegalArgumentException("empty sequence");
 
         nFlushBuffer(hNative);
 
-        nBuffering(hNative, sequence, sequence.length);
+        if(-1 == nBuffering(hNative, sequence, sequence.length))
+            throw new IllegalArgumentException("invalid sequence");
         
         if(-1 == nBuffering(hNative, sequence, -1))
             throw new IllegalArgumentException("invalid sequence");
