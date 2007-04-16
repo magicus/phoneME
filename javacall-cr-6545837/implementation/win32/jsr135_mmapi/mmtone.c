@@ -34,7 +34,7 @@ typedef struct {
     javacall_int64  playerId;
     int     offset;             /* stopped offset */
     int     currentTime;        /* current playing time */
-    int*    pToneBuffer;        /* Pointer to tone data buffer */
+    char*    pToneBuffer;        /* Pointer to tone data buffer */
     /* Current tone data size that stored to tone buffer in bytes */
     int     toneDataSize;       
     javacall_bool isForeground; /* Is in foreground? */
@@ -75,7 +75,7 @@ static DWORD WINAPI tone_jts_player(void* pArg)
     tone_handle* pHandle = (tone_handle*)pArg;
     long duration, totalDuration = pHandle->currentTime;
     /* Tone data is integer array */
-    int* pTone = pHandle->pToneBuffer;
+    char* pTone = pHandle->pToneBuffer;
 
     /* Bytes to integer size */
     length = pHandle->toneDataSize / sizeof(int);
@@ -333,7 +333,7 @@ static long tone_get_time(javacall_handle handle)
 static long tone_set_time(javacall_handle handle, long ms)
 {
     tone_handle* pHandle = (tone_handle*)handle;
-    int* pTone = pHandle->pToneBuffer;
+    char* pTone = pHandle->pToneBuffer;
     int i;
     int note;
     int length;
