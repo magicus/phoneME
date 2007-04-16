@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include "incls/_precompiled.incl"
@@ -237,27 +237,27 @@ void SourceAssembler::ldr_big_integer(Register r, int x, Condition cond) {
 
 void SourceAssembler::start() {
   // header
-  comment("Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.");
+  comment("Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.");
   comment("DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER");
   comment("");
   comment("This program is free software; you can redistribute it and/or");
   comment("modify it under the terms of the GNU General Public License version");
-  comment("2 only, as published by the Free Software Foundation. ");
+  comment("2 only, as published by the Free Software Foundation.");
   comment("");
   comment("This program is distributed in the hope that it will be useful, but");
   comment("WITHOUT ANY WARRANTY; without even the implied warranty of");
   comment("MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU");
   comment("General Public License version 2 for more details (a copy is");
-  comment("included at /legal/license.txt). ");
+  comment("included at /legal/license.txt).");
   comment("");
   comment("You should have received a copy of the GNU General Public License");
   comment("version 2 along with this work; if not, write to the Free Software");
   comment("Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA");
-  comment("02110-1301 USA ");
+  comment("02110-1301 USA");
   comment("");
   comment("Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa");
   comment("Clara, CA 95054 or visit www.sun.com if you need additional");
-  comment("information or have any questions. ");
+  comment("information or have any questions.");
 
   // make sure people know that this file shouldn't be edited
   comment_section("Generated assembly file -- do *not* edit");

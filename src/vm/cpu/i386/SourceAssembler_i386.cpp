@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include "incls/_precompiled.incl"
@@ -46,27 +46,27 @@ void SourceAssembler::start() {
   _current_segment = NO_SEGMENT;
 
   // Emit the header.
-  emit_comment("Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.");
+  emit_comment("Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.");
   emit_comment("DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER");
   emit_comment("");
   emit_comment("This program is free software; you can redistribute it and/or");
   emit_comment("modify it under the terms of the GNU General Public License version");
-  emit_comment("2 only, as published by the Free Software Foundation. ");
+  emit_comment("2 only, as published by the Free Software Foundation.");
   emit_comment("");
   emit_comment("This program is distributed in the hope that it will be useful, but");
   emit_comment("WITHOUT ANY WARRANTY; without even the implied warranty of");
   emit_comment("MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU");
   emit_comment("General Public License version 2 for more details (a copy is");
-  emit_comment("included at /legal/license.txt). ");
+  emit_comment("included at /legal/license.txt).");
   emit_comment("");
   emit_comment("You should have received a copy of the GNU General Public License");
   emit_comment("version 2 along with this work; if not, write to the Free Software");
   emit_comment("Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA");
-  emit_comment("02110-1301 USA ");
+  emit_comment("02110-1301 USA");
   emit_comment("");
   emit_comment("Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa");
   emit_comment("Clara, CA 95054 or visit www.sun.com if you need additional");
-  emit_comment("information or have any questions. ");
+  emit_comment("information or have any questions.");
   emit("\n");
 
   if (GenerateInlineAsm)

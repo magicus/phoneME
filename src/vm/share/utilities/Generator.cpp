@@ -2,27 +2,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /*
@@ -302,27 +302,27 @@ void Generator::generate_oopmaps() {
     
     const char * header = 
       "/*\n"
-      " * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.\n"
+      " * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.\n"
       " * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER\n"
       " * \n"
       " * This program is free software; you can redistribute it and/or\n"
       " * modify it under the terms of the GNU General Public License version\n"
-      " * 2 only, as published by the Free Software Foundation. \n"
+      " * 2 only, as published by the Free Software Foundation.\n"
       " * \n"
       " * This program is distributed in the hope that it will be useful, but\n"
       " * WITHOUT ANY WARRANTY; without even the implied warranty of\n"
       " * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU\n"
       " * General Public License version 2 for more details (a copy is\n"
-      " * included at /legal/license.txt). \n"
+      " * included at /legal/license.txt).\n"
       " * \n"
       " * You should have received a copy of the GNU General Public License\n"
       " * version 2 along with this work; if not, write to the Free Software\n"
       " * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA\n"
-      " * 02110-1301 USA \n"
+      " * 02110-1301 USA\n"
       " * \n"
       " * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa\n"
       " * Clara, CA 95054 or visit www.sun.com if you need additional\n"
-      " * information or have any questions. \n"
+      " * information or have any questions.\n"
       " */\n"
       "\n"
       "/* This file is auto-generated. Do not edit */\n"
