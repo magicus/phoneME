@@ -863,7 +863,6 @@ jumpMessageGetString(JUMPMessageReader* r)
 JUMPPlatformCString*
 jumpMessageGetStringArray(JUMPMessageReader* r, uint32* lengthPtr)
 {
-    /* FIXME: create string array freeing routine */
     uint32 length;
     uint32 i;
     JUMPPlatformCString* strs;
@@ -900,17 +899,32 @@ jumpMessageGetStringArray(JUMPMessageReader* r, uint32* lengthPtr)
     for (i = 0; i < length; i++) {
 	strs[i] = jumpMessageGetString(r);
 	if (r->status != JUMP_SUCCESS) {
-	    int j;
-	    for (j = 0; j < i; j++) {
-		free(strs[j]);
-	    }
-	    free(strs);
+	    jumpMessageFreeStringArray(strs, i);
 	    return NULL;
 	}
     }
     
     return strs;
 }
+
+void
+jumpMessageFreeStringArray(JUMPPlatformCString* p, uint32 length)
+{
+    uint32 i;
+
+    /* jumpMessageGetStringArray() may validly return NULL, so
+       accept it here. */
+
+    if (p == NULL) {
+	return;
+    }
+
+    for (i = 0; i < length; i++) {
+	free(p[i]);
+    }
+    free(p);
+}
+
 
 JUMPPlatformCString
 jumpMessageGetType(JUMPMessage m)
