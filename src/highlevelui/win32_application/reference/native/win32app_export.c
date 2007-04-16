@@ -556,8 +556,13 @@ static jint mapKey(WPARAM wParam, LPARAM lParam) {
         return KEYMAP_KEY_BACKSPACE;
 
     case VK_HOME:
+    case VK_F7:
         return KEYMAP_MD_KEY_HOME;
     
+    case VK_END:
+    case VK_F8:
+        return KEYMAP_KEY_END;
+
     default:
         break;
     }

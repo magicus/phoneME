@@ -124,6 +124,7 @@ int mapKey(QKeyEvent *key) {
 
     // The cancel key
     case Qt::Key_Escape:
+    case Qt::Key_F8:
          unicode = KEYMAP_KEY_END;
          break;
 
