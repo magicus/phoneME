@@ -34,12 +34,17 @@ export JAVA_HOME	= $(JDK_HOME)
 
 #JUMP's binary bundle pattern file name
 BINARYBUNDLE_PATTERN_FILENAME=.binary-pattern
+
 JUMP_ANT_OPTIONS += -Ddist.dir=$(call POSIX2HOST,$(CVM_JUMP_BUILDDIR)) 	\
 		    -Dcdc.dir=$(call POSIX2HOST,$(CDC_DIST_DIR)) \
 		    -Dbinary.pattern.file=$(BINARYBUNDLE_PATTERN_FILENAME)  
 
 ifeq ($(USE_MIDP), true)
 JUMP_ANT_OPTIONS         += -Dmidp_output_dir=$(subst $(CDC_DIST_DIR)/,,$(MIDP_OUTPUT_DIR))
+endif
+
+ifneq ($(JUMP_BUILD_PROPS_FILE),undefined)
+JUMP_ANT_OPTIONS += -Duser.build.properties=$(JUMP_BUILD_PROPS_FILE) 
 endif
 
 # The default JUMP component location
