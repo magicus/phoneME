@@ -31,8 +31,8 @@ import com.sun.jump.module.JUMPModule;
 import java.util.Map;
 
 /**
- * <code>JUMPFileSystemModuleFactory</code> is a factory for 
- * <code>JUMPFileSystemModule</code>.
+ * <code>FileSystemModuleFactoryImpl</code> is a factory for 
+ * <code>FileSystemModuleImpl</code>.
  */
 public class FileSystemModuleFactoryImpl extends JUMPModuleFactory {
     /** The only instance of FileSystem module. */
