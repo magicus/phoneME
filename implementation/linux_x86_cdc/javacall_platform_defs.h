@@ -74,6 +74,12 @@ typedef char* javacall_filename_string;
 typedef const char* javacall_const_filename_string;
 
 /**
+ * @def JAVACALL_MAX_EVENT_SIZE
+ * Maximal length of event data
+ */
+#define JAVACALL_MAX_EVENT_SIZE        256
+
+/**
  * @def JAVACALL_MAX_FILE_NAME_LENGTH
  * Maximal length of filename supported 
  */
@@ -89,7 +95,7 @@ typedef const char* javacall_const_filename_string;
  * @def JAVACALL_MAX_ROOTS_LIST_LENGTH
  * Maximal length of a list of file system roots
  */
-#define JAVACALL_MAX_ROOTS_LIST_LENGTH  1024
+#define JAVACALL_MAX_ROOTS_LIST_LENGTH  8192
 
 /**
  * @def JAVACALL_MAX_ROOT_PATH_LENGTH
@@ -101,7 +107,7 @@ typedef const char* javacall_const_filename_string;
  * @def JAVACALL_MAX_LOCALIZED_ROOTS_LIST_LENGTH
  * Maximal length of a list of localized names of file system roots
  */
-#define JAVACALL_MAX_LOCALIZED_ROOTS_LIST_LENGTH  1024
+#define JAVACALL_MAX_LOCALIZED_ROOTS_LIST_LENGTH  8192
 
 /**
  * @def JAVACALL_MAX_LOCALIZED_DIR_NAME_LENGTH
