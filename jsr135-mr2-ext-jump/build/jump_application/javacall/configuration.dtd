@@ -1,0 +1,34 @@
+<!--
+        	
+        Copyright 1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+-->
+<!ELEMENT configuration (properties | constants)+>
+<!ELEMENT properties (property)+>
+<!ELEMENT property EMPTY>
+<!-- If callout is specified, it must be a defined native function -->
+<!--  with the signature: char* foo(void) -->
+<!ATTLIST property
+        Key      CDATA                          #REQUIRED
+        Value    CDATA                          #REQUIRED
+        Scope    (system | internal)            "internal"
+        Callout  CDATA                          #IMPLIED
+        Comment  CDATA                          #IMPLIED
+>
+<!ELEMENT constants (constant_class)+>
+<!ELEMENT constant_class (constant)+>
+<!ATTLIST constant_class
+    Package  CDATA                          #REQUIRED
+    Name     CDATA                          #REQUIRED
+    Scope    (protected | public)           "public"
+    Comment  CDATA                          #IMPLIED
+>
+
+<!ELEMENT constant EMPTY>
+<!ATTLIST constant
+    Type     (int | String | boolean)       #IMPLIED
+    Name     CDATA                          #REQUIRED
+    Value    CDATA                          #REQUIRED
+    VScope   (protected | public | private) #REQUIRED
+    Comment  CDATA                          #IMPLIED
+>
