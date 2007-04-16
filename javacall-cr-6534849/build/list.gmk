@@ -30,6 +30,7 @@
          
 #JSR folders for source and include files
 MIDP_JC_DIR=midp
+JUMP_JC_DIR=jump
 JSR_120_JC_DIR=jsr120_wma
 JSR_135_JC_DIR=jsr135_mmapi
 JSR_177_JC_DIR=jsr177_satsa
