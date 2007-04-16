@@ -679,7 +679,7 @@ oneString(JUMPMessage m)
     
     jumpMessageReaderInit(&r, m);
     strings = jumpMessageGetStringArray(&r, &len);
-    bufSzie = 1; /* for the string null terminator */
+    bufSize = 1; /* for the string null terminator */
     if (strings != NULL) {
         /* first figure out the size of the buffer we need to allocate */
         for (i = 0; i < len; i++) {
