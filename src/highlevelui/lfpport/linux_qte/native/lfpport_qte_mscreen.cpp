@@ -276,9 +276,9 @@ void PlatformMScreen::keyPressEvent(QKeyEvent *key)
 {
     key_press_count += 1;
 #if ENABLE_MULTIPLE_ISOLATES
-    if (key->key() == Qt::Key_F12 ||
+    if (key->key() == Qt::Key_F7 ||
         key->key() == Qt::Key_Home) {
-        // F12 to display the foreground selector
+        // F7 to display the foreground selector
         if (!key->isAutoRepeat()) {
             MidpEvent evt;
             MIDP_EVENT_INITIALIZE(evt);
@@ -300,8 +300,9 @@ void PlatformMScreen::keyPressEvent(QKeyEvent *key)
         }
     }
 #else
-    // F12 pause or activate all Java apps
-    if ((key->key() == Qt::Key_F12 || key->key() == Qt::Key_Home) &&
+    // F7 pause or activate all Java apps
+    if ((key->key() == Qt::Key_F7 ||
+         key->key() == Qt::Key_Home) &&
         !key->isAutoRepeat()) {
         pauseAll();
     }
