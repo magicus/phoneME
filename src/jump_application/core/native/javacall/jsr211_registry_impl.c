@@ -28,6 +28,9 @@
  * @file
  * @brief Content Handler Registry implementation based on javacall.
  */
+
+#ifdef ENABLE_JSR211_REGISTRY_IMPL
+
 #include "jsr211_registry.h"
 #include "jsr211_invoc.h"
 #include "javacall_chapi.h"
@@ -719,3 +722,4 @@ javacall_result javautil_chapi_appendString(
     return JAVACALL_OK;
 }
 
+#endif ENABLE_JSR211_REGISTRY_IMPL
