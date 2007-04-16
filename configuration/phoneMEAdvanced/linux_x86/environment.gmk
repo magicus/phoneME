@@ -35,7 +35,7 @@
 
 JSR_LIST = JSR_135 JSR_177 JSR_211
 
-USE_MIDP=false
+USE_MIDP=true
 
 JSR_135_JC_IMPL_PATH ?= $(JAVACALL_DIR)/implementation/linux_x86_cdc
 

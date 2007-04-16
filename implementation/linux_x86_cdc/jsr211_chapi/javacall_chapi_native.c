@@ -28,11 +28,11 @@
  * @brief Content Handler Registry implementation based on POSIX file calls.
  */
 
-#include "javacall_chapi_native.h"
+#include "inc/javacall_chapi_native.h"
 #include "javacall_chapi_callbacks.h"
 
-#include "javacall_registry.h"
-#include "javacall_invoke.h"
+#include "inc/javacall_registry.h"
+#include "inc/javacall_invoke.h"
 
 #include <string.h>
 #include <stdlib.h>

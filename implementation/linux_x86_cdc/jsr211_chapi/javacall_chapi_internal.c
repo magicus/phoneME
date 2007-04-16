@@ -36,13 +36,14 @@
 //#include <stdio.h>
 #include <string.h>
 #include <wchar.h>
-#include <process.h>
+#include <sys/io.h>
 #include <fcntl.h>
-#include <io.h>
+
 
 
 #include "javacall_chapi.h"
-#include "javacall_chapi_native.h"
+#include "inc/javacall_chapi_native.h"
+#include "javacall_chapi_callbacks.h"
 
 
 /* Attention! Win32 specific implementation! */
@@ -113,32 +114,6 @@ typedef struct {
     flag = -1
 
 
-/**
- * Tests if the string is not identical to any of ones included in array.
- * Caution! Internal structure fields used.
- */
-static javacall_bool isUniqueString(const javacall_utf16 *str, int sz,
-            javacall_bool caseSens, javacall_chapi_result_str_array array) {
-    javacall_utf16 *ptr = array->buf;
-    javacall_utf16 *end;
-    int z;
-
-    if (ptr != NULL && array->used > 0) {
-        end = ptr + array->used;
-        ptr++;
-        while (ptr < end) {
-            z = *ptr++;
-            if (z == sz && 
-                ((caseSens == JAVACALL_TRUE && CHAPI_ISEQUAL(str, ptr, z)) ||
-                (caseSens == JAVACALL_FALSE && CHAPI_ISEQUAL_I(str, ptr, z)))) {
-                return JAVACALL_FALSE;
-            }
-            ptr += z;
-        }
-    }
-
-    return JAVACALL_TRUE;
-}
 
 /**
  * Reads integer value at given position.
@@ -444,8 +419,8 @@ static javacall_result nextAccessedHandler(REG* reg,
  * Opens registry file and initialize REG structure.
  */
 static javacall_result regOpen(REG* reg, javacall_bool readOnly) {
-    int ioFlag = (readOnly == JAVACALL_TRUE? _O_RDONLY:
-                              _O_RDWR | _O_CREAT);
+    int ioFlag = (readOnly == JAVACALL_TRUE? O_RDONLY:
+                              O_RDWR | O_CREAT);
     reg->file = INVALID_HANDLE;
     regClose(reg); // clean up
 
@@ -453,7 +428,7 @@ static javacall_result regOpen(REG* reg, javacall_bool readOnly) {
         return JAVACALL_FAIL;   // javacall_chapi_initialize() not called.
     }
 
-	reg->file = _open(regFilePath,ioFlag);
+	reg->file = open(regFilePath,ioFlag);
 	if (!reg->file) {
 		if (readOnly == JAVACALL_TRUE){
 			reg->file = INVALID_HANDLE;
@@ -489,9 +464,9 @@ static javacall_result removeHandler(REG* reg) {
                 break;
             }
         }
-        if (0 > _lseek(reg->file, reg->cur, SEEK_SET)
+        if (0 > lseek(reg->file, reg->cur, SEEK_SET)
          || reg->hsize != _read(reg->file, buf, reg->hsize)
-         || 0 > _lseek(reg->file, cur, SEEK_SET)
+         || 0 > lseek(reg->file, cur, SEEK_SET)
          || reg->hsize != _write(reg->file, buf, reg->hsize)) {
             status = JAVACALL_IO_ERROR;
             break;
@@ -611,7 +586,7 @@ javacall_result javacall_chapi_register_handler(
     do {
         // Set file position at end and write fake REG records.
         off = 0;
-        if (0 > _lseek(reg.file, 0, SEEK_END) ||
+        if (0 > lseek(reg.file, 0, SEEK_END) ||
             sizeof(int) != _write(reg.file, (void*)&off, sizeof(int)) ||
             sizeof(reg.offs) != _write(reg.file, (void*)&(reg.offs), sizeof(reg.offs))) {
             status = JAVACALL_IO_ERROR;
@@ -642,9 +617,9 @@ javacall_result javacall_chapi_register_handler(
         _WRITE_CH_ARRAY(accesses, nAccesses, JAVACALL_CHAPI_FIELD_ACCESSES);
 
         // actual records of the handler concerned REG data
-        if (_lseek(reg.file, -off, SEEK_CUR) < 0 ||
+        if (lseek(reg.file, -off, SEEK_CUR) < 0 ||
             sizeof(int) != _write(reg.file, (void*)&(off), sizeof(int)) ||
-            sizeof(reg.offs) != _write(reg.file, (void*)&(reg.offs), sizeof(reg.offs))) {
+            sizeof(reg.offs) != write(reg.file, (void*)&(reg.offs), sizeof(reg.offs))) {
             status = JAVACALL_IO_ERROR;
             break;
         }
