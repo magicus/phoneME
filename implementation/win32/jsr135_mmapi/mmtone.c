@@ -34,7 +34,7 @@ typedef struct {
     javacall_int64  playerId;
     int     offset;             /* stopped offset */
     int     currentTime;        /* current playing time */
-    int*    pToneBuffer;        /* Pointer to tone data buffer */
+    char*    pToneBuffer;        /* Pointer to tone data buffer */
     /* Current tone data size that stored to tone buffer in bytes */
     int     toneDataSize;       
     javacall_bool isForeground; /* Is in foreground? */
@@ -70,17 +70,12 @@ static DWORD WINAPI tone_jts_player(void* pArg)
     static long volume = 100;   /* to reserve last volume */
 
     int i;
-    int length;
     long note;
     tone_handle* pHandle = (tone_handle*)pArg;
     long duration, totalDuration = pHandle->currentTime;
-    /* Tone data is integer array */
-    int* pTone = pHandle->pToneBuffer;
+    char* pTone = pHandle->pToneBuffer;
 
-    /* Bytes to integer size */
-    length = pHandle->toneDataSize / sizeof(int);
-    
-    for(i = pHandle->offset; i < length; i += 2) {
+    for(i = pHandle->offset; i < pHandle->toneDataSize; i += 2) {
         /* JTS playing stopped by external force */
         if (JAVACALL_TRUE == pHandle->stopPlaying) {
             /* Store stopped offset to start from stopped position later */
@@ -333,10 +328,9 @@ static long tone_get_time(javacall_handle handle)
 static long tone_set_time(javacall_handle handle, long ms)
 {
     tone_handle* pHandle = (tone_handle*)handle;
-    int* pTone = pHandle->pToneBuffer;
+    char* pTone = pHandle->pToneBuffer;
     int i;
     int note;
-    int length;
     int totalDuration = 0;
     javacall_bool needRestart = JAVACALL_FALSE;
 
@@ -351,10 +345,9 @@ static long tone_set_time(javacall_handle handle, long ms)
         needRestart = JAVACALL_TRUE;
     }
     
-    length = pHandle->toneDataSize / sizeof(int); /* convert to int size */
     pHandle->offset = 0;    /* init to zero */
 
-    for(i = 0; i < length; i += 2) {
+    for(i = 0; i < pHandle->toneDataSize; i += 2) {
         note = pTone[i];
         switch(note) {
         case JAVACALL_SET_VOLUME:
