@@ -172,74 +172,36 @@ public class DefaultConfiguration extends Configuration {
         if (protocol == null) {
 			if( nIsAmrSupported() )
 			{
-				if( nIsJtsSupported() )
-				{
-					return new String[]{
-						MIME_AUDIO_TONE,
-						MIME_AUDIO_AMR,
-						MIME_AUDIO_MIDI,
-						MIME_AUDIO_MIDI_2,
-						MIME_AUDIO_SP_MIDI,
-						MIME_AUDIO_WAV,
-						MIME_AUDIO_WAV_2,
-						MIME_IMAGE_GIF
-					};
-				}
-				else
-				{
-					return new String[]{
-						MIME_AUDIO_AMR,
-						MIME_AUDIO_MIDI,
-						MIME_AUDIO_MIDI_2,
-						MIME_AUDIO_SP_MIDI,
-						MIME_AUDIO_WAV,
-						MIME_AUDIO_WAV_2,
-						MIME_IMAGE_GIF
-					};
-				}
+				return new String[]{
+					MIME_AUDIO_TONE,
+					MIME_AUDIO_AMR,
+					MIME_AUDIO_MIDI,
+					MIME_AUDIO_MIDI_2,
+					MIME_AUDIO_SP_MIDI,
+					MIME_AUDIO_WAV,
+					MIME_AUDIO_WAV_2,
+					MIME_IMAGE_GIF
+				};
 			}
 			else
 			{
-				if( nIsJtsSupported() )
-				{
-					return new String[]{
-						MIME_AUDIO_TONE,
-						MIME_AUDIO_MIDI,
-						MIME_AUDIO_MIDI_2,
-						MIME_AUDIO_SP_MIDI,
-						MIME_AUDIO_WAV,
-						MIME_AUDIO_WAV_2,
-						MIME_IMAGE_GIF
-						};
-				}
-				else
-				{
-					return new String[]{
-						MIME_AUDIO_MIDI,
-						MIME_AUDIO_MIDI_2,
-						MIME_AUDIO_SP_MIDI,
-						MIME_AUDIO_WAV,
-						MIME_AUDIO_WAV_2,
-						MIME_IMAGE_GIF
-						};
-				}
+				return new String[]{
+					MIME_AUDIO_TONE,
+					MIME_AUDIO_MIDI,
+					MIME_AUDIO_MIDI_2,
+					MIME_AUDIO_SP_MIDI,
+					MIME_AUDIO_WAV,
+					MIME_AUDIO_WAV_2,
+					MIME_IMAGE_GIF
+					};
 			}
         }
 
         if (protocol.equals("device")) {
-			if( nIsJtsSupported() )
-			{
-				return new String[]{
-					MIME_AUDIO_TONE,
-					MIME_AUDIO_MIDI
-				};
-			}
-			else
-			{
-				return new String[]{
-					MIME_AUDIO_MIDI
-				};
-			}
+			return new String[]{
+				MIME_AUDIO_TONE,
+				MIME_AUDIO_MIDI
+			};
         }
 
         if (protocol.equals("http")) {
