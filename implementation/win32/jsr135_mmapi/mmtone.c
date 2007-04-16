@@ -331,7 +331,6 @@ static long tone_set_time(javacall_handle handle, long ms)
     char* pTone = pHandle->pToneBuffer;
     int i;
     int note;
-    int length;
     int totalDuration = 0;
     javacall_bool needRestart = JAVACALL_FALSE;
 
@@ -346,10 +345,9 @@ static long tone_set_time(javacall_handle handle, long ms)
         needRestart = JAVACALL_TRUE;
     }
     
-    length = pHandle->toneDataSize / sizeof(int); /* convert to int size */
     pHandle->offset = 0;    /* init to zero */
 
-    for(i = 0; i < length; i += 2) {
+    for(i = 0; i < pHandle->toneDataSize; i += 2) {
         note = pTone[i];
         switch(note) {
         case JAVACALL_SET_VOLUME:
