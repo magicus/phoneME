@@ -31,7 +31,7 @@ printconfig::
 	@echo "JUMP_DIR           = $(JUMP_DIR)"
 
 .PHONY: jumptargets force_jump_build
-jumptargets: force_jump_build $(CVM_BINDIR)/runjump
+jumptargets: force_jump_build $(CVM_BINDIR)/runjump $(CVM_BINDIR)/autotest $(CVM_BINDIR)/runinstall 
 
 $(CVM_BUILD_DEFS_MK)::
 	$(AT) echo updating $@ [from rules_jump.mk]
@@ -60,6 +60,10 @@ ifneq ($(CVM_PRELOAD_LIB), true)
 else
 	$(AT)cp $^ $@
 endif
+	$(AT)chmod 755 $@
+
+$(CVM_BINDIR)/%: $(JUMP_SCRIPTS_DIR)/%
+	$(AT)cp $^ $@
 	$(AT)chmod 755 $@
 
 .PHONY: javadoc-api
