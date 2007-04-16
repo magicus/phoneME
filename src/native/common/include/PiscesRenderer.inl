@@ -96,7 +96,6 @@
     }
 
 static INLINE Renderer* renderer_create(Surface* surface);
-static INLINE void renderer_connectSurface(Renderer * rdr, Surface* surface);
 static INLINE void renderer_dispose(Renderer* rdr);
 
 static INLINE void renderer_beginRendering1(Renderer* rdr, jint windingRule);
@@ -231,12 +230,6 @@ static void updatePaintDependedRoutines(Renderer* rdr);
 static INLINE Renderer* 
 renderer_create(Surface* surface) {
     return createCommon(surface);
-}
-
-static INLINE void
-renderer_connectSurface(Renderer * rdr, Surface * surface) {
-    rdr->_surface = surface;
-    rdr->_rendererState = INVALID_ALL;
 }
 
 static INLINE void

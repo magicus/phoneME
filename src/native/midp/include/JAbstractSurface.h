@@ -37,8 +37,6 @@ typedef struct _AbstractSurface {
 }
 AbstractSurface;
 
-#ifdef PISCES_JAVA_SURFACE_SUPPORT
-
 #define ACQUIRE_SURFACE(surface, surfaceHandle)                              \
         SNI_BEGIN_RAW_POINTERS;                                              \
         ((AbstractSurface*)(surface))->acquire((AbstractSurface*)(surface),  \
@@ -47,14 +45,6 @@ AbstractSurface;
 // no need to call release from RELEASE_SURFACE on MIDP
 #define RELEASE_SURFACE(surface, surfaceHandle)                              \
         SNI_END_RAW_POINTERS;
-
-#else // PISCES_JAVA_SURFACE_SUPPORT
-
-#define ACQUIRE_SURFACE(surface, surfaceHandle) ;
-
-#define RELEASE_SURFACE(surface, surfaceHandle) ;
-
-#endif // PISCES_JAVA_SURFACE_SUPPORT
 
 AbstractSurface* surface_get(jobject surfaceHandle);
 jboolean surface_initialize(jobject surfaceHandle);

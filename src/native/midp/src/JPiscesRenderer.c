@@ -48,22 +48,10 @@
 #define CMD_CURVE_TO 3
 #define CMD_CLOSE 4
 
-// SURFACE_FROM_RENDERER is needed only when the java surface support is enabled
-#ifdef PISCES_JAVA_SURFACE_SUPPORT
-
 #define SURFACE_FROM_RENDERER(surface, surfaceHandle, rendererHandle)     \
         KNI_GetObjectField((rendererHandle), fieldIds[RENDERER_SURFACE],  \
                            (surfaceHandle));                              \
         (surface) = &surface_get((surfaceHandle))->super;
-
-#else // PISCES_JAVA_SURFACE_SUPPORT
-
-#define SURFACE_FROM_RENDERER(surface, surfaceHandle, rendererHandle) \
-    (void)(surface); \
-    (void)(surfaceHandle);
-
-#endif // PISCES_JAVA_SURFACE_SUPPORT
-
 
 static jfieldID fieldIds[RENDERER_LAST + 1];
 static jboolean fieldIdsInitialized = KNI_FALSE;
@@ -106,51 +94,15 @@ Java_com_sun_pisces_PiscesRenderer_initialize() {
                            surfaceHandle);
         surface = &surface_get(surfaceHandle)->super;
 
-        ACQUIRE_SURFACE(surface, surfaceHandle);
+/*
+ *      ACQUIRE_SURFACE(surface, surfaceHandle);
+ */ 
         rdr = renderer_create(surface);
         KNI_SetLongField(objectHandle, fieldIds[RENDERER_NATIVE_PTR],
                          PointerToJLong(rdr));
-        RELEASE_SURFACE(surface, surfaceHandle);
-
-        //    KNI_registerCleanup(objectHandle, disposeNativeImpl);
-
-        if (KNI_TRUE == readAndClearMemErrorFlag()) {
-            KNI_ThrowNew("java/lang/OutOfMemoryError",
-                         "Allocation of internal renderer buffer failed.");
-        }
-
-    } else {
-        KNI_ThrowNew("java/lang/IllegalStateException", "");
-    }
-
-    // don't do anything here (see the throw above)!
-
-    KNI_EndHandles();
-    KNI_ReturnVoid();
-}
-
-KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_PiscesRenderer_connect() {
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(objectHandle);
-    KNI_DeclareHandle(surfaceHandle);
-
-    Renderer* rdr;
-    Surface* surface;
-
-    KNI_GetThisPointer(objectHandle);
-
-    if (initializeRendererFieldIds(objectHandle)) {
-        KNI_GetObjectField(objectHandle, fieldIds[RENDERER_SURFACE], 
-                           surfaceHandle);
-        surface = &surface_get(surfaceHandle)->super;
-
-        ACQUIRE_SURFACE(surface, surfaceHandle);
-        rdr = (Renderer *) KNI_GetLongField(objectHandle, fieldIds[RENDERER_NATIVE_PTR]);
-        if(rdr != NULL)
-            renderer_connectSurface(rdr, surface);
-            
-        RELEASE_SURFACE(surface, surfaceHandle);
+/*
+ *      RELEASE_SURFACE(surface, surfaceHandle);
+ */ 
 
         //    KNI_registerCleanup(objectHandle, disposeNativeImpl);
 
@@ -189,8 +141,9 @@ Java_com_sun_pisces_PiscesRenderer_nativeFinalize() {
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_PiscesRenderer_beginRendering__IIIII() {
-    KNI_StartHandles(1);
+    KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);
+    KNI_DeclareHandle(surfaceHandle);
 
     jint minX = KNI_GetParameterAsInt(1);
     jint minY = KNI_GetParameterAsInt(2);
@@ -199,12 +152,17 @@ Java_com_sun_pisces_PiscesRenderer_beginRendering__IIIII() {
     jint windingRule = KNI_GetParameterAsInt(5);
 
     Renderer* rdr;
+    Surface* surface;
 
     KNI_GetThisPointer(objectHandle);
     rdr = (Renderer*)JLongToPointer(KNI_GetLongField(objectHandle,
                                     fieldIds[RENDERER_NATIVE_PTR]));
 
+    SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
+    ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_beginRendering5(rdr, minX, minY, width, height, windingRule);
+    RELEASE_SURFACE(surface, surfaceHandle);
 
     if (KNI_TRUE == readAndClearMemErrorFlag()) {
         KNI_ThrowNew("java/lang/OutOfMemoryError",
@@ -217,18 +175,24 @@ Java_com_sun_pisces_PiscesRenderer_beginRendering__IIIII() {
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_PiscesRenderer_beginRendering__I() {
-    KNI_StartHandles(1);
+    KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);
+    KNI_DeclareHandle(surfaceHandle);
 
     jint windingRule = KNI_GetParameterAsInt(1);
 
     Renderer* rdr;
+    Surface* surface;
 
     KNI_GetThisPointer(objectHandle);
     rdr = (Renderer*)JLongToPointer(KNI_GetLongField(objectHandle,
                                     fieldIds[RENDERER_NATIVE_PTR]));
 
+    SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
+    ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_beginRendering1(rdr, windingRule);
+    RELEASE_SURFACE(surface, surfaceHandle);
 
     if (KNI_TRUE == readAndClearMemErrorFlag()) {
         KNI_ThrowNew("java/lang/OutOfMemoryError",
@@ -254,9 +218,8 @@ Java_com_sun_pisces_PiscesRenderer_endRendering() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
-
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_endRendering(rdr);
-
     RELEASE_SURFACE(surface, surfaceHandle);
 
     if (KNI_TRUE == readAndClearMemErrorFlag()) {
@@ -948,6 +911,7 @@ Java_com_sun_pisces_PiscesRenderer_clearRect() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_clearRect(rdr, x, y, w, h);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -980,6 +944,7 @@ Java_com_sun_pisces_PiscesRenderer_drawLine() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_drawLine(rdr, x0, y0, x1, y1);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -1012,6 +977,7 @@ Java_com_sun_pisces_PiscesRenderer_drawRect() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_drawRect(rdr, x, y, w, h);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -1044,6 +1010,7 @@ Java_com_sun_pisces_PiscesRenderer_fillRect() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_fillRect(rdr, x, y, w, h);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -1076,6 +1043,7 @@ Java_com_sun_pisces_PiscesRenderer_drawOval() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_drawOval(rdr, x, y, w, h);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -1108,6 +1076,7 @@ Java_com_sun_pisces_PiscesRenderer_fillOval() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_fillOval(rdr, x, y, w, h);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -1142,6 +1111,7 @@ Java_com_sun_pisces_PiscesRenderer_drawRoundRect() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_drawRoundRect(rdr, x, y, w, h, aw, ah);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -1176,6 +1146,7 @@ Java_com_sun_pisces_PiscesRenderer_fillRoundRect() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_fillRoundRect(rdr, x, y, w, h, aw, ah);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -1211,6 +1182,7 @@ Java_com_sun_pisces_PiscesRenderer_drawArc() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_drawArc(rdr, x, y, width, height, startAngle, arcAngle, arcType);
     RELEASE_SURFACE(surface, surfaceHandle);
 
@@ -1246,6 +1218,7 @@ Java_com_sun_pisces_PiscesRenderer_fillArc() {
 
     SURFACE_FROM_RENDERER(surface, surfaceHandle, objectHandle);
     ACQUIRE_SURFACE(surface, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_fillArc(rdr, x, y, width, height, startAngle, arcAngle, arcType);
     RELEASE_SURFACE(surface, surfaceHandle);
 

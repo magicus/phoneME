@@ -29,32 +29,34 @@ package com.sun.pisces;
 import javax.microedition.lcdui.Graphics;
 
 public final class GraphicsSurface extends AbstractSurface {
+    private Graphics g;
 
-    public GraphicsSurface(Graphics g) {
-        this(g, 0, 0);
+    public GraphicsSurface() {
+        initialize();
     }
     
-    public GraphicsSurface(Graphics g, int x, int y) {
-        initialize(g, x, y, TYPE_USHORT_565_RGB);
+    public void bindTarget(Graphics g) {
+        this.g = g;
     }
-
-    private native void initialize(Graphics g, int x, int y, int dataType);
+    
+    public void releaseTarget() {
+        this.g = null;
+    }
         
     public SurfaceDestination createSurfaceDestination() {
-        System.out.println("createSurfaceDestination -- not implemented!");
-        throw new RuntimeException("createSurfaceDestination -- not implemented");
+        throw new RuntimeException("Not implemented!");
     }
-
 
     public void getRGB(int[] argb, int offset, int scanLength, 
             int x, int y, int width, int height) {
-        System.out.println("getRGB -- not implemented!");
-        throw new RuntimeException("getRGB -- not implemented.");
+        throw new RuntimeException("Not implemented!");
     }
 
     public void setRGB(int[] argb, int offset, int scanLength, 
             int x, int y, int width, int height) {
-        System.out.println("setRGB -- not implemented!");
-        throw new RuntimeException("setRGB -- not implemented.");
+        throw new RuntimeException("Not implemented!");
     }
+
+    private native void initialize();
 }
+

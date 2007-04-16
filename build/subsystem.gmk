@@ -201,7 +201,6 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
     ifdef PISCES_JAVA_SURFACE_SUPPORT
         INTERNAL_PISCES_SRC_FILES += \
                     JJavaSurface.c
-        EXTRA_CFLAGS += -DPISCES_JAVA_SURFACE_SUPPORT
     endif # PISCES_JAVA_SURFACE_SUPPORT
 endif
 
