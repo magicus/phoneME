@@ -217,7 +217,7 @@ class ContentReader {
         data[j] = (byte)':';
         j++;
 
-        for (int i = 0; i < password.length(); i++, j++) {
+        for (int i = 0; i < password.length; i++, j++) {
             data[j] = (byte)password[i];
         }
 
