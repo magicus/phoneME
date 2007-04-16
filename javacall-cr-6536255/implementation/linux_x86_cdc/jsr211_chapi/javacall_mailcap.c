@@ -29,11 +29,11 @@
  * @brief javacall registry access implementation for unix mailcap files (rfc 1524)
  */
 
-#include "javacall_registry.h"
+#include "inc/javacall_registry.h"
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <io.h>
+#include <sys/io.h>
 #include <fcntl.h>
 //#include <wchar.h>
 #include <memory.h>
@@ -104,8 +104,8 @@ const char* NEW = "new";
 
 #define chricmp(a,b) (((a>='A' && a<='Z') ? a+('a'-'A'): a) == ((b>='A' && b<='Z') ? b+('a'-'A'): b))
 
-int open_db(int* file, int flag);
-void close_db(int file);
+static int open_db(int* file, int flag);
+static void close_db(int file);
 
 static int wasiequal(const short* ws, const char* s){
 	while (*ws && *s && chricmp(*ws,*s)){
@@ -161,9 +161,9 @@ static void pop_info(){
 static int get_line(char* line, int max_size, int f){
 	long pos = _tell(f);
 	int i=0,count=0;
-	while (_read(f,&i,1)==1){
+	while (read(f,&i,1)==1){
 		if ((char)i=='#'){
-			while (_read(f,&i,1)==1 && (char)i!='\n');
+			while (read(f,&i,1)==1 && (char)i!='\n');
 		}
 		if ((char)i!='\n' && (char)i!='\r') break;
 	}
@@ -171,11 +171,11 @@ static int get_line(char* line, int max_size, int f){
 		if ((char)i=='\n') break;
 		if (count>=max_size-1) {
 			//buffer too small return
-			_lseek(f,pos,SEEK_SET);
+			lseek(f,pos,SEEK_SET);
 			return -1;
 		}
 		line[count++]=(char)i;
-		if (_read(f,&i,1)!=1) break;
+		if (read(f,&i,1)!=1) break;
 	};
 	line[count]=0;
 	return count;
@@ -471,24 +471,24 @@ static int has_action(const short* action, mailcap_type_info* info){
 }
 
 static int file_exists(const char* fname){
-	int file = _open(fname,_O_RDONLY);
+	int file = open(fname,O_RDONLY);
 	if (file){
-		_close(file);
+		close(file);
 		return 1;
 	}
 	return 0;
 }
 
-static int open_db(int* file, int flag){
+int open_db(int* file, int flag){
 	if (flag == CHAPI_READ) {
 		handlerdb_global_lock(1);
-		*file = _open(mailcaps_fname,_O_RDONLY);
+		*file = open(mailcaps_fname,O_RDONLY);
 	} else 	if (flag == CHAPI_WRITE) {
 		handlerdb_global_lock(0);
-		*file = _open(mailcaps_fname,_O_RDWR);
+		*file = open(mailcaps_fname,O_RDWR);
 	} else if (flag == CHAPI_APPEND){
 		handlerdb_global_lock(0);
-		*file = _open(mailcaps_fname, _O_RDWR | _O_APPEND | _O_CREAT, _S_IWRITE);
+		*file = open(mailcaps_fname, O_RDWR | O_APPEND | O_CREAT, S_IWRITE);
 	} else 
 		return ERROR_BAD_PARAMS;
 
@@ -501,8 +501,8 @@ static int open_db(int* file, int flag){
 }
 
 
-static void close_db(int file){
-	if (file) _close(file);
+void close_db(int file){
+	if (file) close(file);
 	handlerdb_global_unlock();
 }
 
@@ -538,8 +538,8 @@ void handlerdb_global_unlock(void){
  *
  */
 int handlerdb_is_modified(long lastread){
-	struct _stat st;
-	_stat(mailcaps_fname,&st);
+	struct stat st;
+	stat(mailcaps_fname,&st);
 	return (st.st_mtime > (time_t)lastread);
 }
 
@@ -669,7 +669,7 @@ int register_handler(
 		b += sprintf(b,"x-java;\n");
 
 		len=b-buf;
-		if (_write(file,buf,len)!=len) {
+		if (write(file,buf,len)!=len) {
 			result = ERROR_IO_FAILURE;
 			break;
 		}

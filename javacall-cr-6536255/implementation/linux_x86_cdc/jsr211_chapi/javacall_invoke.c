@@ -32,11 +32,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <process.h>
 #include <pthread.h>
 
-#include "javacall_invoke.h"
-#include "javacall_registry.h"
+#include "inc/javacall_invoke.h"
+#include "inc/javacall_registry.h"
 
 
 typedef void* native_handler_info;
@@ -49,7 +48,7 @@ typedef struct _native_invocation_handle_impl {
 	char* action;
 	char* url;
 	pthread_t *monitor_thread;
-	pthread_mutex_t locked;
+	pthread_mutex_t* locked;
 } native_invocation_handle_impl;
 
 static native_invocation_handle_impl* alloc_invoc_handle(){
@@ -60,15 +59,15 @@ static native_invocation_handle_impl* alloc_invoc_handle(){
 }
 
 static void native_invocation_lock(native_invocation_handle_impl* invoc){
-	if (!invoc->locked){
-		pthread_mutex_init(&invoc->locked,0);
+	if ((invoc->locked) == 0){
+		pthread_mutex_init(invoc->locked,0);
 	} else {
-		pthread_mutex_lock(&invoc->locked);
+		pthread_mutex_lock(invoc->locked);
 	}
 }
 
 static void native_invocation_unlock(native_invocation_handle_impl* invoc){
-	if (invoc->locked) pthread_mutex_unlock(&invoc->locked);
+	if ( (invoc->locked) != 0) pthread_mutex_unlock(invoc->locked);
 }
 
 static void free_invoke_handle(native_invocation_handle_impl* invoc){
@@ -88,7 +87,7 @@ static int register_monitor(native_invocation_handle_impl* invoc){
 
 
 /*******************************************************
-********				PUBLIC API				********
+********		PUBLIC API		********
 ********************************************************/
 
 void native_handler_exec_wait(native_invocation_handle hinvoc){
