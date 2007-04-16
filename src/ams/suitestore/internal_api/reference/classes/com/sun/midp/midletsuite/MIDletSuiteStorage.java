@@ -26,8 +26,6 @@
 
 package com.sun.midp.midletsuite;
 
-import java.util.Vector;
-
 import java.io.IOException;
 
 import com.sun.midp.security.SecurityToken;
@@ -46,6 +44,7 @@ import com.sun.midp.rms.RecordStoreImpl;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
+import com.sun.midp.installer.JarReader;
 
 /**
  * This class manages the persistent data for MIDlet suites.
@@ -135,6 +134,14 @@ public class MIDletSuiteStorage {
     private static MIDletSuiteStorage getMasterStorage() {
         if (masterStorage == null) {
             masterStorage = new MIDletSuiteStorage();
+
+            int status = loadSuitesIcons0();
+            if (Logging.REPORT_LEVEL <= Logging.ERROR) {
+                if (status != 0) {
+                    Logging.report(Logging.ERROR, LogChannels.LC_AMS,
+                        "Can't load the cached icons, error code" + status);
+                }
+            }
         }
 
         return masterStorage;
@@ -195,6 +202,42 @@ public class MIDletSuiteStorage {
     }
 
     /**
+     *
+     *
+     * @param suiteId unique identifier of the suite
+     * @param iconName the name of the icon to retrieve
+     *
+     * @return
+     */
+    public synchronized byte[] getMIDletSuiteIcon(int suiteId,
+                                                  String iconName) {
+        byte[] iconBytes = null;
+
+        if (iconName == null) {
+            return null;
+        }
+
+        try {
+            iconBytes = getMIDletSuiteIcon0(suiteId, iconName);
+
+            if (iconBytes == null) {
+                /* Search for icon in the image cache */
+                iconBytes = loadCachedIcon0(suiteId, iconName);
+            }
+
+            if (iconBytes == null) {
+                /* Search for icon in the suite JAR */
+                iconBytes = JarReader.readJarEntry(
+                    getMidletSuiteJarPath(suiteId), iconName);
+            }
+        } catch (Exception e) {
+            iconBytes = null;
+        }
+
+        return iconBytes;
+    }
+
+    /**
      * Get the midlet suite's class path including a path to the MONET
      * image of the specified suite and a path to the suite's jar file.
      *
@@ -211,6 +254,34 @@ public class MIDletSuiteStorage {
         }
         return new String[]{jarFile};
     }
+
+    /**
+     * Loads the cached icons from the permanent storage into memory.
+     *
+     * @return status code (0 if no errors) 
+     */
+    public static native int loadSuitesIcons0();
+
+    /**
+     * Retrieves the cached icon from the icon cache.
+     *
+     * @param suiteId unique identifier of the suite
+     * @param iconName the name of the icon to retrieve
+     *
+     * @return cached image data if available, otherwise null
+     */
+    private static native byte[] getMIDletSuiteIcon0(int suiteId,
+                                                     String iconName);
+
+    /**
+     * Loads suite icon data from image cache.
+     *
+     * @param suiteId the ID of suite the icon belongs to
+     * @param iconName the name of the icon to be loaded
+     *
+     * @return cached image data if available, otherwise null
+     */
+    private static native byte[] loadCachedIcon0(int suiteId, String iconName);
 
     /**
      * Reads the basic information about the midlet suite from the storage.

@@ -632,7 +632,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             if (focusIndex == traverseIndex) {
                 oldFocus = newFocus;
             } else {
-                oldFocus = traverseIndex > 0 ? itemLFs[traverseIndex] : null;
+                oldFocus = traverseIndex >= 0 ? itemLFs[traverseIndex] : null;
                 traverseIndex = focusIndex;
             }
         }

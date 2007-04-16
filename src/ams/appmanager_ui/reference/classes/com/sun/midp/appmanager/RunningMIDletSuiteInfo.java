@@ -145,18 +145,9 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
             MIDletSuiteStorage mss) {
         byte[] iconBytes;
 
-        if (iconName == null) {
-            return null;
-        }
-
         try {
-            /* Search for icon in the image cache */
-            iconBytes = loadCachedIcon(theID, iconName);
-            if (iconBytes == null) {
-                /* Search for icon in the suite JAR */
-                iconBytes = JarReader.readJarEntry(
-                    mss.getMidletSuiteJarPath(theID), iconName);
-            }
+            iconBytes = mss.getMIDletSuiteIcon(theID, iconName);
+
             if (iconBytes == null) {
                 if (Logging.REPORT_LEVEL <= Logging.WARNING) {
                     Logging.report(Logging.WARNING, LogChannels.LC_AMS,
@@ -164,8 +155,8 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
                 }
                 return null;
             }
-            return Image.createImage(iconBytes, 0, iconBytes.length);
 
+            return Image.createImage(iconBytes, 0, iconBytes.length);
         } catch (Throwable t) {
             if (Logging.REPORT_LEVEL <= Logging.WARNING) {
                 Logging.report(Logging.WARNING, LogChannels.LC_AMS,
@@ -213,15 +204,6 @@ public class RunningMIDletSuiteInfo extends MIDletSuiteInfo {
 
         return false;
     }
-
-    /**
-     * Loads suite icon data from image cache.
-     *
-     * @param suiteId the ID of suite the icon belongs to
-     * @param iconName the name of the icon to be loaded
-     * @return cached image data if available, otherwise null
-     */
-    private static native byte[] loadCachedIcon(int suiteId, String iconName);
 
     /** Cache of the suite icon. */
     private static Image multiSuiteIcon;

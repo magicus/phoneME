@@ -284,11 +284,19 @@ gx_draw_chars(jint pixel, const jshort *clip,
     widthRemaining = width;
 
     if (xStart != 0) {
-        int startWidth = fontWidth - xStart;
+        int xLimit;
+        int startWidth;
+        if (width > fontWidth) {
+            startWidth = fontWidth - xStart;
+            xLimit = fontWidth;
+        } else {
+            startWidth = width;
+            xLimit = xStart + width;
+        }
 
         /* Clipped, draw the right part of the first char. */
         drawChar(dest, charArray[nCharsToSkip], GXJ_RGB24TORGB16(pixel), xDest, yDest,
-                 xStart, yCharSource, fontWidth, yLimit,
+                 xStart, yCharSource, xLimit, yLimit,
                  FontBitmaps, fontWidth, fontHeight);
         nCharsToSkip++;
         xDest += startWidth;

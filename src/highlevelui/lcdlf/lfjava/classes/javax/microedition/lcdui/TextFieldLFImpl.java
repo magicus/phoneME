@@ -295,6 +295,9 @@ class TextFieldLFImpl extends ItemLFImpl implements
         if (hasFocus && visible) {
 	    if (editable) {
 		disableInput();
+
+                // IMPL_NOTE: problem with synchronization on layers and LCDUILock
+                disableLayers();
 	    } else if (autoScrolling) {
 		stopScroll();
 	    }
@@ -308,6 +311,9 @@ class TextFieldLFImpl extends ItemLFImpl implements
         if (hasFocus && visible) {
 	    if (editable) {
                 enableInput();
+                // IMPL_NOTE: problem with synchronization on layers and LCDUILock
+                showIMPopup = true;
+                enableLayers();
 	    } else if (autoScrolling) {
                 startScroll();
             }
@@ -805,12 +811,17 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * @param newViewportY the new height of the viewport of the screen
      */
     public void uCallScrollChanged(int newViewportX, int newViewportY) {
+        boolean needModeIndicator = false;
         synchronized (Display.LCDUILock) {
-            if (hasFocus && inputModeIndicator.getDisplayMode() != null) {
-                // move input mode indicator because its location depends on 
-                // the item width and item location
-                moveInputModeIndicator();
-            }
+            needModeIndicator = hasFocus && 
+                inputModeIndicator.getDisplayMode() != null;
+        }
+        // Dismiss input mode indicator layer outside LCDUILock
+        // to avoid deadlocking with Chameleon internal lock 'layers'.
+        if (needModeIndicator) {
+            // move input mode indicator because its location depends on 
+            // the item width and item location
+            moveInputModeIndicator();
         }
     }
 
@@ -824,6 +835,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
      */
     void uCallSizeChanged(int w, int h) {
         super.uCallSizeChanged(w, h);
+        boolean needModeIndicator = false;
         synchronized (Display.LCDUILock) {
             xScrollOffset = 0;
             
@@ -832,11 +844,16 @@ class TextFieldLFImpl extends ItemLFImpl implements
             }
 
             startScroll();
+
+            needModeIndicator = hasFocus && 
+                inputModeIndicator.getDisplayMode() != null;
+        }
+        // Dismiss input mode indicator layer outside LCDUILock
+        // to avoid deadlocking with Chameleon internal lock 'layers'.
+        if (needModeIndicator) {
             // move input mode indicator because its location depends on 
             // the item width and item location
-            if (hasFocus && inputModeIndicator.getDisplayMode() != null) {
-                moveInputModeIndicator();
-            }
+            moveInputModeIndicator();
         }
     }
 
@@ -897,7 +914,8 @@ class TextFieldLFImpl extends ItemLFImpl implements
             getBufferString(new DynamicCharacterArray(str),
                             constraints, cursor, true);
         }
-
+        
+        // IMPL_NOTE: problem with synchronization on layers and LCDUILock
         showPTPopup((int)0, cursor, w, h);
         return newXOffset;
     }
@@ -946,6 +964,16 @@ class TextFieldLFImpl extends ItemLFImpl implements
     public boolean isClearKey(int keyCode) {
         return EventConstants.SYSTEM_KEY_CLEAR ==
             KeyConverter.getSystemKey(keyCode);        
+    }
+    /**
+     * Returns true if the keyCode is used as 'enter' (user types in \n)
+     * ('select' plays the role of 'enter' in some input modes).
+     *
+     * @param keyCode key code
+     * @return true if key code is the one for newline, false otherwise
+     */
+    public boolean isNewlineKey(int keyCode) {
+        return false;
     }
 
     /**
@@ -1062,7 +1090,9 @@ class TextFieldLFImpl extends ItemLFImpl implements
         removeInputCommands();
 
         inputModes = inputSession.getAvailableModes();
+
         InputMode im = inputSession.getCurrentInputMode();       
+
 
         inputMenu = new SubMenuCommand(im.getCommandName(), Command.OK, 100);
         inputMenu.setListener(this);
@@ -1455,13 +1485,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
                                           visRect_inout);
         
         // Show indicator layer
-        if (showIMPopup) {
-            if (inputModeIndicator.getDisplayMode() != null) {
-                getCurrentDisplay().showPopup(inputModeIndicator);
-                moveInputModeIndicator();
-                showIMPopup = false;
-            }
-        }
+        enableLayers();
         
         return ret;
     }
@@ -1515,18 +1539,12 @@ class TextFieldLFImpl extends ItemLFImpl implements
                         inputSession.setCurrentInputMode(interruptedIM);
                         interruptedIM = null;
                     }
-
+                    showIMPopup = true;
                 } else {
                     cursor.option = Text.PAINT_USE_CURSOR_INDEX;
                     cursor.visible = false;
                     startScroll();
                 }
-                // Show Input Indicator regardless of editability
-                // so we don't have to turn the layer on/off
-                // when setConstraints() is called later, which
-                // may cause deadlock between locks 'layers' and
-                // LCDUILock.
-                showIMPopup = true;
                 firstTimeInTraverse = false;
             }
             
@@ -1569,12 +1587,50 @@ class TextFieldLFImpl extends ItemLFImpl implements
         
         // Dismiss input mode indicator layer outside LCDUILock
         // to avoid deadlocking with Chameleon internal lock 'layers'.
-        Display currentDisplay = getCurrentDisplay();
-        if (currentDisplay != null) {
-	    currentDisplay.hidePopup(inputModeIndicator);
-            hidePTILayer();
-        }
+        disableLayers();
     }
+
+    /**
+     * Disable all active layers. This method should be called outside of 
+     * LCDUILock to avoid deadlocking with Chameleon internal lock 'layers'.
+     */
+    private void disableLayers() {
+        Display currentDisplay;
+        
+        synchronized (Display.LCDUILock) {
+            currentDisplay = getCurrentDisplay();
+        }
+
+        // Dismiss input mode indicator layer outside LCDUILock
+        // to avoid deadlocking with Chameleon internal lock 'layers'.
+        if (currentDisplay != null) {
+            hidePTILayer();
+	    currentDisplay.hidePopup(inputModeIndicator);
+        }
+     }
+
+   /**
+    * Enable some layers related to the item. This method should be called outside of
+    * LCDUILock to avoid deadlocking with Chameleon internal lock 'layers'.
+    */
+    private void enableLayers() {
+        boolean needToShow = false;
+        Display currentDisplay;
+        synchronized (Display.LCDUILock) {
+            currentDisplay = getCurrentDisplay();
+            needToShow = showIMPopup && 
+                inputModeIndicator.getDisplayMode() != null && 
+                currentDisplay != null; 
+            showIMPopup = false;
+        }
+        
+        // Dismiss input mode indicator layer outside LCDUILock
+        // to avoid deadlocking with Chameleon internal lock 'layers'.
+        if (needToShow) {
+            currentDisplay.showPopup(inputModeIndicator);
+            moveInputModeIndicator();
+        }
+     }
     
     /**
      * Called by the system to indicate traversal has left this Item
@@ -1633,18 +1689,22 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * Move input mode indicator
      */
     void moveInputModeIndicator() {  
-        int[] anchor = getInputModeAnchor();
-        if (inputModeAnchor[0] != anchor[0] ||
-            inputModeAnchor[1] != anchor[1] ||
-            inputModeAnchor[2] != anchor[2] ||
-            inputModeAnchor[3] != anchor[3])
-        {
+        int[] anchor;
+        boolean changed = false;
+        synchronized (Display.LCDUILock) {
+            anchor = getInputModeAnchor();
+            changed = inputModeAnchor[0] != anchor[0] ||
+                inputModeAnchor[1] != anchor[1] ||
+                inputModeAnchor[2] != anchor[2] ||
+                inputModeAnchor[3] != anchor[3];
             inputModeAnchor = anchor;
+        }
+        if (changed) {
             inputModeIndicator.setAnchor(
-                                         inputModeAnchor[0],
-                inputModeAnchor[1],
-                inputModeAnchor[2],
-                inputModeAnchor[3]);
+                                         anchor[0],
+                                         anchor[1],
+                                         anchor[2],
+                                         anchor[3]);
         }
     }
     
@@ -1765,6 +1825,8 @@ class TextFieldLFImpl extends ItemLFImpl implements
         disableTF();
         removeInputCommands();       
         inputSession.endSession();
+        // reset input mode name
+        inputModeIndicator.setDisplayMode(null);
     }
 
     /**

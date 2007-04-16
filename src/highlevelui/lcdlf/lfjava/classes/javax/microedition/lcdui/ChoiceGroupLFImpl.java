@@ -54,7 +54,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                 selectedIndex = 0;
                 cg.cgElements[selectedIndex].setSelected(true);        
             }
-            hilightedIndex = 0;
+            hilightedIndex = -1;
         }
         contentX = getContentX(cg.choiceType);
         elHeights = new int[cg.numOfEls + ChoiceGroup.GROW_FACTOR];
@@ -128,7 +128,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         }
 
         // set hilighted index (it always exists)
-        if (elementNum <= hilightedIndex || hilightedIndex == -1) {
+        if (hasFocus && (elementNum <= hilightedIndex || hilightedIndex == -1)) {
             hilightedIndex++;
         }
         

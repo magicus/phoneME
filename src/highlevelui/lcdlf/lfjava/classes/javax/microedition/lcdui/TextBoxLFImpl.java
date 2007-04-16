@@ -26,13 +26,7 @@
 
 package javax.microedition.lcdui;
 
-import com.sun.midp.lcdui.PhoneDial;
-
-import com.sun.midp.lcdui.DynamicCharacterArray;
-import com.sun.midp.lcdui.Text;
-import com.sun.midp.lcdui.TextCursor;
-import com.sun.midp.lcdui.TextInfo;
-import com.sun.midp.lcdui.TextPolicy;
+import com.sun.midp.lcdui.*;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 
@@ -267,17 +261,10 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
                             constraints, cursor, true);
         }
         
-        // We'll double check our anchor point in case the Form
-        // has scrolled and we need to update our InputModeLayer's
-        // location on the screen
-        if (hasFocus) {
-            moveInputModeIndicator();
-        }
-
         // has to be moved to correct place. It's incorrect to change 
         // the layer's dirty bounds in paint context 
         showPTPopup((int)0, cursor, w, h);
-    }    
+    } 
 
     /**
      * Sets the content size in the passed in array.
@@ -646,6 +633,18 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
             getCurrentDisplay().getWindow().getBodyAnchorY(),
             sLF.viewport[HEIGHT] - space - 4,                    
             space};
+    }
+
+    /**
+     * Returns true if the keyCode is used as 'enter' (user types in \n)
+     * ('select' plays the role of 'enter' in some input modes).
+     *
+     * @param keyCode key code
+     * @return true if key code is the one for newline, false otherwise
+     */
+    public boolean isNewlineKey(int keyCode) {
+        return EventConstants.SYSTEM_KEY_SELECT ==
+            KeyConverter.getSystemKey(keyCode);
     }
 
 

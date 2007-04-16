@@ -34,6 +34,7 @@ import javax.microedition.io.ConnectionNotFoundException;
 import javax.microedition.lcdui.Displayable;
 
 import javax.microedition.midlet.MIDlet;
+import javax.microedition.midlet.MIDletStateChangeException;
 
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.common.JUMPAppModel;
@@ -71,8 +72,8 @@ import com.sun.midp.security.*;
  * name of the MIDP native library.
  */
 public class MIDletContainer extends JUMPAppContainer implements
-    MIDletSuiteExceptionListener, ForegroundController, MIDletStateListener,
-    PlatformRequest, Runnable {
+    ForegroundController, MIDletStateListener,
+    PlatformRequest {
 
     /**
      * Inner class to request security token from SecurityInitializer.
@@ -82,6 +83,9 @@ public class MIDletContainer extends JUMPAppContainer implements
 
     /** This class has a different security domain than the MIDlet suite */
     private SecurityToken internalSecurityToken;
+
+    /** The one and only runtime app ID. */
+    private static final int APP_ID = 1;
 
     /** True, if an app has been started. */
     private boolean appStarted;
@@ -135,7 +139,7 @@ public class MIDletContainer extends JUMPAppContainer implements
             internalSecurityToken);
 
         lcduiEnvironment = new LCDUIEnvironmentForCDC(internalSecurityToken, 
-						      eventQueue, 0, this);
+                                                      eventQueue, 0, this);
 
         displayContainer = lcduiEnvironment.getDisplayContainer();
 
@@ -201,15 +205,13 @@ public class MIDletContainer extends JUMPAppContainer implements
 
             midletClassName = MIDletApplication.getMIDletClassName(app);
 
-            //FIXME: This asynchronous call should be synchronous.
-            new Thread(this).start();
-        } catch (Exception e) {
-            e.printStackTrace();
+            midletStateHandler.startSuite(midletSuite, midletClassName);
+        } catch (Throwable e) {
+            handleFatalException(e);
             return -1;
         }
 
-        //DEBUG:System.err.println("**started");
-        return 1; // only one app can run in this container at a time
+        return APP_ID; // only one app can run in this container at a time
     }
 
     /**
@@ -220,20 +222,7 @@ public class MIDletContainer extends JUMPAppContainer implements
      * @param the application ID returned from startApp
      */    
     public void pauseApp(int appId) {
-        try {
-            MIDletEventConsumer mec =
-                midletStateHandler.getMIDletEventConsumer(
-                    internalSecurityToken, midletClassName);
-
-            if (mec == null) {
-                return;
-            }
-
-            //FIXME: This asynchronous call should be synchronous.
-            mec.handleMIDletPauseEvent();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        midletStateHandler.pauseApp();
     }
     
     /**
@@ -245,19 +234,10 @@ public class MIDletContainer extends JUMPAppContainer implements
      */    
     public void resumeApp(int appId) {
         try {
-            MIDletEventConsumer mec =
-                midletStateHandler.getMIDletEventConsumer(
-                    internalSecurityToken, midletClassName);
-
-            if (mec == null) {
-                return;
-            }
-
-            //FIXME: This asynchronous call should be synchronous.
-            mec.handleMIDletActivateEvent();
-
-        } catch (Exception e) {
-            e.printStackTrace();
+            midletStateHandler.resumeApp();
+        } catch (MIDletStateChangeException msce) {
+            // This exception is treated as a runtime exception
+            throw new RuntimeException(msce.getMessage());
         }
     }
     
@@ -273,22 +253,29 @@ public class MIDletContainer extends JUMPAppContainer implements
      * @param force if false, give the app the option of not being destroyed
      */    
     public void destroyApp(int appId, boolean force) {
-        //Impl note: force=false is not supported.
         try {
-            MIDletEventConsumer mec =
-                midletStateHandler.getMIDletEventConsumer(
-                    internalSecurityToken, midletClassName);
-
-            if (mec == null) {
-                return;
+            midletStateHandler.destroyApp(force);
+            midletSuite.close();
+            appContext.terminateIsolate();
+        } catch (Throwable e) {
+            if (e instanceof MIDletStateChangeException || !force) {
+                throw new RuntimeException(e.getMessage());
             }
 
-            //FIXME: This asynchronous call should be synchronous.
-            mec.handleMIDletDestroyEvent();
-
-        } catch (Exception e) {
-            e.printStackTrace();
+            handleFatalException(e);
         }
+    }
+
+    /*
+     * Standard fatal Throwable handling. Close the suite and terminate
+     * the isolate.
+     *
+     * @param t exception thrown by lower layer
+     */
+    private void handleFatalException(Throwable t) {
+        t.printStackTrace();
+        midletSuite.close();
+        appContext.terminateIsolate();
     }
 
     /**
@@ -299,29 +286,6 @@ public class MIDletContainer extends JUMPAppContainer implements
      * @param displayId Display ID
      */
     private native void setForegroundInNativeState(int displayId);
-
-    /** Run the MIDletStateHandler. */
-    public void run() {
-        try {
-            midletStateHandler.startSuite(this, midletSuite, 0,
-                                          midletClassName);
-            midletSuite.close();
-        } catch (Throwable t) {
-            t.printStackTrace();
-        } finally {
-            appContext.terminateIsolate();
-        }
-    }
-
-    // MIDletSuiteExceptionListener
-
-    /**
-     * Handles exception occurred during MIDlet suite execution.
-     * @param t exception instance
-     */
-    public void handleException(Throwable t) {
-        t.printStackTrace();
-    }
 
     // MIDletStateListener
     /**
@@ -385,7 +349,7 @@ public class MIDletContainer extends JUMPAppContainer implements
      * @param className class name of the MIDlet
      */
     public void midletPausedItself(MIDletSuite suite, String className) {
-        // Impl note: The JUMPApplication API does not support this.
+        appContext.notifyPaused(APP_ID);
     }
 
     /**
@@ -395,15 +359,7 @@ public class MIDletContainer extends JUMPAppContainer implements
      * @param className class name of the MIDlet
      */
     public void resumeRequest(MIDletSuite suite, String className) {
-        MIDletEventConsumer mec =
-            midletStateHandler.getMIDletEventConsumer(internalSecurityToken,
-                                                      className);
-        // Impl note: The JUMPApplication API does not support this.
-        if (mec == null) {
-            return;
-        }
-
-        mec.handleMIDletActivateEvent();
+        appContext.resumeRequest(APP_ID);
     }
 
     /**
@@ -414,7 +370,8 @@ public class MIDletContainer extends JUMPAppContainer implements
      * @param className class name of the MIDlet
      */
     public void midletDestroyed(MIDletSuite suite, String className) {
-        // Impl note: The JUMPApplication API does not support this.
+        appContext.notifyDestroyed(APP_ID);
+        appContext.terminateIsolate();
     }
 
     // ForegroundController

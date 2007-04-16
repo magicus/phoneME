@@ -216,6 +216,7 @@ keymap_get_system_key(int keyCode)
     case KEYMAP_KEY_END:    return 3;
     case KEYMAP_KEY_BACKSPACE:
     case KEYMAP_KEY_CLEAR:  return 4;
+    case KEYMAP_KEY_SELECT: return 5; 
     default:                return 0;
     }
 }

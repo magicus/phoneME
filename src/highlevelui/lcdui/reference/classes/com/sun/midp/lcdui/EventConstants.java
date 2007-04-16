@@ -98,6 +98,11 @@ public final class EventConstants {
     public static final int SYSTEM_KEY_CLEAR = 4;
 
     /**
+     * The value returned from getSystemKey if the keyCode is SELECT
+     */
+    public static final int SYSTEM_KEY_SELECT = 5;
+
+    /**
      * An identifier for the first soft button, typically the left one.
      * NOTE: This value must be kept in sync with the value defined in
      * the "midpInput.h" file

@@ -71,8 +71,8 @@ import com.sun.midp.io.j2me.storage.File;
 
 import com.sun.midp.rms.RecordStoreFactory;
 
-//FIXME: sync with cldc installer for CHManager dependency
-//import com.sun.midp.content.CHManager;
+// IMPL_NOTE: sync with cldc installer for CHManager dependency
+// import com.sun.midp.content.CHManager;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -281,8 +281,8 @@ public abstract class JUMPInstaller {
         state.removeRMS = removeRMS;
         state.nextStep = 1;
         state.listener = installListener;
-        //FIXME: sync with cldc installer for CHManager dependency
-        //state.chmanager = CHManager.getManager(null);
+        // IMPL_NOTE: sync with cldc installer for CHManager dependency
+        // state.chmanager = CHManager.getManager(null);
         state.storageId = storageId;
 
         return performInstall();
@@ -497,7 +497,7 @@ public abstract class JUMPInstaller {
 
             PushRegistryInternal.enablePushLaunch(true);
         }
-
+        
         return info.id;
     }
 
@@ -678,7 +678,8 @@ public abstract class JUMPInstaller {
         state.jad = null;
 
         state.file = new File();
-
+        
+        /*
         if (suiteSize > state.file.getBytesAvailableForFiles(state.storageId)) {
             postInstallMsgBackToProvider(
                 OtaNotifier.INSUFFICIENT_MEM_MSG);
@@ -688,6 +689,7 @@ public abstract class JUMPInstaller {
                 InvalidJadException(InvalidJadException.INSUFFICIENT_STORAGE,
                     Integer.toString((suiteSize + 1023)/ 1024));
         }
+        */
 
         info.jarUrl = state.jadProps.getProperty(MIDletSuite.JAR_URL_PROP);
         if (info.jarUrl == null || info.jarUrl.length() == 0) {
@@ -1007,7 +1009,7 @@ public abstract class JUMPInstaller {
             }
 
             info.trusted = Permissions.isTrusted(info.domain);
-
+                       
             // Do not overwrite trusted suites with untrusted ones
             if (!info.trusted && state.isPreviousVersion &&
                     state.previousSuite.isTrusted()) {
@@ -1073,7 +1075,7 @@ public abstract class JUMPInstaller {
             checkConfiguration();
             matchProfile();
 
-        //FIXME: sync with cldc installer for CHManager dependency
+        // IMPL_NOTE: sync with cldc installer for CHManager dependency
          /**
         *    try {
         *         state.chmanager.preInstall(this,
@@ -1132,8 +1134,8 @@ public abstract class JUMPInstaller {
             registerPushConnections();
 
             /** Do the Content Handler registration updates now */
-            //FIXME: sync with cldc installer for CHManager dependency
-            //state.chmanager.install();
+            // IMPL_NOTE: sync with cldc installer for CHManager dependency
+            // state.chmanager.install();
 
             /*
              * Store suite will remove the suite including push connections,
@@ -1302,7 +1304,7 @@ public abstract class JUMPInstaller {
      *   of the JAR
      */
     protected abstract int downloadJAR(String filename) throws IOException;
-
+   
     /**
      * If the JAD belongs to an installed suite, check the URL against the
      * installed one. Set the state.exception if the user needs to be warned.
@@ -1356,15 +1358,16 @@ public abstract class JUMPInstaller {
             // there is no previous version
             return;
         }
-
+        
         try {
             midletSuite =
               state.midletSuiteStorage.getMIDletSuite(id, true);
 
             if (midletSuite == null) {
                 // there is no previous version
+                state.isPreviousVersion = false;
                 return;
-            }
+            }             
             checkVersionFormat(info.suiteVersion);
 
             state.isPreviousVersion = true;

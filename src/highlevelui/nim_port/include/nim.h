@@ -210,6 +210,7 @@
 #define MEDIATOR_INPUTMODECOMPLETED 4
 #define MEDIATOR_ISCLEARKEY 5
 #define MEDIATOR_GETAVAILABLESIZE 6
+#define MEDIATOR_ISNEWLINEKEY 7
 /** @} */
 
 /** data type for a constraint map; there's one constraint map

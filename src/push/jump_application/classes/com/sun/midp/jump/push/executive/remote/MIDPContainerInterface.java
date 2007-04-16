@@ -59,11 +59,6 @@ public interface MIDPContainerInterface extends Remote {
     /**
      * Unregisters connection.
      *
-     * <p>
-     * <strong>Precondition</strong>: <code>connection</code> MUST have been
-     * already registered.
-     * </p>
-     *
      * @param midletSuiteId ID of <code>MIDlet suite</code> to unregister
      *  connection for
      *
@@ -79,6 +74,24 @@ public interface MIDPContainerInterface extends Remote {
      */
     boolean unregisterConnection(int midletSuiteId,
             String connectionName) throws SecurityException, RemoteException;
+
+    /**
+     * Lists all the connections registered by the suite.
+     *
+     * <p>
+     * Close match to <code>PushRegistry.listConnections</code>
+     * </p>
+     *
+     * @param midletSuiteId <code>MIDlet</code> suite to list connections for
+     * @param available if <code>true</code>, list connections with available
+     *  data
+     *
+     * @return connections
+     *
+     * @throws RemoteException as requested by RMI spec.
+     */
+    String [] listConnections(int midletSuiteId, boolean available)
+        throws RemoteException;
 
     /**
      * Fetches the <code>MIDlet</code> by the connection.
