@@ -71,7 +71,8 @@ JUMP_EXECUTIVE_BOOTCLASSESZIP   := $(JUMP_OUTPUT_DIR)/executive-jump.jar
 JUMP_SRCDIRS           += \
 	$(JUMP_SRCDIR)/share/api/native \
 	$(JUMP_SRCDIR)/share/impl/isolate/native \
-	$(JUMP_SRCDIR)/share/impl/os/native
+	$(JUMP_SRCDIR)/share/impl/os/native \
+	$(JUMP_SRCDIR)/share/impl/eventqueue/native
 
 #
 # Add as necessary
@@ -92,6 +93,13 @@ JUMP_OBJECTS            += \
 	jump_os_impl.o \
 	jump_messaging.o \
 	jump_isolate_impl.o \
+	jump_eventqueue_impl.o \
+
+#
+# JavaCall is needed for JUMP event queue module
+# (at least until it can be conditionally compiled and added to the modules list)
+#
+CVM_INCLUDE_JAVACALL = true
 
 #
 # Any native code for the stand-alone jump native library goes here
@@ -99,8 +107,7 @@ JUMP_OBJECTS            += \
 JUMP_NATIVE_LIBRARY_OBJECTS            += \
 	jump_messaging.o
 
-JUMP_NATIVE_LIBRARY_NAME = jumpmesg
-JUMP_NATIVE_LIBRARY_PATHNAME = $(JUMP_OUTPUT_DIR)/$(LIB_PREFIX)$(JUMP_NATIVE_LIBRARY_NAME)$(LIB_POSTFIX)
+JUMP_NATIVE_LIBRARY_PATHNAME = $(JUMP_OUTPUT_DIR)/$(LIB_PREFIX)jumpmesg$(LIB_POSTFIX)
 
 #
 # Make sure this shared library gets built
