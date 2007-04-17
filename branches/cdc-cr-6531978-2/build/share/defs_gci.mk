@@ -29,7 +29,6 @@
 #
 ifeq ($(AWT_IMPLEMENTATION), gci)
    USE_GCI = true
-   GCI_DIR = $(AWT_IMPLEMENTATION_DIR)
 endif
 
 ifeq ($(USE_GCI), true)
@@ -38,11 +37,26 @@ ifeq ($(J2ME_CLASSLIB), basis)
 #
 # Define AWT_IMPLEMENTATION to be GCI-based
 #
+AWT_IMPLEMENTATION ?= gci
 ifneq ($(AWT_IMPLEMENTATION), gci)
+    $(warning AWT_IMPLEMENTATION should be set to gci when USE_GCI=true. \
+              Any other value set will be overridden.) 
     override AWT_IMPLEMENTATION = gci
-    override AWT_IMPLEMENTATION_DIR = $(GCI_DIR)
 endif
 
+#
+## Allow user to set either GCI_DIR or AWT_IMPLEMENTATION_DIR
+#
+ifdef GCI_DIR
+    AWT_IMPLEMENTATION_DIR = $(GCI_DIR)
+else
+    ifdef AWT_IMPLEMENTATION_DIR
+        GCI_DIR = $(AWT_IMPLEMENTATION_DIR)
+    else
+        GCI_DIR = $(COMPONENTS_DIR)/gci
+        AWT_IMPLEMENTATION_DIR = $(GCI_DIR)
+    endif
+endif 
 
 endif # J2ME_CLASSLIB
 
