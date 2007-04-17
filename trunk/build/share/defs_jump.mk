@@ -1,4 +1,4 @@
-#
+
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -34,10 +34,12 @@ export JAVA_HOME	= $(JDK_HOME)
 
 #JUMP's binary bundle pattern file name
 BINARYBUNDLE_PATTERN_FILENAME=.binary-pattern
-
-JUMP_ANT_OPTIONS += -Ddist.dir=$(call POSIX2HOST,$(CVM_JUMP_BUILDDIR)) 	\
+# .jar and .zip files to compile jump classes against
+JUMP_BOOTCLASSES = $(patsubst $(CVM_BUILD_TOP)/%,%,$(CVM_BUILDTIME_CLASSESZIP) $(LIB_CLASSESJAR) $(JSROP_JARS))
+JUMP_ANT_OPTIONS += -Djump.boot.cp=$(subst $(space),$(comma),$(JUMP_BOOTCLASSES)) \
+		    -Ddist.dir=$(call POSIX2HOST,$(CVM_JUMP_BUILDDIR)) 	\
 		    -Dcdc.dir=$(call POSIX2HOST,$(CDC_DIST_DIR)) \
-		    -Dbinary.pattern.file=$(BINARYBUNDLE_PATTERN_FILENAME)  
+		    -Dbinary.pattern.file=$(BINARYBUNDLE_PATTERN_FILENAME)   
 
 ifeq ($(USE_MIDP), true)
 JUMP_ANT_OPTIONS         += -Dmidp_output_dir=$(subst $(CDC_DIST_DIR)/,,$(MIDP_OUTPUT_DIR))
