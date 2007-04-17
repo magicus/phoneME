@@ -283,8 +283,12 @@ else
    EXTRA_CFLAGS += -DENABLE_JPEG=0
 endif
 
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
 ifeq ($(USE_LINKS), true)
    EXTRA_CFLAGS += -DENABLE_LINKS=1
+else
+   EXTRA_CFLAGS += -DENABLE_LINKS=0
+endif
 else
    EXTRA_CFLAGS += -DENABLE_LINKS=0
 endif
