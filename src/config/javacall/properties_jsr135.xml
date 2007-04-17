@@ -35,7 +35,7 @@
       Comment="Version number."/>
 
     <property Key="supports.mixing"
-      Value="true"
+      Value="false"
       Scope="system"
       Comment="Mixing support."/>
 
