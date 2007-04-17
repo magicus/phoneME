@@ -41,7 +41,7 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.crypto.SHA \
         com.sun.midp.events.EventQueue \
         com.sun.midp.events.NativeEventMonitor \
-        com.sun.midp.installer.JarReader \
+        com.sun.midp.jarutil.JarReader \
         com.sun.midp.installer.OtaNotifier \
 	com.sun.midp.io.NetworkConnectionBase \
         com.sun.midp.io.j2me.push.PushRegistryImpl \

@@ -71,7 +71,6 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/InstallState.java \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/InvalidJadException.java \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/JadProperties.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/JarReader.java \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/ManifestProperties.java \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/SuiteDownloadInfo.java \
     $(MIDLET_API_DIR)/classes/javax/microedition/midlet/MIDletStateChangeException.java \
@@ -126,9 +125,6 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
   midp_foreground_id.c \
   midpInflate.c \
   midpInit.c \
-  jar.c \
-  JarReader.c \
-  midpJar.c \
   JumpInit.c
 
 ifneq ($(CVM_PRELOAD_LIB), true)

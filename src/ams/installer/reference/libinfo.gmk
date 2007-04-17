@@ -33,17 +33,13 @@ LIB_JAVA_FILES= \
     com/sun/midp/installer/InstallState.java \
     com/sun/midp/installer/InvalidJadException.java \
     com/sun/midp/installer/JadProperties.java \
-    com/sun/midp/installer/JarReader.java \
     com/sun/midp/installer/ManifestProperties.java \
     com/sun/midp/installer/SuiteDownloadInfo.java
 
 LIB_C_FILES= \
     fileInstallerShared.c \
     jadParser.c \
-    jar.c \
-    JarReader.c \
-    manifestParser.c \
-    midpJar.c
+    manifestParser.c
 
 #
 # IMPL_NOTE: remove when decoupling is complete

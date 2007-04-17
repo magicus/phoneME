@@ -32,7 +32,6 @@ import com.sun.midp.installer.ManifestProperties;
 import com.sun.midp.installer.OtaNotifier;
 import com.sun.midp.installer.InstallState;
 import com.sun.midp.installer.VerifierImpl;
-import com.sun.midp.installer.JarReader;
 
 import java.util.Vector;
 
@@ -61,6 +60,8 @@ import com.sun.midp.midletsuite.InstallInfo;
 import com.sun.midp.midletsuite.SuiteSettings;
 import com.sun.midp.midletsuite.MIDletSuiteLockedException;
 import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
+
+import com.sun.midp.jarutil.JarReader;
 
 import com.sun.midp.io.HttpUrl;
 import com.sun.midp.io.Util;
@@ -783,8 +784,8 @@ public abstract class JUMPInstaller {
             // Create JAR Properties (From .jar file's MANIFEST)
 
             try {
-                state.manifest = JarReader.readJarEntry(token,
-                    info.jarFilename, MIDletSuite.JAR_MANIFEST);
+                state.manifest = JarReader.readJarEntry(info.jarFilename,
+                    MIDletSuite.JAR_MANIFEST);
                 if (state.manifest == null) {
                     postInstallMsgBackToProvider(
                         OtaNotifier.INVALID_JAR_MSG);
@@ -1270,7 +1271,7 @@ public abstract class JUMPInstaller {
 
         try {
             /* Attempt to read the MIDlet from the JAR file. */
-            if (JarReader.readJarEntry(token, info.jarFilename, file) != null) {
+            if (JarReader.readJarEntry(info.jarFilename, file) != null) {
                 return;                // File found, normal return
             }
             // Fall into throwing the exception

@@ -35,9 +35,7 @@ import java.io.ByteArrayInputStream;
 
 import javax.microedition.io.ConnectionNotFoundException;
 
-import com.sun.midp.security.SecurityHandler;
-import com.sun.midp.security.SecurityToken;
-import com.sun.midp.security.Permissions;
+import com.sun.midp.security.*;
 
 import com.sun.midp.main.MIDletSuiteVerifier;
 import com.sun.midp.main.MIDletAppImageGenerator;
@@ -45,14 +43,9 @@ import com.sun.midp.main.MIDletAppImageGenerator;
 import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 
-import com.sun.midp.midletsuite.MIDletSuiteStorage;
-import com.sun.midp.midletsuite.MIDletSuiteImpl;
-import com.sun.midp.midletsuite.MIDletInfo;
-import com.sun.midp.midletsuite.MIDletSuiteInfo;
-import com.sun.midp.midletsuite.InstallInfo;
-import com.sun.midp.midletsuite.SuiteSettings;
-import com.sun.midp.midletsuite.MIDletSuiteLockedException;
-import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
+import com.sun.midp.midletsuite.*;
+
+import com.sun.midp.jarutil.JarReader;
 
 import com.sun.midp.io.HttpUrl;
 import com.sun.midp.io.Util;
@@ -747,8 +740,8 @@ public abstract class Installer {
 
             // Create JAR Properties (From .jar file's MANIFEST)
             try {
-                state.manifest = JarReader.readJarEntry(
-                    info.jarFilename, MIDletSuite.JAR_MANIFEST);
+                state.manifest = JarReader.readJarEntry(info.jarFilename,
+                    MIDletSuite.JAR_MANIFEST);
                 if (state.manifest == null) {
                     postInstallMsgBackToProvider(
                         OtaNotifier.INVALID_JAR_MSG);

@@ -192,6 +192,10 @@ else
    EXTRA_CFLAGS += -DENABLE_IMAGE_CACHE=0
 endif
 
+ifeq ($(TARGET_VM), cdc_vm)
+   USE_ICON_CACHE = false
+endif
+
 ifeq ($(USE_ICON_CACHE), true)
    EXTRA_CFLAGS += -DENABLE_ICON_CACHE=1
 else

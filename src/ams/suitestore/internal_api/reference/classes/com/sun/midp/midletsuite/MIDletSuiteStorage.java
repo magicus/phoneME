@@ -36,6 +36,7 @@ import com.sun.midp.midlet.MIDletStateHandler;
 
 import com.sun.midp.content.CHManager;
 
+import com.sun.midp.jarutil.JarReader;
 import com.sun.midp.util.Properties;
 
 import com.sun.midp.configurator.Constants;
@@ -44,7 +45,6 @@ import com.sun.midp.rms.RecordStoreImpl;
 
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
-import com.sun.midp.installer.JarReader;
 
 /**
  * This class manages the persistent data for MIDlet suites.

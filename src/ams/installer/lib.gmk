@@ -52,23 +52,5 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/InstallState.java \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/InvalidJadException.java \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/JadProperties.java \
-    $(INSTALLER_DIR)/classes/com/sun/midp/installer/JarReader.java \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/ManifestProperties.java \
     $(INSTALLER_DIR)/classes/com/sun/midp/installer/SuiteDownloadInfo.java
-
-# vpath for sub-system
-#
-vpath % \
-    $(INSTALLER_DIR)/native
-
-# Include path for the sub-system
-#
-SUBSYSTEM_AMS_EXTRA_INCLUDES += \
-    -I$(INSTALLER_DIR)/../include
-
-# Native files for common module
-#
-SUBSYSTEM_AMS_NATIVE_FILES += \
-        jar.c \
-        JarReader.c \
-        midpJar.c
