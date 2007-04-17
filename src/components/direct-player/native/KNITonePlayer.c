@@ -62,3 +62,13 @@ Java_com_sun_mmedia_NativeTonePlayer_nStopTone() {
     }
     KNI_ReturnBoolean(returnValue);
 }
+
+/*************************************************************************/
+
+/* Native finalizer */
+KNIEXPORT KNI_RETURNTYPE_VOID
+Java_com_sun_mmedia_NativeTonePlayer_finalize() {
+
+    javacall_media_stop_tone();
+    KNI_ReturnVoid();
+}

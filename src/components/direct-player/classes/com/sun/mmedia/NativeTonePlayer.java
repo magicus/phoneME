@@ -44,6 +44,8 @@ public class NativeTonePlayer implements TonePlayer {
      */
     private native boolean nPlayTone(int note, int dur, int vol);
     private native boolean nStopTone();
+    // native finalizer 
+    private native void finalize();
     
     public void playTone(int note, int duration, int volume)
          throws MediaException {
