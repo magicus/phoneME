@@ -180,16 +180,6 @@ public abstract class Installer {
      */
     protected String additionalPermissions;
 
-    /** Class registered in SecurityInitializer. */
-    private static class SecurityTrusted implements ImplicitlyTrustedClass {}
-
-    /**
-     * Security token for provileged access to internal API's.
-     * Note it must stay package private.
-     */
-    static SecurityToken classSecurityToken =
-        SecurityInitializer.requestToken(new SecurityTrusted());
-
     /**
      * Constructor of the Installer.
      */
