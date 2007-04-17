@@ -31,7 +31,7 @@ printconfig::
 	@echo "JUMP_DIR           = $(JUMP_DIR)"
 
 .PHONY: jumptargets force_jump_build
-jumptargets: force_jump_build
+jumptargets: force_jump_build $(CVM_BINDIR)/runjump $(CVM_BINDIR)/autotest $(CVM_BINDIR)/runinstall 
 
 $(CVM_BUILD_DEFS_MK)::
 	$(AT) echo updating $@ [from rules_jump.mk]
@@ -53,6 +53,24 @@ force_jump_build: $(JUMP_DEPENDENCIES)
                 $(JUMP_EXECUTIVE_BOOTCLASSESZIP) \
                 $(CVM_LIBDIR)
 	@echo  "<==== done building jump api's and implementation"
+
+#
+# For a non-romized build we should add JSRs jarfiles to Xbootclasspath
+# for a server cvm instance. After forking the classpath will be inherited by
+# executive and isolates cvm instances.
+# For a romized build all JSR classes are included in cvm executable.
+#
+$(CVM_BINDIR)/runjump: $(JUMP_SCRIPTS_DIR)/runjump
+ifneq ($(CVM_PRELOAD_LIB), true)
+	$(AT)sed -e "s,^ *SERVER_JARFILE=.*$$,&$(JUMP_JSROP_JARS)," $^ > $@
+else
+	$(AT)cp $^ $@
+endif
+	$(AT)chmod 755 $@
+
+$(CVM_BINDIR)/%: $(JUMP_SCRIPTS_DIR)/%
+	$(AT)cp $^ $@
+	$(AT)chmod 755 $@
 
 .PHONY: javadoc-api
 javadoc-api:
