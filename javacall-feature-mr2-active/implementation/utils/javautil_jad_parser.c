@@ -94,7 +94,7 @@ javacall_result javautil_get_jar_url_from_jad(const javacall_utf16* jadPath,
     char* jadBuffer;
     char* jadBufferStart;
     javacall_jad_properties jadProps;
-    long freeSpace, neededSpace;
+    javacall_int64 freeSpace, neededSpace;
 
     /**
      * Read the entire jad file into a buffer.
