@@ -227,7 +227,7 @@ public class MIDletSuiteStorage {
 
             if (iconBytes == null) {
                 /* Search for icon in the suite JAR */
-                iconBytes = JarReader.readJarEntry(classSecurityToken,
+                iconBytes = JarReader.readJarEntry(
                     getMidletSuiteJarPath(suiteId), iconName);
             }
         } catch (Exception e) {

@@ -750,8 +750,8 @@ public abstract class Installer {
 
             // Create JAR Properties (From .jar file's MANIFEST)
             try {
-                state.manifest = JarReader.readJarEntry(classSecurityToken,
-                    info.jarFilename, MIDletSuite.JAR_MANIFEST);
+                state.manifest = JarReader.readJarEntry(info.jarFilename,
+                    MIDletSuite.JAR_MANIFEST);
                 if (state.manifest == null) {
                     postInstallMsgBackToProvider(
                         OtaNotifier.INVALID_JAR_MSG);
@@ -1300,8 +1300,7 @@ public abstract class Installer {
 
         try {
             /* Attempt to read the MIDlet from the JAR file. */
-            if (JarReader.readJarEntry(classSecurityToken,
-                    info.jarFilename, file) != null) {
+            if (JarReader.readJarEntry(info.jarFilename, file) != null) {
                 return;                // File found, normal return
             }
             // Fall into throwing the exception

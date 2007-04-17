@@ -30,9 +30,13 @@ import java.lang.String;
 
 import java.io.IOException;
 
+import com.sun.midp.midlet.MIDletStateHandler;
+import com.sun.midp.midlet.MIDletSuite; 
+
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 
+import com.sun.midp.io.Util;
 /**
  * This class provides a Java API for reading an entry from a Jar file stored
  * on the file system.
@@ -42,7 +46,6 @@ public class JarReader {
      * Returns the content of the given entry in the JAR file on the
      * file system given by jarFilePath.
      *
-     * @param securityToken token with permission to install software
      * @param jarFilePath file pathname of the JAR file to read. May
      *          be a relative pathname.
      * @param entryName name of the entry to return.
@@ -55,17 +58,19 @@ public class JarReader {
      * @exception SecurityException if the caller does not have permission
      *   to install software.
      */
-    public static byte[] readJarEntry(SecurityToken securityToken,
-                               String jarFilePath, String entryName)
+    public static byte[] readJarEntry(String jarFilePath, String entryName)
             throws IOException {
+        MIDletStateHandler midletStateHandler =
+            MIDletStateHandler.getMidletStateHandler();
+        MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
 
-        if (securityToken != null) {
-            securityToken.checkIfPermissionAllowed(Permissions.AMS);
-        } else {
+        if (midletSuite == null) {
             throw new SecurityException(SecurityToken.STD_EX_MSG);
         }
 
-        if (entryName.charAt(0) == '/') { 
+        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+
+        if (entryName.charAt(0) == '/') {
             /*
              * Strip off the leading directory separator, or the
              * resource will not be found in the JAR.

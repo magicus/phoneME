@@ -230,8 +230,7 @@ public final class SecurityInitializer {
 
         "com.sun.midp.suspend.AbstractSubsystem$SecurityTrusted",
         "com.sun.midp.io.j2me.socket.Protocol$SecurityTrusted",
-        "com.sun.midp.main.MIDletProxyList$SecurityTrusted",
-        "com.sun.midp.installer.Installer$SecurityTrusted"
+        "com.sun.midp.main.MIDletProxyList$SecurityTrusted"
     };
 
     /**
