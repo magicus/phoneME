@@ -115,6 +115,42 @@ void javanotify_install_midlet(const char * httpUrl);
 
 /**
  * A notification function for telling Java to perform installation of
+ * a content via http, for SprintAMS.
+ *
+ * This function requires that the descriptor (JADfile, or GCDfile)
+ * has already been downloaded and resides somewhere on the file system.
+ * The function also requires the full URL that was used to download the
+ * file.
+ * 
+ * The given URL should be of the form http://www.sun.com/a/b/c/d.jad
+ * or http://www.sun.com/a/b/c/d.gcd.  
+ * Java will start a graphical installer which will download the content
+ * fom the Internet.
+ *
+ * @param httpUrl null-terminated http URL string of the content 
+ *        descriptor. The URL is of the following form:
+ *        http://www.website.com/a/b/c/d.jad
+ * @param descFilePath full path of the descriptor file which is of the 
+ *        form:
+ *        /a/b/c/d.jad  or /a/b/c/d.gcd
+ * @param descFilePathLen length of the file path
+ * @param isJadFile set to TRUE if the mime type of of the downloaded
+ *        descriptor file is <tt>text/vnd.sun.j2me.app-descriptor</tt>. If 
+ *        the mime type is anything else (e.g., <tt>text/x-pcs-gcd</tt>), 
+ *        this must be set to FALSE.
+ * @param isSilent set to TRUE if the content is to be installed silently,
+ *        without intervention from the user. (e.g., in the case of SL
+ *        or SI messages)
+ * 
+ */
+void javanotify_install_content(const char * httpUrl,
+                                const javacall_utf16* descFilePath,
+                                int descFilePathLen,
+                                javacall_bool isJadFile,
+                                javacall_bool isSilent);
+
+/**
+ * A notification function for telling Java to perform installation of
  * a MIDlet from filesystem,
  *
  * The installation will be performed in the background without launching

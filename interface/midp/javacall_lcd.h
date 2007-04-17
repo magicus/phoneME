@@ -234,6 +234,12 @@ int javacall_lcd_get_screen_width();
   */
 int javacall_lcd_get_screen_height();
 
+/**
+ * The platform should invoke this function in platform context
+ * to rotate the screen.
+ */
+void javanotify_rotation();
+
 /** @} */
 
 
