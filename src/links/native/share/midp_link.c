@@ -863,6 +863,20 @@ Java_com_sun_midp_links_LinkPortal_getLinks0(void)
     KNI_ReturnVoid();
 }
 
+/**
+ * Shutdowns Links subsystem.
+ */
+void midp_links_shutdown() {
+    if (portals != NULL) {
+        int i;
+        for (i = 0; i < JVM_MaxIsolates(); i++) {
+            portal_free(&portals[i]);       
+        }
+
+        pcsl_mem_free(portals);        
+        portals = NULL;
+    }
+}
 
 
 #if ENABLE_I3_TEST

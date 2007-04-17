@@ -217,6 +217,19 @@ EXTRA_INCLUDES		+= $(SUBSYSTEM_PROTOCOL_EXTRA_INCLUDES)
 EXTRA_CFLAGS		+= $(SUBSYSTEM_PROTOCOL_EXTRA_CFLAGS)
 
 #######################################################################
+# Links
+#######################################################################
+ifeq ($(USE_LINKS), true)
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_LINKS_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_LINKS_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_LINKS_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_LINKS_EXTRA_INCLUDES)
+EXTRA_CFLAGS		+= $(SUBSYSTEM_LINKS_EXTRA_CFLAGS)
+endif  
+
+#######################################################################
 # TESTS
 #######################################################################
 

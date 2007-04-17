@@ -283,6 +283,12 @@ else
    EXTRA_CFLAGS += -DENABLE_JPEG=0
 endif
 
+ifeq ($(USE_LINKS), true)
+   EXTRA_CFLAGS += -DENABLE_LINKS=1
+else
+   EXTRA_CFLAGS += -DENABLE_LINKS=0
+endif
+
 EXTRA_CFLAGS += -DPROJECT_NAME='"$(PROJECT_NAME)"'
 
 ifeq ($(USE_NATIVE_PROFILER), true)
