@@ -27,6 +27,17 @@
 #include "multimedia.h"
 #include <windows.h>
 
+#define JTS_SILENCE         -1
+#define JTS_VERSION         -2
+#define JTS_TEMPO           -3
+#define JTS_RESOLUTION      -4
+#define JTS_BLOCK_START     -5
+#define JTS_BLOCK_END       -6
+#define JTS_PLAY_BLOCK      -7
+#define JTS_SET_VOLUME      -8
+#define JTS_REPEAT          -9
+#define JTS_C4              60
+
 /**
  * Tone player handle
  */
@@ -44,6 +55,77 @@ typedef struct {
 } tone_handle;
 
 /**********************************************************************************/
+
+static BOOL tone_check_sequence( const char* seq, long len )
+{
+    int t;
+    int pos = 0;
+
+    char blk_defined[ 128 ];
+    BOOL res_defined = FALSE;
+    BOOL tmp_defined = FALSE;
+    int  blk         = -1;
+
+    memset( blk_defined, 0, 128 );
+
+    if( len < 2 ) return FALSE;
+
+    while( pos < len )
+    {
+        switch( t = seq[ pos++ ] )
+        {
+        case JTS_VERSION:
+            if( 1 != seq[ pos ] ) return FALSE;
+            pos++;
+            break;
+        case JTS_TEMPO:
+            if( tmp_defined ) return FALSE;
+            if( seq[ pos ] < 5 || seq[ pos ] > 127 ) return FALSE;
+            tmp_defined = TRUE;
+            pos++;
+            break;
+        case JTS_RESOLUTION:
+            if( res_defined ) return FALSE;
+            if( seq[ pos ] < 1 || seq[ pos ] > 127 ) return FALSE;
+            res_defined = TRUE;
+            pos++;
+            break;
+        case JTS_BLOCK_START:
+            if( seq[ pos ] < 0 || seq[ pos ] > 127 ) return FALSE;
+            blk = seq[ pos++ ];
+            break;
+        case JTS_BLOCK_END:
+            if( -1 == blk ) return FALSE;
+            if( seq[ pos++ ] != blk ) return FALSE;
+            blk_defined[ blk ] = 1;
+            blk = -1;
+            break;
+        case JTS_PLAY_BLOCK:
+            if( seq[ pos ] < 0 || seq[ pos ] > 127 ) return FALSE;
+            if( !blk_defined[ seq[ pos ] ] ) return FALSE;
+            pos++;
+            break;
+        case JTS_SET_VOLUME:
+            if( seq[ pos ] < 0 || seq[ pos ] > 100 ) return FALSE;
+            pos++;
+            break;
+        case JTS_REPEAT:
+            if( seq[ pos ] < 2 || seq[ pos ] > 127 ) return FALSE;
+            pos++;
+            break;
+        case JTS_SILENCE:
+            if( seq[ pos ] < 1 || seq[ pos ] > 127 ) return FALSE;
+            pos++;
+            break;
+        default:
+            if( t < 0 || t > 127 ) return FALSE;
+            if( seq[ pos ] < 1 || seq[ pos ] > 127 ) return FALSE;
+            pos++;
+        }
+    }
+
+    return TRUE;
+}
 
 /**
  * Play tone by using MIDI short message
@@ -207,6 +289,8 @@ static long tone_do_buffering(javacall_handle handle,
         return 0;
     }
 
+    if( !tone_check_sequence( (const char*)buffer, length ) ) return -1;
+
     if (NULL != pHandle->pToneBuffer) {
         FREE(pHandle->pToneBuffer);
     }
@@ -267,9 +351,20 @@ static javacall_result tone_start(javacall_handle handle)
             pHandle->isPlaying = JAVACALL_TRUE;
             return JAVACALL_OK;
         }
+        else
+        {
+            printf("tone_start: failed\n");
+            return JAVACALL_FAIL;
+        }
+    }
+    else
+    {
+        printf("tone_start: no data\n");
+        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA, 
+            pHandle->playerId, (void*)0 );
     }
     
-    return JAVACALL_FAIL;
+    return JAVACALL_OK;
 }
 
 /**
