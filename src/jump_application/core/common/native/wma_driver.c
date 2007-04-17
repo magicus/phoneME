@@ -24,7 +24,7 @@
 
 #include <stdio.h> // NULL, fprintf()
 #include <string.h> // strcmp()
-#include <JUMPMessages.h>
+#include <jump_messaging.h>
 #include <jsr120_jumpdriver.h>
 
 #include <jsr120_sms_pool.h>
@@ -32,54 +32,64 @@
 #include "javacall_cbs.h"
 #include "javacall_sms.h"
 
+#include <kni.h>
+#include <sni.h>
 
-static void wma_handler(JUMPMessage *m, jmpMessageQueue queue, void *context) {
-    unsigned char buf[JUMP_MSG_MAX_LENGTH];
+typedef int MessageListener(JUMPMessage m);
 
-    (void)queue; (void)context;
-    if (m->messageType != NULL && !strcmp(m->messageType, "wma/jsr120")) {
-        JUMPMessage *mm = jumpMessageResponseInBuffer(m, buf, sizeof buf);
-        int offset = 0;
-        jumpMessageWriteString(mm, &offset, "Hello");
-        jumpMessageSend(m->senderProcessId, mm);
-    }
+MessageListener jsr120_jumpdriver_listener, jsr120_jumpcallback_listener;
+
+#ifdef ENABLE_JSR_205
+MessageListener jsr205_jumpdriver_listener, jsr205_jumpcallback_listener;
+#endif
+
+static void wma_listener(JUMPPlatformCString msgType, 
+    MessageListener *listeners[], int listener_cnt);
+char *prog_name = "isolate";
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_jump_driver_wma_Listener_nativeStartListener) {
+    static const JUMPPlatformCString msgType = "jsrop/wma";
+    static MessageListener *listeners[] = {
+        jsr120_jumpcallback_listener
+#ifdef ENABLE_JSR_205
+        , jsr205_jumpcallback_listener
+#endif
+    };
+    prog_name = "listener";
+    CVMD_gcSafeExec(_ee, {
+        wma_listener(msgType, listeners, sizeof listeners / sizeof listeners[0]);
+    });
+    KNI_ReturnVoid();
 }
-void jsr120_jumpdriver_listener(JUMPMessage *m__, jmpMessageQueue queue__, void *context__);
-#if (ENABLE_JSR_205)
-void jsr205_jumpdriver_listener(JUMPMessage *m__, jmpMessageQueue queue__, void *context__);
+void wmaDriver(int argc, char **argv) {
+    static const JUMPPlatformCString msgType = "native/wmaDriver";
+    static MessageListener *listeners[] = {
+        jsr120_jumpdriver_listener
+#ifdef ENABLE_JSR_205
+        , jsr205_jumpdriver_listener
 #endif
+    };
+    prog_name = "driver";
+    wma_listener(msgType, listeners, sizeof listeners / sizeof listeners[0]);
+}
 
-int wma_driver(int argc, const char **argv) {
-    char *context = "";
-    JUMPMessage *m;
-    int quit;
-    JUMPMessageFlag quitFlag;
-    int ready;
-    JUMPMessageFlag readyFlag;
-    unsigned char buf[NMSG_MAX_LENGTH];
-    
-    //temporary call. Should be called from cdc/midp.  
-    init_jsr120();
+static void wma_listener(JUMPPlatformCString msgType, 
+            MessageListener *listeners[], int listener_cnt) {
+    JUMPMessage in;
+    JUMPMessageStatusCode code;
 
-    if (context == NULL || jumpMessageQueueCreate() < 0) {
-        fprintf(stderr, "Cannot create queue!!\n");
-        return -1;
-    }
-    readyFlag = jumpMessageFlagCreate("executive/ready", &ready);
-    quitFlag = jumpMessageFlagCreate("internal/quit", &quit);
-    jumpMessageQueueAddHandlerOnType("wma/jsr120", jsr120_jumpdriver_listener, context);
-#if (ENABLE_JSR_205)
-    jumpMessageQueueAddHandlerOnType("wma/jsr205", jsr205_jumpdriver_listener, context);
-#endif
-    m = jumpMessageCreateInBuffer("executive/iamready", buf, sizeof buf);
-    jumpMessageSend(jumpProcessGetExecutiveId(), m);
-    jumpMessageFlagWait(readyFlag);
-    jumpMessageFlagWait(quitFlag);
-    jumpMessageQueueRemoveHandlerOnType("wma/test", context);
-    m = jumpMessageCreateInBuffer("internal/quit", buf, sizeof buf);
-    jumpMessageSend(jumpProcessGetId(), m);
-    jumpMessageQueueDestroy();
-    return 0;
+    in = jumpMessageWaitFor(msgType, 0, &code);
+    while (in != NULL) {
+        int i;
+        for (i = 0; i < listener_cnt; i++) {
+            if ((*listeners[i])(in) != 0) {
+                break;
+            }
+        }
+        in = jumpMessageWaitFor(msgType, 0, &code);
+    } 
+    return;
 }
 
 /**
@@ -145,5 +155,4 @@ void javanotify_incoming_cbs(
     CbsMessage *cbs = jsr120_cbs_new_msg(msgType, msgID, msgBufferLen, msgBuffer);
     INVOKE_REMOTELY_VOID(jsr120_cbs_pool_add_msg, (cbs));
 }
-
 

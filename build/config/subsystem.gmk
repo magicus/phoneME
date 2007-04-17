@@ -175,8 +175,7 @@ vpath % $(JSR_120_DIR)/src/share/protocol/cbs/native/share
 vpath % $(JSR_120_DIR)/src/share/core/common/native/share
 
 ifeq ($(ENABLE_JUMP), true)
-#vpath % $(JSR_120_DIR)/src/jump_application/core/common/native/jump_driver
-vpath % $(JSR_120_DIR)/src/jump_application/core/common/native/
+vpath % $(JSR_120_DIR)/src/jump_application/core/common/native
 endif
 
 SUBSYSTEM_JSR_120_EXTRA_INCLUDES = \
@@ -200,9 +199,11 @@ endif
 
 ifeq ($(ENABLE_JUMP), true)
 SUBSYSTEM_JSR_120_NATIVE_FILES += \
-    jsr120_jumpdriver.c \
-    jsr120_jumpdriver_stubs.c \
-    wma_driver.c 
+    jsr120_callback_proxy.c  \
+    jsr120_callback_srv.c  \
+    jsr120_driver_proxy.c  \
+    jsr120_driver_srv.c  \
+    wma_driver.c
 endif
 
 # Specify romizer configuration file for the jsr
@@ -316,7 +317,6 @@ clean_tools::
 # Create JSR120 source in subdir 'jsr120/'
 #JSR_120_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr120
 
-# Valid for midp build only
 # Copy and filter JSR120 source in JSR_120_SOURCE_OUTPUT_DIR
 #jsr_120_source_bundle: SOURCE_OUTPUT_DIR
 #	@echo " ... JSR 120 source bundle" $(LOG)

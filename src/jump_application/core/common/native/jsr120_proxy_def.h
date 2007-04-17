@@ -22,87 +22,23 @@
  * information or have any questions. 
  */
 
+#include "./jsr120_driver_def.h"
 
-#define NM_DEBUG
-#ifdef NM_DEBUG
-extern char *prog_name;
-#define LOG(str)  do { \
-    fprintf(stderr, "[%s-%d] (%s:%d): %s\n", prog_name, getpid(), \
-        __FUNCTION__, __LINE__, (str)); \
-    fflush(stderr); \
-} while (0)
+static const JUMPPlatformCString driverMessageType__ = "native/wmaDriver";
+static const JUMPPlatformCString jsropMessageType__ = "jsrop/wma";
 
-#define LOG1(fmt, par)  do { \
-    char _b[100]; \
-    snprintf(_b, sizeof _b, (fmt), (par)); \
-    _b[sizeof _b - 1] = '\0'; \
-    fprintf(stderr, "[%s-%d] (%s:%d): %s\n", prog_name, getpid(), \
-        __FUNCTION__, __LINE__, _b); \
-    fflush(stderr); \
-} while (0)
-#define LOG2(fmt, par1, par2)  do { \
-    char _b[100]; \
-    snprintf(_b, sizeof _b, (fmt), (par1), (par2)); \
-    _b[sizeof _b - 1] = '\0'; \
-    fprintf(stderr, "[%s-%d] (%s:%d): %s\n", prog_name, getpid(), \
-        __FUNCTION__, __LINE__, _b); \
-    fflush(stderr); \
-} while (0)
-
-#define nmsg_error(s)   do {LOG1("%s --> exit", (s)); exit(1);} while (0)
-#else
-#define LOG(x)  (void)prog_name /* avoid warining about unused variable */
-#define LOG1(x,arg) (void)prog_name /* avoid warining about unused variable */
-#define LOG2(x,arg1,arg2)   (void)prog_name /* avoid warining about unused variable */
-#define nmsg_error(s)   do {printf("%s --> exit\n", (s)); exit(1);} while (0)
-#endif
-
-
-#include <jsr120_sms_protocol.h>
-#include <jsr120_cbs_protocol.h>
-#include <jsr120_sms_listeners.h>
-#include <jsr120_cbs_listeners.h>
-#include <app_package.h>
-
-#include <stdio.h>
-#include <string.h>
-
-#include <JUMPMessages.h>
-// #define JSR120_KNI_LAYER
-#include <jsr120_jumpdriver.h>
-
-#include <javacall_sms.h>
-#include <javacall_cbs.h>
-
-static int driver = -1;
-
-extern struct {
-    int pid;
-    int client_id1;
-    int client_id2;
-    int key;
-} client_list__[];
-extern int client_cnt__;
-
-#define ALIGN_BITS                  64
-#define ALIGN_BYTES                 (ALIGN_BITS >> 3)
-#define ALIGN_MASK                  (ALIGN_BYTES - 1)
-#define ALIGN_IS_ALIGNED(ptr_)      (ALIGN_SHIFT(ptr_) == 0)
-#define ALIGN_SHIFT(ptr_)           ((ptr_) & ALIGN_MASK)
-#define ALIGN_GAP                   (ALIGN_BYTES - 1)
-#define ALIGN(ptr_)                 ((ptr_) = (ALIGN_IS_ALIGNED((int)ptr_) ? (ptr_) : ((ptr_) + ALIGN_SHIFT((int)ptr_))))
-
-#define START_INTERFACE()
+#define START_INTERFACE(jsrNo_, name_)
 #define END_INTERFACE()
 #define SET_CLIENT_ID(clientId1_, clientId2_, clientKey_)
 #define CLEAR_CLIENT_ID(clientKey_)
 #define SET_SERVER_BY_ID(clientHandle_, serverHandle_) {\
-    int i = (int)(clientHandle_); \
+    int i = (int)(clientHandle_) - 1; \
     int pid; \
-	if (i < client_cnt__ && (pid = client_list__[i].pid) != -1) { \
+	if (i>= 0 && i < client_cnt__ && (pid = client_list__[i].pid) != -1) { \
 	    /* TODO: multithread issues: maybe mutex is required */ \
-        server_pid__ = pid; \
+        SET_SERVER_ID(pid) \
         serverHandle_ = client_list__[i].client_id2; \
+        LOG3("SET_SERVER_BY_ID() pid=%d, i=%d, handle=%d", pid, i, serverHandle_); \
 	} else { \
         LOG2("bad client handle: handle=%d, cnt=%d", i, client_cnt__); \
 	    goto err; \
@@ -111,57 +47,61 @@ extern int client_cnt__;
 
 #define START_INTERNAL(msg_, type_, name_, args_)   \
 type_ D##name_ args_ { \
-    unsigned char buf[JUMP_MSG_MAX_LENGTH]; \
-    JUMPMessage *mm__ = jumpMessageCreateInBuffer(msg_, buf, sizeof buf); \
-    int offset__ = 0; \
-    int server_pid__; \
-    jumpMessageWriteShort(mm__, &offset__, ID_##name_); 
+    JUMPMessageStatusCode code__ = 0; \
+    JUMPOutgoingMessage mm__ = jumpMessageNewOutgoingByType(msg_, &code__); \
+    JUMPMessage m__; \
+    JUMPAddress server_pid__; \
+    JUMPMessageReader r__;\
+    (void)r__; (void)m__; /* for callback methods */ \
+    jumpMessageAddShort(mm__, ID_##name_); \
+    LOG("calling stub of " #name_ "(" #args_ ")");
 
-#define SET_SERVER_ID(pid_)    server_pid = pid_;
+#define SET_SERVER_ID(pid_)    server_pid__.processId = pid_;
 #define SET_SERVER_DRIVER() {\
     if (driver == -1) { \
-        driver = jumpMessageQueueOpen("WMADRIVER"); \
+/* TODO: multithread issues: maybe mutex is required */ \
+        driver = jumpProcessRunDriver("wmaDriver", "jsr120"); \
         if (driver == -1) { \
-            LOG("cannot find WMADRIVER"); \
+            LOG("cannot find WMA driver"); \
             goto err; \
         } \
     } \
-    server_pid__ = driver; \
+    SET_SERVER_ID(driver) \
 }
 
 #define SET_SERVER_SELF() \
-    server_pid__ = jumpProcessGetId();
+    SET_SERVER_ID(jumpProcessGetId())
 
 #define START(type_, name_, args_)   \
-    START_INTERNAL("wma/jsr120", type_, name_, args_) \
+    START_INTERNAL(driverMessageType__, type_, name_, args_) \
     SET_SERVER_DRIVER() {
 
 #define START_VOID(name_, args_)   \
-    START_INTERNAL("wma/jsr120", void, name_, args_) \
+    START_INTERNAL(driverMessageType__, void, name_, args_) \
     SET_SERVER_DRIVER() {
 
 #define START_SELF(name_, args_)   \
-    START_INTERNAL("wma/jsr120", void, name_, args_) \
+    START_INTERNAL(driverMessageType__, void, name_, args_) \
     SET_SERVER_SELF() {
 
 #define START_CALLBACK(name_, args_, clientHandle_)   \
-    START_INTERNAL("wma/jsr120", void, name_, args_) \
+    START_INTERNAL(jsropMessageType__, void, name_, args_) \
     SET_SERVER_BY_ID(clientHandle_, clientHandle_) {
 
 #define ARG(type_, arg_)    {\
     type##type_ tmp_arg__ = (type##type_) (arg_); \
-    jumpMessageWrite##type_(mm__, &offset__, tmp_arg__); \
+    jumpMessageAdd##type_(mm__, tmp_arg__); \
 }
 
 #define ARG_ARRAY(type_, arg_, arglen_)    \
-    jumpMessageWrite##type_##Array(mm__, &offset__, arg_, arglen_);
+    jumpMessageAddBytesFrom(mm__, (int8*)(arg_), (arglen_ * sizeof *(arg_)));
 
 #define ARG_STRING(arg_)    \
     if (arg_ == NULL) { \
-        jumpMessageWriteInt(mm__, &offset__, -1); \
+        jumpMessageAddInt(mm__, -1); \
     } else { \
         int len__ = strlen(arg_); \
-        jumpMessageWriteInt(mm__, &offset__, len__); \
+        jumpMessageAddInt(mm__, len__); \
         ARG_ARRAY(Byte, arg_, len__) \
     }
 
@@ -170,16 +110,16 @@ type_ D##name_ args_ { \
 
 #define INVOKE_VOID(function_, arg_) {\
     unsigned char iface_result__; \
-    mm__ = jumpMessageSendAndWaitForResponse(server_pid__, mm__); \
-    if (mm__ == NULL) { \
-        LOG("cannot create response message"); \
+    LOG(#function_ ": before send"); \
+    m__ = jumpMessageSendSync(server_pid__, mm__, 0, &code__); \
+    LOG(#function_ ": after send"); \
+    /* jumpMessageFreeOutgoing(mm__); */ \
+    if (code__ != 0 || m__ == NULL) { \
+        LOG("cannot create message"); \
         goto err; \
     } \
-    offset__ = 0; \
-    if (jumpMessageReadByte(mm__, &offset__, &iface_result__) < 0) { \
-        LOG("cannot read byte"); \
-        goto err; \
-    } \
+    jumpMessageReaderInit(&r__, m__); \
+    iface_result__ = jumpMessageGetByte(&r__); \
     if (iface_result__ != IFACE_STATUS_OK) { \
         LOG("bad result returned"); \
         goto err; \
@@ -187,12 +127,14 @@ type_ D##name_ args_ { \
 }   
 
 #define INVOKE_AND_END(function_, args_) \
-    jumpMessageSend(server_pid__, mm__); \
+    jumpMessageSendAsync(server_pid__, mm__, &code__);\
+    /*jumpMessageFreeOutgoing(mm__);*/ \
+    if (code__ != 0) {\
+        LOG("cannot create message"); \
+        goto err; \
     } \
-err: \
-    return; \
-}
- 
+    END_VOID()
+
 #define DECL_ARG(type_, arg_) \
     ;
 
@@ -213,12 +155,9 @@ err: \
 
 #define STRUC_SIZE(type_, name_, size_, argcnt_) {\
     int size__; \
-    if (jumpMessageReadInt(mm__, &offset__, &size__) < 0) { \
-        LOG("cannot read structure size"); \
-        goto err; \
-    } \
+    size__ = jumpMessageGetInt(&r__); \
     if (size__ != -1) { \
-        name_##_ptr = malloc(size__ + argcnt_ * ALIGN_GAP * 2); \
+        name_##_ptr = malloc(size__ + (argcnt_) * ALIGN_GAP * 2); \
         if (name_##_ptr == NULL) { \
             LOG("no memory"); \
             goto err; \
@@ -229,35 +168,30 @@ err: \
     } else { \
         name_ = NULL; \
     } \
+    LOG("STRUC_SIZE: " #type_ " " #name_ " " #size_ " " #argcnt_ ); \
 }
 
 #define OUT_ARG(type_, arg_)    { \
-    type##type_ tmp_arg__; \
-    if (jumpMessageRead##type_(mm__, &offset__, &tmp_arg__) < 0) { \
-        LOG("cannot read OUT_ARG from message"); \
-        goto err; \
-    } \
+    type##type_ tmp_arg__ = (type##type_)jumpMessageGet##type_(&r__); \
     *(arg_) = tmp_arg__; \
+    LOG("OUT_ARG: " #type_ " " #arg_); \
 }
 
 #define OUT_ARG_ARRAY(type_, ptr_, arrlen_)    \
-    if (jumpMessageRead##type_##Array(mm__, &offset__, ptr_, arrlen_) < 0) { \
-        LOG("cannot read OUT_ARG_ARRAY from message"); \
-        goto err; \
-    }
+    LOG("OUT_ARG_ARRAY: " #type_ " " #ptr_ " " #arrlen_); \
+    jumpMessageGetBytesInto(&r__, (int8*)ptr_, (arrlen_) * sizeof *(ptr_)); 
 
 #define OUT_LOCAL_STRUC(type_, struc_, field_)    \
+    LOG("OUT_LOCAL_STRUC: " #type_ " " #struc_ " " #field_); \
     if (struc_ != NULL) { \
         OUT_ARG(type_, &(struc_)->field_) \
     }
     
 #define OUT_LOCAL_STRUC_STRING(struc_, field_)    \
+    LOG("OUT_LOCAL_STRUC_STRING: " #struc_ " " #field_); \
     if (struc_ != NULL) { \
         int len__ = -1; \
-        if (jumpMessageReadInt(mm__, &offset__, &len__) < 0) { \
-            LOG("cannot read length of STRUC_FIELD"); \
-            goto err; \
-        } \
+        len__ = jumpMessageGetInt(&r__); \
         if (len__ == -1) { \
             (struc_)->field_ = NULL; \
         } else { \
@@ -269,6 +203,7 @@ err: \
     }
 
 #define OUT_LOCAL_STRUC_ARRAY(type_, struc_, field_, fieldlen_)    \
+    LOG("OUT_LOCAL_STRUC: " #type_ " " #struc_ " " #field_ " " #fieldlen_); \
     if (struc_ != NULL) { \
         OUT_LOCAL_STRUC_ARRAY_INTERNAL(type_, struc_, field_, fieldlen_) \
         ALIGN(struc_##_ptr); \
@@ -278,10 +213,7 @@ err: \
 #define OUT_LOCAL_STRUC_ARRAY_INTERNAL(type_, struc_, field_, fieldlen_)    \
     struc_->field_ = (void*)struc_##_ptr; \
     struc_##_ptr += fieldlen_ * sizeof (type##type_); \
-    if (jumpMessageRead##type_##Array(mm__, &offset__, struc_->field_, fieldlen_) < 0) { \
-        LOG("cannot read array"); \
-        goto err; \
-    } 
+    jumpMessageGetBytesInto(&r__, (int8*)(struc_)->field_, (fieldlen_) * sizeof *((struc_)->field_)); 
 
 #define OUT_LOCAL(type_, arg_)    \
     OUT_ARG(type_, &arg_)
@@ -290,15 +222,24 @@ err: \
     OUT_ARG_ARRAY(type_, ptr_, arrlen_)
 
 #define END_VOID() \
+        return; \
     } \
 err: \
+    if (server_pid__.processId == driver) { \
+        driver = -1; \
+    } \
     return; \
 }
     
 #define END(okvalue_, errvalue_) \
+        LOG1("return value=%d", (int)(okvalue_)); \
         return okvalue_; \
     } \
 err: \
+    if (server_pid__.processId == driver) { \
+        driver = -1; \
+    } \
+    LOG1("return error value=%d", (int)(errvalue_)); \
     return errvalue_; \
 }
 
@@ -311,8 +252,6 @@ err: \
 
 #define DECL_FREE_FUNCTION(function_, type_) \
     void D##function_(type_ ptr__) { \
-        free((void *)ptr__); \
+        /* free((void *)ptr__); */ \
     } 
-    
-#include "./jsr120_jumpdriver_interface.incl"
 

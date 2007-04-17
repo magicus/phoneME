@@ -22,17 +22,9 @@
  * information or have any questions. 
  */
 
-#define IFACE_STATUS_OK     0
-#define IFACE_STATUS_FAIL   1
+#include "./jsr120_driver_def.h"
 
-#define STRING_LEN(str_)    (str_ == NULL ? 0 : strlen(str_))
-
-typedef int typeInt;
-typedef unsigned char typeByte;
-typedef short typeShort;
-typedef long long typeLong;
-
-START_INTERFACE()
+START_INTERFACE(120, driver)
 
 // jsr120_cbs_is_midlet_msgID_registered()
 START(WMA_STATUS, jsr120_cbs_is_midlet_msgID_registered, (jchar msgID))
@@ -273,22 +265,6 @@ START_SELF(jsr120_sms_pool_add_msg, (SmsMessage *sms))
 DECL_ARG(SmsMessage *, sms)
 ARG(Int, sms)
 INVOKE_AND_END(jsr120_sms_pool_add_msg, (sms))
-
-// jsr120_sms_unblock_thread()
-START_CALLBACK(jsr120_sms_unblock_thread, (jint handle, jint waitingFor), handle)
-DECL_ARG(jint, handle)
-DECL_ARG(jint, waitingFor)
-ARG(Int, handle)
-ARG(Int, waitingFor)
-INVOKE_AND_END(jsr120_sms_unblock_thread, (handle, waitingFor))
-
-// jsr120_cbs_unblock_thread()
-START_CALLBACK(jsr120_cbs_unblock_thread, (jint handle, jint waitingFor), handle)
-DECL_ARG(jint, handle)
-DECL_ARG(jint, waitingFor)
-ARG(Int, handle)
-ARG(Int, waitingFor)
-INVOKE_AND_END(jsr120_cbs_unblock_thread, (handle, waitingFor))
 
 // javanotify_incoming_sms()
 START_VOID(javanotify_incoming_sms, 
