@@ -70,10 +70,10 @@ static void CALLBACK waveInProc(HWAVEIN hwi, UINT uMsg,
     recorder_handle* hRecord = (recorder_handle*)dwInstance;
     DWORD recorded;
         
-    if (NULL == hRecord)
+    if ((NULL == hRecord) || (NULL == hRecord->pHdr))
         return;
 
-    JAVA_DEBUG_PRINT1("[record] waveInProc %d %d\n", hRecord->isRecording);
+    JAVA_DEBUG_PRINT1("[record] waveInProc %d\n", hRecord->isRecording);
 
     if (uMsg != WIM_DATA)
         return;
