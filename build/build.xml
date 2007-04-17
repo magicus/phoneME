@@ -47,6 +47,7 @@ information or have any questions.
 
   <property name="api.jar.suffix" value="-jump-api.jar"/>
   <property name="impl.jar.suffix" value="-jump-impl.jar"/>
+  <property name="jump.boot.cp" value="btclasses.zip,lib/*.jar"/>
 
   <property name="user.build.properties" value="user.build.properties"/>
   <!-- 
@@ -90,10 +91,8 @@ information or have any questions.
         message="cdc.dir property (${cdc.dir}) seems to be incorrect (please, provide correct one with -D option)"/>
 
     <path id="boot.cp">
-      <fileset dir="${cdc.dir}">
-        <include name="btclasses.zip"/>
-        <include name="lib/*.jar"/>
-      </fileset>
+      <fileset dir="${cdc.dir}"
+       includes="${jump.boot.cp}" />
     </path>
     <presetdef name="javac.base">
       <javac>

@@ -24,15 +24,26 @@ information or have any questions.
 -->
 <project basedir="." default="compile-download-module" name="jump-impl-download">
 
-  <target name="compile-download-module">
-      <jump.javac 
-             srcdir="${s.share.impl.dir}/download/jaxp">
-           <include name="**/*.java" />
-      </jump.javac>
+  <available
+        property="xml.classes.available"
+        classname="javax.xml.parsers.SAXParser"
+        ignoresystemclasses="true">
+     <classpath>
+        <fileset dir="${cdc.dir}" includes="${jump.boot.cp}" />
+     </classpath>
+  </available>
 
+  <target name="compile-download-module" depends="compile-parser">
       <jump.javac 
              srcdir="${s.share.impl.dir}/download/classes">
            <include name="com/sun/jumpimpl/module/download/*.java" />
+      </jump.javac>
+  </target>
+
+  <target name="compile-parser" unless="xml.classes.available">
+      <jump.javac 
+             srcdir="${s.share.impl.dir}/download/jaxp">
+           <include name="**/*.java" />
       </jump.javac>
   </target>
 
