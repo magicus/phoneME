@@ -43,7 +43,7 @@ ifeq ($(USE_MIDP), true)
 JUMP_ANT_OPTIONS         += -Dmidp_output_dir=$(subst $(CDC_DIST_DIR)/,,$(MIDP_OUTPUT_DIR))
 endif
 
-ifneq ($(JUMP_BUILD_PROPS_FILE),undefined)
+ifneq ($(JUMP_BUILD_PROPS_FILE),)
 JUMP_ANT_OPTIONS += -Duser.build.properties=$(JUMP_BUILD_PROPS_FILE) 
 endif
 
