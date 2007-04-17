@@ -622,16 +622,6 @@ public class MIDPWindow extends CWindow {
             }
         }
         super.paint(g, refreshQ);
-
-        /** Check body layer overlapped state for the future repaints */
-        for (CLayerElement le = layers.getTop();
-                le != null; le = le.getLower()){
-            CLayer l = le.getLayer();
-            if (l.isVisible()) {
-                bodyLayer.setOverlapped(l != bodyLayer);
-                break;
-            }
-        }
     }
 
 
@@ -656,6 +646,7 @@ public class MIDPWindow extends CWindow {
         // any visible higher layer also.
         if (super.dirty || !bodyLayer.opaque ||
                 bodyLayer.isOverlapped()) {
+            System.out.println("NON OPTIMIZED");
             return false;
         }
 
@@ -666,6 +657,7 @@ public class MIDPWindow extends CWindow {
         // Thus, for the first one, the clip can be set and then translated,
         // but in the second case, the translate must be done first and then
         // the clip set.
+        System.out.println("OPTIMIZED");
         if (bodyLayer.isDirty()) {
             if (bodyLayer.isEmptyDirtyRegions()) {
                 g.setClip(bodyLayer.bounds[X], bodyLayer.bounds[Y],

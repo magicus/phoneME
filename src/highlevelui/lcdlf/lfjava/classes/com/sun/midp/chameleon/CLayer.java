@@ -58,7 +58,14 @@ public class CLayer {
     /** Flag indicating the ability of this layer to support key/pen input. */
     protected boolean supportsInput;
 
-    /** 
+    /**
+     * Flag indicating whether the layer is overlapped by any
+     * higher visible layer in the owner window stack.
+     * Designed to be used from window painting routines only.
+     */
+    protected boolean overlapped;
+
+    /**
      * Flag indicating this layer is either completely opaque, or not.
      * By default, a layer is not opaque, and thus requires the background
      * and any layers below it to be painted in addition to itself. However,
@@ -478,6 +485,24 @@ public class CLayer {
     }
 
     /**
+     * Inform the layer whether it is overlapped by a higher visible
+     * layer within the owner window stack.
+     * @param overlapped true if overlapped, false otherwise
+     */
+    public void setOverlapped(boolean overlapped) {
+        this.overlapped = overlapped;
+    }
+
+    /**
+     * Checks whether the layer is overlapped by a higher visible
+     * layer in the owner window stack
+     * @return true if overlapped, false otherwise
+     */
+    public boolean isOverlapped() {
+        return overlapped;
+    }
+
+    /**
      * Utility method to determine if this layer wanna handle
      * the given point. By default the layer handles the point if it
      * lies within the bounds of this layer.  The point should be in
@@ -771,7 +796,7 @@ public class CLayer {
         try {            
             // We first reset our dirty flag
             this.dirty = false;
-            
+
             graphicsColor = g.getColor();
             graphicsFont = g.getFont();
             
