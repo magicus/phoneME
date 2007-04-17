@@ -65,6 +65,12 @@ endif # USE_I3_TEST
 SUBSYSTEM_LINKS_NATIVE_FILES = \
     midp_link.c
 
-SUBSYSTEM_LINKS_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_LINKS_DIR)/include    
+#
+# Export information to the rest of the makefile system.
+#
 
+$(MIDP_CLASSES_ZIP) :: $(SUBSYSTEM_LINKS_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_LINKS_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_LINKS_NATIVE_FILES)

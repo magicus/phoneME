@@ -100,7 +100,7 @@ USE_FIXED               = false
 USE_VERIFY_ONCE         = false
 
 # Links
-USE_LINKS               = false
+USE_LINKS               = true
 
 # ABB
 USE_MIDP_ABB            = false

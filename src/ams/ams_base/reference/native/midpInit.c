@@ -39,9 +39,6 @@
 #include <stdio.h>
 #include <pcsl_print.h>
 #endif
-#if ENABLE_LINKS
-#include <midp_links.h>
-#endif
 
 /**
  * @file
@@ -268,10 +265,6 @@ void midpFinalize() {
 
         storageFinalize();
     }
-
-#if ENABLE_LINKS
-    midp_links_shutdown();
-#endif
 
     midpHome = NULL;
     midpFinalizeMemory();

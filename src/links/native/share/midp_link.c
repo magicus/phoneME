@@ -38,8 +38,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <midp_links.h>
-
 static const char* const midpClosedLinkException =
     "com/sun/midp/links/ClosedLinkException";
     /* IMPL_NOTE - move to midpError.h? */
@@ -158,6 +156,8 @@ typedef struct _portal {
 /**
  * Pointer to an array of portal entries.  Allocated lazily; will have size of
  * JVM_MaxIsolates().
+ *
+ * IMPL_NOTE: need to deal with initialization and finalization.
  */
 static portal *portals = NULL;
 
@@ -863,20 +863,7 @@ Java_com_sun_midp_links_LinkPortal_getLinks0(void)
     KNI_ReturnVoid();
 }
 
-/**
- * Shutdowns Links subsystem.
- */
-void midp_links_shutdown() {
-    if (portals != NULL) {
-        int i;
-        for (i = 0; i < JVM_MaxIsolates(); i++) {
-            portal_free(&portals[i]);       
-        }
 
-        pcsl_mem_free(portals);        
-        portals = NULL;
-    }
-}
 
 #if ENABLE_I3_TEST
 
