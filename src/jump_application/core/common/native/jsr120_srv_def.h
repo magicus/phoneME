@@ -56,7 +56,7 @@ err: \
     return 1; \
 }
 
-#define SET_CLIENT_ID(clientMsId_, clientHandle_, clientKey_)    {\
+#define SET_CLIENT_ID(type_, clientMsId_, clientHandle_, clientKey_)    {\
     int i; \
     int pid; \
     for (i = 0; i < client_cnt__; i++) { \
@@ -71,8 +71,18 @@ err: \
     client_list__[i].pid = pid; \
     client_list__[i].client_id1 = (int)(clientMsId_); \
     client_list__[i].client_id2 = (int)(clientHandle_); \
-    client_list__[i].key = (int)(clientKey_); \
-    LOG3("SET_CLIENT_ID() pid=%d, i=%d, handle=%d", pid, i, clientHandle_); \
+    if ((type_) == WMADRIVER_MMS_CLIENT) { \
+        char *key = strdup(clientKey_); \
+        if (key == NULL) { \
+            goto err; \
+        } \
+        client_list__[i].key = (int)key; \
+        LOG3("SET_CLIENT_ID() pid=%d, i=%d, handle=%d", pid, i, clientHandle_); \
+    } else {\
+        client_list__[i].key = (int)(clientKey_); \
+        LOG3("SET_CLIENT_ID() pid=%d, i=%d, handle=%d", pid, i, clientHandle_); \
+    } \
+    client_list__[i].type = (type_); \
     clientHandle_ = i + 1; \
     clientMsId_ = pid; \
     if (i >= client_cnt__) { \
@@ -80,13 +90,50 @@ err: \
     } \
 }
 
-#define CLEAR_CLIENT_ID(clientKey_)  {\
+#define CLEAR_CLIENT_ID(type_, clientKey_)  {\
     int i; \
     int pid = (int)jumpMessageGetSender(m__)->processId; \
-    for (i = 0; i < client_cnt__; i++) { \
-        if (client_list__[i].key == (int)(clientKey_) && \
-                client_list__[i].pid == pid) { \
-            client_list__[i].pid = -1; \
+    if ((type_) == WMADRIVER_MMS_CLIENT) { \
+        for (i = 0; i < client_cnt__; i++) { \
+            if (client_list__[i].type == WMADRIVER_MMS_CLIENT && \
+                    client_list__[i].pid == pid && \
+                    !strcmp((char*)client_list__[i].key, (clientKey_))) { \
+                client_list__[i].pid = -1; \
+                free((char*)client_list__[i].key); \
+                client_list__[i].key = 0; \
+            } \
+        } \
+    } else { \
+        for (i = 0; i < client_cnt__; i++) { \
+            if (client_list__[i].type != WMADRIVER_MMS_CLIENT && \
+                    client_list__[i].pid == pid && \
+                    client_list__[i].key == (int)(clientKey_)) { \
+                client_list__[i].pid = -1; \
+            } \
+        } \
+    } \
+}
+
+#define CLEAR_MS_ID(type_, clientMsId_)  {\
+    int i; \
+    int pid = (int)jumpMessageGetSender(m__)->processId; \
+    if ((type_) == WMADRIVER_MMS_CLIENT) { \
+        for (i = 0; i < client_cnt__; i++) { \
+            if (client_list__[i].type == WMADRIVER_MMS_CLIENT && \
+                    client_list__[i].pid == pid && \
+                    client_list__[i].client_id1 == (int)(clientMsId_)) { \
+                client_list__[i].pid = -1; \
+                free((char*)client_list__[i].key); \
+                client_list__[i].key = 0; \
+            } \
+        } \
+    } else { \
+        for (i = 0; i < client_cnt__; i++) { \
+            if (client_list__[i].type == (type_) && \
+                    client_list__[i].pid == pid && \
+                    client_list__[i].client_id1 == (int)(clientMsId_)) { \
+                client_list__[i].pid = -1; \
+            } \
         } \
     } \
 }

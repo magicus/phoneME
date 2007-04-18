@@ -29,12 +29,14 @@ static const JUMPPlatformCString jsropMessageType__ = "jsrop/wma";
 
 #define START_INTERFACE(jsrNo_, name_)
 #define END_INTERFACE()
-#define SET_CLIENT_ID(clientId1_, clientId2_, clientKey_)
-#define CLEAR_CLIENT_ID(clientKey_)
+#define SET_CLIENT_ID(type_, clientId1_, clientId2_, clientKey_)
+#define CLEAR_CLIENT_ID(type_, clientKey_)
+#define CLEAR_MS_ID(type_, clientMsId_)
 #define SET_SERVER_BY_ID(clientHandle_, serverHandle_) {\
     int i = (int)(clientHandle_) - 1; \
     int pid; \
-	if (i>= 0 && i < client_cnt__ && (pid = client_list__[i].pid) != -1) { \
+	if (i>= 0 && i < client_cnt__ && \
+            (pid = client_list__[i].pid) != -1) { \
 	    /* TODO: multithread issues: maybe mutex is required */ \
         SET_SERVER_ID(pid) \
         serverHandle_ = client_list__[i].client_id2; \

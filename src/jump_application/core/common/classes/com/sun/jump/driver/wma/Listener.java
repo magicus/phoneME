@@ -1,4 +1,6 @@
 /*
+ *
+ *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -22,11 +24,27 @@
  * information or have any questions. 
  */
 
-#include "./jsr120_proxy_def.h"
+package com.sun.jump.driver.wma;
 
-extern struct WMADRIVER_CLIENTS client_list__[];
-extern int client_cnt__;
-static int driver = -1;
-
-#include "jsr120_callback_interface.h"
+public class Listener {
+    private static ListenerTask listener = null;
+    private static Object listenerLock = new Object();
+    
+    public static void startListener() {
+        synchronized (listenerLock) {
+            if (listener == null) {
+                listener = new ListenerTask();
+                listener.start();
+            }
+        }
+    }
+    
+    // JSR part
+    private static class ListenerTask extends Thread {
+        public void run() {
+            Listener.nativeStartListener();
+        }
+    }
+    private static native void nativeStartListener();
+}
 

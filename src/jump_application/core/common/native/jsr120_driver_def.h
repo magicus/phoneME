@@ -113,6 +113,20 @@ typedef int64 typeLong;
 
 #define MAX_SHMEM_NAME_LEN 20
 
+enum WMADRIVER_CLIENT_TYPE {
+    WMADRIVER_CBS_CLIENT,
+    WMADRIVER_SMS_CLIENT,
+    WMADRIVER_MMS_CLIENT
+};
+struct WMADRIVER_CLIENTS {
+    enum WMADRIVER_CLIENT_TYPE type; 
+    int pid;
+    int client_id1;
+    int client_id2;
+    int key;
+};
+
+
 int jumpProcessRunDriver(char *driver_name, char *lib_name);
 
 #endif /* #ifdef _JSR120_DRIVER_DEF_H */

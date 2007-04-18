@@ -130,6 +130,11 @@ endif
 endif
 endif
 
+ifeq ($(ENABLE_JUMP), true)
+MODULE_JSR_120_COMMON_JAVA_FILES += \
+    $(JSR_120_DIR)/src/jump_application/core/common/classes/com/sun/jump/driver/wma/Listener.java
+endif
+
 
 MODULE_JSR_120_SMS_JAVA_FILES = \
     $(JSR_120_DIR)/src/share/protocol/share/com/sun/midp/io/j2me/ProtocolBase.java \
@@ -268,13 +273,17 @@ JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_120_NATIVE_FILES)
 EXTRA_INCLUDES		+= $(SUBSYSTEM_JSR_120_EXTRA_INCLUDES)
 #################################################################
 
+JSR_120_TOOLS_CLASS_DIR = $(JSR_120_BUILD_DIR)/tools_classes
+JSR_120_CLASSBINDIR = $(JSR_120_BUILD_DIR)/classes
+JSR_120_BINDIR = $(JSR_120_BUILD_DIR)/bin
+
 WMATOOL_MAIN_CLASS = com.sun.wma.TCKTest
-WMATOOL_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/WMATool.manifest
-WMATOOL_JAR_FILE = $(BINDIR)/WMATool.jar
+WMATOOL_MANIFEST_FILE = $(JSR_120_TOOLS_CLASS_DIR)/WMATool.manifest
+WMATOOL_JAR_FILE = $(JSR_120_BINDIR)/WMATool.jar
 
 WMATOOL_CLASS_OUTPUT_DIRS += \
-	$(TOOLS_CLASS_DIR)/com/sun/midp/io/j2me/sms \
-	$(TOOLS_CLASS_DIR)/com/sun/midp/io/j2me/cbs
+	$(JSR_120_TOOLS_CLASS_DIR)/com/sun/midp/io/j2me/sms \
+	$(JSR_120_TOOLS_CLASS_DIR)/com/sun/midp/io/j2me/cbs
 
 WMATOOL_CLASS_DIRS += \
 	com/sun/midp/io/j2me/sms \
@@ -285,28 +294,32 @@ all_tools :: $(WMATOOL_JAR_FILE)
 
 $(WMATOOL_JAR_FILE): $(TOOLS_CLASS_DIR) $(MODULE_TOOL_WMATOOL_JAVA_FILES) $(WMATOOL_MANIFEST_FILE)
 	@echo " ... building WMATool " $(LOG)
-	@echo +++ $(JAVAC_CMD) -g:none -d $(TOOLS_CLASS_DIR) \
+	@echo +++ $(JAVAC_CMD) -g:none -d $(JSR_120_TOOLS_CLASS_DIR) \
 		-classpath "$(TOOLS_CLASSPATH)" \
 		$(MODULE_TOOL_WMATOOL_JAVA_FILES) $(LOG_ONLY)
-	@($(JAVAC_CMD) -g:none -d $(TOOLS_CLASS_DIR) \
+	@($(JAVAC_CMD) -g:none -d $(JSR_120_TOOLS_CLASS_DIR) \
 		-classpath "$(TOOLS_CLASSPATH)" \
 		$(MODULE_TOOL_WMATOOL_JAVA_FILES)) $(LOG)
 	@(mkdir -p $(WMATOOL_CLASS_OUTPUT_DIRS)) $(LOG)
-	@(cp $(CLASSBINDIR)/com/sun/midp/io/j2me/sms/TextEncoder.class \
-		$(TOOLS_CLASS_DIR)/com/sun/midp/io/j2me/sms) $(LOG)
+	@(cp $(JSR_120_CLASSBINDIR)/com/sun/midp/io/j2me/sms/TextEncoder.class \
+		$(JSR_120_TOOLS_CLASS_DIR)/com/sun/midp/io/j2me/sms) $(LOG)
 	@echo " ... $@ " $(LOG)
-	@(mkdir -p $(BINDIR)) $(LOG)
-	@echo +++ cd $(TOOLS_CLASS_DIR)\; $(JAR_CMD) cfm WMATool.jar \
+	@(mkdir -p $(JSR_120_BINDIR)) $(LOG)
+	@echo +++ cd $(JSR_120_TOOLS_CLASS_DIR)\; $(JAR_CMD) cfm WMATool.jar \
 		WMATool.manifest \
 		$(WMATOOL_CLASS_DIRS) $(LOG_ONLY)
-	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm WMATool.jar \
+	@(cd $(JSR_120_TOOLS_CLASS_DIR); $(JAR_CMD) cfm WMATool.jar \
 		WMATool.manifest com/sun/midp/io/j2me/sms \
 		com/sun/wma com/sun/tck) $(LOG)
-	@(cp -f $(TOOLS_CLASS_DIR)/WMATool.jar $(WMATOOL_JAR_FILE)) $(LOG)
+	@(cp -f $(JSR_120_TOOLS_CLASS_DIR)/WMATool.jar $(WMATOOL_JAR_FILE)) $(LOG)
 
-$(WMATOOL_MANIFEST_FILE): 
+$(WMATOOL_MANIFEST_FILE): $(JSR_120_TOOLS_CLASS_DIR)
 	@echo " ... $@ " $(LOG)
 	@(echo "Main-Class: $(WMATOOL_MAIN_CLASS)" > $@) $(LOG)
+
+$(JSR_120_TOOLS_CLASS_DIR) $(JSR_120_CLASSBINDIR) $(JSR_120_BINDIR):
+	@echo " ... creating $@ " $(LOG)
+	@(mkdir -p $@) $(LOG)
 
 clean_tools::
 	-@(rm -fr $(WMATOOL_JAR_FILE)) $(LOG)

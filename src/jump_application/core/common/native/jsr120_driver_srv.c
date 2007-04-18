@@ -24,13 +24,8 @@
 
 #include "./jsr120_srv_def.h"
 
-struct {
-        int pid;
-        int client_id1;
-        int client_id2;
-        int key;
-} client_list__[MAX_CLIENTS];
-int client_cnt__ = 0;
+extern struct WMADRIVER_CLIENTS client_list__[];
+extern int client_cnt__;
 
 #include "./jsr120_driver_interface.h"
 
