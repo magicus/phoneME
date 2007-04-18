@@ -485,24 +485,6 @@ public class CLayer {
     }
 
     /**
-     * Inform the layer whether it is overlapped by a higher visible
-     * layer within the owner window stack.
-     * @param overlapped true if overlapped, false otherwise
-     */
-    public void setOverlapped(boolean overlapped) {
-        this.overlapped = overlapped;
-    }
-
-    /**
-     * Checks whether the layer is overlapped by a higher visible
-     * layer in the owner window stack
-     * @return true if overlapped, false otherwise
-     */
-    public boolean isOverlapped() {
-        return overlapped;
-    }
-
-    /**
      * Utility method to determine if this layer wanna handle
      * the given point. By default the layer handles the point if it
      * lies within the bounds of this layer.  The point should be in
@@ -529,7 +511,26 @@ public class CLayer {
         cleanDirtyRegions();
         setDirty();
     }
-    
+
+    /**
+     * Check whether the layer is intersected with another one.
+     * @param l the layer to check intersection with
+     * @return true when the layers are intersected, false otherwise
+     */
+    public boolean intersects(CLayer l) {
+        int x = bounds[X];
+        int y = bounds[Y];
+        int x2 = x + bounds[W];
+        int y2 = y + bounds[H];
+        int lx = l.bounds[X];
+        int ly = l.bounds[Y];
+        int lx2 = lx + l.bounds[W];
+        int ly2 = ly + l.bounds[H];
+
+        return !(lx >= x2 || lx2 <= x ||
+            ly >= y2 || ly2 <= y);
+    }
+
     /**
      * Add an area to be marked for repaint to this layer. This could
      * be needed for a variety of reasons, such as this layer being

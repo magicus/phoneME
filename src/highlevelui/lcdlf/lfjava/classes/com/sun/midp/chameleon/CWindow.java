@@ -346,6 +346,8 @@ public abstract class CWindow {
      *
      * @param layer the layer whose area should be reported as dirty to
      *   other stack layers
+     * @return element of the window layers list that contains swept
+     *   layer, it can be used for further layer processing
      */
     CLayerElement sweepLayer(CLayer layer) {
         if (layer != null) {
@@ -366,14 +368,6 @@ public abstract class CWindow {
             }
         }
         return null;
-    }
-
-    /** Clean ovelapped state of window layers */
-    private void cleanOverlapping() {
-        CLayerElement le;
-        for(le = layers.getTop(); le != null; le = le.getLower()) {
-            le.getLayer().setOverlapped(false);
-        }
     }
 
     /**
@@ -426,7 +420,6 @@ public abstract class CWindow {
             if (l2.visible) {
                 if (l2.addDirtyRegion(
                         dx-l2.bounds[X], dy-l2.bounds[Y], dw, dh)) {
-                    l2.setOverlapped(true);
                     // Remember the highest changed layer
                     res = le2;
                 }
@@ -440,10 +433,8 @@ public abstract class CWindow {
 
                 l2 = le2.getLayer();
                 if (l2.visible) {
-                    if (l2.addDirtyRegion(
-                            dx-l2.bounds[X], dy-l2.bounds[Y], dw, dh)) {
-                        l2.setOverlapped(true);
-                    }
+                    l2.addDirtyRegion(
+                        dx-l2.bounds[X], dy-l2.bounds[Y], dw, dh);
                 }
             }
 
@@ -668,7 +659,6 @@ public abstract class CWindow {
         g.setClip(bounds[X], bounds[Y], bounds[W], bounds[H]);
 
         synchronized (layers) {
-            cleanOverlapping();
             sweepAndMarkLayers();
             copyDirtyLayers();
         }

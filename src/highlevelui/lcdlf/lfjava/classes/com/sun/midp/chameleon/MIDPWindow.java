@@ -79,6 +79,7 @@ public class MIDPWindow extends CWindow {
     private TitleLayer titleLayer;
     private TickerLayer tickerLayer;
     private BodyLayer bodyLayer;
+    private CLayerElement bodyLayerElement;
     private SoftButtonLayer buttonLayer;
     private PTILayer ptiLayer;
 
@@ -621,10 +622,25 @@ public class MIDPWindow extends CWindow {
                 sizeChangedOccured = false;
             }
         }
+        checkBodyOverlapping();
         super.paint(g, refreshQ);
     }
 
-
+    /** Check whether body layer is overlapped with a higher layer */
+    void checkBodyOverlapping() {
+        if (bodyLayer.visible) {
+            CLayer l;
+            bodyLayer.overlapped = false;
+            for (CLayerElement le = bodyLayerElement.getUpper();
+                    le != null; le = le.getUpper()) {
+                l = le.getLayer();
+                if (l.visible && bodyLayer.intersects(l)) {
+                    bodyLayer.overlapped = true;
+                    break;
+                }
+            }
+        }
+    }
 
     /**
      * This method is an optimization which allows Display to bypass
@@ -645,8 +661,7 @@ public class MIDPWindow extends CWindow {
         // the Canvas should be opaque and be not overlapped with
         // any visible higher layer also.
         if (super.dirty || !bodyLayer.opaque ||
-                bodyLayer.isOverlapped()) {
-            System.out.println("NON OPTIMIZED");
+                bodyLayer.overlapped) {
             return false;
         }
 
@@ -657,7 +672,6 @@ public class MIDPWindow extends CWindow {
         // Thus, for the first one, the clip can be set and then translated,
         // but in the second case, the translate must be done first and then
         // the clip set.
-        System.out.println("OPTIMIZED");
         if (bodyLayer.isDirty()) {
             if (bodyLayer.isEmptyDirtyRegions()) {
                 g.setClip(bodyLayer.bounds[X], bodyLayer.bounds[Y],
@@ -801,6 +815,8 @@ public class MIDPWindow extends CWindow {
                 bodyLayer = new BodyLayer(tunnel);
                 mainLayers[id] = bodyLayer;
                 addLayer(bodyLayer);
+                bodyLayerElement =
+                    layers.find(bodyLayer);
                 break;
         }
     }
