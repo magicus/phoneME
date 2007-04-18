@@ -288,6 +288,8 @@ static javacall_result audio_start(javacall_handle handle){
     if (pHandle->hWnd && 0 == MCIWndPlay(pHandle->hWnd)) {
         JAVA_DEBUG_PRINT("[jc_media] - javacall_media_start OK\n");
         pHandle->duration = MCIWndGetLength(pHandle->hWnd);
+        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DURATION_UPDATED, 
+            pHandle->playerId, (void*)pHandle->duration);
         pHandle->timerId = 
             (UINT)timeSetEvent(TIMER_CALLBACK_DURATION, 100, 
             audio_timer_callback,(DWORD)pHandle, TIME_PERIODIC);
