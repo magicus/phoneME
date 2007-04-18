@@ -48,6 +48,7 @@ typedef struct {
     char*    pToneBuffer;        /* Pointer to tone data buffer */
     /* Current tone data size that stored to tone buffer in bytes */
     int     toneDataSize;       
+    int     totalDuration;
     javacall_bool isForeground; /* Is in foreground? */
     javacall_bool isPlaying;    /* Is playing? */
     javacall_bool stopPlaying;  /* Stop JTS playing thread? */
@@ -192,6 +193,9 @@ static DWORD WINAPI tone_jts_player(void* pArg)
 
     /* JTS loop ended not by stop => Post EOM event */
     if (JAVACALL_FALSE == pHandle->stopPlaying) {
+        pHandle->totalDuration = totalDuration;
+        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DURATION_UPDATED, 
+            pHandle->playerId, (void*)totalDuration);
         javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA, 
             pHandle->playerId, (void*)totalDuration);
         pHandle->offset = 0;
@@ -227,6 +231,7 @@ static javacall_handle tone_create(javacall_int64 playerId,
     pHandle->isForeground = JAVACALL_TRUE;
     pHandle->stopPlaying = JAVACALL_FALSE;
     pHandle->hmo = NULL;
+    pHandle->totalDuration = -1;
 
     return pHandle;
 }
@@ -245,6 +250,7 @@ static javacall_result tone_close(javacall_handle handle)
     pHandle->toneDataSize = 0;
     pHandle->offset = 0;
     pHandle->currentTime = 0;
+    pHandle->totalDuration = -1;
     javacall_close_midi_out(&pHandle->hmo);
     
     FREE(pHandle);
@@ -320,6 +326,7 @@ static javacall_result tone_clear_buffer(javacall_handle handle)
         pHandle->toneDataSize = 0;
         pHandle->offset = 0;
         pHandle->currentTime = 0;
+        pHandle->totalDuration = -1;
     }
 
     return JAVACALL_OK;
@@ -475,8 +482,8 @@ static long tone_set_time(javacall_handle handle, long ms)
  */
 static long tone_get_duration(javacall_handle handle)
 {
-    /* This function handled from Java side. NEVER called! */
-    return -1;
+    tone_handle* pHandle = (tone_handle*)handle;
+    return pHandle->totalDuration;
 }
 
 
