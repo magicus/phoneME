@@ -30,8 +30,11 @@ extern "C" {
 
 #include "javacall_multimedia.h" 
 
-const char* javacall_media_supports_mixing() {
-    return "false";
+/**
+ * Query whether audio mixing is supported or not
+ */
+javacall_bool javacall_media_supports_mixing() {
+    return JAVACALL_FALSE;
 }
 
 /**
