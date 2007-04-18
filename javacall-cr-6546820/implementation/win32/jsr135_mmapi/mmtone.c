@@ -596,7 +596,7 @@ static long tone_set_volume(javacall_handle handle, long level)
 static javacall_bool tone_is_mute(javacall_handle handle)
 {
     tone_handle* pHandle = (tone_handle*)handle;
-    return ( 1 == pHandle->mute ) ? javacall_true : javacall_false;
+    return pHandle->mute ? JAVACALL_TRUE : JAVACALL_FALSE;
 }
 
 /**
