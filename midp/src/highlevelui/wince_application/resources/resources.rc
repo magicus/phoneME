@@ -1,0 +1,69 @@
+/*
+ *
+ *
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
+
+/*======================================================================*/
+#include "windows.h"                 /* Windows stuff */
+#include "aygshell.h"                /* Pocket PC stuff */
+#include "resources.h"               /* Program-specific stuff */
+#include <midp_constants_data.h>
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_EMPTY    ""
+    IDS_QUIT     "Quit"
+    IDS_MENU     "Menu"
+END
+
+ID_MENU_SIMPLE RCDATA
+BEGIN
+    0,
+    2,
+    I_IMAGENONE, IDM_SOFTBTN_0, TBSTATE_ENABLED,
+                 TBSTYLE_BUTTON | TBSTYLE_AUTOSIZE, IDS_EMPTY, 0, NOMENU,
+    I_IMAGENONE, IDM_SOFTBTN_1, TBSTATE_ENABLED,
+                 TBSTYLE_BUTTON | TBSTYLE_AUTOSIZE, IDS_EMPTY, 0, NOMENU,
+END
+
+ID_MENU_POPUP MENU DISCARDABLE
+BEGIN
+    MENUITEM "Quit",    IDM_SOFTBTN_0
+    POPUP "Menu"
+    BEGIN
+        MENUITEM "12345", 0
+        MENUITEM "12345", 0
+    END
+END
+
+
+ID_MENU_POPUP RCDATA
+BEGIN
+    ID_MENU_POPUP, 2,
+    I_IMAGENONE, IDM_SOFTBTN_0, TBSTATE_ENABLED,
+                 TBSTYLE_BUTTON | TBSTYLE_AUTOSIZE, IDS_EMPTY, 0, 1,
+    I_IMAGENONE, IDM_SOFTBTN_1, TBSTATE_ENABLED,
+                 TBSTYLE_DROPDOWN | TBSTYLE_AUTOSIZE, IDS_EMPTY, 0, 1,
+END
+
