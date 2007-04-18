@@ -80,6 +80,18 @@ static javacall_bool jmmpCheckCondition(KNIPlayerInfo* pKniInfo, int conditions)
     return JAVACALL_TRUE;
 }
 
+const char* get_system_property_supports_mixing()
+{
+    if( JAVACALL_TRUE == javacall_media_supports_mixing() )
+    {
+        return "true";
+    }
+    else
+    {
+        return "false";
+    }
+}
+
 /* KNI Implementation **********************************************************************/
 
 /*  protected native int nInit (int isolatedId, int playerId, String mimeType, String URI, long contentLength ) ; */

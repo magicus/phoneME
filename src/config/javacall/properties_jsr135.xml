@@ -37,7 +37,7 @@
     <property Key="supports.mixing"
       Value=""
       Scope="system"
-      Callout="javacall_media_supports_mixing" 
+      Callout="get_system_property_supports_mixing" 
       Comment="Mixing support."/>
 
     <property Key="supports.audio.capture"
