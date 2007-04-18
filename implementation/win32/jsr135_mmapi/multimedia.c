@@ -243,9 +243,12 @@ const javacall_media_caps* javacall_media_get_caps()
     return _media_caps;
 }
 
-const char* javacall_media_supports_mixing()
+/**
+ * Query whether audio mixing is supported or not
+ */
+javacall_bool javacall_media_supports_mixing()
 {
-    return "false";
+    return JAVACALL_FALSE;
 }
 
 /**
