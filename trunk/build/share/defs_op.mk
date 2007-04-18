@@ -92,9 +92,7 @@ define generateConstantList
 endef
 
 # Jump API classpath
-EMPTY =
-ONESPACE = $(EMPTY) $(EMPTY)
-JSROP_JUMP_API = $(subst $(ONESPACE),$(PS),$(JUMP_API_CLASSESZIP) $(JUMP_IMPL_CLASSESZIP))
+JSROP_JUMP_API = $(subst $(space),$(PS),$(JUMP_API_CLASSESZIP))
 
 # SecOP - CDC/FP Security Optional Package
 ifeq ($(USE_SECOP),true)
