@@ -30,6 +30,10 @@ extern "C" {
 
 #include "javacall_multimedia.h" 
 
+const char* javacall_media_supports_mixing() {
+    return "false";
+}
+
 /**
  * Call this function when VM starts
  * Perform global initialization operation

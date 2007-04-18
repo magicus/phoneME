@@ -277,6 +277,12 @@ void javanotify_on_media_notification(javacall_media_notification_type type,
  */
 const javacall_media_caps* javacall_media_get_caps(void);
 
+/**
+ * return "true" if this implementation supports audio mixing;
+ * otherwise return "false".
+ */
+const char* javacall_media_supports_mixing();
+
 /** @} */ 
 
 /**********************************************************************************/
