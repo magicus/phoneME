@@ -148,6 +148,9 @@ public class Launcher {
 		"Could not create application class loader");
 	}
 
+        // Set the loader as the systemClassLoader
+        CVM.setSystemClassLoader(loader);
+
 	// Register in case application classes were ROMized
 	CVM.Preloader.registerClassLoader("sys", loader);
 

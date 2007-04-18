@@ -1911,6 +1911,12 @@ typedef struct {
 CVMClassLoaderICell* 
 CVMclassGetSystemClassLoader(CVMExecEnv* ee);
 
+/*
+ * Set the system class loader.
+ */
+void
+CVMclassSetSystemClassLoader(CVMExecEnv* ee, jobject loader);
+
 #ifdef CVM_INSPECTOR
 
 /* Purpose: Checks to see if the specified pointer is a valid classblock. */
