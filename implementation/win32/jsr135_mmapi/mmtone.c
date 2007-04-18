@@ -58,6 +58,7 @@ typedef struct {
 
     int             blk[ 128 ];   /* block start offsets */
     long            volume;
+    int             mute;         /* 1 = mute, 0 = unmute*/
     long            tempo;
     long            resolution;
     int             offset;                   /* stopped offset */
@@ -570,14 +571,13 @@ static javacall_result tone_switch_to_background(javacall_handle handle, int opt
 
 /* VolumeControl Functions ************************************************/
 
-static long _shadowLevel = 50;
-
 /**
  *
  */
 static long tone_get_volume(javacall_handle handle)
 {
-    return _shadowLevel;
+    tone_handle* pHandle = (tone_handle*)handle;
+    return pHandle->volume;
 }
 
 /**
@@ -585,7 +585,8 @@ static long tone_get_volume(javacall_handle handle)
  */
 static long tone_set_volume(javacall_handle handle, long level)
 {
-    _shadowLevel = level;
+    tone_handle* pHandle = (tone_handle*)handle;
+    pHandle->volume = level;
     return level;
 }
 
@@ -594,7 +595,8 @@ static long tone_set_volume(javacall_handle handle, long level)
  */
 static javacall_bool tone_is_mute(javacall_handle handle)
 {
-    return (tone_get_volume(handle) == 0 ? JAVACALL_TRUE : JAVACALL_FALSE);
+    tone_handle* pHandle = (tone_handle*)handle;
+    return ( 1 == pHandle->mute ) ? javacall_true : javacall_false;
 }
 
 /**
@@ -602,20 +604,8 @@ static javacall_bool tone_is_mute(javacall_handle handle)
  */
 static javacall_result tone_set_mute(javacall_handle handle, javacall_bool mute)
 {
-    static LONG old_volume = 0;
-
-    if (mute) {
-        if (0 == old_volume) {
-            old_volume = tone_get_volume(handle);
-        }
-        tone_set_volume(handle, 0);
-    } else {
-        if (0 != old_volume) {
-            tone_set_volume(handle, old_volume);
-        }
-        old_volume = 0;
-    }
-    
+    tone_handle* pHandle = (tone_handle*)handle;
+    pHandle->mute = mute ? 1 : 0;
     return JAVACALL_OK;
 }
 
