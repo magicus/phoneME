@@ -44,7 +44,7 @@ LINK_ARCH_LIBS		=
 # CVM_DEFINES += -DCVM_ARM_HAS_WMMX
 
 # MontaVista uses AAPCS callng conventions on Bulverde
-CVM_DEFINES += -DAAPCS 
+USE_AAPCS ?= true
 
 # These options are not enabled for linux-arm by default
 CVM_DEFINES += -DIAI_CACHEDCONSTANT -DIAI_CACHEDCONSTANT_INLINING

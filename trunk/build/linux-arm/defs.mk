@@ -97,6 +97,14 @@ ifeq ($(USE_GCC2), true)
 endif
 endif
 
+# Our source needs to know if AAPCS calling conventions are used
+USE_AAPCS ?= false
+CVM_FLAGS += USE_AAPCS
+USE_AAPCS_CLEANUP_ACTION = $(CVM_DEFAULT_CLEANUP_ACTION)
+ifeq ($(USE_AAPCS),true)
+CVM_DEFINES += -DAAPCS 
+endif
+
 #
 # JIT related settings
 #
