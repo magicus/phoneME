@@ -102,7 +102,7 @@ public class WindowingClient implements JUMPMessageHandler {
         setState(int state) {
             switch(state) {
             case STATE_FOREGROUND:
-                widget.requestForeground();
+                widget.requestFocus();
                 GCIGraphicsEnvironment.getInstance(
                     ).getEventManager().startEventLoop();
                 widget.suspendRendering(false);
@@ -112,11 +112,11 @@ public class WindowingClient implements JUMPMessageHandler {
                 GCIGraphicsEnvironment.getInstance(
                     ).getEventManager().stopEventLoop();
                 widget.suspendRendering(true);
-                widget.requestBackground();
+                widget.yieldFocus();
                 break;
 
             case STATE_SOFT_BACKGROUND:
-                widget.requestBackground();
+                widget.yieldFocus();
                 break;
             }
         }
@@ -162,13 +162,13 @@ public class WindowingClient implements JUMPMessageHandler {
         public boolean
         focusEventReceived(GCIFocusEvent event) {
             switch(event.getID()) {
-            case GCIFocusEvent.FOCUS_GOT_FOREGROUND:
+            case GCIFocusEvent.FOCUS_GAINED:
                 postRequest(
                     event.getScreenWidget(),
                     JUMPIsolateWindowRequest.ID_NOTIFY_WINDOW_FOREGROUND);
                 break;
 
-            case GCIFocusEvent.FOCUS_GOT_BACKGROUND:
+            case GCIFocusEvent.FOCUS_LOST:
                 postRequest(
                     event.getScreenWidget(),
                     JUMPIsolateWindowRequest.ID_NOTIFY_WINDOW_BACKGROUND);
