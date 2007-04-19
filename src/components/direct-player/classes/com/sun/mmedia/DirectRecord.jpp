@@ -92,6 +92,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
         recordingByNative = false;
         this.locator = null;
     	this.stream = stream;
+		extStream = true;
     }
     
     /**
@@ -146,6 +147,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
         	    httpCon.setRequestProperty("Content-Type", "audio/wav");
 
         	    stream = httpCon.openOutputStream();
+				extStream = false;
             }
 
         // #ifdef USE_FILE_CONNECTION [
@@ -170,6 +172,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
         	    }
                 // Output stream is now file by using FC        
         	    stream = fileCon.openOutputStream();
+				extStream = false;
             }
         // #endif ]
             recordingByNative = false;
@@ -438,14 +441,9 @@ public final class DirectRecord implements RecordControl, DirectControls {
      * Suspend recording (from Player object)
      */
     public synchronized void playerStopped() {
-        try {
-            if (recording) {
-                reset();
-                suspended = true;
-            }
-        } catch(IOException e) {
-            if (debug)
-                System.out.println("[drecord] ERROR exception during reset with player stop");
+        if (recording) {
+            stopRecord();
+            suspended = true;
         }
     }
 
@@ -468,7 +466,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
      */
     private void cleanUp() {
         try {
-            if (stream != null) {
+            if (stream != null && !extStream) {
                 stream.close();
             }
         } catch(Exception e) {
@@ -530,6 +528,9 @@ public final class DirectRecord implements RecordControl, DirectControls {
     private boolean recordingByNative; // false
     /* Recording data buffer */
     private byte[] dataBuffer;
+    
+	/* External Output Stream flag */
+    private boolean extStream = false;
 
     private boolean hasDataToCommit=false;
 
