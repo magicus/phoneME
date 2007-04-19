@@ -277,6 +277,15 @@ void javanotify_on_media_notification(javacall_media_notification_type type,
  */
 const javacall_media_caps* javacall_media_get_caps(void);
 
+/**
+ * Query whether audio mixing is supported;
+ *
+ * @retval JAVACALL_TRUE    audio mixing is supported
+ * @retval JAVACALL_FALSE   audio mixing is NOT supported
+ * 
+ */
+javacall_bool javacall_media_supports_mixing();
+
 /** @} */ 
 
 /**********************************************************************************/
