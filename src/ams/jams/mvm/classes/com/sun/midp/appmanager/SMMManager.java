@@ -175,6 +175,8 @@ public class SMMManager extends MIDlet
         // IMPL_NOTE: remove this:
         GraphicalInstaller.saveSettings(null, MIDletSuite.UNUSED_SUITE_ID);
 
+        appManagerUI.cleanUp();
+
         // Ending this MIDlet ends all others.
         midletProxyList.shutdown();
     }
