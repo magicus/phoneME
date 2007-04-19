@@ -78,10 +78,27 @@ public class MIDPWindow extends CWindow {
     private AlertLayer alertLayer;
     private TitleLayer titleLayer;
     private TickerLayer tickerLayer;
-    private BodyLayer bodyLayer;
-    private CLayerElement bodyLayerElement;
     private SoftButtonLayer buttonLayer;
     private PTILayer ptiLayer;
+    private BodyLayer bodyLayer;
+
+    // States of layer overlapping by a higher visible layer,
+    // needed for optimized Canvas painting
+
+    /** Overlapping state is not checked */
+    private static final int UNCHECKED = -1;
+
+    /** Layer is not overlapped by a higher visible layer */
+    private static final int NOT_OVERLAPPED = 0;
+
+    /** Layer is overlapped by a higher visible layer */
+    private static final int OVERLAPPED = 1;
+
+    /** State of the body layer overlapping check */
+    private int bodyLayerOverlapped = UNCHECKED;
+
+    /** Cached reference to body layer element in the layers stack */
+    private CLayerElement bodyLayerElement;
 
     // layout modes
     /**
@@ -622,22 +639,19 @@ public class MIDPWindow extends CWindow {
                 sizeChangedOccured = false;
             }
         }
-        checkBodyOverlapping();
         super.paint(g, refreshQ);
     }
 
-    /** Check whether body layer is overlapped with a higher layer */
-    void checkBodyOverlapping() {
-        if (bodyLayer.visible) {
-            CLayer l;
-            bodyLayer.overlapped = false;
-            for (CLayerElement le = bodyLayerElement.getUpper();
-                    le != null; le = le.getUpper()) {
-                l = le.getLayer();
-                if (l.visible && bodyLayer.intersects(l)) {
-                    bodyLayer.overlapped = true;
-                    break;
-                }
+    /** Check whether body layer is overlapped with a higher visible layer */
+    private void checkBodyOverlapping() {
+        CLayer l;
+        bodyLayerOverlapped = NOT_OVERLAPPED;
+        for (CLayerElement le = bodyLayerElement.getUpper();
+                le != null; le = le.getUpper()) {
+            l = le.getLayer();
+            if (l.visible && bodyLayer.intersects(l)) {
+                bodyLayerOverlapped = OVERLAPPED;
+                break;
             }
         }
     }
@@ -660,8 +674,19 @@ public class MIDPWindow extends CWindow {
         // to bypass the Chameleon paint engine. Body layer holding
         // the Canvas should be opaque and be not overlapped with
         // any visible higher layer also.
-        if (super.dirty || !bodyLayer.opaque ||
-                bodyLayer.overlapped) {
+        if (super.dirty || !bodyLayer.opaque) {
+            bodyLayerOverlapped = UNCHECKED;
+            return false;
+        }
+
+        // Check body layer overlapping with a higher visible layers
+        if (bodyLayerOverlapped == UNCHECKED) {
+            checkBodyOverlapping();
+        }
+        if (bodyLayerOverlapped == OVERLAPPED) {
+            // The state is not rechecked until overlapping higher
+            // layer will disappear and notify owner window about
+            // it setting dirty window state.
             return false;
         }
 

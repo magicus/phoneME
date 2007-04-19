@@ -59,13 +59,6 @@ public class CLayer {
     protected boolean supportsInput;
 
     /**
-     * Flag indicating whether the layer is overlapped by any
-     * higher visible layer in the owner window stack.
-     * Designed to be used from window painting routines only.
-     */
-    protected boolean overlapped;
-
-    /**
      * Flag indicating this layer is either completely opaque, or not.
      * By default, a layer is not opaque, and thus requires the background
      * and any layers below it to be painted in addition to itself. However,

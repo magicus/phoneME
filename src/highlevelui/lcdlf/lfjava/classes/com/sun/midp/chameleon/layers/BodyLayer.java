@@ -74,7 +74,6 @@ public class BodyLayer extends CLayer
         super(bgImage, bgColor);
         this.tunnel = tunnel;
         this.visible = false;
-        this.overlapped = false;
 
         setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
     }
@@ -96,7 +95,6 @@ public class BodyLayer extends CLayer
         super(bgImage, bgColor);
         this.tunnel = tunnel;
         this.visible = false;
-        this.overlapped = false;
         setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
     }
 
