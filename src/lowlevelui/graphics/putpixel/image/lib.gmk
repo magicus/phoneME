@@ -32,33 +32,32 @@
 # other def. (like VPATH)
 ############################################################
 
+# Local module directory
+IMAGE_DIR = $(SUBSYSTEM_DIR)/lowlevelui/graphics/putpixel/image
 
-#Local module dir
-GRAPHICS_API_MODULE_DIR=$(GRAPHICS_API_DIR)/reference
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(IMAGE_DIR)/classes
 
-# Java files for the libarary
+# Java files for the putpixel module
 #
-SUBSYSTEM_GRAPHICSAPI_JAVA_FILES += \
-    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Font.java \
-    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Graphics.java
+SUBSYSTEM_GRAPHICS_JAVA_FILES += \
+    $(IMAGE_DIR)/classes/javax/microedition/lcdui/ImageData.java \
+    $(IMAGE_DIR)/classes/javax/microedition/lcdui/ImageDataFactory.java
 
-# vpath for the library
+# vpath for putixel module
 #
 vpath % \
-    $(GRAPHICS_API_MODULE_DIR)/native
+    $(IMAGE_DIR)/reference/native
 
+
+# Native files for putpixel module
+SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
+    gxjimg_imagedatafactory_kni.c
 
 # I3test files
-#
 ifeq ($(USE_I3_TEST), true)
 
-SUBSYSTEM_GRAPHICSAPI_I3TEST_JAVA_FILES = \
-    $(GRAPHICS_API_MODULE_DIR)/i3test/javax/microedition/lcdui/TestGraphicsClipping.java
+    SUBSYSTEM_GRAPHICS_I3TEST_JAVA_FILES +=
 
 endif
 
-# Native files for common module
-#
-SUBSYSTEM_GRAPHICSAPI_NATIVE_FILES += \
-    gxapi_font_kni.c \
-    gxapi_graphics_kni.c

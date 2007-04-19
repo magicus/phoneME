@@ -32,33 +32,41 @@
 # other def. (like VPATH)
 ############################################################
 
-
-IMAGE_DECODE_UTIL_LIB = image_decode
-LIB_SET += $(IMAGE_DECODE_UTIL_LIB)
-
 # Local module directory
-IMAGE_DECODE_UTIL_DIR = $(SUBSYSTEM_LOWUI_DIR)/image_decode
+RENDER_DIR=$(SUBSYSTEM_DIR)/lowlevelui/graphics/putpixel/render
 
-# Java files for the sub-system
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(RENDER_DIR)/classes
+
+# Java files for the putpixel module
 #
-SUBSYSTEM_IMAGEDECODEUTIL_JAVA_FILES =
+SUBSYSTEM_GRAPHICS_JAVA_FILES +=
 
-# vpath for sub-system
+# vpath for putixel module
 #
 vpath % \
-    $(IMAGE_DECODE_UTIL_DIR)/reference/native
+    $(RENDER_DIR)/reference/native/native
 
+# Additional include path for highlevel ui subsystem
+# (IMPL_NOTE remove this dependency)
 
-# Include path for the sub-system
-#
-SUBSYSTEM_IMAGEDECODEUTIL_EXTRA_INCLUDES = \
-    -I$(IMAGE_DECODE_UTIL_DIR)/reference/native \
-    -I$(IMAGE_DECODE_UTIL_DIR)/include
+SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
+    -I$(RENDER_DIR)/include
 
-# Native files for the subsystem
-#
-SUBSYSTEM_IMAGEDECODEUTIL_NATIVE_FILES = \
-    imgdcd_image_util.c \
-    imgdcd_image_decode.c \
-    imgdcd_png_decode.c
+# Native files for putpixel module
+SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
+    gxj_screen_buffer.c \
+    gxj_font_bitmap.c \
+    gxj_graphics_asm.c \
+    gxj_graphics.c \
+    gxj_image.c \
+    gxj_putpixel.c \
+    gxj_text.c
+
+# I3test files
+ifeq ($(USE_I3_TEST), true)
+
+    SUBSYSTEM_GRAPHICS_I3TEST_JAVA_FILES +=
+
+endif
 

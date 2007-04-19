@@ -709,55 +709,6 @@ public class Image {
     }
 
     /**
-     * Renders this Image onto the provided Graphics object.
-     *
-     * @param g the Graphics object to be rendered upon
-     * @param x the x coordinate of the anchor point
-     * @param y the y coordinate of the anchor point
-     * @param anchor the anchor point for positioning the image
-     * @return false if <code>anchor</code> is not a legal value
-     *
-     * @see Graphics
-     */
-    native boolean render(Graphics g, int x, int y, int anchor);
-
-    /**
-     * Renders the specified region onto the provided Graphics object.
-     * ImmutableImage overrides this method so that the native
-     * implementation handles this appropriately.
-     *
-     * @param g  the Graphics object to be rendered upon
-     * @param x_src the x coordinate of the upper left corner of the region
-     * within the source image to copy
-     * @param y_src the y coordinate of the upper left corner of the region
-     * within the source image to copy
-     * @param width the width of the region to copy
-     * @param height the height of the region to copy
-     * @param transform the desired transformation for the selected region
-     * being copied
-     * @param x_dest the x coordinate of the anchor point in the
-     * destination drawing area
-     * @param y_dest the y coordinate of the anchor point in the
-     * destination drawing area
-     * @param anchor the anchor point for positioning the region within
-     * the destination image
-     *
-     * @return false if <code>src</code> is the same image as the
-     * destination of this <code>Graphics</code> object,
-     * or <code>transform</code> is invalid,
-     * or <code>anchor</code> is invalid,
-     * or the region to be copied exceeds the bounds of the source image.
-     *
-     * @see Graphics
-     */
-    native boolean renderRegion(Graphics g,
-                                int x_src, int y_src,
-                                int width, int height,
-                                int transform,
-                                int x_dest, int y_dest,
-                                int anchor);
-
-    /**
      * Function to load an romized Image.
      *
      * @param imageDataArrayPtr native pointer to image data as Java int
@@ -812,8 +763,8 @@ public class Image {
         Image newImage = createImage(width, height);
         synchronized(this) {
             if (keepContent) {
-                render(Graphics.getImageGraphics(newImage), 0, 0,
-                    Graphics.TOP | Graphics.LEFT);
+                Graphics.getImageGraphics(newImage).render(this, 0, 0,
+		    Graphics.TOP | Graphics.LEFT);
             }
             this.width = width;
             this.height = height;

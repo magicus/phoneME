@@ -33,32 +33,26 @@
 ############################################################
 
 
+IMAGE_API_LIB = image_api
+LIB_SET += $(IMAGE_API_LIB)
+
 #Local module dir
-GRAPHICS_API_MODULE_DIR=$(GRAPHICS_API_DIR)/reference
+IMAGE_API_DIR=$(SUBSYSTEM_LOWUI_DIR)/image_api/reference
 
 # Java files for the libarary
 #
-SUBSYSTEM_GRAPHICSAPI_JAVA_FILES += \
-    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Font.java \
-    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Graphics.java
+SUBSYSTEM_IMAGEAPI_JAVA_FILES += \
+    $(IMAGE_API_DIR)/classes/javax/microedition/lcdui/Image.java \
+    $(IMAGE_API_DIR)/classes/javax/microedition/lcdui/game/Sprite.java \
+    $(IMAGE_API_DIR)/classes/javax/microedition/lcdui/game/TiledLayer.java
 
 # vpath for the library
 #
 vpath % \
-    $(GRAPHICS_API_MODULE_DIR)/native
+    $(IMAGE_API_DIR)/native
 
-
-# I3test files
-#
-ifeq ($(USE_I3_TEST), true)
-
-SUBSYSTEM_GRAPHICSAPI_I3TEST_JAVA_FILES = \
-    $(GRAPHICS_API_MODULE_DIR)/i3test/javax/microedition/lcdui/TestGraphicsClipping.java
-
-endif
 
 # Native files for common module
 #
-SUBSYSTEM_GRAPHICSAPI_NATIVE_FILES += \
-    gxapi_font_kni.c \
-    gxapi_graphics_kni.c
+SUBSYSTEM_IMAGEAPI_NATIVE_FILES += \
+    imgapi_image_kni.c

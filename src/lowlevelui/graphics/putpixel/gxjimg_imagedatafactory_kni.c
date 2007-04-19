@@ -32,17 +32,14 @@
 #include <midpUtilKni.h>
 #include <midpMalloc.h>
 
-#include <gx_image.h>
 #include <gxutl_image.h>
 #include <gxutl_image_errorcodes.h>
 #include <gxutl_graphics.h>
 
 #include <imgdcd_image_util.h>
 
+#include <gx_image.h>
 #include <gxj_putpixel.h>
-#include "gxj_intern_graphics.h"
-#include "gxj_intern_image.h"
-#include "gxj_intern_putpixel.h"
 
 #if ENABLE_IMAGE_CACHE
 #include <imageCache.h>

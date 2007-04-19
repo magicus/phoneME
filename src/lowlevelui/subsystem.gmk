@@ -88,26 +88,23 @@ endif
 
 include $(SUBSYSTEM_LOWUI_DIR)/graphics/$(LIB_MAKE_FILE)
 
-
-#####################################################################
-# Image decoding utility library
-# Description: image decoding library
-#              graphics.putpixel depends on it
-#####################################################################
-
-ifeq ($(SUBSYSTEM_GRAPHICS_MODULES), putpixel) 
-    include $(SUBSYSTEM_LOWUI_DIR)/image_decode/$(LIB_MAKE_FILE)
-endif
 endif
 
 #####################################################################
 # Graphics api Subsystem
-# Description: Java classes for lowlevelui and
+# Description: Java classes for graphics, font and
 #              and corresponding kni implementations
 #####################################################################
 
 include $(SUBSYSTEM_LOWUI_DIR)/graphics_api/$(LIB_MAKE_FILE)
 
+#####################################################################
+# Graphics api Subsystem
+# Description: Java classes for Image and
+#              and corresponding kni implementations
+#####################################################################
+
+include $(SUBSYSTEM_LOWUI_DIR)/image_api/$(LIB_MAKE_FILE)
 
 
 ####################################################################
@@ -117,38 +114,42 @@ $(MIDP_CLASSES_ZIP) :: $(SUBSYSTEM_GRAPHICSUTIL_JAVA_FILES)
 SUBSYSTEM_LOWLEVELUI_JAVA_FILES = \
     $(SUBSYSTEM_GRAPHICSUTIL_JAVA_FILES)         \
     $(SUBSYSTEM_GRAPHICSAPI_JAVA_FILES)          \
+    $(SUBSYSTEM_IMAGEAPI_JAVA_FILES)          \
     $(SUBSYSTEM_GRAPHICS_JAVA_FILES)             \
-    $(SUBSYSTEM_PLATFORMGRAPHICSPORT_JAVA_FILES) \
-    $(SUBSYSTEM_IMAGEDECODEUTIL_JAVA_FILES)    
+    $(SUBSYSTEM_PLATFORMGRAPHICSPORT_JAVA_FILES)
+
 
 SUBSYSTEM_LOWLEVELUI_I3TEST_JAVA_FILES = \
     $(SUBSYSTEM_GRAPHICSUTIL_I3TEST_JAVA_FILES)         \
     $(SUBSYSTEM_GRAPHICSAPI_I3TEST_JAVA_FILES)          \
+    $(SUBSYSTEM_IMAGEAPI_I3TEST_JAVA_FILES)             \
     $(SUBSYSTEM_GRAPHICS_I3TEST_JAVA_FILES)             \
-    $(SUBSYSTEM_PLATFORMGRAPHICSPORT_I3TEST_JAVA_FILES) \
-    $(SUBSYSTEM_IMAGEDECODEUTIL_I3TEST_JAVA_FILES)             \
+    $(SUBSYSTEM_PLATFORMGRAPHICSPORT_I3TEST_JAVA_FILES)
+
 
 SUBSYSTEM_LOWLEVELUI_NATIVE_FILES = \
     $(SUBSYSTEM_GRAPHICSUTIL_NATIVE_FILES)         \
     $(SUBSYSTEM_GRAPHICSAPI_NATIVE_FILES)          \
+    $(SUBSYSTEM_IMAGEAPI_NATIVE_FILES)             \
     $(SUBSYSTEM_GRAPHICS_NATIVE_FILES)             \
-    $(SUBSYSTEM_PLATFORMGRAPHICSPORT_NATIVE_FILES) \
-    $(SUBSYSTEM_IMAGEDECODEUTIL_NATIVE_FILES)
+    $(SUBSYSTEM_PLATFORMGRAPHICSPORT_NATIVE_FILES)
+
 
 SUBSYSTEM_LOWLEVELUI_EXTRA_INCLUDES = \
     $(SUBSYSTEM_GRAPHICSUTIL_EXTRA_INCLUDES)        \
     $(SUBSYSTEM_GRAPHICSAPI_EXTRA_INCLUDES)         \
+    $(SUBSYSTEM_IMAGEAPI_EXTRA_INCLUDES)            \
     $(SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES)            \
-    $(SUBSYSTEM_PLATFORMGRAPHICSPORT_EXTRA_INCLUDES)\
-    $(SUBSYSTEM_IMAGEDECODEUTIL_EXTRA_INCLUDES)
+    $(SUBSYSTEM_PLATFORMGRAPHICSPORT_EXTRA_INCLUDES)
+
 
 
 SUBSYSTEM_LOWLEVELUI_EXTRA_CFLAGS = \
     $(SUBSYSTEM_GRAPHICSUTIL_EXTRA_CFLAGS)          \
     $(SUBSYSTEM_GRAPHICSAPI_EXTRA_CFLAGS)           \
+    $(SUBSYSTEM_IMAGEAPI_EXTRA_CFLAGS)              \
     $(SUBSYSTEM_GRAPHICS_EXTRA_CFLAGS)              \
-    $(SUBSYSTEM_PLATFORMGRAPHICSPORT_EXTRA_CFLAGS)  \
-    $(SUBSYSTEM_IMAGEDECODEUTIL_EXTRA_CFLAGS)
+    $(SUBSYSTEM_PLATFORMGRAPHICSPORT_EXTRA_CFLAGS)
 
 
 ####################################################################
@@ -156,4 +157,5 @@ SUBSYSTEM_LOWLEVELUI_EXTRA_CFLAGS = \
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += \
     $(GRAPHICS_API_DIR)/classes \
+    $(IMAGE_API_DIR)/classes \
     $(GRAPHICS_DIR)/classes

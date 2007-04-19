@@ -33,32 +33,62 @@
 ############################################################
 
 
-#Local module dir
-GRAPHICS_API_MODULE_DIR=$(GRAPHICS_API_DIR)/reference
+IMAGE_DECODE_LIB = image_decode
+LIB_SET += $(IMAGE_DECODE_LIB)
 
-# Java files for the libarary
+# Local module directory
+IMAGE_DECODE_DIR = $(SUBSYSTEM_LOWUI_DIR)/graphics/putpixel/$(IMAGE_DECODE_LIB)
+
+# Java files for the sub-system
 #
-SUBSYSTEM_GRAPHICSAPI_JAVA_FILES += \
-    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Font.java \
-    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Graphics.java
+SUBSYSTEM_GRAPHICS_JAVA_FILES +=
 
-# vpath for the library
+# Include path for the sub-system
+#
+SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
+    -I$(IMAGE_DECODE_DIR)/reference/native \
+    -I$(IMAGE_DECODE_DIR)/include 
+
+# vpath for sub-system
 #
 vpath % \
-    $(GRAPHICS_API_MODULE_DIR)/native
+    $(IMAGE_DECODE_DIR)/reference/native
 
 
-# I3test files
+# Native files for the subsystem
 #
-ifeq ($(USE_I3_TEST), true)
+SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
+    imgdcd_image_util.c \
+    imgdcd_image_decode.c \
+    imgdcd_png_decode.c
 
-SUBSYSTEM_GRAPHICSAPI_I3TEST_JAVA_FILES = \
-    $(GRAPHICS_API_MODULE_DIR)/i3test/javax/microedition/lcdui/TestGraphicsClipping.java
-
-endif
-
-# Native files for common module
-#
-SUBSYSTEM_GRAPHICSAPI_NATIVE_FILES += \
-    gxapi_font_kni.c \
-    gxapi_graphics_kni.c
+# JPEG libray use with Putpixel
+    ifeq ($(USE_JPEG), true)
+	vpath % $(JPEG_DIR)
+	SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += -I$(JPEG_DIR)
+	SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
+		jcomapi.c \
+		jdapimin.c \
+		jdapistd.c \
+		jdcoefct.c \
+		jdcolor.c \
+		jddctmgr.c \
+		jdhuff.c \
+		jdinput.c \
+		jdmainct.c \
+		jdmarker.c \
+		jdmaster.c \
+		jdmerge.c \
+		jdphuff.c \
+		jdpostct.c \
+		jdsample.c \
+		jerror.c \
+		jidctfst.c \
+		jidctred.c \
+		jmemmgr.c \
+		jmemnobs.c \
+		jpegdecoder.c \
+		jquant1.c \
+		jquant2.c \
+		jutils.c
+   endif

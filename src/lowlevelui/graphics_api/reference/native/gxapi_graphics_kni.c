@@ -983,3 +983,168 @@ KNIDECL(javax_microedition_lcdui_Graphics_getDisplayColor) {
     int color = KNI_GetParameterAsInt(1);
     KNI_ReturnInt(gx_get_displaycolor(color));
 }
+
+
+/**
+ * Draws the specified image by using the anchor point.
+ * The image can be drawn in different positions relative to
+ * the anchor point by passing the appropriate position constants.
+ * See <a href="#anchor">anchor points</a>.
+ *
+ * <p>If the source image contains transparent pixels, the corresponding
+ * pixels in the destination image must be left untouched.  If the source
+ * image contains partially transparent pixels, a compositing operation
+ * must be performed with the destination pixels, leaving all pixels of
+ * the destination image fully opaque.</p>
+ *
+ * <p>If <code>img</code> is the same as the destination of the Graphics
+ * object, the result is undefined.  For copying areas within an
+ * <code>Image</code>, {@link #copyArea copyArea} should be used instead.
+ * </p>
+ *
+ * @param img the specified Image to be drawn
+ * @param x the x coordinate of the anchor point
+ * @param y the y coordinate of the anchor point
+ * @param anchor the anchor point for positioning the image
+ * @throws IllegalArgumentException if <code>anchor</code>
+ * is not a legal value
+ * @throws NullPointerException if <code>g</code> is <code>null</code>
+ * @see Image
+ */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(javax_microedition_lcdui_Graphics_render) {
+    jboolean success = KNI_TRUE;
+
+    int anchor = KNI_GetParameterAsInt(4);
+    int y      = KNI_GetParameterAsInt(3);
+    int x      = KNI_GetParameterAsInt(2);
+
+    KNI_StartHandles(3);
+    KNI_DeclareHandle(img);
+    KNI_DeclareHandle(g);
+    KNI_DeclareHandle(gImg);
+
+    KNI_GetParameterAsObject(1, img);
+    KNI_GetThisPointer(g);
+
+    if (GRAPHICS_OP_IS_ALLOWED(g)) {
+        /* null checking is handled by the Java layer, but test just in case */
+        if (KNI_IsNullHandle(img)) {
+            success = KNI_FALSE; //KNI_ThrowNew(midpNullPointerException, NULL);
+        } else {
+  	    const java_imagedata * srcImageDataPtr =
+	      GET_IMAGE_PTR(img)->imageData;
+
+            GET_IMAGE_PTR(gImg) =
+	      (struct Java_javax_microedition_lcdui_Image *)
+	      (GXAPI_GET_GRAPHICS_PTR(g)->img);
+            if (KNI_IsSameObject(gImg, img) || !gxutl_check_anchor(anchor,0)) {
+                success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
+            } else if (!gxutl_normalize_anchor(&x, &y, srcImageDataPtr->width, 
+					       srcImageDataPtr->height, 
+					       anchor)) {
+                success = KNI_FALSE;//KNI_ThrowNew(midpIllegalArgumentException, NULL);
+            } else {
+	        jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
+	        const java_imagedata * dstMutableImageDataPtr = 
+		  GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(g);
+
+                GXAPI_TRANSLATE(g, x, y);
+		GXAPI_GET_CLIP(g, clip);
+
+		gx_render_image(srcImageDataPtr, dstMutableImageDataPtr,
+				clip, x, y);
+
+            }
+        }
+    }
+
+    KNI_EndHandles();
+    KNI_ReturnBoolean(success);
+}
+
+/**
+ * Renders the given region of the given  <tt>Image</tt> onto the
+ * this <tt>Graphics</tt> object.
+ * <p>
+ * Java declaration:
+ * <pre>
+ *     renderRegion(Ljavax/microedition/lcdui/Image;IIIIIIII)V
+ * </pre>
+ *
+ * @param img The <tt>Image</tt> object to be drawn
+ * @param x_src The x coordinate of the upper-left corner of the
+ *              source region
+ * @param y_src The y coordinate of the upper-left corner of the
+ *              source region
+ * @param width The width of the source region
+ * @param height The height of the source region
+ * @param transform The transform to apply to the selected region.
+ * @param x_dest The x coordinate of the destination anchor point
+ * @param y_dest The y coordinate of the destination anchor point
+ * @param anchor The anchor point for positioning the destination
+ *               <tt>Image</tt>
+ */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(javax_microedition_lcdui_Graphics_renderRegion) {
+    int anchor    = KNI_GetParameterAsInt(9);
+    int y_dest    = KNI_GetParameterAsInt(8);
+    int x_dest    = KNI_GetParameterAsInt(7);
+    int transform = KNI_GetParameterAsInt(6);
+    int height    = KNI_GetParameterAsInt(5);
+    int width     = KNI_GetParameterAsInt(4);
+    int y_src     = KNI_GetParameterAsInt(3);
+    int x_src     = KNI_GetParameterAsInt(2);
+    jboolean success = KNI_TRUE;
+
+    KNI_StartHandles(3);
+    KNI_DeclareHandle(img);
+    KNI_DeclareHandle(g);
+    KNI_DeclareHandle(gImg);
+
+    KNI_GetParameterAsObject(1, img);
+    KNI_GetThisPointer(g);
+    
+    if (GRAPHICS_OP_IS_ALLOWED(g)) {
+      if (KNI_IsNullHandle(img)) {
+        /* null checking is performed in the Java code, but check just in case */
+        success = KNI_FALSE; //KNI_ThrowNew(midpNullPointerException, NULL);
+      } else if ((transform < 0) || (transform > 7)) {
+        success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
+      } else if (!gxutl_normalize_anchor(&x_dest, &y_dest,
+					 width, height, anchor)) {
+        success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
+      } else {
+	const java_imagedata * srcImageDataPtr = GET_IMAGE_PTR(img)->imageData;
+        jint img_width = srcImageDataPtr->width;
+        jint img_height = srcImageDataPtr->height;
+
+        GET_IMAGE_PTR(gImg) = (struct Java_javax_microedition_lcdui_Image *)
+	                      (GXAPI_GET_GRAPHICS_PTR(g)->img);
+        if (KNI_IsSameObject(gImg, img) || 
+           (height < 0) || (width < 0) || (x_src < 0) || (y_src < 0) ||
+           ((x_src + width) > img_width) || 
+           ((y_src + height) > img_height)) {
+          success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
+        } else {
+	  jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
+
+	  const java_imagedata * dstMutableImageDataPtr = 
+	    GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(g);
+
+	  GXAPI_TRANSLATE(g, x_dest, y_dest);
+	  GXAPI_GET_CLIP(g, clip);
+
+	  gx_render_imageregion(srcImageDataPtr, dstMutableImageDataPtr,
+				clip, 
+				x_src, y_src, 
+				width, height,
+				x_dest, y_dest, 
+				transform);
+        }
+      }
+    }
+
+    KNI_EndHandles();
+    KNI_ReturnBoolean(success);
+}
