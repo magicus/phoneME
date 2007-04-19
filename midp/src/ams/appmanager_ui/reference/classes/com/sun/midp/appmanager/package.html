@@ -1,0 +1,54 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!--
+
+    
+ 
+  Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+
+-->
+</head>
+<body bgcolor="white">
+Classes the implement the graphical application manager.
+
+<p><h2>Application Manager Example</h2>
+</p>
+<p>The Application Manager component is an example user interface for managing
+ existing applications. The component enables the user to perform various
+ actions on installed MIDlet suites. It provides the ability to perform the
+ following tasks:
+</p>
+<ul>
+<li>Show a list of installed applications</li>
+<li>Show information about an application</li>
+<li>Show the Sun copyright.</li>
+<li>Delete a MIDlet suite</li>
+<li>Invoke a selected MIDlet</li>
+<li>Modify a MIDlet suite's security permission level</li>
+</ul>
+<p><h2>Detailed Design</h2>
+</p>
+<p>The example application manager is implemented as three MIDlets in the
+ com.sun.midp.appmanager package. All of the MIDlets use the
+ <code>MIDletSuiteStorage</code> class in the com.sun.midp.midletsuite package
+ to access persistent application storage services.
+</p>
+<p>The <code>Manager</code> class implements application selection. For
+ maximum code reuse, the application information and security settings are
+ implemented in the <code>AppInfo</code> and <code>AppSettings</code> classes.
+ The <code>Manager</code> always has at least one application, the example
+ Discovery Application. The figure below shows the dependencies between
+ classes.
+</p>
+<p><img src="doc-files/appman.gif" name="app_man_dep" align="CENTER" border="0">
+</p>
+<p>To highlight a newly-installed MIDlet suite on startup (a user-experience
+ feature), the <code>Manager</code> checks the RMS record store of the
+ internal suite, find any MIDlet suite identifiers (suiteIDs) written by the
+ Graphical Installer MIDlet. If it finds a suiteID, the <code>Manager</code>
+ highlights the corresponding MIDlet suite, then erases the suiteID from the
+ record store.
+</p>
+</body>
+</html>
