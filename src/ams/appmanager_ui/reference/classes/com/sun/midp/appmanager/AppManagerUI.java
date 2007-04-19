@@ -1278,6 +1278,16 @@ class AppManagerUI extends Form
         display.setCurrent(alert);
     }
 
+    /**
+     * Called by Manager when destroyApp happens to clean up data.
+     * Timer that shedules scrolling test repainting should be
+     * canceled when AMS MIDlet is about to be destroyed to avoid
+     * generation of repaint events.
+     */
+    void cleanUp() {
+        textScrollTimer.cancel();
+    }
+
     /** A Timer which will handle firing repaints of the ScrollPainter */
     protected static Timer textScrollTimer;
 
