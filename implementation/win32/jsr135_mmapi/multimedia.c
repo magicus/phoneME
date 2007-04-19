@@ -244,6 +244,14 @@ const javacall_media_caps* javacall_media_get_caps()
 }
 
 /**
+ * Query whether audio mixing is supported or not
+ */
+javacall_bool javacall_media_supports_mixing()
+{
+    return JAVACALL_FALSE;
+}
+
+/**
  * Native player create. 
  * This function create internal information structure that will be used from other native API.
  */
