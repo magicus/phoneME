@@ -42,10 +42,6 @@ public final class GraphicsSurface extends AbstractSurface {
     public void releaseTarget() {
         this.g = null;
     }
-        
-    public SurfaceDestination createSurfaceDestination() {
-        throw new RuntimeException("Not implemented!");
-    }
 
     public void getRGB(int[] argb, int offset, int scanLength, 
             int x, int y, int width, int height) {
