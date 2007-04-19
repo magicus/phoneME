@@ -520,15 +520,11 @@ public class CLayer {
     public boolean intersects(CLayer l) {
         int x = bounds[X];
         int y = bounds[Y];
-        int x2 = x + bounds[W];
-        int y2 = y + bounds[H];
         int lx = l.bounds[X];
         int ly = l.bounds[Y];
-        int lx2 = lx + l.bounds[W];
-        int ly2 = ly + l.bounds[H];
 
-        return !(lx >= x2 || lx2 <= x ||
-            ly >= y2 || ly2 <= y);
+        return !(lx >= x + bounds[W] || lx + l.bounds[W] <= x ||
+            ly >= y + bounds[H] || ly + l.bounds[H] <= y);
     }
 
     /**
