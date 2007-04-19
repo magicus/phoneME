@@ -264,8 +264,9 @@ ifneq ($(USE_JSR_205), true)
 # do not include if building with JSR205 as there are
 # conflicting properties there
 #
-SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+JSR_120_PROPERTY_FILES += \
     $(INTERNAL_JSR_120_CONFIG_DIR)/common/properties_jsr120.xml
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += $(JSR_120_PROPERTY_FILES)
 endif
 
 JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_120_I3TEST_JAVA_FILES)

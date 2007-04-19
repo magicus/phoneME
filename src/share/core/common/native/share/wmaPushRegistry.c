@@ -61,6 +61,7 @@ static int registerMMSEntry(unsigned char *appID, AppIdType msid);
 static void unregisterMMSEntry(unsigned char *appID, int handle);
 #endif
 
+#ifndef NO_PUSH
 /**
  * Unregister or close the given WMA entry
  *
@@ -380,4 +381,7 @@ char *getMMSAppID(char *entry) {
     return NULL;
 
 }
+#endif
+
+
 #endif
