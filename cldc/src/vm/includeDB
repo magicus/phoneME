@@ -1,0 +1,3209 @@
+//
+//
+// DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+// 
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License version
+// 2 only, as published by the Free Software Foundation. 
+// 
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.   See the GNU
+// General Public License version 2 for more details (a copy is
+// included at /legal/license.txt). 
+// 
+// You should have received a copy of the GNU General Public License
+// version 2 along with this work; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+// 02110-1301 USA 
+// 
+// Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+// Clara, CA 95054 or visit www.sun.com if you need additional
+// information or have any questions.
+//
+//!c<
+// Copyright  2006 Sun Microsystems, Inc. and Intel Corporation
+// This material is provided pursuant to the Development Agreement of
+// 6/2/2003 between Sun and Intel and is licensed pursuant to the
+// SCSL, as modified by the SCSL Supplement entered into by the
+// parties concurrently with that Agreement.
+//!c>
+//
+
+//
+// FILE FORMAT:
+//
+// a comment starts with '// ' and goes to the end of the line
+// anything else is a pair of filenames.  The line "x.cpp y.hpp" means
+// "x.cpp must include y.hpp".  Similarly, "y.hpp z.hpp" means "any
+// file including y.hpp must also include z.hpp, and z.hpp must be
+// included before y.hpp".
+//
+// To make a change, edit this file and then do a "make lists"
+// in the binary dirs.
+//
+// Style hint: we try to keep the entries ordered alphabetically, both
+// globally (left-hand sides) and within a given file (right-hand sides)
+//
+// To avoid unnecessary conflicts with the work of other programmers,
+// do not delete, move, or reformat pre-existing lines.  Do not attempt
+// to "optimize" this file incrementally.
+//
+// Some header files occur in clusters.  Header files which depend on
+// the token "generate_platform_dependent_include" are included
+// directly by other header files, and should not be explicitly
+// declared as dependencies.  Header files named H.inline.hpp or
+// H_inline.hpp generally contain bodies for inline functions declared
+// in H.hpp.
+//
+// (Sometimes, circular dependencies prevent complex function bodies
+// from being defined directly in H.hpp.  In such cases, a client
+// S.cpp of H.hpp must always declare a dependency on H.inline.hpp,
+// which in turn will declare a dependency on H.hpp.  If by some
+// mischance S.cpp declares a dependency on H.hpp, the compiler may
+// complain about missing inline function bodies, or (perhaps) the
+// program may fail to link.  The solution is to have S.cpp depend on
+// H.inline.hpp instead of H.hpp.
+//
+// Generally, if in response to a source code change the compiler
+// issues an error in a file F (which may be either a header or a
+// source file), you should consider if the error arises from a
+// missing class definition C.  If that is the case, find the header
+// file H which contains C (often, H=C.hpp, but you may have to search
+// for C's definition).  Then, add a line to includeDB or includeDB2,
+// as appropriate.
+//
+//
+// Here are some typical compiler errors that may require changes to
+// includeDB. (Messages are taken from Sun's SPARC compiler.)
+//
+//   "klassVtable.cpp", line 96: Error: No_GC_Verifier is not defined.
+//
+// Source code:
+//   No_GC_Verifier no_gc;
+//
+// The problem is that the class name No_GC_Verifier is not declared,
+// so the compiler is confused by the syntax.  The solution:
+//   klassVtable.cpp            gcLocker.hpp
+//
+// Sometimes the compiler has only partial knowledge about a class:
+//   "privilegedStack.cpp", line 60: Error: cast is not a member of
+//                                   instanceKlass.
+// Source code:
+//   if (_protection_domain != instanceKlass::cast()) return false;
+//
+// Here, instanceKlass is known to the compiler as a type, because of
+// a forward declaration somewhere ("class instanceKlass;").  The
+// problem is that the compiler has not seen the body of
+// instanceKlass, and so it complains that it does not know about
+// "instanceKlass::cast". Solution:
+//
+//   privilegedStack.cpp             instanceKlass.hpp
+//
+// Here's another example of a missing declaration:
+//
+//   "privilegedStack.cpp", line 111: Error: The function AllocateHeap
+//                                    must have a prototype.
+// Source code:
+//   _array = NEW_C_HEAP_ARRAY(PrivilegedElement, initial_size);
+//
+// The problem is that the macro call expands to use a heap function
+// which is defined (for technical reasons) in a different file.
+// Solution:
+//
+//   privilegedStack.cpp             allocation_inline.hpp
+//
+// The macro is defined in allocation.hpp, while the function is defined
+// (as an inline) in allocation_inline.hpp.  Generally, if you find you
+// need a header H.hpp, and there is also a header H.inline.hpp or
+// H_inline.hpp, use the latter, because it contains inline definitions
+// you will require.
+
+
+// Utilities
+
+ErrorMessage.hpp                 Allocation.hpp
+ErrorMessage.cpp                 ErrorMessage.hpp
+
+CharacterStream.hpp              Symbol.hpp
+CharacterStream.hpp              TypeArray.hpp
+CharacterStream.cpp              CharacterStream.hpp
+
+
+CallInfo.hpp                     Top.hpp
+CallInfo.cpp                     TypeArray.hpp
+CallInfo.cpp                     CallInfo.hpp
+CallInfo.cpp                     OopDesc.inline.hpp
+CallInfo.cpp                     CodeGenerator.hpp
+CallInfo.cpp                     Compiler.hpp
+
+
+FileDecoderDesc.hpp              Buffer.hpp
+FileDecoderDesc.hpp              MixedOopDesc.hpp
+FileDecoderDesc.hpp              OsFile_<os_family>.hpp
+
+FileDecoder.hpp                  MixedOop.hpp
+FileDecoder.hpp                  FileDecoderDesc.hpp
+FileDecoder.hpp                  JarFileParser.hpp
+
+FileDecoder.cpp                  FileDecoder.hpp
+FileDecoder.cpp                  Inflate.hpp
+FileDecoder.cpp                  Universe.hpp
+FileDecoder.cpp                  Throw.hpp
+InflaterDesc.hpp                 FileDecoderDesc.hpp
+InflaterDesc.hpp                 Buffer.hpp
+
+Inflate.hpp                      InflaterDesc.hpp
+Inflate.hpp                      FileDecoder.hpp
+
+Inflate.cpp                      jvm.h
+Inflate.cpp                      Inflate.hpp
+Inflate.cpp                      JarFileInfo.hpp
+Inflate.cpp                      Thread.hpp
+Inflate.cpp                      Throw.hpp
+Inflate.cpp                      Universe.hpp
+
+JarFileUncommon.cpp              jvm.h
+JarFileUncommon.cpp              Inflate.hpp
+JarFileUncommon.cpp              Thread.hpp
+JarFileUncommon.cpp              ObjectHeap_<iarch>.hpp
+JarFileUncommon.cpp              Throw.hpp
+JarFileUncommon.cpp              Bytes_<iarch>.hpp
+JarFileUncommon.cpp              ClassPathAccess.hpp
+JarFileUncommon.cpp              JarFileParser.hpp
+
+ClassPathAccess.hpp              JarFileParser.hpp
+ClassPathAccess.hpp              Symbol.hpp
+ClassPathAccess.hpp              ObjArray.hpp
+ClassPathAccess.hpp              Thread.hpp
+ClassPathAccess.hpp              Buffer.hpp
+                                 
+ClassPathAccess.cpp              ROM.hpp
+ClassPathAccess.cpp              OS.hpp
+ClassPathAccess.cpp              ClassPathAccess.hpp
+ClassPathAccess.cpp              Symbol.hpp
+ClassPathAccess.cpp              Throw.hpp
+ClassPathAccess.cpp              FilePath.hpp
+ClassPathAccess.cpp              Universe.hpp
+ClassPathAccess.cpp              FileDecoder.hpp
+ClassPathAccess.cpp              Task.hpp
+
+#if ENABLE_DYNUPDATE
+ClassPathAccess.cpp              UpdateManager.hpp
+#endif
+
+ClassPathAccess.cpp              OsFile_<os_family>.hpp
+
+FilePath.hpp                     Symbol.hpp
+FilePath.hpp                     TypeArray.hpp
+FilePath.cpp                     FilePath.hpp
+FilePath.cpp                     Universe.hpp
+FilePath.cpp                     SymbolTable.hpp
+FilePath.cpp                     ObjectHeap_<iarch>.hpp
+
+BufferedFileDesc.hpp             MixedOopDesc.hpp
+BufferedFileDesc.hpp             JarFileInfo.hpp
+
+BufferedFile.hpp                 MixedOop.hpp
+BufferedFile.hpp                 BufferedFileDesc.hpp
+BufferedFile.hpp                 JarFileInfo.hpp
+BufferedFile.hpp                 Buffer.hpp
+
+BufferedFile.cpp                 BufferedFile.hpp
+BufferedFile.cpp                 OS.hpp
+BufferedFile.cpp                 Thread.hpp
+BufferedFile.cpp                 Universe.hpp
+BufferedFile.cpp                 OopVisitor.hpp
+BufferedFile.cpp                 Throw.hpp
+
+Stream.cpp                       Stream.hpp
+
+// Debugger files included in all builds
+
+RefNodeDesc.hpp                  ObjectHeap_<iarch>.hpp
+
+PacketDataBufferDesc.hpp         MixedOopDesc.hpp
+PacketDataBufferDesc.hpp         Universe.hpp
+
+JavaDebugger.hpp                 Oop.hpp
+VMEvent.hpp                      Oop.hpp
+VMEvent.hpp                      InstanceClass.hpp
+VMEvent.hpp                      Frame.hpp
+VMEventModifierDesc.hpp          Bytecodes.hpp
+VMEvent.cpp                      Thread.hpp
+JavaDebugger.cpp                 JavaDebugger.hpp
+LineVarTable.hpp                 TypeArray.hpp
+
+
+#if ENABLE_JAVA_DEBUGGER
+
+RefNode.hpp                      Oop.hpp
+RefNode.hpp                      RefNodeDesc.hpp
+
+PacketDataBuffer.hpp             MixedOop.hpp
+PacketDataBuffer.hpp             Buffer.hpp
+PacketDataBuffer.hpp             PacketDataBufferDesc.hpp
+
+
+DebuggerStream.hpp               PacketDataBuffer.hpp
+DebuggerStream.hpp               Transport.hpp
+DebuggerStream.hpp               String.hpp
+DebuggerStream.hpp               JDWP.hpp
+
+DebuggerStream.cpp               DebuggerStream.hpp
+DebuggerStream.cpp               SocketTransport.hpp
+DebuggerStream.cpp               JavaDebugger.hpp
+DebuggerStream.cpp               CharacterStream.hpp
+DebuggerStream.cpp               Bytes_<iarch>.hpp
+DebuggerStream.cpp               ThreadObj.hpp
+DebuggerStream.cpp               Thread.hpp
+DebuggerStream.cpp               Universe.hpp
+DebuggerStream.cpp               ObjectHeap_<iarch>.hpp
+DebuggerStream.cpp               TypeArrayClass.hpp
+DebuggerStream.cpp               ObjArrayClass.hpp
+DebuggerStream.cpp               TypeSymbol.hpp
+
+JavaDebugger.hpp                 PacketDataBuffer.hpp
+JavaDebugger.hpp                 DebuggerStream.hpp
+JavaDebugger.hpp                 SocketTransport.hpp
+JavaDebugger.hpp                 Bytecodes.hpp
+JavaDebugger.hpp                 RefNode.hpp
+JavaDebugger.hpp                 InstanceClass.hpp
+
+JavaDebugger.cpp                 jvmspi.h
+JavaDebugger.cpp                 SocketTransport.hpp
+JavaDebugger.cpp                 JDWP.hpp
+JavaDebugger.cpp                 Field.hpp
+JavaDebugger.cpp                 FieldType.hpp
+JavaDebugger.cpp                 JavaClassObj.hpp
+JavaDebugger.cpp                 VMEvent.hpp
+JavaDebugger.cpp                 VMEventModifier.hpp
+JavaDebugger.cpp                 ArrayReferenceImpl.hpp
+JavaDebugger.cpp                 VMImpl.hpp
+JavaDebugger.cpp                 ThreadReferenceImpl.hpp
+JavaDebugger.cpp                 ObjectReferenceImpl.hpp
+JavaDebugger.cpp                 ReferenceTypeImpl.hpp
+JavaDebugger.cpp                 StackFrameImpl.hpp
+JavaDebugger.cpp                 Method.hpp
+JavaDebugger.cpp                 Universe.hpp
+JavaDebugger.cpp                 ObjectHeap_<iarch>.hpp
+JavaDebugger.cpp                 ObjArrayDesc.hpp
+JavaDebugger.cpp                 JVM.hpp
+JavaDebugger.cpp                 LineVarTable.hpp
+
+VMImpl.cpp                       JavaDebugger.hpp
+VMImpl.cpp                       VMImpl.hpp
+VMImpl.cpp                       JDWP.hpp
+VMImpl.cpp                       ThreadReferenceImpl.hpp
+VMImpl.cpp                       ObjArray.hpp
+VMImpl.cpp                       ObjArrayClass.hpp
+VMImpl.cpp                       Universe.hpp
+VMImpl.cpp                       VMEvent.hpp
+VMImpl.cpp                       JVM.hpp
+VMImpl.cpp                       ObjectHeap_<iarch>.hpp
+
+ArrayReferenceImpl.hpp           JavaDebugger.hpp
+
+ArrayReferenceImpl.cpp           ArrayReferenceImpl.hpp
+ArrayReferenceImpl.cpp           ObjArray.hpp
+ArrayReferenceImpl.cpp           ObjArrayClass.hpp
+ArrayReferenceImpl.cpp           ObjectReferenceImpl.hpp
+ArrayReferenceImpl.cpp           TypeArrayClass.hpp
+ArrayReferenceImpl.cpp           JavaDebugger.hpp
+ArrayReferenceImpl.cpp           JDWP.hpp
+ArrayReferenceImpl.cpp           ObjectHeap_<iarch>.hpp
+
+ThreadReferenceImpl.hpp          Thread.hpp
+
+ThreadReferenceImpl.cpp          JavaDebugger.hpp
+ThreadReferenceImpl.cpp          JDWP.hpp
+ThreadReferenceImpl.cpp          ThreadReferenceImpl.hpp
+ThreadReferenceImpl.cpp          VMEventModifier.hpp
+ThreadReferenceImpl.cpp          Frame.hpp
+ThreadReferenceImpl.cpp          Method.hpp
+ThreadReferenceImpl.cpp          Universe.hpp
+ThreadReferenceImpl.cpp          Scheduler.hpp
+ThreadReferenceImpl.cpp          ObjectHeap_<iarch>.hpp
+ThreadReferenceImpl.cpp          Transport.hpp
+ThreadReferenceImpl.cpp          StackFrameImpl.hpp
+
+ObjectReferenceImpl.cpp          JavaDebugger.hpp
+ObjectReferenceImpl.cpp          JDWP.hpp
+ObjectReferenceImpl.cpp          ObjectReferenceImpl.hpp
+ObjectReferenceImpl.cpp          Universe.hpp
+ObjectReferenceImpl.cpp          Field.hpp
+ObjectReferenceImpl.cpp          ObjArrayClass.hpp
+ObjectReferenceImpl.cpp          ObjectHeap_<iarch>.hpp
+ObjectReferenceImpl.cpp          EntryActivation.hpp
+ObjectReferenceImpl.cpp          Signature.hpp
+ObjectReferenceImpl.cpp          ThreadReferenceImpl.hpp
+ObjectReferenceImpl.cpp          Method.hpp
+ObjectReferenceImpl.cpp          JavaClassObj.hpp
+
+ReferenceTypeImpl.cpp            JavaDebugger.hpp
+ReferenceTypeImpl.cpp            JDWP.hpp
+ReferenceTypeImpl.cpp            ReferenceTypeImpl.hpp
+ReferenceTypeImpl.cpp            ObjectReferenceImpl.hpp
+ReferenceTypeImpl.cpp            Field.hpp
+ReferenceTypeImpl.cpp            ObjectHeap_<iarch>.hpp
+
+StackFrameImpl.hpp               JavaDebugger.hpp
+StackFrameImpl.hpp               DebuggerStream.hpp
+StackFrameImpl.hpp               Frame.hpp
+
+StackFrameImpl.cpp               JavaDebugger.hpp
+StackFrameImpl.cpp               JDWP.hpp
+StackFrameImpl.cpp               Method.hpp
+StackFrameImpl.cpp               StackFrameImpl.hpp
+StackFrameImpl.cpp               ThreadReferenceImpl.hpp
+StackFrameImpl.cpp               ObjectHeap_<iarch>.hpp
+
+VMEventDesc.hpp                  MixedOopDesc.hpp
+
+VMEvent.hpp                      MixedOop.hpp
+VMEvent.hpp                      VMEventModifier.hpp
+VMEvent.hpp                      DebuggerStream.hpp
+VMEvent.hpp                      VMEventDesc.hpp
+VMEvent.hpp                      VMEventModifierDesc.hpp
+VMEvent.hpp                      Throwable.hpp
+
+VMEvent.cpp                      VMEvent.hpp
+VMEvent.cpp                      JDWP.hpp
+VMEvent.cpp                      JavaDebugger.hpp
+VMEvent.cpp                      Method.hpp
+VMEvent.cpp                      Universe.hpp
+VMEvent.cpp                      CompiledMethod.hpp
+VMEvent.cpp                      ObjectHeap_<iarch>.hpp
+
+VMEventModifierDesc.hpp          MixedOopDesc.hpp
+
+VMEventModifier.hpp              MixedOop.hpp
+VMEventModifier.hpp              VMEventModifierDesc.hpp
+VMEventModifier.hpp              Frame.hpp
+VMEventModifier.hpp              InstanceClass.hpp
+VMEventModifier.hpp              DebuggerStream.hpp
+
+VMEventModifier.cpp              VMEventModifier.hpp
+VMEventModifier.cpp              JavaDebugger.hpp
+VMEventModifier.cpp              JDWP.hpp
+VMEventModifier.cpp              Method.hpp
+VMEventModifier.cpp              Universe.hpp
+VMEventModifier.cpp              VMEvent.hpp
+VMEventModifier.cpp              SymbolTable.hpp
+VMEventModifier.cpp              ObjectHeap_<iarch>.hpp
+VMEventModifier.cpp              CompiledMethod.hpp
+VMEventModifier.cpp              ObjArrayClass.hpp
+VMEventModifier.cpp              TypeSymbol.hpp
+
+SocketTransportDesc.hpp          MixedOopDesc.hpp
+SocketTransportDesc.hpp          TransportDesc.hpp
+
+SocketTransport.hpp              Arguments.hpp
+SocketTransport.hpp              SocketTransportDesc.hpp
+SocketTransport.hpp              Transport.hpp
+SocketTransport.cpp              SocketTransport.hpp
+SocketTransport.cpp              JavaDebugger.hpp
+SocketTransport.cpp              ObjectHeap_<iarch>.hpp
+
+TransportDesc.hpp                MixedOopDesc.hpp
+
+Transport.hpp                    TransportDesc.hpp
+Transport.hpp                    Universe.hpp
+Transport.cpp                    SocketTransport.hpp
+Transport.cpp                    Transport.hpp
+
+#endif ENABLE_JAVA_DEBUGGER
+
+ExecutionStackDesc.hpp           Oop.hpp
+ExecutionStackDesc.hpp           Thread.hpp
+
+ExecutionStackDesc.cpp           ExecutionStackDesc.hpp
+ExecutionStackDesc.cpp           Frame.hpp
+ExecutionStackDesc.cpp           ObjectHeap_<iarch>.hpp
+
+ExecutionStack.hpp               Oop.hpp
+ExecutionStack.hpp               ExecutionStackDesc.hpp
+ExecutionStack.cpp               Universe.hpp
+ExecutionStack.cpp               OopVisitor.hpp
+ExecutionStack.cpp               ExecutionStack.hpp
+ExecutionStack.cpp               ObjectHeap_<iarch>.hpp
+
+EntryActivationDesc.hpp          MethodDesc.hpp
+EntryActivationDesc.hpp          FarClassDesc.hpp
+EntryActivationDesc.cpp          EntryActivationDesc.hpp
+
+EntryActivation.hpp              Oop.hpp
+EntryActivation.hpp              EntryActivationDesc.hpp
+EntryActivation.cpp              EntryActivation.hpp
+EntryActivation.cpp              Universe.hpp
+EntryActivation.cpp              OopVisitor.hpp
+EntryActivation.cpp              ObjectHeap_<iarch>.hpp
+EntryActivation.cpp              OsMisc.hpp
+EntryActivation.cpp              Method.hpp
+
+ClassParserStateDesc.hpp         Oop.hpp
+ClassParserStateDesc.hpp         InstanceClass.hpp
+ClassParserStateDesc.hpp         ConstantPool.hpp
+ClassParserStateDesc.cpp         ClassParserStateDesc.hpp
+ClassParserStateDesc.cpp         ObjectHeap_<iarch>.hpp
+
+ClassParserState.hpp             ClassParserStateDesc.hpp
+ClassParserState.cpp             ClassParserState.hpp
+ClassParserState.cpp             ObjectHeap_<iarch>.hpp
+
+Profiler.hpp                     Stream.hpp
+Profiler.hpp                     Top.hpp
+Profiler.cpp                     Globals_<os_family>.hpp
+Profiler.cpp                     Profiler.hpp
+Profiler.cpp                     CompiledMethod.hpp
+Profiler.cpp                     Thread.hpp
+Profiler.cpp                     Compiler.hpp
+Profiler.cpp                     ObjectHeap_<iarch>.hpp
+Profiler.cpp                     OS.hpp
+Profiler.cpp                     Frame.hpp
+Profiler.cpp                     OopDesc.inline.hpp
+Profiler.cpp                     TypeArray.hpp
+
+WTKProfiler.hpp                  Top.hpp
+WTKProfiler.cpp                  WTKProfiler.hpp
+WTKProfiler.cpp                  CompiledMethod.hpp
+WTKProfiler.cpp                  Thread.hpp
+WTKProfiler.cpp                  Compiler.hpp
+WTKProfiler.cpp                  Frame.hpp
+WTKProfiler.cpp                  OopDesc.inline.hpp
+WTKProfiler.cpp                  TypeArray.hpp
+WTKProfiler.cpp                  OS.hpp
+WTKProfiler.cpp                  Signature.hpp
+WTKProfiler.cpp                  Universe.hpp
+WTKProfiler.cpp                  MixedOop.hpp
+WTKProfiler.cpp                  MixedOopDesc.hpp
+WTKProfiler.cpp                  Universe.hpp
+WTKProfiler.cpp                  StackUtils.hpp
+
+#if ENABLE_XSCALE_WMMX_INSTRUCTIONS
+Disassembler_wmmx.cpp            Disassembler_<carch>.hpp
+#endif
+
+#if ENABLE_INTERPRETER_GENERATOR
+Disassembler_<iarch>.hpp         Assembler_<iarch>.hpp
+Disassembler_<iarch>.hpp         Stream.hpp
+Disassembler_<iarch>.hpp         Oop.hpp
+Disassembler_<iarch>.cpp         Disassembler_<iarch>.hpp
+#endif
+
+Disassembler_<carch>.hpp         Assembler_<carch>.hpp
+Disassembler_<carch>.hpp         Stream.hpp
+Disassembler_<carch>.hpp         Oop.hpp
+Disassembler_<carch>.cpp         Disassembler_<carch>.hpp
+Disassembler_<carch>.cpp         BinaryAssembler_<carch>.hpp
+
+#if ENABLE_INTERPRETER_GENERATOR
+SourceMacros_<iarch>.hpp         Bytecodes.hpp
+SourceMacros_<iarch>.hpp         SourceAssembler_<iarch>.hpp
+SourceMacros_<iarch>.cpp         SourceMacros_<iarch>.hpp
+SourceMacros_<iarch>.cpp         Frame.hpp
+SourceMacros_<iarch>.cpp         Method.hpp
+SourceMacros_<iarch>.cpp         JavaClassObj.hpp
+SourceMacros_<iarch>.cpp         ConstantPool.hpp
+SourceMacros_<iarch>.cpp         Synchronizer.hpp
+SourceMacros_<iarch>.cpp         ObjectHeap_<iarch>.hpp
+SourceMacros_<iarch>.cpp         Assembler_<iarch>.hpp
+#if ENABLE_JAVA_DEBUGGER
+SourceMacros_<iarch>.cpp         JavaDebugger.hpp
+#endif
+#if ENABLE_CPU_VARIANT
+SourceMacros_<iarch>.cpp         CPUVariantSupport.hpp
+#endif
+
+SharedStubs.hpp                  SourceMacros_<iarch>.hpp
+SharedStubs_<iarch>.cpp          SharedStubs.hpp
+SharedStubs_<iarch>.cpp          Generator.hpp
+SharedStubs_<iarch>.cpp          Frame.hpp
+SharedStubs_<iarch>.cpp          Method.hpp
+SharedStubs_<iarch>.cpp          Thread.hpp
+SharedStubs_<iarch>.cpp          CallInfo.hpp
+SharedStubs_<iarch>.cpp          EntryActivation.hpp
+SharedStubs_<iarch>.cpp          ClassParserState.hpp
+SharedStubs_<iarch>.cpp          ExecutionStack.hpp
+SharedStubs_<iarch>.cpp          CompiledMethod.hpp
+SharedStubs_<iarch>.cpp          BufferedFile.hpp
+SharedStubs_<iarch>.cpp          ObjNearDesc.hpp
+SharedStubs_<iarch>.cpp          ArrayClassDesc.hpp
+SharedStubs_<iarch>.cpp          ObjectHeap_<iarch>.hpp
+SharedStubs_<iarch>.cpp          Synchronizer.hpp
+SharedStubs_<iarch>.cpp          StackmapListDesc.hpp
+SharedStubs_<iarch>.cpp          MethodTrap.hpp
+#if ENABLE_ISOLATES
+SharedStubs_<iarch>.cpp          TaskDesc.hpp
+SharedStubs_<iarch>.cpp          TaskMirrorDesc.hpp
+#endif
+
+InterpreterStubs.hpp             SourceMacros_<iarch>.hpp
+
+InterpreterStubs_<iarch>.cpp     InterpreterStubs.hpp
+InterpreterStubs_<iarch>.cpp     Generator.hpp
+InterpreterStubs_<iarch>.cpp     Frame.hpp
+InterpreterStubs_<iarch>.cpp     Method.hpp
+InterpreterStubs_<iarch>.cpp     Thread.hpp
+InterpreterStubs_<iarch>.cpp     CallInfo.hpp
+InterpreterStubs_<iarch>.cpp     ObjectHeap_<iarch>.hpp
+#if ENABLE_JAVA_DEBUGGER
+InterpreterStubs_<iarch>.cpp     JavaDebugger.hpp
+#endif
+
+CompilerStubs.hpp                SourceMacros_<iarch>.hpp
+CompilerStubs_<iarch>.cpp        GPTableGenerator_<iarch>.hpp
+CompilerStubs_<iarch>.cpp        CompilerStubs.hpp
+CompilerStubs_<iarch>.cpp        Generator.hpp
+CompilerStubs_<iarch>.cpp        Frame.hpp
+CompilerStubs_<iarch>.cpp        Method.hpp
+CompilerStubs_<iarch>.cpp        Thread.hpp
+CompilerStubs_<iarch>.cpp        ObjArrayClass.hpp
+CompilerStubs_<iarch>.cpp        TypeArrayClass.hpp
+CompilerStubs_<iarch>.cpp        Array.hpp
+CompilerStubs_<iarch>.cpp        Synchronizer.hpp
+CompilerStubs_<iarch>.cpp        ObjectHeap_<iarch>.hpp
+CompilerStubs_<iarch>.cpp        SharedStubs.hpp
+
+GPTableGenerator_<iarch>.hpp     SourceMacros_<iarch>.hpp
+GPTableGenerator_<iarch>.cpp     Assembler_<iarch>.hpp
+GPTableGenerator_<iarch>.cpp     GPTableGenerator_<iarch>.hpp
+
+NativeGenerator.hpp              SourceMacros_<iarch>.hpp
+NativeGenerator_<iarch>.cpp      NativeGenerator.hpp
+NativeGenerator_<iarch>.cpp      Generator.hpp
+NativeGenerator_<iarch>.cpp      Frame.hpp
+NativeGenerator_<iarch>.cpp      Method.hpp
+NativeGenerator_<iarch>.cpp      Thread.hpp
+NativeGenerator_<iarch>.cpp      String.hpp
+NativeGenerator_<iarch>.cpp      FarClass.hpp
+NativeGenerator_<iarch>.cpp      JavaNear.hpp
+NativeGenerator_<iarch>.cpp      ObjectHeap_<iarch>.hpp
+#endif
+
+#if ENABLE_INTERPRETER_GENERATOR
+Generator.hpp                    SourceMacros_<iarch>.hpp
+Generator.cpp                    GPTableGenerator_<iarch>.hpp 
+#endif
+
+Generator.hpp                    Stream.hpp
+Generator.hpp                    Globals.hpp
+Generator.cpp                    Generator.hpp
+Generator.cpp                    VirtualStackFrame.hpp
+Generator.cpp                    Entry.hpp
+Generator.cpp                    CompilationQueue.hpp
+Generator.cpp                    ArrayClass.hpp
+Generator.cpp                    EntryActivation.hpp
+Generator.cpp                    CompiledMethod.hpp
+Generator.cpp                    InterpreterGenerator.hpp
+Generator.cpp                    SharedStubs.hpp
+Generator.cpp                    InterpreterStubs.hpp
+Generator.cpp                    CompilerStubs.hpp
+Generator.cpp                    NativeGenerator.hpp
+Generator.cpp                    OS_<os_family>.hpp
+Generator.cpp                    FilePath.hpp
+Generator.cpp                    ObjectHeap_<iarch>.hpp
+Generator.cpp                    OsFile.hpp
+Generator.cpp                    FloatSupport.hpp
+Generator.cpp                    Arguments.hpp
+Generator.cpp                    ObjNear.hpp
+Generator.cpp                    ClassParserState.hpp
+Generator.cpp                    StackmapList.hpp
+Generator.cpp                    Boundary.hpp
+Generator.cpp                    Compiler.hpp
+#if ENABLE_CPU_VARIANT
+Generator.cpp                    CPUVariantSupport.hpp
+#endif
+#if ENABLE_ISOLATES
+Generator.cpp                    Task.hpp
+Generator.cpp                    TaskMirror.hpp
+#endif
+
+Arguments.hpp                    FilePath.hpp
+Arguments.hpp                    Allocation.hpp
+Arguments.hpp                    RemoteTracer.hpp
+Arguments.hpp                    Stream.hpp
+Arguments.cpp                    Symbol.hpp
+Arguments.cpp                    SymbolTable.hpp
+Arguments.cpp                    Arguments.hpp
+Arguments.cpp                    JVM.hpp
+Arguments.cpp                    jvmspi.h
+Arguments.cpp                    Universe.hpp
+Arguments.cpp                    ObjectHeap_<iarch>.hpp
+Arguments.cpp                    jvmspi.h
+Arguments.cpp                    FilePath.hpp
+Arguments.hpp                    MethodTrap.hpp
+#if ENABLE_JAVA_DEBUGGER
+Arguments.cpp                    JavaDebugger.hpp
+#endif
+
+BytecodeClosure.hpp              Top.hpp
+BytecodeClosure.hpp              Method.hpp
+BytecodeClosure.hpp              ConstantPool.hpp
+BytecodeClosure.cpp              BytecodeClosure.hpp
+BytecodeClosure.cpp              FieldType.hpp
+BytecodeClosure.cpp              Signature.hpp
+BytecodeClosure.cpp              Symbol.hpp
+BytecodeClosure.cpp              Thread.hpp
+BytecodeClosure.cpp              ObjectHeap_<iarch>.hpp
+
+CompiledMethod.cpp               OopVisitor.hpp
+CompiledMethod.cpp               CompiledMethod.hpp
+CompiledMethod.cpp               Relocation.hpp
+CompiledMethod.cpp               Method.hpp
+CompiledMethod.cpp               OS.hpp
+CompiledMethod.cpp               OopDesc.inline.hpp
+CompiledMethod.cpp               OsMisc.hpp
+CompiledMethod.cpp               ObjectHeap_<iarch>.hpp
+CompiledMethod.cpp               BinaryAssembler_<carch>.hpp
+
+CompiledMethod_<carch>.cpp       OsMisc.hpp
+CompiledMethod_<carch>.cpp       Disassembler_<carch>.hpp
+CompiledMethod_<carch>.cpp       CompiledMethod.hpp
+CompiledMethod_<carch>.cpp       Relocation.hpp
+CompiledMethod_<carch>.cpp       Near.hpp
+CompiledMethod_<carch>.cpp       BinaryAssembler_<carch>.hpp
+#if ENABLE_CODE_PATCHING
+CompiledMethod_<carch>.cpp       StackUtils.hpp
+#endif
+
+CodeOptimizer_<carch>.hpp        Assembler_<carch>.hpp
+CodeOptimizer_<carch>.hpp        TypeArray.hpp
+CodeOptimizer_<carch>.hpp        Universe.hpp
+CodeOptimizer_<carch>.cpp        CodeOptimizer_<carch>.hpp
+CodeOptimizer_<carch>.cpp        Disassembler_<carch>.hpp
+CodeOptimizer_<carch>.cpp        Globals.hpp
+CodeOptimizer_<carch>.cpp        Relocation.hpp
+CodeOptimizer_<carch>.cpp        Thread.hpp
+CodeOptimizer_<carch>.cpp        Compiler.hpp
+
+Addressing.hpp                   BinaryAssembler_<carch>.hpp
+Addressing.hpp                   Method.hpp
+Addressing.hpp                   VirtualStackFrame.hpp
+Addressing.cpp                   Compiler.hpp
+Addressing.cpp                   Addressing.hpp
+
+Addressing_<carch>.hpp           Addressing.hpp
+Addressing_<carch>.cpp           Compiler.hpp
+Addressing_<carch>.cpp           Addressing.hpp
+Addressing_<carch>.cpp           ObjectHeap_<iarch>.hpp
+
+CodeGenerator.hpp                Addressing_<carch>.hpp
+CodeGenerator.hpp                Value.hpp
+CodeGenerator.hpp                BinaryAssembler_<carch>.hpp
+CodeGenerator.hpp                VirtualStackFrame.hpp
+CodeGenerator.hpp                BytecodeClosure.hpp
+CodeGenerator.hpp                CompiledMethodDesc.hpp
+CodeGenerator.cpp                Compiler.hpp
+CodeGenerator.cpp                Throw.hpp
+CodeGenerator.cpp                JVM.hpp
+
+CodeGenerator_<carch>.hpp        generate_platform_dependent_include
+CodeGenerator_<carch>.cpp        Compiler.hpp
+CodeGenerator_<carch>.cpp        CodeGenerator.hpp
+CodeGenerator_<carch>.cpp        Frame.hpp
+CodeGenerator_<carch>.cpp        Symbols.hpp
+CodeGenerator_<carch>.cpp        Signature.hpp
+CodeGenerator_<carch>.cpp        Instructions_<carch>.hpp
+CodeGenerator_<carch>.cpp        FPURegisterMap_<carch>.hpp
+CodeGenerator_<carch>.cpp        Location.hpp
+CodeGenerator_<carch>.cpp        ObjectHeap_<iarch>.hpp
+CodeGenerator_<carch>.cpp        TypeArrayClass.hpp
+CodeGenerator_<carch>.cpp        ConstantPool.hpp
+CodeGenerator_<carch>.cpp        ObjArrayClass.hpp
+CodeGenerator_<carch>.cpp        Synchronizer.hpp
+CodeGenerator_<carch>.cpp        FloatNatives.hpp
+#if ENABLE_JAVA_DEBUGGER
+CodeGenerator_<carch>.cpp        JavaDebugger.hpp
+#endif
+#if ENABLE_ISOLATES
+CodeGenerator_<carch>.cpp        TaskMirror.hpp
+#endif
+#if !ENABLE_ISOLATES
+CodeGenerator_<carch>.cpp        JavaClassObj.hpp
+#endif
+
+BytecodePrintClosure.hpp         BytecodeClosure.hpp
+BytecodePrintClosure.cpp         BytecodePrintClosure.hpp
+BytecodePrintClosure.cpp         Method.hpp
+BytecodePrintClosure.cpp         Bytecodes.hpp
+BytecodePrintClosure.cpp         ConstantPool.hpp
+BytecodePrintClosure.cpp         ObjectHeap_<iarch>.hpp
+BytecodePrintClosure.cpp         ObjArray.hpp
+BytecodePrintClosure.cpp         Field.hpp
+BytecodePrintClosure.cpp         OsMisc.hpp
+BytecodePrintClosure.cpp         StackmapList.hpp
+BytecodePrintClosure.cpp         StackmapGenerator.hpp
+
+RegisterAllocator.hpp            Assembler_<carch>.hpp
+RegisterAllocator.cpp            RegisterAllocator.hpp
+RegisterAllocator.cpp            Compiler.hpp
+RegisterAllocator.cpp            VirtualStackFrame.hpp
+RegisterAllocator_<carch>.cpp    RegisterAllocator.hpp
+RegisterAllocator_<carch>.cpp    Compiler.hpp
+
+FPURegisterMap_<carch>.hpp       Assembler_<carch>.hpp
+FPURegisterMap_<carch>.hpp       TypeArray.hpp
+FPURegisterMap_<carch>.cpp       FPURegisterMap_<carch>.hpp
+FPURegisterMap_<carch>.cpp       RegisterAllocator.hpp
+FPURegisterMap_<carch>.cpp       Compiler.hpp
+FPURegisterMap_<carch>.cpp       CodeGenerator.hpp
+
+VirtualStackFrameDesc.hpp        MixedOopDesc.hpp
+
+VirtualStackFrame.hpp            MixedOop.hpp
+VirtualStackFrame.hpp            VirtualStackFrameDesc.hpp
+VirtualStackFrame.hpp            Method.hpp
+VirtualStackFrame.hpp            Value.hpp
+VirtualStackFrame.cpp            VirtualStackFrame.hpp
+VirtualStackFrame.cpp            Location.hpp
+VirtualStackFrame.cpp            Signature.hpp
+VirtualStackFrame.cpp            Symbols.hpp
+VirtualStackFrame.cpp            ObjectHeap_<iarch>.hpp
+VirtualStackFrame.cpp            SystemDictionary.hpp
+//VirtualStackFrame.cpp            SourceAssembler_<carch>.hpp
+VirtualStackFrame.cpp            Compiler.hpp
+VirtualStackFrame.cpp            FPURegisterMap_<carch>.hpp
+VirtualStackFrame.cpp            InstanceClass.hpp
+VirtualStackFrame.cpp            StackmapGenerator.hpp
+VirtualStackFrame.cpp            VSFMergeTest.hpp
+VirtualStackFrame.cpp            StackUtils.hpp
+
+VSFMergeTest.hpp                 VirtualStackFrame.hpp
+VSFMergeTest.hpp                 CodeGenerator.hpp
+VSFMergeTest.hpp                 Location.hpp
+VSFMergeTest.cpp                 Arguments.hpp
+VSFMergeTest.cpp                 Compiler.hpp
+VSFMergeTest.cpp                 CompilerTest.hpp
+VSFMergeTest.cpp                 Location.hpp
+VSFMergeTest.cpp                 VSFMergeTest.hpp
+
+VirtualStackFrame_<carch>.cpp    VirtualStackFrame.hpp
+VirtualStackFrame_<carch>.cpp    FPURegisterMap_<carch>.hpp
+VirtualStackFrame_<carch>.cpp    VirtualStackFrame.hpp
+VirtualStackFrame_<carch>.cpp    BinaryAssembler_<carch>.hpp
+VirtualStackFrame_<carch>.cpp    CodeGenerator.hpp
+VirtualStackFrame_<carch>.cpp    Location.hpp
+VirtualStackFrame_<carch>.cpp    Compiler.hpp
+
+Location.hpp                     VirtualStackFrame.hpp
+Location.hpp                     Value.hpp
+Location.hpp                     TypeArray.hpp
+Location.cpp                     Location.hpp
+Location.cpp                     CodeGenerator.hpp
+Location.cpp                     Compiler.hpp
+
+Value.hpp                        GlobalDefinitions.hpp
+Value.hpp                        RegisterAllocator.hpp
+Value.hpp                        ObjArrayClass.hpp
+Value.cpp                        InstanceClass.hpp
+Value.cpp                        Value.hpp
+Value.cpp                        Compiler.hpp
+Value.cpp                        Field.hpp
+Value.cpp                        InstanceClass.hpp
+
+Relocation.hpp                   CompiledMethod.hpp
+Relocation.cpp                   Relocation.hpp
+Relocation.cpp                   BinaryAssembler_<carch>.hpp
+Relocation.cpp                   Compiler.hpp
+Relocation.cpp                   Location.hpp
+
+Compiler.hpp                     CompilationQueue.hpp
+Compiler.hpp                     Method.hpp
+Compiler.hpp                     VirtualStackFrame.hpp
+Compiler.hpp                     CodeGenerator.hpp
+Compiler.hpp                     CompilationQueue.hpp
+Compiler.hpp                     BytecodeCompileClosure.hpp
+Compiler.hpp                     Entry.hpp
+Compiler.hpp                     MixedOop.hpp
+Compiler.hpp                     CodeOptimizer_<carch>.hpp
+#if ENABLE_JVMPI_PROFILE
+Compiler.cpp                     Globals.hpp
+#endif 
+
+
+Compiler.cpp                     Compiler.hpp
+Compiler.cpp                     jvm.h
+Compiler.cpp                     CompiledMethodCache.hpp
+Compiler.cpp                     Timer.hpp
+Compiler.cpp                     ObjectHeap_<iarch>.hpp
+Compiler.cpp                     BytecodeCompileClosure.hpp
+Compiler.cpp                     InstanceClass.hpp
+Compiler.cpp                     Universe.hpp
+Compiler.cpp                     JVM.hpp
+Compiler.cpp                     CodeOptimizer_<carch>.hpp
+Compiler.cpp                     EventLogger.hpp
+Compiler.cpp                     Signature.hpp
+
+CompilerTest.hpp                 Compiler.hpp
+CompilerTest.cpp                 CompilerTest.hpp
+CompilerTest.cpp                 InstanceClass.hpp
+CompilerTest.cpp                 Method.hpp
+CompilerTest.cpp                 ObjArray.hpp
+CompilerTest.cpp                 jvm.h
+CompilerTest.cpp                 ConstantPool.hpp
+CompilerTest.cpp                 Arguments.hpp
+CompilerTest.cpp                 VSFMergeTest.hpp
+CompilerTest.cpp                 FilePath.hpp
+
+CompilationQueueElementDesc.hpp  MixedOopDesc.hpp
+
+CompilationQueue.hpp             CompilationQueueElementDesc.hpp
+CompilationQueue.hpp             VirtualStackFrame.hpp
+CompilationQueue.hpp             BinaryAssembler_<carch>.hpp
+CompilationQueue.hpp             BytecodeCompileClosure.hpp
+CompilationQueue.cpp             CompilationQueue.hpp
+CompilationQueue.cpp             Universe.hpp
+CompilationQueue.cpp             SystemDictionary.hpp
+CompilationQueue.cpp             Compiler.hpp
+CompilationQueue.cpp             InstanceClass.hpp
+CompilationQueue.cpp             Symbols.hpp
+CompilationQueue.cpp             VMEvent.hpp
+CompilationQueue_<carch>.cpp     CompilationQueue.hpp
+CompilationQueue_<carch>.cpp     Universe.hpp
+CompilationQueue_<carch>.cpp     SystemDictionary.hpp
+CompilationQueue_<carch>.cpp     CodeGenerator.hpp
+CompilationQueue_<carch>.cpp     BytecodeCompileClosure.hpp
+CompilationQueue_<carch>.cpp     Compiler.hpp
+CompilationQueue_<carch>.cpp     Entry.hpp
+CompilationQueue_<carch>.cpp     Location.hpp
+CompilationQueue_<carch>.cpp     Synchronizer.hpp
+
+EntryDesc.hpp                    MixedOopDesc.hpp
+
+Entry.hpp                        MixedOop.hpp
+Entry.hpp                        EntryDesc.hpp
+Entry.hpp                        VirtualStackFrame.hpp
+
+Entry.hpp                        BinaryAssembler_<carch>.hpp
+Entry.cpp                        Entry.hpp
+Entry.cpp                        Universe.hpp
+Entry.cpp                        SystemDictionary.hpp
+Entry.cpp                        InstanceClass.hpp
+
+BytecodeCompileClosure.hpp       BytecodeClosure.hpp
+BytecodeCompileClosure.hpp       CodeGenerator.hpp
+BytecodeCompileClosure.cpp       BytecodeCompileClosure.hpp
+BytecodeCompileClosure.cpp       Method.hpp
+BytecodeCompileClosure.cpp       Frame.hpp
+BytecodeCompileClosure.cpp       Compiler.hpp
+BytecodeCompileClosure.cpp       FPURegisterMap_<carch>.hpp
+BytecodeCompileClosure.cpp       JavaClassObj.hpp
+BytecodeCompileClosure.cpp       ConstantPool.hpp
+BytecodeCompileClosure.cpp       Signature.hpp
+BytecodeCompileClosure.cpp       VMEvent.hpp
+BytecodeCompileClosure.cpp       TypeArrayClass.hpp
+
+#if ENABLE_JVMPI_PROFILE
+CompiledMethodDesc.hpp           jvmpi.h
+#endif
+CompiledMethodDesc.hpp           MethodDesc.hpp
+CompiledMethodDesc.hpp           RemoteTracer.hpp
+CompiledMethodDesc.cpp           CompiledMethodDesc.hpp
+CompiledMethodDesc.cpp           Relocation.hpp
+CompiledMethodDesc.cpp           BinaryAssembler_<carch>.hpp
+
+CompiledMethodDesc_<carch>.cpp   CompiledMethodDesc.hpp
+CompiledMethodDesc_<carch>.cpp   Relocation.hpp
+CompiledMethodDesc_<carch>.cpp   BinaryAssembler_<carch>.hpp
+CompiledMethodDesc_<carch>.cpp   Instructions_<carch>.hpp
+CompiledMethodDesc_<carch>.cpp   ObjectHeap_<iarch>.hpp
+
+CompiledMethod.hpp               Oop.hpp
+CompiledMethod.hpp               CompiledMethodDesc.hpp
+
+Scheduler.hpp                    Universe.hpp
+Scheduler.hpp                    Task.hpp
+Scheduler.hpp                    jvm.h
+Scheduler.hpp                    jvmspi.h
+Scheduler.hpp                    Thread.hpp
+Scheduler.hpp                    Oop.hpp
+Scheduler.hpp                    GlobalDefinitions.hpp
+Scheduler.hpp                    ThreadObj.hpp
+Scheduler.cpp                    OS.hpp
+Scheduler.cpp                    Scheduler.hpp
+Scheduler.cpp                    Synchronizer.hpp
+Scheduler.cpp                    Throw.hpp
+Scheduler.cpp                    Throwable.hpp
+Scheduler.cpp                    ThreadObj.hpp
+Scheduler.cpp                    ObjectHeap_<iarch>.hpp
+Scheduler.cpp                    EntryActivation.hpp
+Scheduler.cpp                    Universe.hpp
+Scheduler.cpp                    Symbols.hpp
+Scheduler.cpp                    String.hpp
+Scheduler.cpp                    Method.hpp
+Scheduler.cpp                    InstanceClass.hpp
+Scheduler.cpp                    TypeArray.hpp
+Scheduler.cpp                    VMEvent.hpp
+Scheduler.cpp                    JavaDebugger.hpp
+Scheduler.cpp                    WTKProfiler.hpp
+Scheduler.cpp                    DeadlockFinder.hpp
+Scheduler.cpp                    Task.hpp
+
+Synchronizer.hpp                 JavaOop.hpp
+Synchronizer.hpp                 JavaNear.hpp
+Synchronizer.hpp                 JavaNearDesc.hpp
+Synchronizer.hpp                 Thread.hpp
+Synchronizer.hpp                 StringProxyLockDesc.hpp
+Synchronizer.cpp                 JavaClass.hpp
+Synchronizer.cpp                 Synchronizer.hpp
+Synchronizer.cpp                 Scheduler.hpp
+Synchronizer.cpp                 ObjectHeap_<iarch>.hpp
+Synchronizer.cpp                 EntryActivation.hpp
+Synchronizer.cpp                 Universe.hpp
+Synchronizer.cpp                 Method.hpp
+Synchronizer.cpp                 InstanceClass.hpp
+Synchronizer.cpp                 Symbols.hpp
+Synchronizer.cpp                 String.hpp
+
+DeadlockFinder.hpp               Top.hpp
+DeadlockFinder.hpp               Stream.hpp
+DeadlockFinder.cpp               DeadlockFinder.hpp
+DeadlockFinder.cpp               Frame.hpp
+DeadlockFinder.cpp               Thread.hpp
+DeadlockFinder.cpp               Synchronizer.hpp
+DeadlockFinder.cpp               Universe.hpp
+
+AssemblerLoopFlags.hpp           Top.hpp
+
+Bytecodes.hpp                    Top.hpp
+
+BytecodeHistogram.hpp            kni_md.h
+BytecodeHistogram.hpp            jvm.h
+BytecodeHistogram.hpp            Bytecodes.hpp
+BytecodeHistogram.cpp            BytecodeHistogram.hpp
+
+PairHistogram.hpp                kni_md.h
+PairHistogram.hpp                jvm.h
+PairHistogram.hpp                Bytecodes.hpp
+PairHistogram.cpp                PairHistogram.hpp
+
+Buffer.hpp                       jvm.h
+Buffer.hpp                       Bytes_<iarch>.hpp
+Buffer.hpp                       TypeArray.hpp
+Buffer.cpp                       Buffer.hpp
+Buffer.cpp                       Universe.hpp
+Buffer.cpp                       Throw.hpp
+
+Frame_<iarch>.hpp                Top.hpp
+
+Frame.hpp                        CallInfo.hpp
+Frame.hpp                        CompiledMethodDesc.hpp
+Frame.hpp                        Frame_<iarch>.hpp
+Frame.hpp                        Assembler_<carch>.hpp
+Frame.hpp                        BinaryAssembler_<carch>.hpp
+Frame.hpp                        Thread.hpp
+Frame.hpp                        Synchronizer.hpp
+
+Frame.cpp                        EntryActivation.hpp
+Frame.cpp                        Frame.hpp
+Frame.cpp                        MethodDesc.hpp
+Frame.cpp                        Method.hpp
+Frame.cpp                        ObjectHeap_<iarch>.hpp
+Frame.cpp                        OopDesc.inline.hpp
+Frame.cpp                        Relocation.hpp
+Frame.cpp                        OsMisc.hpp
+Frame.cpp                        Synchronizer.hpp
+Frame.cpp                        StackmapGenerator.hpp
+Frame.cpp                        InstanceClass.hpp
+Frame.cpp                        ObjArray.hpp
+Frame.cpp                        ExecutionStack.hpp
+Frame.cpp                        WTKProfiler.hpp
+
+Frame_<iarch>.cpp                Frame_<iarch>.hpp
+Frame_<iarch>.cpp                MethodDesc.hpp
+Frame_<iarch>.cpp                Method.hpp
+Frame_<iarch>.cpp                OopDesc.inline.hpp
+Frame_<iarch>.cpp                Synchronizer.hpp
+
+String.hpp                       CharacterStream.hpp
+String.hpp                       Instance.hpp
+String.cpp                       String.hpp
+String.cpp                       TypeArray.hpp
+String.cpp                       Universe.hpp
+
+JavaClassObj.hpp                 Instance.hpp
+JavaClassObj.hpp                 ThreadObj.hpp
+JavaClassObj.hpp                 JavaClass.hpp
+JavaClassObj.cpp                 JavaClassObj.hpp
+JavaClassObj.cpp                 InstanceClass.hpp
+JavaClassObj.cpp                 Universe.hpp
+
+ThreadObj.hpp                    Top.hpp
+ThreadObj.hpp                    Instance.hpp
+ThreadObj.cpp                    ThreadObj.hpp
+ThreadObj.cpp                    Universe.hpp
+ThreadObj.cpp                    InstanceClass.hpp
+ThreadObj.cpp                    ObjectHeap_<iarch>.hpp
+
+Throwable.hpp                    Instance.hpp
+Throwable.hpp                    InstanceClass.hpp
+Throwable.cpp                    Universe.hpp
+Throwable.cpp                    Throwable.hpp
+Throwable.cpp                    String.hpp
+Throwable.cpp                    InstanceClass.hpp
+Throwable.cpp                    ObjArray.hpp
+Throwable.cpp                    TypeArray.hpp
+Throwable.cpp                    Symbol.hpp
+Throwable.cpp                    Symbols.hpp
+Throwable.cpp                    Method.hpp
+Throwable.cpp                    ObjectHeap_<iarch>.hpp
+
+Throw.hpp                        Allocation.hpp
+Throw.cpp                        jvmspi.h
+Throw.cpp                        Throw.hpp
+Throw.cpp                        CharacterStream.hpp
+Throw.cpp                        SystemDictionary.hpp
+Throw.cpp                        Symbols.hpp
+Throw.cpp                        Universe.hpp
+Throw.cpp                        Method.hpp
+Throw.cpp                        String.hpp
+Throw.cpp                        JVM.hpp
+Throw.cpp                        EntryActivation.hpp
+Throw.cpp                        ErrorMessage.hpp
+Throw.cpp                        InstanceClass.hpp
+Throw.cpp                        Throwable.hpp
+Throw.cpp                        ObjectHeap_<iarch>.hpp
+
+Timer.hpp                        Top.hpp
+Timer.cpp                        Timer.hpp
+Timer.cpp                        jvm.h
+Timer.cpp                        OS.hpp
+
+OS.hpp                           Debug.hpp
+OS.cpp                           OS.hpp
+OS.cpp                           Stream.hpp
+OS.cpp                           JVM_<os_family>.hpp
+OS.cpp                           jvm.h
+OS.cpp                           jvmspi.h
+OS.cpp                           RemoteTracer.hpp
+OS.cpp                           OsMisc.hpp
+OS.cpp                           OsMisc_<os_family>.hpp
+
+OsFile.hpp                       OsFile_<os_family>.hpp
+OsFile.cpp                       OsFile.hpp
+OsFile_<os_family>.hpp           OS_<os_family>.hpp
+OsFile_<os_family>.cpp           OS_<os_family>.hpp
+OsFile_<os_family>.cpp           OsFile.hpp
+OsFile_<os_family>.cpp           OsFile_<os_family>.hpp
+OsFile_<os_family>.cpp           GlobalDefinitions.hpp
+OsFile_<os_family>.cpp           Stream.hpp
+
+OsMemory.hpp                     OS.hpp
+OsMemory.cpp                     Globals.hpp
+OsMemory.cpp                     OsMemory.hpp
+OsMemory_<os_family>.cpp         OsMemory.hpp
+OsMemory_<os_family>.cpp         OS_<os_family>.hpp
+
+OsMisc.hpp                       Debug.hpp
+OsMisc.hpp                       OsMisc_<os_family>.hpp
+OsMisc_<os_family>.hpp           OS_<os_family>.hpp
+OsMisc_<os_family>.cpp           OsMisc.hpp
+OsMisc_<os_family>.cpp           OsFile.hpp
+OsMisc_<os_family>.cpp           OsMemory.hpp
+OsMisc_<os_family>.cpp           OS_<os_family>.hpp
+OsMisc_<os_family>.cpp           OsMisc_<os_family>.hpp
+OsMisc_<os_family>.cpp           OsFile_<os_family>.hpp
+OsMisc_<os_family>.cpp           OsMemory_<os_family>.hpp
+
+OsSocket_<os_family>.cpp         OS_<os_family>.hpp
+OsSocket_<os_family>.cpp         Stream.hpp
+OsSocket_<os_family>.cpp         sni.h
+
+OS_<os_family>.hpp               Debug.hpp
+OS_<os_family>.hpp               Globals.hpp
+OS_<os_family>.cpp               Top.hpp
+OS_<os_family>.cpp               OS_<os_family>.hpp
+OS_<os_family>.cpp               OS.hpp
+OS_<os_family>.cpp               RemoteTracer.hpp
+OS_<os_family>.cpp               sni.h
+OS_<os_family>.cpp               OsMisc.hpp
+OS_<os_family>.cpp               ExecutionStack.hpp
+#if ENABLE_INTEL_NPCE
+OS_<os_family>.cpp               Method.hpp
+OS_<os_family>.cpp               CompiledMethod.hpp
+OS_<os_family>.cpp               Relocation.hpp
+OS_<os_family>.cpp               ObjectHeap_<iarch>.hpp
+#endif
+OS_<os_family>.cpp               StackUtils.hpp
+
+// The following 3 lines are for monitor function, see OS_gba.cpp
+OS_<os_family>.cpp               Compiler.hpp
+OS_<os_family>.cpp               ObjectHeap_<iarch>.hpp
+OS_<os_family>.cpp               Verifier.hpp
+
+Field.hpp                        InstanceClass.hpp
+Field.hpp                        ConstantTag.hpp
+Field.hpp                        ROM.hpp
+Field.cpp                        Field.hpp
+Field.cpp                        ObjectHeap_<iarch>.hpp
+Field.cpp                        ConstantPool.hpp
+Field.cpp                        FieldType.hpp
+Field.cpp                        TypeArray.hpp
+
+AccessFlags.hpp                  Top.hpp
+AccessFlags.hpp                  JvmConst.hpp
+AccessFlags.cpp                  AccessFlags.hpp
+
+LargeObject.hpp                  Oop.hpp
+LargeObject.hpp                  ObjectHeap_<iarch>.hpp
+LargeObject.cpp                  ExecutionStackDesc.hpp
+LargeObject.cpp                  Frame.hpp
+LargeObject.cpp                  JavaClassDesc.hpp
+LargeObject.cpp                  LargeObject.hpp
+LargeObject.cpp                  RefArray.hpp
+LargeObject.cpp                  Scheduler.hpp
+LargeObject.cpp                  OopDesc.inline.hpp
+#if ENABLE_MONET
+LargeObject.cpp                  ROM.hpp
+#endif
+
+ObjectHeap.hpp                   Oop.hpp
+ObjectHeap.hpp                   ArrayDesc.hpp
+ObjectHeap.hpp                   CompiledMethodCache.hpp
+ObjectHeap_<iarch>.hpp           ObjectHeap.hpp
+
+ObjectHeap.cpp                   StringTable.hpp
+ObjectHeap.cpp                   jvm.h
+ObjectHeap.cpp                   FinalizerConsDesc.hpp
+ObjectHeap.cpp                   ObjectHeap_<iarch>.hpp
+ObjectHeap.cpp                   Compiler.hpp
+ObjectHeap.cpp                   LargeObject.hpp
+ObjectHeap.cpp                   OopDesc.inline.hpp
+ObjectHeap.cpp                   ROM.hpp
+ObjectHeap.cpp                   ObjArray.hpp
+ObjectHeap.cpp                   ROMWriter.hpp
+
+ObjectHeap.cpp                   Throw.hpp
+ObjectHeap.cpp                   Timer.hpp
+ObjectHeap.cpp                   Method.hpp
+ObjectHeap.cpp                   Scheduler.hpp
+ObjectHeap.cpp                   Synchronizer.hpp
+ObjectHeap.cpp                   Profiler.hpp
+ObjectHeap.cpp                   Relocation.hpp
+ObjectHeap.cpp                   RefArray.hpp
+ObjectHeap.cpp                   JVM.hpp
+ObjectHeap.cpp                   RemoteTracer.hpp
+ObjectHeap.cpp                   OsMisc.hpp
+ObjectHeap.cpp                   ClassFileParser.hpp
+ObjectHeap.cpp                   Verifier.hpp
+ObjectHeap.cpp                   TypeSymbol.hpp
+ObjectHeap.cpp                   JavaDebugger.hpp
+ObjectHeap.cpp                   Boundary.hpp
+ObjectHeap.cpp                   CompiledMethodDesc.hpp
+ObjectHeap.cpp                   EventLogger.hpp
+ObjectHeap.cpp                   JarFileParser.hpp
+ObjectHeap.cpp                   Task.hpp
+
+ConstantTag.hpp                  ArrayDesc.hpp
+ConstantTag.hpp                  GlobalDefinitions.hpp
+ConstantTag.hpp                  Stream.hpp
+ConstantTag.hpp                  JvmConst.hpp
+ConstantTag.cpp                  ConstantTag.hpp
+
+JavaVTable.hpp                   Universe.hpp
+JavaVTable.hpp                   InstanceClass.hpp
+JavaVTable.hpp                   Method.hpp
+JavaVTable.cpp                   JavaVTable.hpp
+JavaVTable.cpp                   Symbol.hpp
+JavaVTable.cpp                   ObjectHeap_<iarch>.hpp
+JavaVTable.cpp                   ClassInfo.hpp
+
+TypeSymbol.hpp                   JavaClass.hpp
+TypeSymbol.hpp                   Symbol.hpp
+TypeSymbol.cpp                   TypeSymbol.hpp
+TypeSymbol.cpp                   SymbolTable.hpp
+TypeSymbol.cpp                   TypeArray.hpp
+TypeSymbol.cpp                   SystemDictionary.hpp
+TypeSymbol.cpp                   ArrayClass.hpp
+TypeSymbol.cpp                   TypeArrayClass.hpp
+TypeSymbol.cpp                   ObjArrayClass.hpp
+TypeSymbol.cpp                   InstanceClass.hpp
+TypeSymbol.cpp                   Throw.hpp
+TypeSymbol.cpp                   Symbols.hpp
+TypeSymbol.cpp                   FieldType.hpp
+TypeSymbol.cpp                   ObjectHeap_<iarch>.hpp
+TypeSymbol.cpp                   OopDesc.inline.hpp
+
+FieldType.hpp                    TypeSymbol.hpp
+FieldType.cpp                    FieldType.hpp
+FieldType.cpp                    Universe.hpp
+FieldType.cpp                    Signature.hpp
+FieldType.cpp                    TypeArrayClass.hpp
+FieldType.cpp                    ObjArrayClass.hpp
+FieldType.cpp                    ObjectHeap_<iarch>.hpp
+
+// Assembler
+
+#if ENABLE_INTERPRETER_GENERATOR
+#ifeq iarch arm
+Assembler_armthumb.hpp           GlobalDefinitions.hpp
+Assembler_<iarch>.hpp            Assembler_armthumb.hpp
+#endif
+#ifeq iarch thumb2
+Assembler_armthumb.hpp           GlobalDefinitions.hpp
+Assembler_<iarch>.hpp            Assembler_armthumb.hpp
+#endif
+Assembler_<iarch>.hpp            Allocation.hpp
+Assembler_<iarch>.hpp            Bytecodes.hpp
+Assembler_<iarch>.hpp            Globals.hpp
+Assembler_<iarch>.cpp            Assembler_<iarch>.hpp
+#endif
+
+#ifeq carch arm
+Assembler_armthumb.hpp           GlobalDefinitions.hpp
+Assembler_<carch>.hpp            Assembler_armthumb.hpp
+#endif
+#ifeq carch thumb
+Assembler_armthumb.hpp           GlobalDefinitions.hpp
+Assembler_<carch>.hpp            Assembler_armthumb.hpp
+#endif
+#ifeq carch thumb2
+Assembler_armthumb.hpp           GlobalDefinitions.hpp
+Assembler_<carch>.hpp            Assembler_armthumb.hpp
+#endif
+Assembler_<carch>.hpp            Allocation.hpp
+Assembler_<carch>.hpp            Bytecodes.hpp
+Assembler_<carch>.hpp            Globals.hpp
+Assembler_<carch>.cpp            Assembler_<carch>.hpp
+Assembler_<carch>.cpp            BinaryAssembler_<carch>.hpp
+Assembler_<carch>.cpp            RegisterAllocator.hpp
+
+#if ENABLE_INTERPRETER_GENERATOR
+SourceAssembler_<iarch>.hpp      Assembler_<iarch>.hpp
+SourceAssembler_<iarch>.hpp      Frame.hpp
+SourceAssembler_<iarch>.hpp      Disassembler_<iarch>.hpp
+
+SourceAssembler_<iarch>.cpp      SourceAssembler_<iarch>.hpp
+SourceAssembler_<iarch>.cpp      InterpreterGenerator.hpp
+SourceAssembler_<iarch>.cpp      Frame.hpp
+SourceAssembler_<iarch>.cpp      Bytecodes.hpp
+SourceAssembler_<iarch>.cpp      Synchronizer.hpp
+SourceAssembler_<iarch>.cpp      CallInfo.hpp
+SourceAssembler_<iarch>.cpp      CompiledMethod.hpp
+SourceAssembler_<iarch>.cpp      ObjectHeap_<iarch>.hpp
+SourceAssembler_<iarch>.cpp      GPTableGenerator_<iarch>.hpp
+#endif
+
+BinaryAssembler_<carch>.hpp      MixedOop.hpp
+BinaryAssembler_<carch>.hpp      Assembler_<carch>.hpp
+BinaryAssembler_<carch>.hpp      CompiledMethod.hpp
+BinaryAssembler_<carch>.hpp      Relocation.hpp
+BinaryAssembler_<carch>.hpp      CallInfo.hpp
+BinaryAssembler_<carch>.hpp      ObjectHeap_<iarch>.hpp
+BinaryAssembler_<carch>.hpp      ObjArray.hpp
+BinaryAssembler_<carch>.hpp      TypeArray.hpp
+BinaryAssembler_<carch>.hpp      Disassembler_<carch>.hpp
+BinaryAssembler_<carch>.cpp      Universe.hpp
+BinaryAssembler_<carch>.cpp      BinaryAssembler_<carch>.hpp
+BinaryAssembler_<carch>.cpp      Thread.hpp
+BinaryAssembler_<carch>.cpp      Instructions_<carch>.hpp
+BinaryAssembler_<carch>.cpp      FPURegisterMap_<carch>.hpp
+BinaryAssembler_<carch>.cpp      Compiler.hpp
+
+Instructions_<carch>.hpp         Allocation.hpp
+Instructions_<carch>.hpp         Compiler.hpp
+Instructions_<carch>.cpp         Instructions_<carch>.hpp
+
+// Natives
+BuildFlags.hpp                   BuildFlags_<os_family>.hpp
+kni_md.h                         BuildFlags.hpp
+kni.h                            kni_md.h
+
+KniImpl.hpp                      kni.h
+KniImpl.hpp                      Top.hpp
+KniImpl.hpp                      JavaClassObj.hpp
+
+kni.cpp                          KniImpl.hpp
+kni.cpp                          JavaClassObj.hpp
+kni.cpp                          String.hpp
+kni.cpp                          SystemDictionary.hpp
+kni.cpp                          Field.hpp
+kni.cpp                          Method.hpp
+kni.cpp                          ConstantPoolDesc.hpp
+kni.cpp                          InstanceClass.hpp
+kni.cpp                          Universe.hpp
+kni.cpp                          ObjectHeap_<iarch>.hpp
+kni.cpp                          Throwable.hpp
+kni.cpp                          EntryActivation.hpp
+kni.cpp                          Symbols.hpp
+kni.cpp                          SymbolTable.hpp
+kni.cpp                          TypeSymbol.hpp
+kni.cpp                          FieldType.hpp
+kni.cpp                          ObjArrayClass.hpp
+kni.cpp                          TypeArrayClass.hpp
+
+KniUncommon.cpp                  KniImpl.hpp
+KniUncommon.cpp                  JavaClassObj.hpp
+KniUncommon.cpp                  ObjectHeap_<iarch>.hpp
+KniUncommon.cpp                  ObjArrayClass.hpp
+KniUncommon.cpp                  TypeArrayClass.hpp
+
+Natives.hpp                      Universe.hpp
+Natives.hpp                      InstanceClass.hpp
+Natives.hpp                      NativesTable.hpp
+Natives.hpp                      Frame.hpp
+Natives.cpp                      ROMWriter.hpp
+Natives.cpp                      Stream.hpp
+Natives.cpp                      Natives.hpp
+Natives.cpp                      SystemDictionary.hpp
+Natives.cpp                      JavaClassObj.hpp
+Natives.cpp                      Universe.hpp
+Natives.cpp                      Method.hpp
+Natives.cpp                      String.hpp
+Natives.cpp                      Throw.hpp
+Natives.cpp                      ThreadObj.hpp
+Natives.cpp                      OS.hpp
+Natives.cpp                      Synchronizer.hpp
+Natives.cpp                      ObjectHeap_<iarch>.hpp
+Natives.cpp                      Scheduler.hpp
+Natives.cpp                      Symbols.hpp
+Natives.cpp                      CharacterStream.hpp
+Natives.cpp                      JVM.hpp
+Natives.cpp                      jvmspi.h
+Natives.cpp                      ClassPathAccess.hpp
+Natives.cpp                      Buffer.hpp
+Natives.cpp                      EntryActivation.hpp
+Natives.cpp                      TypeArrayClass.hpp
+Natives.cpp                      Field.hpp
+Natives.cpp                      FieldType.hpp
+Natives.cpp                      Throwable.hpp
+Natives.cpp                      SymbolTable.hpp
+Natives.cpp                      Signature.hpp
+Natives.cpp                      ObjArrayClass.hpp
+Natives.cpp                      WeakReference.hpp
+Natives.cpp                      ConstantPool.hpp
+Natives.cpp                      Semaphore.hpp
+Natives.cpp                      Inflate.hpp
+Natives.cpp                      SourceROMWriter.hpp
+Natives.cpp                      BinaryROMWriter.hpp
+Natives.cpp                      Task.hpp
+#if ENABLE_JAVA_DEBUGGER
+Natives.cpp                      JavaDebugger.hpp
+Natives.cpp                      ObjectReferenceImpl.hpp
+#endif
+#if ENABLE_REFLECTION
+Natives.cpp                      ParsedTypeSymbol.hpp
+#endif
+Natives.cpp                      SegmentedSourceROMWriter.hpp
+Natives.cpp                      StackUtils.hpp
+
+WeakReference.hpp                Instance.hpp
+WeakReference.cpp                WeakReference.hpp
+WeakReference.cpp                InstanceClass.hpp
+WeakReference.cpp                Symbols.hpp
+WeakReference.cpp                SystemDictionary.hpp
+WeakReference.cpp                Thread.hpp
+
+FloatNatives.hpp                 Universe.hpp
+FloatNatives.cpp                 FloatNatives.hpp
+FloatNatives.cpp                 Thread.hpp
+FloatNatives.cpp                 kni.h
+
+TaskDesc.hpp                     OopDesc.hpp
+TaskDesc.hpp                     MixedOopDesc.hpp
+TaskDesc.hpp                     ObjArrayDesc.hpp
+TaskDesc.hpp                     ArrayDesc.hpp
+
+Task.hpp                         TaskDesc.hpp
+Task.hpp                         MixedOop.hpp
+Task.hpp                         Universe.hpp
+Task.hpp                         OopCons.hpp
+Task.cpp                         Task.hpp
+Task.cpp                         ObjArrayDesc.hpp
+Task.cpp                         MethodTrap.hpp
+Task.cpp                         Verifier.hpp
+Task.cpp                         RefArray.hpp
+Task.cpp                         StringTable.hpp
+Task.cpp                         SymbolTable.hpp
+Task.cpp                         Synchronizer.hpp
+Task.cpp                         CompiledMethodCache.hpp
+#if ENABLE_MONET
+Task.cpp                         LargeObject.hpp
+#endif
+
+TaskContext.hpp                  ObjectHeap.hpp
+TaskContext.hpp                  GlobalDefinitions.hpp
+TaskContext.hpp                  LargeObject.hpp
+TaskContext.cpp                  ROM.hpp
+TaskContext.cpp                  Task.hpp
+TaskContext.cpp                  TaskContext.hpp
+TaskContext.cpp                  Universe.hpp
+
+#if ENABLE_ISOLATES
+TaskContext.cpp                  StringTable.hpp
+TaskContext.cpp                  SymbolTable.hpp
+TaskContext.cpp                  RefArray.hpp
+
+IsolateNatives.hpp               kni.h
+IsolateNatives.hpp               Allocation.hpp
+
+IsolateNatives.cpp               IsolateNatives.hpp
+IsolateNatives.cpp               Oop.hpp
+IsolateNatives.cpp               Task.hpp
+IsolateNatives.cpp               String.hpp
+IsolateNatives.cpp               ObjArray.hpp
+IsolateNatives.cpp               Universe.hpp
+IsolateNatives.cpp               InstanceClass.hpp
+IsolateNatives.cpp               EntryActivation.hpp
+IsolateNatives.cpp               JavaClassObj.hpp
+IsolateNatives.cpp               Throw.hpp
+IsolateNatives.cpp               Thread.hpp
+IsolateNatives.cpp               Scheduler.hpp
+IsolateNatives.cpp               Symbols.hpp
+IsolateNatives.cpp               FilePath.hpp
+IsolateNatives.cpp               JavaDebugger.hpp
+
+IsolateObj.hpp                   Instance.hpp
+IsolateObj.hpp                   String.hpp
+IsolateObj.hpp                   ObjArray.hpp
+IsolateObj.hpp                   TaskMirror.hpp
+IsolateObj.cpp                   Universe.hpp
+IsolateObj.cpp                   IsolateObj.hpp
+IsolateObj.cpp                   TaskList.hpp
+IsolateObj.cpp                   Thread.hpp
+IsolateObj.cpp                   Scheduler.hpp
+IsolateObj.cpp                   Universe.hpp
+IsolateObj.cpp                   InstanceClass.hpp
+
+Task.hpp                         IsolateObj.hpp
+Task.hpp                         String.hpp
+Task.hpp                         jvmspi.h
+
+Task.cpp                         Oop.hpp
+Task.cpp                         TaskList.hpp
+Task.cpp                         Thread.hpp
+Task.cpp                         ThreadObj.hpp
+Task.cpp                         Scheduler.hpp
+Task.cpp                         JVM.hpp
+Task.cpp                         OsMisc.hpp
+Task.cpp                         String.hpp
+Task.cpp                         EntryActivation.hpp
+Task.cpp                         SymbolTable.hpp
+Task.cpp                         SystemDictionary.hpp
+Task.cpp                         InstanceClass.hpp
+Task.cpp                         Method.hpp
+Task.cpp                         Symbols.hpp
+Task.cpp                         Throw.hpp
+Task.cpp                         OopVisitor.hpp
+Task.cpp                         ObjectHeap_<iarch>.hpp
+Task.cpp                         Field.hpp
+Task.cpp                         sni.h
+Task.cpp                         jvmspi.h
+Task.cpp                         FilePath.hpp
+Task.cpp                         Compiler.hpp
+Task.cpp                         JarFileParser.hpp
+#if ENABLE_JAVA_DEBUGGER
+Task.cpp                         Transport.hpp
+Task.cpp                         JavaDebugger.hpp
+#endif
+Task.cpp                         WTKProfiler.hpp
+Task.cpp                         Profiler.hpp
+
+TaskList.hpp                     ObjArray.hpp
+
+TaskMirrorDesc.hpp               Top.hpp
+TaskMirrorDesc.hpp               OopDesc.hpp
+
+TaskMirror.hpp                   TaskMirrorDesc.hpp
+TaskMirror.hpp                   Oop.hpp
+TaskMirror.cpp                   TaskMirror.hpp
+TaskMirror.cpp                   OopVisitor.hpp
+TaskMirror.cpp                   InstanceClass.hpp
+TaskMirror.cpp                   ROM.hpp
+TaskMirror.cpp                   TypeArray.hpp
+TaskMirror.cpp                   Field.hpp
+TaskMirror.cpp                   JavaClassObj.hpp
+
+TaskMirrorDesc.cpp               TaskMirrorDesc.hpp
+TaskMirrorDesc.cpp               InstanceClassDesc.hpp
+TaskMirrorDesc.cpp               OopDesc.inline.hpp
+#endif ENABLE_ISOLATES
+
+// NativesTable.cpp is auto-generated -- need special handling in MakeDep
+NativesTable.cpp                 NativesTable.hpp
+
+// Interpreter
+
+Bytecodes.cpp                    Bytecodes.hpp
+Bytecodes.cpp                    Method.hpp
+Bytecodes.cpp                    Bytes_<iarch>.hpp
+Bytecodes.cpp                    ObjectHeap_<iarch>.hpp
+
+#if ENABLE_INTERPRETER_GENERATOR
+TemplateTable.hpp                SourceMacros_<iarch>.hpp
+TemplateTable.hpp                Assembler_<iarch>.hpp
+TemplateTable.hpp                SourceAssembler_<iarch>.hpp
+TemplateTable.hpp                Bytecodes.hpp
+TemplateTable.cpp                TemplateTable.hpp
+TemplateTable_<iarch>.cpp        TemplateTable.hpp
+TemplateTable_<iarch>.cpp        InterpreterGenerator.hpp
+TemplateTable_<iarch>.cpp        Method.hpp
+TemplateTable_<iarch>.cpp        Frame.hpp
+TemplateTable_<iarch>.cpp        ObjectHeap_<iarch>.hpp
+TemplateTable_<iarch>.cpp        Synchronizer.hpp
+TemplateTable_<iarch>.cpp        Robocop.hpp
+TemplateTable_<iarch>.cpp        CompiledMethod.hpp
+TemplateTable_<iarch>.cpp        Array.hpp
+TemplateTable_<iarch>.cpp        ObjArrayClass.hpp
+TemplateTable_<iarch>.cpp        TypeArrayClass.hpp
+TemplateTable_<iarch>.cpp        InstanceClass.hpp
+TemplateTable_<iarch>.cpp        ConstantPool.hpp
+#if ENABLE_ISOLATES
+TemplateTable_<iarch>.cpp        TaskMirror.hpp
+#endif
+#if ENABLE_JAVA_DEBUGGER
+TemplateTable_<iarch>.cpp        JavaDebugger.hpp
+#endif
+
+FloatSupport.hpp                 SourceMacros_<iarch>.hpp
+
+#if ENABLE_CPU_VARIANT
+CPUVariantSupport_<iarch>.cpp    CPUVariantSupport.hpp
+CPUVariantSupport_<iarch>.cpp    Generator.hpp
+CPUVariantSupport_<iarch>.cpp    InterpreterGenerator.hpp
+CPUVariantSupport_<iarch>.cpp    SourceMacros_<iarch>.hpp
+
+CPUVariantSupport.hpp            SourceMacros_<iarch>.hpp
+
+CPUVariantSupport_<iarch>.hpp    generate_platform_dependent_include
+#endif
+
+InterpreterGenerator.hpp          Bytecodes.hpp
+InterpreterGenerator.hpp          SourceMacros_<iarch>.hpp
+InterpreterGenerator.hpp          TemplateTable.hpp
+InterpreterGenerator.hpp          Method.hpp
+InterpreterGenerator_<iarch>.cpp  GPTableGenerator_<iarch>.hpp
+InterpreterGenerator_<iarch>.cpp  InterpreterGenerator.hpp
+InterpreterGenerator_<iarch>.cpp  Frame.hpp
+InterpreterGenerator_<iarch>.cpp  Synchronizer.hpp
+InterpreterGenerator_<iarch>.cpp  String.hpp
+InterpreterGenerator_<iarch>.cpp  ConstantPool.hpp
+InterpreterGenerator_<iarch>.cpp  ObjectHeap_<iarch>.hpp
+InterpreterGenerator_<iarch>.cpp  AssemblerLoopFlags.hpp
+InterpreterGenerator_<iarch>.cpp  CompiledMethod.hpp
+#if ENABLE_ISOLATES
+InterpreterGenerator_<iarch>.cpp  TaskMirror.hpp
+#endif
+#if ENABLE_JAVA_DEBUGGER
+InterpreterGenerator_<iarch>.cpp  JavaDebugger.hpp
+#endif
+#endif
+
+FloatSupport_<iarch>.cpp         FloatSupport.hpp
+FloatSupport_<iarch>.cpp         Generator.hpp
+FloatSupport_<iarch>.cpp         TemplateTable.hpp
+FloatSupport_<iarch>.cpp         InterpreterGenerator.hpp
+FloatSupport_<iarch>.cpp         SourceMacros_<iarch>.hpp
+FloatSupport_<iarch>.cpp         FloatNatives.hpp
+FloatSupport_<iarch>.cpp         ObjectHeap_<iarch>.hpp
+
+InterpreterRuntime.hpp           Method.hpp
+InterpreterRuntime.hpp           Bytecodes.hpp
+InterpreterRuntime.cpp           jvm.h
+InterpreterRuntime.cpp           Universe.hpp
+InterpreterRuntime.cpp           InterpreterRuntime.hpp
+InterpreterRuntime.cpp           JvmConst.hpp
+InterpreterRuntime.cpp           ConstantPool.hpp
+InterpreterRuntime.cpp           FieldType.hpp
+InterpreterRuntime.cpp           SystemDictionary.hpp
+InterpreterRuntime.cpp           Field.hpp
+InterpreterRuntime.cpp           Signature.hpp
+InterpreterRuntime.cpp           InterpreterGenerator.hpp
+InterpreterRuntime.cpp           String.hpp
+InterpreterRuntime.cpp           Synchronizer.hpp
+InterpreterRuntime.cpp           Throw.hpp
+InterpreterRuntime.cpp           Bytes_<iarch>.hpp
+InterpreterRuntime.cpp           BinaryAssembler_<carch>.hpp
+InterpreterRuntime.cpp           Scheduler.hpp
+InterpreterRuntime.cpp           ObjectHeap_<iarch>.hpp
+InterpreterRuntime.cpp           JVM.hpp
+InterpreterRuntime.cpp           EntryActivation.hpp
+InterpreterRuntime.cpp           ThreadObj.hpp
+InterpreterRuntime.cpp           TypeArrayClass.hpp
+InterpreterRuntime.cpp           ObjArrayClass.hpp
+InterpreterRuntime.cpp           ROMOptimizer.hpp
+InterpreterRuntime.cpp           OsMisc.hpp
+InterpreterRuntime.cpp           WTKProfiler.hpp
+InterpreterRuntime.cpp           ROMWriter.hpp
+#if ENABLE_ISOLATES
+InterpreterRuntime.cpp           Task.hpp
+#endif
+
+InterpreterRuntime_<iarch>.cpp   Top.hpp
+InterpreterRuntime_<iarch>.cpp   Method.hpp
+InterpreterRuntime_<iarch>.cpp   Frame.hpp
+InterpreterRuntime_<iarch>.cpp   InstanceClass.hpp
+InterpreterRuntime_<iarch>.cpp   FloatNatives.hpp
+InterpreterRuntime_<iarch>.cpp   ObjectHeap_<iarch>.hpp
+
+#if ENABLE_INTERPRETER_GENERATOR
+Robocop.hpp                      SourceAssembler_<iarch>.hpp
+Robocop.hpp                      Bytecodes.hpp
+Robocop.hpp                      InterpreterGenerator.hpp
+Robocop.hpp                      Method.hpp
+Robocop.hpp                      TemplateTable.hpp
+Robocop.cpp                      Robocop.hpp
+Robocop.cpp                      ObjectHeap_<iarch>.hpp
+#endif
+
+// Runtime
+
+Allocation.hpp                   OsMemory.hpp
+Allocation.hpp                   Globals.hpp
+Allocation.cpp                   Allocation.hpp
+Allocation.cpp                   Stream.hpp
+
+Top.hpp                          Globals.hpp
+Top.hpp                          Debug.hpp
+Top.hpp                          Stream.hpp
+Top.hpp                          GlobalDefinitions.hpp
+
+
+SystemDictionary.hpp             Thread.hpp
+SystemDictionary.hpp             Buffer.hpp
+SystemDictionary.cpp             Symbol.hpp
+SystemDictionary.cpp             Symbols.hpp
+SystemDictionary.cpp             InstanceClass.hpp
+SystemDictionary.cpp             BufferedFile.hpp
+SystemDictionary.cpp             ClassPathAccess.hpp
+SystemDictionary.cpp             SystemDictionary.hpp
+SystemDictionary.cpp             Universe.hpp
+SystemDictionary.cpp             ClassFileParser.hpp
+SystemDictionary.cpp             Throw.hpp
+SystemDictionary.cpp             FieldType.hpp
+SystemDictionary.cpp             ObjectHeap_<iarch>.hpp
+SystemDictionary.cpp             JavaClassObj.hpp
+SystemDictionary.cpp             TypeArrayClass.hpp
+SystemDictionary.cpp             ObjArrayClass.hpp
+SystemDictionary.cpp             Method.hpp
+SystemDictionary.cpp             jvm.h
+SystemDictionary.cpp             VMEvent.hpp
+SystemDictionary.cpp             FileDecoder.hpp
+SystemDictionary.cpp             Task.hpp
+
+Globals.hpp                      Debug.hpp
+Globals.hpp                      GlobalDefinitions.hpp
+
+GlobalDefinitions.hpp            kni.h
+GlobalDefinitions.hpp            ROMImage.hpp
+GlobalDefinitions.hpp            GlobalDefinitions_<compiler>.hpp
+GlobalDefinitions.hpp            Globals_<os_family>.hpp
+
+GlobalDefinitions.cpp            GlobalDefinitions.hpp
+#if ENABLE_ISOLATES
+GlobalDefinitions.cpp            Task.hpp
+GlobalDefinitions.cpp            Thread.hpp
+GlobalDefinitions.cpp            IsolateObj.hpp
+GlobalDefinitions.cpp            Universe.hpp
+#endif
+GlobalDefinitions.cpp            Array.hpp
+GlobalDefinitions.cpp            Oop.hpp
+GlobalDefinitions.cpp            Top.hpp
+GlobalDefinitions.cpp            JVM.hpp
+
+GlobalDefinitions_<iarch>.hpp    generate_platform_dependent_include
+
+GlobalDefinitions_<iarch>.cpp    GlobalDefinitions.hpp
+GlobalDefinitions_<iarch>.cpp    ObjectHeap_<iarch>.hpp
+GlobalDefinitions_<iarch>.cpp    JavaClass.hpp
+
+Stream.hpp                       Allocation.hpp
+Stream.hpp                       GlobalDefinitions.hpp
+Stream.hpp                       OsFile.hpp
+Stream.cpp                       Top.hpp
+
+ThreadDesc.hpp                   MixedOopDesc.hpp
+
+Thread.hpp                       ThreadDesc.hpp
+Thread.hpp                       Allocation.hpp
+Thread.hpp                       GlobalDefinitions.hpp
+Thread.hpp                       Stream.hpp
+Thread.hpp                       Instance.hpp
+Thread.hpp                       TypeArray.hpp
+Thread.hpp                       CompiledMethodCache.hpp
+Thread.hpp                       ThreadObj.hpp
+Thread.hpp                       OsMisc.hpp
+Thread.cpp                       jvm.h
+Thread.cpp                       Oop.hpp
+Thread.cpp                       OopDesc.inline.hpp
+Thread.cpp                       Thread.hpp
+Thread.cpp                       ObjectHeap_<iarch>.hpp
+Thread.cpp                       Frame.hpp
+Thread.cpp                       Scheduler.hpp
+Thread.cpp                       Method.hpp
+Thread.cpp                       Symbols.hpp
+Thread.cpp                       Throw.hpp
+Thread.cpp                       Profiler.hpp
+Thread.cpp                       Relocation.hpp
+Thread.cpp                       JVM.hpp
+Thread.cpp                       SystemDictionary.hpp
+Thread.cpp                       EntryActivation.hpp
+Thread.cpp                       ExecutionStack.hpp
+Thread.cpp                       Synchronizer.hpp
+Thread.cpp                       Throwable.hpp
+Thread.cpp                       VMEvent.hpp
+Thread.cpp                       JavaDebugger.hpp
+Thread.cpp                       Compiler.hpp
+Thread.cpp                       WTKProfiler.hpp
+
+Debug.hpp                        GlobalDefinitions.hpp
+Debug.cpp                        Debug.hpp
+Debug.cpp                        ObjectHeap_<iarch>.hpp
+Debug.cpp                        Frame.hpp
+Debug.cpp                        Compiler.hpp
+Debug.cpp                        RegisterAllocator.hpp
+Debug.cpp                        JVM.hpp
+Debug.cpp                        FPURegisterMap_<carch>.hpp
+Debug.cpp                        Scheduler.hpp
+Debug.cpp                        ROM.hpp
+Debug.cpp                        Universe.hpp
+Debug.cpp                        ErrorMessage.hpp
+Debug.cpp                        TypeArray.hpp
+Debug.cpp                        InstanceClass.hpp
+Debug.cpp                        Field.hpp
+Debug.cpp                        ROMizerHashEntry.hpp
+Debug.cpp                        Signature.hpp
+
+Debug_<carch>.cpp                Debug.hpp
+Debug_<carch>.cpp                Compiler.hpp
+Debug_<carch>.cpp                FPURegisterMap_<carch>.hpp
+Debug_<carch>.cpp                ObjectHeap_<iarch>.hpp
+
+Globals.cpp                      Top.hpp
+Globals.cpp                      Bytecodes.hpp
+Globals.cpp                      InterpreterGenerator.hpp
+Globals.cpp                      Universe.hpp
+Globals.cpp                      ObjectHeap_<iarch>.hpp
+Globals.cpp                      ConstantTag.hpp
+Globals.cpp                      AccessFlags.hpp
+
+Bytes_<iarch>.hpp                Top.hpp
+
+ClassFileParser.hpp              Buffer.hpp
+ClassFileParser.hpp              Bytes_<iarch>.hpp
+ClassFileParser.hpp              Oop.hpp
+ClassFileParser.hpp              InstanceClass.hpp
+ClassFileParser.hpp              ConstantPool.hpp
+ClassFileParser.hpp              Symbol.hpp
+ClassFileParser.hpp              AccessFlags.hpp
+ClassFileParser.hpp              SystemDictionary.hpp
+ClassFileParser.hpp              ClassParserState.hpp
+ClassFileParser.cpp              ClassFileParser.hpp
+ClassFileParser.cpp              FieldType.hpp
+ClassFileParser.cpp              Universe.hpp
+ClassFileParser.cpp              ConstantTag.hpp
+ClassFileParser.cpp              TypeArray.hpp
+ClassFileParser.cpp              Method.hpp
+ClassFileParser.cpp              Instance.hpp
+ClassFileParser.cpp              MethodDesc.hpp
+ClassFileParser.cpp              Field.hpp
+ClassFileParser.cpp              Symbols.hpp
+ClassFileParser.cpp              JavaVTable.hpp
+ClassFileParser.cpp              Signature.hpp
+ClassFileParser.cpp              Throw.hpp
+ClassFileParser.cpp              Natives.hpp
+ClassFileParser.cpp              ObjectHeap_<iarch>.hpp
+ClassFileParser.cpp              CharacterStream.hpp
+ClassFileParser.cpp              StackMapDefinitions.hpp
+ClassFileParser.cpp              jvmspi.h
+ClassFileParser.cpp              Synchronizer.hpp
+ClassFileParser.cpp              StackmapGenerator.hpp
+ClassFileParser.cpp              OsMisc.hpp
+ClassFileParser.cpp              OopDesc.inline.hpp
+ClassFileParser.cpp              Compiler.hpp
+ClassFileParser.hpp              LineVarTable.hpp
+#if ENABLE_ISOLATES
+ClassFileParser.cpp              TaskMirror.hpp
+#endif
+
+// Verifier
+
+Verifier.hpp                     InstanceClass.hpp
+Verifier.hpp                     Method.hpp
+
+Verifier.cpp                     Globals.hpp
+Verifier.cpp                     jvm.h
+Verifier.cpp                     ObjectHeap_<iarch>.hpp
+Verifier.cpp                     Verifier.hpp
+Verifier.cpp                     VerifyMethodCodes.hpp
+Verifier.cpp                     StackmapGenerator.hpp
+Verifier.cpp                     StackUtils.hpp
+
+VerifierFrame.hpp                Universe.hpp
+VerifierFrame.hpp                Symbol.hpp
+VerifierFrame.hpp                TypeArray.hpp
+VerifierFrame.hpp                StackMapDefinitions.hpp
+VerifierFrame.hpp                VerifierDefinitions.hpp
+
+VerifierFrame.cpp                Verifier.hpp
+VerifierFrame.cpp                VerifierFrame.hpp
+VerifierFrame.cpp                VerifierDefinitions.hpp
+VerifierFrame.cpp                Signature.hpp
+VerifierFrame.cpp                SystemDictionary.hpp
+VerifierFrame.cpp                Method.hpp
+VerifierFrame.cpp                Throw.hpp
+VerifierFrame.cpp                Symbols.hpp
+VerifierFrame.cpp                JavaClass.hpp
+VerifierFrame.cpp                ObjectHeap_<iarch>.hpp
+
+VerifyMethodCodes.hpp            BytecodeClosure.hpp
+VerifyMethodCodes.hpp            VerifierFrame.hpp
+VerifyMethodCodes.hpp            Throw.hpp
+VerifyMethodCodes.hpp            StackMapDefinitions.hpp
+VerifyMethodCodes.hpp            Bytecodes.hpp
+
+VerifyMethodCodes.cpp            Verifier.hpp
+VerifyMethodCodes.cpp            VerifyMethodCodes.hpp
+VerifyMethodCodes.cpp            StackMapDefinitions.hpp
+VerifyMethodCodes.cpp            VerifierDefinitions.hpp
+VerifyMethodCodes.cpp            SystemDictionary.hpp
+VerifyMethodCodes.cpp            Signature.hpp
+VerifyMethodCodes.cpp            CharacterStream.hpp
+VerifyMethodCodes.cpp            Method.hpp
+VerifyMethodCodes.cpp            TypeArrayClass.hpp
+VerifyMethodCodes.cpp            ObjArrayClass.hpp
+VerifyMethodCodes.cpp            InstanceClass.hpp
+VerifyMethodCodes.cpp            ConstantPool.hpp
+VerifyMethodCodes.cpp            ObjectHeap_<iarch>.hpp
+
+
+// Handles
+
+Array.hpp                        ArrayDesc.hpp
+Array.hpp                        JavaOop.hpp
+Array.cpp                        Array.hpp
+Array.cpp                        TypeArrayClass.hpp
+
+ArrayClass.hpp                   JavaClass.hpp
+ArrayClass.hpp                   ArrayClassDesc.hpp
+ArrayClass.cpp                   ArrayClass.hpp
+ArrayClass.cpp                   OopVisitor.hpp
+ArrayClass.cpp                   SystemDictionary.hpp
+ArrayClass.cpp                   Symbols.hpp
+ArrayClass.cpp                   ObjArrayClass.hpp
+ArrayClass.cpp                   Universe.hpp
+ArrayClass.cpp                   ObjectHeap_<iarch>.hpp
+ArrayClass.cpp                   InstanceClass.hpp
+ArrayClass.cpp                   VMEvent.hpp
+
+ObjArray.hpp                     Array.hpp
+ObjArray.cpp                     ObjArray.hpp
+ObjArray.cpp                     OopVisitor.hpp
+ObjArray.cpp                     Throw.hpp
+ObjArray.cpp                     ObjArrayClass.hpp
+ObjArray.cpp                     ObjectHeap_<iarch>.hpp
+ObjArray.cpp                     Universe.hpp
+
+ObjArrayClass.hpp                ArrayClass.hpp
+ObjArrayClass.hpp                ObjArrayClassDesc.hpp
+ObjArrayClass.hpp                Frame.hpp
+
+ObjArrayClass.cpp                ObjArrayClass.hpp
+ObjArrayClass.cpp                OopVisitor.hpp
+ObjArrayClass.cpp                Universe.hpp
+ObjArrayClass.cpp                ObjectHeap_<iarch>.hpp
+ObjArrayClass.cpp                CharacterStream.hpp
+ObjArrayClass.cpp                TypeArrayClass.hpp
+ObjArrayClass.cpp                TypeSymbol.hpp
+ObjArrayClass.cpp                Throw.hpp
+ObjArrayClass.cpp                Symbols.hpp
+
+RefArray.hpp                     Array.hpp
+RefArray.hpp                     Universe.hpp
+RefArray.cpp                     ObjectHeap_<iarch>.hpp
+RefArray.cpp                     RefArray.hpp
+RefArray.cpp                     Task.hpp
+
+Oop.hpp                          OopDesc.hpp
+Oop.hpp                          FarClassDesc.hpp
+Oop.cpp                          Oop.hpp
+Oop.cpp                          OopDesc.inline.hpp
+Oop.cpp                          Universe.hpp
+Oop.cpp                          Method.hpp
+Oop.cpp                          OopVisitor.hpp
+Oop.cpp                          Instance.hpp
+Oop.cpp                          TypeArray.hpp
+Oop.cpp                          ConstantPool.hpp
+Oop.cpp                          NearClass.hpp
+Oop.cpp                          InstanceClass.hpp
+Oop.cpp                          ObjArrayClass.hpp
+Oop.cpp                          TypeArrayClass.hpp
+Oop.cpp                          Near.hpp
+Oop.cpp                          ObjNear.hpp
+Oop.cpp                          String.hpp
+Oop.cpp                          ObjectHeap_<iarch>.hpp
+Oop.cpp                          JavaClassObj.hpp
+Oop.cpp                          EntryActivation.hpp
+Oop.cpp                          ExecutionStack.hpp
+Oop.cpp                          CompiledMethod.hpp
+Oop.cpp                          BufferedFile.hpp
+Oop.cpp                          StackmapList.hpp
+Oop.cpp                          Thread.hpp
+Oop.cpp                          Entry.hpp
+Oop.cpp                          CompilationQueue.hpp
+Oop.cpp                          VirtualStackFrame.hpp
+Oop.cpp                          MixedOop.hpp
+Oop.cpp                          Task.hpp
+#if ENABLE_ISOLATES
+Oop.cpp                          TaskMirror.hpp
+Oop.cpp                          TaskContext.hpp
+#endif
+
+OopVisitor.hpp                   Oop.hpp
+OopVisitor.hpp                   Symbol.hpp
+OopVisitor.cpp                   OopVisitor.hpp
+OopVisitor.cpp                   jvm.h
+OopVisitor.cpp                   OsMisc.hpp
+
+JavaOop.hpp                      Oop.hpp
+JavaOop.cpp                      JavaDesc.hpp
+JavaOop.cpp                      JavaOop.hpp
+JavaOop.cpp                      OopVisitor.hpp
+
+Signature.hpp                    TypeSymbol.hpp
+Signature.cpp                    CharacterStream.hpp
+Signature.cpp                    Signature.hpp
+Signature.cpp                    Thread.hpp
+Signature.cpp                    ObjectHeap_<iarch>.hpp
+
+JavaClass.hpp                    FarClass.hpp
+JavaClass.hpp                    ClassInfo.hpp
+JavaClass.hpp                    JavaClassDesc.hpp
+JavaClass.hpp                    SymbolTable.hpp
+JavaClass.hpp                    SystemDictionary.hpp
+JavaClass.cpp                    JavaClassObj.hpp
+JavaClass.cpp                    JavaClass.hpp
+JavaClass.cpp                    OopVisitor.hpp
+JavaClass.cpp                    InstanceClass.hpp
+JavaClass.cpp                    Method.hpp
+JavaClass.cpp                    Universe.hpp
+JavaClass.cpp                    ObjectHeap_<iarch>.hpp
+JavaClass.cpp                    Throw.hpp
+JavaClass.cpp                    EntryActivation.hpp
+JavaClass.cpp                    TypeArrayClass.hpp
+JavaClass.cpp                    ObjArrayClass.hpp
+JavaClass.cpp                    Symbols.hpp
+JavaClass.cpp                    ClassInfo.hpp
+JavaClass.cpp                    VMEvent.hpp
+JavaClass.cpp                    SystemDictionary.hpp
+#if ENABLE_ISOLATES
+JavaClass.hpp                    TaskMirrorDesc.hpp
+JavaClass.hpp                    TaskMirror.hpp
+#endif
+
+ClassInfo.hpp                    OopVisitor.hpp
+ClassInfo.hpp                    Universe.hpp
+ClassInfo.hpp                    Symbol.hpp
+ClassInfo.hpp                    Oop.hpp
+ClassInfo.hpp                    ClassInfoDesc.hpp
+ClassInfo.cpp                    ClassInfo.hpp
+ClassInfo.cpp                    InstanceClass.hpp
+ClassInfo.cpp                    JavaClass.hpp
+ClassInfo.cpp                    Method.hpp
+ClassInfo.cpp                    ObjArray.hpp
+ClassInfo.cpp                    ObjectHeap_<iarch>.hpp
+ClassInfo.cpp                    OopVisitor.hpp
+ClassInfo.cpp                    Symbols.hpp
+
+Instance.hpp                     JavaOop.hpp
+Instance.hpp                     InstanceDesc.hpp
+Instance.cpp                     InstanceClass.hpp
+Instance.cpp                     Instance.hpp
+Instance.cpp                     OopVisitor.hpp
+Instance.cpp                     ConstantPool.hpp
+Instance.cpp                     Field.hpp
+Instance.cpp                     ObjectHeap_<iarch>.hpp
+
+InstanceClass.hpp                JavaClass.hpp
+InstanceClass.hpp                ClassInfo.hpp
+InstanceClass.hpp                InstanceClassDesc.hpp
+InstanceClass.hpp                AccessFlags.hpp
+InstanceClass.hpp                Universe.hpp
+#if ENABLE_ISOLATES
+InstanceClass.hpp                TaskMirror.hpp
+#endif
+
+InstanceClass.cpp                JavaClassObj.hpp
+InstanceClass.cpp                InstanceClass.hpp
+InstanceClass.cpp                OopVisitor.hpp
+InstanceClass.cpp                ObjArray.hpp
+InstanceClass.cpp                Method.hpp
+InstanceClass.cpp                Field.hpp
+InstanceClass.cpp                Throw.hpp
+InstanceClass.cpp                Scheduler.hpp
+InstanceClass.cpp                Symbols.hpp
+InstanceClass.cpp                Universe.hpp
+InstanceClass.cpp                ObjectHeap_<iarch>.hpp
+InstanceClass.cpp                Verifier.hpp
+InstanceClass.cpp                ClassFileParser.hpp
+InstanceClass.cpp                EntryActivation.hpp
+InstanceClass.cpp                ROM.hpp
+InstanceClass.cpp                SymbolTable.hpp
+InstanceClass.cpp                Compiler.hpp
+#if ENABLE_ISOLATES
+InstanceClass.cpp                TaskMirror.hpp
+InstanceClass.cpp                Task.hpp
+InstanceClass.cpp                ROMOptimizer.hpp
+#endif
+
+FarClass.hpp                     Oop.hpp
+FarClass.hpp                     Near.hpp
+FarClass.hpp                     FarClassDesc.hpp
+FarClass.cpp                     FarClass.hpp
+FarClass.cpp                     OopVisitor.hpp
+FarClass.cpp                     Universe.hpp
+FarClass.cpp                     ObjectHeap_<iarch>.hpp
+
+TypeArray.hpp                    Array.hpp
+TypeArray.hpp                    ObjectHeap_<iarch>.hpp
+
+TypeArray.cpp                    TypeArray.hpp
+TypeArray.cpp                    OopVisitor.hpp
+TypeArray.cpp                    TypeArrayClass.hpp
+TypeArray.cpp                    Throw.hpp
+TypeArray.cpp                    Universe.hpp
+TypeArray.cpp                    ObjectHeap_<iarch>.hpp
+
+TypeArrayClass.hpp               ArrayClass.hpp
+TypeArrayClass.hpp               TypeArrayClassDesc.hpp
+TypeArrayClass.cpp               TypeArrayClass.hpp
+TypeArrayClass.cpp               Universe.hpp
+TypeArrayClass.cpp               OopVisitor.hpp
+TypeArrayClass.cpp               ObjArrayClass.hpp
+TypeArrayClass.cpp               ObjectHeap_<iarch>.hpp
+
+StringTable.hpp                  ObjArray.hpp
+StringTable.hpp                  String.hpp
+StringTable.hpp                  Universe.hpp
+StringTable.cpp                  StringTable.hpp
+StringTable.cpp                  CharacterStream.hpp
+StringTable.cpp                  ROM.hpp
+StringTable.cpp                  Throw.hpp
+StringTable.cpp                  Task.hpp
+
+Symbol.hpp                       Oop.hpp
+Symbol.hpp                       SymbolDesc.hpp
+Symbol.cpp                       Symbol.hpp
+Symbol.cpp                       Signature.hpp
+Symbol.cpp                       Symbols.hpp
+Symbol.cpp                       OopVisitor.hpp
+Symbol.cpp                       Universe.hpp
+Symbol.cpp                       ObjectHeap_<iarch>.hpp
+Symbol.cpp                       CharacterStream.hpp
+Symbol.cpp                       SymbolTable.hpp
+Symbol.cpp                       FieldType.hpp
+Symbol.cpp                       ROM.hpp
+
+SymbolTable.hpp                  Universe.hpp
+SymbolTable.hpp                  ObjArray.hpp
+SymbolTable.hpp                  Symbol.hpp
+SymbolTable.hpp                  String.hpp
+SymbolTable.cpp                  SymbolTable.hpp
+SymbolTable.cpp                  Universe.hpp
+SymbolTable.cpp                  ObjectHeap_<iarch>.hpp
+SymbolTable.cpp                  CharacterStream.hpp
+SymbolTable.cpp                  ROM.hpp
+SymbolTable.cpp                  Throw.hpp
+SymbolTable.cpp                  Task.hpp
+
+Method.hpp                       Oop.hpp
+Method.hpp                       OopCons.hpp
+Method.hpp                       ObjectHeap_<iarch>.hpp
+Method.hpp                       Universe.hpp
+Method.hpp                       ConstantPool.hpp
+Method.cpp                       BytecodeClosure.hpp
+Method.hpp                       MethodDesc.hpp
+Method.hpp                       VMEvent.hpp
+Method.cpp                       ConstantPoolDesc.hpp
+Method.hpp                       Bytecodes.hpp
+Method.hpp                       Bytes_<iarch>.hpp
+//Method.hpp                       SourceAssembler_<carch>.hpp
+Method.hpp                       Thread.hpp
+Method.hpp                       OsMisc.hpp
+Method.hpp                       MethodTrap.hpp
+
+Method.cpp                       Arguments.hpp
+Method.cpp                       Method.hpp
+Method.cpp                       OopVisitor.hpp
+Method.cpp                       OopDesc.inline.hpp
+Method.cpp                       Symbols.hpp
+Method.cpp                       Signature.hpp
+Method.cpp                       Compiler.hpp
+Method.cpp                       BytecodePrintClosure.hpp
+Method.cpp                       ObjectHeap_<iarch>.hpp
+Method.cpp                       BytecodeCompileClosure.hpp
+Method.cpp                       ObjNear.hpp
+Method.cpp                       StackmapList.hpp
+#if ENABLE_JVMPI_PROFILE
+Method.cpp                       jvmpi_impl.hpp
+#endif           
+
+ConstantPool.hpp                 Oop.hpp
+ConstantPool.hpp                 ConstantPoolDesc.hpp
+ConstantPool.hpp                 Symbol.hpp
+ConstantPool.hpp                 TypeArray.hpp
+ConstantPool.hpp                 InstanceClass.hpp
+ConstantPool.hpp                 FarClass.hpp
+ConstantPool.hpp                 Field.hpp
+ConstantPool.hpp                 FieldType.hpp
+ConstantPool.hpp                 ConstantTag.hpp
+ConstantPool.hpp                 JvmConst.hpp
+ConstantPool.hpp                 Symbols.hpp
+ConstantPool.hpp                 Throw.hpp
+ConstantPool.cpp                 ConstantPool.hpp
+ConstantPool.cpp                 FieldType.hpp
+ConstantPool.cpp                 OopVisitor.hpp
+ConstantPool.cpp                 Method.hpp
+ConstantPool.cpp                 Signature.hpp
+ConstantPool.cpp                 String.hpp
+ConstantPool.cpp                 SystemDictionary.hpp
+ConstantPool.cpp                 Universe.hpp
+ConstantPool.cpp                 Throw.hpp
+ConstantPool.cpp                 ObjectHeap_<iarch>.hpp
+ConstantPool.cpp                 ROMOptimizer.hpp
+ConstantPool.cpp                 SymbolTable.hpp
+ConstantPool.cpp                 ROMWriter.hpp
+
+Near.hpp                         Oop.hpp
+Near.hpp                         NearDesc.hpp
+Near.cpp                         Near.hpp
+Near.cpp                         OopVisitor.hpp
+Near.cpp                         TypeArray.hpp
+
+NearClass.hpp                    Near.hpp
+NearClass.hpp                    FarClass.hpp
+NearClass.hpp                    NearClassDesc.hpp
+NearClass.cpp                    NearClass.hpp
+NearClass.cpp                    OopVisitor.hpp
+NearClass.cpp                    Universe.hpp
+
+ObjNear.hpp                      Near.hpp
+ObjNear.hpp                      ObjNearDesc.hpp
+ObjNear.cpp                      ObjNear.hpp
+ObjNear.cpp                      OopVisitor.hpp
+ObjNear.cpp                      Universe.hpp
+ObjNear.cpp                      ObjectHeap_<iarch>.hpp
+
+JavaNear.hpp                     Near.hpp
+JavaNear.hpp                     JavaNearDesc.hpp
+JavaNear.cpp                     JavaNear.hpp
+JavaNear.cpp                     OopVisitor.hpp
+JavaNear.cpp                     Universe.hpp
+JavaNear.cpp                     ObjectHeap_<iarch>.hpp
+JavaNear.cpp                     TypeArray.hpp
+JavaNear.cpp                     JavaClass.hpp
+
+Universe.hpp                     BufferedFile.hpp
+Universe.hpp                     CompilationQueueElementDesc.hpp
+Universe.hpp                     EntryDesc.hpp
+Universe.hpp                     MixedOopDesc.hpp
+Universe.hpp                     ObjArray.hpp
+Universe.hpp                     Oop.hpp
+Universe.hpp                     OopDesc.hpp
+Universe.hpp                     Thread.hpp
+Universe.hpp                     VirtualStackFrameDesc.hpp
+Universe.hpp                     TaskContext.hpp
+Universe.cpp                     Bytecodes.hpp
+Universe.cpp                     BytecodeClosure.hpp
+Universe.cpp                     CharacterStream.hpp
+Universe.cpp                     ClassFileParser.hpp
+Universe.cpp                     ClassParserState.hpp
+Universe.cpp                     Compiler.hpp
+Universe.cpp                     ConstantPool.hpp
+Universe.cpp                     Entry.hpp
+Universe.cpp                     EntryActivation.hpp
+Universe.cpp                     ExecutionStack.hpp
+Universe.cpp                     FileDecoder.hpp
+Universe.cpp                     FilePath.hpp
+Universe.cpp                     Inflate.hpp
+Universe.cpp                     InstanceClass.hpp
+Universe.cpp                     JarFileParser.hpp
+Universe.cpp                     JavaClass.hpp
+Universe.cpp                     JavaClassObj.hpp
+Universe.cpp                     JavaNear.hpp
+Universe.cpp                     JavaVTable.hpp
+Universe.cpp                     JVM.hpp
+Universe.cpp                     MixedOop.hpp
+Universe.cpp                     Near.hpp
+Universe.cpp                     NearClass.hpp
+Universe.cpp                     ObjArrayClass.hpp
+Universe.cpp                     ObjectHeap_<iarch>.hpp
+Universe.cpp                     ObjNear.hpp
+Universe.cpp                     OopDesc.inline.hpp
+Universe.cpp                     OopVisitor.hpp
+Universe.cpp                     OS.hpp
+Universe.cpp                     OsFile_<os_family>.hpp
+Universe.cpp                     RefArray.hpp
+Universe.cpp                     RemoteTracer.hpp
+Universe.cpp                     ROMWriter.hpp
+Universe.cpp                     Scheduler.hpp
+Universe.cpp                     Semaphore.hpp
+Universe.cpp                     StackmapGenerator.hpp
+Universe.cpp                     StackmapListDesc.hpp
+Universe.cpp                     String.hpp
+Universe.cpp                     StringTable.hpp
+Universe.cpp                     Symbol.hpp
+Universe.cpp                     Symbols.hpp
+Universe.cpp                     SymbolTable.hpp
+Universe.cpp                     SystemDictionary.hpp
+Universe.cpp                     TemplateTable.hpp
+Universe.cpp                     ThreadObj.hpp
+Universe.cpp                     Throw.hpp
+Universe.cpp                     Throwable.hpp
+Universe.cpp                     TypeArray.hpp
+Universe.cpp                     TypeArrayClass.hpp
+Universe.cpp                     Universe.hpp
+Universe.cpp                     VMEvent.hpp
+Universe.cpp                     WeakReference.hpp
+Universe.cpp                     ROMTools.hpp
+Universe.cpp                     ROMProfile.hpp
+
+#if ENABLE_JAVA_DEBUGGER
+Universe.cpp                     JavaDebugger.hpp
+Universe.cpp                     RefNodeDesc.hpp
+#endif
+#if ENABLE_ISOLATES
+Universe.cpp                     IsolateObj.hpp
+Universe.cpp                     TaskDesc.hpp
+Universe.hpp                     TaskList.hpp
+Universe.cpp                     TaskMirror.hpp
+Universe.cpp                     TaskMirrorDesc.hpp
+#endif
+#if ENABLE_DYNUPDATE
+Universe.cpp                     UpdateManager.hpp
+#endif
+Universe.cpp                     ROM.hpp
+Universe.cpp                     StackUtils.hpp
+
+// Romizer
+MetaObjTypeDesc.hpp              MixedOopDesc.hpp
+MetaObjTypeDesc.cpp              MetaObjTypeDesc.hpp
+
+MetaObjType.hpp                  MetaObjTypeDesc.hpp
+MetaObjType.cpp                  MetaObjType.hpp
+MetaObjType.cpp                  Universe.hpp
+MetaObjType.cpp                  Thread.hpp
+MetaObjType.hpp                  MixedOop.hpp
+
+ROMizerHashEntryDesc.hpp             MixedOopDesc.hpp
+ROMizerHashEntryDesc.cpp             ROMizerHashEntryDesc.hpp
+
+ROMizerHashEntry.hpp                 ROMizerHashEntryDesc.hpp
+ROMizerHashEntry.cpp                 ROMizerHashEntry.hpp
+ROMizerHashEntry.cpp                 Universe.hpp
+ROMizerHashEntry.cpp                 Thread.hpp
+ROMizerHashEntry.hpp                 MixedOop.hpp
+
+ROMWriter.hpp                    NativesTable.hpp
+ROMWriter.hpp                    Method.hpp
+ROMWriter.hpp                    InstanceClass.hpp
+ROMWriter.hpp                    ConstantPool.hpp
+ROMWriter.hpp                    ROM.hpp
+ROMWriter.hpp                    ObjArray.hpp
+ROMWriter.hpp                    TypeArray.hpp
+ROMWriter.hpp                    FilePath.hpp
+ROMWriter.hpp                    StackmapList.hpp
+ROMWriter.hpp                    OsMisc.hpp
+ROMWriter.hpp                    Throwable.hpp
+ROMWriter.hpp                    MixedOop.hpp
+ROMWriter.hpp                    Arguments.hpp
+ROMWriter.hpp                    ROMizerHashEntry.hpp
+#if ENABLE_ISOLATES
+ROMWriter.hpp                    TaskMirror.hpp
+#endif
+
+ROMWriter.cpp                    ROMWriter.hpp
+ROMWriter.cpp                    SourceROMWriter.hpp
+ROMWriter.cpp                    BinaryROMWriter.hpp
+ROMWriter.cpp                    InstanceClass.hpp
+ROMWriter.cpp                    OopDesc.inline.hpp
+ROMWriter.cpp                    JarFileParser.hpp
+
+ROMWriter.hpp                    ROMOptimizer.hpp
+
+ROMWriter.cpp                    Method.hpp
+ROMWriter.cpp                    CompiledMethod.hpp
+ROMWriter.cpp                    ObjNear.hpp
+ROMWriter.cpp                    StringTable.hpp
+ROMWriter.cpp                    SymbolTable.hpp
+ROMWriter.cpp                    ObjArrayClass.hpp
+ROMWriter.cpp                    ConstantPoolRewriter.hpp
+ROMWriter.cpp                    StackmapList.hpp
+ROMWriter.cpp                    JavaClassObj.hpp
+ROMWriter.cpp                    SystemDictionary.hpp
+ROMWriter.cpp                    Universe.hpp
+ROMWriter.cpp                    Arguments.hpp
+ROMWriter.cpp                    ClassFileParser.hpp
+ROMWriter.cpp                    Generator.hpp
+ROMWriter.cpp                    Signature.hpp
+ROMWriter.cpp                    Relocation.hpp
+ROMWriter.cpp                    ROMizerHashEntry.hpp
+ROMWriter.cpp                    MetaObjType.hpp
+#if ENABLE_ISOLATES
+ROMWriter.cpp                    Verifier.hpp
+#endif
+
+#if !ENABLE_MONET
+ROMWriter.cpp                    ROMStructsWriter.hpp
+
+SourceObjectWriter.cpp           SourceROMWriter.hpp
+SourceObjectWriter.cpp           CompiledMethod.hpp
+SourceObjectWriter.cpp           Signature.hpp
+SourceObjectWriter.cpp           LineVarTable.hpp
+SourceObjectWriter.cpp           Natives.hpp
+
+SourceROMWriter.hpp              ROMWriter.hpp
+SourceROMWriter.cpp              FileDecoder.hpp
+SourceROMWriter.cpp              Inflate.hpp
+SourceROMWriter.cpp              ClassPathAccess.hpp
+SourceROMWriter.cpp              SourceROMWriter.hpp
+SourceROMWriter.cpp              InstanceClass.hpp
+SourceROMWriter.cpp              OopDesc.inline.hpp
+SourceROMWriter.cpp              Method.hpp
+SourceROMWriter.cpp              CompiledMethod.hpp
+SourceROMWriter.cpp              ObjNear.hpp
+SourceROMWriter.cpp              StringTable.hpp
+SourceROMWriter.cpp              SymbolTable.hpp
+SourceROMWriter.cpp              ObjArrayClass.hpp
+SourceROMWriter.cpp              ConstantPoolRewriter.hpp
+SourceROMWriter.cpp              StackmapList.hpp
+SourceROMWriter.cpp              JavaClassObj.hpp
+SourceROMWriter.cpp              SystemDictionary.hpp
+SourceROMWriter.cpp              ROMStructsWriter.hpp
+SourceROMWriter.cpp              Universe.hpp
+SourceROMWriter.cpp              Arguments.hpp
+SourceROMWriter.cpp              ClassFileParser.hpp
+SourceROMWriter.cpp              Generator.hpp
+SourceROMWriter.cpp              Signature.hpp
+SourceROMWriter.cpp              ROMizerHashEntry.hpp
+SourceROMWriter.cpp              Frame.hpp
+SourceROMWriter.cpp              Compiler.hpp
+SourceROMWriter.cpp              JarFileParser.hpp
+SourceROMWriter.cpp              Natives.hpp
+
+ROMStructsWriter.hpp             ArrayClass.hpp
+ROMStructsWriter.hpp             ROMWriter.hpp
+ROMStructsWriter.cpp             ROMStructsWriter.hpp
+ROMStructsWriter.cpp             TypeArrayClass.hpp
+ROMStructsWriter.cpp             ObjectHeap_<iarch>.hpp
+ROMStructsWriter.cpp             Natives.hpp
+#endif !ENABLE_MONET
+
+
+#if ENABLE_MONET
+BinaryObjectWriter.cpp           BinaryROMWriter.hpp
+BinaryObjectWriter.cpp           CompiledMethod.hpp
+BinaryObjectWriter.cpp           ROMizerHashEntry.hpp
+
+BinaryROMWriter.hpp              ROMWriter.hpp
+BinaryROMWriter.cpp              BinaryROMWriter.hpp
+BinaryROMWriter.cpp              InstanceClass.hpp
+BinaryROMWriter.cpp              OopDesc.inline.hpp
+BinaryROMWriter.cpp              Method.hpp
+BinaryROMWriter.cpp              CompiledMethod.hpp
+BinaryROMWriter.cpp              ObjNear.hpp
+BinaryROMWriter.cpp              StringTable.hpp
+BinaryROMWriter.cpp              SymbolTable.hpp
+BinaryROMWriter.cpp              ObjArrayClass.hpp
+BinaryROMWriter.cpp              ConstantPoolRewriter.hpp
+BinaryROMWriter.cpp              StackmapList.hpp
+BinaryROMWriter.cpp              JavaClassObj.hpp
+BinaryROMWriter.cpp              SystemDictionary.hpp
+BinaryROMWriter.cpp              Universe.hpp
+BinaryROMWriter.cpp              Arguments.hpp
+BinaryROMWriter.cpp              ClassFileParser.hpp
+BinaryROMWriter.cpp              Generator.hpp
+BinaryROMWriter.cpp              Signature.hpp
+BinaryROMWriter.cpp              ROMizerHashEntry.hpp
+BinaryROMWriter.cpp              JarFileParser.hpp
+#endif ENABLE_MONET
+
+ROMTools.hpp                     ROM.hpp
+ROMTools.hpp                     Oop.hpp
+ROMTools.hpp                     Thread.hpp
+ROMTools.hpp                     MixedOop.hpp
+
+ROMTools.cpp                     ROMTools.hpp
+ROMTools.cpp                     Universe.hpp
+ROMTools.cpp                     ObjArray.hpp
+ROMTools.cpp                     TypeArrayClass.hpp
+ROMTools.cpp                     InstanceClass.hpp
+ROMTools.cpp                     Symbol.hpp
+ROMTools.cpp                     Method.hpp
+ROMTools.cpp                     CompiledMethod.hpp
+ROMTools.cpp                     String.hpp
+ROMTools.cpp                     ObjectHeap_<iarch>.hpp
+ROMTools.cpp                     OopDesc.inline.hpp
+
+ROMOptimizer.hpp                 ObjectHeap_<iarch>.hpp
+ROMOptimizer.hpp                 ROMTools.hpp
+ROMOptimizer.hpp                 TypeArray.hpp
+ROMOptimizer.hpp                 ObjArray.hpp
+ROMOptimizer.hpp                 InstanceClass.hpp
+ROMOptimizer.hpp                 ROM.hpp
+ROMOptimizer.hpp                 ConstantPool.hpp
+ROMOptimizer.hpp                 Method.hpp
+ROMOptimizer.hpp                 ROMProfile.hpp
+
+ROMOptimizer.cpp                 ROMOptimizer.hpp
+ROMOptimizer.cpp                 OopDesc.inline.hpp
+ROMOptimizer.cpp                 InterpreterRuntime.hpp
+ROMOptimizer.cpp                 Scheduler.hpp
+ROMOptimizer.cpp                 ObjNear.hpp
+ROMOptimizer.cpp                 String.hpp
+ROMOptimizer.cpp                 BytecodeClosure.hpp
+ROMOptimizer.cpp                 JVM.hpp
+ROMOptimizer.cpp                 Arguments.hpp
+ROMOptimizer.cpp                 SystemDictionary.hpp
+ROMOptimizer.cpp                 ConstantPoolRewriter.hpp
+ROMOptimizer.cpp                 SymbolTable.hpp
+ROMOptimizer.cpp                 StringTable.hpp
+ROMOptimizer.cpp                 MethodInvocationClosure.hpp 
+ROMOptimizer.cpp                 ROMInliner.hpp 
+ROMOptimizer.cpp                 StackmapList.hpp 
+ROMOptimizer.cpp                 StackmapGenerator.hpp 
+ROMOptimizer.cpp                 Signature.hpp 
+ROMOptimizer.cpp                 ROMWriter.hpp
+ROMOptimizer.cpp                 JavaClassObj.hpp
+ROMOptimizer.cpp                 JavaVTable.hpp
+
+SourceROMOptimizer.cpp           ROMOptimizer.hpp
+SourceROMOptimizer.cpp           OopDesc.inline.hpp
+SourceROMOptimizer.cpp           InterpreterRuntime.hpp
+SourceROMOptimizer.cpp           Scheduler.hpp
+SourceROMOptimizer.cpp           ObjNear.hpp
+SourceROMOptimizer.cpp           String.hpp
+SourceROMOptimizer.cpp           BytecodeClosure.hpp
+SourceROMOptimizer.cpp           JVM.hpp
+SourceROMOptimizer.cpp           Arguments.hpp
+SourceROMOptimizer.cpp           SystemDictionary.hpp
+SourceROMOptimizer.cpp           ConstantPoolRewriter.hpp
+SourceROMOptimizer.cpp           SymbolTable.hpp
+SourceROMOptimizer.cpp           StringTable.hpp
+SourceROMOptimizer.cpp           MethodInvocationClosure.hpp 
+SourceROMOptimizer.cpp           ROMInliner.hpp 
+SourceROMOptimizer.cpp           StackmapList.hpp 
+SourceROMOptimizer.cpp           StackmapGenerator.hpp 
+SourceROMOptimizer.cpp           Signature.hpp 
+SourceROMOptimizer.cpp           ROMWriter.hpp
+SourceROMOptimizer.cpp           JavaClassObj.hpp
+
+ROM.hpp                          Thread.hpp
+ROM.hpp                          ROMImage.hpp
+ROM.hpp                          OopDesc.hpp
+ROM.hpp                          ObjArray.hpp
+ROM.hpp                          TypeArray.hpp
+ROM.hpp                          OsFile.hpp
+ROM.hpp                          Task.hpp
+#if ENABLE_ISOLATES
+ROM.hpp                          Thread.hpp
+#endif
+ROM.cpp                          OopDesc.hpp
+ROM.cpp                          OopDesc.inline.hpp
+ROM.cpp                          ROM.hpp
+ROM.cpp                          StringTable.hpp
+ROM.cpp                          SymbolTable.hpp
+ROM.cpp                          Method.hpp
+ROM.cpp                          Field.hpp
+ROM.cpp                          ROMWriter.hpp
+ROM.cpp                          CompiledMethod.hpp
+ROM.cpp                          JarFileParser.hpp
+ROM.cpp                          Arguments.hpp
+ROM.cpp                          FilePath.hpp
+ROM.cpp                          ObjArrayClass.hpp
+ROM.cpp                          Frame.hpp
+ROM.cpp                          SegmentedSourceROMWriter.hpp
+
+BinaryROM.cpp                    OopDesc.hpp
+BinaryROM.cpp                    OopDesc.inline.hpp
+BinaryROM.cpp                    ROM.hpp
+BinaryROM.cpp                    StringTable.hpp
+BinaryROM.cpp                    SymbolTable.hpp
+BinaryROM.cpp                    Method.hpp
+BinaryROM.cpp                    Field.hpp
+BinaryROM.cpp                    ROMWriter.hpp
+BinaryROM.cpp                    CompiledMethod.hpp
+BinaryROM.cpp                    JarFileParser.hpp
+BinaryROM.cpp                    Arguments.hpp
+BinaryROM.cpp                    FilePath.hpp
+BinaryROM.cpp                    ObjArrayClass.hpp
+BinaryROM.cpp                    Frame.hpp
+BinaryROM.cpp                    Stream.hpp
+BinaryROM.cpp                    StackmapGenerator.hpp
+#if ENABLE_MONET
+BinaryROM.cpp                    LargeObject.hpp
+#endif
+
+// ROMImage.cpp is auto-generated -- need special handling in MakeDep
+ROMImage.cpp                     ROMImage.hpp
+
+//jvmpi support
+#if ENABLE_JVMPI_PROFILE
+jvmpi.h                         Globals.hpp
+jvmpi_impl.hpp                  jvmpi.h
+jvmpi_impl.hpp                  ClassInfo.hpp
+jvmpi_impl.hpp                  ConstantPool.hpp
+jvmpi_impl.hpp                  CompiledMethod.hpp
+jvmpi.cpp                       jvmpi_impl.hpp
+jvmpi.cpp                       Signature.hpp
+jvmpi.cpp                       OS_<os_family>.hpp
+ClassFileParser.cpp             jvmpi_impl.hpp
+ObjectHeap.cpp                  jvmpi_impl.hpp
+Method.cpp                      Stream.hpp
+#endif
+
+// Memory
+JVM.hpp                        jvm.h
+JVM.hpp                        Arguments.hpp
+JVM.hpp                        Debug.hpp
+JVM.hpp                        GlobalDefinitions.hpp
+
+//jvmpi support
+#if ENABLE_JVMPI_PROFILE
+JVM.hpp                        jvmpi_impl.hpp
+#endif
+
+JVM.cpp                        jvm.h
+JVM.cpp                        jvmspi.h
+JVM.cpp                        JVM.hpp
+JVM.cpp                        ObjectHeap_<iarch>.hpp
+JVM.cpp                        Generator.hpp
+JVM.cpp                        Arguments.hpp
+JVM.cpp                        InterpreterGenerator.hpp
+JVM.cpp                        String.hpp
+JVM.cpp                        Universe.hpp
+JVM.cpp                        SystemDictionary.hpp
+JVM.cpp                        ObjArray.hpp
+JVM.cpp                        Symbols.hpp
+JVM.cpp                        OS.hpp
+JVM.cpp                        OsMisc.hpp
+JVM.cpp                        BytecodeHistogram.hpp
+JVM.cpp                        PairHistogram.hpp
+JVM.cpp                        Compiler.hpp
+JVM.cpp                        Scheduler.hpp
+JVM.cpp                        JVM.hpp
+JVM.cpp                        Profiler.hpp
+JVM.cpp                        WTKProfiler.hpp
+JVM.cpp                        CharacterStream.hpp
+JVM.cpp                        EntryActivation.hpp
+JVM.cpp                        InstanceClass.hpp
+JVM.cpp                        Throw.hpp
+JVM.cpp                        ROMWriter.hpp
+JVM.cpp                        SourceROMWriter.hpp
+JVM.cpp                        BinaryROMWriter.hpp
+JVM.cpp                        Verifier.hpp
+JVM.cpp                        AssemblerLoopFlags.hpp
+JVM.cpp                        SymbolTable.hpp
+JVM.cpp                        CompilerTest.hpp
+JVM.cpp                        EventLogger.hpp
+JVM.cpp                        JarFileParser.hpp
+JVM.cpp                        MethodTrap.hpp
+#if ENABLE_JAVA_DEBUGGER
+JVM.cpp                        VMEvent.hpp
+JVM.cpp                        JavaDebugger.hpp
+JVM.hpp                        Transport.hpp
+#endif
+#if ENABLE_ISOLATES
+JVM.cpp                        Task.hpp
+#endif
+#if ENABLE_WTK_PROFILER
+JVM.cpp                        Stream.hpp
+#endif
+JVM.cpp                        SegmentedSourceROMWriter.hpp
+
+JVM_<os_family>.hpp            Allocation.hpp
+JVM_<os_family>.cpp            JVM_<os_family>.hpp
+JVM_<os_family>.cpp            JVM.hpp
+JVM_<os_family>.cpp            Arguments.hpp
+JVM_<os_family>.cpp            Generator.hpp
+JVM_<os_family>.cpp            InterpreterGenerator.hpp
+JVM_<os_family>.cpp            String.hpp
+JVM_<os_family>.cpp            Universe.hpp
+JVM_<os_family>.cpp            SystemDictionary.hpp
+JVM_<os_family>.cpp            ObjArray.hpp
+JVM_<os_family>.cpp            Symbols.hpp
+JVM_<os_family>.cpp            ObjectHeap_<iarch>.hpp
+JVM_<os_family>.cpp            OS.hpp
+JVM_<os_family>.cpp            BytecodeHistogram.hpp
+JVM_<os_family>.cpp            PairHistogram.hpp
+JVM_<os_family>.cpp            Compiler.hpp
+JVM_<os_family>.cpp            Scheduler.hpp
+JVM_<os_family>.cpp            Profiler.hpp
+JVM_<os_family>.cpp            jvm.h
+
+jvmspi.cpp                     jvmspi.h
+jvmspi.cpp                     Arguments.hpp
+jvmspi.cpp                     Globals.hpp
+jvmspi.cpp                     OsMemory.hpp
+
+Main_<os_family>.cpp           jvm.h
+Main_<os_family>.cpp           jvmspi.h
+Main_<os_family>.cpp           sni.h
+Main_<os_family>.cpp           OS_<os_family>.hpp
+Main_<os_family>.cpp           Globals.hpp
+Main_<os_family>.cpp           OsMemory.hpp
+Main_<os_family>.cpp           OsMisc_<os_family>.hpp
+
+jvm.h                          kni.h
+jvm.h                          GlobalDefinitions.hpp
+
+jvmspi.h                       jvm.h
+
+JavaDesc.hpp                   OopDesc.hpp
+
+ArrayDesc.hpp                  JavaDesc.hpp
+
+ObjArrayDesc.hpp               ArrayDesc.hpp
+
+FinalizerConsDesc.hpp            ObjArrayDesc.hpp
+FinalizerConsDesc.cpp            FinalizerConsDesc.hpp
+FinalizerConsDesc.cpp            InstanceClass.hpp
+FinalizerConsDesc.cpp            JavaOop.hpp
+FinalizerConsDesc.cpp            Method.hpp
+FinalizerConsDesc.cpp            Symbols.hpp
+FinalizerConsDesc.cpp            EntryActivation.hpp
+FinalizerConsDesc.cpp            ObjectHeap_<iarch>.hpp
+
+MethodDesc.hpp                   OopDesc.hpp
+MethodDesc.hpp                   ConstantPoolDesc.hpp
+MethodDesc.hpp                   ROM.hpp
+MethodDesc.hpp                   AccessFlags.hpp
+MethodDesc.cpp                   MethodDesc.hpp
+MethodDesc.cpp                   CompiledMethod.hpp
+MethodDesc.hpp                   MethodTrap.hpp
+MethodDesc.cpp                   ObjectHeap_<iarch>.hpp
+
+ConstantPoolDesc.hpp             OopDesc.hpp
+ConstantPoolDesc.cpp             ConstantTag.hpp
+ConstantPoolDesc.cpp             ConstantPoolDesc.hpp
+
+NearDesc.hpp                     OopDesc.hpp
+
+ObjNearDesc.hpp                  NearDesc.hpp
+ObjNearDesc.hpp                  JavaDesc.hpp
+ObjNearDesc.cpp                  ObjNearDesc.hpp
+ObjNearDesc.cpp                  EntryActivationDesc.hpp
+ObjNearDesc.cpp                  ExecutionStackDesc.hpp
+ObjNearDesc.cpp                  StackmapListDesc.hpp
+ObjNearDesc.cpp                  BufferedFileDesc.hpp
+ObjNearDesc.cpp                  ClassParserStateDesc.hpp
+ObjNearDesc.cpp                  CompiledMethodDesc.hpp
+ObjNearDesc.cpp                  JavaNearDesc.hpp
+ObjNearDesc.cpp                  ObjectHeap_<iarch>.hpp
+#if ENABLE_ISOLATES
+ObjNearDesc.hpp                  TaskDesc.hpp
+#endif
+JavaNearDesc.hpp                 NearDesc.hpp
+JavaNearDesc.hpp                 ClassInfo.hpp
+
+InstanceDesc.hpp                 JavaDesc.hpp
+
+OopDesc.hpp                      Top.hpp
+OopDesc.hpp                      ROMImage.hpp
+OopDesc.inline.hpp               OopDesc.hpp
+OopDesc.inline.hpp               Universe.hpp
+OopDesc.inline.hpp               ObjArrayDesc.hpp
+OopDesc.inline.hpp               FarClassDesc.hpp
+OopDesc.inline.hpp               TypeArrayClassDesc.hpp
+OopDesc.inline.hpp               ObjectHeap_<iarch>.hpp
+OopDesc.inline.hpp               EntryActivationDesc.hpp
+OopDesc.inline.hpp               ClassParserStateDesc.hpp
+OopDesc.inline.hpp               ExecutionStackDesc.hpp
+OopDesc.inline.hpp               CompiledMethodDesc.hpp
+OopDesc.inline.hpp               BufferedFileDesc.hpp
+OopDesc.inline.hpp               JavaNear.hpp
+OopDesc.inline.hpp               Near.hpp
+OopDesc.inline.hpp               ObjNearDesc.hpp
+OopDesc.inline.hpp               TypeArrayClass.hpp
+OopDesc.inline.hpp               StackmapListDesc.hpp
+OopDesc.inline.hpp               ThreadDesc.hpp
+OopDesc.inline.hpp               EntryDesc.hpp
+OopDesc.inline.hpp               VirtualStackFrameDesc.hpp
+OopDesc.inline.hpp               CompilationQueueElementDesc.hpp
+OopDesc.inline.hpp               MixedOopDesc.hpp
+OopDesc.inline.hpp               VMEventDesc.hpp
+OopDesc.inline.hpp               VMEventModifierDesc.hpp
+OopDesc.inline.hpp               RefNodeDesc.hpp
+OopDesc.inline.hpp               PacketDataBufferDesc.hpp
+OopDesc.inline.hpp               BoundaryDesc.hpp
+#if ENABLE_ISOLATES
+OopDesc.inline.hpp               TaskDesc.hpp
+OopDesc.inline.hpp               TaskMirrorDesc.hpp
+#endif
+
+OopDesc.cpp                      OopDesc.inline.hpp 
+
+SymbolDesc.hpp                   OopDesc.hpp
+SymbolDesc.cpp                   SymbolDesc.hpp
+
+Symbols.hpp                      Universe.hpp
+Symbols.hpp                      Symbol.hpp
+Symbols.cpp                      Symbols.hpp
+Symbols.cpp                      SymbolTable.hpp
+Symbols.cpp                      TypeSymbol.hpp
+
+FarClassDesc.hpp                 OopDesc.hpp
+FarClassDesc.hpp                 NearDesc.hpp
+FarClassDesc.cpp                 Universe.hpp
+FarClassDesc.cpp                 FarClassDesc.hpp
+
+JavaClassDesc.hpp                ClassInfoDesc.hpp
+JavaClassDesc.hpp                FarClassDesc.hpp
+JavaClassDesc.hpp                AccessFlags.hpp
+JavaClassDesc.hpp                JavaDesc.hpp
+JavaClassDesc.cpp                JavaClassDesc.hpp
+
+ClassInfoDesc.hpp                OopDesc.hpp
+ClassInfoDesc.hpp                AccessFlags.hpp
+ClassInfoDesc.cpp                ClassInfoDesc.hpp
+#if ENABLE_ISOLATES
+ClassInfoDesc.hpp                TaskMirror.hpp
+#endif
+
+InstanceClassDesc.hpp            JavaClassDesc.hpp
+InstanceClassDesc.hpp            InstanceDesc.hpp
+InstanceClassDesc.cpp            InstanceClassDesc.hpp
+InstanceClassDesc.cpp            OopDesc.inline.hpp
+#if ENABLE_ISOLATES
+InstanceClassDesc.cpp            Task.hpp
+#endif
+
+ArrayClassDesc.hpp               InstanceClassDesc.hpp
+ArrayClassDesc.hpp               ArrayDesc.hpp
+ArrayClassDesc.cpp               ArrayClassDesc.hpp
+ArrayClassDesc.cpp               JavaVTable.hpp
+ArrayClassDesc.cpp               ObjectHeap_<iarch>.hpp
+
+ObjArrayClassDesc.hpp            ArrayClassDesc.hpp
+
+TypeArrayClassDesc.hpp           ArrayClassDesc.hpp
+
+NearClassDesc.hpp                FarClassDesc.hpp
+NearClassDesc.hpp                NearDesc.hpp
+
+StackmapList.hpp                 Universe.hpp
+StackmapList.hpp                 Oop.hpp
+StackmapList.hpp                 TypeArray.hpp
+StackmapList.hpp                 StackmapListDesc.hpp
+StackmapList.cpp                 StackmapList.hpp
+StackmapList.cpp                 ObjArray.hpp
+StackmapList.cpp                 OopVisitor.hpp
+StackmapList.cpp                 Near.hpp
+
+StackmapListDesc.hpp             OopDesc.hpp
+StackmapListDesc.cpp             StackmapListDesc.hpp
+
+StackmapGenerator.hpp            TypeArray.hpp
+StackmapGenerator.hpp            BytecodeClosure.hpp
+StackmapGenerator.hpp            Method.hpp
+StackmapGenerator.hpp            StackMapDefinitions.hpp
+StackmapGenerator.hpp            Oop.hpp
+StackmapGenerator.hpp            ObjArray.hpp
+StackmapGenerator.hpp            StackmapList.hpp
+
+StackmapGenerator.cpp            StackmapGenerator.hpp
+StackmapGenerator.cpp            ConstantPool.hpp
+StackmapGenerator.cpp            Signature.hpp
+StackmapGenerator.cpp            InstanceClass.hpp
+StackmapGenerator.cpp            Field.hpp
+StackmapGenerator.cpp            Universe.hpp
+StackmapGenerator.cpp            StackMapDefinitions.hpp
+StackmapGenerator.cpp            Oop.hpp
+StackmapGenerator.cpp            TypeArray.hpp
+StackmapGenerator.cpp            Method.hpp
+StackmapGenerator.cpp            ObjArray.hpp
+StackmapGenerator.cpp            BytecodeClosure.hpp
+StackmapGenerator.cpp            Bytecodes.hpp
+StackmapGenerator.cpp            ObjectHeap_<iarch>.hpp
+
+EventLogger.hpp                  Top.hpp
+EventLogger.hpp                  Allocation.hpp
+EventLogger.cpp                  EventLogger.hpp
+EventLogger.cpp                  OsMemory.hpp
+EventLogger.cpp                  OS.hpp
+EventLogger.cpp                  Stream.hpp
+
+RemoteTracer.hpp                 Allocation.hpp
+RemoteTracer.cpp                 Top.hpp
+RemoteTracer.cpp                 JVM.hpp
+RemoteTracer.cpp                 RemoteTracer.hpp
+RemoteTracer.cpp                 OopDesc.inline.hpp
+
+BSDSocket.cpp                    GlobalDefinitions.hpp
+BSDSocket.cpp                    jvm.h
+BSDSocket.cpp                    sni.h
+BSDSocket.cpp                    OS.hpp
+BSDSocket.cpp                    Globals.hpp
+
+PCSLSocket.cpp                   GlobalDefinitions.hpp
+PCSLSocket.cpp                   jvm.h
+PCSLSocket.cpp                   sni.h
+PCSLSocket.cpp                   OS.hpp
+
+sni.h                            jvmspi.h
+
+sni.cpp                          GlobalDefinitions.hpp
+sni.cpp                          sni.h
+sni.cpp                          Scheduler.hpp
+sni.cpp                          TypeArray.hpp
+sni.cpp                          TypeArrayClass.hpp
+sni.cpp                          JavaClass.hpp
+sni.cpp                          JavaClassObj.hpp
+sni.cpp                          InstanceClass.hpp
+#if ENABLE_ISOLATES
+sni.cpp                          Task.hpp
+#endif
+
+BytecodeOptimizer.hpp            OopDesc.inline.hpp
+BytecodeOptimizer.cpp            BytecodeOptimizer.hpp
+BytecodeOptimizer.cpp            ConstantPoolRewriter.hpp
+BytecodeOptimizer.cpp            StackmapGenerator.hpp
+
+ConstantPoolRewriter.hpp        OopDesc.inline.hpp
+ConstantPoolRewriter.hpp        Top.hpp
+ConstantPoolRewriter.hpp        ConstantPool.hpp
+ConstantPoolRewriter.hpp        Bytecodes.hpp
+ConstantPoolRewriter.hpp        BytecodeOptimizer.hpp
+ConstantPoolRewriter.cpp        OopVisitor.hpp
+ConstantPoolRewriter.cpp        ConstantPoolRewriter.hpp
+ConstantPoolRewriter.cpp        Bytecodes.hpp
+ConstantPoolRewriter.cpp        InstanceClass.hpp
+ConstantPoolRewriter.cpp        TypeArrayClass.hpp
+ConstantPoolRewriter.cpp        TypeArray.hpp
+ConstantPoolRewriter.cpp        ObjArray.hpp
+ConstantPoolRewriter.cpp        String.hpp
+ConstantPoolRewriter.cpp        Method.hpp
+ConstantPoolRewriter.cpp        Symbols.hpp
+ConstantPoolRewriter.cpp        SymbolTable.hpp
+ConstantPoolRewriter.cpp        ROMOptimizer.hpp
+ConstantPoolRewriter.cpp        StackmapGenerator.hpp
+ConstantPoolRewriter.cpp        StackmapList.hpp
+ConstantPoolRewriter.cpp        ROMWriter.hpp
+ConstantPoolRewriter.cpp        CompiledMethod.hpp
+#if ENABLE_JAVA_DEBUGGER
+ConstantPoolRewriter.cpp        LineVarTable.hpp
+#endif
+Cosine_kernel.cpp               FloatNatives.hpp
+
+Sine_kernel.cpp                 FloatNatives.hpp
+
+Tangent_kernel.cpp              FloatNatives.hpp
+
+JFP_lib_cos.cpp                 FloatNatives.hpp
+
+JFP_lib_sin.cpp                 FloatNatives.hpp
+
+JFP_lib_tan.cpp                 FloatNatives.hpp
+
+JFP_lib_scalbn.cpp              FloatNatives.hpp
+
+JFP_lib_fabs.cpp                FloatNatives.hpp
+
+JFP_lib_ceil.cpp                FloatNatives.hpp
+
+JFP_lib_floor.cpp               FloatNatives.hpp
+
+JFP_lib_copysign.cpp            FloatNatives.hpp
+
+IEEE754_fmod.cpp                FloatNatives.hpp
+
+IEEE754_rem_pio2.cpp            FloatNatives.hpp
+
+IEEE754_sqrt.cpp                FloatNatives.hpp
+
+Remainder_pio2_kernel.cpp       FloatNatives.hpp
+
+MethodInvocationClosure.hpp     ObjArray.hpp
+MethodInvocationClosure.cpp     BytecodeClosure.hpp
+MethodInvocationClosure.cpp     Bytecodes.hpp
+MethodInvocationClosure.cpp     Method.hpp
+MethodInvocationClosure.cpp     MethodInvocationClosure.hpp
+MethodInvocationClosure.cpp     ROMOptimizer.hpp
+MethodInvocationClosure.cpp     SymbolTable.hpp
+MethodInvocationClosure.cpp     ObjectHeap_<iarch>.hpp
+
+ROMInliner.hpp                  ObjArray.hpp
+ROMInliner.cpp                  ROMInliner.hpp
+ROMInliner.cpp                  BytecodeClosure.hpp
+ROMInliner.cpp                  Bytecodes.hpp
+ROMInliner.cpp                  Method.hpp
+ROMInliner.cpp                  MethodInvocationClosure.hpp
+ROMInliner.cpp                  ROMOptimizer.hpp
+ROMInliner.cpp                  SymbolTable.hpp
+ROMInliner.cpp                  Signature.hpp
+ROMInliner.cpp                  ObjectHeap_<iarch>.hpp
+
+
+HotRoutines.incl.hpp            Top.hpp
+HotRoutines.incl.hpp            VirtualStackFrame.hpp
+HotRoutines.incl.hpp            Location.hpp
+HotRoutines.incl.hpp            Compiler.hpp
+HotRoutines.incl.hpp            CodeGenerator.hpp
+HotRoutines.incl.hpp            OopDesc.inline.hpp
+HotRoutines.incl.hpp            Inflate.hpp
+HotRoutines.incl.hpp            ConstantPool.hpp
+HotRoutines.incl.hpp            VerifierFrame.hpp
+HotRoutines.incl.hpp            Field.hpp
+HotRoutines.incl.hpp            Bytecodes.hpp
+HotRoutines.incl.hpp            ClassFileParser.hpp
+HotRoutines.incl.hpp            Throw.hpp
+HotRoutines.incl.hpp            Verifier.hpp
+HotRoutines.incl.hpp            MixedOopDesc.hpp
+HotRoutines.incl.hpp            RegisterAllocator.hpp
+
+HotRoutines0.cpp                HotRoutines.incl.hpp 
+HotRoutines1.cpp                HotRoutines.incl.hpp 
+
+#if ENABLE_JVM_MALLOC
+JVM_Malloc.cpp                  Top.hpp
+JVM_Malloc.cpp                  JVM_Malloc.hpp
+#endif
+
+#if ENABLE_RMFS
+rmfsAlloc.cpp                   Top.hpp
+rmfsAlloc.cpp                   rmfsAlloc.hpp
+
+rmfsApi.hpp                     rmfsAlloc.hpp
+
+rmfsApi.cpp                     Top.hpp
+rmfsApi.cpp                     rmfsAlloc.hpp
+rmfsApi.cpp                     rmfsApi.hpp
+#endif ENABLE_RMFS
+
+CompiledMethodCache.hpp         Top.hpp
+CompiledMethodCache.cpp         GlobalDefinitions.hpp
+CompiledMethodCache.cpp         CompiledMethodCache.hpp
+CompiledMethodCache.cpp         Compiler.hpp
+CompiledMethodCache.cpp         Frame.hpp
+CompiledMethodCache.cpp         Method.hpp
+CompiledMethodCache.cpp         Thread.hpp
+CompiledMethodCache.cpp         Universe.hpp
+CompiledMethodCache.cpp         ObjectHeap_<iarch>.hpp
+
+#if ENABLE_JVMPI_PROFILE
+CompiledMethodCache.cpp         jvmpi_impl.hpp
+#endif
+
+MixedOopDesc.hpp                OopDesc.hpp
+MixedOopDesc.cpp                MixedOopDesc.hpp
+
+MixedOop.hpp                    Oop.hpp
+MixedOop.hpp                    MixedOopDesc.hpp
+MixedOop.cpp                    MixedOop.hpp
+MixedOop.cpp                    Universe.hpp
+MixedOop.cpp                    CompilationQueue.hpp
+MixedOop.cpp                    OopVisitor.hpp
+MixedOop.cpp                    Thread.hpp
+MixedOop.cpp                    BinaryAssembler_<carch>.hpp
+MixedOop.cpp                    Near.hpp
+MixedOop.cpp                    JarFileParser.hpp
+MixedOop.cpp                    Task.hpp
+
+BoundaryDesc.hpp                OopDesc.hpp
+
+Boundary.hpp                    Oop.hpp
+Boundary.hpp                    BoundaryDesc.hpp
+Boundary.cpp                    Boundary.hpp
+Boundary.cpp                    Universe.hpp
+Boundary.cpp                    OopVisitor.hpp
+
+Semaphore.hpp                   Instance.hpp
+Semaphore.cpp                   Semaphore.hpp
+Semaphore.cpp                   Scheduler.hpp
+Semaphore.cpp                   Universe.hpp
+Semaphore.cpp                   SymbolTable.hpp
+Semaphore.cpp                   SystemDictionary.hpp
+Semaphore.cpp                   InstanceClass.hpp
+Semaphore.cpp                   sni.h
+
+ReflectNatives.hpp              kni.h
+ReflectNatives.hpp              Allocation.hpp
+ReflectNatives.cpp              ReflectNatives.hpp
+ReflectNatives.cpp              String.hpp
+ReflectNatives.cpp              InstanceClass.hpp
+ReflectNatives.cpp              JavaClassObj.hpp
+ReflectNatives.cpp              Field.hpp
+ReflectNatives.cpp              Throw.hpp
+
+#if ENABLE_DYNUPDATE
+UpdateManager.hpp               Symbol.hpp
+
+UpdateManager.cpp               UpdateManager.hpp
+UpdateManager.cpp               ClassPathAccess.hpp
+UpdateManager.cpp               InstanceClass.hpp
+UpdateManager.cpp               FileDecoder.hpp
+#endif
+
+#if ENABLE_C_INTERPRETER
+Interpreter_c.cpp               Top.hpp
+Interpreter_c.cpp               EntryActivation.hpp
+Interpreter_c.cpp               Method.hpp
+Interpreter_c.cpp               JavaClassObj.hpp
+Interpreter_c.cpp               FloatNatives.hpp
+Interpreter_c.cpp               CompiledMethod.hpp
+Interpreter_c.cpp               ObjectHeap_<iarch>.hpp
+Interpreter_c.cpp               Compiler.hpp
+Interpreter_c.cpp               Scheduler.hpp
+#if ENABLE_JAVA_DEBUGGER
+Interpreter_c.cpp               JavaDebugger.hpp
+#endif
+#endif
+
+MethodTrap.hpp                  GlobalDefinitions.hpp
+MethodTrap.hpp                  Universe.hpp
+MethodTrap.cpp                  InstanceClass.hpp
+MethodTrap.cpp                  JVM.hpp
+MethodTrap.cpp                  Method.hpp
+MethodTrap.cpp                  MethodTrap.hpp
+MethodTrap.cpp                  SymbolTable.hpp
+MethodTrap.cpp                  jvmspi.h
+MethodTrap.cpp                  kni.h
+
+#if ENABLE_REFLECTION
+ReflectionNatives.cpp           GlobalDefinitions.hpp
+ReflectionNatives.cpp           FieldEnumerator.hpp
+ReflectionNatives.cpp           MethodEnumerator.hpp
+ReflectionNatives.cpp           FieldObj.hpp
+ReflectionNatives.cpp           MethodObj.hpp
+ReflectionNatives.cpp           ConstructorObj.hpp
+ReflectionNatives.cpp           kni.h
+ReflectionNatives.cpp           Allocation.hpp
+ReflectionNatives.cpp           EntryActivation.hpp
+ReflectionNatives.cpp           InstanceClass.hpp
+ReflectionNatives.cpp           JavaClass.hpp
+ReflectionNatives.cpp           JavaClassObj.hpp
+ReflectionNatives.cpp           JvmConst.hpp
+ReflectionNatives.cpp           Method.hpp
+ReflectionNatives.cpp           ObjArray.hpp
+ReflectionNatives.cpp           ObjArrayClass.hpp
+ReflectionNatives.cpp           ParsedTypeSymbol.hpp
+ReflectionNatives.cpp           String.hpp
+ReflectionNatives.cpp           Symbol.hpp
+ReflectionNatives.cpp           Symbols.hpp
+ReflectionNatives.cpp           SymbolTable.hpp
+ReflectionNatives.cpp           SystemDictionary.hpp
+ReflectionNatives.cpp           Throw.hpp
+ReflectionNatives.cpp           TypeArrayClass.hpp
+ReflectionNatives.cpp           Universe.hpp
+
+ParsedTypeSymbol.hpp            TypeSymbol.hpp
+ParsedTypeSymbol.cpp            ParsedTypeSymbol.hpp
+ParsedTypeSymbol.cpp            JavaClass.hpp
+ParsedTypeSymbol.cpp            JavaClassObj.hpp
+ParsedTypeSymbol.cpp            Universe.hpp
+
+FieldEnumerator.hpp             InstanceClass.hpp
+FieldEnumerator.hpp             ObjArray.hpp
+FieldEnumerator.hpp             Symbol.hpp
+FieldEnumerator.cpp             FieldEnumerator.hpp
+FieldEnumerator.cpp             FieldObj.hpp
+FieldEnumerator.cpp             TypeArray.hpp
+FieldEnumerator.cpp             Universe.hpp
+
+MethodEnumerator.hpp            InstanceClass.hpp
+MethodEnumerator.hpp            Method.hpp
+MethodEnumerator.hpp            MethodObj.hpp
+MethodEnumerator.hpp            ObjArray.hpp
+MethodEnumerator.hpp            Symbol.hpp
+MethodEnumerator.cpp            MethodEnumerator.hpp
+MethodEnumerator.cpp            ClassInfo.hpp
+MethodEnumerator.cpp            TypeArray.hpp
+MethodEnumerator.cpp            Universe.hpp
+
+MemberObj.hpp                   GlobalDefinitions.hpp
+MemberObj.hpp                   Instance.hpp
+MemberObj.hpp                   Method.hpp
+MemberObj.hpp                   ParsedTypeSymbol.hpp
+MemberObj.hpp                   Symbol.hpp
+MemberObj.cpp                   MemberObj.hpp
+MemberObj.cpp                   InstanceClass.hpp
+MemberObj.cpp                   ObjArray.hpp
+MemberObj.cpp                   SystemDictionary.hpp
+MemberObj.cpp                   TypeArray.hpp
+MemberObj.cpp                   Universe.hpp
+
+FieldObj.hpp                    MemberObj.hpp
+FieldObj.hpp                    Field.hpp
+FieldObj.hpp                    JavaClassObj.hpp
+FieldObj.hpp                    String.hpp
+FieldObj.cpp                    FieldObj.hpp
+FieldObj.cpp                    Symbols.hpp
+
+MethodObj.hpp                   MemberObj.hpp
+MethodObj.hpp                   JavaClassObj.hpp
+MethodObj.hpp                   String.hpp
+MethodObj.cpp                   MethodObj.hpp
+MethodObj.cpp                   JavaClass.hpp
+MethodObj.cpp                   Symbols.hpp
+
+ConstructorObj.hpp              MemberObj.hpp
+ConstructorObj.hpp              JavaClassObj.hpp
+ConstructorObj.hpp              String.hpp
+ConstructorObj.cpp              ConstructorObj.hpp
+ConstructorObj.cpp              JavaClass.hpp
+ConstructorObj.cpp              Symbols.hpp
+#endif
+
+kvmcompat.cpp                   Top.hpp
+kvmcompat.cpp                   kvmcompat.h
+kvmcompat.cpp                   KniImpl.hpp
+kvmcompat.cpp                   SystemDictionary.hpp
+kvmcompat.cpp                   Symbol.hpp
+kvmcompat.cpp                   InstanceClass.hpp
+kvmcompat.cpp                   SymbolTable.hpp
+kvmcompat.cpp                   Universe.hpp
+kvmcompat.cpp                   kni.h
+kvmcompat.cpp                   JavaClassObj.hpp
+kvmcompat.cpp                   ObjectHeap_<iarch>.hpp
+kvmcompat.cpp                   TypeArrayClass.hpp
+
+ROMProfile.hpp                  ROMTools.hpp
+ROMProfile.cpp                  ROMProfile.hpp
+ROMProfile.cpp                  ROMWriter.hpp
+
+SegmentedSourceROMWriter.hpp    SourceROMWriter.hpp
+SegmentedSourceROMWriter.hpp    Stream.hpp
+SegmentedSourceROMWriter.cpp    SegmentedSourceROMWriter.hpp
+
+JarFileParser.hpp               OsFile_<os_family>.hpp
+JarFileParser.hpp               ObjArray.hpp
+JarFileParser.hpp               MixedOop.hpp
+JarFileParser.hpp               TypeArray.hpp
+JarFileParser.hpp               BufferedFile.hpp
+JarFileParser.hpp               Instance.hpp
+
+JarFileParser.cpp               Universe.hpp
+JarFileParser.cpp               Throw.hpp
+JarFileParser.cpp               JarFileParser.hpp
+JarFileParser.cpp               ClassPathAccess.hpp
+JarFileParser.cpp               Inflate.hpp
+JarFileParser.cpp               FileDecoder.hpp
+JarFileParser.cpp               ROM.hpp
+JarFileParser.cpp               ObjectHeap_<iarch>.hpp
+JarFileParser.cpp               FilePath.hpp
+JarFileParser.cpp               OopVisitor.hpp
+JarFileParser.cpp               InstanceClass.hpp
+
+MemoryProfiler.hpp              DebuggerStream.hpp
+MemoryProfiler.hpp              Frame.hpp
+MemoryProfiler.hpp              SocketTransport.hpp
+MemoryProfiler.cpp              OopDesc.inline.hpp
+MemoryProfiler.cpp              GlobalDefinitions.hpp
+MemoryProfiler.cpp              ExecutionStack.hpp
+MemoryProfiler.cpp              MemoryProfiler.hpp
+MemoryProfiler.cpp              JavaClass.hpp
+MemoryProfiler.cpp              Scheduler.hpp
+MemoryProfiler.cpp              ThreadReferenceImpl.hpp
+MemoryProfiler.cpp              ROM.hpp
+MemoryProfiler.cpp              JavaDebugger.hpp
+MemoryProfiler.cpp              Natives.hpp
+MemoryProfiler.cpp              Method.hpp
+MemoryProfiler.cpp              Debug.hpp
+MemoryProfiler.cpp              InstanceClass.hpp
+JavaDebugger.cpp                MemoryProfiler.hpp
+
+StackUtils.hpp                  Allocation.hpp
+
+OopCons.hpp                     ObjArray.hpp
+OopCons.hpp                     Universe.hpp
