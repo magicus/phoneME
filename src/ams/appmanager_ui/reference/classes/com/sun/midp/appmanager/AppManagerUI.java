@@ -1280,7 +1280,7 @@ class AppManagerUI extends Form
 
     /**
      * Called by Manager when destroyApp happens to clean up data.
-     * Timer that shedules scrolling test repainting should be
+     * Timer that shedules scrolling text repainting should be
      * canceled when AMS MIDlet is about to be destroyed to avoid
      * generation of repaint events.
      */
