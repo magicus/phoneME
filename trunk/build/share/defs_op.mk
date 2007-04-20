@@ -78,9 +78,6 @@ endif
 # The list of JSR jar files we want to hide.
 JSROP_HIDE_JARS = $(subst $(space),:,$(foreach jsr_number,$(HIDE_JSROP_NUMBERS),$(JSROP_LIB_DIR)/jsr$(jsr_number).jar))
 
-# The list of all used JSR jar files
-JSROP_JARS_LIST = $(subst $(space),:,$(JSROP_JARS))
-
 # Generate constants classes list for the given xml file
 # generateConstantList(generatedDirectory, constantsXmlFile)
 define generateConstantList
@@ -284,6 +281,9 @@ $(error JAVACALL_DIR must point to a directory containing javacall implementatio
 endif
 include $(JAVACALL_MAKE_FILE)
 endif
+
+# The list of all used JSR jar files
+JSROP_JARS_LIST = $(subst $(space),$(PS),$(JSROP_JARS) $(JSROP_EXTRA_JARS))
 
 #Variable containing all JSROP components output dirs
 JSROP_OUTPUT_DIRS = $(foreach jsr_number,$(JSROP_NUMBERS),\

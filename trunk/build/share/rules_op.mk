@@ -77,6 +77,32 @@ define makeJSROPJar
 	$(CVM_JAR) cf $(1) -C $(2) .;
 endef
 
+# Creates an additional jar file containing classes implemented outside JSR's
+# component directory but included in JSR API specification
+# makeExtraJar(extraJarFileName,jsrApiClassesList,jsrClassesDir,classesDirs,jsrExtraClassesDir)
+define makeExtraJar
+	$(AT)for class in $(2); do if !(test -r $(3)/$$class); then \
+	    for dir in $(4); do if (test -r $$dir/$$class); then \
+	        DSTDIR=`dirname $(5)/$$class`; mkdir -p $$DSTDIR; cp $$dir/$$class $$DSTDIR; \
+	    fi; done; \
+	    if !(test -r $(5)/$$class); then echo "Could not find $$class"; exit 1; fi \
+	fi; done
+	@echo ...$(1)
+	$(AT)$(CVM_JAR) cf $(1) -C $(5) .
+endef
+
+# makeJSRExtraJar(jsrNumber)
+# The following variables MUST BE defined
+# JSR_#_BUILD_DIR            - path to JSR's build directory
+# JSR_#_EXTRA_JAR            - JSR's extras jar file path
+# JSR_#_API_CLASSES          - JSR's API classes list
+define makeJSRExtraJar
+	$(call makeExtraJar,$(JSR_$(1)_EXTRA_JAR),$(JSR_$(1)_API_CLASSES),\
+	    $(JSR_$(1)_BUILD_DIR)/classes,\
+	    $(CVM_BUILDTIME_CLASSESDIR) $(JAVACLASSES_CLASSPATH),\
+	    $(JSR_$(1)_BUILD_DIR)/extraclasses)
+endef
+
 # compileJSRClasses(jsrNumber)
 # The following variables MUST BE defined
 # JSR_#_BUILD_DIR            - path to JSR's build directory
@@ -90,6 +116,12 @@ endef
 #Command for building shared libraries
 define makeSharedLibrary
 	$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $(1) $(JSROP_LINKLIBS) -L$(JSROP_LIB_DIR)
+endef
+
+# Command for reading API classes list from file
+# readClassList(fileName)
+define readClassList
+	$(foreach class,$(subst .,/,$(shell cat $(1) | grep -v "\#")),$(class).class)
 endef
 
 ifeq ($(CVM_INCLUDE_JAVACALL), true)
@@ -116,10 +148,10 @@ $(JSR_CDCRESTRICTED_CLASSLIST): $(JSROP_JARS)
 # there is no restrictions for midlets to accessing the JSROP 
 # class' public members.
 #
-$(JSR_MIDPPERMITTED_CLASSLIST): $(JSROP_JARS)
+$(JSR_MIDPPERMITTED_CLASSLIST): $(JSROP_JARS) $(JSROP_EXTRA_JARS)
 	@echo "Generating MIDP permitted JSR class list ...";
 	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister \
-	    -listapi:include=java/*,include=javax/*,input=$(JSROP_JARS_LIST),cout=$(JSR_MIDPPERMITTED_CLASSLIST)
+	    -listapi:include=java/*,include=javax/*,include=javacard/*,input=$(JSROP_JARS_LIST),cout=$(JSR_MIDPPERMITTED_CLASSLIST)
 endif
 
 clean::
