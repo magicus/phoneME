@@ -139,7 +139,7 @@ public class MIDletSuiteStorage {
             if (Logging.REPORT_LEVEL <= Logging.ERROR) {
                 if (status != 0) {
                     Logging.report(Logging.ERROR, LogChannels.LC_AMS,
-                        "Can't load the cached icons, error code" + status);
+                        "Can't load the cached icons, error code: " + status);
                 }
             }
         }
