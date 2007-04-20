@@ -26,8 +26,6 @@
 
 package com.sun.j2me.content;
 
-import com.sun.j2me.io.Base64;
-
 import javax.microedition.io.Connector;
 import javax.microedition.io.Connection;
 import javax.microedition.io.ContentConnection;
@@ -221,7 +219,85 @@ class ContentReader {
             data[j] = (byte)password[i];
         }
 
-        return "Basic " + Base64.encode(data, 0, data.length);
+        return "Basic " + encode(data, 0, data.length);
     }
+
+    /**
+     * Converts a byte array into a Base64 encoded string.
+     * @param data bytes to encode
+     * @param offset which byte to start at
+     * @param length how many bytes to encode; padding will be added if needed
+     * @return base64 encoding of data; 4 chars for every 3 bytes
+     */
+    private static String encode(byte[] data, int offset, int length) {
+        int i;
+        int encodedLen;
+        char[] encoded;
+
+        // 4 chars for 3 bytes, run input up to a multiple of 3
+        encodedLen = (length + 2) / 3 * 4;
+        encoded = new char [encodedLen];
+
+        for (i = 0, encodedLen = 0; encodedLen < encoded.length;
+             i += 3, encodedLen += 4) {
+            encodeQuantum(data, offset + i, length - i, encoded, encodedLen);
+        }
+
+        return new String(encoded);
+    }
+
+    /**
+     * Encodes 1, 2, or 3 bytes of data as 4 Base64 chars.
+     *
+     * @param in buffer of bytes to encode
+     * @param inOffset where the first byte to encode is
+     * @param len how many bytes to encode
+     * @param out buffer to put the output in
+     * @param outOffset where in the output buffer to put the chars
+     */
+    private static void encodeQuantum(byte in[], int inOffset, int len,
+                                      char out[], int outOffset) {
+	byte a = 0, b = 0, c = 0;
+
+        a = in[inOffset];
+        out[outOffset] = ALPHABET[(a >>> 2) & 0x3F];
+
+        if (len > 2) {
+            b = in[inOffset + 1];
+            c = in[inOffset + 2];
+            out[outOffset + 1] = ALPHABET[((a << 4) & 0x30) +
+                                         ((b >>> 4) & 0xf)];
+	    out[outOffset + 2] = ALPHABET[((b << 2) & 0x3c) +
+                                          ((c >>> 6) & 0x3)];
+	    out[outOffset + 3] = ALPHABET[c & 0x3F];
+        } else if (len > 1) {
+            b = in[inOffset + 1];
+            out[outOffset + 1] = ALPHABET[((a << 4) & 0x30) +
+                                         ((b >>> 4) & 0xf)];
+	    out[outOffset + 2] =  ALPHABET[((b << 2) & 0x3c) +
+                                          ((c >>> 6) & 0x3)];
+	    out[outOffset + 3] = '=';
+        } else {
+            out[outOffset + 1] = ALPHABET[((a << 4) & 0x30) +
+                                         ((b >>> 4) & 0xf)];
+	    out[outOffset + 2] = '=';
+	    out[outOffset + 3] = '=';
+        }
+    }
+
+    /**
+     * This character array provides the alphabet map from RFC1521.
+     */
+    private final static char ALPHABET[] = {
+	//       0    1    2    3    4    5    6    7
+		'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',  // 0
+		'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',  // 1
+		'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',  // 2
+		'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',  // 3
+		'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',  // 4
+		'o', 'p', 'q', 'r', 's', 't', 'u', 'v',  // 5
+		'w', 'x', 'y', 'z', '0', '1', '2', '3',  // 6
+		'4', '5', '6', '7', '8', '9', '+', '/'  // 7
+	};
 
 }

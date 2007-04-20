@@ -68,7 +68,7 @@
 #define _JSR211_REGISTRY_H_
 
 #include <pcsl_string.h>
-#include "suiteid.h"
+#include <suitestore_common.h>
 
 #ifdef __cplusplus
 extern "C" {
