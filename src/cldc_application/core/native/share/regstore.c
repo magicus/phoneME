@@ -44,8 +44,6 @@
 #include <midpMalloc.h>
 #include <midpStorage.h>
 
-#include <suiteid.h>
-
 #include <pcsl_memory.h>
 
 #include <jsr211_registry.h>
