@@ -283,7 +283,7 @@ include $(JAVACALL_MAKE_FILE)
 endif
 
 # The list of all used JSR jar files
-JSROP_JARS_LIST = $(subst $(space),:,$(JSROP_JARS) $(JSROP_EXTRA_JARS))
+JSROP_JARS_LIST = $(subst $(space),$(PS),$(JSROP_JARS) $(JSROP_EXTRA_JARS))
 
 #Variable containing all JSROP components output dirs
 JSROP_OUTPUT_DIRS = $(foreach jsr_number,$(JSROP_NUMBERS),\
