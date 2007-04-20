@@ -508,6 +508,10 @@ read_suites_data(char** ppszError) {
         }
 
         /* IMPL_NOTE: introduce pcsl_mem_copy() */
+        if (bufferLen < (long)MIDLET_SUITE_DATA_SIZE) {
+            status = IO_ERROR;
+            break;
+        }
         memcpy((char*)pData, (char*)&buffer[pos], MIDLET_SUITE_DATA_SIZE);
         ADJUST_POS_IN_BUF(pos, bufferLen, MIDLET_SUITE_DATA_SIZE);
 

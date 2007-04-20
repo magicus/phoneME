@@ -1133,9 +1133,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         // to activate the command assigned to this item by the pointer
 
         // accept the word if the PTI is currently enabled
-        if (hasPTI()) {
-            inputSession.processKey(Constants.KEYCODE_SELECT, false);
-        }
+        acceptPTI();
         
         if (pressedIn) {
             int newId = getIndexAt(x, y);
@@ -1942,6 +1940,21 @@ class TextFieldLFImpl extends ItemLFImpl implements
     public boolean hasPTI() {
         return pt_popupOpen;
     }
+
+    /**
+     * Accept the word if the PTI is currently enabled
+     *
+     * @return true if pti layer was visible and has been accepted , false - otherwise
+     */
+    protected boolean acceptPTI() {
+        boolean ret = false;
+        if (hasPTI()) {
+            ret = InputMode.KEYCODE_NONE !=
+                inputSession.processKey(Constants.KEYCODE_SELECT, false);
+        }
+        return ret;
+    }
+
     
 } // TextFieldLFImpl
 

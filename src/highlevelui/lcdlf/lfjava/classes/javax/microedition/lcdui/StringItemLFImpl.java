@@ -397,10 +397,10 @@ class StringItemLFImpl extends ItemLFImpl implements StringItemLF {
                     mode |= Text.INVERT;
                 }
 
-                Text.paint(g, strItem.str,  strItem.font,
+                Text.paint(g, strItem.str, strItem.font,
                         getForeground(appearanceMode),
                         getForegroundHilight(appearanceMode),
-                        contentBounds[WIDTH], contentBounds[HEIGHT], 0, mode, null);                
+                        contentBounds[WIDTH], contentBounds[HEIGHT], contentBounds[X], mode, null);
             }
             break;
             case Item.BUTTON: {

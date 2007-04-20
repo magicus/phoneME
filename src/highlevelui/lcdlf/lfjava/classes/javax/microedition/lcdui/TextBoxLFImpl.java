@@ -119,6 +119,23 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         updateTextInfo();
     }
 
+
+    /**
+     * Commit the given input to this TextInputComponent's buffer.
+     * This call constitutes a change to the value of this TextInputComponent
+     * and should result in any listeners being notified.
+     * @param input text to commit 
+     */
+    public void commit(String input) {
+        // keep the first visible line 
+        int oldTopVis = myInfo.topVis;
+        super.commit(input);
+        // try to restore the visible region
+        myInfo.topVis = oldTopVis;
+        myInfo.isModified = myInfo.scrollY = true;
+        updateTextInfo();
+    }
+
     
     /**
      * Notifies L&amps;F of a character insertion in the corresponding
@@ -477,10 +494,13 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         int lines = myInfo.scrollByPage(dir == Canvas.UP ?
                                         TextInfo.BACK : TextInfo.FORWARD);
         if (lines != 0) {
-	    if (editable) {
+            if (editable) {
+                // accept the word if the PTI is currently enabled
+                acceptPTI();
+                
                 cursor.y += ScreenSkin.FONT_INPUT_TEXT.getHeight() * lines;
                 cursor.option = Text.PAINT_GET_CURSOR_INDEX;
-	    }
+            }
             updateTextInfo();
         }
     }
@@ -495,6 +515,9 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         int oldTopVis = myInfo.topVis;
         if (myInfo.scroll(dir == Canvas.UP ? TextInfo.BACK : TextInfo.FORWARD)) {
             if (editable) {
+                // accept the word if the PTI is currently enabled
+                acceptPTI();
+
                 cursor.y += (myInfo.topVis - oldTopVis) * ScreenSkin.FONT_INPUT_TEXT.getHeight();
                 cursor.option = Text.PAINT_GET_CURSOR_INDEX;
             }
@@ -519,6 +542,9 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         
         if (myInfo.topVis != oldTopVis) {
             if (editable) {
+                // accept the word if the PTI is currently enabled
+                acceptPTI();
+
                 cursor.y += (myInfo.topVis - oldTopVis) * ScreenSkin.FONT_INPUT_TEXT.getHeight();
                 cursor.option = Text.PAINT_GET_CURSOR_INDEX;
             }

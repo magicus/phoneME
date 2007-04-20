@@ -185,6 +185,11 @@ MIDPError midp_load_suites_icons() {
 
     /* iterating through the cache entries */
     for (i = 0; i < pCacheFileHeader->numberOfEntries; i++) {
+        if ((long)sizeof(IconCacheEntry) > bufferLen) {
+            status = IO_ERROR;
+            break;
+        }
+
         pNextCacheEntry = (IconCacheEntry*)&buffer[pos];
 
         if (pNextCacheEntry->isFree) {
@@ -340,6 +345,9 @@ static MIDPError store_suites_icons(const IconCache* pIconCache) {
         pData = &g_pIconCache[i];
 
         if (pData->pInfo[0].isFree) {
+            if (pCacheFileHeader->numberOfEntries > 0) {
+                pCacheFileHeader->numberOfEntries--;
+            }
             continue;
         }
 

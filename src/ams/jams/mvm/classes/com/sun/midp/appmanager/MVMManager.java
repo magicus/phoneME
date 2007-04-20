@@ -167,6 +167,8 @@ public class MVMManager extends MIDlet
          */
         GraphicalInstaller.saveSettings(null, MIDletSuite.UNUSED_SUITE_ID);
 
+        appManagerUI.cleanUp();
+
         // Ending the MIDlet ends all others.
         midletProxyList.shutdown();
     }

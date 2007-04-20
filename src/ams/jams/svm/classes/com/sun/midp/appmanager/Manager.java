@@ -143,6 +143,8 @@ public class Manager extends MIDlet implements ApplicationManager {
     public void destroyApp(boolean unconditional) {
         GraphicalInstaller.saveSettings(null, MIDletSuite.UNUSED_SUITE_ID);
 
+        managerUI.cleanUp();
+
         if (MIDletSuiteUtils.getNextMIDletSuiteToRun() !=
                 MIDletSuite.UNUSED_SUITE_ID) {
             /*
