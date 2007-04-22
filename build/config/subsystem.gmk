@@ -225,7 +225,7 @@ include $(JSR_120_DIR)/build/config/javacall.gmk
 # Determines what option we have made and set it
 # to some variable that global makefile recognize
 #
-SUBSYSTEM_JSR_120_JAVA_FILES   = \
+SUBSYSTEM_JSR_120_JAVA_FILES   += \
     $(MODULE_JSR_120_COMMON_JAVA_FILES) \
     $(MODULE_JSR_120_SMS_JAVA_FILES) \
     $(MODULE_JSR_120_CBS_JAVA_FILES)

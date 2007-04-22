@@ -612,6 +612,7 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_numberOfSegments0) {
 
     jint segments = 0;
 
+fprintf(stderr, "numberOfSegments0: start\n");
     KNI_StartHandles(1);
     KNI_DeclareHandle(msgBufferObject);
 
@@ -644,7 +645,7 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_numberOfSegments0) {
 
     pcsl_mem_free(msgBuffer);
     KNI_EndHandles();
-
+fprintf(stderr, "numberOfSegments0: exit=%d\n", segments);
     KNI_ReturnInt(segments);
 }
 
