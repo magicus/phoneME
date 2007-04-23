@@ -223,6 +223,17 @@ include $(JSR_82_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
+# (Extra) XML api for Java ME
+# Description: JSR 280
+# IMPL_NOTE: NYI
+#####################################################################
+
+ifeq ($(USE_JSR_280), true)
+JPP_DEFS += -DENABLE_JSR_280
+include $(JSR_280_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
 # (Extra) QA TESTS Subsystem
 # Description: like portability tests
 #####################################################################
