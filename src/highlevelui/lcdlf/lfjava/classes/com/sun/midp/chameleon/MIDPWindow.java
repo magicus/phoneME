@@ -82,24 +82,6 @@ public class MIDPWindow extends CWindow {
     private PTILayer ptiLayer;
     private BodyLayer bodyLayer;
 
-    // States of layer overlapping by a higher visible layer,
-    // needed for optimized Canvas painting
-
-    /** Overlapping state is not checked */
-    private static final int UNCHECKED = -1;
-
-    /** Layer is not overlapped by a higher visible layer */
-    private static final int NOT_OVERLAPPED = 0;
-
-    /** Layer is overlapped by a higher visible layer */
-    private static final int OVERLAPPED = 1;
-
-    /** State of the body layer overlapping check */
-    private int bodyLayerOverlapped = UNCHECKED;
-
-    /** Cached reference to body layer element in the layers stack */
-    private CLayerElement bodyLayerElement;
-
     // layout modes
     /**
      * Normal screen mode
@@ -642,20 +624,6 @@ public class MIDPWindow extends CWindow {
         super.paint(g, refreshQ);
     }
 
-    /** Check whether body layer is overlapped with a higher visible layer */
-    private void checkBodyOverlapping() {
-        CLayer l;
-        bodyLayerOverlapped = NOT_OVERLAPPED;
-        for (CLayerElement le = bodyLayerElement.getUpper();
-                le != null; le = le.getUpper()) {
-            l = le.getLayer();
-            if (l.visible && bodyLayer.intersects(l)) {
-                bodyLayerOverlapped = OVERLAPPED;
-                break;
-            }
-        }
-    }
-
     /**
      * This method is an optimization which allows Display to bypass
      * the Chameleon paint engine logic and directly paint an animating
@@ -669,54 +637,11 @@ public class MIDPWindow extends CWindow {
      *         canvas can be rendered directly.
      */
     public boolean setGraphicsForCanvas(Graphics g) {
-        // IMPL_NOTE: Only Canvas painting specially doesn't change
-        // dirty state of the owner window, however it is not enough
-        // to bypass the Chameleon paint engine. Body layer holding
-        // the Canvas should be opaque and be not overlapped with
-        // any visible higher layer also.
-        if (super.dirty || !bodyLayer.opaque) {
-            bodyLayerOverlapped = UNCHECKED;
-            return false;
+        if (bodyLayer.checkCanvasOptimization()) {
+            bodyLayer.setGraphicsForCanvas(g);
+            return true;
         }
-
-        // Check body layer overlapping with a higher visible layers
-        if (bodyLayerOverlapped == UNCHECKED) {
-            checkBodyOverlapping();
-        }
-        if (bodyLayerOverlapped == OVERLAPPED) {
-            // The state is not rechecked until overlapping higher
-            // layer will disappear and notify owner window about
-            // it setting dirty window state.
-            return false;
-        }
-
-        // NOTE: note the two different orders of clip and translate
-        // below. That is because the layer's bounds are stored in
-        // the coordinate space of the window. But its internal dirty
-        // region is stored in the coordinate space of the layer itself.
-        // Thus, for the first one, the clip can be set and then translated,
-        // but in the second case, the translate must be done first and then
-        // the clip set.
-        if (bodyLayer.isDirty()) {
-            if (bodyLayer.isEmptyDirtyRegions()) {
-                g.setClip(bodyLayer.bounds[X], bodyLayer.bounds[Y],
-                          bodyLayer.bounds[W], bodyLayer.bounds[H]);
-                g.translate(bodyLayer.bounds[X], bodyLayer.bounds[Y]);
-
-            } else {
-                g.translate(bodyLayer.bounds[X], bodyLayer.bounds[Y]);
-                g.setClip(bodyLayer.dirtyBounds[X], bodyLayer.dirtyBounds[Y],
-                          bodyLayer.dirtyBounds[W], bodyLayer.dirtyBounds[H]);
-            }
-            bodyLayer.cleanDirty();
-        } else {
-            // NOTE: the layer can be not dirty, e.g. in the case an empty
-            // area was requested for repaint, set empty clip area then.
-            g.translate(bodyLayer.bounds[X], bodyLayer.bounds[Y]);
-            g.setClip(0, 0, 0, 0);
-        }
-
-        return true;
+        return false;
     }
 
     /**
@@ -840,8 +765,6 @@ public class MIDPWindow extends CWindow {
                 bodyLayer = new BodyLayer(tunnel);
                 mainLayers[id] = bodyLayer;
                 addLayer(bodyLayer);
-                bodyLayerElement =
-                    layers.find(bodyLayer);
                 break;
         }
     }

@@ -44,7 +44,23 @@ public class BodyLayer extends CLayer
      */
     protected ScrollIndLayer scrollInd;
 
+    /** Tunnel instance to call Display methods */
     ChamDisplayTunnel tunnel;
+
+    // States of layer overlapping by a higher visible layer,
+    // needed for optimized Canvas painting
+
+    /** Overlapping state is not checked */
+    private static final int UNCHECKED = -1;
+
+    /** Layer is not overlapped by a higher visible layer */
+    private static final int NOT_OVERLAPPED = 0;
+
+    /** Layer is overlapped by a higher visible layer */
+    private static final int OVERLAPPED = 1;
+
+    /** State of the body layer overlapping check */
+    private int overlapped = UNCHECKED;
 
     /**
      * Create a new BodyLayer.
@@ -117,6 +133,70 @@ public class BodyLayer extends CLayer
             }
         }
     }
+
+    /**
+     * Check whether BodyLayer can be used for optimized Canvas painting
+     * with no complex analysis of all dirty UI layers intersection.
+     *
+     * @return true if optimized Canvas painting is possible,
+     *   false otherwise.
+     */
+    public boolean checkCanvasOptimization() {
+        // IMPL_NOTE: Only Canvas painting specially doesn't change dirty
+        //   state of the owner window, however it is not enough to bypass
+        //   the Chameleon paint engine. Body layer holding the Canvas
+        //   should be not overlapped by a visible layer also.
+        if (owner == null || !opaque) {
+            return false;
+        }
+        if (owner.isDirty()) {
+            // Schedule next overlapping check
+            overlapped = UNCHECKED;
+            return false;
+        }
+        // Check body layer overlapping with a higher visible layers
+        if (overlapped == UNCHECKED) {
+            overlapped = owner.isOverlapped(this) ?
+                OVERLAPPED : NOT_OVERLAPPED;
+        }
+        // The overlapping state is not rechecked owner window is
+        // marked as dirty due to other UI layers changes.
+        return (overlapped == NOT_OVERLAPPED);
+    }
+
+    /**
+     * Prepare Graphics context for optimized painting of the Canvas
+     * holded by this BodyLayer instance. Bounds and dirty region of
+     * the layer are used to set Graphics clip area and translation.
+     * 
+     * @param g Graphics context to prepare
+     */
+    public void setGraphicsForCanvas(Graphics g) {
+        // NOTE: note the two different orders of clip and translate
+        // below. That is because the layer's bounds are stored in
+        // the coordinate space of the window. But its internal dirty
+        // region is stored in the coordinate space of the layer itself.
+        // Thus, for the first one, the clip can be set and then translated,
+        // but in the second case, the translate must be done first and then
+        // the clip set.
+        if (isDirty()) {
+            if (isEmptyDirtyRegions()) {
+                g.setClip(bounds[X], bounds[Y], bounds[W], bounds[H]);
+                g.translate(bounds[X], bounds[Y]);
+            } else {
+                g.translate(bounds[X], bounds[Y]);
+                g.setClip(dirtyBounds[X], dirtyBounds[Y],
+                    dirtyBounds[W], dirtyBounds[H]);
+            }
+            cleanDirty();
+        } else {
+            // NOTE: the layer can be not dirty, e.g. in the case an empty
+            // area was requested for repaint, set empty clip area then.
+            g.translate(bounds[X], bounds[Y]);
+            g.setClip(0, 0, 0, 0);
+        }
+    }
+
 
     /**
      * Add this layer's entire area to be marked for repaint. Any pending
