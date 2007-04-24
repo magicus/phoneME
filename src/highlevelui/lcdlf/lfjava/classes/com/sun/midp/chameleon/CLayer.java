@@ -58,7 +58,7 @@ public class CLayer {
     /** Flag indicating the ability of this layer to support key/pen input. */
     protected boolean supportsInput;
 
-    /** 
+    /**
      * Flag indicating this layer is either completely opaque, or not.
      * By default, a layer is not opaque, and thus requires the background
      * and any layers below it to be painted in addition to itself. However,
@@ -504,7 +504,22 @@ public class CLayer {
         cleanDirtyRegions();
         setDirty();
     }
-    
+
+    /**
+     * Check whether the layer is intersected with another one.
+     * @param l the layer to check intersection with
+     * @return true when the layers are intersected, false otherwise
+     */
+    public boolean intersects(CLayer l) {
+        int x = bounds[X];
+        int y = bounds[Y];
+        int lx = l.bounds[X];
+        int ly = l.bounds[Y];
+
+        return !(lx >= x + bounds[W] || lx + l.bounds[W] <= x ||
+            ly >= y + bounds[H] || ly + l.bounds[H] <= y);
+    }
+
     /**
      * Add an area to be marked for repaint to this layer. This could
      * be needed for a variety of reasons, such as this layer being
@@ -771,7 +786,7 @@ public class CLayer {
         try {            
             // We first reset our dirty flag
             this.dirty = false;
-            
+
             graphicsColor = g.getColor();
             graphicsFont = g.getFont();
             

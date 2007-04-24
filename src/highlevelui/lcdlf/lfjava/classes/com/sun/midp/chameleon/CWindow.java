@@ -312,6 +312,31 @@ public abstract class CWindow {
      */
     public abstract void requestRepaint();
 
+
+    /**
+     * Check whether layer is overlapped with a higher visible layer
+     * in the layer stack of the window
+     *
+     * @param l layer to check overlapping
+     * @return true if overlapped, false otherwise
+     */
+    public boolean isOverlapped(CLayer l) {
+        synchronized(layers) {
+            CLayerElement le = layers.find(l);
+            if (le != null) {
+                CLayer l2;
+                for (le = le.getUpper(); le != null; le = le.getUpper()) {
+                    l2 = le.getLayer();
+                    if (l2.isVisible() && l.intersects(l2)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+
     /**
      * Subtract this layer area from an underlying dirty regions.
      * The method is designed to reduce dirty regions of a layres
@@ -346,6 +371,8 @@ public abstract class CWindow {
      *
      * @param layer the layer whose area should be reported as dirty to
      *   other stack layers
+     * @return element of the window layers list that contains swept
+     *   layer, it can be used for further layer processing
      */
     CLayerElement sweepLayer(CLayer layer) {
         if (layer != null) {

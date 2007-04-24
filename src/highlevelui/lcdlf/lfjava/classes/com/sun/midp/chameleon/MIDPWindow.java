@@ -78,9 +78,9 @@ public class MIDPWindow extends CWindow {
     private AlertLayer alertLayer;
     private TitleLayer titleLayer;
     private TickerLayer tickerLayer;
-    private BodyLayer bodyLayer;
     private SoftButtonLayer buttonLayer;
     private PTILayer ptiLayer;
+    private BodyLayer bodyLayer;
 
     // layout modes
     /**
@@ -121,6 +121,12 @@ public class MIDPWindow extends CWindow {
 
     /** Determines whether area of the window has been changed */
     boolean sizeChangedOccured = false;
+
+    /** Indicates if body layer was checked for optimized Canvas painting */
+    boolean bodyChecked = false;
+
+    /** Indicates wheher body layer is overlapped with a visible layer */
+    boolean bodyOverlapped = false;
 
     /**
      * Construct a new MIDPWindow given the tunnel to the desired
@@ -637,43 +643,25 @@ public class MIDPWindow extends CWindow {
      *         canvas can be rendered directly.
      */
     public boolean setGraphicsForCanvas(Graphics g) {
-        // IMPL_NOTE: Only Canvas painting specially doesn't change
-        // dirty state of the owner window, however it is not enough
-        // to bypass the Chameleon paint engine. Body layer holding
-        // the Canvas should be opaque and be not overlapped with
-        // any visible higher layer also. The check for overlapping
-        // is to be added later.
-        if (super.dirty || !bodyLayer.opaque) {
+        // IMPL_NOTE: Only Canvas painting specially doesn't change dirty
+        //   state of the owner window, however it is not enough to bypass
+        //   the Chameleon paint engine. Body layer holding the Canvas
+        //   should be not overlapped by a visible layer also.
+        if (super.dirty) {
+            // Schedule next overlapping check
+            bodyChecked = false;
             return false;
         }
-
-        // NOTE: note the two different orders of clip and translate
-        // below. That is because the layer's bounds are stored in
-        // the coordinate space of the window. But its internal dirty
-        // region is stored in the coordinate space of the layer itself.
-        // Thus, for the first one, the clip can be set and then translated,
-        // but in the second case, the translate must be done first and then
-        // the clip set.
-        if (bodyLayer.isDirty()) {
-            if (bodyLayer.isEmptyDirtyRegions()) {
-                g.setClip(bodyLayer.bounds[X], bodyLayer.bounds[Y],
-                          bodyLayer.bounds[W], bodyLayer.bounds[H]);
-                g.translate(bodyLayer.bounds[X], bodyLayer.bounds[Y]);
-
-            } else {
-                g.translate(bodyLayer.bounds[X], bodyLayer.bounds[Y]);
-                g.setClip(bodyLayer.dirtyBounds[X], bodyLayer.dirtyBounds[Y],
-                          bodyLayer.dirtyBounds[W], bodyLayer.dirtyBounds[H]);
-            }
-            bodyLayer.cleanDirty();
-        } else {
-            // NOTE: the layer can be not dirty, e.g. in the case an empty
-            // area was requested for repaint, set empty clip area then.
-            g.translate(bodyLayer.bounds[X], bodyLayer.bounds[Y]);
-            g.setClip(0, 0, 0, 0);
+        if (!bodyChecked) {
+            bodyOverlapped = !bodyLayer.opaque ||
+                isOverlapped(bodyLayer);
+            bodyChecked = true;
         }
-
-        return true;
+        if (!bodyOverlapped) {
+            bodyLayer.setGraphicsForCanvas(g);
+            return true;
+        }
+        return false;
     }
 
     /**
