@@ -60,20 +60,13 @@ SUBSYSTEM_SERVICES_JAVA_FILES += \
     $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceManager.java \
     $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceMessage.java \
     $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceRequestor.java \
-    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceConnectionClosedException.java \
-    $(SERVICES_DIR)/reference/classes/com/sun/midp/links/NamedLinkPortal.java \
-    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestProtocolClient.java \
-    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestProtocolAMS.java \
-    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestListener.java \
-    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceConnectionLinks.java \
-    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/IsolateSystemServiceRequestHandler.java \
-    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestHandler.java \
-    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceConnectionImpl.java \
-    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestorRemote.java \
-    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceRequestorLocal.java \
-    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceManagerImpl.java \
-    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceReadMessage.java \
-    $(SERVICES_DIR)/reference/classes/com/sun/midp/services/SystemServiceWriteMessage.java
+    $(SERVICES_DIR)/classes/com/sun/midp/services/SystemServiceConnectionClosedException.java
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+include $(SERVICES_DIR)/mvm/lib.gmk
+else
+include $(SERVICES_DIR)/svm/lib.gmk
+endif    
 
 ifeq ($(USE_I3_TEST), true)
 
