@@ -88,7 +88,7 @@ define makeExtraJar
 	        cp $$dir/$$class $$DSTDIR; break; \
 	    fi; done; \
 	    if (test -r $(6)/$$class); then continue; fi; \
-	    for jar in $$JARS; do if test "`$(CVM_JAR) tf $$jar | grep $$class`" != ""; then \
+	    for jar in $$JARS; do if $(CVM_JAR) -tf $$jar $$class | grep "^$$class$$" >/dev/null; then \
 	        $(UNZIP) -qo $$jar $$class -d $(6); break; \
 	    fi; done; \
 	    if !(test -r $(6)/$$class); then echo "Could not find $$class"; exit 1; fi; \
