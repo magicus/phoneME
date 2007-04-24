@@ -24,11 +24,17 @@ information or have any questions.
 -->
 <project basedir="." default="compile-eventqueue" name="jump-impl-eventqueue">
 
-  <target name="compile-eventqueue">
-      <jump.javac
-             srcdir="${s.share.impl.dir}/eventqueue/classes">
-           <include name="com/sun/jumpimpl/module/eventqueue/*.java" />
-      </jump.javac>
-  </target>
+    <condition
+        property="eventqueue.impl.subdir"
+        value=""
+        else="/stub">
+        <isset property="javacall.events.used"/>
+    </condition>
+
+    <target name="compile-eventqueue">
+        <jump.javac srcdir="${s.share.impl.dir}/eventqueue${eventqueue.impl.subdir}/classes">
+            <include name="com/sun/jumpimpl/module/eventqueue/*.java" />
+        </jump.javac>
+    </target>
 
 </project>
