@@ -47,21 +47,6 @@ public class BodyLayer extends CLayer
     /** Tunnel instance to call Display methods */
     ChamDisplayTunnel tunnel;
 
-    // States of layer overlapping by a higher visible layer,
-    // needed for optimized Canvas painting
-
-    /** Overlapping state is not checked */
-    private static final int UNCHECKED = -1;
-
-    /** Layer is not overlapped by a higher visible layer */
-    private static final int NOT_OVERLAPPED = 0;
-
-    /** Layer is overlapped by a higher visible layer */
-    private static final int OVERLAPPED = 1;
-
-    /** State of the body layer overlapping check */
-    private int overlapped = UNCHECKED;
-
     /**
      * Create a new BodyLayer.
      *
@@ -135,36 +120,6 @@ public class BodyLayer extends CLayer
     }
 
     /**
-     * Check whether BodyLayer can be used for optimized Canvas painting
-     * with no complex analysis of all dirty UI layers intersection.
-     *
-     * @return true if optimized Canvas painting is possible,
-     *   false otherwise.
-     */
-    public boolean checkCanvasOptimization() {
-        // IMPL_NOTE: Only Canvas painting specially doesn't change dirty
-        //   state of the owner window, however it is not enough to bypass
-        //   the Chameleon paint engine. Body layer holding the Canvas
-        //   should be not overlapped by a visible layer also.
-        if (owner == null || !opaque) {
-            return false;
-        }
-        if (owner.isDirty()) {
-            // Schedule next overlapping check
-            overlapped = UNCHECKED;
-            return false;
-        }
-        // Check body layer overlapping with a higher visible layers
-        if (overlapped == UNCHECKED) {
-            overlapped = owner.isOverlapped(this) ?
-                OVERLAPPED : NOT_OVERLAPPED;
-        }
-        // The overlapping state is not rechecked owner window is
-        // marked as dirty due to other UI layers changes.
-        return (overlapped == NOT_OVERLAPPED);
-    }
-
-    /**
      * Prepare Graphics context for optimized painting of the Canvas
      * holded by this BodyLayer instance. Bounds and dirty region of
      * the layer are used to set Graphics clip area and translation.
@@ -196,7 +151,6 @@ public class BodyLayer extends CLayer
             g.setClip(0, 0, 0, 0);
         }
     }
-
 
     /**
      * Add this layer's entire area to be marked for repaint. Any pending

@@ -122,6 +122,12 @@ public class MIDPWindow extends CWindow {
     /** Determines whether area of the window has been changed */
     boolean sizeChangedOccured = false;
 
+    /** Indicates if body layer was checked for optimized Canvas painting */
+    boolean bodyChecked = false;
+
+    /** Indicates wheher body layer is overlapped with a visible layer */
+    boolean bodyOverlapped = false;
+
     /**
      * Construct a new MIDPWindow given the tunnel to the desired
      * MIDP Display instance
@@ -637,7 +643,21 @@ public class MIDPWindow extends CWindow {
      *         canvas can be rendered directly.
      */
     public boolean setGraphicsForCanvas(Graphics g) {
-        if (bodyLayer.checkCanvasOptimization()) {
+        // IMPL_NOTE: Only Canvas painting specially doesn't change dirty
+        //   state of the owner window, however it is not enough to bypass
+        //   the Chameleon paint engine. Body layer holding the Canvas
+        //   should be not overlapped by a visible layer also.
+        if (super.dirty) {
+            // Schedule next overlapping check
+            bodyChecked = false;
+            return false;
+        }
+        if (!bodyChecked) {
+            bodyOverlapped = !bodyLayer.opaque ||
+                isOverlapped(bodyLayer);
+            bodyChecked = true;
+        }
+        if (!bodyOverlapped) {
             bodyLayer.setGraphicsForCanvas(g);
             return true;
         }
