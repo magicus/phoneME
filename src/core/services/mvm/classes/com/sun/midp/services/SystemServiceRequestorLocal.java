@@ -29,6 +29,8 @@ package com.sun.midp.services;
 import com.sun.midp.links.*;
 import com.sun.cldc.isolate.*;
 import java.io.*;
+import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.Permissions;
 
 final class SystemServiceRequestorLocal extends SystemServiceRequestor {
     private SystemServiceManager serviceManager;
@@ -37,6 +39,13 @@ final class SystemServiceRequestorLocal extends SystemServiceRequestor {
         this.serviceManager = serviceManager;
     }
     
+    static SystemServiceRequestorLocal newInstance(SecurityToken token) {
+        token.checkIfPermissionAllowed(Permissions.MIDP);
+        
+        SystemServiceManager manager = SystemServiceManager.getInstance(token);
+        return new SystemServiceRequestorLocal(manager);
+    }
+
     public SystemServiceConnection requestService(String serviceID) {
         synchronized (this) {
             return doRequestService(serviceID);

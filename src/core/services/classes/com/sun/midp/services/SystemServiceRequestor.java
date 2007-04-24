@@ -26,7 +26,6 @@
 
 package com.sun.midp.services;
 
-import com.sun.midp.links.*;
 import com.sun.midp.main.MIDletSuiteUtils;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
@@ -53,23 +52,11 @@ public abstract class SystemServiceRequestor {
     synchronized public static SystemServiceRequestor getInstance(
             SecurityToken token) {
 
-        token.checkIfPermissionAllowed(Permissions.MIDP);
-
         if (instance == null) {
-            if (!MIDletSuiteUtils.isAmsIsolate()) {
-                Link receiveLink = NamedLinkPortal.getLink(
-                    SystemServiceRequestHandler.SERVICE_TO_CLIENT_LINK_NAME);
-                Link sendLink = NamedLinkPortal.getLink(
-                    SystemServiceRequestHandler.CLIENT_TO_SERVICE_LINK_NAME);
-                SystemServiceConnectionLinks requestLinks = null;
-                requestLinks = new SystemServiceConnectionLinks(
-                        sendLink, receiveLink);
-
-                instance = new SystemServiceRequestorRemote(requestLinks);
+            if (MIDletSuiteUtils.isAmsIsolate()) {
+                instance = SystemServiceRequestorLocal.newInstance(token);
             } else {
-                SystemServiceManager manager = null;
-                manager = SystemServiceManager.getInstance(token);
-                instance = new SystemServiceRequestorLocal(manager);
+                instance = SystemServiceRequestorRemote.newInstance(token);
             }
         }
 

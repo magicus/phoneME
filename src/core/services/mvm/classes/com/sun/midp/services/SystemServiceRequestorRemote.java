@@ -28,6 +28,8 @@ package com.sun.midp.services;
 
 import com.sun.midp.links.*;
 import java.io.*;
+import com.sun.midp.security.SecurityToken;
+import com.sun.midp.security.Permissions;
 
 final class SystemServiceRequestorRemote extends SystemServiceRequestor {
     private SystemServiceConnectionLinks sendReceiveLinks = null;
@@ -41,6 +43,19 @@ final class SystemServiceRequestorRemote extends SystemServiceRequestor {
             this.requestProtocol = 
                 new SystemServiceRequestProtocolClient(sendReceiveLinks);
         }
+    }
+
+    static SystemServiceRequestorRemote newInstance(SecurityToken token) {
+        token.checkIfPermissionAllowed(Permissions.MIDP);
+
+        Link receiveLink = NamedLinkPortal.getLink(
+                SystemServiceRequestHandler.SERVICE_TO_CLIENT_LINK_NAME);
+        Link sendLink = NamedLinkPortal.getLink(
+                SystemServiceRequestHandler.CLIENT_TO_SERVICE_LINK_NAME);
+        SystemServiceConnectionLinks requestLinks = null;
+        requestLinks = new SystemServiceConnectionLinks(sendLink, receiveLink);
+
+        return new SystemServiceRequestorRemote(requestLinks);
     }
 
     public SystemServiceConnection requestService(String serviceID) {
