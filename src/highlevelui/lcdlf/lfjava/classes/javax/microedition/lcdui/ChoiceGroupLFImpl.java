@@ -381,8 +381,8 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
         boolean ret = super.lCallTraverse(dir, viewportWidth, viewportHeight, visRect);
         // all choice items are out of viewport.
         // Probably justr the label (if it's present) is visible on the screen
-        int contentY = contentBounds[Y] + ScreenSkin.PAD_FORM_ITEMS;
-        int contentH = contentBounds[HEIGHT] - 2 * ScreenSkin.PAD_FORM_ITEMS;
+        int contentY = contentBounds[Y];
+        int contentH = contentBounds[HEIGHT];
 
 
         if (contentY > visRect[Y] + visRect[HEIGHT] ||
@@ -404,6 +404,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                 }
                 newHeight = elHeights[newHilightedIndex];
 
+                
                 // highlighted index is out of visible rect
                 // move highlight to the best place
                 if (newY + newHeight > visRect[Y] + visRect[HEIGHT]) {
@@ -445,6 +446,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
                     }
                 }
             } else {
+
                 if (cg.choiceType == Choice.IMPLICIT &&
                     pendingIndex == -1) {
                     pendingIndex = selectedIndex;
