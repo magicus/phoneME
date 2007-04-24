@@ -308,9 +308,7 @@ final class ConnectionRegistry
      * @param midlet The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midlet) {
-        byte[] asciiClassName = Util.toCString(midlet.getClassName());
-
-        checkInByMidlet0(midlet.getSuiteId(), asciiClassName);
+        checkInByMidlet0(midlet.getSuiteId(), midlet.getClassName());
     }
 
     /**
@@ -327,9 +325,7 @@ final class ConnectionRegistry
     public void midletStartError(int externalAppId, int suiteId,
                                  String className, int errorCode,
                                  String errorDetails) {
-        byte[] asciiClassName = Util.toCString(className);
-
-        checkInByMidlet0(suiteId, asciiClassName);
+        checkInByMidlet0(suiteId, className);
     }
 
     /**
@@ -445,10 +441,10 @@ final class ConnectionRegistry
                 .registerConnection(midletSuite, connection, midlet, filter);
         }
 
-        byte[] asciiRegistration = Util.toCString(connection
+        String asciiRegistration = connection
                   + "," + midlet
                   + "," + filter
-                  + "," + suiteIdToString(midletSuite));
+                  + "," + suiteIdToString(midletSuite);
 
         if (add0(asciiRegistration) == -1) {
             // in case of Bluetooth URL, unregistration within Bluetooth
@@ -474,9 +470,7 @@ final class ConnectionRegistry
     public static boolean unregisterConnection(MIDletSuite midletSuite,
             String connection) {
 
-        byte[] asciiRegistration = Util.toCString(connection);
-        byte[] asciiStorage = Util.toCString(suiteIdToString(midletSuite));
-        int ret =  del0(asciiRegistration, asciiStorage);
+        int ret =  del0(connection, suiteIdToString(midletSuite));
         if (ret == -2) {
             throw new SecurityException("wrong suite");
         }
@@ -748,7 +742,7 @@ final class ConnectionRegistry
      * @param connection string to register
      * @return 0 if successful, -1 if failed
      */
-    private static native int add0(byte[] connection);
+    private static native int add0(String connection);
 
     /**
      * Native function to test registered inbound connections
@@ -796,7 +790,7 @@ final class ConnectionRegistry
      * @param storage current suite storage name
      * @return 0 if successful, -1 if failed
      */
-    private static native int del0(byte[] connection, byte[] storage);
+    private static native int del0(String connection, String storage);
 
     /**
      * Native connection registry check in connection function.
@@ -821,7 +815,7 @@ final class ConnectionRegistry
      *        byte array
      */
     private static native void checkInByMidlet0(int suiteId,
-                                                byte[] className);
+                                                String className);
 
     /**
      * Native connection registry list connection function.
