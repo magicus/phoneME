@@ -112,13 +112,13 @@ static unsigned char addPremulColorsSrcOver(unsigned char Cs, unsigned char As,
  * @param Csr one of the raw color components of the source pixel
  * @param As the alpha component of the source pixel
  * @param Cdr one of the raw color components of the destination pixel
- * @param Ad the alpha component of the destination pixel
  * @return a color component of the result in premultiplied form
  */
 static unsigned char addColors(unsigned char Csr, unsigned char As,
-            unsigned char Cdr, unsigned char Ad) {
+            unsigned char Cdr) {
     unsigned char Cs = premultiplyAlpha(Csr, As);
-    unsigned char Cd = premultiplyAlpha(Cdr, Ad);
+    /* Note: treat all backround pixels as full opaque */
+    unsigned char Cd = premultiplyAlpha(Cdr, 0xff);
     return addPremulColorsSrcOver(Cs, As, Cd);
 }
 
@@ -127,12 +127,11 @@ static unsigned char addColors(unsigned char Csr, unsigned char As,
  * effects.
  *
  * @param src source pixel value in 32bit ARGB format.
- * @param dst destination pixel value in 32bit ARGB format.
- * @return result pixel value in 32bit ARGB format.
+ * @param dst destination pixel value in 32bit RGB format.
+ * @return result pixel value in 32bit RGB format.
  */
 static jint alphaComposition(jint src, jint dst) {
       unsigned char As  = (unsigned char)(src >> 24);
-      unsigned char Ad  = (unsigned char)(dst >> 24);      
       unsigned char Rsr = (unsigned char)(src >> 16);
       unsigned char Rdr = (unsigned char)(dst >> 16);     
       unsigned char Gsr = (unsigned char)(src >> 8);
@@ -140,12 +139,12 @@ static jint alphaComposition(jint src, jint dst) {
       unsigned char Bsr = (unsigned char)src;
       unsigned char Bdr = (unsigned char)dst;
       
-      unsigned char Rr = addColors(Rsr, As, Rdr, Ad);
-      unsigned char Gr = addColors(Gsr, As, Gdr, Ad);
-      unsigned char Br = addColors(Bsr, As, Bdr, Ad);
+      unsigned char Rr = addColors(Rsr, As, Rdr);
+      unsigned char Gr = addColors(Gsr, As, Gdr);
+      unsigned char Br = addColors(Bsr, As, Bdr);
       
-      /* compose ARGB from separate alpha and color components */
-      return 0xff000000 | ((jint)Rr << 16) | ((jint)Gr << 8) | Br;
+      /* compose RGB from separate color components */
+      return ((jint)Rr << 16) | ((jint)Gr << 8) | Br;
 }
 
 /** Draw image in RGB format */
@@ -196,8 +195,7 @@ gx_draw_rgb(const jshort *clip,
                 if (!processAlpha || ((value & 0xff000000) == 0xff000000)) {
                     sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
                 } else {
-		    /* Note: treat all backround pixels as full opaque */
-		    jint background = GXJ_RGB16TORGB24(sbuf->pixelData[idx]) | 0xff000000;
+		    jint background = GXJ_RGB16TORGB24(sbuf->pixelData[idx]);
 		    jint composition = alphaComposition(value, background);
 		    sbuf->pixelData[idx] = GXJ_RGB24TORGB16(composition);
                 }
