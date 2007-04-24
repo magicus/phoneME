@@ -68,20 +68,3 @@ else
 include $(SERVICES_DIR)/svm/lib.gmk
 endif    
 
-ifeq ($(USE_I3_TEST), true)
-
-SUBSYSTEM_SERVICES_I3TEST_JAVA_FILES = \
-    $(SERVICES_DIR)/i3test/com/sun/midp/links/TestNamedLinkPortal.java \
-    $(SERVICES_DIR)/i3test/com/sun/midp/services/TestServiceRequestProtocol.java \
-    $(SERVICES_DIR)/i3test/com/sun/midp/services/TestSystemServiceRequest.java \
-    $(SERVICES_DIR)/i3test/com/sun/midp/services/SystemServiceRequestIsolate.java \
-    $(SERVICES_DIR)/i3test/com/sun/midp/services/TestSystemServiceManager.java \
-    $(SERVICES_DIR)/i3test/com/sun/midp/services/TestSystemService.java \
-    $(SERVICES_DIR)/i3test/com/sun/midp/services/SystemServiceIsolate.java \
-    $(SERVICES_DIR)/i3test/com/sun/midp/services/SecurityTokenProvider.java
-else
-
-SUBSYSTEM_SERVICES_I3TEST_JAVA_FILES =
-
-endif # USE_I3_TEST
-
