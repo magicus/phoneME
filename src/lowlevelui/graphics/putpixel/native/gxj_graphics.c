@@ -84,10 +84,8 @@ gx_copy_area(const jshort *clip,
  * @param A the alpha component of the source pixel (As or Ad in the formula).
  * @return color component in premultiplied form.
  */
-static unsigned char premultiplyAlpha(unsigned char C, unsigned char A) {
-
-    return (unsigned char)( (int)C * A / 0xff );
-}
+#define PREMULTUPLY_ALPHA(C, A) \
+    (unsigned char)( (int)(C) * (A) / 0xff )
 
 /**
  * The source is composited over the destination (Porter-Duff Source Over 
@@ -95,32 +93,32 @@ static unsigned char premultiplyAlpha(unsigned char C, unsigned char A) {
  *
  * Formula: Cr = Cs + Cd*(1-As)
  *
+ * Note: the result is always equal or less than 0xff, i.e. overflow is impossible.
+ *
  * @param Cs a color component of the source pixel in premultiplied form
  * @param As the alpha component of the source pixel
  * @param Cd a color component of the destination pixel in premultiplied form
  * @return a color component of the result in premultiplied form
  */
-static unsigned char addPremulColorsSrcOver(unsigned char Cs, unsigned char As,
-            unsigned char Cd) {    
-    /* Note: the result is always equal or less than 0xff, i.e. overflow is impossible */
-    return (unsigned char)( (int)Cs + (int)Cd * (0xff - As) / 0xff );
-}
+#define ADD_PREMULTIPLIEDCOLORS_SRCOVER(Cs, As, Cd) \
+    (unsigned char)( (int)(Cs) + (int)(Cd) * (0xff - (As)) / 0xff )
 
 /**
  * Combine separate source and destination color components.
+ *
+ * Note: all backround pixels are treated as full opaque.
  *
  * @param Csr one of the raw color components of the source pixel
  * @param As the alpha component of the source pixel
  * @param Cdr one of the raw color components of the destination pixel
  * @return a color component of the result in premultiplied form
  */
-static unsigned char addColors(unsigned char Csr, unsigned char As,
-            unsigned char Cdr) {
-    unsigned char Cs = premultiplyAlpha(Csr, As);
-    /* Note: treat all backround pixels as full opaque */
-    unsigned char Cd = premultiplyAlpha(Cdr, 0xff);
-    return addPremulColorsSrcOver(Cs, As, Cd);
-}
+#define ADD_COLORS(Csr, As, Cdr) \
+    ADD_PREMULTIPLIEDCOLORS_SRCOVER( \
+            PREMULTUPLY_ALPHA(Csr, As), \
+            As, \
+            PREMULTUPLY_ALPHA(Cdr, 0xff) )
+
 
 /**
  * Combine source and destination colors to achieve blending and transparency
@@ -131,20 +129,19 @@ static unsigned char addColors(unsigned char Csr, unsigned char As,
  * @return result pixel value in 32bit RGB format.
  */
 static jint alphaComposition(jint src, jint dst) {
-      unsigned char As  = (unsigned char)(src >> 24);
-      unsigned char Rsr = (unsigned char)(src >> 16);
-      unsigned char Rdr = (unsigned char)(dst >> 16);     
-      unsigned char Gsr = (unsigned char)(src >> 8);
-      unsigned char Gdr = (unsigned char)(dst >> 8);
-      unsigned char Bsr = (unsigned char)src;
-      unsigned char Bdr = (unsigned char)dst;
-      
-      unsigned char Rr = addColors(Rsr, As, Rdr);
-      unsigned char Gr = addColors(Gsr, As, Gdr);
-      unsigned char Br = addColors(Bsr, As, Bdr);
-      
-      /* compose RGB from separate color components */
-      return ((jint)Rr << 16) | ((jint)Gr << 8) | Br;
+    unsigned char As = (unsigned char)(src >> 24);
+
+    unsigned char Rr = ADD_COLORS(
+            (unsigned char)(src >> 16), As, (unsigned char)(dst >> 16) );
+
+    unsigned char Gr = ADD_COLORS(
+            (unsigned char)(src >> 8), As, (unsigned char)(dst >> 8) );
+
+    unsigned char Br = ADD_COLORS(
+            (unsigned char)src, As, (unsigned char)dst );
+
+    /* compose RGB from separate color components */
+    return ((jint)Rr << 16) | ((jint)Gr << 8) | Br;
 }
 
 /** Draw image in RGB format */
@@ -195,9 +192,9 @@ gx_draw_rgb(const jshort *clip,
                 if (!processAlpha || ((value & 0xff000000) == 0xff000000)) {
                     sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
                 } else {
-		    jint background = GXJ_RGB16TORGB24(sbuf->pixelData[idx]);
-		    jint composition = alphaComposition(value, background);
-		    sbuf->pixelData[idx] = GXJ_RGB24TORGB16(composition);
+                    jint background = GXJ_RGB16TORGB24(sbuf->pixelData[idx]);
+                    jint composition = alphaComposition(value, background);
+                    sbuf->pixelData[idx] = GXJ_RGB24TORGB16(composition);
                 }
             }
         } /* loop by rgb data columns */
