@@ -34,7 +34,7 @@ printconfig::
 jumptargets: jumptargets-api jumptargets-impl
 
 jumptargets-api: force_jump_build-api
-jumptargets-impl: $(JSROP_JARS) force_jump_build-impl $(CVM_BINDIR)/runjump $(CVM_BINDIR)/autotest $(CVM_BINDIR)/runinstall
+jumptargets-impl: $(JSROP_JARS) force_jump_build-impl $(CVM_BINDIR)/runjump $(CVM_BINDIR)/autotest $(CVM_BINDIR)/runinstall $(CVM_BINDIR)/runxinstall
 
 $(CVM_BUILD_DEFS_MK)::
 	$(AT) echo updating $@ [from rules_jump.mk]
