@@ -84,7 +84,7 @@ int handlerdb_is_modified(long lastread);
 int register_handler(
         const unsigned short* content_handler_id,
 		const unsigned short* content_handler_friendly_name,
-		const unsigned short* suite_id,
+		int suite_id,
         const unsigned short* class_name,
 		int flag,
         const unsigned short** types,     int nTypes,
@@ -105,7 +105,7 @@ int enum_handlers_by_type(const unsigned short* mimetype, int* pos_handle, /*OUT
 
 int enum_handlers_by_action(const unsigned short* action, int* pos_handle, /*OUT*/ short*  buffer, int* length);
 
-int enum_handlers_by_suit_id(const unsigned short* suit_id, int* pos_handle, /*OUT*/ short*  buffer, int* length);
+int enum_handlers_by_suit_id(int suit_id, int* pos_handle, /*OUT*/ short*  buffer, int* length);
 
 int enum_actions(const unsigned short* content_handler_id, /*OUT*/ int* pos_id, short*  buffer, int* length);
 
@@ -123,12 +123,12 @@ int get_class_name(const unsigned short* content_handler_id, /*OUT*/ short*  buf
 
 int get_content_handler_friendly_name(const unsigned short* content_handler_id, /*OUT*/ short*  buffer, int* length);
 
-int get_suite_id(const unsigned short* content_handler_id, /*OUT*/ short*  buffer, int* length);
+int get_suite_id(const unsigned short* content_handler_id, /*OUT*/ int*  val);
 
 int get_flag(const unsigned short* content_handler_id,/*OUT*/  int* val);
 
 int get_handler_info(const unsigned short* content_handler_id,
-				   /*OUT*/  short*  suit_id, int* suit_id_len,
+				   /*OUT*/  int*  suit_id, 
 				   short*  classname, int* classname_len,
 				   int *flag);
 

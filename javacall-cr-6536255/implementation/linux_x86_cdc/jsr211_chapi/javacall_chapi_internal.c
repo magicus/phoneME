@@ -109,7 +109,7 @@ typedef struct {
 
 #define CLEAN_HANDLER(id, suit, clas, flag) \
     if (id != NULL) { free(id); id = NULL; } \
-    if (suit != NULL) { free(suit); suit = NULL; } \
+	suit = 0; \
     if (clas != NULL) { free(clas); clas = NULL; } \
     flag = -1
 
@@ -236,7 +236,7 @@ static int readArray(REG* reg, javacall_chapi_field field,
  */
 static javacall_result loadHandler(REG* reg, 
         javacall_utf16** id, int* id_sz,
-        javacall_utf16** suit, int* suit_sz,
+        int* suit,
         javacall_utf16** clas, int* clas_sz, int* flag) {
 
     if ((*id_sz = readString(reg, JAVACALL_CHAPI_FIELD_ID, id)) <= 0 || 
@@ -245,14 +245,14 @@ static javacall_result loadHandler(REG* reg,
     }
 
     if (*flag < 2) { // JVM handler
-        if ((*suit_sz = 
-                readString(reg, JAVACALL_CHAPI_FIELD_SUITE, suit)) <= 0 ||
+        if ((*suit = 
+                readInt(reg, JAVACALL_CHAPI_FIELD_SUITE)) <= 0 ||
             (*clas_sz = 
                 readString(reg, JAVACALL_CHAPI_FIELD_CLASS, clas)) <= 0) {
         return JAVACALL_FAIL;
       }
     } else {
-        *suit_sz = *clas_sz = 0;
+        *suit = *clas_sz = 0;
 	}
 
     return JAVACALL_OK;
@@ -521,7 +521,7 @@ javacall_result javacall_chapi_finalize(void) {
     return JAVACALL_OK;
 }
 
-// 2 auxiliary macros for code shrinking
+// 3 auxiliary macros for code shrinking
 #define _WRITE_CH_STRING(STR, OFF_IDX) \
     sz = writeString(&reg, STR); \
     if (sz < 0) { \
@@ -539,6 +539,15 @@ javacall_result javacall_chapi_finalize(void) {
     } \
     reg.offs[OFF_IDX] = (sz > 0? off: 0); \
     off += sz
+
+#define _WRITE_CH_INT(INT, OFF_IDX) \
+		if (sizeof(int) != _write(reg.file, (void*)&INT, sizeof(int))) { \
+            status = JAVACALL_IO_ERROR; \
+            break; \
+		}  \
+        reg.offs[OFF_IDX] = off; \
+        off += sizeof(int);
+
 
 
 /**
@@ -564,9 +573,9 @@ javacall_result javacall_chapi_finalize(void) {
  * @param nAccesses length of accesses array
  * @return operation status.
  */
-javacall_result javacall_chapi_register_handler(
+javacall_result javacall_chapi_register_java_handler(
         const javacall_utf16_string id,
-        const javacall_utf16_string suite_id,
+        int suite_id,
         const javacall_utf16_string class_name,
         int flag, 
         const javacall_utf16_string* types,     int nTypes,
@@ -600,14 +609,8 @@ javacall_result javacall_chapi_register_handler(
             break;
         }
 
-        if (sizeof(int) != _write(reg.file, (void*)&flag, sizeof(int))) {
-            status = JAVACALL_IO_ERROR;
-            break;
-        }
-        reg.offs[JAVACALL_CHAPI_FIELD_FLAG] = off;
-        off += sizeof(int);
-
-        _WRITE_CH_STRING(suite_id, JAVACALL_CHAPI_FIELD_SUITE);
+		_WRITE_CH_INT(flag, JAVACALL_CHAPI_FIELD_FLAG);
+        _WRITE_CH_INT(suite_id, JAVACALL_CHAPI_FIELD_SUITE);
         _WRITE_CH_STRING(class_name, JAVACALL_CHAPI_FIELD_CLASS);
         _WRITE_CH_ARRAY(types, nTypes, JAVACALL_CHAPI_FIELD_TYPES);
         _WRITE_CH_ARRAY(suffixes, nSuffixes, JAVACALL_CHAPI_FIELD_SUFFIXES);
@@ -716,9 +719,9 @@ javacall_result javacall_chapi_find_handler(
     javacall_result status;
     REG reg;
     javacall_utf16 *id = NULL;
-    javacall_utf16 *suit = NULL;
+    int suit = 0;
     javacall_utf16 *clas = NULL;
-    int id_sz, suit_sz, clas_sz, flag = -1;
+    int id_sz, clas_sz, flag = -1;
     int n, sz;
     int mode;
     int value_sz;
@@ -782,11 +785,11 @@ javacall_result javacall_chapi_find_handler(
         free(buf);
 
         if (n > 0) {
-            status = loadHandler(&reg, &id, &id_sz, &suit, &suit_sz, 
+            status = loadHandler(&reg, &id, &id_sz, &suit, 
                                                     &clas, &clas_sz, &flag);
             if (status == JAVACALL_OK) {
                 status = javautil_chapi_appendHandler(id, id_sz, 
-                                suit, suit_sz, clas, clas_sz, flag, result);
+                                suit, clas, clas_sz, flag, result);
             }
             CLEAN_HANDLER(id, suit, clas, flag);
         }
@@ -814,39 +817,32 @@ javacall_result javacall_chapi_find_handler(
  * @return status of the operation
  */
 javacall_result javacall_chapi_find_for_suite(
-                        const javacall_utf16_string suite_id,
+                        int suite_id,
                         /*OUT*/ javacall_chapi_result_CH_array result) {
     javacall_result status;
     REG reg;
     javacall_utf16 *id = NULL;
-    javacall_utf16* suit = NULL;
+    int suit = 0;
     javacall_utf16 *clas = NULL;
-    int id_sz, suit_sz, clas_sz, flag;
-    int suite_id_sz;
+    int id_sz, clas_sz, flag;
 
     if (JAVACALL_OK != regOpen(&reg, JAVACALL_TRUE)) {
         return JAVACALL_FAIL;
     }
 
-    suite_id_sz = CHAPI_STRLEN(suite_id);
     do {
         status = nextHandler(&reg);
         if (JAVACALL_OK != status) {
             break;
         }
-
-        if ((suit_sz = readString(&reg, JAVACALL_CHAPI_FIELD_SUITE, &suit)) <= 0)
-           continue; // non-JVM handler shouldn't be processed.
-
-        flag = (suit_sz == suite_id_sz 
-                && CHAPI_ISEQUAL(suite_id, suit, suit_sz)? 1: 0);
-        free(suit);
+		suit = readInt(&reg, JAVACALL_CHAPI_FIELD_SUITE);
+		flag = (suit == suite_id);
 
         if (flag) {
-            status = loadHandler(&reg, &id, &id_sz, &suit, &suit_sz,
+            status = loadHandler(&reg, &id, &id_sz, &suit, 
                                                 &clas, &clas_sz, &flag);
             if (status == JAVACALL_OK) {
-                status = javautil_chapi_appendHandler(id, id_sz, suit, suit_sz,
+                status = javautil_chapi_appendHandler(id, id_sz, suit, 
                                                 clas, clas_sz, flag, result);
             }
             CLEAN_HANDLER(id, suit, clas, flag);
@@ -1000,9 +996,9 @@ javacall_result javacall_chapi_get_handler(
     javacall_result status;
     REG reg;
     javacall_utf16 *id_ = NULL;
-    javacall_utf16 *suit = NULL;
+    int suit;
     javacall_utf16 *clas = NULL;
-    int id_sz, suit_sz, clas_sz, flag = -1;
+    int id_sz, clas_sz, flag = -1;
     javacall_utf16 *test = NULL;
     int test_sz, found = JAVACALL_FALSE;
 
@@ -1030,11 +1026,11 @@ javacall_result javacall_chapi_get_handler(
         if (test_sz == id_sz ||
             (mode == JAVACALL_CHAPI_SEARCH_PREFIX && test_sz < id_sz)) {
             if (CHAPI_ISEQUAL(id, test, test_sz)) {
-                status = loadHandler(&reg, &id_, &id_sz, &suit, &suit_sz, 
+                status = loadHandler(&reg, &id_, &id_sz, &suit,
                                                     &clas, &clas_sz, &flag);
                 if (status == JAVACALL_OK) {
                     status = javautil_chapi_fillHandler(id_, id_sz, 
-                                suit, suit_sz, clas, clas_sz, flag, result);
+                                suit, clas, clas_sz, flag, result);
                 }
                 CLEAN_HANDLER(id_, suit, clas, flag);
                 found = JAVACALL_TRUE;

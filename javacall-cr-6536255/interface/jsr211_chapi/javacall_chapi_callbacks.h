@@ -51,13 +51,9 @@ extern "C" {
 
 /**
  * Internal structure.
- * Common result buffer for serialized data storage.
+ * Handle to result buffer for serialized data storage.
  */
-typedef struct {
-    javacall_utf16* buf;
-    int bufsz;
-    int used;
-} _JAVAUTIL_CHAPI_RESBUF_;
+typedef void* _JAVAUTIL_CHAPI_RESBUF_;
 
 /**
  * Result buffer for Content Handler, used as OUTPUT parameter of 
@@ -82,11 +78,17 @@ typedef _JAVAUTIL_CHAPI_RESBUF_*   javacall_chapi_result_str_array;
 
 
 /**
+ * Clear any memory used in result structure
+ * @param result output result structure.
+ * @return operation status.
+ */
+void javautil_chapi_clearResult(_JAVAUTIL_CHAPI_RESBUF_* buffer);
+
+/**
  * Fills output result structure with handler data.
  * @param id handler ID
  * @param id_size handler ID size
- * @param suite_id suite Id
- * @param suite_id_size suite ID size
+ * @param suit suite Id
  * @param class_name handler class name
  * @param class_name_size handler class name size
  * @param flag handler installation flag
@@ -95,7 +97,7 @@ typedef _JAVAUTIL_CHAPI_RESBUF_*   javacall_chapi_result_str_array;
  */
 javacall_result javautil_chapi_fillHandler(
         const javacall_utf16* id, int id_size,
-        const javacall_utf16* suite_id, int suite_id_size,
+        int suit,
         const javacall_utf16* class_name, int class_name_size,
         int flag, /*OUT*/ javacall_chapi_result_CH result);
 
@@ -116,8 +118,7 @@ javacall_result javautil_chapi_appendString(
  * Appends the handler data to the result array.
  * @param id handler ID
  * @param id_size handler ID size
- * @param suite_id suite Id
- * @param suite_id_size suite ID size
+ * @param suit suite Id
  * @param class_name handler class name
  * @param class_name_size handler class name size
  * @param flag handler installation flag
@@ -126,7 +127,7 @@ javacall_result javautil_chapi_appendString(
  */
 javacall_result javautil_chapi_appendHandler(
         const javacall_utf16* id, int id_size,
-        const javacall_utf16* suite_id, int suite_id_size,
+        int suit,
         const javacall_utf16* class_name, int class_name_size,
         int flag, /*OUT*/ javacall_chapi_result_CH_array array);
 

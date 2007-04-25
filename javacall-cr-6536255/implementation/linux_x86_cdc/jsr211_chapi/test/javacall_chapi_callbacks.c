@@ -24,29 +24,24 @@
  */
 
 /**
+* !!!ATTENTION!!!
+* This implementation should not be included to javacall library,
+* it is presented here only for standalone test compilation
+* Implementation of this API is provided in VM jsr code
+*/
+
+
+/**
  * @file javacall_chapi_callbacks.c
  * @ingroup CHAPI
  * @brief javacall registry access implementation
  */
 
-/**************************************************************
-*                                                             *
-*	NOTE!                                                 *
-*	THIS FILE SHOULD NOT BE INCLUDED TO REGULAR BUILD     *
-*	FOR STANDALONE JAVACALL IMPLEMENTATION TESTING ONLY!  *
-*                                                             *
-***************************************************************/
 
-
+#include "javacall_chapi_callbacks.h"
 #include <string.h>
 #include <stdlib.h>
 
-#include "javacall_chapi_callbacks.h"
-#include <javautil_unicode.h>
-
-typedef int SuiteIdType;
-
-#define _SUITE_ID_LEN 8
 /**
  * The granularity of dynamically expanded size for result buffer.
  * Note! The value should mask last bits!
@@ -56,6 +51,14 @@ typedef int SuiteIdType;
 
 #define GET_CH_SIZE(id_size, clas_size) \
     id_size + class_name_size + 5
+
+
+/**
+ * String length calculation.
+ * In win32 implementation used standart strlen() procedure for wide chars.
+ * Parameter 'str' of 'javacall_utf16_string' type (terminated with zero).
+ */
+#define CHAPI_STRLEN(str)   wcslen(str)
 
 
 /**
@@ -76,11 +79,7 @@ typedef int SuiteIdType;
  * int sz
  * Result: boolean true if strings are lexically identical.
  */
-int CHAPI_ISEQUAL_I(javacall_const_utf16_string str1, javacall_const_utf16_string str2, int sz){
-	int result=1;
-	javautil_unicode_nicmp((str1), (str2), (sz), &result);
-	return !result;
-}
+#define CHAPI_ISEQUAL_I(str1, str2, sz) (0 == _wcsnicmp((str1), (str2), (sz)))
 
 
 /**
@@ -102,32 +101,6 @@ static javacall_result assureBufferCap(_JAVAUTIL_CHAPI_RESBUF_* resbuf,
 }
 
 
-
-static SuiteIdType get_midp_suite(const javacall_utf16* jc_suite, int sz) {
-    int ret = 0;
-    
-    if (sz == _SUITE_ID_LEN) {
-        int hex;
-        const javacall_utf16 *p = jc_suite;
-
-        while (sz-- > 0) {
-            if (ret != 0 || *p != '0') {
-                hex = *p > '9'? *p - 'A' + 0xA: *p - '0';
-                if (hex < 0 || hex > 0xF) {
-                    ret = 0;
-                    break; // Invalid suite ID
-                } 
-
-                ret <<= 4;
-                ret |= hex;
-            }
-            p++;
-        }
-        
-    }
-
-    return ret;
-}
 
 /**
  * Serializes handler data into buffer.
@@ -158,8 +131,7 @@ static void fill_ch_buf(const javacall_utf16* id, int id_size, int suit,
  * Fills output result structure with handler data.
  * @param id handler ID
  * @param id_size handler ID size
- * @param suite_id suite Id
- * @param suite_id_size suite ID size
+ * @param suit suite Id
  * @param class_name handler class name
  * @param class_name_size handler class name size
  * @param flag handler installation flag
@@ -168,11 +140,10 @@ static void fill_ch_buf(const javacall_utf16* id, int id_size, int suit,
  */
 javacall_result javautil_chapi_fillHandler(
         const javacall_utf16* id, int id_size,
-        const javacall_utf16* suite_id, int suite_id_size,
+        int suit, 
         const javacall_utf16* class_name, int class_name_size,
         int flag, /*OUT*/ javacall_chapi_result_CH result) {
     int sz;
-    SuiteIdType suit = get_midp_suite(suite_id, suite_id_size);
     javacall_utf16 *buf;
 
     sz = GET_CH_SIZE(id_size, class_name_size);
@@ -223,8 +194,7 @@ javacall_result javautil_chapi_appendString(
  * Appends the handler data to the result array.
  * @param id handler ID
  * @param id_size handler ID size
- * @param suite_id suite Id
- * @param suite_id_size suite ID size
+ * @param suit suite Id
  * @param class_name handler class name
  * @param class_name_size handler class name size
  * @param flag handler installation flag
@@ -233,11 +203,10 @@ javacall_result javautil_chapi_appendString(
  */
 javacall_result javautil_chapi_appendHandler(
         const javacall_utf16* id, int id_size,
-        const javacall_utf16* suite_id, int suite_id_size,
+        int suit,
         const javacall_utf16* class_name, int class_name_size,
         int flag, /*OUT*/ javacall_chapi_result_CH_array array) {
     int sz = GET_CH_SIZE(id_size, class_name_size);
-    SuiteIdType suit = get_midp_suite(suite_id, suite_id_size);
     int n;
 
     if (array->buf == NULL) {
