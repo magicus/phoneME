@@ -545,7 +545,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_addrToString(void) {
 KNIEXPORT KNI_RETURNTYPE_INT
 Java_com_sun_midp_io_j2me_datagram_Protocol_getIpNumber(void) {
     int len;
-    int status;
+    int status = PCSL_NET_NOSTATUS;
     int ipn = -1;
     unsigned char ipBytes[MAX_ADDR_LENGTH];
     void* context = NULL;
@@ -587,6 +587,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_getIpNumber(void) {
         midp_thread_wait(HOST_NAME_LOOKUP_SIGNAL, (int)handle, context);
     } else {
         /* status is either PCSL_NET_IOERROR or PCSL_NET_INVALID */
+        /* or (in the case of out-of-memory) PCSL_NET_NOSTATUS */
         ipn = -1;
         REPORT_INFO1(LC_PROTOCOL,
             "datagram::getIpNumber returns PCSL error code %d", status);
