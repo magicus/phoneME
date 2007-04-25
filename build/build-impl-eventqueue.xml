@@ -31,9 +31,20 @@ information or have any questions.
         <isset property="javacall.events.used"/>
     </condition>
 
-    <target name="compile-eventqueue">
-        <jump.javac srcdir="${s.share.impl.dir}/eventqueue${eventqueue.impl.subdir}/classes">
-            <include name="com/sun/jumpimpl/module/eventqueue/*.java" />
+    <target name="without-events" unless="javacall.events.used">
+        <patternset id="use-eventqueue-stub">
+            <exclude name="classes/com/sun/jumpimpl/**/EventQueueModuleImpl.java"/>
+            <include name="stub_classes/com/sun/jumpimpl/**/*"/>
+        </patternset>
+    </target>
+    <target name="with-events" if="javacall.events.used">
+        <patternset id="use-eventqueue-stub"/>
+    </target>
+
+    <target name="compile-eventqueue" depends="with-events,without-events">
+        <jump.javac srcdir="${s.share.impl.dir}/eventqueue">
+            <include name="classes/com/sun/jumpimpl/module/eventqueue/*.java" />
+            <patternset refid="use-eventqueue-stub"/>
         </jump.javac>
     </target>
 

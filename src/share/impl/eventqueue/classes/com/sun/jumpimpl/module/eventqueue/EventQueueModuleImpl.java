@@ -40,10 +40,16 @@ import com.sun.jump.module.eventqueue.JUMPEventHandler;
  */
 public class EventQueueModuleImpl implements JUMPEventQueueModule {
     /** Table to map event type to its processor. */
-    Hashtable handlers;
+    private Hashtable handlers;
 
     /** Flag indicating whether the event receiving thread should proceed. */
-    volatile boolean initialized;
+    private volatile boolean initialized;
+
+    /** Queue to store events of the corresponding type. */
+    private LinkedList queue;
+
+    /** Thread for processing events in the queue. */
+    private Thread eventProcessor;
 
     /**
      * Loads the event queue module and starts to receive native events.
@@ -63,15 +69,52 @@ public class EventQueueModuleImpl implements JUMPEventQueueModule {
         new Thread() {
             public void run() {
                 while (initialized) {
-                    EventData event = new EventData(0, null);
-                    int type = receiveEvent(event);
-                    EventProcessor ep = (EventProcessor)handlers.get(new Integer(type));
-                    if (ep != null) {
-                        ep.addEvent(event);
+                    EventData event = new EventData();
+                    event.type = receiveEvent(event);
+                    if (event.type >= 0) {
+                        synchronized (queue) {
+                            queue.add(event);
+                            queue.notify();
+                        }
                     }
                 }
             }
         }.start();
+
+        // Start the event processing thread.
+        eventProcessor = new Thread() {
+            public void run() {
+                while (true) {
+                    EventData event;
+                    synchronized (queue) {
+                        try {
+                            // Try to get the first event from the queue.
+                            event = (EventData)queue.removeFirst();
+                        } catch (NoSuchElementException e) {
+                            try {
+                                // The queue is empty. Sleep until an event is available.
+                                wait();
+                                // A new event is available, restart the loop to process it.
+                                continue;
+                            } catch (InterruptedException ie) {
+                                // Shutdown the processing thread.
+                                return;
+                            }
+                        }
+                    }
+                    // An event has been extracted from the queue, try to find
+                    // a handler that will process it.
+                    // Note: we do the processing out of the synchronized block,
+                    // so new events can be queued up while the current one is
+                    // being processed.
+                    JUMPEventHandler handler = (JUMPEventHandler)handlers.get(new Integer(event.type));
+                    if (handler != null) {
+                        handler.handleEvent(event.id, event.data);
+                    }
+                }
+            }
+        };
+        eventProcessor.start();
     }
 
     /**
@@ -84,11 +127,9 @@ public class EventQueueModuleImpl implements JUMPEventQueueModule {
         // Shutdown native event system.
         shutdownEventSystem();
 
-        // Finish all event processing threads.
-        Enumeration e = handlers.elements();
-        while (e.hasMoreElements()) {
-            ((EventProcessor)e.nextElement()).interrupt();
-        }
+        // Finish the event processing thread.
+        eventProcessor.interrupt();
+
         handlers.clear();
     }
 
@@ -101,8 +142,7 @@ public class EventQueueModuleImpl implements JUMPEventQueueModule {
      *        will deal with all events of this type.
      */
     public void registerEventHandler(int type, JUMPEventHandler handler) {
-        // Make a dedicated queue to store events of the given type.
-        handlers.put(new Integer(type), new EventProcessor(handler));
+        handlers.put(new Integer(type), handler);
     }
 
     /**
@@ -130,73 +170,14 @@ public class EventQueueModuleImpl implements JUMPEventQueueModule {
 }
 
 /**
- * This class represents a processing entity for one type of events.
- */
-class EventProcessor extends Thread {
-    /** Queue to store events of the corresponding type. */
-    private LinkedList queue;
-
-    /** Handler for events of the corresponding type. */
-    private JUMPEventHandler handler;
-
-    /**
-     * Creates an <code>EventProcessor</code> instance.
-     *
-     * @param h handler for this type of events.
-     */
-    EventProcessor(JUMPEventHandler h) {
-        queue = new LinkedList();
-        handler = h;
-
-        // Start a new thread for handling events of the given type.
-        start();
-    }
-
-    /**
-     * Puts a new event in the queue and wakes up the processing thread.
-     *
-     * @param event event data.
-     */
-    synchronized void addEvent(EventData event) {
-        queue.add(event);
-        notify();
-    }
-
-    /**
-     * Event processing happens here.
-     */
-    public void run() {
-        while (true) {
-            EventData event;
-            synchronized (this) {
-                try {
-                    // Try to get the first event from the queue.
-                    event = (EventData)queue.removeFirst();
-                } catch (NoSuchElementException e) {
-                    try {
-                        // The queue is empty. Sleep until an event is available.
-                        wait();
-                        // A new event is available, restart the loop to process it.
-                        continue;
-                    } catch (InterruptedException ie) {
-                        // Shutdown the processing thread.
-                        return;
-                    }
-                }
-            }
-            // An event has been extracted from the queue, process it.
-            // Note: we do the processing out of the synchronized block,
-            // so new events can be queued up while the current one is
-            // being processed.
-            handler.handleEvent(event.id, event.data);
-        }
-    }
-}
-
-/**
  * This class holds event information that may be needed for the handler.
  */
 class EventData {
+    /** 
+     * Event type, used for dispatching events to their respective handlers.
+     */
+    int type;
+
     /** 
      * Event identifier, used for distinguishing various
      * kinds of events processed by one handler.
@@ -208,15 +189,4 @@ class EventData {
      * the particular event type.
      */
     byte[] data;
-
-    /** 
-     * Creates a new entity representing a single event.
-     *
-     * @param id event identifier.
-     * @param data event data.
-     */
-    EventData(int id, byte[] data) {
-        this.id = id;
-        this.data = data;
-    }
 }
