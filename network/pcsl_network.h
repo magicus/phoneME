@@ -157,7 +157,7 @@ extern "C" {
 #define PCSL_NET_INTERRUPTED -3
 
 /** 
- * Return value indicating that there was an error and 
+ * Return value indicating that there was an error and
  * ConnectionNotFoundException needs to be thrwon to the calling Java thread
  */
 #define PCSL_NET_CONNECTION_NOTFOUND -4
@@ -166,6 +166,13 @@ extern "C" {
  * Return value indicating that a function parameter had an invalid value.
  */
 #define PCSL_NET_INVALID -5
+
+/**
+ * A value that is guaranteed to be different from any
+ * possible PCSL_NET_* return value.
+ * No function will ever return it as a status code.
+ */
+#define PCSL_NET_NOSTATUS -6
 
 /**
  * The value which valid handle returned by pcsl network functions cannot have
