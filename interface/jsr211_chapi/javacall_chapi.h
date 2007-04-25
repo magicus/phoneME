@@ -142,9 +142,9 @@ javacall_result javacall_chapi_finalize(void);
  * @param nAccesses length of accesses array
  * @return operation status.
  */
-javacall_result javacall_register_java_handler(
+javacall_result javacall_chapi_register_java_handler(
         const javacall_utf16_string id,
-        const javacall_utf16_string suite_id,
+        int suite_id,
         const javacall_utf16_string class_name,
         int flag, 
         const javacall_utf16_string* types,     int nTypes,
@@ -192,7 +192,7 @@ javacall_result javacall_chapi_find_handler(
  * @return status of the operation
  */
 javacall_result javacall_chapi_find_for_suite(
-                        const javacall_utf16_string suite_id,
+                        int suite_id,
                         /*OUT*/ javacall_chapi_result_CH_array result);
 
 /**

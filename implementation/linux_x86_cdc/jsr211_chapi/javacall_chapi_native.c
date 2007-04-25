@@ -82,7 +82,7 @@ javacall_result javacall_chapi_native_finalize(void){
  */
 javacall_result javacall_chapi_native_register_handler(
         const javacall_utf16_string id,
-        const javacall_utf16_string suite_id,
+        int suite_id,
         const javacall_utf16_string class_name,
         int flag, 
         const javacall_utf16_string* types,     int nTypes,
@@ -93,8 +93,8 @@ javacall_result javacall_chapi_native_register_handler(
         const javacall_utf16_string* accesses,  int nAccesses){
 
 	int result = register_handler(	(const unsigned short*) id,
-									L"Phone ME Application",							  
-									(const unsigned short*) suite_id,
+									L"Java Application",							  
+									suite_id,
 									(const unsigned short*) class_name,
 									flag,
 									(const unsigned short**) types,   nTypes,
@@ -167,16 +167,15 @@ javacall_result javacall_chapi_native_find_handler(
 		if (res) 
 			break;
 		else {
-			unsigned short suite_id[MAX_BUFFER];
-			int suite_id_len = MAX_BUFFER;
+			int suite_id;
 			unsigned short classname[MAX_BUFFER];
 			int classname_len = MAX_BUFFER;
 			int flag;
 
-			res=get_handler_info(buffer,suite_id,&suite_id_len,classname,&classname_len,&flag);
+			res=get_handler_info(buffer,&suite_id,classname,&classname_len,&flag);
 			if (res) break;
 			
-			res = javautil_chapi_appendHandler(buffer,len, suite_id, suite_id_len, classname, classname_len, flag,
+			res = javautil_chapi_appendHandler(buffer,len, suite_id, classname, classname_len, flag,
 											result);
 			if (res) break;
 		}
@@ -198,7 +197,7 @@ javacall_result javacall_chapi_native_find_handler(
  * @return status of the operation
  */
 javacall_result javacall_chapi_native_find_for_suite(
-                        const javacall_utf16_string suite_id,
+                        int suite_id,
                         /*OUT*/ javacall_chapi_result_CH_array result){
 	int pos = 0;
 	unsigned short* buffer;
@@ -222,15 +221,14 @@ javacall_result javacall_chapi_native_find_for_suite(
 		if (res) 
 			break;
 		else {
-			int suite_id_len = wcslen(suite_id);
 			unsigned short classname[MAX_BUFFER];
 			int classname_len = MAX_BUFFER;
 			int flag;
 
-			res=get_handler_info(buffer,0, 0,classname,&classname_len,&flag);
+			res=get_handler_info(buffer,0, classname,&classname_len,&flag);
 			if (res) break;
 			
-			res = javautil_chapi_appendHandler(buffer,len, suite_id, suite_id_len, classname, classname_len, flag,
+			res = javautil_chapi_appendHandler(buffer,len, suite_id, classname, classname_len, flag,
 											result);
 			if (res) break;
 		}
@@ -286,8 +284,7 @@ while (!found){
 		if (res) {
 			break;
 		} else {
-			unsigned short suite_id[MAX_BUFFER];
-			int suite_id_len = MAX_BUFFER;
+			int suite_id;
 			unsigned short classname[MAX_BUFFER];
 			int classname_len = MAX_BUFFER;
 			int flag;
@@ -299,10 +296,10 @@ while (!found){
 			if (!res) continue;
 
 
-			res=get_handler_info(buffer,suite_id,&suite_id_len,classname,&classname_len,&flag);
+			res=get_handler_info(buffer,&suite_id,classname,&classname_len,&flag);
 			if (res) break;
 			
-			res = javautil_chapi_fillHandler(buffer,len, suite_id, suite_id_len, classname, classname_len, flag,
+			res = javautil_chapi_fillHandler(buffer,len, suite_id, classname, classname_len, flag,
 											handler);
 			if (res) break;
 			found = 1;
@@ -531,17 +528,16 @@ javacall_result javacall_chapi_native_get_handler(
         /*OUT*/ javacall_chapi_result_CH result){
 
 int res;
-unsigned short suite_id[MAX_BUFFER];
-int suite_id_len = MAX_BUFFER;
+int suite_id;
 unsigned short classname[MAX_BUFFER];
 int classname_len = MAX_BUFFER;
 int flag;
 
 if (search_flag==JAVACALL_CHAPI_SEARCH_EXACT){
 	if (is_trusted(id,caller_id)){
-			res=get_handler_info(id,suite_id,&suite_id_len,classname,&classname_len,&flag);
+			res=get_handler_info(id,&suite_id,classname,&classname_len,&flag);
 			if (!res) {
-				res = javautil_chapi_fillHandler(id, wcslen(id), suite_id, suite_id_len, classname, classname_len, flag,
+				res = javautil_chapi_fillHandler(id, wcslen(id), suite_id, classname, classname_len, flag,
 												result);
 			}
 	}
@@ -576,9 +572,9 @@ if (search_flag==JAVACALL_CHAPI_SEARCH_EXACT){
 
 
 		if (!memcmp(buffer,id,sizeof(*id)*prefixlen) && is_trusted(buffer,caller_id)){
-			res=get_handler_info(buffer,suite_id,&suite_id_len,classname,&classname_len,&flag);
+			res=get_handler_info(buffer,&suite_id,classname,&classname_len,&flag);
 			if (!res) {
-				res = javautil_chapi_fillHandler(buffer,len, suite_id, suite_id_len, classname, classname_len, flag,
+				res = javautil_chapi_fillHandler(buffer,len, suite_id, classname, classname_len, flag,
 												result);
 			}
 			break;

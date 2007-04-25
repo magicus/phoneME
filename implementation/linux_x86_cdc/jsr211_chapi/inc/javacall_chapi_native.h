@@ -99,7 +99,7 @@ javacall_result javacall_chapi_native_finalize(void);
  */
 javacall_result javacall_chapi_native_register_handler(
         const javacall_utf16_string id,
-        const javacall_utf16_string suite_id,
+        int suite_id,
         const javacall_utf16_string class_name,
         int flag, 
         const javacall_utf16_string* types,     int nTypes,
@@ -147,7 +147,7 @@ javacall_result javacall_chapi_native_find_handler(
  * @return status of the operation
  */
 javacall_result javacall_chapi_native_find_for_suite(
-                        const javacall_utf16_string suite_id,
+                        int suite_id,
                         /*OUT*/ javacall_chapi_result_CH_array result);
 
 /**
