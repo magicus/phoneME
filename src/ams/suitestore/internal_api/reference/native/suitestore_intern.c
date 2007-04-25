@@ -522,6 +522,11 @@ read_suites_data(char** ppszError) {
 
         /* setup pJarHash */
         if (pData->jarHashLen > 0) {
+            pData->varSuiteData.pJarHash = pcsl_mem_malloc(pData->jarHashLen);
+            if (pData->varSuiteData.pJarHash == NULL) {
+                status = OUT_OF_MEMORY;
+                break;
+            }
             memcpy(pData->varSuiteData.pJarHash, (char*)&buffer[pos],
                 pData->jarHashLen);
             ADJUST_POS_IN_BUF(pos, bufferLen, pData->jarHashLen);
