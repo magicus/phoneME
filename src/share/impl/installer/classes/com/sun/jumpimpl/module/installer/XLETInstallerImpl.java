@@ -520,24 +520,24 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
                 }
             }
             System.out.println("");
-            String value = System.getProperty("jump.installer.interactive");
-            if (value.toLowerCase().equals("true")) {
-                System.out.println("Deleting this bundle will remove all of the applications.");
-                while ( true ) {
-                    String message = "Do you wish to proceed? [y/n]: ";
-                    String answer = Utilities.promptUser(message);
-                    if (answer.toLowerCase().equals("y")) {
-                        break;
-                    } else if (answer.toLowerCase().equals("n")){
-                        return;
-                    } else {
-                        System.out.println("ERROR: Illegal response.");
-                    }
-                }
-                
-            } else {
+//            String value = System.getProperty("jump.installer.interactive");
+//            if (value.toLowerCase().equals("true")) {
+//                System.out.println("Deleting this bundle will remove all of the applications.");
+//                while ( true ) {
+//                    String message = "Do you wish to proceed? [y/n]: ";
+//                    String answer = Utilities.promptUser(message);
+//                    if (answer.toLowerCase().equals("y")) {
+//                        break;
+//                    } else if (answer.toLowerCase().equals("n")){
+//                        return;
+//                    } else {
+//                        System.out.println("ERROR: Illegal response.");
+//                    }
+//                }
+//                
+//            } else {
                 System.out.println("All applications will be removed.");
-            }
+//            }
         }
         
         trace(getString("AttemptingToRemove") + bundleName);

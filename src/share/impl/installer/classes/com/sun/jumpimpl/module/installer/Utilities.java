@@ -49,7 +49,7 @@ public class Utilities {
                 continue;
             }
             
-            if ( "".equals( answer ) ) {
+            if ( "".equals( answer ) || answer == null) {
                 continue;
             } else {
                 return answer;

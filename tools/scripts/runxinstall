@@ -24,41 +24,32 @@
 #
 
 #  
-#  This is a script to help download, install, uninstall, and list applications
-#  within a JUMP system
+#  runxinstall is a script to help install, uninstall, and list installed 
+#  content within a JUMP system.  runxinstall differs from runinstall in that
+#  this tool runs within the JUMP Executive process.
 #
-#  Usage:
-#    runinstall <options> -command <command>
-#  
-#   <command> can be:
-#        list, install, install_all, uninstall, or uninstall_all
-#   <options> can be:
-#       -verbose - prints debugging information
+# Available commands:
+#   Command: runxinstall install <content descriptor URL>
+#   Desc.  : install content from specified descriptor file
+#   Example: runxinstall install file:///home/user/content.jad
 #
-# Example commands:
+#   Command runxinstall install_all <provisioning server URL>
+#   Desc.  : install all content from specified provisioning server url
 #
-#     Command: runinstall -command list
-#     Action : List the applications within the system
+#   Command: runxinstall uninstall <app model> <id>
+#   Desc.  : uinstall application with specified app model and id number
+#   Example: runxinstall uninstall xlet 7
+#            runxinstall uninstall midlet 2
+#            runxinstall uninstall main 5
 #
-#     Command: runinstall -command install
-#     Action : Download and install an application into the system.
-#     Note   : The user will be prompted for input to specify the application
-#              to be installed
+#   Command: runxinstall uninstall_all
+#   Desc.  : uninstall all installed content
+#         
+#   Command: runxinstall list
+#   Desc.  : print a list of the titles of all installed content
 #
-#     Command: runinstall -command install_all
-#     Action : Download and install all applications available in a provisioning
-#              server
-#     Note   : There is no user interaction in this case.
-#
-#     Command: runinstall -command uninstall
-#     Action : Uninstall an application into the system.
-#     Note   : The user will be prompted for input to specify the application
-#              to be uninstalled.
-#
-#     Command: runinstall -command uninstall_all
-#     Action : Uninstall all applications currently installed
-#     Note   : There is no user interaction in this case.
-#
+#   runxinstall info
+#   Desc.  : print out information about each installed application
 #
 ########################### VARIABLE EXPLANATION ################################
 #
@@ -74,45 +65,39 @@
 #        On linux-arm-zaurus, default is /home/cdcams.
 #
 # Name:  CDC_SUBDIR
-# Desc:  Subdirectory name of phoneme build, only necessary for non-jmp_install builds
-#        whcih are run from within a development workspace.
+# Desc:  Subdirectory name of phoneme build
 # Dflt:  jump
 #
 # Name:  JUMP_CONTENT_STORE_DIR
 # Desc:  Root of content store
 # Dflt:  data (default value is determined in modules-config.properties)
 #
-# Name:  PROVISIONING_SERVER_URL
-# Desc:  URL to a provisioning server
-# Dflt:  None
+# Name:  USE_GCI
+# Desc:  Determines if GCI/directfb will be used to display
+# Dflt:  false
 #
+# Name:  USE_QVFB
+# Desc:  Decides if Qtopia's qvfb is used for display purposes, will automatically
+#         start if set to true.
+# Dflt:  false
+#
+
+WHOAMI=`whoami`
 
 PHONEME_PLATFORM=`uname -a | cut -d ' ' -f 12`
 if [ "$PHONEME_PLATFORM" = "unknown" ] ; then
   PHONEME_PLATFORM=`uname -a | cut -d ' ' -f 11`
 fi
 
-if [ "$PHONEME_PLATFORM" != "i686" ] ; then
-    echo "This script is not supported for this $PHONEME_PLATFORM."
-    exit 0
-fi
-
-# Use the following provisioning url for discovery
-if [ -z "$PROVISIONING_SERVER_URL" ] ; then
-   echo "Error: The environment variable PROVISIONING_SERVER_URL needs to be set to a provisioning server URL."
-   exit 0
-fi
-
 # PHONEME_DIR is primarily used when running from a build within your workspace.
 # It sets PHONEME_DIST, which is the important variable for determining the location
 # of the build.  PHONEME_DIR is strategically used to determine PHONEME_DIST.
-# Note: CDC_SUBDIR is not used when PHONEME_DIST is specified
+# Note: PHONEME_DIR is when PHONEME_DIST is set by the user.
 if [ -z "$PHONEME_DIR" ] ; then
     export PHONEME_DIR=/home/$WHOAMI/phoneme
 fi
 
 # Subdirectory name used in Phoneme build
-# Note: CDC_SUBDIR is not used when PHONEME_DIST is specified
 if [ -z "$CDC_SUBDIR" ] ; then
     export CDC_SUBDIR=jump
 fi
@@ -129,26 +114,38 @@ if [ -z "$DEFAULT_LINUX_PLATFORM" ] ; then
   fi
 fi
 
-if [ -z "$PHONEME_DIST" ] ; then
-    if [ "$PHONEME_PLATFORM" = "i686" ] ; then
-
-        export PHONEME_DIST=$PHONEME_DIR/build/$DEFAULT_LINUX_PLATFORM/$CDC_SUBDIR
-    fi
+################# ZAURUS SECTION ########################
+if [ "$PHONEME_PLATFORM" = "armv5tel" ] ; then
+   if [ -z "$PHONEME_DIST" ] ; then
+       export PHONEME_DIST=/home/cdcams    
+   fi
+   export USE_JIT=true
+   export LOGNAME=$WHOAMI
+   export QTDIR=/home/QtPalmtop
+   export USE_QVFB=false
+################ LINUX X86 SECTION ######################
+elif [ "$PHONEME_PLATFORM" = "i686" ] ; then
+   if [ -z "$PHONEME_DIST" ] ; then
+       export PHONEME_DIST=$PHONEME_DIR/build/$DEFAULT_LINUX_PLATFORM/$CDC_SUBDIR
+   fi
 fi
 
-CVM=$PHONEME_DIST/bin/cvm
-JUMP_LIBDIR=$PHONEME_DIST/lib
-INSTALLER_TOOL_CLASS=com.sun.jumpimpl.module.installer.JUMPInstallerTool
+RUNJUMP=$PHONEME_DIST/bin/runjump
+TMP_FILE=/tmp/${WHOAMI}.jump.properties
 
-# Set the root of content store if specified
-if [ "$JUMP_CONTENT_STORE_DIR" != "" ] ; then
-  PROPERTIES="-Dcontentstore.root=$JUMP_CONTENT_STORE_DIR"
-fi
+PRESENTATION_MODE=com.sun.jumpimpl.presentation.installer.InstallerTool
 
-ARGUMENTS="-ProvisioningServerURL $PROVISIONING_SERVER_URL"
+ARG1="jump.presentation.installer.arg1=$1"
+ARG2="jump.presentation.installer.arg2=$2"
+ARG3="jump.presentation.installer.arg3=$3"
+PROPERTIES="jump.installer.verbose=true jump.presentation=$PRESENTATION_MODE $ARG1 $ARG2 $ARG3"
 
-cd $PHONEME_DIST
+rm -f $TMP_FILE
+touch $TMP_FILE
+for property in $PROPERTIES; do \
+  echo $property >> $TMP_FILE
+done;
 
-COMMAND="$CVM $PROPERTIES -cp $JUMP_LIBDIR/executive-jump.jar:$JUMP_LIBDIR/jump.jar $INSTALLER_TOOL_CLASS $ARGUMENTS $* "
+COMMAND="$RUNJUMP system --config-file $TMP_FILE"
 echo $COMMAND
 $COMMAND

@@ -98,6 +98,7 @@ public class SimpleBasisAMSImageButton
     private boolean textShadow = false;
     private boolean mousedown = false;
     private boolean lastFocused = false;
+    private boolean focusable = true;
     
     /**
      * Constructs an SimpleBasisAMSImageButton
@@ -138,8 +139,12 @@ public class SimpleBasisAMSImageButton
         actionListener.actionPerformed(ae);
     }
     
+    public void setFocusable(boolean val) {
+        focusable = val;
+    }
+    
     public boolean isFocusable() {
-        return true;
+        return focusable;
     }
     
     public boolean isEnabled() {
@@ -531,7 +536,7 @@ public class SimpleBasisAMSImageButton
             g.setColor(getForeground());
         }
         g.fillRect(0, 0, size.width, size.height);
-                
+        
         try {
             if (!tracker.checkID(buttonState)) {
                 tracker.waitForID(buttonState);
@@ -567,13 +572,14 @@ public class SimpleBasisAMSImageButton
                 fm = getFontMetrics(defaultFont);
             }
             
-            int width = (int) fm.stringWidth(label);
+            int labelWidth = (int) fm.stringWidth(label);
+            int buttonWidth = size.width;
             String displayLabel = label;
             String tmpLabel = null;
-            while (width > size.width) {
+            while (labelWidth > size.width) {
                 displayLabel = displayLabel.substring(0, displayLabel.length() - 1);
                 tmpLabel = displayLabel + "...";
-                width = (int) fm.stringWidth(tmpLabel);
+                labelWidth = (int) fm.stringWidth(tmpLabel);
             }
             
             if (tmpLabel != null) {
@@ -582,7 +588,7 @@ public class SimpleBasisAMSImageButton
             
             int height = (int) fm.getHeight();
             if (labelX == -1) {
-                labelX = ( (size.width - width) / 2);
+                labelX = ( (size.width - labelWidth) / 2);
                 if (labelX < 0) {
                     labelX = 0;
                 }
@@ -620,7 +626,7 @@ public class SimpleBasisAMSImageButton
         g.setColor(Color.BLACK);
         g.drawString(str, x + 1, y + 1);
         g.setColor(origColor);
-        g.drawString(label, x, y);
+        g.drawString(str, x, y);
     }
     
     /*
