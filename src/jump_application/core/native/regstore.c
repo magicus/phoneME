@@ -326,7 +326,7 @@ static int fillActionMap(JNIEnv *env, jobjectArray actionNamesMap,  JSR211_conte
 			jstring str;
 			jobject arr;
             jobject map = (*env)->GetObjectArrayElement(env,actionNamesMap,i);
-			str = (jstring)*j_locs = (*env)->GetObjectField(env, map, anMapLocale);
+			str = (jstring)(*j_locs = (*env)->GetObjectField(env, map, anMapLocale));
 			if (!j_locs++){
 				ret = JNI_ENOMEM;
 				break;
@@ -338,7 +338,7 @@ static int fillActionMap(JNIEnv *env, jobjectArray actionNamesMap,  JSR211_conte
 			}
             arr = (*env)->GetObjectField(env, map, anMapActionnames);
             for (j = 0; j < n; j++) {
-                str = (jstring)j_nams = (*env)->GetObjectArrayElement(env, arr, j);
+                str = (jstring)(*j_nams = (*env)->GetObjectArrayElement(env, arr, j));
                 if (!j_nams++) {
                     ret = JNI_ENOMEM;
                     break;
@@ -712,5 +712,3 @@ JNIEXPORT jboolean JNICALL Java_com_sun_j2me_content_RegistryStore_unregister0
 
 	return (res==JNI_OK? JNI_TRUE: JNI_FALSE);
 }
-
-		
