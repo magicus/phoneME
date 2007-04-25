@@ -26,6 +26,8 @@
 
 package com.sun.j2me.content;
 
+import java.util.Hashtable;
+
 /**
  * Each AppProxy instance provides access to the AMS information
  * and functions for a running or installed application.
@@ -98,11 +100,11 @@ class AppProxy {
      * /
     private static boolean oneExecute;*/
 
-    /** The known AppProxy instances. Key is classname. * /
-    protected Hashtable appmap;*/
+    /** The known AppProxy instances. Key is classname. */
+    protected Hashtable appmap = new Hashtable();
 
-    /** The mutex used to avoid corruption between threads. * /
-    protected static final Object mutex = new Object();*/
+    /** The mutex used to avoid corruption between threads. */
+    protected static final Object mutex = new Object();
 
     /** The MIDlet suite for this app. * /
     protected final MIDletSuite msuite;*/
@@ -120,7 +122,7 @@ class AppProxy {
     private String applicationID = null;
 
     /** The application is registered. */
-    private boolean isRegistered = false;
+    private boolean isRegistered = true;
 
     /** MIDlet property for the suite version. * /
     static final String VERSION_PROP       = "MIDlet-Version";*/
@@ -150,9 +152,13 @@ class AppProxy {
      * @return the current application.
      */
     static AppProxy getCurrent() {
-    	/*
+    	
         synchronized (mutex) {
             if (currentApp == null) {
+            	currentApp = new AppProxy(1,"test");
+            }
+            
+            	/*
                 MIDletStateHandler mh =
                     MIDletStateHandler.getMidletStateHandler();
                 MIDletSuite msuite = mh.getMIDletSuite();
@@ -166,8 +172,9 @@ class AppProxy {
                     return null;
                 }
             }
+            */
         }
-        */
+        
         return currentApp;
     }
 
@@ -181,8 +188,8 @@ class AppProxy {
      *   is not present
      * @exception IllegalArgumentException if classname is not
      *   a valid application
-     * /
-    protected AppProxy(MIDletSuite msuite, String classname, Hashtable appmap)
+     */
+    protected AppProxy(String classname, Hashtable appmap)
         throws ClassNotFoundException
     {
         if (appmap == null) {
@@ -190,19 +197,19 @@ class AppProxy {
             appmap = new Hashtable();
         }
 
-        this.msuite = msuite;
-        this.storageId = msuite.getID();
+        //this.msuite = msuite;
+        this.storageId = classname.hashCode();
         this.classname = classname;
         this.appmap = appmap;
         if (classname != null) {
-            verifyApplication(classname);
-            initAppInfo();
+            //verifyApplication(classname);
+            //initAppInfo();
             appmap.put(classname, this);
             if (LOG_INFO) {
                 logInfo("AppProxy created: " + classname);
             }
         }
-    }*/
+    }
 
     /**
      * Construct an AppProxy with the specified suiteId, classname.
@@ -257,17 +264,16 @@ class AppProxy {
     AppProxy forClass(String classname) throws ClassNotFoundException
     {
         AppProxy curr = null;
-        /*
         synchronized (mutex) {
             // Check if class already has a AppProxy
             curr = (AppProxy)appmap.get(classname);
             if (curr == null) {
                 // Create a new instance
                 // throws ClassNotFoundException and IllegalArgumentException
-                curr = new AppProxy(msuite, classname, appmap);
+                curr = new AppProxy(classname, appmap);
             }
         }
-        */
+        
         return curr;
     }
 

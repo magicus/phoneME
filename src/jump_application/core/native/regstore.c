@@ -172,7 +172,7 @@ static int initializeFields(JNIEnv *env) {
     static const char* STRING_TYPE = "Ljava/lang/String;";
     static const char* S_ARRAY_TYPE = "[Ljava/lang/String;";
     static const char* CONTENT_HANDLER_CLASS = 
-                            "com/sun/midp/content/ContentHandlerImpl";
+                            "com/sun/j2me/content/ContentHandlerImpl";
 
     static const char* ANM_ARRAY_TYPE = 
                             "[Ljavax/microedition/content/ActionNameMap;";
@@ -183,6 +183,10 @@ static int initializeFields(JNIEnv *env) {
     do {
         // 1. initialize ContentHandlerImpl fields
         jobject clObj = (*env)->FindClass(env, CONTENT_HANDLER_CLASS);
+		if (!clObj)  {
+			ret = JNI_ERR;
+			break;
+		}
         chImplId =          (*env)->GetFieldID(env, clObj, "ID", STRING_TYPE);
         chImplSuiteId =     (*env)->GetFieldID(env, clObj,  "storageId", "I");
         chImplClassname =   (*env)->GetFieldID(env, clObj,  "classname", STRING_TYPE);
@@ -390,7 +394,12 @@ static int fillHandlerData(JNIEnv *env, jobject jhandler, JSR211_content_handler
 
         // classname
         handler->j_class_name = (jstring)(*env)->GetObjectField(env, jhandler, chImplClassname);
+		if (!handler->j_class_name){
+            ret = JNI_ERR;
+            break;
+		} 
 		handler->class_name = (*env)->GetStringChars (env, handler->j_class_name, NULL);
+		
 
         // flag
         handler->flag = (*env)->GetIntField(env, jhandler, chImplregMethod);
