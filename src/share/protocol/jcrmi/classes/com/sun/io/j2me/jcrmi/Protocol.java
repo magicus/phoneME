@@ -420,8 +420,7 @@ public class Protocol
 
         RemoteStub stub;
         try {
-            stub = (RemoteStub)
-                    (Class.forName(className + "_Stub").newInstance());
+            stub = RemoteStubCreation.createStub(className + "_Stub");                    
         } catch (ClassNotFoundException cnfe) {
             throw new RemoteException("Can't find stub class", cnfe);
         } catch (IllegalAccessException iae) {
