@@ -42,7 +42,11 @@
 
 
 #include "javacall_chapi.h"
+
+#ifdef USE_NATIVE_REGISTRY
 #include "inc/javacall_chapi_native.h"
+#endif
+
 #include "javacall_chapi_callbacks.h"
 
 
@@ -492,11 +496,12 @@ static javacall_result removeHandler(REG* reg) {
 javacall_result javacall_chapi_initialize(void) {
     const char* fn = ".jsr211_reg";
 	int fnlen = strlen(fn);
-
+	int homelen,len;
 	const char* home = getenv("HOME");
-	int homelen = strlen(home);
+	if (!home) home=".";
+	homelen = strlen(home);
 
-	int len = homelen + fnlen + 2;
+	len = homelen + fnlen + 2;
 	regFilePath = malloc(len);
 	if (!regFilePath) return JAVACALL_FAIL;
 
@@ -634,6 +639,7 @@ javacall_result javacall_chapi_register_java_handler(
         _chsize(reg.file, reg.fsize);
     }
 
+#ifdef USE_NATIVE_REGISTRY
 	if (status == JAVACALL_OK){
 		// register handler in native registry
 		javacall_chapi_native_register_handler(
@@ -648,6 +654,7 @@ javacall_result javacall_chapi_register_java_handler(
 			action_names, nActionNames,
 			accesses, nAccesses);
 	}
+#endif
 
     return status;
 }
@@ -691,9 +698,11 @@ javacall_result javacall_chapi_unregister_handler(
         status = JAVACALL_FILE_NOT_FOUND;
     }
 
+#ifdef USE_NATIVE_REGISTRY
 	if (status == JAVACALL_OK){
 		javacall_chapi_native_unregister_handler(id);
 	}
+#endif
 
     return status;
 }
@@ -800,9 +809,11 @@ javacall_result javacall_chapi_find_handler(
         status = JAVACALL_OK;
     }
 
+#ifdef USE_NATIVE_REGISTRY
 	if (status == JAVACALL_OK){
-		javacall_chapi_find_handler(caller_id,key,value,result);
+		javacall_chapi_native_find_handler(caller_id,key,value,result);
 	}
+#endif
 
     return status;
 }
@@ -854,9 +865,11 @@ javacall_result javacall_chapi_find_for_suite(
         status = JAVACALL_OK;
     }
 
+#ifdef USE_NATIVE_REGISTRY
 	if (status == JAVACALL_OK){
 		javacall_chapi_native_find_for_suite(suite_id,result);
 	}
+#endif
 
     return status;
 }
@@ -878,9 +891,10 @@ javacall_result javacall_chapi_handler_by_URL(
         const javacall_utf16_string url,
         const javacall_utf16_string action,
         /*OUT*/ javacall_chapi_result_CH handler) {
-	javacall_result status;
-
+		javacall_result status = JAVACALL_NOT_IMPLEMENTED;
+#ifdef USE_NATIVE_REGISTRY
 	status = javacall_chapi_native_handler_by_URL(caller_id, url, action, handler);
+#endif
     return status;
 }
 
@@ -966,9 +980,11 @@ javacall_result javacall_chapi_get_all(
         status = JAVACALL_OK;
     }
 
+#ifdef USE_NATIVE_REGISTRY
 	if ( status == JAVACALL_OK){
 		javacall_chapi_native_get_all(caller_id,field, result);
 	}
+#endif
 
     return status;
 }
@@ -1047,12 +1063,14 @@ javacall_result javacall_chapi_get_handler(
 		return status;
 	}
 
+#ifdef USE_NATIVE_REGISTRY
 	if (JAVACALL_OK == javacall_chapi_native_get_handler(caller_id,
         id,
         mode,
         result)){
 		return JAVACALL_OK;
 	}
+#endif
 
     return status;
 }
@@ -1112,11 +1130,15 @@ javacall_result javacall_chapi_get_handler_field(
     }
 
     regClose(&reg);
+
+#ifdef USE_NATIVE_REGISTRY
     if (status == JAVACALL_END_OF_FILE) {
 		status = javacall_chapi_native_get_handler_field(
         id,key,result);
 		if (status != JAVACALL_OK) status = JAVACALL_FILE_NOT_FOUND;
     }
+#endif
+
     return status;
 }
 
@@ -1156,5 +1178,9 @@ javacall_result javacall_chapi_execute_handler(
             javacall_chapi_invocation* invoc, 
             /*OUT*/ int* exec_status) {
 
+#ifdef USE_NATIVE_REGISTRY
 	return javacall_chapi_native_execute_handler(id,invoc,exec_status);
+#else
+	return JAVACALL_NOT_IMPLEMENTED;
+#endif
 }
