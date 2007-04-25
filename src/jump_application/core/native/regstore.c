@@ -471,7 +471,10 @@ static int fillHandlerData(JNIEnv *env, jobject jhandler, JSR211_content_handler
 JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_findHandler0
   (JNIEnv *env, jobject regStore, jstring callerId, jint searchBy, jstring value){
 	jstring ret;
-    const javacall_utf16_string caller_id_ = (const javacall_utf16_string)(*env)->GetStringChars(env,callerId, NULL);
+    const javacall_utf16_string caller_id_ = 
+		callerId != NULL ?
+		((const javacall_utf16_string)(*env)->GetStringChars(env,callerId, NULL)) : 
+		NULL;
     const javacall_utf16_string value_ = (const javacall_utf16_string)(*env)->GetStringChars(env, value, NULL);
 	_JSR211_INTERNAL_RESULT_BUFFER_ result = _JSR211_RESULT_INITIALIZER_;
     jint status = javacall_chapi_find_handler(caller_id_, searchBy, value_, (javacall_chapi_result_CH_array)&result);
