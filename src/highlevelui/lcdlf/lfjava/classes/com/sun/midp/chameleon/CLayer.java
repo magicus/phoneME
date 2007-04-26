@@ -39,7 +39,7 @@ public class CLayer {
     
     /** Flag indicating this layer is in need of repainting. */
     private boolean dirty;
-    
+
     /** Array holding a bounding rectangle of an area needing repainting. */
     protected int[] dirtyBounds;
 
@@ -710,9 +710,10 @@ public class CLayer {
 
     /**
      * Copy bounds of the layer to use them on dirty layers painting
-     * when the layers are not locked for changes from other threads
+     * when the layers are not locked for changes from other threads.
+     * Method should be called on dirty layers only.
      */
-    void copyLayerBounds() {
+    void copyAndCleanDirtyState() {
         if (dirtyBounds[X] == -1) {
             // Whole layer is dirty
             dirtyBoundsCopy[X] = 0;
@@ -725,6 +726,9 @@ public class CLayer {
         }
         System.arraycopy(
             bounds, 0, boundsCopy, 0, 4);
+
+        // Reset dirty layer state
+        cleanDirty();
     }
 
     /**
@@ -769,9 +773,6 @@ public class CLayer {
      */
     public void paint(Graphics g) {
         try {            
-            // We first reset our dirty flag
-            this.dirty = false;
-            
             graphicsColor = g.getColor();
             graphicsFont = g.getFont();
             
@@ -792,9 +793,6 @@ public class CLayer {
             // return them to standard
             g.setColor(graphicsColor);
             g.setFont(graphicsFont);
-            
-            // We reset our dirty bounds region
-            cleanDirtyRegions();
             
         } catch (Throwable t) {
             t.printStackTrace();
@@ -916,6 +914,5 @@ public class CLayer {
         res += ", visible: " + (visible ? 1 : 0);
         res += ", transparent: " + (transparent ? 1 : 0);
         return res;
-    }
-
+    }    
 }

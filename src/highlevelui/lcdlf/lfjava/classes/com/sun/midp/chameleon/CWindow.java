@@ -191,6 +191,7 @@ public abstract class CWindow {
      * @return true if successful, false otherwise
      */
     public boolean relocateLayer(CLayer layer, int x, int y, int w, int h) {
+
         if (layer != null) {
             synchronized (layers) {
                 if (sweepLayer(layer) != null) {
@@ -428,8 +429,8 @@ public abstract class CWindow {
         if (!l.opaque || hidden) {
             for (CLayerElement le2 = le.getLower();
                     le2 != null; le2 = le2.getLower()) {
-
                 l2 = le2.getLayer();
+
                 if (l2.visible) {
                     l2.addDirtyRegion(
                         dx-l2.bounds[X], dy-l2.bounds[Y], dw, dh);
@@ -512,9 +513,11 @@ public abstract class CWindow {
     /**
      * Copy dirty layer references to array for further painting.
      * The copying is needed to not keep lock on layers list when
-     * layers painting will happen.
+     * layers painting will happen. Dirty states of the layers are
+     * cleaned after the copying. Layers painting can change layers
+     * state again, but it will be served on next repaint only.
      */
-    private void copyDirtyLayers() {
+    private void copyAndCleanDirtyLayers() {
         if (CGraphicsQ.DEBUG) {
             System.err.println("[Copy dirty layers]");
         }
@@ -526,14 +529,13 @@ public abstract class CWindow {
             dirtyMaxCount += layersCount;
             dirtyLayers = new CLayer[dirtyMaxCount];
         }
-        // Copy dirty layer references
+        // Copy dirty layer references and reset dirty layer states
         for (CLayerElement le = layers.getBottom();
                 le != null; le = le.getUpper()) {
             l = le.getLayer();
             if (l.visible && l.isDirty()) {
-                l.copyLayerBounds();
+                l.copyAndCleanDirtyState();
                 dirtyLayers[dirtyCount++] = l;
-
             } else { // !(visible && dirty)
                 if (CGraphicsQ.DEBUG) {
                     System.err.println("Skip Layer: " + l);
@@ -658,7 +660,7 @@ public abstract class CWindow {
 
         synchronized (layers) {
             sweepAndMarkLayers();
-            copyDirtyLayers();
+            copyAndCleanDirtyLayers();
         }
         paintLayers(g, refreshQ);
 

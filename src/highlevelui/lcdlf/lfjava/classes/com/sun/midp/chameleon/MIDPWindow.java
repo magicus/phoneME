@@ -536,7 +536,7 @@ public class MIDPWindow extends CWindow {
     public boolean setVerticalScroll(int scrollPosition, int scrollProportion) {
         if (alertLayer.isVisible()) {
             return alertLayer.setVerticalScroll(
-                scrollPosition, scrollProportion);
+                    scrollPosition, scrollProportion);
         }
         if (bodyLayer.setVerticalScroll(
                 scrollPosition, scrollProportion)) {
@@ -585,6 +585,27 @@ public class MIDPWindow extends CWindow {
      */
     public int getBodyHeight() {
         return bodyLayer.bounds[H];
+    }
+
+
+    /**
+     * Get the current width of the alert layer (the body
+     * layer renders the contents of the current displayable).
+     *
+     * @return the width of the alert layer
+     */
+    public int getAlertWidth() {
+        return alertLayer.bounds[W];
+    }
+
+    /**
+     * Get the current height of the alert layer (the body
+     * layer renders the contents of the current displayable).
+     *
+     * @return the height of the alert layer
+     */
+    public int getAlertHeight() {
+        return alertLayer.bounds[H];
     }
 
     /**

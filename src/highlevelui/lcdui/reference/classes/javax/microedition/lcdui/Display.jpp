@@ -2251,6 +2251,25 @@ public class Display {
     MIDPWindow getWindow() {
         return window;
     }
+
+    /**
+     * Get the width of the current displayable layer.
+     *
+     * @return the width of the current displayable layer
+     */
+    int getDisplayableWidth() {
+        return  (current instanceof AlertLF) ? window.getAlertWidth() : window.getBodyWidth();
+    }
+
+    /**
+     * Get the height of the current displayable layer.
+     *
+     * @return the width of the current displayable layer
+     */
+    int getDisplayableHeight() {
+        return  (current instanceof AlertLF) ? window.getAlertHeight() : window.getBodyHeight();
+    }
+
     // #endif ENABLE_CHAMELEON
 
     /**
