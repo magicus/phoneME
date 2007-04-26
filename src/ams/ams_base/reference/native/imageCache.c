@@ -220,6 +220,7 @@ static void deleteImageCache(SuiteIdType suiteId, StorageIdType storageId) {
 
     handle = storage_open_file_iterator(&root);
     if (handle == NULL) {
+        pcsl_string_free(&root);
         return;
     }
 

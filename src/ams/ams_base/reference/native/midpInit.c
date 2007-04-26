@@ -40,6 +40,10 @@
 #include <pcsl_print.h>
 #endif
 
+#if ENABLE_ICON_CACHE
+#include <suitestore_icon_cache.h>
+#endif
+
 /**
  * @file
  *
@@ -247,6 +251,9 @@ void midpFinalize() {
         }
     }
 
+#if ENABLE_ICON_CACHE
+    midp_free_suites_icons();
+#endif    
     midp_suite_storage_cleanup();
 
     /** Now it makes no sense to process suspend/resume requests. */
