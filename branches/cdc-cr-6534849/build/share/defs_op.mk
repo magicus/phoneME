@@ -261,6 +261,13 @@ endif
 
 ifeq ($(CVM_INCLUDE_JAVACALL), true)
 JAVACALL_TARGET=$(TARGET_OS)_$(TARGET_CPU_FAMILY)
+JAVACALL_FLAGS = $(JSROP_OP_FLAGS)
+ifeq ($(USE_JAVACALL_EVENTS), true)
+JAVACALL_FLAGS += USE_COMMON=true
+JUMP_ANT_OPTIONS += -Djavacall.events.used=true
+JUMP_OBJECTS += \
+	jump_eventqueue_impl.o
+endif
 # Check javacall makefile and include it
 ifeq ($(JAVACALL_PROJECT_DIR),)
 export JAVACALL_DIR ?= $(COMPONENTS_DIR)/javacall
@@ -284,6 +291,7 @@ CVM_INCLUDE_DIRS+= $(JSROP_INCLUDE_DIRS)
 ifneq ($(JAVACALL_LINKLIBS),)
 LINKLIBS_CVM    += $(JAVACALL_LINKLIBS) -L$(JSROP_LIB_DIR)
 endif
+
 ifeq ($(CVM_PRELOAD_LIB), true)
 CVM_JCC_INPUT   += $(JSROP_JARS)
 CVM_CNI_CLASSES += $(JSROP_CNI_CLASSES)
