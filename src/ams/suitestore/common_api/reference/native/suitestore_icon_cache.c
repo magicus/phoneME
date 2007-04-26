@@ -479,7 +479,7 @@ midp_get_suite_icon(SuiteIdType suiteId, const pcsl_string* pIconName,
  *              the memory needed to store a copy of the icon's name.
  * @param pImageData pointer to the array containing the icon's bytes
  *        Note: after calling this function the control over the memory
- *              occupied by pImageData is given to it.
+ *              occupied by pImageData is given to midp_add_suite_icon().
  * @param imageDataLen size of data given in pImageData
  *
  * @return status code (ALL_OK if successful)
@@ -530,12 +530,6 @@ midp_add_suite_icon(SuiteIdType suiteId, const pcsl_string* pIconName,
                 }
 
                 pIconCache = &g_pIconCache[g_numberOfIcons];
-
-                if (pIconCache == NULL) {
-                    status = OUT_OF_MEMORY;
-                    break;
-                }
-
                 g_numberOfIcons++;
             }
         } else {
