@@ -71,8 +71,7 @@ JUMP_EXECUTIVE_BOOTCLASSESZIP   := $(JUMP_OUTPUT_DIR)/executive-jump.jar
 JUMP_SRCDIRS           += \
 	$(JUMP_SRCDIR)/share/api/native \
 	$(JUMP_SRCDIR)/share/impl/isolate/native \
-	$(JUMP_SRCDIR)/share/impl/os/native \
-	$(JUMP_SRCDIR)/share/impl/eventqueue/native
+	$(JUMP_SRCDIR)/share/impl/os/native
 
 #
 # Add as necessary
