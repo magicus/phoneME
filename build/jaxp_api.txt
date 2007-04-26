@@ -23,6 +23,10 @@
 #
 # List of visible classes for JSR172 JAXP subset API
 
+# This class list is used after JSR's jarfile creation for verifying all API
+# classes are implemented. If some classes are missed they are searched
+# in configuration/profile target jarfiles.
+
 javax.xml.parsers.SAXParser
 javax.xml.parsers.SAXParserFactory
 javax.xml.parsers.FactoryConfigurationError

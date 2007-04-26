@@ -23,6 +23,10 @@
 #
 # List of visible classes for JSR172 JAX-RPC subset API
 
+# This class list is used after JSR's jarfile creation for verifying all API
+# classes are implemented. If some classes are missed they are searched
+# in configuration/profile target jarfiles.
+
 javax.xml.rpc.JAXRPCException
 javax.xml.rpc.NamespaceConstants
 javax.xml.rpc.Stub
