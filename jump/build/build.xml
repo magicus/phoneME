@@ -1,0 +1,195 @@
+<?xml version="1.0"?>
+<!--
+Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License version
+2 only, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License version 2 for more details (a copy is
+included at /legal/license.txt).
+
+You should have received a copy of the GNU General Public License
+version 2 along with this work; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301 USA
+
+Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+Clara, CA 95054 or visit www.sun.com if you need additional
+information or have any questions.
+-->
+
+<project basedir="." default="all" name="jump">
+
+  <import file="build-api.xml"/>
+  <import file="build-impl.xml"/>
+  <import file="build-tests.xml"/>
+  <import file="defs-tools.xml"/>
+
+  <property name="ws.dir" value="${basedir}/.."/>
+  <property name="src.dir" value="${ws.dir}/src"/>
+  <property name="s.share.dir" value="${src.dir}/share"/>
+  <property name="s.share.api.dir" value="${s.share.dir}/api"/>
+  <property name="s.share.impl.dir" value="${s.share.dir}/impl"/>
+  <property name="s.share.tests.dir" value="${s.share.dir}/tests"/>
+  <property name="doc.dir" value="${ws.dir}/doc"/>
+
+  <property name="dist.dir" value="${ws.dir}/dist"/>
+  <property name="d.classes.dir" value="${dist.dir}/classes"/>
+  <property name="d.lib.dir" value="${dist.dir}/lib"/>
+  <property name="d.gen.dir" value="${dist.dir}/generated"/>
+  <property name="d.doc.dir" value="${dist.dir}/doc"/>
+  <property name="d.apidoc.dir" value="${d.doc.dir}/api"/>
+
+  <property name="api.jar.suffix" value="-jump-api.jar"/>
+  <property name="impl.jar.suffix" value="-jump-impl.jar"/>
+  <property name="jump.boot.cp" value="btclasses.zip,lib/*.jar"/>
+
+  <property name="user.build.properties" value="user.build.properties"/>
+  <!-- 
+      JUMP classes that should be in the bootclasspath of a mvm server.
+  -->
+  <property name="jump.jar" value="${d.lib.dir}/jump.jar"/>
+  <!--
+      JUMP classes that should be in the bootclasspath 
+      of a cvmc command launching executive.
+  -->
+  <property name="executive-jump.jar" value="${d.lib.dir}/executive-jump.jar"/>
+
+  <property name="debug" value="true"/>
+
+  <target name="all" depends="build-api, build-impl"/>
+
+  <!-- init target -->
+  <target name="init" depends="make-dist-dirs, set-properties, set-tools">
+  </target>
+
+  <!-- make distribution directories -->
+  <target name="make-dist-dirs">
+    <mkdir dir="${dist.dir}"/>
+    <mkdir dir="${d.classes.dir}"/>
+    <mkdir dir="${d.lib.dir}"/>
+    <mkdir dir="${d.gen.dir}"/>
+    <mkdir dir="${d.doc.dir}"/>
+    <mkdir dir="${d.apidoc.dir}"/>
+  </target>
+
+  <target name="set-properties" depends="define-preset-bases">
+     <property file="${user.build.properties}"/>
+     <property file="build.properties"/>
+  </target>
+
+  <target name="define-preset-bases">
+    <!-- Quick check of cdc.dir property -->
+    <available file="${cdc.dir}/btclasses.zip" type="file"
+        property="cdc.dir.ok"/>
+    <fail unless="cdc.dir.ok"
+        message="cdc.dir property (${cdc.dir}) seems to be incorrect (please, provide correct one with -D option)"/>
+
+    <path id="boot.cp">
+      <fileset dir="${cdc.dir}"
+       includes="${jump.boot.cp}" />
+    </path>
+    <presetdef name="javac.base">
+      <javac>
+        <bootclasspath refid="boot.cp"/>
+      </javac>
+    </presetdef>
+    <presetdef name="javadoc.base">
+      <javadoc>
+        <bootclasspath refid="boot.cp"/>
+      </javadoc>
+    </presetdef>
+  </target>
+
+  <target name="clean" depends="clean-reports">
+      <property name="data.dir" value="${cdc.dir}/${contentstore.root.default}"/>
+
+      <delete dir="${dist.dir}"/>
+      <delete quiet="true" dir="${data.dir}"/>
+  </target>
+
+    <!--
+        The target to build impl or api set of jars in one pass.
+
+        The target builds 3 jars: shared, client, executive.
+         - "shared" jar includes classes that executive and isolates can access;
+         - "executive" jar includes classes that only executive can access;
+         - "client" jar includes classes that only isolates can access;
+
+        As the single base directory specified with "d.classes.dir" property is
+        used to store all compiled classes pattern rules are used to select
+        classes subset that go into specific jar. All patterns are
+        defined in "jars.properties" file.
+    -->
+    <target name="make-jars">
+        <property name="is-api" value="true"/>
+
+        <condition 
+            property="jar-suffix" 
+            value="${api.jar.suffix}" else="${impl.jar.suffix}">
+            <equals arg1="true" arg2="${is-api}"/>
+        </condition>
+        <condition property="jar-pattern-prefix" value="api" else="impl">
+            <equals arg1="true" arg2="${is-api}"/>
+        </condition>
+
+        <loadproperties srcfile="jar-patterns.properties">
+            <filterchain>
+                <linecontainsregexp>
+                    <regexp pattern="^\s*${jar-pattern-prefix}-"/>
+                </linecontainsregexp>
+            </filterchain>
+        </loadproperties>
+
+        <!-- shared -->
+        <antcall target="make-jar-impl">
+            <param name="jar-basename" value="shared"/>
+        </antcall>
+
+         <!-- client -->
+        <antcall target="make-jar-impl">
+            <param name="jar-basename" value="client"/>
+        </antcall>
+
+        <!-- executive -->
+        <antcall target="make-jar-impl">
+            <param name="jar-basename" value="executive"/>
+        </antcall>
+    </target>
+
+    <target name="make-jar-impl">
+        <property name="jar-basename" value=""/>
+        <propertyset id="includes-propertyset">
+            <propertyref prefix="${jar-pattern-prefix}-${jar-basename}-include"/>
+        </propertyset>
+        <property name="jar-includes.raw" refid="includes-propertyset"/>
+
+        <pathconvert property="jar-includes" pathsep=",">
+            <path>
+                <pathelement path="@ ${jar-includes.raw}"/>
+            </path>
+            <mapper>
+                <filtermapper>
+                    <tokenfilter>
+                        <!-- strip away ${basedir} value ant adds silently -->
+                        <replaceregex pattern="^[^@]*@" replace=""/>
+                        <!-- remove property name followed by '=' -->
+                        <replaceregex pattern="${jar-pattern-prefix}-${jar-basename}-include\.[^=]*=" replace="" flags="g"/>
+                        <!-- strip away spaces -->
+                        <replaceregex pattern="\s" replace="" flags="g"/>
+                    </tokenfilter>
+                </filtermapper>
+            </mapper>
+        </pathconvert>
+
+        <jar destfile="${d.lib.dir}/${jar-basename}${jar-suffix}" update="true"
+            basedir="${d.classes.dir}"
+            includes="${jar-includes}"/>
+    </target>
+
+</project>
