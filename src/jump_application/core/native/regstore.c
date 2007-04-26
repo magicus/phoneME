@@ -70,6 +70,11 @@ static jfieldID anMapActionnames;   // [] actionnames
 
 DECLARE_MSG(fcFindHandler,   "Could not find handler")
 DECLARE_MSG(fcFindInvocation,   "Invocation not found")
+DECLARE_MSG(fcFindForSuite,   "Can't find handlers for suite")
+DECLARE_MSG(fcFindGetValues, "Can't read values");
+DECLARE_MSG(fcGetHandlerField, "Can't read handler fields");
+DECLARE_MSG(fcGetHandler, "Can't find handler");
+DECLARE_MSG(fcHandlerByURL, "Can't find handler for URL");
 DECLARE_MSG(fcUnexpectedFinilize,   "Unexpected RegistryStore finalization")
 DECLARE_MSG(fcNoClassFields,   "Can't initialize JSR211 class fields")
 DECLARE_MSG(fcErrorReadingFields,   "Can't read ContentHandler fields")
@@ -390,7 +395,7 @@ static int fillHandlerData(JNIEnv *env, jobject jhandler, JSR211_content_handler
 		handler->id = (*env)->GetStringChars (env, handler->j_id, NULL);
 
         // suiteId
-        handler->suite_id = (*env)->GetIntField(env, handler->j_id, chImplSuiteId);
+        handler->suite_id = (*env)->GetIntField(env, jhandler, chImplSuiteId);
 
         // classname
         handler->j_class_name = (jstring)(*env)->GetObjectField(env, jhandler, chImplClassname);
@@ -471,14 +476,11 @@ static int fillHandlerData(JNIEnv *env, jobject jhandler, JSR211_content_handler
 JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_findHandler0
   (JNIEnv *env, jobject regStore, jstring callerId, jint searchBy, jstring value){
 	jstring ret;
-    const javacall_utf16_string caller_id_ = 
-		callerId != NULL ?
-		((const javacall_utf16_string)(*env)->GetStringChars(env,callerId, NULL)) : 
-		NULL;
+	const jchar* caller_id_ = callerId !=NULL ? (*env)->GetStringChars(env,callerId, NULL) : NULL;
     const javacall_utf16_string value_ = (const javacall_utf16_string)(*env)->GetStringChars(env, value, NULL);
 	_JSR211_INTERNAL_RESULT_BUFFER_ result = _JSR211_RESULT_INITIALIZER_;
-    jint status = javacall_chapi_find_handler(caller_id_, searchBy, value_, (javacall_chapi_result_CH_array)&result);
-	if (status!=0){
+    jint status = javacall_chapi_find_handler((const javacall_utf16_string)caller_id_, JAVACALL_FIELD(searchBy), value_, (javacall_chapi_result_CH_array)&result);
+	if (status!=JAVACALL_OK){
 		JNU_ThrowInternalError(env, fcFindHandler);
 		return NULL;
 	}
@@ -494,9 +496,14 @@ JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_findHandler0
  */
 JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_forSuite0
   (JNIEnv *env, jobject regStore, int suiteId){
+	jstring ret;
 	_JSR211_INTERNAL_RESULT_BUFFER_ result = _JSR211_RESULT_INITIALIZER_;
 	jint status = javacall_chapi_find_for_suite(suiteId, (javacall_chapi_result_CH_array)&result);
-	jstring ret = result2string(env,&result);
+	if (status!=JAVACALL_OK){
+		JNU_ThrowInternalError(env, fcFindForSuite);
+		return NULL;
+	}
+	ret = result2string(env,&result);
 	javautil_chapi_clearResult((javacall_chapi_result_CH_array)&result);
 	return ret;
 }
@@ -509,10 +516,15 @@ JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_forSuite0
  */
 JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_getValues0
   (JNIEnv *env, jobject regStore, jstring callerId, jint searchBy){
-    const jchar* caller_id_ = (*env)->GetStringChars(env,callerId, NULL);
+	jstring ret;
+    const jchar* caller_id_ = callerId !=NULL ? (*env)->GetStringChars(env,callerId, NULL) : NULL;
 	_JSR211_INTERNAL_RESULT_BUFFER_ result = _JSR211_RESULT_INITIALIZER_;
-	jint status = javacall_chapi_get_all((const javacall_utf16_string)caller_id_, searchBy, (javacall_chapi_result_CH_array)&result);
-	jstring ret = result2string(env,&result);
+	jint status = javacall_chapi_get_all((const javacall_utf16_string)caller_id_, JAVACALL_FIELD(searchBy), (javacall_chapi_result_CH_array)&result);
+	if (status!=JAVACALL_OK){
+		JNU_ThrowInternalError(env, fcFindGetValues);
+		return NULL;
+	}
+	ret = result2string(env,&result);
 	javautil_chapi_clearResult((javacall_chapi_result_CH_array)&result);
 	return ret;
 }
@@ -525,11 +537,16 @@ JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_getValues0
  */
 JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_getHandler0
   (JNIEnv *env, jobject regStore, jstring callerId, jstring id, jint mode){
-	const jchar* caller_id_ = (*env)->GetStringChars(env,callerId, NULL);
+	jstring ret;
+	const jchar* caller_id_ = callerId !=NULL ? (*env)->GetStringChars(env,callerId, NULL) : NULL;
 	const jchar* _id_ = (*env)->GetStringChars(env,id, NULL);
 	_JSR211_INTERNAL_RESULT_BUFFER_ result = _JSR211_RESULT_INITIALIZER_;
 	jint status = javacall_chapi_get_handler((const javacall_utf16_string)caller_id_, (const javacall_utf16_string)_id_, mode, (javacall_chapi_result_CH_array)&result);
-	jstring ret = result2string(env,&result);
+	if (status!=JAVACALL_OK){
+		JNU_ThrowInternalError(env, fcGetHandler);
+		return NULL;
+	}
+	ret = result2string(env,&result);
 	javautil_chapi_clearResult((javacall_chapi_result_CH_array)&result);
 	return ret;
 }
@@ -542,10 +559,15 @@ JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_getHandler0
  */
 JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_loadFieldValues0
   (JNIEnv *env, jobject regStore, jstring handlerId, jint fieldId){
+	jstring ret;
 	const jchar* handler_id_ = (*env)->GetStringChars(env,handlerId, NULL);
 	_JSR211_INTERNAL_RESULT_BUFFER_ result = _JSR211_RESULT_INITIALIZER_;
-	jint status = javacall_chapi_get_handler_field((const javacall_utf16_string)handler_id_, fieldId, (javacall_chapi_result_CH_array)&result);
-	jstring ret = result2string(env,&result);
+	jint status = javacall_chapi_get_handler_field((const javacall_utf16_string)handler_id_, JAVACALL_FIELD(fieldId), (javacall_chapi_result_CH_array)&result);
+	if (status!=JAVACALL_OK){
+		JNU_ThrowInternalError(env, fcGetHandlerField);
+		return NULL;
+	}
+	ret = result2string(env,&result);
 	javautil_chapi_clearResult((javacall_chapi_result_CH_array)&result);
 	return ret;
 }
@@ -558,12 +580,17 @@ JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_loadFieldValue
  */
 JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_getByURL0
   (JNIEnv *env, jobject regStore, jstring callerId, jstring url, jstring action){
-	const jchar* caller_id_ = (*env)->GetStringChars(env,callerId, NULL);
+	jstring ret;
+	const jchar* caller_id_ = callerId !=NULL ? (*env)->GetStringChars(env,callerId, NULL) : NULL;
 	const jchar* url_ = (*env)->GetStringChars(env,url, NULL);
 	const jchar* action_ = (*env)->GetStringChars(env, action, NULL);
 	_JSR211_INTERNAL_RESULT_BUFFER_ result = _JSR211_RESULT_INITIALIZER_;
 	jint status = javacall_chapi_handler_by_URL((const javacall_utf16_string)caller_id_, (const javacall_utf16_string)url_, (const javacall_utf16_string)action_,(javacall_chapi_result_CH_array)&result);
-	jstring ret = result2string(env,&result);
+	if (status!=JAVACALL_OK){
+		JNU_ThrowInternalError(env, fcHandlerByURL);
+		return NULL;
+	}
+	ret = result2string(env,&result);
 	javautil_chapi_clearResult((javacall_chapi_result_CH_array)&result);
 	return ret;
 }
