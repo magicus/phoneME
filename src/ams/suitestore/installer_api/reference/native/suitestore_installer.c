@@ -403,8 +403,10 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
     char* pszError;
     lockStorageList *node;
     SuiteIdType suiteId;
-    unsigned char* pIconData = NULL;
     int iconBufLen = -1;
+#if ENABLE_ICON_CACHE
+    unsigned char* pIconData = NULL;
+#endif    
 
     if (pInstallInfo == NULL || pSuiteSettings == NULL || pSuiteData == NULL) {
         return BAD_PARAMS;
