@@ -893,17 +893,12 @@ class DisplayableLFImpl implements DisplayableLF {
      * @return the height a displayable would occupy 
      */
     public int getDisplayableHeight() {
-        int h = 0;
+        int h = 0;                
         
         if (!owner.isInFullScreenMode) {
-            h = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT;
-            
-            if (owner.getTitle() != null) {
-                h -= TitleSkin.HEIGHT;
-            }
-            if (owner.getTicker() != null) {
-                h -= TickerSkin.HEIGHT;
-            }
+            h = currentDisplay != null ?
+            currentDisplay.getDisplayableHeight() :
+            ScreenSkin.HEIGHT;
         } else {
             h = ScreenSkin.HEIGHT;
         }
@@ -918,7 +913,7 @@ class DisplayableLFImpl implements DisplayableLF {
      */
     public int getDisplayableWidth() {
         int w = currentDisplay != null ?
-            currentDisplay.getWindow().getBodyWidth() :
+            currentDisplay.getDisplayableWidth() :
             ScreenSkin.WIDTH;
         return w;
     }
