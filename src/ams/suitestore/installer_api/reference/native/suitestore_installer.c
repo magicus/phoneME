@@ -539,19 +539,24 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
 #if ENABLE_IMAGE_CACHE
         createImageCache(suiteId, pMsd->storageId);
 
+#if ENABLE_ICON_CACHE
         iconBufLen = loadImageFromCache(suiteId, &pMsd->varSuiteData.iconName,
                                         &pIconData);
 #else
+        (void)iconBufLen; /* not used if the icon cache is disabled */
+#endif /* ENABLE_ICON_CACHE */
+
+#else
         /* IMPL_NOTE: the entry must be read using midpGetJarEntry(). */
         iconBufLen = -1;
-#endif
+#endif /* ENABLE_IMAGE_CACHE */
 
 #if ENABLE_ICON_CACHE
         if (iconBufLen > 0) {
             midp_add_suite_icon(suiteId, &pMsd->varSuiteData.iconName,
                                 pIconData, iconBufLen);
         }
-#endif        
+#endif
     } while (0);
 
     if (status != ALL_OK) {
