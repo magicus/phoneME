@@ -46,7 +46,7 @@ public class EventQueueModuleImpl implements JUMPEventQueueModule {
     private volatile boolean initialized;
 
     /** Queue to store events of the corresponding type. */
-    private LinkedList queue;
+    private LinkedList queue = new LinkedList();
 
     /** Thread for processing events in the queue. */
     private Thread eventProcessor;
@@ -93,7 +93,7 @@ public class EventQueueModuleImpl implements JUMPEventQueueModule {
                         } catch (NoSuchElementException e) {
                             try {
                                 // The queue is empty. Sleep until an event is available.
-                                wait();
+                                queue.wait();
                                 // A new event is available, restart the loop to process it.
                                 continue;
                             } catch (InterruptedException ie) {
