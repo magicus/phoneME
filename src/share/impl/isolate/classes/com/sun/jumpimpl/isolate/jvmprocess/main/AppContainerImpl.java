@@ -126,6 +126,7 @@ public class AppContainerImpl extends JUMPAppContainer implements Runnable {
 
 	     Class mainClass = loader.loadClass(className);
 	     Method mainMethod = mainClass.getMethod("main", args1);
+             mainMethod.setAccessible(true);
 	     mainMethod.invoke(null, new Object[]{args2});
 
 	  } catch (InvocationTargetException i) {
