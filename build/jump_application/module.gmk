@@ -62,6 +62,7 @@ ABSTRACTIONS_CLASSES = \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/Permission.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/FileConnectionPermission.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/SatsaPermission.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/LocationPermission.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/io/Base64.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseInterface.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseAdapter.java \
