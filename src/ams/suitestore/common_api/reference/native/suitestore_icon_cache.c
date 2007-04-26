@@ -261,6 +261,7 @@ MIDPError midp_load_suites_icons() {
 }
 
 /**
+ * Writes the cache contents into the icon cache file.
  *
  * @param pIconCache currently unused; may be useful to optimize
  *                   the writing of the file
@@ -401,14 +402,28 @@ static MIDPError store_suites_icons(const IconCache* pIconCache) {
  * Frees the memory allocated for icons cache.
  */
 void midp_free_suites_icons() {
-    int i;
+    int i, n;
 
-    for(i = 0; i < g_numberOfEntries; i++) {
-        if (i < g_numberOfIcons && !g_pIconCache[i].pInfo[0].isFree &&
-                g_pIconCache[i].pInfo[0].pImageData != NULL) {
-            pcsl_mem_free(g_pIconCache[i].pInfo[0].pImageData);
+    if (g_iconsLoaded && g_numberOfEntries > 0 && g_pIconCache != NULL) {
+        /* for each suite whose icons are in cache */
+        for (i = 0; i < g_numberOfIcons; i++) {
+            /* for each cached icon of this suite (currently 1) */
+            for (n = 0; n < g_pIconCache[i].numberOfCachedImages; n++) {
+                CachedImageInfo* pEntry = &g_pIconCache[i].pInfo[n];
+
+                if (pEntry->isFree) {
+                    continue;
+                }
+
+                if (pEntry->pImageData != NULL) {
+                    pcsl_mem_free(pEntry->pImageData);
+                }
+
+                pcsl_string_free(&pEntry->imageName);
+            }
         }
-        pcsl_mem_free(&g_pIconCache[i]);
+
+        pcsl_mem_free(g_pIconCache);
     }
 
     g_pIconCache      = NULL;
@@ -460,9 +475,11 @@ midp_get_suite_icon(SuiteIdType suiteId, const pcsl_string* pIconName,
  *
  * @param suiteId ID of the suite which the icon belongs to
  * @param pIconName the icon's name
+ *        Note: this function (not the caller) is responsible for allocating
+ *              the memory needed to store a copy of the icon's name.
  * @param pImageData pointer to the array containing the icon's bytes
  *        Note: after calling this function the control over the memory
- *              occupied by pImageData is given to it.
+ *              occupied by pImageData is given to midp_add_suite_icon().
  * @param imageDataLen size of data given in pImageData
  *
  * @return status code (ALL_OK if successful)
@@ -471,6 +488,7 @@ MIDPError
 midp_add_suite_icon(SuiteIdType suiteId, const pcsl_string* pIconName,
                     unsigned char* pImageData, int imageDataLen) {
     MIDPError status = ALL_OK;
+    pcsl_string_status res;
 
     if (pIconName == NULL || pImageData == NULL || imageDataLen == 0 ||
             suiteId == UNUSED_SUITE_ID) {
@@ -481,38 +499,57 @@ midp_add_suite_icon(SuiteIdType suiteId, const pcsl_string* pIconName,
         IconCache* pIconCache = get_icon_cache_for_suite(suiteId);
 
         if (pIconCache == NULL) {
-            if (g_numberOfEntries <= g_numberOfIcons + 1) {
-                /* the cache is too small - add more entries */
-                int numOfEntries = g_numberOfIcons + RESERVED_CACHE_ENTRIES_NUM;
-                IconCache *pIconsData = (IconCache*) pcsl_mem_malloc(
-                    sizeof(IconCache) * numOfEntries);
-                if (!pIconsData) {
-                    return OUT_OF_MEMORY;
+            /* try to find a free entry */
+            int n;
+            for (n = 0; n < g_numberOfIcons; n++) {
+                if (g_pIconCache[n].pInfo[0].isFree) {
+                    pIconCache = &g_pIconCache[n];
+                    break;
                 }
-
-                if (g_numberOfEntries > 0) {
-                    memcpy((char*)pIconsData, (char*)g_pIconCache,
-                        g_numberOfEntries * sizeof(IconCache));
-                    pcsl_mem_free(g_pIconCache);
-                }
-
-                g_pIconCache = pIconsData;
             }
-
-            pIconCache = &g_pIconCache[g_numberOfIcons];
 
             if (pIconCache == NULL) {
-                return OUT_OF_MEMORY;
-            }
+                /* there are no free entries in the cache */
+                if (g_numberOfEntries <= g_numberOfIcons + 1) {
+                    /* the cache is too small - add more entries */
+                    int numOfEntries = g_numberOfIcons + RESERVED_CACHE_ENTRIES_NUM;
+                    IconCache *pIconsData = (IconCache*) pcsl_mem_malloc(
+                        sizeof(IconCache) * numOfEntries);
+                    if (pIconsData == NULL) {
+                        status = OUT_OF_MEMORY;
+                        break;
+                    }
 
-            g_numberOfIcons++;
+                    if (g_numberOfEntries > 0) {
+                        memcpy((char*)pIconsData, (char*)g_pIconCache,
+                            g_numberOfEntries * sizeof(IconCache));
+                        pcsl_mem_free(g_pIconCache);
+                    }
+
+                    g_pIconCache = pIconsData;
+                }
+
+                pIconCache = &g_pIconCache[g_numberOfIcons];
+                g_numberOfIcons++;
+            }
+        } else {
+            /* cache entry for this suite already exists, free it first */
+            pcsl_string_free(&pIconCache->pInfo[0].imageName);
+            pcsl_mem_free(pIconCache->pInfo[0].pImageData);
         }
+
+        /* until the entry is filled, consider it as free */
+        pIconCache->pInfo[0].isFree = 1;
 
         pIconCache->suiteId = suiteId;
         pIconCache->numberOfCachedImages = 1;
 
+        res = pcsl_string_dup(pIconName, &pIconCache->pInfo[0].imageName);
+        if (res != PCSL_STRING_OK) {
+            status = OUT_OF_MEMORY;
+            break;
+        }
         pIconCache->pInfo[0].isFree = 0;
-        pIconCache->pInfo[0].imageName = *pIconName;
         pIconCache->pInfo[0].entryOffsetInFile = (unsigned long)-1;
         pIconCache->pInfo[0].imageDataLength = imageDataLen;
         pIconCache->pInfo[0].pImageData = pImageData;
@@ -534,6 +571,9 @@ MIDPError midp_remove_suite_icons(SuiteIdType suiteId) {
     IconCache* pIconCache = get_icon_cache_for_suite(suiteId);
 
     if (pIconCache != NULL) {
+        pcsl_string_free(&pIconCache->pInfo[0].imageName);
+        pcsl_mem_free(pIconCache->pInfo[0].pImageData);
+        pIconCache->pInfo[0].pImageData = NULL;
         pIconCache->pInfo[0].isFree = 1;
     }
 
