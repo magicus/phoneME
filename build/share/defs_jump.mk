@@ -93,13 +93,6 @@ JUMP_OBJECTS            += \
 	jump_os_impl.o \
 	jump_messaging.o \
 	jump_isolate_impl.o \
-	jump_eventqueue_impl.o \
-
-#
-# JavaCall is needed for JUMP event queue module
-# (at least until it can be conditionally compiled and added to the modules list)
-#
-CVM_INCLUDE_JAVACALL = true
 
 #
 # Any native code for the stand-alone jump native library goes here
