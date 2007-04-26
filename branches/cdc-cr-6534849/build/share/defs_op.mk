@@ -265,6 +265,8 @@ JAVACALL_FLAGS = $(JSROP_OP_FLAGS)
 ifeq ($(USE_JAVACALL_EVENTS), true)
 JAVACALL_FLAGS += USE_COMMON=true
 JUMP_ANT_OPTIONS += -Djavacall.events.used=true
+JUMP_SRCDIRS += \
+	$(JUMP_SRCDIR)/share/impl/eventqueue/native
 JUMP_OBJECTS += \
 	jump_eventqueue_impl.o
 endif
