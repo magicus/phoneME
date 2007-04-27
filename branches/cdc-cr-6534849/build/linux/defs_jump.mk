@@ -24,6 +24,8 @@
 # information or have any questions. 
 #
 
+LINKLIBS += -lrt
+
 JUMP_SRCDIRS            += \
 	$(JUMP_SRCDIR)/$(TARGET_OS)/api/native \
 
@@ -32,8 +34,10 @@ JUMP_INCLUDE_DIRS += \
 
 JUMP_OBJECTS            += \
 	jump_os_linux.o \
+	jump_os_sync_linux.o \
 	jump_os_process_linux.o
 
 JUMP_NATIVE_LIBRARY_OBJECTS            += \
 	jump_os_linux.o \
+	jump_os_sync_linux.o \
 	jump_os_process_linux.o

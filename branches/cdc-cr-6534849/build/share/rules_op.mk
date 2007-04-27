@@ -43,6 +43,16 @@ define generateJSRInitializer
 	-out $(4)
 endef
 
+# Generate constant classes
+# generateConstantClasses(constantsXmlFile, constantsClassList, generatedDirectory)
+define generateConstantClasses
+	$(foreach class, $(2), \
+	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE) \
+	-xml $(1) \
+	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantsJava.xsl \
+	-params fullClassName $(class) \
+	-out $(3)/classes/$(subst .,/,$(class)).java; )
+endef
 
 # Macro to pre-process Jpp file into Java file
 # runjpp(<input_jpp_file>, <output_java_file>)
@@ -67,6 +77,32 @@ define makeJSROPJar
 	$(CVM_JAR) cf $(1) -C $(2) .;
 endef
 
+# Creates an additional jar file containing classes implemented outside JSR's
+# component directory but included in JSR API specification
+# makeExtraJar(extraJarFileName,jsrApiClassesList,jsrClassesDir,classesDirs,jsrExtraClassesDir)
+define makeExtraJar
+	$(AT)for class in $(2); do if !(test -r $(3)/$$class); then \
+	    for dir in $(4); do if (test -r $$dir/$$class); then \
+	        DSTDIR=`dirname $(5)/$$class`; mkdir -p $$DSTDIR; cp $$dir/$$class $$DSTDIR; \
+	    fi; done; \
+	    if !(test -r $(5)/$$class); then echo "Could not find $$class"; exit 1; fi \
+	fi; done
+	@echo ...$(1)
+	$(AT)$(CVM_JAR) cf $(1) -C $(5) .
+endef
+
+# makeJSRExtraJar(jsrNumber)
+# The following variables MUST BE defined
+# JSR_#_BUILD_DIR            - path to JSR's build directory
+# JSR_#_EXTRA_JAR            - JSR's extras jar file path
+# JSR_#_API_CLASSES          - JSR's API classes list
+define makeJSRExtraJar
+	$(call makeExtraJar,$(JSR_$(1)_EXTRA_JAR),$(JSR_$(1)_API_CLASSES),\
+	    $(JSR_$(1)_BUILD_DIR)/classes,\
+	    $(CVM_BUILDTIME_CLASSESDIR) $(JAVACLASSES_CLASSPATH),\
+	    $(JSR_$(1)_BUILD_DIR)/extraclasses)
+endef
+
 # compileJSRClasses(jsrNumber)
 # The following variables MUST BE defined
 # JSR_#_BUILD_DIR            - path to JSR's build directory
@@ -82,19 +118,40 @@ define makeSharedLibrary
 	$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $(1) $(JSROP_LINKLIBS) -L$(JSROP_LIB_DIR)
 endef
 
+# Command for reading API classes list from file
+# readClassList(fileName)
+define readClassList
+	$(foreach class,$(subst .,/,$(shell cat $(1) | grep -v "\#")),$(class).class)
+endef
+
 ifeq ($(CVM_INCLUDE_JAVACALL), true)
 javacall_lib: $(JAVACALL_LIBRARY)
 else
 javacall_lib:
 endif
 
-#
-# Run JavaAPILister to generate the list of classes that are hidden from CDC
-#
 ifeq ($(CVM_DUAL_STACK), true)
-$(JSR_RESTRICTED_CLASSLIST): $(JSROP_JARS)
+#
+# Run JavaAPILister to generate the list of classes that are 
+# hidden from CDC.
+#
+$(JSR_CDCRESTRICTED_CLASSLIST): $(JSROP_JARS)
 	@echo "Generating JSR restricted class list ..."
-	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister -listapi:input=$(JSROP_HIDE_JARS),cout=$(JSR_RESTRICTED_CLASSLIST)
+	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister \
+	    -listapi:include=java/*,include=javax/*,input=$(JSROP_HIDE_JARS),cout=$(JSR_CDCRESTRICTED_CLASSLIST)
+
+#
+# Generate a list of all JSR classes. These classes will be
+# add to the $(CVM_MIDPCLASSLIST) to allow accessing from
+# midlets. The JSROP classes don't need to be added to 
+# $(CVM_MIDPFILTERCONFIG) and ROMized member filter because 
+# there is no restrictions for midlets to accessing the JSROP 
+# class' public members.
+#
+$(JSR_MIDPPERMITTED_CLASSLIST): $(JSROP_JARS) $(JSROP_EXTRA_JARS)
+	@echo "Generating MIDP permitted JSR class list ...";
+	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister \
+	    -listapi:include=java/*,include=javax/*,include=javacard/*,include=org/xml/sax/*,input=$(JSROP_JARS_LIST),cout=$(JSR_MIDPPERMITTED_CLASSLIST)
 endif
 
 clean::

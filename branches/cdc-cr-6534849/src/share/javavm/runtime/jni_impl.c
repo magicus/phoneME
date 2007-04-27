@@ -25,6 +25,8 @@
  *
  */
 
+#define _JNI_IMPLEMENTATION_
+
 #include "javavm/include/defs.h"
 #include "javavm/include/objects.h"
 #include "javavm/include/classes.h"

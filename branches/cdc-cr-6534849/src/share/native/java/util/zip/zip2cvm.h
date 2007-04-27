@@ -25,6 +25,7 @@
  *
  */
 
+#ifndef JAVASE
 /*
  * Mapping to the CVM namespace.
  */
@@ -38,3 +39,5 @@
 #define ZIP_Open CVMziputilOpen
 #define ZIP_FindEntry CVMziputilFindEntry
 #define ZIP_ReadEntry CVMziputilReadEntry
+
+#endif

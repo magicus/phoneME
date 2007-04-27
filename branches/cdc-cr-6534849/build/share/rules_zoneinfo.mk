@@ -31,6 +31,9 @@
 $(ZONEINFO_CLASSES_DIR)/%.class: $(CVM_SHAREROOT)/tools/javazic/%.java
 	$(AT)echo $? >> $(ZONEINFO_CLASSES_DIR)/.classes.list
 
+$(ZONEINFO_CLASSES_DIR)/%.class: $(CVM_SHAREROOT)/classes/%.java 
+	$(AT)echo $? >> $(ZONEINFO_CLASSES_DIR)/.classes.list
+
 $(J2ME_CLASSLIB):: $(ZONEINFO_CLASSES_DIR) .delete.classlist $(FILES_class) .compile.classlist $(ZONEINFO_INSTALLDIR)/$(MAPFILE)
 
 $(ZONEINFO_CLASSES_DIR):
@@ -39,22 +42,12 @@ $(ZONEINFO_CLASSES_DIR):
 .delete.classlist:
 	$(AT)rm -rf $(ZONEINFO_CLASSES_DIR)/.classes.list
 
-ZIC_SOURCE_DIR = $(CVM_BUILD_TOP)/zic_source
-$(ZIC_SOURCE_DIR):
-	$(AT)mkdir $@
-	$(AT)(cd $(CVM_SHAREROOT)/classes; \
-	    tar cf - sun/util/calendar/*.java ) | \
-	    (cd $@; tar xfB - );
-	$(AT)(cd $(CVM_SHAREROOT)/tools/javazic; \
-	    tar cf - sun/tools/javazic/*.java ) | \
-	    (cd $@; tar xfB - );
-
-.compile.classlist: $(CVM_BUILD_TOP)/zic_source
+.compile.classlist:
 	$(AT)if [ -s $(ZONEINFO_CLASSES_DIR)/.classes.list ] ; then	\
 	     echo "Compiling zic classes... ";				\
-	     $(JAVAC_CMD) -sourcepath $<				\
+	     $(JAVAC_CMD)						\
 			-d $(ZONEINFO_CLASSES_DIR)			\
-			`cat $(ZONEINFO_CLASSES_DIR)/.classes.list` ;	\
+			@$(ZONEINFO_CLASSES_DIR)/.classes.list ;	\
 	fi
 
 $(ZONEINFO_WORKDIR)/$(MAPFILE): $(FILES_class) $(TZFILES)
@@ -65,9 +58,12 @@ $(ZONEINFO_WORKDIR)/$(MAPFILE): $(FILES_class) $(TZFILES)
 	    -V "$(TZDATA_VER)" -d $(ZONEINFO_WORKDIR) $(TZFILES)
 
 $(ZONEINFO_INSTALLDIR)/$(MAPFILE): $(ZONEINFO_WORKDIR)/$(MAPFILE)
-	$(AT)if [ ! -d $(ZONEINFO_INSTALLDIR) ] ; then mkdir $(ZONEINFO_INSTALLDIR); \
-	else rm -rf $(ZONEINFO_INSTALLDIR)/*; fi
+	$(AT)if [ ! -d $(ZONEINFO_INSTALLDIR) ] ; then \
+		mkdir $(ZONEINFO_INSTALLDIR); \
+	else \
+		rm -rf $(ZONEINFO_INSTALLDIR)/*; \
+	fi
 	$(AT)cp -r $(ZONEINFO_WORKDIR)/* $(ZONEINFO_INSTALLDIR)
 
 clean::
-	rm -rf $(ZONEINFO_CLASSES_DIR) $(ZONEINFO_INSTALLDIR) $(ZIC_SOURCE_DIR)
+	rm -rf $(ZONEINFO_CLASSES_DIR) $(ZONEINFO_INSTALLDIR)

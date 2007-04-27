@@ -996,9 +996,28 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         int n = buf.indexOf(':');
         if (n < 0) n = buf.indexOf('/');
         if (n < 0) n = buf.length();
-        String token = buf.substring(0, n);
-        index += n;
-        return token;
+
+        int beginIndex = buf.indexOf("[");
+        int endIndex = buf.indexOf("]");
+        
+        /* IPv6 addresses are enclosed within [] */
+        if (beginIndex > endIndex) {
+            throw new IllegalArgumentException("invalid host name " + buf);
+        }
+        if ((beginIndex ==0) && (endIndex >0)) {
+            return parseIPv6Address(buf, endIndex);
+        } else {
+            /* parse IPv4 Address */
+            String token = buf.substring(0, n);
+            index += n;
+            return token;
+        }
+    }
+
+    private String parseIPv6Address(String address, int closing) {
+        index += closing+1;
+        /* beginning '[' and closing ']' should be included in the hostname*/
+        return address.substring(0, closing+1);
     }
 
     private int parsePort() throws IOException {

@@ -58,6 +58,18 @@
 #include "javavm/include/jvmti_jni.h"
 #endif
 
+/* Set the systemClassLoader */
+CNIResultCode
+CNIsun_misc_CVM_setSystemClassLoader(CVMExecEnv*ee, CVMStackVal32 *arguments,
+                                     CVMMethodBlock **p_mb)
+{
+    jobject loaderObj = &arguments[0].j.r;
+    CVMD_gcSafeExec(ee, {
+        CVMclassSetSystemClassLoader(ee, loaderObj);
+    });
+    return CNI_VOID;
+}
+
 #ifdef CVM_DEBUG_ASSERTS
 #define CVMassertOKToCopyArrayOfType(expectedType_) \
     {                                                                   \
@@ -600,6 +612,9 @@ CNIsun_misc_CVM_throwLocalException(CVMExecEnv* ee,
 }
 
 #ifdef CVM_DUAL_STACK
+/* 
+ * Check if the classloader is one of the MIDP dual-stack classloaders.
+ */
 CVMBool
 CVMclassloaderIsCLDCClassLoader(CVMExecEnv *ee,
                                 CVMClassLoaderICell* loaderICell)
@@ -607,11 +622,18 @@ CVMclassloaderIsCLDCClassLoader(CVMExecEnv *ee,
     if (loaderICell != NULL) {
         CVMClassBlock* loaderCB = CVMobjectGetClass(
                                   CVMID_icellDirect(ee, loaderICell));
+        CVMClassTypeID loaderID = CVMcbClassName(loaderCB);
         const char *midletLoaderName = "sun/misc/MIDletClassLoader";
+        const char *midpImplLoaderName = "sun/misc/MIDPImplementationClassLoader";
         CVMClassTypeID MIDletClassLoaderID =
             CVMtypeidLookupClassID(ee, midletLoaderName, 
                                    strlen(midletLoaderName));
-        if (CVMcbClassName(loaderCB) == MIDletClassLoaderID ){
+        CVMClassTypeID MIDPImplClassLoaderID = 
+	    CVMtypeidLookupClassID(ee,midpImplLoaderName,
+				   strlen(midpImplLoaderName));
+
+        if (loaderID == MIDletClassLoaderID ||
+            loaderID == MIDPImplClassLoaderID){
             return CVM_TRUE;
         } else {
             return CVM_FALSE;

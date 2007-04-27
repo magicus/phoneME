@@ -75,13 +75,21 @@ HIDE_JSROP_NUMBERS = $(patsubst HIDE_JSR_%=true,%,\
                 $(filter %true, $(HIDE_JSROP_FLAGS)))
 endif
 
-# The list of JAR jar files we want to hide.
+# The list of JSR jar files we want to hide.
 JSROP_HIDE_JARS = $(subst $(space),:,$(foreach jsr_number,$(HIDE_JSROP_NUMBERS),$(JSROP_LIB_DIR)/jsr$(jsr_number).jar))
 
+# Generate constants classes list for the given xml file
+# generateConstantList(generatedDirectory, constantsXmlFile)
+define generateConstantList
+	$(shell $(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE) \
+	-xml $(2) \
+	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantClasses.xsl \
+	-out $(1)/.constant.class.list; \
+    cat $(1)/.constant.class.list )
+endef
+
 # Jump API classpath
-EMPTY =
-ONESPACE = $(EMPTY) $(EMPTY)
-JSROP_JUMP_API = $(subst $(ONESPACE),$(PS),$(JUMP_API_CLASSESZIP) $(JUMP_IMPL_CLASSESZIP))
+JSROP_JUMP_API = $(subst $(space),$(PS),$(JUMP_API_CLASSESZIP))
 
 # SecOP - CDC/FP Security Optional Package
 ifeq ($(USE_SECOP),true)
@@ -283,6 +291,9 @@ endif
 include $(JAVACALL_MAKE_FILE)
 endif
 
+# The list of all used JSR jar files
+JSROP_JARS_LIST = $(subst $(space),$(PS),$(JSROP_JARS) $(JSROP_EXTRA_JARS))
+
 #Variable containing all JSROP components output dirs
 JSROP_OUTPUT_DIRS = $(foreach jsr_number,$(JSROP_NUMBERS),\
           $(JSR_$(jsr_number)_BUILD_DIR)) $(JAVACALL_BUILD_DIR) \
@@ -302,10 +313,16 @@ else
 CLASSLIB_DEPS   += $(JSROP_NATIVE_LIBS)
 endif
 
-# JSR_RESTRICTED_CLASSLIST is a list of JSROP classes 
-# that are hidden from CDC applications.
 ifeq ($(CVM_DUAL_STACK), true)
-JSR_RESTRICTED_CLASSLIST = $(CVM_LIBDIR)/JSRRestrictedClasses.txt
-else
-JSR_RESTRICTED_CLASSLIST =
+# JSR_CDCRESTRICTED_CLASSLIST is a list of JSROP classes 
+# that are hidden from CDC applications.
+JSR_CDCRESTRICTED_CLASSLIST = $(CVM_LIBDIR)/JSRRestrictedClasses.txt
+# JSR_CDCRESTRICTED_CLASSLIST is a list of JSROP classes
+# that are accessible from midlets. JSR_CDCRESTRICTED_CLASSLIST and
+# JSR_CDCRESTRICTED_CLASSLIST don't always contain the same classes
+# depending on which JSRs are hidden from CDC.
+JSR_MIDPPERMITTED_CLASSLIST = $(CVM_BUILD_TOP)/.jsrmidppermittedclasses
+# CVM_MIDPCLASSLIST_FILES are the files that contain MIDP permitted
+# classes.
+CVM_MIDPCLASSLIST_FILES += $(JSR_MIDPPERMITTED_CLASSLIST)
 endif

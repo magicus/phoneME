@@ -418,6 +418,7 @@ LABEL(doPatch)
  */
 	ENTRY ( CVMCCMruntimeResolveGlue )
 ENTRY1 ( CVMCCMruntimeResolveGlue )
+LABEL(CVMCCMruntimeResolveGlueLocal)
         /* a3 = cpIndex 
 	 * lr = address of cachedConstant, 4 bytes before returnAddress 
 	 * ip = address of ccm helper to call 
@@ -469,7 +470,7 @@ tmp	SETS	"$x.Glue"
 ENTRY1($tmp)
 	IMPORT  $x
 	ldr     ip, =$x
-	b       CVMCCMruntimeResolveGlue
+	b       CVMCCMruntimeResolveGlueLocal
 	SET_SIZE($tmp)
 	MEND
 #define RES_ENTRY(x) res_entry x
@@ -481,9 +482,9 @@ ENTRY1($tmp)
 #endif
 #define RES_ENTRY(x) 						\
 	ENTRY(CONCAT(x,Glue));					\
-	IMPORT(CVMCCMruntimeResolveNewClassBlockAndClinit);	\
+	IMPORT(x);						\
 	ldr	ip, =x;						\
-	b	CVMCCMruntimeResolveGlue;			\
+	b	CVMCCMruntimeResolveGlueLocal;			\
 	SET_SIZE(CONCAT(x,Glue))
 #endif
 

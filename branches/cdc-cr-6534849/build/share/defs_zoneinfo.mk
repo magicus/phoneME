@@ -28,8 +28,6 @@
 # Makefile for building javazic utility & TimeZone resource files
 #
 
-ZONEINFO_SRC_DIR = $(CVM_SHAREROOT)/tools/javazic/sun/tools/javazic
-
 ZONEINFO_CLASSES = \
 	sun/tools/MyClassPath.java \
 	sun/tools/javazic/BackEnd.java \
@@ -49,7 +47,12 @@ ZONEINFO_CLASSES = \
 	sun/tools/javazic/Timezone.java \
 	sun/tools/javazic/Zoneinfo.java \
 	sun/tools/javazic/Zone.java \
-	sun/tools/javazic/ZoneRec.java 
+	sun/tools/javazic/ZoneRec.java \
+	sun/util/calendar/CalendarDate.java \
+	sun/util/calendar/CalendarSystem.java \
+	sun/util/calendar/Gregorian.java \
+	sun/util/calendar/ZoneInfoFile.java \
+	sun/util/calendar/ZoneInfo.java \
 
 ZONEINFO_CLASSES_DIR = $(CVM_BUILD_TOP)/zic_classes
 TZDATA = $(CVM_SHAREROOT)/tools/javazic/tzdata/
