@@ -99,7 +99,7 @@ endef
 define makeJSRExtraJar
 	$(call makeExtraJar,$(JSR_$(1)_EXTRA_JAR),$(JSR_$(1)_API_CLASSES),\
 	    $(JSR_$(1)_BUILD_DIR)/classes,\
-	    $(CVM_JCC_INPUT), \
+	    $(JSROP_EXTRA_SEARCHPATH), \
 	    $(JSR_$(1)_BUILD_DIR)/extraclasses)
 endef
 
