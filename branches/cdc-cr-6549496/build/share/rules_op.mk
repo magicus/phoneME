@@ -79,21 +79,16 @@ endef
 
 # Creates an additional jar file containing classes implemented outside JSR's
 # component directory but included in JSR API specification
-# makeExtraJar(extraJarFileName,jsrApiClassesList,jsrClassesDir,classesDirs,libJars,jsrExtraClassesDir)
+# makeExtraJar(extraJarFileName,jsrApiClassesList,jsrClassesDir,libJars,jsrExtraClassesDir)
 define makeExtraJar
 	for class in $(2); do if !(test -r $(3)/$$class); then \
-	    for dir in $(4); do if (test -r $$dir/$$class); then \
-	        DSTDIR=`dirname $(6)/$$class`; mkdir -p $$DSTDIR; \
-	        cp $$dir/$$class $$DSTDIR; break; \
+	    for jar in $(4); do if $(UNZIP) -l $$jar $$class | grep "$$class" >/dev/null; then \
+	        $(UNZIP) -qo $$jar $$class -d $(5); break; \
 	    fi; done; \
-	    if (test -r $(6)/$$class); then continue; fi; \
-	    for jar in $(5); do if $(UNZIP) -l $$jar $$class | grep "$$class" >/dev/null; then \
-	        $(UNZIP) -qo $$jar $$class -d $(6); break; \
-	    fi; done; \
-	    if !(test -r $(6)/$$class); then echo "Could not find $$class"; exit 1; fi; \
+	    if !(test -r $(5)/$$class); then echo "Could not find $$class"; exit 1; fi; \
 	fi; done
 	@echo ...$(1)
-	$(AT)$(CVM_JAR) cf $(1) -C $(6) .
+	$(AT)$(CVM_JAR) cf $(1) -C $(5) .
 endef
 
 # makeJSRExtraJar(jsrNumber)
@@ -104,7 +99,6 @@ endef
 define makeJSRExtraJar
 	$(call makeExtraJar,$(JSR_$(1)_EXTRA_JAR),$(JSR_$(1)_API_CLASSES),\
 	    $(JSR_$(1)_BUILD_DIR)/classes,\
-	    $(CVM_BUILDTIME_CLASSESDIR) $(LIB_CLASSESDIR),\
 	    $(CVM_JCC_INPUT), \
 	    $(JSR_$(1)_BUILD_DIR)/extraclasses)
 endef
