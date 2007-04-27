@@ -302,7 +302,7 @@ endif
 JSROP_EXTRA_SEARCHPATH = $(CVM_JCC_INPUT)
 else
 CLASSLIB_DEPS   += $(JSROP_NATIVE_LIBS)
-JSROP_EXTRA_SEARCHPATH = `find $(CVM_LIBDIR) -name "*.jar"`
+JSROP_EXTRA_SEARCHPATH = `find $(CVM_BUILD_TOP) -name "*.jar" -o -name "*.zip"`
 endif
 
 ifeq ($(CVM_DUAL_STACK), true)
