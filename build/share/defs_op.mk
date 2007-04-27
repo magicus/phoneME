@@ -277,6 +277,7 @@ JUMP_SRCDIRS += \
 	$(JUMP_SRCDIR)/share/impl/eventqueue/native
 JUMP_OBJECTS += \
 	jump_eventqueue_impl.o
+JUMP_DEPENDENCIES += javacall_lib
 endif
 # Check javacall makefile and include it
 ifeq ($(JAVACALL_PROJECT_DIR),)
