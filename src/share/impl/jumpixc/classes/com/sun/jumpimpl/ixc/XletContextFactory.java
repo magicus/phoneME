@@ -56,36 +56,7 @@ public class XletContextFactory {
    **/ 
 
    public static XletContext getXletContext(ClassLoader loader) {
-        ClassLoader currentClassLoader = loader;
-        ClassLoader targetClassLoader  = loader;
-
-        for (; currentClassLoader != null; 
-               currentClassLoader = currentClassLoader.getParent()) {
-           if (isApplicationClassLoader(currentClassLoader)) {
-               // The caller's ClassLoader had application CL as a parent.
-               // Create n XletContext with this application CL.
-               targetClassLoader = currentClassLoader;
-           }
-        }
-
-        return createXletContext(targetClassLoader); 
-   }
-
-   static Class systemClassLoader = ClassLoader.getSystemClassLoader().getClass();
-   static String midpClassLoaderName = System.getProperty(
-                "com.sun.midp.mainClass.name",
-                "com.sun.midp.main.CdcMIDletSuiteLoader");
-
-   private static boolean isApplicationClassLoader(ClassLoader loader) {
-
-      // Xlets and Main,
-      if (systemClassLoader.isInstance(loader)) return true;
-
-      // MIDlets.
-      if (loader.getClass().getName().indexOf(midpClassLoaderName) != -1)
-         return true;
-    
-      return false;
+        return createXletContext(loader);
    }
 
    private static HashMap contextHash = new HashMap(); // CL, DummyXletContext

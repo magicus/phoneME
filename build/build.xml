@@ -47,7 +47,9 @@ information or have any questions.
 
   <property name="api.jar.suffix" value="-jump-api.jar"/>
   <property name="impl.jar.suffix" value="-jump-impl.jar"/>
+  <property name="jump.boot.cp" value="btclasses.zip,lib/*.jar"/>
 
+  <property name="user.build.properties" value="user.build.properties"/>
   <!-- 
       JUMP classes that should be in the bootclasspath of a mvm server.
   -->
@@ -57,7 +59,6 @@ information or have any questions.
       of a cvmc command launching executive.
   -->
   <property name="executive-jump.jar" value="${d.lib.dir}/executive-jump.jar"/>
-
 
   <property name="debug" value="true"/>
 
@@ -78,7 +79,7 @@ information or have any questions.
   </target>
 
   <target name="set-properties" depends="define-preset-bases">
-     <property file="user.build.properties"/>
+     <property file="${user.build.properties}"/>
      <property file="build.properties"/>
   </target>
 
@@ -90,10 +91,8 @@ information or have any questions.
         message="cdc.dir property (${cdc.dir}) seems to be incorrect (please, provide correct one with -D option)"/>
 
     <path id="boot.cp">
-      <fileset dir="${cdc.dir}">
-        <include name="btclasses.zip"/>
-        <include name="lib/*.jar"/>
-      </fileset>
+      <fileset dir="${cdc.dir}"
+       includes="${jump.boot.cp}" />
     </path>
     <presetdef name="javac.base">
       <javac>
@@ -108,21 +107,10 @@ information or have any questions.
   </target>
 
   <target name="clean" depends="clean-reports">
-      <property file="modules-config.properties"/>
-      <property name="data.dir" value="${cdc.dir}/${contentstore.root}"/>
+      <property name="data.dir" value="${cdc.dir}/${contentstore.root.default}"/>
 
       <delete dir="${dist.dir}"/>
       <delete quiet="true" dir="${data.dir}"/>
-      <available file="${data.dir}" type="dir" property="deletion.failed"/>
-      <antcall target="delete-as-root">
-          <param name="data.dir" value="${data.dir}"/>
-      </antcall>
-  </target>
-
-  <target name="delete-as-root" if="deletion.failed">
-      <exec executable="sudo">
-         <arg line="rm -rf ${data.dir}"/>
-      </exec>
   </target>
 
     <!--

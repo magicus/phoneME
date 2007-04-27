@@ -25,7 +25,7 @@
 
 #
 #  Usage:
-#    runjump [ server | executive | system | command |  midlet | xlet | main | cvmc | cleanup | status | output | debug | getpid ]
+#    runjump [ server | executive | system | command | cvmc | cleanup | status | output | debug | getpid ]
 #
 #
 # Example commands:
@@ -42,6 +42,9 @@
 #     Command: runjump system
 #     Action : run the server and the executive
 #
+#     Command: runjump output
+#     Action : print the server output
+#
 #     Command: runjump command <server command>
 #     Action : give a command to the server
 #
@@ -49,39 +52,8 @@
 #     Action : kill all processes created by server, in addition to the server itself.
 #              This will also kill qvfb if it is running
 #
-#     Command: runjump midlet <jar file of midlet>  <midlet class>
-#     Action : run a midlet
-#     Note   : This command takes the arguments noted above and creates a cvmc
-#              command to give to the server that looks something like:
-#              cvmc -target <pid> -Xbootclasspath/a:<jar file of midlet> com.sun.midp.main.MIDletSuiteLoader -1 <midlet class> $*
-#
-#     Command: runjump xlet <jar file of xlet>  <xlet class>
-#     Action : run an xlet
-#     Note   : This command takes the arguments noted above and creates a cvmc
-#              command to give to the server that looks something like:
-#              cvmc -target <pid> -cp <jar file of xlet> sun.mtask.xlet.PXletRunner -name <xlet class> -path <jar file of xlet> $*
-#
 #     Command: runjump status 
 #     Action : get the status of the server
-#
-###
-# Note: On linux-x86-suse, the following is the minimum set of variables that should
-#       be set before running when developing and running within the workspace.
-#       The remaining variables will be derived from this set:
-#
-#   PHONEME_DIR
-#   PCSL_DIR
-#   MIDP_DIR
-#   CDC_SUBDIR
-#
-# Note: For binary-only installations on linux-x86-suse and linux-arm-zaurus,
-#       the following is the minimum set of variables that should be set before
-#       running.  The remaining variables will be derived from this set:
-#
-#   PHONEME_DIST
-#
-# For explanation on all possible variables that can be used with this script,
-# please read below:
 #
 ########################### VARIABLE EXPLANATION ################################
 #
@@ -124,12 +96,15 @@
 #
 # Name:  QVFB_WIDTH
 # Desc:  For running with Qtopia's qvfb
-# Dflt:  640
+# Dflt:  240
 #
 # Name:  QWS_HEIGHT
 # Desc:  For running with Qtopia's qvfb
-# Dflt:  442
-# Note:  if QVFB_HEIGHT is 480, qvfb fails (reason currently unknown)
+# Dflt:  320
+#
+# Name:  PROVISIONING_SERVER_URL
+# Desc:  URL to a provisioning server
+# Dflt:  None
 #
 
 WHOAMI=`whoami`
@@ -153,11 +128,6 @@ if [ -z "$PHONEME_DIR" ] ; then
     export PHONEME_DIR=/home/$WHOAMI/phoneme
 fi
 
-# Subdirectory name used in Phoneme build
-if [ -z "$CDC_SUBDIR" ] ; then
-    export CDC_SUBDIR=jump
-fi
-
 # Default port for debugging
 if [ -z "$CDC_DEBUG_PORT" ] ; then
   export CDC_DEBUG_PORT=8000
@@ -178,6 +148,10 @@ if [ "$USE_QVFB" = "true" ] ; then
   if [ -z "$PBP_SCREEN_BOUNDS" ] ; then
     PBP_SCREEN_BOUNDS=0,50-640x392
   fi
+# Subdirectory name used in Phoneme build
+if [ -z "$CDC_SUBDIR" ] ; then
+    export CDC_SUBDIR=jump-qt
+fi
 fi
 
 if [ "$USE_QVFB" = "true" ] && [ "$USE_GCI" = "true" ] ; then
@@ -186,16 +160,33 @@ if [ "$USE_QVFB" = "true" ] && [ "$USE_GCI" = "true" ] ; then
 fi
 
 if [ "$USE_GCI" = "true" ] ; then  
-  if [ "$WHOAMI" != "root" ] ; then
-      echo "ERROR:  You need to run as root when displaying with GCI/DirectFB."
-      exit 0
-  fi
+#  if [ "$WHOAMI" != "root" ] ; then
+#      echo "ERROR:  You need to run as root when displaying with GCI/DirectFB."
+#      exit 0
+#  fi
   echo "Using GCI/DirectFB... Don't forget to modify modules-config.properties"
   echo " and correctly set the value for isolate-init-classes."
   if [ -z "$PBP_SCREEN_BOUNDS" ] ; then
-    PBP_SCREEN_BOUNDS=0,50-640x430
+    PBP_SCREEN_BOUNDS=0,50-240x270
+  fi
+# Subdirectory name used in Phoneme build
+if [ -z "$CDC_SUBDIR" ] ; then
+    export CDC_SUBDIR=jump-gci
+fi
+fi
+
+### Try to determine a default build platform.
+### This is just a simple way to determine it.
+### This should be adjusted to fit more platforms.
+if [ -z "$DEFAULT_LINUX_PLATFORM" ] ; then
+  tmp=`uname -a | awk '{ print $3 }' | grep generic`
+  if [ "$tmp" != "" ] ; then
+    DEFAULT_LINUX_PLATFORM=linux-x86-generic
+  else
+    DEFAULT_LINUX_PLATFORM=linux-x86-suse  
   fi
 fi
+
 ################# ZAURUS SECTION ########################
 if [ "$PHONEME_PLATFORM" = "armv5tel" ] ; then
    if [ -z "$PHONEME_DIST" ] ; then
@@ -208,16 +199,22 @@ if [ "$PHONEME_PLATFORM" = "armv5tel" ] ; then
 ################ LINUX X86 SECTION ######################
 elif [ "$PHONEME_PLATFORM" = "i686" ] ; then
    if [ -z "$PHONEME_DIST" ] ; then
-       export PHONEME_DIST=$PHONEME_DIR/build/linux-x86-suse/$CDC_SUBDIR
+       export PHONEME_DIST=$PHONEME_DIR/build/$DEFAULT_LINUX_PLATFORM/$CDC_SUBDIR
    fi
 fi
 
 MIDP_PROPERTIES=""
 EXECUTIVE_PROPERTIES=""
+EXECUTIVE_ARGUMENTS=""
 
 if [ "$JUMP_CONTENT_STORE_DIR" != "" ] ; then
   SYSTEM_PROPERTIES="-Dcontentstore.root=$JUMP_CONTENT_STORE_DIR"
 fi
+
+if [ "$PROVISIONING_SERVER_URL" != "" ] ; then
+  EXECUTIVE_PROPERTIES="$EXECUTIVE_PROPERTIES -Djump.installer.provisionURL=$PROVISIONING_SERVER_URL"
+fi
+
 SERVER_JARFILE=$PHONEME_DIST/lib/jump.jar
 EXECUTIVE_JARFILE=$PHONEME_DIST/lib/executive-jump.jar
 CVMC=$PHONEME_DIST/bin/cvmc
@@ -233,9 +230,6 @@ DO_COMMAND=false
 DO_GETPID=false
 DO_OUTPUT=false
 DO_CVMC=false
-DO_MIDLET=false
-DO_XLET=false
-DO_MAIN=false
 
 if [ "$1" = "server" ] ; then
     DO_CLEANUP=true
@@ -243,10 +237,14 @@ if [ "$1" = "server" ] ; then
 elif [ "$1" = "executive" ] ; then
     DO_CLEANUP=false
     DO_EXECUTIVE=true
+    shift
+    EXECUTIVE_ARGUMENTS="$EXECUTIVE_ARGUMENTS $*"
 elif [ "$1" = "system" ] ; then
     DO_CLEANUP=true
     DO_SERVER=true
     DO_EXECUTIVE=true
+    shift
+    EXECUTIVE_ARGUMENTS="$EXECUTIVE_ARGUMENTS $*"
 elif [ "$1" = "run" ] ; then
     DO_COMMAND=true
 elif [ "$1" = "cleanup" ] ; then
@@ -275,15 +273,13 @@ elif [ "$1" = "output" ] ; then
     DO_OUTPUT=true
 elif [ "$1" = "cvmc" ] ; then
     DO_CVMC=true
-elif [ "$1" = "midlet" ] ; then
-    DO_MIDLET=true
-elif [ "$1" = "xlet" ] ; then
-    DO_XLET=true
-elif [ "$1" = "main" ] ; then
-    DO_MAIN=true      
+elif [ "$1" = "install" ] ; then
+    DO_CLEANUP=true
+    DO_SERVER=true
+    DO_EXECUTIVE=true     
 else
     echo "Usage: "
-    echo "    runjump [ server | executive | system | command |  midlet | xlet | main | cvmc | cleanup | status | output | debug | getpid ]"
+    echo "    runjump [ server | executive | system | command | cvmc | cleanup | status | output | debug | getpid ]"
     echo "  Please read the documentation in the top section of this script for more information."
     exit 0
 fi
@@ -293,16 +289,15 @@ if [ "$USE_QVFB" = "true" ]; then
     export QTDIR=$QTOPIA_HOME
     export USE_DASH_QWS=true
     if [ -z "$QVFB_WIDTH" ] ; then
-       export QVFB_WIDTH=640
+       export QVFB_WIDTH=240
     fi
-    ### if QVFB_HEIGHT is 480, qvfb fails... don't know why.  442 works.
     if [ -z "$QVFB_HEIGHT" ] ; then
-        export QVFB_HEIGHT=442
+        export QVFB_HEIGHT=320
     fi
     export LD_LIBRARY_PATH=$QTDIR/lib:$PHONEME_DIST/lib
 else
     # TBD just keeping old stuff, this line might need to be removed (and in this case the whole if should be simplified into then part)
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PHONEME_DIST/lib
+    export LD_LIBRARY_PATH=$PHONEME_DIST/lib:$DIRECTFB_DIR/lib
 fi
  
 ############# Output log files
@@ -339,6 +334,7 @@ if [ "$DO_SETTINGS" = "true" ] ; then
       echo "QVFB_WIDTH:             $QVFB_WIDTH" >> $SETTINGS_LOGFILE
       echo "QVFB_HEIGHT:            $QVFB_HEIGHT" >> $SETTINGS_LOGFILE
   fi
+  echo "PBP_SCREEN_BOUNDS       $PBP_SCREEN_BOUNDS" >> $SETTINGS_LOGFILE
   echo "***********************************************"  >> $SETTINGS_LOGFILE
 
   cat $SETTINGS_LOGFILE
@@ -499,7 +495,7 @@ if [ "$DO_EXECUTIVE" = "true" ] ; then
       exit 0
   fi
 
-  EXECUTIVE_COMMAND="$CVMC -target $SERVER_PID -command JDETACH $EXECUTIVE_PROPERTIES -Xbootclasspath/a=$EXECUTIVE_JARFILE com.sun.jumpimpl.executive.JUMPExecutiveImpl"
+  EXECUTIVE_COMMAND="$CVMC -target $SERVER_PID -command JDETACH $EXECUTIVE_PROPERTIES -Xbootclasspath/a=$EXECUTIVE_JARFILE com.sun.jumpimpl.executive.JUMPExecutiveImpl $EXECUTIVE_ARGUMENTS"
   $EXECUTIVE_COMMAND >> $SERVER_LOGFILE 2>&1 &
 
   EXECUTIVE_COMMAND="$CVMC -target $SERVER_PID -setenv PBP_SCREEN_BOUNDS=$PBP_SCREEN_BOUNDS"
@@ -582,7 +578,7 @@ if [ "$DO_CVMC" = "true" ] ; then
     if [ $SERVER_PID != "" ] ; then
         echo ""
         shift
-        CVMC_COMMAND="$CVMC $*"
+        CVMC_COMMAND="$CVMC -target $SERVER_PID $*"
         echo "CVMC command: $CVMC_COMMAND"
         echo ""
   
@@ -608,107 +604,3 @@ if [ "$DO_GETPID" = "true" ] ; then
     fi
 fi
 
-### MIDLET Command
-if [ "$DO_MIDLET" = "true" ] ; then
-    SERVER_PID=`cat $SERVER_PID_LOGFILE`
-    if [ $SERVER_PID != "" ] ; then
-        echo ""
-        echo "PID of running JUMP Server: $SERVER_PID."
-    else
-        echo ""
-        echo "A JUMP Server is not running."
-    fi
-    
-    JARFILE=$2
-    MIDLETCLASS=$3
-    shift
-    shift
-    shift
-    if [ "$JARFILE" = "" ] ; then
-        echo "Illegal MIDLET command.  Please try again."
-        exit 0
-    fi
-
-    if [ "$MIDLETCLASS" = "" ] ; then
-        echo "Illegal MIDLET command.  Please try again."
-        exit 0
-    fi
-   
-    MIDLET_COMMAND="$CVMC -target $SERVER_PID -Xbootclasspath/a:$JARFILE -Dcom.sun.midp.mainClass.name=com.sun.midp.main.CdcMIDletSuiteLoader sun.misc.MIDPLauncher -1 $MIDLETCLASS $*"
-
-    echo "Executing MIDLET launch command: $MIDLET_COMMAND"
-    echo ""
-
-    rm -f $APP_LOGFILE
-    $MIDLET_COMMAND > $APP_LOGFILE 2>&1 &    
-fi
-
-### XLET Command
-if [ "$DO_XLET" = "true" ] ; then
-    SERVER_PID=`cat $SERVER_PID_LOGFILE`
-    if [ $SERVER_PID != "" ] ; then
-        echo ""
-        echo "PID of running JUMP Server: $SERVER_PID."
-    else
-        echo ""
-        echo "A JUMP Server is not running."
-    fi
-    
-    JARFILE=$2
-    XLETCLASS=$3
-    shift
-    shift
-    if [ "$JARFILE" = "" ] ; then
-        echo "Illegal XLET command.  Please try again."
-        exit 0
-    fi
-
-    if [ "$XLETCLASS" = "" ] ; then
-        echo "Illegal XLET command.  Please try again."
-        exit 0
-    fi
-
-    XLET_COMMAND="$CVMC -target $SERVER_PID -cp $JARFILE sun.mtask.xlet.PXletRunner -name XLETCLASS -path $JARFILE $*"
-
-    echo "Executing XLET launch command: $XLET_COMMAND"
-    echo ""
-
-    rm -f $APP_LOGFILE
-    $XLET_COMMAND > $APP_LOGFILE 2>&1 &    
-fi
-
-### Main Command
-if [ "$DO_MAIN" = "true" ] ; then
-    SERVER_PID=`cat $SERVER_PID_LOGFILE`
-    if [ $SERVER_PID != "" ] ; then
-        echo ""
-        echo "PID of running JUMP Server: $SERVER_PID."
-    else
-        echo ""
-        echo "A JUMP Server is not running."
-    fi
-    
-    JARFILE=$2
-    MAINCLASS=$3
-    shift
-    shift
-    shift
-
-    if [ "$JARFILE" = "" ] ; then
-        echo "Illegal XLET command.  Please try again."
-        exit 0
-    fi
-
-    if [ "$MAINCLASS" = "" ] ; then
-        echo "Illegal MAIN command.  Please try again."
-        exit 0
-    fi
-
-    MAIN_COMMAND="$CVMC -target $SERVER_PID $SYSTEM_PROPERTIES -cp $JARFILE $MAINCLASS $*"
-
-    echo "Executing Main launch command: $MAIN_COMMAND"
-    echo ""
-
-    rm -f $APP_LOGFILE
-    $MAIN_COMMAND > $APP_LOGFILE 2>&1 &    
-fi

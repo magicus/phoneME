@@ -62,7 +62,7 @@ public class ExportedObject {
    static final long startingObjectID = 1000L; // the first ID, 
 
    /*
-    * Note: this initial value is assigned for AppManager's
+    * Note: this initial value is assigned for Executive VM's
     * IxcRegistry object as well as the first object exported by
     * any child xlet.
     */
@@ -115,7 +115,7 @@ public class ExportedObject {
 
       if (remoteRef == null) {
          remoteRef = new RemoteRef(objectID, 
-                           ConnectionReceiver.getPortNumber(),
+                           ConnectionReceiver.getLocalServicePort(),
                            Utils.getMtaskClientID(),
                            type.getRemoteInterfaceNames(),                          
                            type.getMethodIDsAslongs());

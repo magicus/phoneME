@@ -1,6 +1,4 @@
 /*
- * @(#)ConnectionReceiver.java	1.12 06/09/06
- * 
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -50,8 +48,6 @@ import sun.security.action.GetIntegerAction;
 import javax.microedition.xlet.*;
 import javax.microedition.xlet.ixc.*;
 
-//import sun.mtask.Listener;
-
 /* 
  * This is VM-wide singleton class for accepting incoming
  * connections from other clients, with it's ServerSocket.
@@ -62,33 +58,10 @@ import javax.microedition.xlet.ixc.*;
    
 public class ConnectionReceiver implements Runnable {
 
-   static int APPMGR_PORTNUM;
-   static boolean initialized = false;
-   static ServerSocket serverSocket;
+   private static int execVMServicePort;
+   private static boolean initialized = false;
+   private static ServerSocket serverSocket;
    private static boolean debug = false; // Enable/disable debug output
-
-   /**
-    * Initializes the appmanager's port number, which the master Ixc Registry
-    * will be listening for this mtask session's ixc method invocations.
-    *
-    * If a system property "serviceregistry.ixcport" is set, then it's integer value
-    * is used as a master port number.  If not, then the ixc port number is  
-    * mtask's process ID plus 1. 
-   */
-   private static void initAppManagerPortNumber() {
-      Integer portNumber = ((Integer)AccessController.doPrivileged(
-                 new GetIntegerAction("serviceregistry.ixcport")));
-      if (portNumber != null)
-          APPMGR_PORTNUM = portNumber.intValue();
-      else {
-          int serverProcessID =  Utils.getMtaskServerID();
-
-          if (serverProcessID != 0) // Set the server port based on the server process ID
-              APPMGR_PORTNUM = serverProcessID + 1; 
-          else 
-              APPMGR_PORTNUM = 35218; // some default number 
-      }
-   }
 
    private ConnectionReceiver(final int port) {
       serverSocket = (ServerSocket) AccessController.doPrivileged(
@@ -112,7 +85,46 @@ public class ConnectionReceiver implements Runnable {
 
        if (serverSocket != null)
           new Thread(this).start();
-   }
+    }
+
+    public synchronized static void setExecVMServicePort(int portNumber) {
+       if (initialized) { 
+          throw new InternalError("ExecutiveVM port already set: " + getExecVMServicePort());
+       }
+       execVMServicePort = portNumber;
+       initialized = true;
+    }
+
+    public synchronized static int getExecVMServicePort() {
+       if (!initialized) { 
+          throw new InternalError("ExecutiveVM port not yet set");
+       }
+       return execVMServicePort;
+    }
+
+    /*
+     * Starts the executive VM ServerSocket.
+     * Should only be called in the ExecutiveVM.
+     */
+    public static void startExecVMService() {
+       setExecVMServicePort(getLocalServicePort());
+    }
+
+    /*
+     * Starts the ConnectionReceiver if necessary, and returns the local
+     * VM's ServerSocket. 
+     */
+    static int getLocalServicePort() {
+       if (serverSocket == null) {
+          new ConnectionReceiver(0);
+       }
+
+       return serverSocket.getLocalPort();
+    }
+
+    private static void debugOut(String s) {
+       System.out.println("ConnectionReceiver: " + s);
+    }
 
 
    // Waits for the connection request to come to this ServerSocket.
@@ -145,33 +157,6 @@ public class ConnectionReceiver implements Runnable {
         }
       }
     }
-
-    public static void startAppManagerSocket() {
-       if (serverSocket == null) {
-          new ConnectionReceiver(getAppManagerPort());
-       }
-    }
-
-    static int getPortNumber() {
-       if (serverSocket == null) {
-          new ConnectionReceiver(0);
-       }
-
-       return serverSocket.getLocalPort();
-    }
-
-    private static void  debugOut(String s) {
-       System.out.println("ConnectionReceiver: " + s);
-    }
-
-    static int getAppManagerPort() {
-       if (!initialized) { 
-          initAppManagerPortNumber();
-          initialized = true;
-       }
-       return APPMGR_PORTNUM;
-    }
-
 
     // Handles each incoming connection request.
     class RemoteMethodExecutor implements Runnable {
@@ -216,7 +201,7 @@ public class ConnectionReceiver implements Runnable {
              if (exportedObject != null) {
                 remoteObject = exportedObject.remoteObject;
                 isExecutiveIxcRegistry = 
-                   (remoteObject instanceof JumpExecIxcRegistryRemote); 
+                   (remoteObject instanceof JUMPExecIxcRegistryRemote); 
              }
 
              if (debug) debugOut("Found corresponding Object " + remoteObject + ", isExecutiveIxcRegistry=" + isExecutiveIxcRegistry);

@@ -67,10 +67,8 @@ public interface JUMPMessageDispatcher {
     
     /**
      * Registers the message handler for the message type.  This
-     * starts a non-daemon thread which will persist until all
-     * handlers for the message type have been cancelled.  Note that
-     * being a non-daemon thread also ensure the process will not stop
-     * before the thread has had a chance to clean up and exit.
+     * starts a daemon thread which will persist until all
+     * handlers for the message type have been cancelled.  
      *
      * @return
      * opaque object that represents the registration. The token can be

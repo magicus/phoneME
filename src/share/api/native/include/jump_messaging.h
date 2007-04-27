@@ -222,12 +222,12 @@ jumpMessageGetBytesInto(JUMPMessageReader* r, int8* buffer, uint32 length);
 
 /*
  * If r->status != JUMP_SUCCESS, returns NULL.  Otherwise returns the
- * next byte array from the message or sets r->status to one of
+ * next byte array from the message and sets *length to the number of
+ * bytes in the array, or returns NULL and sets r->status to one of
  * JUMP_OVERRUN, JUMP_OUT_OF_MEMORY, or JUMP_NEGATIVE_ARRAY_LENGTH on
- * error.  The caller should call free() on the return value once it
- * is done.  Sets *length to the number of bytes in the array, or -1
- * if the array was NULL.  A NULL return value with *length != -1
- * indicates out of memory.
+ * error.  A NULL return with r->status == JUMP_SUCCESS indicates a
+ * NULL array was sent.  If the return value is non-NULL, it should
+ * be passed to free() when it is no longer used.
  */
 extern int8*
 jumpMessageGetByteArray(JUMPMessageReader* r, uint32* length);
@@ -268,15 +268,22 @@ jumpMessageGetString(JUMPMessageReader* r);
 
 /*
  * If r->status != JUMP_SUCCESS, returns NULL.  Otherwise returns the
- * next string from the message or sets r->status to one of
- * JUMP_OVERRUN, JUMP_OUT_OF_MEMORY, or JUMP_NEGATIVE_ARRAY_LENGTH on
- * error.  The caller should call free() on the return value once it
- * is done Sets *length to the number of strings in the array, or -1
- * if the array was NULL.  A NULL return value with *length != -1
- * indicates out of memory.
+ * string array at the current message position and sets *length to
+ * the number of elements in the array, or returns NULL and sets
+ * r->status to one of JUMP_OVERRUN, JUMP_OUT_OF_MEMORY, or
+ * JUMP_NEGATIVE_ARRAY_LENGTH on error.  A NULL return with r->status
+ * == JUMP_SUCCESS indicates a NULL array was sent.  If the return
+ * value is non-NULL, it should be passed with *length to
+ * jumpMessageFreeStringArray() when it is no longer used.
  */
 extern JUMPPlatformCString*
 jumpMessageGetStringArray(JUMPMessageReader* r, uint32* length);
+
+/*
+ * Frees an array of strings.
+ */
+extern void
+jumpMessageFreeStringArray(JUMPPlatformCString* p, uint32 length);
 
 /*
  * Message header inspection

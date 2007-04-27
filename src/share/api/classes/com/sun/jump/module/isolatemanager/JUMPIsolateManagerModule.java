@@ -29,7 +29,6 @@ package com.sun.jump.module.isolatemanager;
 import com.sun.jump.executive.JUMPIsolateProxy;
 import com.sun.jump.module.JUMPModule;
 import com.sun.jump.common.JUMPAppModel;
-import com.sun.jump.common.JUMPProcessProxy;
 
 /**
  * <code>JUMPIsolateManagerModule</code> is an executive module that performs
@@ -47,16 +46,6 @@ public interface JUMPIsolateManagerModule extends JUMPModule {
      */
     public JUMPIsolateProxy newIsolate(JUMPAppModel model, String vmArgs);
 
-    /** 
-     * Create new native process
-     */
-    public JUMPProcessProxy newProcess();
-    
-    /** 
-     * Register existing native process
-     */
-    public void registerProcess(JUMPProcessProxy process);
-    
     /**
      * Returns the <code>JUMPIsolate</code> associated with the isolate id.
      * It returns <Code>null</code> if no such isolate is found.
@@ -67,9 +56,4 @@ public interface JUMPIsolateManagerModule extends JUMPModule {
      * Returns all the active and running isolates.
      */
     public JUMPIsolateProxy[] getActiveIsolates();
-
-    /**
-     * Returns all the active and running native processes.
-     */
-    public JUMPProcessProxy[] getProcesses();
 }

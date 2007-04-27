@@ -26,6 +26,7 @@ package com.sun.jumpimpl.isolate.jvmprocess.xlet;
 
 import com.sun.jump.isolate.jvmprocess.JUMPIsolateProcess;
 import com.sun.jump.isolate.jvmprocess.JUMPAppContainer;
+import com.sun.jump.isolate.jvmprocess.JUMPAppContainerContext;
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.message.JUMPMessage;
 import com.sun.jump.message.JUMPMessageHandler;
@@ -33,6 +34,7 @@ import com.sun.jump.message.JUMPMessageHandler;
 import sun.mtask.xlet.PXletManager;
 import java.io.IOException;
 import java.io.File;
+import java.util.StringTokenizer;
 
 /*
  * Application Container for the xlet app model.
@@ -45,7 +47,8 @@ import java.io.File;
 
 public class AppContainerImpl extends JUMPAppContainer {
 
-   public static JUMPAppContainer getInstance() {
+   public static JUMPAppContainer
+       getInstance(JUMPAppContainerContext context) {
 	   return new AppContainerImpl(); 
    }
 
@@ -71,19 +74,23 @@ public class AppContainerImpl extends JUMPAppContainer {
        try {
 
           String className = app.getProperty(INITIAL_CLASS_KEY);
-          String contentStoreDir = System.getProperty("contentstore.root");
-          if (contentStoreDir == null) {
-              contentStoreDir = (String) JUMPIsolateProcess.getInstance().getConfig().get("contentstore.root");
-          }                
-          String classPath = (System.getProperty("java.home") + File.separator + 
-		contentStoreDir + File.separator + app.getProperty(CLASSPATH_KEY));
+          String classPath = app.getProperty(CLASSPATH_KEY);
+
+	  StringTokenizer st = new StringTokenizer(classPath, File.pathSeparator);
+	  int count = st.countTokens();
+          String[] pathArray = new String[count];
+          count = 0;
+
+          while (st.hasMoreTokens()) {
+                 pathArray[count++] = st.nextToken();
+          }
 
           xletManager = PXletManager.createXlet(className, 
-		       null, null, new String[]{classPath}, args);
+		       null, null, pathArray, args);
 	  xletManager.postInitXlet();
 	  xletManager.postStartXlet();
 
-          // FIXME: xlet manager calls are asynchronous.  Do we want to wait here?
+          // FIXME: xlet manager calls are asynchronous, need to wait. 
 
 	  currentApp = app;
 
@@ -92,7 +99,7 @@ public class AppContainerImpl extends JUMPAppContainer {
 	       return -1;
        } 
 
-       return 1; // only one xlet per isolate
+       return Integer.parseInt(app.getProperty(JUMPApplication.ID_KEY));
     }
     
     public void pauseApp(int appId) {

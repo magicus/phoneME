@@ -51,12 +51,22 @@ dumpMessage(JUMPMessage m, char* intro)
     
     ensureInitialized();
     
+    printf("%s\n", intro);
     jumpMessageReaderInit(&r, m);
     strings = jumpMessageGetStringArray(&r, &len);
-    printf("%s\n", intro);
-    for (i = 0; i < len; i++) {
-	printf("    \"%s\"\n", strings[i]);
+    if (r.status != JUMP_SUCCESS) {
+	printf("    <failure>\n");
+	return;
     }
+    if (strings == NULL) {
+	printf("    <null>\n");
+    }
+    else {
+	for (i = 0; i < len; i++) {
+	    printf("    \"%s\"\n", strings[i]);
+	}
+    }
+    jumpMessageFreeStringArray(strings, len);
 }
 
 JNIEXPORT void JNICALL

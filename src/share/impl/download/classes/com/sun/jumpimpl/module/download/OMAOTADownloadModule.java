@@ -54,12 +54,26 @@ public class OMAOTADownloadModule //extends GenericDownloadModuleImpl
 
     static String ddMime = "application/vnd.oma.dd+xml";
 
+    private String encode(String url) {
+        // Change spaces to %20
+        String encodedURL = "";
+        for (int i = 0; i < url.length(); i++) {
+            char c = url.charAt(i);
+            if (c == ' ') {
+                encodedURL += "%20";
+            } else {
+                encodedURL += c;
+            }
+        }
+        return encodedURL;
+    }
+    
     public JUMPDownloadDescriptor createDescriptor(String url) 
         throws JUMPDownloadException {
 
       try {
 
-          URL ddURL = new URL(url);
+          URL ddURL = new URL(encode(url));
           URLConnection conn = ddURL.openConnection();
           conn.setRequestProperty("User-Agent", "CDC/FP 1.1 Appmanager");
 
@@ -69,9 +83,10 @@ public class OMAOTADownloadModule //extends GenericDownloadModuleImpl
               System.err.println("debug : xlet mimetype is " + mimeType);
           }
 
-          if ( (mimeType == null) || !mimeType.equalsIgnoreCase(ddMime)) {
+          if (!ddURL.getProtocol().equals("file") &&
+                  (mimeType == null || !mimeType.equalsIgnoreCase(ddMime))) {
               throw new JUMPDownloadException("Content type for the DD URL"+
-                                      "is not "+ ddMime + "\n" + url);
+                                      " is not "+ ddMime + "\n" + url);
           }
 
           // load the descriptor

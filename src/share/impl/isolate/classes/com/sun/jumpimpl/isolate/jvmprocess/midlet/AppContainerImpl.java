@@ -30,6 +30,8 @@ import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.common.JUMPAppModel;
 
 import com.sun.jump.isolate.jvmprocess.JUMPAppContainer;
+import com.sun.jump.isolate.jvmprocess.JUMPAppContainerContext;
+
 import com.sun.jumpimpl.process.JUMPModulesConfig;
 
 import sun.misc.MIDPConfig;
@@ -55,7 +57,8 @@ public class AppContainerImpl extends JUMPAppContainer {
      * Creates an app container for a MIDlet.
      * This method is called using reflection.
      */
-    public static JUMPAppContainer getInstance() {
+    public static JUMPAppContainer
+        getInstance(JUMPAppContainerContext context) {
         try {
 
             /*
@@ -71,24 +74,23 @@ public class AppContainerImpl extends JUMPAppContainer {
 
 	    if (midpImplementationClassLoader == null) {
 	       String midpJar = (String)
-	  	   JUMPModulesConfig.getProperties().get("jump.midp.classes.zip");
+                   context.getConfigProperty("jump.midp.classes.zip");
 
                midpImplementationClassLoader =
-                   MIDPConfig.newMIDPImplementationClassLoader(new String[] { midpJar } );
+                   MIDPConfig.newMIDPImplementationClassLoader(
+                       new String[] { midpJar });
             }
              
             Class clazz =
                 Class.forName("com.sun.midp.jump.isolate.MIDletContainer",
                               true, midpImplementationClassLoader);
 
-	    String midpHome = (String)
-		JUMPModulesConfig.getProperties().get("sun.midp.home.path");
-
 	    Constructor constructor  = clazz.getDeclaredConstructor(
-			    new Class[] {String.class} );
+			    new Class[] {JUMPAppContainerContext.class});
 
             JUMPAppContainer midletContainer =
-                (JUMPAppContainer) constructor.newInstance(new Object[] {midpHome});;
+                (JUMPAppContainer)constructor.newInstance(
+                    new Object[] {context});
 
             return midletContainer;
         } catch (ClassNotFoundException e) {

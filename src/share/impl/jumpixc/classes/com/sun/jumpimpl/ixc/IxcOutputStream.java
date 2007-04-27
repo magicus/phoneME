@@ -27,10 +27,10 @@
 
 package com.sun.jumpimpl.ixc;
 
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
+import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.rmi.Remote;
 import java.security.AccessController;
@@ -44,19 +44,19 @@ public class IxcOutputStream extends ObjectOutputStream {
 
    static private NullObject nullObject = new NullObject();
 
-   IxcOutputStream(OutputStream out, XletContext context, boolean isAppManager)
+   IxcOutputStream(OutputStream out, XletContext context, boolean isExecutiveVM)
       throws IOException {
       super(out);
       this.context = context;
 
       /***
-       * isAppManager value indicates that this IxcOutputStream is used
-       * for the central JumpExecIxcRegistry's output stream.
-       * In thie JumpExecIxcRegistry, we don't want to be converting
+       * isExecutiveVM value indicates that this IxcOutputStream is used
+       * for the central JUMPExecIxcRegistry's output stream.
+       * In the JUMPExecIxcRegistry, we don't want to be converting
        * Remote object to a RemoteRef, but just write out outgoing
        * RemoteRef objects.
       **/
-      if (!isAppManager) {
+      if (!isExecutiveVM) {
          AccessController.doPrivileged(new PrivilegedAction() {
             public Object run() {
                enableReplaceObject(true);
@@ -74,7 +74,10 @@ public class IxcOutputStream extends ObjectOutputStream {
       if (nextObject instanceof Remote) { 
          /* 
          * If this is a Remote object, need to replace it
-         * with a corresponding RemoteRef instance.
+         * with a corresponding RemoteRef instance to be sent
+	 * over the pipe. IxcInputStream will convert the 
+	 * incoming RemoteRef instance to the stub.
+	 *
          * If this object is already a stub, just send 
          * the RemoteRef used to create that stub.
          * Else, record this Remote instance in 
@@ -83,11 +86,6 @@ public class IxcOutputStream extends ObjectOutputStream {
          **/
          if (nextObject instanceof StubObject) { // is it a stub?
             nextObject = ((StubObject)nextObject).remoteRef;
-         } else if (nextObject instanceof RemoteRef) { 
-            // This should only happen w/in the AppManager VM
-            // where IxcInputStream is not replacing RemoteRef with
-            // some other objects that ther caller expects.
-            // No need to do anything.
          } else {
             //System.out.println("@@implicit export at marshallObject");
             ExportedObject eo =

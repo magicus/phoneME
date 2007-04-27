@@ -101,15 +101,27 @@ public class IsolateManagerModuleImpl
 	// only one isolate object for each pid.
 	//
         int pid = JUMPOSInterface.getInstance().createProcess(args);
+        if (pid == -1) {
+	    /* failed to create process */
+            throw new RuntimeException("Failed to the isolate process");
+        }
+
         JUMPIsolateProxyImpl isolate =
 	    JUMPIsolateProxyImpl.registerIsolate(pid);
         isolates.add(isolate);
+
 	//
 	// Wait until isolate is initialized (it will send us a message
 	// when it is ready)
 	//
 	// FIXME: what's the right timeout value and where is that stored?
 	isolate.waitForState(JUMPIsolateLifecycleRequest.ISOLATE_STATE_INITIALIZED, 5000L);
+
+        // Tell the isolate about the ixc port.
+        // FIXME: should go away once ixc is on messaging.
+        rsh.sendRequest(isolate,
+               new com.sun.jumpimpl.ixc.IxcMessage(
+               com.sun.jumpimpl.ixc.ConnectionReceiver.getExecVMServicePort()));
 
 	//
 	// FIXME!!!! What happens if we time out? We can kill
@@ -128,14 +140,6 @@ public class IsolateManagerModuleImpl
         return newIsolate(model, null);
     }
 
-    /**
-     * Create new native process
-     */
-    public JUMPProcessProxy newProcess() {
-        System.err.println("***IsolateManagerModuleImpl newProcess() unimplemented**");
-        return null;
-    }
-    
     /**
      * Register existing native process
      */

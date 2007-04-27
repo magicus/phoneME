@@ -36,10 +36,12 @@ import com.sun.jump.module.contentstore.JUMPStoreHandle;
 import com.sun.jump.module.download.JUMPDownloadDescriptor;
 import com.sun.jump.common.JUMPContent;
 import com.sun.jump.module.installer.JUMPInstallerModule;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Enumeration;
@@ -86,7 +88,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
     /**
      * The root directory of the content store
      */
-    protected String repositoryDir = null;
+    protected String contentStoreDir = null;
     /**
      * Holds the app id -> JUMPApplication object relationship
      */
@@ -111,6 +113,11 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
      * Print out messages
      */
     private boolean verbose = false;
+    
+    /**
+     *
+     */
+    private static final boolean ALLOW_MULTIPLE_APP_INSTALLS = false;
     
     
     private String getAvailableAppIdHashKey() {
@@ -166,7 +173,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
      * Implementation of JUMPInstaler.unload()
      */
     public void unload() {
-        repositoryDir = null;
+        contentStoreDir = null;
         verbose = false;
         if (storeHandle != null) {
             closeStore(storeHandle);
@@ -190,22 +197,19 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         }
         
         // the repository directory should be passed in as a system property
-        repositoryDir = System.getProperty("contentstore.root");
-        if (repositoryDir == null && map != null) {
-            repositoryDir = (String)map.get("contentstore.root");
+        contentStoreDir = System.getProperty("contentstore.root");
+        if (contentStoreDir == null && map != null) {
+            contentStoreDir = (String)map.get("contentstore.root");
         }
-        if (repositoryDir != null) {
+        if (contentStoreDir != null) {
             // remove any ending /'s'
-            if (!repositoryDir.endsWith("/")) {
-                repositoryDir = repositoryDir.concat("/");
+            if (!contentStoreDir.endsWith("/")) {
+                contentStoreDir = contentStoreDir.concat("/");
             }
         } else {
             // default to the current directory
-            repositoryDir = "./";
+            contentStoreDir = "./";
         }
-        
-        repositoryDir =  System.getProperty("java.home", "./") +
-                '/' + repositoryDir;
         
         // Get the store handle from the JUMPContentStoreSubClass.
         storeHandle = openStore(true);
@@ -283,13 +287,23 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         bundleName = bundleName.replace(' ', '_');
         
         trace(getString("Installing") + bundleName);
-        String jarPath = REPOSITORY_APPS_DIRNAME + '/' + bundleName + '/' + bundleName + ".jar";
         
-        // createUniquePathName ensures that we don't overwrite an existing file by
-        // retrieving a unique name for saving.  If there exists a file of the same
-        // name, using the example above the new name will look something like this:
-        // apps/CasinoGames(2)/CasinoGames(2).jar.
-        jarPath = createUniquePathName(repositoryDir + jarPath);
+        String jarPathWithinStore = REPOSITORY_APPS_DIRNAME + '/' + bundleName + '/' + bundleName + ".jar";
+        String jarPath = null;
+        if (ALLOW_MULTIPLE_APP_INSTALLS) {
+            // createUniquePathName ensures that we don't overwrite an existing file by
+            // retrieving a unique name for saving.  If there exists a file of the same
+            // name, using the example above the new name will look something like this:
+            // apps/CasinoGames(2)/CasinoGames(2).jar.
+            jarPath = createUniquePathName(contentStoreDir + jarPathWithinStore);
+        } else {
+            jarPath = contentStoreDir + jarPathWithinStore;
+            if (new File(jarPath).exists()) {
+                System.out.println("*** Error installing bundle: A bundle with this name is already installed.");
+                return null;
+            }
+        }
+        
         trace(getString("AttemptingToSave") + jarPath);
         
         // Because of the possibility of the filename being modified because of
@@ -378,43 +392,41 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
                 continue;
             }
             
+            String appTitle = app.getProperty("JUMPApplication_title");
+            if (appTitle == null) {
+                return null;
+            }
+            
+            // Properties object to hold application properties to be written to .app file
+            // The key values in this properties object should match the key values
+            // defined for application descriptor files.
+            Properties appProperties = new Properties();
+            
+            String appIDHashKey = getAvailableAppIdHashKey();
+            if (appIDHashKey == null) {
+                trace("ERROR: Could not obtain an id hash key value.");
+                return null;
+            } else {
+                appProperties.setProperty(DESCRIPTOR_ID_KEY, appIDHashKey);
+            }
+            
             // Retrieve the filename of the icon
             //String iconFileName = app.getIconPath().getFile();
             String iconFileName = app.getProperty("JUMPApplication_iconPath");
             
             // extract the icon image from the jar file and place it in
             // the icons/ directory within the app repository
-            String iconPath = extractIconFromJar(jarPath, iconFileName.trim());
+            String iconPath = extractIconFromJar(jarPath, iconFileName.trim(), appIDHashKey);
             
             // create an app descriptor file in the menu/ directory for
             // the new app so that the appmanager can recognize it.
             // make sure the descriptor pathname is uniqe and doesn't exist.
             String descriptorsDir = REPOSITORY_DESCRIPTORS_DIRNAME + '/';
-            String appDescriptorPath = createUniquePathName(descriptorsDir + app.getProperty("JUMPApplication_title") + APP_DESCRIPTOR_EXTENSION);
-            if (appDescriptorPath == null) {
-                return null;
-            }
             
-            // We need to check for the possibility that there already exists an app with
-            // the same name/title.  If this happens, the app descriptor pathname will
-            // reflect this because it's name will be unique.  Therefore, we can use the
-            // basename of the app descriptor to determine the title of the app.
-            // In other words, detect if we have something like CasinoGames(2).
-            dotindex = appDescriptorPath.lastIndexOf('.');
-            int slashindex = appDescriptorPath.lastIndexOf('/');
-            if (dotindex == -1 || slashindex == -1) {
-                return null;
-            }
-            String appTitle = appDescriptorPath.substring(slashindex + 1, dotindex);
-            
-            // Properties object to hold application properties to be written to .app file
-            // The key values in this properties object should match the key values
-            // defined for application descriptor files.
-            Properties appProperties = new Properties();
             appProperties.setProperty(DESCRIPTOR_BUNDLENAME_KEY, bundleName);
             appProperties.setProperty(DESCRIPTOR_APPMODEL_KEY, app.getProperty("JUMPApplication_appModel"));
             appProperties.setProperty(getInstallerInitialClassKey(), app.getProperty(getPropertyInstallerInitialClassKey()));
-            appProperties.setProperty(DESCRIPTOR_JARPATH_KEY, jarPath.substring(repositoryDir.length()));
+            appProperties.setProperty(DESCRIPTOR_JARPATH_KEY, jarPath);
             appProperties.setProperty(DESCRIPTOR_TITLE_KEY, appTitle);
             if (iconPath != null) {
                 appProperties.setProperty(DESCRIPTOR_ICON_KEY, iconPath);
@@ -423,27 +435,26 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             if (securityLevel != null) {
                 appProperties.setProperty(DESCRIPTOR_SECURITYLEVEL_KEY, securityLevel);
             }
-            String appIDHashKey = getAvailableAppIdHashKey();
-            if (appIDHashKey == null) {
-                trace("ERROR: Could not obtain an id hash key value.");
+            
+            String appDescriptorPath = descriptorsDir + appTitle + '-' + appIDHashKey + APP_DESCRIPTOR_EXTENSION;
+            if (new File(appDescriptorPath).exists()) {
+                System.out.println("*** Error installing bundle: A descriptor with this name is already installed.");
                 return null;
-            } else {
-                appProperties.setProperty(DESCRIPTOR_ID_KEY, appIDHashKey);
             }
             // create application descriptor file
             boolean result = createAppDescriptor(appDescriptorPath, appProperties);
-            
             // create JUMPApplication object for the app
             if (result) {
                 JUMPApplication module = createJUMPApplication(appDescriptorPath);
+                trace("--> createJUMPApplication returns: " + module.toString());
                 if (module != null) {
                     installedContentHashtable.put(appIDHashKey, module);
+                    addInstalledAppIdEntry(appIDHashKey, module);
                 }
             }
         }
         
         // return installed content
-        //int size = installedContentVector.size();
         int size = installedContentHashtable.size();
         if (size > 0) {
             Vector jumpAppObjectsVector = new Vector();
@@ -451,7 +462,6 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             for (Enumeration e = installedContentHashtable.keys() ; e.hasMoreElements() ;) {
                 Object key = e.nextElement();
                 Object app = installedContentHashtable.get(key);
-                addInstalledAppIdEntry(key, app);
                 jumpAppObjectsVector.add(app);
             }
             return (JUMPContent[])jumpAppObjectsVector.toArray(new JUMPContent[]{});
@@ -479,7 +489,6 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             return;
         }
         
-        
 // Currently, calling JUMPExecutive.getInstance returns null.  Therefore, we
 // cannot use the JUMPUserInputManager APIs until this is fixed.  When this is
 // fixed, the following code can be uncommented.
@@ -498,15 +507,47 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
 //            }
 //        }
         
+        if (apps.length > 1) {
+            System.out.print(app.getAppType().toString());
+            System.out.print(": " + app.getTitle() + " is contained within a bundle" );
+            System.out.println("that contains the following applications:" );
+            System.out.print("  ");
+            for (int i = 0; i < apps.length; i++) {
+                JUMPApplication application = (JUMPApplication)apps[i];
+                System.out.print(application.getTitle());
+                if (i < (apps.length - 1)) {
+                    System.out.print(", ");
+                }
+            }
+            System.out.println("");
+//            String value = System.getProperty("jump.installer.interactive");
+//            if (value.toLowerCase().equals("true")) {
+//                System.out.println("Deleting this bundle will remove all of the applications.");
+//                while ( true ) {
+//                    String message = "Do you wish to proceed? [y/n]: ";
+//                    String answer = Utilities.promptUser(message);
+//                    if (answer.toLowerCase().equals("y")) {
+//                        break;
+//                    } else if (answer.toLowerCase().equals("n")){
+//                        return;
+//                    } else {
+//                        System.out.println("ERROR: Illegal response.");
+//                    }
+//                }
+//                
+//            } else {
+                System.out.println("All applications will be removed.");
+//            }
+        }
+        
         trace(getString("AttemptingToRemove") + bundleName);
         
         // Get the path to the app bundle's jar file, which is assumed
         // to be the first entry in the classpath.
         String jarPath = getAppClasspath(app);
-        
         boolean result1 = removeJarFile(jarPath);
         if (!result1) {
-            trace(getString("CannotRemoveApplicationJar"));
+            trace(getString("CannotRemoveApplicationJar") + ": " + jarPath);
         }
         
         // Remove the icon and app descriptor for each app in the bundle
@@ -516,7 +557,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             removeInstalledAppIdEntry(Integer.toString(appId));
             
             // Remove the icon and app descriptor for each app
-            boolean result2 = removeAppDescriptor(apps[i].getTitle());
+            boolean result2 = removeAppDescriptor(apps[i]);
             if (!result2) {
                 trace(getString("CouldNotRemoveAppDescriptor") + apps[i].getTitle());
             }
@@ -569,7 +610,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         
         for (Iterator itn = list.getChildren(); itn.hasNext(); ) {
             JUMPNode node = (JUMPNode) itn.next();
-            JUMPApplication app = createJUMPApplication(node.getName());
+            JUMPApplication app = createJUMPApplication(node.getURI());
             
             // Identify only the xlets or main apps, not both at the same time
             if (app != null && app.getAppType() == getInstallerAppModel()) {
@@ -612,6 +653,10 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
     }
     
     private String extractIconFromJar(String jarFile, String iconFile) {
+        return (extractIconFromJar(jarFile, iconFile, null));
+    }
+    
+    private String extractIconFromJar(String jarFile, String iconFile, String id) {
         
         String iconFileName = null;
         String iconFilePath = null;
@@ -641,11 +686,30 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             iconFileName = iconFile;
         }
         
-        String iconsDir = repositoryDir + REPOSITORY_ICONS_DIRNAME + '/';
+        if (id != null) {
+            // Get extention of file
+            int dotindex = iconFileName.lastIndexOf('.');
+            if (dotindex == -1) {
+                return null;
+            }
+            
+            // The path up until the extention.
+            String pathToExtention = iconFileName.substring(0, dotindex);
+            
+            // The extention
+            String extention = iconFileName.substring(dotindex);
+            
+            iconFileName = pathToExtention + '-' + id + extention;
+        }
         
-        // make a unique file name if we don't want to overwrite
-        // current contents with the same name.
-        iconFilePath = createUniquePathName(iconsDir + iconFileName);
+        String iconsDir = contentStoreDir + REPOSITORY_ICONS_DIRNAME + '/';
+        iconFilePath = iconsDir + iconFileName;
+        if (new File(iconFilePath).exists()) {
+            System.out.println("*** Warning installing bundle: An icon with this name is already installed.");
+            return iconFilePath;
+        } else {
+            trace("Saving icon file: " + iconFilePath);
+        }
         
         try {
             
@@ -665,7 +729,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             fos.write(buffer);
             fos.close();
             
-            return iconFilePath.substring(iconsDir.length());
+            return iconFilePath;
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -740,7 +804,13 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
      */
     private boolean createAppDescriptor(String descriptorPath, Properties props) {
         
+        // Convert the paths to the relative path from the content store root,
+        // we don't want to store the absolute path to the persistant store
+        removeContentStorePath(props, DESCRIPTOR_ICON_KEY);
+        removeContentStorePath(props, DESCRIPTOR_JARPATH_KEY);
+        
         JUMPData propData = new JUMPData(props);
+        
         try {
             storeHandle.createDataNode(descriptorPath, propData);
         } catch (RuntimeException re) {
@@ -758,12 +828,14 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
      * Retrieve an instance of JUMPApplication for the given application or menu.
      */
     private JUMPApplication createJUMPApplication(String descriptorPath) {
-        
+               
         storeHandle = openStore(true);
         JUMPNode appDescriptorNode = null;
         try {
             appDescriptorNode = storeHandle.getNode(descriptorPath);
-        } catch (IOException e) {}
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         closeStore(storeHandle);
         
         if (appDescriptorNode == null) {
@@ -782,13 +854,17 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         JUMPApplication module = null;
         
         // First, make sure the app type is correct
-        String appType = (String)appDescriptorProps.getProperty("type");
+        String appType = (String)appDescriptorProps.getProperty(DESCRIPTOR_APPMODEL_KEY);
         if (appType == null || !appType.equals(getInstallerAppModel().getName())) {
             return null;
         }
         
+        // Convert back the path to the absolute path
+        addContentStorePath(appDescriptorProps, DESCRIPTOR_ICON_KEY);
+        addContentStorePath(appDescriptorProps, DESCRIPTOR_JARPATH_KEY);        
+        
         // Now, obtain the values for specific keys
-        String classPath = (String)appDescriptorProps.getProperty("path");
+        String classPath = (String)appDescriptorProps.getProperty(DESCRIPTOR_JARPATH_KEY);
         if (classPath == null) {
             return null;
         }
@@ -804,34 +880,64 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
             return null;
         }
         
-        String bundleName = (String)appDescriptorProps.getProperty("bundle");
+        String bundleName = (String)appDescriptorProps.getProperty(DESCRIPTOR_BUNDLENAME_KEY);
         if (bundleName == null) {
             return null;
         }
         
-        String title = (String)appDescriptorProps.getProperty("title");
+        String title = (String)appDescriptorProps.getProperty(DESCRIPTOR_TITLE_KEY);
         if (title == null) {
             return null;
         }
         
-        String iconPath = (String)appDescriptorProps.getProperty("icon");
+        String iconPath = (String)appDescriptorProps.getProperty(DESCRIPTOR_ICON_KEY);
         URL iconPathURL = null;
-        try {
-            iconPathURL = new URL("file", null, iconPath);
-            if (iconPathURL == null) {
+        if (iconPath != null) {
+            try {
+                iconPathURL = new URL("file", null, iconPath);
+                if (iconPathURL == null) {
+                    return null;
+                }
+            } catch (MalformedURLException ex) {
+                ex.printStackTrace();
                 return null;
             }
-        } catch (MalformedURLException ex) {
-            ex.printStackTrace();
-            return null;
+        } else {
+            trace("Application: " + title + " doesn't have an icon.");
         }
-        
+
         String clazz = (String)appDescriptorProps.getProperty(getInstallerInitialClassKey());
         
         String id = (String)appDescriptorProps.getProperty("id");
         
         module = createJUMPApplicationObject(bundleName, clazz, classPathURL, title, iconPathURL, Integer.parseInt(id));
+ 
         return module;
+    }
+    
+    /**
+     * Removes the content store dir path from the property represented by the key.
+     * Used when creating .app file from the JUMPApplication properties list,
+     * so that .app file in the content sore will not have a full path to store,
+     * allowing the store to be moved from one location to another.
+     */
+    private void removeContentStorePath(Properties props, String key) {
+        String value = (String) props.remove(key);
+        if (value == null) return;
+        props.put(key, value.substring(contentStoreDir.length()));
+    }
+    
+    /**
+     * Prepends the content store dir path to the property represented by the key.
+     * Used when creating JUMPApplication properties from the .app file
+     * in the content store, so that the JUMPApplication created have
+     * proper absolute path corresponding to the current run's contentstore
+     * root location.
+     */
+    private void addContentStorePath(Properties props, String key) {
+        String value = (String) props.remove(key);
+        if (value == null) return;
+        props.put(key, contentStoreDir + value);
     }
     
     /**
@@ -845,7 +951,7 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
      */
     protected JUMPApplication createJUMPApplicationObject(String bundle,
             String clazz, URL classPathURL, String title, URL iconPathURL, int id) {
-        return new XLETApplication(repositoryDir, bundle, clazz, classPathURL, title, iconPathURL, id);
+        return new XLETApplication(contentStoreDir, bundle, clazz, classPathURL, title, iconPathURL, id);
     }
     
     /**
@@ -882,9 +988,10 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
         
         // Check to see that the jar file exists, and if so, start
         // removing things.
-        File jarFile = new File(repositoryDir + jarPath);
-
+        File jarFile = new File(jarPath);
+        trace("removeJarFile(): " + jarFile);
         if (jarFile != null && jarFile.exists()) {
+            trace("jarFile: " + jarFile + " exists!!! ***");
             boolean jarFileDelete = false;
             boolean jarFileParentDirDelete = false;
             File jarFileParent = null;
@@ -919,8 +1026,10 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
      * @param applicationName the application for which the application descriptor should be removed
      * @return boolean value indicating success or failure
      */
-    private boolean removeAppDescriptor(String applicationName) {
-        String uri = REPOSITORY_DESCRIPTORS_DIRNAME + '/' + applicationName + APP_DESCRIPTOR_EXTENSION;
+    private boolean removeAppDescriptor(JUMPApplication app) {
+        String appTitle = app.getTitle();
+        String id = Integer.toString(app.getId());
+        String uri = REPOSITORY_DESCRIPTORS_DIRNAME + '/' + appTitle + '-' + id + APP_DESCRIPTOR_EXTENSION;
         storeHandle = openStore(true);
         if (storeHandle == null) {
             return false;
@@ -939,9 +1048,9 @@ public class XLETInstallerImpl extends JUMPContentStore implements JUMPInstaller
      * @param iconURL URL of icon file within the content store
      * @return boolean value indicating success or failure
      */
-    private boolean removeIcon(URL iconURL) {      
+    private boolean removeIcon(URL iconURL) {
         String iconFileName = iconURL.getFile();
-        System.out.println("Trying to remove icon file: " + iconFileName);
+        trace("Trying to remove icon file: " + iconFileName);
         File iconFile = new File(iconFileName);
         if (iconFile != null && iconFile.exists()) {
             try {

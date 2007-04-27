@@ -34,6 +34,8 @@ import java.rmi.Remote;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+import java.lang.reflect.Array;
+
 import javax.microedition.xlet.XletContext;
 import javax.microedition.xlet.ixc.IxcRegistry;
 import javax.microedition.xlet.ixc.StubException;
@@ -46,20 +48,19 @@ public class IxcInputStream extends ObjectInputStream {
 
    XletContext context;
 
-   //IxcInputStream(InputStream in, ClassLoader loader) 
-   IxcInputStream(InputStream in, XletContext context, boolean isAppManager) 
+   IxcInputStream(InputStream in, XletContext context, boolean isExecutiveVM) 
       throws IOException {
       super(in);
       this.context = context;
 
       /*** 
-       * isAppManager value indicates that this IxcInputStream is used
-       * for the central JumpExecIxcRegistry's input stream.
-       * In thie JumpExecIxcRegistry, we don't want to be converting
+       * isExecutiveVM value indicates that this IxcInputStream is used
+       * for the central JUMPExecIxcRegistry's input stream.
+       * In thie JUMPExecIxcRegistry, we don't want to be converting
        * Remote object to a stub or vice versa, but just record incoming
        * RemoteRef objects.
       **/
-      if (!isAppManager) {
+      if (!isExecutiveVM) {
          AccessController.doPrivileged(new PrivilegedAction() {
             public Object run() {
                enableResolveObject(true);
@@ -120,14 +121,14 @@ public class IxcInputStream extends ObjectInputStream {
     void reportImportToJumpExecIxcRegistry(StubObject r,
                                    XletContext importer) {
                                                                                 
-       // Report to the JumpExecIxcRegistry about this new import if
+       // Report to the JUMPExecIxcRegistry about this new import if
        // the connection is made not with
        // JumpExecIxcRegistry itself but with some other client VM.
 
        IxcRegistry registry = IxcRegistry.getRegistry(importer);
                                                                                 
-       if (registry instanceof JumpIxcRegistryImpl) {
-          ((JumpIxcRegistryImpl)registry).amHandler.notifyObjectImport(
+       if (registry instanceof JUMPIxcRegistryImpl) {
+          ((JUMPIxcRegistryImpl)registry).amHandler.notifyObjectImport(
                          Utils.getMtaskClientID(), (Remote)r);
        }
     }

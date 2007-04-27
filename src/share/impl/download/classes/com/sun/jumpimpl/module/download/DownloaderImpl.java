@@ -1,6 +1,5 @@
-
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This program is free software; you can redistribute it and/or
@@ -99,6 +98,20 @@ class DownloaderImpl implements JUMPDownloader {
         return null;
  
     }
+    
+    private String encode(String url) {
+        // Change spaces to %20
+        String encodedURL = "";
+        for (int i = 0; i < url.length(); i++) {
+            char c = url.charAt(i);
+            if (c == ' ') {
+                encodedURL += "%20";
+            } else {
+                encodedURL += c;
+            }
+        }
+        return encodedURL;
+    }    
 
     public boolean startDownload( String url, String nfUri,
                                 int size, JUMPDownloadDestination store
@@ -115,7 +128,7 @@ class DownloaderImpl implements JUMPDownloader {
                 gran = report.getGranularity();
             }
 
-            URL objectUrl = new URL( url );
+            URL objectUrl = new URL( encode(url) );
     
             if ( report != null )
             {
@@ -123,16 +136,17 @@ class DownloaderImpl implements JUMPDownloader {
             }
             
             URLConnection conn = objectUrl.openConnection();
-    
-            if ( ( ( HttpURLConnection )conn ).getResponseCode() !=
-                     HttpURLConnection.HTTP_OK )
+            
+            if (objectUrl.getProtocol().equals("http") &&
+                ( ( HttpURLConnection )conn ).getResponseCode() !=
+                         HttpURLConnection.HTTP_OK )
             {
                 if ( nfUri != null )
                 {
                     sendNotify( nfUri, ST_LOADERERROR,
                                 "Can't process server response" );
                 }
-            
+                
                 throw new JUMPDownloadException( "Http response is not OK: "+
                              ( (HttpURLConnection )conn ).getResponseCode() );
             }
