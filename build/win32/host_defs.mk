@@ -87,7 +87,7 @@ CCFLAGS_SPACE     = $(CCFLAGS) /Od -D_DEBUG -DDEBUG
 endif
 
 ifeq ($(CVM_SYMBOLS), true)
-CCFLAGS += /Zi /Yd
+CCFLAGS += /Zi
 endif
 
 ifeq ($(CVM_DEBUG), true)

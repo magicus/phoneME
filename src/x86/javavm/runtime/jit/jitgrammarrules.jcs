@@ -3036,8 +3036,8 @@ InitLocalVarAddress(CVMJITCompilationContext* con,
      * Taken from  reloadLocal(con, rx->loadOpcode[rp->size-1], rp):
      * Locals are located just before the frame ptr; this is a negative offset 
      */
-    frameOffset = -((con->numberLocalWords - l->localNo) *
-	sizeof(CVMJavaVal32));
+    frameOffset = 
+	-(int)((con->numberLocalWords - l->localNo) * sizeof(CVMJavaVal32));
     frameReg = CVMCPU_JFP_REG;
 
     /* Make sure we're within the addressing range: */
@@ -3649,7 +3649,8 @@ regAddr: CLASS_BLOCK : 20 : : : : {
         CVMRMResource *dest;	    
         CVMClassBlock *cb = CVMJITirnodeGetConstantAddr($$)->cb;
         CVMJITsetSymbolName((con, "cb %C", cb));
-        dest = CVMRMbindResourceForConstantAddr(CVMRM_INT_REGS(con), (CVMAddr)cb);      
+        dest = CVMRMbindResourceForConstantAddr(CVMRM_INT_REGS(con),
+						(CVMAddr)cb);      
         /* Need this in case this constant is a CSE */
         CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, $$);
         pushResource(con, dest);
@@ -3663,7 +3664,8 @@ reg32: INEG32 reg32 : 10 : : : : {
    CVMRMpinResource(CVMRM_INT_REGS(con), src, GET_REGISTER_GOALS);
    dstRegID = CVMRMgetRegisterNumber(src);
    CVMRMrelinquishResource(CVMRM_INT_REGS(con), src);
-   dst = CVMRMgetResourceStrict(CVMRM_INT_REGS(con), (1U << dstRegID), GET_REGISTER_AVOID_GOALS, 1);
+   dst = CVMRMgetResourceStrict(CVMRM_INT_REGS(con), (1U << dstRegID),
+				GET_REGISTER_AVOID_GOALS, 1);
    CVMassert(dstRegID == CVMRMgetRegisterNumber(dst));
    CVMCPUemitUnaryALU(con, CVMCPU_NEG_OPCODE, dstRegID, dstRegID, CVM_TRUE);
    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dst, $$);
@@ -7190,7 +7192,7 @@ resolveConstant(CVMJITCompilationContext *con, CVMJITIRNodePtr thisNode,
      */
     CVMJITaddCodegenComment((con, "load cachedConstant"));
     CVMCPUemitMemoryReferencePCRelative(con, CVMCPU_LDR32_OPCODE,
-					destRegNo, -sizeof(CVMUint32));
+					destRegNo, -(int)sizeof(CVMUint32));
 
     /* Occupy the target register with the resolved value: */
     CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, thisNode);

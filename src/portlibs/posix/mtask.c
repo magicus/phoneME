@@ -675,14 +675,30 @@ oneString(JUMPMessage m)
     char* string;
     JUMPMessageReader r;
     JUMPPlatformCString* strings;
-    uint32 len, i;
+    uint32 len, i, bufSize;
     
-    string = (char*)calloc(1024, 1);
     jumpMessageReaderInit(&r, m);
     strings = jumpMessageGetStringArray(&r, &len);
-    for (i = 0; i < len; i++) {
-	strcat(string, strings[i]);
-	strcat(string, " ");
+    bufSize = 1; /* for the string null terminator */
+    if (strings != NULL) {
+        /* first figure out the size of the buffer we need to allocate */
+        for (i = 0; i < len; i++) {
+            if (strings[i] != NULL) {
+	        bufSize += strlen(strings[i]) + 1 /* for the " " */;
+            }
+        }
+
+        /* allocate the buf and start copying */
+        string = calloc(bufSize, sizeof(char));
+        if (string == NULL) {
+	    return NULL;
+	}
+        for (i = 0; i < len; i++) {
+	    if (strings[i] != NULL) {
+	        strcat(string, strings[i]);
+	        strcat(string, " ");
+	    }
+        }
     }
     return string;
 }
@@ -831,7 +847,7 @@ prepareJNative(char *procName, char *soLibName)
     char *libName;
     JUMPMessageQueueStatusCode code = 0;
     unsigned char *type; 
-    void *symbol;
+    void *symbol = NULL;
 
     /*
      * trying to find native method.
@@ -862,11 +878,9 @@ prepareJNative(char *procName, char *soLibName)
 	if (dsoHandle != NULL) {
 	    symbol = dlsym(dsoHandle, procName);
 	    /* FIXME: should we do "dlclose()" somewhere? */
-	} else {
-	    fprintf(stderr, "MTASK: Can't find lib: %s\n", soLibName);
-	    return NULL;
 	}
-    } else {
+    } 
+    if (symbol == NULL) {
 	symbol = dlsym(RTLD_DEFAULT, procName);
     }
 

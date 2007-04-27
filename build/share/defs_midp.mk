@@ -33,7 +33,7 @@ ifeq ($(USE_MIDP),true)
 -include ../$(TARGET_OS)/defs_midp.mk
 
 
-ifeq ($(AWT_IMPLEMENTATION), gci)
+ifeq ($(USE_GCI), true)
     MIDP_PLATFORM = linux_gci
 else
     MIDP_PLATFORM = linux_fb_gcc
@@ -68,8 +68,8 @@ PCSL_MAKE_OPTIONS 	?=
 export JDK_DIR		= $(JDK_HOME)
 TARGET_VM		= cdc_vm
 MIDP_DIR		?= $(COMPONENTS_DIR)/midp
-MIDP_DEFS_JCC_MK	= $(MIDP_DIR)/build/common/cdc_vm/defs_cdc.mk
-ifeq ($(wildcard $(MIDP_DEFS_JCC_MK)),)
+MIDP_DEFS_CDC_MK	= $(MIDP_DIR)/build/common/cdc_vm/defs_cdc.mk
+ifeq ($(wildcard $(MIDP_DEFS_CDC_MK)),)
 $(error MIDP_DIR must point to the MIDP directory: $(MIDP_DIR))
 endif
 
@@ -114,7 +114,7 @@ MIDP_LIBS 		?= \
 LINKLIBS 		+= $(MIDP_LIBS)
 endif
 
--include $(MIDP_DEFS_JCC_MK)
+-include $(MIDP_DEFS_CDC_MK)
 ifeq ($(CVM_PRELOAD_LIB), true)
 # Add MIDP classes to JCC input list so they can be romized.
 CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_CLASSES_ZIP)

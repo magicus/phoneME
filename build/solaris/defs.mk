@@ -203,3 +203,10 @@ endif
 # Don't let the default compiler compatibility check be done
 # if we are not using gcc
 CVM_DISABLE_COMPILER_CHECK = $(CVM_USE_NATIVE_TOOLS)
+
+# The solaris cc uses -V for version output, not -dumpversion like 
+# gcc does.
+ifeq ($(CVM_USE_NATIVE_TOOLS),true)
+TARGET_CC_VERSION = $(shell $(TARGET_CC) -V 2>&1 | grep -v usage)
+endif
+HOST_CC_VERSION = $(shell $(HOST_CC) -V 2>&1 | grep -v usage)

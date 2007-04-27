@@ -384,6 +384,7 @@ include ../$(TARGET_OS)/top.mk
 include  ../share/defs.mk
 -include ../share/defs_midp.mk
 -include ../share/defs_jump.mk
+-include ../share/defs_gci.mk
 include ../share/defs_$(J2ME_CLASSLIB).mk
 -include ../share/defs_op.mk
 ifneq ($(OPT_PKGS_DEFS_FILES),)
@@ -395,6 +396,7 @@ endif
 include  ../share/rules.mk
 -include ../share/rules_midp.mk
 -include ../share/rules_jump.mk
+-include ../share/rules_gci.mk
 include ../share/rules_$(J2ME_CLASSLIB).mk
 ifneq ($(J2ME_PLATFORM),)
 include ../share/rules_$(J2ME_PLATFORM).mk

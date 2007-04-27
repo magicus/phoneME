@@ -30,8 +30,11 @@ ifeq ($(USE_JUMP),true)
 printconfig::
 	@echo "JUMP_DIR           = $(JUMP_DIR)"
 
-.PHONY: jumptargets force_jump_build
-jumptargets: force_jump_build
+.PHONY: jumptargets jumptargets-api jumptargets-impl 
+jumptargets: jumptargets-api jumptargets-impl
+
+jumptargets-api: force_jump_build-api
+jumptargets-impl: $(JSROP_JARS) force_jump_build-impl $(CVM_BINDIR)/runjump $(CVM_BINDIR)/autotest $(CVM_BINDIR)/runinstall $(CVM_BINDIR)/runxinstall
 
 $(CVM_BUILD_DEFS_MK)::
 	$(AT) echo updating $@ [from rules_jump.mk]
@@ -44,15 +47,36 @@ $(CVM_BUILD_DEFS_MK)::
 # that force it to be rebuilt. But list $(JUMP_DEPENDENCIES) anyway just to
 # make things explicit
 #
-force_jump_build: $(JUMP_DEPENDENCIES)
-	@echo "====> start building jump api's and implementation"
-	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build.xml all)
-	$(AT)cp $(JUMP_API_CLASSESZIP) \
-                $(JUMP_IMPL_CLASSESZIP) \
-                $(JUMP_SHARED_BOOTCLASSESZIP) \
+force_jump_build-api: $(JUMP_DEPENDENCIES)
+	@echo "====> start building jump api's"
+	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build.xml build-api)
+	@echo "====> done building jump api's"
+
+force_jump_build-impl: $(JUMP_DEPENDENCIES)
+	@echo "====> start building jump impl's"
+	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(CVM_ANT_OPTIONS) $(JUMP_ANT_OPTIONS) -f build/build.xml build-impl)
+	$(AT)cp $(JUMP_SHARED_BOOTCLASSESZIP) \
                 $(JUMP_EXECUTIVE_BOOTCLASSESZIP) \
                 $(CVM_LIBDIR)
-	@echo  "<==== done building jump api's and implementation"
+	@echo  "<==== done building jump implementation"
+
+#
+# For a non-romized build we should add JSRs jarfiles to Xbootclasspath
+# for a server cvm instance. After forking the classpath will be inherited by
+# executive and isolates cvm instances.
+# For a romized build all JSR classes are included in cvm executable.
+#
+$(CVM_BINDIR)/runjump: $(JUMP_SCRIPTS_DIR)/runjump
+ifneq ($(CVM_PRELOAD_LIB), true)
+	$(AT)sed -e "s,^ *SERVER_JARFILE=.*$$,&$(JUMP_JSROP_JARS)," $^ > $@
+else
+	$(AT)cp $^ $@
+endif
+	$(AT)chmod 755 $@
+
+$(CVM_BINDIR)/%: $(JUMP_SCRIPTS_DIR)/%
+	$(AT)cp $^ $@
+	$(AT)chmod 755 $@
 
 .PHONY: javadoc-api
 javadoc-api:

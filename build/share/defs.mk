@@ -270,6 +270,7 @@ CVM_TIMESTAMPING	?= true
 CVM_INCLUDE_COMMCONNECTION ?= false
 USE_MIDP	?= false
 USE_JUMP	?= false
+USE_GCI         ?= false
 
 # Some makefiles still reference CVM_INCLUDE_MIDP and CVM_INCLUDE_JUMP,
 # so give them proper values until they are cleaned up.
@@ -764,6 +765,7 @@ CVM_FLAGS += \
 	CVM_INCLUDE_COMMCONNECTION \
 	USE_MIDP \
 	USE_JUMP \
+	USE_GCI \
 	CVM_DUAL_STACK \
 	CVM_SPLIT_VERIFY \
 	CVM_KNI \
@@ -932,6 +934,9 @@ USE_MIDP_CLEANUP_ACTION        = \
 USE_JUMP_CLEANUP_ACTION        = \
 	$(CVM_DEFAULT_CLEANUP_ACTION)    \
 	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
+USE_GCI_CLEANUP_ACTION         = \
+        $(CVM_DEFAULT_CLEANUP_ACTION)    \
+        $(CVM_JAVAC_DEBUG_CLEANUP_ACTION)
 CVM_DUAL_STACK_CLEANUP_ACTION          = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_SPLIT_VERIFY_CLEANUP_ACTION        = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_KNI_CLEANUP_ACTION                 = $(CVM_DEFAULT_CLEANUP_ACTION)
@@ -1048,6 +1053,7 @@ endif
 	$(CVM_ROM_MEMBER_FILTER)
     CVM_MIDPFILTERCONFIG  = $(CVM_LIBDIR)/MIDPFilterConfig.txt
     CVM_MIDPCLASSLIST     = $(CVM_LIBDIR)/MIDPPermittedClasses.txt
+    CVM_MIDPCLASSLIST_FILES += $(CVM_MIDPDIR)/MIDPPermittedClasses.txt
     CVM_MIDPFILTERCONFIGINPUT = $(CVM_MIDPDIR)/MIDPFilterConfig.txt
 
 #
@@ -1157,6 +1163,7 @@ endif
 
 CVM_TESTCLASSES_SRCDIR    = $(CVM_SHAREROOT)/javavm/test
 CVM_CLDCCLASSES_SRCDIR    = $(CVM_SHAREROOT)/classes/cldc
+CVM_VMIMPLCLASSES_SRCDIR  = $(CVM_SHAREROOT)/javavm/classes
 CVM_SHAREDCLASSES_SRCDIR  = $(CVM_SHAREROOT)/classes
 CVM_TARGETCLASSES_SRCDIR  = $(CVM_TARGETROOT)/classes
 
@@ -2061,26 +2068,6 @@ ifeq ($(CVM_GCOV), true)
 CCFLAGS   	+= -fprofile-arcs -ftest-coverage
 endif
 
-# CVM include directories used to be specified with CVM_INCLUDES, and included
-# the -I option. Now they are specified with CVM_INCLUDE_DIRS and do not
-# include the -I option.
-ifdef CVM_INCLUDES
-$(error CVM_INCLUDES is no longer supported. Use CVM_INCLUDE_DIRS and remove the leading "-I".)
-else
-# force an error if referenced in a command line
-CVM_INCLUDES = "Do not reference CVM_INCLUDES"
-endif
-
-# Profile include directories used to be specified with PROFILE_INCLUDES, and 
-# included the -I option. Now they are specified with PROFILE_INCLUDE_DIRS
-# and do not include the -I option.
-ifdef PROFILE_INCLUDES
-$(error PROFILE_INCLUDES is no longer supported. Use PROFILE_INCLUDE_DIRS and remove the leading "-I".)
-else
-# force an error if referenced in a command line
-PROFILE_INCLUDES = "Do not reference PROFILE_INCLUDES"
-endif
-
 # PROFILE_INCLUDE_DIRS is a list of profile specific directories that contains
 # 	the profile specific include paths. These paths should be searched for
 #	include files before searching the base configuration include path.
@@ -2140,6 +2127,14 @@ endif
 
 # include tools component makefile
 include $(TOOLS_DIR)/tools.gmk
+
+# Locate the cdc-com component
+ifeq ($(USE_CDC_COM),true)
+CDC_COM_DIR ?= $(COMPONENTS_DIR)/cdc-com
+ifeq ($(wildcard $(CDC_COM_DIR)/build/share/id_cdc-com.mk),)
+$(error CDC_COM_DIR must point to a directory containing the cdc-com sources: $(CDC_COM_DIR))
+endif
+endif
 
 #
 # Include target makfiles last.

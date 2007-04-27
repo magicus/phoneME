@@ -23,7 +23,7 @@
 #
 # @(#)GNUmakefile	1.2 06/10/10
 #
-ASM_ARCH_FLAGS		= -ARCH 4 -CPU StrongARM1 -32
+ASM_ARCH_FLAGS		= -CPU StrongARM1 -32
 CC_ARCH_FLAGS   	= /MC
 CC_ARCH_FLAGS_FDLIB	= /Op
 # NOTE: we may not need /Od now that /Op is being used. Need to confirm.

@@ -28,7 +28,7 @@
 J2ME_PROFILE_NAME		= CDC
 J2ME_PROFILE_SPEC_VERSION	= 1.1
 
-CVM_BUILD_ID 		= bXX
+CVM_BUILD_ID 		= b18
 CVM_BUILD_NAME		= CVM
 CVM_BUILD_VERSION	= phoneme_advanced_mr2
 
@@ -39,3 +39,5 @@ J2ME_PRODUCT_NAME	= phoneME Advanced
 J2ME_BUILD_VERSION	= $(CVM_BUILD_VERSION)
 J2ME_BUILD_ID		= $(CVM_BUILD_ID)
 
+# override with commercial versioning if present
+-include ../share/id_cdc-com.mk

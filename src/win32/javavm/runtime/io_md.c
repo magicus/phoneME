@@ -388,7 +388,7 @@ CVMioSeek(CVMInt32 fd, CVMInt64 offset, CVMInt32 whence)
         r = -1;
     }
     else {
-        r = ret | (hi << 32);
+        r = ret | ((CVMInt64)hi << 32);
     }
 
     return r;
@@ -639,7 +639,7 @@ CVMioFileSizeFD(CVMInt32 fd, CVMInt64 *size)
     if (lo == 0xFFFFFFFF)
         return -1;
     else {
-        *size = lo | (hi << 32);
+        *size = lo | ((CVMInt64)hi << 32);
         return 0;
     }
 }

@@ -105,9 +105,6 @@ public class DatagramObject extends UniversalOutputStream implements Datagram {
         DatagramObject ref = (DatagramObject)reference;
 	host = ref.host;
 	port = ref.port;
-        /* check to see if the host and port are valid values */
-        if (host == null || port == -1) 
-           throw new IllegalArgumentException("invalid host or port number");
 	dgram.setAddress(ref.dgram.getAddress());
 	dgram.setPort(port);
     }

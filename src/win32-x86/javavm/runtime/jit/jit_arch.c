@@ -109,7 +109,7 @@ static DWORD handleException(struct _EXCEPTION_POINTERS *ep, DWORD code, DWORD *
          * (instruction size == 2) at pc and will subtract 2 bytes
          */
         *(--sp) = pc + 2;
-        ep->ContextRecord->Esp = sp;
+        ep->ContextRecord->Esp = (DWORD)sp;
         ep->ContextRecord->Eip =
            (unsigned long)CVMCCMruntimeThrowNullPointerExceptionGlue;
 #ifdef CVM_JIT_DEBUG
@@ -132,8 +132,8 @@ static DWORD handleException(struct _EXCEPTION_POINTERS *ep, DWORD code, DWORD *
          * Branch to throw null pointer exception glue
          */
         *(--sp) = (CVMUint8*) 0xcafebabe; /* glue code expects a return address on top of stack (rr) */
-        (CVMUint8 *)ep->ContextRecord->Esp = sp;
-        (CVMUint8 *)ep->ContextRecord->Eip =
+        ep->ContextRecord->Esp = (DWORD)sp;
+        ep->ContextRecord->Eip =
            (unsigned long)CVMCCMruntimeThrowNullPointerExceptionGlue;
         return EXCEPTION_CONTINUE_EXECUTION;
 #endif

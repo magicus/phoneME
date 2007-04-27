@@ -109,6 +109,7 @@ ENTRY ( CVMPPCruntimeGCRendezvousNoRetAddrAdjustGlue )
 /* Throw various well known exceptions */
 
 ENTRY ( CVMCCMruntimeThrowNullPointerExceptionGlue )
+CVMCCMruntimeThrowNullPointerExceptionGlueLocal:
 	mflr	r7
 	FIXUP_FRAMES(JFP,r7)
 	lis	r5, HA16(java_lang_NullPointerException_Classblock)
@@ -584,7 +585,7 @@ ENTRY ( CVMCCMruntimeMonitorEnterGlue )
 
         # Make sure that the object is not NULL:
         cmpwi	OBJ, 0
-        beq-	SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlue)
+        beq-	CVMCCMruntimeThrowNullPointerExceptionGlueLocal
 
         /* Setup a lock record and assume the object has not been locked
 	   yet:	 */
@@ -745,7 +746,7 @@ _monenterRecordNotAvailable:
 
         /* Make sure that the object is not NULL */
         cmpwi	OBJ, 0
-        beq-	SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlue)
+        beq-	CVMCCMruntimeThrowNullPointerExceptionGlueLocal
 
         /* Acquire the microlock: */
         li	r0, CVM_MICROLOCK_LOCKED 
@@ -898,7 +899,7 @@ ENTRY ( CVMCCMruntimeMonitorExitGlue )
 
         /* Make sure that the object is not NULL: */
         cmpwi	OBJ, 0
-        beq-	SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlue)
+        beq-	CVMCCMruntimeThrowNullPointerExceptionGlueLocal
 
         /* Check to see if the object is locked with a fastlock: */
         lwz	LOCKREC, OFFSET_CVMObjectHeader_various32(OBJ) /* Get obits */
@@ -1048,7 +1049,7 @@ _monexitFastTryUnlockFailed:
 
         /* Make sure that the object is not NULL */
         cmpwi	OBJ, 0
-        beq-	SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlue)
+        beq-	CVMCCMruntimeThrowNullPointerExceptionGlueLocal
 
         /* Acquire the microlock: */
         li	r0, CVM_MICROLOCK_LOCKED 
