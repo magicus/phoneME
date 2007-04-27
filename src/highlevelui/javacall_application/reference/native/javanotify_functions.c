@@ -559,21 +559,38 @@ void javanotify_incoming_sms(javacall_sms_encoding msgType,
 /*
  * See javacall_mms.h for description
  */
-void javanotify_incoming_mms_singlecall(
-                char* fromAddress, char* appID, char* replyToAppID,
+void javanotify_incoming_mms(
+        char* fromAddress, char* appID, char* replyToAppID,
         int bodyLen, unsigned char* body) {
     midp_jc_event_union e;
-        MmsMessage* mms;
+    MmsMessage* mms;
 
     e.eventType = MIDP_JC_EVENT_MMS_INCOMING;
 
-        mms = jsr205_mms_new_msg(fromAddress, appID, replyToAppID, bodyLen, body);
+    mms = jsr205_mms_new_msg(fromAddress, appID, replyToAppID, bodyLen, body);
 
-        e.data.mmsIncomingEvent.stub = (int)mms;
+    e.data.mmsIncomingEvent.stub = (int)mms;
 
     midp_jc_event_send(&e);
     return;
 }
+
+void javanotify_incoming_mms_available(javacall_handle handle, char* appID) {
+
+    midp_jc_event_union e;
+    MmsMessage* mms;
+
+    e.eventType = MIDP_JC_EVENT_MMS_INCOMING;
+
+    //bodyLen=-1
+    mms = jsr205_mms_new_msg("", appID, "", -1, (char*)handle);
+
+    e.data.mmsIncomingEvent.stub = (int)mms;
+
+    midp_jc_event_send(&e);
+    return;
+}
+
 #endif
 
 #ifdef ENABLE_JSR_120
@@ -650,14 +667,14 @@ void javanotify_sms_send_completed(javacall_sms_sending_result result,
  *         <tt>JAVACALL_MMS_CALLBACK_SEND_FAILED</tt> on failure
  * @param handle of available MMS
  */
-void javanotify_mms_send_completed(javacall_mms_sending_result result,
+void javanotify_mms_send_completed(javacall_result result,
                                    javacall_handle handle) {
     midp_jc_event_union e;
 
     e.eventType = MIDP_JC_EVENT_MMS_SENDING_RESULT;
     e.data.mmsSendingResultEvent.handle = (void *) handle;
-    e.data.mmsSendingResultEvent.result
-        = JAVACALL_MMS_SENDING_RESULT_SUCCESS == result ? 0 : -1;
+    e.data.mmsSendingResultEvent.result = 
+        (JAVACALL_OK == result) ? WMA_OK : WMA_ERR;
 
     midp_jc_event_send(&e);
     return;
