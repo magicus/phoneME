@@ -100,11 +100,13 @@ JAVACARD_CLASSES = $(MIDP_OUTPUT_DIR)/javacard_classes
 
 # Tools and applets
 #
-JAVAC ?= JAVAC_CMD
+JSR177_JAVAC ?= $(JAVAC_CMD)
 
 ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
 all_tools :: $(JAVACARD_CLASSES) $(BINDIR) $(JCRMIC_TOOL) $(ACL_DATA_DIRS) \
              $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java $(SIM_TOOL)
+
+JSR177_JAVA ?= $(JAVA_CMD)
 else
 all_tools :: $(JAVACARD_CLASSES) $(BINDIR) $(JCRMIC_TOOL) $(ACL_DATA_DIRS) \
              $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java 
