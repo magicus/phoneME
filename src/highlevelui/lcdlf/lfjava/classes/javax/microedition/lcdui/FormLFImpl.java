@@ -223,7 +223,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * Notifies look&feel object of an item inserted in the corresponding
      * Form.
      * 
-     * @param itemNum - the index of the deleted item
+     * @param itemNum - the index of the inserted item
      * @param item - the item inserted in the corresponding Form
      *
      */
@@ -250,6 +250,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
 
         if (traverseIndex >= itemNum) {
             traverseIndex++;
+        } else if (traverseIndex == -1) {
+            traverseIndex = itemNum;
         }
 
         lRequestInvalidate();
