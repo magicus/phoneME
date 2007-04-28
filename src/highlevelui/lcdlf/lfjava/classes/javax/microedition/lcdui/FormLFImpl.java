@@ -250,6 +250,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
 
         if (traverseIndex >= itemNum) {
             traverseIndex++;
+        } else if (traverseIndex == -1) {
+            traverseIndex = itemNum;
         }
 
         lRequestInvalidate();
