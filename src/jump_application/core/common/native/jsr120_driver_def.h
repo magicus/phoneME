@@ -25,7 +25,7 @@
 #ifndef _JSR120_DRIVER_DEF_H
 #define _JSR120_DRIVER_DEF_H
 
-//#define NM_DEBUG
+#define NM_DEBUG
 extern char *prog_name;
 #ifdef NM_DEBUG
 #define LOG(str)  do { \

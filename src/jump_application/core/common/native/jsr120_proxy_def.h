@@ -116,7 +116,7 @@ type_ D##name_ args_ { \
     m__ = jumpMessageSendSync(server_pid__, mm__, 0, &code__); \
     LOG(#function_ ": after send"); \
     /* jumpMessageFreeOutgoing(mm__); */ \
-    if (code__ != 0 || m__ == NULL) { \
+    if (code__ != JUMP_SUCCESS || m__ == NULL) { \
         LOG("cannot create message"); \
         goto err; \
     } \
@@ -131,8 +131,8 @@ type_ D##name_ args_ { \
 #define INVOKE_AND_END(function_, args_) \
     jumpMessageSendAsync(server_pid__, mm__, &code__);\
     /*jumpMessageFreeOutgoing(mm__);*/ \
-    if (code__ != 0) {\
-        LOG("cannot create message"); \
+    if (code__ != JUMP_SUCCESS) {\
+        LOG1("cannot create message, error=%d", code__); \
         goto err; \
     } \
     END_VOID()

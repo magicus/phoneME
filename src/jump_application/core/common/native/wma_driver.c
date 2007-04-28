@@ -49,6 +49,7 @@ char *prog_name = "isolate";
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_jump_driver_wma_Listener_nativeStartListener) {
+    JUMPMessageStatusCode code;
     static const JUMPPlatformCString msgType = "jsrop/wma";
     static MessageListener *listeners[] = {
         jsr120_jumpcallback_listener
@@ -58,7 +59,10 @@ KNIDECL(com_sun_jump_driver_wma_Listener_nativeStartListener) {
     };
     prog_name = "listener";
     CVMD_gcSafeExec(_ee, {
-        wma_listener(msgType, listeners, sizeof listeners / sizeof listeners[0]);
+        jumpMessageQueueCreate(msgType, &code);
+        if (code == JUMP_SUCCESS) {
+            wma_listener(msgType, listeners, sizeof listeners / sizeof listeners[0]);
+        }
     });
     KNI_ReturnVoid();
 }
@@ -71,6 +75,7 @@ void wmaDriver(int argc, char **argv) {
 #endif
     };
     prog_name = "driver";
+    init_jsr120();
     wma_listener(msgType, listeners, sizeof listeners / sizeof listeners[0]);
 }
 
@@ -80,7 +85,7 @@ static void wma_listener(JUMPPlatformCString msgType,
     JUMPMessageStatusCode code;
 
     in = jumpMessageWaitFor(msgType, 0, &code);
-    while (in != NULL) {
+    while (code == JUMP_SUCCESS && in != NULL) {
         int i;
         for (i = 0; i < listener_cnt; i++) {
             if ((*listeners[i])(in) != 0) {
@@ -89,7 +94,6 @@ static void wma_listener(JUMPPlatformCString msgType,
         }
         in = jumpMessageWaitFor(msgType, 0, &code);
     } 
-    return;
 }
 
 /**

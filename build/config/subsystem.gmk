@@ -151,7 +151,7 @@ MODULE_JSR_120_CBS_JAVA_FILES = \
 
 # Java files for the (wmatool) module
 #
-MODULE_TOOL_WMATOOL_JAVA_FILES = \
+MODULE_TOOL_WMATOOL_JAVA_FILES += \
     $(JSR_120_GENERATED_DIR)/classes/com/sun/wma/TCKTest.java \
     $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/wma/api/server/CBSServer.java \
     $(JSR_120_DIR)/src/share/tool/wmatool/classes/com/sun/tck/wma/BinaryMessage.java \
@@ -277,6 +277,7 @@ EXTRA_INCLUDES		+= $(SUBSYSTEM_JSR_120_EXTRA_INCLUDES)
 JSR_120_TOOLS_CLASS_DIR = $(JSR_120_BUILD_DIR)/tools_classes
 JSR_120_CLASSBINDIR = $(JSR_120_BUILD_DIR)/classes
 JSR_120_BINDIR = $(JSR_120_BUILD_DIR)/bin
+JSR_120_TOOLS_CLASSPATH = $(JSR_120_BUILD_DIR)/classes
 
 WMATOOL_MAIN_CLASS = com.sun.wma.TCKTest
 WMATOOL_MANIFEST_FILE = $(JSR_120_TOOLS_CLASS_DIR)/WMATool.manifest
@@ -293,13 +294,13 @@ WMATOOL_CLASS_DIRS += \
 
 all_tools :: $(WMATOOL_JAR_FILE)
 
-$(WMATOOL_JAR_FILE): $(TOOLS_CLASS_DIR) $(MODULE_TOOL_WMATOOL_JAVA_FILES) $(WMATOOL_MANIFEST_FILE)
+$(WMATOOL_JAR_FILE): $(JSR_120_TOOLS_CLASS_DIR) $(MODULE_TOOL_WMATOOL_JAVA_FILES) $(WMATOOL_MANIFEST_FILE)
 	@echo " ... building WMATool " $(LOG)
 	@echo +++ $(JAVAC_CMD) -g:none -d $(JSR_120_TOOLS_CLASS_DIR) \
-		-classpath "$(TOOLS_CLASSPATH)" \
+		-classpath "$(JSR_120_TOOLS_CLASSPATH)" \
 		$(MODULE_TOOL_WMATOOL_JAVA_FILES) $(LOG_ONLY)
 	@($(JAVAC_CMD) -g:none -d $(JSR_120_TOOLS_CLASS_DIR) \
-		-classpath "$(TOOLS_CLASSPATH)" \
+		-classpath "$(JSR_120_TOOLS_CLASSPATH)" \
 		$(MODULE_TOOL_WMATOOL_JAVA_FILES)) $(LOG)
 	@(mkdir -p $(WMATOOL_CLASS_OUTPUT_DIRS)) $(LOG)
 	@(cp $(JSR_120_CLASSBINDIR)/com/sun/midp/io/j2me/sms/TextEncoder.class \
@@ -310,8 +311,7 @@ $(WMATOOL_JAR_FILE): $(TOOLS_CLASS_DIR) $(MODULE_TOOL_WMATOOL_JAVA_FILES) $(WMAT
 		WMATool.manifest \
 		$(WMATOOL_CLASS_DIRS) $(LOG_ONLY)
 	@(cd $(JSR_120_TOOLS_CLASS_DIR); $(JAR_CMD) cfm WMATool.jar \
-		WMATool.manifest com/sun/midp/io/j2me/sms \
-		com/sun/wma com/sun/tck) $(LOG)
+		WMATool.manifest $(WMATOOL_CLASS_DIRS)) $(LOG)
 	@(cp -f $(JSR_120_TOOLS_CLASS_DIR)/WMATool.jar $(WMATOOL_JAR_FILE)) $(LOG)
 
 $(WMATOOL_MANIFEST_FILE): $(JSR_120_TOOLS_CLASS_DIR)

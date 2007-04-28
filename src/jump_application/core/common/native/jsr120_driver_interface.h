@@ -266,6 +266,7 @@ DECL_ARG(SmsMessage *, sms)
 ARG(Int, sms)
 INVOKE_AND_END(jsr120_sms_pool_add_msg, (sms))
 
+/*
 // javanotify_incoming_sms()
 START_VOID(javanotify_incoming_sms, 
         (javacall_sms_encoding   msgType,
@@ -317,7 +318,7 @@ INVOKE_VOID(javanotify_incoming_cbs,
 		              msgBuffer,
 		              msgBufferLen))
 END_VOID()
-
+*/
 END_INTERFACE()
 
 DECL_FREE_FUNCTION(jsr120_cbs_delete_msg, CbsMessage*)

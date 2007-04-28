@@ -32,7 +32,7 @@ int jsr##jsrNo_##_jump##name_##_listener(JUMPMessage m__) { \
     unsigned char par_buf__[2 * JUMP_MESSAGE_BUFFER_SIZE]; \
     unsigned char *par_buf_ptr__ = par_buf__; \
     JUMPOutgoingMessage mm__ = jumpMessageNewOutgoingByRequest(m__, &code__); \
-    if (mm__ == NULL) { \
+    if (code__ != JUMP_SUCCESS || mm__ == NULL) { \
         goto nomem_err; \
     } \
     jumpMessageReaderInit(&r__, m__); \
@@ -72,7 +72,7 @@ err: \
     client_list__[i].client_id1 = (int)(clientMsId_); \
     client_list__[i].client_id2 = (int)(clientHandle_); \
     if ((type_) == WMADRIVER_MMS_CLIENT) { \
-        char *key = strdup(clientKey_); \
+        char *key = strdup((char*)clientKey_); \
         if (key == NULL) { \
             goto err; \
         } \
@@ -97,7 +97,7 @@ err: \
         for (i = 0; i < client_cnt__; i++) { \
             if (client_list__[i].type == WMADRIVER_MMS_CLIENT && \
                     client_list__[i].pid == pid && \
-                    !strcmp((char*)client_list__[i].key, (clientKey_))) { \
+                    !strcmp((char*)client_list__[i].key, (char*)(clientKey_))) { \
                 client_list__[i].pid = -1; \
                 free((char*)client_list__[i].key); \
                 client_list__[i].key = 0; \
