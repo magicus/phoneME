@@ -81,7 +81,7 @@ endef
 # component directory but included in JSR API specification
 # makeExtraJar(extraJarFileName,jsrApiClassesList,jsrClassesDir,libJars,jsrExtraClassesDir)
 define makeExtraJar
-	for class in $(2); do if !(test -r $(3)/$$class); then \
+	$(AT)for class in $(2); do if !(test -r $(3)/$$class); then \
 	    for jar in $(4); do if $(UNZIP) -l $$jar $$class | grep "$$class" >/dev/null; then \
 	        $(UNZIP) -qo $$jar $$class -d $(5); break; \
 	    fi; done; \
