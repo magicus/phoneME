@@ -47,8 +47,32 @@ class RemoteStubCreation {
      */
     static RemoteStub createStub(String className) throws ClassNotFoundException,
                      IllegalAccessException, InstantiationException {
+        
+        /* 
+         * IMPL_NOTE Thread.currentThread().getContextClassLoader() method shall be
+         * used in future
+         */      
+
+        ClassLoader classLoader = MIDPConfig.getMIDletClassLoader();
+
+        if (classLoader == null) {
+            Class clazz;
+            
+            for (int i = 0; ; i++) {
+                clazz = CVM.getCallerClass(i);
+                
+                if (clazz == null) {
+                    throw new IllegalStateException("Application's class loader was not found");
+                }
+                
+                classLoader = CVM.getCallerClass(i).getClassLoader();
+                if (classLoader instanceof CDCAppClassLoader) {
+                    break;
+                }
+            }
+        }
 
         return (RemoteStub)
-               (Class.forName(className, true, CVM.getCallerClass(7).getClassLoader()).newInstance());
+            (Class.forName(className, true, classLoader).newInstance());
     }
 }
