@@ -928,7 +928,7 @@ class ChoiceGroupPopupLFImpl extends ChoiceGroupLFImpl {
                 int bottom = sLF.viewport[HEIGHT] - contentBounds[HEIGHT] - top;
                 int x = getInnerBounds(X) - sLF.viewable[X] + contentBounds[X] +
                     getCurrentDisplay().getWindow().getBodyAnchorX();
-                int y = top + getCurrentDisplay().getWindow().getBodyAnchorX();
+                int y = top + getCurrentDisplay().getWindow().getBodyAnchorY();
 
                 popupLayer.show(x, y,
                                 contentBounds[WIDTH], contentBounds[HEIGHT],
