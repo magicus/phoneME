@@ -27,7 +27,11 @@
 package com.sun.io.j2me.jcrmi;
 
 import javax.microedition.jcrmi.RemoteStub;
+
 import sun.misc.CVM;
+import sun.misc.MIDletClassLoader;
+import sun.misc.MIDPConfig;
+import sun.misc.CDCAppClassLoader;
 
 /**
  * Creation of the Remote stub object.
