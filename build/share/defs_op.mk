@@ -49,8 +49,8 @@ INCLUDED_JSROP_NUMBERS = $(patsubst USE_JSR_%=true,%,\
               $(filter %true, $(JSROP_OP_FLAGS)))
 
 # Create a list of a JSR jar files we want to build.
-JSROP_BUILD_JARS = $(foreach jsr_number,$(INCLUDED_JSROP_NUMBERS),\
-           $(JSROP_LIB_DIR)/jsr$(jsr_number).jar)
+JSROP_BUILD_JARS = $(filter-out $(JSROP_LIB_DIR)/jsr205.jar,$(foreach jsr_number,$(INCLUDED_JSROP_NUMBERS),\
+           $(JSROP_LIB_DIR)/jsr$(jsr_number).jar))
 
 # Variable which is passed to MIDP and blocks JSRs building from MIDP; looks like:
 # USE_JSR_75=false USE_JSR_82=false USE_JSR_120=false ...
@@ -76,7 +76,7 @@ HIDE_JSROP_NUMBERS = $(patsubst HIDE_JSR_%=true,%,\
 endif
 
 # The list of JSR jar files we want to hide.
-JSROP_HIDE_JARS = $(subst $(space),:,$(foreach jsr_number,$(HIDE_JSROP_NUMBERS),$(JSROP_LIB_DIR)/jsr$(jsr_number).jar))
+JSROP_HIDE_JARS = $(subst $(space),:,$(filter-out $(JSROP_LIB_DIR)/jsr205.jar,$(foreach jsr_number,$(HIDE_JSROP_NUMBERS),$(JSROP_LIB_DIR)/jsr$(jsr_number).jar)))
 
 # Generate constants classes list for the given xml file
 # generateConstantList(generatedDirectory, constantsXmlFile)
@@ -135,6 +135,16 @@ ifeq ($(wildcard $(JSR_82_MAKE_FILE)),)
 $(error JSR_82_DIR must point to a directory containing JSR 82 sources)
 endif
 include $(JSR_82_MAKE_FILE)
+endif
+
+# Include JSR 205
+ifeq ($(USE_JSR_205), true)
+export JSR_205_DIR ?= $(COMPONENTS_DIR)/jsr205
+JSR_205_MAKE_FILE = $(JSR_205_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_205_MAKE_FILE)),)
+$(error JSR_205_DIR must point to a directory containing JSR 205 sources)
+endif
+include $(JSR_205_MAKE_FILE)
 endif
 
 # Include JSR 120
@@ -205,16 +215,6 @@ ifeq ($(wildcard $(JSR_184_MAKE_FILE)),)
 $(error JSR_184_DIR must point to a directory containing JSR 184 sources)
 endif
 include $(JSR_184_MAKE_FILE)
-endif
-
-# Include JSR 205
-ifeq ($(USE_JSR_205), true)
-export JSR_205_DIR ?= $(COMPONENTS_DIR)/jsr205
-JSR_205_MAKE_FILE = $(JSR_205_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
-ifeq ($(wildcard $(JSR_205_MAKE_FILE)),)
-$(error JSR_205_DIR must point to a directory containing JSR 205 sources)
-endif
-include $(JSR_205_MAKE_FILE)
 endif
 
 # Include JSR 211
