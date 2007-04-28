@@ -80,8 +80,10 @@ enum {
     ID_jsr120_cbs_delete_msg,
     ID_jsr120_cbs_pool_add_msg,
 
+    ID_KILL_SHMEM = 0x200,
+
     // sms
-    ID_jsr120_is_sms_midlet_port_registered = 0x200,
+    ID_jsr120_is_sms_midlet_port_registered = 0x300,
     ID_jsr120_register_sms_midlet_port,
     ID_jsr120_unregister_sms_midlet_port,
     ID_jsr120_sms_unblock_thread,
@@ -94,7 +96,7 @@ enum {
     ID_jsr120_sms_delete_msg,
     ID_jsr120_sms_pool_add_msg,
     
-    ID_javanotify_incoming_sms = 0x300,
+    ID_javanotify_incoming_sms = 0x400,
     ID_javanotify_incoming_cbs
 };
 

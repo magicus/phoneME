@@ -22,8 +22,6 @@
  * information or have any questions. 
  */
 
-#include "./jsr120_driver_def.h"
-
 static const JUMPPlatformCString driverMessageType__ = "native/wmaDriver";
 static const JUMPPlatformCString jsropMessageType__ = "jsrop/wma";
 
@@ -170,18 +168,19 @@ type_ D##name_ args_ { \
     } else { \
         name_ = NULL; \
     } \
-    LOG("STRUC_SIZE: " #type_ " " #name_ " " #size_ " " #argcnt_ ); \
+    LOG1("STRUC_SIZE: " #type_ " " #name_ " " #size_ " " #argcnt_ "=%d", size__); \
 }
 
 #define OUT_ARG(type_, arg_)    { \
     type##type_ tmp_arg__ = (type##type_)jumpMessageGet##type_(&r__); \
     *(arg_) = tmp_arg__; \
-    LOG("OUT_ARG: " #type_ " " #arg_); \
+    LOG2("OUT_ARG: " #type_ " " #arg_ "=(%d 0x%X)", (int)tmp_arg__, (int)tmp_arg__); \
 }
 
 #define OUT_ARG_ARRAY(type_, ptr_, arrlen_)    \
     LOG("OUT_ARG_ARRAY: " #type_ " " #ptr_ " " #arrlen_); \
-    jumpMessageGetBytesInto(&r__, (int8*)ptr_, (arrlen_) * sizeof *(ptr_)); 
+    jumpMessageGetBytesInto(&r__, (int8*)ptr_, (arrlen_) * sizeof *(ptr_)); \
+    LOG_ARRAY(ptr_, arrlen_); 
 
 #define OUT_LOCAL_STRUC(type_, struc_, field_)    \
     LOG("OUT_LOCAL_STRUC: " #type_ " " #struc_ " " #field_); \
@@ -197,7 +196,6 @@ type_ D##name_ args_ { \
         if (len__ == -1) { \
             (struc_)->field_ = NULL; \
         } else { \
-            (struc_)->field_ = struc_##_ptr; \
             OUT_LOCAL_STRUC_ARRAY_INTERNAL(Byte, struc_, field_, len__) \
             *struc_##_ptr++ = '\0'; \
             ALIGN(struc_##_ptr); \
@@ -205,7 +203,7 @@ type_ D##name_ args_ { \
     }
 
 #define OUT_LOCAL_STRUC_ARRAY(type_, struc_, field_, fieldlen_)    \
-    LOG("OUT_LOCAL_STRUC: " #type_ " " #struc_ " " #field_ " " #fieldlen_); \
+    LOG("OUT_LOCAL_STRUC_ARRAY: " #type_ " " #struc_ " " #field_ " " #fieldlen_); \
     if (struc_ != NULL) { \
         OUT_LOCAL_STRUC_ARRAY_INTERNAL(type_, struc_, field_, fieldlen_) \
         ALIGN(struc_##_ptr); \
@@ -213,15 +211,47 @@ type_ D##name_ args_ { \
 
 
 #define OUT_LOCAL_STRUC_ARRAY_INTERNAL(type_, struc_, field_, fieldlen_)    \
-    struc_->field_ = (void*)struc_##_ptr; \
-    struc_##_ptr += fieldlen_ * sizeof (type##type_); \
-    jumpMessageGetBytesInto(&r__, (int8*)(struc_)->field_, (fieldlen_) * sizeof *((struc_)->field_)); 
+    (struc_)->field_ = (void*)struc_##_ptr; \
+    LOG1("OUT_LOCAL_STRUC_ARRAY_INTERNAL: " #fieldlen_ "=%d", (fieldlen_)); \
+    LOG1("OUT_LOCAL_STRUC_ARRAY_INTERNAL: size=%d", (fieldlen_) * sizeof *((struc_)->field_)); \
+    if ((fieldlen_) > 0) {\
+        struc_##_ptr += (fieldlen_) * sizeof (type##type_); \
+        jumpMessageGetBytesInto(&r__, (int8*)(struc_)->field_, (fieldlen_) * sizeof *((struc_)->field_)); \
+        LOG_ARRAY((int8*)(struc_)->field_, (fieldlen_) * sizeof *((struc_)->field_)); \
+    }
 
 #define OUT_LOCAL(type_, arg_)    \
     OUT_ARG(type_, &arg_)
 
 #define OUT_LOCAL_ARRAY(type_, ptr_, arrlen_)    \
     OUT_ARG_ARRAY(type_, ptr_, arrlen_)
+
+#define OUT_SHMEM(buffer_, size_) { \
+        char name[MAX_SHMEM_NAME_LEN + 1]; \
+        int namelen; \
+        CVMSharedMemory *smh; \
+        char *mem; \
+        JUMPOutgoingMessage kill; \
+        namelen = jumpMessageGetInt(&r__); \
+        jumpMessageGetBytesInto(&r__, name, namelen); \
+        *(name + namelen) = '\0'; \
+        smh = CVMsharedMemOpen(name); \
+        if (smh == NULL) { \
+            goto err; \
+        } \
+        mem = CVMsharedMemGetAddress(smh); \
+        if (mem == NULL) { \
+            goto err; \
+        } \
+        size_ = CVMsharedMemGetSize(smh); \
+        memcpy(buffer_, mem, size_); \
+        CVMsharedMemClose(smh); \
+        kill = jumpMessageNewOutgoingByType(driverMessageType__, &code__); \
+        jumpMessageAddShort(kill, ID_KILL_SHMEM); \
+        jumpMessageAddInt(kill, namelen); \
+        jumpMessageAddBytesFrom(kill, name, namelen); \
+        jumpMessageSendAsync(server_pid__, kill, &code__); \
+    }
 
 #define END_VOID() \
         return; \
@@ -234,14 +264,14 @@ err: \
 }
     
 #define END(okvalue_, errvalue_) \
-        LOG1("return value=%d", (int)(okvalue_)); \
+        LOG2("return ok %s=%d", #okvalue_, (int)(okvalue_)); \
         return okvalue_; \
     } \
 err: \
     if (server_pid__.processId == driver) { \
         driver = -1; \
     } \
-    LOG1("return error value=%d", (int)(errvalue_)); \
+    LOG2("return error %s=%d", #errvalue_, (int)(errvalue_)); \
     return errvalue_; \
 }
 

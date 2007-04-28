@@ -50,13 +50,40 @@ extern char *prog_name;
         __FUNCTION__, __LINE__, _b); \
     fflush(stderr); \
 } while (0)
-
 #define LOG3(fmt, par1, par2, par3)  do { \
     char _b[1000]; \
     snprintf(_b, sizeof _b, (fmt), (par1), (par2), (par3)); \
     _b[sizeof _b - 1] = '\0'; \
     fprintf(stderr, "[%s-%d] (%s:%d): %s\n", prog_name, getpid(), \
         __FUNCTION__, __LINE__, _b); \
+    fflush(stderr); \
+} while (0)
+#define LOG_ARRAY(arr_, arrlen_)  do { \
+    char *b_, *p_; \
+    int i, left_ = sizeof b_ - 1; \
+    b_ = malloc(10000); \
+    if (b_ == NULL) { \
+        break; \
+    } \
+    p_ = b_; \
+    for (i = 0; i < (arrlen_); i++) { \
+        int len_, val_ = (arr_)[i]; \
+        if (sizeof (arr_)[0] == 1) { \
+            val_ &= 0xff; \
+        } \
+        len_ = snprintf(p_, left_, " [%Xh %d %c]", val_, val_, \
+            (val_ >= ' ' && val_ <= 127 ? val_ : '?')); \
+        if (len_ < 0) { \
+            break; \
+        } \
+        p_ += len_; \
+        left_ -= len_; \
+    } \
+    *p_ = '\0'; \
+    b_[10000 - 1] = '\0'; \
+    fprintf(stderr, "[%s-%d] (%s:%d): len=%d, \"%s\"\n", prog_name, getpid(), \
+        __FUNCTION__, __LINE__, (arrlen_), b_); \
+    free(b_); \
     fflush(stderr); \
 } while (0)
 
@@ -76,10 +103,6 @@ extern char *prog_name;
 #include <jsr120_cbs_protocol.h>
 #include <jsr120_sms_listeners.h>
 #include <jsr120_cbs_listeners.h>
-#ifdef ENABLE_JSR_205
-#include <jsr120_sms_protocol.h>
-#include <jsr120_sms_listeners.h>
-#endif
 
 #include <app_package.h>
 
@@ -87,6 +110,7 @@ extern char *prog_name;
 #include <porting/JUMPProcess.h>
 #include <porting/JUMPTypes.h>
 #include <jsr120_jumpdriver.h>
+#include <shared_memory.h>
 
 #include <javacall_sms.h>
 #include <javacall_cbs.h>

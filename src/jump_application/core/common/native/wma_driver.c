@@ -160,7 +160,7 @@ void javanotify_incoming_cbs(
     INVOKE_REMOTELY_VOID(jsr120_cbs_pool_add_msg, (cbs));
 }
 
-#include "./jsr120_srv_def.h"
+#include "jsr120_driver_def.h"
 
 struct WMADRIVER_CLIENTS client_list__[MAX_CLIENTS];
 int client_cnt__ = 0;

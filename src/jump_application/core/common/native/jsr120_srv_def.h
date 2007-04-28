@@ -22,8 +22,6 @@
  * information or have any questions. 
  */
 
-#include "./jsr120_driver_def.h"
-
 #define START_INTERFACE(jsrNo_, name_)   \
 int jsr##jsrNo_##_jump##name_##_listener(JUMPMessage m__) { \
     short id__; \
@@ -41,6 +39,15 @@ int jsr##jsrNo_##_jump##name_##_listener(JUMPMessage m__) { \
     switch (id__) { 
 
 #define END_INTERFACE() \
+    case ID_KILL_SHMEM: { \
+            char name[MAX_SHMEM_NAME_LEN + 1]; \
+            int namelen; \
+            namelen = jumpMessageGetInt(&r__); \
+            jumpMessageGetBytesInto(&r__, name, namelen); \
+            *(name + namelen) = '\0'; \
+            CVMsharedMemDestroy(CVMsharedMemOpen(name)); \
+        } \
+        return 1; \
     default: \
         return 0; \
     } \
@@ -181,6 +188,8 @@ err: \
         arg_ = NULL; \
     } else { \
         ARG_ARRAY_INTERNAL(arg_, len__) \
+        *par_buf_ptr__++ = '\0'; \
+        ALIGN(par_buf_ptr__); \
     } \
 }
     
@@ -244,7 +253,8 @@ err: \
 
 #define OUT_LOCAL_STRUC_ARRAY(type_, struc_, field_, arrlen_)    \
     if (struc_ != NULL) { \
-        jumpMessageAddBytesFrom(mm__, (int8*)((struc_)->field_), (arrlen_ * sizeof *((struc_)->field_)));\
+        LOG_ARRAY((int8*)((struc_)->field_), ((arrlen_) * sizeof *((struc_)->field_))); \
+        jumpMessageAddBytesFrom(mm__, (int8*)((struc_)->field_), ((arrlen_) * sizeof *((struc_)->field_)));\
     }
 
 #define OUT_LOCAL(type_, ptr_)    \
@@ -252,6 +262,27 @@ err: \
 
 #define OUT_LOCAL_ARRAY(type_, arg_, arrlen_)    \
     jumpMessageAddBytesFrom(mm__, (int8*)(arg_), (arglen_ * sizeof *(arg_)));
+
+#define OUT_SHMEM(buffer_, size_) { \
+        static int g_count = 0; \
+        char name[MAX_SHMEM_NAME_LEN + 1]; \
+        int namelen; \
+        CVMSharedMemory *smh; \
+        char *mem; \
+        smh = CVMsharedMemCreate(name, size_); \
+        if (smh == NULL) { \
+            goto err; \
+        } \
+        mem = CVMsharedMemGetAddress(smh); \
+        if (mem == NULL) { \
+            goto err; \
+        } \
+        memcpy(mem, buffer_, size_); \
+        sprintf(name, "WMA-%04x", g_count++); \
+        namelen = strlen(name); \
+        jumpMessageAddInt(mm__, namelen); \
+        jumpMessageAddBytesFrom(mm__, name, namelen); \
+    }
 
 #define END_VOID() \
         break; \

@@ -22,6 +22,7 @@
  * information or have any questions. 
  */
 
+#include "jsr120_driver_def.h"
 #include "./jsr120_srv_def.h"
 
 extern struct WMADRIVER_CLIENTS client_list__[];
