@@ -367,12 +367,18 @@ ifeq ($(JSR_177_APDU_MANAGER),carddevice)
     endif
 endif
 
+# Definition for the build directory
+#
+JSR_177_BUILD_DIR       = $(JSROP_BUILD_DIR)/jsr177
+JSR_177_GENERATED_DIR   = $(JSR_177_BUILD_DIR)/generated
+
 # Java card constants
 #
 JCRMIC_PROPERTIES = com/sun/satsa/jcrmic/jcrmic.properties
 JCRMIC_MANIFEST_FILE = jcrmic.manifest
 JCRMIC_ARCHIVE = jcrmic.jar
 JCRMIC_TOOL = $(BINDIR)/$(JCRMIC_ARCHIVE)
+SIM_TEST    = $(JSR_177_BUILD_DIR)/.sim_test
 
 ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
     ifndef JC_DIR
@@ -392,7 +398,7 @@ ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
     JC_EEPROM_IMAGE = $(BINDIR)/jc_eeprom_image
     SAT_SCRIPT_PATH = $(JAVACARD_CLASSES)/jc_script
     
-    SIM_TOOL = sim_test $(APPLETS) $(JC_EEPROM_IMAGE)
+    SIM_TOOL = $(SIM_TEST) $(APPLETS) $(JC_EEPROM_IMAGE)
 endif
 
 # i3test for jsr 177
@@ -433,11 +439,6 @@ JPP_DEFS += -DENABLE_JSR_177
 #
 ROMGEN_INCLUDE_PATHS += $(JSR_177_DIR)/src/share/config
 ROMGEN_CFG_FILES     += satsa_rom.cfg
-
-# Definition for the build directory
-#
-JSR_177_BUILD_DIR       = $(JSROP_BUILD_DIR)/jsr177
-JSR_177_GENERATED_DIR   = $(JSR_177_BUILD_DIR)/generated
 
 ifeq ($(TARGET_VM), cldc)
 include $(JSR_177_DIR)/src/cldc_application/config/subsystem.gmk
@@ -583,13 +584,14 @@ define applets
 	$(call simtoolkit,$@,$(AT)mkdir -p $(JAVACARD_CLASSES)/api_export_files/$(SIM_TOOLKIT_PATH)/javacard/)
 	$(call simtoolkit,$@,$(AT)cp $(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.exp $(JAVACARD_CLASSES)/api_export_files/$(SIM_TOOLKIT_PATH)/javacard/)
 endef
- 
-sim_test:
+
+$(SIM_TEST):
 	@echo " ... Checking Java Card Development Kit"
 	$(if $(shell ($(JC_DIR)/bin/cref -version 2>/dev/null | \
 	              grep "[Vv]ersion" | grep "2\.2\.1" > /dev/null); \
 	             if test $$? -ne 0; then echo "Error"; fi), \
 	    $(error JC_DIR points to wrong Java Card Development Kit directory: $(JC_DIR)))
+	$(AT)touch $@
 
 $(APPLETS): 
 	$(call applets,$@,$^)
@@ -635,7 +637,7 @@ JSROP_NATIVE_LIBS    += $(JSR_177_NATIVE_LIB)
 JSR_177_API_CLASSLIST = $(JSR_177_DIR)/build/satsa_api.txt
 JSR_177_API_CLASSES   = $(call readClassList, $(JSR_177_API_CLASSLIST))
 JSR_177_EXTRA_JAR     = $(JSROP_LIB_DIR)/$(JSR_177_LIB_NAME)_extras.jar
-#JSROP_EXTRA_JARS     += $(JSR_177_EXTRA_JAR)
+JSROP_EXTRA_JARS     += $(JSR_177_EXTRA_JAR)
 
 CVM_INCLUDE_JAVACALL  = true
 
