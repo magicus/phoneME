@@ -205,25 +205,12 @@ public class SlotFactory {
                 throw new IllegalArgumentException("Slot does not exist");
             }
 
-            if (slots[slot] != null) {
-                return slots[slot].isSAT();
-            } else {
-                /* Find device for the slot */
-                CardDevice device = null;
-                for (int i = 0; i < deviceRecords.length; i++) {
-                    if (deviceRecords[i].device.checkSlotNumber(slot)) {
-                        device = deviceRecords[i].device;
-                        break;
-                    }
-                }
-
-                if (device == null) {
-                    /* Should not be here, paranoic check */
-            throw new IllegalArgumentException("Slot's device does not exist");
-                }
-                    
-                int localSlot = slot - device.getStartSlotNumber();
-                return device.isSatSlot(localSlot);
+            try {
+                return getCardSlot(slot).isSAT();              
+            }
+            catch (CardDeviceException e) {
+                /* Should not be here, paranoic check */
+                throw new IllegalArgumentException("Slot's device does not exist");
             }
         }
     }
