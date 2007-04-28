@@ -402,7 +402,7 @@ write_file(char** ppszError, const pcsl_string* fileName,
     *ppszError  = NULL;
 
     /* open the file */
-    handle = storage_open(ppszError, fileName, OPEN_WRITE);
+    handle = storage_open(ppszError, fileName, OPEN_READ_WRITE_TRUNCATE);
     if (*ppszError != NULL) {
         return IO_ERROR;
     }
@@ -410,8 +410,6 @@ write_file(char** ppszError, const pcsl_string* fileName,
     /* write the whole buffer */
     if (inBufferLen > 0) {
         storageWrite(ppszError, handle, inBuffer, inBufferLen);
-    } else {
-        storageTruncate(ppszError, handle, 0);
     }
 
     if (*ppszError != NULL) {
@@ -522,6 +520,11 @@ read_suites_data(char** ppszError) {
 
         /* setup pJarHash */
         if (pData->jarHashLen > 0) {
+            pData->varSuiteData.pJarHash = pcsl_mem_malloc(pData->jarHashLen);
+            if (pData->varSuiteData.pJarHash == NULL) {
+                status = OUT_OF_MEMORY;
+                break;
+            }
             memcpy(pData->varSuiteData.pJarHash, (char*)&buffer[pos],
                 pData->jarHashLen);
             ADJUST_POS_IN_BUF(pos, bufferLen, pData->jarHashLen);

@@ -162,7 +162,7 @@ public class DatagramObject implements Datagram {
             throw new IllegalArgumentException("Missing port");
         }
 
-        temp = Protocol.getIpNumber(Util.toCString(url.host));
+        temp = Protocol.getIpNumber(url.host);
         if (temp == -1) {
             throw new IllegalArgumentException("Invalid host");
         }

@@ -497,7 +497,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         }
         
         xScrollOffset = paint(g, tf.buffer,
-            inputSession.getPendingChar(), 
+            hasFocus ? inputSession.getPendingChar() : 0, 
             tf.constraints,
             ScreenSkin.FONT_INPUT_TEXT, clr, 
             width - (2 * TextFieldSkin.PAD_H), 
@@ -632,7 +632,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
             Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
                 "[TF.getDisplayString] getMatchList:");
         }
-        pt_matches = inputSession.getMatchList();
+        pt_matches = hasFocus ? inputSession.getMatchList() : new String[0];
 
         return out.toString();
     }
@@ -1743,7 +1743,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
      */
     private void resetUneditable() {
         String text = getDisplayString(
-            tf.buffer, inputSession.getPendingChar(),
+            tf.buffer, hasFocus ? inputSession.getPendingChar() : 0,
             tf.constraints, cursor, true);
         
         textWidth = ScreenSkin.FONT_INPUT_TEXT.stringWidth(text);

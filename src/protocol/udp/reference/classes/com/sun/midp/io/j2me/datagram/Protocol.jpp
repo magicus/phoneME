@@ -365,7 +365,7 @@ public class Protocol implements UDPDatagramConnection,
                     throw new IOException("Missing port");
                 }
 
-                ipNumber = getIpNumber(Util.toCString(locHost));
+                ipNumber = getIpNumber(locHost);
 
                 if (ipNumber == -1) {
                     throw new IOException("Invalid host");
@@ -717,10 +717,10 @@ public class Protocol implements UDPDatagramConnection,
     /**
      * Get a raw IPv4 address for the given hostname.
      *
-     * @param szHost the hostname to lookup as a 'C' string
+     * @param sHost the hostname to lookup
      * @return raw IPv4 address or -1 if there was an error
      */
-    public static native int getIpNumber(byte[] szHost);
+    public static native int getIpNumber(String sHost);
 
     /**
      * Get the maximum length of a datagram.

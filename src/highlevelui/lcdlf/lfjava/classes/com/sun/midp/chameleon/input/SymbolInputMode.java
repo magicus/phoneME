@@ -43,7 +43,7 @@ import com.sun.midp.lcdui.EventConstants;
 public class SymbolInputMode implements InputMode {
 
     /** A holder for the keyCode which was last processed */
-    protected int lastKey = -1;
+    protected int lastKey = KEYCODE_NONE;
 
     /** The InputModeMediator for the current input session */
     protected InputModeMediator mediator;
@@ -676,7 +676,7 @@ public class SymbolInputMode implements InputMode {
             committed = true;
             mediator.commit(String.valueOf((char)lastKey));
         }
-        lastKey = -1;
+        lastKey = KEYCODE_NONE;
         return committed;
     }
 

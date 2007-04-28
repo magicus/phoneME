@@ -234,8 +234,6 @@ public class Protocol extends NetworkConnectionBase
      */
     private void connect() throws IOException {
 
-        byte[] szHost;
-        byte[] szIpBytes = null;
         int result;
         // Max length of IPv4 address is 4  
         // IMPL NOTE: IPv6 needs to have an address of length =16
@@ -255,9 +253,7 @@ public class Protocol extends NetworkConnectionBase
             throw new IllegalArgumentException("Missing port number");
         }
 
-        szHost = Util.toCString(host);
-
-        result = getIpNumber0(szHost, ipBytes);
+        result = getIpNumber0(host, ipBytes);
         if (result == -1) {
             throw new
                 ConnectionNotFoundException("Could not resolve hostname");
@@ -752,12 +748,12 @@ public class Protocol extends NetworkConnectionBase
     /**
      * Gets a byte array that represents an IPv4 or IPv6 address 
      *
-     * @param      szHost  the hostname to lookup as a 'C' string
+     * @param      sHost  the hostname to lookup
      * @param      ipBytes_out  Output array that receives the
      *             bytes of IP address
      * @return     number of bytes copied to ipBytes_out or -1 for an error
      */
-    private native int getIpNumber0(byte[] szHost, byte[] ipBytes_out);
+    private native int getIpNumber0(String sHost, byte[] ipBytes_out);
     
     /**
      * Gets the requested IP number.

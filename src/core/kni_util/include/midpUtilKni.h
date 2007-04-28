@@ -363,7 +363,7 @@ jint midp_jstring_to_address_and_length(jstring jStringHandle, jchar* * pAddr);
  */
 #define GET_PCSL_STRING_DATA_AND_LENGTH(id) \
     { \
-        const jint id##_len = pcsl_string_length(id); \
+        const jint id##_len = pcsl_string_utf16_length(id); \
         const jchar * const id##_data = pcsl_string_get_utf16_data(id); \
         const jchar * const * const last_pcsl_string_data = & id##_data; \
         const pcsl_string* const last_pcsl_string_itself = id; \
@@ -377,7 +377,6 @@ jint midp_jstring_to_address_and_length(jstring jStringHandle, jchar* * pAddr);
 #define RELEASE_PCSL_STRING_DATA_AND_LENGTH \
         } pcsl_string_release_utf16_data(*last_pcsl_string_data, last_pcsl_string_itself); \
     }
-
 
 /**
  * Given name of pcsl_string specified as the GET_PCSL_STRING_DATA_AND_LENGTH

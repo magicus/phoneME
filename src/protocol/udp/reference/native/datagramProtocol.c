@@ -44,6 +44,7 @@
 #include <kni_globals.h>
 #include <pcsl_memory.h>
 #include <suitestore_common.h>
+#include <midpUtilKni.h>
 
 /**
  * @file
@@ -544,26 +545,27 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_addrToString(void) {
 KNIEXPORT KNI_RETURNTYPE_INT
 Java_com_sun_midp_io_j2me_datagram_Protocol_getIpNumber(void) {
     int len;
-    int status;
+    int status = PCSL_NET_NOSTATUS;
     int ipn = -1;
     unsigned char ipBytes[MAX_ADDR_LENGTH];
     void* context = NULL;
     void* handle;
     MidpReentryData* info;
 
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(hostObject);
-
-    KNI_GetParameterAsObject(1, hostObject);
-
     info = (MidpReentryData*)SNI_GetReentryData(NULL);
 
     if (info == NULL) {  /* First invocation */
-        SNI_BEGIN_RAW_POINTERS;
-        status = pcsl_network_gethostbyname_start(
-               (char*)JavaByteArray(hostObject),
-                ipBytes, MAX_ADDR_LENGTH, &len, &handle, &context);
-        SNI_END_RAW_POINTERS;
+        KNI_StartHandles(1);
+        GET_PARAMETER_AS_PCSL_STRING(1, host)
+            const jbyte * const host_bytes = pcsl_string_get_utf8_data(&host);
+
+            status = pcsl_network_gethostbyname_start(
+                   (char*)host_bytes,
+                    ipBytes, MAX_ADDR_LENGTH, &len, &handle, &context);
+
+            pcsl_string_release_utf8_data(host_bytes, &host);
+        RELEASE_PCSL_STRING_PARAMETER
+        KNI_EndHandles();
     } else {  /* Reinvocation after unblocking the thread */
         handle = (void*)info->descriptor;
         /* IMPL NOTE: Please see 6440539 for details. */
@@ -573,8 +575,6 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_getIpNumber(void) {
         status = pcsl_network_gethostbyname_finish(ipBytes, MAX_ADDR_LENGTH,
                                                   &len, handle, context);
     }
-
-    KNI_EndHandles();
 
     if (status == PCSL_NET_SUCCESS) {
         /*
@@ -587,6 +587,7 @@ Java_com_sun_midp_io_j2me_datagram_Protocol_getIpNumber(void) {
         midp_thread_wait(HOST_NAME_LOOKUP_SIGNAL, (int)handle, context);
     } else {
         /* status is either PCSL_NET_IOERROR or PCSL_NET_INVALID */
+        /* or (in the case of out-of-memory) PCSL_NET_NOSTATUS */
         ipn = -1;
         REPORT_INFO1(LC_PROTOCOL,
             "datagram::getIpNumber returns PCSL error code %d", status);

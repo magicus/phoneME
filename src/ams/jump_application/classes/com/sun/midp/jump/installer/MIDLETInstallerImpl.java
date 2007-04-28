@@ -135,14 +135,14 @@ public class MIDLETInstallerImpl implements JUMPInstallerModule {
        } catch (Throwable ex) {
           handleInstallerException(ex);   
        } finally {
-           File localJad = new File(localJadFile);
-           if (localJad.exists()) {
-               localJad.delete();
-           }
-           File localJar = new File(localJarFile);
-           if (localJar.exists()) {
-               localJar.delete();
-           }           
+//           File localJad = new File(localJadFile);
+//           if (localJad.exists()) {
+//               localJad.delete();
+//           }
+//           File localJar = new File(localJarFile);
+//           if (localJar.exists()) {
+//               localJar.delete();
+//           }           
        }
 
        return null;
@@ -169,26 +169,26 @@ public class MIDLETInstallerImpl implements JUMPInstallerModule {
                 System.out.println("");
                 System.out.println("Deleting this suite will remove all of the midlets.");
                 
-            while ( true ) {
-                System.out.println("Do you wish to proceed: [y/n]");
-                BufferedReader in =
-                        new BufferedReader( new InputStreamReader( System.in ) );
-                String answer;
-                
-                try {
-                    answer = in.readLine();
-                } catch ( java.io.IOException ioe ) {
-                    continue;
-                }
-                
-                if (answer.toLowerCase().equals("y")) {
-                    break;
-                } else if (answer.toLowerCase().equals("n")){
-                    return;
-                } else {
-                    System.out.println("ERROR: Illegal response.");
-                }
-            }
+//            while ( true ) {
+//                System.out.println("Do you wish to proceed: [y/n]");
+//                BufferedReader in =
+//                        new BufferedReader( new InputStreamReader( System.in ) );
+//                String answer;
+//                
+//                try {
+//                    answer = in.readLine();
+//                } catch ( java.io.IOException ioe ) {
+//                    continue;
+//                }
+//                
+//                if (answer.toLowerCase().equals("y")) {
+//                    break;
+//                } else if (answer.toLowerCase().equals("n")){
+//                    return;
+//                } else {
+//                    System.out.println("ERROR: Illegal response.");
+//                }
+//            }
         }
         suiteStore.remove(midlet.getMIDletSuiteID());
     }

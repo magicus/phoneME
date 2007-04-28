@@ -43,6 +43,7 @@
 #include <midp_thread.h>
 #include <midp_libc_ext.h>
 #include <kni_globals.h>
+#include <midpUtilKni.h>
 
 /**
  * @file
@@ -590,7 +591,7 @@ Java_com_sun_midp_io_j2me_socket_Protocol_finalize(void) {
  *     getIpNumber([B)I
  * </pre>
  *
- * @param szHost the hostname to lookup as a 'C' string
+ * @param sHost the hostname to lookup
  * @param ipBytes Output parameter that represents an unsigned char
  *                array for an IP address
  * @return len Length of ipBytes
@@ -606,19 +607,20 @@ Java_com_sun_midp_io_j2me_socket_Protocol_getIpNumber0(void) {
     MidpReentryData* info;
 
     KNI_StartHandles(2);
-    KNI_DeclareHandle(hostObject);
     KNI_DeclareHandle(ipAddressObject);
     
-    KNI_GetParameterAsObject(1, hostObject);
     KNI_GetParameterAsObject(2, ipAddressObject);
 
     info = (MidpReentryData*)SNI_GetReentryData(NULL);
     if (info == NULL) {  /* First invocation */
-        SNI_BEGIN_RAW_POINTERS;
-        status = pcsl_network_gethostbyname_start(
-                (char*)JavaByteArray(hostObject), 
-                ipBytes, MAX_ADDR_LENGTH, &len, &pcslHandle, &context);
-        SNI_END_RAW_POINTERS;
+        GET_PARAMETER_AS_PCSL_STRING(1, host)
+            const jbyte * const host_bytes = pcsl_string_get_utf8_data(&host);
+            status = pcsl_network_gethostbyname_start(
+                    (char*)host_bytes,
+                    ipBytes, MAX_ADDR_LENGTH, &len, &pcslHandle, &context);
+
+            pcsl_string_release_utf8_data(host_bytes, &host);
+        RELEASE_PCSL_STRING_PARAMETER
     } else {  /* Reinvocation after unblocking the thread */
         pcslHandle = (void*)info->descriptor;
         /* IMPL NOTE: Please see 6440539 for details. */
