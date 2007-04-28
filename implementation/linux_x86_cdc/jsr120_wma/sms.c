@@ -37,6 +37,35 @@
 #include <stdio.h>
 #define javacall_print(x) printf(x)
 
+#include <dlfcn.h>
+#include <stdio.h>
+#define RTLD_DEFAULT 0
+#define decl_javanotify(name_, args_, actuals_)  \
+    static void (*name_##_func_addr) args_ = NULL; \
+    static void name_##_init_func_addr() { \
+        name_##_func_addr = dlsym(RTLD_DEFAULT, "javanotify_" #name_); \
+    } \
+    void jn_local_##name_ args_ { \
+        if (name_##_func_addr == NULL) { \
+            name_##_init_func_addr(); \
+            /*fprintf(stderr, "error: non-initialyzed javanotify: %s\n", #name_); */\
+            /* return; */\
+        } \
+        (*name_##_func_addr) actuals_; \
+    } \
+
+#define call_javanotify(name_, params_) do {\
+    fprintf(stderr, "calling javanotify: %s %s\n", #name_, #params_); \
+    jn_local_##name_ params_ ;\
+    fprintf(stderr, "after javanotify: %s\n", #name_); \
+} while (0)
+
+#include "javacall_sms.h"
+decl_javanotify(sms_send_completed, (
+        javacall_sms_sending_result result, 
+        int                         handle
+), (result, handle))
+
 extern char* encodeSmsBuffer(
     int encodingType, int destPortNum, javacall_int64 timeStamp, 
     const char* recipientPhone, const char* senderPhone, int msgLength, const char* msg,
@@ -98,7 +127,8 @@ int javacall_sms_send(  javacall_sms_encoding    msgType,
 
     javacall_print("## javacall: SMS sending...\n"); fflush(stdout);
 
-    javanotify_sms_send_completed(JAVACALL_SMS_SENDING_RESULT_SUCCESS, 13);
+//    javanotify_sms_send_completed(JAVACALL_SMS_SENDING_RESULT_SUCCESS, 13);
+    call_javanotify(sms_send_completed, (JAVACALL_SMS_SENDING_RESULT_SUCCESS, 13));
 
     return 1;
 }
@@ -156,11 +186,16 @@ javacall_result javacall_is_sms_port_registered(unsigned short portNum) {
     int i;
     for (i=0; i<PORTS_MAX; i++) {
         if (portsList[i] == portNum) {
-            //printf("javacall_is_sms_port_registered %i - YES\n", portNum); fflush(stdout);
+            printf("javacall_is_sms_port_registered %i - YES\n", portNum); fflush(stdout);
             return JAVACALL_OK;
         }
     }
-    //printf("javacall_is_sms_port_registered %i - NO\n", portNum); fflush(stdout);
+    printf("javacall_is_sms_port_registered %i - NO\n", portNum); 
+    printf("javacall_is_sms_port_registered: registered ports are: ");
+    for (i=0; i<PORTS_MAX; i++) {
+        printf(" %d", portsList[i]);
+    }
+    printf("\n");fflush(stdout);
     return JAVACALL_FAIL;
 }
 

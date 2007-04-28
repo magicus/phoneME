@@ -349,6 +349,7 @@ void listen_sockets() {
         FD_SET(mmsDatagramSocketHandle, &fds);
 	
         printf("waiting...\n");
+        fflush(stdout);
 
         select(max + 1, &fds, NULL, NULL, NULL);
 
@@ -356,7 +357,9 @@ void listen_sockets() {
              (FD_ISSET(cbsDatagramSocketHandle, &fds)) ? cbsDatagramSocketHandle : 
              (FD_ISSET(mmsDatagramSocketHandle, &fds)) ? mmsDatagramSocketHandle : 0;
 
-        try_process_wma_emulator(fd);
+         if (try_process_wma_emulator(fd) != JAVACALL_OK) {
+             break;
+         }
     }
 
     //close(smsDatagramSocketHandle);
