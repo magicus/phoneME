@@ -358,7 +358,7 @@ endif
 J2ME_CLASSLIB		?= cdc
 
 # MIDP requires at least foundation
-ifeq ($(CVM_INCLUDE_MIDP),true)
+ifeq ($(USE_MIDP),true)
     ifeq ($(J2ME_CLASSLIB), cdc)
 	J2ME_CLASSLIB = foundation
     endif
