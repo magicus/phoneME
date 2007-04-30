@@ -1,0 +1,225 @@
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+######################################################################
+#
+# Module's Component Configuration file
+#
+######################################################################
+
+# Add to global SUBSYSTEMS list
+#
+SUBSYSTEMS += pisces
+
+# Specify which module to build
+#
+# pure_java   : use Java ME code only
+#
+# java_native : use Java ME and C code [Default]
+#
+ifndef SUBSYSTEM_PISCES_MODULES
+    SUBSYSTEM_PISCES_MODULES = java_native
+endif
+
+# Directories for each internal workspace
+INTERNAL_PISCES_DIR=$(PISCES_DIR)
+
+# Implementation APIs in pisces
+SUBSYSTEM_PISCES_JAVA_FILES_SOURCEPATH=\
+$(INTERNAL_PISCES_DIR)/src/classes/common
+
+ifeq ($(SUBSYSTEM_PISCES_MODULES), pure_java)
+    SUBSYSTEM_PISCES_JAVA_FILES_SOURCEPATH +=\
+    $(PATHSEP)$(INTERNAL_PISCES_DIR)/src/classes/java\
+    $(PATHSEP)$(INTERNAL_PISCES_DIR)/src/classes/java-midp
+endif
+ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
+    SUBSYSTEM_PISCES_JAVA_FILES_SOURCEPATH +=\
+    $(PATHSEP)$(INTERNAL_PISCES_DIR)/src/classes/native\
+    $(PATHSEP)$(INTERNAL_PISCES_DIR)/src/classes/native-midp
+endif
+
+INTERNAL_PISCES_CONFIG_DIR = \
+$(INTERNAL_PISCES_DIR)/build
+
+# Include Pisces system properties in Configuration
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+	$(INTERNAL_PISCES_CONFIG_DIR)/properties_pisces.xml
+
+# Javadoc source path
+# For the complete pisces subsystem
+# 
+SUBSYSTEM_PISCES_JAVADOC_SOURCEPATH=\
+$(SUBSYSTEM_PISCES_JAVA_FILES_SOURCEPATH)
+
+SUBSYSTEM_PISCES_PACKAGES = \
+   com.sun.pisces
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_PISCES_JAVADOC_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_PISCES_PACKAGES)
+
+MIDP_JAVADOC_ALL += \
+    -group "Pisces 2D Renderer" \
+    $(shell echo $(SUBSYSTEM_PISCES_PACKAGES) | tr ' ' $(PATHSEP))
+
+# Java files for the ( pisces ) module
+#
+INTERNAL_PISCES_COMMON_CLASSES_DIR := $(INTERNAL_PISCES_DIR)/src/classes/common
+
+INTERNAL_PISCES_JAVA_FILES := \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/Dasher.java \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/Flattener.java \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/GradientColorMap.java \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/GZIPInputStream.java \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/LineSink.java \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/Paint.java \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/PathSink.java \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/PathSource.java \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/PathStore.java \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/PiscesFont.java \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/PiscesMath.java \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/RendererBase.java \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/Stroker.java \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/Surface.java \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/SurfaceDestination.java \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/Transform4.java \
+        $(INTERNAL_PISCES_COMMON_CLASSES_DIR)/com/sun/pisces/Transformer.java
+
+ifeq ($(SUBSYSTEM_PISCES_MODULES), pure_java)
+    INTERNAL_PISCES_JAVA_CLASSES_DIR := \
+            $(INTERNAL_PISCES_DIR)/src/classes/java
+    INTERNAL_PISCES_JAVA-MIDP_CLASSES_DIR := \
+            $(INTERNAL_PISCES_DIR)/src/classes/java-midp
+
+    INTERNAL_PISCES_JAVA_FILES +=
+            $(INTERNAL_PISCES_JAVA_CLASSES_DIR)/com/sun/pisces/Blit.java \
+            $(INTERNAL_PISCES_JAVA_CLASSES_DIR)/com/sun/pisces/Gradient.java \
+            $(INTERNAL_PISCES_JAVA_CLASSES_DIR)/com/sun/pisces/LinearGradient.java \
+            $(INTERNAL_PISCES_JAVA_CLASSES_DIR)/com/sun/pisces/NativeSurface.java \
+            $(INTERNAL_PISCES_JAVA_CLASSES_DIR)/com/sun/pisces/PiscesCache.java \
+            $(INTERNAL_PISCES_JAVA_CLASSES_DIR)/com/sun/pisces/PiscesRenderer.java \
+            $(INTERNAL_PISCES_JAVA_CLASSES_DIR)/com/sun/pisces/RadialGradient.java \
+            $(INTERNAL_PISCES_JAVA_CLASSES_DIR)/com/sun/pisces/Renderer.java \
+            $(INTERNAL_PISCES_JAVA_CLASSES_DIR)/com/sun/pisces/Texture.java \
+            $(INTERNAL_PISCES_JAVA_CLASSES_DIR)/com/sun/pisces/Transform6.java \
+            $(INTERNAL_PISCES_JAVA-MIDP_CLASSES_DIR)/com/sun/pisces/GraphicsSurfaceDestination.java
+endif
+
+ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
+    INTERNAL_PISCES_NATIVE_CLASSES_DIR := \
+            $(INTERNAL_PISCES_DIR)/src/classes/native
+    INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR := \
+            $(INTERNAL_PISCES_DIR)/src/classes/native-midp
+
+    INTERNAL_PISCES_JAVA_FILES += \
+            $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/AbstractSurface.java \
+            $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/NativeFinalization.java \
+            $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/NativeSurface.java \
+            $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/PiscesRenderer.java \
+            $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/Transform6.java \
+            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/Configuration.java \
+            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/GraphicsSurfaceDestination.java \
+            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/NativeFinalizer.java \
+            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesFinalizer.java \
+            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesLibrary.java
+
+    ifdef PISCES_JAVA_SURFACE_SUPPORT
+        INTERNAL_PISCES_JAVA_FILES += \
+                $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/JavaSurface.java
+    endif # PISCES_JAVA_SURFACE_SUPPORT
+endif
+
+ifeq ($(SUBSYSTEM_PISCES_MODULES), pure_java)
+
+    # Specify romizer configuration file for the jsr
+    # and path where the file is located
+    #
+    ROMGEN_INCLUDE_PATHS += $(INTERNAL_PISCES_DIR)/build/config
+    ROMGEN_CFG_FILES     += pisces_pure_java_rom.cfg
+
+endif
+
+ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
+
+    # set vpath, includes and src files
+
+    vpath % $(INTERNAL_PISCES_DIR)/src/native/common/src
+    vpath % $(INTERNAL_PISCES_DIR)/src/native/midp/src
+
+    INTERNAL_PISCES_INCLUDES += \
+            -I$(INTERNAL_PISCES_DIR)/src/native/common/include \
+            -I$(INTERNAL_PISCES_DIR)/src/native/midp/include \
+
+    INTERNAL_PISCES_SRC_FILES += \
+                PiscesBlit.c \
+                PiscesLibrary.c \
+                PiscesMath.c \
+                PiscesPipelines.c \
+                PiscesRenderer.c \
+                PiscesTransform.c \
+                PiscesUtil.c \
+                PiscesSysutils.c \
+                JAbstractSurface.c \
+                JGraphicsSurfaceDestination.c \
+                JNativeSurface.c \
+                JNativeFinalizer.c \
+		JPiscesFinalizer.c \
+                JPiscesRenderer.c \
+                JTransform.c \
+                KNIUtil.c
+
+    # Specify romizer configuration file for the jsr
+    # and path where the file is located
+    #
+    ROMGEN_INCLUDE_PATHS += $(INTERNAL_PISCES_DIR)/build/config
+    ROMGEN_CFG_FILES     += pisces_rom.cfg
+
+    ifdef PISCES_JAVA_SURFACE_SUPPORT
+        INTERNAL_PISCES_SRC_FILES += \
+                    JJavaSurface.c
+        EXTRA_CFLAGS += -DPISCES_JAVA_SURFACE_SUPPORT
+    endif # PISCES_JAVA_SURFACE_SUPPORT
+endif
+
+# All of them provided to main makefile
+
+SUBSYSTEM_PISCES_JAVA_FILES = \
+    $(INTERNAL_PISCES_JAVA_FILES)
+
+SUBSYSTEM_PISCES_NATIVE_FILES += \
+    $(INTERNAL_PISCES_SRC_FILES)
+
+SUBSYSTEM_PISCES_INCLUDES += \
+    $(INTERNAL_PISCES_INCLUDES)
+
+# Append Pisces source bundle creation to target
+source_bundle:: pisces_source_bundle
+
+# Create Pisces source in subdir 'pisces'
+PISCES_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/pisces
+
+# Copy and filter Pisces source in PISCES_SOURCE_OUTPUT_DIR
+pisces_source_bundle: PISCES_DIR SOURCE_OUTPUT_DIR
+	@echo " ... Pisces source bundle" $(LOG)
+	@$(call re_src_filter,$(PISCES_DIR),$(PISCES_SOURCE_OUTPUT_DIR),src)
+	@$(call re_src_filter,$(PISCES_DIR),$(PISCES_SOURCE_OUTPUT_DIR),build)
