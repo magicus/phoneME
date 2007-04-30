@@ -32,32 +32,32 @@
 # other def. (like VPATH)
 ############################################################
 
+# Local module directory
+IMAGE_DIR = $(SUBSYSTEM_DIR)/lowlevelui/graphics/putpixel/image/reference
 
-IMAGE_API_LIB = image_api
-LIB_SET += $(IMAGE_API_LIB)
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(IMAGE_DIR)/classes
 
-#Local module dir
-IMAGE_API_DIR=$(SUBSYSTEM_LOWUI_DIR)/image_api
-
-# Java files for the libarary
+# Java files for the putpixel module
 #
-SUBSYSTEM_IMAGEAPI_JAVA_FILES += \
-    $(IMAGE_API_DIR)/reference/classes/javax/microedition/lcdui/Image.java \
-    $(IMAGE_API_DIR)/reference/classes/javax/microedition/lcdui/game/Sprite.java \
-    $(IMAGE_API_DIR)/reference/classes/javax/microedition/lcdui/game/TiledLayer.java
+SUBSYSTEM_GRAPHICS_JAVA_FILES += \
+    $(IMAGE_DIR)/classes/javax/microedition/lcdui/ImageData.java \
+    $(IMAGE_DIR)/classes/javax/microedition/lcdui/ImageDataFactory.java
 
-# Include path for the sub-system
-#
-SUBSYSTEM_IMAGEAPI_EXTRA_INCLUDES += \
-    -I$(IMAGE_API_DIR)/include 
-
-# vpath for the library
+# vpath for putixel module
 #
 vpath % \
-    $(IMAGE_API_DIR)/reference/native
+    $(IMAGE_DIR)/native
 
 
-# Native files for common module
-#
-SUBSYSTEM_IMAGEAPI_NATIVE_FILES += \
-    imgapi_image_kni.c
+# Native files for putpixel module
+SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
+    gxjimg_imagedatafactory_kni.c
+
+# I3test files
+ifeq ($(USE_I3_TEST), true)
+
+    SUBSYSTEM_GRAPHICS_I3TEST_JAVA_FILES +=
+
+endif
+

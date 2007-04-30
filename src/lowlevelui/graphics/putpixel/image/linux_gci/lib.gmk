@@ -33,7 +33,7 @@
 ############################################################
 
 # Local module directory
-IMAGE_DIR = $(SUBSYSTEM_DIR)/lowlevelui/graphics/putpixel/image
+IMAGE_GCI_DIR = $(SUBSYSTEM_LOWUI_DIR)/graphics/putpixel/image/linux_gci
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(IMAGE_DIR)/classes
@@ -41,13 +41,13 @@ MIDP_JAVADOC_SOURCEPATH += $(IMAGE_DIR)/classes
 # Java files for the putpixel module
 #
 SUBSYSTEM_GRAPHICS_JAVA_FILES += \
-    $(IMAGE_DIR)/classes/javax/microedition/lcdui/ImageData.java \
-    $(IMAGE_DIR)/classes/javax/microedition/lcdui/ImageDataFactory.java
+    $(IMAGE_GCI_DIR)/classes/javax/microedition/lcdui/ImageData.java \
+    $(IMAGE_GCI_DIR)/classes/javax/microedition/lcdui/ImageDataFactory.java
 
 # vpath for putixel module
 #
 vpath % \
-    $(IMAGE_DIR)/reference/native
+    $(IMAGE_GCI_DIR)/native
 
 
 # Native files for putpixel module

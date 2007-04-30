@@ -50,14 +50,13 @@ SUBSYSTEM_LOWUI_DIR = $(SUBSYSTEM_DIR)/lowlevelui
 ifeq ($(PLATFORM), linux_qte)
     SUBSYSTEM_GRAPHICS_MODULES = platform_graphics
 else
-    ifneq ($(PLATFORM), linux_gci)
-      ifeq ($(PLATFORM), stubs)
-          ifndef SUBSYSTEM_GRAPHICS_MODULES
-              SUBSYSTEM_GRAPHICS_MODULES = platform_graphics
-          endif
-      else
-          SUBSYSTEM_GRAPHICS_MODULES = putpixel
-      endif
+    ifeq ($(PLATFORM), stubs)
+        ifndef SUBSYSTEM_GRAPHICS_MODULES
+            SUBSYSTEM_GRAPHICS_MODULES = platform_graphics
+        endif
+    else
+# Putpixel will be used for linux_gci as well
+        SUBSYSTEM_GRAPHICS_MODULES = putpixel
     endif
 endif
 
@@ -67,7 +66,6 @@ endif
 # Description: graphics utility functions
 #####################################################################
 
-ifneq ($(PLATFORM), linux_gci)
 include $(SUBSYSTEM_LOWUI_DIR)/graphics_util/$(LIB_MAKE_FILE)
 
 
@@ -88,7 +86,6 @@ endif
 
 include $(SUBSYSTEM_LOWUI_DIR)/graphics/$(LIB_MAKE_FILE)
 
-endif
 
 #####################################################################
 # Graphics api Subsystem
@@ -114,7 +111,7 @@ $(MIDP_CLASSES_ZIP) :: $(SUBSYSTEM_GRAPHICSUTIL_JAVA_FILES)
 SUBSYSTEM_LOWLEVELUI_JAVA_FILES = \
     $(SUBSYSTEM_GRAPHICSUTIL_JAVA_FILES)         \
     $(SUBSYSTEM_GRAPHICSAPI_JAVA_FILES)          \
-    $(SUBSYSTEM_IMAGEAPI_JAVA_FILES)          \
+    $(SUBSYSTEM_IMAGEAPI_JAVA_FILES)             \
     $(SUBSYSTEM_GRAPHICS_JAVA_FILES)             \
     $(SUBSYSTEM_PLATFORMGRAPHICSPORT_JAVA_FILES)
 

@@ -1,4 +1,5 @@
-#  
+#
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,35 +24,6 @@
 # information or have any questions. 
 #
 
-############################################################
-# Module's Component Configuration file
-#
-# Remember: It is up to the module itself to impose rules of
-# how to compile the options. All the global Makefile needs
-# is the final def. of Java and native file lists and some
-# other def. (like VPATH)
-############################################################
-
-
-GRAPHICS_LIB = graphics
-LIB_SET += $(GRAPHICS_LIB)
-
-
-# Local module directory
-GRAPHICS_DIR = $(SUBSYSTEM_LOWUI_DIR)/graphics
-
-# Java files for the sub-system
-#
-SUBSYSTEM_GRAPHICS_JAVA_FILES += \
-    $(GRAPHICS_DIR)/classes/javax/microedition/lcdui/AbstractImageData.java \
-    $(GRAPHICS_DIR)/classes/javax/microedition/lcdui/AbstractImageDataFactory.java
-
-# Include path for the sub-system
-#
-SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
-    -I$(GRAPHICS_DIR)/include
-
-# Include platform specific module
-#
-include $(GRAPHICS_DIR)/$(SUBSYSTEM_GRAPHICS_MODULES)/$(LIB_MAKE_FILE)
-
+LIB_PUTPIXEL_IMAGE_GCI_DESCRIPTION=Low Level UI Putpixel Image Implementation
+LIB_PUTPIXEL_IMAGE_GCI_VERSION=1.0
+LIB_PUTPIXEL_IMAGE_GCI_DEPENDENCY=lowlevelui/graphics_util

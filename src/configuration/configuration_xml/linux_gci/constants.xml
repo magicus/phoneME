@@ -49,7 +49,7 @@
 <!-- Package javax.microedition.lcdui -->
   <constant Type="boolean"
             Name="CHAM_USE_IMAGES"
-            Value="false"
+            Value="true"
             Comment="When false, Chameleon will not even attempt to load images for the UI."/>
   <constant Type="boolean"
             Name="CHAM_ROMIZED_IMAGES"

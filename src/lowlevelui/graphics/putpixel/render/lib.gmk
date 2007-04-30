@@ -45,7 +45,7 @@ SUBSYSTEM_GRAPHICS_JAVA_FILES +=
 # vpath for putixel module
 #
 vpath % \
-    $(RENDER_DIR)/reference/native/native
+    $(RENDER_DIR)/reference/native
 
 # Additional include path for highlevel ui subsystem
 # (IMPL_NOTE remove this dependency)

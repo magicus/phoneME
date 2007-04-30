@@ -49,12 +49,6 @@ typedef struct Java_java_lang_String _JavaString;
 
 
 /**
- * Structure representing the <tt>Image</tt> class.
- */
-typedef struct Java_javax_microedition_lcdui_Image      _MidpImage;
-
-
-/**
  * Get a C structure representing the given <tt>Font</tt> class.
  */
 #define GET_FONT_PTR(handle)           (unhand(_MidpFont,(handle)))
@@ -64,11 +58,6 @@ typedef struct Java_javax_microedition_lcdui_Image      _MidpImage;
  * Get a C structure representing the given <tt>String</tt> class.
  */
 #define GET_STRING_PTR(handle) (unhand(_JavaString,(handle)))
-
-/**
- * Get a C structure representing the given <tt>Image</tt> class.
- */
-#define GET_IMAGE_PTR(handle)          (unhand(_MidpImage,(handle)))
 
 /**
  * Gets the line style of the given graphics object.

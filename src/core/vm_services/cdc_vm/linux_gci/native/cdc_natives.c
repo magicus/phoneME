@@ -42,12 +42,12 @@ static int controlPipe[2]; /* [0] for read, [1] for write */
 
 static void initCDCEvents();
 
-/* used by imageCache.c */
+/* used by imageCache.c 
 MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
 				unsigned int length,
 				unsigned char** ret_dataBuffer,
 				unsigned int* ret_length) {}
-
+*/
 KNIEXPORT KNI_RETURNTYPE_LONG
 JVM_JavaMilliSeconds() {
     return CVMtimeMillis();

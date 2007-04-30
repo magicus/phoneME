@@ -27,20 +27,12 @@
 #include <stdlib.h>
 #include <sni.h>
 #include <midpError.h>
-#include <gxutl_graphics.h>
+#include <gxutl_image_errorcodes.h>
+
+#include <imgapi_image.h>
 
 #include <gx_image.h>
 
-/**
- * Structure representing the <tt>Image</tt> class.
- */
-typedef struct Java_javax_microedition_lcdui_Image      _MidpImage;
-
-
-/**
- * Get a C structure representing the given <tt>Image</tt> class.
- */
-#define GET_IMAGE_PTR(handle)          (unhand(_MidpImage,(handle)))
 
 /**
  * Gets an ARGB integer array from this <tt>ImmutableImage</tt>. The
