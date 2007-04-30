@@ -1,0 +1,81 @@
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+# MIDP_ABB_DIR = point to the root of this workspace
+#
+#
+######################################################################
+
+
+# Java files for the ( jsr234 ) module
+#
+MODULE_JSR_234_JAVA_FILES += \
+    $(MIDP_ABB_DIR)/src/classes/javax/microedition/media/Control.java \
+    $(MIDP_ABB_DIR)/src/classes/javax/microedition/media/Controllable.java \
+    $(MIDP_ABB_DIR)/src/classes/javax/microedition/media/Manager.java \
+    $(MIDP_ABB_DIR)/src/classes/javax/microedition/media/MediaException.java \
+    $(MIDP_ABB_DIR)/src/classes/javax/microedition/media/Player.java \
+    $(MIDP_ABB_DIR)/src/classes/javax/microedition/media/PlayerListener.java \
+    $(MIDP_ABB_DIR)/src/classes/javax/microedition/media/control/ToneControl.java \
+    $(MIDP_ABB_DIR)/src/classes/javax/microedition/media/control/VolumeControl.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/PCMAudioOut.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/Configuration.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/DefaultConfiguration.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/ImageAccess.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/MIDletPauseListener.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/TonePlayer.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/VideoRenderer.java \
+
+
+MODULE_JSR_234_JAVA_FILES += \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundConnectable.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundGlobalEffectModule.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundHiddenManager.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundRenderThread.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundSynthPerformance.java \
+    $(MIDP_ABB_DIR)/src/classes/com/sun/mmedia/QSoundTonePlayer.java 
+
+vpath % $(MIDP_ABB_DIR)/src/native
+
+MODULE_JSR_234_NATIVE_FILES += \
+    qsoundnative.c 
+
+MODULE_JSR_234_EXTRA_INCLUDES += \
+    -I$(MIDP_ABB_DIR)/src/native \
+    -I$(MIDP_ABB_DIR)/src/native/include
+
+# Specify romizer configuration file for mmapi
+# and path where the file is located
+#
+ROMGEN_INCLUDE_PATHS += $(MIDP_ABB_DIR)/src/config
+ROMGEN_CFG_FILES     += jsr234_rom.config
