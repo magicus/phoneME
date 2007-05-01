@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
@@ -497,7 +497,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         }
         
         xScrollOffset = paint(g, tf.buffer,
-            inputSession.getPendingChar(), 
+            hasFocus ? inputSession.getPendingChar() : 0, 
             tf.constraints,
             ScreenSkin.FONT_INPUT_TEXT, clr, 
             width - (2 * TextFieldSkin.PAD_H), 
@@ -632,7 +632,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
             Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
                 "[TF.getDisplayString] getMatchList:");
         }
-        pt_matches = inputSession.getMatchList();
+        pt_matches = hasFocus ? inputSession.getMatchList() : new String[0];
 
         return out.toString();
     }
@@ -1133,9 +1133,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
         // to activate the command assigned to this item by the pointer
 
         // accept the word if the PTI is currently enabled
-        if (hasPTI()) {
-            inputSession.processKey(Constants.KEYCODE_SELECT, false);
-        }
+        acceptPTI();
         
         if (pressedIn) {
             int newId = getIndexAt(x, y);
@@ -1745,7 +1743,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
      */
     private void resetUneditable() {
         String text = getDisplayString(
-            tf.buffer, inputSession.getPendingChar(),
+            tf.buffer, hasFocus ? inputSession.getPendingChar() : 0,
             tf.constraints, cursor, true);
         
         textWidth = ScreenSkin.FONT_INPUT_TEXT.stringWidth(text);
@@ -1942,6 +1940,21 @@ class TextFieldLFImpl extends ItemLFImpl implements
     public boolean hasPTI() {
         return pt_popupOpen;
     }
+
+    /**
+     * Accept the word if the PTI is currently enabled
+     *
+     * @return true if pti layer was visible and has been accepted , false - otherwise
+     */
+    protected boolean acceptPTI() {
+        boolean ret = false;
+        if (hasPTI()) {
+            ret = InputMode.KEYCODE_NONE !=
+                inputSession.processKey(Constants.KEYCODE_SELECT, false);
+        }
+        return ret;
+    }
+
     
 } // TextFieldLFImpl
 

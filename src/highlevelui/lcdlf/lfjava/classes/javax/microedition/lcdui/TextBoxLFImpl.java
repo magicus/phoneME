@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
@@ -119,6 +119,23 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         updateTextInfo();
     }
 
+
+    /**
+     * Commit the given input to this TextInputComponent's buffer.
+     * This call constitutes a change to the value of this TextInputComponent
+     * and should result in any listeners being notified.
+     * @param input text to commit 
+     */
+    public void commit(String input) {
+        // keep the first visible line 
+        int oldTopVis = myInfo.topVis;
+        super.commit(input);
+        // try to restore the visible region
+        myInfo.topVis = oldTopVis;
+        myInfo.isModified = myInfo.scrollY = true;
+        updateTextInfo();
+    }
+
     
     /**
      * Notifies L&amps;F of a character insertion in the corresponding
@@ -185,27 +202,36 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
      * Notifies L&amps;F that constraints have to be changed.
      */
     public void lSetConstraints() {
+        boolean wasEditable = editable;
     	setConstraintsCommon(false);
         
         setVerticalScroll();
-        
-        // reset cursor position if needed
-        if (editable && myInfo != null) {
-            int pos = cursor.y / ScreenSkin.FONT_INPUT_TEXT.getHeight();
-            int newPos = pos;
-            if (pos <= myInfo.topVis) {
-                newPos = myInfo.topVis + 1;
-            } else if (pos > myInfo.topVis + myInfo.visLines) {
-                newPos = myInfo.topVis + myInfo.visLines;
-            }
-            if (newPos != pos) {
-                cursor.y = newPos  * ScreenSkin.FONT_INPUT_TEXT.getHeight();
-                cursor.option = Text.PAINT_GET_CURSOR_INDEX;
+
+        if (myInfo != null) {
+            // reset cursor position if needed
+            if (editable) {
+                int pos = cursor.y / ScreenSkin.FONT_INPUT_TEXT.getHeight();
+                int newPos = pos;
+                // if text box has been uneditable before to reset cursor
+                // position to the top of the screen
+                if (!wasEditable) {
+                    newPos = myInfo.topVis + 1;
+                } else if (pos <= myInfo.topVis) {
+                    newPos = myInfo.topVis + 1;
+                } else if (pos > myInfo.topVis + myInfo.visLines) {
+                    newPos = myInfo.topVis + myInfo.visLines;
+                }
+                if (newPos != pos) {
+                    cursor.y = newPos  * ScreenSkin.FONT_INPUT_TEXT.getHeight();
+                    cursor.option = Text.PAINT_GET_CURSOR_INDEX;
+                    myInfo.isModified = myInfo.scrollY = true;
+                    updateTextInfo();
+                }
+            } else {
                 myInfo.isModified = myInfo.scrollY = true;
                 updateTextInfo();
             }
         }
-        
         lRequestPaint();
     }
 
@@ -477,10 +503,12 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         int lines = myInfo.scrollByPage(dir == Canvas.UP ?
                                         TextInfo.BACK : TextInfo.FORWARD);
         if (lines != 0) {
-	    if (editable) {
+            if (editable) {
+                // accept the word if the PTI is currently enabled
+                acceptPTI();
                 cursor.y += ScreenSkin.FONT_INPUT_TEXT.getHeight() * lines;
                 cursor.option = Text.PAINT_GET_CURSOR_INDEX;
-	    }
+            }
             updateTextInfo();
         }
     }
@@ -495,6 +523,9 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         int oldTopVis = myInfo.topVis;
         if (myInfo.scroll(dir == Canvas.UP ? TextInfo.BACK : TextInfo.FORWARD)) {
             if (editable) {
+                // accept the word if the PTI is currently enabled
+                acceptPTI();
+
                 cursor.y += (myInfo.topVis - oldTopVis) * ScreenSkin.FONT_INPUT_TEXT.getHeight();
                 cursor.option = Text.PAINT_GET_CURSOR_INDEX;
             }
@@ -519,6 +550,9 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         
         if (myInfo.topVis != oldTopVis) {
             if (editable) {
+                // accept the word if the PTI is currently enabled
+                acceptPTI();
+
                 cursor.y += (myInfo.topVis - oldTopVis) * ScreenSkin.FONT_INPUT_TEXT.getHeight();
                 cursor.option = Text.PAINT_GET_CURSOR_INDEX;
             }
@@ -541,64 +575,64 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
 
 	case Canvas.LEFT:
 	    if (editable) {
-                keyClicked(dir);
-		if (cursor.index > 0) {
-		    cursor.index--;
-		    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-		    myInfo.isModified = myInfo.scrollX = keyUsed = true;
-		}
+            keyClicked(dir);
+            if (cursor.index > 0) {
+                cursor.index--;
+                cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+                myInfo.isModified = myInfo.scrollX = keyUsed = true;
+            }
 	    } else {
-		keyUsed = myInfo.scroll(TextInfo.BACK);
+            keyUsed = myInfo.scroll(TextInfo.BACK);
 	    }
 	    break;
 
 	case Canvas.RIGHT:
 	    if (editable) {
-                keyClicked(dir);
-		if (cursor.index < tf.buffer.length()) {
-		    cursor.index++;
-		    cursor.option = Text.PAINT_USE_CURSOR_INDEX;
-		    myInfo.isModified = myInfo.scrollX = keyUsed = true;
-		}
+            keyClicked(dir);
+            if (cursor.index < tf.buffer.length()) {
+                cursor.index++;
+                cursor.option = Text.PAINT_USE_CURSOR_INDEX;
+                myInfo.isModified = myInfo.scrollX = keyUsed = true;
+            }
 	    } else {
-		keyUsed = myInfo.scroll(TextInfo.FORWARD);
+            keyUsed = myInfo.scroll(TextInfo.FORWARD);
 	    }
 	    break;
 	    
 	case Canvas.UP:
 	    if (editable) {
-                keyClicked(dir);
-		cursor.y -= ScreenSkin.FONT_INPUT_TEXT.getHeight();
-		if (cursor.y > 0) {
-		    cursor.option = Text.PAINT_GET_CURSOR_INDEX;
-		    myInfo.isModified = myInfo.scrollY = keyUsed = true;
-		} else { 
-		    cursor.y += ScreenSkin.FONT_INPUT_TEXT.getHeight();
-		}
+            keyClicked(dir);
+            cursor.y -= ScreenSkin.FONT_INPUT_TEXT.getHeight();
+            if (cursor.y > 0) {
+                cursor.option = Text.PAINT_GET_CURSOR_INDEX;
+                myInfo.isModified = myInfo.scrollY = keyUsed = true;
+            } else { 
+                cursor.y += ScreenSkin.FONT_INPUT_TEXT.getHeight();
+            }
 	    } else {
-		keyUsed = myInfo.scroll(TextInfo.BACK);
+            keyUsed = myInfo.scroll(TextInfo.BACK);
 	    }
 	    break;
-
-	case Canvas.DOWN:
-	    if (editable) {
+        
+        case Canvas.DOWN:
+            if (editable) {
                 keyClicked(dir);
-		cursor.y += ScreenSkin.FONT_INPUT_TEXT.getHeight();
-		if (cursor.y <= myInfo.height) {
-		    cursor.option = Text.PAINT_GET_CURSOR_INDEX;
-		    myInfo.isModified = myInfo.scrollY = keyUsed = true;
-		} else {
-		    cursor.y -= ScreenSkin.FONT_INPUT_TEXT.getHeight();
-		}
-	    } else {
-		keyUsed = myInfo.scroll(TextInfo.FORWARD);
-	    }
-	    break;
-	default:
-	    // no-op
-	    break;
-	}
-
+                cursor.y += ScreenSkin.FONT_INPUT_TEXT.getHeight();
+                if (cursor.y <= myInfo.height) {
+                    cursor.option = Text.PAINT_GET_CURSOR_INDEX;
+                    myInfo.isModified = myInfo.scrollY = keyUsed = true;
+                } else {
+                    cursor.y -= ScreenSkin.FONT_INPUT_TEXT.getHeight();
+                }
+            } else {
+                keyUsed = myInfo.scroll(TextInfo.FORWARD);
+            }
+            break;
+        default:
+            // no-op
+            break;
+        }
+        
         updateTextInfo();
         
         return keyUsed;

@@ -1,22 +1,22 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -32,7 +32,6 @@ import com.sun.midp.installer.ManifestProperties;
 import com.sun.midp.installer.OtaNotifier;
 import com.sun.midp.installer.InstallState;
 import com.sun.midp.installer.VerifierImpl;
-import com.sun.midp.installer.JarReader;
 
 import java.util.Vector;
 
@@ -61,6 +60,8 @@ import com.sun.midp.midletsuite.InstallInfo;
 import com.sun.midp.midletsuite.SuiteSettings;
 import com.sun.midp.midletsuite.MIDletSuiteLockedException;
 import com.sun.midp.midletsuite.MIDletSuiteCorruptedException;
+
+import com.sun.midp.jarutil.JarReader;
 
 import com.sun.midp.io.HttpUrl;
 import com.sun.midp.io.Util;
@@ -783,8 +784,8 @@ public abstract class JUMPInstaller {
             // Create JAR Properties (From .jar file's MANIFEST)
 
             try {
-                state.manifest = JarReader.readJarEntry(token,
-                    info.jarFilename, MIDletSuite.JAR_MANIFEST);
+                state.manifest = JarReader.readJarEntry(info.jarFilename,
+                    MIDletSuite.JAR_MANIFEST);
                 if (state.manifest == null) {
                     postInstallMsgBackToProvider(
                         OtaNotifier.INVALID_JAR_MSG);
@@ -1270,7 +1271,7 @@ public abstract class JUMPInstaller {
 
         try {
             /* Attempt to read the MIDlet from the JAR file. */
-            if (JarReader.readJarEntry(token, info.jarFilename, file) != null) {
+            if (JarReader.readJarEntry(info.jarFilename, file) != null) {
                 return;                // File found, normal return
             }
             // Fall into throwing the exception

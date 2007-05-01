@@ -1,27 +1,27 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.chameleon.layers;
@@ -43,8 +43,8 @@ public class BodyLayer extends CLayer
      * in case not all content can fit on the menu.
      */
     protected ScrollIndLayer scrollInd;
-    
-    
+
+    /** Tunnel instance to call Display methods */
     ChamDisplayTunnel tunnel;
 
     /**
@@ -116,6 +116,39 @@ public class BodyLayer extends CLayer
             } else {
                 updateScrollIndicator();
             }
+        }
+    }
+
+    /**
+     * Prepare Graphics context for optimized painting of the Canvas
+     * holded by this BodyLayer instance. Bounds and dirty region of
+     * the layer are used to set Graphics clip area and translation.
+     * 
+     * @param g Graphics context to prepare
+     */
+    public void setGraphicsForCanvas(Graphics g) {
+        // NOTE: note the two different orders of clip and translate
+        // below. That is because the layer's bounds are stored in
+        // the coordinate space of the window. But its internal dirty
+        // region is stored in the coordinate space of the layer itself.
+        // Thus, for the first one, the clip can be set and then translated,
+        // but in the second case, the translate must be done first and then
+        // the clip set.
+        if (isDirty()) {
+            if (isEmptyDirtyRegions()) {
+                g.setClip(bounds[X], bounds[Y], bounds[W], bounds[H]);
+                g.translate(bounds[X], bounds[Y]);
+            } else {
+                g.translate(bounds[X], bounds[Y]);
+                g.setClip(dirtyBounds[X], dirtyBounds[Y],
+                    dirtyBounds[W], dirtyBounds[H]);
+            }
+            cleanDirty();
+        } else {
+            // NOTE: the layer can be not dirty, e.g. in the case an empty
+            // area was requested for repaint, set empty clip area then.
+            g.translate(bounds[X], bounds[Y]);
+            g.setClip(0, 0, 0, 0);
         }
     }
 

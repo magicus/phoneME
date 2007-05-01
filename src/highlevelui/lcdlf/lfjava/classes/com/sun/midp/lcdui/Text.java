@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved. 
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved. 
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
  *  
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License version 
- * 2 only, as published by the Free Software Foundation.  
+ * 2 only, as published by the Free Software Foundation. 
  *  
  * This program is distributed in the hope that it will be useful, but 
  * WITHOUT ANY WARRANTY; without even the implied warranty of 
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
  * General Public License version 2 for more details (a copy is 
- * included at /legal/license.txt).  
+ * included at /legal/license.txt). 
  *  
  * You should have received a copy of the GNU General Public License 
  * version 2 along with this work; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 
- * 02110-1301 USA  
+ * 02110-1301 USA 
  *  
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa 
  * Clara, CA 95054 or visit www.sun.com if you need additional 
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.lcdui;
@@ -252,6 +252,7 @@ public class Text {
 	    cursor = null;
 	}
 	
+    int oldNumLines = info.numLines;
 	if (info.isModified) {
 	    
 	    int[] inout = initGNL(font, w, h, options, offset);
@@ -360,28 +361,32 @@ public class Text {
 	    }
 	}
 	// check scroll position and move if needed
-	if (cursor != null && (info.isModified ||info.scrollX || info.scrollY)) {
+	if (info.isModified ||info.scrollX || info.scrollY) {
 	    if (info.numLines > info.visLines) {
-		if (info.cursorLine > info.topVis + info.visLines - 1) {
-		    int diff = info.cursorLine - 
-			(info.topVis + info.visLines - 1);
-		    info.topVis += diff;
-		} else if (info.cursorLine < info.topVis) {
-		    int diff = info.topVis - info.cursorLine;
-		    info.topVis -= diff;
-		}
-                
-                if (info.topVis + info.visLines > info.numLines) {
-                    info.topVis = info.numLines - info.visLines;
+            if (cursor != null) {
+                if (info.cursorLine > info.topVis + info.visLines - 1) {
+                    int diff = info.cursorLine - 
+                        (info.topVis + info.visLines - 1);
+                    info.topVis += diff;
+                } else if (info.cursorLine < info.topVis) {
+                    int diff = info.topVis - info.cursorLine;
+                    info.topVis -= diff;
                 }
-                
-	    } else {
-                info.topVis = 0;
+            } else if (oldNumLines != 0) {
+                info.topVis = (info.topVis * info.numLines) / oldNumLines;
+            }                
+            if (info.topVis + info.visLines > info.numLines) {
+                info.topVis = info.numLines - info.visLines;
             }
+	    } else {
+            info.topVis = 0;
+        }
+        if (cursor != null) {
             cursor.yOffset = info.topVis * fontHeight;
+        }
 	}
 	info.scrollX = info.scrollY = info.isModified = false;
-        return true;
+    return true;
     }    
 
 
