@@ -30,12 +30,20 @@ import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModuleFactory;
 import com.sun.jump.module.lifecycle.JUMPApplicationLifecycleModule;
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.executive.JUMPApplicationProxy;
+import com.sun.jump.executive.JUMPExecutive;
+import com.sun.jump.message.JUMPMessage;
+import com.sun.jump.message.JUMPMessageHandler;
+import com.sun.jump.message.JUMPMessageDispatcher;
+import com.sun.jump.message.JUMPMessageDispatcherTypeException;
+import com.sun.jump.command.JUMPIsolateLifecycleRequest;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.io.IOException;
 
 public class OneLiveOnlyApplicationLifecycleModule
-        implements JUMPApplicationLifecycleModule {
+        implements JUMPApplicationLifecycleModule, JUMPMessageHandler {
     
     private final HashMap mapAppToAppProxy = new HashMap();
     
@@ -45,6 +53,17 @@ public class OneLiveOnlyApplicationLifecycleModule
     // Examples could be -- maximum number of instances allowed, etc.
     //
     public void load(Map config) {
+        try {
+            JUMPExecutive e = JUMPExecutive.getInstance();
+            JUMPMessageDispatcher md = e.getMessageDispatcher();
+            md.registerHandler(JUMPIsolateLifecycleRequest.MESSAGE_TYPE, this);
+        } catch (JUMPMessageDispatcherTypeException dte) {
+            dte.printStackTrace();
+            throw new IllegalStateException();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            throw new IllegalStateException();
+        }
     }
     
     public void unload() {
@@ -121,5 +140,35 @@ public class OneLiveOnlyApplicationLifecycleModule
             return (JUMPApplicationProxy[])v.toArray(new JUMPApplicationProxy[]{});
         }
     }
-}
 
+
+    public void
+    handleMessage(JUMPMessage message) {
+        if(JUMPIsolateLifecycleRequest.MESSAGE_TYPE.equals(
+            message.getType())) {
+
+            JUMPIsolateLifecycleRequest cmd =
+                (JUMPIsolateLifecycleRequest)
+                    JUMPIsolateLifecycleRequest.fromMessage(message);
+
+            if(JUMPIsolateLifecycleRequest.ID_ISOLATE_DESTROYED.equals(
+                cmd.getCommandId())) {
+
+                synchronized(this) {
+                    unregisterApp(getApplications(), cmd.getIsolateId());
+                } 
+            }
+        }
+    }
+
+    private void
+    unregisterApp(JUMPApplicationProxy[] proxies, int isolateId) {
+        if(proxies != null) {
+            for(int i = 0; i != proxies.length; ++i) {
+                if(proxies[i].getIsolateProxy().getIsolateId() == isolateId) {
+                    mapAppToAppProxy.remove(proxies[i].getApplication());
+                }
+            }
+        }
+    }
+}
