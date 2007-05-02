@@ -85,7 +85,7 @@ class DownloaderImpl implements JUMPDownloader {
             try {
                 File jarFile = File.createTempFile("content", fileExtension);
                 FileOutputStream fos = new FileOutputStream( jarFile );
-                fos.write( ((DownloadDestinationImpl)destination).getBuffer() );
+                fos.write(destination.getBuffer());
                 fos.close();
 
                 return jarFile.toURI().toURL();

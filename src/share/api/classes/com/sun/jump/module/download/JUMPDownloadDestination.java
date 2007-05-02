@@ -100,4 +100,6 @@ public interface JUMPDownloadDestination {
      * <br>
      */
     public int getMaxChunkSize();
+
+    public byte[] getBuffer();
 }
