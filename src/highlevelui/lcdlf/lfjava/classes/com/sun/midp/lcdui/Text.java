@@ -817,7 +817,18 @@ public class Text {
                   && ((inout[GNL_NUM_LINES] + 1) * inout[GNL_FONT_HEIGHT]
                         > inout[GNL_HEIGHT])
                   );
-
+            // we allow \r\n as an alternative delimiter, but not \r alone
+            } else if ( text[curLoc] == '\r'
+                     && curLoc+1 < text.length
+                     && text[curLoc+1] == '\n') {
+                inout[GNL_LINE_END] = curLoc;
+                inout[GNL_NEW_LINE_START] = curLoc + 2;
+                inout[GNL_LINE_WIDTH] = prevLineWidth;
+                return
+                  (  ((inout[GNL_OPTIONS] & TRUNCATE) == TRUNCATE)
+                  && ((inout[GNL_NUM_LINES] + 1) * inout[GNL_FONT_HEIGHT]
+                        > inout[GNL_HEIGHT])
+                  );
             } else if (text[curLoc] == ' ') {
                 inout[GNL_LINE_END] = curLoc;
                 inout[GNL_NEW_LINE_START] = curLoc + 1;
