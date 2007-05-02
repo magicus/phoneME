@@ -288,6 +288,14 @@ include $(PISCES_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
+# (Extra) Mobile Sensor
+# Description: JSR 256
+#####################################################################
+ifeq ($(USE_JSR_256), true)
+include $(JSR_256_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
 # (Extra) SATSA Subsystem
 # Description: JSR 177
 #####################################################################
