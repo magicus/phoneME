@@ -1,0 +1,76 @@
+;   
+; Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+; DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+; 
+; This program is free software; you can redistribute it and/or
+; modify it under the terms of the GNU General Public License version
+; 2 only, as published by the Free Software Foundation.
+; 
+; This program is distributed in the hope that it will be useful, but
+; WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+; General Public License version 2 for more details (a copy is
+; included at /legal/license.txt).
+; 
+; You should have received a copy of the GNU General Public License
+; version 2 along with this work; if not, write to the Free Software
+; Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+; 02110-1301 USA
+; 
+; Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+; Clara, CA 95054 or visit www.sun.com if you need additional
+; information or have any questions.
+;
+; This is the scatter-load file for linking cldc_vm.axf. We place the
+; interesting pieces of the VM into different memory addresses so that
+; we can test the VM with different memory speed.
+;
+;
+; Regular code and data: 0x00008000 - 0x00ffffff  16MB
+; C stackheap:           0x01000000 - 0x03ffffff  48MB; This is also where
+;                                                       Java heap is malloc'ed
+; Hot Routines, etc:     0x04000000 - 0x04fffff   16MB
+;
+; For example, the Java heap is placed at address 0x01000000. We can
+; run the experiment "what if the entire heap is in fast memory" by
+; benchmarking the VM with two different memory map configurations
+; (assuming CPU is 10 Mhz)
+;
+; [configuration1: everything is in slow memory (2 wait states)]
+; 00000000 05000000 RAM 2 rw 300/300 300/300
+;
+; [configuration1: heap is in fast memory (0 wait state), everything
+; else is in slow memory (2 wait states)]
+; 00000000 01000000 RAM 2 rw 100/100 100/100      (slow)
+; 01000000 03000000 RAM 2 rw 300/300 300/300      (fast)
+; 04000000 01000000 RAM 2 rw 100/100 100/100      (slow)
+;
+; For more information about simulating memory speed, 
+; see section 4.13 of ARM Developer Suite, Debug Target Guide 
+; at http://www.arm.com/pdfs/DUI0058D_ADS1_2_DebugTarg.pdf 
+
+LR_1 0x00008000
+{
+    RO +0
+    {
+        *(+RO)
+    }
+    RW +0
+    {
+        *(+RW)
+    }
+    ZI +0
+    {
+        *(+ZI)
+    }
+    RO2 0x04000000
+    {
+        HotRoutines1.o (+RO)
+        HotRoutines1.o (+RW)
+        HotRoutines1.o (+ZI)
+    }
+    INTERP_DATA 0x04100000
+    {
+        Interpreter_arm.o (+RW)
+    }
+}
