@@ -418,7 +418,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         int currentScreen = getCurrentScreen();
         if (currentScreen == APPLICATIONS_SCREEN) {
             // Find out number of total screen pages
-            int totalApplicationsScreenPages = getTotalScreenPages(applicationsScreenButtons.length);
+            int totalApplicationsScreenPages = getTotalScreenPages(applicationsScreenButtons.length, SCREEN_DISPLAY_ICONS);
             
             // Don't scroll beyond the last page
             if (applicationsScreenPageNumber < (totalApplicationsScreenPages - 1)) {
@@ -428,7 +428,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
             
         } else if (currentScreen == SWITCHTO_SCREEN) {
             // Find out number of total screen pages
-            int totalSwitchToScreenPages = getTotalScreenPages(switchScreenButtons.length);
+            int totalSwitchToScreenPages = getTotalScreenPages(switchScreenButtons.length, SCREEN_DISPLAY_ICONS);
             // Don't scroll beyond the last page
             if (switchToScreenPageNumber < (totalSwitchToScreenPages - 1)) {
                 switchToScreenPageNumber++;
@@ -437,7 +437,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
             
         } else if (currentScreen == KILL_SCREEN) {
             // Find out number of total screen pages
-            int totalKillScreenPages = getTotalScreenPages(killScreenButtons.length);
+            int totalKillScreenPages = getTotalScreenPages(killScreenButtons.length, SCREEN_DISPLAY_ICONS);
             // Don't scroll beyond the last page
             if (killScreenPageNumber < (totalKillScreenPages - 1)) {
                 killScreenPageNumber++;
@@ -453,10 +453,10 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
      * Utility method to determine the number of pages to store
      * a total number of icons
      */
-    int getTotalScreenPages(int numIcons) {
+    int getTotalScreenPages(int numIcons, int screenIconCapacity) {
         int totalScreenPages = 0;
-        int div = numIcons / SCREEN_DISPLAY_ICONS;
-        int mod = numIcons % SCREEN_DISPLAY_ICONS;
+        int div = numIcons / screenIconCapacity;
+        int mod = numIcons % screenIconCapacity;
         if (mod == 0) {
             totalScreenPages = div;
         } else {
