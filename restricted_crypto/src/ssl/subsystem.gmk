@@ -1,0 +1,78 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+############################################################
+#
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+#
+############################################################
+
+SUBSYSTEM_SECURITY_MODULES += midp_ssl
+
+SSL_REF_DIR = $(RESTRICTED_CRYPTO_DIR)/src/ssl/reference
+
+SSL_PACKAGE_DIR = $(CRYPTO_CLASSES_DIR)/com/sun/midp/ssl
+
+JPP_DEFS += -DENABLE_SSL
+
+# Javadoc source path
+SUBSYSTEM_SSL_SOURCEPATH=$(SSL_REF_DIR)/classes
+
+SUBSYSTEM_SSL_PACKAGES = \
+    com.sun.midp.ssl
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_SSL_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_SSL_PACKAGES)
+
+MIDP_JAVADOC_ALL += \
+    -group "SSL Subsystem" \
+    $(shell echo $(SUBSYSTEM_SSL_PACKAGES) | tr ' ' $(PATHSEP))
+
+#
+# Java files for the library
+#
+MIDP_SSL_JAVA_FILES = \
+    $(SSL_REF_DIR)/classes/com/sun/midp/ssl/Handshake.java \
+    $(SSL_REF_DIR)/classes/com/sun/midp/ssl/In.java \
+    $(SSL_REF_DIR)/classes/com/sun/midp/ssl/Out.java\
+    $(SSL_REF_DIR)/classes/com/sun/midp/ssl/Record.java\
+    $(SSL_REF_DIR)/classes/com/sun/midp/ssl/SSLStreamConnection.java
+
+SUBSYSTEM_SECURITY_JAVA_FILES += $(MIDP_SSL_JAVA_FILES)
+
+SSL_CLASSES = $(MIDP_OUTPUT_DIR)/classes/com/sun/midp/ssl/*
+#$(patsubst %.java, %.class, \
+#  $(subst $(SSL_REF_DIR), $(MIDP_OUTPUT_DIR), $(MIDP_SSL_JAVA_FILES)))
+
+$(SSL_PACKAGE_DIR):
+	@mkdir -p $(SSL_PACKAGE_DIR)
+
+crypto_binaries:: $(SSL_PACKAGE_DIR) $(SSL_CLASSES)
+	@cp -f $(SSL_CLASSES) $(SSL_PACKAGE_DIR)
