@@ -68,6 +68,8 @@ endif
 #(location of the used javacall_platform_defs.h)
 JAVACALL_PLATFORM_DEFS_DIR=$(JAVACALL_DIR)/implementation/win32
 
+SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/stubs javacall/configuration
+SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/stubs/javacall_platform_defs.h javacall/implementation/stubs
 SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(JAVACALL_DIR)/implementation/stubs/$($(jsr)_JC_DIR) javacall/implementation/stubs))
 SOURCE_OUTPUT_LIST += $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h javacall/implementation/win32
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/phoneMEFeature/win32_x86 javacall/configuration/phoneMEFeature
