@@ -1,0 +1,68 @@
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+
+#
+# Not ABB. Full MMAPI.
+#
+ABB = false
+
+#
+# Always ON
+#
+DIRECT_PLAYER = true
+
+#
+# If you want to support VideoControl, turn on DIRECT_VIDEO_PLAYER option
+#
+DIRECT_VIDEO_PLAYER = true
+INDIRECT_VIDEO_PLAYER = true
+
+#
+# If you want to support "capture://video, turn on VIDEO_CAPTURE option
+#
+VIDEO_CAPTURE = false
+
+#
+# If you want to support "capture://audio, turn on AUDIO_CAPTURE option
+#
+AUDIO_CAPTURE = true
+
+#
+# if you want to support interactive MIDI or MIDIControl, 
+# turn on DIRECT_MIDI_CONTROL option
+#
+DIRECT_MIDI_CONTROL = true
+
+#
+# If you want to support RecordControl, turn on DIRECT_RECORD option
+#
+DIRECT_RECORD = true
+
+
+#
+# If you want to support file:// protocol, turn on USE_FILE_CONNECTION option
+#
+USE_FILE_CONNECTION = false
+
+USE_STATIC_LIB = true
