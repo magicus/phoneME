@@ -320,7 +320,7 @@ endif
 # having to specify both CVM_BUILD_SUBDIR and CVM_BUILD_SUBDIR_NAME.
 # Specifying CVM_BUILD_SUBDIR_NAME automatically implies CVM_BUILD_SUBDIR.
 ifneq ($(CVM_BUILD_SUBDIR_NAME),)
-    override CVM_BUILD_SUBDIR = true
+    CVM_BUILD_SUBDIR = true
 else
     CVM_BUILD_SUBDIR_NAME = .
 endif
@@ -331,6 +331,8 @@ ifeq ($(CVM_BUILD_SUBDIR), true)
   else
     CVM_BUILD_SUBDIR_NAME=$(J2ME_CLASSLIB)
   endif
+else
+  override CVM_BUILD_SUBDIR_NAME=.
 endif
 
 ifeq ($(CVM_BUILD_SUBDIR), true)
@@ -358,7 +360,7 @@ endif
 J2ME_CLASSLIB		?= cdc
 
 # MIDP requires at least foundation
-ifeq ($(CVM_INCLUDE_MIDP),true)
+ifeq ($(USE_MIDP),true)
     ifeq ($(J2ME_CLASSLIB), cdc)
 	J2ME_CLASSLIB = foundation
     endif
