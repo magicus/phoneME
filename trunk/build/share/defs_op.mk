@@ -269,6 +269,16 @@ endif
 
 ifeq ($(CVM_INCLUDE_JAVACALL), true)
 JAVACALL_TARGET=$(TARGET_OS)_$(TARGET_CPU_FAMILY)
+JAVACALL_FLAGS = $(JSROP_OP_FLAGS)
+ifeq ($(USE_JAVACALL_EVENTS), true)
+JAVACALL_FLAGS += USE_COMMON=true
+JUMP_ANT_OPTIONS += -Djavacall.events.used=true
+JUMP_SRCDIRS += \
+	$(JUMP_SRCDIR)/share/impl/eventqueue/native
+JUMP_OBJECTS += \
+	jump_eventqueue_impl.o
+JUMP_DEPENDENCIES += javacall_lib
+endif
 # Check javacall makefile and include it
 ifeq ($(JAVACALL_PROJECT_DIR),)
 export JAVACALL_DIR ?= $(COMPONENTS_DIR)/javacall
@@ -292,13 +302,14 @@ JSROP_OUTPUT_DIRS = $(foreach jsr_number,$(JSROP_NUMBERS),\
 
 CVM_INCLUDE_DIRS+= $(JSROP_INCLUDE_DIRS)
 
+ifneq ($(JAVACALL_LINKLIBS),)
+LINKLIBS_CVM    += $(JAVACALL_LINKLIBS) -L$(JSROP_LIB_DIR)
+endif
+
 ifeq ($(CVM_PRELOAD_LIB), true)
 CVM_JCC_INPUT   += $(JSROP_JARS)
 CVM_CNI_CLASSES += $(JSROP_CNI_CLASSES)
 CVM_OBJECTS     += $(JSROP_NATIVE_OBJS)
-ifneq ($(JAVACALL_LINKLIBS),)
-LINKLIBS_CVM    += $(JAVACALL_LINKLIBS) -L$(JSROP_LIB_DIR)
-endif
 JSROP_EXTRA_SEARCHPATH = $(CVM_JCC_INPUT)
 else
 CLASSLIB_DEPS   += $(JSROP_NATIVE_LIBS)
