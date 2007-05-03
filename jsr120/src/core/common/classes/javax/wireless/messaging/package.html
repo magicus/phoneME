@@ -1,0 +1,110 @@
+<!--
+     
+
+   Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+  <head>
+    <title>Wireless Messaging API</title>
+    <!-- Changed  18-Mar-2002 -->
+  </head>
+
+  <body>
+    <p> This package defines an API which
+        allows applications to send and receive wireless
+        messages. The API is generic and independent of the
+        underlying messaging protocol. The underlying protocol
+        can be, for example, GSM Short Message Service, CDMA SMS, and so on.
+    </p>
+
+
+
+    <H2>Overview</H2>
+    <p>This package is designed to work with <code>Message</code> objects that may
+    contain different elements depending on the underlying
+    messaging protocol. This is different from <code>Datagrams</code> that are
+    assumed always to be blocks of binary data.
+    </p>
+    <p>
+    An adapter specification for a given messaging protocol may define
+    further interfaces derived from the <code>Message</code> interfaces included in
+    this generic specification.
+    </p>
+    <p>
+    Unlike network layer
+    datagrams, the wireless messaging protocols that are accessed by using
+    this API are typically of store-and-forward nature. Messages will usually
+    reach the recipient,
+    even if the recipient is not connected at the time of sending. This may
+    happen significantly later if the
+    recipient is disconnected for a long period of time. Sending and possibly
+    also receiving these wireless messages typically involves a
+    financial cost to the end user that cannot be neglected. Therefore,
+    applications should not send unnecessary messages.
+    </p>
+
+    <H2>The MessageConnection and Message Interfaces</H2>
+
+    <p>
+    The <code>MessageConnection</code> interface represents a
+    <code>Connection</code> that can be used for sending and receiving
+    messages. The application opens a <code>MessageConnection</code>
+    with the Generic Connection Framework by providing a URL
+    connection string.
+    </p>
+    <p>The <code>MessageConnection</code> can be opened either in
+    "server" or in "client" mode. A "server" mode connection is
+    opened by providing a URL that specifies an identifier for
+    an application on the local device for incoming messages. A port number
+    is an example of an identifier.
+    Messages received with this identifier will then be
+    delivered to the application by using this connection.
+    A "server" mode connection can be used both for sending and
+    for receiving messages.
+    </p>
+    <p>
+    A "client" mode connection
+    is opened by providing a URL that points to another device. A "client"
+    mode connection can only be used for sending messages.
+    </p>
+    <p>The messages are represented by the <code>Message</code> interface
+    and interfaces derived from it. The <code>Message</code> interface
+    has the very basic functions that are common to all messages.
+    Derived interfaces represent messages of different types and provide
+    methods for accessing type-specific features. The kinds of derived
+    interfaces that are supported depends on the
+    underlying messaging protocol.  If necessary, interfaces derived
+    from <code>Message</code> can be defined in the adapter definitions
+    for mapping the API to an underlying protocol.
+    </p>
+    <p>
+    The mechanism to derive new interfaces from the
+    <code>Message</code> is intended
+    as an extensibility mechanism allowing new protocols to be supported
+    in platforms. Applications are not expected to create their own
+    classes that implement the
+    <code>Message</code> interface. The only correct way for
+    applications to create object instances implementing the
+    <code>Message</code>
+    interface is to use the <code>MessageConnection.newMessage</code>
+    factory method.
+    </p>
+    <p>
+    <code>BinaryMessage</code> and <code>TextMessage</code> are 
+    subinterfaces of <code>Message</code>
+    representing binary and text messages. They have methods to get and set the
+    binary/text data payloads. To create instances of these classes, use the
+    <code>MessageConnection.newMessage</code> factory method, using
+    <code>MessageConnection.BINARY_MESSAGE</code> or 
+    <code>MessageConnection.TEXT_MESSAGE</code> for the message type.
+    </p>
+    <p>
+    The <code>MessageListener</code> interface provides a mechanism for 
+    the application to be notified of incoming messages. The listener 
+    mechanism allows applications to receive incoming messages without 
+    needing to have a thread blocked in the <code>receive()</code> method call.
+    </p>
+
+  </body>
+</html>
