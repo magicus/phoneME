@@ -75,7 +75,7 @@ public class SimpleBasisAMSImageButton
     public static final int OVER = 2;
     public static final int DISABLED = 3;
     
-    private static Font defaultFont = new Font("Serif", Font.BOLD, 16);
+    private static Font defaultFont = new Font("Serif", Font.BOLD, 12);
     private static final SimpleBasisAMSBorder defaultUnpressedBorder =
             new DefaultJUMPGuiAMSImageButtonBorder(false);
     private static final SimpleBasisAMSBorder defaultArmedBorder =

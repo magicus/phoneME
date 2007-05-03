@@ -127,7 +127,7 @@ public class SimpleBasisAMSInstall {
         
         if (currentScreen == INSTALL_APPS_LIST_SCREEN) {
             // Find out number of total screen pages
-            int totalInstallAppsListScreenPages = ams.getTotalScreenPages(installAppsListScreenButtons.length);
+            int totalInstallAppsListScreenPages = ams.getTotalScreenPages(installAppsListScreenButtons.length, APPS_LIST_SCREEN_ROWS * APPS_LIST_SCREEN_COLUMNS);
             
             // Don't scroll beyond the last page
             if (installAppsListScreenPageNumber < (totalInstallAppsListScreenPages - 1)) {
@@ -136,7 +136,7 @@ public class SimpleBasisAMSInstall {
             }
         } else if (currentScreen == REMOVE_APPS_LIST_SCREEN) {
             // Find out number of total screen pages
-            int totalRemoveAppsListScreenPages = ams.getTotalScreenPages(removeAppsListScreenButtons.length);
+            int totalRemoveAppsListScreenPages = ams.getTotalScreenPages(removeAppsListScreenButtons.length, ams.SCREEN_DISPLAY_ICONS);
             
             // Don't scroll beyond the last page
             if (removeAppsListScreenPageNumber < (totalRemoveAppsListScreenPages - 1)) {
@@ -333,7 +333,7 @@ public class SimpleBasisAMSInstall {
     }
     
     
-    /****************************** REMOVE SCREEN ****************************/
+    /****************************** INSTALL SCREEN ****************************/
     
     public void showInstallScreen() {
         ams.showScreen(createInstallScreen());
@@ -676,7 +676,7 @@ public class SimpleBasisAMSInstall {
     private SimpleBasisAMSImageButton removeAppsListScreenButtons[] = null;
     Container createRemoveAppsListScreen() {
         Container removeAppsListScreen = new Container();
-        removeAppsListScreen.setLayout(new GridLayout(APPS_LIST_SCREEN_ROWS, APPS_LIST_SCREEN_COLUMNS));
+        removeAppsListScreen.setLayout(new GridLayout(ams.SCREEN_ROWS, ams.SCREEN_COLUMNS));
         
         JUMPInstallerModule installers[] = JUMPInstallerModuleFactory.getInstance().getAllInstallers();
         Vector allApps = new Vector();
@@ -692,9 +692,9 @@ public class SimpleBasisAMSInstall {
             JUMPApplication app = (JUMPApplication)content[i];
             removeAppsListScreenButtons[i] = ams.createScreenButton(app, new RemoveOneActionListener(app), BUTTON_RED_COLOR);
         }
-        int firstPositionIndex = removeAppsListScreenPageNumber * APPS_LIST_SCREEN_NUM_ENTRIES;
+        int firstPositionIndex = removeAppsListScreenPageNumber * ams.SCREEN_DISPLAY_ICONS;
         for (int i = firstPositionIndex;
-        i < (removeAppsListScreenPageNumber * APPS_LIST_SCREEN_NUM_ENTRIES + APPS_LIST_SCREEN_NUM_ENTRIES); i++) {
+        i < (removeAppsListScreenPageNumber * ams.SCREEN_DISPLAY_ICONS + ams.SCREEN_DISPLAY_ICONS); i++) {
             if (i < removeAppsListScreenButtons.length) {
                 removeAppsListScreen.add(removeAppsListScreenButtons[i]);
             } else {
