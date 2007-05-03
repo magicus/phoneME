@@ -73,23 +73,6 @@ extern "C" {
 
 #include <jni.h>
 
-/**
- * Common result buffer for serialized data storage.
- */
-typedef struct {
-    jchar* buf;
-	jsize  bufsz;
-	jsize  used;
-} _JSR211_INTERNAL_RESULT_BUFFER_;
-
-#define _JSR211_RESULT_INITIALIZER_  { NULL, 0, 0 }
-
-/**
- * Transform field value from 'jsr211_field' to 'javacall_chapi_field' enum.
- */
-#define JAVACALL_FIELD(jsr211_field) \
-    (jsr211_field == 0? 0: jsr211_field + JAVACALL_CHAPI_FIELD_CLASS)
-
 
 /**
  * Result codes for jsr211_execute_handler() method.

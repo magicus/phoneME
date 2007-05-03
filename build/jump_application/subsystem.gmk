@@ -75,10 +75,6 @@ INTERNAL_JSR_211_JUMP_DIR   = $(JSR_211_DIR)/src/jump_application/classes
 INTERNAL_JSR_211_SHARE_DIR    = $(JSR_211_DIR)/share/src/classes
 INTERNAL_JSR_211_CONFIG_DIR= $(JSR_211_DIR)/build/share
 
-# Obsolete: Include JSR_211 system properties in Configuration
-SUBSYSTEM_CONFIGURATION_PROPERTRATOR_ARGS += \
-    -f $(INTERNAL_JSR_211_CONFIG_DIR)/properties_chapi.xml
-
 # Include JSR_211 system properties in Configuration
 SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
 	$(INTERNAL_JSR_211_CONFIG_DIR)/properties_chapi.xml
@@ -155,6 +151,19 @@ chapi_source_bundle: JSR_211_DIR SOURCE_OUTPUT_DIR
 ##################################################################
 # JUMP required variables
 ##################################################################
+
+JSR_211_PROPERTY_FILES += $(JSR_211_DIR)/src/build/share/properties_chapi.xml
+JSR_211_GENERATED_DIR = $(JSR_211_BUILD_DIR)/generated
+JSR_211_INIT_PACKAGE  = $(JSR_INIT_PACKAGE).jsr211
+JSR_211_INITIALIZER   = $(JSR_211_GENERATED_DIR)/classes/$(subst .,/,$(JSR_211_INIT_PACKAGE))/$(JSR_INIT_CLASS).java
+
+JSR_INITIALIZER_LIST += $(JSR_211_INIT_PACKAGE).$(JSR_INIT_CLASS)
+SUBSYSTEM_JSR_211_JAVA_FILES += \
+    $(JSR_211_INITIALIZER)
+
+$(JSR_211_INITIALIZER): $(CONFIGURATOR_JAR_FILE)
+	$(AT)$(call generateJSRInitializer,$(JSR_211_PROPERTY_FILES),$(JSR_211_GENERATED_DIR),$(JSR_211_INIT_PACKAGE),$@,$(JSR_211_LIB_NAME))
+
 
 SUBSYSTEM_JSR_211_INCLUDE_DIRS += \
     $(JSROP_ABSTRACTS_DIR)/include \

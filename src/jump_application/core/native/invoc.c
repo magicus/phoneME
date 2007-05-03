@@ -34,17 +34,6 @@
 #include "jsr211_invoc.h"
 		
 
-
-/**
- * Checks whether the internal handlers, if any, are installed.
- * Implemented in jsr211_deploy.c accordingly to JAMS/NAMS mode.
- * @return JSR211_OK or JSR211_FAILED - if registry corrupted or OUT_OF_MEMORY.
- */
-jint jsr211_check_internal_handlers(){
-	return 0;
-}
-
-
 /**
  * Function to find a matching entry entry in the queue.
  * The handlerID must match. The function seeks among new Invocations 
@@ -54,6 +43,6 @@ jint jsr211_check_internal_handlers(){
  *
  * @return the found invocation, or NULL if no matched invocation.
  */
-StoredInvoc* jsr211_get_invocation(const jchar* handlerID){
+StoredInvoc* jsr211_get_invocation(const javacall_utf16* handlerID){
 	return NULL;
 }

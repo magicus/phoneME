@@ -33,7 +33,7 @@
 #include <jni.h>
 //#include <native/common/jni_util.h>
 #include "javacall_chapi.h"
-#include "javacall_chapi_callbacks.h"
+#include "javacall_chapi_result.h"
 
 #include "jsr211_registry.h"
 #include "jsr211_invoc.h"
@@ -61,6 +61,13 @@ static jfieldID chImplAccesses;     // accesses     : String[]
 /** javax.microedition.content.ActionNameMap fields */
 static jfieldID anMapLocale;        // locale
 static jfieldID anMapActionnames;   // [] actionnames
+
+
+/**
+ * Transform field value from 'jsr211_field' to 'javacall_chapi_field' enum.
+ */
+#define JAVACALL_FIELD(jsr211_field) \
+    (jsr211_field == 0? 0: jsr211_field + JAVACALL_CHAPI_FIELD_CLASS)
 
 
 /**  JSR 211 exception messages */
@@ -139,7 +146,7 @@ typedef struct JSR211_content_handler_ {
 } JSR211_content_handler;
 
 
-static jstring result2string(JNIEnv *env, _JSR211_INTERNAL_RESULT_BUFFER_* buffer){
+static jstring result2string(JNIEnv *env, JAVAUTIL_CHAPI_RESBUF* buffer){
 	return (*env)->NewString(env, buffer->buf, buffer->used);
 }
 
@@ -478,7 +485,7 @@ JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_findHandler0
 	jstring ret;
 	const jchar* caller_id_ = callerId !=NULL ? (*env)->GetStringChars(env,callerId, NULL) : NULL;
     const javacall_utf16_string value_ = (const javacall_utf16_string)(*env)->GetStringChars(env, value, NULL);
-	_JSR211_INTERNAL_RESULT_BUFFER_ result = _JSR211_RESULT_INITIALIZER_;
+	JAVAUTIL_CHAPI_RESBUF result = JAVAUTIL_CHAPI_RESBUF_INITIALIZER;
     jint status = javacall_chapi_find_handler((const javacall_utf16_string)caller_id_, JAVACALL_FIELD(searchBy), value_, (javacall_chapi_result_CH_array)&result);
 	if (status!=JAVACALL_OK){
 		JNU_ThrowInternalError(env, fcFindHandler);
@@ -497,7 +504,7 @@ JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_findHandler0
 JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_forSuite0
   (JNIEnv *env, jobject regStore, int suiteId){
 	jstring ret;
-	_JSR211_INTERNAL_RESULT_BUFFER_ result = _JSR211_RESULT_INITIALIZER_;
+	JAVAUTIL_CHAPI_RESBUF result = JAVAUTIL_CHAPI_RESBUF_INITIALIZER;
 	jint status = javacall_chapi_find_for_suite(suiteId, (javacall_chapi_result_CH_array)&result);
 	if (status!=JAVACALL_OK){
 		JNU_ThrowInternalError(env, fcFindForSuite);
@@ -518,7 +525,7 @@ JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_getValues0
   (JNIEnv *env, jobject regStore, jstring callerId, jint searchBy){
 	jstring ret;
     const jchar* caller_id_ = callerId !=NULL ? (*env)->GetStringChars(env,callerId, NULL) : NULL;
-	_JSR211_INTERNAL_RESULT_BUFFER_ result = _JSR211_RESULT_INITIALIZER_;
+	JAVAUTIL_CHAPI_RESBUF result = JAVAUTIL_CHAPI_RESBUF_INITIALIZER;
 	jint status = javacall_chapi_get_all((const javacall_utf16_string)caller_id_, JAVACALL_FIELD(searchBy), (javacall_chapi_result_CH_array)&result);
 	if (status!=JAVACALL_OK){
 		JNU_ThrowInternalError(env, fcFindGetValues);
@@ -540,7 +547,7 @@ JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_getHandler0
 	jstring ret;
 	const jchar* caller_id_ = callerId !=NULL ? (*env)->GetStringChars(env,callerId, NULL) : NULL;
 	const jchar* _id_ = (*env)->GetStringChars(env,id, NULL);
-	_JSR211_INTERNAL_RESULT_BUFFER_ result = _JSR211_RESULT_INITIALIZER_;
+	JAVAUTIL_CHAPI_RESBUF result = JAVAUTIL_CHAPI_RESBUF_INITIALIZER;
 	jint status = javacall_chapi_get_handler((const javacall_utf16_string)caller_id_, (const javacall_utf16_string)_id_, mode, (javacall_chapi_result_CH_array)&result);
 	if (status!=JAVACALL_OK){
 		JNU_ThrowInternalError(env, fcGetHandler);
@@ -561,7 +568,7 @@ JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_loadFieldValue
   (JNIEnv *env, jobject regStore, jstring handlerId, jint fieldId){
 	jstring ret;
 	const jchar* handler_id_ = (*env)->GetStringChars(env,handlerId, NULL);
-	_JSR211_INTERNAL_RESULT_BUFFER_ result = _JSR211_RESULT_INITIALIZER_;
+	JAVAUTIL_CHAPI_RESBUF result = JAVAUTIL_CHAPI_RESBUF_INITIALIZER;
 	jint status = javacall_chapi_get_handler_field((const javacall_utf16_string)handler_id_, JAVACALL_FIELD(fieldId), (javacall_chapi_result_CH_array)&result);
 	if (status!=JAVACALL_OK){
 		JNU_ThrowInternalError(env, fcGetHandlerField);
@@ -584,7 +591,7 @@ JNIEXPORT jstring JNICALL Java_com_sun_j2me_content_RegistryStore_getByURL0
 	const jchar* caller_id_ = callerId !=NULL ? (*env)->GetStringChars(env,callerId, NULL) : NULL;
 	const jchar* url_ = (*env)->GetStringChars(env,url, NULL);
 	const jchar* action_ = (*env)->GetStringChars(env, action, NULL);
-	_JSR211_INTERNAL_RESULT_BUFFER_ result = _JSR211_RESULT_INITIALIZER_;
+	JAVAUTIL_CHAPI_RESBUF result = JAVAUTIL_CHAPI_RESBUF_INITIALIZER;
 	jint status = javacall_chapi_handler_by_URL((const javacall_utf16_string)caller_id_, (const javacall_utf16_string)url_, (const javacall_utf16_string)action_,(javacall_chapi_result_CH_array)&result);
 	if (status!=JAVACALL_OK){
 		JNU_ThrowInternalError(env, fcHandlerByURL);
@@ -629,13 +636,13 @@ JNIEXPORT jint JNICALL Java_com_sun_j2me_content_RegistryStore_launch0
 
     switch (javacall_chapi_execute_handler((const javacall_utf16_string)handler_id_, &invoc, &exec_status)) {
         case JAVACALL_OK:
-			exec_status = JSR211_LAUNCH_OK;
+			exec_status = JAVACALL_CHAPI_LAUNCH_OK;
             break;
         case JAVACALL_FILE_NOT_FOUND:
-            exec_status = JSR211_LAUNCH_ERR_NO_HANDLER;
+            exec_status = JAVACALL_CHAPI_LAUNCH_ERR_NO_HANDLER;
             break;
         default:
-            exec_status = JSR211_LAUNCH_ERROR;
+            exec_status = JAVACALL_CHAPI_LAUNCH_ERROR;
 	}
 
 	(*env)->ReleaseStringChars(env,handlerId, handler_id_);
@@ -654,7 +661,7 @@ JNIEXPORT jboolean JNICALL Java_com_sun_j2me_content_RegistryStore_init
    if (!initialized) {
 	   if (JAVACALL_OK != javacall_chapi_initialize()) return JNI_FALSE;
    } else {
-	   if (JAVACALL_OK != jsr211_check_internal_handlers()) return JNI_FALSE;
+	   //if (JAVACALL_OK != jsr211_check_internal_handlers()) return JNI_FALSE;
    }
    
    initialized++;

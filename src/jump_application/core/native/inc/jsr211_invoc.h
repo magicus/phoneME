@@ -58,27 +58,27 @@ typedef enum {
  * Stored InvocationImpl.
  */
 typedef struct _StoredInvoc {
-    jint     status;        /**< The current status */
-    jboolean    notified;    /**< Invocation has been notified */
-    jboolean    cleanup;    /**< true to cleanup on application exit */
-    jboolean    responseRequired; /**< True if a response is required */
-    jint    tid;        /**< The assigned transaction id */
-    jint    previousTid;    /**< The tid of a previous Invocation */
-    jchar * url;        /**< The URL of the request */
-    jchar * type;        /**< The type of the request */
-    jchar * action;        /**< The action of the request */
-    jchar * ID;        /**< The ID of the handler requested */
+    int     status;        /**< The current status */
+    javacall_bool    notified;    /**< Invocation has been notified */
+    javacall_bool    cleanup;    /**< true to cleanup on application exit */
+    javacall_bool    responseRequired; /**< True if a response is required */
+    int    tid;        /**< The assigned transaction id */
+    int    previousTid;    /**< The tid of a previous Invocation */
+    javacall_utf16 * url;        /**< The URL of the request */
+    javacall_utf16 * type;        /**< The type of the request */
+    javacall_utf16 * action;        /**< The action of the request */
+    javacall_utf16 * ID;        /**< The ID of the handler requested */
     int suiteId;    /**< The target Application suiteID */
-    jchar * classname;    /**< The target classname */
-    jchar * invokingAuthority; /**< The invoking authority string */
-    jchar * invokingAppName; /**< The invoking name */
+    javacall_utf16 * classname;    /**< The target classname */
+    javacall_utf16 * invokingAuthority; /**< The invoking authority string */
+    javacall_utf16 * invokingAppName; /**< The invoking name */
     int invokingSuiteId; /**< The invoking MIDlet suiteID */
-    jchar * invokingClassname; /**< The invoking MIDlet classname */
-    jchar * invokingID;    /**< The invoking Application ID */
-    jchar * username;    /**< The username provided as credentials */
-    jchar * password;    /**< The password provided as credentials */
+    javacall_utf16 * invokingClassname; /**< The invoking MIDlet classname */
+    javacall_utf16 * invokingID;    /**< The invoking Application ID */
+    javacall_utf16 * username;    /**< The username provided as credentials */
+    javacall_utf16 * password;    /**< The password provided as credentials */
     int         argsLen;    /**< The length of the argument array */
-    jchar ** args;        /**< The arguments */
+    javacall_utf16 ** args;        /**< The arguments */
     void*       data;        /**< The data; may be NULL */
     int         dataLen;    /**< The length of the data in bytes */
 } StoredInvoc;
@@ -92,7 +92,7 @@ typedef struct _StoredInvoc {
  *
  * @return the found invocation, or NULL if no matched invocation.
  */
-StoredInvoc* jsr211_get_invocation(const jchar* handlerID);
+StoredInvoc* jsr211_get_invocation(const javacall_utf16* handlerID);
 
 
 #ifdef __cplusplus
