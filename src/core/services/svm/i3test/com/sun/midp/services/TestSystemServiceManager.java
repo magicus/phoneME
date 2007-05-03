@@ -27,10 +27,8 @@
 package com.sun.midp.services;
 
 import com.sun.midp.security.*;
-import com.sun.midp.links.*;
 import java.io.*;
 import java.util.*;
-import com.sun.cldc.isolate.*;
 import com.sun.midp.i3test.TestCase;
 
 public class TestSystemServiceManager extends TestCase {

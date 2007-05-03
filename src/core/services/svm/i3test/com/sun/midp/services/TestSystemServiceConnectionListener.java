@@ -27,18 +27,16 @@
 package com.sun.midp.services;
 
 import com.sun.midp.security.*;
-import com.sun.midp.links.*;
 import java.io.*;
 import java.util.*;
-import com.sun.cldc.isolate.*;
 import com.sun.midp.i3test.TestCase;
 
 /**
  * Tests for system service requesting functionality
  */
 public class TestSystemServiceConnectionListener extends TestCase {
-    private static SecurityToken token = SecurityTokenProvider.getToken();  
-
+    private static SecurityToken token = SecurityTokenProvider.getToken();
+        
     class SimpleSystemService implements SystemService, Runnable {
         final static String SERVICE_ID = "42";
 
@@ -74,53 +72,22 @@ public class TestSystemServiceConnectionListener extends TestCase {
                 // send test string to client
                 SystemServiceMessage msg = SystemServiceMessage.newMessage();
                 msg.getDataOutput().writeUTF(testString);
+                System.err.println("S: sending string");
                 con.send(msg);
 
                 // get a response string from client
+                System.err.println("S: receiving string");
                 msg = con.receive();
                 String responseString = msg.getDataInput().readUTF();
 
                 // compare strings
+                System.err.println("S: comparing string");
                 stringsMatch = testString.toUpperCase().equals(responseString);
             } catch (Throwable t) {
             }
         }
     }
 
-    void testRemote() 
-        throws IsolateStartupException,
-               InterruptedIOException,
-               IOException,
-               ClosedLinkException {
-
-        SystemServiceManager manager = SystemServiceManager.getInstance(token);
-        SimpleSystemService service = new SimpleSystemService();
-        manager.registerService(service);
-
-        SystemServiceRequestHandler requestHandler = 
-            new SystemServiceRequestHandler(manager);
-
-        Isolate serviceIsolate = Isolate.currentIsolate();
-        Isolate clientIsolate = new Isolate(
-                "com.sun.midp.services.SystemServiceIsolate", null);
-        clientIsolate.start();
-
-        IsolateSystemServiceRequestHandler isolateRequestHandler = 
-            requestHandler.newIsolateRequestHandler(clientIsolate);
-
-        Link namedPortalLink = Link.newLink(serviceIsolate, clientIsolate);
-        Link[] clientLinks = { namedPortalLink };
-        LinkPortal.setLinks(clientIsolate, clientLinks);
-        NamedLinkPortal.sendLinks(namedPortalLink);
-
-        requestHandler.handleIsolateRequests(isolateRequestHandler);
-
-        clientIsolate.waitForExit();
-        
-        manager.shutdown();
-
-        assertTrue("Strings match", service.stringsMatch);
-    }
 
     void testLocal() {
         SystemServiceManager manager = SystemServiceManager.getInstance(token);
@@ -136,15 +103,19 @@ public class TestSystemServiceConnectionListener extends TestCase {
 
         try {
             // receive string from service
+            System.err.println("C: receiving string");
             SystemServiceMessage msg = con.receive();
             String testString = msg.getDataInput().readUTF();
 
             // convert string to upper case and sent it back to service
             msg = SystemServiceMessage.newMessage();
             msg.getDataOutput().writeUTF(testString.toUpperCase());
+            System.err.println("C: receiving string");
+           
             con.send(msg);
         } catch (Throwable t) {
             System.err.println("Exception: " + t);
+            t.printStackTrace();
         }
 
         manager.shutdown();
@@ -157,12 +128,7 @@ public class TestSystemServiceConnectionListener extends TestCase {
      */
     public void runTests() 
         throws InterruptedIOException,
-               IsolateStartupException,
-               ClosedLinkException,
                IOException {
-
-        declare("testRemote");
-        testRemote();
 
         declare("testLocal");
         testLocal();

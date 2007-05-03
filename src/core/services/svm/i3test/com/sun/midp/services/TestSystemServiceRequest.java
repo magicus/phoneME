@@ -26,17 +26,15 @@
 
 package com.sun.midp.services;
 
-import com.sun.midp.links.*;
 import java.io.*;
 import java.util.*;
-import com.sun.cldc.isolate.*;
 import com.sun.midp.i3test.TestCase;
 
 /**
  * Tests for system service requesting functionality
  */
 public class TestSystemServiceRequest extends TestCase {
-    private static String SERVICE_ID = "42";
+    private final static String SERVICE_ID = "42";
 
     class DummySystemServiceManager extends SystemServiceManager {
         SystemService service = null;
@@ -78,38 +76,6 @@ public class TestSystemServiceRequest extends TestCase {
         }
     }
 
-    void testRemote() 
-        throws IsolateStartupException,
-               InterruptedIOException,
-               IOException,
-               ClosedLinkException {
-
-        SystemServiceManager serviceManager = new DummySystemServiceManager();
-        DummySystemService service = new DummySystemService();
-        serviceManager.registerService(service);
-
-        SystemServiceRequestHandler requestHandler = 
-            new SystemServiceRequestHandler(serviceManager);
-
-        Isolate serviceIsolate = Isolate.currentIsolate();
-        Isolate clientIsolate = new Isolate(
-                "com.sun.midp.services.SystemServiceRequestIsolate", null);
-        clientIsolate.start();
-
-        IsolateSystemServiceRequestHandler isolateRequestHandler = 
-            requestHandler.newIsolateRequestHandler(clientIsolate);
-
-        Link namedPortalLink = Link.newLink(serviceIsolate, clientIsolate);
-        Link[] clientLinks = { namedPortalLink };
-        LinkPortal.setLinks(clientIsolate, clientLinks);
-        NamedLinkPortal.sendLinks(namedPortalLink);
-
-        requestHandler.handleIsolateRequests(isolateRequestHandler);
-
-        clientIsolate.waitForExit();
-        
-        assertTrue("Service requested", service.wasRequested);
-    }
 
     void testLocal() {
         SystemServiceManager serviceManager = new DummySystemServiceManager();
@@ -129,12 +95,7 @@ public class TestSystemServiceRequest extends TestCase {
      */
     public void runTests() 
         throws InterruptedIOException,
-               IsolateStartupException,
-               ClosedLinkException,
                IOException {
-
-        declare("testRemote");
-        testRemote();
 
         declare("testLocal");
         testLocal();

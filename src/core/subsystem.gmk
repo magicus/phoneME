@@ -173,12 +173,7 @@ endif
 # Services library
 # Description: Services Framework
 #####################################################################
-
-ifeq ($(USE_MULTIPLE_ISOLATES), true)
-ifeq ($(USE_LINKS), true)
 include $(SUBSYSTEM_CORE_DIR)/services/$(LIB_MAKE_FILE)
-endif
-endif
 
 ####################################################################
 
