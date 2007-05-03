@@ -63,7 +63,7 @@ static int to_low(int code){
 	do {
 		prev = next++;
 		if (code < next->first){
-			if (code >= prev->last) code += prev->inc;
+			if (code <= prev->last) code += prev->inc;
 			break;
 		}
 	} while(1);
