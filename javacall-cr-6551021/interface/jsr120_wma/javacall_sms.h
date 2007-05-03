@@ -120,7 +120,7 @@ javacall_result javacall_sms_send(  javacall_sms_encoding   msgType,
                         int                     msgBufferLen, 
                         unsigned short          sourcePort, 
                         unsigned short          destPort,
-                        javacall_handle*        handle/*OUT*/);
+                        int                     handle);
 
 /**
  * The platform must have the ability to identify the port number of incoming 
@@ -218,7 +218,7 @@ int javacall_sms_get_number_of_segments(
  */
 void javanotify_sms_send_completed(
                         javacall_result result, 
-                        javacall_handle handle);
+                        int handle);
 
 /**
  * callback that needs to be called by platform to handover an incoming SMS intended for Java 

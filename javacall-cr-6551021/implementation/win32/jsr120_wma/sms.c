@@ -45,8 +45,6 @@ extern char* getProp(const char* propName, char* defaultValue);
 extern int getIntProp(const char* propName, int defaultValue);
 extern const char* getStrProp(const char* propName, const char* defaultValue);
 
-static int msgID = 0;
-
 /**
  * send an SMS message
  *
@@ -65,7 +63,7 @@ javacall_result javacall_sms_send(  javacall_sms_encoding    msgType,
                         int                     msgBufferLen, 
                         unsigned short          sourcePort, 
                         unsigned short          destPort,
-                        javacall_handle*        handle /*OUT*/) {
+                        int                     handle ) {
 
     javacall_handle datagramHandle;
     javacall_result ok;
@@ -100,8 +98,7 @@ javacall_result javacall_sms_send(  javacall_sms_encoding    msgType,
 
     javacall_print("## javacall: SMS sending...\n");
 
-    *handle = (javacall_handle)msgID++;
-    javanotify_sms_send_completed(JAVACALL_OK, (javacall_handle)msgID);
+    javanotify_sms_send_completed(JAVACALL_OK, handle);
 
     return JAVACALL_OK;
 }
