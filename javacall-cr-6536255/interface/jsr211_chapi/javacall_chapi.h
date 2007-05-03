@@ -45,7 +45,7 @@
 #define __JAVACALL_JSR211_CHAPI_H
 
 #include <javacall_defs.h>
-#include "javacall_chapi_callbacks.h"
+#include "javacall_chapi_result.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -103,6 +103,21 @@ typedef struct _InvocParams {
     int                   dataLen;            /**< The length of the data in bytes */
     void*                 data;               /**< The data; may be NULL */
 } javacall_chapi_invocation;
+
+/**
+ * Result codes for jsr211_execute_handler() method.
+ */
+typedef enum {
+    JAVACALL_CHAPI_LAUNCH_OK                = 0,    /** OK, handler started */
+    JAVACALL_CHAPI_LAUNCH_OK_SHOULD_EXIT    = 1,    /** OK, handler started 
+                                            or is ready to start, 
+                                            invoking app should exit. */
+    JAVACALL_CHAPI_LAUNCH_ERR_NOTSUPPORTED  = -1,   /** ERROR, not supported */
+    JAVACALL_CHAPI_LAUNCH_ERR_NO_HANDLER    = -2,    /** ERROR, no requested handler */
+    JAVACALL_CHAPI_LAUNCH_ERR_NO_INVOCATION = -3,    /** ERROR, no invocation queued for 
+                                                       requested handler */
+    JAVACALL_CHAPI_LAUNCH_ERROR             = -4    /** common error */
+} javacall_chapi_launch_result;
 
 
 /**
@@ -283,7 +298,7 @@ javacall_result javacall_chapi_get_handler_field(
 javacall_result javacall_chapi_execute_handler(
             const javacall_utf16_string id, 
             javacall_chapi_invocation* invoc, 
-            /*OUT*/ int* exec_status);
+            /*OUT*/ javacall_chapi_launch_result* exec_status);
 
 /** @} */
 

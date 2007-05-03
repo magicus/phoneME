@@ -24,7 +24,7 @@
  */
 
 /**
- * @file native_handlers_info.h
+ * @file javacall_registry.h
  * @ingroup CHAPI
  * @brief Content handlers database access interface
  */
