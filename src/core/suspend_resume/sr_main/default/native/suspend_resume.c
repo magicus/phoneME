@@ -185,6 +185,11 @@ void midp_resume() {
     }
 }
 
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_suspend_SuspendSystem_isResumePending) {
+    KNI_ReturnBoolean(midp_checkResumeRequest() || (sr_state == SR_RESUMING));
+}
+
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_suspend_SuspendSystem_00024MIDPSystem_suspended0) {
     allMidletsKilled = KNI_GetParameterAsBoolean(1);
@@ -281,7 +286,7 @@ jboolean midp_checkAndResume() {
 
     REPORT_INFO(LC_LIFECYCLE, "midp_checkAndResume()");
 
-    if (SR_SUSPENDED == sr_state && midp_checkResumeRequest()) {
+    if ((SR_SUSPENDED == midp_getSRState()) && midp_checkResumeRequest()) {
         midp_resume();
         res = KNI_TRUE;
     }

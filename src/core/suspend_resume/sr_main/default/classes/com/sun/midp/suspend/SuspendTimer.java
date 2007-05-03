@@ -65,7 +65,9 @@ class SuspendTimer extends Timer {
         if (null == task) {
             task = new TimerTask() {
                 public void run() {
-                    midletList.terminatePauseAll();
+                    if (!SuspendSystem.getInstance().isResumePending()) {
+                        midletList.terminatePauseAll();
+                    }
                 }
             };
 
