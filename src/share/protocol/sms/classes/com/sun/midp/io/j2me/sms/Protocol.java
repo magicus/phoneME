@@ -585,13 +585,11 @@ public class Protocol extends ProtocolBase {
 		    return 0;
                 }
             }
-System.out.println("before native");
 	    // Other protocols can receive the message.
 	    segments = numberOfSegments0(msgBuffer, msgBuffer.length,
 					 messageType, hasPort);
         }
 
-System.out.println("segments="+segments);
 	return segments;
     }
 

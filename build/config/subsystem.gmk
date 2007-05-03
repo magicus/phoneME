@@ -93,15 +93,7 @@ MODULE_JSR_120_COMMON_JAVA_FILES = \
     $(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/BinaryMessage.java \
     $(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/TextMessage.java 
     
-# test
-#MODULE_JSR_120_COMMON_JAVA_FILES += \
-#    $(JSR_120_DIR)/src/share/test/classes/com/sun/midp/wma/test/JumpDriverTest.java
-
 vpath % $(JSR_120_DIR)/src/share/test/native
-
-#SUBSYSTEM_JSR_120_NATIVE_FILES += \
-#    jump_driver_test.c
-#
 
 ifneq ($(USE_NATIVE_AMS), true)
 ifneq ($(NO_PUSH), true)
