@@ -110,7 +110,7 @@ public class SuspendSystem extends AbstractSubsystem {
         protected synchronized void resumeImpl() {
             midletKilled = false;
             midletPaused = false;
-
+            
             SuspendResumeUI.dismissSuspendAlert();
             alertIfAllMidletsKilled();
 

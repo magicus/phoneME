@@ -110,7 +110,7 @@ public abstract class AbstractSubsystem implements Subsystem {
                 while (subs.hasMoreElements()) {
                     ((Subsystem)subs.nextElement()).resume();
                 }
-            
+
                 resumeImpl();
                 state = ACTIVE;
                 resumed();

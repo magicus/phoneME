@@ -28,8 +28,11 @@ package com.sun.midp.suspend;
 
 import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.Configuration;
+import com.sun.midp.main.MIDletProxy;
+
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Enumeration;
 
 /**
  * Timer for terminating MIDlets that have not completed
@@ -65,7 +68,16 @@ class SuspendTimer extends Timer {
         if (null == task) {
             task = new TimerTask() {
                 public void run() {
-                    if (!SuspendSystem.getInstance().isResumePending()) {
+                    SuspendSystem ss = SuspendSystem.getInstance();
+
+                    // don't kill the midlets if the resume request is pending
+                    if (ss.isResumePending()) {
+                        Enumeration midlets = midletList.getMIDlets();
+                        while(midlets.hasMoreElements()) {
+                          ss.removeSuspendDependency(
+                                  (MIDletProxy)midlets.nextElement());
+                        }
+                    } else {
                         midletList.terminatePauseAll();
                     }
                 }
