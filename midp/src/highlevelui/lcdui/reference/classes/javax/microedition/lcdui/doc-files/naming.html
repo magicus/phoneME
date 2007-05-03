@@ -1,0 +1,110 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+
+<!--
+	
+
+Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+
+-->
+
+<title>LCDUI Method Naming Conventions</title></head>
+<body>
+<h1>LCDUI Method Naming Conventions</h1>
+
+<p>
+LCDUI uses a set of naming conventions to guide developers as to the
+locking context for each method.  For a detailed discussion of the
+locking policy in LCDUI, please see the "Thread Safety" section of the
+<i>Design Guide</i>.
+
+<p>
+The naming convention applies primarily to calls between the public
+API (model) classes and the LF ("look and feel") classes.  However,
+the convention is also applied elsewhere.
+
+<p>
+All data in LCDUI, including data in both the API classes and in the
+LF classes, is protected by a monitor lock on a single object,
+<code>Display.LCDUILock</code>.  This lock must be held during access,
+read or write, to any class or instance variables of any API or LF
+classes within LCDUI.  The monitor lock on the
+<code>Display.calloutLock</code> object <em>must</em> be held by any
+code that calls out to the application, whereas, the monitor lock on
+LCDUILock <em>must not</em> be held across such calls.  This implies
+that LCDUILock must not be held across calls to internal methods that
+might call out to the application.  This further implies that there is
+a mixture of code within LCDUI: some methods are called while the
+monitor lock on LCDUILock is held ("locked"), and some methods are
+called when it is not held ("unlocked").
+
+<p>
+The primary goal of the naming convention is therefore to distinguish
+methods that are called while LCDUILock is locked from those called
+while LCDUILock is unlocked.  The first convention is as follows:
+
+<ul>
+     <li>Prefix 'l'</li>
+	Methods prefixed with 'l' are called while LCDUILock is
+	locked.  Code within these methods has free access to LCDUI
+	class and instance variables.  Code within these methods
+	<em>must not</em> call out to the application.
+
+     <li>Prefix 'u'</li>
+	Methods prefixed with 'u' are called while LCDUILock is
+	unlocked.  Code within these methods must first lock LCDUILock
+	prior to any access to class or instance variables.   Code
+	within these methods may call out to the application, but it
+	may do so only while LCDUILock is not held and while
+	calloutLock is held.
+</ul>
+
+<p>
+Additional naming conventions describe special actions that are likely
+to occur during this call that have some impact on thread safety.
+
+<ul>
+     <li>Prefix 'uCall'</li>
+
+	A prefix of 'uCall' implies everything that the 'u' prefix
+	implies, with the following additional characteristics.  Methods
+	prefixed with 'uCall' are called only from the event dispatch
+	thread while LCDUILock is unlocked.  These methods may end up
+	calling into application code, handling LCDUILock and
+	calloutLock appropriately.  A subclass may override methods
+	with this prefix if it needs to perform an additional callout
+	to application code.  Otherwise, it should only override the
+	'lCall' version explained below.
+
+     <li>Prefix 'lCall'</li>
+
+	Methods prefixed with 'lCall' contain implementation code that
+	is shared by 'uCall' methods.  As with other methods with the
+	'l' prefix, methods prefixed with 'lCall' are called while
+	LCDUILock is held.  Note that 'lCall' methods <em>do not</em>
+	actually call out to the application.  They are named as such
+	because they assist 'uCall' methods.  In all cases it is the
+	responsibility of 'uCall' methods to perform the actual
+	callout to the application.  An 'lCall' method may be
+	overriden by subclass to perform additional work that does not
+	involve calling out to application code.
+
+     <li>Prefix 'lRequest'</li>
+
+	Methods prefixed with 'lRequest' initiate some action by
+	posting an asynchronous event to the event queue.  The method
+	returns immediately and does not wait for the event to be
+	processed.  The requested action is performed at a later time,
+	when the event is processed.  As with other methods that have
+	the 'l' prefix, these methods must be called while LCDUILock
+	is held.
+</ul>
+
+<p>
+There are a variety of methods that don't adhere to any of the
+conventions described above.  Generally, these are methods internal to
+an API class or an LF class, and they are called while LCDUILock is held.
+
+</body>
+</html>
