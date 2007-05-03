@@ -79,13 +79,13 @@ endef
 
 # Creates an additional jar file containing classes implemented outside JSR's
 # component directory but included in JSR API specification
-# makeExtraJar(extraJarFileName,jsrApiClassesList,jsrClassesDir,classesDirs,jsrExtraClassesDir)
+# makeExtraJar(extraJarFileName,jsrApiClassesList,jsrClassesDir,libJars,jsrExtraClassesDir)
 define makeExtraJar
 	$(AT)for class in $(2); do if !(test -r $(3)/$$class); then \
-	    for dir in $(4); do if (test -r $$dir/$$class); then \
-	        DSTDIR=`dirname $(5)/$$class`; mkdir -p $$DSTDIR; cp $$dir/$$class $$DSTDIR; \
+	    for jar in $(4); do if $(UNZIP) -l $$jar $$class | grep "$$class" >/dev/null; then \
+	        $(UNZIP) -qo $$jar $$class -d $(5); break; \
 	    fi; done; \
-	    if !(test -r $(5)/$$class); then echo "Could not find $$class"; exit 1; fi \
+	    if !(test -r $(5)/$$class); then echo "Error: could not find $$class"; fi; \
 	fi; done
 	@echo ...$(1)
 	$(AT)$(CVM_JAR) cf $(1) -C $(5) .
@@ -99,7 +99,7 @@ endef
 define makeJSRExtraJar
 	$(call makeExtraJar,$(JSR_$(1)_EXTRA_JAR),$(JSR_$(1)_API_CLASSES),\
 	    $(JSR_$(1)_BUILD_DIR)/classes,\
-	    $(CVM_BUILDTIME_CLASSESDIR) $(JAVACLASSES_CLASSPATH),\
+	    $(JSROP_EXTRA_SEARCHPATH), \
 	    $(JSR_$(1)_BUILD_DIR)/extraclasses)
 endef
 
