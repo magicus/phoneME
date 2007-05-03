@@ -44,9 +44,11 @@
 #ifndef __JAVACALL_JSR211_CHAPI_NATIVE_H
 #define __JAVACALL_JSR211_CHAPI_NATIVE_H
 
+#ifdef USE_NATIVE_REGISTRY
+
 #include <javacall_defs.h>
 #include "javacall_chapi.h"
-#include "javacall_chapi_callbacks.h"
+#include "javacall_chapi_result.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -245,5 +247,7 @@ javacall_result javacall_chapi_native_execute_handler(
 #ifdef __cplusplus
 }
 #endif/*__cplusplus*/
+
+#endif /* USE_NATIVE_REGISTRY */
 
 #endif  /* __JAVACALL_JSR211_CHAPI_NATIVE_H */

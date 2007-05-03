@@ -33,59 +33,21 @@
 #define SEEK_END 1
 
 #include <stdlib.h>
-//#include <stdio.h>
 #include <string.h>
-#include <wchar.h>
-#include <sys/io.h>
-#include <fcntl.h>
-
-
 
 #include "javacall_chapi.h"
+#include "inc/javautil_str.h"
+#include "inc/javautil_storage.h"
+
 
 #ifdef USE_NATIVE_REGISTRY
 #include "inc/javacall_chapi_native.h"
 #endif
 
-#include "javacall_chapi_callbacks.h"
+#include "javacall_chapi_result.h"
 
 
 /* Attention! Win32 specific implementation! */
-#define INVALID_HANDLE  (-1)
-
-/***********************************/
-/* Attention! Win32 specific implementation! */
-/***** CHAPI string macros     *****/
-/***********************************/
-
-/**
- * String length calculation.
- * In win32 implementation used standart strlen() procedure for wide chars.
- * Parameter 'str' of 'javacall_utf16_string' type (terminated with zero).
- */
-#define CHAPI_STRLEN(str)   wcslen(str)
-
-
-/**
- * String strict comparison
- * Parameters:
- * const javacall_utf16* str1
- * const javacall_utf16* str2
- * int sz
- * Result: boolean true if strings are fully identical.
- */
-#define CHAPI_ISEQUAL(str1, str2, sz) (0 == memcmp((str1), (str2), (sz) * sizeof(javacall_utf16)))
-
-/**
- * String case insensitive comparison
- * Parameters:
- * const javacall_utf16* str1
- * const javacall_utf16* str2
- * int sz
- * Result: boolean true if strings are lexically identical.
- */
-#define CHAPI_ISEQUAL_I(str1, str2, sz) (0 == _wcsnicmp((str1), (str2), (sz)))
-
 
 /**
  * File path of the registry storage.
@@ -97,7 +59,7 @@ static char* regFilePath = NULL;
 
 /* Opened registry data */
 typedef struct {
-    int file; // opened registry file handle
+    javautil_storage file; // opened registry file handle
     javacall_int32 fsize; // file size
     javacall_int32 cur;   // absolute position of handler data
     javacall_int32 hsize;            // handler size
@@ -109,7 +71,7 @@ typedef struct {
  * The result is boolean value: TRUE- success.
  */
 #define SET_POS(reg_ptr, field)  (0 <= reg_ptr->cur && \
-		 0 < _lseek(reg_ptr->file,(long) reg_ptr->cur + reg_ptr->offs[field], SEEK_SET))
+		 0 == javautil_storage_setpos(reg_ptr->file,(long) reg_ptr->cur + reg_ptr->offs[field], JUS_SEEK_SET))
 
 #define CLEAN_HANDLER(id, suit, clas, flag) \
     if (id != NULL) { free(id); id = NULL; } \
@@ -128,7 +90,7 @@ static int readInt(REG* reg, javacall_chapi_field field) {
 
     if (reg->offs[field] <= 0  || 
        (!SET_POS(reg, field)) || 
-      sizeof(int) != _read(reg->file, (void*)&val, sizeof(int))) {
+      sizeof(int) != javautil_storage_read(reg->file, (void*)&val, sizeof(int))) {
         val = -1;
     }
 
@@ -152,7 +114,7 @@ static int readString(REG* reg, javacall_chapi_field field,
         }
 
         if ((!SET_POS(reg, field))  ||
-            sizeof(c) != _read(reg->file, (void*)&c, sizeof(c) )) {
+            sizeof(c) != javautil_storage_read(reg->file, (void*)&c, sizeof(c) )) {
             sz = -1;
             break;
         }
@@ -164,7 +126,7 @@ static int readString(REG* reg, javacall_chapi_field field,
             break;
         }
 
-        if (sz != _read(reg->file, (void*)buf, sz)) {
+        if (sz != javautil_storage_read(reg->file, (void*)buf, sz)) {
             free(buf);
             sz = -1;
             break;
@@ -202,9 +164,9 @@ static int readArray(REG* reg, javacall_chapi_field field,
 
         if ((!SET_POS(reg, field))  ||
           sizeof(int) != 
-          _read(reg->file,(void*)&sz, sizeof(int)) ||
+          javautil_storage_read(reg->file,(void*)&sz, sizeof(int)) ||
           sizeof(javacall_utf16) != 
-          _read(reg->file,(void*)&c, sizeof(javacall_utf16))) {
+          javautil_storage_read(reg->file,(void*)&c, sizeof(javacall_utf16))) {
             n = -1;
             break;
         }
@@ -215,7 +177,7 @@ static int readArray(REG* reg, javacall_chapi_field field,
             break;
         }
 
-        if (sz != _read(reg->file,(void*)buf, sz)) {
+        if (sz != javautil_storage_read(reg->file,(void*)buf, sz)) {
             free(buf);
             n = -1;
             break;
@@ -267,17 +229,20 @@ static javacall_result loadHandler(REG* reg,
  * @return Number of written bytes, -1 if error.
  */
 static int writeString(REG* reg, const javacall_utf16_string str) {
-    int sz;
+    int sz = 0;
     javacall_utf16 c;
 
-    sz = (str == NULL? 0: CHAPI_STRLEN(str));
+	if (str != NULL){
+		sz = javautil_wcslen(str);
+	}
+
     if (sz > 0) {
         c = sz;
         sz *= sizeof(javacall_utf16);
 
         if (sizeof(javacall_utf16) != 
-          _write(reg->file, (void*)&c, sizeof(javacall_utf16)) ||
-          sz != _write(reg->file, (void*)str, sz)) {
+          javautil_storage_write(reg->file, (void*)&c, sizeof(javacall_utf16)) ||
+          sz != javautil_storage_write(reg->file, (void*)str, sz)) {
             sz = -1;
         } else {
 			sz += sizeof(javacall_utf16);
@@ -303,7 +268,7 @@ static int writeArray(REG* reg, const javacall_utf16_string* array, int len) {
         do {
             /* calculate total size */
             for (i = 0; i < len; i++) {
-                str_sz = CHAPI_STRLEN(array[i]);
+				str_sz = javautil_wcslen(array[i]);
                 /* Only non-empty strings allowed */
                 if (str_sz <= 0) {
                     arr_sz = -1;
@@ -319,9 +284,9 @@ static int writeArray(REG* reg, const javacall_utf16_string* array, int len) {
             arr_sz *= sizeof(javacall_utf16);
             c = len;
             if (sizeof(int) != 
-              _write(reg->file, (void*)&arr_sz, sizeof(int)) ||
+              javautil_storage_write(reg->file, (void*)&arr_sz, sizeof(int)) ||
               sizeof(javacall_utf16) != 
-              _write(reg->file, (void*)&c, sizeof(javacall_utf16))) {
+              javautil_storage_write(reg->file, (void*)&c, sizeof(javacall_utf16))) {
                 arr_sz = -1;
                 break;
             }
@@ -343,10 +308,10 @@ static int writeArray(REG* reg, const javacall_utf16_string* array, int len) {
  * Close registry file.
  */
 static void regClose(REG* reg) {
-    if (reg->file != INVALID_HANDLE) {
-        _close(reg->file);
+    if (reg->file != JAVAUTIL_INVALID_STORAGE_HANDLE) {
+        javautil_storage_close(reg->file);
     }
-    reg->file = INVALID_HANDLE;
+    reg->file = JAVAUTIL_INVALID_STORAGE_HANDLE;
     reg->fsize = reg->cur = -1;
 }
 
@@ -362,15 +327,16 @@ static javacall_result nextHandler(REG* reg) {
             break;
         }
 
-        reg->cur = _lseek(reg->file, reg->cur + reg->hsize, SEEK_SET);
-        if (reg->cur < 0) {
+        status = javautil_storage_setpos(reg->file, reg->cur + reg->hsize, JUS_SEEK_SET);
+        if (status!=JAVACALL_OK) {
             status = JAVACALL_IO_ERROR;
             break;
         }
+		reg->cur += reg->hsize;
 
         if (sizeof(int) != 
-            _read(reg->file,(void*)&(reg->hsize), sizeof(int)) ||
-            sizeof(reg->offs) != _read(reg->file, (void*)&(reg->offs), sizeof(reg->offs))) {
+            javautil_storage_read(reg->file,(void*)&(reg->hsize), sizeof(int)) ||
+            sizeof(reg->offs) != javautil_storage_read(reg->file, (void*)&(reg->offs), sizeof(reg->offs))) {
             status = JAVACALL_IO_ERROR;
             break;
         }
@@ -392,9 +358,13 @@ static javacall_result nextAccessedHandler(REG* reg,
                                     const javacall_utf16_string caller_id) {
     javacall_result status;
     javacall_utf16 *buf, *ptr;
-    int n, test_sz, caller_sz;
+    int n, test_sz, caller_sz = 0;
 
-    caller_sz = (caller_id == NULL? 0: CHAPI_STRLEN(caller_id));
+	if (caller_id)
+		caller_sz = javautil_wcslen(caller_id);
+
+
+    
     while ((status = nextHandler(reg)) == JAVACALL_OK && 
             caller_sz &&
             reg->offs[JAVACALL_CHAPI_FIELD_ACCESSES] != 0) {
@@ -405,9 +375,8 @@ static javacall_result nextAccessedHandler(REG* reg,
         }
         for (ptr = buf; n > 0; ptr += test_sz, n--) {
             test_sz = *ptr++;
-            if (test_sz <= caller_sz &&
-                CHAPI_ISEQUAL(ptr, caller_id, test_sz)) {
-                break;
+            if (test_sz <= caller_sz) {
+				if (!javautil_wcsncmp(ptr, caller_id, test_sz)) break;
             }
         }
         free(buf);
@@ -422,71 +391,32 @@ static javacall_result nextAccessedHandler(REG* reg,
 /**
  * Opens registry file and initialize REG structure.
  */
-static javacall_result regOpen(REG* reg, javacall_bool readOnly) {
-    int ioFlag = (readOnly == JAVACALL_TRUE? O_RDONLY:
-                              O_RDWR | O_CREAT);
-    reg->file = INVALID_HANDLE;
+static javacall_result regOpen(REG* reg, const char* regname, javacall_bool readOnly) {
+    int ioFlag = (readOnly == JAVACALL_TRUE? JUS_O_RDONLY: JUS_O_RDWR | JUS_O_CREATE);
+    reg->file = JAVAUTIL_INVALID_STORAGE_HANDLE;
     regClose(reg); // clean up
 
-    if (regFilePath == NULL) {
+	if (regname == NULL) regname = regFilePath;
+
+    if (regname == NULL) {
         return JAVACALL_FAIL;   // javacall_chapi_initialize() not called.
     }
 
-	reg->file = open(regFilePath,ioFlag);
-	if (!reg->file) {
+	if (JAVACALL_OK != javautil_storage_open(regname,ioFlag,&reg->file)) {
 		if (readOnly == JAVACALL_TRUE){
-			reg->file = INVALID_HANDLE;
+			reg->file = JAVAUTIL_INVALID_STORAGE_HANDLE;
 			reg->fsize = 0;
 		} else {
 			return JAVACALL_IO_ERROR;
 		}
 	}  else {
-		reg->fsize = _filelength(reg->file);
+		javautil_storage_getsize(reg->file,&reg->fsize);
 		reg->cur = 0;
 		reg->hsize = 0;
 	}
 
     return JAVACALL_OK;
 }
-
-/**
- * Removes given handler.
- */
-static javacall_result removeHandler(REG* reg) {
-    javacall_result status = JAVACALL_OK;
-    javacall_int32 cur = reg->cur;
-    int bufsz = 0;
-    void* buf = NULL;
-
-    while (JAVACALL_OK == nextHandler(reg)) {
-        if (reg->hsize > bufsz) {
-            bufsz = reg->hsize;
-            free(buf);
-            buf = malloc(bufsz);
-            if (buf == NULL) {
-                status = JAVACALL_OUT_OF_MEMORY;
-                break;
-            }
-        }
-        if (0 > lseek(reg->file, reg->cur, SEEK_SET)
-         || reg->hsize != _read(reg->file, buf, reg->hsize)
-         || 0 > lseek(reg->file, cur, SEEK_SET)
-         || reg->hsize != _write(reg->file, buf, reg->hsize)) {
-            status = JAVACALL_IO_ERROR;
-            break;
-        }
-        cur += reg->hsize;
-    }
-
-    if (buf != NULL) {
-        free(buf);
-    }
-
-    _chsize(reg->file, cur);
-    reg->fsize = cur;
-    return status;
-}
-
 
 /**
  * Initializes content handler registry.
@@ -546,7 +476,7 @@ javacall_result javacall_chapi_finalize(void) {
     off += sz
 
 #define _WRITE_CH_INT(INT, OFF_IDX) \
-		if (sizeof(int) != _write(reg.file, (void*)&INT, sizeof(int))) { \
+		if (sizeof(int) != javautil_storage_write(reg.file, (void*)&INT, sizeof(int))) { \
             status = JAVACALL_IO_ERROR; \
             break; \
 		}  \
@@ -593,16 +523,16 @@ javacall_result javacall_chapi_register_java_handler(
     int sz, off;
     REG reg;
 
-    if (JAVACALL_OK != regOpen(&reg, JAVACALL_FALSE)) {
+    if (JAVACALL_OK != regOpen(&reg, 0,  JAVACALL_FALSE)) {
         return JAVACALL_FAIL;
     }
 
     do {
         // Set file position at end and write fake REG records.
         off = 0;
-        if (0 > lseek(reg.file, 0, SEEK_END) ||
-            sizeof(int) != _write(reg.file, (void*)&off, sizeof(int)) ||
-            sizeof(reg.offs) != _write(reg.file, (void*)&(reg.offs), sizeof(reg.offs))) {
+        if ((JAVACALL_OK != javautil_storage_setpos(reg.file, 0, JUS_SEEK_END)) ||
+            sizeof(int) != javautil_storage_write(reg.file, (void*)&off, sizeof(int)) ||
+            sizeof(reg.offs) != javautil_storage_write(reg.file, (void*)&(reg.offs), sizeof(reg.offs))) {
             status = JAVACALL_IO_ERROR;
             break;
         }
@@ -625,19 +555,18 @@ javacall_result javacall_chapi_register_java_handler(
         _WRITE_CH_ARRAY(accesses, nAccesses, JAVACALL_CHAPI_FIELD_ACCESSES);
 
         // actual records of the handler concerned REG data
-        if (lseek(reg.file, -off, SEEK_CUR) < 0 ||
-            sizeof(int) != _write(reg.file, (void*)&(off), sizeof(int)) ||
-            sizeof(reg.offs) != write(reg.file, (void*)&(reg.offs), sizeof(reg.offs))) {
-            status = JAVACALL_IO_ERROR;
-            break;
+        if (javautil_storage_setpos(reg.file, -off, SEEK_CUR) != JAVACALL_OK ||
+            sizeof(int) != javautil_storage_write(reg.file, (void*)&(off), sizeof(int)) ||
+            sizeof(reg.offs) != javautil_storage_write(reg.file, (void*)&(reg.offs), sizeof(reg.offs))) {
+			regClose(&reg);
+			javacall_chapi_unregister_handler(id);
+			return JAVACALL_IO_ERROR;
         }
 
         status = JAVACALL_OK;
     } while (0);
+	regClose(&reg);
 
-    if (status != JAVACALL_OK && reg.file != INVALID_HANDLE) {
-        _chsize(reg.file, reg.fsize);
-    }
 
 #ifdef USE_NATIVE_REGISTRY
 	if (status == JAVACALL_OK){
@@ -671,28 +600,82 @@ javacall_result javacall_chapi_unregister_handler(
     REG reg;
     javacall_utf16* test_id;
     int id_sz, test_sz, found = 0;
+	char* buf = 0;
+	int bufsz = 0;
+	char tmpname[MAX_STORAGE_NAME]; 
+	int tnlen = MAX_STORAGE_NAME;
+	javautil_storage tmpfile;
 
-    id_sz = CHAPI_STRLEN(id);
+    id_sz = javautil_wcslen(id);
     if (id_sz <= 0) {
         return JAVACALL_FAIL;
     }
 
-    if (JAVACALL_OK != regOpen(&reg, JAVACALL_FALSE)) {
-        return JAVACALL_FAIL;
-    }
+	if (JAVACALL_OK != javautil_storage_gettmpname(tmpname, &tnlen) ) return JAVACALL_IO_ERROR;
+	if (JAVACALL_OK != javautil_storage_open(tmpname,JUS_O_RDWR | JUS_O_CREATE, &tmpfile)) return JAVACALL_IO_ERROR;
 
-    while ((status = nextHandler(&reg)) == JAVACALL_OK) {
+
+    status = regOpen(&reg, 0, JAVACALL_TRUE);
+
+    while ((status == JAVACALL_OK) && (status = nextHandler(&reg)) == JAVACALL_OK) {
+
+        if (reg.hsize > bufsz) {
+            bufsz = reg.hsize;
+            if (buf) {
+				void *tmp = realloc(buf, bufsz);
+				if (!tmp) {
+					status = JAVACALL_OUT_OF_MEMORY;
+					break;
+				}
+				buf = tmp;
+			} else {
+				buf = malloc(bufsz);
+				if (!buf) {
+					status = JAVACALL_OUT_OF_MEMORY;
+					break;
+				}
+			}
+        }
+
+		if (JAVACALL_OK != javautil_storage_read(reg.file, buf, reg.hsize)){
+			status = JAVACALL_IO_ERROR;
+			break;
+		}
+
+		test_sz = *((int*)(buf+reg.offs[JAVACALL_CHAPI_FIELD_ID]));
+		test_id = (javacall_utf16_string)(buf+reg.offs[JAVACALL_CHAPI_FIELD_ID]+sizeof(int));
+
+		found = (id_sz == test_sz  && 0 == javautil_wcsincmp(id, test_id, id_sz));
+
+
         test_sz = readString(&reg, JAVACALL_CHAPI_FIELD_ID, &test_id);
-        found = test_sz == id_sz && CHAPI_ISEQUAL(id, test_id, id_sz);
+
+		if (test_sz == id_sz){
+			found = javautil_wcsincmp(id, test_id, id_sz) == 0;
+		}
         free(test_id);
 
-        if (found) {
-            status = removeHandler(&reg);
-            break;
+        if (!found) {
+			// copy handle
+			if (sizeof(int) != javautil_storage_write(tmpfile, (void*)&reg.hsize, sizeof(int)) ||
+				sizeof(reg.offs) != javautil_storage_write(tmpfile, (void*)&(reg.offs), sizeof(reg.offs)) ||
+				reg.hsize !=  javautil_storage_write(tmpfile, buf, reg.hsize)) {
+				status = JAVACALL_IO_ERROR;
+				break;
+			}
         }
     }
 
+	if (buf) free(buf);
     regClose(&reg);
+	javautil_storage_close(tmpfile);
+
+	if (status == JAVACALL_OK){
+		// aquire mutex
+		javautil_storage_remove(regFilePath);
+		javautil_storage_rename(regFilePath, tmpname);
+		// release mutex
+	}
 
     if (status == JAVACALL_END_OF_FILE) {
         status = JAVACALL_FILE_NOT_FOUND;
@@ -749,11 +732,11 @@ javacall_result javacall_chapi_find_handler(
             return JAVACALL_INVALID_ARGUMENT; // wrong parameter 'key'
     }
 
-    if (JAVACALL_OK != regOpen(&reg, JAVACALL_TRUE)) {
+    if (JAVACALL_OK != regOpen(&reg, 0, JAVACALL_TRUE)) {
         return JAVACALL_FAIL;
     }
 
-    value_sz = CHAPI_STRLEN(value);
+	value_sz = javautil_wcslen(value);
     do {
         status = nextAccessedHandler(&reg, caller_id);
         if (JAVACALL_OK != status) {
@@ -773,7 +756,7 @@ javacall_result javacall_chapi_find_handler(
             if (sz > value_sz) {
                 sz = value_sz;
             }
-            n = (CHAPI_ISEQUAL(buf, value, sz)? 1: 0);
+			n = javautil_wcsncmp(buf, value, sz) ? 0 : 1;
         } else {
             n = readArray(&reg, key, &buf);
             if (n < 0) {
@@ -783,10 +766,14 @@ javacall_result javacall_chapi_find_handler(
     
             for (ptr = buf; n > 0; ptr += sz, n--) {
                 sz = *ptr++;
-                if (sz == value_sz &&
-                    ((mode == 0 && CHAPI_ISEQUAL(ptr, value, sz)) ||
-                    (mode > 0 && CHAPI_ISEQUAL_I(ptr, value, sz)))) {
-                        break;
+                if (sz == value_sz) {
+					int cmp = 1;
+					if (mode == 0){
+						cmp = javautil_wcsincmp(ptr, value, sz);
+					} else {
+						cmp = javautil_wcsncmp(ptr, value, sz);
+					}
+                    if (!cmp) break;
                 }
             }
         }
@@ -837,7 +824,7 @@ javacall_result javacall_chapi_find_for_suite(
     javacall_utf16 *clas = NULL;
     int id_sz, clas_sz, flag;
 
-    if (JAVACALL_OK != regOpen(&reg, JAVACALL_TRUE)) {
+    if (JAVACALL_OK != regOpen(&reg,  0, JAVACALL_TRUE)) {
         return JAVACALL_FAIL;
     }
 
@@ -935,7 +922,7 @@ javacall_result javacall_chapi_get_all(
             return JAVACALL_INVALID_ARGUMENT;
     }
 
-    if (JAVACALL_OK != regOpen(&reg, JAVACALL_TRUE)) {
+    if (JAVACALL_OK != regOpen(&reg,  0, JAVACALL_TRUE)) {
         return JAVACALL_FAIL;
     }
 
@@ -951,9 +938,8 @@ javacall_result javacall_chapi_get_all(
 
         if (mode < 0) {
             sz = readString(&reg, field, &str);
-            if (sz > 0 && JAVACALL_TRUE == 
-                            isUniqueString(str, sz, JAVACALL_TRUE, result)) {
-                status = javautil_chapi_appendString(str, sz, result);
+            if (sz > 0) {
+                status = javautil_chapi_appendUniqueString(str, sz,JAVACALL_TRUE, result);
             }
         } else {
             n = readArray(&reg, field, &str);
@@ -964,10 +950,7 @@ javacall_result javacall_chapi_get_all(
 
             for (ptr = str; n-- > 0 && status == JAVACALL_OK; ptr += sz) {
                 sz = *ptr++;
-                if (JAVACALL_TRUE == isUniqueString(ptr, sz, 
-                        (mode > 0? JAVACALL_TRUE: JAVACALL_FALSE), result)) {
-                    status = javautil_chapi_appendString(ptr, sz, result);
-                }
+                status = javautil_chapi_appendUniqueString(ptr, sz, mode > 0 ? JAVACALL_TRUE: JAVACALL_FALSE, result);
             }
         }
         if (str != NULL) {
@@ -1018,12 +1001,13 @@ javacall_result javacall_chapi_get_handler(
     javacall_utf16 *test = NULL;
     int test_sz, found = JAVACALL_FALSE;
 
-    id_sz = CHAPI_STRLEN(id);
+	id_sz = javautil_wcslen(id);
+
     if (id_sz <= 0) {
         return JAVACALL_FAIL;
     }
 
-    if (JAVACALL_OK != regOpen(&reg, JAVACALL_TRUE)) {
+    if (JAVACALL_OK != regOpen(&reg,  0, JAVACALL_TRUE)) {
         return JAVACALL_FAIL;
     }
 
@@ -1041,7 +1025,7 @@ javacall_result javacall_chapi_get_handler(
 
         if (test_sz == id_sz ||
             (mode == JAVACALL_CHAPI_SEARCH_PREFIX && test_sz < id_sz)) {
-            if (CHAPI_ISEQUAL(id, test, test_sz)) {
+            if (javautil_wcsincmp(id, test, test_sz) == 0) {
                 status = loadHandler(&reg, &id_, &id_sz, &suit,
                                                     &clas, &clas_sz, &flag);
                 if (status == JAVACALL_OK) {
@@ -1097,18 +1081,22 @@ javacall_result javacall_chapi_get_handler_field(
     int sz, n, found;
     int id_sz;
 
-    id_sz = CHAPI_STRLEN(id);
+	id_sz = javautil_wcslen(id);
+
     if (id_sz <= 0) {
         return JAVACALL_FAIL;
     }
     
-    if (JAVACALL_OK != regOpen(&reg, JAVACALL_TRUE)) {
+    if (JAVACALL_OK != regOpen(&reg,  0, JAVACALL_TRUE)) {
         return JAVACALL_FAIL;
     }
 
     while ((status = nextHandler(&reg)) == JAVACALL_OK) {
         sz = readString(&reg, JAVACALL_CHAPI_FIELD_ID, &buf);
-        found = ((sz == id_sz && CHAPI_ISEQUAL(id, buf, sz))? 1: 0);
+		if (sz == id_sz){
+			found = (javautil_wcsincmp(id, buf, sz) == 0);
+		}
+
         free(buf);
         if (found) {
             if (reg.offs[key] == 0) {
@@ -1176,7 +1164,7 @@ static wchar_t* strzdup(const javacall_utf16* str, int str_size) {
 javacall_result javacall_chapi_execute_handler(
             const javacall_utf16_string id, 
             javacall_chapi_invocation* invoc, 
-            /*OUT*/ int* exec_status) {
+            /*OUT*/ javacall_chapi_launch_result* exec_status) {
 
 #ifdef USE_NATIVE_REGISTRY
 	return javacall_chapi_native_execute_handler(id,invoc,exec_status);

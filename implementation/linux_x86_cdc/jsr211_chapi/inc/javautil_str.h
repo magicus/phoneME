@@ -39,30 +39,31 @@
  * @{
  */
 
-#ifndef __JAVACALL_INVOKE_H
-#define __JAVACALL_INVOKE_H
+#ifndef __JAVAUTIL_STR_H___
+#define __JAVAUTIL_STR_H___
+
+#include <javacall_defs.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif/*__cplusplus*/
 
-typedef void* native_invocation_handle;
 
+int javautil_wcslen(javacall_const_utf16_string str);
+int javautil_wcscmp(javacall_const_utf16_string str1, javacall_const_utf16_string str2);
+int javautil_wcsncmp(javacall_const_utf16_string str1, javacall_const_utf16_string str2, int size);
+int javautil_wcsicmp(javacall_const_utf16_string str1, javacall_const_utf16_string str2);
+int javautil_wcsincmp(javacall_const_utf16_string str1, javacall_const_utf16_string str2, int size);
 
-#define NATIVE_INVOCATION_STATUS_ERROR 0xFEFEFEFEL
-
-native_invocation_handle native_handler_exec_invoke(const unsigned short* content_handler_id, const char* action, const char* url);
-
-// should be implemented by client module
-int native_handler_exec_invocation_finished(native_invocation_handle invoc,int exitcode);
-
-void native_handler_exec_wait(native_invocation_handle invoc);
-
-void native_handler_exec_cleanup_monitor(native_invocation_handle invoc);
+int javautil_strlen(const char* str1);
+int javautil_strcmp(const char* str1, const char* str2);
+int javautil_strncmp(const char* str1, const char* str2, int size);
+int javautil_stricmp(const char* str1, const char* str2);
+int javautil_strincmp(const char* str1, const char*, int size);
 
 
 #ifdef __cplusplus
 }
 #endif/*__cplusplus*/
 
-#endif //__JAVACALL_NATIVE_HANDLERS_EXEC_H
+#endif //__JAVAUTIL_STR_H___

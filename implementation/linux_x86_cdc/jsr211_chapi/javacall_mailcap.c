@@ -29,7 +29,10 @@
  * @brief javacall registry access implementation for unix mailcap files (rfc 1524)
  */
 
+#ifdef USE_NATIVE_REGISTRY
+
 #include "inc/javacall_registry.h"
+#include "inc/javacall_str.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -445,7 +448,7 @@ static int suffix_fits(const short* suffix, mailcap_type_info* info){
 	if (!suffix || !info || !info->nametemplate) return 0;
 	*b++='%';*b++='s';
 	while (*suffix) *b++=(char)*suffix++;
-	return stricmp(b,info->nametemplate);
+	return javautil_stricmp(b,info->nametemplate);
 }
 
 static int type_fits(const short* type, mailcap_type_info* info){
@@ -911,3 +914,5 @@ int unregister_handler(const unsigned short* content_handler_id){
 	//find by x-java and x-java-content-handler-id
 	return ERROR_ACCESS_DENIED;
 }
+
+#endif //USE_NATIVE_REGISTRY
