@@ -25,7 +25,7 @@
 #ifndef _JSR120_DRIVER_DEF_H
 #define _JSR120_DRIVER_DEF_H
 
-#define NM_DEBUG
+//#define NM_DEBUG
 extern char *prog_name;
 #ifdef NM_DEBUG
 #define LOG(str)  do { \
@@ -93,6 +93,7 @@ extern char *prog_name;
 #define LOG1(x,arg) (void)prog_name /* avoid warining about unused variable */
 #define LOG2(x,arg1,arg2)   (void)prog_name /* avoid warining about unused variable */
 #define LOG3(x,arg1,arg2,arg3)   (void)prog_name /* avoid warining about unused variable */
+#define LOG_ARRAY(arr_, arrlen_) (void)prog_name /* avoid warining about unused variable */
 #define nmsg_error(s)   do {printf("%s --> exit\n", (s)); exit(1);} while (0)
 #endif
 
