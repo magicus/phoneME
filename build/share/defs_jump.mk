@@ -58,7 +58,7 @@ JUMP_OUTPUT_DIR         = $(CVM_JUMP_BUILDDIR)/lib
 JUMP_SRCDIR             = $(JUMP_DIR)/src
 JUMP_SCRIPTS_DIR        = $(JUMP_DIR)/tools/scripts
 
-JUMP_JSROP_JARS         = :$(subst $(ONESPACE),:,$(patsubst $(CVM_BUILD_TOP)%,\$$PHONEME_DIST%,$(JSROP_JARS)))
+JUMP_JSROP_JARS         = :$(subst $(space),$(PS),$(patsubst $(CVM_BUILD_TOP)%,\$$PHONEME_DIST%,$(JSROP_JARS)))
 
 #
 # JUMP_DEPENDENCIES defines what needs to be built for jump
