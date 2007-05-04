@@ -26,7 +26,7 @@ SUBSYSTEM_MAKE_FILE      = subsystem.gmk
 JSR_INIT_PACKAGE         = com.sun.cdc.config
 JSR_INIT_CLASS           = Initializer
 
-JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239
+JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239 280
 
 # Directory which JSRs *.jar and *.so files are put to
 JSROP_LIB_DIR   = $(CVM_LIBDIR)
@@ -265,6 +265,16 @@ ifeq ($(wildcard $(JSR_239_MAKE_FILE)),)
 $(error JSR_239_DIR must point to a directory containing JSR 239 sources)
 endif
 include $(JSR_239_MAKE_FILE)
+endif
+
+# Include JSR 280
+ifeq ($(USE_JSR_280), true)
+export JSR_280_DIR ?= $(COMPONENTS_DIR)/jsr280
+JSR_280_MAKE_FILE = $(JSR_280_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_280_MAKE_FILE)),)
+$(error JSR_75_DIR must point to a directory containing JSR 280 sources)
+endif
+include $(JSR_280_MAKE_FILE)
 endif
 
 ifeq ($(CVM_INCLUDE_JAVACALL), true)
