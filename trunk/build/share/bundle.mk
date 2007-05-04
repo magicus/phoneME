@@ -27,8 +27,7 @@
 #
 # Targets (default is src.zip):
 #   src.zip:      j2me source bundle. Renamed to <profile>-src.zip.
-#   jcov-src.zip: JCOV source bundle
-#   all:          both of the above
+#   all:          src.zip target
 #
 # Options - defaults in parenthesis:
 #   J2ME_CLASSLIB(cdc): profile to build source bundle for.
@@ -48,6 +47,7 @@
 #   INCLUDE_DUALSTACK(false): Include cdc/cldc dual stack support.
 #   INCLUDE_KNI(false): Include support for KNI methods
 #   INCLUDE_COMMCONNECTION(true): Include CommConnection support.
+#   INCLUDE_JCOV(false): Include support for JCOV
 #   INCLUDE_MTASK: true for oi build. false for ri builds.
 #   USE_CDC_COM(false): set true for commericial source bundles
 #   CDC_COM_DIR: directory of cdc-com component
@@ -73,7 +73,7 @@
 #
 
 default: src.zip
-all:	 src.zip jcov-src.zip
+all:	 src.zip
 
 empty:=
 comma:= ,
@@ -108,6 +108,7 @@ CVM_PRODUCT = oi
 INCLUDE_DUALSTACK	= false
 INCLUDE_KNI		= $(INCLUDE_DUALSTACK)
 INCLUDE_COMMCONNECTION  = true
+INCLUDE_JCOV		= false
 ifeq ($(CVM_PRODUCT),ri)
 INCLUDE_JIT		= false
 INCLUDE_MTASK		= false
@@ -349,6 +350,22 @@ EXCLUDE_PATTERNS += \
        *win32/native/com/sun/cdc/io/j2me/comm/*
 endif
 
+# jcov suport
+
+ifeq ($(INCLUDE_JCOV), true)
+
+BUNDLE_INCLUDE_LIST += 		\
+	build/share/jcov*.mk	\
+	src/share/tools/jcov
+
+BUNDLE_INCLUDE_LIST += \
+	$(foreach os,$(BUNDLE_OS_PORTS),src/$(os)/tools/jcov)
+
+BUNDLE_INCLUDE_LIST += \
+	$(foreach os,$(BUNDLE_OS_PORTS),build/$(os)/jcov.mk)
+
+endif
+
 # MTask support
 
 ifeq ($(INCLUDE_MTASK), true)
@@ -526,6 +543,7 @@ FEATURE_LIST += J2ME_CLASSLIB \
 	INCLUDE_JIT \
 	INCLUDE_MTASK \
 	INCLUDE_KNI \
+	INCLUDE_JCOV \
 	INCLUDE_DUALSTACK \
 	INCLUDE_COMMCONNECTION
 
@@ -608,36 +626,6 @@ endif
 ifeq ($(USE_VERBOSE_MAKE), true)
 	@echo "<<<Finished "$@" ..." ;
 endif
-
-#######
-# JCOV
-#######
-
-#
-# All jcov bundles include these directories
-#
-BUNDLE_JCOV_LIST += 				\
-	build/share/jcov*.mk	\
-	src/share/tools/jcov
-
-# Add every src/<os>/tools/jcov directory
-BUNDLE_JCOV_LIST += \
-	$(foreach os,$(BUNDLE_OS_PORTS),src/$(os)/tools/jcov)
-
-# Add every build/<os>/jcov.mk file
-BUNDLE_JCOV_LIST += \
-	$(foreach os,$(BUNDLE_OS_PORTS),build/$(os)/jcov.mk)
-
-jcov-src: jcov-src.zip
-jcov-src.zip::
-	@echo ">>>Making "$@" ..." ;
-	mkdir -p $(INSTALLDIR)
-	rm -rf $(INSTALLDIR)/jcov-src.zip
-	(cd $(CVM_TOP); \
-	 $(ZIP) -r -q  - $(BUNDLE_JCOV_LIST) -x "*SCCS/*" -x "*/.svn/*") \
-		 > $(INSTALLDIR)/jcov-src.zip;
-	@rm -rf $<;
-	@echo "<<<Finished "$@" ..." ;
 
 #
 # Include any commercial-specific rules and defs
