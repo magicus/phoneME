@@ -34,9 +34,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int opened = 0;
-
-#define JAVAUTIL_STOREAGE_PREFIX "jus"
 
 javacall_result javautil_storage_open(const char* name, int flag, /* OUT */ javautil_storage* storage)
 { 
@@ -114,33 +111,7 @@ javacall_result javautil_storage_getpos(javautil_storage storage, /* OUT */long*
 
 int javautil_storage_read(javautil_storage storage, char* buffer, unsigned int size)
 { 
-	long pos = ftell((FILE*)storage);
-	int ret = fread(buffer, size, 1, (FILE*)storage); 
-	printf("size:%d\n",size);
-	printf("pos:%d\n",pos);
-	printf("err:%d\n",ferror((FILE*)storage));
-	printf("eof:%d\n",feof((FILE*)storage));
-	printf("ret:%d\n",ret);
-	if (feof((FILE*)storage)){
-		char buf[1000];
-		long s;
-		fflush((FILE*)storage);
-
-		javautil_storage_getsize(storage,&s);
-		printf("size:%d\n",s);
-		fseek((FILE*)storage,0,SEEK_SET);
-		ret = fread(buf, s, 1, (FILE*)storage);
-		
-		fseek((FILE*)storage,0x30,SEEK_SET);
-		ret = fread(buf, 0x40, 1, (FILE*)storage); 
-
-		fseek((FILE*)storage,0x40,SEEK_SET);
-		ret = fread(buf, 0x40, 1, (FILE*)storage); 
-
-		fseek((FILE*)storage,0x60,SEEK_SET);
-		ret = fread(buf, 0x40, 1, (FILE*)storage); 
-	}
-	return ret==1? size : 0;
+	return  fread(buffer, 1, size, (FILE*)storage); 
 }
 
 int javautil_storage_write(javautil_storage storage, char* buffer, unsigned int size)
