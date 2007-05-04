@@ -28,10 +28,6 @@
  * @brief Content Handler Registry implementation based on POSIX file calls.
  */
 
-#define SEEK_SET 0
-#define SEEK_CUR 2
-#define SEEK_END 1
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -179,6 +175,7 @@ static int readArray(REG* reg, javacall_chapi_field field,
 
         if (sz != javautil_storage_read(reg->file,(void*)buf, sz)) {
             free(buf);
+			buf = NULL;
             n = -1;
             break;
         }
@@ -336,6 +333,7 @@ static javacall_result nextHandler(REG* reg) {
 
         if (sizeof(int) != 
             javautil_storage_read(reg->file,(void*)&(reg->hsize), sizeof(int)) ||
+			reg->hsize == 0 ||
             sizeof(reg->offs) != javautil_storage_read(reg->file, (void*)&(reg->offs), sizeof(reg->offs))) {
             status = JAVACALL_IO_ERROR;
             break;
@@ -357,7 +355,7 @@ static javacall_result nextHandler(REG* reg) {
 static javacall_result nextAccessedHandler(REG* reg, 
                                     const javacall_utf16_string caller_id) {
     javacall_result status;
-    javacall_utf16 *buf, *ptr;
+    javacall_utf16 *buf=0, *ptr;
     int n, test_sz, caller_sz = 0;
 
 	if (caller_id)
@@ -379,7 +377,7 @@ static javacall_result nextAccessedHandler(REG* reg,
 				if (!javautil_wcsncmp(ptr, caller_id, test_sz)) break;
             }
         }
-        free(buf);
+        if (buf) free(buf);
         if (n > 0) {
             break;
         }
@@ -555,7 +553,7 @@ javacall_result javacall_chapi_register_java_handler(
         _WRITE_CH_ARRAY(accesses, nAccesses, JAVACALL_CHAPI_FIELD_ACCESSES);
 
         // actual records of the handler concerned REG data
-        if (javautil_storage_setpos(reg.file, -off, SEEK_CUR) != JAVACALL_OK ||
+        if (javautil_storage_setpos(reg.file, -off, JUS_SEEK_CUR) != JAVACALL_OK ||
             sizeof(int) != javautil_storage_write(reg.file, (void*)&(off), sizeof(int)) ||
             sizeof(reg.offs) != javautil_storage_write(reg.file, (void*)&(reg.offs), sizeof(reg.offs))) {
 			regClose(&reg);
