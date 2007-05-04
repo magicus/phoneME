@@ -89,13 +89,12 @@ decl_javanotify(incoming_cbs, (
 ), (msgType, msgID, msgBuffer, msgBufferLen))
 
 // ---------------------------------------------------------------------------------
-//#define ENABLE_JSR_205  0
 
 javacall_handle smsDatagramSocketHandle = NULL;
 javacall_handle cbsDatagramSocketHandle = NULL;
-//#if (ENABLE_JSR_205)
+#if (ENABLE_JSR_205)
 javacall_handle mmsDatagramSocketHandle = NULL;
-// #endif
+#endif
 
 #include <stdio.h>
 #include <pthread.h>

@@ -186,16 +186,11 @@ javacall_result javacall_is_sms_port_registered(unsigned short portNum) {
     int i;
     for (i=0; i<PORTS_MAX; i++) {
         if (portsList[i] == portNum) {
-            printf("javacall_is_sms_port_registered %i - YES\n", portNum); fflush(stdout);
+            //printf("javacall_is_sms_port_registered %i - YES\n", portNum); fflush(stdout);
             return JAVACALL_OK;
         }
     }
-    printf("javacall_is_sms_port_registered %i - NO\n", portNum); 
-    printf("javacall_is_sms_port_registered: registered ports are: ");
-    for (i=0; i<PORTS_MAX; i++) {
-        printf(" %d", portsList[i]);
-    }
-    printf("\n");fflush(stdout);
+    //printf("javacall_is_sms_port_registered %i - NO\n", portNum); fflush(stdout);
     return JAVACALL_FAIL;
 }
 
