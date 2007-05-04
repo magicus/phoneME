@@ -125,6 +125,8 @@ endif
 ifeq ($(ENABLE_JUMP), true)
 MODULE_JSR_120_COMMON_JAVA_FILES += \
     $(JSR_120_DIR)/src/jump_application/core/common/classes/com/sun/jump/driver/wma/Listener.java
+SUBSYSTEM_JSR_120_CNI_CLASSES += \
+    com.sun.jump.driver.wma.Listener
 endif
 
 
