@@ -80,16 +80,6 @@ javacall_result javautil_storage_getpos(javautil_storage storage, /* OUT */long*
 int javautil_storage_read(javautil_storage storage, char* buffer, unsigned int size);
 int javautil_storage_write(javautil_storage storage, char* buffer, unsigned int size);
 
-/*
-int _chsize(int a, long b);
-int _close(int a);
-int _open(char* name, int flag);
-long _filelength(int a);
-long _lseek(int a, long b , int c);
-int _read(int a , void *b, unsigned int c);
-long tell(int a);
-int _write(int a, const void *b, unsigned int c);
-*/
 
 #ifdef __cplusplus
 }

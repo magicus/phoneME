@@ -59,7 +59,6 @@ javacall_result javautil_storage_open(const char* name, int flag, /* OUT */ java
 	}
 	*storage = (javautil_storage*)f;
 
-	opened++;
 	return JAVACALL_OK; 
 }
 
@@ -71,7 +70,6 @@ javacall_result javautil_storage_remove(const char* name)
 
 javacall_result javautil_storage_close(javautil_storage storage)
 {
-	opened--;
 	return (fclose((FILE*)storage)==0) ? JAVACALL_OK : JAVACALL_IO_ERROR; 
 }
 
