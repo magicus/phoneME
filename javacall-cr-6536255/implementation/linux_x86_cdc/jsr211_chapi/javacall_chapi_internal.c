@@ -527,6 +527,9 @@ javacall_result javacall_chapi_register_java_handler(
 
     do {
         // Set file position at end and write fake REG records.
+		status = javautil_storage_lock(reg.file);
+		if (status != JAVACALL_OK) break;
+
         off = 0;
         if ((JAVACALL_OK != javautil_storage_setpos(reg.file, 0, JUS_SEEK_END)) ||
             sizeof(int) != javautil_storage_write(reg.file, (void*)&off, sizeof(int)) ||
@@ -561,8 +564,10 @@ javacall_result javacall_chapi_register_java_handler(
 			return JAVACALL_IO_ERROR;
         }
 
-        status = JAVACALL_OK;
+		status = javautil_storage_flush(reg.file);
     } while (0);
+
+	javautil_storage_unlock(reg.file);
 	regClose(&reg);
 
 

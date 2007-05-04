@@ -79,6 +79,9 @@ javacall_result javautil_storage_setpos(javautil_storage storage, long pos, int 
 javacall_result javautil_storage_getpos(javautil_storage storage, /* OUT */long* pos);
 int javautil_storage_read(javautil_storage storage, char* buffer, unsigned int size);
 int javautil_storage_write(javautil_storage storage, char* buffer, unsigned int size);
+javacall_result  javautil_storage_flush(javautil_storage storage);
+javacall_result  javautil_storage_lock(javautil_storage storage);
+javacall_result  javautil_storage_unlock(javautil_storage storage);
 
 
 #ifdef __cplusplus
