@@ -284,6 +284,6 @@ err: \
 
 #define DECL_FREE_FUNCTION(function_, type_) \
     void D##function_(type_ ptr__) { \
-        /* free((void *)ptr__); */ \
+        free((void *)ptr__); \
     } 
 

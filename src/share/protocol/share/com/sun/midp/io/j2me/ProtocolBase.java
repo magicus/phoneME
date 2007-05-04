@@ -172,6 +172,7 @@ public abstract class ProtocolBase implements MessageConnection,
     /** Creates a message connection protocol handler. */
     public ProtocolBase() {
 	appPackage = AppPackage.getInstance();
+	// IMPL_NOTE: should be moved to a JSROP initializer
 	com.sun.jump.driver.wma.Listener.startListener();
     }
     /**
