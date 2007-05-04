@@ -35,7 +35,7 @@ typedef struct _AbstractSurface {
                     jobject surfaceHandle);
     void (*release)(struct _AbstractSurface* surface, JNIEnv* env,
                     jobject surfaceHandle);
-    void (*cleanup)();
+    void (*cleanup)(struct _AbstractSurface* surface);
 }
 AbstractSurface;
 
