@@ -72,16 +72,13 @@ public class TestSystemServiceConnectionListener extends TestCase {
                 // send test string to client
                 SystemServiceMessage msg = SystemServiceMessage.newMessage();
                 msg.getDataOutput().writeUTF(testString);
-                System.err.println("S: sending string");
                 con.send(msg);
 
                 // get a response string from client
-                System.err.println("S: receiving string");
                 msg = con.receive();
                 String responseString = msg.getDataInput().readUTF();
 
                 // compare strings
-                System.err.println("S: comparing string");
                 stringsMatch = testString.toUpperCase().equals(responseString);
             } catch (Throwable t) {
             }
@@ -103,18 +100,15 @@ public class TestSystemServiceConnectionListener extends TestCase {
 
         try {
             // receive string from service
-            System.err.println("C: receiving string");
             SystemServiceMessage msg = con.receive();
             String testString = msg.getDataInput().readUTF();
 
             // convert string to upper case and sent it back to service
             msg = SystemServiceMessage.newMessage();
             msg.getDataOutput().writeUTF(testString.toUpperCase());
-            System.err.println("C: receiving string");
            
             con.send(msg);
         } catch (Throwable t) {
-            System.err.println("Exception: " + t);
             t.printStackTrace();
         }
 

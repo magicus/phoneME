@@ -36,7 +36,7 @@ import com.sun.midp.i3test.TestCase;
  * Tests for system service requesting functionality
  */
 public class TestSystemServiceRequest extends TestCase {
-    private static String SERVICE_ID = "42";
+    public final static String SERVICE_ID = "42";
 
     class DummySystemServiceManager extends SystemServiceManager {
         SystemService service = null;

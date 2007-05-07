@@ -59,6 +59,8 @@ SUBSYSTEM_SERVICES_I3TEST_JAVA_FILES = \
     $(SERVICES_MVM_DIR)/i3test/com/sun/midp/services/SystemServiceRequestIsolate.java \
     $(SERVICES_MVM_DIR)/i3test/com/sun/midp/services/TestSystemServiceManager.java \
     $(SERVICES_MVM_DIR)/i3test/com/sun/midp/services/TestSystemService.java \
+    $(SERVICES_MVM_DIR)/i3test/com/sun/midp/services/TestSystemServiceConnectionListener.java \
+    $(SERVICES_MVM_DIR)/i3test/com/sun/midp/services/SystemServiceConnectionListenerIsolate.java \
     $(SERVICES_MVM_DIR)/i3test/com/sun/midp/services/SystemServiceIsolate.java \
     $(SERVICES_MVM_DIR)/i3test/com/sun/midp/services/SecurityTokenProvider.java
 else

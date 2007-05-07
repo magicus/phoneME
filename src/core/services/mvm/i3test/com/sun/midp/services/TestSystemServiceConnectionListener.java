@@ -102,7 +102,8 @@ public class TestSystemServiceConnectionListener extends TestCase {
 
         Isolate serviceIsolate = Isolate.currentIsolate();
         Isolate clientIsolate = new Isolate(
-                "com.sun.midp.services.SystemServiceIsolate", null);
+                "com.sun.midp.services.SystemServiceConnectionListenerIsolate",
+                null);
         clientIsolate.start();
 
         IsolateSystemServiceRequestHandler isolateRequestHandler = 

@@ -33,7 +33,7 @@ final class SystemServiceConnectionImpl
     implements SystemServiceConnection {
     
     private SystemServiceConnectionListener listener = null;
-    private SystemServiceMessage message = null;
+    private SystemServiceWriteMessage message = null;
 
 
     class ListenerThread extends Thread {
@@ -61,7 +61,8 @@ final class SystemServiceConnectionImpl
                     this.wait();
                 }
 
-                SystemServiceMessage msg = message;
+                SystemServiceReadMessage msg = 
+                    new SystemServiceReadMessage(message.getData());
                 message = null;
                 this.notifyAll();
 
@@ -77,7 +78,7 @@ final class SystemServiceConnectionImpl
 
         synchronized (this) {
             try {
-                message = msg;
+                message = (SystemServiceWriteMessage)msg;
                 this.notifyAll();
 
                 while (message != null) {
