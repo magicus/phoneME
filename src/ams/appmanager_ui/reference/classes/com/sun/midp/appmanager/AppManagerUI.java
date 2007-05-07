@@ -1378,6 +1378,7 @@ class AppManagerUI extends Form
          * @param h The current height of this Item
          */
         protected void sizeChanged(int w, int h) {
+            stopScroll();
             width = w;
             height = h;
             int widthForText = w - ITEM_PAD - ICON_BG.getWidth();
