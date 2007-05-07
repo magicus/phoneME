@@ -9,9 +9,8 @@
  
 <body>
 <!-- BEGIN PAGE TITLE -->
-<div id="projecthome" class="app">
-<HR>
-<h1 class="style3">Before You Begin</h1> 
+<div id="projecthome" class="app"> <h1><font color="#e76f00">Before You Begin<span 
+class="style1"></span></font></h1>
 <!-- END PAGE TITLE -->
 
 <p>
@@ -25,18 +24,16 @@ This document contains the following sections:
 <ul>
 <li><a href="#docs">Document Notes and Conventions</a></l>
 <li><a href="#env">Setting Variables for Your Build Environment</a></li>
+<li><a href="#op_pack">Including Optional Packages in Your Builds</a></li>
+<li><a href="#dash_c">Building with the <code>make -C</code> Option</a></li>
 <li><a href="#default">Default Build Configuration</a></li>
 <li><a href="#audio">Building a Complete Audio Implementation</a></li>
 </ul> 
 <P>
-<b>Note:</b> This section contains information you may find useful while working through 
+<b>Note:</b> This section contains information you might find useful while working through 
 the phoneME Feature installation process.  It is for your information only.  If you want
 to begin downloading and installing the phoneME Feature software right away, see
 <a href="./download_feature.html">Downloading the phoneME Feature Software Source Code</a>.  
-<p>
-<b>Note:</b> This document is part of the MR2 development release version of phoneME Feature
-software. The instructions have not been verified or tested.  The contents will continue to
-change as development moves forward.
 <p>
 
 <!-- __________ This Section Transferred from Index Page for Evaluation ________ -->
@@ -50,10 +47,10 @@ change as development moves forward.
 For your ease of use, this guide uses the following conventions:
 <p>
 <ul>
-<li>The document variable <code>$HOME</code> means "the location where you have installed 
+<li>The document variable <code>$MEHOME</code> means "the location where you have installed 
 the phoneME Feature software."  For example, if you install the phoneME Feature software 
 into the directory <code>/home/chocolate/phoneME_feature</code>, changing directory to 
-<code>$HOME/midp</code> means to change directory to 
+<code>$MEHOME/midp</code> means to change directory to 
 <code>/home/chocolate/phoneME_feature/midp</code>.
 <p>
 <li>For all procedures and examples carried out on the Linux platform, the Bash shell
@@ -74,17 +71,16 @@ for the shell you are using.
 <p>
 
 Preparing your build environment requires you to set environment variables for your 
-Linux/i386 or Win32/i386 build platform. This section describes how to do this on both 
-Linux/i386 and win32/i386 build platforms.  The specific variables that need to be set 
-for each platform are described in the remainder of this document. 
+Linux on i386 or Win32 on i386 build platforms.  The specific variables that need to be set 
+are described in the remainder of this document. 
 
 <p>
 
-BuIld environment variables can be set in two ways:
+Build environment variables can be set in two ways:
 <P>
 <UL>
 <LI><a href="#system">As a system variable</LI></a>
-<LI><a href="#cline">On the command line, when you run <code>make</code></LI></a>
+<LI><a href="#cline">On the command-line, when you run <code>make</code></LI></a>
 </UL>
 <P>
 
@@ -92,7 +88,7 @@ BuIld environment variables can be set in two ways:
 <a name="system"><strong>Setting System Variables</strong></a>
 <p>
 
-On a Linux/i386 build platform, a system variable is set in the following way:
+On a Linux on i386 build platform, a system variable is set in the following way:
 <p>
 <ul>
 <code> $ export <i>VARIABLE</i>=<i>value</i></code>
@@ -103,12 +99,12 @@ platform <!-- (for both Linux/i386 and Linux/ARM targets) -->, type:
 <code> $ export TARGET_CPU=i386</code>
 <P>
 </ul>
-On a Win32/i386 build platform, a system variable is set in the following way:
+On a Win32 on i386 build platform, a system variable is set in the following way:
 <p>
 <ul>
 <code>$ set <i>VARIABLE</i>=<i>value</i></code>
 <P>
-For example, to set the <code>TARGET_CPU</code> as a system variable on a Win32/i386
+For example, to set the <code>TARGET_CPU</code> as a system variable on a Win32 on i386
 platform, type:
 <P>
 <code>$ set TARGET_CPU=i386</code>
@@ -117,25 +113,84 @@ platform, type:
 <p>
 
 
-<a name="cline"><strong>Setting Command Line Variables</strong></a>
+<a name="cline"><strong>Setting Command-Line Variables</strong></a>
 <p>
 
-On Linux/i386 and Win32/i386 build platforms, a command line variable is set in the 
+On Linux on i386 and Win32 on i386 build platforms, a command-line variable is set in the 
 following way:
 <p>
 <ul>
 <code>$ make <i>VARIABLE</i>=<i>value</i> make_target</code>
 <P>
-For example, to set <code>TARGET_CPU</code> on a <code>make</code> command line
-for a Linux/i386 platform, <!-- (for both Linux/i386 and Linux/ARM targets) --> use the
-following format:
+For example, to set <code>TARGET_CPU</code> on a <code>make</code> command-line
+for a Linux on i386 platform, use the following format:
 <P>
 <code>$ make TARGET_CPU=i386 all</code>
 <p>
 </ul>
 <p>
-<b>Note:</b> Typing <code>make</code> on the command line by itself is the same as 
+<b>Note:</b> Typing <code>make</code> on the command-line by itself is the same as 
 typing <code>make all</code>. 
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="op_pack"></a><h3>Including Optional Packages in Your Builds</h3>
+<!-- END SECTION HEAD -->
+
+Optional packages can be included in the JavaCall porting layer and phoneME Feature software 
+client builds by adding the appropriate optional package variable pairs to the <code>make</code> 
+command line.  
+<P>
+To do this, use the following variable format, where <code>XXX</code> is the JSR number:
+<ul>
+<li><code>USE_JSR_XXX=true</code>
+<li><code>JSR_XXX_DIR=</code><em>path-to-jsr-source</em>
+</ul>
+<p>
+For example, to build the JavaCall porting layer to include JSR-120 (Wireless Messaging APIs), 
+the <code>make</code> command-line looks like this:
+<p>
+<ol>
+<code>$ make USE_JSR_120=true JSR_120_DIR=$MEHOME/120 </code>  
+</ol>
+<p>
+<b>Note:</b> For optional packages with two-digit numbers, the format is <code>USE_JSR_XX</code>
+and <code>JSR_XX_DIR</code>.
+<p>
+Builds for PCSL and CLDC do not require optional packages to be included, even if they are built 
+in the JavaCall porting layer and the phoneME Feature software client.  However, if optional 
+packages are included in the build for the JavaCall porting layer, the same optional packages 
+<em>must</em> be included in the phoneME Feature client software build.
+<p>
+For more information on building with optional packages, see
+<a href="http://java.sun.com/javame/reference/docs/sjwc-2.0-web/docs/BuildGuide-html/index.html">
+<i>Sun Java Wireless Client Build Guide</i></a>.
+<p>
+
+
+<!-- BEGIN SECTION HEAD -->
+<hr noshade="noshade" size="1">
+<a name="dash_c"></a><h3>Building With the <code>make -C</code> Option</h3>
+<!-- END SECTION HEAD -->
+<p>
+When using <code>make</code> to build the JavaCall porting layer, PCSL, CLDC, and phoneME 
+Feature software, the </code>-C</code> option is used to specify the directory where the build 
+is performed.  Using the <code>-C</code> option enables you to build in the correct location 
+without changing to the build directory before the build is launched. 
+<p>
+For improved usability, this guide directs you to change to the build directory before building
+a component. However, if you choose, you can launch your build from any directory using the 
+<code>make</code> </code>-C</code> option.
+<p>
+For example, if the build directory for building the JavaCall porting layer on an i386 target
+platform in the phoneME Feature client is <code>%MEHOME%/midp/build/javacall</code>, enter the
+following: 
+<p>
+<ol>
+<code>$ make -C %MEHOME%/midp/build/javacall</code> <em>flag1 flag2 flag3</em>
+</ol>
+<p>
 
 
 <!-- BEGIN SECTION HEAD -->
@@ -154,105 +209,63 @@ configuration uses Frame Buffer graphics (<KBD>fb</KBD>), with Adaptive User Int
 Technology (<KBD>chameleon</KBD>), and multitasking (<KBD>mvm</KBD>). Therefore,
 the default build configuration is named <KBD>linux_arm_fb_chameleon_mvm</KBD>.
 <P>
-On the Win32/i386 platform, the default build configuration is <KBD>win32_i386</KBD>.
-If you build using the JavaCall porting layer for the Win32/i386 target platform,
-the build configuration is <code>javacall_i386</code>.
+On the Win32 on i386 platform, the default build configuration is <KBD>javacall_i386</KBD>.
 <P>
 <!-- For more information about build options and settings in the phoneME Feature software,
-see <A HREF="options_feature.html">Default Bulld Configuration Options</A>. -->
+see <A HREF="options_feature.html">Default Build Configuration Options</A>. -->
 <p>
 
-
-<!-- _________________________________ Commented out ____________________ -->
-
-<!-- BEGIN SECTION HEAD
+<!-- BEGIN SECTION HEAD -->
+<a name="audio"></a>
 <hr noshade="noshade" size="1">
-<a name="make"></a><h3><code>make</code> Targets and Options</h3>
-END SECTION HEAD -->
+<h3>Building a Complete Audio Implementation</h3>
+<!-- END SECTION HEAD -->
+<p>
+
+A complete implementation of JSR 135 is provided on the Win32 on i386 platform. Building 
+JSR 135 on the Linux on ARM platform provides only a MIDP ABB implementation of JSR 135.
+To build an implementation of JSR 135 on Linux on ARM, some files need to be modified.
+<P>
+
+<strong>On a Linux on ARM platform</strong>
+<p>
+Modify the following files:
+<UL>
+<LI><KBD>jsr135/linux-abb/src/native/qsoundnative.c</KBD></LI>
+</UL>
+<p>
+These files contain stubbed implementations of all native methods for the following
+classes:
+<P>
+<UL>
+<LI><KBD>com.sun.mmedia.QSound*</KBD></LI>
+</UL
+><p>
+Sun Microsystems' compliant Mobile Media API (JSR 135) implementation utilizes audio
+libraries licensed from <a href="http://www.qsound.com/index.htm">QSound Labs, Inc.</a>.
+<P>
+<B>Note:</B> Other libraries are possible.  If you choose other audio libraries, you
+need to modify the listed files for those libraries.
+<p>
+
+<strong>On a Win32 on i386 platform</strong>
+<p>
+A complete implementation of JSR-135 is provided. To port it to other platforms you 
+must implement the JavaCall API, which can be found at:
+<p>
+<ul>
+<li><code>javacall/interface</code
+></ul>
+<p>
+In particular, the JSR-135 audio part of the JavaCall API can be found in:
+<p>
+<ul>
+<li><code>javacall/interface/jsr135_mmapi/javacall_multimedia.h
+</ul>
 <p>
 
 <!--
-To build a phoneME Feature software component, such as JavaCall, PCSL, or CLDC, or to 
-build the phoneME Feature software client, set the environment variables for the platform 
-you are building on and run <code>make all</code> in the component directory. 
-<p>
-
-To build a default implementation of the phoneME Feature software, you run the
-<KBD>make all</KBD> command with the file <KBD>Default.gmk</KBD>, as shown in 
-<a href="client_feature.html">Building a phoneME Feature Software Reference Port</a>. 
-This builds a default version of the phoneME Feature software client for your target 
-platform.
-<p>
-The
-<KBD>Default.gmk</KBD> file is located in the directory
-<I>InstallDir</I><KBD>/midp/build</KBD>/<EM>platform</EM>
-<P>
--->
-
-<!-- __________________ Table Commented Out _______________ -->
-
-<!-- 
-The phoneME Feature software client and its supporting components (JavaCall, PCSL, and CLDC)
-are built using the makefiles and source files provided in the directory structure for each
-component, using the component's default settings.  The <KBD>make</KBD> utility provides several 
-build targets.  This guide uses two, as shown in <A HREF="#table1-1">TABLE 1-1</A>.
-<P>
-
-<TABLE CLASS="Titled" BORDER=1 BORDERCOLORLIGHT="#FFFFFF" BORDERCOLORDARK="#000000"
-CELLPADDING=5 CELLSPACING=0>
-<CAPTION><A NAME="table1-1"><b>TABLE 1-1</b> <code>make</code> Utility Build Targets</A>
-</CAPTION>
-<THEAD>
-<TR>
-<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
-<P CLASS="TableHead"><A NAME="pgfId-485277"></A>Target
-</P>
-</TH>
-<TH SCOPE="COL" ROWSPAN="1" COLSPAN="1" BGCOLOR="#CCCCCC">
-<P CLASS="TableHead"><A NAME="pgfId-485279"></A>Description
-</P>
-</TH>
-</TR>
-</THEAD>
-<TBODY>
-<TR>
-<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P>
-<KBD>all</KBD>
-</P>
-</TD>
-<TD ROWSPAN="1" COLSPAN="1">
-<P>Creates component software executables, classes, and tools for the target platform you have
-specified.
-</P>
-</TD>
-</TR>
-<TR>
-<TD SCOPE="ROW" ROWSPAN="1" COLSPAN="1">
-<P>
-<KBD>docs_html</KBD>
-</P>
-</TD>
-<TD ROWSPAN="1" COLSPAN="1">
-<P>Generates Javadoc API documentation for the selected component. (Only for CLDC and the
-phoneME Feature software client.  For PCSL Doxygen API documentation, the <code>make</code>
-target is <code>doc</code>.)
-</P>
-</TD>
-</TR>
-</TBODY>
-</TABLE>
--->
-<!-- ____________________ Close Commented Table ___________________ -->
-
-<p>
-<a name="audio"></a>
-<h3>Building a Complete Audio Implementation</h3>
-<p>
-In order to build a complete implementation of JSR 135, the following files need
-to be modified.
-<P>
-On a Win32/i386 platform:
+On a Win32 on i386 platform:
 <P>
 <UL>
 <LI><KBD>jsr135/win32-jsr135/src/native/AMRDecoder.c</KBD></LI>
@@ -281,10 +294,11 @@ On Win32/i386 and Linux/ARM platforms:
 </UL>
 <P>
 Sun Microsystems' compliant Mobile Media API (JSR 135) implementation utilizes audio
-libraries licensed from QSound Labs, Inc. (www.qsound.com).
+libraries licensed from <a href="http://www.qsound.com/index.htm">QSound Labs, Inc.</a>.
 <P>
 <B>Note:</B> Other libraries are possible.  If you choose other audio libraries, you
-will need to modify the listed files for those libraries.
+need to modify the listed files for those libraries.
+-->
 <pre>
 
 
@@ -292,7 +306,7 @@ will need to modify the listed files for those libraries.
 
 <a href="./index_feature.html">first</a> | <a href="./download_feature.html">prev</a> | 
 <a href="./buildenv_feature.html">next</a> | <a href="./client_feature.html">last</a> 
-
+<p>
 
 <!-- =============================== END PAGE BODY ======================= -->
 

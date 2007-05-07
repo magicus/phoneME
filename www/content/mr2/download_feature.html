@@ -6,10 +6,15 @@
 -->
 </style>
 </head>
+ 
 <body>
-<div id="projecthome" class="app">
-<HR>
-<h1 class="style3">Downloading phoneME Feature Software Source Code</h1> 
+<!--  ===============    BEGIN PAGE BODY (Ignore Everything Above)  ============= -->
+
+<!--BEGIN PAGE TITLE -->
+<div id="projecthome" class="app"> <h1><font color="#e76f00"> Downloading phoneME 
+Feature Software Source Code  &nbsp; <span class="style1"> </span></font></h1>
+<!--END PAGE TITLE -->
+
 <p>
 <a href="./index_feature.html">first-prev</a> | 
 <!-- <a href="./begin_feature.html">prev</a> | -->
@@ -19,21 +24,25 @@ The phoneME Feature software project provides two ways for you to access the sou
 <p>
 <ul>
 <li>Download the phoneME Feature software <a href="#zip_file">zip archive</a> file
-<li>Checkout the source code from the Subversion <a href="#repo">repository</a>
+<li>Check out the source code from the Subversion <a href="#repo">repository</a>
 </ul>
 <p>
 The download zip archive and the source code repository both provide the directory structures,
-and the source files, libraries, makefiles, tools, and executables, needed to build the phoneME
+source files, libraries, makefiles, tools, and executables needed to build the phoneME
 Feature software.
 <p>
-<b>Note:</b> To checkout the source code from the Subversion repository you must have write 
+<b>Note:</b> To check out the source code from the Subversion repository you must have write 
 access to the code and have a <a href="http://subversion.tigris.org/project_packages.html">
-Subversion client</a> installed on your platform.
+Subversion client</a> installed on your platform. For more information on using Subversion, 
+see the phoneME Feature <a href="https://phoneme.dev.java.net/servlets/ProjectSource">Access</a> 
+page.
 <p>
-<b>Note:</b> This document is part of the MR2 development release version of phoneME Feature
-software. The instructions have not been verified or tested.  The contents will continue to
-change as development moves forward.
+For more information on the structure of the phoneME Feature source code repository and 
+how to work with it, see the 
+<a href="http://wiki.java.net/bin/view/Mobileandembedded/PhoneMERepositoryStructure">
+phoneME Repository Structure</a> page.
 <p>
+
 
 <!-- BEGIN SECTION HEAD -->
 <hr noshade="noshade" size="1">
@@ -43,15 +52,15 @@ change as development moves forward.
 To download the source code zip file, take the following steps:
 <p>
 <ol>
-<li>Create a phoneME Feature directory on your platform.
+<b><li>Create a phoneME Feature directory on your platform.</b>
 <p>
 % <code>mkdir phoneME_feature</code>
 <p>
-<li>Go to the phoneME Feature <a href="https://phoneme.dev.java.net/downloads_page.html">
-Downloads page<a> and click on the MR2 zip file name to copy it to your platform.
+<b><li>Go to the phoneME Feature <a href="https://phoneme.dev.java.net/downloads_page.html">
+Downloads page<a> and click the MR2 zip file name to copy it to your platform.</b>
 <p>
-<li>Once the file has been downloaded, unzip the file into your <code>phoneME_feature</code>
-directory.
+<b><li>Once the file is downloaded, unzip the file into your <code>phoneME_feature</code>
+directory.</b>
 <p>
 % <code>unzip phoneme_feature-mr2-dev-src-</code><i>buildnum</i>-<i>date</i><code>.zip</code>
 </ol>
@@ -60,77 +69,52 @@ directory.
  
 <!-- BEGIN SECTION HEAD -->
 <hr noshade="noshade" size="1">
-<a name="repo"></a><h3>Checkout the Source Code Repository</h3>
+<a name="repo"></a><h3>Checking Out the Source Code Repository</h3>
 <!-- END SECTION HEAD  -->
 <p>
-To checkout the phoneME Feature source code repository, you must first install a Subversion 
+To check out the phoneME Feature source code repository, you must first install a Subversion 
 client on your platform.  Once the client is installed, take the following steps:
 <p>
 <ol>
-<li>Create a phoneME Feature software directory on your platform and change to it.
+<b><li>Create a phoneME Feature software directory on your platform and change to it.</b>
 <p>
 % <code>mkdir phoneME_feature</code>
 <br>
 % <code>cd phoneME_feature</code>
 <p>
-<li>Checkout the source code using the following command:
+<b><li>Check out the source code using the following command:</b>
 <p>
-% <code>svn checkout https://phoneme.dev.java.net/svn/phoneme/trunk phoneme --username guest</code>
+% <code>svn co 
+https://phoneme.dev.java.net/svn/phoneme/components/</code><em>component_name</em><code>/trunk</code> 
+<em>component_name</em>
 <p>
+<b>Note:</b> In the phoneME Feature URL command string, <em>component_name</em> is the name of the 
+component you are working with. For example, if you are checking out the MIDP component, 
+substitute <code>midp</code> for <em>component_name</em> in both places. 
 </ol>
-<b>Note:</b> For more information on using the source code repository and Subversion, 
-see the phoneME Feature 
-<a href="https://phoneme.dev.java.net/servlets/ProjectSource">Access</a> page.
 <p>
-
-
-<!-- __________________ Removed to prevent redundancy _____________________ -->
-
-<!-- BEGIN SECTION HEAD
-<hr noshade="noshade" size="1">
-<a name="not_in"></a><h3>Browse the Source Code</h3>
-END SECTION HEAD  -->
-
-<!--
-<p>
-There are two ways you can browse the phoneME Feature source code:
-<p>
-<ul>
-<p>
-<li>In the file tree created by the download zip archive.
-<p>
-<li>In the source code <a href="https://phoneme.dev.java.net/source/browse/phoneme">
-repository</a>.
-<p>
-<b>NOTE:</b> For the most interesting project contents, see the
-<a href="https://phoneme.dev.java.net/source/browse/phoneme/components"> components</a>
-branch.
-</ul>
-<p>
-The source code repository and the download zip archive both provide the directory structures,
-and the source files, libraries, makefiles, tools, and executables, needed to build the phoneME
-Feature software.
-<p>
--->
-
-
-
-
 
 
 <!-- BEGIN SECTION HEAD -->
 <hr noshade="noshade" size="1">
-<a name="docs"></a><h3>Update the Source Code</h3>
+<a name="docs"></a><h3>Updating the Source Code</h3>
 <!-- END SECTION HEAD  -->
 <p>
 If you are working in the phoneME Feature software source code repository, you can periodically  
-update your code to get the latest checkins and improvements. Type the following command at the 
-top-level of your phoneME Feature source tree: 
+update your code to get the latest checkins and improvements. Do the following:
 <p>
-<ul>
+<ol>
+<b><li>Change to the directory for the component you want to update, for example, MIDP.</b>
+<p>
+<code>% cd phoneME_feature/midp</code>
+<p>
+<b><li>Enter the update command to update the component, as shown here.</b>
+<p>
 % <code>svn update</code>
 <p>
-</ul>
+</ol>
+<p>
+If you want to update other components, repeat the above steps for those components.
 <pre>
 
 
