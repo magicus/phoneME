@@ -602,7 +602,7 @@ javacall_result javacall_chapi_unregister_handler(
     javacall_result status;
     REG reg;
     javacall_utf16* test_id;
-    int id_sz, test_sz, found = 0;
+    int id_sz, test_sz, found = 0, g_found = 0;
 	char* buf = 0;
 	int bufsz = 0;
 	char tmpname[MAX_STORAGE_NAME]; 
@@ -640,29 +640,22 @@ javacall_result javacall_chapi_unregister_handler(
 			}
         }
 
-		if (JAVACALL_OK != javautil_storage_read(reg.file, buf, reg.hsize)){
+		if ((reg.hsize-sizeof(int) - sizeof(reg.offs)) != javautil_storage_read(reg.file, buf, reg.hsize-sizeof(int) - sizeof(reg.offs))){
 			status = JAVACALL_IO_ERROR;
 			break;
 		}
 
-		test_sz = *((int*)(buf+reg.offs[JAVACALL_CHAPI_FIELD_ID]));
-		test_id = (javacall_utf16_string)(buf+reg.offs[JAVACALL_CHAPI_FIELD_ID]+sizeof(int));
+		test_sz = *((short*)(buf+reg.offs[JAVACALL_CHAPI_FIELD_ID]-sizeof(int) - sizeof(reg.offs)));
+		test_id = (javacall_utf16_string)(buf+reg.offs[JAVACALL_CHAPI_FIELD_ID]+sizeof(short)-sizeof(int) - sizeof(reg.offs));
 
 		found = (id_sz == test_sz  && 0 == javautil_wcsincmp(id, test_id, id_sz));
-
-
-        test_sz = readString(&reg, JAVACALL_CHAPI_FIELD_ID, &test_id);
-
-		if (test_sz == id_sz){
-			found = javautil_wcsincmp(id, test_id, id_sz) == 0;
-		}
-        free(test_id);
+		g_found |= found;
 
         if (!found) {
 			// copy handle
 			if (sizeof(int) != javautil_storage_write(tmpfile, (void*)&reg.hsize, sizeof(int)) ||
 				sizeof(reg.offs) != javautil_storage_write(tmpfile, (void*)&(reg.offs), sizeof(reg.offs)) ||
-				reg.hsize !=  javautil_storage_write(tmpfile, buf, reg.hsize)) {
+				(reg.hsize-sizeof(int) - sizeof(reg.offs)) !=  javautil_storage_write(tmpfile, buf, reg.hsize-sizeof(int) - sizeof(reg.offs))) {
 				status = JAVACALL_IO_ERROR;
 				break;
 			}
@@ -673,16 +666,21 @@ javacall_result javacall_chapi_unregister_handler(
     regClose(&reg);
 	javautil_storage_close(tmpfile);
 
+    if (status == JAVACALL_END_OF_FILE) {
+		if (!g_found) {
+			status = JAVACALL_FILE_NOT_FOUND;
+		} else {
+			status = JAVACALL_OK;
+		}
+    }
+
 	if (status == JAVACALL_OK){
 		// aquire mutex
 		javautil_storage_remove(regFilePath);
-		javautil_storage_rename(regFilePath, tmpname);
+		javautil_storage_rename(tmpname, regFilePath);
 		// release mutex
 	}
 
-    if (status == JAVACALL_END_OF_FILE) {
-        status = JAVACALL_FILE_NOT_FOUND;
-    }
 
 #ifdef USE_NATIVE_REGISTRY
 	if (status == JAVACALL_OK){
