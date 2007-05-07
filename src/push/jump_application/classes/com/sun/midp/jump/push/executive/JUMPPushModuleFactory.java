@@ -27,6 +27,23 @@ package com.sun.midp.jump.push.executive;
 import com.sun.jump.module.JUMPModuleFactory;
 
 public abstract class JUMPPushModuleFactory extends JUMPModuleFactory {
+    private static JUMPPushModuleFactory INSTANCE = null;
+
+    public static JUMPPushModuleFactory getInstance() {
+        return INSTANCE;
+    }
+
+    /**
+     * Creates a new instance of JUMPApplicationLifecycleModuleFactory
+     */
+    protected JUMPPushModuleFactory() {
+        synchronized (JUMPPushModuleFactory.class){
+            if (INSTANCE == null) {
+                INSTANCE = this;
+            }
+        }
+    }
+
     /**
      * Gets an instance of push module.
      *
