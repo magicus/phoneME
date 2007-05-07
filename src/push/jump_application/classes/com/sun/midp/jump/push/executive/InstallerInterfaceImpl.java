@@ -95,12 +95,6 @@ final class InstallerInterfaceImpl implements InstallerInterface {
         pushController.removeSuiteInfo(midletSuiteId);
     }
 
-    /** {@inheritDoc} */
-    public boolean enableConnections(final int midletSuiteId) {
-        // TBD: rethink if we need it
-        return true;
-    }
-
     /**
      * Checks if the suite is allowed to install static push reservations.
      *
