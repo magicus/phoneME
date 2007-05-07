@@ -39,19 +39,20 @@ javacall_result javautil_storage_open(const char* name, int flag, /* OUT */ java
 { 
 	char* b;
 	FILE* f ;
-
+	
 	if (!storage) return JAVACALL_INVALID_ARGUMENT;	
 	if (flag == JUS_O_RDONLY){
-		b = "br";
-	} else if ( flag == JUS_O_RDWR ){
-			b = "br+";
-	} else if ( flag == (JUS_O_RDWR | JUS_O_CREATE)){
-			b = "bw+";
+		b = "rb";
+	} else if ( flag == JUS_O_RDWR || flag == (JUS_O_RDWR | JUS_O_CREATE)){
+			b = "rb+";
 	} else {
 		return JAVACALL_INVALID_ARGUMENT;
 	}
 	
 	f = fopen(name,b);
+	if ((flag & JUS_O_CREATE)!=0 && !f){
+		f = fopen(name,"wb");
+	}
 
 	if (!f) {
 		*storage = JAVAUTIL_INVALID_STORAGE_HANDLE;
@@ -119,7 +120,7 @@ int javautil_storage_write(javautil_storage storage, char* buffer, unsigned int 
 }
 
 javacall_result  javautil_storage_flush(javautil_storage storage){
-	return (fflush((FILE*)storage)) ? JAVACALL_OK : JAVACALL_IO_ERROR;
+	return (fflush((FILE*)storage) == 0) ? JAVACALL_OK : JAVACALL_IO_ERROR;
 }
 
 javacall_result  javautil_storage_lock(javautil_storage storage){
