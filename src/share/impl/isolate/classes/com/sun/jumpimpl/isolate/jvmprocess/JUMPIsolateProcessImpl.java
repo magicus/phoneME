@@ -192,10 +192,14 @@ public class JUMPIsolateProcessImpl
 	    System.exit(-1);
 	}
     }
-    
+
     public void initialize(JUMPAppModel appModel) {
 	System.err.println("Setting app model to "+appModel);
 	this.appModel = appModel;
+
+        AppContainerFactoryImpl factory = new AppContainerFactoryImpl();
+
+        this.appContainer = factory.getAppContainer(appModel, this);
 
         this.windowing = new WindowingIsolateClient();
 
@@ -326,17 +330,6 @@ public class JUMPIsolateProcessImpl
         // app container is initialized to set bounds 
         // for the app screen area.
         windowing.onBeforeApplicationStarted(app);
-
-        if (appContainer == null) {
-            try {
-                AppContainerFactoryImpl factory = 
-                    new AppContainerFactoryImpl();
-
-                appContainer = factory.getAppContainer(appModel, this);
-            } catch(Throwable t) {
-                t.printStackTrace();
-            }
-        }
 
         if(appContainer != null) {
             // The message is telling us to start an application
