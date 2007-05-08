@@ -508,12 +508,41 @@ void javanotify_network_event(javacall_network_event netEvent) {
 #if ENABLE_JSR_120
     #include <jsr120_sms_pool.h>
     #include <jsr120_cbs_pool.h>
+    #include <javacall_memory.h>
 #endif
 #if ENABLE_JSR_205
     #include <jsr205_mms_pool.h>
+    #include <string.h>
 #endif
 
 #ifdef ENABLE_JSR_120
+
+SmsMessage* jsr120_sms_new_msg_javacall(jchar  encodingType,
+                                        unsigned char  msgAddr[MAX_ADDR_LEN],
+                                        jchar  sourcePortNum,
+                                        jchar  destPortNum,
+                                        jlong  timeStamp,
+                                        jchar  msgLen,
+                                        unsigned char* msgBuffer) {
+
+    SmsMessage *sms = (SmsMessage*)javacall_malloc(sizeof(SmsMessage));
+    memset(sms, 0, sizeof(SmsMessage));
+
+    sms->msgAddr   = (char*)javacall_malloc(MAX_ADDR_LEN);
+    sms->msgBuffer = (char*)javacall_malloc(msgLen);
+
+    sms->encodingType  = encodingType;
+    sms->sourcePortNum = sourcePortNum;
+    sms->destPortNum   = destPortNum;
+    sms->timeStamp     = timeStamp;
+    sms->msgLen        = msgLen;
+
+    memcpy(sms->msgAddr, msgAddr, MAX_ADDR_LEN);
+    memcpy(sms->msgBuffer, msgBuffer, msgLen);
+
+    return sms;
+}
+
 /**
  * callback that needs to be called by platform to handover an incoming SMS intended for Java 
  *
@@ -545,10 +574,11 @@ void javanotify_incoming_sms(javacall_sms_encoding msgType,
         SmsMessage* sms;
 
     e.eventType = MIDP_JC_EVENT_SMS_INCOMING;
-        sms = jsr120_sms_new_msg(
-                msgType, sourceAddress, sourcePortNum, destPortNum, timeStamp, msgBufferLen, msgBuffer);
 
-        e.data.smsIncomingEvent.stub = (int)sms;
+    sms = jsr120_sms_new_msg_javacall(
+             msgType, sourceAddress, sourcePortNum, destPortNum, timeStamp, msgBufferLen, msgBuffer);
+
+    e.data.smsIncomingEvent.stub = (int)sms;
 
     midp_jc_event_send(&e);
     return;
@@ -556,6 +586,30 @@ void javanotify_incoming_sms(javacall_sms_encoding msgType,
 #endif
 
 #ifdef ENABLE_JSR_205
+
+static char* javacall_copystring(char* src) {
+    int length = strlen(src)+1;
+    char* result = javacall_malloc(length);
+    memcpy(result, src, length);
+    return (char*)result;
+}
+
+MmsMessage* jsr205_mms_new_msg_javacall(char* fromAddress, char* appID,
+    char* replyToAppID, int msgLen, unsigned char* msgBuffer) {
+
+    MmsMessage* message = (MmsMessage*)javacall_malloc(sizeof(MmsMessage));
+    memset(message, 0, sizeof(MmsMessage));
+
+    message->fromAddress  = javacall_copystring(fromAddress);
+    message->appID        = javacall_copystring(appID);
+    message->replyToAppID = javacall_copystring(replyToAppID);
+
+    message->msgLen = msgLen;
+    message->msgBuffer = (char*)memcpy((void*)javacall_malloc(msgLen), msgBuffer, msgLen);
+
+    return message;
+}
+
 /*
  * See javacall_mms.h for description
  */
@@ -567,7 +621,7 @@ void javanotify_incoming_mms(
 
     e.eventType = MIDP_JC_EVENT_MMS_INCOMING;
 
-    mms = jsr205_mms_new_msg(fromAddress, appID, replyToAppID, bodyLen, body);
+    mms = jsr205_mms_new_msg_javacall(fromAddress, appID, replyToAppID, bodyLen, body);
 
     e.data.mmsIncomingEvent.stub = (int)mms;
 
@@ -583,7 +637,7 @@ void javanotify_incoming_mms_available(javacall_handle handle, char* appID) {
     e.eventType = MIDP_JC_EVENT_MMS_INCOMING;
 
     //bodyLen=-1
-    mms = jsr205_mms_new_msg("", appID, "", -1, (char*)handle);
+    mms = jsr205_mms_new_msg_javacall("", appID, "", -1, (char*)handle);
 
     e.data.mmsIncomingEvent.stub = (int)mms;
 
@@ -594,6 +648,25 @@ void javanotify_incoming_mms_available(javacall_handle handle, char* appID) {
 #endif
 
 #ifdef ENABLE_JSR_120
+
+CbsMessage* jsr120_cbs_new_msg_javacall(jchar encodingType,
+                               jchar msgID,
+                               jchar msgLen,
+                               unsigned char* msgBuffer) {
+
+    CbsMessage* message = (CbsMessage*)javacall_malloc(sizeof(CbsMessage));
+    memset(message, 0, sizeof(CbsMessage));
+
+    message->encodingType = encodingType;
+    message->msgID        = msgID;
+
+    message->msgLen       = (msgLen > MAX_CBS_MESSAGE_SIZE) ? MAX_CBS_MESSAGE_SIZE : msgLen;
+    message->msgBuffer    = (unsigned char*)javacall_malloc(msgLen);
+    memcpy(message->msgBuffer, msgBuffer, msgLen);
+
+    return message;
+}
+
 /**
  * callback that needs to be called by platform to handover an incoming CBS intended for Java 
  *
@@ -620,7 +693,7 @@ void javanotify_incoming_cbs(
 
     e.eventType = MIDP_JC_EVENT_CBS_INCOMING;
 
-    cbs = jsr120_cbs_new_msg(msgType, msgID, msgBufferLen, msgBuffer);
+    cbs = jsr120_cbs_new_msg_javacall(msgType, msgID, msgBufferLen, msgBuffer);
 
     e.data.cbsIncomingEvent.stub = (int)cbs;
 
@@ -637,18 +710,18 @@ void javanotify_incoming_cbs(
  * each sms sending completion. 
  *
  * @param result indication of send completed status result: Either
- *         <tt>JAVACALL_SMS_CALLBACK_SEND_SUCCESSFULLY</tt> on success,
- *         <tt>JAVACALL_SMS_CALLBACK_SEND_FAILED</tt> on failure
+ *         <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt> on failure
  * @param handle Handle value returned from javacall_sms_send
  */
-void javanotify_sms_send_completed(javacall_sms_sending_result result,
+void javanotify_sms_send_completed(javacall_result result,
                                    int handle) {
     midp_jc_event_union e;
 
     e.eventType = MIDP_JC_EVENT_SMS_SENDING_RESULT;
     e.data.smsSendingResultEvent.handle = (void *) handle;
     e.data.smsSendingResultEvent.result
-        = JAVACALL_SMS_SENDING_RESULT_SUCCESS == result ? 0 : -1;
+        = JAVACALL_OK == result ? WMA_OK : WMA_ERR;
 
     midp_jc_event_send(&e);
     return;
@@ -663,12 +736,12 @@ void javanotify_sms_send_completed(javacall_sms_sending_result result,
  * each mms sending completion. 
  *
  * @param result indication of send completed status result: Either
- *         <tt>JAVACALL_MMS_CALLBACK_SEND_SUCCESSFULLY</tt> on success,
- *         <tt>JAVACALL_MMS_CALLBACK_SEND_FAILED</tt> on failure
+ *         <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt> on failure
  * @param handle of available MMS
  */
 void javanotify_mms_send_completed(javacall_result result,
-                                   javacall_handle handle) {
+                                   int handle) {
     midp_jc_event_union e;
 
     e.eventType = MIDP_JC_EVENT_MMS_SENDING_RESULT;
