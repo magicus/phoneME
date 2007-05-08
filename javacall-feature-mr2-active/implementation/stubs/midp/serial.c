@@ -108,6 +108,25 @@ javacall_serial_get_baudRate(javacall_handle hPort, int *baudRate)
 }
 
 /**
+ * Configure serial port
+ *
+ * @param hPort the port to configure
+ * @param baudRate the new baud rate for the open connection
+ * @param options options for the serial port:
+ * bit 0: 0 - 1 stop bit, 1 - 2 stop bits 
+ * bit 2-1: 00 - no parity, 01 - odd parity, 10 - even parity 
+ * bit 4: 0 - no auto RTS, 1 - set auto RTS 
+ * bit 5: 0 - no auto CTS, 1 - set auto CTS 
+ * bit 7-6: 01 - 7 bits per symbol, 11 - 8 bits per symbol 
+ * @return <tt>JAVACALL_OK</tt> on success, 
+ *         <tt>JAVACALL_FAIL</tt> on error
+ */
+javacall_result /*OPTIONAL*/ javacall_serial_configure(javacall_handle pHandle, int baudRate, int options)
+{
+    return JAVACALL_FAIL;
+}
+
+/**
  * Initiates closing serial link.
  *
  * @param hPort the port to close
