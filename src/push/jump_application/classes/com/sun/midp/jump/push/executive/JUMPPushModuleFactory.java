@@ -29,12 +29,19 @@ import com.sun.jump.module.JUMPModuleFactory;
 public abstract class JUMPPushModuleFactory extends JUMPModuleFactory {
     private static JUMPPushModuleFactory INSTANCE = null;
 
+    /**
+     * Gets an instance of factory.
+     *
+     * @return instance of factory (cannot be <code>null</code>)
+     */
     public static JUMPPushModuleFactory getInstance() {
         return INSTANCE;
     }
 
     /**
-     * Creates a new instance of JUMPApplicationLifecycleModuleFactory
+     * Constructor.
+     *
+     * To be used by subclasses only
      */
     protected JUMPPushModuleFactory() {
         synchronized (JUMPPushModuleFactory.class){
