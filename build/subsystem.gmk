@@ -95,7 +95,10 @@ SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
 
 # ri_jaxp 
 #
-INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES := \
+INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES =
+
+ifneq ($(USE_JSR_280), true)
+INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES += \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/helpers/DefaultHandler.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/InputSource.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/SAXNotSupportedException.java \
@@ -115,6 +118,7 @@ INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES := \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Pair.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Parser.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Attrs.java
+endif
 
 # ri_jaxrpc
 #
@@ -159,8 +163,14 @@ SUBSYSTEM_JSR_172_JAVA_FILES += $(foreach class, $(SUBSYSTEM_JSR_172_CONSTANT_CL
 
 SUBSYSTEM_JSR_172_JAVA_FILES += $(INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES)
 
-$(JSR_172_JAR): $(JPP_CLASS_FILES) jsr172_constants $(SUBSYSTEM_JSR_172_JAVA_FILES)
-	$(call compileJSRClasses,172)
+ifeq ($(USE_JSR_280), true)
+JSR_172_DEPS = $(PS)$(JSR_280_JAR)
+endif
+
+$(JSR_172_JAR): $(JSR_280_JAR) $(JPP_CLASS_FILES) jsr172_constants $(SUBSYSTEM_JSR_172_JAVA_FILES)
+	@echo "Linking $@"
+	$(call compileJSROP,jsr172,$(JSR_172_BUILD_DIR)/classes,$(SUBSYSTEM_JSR_172_JAVA_FILES),$(JSR_172_DEPS))
+	$(call makeJSROPJar,$(JSR_172_JAR),$(JSR_172_BUILD_DIR)/classes)
 
 $(JSR_172_EXTRA_JAR): $(JSR_172_JAR)
 	$(call makeJSRExtraJar,172)
