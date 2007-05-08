@@ -144,6 +144,10 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/classes/com/sun/mmedia/AudioTunnel.java \
     $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/NativeTonePlayer.java 
 
+ifneq ($(TARGET_VM),cldc_vm)
+SUBSYSTEM_JSR_135_JAVA_FILES += $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/classes/com/sun/jumpimpl/module/multimedia/MultimediaModuleImpl.java
+endif
+
 # Permission verifier
 SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/$(JSROP_PLATFORM)/classes/com/sun/mmedia/PermissionAccessor.java
