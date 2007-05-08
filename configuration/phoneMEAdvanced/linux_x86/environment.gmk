@@ -41,6 +41,7 @@ COMMON_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/linux_x86_cdc
 
 JSR_120_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/linux_x86_cdc
 JSR_135_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/linux_x86_cdc
+JSR_135_NOTIFIER_PATH=$(JAVACALL_DIR)/notifiers/jump_application
 JSR_177_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/linux_x86_cdc_simu
 
 #For each project location for basic definitions shall be specified
