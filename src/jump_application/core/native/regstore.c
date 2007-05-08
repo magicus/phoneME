@@ -75,16 +75,17 @@ static jfieldID anMapActionnames;   // [] actionnames
 #define DECLARE_MSG(n, s) static const char n[] = s;
 #define EXCEPTION_MSG(s) s
 
-DECLARE_MSG(fcFindHandler,   "Could not find handler")
+DECLARE_MSG(fcFindHandler,   "Could not find ContentHandler for field value")
 DECLARE_MSG(fcFindInvocation,   "Invocation not found")
-DECLARE_MSG(fcFindForSuite,   "Can't find handlers for suite")
-DECLARE_MSG(fcFindGetValues, "Can't read values");
-DECLARE_MSG(fcGetHandlerField, "Can't read handler fields");
-DECLARE_MSG(fcGetHandler, "Can't find handler");
-DECLARE_MSG(fcHandlerByURL, "Can't find handler for URL");
+DECLARE_MSG(fcFindForSuite,   "Could not find ContentHandler for suite ID")
+DECLARE_MSG(fcFindGetValues, "Could not read ContentHandler values");
+DECLARE_MSG(fcGetHandlerField, "Could not read ContentHandler fields");
+DECLARE_MSG(fcGetHandler, "Could not find ContentHandler");
+DECLARE_MSG(fcHandlerByURL, "Could not find ContentHandler for URL");
 DECLARE_MSG(fcUnexpectedFinilize,   "Unexpected RegistryStore finalization")
-DECLARE_MSG(fcNoClassFields,   "Can't initialize JSR211 class fields")
-DECLARE_MSG(fcErrorReadingFields,   "Can't read ContentHandler fields")
+DECLARE_MSG(fcNoClassFields,   "Could not initialize JSR211 class fields")
+DECLARE_MSG(fcRegister,   "Could not register ContentHandler")
+
 
 
 /** 
@@ -707,11 +708,11 @@ JNIEXPORT jboolean JNICALL Java_com_sun_j2me_content_RegistryStore_register0
 
         res = fillHandlerData(env, contentHandler, &handler);
         if (res != JNI_OK) {
-			JNU_ThrowInternalError(env, fcErrorReadingFields);
+			JNU_ThrowInternalError(env, fcGetHandlerField);
             break;
         }
 
-		res = (javacall_chapi_register_java_handler((const javacall_utf16_string)handler.id, 
+		res = javacall_chapi_register_java_handler((const javacall_utf16_string)handler.id, 
 											  handler.suite_id,
 											  (const javacall_utf16_string)handler.class_name,
 											  handler.flag,
@@ -726,7 +727,11 @@ JNIEXPORT jboolean JNICALL Java_com_sun_j2me_content_RegistryStore_register0
 											  (const javacall_utf16_string*)handler.action_names,
 											  handler.nActionNames,
 											  (const javacall_utf16_string*)handler.accesses,
-											  handler.nAccesses) == JAVACALL_OK) ? JNI_OK: JNI_ERR;
+											  handler.nAccesses);
+
+		if (res!=JAVACALL_OK){
+			JNU_ThrowInternalError(env, fcRegister);
+		}
 
     } while (0);
     
@@ -734,7 +739,7 @@ JNIEXPORT jboolean JNICALL Java_com_sun_j2me_content_RegistryStore_register0
     
     cleanHandlerData(env,&handler);
 
-    return (res==JNI_OK? JNI_TRUE: JNI_FALSE);
+    return (res==JAVACALL_OK ? JNI_TRUE: JNI_FALSE);
 }
 
 
@@ -750,11 +755,9 @@ JNIEXPORT jboolean JNICALL Java_com_sun_j2me_content_RegistryStore_unregister0
 	const jchar* id = (*env)->GetStringChars(env,handlerId, NULL);
 	if (!id) return JNI_FALSE;
 
-    if (JAVACALL_OK != javacall_chapi_unregister_handler((const javacall_utf16_string)id)) {
-		res = JNI_ERR;
-    }
+    res = javacall_chapi_unregister_handler((const javacall_utf16_string)id); 
 
 	(*env)->ReleaseStringChars(env, handlerId, id);
 
-	return (res==JNI_OK? JNI_TRUE: JNI_FALSE);
+	return (res==JAVACALL_OK? JNI_TRUE: JNI_FALSE);
 }

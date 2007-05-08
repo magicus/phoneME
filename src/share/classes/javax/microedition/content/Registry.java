@@ -1051,6 +1051,6 @@ public class Registry {
      * @return the ID; MUST NOT be <code>null</code>
      */
     public String getID() {
-        return impl == null? null: impl.getID();
+        return impl == null? null : impl.getID();
     }
 }

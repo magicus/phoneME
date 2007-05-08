@@ -119,7 +119,7 @@ class AppProxy {
     private String applicationName = null;
 
     /** The ApplicationID, (same a suiteId). */
-    private String applicationID = null;
+    private String applicationID = "APP_TEST";
 
     /** The application is registered. */
     private boolean isRegistered = true;
