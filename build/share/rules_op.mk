@@ -22,6 +22,8 @@
 # information or have any questions. 
 #
 
+SUBSYSTEM_RULES_FILE     = subsystem_rules.gmk
+
 .PHONY: javacall_lib
 
 ifneq ($(CVM_PRELOAD_LIB), true)
@@ -156,3 +158,23 @@ endif
 
 clean::
 	$(AT)rm -rf $(JSROP_OUTPUT_DIRS)
+
+# Include JSR 172
+ifeq ($(USE_JSR_172), true)
+export JSR_172_DIR ?= $(COMPONENTS_DIR)/jsr172
+JSR_172_MAKE_FILE = $(JSR_172_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_172_MAKE_FILE)),)
+$(error JSR_172_DIR must point to a directory containing JSR 172 sources)
+endif
+include $(JSR_172_MAKE_FILE)
+endif
+
+# Include JSR 280
+ifeq ($(USE_JSR_280), true)
+export JSR_280_DIR ?= $(COMPONENTS_DIR)/jsr280
+JSR_280_MAKE_FILE = $(JSR_280_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_280_MAKE_FILE)),)
+$(error JSR_280_DIR must point to a directory containing JSR 280 sources)
+endif
+include $(JSR_280_MAKE_FILE)
+endif
