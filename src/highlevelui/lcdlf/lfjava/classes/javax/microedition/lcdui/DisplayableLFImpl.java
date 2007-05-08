@@ -328,10 +328,11 @@ class DisplayableLFImpl implements DisplayableLF {
             // the displayable is not a GameCanvas.
             stickyKeyMask = currentKeyMask = -1;
         }
-                
-        // Setup scroll bar
-        currentDisplay.setVerticalScroll(getVerticalScrollPosition(),
-                                         getVerticalScrollProportion());
+
+       // IMPL_NOTES: should be remove after interface will be fixed
+         currentDisplay.setVerticalScroll(getVerticalScrollPosition(), 
+                                          getVerticalScrollProportion());
+
         state = SHOWN;
 
     } // lCallShow()
