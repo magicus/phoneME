@@ -290,14 +290,19 @@ JUMP_OBJECTS += \
 JUMP_DEPENDENCIES += javacall_lib
 endif
 # Check javacall makefile and include it
-ifeq ($(JAVACALL_PROJECT_DIR),)
 export JAVACALL_DIR ?= $(COMPONENTS_DIR)/javacall
+# Temporary setting of JAVACALL_MAKE_FILE for checking JAVACALL_DIR correctness
+# Will be changed if JAVACALL_PROJECT_DIR is set
 JAVACALL_MAKE_FILE = $(JAVACALL_DIR)/configuration/phoneMEAdvanced/$(JAVACALL_TARGET)/module.gmk
-else
-JAVACALL_MAKE_FILE = $(JAVACALL_PROJECT_DIR)/configuration/tiburon/$(JAVACALL_TARGET)/module.gmk
-endif
 ifeq ($(wildcard $(JAVACALL_MAKE_FILE)),)
 $(error JAVACALL_DIR must point to a directory containing javacall implementation sources)
+endif
+# Check JAVACALL_PROJECT_DIR
+ifneq ($(JAVACALL_PROJECT_DIR),)
+JAVACALL_MAKE_FILE = $(JAVACALL_PROJECT_DIR)/configuration/tiburon/$(JAVACALL_TARGET)/module.gmk
+ifeq ($(wildcard $(JAVACALL_MAKE_FILE)),)
+$(error JAVACALL_PROJECT_DIR must point to a directory containing javacall-com implementation sources)
+endif
 endif
 include $(JAVACALL_MAKE_FILE)
 endif
