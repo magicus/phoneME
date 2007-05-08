@@ -323,6 +323,20 @@ javacall_result /*OPTIONAL*/ javacall_network_get_http_proxy(/*OUT*/ char *pHttp
 }
 
 /**
+ * Gets a platform-specific error code for the previous operation on an open
+ * connection.  This is mainly useful for adding detail information to
+ * debugging and diagnostic messages.
+ *
+ * @param handle handle of an open connection
+ *
+ * @return 0 if there is no error;\n
+ * a non-zero, platform-specific value if there was an error
+ */
+int /*OPTIONAL*/ javacall_network_error(javacall_handle handle) {
+    return 0;
+}
+
+/**
  * Gets the name of the local device from the system. This method is
  * called when the <tt>microedition.hostname</tt> system property
  * is retrieved.

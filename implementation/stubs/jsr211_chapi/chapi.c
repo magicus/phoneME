@@ -101,6 +101,25 @@ javacall_result javacall_chapi_find_handler(
 }
                         
 /**
+ * Initializes content handler registry.
+ *
+ * @return JAVACALL_OK if content handler registry initialized successfully
+ */
+javacall_result javacall_chapi_initialize(void) {
+    return JAVACALL_NOT_IMPLEMENTED;
+}
+
+
+/**
+ * Finalizes content handler registry.
+ *
+ * @return JAVACALL_OK if content handler registry finalized successfully
+ */
+javacall_result javacall_chapi_finalize(void) {
+    return JAVACALL_NOT_IMPLEMENTED;
+}
+
+/**
  * Fetches handlers registered for the given suite.
  *
  * @param suite_id requested suite Id.
