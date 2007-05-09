@@ -80,7 +80,7 @@
 #define SET_SIZE(x)
 
 #define ALIGN(n)		\
-	ALIGN n
+	ALIGN 1 :SHL: (n)
 
 #define WORD(x)			\
 	DCD x
