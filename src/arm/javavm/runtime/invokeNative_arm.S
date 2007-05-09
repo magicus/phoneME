@@ -74,10 +74,10 @@
 /* method returns a word, 2 if the native method returns a */
 /* double word, or -1 if the native method returns an object. */
 
+	ALIGN(4)
+
 	ENTRY(CVMjniInvokeNative)
 ENTRY1(CVMjniInvokeNative)
-
-	ALIGN(4)
 
 /* Arguments: */
 
