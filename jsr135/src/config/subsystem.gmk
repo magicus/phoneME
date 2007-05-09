@@ -1,0 +1,237 @@
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+######################################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+######################################################################
+
+SUBSYSTEMS += jsr135
+
+JSR_135_CONFIG_DIR = $(JSR_135_DIR)/src/config/$(TARGET_PLATFORM)
+
+-include $(JSR_135_CONFIG_DIR)/config.gmk
+include $(JSR_135_DIR)/src/config/features.defs
+
+EXTRA_CFLAGS  += -DENABLE_JSR_135=1
+JPP_DEFS      += -DENABLE_JSR_135
+
+# Include JSR_135 system properties in Configuration
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+        $(JSR_135_CONFIG_DIR)/properties_jsr135.xml
+
+# Specify romizer configuration file for the MMAPI
+# and path where the file is located
+#
+ROMGEN_INCLUDE_PATHS += $(JSR_135_DIR)/src/config
+ROMGEN_CFG_FILES     += jsr135_rom.cfg
+
+# Jpp files that need pre-processing
+#
+$(GENERATED_DIR)/classes/javax/microedition/media/Player.java: \
+  $(JSR_135_DIR)/src/core/javax/microedition/media/Player.jpp
+	@$(call runjpp,$^,$@)
+    
+$(GENERATED_DIR)/classes/javax/microedition/media/PlayerListener.java: \
+  $(JSR_135_DIR)/src/core/javax/microedition/media/PlayerListener.jpp
+	@$(call runjpp,$^,$@)
+    
+$(GENERATED_DIR)/classes/javax/microedition/media/Manager.java: \
+  $(JSR_135_DIR)/src/core/javax/microedition/media/Manager.jpp
+	@$(call runjpp,$^,$@)
+    
+$(GENERATED_DIR)/classes/com/sun/mmedia/BasicPlayer.java: \
+  $(JSR_135_DIR)/src/core/com/sun/mmedia/BasicPlayer.jpp
+	@$(call runjpp,$^,$@)
+    
+$(GENERATED_DIR)/classes/com/sun/mmedia/Configuration.java: \
+  $(JSR_135_DIR)/src/core/com/sun/mmedia/Configuration.jpp
+	@$(call runjpp,$^,$@)
+    
+$(GENERATED_DIR)/classes/com/sun/mmedia/protocol/CommonDS.java: \
+  $(JSR_135_DIR)/src/core/com/sun/mmedia/protocol/CommonDS.jpp
+	@$(call runjpp,$^,$@)
+    
+$(GENERATED_DIR)/classes/com/sun/mmedia/protocol/BasicDS.java: \
+  $(JSR_135_DIR)/src/core/com/sun/mmedia/protocol/BasicDS.jpp
+	@$(call runjpp,$^,$@)
+    
+$(GENERATED_DIR)/classes/com/sun/mmedia/DefaultConfiguration.java: \
+  $(JSR_135_DIR)/src/components/$(TARGET_PLATFORM)/configuration/com/sun/mmedia/DefaultConfiguration.jpp
+	@$(call runjpp,$^,$@)
+    
+$(GENERATED_DIR)/classes/com/sun/mmedia/DirectPlayer.java: \
+  $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/DirectPlayer.jpp
+	@$(call runjpp,$^,$@)
+
+$(GENERATED_DIR)/classes/com/sun/mmedia/DirectRecord.java: \
+  $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/DirectRecord.jpp
+	@$(call runjpp,$^,$@)
+
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(GENERATED_DIR)/classes/javax/microedition/media/Player.java \
+    $(GENERATED_DIR)/classes/javax/microedition/media/PlayerListener.java \
+    $(GENERATED_DIR)/classes/javax/microedition/media/Manager.java \
+    $(GENERATED_DIR)/classes/com/sun/mmedia/BasicPlayer.java \
+    $(GENERATED_DIR)/classes/com/sun/mmedia/Configuration.java \
+    $(GENERATED_DIR)/classes/com/sun/mmedia/DefaultConfiguration.java \
+    $(GENERATED_DIR)/classes/com/sun/mmedia/protocol/CommonDS.java \
+    $(GENERATED_DIR)/classes/com/sun/mmedia/protocol/BasicDS.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/Control.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/Controllable.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/MediaException.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/control/ToneControl.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/control/VolumeControl.java \
+    $(JSR_135_DIR)/src/core/com/sun/mmedia/AudioRenderer.java \
+    $(JSR_135_DIR)/src/core/com/sun/mmedia/TonePlayer.java \
+    $(JSR_135_DIR)/src/core/com/sun/mmedia/protocol/LocatorParser.java
+
+SUBSYSTEM_JSR_135_JAVA_FILES += $(JSR_135_DIR)/src/components/mmevent/classes/com/sun/mmedia/MediaEventConsumer.java
+SUBSYSTEM_JSR_135_JAVA_FILES += $(JSR_135_DIR)/src/components/mmevent/classes/com/sun/mmedia/MediaTunnel.java
+
+ifneq ($(ABB), true)
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/TimeBase.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/protocol/DataSource.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/protocol/SourceStream.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/protocol/ContentDescriptor.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/control/FramePositioningControl.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/control/GUIControl.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/control/MIDIControl.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/control/MetaDataControl.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/control/PitchControl.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/control/RateControl.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/control/RecordControl.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/control/StopTimeControl.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/control/TempoControl.java \
+    $(JSR_135_DIR)/src/core/javax/microedition/media/control/VideoControl.java \
+    $(JSR_135_DIR)/src/core/com/sun/mmedia/VideoRenderer.java
+endif
+
+ifeq ($(ABB), true)
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/core/com/sun/mmedia/protocol/DataSource.java \
+    $(JSR_135_DIR)/src/core/com/sun/mmedia/protocol/SourceStream.java \
+    $(JSR_135_DIR)/src/core/com/sun/mmedia/protocol/ContentDescriptor.java
+endif
+
+ifeq ($(DIRECT_PLAYER), true)
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(GENERATED_DIR)/classes/com/sun/mmedia/DirectPlayer.java \
+    $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/DirectTone.java \
+    $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/DirectVolume.java \
+    $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/NativeTonePlayer.java \
+    $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/DirectControls.java \
+    $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/NativeTonePlayer.java \
+    $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/PlayerStateSubscriber.java
+endif
+
+ifeq ($(DIRECT_MIDI_CONTROL), true)
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/DirectMIDI.java \
+    $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/DirectMIDIControl.java
+endif
+
+#
+# Indirect video player
+#
+ifeq ($(INDIRECT_VIDEO_PLAYER), true)
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/BasicAudioOut.java \
+    $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/FormatConversionUtils.java \
+    $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/GIFPlayer.java \
+    $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/GIFImageDecoder.java \
+    $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/ImageAccess.java \
+    $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/MIDPImageAccessor.java \
+    $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/MIDPVideoRenderer.java \
+    $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/MMCustomItem.java \
+    $(JSR_135_DIR)/src/components/video-renderer/classes/com/sun/mmedia/PermissionAccessor.java
+endif
+    
+#
+# Direct video player
+#
+ifeq ($(DIRECT_VIDEO_PLAYER), true)
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/DirectVideo.java 
+endif
+
+ifeq ($(DIRECT_CAMERA_PLAYER), true)
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/components/direct-player/classes/com/sun/mmedia/DirectCamera.java
+endif
+
+ifeq ($(DIRECT_RECORD), true)
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(GENERATED_DIR)/classes/com/sun/mmedia/DirectRecord.java
+endif
+
+
+#
+# Native
+#
+
+vpath % $(JSR_135_DIR)/src/components/direct-player/native
+vpath % $(JSR_135_DIR)/src/components/javacall/configuration/native
+
+#
+# Native KNI files
+#
+
+ifeq ($(DIRECT_PLAYER),true)
+SUBSYSTEM_JSR_135_NATIVE_FILES += \
+	KNIDirectConfig.c \
+	KNIDirectPlayer.c \
+	KNIDirectVolume.c \
+	KNITonePlayer.c
+endif
+
+ifeq ($(DIRECT_VIDEO_PLAYER),true)
+SUBSYSTEM_JSR_135_NATIVE_FILES += \
+	KNIDirectVideo.c
+endif
+
+ifeq ($(DIRECT_RECORD), true)
+SUBSYSTEM_JSR_135_NATIVE_FILES += \
+	KNIDirectRecord.c
+endif
+
+ifeq ($(DIRECT_MIDI_CONTROL), true)
+SUBSYSTEM_JSR_135_NATIVE_FILES += \
+	KNIDirectMIDIControl.c
+endif
+
+# Append JSR 135 source bundle creation to target
+source_bundle:: jsr_135_source_bundle
+
+# Create JSR 135 source in subdir 'jsr135/'
+JSR_135_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr135
+
+# Copy and filter JSR 135 source in JSR_135_SOURCE_OUTPUT_DIR
+jsr_135_source_bundle: JSR_135_DIR SOURCE_OUTPUT_DIR
+	@echo " ... JSR 135 source bundle" $(LOG)
+	@$(call re_src_filter,$(JSR_135_DIR),$(JSR_135_SOURCE_OUTPUT_DIR),src)
