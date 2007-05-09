@@ -1,0 +1,30 @@
+<!--
+
+        Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+-->
+    <hr class="pHr">
+
+    <table class="full-width">
+      <!-- formatting table -->
+      <tr>
+        <td class="go-left">
+          <a href="index.html" class="qindex">Main Page</a>
+          &nbsp; <a href="modules.html" class="qindex">Modules</a>
+          &nbsp; <a href="annotated.html" class="qindex">Data
+                  Structures</a>
+          &nbsp; <a href="files.html" class="qindex">File List</a>
+          &nbsp; <a href="functions.html" class="qindex">Data Fields</a>
+          &nbsp; <a href="globals.html" class="qindex">Globals</a>
+          &nbsp;
+        </td>
+        <td class="go-right"><span class="copyright">Reference Documentation
+            <br>phoneME Feature project, Version 2.0 </td>
+      </tr>
+    </table>
+
+    <p class="copyright"><a href="../../share/copyright.html">Copyright</a>
+      &#169; 2006-2007 Sun Microsystems, Inc. All rights reserved.</p>
+
+  </body>
+</html>
+</html>
