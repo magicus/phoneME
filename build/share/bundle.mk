@@ -49,6 +49,7 @@
 #   INCLUDE_COMMCONNECTION(true): Include CommConnection support.
 #   INCLUDE_JCOV(false): Include support for JCOV
 #   INCLUDE_MTASK: true for oi build. false for ri builds.
+#   INCLUDE_GCI(false): Set true to include GCI makefiles
 #   USE_CDC_COM(false): set true for commericial source bundles
 #   CDC_COM_DIR: directory of cdc-com component
 #
@@ -109,6 +110,7 @@ INCLUDE_DUALSTACK	= false
 INCLUDE_KNI		= $(INCLUDE_DUALSTACK)
 INCLUDE_COMMCONNECTION  = true
 INCLUDE_JCOV		= false
+INCLUDE_GCI		= false
 ifeq ($(CVM_PRODUCT),ri)
 INCLUDE_JIT		= false
 INCLUDE_MTASK		= false
@@ -388,6 +390,16 @@ EXCLUDE_PATTERNS += \
 
 endif
 
+# gci
+
+ifeq ($(INCLUDE_GCI), true)
+
+BUILDDIR_PATTERNS += \
+	defs_gci.mk \
+	rules_gci.mk
+
+endif
+
 # cdc
 
 BUILDDIR_PATTERNS += \
@@ -544,6 +556,7 @@ FEATURE_LIST += J2ME_CLASSLIB \
 	INCLUDE_MTASK \
 	INCLUDE_KNI \
 	INCLUDE_JCOV \
+	INCLUDE_GCI \
 	INCLUDE_DUALSTACK \
 	INCLUDE_COMMCONNECTION
 
