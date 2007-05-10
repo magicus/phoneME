@@ -50,7 +50,8 @@ SUBSYSTEM_SERVICES_I3TEST_JAVA_FILES = \
     $(SERVICES_SVM_DIR)/i3test/com/sun/midp/services/SecurityTokenProvider.java \
     $(SERVICES_SVM_DIR)/i3test/com/sun/midp/services/TestSystemServiceRequest.java \
     $(SERVICES_SVM_DIR)/i3test/com/sun/midp/services/TestSystemServiceManager.java \
-    $(SERVICES_SVM_DIR)/i3test/com/sun/midp/services/TestSystemService.java
+    $(SERVICES_SVM_DIR)/i3test/com/sun/midp/services/TestSystemService.java \
+    $(SERVICES_SVM_DIR)/i3test/com/sun/midp/services/TestSystemServiceConnectionListener.java
 else
 
 SUBSYSTEM_SERVICES_I3TEST_JAVA_FILES =
