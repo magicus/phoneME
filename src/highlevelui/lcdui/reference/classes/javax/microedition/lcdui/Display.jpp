@@ -576,7 +576,7 @@ public class Display {
     private GCIDisplay gciDisplay;
   
     /** GCIScreenWidget that represents a device screen */
-    private GCIScreenWidget gciScreenWidget; 
+    private static GCIScreenWidget gciScreenWidget;
 
     // #endif ENABLE_GCI
 /*
@@ -676,14 +676,17 @@ public class Display {
         }
 
         // #ifdef ENABLE_GCI
-        GCIDisplay gciDisplay =
-            GCIGraphicsEnvironment.getInstance().getDefaultDisplay();
-        gciScreenWidget = gciDisplay.createScreenWidget(0, 0, 
-	                                                WIDTH, HEIGHT, 
-                                                        null, null);
+        if (gciScreenWidget == null) {
+            GCIDisplay gciDisplay =
+                GCIGraphicsEnvironment.getInstance().getDefaultDisplay();
+            gciScreenWidget = gciDisplay.createScreenWidget(0, 0,
+                                                            WIDTH, HEIGHT,
+                                                            null, null);
+        }
+
         screenGraphics = Graphics.getScreenGraphics(displayId,
-                                                    WIDTH, HEIGHT, 
-	                      gciScreenWidget.getDrawingSurface());
+                                                    WIDTH, HEIGHT,
+                             gciScreenWidget.getDrawingSurface());
 
         // #else
 
