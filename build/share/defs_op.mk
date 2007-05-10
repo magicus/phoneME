@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -292,10 +292,10 @@ JUMP_DEPENDENCIES += javacall_lib
 endif
 # Check javacall makefile and include it
 export JAVACALL_DIR ?= $(COMPONENTS_DIR)/javacall
-ifeq ($(JAVACALL_PROJECT_DIR),)
+ifeq ($(PROJECT_JAVACALL_DIR),)
 JSROP_JC_DIR = JAVACALL_DIR
 else
-JSROP_JC_DIR = JAVACALL_PROJECT_DIR
+JSROP_JC_DIR = PROJECT_JAVACALL_DIR
 endif
 JAVACALL_MAKE_FILE = $($(JSROP_JC_DIR))/configuration/phoneMEAdvanced/$(JAVACALL_TARGET)/module.gmk
 ifeq ($(wildcard $(JAVACALL_MAKE_FILE)),)
