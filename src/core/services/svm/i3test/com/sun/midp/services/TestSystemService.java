@@ -34,7 +34,7 @@ import com.sun.midp.i3test.TestCase;
 /**
  * Tests for system service requesting functionality
  */
-public class TestSystemServiceConnectionListener extends TestCase {
+public class TestSystemService extends TestCase {
     private static SecurityToken token = SecurityTokenProvider.getToken();
         
     class SimpleSystemService implements SystemService, Runnable {
