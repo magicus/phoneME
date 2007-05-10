@@ -32,8 +32,8 @@
 ASM_ARCH_FLAGS		= -mips2
 CC_ARCH_FLAGS   	= -mips2
 # Fix gcc fp extra precision bug on mips 
-CC_ARCH_FLAGS_FDLIB	= -mips2 -ffloat-store
-CC_ARCH_FLAGS_LOOP 	= -mips2
+CC_ARCH_FLAGS_FDLIB	= -ffloat-store
+CC_ARCH_FLAGS_LOOP 	=
 LINK_ARCH_FLAGS 	=
 LINK_ARCH_LIBS		= -lm
 
