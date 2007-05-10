@@ -47,21 +47,19 @@ import com.sun.jump.module.eventqueue.JUMPEventQueueModule;
 import com.sun.jump.module.eventqueue.JUMPEventHandler;
 
 /**
- * Implementation of FileSystem module.
+ * Implementation of Multimedia module.
  * This class performs the following activities:
  * <ul>
  *  <li>starts native file system monitoring;</li>
- *  <li>accepts registration and unregistration requests from client isolates
- *      and maintains a table of "interested" ones;</li>
- *  <li>listens to events that come from the monitoring process;</li>
- *  <li>notifies all registered isolates via JUMP messages.</li>
+ *  <li>listens to multimedia events from the platform;</li>
+ *  <li>notifies related isolates via JUMP messages.</li>
  * </ul>
  */
 public class MultimediaModuleImpl implements JUMPModule, JUMPEventHandler {
-    /** Message type for file system events. */
+    /** Message type for Multimedia events. */
     public static final String MESSAGE_TYPE = "mvm/multimedia";
 
-    /** Message ID for notifications from file system monitor. */
+    /** Message ID for notifications from Multimedia monitor. */
     public static final String MM_EVENT = "mm_event";
 
     /** Executive process for messaging. */
