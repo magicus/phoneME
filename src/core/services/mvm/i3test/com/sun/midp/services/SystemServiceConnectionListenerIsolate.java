@@ -37,74 +37,91 @@ import com.sun.cldc.isolate.*;
 public class SystemServiceConnectionListenerIsolate  {
     private static SecurityToken token = SecurityTokenProvider.getToken();
 
+    class ConnectionListener implements SystemServiceConnectionListener {
+        private SystemServiceConnection con = null;
+        private boolean done = false;
+
+        ConnectionListener(SystemServiceConnection con) {
+            this.con = con;
+        }
+
+        public void onMessage(SystemServiceMessage msg) {
+            try {
+                // read received string
+                String testString = msg.getDataInput().readUTF();
+
+                // convert string to upper case and sent it back to service
+                msg = SystemServiceMessage.newMessage();
+                msg.getDataOutput().writeUTF(testString.toUpperCase());
+                con.send(msg);
+
+                // we are done
+                synchronized (this) {
+                    done = true;
+                    notifyAll();
+                }
+            } catch (Throwable t) {
+                System.err.println("Exception: " + t);
+                t.printStackTrace();
+            }
+        }
+
+        public void onConnectionClosed() {
+        }
+
+        void await() {
+            try {
+                synchronized (this) {
+                    while (!done) {
+                        wait();
+                    }
+                }
+            } catch (InterruptedException ignore) { }
+        }        
+    }
+
     public static void main(String[] args) 
         throws ClosedLinkException, 
+               SystemServiceConnectionClosedException,
+               InterruptedIOException, 
+               IOException {
+
+        SystemServiceConnectionListenerIsolate is = 
+            new SystemServiceConnectionListenerIsolate();
+
+        is.run();
+    }
+
+    private void run() 
+        throws ClosedLinkException,
+               SystemServiceConnectionClosedException,
                InterruptedIOException, 
                IOException {
 
         Link[] isolateLinks = LinkPortal.getLinks();
         NamedLinkPortal.receiveLinks(isolateLinks[0]);
 
+        // request service
         SystemServiceRequestor serviceRequestor = 
             SystemServiceRequestor.getInstance(token);
 
         SystemServiceConnection con = null;
         con = serviceRequestor.requestService(
                 TestSystemService.SERVICE_ID);
+
+        // send an empty string to service to start messages exchange
+        SystemServiceMessage msg = SystemServiceMessage.newMessage();
+        msg.getDataOutput().writeUTF("");
+        con.send(msg);
+
+        // set listener and wait for exchange to complete
         ConnectionListener l = new ConnectionListener(con);
         con.setConnectionListener(l);
-        System.err.println("C: ++++++++");
         l.await();
-        System.err.println("C: --------");
 
-        System.exit(0);
-   }
+        Isolate cur = Isolate.currentIsolate();
+        cur.exit(0);        
+    }
 }
 
-class ConnectionListener implements SystemServiceConnectionListener {
-    private SystemServiceConnection con = null;
-    private boolean done = false;
-
-    ConnectionListener(SystemServiceConnection con) {
-        this.con = con;
-    }
-
-    public void onMessage(SystemServiceMessage msg) {
-        try {
-            // read received string
-            System.err.println("C: received string");
-            String testString = msg.getDataInput().readUTF();
-
-            // convert string to upper case and sent it back to service
-            System.err.println("C: sending string");
-            msg = SystemServiceMessage.newMessage();
-            msg.getDataOutput().writeUTF(testString.toUpperCase());
-            con.send(msg);
-            System.err.println("C: string sent");
-
-            // we are done
-            synchronized (this) {
-                done = true;
-                notifyAll();
-            }
-            System.err.println("C: done");            
-        } catch (Throwable t) {
-            System.err.println("Exception: " + t);
-            t.printStackTrace();
-        }
-    }
-
-    public void onConnectionClosed() {
-    }
-
-    void await() {
-        try {
-            synchronized (this) {
-                while (!done) {
-                    wait();
-                }
-            }
-        } catch (InterruptedException ignore) { }
-    }        
-}
 

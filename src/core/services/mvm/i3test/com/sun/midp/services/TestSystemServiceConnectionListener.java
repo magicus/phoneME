@@ -37,16 +37,55 @@ import com.sun.midp.i3test.TestCase;
  * Tests for system service requesting functionality
  */
 public class TestSystemServiceConnectionListener extends TestCase {
-    private static SecurityToken token = SecurityTokenProvider.getToken();  
+    private static SecurityToken token = SecurityTokenProvider.getToken(); 
+    private final static String testString = "just a test string";   
 
-    class SimpleSystemService implements SystemService, Runnable {
+    class ConnectionListener implements SystemServiceConnectionListener {
+        private SystemServiceConnection con = null;
+        private boolean stringSent = false;
+
+        String responseString = null;
+        boolean connectionClosed = false;
+
+        ConnectionListener(SystemServiceConnection con) {
+            this.con = con;
+        }
+
+        public void onMessage(SystemServiceMessage msg) {
+            try {
+                // string received from client
+                String str = msg.getDataInput().readUTF();
+                
+                if (!stringSent) {
+                    // send test string to client
+                    msg = SystemServiceMessage.newMessage();
+                    msg.getDataOutput().writeUTF(testString);
+                    con.send(msg);
+
+                    stringSent = true;
+                } else {
+                    // string received from client is response string
+                    responseString = str;
+                }
+
+            } catch (Throwable t) {
+                System.err.println("Exception: " + t);
+                t.printStackTrace();
+            }
+        }
+
+        public void onConnectionClosed() {
+            connectionClosed = true;
+        }
+    }
+    
+    class SimpleSystemService implements SystemService {
         final static String SERVICE_ID = "42";
 
-        private final static String testString = "just a test string";
+        private ConnectionListener listener = null;
 
-        Thread serviceThread = null;
-        SystemServiceConnection con = null;
         boolean stringsMatch = false;
+        boolean connectionClosed = false;
 
         public String getServiceID() {
             return SERVICE_ID;
@@ -56,34 +95,17 @@ public class TestSystemServiceConnectionListener extends TestCase {
         }
 
         public void stop() {
-            try {
-                serviceThread.join();
-            } catch (InterruptedException e) {
-            }
+            // compare strings
+            String responseString = listener.responseString; 
+            stringsMatch = testString.toUpperCase().equals(responseString);
+
+            connectionClosed = listener.connectionClosed;
         }
 
         public void acceptConnection(SystemServiceConnection con) {
-            this.con = con;
 
-            serviceThread = new Thread(this);
-            serviceThread.start();
-        }
-
-        public void run() {
-            try {
-                // send test string to client
-                SystemServiceMessage msg = SystemServiceMessage.newMessage();
-                msg.getDataOutput().writeUTF(testString);
-                con.send(msg);
-
-                // get a response string from client
-                msg = con.receive();
-                String responseString = msg.getDataInput().readUTF();
-
-                // compare strings
-                stringsMatch = testString.toUpperCase().equals(responseString);
-            } catch (Throwable t) {
-            }
+            listener = new ConnectionListener(con);
+            con.setConnectionListener(listener);
         }
     }
 
@@ -104,6 +126,7 @@ public class TestSystemServiceConnectionListener extends TestCase {
         Isolate clientIsolate = new Isolate(
                 "com.sun.midp.services.SystemServiceConnectionListenerIsolate",
                 null);
+        clientIsolate.setAPIAccess(true);
         clientIsolate.start();
 
         IsolateSystemServiceRequestHandler isolateRequestHandler = 
@@ -121,6 +144,7 @@ public class TestSystemServiceConnectionListener extends TestCase {
         manager.shutdown();
 
         assertTrue("Strings match", service.stringsMatch);
+        assertTrue("Connection closed", service.connectionClosed);       
     }
 
     void testLocal() {
@@ -136,8 +160,13 @@ public class TestSystemServiceConnectionListener extends TestCase {
                 SimpleSystemService.SERVICE_ID);
 
         try {
+            // send an empty string to service to start messages exchange
+            SystemServiceMessage msg = SystemServiceMessage.newMessage();
+            msg.getDataOutput().writeUTF("");
+            con.send(msg);
+            
             // receive string from service
-            SystemServiceMessage msg = con.receive();
+            msg = con.receive();
             String testString = msg.getDataInput().readUTF();
 
             // convert string to upper case and sent it back to service
@@ -169,3 +198,5 @@ public class TestSystemServiceConnectionListener extends TestCase {
         testLocal();
     }
 }
+
+
