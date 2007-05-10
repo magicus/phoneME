@@ -29,7 +29,6 @@
 ######################################################################
 
 $(JSR_172_JAR): $(JSR_280_JAR) $(JPP_CLASS_FILES) jsr172_constants $(SUBSYSTEM_JSR_172_JAVA_FILES)
-	@echo "Linking $@"
 	$(call compileJSROP,jsr172,$(JSR_172_BUILD_DIR)/classes,$(SUBSYSTEM_JSR_172_JAVA_FILES),$(JSR_172_DEPS))
 	$(call makeJSROPJar,$(JSR_172_JAR),$(JSR_172_BUILD_DIR)/classes)
 
