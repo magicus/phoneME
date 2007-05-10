@@ -210,6 +210,9 @@ public class MIDPWindow extends CWindow {
             tickerLayer.toggleAlert(true);
             buttonLayer.toggleAlert(true);
             
+            // alert does not use title layer. The title is a part of content 
+            titleLayer.setTitle(null);
+
             alertLayer.setAlert(true, (Alert)displayable, height);
             
             paintWash(false);
