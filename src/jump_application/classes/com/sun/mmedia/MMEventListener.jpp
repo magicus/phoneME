@@ -23,76 +23,97 @@
  *  information or have any questions. 
  */
 package com.sun.mmedia;
+import java.io.*;
 import javax.microedition.media.*;
+import com.sun.jump.message.*;
+import com.sun.jump.common.*;
+import com.sun.jump.isolate.jvmprocess.*;
+import com.sun.jumpimpl.module.multimedia.*;
 
 /**
  * Event listener for events delivered from native layer
  */
-class MMEventListener {
+class MMEventListener implements JUMPMessageHandler {
+    /**
+     * Executive process for isolate registration as file system listener.
+     */
+    private static JUMPProcessProxy executive;
 
     /**
-     * A thread waiting for incoming events.
+     * Current isolate process which will send messages to executive.
      */
-    private static Thread eventThread;
+    private static JUMPIsolateProcess thisProcess;
+
     /**
-     * Performs OS specific checking for a file root mount/unmount.
+     * Message dispatcher for registration of handlers.
      */
-    private native static boolean waitEventFromNative();
-    private native static int nativeEventInit();
-    private native static int nativeEventDestroy();
-    private native static boolean getNativeEvent(MMNativeEventImpl event);
-    
+    private static JUMPMessageDispatcher msgDisp;
+
+    /**
+     * Message handler registration token.
+     */
+    private static Object msgToken;
+
     public MMEventListener() {
-        if (eventThread == null) {
-            // Create event thread
-            eventThread = new Thread() {
-                /**
-                 * The main loop
-                 */
-                public void run() {
-                    try {
-                        nativeEventInit();
-                        while (true) {
-                            if (waitEventFromNative()) {
-                                MMNativeEventImpl event = new MMNativeEventImpl();
-                                if (getNativeEvent(event)) {
-                                    BasicPlayer p = BasicPlayer.get(event.playerId);
-                                    switch(event.eventId) {
-                                        case MMNativeEventImpl.EOM_EVENT:
-                                            p.sendEvent(PlayerListener.END_OF_MEDIA, new Long(event.value));
-                                        break;
-// #ifndef ABB [
-                                        case MMNativeEventImpl.RSL_EVENT:
-                                            p.sendEvent(PlayerListener.RECORD_STOPPED, new Long(event.value));
-                                            break;
-// #endif ]
-                                    }
-                                    Thread.yield();
-                                }
-                            } else {
-                                sleep(10);
-                            };
-                        }
-                    } catch (Exception ex) {
-                    }
-                }
-                protected void finalize() {
-                    nativeEventDestroy();
-                }
-            };
-            // Start the thread
-            eventThread.start();
-
+        if (thisProcess == null) {
+            thisProcess = JUMPIsolateProcess.getInstance();
+            executive = thisProcess.getExecutiveProcess();
+            // Register message handler.
+            msgDisp = thisProcess.getMessageDispatcher();
+            try {
+                msgToken = msgDisp.registerHandler(MultimediaModuleImpl.MESSAGE_TYPE, this);
+            } catch (JUMPMessageDispatcherTypeException e) {
+                throw new RuntimeException("Cannot register multimedia message handler: "
+                    + e.getMessage());
+            } catch (IOException e) {
+                throw new RuntimeException("Cannot register multimedia message handler: "
+                    + e.getMessage());
+            }
         }
     }
 
     /**
-     * Receiving anevents is Platform spevific. Will be defined later
-     * Process of events shall be performed in the following way:
-     *           BasicPlayer p;
-     *           p = BasicPlayer.get(playerId_Inside_Isolate);
-     *           p.sendEvent(PlayerListener.END_OF_MEDIA, (Object)new Long(nevt.intParam2 * 1000)); 
+     * Performs clean up upon object destruction.
+     * Removes current isolate from the list of isolates interested in
+     * receiving mount/unmount events.
      */
+    protected void finalize() {
+        // Unregister message handler.
+        try {
+            msgDisp.cancelRegistration(msgToken);
+        } catch (IOException e) {
+            System.err.println("Could not unregister file system message handler: "
+                + e.getMessage());
+        }
+    }
+    /**
+     * Handles Multimedia event messages.
+     *
+     * @param message message from JUMP executive.
+     */
+    public void handleMessage(JUMPMessage message) {
+	    JUMPMessageReader r = new JUMPMessageReader(message);
+        String id = r.getUTF();
+        String[] args = r.getUTFArray();
+        byte[] data = r.getByteArray();
+        MMNativeEventImpl nEvent = new MMNativeEventImpl();
+
+        parseNativeEvent(data, nEvent);
+        BasicPlayer p = BasicPlayer.get(nEvent.playerId);
+        switch(nEvent.eventId) {
+            case MMNativeEventImpl.EOM_EVENT:
+                p.sendEvent(PlayerListener.END_OF_MEDIA, new Long(nEvent.value));
+                break;
+// #ifndef ABB [
+            case MMNativeEventImpl.RSL_EVENT:
+                p.sendEvent(PlayerListener.RECORD_STOPPED, new Long(nEvent.value));
+                break;
+// #endif ]
+        }
+    }
+
+    private native static boolean parseNativeEvent(byte[] data, MMNativeEventImpl event);
+
 }
 
 class MMNativeEventImpl {
