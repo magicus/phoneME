@@ -23,6 +23,7 @@
 #
 
 SUBSYSTEM_MAKE_FILE      = subsystem.gmk
+SUBSYSTEM_DEFS_FILE      = subsystem_defs.gmk
 JSR_INIT_PACKAGE         = com.sun.cdc.config
 JSR_INIT_CLASS           = Initializer
 
@@ -160,11 +161,11 @@ endif
 # Include JSR 172
 ifeq ($(USE_JSR_172), true)
 export JSR_172_DIR ?= $(COMPONENTS_DIR)/jsr172
-JSR_172_MAKE_FILE = $(JSR_172_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
-ifeq ($(wildcard $(JSR_172_MAKE_FILE)),)
+JSR_172_DEFS_FILE = $(JSR_172_DIR)/build/$(SUBSYSTEM_DEFS_FILE)
+ifeq ($(wildcard $(JSR_172_DEFS_FILE)),)
 $(error JSR_172_DIR must point to a directory containing JSR 172 sources)
 endif
-include $(JSR_172_MAKE_FILE)
+include $(JSR_172_DEFS_FILE)
 endif
 
 # Include JSR 177
@@ -270,11 +271,11 @@ endif
 # Include JSR 280
 ifeq ($(USE_JSR_280), true)
 export JSR_280_DIR ?= $(COMPONENTS_DIR)/jsr280
-JSR_280_MAKE_FILE = $(JSR_280_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
-ifeq ($(wildcard $(JSR_280_MAKE_FILE)),)
-$(error JSR_75_DIR must point to a directory containing JSR 280 sources)
+JSR_280_DEFS_FILE = $(JSR_280_DIR)/build/$(SUBSYSTEM_DEFS_FILE)
+ifeq ($(wildcard $(JSR_280_DEFS_FILE)),)
+$(error JSR_280_DIR must point to a directory containing JSR 280 sources)
 endif
-include $(JSR_280_MAKE_FILE)
+include $(JSR_280_DEFS_FILE)
 endif
 
 ifeq ($(CVM_INCLUDE_JAVACALL), true)
