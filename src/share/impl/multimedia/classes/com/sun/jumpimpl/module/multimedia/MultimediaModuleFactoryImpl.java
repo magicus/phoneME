@@ -53,9 +53,9 @@ public class MultimediaModuleFactoryImpl extends JUMPModuleFactory {
         } catch (ClassNotFoundException e) {
             /* The corresponding module may be not present - ignore silently. */
         } catch (InstantiationException e) {
-            throw new RuntimeException("FileSystem module initialization failed.");
+            throw new RuntimeException("Multimedia module initialization failed.");
         } catch (IllegalAccessException e) {
-            throw new RuntimeException("FileSystem module initialization failed.");
+            throw new RuntimeException("Multimedia module initialization failed.");
         }
     }
 
