@@ -114,38 +114,6 @@ extern "C" {
 #define JAVACALL_SILENCE     -1
 
 /**
- * @enum javacall_media_notification_type
- * 
- * @brief Multimedia notification type.
- */
-typedef enum {
-    /** Posted when a Player has reached the end of the media. */
-    JAVACALL_EVENT_MEDIA_END_OF_MEDIA = 1,      
-    /** Posted when the duration of a Player is updated. */    
-    JAVACALL_EVENT_MEDIA_DURATION_UPDATED, 
-    /** Record size limit is reached or no more space is available */
-    JAVACALL_EVENT_MEDIA_RECORD_SIZE_LIMIT,
-    /** Posted when an error occurs during the recording. */
-    JAVACALL_EVENT_MEDIA_RECORD_ERROR,          
-    /** Posted when the system or another higher priority application has released 
-        an exclusive device which is now available to the Player. */
-    JAVACALL_EVENT_MEDIA_DEVICE_AVAILABLE,      
-    /** Posted when the system or another higher priority application has temporarily 
-        taken control of an exclusive device which was previously available to the Player. */
-    JAVACALL_EVENT_MEDIA_DEVICE_UNAVAILABLE,    
-    /** Posted when the Player enters into a buffering mode. */
-    JAVACALL_EVENT_MEDIA_BUFFERING_STARTED,     
-    /** Posted when the Player leaves the buffering mode. */
-    JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED,
-    /** Posted when the volume changed from external action. */
-    JAVACALL_EVENT_MEDIA_VOLUME_CHANGED,
-    /** Posted when the blocked snapshot finished */
-    JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED,
-    /** Posted when an error had occurred. */
-    JAVACALL_EVENT_MEDIA_ERROR
-} javacall_media_notification_type;
-
-/**
  * @enum javacall_media_type
  * 
  * @brief Multimedia contents type. If you want to add new media types, you have to consult with Sun Microsystems.
@@ -212,48 +180,6 @@ typedef struct {
     /** Supported protocol strings for this Mime type. Can't exceed JAVACALL_MEDIA_MAX_PROTOCOL_COUNT. */
     const char* protocols[JAVACALL_MEDIA_MAX_PROTOCOL_COUNT];
 } javacall_media_caps;
-
-/** @} */
-
-/**
- * @defgroup MediaNotification Notification API for Multimedia
- * @ingroup JSR135 
- *
- * @brief Multimedia related external events notification
- *
- * @{
- */        
-
-/**
- * Post native media event to Java event handler
- * 
- * @param type          Event type
- * @param isolateId     Isolate ID that came from javacall_media_create function
- * @param playerId      Player ID that came from javacall_media_create function
- * @param data          Data that will be carried with this notification
- *                      - JAVACALL_EVENT_MEDIA_END_OF_MEDIA
- *                          data = Media time when the Player reached end of media and stopped.
- *                      - JAVACALL_EVENT_MEDIA_DURATION_UPDATED
- *                          data = The duration of the media.
- *                      - JAVACALL_EVENT_MEDIA_RECORD_SIZE_LIMIT
- *                          data = The media time when the recording stopped.
- *                      - JAVACALL_EVENT_MEDIA_DEVICE_AVAILABLE
- *                          data = String specifying the name of the device.
- *                      - JAVACALL_EVENT_MEDIA_DEVICE_UNAVAILABLE   
- *                          data = String specifying the name of the device.
- *                      - JAVACALL_EVENT_MEDIA_BUFFERING_STARTED
- *                          data = Designating the media time when the buffering is started.
- *                      - JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED
- *                          data = Designating the media time when the buffering stopped.
- *                      - JAVACALL_EVENT_MEDIA_VOLUME_CHANGED
- *                          data = volume value.
- *                      - JAVACALL_EVENT_MEDIA_SNAPSHOT_FINISHED
- *                          data = None.
- */
-void javanotify_on_media_notification(javacall_media_notification_type type,
-                                      int isolateId,
-                                      int playerId, 
-                                      void* data);
 
 /** @} */
 
