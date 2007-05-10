@@ -210,6 +210,9 @@ public class MIDPWindow extends CWindow {
             tickerLayer.toggleAlert(true);
             buttonLayer.toggleAlert(true);
             
+            // alert does not use title layer. The title is a part of content 
+            titleLayer.setTitle(null);
+
             alertLayer.setAlert(true, (Alert)displayable, height);
             
             paintWash(false);
@@ -218,6 +221,7 @@ public class MIDPWindow extends CWindow {
             titleLayer.setTitle(displayable.getTitle());
 	    bodyLayer.setVisible(true);
         }
+        addLayer(tickerLayer);
 
         resize();
         requestRepaint();
@@ -244,6 +248,8 @@ public class MIDPWindow extends CWindow {
         } else {
             bodyLayer.setVisible(false);
         }
+        
+        removeLayer(tickerLayer);
         
         buttonLayer.dismissMenu();
 
@@ -783,7 +789,6 @@ public class MIDPWindow extends CWindow {
             case TICKER_LAYER:
                 tickerLayer = new TickerLayer();
                 mainLayers[id] = tickerLayer ;
-                addLayer(tickerLayer);
                 break;
             case BTN_LAYER:
                 buttonLayer = new SoftButtonLayer(tunnel);
