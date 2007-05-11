@@ -1317,7 +1317,7 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
     int yOffset = topBarOn ? topBarHeight : 0;
     int screenWidth = VRAM.width;
     int screenHeight = VRAM.height;
-    javacall_pixel* screenBuffer = VRAM.hdc;
+    javacall_pixel* screenBuffer = VRAM.hdc + yOffset * VRAM.width;
 
     if(x1 < 0) {
         x1 = 0;
@@ -1333,7 +1333,7 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
 
     if(x2 > screenWidth) {
         x2 = screenWidth;
-    }getBitmapDC
+    }
 
     if(y2 > screenHeight) {
         y2 = screenHeight;
@@ -1359,18 +1359,6 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
     hdc = getBitmapDC(NULL);
 
     hdcMem = CreateCompatibleDC(hdc);
-  /*
-    if (topBarOn) {
-        unsigned char* raw_image = (unsigned char*)(_topbar_dib_data.info);
-        for(count = (topBarHeight * topBarWidth - 1); count >= 0 ; count--) {
-            unsigned int r,g,b;
-            r = *raw_image++;
-            g = *raw_image++;
-            b = *raw_image++;
-            VRAM.hdc[count] = RGB2PIXELTYPE(r,g,b);
-        }
-    }
-*/
 
     destHBmp = CreateDIBSection (hdcMem, &bi, DIB_RGB_COLORS, &destBits, NULL, 0);
 
@@ -1380,7 +1368,7 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
 
         for(j = 0; j < height; j++) {
             for(i = 0; i < width; i++) {
-                pixel = screenBuffer[((y + j) *screenWidth) + x + i + yOffset * screenWidth];
+                pixel = screenBuffer[((y + j) *screenWidth) + x + i];
                 r = GET_RED_FROM_PIXEL(pixel);
                 g = GET_GREEN_FROM_PIXEL(pixel);
                 b = GET_BLUE_FROM_PIXEL(pixel);
@@ -1393,7 +1381,7 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
             }
         }
 
-        SetDIBitsToDevice(hdc, x, y, width, height, 0, 0, 0,
+        SetDIBitsToDevice(hdc, x, y, width, height, 0, yOffset, 0,
                           height, destBits, &bi, DIB_RGB_COLORS);
     }
 
