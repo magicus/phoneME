@@ -1989,23 +1989,6 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         }
     }
 
-    /**
-     * Calculate the height a displayable would occupy if it was to
-     * be displayed.
-     *
-     * @return the height a displayable would occupy 
-     */
-    public int getDisplayableHeight() {
-        int h = super.getDisplayableHeight();
-        if (traverseIndex != -1 && itemLFs != null &&
-            itemLFs[traverseIndex] instanceof TextFieldLFImpl) {
-            if (((TextFieldLFImpl)itemLFs[traverseIndex]).hasPTI()) {
-                h -= PTISkin.HEIGHT;
-            }
-        }
-        return h;
-    }
-
 
     /**
      * Scroll content inside of the form.

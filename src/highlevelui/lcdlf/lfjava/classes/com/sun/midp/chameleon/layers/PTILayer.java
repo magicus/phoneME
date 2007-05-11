@@ -344,8 +344,6 @@ public class PTILayer extends PopupLayer {
                         bounds[H] >> 1, Graphics.VCENTER | Graphics.RIGHT);
         }
 
-        int x = 0, y = 0;
-
         String text_b = "", text_a = "";
 
         for (int i = -1; ++i < l.length; ) {
@@ -359,10 +357,12 @@ public class PTILayer extends PopupLayer {
         g.translate((bounds[W] - widthMax) >> 1, 0);
         g.setClip(0, 0, widthMax, bounds[H]);
 
-        x = 0;
-        y = PTISkin.FONT.getHeight() < bounds[H] ?
-            (bounds[H] - PTISkin.FONT.getHeight()) >> 1 : 0;
+        int x = 0;
+        int y = (bounds[H] - PTISkin.FONT.getHeight()) >> 1;
 
+        // prevent the overlapping of the outline 
+        if (y <= 0) y = 1;
+        
         // draw before words
         if (text_a.length() > 0) {
             g.setColor(PTISkin.COLOR_FG);
@@ -385,6 +385,7 @@ public class PTILayer extends PopupLayer {
             g.drawString(l[selId] + SEPARATOR, x, y,
                          Graphics.LEFT | Graphics.TOP);
             x += PTISkin.FONT.stringWidth(l[selId] + SEPARATOR);
+            
         }
 
         // draw after words
