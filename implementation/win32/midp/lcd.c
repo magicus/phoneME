@@ -279,6 +279,24 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
     return NULL;
 }
 
+javacall_pixel* getTopbarBuffer(int* screenWidth, int* screenHeight) {
+
+    if((JAVACALL_TRUE == initialized) && topBarOn) {
+        if(screenWidth) {
+            *screenWidth = VRAM.width;
+        }
+        if(screenHeight) {
+            *screenHeight = topBarHeight;
+        }
+
+        return VRAM.hdc;
+    }
+
+    return NULL;
+
+}
+
+
 /**
  * Set or unset full screen mode.
  *

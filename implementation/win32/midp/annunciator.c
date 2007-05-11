@@ -31,9 +31,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <windows.h>
 
 #include "javacall_annunciator.h"
 #include "javacall_lcd.h"
+
+#include "lcd.h"
 #include "local_defs.h"
 
 
@@ -71,7 +74,8 @@ void util_clear_screen(unsigned short *scrn, int screenSize) {
     }
 }
 
-void util_draw_bitmap(unsigned char *bitmap_rgb,
+void util_draw_bitmap(unsigned char *bitmap_data, 
+                      unsigned char bytesPerPix,
                       int bitmap_width,
                       int bitmap_height,
                       int screen_top,
@@ -83,8 +87,12 @@ void util_draw_bitmap(unsigned char *bitmap_rgb,
     javacall_pixel *scrn;
     int startx, starty;
 
-    scrn = javacall_lcd_get_screen(JAVACALL_LCD_SCREEN_PRIMARY,
-                                   &screenWidth, &screenHeight, &colorEncoding);
+//    scrn = javacall_lcd_get_screen(JAVACALL_LCD_SCREEN_PRIMARY,
+  //                                 &screenWidth, &screenHeight, &colorEncoding);
+    scrn = getTopbarBuffer(&screenWidth, &screenHeight);
+    if (NULL == scrn) {
+        return;
+    }
     ////
     startx = screen_left < 0 ? 0 : screen_left;
     starty = screen_top < 0 ? 0 : screen_top;
@@ -101,7 +109,7 @@ void util_draw_bitmap(unsigned char *bitmap_rgb,
     bitmap_horizontal_gap = 0;
 
     if (startx + bitmap_width > screenWidth) {
-        bitmap_horizontal_gap = 3 * (bitmap_width - (screenWidth - startx));
+        bitmap_horizontal_gap = bytesPerPix * (bitmap_width - (screenWidth - startx));
         bitmap_width = screenWidth - startx;
     }
     if (starty + bitmap_height > screenHeight) {
@@ -110,21 +118,32 @@ void util_draw_bitmap(unsigned char *bitmap_rgb,
 
     //srcraster=src->pixels+negy*src->x+negx;
     //scrn=scrn+starty*screenWidth+startx;
-    bitmap_rgb = bitmap_rgb + negy * screenWidth + negx;
+    bitmap_data = bitmap_data + negy * screenWidth * bytesPerPix + negx * bytesPerPix;
     /////
 
     for (y = screen_top; y < screen_top + bitmap_height; y++) {
         for (x = screen_left; x < screen_left + bitmap_width; x++) {
             if ((y >= 0) && (x >= 0) && (y < screenHeight) && (x < screenWidth)) {
-                unsigned short r = *bitmap_rgb++;
-                unsigned short g = *bitmap_rgb++;
-                unsigned short b = *bitmap_rgb++;
+                unsigned short r = *bitmap_data++;
+                unsigned short g = *bitmap_data++;
+                unsigned short b = *bitmap_data++;
 
+                if (bytesPerPix == 4) {
+                  javacall_pixel pix = scrn[(y * screenWidth) + x];
+                  unsigned short rd = GET_RED_FROM_PIXEL(pix);
+                  unsigned short gd = GET_GREEN_FROM_PIXEL(pix);
+                  unsigned short bd = GET_BLUE_FROM_PIXEL(pix);
+                  unsigned short alpha = *bitmap_data++;
+                  r = rd * alpha + (0xFF - alpha) * r;
+                  g = gd * alpha + (0xFF - alpha) * g;
+                  b = bd * alpha + (0xFF - alpha) * b;
+
+                }                
                 scrn[(y * screenWidth) + x] = RGB2PIXELTYPE(r, g, b);
                 //scrn[(y*screenWidth)+x]= tmp;
             }
         }
-        bitmap_rgb += bitmap_horizontal_gap;
+        bitmap_data += bitmap_horizontal_gap;
     }
 }
 
@@ -173,23 +192,22 @@ javacall_result javacall_annunciator_flash_backlight(javacall_bool enableBacklig
  */
 javacall_result javacall_annunciator_display_trusted_icon(javacall_bool enableTrustedIcon) {
 
-#if 0
+
     javacall_pixel *scrn;
 
     scrn = javacall_lcd_get_screen(JAVACALL_LCD_SCREEN_PRIMARY,
                                    &screenWidth, &screenHeight, &colorEncoding);
 
     if (enableTrustedIcon) {
-        util_draw_bitmap(lock_data, lock_width, lock_height, 0, 0);
+        util_draw_bitmap(lock_data, 3, lock_width, lock_height, 0, 0);
         javacall_lcd_flush();
 
     } else {
         util_clear_screen(scrn, (screenWidth * screenHeight));
         javacall_lcd_flush();
     }
-#endif
+    return JAVACALL_OK;
 
-    return JAVACALL_FAIL;
 }
 
 /**
@@ -203,7 +221,8 @@ javacall_result javacall_annunciator_display_trusted_icon(javacall_bool enableTr
  */
 javacall_result javacall_annunciator_display_network_icon(javacall_bool enableNetworkIndicator) {
 
-#if 0
+//    return javacall_annunciator_display_trusted_icon(enableNetworkIndicator);
+
     javacall_pixel *scrn;
     javacall_bool indicator_on;
 
@@ -216,7 +235,7 @@ javacall_result javacall_annunciator_display_network_icon(javacall_bool enableNe
     if (enableNetworkIndicator) {
         indicator_on = JAVACALL_TRUE;
 
-        util_draw_bitmap(network_data, network_width, network_height, 0, 0);
+        util_draw_bitmap(network_data, network_bytespp, network_width, network_height, 0, 0);
         javacall_lcd_flush();
 
     } else {
@@ -224,9 +243,9 @@ javacall_result javacall_annunciator_display_network_icon(javacall_bool enableNe
         util_clear_screen(scrn, (screenWidth * screenHeight));
         javacall_lcd_flush();
     }
-#endif
 
-    return JAVACALL_FAIL;
+    return JAVACALL_OK;
+
 
 }
 
