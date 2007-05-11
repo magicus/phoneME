@@ -1298,7 +1298,6 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
     int y;
     int width;
     int height;
-    javacall_pixel* pixels = VRAM.hdc;
     int i;
     int j;
     javacall_pixel pixel;
@@ -1315,6 +1314,11 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
     HGDIOBJ    oobj;
     HDC hdc;
 
+    int yOffset = topBarOn ? topBarHeight : 0;
+    int screenWidth = VRAM.width;
+    int screenHeight = VRAM.height - yOffset;
+    javacall_pixel* screenBuffer = VRAM.hdc + yOffset * VRAM.width;
+
     if(x1 < 0) {
         x1 = 0;
     }
@@ -1327,12 +1331,12 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
         return;
     }
 
-    if(x2 > VRAM.width) {
-        x2 = VRAM.width;
+    if(x2 > screenWidth) {
+        x2 = screenWidth;
     }
 
-    if(y2 > VRAM.height) {
-        y2 = VRAM.height;
+    if(y2 > screenHeight) {
+        y2 = screenHeight;
     }
 
     x = x1;
@@ -1355,7 +1359,7 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
     hdc = getBitmapDC(NULL);
 
     hdcMem = CreateCompatibleDC(hdc);
-  
+  /*
     if (topBarOn) {
         unsigned char* raw_image = (unsigned char*)(_topbar_dib_data.info);
         for(count = (topBarHeight * topBarWidth - 1); count >= 0 ; count--) {
@@ -1366,7 +1370,7 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
             VRAM.hdc[count] = RGB2PIXELTYPE(r,g,b);
         }
     }
-
+*/
 
     destHBmp = CreateDIBSection (hdcMem, &bi, DIB_RGB_COLORS, &destBits, NULL, 0);
 
@@ -1374,17 +1378,16 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
         oobj = SelectObject(hdcMem, destHBmp);
         SelectObject(hdcMem, oobj);
 
-
         for(j = 0; j < height; j++) {
             for(i = 0; i < width; i++) {
-                pixel = pixels[((y + j) * VRAM.width) + x + i];
+                pixel = screenBuffer[((y + j) *screenWidth) + x + i];
                 r = GET_RED_FROM_PIXEL(pixel);
                 g = GET_GREEN_FROM_PIXEL(pixel);
                 b = GET_BLUE_FROM_PIXEL(pixel);
 
                 destPtr = destBits + ((j * width + i) * sizeof (long));
 
-                *destPtr++ = b; /* dest pixels seem to be in BGRA order */
+                *destPtr++ = b;
                 *destPtr++ = g;
                 *destPtr++ = r;
             }
