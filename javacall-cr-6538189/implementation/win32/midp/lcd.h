@@ -54,6 +54,10 @@ extern HWND midpGetWindowHandle();
 #define EXMENU_TEXT_RESUME                              "Send \"Resume\" event"
 
 
+
+unsigned short* getTopbarBuffer(int* screenWidth, int* screenHeight);
+  
+
 #if !ENABLE_MULTIPLE_INSTANCES
 
 /*
