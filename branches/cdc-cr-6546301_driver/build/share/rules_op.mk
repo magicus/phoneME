@@ -22,6 +22,7 @@
 # information or have any questions. 
 #
 
+SUBSYSTEM_RULES_FILE     = subsystem_rules.gmk
 .PHONY: javacall_lib
 
 ifneq ($(CVM_PRELOAD_LIB), true)
@@ -156,3 +157,22 @@ endif
 
 clean::
 	$(AT)rm -rf $(JSROP_OUTPUT_DIRS)
+    
+# Include JSR 120
+ifeq ($(USE_JSR_120), true)
+JSR_120_RULES_FILE = $(JSR_120_DIR)/build/$(SUBSYSTEM_RULES_FILE)
+ifeq ($(wildcard $(JSR_120_DEFS_FILE)),)
+$(error JSR_120_DIR must point to a directory containing JSR 120 sources)
+endif
+include $(JSR_120_RULES_FILE)
+endif
+
+# Include JSR 205
+ifeq ($(USE_JSR_205), true)
+JSR_205_RULES_FILE = $(JSR_205_DIR)/build/$(SUBSYSTEM_RULES_FILE)
+ifeq ($(wildcard $(JSR_205_RULES_FILE)),)
+$(error JSR_205_DIR must point to a directory containing JSR 205 sources)
+endif
+include $(JSR_205_RULES_FILE)
+endif
+

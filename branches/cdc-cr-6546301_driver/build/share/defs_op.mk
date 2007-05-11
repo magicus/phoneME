@@ -23,6 +23,7 @@
 #
 
 SUBSYSTEM_MAKE_FILE      = subsystem.gmk
+SUBSYSTEM_DEFS_FILE      = subsystem_defs.gmk
 JSR_INIT_PACKAGE         = com.sun.cdc.config
 JSR_INIT_CLASS           = Initializer
 
@@ -137,24 +138,14 @@ endif
 include $(JSR_82_MAKE_FILE)
 endif
 
-# Include JSR 205
-ifeq ($(USE_JSR_205), true)
-export JSR_205_DIR ?= $(COMPONENTS_DIR)/jsr205
-JSR_205_MAKE_FILE = $(JSR_205_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
-ifeq ($(wildcard $(JSR_205_MAKE_FILE)),)
-$(error JSR_205_DIR must point to a directory containing JSR 205 sources)
-endif
-include $(JSR_205_MAKE_FILE)
-endif
-
 # Include JSR 120
 ifeq ($(USE_JSR_120), true)
 export JSR_120_DIR ?= $(COMPONENTS_DIR)/jsr120
-JSR_120_MAKE_FILE = $(JSR_120_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
-ifeq ($(wildcard $(JSR_120_MAKE_FILE)),)
+JSR_120_DEFS_FILE = $(JSR_120_DIR)/build/$(SUBSYSTEM_DEFS_FILE)
+ifeq ($(wildcard $(JSR_120_DEFS_FILE)),)
 $(error JSR_120_DIR must point to a directory containing JSR 120 sources)
 endif
-include $(JSR_120_MAKE_FILE)
+include $(JSR_120_DEFS_FILE)
 endif
 
 # Include JSR 135
@@ -215,6 +206,16 @@ ifeq ($(wildcard $(JSR_184_MAKE_FILE)),)
 $(error JSR_184_DIR must point to a directory containing JSR 184 sources)
 endif
 include $(JSR_184_MAKE_FILE)
+endif
+
+# Include JSR 205
+ifeq ($(USE_JSR_205), true)
+export JSR_205_DIR ?= $(COMPONENTS_DIR)/jsr205
+JSR_205_DEFS_FILE = $(JSR_205_DIR)/build/$(SUBSYSTEM_DEFS_FILE)
+ifeq ($(wildcard $(JSR_205_DEFS_FILE)),)
+$(error JSR_205_DIR must point to a directory containing JSR 205 sources)
+endif
+include $(JSR_205_DEFS_FILE)
 endif
 
 # Include JSR 211
