@@ -570,7 +570,7 @@ public class Display {
 
     // #ifdef ENABLE_GCI	
     /** GCIScreenWidget that represents a device screen */
-    private GCIScreenWidget gciScreenWidget; 
+    private static GCIScreenWidget gciScreenWidget;
 
     // #endif ENABLE_GCI
 /*
@@ -669,9 +669,10 @@ public class Display {
 
         gciScreenWidget = ((ForegroundControllerGCI)foregroundController).
                           getGCIScreenWidget();
+
         screenGraphics = Graphics.getScreenGraphics(displayId,
-                                                    WIDTH, HEIGHT, 
-	                      gciScreenWidget.getDrawingSurface());
+                                                    WIDTH, HEIGHT,
+                             gciScreenWidget.getDrawingSurface());
 
         // #else
 

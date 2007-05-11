@@ -96,7 +96,7 @@ public class MIDletContainer extends JUMPAppContainer implements
     /**
      * Provides interface to lcdui environment.
      */
-    protected LCDUIEnvironment lcduiEnvironment;
+    private LCDUIEnvironment lcduiEnvironment;
 
     /** Starts and controls MIDlets through the lifecycle states. */
     private MIDletStateHandler midletStateHandler;
@@ -118,24 +118,18 @@ public class MIDletContainer extends JUMPAppContainer implements
 
     /** Core initialization of a MIDP environment. */
     public MIDletContainer(JUMPAppContainerContext context) {
-
-        EventQueue eventQueue;
-
-        CDCInit.init(context.getConfigProperty("sun.midp.home.path"));
-
         appContext = context;
+    }
+
+    /** Core initialization of a MIDP environment. */
+    private void init() {
+        CDCInit.init(appContext.getConfigProperty("sun.midp.home.path"));
 
         internalSecurityToken =
             SecurityInitializer.requestToken(new SecurityTrusted());
 
         // Init security tokens for core subsystems
         SecurityInitializer.initSystem();
-
-        eventQueue = EventQueue.getEventQueue(
-            internalSecurityToken);
-
-        lcduiEnvironment = new LCDUIEnvironmentForCDC(internalSecurityToken, 
-                                                      eventQueue, 0);
 
         suiteStorage =
             MIDletSuiteStorage.getMIDletSuiteStorage(internalSecurityToken);
@@ -148,6 +142,14 @@ public class MIDletContainer extends JUMPAppContainer implements
             this,
             new CdcMIDletLoader(suiteStorage),
             this);
+
+        EventQueue eventQueue =
+            EventQueue.getEventQueue(internalSecurityToken);
+
+        lcduiEnvironment =
+            new LCDUIEnvironmentForCDC(internalSecurityToken,
+                                       eventQueue, 0);
+
     }
 
     /**
@@ -161,6 +163,8 @@ public class MIDletContainer extends JUMPAppContainer implements
      * @return runtime application ID or -1 for failure
      */
     public synchronized int startApp(JUMPApplication app, String[] args) {
+        init();
+
         try {
             int suiteId;
 

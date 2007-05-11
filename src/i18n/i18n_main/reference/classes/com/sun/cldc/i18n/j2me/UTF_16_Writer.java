@@ -1,4 +1,6 @@
 /*
+ *   
+ *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -22,39 +24,21 @@
  * information or have any questions.
  */
 
-package com.sun.midp.jump.push.executive;
+package com.sun.cldc.i18n.j2me;
 
-import com.sun.jump.module.JUMPModuleFactory;
-
-public abstract class JUMPPushModuleFactory extends JUMPModuleFactory {
-    private static JUMPPushModuleFactory INSTANCE = null;
-
-    /**
-     * Gets an instance of factory.
-     *
-     * @return instance of factory (cannot be <code>null</code>)
-     */
-    public static JUMPPushModuleFactory getInstance() {
-        return INSTANCE;
-    }
-
-    /**
-     * Constructor.
-     *
-     * To be used by subclasses only
-     */
-    protected JUMPPushModuleFactory() {
-        synchronized (JUMPPushModuleFactory.class){
-            if (INSTANCE == null) {
-                INSTANCE = this;
-            }
-        }
-    }
-
-    /**
-     * Gets an instance of push module.
-     *
-     * @return an instance of Push module
-     */
-    public abstract JUMPPushModule getPushModule();
+/**
+ * Writer for UTF-16 encoded output streams (default byte order).
+ * We assume that character strings
+ * are correctly converted to UFT-16, so no additional checking is performed.
+ */
+ /* IMPL_NOTE: we need this class name because it is a part of
+ * an internal interface: encoding name is converted into a class name,
+ * and then Class.forName() is performed.
+ */
+public class UTF_16_Writer extends UTF_16BE_Writer {
+    // Just extending the right class for the default byte order
+    // To change the default encoding you need to change the base class
 }
+
+
+

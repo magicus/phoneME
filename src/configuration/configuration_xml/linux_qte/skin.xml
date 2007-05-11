@@ -414,7 +414,7 @@
 
   <font
         Key="PTI_FONT"
-      Value="FontResources.SYS_B_S"/>
+      Value="FontResources.SYS_P_M"/>
 
   <composite_image
         Key="PTI_IMAGE_BG"

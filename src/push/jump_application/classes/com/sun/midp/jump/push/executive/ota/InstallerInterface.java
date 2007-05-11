@@ -68,33 +68,6 @@ public interface InstallerInterface {
                         SecurityException;
 
     /**
-     * Enables connections.
-     *
-     * <p>
-     * Enable previously installed connections.  That means that
-     * from now on <code>MIDlet suite</code> can be activated by Push
-     * system.
-     * </p>
-     *
-     * <p>
-     * If for any reason connections cannot be enabled, <code>false</code> is
-     * returned and connections are automatically <em>uninstalled</em>.
-     * </p>
-     *
-     * <p>
-     * <strong>Precondition</strong>: connections for this suite should have
-     * been already installed with <code>installConnections</code> method.
-     * </p>
-     *
-     * @param midletSuiteId ID of <code>MIDlet suite</code> to enable
-     *  connections for
-     *
-     * @return <code>true</code> if connections can be enabled,
-     *  <code>false</code> otherwise.
-     */
-    boolean enableConnections(int midletSuiteId);
-
-    /**
      * Uninstalls connections.
      *
      * <p>

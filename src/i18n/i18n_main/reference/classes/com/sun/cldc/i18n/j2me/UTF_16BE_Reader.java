@@ -1,60 +1,49 @@
 /*
+ *
+ *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
 
-package com.sun.midp.jump.push.executive;
+package com.sun.cldc.i18n.j2me;
 
-import com.sun.jump.module.JUMPModuleFactory;
+import java.io.Reader;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 
-public abstract class JUMPPushModuleFactory extends JUMPModuleFactory {
-    private static JUMPPushModuleFactory INSTANCE = null;
+/** Reader for Big Endian UTF-16 encoded input streams. */
+public class UTF_16BE_Reader extends UTF_16_Reader {
 
     /**
-     * Gets an instance of factory.
-     *
-     * @return instance of factory (cannot be <code>null</code>)
+     * Open the reader
+     * @param in the input stream to be read
+     * @param enc identifies the encoding to be used
+     * @return a reader for the given input stream and encoding
+     * @throws UnsupportedEncodingException
      */
-    public static JUMPPushModuleFactory getInstance() {
-        return INSTANCE;
+    public Reader open(InputStream in, String enc)
+        throws UnsupportedEncodingException {
+        super.open(in, enc);
+        byteOrder = BIG_ENDIAN; // AFTER the constructor
+        return this;
     }
-
-    /**
-     * Constructor.
-     *
-     * To be used by subclasses only
-     */
-    protected JUMPPushModuleFactory() {
-        synchronized (JUMPPushModuleFactory.class){
-            if (INSTANCE == null) {
-                INSTANCE = this;
-            }
-        }
-    }
-
-    /**
-     * Gets an instance of push module.
-     *
-     * @return an instance of Push module
-     */
-    public abstract JUMPPushModule getPushModule();
 }
