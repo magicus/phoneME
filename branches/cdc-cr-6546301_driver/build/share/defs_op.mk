@@ -271,11 +271,11 @@ endif
 ifeq ($(CVM_INCLUDE_JAVACALL), true)
 JAVACALL_TARGET=$(TARGET_OS)_$(TARGET_CPU_FAMILY)
 # Check javacall makefile and include it
-ifeq ($(JAVACALL_PROJECT_DIR),)
+ifeq ($(PROJECT_JAVACALL_DIR),)
 export JAVACALL_DIR ?= $(COMPONENTS_DIR)/javacall
 JAVACALL_MAKE_FILE = $(JAVACALL_DIR)/configuration/phoneMEAdvanced/$(JAVACALL_TARGET)/module.gmk
 else
-JAVACALL_MAKE_FILE = $(JAVACALL_PROJECT_DIR)/configuration/tiburon/$(JAVACALL_TARGET)/module.gmk
+JAVACALL_MAKE_FILE = $(PROJECT_JAVACALL_DIR)/configuration/tiburon/$(JAVACALL_TARGET)/module.gmk
 endif
 ifeq ($(wildcard $(JAVACALL_MAKE_FILE)),)
 $(error JAVACALL_DIR must point to a directory containing javacall implementation sources)
