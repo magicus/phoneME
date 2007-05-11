@@ -629,7 +629,9 @@ void javanotify_incoming_mms(
     return;
 }
 
-void javanotify_incoming_mms_available(javacall_handle handle, char* appID) {
+void javanotify_incoming_mms_available(
+        char* fromAddress, char* appID, char* replyToAppID, 
+        javacall_handle handle) {
 
     midp_jc_event_union e;
     MmsMessage* mms;
@@ -637,7 +639,7 @@ void javanotify_incoming_mms_available(javacall_handle handle, char* appID) {
     e.eventType = MIDP_JC_EVENT_MMS_INCOMING;
 
     //bodyLen=-1
-    mms = jsr205_mms_new_msg_javacall("", appID, "", -1, (char*)handle);
+    mms = jsr205_mms_new_msg_javacall(fromAddress, appID, replyToAppID, -1, (char*)handle);
 
     e.data.mmsIncomingEvent.stub = (int)mms;
 
