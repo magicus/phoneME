@@ -1316,8 +1316,8 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
 
     int yOffset = topBarOn ? topBarHeight : 0;
     int screenWidth = VRAM.width;
-    int screenHeight = VRAM.height - yOffset;
-    javacall_pixel* screenBuffer = VRAM.hdc + yOffset * VRAM.width;
+    int screenHeight = VRAM.height;
+    javacall_pixel* screenBuffer = VRAM.hdc;
 
     if(x1 < 0) {
         x1 = 0;
@@ -1333,7 +1333,7 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
 
     if(x2 > screenWidth) {
         x2 = screenWidth;
-    }
+    }getBitmapDC
 
     if(y2 > screenHeight) {
         y2 = screenHeight;
@@ -1380,7 +1380,7 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
 
         for(j = 0; j < height; j++) {
             for(i = 0; i < width; i++) {
-                pixel = screenBuffer[((y + j) *screenWidth) + x + i];
+                pixel = screenBuffer[((y + j) *screenWidth) + x + i + yOffset * screenWidth];
                 r = GET_RED_FROM_PIXEL(pixel);
                 g = GET_GREEN_FROM_PIXEL(pixel);
                 b = GET_BLUE_FROM_PIXEL(pixel);
