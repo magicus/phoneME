@@ -258,7 +258,7 @@ $(CVM_BUILDTIME_CLASSESDIR)/%.class: %.java
 #	echo "$$_javalist" >> $(REBUILD_JAVA_LIST); \
 #    fi )
 #endef
-#$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_SATSA_JAVA_FILES)
+#$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_SATSA_JAVA_FILES)
 #	$(appendjavafiles)
 
 # Include Optional packages rules
