@@ -70,7 +70,7 @@
 #
 # Name:  CDC_SUBDIR
 # Desc:  Subdirectory name of phoneme build
-# Dflt:  jump
+# Dflt:  none
 #
 # Name:  JUMP_CONTENT_STORE_DIR
 # Desc:  Root of content store
@@ -128,6 +128,13 @@ if [ -z "$PHONEME_DIR" ] ; then
     export PHONEME_DIR=/home/$WHOAMI/phoneme
 fi
 
+# Subdirectory name used in Phoneme build
+if [ -z "$CDC_SUBDIR" ] ; then
+    export SUBDIR=./
+else
+    export SUBDIR=$CDC_SUBDIR
+fi
+
 # Default port for debugging
 if [ -z "$CDC_DEBUG_PORT" ] ; then
   export CDC_DEBUG_PORT=8000
@@ -148,10 +155,6 @@ if [ "$USE_QVFB" = "true" ] ; then
   if [ -z "$PBP_SCREEN_BOUNDS" ] ; then
     PBP_SCREEN_BOUNDS=0,50-640x392
   fi
-# Subdirectory name used in Phoneme build
-if [ -z "$CDC_SUBDIR" ] ; then
-    export CDC_SUBDIR=jump-qt
-fi
 fi
 
 if [ "$USE_QVFB" = "true" ] && [ "$USE_GCI" = "true" ] ; then
@@ -160,19 +163,9 @@ if [ "$USE_QVFB" = "true" ] && [ "$USE_GCI" = "true" ] ; then
 fi
 
 if [ "$USE_GCI" = "true" ] ; then  
-#  if [ "$WHOAMI" != "root" ] ; then
-#      echo "ERROR:  You need to run as root when displaying with GCI/DirectFB."
-#      exit 0
-#  fi
-  echo "Using GCI/DirectFB... Don't forget to modify modules-config.properties"
-  echo " and correctly set the value for isolate-init-classes."
   if [ -z "$PBP_SCREEN_BOUNDS" ] ; then
     PBP_SCREEN_BOUNDS=0,50-240x270
   fi
-# Subdirectory name used in Phoneme build
-if [ -z "$CDC_SUBDIR" ] ; then
-    export CDC_SUBDIR=jump-gci
-fi
 fi
 
 ### Try to determine a default build platform.
@@ -199,7 +192,7 @@ if [ "$PHONEME_PLATFORM" = "armv5tel" ] ; then
 ################ LINUX X86 SECTION ######################
 elif [ "$PHONEME_PLATFORM" = "i686" ] ; then
    if [ -z "$PHONEME_DIST" ] ; then
-       export PHONEME_DIST=$PHONEME_DIR/build/$DEFAULT_LINUX_PLATFORM/$CDC_SUBDIR
+       export PHONEME_DIST=$PHONEME_DIR/build/$DEFAULT_LINUX_PLATFORM/$SUBDIR
    fi
 fi
 
@@ -217,6 +210,7 @@ fi
 
 SERVER_JARFILE=$PHONEME_DIST/lib/jump.jar
 EXECUTIVE_JARFILE=$PHONEME_DIST/lib/executive-jump.jar
+MIDP_CLASSES_ZIP=$PHONEME_DIST/lib/midpclasses.zip
 CVMC=$PHONEME_DIST/bin/cvmc
 
 ##### End: Possible Variables Needing Modification #####
@@ -322,18 +316,22 @@ if [ "$DO_SETTINGS" = "true" ] ; then
   echo "PHONEME_DIR:            $PHONEME_DIR" >> $SETTINGS_LOGFILE
   echo "PHONEME_DIST:           $PHONEME_DIST" >> $SETTINGS_LOGFILE
   echo "PHONEME_PLATFORM:       $PHONEME_PLATFORM" >> $SETTINGS_LOGFILE
+if [ -z "$CDC_SUBDIR" ] ; then
+  echo "CDC_SUBDIR:             <none>" >> $SETTINGS_LOGFILE
+else
   echo "CDC_SUBDIR:             $CDC_SUBDIR" >> $SETTINGS_LOGFILE
+fi
   echo "CDC_DEBUG_PORT:         $CDC_DEBUG_PORT" >> $SETTINGS_LOGFILE
   echo "JUMP_CONTENT_STORE_DIR  $JUMP_CONTENT_STORE_DIR" >> $SETTINGS_LOGFILE
   echo "USE_QVFB:               $USE_QVFB" >> $SETTINGS_LOGFILE
-  echo "USE_GCI:                $USE_GCI" >> $SETTINGS_LOGFILE
-  echo "LD_LIBRARY_PATH         $LD_LIBRARY_PATH" >> $SETTINGS_LOGFILE
   if [ "$USE_QVFB" = "true" ] ; then
       echo "QTOPIA_HOME:            $QTOPIA_HOME" >> $SETTINGS_LOGFILE
       echo "QWS_DISPLAY:            $QWS_DISPLAY" >> $SETTINGS_LOGFILE
       echo "QVFB_WIDTH:             $QVFB_WIDTH" >> $SETTINGS_LOGFILE
       echo "QVFB_HEIGHT:            $QVFB_HEIGHT" >> $SETTINGS_LOGFILE
   fi
+  echo "USE_GCI:                $USE_GCI" >> $SETTINGS_LOGFILE
+  echo "LD_LIBRARY_PATH         $LD_LIBRARY_PATH" >> $SETTINGS_LOGFILE
   echo "PBP_SCREEN_BOUNDS       $PBP_SCREEN_BOUNDS" >> $SETTINGS_LOGFILE
   echo "***********************************************"  >> $SETTINGS_LOGFILE
 
@@ -356,11 +354,6 @@ if [ "$DO_CLEANUP" = "true" ] ; then
       
       sleep 1
 
-      CLEANUP_SERVER_COMMAND="$CVMC -childrenexited"
-      $CLEANUP_SERVER_COMMAND >> $CLEANUP_LOGFILE 2>&1
-
-      sleep 1
-
       CLEANUP_SERVER_COMMAND="$CVMC -killserver"
       $CLEANUP_SERVER_COMMAND >> $CLEANUP_LOGFILE 2>&1
   fi
@@ -376,13 +369,14 @@ if [ "$DO_CLEANUP" = "true" ] ; then
   fi
 
   # Remove message queues
-  mesgqs=`ipcs -q | awk '{ print $2 }'| grep -v Message | grep -v msqid`
-  for id in $mesgqs; do \
-      CLEANUP_MESSAGE_QUEUES_COMMAND="ipcrm -q $id"
-      $CLEANUP_MESSAGE_QUEUES_COMMAND >> $CLEANUP_LOGFILE 2>&1
-  done;
+mesgqs=`ipcs -q | awk '{ print $2 }'| grep -v Message | grep -v msqid`
+for id in $mesgqs; do \
+    CLEANUP_MESSAGE_QUEUES_COMMAND="ipcrm -q $id"
+    $CLEANUP_MESSAGE_QUEUES_COMMAND >> $CLEANUP_LOGFILE 2>&1
+done;
 
   # Kill qvfb if it's running
+if [ "$USE_QVFB" = "true" ] ; then
   process_ids=`ps auxww | grep $WHOAMI | grep qvfb | grep -v grep | sed 's/  */ /1' | cut -d ' ' -f 2`
   if [ ! "$process_ids" = "" ] ; then
     echo "qvfb instance found... removing."
@@ -391,6 +385,7 @@ if [ "$DO_CLEANUP" = "true" ] ; then
         $CLEANUP_PROCESSES_COMMAND >> $CLEANUP_LOGFILE 2>&1 
     done;
   fi
+fi
 
   ### Remove output files
   rm -f $SERVER_LOGFILE $WARMUP_LOGFILE $APP_LOGFILE $SETTINGS_LOGFILE $SERVER_PID_LOGFILE $CVMC_LOGFILE
@@ -495,7 +490,7 @@ if [ "$DO_EXECUTIVE" = "true" ] ; then
       exit 0
   fi
 
-  EXECUTIVE_COMMAND="$CVMC -target $SERVER_PID -command JDETACH $EXECUTIVE_PROPERTIES -Xbootclasspath/a=$EXECUTIVE_JARFILE com.sun.jumpimpl.executive.JUMPExecutiveImpl $EXECUTIVE_ARGUMENTS"
+  EXECUTIVE_COMMAND="$CVMC -target $SERVER_PID -command JDETACH $EXECUTIVE_PROPERTIES -Xbootclasspath/a=$EXECUTIVE_JARFILE:$MIDP_CLASSES_ZIP com.sun.jumpimpl.executive.JUMPExecutiveImpl $EXECUTIVE_ARGUMENTS"
   $EXECUTIVE_COMMAND >> $SERVER_LOGFILE 2>&1 &
 
   EXECUTIVE_COMMAND="$CVMC -target $SERVER_PID -setenv PBP_SCREEN_BOUNDS=$PBP_SCREEN_BOUNDS"
