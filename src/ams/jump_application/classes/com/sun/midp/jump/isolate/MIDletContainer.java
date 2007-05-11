@@ -110,9 +110,6 @@ public class MIDletContainer extends JUMPAppContainer implements
     /** Name of the class to start MIDlet suite execution */
     private String midletClassName;
 
-    /** Holds the ID of the current display, for preempting purposes. */
-    private int currentDisplayId;
-
     /** Provides methods to signal app state changes. */
     private JUMPAppContainerContext appContext;
 
