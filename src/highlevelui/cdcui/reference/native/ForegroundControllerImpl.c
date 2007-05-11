@@ -35,7 +35,7 @@
  * @param displayId ID of the foreground Display
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_main_CdcMIDletSuiteLoader_setForegroundInNativeState) {
+KNIDECL(com_sun_midp_lcdui_ForegroundControllerImpl_setForegroundInNativeState) {
     gForegroundDisplayId = KNI_GetParameterAsInt(1);
     KNI_ReturnVoid();
 }

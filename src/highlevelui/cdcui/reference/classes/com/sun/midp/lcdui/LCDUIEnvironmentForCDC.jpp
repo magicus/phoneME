@@ -30,6 +30,7 @@ import com.sun.midp.events.EventQueue;
 // #ifdef ENABLE_GCI
 import com.sun.me.gci.windowsystem.*;
 import com.sun.me.gci.windowsystem.event.*;
+import java.security.*;
 // #endif ENABLE_GCI
 
 /**
@@ -48,11 +49,27 @@ public class LCDUIEnvironmentForCDC extends LCDUIEnvironment {
      */
     public LCDUIEnvironmentForCDC(SecurityToken internalSecurityToken,
                                   EventQueue eventQueue, 
-                                  int isolateId,
-                                  ForegroundController foregroundController) {
+                                  int isolateId) {
 
-        super(internalSecurityToken, eventQueue, 
-              isolateId, foregroundController);
+	super(internalSecurityToken, eventQueue, isolateId);
+
+
+// #ifdef ENABLE_GCI
+
+        // GCI library has to be loaded before GCIScreenWidget is created
+        java.security.AccessController.doPrivileged(
+                 new sun.security.action.LoadLibraryAction("gci"));
+
+        foregroundController =
+            new ForegroundControllerGCI(displayContainer, 
+	                                getGCIScreenWidget());
+// #else
+        foregroundController =
+	    new ForegroundControllerImpl(displayContainer);
+// #endif ENABLE_GCI
+
+	initDisplayEventHandler(internalSecurityToken, eventQueue,
+				foregroundController);
 
         // #ifdef ENABLE_GCI
             GCIGraphicsEnvironment gciEnv = 
@@ -63,6 +80,31 @@ public class LCDUIEnvironmentForCDC extends LCDUIEnvironment {
             GCIEventListener gciEvLst = new GCIEventListener(eventQueue);
             gciEvMgr.setKeyListener(gciEvLst);
             gciEvMgr.setPointerListener(gciEvLst);
+
         // #endif ENABLE_GCI
     }
+
+// #ifdef ENABLE_GCI
+    /**
+     * Gets <code>GCIScreenWidget</code> instance 
+     * associated with this isolate.
+     * It is instantiated once per isolate.
+     *
+     * @return <code>GCIScreenWidget</code>
+     */
+    public GCIScreenWidget getGCIScreenWidget() {
+	if (gciScreenWidget == null) {
+            GCIDisplay gciDisplay =
+                GCIGraphicsEnvironment.getInstance().getDefaultDisplay();
+            gciScreenWidget = gciDisplay.createScreenWidget(10, 10, 
+	                                                    176, 210,
+                                                            null, null);
+	}
+	return gciScreenWidget;
+    }
+	
+    /** GCIScreenWidget that represents a device screen */
+    private GCIScreenWidget gciScreenWidget; 
+
+// #endif ENABLE_GCI
 }

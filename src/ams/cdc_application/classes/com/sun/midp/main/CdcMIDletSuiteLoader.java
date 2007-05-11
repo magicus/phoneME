@@ -41,14 +41,10 @@ import com.sun.midp.midletsuite.*;
  * internal security the internal AMS classes and start a MIDlet suite.
  */
 public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
-    implements ForegroundController, MIDletStateListener,
-    PlatformRequest {
+    implements MIDletStateListener, PlatformRequest {
 
     /** Disable startup error alerts, uninitialized by default */
     protected int disableAlerts = -1;
-
-    /** Holds the ID of the current display, for preempting purposes. */
-    protected int currentDisplayId;
 
     /**
      * Called at the initial start of the VM.
@@ -114,13 +110,13 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
 
     /** Creates environment objects needed to AMS task */
     protected void createSuiteEnvironment() {
-        foregroundController = this;
 
         lcduiEnvironment = new LCDUIEnvironmentForCDC(internalSecurityToken, 
-						      eventQueue, isolateId, 
-						      foregroundController);
+						      eventQueue, isolateId);
 
-        // creates display container, needs foregroundController
+	foregroundController = lcduiEnvironment.getForegroundController();
+
+        // sets DisplayContainer
         super.createSuiteEnvironment();
 
         midletStateHandler =
@@ -227,14 +223,6 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
 
         reportError(errorCode, t.getMessage());
     }
-
-    /**
-     * Set foreground display native state, so the native code will know
-     * which display can draw.
-     *
-     * @param displayId Display ID
-     */
-    private native void setForegroundInNativeState(int displayId);
 
     /**
      * Gets AMS error message by generic error code.
@@ -379,83 +367,6 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      */
     public void midletDestroyed(MIDletSuite suite, String className) {
         displayContainer.removeDisplay(className);
-    }
-
-    // ForegroundController
-
-    /**
-     * Called to register a newly create Display. Must method must
-     * be called before the other methods can be called.
-     * This implementation does nothing.
-     *
-     * @param displayId ID of the Display
-     * @param ownerClassName Class name of the  that owns the display
-     *
-     * @return a place holder displayable to used when "getCurrent()==null",
-     *         if null is returned an empty form is used
-     */
-    public Displayable registerDisplay(int displayId, String ownerClassName) {
-        currentDisplayId = displayId;
-
-        return null;
-    }
-
-    /**
-     * Called to request the foreground.
-     * This implementation does nothing.
-     *
-     * @param displayId ID of the Display
-     * @param isAlert true if the current displayable is an Alert
-     */
-    public void requestForeground(int displayId, boolean isAlert) {
-        ForegroundEventConsumer fc =
-            displayContainer.findForegroundEventConsumer(displayId);
-
-        if (fc == null) {
-            return;
-        }
-
-        setForegroundInNativeState(displayId);
-
-        fc.handleDisplayForegroundNotifyEvent();
-    }
-
-    /**
-     * Called to request the background.
-     * This implementation does nothing.
-     *
-     * @param displayId ID of the Display
-     */
-    public void requestBackground(int displayId) {
-        ForegroundEventConsumer fc =
-            displayContainer.findForegroundEventConsumer(displayId);
-
-        if (fc == null) {
-            return;
-        }
-
-        fc.handleDisplayBackgroundNotifyEvent();
-    }
-
-    /**
-     * Called to start preempting. The given display will preempt all other
-     * displays for this isolate.
-     *
-     * @param displayId ID of the Display
-     */
-    public void startPreempting(int displayId) {
-        requestBackground(currentDisplayId);
-        requestForeground(displayId, true);
-    }
-
-    /**
-     * Called to end preempting.
-     *
-     * @param displayId ID of the Display
-     */
-    public void stopPreempting(int displayId) {
-        requestBackground(displayId);
-        requestForeground(currentDisplayId, false);
     }
 
     // Platform Request

@@ -72,8 +72,7 @@ import com.sun.midp.security.*;
  * name of the MIDP native library.
  */
 public class MIDletContainer extends JUMPAppContainer implements
-    ForegroundController, MIDletStateListener,
-    PlatformRequest {
+    MIDletStateListener, PlatformRequest {
 
     /**
      * Inner class to request security token from SecurityInitializer.
@@ -90,9 +89,6 @@ public class MIDletContainer extends JUMPAppContainer implements
     /** True, if an app has been started. */
     private boolean appStarted;
 
-
-    /** Stores array of active displays for a MIDlet suite isolate. */
-    private DisplayContainer displayContainer;
 
     /** Reference to the suite storage. */
     private MIDletSuiteStorage suiteStorage;
@@ -139,9 +135,7 @@ public class MIDletContainer extends JUMPAppContainer implements
             internalSecurityToken);
 
         lcduiEnvironment = new LCDUIEnvironmentForCDC(internalSecurityToken, 
-                                                      eventQueue, 0, this);
-
-        displayContainer = lcduiEnvironment.getDisplayContainer();
+                                                      eventQueue, 0);
 
         suiteStorage =
             MIDletSuiteStorage.getMIDletSuiteStorage(internalSecurityToken);
@@ -278,15 +272,6 @@ public class MIDletContainer extends JUMPAppContainer implements
         appContext.terminateIsolate();
     }
 
-    /**
-     * Set foreground display native state, so the native code will know
-     * which display can draw. This method will not be needed when
-     * JUMP uses GCI.
-     *
-     * @param displayId Display ID
-     */
-    private native void setForegroundInNativeState(int displayId);
-
     // MIDletStateListener
     /**
      * Called before a MIDlet is created.
@@ -372,82 +357,6 @@ public class MIDletContainer extends JUMPAppContainer implements
     public void midletDestroyed(MIDletSuite suite, String className) {
         appContext.notifyDestroyed(APP_ID);
         appContext.terminateIsolate();
-    }
-
-    // ForegroundController
-
-    /**
-     * Called to register a newly create Display. Must method must
-     * be called before the other methods can be called.
-     * This implementation does nothing.
-     *
-     * @param displayId ID of the Display
-     * @param ownerClassName Class name of the  that owns the display
-     *
-     * @return a place holder displayable to used when "getCurrent()==null",
-     *         if null is returned an empty form is used
-     */
-    public Displayable registerDisplay(int displayId, String ownerClassName) {
-        currentDisplayId = displayId;
-        return null;
-    }
-
-    /**
-     * Called to request the foreground.
-     * This implementation does nothing.
-     *
-     * @param displayId ID of the Display
-     * @param isAlert true if the current displayable is an Alert
-     */
-    public void requestForeground(int displayId, boolean isAlert) {
-        ForegroundEventConsumer fc =
-            displayContainer.findForegroundEventConsumer(displayId);
-
-        if (fc == null) {
-            return;
-        }
-
-        setForegroundInNativeState(displayId);
-
-        fc.handleDisplayForegroundNotifyEvent();
-    }
-
-    /**
-     * Called to request the background.
-     * This implementation does nothing.
-     *
-     * @param displayId ID of the Display
-     */
-    public void requestBackground(int displayId) {
-        ForegroundEventConsumer fc =
-            displayContainer.findForegroundEventConsumer(displayId);
-
-        if (fc == null) {
-            return;
-        }
-
-        fc.handleDisplayBackgroundNotifyEvent();
-    }
-
-    /**
-     * Called to start preempting. The given display will preempt all other
-     * displays for this isolate.
-     *
-     * @param displayId ID of the Display
-     */
-    public void startPreempting(int displayId) {
-        requestBackground(currentDisplayId);
-        requestForeground(displayId, true);
-    }
-
-    /**
-     * Called to end preempting.
-     *
-     * @param displayId ID of the Display
-     */
-    public void stopPreempting(int displayId) {
-        requestBackground(displayId);
-        requestForeground(currentDisplayId, false);
     }
 
     // Platform Request

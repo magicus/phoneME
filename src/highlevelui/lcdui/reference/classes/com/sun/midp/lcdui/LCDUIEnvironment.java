@@ -33,22 +33,52 @@ import javax.microedition.lcdui.Image;
  */
 public class LCDUIEnvironment {
 
+
+    /**
+     * Creates lcdui Display Container. 
+     * The rest of the event producers/hanlders/listners
+     * are created and initialised in initDisplayEventHandler ().)
+     * 
+     * @param internalSecurityToken security token
+     * @param eventQueue this isolate's eventQueue instance
+     * @param isolateId this isolate's id
+     */
+    public LCDUIEnvironment(SecurityToken internalSecurityToken,
+			    EventQueue eventQueue,
+			    int isolateId) {
+        displayContainer = new DisplayContainer(
+            internalSecurityToken, isolateId);
+    }
+
     /**
      * Creates lcdui event producers/handlers/lisneners.
      * 
-     * @param internalSecurityToken
-     * @param eventQueue
-     * @param isolateId
-     * @param foregroundController
+     * @param internalSecurityToken security token
+     * @param eventQueue this isolate's eventQueue instance
+     * @param isolateId this isolate's id
+     * @param foregroundController this isolate's foreground controller
      */
     public LCDUIEnvironment(SecurityToken internalSecurityToken,
 		EventQueue eventQueue, 
 		int isolateId,
 		ForegroundController foregroundController) {
 
-        displayEventHandler =
-            DisplayEventHandlerFactory.getDisplayEventHandler(
-               internalSecurityToken);
+	this(internalSecurityToken, eventQueue, isolateId);
+
+	initDisplayEventHandler(internalSecurityToken, eventQueue,
+				foregroundController);
+    }
+
+    /*
+     * Creates lcdui event producers/handlers/lisneners.
+     * 
+     * @param internalSecurityToken security token
+     * @param eventQueue this isolate's eventQueue instance
+     * @param fgController this isolate's foreground controller
+     */
+    protected void initDisplayEventHandler(SecurityToken internalSecurityToken,
+					   EventQueue eventQueue,
+					   ForegroundController fgController) {
 
         DisplayEventProducer displayEventProducer =
             new DisplayEventProducer(
@@ -58,9 +88,9 @@ public class LCDUIEnvironment {
             new RepaintEventProducer(
                 eventQueue);
 
-        displayContainer = new DisplayContainer(
-            internalSecurityToken, isolateId);
-
+        displayEventHandler =
+            DisplayEventHandlerFactory.getDisplayEventHandler(
+               internalSecurityToken);
         /*
          * Because the display handler is implemented in a javax
          * package it cannot created outside of the package, so
@@ -69,7 +99,7 @@ public class LCDUIEnvironment {
          */
         displayEventHandler.initDisplayEventHandler(
 	    displayEventProducer,
-            foregroundController,
+            fgController,
             repaintEventProducer,
             displayContainer);
 
@@ -84,7 +114,10 @@ public class LCDUIEnvironment {
             internalSecurityToken,
             eventQueue,
             (ItemEventConsumer)displayEventHandler);
+
+	foregroundController = fgController;
     }
+
 
     /**
      * Gets DisplayContainer instance. 
@@ -93,6 +126,15 @@ public class LCDUIEnvironment {
      */
     public DisplayContainer getDisplayContainer() {
 	return displayContainer;
+    }
+
+    /**
+     * Gets ForegroundController instance. 
+     *
+     * @return ForegroundController
+     */
+    public ForegroundController getForegroundController() {
+	return foregroundController;
     }
 
     /** 
@@ -114,11 +156,16 @@ public class LCDUIEnvironment {
     }
 
     /** Stores array of active displays for a MIDlet suite isolate. */
-    private DisplayContainer displayContainer;
+    protected DisplayContainer displayContainer;
 
     /**
      * Provides interface for display preemption, creation and other
      * functionality that can not be publicly added to a javax package.
      */
-    private DisplayEventHandler displayEventHandler;
+    protected DisplayEventHandler displayEventHandler;
+
+    /**
+     * Provides interface cor foreground switching.
+     */
+    protected ForegroundController foregroundController;
 }
