@@ -78,4 +78,4 @@ MODULE_JSR_234_EXTRA_INCLUDES += \
 # and path where the file is located
 #
 ROMGEN_INCLUDE_PATHS += $(MIDP_ABB_DIR)/src/config
-ROMGEN_CFG_FILES     += jsr234_rom.config
+ROMGEN_CFG_FILES     += midp_abb_rom.config
