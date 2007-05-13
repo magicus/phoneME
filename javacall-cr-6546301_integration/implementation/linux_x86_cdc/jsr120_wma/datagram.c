@@ -323,7 +323,11 @@ int addUDPSocket(fd_set* fds, int* maxPort, int port) {
     return sock;
 }
 
-extern int smsDatagramSocketHandle, cbsDatagramSocketHandle, mmsDatagramSocketHandle;
+extern int smsDatagramSocketHandle, cbsDatagramSocketHandle;
+
+#ifdef ENABLE_JSR_205
+extern int mmsDatagramSocketHandle;
+#endif
 
 void listen_sockets() {
 
@@ -332,7 +336,9 @@ void listen_sockets() {
     int fd = 0;
     int host_port1 = 11100;
     int host_port2 = 22200;
+#ifdef ENABLE_JSR_205
     int host_port3 = 33300;
+#endif
     int max = 0;
     int buf[1024];
 
@@ -341,26 +347,35 @@ void listen_sockets() {
 
     smsDatagramSocketHandle = addUDPSocket(&fds, &max, host_port1);
     cbsDatagramSocketHandle = addUDPSocket(&fds, &max, host_port2);
+#ifdef ENABLE_JSR_205
     mmsDatagramSocketHandle = addUDPSocket(&fds, &max, host_port3);
+#endif
 
     while (1) {
         FD_SET(smsDatagramSocketHandle, &fds); //need to reset each time
         FD_SET(cbsDatagramSocketHandle, &fds);
+#ifdef ENABLE_JSR_205
         FD_SET(mmsDatagramSocketHandle, &fds);
-	
+#endif
+
         printf("waiting...\n");
 
         select(max + 1, &fds, NULL, NULL, NULL);
 
         fd = (FD_ISSET(smsDatagramSocketHandle, &fds)) ? smsDatagramSocketHandle :
-             (FD_ISSET(cbsDatagramSocketHandle, &fds)) ? cbsDatagramSocketHandle : 
-             (FD_ISSET(mmsDatagramSocketHandle, &fds)) ? mmsDatagramSocketHandle : 0;
+             (FD_ISSET(cbsDatagramSocketHandle, &fds)) ? cbsDatagramSocketHandle : 0;
+#ifdef ENABLE_JSR_205
+        fd = (fd == 0 && FD_ISSET(mmsDatagramSocketHandle, &fds)) ? 
+                                                  mmsDatagramSocketHandle : 0;
+#endif
 
         try_process_wma_emulator(fd);
     }
 
     //close(smsDatagramSocketHandle);
     //close(cbsDatagramSocketHandle);
+#ifdef ENABLE_JSR_205
     //close(mmsDatagramSocketHandle);
+#endif
 }
 
