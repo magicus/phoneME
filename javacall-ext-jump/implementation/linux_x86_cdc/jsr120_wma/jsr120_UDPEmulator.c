@@ -46,7 +46,49 @@
 #define DEFAULT_CBS_IN_PORT 22200
 #define DEFAULT_MMS_IN_PORT 33300
 
-//#define ENABLE_JSR_205  0
+
+#include <dlfcn.h>
+#include <stdio.h>
+#define RTLD_DEFAULT 0
+#define decl_javanotify(name_, args_, actuals_)  \
+    static void (*name_##_func_addr) args_ = NULL; \
+    static void name_##_init_func_addr() { \
+        name_##_func_addr = dlsym(RTLD_DEFAULT, "javanotify_" #name_); \
+    } \
+    void jn_local_##name_ args_ { \
+        if (name_##_func_addr == NULL) { \
+            name_##_init_func_addr(); \
+            /*fprintf(stderr, "error: non-initialyzed javanotify: %s\n", #name_); */\
+            /*return; */\
+        } \
+        (*name_##_func_addr) actuals_; \
+    } \
+
+#define call_javanotify(name_, params_) do {\
+    fprintf(stderr, "calling javanotify: %s%s\n", #name_, #params_); \
+    jn_local_##name_ params_; \
+    fprintf(stderr, "calling javanotify: %s%s - completed\n", #name_, #params_); \
+} while (0)
+
+#include "javacall_sms.h"
+#include "javacall_cbs.h"
+decl_javanotify(incoming_sms, (
+        javacall_sms_encoding   msgType,
+        char*                   sourceAddress,
+        unsigned char*          msgBuffer,
+        int                     msgBufferLen,
+        unsigned short          sourcePortNum,
+        unsigned short          destPortNum,
+        javacall_int64          timeStamp
+), (msgType, sourceAddress, msgBuffer, msgBufferLen, sourcePortNum, destPortNum, timeStamp))
+decl_javanotify(incoming_cbs, (
+        javacall_cbs_encoding  msgType,
+        unsigned short         msgID,
+        unsigned char*         msgBuffer,
+        int                    msgBufferLen
+), (msgType, msgID, msgBuffer, msgBufferLen))
+
+// ---------------------------------------------------------------------------------
 
 javacall_handle smsDatagramSocketHandle = NULL;
 javacall_handle cbsDatagramSocketHandle = NULL;
@@ -177,7 +219,8 @@ javacall_result process_UDPEmulator_sms_incoming(javacall_handle handle) {
 
     //encodingType = JAVACALL_SMS_MSG_TYPE_ASCII; //## to do: convert encodingType_int->encodingType
     encodingType = encodingType_int;
-    javanotify_incoming_sms(encodingType, sourceAddress, msg, msgLen, (unsigned short)port, (unsigned short)destPortNum, timeStamp);
+//    javanotify_incoming_sms(encodingType, sourceAddress, msg, msgLen, (unsigned short)port, (unsigned short)destPortNum, timeStamp);
+    call_javanotify(incoming_sms, (encodingType, sourceAddress, msg, msgLen, (unsigned short)port, (unsigned short)destPortNum, timeStamp));
 
     return JAVACALL_OK;
 }
@@ -214,7 +257,8 @@ javacall_result process_UDPEmulator_cbs_incoming(javacall_handle handle) {
         return JAVACALL_FAIL;
     }
 
-    javanotify_incoming_cbs(msgType, msgID, msgBuffer, msgBufferLen);
+//    javanotify_incoming_cbs(msgType, msgID, msgBuffer, msgBufferLen);
+    call_javanotify(incoming_cbs, (msgType, msgID, msgBuffer, msgBufferLen));
 
     return JAVACALL_OK;
 }
@@ -276,5 +320,6 @@ javacall_result try_process_wma_emulator(javacall_handle handle) {
         return JAVACALL_OK;
     }
 #endif
+fprintf(stderr, "Invalid handle\n"); fflush(stderr);
     return JAVACALL_FALSE;
 }
