@@ -34,6 +34,11 @@
 #For 'midp' USE_MIDP and MIDP_JC_IMPL_PATH variables are used
 #For 'nams' USE_NATIVE_AMS_JC and NATIVE_AMS_JC_IMPL_PATH variables are used
 
+ifeq ($(PROJECT_NAME),)
+PROJECT_NAME = "phoneME Feature project"
+PROJECT_VERSION = MR2
+endif
+
 JSR_LIST = MIDP JSR_120 JSR_135 JSR_177 JSR_211
 
 USE_MIDP=true
