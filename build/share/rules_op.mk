@@ -159,6 +159,16 @@ endif
 clean::
 	$(AT)rm -rf $(JSROP_OUTPUT_DIRS)
 
+# Include JSR 120
+ifeq ($(USE_JSR_120), true)
+export JSR_120_DIR ?= $(COMPONENTS_DIR)/jsr120
+JSR_120_RULES_FILE = $(JSR_120_DIR)/build/$(SUBSYSTEM_RULES_FILE)
+ifeq ($(wildcard $(JSR_120_RULES_FILE)),)
+$(error JSR_120_DIR must point to a directory containing JSR 120 sources)
+endif
+include $(JSR_120_RULES_FILE)
+endif
+
 # Include JSR 172
 ifeq ($(USE_JSR_172), true)
 export JSR_172_DIR ?= $(COMPONENTS_DIR)/jsr172
@@ -167,6 +177,16 @@ ifeq ($(wildcard $(JSR_172_MAKE_FILE)),)
 $(error JSR_172_DIR must point to a directory containing JSR 172 sources)
 endif
 include $(JSR_172_MAKE_FILE)
+endif
+
+# Include JSR 205
+ifeq ($(USE_JSR_205), true)
+export JSR_205_DIR ?= $(COMPONENTS_DIR)/jsr205
+JSR_205_RULES_FILE = $(JSR_205_DIR)/build/$(SUBSYSTEM_RULES_FILE)
+ifeq ($(wildcard $(JSR_205_RULES_FILE)),)
+$(error JSR_205_DIR must point to a directory containing JSR 205 sources)
+endif
+include $(JSR_205_RULES_FILE)
 endif
 
 # Include JSR 280
