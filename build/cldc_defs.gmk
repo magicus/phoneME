@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -22,28 +23,15 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions. 
 #
-######################################################################
-#
-# Subsystem's PLATFORM Configuration file
-#
-######################################################################
 
-POOL_IMPL_DIR = ram_pool
+include $(JSR_120_DIR)/build/config/common_defs.gmk
 
-vpath % $(JSR_120_DIR)/src/share/core/common/native/$(POOL_IMPL_DIR)
-vpath % $(JSR_120_DIR)/src/share/core/common/native/javacall
-vpath % $(JSR_120_DIR)/src/share/protocol/sms/native/javacall
-vpath % $(JSR_120_DIR)/src/share/protocol/cbs/native/javacall
+JTWI_I3TEST_JAVA_FILES              += $(SUBSYSTEM_JSR_120_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES                   += $(SUBSYSTEM_JSR_120_NATIVE_FILES)
+EXTRA_INCLUDES                      += $(SUBSYSTEM_JSR_120_EXTRA_INCLUDES)
+EXTRA_CFLAGS                        += $(JSR_120_EXTRA_CFLAGS)
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += $(JSR_120_PROPERTY_FILES)
 
-SUBSYSTEM_JSR_120_NATIVE_FILES += \
-	jsr120_sms_pool.c \
-	jsr120_cbs_pool.c \
-	smsProtocol_javacall.c \
-	cbsProtocol_javacall.c \
-	wmaInterface.c
-
-SUBSYSTEM_JSR_120_EXTRA_INCLUDES += \
-    -I$(JSR_120_DIR)/src/share/core/common/native/share/inc \
-    -I$(JSR_120_DIR)/src/share/protocol/sms/native/share/inc \
-    -I$(JSR_120_DIR)/src/share/protocol/cbs/native/share/inc
+# Create JSR 120 source in subdir 'jsr120/'
+JSR_120_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr120
 

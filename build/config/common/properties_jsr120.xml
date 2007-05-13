@@ -67,5 +67,15 @@
       Scope="internal"
       Comment="The phone number for outbound messages from the SMS emulator."/>
     
+    <property Key="j2me.sms.Protocol"
+      Value="com.sun.midp.io.j2me.sms.Protocol"
+      Scope="system"
+      Comment="The Protocol class name."/>
+
+    <property Key="j2me.cbs.Protocol"
+      Value="com.sun.midp.io.j2me.cbs.Protocol"
+      Scope="system"
+      Comment="The Protocol class name."/>
+
   </properties>
 </configuration>

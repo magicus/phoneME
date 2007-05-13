@@ -1,4 +1,5 @@
 #
+#   
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -22,28 +23,17 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions. 
 #
-######################################################################
+
+ifneq ($(TARGET_VM),cldc_vm)
+
+# CDC-specific build
 #
-# Subsystem's PLATFORM Configuration file
+include $(JSR_120_DIR)/build/cdc_rules.gmk
+
+else
+
+# CLDC-specific build
 #
-######################################################################
+include $(JSR_120_DIR)/build/cldc_rules.gmk
 
-POOL_IMPL_DIR = ram_pool
-
-vpath % $(JSR_120_DIR)/src/share/core/common/native/$(POOL_IMPL_DIR)
-vpath % $(JSR_120_DIR)/src/share/core/common/native/javacall
-vpath % $(JSR_120_DIR)/src/share/protocol/sms/native/javacall
-vpath % $(JSR_120_DIR)/src/share/protocol/cbs/native/javacall
-
-SUBSYSTEM_JSR_120_NATIVE_FILES += \
-	jsr120_sms_pool.c \
-	jsr120_cbs_pool.c \
-	smsProtocol_javacall.c \
-	cbsProtocol_javacall.c \
-	wmaInterface.c
-
-SUBSYSTEM_JSR_120_EXTRA_INCLUDES += \
-    -I$(JSR_120_DIR)/src/share/core/common/native/share/inc \
-    -I$(JSR_120_DIR)/src/share/protocol/sms/native/share/inc \
-    -I$(JSR_120_DIR)/src/share/protocol/cbs/native/share/inc
-
+endif

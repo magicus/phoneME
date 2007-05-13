@@ -22,17 +22,8 @@
  * information or have any questions. 
  */
 
-#define IFACE_STATUS_OK     0
-#define IFACE_STATUS_FAIL   1
 
-#define STRING_LEN(str_)    (str_ == NULL ? 0 : strlen(str_))
-
-typedef int typeInt;
-typedef unsigned char typeByte;
-typedef short typeShort;
-typedef long long typeLong;
-
-START_INTERFACE()
+START_INTERFACE(120, driver)
 
 // jsr120_cbs_is_midlet_msgID_registered()
 START(WMA_STATUS, jsr120_cbs_is_midlet_msgID_registered, (jchar msgID))
@@ -52,7 +43,7 @@ DECL_ARG(jint, handle)
 ARG(Short, msgID)
 ARG(Int, msid)
 ARG(Int, handle)
-SET_CLIENT_ID(msid, handle, msgID)
+SET_CLIENT_ID(WMADRIVER_CBS_CLIENT, msid, handle, msgID)
 INVOKE(status, jsr120_cbs_register_midlet_msgID, (msgID, msid, handle))
 END_STATUS()
 
@@ -63,7 +54,7 @@ DECL_STATUS()
 DECL_ARG(jchar, msgID)
 ARG(Short, msgID)
 INVOKE(status, jsr120_cbs_unregister_midlet_msgID, (msgID))
-CLEAR_CLIENT_ID(msgID)
+CLEAR_CLIENT_ID(WMADRIVER_CBS_CLIENT, msgID)
 END_STATUS()
 
 // jsr120_cbs_delete_midlet_suite_msg()
@@ -91,7 +82,7 @@ DECL_ARG(jint, handle)
 ARG(Short, port)
 ARG(Int, msid)
 ARG(Int, handle)
-SET_CLIENT_ID(msid, handle, port)
+SET_CLIENT_ID(WMADRIVER_SMS_CLIENT, msid, handle, port)
 INVOKE(status, jsr120_register_sms_midlet_port, (port, msid, handle))
 END_STATUS()
 
@@ -100,7 +91,7 @@ START(WMA_STATUS, jsr120_unregister_sms_midlet_port, (jchar port))
 DECL_STATUS()
 DECL_ARG(jchar, port)
 ARG(Short, port)
-CLEAR_CLIENT_ID(port)
+CLEAR_CLIENT_ID(WMADRIVER_SMS_CLIENT, port)
 INVOKE(status, jsr120_unregister_sms_midlet_port, (port))
 END_STATUS()
 
@@ -274,22 +265,7 @@ DECL_ARG(SmsMessage *, sms)
 ARG(Int, sms)
 INVOKE_AND_END(jsr120_sms_pool_add_msg, (sms))
 
-// jsr120_sms_unblock_thread()
-START_CALLBACK(jsr120_sms_unblock_thread, (jint handle, jint waitingFor), handle)
-DECL_ARG(jint, handle)
-DECL_ARG(jint, waitingFor)
-ARG(Int, handle)
-ARG(Int, waitingFor)
-INVOKE_AND_END(jsr120_sms_unblock_thread, (handle, waitingFor))
-
-// jsr120_cbs_unblock_thread()
-START_CALLBACK(jsr120_cbs_unblock_thread, (jint handle, jint waitingFor), handle)
-DECL_ARG(jint, handle)
-DECL_ARG(jint, waitingFor)
-ARG(Int, handle)
-ARG(Int, waitingFor)
-INVOKE_AND_END(jsr120_cbs_unblock_thread, (handle, waitingFor))
-
+/*
 // javanotify_incoming_sms()
 START_VOID(javanotify_incoming_sms, 
         (javacall_sms_encoding   msgType,
@@ -341,7 +317,7 @@ INVOKE_VOID(javanotify_incoming_cbs,
 		              msgBuffer,
 		              msgBufferLen))
 END_VOID()
-
+*/
 END_INTERFACE()
 
 DECL_FREE_FUNCTION(jsr120_cbs_delete_msg, CbsMessage*)

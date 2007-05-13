@@ -644,7 +644,6 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_numberOfSegments0) {
 
     pcsl_mem_free(msgBuffer);
     KNI_EndHandles();
-
     KNI_ReturnInt(segments);
 }
 
