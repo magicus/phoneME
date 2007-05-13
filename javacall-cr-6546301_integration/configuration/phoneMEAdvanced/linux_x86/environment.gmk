@@ -56,6 +56,7 @@ SOURCE_OUTPUT_LIST += $(foreach dir,$(NOTIFIERS_SRC_LIST), $(dir) javacall/notif
 
 ifeq ($(USE_JSR_120),true)
 SOURCE_OUTPUT_LIST += $(JSR_120_JC_IMPL_PATH)/$(JSR_120_JC_DIR) javacall/implementation/linux_x86_cdc
+CFLAGS += -DENABLE_JSR120=1
 endif
 
 ifeq ($(USE_JSR_135),true)
