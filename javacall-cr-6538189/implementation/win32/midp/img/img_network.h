@@ -23,6 +23,7 @@
  * information or have any questions.
  */
 
+int network_x = 200;
 int network_width = 14;
 int network_height = 14;
 int network_bytespp = 4; //3-RGB, 4 - RGBA 

@@ -55,9 +55,6 @@ extern HWND midpGetWindowHandle();
 
 
 
-unsigned short* getTopbarBuffer(int* screenWidth, int* screenHeight);
-  
-
 #if !ENABLE_MULTIPLE_INSTANCES
 
 /*

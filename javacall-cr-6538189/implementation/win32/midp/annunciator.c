@@ -39,7 +39,7 @@
 #include "lcd.h"
 #include "local_defs.h"
 
-
+#include "img/topbar.h"
 #include "img/img_lock.h"
 #include "img/img_network.h"
 #include "img/img_caps.h"
@@ -49,10 +49,17 @@
 #include "img/img_T9.h"
 
 
+static javacall_bool trustedOn = JAVACALL_FALSE;
+static javacall_bool networkOn = JAVACALL_FALSE;
+
+extern javacall_pixel* getTopbarBuffer(int* screenWidth, int* screenHeight);
+
+/*
 javacall_bool first_time = JAVACALL_TRUE;
 static int screenWidth = 0;
 static int screenHeight = 0;
 static javacall_lcd_color_encoding_type colorEncoding;
+
 
 void util_lcd_init(void) {
 
@@ -73,6 +80,7 @@ void util_clear_screen(unsigned short *scrn, int screenSize) {
         scrn[index] = RGB2PIXELTYPE(255, 255, 255);
     }
 }
+*/
 
 void util_draw_bitmap(unsigned char *bitmap_data, 
                       unsigned char bytesPerPix,
@@ -86,14 +94,14 @@ void util_draw_bitmap(unsigned char *bitmap_data,
     unsigned negy, negx;
     javacall_pixel *scrn;
     int startx, starty;
+    int screenWidth = 0;
+    int screenHeight = 0;
 
-//    scrn = javacall_lcd_get_screen(JAVACALL_LCD_SCREEN_PRIMARY,
-  //                                 &screenWidth, &screenHeight, &colorEncoding);
     scrn = getTopbarBuffer(&screenWidth, &screenHeight);
     if (NULL == scrn) {
         return;
     }
-    ////
+
     startx = screen_left < 0 ? 0 : screen_left;
     starty = screen_top < 0 ? 0 : screen_top;
 
@@ -116,10 +124,7 @@ void util_draw_bitmap(unsigned char *bitmap_data,
         bitmap_height = screenHeight - starty;
     }
 
-    //srcraster=src->pixels+negy*src->x+negx;
-    //scrn=scrn+starty*screenWidth+startx;
     bitmap_data = bitmap_data + negy * screenWidth * bytesPerPix + negx * bytesPerPix;
-    /////
 
     for (y = screen_top; y < screen_top + bitmap_height; y++) {
         for (x = screen_left; x < screen_left + bitmap_width; x++) {
@@ -134,19 +139,35 @@ void util_draw_bitmap(unsigned char *bitmap_data,
                   unsigned short gd = GET_GREEN_FROM_PIXEL(pix);
                   unsigned short bd = GET_BLUE_FROM_PIXEL(pix);
                   unsigned short alpha = *bitmap_data++;
+
                   r = rd * alpha + (0xFF - alpha) * r;
                   g = gd * alpha + (0xFF - alpha) * g;
                   b = bd * alpha + (0xFF - alpha) * b;
-
                 }                
                 scrn[(y * screenWidth) + x] = RGB2PIXELTYPE(r, g, b);
-                //scrn[(y*screenWidth)+x]= tmp;
             }
         }
         bitmap_data += bitmap_horizontal_gap;
     }
 }
 
+/**
+ * Draws top bar 
+ */
+void drawTopbarImage(void) {
+
+    util_draw_bitmap((unsigned char*)topbar_data, 3, topBarWidth, topBarHeight, 0, 0);
+
+    if (networkOn) {
+        util_draw_bitmap(network_data, network_bytespp, network_width, network_height, 0, network_x);
+    }
+
+    if (trustedOn) {
+//TODO: draw trusted icon
+    }
+
+    javacall_lcd_flush();
+}
 
 /**
  * Turn device's Vibrate on/off
@@ -192,20 +213,11 @@ javacall_result javacall_annunciator_flash_backlight(javacall_bool enableBacklig
  */
 javacall_result javacall_annunciator_display_trusted_icon(javacall_bool enableTrustedIcon) {
 
+    trustedOn = enableTrustedIcon;
 
-    javacall_pixel *scrn;
+    drawTopbarImage();
+    javacall_lcd_flush();
 
-    scrn = javacall_lcd_get_screen(JAVACALL_LCD_SCREEN_PRIMARY,
-                                   &screenWidth, &screenHeight, &colorEncoding);
-
-    if (enableTrustedIcon) {
-        util_draw_bitmap(lock_data, 3, lock_width, lock_height, 0, 0);
-        javacall_lcd_flush();
-
-    } else {
-        util_clear_screen(scrn, (screenWidth * screenHeight));
-        javacall_lcd_flush();
-    }
     return JAVACALL_OK;
 
 }
@@ -221,28 +233,10 @@ javacall_result javacall_annunciator_display_trusted_icon(javacall_bool enableTr
  */
 javacall_result javacall_annunciator_display_network_icon(javacall_bool enableNetworkIndicator) {
 
-//    return javacall_annunciator_display_trusted_icon(enableNetworkIndicator);
+    networkOn = enableNetworkIndicator;
 
-    javacall_pixel *scrn;
-    javacall_bool indicator_on;
-
-    //javacall_print(print_buffer);  // Much info on screen
-
-    indicator_on = JAVACALL_FALSE;
-    util_lcd_init();
-    scrn = javacall_lcd_get_screen(JAVACALL_LCD_SCREEN_PRIMARY,
-                                   &screenWidth, &screenHeight, &colorEncoding);
-    if (enableNetworkIndicator) {
-        indicator_on = JAVACALL_TRUE;
-
-        util_draw_bitmap(network_data, network_bytespp, network_width, network_height, 0, 0);
-        javacall_lcd_flush();
-
-    } else {
-        indicator_on = JAVACALL_FALSE;
-        util_clear_screen(scrn, (screenWidth * screenHeight));
-        javacall_lcd_flush();
-    }
+    drawTopbarImage();
+    javacall_lcd_flush();
 
     return JAVACALL_OK;
 
