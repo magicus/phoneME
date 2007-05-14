@@ -7,7 +7,7 @@
 
 <html>
   <head>
-    <title>Reference Documentation - phoneME Feature project - Version MR2</title>
+    <title>Reference Documentation - Javacall</title>
     <link rel="stylesheet" href="doxygen_style.css" type="text/css">
   </head>
 

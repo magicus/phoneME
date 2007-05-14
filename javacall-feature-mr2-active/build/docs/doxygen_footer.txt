@@ -18,12 +18,12 @@
           &nbsp;
         </td>
         <td class="go-right"><span class="copyright">Reference Documentation
-            <br>phoneME Feature project, Version MR2 </td>
+            <br>Javacall</td>
       </tr>
     </table>
 
     <p class="copyright"><a href="../../share/copyright.html">Copyright</a>
-      &#169; 2006-2007 Sun Microsystems, Inc. All rights reserved.</p>
+      &#169; 2007 Sun Microsystems, Inc. All rights reserved.</p>
 
   </body>
 </html>
