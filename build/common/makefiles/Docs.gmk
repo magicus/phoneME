@@ -64,7 +64,7 @@ GROUPNAME = $(PROJECT_NAME)
 JAVADOCTITLE  = "$(GROUPNAME)"
 JAVADOCWINDOWTITLE  = "$(GROUPNAME)"
 JAVADOCHEADER = '<strong>$(GROUPNAME)</strong>'
-JAVADOCBOTTOM = 'Copyright 1990-2007 Sun Microsystems, Inc.'
+JAVADOCBOTTOM = 'Copyright 2007 Sun Microsystems, Inc. All rights reserved. <br>SUN PROPRIETARY/CONFIDENTIAL.'
 
 # Search path for tool source
 #
