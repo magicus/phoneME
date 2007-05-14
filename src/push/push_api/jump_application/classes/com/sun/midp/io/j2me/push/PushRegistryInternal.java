@@ -39,13 +39,6 @@ import com.sun.midp.security.SecurityToken;
  *  sources refactoring
  */
 public final class PushRegistryInternal {
-
-    /**
-     * Push option to only launch this suite when not other applications
-     * are running.
-     */
-    public static final int PUSH_OPT_WHEN_ONLY_APP = 1;
-
     /**
      * Hides the default constructor.
      */
@@ -100,33 +93,6 @@ public final class PushRegistryInternal {
             final boolean bypassChecks)
             throws ClassNotFoundException, IOException {
         throw new ConnectionNotFoundException();
-    }
-
-    /**
-     * Initializes the security token for this class, so it can
-     * perform actions that a normal MIDlet Suite cannot.
-     *
-     * @param token security token for this class.
-     */
-    public static void initSecurityToken(final SecurityToken token) { }
-
-    /**
-     * Return a list of registered connections for given
-     * <code>MIDlet</code> suite.
-     *
-     * @param id identifies the specific <code>MIDlet</code>
-     *               suite to be launched
-     * @param available if <code>true</code>, only return the list of
-     *      connections with input available
-     *
-     * @return array of connection strings, where each connection is
-     *       represented by the generic connection <em>protocol</em>,
-     *       <em>host</em> and <em>port number</em> identification
-     */
-    public static String listConnections(
-            final int id,
-            final boolean available) {
-        return null;
     }
 
     /**

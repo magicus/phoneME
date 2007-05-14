@@ -106,8 +106,10 @@ public final class SecurityInitializer {
             internalSecurityToken);
         com.sun.midp.midletsuite.MIDletSuiteStorage.initSecurityToken(
             internalSecurityToken);
+// #ifndef ENABLE_CDC
         com.sun.midp.io.j2me.push.PushRegistryInternal.initSecurityToken(
             internalSecurityToken);
+// #endif ENABLE_CDC
     }
 
     /**
