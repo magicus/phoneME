@@ -42,7 +42,7 @@
 #include "javacall_datagram.h"
 #include "javacall_lifecycle.h"
 
-#include "img/topbar.h"
+//#include "img/topbar.h"
 
 
 #include "lcd.h"
@@ -86,9 +86,11 @@ static void releaseBitmapDC(HDC hdcMem);
 static void DrawBitmap(HDC hdc, HBITMAP hBitmap, int x, int y, int rop);
 static HDC getBitmapDC(void *imageData);
 static HPEN setPen(HDC hdc, int pixel, int dotted);
+extern void drawTopbarImage(void);
+
 //static void DrawMenuBarBorder(HDC myhdc);
 //static void drawEmulatorScreen(javacall_bool fullscreen);
-       void CreateEmulatorWindow();
+void CreateEmulatorWindow(void);
 /*
 static void paintVerticalScroll(HDC hdc, int scrollPosition,
                                 int scrollProportion);
@@ -156,8 +158,10 @@ static javacall_bool reverse_orientation;
  with the same width. Scaleable top bar will be implemented and
  then those constants will become expared.
  */
-static int topBarHeight = 12;//_topbar_dib_data.hdr.biHeight; //11
-static int topBarWidth = 240;//_topbar_dib_data.hdr.biWidth;
+//static int topBarHeight = 12;//_topbar_dib_data.hdr.biHeight; //11
+//static int topBarWidth = 240;//_topbar_dib_data.hdr.biWidth;
+extern int topBarWidth;
+extern int topBarHeight;
 static javacall_bool topBarOn = JAVACALL_TRUE;
 
 /* current skin*/
@@ -178,10 +182,12 @@ javacall_bool penAreDragging = JAVACALL_FALSE;
 javacall_result javacall_lcd_init(void) {
 
     if(!initialized) {
+
+
         reverse_orientation = JAVACALL_FALSE;
         inFullScreenMode = JAVACALL_FALSE;
         penAreDragging = JAVACALL_FALSE;
-        initialized = JAVACALL_TRUE;
+        initialized = JAVACALL_TRUE;  
     }
 
     return JAVACALL_OK;
@@ -279,6 +285,16 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
     return NULL;
 }
 
+/**
+ * Get top bar raster pointer
+ *
+ * @param screenWidth output paramter to hold width of top bar
+ * @param screenHeight output paramter to hold height of top bar
+ *
+ * @return pointer to video ram mapped memory region of size
+ *         ( screenWidth * screenHeight )
+ *         or <code>NULL</code> in case of failure
+ */
 javacall_pixel* getTopbarBuffer(int* screenWidth, int* screenHeight) {
 
     if((JAVACALL_TRUE == initialized) && topBarOn) {
@@ -295,7 +311,6 @@ javacall_pixel* getTopbarBuffer(int* screenWidth, int* screenHeight) {
     return NULL;
 
 }
-
 
 /**
  * Set or unset full screen mode.
@@ -325,7 +340,11 @@ javacall_result javacall_lcd_set_full_screen_mode(javacall_bool useFullScreen) {
     } else {
         topBarOn = (currentSkin->displayRect.width == topBarWidth) ?
             JAVACALL_TRUE : JAVACALL_FALSE;
+        if (topBarOn) {
+            drawTopbarImage();
+        }
     }
+
     return JAVACALL_OK;
 }
 
@@ -982,6 +1001,9 @@ static void setCurrentSkin(ESkin* newSkin) {
             MoveWindow(hMainWindow, wr.left, wr.top, 
                 r.right - r.left, r.bottom - r.top, TRUE);
         }
+        if (topBarOn) {
+            drawTopbarImage();
+        }
     }
 }
 
@@ -1197,6 +1219,8 @@ static void DrawBitmap(HDC hdc, HBITMAP hBitmap, int x, int y, int rop) {
     DeleteDC(hdcMem);
 }
 
+
+ 
 /**
  *
  */
@@ -1304,7 +1328,6 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
     int r;
     int g;
     int b;
-    int count;
     unsigned char *destBits;
     unsigned char *destPtr;
 
@@ -1314,10 +1337,9 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
     HGDIOBJ    oobj;
     HDC hdc;
 
-    int yOffset = topBarOn ? topBarHeight : 0;
     int screenWidth = VRAM.width;
     int screenHeight = VRAM.height;
-    javacall_pixel* screenBuffer = VRAM.hdc + yOffset * VRAM.width;
+    javacall_pixel* screenBuffer = VRAM.hdc;
 
     if(x1 < 0) {
         x1 = 0;
@@ -1362,6 +1384,7 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
 
     destHBmp = CreateDIBSection (hdcMem, &bi, DIB_RGB_COLORS, &destBits, NULL, 0);
 
+
     if(destBits != NULL) {
         oobj = SelectObject(hdcMem, destHBmp);
         SelectObject(hdcMem, oobj);
@@ -1381,7 +1404,7 @@ static void RefreshScreen(int x1, int y1, int x2, int y2) {
             }
         }
 
-        SetDIBitsToDevice(hdc, x, y, width, height, 0, yOffset, 0,
+        SetDIBitsToDevice(hdc, x, y, width, height, 0, 0, 0,
                           height, destBits, &bi, DIB_RGB_COLORS);
     }
 
