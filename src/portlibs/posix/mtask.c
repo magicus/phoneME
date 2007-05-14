@@ -672,15 +672,21 @@ dumpMessage(JUMPMessage m, char* intro)
 static char*
 oneString(JUMPMessage m)
 {
-    char* string;
     JUMPMessageReader r;
     JUMPPlatformCString* strings;
-    uint32 len, i, bufSize;
+    uint32 len;
     
     jumpMessageReaderInit(&r, m);
     strings = jumpMessageGetStringArray(&r, &len);
-    bufSize = 1; /* for the string null terminator */
+    if (r.status != JUMP_SUCCESS) {
+	return NULL;
+    }
+
     if (strings != NULL) {
+	uint32 i;
+	uint32 bufSize = 1; /* for the string null terminator */
+	char* string;
+
         /* first figure out the size of the buffer we need to allocate */
         for (i = 0; i < len; i++) {
             if (strings[i] != NULL) {
@@ -690,17 +696,22 @@ oneString(JUMPMessage m)
 
         /* allocate the buf and start copying */
         string = calloc(bufSize, sizeof(char));
-        if (string == NULL) {
-	    return NULL;
-	}
-        for (i = 0; i < len; i++) {
-	    if (strings[i] != NULL) {
-	        strcat(string, strings[i]);
-	        strcat(string, " ");
+	if (string != NULL) {
+	    for (i = 0; i < len; i++) {
+		if (strings[i] != NULL) {
+		    strcat(string, strings[i]);
+		    strcat(string, " ");
+		}
 	    }
-        }
+	}
+
+	jumpMessageFreeStringArray(strings, len);
+
+	return string;
     }
-    return string;
+    else {
+	return calloc(1, sizeof(char));
+    }
 }
 
 /* Returns a JUMPMessage when there is a message to process.  There
