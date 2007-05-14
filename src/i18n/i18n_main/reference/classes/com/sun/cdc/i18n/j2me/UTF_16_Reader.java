@@ -30,7 +30,7 @@ import java.io.*;
 
 
 /** Reader for UTF-16 encoded input streams. */
-public class UTF_16_Reader extends com.sun.cldc.i18n.StreamReader {
+public class UTF_16_Reader extends com.sun.cdc.i18n.StreamReader {
 
     /** the first byte of a pair of bytes that represent a 16-bit char */
     protected int firstByte = -1;
