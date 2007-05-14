@@ -26,6 +26,11 @@
 
 package com.sun.cldc.i18n.j2me;
 
+import java.io.Writer;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.io.IOException;
+
 /**
  * Writer for UTF-16 encoded output streams (default byte order).
  * We assume that character strings
@@ -38,6 +43,55 @@ package com.sun.cldc.i18n.j2me;
 public class UTF_16_Writer extends UTF_16BE_Writer {
     // Just extending the right class for the default byte order
     // To change the default encoding you need to change the base class
+
+    /**
+     * Gets set to true after writing byte order mark (BOM), BOM is 0xfeff.
+     */
+    protected boolean addedBOM;
+
+    static final char[] bom = new char[] {0xfeff};
+
+    /**
+     * Write a portion of an array of characters.
+     *
+     * @param  cbuf  Array of characters
+     * @param  off   Offset from which to start writing characters
+     * @param  len   Number of characters to write
+     *
+     * @exception  java.io.IOException  If an I/O error occurs
+     */
+    public void write(char cbuf[], int off, int len) throws IOException {
+        if (!addedBOM) {
+            super.write(bom,0,1);
+            addedBOM=true;
+        }
+        super.write(cbuf,off,len);
+    }
+
+    /**
+     * Get the size in bytes of an array of chars.
+     *
+     * @param      array  Source buffer
+     * @param      offset Offset at which to start counting character sizes
+     * @param      length number of bytes to use for counting
+     *
+     * @return     number of bytes that the characters would be converted to
+     */
+    /* The class Helper will ask the writer for the size the output will be.
+     * Since chars already are in utf16, calculation is simple. */
+    public int sizeOf(char[] array, int offset, int length) {
+        // add the size of BOM
+        return super.sizeOf(array,offset,length) + 2;
+    }
+    /**
+     * Open the writer
+     */
+    public Writer open(OutputStream out, String enc)
+        throws UnsupportedEncodingException {
+        super.open(out,enc);
+        addedBOM = false;
+        return this;
+    }
 }
 
 
