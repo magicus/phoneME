@@ -56,7 +56,7 @@ final class ConnectionRegistry {
          * This instance is created on demand.
          * </p>
          */
-        private MIDPContainerInterface ifc = null;
+        final static MIDPContainerInterface IFC = getRemoteInterface();
 
         /**
          * Gets a reference to remote interface.
@@ -64,14 +64,13 @@ final class ConnectionRegistry {
          * @return a reference to remote interface
          * (cannot be <code>null</code>)
          */
-        MIDPContainerInterface getRemoteInterface() {
-            if (ifc != null) {
-                return ifc;
-            }
+        static MIDPContainerInterface getRemoteInterface() {
+            final JUMPIsolateProcess jip = JUMPIsolateProcess.getInstance();
 
-            ifc = (MIDPContainerInterface) JUMPIsolateProcess.getInstance()
-                .getRemoteService(
-                    Configuration.MIDP_CONTAINER_INTERFACE_IXC_URI);
+            final String URI = Configuration.MIDP_CONTAINER_INTERFACE_IXC_URI;
+
+            final MIDPContainerInterface ifc = (MIDPContainerInterface)
+                    jip.getRemoteService(URI);
 
             if (ifc == null) {
                 throw new RuntimeException(
@@ -81,10 +80,6 @@ final class ConnectionRegistry {
             return ifc;
         }
     }
-
-    /** Remote interface helper. */
-    private static final RemoteInterfaceHelper remoteInterfaceHelper =
-            new RemoteInterfaceHelper();
 
     /**
      * Registers a connection.
@@ -299,7 +294,7 @@ final class ConnectionRegistry {
      * @return remote interface instance (cannot be <code>null</code>)
      */
     private static MIDPContainerInterface getRemoteInterface() {
-        return remoteInterfaceHelper.getRemoteInterface();
+        return RemoteInterfaceHelper.IFC;
     }
 
     /**
