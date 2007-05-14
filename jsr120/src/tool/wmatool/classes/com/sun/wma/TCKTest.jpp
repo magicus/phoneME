@@ -1,0 +1,434 @@
+/*
+ *   
+ *
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
+
+package com.sun.wma;
+
+import com.sun.tck.wma.Message;
+import com.sun.tck.wma.MessageConnection;
+
+import com.sun.tck.wma.BinaryMessage;
+import com.sun.tck.wma.MessageConnector;
+import com.sun.tck.wma.TextMessage;
+
+// #ifdef ENABLE_JSR_205
+import com.sun.tck.wma.SizeExceededException;
+import com.sun.tck.wma.MessagePart;
+import com.sun.tck.wma.MultipartMessage;
+import com.sun.tck.wma.mms.MMSAddress;
+import com.sun.tck.wma.mms.MultipartObject;
+// #endif ENABLE_JSR_205
+
+import java.io.IOException;
+
+/**
+ * Simulates a TCK harness for these types of operations:
+ * <p><pre>
+ * - Sending and receiving SMS messages.
+ * - Sending CBS messages (Broadcasting).
+ * - Sending and receiving MMS messages.
+ * </pre>
+ *
+ * @see #TCKTest(String[])
+ */
+public class TCKTest {
+
+    /**
+     * Transmission direction flag: send (<code>true</code>) or
+     * receive (<code>false</code>).
+     */
+    private boolean sending = false;
+
+    /** Target address. */
+    private String address = "";
+
+    /** Target message. */
+    private String message = "";
+
+    /** Text flag for message type to send. */
+    private String msgType = MessageConnection.BINARY_MESSAGE;
+
+    /** The number of times "message" is copied into the data buffer. */
+    private int msgCopies = 1;
+
+    /** Verbose flag for diagnostic output (true for verbosity.). */
+    private boolean verbose = false;
+
+    /**
+     * Launch a TCK test program.
+     * <p><pre>
+     * TCKTest supports the following commands:
+     *
+     *  -help       Print the command use summary.
+     *  no args     Same as -help.
+     *
+     *  -send       sms://&lt;phonenumber:port//&gt; target for
+     *                  sending messages.
+     *  -receive    sms://:&lt;port&gt; target  for receiving messages.
+     *  -message    Message string to send.
+     *  -copies     Specifies the number of copies of the message data.
+     *  -text       Send as a text message.
+     *  -binary     Send as a binary message.
+     *  -multipart  Send as a multipart message. (if JSR205 included)
+     *  -verbose    Print messages as they are sent and received.
+     *
+     * Note: The protocol for -send and -receive can also be "cbs:" or "mms:".
+     *
+     * </pre>
+     *
+     * @param args  The command-line argument list.
+     */
+    public TCKTest(final String[] args) throws IllegalArgumentException {
+
+        // Parse the command line arguments. Show help, if necessary.
+        boolean showHelp = parseArgs(args);
+        if (showHelp == true) {
+            printHelp();
+            return;
+        }
+
+        // If verbose mode is active, show the command-line arguments.
+        if (verbose) {
+            System.out.println("Command-Line arguments:");
+            for (int i = 0, n = args.length; i < n; i++) {
+                 System.out.print(" " + args[i]);
+            }
+            System.out.println();
+        }
+
+        // Create the payload, which is the message, duplicated "copies" times.
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < msgCopies; i++) {
+            sb.append(message);
+        }
+        message = sb.toString();
+
+        try {
+            
+            // Open the SMS, CBS or MMS connection.
+            MessageConnection conn = new MessageConnector().open(address);
+
+            // Message to be processed.
+            Message msg = null;
+
+            if (sending) {
+
+                if (msgType.equals(MessageConnection.TEXT_MESSAGE)) {
+                    msg = createTextMessage(conn, msgType, message);
+                } else if (msgType.equals(MessageConnection.BINARY_MESSAGE)) {
+                    msg = createBinaryMessage(conn, msgType, message);
+               // #ifdef ENABLE_JSR_205
+                } else if (msgType.equals(
+                    MessageConnection.MULTIPART_MESSAGE)) {
+                    msg = createMultipartMessage(conn, msgType, address,
+                                                 message);
+               // #endif ENABLE_JSR_205
+                }
+                msg.setAddress(address);
+
+                if (verbose) {
+                    System.out.println("    Sending to: " + address);
+                    System.out.println("  Message type: " + msgType);
+                    System.out.println("Message length: " + message.length() +
+                                       " characters.");
+                }
+
+                conn.send(msg);
+
+                if (verbose) {
+                    System.out.println("Message sent.");
+                }
+
+            } else {
+
+                if (verbose) {
+                    System.out.println("Waiting for a message...");
+                }
+
+                msg = conn.receive();
+
+                if (verbose) {
+                    System.out.println("Message received.");
+                }
+            }
+
+            // Wait for streams to finish, then close the connection.
+            conn.close();
+
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+            System.out.println("ERROR: " + ioe.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("ERROR: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Parse the command line arguments and get parameter data.
+     *
+     * @param args All command-line arguments.
+     *
+     * @return <code>true</code> if the user requested help (i.e., the command
+     *     line was blank, or <code>-help</code> was specified as one of the
+     *     command-line arguments); <code>false</code>, otherwise.
+     *
+     * @throws IllegalArgumentException if a command-line switch was missing a
+     *     parameter or if the switch had inappropriate data.
+     */
+    private boolean parseArgs(final String[] args) {
+
+        // See if the user requested help.
+        if (args.length == 0 || args[0].equalsIgnoreCase("-help")) {
+            return true;
+        }
+
+        for (int i = 0, n = args.length; i < n; i++) {
+
+            String command = args[i];
+
+            if (command.equalsIgnoreCase("-send")) {
+
+                sending = true;
+                i++;
+                if (i >= n) {
+                    throw new IllegalArgumentException("Please specify an " +
+                                                       "address.");
+                }
+                address = args[i]; 
+
+            } else if (command.equalsIgnoreCase("-receive")) {
+
+                sending = false;
+                i++;
+                if (i >= n) {
+                    throw new IllegalArgumentException("Please specify an " +
+                                                       "address.");
+                }
+                address = args[i]; 
+
+            } else if (command.equalsIgnoreCase("-message")) {
+
+                i++;
+                if (i >= n) {
+                    throw new IllegalArgumentException("Please specify a " +
+                                                        "message.");
+                }
+                message = args[i]; 
+
+            } else if (command.equalsIgnoreCase("-copies")) {
+
+                i++;
+                if (i >= n) {
+                    throw new IllegalArgumentException("Please specify the "
+                        + "number of times the message will be copied into the "
+                        + "sending buffer.");
+                }
+                msgCopies = Integer.parseInt(args[i]);
+
+            } else if (command.equalsIgnoreCase("-text")) {
+                msgType = MessageConnection.TEXT_MESSAGE;
+            } else if (command.equalsIgnoreCase("-binary")) {
+                msgType = MessageConnection.BINARY_MESSAGE;
+           // #ifdef ENABLE_JSR_205
+            } else if (command.equalsIgnoreCase("-multipart")) {
+                msgType = MessageConnection.MULTIPART_MESSAGE;
+           // #endif ENABLE_JSR_205
+            } else if (command.equalsIgnoreCase("-verbose")) {
+                verbose = true;
+            } else {
+                throw new IllegalArgumentException("Unknown command: " +
+                                                   command);
+            }
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Construct a <code>TextMessage</code>
+     *
+     * @param msgconn The currently-open message connection.
+     * @param type The message type, which should be "text".
+     * @param payload The message payload to be sent.
+     *
+     * @return The <code>TextMessage</code> object.
+     *
+     * @throws IllegalArgumentException if the message could not be constructed.
+     */
+    private TextMessage createTextMessage(MessageConnection msgconn,
+        String type, String payload) throws IllegalArgumentException {
+
+        TextMessage msg = (TextMessage)msgconn.newMessage(type);
+        if (msg == null) {
+            throw new IllegalArgumentException("Message type, " + type +
+                                               ", not supported.");
+        }
+        msg.setPayloadText(payload);
+
+        return msg;
+    }
+
+    /**
+     * Construct a <code>BinaryMessage</code>
+     *
+     * @param msgconn The currently-open message connection.
+     * @param type The message type, which should be "binary".
+     * @param payload The message payload to be sent.
+     *
+     * @return The <code>BinaryMessage</code> object.
+     *
+     * @throws IllegalArgumentException if the message could not be constructed.
+     */
+    private BinaryMessage createBinaryMessage(MessageConnection msgconn,
+        String type, String payload) throws IllegalArgumentException {
+
+        BinaryMessage msg = (BinaryMessage)msgconn.newMessage(type);
+        if (msg == null) {
+            throw new IllegalArgumentException("Message type, " + type +
+                                               ", not supported.");
+        }
+        msg.setPayloadData(payload.getBytes());
+
+        return msg;
+    }
+
+    // #ifdef ENABLE_JSR_205
+    /**
+     * Construct a <code>MultipartMessage</code>.
+     * <p>
+     * Note: The <code>MultipartMessage</code> only consists of a single
+     * <code>MessagePart</code>.
+     *
+     * @param msgconn The currently-open message connection.
+     * @param type The message type, which should be "multipart".
+     * @param address The MMS address to which the message with be sent.
+     * @param payload The message payload to be sent.
+     *
+     * @return The <code>MultipartMessage</code> object.
+     *
+     * @throws IllegalArgumentException if the message could not be constructed.
+     */
+    private MultipartMessage createMultipartMessage(MessageConnection msgconn,
+        String type, String address, String payload)
+        throws IllegalArgumentException, SizeExceededException {
+
+        MMSAddress parsedAddress = MMSAddress.getParsedMMSAddress(address);
+        if (parsedAddress == null) {
+            throw new IllegalArgumentException("Invalid MMS connection URL");
+        }
+
+        String host = new String(parsedAddress.address);
+        String appID = new String(parsedAddress.appId);
+
+        MultipartMessage msg = (MultipartMessage)msgconn.newMessage(type);
+        if (msg == null) {
+            throw new IllegalArgumentException("Message type, " + type +
+                                               ", not supported.");
+        }
+
+        // Pick up the message payload; build a multipart message.
+        byte[] content = payload.getBytes();
+        msg = new MultipartObject(address);
+
+/*
+ * RFC: MessageConnection sets the "from" address.
+        String fromAddress = "mms://+1234567:33301";
+        System.out.println("fromAddress="+fromAddress);
+        // ((MultipartObject)msg).addAddress("from", fromAddress);
+        ((MultipartObject)msg).setFromAddress("from", fromAddress);   // ???
+*/
+
+        // The content type should be "multipart," here.
+        String contentType = type;
+
+        /*
+         * contentID = "Content-ID" ":" msg-id
+         * <p>
+         * The Content-ID part is the phone number, while the msg-id
+         * part is the application ID [RFC 2045].
+         *
+         * RFC: Need verification of syntax.
+         */
+        String contentID = "Content-ID:" + appID;
+
+        String contentLocation = null;
+
+        // No encoding will be done.
+        String encoding = null;
+
+        MessagePart msgPart = new MessagePart(content, 0,
+            content.length, contentType, contentID, contentLocation,
+            encoding);
+        msg.addMessagePart(msgPart);
+        return msg;
+    }
+    // #endif ENABLE_JSR_205
+
+    /**
+     * Display some help for the user.
+     */
+    private void printHelp() {
+
+        System.out.println("\n  TCKTest supports the following commands:\n\n"
+            + "  -help       Print the command use summary.\n"
+            + "  no args     Same has -help.\n\n"
+            + "  -send       sms://<phonenumber:port//> target for "
+            + "sending messages.\n"
+            + "  -receive    sms://:<port> target for receiving messages.\n"
+            + "  -message    Message string to send.\n"
+            + "  -copies     Specifies the number of copies of the message "
+            + "data.\n"
+            + "  -text       Send as a text message.\n"
+            + "  -binary     Send as a binary message.\n"
+
+       // #ifdef ENABLE_JSR_205
+            + "  -multipart  Send as a multipart message.\n"
+       // #endif ENABLE_JSR_205
+
+            + "  -verbose    Print messages as they are sent and received.\n\n"
+            + " Note: The protocol for -send and -receive can also be \"cbs:\" "
+            + "or \"mms:\".\n");
+    }
+
+    /**
+     * Main entry point. Start a new instance of the TCK test harness.
+     *
+     * @param args  The command-line argument list.
+     */
+    public static void main(String[] args) {
+
+        // Using an instance mostly avoids the need for static variables.
+        try {
+            new TCKTest(args);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            System.exit(-1);
+        }
+    }
+
+}
+
