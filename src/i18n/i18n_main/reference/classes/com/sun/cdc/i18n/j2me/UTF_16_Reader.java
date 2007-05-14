@@ -30,7 +30,7 @@ import java.io.*;
 
 
 /** Reader for UTF-16 encoded input streams. */
-public class UTF_16_Reader extends com.sun.cdc.i18n.StreamReader {
+public class UTF_16_Reader extends com.sun.cldc.i18n.StreamReader {
 
     /** the first byte of a pair of bytes that represent a 16-bit char */
     protected int firstByte = -1;
@@ -83,22 +83,40 @@ public class UTF_16_Reader extends com.sun.cdc.i18n.StreamReader {
     protected char mergeBytesLittleEndian(int firstByte, int secondByte) {
         return (char) ((secondByte << 8) + firstByte);
     }
+    /** Convert two bytes to a 16-bit char
+     * using the current byte order.
+     * @param firstByte the first of two bytes representing a char
+     * @param secondByte the second of two bytes representing a char
+     * @return the character represented by the two bytes
+     */
+    protected char mergeBytes(int firstByte, int secondByte) {
+        if (byteOrder == BIG_ENDIAN) {
+            return mergeBytesBigEndian(firstByte,secondByte);
+        } else { // if (byteOrder == LITTLE_ENDIAN)
+            return mergeBytesLittleEndian(firstByte,secondByte);
+        }
+    }
+
     /**
      * If the two argument bytes represent a Byte Order Mark (BOM),
-     * return the corresponding byte order constant; else return the
-     * value corresponding to the default byte order.
+     * set the byteOrder member to the corresponding byte order constant;
+     * else set it to the default byte order.
      * @param firstByte the first of two bytes representing a char or BOM
      * @param secondByte the second of two bytes representing a char or BOM
-     * @return either BIG_ENDIAN or LITTLE_ENDIAN
+     * @return true if it was a byte order mark, false it it was data
      */
-    protected int bomDetect(int firstByte, int secondByte) {
+    protected boolean bomDetect(int firstByte, int secondByte) {
         if (firstByte == 0xFE && secondByte == 0xFF) {
-            return BIG_ENDIAN;
+            byteOrder = BIG_ENDIAN;
+            return true;
         } else if (firstByte == 0xFF && secondByte == 0xFE) {
-            return LITTLE_ENDIAN;
+            byteOrder = LITTLE_ENDIAN;
+            return  true;
         } else { // default
-            // TODO: make a platform call or a fetch from XML configuration
-            return BIG_ENDIAN;
+            // The UTF-16 FAQ says that in absence of BOM
+            // big-endian byte serialization is used.
+            byteOrder = BIG_ENDIAN;
+            return false;
         }
     }
 
@@ -127,19 +145,17 @@ public class UTF_16_Reader extends com.sun.cdc.i18n.StreamReader {
                 return (0 == count) ? -1 : count;
             }
 
-            // only for the first two bytes: examine BOM
             if (byteOrder == UNKNOWN_BYTE_ORDER) {
-                byteOrder = bomDetect(firstByte,secondByte);
+                // only for the first two bytes: examine BOM
+                final boolean itWasBOM = bomDetect(firstByte,secondByte);
+                if (!itWasBOM) {
+                    cbuf[off + count] = mergeBytes(firstByte,secondByte);
+                    count++;
+                }
+            } else {
+                cbuf[off + count] = mergeBytes(firstByte,secondByte);
+                count++;
             }
-
-            if (byteOrder == BIG_ENDIAN) {
-                cbuf[off + count] =
-                        mergeBytesBigEndian(firstByte,secondByte);
-            } else { // if (byteOrder == LITTLE_ENDIAN)
-                cbuf[off + count] =
-                        mergeBytesLittleEndian(firstByte,secondByte);
-            }
-            count++;
         }
         return count;
     }
@@ -196,6 +212,13 @@ public class UTF_16_Reader extends com.sun.cdc.i18n.StreamReader {
      * that includes that character so the reader will throw an IOException
      */
     public int sizeOf(byte[] array, int offset, int length) {
+        int b1 = 0xff & array[0];
+        int b2 = 0xff & array[1];
+        if ((b1 == 0xfe && b2 == 0xff)
+          ||(b1 == 0xff && b2 == 0xfe)){
+            // do not count BOM, it's not a part of data
+            return length/2 - 1;
+        }
         return length/2;
     }
 }
