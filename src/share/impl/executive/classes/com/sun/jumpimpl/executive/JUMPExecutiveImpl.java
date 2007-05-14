@@ -30,6 +30,7 @@ import com.sun.jump.module.presentation.JUMPPresentationModule;
 import com.sun.jump.module.presentation.JUMPPresentationModuleFactory;
 import com.sun.jump.executive.JUMPExecutive;
 import com.sun.jump.executive.JUMPUserInputManager;
+import com.sun.jump.executive.JUMPIsolateFactory;
 import com.sun.jump.executive.JUMPIsolateProxy;
 import com.sun.jump.executive.JUMPApplicationProxy;
 import com.sun.jump.message.JUMPMessagingService;
@@ -37,9 +38,6 @@ import com.sun.jump.message.JUMPMessageDispatcher;
 import com.sun.jump.message.JUMPOutgoingMessage;
 import com.sun.jump.message.JUMPMessage;
 import com.sun.jump.common.JUMPAppModel;
-
-import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModuleFactory;
-import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModule;
 
 import com.sun.jumpimpl.process.JUMPProcessProxyImpl;
 import com.sun.jumpimpl.process.JUMPModulesConfig;
@@ -60,6 +58,8 @@ import java.io.BufferedInputStream;
 public class JUMPExecutiveImpl extends JUMPExecutive {
     private JUMPProcessProxyImpl pp;
     private JUMPOSInterface os;
+    private JUMPIsolateFactory isolateFactory = null;
+
     
     // name of a propoerty which points to name of a propoerty file which
     // overrides default modules configuration
@@ -111,10 +111,9 @@ public class JUMPExecutiveImpl extends JUMPExecutive {
         
         if (false) {
             // Sample code to create blank isolate upon startup
-            JUMPIsolateManagerModuleFactory lcmf =
-                    JUMPIsolateManagerModuleFactory.getInstance();
-            JUMPIsolateManagerModule lcm = lcmf.getModule();
-            JUMPIsolateProxy ip = lcm.newIsolate(JUMPAppModel.XLET);
+            JUMPIsolateFactory factory = jei.getIsolateFactory();
+                    
+            JUMPIsolateProxy ip = factory.newIsolate(JUMPAppModel.XLET);
             System.err.println("New isolate created="+ip);
             
             JUMPInstallerModuleFactory imf =
@@ -185,5 +184,12 @@ public class JUMPExecutiveImpl extends JUMPExecutive {
     
     public JUMPUserInputManager getUserInputManager() {
         return null;
+    }
+
+    public synchronized JUMPIsolateFactory getIsolateFactory() {
+        if (isolateFactory == null) 
+            isolateFactory =  new IsolateFactoryImpl();
+
+        return isolateFactory;
     }
 }

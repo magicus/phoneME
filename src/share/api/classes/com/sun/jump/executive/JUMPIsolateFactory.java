@@ -24,42 +24,36 @@
  * information or have any questions. 
  */
 
-package com.sun.jumpimpl.module.isolatemanager;
+package com.sun.jump.executive;
 
-import java.util.Map;
-import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModule;
-import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModuleFactory;
+import com.sun.jump.module.JUMPModule;
+import com.sun.jump.common.JUMPAppModel;
 
 /**
- *
+ * <code>JUMPIsolateFactory</code> is an executive feature that performs
+ * application isolate creation and retrieval operations.
  */
-public class IsolateManagerModuleFactoryImpl extends JUMPIsolateManagerModuleFactory {
-    private JUMPIsolateManagerModule MODULE;
-    
-    /** 
-     * Creates a new instance of IsolateManagerModuleFactoryImpl 
+public interface JUMPIsolateFactory {
+
+    /**
+     * Create new isolate conforming to <code>model</code>
      */
-    public IsolateManagerModuleFactoryImpl() {
-	super();
-    }
-    
-    /** 
-     * Get the singleton isolatemanager module for this address space
+    public JUMPIsolateProxy newIsolate(JUMPAppModel model);
+
+    /**
+     * Create new isolate conforming to <code>model</code>,
+     * with additional VM arguments.
      */
-    public synchronized JUMPIsolateManagerModule getModule() {
-	if (MODULE == null) {
-	    MODULE = new IsolateManagerModuleImpl();
-	}
-	return MODULE;
-    }
-        
-    public void load(Map config) {
-	getModule(); // Create our singleton
-	MODULE.load(config);
-    }
+    public JUMPIsolateProxy newIsolate(JUMPAppModel model, String vmArgs);
+
+    /**
+     * Returns the <code>JUMPIsolate</code> associated with the isolate id.
+     * It returns <Code>null</code> if no such isolate is found.
+     */
+    public JUMPIsolateProxy getIsolate(int isolateId);
     
-    public void unload() {
-	getModule(); // Create our singleton
-	MODULE.unload();
-    }
+    /**
+     * Returns all the active and running isolates.
+     */
+    public JUMPIsolateProxy[] getActiveIsolates();
 }

@@ -30,6 +30,7 @@ import com.sun.jump.common.JUMPContent;
 import com.sun.jump.common.JUMPAppModel;
 import com.sun.jump.executive.JUMPApplicationProxy;
 import com.sun.jump.executive.JUMPExecutive;
+import com.sun.jump.executive.JUMPIsolateFactory;
 import com.sun.jump.executive.JUMPIsolateProxy;
 import com.sun.jump.message.JUMPMessage;
 import com.sun.jump.message.JUMPMessageDispatcher;
@@ -41,8 +42,6 @@ import com.sun.jump.module.download.JUMPDownloadDescriptor;
 import com.sun.jump.module.download.JUMPDownloader;
 import com.sun.jump.module.download.JUMPDownloadModule;
 import com.sun.jump.module.download.JUMPDownloadModuleFactory;
-import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModule;
-import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModuleFactory;
 import com.sun.jump.module.presentation.JUMPPresentationModule;
 
 import com.sun.jumpimpl.module.download.DownloadDestinationImpl;
@@ -90,13 +89,15 @@ public class AutoTester implements JUMPPresentationModule, JUMPMessageHandler {
      */
     public void installAndPerformTests(String descriptorUrl) {
 
-        JUMPIsolateManagerModule lcm = JUMPIsolateManagerModuleFactory.getInstance().getModule();
+        JUMPExecutive executive = JUMPExecutive.getInstance();
 
 	JUMPDownloadModule downloadModule;
 	JUMPInstallerModule installerModule;
 
+        JUMPIsolateFactory lcm = executive.getIsolateFactory();
+
 	// Get the download and install modules based on the URL
-	if (descriptorUrl.endsWith(".jad"))  {
+	if (descriptorUrl.trim().toLowerCase().endsWith(".jad"))  {
             downloadModule = JUMPDownloadModuleFactory.getInstance().getModule(JUMPDownloadModuleFactory.PROTOCOL_MIDP_OTA);
             installerModule = JUMPInstallerModuleFactory.getInstance().getModule(JUMPAppModel.MIDLET);
 	} else {
@@ -107,7 +108,7 @@ public class AutoTester implements JUMPPresentationModule, JUMPMessageHandler {
         try {
 
 	   // Start the message dispatcher first, for the lifecycle events.
-           JUMPMessageDispatcher md = JUMPExecutive.getInstance().getMessageDispatcher();
+           JUMPMessageDispatcher md = executive.getMessageDispatcher();
            md.registerHandler(JUMPIsolateLifecycleRequest.MESSAGE_TYPE, this); 
 
            while (true) { // Exits when the exception happens.

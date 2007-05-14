@@ -25,8 +25,8 @@
 package com.sun.jumpimpl.module.lifecycle;
 
 import com.sun.jump.executive.JUMPIsolateProxy;
-import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModule;
-import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModuleFactory;
+import com.sun.jump.executive.JUMPExecutive;
+import com.sun.jump.executive.JUMPIsolateFactory;
 import com.sun.jump.module.lifecycle.JUMPApplicationLifecycleModule;
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.executive.JUMPApplicationProxy;
@@ -75,8 +75,7 @@ public class OneLiveOnlyApplicationLifecycleModule
             
             if (proxy == null) {
                 // Get a handle to the isolate manager.
-                JUMPIsolateManagerModuleFactory ismf = JUMPIsolateManagerModuleFactory.getInstance();
-                JUMPIsolateManagerModule ism = ismf.getModule();
+                JUMPIsolateFactory ism = JUMPExecutive.getInstance().getIsolateFactory();
                 
                 // Create isolate, which returns JUMPIsolateProxy
                 JUMPIsolateProxy ip = ism.newIsolate(app.getAppType());

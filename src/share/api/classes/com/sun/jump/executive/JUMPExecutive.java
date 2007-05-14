@@ -78,4 +78,10 @@ public abstract class JUMPExecutive
      * Gets the User input manager configured with the executive.
      */
     public abstract JUMPUserInputManager getUserInputManager();
+
+    /**
+     * Gets the Isolate factory configured with the executive.
+     */
+
+    public abstract JUMPIsolateFactory getIsolateFactory();
 }

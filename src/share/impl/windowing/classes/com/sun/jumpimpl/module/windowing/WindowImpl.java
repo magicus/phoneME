@@ -26,7 +26,6 @@
 
 package com.sun.jumpimpl.module.windowing;
 
-import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModuleFactory;
 import com.sun.jump.executive.JUMPExecutive;
 import com.sun.jump.common.JUMPIsolate;
 import com.sun.jump.common.JUMPWindow;
@@ -125,7 +124,7 @@ public class WindowImpl extends JUMPWindow {
             return null;
         }
 
-        return JUMPIsolateManagerModuleFactory.getInstance(
-            ).getModule().getIsolate(isolateId);
+        return JUMPExecutive.getInstance(
+            ).getIsolateFactory().getIsolate(isolateId);
     }
 }

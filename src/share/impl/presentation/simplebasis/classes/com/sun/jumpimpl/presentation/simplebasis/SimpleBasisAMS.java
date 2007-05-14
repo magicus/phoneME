@@ -28,6 +28,7 @@ import com.sun.jump.command.JUMPIsolateLifecycleRequest;
 import com.sun.jump.command.JUMPIsolateWindowRequest;
 import com.sun.jump.common.JUMPWindow;
 import com.sun.jump.executive.JUMPExecutive;
+import com.sun.jump.executive.JUMPIsolateFactory;
 import com.sun.jump.message.JUMPMessageDispatcher;
 import com.sun.jump.message.JUMPMessageDispatcherTypeException;
 import com.sun.jump.module.lifecycle.JUMPApplicationLifecycleModule;
@@ -41,8 +42,6 @@ import com.sun.jump.message.JUMPMessage;
 import com.sun.jump.message.JUMPMessageHandler;
 import com.sun.jump.module.installer.JUMPInstallerModule;
 import com.sun.jump.module.installer.JUMPInstallerModuleFactory;
-import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModule;
-import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModuleFactory;
 import com.sun.jump.module.windowing.JUMPWindowingModule;
 import com.sun.jump.module.windowing.JUMPWindowingModuleFactory;
 import java.awt.BorderLayout;
@@ -78,8 +77,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
     private JUMPWindowingModule wm = null;
     private JUMPApplicationLifecycleModuleFactory almf = null;
     private JUMPApplicationLifecycleModule alm = null;
-    private JUMPIsolateManagerModuleFactory lcmf = null;
-    private JUMPIsolateManagerModule lcm = null;
+    private JUMPIsolateFactory lcm = null;
     private JUMPApplicationProxy currentApp = null;
     private Object timeoutObject = null;
     private boolean appWindowDisplayState = false;
@@ -239,11 +237,11 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         almf = JUMPApplicationLifecycleModuleFactory.getInstance();
         alm = almf.getModule(JUMPApplicationLifecycleModuleFactory.POLICY_ONE_LIVE_INSTANCE_ONLY);
         
-        lcmf = JUMPIsolateManagerModuleFactory.getInstance();
-        lcm = lcmf.getModule();
         
         JUMPExecutive e = JUMPExecutive.getInstance();
         JUMPMessageDispatcher md = e.getMessageDispatcher();
+
+        lcm = e.getIsolateFactory();
         
         try {
             md.registerHandler(JUMPIsolateWindowRequest.MESSAGE_TYPE, this);
