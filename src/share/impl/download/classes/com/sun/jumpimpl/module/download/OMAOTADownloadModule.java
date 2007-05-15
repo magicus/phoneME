@@ -155,12 +155,10 @@ public class OMAOTADownloadModule //extends GenericDownloadModuleImpl
           return d;
 
       } catch (SyntaxException e) {
-          e.printStackTrace();
           throw new JUMPDownloadException("The descriptor file is invalid");
       } catch (JUMPDownloadException e) {
           throw e;
       } catch (Throwable e) {
-          e.printStackTrace();
           throw new JUMPDownloadException( "Unexpected error:"+e.getMessage() );
       }
     }

@@ -220,15 +220,13 @@ implements JUMPDownloadModule {
             d.checkOut();
         }
         catch (SyntaxException e) {
-            e.printStackTrace(); 
-            throw new JUMPDownloadException("Descriptor is invalid");
+            throw new JUMPDownloadException("ERROR: Descriptor is invalid");
         }
         catch (JUMPDownloadException e) {
             throw e;
         }
         catch (Throwable e) {
-            e.printStackTrace();
-            throw new JUMPDownloadException("I/O trouble:\n"+e.toString());
+            throw new JUMPDownloadException("ERROR: I/O trouble:\n"+e.toString());
         }
         return d;
     }
