@@ -107,6 +107,10 @@
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_MONITOR_EXIT
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_GC_RENDEZVOUS
 
+#ifdef CVM_JIT_USE_FP_HARDWARE
+#define CVMCCM_HAVE_PLATFORM_SPECIFIC_D2F
+#endif
+
 /*
  * The following #define/#undef are used to determine whether to include the
  * shared C implementations of these CCM intrinsic helpers in the build

@@ -192,7 +192,11 @@ CVMJITcbufAllocate(CVMJITCompilationContext* con, CVMSize extraSpace)
 
     /* Start with the last possible instruction in this buffer (sort of
        like maxLogicalPC) */
-    con->earliestConstantRefPC = con->numMainLineInstructionBytes;
+    con->earliestConstantRefPC = MAX_LOGICAL_PC;
+
+#ifdef CVM_JIT_USE_FP_HARDWARE    
+    con->earliestFPConstantRefPC = MAX_LOGICAL_PC;
+#endif    
 
     /* find a free buffer to generate code into */
     cbuf = CVMJITcodeCacheFindFreeBuffer(con, bufSizeEstimate, CVM_TRUE);

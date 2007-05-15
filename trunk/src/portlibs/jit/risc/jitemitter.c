@@ -563,9 +563,9 @@ CVMCPUCCALLpinArg(CVMJITCompilationContext *con,
 #endif /* !CVMCPU_HAVE_PLATFORM_SPECIFIC_C_CALL_CONVENTION &&
           !CVMCPU_ALLOW_C_ARGS_BEYOND_MAX_ARG_REGS */
 
-/* Purpose: Emits a constantpool dump with a branch around it if needed. */
-void
-CVMRISCemitConstantPoolDumpWithBranchAroundIfNeeded(
+/* Purpose: Emits a constantpool dump with a branch around. */
+void 
+CVMRISCemitConstantPoolDumpWithBranchAround(
     CVMJITCompilationContext* con)
 {
     if (CVMJITcpoolNeedDump(con)) {
@@ -582,5 +582,15 @@ CVMRISCemitConstantPoolDumpWithBranchAroundIfNeeded(
 	CVMJITaddCodegenComment((con, "branch over constant pool dump"));
         CVMCPUemitBranch(con, endPC, CVMCPU_COND_AL);
         CVMJITcbufPop(con);
+    }
+}
+
+/* Purpose: Emits a constantpool dump with a branch around it if needed. */
+void
+CVMRISCemitConstantPoolDumpWithBranchAroundIfNeeded(
+    CVMJITCompilationContext* con)
+{
+    if (CVMJITcpoolNeedDump(con)) {
+	CVMRISCemitConstantPoolDumpWithBranchAround(con);
     }
 }

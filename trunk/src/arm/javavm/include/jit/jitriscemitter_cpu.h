@@ -165,7 +165,7 @@ CVMARMalurhsEncodeToken(CVMJITCompilationContext* con,
 
 /* MemSpec query APIs: ==================================================== */
 
-#define CVMARMisMode2Instruction(opcode) (((opcode) & 0x0f000000) != 0)
+#define CVMARMisMode2Instruction(opcode) ((opcode >> 26) == 0x1)
 
 #define CVMCPUmemspecIsEncodableAsImmediate(value) \
     ((-0xfff <= ((CVMInt32)(value))) && (((CVMInt32)(value)) <= 0xfff))
@@ -174,6 +174,7 @@ CVMARMalurhsEncodeToken(CVMJITCompilationContext* con,
     (CVMARMisMode2Instruction(opcode) ? \
      CVMCPUmemspecIsEncodableAsImmediate(value) : ((value) <= 255))
 
+#define CVMARMisMode5Instruction(opcode) ((opcode >> 26) == 0x3)
 
 /* MemSpec token encoder APIs: ============================================ */
 
@@ -431,5 +432,23 @@ CVMARMCCALLgetRequired(CVMJITCompilationContext *con,
             CVMCPU_SP_REG, CVMCPU_SP_REG, stackWords, CVMJIT_NOSETCC); \
     }                                                                  \
 }
+
+#ifdef CVM_JIT_USE_FP_HARDWARE
+/* Purpose: Emits instructions to move register contents 
+ *          to and from fp registers */
+void
+CVMARMemitMoveFloatFP(CVMJITCompilationContext* con,
+                 int opcode, int destRegID, int srcRegID);
+
+void
+CVMARMemitMoveDoubleFP(CVMJITCompilationContext* con,
+                 int opcode, int fpRegID, int regID);
+
+/* Purpose: Emits instructions to move system register contents 
+ *          to and from ARM registers */
+void
+CVMARMemitStatusRegisterFP(CVMJITCompilationContext* con,
+                 int opcode, int statusReg, int regID);
+#endif /* CVM_JIT_USE_FP_HARDWARE */
 
 #endif /* _INCLUDED_ARM_JITRISCEMITTER_CPU_H */

@@ -73,7 +73,7 @@ findConstantEntry(
     CVMJITConstantEntry *thisEntry = head;
     while (thisEntry != NULL){
 	/* We ignore cached constants since they aren't real constants */
-	if ((!thisEntry->isCachedConstant) && 
+	if ((!thisEntry->isCachedConstant) &&
 	    (thisEntry->constSize == constSize) && (*cfp)(thisEntry, vp))
 	{
 	    return thisEntry;
@@ -102,7 +102,9 @@ addConstantEntry(
 #ifdef CVM_TRACE_JIT
     thisEntry->printName = CVMJITgetSymbolName(con);
 #endif
-    PUT_ON_CONSTANT_POOL_LIST(thisEntry, con);
+    thisEntry->next = con->constantPool;
+    con->constantPool = thisEntry;
+    con->constantPoolSize += (thisEntry->constSize == shortConst) ? 4 : 8;
     return thisEntry;
 }
 
@@ -117,10 +119,22 @@ CVMJITcpoolNeedDump(CVMJITCompilationContext* con)
     /* Make sure we haven't used more than half our load/store offset range. */
     if (con->numEntriesToEmit != 0) {
 	CVMInt32 logicalAddress = CVMJITcbufGetLogicalPC(con);
-	
-	if (!CVMJITcanReachAddress(con,
-				   logicalAddress, con->earliestConstantRefPC,
-				   CVMJIT_MEMSPEC_ADDRESS_MODE, CVM_TRUE)) {
+
+#ifdef CVM_JIT_USE_FP_HARDWARE
+	if (con->earliestFPConstantRefPC != MAX_LOGICAL_PC ||
+	    !CVMJITcanReachAddress(con, 
+	        logicalAddress, con->earliestFPConstantRefPC,
+	        CVMJIT_FPMEMSPEC_ADDRESS_MODE, CVM_TRUE)) {
+	    /* We are drifting dangerously towards not being able to reach
+	       the constants. */
+	    return CVM_TRUE;
+	}
+#endif
+
+	if (con->earliestConstantRefPC != MAX_LOGICAL_PC || 
+	    !CVMJITcanReachAddress(con,
+	        logicalAddress, con->earliestConstantRefPC,
+	        CVMJIT_MEMSPEC_ADDRESS_MODE, CVM_TRUE)) {
 	    /* We are drifting dangerously towards not being able to reach
 	       the constants. */
 	    return CVM_TRUE;
@@ -139,7 +153,7 @@ CVMJITgetRuntimeConstantReference(
     CVMCompareFunction cfp,
     CVMFillinFunction  ffp,
     void* vp,
-    CVMUint8 isCachedConstant)
+    CVMUint8 isCachedConstant, CVMBool isFloat)
 {
     CVMJITConstantEntry *thisEntry;
 
@@ -160,11 +174,20 @@ CVMJITgetRuntimeConstantReference(
 		break;
 	    /* We found an already emitted entry. Return its address if it can
 	       be reached from 'logicalAddress'. */
-	    if (CVMJITcanReachAddress(con,
+
+#ifdef CVM_JIT_USE_FP_HARDWARE
+ 	    if (isFloat && CVMJITcanReachAddress(con,
+				   logicalAddress, thisEntry->address,
+				   CVMJIT_FPMEMSPEC_ADDRESS_MODE, CVM_FALSE)) {
+		return thisEntry->address;
+	    }
+#endif
+
+	    if (!isFloat && CVMJITcanReachAddress(con,
 				      logicalAddress, thisEntry->address,
 				      CVMJIT_MEMSPEC_ADDRESS_MODE, CVM_FALSE)){
 		return thisEntry->address;
-	    }	
+	    }
 	    /* If we are here, we found an already emitted constant that is
 	       out of reach of the current 'logicalAddress'. Therefore we
 	       keep looking */
@@ -181,6 +204,13 @@ CVMJITgetRuntimeConstantReference(
     CVMassert(!thisEntry->hasBeenEmitted);
     CVMJITfixupAddElement(con, &(thisEntry->references), logicalAddress);
     CVMJITresetSymbolName(con);
+
+#ifdef CVM_JIT_USE_FP_HARDWARE
+    if (isFloat && logicalAddress < con->earliestFPConstantRefPC) {
+	/* See the farthest away constant reference */
+	con->earliestFPConstantRefPC = logicalAddress;
+    } else
+#endif
     if (logicalAddress < con->earliestConstantRefPC) {
 	/* See the farthest away constant reference */
 	con->earliestConstantRefPC = logicalAddress;
@@ -207,7 +237,6 @@ CVMFillinEntry32(CVMJITConstantEntry* thisEntry, void* vp)
     }
 }
 
-
 /*
  * Lookup and insert a 32-bit constant
  */
@@ -218,9 +247,20 @@ CVMJITgetRuntimeConstantReference32(
     CVMInt32 v)
 {
     return CVMJITgetRuntimeConstantReference( con, logicalAddress, shortConst,
-        &CVMCompareEntry32, &CVMFillinEntry32, &v, CVM_FALSE);
+        &CVMCompareEntry32, &CVMFillinEntry32, &v, CVM_FALSE, CVM_FALSE);
 }
 
+#ifdef CVM_JIT_USE_FP_HARDWARE
+CVMInt32
+CVMJITgetRuntimeFPConstantReference32(
+    CVMJITCompilationContext* con,
+    CVMInt32 logicalAddress,
+    CVMInt32 v)
+{
+    return CVMJITgetRuntimeConstantReference( con, logicalAddress, shortConst,
+        &CVMCompareEntry32, &CVMFillinEntry32, &v, CVM_FALSE, CVM_TRUE);
+}
+#endif
 
 #ifdef IAI_CACHEDCONSTANT
 /*
@@ -234,7 +274,7 @@ CVMJITgetRuntimeCachedConstant32(
     /* Reserve a slot for the cached constant */
     CVMJITgetRuntimeConstantReference(
 	con, logicalAddress, shortConst,
-        &CVMCompareEntry32, &CVMFillinEntry32, NULL, CVM_TRUE);
+        &CVMCompareEntry32, &CVMFillinEntry32, NULL, CVM_TRUE, CVM_FALSE);
     /*
      * Emit code to load the address of the constant into a platform
      * specific register. We don't know the true address of the cached
@@ -278,8 +318,20 @@ CVMJITgetRuntimeConstantReference64(
     CVMJavaVal64* vp)
 {
     return CVMJITgetRuntimeConstantReference( con, logicalAddress, longConst,
-        &CVMCompareEntry64, &CVMFillinEntry64, vp, CVM_FALSE);
+        &CVMCompareEntry64, &CVMFillinEntry64, vp, CVM_FALSE, CVM_FALSE);
 }
+
+#ifdef CVM_JIT_USE_FP_HARDWARE
+CVMInt32
+CVMJITgetRuntimeFPConstantReference64(
+    CVMJITCompilationContext* con,
+    CVMInt32 logicalAddress,
+    CVMJavaVal64* vp)
+{
+    return CVMJITgetRuntimeConstantReference( con, logicalAddress, longConst,
+        &CVMCompareEntry64, &CVMFillinEntry64, vp, CVM_FALSE, CVM_TRUE);
+}
+#endif
 
 void
 CVMJITdumpRuntimeConstantPool(CVMJITCompilationContext* con, CVMBool forceDump)
@@ -289,9 +341,10 @@ CVMJITdumpRuntimeConstantPool(CVMJITCompilationContext* con, CVMBool forceDump)
     CVMInt32 emitted = 0; /* Count those emitted */
     CVMUint32 size;
 
+
 #ifdef IAI_CODE_SCHEDULER_SCORE_BOARD
     CVMJITCSConstantPoolDumpInfo* dumpInfoItem;
-#endif   
+#endif
 
     if (con->numEntriesToEmit == 0) {
 	return;
@@ -325,12 +378,12 @@ CVMJITdumpRuntimeConstantPool(CVMJITCompilationContext* con, CVMBool forceDump)
 	}
     }
 #endif
-    
+
     /*
      * Dump the 1 word constants first, followed by the 2 word constants.
      * This way we can align the two work constants if necessary.
      */
-    size = shortConst; 
+    size = shortConst;
  dumpForNewSize:
     thisEntry = GET_CONSTANT_POOL_LIST_HEAD(con);
     while (thisEntry != NULL) {
@@ -352,7 +405,7 @@ CVMJITdumpRuntimeConstantPool(CVMJITCompilationContext* con, CVMBool forceDump)
 	    thisRef = thisEntry->references;
 	    while (thisRef != NULL) {
 	       if (thisEntry->isCachedConstant) {
-#ifdef IAI_CACHEDCONSTANT   
+#ifdef IAI_CACHEDCONSTANT
 		   CVMtraceJITCodegen((
 			":::::Fixed instruction at %d to reference %d\n",
 			thisRef->logicalAddress, thisLogicalAddress));
@@ -363,6 +416,7 @@ CVMJITdumpRuntimeConstantPool(CVMJITCompilationContext* con, CVMBool forceDump)
 		   CVMJITcbufPop(con);
 #endif /* IAI_CACHEDCONSTANT */
 	       } else {
+
 		   /* patch constant reference to proper address */
 		   CVMJITfixupAddress(con,
 			thisRef->logicalAddress, thisLogicalAddress,
@@ -390,7 +444,12 @@ CVMJITdumpRuntimeConstantPool(CVMJITCompilationContext* con, CVMBool forceDump)
     }
     CVMassert(con->numEntriesToEmit == emitted);
     con->numEntriesToEmit = 0;
-    con->earliestConstantRefPC = CVMJITcbufGetLogicalPC(con);
+    /* 64 bit align for dumping 64 bit constants */
+    con->constantPoolSize = 4;
+    con->earliestConstantRefPC = MAX_LOGICAL_PC;
+#ifdef CVM_JIT_USE_FP_HARDWARE
+    con->earliestFPConstantRefPC = MAX_LOGICAL_PC;
+#endif
 
 #ifdef IAI_CODE_SCHEDULER_SCORE_BOARD
     CVMJITcsClearEmitInPlace(con);
