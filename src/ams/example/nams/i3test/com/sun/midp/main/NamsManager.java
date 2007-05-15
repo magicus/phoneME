@@ -52,7 +52,7 @@ public class NamsManager extends MIDlet implements CommandListener {
      * The timeout before the running MIDlet is killed.
      */
     private static final int destroyTimeout =
-            Configuration.getIntProperty("suspendAppTimeout", 5000);
+        Configuration.getIntProperty("destroyMIDletTimeout", 5000);
     
     /** stores event copies for native events being tracked */
     static private EventCopyStorage eventCopyStorage = new EventCopyStorage();
