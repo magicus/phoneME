@@ -1,27 +1,27 @@
 /*
  * @(#)jitconstantpool.h	1.21 06/10/10
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
- *   
- * This program is free software; you can redistribute it and/or  
- * modify it under the terms of the GNU General Public License version  
- * 2 only, as published by the Free Software Foundation.   
- *   
- * This program is distributed in the hope that it will be useful, but  
- * WITHOUT ANY WARRANTY; without even the implied warranty of  
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
- * General Public License version 2 for more details (a copy is  
- * included at /legal/license.txt).   
- *   
- * You should have received a copy of the GNU General Public License  
- * version 2 along with this work; if not, write to the Free Software  
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
- * 02110-1301 USA   
- *   
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
- * Clara, CA 95054 or visit www.sun.com if you need additional  
- * information or have any questions. 
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
  *
  */
 
@@ -31,7 +31,7 @@
  * or simple instruction combinations. Such constants typically show up as
  * - large integers, bit patterns or floating-point numbers explicit in
  *   the computation.
- * - large numbers (such as large offsets from PC or an address base 
+ * - large numbers (such as large offsets from PC or an address base
  *   register) implicit in the computation
  * - absolute addresses of external program or data objects.
  *
@@ -58,7 +58,7 @@
  */
 struct CVMJITConstantEntry {
     CVMUint8            isCachedConstant; /* cached value */
-CVMUint8	        hasBeenEmitted;   /* true if already emitted */
+    CVMUint8	        hasBeenEmitted;   /* true if already emitted */
     CVMInt32		address;         /* only if hasBeenEmitted */
     CVMJITFixupElement* references;      /* ...otherwise */
     enum { shortConst, longConst } constSize;
@@ -75,11 +75,8 @@ CVMUint8	        hasBeenEmitted;   /* true if already emitted */
 /* get the first CVMJITConstantEntry */
 #define GET_CONSTANT_POOL_LIST_HEAD(con) ((con)->constantPool)
 
-/* add a new CVMJITConstantEntry */
-#define PUT_ON_CONSTANT_POOL_LIST(thisEntry, con) { \
-    thisEntry->next = (con)->constantPool;\
-    (con)->constantPool = thisEntry;\
-}
+/* Initial value of earliestConstantRefPC */
+#define MAX_LOGICAL_PC 0x7FFFFFFF
 
 /*
  * An instruction's logical address is relative to the origin of the
@@ -104,6 +101,18 @@ CVMInt32
 CVMJITgetRuntimeConstantReference64(
     CVMJITCompilationContext* con,
     CVMInt32 logicalAddress, CVMJavaVal64* cvp);
+
+#ifdef CVM_JIT_USE_FP_HARDWARE
+CVMInt32
+CVMJITgetRuntimeFPConstantReference32(
+    CVMJITCompilationContext* con,
+    CVMInt32 logicalAddress, CVMInt32 v);
+
+CVMInt32
+CVMJITgetRuntimeFPConstantReference64(
+    CVMJITCompilationContext* con,
+    CVMInt32 logicalAddress, CVMJavaVal64* vp);
+#endif
 
 /*
  * This function creates a cached constant reference in the constant pool

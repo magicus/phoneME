@@ -1,27 +1,27 @@
 /*
  * @(#)jitemitter_cpu.c	1.263 06/10/10
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
- *   
- * This program is free software; you can redistribute it and/or  
- * modify it under the terms of the GNU General Public License version  
- * 2 only, as published by the Free Software Foundation.   
- *   
- * This program is distributed in the hope that it will be useful, but  
- * WITHOUT ANY WARRANTY; without even the implied warranty of  
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU  
- * General Public License version 2 for more details (a copy is  
- * included at /legal/license.txt).   
- *   
- * You should have received a copy of the GNU General Public License  
- * version 2 along with this work; if not, write to the Free Software  
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  
- * 02110-1301 USA   
- *   
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa  
- * Clara, CA 95054 or visit www.sun.com if you need additional  
- * information or have any questions. 
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
  *
  */
 /*
@@ -56,7 +56,7 @@
 
 #include "javavm/include/clib.h"
 
-/* 
+/*
  * Macros for 64-bit access.
  */
 #if CVM_ENDIANNESS == CVM_BIG_ENDIAN
@@ -240,7 +240,7 @@ CVMCPUalurhsRelinquishResource(CVMJITRMContext* con,
         CVMRMrelinquishResource(con, ap->r2);
 	break;
     }
-    /* Will be freed whole-sale at the very end 
+    /* Will be freed whole-sale at the very end
        free(ap); */
 }
 
@@ -418,6 +418,53 @@ static const char *getOpcodeName(CVMInt32 opcode)
     case ARM_MVN_OPCODE:        name = "mvn"; break;
     case CVMCPU_CMP_OPCODE:     name = "cmp"; break;
     case CVMCPU_CMN_OPCODE:     name = "cmn"; break;
+
+    case CVMCPU_FADD_OPCODE:	name = "fadds"; break;
+    case CVMCPU_FSUB_OPCODE:	name = "fsubs"; break;
+    case CVMCPU_FMUL_OPCODE:	name = "fmuls"; break;
+    case CVMCPU_FDIV_OPCODE:	name = "fdivs"; break;
+
+    case CVMCPU_DADD_OPCODE:	name = "faddd"; break;
+    case CVMCPU_DSUB_OPCODE:	name = "fsubd"; break;
+    case CVMCPU_DMUL_OPCODE:	name = "fmuld"; break;
+    case CVMCPU_DDIV_OPCODE:	name = "fdivd"; break;
+
+    case CVMCPU_FLDR32_OPCODE:  name = "flds"; break;
+    case CVMCPU_FLDR64_OPCODE:  name = "fldd"; break;
+    case CVMCPU_FSTR32_OPCODE:  name = "fsts"; break;
+    case CVMCPU_FSTR64_OPCODE:  name = "fstd"; break;
+
+    case CVMARM_FLDRM32_OPCODE: name = "fldms"; break;
+    case CVMARM_FLDRM64_OPCODE: name = "fldmd"; break;
+    case CVMARM_FSTRM32_OPCODE: name = "fstms"; break;
+    case CVMARM_FSTRM64_OPCODE: name = "fstmd"; break;
+
+    case CVMCPU_FNEG_OPCODE:	name = "fnegs";   break;
+    case CVMCPU_DNEG_OPCODE:	name = "fnegd";   break;
+
+    case CVMARM_F2I_OPCODE:	name = "fsitos";  break;
+    case CVMARM_I2F_OPCODE:	name = "ftosizs"; break;
+    case CVMARM_D2I_OPCODE:	name = "ftosizd"; break;
+    case CVMARM_I2D_OPCODE:	name = "fsitod";  break;
+    case CVMARM_F2D_OPCODE:	name = "fcvtds";  break;
+    case CVMARM_D2F_OPCODE:	name = "fcvtsd";  break;
+
+    case CVMCPU_FMOV_OPCODE:	name = "fcpys";   break;
+    case CVMCPU_DMOV_OPCODE:	name = "fcpyd";   break;
+    case CVMARM_MOVFA_OPCODE:	name = "fmsr";    break;
+    case CVMARM_MOVAF_OPCODE:	name = "fmrs";    break;
+    case CVMARM_MOVDA_OPCODE:	name = "fmdrr";   break;
+    case CVMARM_MOVAD_OPCODE:	name = "fmrrd";   break;
+
+    case CVMARM_MOVSA_OPCODE:	name = "fmxr";   break;
+    case CVMARM_MOVAS_OPCODE:	name = "fmrx";   break;
+
+    case CVMCPU_FCMP_OPCODE:	name = "fcmps";   break;
+    case CVMARM_FCMPES_OPCODE:	name = "fcmpes";  break;
+    case CVMCPU_DCMP_OPCODE:	name = "fcmpd";   break;
+    case CVMARM_DCMPED_OPCODE:	name = "fcmped";  break;
+    case CVMARM_FMSTAT_OPCODE:	name = "fmstat";  break;
+
     default:
         CVMconsolePrintf("Unknown opcode 0x%08x", opcode);
         CVMassert(CVM_FALSE); /* Unknown opcode name */
@@ -591,6 +638,85 @@ dumpMode2Instruction(CVMJITCompilationContext *con,
     }
 }
 
+/* Purpose: Dumps the content of an ARM mode 5 operand. */
+void
+dumpMode5Instruction(CVMJITCompilationContext *con,
+		     CVMUint32 instruction, CVMCPUCondCode condCode)
+{
+#ifdef CVM_JIT_USE_FP_HARDWARE
+    int opcode  = instruction & 0x0FF00F00;
+    int destreg = (instruction >> 12) & 0xF;
+        destreg = ((instruction >> 22) & 0x1) | destreg << 1;
+    int basereg = (instruction >> 16) & 0xF;
+    int P       = (instruction >> 24) & 0x1;
+    int U       = (instruction >> 23) & 0x1;
+    int W       = (instruction >> 21) & 0x1;
+    int L       = (instruction >> 20) & 0x1;
+    int type    = (instruction >> 8) & 0xF;
+    int size    = (instruction & 0xFF) + destreg;
+    int offset  = instruction & 0x000000FF;
+    int puw     = P << 2 | U << 1 | W;
+
+    /* VFP load/store addressing modes */
+    enum {
+        unindexed = 2,
+        increment,
+        negativeOffset,
+        decrement,
+        positiveOffset
+    };
+
+    switch (puw) {
+        case unindexed:
+        case increment:
+        case decrement: {
+            CVMconsolePrintf("	f%sm", (L ? "ld" : "st"));
+
+            if (basereg == CVMARM_sp) {
+                CVMconsolePrintf("%c", L == P ? 'e' : 'f');
+                CVMconsolePrintf("%c", L == U ? 'd' : 'a');
+            } else {
+                CVMconsolePrintf("%c", L == P ? 'i' : 'd');
+                CVMconsolePrintf("%c", L == U ? 'b' : 'a');
+            }
+            CVMconsolePrintf("%c", type == 0xA ? 's' : 'd');
+            CVMconsolePrintf("%s	%s", conditions[condCode],
+                         regNames[basereg]);
+
+            if (W) {
+                CVMconsolePrintf("!");
+            }
+
+            CVMconsolePrintf(", {");
+            CVMconsolePrintf("%%f%d", destreg);
+            destreg += (type == 0xA ? 1:2);
+            while (destreg < size) {
+                CVMconsolePrintf(", ");
+	        CVMconsolePrintf("%%f%d", destreg);
+	        destreg += (type == 0xA ? 1:2);
+            }
+            CVMconsolePrintf("}");
+            break;
+        }
+        case negativeOffset:
+        case positiveOffset: {
+            CVMconsolePrintf("	f%s%c%s	%%f%d, [%s, ",
+                         (L ? "ld" : "st"),
+                         (type == 0xA ? 's' : 'd'),
+                          conditions[condCode], destreg, regNames[basereg]);
+
+            CVMconsolePrintf("#%c%d", (U ? '+' : '-'), offset);
+            CVMconsolePrintf("]");
+	    break;
+        }
+        default: {
+            CVMconsolePrintf("Unknown opcode 0x%08x", opcode);
+            CVMassert(CVM_FALSE); /* Unknown opcode name */
+        }
+    }
+#endif /* CVM_JIT_USE_FP_HARDWARE */
+}
+
 static void
 printPC(CVMJITCompilationContext* con)
 {
@@ -630,7 +756,7 @@ void
 CVMJITemitWord(CVMJITCompilationContext *con, CVMInt32 wordVal)
 {
     CVMJITcsSetEmitInPlace(con);
-    emitInstruction(con, wordVal); 
+    emitInstruction(con, wordVal);
     CVMJITcsClearEmitInPlace(con);
 
     CVMtraceJITCodegenExec({
@@ -644,7 +770,7 @@ void
 CVMCPUemitNop(CVMJITCompilationContext *con)
 {
     CVMJITcsSetEmitInPlace(con);
-    emitInstruction(con, CVMCPU_NOP_INSTRUCTION); 
+    emitInstruction(con, CVMCPU_NOP_INSTRUCTION);
     CVMJITcsClearEmitInPlace(con);
 
     CVMtraceJITCodegenExec({
@@ -660,7 +786,7 @@ CVMCPUemitNop(CVMJITCompilationContext *con)
 static void
 emitBinaryALUConstant16Conditional(CVMJITCompilationContext* con, int opcode,
 				   int destReg, int sourceReg,
-				   CVMUint32 constant, 
+				   CVMUint32 constant,
 				   CVMBool setcc, CVMCPUCondCode condCode)
 {
     /* Scaled components of the 16-bit constant */
@@ -674,7 +800,7 @@ emitBinaryALUConstant16Conditional(CVMJITCompilationContext* con, int opcode,
 	      opcode == CVMCPU_XOR_OPCODE ||
 	      opcode == CVMCPU_ADD_OPCODE ||
 	      opcode == CVMCPU_SUB_OPCODE);
-    
+
     /* Encode as two instructions */
     CVMJITcsPushSourceRegister(con, sourceReg);
     CVMCPUemitBinaryALUConditional(con, opcode, destReg, sourceReg,
@@ -703,7 +829,7 @@ CVMCPUemitLoadConstantPoolBaseRegister(CVMJITCompilationContext *con)
     offset = con->target.cpLogicalPC - CVMJITcbufGetLogicalPC(con) - 8;
 
     CVMJITprintCodegenComment(("setup cp base register"));
-    aluConstant16ScaledConditional(con, CVMCPU_ADD_OPCODE, 
+    aluConstant16ScaledConditional(con, CVMCPU_ADD_OPCODE,
 				   CVMCPU_CP_REG, CVMARM_PC,
 				   offset, 0, CVMCPU_COND_AL);
 
@@ -721,9 +847,9 @@ CVMCPUemitLoadConstantPoolBaseRegister(CVMJITCompilationContext *con)
 #endif /* CVMCPU_HAS_CP_REG */
 
 
-/* Purpose:  Add/sub a 16-bits constant scaled by 2^scale. Called by 
- *           method prologue and patch emission routines. 
- * NOTE:     CVMCPUemitAddConstant16Scaled should not rely on regman   
+/* Purpose:  Add/sub a 16-bits constant scaled by 2^scale. Called by
+ *           method prologue and patch emission routines.
+ * NOTE:     CVMCPUemitAddConstant16Scaled should not rely on regman
  *           states because the regman context used to emit the method
  *           prologue is gone at the patching time.
  * NOTE:     CVMCPUemitALUConstant16Scaled must always emit the same
@@ -731,7 +857,7 @@ CVMCPUemitLoadConstantPoolBaseRegister(CVMJITCompilationContext *con)
  *           is passed to it.
  */
 void
-CVMCPUemitALUConstant16Scaled(CVMJITCompilationContext *con, int opcode, 
+CVMCPUemitALUConstant16Scaled(CVMJITCompilationContext *con, int opcode,
 			      int destRegID, int srcRegID,
 			      CVMUint32 constant, int scale)
 {
@@ -747,7 +873,7 @@ CVMCPUemitALUConstant16Scaled(CVMJITCompilationContext *con, int opcode,
     } else {
         /* The only time this would happen is if there are about 240+
 	 * words of locals, so it's ok to just not compile this method.
-         */ 
+         */
 	CVMJITerror(con, CANNOT_COMPILE, "too many locals");
     }
 }
@@ -776,7 +902,7 @@ CVMCPUemitStackLimitCheckAndStoreReturnAddr(CVMJITCompilationContext* con)
     CVMJITaddCodegenComment((con, "letInterpreterDoInvoke"));
 #ifdef CVM_JIT_COPY_CCMCODE_TO_CODECACHE
     CVMCPUemitBranch(con,
-        CVMCCMcodeCacheCopyHelperOffset(con, 
+        CVMCCMcodeCacheCopyHelperOffset(con,
             CVMCCMletInterpreterDoInvokeWithoutFlushRetAddr),
         CVMCPU_COND_LS);
 #else
@@ -795,9 +921,9 @@ CVMCPUemitStackLimitCheckAndStoreReturnAddr(CVMJITCompilationContext* con)
 #endif
 }
 
-/* 
+/*
  *  Purpose: Emits code to invoke method through MB.
- *           MB is already in CVMCPU_ARG1_REG. 
+ *           MB is already in CVMCPU_ARG1_REG.
  */
 void
 CVMCPUemitInvokeMethod(CVMJITCompilationContext* con)
@@ -851,7 +977,7 @@ CVMCPUemitRegisterBranch(CVMJITCompilationContext* con, int regno)
 void
 CVMCPUemitTableSwitchBranch(CVMJITCompilationContext* con, int indexRegNo)
 {
-    /* 
+    /*
      * Since on arm the pc is already offset by 8, we just need to add
      * key*4 to pc and then pad with a nop so things line up right.
      */
@@ -879,7 +1005,7 @@ CVMCPUemitPopFrame(CVMJITCompilationContext* con, int resultSize)
         CVMJITcsSetDestRegister(con, CVMCPU_JSP_REG);
         CVMJITcsPushSourceRegister(con, CVMCPU_JFP_REG);
         /* If it's encodable, we quickly emit the instruction: */
-        emitInstruction(con, ARM_MAKE_CONDCODE_BITS(CVMCPU_COND_AL) | 
+        emitInstruction(con, ARM_MAKE_CONDCODE_BITS(CVMCPU_COND_AL) |
             (CVMUint32)CVMCPU_SUB_OPCODE |
 	    CVMCPU_JFP_REG << 16 | CVMCPU_JSP_REG << 12 |
             CVMARM_MODE1_CONSTANT | rotate << 8 | base);
@@ -917,7 +1043,7 @@ CVMCPUemitPopFrame(CVMJITCompilationContext* con, int resultSize)
  * Patch branch instruction at location "instrAddr" to branch to offset
  * "offset" from "instrAddr".
  */
-void 
+void
 CVMCPUpatchBranchInstruction(int offset, CVMUint8* instrAddr)
 {
     CVMCPUInstruction branch;
@@ -940,7 +1066,7 @@ CVMARMgetBranchInstruction(CVMCPUCondCode condCode, int offset, CVMBool link)
     int realoffset = (offset - 8) >> 2; /* adjust by 8 on ARM */
     CVMassert((realoffset & 0xff800000) == 0 ||
 	      (realoffset & 0xff800000) == 0xff800000);
-    return (ARM_MAKE_CONDCODE_BITS(condCode) | opcode 
+    return (ARM_MAKE_CONDCODE_BITS(condCode) | opcode
 	    | ((CVMUint32)realoffset & 0x00ffffff));
 }
 
@@ -948,7 +1074,7 @@ CVMARMgetBranchInstruction(CVMCPUCondCode condCode, int offset, CVMBool link)
 
 void
 CVMARMemitBranch(CVMJITCompilationContext* con,
-	         int logicalPC, CVMCPUCondCode condCode, 
+	         int logicalPC, CVMCPUCondCode condCode,
                  CVMBool link, CVMJITFixupElement** fixupList)
 {
     CVMUint32 branchInstruction;
@@ -968,15 +1094,15 @@ CVMARMemitBranch(CVMJITCompilationContext* con,
     }
 
     branchInstruction =
-        CVMARMgetBranchInstruction(condCode, 
-				   logicalPC - CVMJITcbufGetLogicalPC(con), 
+        CVMARMgetBranchInstruction(condCode,
+				   logicalPC - CVMJITcbufGetLogicalPC(con),
 				   link);
     emitInstruction(con, branchInstruction);
     CVMJITstatsRecordInc(con, CVMJIT_STATS_BRANCHES);
 
     CVMtraceJITCodegenExec({
         printPC(con);
-        CVMconsolePrintf("	%s%s	PC=(%d)", 
+        CVMconsolePrintf("	%s%s	PC=(%d)",
                          link ? "bl" : "b",
                          conditions[condCode], logicalPC);
     });
@@ -1021,7 +1147,7 @@ CVMCPUemitBinaryALUConditional(CVMJITCompilationContext* con,
     CVMJITcsSetStatusBinaryALUInstruction(con, opcode);
     CVMJITcsSetStatusInstruction(con, condCode);
 
-    emitInstruction(con, 
+    emitInstruction(con,
 		    ARM_MAKE_CONDCODE_BITS(condCode) | (CVMUint32)opcode |
 		    (setcc ? (1 << 20) : 0) |
                     lhsRegID << 16 | destRegID << 12 | rhsToken);
@@ -1031,7 +1157,7 @@ CVMCPUemitBinaryALUConditional(CVMJITCompilationContext* con,
         printPC(con);
         formatMode1(mode1buf, rhsToken);
         CVMconsolePrintf("	%s%s%s	%s, %s, %s",
-            getOpcodeName(opcode), conditions[condCode], setcc?"s":"", 
+            getOpcodeName(opcode), conditions[condCode], setcc?"s":"",
             regNames[destRegID], regNames[lhsRegID],  mode1buf);
     });
     CVMJITdumpCodegenComments(con);
@@ -1056,7 +1182,7 @@ CVMCPUemitBinaryALUConstantConditional(CVMJITCompilationContext* con,
 		opcode == CVMCPU_OR_OPCODE ||
 		opcode == CVMCPU_XOR_OPCODE ||
 		opcode == CVMCPU_ADD_OPCODE ||
-		opcode == CVMCPU_SUB_OPCODE) && 
+		opcode == CVMCPU_SUB_OPCODE) &&
 	       (rhsConstValue < 0x10000)) {
 	/* If it is a 16-bit BIC, OR, XOR, ADD, or SUB, then emit as
 	   two instructions rather than loading a constant. */
@@ -1149,7 +1275,7 @@ CVMCPUemitLoadLongConstant(CVMJITCompilationContext *con, int regID,
 }
 
 /* Purpose: Emits instructions to compares 2 64 bit integers for the specified
-            condition. 
+            condition.
    Return: The returned condition code may have been transformed by the
            comparison instructions because the emitter may choose to implement
            the comparison in a different form.  For example, a less than
@@ -1261,7 +1387,7 @@ CVMCPUemitMul(
 	extrareg = 0;  /* extrareg must be 0 for mul */
     } else if (opcode == CVMARM_MLA_OPCODE) {
         CVMJITcsPushSourceRegister(con, extrareg);
-    } else { 
+    } else {
         CVMJITcsSetDestRegister2(con, extrareg);
     }
     CVMJITcsSetDestRegister(con, destreg);
@@ -1316,24 +1442,45 @@ CVMCPUemitMoveConditional(CVMJITCompilationContext* con, int opcode,
                           int destRegID, CVMCPUALURhsToken srcToken,
                           CVMBool setcc, CVMCPUCondCode condCode)
 {
-    CVMassert(opcode == CVMCPU_MOV_OPCODE || opcode == ARM_MVN_OPCODE);
 
-    CVMJITcsSetCompareInstruction(con, setcc);
-    CVMJITcsSetStatusInstruction(con, condCode);
-    CVMJITcsSetDestRegister(con, destRegID);
+    CVMassert(opcode == CVMCPU_MOV_OPCODE || opcode == ARM_MVN_OPCODE ||
+              opcode == CVMCPU_FMOV_OPCODE || opcode == CVMCPU_DMOV_OPCODE);
 
-    emitInstruction(con, ARM_MAKE_CONDCODE_BITS(condCode) |
+#ifdef CVM_JIT_USE_FP_HARDWARE
+    if (opcode == CVMCPU_FMOV_OPCODE || opcode == CVMCPU_DMOV_OPCODE) {
+        emitInstruction(con, ARM_MAKE_CONDCODE_BITS(condCode) |
+                    (CVMUint32)opcode |
+	            (destRegID & 0x01) << 22 | (destRegID >> 1) << 12 |
+                    (srcToken  & 0x01) << 5  | (srcToken  >> 1));
+
+        CVMtraceJITCodegenExec({
+            char mode1buf[48];
+            formatMode1(mode1buf, srcToken);
+            printPC(con);
+            CVMconsolePrintf("	%s%s	%%f%d, %%f%d",
+                         getOpcodeName(opcode), conditions[condCode],
+                         destRegID, srcToken);
+        });
+    } else
+#endif
+    {
+        CVMJITcsSetCompareInstruction(con, setcc);
+        CVMJITcsSetStatusInstruction(con, condCode);
+        CVMJITcsSetDestRegister(con, destRegID);
+
+        emitInstruction(con, ARM_MAKE_CONDCODE_BITS(condCode) |
                     (setcc ? (1 << 20) : 0) |
                     (CVMUint32)opcode | destRegID << 12 | srcToken);
 
-    CVMtraceJITCodegenExec({
-        char mode1buf[48];
-        formatMode1(mode1buf, srcToken);
-        printPC(con);
-        CVMconsolePrintf("	%s%s%s	%s, %s",
+        CVMtraceJITCodegenExec({
+            char mode1buf[48];
+            formatMode1(mode1buf, srcToken);
+            printPC(con);
+            CVMconsolePrintf("	%s%s%s	%s, %s",
                          getOpcodeName(opcode), conditions[condCode],
                          setcc?"s":"", regNames[destRegID], mode1buf);
-    });
+        });
+    }
     CVMJITdumpCodegenComments(con);
 }
 
@@ -1417,6 +1564,14 @@ CVMCPUemitLoadConstantConditional(
     CVMUint32 base;
     CVMUint32 rotate;
 
+#ifdef CVM_JIT_USE_FP_HARDWARE
+    CVMRMResource *res = CVMRMfindResourceConstant32InRegister(CVMRM_FP_REGS(con), v);
+    if (res != NULL) {
+        CVMARMemitMoveFloatFP(con, CVMARM_MOVAF_OPCODE,
+            CVMRMgetRegisterNumberUnpinned(res),
+            regno);
+    } else
+#endif
     /* Check to see if we can do this as a positive constant: */
     if (CVMARMmode1EncodeImmediate(v, &base, &rotate)) {
         CVMCPUemitMoveConditional(con, CVMCPU_MOV_OPCODE, regno,
@@ -1439,7 +1594,7 @@ CVMCPUemitLoadConstantConditional(
 	/*
 	 * Normally we call CVMJITgetRuntimeConstantReference32 first and
 	 * then emit the instruction to load the constant afterwards.
-	 * When code scheduling is enabled, the instruction to load the 
+	 * When code scheduling is enabled, the instruction to load the
 	 * constant might be emitted somewhere other than the current
 	 * logicalPC, so when code scheduling is enabled we need to wait
 	 * until after the load instruction is emitted before calling
@@ -1486,6 +1641,105 @@ CVMCPUemitLoadConstantConditional(
     CVMJITresetSymbolName(con);
 }
 
+static int absolute(int v){
+    return (v<0)?-v:v;
+}
+
+#ifdef CVM_JIT_USE_FP_HARDWARE
+/* This function can dump constant pool and so to update logical address
+  in the context */
+static CVMInt32
+CVMARMgetRuntimeConstantReferenceFP(
+    CVMJITCompilationContext* con,
+    CVMInt32 v)
+{
+
+    if (con->constantPoolSize >= CVMARM_FP_MAX_LOADSTORE_OFFSET) {
+    	CVMRISCemitConstantPoolDumpWithBranchAround(con);
+    }
+    return CVMJITgetRuntimeFPConstantReference32(con,
+        CVMJITcbufGetLogicalPC(con), v);
+}
+
+void
+CVMCPUemitLoadConstantConditionalFP(
+    CVMJITCompilationContext* con,
+    int regno,
+    CVMInt32 v,
+    CVMCPUCondCode condCode)
+{
+    CVMRMResource *res =
+        CVMRMfindResourceConstant32InRegister(CVMRM_FP_REGS(con), v);
+    if (res != NULL) {
+	if (regno != CVMRMgetRegisterNumberUnpinned(res)) {
+            CVMCPUemitMoveConditional(con, CVMCPU_FMOV_OPCODE, regno,
+                CVMRMgetRegisterNumberUnpinned(res), CVMJIT_NOSETCC, condCode);
+	}
+        CVMJITresetSymbolName(con);
+	return;
+    }
+    res = CVMRMfindResourceConstant32InRegister(CVMRM_INT_REGS(con), v);
+    if (res != NULL) {
+        CVMARMemitMoveFloatFP(con, CVMARM_MOVFA_OPCODE, regno,
+            CVMRMgetRegisterNumberUnpinned(res));
+        CVMJITresetSymbolName(con);
+	return;
+    }
+
+    if (v == 0) {
+	res = CVMRMfindResourceForNonNaNConstant(CVMRM_FP_REGS(con));
+	if (res != NULL) {
+	    CVMCPUemitBinaryFP(con, CVMCPU_FSUB_OPCODE, regno,
+                CVMRMgetRegisterNumberUnpinned(res),
+                CVMRMgetRegisterNumberUnpinned(res));
+            CVMJITresetSymbolName(con);
+	    return;
+	}
+	res = CVMRMfindResourceForNonNaNConstant(CVMRM_INT_REGS(con));
+	if (res != NULL) {
+            CVMARMemitMoveFloatFP(con, CVMARM_MOVFA_OPCODE, regno,
+                CVMRMgetRegisterNumberUnpinned(res));
+            CVMCPUemitBinaryFP(con, CVMCPU_FSUB_OPCODE, regno, regno, regno);
+            CVMJITresetSymbolName(con);
+	    return;
+	}
+        {
+            /* Load 0 into ARM register */
+            CVMRMResource *tempReg = CVMRMgetResource(CVMRM_INT_REGS(con),
+                                       CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
+            CVMInt32 tempRegID = CVMRMgetRegisterNumber(tempReg);
+            CVMCPUemitLoadConstant(con, tempRegID, 0);
+            CVMARMemitMoveFloatFP(con, CVMARM_MOVFA_OPCODE, regno, tempRegID);
+            CVMRMrelinquishResource(CVMRM_INT_REGS(con), tempReg);
+            CVMJITresetSymbolName(con);
+            return;
+        }
+    }
+    CVMInt32 targetLiteralOffset =
+        CVMARMgetRuntimeConstantReferenceFP(con, v);
+
+    CVMInt32 logicalPC = CVMJITcbufGetLogicalPC(con);
+
+#ifdef CVMCPU_HAS_CP_REG
+    int baseReg = CVMCPU_CP_REG;
+    /* offset of 0 will be patched after the constant pool is dumped */
+    CVMInt32 relativeOffset = 0;
+#else
+    int baseReg = CVMARM_PC;
+    CVMInt32 relativeOffset =
+        (targetLiteralOffset != 0) ? targetLiteralOffset - logicalPC - 8
+                                   : 0;
+#endif
+
+    /* Emit the load relative to the constant pool base register. */
+    CVMCPUemitMemoryReferenceConditional(con, CVMCPU_FLDR32_OPCODE, regno,
+	baseReg, CVMCPUmemspecEncodeImmediateToken(con, relativeOffset),
+	condCode);
+
+    CVMJITresetSymbolName(con);
+}
+#endif
+
 /*
  * This is for emitting the sequence necessary for doing a call to an
  * absolute target. The target can either be in the code cache
@@ -1516,7 +1770,7 @@ emitReturnAddressComputation(CVMJITCompilationContext* con,
     CVMJITcsSetDestRegister(con, CVMARM_LR);
     CVMJITcsPushSourceRegister(con, CVMARM_PC);
     if (skip == 0) {
-	emitInstruction(con, ARM_MAKE_CONDCODE_BITS(condCode) | 
+	emitInstruction(con, ARM_MAKE_CONDCODE_BITS(condCode) |
             (CVMUint32)CVMCPU_MOV_OPCODE | CVMARM_LR << 12 | CVMARM_PC);
     } else {
         CVMUint32 base, rotate;
@@ -1525,7 +1779,7 @@ emitReturnAddressComputation(CVMJITCompilationContext* con,
         /* Make sure skip is reachable via mode1 addressing: */
         success = CVMARMmode1EncodeImmediate(skip, &base, &rotate);
         CVMassert(success);
-	emitInstruction(con, ARM_MAKE_CONDCODE_BITS(condCode) | 
+	emitInstruction(con, ARM_MAKE_CONDCODE_BITS(condCode) |
                     (CVMUint32)CVMCPU_ADD_OPCODE | CVMARM_PC << 16 |
                     CVMARM_LR << 12 | CVMARM_MODE1_CONSTANT |
                     rotate << 8 | base);
@@ -1540,7 +1794,7 @@ emitReturnAddressComputation(CVMJITCompilationContext* con,
         } else {
             CVMJITaddCodegenComment((con, "lr = pc + offset"));
             CVMconsolePrintf("	add%s	%s, %s, %d",
-                             conditions[condCode], 
+                             conditions[condCode],
                              regNames[CVMARM_LR], regNames[CVMARM_PC], skip);
         }
     });
@@ -1595,9 +1849,9 @@ CVMARMemitAbsoluteCallConditional(CVMJITCompilationContext* con,
 	}
 	cpSkipIsMode1 = CVMARMmode1EncodeImmediate(cpSkip, NULL, NULL);
 
-	/* 
+	/*
 	 * If the call is conditional or the skip value is not mode1, then
-	 * we will have to branch around the the constant pool. If the 
+	 * we will have to branch around the the constant pool. If the
 	 * branch is not allowed, then we can't dump.
 	 */
         if (condCode != CVMCPU_COND_AL || !cpSkipIsMode1) {
@@ -1673,7 +1927,7 @@ CVMARMemitAbsoluteCallConditional(CVMJITCompilationContext* con,
 	Case 3 is not allowed if okToBranchAroundCpDump is not TRUE.
         If the condCode is not CVMCPU_COND_AL, then all of the above
         instructions are conditional, and case 2 will include an unconditional
-	branch around the constant pool. This is why we add 4 to 
+	branch around the constant pool. This is why we add 4 to
 	cpSkip in this case.
     */
 
@@ -1702,7 +1956,7 @@ CVMARMemitAbsoluteCallConditional(CVMJITCompilationContext* con,
             CVMCPUemitBranch(con, helperOffset, condCode);
 	} else {
 	    /* emit conditional branch link */
-            CVMARMemitBranch(con, helperOffset, condCode, CVM_TRUE, 
+            CVMARMemitBranch(con, helperOffset, condCode, CVM_TRUE,
                              NULL /* no fixupList */);
 	}
     } else
@@ -1726,7 +1980,7 @@ CVMARMemitAbsoluteCallConditional(CVMJITCompilationContext* con,
         CVMCPUemitLoadConstantConditional(con, CVMARM_PC, (CVMInt32)target,
                                           condCode);
 	CVMJITcsClearEmitInPlace(con);
-	/* 
+	/*
 	 * loading the target constant may have added a new cp entry,
 	 * so we better fix up the return address in case it has.
 	 */
@@ -1767,7 +2021,7 @@ CVMARMemitAbsoluteCallConditional(CVMJITCompilationContext* con,
         CVMassert(condCode != CVMCPU_COND_AL ?
                   okToBranchAroundCpDump : CVM_TRUE);
 
-	/* 
+	/*
 	 * If the call is conditional or we can't encode the skip value
 	 * using mode1, then we need to unconditionally jump over the
 	 * constant pool. In the case of the conditional call, we do this
@@ -1797,7 +2051,7 @@ CVMCPUemitReturn(CVMJITCompilationContext* con, void* helper)
 
     /*
      * First set up
-     * 
+     *
      *   ldr     PREV, [JFP,#OFFSET_CVMFrame_prevX]
      *
      * This is expected at the return handler
@@ -1840,7 +2094,9 @@ CVMCPUemitMemoryReferenceConditional(CVMJITCompilationContext* con,
     int offset = CVMARMmemspecGetTokenOffset(memSpecToken);
 
     /* Check for the 64 bit case: */
-    if (opcode > CVMCPU_STR64_OPCODE) {
+    if (opcode != CVMCPU_FSTR64_OPCODE &&
+        opcode != CVMCPU_FLDR64_OPCODE &&
+        opcode > CVMCPU_STR64_OPCODE) {
         /* Do 32-bit and less case: */
         CVMARMemitMemoryReferenceConditional(con, opcode, destreg, basereg,
             memSpecToken, condCode);
@@ -1848,78 +2104,124 @@ CVMCPUemitMemoryReferenceConditional(CVMJITCompilationContext* con,
 
         CVMJITcsSetEmitInPlace(con);
         /* Do 64-bit case: */
+#ifdef CVM_JIT_USE_FP_HARDWARE
+        if (CVMARMisMode5Instruction(opcode)) {
+            opcode = (opcode == CVMCPU_FSTR64_OPCODE) ?
+                CVMCPU_FSTR64_OPCODE : CVMCPU_FLDR64_OPCODE;
+        } else
+#endif
+        {
         opcode = (opcode == CVMCPU_STR64_OPCODE) ?
                  CVMCPU_STR32_OPCODE : CVMCPU_LDR32_OPCODE;
+        }
 
         switch (CVMARMmemspecGetTokenType(memSpecToken)) {
         case CVMCPU_MEMSPEC_IMMEDIATE_OFFSET:
-            /* Load/store 1st word: */
-            CVMARMemitMemoryReferenceConditional(con, opcode, destreg,
-                basereg, CVMCPUmemspecEncodeImmediateToken(con, offset),
-                condCode);
+#ifdef CVM_JIT_USE_FP_HARDWARE
+            if (CVMARMisMode5Instruction(opcode)) {
+                CVMARMemitMemoryReferenceConditional(con, opcode, destreg,
+                    basereg, CVMCPUmemspecEncodeImmediateToken(con, offset),
+                    condCode);
+	    } else
+#endif
+            {
+                /* Load/store 1st word: */
+                CVMARMemitMemoryReferenceConditional(con, opcode, destreg,
+                    basereg, CVMCPUmemspecEncodeImmediateToken(con, offset),
+                    condCode);
 
-            /* Load/store 2nd word: */
-            if (offset > 0xFFF-4) {
-                goto useNewBaseReg;
+                /* Load/store 2nd word: */
+                if (offset > 0xFFF-4) {
+                    goto useNewBaseReg;
+                }
+                CVMARMemitMemoryReferenceConditional(con, opcode, destreg+1,
+                    basereg, CVMCPUmemspecEncodeImmediateToken(con, offset+4),
+                    condCode);
             }
-            CVMARMemitMemoryReferenceConditional(con, opcode, destreg+1,
-                basereg, CVMCPUmemspecEncodeImmediateToken(con, offset+4),
-                condCode);
             break;
 
         case CVMCPU_MEMSPEC_REG_OFFSET:
-            /* Load/store 1st word: */
-            CVMARMemitMemoryReferenceConditional(con, opcode, destreg,
+#ifdef CVM_JIT_USE_FP_HARDWARE
+            if (CVMARMisMode5Instruction(opcode)) {
+                /* Addressing mode 5 doesn't support register offset */
+                CVMassert(CVM_FALSE);
+	    } else
+#endif
+            {
+                /* Load/store 1st word: */
+                CVMARMemitMemoryReferenceConditional(con, opcode, destreg,
                 basereg, memSpecToken, condCode);
 
-        /* There's no easy way to inc the offset by 4.  So instead, we make a
-           new base register.  We can't just simply inc the original base
-           register because someone else may need it later: */
-        useNewBaseReg:
-            /* Load/store 2nd word: */
-            {
-                CVMRMResource *newbase;
-                CVMInt32 newbasereg;
+                /* There's no easy way to inc the offset by 4.
+                   So instead, we make a new base register.
+                   We can't just simply inc the original base
+                   register because someone else may need it later: */
+                useNewBaseReg:
+                /* Load/store 2nd word: */
+                {
+                    CVMRMResource *newbase;
+                    CVMInt32 newbasereg;
 
-                newbase = CVMRMgetResource(CVMRM_INT_REGS(con),
+                    newbase = CVMRMgetResource(CVMRM_INT_REGS(con),
 				CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
-                newbasereg = CVMRMgetRegisterNumber(newbase);
-                CVMCPUemitBinaryALUConstant(con, CVMCPU_ADD_OPCODE,
-                    newbasereg, basereg, 4, CVMJIT_NOSETCC);
-                CVMARMemitMemoryReferenceConditional(con, opcode, destreg+1,
-                    newbasereg, memSpecToken, condCode);
-                CVMRMrelinquishResource(CVMRM_INT_REGS(con), newbase);
-            }
+                    newbasereg = CVMRMgetRegisterNumber(newbase);
+                    CVMCPUemitBinaryALUConstant(con, CVMCPU_ADD_OPCODE,
+                        newbasereg, basereg, 4, CVMJIT_NOSETCC);
+                    CVMARMemitMemoryReferenceConditional(con, opcode,
+                        destreg+1, newbasereg, memSpecToken, condCode);
+                    CVMRMrelinquishResource(CVMRM_INT_REGS(con), newbase);
+                }
+	    }
             break;
 
         case CVMCPU_MEMSPEC_POSTINCREMENT_IMMEDIATE_OFFSET:
-            /* Load/store 1st word: */
-            CVMARMemitMemoryReferenceConditional(con, opcode, destreg,
-                basereg,
-                CVMCPUmemspecEncodePostIncrementImmediateToken(con, 4),
-                condCode);
+#ifdef CVM_JIT_USE_FP_HARDWARE
+            if (CVMARMisMode5Instruction(opcode)) {
+                CVMARMemitMemoryReferenceConditional(con, opcode, destreg,
+                    basereg,
+                    CVMCPUmemspecEncodePostIncrementImmediateToken(con,
+                        offset), condCode);
+	    } else
+#endif
+            {
+                /* Load/store 1st word: */
+                CVMARMemitMemoryReferenceConditional(con, opcode, destreg,
+                    basereg,
+                    CVMCPUmemspecEncodePostIncrementImmediateToken(con, 4),
+                    condCode);
 
-            /* Load/store 2nd word: */
-            CVMARMemitMemoryReferenceConditional(con, opcode, destreg+1,
-                basereg,
-                CVMCPUmemspecEncodePostIncrementImmediateToken(con,
+                /* Load/store 2nd word: */
+                CVMARMemitMemoryReferenceConditional(con, opcode, destreg+1,
+                    basereg,
+                    CVMCPUmemspecEncodePostIncrementImmediateToken(con,
                     (offset-4)),
-                condCode);
+                    condCode);
+            }
             break;
 
         case CVMCPU_MEMSPEC_PREDECREMENT_IMMEDIATE_OFFSET:
-            /* Load/store 2nd word: */
-            CVMARMemitMemoryReferenceConditional(con, opcode, destreg+1,
-                basereg,
-                CVMCPUmemspecEncodePreDecrementImmediateToken(con,
+#ifdef CVM_JIT_USE_FP_HARDWARE
+            if (CVMARMisMode5Instruction(opcode)) {
+                CVMARMemitMemoryReferenceConditional(con, opcode, destreg,
+                    basereg,
+                    CVMCPUmemspecEncodePreDecrementImmediateToken(con, offset),
+                    condCode);
+	    } else
+#endif
+            {
+                /* Load/store 2nd word: */
+                CVMARMemitMemoryReferenceConditional(con, opcode, destreg+1,
+                    basereg,
+                    CVMCPUmemspecEncodePreDecrementImmediateToken(con,
                     (offset-4)),
-                condCode);
+                    condCode);
 
-            /* Load/store 1st word: */
-            CVMARMemitMemoryReferenceConditional(con, opcode, destreg,
-                basereg,
-                CVMCPUmemspecEncodePreDecrementImmediateToken(con, 4),
-                condCode);
+                /* Load/store 1st word: */
+                CVMARMemitMemoryReferenceConditional(con, opcode, destreg,
+                    basereg,
+                    CVMCPUmemspecEncodePreDecrementImmediateToken(con, 4),
+                    condCode);
+            }
             break;
 
         default:
@@ -1938,10 +2240,19 @@ CVMCPUemitMemoryReferenceImmediateConditional(CVMJITCompilationContext* con,
     int offsetLimit;
     CVMInt32 offset;
 
+
+#ifdef CVM_JIT_USE_FP_HARDWARE
+    if (CVMARMisMode5Instruction(opcode)) {
+	/* Addressing Mode 5 offsets are multiplied by 4 */
+	offsetLimit = 0x100 << 2;
+    } else
+#endif
+    {
     offsetLimit =
         (opcode <= CVMCPU_STR64_OPCODE || CVMARMisMode2Instruction(opcode)) ?
             /* 64 bit and Mode 2 case: */ 0x1000 :
             /* Mode 3 case:            */ 0x100;
+    }
 
     offset = (immOffset >= 0) ? immOffset : -immOffset;
     if (offset < offsetLimit) {
@@ -1955,7 +2266,7 @@ CVMCPUemitMemoryReferenceImmediateConditional(CVMJITCompilationContext* con,
         CVMCPUemitMemoryReferenceConditional(con,
             opcode, destRegID, baseRegID,
             CVMARMmemspecEncodeToken(CVMCPU_MEMSPEC_REG_OFFSET,
-                CVMRMgetRegisterNumber(offsetRes), CVMARM_NOSHIFT_OPCODE, 0),
+            CVMRMgetRegisterNumber(offsetRes), CVMARM_NOSHIFT_OPCODE, 0),
             condCode);
         CVMRMrelinquishResource(CVMRM_INT_REGS(con), offsetRes);
     }
@@ -2009,10 +2320,18 @@ CVMARMemitMemoryReferenceConditional(CVMJITCompilationContext* con,
 	CVMassert(shifterImm <= 31);
 	CVMassert(offset <= 15); /* offset is a base register in this case */
     } else {
-	CVMassert((loadStoreAddressingMode & ARM_LOADSTORE_REGISTER_OFFSET) 
+	CVMassert((loadStoreAddressingMode & ARM_LOADSTORE_REGISTER_OFFSET)
 		  == 0);
 	CVMassert(shifterImm == 0);
 	CVMassert(shiftOp == 0);
+#ifdef CVM_JIT_USE_FP_HARDWARE
+        if (CVMARMisMode5Instruction(opcode)) {
+	    /* Do nothing we check for big offsets
+	     * while generating the instruction.
+	     */
+        } else
+#endif
+
         if (CVMARMisMode2Instruction(opcode)) {
 	    CVMassert(offset <= 4095);
 	} else {
@@ -2021,9 +2340,75 @@ CVMARMemitMemoryReferenceConditional(CVMJITCompilationContext* con,
     }
 #endif
 
-    instruction = ARM_MAKE_CONDCODE_BITS(condCode) | (CVMUint32)opcode | 
+#ifdef CVM_JIT_USE_FP_HARDWARE
+    if (CVMARMisMode5Instruction(opcode)) {
+	switch(type) {
+	    case CVMCPU_MEMSPEC_IMMEDIATE_OFFSET: {
+                int hiOffset = offset & ~0x03FF;
+		if (hiOffset) {
+                    CVMRMResource *tempReg =
+                        CVMRMgetResource(CVMRM_INT_REGS(con),
+                        CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
+                    CVMInt32 tempRegID = CVMRMgetRegisterNumber(tempReg);
+
+                    int op =
+                        loadStoreAddressingMode & ARM_LOADSTORE_ADDOFFSET ?
+                        CVMCPU_ADD_OPCODE : CVMCPU_SUB_OPCODE;
+                    CVMCPUemitBinaryALUConstant(con, op, tempRegID,
+                        basereg, hiOffset, CVMJIT_NOSETCC);
+                    CVMRMrelinquishResource(CVMRM_INT_REGS(con), tempReg);
+
+		    offset -= hiOffset;
+		    basereg = tempRegID;
+		}
+		break;
+	    }
+	    case CVMCPU_MEMSPEC_POSTINCREMENT_IMMEDIATE_OFFSET: {
+                /* If we are in post increment mode write back
+                 * mode is not supported for fsts and fstd.
+                 * To get around this we emit fstms or fstmd
+                 * and set the writeback bit.
+                 */
+                CVMassert(offset == 4 || offset == 8);
+                loadStoreAddressingMode =
+                    ARM_LOADSTORE_WRITEBACK | ARM_LOADSTORE_ADDOFFSET;
+                opcode &= ~ARM_LOADSTORE_PREINDEX;
+                break;
+	    }
+	    case  CVMCPU_MEMSPEC_REG_OFFSET: {
+	        /* Addressing Mode 5 doesn't support register offset.
+	         * If we are here we need to convert the register offset
+	         * to an address first.
+	         */
+                CVMRMResource *tempReg = CVMRMgetResource(CVMRM_INT_REGS(con),
+                               CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
+                CVMInt32 tempRegID = CVMRMgetRegisterNumber(tempReg);
+
+                int op =
+                    loadStoreAddressingMode & ARM_LOADSTORE_ADDOFFSET ?
+                    CVMCPU_ADD_OPCODE : CVMCPU_SUB_OPCODE;
+
+	        CVMCPUemitBinaryALURegister(con, op, tempRegID, basereg,
+	            offset, CVMJIT_NOSETCC);
+
+                offset = 0;
+                basereg = tempRegID;
+                loadStoreAddressingMode &= ~ARM_LOADSTORE_REGISTER_OFFSET;
+                CVMRMrelinquishResource(CVMRM_INT_REGS(con), tempReg);
+                break;
+	    }
+	}
+        instruction = ARM_MAKE_CONDCODE_BITS(condCode) | (CVMUint32)opcode |
+                      loadStoreAddressingMode | basereg << 16 |
+                      (destreg & 0x01) << 22 | (destreg >> 1) << 12 |
+                      shiftOp | shifterImm << 7;
+    } else
+#endif
+    {
+    instruction = ARM_MAKE_CONDCODE_BITS(condCode) | (CVMUint32)opcode |
                   loadStoreAddressingMode | basereg << 16 | destreg << 12 |
                   shiftOp | shifterImm << 7;
+    }
 
     /* NOTE: It appears that we will never supposed to get an offset that
         can be out of range.
@@ -2037,7 +2422,7 @@ CVMARMemitMemoryReferenceConditional(CVMJITCompilationContext* con,
         (256 * 8 bytes) range which is well within the 4K mode 2 limit.
 
         Branches within a method uses Branch and Link which has a 32M range
-        and does not concern this emitter. 
+        and does not concern this emitter.
 
         Branches to far functions like CCM helpers uses this emitter but are
         done as loading of constants manager by the constantpool manager.
@@ -2052,10 +2437,31 @@ CVMARMemitMemoryReferenceConditional(CVMJITCompilationContext* con,
         with the offsets being out of range.
     */
 
-    /* mode2 and mode3 store the offset values differently */
+    /* mode 3 and mode 5 stores the offset values in a different
+     * order than mode 2
+     */
     if (CVMARMisMode2Instruction(opcode)) {
 	instruction |= (offset & 0xFFF);
-    } else {
+    }
+#ifdef CVM_JIT_USE_FP_HARDWARE
+      else if (CVMARMisMode5Instruction(opcode)) {
+	    /* mode 5 offset are automatically multiplied by 4
+	     * we compenstate for this by dividing by 4 first
+	     */
+	    CVMassert((offset % 4) == 0);
+
+	    offset >>= 2;
+
+	    CVMassert(offset <= 255);
+
+            instruction |= (offset & 0xff);
+            /* multiply offset by 4 again so trace codegen
+             * will print the correct offsets
+             */
+            offset = offset << 2;
+    }
+#endif
+      else {
 	instruction |= (offset & 0x0f);
 	instruction |= (offset & 0xf0) << 4;
 
@@ -2080,12 +2486,14 @@ CVMARMemitMemoryReferenceConditional(CVMJITCompilationContext* con,
 
 #ifdef IAI_CODE_SCHEDULER_SCORE_BOARD
     switch(opcode) {
+        case CVMCPU_FLDR32_OPCODE:
         case CVMCPU_LDR32_OPCODE:
         case CVMCPU_LDR16U_OPCODE:
         case CVMCPU_LDR16_OPCODE:
         case CVMCPU_LDR8_OPCODE:
             CVMJITcsSetLoadInstruction(con);
             break;
+        case CVMCPU_FSTR32_OPCODE:
         case CVMCPU_STR32_OPCODE:
         case CVMCPU_STR16_OPCODE:
         case CVMCPU_STR8_OPCODE:
@@ -2102,11 +2510,13 @@ CVMARMemitMemoryReferenceConditional(CVMJITCompilationContext* con,
 	/* This is going to be a memory reference. Determine
 	   if read or write */
 	switch(opcode) {
+        case CVMCPU_FLDR32_OPCODE:
         case CVMCPU_LDR32_OPCODE:
         case CVMCPU_LDR16U_OPCODE:
         case CVMCPU_LDR16_OPCODE:
         case CVMCPU_LDR8_OPCODE:
             CVMJITstatsRecordInc(con, CVMJIT_STATS_MEMREAD); break;
+        case CVMCPU_FSTR32_OPCODE:
         case CVMCPU_STR32_OPCODE:
         case CVMCPU_STR16_OPCODE:
         case CVMCPU_STR8_OPCODE:
@@ -2128,13 +2538,13 @@ CVMARMemitMemoryReferenceConditional(CVMJITCompilationContext* con,
 	}
 
 	if (loadStoreAddressingMode & ARM_LOADSTORE_REGISTER_OFFSET) {
-	     /* offset is a base register in this case */ 
+	     /* offset is a base register in this case */
 	    CVMJITcsPushSourceRegister(con, offset);
 	} else if (CVMJITcsTestBaseRegister(con, CVMCPU_JFP_REG)) {
 	    /* Before making CVMJITcsSetJavaFrameIndex call, we need to make
 	     * sure we haven't exceeded the maximum index we can support.
 	     */
-	    if (offset < (con->numberLocalWords * 
+	    if (offset < (con->numberLocalWords *
 			  (CVMJITCS_TEMP_LOCAL_NUM - 1) * sizeof(CVMUint32)))
 	    {
 		int offsetIdx;
@@ -2143,7 +2553,7 @@ CVMARMemitMemoryReferenceConditional(CVMJITCompilationContext* con,
 		} else {
 		    offsetIdx = -(offset / sizeof(CVMUint32));
 		}
-		CVMJITcsSetJavaFrameIndex(con, 
+		CVMJITcsSetJavaFrameIndex(con,
 		    offsetIdx + con->numberLocalWords);
 	    } else {
 		CVMJITcsSetEmitInPlace(con);
@@ -2173,37 +2583,41 @@ CVMARMemitMemoryReferenceConditional(CVMJITCompilationContext* con,
         if (isMode2) {
             dumpMode2Instruction(con, instruction, condCode);
         } else {
-            CVMconsolePrintf("	%s%s	%s, [%s",
-                getOpcodeName(opcode), conditions[condCode],
-                regNames[destreg], regNames[basereg]);
-            /* not all are valid for all opcodes, but we're not checking that
-               here */
-            if (loadStoreAddressingMode & ARM_LOADSTORE_PREINDEX){
-                CVMconsolePrintf(", ");
+            if (CVMARMisMode5Instruction(opcode)) {
+		dumpMode5Instruction(con, instruction, condCode);
             } else {
-                CVMconsolePrintf("], ");
-            }
-
-            if (loadStoreAddressingMode & ARM_LOADSTORE_REGISTER_OFFSET){
-                CVMconsolePrintf("%c%s",
-                    (loadStoreAddressingMode & ARM_LOADSTORE_ADDOFFSET)?'+':'-',
-                    regNames[offset]);
-                if ( shifterImm != 0 ){
-                    CVMconsolePrintf(", %s #%d", shiftname(shiftOp),
-                                     shifterImm);
+                CVMconsolePrintf("	%s%s	%s, [%s",
+                    getOpcodeName(opcode), conditions[condCode],
+                    regNames[destreg], regNames[basereg]);
+                /* not all are valid for all opcodes, but we're not
+                   checking that here */
+                if (loadStoreAddressingMode & ARM_LOADSTORE_PREINDEX){
+                    CVMconsolePrintf(", ");
+                } else {
+                    CVMconsolePrintf("], ");
                 }
-            } else {
-                CVMconsolePrintf("#%c%d",
-                    (loadStoreAddressingMode & ARM_LOADSTORE_ADDOFFSET)?'+':'-',
-                    offset);
+
+                if (loadStoreAddressingMode & ARM_LOADSTORE_REGISTER_OFFSET) {
+                    CVMconsolePrintf("%c%s",
+                        (loadStoreAddressingMode & ARM_LOADSTORE_ADDOFFSET) ?
+                        '+' : '-', regNames[offset]);
+                    if ( shifterImm != 0 ){
+                        CVMconsolePrintf(", %s #%d", shiftname(shiftOp),
+                            shifterImm);
+                    }
+                } else {
+                    CVMconsolePrintf("#%c%d",
+                        (loadStoreAddressingMode & ARM_LOADSTORE_ADDOFFSET) ?
+                        '+':'-', offset);
+                }
+                if (loadStoreAddressingMode & ARM_LOADSTORE_PREINDEX) {
+                    CVMconsolePrintf("]");
+                }
+                if (loadStoreAddressingMode & ARM_LOADSTORE_WRITEBACK) {
+                    CVMconsolePrintf("!");
+                }
             }
-            if (loadStoreAddressingMode & ARM_LOADSTORE_PREINDEX){
-                CVMconsolePrintf("]");
-            }
-            if (loadStoreAddressingMode & ARM_LOADSTORE_WRITEBACK){
-                CVMconsolePrintf("!");
-            }
-        }
+	}
     });
     CVMJITdumpCodegenComments(con);
 }
@@ -2234,7 +2648,7 @@ CVMCPUemitComputeAddressOfArrayElement(CVMJITCompilationContext *con,
                                        int baseRegID, int indexRegID,
                                        int shiftOpcode, int shiftAmount)
 {
-    CVMCPUALURhsToken rhs = 
+    CVMCPUALURhsToken rhs =
 	CVMARMalurhsEncodeToken(con, CVMARM_ALURHS_SHIFT_BY_CONSTANT,
 				shiftAmount, shiftOpcode,
 				indexRegID, CVMCPU_INVALID_REG);
@@ -2303,7 +2717,7 @@ CVMCPUemitGcCheck(CVMJITCompilationContext* con, CVMBool cbufRewind)
     {
 	/* In this case, it will be a simple bl to the code cache copy */
 	int helperOffset;
-        
+
         if (cbufRewind) {
 	    /* The code buffer will be rewinded after the bl instruction,
              * and the bl will be patched with the next instruction. In
@@ -2311,7 +2725,7 @@ CVMCPUemitGcCheck(CVMJITCompilationContext* con, CVMBool cbufRewind)
              * subtract the lr by 4, so we can return to the patch point
              * after the gc is done.
              */
-            CVMJITaddCodegenComment((con, 
+            CVMJITaddCodegenComment((con,
                                "call CVMCCMruntimeGCRendezvousGlue"));
             helperOffset = CVMCCMcodeCacheCopyHelperOffset(con,
 				CVMCCMruntimeGCRendezvousGlue);
@@ -2321,7 +2735,7 @@ CVMCPUemitGcCheck(CVMJITCompilationContext* con, CVMBool cbufRewind)
              * CVMARMruntimeGCRendezvousNoRetAddrAdjustGlue instead. The
              * lr adjustment is skipped in this case.
              */
-            CVMJITaddCodegenComment((con, 
+            CVMJITaddCodegenComment((con,
                     "call CVMARMruntimeGCRendezvousNoRetAddrAdjustGlue"));
             helperOffset =  CVMCCMcodeCacheCopyHelperOffset(con,
                     CVMARMruntimeGCRendezvousNoRetAddrAdjustGlue);
@@ -2355,16 +2769,209 @@ CVMCPUemitGcCheck(CVMJITCompilationContext* con, CVMBool cbufRewind)
 }
 #endif /* CVMJIT_PATCH_BASED_GC_CHECKS */
 
+#ifdef CVM_JIT_USE_FP_HARDWARE
+/* Purpose: Emits instructions to do the specified floating point operation. */
+void
+CVMCPUemitBinaryFP( CVMJITCompilationContext* con,
+		    int opcode, int destRegID, int lhsRegID, int rhsRegID)
+{
+    CVMassert(opcode == CVMCPU_FADD_OPCODE || opcode == CVMCPU_FSUB_OPCODE ||
+              opcode == CVMCPU_FMUL_OPCODE || opcode == CVMCPU_FDIV_OPCODE ||
+              opcode == CVMCPU_DADD_OPCODE || opcode == CVMCPU_DSUB_OPCODE ||
+              opcode == CVMCPU_DMUL_OPCODE || opcode == CVMCPU_DDIV_OPCODE );
+
+    emitInstruction(con, ARM_MAKE_CONDCODE_BITS(CVMCPU_COND_AL) |
+                    (CVMUint32)opcode |
+                    (destRegID & 0x01) << 22 | (destRegID >> 1) << 12 |
+                    (lhsRegID  & 0x01) << 7  | (lhsRegID  >> 1) << 16 |
+                    (rhsRegID  & 0x01) << 5  | (rhsRegID  >> 1));
+
+    CVMtraceJITCodegenExec({
+        printPC(con);
+        CVMconsolePrintf("	%s	%%f%d, %%f%d, %%f%d",
+            getOpcodeName(opcode),
+            destRegID, lhsRegID, rhsRegID);
+    });
+    CVMJITdumpCodegenComments(con);
+}
+
+void
+CVMCPUemitUnaryFP( CVMJITCompilationContext* con,
+		    int opcode, int destRegID, int srcRegID)
+{
+    CVMassert(opcode == CVMCPU_FNEG_OPCODE || opcode == CVMCPU_DNEG_OPCODE ||
+              opcode == CVMARM_I2F_OPCODE  || opcode == CVMARM_F2I_OPCODE  ||
+              opcode == CVMARM_I2D_OPCODE  || opcode == CVMARM_D2I_OPCODE  ||
+              opcode == CVMARM_F2D_OPCODE  || opcode == CVMARM_D2F_OPCODE);
+
+    emitInstruction(con, ARM_MAKE_CONDCODE_BITS(CVMCPU_COND_AL) |
+                    (CVMUint32)opcode |
+                    (destRegID & 0x01) << 22 | (destRegID >> 1) << 12 |
+                    (srcRegID  & 0x01) << 5  | (srcRegID  >> 1));
+
+    CVMtraceJITCodegenExec({
+        printPC(con);
+        CVMconsolePrintf("	%s	%%f%d, %%f%d",
+            getOpcodeName(opcode),
+            destRegID, srcRegID);
+    });
+
+    CVMJITdumpCodegenComments(con);
+}
+
+void
+CVMCPUemitFCompare(CVMJITCompilationContext* con,
+                  int opcode, CVMCPUCondCode condCode,
+		  int lhsRegID, int rhsRegID)
+{
+    CVMassert(opcode == CVMCPU_FCMP_OPCODE   ||
+              opcode == CVMARM_FCMPES_OPCODE ||
+              opcode == CVMCPU_DCMP_OPCODE   ||
+              opcode == CVMARM_DCMPED_OPCODE ||
+              opcode == CVMARM_FMSTAT_OPCODE);
+
+    if (opcode == CVMARM_FMSTAT_OPCODE) {
+        lhsRegID = 0;
+        rhsRegID = 0;
+    }
+    emitInstruction(con, ARM_MAKE_CONDCODE_BITS(CVMCPU_COND_AL) |
+                    (CVMUint32)opcode |
+                    (lhsRegID  & 0x01) << 22 | (lhsRegID >> 1) << 12 |
+                    (rhsRegID  & 0x01) << 5  | (rhsRegID >> 1));
+
+    if (opcode == CVMARM_FMSTAT_OPCODE) {
+        CVMtraceJITCodegenExec({
+            printPC(con);
+            CVMconsolePrintf("	fmstat");
+        });
+    } else {
+        CVMtraceJITCodegenExec({
+            printPC(con);
+            CVMconsolePrintf("	%s	%%f%d, %%f%d",
+	        getOpcodeName(opcode),
+                lhsRegID, rhsRegID);
+        });
+    }
+    CVMJITdumpCodegenComments(con);
+}
+
+/* Purpose: Loads a 32-bit constant into an FP register. */
+extern void
+CVMCPUemitLoadConstantFP(
+    CVMJITCompilationContext *con,
+    int regID,
+    CVMInt32 v)
+{
+    CVMCPUemitLoadConstantConditionalFP(con, regID, v, CVMCPU_COND_AL);
+}
+
+/* Purpose: Loads a 64-bit double constant into an FP register. */
+void
+CVMCPUemitLoadLongConstantFP(CVMJITCompilationContext *con, int regID,
+                             CVMJavaVal64 *value)
+{
+
+    CVMJavaVal64 val;
+    CVMmemCopy64(val.v, value->v);
+    CVMCPUemitLoadConstantFP(con, LOREG(regID), (int)val.l);
+    CVMCPUemitLoadConstantFP(con, HIREG(regID), val.l>>32);
+}
+
+void
+CVMARMemitMoveFloatFP(CVMJITCompilationContext* con,
+                 int opcode, int fpRegID, int regID)
+{
+    CVMassert(opcode == CVMARM_MOVFA_OPCODE || opcode == CVMARM_MOVAF_OPCODE);
+
+    CVMassert(((unsigned)fpRegID) < 32 && ((unsigned)regID) < 16);
+
+    emitInstruction(con, ARM_MAKE_CONDCODE_BITS(CVMCPU_COND_AL) |
+                    (CVMUint32)opcode |
+                    (regID << 12) |
+                    (fpRegID  & 0x01) << 7  | (fpRegID  >> 1) << 16);
+
+    CVMtraceJITCodegenExec({
+        printPC(con);
+        if (opcode == CVMARM_MOVAF_OPCODE) {
+            CVMconsolePrintf("	%s	%s, %%f%d",
+                getOpcodeName(opcode),
+                regNames[regID], fpRegID);
+        } else {
+            CVMconsolePrintf("	%s	%%f%d, %s",
+                getOpcodeName(opcode),
+                fpRegID, regNames[regID]);
+        }
+    });
+    CVMJITdumpCodegenComments(con);
+}
+
+void
+CVMARMemitMoveDoubleFP(CVMJITCompilationContext* con,
+                 int opcode, int fpRegID, int regID)
+{
+    int lo;
+    int hi;
+
+    CVMassert(opcode == CVMARM_MOVDA_OPCODE || opcode == CVMARM_MOVAD_OPCODE);
+    CVMassert((fpRegID & 1) == 0);
+
+    lo = LOREG(regID);
+    hi = HIREG(regID);
+
+    emitInstruction(con, ARM_MAKE_CONDCODE_BITS(CVMCPU_COND_AL) |
+                    (CVMUint32)opcode | (fpRegID >> 1) |
+                    (lo << 12) | (hi << 16));
+
+    CVMtraceJITCodegenExec({
+        printPC(con);
+        if (opcode == CVMARM_MOVAD_OPCODE) {
+            CVMconsolePrintf("	%s	%s, %s, %%f%d",
+                getOpcodeName(opcode),
+                regNames[lo], regNames[hi], fpRegID);
+	} else {
+            CVMconsolePrintf("	%s	%%f%d, %s, %s",
+                getOpcodeName(opcode),
+                fpRegID, regNames[lo], regNames[hi]);
+	}
+    });
+    CVMJITdumpCodegenComments(con);
+}
+
+static const char *const fpStatusRegNames[] = {
+    "fpsid", "fpscr","","","","","","","fpexc"
+};
+
+void
+CVMARMemitStatusRegisterFP(CVMJITCompilationContext* con,
+                 int opcode, int statusReg, int regID)
+{
+    CVMassert(opcode == CVMARM_MOVSA_OPCODE || opcode == CVMARM_MOVAS_OPCODE);
+
+    emitInstruction(con, ARM_MAKE_CONDCODE_BITS(CVMCPU_COND_AL) |
+                    (CVMUint32)opcode | (regID << 12) | (statusReg << 16));
+
+    CVMtraceJITCodegenExec({
+        printPC(con);
+        if (opcode == CVMARM_MOVAS_OPCODE) {
+            CVMconsolePrintf("	%s	%s, %s",
+                getOpcodeName(opcode),
+                regNames[regID], fpStatusRegNames[statusReg]);
+        } else {
+            CVMconsolePrintf("	%s	%s, %s",
+                getOpcodeName(opcode),
+                fpStatusRegNames[statusReg] , regNames[regID]);
+        }
+    });
+    CVMJITdumpCodegenComments(con);
+}
+#endif /* CVM_JIT_USE_FP_HARDWARE */
+
 /*
  * CVMJITcanReachAddress - Check if toPC can be reached by an
  * instruction at fromPC using the specified addressing mode. If
  * needMargin is ture, then a margin of safety is added (usually the
  * allowed offset range is cut in half).
  */
-static int absolute(int v){
-    return (v<0)?-v:v;
-}
-
 CVMBool
 CVMJITcanReachAddress(CVMJITCompilationContext* con,
 		      int fromPC, int toPC,
@@ -2374,9 +2981,13 @@ CVMJITcanReachAddress(CVMJITCompilationContext* con,
     case CVMJIT_BRANCH_ADDRESS_MODE:
     case CVMJIT_COND_BRANCH_ADDRESS_MODE:
 	return CVM_TRUE; /* 32 Meg should reach in every case. */
+    case CVMJIT_FPMEMSPEC_ADDRESS_MODE:
     case CVMJIT_MEMSPEC_ADDRESS_MODE: {
 	int diff;
-	int maxDiff = CVMCPU_MAX_LOADSTORE_OFFSET;
+	int maxDiff = 
+	    mode == CVMJIT_FPMEMSPEC_ADDRESS_MODE ?
+                CVMJIT_FPMEMSPEC_ADDRESS_MODE:
+                CVMCPU_MAX_LOADSTORE_OFFSET;
 #ifdef CVMCPU_HAS_CP_REG
 	fromPC = con->target.cpLogicalPC; /* relative to cp base register */
 	needMargin = CVM_FALSE;           /* we never worry about the margin */
@@ -2444,8 +3055,19 @@ CVMJITfixupAddress(CVMJITCompilationContext* con,
 	} else {
 	    instruction |= ARM_LOADSTORE_ADDOFFSET; /* turn on U bit */
 	}
-	instruction &= 0xfffff000; /* mask off lower 12 bits */
-	offsetBits &= 0x00000fff;  /* offset in lower 12 bits */
+	{
+	    CVMUint32 offsetMask = 0x00000fff;
+#ifdef CVM_JIT_USE_FP_HARDWARE
+            /* Determines if this is a VFP instruction or not */
+            if (((instruction >> 25) & 0x7) == 6) {
+		offsetMask = 0x000000ff;
+	        CVMassert((offsetBits & 0x3) == 0);
+                offsetBits >>= 2;
+	    }
+#endif
+	    CVMassert((offsetBits &~offsetMask) == 0);
+	    instruction &=~offsetMask; /* mask off lower 12 bits */
+        }
 	break;
     default:
 	offsetBits = 0; /* avoid compiler warning */
@@ -2456,7 +3078,7 @@ CVMJITfixupAddress(CVMJITCompilationContext* con,
     *instructionPtr = instruction;
 }
 
-#ifdef IAI_CACHEDCONSTANT   
+#ifdef IAI_CACHEDCONSTANT
 /*
  * CVMJITemitLoadConstantAddress - Emit instruction(s) to load the address
  * of a constant pool constant into CVMCPU_ARG4_REG (a4).
@@ -2469,7 +3091,7 @@ CVMJITemitLoadConstantAddress(CVMJITCompilationContext* con,
     CVMUint32 base;
     CVMUint32 rotate;
 
-    /* 
+    /*
      * offsetBits == 0 is a special case when we don't know the target
      * address yet. Don't adjust for the PC in this case.
      */

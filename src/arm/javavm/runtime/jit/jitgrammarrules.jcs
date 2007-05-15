@@ -172,7 +172,7 @@ reg32: ISUB32 aluRhs reg32 : 15 : : : : {
     };
 
 // Purpose: valueFloat = -valueFloat.
-reg32: FNEG reg32 : 10 : : : : {
+reg32: FNEG reg32 : 50 : : : : {
         /* Since floats are sign,magnitute quantities, we only need to toggle
            the sign bit (i.e. the MSB bit) with an exclusive or operation:
 
@@ -194,7 +194,7 @@ reg32: FNEG reg32 : 10 : : : : {
     };
 
 // Purpose: valueDouble = -valueDouble.
-reg64: DNEG reg64 : 20 : : : : {
+reg64: DNEG reg64 : 50 : : : : {
         /* Since doubles are sign,magnitute quantities, we only need to toggle
            the sign bit (i.e. the MSB bit) with an exclusive or operation:
 

@@ -231,6 +231,9 @@ struct CVMRMResource {
 #define CVMRMisRef(rp) \
     ((((rp)->flags) & CVMRMref) != 0)
 
+#define CVMRMisPinned(rp) \
+    ((((rp)->flags) & CVMRMpinned) != 0)
+
 #define CVMRMgetRefCount(con, rp)  \
     CVMJITidentityGetDecorationRefCount(con , &((rp)->dec))  
 
@@ -303,6 +306,21 @@ CVMRMcloneResourceStrict(
 extern CVMRMResource *
 CVMRMbindStackTempToResource(
     CVMJITRMContext*, CVMJITIRNode* expr, int size );
+
+#ifdef CVM_JIT_USE_FP_HARDWARE
+/* Returns a resource that is a constant in a register */
+extern CVMRMResource*
+CVMRMfindResourceConstant32InRegister(CVMJITRMContext* con,
+		       CVMInt32 constant);
+
+/* Returns a resource that is NonNan constant in a register */
+extern CVMRMResource *
+CVMRMfindResourceForNonNaNConstant(CVMJITRMContext*);
+#endif
+
+/* Returns a resource that matches this constant */
+extern CVMRMResource*
+CVMRMfindResourceConstant32(CVMJITRMContext*, CVMInt32 constant);
 
 /* Return lazily-pinned constant */
 extern CVMRMResource *

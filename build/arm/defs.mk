@@ -66,6 +66,11 @@ $(error cannot specify CVM_JIT_PATCHED_METHOD_INVOCATIONS=true with CVM_JIT_COPY
 endif
 endif
 
+ifeq ($(CVM_JIT_USE_FP_HARDWARE), true)
+CVM_JCS_CPU_RULES_FILE    += \
+    $(CVM_TOP)/src/arm/javavm/runtime/jit/jitfloatgrammarrules.jcs
+endif
+
 include  ../portlibs/defs_jit_risc.mk
 
 endif

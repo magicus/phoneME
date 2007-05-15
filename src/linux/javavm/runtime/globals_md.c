@@ -185,6 +185,11 @@ CVMBool CVMinitStaticState()
     linuxNetInit();
 
     sigignore(SIGPIPE);
+    
+#ifdef __VFP_FP__    
+    /* FIXME This is only needed for armboard5 the omap boards don't */     
+    sigignore(SIGFPE);
+#endif
 
     {
 	char buf[MAXPATHLEN + 1], *p0, *p;

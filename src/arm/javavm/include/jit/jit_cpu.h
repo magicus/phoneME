@@ -44,6 +44,11 @@
 /* Number of 32-bit words per register (must be 1 in current implementation) */
 #define CVMCPU_MAX_REG_SIZE	1
 
+/* Number of 32-bit words per FP register */
+#ifdef CVM_JIT_USE_FP_HARDWARE
+#define CVMCPU_FP_MAX_REG_SIZE 	1
+#endif
+
 /* No 64-bit registers */
 #undef CVMCPU_HAS_64BIT_REGISTERS
 
