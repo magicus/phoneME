@@ -98,5 +98,5 @@ jboolean anc_show_backlight(AncBacklightState mode) {
  * Turn Home indicator on or off.
  */ 
 void anc_toggle_home_icon(jboolean isHomeOn) {
-    (void) javacall_annunciator_display_home_icon(status);
+    (void) javacall_annunciator_display_home_icon(isHomeOn);
 }
