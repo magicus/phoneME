@@ -81,6 +81,10 @@
 #         start if set to true.
 # Dflt:  false
 #
+# Name:  PROVISIONING_SERVER_URL
+# Desc:  URL to a provisioning server
+# Dflt:  None
+#
 
 WHOAMI=`whoami`
 
@@ -138,7 +142,7 @@ PRESENTATION_MODE=com.sun.jumpimpl.presentation.installer.InstallerTool
 ARG1="jump.presentation.installer.arg1=$1"
 ARG2="jump.presentation.installer.arg2=$2"
 ARG3="jump.presentation.installer.arg3=$3"
-PROPERTIES="jump.installer.verbose=true jump.presentation=$PRESENTATION_MODE $ARG1 $ARG2 $ARG3"
+PROPERTIES="jump.installer.verbose=true jump.presentation=$PRESENTATION_MODE jump.installer.provisionURL=$PROVISIONING_SERVER_URL $ARG1 $ARG2 $ARG3"
 
 rm -f $TMP_FILE
 touch $TMP_FILE
