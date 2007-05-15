@@ -230,13 +230,14 @@ bool TextFieldBody::validate(const QString &s, int line, int col) {
 	}
 	break;
     case MIDP_CONSTRAINT_PHONENUMBER:
-      {
-    	QRegExp numbers("^[0-9]*$");
+    {
+        /* the phone number has to accept the '+' at the start of the text, any digits, '#' and '*' */
+        QRegExp numbers("^[\053]?[0-9\\s\052\043]*$");
         if (numbers.match(s) >= 0) {
             ok = true;
         }
     }
-      break;
+    break;
     case MIDP_CONSTRAINT_ANY:
     case MIDP_CONSTRAINT_EMAILADDR:
     case MIDP_CONSTRAINT_URL:
@@ -292,6 +293,7 @@ void TextFieldBody::insertAt(const QString &s, int line, int col,
     if (validate(s, line, col)) {
          switch ((MidpConstraint)(constraints & MIDP_CONSTRAINT_MASK)) {
             case MIDP_CONSTRAINT_PHONENUMBER:
+
                 str = QMultiLineEdit::textLine(line);
                 str.insert(col,s);
 
