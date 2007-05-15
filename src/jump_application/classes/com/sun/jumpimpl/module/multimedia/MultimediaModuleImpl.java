@@ -40,8 +40,7 @@ import com.sun.jump.command.JUMPRequest;
 import com.sun.jump.message.JUMPOutgoingMessage;
 import com.sun.jump.executive.JUMPExecutive;
 import com.sun.jump.executive.JUMPIsolateProxy;
-import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModuleFactory;
-import com.sun.jump.module.isolatemanager.JUMPIsolateManagerModule;
+import com.sun.jump.executive.JUMPIsolateFactory;
 import com.sun.jump.module.eventqueue.JUMPEventQueueModuleFactory;
 import com.sun.jump.module.eventqueue.JUMPEventQueueModule;
 import com.sun.jump.module.eventqueue.JUMPEventHandler;
@@ -69,7 +68,7 @@ public class MultimediaModuleImpl implements JUMPModule, JUMPEventHandler {
     Object msgToken;
 
     /** Isolate manager for getting <code>JUMPIsolateProxy</code> instances. */
-    JUMPIsolateManagerModule imm;
+    JUMPIsolateFactory isolateFactory;
 
     /**
      * Loads the Multimedia module. Performs necessary initialization to start
@@ -99,12 +98,12 @@ public class MultimediaModuleImpl implements JUMPModule, JUMPEventHandler {
      */
     public void handleEvent(int id, byte[] data) {
         // Parse event data to get IsolateId
-	    int isolateId = id;
-        if (imm == null) {
-            imm = JUMPIsolateManagerModuleFactory.getInstance().getModule();
+        int isolateId = id;
+        if (isolateFactory == null) {
+            isolateFactory = thisProcess.getIsolateFactory();
         }
 
-        JUMPIsolateProxy ip=imm.getIsolate(isolateId);
+        JUMPIsolateProxy ip=isolateFactory.getIsolate(isolateId);
         // Pre-create message for isolate notifications.
         JUMPRequest eventCmd = new JUMPRequest(MESSAGE_TYPE, MM_EVENT);
         JUMPOutgoingMessage notification = eventCmd.toMessage(thisProcess);
