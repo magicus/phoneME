@@ -27,7 +27,7 @@ int trusted_x = 180;
 int trusted_width = 12;
 int trusted_height = 12;
 int trusted_bytespp = 4; //3-RGB, 4 - RGBA 
-static const unsigned char trusted_data[]=
+static const BYTE trusted_data[]=
 {"\7\10\10\11\30\31\31_')*\252'++\215&*+\221)02\260)13\265!*,\225\35(+\214\33"
  "(+\253\20\30\31j\6\10\11\14\27\31\31(SXY\315\254\267\271\377\243\262\263\377"
  "\241\263\266\377\255\311\315\377\245\313\321\377\211\262\270\377z\252\262"

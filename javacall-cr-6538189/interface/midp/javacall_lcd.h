@@ -72,6 +72,18 @@ typedef unsigned short javacall_pixel;
 #define RGB2PIXELTYPE(r,g,b)  (( ((javacall_pixel)b)>>3)&0x1f) | ( (( ((javacall_pixel)g)>>2)&0x3f) << 5) | ((( ((javacall_pixel)r)>>3)&0x1f)<<11)
 #endif
 
+#ifndef RGB
+#define RGB(r, g, b)   ( b +(g << 5)+ (r << 11) )
+#endif
+
+/** Separate colors are 8 bits as in Java RGB */
+#ifndef GET_RED_FROM_PIXEL
+#define GET_RED_FROM_PIXEL(P)   (((P) >> 8) & 0xF8)
+#define GET_GREEN_FROM_PIXEL(P) (((P) >> 3) & 0xFC)
+#define GET_BLUE_FROM_PIXEL(P)  (((P) << 3) & 0xF8)
+#endif
+
+
 /**
  * @enum javacall_lcd_color_encoding_type
  * @brief Color encoding format

@@ -42,12 +42,11 @@
 #include "javacall_datagram.h"
 #include "javacall_lifecycle.h"
 
-//#include "img/topbar.h"
-
 
 #include "lcd.h"
 #include "skins.h"
 #include "local_defs.h"
+
 
 
 #define UNTRANSLATED_SCREEN_BITMAP (void*)0xffffffff
@@ -59,6 +58,7 @@
 
 #define MD_KEY_HOME (KEY_MACHINE_DEP)
 
+extern void drawTopbarImage(void);
 
 static HBITMAP getBitmapDCtmp = NULL;
 
@@ -86,15 +86,9 @@ static void releaseBitmapDC(HDC hdcMem);
 static void DrawBitmap(HDC hdc, HBITMAP hBitmap, int x, int y, int rop);
 static HDC getBitmapDC(void *imageData);
 static HPEN setPen(HDC hdc, int pixel, int dotted);
-extern void drawTopbarImage(void);
 
-//static void DrawMenuBarBorder(HDC myhdc);
-//static void drawEmulatorScreen(javacall_bool fullscreen);
 void CreateEmulatorWindow(void);
-/*
-static void paintVerticalScroll(HDC hdc, int scrollPosition,
-                                int scrollProportion);
-*/
+
 static void invalidateLCDScreen(int x1, int y1, int x2, int y2);
 static void RefreshScreen(int x1, int y1, int x2, int y2);  
 static int mapKey(WPARAM wParam, LPARAM lParam);
@@ -156,10 +150,8 @@ static javacall_bool reverse_orientation;
  IMPL NOTE: top bar at the moment is available only as raw data
  of fixed width & height and thus available only for displays
  with the same width. Scaleable top bar will be implemented and
- then those constants will become expared.
+ then this variable will become expared.
  */
-//static int topBarHeight = 12;//_topbar_dib_data.hdr.biHeight; //11
-//static int topBarWidth = 240;//_topbar_dib_data.hdr.biWidth;
 extern int topBarWidth;
 extern int topBarHeight;
 static javacall_bool topBarOn = JAVACALL_TRUE;
@@ -182,8 +174,6 @@ javacall_bool penAreDragging = JAVACALL_FALSE;
 javacall_result javacall_lcd_init(void) {
 
     if(!initialized) {
-
-
         reverse_orientation = JAVACALL_FALSE;
         inFullScreenMode = JAVACALL_FALSE;
         penAreDragging = JAVACALL_FALSE;
@@ -286,7 +276,7 @@ javacall_pixel* javacall_lcd_get_screen(javacall_lcd_screen_type screenType,
 }
 
 /**
- * Get top bar raster pointer
+ * Get top bar offscreen buffer
  *
  * @param screenWidth output paramter to hold width of top bar
  * @param screenHeight output paramter to hold height of top bar
@@ -1218,8 +1208,6 @@ static void DrawBitmap(HDC hdc, HBITMAP hBitmap, int x, int y, int rop) {
     SelectObject(hdcMem, tmp);
     DeleteDC(hdcMem);
 }
-
-
  
 /**
  *

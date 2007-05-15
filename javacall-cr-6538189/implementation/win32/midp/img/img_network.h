@@ -27,7 +27,7 @@ int network_x = 200;
 int network_width = 12;
 int network_height = 12;
 int network_bytespp = 4; //3-RGB, 4 - RGBA 
-static const unsigned char network_data[]=
+static const BYTE network_data[]=
 {"\0\0\0\0\330\346\377\6\330\346\377\34\330\346\377$\330\346\377$\330\346\377"
  "$\330\346\377$\325\344\377$\312\334\377$\274\320\377\34\263\311\377\6\0\0"
  "\0\0\0\0\0\0\330\346\3770\330\346\377\314\330\346\377\375\330\346\377\377"

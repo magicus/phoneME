@@ -36,7 +36,6 @@
 #include "javacall_annunciator.h"
 #include "javacall_lcd.h"
 
-#include "lcd.h"
 #include "local_defs.h"
 
 #include "img/topbar.h"
