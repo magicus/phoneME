@@ -82,6 +82,58 @@ void util_clear_screen(unsigned short *scrn, int screenSize) {
 }
 */
 
+
+/**
+ * Premultiply color components by it's corresponding alpha component.
+ *
+ * Formula: Cs = Csr * As (for source pixel),
+ *          Cd = Cdr * Ad (analog for destination pixel).
+ *
+ * @param C one of the raw color components of the pixel (Csr or Cdr in the formula).
+ * @param A the alpha component of the source pixel (As or Ad in the formula).
+ * @return color component in premultiplied form.
+ */
+#define PREMULTUPLY_ALPHA(C, A) \
+    (unsigned char)( (int)(C) * (A) / 0xff )
+
+
+/**
+ * The source is composited over the destination (Porter-Duff Source Over
+ * Destination rule).
+ *
+ * Formula: Cr = Cs + Cd*(1-As)
+ *
+ * Note: the result is always equal or less than 0xff, i.e. overflow is impossible.
+ *
+ * @param Cs a color component of the source pixel in premultiplied form
+ * @param As the alpha component of the source pixel
+ * @param Cd a color component of the destination pixel in premultiplied form
+ * @return a color component of the result in premultiplied form
+ */
+#define ADD_PREMULTIPLIEDCOLORS_SRCOVER(Cs, As, Cd) \
+    (unsigned char)( (int)(Cs) + (int)(Cd) * (0xff - (As)) / 0xff )
+
+    
+/**
+ * Combine separate source and destination color components.
+ *
+ * Note: all backround pixels are treated as full opaque.
+ *
+ * @param Csr one of the raw color components of the source pixel
+ * @param As the alpha component of the source pixel
+ * @param Cdr one of the raw color components of the destination pixel
+ * @return a color component of the result in premultiplied form
+ */
+#define ADD_COLORS(Csr, As, Cdr) \
+    ADD_PREMULTIPLIEDCOLORS_SRCOVER( \
+            PREMULTUPLY_ALPHA(Csr, As), \
+            As, \
+            PREMULTUPLY_ALPHA(Cdr, 0xff) )
+
+
+/**
+ * Draws image from raw data array to top bar offscreen buffer
+ */
 void util_draw_bitmap(unsigned char *bitmap_data, 
                       unsigned char bytesPerPix,
                       int bitmap_width,
@@ -129,30 +181,31 @@ void util_draw_bitmap(unsigned char *bitmap_data,
     for (y = screen_top; y < screen_top + bitmap_height; y++) {
         for (x = screen_left; x < screen_left + bitmap_width; x++) {
             if ((y >= 0) && (x >= 0) && (y < screenHeight) && (x < screenWidth)) {
-                unsigned short r = *bitmap_data++;
-                unsigned short g = *bitmap_data++;
-                unsigned short b = *bitmap_data++;
+                unsigned char r = *bitmap_data++;
+                unsigned char g = *bitmap_data++;
+                unsigned char b = *bitmap_data++;
 
                 if (bytesPerPix == 4) {
                   javacall_pixel pix = scrn[(y * screenWidth) + x];
-                  unsigned short rd = GET_RED_FROM_PIXEL(pix);
-                  unsigned short gd = GET_GREEN_FROM_PIXEL(pix);
-                  unsigned short bd = GET_BLUE_FROM_PIXEL(pix);
-                  unsigned short alpha = *bitmap_data++;
+                  unsigned char rd = GET_RED_FROM_PIXEL(pix);
+                  unsigned char gd = GET_GREEN_FROM_PIXEL(pix);
+                  unsigned char bd = GET_BLUE_FROM_PIXEL(pix);
+                  unsigned char alpha = *bitmap_data++;
 
-                  r = rd * alpha + (0xFF - alpha) * r;
-                  g = gd * alpha + (0xFF - alpha) * g;
-                  b = bd * alpha + (0xFF - alpha) * b;
+                  r = ADD_COLORS(r, alpha, rd);
+                  g = ADD_COLORS(g, alpha, gd);
+                  b = ADD_COLORS(b, alpha, bd);
                 }                
                 scrn[(y * screenWidth) + x] = RGB2PIXELTYPE(r, g, b);
             }
         }
         bitmap_data += bitmap_horizontal_gap;
     }
+
 }
 
 /**
- * Draws top bar 
+ * Redraws top bar 
  */
 void drawTopbarImage(void) {
 
@@ -163,7 +216,6 @@ void drawTopbarImage(void) {
     }
 
     if (trustedOn) {
-//TODO: draw trusted icon
     }
 
     javacall_lcd_flush();
