@@ -39,10 +39,6 @@
 /**
  * Platform handling code for turning off or on
  * indicators for signed MIDlet.
- *
- * IMPL_NOTE:Currently indicator does nothing for Java
- * and platform widget modules as we are waiting for
- * UI input.
  */
 void anc_show_trusted_indicator(jboolean isTrusted) {
     (void) javacall_annunciator_display_trusted_icon(isTrusted);
@@ -50,8 +46,6 @@ void anc_show_trusted_indicator(jboolean isTrusted) {
 
 /**
  * Porting implementation for network indicator.
- * It controls the LED as the network indicator, it
- * ONLY works on device. There is no equivalent in emulator.
  */
 void anc_set_network_indicator(AncNetworkIndicatorState status) {
     (void) javacall_annunciator_display_network_icon(status);
@@ -104,6 +98,5 @@ jboolean anc_show_backlight(AncBacklightState mode) {
  * Turn Home indicator on or off.
  */ 
 void anc_toggle_home_icon(jboolean isHomeOn) {
-    REPORT_WARN(LC_LOWUI, "anc_toggle_home_icon: Stubbed out."); 
-    (void)isHomeOn;
+    (void) javacall_annunciator_display_home_icon(status);
 }
