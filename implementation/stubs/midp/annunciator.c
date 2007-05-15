@@ -89,6 +89,18 @@ javacall_result javacall_annunciator_display_network_icon(javacall_bool enableNe
     return JAVACALL_FAIL;
 }
 
+/**
+ * Turning Home indicator off or on. 
+ *
+ * @param enableHomeIndicator boolean value indicating if home indicator
+ *             icon should be enabled
+ * @return <tt>JAVACALL_OK</tt> operation was supported by the device
+ *         <tt>JAVACALL_FAIL</tt> or negative value on failure, or if not 
+ *         supported on device
+ */
+javacall_result javacall_annunciator_display_home_icon(javacall_bool enableHomeIndicator) {
+    return JAVACALL_FAIL;
+}
 
     
 /**

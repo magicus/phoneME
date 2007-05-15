@@ -40,17 +40,20 @@
 #include "local_defs.h"
 
 #include "img/topbar.h"
-#include "img/img_lock.h"
 #include "img/img_network.h"
+#include "img/img_home.h"
+#include "img/img_trusted.h"
+/*
 #include "img/img_caps.h"
 #include "img/img_lowercase.h"
 #include "img/img_numeric.h"
 #include "img/img_symbols.h"
 #include "img/img_T9.h"
-
+*/
 
 static javacall_bool trustedOn = JAVACALL_FALSE;
 static javacall_bool networkOn = JAVACALL_FALSE;
+static javacall_bool homeOn = JAVACALL_FALSE;
 
 extern javacall_pixel* getTopbarBuffer(int* screenWidth, int* screenHeight);
 
@@ -134,7 +137,7 @@ void util_clear_screen(unsigned short *scrn, int screenSize) {
 /**
  * Draws image from raw data array to top bar offscreen buffer
  */
-void util_draw_bitmap(unsigned char *bitmap_data, 
+void util_draw_bitmap(const unsigned char *bitmap_data, 
                       unsigned char bytesPerPix,
                       int bitmap_width,
                       int bitmap_height,
@@ -216,6 +219,11 @@ void drawTopbarImage(void) {
     }
 
     if (trustedOn) {
+        util_draw_bitmap(trusted_data, trusted_bytespp, trusted_width, trusted_height, 0, trusted_x);
+    }
+
+    if (homeOn) {
+        util_draw_bitmap(home_data, home_bytespp, home_width, home_height, 0, home_x);
     }
 
     javacall_lcd_flush();
@@ -291,9 +299,26 @@ javacall_result javacall_annunciator_display_network_icon(javacall_bool enableNe
     javacall_lcd_flush();
 
     return JAVACALL_OK;
-
-
 }
+
+/**
+ * Turning Home indicator off or on. 
+ *
+ * @param enableHomeIndicator boolean value indicating if home indicator
+ *             icon should be enabled
+ * @return <tt>JAVACALL_OK</tt> operation was supported by the device
+ *         <tt>JAVACALL_FAIL</tt> or negative value on failure, or if not 
+ *         supported on device
+ */
+javacall_result javacall_annunciator_display_home_icon(javacall_bool enableHomeIndicator) {
+    homeOn = enableHomeIndicator;
+
+    drawTopbarImage();
+    javacall_lcd_flush();
+
+    return JAVACALL_OK;
+}
+ 
 
 /**
  * Set the input mode.
@@ -457,7 +482,9 @@ javacall_result javacall_annunciator_play_audible_tone(javacall_audible_tone_typ
  * <tt>JAVACALL_FAIL</tt> or negative value on failure, or if not
  * supported on device
  */
+/*
 javacall_result javacall_annunciator_display_secure_network_icon(
         javacall_bool enableIndicator) {
     return JAVACALL_FAIL;
 }
+*/
