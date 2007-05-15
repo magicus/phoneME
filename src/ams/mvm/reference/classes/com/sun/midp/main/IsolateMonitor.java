@@ -199,14 +199,15 @@ class IsolateMonitor implements MIDletProxyListListener {
      * Notifies the listeners that a suite has terminated.
      *
      * @param suiteId ID of the MIDlet suite
+     * @param className class name of the MIDlet suite
      */
-    void notifyListeners(int suiteId) {
+    void notifyListeners(int suiteId, String className) {
         synchronized (listeners) {
             for (int i = 0; i < listeners.size(); i++) {
                 IsolateMonitorListener listener =
                     (IsolateMonitorListener)listeners.elementAt(i);
 
-                listener.suiteTerminated(suiteId);
+                listener.suiteTerminated(suiteId, className);
             }
         }
     }
@@ -229,6 +230,6 @@ class TerminationNotifier implements Runnable {
     /** Performs this classes function. */
     public void run() {
         isolate.waitForExit();
-        parent.notifyListeners(midlet.getSuiteId());
+        parent.notifyListeners(midlet.getSuiteId(), midlet.getClassName());
     }
 }

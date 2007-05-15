@@ -33,9 +33,9 @@
   <!-- System tunable parameters -->
 
   <property Key="destroyMIDletTimeout"
-	  Value="5"
+	  Value="5000"
 	  Scope="internal"
-	  Comment="Destroy MIDlet timeout"/>
+	  Comment="Timeout in milliseconds to destroy a running MIDlet"/>
 
   <property Key="suspendAppTimeout"
 	  Value="2000"

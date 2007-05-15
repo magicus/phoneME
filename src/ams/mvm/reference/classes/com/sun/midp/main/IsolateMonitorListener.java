@@ -35,6 +35,7 @@ interface IsolateMonitorListener {
      * Called when a suite isolate is terminated.
      *
      * @param suiteId ID of the suite
+     * @param suiteId class name of the suite
      */
-    void suiteTerminated(int suiteId);
+    void suiteTerminated(int suiteId, String className);
 }

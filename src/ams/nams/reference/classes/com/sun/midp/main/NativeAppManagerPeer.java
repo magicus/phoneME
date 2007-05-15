@@ -182,8 +182,6 @@ public class NativeAppManagerPeer
             EventTypes.NATIVE_SET_FOREGROUND_REQUEST, this);
 
         IndicatorManager.init(midletProxyList);
-
-        NamsTestService.init(internalSecurityToken, eventQueue);
     }
 
     /**
@@ -209,7 +207,8 @@ public class NativeAppManagerPeer
      * @param midlet The proxy of the MIDlet being added
      */
     public void midletAdded(MIDletProxy midlet) {
-        notifyMidletCreated(midlet.getExternalAppId());
+        notifyMidletCreated(midlet.getExternalAppId(),
+                            midlet.getSuiteId(), midlet.getClassName());
     }
 
     /**
@@ -221,12 +220,14 @@ public class NativeAppManagerPeer
     public void midletUpdated(MIDletProxy midlet, int fieldId) {
         if (fieldId == MIDLET_STATE) {
             if (midlet.getMidletState() == MIDletProxy.MIDLET_ACTIVE) {
-                notifyMidletActive(midlet.getExternalAppId());
+                notifyMidletActive(midlet.getExternalAppId(),
+                                   midlet.getSuiteId(), midlet.getClassName());
                 return;
             }
 
             if (midlet.getMidletState() == MIDletProxy.MIDLET_PAUSED) {
-                notifyMidletPaused(midlet.getExternalAppId());
+                notifyMidletPaused(midlet.getExternalAppId(),
+                                   midlet.getSuiteId(), midlet.getClassName());
                 return;
             }
         }
@@ -238,7 +239,8 @@ public class NativeAppManagerPeer
      * @param midlet The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midlet) {
-        notifyMidletDestroyed(midlet.getExternalAppId());
+        notifyMidletDestroyed(midlet.getExternalAppId(),
+                              midlet.getSuiteId(), midlet.getClassName());
     }
 
     /**
@@ -253,7 +255,7 @@ public class NativeAppManagerPeer
     public void midletStartError(int externalAppId, int suiteId,
                                  String className, int errorCode,
                                  String errorDetails) {
-        notifyMidletStartError(externalAppId, errorCode);
+        notifyMidletStartError(externalAppId, suiteId, className, errorCode);
     }
 
     // ------ End implementation of the MIDletProxyListListener interface
@@ -266,9 +268,10 @@ public class NativeAppManagerPeer
      * Called when a suite isolate is terminated.
      *
      * @param suiteId ID of the suite
+     * @param className class name of the suite
      */
-    public void suiteTerminated(int suiteId) {
-        notifySuiteTerminated(suiteId);
+    public void suiteTerminated(int suiteId, String className) {
+        notifySuiteTerminated(suiteId, className);
     }
 
 
@@ -313,9 +316,13 @@ public class NativeAppManagerPeer
             if (midlet == null) {
                 if (nativeEvent.intParam2 == MIDletSuite.UNUSED_SUITE_ID) {
                     notifyMidletStartError(nativeEvent.intParam1,
+                                           MIDletSuite.UNUSED_SUITE_ID,
+                                           nativeEvent.stringParam1,
                                            Constants.MIDLET_ID_NOT_GIVEN);
                 } else if (nativeEvent.stringParam1 == null) {
                     notifyMidletStartError(nativeEvent.intParam1,
+                                           nativeEvent.intParam2,
+                                           null,
                                            Constants.MIDLET_CLASS_NOT_GIVEN);
                 } else {
                     MIDletSuiteUtils.executeWithArgs(internalSecurityToken,
@@ -482,45 +489,67 @@ public class NativeAppManagerPeer
      * Notify the native application manager of the MIDlet creation.
      *
      * @param externalAppId ID assigned by the external application manager
+     * @param suiteId ID of the midlet suite
+     * @param className class name of the midlet that failed to start
      * @param error error code
      */
     private static native void notifyMidletStartError(int externalAppId,
+                                                      int suiteId,
+                                                      String className,
                                                       int error);
 
     /**
      * Notify the native application manager of the MIDlet creation.
      *
      * @param externalAppId ID assigned by the external application manager
+     * @param suiteId ID of the suite the created midlet belongs to
+     * @param className class name of the midlet that was created
      */
-    private static native void notifyMidletCreated(int externalAppId);
+    private static native void notifyMidletCreated(int externalAppId,
+                                                   int suiteId,
+                                                   String className);
 
     /**
      * Notify the native application manager that the MIDlet is active.
      *
      * @param externalAppId ID assigned by the external application manager
+     * @param suiteId ID of the suite the started midlet belongs to
+     * @param className class name of the midlet that was started
      */
-    private static native void notifyMidletActive(int externalAppId);
+    private static native void notifyMidletActive(int externalAppId,
+                                                  int suiteId,
+                                                  String className);
 
     /**
      * Notify the native application manager that the MIDlet is paused.
      *
      * @param externalAppId ID assigned by the external application manager
+     * @param suiteId ID of the suite the paused midlet belongs to
+     * @param className class name of the midlet that was paused
      */
-    private static native void notifyMidletPaused(int externalAppId);
+    private static native void notifyMidletPaused(int externalAppId,
+                                                  int suiteId,
+                                                  String className);
 
     /**
      * Notify the native application manager that the MIDlet is destroyed.
      *
      * @param externalAppId ID assigned by the external application manager
+     * @param suiteId ID of the suite the destroyed midlet belongs to
+     * @param className class name of the midlet that was destroyed
      */
-    private static native void notifyMidletDestroyed(int externalAppId);
+    private static native void notifyMidletDestroyed(int externalAppId,
+                                                     int suiteId,
+                                                     String className);
 
     /**
      * Notify the native application manager that the suite is terminated.
      *
      * @param suiteId ID of the MIDlet suite
+     * @param className class name of the midlet that was terminated
      */
-    private static native void notifySuiteTerminated(int suiteId);
+    private static native void notifySuiteTerminated(int suiteId,
+                                                     String className);
 
     /**
      * Register the Isolate ID of the AMS Isolate by making a native

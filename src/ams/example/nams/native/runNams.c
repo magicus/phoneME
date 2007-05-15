@@ -53,6 +53,8 @@
 
 #define MIDLET_DESTROY_DEFAULT_TIMEOUT 5000
 
+#define NAMS_TEST_SERVICE_CLASS_NAME "com.sun.midp.main.NamsTestServiceMidlet"
+
 #if ENABLE_I3_TEST
 extern void initNams(void);
 extern int findNextEmptyMIDlet(int appId);
@@ -120,7 +122,7 @@ static SuiteIdType getSuiteId(int index) {
     return UNUSED_SUITE_ID;
 }
 
-static void loadSuiteIds() {
+static MIDPError loadSuiteIds() {
     int i;
     MIDPError status;
 
@@ -133,26 +135,28 @@ static void loadSuiteIds() {
      * extra resources such as the VM for the operation being performed.
      */
     if (midpInit(LIST_LEVEL) != 0) {
-        return;
+        return OUT_OF_MEMORY;
     }
 
     status = midp_get_suite_ids(&pSuiteIds, &numberOfSuiteIds);
     if (status != ALL_OK) {
         REPORT_ERROR(LC_AMS, "Can't load suite IDs.");
         fprintf(stderr, "Can't load suite IDs: error %d.\n", status);
-        return;
+        return status;
     }
 
     pSuiteRunState = (jint*)midpMalloc(numberOfSuiteIds*sizeof(jint));
     if (pSuiteRunState == NULL) {
         REPORT_ERROR(LC_AMS, "Out of Memory");
         fprintf(stderr, "Out Of Memory\n");
-        return;
+        return OUT_OF_MEMORY;
     }
 
     for (i = 0; i < numberOfSuiteIds; i++) {
         pSuiteRunState[i] = MIDP_MIDLET_STATE_DESTROYED;
     }
+
+    return ALL_OK;
 }
 
 static void unloadSuiteIds() {
@@ -315,6 +319,18 @@ void system_state_listener(const NamsEventData* pEventData) {
  */
 void background_listener(const NamsEventData* pEventData) {
     int i = 0;
+
+    if (pEventData == NULL) {
+        printf("--- background_listener(): NULL event data!\n");
+        return;
+    }
+
+    if (pEventData->state != MIDP_DISPLAY_STATE_BACKGROUND &&
+        pEventData->state != MIDP_DISPLAY_STATE_BACKGROUND_REQUEST) {
+        /* probably foreground request - don't handle */
+        return;
+    }
+
     printf("--- background_listener(appId = %d, reason = %d)\n",
            pEventData->appId, pEventData->reason);
 
@@ -336,6 +352,17 @@ void background_listener(const NamsEventData* pEventData) {
  * @param pEventData
  */
 void foreground_listener(const NamsEventData* pEventData) {
+    if (pEventData == NULL) {
+        printf("--- foreground_listener(): NULL event data!\n");
+        return;
+    }
+
+    if (pEventData->state != MIDP_DISPLAY_STATE_FOREGROUND &&
+        pEventData->state != MIDP_DISPLAY_STATE_FOREGROUND_REQUEST) {
+        /* probably background request - don't handle */
+        return;
+    }
+
     printf("--- foreground_listener(appId = %d, reason = %d)\n",
            pEventData->appId, pEventData->reason);
 
@@ -443,6 +470,11 @@ static void initNamsCommands(int argn, char* args[]) {
 static MIDPError
 setupArgToStartMidlet(int argc, char* argv[]) {
     MIDPError status = BAD_PARAMS;
+    SuiteIdType tmpSuiteId = UNUSED_SUITE_ID;
+
+    if (argc == 0) {
+        return status;
+    }
 
     do {
         int i, len;
@@ -458,28 +490,32 @@ setupArgToStartMidlet(int argc, char* argv[]) {
         }
 
         if (onlyDigits) {
-            /* Run by number */
-            int suiteNumber;
+            /* run the midlet suite by its ID */
+            int i;
 
             /* the format of the string is "number:" */
-            if (sscanf(argv[0], "%d", &suiteNumber) != 1) {
-                REPORT_ERROR(LC_AMS, "Invalid suite number format");
-                fprintf(stderr, "Invalid suite number format\n");
+            if (sscanf(argv[0], "%d", &tmpSuiteId) != 1) {
+                REPORT_ERROR(LC_AMS, "Invalid suite ID format");
+                fprintf(stderr, "Invalid suite ID format\n");
                 break;
             }
 
-            if (suiteNumber > numberOfSuiteIds || suiteNumber < 1) {
-                REPORT_ERROR(LC_AMS, "Suite number out of range");
-                fprintf(stderr, "Suite number out of range\n");
+            for (i = 0; i < numberOfSuiteIds; i++) {
+                if (tmpSuiteId == pSuiteIds[i]) {
+                    break;
+                }
+            }
+
+            if (i == numberOfSuiteIds) {
+                REPORT_ERROR(LC_AMS, "Suite with the given ID was not found");
+                fprintf(stderr, "Suite with the given ID was not found\n");
                 break;
             }
 
-            suiteIDToRun = pSuiteIds[suiteNumber - 1];
+            suiteIDToRun = tmpSuiteId;
         } else {
             /* Run by ID */
             suiteIDToRun = INTERNAL_SUITE_ID;
-
-            /* IMPL_NOTE: consider handling of other IDs. */
         }
 
         /* Setting up a class name of the midlet to be run */
@@ -529,6 +565,8 @@ setupArgToStartMidlet(int argc, char* argv[]) {
     return status;
 }
 
+static MIDPError runMidletWithNAMS(int argc, char* argv[]);
+
 /**
  * Mode 1. NAMS test service:<br>
  * runNams [&lt;VM args&gt;] -namsTestService<br>
@@ -540,6 +578,12 @@ setupArgToStartMidlet(int argc, char* argv[]) {
  * @return error code (<tt>ALL_OK</tt> if successful)
  */
 static MIDPError runNamsTestService(int argc, char* argv[]) {
+    int numOfArgsToRunTestService = 2;
+    char* ppArgsToRunTestService[] = {
+        "-1", /* internal suite id */
+        NAMS_TEST_SERVICE_CLASS_NAME
+    };
+
 #if ENABLE_I3_TEST
     initNams();
     initNamsCommands(argc - 1, argv + 1);
@@ -548,7 +592,8 @@ static MIDPError runNamsTestService(int argc, char* argv[]) {
     (void)argv;
 #endif
 
-    return midp_system_start();
+    return runMidletWithNAMS(numOfArgsToRunTestService,
+                             ppArgsToRunTestService);
 }
 
 /**
@@ -752,7 +797,11 @@ int runNams(int argc, char* argv[]) {
                 break;
             } else {
                 /* load the suite id's */
-                loadSuiteIds();
+                status = loadSuiteIds();
+                if (status != ALL_OK) {
+                    fprintf(stderr, "Failed to load suite IDs (%d)\n", status);
+                    break;
+                }
                 status = handlers[i](--argc, ++argv);
             }
         }
