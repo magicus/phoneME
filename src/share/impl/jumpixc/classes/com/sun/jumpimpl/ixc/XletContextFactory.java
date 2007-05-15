@@ -62,6 +62,18 @@ public class XletContextFactory {
    private static HashMap contextHash = new HashMap(); // CL, DummyXletContext
 
    private static XletContext createXletContext(ClassLoader loader) { 
+      /*
+       * If loader is null, use system class loader which must be
+       * not null
+       */
+      if (loader == null) {
+          loader = ClassLoader.getSystemClassLoader();
+          if (loader == null) {
+              throw new RuntimeException("Failed to obtain " +
+                      "valid class loader for fake xlet context");
+          }
+      }
+
       synchronized(contextHash) {
           XletContext context = (XletContext)contextHash.get(loader);
           if (context == null) {

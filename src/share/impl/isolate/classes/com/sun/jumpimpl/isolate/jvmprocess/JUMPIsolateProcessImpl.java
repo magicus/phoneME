@@ -438,27 +438,7 @@ public class JUMPIsolateProcessImpl
      * @return class loader to use
      */
     private ClassLoader getImplClassLoader() {
-        /*
-         * IMPL_NOTE: a hack!  What we're trying to achieve is to
-         * find out a class loader for IXC used in implementation classes.
-         * For MIDP container MIDPConfig should return proper class loader.
-         * For non MIDP container MIDPConfig is assumed to return null and
-         * it is substituted with proper class loader.
-         *
-         * Better solution could be to have separate implemenations for
-         * different isolate types (main, xlet, midlet)
-         */
-        /*
-         * NOTE: cannot relaibly use getClass().getClassLoader() as currently
-         * JUMPIsolateProcessImpl is loaded by bootstrap class loader.
-         */
-        final ClassLoader cl = sun.misc.MIDPConfig.getMIDPImplementationClassLoader();
-        if (cl != null) {
-            // MIDP container case
-            return cl;
-        }
-        // Main/xlet case
-        return ClassLoader.getSystemClassLoader();
+        return appContainer.getClass().getClassLoader();
     }
 
     /**
