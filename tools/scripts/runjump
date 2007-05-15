@@ -210,7 +210,6 @@ fi
 
 SERVER_JARFILE=$PHONEME_DIST/lib/jump.jar
 EXECUTIVE_JARFILE=$PHONEME_DIST/lib/executive-jump.jar
-MIDP_CLASSES_ZIP=$PHONEME_DIST/lib/midpclasses.zip
 CVMC=$PHONEME_DIST/bin/cvmc
 
 ##### End: Possible Variables Needing Modification #####
@@ -490,7 +489,7 @@ if [ "$DO_EXECUTIVE" = "true" ] ; then
       exit 0
   fi
 
-  EXECUTIVE_COMMAND="$CVMC -target $SERVER_PID -command JDETACH $EXECUTIVE_PROPERTIES -Xbootclasspath/a=$EXECUTIVE_JARFILE:$MIDP_CLASSES_ZIP com.sun.jumpimpl.executive.JUMPExecutiveImpl $EXECUTIVE_ARGUMENTS"
+  EXECUTIVE_COMMAND="$CVMC -target $SERVER_PID -command JDETACH $EXECUTIVE_PROPERTIES -Xbootclasspath/a=$EXECUTIVE_JARFILE com.sun.jumpimpl.executive.JUMPExecutiveImpl $EXECUTIVE_ARGUMENTS"
   $EXECUTIVE_COMMAND >> $SERVER_LOGFILE 2>&1 &
 
   EXECUTIVE_COMMAND="$CVMC -target $SERVER_PID -setenv PBP_SCREEN_BOUNDS=$PBP_SCREEN_BOUNDS"
