@@ -41,6 +41,11 @@ public class JUMPOSInterfaceImpl extends JUMPOSInterface {
      * the stdout and stderr output files should go.
      */
     public native void setTestingMode(String filePrefix);
+    
+    /**
+     * Shutdown the server
+     */
+    public native void shutdownServer();
 
     /**
      * Create a process and return a unique integer ID designating it.

@@ -641,3 +641,24 @@ Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_setTestingMode(
     jumpMessageSendSync(targetAddress, outMessage, TIMEOUT, &code);
     (*env)->ReleaseStringUTFChars(env, filePrefix, filePrefixStr);
 }
+
+JNIEXPORT void JNICALL
+Java_com_sun_jumpimpl_os_JUMPOSInterfaceImpl_shutdownServer(
+    JNIEnv *env,
+    jobject thisObj)
+{
+    JUMPPlatformCString type = "mvm/server";
+    JUMPOutgoingMessage outMessage;
+    JUMPAddress targetAddress;
+    JUMPMessageStatusCode code;
+
+    outMessage = jumpMessageNewOutgoingByType(type, &code);
+    jumpMessageAddInt(outMessage, 1);
+    jumpMessageAddString(outMessage, "JEXIT");
+
+    jumpMessageQueueCleanQueuesOf(jumpProcessGetExecutiveId());
+        
+    targetAddress.processId = jumpProcessGetServerPid();                
+#define TIMEOUT 10000
+    jumpMessageSendSync(targetAddress, outMessage, TIMEOUT, &code);
+}

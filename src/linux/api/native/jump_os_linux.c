@@ -971,7 +971,7 @@ jumpMessageQueueCleanQueuesOf(int cpid)
     DIR* dir;
     struct dirent* ptr;
 
-    if (jumpProcessIsAlive(cpid) == 1) {
+    if (jumpProcessIsAlive(cpid) == 0) {
 	return;
     }
 

@@ -110,11 +110,14 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
     int applicationsScreenPageNumber = 0;
     int switchToScreenPageNumber = 0;
     int killScreenPageNumber = 0;
-        
+    
     SimpleBasisAMSInstall installer = null;
     static boolean verbose;
     Map map = null;
-
+    
+    JUMPMessageDispatcher md = null;
+    Object isolateWindowHandler = null;
+    Object lifecycleHandler = null;
     
     /**
      * Creates a new instance of SimpleBasisAMS
@@ -136,7 +139,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         }
         if (verboseStr != null && verboseStr.toLowerCase().equals("true")) {
             verbose = true;
-        }             
+        }
     }
     
     public void stop() {
@@ -239,13 +242,13 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         
         
         JUMPExecutive e = JUMPExecutive.getInstance();
-        JUMPMessageDispatcher md = e.getMessageDispatcher();
+        md = e.getMessageDispatcher();
 
         lcm = e.getIsolateFactory();
         
         try {
-            md.registerHandler(JUMPIsolateWindowRequest.MESSAGE_TYPE, this);
-            md.registerHandler(JUMPIsolateLifecycleRequest.MESSAGE_TYPE, this);
+            isolateWindowHandler = md.registerHandler(JUMPIsolateWindowRequest.MESSAGE_TYPE, this);
+            lifecycleHandler = md.registerHandler(JUMPIsolateLifecycleRequest.MESSAGE_TYPE, this);
         } catch (JUMPMessageDispatcherTypeException ex) {
             ex.printStackTrace();
         } catch (IOException ex) {
@@ -738,7 +741,7 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         public void actionPerformed(ActionEvent e) {
             doPrefsScreen();
         }
-    }    
+    }
     
     class LaunchAppActionListener
             implements ActionListener {
@@ -786,6 +789,17 @@ public class SimpleBasisAMS implements JUMPPresentationModule, JUMPMessageHandle
         
         public void actionPerformed(ActionEvent e) {
             killAllApps();
+            // shut down the server
+            new com.sun.jumpimpl.os.JUMPOSInterfaceImpl().shutdownServer();
+            try {
+                md.cancelRegistration(isolateWindowHandler);
+                md.cancelRegistration(lifecycleHandler);                
+            } catch (Exception ex) {
+                System.out.println("ERROR: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+            finally {
+            }
             System.exit(0);
         }
     }

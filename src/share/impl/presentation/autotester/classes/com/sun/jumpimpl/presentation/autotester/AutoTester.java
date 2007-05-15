@@ -79,7 +79,10 @@ public class AutoTester implements JUMPPresentationModule, JUMPMessageHandler {
 	} 
 
 	installAndPerformTests(nextDescriptor);
-
+        
+        // shut down the server
+        new com.sun.jumpimpl.os.JUMPOSInterfaceImpl().shutdownServer();
+        System.exit(0);
     }
 
     /**

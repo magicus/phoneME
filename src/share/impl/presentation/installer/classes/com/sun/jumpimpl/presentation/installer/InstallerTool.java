@@ -74,11 +74,13 @@ public class InstallerTool implements JUMPPresentationModule {
                 return null;
             }
         } else if (command.equals("install_all")) {        
-            str = new String[4];
+            str = new String[6];
             str[0] = "-command";
             str[1] = command;
             str[2] = "-DescriptorURI";
-            str[3] = arg2;                               
+            str[3] = arg2;
+            str[4] = "-ProvisioningServerURL";
+            str[5] = (String)map.get("jump.installer.provisionURL");
         } else if (command.equals("uninstall")) {
             str = new String[6];
             str[0] = "-command";
@@ -150,5 +152,6 @@ public class InstallerTool implements JUMPPresentationModule {
     public void start() {
         System.out.println("*** Starting InstallerTool ***");
         new JUMPInstallerTool(installToolArgs);
+        System.exit(0);
     }
 }
