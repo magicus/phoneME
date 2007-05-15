@@ -152,6 +152,8 @@ public class InstallerTool implements JUMPPresentationModule {
     public void start() {
         System.out.println("*** Starting InstallerTool ***");
         new JUMPInstallerTool(installToolArgs);
+        // shut down the server
+        new com.sun.jumpimpl.os.JUMPOSInterfaceImpl().shutdownServer();
         System.exit(0);
     }
 }
