@@ -24,12 +24,6 @@
 
 package com.sun.midp.jump.push.executive;
 
-import com.sun.jump.common.JUMPAppModel;
-import com.sun.jump.common.JUMPApplication;
-import com.sun.jump.module.installer.JUMPInstallerModuleFactory;
-import com.sun.jump.module.lifecycle.JUMPApplicationLifecycleModule;
-import com.sun.jump.module.lifecycle.JUMPApplicationLifecycleModuleFactory;
-import com.sun.midp.jump.installer.MIDLETInstallerImpl;
 import com.sun.midp.jump.push.executive.persistence.Store;
 import com.sun.midp.push.gcf.ReservationDescriptor;
 import com.sun.midp.push.gcf.ReservationDescriptorFactory;
@@ -56,45 +50,16 @@ final class PushController {
      * @param store Store to use
      * (cannot be <code>null</code>)
      *
+     * @param lifecycleAdapter lifecycle adapter to use
+     * (cannot be <code>null</code>)
+     *
      * @param reservationDescriptorFactory reservation descriptor factory
      * (cannot be <code>null</code>)
      */
     public PushController(
             final Store store,
+            final LifecycleAdapter lifecycleAdapter,
             final ReservationDescriptorFactory reservationDescriptorFactory) {
-        /*
-         * IMPL_NOTE: not an ideal solution as it introduces
-         * implementation dependencies.  However pragmatically good enough
-         */
-        final MIDLETInstallerImpl midletInstaller = (MIDLETInstallerImpl)
-                    JUMPInstallerModuleFactory
-                        .getInstance()
-                        .getModule(JUMPAppModel.MIDLET);
-        if (midletInstaller == null) {
-            throw new RuntimeException("failed to obtain midlet installer");
-        }
-
-        final JUMPApplicationLifecycleModule lifecycleModule =
-                JUMPApplicationLifecycleModuleFactory
-                    .getInstance()
-                    .getModule(JUMPApplicationLifecycleModuleFactory.POLICY_ONE_LIVE_INSTANCE_ONLY);
-        if (lifecycleModule == null) {
-            throw new RuntimeException("failed to obtain lifecycle module");
-        }
-
-        final LifecycleAdapter lifecycleAdapter = new LifecycleAdapter() {
-            public void launchMidlet(final int midletSuiteID,
-                    final String midlet) {
-                final JUMPApplication app = midletInstaller
-                        .getMIDletApplication(midletSuiteID, midlet);
-                if (app == null) {
-                    logError("failed to convert to MIDP application");
-                }
-
-                lifecycleModule.launchApplication(app, new String [0]);
-            }
-        };
-
         this.alarmController = new AlarmController(store, lifecycleAdapter);
         this.connectionController = new ConnectionController(
                 store, reservationDescriptorFactory, lifecycleAdapter);
