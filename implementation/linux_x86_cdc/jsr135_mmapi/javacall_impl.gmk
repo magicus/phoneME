@@ -23,12 +23,15 @@
 # information or have any questions. 
 #
 
-# DON'T CHANGE the order of the following vpath directives!
-PROJECT_JSR_135_JC_DIR ?= $(JSR_135_JC_IMPL_PATH)/$(JSR_135_JC_DIR)
+PROJECT_JSR_135_JC_DIR = $(JSR_135_JC_IMPL_PATH)/$(JSR_135_JC_DIR)
 VPATH+=$(PROJECT_JSR_135_JC_DIR)
 
+SO_JSR_135_JC_DIR = javacall/implementation/linux_x86_cdc/$(JSR_135_JC_DIR)
+
 PORTING_SOURCE += $(notdir $(wildcard $(PROJECT_JSR_135_JC_DIR)/*.c))
-SOURCE_OUTPUT_LIST += $(foreach file,$(notdir $(wildcard $(PROJECT_JSR_135_JC_DIR)/*.*)), $(PROJECT_JSR_135_JC_DIR)/$(file) javacall/implementation/linux_x86_cdc/$(JSR_135_JC_DIR))
+SOURCE_OUTPUT_LIST += $(foreach file, \
+	$(notdir $(wildcard $(PROJECT_JSR_135_JC_DIR)/*.*)), \
+	$(PROJECT_JSR_135_JC_DIR)/$(file) $(SO_JSR_135_JC_DIR))
 
 JSR_135_INTERFACE_DIR = $(JAVACALL_DIR)/interface/$(JSR_135_JC_DIR)
 SOURCE_OUTPUT_LIST += $(JSR_135_INTERFACE_DIR) javacall/interface
