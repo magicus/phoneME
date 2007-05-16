@@ -32,6 +32,8 @@
 #undef  POUND
 #define POUND #
 
+#define PRESERVE8 /* empty */
+
 #define SET_SECTION_EXEC(x)
 
 #define SET_SECTION_EXEC_WRITE
@@ -54,15 +56,26 @@
 #define WORD(x)			\
 	.word x
 
+#define BYTE(x)			\
+	.byte x
+
 #define STRING(s)		\
 	.string s
+
+#define EQUIV(this, that)	\
+	.equiv this, that
 
 #define POOL			\
 	.pool
 
+#define END /* empty */
+
 #define IMPORT(x)
 
 #else /* __RVCT__ */
+
+#define PRESERVE8 PRESERVE8
+
 #define SET_SECTION_EXEC(x)	  \
 	AREA    x, CODE, READONLY
 
@@ -85,13 +98,20 @@
 #define WORD(x)			\
 	DCD x
 
+#define BYTE(x)			\
+	DCB x
 
 #define STRING(s)		\
 	DCB s, 0
 
+#define EQUIV(this, that)	\
+	this EQU that
+
 #define POOL
 
 #define IMPORT(x)       IMPORT x
+
+#define END END
 
 #endif /* __RVCT__ */
 

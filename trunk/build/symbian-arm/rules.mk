@@ -23,6 +23,23 @@
 #
 # %W% %E%
 #
+
+ifeq ($(SYMBIAN_PLATFORM), armv5)
+
+# .S files need to be cpp'd.  armcc can't preprocess and then invoke the
+# assembler, and we can't change how the Symbian build process handles
+# .S files, so we preprocess the file here while building the .mmp.
+# The preprocessed file name has an underscore prepended to hide it from
+# vpath.
+$(CVM_OBJDIR)/%.o: %.S
+	$(AT)armcc $(CVM_DEFINES) $(ALL_INCLUDE_FLAGS) -E $^ \
+		    > $(CVM_DERIVEDROOT)/javavm/runtime/_$(notdir $^)
+	$(AT)echo SOURCEPATH $(CVM_DERIVEDROOT)/javavm/runtime >> $(CVM_MMP)
+	$(AT)echo SOURCE _$(notdir $^) >> $(CVM_MMP)
+
+else
+
+#
 # Compile ccmcodecachecopy_cpu.S as a library and copy to the Symbian release directory,
 # so we can link the CVM executable against it.
 #
@@ -34,22 +51,6 @@ CVMEXT_LIB_DEPS += \
 		$(CVM_TOP)/src/arm/javavm/runtime/jit/jit_cpu.S
 endif
 
-ifeq ($(SYMBIAN_PLATFORM), armv5)
-#
-# Preprocess the *.S files.
-#
-ASM_COMMAND = armcc $(CVM_DEFINES) $(ALL_INCLUDE_FLAGS) -E $(1)\
-		    > $(CVM_DERIVEDROOT)/javavm/runtime/$(2)0.S; \
-              echo SOURCEPATH $(CVM_DERIVEDROOT)/javavm/runtime >> $(CVM_MMP); \
-	      echo SOURCE $(2)0.S >> $(CVM_MMP)
-$(CVMEXT_LIB) : $(CVMEXT_LIB_DEPS)
-	echo "Preprocess $^"
-ifeq ($(CVM_JIT), true)
-	$(call ASM_COMMAND,$(CVM_TOP)/src/arm/javavm/runtime/jit/ccmcodecachecopy_cpu.S,ccmcodecachecopy_cpu)
-	$(call ASM_COMMAND,$(CVM_TOP)/src/arm/javavm/runtime/jit/jit_cpu.S,jit_cpu)
-endif
-	$(call ASM_COMMAND,$(CVM_TOP)/src/arm/javavm/runtime/invokeNative_arm.S,invokeNative_arm)
-else
 #
 # Use Symbian gcc to compile the *.S files and link as a lib.
 #
