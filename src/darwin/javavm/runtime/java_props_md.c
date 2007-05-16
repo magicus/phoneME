@@ -90,11 +90,26 @@ CVMgetJavaProperties(java_props_t *sprops)
     /* tmp dir */
     sprops->tmp_dir = P_tmpdir;
 
+#ifndef JAVASE
     /* Printing properties */
     sprops->printerJob = NULL;
 
     /* Java 2D properties */
     sprops->graphics_env = NULL;
+#else
+    /* Printing properties */
+    sprops->printerJob = "sun.print.PSPrinterJob";
+
+    /* Preferences properties */
+    sprops->util_prefs_PreferencesFactory =
+                                "java.util.prefs.FileSystemPreferencesFactory";
+
+    /* patches/service packs installed */
+    sprops->patch_level = "unknown";
+
+    sprops->graphics_env = "sun.awt.X11GraphicsEnvironment";
+#endif
+
     sprops->awt_toolkit = NULL;
 
     v = getenv("JAVA_FONTS");
@@ -142,8 +157,7 @@ CVMgetJavaProperties(java_props_t *sprops)
 	}
 
 #ifdef ARCH
-	strncpy(name.machine, ARCH, sizeof(name.machine));
-	name.machine[sizeof(name.machine)] = '\0'; /* in case of overflow */
+        sprops->os_arch = ARCH;
 #else
 	{
 	    char* arch = name.machine;

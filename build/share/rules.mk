@@ -460,8 +460,10 @@ $(J2ME_CLASSLIB):: $(J2ME_CLASSLIB)classes $(LIB_CLASSESJAR)
 ifneq ($(JSR_CLASSES),)
 $(J2ME_CLASSLIB):: jsrclasses
 endif
+ifeq ($(JAVASE),)
 $(J2ME_CLASSLIB):: testclasses $(CVM_TEST_CLASSESZIP)
 $(J2ME_CLASSLIB):: democlasses $(CVM_DEMO_CLASSESJAR)
+endif
 ifeq ($(USE_JUMP), true)
 $(J2ME_CLASSLIB):: jumptargets
 endif
@@ -470,12 +472,14 @@ $(J2ME_CLASSLIB):: headers $(CVM_ROMJAVA_LIST)
 $(J2ME_CLASSLIB):: $(CLASSLIB_DEPS)
 $(J2ME_CLASSLIB):: aotdeps
 $(J2ME_CLASSLIB):: $(CVM_BINDIR)/$(CVM)
+ifeq ($(JAVASE),)
 ifeq ($(CDC_10),true)
 $(J2ME_CLASSLIB):: $(CVM_TZDATAFILE)
 endif
 $(J2ME_CLASSLIB):: $(CVM_MIMEDATAFILE) $(CVM_PROPS_BUILD) $(CVM_POLICY_BUILD)
 ifeq ($(CVM_DUAL_STACK), true)
 $(J2ME_CLASSLIB):: $(CVM_MIDPFILTERCONFIG) $(CVM_MIDPCLASSLIST) $(JSR_CDCRESTRICTED_CLASSLIST)
+endif
 endif
 
 #####################################
@@ -801,6 +805,8 @@ $(CVM_BUILDTIME_CLASSESZIP): $(CVM_BUILD_TOP)/.btclasses
 		> $(CVM_CLASSES_TMP)
 	$(AT)mv -f $(CVM_CLASSES_TMP) $@
 
+ifeq ($(JAVASE),)
+
 $(CVM_TEST_CLASSESZIP): $(CVM_BUILD_TOP)/.testclasses
 	@echo ... $@
 	$(AT)(cd $(CVM_TEST_CLASSESDIR); $(ZIP) -r -0 -q - * ) \
@@ -813,6 +819,7 @@ $(CVM_DEMO_CLASSESJAR): $(CVM_BUILD_TOP)/.democlasses
 	$(AT)(cd $(CVM_DEMO_CLASSESDIR); $(ZIP) -r -q - *) > $(CVM_CLASSES_TMP)
 	$(AT)mv -f $(CVM_CLASSES_TMP) $@
 
+endif
 
 #
 # Create the profile jar file if there is anything in the profile
