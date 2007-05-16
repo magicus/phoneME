@@ -50,7 +50,7 @@ import javax.microedition.io.SocketConnection;
  * API. Receives Native AMS callbacks and sends the information out through
  * the socket.
  */
-public class NamsTestService implements EventListener, Runnable {
+class NamsTestService implements EventListener, Runnable {
 
     static final int PORT = 13322;
     static final String PFX = "namstestsvc: ";

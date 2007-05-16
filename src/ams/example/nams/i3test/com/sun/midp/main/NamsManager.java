@@ -48,6 +48,12 @@ import com.sun.midp.log.LogChannels;
  */
 public class NamsManager extends MIDlet implements CommandListener {
 
+    /**
+     * The timeout before the running MIDlet is killed.
+     */
+    private static final int destroyTimeout =
+        Configuration.getIntProperty("destroyMIDletTimeout", 5000);
+    
     /** stores event copies for native events being tracked */
     static private EventCopyStorage eventCopyStorage = new EventCopyStorage();
 
@@ -257,7 +263,7 @@ public class NamsManager extends MIDlet implements CommandListener {
                     null, null, null, null, null, null);
         }
 
-        NamsAPIWrapper.midletDestroy(appId);
+        NamsAPIWrapper.midletDestroy(appId, destroyTimeout);
     }
 
     static public void midletSetForeground(int appId) {

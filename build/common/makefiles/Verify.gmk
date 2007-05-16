@@ -301,6 +301,7 @@ endef
 #
 BOOLEAN_OPTIONS = \
 	USE_NATIVE_AMS \
+	USE_NAMS_TEST_SERVICE \
 	USE_RAW_AMS_IMAGES \
 	USE_RESTRICTED_CRYPTO \
 	USE_SSL \
@@ -357,6 +358,17 @@ BOOLEAN_OPTIONS = \
 $(BOOLEAN_OPTIONS)::
 	@echo +++ Verify option \"$@\" $(LOG_ONLY)
 	@$(verify_boolean) $(LOG)
+
+USE_NATIVE_AMS::
+	@if [ "$(USE_NATIVE_AMS)" = "true" ]; then \
+	  if [ "$(USE_I3_TEST)" = "true" ]; then \
+	    if [ "$(USE_NAMS_TEST_SERVICE)" = "false" ]; then \
+	      echo "ERROR: USE_NAMS_TEST_SERVICE must be set to true when building"\
+	           "with USE_NATIVE_AMS=true and USE_I3_TEST=true"; \
+	      exit -1; \
+	    fi; \
+	  fi; \
+	fi;
 
 USE_VERIFY_ONCE::
 	@if [ "$(USE_VERIFY_ONCE)" = "true" ]; then \

@@ -34,13 +34,18 @@
 
 NAMS_EXAMPLES_DIR = $(SUBSYSTEM_AMS_DIR)/example/nams
 
+ifeq ($(USE_NAMS_TEST_SERVICE), true)
+
 SUBSYSTEM_AMS_JAVA_FILES += \
+	$(NAMS_EXAMPLES_DIR)/classes/com/sun/midp/main/NamsTestServiceMidlet.java \
 	$(NAMS_EXAMPLES_DIR)/classes/com/sun/midp/main/NamsTestService.java \
 	$(NAMS_EXAMPLES_DIR)/classes/com/sun/midp/main/NamsAPIWrapper.java
 
 SUBSYSTEM_AMS_NATIVE_FILES += \
 	nams_test_service_kni.c \
 	nams_api_wrapper_kni.c
+	
+endif	
 
 # vpath for ( example ) module
 #
@@ -90,7 +95,7 @@ ifeq ($(USE_I3_TEST), true)
 vpath % $(NAMS_EXAMPLES_DIR)/i3test/native/$(TARGET_OS)
 
 AMS_RUNNAMS_NATIVE_FILES += \
-	runNams_md.c
+	runNamsI3test_md.c
 
 SUBSYSTEM_AMS_I3TEST_JAVA_FILES += \
 	$(NAMS_EXAMPLES_DIR)/i3test/com/sun/midp/events/EventCopyStorage.java \
@@ -119,9 +124,11 @@ vpath % \
 
 else
 
+ifeq ($(USE_NAMS_TEST_SERVICE), true)
 AMS_RUNNAMS_NATIVE_FILES += \
 	midpNamsTestService.c \
 	midpNamsTestEventProducer.c
+endif	
 
 endif
 
