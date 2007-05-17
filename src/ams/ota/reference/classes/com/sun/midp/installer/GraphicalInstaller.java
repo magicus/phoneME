@@ -140,10 +140,6 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     private Command okCmd =
         new Command(Resource.getString(ResourceConstants.CONTINUE),
                     Command.OK, 1);
-    /** Command object for "OK" command for exception form. */
-    private Command exceptionCmd =
-        new Command(Resource.getString(ResourceConstants.OK),
-                    Command.OK, 1);
     /** Command object for "Yes" command for keep RMS form. */
     private Command keepRMSCmd =
         new Command(Resource.getString(ResourceConstants.YES),
@@ -1451,29 +1447,30 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
         lastDisplayChange = System.currentTimeMillis();
         display.setCurrent(successAlert, new Form(""));
-            // this Form is never displayed
+        // this Form is never displayed
     }
 
     /**
-     * Alert the user that an action was canceled. The backgroundInstaller
-     * will hide the message.
+     * Alert the user that an action was canceled.
+     *
      * @param message message to display to user
      */
     private void displayCancelledMessage(String message) {
-        Form form;
         Image icon;
-
-        form = new Form(null);
+        Alert cancelAlert;
 
         icon = getImageFromInternalStorage("_ack8");
-        form.append(new ImageItem(null, icon, ImageItem.LAYOUT_CENTER +
-                                     ImageItem.LAYOUT_NEWLINE_BEFORE +
-                                     ImageItem.LAYOUT_NEWLINE_AFTER, null));
 
-        form.append(message);
+        cancelAlert = new Alert(null, message, icon, null);
 
-        display.setCurrent(form);
+        cancelAlert.setTimeout(Alert.FOREVER);
+        cancelAlert.setCommandListener(this);
+
+        // We need to prevent "flashing" on fast development platforms.
+        preventScreenFlash();
+
         lastDisplayChange = System.currentTimeMillis();
+        display.setCurrent(cancelAlert);
     }
 
     /**
@@ -1492,7 +1489,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         a.setCommandListener(this);
 
         display.setCurrent(a, new Form(""));
-          // this Form is never displayed
+        // this Form is never displayed
     }
 
     /**
@@ -1606,8 +1603,8 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
                         parent.exit(true);
                     } catch (InvalidJadException ije) {
-                        if (ije.getReason() ==
-                                InvalidJadException.INVALID_JAD_TYPE) {
+                        int reason = ije.getReason();
+                        if (reason == InvalidJadException.INVALID_JAD_TYPE) {
                             // media type of JAD was wrong, it could be a JAR
                             String mediaType = (String)ije.getExtraData();
 
@@ -1624,6 +1621,13 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                 displayListAfterCancelMessage();
                                 break;
                             }
+                        } else if
+                            (reason == InvalidJadException.ALREADY_INSTALLED ||
+                             reason == InvalidJadException.OLD_VERSION ||
+                             reason == InvalidJadException.NEW_VERSION) {
+                            // user has canceled the update operation,
+                            // don't display an error message 
+                            break;
                         }
 
                         msg = translateJadException(ije, name, null, null, url);
