@@ -50,7 +50,7 @@ public class Test implements Runnable {
 
           // First find the lifecycle module remote.
           Remote remote = JUMPIsolateProcess.getInstance().getRemoteService(
-                                  JUMPApplicationLifecycleModuleRemote.class);
+                                  JUMPApplicationLifecycleModuleRemote.class.getName());
    
           System.out.println("Test received " + remote);
    

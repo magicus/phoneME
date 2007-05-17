@@ -68,22 +68,6 @@ public abstract class JUMPIsolateProcess
      * This method should be used to access implementation interfaces only.
      * </p>
      *
-     * @param  remoteInterface remote interface of an JUMP module.
-     * @return remote object which implements the remoteInterface.
-     */ 
-
-    public Remote getRemoteService(Class remoteInterface) {
-	return getRemoteService(remoteInterface.getName());
-    }
-
-    /**
-     * Returns a module's remote object.  The isolate can access
-     * JUMP modules in the executive through the remote object.
-     *
-     * <p>
-     * This method should be used to access implementation interfaces only.
-     * </p>
-     *
      * @param name name of service to retrieve
      * @return remote object which implements the remoteInterface.
      */
