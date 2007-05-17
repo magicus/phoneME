@@ -29,6 +29,9 @@ JSR_INIT_CLASS           = Initializer
 
 JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239 280
 
+# Defintion for path separator used in JSRs
+PATHSEP        ?= $(PS)
+
 # Directory which JSRs *.jar and *.so files are put to
 JSROP_LIB_DIR   = $(CVM_LIBDIR)
 
