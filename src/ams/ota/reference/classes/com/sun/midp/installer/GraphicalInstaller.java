@@ -140,12 +140,6 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     private Command okCmd =
         new Command(Resource.getString(ResourceConstants.CONTINUE),
                     Command.OK, 1);
-    /*
-       Command object for "OK" command for exception form.
-       private Command exceptionCmd =
-           new Command(Resource.getString(ResourceConstants.OK),
-                       Command.OK, 1);
-    */
     /** Command object for "Yes" command for keep RMS form. */
     private Command keepRMSCmd =
         new Command(Resource.getString(ResourceConstants.YES),
