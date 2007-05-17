@@ -48,6 +48,9 @@ MODULE_SATSA_CRYPTO_JAVA_FILES += \
     $(JSR_177_DIR)/src/share/crypto/classes/com/sun/satsa/crypto/RSAPublicKey.java
 endif
 
+MODULE_SATSA_JCRMI_JAVA_FILES += \
+    $(JSR_177_DIR)/src/jump_application/protocol/jcrmi/classes/com/sun/io/j2me/jcrmi/RemoteStubCreation.java
+
 MODULE_SATSA_CRYPTO_JAVA_FILES += \
     $(JSR_177_DIR)/src/jump_application/satsa/classes/com/sun/j2me/crypto/MD2.java \
 
@@ -109,13 +112,13 @@ JAVACARD_CLASSES = $(JSR_177_BUILD_DIR)/javacard_classes
 
 # Tools and applets
 #
+JSR177_JAVAC ?= $(CVM_JAVAC)
+
 ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
 TOOLS = $(JAVACARD_CLASSES) $(BINDIR) $(JCRMIC_TOOL) $(ACL_DATA_DIRS) \
         $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java $(SIM_TOOL)
 
-PATHSEP ?= $(PS)
-JAVA_CMD ?= $(CVM_JAVA)
-JAVAC ?= $(CVM_JAVAC)
+JSR177_JAVA ?= $(CVM_JAVA)
 else
 TOOLS = $(JAVACARD_CLASSES) $(BINDIR) $(JCRMIC_TOOL) $(ACL_DATA_DIRS) \
         $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java 

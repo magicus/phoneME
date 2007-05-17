@@ -24,28 +24,26 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.io.j2me.jcrmi;
+package com.sun.io.j2me.jcrmi;
 
-import com.sun.j2me.io.ConnectionBaseInterface;
-import javax.microedition.io.Connection;
-import java.io.IOException;
+import javax.microedition.jcrmi.RemoteStub;
 
-public class Protocol implements ConnectionBaseInterface {
-    ConnectionBaseInterface protocol = null;
+/**
+ * Creation of the Remote stub object.
+ */
+class RemoteStubCreation {
 
-    public Protocol() {
-        try {
-            protocol = (ConnectionBaseInterface)
-            Class.forName("com.sun.io.j2me.jcrmi.Protocol").newInstance();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-    }
+    /**
+     * Creates stub.
+     * @return new stub object
+     * @throws ClassNotFoundException if stub class wasn't found        
+     * @throws IllegalAccessException if access to stub class is denied        
+     * @throws InstantiationException if it was impossible to create stub object
+     */
+    static RemoteStub createStub(String className) throws ClassNotFoundException,
+                     IllegalAccessException, InstantiationException {
 
-    public Connection openPrim(String name, int mode, boolean timeouts)
-	                           throws IOException {
-
-        return protocol.openPrim(name, mode, timeouts);
+        return (RemoteStub)
+               (Class.forName(className).newInstance());
     }
 }
