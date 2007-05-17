@@ -35,8 +35,9 @@
       Comment="Version number."/>
 
     <property Key="supports.mixing"
-      Value="true"
+      Value=""
       Scope="system"
+      Callout="get_system_property_supports_mixing" 
       Comment="Mixing support."/>
 
     <property Key="supports.audio.capture"
@@ -45,7 +46,7 @@
       Comment="Audio capture support."/>
 
     <property Key="supports.video.capture"
-      Value="true"
+      Value="false"
       Scope="system"
       Comment="Video capture support."/>
 
@@ -63,12 +64,12 @@
       Value="encoding=pcm encoding=pcm&amp;rate=8000&amp;bits=8&amp;channels=1 encoding=pcm&amp;rate=22050&amp;bits=16&amp;channels=2"
       Scope="system"
       Comment="Supported audio encodings."/>
-    -->
 
     <property Key="video.encodings"
       Value="encoding=png"
       Scope="system"
       Comment="Supported video encodings."/>
+    -->
 
     <!--
     <property Key="video.encodings"

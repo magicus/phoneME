@@ -1,25 +1,25 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 package com.sun.mmedia;
 
@@ -76,6 +76,9 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
 
     /* minimum wait time */
     private final long MIN_WAIT = 50;
+
+    /* For zero duration GIFs (e.g. non-animated) wait time between STARTED and END_OF_MEDIA */
+    private final long ZERO_DURATION_WAIT = 50;
 
     /* a table of frame durations */    
     private Vector frameTimes;
@@ -303,6 +306,13 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
 
             decodeFrame();
 
+            // If duration is 0 prepare the last frame once.
+            if (duration == 0) {
+                while (getFrame())
+                    decodeFrame();
+                renderFrame();
+            }
+
         } catch (IOException e) {
             throw new MediaException("can't seek first frame");
         }
@@ -316,31 +326,42 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
      *            otherwise false.
      */
     protected boolean doStart() {
-        startTime = System.currentTimeMillis(); 
-
-        if (stopped) {
-            // wake up existing play thread
-            stopped = false;
-            
-            synchronized (playLock) {
-                playLock.notifyAll();
-            }
+        if (duration == 0) { // e.g. for non-animated GIFs
+            new Thread(new Runnable() {
+                synchronized public void run() {
+                    try {
+                        wait(ZERO_DURATION_WAIT);
+                    } catch (InterruptedException ie) { }
+                    sendEvent(PlayerListener.END_OF_MEDIA, new Long(0));
+                }
+            }).start();
         } else {
-            displayTime = getFrameInterval(frameCount) / 1000;
+            startTime = System.currentTimeMillis(); 
+
+            if (stopped) {
+                // wake up existing play thread
+                stopped = false;
+            
+                synchronized (playLock) {
+                    playLock.notifyAll();
+                }
+            } else {
+                displayTime = getFrameInterval(frameCount) / 1000;
                 
-            // Ensure that previous thread has finished ... sn162189: Is it really needed ? 
-            playThreadFinished();
+                // Ensure that previous thread has finished
+                playThreadFinished();
 
-            synchronized (playLock) {
-                if (playThread == null) {
-                    // Check for null is a protection against several
-                    // simultaneous doStart()'s trying to create a new thread.
-                    // But if playThreadFinished() failed to terminate
-                    // playThread, we can have a problem ...
+                synchronized (playLock) {
+                    if (playThread == null) {
+                        // Check for null is a protection against several
+                        // simultaneous doStart()'s trying to create a new thread.
+                        // But if playThreadFinished() failed to terminate
+                        // playThread, we can have a problem
 
-                    // create a new play thread
-                    playThread = new Thread(this);
-                    playThread.start();
+                        // create a new play thread
+                        playThread = new Thread(this);
+                        playThread.start();
+                    }
                 }
             }
         }
@@ -603,7 +624,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
        
         if (!stopped) {
             // threshold levels in milliseconds
-            // sn162189: don't understand what is it for.
             // It makes playback falter if frame intervals differ
             //EARLY_THRESHOLD = 250;
             //if (frameInterval > 0 && frameInterval < EARLY_THRESHOLD)
@@ -656,6 +676,7 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             stream.seek(0);
             parseHeader();
         }
+        imageDecoder.clearImage();
     }
     
     private void decodeFrame() {
@@ -852,7 +873,6 @@ final public class GIFPlayer extends BasicPlayer implements Runnable {
             }
 
             imageDecoder.setGlobalPalette(tableDepth, globalColorTable, index);
-            imageDecoder.clearImage();
         }
     
         firstFramePos = stream.tell();
