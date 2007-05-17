@@ -453,7 +453,7 @@ endif
 #
 $(JCRMIC_TOOL): $(JCRMIC_SOURCES)
 	@echo " ..." $@
-	$(AT)$(JAVAC_CMD) -d $(JAVACARD_CLASSES) $(JCRMIC_SOURCES)
+	$(AT)$(JSR177_JAVAC) -d $(JAVACARD_CLASSES) $(JCRMIC_SOURCES)
 	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/jcrmic/$(JCRMIC_PROPERTIES) $(JAVACARD_CLASSES)/$(JCRMIC_PROPERTIES)
 	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/jcrmic/$(JCRMIC_MANIFEST_FILE) $(JAVACARD_CLASSES)/$(JCRMIC_MANIFEST_FILE)
 	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAR_CMD) cfm $(JCRMIC_ARCHIVE) $(JCRMIC_MANIFEST_FILE) com/sun/satsa/jcrmic )
@@ -492,10 +492,10 @@ ACL_DATA_SOURCES =                                              \
 
 $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java: $(JSR_177_DIR)/src/share/tool/acl_data/acl_0
 	@echo " ... generating " $@
-	$(AT)$(JAVAC) -source 1.4 -encoding utf-8 -d $(ACL_DATA_CLASSES) -classpath $(ACL_DATA_CLASSES) $(ACL_DATA_SOURCES)
-	$(AT)$(JAVA_CMD) -classpath $(ACL_DATA_CLASSES) acl_data.Main $(JSR_177_DIR)/src/share/tool/acl_data/acl_0 \
+	$(AT)$(JSR177_JAVAC) -source 1.4 -encoding utf-8 -d $(ACL_DATA_CLASSES) -classpath $(ACL_DATA_CLASSES) $(ACL_DATA_SOURCES)
+	$(AT)$(JSR177_JAVA) -classpath $(ACL_DATA_CLASSES) acl_data.Main $(JSR_177_DIR)/src/share/tool/acl_data/acl_0 \
 	$(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/ $(ACL_DATA_DIR)/files/
-	$(AT)$(JAVA_CMD) -classpath $(ACL_DATA_CLASSES) acl_data.Print $(ACL_DATA_DIR)/files/* > $(ACL_DATA_DIR)/files.txt
+	$(AT)$(JSR177_JAVA) -classpath $(ACL_DATA_CLASSES) acl_data.Print $(ACL_DATA_DIR)/files/* > $(ACL_DATA_DIR)/files.txt
 
 ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
 # wim_data tool
@@ -518,8 +518,8 @@ WIM_DATA_SOURCES =                                         \
     
 $(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)/Data.java: $(JSR_177_DIR)/src/share/tool/wim_data/Main.java
 	@echo " ... generating " $@
-	$(AT)$(JAVAC) -source 1.4 -encoding utf-8 -d $(WIM_DATA_CLASSES) -classpath $(WIM_DATA_CLASSES) $(WIM_DATA_SOURCES)
-	$(AT)$(JAVA_CMD) -classpath $(WIM_DATA_CLASSES) wim_data.Main $(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)/ \
+	$(AT)$(JSR177_JAVAC) -source 1.4 -encoding utf-8 -d $(WIM_DATA_CLASSES) -classpath $(WIM_DATA_CLASSES) $(WIM_DATA_SOURCES)
+	$(AT)$(JSR177_JAVA) -classpath $(WIM_DATA_CLASSES) wim_data.Main $(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)/ \
 	$(WIM_DATA_DIR)/	
 
 # simulator tool
@@ -576,11 +576,11 @@ endef
 # actions    - compiles 'appTarget'
 define applets
 	@echo " ... compiling $(1)"
-	$(AT)$(JAVAC) -g -d $(JAVACARD_CLASSES) -classpath $(JAVACARD_CLASSES)$(PATHSEP)$(JC_API) $(filter %.java,$(2))
+	$(AT)$(JSR177_JAVAC) -g -d $(JAVACARD_CLASSES) -classpath $(JAVACARD_CLASSES)$(PATHSEP)$(JC_API) $(filter %.java,$(2))
 	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/javacard/$(call appletName,$@).opt $(JAVACARD_CLASSES)/
 	@echo " ... preparing $(1)"
 	$(call simtoolkit,$@,$(AT)cp -r -f $(JC_DIR)/api_export_files $(JAVACARD_CLASSES))
-	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_VERIFIER)$(PATHSEP)$(JC_CONVERTER) com.sun.javacard.converter.Converter -config $(call appletName, $(1)).opt )	
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JSR177_JAVA) -classpath $(JC_VERIFIER)$(PATHSEP)$(JC_CONVERTER) com.sun.javacard.converter.Converter -config $(call appletName, $(1)).opt )	
 	$(call simtoolkit,$@,$(AT)mkdir -p $(JAVACARD_CLASSES)/api_export_files/$(SIM_TOOLKIT_PATH)/javacard/)
 	$(call simtoolkit,$@,$(AT)cp $(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.exp $(JAVACARD_CLASSES)/api_export_files/$(SIM_TOOLKIT_PATH)/javacard/)
 endef
@@ -600,10 +600,10 @@ $(TOOLKIT_EXP):
 	$(call applets,(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.cap,$(SIM_TOOLKIT_SOURCES))
 	
 $(TOOLKIT_CLASSES):
-	$(AT)$(JAVAC) -g -d $(JAVACARD_CLASSES) -classpath $(JAVACARD_CLASSES)$(PATHSEP)$(JC_API) $(SIM_TOOLKIT_SOURCES)
+	$(AT)$(JSR177_JAVAC) -g -d $(JAVACARD_CLASSES) -classpath $(JAVACARD_CLASSES)$(PATHSEP)$(JC_API) $(SIM_TOOLKIT_SOURCES)
 
 $(JAVACARD_CLASSES)/%.scr:
-	$(AT)$(JAVA_CMD) -classpath $(JC_SCRIPTGEN) com.sun.javacard.scriptgen.Main -o $@ -nobanner $^
+	$(AT)$(JSR177_JAVA) -classpath $(JC_SCRIPTGEN) com.sun.javacard.scriptgen.Main -o $@ -nobanner $^
 
 $(JC_EEPROM_IMAGE): $(SCRS)
 	@echo " ..." $@
@@ -612,7 +612,7 @@ $(JC_EEPROM_IMAGE): $(SCRS)
 	@echo " ... loading applets (be patient)"
 	$(AT)$(JC_DIR)/bin/cref -o $(JC_EEPROM_IMAGE) -nobanner -nomeminfo -s &
 	-$(AT)sleep 1
-	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAVA_CMD) -classpath $(JC_APDUTOOL_CLASSPATH) com.sun.javacard.apdutool.Main -h 127.0.0.1 -nobanner satsimulator.scr)
+	$(AT)(cd $(JAVACARD_CLASSES) ; $(JSR177_JAVA) -classpath $(JC_APDUTOOL_CLASSPATH) com.sun.javacard.apdutool.Main -h 127.0.0.1 -nobanner satsimulator.scr)
 	$(AT)(mkdir -p $(SAT_SCRIPT_PATH) ; mv -f $(JAVACARD_CLASSES)/satsimulator.scr $(SAT_SCRIPT_PATH)/)
 	$(AT)(cd $(JAVACARD_CLASSES) ; rm -f *.opt header.scr footer.scr satsimulator.scr)
 	@echo " ..." $@ " done"
