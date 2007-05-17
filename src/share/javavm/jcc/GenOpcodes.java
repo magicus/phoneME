@@ -223,7 +223,7 @@ class GenOpcodes
 		System.err.println("\"" + arg + "\" not supported:\n" + ex);
 		printUsage();
 		System.exit(1);
-		//areturn;
+		return;
 	    }
 
 	    FileGenerator fileGenerator;
