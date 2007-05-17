@@ -62,6 +62,7 @@ class StackLock {
 
   ReturnOop waiters()                 { return _waiters; }
   void set_waiters(Thread* value);
+  void clear_waiters() {_waiters = NULL;}
 
   static size_t size() {
     return sizeof(StackLock) + JavaNearDesc::allocation_size();

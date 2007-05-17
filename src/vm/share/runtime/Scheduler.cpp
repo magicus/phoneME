@@ -635,16 +635,51 @@ void Scheduler::wake_up_terminated_sleepers(int task_id JVM_TRAPS) {
     resume_threads(task_id);
   }
 
-#if ENABLE_JAVA_DEBUGGER
   Thread::Fast thread = Universe::global_threadlist();
   while (thread.not_null()) {
     if (thread().task_id() == task_id) {      
+        // THIS CODE MAKES SENCE ONLY IN CASE OF DEADLOCKS!        
+      if (thread().wait_obj() != NULL) { 
+        //thread is still sync!
+        //this mean that this thread waits for some lock, which is 
+        // owned by some other thread. 
+        // the idea is to revert attempts of stack locking made 
+        // by all other threads except for owner. 
+        // so in the end we must get the following situation - 
+        // all threads are active and there are no waiting threads on 
+        // any locks. So we make all waiting threads active, clear
+        // wait object and lock fields of the thread. Also we MUST clear
+        // all waiters on such locks, otherwise threads on that queues will
+        // be activated second time during unlock_stack_lock, which will happen
+        // when lock owner will be active.
+        // NOTE: during this loop the VM state is inconsistent - we clear all waiters 
+        // at once, while activating threads one by one. Please keep it in mind while 
+        // modifing this code. 
+        JavaOop::Raw wait_obj = thread().wait_obj();        
+        if (Thread::current()->equals(thread())) {
+          Thread::set_current_pending_exception(&termination_signal);
+        } else {
+          thread().set_noncurrent_pending_exception(&termination_signal);
+        }
+        // There are two signs which shows that a thread is waiting on some StackLock - 
+        // his wait_stack_lock and wait_obj field are nonnull and the thread is in the
+        // waiters list of the corresponding stacklock. So we must destroy these signs.
+        // Note, that we couldn't use unlock_stack_lock, because it would try to wake up 
+        // other threads and give the lock to them.
+        // So we need to clear wait_* fields of the Thread, clear waiters of each stacklock
+        // and activate the thread.
+        add_to_active(&thread);
+        thread().clear_wait_stack_lock();
+        thread().clear_wait_obj();
+        StackLock::from_java_oop(&wait_obj)->clear_waiters();
+      }                           
+#if ENABLE_JAVA_DEBUGGER
       thread().set_suspend_count(0);
       thread().clear_dbg_suspended();      
+#endif
     }
     thread = thread().global_next();
   }
-#endif
 }
 #endif
 

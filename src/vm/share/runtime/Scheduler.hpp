@@ -168,7 +168,6 @@ private:
   static ReturnOop add_sync_thread(Thread* thread, Thread *pending_waiters,
                                    JavaOop *obj);
   static void remove_waiting_thread(Thread* thread);
-  static void remove_sync_thread(Thread* thread);
   static void add_to_sleeping(Thread* thread);
   static void wake_up_timed_out_sleepers(JVM_SINGLE_ARG_TRAPS);
   static void check_blocked_threads(jlong timeout);
