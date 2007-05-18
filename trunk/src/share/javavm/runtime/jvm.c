@@ -2140,6 +2140,14 @@ JVM_StartSystemThread(JNIEnv *env, jobject thisObj,
 
 #if defined(CVM_HAVE_DEPRECATED) || defined(CVM_THREAD_SUSPENSION)
 
+#ifdef JAVASE
+JNIEXPORT void JNICALL
+JVM_StopThread(JNIEnv* env, jobject jthread, jobject throwable)
+{
+    CVMconsolePrintf("unimplemented function JVM_StopThread called!");
+}
+#endif
+
 JNIEXPORT void JNICALL
 JVM_SuspendThread(JNIEnv *env, jobject thread)
 {
@@ -2348,11 +2356,10 @@ JVM_CountStackFrames(JNIEnv *env, jobject thread)
 
 	if (targetEE != NULL) {
 	    CVMFrame *frame = CVMeeGetCurrentFrame(targetEE);
-	    while (frame != NULL) { 
-		if (!CVMframeIsTransition(frame)) {
-		    ++count;
-		}
-		frame = CVMframePrev(frame);
+	    CVMFrameIterator iter;
+	    CVMframeIterate(frame, &iter);
+	    while (CVMframeIterateNext(&iter)) {
+		++count;
 	    }
 	} else {
 	    /* Thread hasn't any state yet. */
@@ -2482,26 +2489,46 @@ JVM_HoldsLock(JNIEnv *env, jclass threadClass, jobject objICell)
  */
 
 #ifdef CVM_HAVE_DEPRECATED 
+
+/* NOTE: is_trusted_frame() advances the frame iterator if we encounter a
+   doPrivileged() frame. */
 static CVMBool
-is_trusted_frame(CVMExecEnv *ee, CVMFrame *frame)
+is_trusted_frame(CVMExecEnv *ee, CVMFrameIterator *iter)
 {
+    CVMClassBlock *cb;
+    CVMMethodBlock *mb;
+
+    /* doPrivileged MBs: */
     CVMMethodBlock *doPrivilegedAction1Mb =
-        CVMglobals.java_security_AccessController_doPrivilegedAction1;
+	CVMglobals.java_security_AccessController_doPrivilegedAction1;
     CVMMethodBlock *doPrivilegedExceptionAction1Mb =
-        CVMglobals.java_security_AccessController_doPrivilegedExceptionAction1;
+	CVMglobals.java_security_AccessController_doPrivilegedExceptionAction1;
+    CVMMethodBlock *doPrivilegedAction2Mb =
+	CVMglobals.java_security_AccessController_doPrivilegedAction2;
+    CVMMethodBlock *doPrivilegedExceptionAction2Mb =
+	CVMglobals.java_security_AccessController_doPrivilegedExceptionAction2;
 
-    if (frame->mb == doPrivileged2Mb) {
+    mb = CVMframeIterateGetMb(iter);
+    if (mb == doPrivilegedAction2Mb ||
+	mb == doPrivilegedExceptionAction2Mb) {
+
+	CVMMethodBlock *callerMb;
 	CVMClassLoaderICell *loader;
-	CVMClassBlock *cb;
 
-	frame = CVMframePrev(frame);
-	if (frame->mb == doPrivilegedExceptionAction1Mb ||
-	    frame->mb == doPrivilegedAction1Mb)
-	{
-	    frame = CVMframePrev(frame);
+	/* Get the caller frame of doPrivileged(): */
+	CVMframeIterateNext(iter);
+	callerMb = CVMframeIterateGetMb(iter);
+
+	/* If the caller is one of the outher doPrivileged() methods, then
+	   refetch the caller from before them: */
+	if (callerMb == doPrivilegedAction1Mb ||
+	    callerMb == doPrivilegedExceptionAction1Mb ) {
+	    CVMframeIterateNext(iter);
+	    callerMb = CVMframeIterateGetMb(iter);
 	}
 
-	cb = CVMmbClassBlock(frame->mb);
+	/* Check to see if the classloader of this callerMb is trusted: */
+	cb = CVMmbClassBlock(callerMb);
 	if (cb != NULL && ((loader = CVMcbClassLoader(cb)) == NULL ||
 	    TRUSTED_CLASSLOADER(ee, loader)))
 	{
@@ -2511,34 +2538,34 @@ is_trusted_frame(CVMExecEnv *ee, CVMFrame *frame)
     return CVM_FALSE;
 }
 
+/* Utility function used only by JVM_CurrentLoadedClass() and
+   JVM_CurrentClassLoader() below. */
 static CVMClassBlock *
 current_loaded_class(JNIEnv *env)
 {
     CVMExecEnv *ee = CVMjniEnv2ExecEnv(env);
     CVMFrame *frame = CVMeeGetCurrentFrame(ee);
     CVMClassBlock *cb;
+    CVMMethodBlock *mb;
+    CVMClassLoaderICell *loader;
+    CVMFrameIterator iter;
 
-    frame = CVMgetCallerFrameSpecial(frame, 0, CVM_FALSE);
-    while (frame != NULL) {
-	/* if a method in a class in a trusted loader is in a doPrivileged,
-	   return NULL */
-
-	if (is_trusted_frame(ee, frame)) {
+    CVMframeIterate(frame, &iter);
+    while (CVMframeIterateNext(&iter)) {
+	/* If a method in a class in a trusted loader is in a doPrivileged,
+	   return NULL: */
+	if (is_trusted_frame(ee, &iter)) {
 	    return NULL;
 	}
-
-	CVMassert(frame->mb != NULL && !CVMframeIsTransition(frame));
-
-	{
-	    CVMClassLoaderICell *loader;
-	    cb = CVMmbClassBlock(frame->mb);
-	    if (cb != NULL && (loader = CVMcbClassLoader(cb)) != NULL &&
-		!TRUSTED_CLASSLOADER(ee, loader))
-	    {
+	mb = CVMframeIterateGetMb(&iter);
+	if (!CVMmbIs(mb, NATIVE)) {
+	    cb = CVMmbClassBlock(mb);
+	    CVMassert(cb != NULL);
+	    loader = CVMcbClassLoader(cb);
+	    if ((loader != NULL) && !TRUSTED_CLASSLOADER(ee, loader)) {
 	        return cb;
 	    }
         }
-	frame = CVMgetCallerFrameSpecial(frame, 1, CVM_FALSE);
     }
     return NULL;
 }
@@ -2623,72 +2650,86 @@ JVM_GetClassContext(JNIEnv *env)
 
 #ifdef CVM_HAVE_DEPRECATED
 
-/* NOTE: The name string could probably be handled better... */
-
 JNIEXPORT jint JNICALL
 JVM_ClassDepth(JNIEnv *env, jstring name)
 {
-#ifdef JDK12
-    struct javaframe *frame, frame_buf;
-    ClassClass	*cb;
-    char buf[STK_BUF_LEN], *p;
+    CVMExecEnv *ee = CVMjniEnv2ExecEnv(env);
+    CVMFrame *frame = CVMeeGetCurrentFrame(ee);
+    CVMClassBlock *cb;
+    CVMMethodBlock *mb;
+    CVMFrameIterator iter;
     jint depth = 0;
+    char *utfName;
+    CVMClassTypeID classID;
+    jsize strLen;
+    jsize utfLen;
 
-    javaString2CString((Hjava_lang_String *)DeRef(env, name), buf, sizeof(buf));
-    for (p = buf ; *p ; p++) {
-	if (*p == '.') {
-	    *p = '/';
-	}
+    /* Lookup the typeid of the specified Class name: */
+    strLen = CVMjniGetStringLength(env, name);
+    utfLen = CVMjniGetStringUTFLength(env, name);
+
+    utfName = (char *)malloc(utfLen + 1);
+    if (utfName == NULL) {
+        CVMthrowOutOfMemoryError(ee, NULL);
+	return -1;
+    }
+    CVMjniGetStringUTFRegion(env, name, 0, strLen, utfName);
+
+    VerifyFixClassname(utfName);
+    classID = CVMtypeidLookupClassID(ee, utfName, (int)utfLen);
+    free((void *)utfName);
+
+    /* If there is no class in the system already loaded with this name, then
+       no need to search further: */
+    if (classID == CVM_TYPEID_ERROR) {
+	return -1;
     }
 
-    for (frame = CVMjniEnv2ExecEnv(env)->current_frame ; frame != 0 ; ) {
-	if ((frame->mb != 0) &&
-	    !(frame->mb->fb.access & ACC_NATIVE)) {
-	    cb = fieldclass(&frame->mb->fb);
-	    if (cb && !strcmp(cbName(cb), buf)) {
-		return depth;
+    CVMframeIterate(frame, &iter);
+    while (CVMframeIterateNext(&iter)) {
+	mb = CVMframeIterateGetMb(&iter);
+	if (!CVMmbIs(mb, NATIVE)) {
+	    cb = CVMmbClassBlock(mb);
+	    CVMassert(cb != NULL);
+	    if (CVMcbClassName(cb) == classID) {
+	        return depth;
 	    }
 	    depth++;
-	}
-	frame = FRAME_PREV(frame, &frame_buf);
+        }
     }
-#else
-    CVMconsolePrintf("JVM_ClassDepth() not implemented yet!\n");
-    CVMassert(CVM_FALSE);
     return -1;
-#endif
 }
 
 JNIEXPORT jint JNICALL
 JVM_ClassLoaderDepth(JNIEnv *env)
 {
-#ifdef JDK12
-    struct javaframe *frame, frame_buf;
-    ClassClass	*cb;
+    CVMExecEnv *ee = CVMjniEnv2ExecEnv(env);
+    CVMFrame *frame = CVMeeGetCurrentFrame(ee);
+    CVMClassBlock *cb;
+    CVMMethodBlock *mb;
+    CVMClassLoaderICell *loader;
+    CVMFrameIterator iter;
     jint depth = 0;
 
-    for (frame = CVMjniEnv2ExecEnv(env)->current_frame ; frame != 0 ; ) {
+    CVMframeIterate(frame, &iter);
+    while (CVMframeIterateNext(&iter)) {
 	/* if a method in a class in a trusted loader is in a doPrivileged,
 	   return -1 */
-
-	if (is_trusted_frame(env, frame))
+	if (is_trusted_frame(ee, &iter)) {
 	    return -1;
-
-	if ((frame->mb != 0) && 
-	    !(frame->mb->fb.access & ACC_NATIVE)) {
-	    cb = fieldclass(&frame->mb->fb);
-	    if (cb && cbLoader(cb) && !IsTrustedClassLoader(cbLoader(cb))) {
-		return depth;
+	}
+	mb = CVMframeIterateGetMb(&iter);
+	if (!CVMmbIs(mb, NATIVE)) {
+	    cb = CVMmbClassBlock(mb);
+	    CVMassert(cb != NULL);
+	    loader = CVMcbClassLoader(cb);
+	    if (loader != NULL && !TRUSTED_CLASSLOADER(ee, loader)) {
+	        return depth;
 	    }
-            depth++;
+	    depth++;
         }
-	frame = FRAME_PREV(frame, &frame_buf);
     }
-#else
-    CVMconsolePrintf("JVM_ClassLoaderDepth() not implemented yet!\n");
-    CVMassert(CVM_FALSE);
     return -1;
-#endif
 }
 
 #endif /* CVM_HAVE_DEPRECATED */
@@ -3538,7 +3579,9 @@ JVM_IsNaN(jdouble d)
 JNIEXPORT jboolean JNICALL
 JVM_IsSupportedJNIVersion(jint version)
 {
-    return version == JNI_VERSION_1_1 || version == JNI_VERSION_1_2;
+    return version == JNI_VERSION_1_1 ||
+           version == JNI_VERSION_1_2 ||
+           version == JNI_VERSION_1_4;
 }
 
 JNIEXPORT void * JNICALL
@@ -3779,7 +3822,7 @@ JVM_DisableCompiler(JNIEnv *env, jclass compCls)
 {
 }
 
-#ifdef JDK13
+#ifdef JAVASE
 
 JNIEXPORT void * JNICALL
 JVM_RegisterSignal(jint sig, void *handler)
@@ -3789,11 +3832,12 @@ JVM_RegisterSignal(jint sig, void *handler)
     return (void *)NULL;
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT jboolean JNICALL
 JVM_RaiseSignal(jint sig)
 {
     CVMconsolePrintf("JVM_RaiseSignal() not implemented yet!\n");
     CVMassert(CVM_FALSE);
+    return CVM_TRUE;
 }
 
 JNIEXPORT jint JNICALL
@@ -3804,4 +3848,4 @@ JVM_FindSignal(const char *name)
     return -1;
 }
 
-#endif
+#endif /* JAVASE */

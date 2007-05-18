@@ -885,6 +885,12 @@ struct CVMFrameIterator {
  * "endFrame", so specifying endFrame == frame will scan only the
  * current frame (but including inlined frames).  Currently,
  * "stack" is only used to support "popFrame" below.
+ * Note: the specified frame will be set up as the first frame to be examined
+ *       when CVMframeIterateSkipSpecial() (or its derivatives e.g.
+ *       CVMframeIterateNext()) is called.  After CVMframeIterateSpecial(),
+ *       there is no current frame.  We're expected to call
+ *       CVMframeIterateSkipSpecial() immediately after to get to the first
+ *       frame.
  */
 void
 CVMframeIterateSpecial(CVMStack *stack, CVMFrame* frame,
@@ -898,6 +904,9 @@ CVMframeIterate(CVMFrame* frame, CVMFrameIterator *iter);
  * every frame.  To skip special reflection frames, set skipSpecial
  * true.  "popFrame" is used by exception handling to pop frames
  * as it iterates.
+ * Note: transition frames will always be skipped.  Al other frames will not
+ *       be skipped except for reflection frames depending on the value of
+ *       the skipSpecial.
  */
 CVMBool
 CVMframeIterateSkipSpecial(CVMFrameIterator *iter,
