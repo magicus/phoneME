@@ -564,7 +564,8 @@ renderer_setCompositeRule(Renderer* rdr, jint compositeRule) {
         if ((compositeRule == COMPOSITE_SRC_OVER) ||
             ((compositeRule == COMPOSITE_SRC) && 
                 ((rdr->_imageType == TYPE_INT_ARGB) ||
-                   (rdr->_imageType == TYPE_INT_ARGB_PRE)))) {
+                   (rdr->_imageType == TYPE_INT_ARGB_PRE) || (rdr->_imageType ==
+                   TYPE_USHORT_5658)))) {
             // need to recalculate the alpha map
             // see the implementation of validateAlphaMap
             rdr->_rendererState |= VALIDATE_ALPHA_MAP |
@@ -1028,6 +1029,7 @@ updateInternalColor(Renderer* rdr) {
 
     switch (rdr->_imageType) {
         case TYPE_USHORT_565_RGB:
+        case TYPE_USHORT_5658:
             rdr->_cred = _Pisces_convert8To5[rdr->_ored];
             rdr->_cgreen = _Pisces_convert8To6[rdr->_ogreen];
             rdr->_cblue = _Pisces_convert8To5[rdr->_oblue];
@@ -1057,6 +1059,8 @@ updateRendererSurface(Renderer* rdr) {
             surface->height;
     rdr->_data = 
             surface->data;
+    rdr->_alphaData =
+            surface->alphaData;            
     rdr->_imageOffset = 
             surface->offset;
     rdr->_imageScanlineStride = 
@@ -1067,7 +1071,9 @@ updateRendererSurface(Renderer* rdr) {
     if (rdr->_imageType != surface->imageType) {
         if ((rdr->_compositeRule == COMPOSITE_SRC) && 
                 (rdr->_imageType == TYPE_INT_ARGB || 
-                    rdr->_imageType == TYPE_INT_ARGB_PRE)) {
+                    rdr->_imageType == TYPE_INT_ARGB_PRE ||
+                    rdr->_imageType == TYPE_USHORT_5658
+                    )) {
             // need to recalculate the alpha map
             // see the implementation of validateAlphaMap
             rdr->_rendererState |= VALIDATE_ALPHA_MAP |
@@ -1112,6 +1118,15 @@ updateSurfaceDependedRoutines(Renderer* rdr) {
             rdr->_bl_PT_Clear = blitSrc8888_pre;
             rdr->_clearRect = clearRect8888;
             break;  
+        case TYPE_USHORT_5658:
+            rdr->_bl_SourceOver = blitSrcOver5658;
+            rdr->_bl_PT_SourceOver = blitPTSrcOver5658;
+            rdr->_bl_Source = blitSrc5658;
+            rdr->_bl_PT_Source = blitPTSrc5658;
+            rdr->_bl_Clear = blitSrc5658;
+            rdr->_bl_PT_Clear = blitSrc5658;
+            rdr->_clearRect = clearRect5658;
+            break;
         case TYPE_USHORT_565_RGB:
             rdr->_bl_SourceOver = blitSrcOver565;
             rdr->_bl_PT_SourceOver = blitPTSrcOver565;
@@ -1120,7 +1135,7 @@ updateSurfaceDependedRoutines(Renderer* rdr) {
             rdr->_bl_Clear = blitSrc565;
             rdr->_bl_PT_Clear = blitSrc565;
             rdr->_clearRect = clearRect565;
-            break;
+            break;        
         case TYPE_BYTE_GRAY:
             rdr->_bl_SourceOver = blitSrcOver8;
             rdr->_bl_PT_SourceOver = blitPTSrcOver8;
@@ -1220,7 +1235,8 @@ validateAlphaMap(Renderer* rdr) {
                 if ((rdr->_compositeRule == COMPOSITE_SRC_OVER) || 
                         ((rdr->_compositeRule == COMPOSITE_SRC) &&
                         ((rdr->_imageType == TYPE_INT_ARGB) || 
-                            (rdr->_imageType == TYPE_INT_ARGB_PRE)))) {
+                            (rdr->_imageType == TYPE_INT_ARGB_PRE)||
+                            (rdr->_imageType == TYPE_USHORT_5658)))) {
                     jint i;
                     for (i = 0; i <= rdr->_MAX_AA_ALPHA; i++) {
                         rdr->_colorAlphaMap[i] = 
@@ -1242,7 +1258,9 @@ validateAlphaMap(Renderer* rdr) {
                 if ((rdr->_compositeRule == COMPOSITE_SRC_OVER) || 
                         ((rdr->_compositeRule == COMPOSITE_SRC) &&
                         ((rdr->_imageType == TYPE_INT_ARGB) || 
-                            (rdr->_imageType == TYPE_INT_ARGB_PRE)))) {
+                            (rdr->_imageType == TYPE_INT_ARGB_PRE) ||
+                            (rdr->_imageType == TYPE_USHORT_5658)
+                            ))) {
                     jint i;
                     jfloat compositeAlpha = rdr->_compositeAlpha;
                 

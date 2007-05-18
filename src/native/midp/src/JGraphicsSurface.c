@@ -33,6 +33,8 @@
 #include <commonKNIMacros.h>
 
 #include <midpGraphics.h>
+#include <midpLCDUI.h>
+#include <images.h>
 
 #define SURFACE_NATIVE_PTR 0
 #define SURFACE_GRAPHICS 1
@@ -64,6 +66,7 @@ Java_com_sun_pisces_GraphicsSurface_initialize() {
             surface->super.offset = 0;
             surface->super.pixelStride = 1;
             surface->super.imageType = TYPE_USHORT_565_RGB;
+            surface->super.alphaData = NULL;
 
             surface->acquire = surface_acquire;
             surface->release = surface_release;
@@ -124,14 +127,26 @@ surface_acquire(AbstractSurface* surface, jobject surfaceHandle) {
     if (!KNI_IsNullHandle(graphicsHandle)) {
         VDC vdc;
         VDC* pVDC;
+        _MidpImage * img;
         
         pVDC = setupVDC(graphicsHandle, &vdc);
         pVDC = getVDC(pVDC);
+        
+        img = (_MidpImage *) getMidpGraphicsPtr(graphicsHandle)->img;
+        
         
         surface->super.data = pVDC->hdc;
         surface->super.width = pVDC->width;
         surface->super.height = pVDC->height;
         surface->super.scanlineStride = pVDC->width;
+        
+        if (img->alphaData != NULL) {
+            surface->super.imageType = TYPE_USHORT_5658;
+            surface->super.alphaData = &img->alphaData->elements[0];        
+        } else {
+            surface->super.imageType = TYPE_USHORT_565_RGB;
+            surface->super.alphaData = NULL;
+        }
     } else {
         /* 
          * This is not a correct error type to be reported here. For correct

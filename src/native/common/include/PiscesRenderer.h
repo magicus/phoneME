@@ -312,6 +312,7 @@ typedef struct _Renderer {
 
     // Image layout
     void *_data;
+    void *_alphaData;
     jint _width, _height;
     jint _imageOffset;
     jint _imageScanlineStride;
