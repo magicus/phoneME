@@ -224,9 +224,24 @@ final class AlarmController {
                     return;
                 }
 
-                lifecycleAdapter.launchMidlet(midpApp.midletSuiteID,
-                        midpApp.midlet);
-                removeAlarm(midpApp);
+                try {
+                    lifecycleAdapter.launchMidlet(midpApp.midletSuiteID,
+                            midpApp.midlet);
+                    removeAlarm(midpApp);
+                } catch (Exception ex) {
+                    /*
+                     * IMPL_NOTE: need to handle _all_ the exceptions
+                     * as otherwise Timer thread gets stuck and alarms
+                     * cannot be scheduled anymore.
+                     */
+                    /* TBD: uncomment when logging can be disabled
+                     * (not to interfer with unittests)
+                    logError(
+                            "Failed to launch \"" + midpApp.midlet + "\"" +
+                            " (suite ID: " + midpApp.midletSuiteID + "): " +
+                            ex);
+                     */
+                }
             }
         }
 
