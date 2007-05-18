@@ -36,8 +36,6 @@ import com.sun.midp.push.gcf.ReservationDescriptor;
 import com.sun.midp.jump.push.executive.persistence.Store;
 import com.sun.midp.jump.push.executive.persistence.StoreUtils;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.Set;
 import javax.microedition.io.ConnectionNotFoundException;
 
 /*
@@ -1211,5 +1209,49 @@ public final class ConnectionControllerTest extends TestCase {
 
         assertNull(cc.getMIDlet(midletSuiteId, connection));
         assertNull(cc.getFilter(midletSuiteId, connection));
+    }
+
+    private void pingDescriptor(final MockReservationDescriptor descriptor) {
+        final Thread t = descriptor.connectionReservation.pingThread();
+        t.start();
+        try {
+            t.join();
+        } catch (InterruptedException ie) {
+            fail("Unexpected InterruptedException: " + ie);
+        }
+    }
+
+    public void testThrowingLifecycleAdapter() throws IOException {
+        final int midletSuiteId = 123;
+        final String midlet = "com.sun.Foo";
+        final String connection = "foo://bar";
+        final String filter = "*.123";
+
+        final Store store = createStore();
+
+        final MockReservationDescriptor descriptor =
+                new MockReservationDescriptor(connection, filter);
+
+        final ListingLifecycleAdapter listingLifecycleAdapter =
+                new ListingLifecycleAdapter();
+
+        final LifecycleAdapter throwingLifecycleAdapter =
+                new ThrowingLifecycleAdapter();
+
+        final ProxyLifecycleAdapter lifecycleAdapter =
+                new ProxyLifecycleAdapter();
+
+        final ConnectionController cc =
+                createConnectionController(store, lifecycleAdapter);
+
+        cc.registerConnection(midletSuiteId, midlet, descriptor);
+
+        lifecycleAdapter.lifecycleAdapter = throwingLifecycleAdapter;
+        pingDescriptor(descriptor);
+
+        lifecycleAdapter.lifecycleAdapter = listingLifecycleAdapter;
+        pingDescriptor(descriptor);
+        assertTrue(listingLifecycleAdapter
+                .hasBeenInvokedOnceFor(midletSuiteId, midlet));
     }
 }

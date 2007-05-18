@@ -424,4 +424,37 @@ public final class AlarmControllerTest extends TestCase {
 
         assertEquals(0L, previous);
     }
+
+    public void testThrowingLifecycleAdapter()
+            throws IOException, InterruptedException {
+        final long ALARM_DELTA = 101L; // in ms
+        final long WAIT_DELAY = 3*ALARM_DELTA;
+
+        final int MIDLET_SUITE_ID = 17;
+        final String MIDLET = "com.sun.Foo";
+
+        final ListingLifecycleAdapter listingLifecycleAdapter =
+                new ListingLifecycleAdapter();
+
+        final LifecycleAdapter throwingLifecycleAdapter =
+                new ThrowingLifecycleAdapter();
+
+        final ProxyLifecycleAdapter lifecycleAdapter =
+                new ProxyLifecycleAdapter();
+
+        final AlarmController alarmController =
+                createAlarmController(lifecycleAdapter);
+
+        lifecycleAdapter.lifecycleAdapter = throwingLifecycleAdapter;
+        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET, ALARM_DELTA);
+        Thread.sleep(WAIT_DELAY);
+
+        // And now check that everything is ok despite of previously thrown adapter
+        lifecycleAdapter.lifecycleAdapter = listingLifecycleAdapter;
+        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET, ALARM_DELTA);
+        Thread.sleep(WAIT_DELAY);
+        alarmController.dispose();
+
+        assertTrue(listingLifecycleAdapter.hasBeenInvokedOnceFor(MIDLET_SUITE_ID, MIDLET));
+    }
 }
