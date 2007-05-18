@@ -106,3 +106,8 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nInit) {
     KNI_ReturnInt(returnValue);
 }
 
+/*  protected native boolean nPcmAudioPlayback ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nPcmAudioPlayback) {
+    KNI_ReturnBoolean(KNI_FALSE);
+}

@@ -28,9 +28,15 @@ package com.sun.mmedia;
  *  Description of the Class - empty class in CLDC
  *
  */
-public class AudioTunnel { 
-    public AudioTunnel() {};
-    public static void start() {};
-    public static void start(long delay) {};
-    public static void stop() {};
+public class AudioTunnel {
+    private static AudioTunnel tunnel = null;
+    private AudioTunnel() {};
+    synchronized static AudioTunnel getInstance() {
+        if (tunnel == null) {
+            tunnel = new AudioTunnel();
+        }
+        return tunnel;
+    };
+    void start() {};
+    void stop() {};
 }
