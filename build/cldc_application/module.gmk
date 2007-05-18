@@ -24,6 +24,9 @@
 # information or have any questions. 
 #
 
+# abstractions main directory
+JSROP_ABSTRACTS_DIR=$(ABSTRACTIONS_DIR)
+
 # dirs containing native source files
 vpath % $(JSROP_ABSTRACTS_DIR)/src/cldc_application/native/share
 vpath % $(JSROP_ABSTRACTS_DIR)/src/cldc_application/native/$(TARGET_PLATFORM)
@@ -61,10 +64,13 @@ JSROP_ABSTRACTS_JAVA_FILES = \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/FileAccess.java \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/PrivilegedConnector.java \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/i18n/Resource.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/i18n/ResourceConstants.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/i18n/ResourceConstants.java 
+
+ifeq ($(USE_JSR_177), true)
+JSROP_ABSTRACTS_JAVA_FILES = \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/dialog/Dialog.java \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/dialog/MessageDialog.java
-
+endif
 
 #####################################################
 JTWI_NATIVE_FILES  += $(JSROP_ABSTRACTS_NATIVES)
