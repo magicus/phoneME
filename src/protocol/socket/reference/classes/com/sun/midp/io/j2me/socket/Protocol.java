@@ -34,14 +34,14 @@ import javax.microedition.io.Connector;
 import javax.microedition.io.SocketConnection;
 import javax.microedition.io.ConnectionNotFoundException;
 
+import com.sun.j2me.security.AccessController;
+import com.sun.j2me.security.InterruptedSecurityException;
+
 import com.sun.midp.io.NetworkConnectionBase;
 import com.sun.midp.io.HttpUrl;
 import com.sun.midp.io.Util;
 
 import com.sun.midp.main.Configuration;
-
-import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.midlet.MIDletStateHandler;
 
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
@@ -54,6 +54,10 @@ import com.sun.midp.suspend.StateTransitionException;
 /** Connection to the J2ME socket API. */
 public class Protocol extends NetworkConnectionBase
         implements SocketConnection, Subsystem {
+
+    /** TCP client permission name. */
+    private static final String CLIENT_PERMISSION_NAME =
+        "javax.microedition.io.Connector.socket";
 
     /** Class registered in SecurityInitializer. */
     private static class SecurityTrusted implements ImplicitlyTrustedClass {}
@@ -234,6 +238,8 @@ public class Protocol extends NetworkConnectionBase
      */
     private void connect() throws IOException {
 
+        byte[] szHost;
+        byte[] szIpBytes = null;
         int result;
         // Max length of IPv4 address is 4  
         // IMPL NOTE: IPv6 needs to have an address of length =16
@@ -332,27 +338,22 @@ public class Protocol extends NetworkConnectionBase
             return;
         }
         
-        MIDletStateHandler midletStateHandler;
-        MIDletSuite midletSuite;
-
-        midletStateHandler = MIDletStateHandler.getMidletStateHandler();
-        midletSuite = midletStateHandler.getMIDletSuite();
-
-        // The class may be used when no suite running
-        if (midletSuite == null) {
-            ownerTrusted = true;
-            return;
-        }
-
         name = "TCP" + ":" + name;
 
         try {
-            midletSuite.checkForPermission(Permissions.TCP, name);
-            ownerTrusted = midletSuite.isTrusted();
-        } catch (InterruptedException ie) {
+            AccessController.checkPermission(CLIENT_PERMISSION_NAME, name);
+        } catch (InterruptedSecurityException ise) {
             throw new InterruptedIOException(
-                "Interrupted while trying to ask the user permission");
+                    "Interrupted while trying to ask the user permission");
         }
+
+        try {
+            AccessController.
+                checkPermission(AccessController.TRUSTED_APP_PERMISSION_NAME);
+            ownerTrusted = true;
+        } catch (SecurityException se) {
+            ownerTrusted = false;
+        } 
     }
 
     /**
@@ -739,11 +740,7 @@ public class Protocol extends NetworkConnectionBase
     /**
      * Native finalizer
      */
-// #ifdef ENABLE_CDC
-    protected native void finalize();
-// #else
     private native void finalize();
-// #endif
 
     /**
      * Gets a byte array that represents an IPv4 or IPv6 address 

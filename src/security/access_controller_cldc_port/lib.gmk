@@ -34,23 +34,20 @@
 #
 ############################################################
 
-SUBSYSTEM_SECURITY_MODULES += midp_permissions
+SUBSYSTEM_SECURITY_MODULES += access_controller
 
-PERMISSIONS_DIR = $(SUBSYSTEM_DIR)/security/midp_permissions
+ACCESS_CONTROLLER_DIR = $(SUBSYSTEM_DIR)/security/access_controller_cldc_port
 
 # Javadoc source path
-SUBSYSTEM_MIDP_PERMISSIONS_SOURCEPATH += $(PERMISSIONS_DIR)/reference/classes
+SUBSYSTEM_ACCESS_CONTROLLER_SOURCEPATH += $(ACCESS_CONTROLLER_DIR)/classes
 
-MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_MIDP_PERMISSIONS_SOURCEPATH)
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_ACCESS_CONTROLLER_SOURCEPATH)
 
 #
 # Java files for the library
 #
 SUBSYSTEM_SECURITY_JAVA_FILES += \
-  $(PERMISSIONS_DIR)/reference/classes/com/sun/midp/security/Permissions.java \
-  $(PERMISSIONS_DIR)/reference/classes/com/sun/midp/security/PermissionGroup.java
-
-ifeq ($(USE_I3_TEST), true)
-SUBSYSTEM_SECURITY_I3TEST_JAVA_FILES += \
-    $(PERMISSIONS_DIR)/reference/i3test/com/sun/midp/security/TestPermissions.java
-endif
+  $(ACCESS_CONTROLLER_DIR)/classes/com/sun/j2me/security/AccessControlContext.java \
+  $(ACCESS_CONTROLLER_DIR)/classes/com/sun/j2me/security/AccessControlContextAdapter.java \
+  $(ACCESS_CONTROLLER_DIR)/classes/com/sun/j2me/security/AccessController.java \
+  $(ACCESS_CONTROLLER_DIR)/classes/com/sun/j2me/security/InterruptedSecurityException.java

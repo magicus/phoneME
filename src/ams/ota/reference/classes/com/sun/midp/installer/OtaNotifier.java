@@ -32,6 +32,8 @@ import java.io.OutputStream;
 import javax.microedition.io.Connector;
 import javax.microedition.io.HttpConnection;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.io.Base64;
@@ -39,8 +41,6 @@ import com.sun.midp.io.Base64;
 import com.sun.midp.io.j2me.http.Protocol;
 
 import com.sun.midp.midlet.MIDletSuite;
-
-import com.sun.midp.midlet.MIDletStateHandler;
 
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
@@ -118,6 +118,8 @@ public final class OtaNotifier {
     /**
      * Posts a status message back to the provider's URL in JAD.
      * This method will also retry ALL pending delete notifications.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      *
      * @param message status message to post
      * @param suite MIDlet suite object
@@ -127,15 +129,8 @@ public final class OtaNotifier {
     public static void postInstallMsgBackToProvider(String message,
             MIDletSuite suite, String proxyUsername, String proxyPassword) {
         String url;
-        MIDletSuite callingMidletSuite =
-            MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
 
-        if (callingMidletSuite == null) {
-            throw new IllegalStateException("This method can't be called " +
-                "before a suite is started.");
-        }
-
-        callingMidletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         // Now, send out install notifications
         url = suite.getProperty(NOTIFY_PROP);

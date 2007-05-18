@@ -59,15 +59,12 @@ vpath % $(SUBSYSTEM_DIR)/protocol/udp/reference/native
 $(GENERATED_DIR)/classes/com/sun/midp/io/j2me/datagram/DatagramObject.java: $(SUBSYSTEM_DIR)/protocol/udp/reference/classes/com/sun/midp/io/j2me/datagram/DatagramObject.jpp
 	@$(call runjpp,$^,$@)
 
-$(GENERATED_DIR)/classes/com/sun/midp/io/j2me/datagram/Protocol.java: $(SUBSYSTEM_DIR)/protocol/udp/reference/classes/com/sun/midp/io/j2me/datagram/Protocol.jpp
-	@$(call runjpp,$^,$@)
-
 # Java files for the ( udp ) module
 #
 SUBSYSTEM_UDP_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/udp/classes/javax/microedition/io/UDPDatagramConnection.java \
     $(GENERATED_DIR)/classes/com/sun/midp/io/j2me/datagram/DatagramObject.java \
-    $(GENERATED_DIR)/classes/com/sun/midp/io/j2me/datagram/Protocol.java
+    $(SUBSYSTEM_DIR)/protocol/udp/reference/classes/com/sun/midp/io/j2me/datagram/Protocol.java
 
 ifneq ($(USE_NATIVE_AMS), true)
 SUBSYSTEM_UDP_JAVA_FILES += \

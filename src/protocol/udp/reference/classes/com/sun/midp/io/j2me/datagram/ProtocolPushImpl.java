@@ -114,7 +114,7 @@ public class ProtocolPushImpl extends ProtocolPush {
 
         try {
             midletSuite.checkForPermission(Permissions.UDP_SERVER,
-                                       connection);
+                                            connection);
         } catch (InterruptedException ie) {
             throw new InterruptedIOException(
                 "Interrupted while trying to ask the user permission");

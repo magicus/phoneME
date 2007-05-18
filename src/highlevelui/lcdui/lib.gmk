@@ -166,7 +166,11 @@ SUBSYSTEM_LCDUI_I3TEST_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestTwo.java \
     $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestThree.java \
     $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestKeyConverter.java \
-    $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestNewSetCurrent.java \
     $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/game/TestSprite.java \
     $(LCDUI_CLASSES_DIR)/i3test/com/sun/midp/lcdui/TestDisplayFactory.java
+
+  ifeq ($(TARGET_VM), cldc_vm)
+    SUBSYSTEM_LCDUI_I3TEST_JAVA_FILES += \
+      $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestNewSetCurrent.java
+  endif
 endif

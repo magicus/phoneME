@@ -28,11 +28,12 @@ package com.sun.midp.midletsuite;
 
 import java.io.IOException;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 
 import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.midlet.MIDletStateHandler;
 
 import com.sun.midp.content.CHManager;
 
@@ -78,6 +79,8 @@ public class MIDletSuiteStorage {
 
     /**
      * Returns a reference to the singleton MIDlet suite storage object.
+     * <p>
+     * Method requires the com.sun.midp.ams permission.
      *
      * @return the storage reference
      *
@@ -86,16 +89,7 @@ public class MIDletSuiteStorage {
      */
     public static MIDletSuiteStorage getMIDletSuiteStorage()
             throws SecurityException {
-        MIDletSuite midletSuite =
-            MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-
-        if (midletSuite == null) {
-            throw new
-                IllegalStateException("This method can't be called before " +
-                                      "a suite is started.");
-        }
-
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         return getMasterStorage();
     }

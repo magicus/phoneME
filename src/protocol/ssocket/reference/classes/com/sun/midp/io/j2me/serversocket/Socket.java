@@ -32,6 +32,9 @@ import java.io.InterruptedIOException;
 import javax.microedition.io.StreamConnection;
 import javax.microedition.io.ServerSocketConnection;
 
+import com.sun.j2me.security.AccessController;
+import com.sun.j2me.security.InterruptedSecurityException;
+
 import com.sun.midp.io.j2me.socket.ServerSocket;
 
 import com.sun.midp.io.Util;
@@ -46,6 +49,10 @@ import com.sun.midp.security.SecurityToken;
  * Implements server sockets for J2ME devices.
  */
 public class Socket implements ServerSocketConnection, ServerSocket {
+
+    /** TCP server permission name. */
+    private static final String SERVER_PERMISSION_NAME =
+        "javax.microedition.io.Connector.serversocket";
 
     /**
      * Handle to native server socket object. This is set and get only by
@@ -94,32 +101,29 @@ public class Socket implements ServerSocketConnection, ServerSocket {
             MIDletStateHandler midletStateHandler;
             MIDletSuite midletSuite;
 
-            midletStateHandler =
-                MIDletStateHandler.getMidletStateHandler();
-            midletSuite = midletStateHandler.getMIDletSuite();
-
 	    if (token != null) {
 		token.checkIfPermissionAllowed(Permissions.TCP_SERVER);
 		privilegedSecurityToken = token;
 	    } else {
-		// The class may be used when no suite running
-		if (midletSuite != null) {
-		    try {
-			midletSuite
-			    .checkForPermission(Permissions.TCP_SERVER,
+                AccessController.checkPermission(SERVER_PERMISSION_NAME,
 						"TCP Server" + port);
-		    } catch (InterruptedException ie) {
-			throw new InterruptedIOException(
-			"Interrupted while trying to ask the user permission");
-		    }
-		}
 	    }
 
-            if (midletSuite != null)
-                suiteId = midletSuite.getID();
+            midletStateHandler =
+                MIDletStateHandler.getMidletStateHandler();
+            midletSuite = midletStateHandler.getMIDletSuite();
 
+            if (midletSuite != null) {
+                suiteId = midletSuite.getID();
+            }
         } catch (SecurityException e) {
             close();
+
+            if (e instanceof InterruptedSecurityException) {
+                throw new InterruptedIOException(
+		    "Interrupted while trying to ask the user permission");
+            }
+
             throw e;
         }
 
@@ -263,11 +267,7 @@ public class Socket implements ServerSocketConnection, ServerSocket {
     /**
      * Native finalizer
      */
-// #ifdef ENABLE_CDC
-    protected native void finalize();
-// #else
     private native void finalize();
-// #endif
 
     /**
      * Gets the local IP number.

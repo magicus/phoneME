@@ -820,14 +820,4 @@ public class DatagramObject implements Datagram {
     }
 
 // #endif ENABLE_CLDC_11
-
-// #ifdef ENABLE_CDC
-    public void writeBytes(String s) throws IOException {
-        throw new IOException("unimplemented");
-    }
-
-    public String readLine() throws IOException {
-        throw new IOException("unimplemented");
-    }
-// #endif
 }

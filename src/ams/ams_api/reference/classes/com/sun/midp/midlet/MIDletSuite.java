@@ -243,8 +243,7 @@ public interface MIDletSuite {
      *
      * @return true if the suite is trusted false if not
      */
-    public boolean isTrusted();
-
+     public boolean isTrusted();
 
     /**
      * Check whether the suite classes are preverified and

@@ -35,12 +35,13 @@ import java.io.ByteArrayInputStream;
 
 import javax.microedition.io.ConnectionNotFoundException;
 
+import com.sun.j2me.security.*;
+
 import com.sun.midp.security.*;
 
 import com.sun.midp.main.MIDletSuiteVerifier;
 import com.sun.midp.main.MIDletAppImageGenerator;
 
-import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.midletsuite.*;
@@ -154,6 +155,9 @@ public abstract class Installer {
     /** Holds the install state. */
     protected InstallStateImpl state;
 
+    /** Holds the access control context. */
+    protected AccessControlContext accessControlContext;
+
     /** An alias for more state.installInfo to get more compact record. */
     protected InstallInfo info;
 
@@ -209,6 +213,18 @@ public abstract class Installer {
         return state;
     }
 
+    /**
+     * Creates an AccessControlContext for the suite being installed.
+     *
+     * @return an instance of class containing the installation state
+     */
+    protected AccessControlContext getAccessControlContext() {
+        if (accessControlContext == null) {
+            accessControlContext = new AccessControl(getInstallState());
+        }
+
+        return accessControlContext;
+    }
     /**
      * Installs a software package from the given URL. The URL is assumed
      * refer to an application descriptor.
@@ -1860,17 +1876,14 @@ public abstract class Installer {
     }
 
     /**
-     * Checks if the calling suite has Permissions.MIDP permission.
-     * If not, the SecurityException is thrown.
+     * Checks if the calling suite has com.sun.midp.midletsuite.midp
+     * permission.
+     *
+     * @exception SecurityException if suite does not have the required
+     *            permission
      */
-    private void checkMidpPermission() {
-        MIDletSuite midletSuite = MIDletStateHandler.
-            getMidletStateHandler().getMIDletSuite();
-
-        // if a MIDlet suite is not started, assume the JAM is calling.
-        if (midletSuite != null) {
-            midletSuite.checkIfPermissionAllowed(Permissions.MIDP);
-        }
+    private void checkAmsPermission() throws SecurityException {
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
     }
 
     /**
@@ -1882,7 +1895,7 @@ public abstract class Installer {
      * if they are absent from the jad file; "all" to allow all permissions
      */
     public void setUnsignedSecurityDomain(String domain) {
-        checkMidpPermission();
+        checkAmsPermission();
         unsignedSecurityDomain = domain;
     }
 
@@ -1895,7 +1908,7 @@ public abstract class Installer {
      * if they are absent from the jad file; "all" to allow all permissions
      */
     public void setExtraPermissions(String extraPermissions) {
-        checkMidpPermission();
+        checkAmsPermission();
         additionalPermissions = extraPermissions;
     }
 
@@ -2348,8 +2361,9 @@ public abstract class Installer {
 
             /* Register the new push connection string. */
             try {
-                PushRegistryInternal.registerConnectionInternal(state,
-                    conn, midlet, filter, false);
+                PushRegistryInternal.registerConnectionInternal(
+                    getAccessControlContext(),
+                    state, conn, midlet, filter, false);
             } catch (Exception e) {
                 /* If already registered, abort the installation. */
                 PushRegistryInternal.unregisterConnections(info.id);
@@ -2448,6 +2462,7 @@ public abstract class Installer {
             /* Register the new push connection string. */
             try {
                 PushRegistryInternal.registerConnectionInternal(
+                    getAccessControlContext(),
                     state, conn, midlet, filter, true);
             } catch (IOException e) {
                 if (Logging.REPORT_LEVEL <= Logging.WARNING) {
@@ -2466,6 +2481,69 @@ public abstract class Installer {
 }
 
 /**
+ * Implements the permission checking interface using the permission of
+ * the suite being installed.
+ */
+class AccessControl extends AccessControlContextAdapter implements
+    AccessControlContext {
+    /** Rreference to the MIDlet suite. */
+    private MIDletSuite suite;
+
+    /**
+     * Initializes the AccessControl object.
+     *
+     * @param theSuite reference to the MIDlet suite
+     */
+    AccessControl(MIDletSuite theSuite) {
+        suite = theSuite;
+    }
+    /**
+     * Checks for permission and throw an exception if not allowed.
+     * May block to ask the user a question.
+     *
+     * @param permission ID of the permission to check for,
+     *      the ID must be from
+     *      {@link com.sun.midp.security.Permissions}
+     * @param resource string to insert into the question, can be null if
+     *        no %2 in the question
+     * @param extraValue string to insert into the question,
+     *        can be null if no %3 in the question
+     *
+     * @param name name of the requested permission
+     * 
+     * @exception SecurityException if the specified permission
+     * is not permitted, based on the current security policy
+     * @exception InterruptedException if another thread interrupts the
+     *   calling thread while this method is waiting to preempt the
+     *   display.
+     */
+    public void checkPermissionImpl(String name, String resource,
+            String extraValue) throws SecurityException, InterruptedException {
+
+        int permissionId;
+
+        if (AccessController.TRUSTED_APP_PERMISSION_NAME.equals(name)) {
+            // This is really just a trusted suite check.
+            if (suite.isTrusted()) {
+                return;
+            }
+
+            throw new SecurityException("suite not trusted");
+        }
+
+        permissionId = Permissions.getId(name);
+
+        if (permissionId == Permissions.AMS ||
+                permissionId == Permissions.MIDP) {
+            // These permission checks cannot block
+            suite.checkIfPermissionAllowed(permissionId);
+        } else {
+            suite.checkForPermission(permissionId, resource, extraValue);
+        }
+    }
+}
+
+/*
  * Holds the state of an installation, so it can restarted after it has
  * been stopped.
  */
@@ -2714,7 +2792,7 @@ class InstallStateImpl implements InstallState, MIDletSuite {
      *        no %2 in the question
      *
      * @exception SecurityException if the permission is not
-     *            allowed by this token
+     *            allowed
      * @exception InterruptedException if another thread interrupts the
      *   calling thread while this method is waiting to preempt the
      *   display.
@@ -2737,7 +2815,7 @@ class InstallStateImpl implements InstallState, MIDletSuite {
      *        can be null if no %3 in the question
      *
      * @exception SecurityException if the permission is not
-     *            allowed by this token
+     *            allowed
      * @exception InterruptedException if another thread interrupts the
      *   calling thread while this method is waiting to preempt the
      *   display.

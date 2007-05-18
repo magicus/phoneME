@@ -34,11 +34,10 @@ import javax.microedition.io.UDPDatagramConnection;
 import javax.microedition.io.Connector;
 import javax.microedition.io.Connection;
 
-// #ifdef ENABLE_CDC
-import com.sun.cdc.io.ConnectionBaseInterface;
-// #else
 import com.sun.cldc.io.ConnectionBaseInterface;
-// #endif
+
+import com.sun.j2me.security.AccessController;
+import com.sun.j2me.security.InterruptedSecurityException;
 
 import com.sun.midp.io.NetworkConnectionBase;
 import com.sun.midp.io.HttpUrl;
@@ -59,6 +58,14 @@ import com.sun.midp.security.SecurityInitializer;
  */
 public class Protocol implements UDPDatagramConnection,
     ConnectionBaseInterface {
+
+    /** UDP client permission name. */
+    private static final String SERVER_PERMISSION_NAME =
+        "javax.microedition.io.Connector.datagramreceiver";
+
+    /** UDP server permission name. */
+    private static final String CLIENT_PERMISSION_NAME =
+        "javax.microedition.io.Connector.datagram";
 
     /**
      * Inner class to request security token from SecurityInitializer.
@@ -159,22 +166,23 @@ public class Protocol implements UDPDatagramConnection,
          * number.
          */
         if (host == null) {
-            try {
-                // When asking permission use Internet protocol name.
-                if (checkSecurity) {
-                    midletSuite.checkForPermission(Permissions.UDP_SERVER,
-                                 "UDP:" + name);
-                    ownerTrusted = midletSuite.isTrusted();
-                }
-            } catch (SecurityException e) {
-                // Give back the connection to AMS
-                PushRegistryInternal.checkInConnectionInternal(
-                    classSecurityToken, "datagram:" + name);
+            if (checkSecurity) {
+                try {
+                    // When asking permission use Internet protocol name.
+                    AccessController.checkPermission(SERVER_PERMISSION_NAME,
+                        "UDP:" + name);
+                } catch (SecurityException se) {
+                    // Give back the connection to AMS
+                    PushRegistryInternal.checkInConnectionInternal(
+                        classSecurityToken, "datagram:" + name);
 
-                throw e;
-            } catch (InterruptedException ie) {
-                throw new InterruptedIOException(
-                    "Interrupted while trying to ask the user permission");
+                    if (se instanceof InterruptedSecurityException) {
+                        throw new InterruptedIOException(
+                        "Interrupted while trying to ask the user permission");
+                    }
+
+                    throw se;
+                }
             }
 
             if (port > 0) {
@@ -185,17 +193,26 @@ public class Protocol implements UDPDatagramConnection,
                 throw new IllegalArgumentException("Missing port number");
             }
 
-            try {
-                if (checkSecurity) {
+            if (checkSecurity) {
+                try {
                     // When asking permission use Internet protocol name.
-                    midletSuite.checkForPermission(Permissions.UDP,
+                    AccessController.checkPermission(CLIENT_PERMISSION_NAME,
                                                    "UDP:" + name);
-                    ownerTrusted = midletSuite.isTrusted();
+                } catch (InterruptedSecurityException ise) {
+                    throw new InterruptedIOException(
+                        "Interrupted while trying to ask the user permission");
                 }
-            } catch (InterruptedException ie) {
-                throw new InterruptedIOException(
-                    "Interrupted while trying to ask the user permission");
             }
+        }
+
+        if (checkSecurity) {
+            try {
+                AccessController.checkPermission(
+                    AccessController.TRUSTED_APP_PERMISSION_NAME);
+                ownerTrusted = true;
+            } catch (SecurityException se) {
+                ownerTrusted = false;
+            } 
         }
 
         /* Check the mode parameter. (See NetworkConnectionAdapter). */
@@ -745,12 +762,7 @@ public class Protocol implements UDPDatagramConnection,
     /**
      * Native finalizer.
      */
-// #ifdef ENABLE_CDC
-    protected native void finalize();
-// #else
     private native void finalize();
-// #endif
-
 
     /**
      * Gets the local IP number.

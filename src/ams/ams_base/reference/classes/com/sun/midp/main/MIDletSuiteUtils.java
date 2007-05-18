@@ -26,13 +26,14 @@
 
 package com.sun.midp.main;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.lcdui.DisplayEventHandler;
 import com.sun.midp.lcdui.SystemAlert;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
-import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.midlet.MIDletStateHandler;
+
 import javax.microedition.lcdui.AlertType;
 
 /**
@@ -368,6 +369,8 @@ public class MIDletSuiteUtils {
      * Queues the last suite to run when there is not a next Suite
      * to run. This value will be persistent until it is used.
      * Not used in MVM mode.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      *
      * @param id ID of an installed suite
      * @param midlet class name of MIDlet to invoke
@@ -375,15 +378,10 @@ public class MIDletSuiteUtils {
      * @exception SecurityException if the caller does not have permission
      *   to manage midlets
      */
-    public static void setLastSuiteToRun(int id, String midlet, String arg0, String arg1) {
+    public static void setLastSuiteToRun(int id, String midlet, String arg0,
+            String arg1) {
 
-        MIDletSuite midletSuite =
-            MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-
-        // if a MIDlet suite is not scheduled, assume the JAM is calling.
-        if (midletSuite != null) {
-            midletSuite.checkIfPermissionAllowed(Permissions.AMS);
-        }
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         lastMidletSuiteToRun = id;
         lastMidletToRun = midlet;

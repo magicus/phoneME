@@ -29,6 +29,8 @@ package com.sun.midp.midlet;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
@@ -202,6 +204,8 @@ public class MIDletStateHandler {
 
     /**
      * Starts a MIDlet from outside of the package.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      *
      * @param externalAppId ID of given by an external application manager
      * @param classname name of MIDlet class
@@ -221,7 +225,7 @@ public class MIDletStateHandler {
            ClassNotFoundException, InstantiationException,
            IllegalAccessException {
 
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
         createAndRegisterMIDlet(externalAppId, classname);
     }
 
