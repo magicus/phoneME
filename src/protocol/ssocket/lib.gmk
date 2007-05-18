@@ -58,14 +58,11 @@ GROUP_PROTOCOL_JAVADOC_PACKAGES += \
 #
 vpath % $(SUBSYSTEM_DIR)/protocol/ssocket/reference/native
 
-$(GENERATED_DIR)/classes/com/sun/midp/io/j2me/serversocket/Socket.java: $(SUBSYSTEM_DIR)/protocol/ssocket/reference/classes/com/sun/midp/io/j2me/serversocket/Socket.jpp
-	@$(call runjpp,$^,$@)
-
 # Java files for the ( ssocket ) module
 #
 SUBSYSTEM_SSOCKET_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/ssocket/classes/javax/microedition/io/ServerSocketConnection.java \
-    $(GENERATED_DIR)/classes/com/sun/midp/io/j2me/serversocket/Socket.java
+    $(SUBSYSTEM_DIR)/protocol/ssocket/reference/classes/com/sun/midp/io/j2me/serversocket/Socket.java
 
 # Native files for the ( ssocket ) module
 #

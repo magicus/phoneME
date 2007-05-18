@@ -28,6 +28,8 @@ import java.io.IOException;
 
 import javax.microedition.io.ConnectionNotFoundException;
 
+import com.sun.j2me.security.AccessControlContext;
+
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.security.SecurityToken;
@@ -60,7 +62,9 @@ public final class PushRegistryInternal {
      * that uniquely identifies the <code>MIDlet</code>.
      * This method bypasses the class loader specific checks
      * needed by the <code>Installer</code>.
+     * Method requires com.sun.midp.ams permission.
      *
+     * @param context Access control context the suite
      * @param midletSuite MIDlet suite for the suite registering,
      *                   the suite only has to implement isRegistered,
      *                   checkForPermission, and getID.
@@ -93,6 +97,7 @@ public final class PushRegistryInternal {
      * @see #unregisterConnection
      */
     public static void registerConnectionInternal(
+            final AccessControlContext context,
             final MIDletSuite midletSuite,
             final String connection,
             final String midlet,

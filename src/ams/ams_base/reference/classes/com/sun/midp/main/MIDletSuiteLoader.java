@@ -110,7 +110,7 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
             eventQueue, midletControllerEventProducer);
 
         // Start inbound connection watcher thread.
-        PushRegistryInternal.startListening();
+        PushRegistryInternal.startListening(internalSecurityToken);
 
         // Initialize the Content Handler Monitor of MIDlet exits
         CHManager.getManager(internalSecurityToken).initCleanupMonitor(

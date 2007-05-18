@@ -30,11 +30,10 @@ import java.io.IOException;
 
 import java.util.Vector;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
-
-import com.sun.midp.midlet.Scheduler;
-import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.io.Util;
 
@@ -176,14 +175,11 @@ public class File {
 
     /**
      * Constructs a file object.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      */
     public File() {
-        MIDletSuite midletSuite = Scheduler.getScheduler().getMIDletSuite();
-
-        // if a MIDlet suite is not scheduled, assume the JAM is calling.
-        if (midletSuite != null) {
-            midletSuite.checkIfPermissionAllowed(Permissions.AMS);
-        }
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
     }
 
     /**

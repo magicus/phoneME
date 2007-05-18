@@ -36,6 +36,8 @@ import javax.microedition.midlet.*;
 
 import javax.microedition.rms.*;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.io.j2me.storage.*;
 
 import com.sun.midp.i18n.Resource;
@@ -46,7 +48,7 @@ import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.main.TrustedMIDletIcon;
 
-import com.sun.midp.midlet.*;
+import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.midletsuite.*;
 
@@ -171,6 +173,8 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
     /**
      * Gets an image from the internal storage.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      *
      * IMPL_NOTE: this method should be moved somewhere.
      *
@@ -181,10 +185,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         String imageFileName;
         byte[] imageBytes;
 
-        MIDletStateHandler midletStateHandler =
-            MIDletStateHandler.getMidletStateHandler();
-        MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         imageFileName = File.getStorageRoot(Constants.INTERNAL_STORAGE_ID) +
             imageName;
@@ -571,13 +572,11 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
      * Initialize the settings database if it doesn't exist. This may create
      * two entries. The first will be for the download url, the second will
      * be for storing the storagename of the currently selected midlet
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      */
     public static void initSettings() {
-        MIDletStateHandler midletStateHandler =
-            MIDletStateHandler.getMidletStateHandler();
-        MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
-
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         try {
             RecordStore settings = RecordStore.
@@ -605,6 +604,8 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
     /**
      * Save the settings the user entered.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      *
      * @param url the url to save
      * @param curMidlet suiteId of the currently selected midlet
@@ -612,11 +613,8 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
      */
     public static Exception saveSettings(String url, int curMidlet) {
         Exception ret = null;
-        MIDletStateHandler midletStateHandler =
-            MIDletStateHandler.getMidletStateHandler();
-        MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
 
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         try {
             String temp;

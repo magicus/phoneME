@@ -58,16 +58,11 @@ GROUP_PROTOCOL_JAVADOC_PACKAGES += \
 #
 vpath % $(SUBSYSTEM_DIR)/protocol/serial/reference/native
 
-# Jpp files that need pre-processing
-#
-$(GENERATED_DIR)/classes/com/sun/midp/io/j2me/comm/Protocol.java: $(SUBSYSTEM_DIR)/protocol/serial/reference/classes/com/sun/midp/io/j2me/comm/Protocol.jpp
-	@$(call runjpp,$^,$@)
-
 # Java files for the ( serial ) module
 #
 SUBSYSTEM_SERIAL_JAVA_FILES += \
     $(SUBSYSTEM_DIR)/protocol/serial/classes/javax/microedition/io/CommConnection.java \
-    $(GENERATED_DIR)/classes/com/sun/midp/io/j2me/comm/Protocol.java
+    $(SUBSYSTEM_DIR)/protocol/serial/reference/classes/com/sun/midp/io/j2me/comm/Protocol.java
 
 # Native files for the ( serial ) module
 #

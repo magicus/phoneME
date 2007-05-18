@@ -28,9 +28,10 @@ package com.sun.midp.main;
 
 import java.util.*;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.events.EventQueue;
 
-import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.security.Permissions;
@@ -142,8 +143,10 @@ public class MIDletProxyList
     /**
      * Get a reference to the MIDlet proxy list in a secure way.
      * The calling suite must have the com.sun.midp.ams permission "allowed".
-     *
+     * <p>
      * Should only be called in the AMS Isolate.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      *
      * @param token SecurityToken with the AMS permission allowed or
      *              null to use the midletSuite permission
@@ -154,10 +157,7 @@ public class MIDletProxyList
         if (token != null) {
             token.checkIfPermissionAllowed(Permissions.AMS);
         } else {
-            MIDletSuite midletSuite = MIDletStateHandler.
-                getMidletStateHandler().getMIDletSuite();
-
-            midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+            AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
         }
 
         return midletProxyList;

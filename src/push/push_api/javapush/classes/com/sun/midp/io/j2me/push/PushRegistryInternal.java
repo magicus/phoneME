@@ -29,7 +29,10 @@ package com.sun.midp.io.j2me.push;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 
-import com.sun.midp.midlet.MIDletStateHandler;
+import com.sun.j2me.security.AccessControlContext;
+import com.sun.j2me.security.AccessController;
+import com.sun.j2me.security.InterruptedSecurityException;
+
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.security.SecurityToken;
@@ -39,7 +42,6 @@ import com.sun.midp.security.Permissions;
  * Internal push functionality for CLDC stack.
  */
 public final class PushRegistryInternal {
-
     /**
      * Push option to only launch this suite when not other applications
      * are running.
@@ -54,22 +56,22 @@ public final class PushRegistryInternal {
 
     /**
       * Validates that the method is invoked allowed party.
+      * <p>
+      * Method requires com.sun.midp.ams permission.
       */
     private static void checkInvocationAllowed() {
-        final MIDletSuite current =
-            MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-
-        if (current != null) {
-            current.checkIfPermissionAllowed(Permissions.AMS);
-        }
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
     }
 
     /**
      * Start listening for push notifications. Will throw a security
-     * exception if called by any thing other than the MIDletSuiteLoader.
+     * exception if token does not have the com.sun.midp.ams
+     * permission allowed.
+     *
+     * @param token security token of the calling class
      */
-    public static void startListening() {
-        checkInvocationAllowed();
+    public static void startListening(SecurityToken token) {
+        token.checkIfPermissionAllowed(Permissions.AMS);
         ConnectionRegistry.startListening();
     }
 
@@ -82,10 +84,13 @@ public final class PushRegistryInternal {
      * that uniquely identifies the <code>MIDlet</code>.
      * This method bypasses the class loader specific checks
      * needed by the <code>Installer</code>.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      *
+     * @param context Access control context the suite
      * @param midletSuite MIDlet suite for the suite registering,
      *                   the suite only has to implement isRegistered,
-     *                   checkForPermission, and getID.
+     *                   and getID.
      * @param connection generic connection <em>protocol</em>, <em>host</em>
      *               and <em>port number</em>
      *               (optional parameters may be included
@@ -114,7 +119,8 @@ public final class PushRegistryInternal {
      *
      * @see #unregisterConnection
      */
-    public static void registerConnectionInternal(MIDletSuite midletSuite,
+    public static void registerConnectionInternal(AccessControlContext context,
+                                                  MIDletSuite midletSuite,
                                                   String connection,
                                                   String midlet,
                                                   String filter,
@@ -129,8 +135,8 @@ public final class PushRegistryInternal {
 
         if (!bypassChecks) {
             try {
-                midletSuite.checkForPermission(Permissions.PUSH, null);
-            } catch (InterruptedException ie) {
+                context.checkPermission(PushRegistryImpl.PUSH_PERMISSION_NAME);
+            } catch (InterruptedSecurityException ise) {
                 throw new InterruptedIOException(
                     "Interrupted while trying to ask the user permission");
             }
@@ -153,7 +159,7 @@ public final class PushRegistryInternal {
      * @param token security token for this class.
      */
     public static void initSecurityToken(SecurityToken token) {
-        checkInvocationAllowed();
+        token.checkIfPermissionAllowed(Permissions.AMS);
         ConnectionRegistry.initSecurityToken(token);
     }
 

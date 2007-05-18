@@ -36,6 +36,8 @@ import javax.microedition.lcdui.*;
 
 import javax.microedition.midlet.*;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.io.*;
 
 import com.sun.midp.i18n.Resource;
@@ -169,10 +171,7 @@ public final class MIDletSuiteImpl implements MIDletSuite {
         if (token != null) {
             token.checkIfPermissionAllowed(Permissions.AMS);
         } else {
-            MIDletSuite current = MIDletStateHandler.
-                getMidletStateHandler().getMIDletSuite();
-
-            current.checkIfPermissionAllowed(Permissions.AMS);
+            AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
         }
 
         suiteProperties.setTempProperty(key, value);

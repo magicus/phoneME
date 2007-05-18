@@ -28,13 +28,11 @@ package com.sun.midp.main;
 
 import javax.microedition.lcdui.Image;
 
-import com.sun.midp.midlet.MIDletStateHandler;
-import com.sun.midp.midlet.MIDletSuite;
-
-import com.sun.midp.security.Permissions;
+import com.sun.j2me.security.AccessController;
 
 import com.sun.midp.util.ResourceHandler;
 
+import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.ImplicitlyTrustedClass;
@@ -60,7 +58,8 @@ public class TrustedMIDletIcon {
 
     /**
      * Get the Image of the trusted icon for this Display.
-     * Only callers with the internal AMS permission can use this method.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      *
      * @return an Image of the trusted icon.
      *
@@ -68,17 +67,14 @@ public class TrustedMIDletIcon {
      * the AMS permission
      */
     public static Image getIcon() {
-        MIDletStateHandler midletStateHandler =
-            MIDletStateHandler.getMidletStateHandler();
-
-        MIDletSuite suite = midletStateHandler.getMIDletSuite();
-        suite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         if (trustedIcon == null) {
             byte[] imageData = ResourceHandler.getSystemImageResource(
                     classSecurityToken, "trustedmidlet_icon");
             if (imageData != null) {
-                trustedIcon = Image.createImage(imageData, 0, imageData.length);
+                trustedIcon = Image.createImage(imageData, 0,
+                                                imageData.length);
             } else {
                 // Use a empty immutable image as placeholder
                 trustedIcon = Image.createImage(Image.createImage(16, 16));

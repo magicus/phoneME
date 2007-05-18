@@ -31,8 +31,7 @@ import java.io.*;
 import javax.microedition.io.Connector;
 import javax.microedition.io.Connection;
 
-import com.sun.midp.midlet.MIDletStateHandler;
-import com.sun.midp.midlet.MIDletSuite;
+import com.sun.j2me.security.AccessController;
 
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
@@ -50,13 +49,7 @@ public class RandomAccessStream extends ConnectionBaseAdapter {
 
     /** Constructs a RandomAccessStream. */
     public RandomAccessStream() {
-        MIDletSuite midletSuite =
-            MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-
-        // if a MIDlet suite is not scheduled, assume the JAM is calling.
-        if (midletSuite != null) {
-            midletSuite.checkIfPermissionAllowed(Permissions.AMS);
-        }
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
     };
 
     /**

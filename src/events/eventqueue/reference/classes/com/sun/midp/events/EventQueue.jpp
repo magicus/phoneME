@@ -26,9 +26,9 @@
 
 package com.sun.midp.events;
 
-import com.sun.midp.main.*;
+import com.sun.j2me.security.AccessController;
 
-import com.sun.midp.midlet.*;
+import com.sun.midp.main.*;
 
 import com.sun.midp.security.*;
 import com.sun.midp.log.Logging;
@@ -142,10 +142,7 @@ public class EventQueue implements Runnable {
      * @return MIDP event queue reference
      */
     public static EventQueue getEventQueue() {
-        MIDletSuite midletSuite =
-            MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-
-        midletSuite.checkIfPermissionAllowed(Permissions.MIDP);
+        AccessController.checkPermission(Permissions.MIDP_PERMISSION_NAME);
 
         return eventQueue;
     }
