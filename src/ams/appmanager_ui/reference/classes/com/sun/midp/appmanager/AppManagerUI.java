@@ -615,11 +615,11 @@ class AppManagerUI extends Form
                     ci.removeCommand(endCmd);
 
                     if (ci.msi.midletToRun != null &&
-                            ci.msi.midletToRun.equals(DISCOVERY_APP)) {
+                        ci.msi.midletToRun.equals(DISCOVERY_APP)) {
                         ci.setDefaultCommand(launchInstallCmd);
                     } else if (caManagerIncluded &&
-                            ci.msi.midletToRun != null &&
-                            ci.msi.midletToRun.equals(CA_MANAGER)) {
+                        ci.msi.midletToRun != null &&
+                        ci.msi.midletToRun.equals(CA_MANAGER)) {
                         ci.setDefaultCommand(launchCaManagerCmd);
                     } else {
                         if (ci.msi.enabled) {
@@ -846,7 +846,6 @@ class AppManagerUI extends Form
 
                                 if (mci.msi.proxy == null) { // Not running
                                     mci.removeCommand(launchCmd);
-
                                 }
 
                                 // running MIDlets will continue to run
@@ -860,6 +859,7 @@ class AppManagerUI extends Form
                         int oldNumberOfMidlets = mci.msi.numberOfMidlets;
                         MIDletProxy oldProxy = mci.msi.proxy;
 
+                        midletSwitcher.update(mci.msi, suiteInfo);
                         mci.msi = suiteInfo;
                         mci.msi.proxy = oldProxy;
 
@@ -896,7 +896,6 @@ class AppManagerUI extends Form
      *                  of the recently started midlet
      */
     private void append(RunningMIDletSuiteInfo suiteInfo) {
-
         MidletCustomItem ci = new MidletCustomItem(suiteInfo);
 
         if (suiteInfo.midletToRun != null &&
