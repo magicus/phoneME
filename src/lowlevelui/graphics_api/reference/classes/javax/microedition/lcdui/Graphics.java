@@ -1334,7 +1334,7 @@ public class Graphics {
      * @see Image
      */
     public void drawImage(Image img, int x, int y, int anchor) {
-        if (!img.render(this, x, y, anchor)) {
+        if (!render(img, x, y, anchor)) {
             throw new IllegalArgumentException("");
         }
     }
@@ -1441,8 +1441,8 @@ public class Graphics {
                                   int transform,
                                   int x_dest, int y_dest, 
                                   int anchor) {
-        if (!src.renderRegion(this, x_src, y_src, width, height,
-                              transform, x_dest, y_dest, anchor)) {
+        if (!renderRegion(src, x_src, y_src, width, height,
+                          transform, x_dest, y_dest, anchor)) {
             throw new IllegalArgumentException("");
         }
     }
@@ -1896,6 +1896,54 @@ public class Graphics {
         runtimeClipEnforce = false;
         translate(ax-getTranslateX(), ay-getTranslateY());
     }
+
+    /**
+     * Renders provided Image onto this Graphics object.
+     *
+     * @param img the Image to be rendered
+     * @param x the x coordinate of the anchor point
+     * @param y the y coordinate of the anchor point
+     * @param anchor the anchor point for positioning the image
+     * @return false if <code>anchor</code> is not a legal value
+     *
+     * @see Image
+     */
+    native boolean render(Image img, int x, int y, int anchor);
+
+    /**
+     * Renders the specified region of the provided Image object
+     * onto this Graphics object.
+     *
+     * @param img  the Image object to be rendered
+     * @param x_src the x coordinate of the upper left corner of the region
+     * within the source image to copy
+     * @param y_src the y coordinate of the upper left corner of the region
+     * within the source image to copy
+     * @param width the width of the region to copy
+     * @param height the height of the region to copy
+     * @param transform the desired transformation for the selected region
+     * being copied
+     * @param x_dest the x coordinate of the anchor point in the
+     * destination drawing area
+     * @param y_dest the y coordinate of the anchor point in the
+     * destination drawing area
+     * @param anchor the anchor point for positioning the region within
+     * the destination image
+     *
+     * @return false if <code>src</code> is the same image as the
+     * destination of this <code>Graphics</code> object,
+     * or <code>transform</code> is invalid,
+     * or <code>anchor</code> is invalid,
+     * or the region to be copied exceeds the bounds of the source image.
+     *
+     * @see Image
+     */
+    native boolean renderRegion(Image img,
+                                int x_src, int y_src,
+                                int width, int height,
+                                int transform,
+                                int x_dest, int y_dest,
+                                int anchor);
 
     /**
      * Get a gray value given the RGB values

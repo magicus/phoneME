@@ -32,39 +32,38 @@
 # other def. (like VPATH)
 ############################################################
 
+IMAGE_API_LIB = image_api
+LIB_SET += $(IMAGE_API_LIB)
+
 # Local module directory
-GRAPHICS_MODULE_DIR = $(SUBSYSTEM_LOWUI_DIR)/graphics/platform_graphics
+IMAGE_API_DIR = $(SUBSYSTEM_LOWUI_DIR)/$(IMAGE_API_LIB)/reference
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(GRAPHICS_MODULE_DIR)/classes
-
-# Java files for platform_graphics module
+# Include path for the sub-system
 #
-SUBSYSTEM_GRAPHICS_JAVA_FILES += \
+SUBSYSTEM_IMAGEAPI_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_LOWUI_DIR)/$(IMAGE_API_LIB)/include
 
-# Additional include path for highlevel ui subsystem
-# (IMPL_NOTE remove this dependency)
 
-SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/platform_graphics/include
+# Java files for the libarary
+#
+SUBSYSTEM_IMAGEAPI_JAVA_FILES += \
+    $(IMAGE_API_DIR)/classes/javax/microedition/lcdui/Image.java \
+    $(IMAGE_API_DIR)/classes/javax/microedition/lcdui/game/Sprite.java \
+    $(IMAGE_API_DIR)/classes/javax/microedition/lcdui/game/TiledLayer.java
 
-# vpath for platform_graphics module
+# vpath for the library
 #
 vpath % \
-    $(GRAPHICS_MODULE_DIR)/native
+    $(IMAGE_API_DIR)
 
 
-# Native files for platform_graphics module
-
-SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
-    gxp_image.c \
-    gxp_graphics.c \
-    gxp_font.c
-
+# Native files for common module
+#
+SUBSYSTEM_IMAGEAPI_NATIVE_FILES += \
+    imgapi_image_kni.c
 
 # I3test files
+#
 ifeq ($(USE_I3_TEST), true)
-
-    SUBSYSTEM_GRAPHICS_I3TEST_JAVA_FILES =
-
+SUBSYSTEM_IMAGEAPI_I3TEST_JAVA_FILES = 
 endif

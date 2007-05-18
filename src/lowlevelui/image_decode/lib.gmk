@@ -1,26 +1,26 @@
 #  
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
-# 2 only, as published by the Free Software Foundation.
+# 2 only, as published by the Free Software Foundation. 
 # 
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
-# included at /legal/license.txt).
+# included at /legal/license.txt). 
 # 
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA
+# 02110-1301 USA 
 # 
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
-# information or have any questions.
+# information or have any questions. 
 #
 
 ############################################################
@@ -33,22 +33,62 @@
 ############################################################
 
 
-GRAPHICS_LIB = graphics
-LIB_SET += $(GRAPHICS_LIB)
-
+IMAGE_DECODE_LIB = image_decode
+LIB_SET += $(IMAGE_DECODE_LIB)
 
 # Local module directory
-GRAPHICS_DIR = $(SUBSYSTEM_LOWUI_DIR)/graphics
+IMAGE_DECODE_DIR = $(SUBSYSTEM_LOWUI_DIR)/$(IMAGE_DECODE_LIB)
 
 # Java files for the sub-system
 #
-SUBSYSTEM_GRAPHICS_JAVA_FILES +=
+SUBSYSTEM_IMAGEDCD_JAVA_FILES +=
 
 # Include path for the sub-system
 #
-SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
-    -I$(GRAPHICS_DIR)/include
+SUBSYSTEM_IMAGEDCD_EXTRA_INCLUDES += \
+    -I$(IMAGE_DECODE_DIR)/reference/native \
+    -I$(IMAGE_DECODE_DIR)/include 
 
-# Include platform specific module
+# vpath for sub-system
 #
-include $(GRAPHICS_DIR)/$(SUBSYSTEM_GRAPHICS_MODULES)/$(LIB_MAKE_FILE)
+vpath % \
+    $(IMAGE_DECODE_DIR)/reference/native
+
+
+# Native files for the subsystem
+#
+SUBSYSTEM_IMAGEDCD_NATIVE_FILES += \
+    imgdcd_image_util.c \
+    imgdcd_image_decode.c \
+    imgdcd_png_decode.c
+
+# JPEG libray use with Putpixel
+    ifeq ($(USE_JPEG), true)
+	vpath % $(JPEG_DIR)
+	SUBSYSTEM_IMAGEDCD_EXTRA_INCLUDES += -I$(JPEG_DIR)
+	SUBSYSTEM_IMAGEDCD_NATIVE_FILES += \
+		jcomapi.c \
+		jdapimin.c \
+		jdapistd.c \
+		jdcoefct.c \
+		jdcolor.c \
+		jddctmgr.c \
+		jdhuff.c \
+		jdinput.c \
+		jdmainct.c \
+		jdmarker.c \
+		jdmaster.c \
+		jdmerge.c \
+		jdphuff.c \
+		jdpostct.c \
+		jdsample.c \
+		jerror.c \
+		jidctfst.c \
+		jidctred.c \
+		jmemmgr.c \
+		jmemnobs.c \
+		jpegdecoder.c \
+		jquant1.c \
+		jquant2.c \
+		jutils.c
+   endif

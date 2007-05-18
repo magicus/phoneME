@@ -33,38 +33,36 @@
 ############################################################
 
 # Local module directory
-GRAPHICS_MODULE_DIR = $(SUBSYSTEM_LOWUI_DIR)/graphics/platform_graphics
+IMAGE_MODULE_DIR = $(SUBSYSTEM_LOWUI_DIR)/image/putpixel
 
 # Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(GRAPHICS_MODULE_DIR)/classes
+MIDP_JAVADOC_SOURCEPATH += $(IMAGE_MODULE_DIR)/classes
 
-# Java files for platform_graphics module
+# Java files for the putpixel module
 #
-SUBSYSTEM_GRAPHICS_JAVA_FILES += \
+SUBSYSTEM_IMAGE_JAVA_FILES += \
+    $(IMAGE_MODULE_DIR)/classes/javax/microedition/lcdui/ImageData.java \
+    $(IMAGE_MODULE_DIR)/classes/javax/microedition/lcdui/ImageDataFactory.java
+
+# vpath for putixel module
+#
+vpath % \
+    $(IMAGE_MODULE_DIR)/native
 
 # Additional include path for highlevel ui subsystem
 # (IMPL_NOTE remove this dependency)
-
-SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/platform_graphics/include
-
-# vpath for platform_graphics module
 #
-vpath % \
-    $(GRAPHICS_MODULE_DIR)/native
+#SUBSYSTEM_IMAGE_EXTRA_INCLUDES += \
+#    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/putpixel/include
 
-
-# Native files for platform_graphics module
-
-SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
-    gxp_image.c \
-    gxp_graphics.c \
-    gxp_font.c
-
+# Native files for putpixel module
+SUBSYSTEM_IMAGE_NATIVE_FILES += \
+    imgj_imagedatafactory_kni.c
 
 # I3test files
 ifeq ($(USE_I3_TEST), true)
 
-    SUBSYSTEM_GRAPHICS_I3TEST_JAVA_FILES =
+    SUBSYSTEM_IMAGE_I3TEST_JAVA_FILES =
 
 endif
+

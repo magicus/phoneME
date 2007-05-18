@@ -53,19 +53,10 @@
 typedef struct Java_javax_microedition_lcdui_Graphics   java_graphics;
 
 /**
- * Structure representing the <tt>ImageData</tt> class.
- */
-typedef struct Java_javax_microedition_lcdui_ImageData java_imagedata;
-
-/**
  * Get a C structure representing the given <tt>Graphics</tt> class.
  */
 #define GXAPI_GET_GRAPHICS_PTR(handle)       (unhand(java_graphics,(handle)))
 
-/**
- * Get a C structure representing the given <tt>ImageData</tt> class.
- */
-#define GXAPI_GET_IMAGEDATA_PTR(handle) (unhand(java_imagedata,(handle)))
 
 /**
  * Get a C structure representing the given <tt>ImageData</tt> class.

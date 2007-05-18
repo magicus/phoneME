@@ -588,6 +588,11 @@ public class Display {
 
         graphicsAccessor = new GraphicsAccessImpl();
         GameMap.registerGraphicsAccess(graphicsAccessor);
+
+        // #ifdef ENABLE_GCI
+        java.security.AccessController.doPrivileged(
+                 new sun.security.action.LoadLibraryAction("gci"));
+        // #endif ENABLE_GCI
     
         // #ifdef ENABLE_CHAMELEON
         SkinResources.initGraphicsAccess(graphicsAccessor);
@@ -614,11 +619,6 @@ public class Display {
         DisplayEventHandlerFactory.SetDisplayEventHandlerImpl(
                                    displayEventHandlerImpl);
         deviceAccess = new DisplayDeviceAccess();
-
-        // #ifdef ENABLE_GCI
-        java.security.AccessController.doPrivileged(
-                 new sun.security.action.LoadLibraryAction("gci"));
-        // #endif ENABLE_GCI
 
         DisplayStaticAccess displayStaticAccess = 
             new DisplayStaticAccess () {

@@ -28,7 +28,7 @@
 
 #include <kni.h>
 #include <midpMalloc.h>
-#include "gxj_intern_image_decode.h"
+#include "imgdcd_intern_image_decode.h"
 
 typedef struct _rids {
     imageSrcData super;

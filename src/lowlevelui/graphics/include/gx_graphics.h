@@ -35,7 +35,7 @@
  * @brief Porting api for graphics library
  */
 
-#include <gx_image.h>
+#include <imgapi_image.h>
 
 #ifdef __cplusplus
 extern "C" {

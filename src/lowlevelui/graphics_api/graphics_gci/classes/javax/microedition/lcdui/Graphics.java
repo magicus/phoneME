@@ -1468,18 +1468,11 @@ public class Graphics {
         }
 
         int[] point = new int[]{x, y};
-        int width = img.getWidth();
-        int height = img.getHeight();
-        if (!normalizeAnchor(point, width, height, anchor)) {
+        if (!normalizeAnchor(point, img.getWidth(), img.getHeight(), anchor)) {
             throw new IllegalArgumentException();
         }
 
-        GCIDrawingSurface imageSurface = img.getDrawingSurface();
-        if (imageSurface != null) {
-            gciImageRenderer.drawImage(imageSurface,
-                                       0, 0, width, height, 
-                                       point[0] + transX, point[1]+ transY);
-        }
+        render(img, point[0] + transX, point[1]+ transY, anchor);
     }
 
     /**
@@ -1611,13 +1604,8 @@ public class Graphics {
             throw new IllegalArgumentException();
         }
 
-        GCIDrawingSurface imageSurface = img.getDrawingSurface();
-        if (imageSurface != null) {
-            gciImageRenderer.drawImage(imageSurface,
-                                       x_src, y_src, width, height, 
-                                       point[0] + transX, point[1]+ transY);
-        }
-
+	renderRegion(img, x_src, y_src, width, height, transform, 
+                     point[0] + transX, point[1]+ transY, anchor); 
     }
 
     /**
@@ -1928,7 +1916,7 @@ public class Graphics {
             throw new NullPointerException();
         }
 
-        Graphics g = new Graphics(img.getDrawingSurface());
+        Graphics g = new Graphics(img.getImageData().gciDrawingSurface);
         g.img = img;
         g.setDimensions(img.getWidth(), img.getHeight());
         g.reset();
@@ -1964,7 +1952,7 @@ public class Graphics {
         if (w > width) { w = width; }
         if (h > height) { h = height; }
 
-        Graphics g = new Graphics(img.getDrawingSurface());
+	Graphics g = new Graphics(img.getImageData().gciDrawingSurface);
         g.img = img;
         g.setDimensions(w, h);
         g.reset();
@@ -2089,6 +2077,93 @@ public class Graphics {
     void restoreMIDPRuntimeGC() {
         runtimeClipEnforce = false;
         translate(ax-getTranslateX(), ay-getTranslateY());
+    }
+
+    /**
+     * Renders provided Image onto this Graphics object.
+     *
+     * @param img the Image to be rendered
+     * @param x the x coordinate of the anchor point
+     * @param y the y coordinate of the anchor point
+     * @param anchor the anchor point for positioning the image
+     * @return false if <code>anchor</code> is not a legal value
+     *
+     * @see Image
+     */
+    boolean render(Image img, int x, int y, int anchor) {
+
+        // TODO anchor
+
+        ImageData imgData = img.getImageData();
+        if (imgData.gciMaskDrawingSurface == null) {
+	    gciImageRenderer.drawImage(imgData.gciDrawingSurface,
+				       0, 0, 
+				       imgData.getWidth(), 
+				       imgData.getHeight(),
+				       x, y);
+	 
+	} else {
+	    gciImageRenderer.maskBlit(imgData.gciDrawingSurface,
+				      imgData.gciMaskDrawingSurface,
+				      0, 0, 
+				      imgData.getWidth(), 
+				      imgData.getHeight(), 0, 0,
+				      x, y);
+	}
+	return true;
+    }
+
+    /**
+     * Renders the specified region of the provided Image object
+     * onto this Graphics object.
+     *
+     * @param img  the Image object to be rendered
+     * @param x_src the x coordinate of the upper left corner of the region
+     * within the source image to copy
+     * @param y_src the y coordinate of the upper left corner of the region
+     * within the source image to copy
+     * @param width the width of the region to copy
+     * @param height the height of the region to copy
+     * @param transform the desired transformation for the selected region
+     * being copied
+     * @param x_dest the x coordinate of the anchor point in the
+     * destination drawing area
+     * @param y_dest the y coordinate of the anchor point in the
+     * destination drawing area
+     * @param anchor the anchor point for positioning the region within
+     * the destination image
+     *
+     * @return false if <code>src</code> is the same image as the
+     * destination of this <code>Graphics</code> object,
+     * or <code>transform</code> is invalid,
+     * or <code>anchor</code> is invalid,
+     * or the region to be copied exceeds the bounds of the source image.
+     *
+     * @see Image
+     */
+    boolean renderRegion(Image img,
+			 int x_src, int y_src,
+			 int width, int height,
+			 int transform,
+			 int x_dest, int y_dest,
+			 int anchor) {
+        // TODO anchor & transform
+
+        ImageData imgData = img.getImageData();
+
+	if (imgData.gciMaskDrawingSurface == null) {
+	    gciImageRenderer.drawImage(imgData.gciDrawingSurface,
+				       x_src, y_src, width, height, 
+				       x_dest, y_dest);
+	} else {
+	    gciImageRenderer.maskBlit(imgData.gciDrawingSurface,
+				      imgData.gciMaskDrawingSurface,
+				      x_src, y_src, width, height, 
+				      x_src, y_src,
+				      y_dest, x_dest);
+	}
+
+	return true;
     }
 
     /**

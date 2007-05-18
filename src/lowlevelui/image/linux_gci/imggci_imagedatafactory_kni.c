@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation.
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt).
+ * included at /legal/license.txt). 
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
+ * 02110-1301 USA 
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions.
+ * information or have any questions. 
  */
 
 #include <stddef.h>
@@ -32,24 +32,30 @@
 #include <midpUtilKni.h>
 #include <midpMalloc.h>
 
-#include <gx_image.h>
 #include <gxutl_image.h>
+#include <gxutl_image_errorcodes.h>
 #include <gxutl_graphics.h>
 
+#include <imgapi_image.h>
+#include <imgdcd_image_util.h>
+
+#include <gx_image.h>
 #include <gxj_putpixel.h>
-#include "gxj_intern_graphics.h"
-#include "gxj_intern_image.h"
-#include "gxj_intern_putpixel.h"
 
 #if ENABLE_IMAGE_CACHE
 #include <imageCache.h>
 #endif
 
+/**
+ * This is a dummy - until dependency of linux_gci image lib 
+ * on gxj_screen_buffer type is removed.
+ */
+gxj_screen_buffer gxj_system_screen_buffer;
+
 /** Convenenient for convert Java image object to screen buffer */
 #define getImageScreenBuffer(jimgData,sbuf) \
 	gxj_get_image_screen_buffer_impl(GXAPI_GET_IMAGEDATA_PTR(jimgData), \
 				 sbuf, NULL)
-
 /**
  * Create native representation for a image.
  *
@@ -160,7 +166,10 @@ MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
 	    sbuf.alphaData = rawBuffer->data + pixelSize;
 
 	    rawBuffer->hasAlpha = decode_png(srcBuffer, length,
-					     &sbuf, &creationError);
+					     sbuf.width, sbuf.height,
+        				  (imgdcd_pixel_type *)sbuf.pixelData, 
+					  (imgdcd_alpha_type*)sbuf.alphaData,
+					     &creationError);
 	    if (!rawBuffer->hasAlpha) {
 		sbuf.alphaData = NULL;
 		alphaSize = 0; /* Exclude alpha data */
@@ -170,7 +179,11 @@ MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
 
 	    rawBuffer->hasAlpha = KNI_FALSE;
 
-	    decode_jpeg(srcBuffer, length, &sbuf, &creationError);
+	    decode_jpeg(srcBuffer, length,
+			sbuf.width, sbuf.height,
+		      	(imgdcd_pixel_type *)sbuf.pixelData,
+			(imgdcd_alpha_type *)sbuf.alphaData,
+			&creationError);
 	}
 
 	if (GXUTL_NATIVE_IMAGE_NO_ERROR != creationError) {
@@ -509,7 +522,11 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadPNG) {
     /* assert
      * (imagedata.pixelData != NULL && imagedata.alphaData != NULL)
      */
-    status = decode_png((srcBuffer + offset), length, &image, &creationError);
+    status = decode_png((srcBuffer + offset), length,
+			image.width, image.height,
+			(imgdcd_pixel_type *)image.pixelData,
+			(imgdcd_alpha_type *)image.alphaData,
+			&creationError);
 
     if (GXUTL_NATIVE_IMAGE_NO_ERROR != creationError) {
         KNI_ThrowNew(midpIllegalArgumentException, NULL);
@@ -579,7 +596,11 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadJPEG) {
     /* assert
      * (imagedata.pixelData != NULL)
      */
-    decode_jpeg((srcBuffer + offset), length, &image, &creationError);
+    decode_jpeg((srcBuffer + offset), length,
+		image.width, image.height, 
+		(imgdcd_pixel_type *)image.pixelData,
+		(imgdcd_alpha_type *)image.alphaData, 
+		&creationError);
 
     if (GXUTL_NATIVE_IMAGE_NO_ERROR != creationError) {
         KNI_ThrowNew(midpIllegalArgumentException, NULL);
@@ -740,9 +761,9 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
 #define PIXEL gxj_pixel_type
 #define ALPHA gxj_alpha_type
 
-void pixelCopy(PIXEL *src, const int srcLineW, const int srcXInc,
-               const int srcYInc, const int srcXStart,
-               PIXEL *dst, const int w, const int h) {
+static void pixelCopy(PIXEL *src, const int srcLineW, const int srcXInc,
+		      const int srcYInc, const int srcXStart,
+		      PIXEL *dst, const int w, const int h) {
     int x, srcX;
     PIXEL *dstPtrEnd = dst + (h * w );
 
@@ -756,10 +777,12 @@ void pixelCopy(PIXEL *src, const int srcLineW, const int srcXInc,
     }
 }
 
-void pixelAndAlphaCopy(PIXEL *src, const int srcLineW, const int srcXInc,
-                       const int srcYInc, const int srcXStart, PIXEL *dst,
-                       const int w, const int h,
-                       const ALPHA *srcAlpha, ALPHA *dstAlpha) {
+static void pixelAndAlphaCopy(PIXEL *src, 
+			      const int srcLineW, const int srcXInc,
+			      const int srcYInc, const int srcXStart, 
+			      PIXEL *dst,
+			      const int w, const int h,
+			      const ALPHA *srcAlpha, ALPHA *dstAlpha) {
     int x, srcX;
     PIXEL *dstPtrEnd = dst + (h * w );
 
@@ -775,8 +798,9 @@ void pixelAndAlphaCopy(PIXEL *src, const int srcLineW, const int srcXInc,
     }
 }
 
-void blit(const gxj_screen_buffer *src, int xSrc, int ySrc, int width, int height,
-          gxj_screen_buffer *dst, int transform) {
+static void blit(const gxj_screen_buffer *src, 
+		 int xSrc, int ySrc, int width, int height,
+		 gxj_screen_buffer *dst, int transform) {
     PIXEL *srcPtr = NULL;
     int srcXInc=0, srcYInc=0, srcXStart=0;
 

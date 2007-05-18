@@ -40,10 +40,7 @@ GRAPHICS_API_MODULE_DIR=$(GRAPHICS_API_DIR)/reference
 #
 SUBSYSTEM_GRAPHICSAPI_JAVA_FILES += \
     $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Font.java \
-    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Graphics.java \
-    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Image.java \
-    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/game/Sprite.java \
-    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/game/TiledLayer.java
+    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Graphics.java
 
 # vpath for the library
 #
@@ -64,5 +61,4 @@ endif
 #
 SUBSYSTEM_GRAPHICSAPI_NATIVE_FILES += \
     gxapi_font_kni.c \
-    gxapi_graphics_kni.c \
-    gxapi_image_kni.c
+    gxapi_graphics_kni.c

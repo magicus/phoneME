@@ -33,16 +33,14 @@
 ############################################################
 
 # Local module directory
-GRAPHICS_MODULE_DIR = $(SUBSYSTEM_DIR)/lowlevelui/graphics/putpixel
+GRAPHICS_MODULE_DIR = $(SUBSYSTEM_LOWUI_DIR)/graphics/putpixel
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(GRAPHICS_MODULE_DIR)/classes
 
 # Java files for the putpixel module
 #
-SUBSYSTEM_GRAPHICS_JAVA_FILES += \
-    $(GRAPHICS_MODULE_DIR)/classes/javax/microedition/lcdui/ImageData.java \
-    $(GRAPHICS_MODULE_DIR)/classes/javax/microedition/lcdui/ImageDataFactory.java
+SUBSYSTEM_GRAPHICS_JAVA_FILES +=
 
 # vpath for putixel module
 #
@@ -53,14 +51,11 @@ vpath % \
 # (IMPL_NOTE remove this dependency)
 
 SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_DIR)/lowlevelui/graphics/putpixel/include
+    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/putpixel/include
 
 # Native files for putpixel module
 SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
     gxj_screen_buffer.c \
-    gxj_image_decode.c \
-    gxj_png_decode.c \
-    gxj_imagedatafactory_kni.c \
     gxj_font_bitmap.c \
     gxj_graphics_asm.c \
     gxj_graphics.c \
