@@ -294,8 +294,8 @@ class GenOpcodes
 	    String name = st.nextToken();
 	    String number = st.nextToken();
 	    String length = st.nextToken();
-	    String pops = st.nextToken();
-	    String pushes = st.nextToken();
+	    st.nextToken();	// pops
+	    st.nextToken();	// pushes
 	    String[] attributes = parseAttributes(st.nextToken());
 	    String simplification = st.nextToken();
 	    String tag = st.nextToken();
@@ -363,8 +363,6 @@ class GenOpcodes
 		assigned,
 		name,
 		length,
-		pops,
-		pushes,
 		attributes,
 		simplification,
 		tag,
@@ -967,8 +965,6 @@ class GenOpcodes
 	private final boolean _assigned;
 	private final String _name;
 	private final String _length;
-	private final String _pops;
-	private final String _pushes;
 	private final String[] _attributes;
 	private final String _simplification;
 	private final String _tag;
@@ -977,14 +973,11 @@ class GenOpcodes
 
 	public Opcode(
 	    boolean assigned, String name, String length,
-	    String pops, String pushes,
 	    String[] attributes, String simplification,
 	    String tag, String typeid, String value) {
 	    _assigned = assigned;
 	    _name = name;
 	    _length = length;
-	    _pops = pops;
-	    _pushes = pushes;
 	    _attributes = attributes;
 	    _simplification = simplification;
 	    _tag = tag;
@@ -1002,17 +995,6 @@ class GenOpcodes
 
 	public String getLength() {
 	    return _length;
-	}
-
-	// FIXME: GetPops() and getPushes() aren't used.  They should
-	// be removed, together with upstream data in opcodes.list.
-
-	public String getPops() {
-	    return _pops;
-	}
-
-	public String getPushes() {
-	    return _pushes;
 	}
 
 	public String[] getAttributes() {
