@@ -2097,7 +2097,11 @@ CVMinitPathValues(void *propsPtr, char *basePath,
     props->java_home = p;
     p += strlen(p) + 1;
     /* Record path to native libraries */
+    if (*(basePath+strlen(basePath)-1) == CVM_PATH_LOCAL_DIR_SEPARATOR) {
+	*(basePath+strlen(basePath)-1) = '\0';
+    }
     strcpy(p, basePath);
+
     *(p+strlen(p)) = CVM_PATH_LOCAL_DIR_SEPARATOR;
     *(p+strlen(p)+1) = '\0';
     strcat(p, dllPath);
@@ -2139,7 +2143,7 @@ CVMinitPathValues(void *propsPtr, char *basePath,
 #else
     props->ext_dirs = "";
 #endif /* CVM_HAS_JCE */
-    CVMassert(p - p0 == size);
+    CVMassert(p - p0 <= size);
     return CVM_TRUE;
 }
 
