@@ -170,6 +170,8 @@ extern void    CVMmutexSetOwner(CVMThreadID *self, CVMMutex* m,
  * if CVMmutexSetOwner is not available.  All of the calls are
  * synchronized by the caller except CVMthreadBoostAndWait, so
  * calls will be serialized for any given boost record.
+ *
+ * NOTE: These APIs are only used to facilitate monitor inflation.
  */
 
 /*
@@ -183,20 +185,31 @@ extern CVMBool CVMthreadBoostInit(CVMThreadBoostRecord *b);
 extern void CVMthreadBoostDestroy(CVMThreadBoostRecord *b);
 
 /*
- * Add a booster (synchronized).  Returns queue for boost-and-wait call.
+ * Sets up boosting info in preparation for CVMthreadBoostAndWait()
+ * i.e adds a booster (synchronized).  Returns queue for boost-and-wait call.
+ * NOTE: CVMthreadAddBooster() is protected by the VM syncLock. 
  */
 extern CVMThreadBoostQueue *CVMthreadAddBooster(CVMThreadID *self,
 					        CVMThreadBoostRecord *b,
-					        CVMThreadID *ti);
+					        CVMThreadID *target);
 /*
- * Boost the priority of a thread and wait until canceled (unsynchronized).
+ * Boosts the priority of the target thread who is supposed to own the
+ * newly inflated monitor.  After that, the current thread will block until
+ * the target thread cancels the boost on the monitor via
+ * CVMthreadCancelBoost().  The target thread is in recorded in the boost
+ * record if necessary (implementation dependent).
+ * NOTE: Not protected by the VM syncLock because this function can block.
  */
 extern void    CVMthreadBoostAndWait(CVMThreadID *self,
 				     CVMThreadBoostRecord *b,
 				     CVMThreadBoostQueue *q);
-/*
- * Cancel all boosters (synchronized).
- */
+
+/* Cancels the boost that was previously put on this boost record which
+   boosted the priority of the current thread.  This cancellation allows the
+   current thread to be restored to its original priority value before the
+   boost operation.
+   NOTE: CVMthreadCancelBoost() is protected by the VM syncLock.
+*/
 extern void    CVMthreadCancelBoost(CVMThreadID *self,
 				    CVMThreadBoostRecord *b);
 #endif

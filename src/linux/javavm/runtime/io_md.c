@@ -31,6 +31,7 @@
 #include "javavm/include/porting/threads.h"
 #include "javavm/include/porting/doubleword.h"
 #include "javavm/include/porting/globals.h"
+#include "javavm/export/jvm.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -92,6 +93,16 @@ CVMioOpen(const char *name, CVMInt32 openMode,
 	    return -1;
 	}
     }
+#ifdef JAVASE
+    else {
+      switch(errno) {
+        case EEXIST:
+          return JVM_EEXIST;
+        default:
+          return -1;
+      }
+    }
+#endif
     return fd;
 }
 
