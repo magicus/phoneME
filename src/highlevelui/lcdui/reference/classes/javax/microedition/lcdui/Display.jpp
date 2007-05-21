@@ -2921,17 +2921,17 @@ public class Display {
          * DisplayEventConsumer I/F method.
          *
          * @param modelVersion the version of the peer's data model
+         * @param supType sub type of the change that happened
          * @param itemPeerId the id of the ItemLF's peer whose state has changed
          * @param hint some value that is interpretted only between the peers
          */
-        public void handlePeerStateChangeEvent(int modelVersion,
-                                         int itemPeerId, int hint) {
+        public void handlePeerStateChangeEvent(int modelVersion, int subType,
+                                                int itemPeerId, int hint) {
             DisplayableLF currentCopy = Display.this.current;
 
             if (currentCopy instanceof FormLF) {
-                ((FormLF)currentCopy).uCallPeerStateChanged(modelVersion,
-                                                            itemPeerId,
-                                                            hint);
+                ((FormLF)currentCopy).uCallPeerStateChanged(modelVersion, subType,
+                                                            itemPeerId, hint);
             }
         }
 

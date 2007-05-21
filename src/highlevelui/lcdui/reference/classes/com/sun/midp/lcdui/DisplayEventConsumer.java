@@ -100,12 +100,14 @@ public interface DisplayEventConsumer {
      * of a change in its native peer state.
      *
      * @param modelVersion the version of the peer's data model
+     * @param supType sub type of the change that happened
      * @param itemPeerId the id of the ItemLF's peer whose state has changed
      * @param hint some value that is interpreted only between the peers
      */
     public void handlePeerStateChangeEvent(
             int modelVersion, 
-            int itemPeerId, 
+            int subType,
+            int itemPeerId,
             int hint);
 
     /*

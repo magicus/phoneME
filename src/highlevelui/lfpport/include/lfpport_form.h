@@ -157,6 +157,17 @@ MidpFormItemPeerStateChanged(PlatformItemWidgetPtr itemWidgetPtr, int hint);
 void 
 MidpFormViewportChanged(PlatformScreenWidgetPtr formPtr, int hint);
 
+/**
+ * Notify Java peer that traverse is requested
+ *
+ * This is NOT a platform dependent function and do NOT need to be ported.
+ *
+ * @param formPtr native widget of the form where the request occurred
+ * @param hint 1 if next item, 0 if previous
+ */
+void MidpFormTraverseRequest(PlatformScreenWidgetPtr formPtr, int hint);
+
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

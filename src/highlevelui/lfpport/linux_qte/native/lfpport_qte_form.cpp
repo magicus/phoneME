@@ -51,6 +51,12 @@ Form::Form() : QWidget(0) {
 	  this, SLOT(viewportChanged(int, int)));
 }
 
+bool Form::focusNextPrevChild ( bool next ) {
+
+    MidpFormTraverseRequest(this, next ? 1 : 0);
+    return FALSE;
+}
+
 /**
  * Form's slot that is called when viewport scroll
  * location changes.
@@ -75,7 +81,7 @@ form_show(MidpFrame* framePtr) {
   PlatformMScreen::getMScreen()->addChild(f);
 
   f->show();
-  
+
  return KNI_OK;
 }
 /**

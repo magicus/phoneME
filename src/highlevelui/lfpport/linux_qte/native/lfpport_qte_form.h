@@ -50,6 +50,13 @@ class Form : public QWidget
     /* Constructor of the form's container */
    Form();
 
+protected:
+   /**
+    * Override to notify Java.
+    */
+  bool focusNextPrevChild ( bool next );
+
+
  public slots:
    /* 
     * This slot is called by Qt when there is a change

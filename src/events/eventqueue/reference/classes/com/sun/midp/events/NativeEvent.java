@@ -94,6 +94,7 @@ public class NativeEvent extends Event {
         intParam2 = 0;
         intParam3 = 0;
         intParam4 = 0;
+        intParam5 = 0;
 
         stringParam1 = null;
         stringParam2 = null;
@@ -111,7 +112,7 @@ public class NativeEvent extends Event {
     public String toString() {
         return "Native Event: t  = " + type + ", i1 = " + intParam1 +
             ", i2 = " + intParam2 + ", i3 = " + intParam3 +
-            ", i4 = " + intParam4 +
+            ", i4 = " + intParam4 + ", i5 = " + intParam5 +
             "\n    s1 = " + stringParam1 +
             "\n    s2 = " + stringParam2 +
             "\n    s3 = " + stringParam3 +
