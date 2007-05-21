@@ -522,11 +522,6 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         }
     }
 
-    private static final int PEER_FOCUS_CHANGED = 0;
-    private static final int PEER_VIEWPORT_CHANGED = 1;
-    private static final int PEER_ITEM_CHANGED = 2;
-    private static final int PEER_TRAVERSE_REQUEST = 3;
-
     /**
      * Called by <code>Display</code> to notify an <code>ItemLF</code>
      * in current <code>FormLF</code> of a change in its peer state.
@@ -2248,6 +2243,13 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
     }
 
 
+    /**
+     * Sub types of peer notification events
+     */
+    private static final int PEER_FOCUS_CHANGED = 0;
+    private static final int PEER_VIEWPORT_CHANGED = 1;
+    private static final int PEER_ITEM_CHANGED = 2;
+    private static final int PEER_TRAVERSE_REQUEST = 3;
 
     /** 
      * A bit mask to capture the horizontal layout directive of an item.
