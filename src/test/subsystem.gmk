@@ -77,7 +77,8 @@ ifeq ($(USE_MULTIPLE_ISOLATES), true)
     SUBSYSTEM_TEST_I3TEST_JAVA_FILES += \
 	$(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/test/TestReflect.java \
 	$(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/test/ReflectSlave.java \
-	$(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/i3test/TestIsolateSynch.java
+	$(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/i3test/TestIsolateSynch.java \
+	$(SUBSYSTEM_DIR)/test/common/i3test/com/sun/midp/i3test/TestUtfReaders.java
 endif
 
 # Test code for Pause/Resume

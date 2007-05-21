@@ -33,6 +33,12 @@ import java.io.UnsupportedEncodingException;
 /** Reader for Big Endian UTF-16 encoded input streams. */
 public class UTF_16BE_Reader extends UTF_16_Reader {
 
+    /** Constructs a UTF-16BE reader. */
+    public UTF_16BE_Reader() {
+        super();
+        bytesForBOM = 0;
+    }
+
     /**
      * Open the reader
      * @param in the input stream to be read
@@ -45,5 +51,14 @@ public class UTF_16BE_Reader extends UTF_16_Reader {
         super.open(in, enc);
         byteOrder = BIG_ENDIAN; // AFTER the constructor
         return this;
+    }
+    /*
+     * This method is only used by our internal Helper class in the method
+     * byteToCharArray to know how much to allocate before using a
+     * reader. If we encounter bad encoding we should return a count
+     * that includes that character so the reader will throw an IOException
+     */
+    public int sizeOf(byte[] array, int offset, int length) {
+        return length/BYTES_PER_CHAR;
     }
 }

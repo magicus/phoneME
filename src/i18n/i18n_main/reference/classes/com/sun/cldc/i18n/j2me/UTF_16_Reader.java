@@ -46,8 +46,25 @@ public class UTF_16_Reader extends com.sun.cldc.i18n.StreamReader {
     /** the byte order: one of BIG_ENDIAN, LITTLE_ENDIAN, UNKNOWN_BYTE_ORDER */
     protected int byteOrder = UNKNOWN_BYTE_ORDER;
 
+    /** mark() saves here a copy of firstByte */
+    protected int markFirstByte;
+    /** mark() saves here a copy of byteOrder */
+    protected int markByteOrder;
+    /** false if mark() has not been invoked yet */
+    protected boolean markIsSet;
+    /** The amount of bytes that mark() must reserve for BOM.
+     *  Derived classes may set this field to 0.
+     */
+    protected int bytesForBOM;
+    /** One Java (utf-16) character is 2 bytes.
+     *  For the purposes of this class, we consider surrogate pairs as
+     *  sequences of two Java characters.
+     */
+    protected static final int BYTES_PER_CHAR = 2;
+
     /** Constructs a UTF-16 reader. */
     public UTF_16_Reader() {
+        bytesForBOM = 2;
     }
 
     /**
@@ -61,6 +78,7 @@ public class UTF_16_Reader extends com.sun.cldc.i18n.StreamReader {
         throws UnsupportedEncodingException {
         firstByte = -1;
         byteOrder = UNKNOWN_BYTE_ORDER;
+        markIsSet = false;
         super.open(in, enc);
         return this;
     }
@@ -161,30 +179,21 @@ public class UTF_16_Reader extends com.sun.cldc.i18n.StreamReader {
     }
 
     /**
-     * Tell whether this reader supports the mark() operation.
-     * The implementation always returns false because it does not
-     * support mark().
+     * Mark the present position in the stream.
      *
-     * @return false
-     */
-    public boolean markSupported() {
-        /*
-         * For readers mark() is in characters; UTF-16 is easier than UTF-8,
-         * but it's not supported yet.
-         * So this reader does not support mark at this time.
-         */
-        return false;
-    }
-
-    /**
-     * Mark a read ahead character is not supported for UTF16
-     * readers.
      * @param readAheadLimit number of characters to buffer ahead
-     * @exception IOException is thrown, for all calls to this method
-     * because marking is not supported for UTF16 readers
+     * @exception  IOException  If an I/O error occurs or
+     *             marking is not supported by the underlying input stream.
      */
     public void mark(int readAheadLimit) throws IOException {
-        throw new IOException("mark() not supported");
+        if (in.markSupported()) {
+            markIsSet = true;
+            markByteOrder = byteOrder;
+            markFirstByte = firstByte;
+            in.mark(readAheadLimit*BYTES_PER_CHAR + bytesForBOM);
+        } else {
+            throw new IOException("mark() not supported");
+        }
     }
 
     /**
@@ -193,7 +202,13 @@ public class UTF_16_Reader extends com.sun.cldc.i18n.StreamReader {
      * because marking is not supported for UTF16 readers
      */
     public void reset() throws IOException {
-        throw new IOException("reset() not supported");
+        if (in.markSupported()) {
+            byteOrder = markByteOrder;
+            firstByte = markFirstByte;
+            in.reset();
+        } else {
+            throw new IOException("reset() not supported");
+        }
     }
 
     /**
@@ -217,8 +232,8 @@ public class UTF_16_Reader extends com.sun.cldc.i18n.StreamReader {
         if ((b1 == 0xfe && b2 == 0xff)
           ||(b1 == 0xff && b2 == 0xfe)){
             // do not count BOM, it's not a part of data
-            return length/2 - 1;
+            return length/BYTES_PER_CHAR - 1;
         }
-        return length/2;
+        return length/BYTES_PER_CHAR;
     }
 }

@@ -216,7 +216,7 @@ public abstract class TestCase {
         totalAsserts++;
 
         if (verbose) {
-            p("## " + totalAsserts + ": " + message);
+            p("## " + totalAsserts + ": " + message + (condition?" OK":" FAILURE"));
         }
 
         if (!condition) {
