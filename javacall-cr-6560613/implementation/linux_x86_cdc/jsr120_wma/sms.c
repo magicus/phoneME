@@ -37,30 +37,7 @@
 #include <stdio.h>
 #define javacall_print(x) printf(x)
 
-#include <dlfcn.h>
-#include <stdio.h>
-#define RTLD_DEFAULT 0
-#define decl_javanotify(name_, args_, actuals_)  \
-    static void (*name_##_func_addr) args_ = NULL; \
-    static void name_##_init_func_addr() { \
-        name_##_func_addr = dlsym(RTLD_DEFAULT, "javanotify_" #name_); \
-    } \
-    void jn_local_##name_ args_ { \
-        if (name_##_func_addr == NULL) { \
-            name_##_init_func_addr(); \
-            /*fprintf(stderr, "error: non-initialyzed javanotify: %s\n", #name_); */\
-            /* return; */\
-        } \
-        (*name_##_func_addr) actuals_; \
-    } \
-
-#define call_javanotify(name_, params_) do {\
-    fprintf(stderr, "calling javanotify: %s %s\n", #name_, #params_); \
-    jn_local_##name_ params_ ;\
-    fprintf(stderr, "after javanotify: %s\n", #name_); \
-} while (0)
-
-#include "javacall_sms.h"
+#include "wma_notify.h"
 decl_javanotify(sms_send_completed, (
         javacall_sms_sending_result result, 
         int                         handle
