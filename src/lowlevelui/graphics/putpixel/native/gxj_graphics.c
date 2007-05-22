@@ -85,7 +85,7 @@ gx_copy_area(const jshort *clip,
  * @return color component in premultiplied form.
  */
 #define PREMULTUPLY_ALPHA(C, A) \
-    (unsigned char)( (int)(C) * (A) / 0xff )
+    (unsigned char)( ((int)(C)) * (A) / 0xff )
 
 /**
  * The source is composited over the destination (Porter-Duff Source Over 
@@ -101,7 +101,7 @@ gx_copy_area(const jshort *clip,
  * @return a color component of the result in premultiplied form
  */
 #define ADD_PREMULTIPLIEDCOLORS_SRCOVER(Cs, As, Cd) \
-    (unsigned char)( (int)(Cs) + (int)(Cd) * (0xff - (As)) / 0xff )
+    (unsigned char)( ((int)(Cs)) + ((int)(Cd)) * (0xff - (As)) / 0xff )
 
 /**
  * Combine separate source and destination color components.
@@ -141,7 +141,7 @@ static jint alphaComposition(jint src, jint dst) {
             (unsigned char)src, As, (unsigned char)dst );
 
     /* compose RGB from separate color components */
-    return ((jint)Rr << 16) | ((jint)Gr << 8) | Br;
+    return (((jint)Rr) << 16) | (((jint)Gr) << 8) | Br;
 }
 
 /** Draw image in RGB format */
@@ -350,7 +350,7 @@ gx_draw_roundrect(int color, const jshort *clip,
 
   REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_roundrect()\n");
 
-  //API of the draw_roundrect requests radius of the arc at the four
+  /* API of the draw_roundrect requests radius of the arc at the four */
   draw_roundrect(pixelColor, clip, sbuf, lineStyle, 
 		 x, y, width, height,
 		 0, arcWidth >> 1, arcHeight >> 1);
