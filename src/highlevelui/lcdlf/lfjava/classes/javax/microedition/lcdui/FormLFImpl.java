@@ -500,10 +500,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * This implementation does nothing.
      *
      * @param modelVersion the version of the peer's data model
+     * @param subtype the sub type of peer event
      * @param itemPeerId the id of the ItemLF's peer whose state has changed
      * @param hint some value that is interpreted only between the peers
      */
-    public void uCallPeerStateChanged(int modelVersion,
+    public void uCallPeerStateChanged(int modelVersion, int subType,
                                       int itemPeerId, int hint) {
         // No peer. Not expected to be called
     }
@@ -1794,6 +1795,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 if (items[i].visible) {
                     firstVis = i;
                 }
+            }
+
+            if (firstVis == items.length) {
+                viewable[Y] = newY;
+                return;
             }
             
             // case 1. We're at the top of the item so just

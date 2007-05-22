@@ -43,6 +43,17 @@
 #include "lfp_intern_registry.h"
 
 /**
+ * Sub types of peer notification events
+ *
+ */
+enum {
+    PEER_FOCUS_CHANGED  = 0,
+    PEER_VIEWPORT_CHANGED  = 1,
+    PEER_ITEM_CHANGED  = 2,
+    PEER_TRAVERSE_REQUEST  = 3
+};
+
+/**
  * KNI function that makes native form visible.
  * CLASS:         javax.microedition.lcdui.FormLFImpl
  * Java Prototype: int createNativeResource0(String title,
@@ -227,23 +238,27 @@ MidpFormInSingleItemMode(MidpDisplayable* formPtr) {
 /**
  * Store a peer changed event to Java event queue.
  *
+ * @param subType sub type of the event
  * @param compPtr pointer to the MidpComponent structure
  * @param hint some value up to Java peer to interpret
  */
 static void
-storePeerChangedEvent(MidpComponent *compPtr, int hint) {
+storePeerChangedEvent(int subType, MidpComponent *compPtr, int hint) {
     MidpEvent event;
 
     MIDP_EVENT_INITIALIZE(event);
 
     event.type = MIDP_PEER_CHANGED_EVENT;
+
     /* Will be compared to FormLFImpl.modelVersion */
     event.intParam1 = MidpCurrentScreen->component.modelVersion;
+    /* Sub type of event */
+    event.intParam2 = subType;
     /* Will be compared to FormLFImpl.nativeId or
      * to FormLFImpl.itemLFs[0..numOfLFs].nativeId */
-    event.intParam2 = (int)compPtr;
+    event.intParam3 = (int)compPtr;
     /* Some integer that is up to Java peer to interpret */
-    event.intParam3 = hint;
+    event.intParam5 = hint;
 
     midpStoreEventAndSignalForeground(event);
 }
@@ -259,15 +274,15 @@ storePeerChangedEvent(MidpComponent *compPtr, int hint) {
 void MidpFormFocusChanged(PlatformItemWidgetPtr itemWidgetPtr) {
 
     if (MidpCurrentScreen != NULL &&
-	MidpCurrentScreen->component.type == MIDP_FORM_TYPE) {
-	/*
-	  ItemPtr is NULL to indicate this is a focus change event
-	  Hint is the pointer of the new focused item, which 
-	  can be NULL, which means no focused item.
-	*/
-	MidpItem *itemPtr = MidpFindItem((MidpDisplayable *)MidpCurrentScreen,
-					 itemWidgetPtr);
-	storePeerChangedEvent(NULL, (int)itemPtr);
+        MidpCurrentScreen->component.type == MIDP_FORM_TYPE) {
+    	/*
+        compPtr is the pointer of the new focused item, which 
+        can be NULL, which means no focused item.
+        Hint is unused.
+        */
+        MidpItem *itemPtr = MidpFindItem((MidpDisplayable *)MidpCurrentScreen,
+                                            itemWidgetPtr);
+        storePeerChangedEvent(PEER_FOCUS_CHANGED, (MidpComponent *)itemPtr, 0);
     }
 }
 
@@ -279,20 +294,19 @@ void MidpFormFocusChanged(PlatformItemWidgetPtr itemWidgetPtr) {
  * @param itemWidgetPtr native widget of the item where state change occurred.
  * @param hint some value up to the item's Java peer to interpret
  */
-void MidpFormItemPeerStateChanged(PlatformItemWidgetPtr itemWidgetPtr, 
-				  int hint)
+void MidpFormItemPeerStateChanged(PlatformItemWidgetPtr itemWidgetPtr, int hint)
 {
 
     if (MidpCurrentScreen != NULL &&
-	MidpCurrentScreen->component.type == MIDP_FORM_TYPE) {
+        MidpCurrentScreen->component.type == MIDP_FORM_TYPE) {
 
-      /* Translate item's widgetPtr to its (MidpItem *) */
-      MidpItem *itemPtr = MidpFindItem((MidpDisplayable *)MidpCurrentScreen,
-				       itemWidgetPtr);
-      
-      if (itemPtr != NULL) {
-	storePeerChangedEvent((MidpComponent *)itemPtr, hint);
-      }
+          /* Translate item's widgetPtr to its (MidpItem *) */
+        MidpItem *itemPtr = MidpFindItem((MidpDisplayable *)MidpCurrentScreen,
+            itemWidgetPtr);
+
+        if (itemPtr != NULL) {
+            storePeerChangedEvent(PEER_ITEM_CHANGED, (MidpComponent *)itemPtr, hint);
+        }
     }
 }
 
@@ -305,9 +319,30 @@ void MidpFormItemPeerStateChanged(PlatformItemWidgetPtr itemWidgetPtr,
  * @param hint some value up to the form's Java peer to interpret
  */
 void MidpFormViewportChanged(PlatformScreenWidgetPtr formPtr, int hint){
+
     if (MidpCurrentScreen != NULL &&
-	MidpCurrentScreen->component.type == MIDP_FORM_TYPE &&
-	formPtr == ((MidpFrame *)MidpCurrentScreen)->widgetPtr) {
-      storePeerChangedEvent((MidpComponent *)MidpCurrentScreen, hint);
+        MidpCurrentScreen->component.type == MIDP_FORM_TYPE &&
+        formPtr == ((MidpFrame *)MidpCurrentScreen)->widgetPtr) 
+    {
+        storePeerChangedEvent(PEER_VIEWPORT_CHANGED, (MidpComponent *)MidpCurrentScreen, hint);
     }
 }
+
+/**
+ * Notify Java peer that traverse is requested
+ *
+ * This is NOT a platform dependent function and do NOT need to be ported.
+ *
+ * @param formPtr native widget of the form where the request occurred
+ * @param hint 1 if next item, 0 if previous
+ */
+void MidpFormTraverseRequest(PlatformScreenWidgetPtr formPtr, int hint){
+
+    if (MidpCurrentScreen != NULL &&
+        MidpCurrentScreen->component.type == MIDP_FORM_TYPE &&
+        formPtr == ((MidpFrame *)MidpCurrentScreen)->widgetPtr) 
+    {
+        storePeerChangedEvent(PEER_TRAVERSE_REQUEST, (MidpComponent *)MidpCurrentScreen, hint);
+    }
+}
+

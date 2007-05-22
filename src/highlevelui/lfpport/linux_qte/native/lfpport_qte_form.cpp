@@ -52,6 +52,18 @@ Form::Form() : QWidget(0) {
 }
 
 /**
+ * Finds a new widget to give the keyboard focus to, 
+ * returns TRUE if is can find a new widget and FALSE if it can't
+ *
+ * Override to notify Java.
+ */
+bool Form::focusNextPrevChild ( bool next ) {
+
+    MidpFormTraverseRequest(this, next ? 1 : 0);
+    return FALSE;
+}
+
+/**
  * Form's slot that is called when viewport scroll
  * location changes.
  *
@@ -75,7 +87,7 @@ form_show(MidpFrame* framePtr) {
   PlatformMScreen::getMScreen()->addChild(f);
 
   f->show();
-  
+
  return KNI_OK;
 }
 /**

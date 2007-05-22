@@ -536,20 +536,21 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
      * <code>ItemLF</code>.
      *
      * @param modelVersion the version of the peer's data model
+     * @param subtype the type of event
      * @param peerId one of the following:
      *  <ul> <li> the id of this <code>FormLF</code> if viewport
      *            has changed in the corresponding native resource
-     *            of this <code>FormLF</code>
+     *            of this <code>FormLF</code> 
      *            (current scroll position is passed as hint)
+     *            or traverse has been requested by peer
      *       <li> the id of the <code>ItemLF</code> whose peer state
-     *            has changed
-     *	     <li> <code>INVALID_NATIVE_ID</code> if a focus
-     *            changed notification.
+     *            has changed or new focus item in case of focus 
+     *            change notification.
      * @param hint some value that is interpreted only between the peers
      */
     public void uCallPeerStateChanged(int modelVersion,
-				      int peerId,
-				      int hint) {
+				      int subType, int peerId, int hint) {
+
 	if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
 	    Logging.report(Logging.INFORMATION,
 			   LogChannels.LC_HIGHUI_FORM_LAYOUT,
@@ -557,40 +558,36 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 			   peerId + "/" + hint);
 	}
 
-	int notifyType;
-	ItemLFImpl oldFocus = null, itemLFToNotify = null;
+	ItemLFImpl itemLFToNotify = null;
 
 	synchronized (Display.LCDUILock) {
         if (modelVersion != super.modelVersion) {
             return; // model version out of sync, ignore the event
         }
 
-        // If not matching ItemLF, this is a focus changed notification
-        // 'hint' is the id of the new focused itemLF
-        if (peerId == INVALID_NATIVE_ID) {
-            notifyType = 1; // focus changed
-            oldFocus = getItemInFocus();
-            itemLFToNotify = id2Item(hint);
-        } else if (peerId == nativeId) {
-            // there is a scroll event from the native peer,
-            // we call show/hide Notify outside of the synchronized block
-            notifyType = 2; // viewport changed
-        } else {
-            // peerId identified the ItemLF, notify it
-            notifyType = 3; // item peer state changed
-            itemLFToNotify = id2Item(peerId);
+        switch (subType) {
+            case PEER_FOCUS_CHANGED:
+            case PEER_ITEM_CHANGED:
+                itemLFToNotify = id2Item(peerId);
+                break;
+            case PEER_VIEWPORT_CHANGED:
+            case PEER_TRAVERSE_REQUEST:
+                if (peerId != nativeId) {
+                    return; // invalid peer id
+                }
+                break;
         }
 	}
 
 	// SYNC NOTE: Following calls may end in app code.
 	// 	      So do it outside LCDUILock
-	switch (notifyType) {
+	switch (subType) {
 
-	case 1: // Focus notification
+	case PEER_FOCUS_CHANGED: // Focus notification
         uFocusChanged(itemLFToNotify);
 	    break;
             
-	case 2: // Scrolling notification
+	case PEER_VIEWPORT_CHANGED: // Scrolling notification
 	    // 'hint' is the new viewport position
 	    uViewportChanged(hint, hint + viewportHeight);
 
@@ -602,18 +599,22 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 	    uCallPaint(null, null);
 	    break;
 
-	case 3: // Item peer notification
-	    if (itemLFToNotify != null &&
-		itemLFToNotify.uCallPeerStateChanged(hint)) {
-		// Notify the itemStateListener
-		owner.uCallItemStateChanged(itemLFToNotify.item);
-	    }
+	case PEER_ITEM_CHANGED: // Item peer notification
+        if (itemLFToNotify != null &&
+        itemLFToNotify.uCallPeerStateChanged(hint)) {
+            // Notify the itemStateListener
+            owner.uCallItemStateChanged(itemLFToNotify.item);
+        }
 	    break;
+
+    case PEER_TRAVERSE_REQUEST: // traverse requested
+        uTraverse((hint == 1) ? Canvas.RIGHT : Canvas.LEFT);
+        break;
 
 	default:
 	    // for safety/completeness.
             Logging.report(Logging.WARNING, LogChannels.LC_HIGHUI_FORM_LAYOUT,
-                "FormLFImpl: notifyType=" + notifyType);
+                "FormLFImpl: notifyType=" + subType);
 	    break;
 	}
     }
@@ -1227,6 +1228,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 
         ItemLFImpl[] itemsCopy;
         int traverseIndexCopy;
+
         synchronized (Display.LCDUILock) {
             itemsCopy = new ItemLFImpl[numOfLFs];
             traverseIndexCopy = traverseIndex;
@@ -1314,7 +1316,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
                 
                 if (scrollForBounds(dir, visRect)) {
                     uRequestPaint(); // request to paint contents area
-                } else {
+                } else {                   
                     synchronized (Display.LCDUILock) {
                         itemsCopy[traverseIndexCopy].lRequestPaint();
                     }
@@ -1458,7 +1460,7 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             if (newY < 0) {
                 newY = 0;
             }
-            
+
             // We loop upwards until we find the first item which is
             // currently at least partially visible
             int firstVis = items.length;
@@ -1466,6 +1468,12 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
                 if (items[i].visibleInViewport) {
                     firstVis = i;
                 }
+            }
+
+            if (firstVis == items.length) {
+                scrollPos = newY;
+                setScrollPosition0(scrollPos);
+                return;
             }
             
             // case 1. We're at the top of the item so just
@@ -2234,6 +2242,13 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
     }
 
 
+    /**
+     * Sub types of peer notification events
+     */
+    private static final int PEER_FOCUS_CHANGED = 0;
+    private static final int PEER_VIEWPORT_CHANGED = 1;
+    private static final int PEER_ITEM_CHANGED = 2;
+    private static final int PEER_TRAVERSE_REQUEST = 3;
 
     /** 
      * A bit mask to capture the horizontal layout directive of an item.

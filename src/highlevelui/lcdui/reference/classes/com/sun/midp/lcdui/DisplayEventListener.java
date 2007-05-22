@@ -146,7 +146,8 @@ public class DisplayEventListener implements EventListener {
                 dc.handlePeerStateChangeEvent(
                     nativeEvent.intParam1,
                     nativeEvent.intParam2,
-                    nativeEvent.intParam3);
+                    nativeEvent.intParam3,
+                    nativeEvent.intParam5);
 
                 return;
 
