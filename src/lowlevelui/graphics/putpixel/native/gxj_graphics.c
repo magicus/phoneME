@@ -41,8 +41,6 @@
 
 /**
  * Draw triangle
- *
- * @param pixel The packed pixel value
  */
 void
 gx_fill_triangle(int color, const jshort *clip, 
@@ -74,6 +72,76 @@ gx_copy_area(const jshort *clip,
 
   copy_imageregion(sbuf, sbuf, clip, x_dest, y_dest, width, height,
 		   x_src, y_src, 0);
+}
+
+/**
+ * Premultiply color components by it's corresponding alpha component.
+ *
+ * Formula: Cs = Csr * As (for source pixel),
+ *          Cd = Cdr * Ad (analog for destination pixel).
+ *
+ * @param C one of the raw color components of the pixel (Csr or Cdr in the formula).
+ * @param A the alpha component of the source pixel (As or Ad in the formula).
+ * @return color component in premultiplied form.
+ */
+#define PREMULTUPLY_ALPHA(C, A) \
+    (unsigned char)( ((int)(C)) * (A) / 0xff )
+
+/**
+ * The source is composited over the destination (Porter-Duff Source Over 
+ * Destination rule).
+ *
+ * Formula: Cr = Cs + Cd*(1-As)
+ *
+ * Note: the result is always equal or less than 0xff, i.e. overflow is impossible.
+ *
+ * @param Cs a color component of the source pixel in premultiplied form
+ * @param As the alpha component of the source pixel
+ * @param Cd a color component of the destination pixel in premultiplied form
+ * @return a color component of the result in premultiplied form
+ */
+#define ADD_PREMULTIPLIEDCOLORS_SRCOVER(Cs, As, Cd) \
+    (unsigned char)( ((int)(Cs)) + ((int)(Cd)) * (0xff - (As)) / 0xff )
+
+/**
+ * Combine separate source and destination color components.
+ *
+ * Note: all backround pixels are treated as full opaque.
+ *
+ * @param Csr one of the raw color components of the source pixel
+ * @param As the alpha component of the source pixel
+ * @param Cdr one of the raw color components of the destination pixel
+ * @return a color component of the result in premultiplied form
+ */
+#define ADD_COLORS(Csr, As, Cdr) \
+    ADD_PREMULTIPLIEDCOLORS_SRCOVER( \
+            PREMULTUPLY_ALPHA(Csr, As), \
+            As, \
+            PREMULTUPLY_ALPHA(Cdr, 0xff) )
+
+
+/**
+ * Combine source and destination colors to achieve blending and transparency
+ * effects.
+ *
+ * @param src source pixel value in 32bit ARGB format.
+ * @param dst destination pixel value in 32bit RGB format.
+ * @return result pixel value in 32bit RGB format.
+ */
+static jint alphaComposition(jint src, jint dst) {
+    unsigned char As = (unsigned char)(src >> 24);
+
+    unsigned char Rr = ADD_COLORS(
+            (unsigned char)(src >> 16), As, (unsigned char)(dst >> 16) );
+
+    unsigned char Gr = ADD_COLORS(
+            (unsigned char)(src >> 8), As, (unsigned char)(dst >> 8) );
+
+    unsigned char Br = ADD_COLORS(
+            (unsigned char)src, As, (unsigned char)dst );
+
+    /* compose RGB from separate color components */
+    return (((jint)Rr) << 16) | (((jint)Gr) << 8) | Br;
 }
 
 /** Draw image in RGB format */
@@ -109,12 +177,12 @@ gx_draw_rgb(const jshort *clip,
 
         if (b >= clipY2) return;
         if (b <  clipY1) continue;
-
+	
         for (a = x; a < x + width; a++) {
 
-            int value = rgbData[offset + (a - x) + dataRowIndex];
+            jint value = rgbData[offset + (a - x) + dataRowIndex];
             int idx = sbufRowIndex + a;
-
+	    
             if (a >= clipX2) break;
             if (a < clipX1) {
                 // JAVA_TRACE("drawRGB:A OutOfBounds %d   %d %d %d %d\n", idx,
@@ -124,13 +192,11 @@ gx_draw_rgb(const jshort *clip,
                 if (!processAlpha || ((value & 0xff000000) == 0xff000000)) {
                     sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
                 } else {
-                    unsigned int xA =
-                        GXJ_XAAA8888_FROM_ARGB8888((unsigned int)value);
-                    unsigned int XAInv =
-                        (unsigned int)(((unsigned int)(0xFFFFFFFF)) - xA);
-                    sbuf->pixelData[idx] =
-                        GXJ_RGB24TORGB16((xA & value) |
-                            (XAInv & GXJ_RGB16TORGB24(sbuf->pixelData[idx])));
+                    if ((value & 0xff000000) != 0) {                        
+                        jint background = GXJ_RGB16TORGB24(sbuf->pixelData[idx]);
+                        jint composition = alphaComposition(value, background);
+                        sbuf->pixelData[idx] = GXJ_RGB24TORGB16(composition);
+                    }
                 }
             }
         } /* loop by rgb data columns */
@@ -284,7 +350,7 @@ gx_draw_roundrect(int color, const jshort *clip,
 
   REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_roundrect()\n");
 
-  //API of the draw_roundrect requests radius of the arc at the four
+  /* API of the draw_roundrect requests radius of the arc at the four */
   draw_roundrect(pixelColor, clip, sbuf, lineStyle, 
 		 x, y, width, height,
 		 0, arcWidth >> 1, arcHeight >> 1);
