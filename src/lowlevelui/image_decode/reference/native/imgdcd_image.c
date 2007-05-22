@@ -28,8 +28,9 @@
  * @file
  * @brief Common internal functions of image.
  */
+#include <midpError.h>
 #include <string.h>
-#include <gxutl_image.h>
+#include <imgdcd_image_util.h>
 
 /* PNG file header */
 const unsigned char gxutl_png_header[16] = {0x89, 'P', 'N', 'G',

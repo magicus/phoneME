@@ -35,6 +35,7 @@
 #include <midp_logging.h>
 
 #include <gxutl_graphics.h>
+#include <gxutl_image_errorcodes.h>
 #include <gx_image.h>
 #include <imgdcd_image_util.h>
 

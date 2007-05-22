@@ -34,7 +34,7 @@
 
 
 #Local module dir
-GRAPHICS_API_MODULE_DIR=$(GRAPHICS_API_DIR)/reference
+GRAPHICS_API_MODULE_DIR=$(GRAPHICS_API_DIR)/graphics_native
 
 # Java files for the libarary
 #
@@ -60,5 +60,6 @@ endif
 # Native files for common module
 #
 SUBSYSTEM_GRAPHICSAPI_NATIVE_FILES += \
+    gxapi_anchor.c \
     gxapi_font_kni.c \
     gxapi_graphics_kni.c

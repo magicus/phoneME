@@ -126,23 +126,4 @@
 #define FACE_PROPORTIONAL  64
 /** @} */
 
-/**
- * Checks that the anchor is set correctly.
- *
- * @param anchor The anchor type.
- * @param illegal_vpos The vertical component that 
- *                     is not allowed for this anchor.
- * @return 1 if anchor is valid, 0 if invalid
- *
- */
-int gxutl_check_anchor(int anchor, int illegal_vpos);
-
-/**
- * Normalizes anchor coordinates to top-left coordinates.
- *
- * @return 1 if anchor is valid, 0 if invalid
- */
-int gxutl_normalize_anchor(jint* X, jint* Y, jint width, jint height, 
-                           jint anchor);
-
 #endif /* _GXUTL_GRAPHICS_H_ */

@@ -32,7 +32,6 @@
 #include <midpUtilKni.h>
 #include <midpMalloc.h>
 
-#include <gxutl_image.h>
 #include <gxutl_image_errorcodes.h>
 #include <gxutl_graphics.h>
 

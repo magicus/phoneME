@@ -111,6 +111,8 @@ SUBSYSTEM_LCDUI_JAVA_FILES += \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/GameCanvas.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/GameAccessImpl.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/Layer.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/Sprite.java \
+    $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/game/TiledLayer.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/KeyConverter.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Canvas.java \
     $(LCDUI_CLASSES_DIR)/classes/javax/microedition/lcdui/Form.java \

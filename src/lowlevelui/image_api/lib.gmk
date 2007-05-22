@@ -47,9 +47,8 @@ SUBSYSTEM_IMAGEAPI_EXTRA_INCLUDES += \
 # Java files for the libarary
 #
 SUBSYSTEM_IMAGEAPI_JAVA_FILES += \
-    $(IMAGE_API_DIR)/classes/javax/microedition/lcdui/Image.java \
-    $(IMAGE_API_DIR)/classes/javax/microedition/lcdui/game/Sprite.java \
-    $(IMAGE_API_DIR)/classes/javax/microedition/lcdui/game/TiledLayer.java
+    $(IMAGE_API_DIR)/classes/javax/microedition/lcdui/Image.java
+
 
 # vpath for the library
 #

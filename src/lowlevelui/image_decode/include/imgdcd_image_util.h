@@ -27,6 +27,7 @@
 #ifndef _IMGDCD_IMAGE_H_
 #define _IMGDCD_IMAGE_H_
 
+#include <midpError.h>
 #include <gxutl_image_errorcodes.h>
 
 /**
@@ -50,6 +51,69 @@ typedef unsigned short imgdcd_pixel_type;
 
 /** 8-bit alpha */
 typedef unsigned char imgdcd_alpha_type;
+
+
+
+/** Type of image */
+typedef enum {
+    GXUTL_IMAGE_FORMAT_UNSUPPORTED,
+    GXUTL_IMAGE_FORMAT_PNG,
+    GXUTL_IMAGE_FORMAT_JPEG,
+    GXUTL_IMAGE_FORMAT_RAW,
+} gxutl_image_format;
+
+/** PNG file header */
+extern const unsigned char gxutl_png_header[16];
+
+/** JPEG file header */
+extern const unsigned char gxutl_jpeg_header[4];
+
+/** RAW platform dependent image file header */
+extern const unsigned char gxutl_raw_header[4];
+
+/** PNG image buffer layout */
+typedef struct {
+    unsigned char header[16]; /**< Must equal gxutl_png_header */
+    unsigned char width[4];   /**< Big-endian intergar */
+    unsigned char height[4];  /**< Big-endian intergar */
+    unsigned char data[1];    /**< variable length byte array */
+} gxutl_image_buffer_png;
+
+/** JPEG image buffer layout */
+typedef struct {
+    unsigned char header[4];  /**< Must equal gxutl_jpeg_header */
+    unsigned char unused[4];  /**< never used in the code */
+    unsigned char data[1];    /**< variable length byte array */
+} gxutl_image_buffer_jpeg;
+
+/** RAW image buffer layout */
+typedef struct {
+    unsigned char header[4];  /**< Must equal gxutl_raw_header */
+    unsigned int width;       /**< Default endian intergar */
+    unsigned int height;      /**< Default endian intergar */
+    unsigned int hasAlpha;    /**< Default endian intergar */
+    unsigned char data[1];    /**< variable length byte array */
+} gxutl_image_buffer_raw;
+
+/**
+ * Identify image format from a given image buffer.
+ *
+ * @param imgBuffer buffer contains the image data
+ * @param length    number of bytes of the buffer
+ * @param format    return image format
+ * @param width     return image width
+ * @param height    return image height
+ *
+ * @return one of error codes:
+ *              MIDP_ERROR_NONE,
+ *              MIDP_ERROR_UNSUPPORTED
+ *              MIDP_ERROR_IMAGE_CORRUPTED
+ */
+MIDP_ERROR gxutl_image_get_info(unsigned char *imgBuffer,
+		 	        unsigned int length,
+			        gxutl_image_format *format,
+			        unsigned int *width,
+			        unsigned int *height);
 
 /**
  * Decodes the given input data into a storage format used by immutable

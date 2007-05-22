@@ -108,9 +108,9 @@ include $(SUBSYSTEM_LOWUI_DIR)/graphics_api/$(LIB_MAKE_FILE)
 #              image.putpixel and image.linux_gci depend on it
 #####################################################################
 
-ifneq ($(SUBSYSTEM_IMAGE_MODULES), platform_graphics) 
+#ifneq ($(SUBSYSTEM_IMAGE_MODULES), platform_graphics) 
     include $(SUBSYSTEM_LOWUI_DIR)/image_decode/$(LIB_MAKE_FILE)
-endif
+#endif
 
 #####################################################################
 # Image Subsystem 

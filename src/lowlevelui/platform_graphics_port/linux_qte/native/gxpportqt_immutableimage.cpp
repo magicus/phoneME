@@ -35,7 +35,8 @@
 
 #include <midpResourceLimit.h>
 
-#include <gxutl_image.h>
+#include <imgdcd_image_util.h>
+#include <gxutl_image_errorcodes.h>
 #include <gxpport_immutableimage.h>
 #include <gxpportqt_image.h>
 #include "gxpportqt_intern_graphics_util.h"

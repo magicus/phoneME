@@ -58,6 +58,7 @@ vpath % \
 # Native files for the subsystem
 #
 SUBSYSTEM_IMAGEDCD_NATIVE_FILES += \
+    imgdcd_image.c \
     imgdcd_image_util.c \
     imgdcd_image_decode.c \
     imgdcd_png_decode.c
