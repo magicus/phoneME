@@ -1761,7 +1761,6 @@ public abstract class Installer {
             byte[] domainPermissions, byte[] permissions, boolean required)
             throws InvalidJadException {
 
-        String jadPermissionLine;
         String reqPermissionLine;
         Vector reqPermissions;
         String permission;
@@ -1920,8 +1919,9 @@ public abstract class Installer {
      */
     protected void checkForJadManifestMismatches()
             throws InvalidJadException {
+        int i;
 
-        for (int i = 0; i < state.jarProps.size(); i++) {
+        for (i = 0; i < state.jarProps.size(); i++) {
             String key = state.jarProps.getKeyAt(i);
             String value = state.jarProps.getValueAt(i);
             String dup = state.jadProps.getProperty(key);
@@ -1935,6 +1935,28 @@ public abstract class Installer {
                     OtaNotifier.ATTRIBUTE_MISMATCH_MSG);
                 throw new InvalidJadException(
                     InvalidJadException.ATTRIBUTE_MISMATCH, key);
+            }
+        }
+
+        // Check that if MIDlet-Permissions[-Opt] presents in jad then it also
+        // presents in the manifest (their equality was already checked by the
+        // code above).
+        String[] keys = {
+            MIDletSuite.PERMISSIONS_PROP, MIDletSuite.PERMISSIONS_OPT_PROP
+        };
+
+        for (i = 0; i < keys.length; i++) {
+            String jadPermissions =
+                    state.jadProps.getProperty(keys[i]);
+            if (jadPermissions != null) {
+                String jarPermissions =
+                        state.jarProps.getProperty(keys[i]);
+                if (jarPermissions == null) {
+                    postInstallMsgBackToProvider(
+                        OtaNotifier.ATTRIBUTE_MISMATCH_MSG);
+                    throw new InvalidJadException(
+                        InvalidJadException.ATTRIBUTE_MISMATCH, keys[i]);
+                }
             }
         }
     }
