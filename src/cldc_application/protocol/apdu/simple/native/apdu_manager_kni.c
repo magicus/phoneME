@@ -66,44 +66,16 @@ KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_init0) {
     if (prop_value != NULL) {
         status = javacall_carddevice_set_property(hostsandports, prop_value);
         if (status != JAVACALL_OK) {
-            buffer = malloc(BUFFER_SIZE);
-            if (buffer == NULL) {
-                err_msg = "init0()";
-                KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
-                goto end;
-            }
+            goto err;
+        }
 
-            switch (status) {
-            case JAVACALL_NOT_IMPLEMENTED:
-                if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
-                    err_msg = buffer;
-                } else{
-                    err_msg = "Required property not supported";
-                }
-                KNI_ThrowNew(cardDeviceException, err_msg);
-                break;
-            case JAVACALL_OUT_OF_MEMORY:
-                if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
-                    err_msg = buffer;
-                } else {
-                    err_msg = "init0()";
-                }
-                KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
-                break;
-            default:
-                if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
-                    err_msg = buffer;
-                } else {
-                    err_msg = "Invalid 'hostsandports' property";
-                }
-                KNI_ThrowNew(cardDeviceException, err_msg);
-                break;
-            }
-            free(buffer);
-            goto end;
+        prop_value = getInternalProp(satselectapdu);
+        status = javacall_carddevice_set_property(satselectapdu, prop_value);
+        if (status != JAVACALL_OK) {
+            goto err;
         }
     }
-
+    
     status = javacall_carddevice_init();
     if (status == JAVACALL_NOT_IMPLEMENTED) {
         
@@ -114,6 +86,7 @@ KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_init0) {
          
     if (status != JAVACALL_OK) {
     err:
+#define BUFFER_SIZE 128
         buffer = malloc(BUFFER_SIZE);
         if (buffer == NULL) {
             err_msg = "init0()";

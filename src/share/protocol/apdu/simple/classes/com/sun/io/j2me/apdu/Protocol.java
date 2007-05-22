@@ -144,6 +144,7 @@ public class Protocol implements APDUConnection, ConnectionBaseInterface,
         if (isSAT) {
             boolean satSlot;
             try {
+                APDUManager.initACL();
                 satSlot = APDUManager.isSatSlot(slot);
             } catch (IllegalArgumentException e) {
                 satSlot = false;

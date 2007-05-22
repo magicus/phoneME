@@ -39,6 +39,7 @@ static char cardDeviceException[] =
 
 /** Configuration property name */
 static char hostsandports[] = "com.sun.io.j2me.apdu.hostsandports";
+static char satselectapdu[] = "com.sun.io.j2me.apdu.satselectapdu";
 
 /**
  * Initializes the device.
@@ -61,44 +62,16 @@ KNIDECL (com_sun_cardreader_PlatformCardDevice_init0) {
     if (prop_value != NULL) {
         status = javacall_carddevice_set_property(hostsandports, prop_value);
         if (status != JAVACALL_OK) {
-#define BUFFER_SIZE 128
-            buffer = malloc(BUFFER_SIZE);
-            if (buffer == NULL) {
-                err_msg = "init0()";
-                KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
-                goto end;
-            }
+            goto err;
+        }
 
-            switch (status) {
-            case JAVACALL_NOT_IMPLEMENTED:
-                if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
-                    err_msg = buffer;
-                } else {
-                    err_msg = "Required property not supported";
-                }
-                KNI_ThrowNew(cardDeviceException, err_msg);
-                break;
-            case JAVACALL_OUT_OF_MEMORY:
-                if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
-                    err_msg = buffer;
-                } else {
-                    err_msg = "init0()";
-                }
-                KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
-                break;
-            default:
-                if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
-                    err_msg = buffer;
-                } else {
-                    err_msg = "Invalid 'hostsandports' property";
-                }
-                KNI_ThrowNew(cardDeviceException, err_msg);
-                break;
-            }
-            free(buffer);
-            goto end;
+        prop_value = getInternalProp(satselectapdu);
+        status = javacall_carddevice_set_property(satselectapdu, prop_value);
+        if (status != JAVACALL_OK) {
+            goto err;
         }
     }
+
     if ((status = javacall_carddevice_init()) == JAVACALL_OK) {
         javacall_carddevice_clear_error();
         retcode = KNI_TRUE;
@@ -109,6 +82,45 @@ KNIDECL (com_sun_cardreader_PlatformCardDevice_init0) {
         KNI_ThrowNew(cardDeviceException, "stub");
         retcode = KNI_TRUE;
     }
+    goto end;
+
+err:        
+#define BUFFER_SIZE 128
+    buffer = malloc(BUFFER_SIZE);
+    if (buffer == NULL) {
+        err_msg = "init0()";
+        KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
+        goto end;
+    }
+
+    switch (status) {
+    case JAVACALL_NOT_IMPLEMENTED:
+        if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
+            err_msg = buffer;
+        } else {
+            err_msg = "Required property not supported";
+        }
+        KNI_ThrowNew(cardDeviceException, err_msg);
+        break;
+    case JAVACALL_OUT_OF_MEMORY:
+        if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
+            err_msg = buffer;
+        } else {
+            err_msg = "init0()";
+        }
+        KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
+        break;
+    default:
+        if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
+            err_msg = buffer;
+        } else {
+            err_msg = "Invalid internal property";
+        }
+        KNI_ThrowNew(cardDeviceException, err_msg);
+        break;
+    }
+    free(buffer);
+
 end:
     KNI_ReturnInt(retcode);
 }
