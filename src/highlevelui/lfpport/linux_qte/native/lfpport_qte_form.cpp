@@ -51,6 +51,12 @@ Form::Form() : QWidget(0) {
 	  this, SLOT(viewportChanged(int, int)));
 }
 
+/**
+ * Finds a new widget to give the keyboard focus to, 
+ * returns TRUE if is can find a new widget and FALSE if it can't
+ *
+ * Override to notify Java.
+ */
 bool Form::focusNextPrevChild ( bool next ) {
 
     MidpFormTraverseRequest(this, next ? 1 : 0);

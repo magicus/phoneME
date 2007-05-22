@@ -558,7 +558,6 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
 			   peerId + "/" + hint);
 	}
 
-	int notifyType;
 	ItemLFImpl itemLFToNotify = null;
 
 	synchronized (Display.LCDUILock) {

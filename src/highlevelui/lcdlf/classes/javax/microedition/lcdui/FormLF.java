@@ -91,7 +91,7 @@ interface FormLF extends DisplayableLF {
      * Called by Display to notify current FormLF of a change in its peer state.
      *
      * @param modelVersion the version of the peer's data model
-     * @param subtype the type of event
+     * @param subtype the sub type of peer event
      * @param itemPeerId the id of the ItemLF's peer whose state has changed
      * @param hint some value that is interpreted only between the peers
      */
