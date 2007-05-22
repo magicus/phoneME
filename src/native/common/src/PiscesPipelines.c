@@ -1181,9 +1181,6 @@ stroker_computeRoundJoin(Pipeline* pipeline, jint cx, jint cy,
     jint* pen_dy = pipeline->stroker_pen_dy;
     jboolean* penIncluded = pipeline->stroker_penIncluded;
 
-    // IMPL NOTE : to fix warning
-    (void) flip;
-
     if (side == 0) {
         centerSide = stroker_side(cx, cy, xa, ya, xb, yb);
     } else {
@@ -1229,12 +1226,22 @@ stroker_computeRoundJoin(Pipeline* pipeline, jint cx, jint cy,
         jboolean rev = (dxa*dxa + dya*dya > dxb*dxb + dyb*dyb);
         jint i = rev ? end : start;
         jint incr = rev ? -1 : 1;
+
+        jint preNcoords = (abs(start - end) + 1) * 2;
+
         while (1) {
             jint idx = i % numPenSegments;
             px = cx + pen_dx[idx];
             py = cy + pen_dy[idx];
-            join[ncoords++] = px;
-            join[ncoords++] = py;
+
+            if (flip) {
+                join[preNcoords - ncoords++ - 1] = py;
+                join[preNcoords - ncoords++ - 1] = px;
+            } else {
+                join[ncoords++] = px;
+                join[ncoords++] = py;
+            }
+
             if (i == (rev ? start : end)) {
                 break;
             }
@@ -1472,3 +1479,4 @@ bbox_checkPoint(Pipeline* pipeline, jint x0, jint y0) {
         pipeline->bbox_maxY = y0;
     }
 }
+
