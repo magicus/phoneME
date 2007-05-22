@@ -65,47 +65,19 @@ KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_init0) {
     const char *prop_value;
 
     prop_value = jumpGetInternalProp(hostsandports, prop_buf, PROP_BUF_SIZE);
-    if (prop_value != NULL) {
+	if (prop_value != NULL) {
         status = javacall_carddevice_set_property(hostsandports, prop_value);
         if (status != JAVACALL_OK) {
-            buffer = malloc(BUFFER_SIZE);
-            if (buffer == NULL) {
-                err_msg = "init0()";
-                KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
-                goto end;
-            }
+            goto err;
+        }
 
-            switch (status) {
-            case JAVACALL_NOT_IMPLEMENTED:
-                if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
-                    err_msg = buffer;
-                } else{
-                    err_msg = "Required property not supported";
-                }
-                KNI_ThrowNew(cardDeviceException, err_msg);
-                break;
-            case JAVACALL_OUT_OF_MEMORY:
-                if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
-                    err_msg = buffer;
-                } else {
-                    err_msg = "init0()";
-                }
-                KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
-                break;
-            default:
-                if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
-                    err_msg = buffer;
-                } else {
-                    err_msg = "Invalid 'hostsandports' property";
-                }
-                KNI_ThrowNew(cardDeviceException, err_msg);
-                break;
-            }
-            free(buffer);
-            goto end;
+        prop_value = jumpGetInternalProp(satselectapdu, prop_buf, PROP_BUF_SIZE);
+        status = javacall_carddevice_set_property(satselectapdu, prop_value);
+        if (status != JAVACALL_OK) {
+            goto err;
         }
     }
-
+    
     status = javacall_carddevice_init();
     if (status == JAVACALL_NOT_IMPLEMENTED) {
         
@@ -116,6 +88,7 @@ KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_init0) {
          
     if (status != JAVACALL_OK) {
     err:
+#define BUFFER_SIZE 128
         buffer = malloc(BUFFER_SIZE);
         if (buffer == NULL) {
             err_msg = "init0()";
@@ -142,6 +115,7 @@ end:
     KNI_ReturnInt((jint)retcode);
 }
 
+JUMPEvent cardReaderEvent;
 /**
  * Checks if this slot is SAT slot. This method is invoked once after a reset of
  * the card.
@@ -159,9 +133,31 @@ KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_isSAT) {
     javacall_bool result;
     char *err_msg;
     char *buffer;
+
+    // Global lock - if in native!!!    
     int slotIndex = KNI_GetParameterAsInt(1);
     
+    cardReaderEvent = jumpEventCreate();
+    do { 
+        status_code=javacall_carddevice_lock();
+        switch (status_code) {
+        case JAVACALL_WOULD_BLOCK:
+            CVMD_gcSafeExec(_ee, {
+                jumpEventWait(cardReaderEvent);
+            });            
+            break;
+        case JAVACALL_OK:
+            break;
+        default:
+            result = JAVACALL_FALSE;
+            goto err;
+        }
+    } while (status_code == JAVACALL_WOULD_BLOCK);
+
+    slot_locked = KNI_TRUE;
+    
     if (javacall_carddevice_is_sat(slotIndex, &result) != JAVACALL_OK) {
+    err:
         buffer = malloc(BUFFER_SIZE);
         if (buffer == NULL) {
             err_msg = "isSAT()";            
@@ -176,10 +172,18 @@ KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_isSAT) {
         }        
         KNI_ThrowNew(jsropIOException, err_msg);
     }
+
+    if (slot_locked) {
+        javacall_carddevice_unlock();  // ignore status_code
+        slot_locked = KNI_FALSE;
+    }
+ 
+    //GlobalUnlock - if in native !!!
+        
+    jumpEventDestroy(cardReaderEvent);
     KNI_ReturnInt(result);
 }
 
-JUMPEvent cardReaderEvent;
 /**
  * Performs reset of the card in the slot. This method must be called within
  * <tt>synchronize</tt> block with the Slot object.
@@ -279,7 +283,6 @@ KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_reset0) {
         if (slot_locked) {
             javacall_carddevice_unlock();  // ignore status_code
             slot_locked = KNI_FALSE;
-            //GlobalUnlock - if in native !!!
         }
         
         jumpEventDestroy(cardReaderEvent);
@@ -430,6 +433,11 @@ KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_exchangeAPDU0) {
         tx_length_max = tx_length;
     }    
     tx_buffer = (char *)malloc(tx_length_max);
+    if (tx_buffer == NULL) {
+        err_msg = "exchangeAPDU0()";
+        KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
+        goto end;
+    }
     memset(tx_buffer, 0, tx_length_max);
     KNI_GetRawArrayRegion(request_handle, 0, tx_length_max, (jbyte *)tx_buffer);
     
@@ -442,6 +450,12 @@ KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_exchangeAPDU0) {
     }
     rx_length_max = KNI_GetArrayLength(response_handle);
     rx_buffer = (char *)malloc(rx_length_max);
+    if (rx_buffer == NULL) {
+        free(tx_buffer);
+        err_msg = "exchangeAPDU0()";
+        KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
+        goto end;
+    }
     memset(rx_buffer, 0, rx_length_max);
     KNI_GetRawArrayRegion(response_handle, 0, rx_length_max, (jbyte *)rx_buffer);
     

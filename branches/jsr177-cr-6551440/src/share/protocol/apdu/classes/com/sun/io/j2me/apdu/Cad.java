@@ -304,31 +304,41 @@ class Cad {
         if (!isAlive()) {
             if (cardSlot.isSAT()) {
                 throw new ConnectionNotFoundException("SIM not found");
-            } else {
-                throw new ConnectionNotFoundException("SmartCard not found");
             }
+            else {
+                throw new ConnectionNotFoundException("SmartCard not found");
+            }            
         }
 
         if (cardSlot.initConnection()) {
             clean();
         }
-        if (cardSlot.isSAT()) {
-            SIMPresent = true;
-        } else {
-            SIMPresent = false;
-        }
-        if (!forSAT && (basicChannelInUse || SIMPresent)) {
-            // get another channel for communication.
-            byte[] response = exchangeApdu(null, getChannelAPDU);
-            if (response.length  == 2) {
-                // just got back the status word
-                throw new IOException("No logical channel available");
+
+        if (!forSAT) {
+            if (cardSlot.isSAT()) {
+                SIMPresent = true;
+            } else {
+                SIMPresent = false;
             }
-            // new channel number is in the first byte of response
-            channel = response[0];
-        } else {
+            if (basicChannelInUse || SIMPresent) {
+                // get another channel for communication.
+                byte[] response = exchangeApdu(null, getChannelAPDU);
+                if (response.length == 2) {
+                    // just got back the status word
+                    throw new IOException("No logical channel available");
+                }
+                // new channel number is in the first byte of response
+                channel = response[0];
+            }
+            else {
+                basicChannelInUse = true;
+                channel = 0;
+            }
+        }
+        else {
             basicChannelInUse = true;
             channel = 0;
+            SIMPresent = true;
         }
         
         selectAPDU[0] = (byte)((selectAPDU[0] & 0xFC) | channel);
@@ -343,6 +353,15 @@ class Cad {
                     "Card application selection failed");
         }
         FCI = result;
+
+        if (forSAT) {
+            if (cardSlot.isSAT()) {
+                SIMPresent = true;
+            }
+            else {
+                SIMPresent = false;
+            }
+        }
         return channel;
     }
 
