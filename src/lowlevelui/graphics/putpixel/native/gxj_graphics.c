@@ -192,9 +192,11 @@ gx_draw_rgb(const jshort *clip,
                 if (!processAlpha || ((value & 0xff000000) == 0xff000000)) {
                     sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
                 } else {
-                    jint background = GXJ_RGB16TORGB24(sbuf->pixelData[idx]);
-                    jint composition = alphaComposition(value, background);
-                    sbuf->pixelData[idx] = GXJ_RGB24TORGB16(composition);
+                    if ((value & 0xff000000) != 0) {                        
+                        jint background = GXJ_RGB16TORGB24(sbuf->pixelData[idx]);
+                        jint composition = alphaComposition(value, background);
+                        sbuf->pixelData[idx] = GXJ_RGB24TORGB16(composition);
+                    }
                 }
             }
         } /* loop by rgb data columns */
