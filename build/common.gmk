@@ -67,6 +67,7 @@ endif
 
 ifeq ($(USE_DEBUG),true)
 BUILD=debug
+CFLAGS += -DENABLE_JAVACALL_DEBUG
 endif
 
 BUILD_EXT_debug=_g

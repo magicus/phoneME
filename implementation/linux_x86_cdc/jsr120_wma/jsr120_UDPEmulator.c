@@ -47,31 +47,7 @@
 #define DEFAULT_MMS_IN_PORT 33300
 
 
-#include <dlfcn.h>
-#include <stdio.h>
-#define RTLD_DEFAULT 0
-#define decl_javanotify(name_, args_, actuals_)  \
-    static void (*name_##_func_addr) args_ = NULL; \
-    static void name_##_init_func_addr() { \
-        name_##_func_addr = dlsym(RTLD_DEFAULT, "javanotify_" #name_); \
-    } \
-    void jn_local_##name_ args_ { \
-        if (name_##_func_addr == NULL) { \
-            name_##_init_func_addr(); \
-            /*fprintf(stderr, "error: non-initialyzed javanotify: %s\n", #name_); */\
-            /*return; */\
-        } \
-        (*name_##_func_addr) actuals_; \
-    } \
-
-#define call_javanotify(name_, params_) do {\
-    fprintf(stderr, "calling javanotify: %s%s\n", #name_, #params_); \
-    jn_local_##name_ params_; \
-    fprintf(stderr, "calling javanotify: %s%s - completed\n", #name_, #params_); \
-} while (0)
-
-#include "javacall_sms.h"
-#include "javacall_cbs.h"
+#include "wma_notify.h"
 decl_javanotify(incoming_sms, (
         javacall_sms_encoding   msgType,
         char*                   sourceAddress,
@@ -87,8 +63,6 @@ decl_javanotify(incoming_cbs, (
         unsigned char*         msgBuffer,
         int                    msgBufferLen
 ), (msgType, msgID, msgBuffer, msgBufferLen))
-
-// ---------------------------------------------------------------------------------
 
 javacall_handle smsDatagramSocketHandle = NULL;
 javacall_handle cbsDatagramSocketHandle = NULL;

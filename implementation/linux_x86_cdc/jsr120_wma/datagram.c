@@ -363,10 +363,12 @@ void listen_sockets() {
         select(max + 1, &fds, NULL, NULL, NULL);
 
         fd = (FD_ISSET(smsDatagramSocketHandle, &fds)) ? smsDatagramSocketHandle :
-             (FD_ISSET(cbsDatagramSocketHandle, &fds)) ? cbsDatagramSocketHandle : 0;
+             (FD_ISSET(cbsDatagramSocketHandle, &fds)) ? cbsDatagramSocketHandle : -1;
 #ifdef ENABLE_JSR_205
-        fd = (fd == 0 && FD_ISSET(mmsDatagramSocketHandle, &fds)) ? 
-                                                  mmsDatagramSocketHandle : 0;
+        if (fd == -1) {
+            fd = FD_ISSET(mmsDatagramSocketHandle, &fds) ? 
+                                                  mmsDatagramSocketHandle : -1;
+        }
 #endif
 
         try_process_wma_emulator(fd);
