@@ -111,7 +111,7 @@ static pthread_mutex_t locked = PTHREAD_MUTEX_INITIALIZER;
 /**
  * Verbose level of the driver.
  */
-javacall_bool jsr177_verbose = JAVACALL_FALSE;
+javacall_bool jsr177_verbose = JAVACALL_TRUE;
 
 /* local functions */
 static int isoOut(int slot, char *command, javacall_int32 length, char *response, 
@@ -1152,7 +1152,7 @@ javacall_bool select_file(char *data, int data_length) {
 	}
 	
     if (rx_buffer[0] == 0x90  &&  rx_buffer[1] == 0x00)
-  	    return JAVACALL_TRUE;
+        return JAVACALL_TRUE;
     else
         return JAVACALL_FALSE;
 }

@@ -152,6 +152,7 @@ static int cmdPowerDown(int slot);
 static int cmdReset(int slot, char *atr, int atr_size);
 static char computeLRC(char *buf, int length);
 static char make_hex(int val);
+static javacall_bool select_file(char *data, int data_length);
 
 /** 
  * Initializes the driver. This is not thread-safe function.
@@ -1343,4 +1344,31 @@ int javacall_carddevice_vsnprintf(char *buffer, javacall_int32 len, const char *
  */
 javacall_bool javacall_carddevice_get_error(char *buf, javacall_int32 buf_size) {
     return JAVACALL_FALSE;
+}
+
+/**
+ * Sends 'select' command 
+ * @data        'select' command with file identifier
+ * @data_length length 'select' command with file identifier
+ * @return JAVACALL_TRUE file with identifier <code>id</code> was successfully selected
+ *         JAVACALL_FALSE otherwise
+ */
+javacall_bool select_file(char *data, int data_length) {
+    javacall_int32 rx_length;
+    void *context;
+    unsigned char rx_buffer[2];
+
+	if (data == NULL  ||  data_length == 0) {
+    	return JAVACALL_FALSE;
+	} 
+
+	rx_length = sizeof rx_buffer;
+	if ((javacall_carddevice_xfer_data_start(data, data_length, (char *)rx_buffer, &rx_length, &context))!=JAVACALL_OK) {
+		return JAVACALL_FALSE;
+	}
+	
+    if (rx_buffer[0] == 0x90  &&  rx_buffer[1] == 0x00)
+        return JAVACALL_TRUE;
+    else
+        return JAVACALL_FALSE;
 }
