@@ -26,7 +26,7 @@
 int trusted_x = 180;
 int trusted_width = 12;
 int trusted_height = 12;
-int trusted_bytespp = 4; //3-RGB, 4 - RGBA 
+javacall_lcd_color_encoding_type trusted_color_format = JAVACALL_LCD_COLOR_RGBA;
 static const BYTE trusted_data[]=
 {"\7\10\10\11\30\31\31_')*\252'++\215&*+\221)02\260)13\265!*,\225\35(+\214\33"
  "(+\253\20\30\31j\6\10\11\14\27\31\31(SXY\315\254\267\271\377\243\262\263\377"

@@ -247,6 +247,7 @@ javacall_result javacall_lcd_finalize(void) {
  *        which can take one of the following:
  *              -# JAVACALL_LCD_COLOR_RGB565
  *              -# JAVACALL_LCD_COLOR_ARGB
+ *              -# JAVACALL_LCD_COLOR_RGBA
  *              -# JAVACALL_LCD_COLOR_RGB888
  *              -# JAVACALL_LCD_COLOR_OTHER
  *

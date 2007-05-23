@@ -89,8 +89,10 @@ typedef enum {
     JAVACALL_LCD_COLOR_RGB565 =200,
     /** ARGB (Alpha + RGB) color format */
     JAVACALL_LCD_COLOR_ARGB   =201,
+    /** RGBA (RGB + Alpha) color format */
+    JAVACALL_LCD_COLOR_RGBA   =202,
     /** RGB888 color format */
-    JAVACALL_LCD_COLOR_RGB888 =202,
+    JAVACALL_LCD_COLOR_RGB888 =203,
     /** Other color format */
     JAVACALL_LCD_COLOR_OTHER  =199
 }javacall_lcd_color_encoding_type;

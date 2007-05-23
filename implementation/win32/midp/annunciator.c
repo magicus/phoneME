@@ -101,7 +101,7 @@ extern javacall_pixel* getTopbarBuffer(int* screenWidth, int* screenHeight);
  * Draws image from raw data array to top bar offscreen buffer
  */
 void util_draw_bitmap(const unsigned char *bitmap_data, 
-                      unsigned char bytesPerPix,
+                      javacall_lcd_color_encoding_type color_format,
                       int bitmap_width,
                       int bitmap_height,
                       int screen_top,
@@ -114,6 +114,16 @@ void util_draw_bitmap(const unsigned char *bitmap_data,
     int startx, starty;
     int screenWidth = 0;
     int screenHeight = 0;
+
+    unsigned char bytesPerPix = 3;
+
+    if (color_format == JAVACALL_LCD_COLOR_RGB888) {
+        bytesPerPix = 3;
+    } else if (color_format == JAVACALL_LCD_COLOR_RGBA) {
+        bytesPerPix = 4;
+    } else {
+        return;
+    }
 
     scrn = getTopbarBuffer(&screenWidth, &screenHeight);
     if (NULL == scrn) {
@@ -151,7 +161,7 @@ void util_draw_bitmap(const unsigned char *bitmap_data,
                 unsigned char g = *bitmap_data++;
                 unsigned char b = *bitmap_data++;
 
-                if (bytesPerPix == 4) {
+                if (color_format == JAVACALL_LCD_COLOR_RGBA) {
                   javacall_pixel pix = scrn[(y * screenWidth) + x];
                   unsigned char rd = GET_RED_FROM_PIXEL(pix);
                   unsigned char gd = GET_GREEN_FROM_PIXEL(pix);
@@ -175,18 +185,18 @@ void util_draw_bitmap(const unsigned char *bitmap_data,
  */
 void drawTopbarImage(void) {
 
-    util_draw_bitmap((unsigned char*)topbar_data, 3, topBarWidth, topBarHeight, 0, 0);
+    util_draw_bitmap((unsigned char*)topbar_data, topbar_color_format, topBarWidth, topBarHeight, 0, 0);
 
     if (networkOn) {
-        util_draw_bitmap(network_data, network_bytespp, network_width, network_height, 0, network_x);
+        util_draw_bitmap(network_data, network_color_format, network_width, network_height, 0, network_x);
     }
 
     if (trustedOn) {
-        util_draw_bitmap(trusted_data, trusted_bytespp, trusted_width, trusted_height, 0, trusted_x);
+        util_draw_bitmap(trusted_data, trusted_color_format, trusted_width, trusted_height, 0, trusted_x);
     }
 
     if (homeOn) {
-        util_draw_bitmap(home_data, home_bytespp, home_width, home_height, 0, home_x);
+        util_draw_bitmap(home_data, home_color_format, home_width, home_height, 0, home_x);
     }
 
     javacall_lcd_flush();

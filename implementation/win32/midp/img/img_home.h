@@ -26,7 +26,7 @@
 int home_x = 160;
 int home_width = 14;
 int home_height = 12;
-int home_bytespp = 4; //3-RGB, 4 - RGBA 
+javacall_lcd_color_encoding_type home_color_format = JAVACALL_LCD_COLOR_RGBA;
 static const BYTE home_data[]=
 {"\0\0\0\0""5<L\11""5<L$5<L$5<L\16\0\1\1\33\1\1\2\322\1\1\2\322\0\1\1\33\0\0"
  "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0""5<L@@>H\377C>G\377$)3\215\0"

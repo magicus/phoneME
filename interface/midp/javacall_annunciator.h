@@ -137,20 +137,20 @@ javacall_result javacall_annunciator_display_home_icon(
  * @enum javacall_input_mode_type
  * @brief Input mode icon type
  */
-typedef enum {
+//typedef enum {
     /** Input mode indication for Latin caps */
-    JAVACALL_INPUT_MODE_LATIN_CAPS      =1,
+    //JAVACALL_INPUT_MODE_LATIN_CAPS      =1,
     /** Input mode indication for Latin lowercase */
-    JAVACALL_INPUT_MODE_LATIN_LOWERCASE =2,
+    //JAVACALL_INPUT_MODE_LATIN_LOWERCASE =2,
     /** Input mode indication for numeric */
-    JAVACALL_INPUT_MODE_NUMERIC         =3,
+    //JAVACALL_INPUT_MODE_NUMERIC         =3,
     /** Input mode indication for symbol */
-    JAVACALL_INPUT_MODE_SYMBOL          =4,
+    //JAVACALL_INPUT_MODE_SYMBOL          =4,
     /** Input mode indication for T9 */
-    JAVACALL_INPUT_MODE_T9              =5,
+    //JAVACALL_INPUT_MODE_T9              =5,
     /** Input mode indication for off */
-    JAVACALL_INPUT_MODE_OFF             =6
-} javacall_input_mode_type;
+    //JAVACALL_INPUT_MODE_OFF             =6
+//} javacall_input_mode_type;
     
 /**
  * Set the input mode.
@@ -167,10 +167,11 @@ typedef enum {
  *         <tt>JAVACALL_FAIL</tt> or negative value on failure, or if not 
  *         supported on device
  */
+/*
 javacall_result javacall_annunciator_display_input_mode_icon(
                      javacall_input_mode_type mode);
     
-
+*/
 
 
 
