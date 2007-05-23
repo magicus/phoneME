@@ -37,6 +37,7 @@ static char cardDeviceException[] =
 
 /** Configuration property name */
 static char hostsandports[] = "com.sun.io.j2me.apdu.hostsandports";
+static char satselectapdu[] = "com.sun.io.j2me.apdu.satselectapdu";
 
 #define PROP_BUF_SIZE 128
 
@@ -59,47 +60,19 @@ KNIDECL (com_sun_cardreader_PlatformCardDevice_init0) {
     const char *prop_value;
     
     prop_value = jumpGetInternalProp(hostsandports, prop_buf, PROP_BUF_SIZE);
-    if (prop_value != NULL) {
+	if (prop_value != NULL) {
         status = javacall_carddevice_set_property(hostsandports, prop_value);
         if (status != JAVACALL_OK) {
-#define BUFFER_SIZE 128
-            buffer = malloc(BUFFER_SIZE);
-            if (buffer == NULL) {
-                err_msg = "init0()";
-                KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
-                goto end;
-            }
+            goto err;
+        }
 
-            switch (status) {
-            case JAVACALL_NOT_IMPLEMENTED:
-                if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
-                    err_msg = buffer;
-                } else {
-                    err_msg = "Required property not supported";
-                }
-                KNI_ThrowNew(cardDeviceException, err_msg);
-                break;
-            case JAVACALL_OUT_OF_MEMORY:
-                if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
-                    err_msg = buffer;
-                } else {
-                    err_msg = "init0()";
-                }
-                KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
-                break;
-            default:
-                if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
-                    err_msg = buffer;
-                } else {
-                    err_msg = "Invalid 'hostsandports' property";
-                }
-                KNI_ThrowNew(cardDeviceException, err_msg);
-                break;
-            }
-            free(buffer);
-            goto end;
+        prop_value = jumpGetInternalProp(satselectapdu, prop_buf, PROP_BUF_SIZE);
+        status = javacall_carddevice_set_property(satselectapdu, prop_value);
+        if (status != JAVACALL_OK) {
+            goto err;
         }
     }
+
     if ((status = javacall_carddevice_init()) == JAVACALL_OK) {
         javacall_carddevice_clear_error();
         retcode = KNI_TRUE;
@@ -110,6 +83,45 @@ KNIDECL (com_sun_cardreader_PlatformCardDevice_init0) {
         KNI_ThrowNew(cardDeviceException, "stub");
         retcode = KNI_TRUE;
     }
+    goto end;
+
+err:        
+#define BUFFER_SIZE 128
+    buffer = malloc(BUFFER_SIZE);
+    if (buffer == NULL) {
+        err_msg = "init0()";
+        KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
+        goto end;
+    }
+
+    switch (status) {
+    case JAVACALL_NOT_IMPLEMENTED:
+        if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
+            err_msg = buffer;
+        } else {
+            err_msg = "Required property not supported";
+        }
+        KNI_ThrowNew(cardDeviceException, err_msg);
+        break;
+    case JAVACALL_OUT_OF_MEMORY:
+        if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
+            err_msg = buffer;
+        } else {
+            err_msg = "init0()";
+        }
+        KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
+        break;
+    default:
+        if (javacall_carddevice_get_error(buffer, BUFFER_SIZE)) {
+            err_msg = buffer;
+        } else {
+            err_msg = "Invalid internal property";
+        }
+        KNI_ThrowNew(cardDeviceException, err_msg);
+        break;
+    }
+    free(buffer);
+
 end:
     KNI_ReturnInt(retcode);
 }
@@ -278,7 +290,8 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_reset0) {
     char *atr_buffer;
     void *context = NULL;
     javacall_result status_code;
-    
+    char *err_msg;
+
     KNI_StartHandles(1);
     KNI_DeclareHandle(atr_handle);
 
@@ -289,6 +302,14 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_reset0) {
     } else {
         atr_length = KNI_GetArrayLength(atr_handle);
         atr_buffer = (char *)malloc(atr_length);
+
+        if (atr_buffer == NULL) {
+            retcode = -1;
+            err_msg = "reset0()";
+            KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
+            goto end;
+        }
+
         memset(atr_buffer, 0, atr_length);
         KNI_GetRawArrayRegion(atr_handle, 0, atr_length, (jbyte *)atr_buffer);
     }
@@ -312,6 +333,7 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_reset0) {
         retcode = atr_length;
     }
 
+end:    
     KNI_EndHandles();
     KNI_ReturnInt(retcode);
 }
@@ -333,6 +355,7 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_cmdXfer0) {
     char *tx_buffer, *rx_buffer;
     void *context = NULL;
     javacall_result status_code;
+    char *err_msg;
     
     KNI_StartHandles(2);
     KNI_DeclareHandle(request_handle);
@@ -347,6 +370,14 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_cmdXfer0) {
     } else {
         tx_length = KNI_GetArrayLength(request_handle);
         tx_buffer = (char *)malloc(tx_length);
+
+        if (tx_buffer == NULL) {
+            retcode = -1;
+            err_msg = "cmdXfer0()";
+            KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
+            goto end;
+        }
+
         memset(tx_buffer, 0, tx_length);
         KNI_GetRawArrayRegion(request_handle, 0, tx_length, (jbyte *)tx_buffer);
     }
@@ -356,12 +387,20 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_cmdXfer0) {
         rx_buffer = NULL;
         rx_length = 0;
         retcode = -1;
-        KNI_SetRawArrayRegion(request_handle, 0, tx_length,(jbyte *)tx_buffer);
         free(tx_buffer);
         goto end;
     } else {
         rx_length = KNI_GetArrayLength(response_handle);
         rx_buffer = (char *)malloc(rx_length);
+
+        if (rx_buffer == NULL) {
+            retcode = -1;
+            free(tx_buffer);
+            err_msg = "cmdXfer0()";
+            KNI_ThrowNew(jsropOutOfMemoryError, err_msg);
+            goto end;
+        }
+
         memset(rx_buffer, 0, rx_length);
         KNI_GetRawArrayRegion(response_handle, 0, rx_length, (jbyte *)rx_buffer);
     }
@@ -390,7 +429,6 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_cmdXfer0) {
         });                
     }
     jumpEventDestroy(cardReaderEvent);
-    KNI_SetRawArrayRegion(request_handle, 0, tx_length,(jbyte *)tx_buffer);
     KNI_SetRawArrayRegion(response_handle, 0, rx_length,(jbyte *)rx_buffer);    
     free(tx_buffer);
     free(rx_buffer);
