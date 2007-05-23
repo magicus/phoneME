@@ -47,6 +47,9 @@
 /** Minimum port number */
 #define MAX_PORT_NUMBER 65536L
 
+/** Maximum length of a command */
+#define MAX_COMMAND_LENGTH 128
+
 /**
  * The table of slots.
  */
@@ -75,10 +78,26 @@ static int slot_count = 0;
 static int current_slot;
 
 /** Configuration property name */
+#define PROP_NUMBER 2
 static char hostsandports[] = "com.sun.io.j2me.apdu.hostsandports";
+static char satselectapdu[] = "com.sun.io.j2me.apdu.satselectapdu";
+static char *properties[PROP_NUMBER] = { hostsandports,
+                                         satselectapdu };
 
 /** Configuration property name */
 static char *saved_hostsandports = NULL;
+static char *saved_satselectapdu = NULL;
+static char *saved_properties[PROP_NUMBER];
+
+/**
+ * APDU command for selecting SIM application
+ */
+static struct {
+    /** Command name. */
+    char *command;
+    /** Length of the command. */
+    int len;
+} satselectcmd;
 
 /**
  * Is the driver already initialized.
@@ -92,7 +111,7 @@ static pthread_mutex_t locked = PTHREAD_MUTEX_INITIALIZER;
 /**
  * Verbose level of the driver.
  */
-javacall_bool jsr177_verbose = JAVACALL_FALSE;
+javacall_bool jsr177_verbose = JAVACALL_TRUE;
 
 /* local functions */
 static int isoOut(int slot, char *command, javacall_int32 length, char *response, 
@@ -109,6 +128,7 @@ static int cmdPowerDown(int slot);
 static int cmdReset(int slot, char *atr, javacall_int32 atr_size);
 static char computeLRC(char *buf, int length);
 static char make_hex(int val);
+static javacall_bool select_file(char *data, int data_length);
 
 /** 
  * Initializes the driver. This is not thread-safe function.
@@ -169,6 +189,9 @@ javacall_result javacall_carddevice_init() {
     }
     current_slot = -1;
 
+    saved_properties[0] = saved_hostsandports;
+    saved_properties[1] = saved_satselectapdu;
+
     javacall_carddevice_clear_error();
     DriverInitialized = JAVACALL_TRUE;
     pthread_mutex_unlock(&locked);
@@ -197,6 +220,12 @@ javacall_result javacall_carddevice_finalize() {
         }
     }
 
+    for (i = 0; i < PROP_NUMBER; i++) {
+        free(saved_properties[i]);
+    } 
+
+    free(satselectcmd.command);
+
     DriverInitialized = JAVACALL_FALSE;
     return JAVACALL_OK;
 }
@@ -212,90 +241,139 @@ javacall_result javacall_carddevice_finalize() {
 javacall_result javacall_carddevice_set_property(const char *prop_name, 
                                                  const char *prop_value) {
     char *p, *s;
-    int slot;
+    int cnt;
+    int prop;
 
     if (prop_name == NULL) {
         return JAVACALL_OK;
     }
-    if (strcmp((const char*)prop_name, hostsandports)) {
+
+    for (prop = 0; prop < PROP_NUMBER; prop++) {        
+        if (!strcmp((const char*)prop_name, properties[prop])) {
+            break;
+        }
+    }
+
+    if (prop == PROP_NUMBER) {
         javacall_carddevice_set_error("javacall_carddevice_set_property: invalid property name: %s", 
             prop_name);
         return JAVACALL_NOT_IMPLEMENTED;
     }
+
     if (DriverInitialized) {
-        if (prop_value == NULL && saved_hostsandports == NULL) {
+        if (prop_value == NULL && saved_properties[prop] == NULL) {
             return JAVACALL_OK;
         }
-        if (prop_value != NULL && saved_hostsandports != NULL &&
-                    !strcmp((char*)prop_value, saved_hostsandports)) {
+        if (prop_value != NULL && saved_properties[prop] != NULL &&
+                    !strcmp((char*)prop_value, saved_properties[prop])) {
             return JAVACALL_OK;
         }
         javacall_carddevice_set_error("javacall_carddevice_set_property: driver already initialized");
         return JAVACALL_FAIL;
     }
     if (prop_value == NULL) {
-        if (saved_hostsandports != NULL) {
-            free(saved_hostsandports);
+        if (saved_properties[prop] != NULL) {
+            free(saved_properties[prop]);
         }
-        saved_hostsandports = NULL;
+        saved_properties[prop] = NULL;
         return JAVACALL_OK;
     }
-    /* prop_value = "jcemulhost:9025,jcemulhost:9026" */
-    for (p = (char*)prop_value, slot = 0; p != NULL && *p != '\0'; p = s) {
-        char host[MAX_HOST_LENGTH];
-        char *p_end;
-        int len;
-        long port; /* long - because we use strtol() */
-        
-        if (*p == ',') {
-            p++;
+
+    if (properties[prop] == hostsandports) {
+        /* prop_value = "jcemulhost:9025,jcemulhost:9026" */
+        for (p = (char*)prop_value, cnt = 0; p != NULL && *p != '\0'; p = s) {
+            char host[MAX_HOST_LENGTH];
+            char *p_end;
+            int len;
+            long port; /* long - because we use strtol() */
+            
+            if (*p == ',') {
+                p++;
+            }
+            if ((s = strchr(p, ',')) == NULL) {
+                s = p + strlen(p);
+            }
+            if (s == p) {
+                javacall_carddevice_set_error("javacall_carddevice_set_property: empty host name");
+                goto err;
+            }
+            if ((p_end = strchr(p, ':')) == NULL || p_end > s) {
+                goto invalid_port;
+            }
+            len = (int)(p_end - p); /* length of hostname */
+            if (len >= (int)sizeof host) {
+                javacall_carddevice_set_error("javacall_carddevice_set_property: very long host name");
+                goto err;
+            }
+            memcpy(host, p, len);
+            host[len] = '\0';
+            
+            p = p_end + 1;
+            if ((int)(s - p) < 1) {
+                goto invalid_port;
+            }
+            if ((port = strtol(p, &p_end, 10)) <= MIN_PORT_NUMBER ||
+                port > MAX_PORT_NUMBER || p_end != s) {
+            invalid_port:
+                javacall_carddevice_set_error("javacall_carddevice_set_property: invalid port number");
+            err:
+                return JAVACALL_FAIL;
+            }
+            slots[cnt].host_name = strdup(host);
+            if (slots[cnt].host_name == NULL) {
+                javacall_carddevice_set_error("javacall_carddevice_set_property: No memory");
+                return JAVACALL_OUT_OF_MEMORY;
+            }
+            slots[cnt].port = (int)port;
+            cnt++;
         }
-        if ((s = strchr(p, ',')) == NULL) {
-            s = p + strlen(p);
+        slot_count = cnt;
+    }
+    else {
+        char command[MAX_COMMAND_LENGTH];
+        for (p = (char*)prop_value, cnt = 0; ; cnt++, p++) {                    
+            command[cnt] = 0;
+            while (p != NULL && *p != '\0' && *p != '.') {
+                if ((*p >= '0') && (*p <= '9')) {
+                    command[cnt] = command[cnt]*16 + *p - '0';
+                } 
+                else            
+                    if ((*p >= 'A') && (*p <= 'F')) {
+                        command[cnt] = command[cnt]*16 + *p - 'A' + 10;
+                    }
+                    else
+                        if ((*p >= 'a') && (*p <= 'f')) {
+                            command[cnt] = command[cnt]*16 + *p - 'a' + 10;
+                        }
+                        else {
+                            javacall_carddevice_set_error("javacall_carddevice_set_property: value of satselectapdu is incorrect");
+                            return JAVACALL_FAIL;
+                        }
+                p++;
+            }
+
+            if (p == NULL || *p == '\0')
+                break;
         }
-        if (s == p) {
-            javacall_carddevice_set_error("javacall_carddevice_set_property: empty host name");
-            goto err;
-        }
-        if ((p_end = strchr(p, ':')) == NULL || p_end > s) {
-            goto invalid_port;
-        }
-        len = (int)(p_end - p); /* length of hostname */
-        if (len >= (int)sizeof host) {
-            javacall_carddevice_set_error("javacall_carddevice_set_property: very long host name");
-            goto err;
-        }
-        memcpy(host, p, len);
-        host[len] = '\0';
-        
-        p = p_end + 1;
-        if ((int)(s - p) < 1) {
-            goto invalid_port;
-        }
-        if ((port = strtol(p, &p_end, 10)) <= MIN_PORT_NUMBER ||
-            port > MAX_PORT_NUMBER || p_end != s) {
-        invalid_port:
-            javacall_carddevice_set_error("javacall_carddevice_set_property: invalid port number");
-        err:
-            return JAVACALL_FAIL;
-        }
-        slots[slot].host_name = strdup(host);
-        if (slots[slot].host_name == NULL) {
+
+        satselectcmd.command = malloc(++cnt);
+        if (satselectcmd.command == NULL) {
             javacall_carddevice_set_error("javacall_carddevice_set_property: No memory");
             return JAVACALL_OUT_OF_MEMORY;
         }
-        slots[slot].port = (int)port;
-        slot++;
+        memcpy(satselectcmd.command, command, cnt);
+        satselectcmd.len = cnt;
     }
-    if (saved_hostsandports != NULL) {
-        free(saved_hostsandports);
+
+    if (saved_properties[prop] != NULL) {
+        free(saved_properties[prop]);
     }
-    saved_hostsandports = strdup((char*)prop_value);
-    if (saved_hostsandports == NULL) {
+    saved_properties[prop] = strdup((char*)prop_value);
+    if (saved_properties[prop] == NULL) {
         javacall_carddevice_set_error("javacall_carddevice_set_property: No memory for property");
         return JAVACALL_OUT_OF_MEMORY;
     }
-    slot_count = slot;
+
     return JAVACALL_OK;
 }
 
@@ -349,9 +427,9 @@ javacall_result javacall_carddevice_is_sat(javacall_int32 slot, javacall_bool *r
         javacall_carddevice_set_error("Driver is not initialized");
         return JAVACALL_FAIL;
     }
+
     if (slot == 0) {
-        /* IMPL_NOTE: to disable SAT support PCSL_FALSE must be returned */
-        *result = JAVACALL_TRUE;
+        *result = select_file(satselectcmd.command, satselectcmd.len);
     } else {
         *result = JAVACALL_FALSE;
     }
@@ -1052,3 +1130,29 @@ static int isoOut(int slot, char *command, javacall_int32 length, char *response
     return received - 4;
 }
 
+/**
+ * Sends 'select' command 
+ * @data        'select' command with file identifier
+ * @data_length length 'select' command with file identifier
+ * @return JAVACALL_TRUE file with identifier <code>id</code> was successfully selected
+ *         JAVACALL_FALSE otherwise
+ */
+javacall_bool select_file(char *data, int data_length) {
+    javacall_int32 rx_length;
+    void *context;
+    unsigned char rx_buffer[2];
+
+	if (data == NULL  ||  data_length == 0) {
+    	return JAVACALL_FALSE;
+	} 
+
+	rx_length = sizeof rx_buffer;
+	if ((javacall_carddevice_xfer_data_start(data, data_length, (char *)rx_buffer, &rx_length, &context))!=JAVACALL_OK) {
+		return JAVACALL_FALSE;
+	}
+	
+    if (rx_buffer[0] == 0x90  &&  rx_buffer[1] == 0x00)
+        return JAVACALL_TRUE;
+    else
+        return JAVACALL_FALSE;
+}
