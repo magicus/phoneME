@@ -61,4 +61,10 @@ public final class JSRInitializer {
         com.sun.midp.jsr229.Initializer.init();
 // #endif
     }
+
+    /**
+     * Finalizes JSRs.
+     */
+    public static void cleanup() {
+    }
 }
