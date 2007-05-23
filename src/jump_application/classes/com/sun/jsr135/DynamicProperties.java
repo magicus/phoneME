@@ -77,15 +77,6 @@ public class DynamicProperties implements PropertyProvider {
     }
 
     /**
-     * Tells underlying implementation to cache values of all the properties
-     * corresponding to this particular class. This call can be ignored if
-     * property caching is not supported.
-     *
-     * @return <code>true</code> on success, <code>false</code> otherwise
-     */
-    public native boolean cacheProperties();
-
-    /**
      * Returns TRUE if audio mixing is supported.
      *
      * @param fromCache indicates whether property value should be taken from
@@ -94,4 +85,14 @@ public class DynamicProperties implements PropertyProvider {
      * @return TRUE if audio mixing is supported.
      */
     private static native String nSupportsMixing(boolean fromCache);
+
+    /**
+     * Tells underlying implementation to cache values of all the properties
+     * corresponding to this particular class. This call can be ignored if
+     * property caching is not supported.
+     *
+     * @return <code>true</code> on success, <code>false</code> otherwise
+     */
+    public native boolean cacheProperties();
+
 }

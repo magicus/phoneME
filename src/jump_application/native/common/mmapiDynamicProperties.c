@@ -48,3 +48,13 @@ Java_com_sun_jsr135_DynamicProperties_nSupportsMixing(JNIEnv *env, jobject this)
     }
     return rv;
 }
+
+/**
+ * Tells underlying implementation to cache values of all the properties
+ * corresponding to this particular class. This call can be ignored if
+ * property caching is not supported.
+ */
+JNIEXPORT jboolean JNICALL
+Java_com_sun_jsr135_DynamicProperties_cacheProperties(JNIEnv *env, jobject this) {
+    return JAVACALL_TRUE;
+}

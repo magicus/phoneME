@@ -30,6 +30,8 @@ import com.sun.jump.common.*;
 import com.sun.jump.isolate.jvmprocess.*;
 import com.sun.jumpimpl.module.multimedia.*;
 
+import com.sun.j2me.app.AppIsolate;
+
 /**
  * Event listener for events delivered from native layer
  */
@@ -52,7 +54,7 @@ class MMEventListener implements JUMPMessageHandler {
     /**
      * Message handler registration token.
      */
-    private static Object msgToken;
+    private Object msgToken = null;
 
     public MMEventListener() {
         if (thisProcess == null) {
@@ -79,11 +81,13 @@ class MMEventListener implements JUMPMessageHandler {
      */
     protected void finalize() {
         // Unregister message handler.
-        try {
-            msgDisp.cancelRegistration(msgToken);
-        } catch (IOException e) {
-            System.err.println("Could not unregister file system message handler: "
-                + e.getMessage());
+        if (msgToken != null) {
+            try {
+                msgDisp.cancelRegistration(msgToken);
+            } catch (IOException e) {
+                System.err.println("Could not unregister file system message handler: "
+                    + e.getMessage());
+            }
         }
     }
     /**
