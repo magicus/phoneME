@@ -1938,9 +1938,8 @@ public abstract class Installer {
      */
     protected void checkForJadManifestMismatches()
             throws InvalidJadException {
-        int i;
 
-        for (i = 0; i < state.jarProps.size(); i++) {
+        for (int i = 0; i < state.jarProps.size(); i++) {
             String key = state.jarProps.getKeyAt(i);
             String value = state.jarProps.getValueAt(i);
             String dup = state.jadProps.getProperty(key);
