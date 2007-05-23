@@ -453,6 +453,7 @@ public class APDUManager {
             cardSlot.atr = atr;
             // after reset we must reload access control file
             com.sun.satsa.acl.AccessControlManager.init(cardSlot.slot);
+            cardSlot.SIMPresent = isSatSlot(cardSlot.slot);
         }
     }
     
@@ -543,7 +544,7 @@ public class APDUManager {
      * @exception IOException in case of I/O problems.
      */
     private static native int init0() throws IOException;
-    
+
     /**
      * Checks if this slot is SAT slot. This method is invoked once after 
      * a reset of the card.

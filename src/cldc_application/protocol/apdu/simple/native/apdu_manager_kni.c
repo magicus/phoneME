@@ -41,6 +41,7 @@ static char cardDeviceException[] =
 
 /** Configuration property name */
 static char hostsandports[] = "com.sun.io.j2me.apdu.hostsandports";
+static char satselectapdu[] = "com.sun.io.j2me.apdu.satselectapdu";
 
 #define BUFFER_SIZE 128
 
@@ -55,7 +56,7 @@ static char hostsandports[] = "com.sun.io.j2me.apdu.hostsandports";
  * @exception IOException in case of I/O problems.
  */
 KNIEXPORT KNI_RETURNTYPE_INT 
-KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_init0) {
+KNIDECL (com_sun_io_j2me_apdu_APDUManager_init0) {
     javacall_int32 retcode;
     javacall_result status;
     char *err_msg;
@@ -126,13 +127,25 @@ end:
  * @exception IOException in case of error
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN 
-KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_isSAT) {
+KNIDECL(com_sun_io_j2me_apdu_APDUManager_isSAT) {
     javacall_bool result;
     char *err_msg;
     char *buffer;
     int slotIndex = KNI_GetParameterAsInt(1);
     
+    status_code = javacall_carddevice_lock();
+    if (status_code != JAVACALL_OK) {
+        if (status_code == JAVACALL_WOULD_BLOCK) {
+            midp_thread_wait(CARD_READER_DATA_SIGNAL, SIGNAL_LOCK, NULL);
+            goto end;
+        }
+        else {
+            goto err;
+        }  
+    }
+    
     if (javacall_carddevice_is_sat(slotIndex, &result) != JAVACALL_OK) {
+err:
         buffer = malloc(BUFFER_SIZE);
         if (buffer == NULL) {
             err_msg = "isSAT()";            
@@ -146,7 +159,15 @@ KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_isSAT) {
             free(buffer);            
         }        
         KNI_ThrowNew(jsropIOException, err_msg);
+        goto end;
     }
+
+    status_code = javacall_carddevice_unlock();
+    if (status_code != JAVACALL_OK) {
+        goto err;
+    }
+
+end:
     KNI_ReturnInt(result);
 }
 
@@ -172,7 +193,7 @@ KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_isSAT) {
  * @exception IOException if any i/o troubles occured
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT 
-KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_reset0) {
+KNIDECL(com_sun_io_j2me_apdu_APDUManager_reset0) {
     MidpReentryData* info;
     void *context = NULL;
     javacall_result status_code;
@@ -182,7 +203,6 @@ KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_reset0) {
 
     jfieldID slot_lockedID;
     jboolean slot_locked = KNI_FALSE;
-    javacall_bool slot_SIMPresent;
     jfieldID slot_cardSessionIdID;
     jint slot_cardSessionId;    
     jint slot_slot;    
@@ -264,15 +284,6 @@ KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_reset0) {
         goto end;
     }
 
-    status_code = javacall_carddevice_is_sat(slot_slot, &slot_SIMPresent);
-    if (status_code != JAVACALL_OK) {
-        goto err;
-    }
-    else {
-        KNI_SetBooleanField(slot_handle, KNI_GetFieldID(slot, "SIMPresent", "Z"),
-                            (jboolean)slot_SIMPresent);
-    }
-    
     KNI_SetBooleanField(slot_handle, KNI_GetFieldID(slot, "powered", "Z"),
                             KNI_TRUE);
     slot_cardSessionIdID = KNI_GetFieldID(slot, "cardSessionId", "I");
@@ -316,7 +327,7 @@ end:
  * @exception IOException if any I/O troubles occured
  */
 KNIEXPORT KNI_RETURNTYPE_INT 
-KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_exchangeAPDU0) {
+KNIDECL (com_sun_io_j2me_apdu_APDUManager_exchangeAPDU0) {
     jint retcode = -1;
     MidpReentryData* info;
     void *context = NULL;
@@ -337,7 +348,6 @@ KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_exchangeAPDU0) {
     jfieldID cardSlot_lockedID;    
     jfieldID cardSlot_receivedID;    
     jint cardSlot_received;
-    jboolean cardSlot_SIMPresent;
 
     jboolean connection = KNI_FALSE;
     
@@ -394,8 +404,6 @@ KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_exchangeAPDU0) {
     cardSlot_received = KNI_GetIntField(slot_handle, cardSlot_receivedID);
     cardSlot_poweredID = KNI_GetFieldID(cardSlot, "powered", "Z");
     cardSlot_powered = KNI_GetBooleanField(slot_handle, cardSlot_poweredID);
-    cardSlot_SIMPresent=KNI_GetBooleanField(slot_handle,
-                KNI_GetFieldID(cardSlot, "SIMPresent", "Z"));
     
     KNI_GetParameterAsObject(3, request_handle);
     if (KNI_IsNullHandle(request_handle)) {
