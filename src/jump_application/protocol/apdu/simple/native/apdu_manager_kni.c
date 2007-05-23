@@ -434,7 +434,6 @@ KNIDECL (com_sun_io_j2me_apdu_APDUManager_exchangeAPDU0) {
     KNI_GetParameterAsObject(4, response_handle);
     if (KNI_IsNullHandle(response_handle)) {
         KNI_ThrowNew(jsropNullPointerException, "Response buffer is null");
-        KNI_SetRawArrayRegion(request_handle, 0, tx_length_max,(jbyte *)tx_buffer);
         free(tx_buffer);
         goto end;
     }
@@ -645,7 +644,6 @@ destroy_end:
     jumpEventDestroy(cardReaderEvent);
 
 free_end:
-    KNI_SetRawArrayRegion(request_handle, 0, tx_length,(jbyte *)tx_buffer);
     KNI_SetRawArrayRegion(response_handle, 0, rx_length,(jbyte *)rx_buffer);    
     free(tx_buffer);
     free(rx_buffer);    
