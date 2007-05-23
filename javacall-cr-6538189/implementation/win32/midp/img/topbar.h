@@ -26,6 +26,8 @@
 int topBarWidth = 240;
 int topBarHeight = 12;
 
+javacall_lcd_color_encoding_type topbar_color_format = JAVACALL_LCD_COLOR_RGB888;
+
 static const DWORD topbar_data[] = 
 { 0x0, 0x0, 0x50900, 0x9000509
 , 0x5090005, 0x50900, 0x9000509, 0x5090005

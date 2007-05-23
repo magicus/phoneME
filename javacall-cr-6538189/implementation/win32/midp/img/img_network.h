@@ -26,7 +26,7 @@
 int network_x = 200;
 int network_width = 12;
 int network_height = 12;
-int network_bytespp = 4; //3-RGB, 4 - RGBA 
+javacall_lcd_color_encoding_type network_color_format = JAVACALL_LCD_COLOR_RGBA;
 static const BYTE network_data[]=
 {"\0\0\0\0\330\346\377\6\330\346\377\34\330\346\377$\330\346\377$\330\346\377"
  "$\330\346\377$\325\344\377$\312\334\377$\274\320\377\34\263\311\377\6\0\0"
