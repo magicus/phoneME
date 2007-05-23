@@ -26,15 +26,6 @@
 #ifndef _LCD_H_
 #define _LCD_H_
 
-#ifndef RGB
-#define RGB(r, g, b)   ( b +(g << 5)+ (r << 11) )
-#endif
-
-/** Separate colors are 8 bits as in Java RGB */
-#define GET_RED_FROM_PIXEL(P)   (((P) >> 8) & 0xF8)
-#define GET_GREEN_FROM_PIXEL(P) (((P) >> 3) & 0xFC)
-#define GET_BLUE_FROM_PIXEL(P)  (((P) << 3) & 0xF8)
-
 #define WM_DEBUGGER      (WM_USER)
 #define WM_HOST_RESOLVED (WM_USER + 1)
 #define WM_NETWORK       (WM_USER + 2)
