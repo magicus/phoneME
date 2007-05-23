@@ -42,48 +42,12 @@
 #include "img/img_network.h"
 #include "img/img_home.h"
 #include "img/img_trusted.h"
-/*
-#include "img/img_caps.h"
-#include "img/img_lowercase.h"
-#include "img/img_numeric.h"
-#include "img/img_symbols.h"
-#include "img/img_T9.h"
-*/
 
 static javacall_bool trustedOn = JAVACALL_FALSE;
 static javacall_bool networkOn = JAVACALL_FALSE;
 static javacall_bool homeOn = JAVACALL_FALSE;
 
 extern javacall_pixel* getTopbarBuffer(int* screenWidth, int* screenHeight);
-
-/*
-javacall_bool first_time = JAVACALL_TRUE;
-static int screenWidth = 0;
-static int screenHeight = 0;
-static javacall_lcd_color_encoding_type colorEncoding;
-
-
-void util_lcd_init(void) {
-
-    if (first_time) {
-        javacall_lcd_get_screen(JAVACALL_LCD_SCREEN_PRIMARY,
-                                &screenWidth, &screenHeight, NULL);
-    }
-    javacall_lcd_flush();
-    first_time = JAVACALL_FALSE;
-
-}
-
-void util_clear_screen(unsigned short *scrn, int screenSize) {
-
-    int index;
-
-    for (index = 0; index < screenSize; index++) {
-        scrn[index] = RGB2PIXELTYPE(255, 255, 255);
-    }
-}
-*/
-
 
 /**
  * Premultiply color components by it's corresponding alpha component.
@@ -275,7 +239,6 @@ javacall_result javacall_annunciator_display_trusted_icon(javacall_bool enableTr
     trustedOn = enableTrustedIcon;
 
     drawTopbarImage();
-    javacall_lcd_flush();
 
     return JAVACALL_OK;
 
@@ -295,7 +258,6 @@ javacall_result javacall_annunciator_display_network_icon(javacall_bool enableNe
     networkOn = enableNetworkIndicator;
 
     drawTopbarImage();
-    javacall_lcd_flush();
 
     return JAVACALL_OK;
 }
@@ -313,117 +275,10 @@ javacall_result javacall_annunciator_display_home_icon(javacall_bool enableHomeI
     homeOn = enableHomeIndicator;
 
     drawTopbarImage();
-    javacall_lcd_flush();
 
     return JAVACALL_OK;
 }
  
-
-/**
- * Set the input mode.
- * Notify the platform to show the current input mode
- * @param mode equals the new mode just set values are one of the following:
- *             JAVACALL_INPUT_MODE_LATIN_CAPS
- *             JAVACALL_INPUT_MODE_LATIN_LOWERCASE
- *             JAVACALL_INPUT_MODE_NUMERIC
- *             JAVACALL_INPUT_MODE_SYMBOL
- *             JAVACALL_INPUT_MODE_T9
- * @return <tt>JAVACALL_OK</tt> operation was supported by the device
- *         <tt>JAVACALL_FAIL</tt> or negative value on failure, or if not
- *         supported on device
- */
-javacall_result javacall_annunciator_display_input_mode_icon(javacall_input_mode_type mode) {
-    
-#if 0
-    static char input_mode_types[][20] = {
-      "LATIN_CAPS",
-      "LATIN_LOWERCASE",
-      "NUMERIC",
-      "SYMBOL",
-      "T9",
-      "OFF"
-    };
-    char *type;
-
-    switch (mode) {
-    case JAVACALL_INPUT_MODE_LATIN_CAPS:
-        type = input_mode_types[0];
-        break;
-    case JAVACALL_INPUT_MODE_LATIN_LOWERCASE:
-        type = input_mode_types[1];
-        break;
-    case JAVACALL_INPUT_MODE_NUMERIC:
-        type = input_mode_types[2];
-        break;
-    case JAVACALL_INPUT_MODE_SYMBOL:
-        type = input_mode_types[3];
-        break;
-    case JAVACALL_INPUT_MODE_T9:
-        type = input_mode_types[4];
-        break;
-    case JAVACALL_INPUT_MODE_OFF:
-        type = input_mode_types[5];
-        break;
-    default:
-        javacall_print ("Invalid input mode ");
-        javacall_print (itoa(mode, print_buffer, 10));
-	javacall_print (".\n");
-        return JAVACALL_INVALID_ARGUMENT;
-        break;
-    };
-
-    javacall_print ("Setting input mode to ");
-    javacall_print (type);
-    javacall_print (".\n");
-
-    return JAVACALL_OK;
-#endif
-
-#if 0
-    javacall_pixel *scrn;
-    javacall_bool indicator_on;
-
-    sprintf(print_buffer, "Setting input mode to %d\n", mode);
-    javacall_print(print_buffer);
-
-    indicator_on = JAVACALL_FALSE;
-    util_lcd_init();
-    scrn = javacall_lcd_get_screen(JAVACALL_LCD_SCREEN_PRIMARY,
-                                   &screenWidth, &screenHeight, &colorEncoding);
-
-    switch (mode) {
-    case JAVACALL_INPUT_MODE_LATIN_CAPS:
-        util_clear_screen(scrn, (screenWidth * screenHeight));
-        util_draw_bitmap(caps_data, caps_width, caps_height, 0, 0);
-        javacall_lcd_flush();
-        break;
-    case JAVACALL_INPUT_MODE_LATIN_LOWERCASE:
-        util_clear_screen(scrn, (screenWidth * screenHeight));
-        util_draw_bitmap(lowCase_data, lowCase_width, lowCase_height, 0, 0);
-        javacall_lcd_flush();
-        break;
-    case JAVACALL_INPUT_MODE_NUMERIC:
-        util_clear_screen(scrn, (screenWidth * screenHeight));
-        util_draw_bitmap(numeric_data, numeric_width, numeric_height, 0, 0);
-        javacall_lcd_flush();
-        break;
-    case JAVACALL_INPUT_MODE_SYMBOL:
-        util_clear_screen(scrn, (screenWidth * screenHeight));
-        util_draw_bitmap(symbol_data, symbol_width, symbol_height, 0, 0);
-        javacall_lcd_flush();
-        break;
-    case JAVACALL_INPUT_MODE_T9:
-        util_clear_screen(scrn, (screenWidth * screenHeight));
-        util_draw_bitmap(t9_data, t9_width, t9_height, 0, 0);
-        javacall_lcd_flush();
-        break;
-    default:
-        break;
-    }
-
-#endif
-    return JAVACALL_FAIL;
-}
 
 /**
  * Play a sound of the given type.
@@ -468,22 +323,3 @@ javacall_result javacall_annunciator_play_audible_tone(javacall_audible_tone_typ
     return JAVACALL_OK;
 }
 
-
-/**
- * Controls the secure connection indicator.
- *
- * The secure connection indicator will be displayed when SSL
- * or HTTPS connection is active.
- *
- * @param enableIndicator boolean value indicating if the secure
- * icon should be enabled
- * @return <tt>JAVACALL_OK</tt> operation was supported by the device
- * <tt>JAVACALL_FAIL</tt> or negative value on failure, or if not
- * supported on device
- */
-/*
-javacall_result javacall_annunciator_display_secure_network_icon(
-        javacall_bool enableIndicator) {
-    return JAVACALL_FAIL;
-}
-*/

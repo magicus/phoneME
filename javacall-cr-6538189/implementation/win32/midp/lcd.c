@@ -49,6 +49,7 @@
 
 
 
+
 #define UNTRANSLATED_SCREEN_BITMAP (void*)0xffffffff
 
 #define CHECK_RETURN(expr) (expr) ? (void)0 : (void)printf( "%s returned error (%s:%d)\n", #expr, __FILE__, __LINE__)
