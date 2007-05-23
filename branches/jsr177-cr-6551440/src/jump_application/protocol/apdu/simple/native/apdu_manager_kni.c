@@ -41,6 +41,7 @@ static char cardDeviceException[] =
 
 /** Configuration property name */
 static char hostsandports[] = "com.sun.io.j2me.apdu.hostsandports";
+static char satselectapdu[] = "com.sun.io.j2me.apdu.satselectapdu";
 
 #define BUFFER_SIZE 128
 #define PROP_BUF_SIZE 128
@@ -56,7 +57,7 @@ static char hostsandports[] = "com.sun.io.j2me.apdu.hostsandports";
  * @exception IOException in case of I/O problems.
  */
 KNIEXPORT KNI_RETURNTYPE_INT 
-KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_init0) {
+KNIDECL (com_sun_io_j2me_apdu_APDUManager_init0) {
     javacall_int32 retcode;
     javacall_result status;
     char *err_msg;
@@ -129,10 +130,12 @@ JUMPEvent cardReaderEvent;
  * @exception IOException in case of error
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN 
-KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_isSAT) {
+KNIDECL(com_sun_io_j2me_apdu_APDUManager_isSAT) {
     javacall_bool result;
     char *err_msg;
     char *buffer;
+    javacall_result status_code;
+    jboolean slot_locked = KNI_FALSE;
 
     // Global lock - if in native!!!    
     int slotIndex = KNI_GetParameterAsInt(1);
@@ -197,7 +200,7 @@ KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_isSAT) {
  * @exception IOException if any i/o troubles occured
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT 
-KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_reset0) {
+KNIDECL(com_sun_io_j2me_apdu_APDUManager_reset0) {
     void *context = NULL;
     javacall_result status_code;
     javacall_int32 atr_length;
@@ -205,7 +208,6 @@ KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_reset0) {
     char *buffer;
 
     jboolean slot_locked = KNI_FALSE;
-    javacall_bool slot_SIMPresent;
     jfieldID slot_cardSessionIdID;
     jint slot_cardSessionId;    
     jint slot_slot;    
@@ -288,15 +290,6 @@ KNIDECL(com_sun_midp_io_j2me_apdu_APDUManager_reset0) {
         jumpEventDestroy(cardReaderEvent);
         goto end;
     }
-
-    status_code = javacall_carddevice_is_sat(slot_slot, &slot_SIMPresent);
-    if (status_code != JAVACALL_OK) {
-        goto err;
-    }
-    else {
-        KNI_SetBooleanField(slot_handle, KNI_GetFieldID(slot, "SIMPresent", "Z"),
-                            (jboolean)slot_SIMPresent);
-    }
     
     KNI_SetBooleanField(slot_handle, KNI_GetFieldID(slot, "powered", "Z"),
                             KNI_TRUE);
@@ -342,7 +335,7 @@ end:
  * @exception IOException if any I/O troubles occured
  */
 KNIEXPORT KNI_RETURNTYPE_INT 
-KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_exchangeAPDU0) {
+KNIDECL (com_sun_io_j2me_apdu_APDUManager_exchangeAPDU0) {
     jint retcode = -1;
     void *context = NULL;
     javacall_result status_code;
@@ -358,7 +351,6 @@ KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_exchangeAPDU0) {
     jfieldID cardSlot_poweredID;
     jboolean cardSlot_powered;
     jboolean cardSlot_locked = KNI_FALSE;
-    jboolean cardSlot_SIMPresent;
 
     jboolean connection = KNI_FALSE;
     
@@ -411,8 +403,6 @@ KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_exchangeAPDU0) {
 
     cardSlot_poweredID = KNI_GetFieldID(cardSlot, "powered", "Z");
     cardSlot_powered = KNI_GetBooleanField(slot_handle, cardSlot_poweredID);
-    cardSlot_SIMPresent=KNI_GetBooleanField(slot_handle,
-                KNI_GetFieldID(cardSlot, "SIMPresent", "Z"));
     
     KNI_GetParameterAsObject(3, request_handle);
     if (KNI_IsNullHandle(request_handle)) {
@@ -439,7 +429,7 @@ KNIDECL (com_sun_midp_io_j2me_apdu_APDUManager_exchangeAPDU0) {
         goto end;
     }
     memset(tx_buffer, 0, tx_length_max);
-    KNI_GetRawArrayRegion(request_handle, 0, tx_length_max, (jbyte *)tx_buffer);
+    KNI_GetRawArrayRegion(request_handle, 0, tx_length, (jbyte *)tx_buffer);
     
     KNI_GetParameterAsObject(4, response_handle);
     if (KNI_IsNullHandle(response_handle)) {
@@ -655,8 +645,8 @@ destroy_end:
     jumpEventDestroy(cardReaderEvent);
 
 free_end:
-    KNI_SetRawArrayRegion(request_handle, 0, tx_length_max,(jbyte *)tx_buffer);
-    KNI_SetRawArrayRegion(response_handle, 0, rx_length_max,(jbyte *)rx_buffer);    
+    KNI_SetRawArrayRegion(request_handle, 0, tx_length,(jbyte *)tx_buffer);
+    KNI_SetRawArrayRegion(response_handle, 0, rx_length,(jbyte *)rx_buffer);    
     free(tx_buffer);
     free(rx_buffer);    
     

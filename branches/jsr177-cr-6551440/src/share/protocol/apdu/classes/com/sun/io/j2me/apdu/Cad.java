@@ -353,15 +353,6 @@ class Cad {
                     "Card application selection failed");
         }
         FCI = result;
-
-        if (forSAT) {
-            if (cardSlot.isSAT()) {
-                SIMPresent = true;
-            }
-            else {
-                SIMPresent = false;
-            }
-        }
         return channel;
     }
 
