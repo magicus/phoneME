@@ -387,7 +387,6 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_cmdXfer0) {
         rx_buffer = NULL;
         rx_length = 0;
         retcode = -1;
-        KNI_SetRawArrayRegion(request_handle, 0, tx_length,(jbyte *)tx_buffer);
         free(tx_buffer);
         goto end;
     } else {
@@ -430,7 +429,6 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_cmdXfer0) {
         });                
     }
     jumpEventDestroy(cardReaderEvent);
-    KNI_SetRawArrayRegion(request_handle, 0, tx_length,(jbyte *)tx_buffer);
     KNI_SetRawArrayRegion(response_handle, 0, rx_length,(jbyte *)rx_buffer);    
     free(tx_buffer);
     free(rx_buffer);
