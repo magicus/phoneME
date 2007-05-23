@@ -1,7 +1,5 @@
 /*
- * @(#)jit_arch.c	1.22 04/08/23
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -24,36 +22,13 @@
  * information or have any questions. 
  *
  */
-extern "C" {
-#include "javavm/include/defs.h"
-#include "javavm/include/porting/jit/jit.h"
-#if 0
-#include "javavm/include/objects.h"
 
-#include "javavm/include/assert.h"
-#include "javavm/include/globals.h"
-#include "javavm/include/porting/memory.h"
-#include "javavm/include/porting/jit/jit.h"
+#ifndef _INCLUDED_FLUSHCACHE_CPU_H
+#define _INCLUDED_FLUSHCACHE_CPU_H
+
+#ifndef _ASM
+extern void
+CVMflushCache(const void *begin, const void *end);
 #endif
-}
 
-#include <e32def.h>
-#include <e32std.h>
-
-
-static RChunk rc;
-void *
-CVMJITallocCodeCache(CVMSize *size)
-{
-    if (rc.CreateLocalCode((TInt)(*size), (TInt)(*size), EOwnerProcess) != KErrNone) {
-        return NULL; /* allocation failed */
-    } else {
-        return rc.Base();
-    }
-}
-
-void
-CVMJITfreeCodeCache(void *start)
-{
-    rc.Close();
-}
+#endif /* _INCLUDED_FLUSHCACHE_CPU_H */

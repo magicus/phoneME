@@ -38,8 +38,7 @@
 /*
  * Flush an address range in the dcache and all of the icache.
  */
-	ENTRY(CVMJITflushCache)
-ENTRY1(CVMJITflushCacheDoit)
+	ENTRY(CVMflushCache)
 	/* First argument:	 beginning address in range */
 	/* Second argument:	 end address in range */
 
@@ -47,6 +46,7 @@ ENTRY1(CVMJITflushCacheDoit)
 	 * properly flushed if the address is in a write buffer. We only
 	 * worry about this for single word cache flushes.
 	 */
+	bic a1, a1, #3
 	ldr a4, [a1]
 
 	/* Work around another linux 2.2 bug on strongARM. It does not
@@ -57,4 +57,4 @@ ENTRY1(CVMJITflushCacheDoit)
 	mov a3, #0		/* flush both caches */
 	swi 0x009f0002		/* arm_syscall(2) */
 	mov pc, lr
-SET_SIZE(CVMJITflushCacheDoit)
+SET_SIZE(CVMflushCache)

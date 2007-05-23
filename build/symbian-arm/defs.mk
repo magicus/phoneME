@@ -87,6 +87,9 @@ ifeq ($(CVM_JIT), true)
 CVM_TARGETOBJS_SPACE += \
 	jit_arch.o \
 
+CVM_TARGETOBJS_OTHER += \
+	flushcache_arch.o
+
 CVM_SRCDIRS   += \
 	$(CVM_TOP)/src/$(TARGET_OS)-$(TARGET_CPU_FAMILY)/javavm/runtime/jit
 
