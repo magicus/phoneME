@@ -319,7 +319,11 @@ public class CardSlot {
      * @throws IOException If an error occured.
      */
     public boolean isSAT() throws IOException {
-        return device.isSatSlot(slotNumber);
+        lockSlot();
+        boolean isSatSlot = device.isSatSlot(slotNumber);
+        unlockSlot();
+
+        return isSatSlot;
     }
 
     /**
