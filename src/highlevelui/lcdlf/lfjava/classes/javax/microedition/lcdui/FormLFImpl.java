@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
@@ -223,7 +223,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * Notifies look&feel object of an item inserted in the corresponding
      * Form.
      * 
-     * @param itemNum - the index of the deleted item
+     * @param itemNum - the index of the inserted item
      * @param item - the item inserted in the corresponding Form
      *
      */
@@ -250,6 +250,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
 
         if (traverseIndex >= itemNum) {
             traverseIndex++;
+        } else if (traverseIndex == -1) {
+            traverseIndex = itemNum;
         }
 
         lRequestInvalidate();
@@ -498,10 +500,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * This implementation does nothing.
      *
      * @param modelVersion the version of the peer's data model
+     * @param subtype the sub type of peer event
      * @param itemPeerId the id of the ItemLF's peer whose state has changed
      * @param hint some value that is interpreted only between the peers
      */
-    public void uCallPeerStateChanged(int modelVersion,
+    public void uCallPeerStateChanged(int modelVersion, int subType,
                                       int itemPeerId, int hint) {
         // No peer. Not expected to be called
     }
@@ -1793,6 +1796,11 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                     firstVis = i;
                 }
             }
+
+            if (firstVis == items.length) {
+                viewable[Y] = newY;
+                return;
+            }
             
             // case 1. We're at the top of the item so just
             // traverse normally
@@ -1985,23 +1993,6 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 dispatchItemLFs[i] = null;
             }
         }
-    }
-
-    /**
-     * Calculate the height a displayable would occupy if it was to
-     * be displayed.
-     *
-     * @return the height a displayable would occupy 
-     */
-    public int getDisplayableHeight() {
-        int h = super.getDisplayableHeight();
-        if (traverseIndex != -1 && itemLFs != null &&
-            itemLFs[traverseIndex] instanceof TextFieldLFImpl) {
-            if (((TextFieldLFImpl)itemLFs[traverseIndex]).hasPTI()) {
-                h -= PTISkin.HEIGHT;
-            }
-        }
-        return h;
     }
 
 

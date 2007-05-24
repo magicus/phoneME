@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -38,6 +38,13 @@
 #if MEASURE_STARTUP
 #include <stdio.h>
 #include <pcsl_print.h>
+#endif
+#if ENABLE_LINKS
+#include <midp_links.h>
+#endif
+
+#if ENABLE_ICON_CACHE
+#include <suitestore_icon_cache.h>
 #endif
 
 /**
@@ -247,6 +254,9 @@ void midpFinalize() {
         }
     }
 
+#if ENABLE_ICON_CACHE
+    midp_free_suites_icons();
+#endif    
     midp_suite_storage_cleanup();
 
     /** Now it makes no sense to process suspend/resume requests. */
@@ -265,6 +275,10 @@ void midpFinalize() {
 
         storageFinalize();
     }
+
+#if ENABLE_LINKS
+    midp_links_shutdown();
+#endif    
 
     midpHome = NULL;
     midpFinalizeMemory();

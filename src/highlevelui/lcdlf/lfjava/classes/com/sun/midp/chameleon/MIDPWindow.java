@@ -1,27 +1,27 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.chameleon;
@@ -78,9 +78,9 @@ public class MIDPWindow extends CWindow {
     private AlertLayer alertLayer;
     private TitleLayer titleLayer;
     private TickerLayer tickerLayer;
-    private BodyLayer bodyLayer;
     private SoftButtonLayer buttonLayer;
     private PTILayer ptiLayer;
+    private BodyLayer bodyLayer;
 
     // layout modes
     /**
@@ -121,6 +121,12 @@ public class MIDPWindow extends CWindow {
 
     /** Determines whether area of the window has been changed */
     boolean sizeChangedOccured = false;
+
+    /** Indicates if body layer was checked for optimized Canvas painting */
+    boolean bodyChecked = false;
+
+    /** Indicates wheher body layer is overlapped with a visible layer */
+    boolean bodyOverlapped = false;
 
     /**
      * Construct a new MIDPWindow given the tunnel to the desired
@@ -204,6 +210,9 @@ public class MIDPWindow extends CWindow {
             tickerLayer.toggleAlert(true);
             buttonLayer.toggleAlert(true);
             
+            // alert does not use title layer. The title is a part of content 
+            titleLayer.setTitle(null);
+
             alertLayer.setAlert(true, (Alert)displayable, height);
             
             paintWash(false);
@@ -212,6 +221,7 @@ public class MIDPWindow extends CWindow {
             titleLayer.setTitle(displayable.getTitle());
 	    bodyLayer.setVisible(true);
         }
+        addLayer(tickerLayer);
 
         resize();
         requestRepaint();
@@ -238,6 +248,8 @@ public class MIDPWindow extends CWindow {
         } else {
             bodyLayer.setVisible(false);
         }
+        
+        removeLayer(tickerLayer);
         
         buttonLayer.dismissMenu();
 
@@ -453,9 +465,10 @@ public class MIDPWindow extends CWindow {
             } else {
                 removeLayer(alertWashLayer);
 
-                // IMPL_NOTES: interface has to be fixed 
-                alertLayer.setScrollInd(
-                    ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
+
+                // IMPL_NOTES: interface has to be fixed
+                 alertLayer.setScrollInd(
+                     ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
                 
                 // IMPL_NOTES: need to be removed as soon as removeLayer algorithm
                 // takes into account layers interaction
@@ -468,10 +481,10 @@ public class MIDPWindow extends CWindow {
                 addLayer(washLayer);
             } else {
                 removeLayer(washLayer);
-                
-                // IMPL_NOTES: interface has to be fixed 
-                bodyLayer.setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
-                
+
+                // IMPL_NOTES: interface has to be fixed
+                 bodyLayer.setScrollInd(ScrollIndLayer.getInstance(ScrollIndSkin.MODE));
+                                
                 // IMPL_NOTES: need to be removed as soon as removeLayer algorithm
                 // takes into account layers interaction
                 tickerLayer.addDirtyRegion();
@@ -534,16 +547,20 @@ public class MIDPWindow extends CWindow {
      * @return true if set vertical scroll occues
      */
     public boolean setVerticalScroll(int scrollPosition, int scrollProportion) {
+
+        BodyLayer layer = null;
         if (alertLayer.isVisible()) {
-            return alertLayer.setVerticalScroll(
-                scrollPosition, scrollProportion);
+            layer = alertLayer;
+        } else if (bodyLayer.isVisible()) {
+            layer = bodyLayer;
         }
-        if (bodyLayer.setVerticalScroll(
-                scrollPosition, scrollProportion)) {
+
+        if (layer != null && layer.setVerticalScroll(scrollPosition, scrollProportion)) {
             setDirty();
             sizeChangedOccured = true;
             return true;
         }
+
         return false;
     }
 
@@ -585,6 +602,27 @@ public class MIDPWindow extends CWindow {
      */
     public int getBodyHeight() {
         return bodyLayer.bounds[H];
+    }
+
+
+    /**
+     * Get the current width of the alert layer (the body
+     * layer renders the contents of the current displayable).
+     *
+     * @return the width of the alert layer
+     */
+    public int getAlertWidth() {
+        return alertLayer.bounds[W];
+    }
+
+    /**
+     * Get the current height of the alert layer (the body
+     * layer renders the contents of the current displayable).
+     *
+     * @return the height of the alert layer
+     */
+    public int getAlertHeight() {
+        return alertLayer.bounds[H];
     }
 
     /**
@@ -637,43 +675,25 @@ public class MIDPWindow extends CWindow {
      *         canvas can be rendered directly.
      */
     public boolean setGraphicsForCanvas(Graphics g) {
-        // IMPL_NOTE: Only Canvas painting specially doesn't change
-        // dirty state of the owner window, however it is not enough
-        // to bypass the Chameleon paint engine. Body layer holding
-        // the Canvas should be opaque and be not overlapped with
-        // any visible higher layer also. The check for overlapping
-        // is to be added later.
-        if (super.dirty || !bodyLayer.opaque) {
+        // IMPL_NOTE: Only Canvas painting specially doesn't change dirty
+        //   state of the owner window, however it is not enough to bypass
+        //   the Chameleon paint engine. Body layer holding the Canvas
+        //   should be not overlapped by a visible layer also.
+        if (super.dirty) {
+            // Schedule next overlapping check
+            bodyChecked = false;
             return false;
         }
-
-        // NOTE: note the two different orders of clip and translate
-        // below. That is because the layer's bounds are stored in
-        // the coordinate space of the window. But its internal dirty
-        // region is stored in the coordinate space of the layer itself.
-        // Thus, for the first one, the clip can be set and then translated,
-        // but in the second case, the translate must be done first and then
-        // the clip set.
-        if (bodyLayer.isDirty()) {
-            if (bodyLayer.isEmptyDirtyRegions()) {
-                g.setClip(bodyLayer.bounds[X], bodyLayer.bounds[Y],
-                          bodyLayer.bounds[W], bodyLayer.bounds[H]);
-                g.translate(bodyLayer.bounds[X], bodyLayer.bounds[Y]);
-
-            } else {
-                g.translate(bodyLayer.bounds[X], bodyLayer.bounds[Y]);
-                g.setClip(bodyLayer.dirtyBounds[X], bodyLayer.dirtyBounds[Y],
-                          bodyLayer.dirtyBounds[W], bodyLayer.dirtyBounds[H]);
-            }
-            bodyLayer.cleanDirty();
-        } else {
-            // NOTE: the layer can be not dirty, e.g. in the case an empty
-            // area was requested for repaint, set empty clip area then.
-            g.translate(bodyLayer.bounds[X], bodyLayer.bounds[Y]);
-            g.setClip(0, 0, 0, 0);
+        if (!bodyChecked) {
+            bodyOverlapped = !bodyLayer.opaque ||
+                isOverlapped(bodyLayer);
+            bodyChecked = true;
         }
-
-        return true;
+        if (!bodyOverlapped) {
+            bodyLayer.setGraphicsForCanvas(g);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -774,7 +794,6 @@ public class MIDPWindow extends CWindow {
             case TICKER_LAYER:
                 tickerLayer = new TickerLayer();
                 mainLayers[id] = tickerLayer ;
-                addLayer(tickerLayer);
                 break;
             case BTN_LAYER:
                 buttonLayer = new SoftButtonLayer(tunnel);

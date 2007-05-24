@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.io.j2me.socket;
@@ -34,14 +34,14 @@ import javax.microedition.io.Connector;
 import javax.microedition.io.SocketConnection;
 import javax.microedition.io.ConnectionNotFoundException;
 
+import com.sun.j2me.security.AccessController;
+import com.sun.j2me.security.InterruptedSecurityException;
+
 import com.sun.midp.io.NetworkConnectionBase;
 import com.sun.midp.io.HttpUrl;
 import com.sun.midp.io.Util;
 
 import com.sun.midp.main.Configuration;
-
-import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.midlet.MIDletStateHandler;
 
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
@@ -54,6 +54,10 @@ import com.sun.midp.suspend.StateTransitionException;
 /** Connection to the J2ME socket API. */
 public class Protocol extends NetworkConnectionBase
         implements SocketConnection, Subsystem {
+
+    /** TCP client permission name. */
+    private static final String CLIENT_PERMISSION_NAME =
+        "javax.microedition.io.Connector.socket";
 
     /** Class registered in SecurityInitializer. */
     private static class SecurityTrusted implements ImplicitlyTrustedClass {}
@@ -255,9 +259,7 @@ public class Protocol extends NetworkConnectionBase
             throw new IllegalArgumentException("Missing port number");
         }
 
-        szHost = Util.toCString(host);
-
-        result = getIpNumber0(szHost, ipBytes);
+        result = getIpNumber0(host, ipBytes);
         if (result == -1) {
             throw new
                 ConnectionNotFoundException("Could not resolve hostname");
@@ -336,27 +338,22 @@ public class Protocol extends NetworkConnectionBase
             return;
         }
         
-        MIDletStateHandler midletStateHandler;
-        MIDletSuite midletSuite;
-
-        midletStateHandler = MIDletStateHandler.getMidletStateHandler();
-        midletSuite = midletStateHandler.getMIDletSuite();
-
-        // The class may be used when no suite running
-        if (midletSuite == null) {
-            ownerTrusted = true;
-            return;
-        }
-
         name = "TCP" + ":" + name;
 
         try {
-            midletSuite.checkForPermission(Permissions.TCP, name);
-            ownerTrusted = midletSuite.isTrusted();
-        } catch (InterruptedException ie) {
+            AccessController.checkPermission(CLIENT_PERMISSION_NAME, name);
+        } catch (InterruptedSecurityException ise) {
             throw new InterruptedIOException(
-                "Interrupted while trying to ask the user permission");
+                    "Interrupted while trying to ask the user permission");
         }
+
+        try {
+            AccessController.
+                checkPermission(AccessController.TRUSTED_APP_PERMISSION_NAME);
+            ownerTrusted = true;
+        } catch (SecurityException se) {
+            ownerTrusted = false;
+        } 
     }
 
     /**
@@ -743,21 +740,17 @@ public class Protocol extends NetworkConnectionBase
     /**
      * Native finalizer
      */
-// #ifdef ENABLE_CDC
-    protected native void finalize();
-// #else
     private native void finalize();
-// #endif
 
     /**
      * Gets a byte array that represents an IPv4 or IPv6 address 
      *
-     * @param      szHost  the hostname to lookup as a 'C' string
+     * @param      sHost  the hostname to lookup
      * @param      ipBytes_out  Output array that receives the
      *             bytes of IP address
      * @return     number of bytes copied to ipBytes_out or -1 for an error
      */
-    private native int getIpNumber0(byte[] szHost, byte[] ipBytes_out);
+    private native int getIpNumber0(String sHost, byte[] ipBytes_out);
     
     /**
      * Gets the requested IP number.

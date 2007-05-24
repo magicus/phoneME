@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -402,7 +402,7 @@ write_file(char** ppszError, const pcsl_string* fileName,
     *ppszError  = NULL;
 
     /* open the file */
-    handle = storage_open(ppszError, fileName, OPEN_WRITE);
+    handle = storage_open(ppszError, fileName, OPEN_READ_WRITE_TRUNCATE);
     if (*ppszError != NULL) {
         return IO_ERROR;
     }
@@ -410,8 +410,6 @@ write_file(char** ppszError, const pcsl_string* fileName,
     /* write the whole buffer */
     if (inBufferLen > 0) {
         storageWrite(ppszError, handle, inBuffer, inBufferLen);
-    } else {
-        storageTruncate(ppszError, handle, 0);
     }
 
     if (*ppszError != NULL) {
@@ -508,6 +506,10 @@ read_suites_data(char** ppszError) {
         }
 
         /* IMPL_NOTE: introduce pcsl_mem_copy() */
+        if (bufferLen < (long)MIDLET_SUITE_DATA_SIZE) {
+            status = IO_ERROR;
+            break;
+        }
         memcpy((char*)pData, (char*)&buffer[pos], MIDLET_SUITE_DATA_SIZE);
         ADJUST_POS_IN_BUF(pos, bufferLen, MIDLET_SUITE_DATA_SIZE);
 
@@ -518,6 +520,11 @@ read_suites_data(char** ppszError) {
 
         /* setup pJarHash */
         if (pData->jarHashLen > 0) {
+            pData->varSuiteData.pJarHash = pcsl_mem_malloc(pData->jarHashLen);
+            if (pData->varSuiteData.pJarHash == NULL) {
+                status = OUT_OF_MEMORY;
+                break;
+            }
             memcpy(pData->varSuiteData.pJarHash, (char*)&buffer[pos],
                 pData->jarHashLen);
             ADJUST_POS_IN_BUF(pos, bufferLen, pData->jarHashLen);

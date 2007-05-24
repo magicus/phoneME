@@ -1,22 +1,22 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -56,7 +56,7 @@ final class ConnectionRegistry {
          * This instance is created on demand.
          * </p>
          */
-        private MIDPContainerInterface ifc = null;
+        final static MIDPContainerInterface IFC = getRemoteInterface();
 
         /**
          * Gets a reference to remote interface.
@@ -64,14 +64,13 @@ final class ConnectionRegistry {
          * @return a reference to remote interface
          * (cannot be <code>null</code>)
          */
-        MIDPContainerInterface getRemoteInterface() {
-            if (ifc != null) {
-                return ifc;
-            }
+        static MIDPContainerInterface getRemoteInterface() {
+            final JUMPIsolateProcess jip = JUMPIsolateProcess.getInstance();
 
-            ifc = (MIDPContainerInterface) JUMPIsolateProcess.getInstance()
-                .getRemoteService(
-                    Configuration.MIDP_CONTAINER_INTERFACE_IXC_URI);
+            final String URI = Configuration.MIDP_CONTAINER_INTERFACE_IXC_URI;
+
+            final MIDPContainerInterface ifc = (MIDPContainerInterface)
+                    jip.getRemoteService(URI);
 
             if (ifc == null) {
                 throw new RuntimeException(
@@ -81,10 +80,6 @@ final class ConnectionRegistry {
             return ifc;
         }
     }
-
-    /** Remote interface helper. */
-    private static final RemoteInterfaceHelper remoteInterfaceHelper =
-            new RemoteInterfaceHelper();
 
     /**
      * Registers a connection.
@@ -299,7 +294,7 @@ final class ConnectionRegistry {
      * @return remote interface instance (cannot be <code>null</code>)
      */
     private static MIDPContainerInterface getRemoteInterface() {
-        return remoteInterfaceHelper.getRemoteInterface();
+        return RemoteInterfaceHelper.IFC;
     }
 
     /**

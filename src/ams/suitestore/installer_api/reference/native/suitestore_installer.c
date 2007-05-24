@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -53,6 +53,18 @@
 
 #if ENABLE_ICON_CACHE
 #include <suitestore_icon_cache.h>
+
+/**
+ * Loads a native image from cache or jar file into memory.
+ *
+ * @param suiteId       The suite id
+ * @param pImageName    The image resource name
+ * @param **ppImageData Pointer where a buffer will be allocated and data stored
+ * @return              -1 if failed, else length of buffer
+ */
+static int
+getImageForIconCache(SuiteIdType suiteId, const pcsl_string* pImageName,
+                     unsigned char **ppImageData);
 #endif
 
 /* Description of these internal functions can be found bellow in the code. */
@@ -403,8 +415,10 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
     char* pszError;
     lockStorageList *node;
     SuiteIdType suiteId;
+#if ENABLE_ICON_CACHE
     unsigned char* pIconData = NULL;
     int iconBufLen = -1;
+#endif
 
     if (pInstallInfo == NULL || pSuiteSettings == NULL || pSuiteData == NULL) {
         return BAD_PARAMS;
@@ -538,20 +552,16 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
 
 #if ENABLE_IMAGE_CACHE
         createImageCache(suiteId, pMsd->storageId);
-
-        iconBufLen = loadImageFromCache(suiteId, &pMsd->varSuiteData.iconName,
-                                        &pIconData);
-#else
-        /* IMPL_NOTE: the entry must be read using midpGetJarEntry(). */
-        iconBufLen = -1;
 #endif
 
 #if ENABLE_ICON_CACHE
+        iconBufLen = getImageForIconCache(suiteId, &pMsd->varSuiteData.iconName,
+                                          &pIconData);
         if (iconBufLen > 0) {
             midp_add_suite_icon(suiteId, &pMsd->varSuiteData.iconName,
                                 pIconData, iconBufLen);
         }
-#endif        
+#endif
     } while (0);
 
     if (status != ALL_OK) {
@@ -856,3 +866,33 @@ store_install_properties(SuiteIdType suiteId, const MidpProperties* pJadProps,
 
     return status;
 }
+
+#if ENABLE_ICON_CACHE
+/**
+ * Loads a native image from cache or jar file into memory.
+ *
+ * @param suiteId       The suite id
+ * @param pImageName    The image resource name
+ * @param **ppImageData Pointer where a buffer will be allocated and data stored
+ * @return              -1 if failed, else length of buffer
+ */
+static int
+getImageForIconCache(SuiteIdType suiteId, const pcsl_string* pImageName,
+                     unsigned char **ppImageData) {
+    int iconBufLen;
+
+#if ENABLE_IMAGE_CACHE
+    iconBufLen = loadImageFromCache(suiteId, pImageName,
+                                    ppImageData);
+#else
+    /* IMPL_NOTE: the entry could be read using midpGetJarEntry(). */
+    iconBufLen = -1;
+
+    (void)suiteId;
+    (void)pImageName;
+    (void)ppImageData;
+#endif /* ENABLE_IMAGE_CACHE */
+
+    return iconBufLen;
+}
+#endif

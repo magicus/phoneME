@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -185,6 +185,12 @@ void midp_resume() {
     }
 }
 
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_suspend_SuspendSystem_isResumePending) {
+    (void)midp_checkAndResume();
+    KNI_ReturnBoolean(midp_getSRState() == SR_RESUMING);
+}
+
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_suspend_SuspendSystem_00024MIDPSystem_suspended0) {
     allMidletsKilled = KNI_GetParameterAsBoolean(1);
@@ -278,10 +284,12 @@ void sr_finalizeSystem() {
 
 jboolean midp_checkAndResume() {
     jboolean res = KNI_FALSE;
+    SRState s = midp_getSRState();
 
     REPORT_INFO(LC_LIFECYCLE, "midp_checkAndResume()");
 
-    if (SR_SUSPENDED == sr_state && midp_checkResumeRequest()) {
+    if ((SR_SUSPENDED == s || SR_SUSPENDING == s) &&
+            midp_checkResumeRequest()) {
         midp_resume();
         res = KNI_TRUE;
     }

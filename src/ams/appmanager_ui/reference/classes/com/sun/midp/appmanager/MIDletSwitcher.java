@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.appmanager;
@@ -90,6 +90,8 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
 
     /**
      * Append launched suite info to the list.
+     *
+     * @param msi RunningMIDletSuiteInfo to append
      */
     synchronized void append(RunningMIDletSuiteInfo msi) {
         checkInfoArraySize();
@@ -98,9 +100,28 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
     }
 
     /**
-     * Remove suite info from the list.
+     * Updates the existing item in the list.
+     * It should be used to update the reference to the previously added object.
+     *
+     * @param oldMsi entry to update 
+     * @param newMsi new value of the entry
      */
-    synchronized void remove(MIDletSuiteInfo msi) {
+    synchronized void update(RunningMIDletSuiteInfo oldMsi,
+                             RunningMIDletSuiteInfo newMsi) {
+        for (int i = 0; i < mcount; i++) {
+            if (minfo[i] == oldMsi) {
+                minfo[i] = newMsi;
+                break;
+            }
+        }
+    }
+
+    /**
+     * Remove suite info from the list.
+     *
+     * @param msi RunningMIDletSuiteInfo to remove
+     */
+    synchronized void remove(RunningMIDletSuiteInfo msi) {
         int pos = -1;
         for (int i = 0; i < mcount; i++) {
             if (minfo[i] == msi) {

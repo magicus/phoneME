@@ -1,27 +1,27 @@
 #
 #   
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
-# 2 only, as published by the Free Software Foundation. 
+# 2 only, as published by the Free Software Foundation.
 # 
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
-# included at /legal/license.txt). 
+# included at /legal/license.txt).
 # 
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA 
+# 02110-1301 USA
 # 
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
-# information or have any questions. 
+# information or have any questions.
 #
 #####################################################################
 #
@@ -192,6 +192,10 @@ else
    EXTRA_CFLAGS += -DENABLE_IMAGE_CACHE=0
 endif
 
+ifeq ($(TARGET_VM), cdc_vm)
+   USE_ICON_CACHE = false
+endif
+
 ifeq ($(USE_ICON_CACHE), true)
    EXTRA_CFLAGS += -DENABLE_ICON_CACHE=1
 else
@@ -235,8 +239,16 @@ endif
 ifeq ($(USE_NATIVE_AMS), true)
    EXTRA_CFLAGS += -DENABLE_NATIVE_AMS=1
    JPP_DEFS	+= -DENABLE_NATIVE_AMS
+
+ifeq ($(USE_NAMS_TEST_SERVICE), true)
+   EXTRA_CFLAGS += -DENABLE_NAMS_TEST_SERVICE=1
+   JPP_DEFS	+= -DENABLE_NAMS_TEST_SERVICE
 else
-   EXTRA_CFLAGS += -DENABLE_NATIVE_AMS=0
+   EXTRA_CFLAGS += -DENABLE_NAMS_TEST_SERVICE=0
+endif
+   
+else
+   EXTRA_CFLAGS += -DENABLE_NATIVE_AMS=0 -DENABLE_NAMS_TEST_SERVICE=0
 endif
 
 ifeq ($(USE_NATIVE_PTI), true)
@@ -281,6 +293,16 @@ ifeq ($(USE_JPEG), true)
    EXTRA_CFLAGS += -DENABLE_JPEG=1
 else
    EXTRA_CFLAGS += -DENABLE_JPEG=0
+endif
+
+ifeq ($(USE_MULTIPLE_ISOLATES), true)
+ifeq ($(USE_LINKS), true)
+   EXTRA_CFLAGS += -DENABLE_LINKS=1
+else
+   EXTRA_CFLAGS += -DENABLE_LINKS=0
+endif
+else
+   EXTRA_CFLAGS += -DENABLE_LINKS=0
 endif
 
 EXTRA_CFLAGS += -DPROJECT_NAME='"$(PROJECT_NAME)"'

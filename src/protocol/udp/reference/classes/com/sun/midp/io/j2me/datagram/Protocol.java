@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.io.j2me.datagram;
@@ -34,11 +34,10 @@ import javax.microedition.io.UDPDatagramConnection;
 import javax.microedition.io.Connector;
 import javax.microedition.io.Connection;
 
-// #ifdef ENABLE_CDC
-import com.sun.cdc.io.ConnectionBaseInterface;
-// #else
 import com.sun.cldc.io.ConnectionBaseInterface;
-// #endif
+
+import com.sun.j2me.security.AccessController;
+import com.sun.j2me.security.InterruptedSecurityException;
 
 import com.sun.midp.io.NetworkConnectionBase;
 import com.sun.midp.io.HttpUrl;
@@ -59,6 +58,14 @@ import com.sun.midp.security.SecurityInitializer;
  */
 public class Protocol implements UDPDatagramConnection,
     ConnectionBaseInterface {
+
+    /** UDP client permission name. */
+    private static final String SERVER_PERMISSION_NAME =
+        "javax.microedition.io.Connector.datagramreceiver";
+
+    /** UDP server permission name. */
+    private static final String CLIENT_PERMISSION_NAME =
+        "javax.microedition.io.Connector.datagram";
 
     /**
      * Inner class to request security token from SecurityInitializer.
@@ -159,22 +166,23 @@ public class Protocol implements UDPDatagramConnection,
          * number.
          */
         if (host == null) {
-            try {
-                // When asking permission use Internet protocol name.
-                if (checkSecurity) {
-                    midletSuite.checkForPermission(Permissions.UDP_SERVER,
-                                 "UDP:" + name);
-                    ownerTrusted = midletSuite.isTrusted();
-                }
-            } catch (SecurityException e) {
-                // Give back the connection to AMS
-                PushRegistryInternal.checkInConnectionInternal(
-                    classSecurityToken, "datagram:" + name);
+            if (checkSecurity) {
+                try {
+                    // When asking permission use Internet protocol name.
+                    AccessController.checkPermission(SERVER_PERMISSION_NAME,
+                        "UDP:" + name);
+                } catch (SecurityException se) {
+                    // Give back the connection to AMS
+                    PushRegistryInternal.checkInConnectionInternal(
+                        classSecurityToken, "datagram:" + name);
 
-                throw e;
-            } catch (InterruptedException ie) {
-                throw new InterruptedIOException(
-                    "Interrupted while trying to ask the user permission");
+                    if (se instanceof InterruptedSecurityException) {
+                        throw new InterruptedIOException(
+                        "Interrupted while trying to ask the user permission");
+                    }
+
+                    throw se;
+                }
             }
 
             if (port > 0) {
@@ -185,17 +193,26 @@ public class Protocol implements UDPDatagramConnection,
                 throw new IllegalArgumentException("Missing port number");
             }
 
-            try {
-                if (checkSecurity) {
+            if (checkSecurity) {
+                try {
                     // When asking permission use Internet protocol name.
-                    midletSuite.checkForPermission(Permissions.UDP,
+                    AccessController.checkPermission(CLIENT_PERMISSION_NAME,
                                                    "UDP:" + name);
-                    ownerTrusted = midletSuite.isTrusted();
+                } catch (InterruptedSecurityException ise) {
+                    throw new InterruptedIOException(
+                        "Interrupted while trying to ask the user permission");
                 }
-            } catch (InterruptedException ie) {
-                throw new InterruptedIOException(
-                    "Interrupted while trying to ask the user permission");
             }
+        }
+
+        if (checkSecurity) {
+            try {
+                AccessController.checkPermission(
+                    AccessController.TRUSTED_APP_PERMISSION_NAME);
+                ownerTrusted = true;
+            } catch (SecurityException se) {
+                ownerTrusted = false;
+            } 
         }
 
         /* Check the mode parameter. (See NetworkConnectionAdapter). */
@@ -365,7 +382,7 @@ public class Protocol implements UDPDatagramConnection,
                     throw new IOException("Missing port");
                 }
 
-                ipNumber = getIpNumber(Util.toCString(locHost));
+                ipNumber = getIpNumber(locHost);
 
                 if (ipNumber == -1) {
                     throw new IOException("Invalid host");
@@ -717,10 +734,10 @@ public class Protocol implements UDPDatagramConnection,
     /**
      * Get a raw IPv4 address for the given hostname.
      *
-     * @param szHost the hostname to lookup as a 'C' string
+     * @param sHost the hostname to lookup
      * @return raw IPv4 address or -1 if there was an error
      */
-    public static native int getIpNumber(byte[] szHost);
+    public static native int getIpNumber(String sHost);
 
     /**
      * Get the maximum length of a datagram.
@@ -745,12 +762,7 @@ public class Protocol implements UDPDatagramConnection,
     /**
      * Native finalizer.
      */
-// #ifdef ENABLE_CDC
-    protected native void finalize();
-// #else
     private native void finalize();
-// #endif
-
 
     /**
      * Gets the local IP number.

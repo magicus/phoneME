@@ -1,22 +1,22 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -24,12 +24,18 @@
 
 package com.sun.midp.jump.push.executive;
 
+import com.sun.jump.common.JUMPAppModel;
+import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.module.contentstore.JUMPContentStore;
 import com.sun.jump.module.contentstore.JUMPStore;
-import com.sun.jump.module.contentstore.JUMPStoreHandle;
 import com.sun.jump.module.contentstore.JUMPStoreFactory;
+import com.sun.jump.module.contentstore.JUMPStoreHandle;
+import com.sun.jump.module.installer.JUMPInstallerModuleFactory;
+import com.sun.jump.module.lifecycle.JUMPApplicationLifecycleModule;
+import com.sun.jump.module.lifecycle.JUMPApplicationLifecycleModuleFactory;
 import com.sun.jump.module.serviceregistry.JUMPServiceRegistryModule;
 import com.sun.jump.module.serviceregistry.JUMPServiceRegistryModuleFactory;
+import com.sun.midp.jump.installer.MIDLETInstallerImpl;
 import com.sun.midp.jump.push.executive.ota.InstallerInterface;
 import com.sun.midp.jump.push.executive.persistence.Store;
 import com.sun.midp.jump.push.executive.persistence.StoreOperationManager;
@@ -67,7 +73,7 @@ final class PushContentStore
 
 final class PushModule implements JUMPPushModule {
 
-    final static class PushSystem {
+    static final class PushSystem {
         /** Installer-to-Push interface impl. */
         private final InstallerInterface installerInterfaceImpl;
 
@@ -82,7 +88,9 @@ final class PushModule implements JUMPPushModule {
                     Configuration.getReservationDescriptorFactory();
 
             pushController = new PushController(
-                    store, reservationDescriptorFactory);
+                    store,
+                    createLifecycleAdapter(),
+                    reservationDescriptorFactory);
 
             final MIDPContainerInterfaceImpl midpContainerInterfaceImpl =
                     new MIDPContainerInterfaceImpl(pushController);
@@ -92,6 +100,51 @@ final class PushModule implements JUMPPushModule {
 
             installerInterfaceImpl = new InstallerInterfaceImpl(pushController,
                     reservationDescriptorFactory);
+        }
+
+        /**
+         * Creates a lifecycle adapter for Push system.
+         *
+         * @return an instance of LifecycleAdapter (cannot be <code>null</code>)
+         */
+        private LifecycleAdapter createLifecycleAdapter() {
+            /*
+             * IMPL_NOTE: not an ideal solution as it introduces
+             * implementation dependencies.  However pragmatically good enough
+             */
+            final MIDLETInstallerImpl midletInstaller = (MIDLETInstallerImpl)
+                        JUMPInstallerModuleFactory
+                            .getInstance()
+                            .getModule(JUMPAppModel.MIDLET);
+            if (midletInstaller == null) {
+                throw new RuntimeException("failed to obtain midlet installer");
+            }
+
+            final String policy = JUMPApplicationLifecycleModuleFactory
+                    .POLICY_ONE_LIVE_INSTANCE_ONLY;
+
+            final JUMPApplicationLifecycleModule lifecycleModule =
+                    JUMPApplicationLifecycleModuleFactory
+                        .getInstance()
+                        .getModule(policy);
+            if (lifecycleModule == null) {
+                throw new RuntimeException("failed to obtain lifecycle module");
+            }
+
+            return new LifecycleAdapter() {
+                public void launchMidlet(final int midletSuiteID,
+                        final String midlet) {
+                    final JUMPApplication app = midletInstaller
+                            .getMIDletApplication(midletSuiteID, midlet);
+                    if (app == null) {
+                        logError("failed to convert to MIDP application");
+                    }
+
+                    // TBD: push-launch dialogs
+
+                    lifecycleModule.launchApplication(app, new String [0]);
+                }
+            };
         }
 
         /**

@@ -1,22 +1,22 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -312,7 +312,7 @@ final class ConnectionController {
             try {
                 removeRegistration(handlers[i]);
             } catch (IOException ioex) {
-                // TBD: logging
+                logError("failed to remove " + handlers[i] + ": " + ioex);
             }
         }
     }
@@ -375,9 +375,9 @@ final class ConnectionController {
                                     info.connection, info.filter,
                                     noopPermissionCallback));
                     } catch (ConnectionNotFoundException cnfe) {
-                        // TBD: proper logging
+                        logError("failed to register " + info + ": " + cnfe);
                     } catch (IOException ioex) {
-                        // TBD: proper logging
+                        logError("failed to register " + info + ": " + ioex);
                     }
                 }
             }
@@ -499,8 +499,19 @@ final class ConnectionController {
                     return;
                 }
 
-                lifecycleAdapter.launchMidlet(
-                        midpApp.midletSuiteID, midpApp.midlet);
+                try {
+                    lifecycleAdapter.launchMidlet(midpApp.midletSuiteID,
+                            midpApp.midlet);
+                } catch (Exception ex) {
+                    /* IMPL_NOTE: need to handle _all_ the exceptions. */
+                    /* TBD: uncomment when logging can be disabled
+                     * (not to interfer with unittests)
+                    logError(
+                            "Failed to launch \"" + midpApp.midlet + "\"" +
+                            " (suite ID: " + midpApp.midletSuiteID + "): " +
+                            ex);
+                     */
+                }
             }
         }
     }
@@ -595,5 +606,20 @@ final class ConnectionController {
         private Set getData(final int midletSuiteID) {
             return (Set) suiteId2data.get(new Integer(midletSuiteID));
         }
+    }
+
+    /**
+     * Logs error message.
+     *
+     * <p>
+     * TBD: common logging
+     * </p>
+     *
+     * @param message message to log
+     */
+    private static void logError(final String message) {
+        System.err.println(
+                "ERROR [" + ConnectionController.class.getName() + "]: "
+                + message);
     }
 }

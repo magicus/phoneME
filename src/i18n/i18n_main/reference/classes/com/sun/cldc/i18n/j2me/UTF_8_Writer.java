@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.cldc.i18n.j2me;
@@ -111,30 +111,59 @@ public class UTF_8_Writer extends com.sun.cldc.i18n.StreamWriter {
     }
 
     /**
-     * Get the size in chars of an array of bytes.
+     * Get the size in bytes of an array of chars.
      *
-     * @param      array  Source buffer
-     * @param      offset Offset at which to start counting characters
-     * @param      length number of bytes to use for counting
+     * @param      cbuf   Source buffer
+     * @param      offset Offset at which to start counting character sizes
+     * @param      length number of characters to use for counting
      *
-     * @return     number of characters that would be converted
+     * @return     number of bytes that the characters would be converted to
      */
-    public int sizeOf(char[] array, int offset, int length) {
-        int outputSize = 0;
+    public int sizeOf(char[] cbuf, int offset, int length) {
         int inputChar;
-
-        while (offset < length) {
-            inputChar = array[offset];
-            if (inputChar < 0x80) {
-            outputSize++;
-            } else if (inputChar < 0x800) {
-            outputSize += 2;
-            } else {
-            outputSize += 3;
+        int outputSize;
+        int outputCount = 0;
+        int count = 0;
+        int localPendingSurrogate = pendingSurrogate;
+        while (count < length) {
+            inputChar = 0xffff & cbuf[offset + count];
+            if (0 != localPendingSurrogate) {
+                if (0xdc00<=inputChar && inputChar<=0xdfff) {
+                //000u uuuu xxxx xxxx xxxx xxxx
+                //1101 10ww wwxx xxxx   1101 11xx xxxx xxxx
+                    final int highHalf = (localPendingSurrogate & 0x03ff) + 0x0040;
+                    final int lowHalf = inputChar & 0x03ff;
+                    inputChar = (highHalf << 10) | lowHalf;
+                } else {
+                    // going to write replacement value instead of unpaired surrogate
+                    outputSize = 1;
+                    outputCount += outputSize;
+                }
+                localPendingSurrogate = 0;
             }
-            offset++;
+            if (inputChar < 0x80) {
+                outputSize = 1;
+            } else if (inputChar < 0x800) {
+                outputSize = 2;
+            } else if (0xd800<=inputChar && inputChar<=0xdbff) {
+                localPendingSurrogate = inputChar;
+                outputSize = 0;
+            } else if (0xdc00<=inputChar && inputChar<=0xdfff) {
+                // unpaired surrogate
+                // going to output replacementValue;
+                outputSize = 1;
+            } else if (inputChar < 0x10000) {
+                outputSize = 3;
+            } else {
+                /* 21 bits: 1111 0xxx  10xx xxxx  10xx xxxx  10xx xxxx
+                 * a aabb  bbbb cccc  ccdd dddd
+                */
+                outputSize = 4;
+            }
+            outputCount += outputSize;
+            count++;
         }
-        return outputSize;
+        return outputCount;
     }
 
     /**

@@ -1,27 +1,27 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.chameleon.layers;
@@ -344,8 +344,6 @@ public class PTILayer extends PopupLayer {
                         bounds[H] >> 1, Graphics.VCENTER | Graphics.RIGHT);
         }
 
-        int x = 0, y = 0;
-
         String text_b = "", text_a = "";
 
         for (int i = -1; ++i < l.length; ) {
@@ -359,10 +357,12 @@ public class PTILayer extends PopupLayer {
         g.translate((bounds[W] - widthMax) >> 1, 0);
         g.setClip(0, 0, widthMax, bounds[H]);
 
-        x = 0;
-        y = PTISkin.FONT.getHeight() < bounds[H] ?
-            (bounds[H] - PTISkin.FONT.getHeight()) >> 1 : 0;
+        int x = 0;
+        int y = (bounds[H] - PTISkin.FONT.getHeight()) >> 1;
 
+        // prevent the overlapping of the outline 
+        if (y <= 0) y = 1;
+        
         // draw before words
         if (text_a.length() > 0) {
             g.setColor(PTISkin.COLOR_FG);
@@ -385,6 +385,7 @@ public class PTILayer extends PopupLayer {
             g.drawString(l[selId] + SEPARATOR, x, y,
                          Graphics.LEFT | Graphics.TOP);
             x += PTISkin.FONT.stringWidth(l[selId] + SEPARATOR);
+            
         }
 
         // draw after words

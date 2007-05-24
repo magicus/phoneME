@@ -24,19 +24,17 @@
  * information or have any questions. 
  */
 
-package com.sun.midp.installer;
+package com.sun.midp.jarutil;
 
 import java.lang.String;
 
 import java.io.IOException;
 
-import com.sun.midp.midlet.MIDletStateHandler;
-import com.sun.midp.midlet.MIDletSuite;
-
-import com.sun.midp.security.SecurityToken;
-import com.sun.midp.security.Permissions;
+import com.sun.j2me.security.AccessController;
 
 import com.sun.midp.io.Util;
+
+import com.sun.midp.security.Permissions;
 
 /**
  * This class provides a Java API for reading an entry from a Jar file stored
@@ -46,48 +44,8 @@ public class JarReader {
     /**
      * Returns the content of the given entry in the JAR file on the
      * file system given by jarFilePath.
-     *
-     * @param securityToken token with permission to install software
-     * @param jarFilePath file pathname of the JAR file to read. May
-     *          be a relative pathname.
-     * @param entryName name of the entry to return.
-     *
-     * @return the content of the given entry in a byte array or null if
-     *          the entry was not found
-     *
-     * @exception IOException if JAR is corrupt or not found
-     * @exception IOException if the entry does not exist.
-     * @exception SecurityException if the caller does not have permission
-     *   to install software.
-     */
-    public static byte[] readJarEntry(SecurityToken securityToken,
-                               String jarFilePath, String entryName)
-            throws IOException {
-
-        if (securityToken == null) {
-            MIDletStateHandler midletStateHandler =
-                MIDletStateHandler.getMidletStateHandler();
-            MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
-
-            midletSuite.checkIfPermissionAllowed(Permissions.AMS);
-        } else {
-            securityToken.checkIfPermissionAllowed(Permissions.AMS);
-        }
-
-        if (entryName.charAt(0) == '/') { 
-            /*
-             * Strip off the leading directory separator, or the
-             * resource will not be found in the JAR.
-             */
-            entryName = entryName.substring(1, entryName.length());
-        }
-
-        return readJarEntry0(jarFilePath, entryName);
-    }
-
-    /**
-     * Returns the content of the given entry in the JAR file on the
-     * file system given by jarFilePath.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      *
      * @param jarFilePath file pathname of the JAR file to read. May
      *          be a relative pathname.
@@ -103,8 +61,17 @@ public class JarReader {
      */
     public static byte[] readJarEntry(String jarFilePath, String entryName)
             throws IOException {
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
-        return readJarEntry(null, jarFilePath, entryName);
+        if (entryName.charAt(0) == '/') {
+            /*
+             * Strip off the leading directory separator, or the
+             * resource will not be found in the JAR.
+             */
+            entryName = entryName.substring(1, entryName.length());
+        }
+
+        return readJarEntry0(jarFilePath, entryName);
     }
 
     /**

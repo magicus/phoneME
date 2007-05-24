@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.io.j2me.comm;
@@ -30,9 +30,10 @@ import java.io.*;
 
 import javax.microedition.io.*;
 
+import com.sun.j2me.security.*;
+
 import com.sun.midp.main.Configuration;
 import com.sun.midp.io.*;
-import com.sun.midp.security.*;
 import com.sun.midp.midlet.*;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
@@ -42,6 +43,10 @@ import com.sun.midp.log.LogChannels;
  */
 public class Protocol extends BufferedConnectionAdapter 
     implements CommConnection {
+
+    /** Comm permission name. */
+    private static final String COMM_PERMISSION_NAME =
+        "javax.microedition.io.Connector.comm";
 
     /** Native handle to the serial port. */
     private int handle = -1;
@@ -321,22 +326,12 @@ public class Protocol extends BufferedConnectionAdapter
      */
     private void checkForPermission(String name)
             throws InterruptedIOException {
-        Scheduler scheduler;
-        MIDletSuite midletSuite;
-
-        scheduler = Scheduler.getScheduler();
-        midletSuite = scheduler.getMIDletSuite();
-
-        // there is no suite running when installing from the command line
-        if (midletSuite == null) {
-            return;
-        }
-
         name = "comm" + ":" + name;
 
         try {
-            midletSuite.checkForPermission(Permissions.COMM, name);
-        } catch (InterruptedException ie) {
+            AccessController.
+                checkPermission(COMM_PERMISSION_NAME, name);
+        } catch (InterruptedSecurityException ise) {
             throw new InterruptedIOException(
                 "Interrupted while trying to ask the user permission");
         }
@@ -606,11 +601,7 @@ public class Protocol extends BufferedConnectionAdapter
     private static native int native_writeBytes(int hPort, byte b[], int off,
         int len) throws IOException;
 
-// #ifdef ENABLE_CDC
-   protected native void finalize();
-// #else
    private native void finalize();
-// #endif
 }
 
 

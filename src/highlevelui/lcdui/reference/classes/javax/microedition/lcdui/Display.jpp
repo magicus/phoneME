@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.lcdui;
@@ -576,7 +576,7 @@ public class Display {
     private GCIDisplay gciDisplay;
   
     /** GCIScreenWidget that represents a device screen */
-    private GCIScreenWidget gciScreenWidget; 
+    private static GCIScreenWidget gciScreenWidget;
 
     // #endif ENABLE_GCI
 /*
@@ -676,14 +676,17 @@ public class Display {
         }
 
         // #ifdef ENABLE_GCI
-        GCIDisplay gciDisplay =
-            GCIGraphicsEnvironment.getInstance().getDefaultDisplay();
-        gciScreenWidget = gciDisplay.createScreenWidget(0, 0, 
-	                                                WIDTH, HEIGHT, 
-                                                        null, null);
+        if (gciScreenWidget == null) {
+            GCIDisplay gciDisplay =
+                GCIGraphicsEnvironment.getInstance().getDefaultDisplay();
+            gciScreenWidget = gciDisplay.createScreenWidget(0, 0,
+                                                            WIDTH, HEIGHT,
+                                                            null, null);
+        }
+
         screenGraphics = Graphics.getScreenGraphics(displayId,
-                                                    WIDTH, HEIGHT, 
-	                      gciScreenWidget.getDrawingSurface());
+                                                    WIDTH, HEIGHT,
+                             gciScreenWidget.getDrawingSurface());
 
         // #else
 
@@ -2251,6 +2254,25 @@ public class Display {
     MIDPWindow getWindow() {
         return window;
     }
+
+    /**
+     * Get the width of the current displayable layer.
+     *
+     * @return the width of the current displayable layer
+     */
+    int getDisplayableWidth() {
+        return  (current instanceof AlertLF) ? window.getAlertWidth() : window.getBodyWidth();
+    }
+
+    /**
+     * Get the height of the current displayable layer.
+     *
+     * @return the width of the current displayable layer
+     */
+    int getDisplayableHeight() {
+        return  (current instanceof AlertLF) ? window.getAlertHeight() : window.getBodyHeight();
+    }
+
     // #endif ENABLE_CHAMELEON
 
     /**
@@ -2899,17 +2921,17 @@ public class Display {
          * DisplayEventConsumer I/F method.
          *
          * @param modelVersion the version of the peer's data model
+         * @param subType sub type of the peer change that happened
          * @param itemPeerId the id of the ItemLF's peer whose state has changed
          * @param hint some value that is interpretted only between the peers
          */
-        public void handlePeerStateChangeEvent(int modelVersion,
-                                         int itemPeerId, int hint) {
+        public void handlePeerStateChangeEvent(int modelVersion, int subType,
+                                                int itemPeerId, int hint) {
             DisplayableLF currentCopy = Display.this.current;
 
             if (currentCopy instanceof FormLF) {
-                ((FormLF)currentCopy).uCallPeerStateChanged(modelVersion,
-                                                            itemPeerId,
-                                                            hint);
+                ((FormLF)currentCopy).uCallPeerStateChanged(modelVersion, subType,
+                                                            itemPeerId, hint);
             }
         }
 

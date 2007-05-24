@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /**
@@ -62,40 +62,24 @@
  */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_del0) {
-    char *szConn = NULL;
-    int connLen;
-    char *szStore = NULL;
-    int storeLen;
     int ret = -1;
 
     KNI_StartHandles(2);
-    KNI_DeclareHandle(conn);
-    KNI_DeclareHandle(storage);
 
-    /* Get the connection string. */
-    KNI_GetParameterAsObject(1, conn);
-    connLen = KNI_GetArrayLength(conn);
-    if ((szConn = midpMalloc(connLen)) != NULL) {
-        KNI_GetRawArrayRegion(conn, 0, connLen, (jbyte*)szConn);
-
-        /* Get the storage name string. */
-        KNI_GetParameterAsObject(2, storage);
-        storeLen = KNI_GetArrayLength(storage);
-        if ((szStore = midpMalloc(storeLen)) != NULL) {
-            KNI_GetRawArrayRegion(storage, 0, storeLen, (jbyte*)szStore);
-
+    GET_PARAMETER_AS_PCSL_STRING(1, conn)    /* the connection string. */
+    GET_PARAMETER_AS_PCSL_STRING(2, storage) /* the storage name string. */
+    const jbyte * const conn_bytes = pcsl_string_get_utf8_data(&conn);
+    const jbyte * const storage_bytes = pcsl_string_get_utf8_data(&storage);
+        if (conn_bytes != NULL && storage_bytes != NULL) {
             /* Perform the delete operation. */
-            ret = pushdel(szConn, szStore);
-            midpFree(szStore);
-        }
-        else {
+            ret = pushdel((char*)conn_bytes, (char*)storage_bytes);
+        } else {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
         }
-        midpFree(szConn);
-    }
-    else {
-        KNI_ThrowNew(midpOutOfMemoryError, NULL);
-    }
+    pcsl_string_release_utf8_data(conn_bytes, &conn);
+    pcsl_string_release_utf8_data(storage_bytes, &storage);
+    RELEASE_PCSL_STRING_PARAMETER
+    RELEASE_PCSL_STRING_PARAMETER
     KNI_EndHandles();
 
     KNI_ReturnInt(ret);
@@ -181,14 +165,20 @@ KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_checkInByMidlet0) {
     SuiteIdType suiteId;
 
     KNI_StartHandles(1);
-    KNI_DeclareHandle(classNameObj);
 
     suiteId = KNI_GetParameterAsInt(1);
-    KNI_GetParameterAsObject(2, classNameObj);
+    GET_PARAMETER_AS_PCSL_STRING(2,className)
 
-    SNI_BEGIN_RAW_POINTERS;
-    pushcheckinbymidlet(suiteId, (char*)JavaByteArray(classNameObj));
-    SNI_END_RAW_POINTERS;
+        const jbyte * const className_bytes
+            = pcsl_string_get_utf8_data(&className);
+        if (NULL == className_bytes) {
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+        } else {
+            pushcheckinbymidlet(suiteId, (char*)className_bytes);
+            pcsl_string_release_utf8_data(className_bytes, &className);
+        }
+
+    RELEASE_PCSL_STRING_PARAMETER
 
     KNI_EndHandles();
     KNI_ReturnVoid();
@@ -210,28 +200,22 @@ KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_checkInByMidlet0) {
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_io_j2me_push_ConnectionRegistry_add0) {
 
-    char *szConn = NULL;
-    int connLen;
     int ret = -1;
 
     KNI_StartHandles(1);
-    KNI_DeclareHandle(conn);
 
-    KNI_GetParameterAsObject(1, conn);
-    connLen = KNI_GetArrayLength(conn);
+    GET_PARAMETER_AS_PCSL_STRING(1, conn)
+        const jbyte * const conn_bytes = pcsl_string_get_utf8_data(&conn);
 
-    szConn = midpMalloc(connLen);
+        if (conn_bytes != NULL) {
+            ret = pushadd((char*)conn_bytes);
+        }
 
-    if (szConn != NULL) {
-        KNI_GetRawArrayRegion(conn, 0, connLen, (jbyte*)szConn);
-        ret = pushadd(szConn);
-        midpFree(szConn);
-    }
-
-    if ((szConn == NULL) || (ret == -2)) {
-        KNI_ThrowNew(midpOutOfMemoryError, NULL);
-    }
-
+        if ((conn_bytes == NULL) || (ret == -2)) {
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+        }
+        pcsl_string_release_utf8_data(conn_bytes, &conn);
+    RELEASE_PCSL_STRING_PARAMETER
     KNI_EndHandles();
     KNI_ReturnInt(ret);
 }

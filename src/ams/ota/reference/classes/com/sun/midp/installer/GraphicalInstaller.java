@@ -1,24 +1,24 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -36,6 +36,8 @@ import javax.microedition.midlet.*;
 
 import javax.microedition.rms.*;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.io.j2me.storage.*;
 
 import com.sun.midp.i18n.Resource;
@@ -46,7 +48,7 @@ import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.main.TrustedMIDletIcon;
 
-import com.sun.midp.midlet.*;
+import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.midletsuite.*;
 
@@ -140,10 +142,6 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
     private Command okCmd =
         new Command(Resource.getString(ResourceConstants.CONTINUE),
                     Command.OK, 1);
-    /** Command object for "OK" command for exception form. */
-    private Command exceptionCmd =
-        new Command(Resource.getString(ResourceConstants.OK),
-                    Command.OK, 1);
     /** Command object for "Yes" command for keep RMS form. */
     private Command keepRMSCmd =
         new Command(Resource.getString(ResourceConstants.YES),
@@ -175,6 +173,8 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
     /**
      * Gets an image from the internal storage.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      *
      * IMPL_NOTE: this method should be moved somewhere.
      *
@@ -185,10 +185,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         String imageFileName;
         byte[] imageBytes;
 
-        MIDletStateHandler midletStateHandler =
-            MIDletStateHandler.getMidletStateHandler();
-        MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         imageFileName = File.getStorageRoot(Constants.INTERNAL_STORAGE_ID) +
             imageName;
@@ -575,13 +572,11 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
      * Initialize the settings database if it doesn't exist. This may create
      * two entries. The first will be for the download url, the second will
      * be for storing the storagename of the currently selected midlet
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      */
     public static void initSettings() {
-        MIDletStateHandler midletStateHandler =
-            MIDletStateHandler.getMidletStateHandler();
-        MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
-
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         try {
             RecordStore settings = RecordStore.
@@ -609,6 +604,8 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
     /**
      * Save the settings the user entered.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      *
      * @param url the url to save
      * @param curMidlet suiteId of the currently selected midlet
@@ -616,11 +613,8 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
      */
     public static Exception saveSettings(String url, int curMidlet) {
         Exception ret = null;
-        MIDletStateHandler midletStateHandler =
-            MIDletStateHandler.getMidletStateHandler();
-        MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
 
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         try {
             String temp;
@@ -1451,29 +1445,30 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
         lastDisplayChange = System.currentTimeMillis();
         display.setCurrent(successAlert, new Form(""));
-            // this Form is never displayed
+        // this Form is never displayed
     }
 
     /**
-     * Alert the user that an action was canceled. The backgroundInstaller
-     * will hide the message.
+     * Alert the user that an action was canceled.
+     *
      * @param message message to display to user
      */
     private void displayCancelledMessage(String message) {
-        Form form;
         Image icon;
-
-        form = new Form(null);
+        Alert cancelAlert;
 
         icon = getImageFromInternalStorage("_ack8");
-        form.append(new ImageItem(null, icon, ImageItem.LAYOUT_CENTER +
-                                     ImageItem.LAYOUT_NEWLINE_BEFORE +
-                                     ImageItem.LAYOUT_NEWLINE_AFTER, null));
 
-        form.append(message);
+        cancelAlert = new Alert(null, message, icon, null);
 
-        display.setCurrent(form);
+        cancelAlert.setTimeout(Alert.FOREVER);
+        cancelAlert.setCommandListener(this);
+
+        // We need to prevent "flashing" on fast development platforms.
+        preventScreenFlash();
+
         lastDisplayChange = System.currentTimeMillis();
+        display.setCurrent(cancelAlert);
     }
 
     /**
@@ -1492,7 +1487,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         a.setCommandListener(this);
 
         display.setCurrent(a, new Form(""));
-          // this Form is never displayed
+        // this Form is never displayed
     }
 
     /**
@@ -1606,8 +1601,8 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
                         parent.exit(true);
                     } catch (InvalidJadException ije) {
-                        if (ije.getReason() ==
-                                InvalidJadException.INVALID_JAD_TYPE) {
+                        int reason = ije.getReason();
+                        if (reason == InvalidJadException.INVALID_JAD_TYPE) {
                             // media type of JAD was wrong, it could be a JAR
                             String mediaType = (String)ije.getExtraData();
 
@@ -1624,6 +1619,13 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                 displayListAfterCancelMessage();
                                 break;
                             }
+                        } else if
+                            (reason == InvalidJadException.ALREADY_INSTALLED ||
+                             reason == InvalidJadException.OLD_VERSION ||
+                             reason == InvalidJadException.NEW_VERSION) {
+                            // user has canceled the update operation,
+                            // don't display an error message 
+                            break;
                         }
 
                         msg = translateJadException(ije, name, null, null, url);

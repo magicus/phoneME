@@ -1,22 +1,22 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *
+ * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- *
+ * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -24,12 +24,6 @@
 
 package com.sun.midp.jump.push.executive;
 
-import com.sun.jump.common.JUMPAppModel;
-import com.sun.jump.common.JUMPApplication;
-import com.sun.jump.module.installer.JUMPInstallerModuleFactory;
-import com.sun.jump.module.lifecycle.JUMPApplicationLifecycleModule;
-import com.sun.jump.module.lifecycle.JUMPApplicationLifecycleModuleFactory;
-import com.sun.midp.jump.installer.MIDLETInstallerImpl;
 import com.sun.midp.jump.push.executive.persistence.Store;
 import com.sun.midp.push.gcf.ReservationDescriptor;
 import com.sun.midp.push.gcf.ReservationDescriptorFactory;
@@ -56,45 +50,16 @@ final class PushController {
      * @param store Store to use
      * (cannot be <code>null</code>)
      *
+     * @param lifecycleAdapter lifecycle adapter to use
+     * (cannot be <code>null</code>)
+     *
      * @param reservationDescriptorFactory reservation descriptor factory
      * (cannot be <code>null</code>)
      */
     public PushController(
             final Store store,
+            final LifecycleAdapter lifecycleAdapter,
             final ReservationDescriptorFactory reservationDescriptorFactory) {
-        /*
-         * IMPL_NOTE: not an ideal solution as it introduces
-         * implementation dependencies.  However pragmatically good enough
-         */
-        final MIDLETInstallerImpl midletInstaller = (MIDLETInstallerImpl)
-                    JUMPInstallerModuleFactory
-                        .getInstance()
-                        .getModule(JUMPAppModel.MIDLET);
-        if (midletInstaller == null) {
-            throw new RuntimeException("failed to obtain midlet installer");
-        }
-
-        final JUMPApplicationLifecycleModule lifecycleModule =
-                JUMPApplicationLifecycleModuleFactory
-                    .getInstance()
-                    .getModule(JUMPApplicationLifecycleModuleFactory.POLICY_ONE_LIVE_INSTANCE_ONLY);
-        if (lifecycleModule == null) {
-            throw new RuntimeException("failed to obtain lifecycle module");
-        }
-
-        final LifecycleAdapter lifecycleAdapter = new LifecycleAdapter() {
-            public void launchMidlet(final int midletSuiteID,
-                    final String midlet) {
-                final JUMPApplication app = midletInstaller
-                        .getMIDletApplication(midletSuiteID, midlet);
-                if (app == null) {
-                    logError("failed to convert to MIDP application");
-                }
-
-                lifecycleModule.launchApplication(app, new String [0]);
-            }
-        };
-
         this.alarmController = new AlarmController(store, lifecycleAdapter);
         this.connectionController = new ConnectionController(
                 store, reservationDescriptorFactory, lifecycleAdapter);

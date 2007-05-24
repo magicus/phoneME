@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.midp.security;
@@ -37,6 +37,12 @@ import com.sun.midp.i18n.ResourceConstants;
  * add a new security domain.
  */
 public final class Permissions {
+
+    /** Name of the MIDP permission. */
+    public static final String MIDP_PERMISSION_NAME = "com.sun.midp";
+
+    /** Name of the AMS permission. */
+    public static final String AMS_PERMISSION_NAME = "com.sun.midp.ams";
 
     /** Binding name of the Manufacturer domain. (all permissions allowed) */
     public static final String MANUFACTURER_DOMAIN_BINDING = "manufacturer";
@@ -75,7 +81,7 @@ public final class Permissions {
 
     /** com.sun.midp permission ID. */
     public static final int MIDP = 0;
-    /** com.sun.midp.midletsuite.ams permission ID. */
+    /** com.sun.midp.ams permission ID. */
     public static final int AMS = 1;
     /** javax.microedition.io.Connector.http permission ID. */
     public static final int HTTP = 2;
@@ -191,8 +197,8 @@ public final class Permissions {
     /*
      * IMPL_NOTE: if this value is changed, the appropriate change should be
      * made in suitestore_installer.c under ENABLE_CONTROL_ARGS_FROM_JAD
-     * section. NUMBER_OF_PERMISSIONS was not moved to *.xml because it is never
-     * used in native in normal case (i.e. when
+     * section. NUMBER_OF_PERMISSIONS was not moved to *.xml because it is
+     * never used in native in normal case (i.e. when
      * ENABLE_CONTROL_ARGS_FROM_JAD=false).
      */
     /** Number of permissions. */
@@ -355,8 +361,8 @@ public final class Permissions {
 
     /** Permission specifications. */
     static final PermissionSpec[] permissionSpecs = {
-        new PermissionSpec("com.sun.midp", NEVER_GROUP),
-        new PermissionSpec("com.sun.midp.midletsuite.ams", NEVER_GROUP),
+        new PermissionSpec(MIDP_PERMISSION_NAME, NEVER_GROUP),
+        new PermissionSpec(AMS_PERMISSION_NAME, NEVER_GROUP),
         new PermissionSpec("javax.microedition.io.Connector.http",
             NET_ACCESS_GROUP),
         new PermissionSpec("javax.microedition.io.Connector.socket",
@@ -530,6 +536,25 @@ public final class Permissions {
         }
 
         return permissionSpecs[permission].group.getRuntimeOneshotQuestion();
+    }
+
+    /**
+     * Get the ID of a permission.
+     *
+     * @param name permission name
+     *
+     * @return permission ID
+     *
+     * @exception SecurityException if the permission is invalid
+     */
+    public static int getId(String name) {
+        for (int i = 0; i < permissionSpecs.length; i++) {
+            if (permissionSpecs[i].name.equals(name)) {
+                return i;
+            }
+        }
+
+        throw new SecurityException(SecurityToken.STD_EX_MSG);
     }
 
     /**

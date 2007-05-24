@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include <sni.h>
@@ -115,30 +115,40 @@ jint nim_process_key(jint id, jint* pInstanceData, jint key, jboolean longPress,
     (void)id;
     (void)pInstanceData;
 
-    printf("nim_process_key(0x%x=%c,long=%i,clear=%i)\n",key,key,longPress,isClearKey);
+    printf("nim_process_key(0x%x='%c',long=%i,clear=%i)\n",key,key,longPress,isClearKey);
     switch((*state)[STATE_NEXT_STATE]) {
     case 0:
-        {
+        {   /* state of initial invocation */
             pcsl_string_status errc = PCSL_STRING_OK;
             locals = (struct _locals*)pcsl_mem_malloc(sizeof(locals));
             locals->x = 0;
             (*state)[STATE_INTERNAL] = (jint)locals;
-            if (0 == isClearKey &&
-                key != Canvas_RIGHT &&
-                key != Canvas_UP &&
-                key != Canvas_DOWN &&
-                key != Canvas_LEFT &&
-                !longPress) {
-                /* mediator.commit("" + (char)keyCode); */
-                errc = pcsl_string_append_char(stringRes,key);
-                (*state)[STATE_FUNC_TOKEN] = MEDIATOR_COMMIT;
+            if( key >= 0 ) {
+                if (0 == isClearKey &&
+                    key != Canvas_RIGHT &&
+                    key != Canvas_UP &&
+                    key != Canvas_DOWN &&
+                    key != Canvas_LEFT &&
+                    !longPress) {
+                    /* mediator.commit("" + (char)keyCode); */
+                    errc = pcsl_string_append_char(stringRes,key);
+                    (*state)[STATE_FUNC_TOKEN] = MEDIATOR_COMMIT;
+                }
+                (*state)[STATE_NEXT_STATE] = 1;
+                locals->x ++;
+                printf("x=%i\n",locals->x); /* will print 1 */
+                return (errc != PCSL_STRING_OK) ? -1 : 1;
+            } else {
+                /* check if it is 'select', that is, 'enter' */
+                (*state)[STATE_NEXT_STATE] = 2;
+                (*state)[STATE_INT_ARG] = key;
+                (*state)[STATE_FUNC_TOKEN] = MEDIATOR_ISNEWLINEKEY;
+                locals->x ++;
+                printf("x=%i\n",locals->x); /* will print 1 */
+                return 0;
             }
-            (*state)[STATE_NEXT_STATE] = 1;
-            locals->x ++;
-            printf("x=%i\n",locals->x); /* will print 1 */
-            return (errc != PCSL_STRING_OK) ? -1 : 1;
         }
-    case 1:
+    case 1: /* state after mediator.commit */
         {
             locals = (struct _locals*)(*state)[STATE_INTERNAL];
 
@@ -150,7 +160,23 @@ jint nim_process_key(jint id, jint* pInstanceData, jint key, jboolean longPress,
             (*state)[STATE_NEXT_STATE] = 0; /* will exit */
             (*state)[STATE_FINAL_RES] = -3; /* as in Java */
 
-            return 0;
+            return 0; /* no string  returned */
+        }
+    case 2:
+        {   /* state after calling mediator.isNewlineKey */
+            pcsl_string_status errc = PCSL_STRING_OK;
+            locals = (struct _locals*)(*state)[STATE_INTERNAL];
+
+            locals->x ++;
+            printf("x=%i check_for_enter=%i\n",locals->x,
+                                (*state)[STATE_CALLBACK_RES]);
+
+            if (0 != (*state)[STATE_CALLBACK_RES]) { /* it's "enter" key */
+                errc = pcsl_string_append_char(stringRes,'\n');
+                (*state)[STATE_FUNC_TOKEN] = MEDIATOR_COMMIT;
+            }
+            (*state)[STATE_NEXT_STATE] = 1;
+            return (errc != PCSL_STRING_OK) ? -1 : 1;
         }
     default:
         return -1;
