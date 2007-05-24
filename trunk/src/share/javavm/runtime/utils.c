@@ -2038,14 +2038,15 @@ CVMprintSubOptionsUsageString(const CVMSubOptionData* knownSubOptions)
  * java_home values.
  */
 CVMBool
-CVMinitPathValues(void *propsPtr, char *basePath,
-                  char *libPath, char *dllPath)
+CVMinitPathValues(void *propsPtr, const char *basePath,
+                  const char *libPath, const char *dllPath)
 {
     char *p, *p0;
     int i;
     size_t size, len;
     CVMProperties *props = (CVMProperties *)propsPtr;
-    const char *jarNames[] = { CVM_JARFILES, NULL };
+    static const char *const jarNames[] = { CVM_JARFILES, NULL };
+    char *localBasePath;
 
     /* Sanity check */
     CVMassert(propsPtr != NULL && basePath != NULL &&
@@ -2096,11 +2097,24 @@ CVMinitPathValues(void *propsPtr, char *basePath,
     strcpy(p, basePath);
     props->java_home = p;
     p += strlen(p) + 1;
-    /* Record path to native libraries */
-    if (*(basePath+strlen(basePath)-1) == CVM_PATH_LOCAL_DIR_SEPARATOR) {
-	*(basePath+strlen(basePath)-1) = '\0';
+
+    /* Make a local copy of basePath without any trailing separator,
+       so it's easy to create paths like basePath + separator + dir. */
+
+    localBasePath = strdup(basePath);
+    if (localBasePath == NULL) {
+	free(p0);
+	return CVM_FALSE;
     }
-    strcpy(p, basePath);
+
+    if (strlen(localBasePath) >= 1 &&
+	*(localBasePath + strlen(localBasePath) - 1) ==
+	CVM_PATH_LOCAL_DIR_SEPARATOR) {
+	*(localBasePath + strlen(basePath) - 1) = '\0';
+    }
+
+    /* Record path to native libraries */
+    strcpy(p, localBasePath);
 
     *(p+strlen(p)) = CVM_PATH_LOCAL_DIR_SEPARATOR;
     *(p+strlen(p)+1) = '\0';
@@ -2114,7 +2128,7 @@ CVMinitPathValues(void *propsPtr, char *basePath,
         if (i > 0) {
             strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
         }
-        strcat(p, basePath);
+        strcat(p, localBasePath);
         *(p+strlen(p)) = CVM_PATH_LOCAL_DIR_SEPARATOR;
         *(p+strlen(p)+1) = '\0'; 
         strcat(p, libPath);
@@ -2131,7 +2145,7 @@ CVMinitPathValues(void *propsPtr, char *basePath,
      * jarfile.
      */
     *p = '\0';
-    strcat(p, basePath);
+    strcat(p, localBasePath);
     *(p+strlen(p)) = CVM_PATH_LOCAL_DIR_SEPARATOR;
     *(p+strlen(p)+1) = '\0';
     strcat(p, libPath);
@@ -2144,6 +2158,7 @@ CVMinitPathValues(void *propsPtr, char *basePath,
     props->ext_dirs = "";
 #endif /* CVM_HAS_JCE */
     CVMassert(p - p0 <= size);
+    free(localBasePath);
     return CVM_TRUE;
 }
 
