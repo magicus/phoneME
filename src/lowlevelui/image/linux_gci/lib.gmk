@@ -47,8 +47,7 @@ SUBSYSTEM_IMAGE_JAVA_FILES += \
 # vpath for putixel module
 #
 vpath % \
-    $(IMAGE_GCI_DIR)
-#    $(IMAGE_GCI_DIR)/native
+    $(IMAGE_GCI_DIR)/native
 
 # Native files for putpixel module
 SUBSYSTEM_IMAGE_NATIVE_FILES += \

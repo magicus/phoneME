@@ -53,7 +53,7 @@ SUBSYSTEM_IMAGEAPI_JAVA_FILES += \
 # vpath for the library
 #
 vpath % \
-    $(IMAGE_API_DIR)
+    $(IMAGE_API_DIR)/native
 
 
 # Native files for common module
