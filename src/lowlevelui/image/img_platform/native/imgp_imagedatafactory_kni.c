@@ -41,6 +41,7 @@
 #include <midpResourceLimit.h>
 #include <midpUtilKni.h>
 
+#include <imgapi_image.h>
 #include <gxpport_immutableimage.h>
 #include <gxpport_mutableimage.h>
 
