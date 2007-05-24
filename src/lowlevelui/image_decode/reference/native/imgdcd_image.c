@@ -33,16 +33,16 @@
 #include <imgdcd_image_util.h>
 
 /* PNG file header */
-const unsigned char gxutl_png_header[16] = {0x89, 'P', 'N', 'G',
+const unsigned char imgdcd_png_header[16] = {0x89, 'P', 'N', 'G',
 				      0x0d, 0x0a, 0x1a, 0x0a,
 				      0x00, 0x00, 0x00, 0x0d,
 				      0x49, 0x48, 0x44, 0x52};
 
 /* JPEG file header */
-const unsigned char gxutl_jpeg_header[4] = {0xff, 0xd8, 0xff, 0xe0};
+const unsigned char imgdcd_jpeg_header[4] = {0xff, 0xd8, 0xff, 0xe0};
 
 /* RAW platform dependent image file header */
-const unsigned char gxutl_raw_header[4] = {0x89, 'S', 'U', 'N'};
+const unsigned char imgdcd_raw_header[4] = {0x89, 'S', 'U', 'N'};
 
 /**
  * Identify image format from a given image buffer.
@@ -58,28 +58,28 @@ const unsigned char gxutl_raw_header[4] = {0x89, 'S', 'U', 'N'};
  *		MIDP_ERROR_UNSUPPORTED
  *		MIDP_ERROR_IMAGE_CORRUPTED
  */
-MIDP_ERROR gxutl_image_get_info(unsigned char *imgBuf,
+MIDP_ERROR imgdcd_image_get_info(unsigned char *imgBuf,
 			        unsigned int length,
-			        gxutl_image_format *format,
+			        imgdcd_image_format *format,
 			        unsigned int *width,
 			        unsigned int *height) {
 
     /* check for a PNG header signature */
     if ((length >= 4 + 8) &&
-        (memcmp(imgBuf, &gxutl_raw_header, 4) == 0)) {
+        (memcmp(imgBuf, &imgdcd_raw_header, 4) == 0)) {
 
-	*format = GXUTL_IMAGE_FORMAT_RAW;
+	*format = IMGDCD_IMAGE_FORMAT_RAW;
 
 	/* Assume default endian */
-	*width  = ((gxutl_image_buffer_raw *)imgBuf)->width;
-	*height = ((gxutl_image_buffer_raw *)imgBuf)->height;
+	*width  = ((imgdcd_image_buffer_raw *)imgBuf)->width;
+	*height = ((imgdcd_image_buffer_raw *)imgBuf)->height;
 
 	return MIDP_ERROR_NONE;
 
     } else if ((length >= 16 + 8) &&
-	       (memcmp(imgBuf, &gxutl_png_header, 16) == 0)) {
+	       (memcmp(imgBuf, &imgdcd_png_header, 16) == 0)) {
 
-        *format = GXUTL_IMAGE_FORMAT_PNG;
+        *format = IMGDCD_IMAGE_FORMAT_PNG;
 
 	/* Big endian */
 	*width  = (imgBuf[16] << 24) |
@@ -95,10 +95,10 @@ MIDP_ERROR gxutl_image_get_info(unsigned char *imgBuf,
 	return MIDP_ERROR_NONE;
 
     } else if ((length >= 4 + 8) &&
-               (memcmp(imgBuf, &gxutl_jpeg_header, 4) == 0)) {
+               (memcmp(imgBuf, &imgdcd_jpeg_header, 4) == 0)) {
         unsigned int i, field_len;
 
-	*format = GXUTL_IMAGE_FORMAT_JPEG;
+	*format = IMGDCD_IMAGE_FORMAT_JPEG;
 
 	/*
          * Find SOF (Start Of Frame) marker:
@@ -147,7 +147,7 @@ MIDP_ERROR gxutl_image_get_info(unsigned char *imgBuf,
 
         return MIDP_ERROR_IMAGE_CORRUPTED;
     } else {
-        *format = GXUTL_IMAGE_FORMAT_UNSUPPORTED;
+        *format = IMGDCD_IMAGE_FORMAT_UNSUPPORTED;
         return MIDP_ERROR_UNSUPPORTED;
     }
 }

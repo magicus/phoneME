@@ -30,6 +30,10 @@
 #include <commonKNIMacros.h>
 #include <midpError.h>
 
+#include <gxutl_image_errorcodes.h>
+#include <imgapi_image.h>
+
+
 /**
  * @file
  * @ingroup lowui_gx
@@ -40,6 +44,29 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * Gets an ARGB integer array from this image. The
+ * array consists of values in the form of 0xAARRGGBB.
+ *
+ * @param imageData The ImageData to read the ARGB data from
+ * @param rgbBuffer The target integer array for the ARGB data
+ * @param offset Zero-based index of first ARGB pixel to be saved
+ * @param scanlen Number of intervening pixels between pixels in
+ *                the same column but in adjacent rows
+ * @param x The x coordinate of the upper left corner of the
+ *          selected region
+ * @param y The y coordinate of the upper left corner of the
+ *          selected region
+ * @param width The width of the selected region
+ * @param height The height of the selected region
+ */
+extern void img_get_argb(const java_imagedata * srcImageDataPtr, 
+			 jint * rgbBuffer, 
+			 jint offset,
+			 jint scanlen,
+			 jint x, jint y, jint width, jint height,
+			 gxutl_native_image_error_codes * errorPtr);
 
 
 /**
@@ -61,10 +88,11 @@ extern "C" {
  *		MIDP_ERROR_OUT_OF_RESOURCE,
  *		MIDP_ERROR_IMAGE_CORRUPTED
  */
-MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
-				unsigned int length,
-				unsigned char** ret_dataBuffer,
-				unsigned int* ret_length);
+MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
+				 unsigned int length,
+				 unsigned char** ret_dataBuffer,
+				 unsigned int* ret_length);
+
 
 #ifdef __cplusplus
 }

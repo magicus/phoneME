@@ -59,7 +59,7 @@ typedef struct {
 
 static
 bool load_raw(QImage** qimage,
-	     gxutl_image_buffer_raw* rawImageBuffer, unsigned int length,
+	     imgdcd_image_buffer_raw* rawImageBuffer, unsigned int length,
              jboolean isStatic, int* ret_Width, int* ret_Height);
 
 /**
@@ -265,13 +265,13 @@ extern "C" void gxpport_decodeimmutable_from_selfidentifying
  gxpport_image_native_handle *newImmutableImagePtr,
  gxutl_native_image_error_codes* creationErrorPtr) {
     MIDP_ERROR err;
-    gxutl_image_format format;
+    imgdcd_image_format format;
     unsigned int w, h;
 
-    err = gxutl_image_get_info(srcBuffer, (unsigned int)length,
+    err = imgdcd_image_get_info(srcBuffer, (unsigned int)length,
 			       &format, &w, &h);
 
-    if (err != MIDP_ERROR_NONE || format == GXUTL_IMAGE_FORMAT_UNSUPPORTED) {
+    if (err != MIDP_ERROR_NONE || format == IMGDCD_IMAGE_FORMAT_UNSUPPORTED) {
         *creationErrorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
         return;
     }
@@ -296,8 +296,8 @@ extern "C" void gxpport_decodeimmutable_from_selfidentifying
 
     switch(format) {
 
-    case GXUTL_IMAGE_FORMAT_JPEG:
-    case GXUTL_IMAGE_FORMAT_PNG:
+    case IMGDCD_IMAGE_FORMAT_JPEG:
+    case IMGDCD_IMAGE_FORMAT_PNG:
         immutableImage->qimage = new QImage();
         if (NULL == immutableImage->qimage) {
             *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
@@ -323,9 +323,9 @@ extern "C" void gxpport_decodeimmutable_from_selfidentifying
 
         break;
 
-    case GXUTL_IMAGE_FORMAT_RAW:
+    case IMGDCD_IMAGE_FORMAT_RAW:
         loadResult = load_raw(&immutableImage->qimage,
-                             (gxutl_image_buffer_raw*)srcBuffer, 
+                             (imgdcd_image_buffer_raw*)srcBuffer, 
                              (unsigned int)length, KNI_FALSE,
                              imgWidth, imgHeight);
 	immutableImage->marker = 5;
@@ -602,11 +602,11 @@ extern "C" void gxpport_decodeimmutable_to_platformbuffer
  unsigned char** ret_dataBuffer, long* ret_length,
  gxutl_native_image_error_codes* creationErrorPtr) {
 
-    gxutl_image_format format;
+    imgdcd_image_format format;
     MIDP_ERROR err;
     unsigned int w, h;
 
-    err = gxutl_image_get_info(srcBuffer, (unsigned int)length,
+    err = imgdcd_image_get_info(srcBuffer, (unsigned int)length,
 			       &format, &w, &h);
     
     switch (err) {
@@ -625,7 +625,7 @@ extern "C" void gxpport_decodeimmutable_to_platformbuffer
 		     
     switch (format) {
 
-    case GXUTL_IMAGE_FORMAT_RAW:
+    case IMGDCD_IMAGE_FORMAT_RAW:
         /* already in RAW format. make a copy */
 	{
 	    unsigned char* dataBuffer = (unsigned char*) midpMalloc(length);
@@ -644,8 +644,8 @@ extern "C" void gxpport_decodeimmutable_to_platformbuffer
 	}
         break;
 
-    case GXUTL_IMAGE_FORMAT_JPEG:
-    case GXUTL_IMAGE_FORMAT_PNG:
+    case IMGDCD_IMAGE_FORMAT_JPEG:
+    case IMGDCD_IMAGE_FORMAT_PNG:
         {
             QImage qimage;
             
@@ -664,11 +664,11 @@ extern "C" void gxpport_decodeimmutable_to_platformbuffer
                         image = qimage;
                     }
                     
-                    *ret_length = offsetof(gxutl_image_buffer_raw, data)
+                    *ret_length = offsetof(imgdcd_image_buffer_raw, data)
 				+ image.numBytes();
 
-                    gxutl_image_buffer_raw *dataBuffer =
-			(gxutl_image_buffer_raw *) midpMalloc(*ret_length);
+                    imgdcd_image_buffer_raw *dataBuffer =
+			(imgdcd_image_buffer_raw *) midpMalloc(*ret_length);
                     
                     if (NULL == dataBuffer) {
                         *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
@@ -677,7 +677,7 @@ extern "C" void gxpport_decodeimmutable_to_platformbuffer
                         dataBuffer->height   = (unsigned int)imgHeight;
                         dataBuffer->hasAlpha = (unsigned int)image.hasAlphaBuffer();
                         
-                        memcpy(dataBuffer->header, gxutl_raw_header, 4);
+                        memcpy(dataBuffer->header, imgdcd_raw_header, 4);
                         memcpy(dataBuffer->data, image.bits(), image.numBytes());
                         
                         *ret_dataBuffer = (unsigned char *)dataBuffer;
@@ -704,7 +704,7 @@ extern "C" void gxpport_loadimmutable_from_platformbuffer
  gxutl_native_image_error_codes* creationErrorPtr) {
 
     int rscSize;
-    gxutl_image_buffer_raw* dataBuffer = (gxutl_image_buffer_raw*)srcBuffer;
+    imgdcd_image_buffer_raw* dataBuffer = (imgdcd_image_buffer_raw*)srcBuffer;
 
     /* Check resource limit */
     rscSize = ImgRegionRscSize(NULL, dataBuffer->width, dataBuffer->height);
@@ -785,14 +785,14 @@ extern "C" QPixmap* gxpportqt_get_immutableimage_pixmap
  * @return ret_Height the height of the decoded image
  */
 static 
-bool load_raw(QImage** qimage, gxutl_image_buffer_raw* rawImageBuffer, 
+bool load_raw(QImage** qimage, imgdcd_image_buffer_raw* rawImageBuffer, 
 	      unsigned int length,
              jboolean isStatic, int* ret_Width, int* ret_Height) {
 
     bool retVal = FALSE;
     
     /* Check buffer size */
-    if (offsetof(gxutl_image_buffer_raw, data)
+    if (offsetof(imgdcd_image_buffer_raw, data)
 	+ rawImageBuffer->width * rawImageBuffer->height * 4
 	== length) {
 

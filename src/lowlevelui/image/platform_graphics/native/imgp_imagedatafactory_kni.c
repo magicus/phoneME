@@ -41,7 +41,6 @@
 #include <midpResourceLimit.h>
 #include <midpUtilKni.h>
 
-#include <gx_image.h>
 #include <gxpport_immutableimage.h>
 #include <gxpport_mutableimage.h>
 
@@ -74,6 +73,44 @@ gxpport_image_native_handle gxp_get_imagedata(jobject imgData) {
 }
 
 /**
+ * Gets an ARGB integer array from this <tt>ImageData</tt>. The
+ * array consists of values in the form of 0xAARRGGBB.
+ *
+ * @param imageData The ImageData to read the ARGB data from
+ * @param rgbBuffer The target integer array for the ARGB data
+ * @param offset Zero-based index of first ARGB pixel to be saved
+ * @param scanlen Number of intervening pixels between pixels in
+ *                the same column but in adjacent rows
+ * @param x The x coordinate of the upper left corner of the
+ *          selected region
+ * @param y The y coordinate of the upper left corner of the
+ *          selected region
+ * @param width The width of the selected region
+ * @param height The height of the selected region
+ */
+extern void img_get_argb(const java_imagedata * srcImageDataPtr, 
+		       jint * rgbBuffer, 
+		       jint offset,
+		       jint scanlength,
+		       jint x, jint y, jint width, jint height,
+		       gxutl_native_image_error_codes * errorPtr) {
+  gxpport_mutableimage_native_handle srcImageNativeData =
+    (gxpport_mutableimage_native_handle)srcImageDataPtr->nativeImageData;    
+
+  if (srcImageDataPtr->isMutable) {
+    gxpport_get_mutable_argb(srcImageNativeData,
+			    rgbBuffer, offset, scanlength,
+			    x, y, width, height, 
+			    errorPtr);
+  } else {
+    gxpport_get_immutable_argb(srcImageNativeData,
+			      rgbBuffer, offset, scanlength,
+			      x, y, width, height, 
+			      errorPtr);
+  }
+}
+
+/**
  * Decodes the given input data into a native platform representation that can
  * be saved.  The input data should be in a self-identifying format; that is,
  * the data must contain a description of the decoding process.
@@ -89,7 +126,7 @@ gxpport_image_native_handle gxp_get_imagedata(jobject imgData) {
  *              MIDP_ERROR_OUT_OF_RESOURCE,
  *              MIDP_ERROR_IMAGE_CORRUPTED
  */
-MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
+MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
 				unsigned int length,
 				unsigned char** ret_dataBuffer,
 				unsigned int* ret_length) {

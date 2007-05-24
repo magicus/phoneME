@@ -36,8 +36,6 @@
 
 #include <gxutl_graphics.h>
 #include <gxutl_image_errorcodes.h>
-#include <gx_image.h>
-#include <imgdcd_image_util.h>
 
 #include "gxj_intern_graphics.h"
 #include "gxj_intern_image.h"
@@ -497,58 +495,6 @@ copy_imageregion(gxj_screen_buffer* src, gxj_screen_buffer* dest, const jshort *
     }
 }
 
-/**
- * Gets an ARGB integer array from this <tt>ImageData</tt>. The
- * array consists of values in the form of 0xAARRGGBB.
- *
- * @param imageData The ImageData to read the ARGB data from
- * @param rgbBuffer The target integer array for the ARGB data
- * @param offset Zero-based index of first ARGB pixel to be saved
- * @param scanlength Number of intervening pixels between pixels in
- *                the same column but in adjacent rows
- * @param x The x coordinate of the upper left corner of the
- *          selected region
- * @param y The y coordinate of the upper left corner of the
- *          selected region
- * @param width The width of the selected region
- * @param height The height of the selected region
- */
-void gx_get_argb(const java_imagedata * srcImageDataPtr,
-		 jint * rgbBuffer,
-		 jint offset,
-		 jint scanlength,
-		 jint x, jint y, jint width, jint height,
-		 gxutl_native_image_error_codes * errorPtr) {
-  gxj_screen_buffer sbuf;
-  if (gxj_get_image_screen_buffer_impl(srcImageDataPtr, &sbuf, NULL) != NULL) {
-    // rgbData[offset + (a - x) + (b - y) * scanlength] = P(a, b);
-    // P(a, b) = rgbData[offset + (a - x) + (b - y) * scanlength]
-    // x <= a < x + width
-    // y <= b < y + height
-    int a, b, pixel, alpha;
-
-    if (sbuf.alphaData != NULL) {
-      for (b = y; b < y + height; b++) {
-	for (a = x; a < x + width; a++) {
-	  pixel = sbuf.pixelData[b*sbuf.width + a];
-	  alpha = sbuf.alphaData[b*sbuf.width + a];
-	  rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
-	    (alpha << 24) + GXJ_RGB16TORGB24(pixel);
-	}
-      }
-    } else {
-      for (b = y; b < y + height; b++) {
-	for (a = x; a < x + width; a++) {
-	  pixel = sbuf.pixelData[b*sbuf.width + a];
-	  rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
-	    GXJ_RGB16TORGB24(pixel) | 0xFF000000;
-	}
-      }
-    }
-  }
-
-  * errorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
-}
 
 /**
  * Draws the specified image at the given coordinates.

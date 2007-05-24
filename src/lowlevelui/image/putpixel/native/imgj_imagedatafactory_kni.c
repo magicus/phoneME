@@ -114,19 +114,19 @@ gxj_screen_buffer* gxj_get_image_screen_buffer_impl(const java_imagedata *img,
  *              MIDP_ERROR_OUT_OF_RESOURCE,
  *              MIDP_ERROR_IMAGE_CORRUPTED
  */
-MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
-				   unsigned int length,
-				   unsigned char** ret_dataBuffer,
-				   unsigned int* ret_length) {
+MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
+				 unsigned int length,
+				 unsigned char** ret_dataBuffer,
+				 unsigned int* ret_length) {
 
     unsigned int pixelSize, alphaSize;
-    gxutl_image_format format;
+    imgdcd_image_format format;
     MIDP_ERROR err;
     gxj_screen_buffer sbuf;
-    gxutl_image_buffer_raw *rawBuffer;
+    imgdcd_image_buffer_raw *rawBuffer;
     gxutl_native_image_error_codes creationError = GXUTL_NATIVE_IMAGE_NO_ERROR;
 
-    err = gxutl_image_get_info(srcBuffer, length,
+    err = imgdcd_image_get_info(srcBuffer, length,
 			    &format, (unsigned int *)&sbuf.width,
 			    (unsigned int *)&sbuf.height);
     if (err != MIDP_ERROR_NONE) {
@@ -138,15 +138,15 @@ MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
 
     switch (format) {
 
-    case GXUTL_IMAGE_FORMAT_JPEG:
+    case IMGDCD_IMAGE_FORMAT_JPEG:
 	/* JPEG does not contain alpha data */
 	alphaSize = 0;
 	/* Fall through */
 
-    case GXUTL_IMAGE_FORMAT_PNG:
+    case IMGDCD_IMAGE_FORMAT_PNG:
 	/* Decode PNG/JPEG to screen buffer format */
-	rawBuffer = (gxutl_image_buffer_raw *)
-	  midpMalloc(offsetof(gxutl_image_buffer_raw, data)+pixelSize+alphaSize);
+	rawBuffer = (imgdcd_image_buffer_raw *)
+	  midpMalloc(offsetof(imgdcd_image_buffer_raw, data)+pixelSize+alphaSize);
 
 	if (rawBuffer == NULL) {
 	    return MIDP_ERROR_OUT_MEM;
@@ -154,7 +154,7 @@ MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
 
 	sbuf.pixelData = (gxj_pixel_type *)rawBuffer->data;
 
-	if (format == GXUTL_IMAGE_FORMAT_PNG) {
+	if (format == IMGDCD_IMAGE_FORMAT_PNG) {
 	    sbuf.alphaData = rawBuffer->data + pixelSize;
 
 	    rawBuffer->hasAlpha = decode_png(srcBuffer, length,
@@ -183,16 +183,16 @@ MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
 	    return MIDP_ERROR_IMAGE_CORRUPTED;
 	}
 
-	memcpy(rawBuffer->header, gxutl_raw_header, 4);
+	memcpy(rawBuffer->header, imgdcd_raw_header, 4);
 	rawBuffer->width  = sbuf.width;		/* Use default endian */
 	rawBuffer->height = sbuf.height;	/* Use default endian */
 
 	*ret_dataBuffer = (unsigned char *)rawBuffer;
-	*ret_length = offsetof(gxutl_image_buffer_raw, data)+pixelSize+alphaSize;
+	*ret_length = offsetof(imgdcd_image_buffer_raw, data)+pixelSize+alphaSize;
 
 	return MIDP_ERROR_NONE;
 
-    case GXUTL_IMAGE_FORMAT_RAW:
+    case IMGDCD_IMAGE_FORMAT_RAW:
 	/* Already in screen buffer format, simply copy the data */
 	*ret_dataBuffer = (unsigned char *)midpMalloc(length);
 	if (*ret_dataBuffer == NULL) {
@@ -206,6 +206,59 @@ MIDP_ERROR gx_decode_data2cache(unsigned char* srcBuffer,
     default:
 	return MIDP_ERROR_UNSUPPORTED;
     } /* switch (image_type) */
+}
+
+/**
+ * Gets an ARGB integer array from this <tt>ImageData</tt>. The
+ * array consists of values in the form of 0xAARRGGBB.
+ *
+ * @param imageData The ImageData to read the ARGB data from
+ * @param rgbBuffer The target integer array for the ARGB data
+ * @param offset Zero-based index of first ARGB pixel to be saved
+ * @param scanlength Number of intervening pixels between pixels in
+ *                the same column but in adjacent rows
+ * @param x The x coordinate of the upper left corner of the
+ *          selected region
+ * @param y The y coordinate of the upper left corner of the
+ *          selected region
+ * @param width The width of the selected region
+ * @param height The height of the selected region
+ */
+void img_get_argb(const java_imagedata * srcImageDataPtr,
+		 jint * rgbBuffer,
+		 jint offset,
+		 jint scanlength,
+		 jint x, jint y, jint width, jint height,
+		 gxutl_native_image_error_codes * errorPtr) {
+  gxj_screen_buffer sbuf;
+  if (gxj_get_image_screen_buffer_impl(srcImageDataPtr, &sbuf, NULL) != NULL) {
+    // rgbData[offset + (a - x) + (b - y) * scanlength] = P(a, b);
+    // P(a, b) = rgbData[offset + (a - x) + (b - y) * scanlength]
+    // x <= a < x + width
+    // y <= b < y + height
+    int a, b, pixel, alpha;
+
+    if (sbuf.alphaData != NULL) {
+      for (b = y; b < y + height; b++) {
+	for (a = x; a < x + width; a++) {
+	  pixel = sbuf.pixelData[b*sbuf.width + a];
+	  alpha = sbuf.alphaData[b*sbuf.width + a];
+	  rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
+	    (alpha << 24) + GXJ_RGB16TORGB24(pixel);
+	}
+      }
+    } else {
+      for (b = y; b < y + height; b++) {
+	for (a = x; a < x + width; a++) {
+	  pixel = sbuf.pixelData[b*sbuf.width + a];
+	  rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
+	    GXJ_RGB16TORGB24(pixel) | 0xFF000000;
+	}
+      }
+    }
+  }
+
+  * errorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
 }
 
 /**
@@ -255,7 +308,7 @@ static int gx_load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
     int imageSize;
     int pixelSize, alphaSize;
     int status = KNI_FALSE;
-    gxutl_image_buffer_raw *rawBuffer = NULL;
+    imgdcd_image_buffer_raw *rawBuffer = NULL;
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(pixelData);
@@ -279,8 +332,8 @@ static int gx_load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
         }
 
         /** Check header */
-        rawBuffer = (gxutl_image_buffer_raw *)(nativeBuffer + offset);
-        if (memcmp(rawBuffer->header, gxutl_raw_header, 4) != 0) {
+        rawBuffer = (imgdcd_image_buffer_raw *)(nativeBuffer + offset);
+        if (memcmp(rawBuffer->header, imgdcd_raw_header, 4) != 0) {
             REPORT_ERROR(LC_LOWUI, "Unexpected raw image type");
             break;
         }
@@ -294,7 +347,7 @@ static int gx_load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
 
         /** Check data array length */
         if ((unsigned int)length !=
-            (offsetof(gxutl_image_buffer_raw, data)
+            (offsetof(imgdcd_image_buffer_raw, data)
                 + pixelSize + alphaSize)) {
             REPORT_ERROR(LC_LOWUI, "Raw image is corrupted");
             break;
@@ -314,7 +367,7 @@ static int gx_load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
             if (!KNI_IsNullHandle(javaBuffer)) {
                 nativeBuffer = gx_get_java_byte_buffer(KNIPASSARGS
                     javaBuffer, offset, length);
-                rawBuffer = (gxutl_image_buffer_raw *)
+                rawBuffer = (imgdcd_image_buffer_raw *)
                     (nativeBuffer + offset);
             }
             memcpy(JavaByteArray(alphaData),
@@ -332,7 +385,7 @@ static int gx_load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
         if (!KNI_IsNullHandle(javaBuffer)) {
             nativeBuffer = gx_get_java_byte_buffer(KNIPASSARGS
                 javaBuffer, offset, length);
-            rawBuffer = (gxutl_image_buffer_raw *)
+            rawBuffer = (imgdcd_image_buffer_raw *)
                 (nativeBuffer + offset);
         }
 	    memcpy(JavaByteArray(pixelData), rawBuffer->data, pixelSize);
@@ -624,7 +677,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
     int imageSize;
     int expectedLength;
 
-    gxutl_image_buffer_raw *rawBuffer;
+    imgdcd_image_buffer_raw *rawBuffer;
     java_imagedata *midpImageData;
 
     jboolean status = KNI_FALSE;
@@ -634,7 +687,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
     KNI_DeclareHandle(imageData);
     KNI_GetParameterAsObject(1, imageData);
 
-    rawBuffer = (gxutl_image_buffer_raw*)imageDataPtr;
+    rawBuffer = (imgdcd_image_buffer_raw*)imageDataPtr;
 
     do {
         if (rawBuffer == NULL) {
@@ -645,7 +698,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
         }
 
         /** Check header */
-        if (memcmp(rawBuffer->header, gxutl_raw_header, 4) != 0) {
+        if (memcmp(rawBuffer->header, imgdcd_raw_header, 4) != 0) {
             REPORT_ERROR(LC_LOWUI, "Unexpected romized image type");
 
             status = KNI_FALSE;
@@ -660,7 +713,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
         }
 
         /** Check data array length */
-        expectedLength = offsetof(gxutl_image_buffer_raw, data) +
+        expectedLength = offsetof(imgdcd_image_buffer_raw, data) +
             pixelSize + alphaSize;
         if (imageDataLength != expectedLength) {
             REPORT_ERROR(LC_LOWUI,

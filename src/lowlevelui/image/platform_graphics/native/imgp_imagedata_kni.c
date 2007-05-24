@@ -34,7 +34,7 @@
 
 #include <midpEventUtil.h>
 
-#include <gx_image.h>
+#include <imgapi_image.h>
 #include <gxpport_immutableimage.h>
 
 /**

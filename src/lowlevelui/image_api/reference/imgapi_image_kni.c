@@ -27,8 +27,9 @@
 #include <stdlib.h>
 #include <sni.h>
 #include <midpError.h>
-#include <gx_image.h>
+
 #include <imgapi_image.h>
+#include <img_image.h>
 #include <gxutl_image_errorcodes.h>
 
 
@@ -104,7 +105,7 @@ KNIDECL(javax_microedition_lcdui_Image_getRGB) {
 	    SNI_BEGIN_RAW_POINTERS;
 
             rgbBuffer = JavaIntArray(rgbData);
-	    gx_get_argb(srcImageDataPtr, rgbBuffer,
+	    img_get_argb(srcImageDataPtr, rgbBuffer,
 		       offset, scanlength,
 		       x, y, width, height, &error);
 
