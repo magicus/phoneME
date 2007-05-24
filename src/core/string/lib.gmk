@@ -50,5 +50,4 @@ vpath % $(STRING_DIR)/reference/native
 
 SUBSYSTEM_STRING_NATIVE_FILES += \
     midpDebug.c \
-    midpUtilUTF.c \
     midpString.c
