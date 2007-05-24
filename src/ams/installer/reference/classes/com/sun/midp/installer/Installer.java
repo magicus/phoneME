@@ -1073,9 +1073,11 @@ public abstract class Installer {
                 if (info.jadUrl != null) {
                     checkForJadManifestMismatches();
 
-                    // Check that if MIDlet-Permissions[-Opt] presents in jad
-                    // then it also presents in the manifest (their equality
-                    // was already checked by checkForJadManifestMismatches()).
+                    /*
+                     * Check that if MIDlet-Permissions[-Opt] presents in jad
+                     * then it also presents in the manifest (their equality
+                     * was already checked by checkForJadManifestMismatches()).
+                     */
                     String[] keys = {
                         MIDletSuite.PERMISSIONS_PROP,
                         MIDletSuite.PERMISSIONS_OPT_PROP
