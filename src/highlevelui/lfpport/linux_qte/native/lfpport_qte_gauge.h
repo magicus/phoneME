@@ -127,6 +127,11 @@ class Gauge : public Item {
  * handle focus change.
  */
 class MyProgressBar : public QProgressBar {
+    /**
+     * if lable is on or off 
+     */
+    bool lableOn;
+    bool lableChanged;
 
  public:
     /**
@@ -144,13 +149,19 @@ class MyProgressBar : public QProgressBar {
     ~MyProgressBar();
 
     /**
-     * Change percentage indicator basing on given values.
+     * Shows/hides percentage indicator
      *
-     * @param s message to show
-     * @param value current value
-     * @param maxValue maximum value allowed
+     * @param on if lable should be switched on or off
+     */ 
+     void showLable(bool on);
+
+protected:
+    /**
+     * Called to generate the text displayed. 
+     * Overrided to hide text when gauge is in continuous mode.
      */
-    jboolean setMyIndicator(QString &s, int value, int maxValue);
+    virtual bool setIndicator( QString & progress_str, int progress, int totalSteps);
+
 };
 
 /**
