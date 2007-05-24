@@ -26,5 +26,4 @@
 
 LIB_HEADER_FILES= \
     midpString.h \
-    midpDebug.h \
-    midpUtilUTF.h
+    midpDebug.h

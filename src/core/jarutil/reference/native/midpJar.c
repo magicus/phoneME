@@ -30,7 +30,6 @@
 #include <jar.h>
 #include <midpMalloc.h>
 #include <midpStorage.h>
-#include <midpUtilUTF.h>
 #include <midpJar.h>
 #include <pcsl_string.h>
 
