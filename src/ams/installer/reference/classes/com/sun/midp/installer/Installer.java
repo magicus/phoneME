@@ -1072,6 +1072,28 @@ public abstract class Installer {
                  */
                 if (info.jadUrl != null) {
                     checkForJadManifestMismatches();
+
+                    /*
+                     * Check that if MIDlet-Permissions[-Opt] presents in jad
+                     * then it also presents in the manifest (their equality
+                     * was already checked by checkForJadManifestMismatches()).
+                     */
+                    String[] keys = {
+                        MIDletSuite.PERMISSIONS_PROP,
+                        MIDletSuite.PERMISSIONS_OPT_PROP
+                    };
+
+                    for (int i = 0; i < keys.length; i++) {
+                        if (state.jadProps.getProperty(keys[i]) != null) {
+                            if (state.jarProps.getProperty(keys[i]) == null) {
+                                postInstallMsgBackToProvider(
+                                    OtaNotifier.ATTRIBUTE_MISMATCH_MSG);
+                                throw new InvalidJadException(
+                                    InvalidJadException.ATTRIBUTE_MISMATCH,
+                                        keys[i]);
+                            }
+                        }
+                    }
                 }
 
                 /*
@@ -1761,7 +1783,6 @@ public abstract class Installer {
             byte[] domainPermissions, byte[] permissions, boolean required)
             throws InvalidJadException {
 
-        String jadPermissionLine;
         String reqPermissionLine;
         Vector reqPermissions;
         String permission;
@@ -1891,7 +1912,6 @@ public abstract class Installer {
      * Can only be called by JAM for testing.
      *
      * @param domain name of a security domain
-     * @param allowedPermissions list of permissions that must be allowed even
      * if they are absent from the jad file; "all" to allow all permissions
      */
     public void setUnsignedSecurityDomain(String domain) {
