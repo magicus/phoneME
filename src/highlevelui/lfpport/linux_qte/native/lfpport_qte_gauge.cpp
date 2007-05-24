@@ -413,6 +413,7 @@ void MyProgressBar::showLable(bool on)
     if (!lableOn) {
         if (lableChanged) {
             lableChanged = FALSE;
+            progress_str = QString::fromLatin1("");
             return TRUE;
         } else {
             return FALSE;
