@@ -395,7 +395,7 @@ endif
 
 # Include commercial components build definitions.
 ifeq ($(USE_CDC_COM),true)
--include $(CDC_COM_DIR)/build/share/def_cdc_com.mk
+-include $(CDC_COM_DIR)/build/share/defs_cdc_com.mk
 endif
 
 # Include all rule makefiles. Since variables in rules are expanded
