@@ -393,6 +393,11 @@ ifneq ($(OPT_PKGS_DEFS_FILES),)
 include $(OPT_PKGS_DEFS_FILES)
 endif
 
+# Include commercial components build definitions.
+ifeq ($(USE_CDC_COM),true)
+-include $(CDC_COM_DIR)/build/share/def_cdc_com.mk
+endif
+
 # Include all rule makefiles. Since variables in rules are expanded
 # eagerly, they must be included after defs makefiles.
 include  ../share/rules.mk
@@ -406,6 +411,12 @@ endif
 ifneq ($(OPT_PKGS_RULES_FILES),)
 include $(OPT_PKGS_RULES_FILES)
 endif
+
+# Include commercial components build rules.
+ifeq ($(USE_CDC_COM),true)
+-include $(CDC_COM_DIR)/build/share/rules_cdc_com.mk
+endif
+
 
 ifeq ($(CVM_TOOLS_BUILD),true)
 # Include the makefiles for tool libraries to build here:
