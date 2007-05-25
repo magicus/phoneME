@@ -1645,7 +1645,7 @@ CVMmemCodeCacheWriteNotify(int pid, void *addr, void *pc, CVMMemHandle *h)
  * Debugging functions
  **********************/
 
-#if defined(CVM_DEBUG) || defined(CVM_USE_MEM_MGR)
+#if defined(CVM_DEBUG) || defined(CVM_USE_MEM_MGR) || defined(CVM_TRACE_JIT)
 
 /*
  * Find the method that the specified pc is in.
