@@ -806,9 +806,9 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
 #define PIXEL gxj_pixel_type
 #define ALPHA gxj_alpha_type
 
-void pixelCopy(PIXEL *src, const int srcLineW, const int srcXInc,
-               const int srcYInc, const int srcXStart,
-               PIXEL *dst, const int w, const int h) {
+static void pixelCopy(PIXEL *src, const int srcLineW, const int srcXInc,
+		      const int srcYInc, const int srcXStart,
+		      PIXEL *dst, const int w, const int h) {
     int x, srcX;
     PIXEL *dstPtrEnd = dst + (h * w );
 
@@ -822,10 +822,12 @@ void pixelCopy(PIXEL *src, const int srcLineW, const int srcXInc,
     }
 }
 
-void pixelAndAlphaCopy(PIXEL *src, const int srcLineW, const int srcXInc,
-                       const int srcYInc, const int srcXStart, PIXEL *dst,
-                       const int w, const int h,
-                       const ALPHA *srcAlpha, ALPHA *dstAlpha) {
+static void pixelAndAlphaCopy(PIXEL *src, 
+			      const int srcLineW, const int srcXInc,
+			      const int srcYInc, const int srcXStart, 
+			      PIXEL *dst,
+			      const int w, const int h,
+			      const ALPHA *srcAlpha, ALPHA *dstAlpha) {
     int x, srcX;
     PIXEL *dstPtrEnd = dst + (h * w );
 
@@ -841,8 +843,9 @@ void pixelAndAlphaCopy(PIXEL *src, const int srcLineW, const int srcXInc,
     }
 }
 
-void blit(const gxj_screen_buffer *src, int xSrc, int ySrc, int width, int height,
-          gxj_screen_buffer *dst, int transform) {
+static void blit(const gxj_screen_buffer *src, 
+		 int xSrc, int ySrc, int width, int height,
+		 gxj_screen_buffer *dst, int transform) {
     PIXEL *srcPtr = NULL;
     int srcXInc=0, srcYInc=0, srcXStart=0;
 

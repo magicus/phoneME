@@ -38,36 +38,49 @@
 #include <imgapi_image.h>
 #include <imgdcd_image_util.h>
 
-#include <gxj_putpixel.h>
-
 #if ENABLE_IMAGE_CACHE
 #include <imageCache.h>
 #endif
 
-/**
- * This is a dummy - until dependency of linux_gci image lib 
- * on gxj_screen_buffer type is removed.
- */
-gxj_screen_buffer gxj_system_screen_buffer;
 
 /** Convenenient for convert Java image object to screen buffer */
-#define getImageScreenBuffer(jimgData,sbuf) \
-	gxj_get_image_screen_buffer_impl(GXAPI_GET_IMAGEDATA_PTR(jimgData), \
-				 sbuf, NULL)
+#define getImageData(jimgData, width, height, pixelData, alphaData)       \
+       imggci_get_image_data(GXAPI_GET_IMAGEDATA_PTR(jimgData),	  \
+                                            width, height,        \
+					    pixelData, alphaData)
+
+/** Convert 24-bit RGB color to 16bit (565) color */
+#define RGB24TORGB16(x) (((( x ) & 0x00F80000) >> 8) + \
+                             ((( x ) & 0x0000FC00) >> 5) + \
+			     ((( x ) & 0x000000F8) >> 3) )
+
+/** Convert 16-bit (565) color to 24-bit RGB color */
+#define RGB16TORGB24(x) ( ((x & 0x001F) << 3) | ((x & 0x001C) >> 2) |\
+                              ((x & 0x07E0) << 5) | ((x & 0x0600) >> 1) |\
+                              ((x & 0xF800) << 8) | ((x & 0xE000) << 3) )
+
 /**
  * Create native representation for a image.
  *
  * @param jimg Java Image ROM structure to convert from
- * @param sbuf pointer to Screen buffer structure to populate
+ * @param width to populate
+ * @param height to populate
+ * @param pixelData to populate
+ * @param alphaData to populate
  * @param g optional Graphics object for debugging clip code.
  *	    give NULL if don't care.
  *
- * @return the given 'sbuf' pointer for convenient usage,
- *	   or NULL if the image is null.
+ * @return KNI_TRUE if image data was retrieved 
+ *	   or KNI_FALSE if the image is null.
  */
-gxj_screen_buffer* gxj_get_image_screen_buffer_impl(const java_imagedata *img,
-						    gxj_screen_buffer *sbuf,
-						    jobject graphics) {
+static int imggci_get_image_data(const java_imagedata *img,
+				 int *width, int *height,
+				 imgdcd_pixel_type **pixelData,
+				 imgdcd_alpha_type **alphaData) {
+/*
+                                  jobject graphics,
+                                  java_graphics **g) {
+*/
 
     /* NOTE:
      * Since this routine is called by every graphics operations
@@ -75,31 +88,32 @@ gxj_screen_buffer* gxj_get_image_screen_buffer_impl(const java_imagedata *img,
      * like JavaByteArray, etc, for max performance.
      */
     if (img == NULL) {
-	return NULL;
+	return KNI_FALSE;
     }
 
-    sbuf->width  = img->width;
-    sbuf->height = img->height;
+    *width  = img->width;
+    *height = img->height;
 
     /* Only use nativePixelData and nativeAlphaData if
      * pixelData is null */
     if (img->pixelData != NULL) {
-	sbuf->pixelData = (gxj_pixel_type *)&(img->pixelData->elements[0]);
-	sbuf->alphaData = (img->alphaData != NULL)
-			    ? (gxj_alpha_type *)&(img->alphaData->elements[0])
-			    : NULL;
+	*pixelData = (imgdcd_pixel_type *)&(img->pixelData->elements[0]);
+	*alphaData = (img->alphaData != NULL)
+	  ? (imgdcd_alpha_type *)&(img->alphaData->elements[0])
+	  : NULL;
     } else {
-	sbuf->pixelData = (gxj_pixel_type *)img->nativePixelData;
-	sbuf->alphaData = (gxj_alpha_type *)img->nativeAlphaData;
+	*pixelData = (imgdcd_pixel_type *)img->nativePixelData;
+	*alphaData = (imgdcd_alpha_type *)img->nativeAlphaData;
     }
 
+/*
 #if ENABLE_BOUNDS_CHECKS
-    sbuf->g = (graphics != NULL) ? GXAPI_GET_GRAPHICS_PTR(graphics) : NULL;
+    *g = (graphics != NULL) ? GXAPI_GET_GRAPHICS_PTR(graphics) : NULL;
 #else
-    (void)graphics; /* Surpress unused parameter warning */
+    (void)graphics; // Surpress unused parameter warning
 #endif
-
-    return sbuf;
+*/
+    return KNI_TRUE;
 }
 
 /**
@@ -128,19 +142,22 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
     unsigned int pixelSize, alphaSize;
     imgdcd_image_format format;
     MIDP_ERROR err;
-    gxj_screen_buffer sbuf;
+    int width, height;
+    imgdcd_pixel_type  *pixelData;
+    imgdcd_alpha_type  *alphaData;
+
     imgdcd_image_buffer_raw *rawBuffer;
     gxutl_native_image_error_codes creationError = GXUTL_NATIVE_IMAGE_NO_ERROR;
 
     err = imgdcd_image_get_info(srcBuffer, length,
-				&format, (unsigned int *)&sbuf.width,
-				(unsigned int *)&sbuf.height);
+				&format, (unsigned int *)&width,
+				(unsigned int *)&height);
     if (err != MIDP_ERROR_NONE) {
 	return err;
     }
 
-    pixelSize = sizeof(gxj_pixel_type) * sbuf.width * sbuf.height;
-    alphaSize = sizeof(gxj_alpha_type) * sbuf.width * sbuf.height;
+    pixelSize = sizeof(imgdcd_pixel_type) * width * height;
+    alphaSize = sizeof(imgdcd_alpha_type) * width * height;
 
     switch (format) {
 
@@ -158,29 +175,27 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
 	    return MIDP_ERROR_OUT_MEM;
 	}
 
-	sbuf.pixelData = (gxj_pixel_type *)rawBuffer->data;
+	pixelData = (imgdcd_pixel_type *)rawBuffer->data;
 
 	if (format == IMGDCD_IMAGE_FORMAT_PNG) {
-	    sbuf.alphaData = rawBuffer->data + pixelSize;
+	    alphaData = rawBuffer->data + pixelSize;
 
 	    rawBuffer->hasAlpha = decode_png(srcBuffer, length,
-					     sbuf.width, sbuf.height,
-        				  (imgdcd_pixel_type *)sbuf.pixelData, 
-					  (imgdcd_alpha_type*)sbuf.alphaData,
+					     width, height,
+					     pixelData, alphaData,
 					     &creationError);
 	    if (!rawBuffer->hasAlpha) {
-		sbuf.alphaData = NULL;
+		alphaData = NULL;
 		alphaSize = 0; /* Exclude alpha data */
 	    }
 	} else {
-	    sbuf.alphaData = NULL;
+	    alphaData = NULL;
 
 	    rawBuffer->hasAlpha = KNI_FALSE;
 
 	    decode_jpeg(srcBuffer, length,
-			sbuf.width, sbuf.height,
-		      	(imgdcd_pixel_type *)sbuf.pixelData,
-			(imgdcd_alpha_type *)sbuf.alphaData,
+			width, height,
+		      	pixelData, alphaData,
 			&creationError);
 	}
 
@@ -190,8 +205,8 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
 	}
 
 	memcpy(rawBuffer->header, imgdcd_raw_header, 4);
-	rawBuffer->width  = sbuf.width;		/* Use default endian */
-	rawBuffer->height = sbuf.height;	/* Use default endian */
+	rawBuffer->width  = width;	/* Use default endian */
+	rawBuffer->height = height;	/* Use default endian */
 
 	*ret_dataBuffer = (unsigned char *)rawBuffer;
 	*ret_length = offsetof(imgdcd_image_buffer_raw, data)+pixelSize+alphaSize;
@@ -236,29 +251,36 @@ void img_get_argb(const java_imagedata * srcImageDataPtr,
 		 jint scanlength,
 		 jint x, jint y, jint width, jint height,
 		 gxutl_native_image_error_codes * errorPtr) {
-  gxj_screen_buffer sbuf;
-  if (gxj_get_image_screen_buffer_impl(srcImageDataPtr, &sbuf, NULL) != NULL) {
+
+  int srcWidth, srcHeight;
+  imgdcd_pixel_type *srcPixelData;
+  imgdcd_alpha_type *srcAlphaData;
+
+  if (getImageData(srcImageDataPtr, &srcWidth, &srcHeight, 
+		    &srcPixelData, &srcAlphaData) == KNI_TRUE) {
+
     // rgbData[offset + (a - x) + (b - y) * scanlength] = P(a, b);
     // P(a, b) = rgbData[offset + (a - x) + (b - y) * scanlength]
     // x <= a < x + width
     // y <= b < y + height
+
     int a, b, pixel, alpha;
 
-    if (sbuf.alphaData != NULL) {
+    if (srcAlphaData != NULL) {
       for (b = y; b < y + height; b++) {
 	for (a = x; a < x + width; a++) {
-	  pixel = sbuf.pixelData[b*sbuf.width + a];
-	  alpha = sbuf.alphaData[b*sbuf.width + a];
+	  pixel = srcPixelData[b*srcWidth + a];
+	  alpha = srcAlphaData[b*srcWidth + a];
 	  rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
-	    (alpha << 24) + GXJ_RGB16TORGB24(pixel);
+	    (alpha << 24) + RGB16TORGB24(pixel);
 	}
       }
     } else {
       for (b = y; b < y + height; b++) {
 	for (a = x; a < x + width; a++) {
-	  pixel = sbuf.pixelData[b*sbuf.width + a];
+	  pixel = srcPixelData[b*srcWidth + a];
 	  rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
-	    GXJ_RGB16TORGB24(pixel) | 0xFF000000;
+	    RGB16TORGB24(pixel) | 0xFF000000;
 	}
       }
     }
@@ -277,8 +299,8 @@ void img_get_argb(const java_imagedata * srcImageDataPtr,
  * @return pointer to the buffer, or NULL if offset/length are
  *    are not applicable.
  */
-static unsigned char *gx_get_java_byte_buffer(KNIDECLARGS
-    jobject byteArray, int offset, int length) {
+static unsigned char *get_java_byte_buffer(KNIDECLARGS jobject byteArray, 
+					   int offset, int length) {
 
     unsigned char *buffer = (unsigned char *)JavaByteArray(byteArray);
     int byteArrayLength = KNI_GetArrayLength(byteArray);
@@ -306,7 +328,7 @@ static unsigned char *gx_get_java_byte_buffer(KNIDECLARGS
  * @return KNI_TRUE in the case ImageData is successfully loaded with
  *    raw image data, otherwise KNI_FALSE.
  */
-static int gx_load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
+static int load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
     unsigned char *nativeBuffer, jobject javaBuffer,
     int offset, int length) {
 
@@ -327,7 +349,7 @@ static int gx_load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
                     "Native and Java buffers should not be used together");
                 break;
             }
-            nativeBuffer = gx_get_java_byte_buffer(KNIPASSARGS
+            nativeBuffer = get_java_byte_buffer(KNIPASSARGS
                 javaBuffer, offset, length);
         }
         if (nativeBuffer == NULL) {
@@ -344,10 +366,10 @@ static int gx_load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
         }
 
         imageSize = rawBuffer->width * rawBuffer->height;
-        pixelSize = sizeof(gxj_pixel_type) * imageSize;
+        pixelSize = sizeof(imgdcd_pixel_type) * imageSize;
         alphaSize = 0;
         if (rawBuffer->hasAlpha) {
-            alphaSize = sizeof(gxj_alpha_type) * imageSize;
+            alphaSize = sizeof(imgdcd_alpha_type) * imageSize;
         }
 
         /** Check data array length */
@@ -370,7 +392,7 @@ static int gx_load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
 
             /** New array allocation could cause GC and buffer moving */
             if (!KNI_IsNullHandle(javaBuffer)) {
-                nativeBuffer = gx_get_java_byte_buffer(KNIPASSARGS
+                nativeBuffer = get_java_byte_buffer(KNIPASSARGS
                     javaBuffer, offset, length);
                 rawBuffer = (imgdcd_image_buffer_raw *)
                     (nativeBuffer + offset);
@@ -388,7 +410,7 @@ static int gx_load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
 
         /** New array allocation could cause GC and buffer moving */
         if (!KNI_IsNullHandle(javaBuffer)) {
-            nativeBuffer = gx_get_java_byte_buffer(KNIPASSARGS
+            nativeBuffer = get_java_byte_buffer(KNIPASSARGS
                 javaBuffer, offset, length);
             rawBuffer = (imgdcd_image_buffer_raw *)
                 (nativeBuffer + offset);
@@ -444,7 +466,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadCachedImage0) {
     len = loadImageFromCache(suiteId, &resName, &rawBuffer);
     if (len != -1 && rawBuffer != NULL) {
         /* image is found in cache */
-        status = gx_load_imagedata_from_raw_buffer(KNIPASSARGS
+        status = load_imagedata_from_raw_buffer(KNIPASSARGS
             imageData, rawBuffer, nullHandle, 0, len);
     }
 
@@ -487,7 +509,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRAW) {
     KNI_GetParameterAsObject(2, imageBytes);
 
     /* Load ImageData content from Java byte array with raw image data */
-    if (gx_load_imagedata_from_raw_buffer(KNIPASSARGS
+    if (load_imagedata_from_raw_buffer(KNIPASSARGS
             imageData, NULL, imageBytes, offset, length) != KNI_TRUE) {
         KNI_ThrowNew(midpIllegalArgumentException, NULL);
     }
@@ -517,7 +539,10 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadPNG) {
     int            offset = KNI_GetParameterAsInt(3);
     int            status = KNI_TRUE;
     unsigned char* srcBuffer = NULL;
-    gxj_screen_buffer            image;
+    
+    imgdcd_pixel_type *imgPixelData;
+    imgdcd_alpha_type *imgAlphaData;
+
     java_imagedata * midpImageData = NULL;
 
     /* variable to hold error codes */
@@ -544,38 +569,34 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadPNG) {
      *            JavaByteArray(pngData)->length, srcBuffer);
      */
 
-    image.width = midpImageData->width;
-    image.height = midpImageData->height;
-
     unhand(jbyte_array, pixelData) = midpImageData->pixelData;
     if (!KNI_IsNullHandle(pixelData)) {
-        image.pixelData = (gxj_pixel_type *)JavaByteArray(pixelData);
+        imgPixelData = (imgdcd_pixel_type *)JavaByteArray(pixelData);
         /*
          * JAVA_TRACE("loadPNG pixelData length=%d\n",
          *            JavaByteArray(pixelData)->length);
          */
     } else {
-	image.pixelData = NULL;
+	imgPixelData = NULL;
     }
 
     unhand(jbyte_array, alphaData) = midpImageData->alphaData;
     if (!KNI_IsNullHandle(alphaData)) {
-        image.alphaData = (gxj_alpha_type *)JavaByteArray(alphaData);
+        imgAlphaData = (imgdcd_alpha_type *)JavaByteArray(alphaData);
         /*
          * JAVA_TRACE("decodePNG alphaData length=%d\n",
          *            JavaByteArray(alphaData)->length);
          */
     } else {
-	image.alphaData = NULL;
+	imgAlphaData = NULL;
     }
 
     /* assert
      * (imagedata.pixelData != NULL && imagedata.alphaData != NULL)
      */
     status = decode_png((srcBuffer + offset), length,
-			image.width, image.height,
-			(imgdcd_pixel_type *)image.pixelData,
-			(imgdcd_alpha_type *)image.alphaData,
+			midpImageData->width, midpImageData->height,
+			imgPixelData, imgAlphaData,
 			&creationError);
 
     if (GXUTL_NATIVE_IMAGE_NO_ERROR != creationError) {
@@ -604,7 +625,10 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadJPEG) {
     int            length = KNI_GetParameterAsInt(4);
     int            offset = KNI_GetParameterAsInt(3);
     unsigned char* srcBuffer = NULL;
-    gxj_screen_buffer            image;
+
+    imgdcd_pixel_type *imgPixelData;
+    imgdcd_alpha_type *imgAlphaData;
+
     java_imagedata * midpImageData = NULL;
 
     /* variable to hold error codes */
@@ -631,12 +655,9 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadJPEG) {
      *            JavaByteArray(jpegData)->length, srcBuffer);
      */
 
-    image.width = midpImageData->width;
-    image.height = midpImageData->height;
-
     unhand(jbyte_array, pixelData) = midpImageData->pixelData;
     if (!KNI_IsNullHandle(pixelData)) {
-        image.pixelData = (gxj_pixel_type *)JavaByteArray(pixelData);
+        imgPixelData = (imgdcd_pixel_type *)JavaByteArray(pixelData);
         /*
          * JAVA_TRACE("loadJPEG pixelData length=%d\n",
          *            JavaByteArray(pixelData)->length);
@@ -644,12 +665,11 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadJPEG) {
     }
 
     /* assert
-     * (imagedata.pixelData != NULL)
+     * (imgPixelData != NULL)
      */
     decode_jpeg((srcBuffer + offset), length,
-		image.width, image.height, 
-		(imgdcd_pixel_type *)image.pixelData,
-		(imgdcd_alpha_type *)image.alphaData, 
+		midpImageData->width, midpImageData->height, 
+		imgPixelData, imgAlphaData, 
 		&creationError);
 
     if (GXUTL_NATIVE_IMAGE_NO_ERROR != creationError) {
@@ -711,10 +731,10 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
         }
 
         imageSize = rawBuffer->width * rawBuffer->height;
-        pixelSize = sizeof(gxj_pixel_type) * imageSize;
+        pixelSize = sizeof(imgdcd_pixel_type) * imageSize;
         alphaSize = 0;
         if (rawBuffer->hasAlpha) {
-            alphaSize = sizeof(gxj_alpha_type) * imageSize;
+            alphaSize = sizeof(imgdcd_alpha_type) * imageSize;
         }
 
         /** Check data array length */
@@ -765,7 +785,8 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
     int height;
     int width;
     int *rgbBuffer;
-    gxj_screen_buffer sbuf;
+    imgdcd_pixel_type *pixelData;
+    imgdcd_alpha_type *alphaData;
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(rgbData);
@@ -774,11 +795,10 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
     KNI_GetParameterAsObject(2, rgbData);
     KNI_GetParameterAsObject(1, imageData);
 
-    width  = (int)GXAPI_GET_IMAGEDATA_PTR(imageData)->width;
-    height = (int)GXAPI_GET_IMAGEDATA_PTR(imageData)->height;
 
     rgbBuffer = JavaIntArray(rgbData);
-    if (getImageScreenBuffer(imageData, &sbuf) != NULL) {
+    if (getImageData(imageData, &width, &height, 
+		     &pixelData, &alphaData) == KNI_TRUE) {
         int i;
         int len = KNI_GetArrayLength(rgbData);
         int data_length = width * height;
@@ -792,14 +812,14 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
          * }
 		 */
 
-        if (sbuf.alphaData != NULL) {
+        if (alphaData != NULL) {
             for (i = 0; i < len; i++) {
-                sbuf.pixelData[i] = GXJ_RGB24TORGB16(rgbBuffer[i]);
-                sbuf.alphaData[i] = (rgbBuffer[i] >> 24) & 0x00ff;
+                pixelData[i] = RGB24TORGB16(rgbBuffer[i]);
+                alphaData[i] = (rgbBuffer[i] >> 24) & 0x00ff;
             }
         } else {
             for (i = 0; i < len; i++) {
-                sbuf.pixelData[i] = GXJ_RGB24TORGB16(rgbBuffer[i]);
+                pixelData[i] = RGB24TORGB16(rgbBuffer[i]);
             }
         }
     }
@@ -808,8 +828,8 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
     KNI_ReturnVoid();
 }
 
-#define PIXEL gxj_pixel_type
-#define ALPHA gxj_alpha_type
+#define PIXEL imgdcd_pixel_type
+#define ALPHA imgdcd_alpha_type
 
 static void pixelCopy(PIXEL *src, const int srcLineW, const int srcXInc,
 		      const int srcYInc, const int srcXStart,
@@ -848,83 +868,88 @@ static void pixelAndAlphaCopy(PIXEL *src,
     }
 }
 
-static void blit(const gxj_screen_buffer *src, 
+static void blit(int srcWidth, int srcHeight,
+		 const imgdcd_pixel_type *srcPixelData,
+		 const imgdcd_alpha_type *srcAlphaData,
 		 int xSrc, int ySrc, int width, int height,
-		 gxj_screen_buffer *dst, int transform) {
+		 imgdcd_pixel_type *dstPixelData,
+		 imgdcd_alpha_type *dstAlphaData, 
+		 int transform) {
+
     PIXEL *srcPtr = NULL;
     int srcXInc=0, srcYInc=0, srcXStart=0;
 
     switch (transform) {
     case TRANS_NONE:
-        srcPtr = (src->pixelData) + (ySrc * src->width + xSrc);
-        srcYInc = src->width;
+        srcPtr = srcPixelData + (ySrc * srcWidth + xSrc);
+        srcYInc = srcWidth;
         srcXStart = 0;
         srcXInc = 1;
         break;
     case TRANS_MIRROR_ROT180:
-        srcPtr = (src->pixelData) + ((ySrc + height - 1) * src->width + xSrc);
-        srcYInc = -(src->width);
+        srcPtr = srcPixelData + ((ySrc + height - 1) * srcWidth + xSrc);
+        srcYInc = -srcWidth;
         srcXStart = 0;
         srcXInc = 1;
         break;
     case TRANS_MIRROR:
-        srcPtr = (src->pixelData) + (ySrc * src->width + xSrc);
-        srcYInc = src->width;
+        srcPtr = srcPixelData + (ySrc * srcWidth + xSrc);
+        srcYInc = srcWidth;
         srcXStart = width - 1;
         srcXInc = -1;
         break;
     case TRANS_ROT180:
-        srcPtr = (src->pixelData) + ((ySrc + height - 1) * src->width + xSrc);
-        srcYInc = -(src->width);
+        srcPtr = srcPixelData + ((ySrc + height - 1) * srcWidth + xSrc);
+        srcYInc = -srcWidth;
         srcXStart = width - 1;
         srcXInc = -1;
         break;
     case TRANS_MIRROR_ROT270:
-        srcPtr = (src->pixelData) + (ySrc * src->width + xSrc);
+        srcPtr = srcPixelData + (ySrc * srcWidth + xSrc);
         srcYInc = 1;
         srcXStart = 0;
-        srcXInc = src->width;
+        srcXInc = srcWidth;
         break;
     case TRANS_ROT90:
-        srcPtr = (src->pixelData) + ((ySrc + height - 1) * src->width + xSrc);
+        srcPtr = srcPixelData + ((ySrc + height - 1) * srcWidth + xSrc);
         srcYInc = 1;
         srcXStart = 0;
-        srcXInc = -(src->width);
+        srcXInc = -srcWidth;
         break;
     case TRANS_ROT270:
-        srcPtr = (src->pixelData) + (ySrc * src->width + xSrc + width - 1);
+        srcPtr = srcPixelData + (ySrc * srcWidth + xSrc + width - 1);
         srcYInc = -1;
         srcXStart = 0;
-        srcXInc = src->width;
+        srcXInc = srcWidth;
         break;
     case TRANS_MIRROR_ROT90:
-        srcPtr = (src->pixelData) + ((ySrc + height - 1) * src->width + xSrc);
+        srcPtr = srcPixelData + ((ySrc + height - 1) * srcWidth + xSrc);
         srcYInc = -1;
         srcXStart = width - 1;
-        srcXInc = -(src->width);
+        srcXInc = -srcWidth;
         break;
     }
 
     if (transform & TRANSFORM_INVERTED_AXES) {
-        if (src->alphaData == NULL) {
-            pixelCopy(srcPtr, src->width, srcXInc, srcYInc, srcXStart,
-                      dst->pixelData, height, width);
+        if (srcAlphaData == NULL) {
+            pixelCopy(srcPtr, srcWidth, srcXInc, srcYInc, srcXStart,
+                      dstPixelData, height, width);
         } else {
-            ALPHA *srcAlpha = src->alphaData + (srcPtr - src->pixelData);
-            pixelAndAlphaCopy(srcPtr, src->width, srcXInc, srcYInc,
+            ALPHA *srcAlpha = srcAlphaData + (srcPtr - srcPixelData);
+            pixelAndAlphaCopy(srcPtr, srcWidth, srcXInc, srcYInc,
                               srcXStart,
-                              dst->pixelData, height, width, srcAlpha,
-                              dst->alphaData);
+                              dstPixelData, height, width, srcAlpha,
+                              dstAlphaData);
         }
     } else {
-        if (src->alphaData == NULL) {
-            pixelCopy(srcPtr, src->width, srcXInc, srcYInc, srcXStart,
-                      dst->pixelData, width, height);
+        if (srcAlphaData == NULL) {
+            pixelCopy(srcPtr, srcWidth, srcXInc, srcYInc, srcXStart,
+                      dstPixelData, width, height);
         } else {
-            ALPHA *srcAlpha = src->alphaData + (srcPtr - src->pixelData);
-            pixelAndAlphaCopy(srcPtr, src->width, srcXInc, srcYInc, srcXStart,
-                              dst->pixelData, width, height,
-                              srcAlpha, dst->alphaData);
+            ALPHA *srcAlpha = srcAlphaData + (srcPtr - srcPixelData);
+            pixelAndAlphaCopy(srcPtr, srcWidth, srcXInc, srcYInc, srcXStart,
+                              dstPixelData, width, height,
+                              srcAlpha, dstAlphaData);
         }
     }
 }
@@ -956,8 +981,14 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRegion) {
     int          width = KNI_GetParameterAsInt(5);
     int              y = KNI_GetParameterAsInt(4);
     int              x = KNI_GetParameterAsInt(3);
-    gxj_screen_buffer srcSBuf;
-    gxj_screen_buffer dstSBuf;
+
+    int srcWidth, srcHeight;
+    imgdcd_pixel_type *srcPixelData;
+    imgdcd_alpha_type *srcAlphaData;
+
+    int dstWidth, dstHeight;
+    imgdcd_pixel_type *dstPixelData;
+    imgdcd_alpha_type *dstAlphaData;
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(srcImg);
@@ -966,10 +997,14 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRegion) {
     KNI_GetParameterAsObject(2, srcImg);
     KNI_GetParameterAsObject(1, destImg);
 
-    if (getImageScreenBuffer(destImg, &dstSBuf) != NULL &&
-        getImageScreenBuffer(srcImg, &srcSBuf) != NULL) {
+    if ((getImageData(destImg, &dstWidth, &dstHeight, 
+		      &dstPixelData, &dstAlphaData) == KNI_TRUE) &&
+        (getImageData(srcImg, &srcWidth, &srcHeight,
+		      &srcPixelData, &srcAlphaData) == KNI_TRUE)) {
 
-        blit(&srcSBuf, x, y, width, height, &dstSBuf, transform);
+      blit(srcWidth, srcHeight, srcPixelData, srcAlphaData,
+	   x, y, width, height, 
+	   dstPixelData, dstAlphaData, transform);
     }
 
     KNI_EndHandles();

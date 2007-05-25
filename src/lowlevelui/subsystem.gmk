@@ -48,7 +48,7 @@ SUBSYSTEM_LOWUI_DIR = $(SUBSYSTEM_DIR)/lowlevelui
 # putpixel          - putpixel graphics library, Java image storage
 #
 ifeq ($(PLATFORM), linux_gci)
-    SUBSYSTEM_GRAPHICS_MODULES = graphics_putpixel
+    SUBSYSTEM_GRAPHICS_MODULES = graphics_gci
     SUBSYSTEM_IMAGE_MODULES = img_gci
 else
     ifeq ($(PLATFORM), linux_qte)
@@ -74,11 +74,20 @@ endif
 
 include $(SUBSYSTEM_LOWUI_DIR)/graphics_util/$(LIB_MAKE_FILE)
 
+#####################################################################
+# Image decoding  Subsystem
+# Description: image decoding library
+#              image.img_putpixel and image.img_gci depend on it
+#####################################################################
+
+#ifneq ($(SUBSYSTEM_IMAGE_MODULES), graphics_platform) 
+    include $(SUBSYSTEM_LOWUI_DIR)/image_decode/$(LIB_MAKE_FILE)
+#endif
 
 #####################################################################
 # Platform graphics port  Subsystem
 # Description: platform dependent library
-#              graphics.platform_graphics depends on it
+#              graphics.graphics_platform depends on it
 #####################################################################
 
 ifeq ($(SUBSYSTEM_GRAPHICS_MODULES), graphics_platform) 
@@ -87,11 +96,11 @@ endif
 
 #####################################################################
 # Graphics Subsystem 
-# Description: contains platform_graphics and putpixel implementations
+# Description: contains graphics_platform and graphics_putpixel implementations
 #####################################################################
-#ifneq ($(PLATFORM), linux_gci)
+ifneq ($(SUBSYSTEM_GRAPHICS_MODULES), graphics_gci)
 include $(SUBSYSTEM_LOWUI_DIR)/graphics/$(LIB_MAKE_FILE)
-#endif
+endif
 
 #####################################################################
 # Graphics api Subsystem
@@ -101,16 +110,6 @@ include $(SUBSYSTEM_LOWUI_DIR)/graphics/$(LIB_MAKE_FILE)
 
 include $(SUBSYSTEM_LOWUI_DIR)/graphics_api/$(LIB_MAKE_FILE)
 
-
-#####################################################################
-# Image decoding  Subsystem
-# Description: image decoding library
-#              image.putpixel and image.linux_gci depend on it
-#####################################################################
-
-#ifneq ($(SUBSYSTEM_IMAGE_MODULES), graphics_platform) 
-    include $(SUBSYSTEM_LOWUI_DIR)/image_decode/$(LIB_MAKE_FILE)
-#endif
 
 #####################################################################
 # Image Subsystem 
