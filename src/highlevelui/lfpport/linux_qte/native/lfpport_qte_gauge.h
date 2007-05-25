@@ -128,10 +128,10 @@ class Gauge : public Item {
  */
 class MyProgressBar : public QProgressBar {
     /**
-     * if lable is on or off 
+     * if label is on or off 
      */
-    bool lableOn;
-    bool lableChanged;
+    bool labelOn;
+    bool labelChanged;
 
  public:
     /**
@@ -151,9 +151,9 @@ class MyProgressBar : public QProgressBar {
     /**
      * Shows/hides percentage indicator
      *
-     * @param on if lable should be switched on or off
+     * @param on if label should be switched on or off
      */ 
-     void showLable(bool on);
+     void showLabel(bool on);
 
 protected:
     /**

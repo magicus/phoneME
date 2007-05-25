@@ -76,15 +76,15 @@ NoninteractiveGauge::NoninteractiveGauge(QWidget *parent,
         switch (initialValue) {
 
         case CONTINUOUS_IDLE:
-            qNoninteractive->showLable(FALSE);
+            qNoninteractive->showLabel(FALSE);
             qNoninteractive->setDisabled(TRUE);
             break;
         case INCREMENTAL_IDLE:
-            qNoninteractive->showLable(TRUE);
+            qNoninteractive->showLabel(TRUE);
             qNoninteractive->setDisabled(TRUE);
             break;
         case CONTINUOUS_RUNNING:
-            qNoninteractive->showLable(FALSE);
+            qNoninteractive->showLabel(FALSE);
             // connect the timeout() SIGNAL of the timer to the corresponding SLOT
             connect( &timer, SIGNAL( timeout() ), this, SLOT( progress() ) );
 
@@ -97,7 +97,7 @@ NoninteractiveGauge::NoninteractiveGauge(QWidget *parent,
     } else {
       // definite range gauge
       qNoninteractive = new MyProgressBar(initialMaxValue, this);
-      qNoninteractive->showLable(TRUE);
+      qNoninteractive->showLabel(TRUE);
       qNoninteractive->setProgress(initialValue);
     }
 
@@ -129,11 +129,11 @@ NoninteractiveGauge::setValue(int value, int maxValue) {
 
         case INCREMENTAL_IDLE:
 	        // qIncrement->setPalette( QPalette( QColor("Grey") ) );
-            qNoninteractive->showLable(TRUE);
+            qNoninteractive->showLabel(TRUE);
 	        qNoninteractive->setDisabled(TRUE);
 	        break;
         case INCREMENTAL_UPDATING:
-            qNoninteractive->showLable(TRUE);
+            qNoninteractive->showLabel(TRUE);
 	        if (this->value == INCREMENTAL_IDLE) {
 	            // was an idle gauge, now being activated again
 	            qNoninteractive->setDisabled(FALSE);
@@ -154,12 +154,12 @@ NoninteractiveGauge::setValue(int value, int maxValue) {
 	        }
 	        break;
         case CONTINUOUS_IDLE:
-            qNoninteractive->showLable(FALSE);
+            qNoninteractive->showLabel(FALSE);
 	        qNoninteractive->setDisabled(TRUE);
         	timer.stop();
 	        break;
         case CONTINUOUS_RUNNING:
-            qNoninteractive->showLable(FALSE);
+            qNoninteractive->showLabel(FALSE);
             if (this->value == CONTINUOUS_IDLE) {
 	            // change from idle to continuous running state
 	            qNoninteractive->setDisabled( FALSE );
@@ -184,7 +184,7 @@ NoninteractiveGauge::setValue(int value, int maxValue) {
             break;
         } // switch (value)
   } else {
-        qNoninteractive->showLable(TRUE);
+        qNoninteractive->showLabel(TRUE);
         if (qNoninteractive->totalSteps() != maxValue) {
             // if this was a max value update call
             qNoninteractive->setTotalSteps(maxValue);
@@ -382,8 +382,8 @@ int InteractiveGauge::bodyWidthForHeight(int *takenHeight, int h) {
 MyProgressBar::MyProgressBar(int maxValue, QWidget *parent, const char* name)
   : QProgressBar(maxValue, parent, name)
 {
-    lableOn = TRUE;
-    lableChanged = FALSE;
+    labelOn = TRUE;
+    labelChanged = FALSE;
 }
 
 MyProgressBar::~MyProgressBar()
@@ -393,13 +393,13 @@ MyProgressBar::~MyProgressBar()
 /**
  * Shows/hides percentage indicator
  *
- * @param on if lable should be switched on or off
+ * @param on if label should be switched on or off
  */ 
-void MyProgressBar::showLable(bool on) 
+void MyProgressBar::showLabel(bool on) 
 {
-    if (lableOn != on) {
-        lableChanged = TRUE;
-        lableOn = on;
+    if (labelOn != on) {
+        labelChanged = TRUE;
+        labelOn = on;
     }
 }
 
@@ -410,9 +410,9 @@ void MyProgressBar::showLable(bool on)
  bool MyProgressBar::setIndicator(QString & progress_str, 
                                     int progress, int totalSteps)
 {
-    if (!lableOn) {
-        if (lableChanged) {
-            lableChanged = FALSE;
+    if (!labelOn) {
+        if (labelChanged) {
+            labelChanged = FALSE;
             progress_str = QString::fromLatin1("");
             return TRUE;
         } else {
