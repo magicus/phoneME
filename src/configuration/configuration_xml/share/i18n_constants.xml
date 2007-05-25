@@ -577,6 +577,9 @@
             Name="AMS_MGR_UPDATE_IS_RUNNING"
             Comment="AMS: com.sun.midp.appmanager.Manager"/>
   <constant Type="int"
+            Name="AMS_MGR_INSTALLER_IS_RUNNING"
+            Comment="AMS: com.sun.midp.appmanager.Manager"/>
+  <constant Type="int"
             Name="AMS_MGR_RUN_THE_NEW_SUITE_TITLE"
             Comment="AMS: com.sun.midp.appmanager.AppManagerUI"/>
   <constant Type="int"

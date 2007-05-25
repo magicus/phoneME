@@ -391,6 +391,8 @@
                 Value="Don't open any restricted connections and don't ask"/>
 <localized_string Key="AMS_MGR_UPDATE_IS_RUNNING"
                 Value="You started an update for the application %1.  Please cancel or finish the update before you change its settings, get info or launch the application"/>
+<localized_string Key="AMS_MGR_INSTALLER_IS_RUNNING"
+                Value="The suite can not be updated because the installer is already running. Please exit the installer and then proceed with the update."/>
 <localized_string Key="AMS_MGR_RUN_THE_NEW_SUITE_TITLE"
                 Value="Launch"/>
 <localized_string Key="AMS_MGR_RUN_THE_NEW_SUITE"

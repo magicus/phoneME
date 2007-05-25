@@ -111,10 +111,6 @@ class AppManagerUI extends Form
     private static final String INSTALLER =
         "com.sun.midp.installer.GraphicalInstaller";
 
-    /** Constant for the graphical installer class name. */
-    private static final String SUITE_SELECTOR =
-        "com.sun.midp.midletsuite.Selector";
-
     /**
      * The font used to paint midlet names in the AppSelector.
      * Inner class cannot have static variables thus it has to be here.
@@ -241,7 +237,6 @@ class AppManagerUI extends Form
     Command backCmd =
         new Command(Resource.getString(ResourceConstants.BACK),
                     Command.BACK, 1);
-
 
 
     /** Command object for "Bring to foreground". */
@@ -506,8 +501,17 @@ class AppManagerUI extends Form
 
         } else if (c == updateCmd) {
 
-            manager.updateSuite(msi);
-            display.setCurrent(this);
+            if (!isInstallerRunning()) {
+                manager.updateSuite(msi);
+                display.setCurrent(this);
+            } else {
+                String alertMessage = Resource.getString(
+                    ResourceConstants.AMS_MGR_INSTALLER_IS_RUNNING);
+
+                displayError.showErrorAlert(null, null,
+                    Resource.getString(ResourceConstants.ERROR),
+                    alertMessage);
+            }
 
         } else if (c == appSettingsCmd) {
 
@@ -1275,6 +1279,29 @@ class AppManagerUI extends Form
         alert.setTimeout(Alert.FOREVER);
 
         display.setCurrent(alert);
+    }
+
+    /**
+     * Checks if the installer is currently running.
+     *
+     * @return true if the installer or discovery application is running,
+     *         false otherwise
+     */
+    private boolean isInstallerRunning() {
+        MidletCustomItem ci;
+        RunningMIDletSuiteInfo msi;
+
+        for (int i = 0; i < size(); i++) {
+            ci = (MidletCustomItem)get(i);
+            msi = ci.msi;
+            if (msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID &&
+                msi.proxy != null && (DISCOVERY_APP.equals(msi.midletToRun) ||
+                                      INSTALLER.equals(msi.midletToRun))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
