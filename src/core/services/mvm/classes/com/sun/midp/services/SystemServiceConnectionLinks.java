@@ -28,28 +28,59 @@ package com.sun.midp.services;
 
 import com.sun.midp.links.*;
 
+/**
+ * Incapsulates pair of Links: one for sending and other 
+ * for receiving data.
+ */
 final class SystemServiceConnectionLinks {
+    /** Send Link */
     protected Link send = null;
+
+    /** Receive Link */
     protected Link receive = null;
 
+    /**
+     * Constructor.
+     *
+     * @param send send Link
+     * @param receive receive Link
+     */
     SystemServiceConnectionLinks(Link send, Link receive) {
         this.send = send;
         this.receive = receive;
     }
 
+    /**
+     * Copy constructor.
+     *
+     * @param links SystemServiceConnectionLinks object
+     */   
     SystemServiceConnectionLinks(SystemServiceConnectionLinks links) {
         this.receive = links.receive;
         this.send = links.send;
     }
 
+    /**
+     * Gets send Link.
+     *
+     * @return send Link
+     */
     Link getSendLink() {
         return send;
     }
 
+    /**
+     * Gets receive Link
+     *
+     * @return receive Link
+     */
     Link getReceiveLink() {
         return receive;
     }
 
+    /**
+     * Closes both send and receive Links
+     */
     void close() {
         send.close();
         receive.close();

@@ -47,14 +47,14 @@ public abstract class SystemServiceMessage {
     }
 
     /**
-     * Gets message body as DataInput.
+     * Gets message data as DataInput.
      *
      * @return DataInput interface for reading data from message
      */
     abstract public DataInput getDataInput();
 
     /**
-     * Gets message body as DataOutput.
+     * Gets message data as DataOutput.
      *
      * @return DataOutput interface for writing data to message
      */

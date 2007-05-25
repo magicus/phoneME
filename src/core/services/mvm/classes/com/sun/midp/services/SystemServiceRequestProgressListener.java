@@ -26,10 +26,27 @@
 
 package com.sun.midp.services;
 
-import com.sun.midp.links.*;
+interface SystemServiceRequestProgressListener {
+    /***
+     * Callback method. Called by protocol after it recieves service ID
+     * from client. Protocol expects us to request service from Service 
+     * Manager and create pair of Links for data exchange between service
+     * and its client.
+     *
+     * @param serviceID service ID
+     * @return SystemServiceConnectionLinks object incapsulating pair of Links 
+     * for data exchange between service and its client. If Service Manager is
+     * unable to fulfill service request, null is returned
+     */
+    public SystemServiceConnectionLinks onServiceRequest(String serviceID);    
 
-interface SystemServiceRequestListener {
-    public SystemServiceConnectionLinks onServiceRequest(String serviceID);
+    /**
+     * Callback method. Called by protocol after pair of Links created on 
+     * previous step have been passed to client. 
+     *
+     * @param connectionLinks pair of Links for data exhange between 
+     * service and its client
+     */
     public void onLinksPassedToClient(SystemServiceConnectionLinks 
             connectionLinks);
 }

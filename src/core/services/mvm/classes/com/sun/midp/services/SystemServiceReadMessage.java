@@ -28,18 +28,38 @@ package com.sun.midp.services;
 
 import java.io.*;
 
+/**
+ * Read only message. Used when receiving.
+ */
 final class SystemServiceReadMessage extends SystemServiceMessage {
+
+    /** Stream for message data */
     private DataInputStream dataStream = null;
 
+    /**
+     * Constructor.
+     *
+     * @param data message data as byte array
+     */
     SystemServiceReadMessage(byte[] data) {
         ByteArrayInputStream byteStream = new ByteArrayInputStream(data);
         dataStream = new DataInputStream(byteStream);
     }
 
+    /**
+     * Gets message data as DataInput.
+     *
+     * @return DataInput interface for reading data from message
+     */
     public DataInput getDataInput() {
         return dataStream;
     }
 
+    /**
+     * Gets message data as DataOutput.
+     *
+     * @return DataOutput interface for writing data to message
+     */    
     public DataOutput getDataOutput() {
         throw new IllegalStateException();
     }

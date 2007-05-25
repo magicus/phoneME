@@ -28,23 +28,48 @@ package com.sun.midp.services;
 
 import java.io.*;
 
+/**
+ * Write only message. Used when sending.
+ */
 final class SystemServiceWriteMessage extends SystemServiceMessage {
+
+    /** Byte stream */
     private ByteArrayOutputStream byteStream = null;
+
+    /** Data stream for message data */
     private DataOutputStream dataStream = null;
 
+    /**
+     * Constructor.
+     */
     SystemServiceWriteMessage() {
         byteStream = new ByteArrayOutputStream();
         dataStream = new DataOutputStream(byteStream);
     }
 
+    /**
+     * Gets message data as DataInput.
+     *
+     * @return DataInput interface for reading data from message
+     */   
     public DataInput getDataInput() {
         throw new IllegalStateException();
     }
 
+    /**
+     * Gets message data as DataOutput.
+     *
+     * @return DataOutput interface for writing data to message
+     */    
     public DataOutput getDataOutput() {
         return dataStream;
     }
 
+    /**
+     * Gets message data as byte array.
+     *
+     * @return message data as byte array
+     */
     byte[] getData() {
         return byteStream.toByteArray();
     }

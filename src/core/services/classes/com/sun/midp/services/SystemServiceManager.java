@@ -68,7 +68,8 @@ public abstract class SystemServiceManager {
      * Gets registered service.
      *
      * @param serviceID unique service ID
-     * @return service corresponding to specified ID
+     * @return service corresponding to specified ID,
+     * null if there is no such service
      */
     abstract public SystemService getService(String serviceID);
 

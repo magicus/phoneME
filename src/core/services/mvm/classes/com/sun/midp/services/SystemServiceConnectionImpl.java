@@ -30,12 +30,21 @@ import com.sun.midp.links.*;
 import java.io.*;
 import java.lang.*;
 
+/**
+ * Implements SystemServiceConnection interface.
+ */
 final class SystemServiceConnectionImpl 
     implements SystemServiceConnection {
     
+    /** Pair of Links for data exchange between service and client */
     private SystemServiceConnectionLinks connectionLinks = null;
+
+    /** Listener to be notified about incoming messages */
     private SystemServiceConnectionListener listener = null;
 
+    /**
+     * Listener thread class.
+     */
     class ListenerThread extends Thread {
         public void run() {
             try {
@@ -49,10 +58,23 @@ final class SystemServiceConnectionImpl
         }
     }
 
+    /** 
+     * Constructor.
+     *
+     * @param connectionLinks pair of Links for data exchange between 
+     * service and client
+     */
     SystemServiceConnectionImpl(SystemServiceConnectionLinks connectionLinks) {
         this.connectionLinks = connectionLinks;
     }
 
+    /**
+     * Receives a message. Blocks until there is a message to receive.
+     * On client side, it receives message from service. On service side,
+     * it receives message from client.
+     *
+     * @return SystemServiceMessage object representing received message
+     */   
     public SystemServiceMessage receive() 
         throws SystemServiceConnectionClosedException {
 
@@ -65,14 +87,29 @@ final class SystemServiceConnectionImpl
         } catch (ClosedLinkException e) {
             throw new SystemServiceConnectionClosedException();
         } catch (InterruptedIOException e) {
+            /*
+             * In normal case, this means that client Isolate has exited.
+             * Close our side of connection, and throw ConnectionClosed
+             * exception.
+             */
             connectionLinks.close();
             throw new SystemServiceConnectionClosedException();
         } catch (IOException e) {
+            /**
+             * Shouldn't happen. So, panic, and close connection.
+             */
             connectionLinks.close();
             throw new SystemServiceConnectionClosedException();
         }
     }
 
+    /**
+     * Sends a message. Blocks until message is received. On client side,
+     * it sends message to service. On service side, it sends message 
+     * to client.
+     *
+     * @param msg message to send
+     */   
     public void send(SystemServiceMessage msg) 
         throws SystemServiceConnectionClosedException {
 
@@ -86,16 +123,34 @@ final class SystemServiceConnectionImpl
         } catch (ClosedLinkException e) {
             throw new SystemServiceConnectionClosedException();
         } catch (InterruptedIOException e) {
+            /*
+             * In normal case, this means that client Isolate has exited.
+             * Close our side of connection, and throw ConnectionClosed
+             * exception.
+             */            
             connectionLinks.close();
             throw new SystemServiceConnectionClosedException();
         } catch (IOException e) {
+            /**
+             * Shouldn't happen. So, panic, and close connection.
+             */            
             connectionLinks.close();
             throw new SystemServiceConnectionClosedException();
         }        
     }
 
+    /**
+     * Sets a listener which will be notified when message has arrived.
+     *
+     * @param listener listener to notify. if null, removes current
+     * listener.
+     */
     public void setConnectionListener(SystemServiceConnectionListener l) {
-        listener = l;
-        new ListenerThread().start();
+        if (listener == null) {
+            listener = l;
+            new ListenerThread().start();
+        } else {
+            throw new IllegalStateException();
+        }
     }
 }

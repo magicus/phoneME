@@ -594,7 +594,7 @@ Java_com_sun_midp_links_Link_receive0(void)
                 if (SNI_GetReentryData(NULL) == NULL) {
                     KNI_ThrowNew(midpClosedLinkException, NULL);
                 } else {
-                    KNI_ThrowNew(midpInterruptedIOException, NULL);
+                    KNI_ThrowNew(midpInterruptedIOException, NULL);                    
                 }
                 break;
         }

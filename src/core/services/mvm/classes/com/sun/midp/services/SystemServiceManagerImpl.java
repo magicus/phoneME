@@ -29,15 +29,18 @@ package com.sun.midp.services;
 import java.util.*;
 import java.lang.*;
 
+
+/**
+ * Implements SystemServiceManager interface
+ */
 final class SystemServiceManagerImpl extends SystemServiceManager {
 
     /** Registered service entries */
     private Hashtable serviceEntries = null;
     
-    SystemServiceManagerImpl() {
-        serviceEntries = new Hashtable();
-    }
-
+    /**
+     * SystemServiceEntry class. Used for housekeeping.
+     */
     class SystemServiceEntry {
         boolean isStarted = false;
         SystemService service = null;
@@ -46,12 +49,31 @@ final class SystemServiceManagerImpl extends SystemServiceManager {
             this.isStarted = false;
             this.service = service;
         }
+    }    
+
+    /**
+     * Constructor.
+     */
+    SystemServiceManagerImpl() {
+        serviceEntries = new Hashtable();
     }
 
+    /**
+     * Registers service.
+     *
+     * @param service service to register
+     */    
     synchronized public void registerService(SystemService service) {
         addService(service);
     }
 
+    /**
+     * Gets registered service.
+     *
+     * @param serviceID unique service ID
+     * @return service corresponding to specified ID,
+     * null if there is no such service
+     */    
     synchronized public SystemService getService(String serviceID) {
         SystemServiceEntry entry = 
             (SystemServiceEntry)serviceEntries.get(serviceID);
@@ -68,10 +90,18 @@ final class SystemServiceManagerImpl extends SystemServiceManager {
         return entry.service;
     }
 
+    /**
+     * Shutdowns service manager
+     */   
     public void shutdown() {
         removeAllServices();
     }
 
+    /**
+     * Adds service to the set of registered services.
+     *
+     * @param service service to add
+     */
     private void addService(SystemService service) {
         removeService(service.getServiceID());
 
@@ -79,6 +109,11 @@ final class SystemServiceManagerImpl extends SystemServiceManager {
         serviceEntries.put(service.getServiceID(), entry);
     }
 
+    /**
+     * Removes service from the set of registered services.
+     *
+     * @param service service to remove
+     */   
     private void removeService(String serviceID) {
         SystemServiceEntry entry = 
             (SystemServiceEntry)serviceEntries.get(serviceID);
@@ -95,6 +130,9 @@ final class SystemServiceManagerImpl extends SystemServiceManager {
         serviceEntries.remove(serviceID);
     }
 
+    /**
+     * Removes all services from the set of registered services.
+     */       
     private void removeAllServices() {
         Enumeration e = serviceEntries.keys();
         for(; e.hasMoreElements(); ) {

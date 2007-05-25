@@ -39,8 +39,8 @@ SUBSYSTEM_SERVICES_JAVA_FILES += \
     $(SERVICES_MVM_DIR)/classes/com/sun/midp/links/NamedLinkPortal.java \
     $(SERVICES_MVM_DIR)/classes/com/sun/midp/services/SystemServiceRequestProtocolClient.java \
     $(SERVICES_MVM_DIR)/classes/com/sun/midp/services/SystemServiceRequestProtocolAMS.java \
-    $(SERVICES_MVM_DIR)/classes/com/sun/midp/services/SystemServiceRequestListener.java \
     $(SERVICES_MVM_DIR)/classes/com/sun/midp/services/SystemServiceConnectionLinks.java \
+    $(SERVICES_MVM_DIR)/classes/com/sun/midp/services/SystemServiceRequestProgressListener.java \
     $(SERVICES_MVM_DIR)/classes/com/sun/midp/services/IsolateSystemServiceRequestHandler.java \
     $(SERVICES_MVM_DIR)/classes/com/sun/midp/services/SystemServiceRequestHandler.java \
     $(SERVICES_MVM_DIR)/classes/com/sun/midp/services/SystemServiceConnectionImpl.java \

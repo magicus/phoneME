@@ -37,8 +37,8 @@ import com.sun.midp.i3test.TestCase;
  */
 public class TestServiceRequestProtocol extends TestCase {
 
-    class SystemServiceRequestListenerImpl 
-        implements SystemServiceRequestListener {
+    class SystemServiceRequestProgressListenerImpl 
+        implements SystemServiceRequestProgressListener {
 
         // expected service ID
         String serviceID = "";
@@ -49,7 +49,7 @@ public class TestServiceRequestProtocol extends TestCase {
         // true if connection links has been passed to client
         boolean linksPassed = false;
 
-        SystemServiceRequestListenerImpl(String serviceID, 
+        SystemServiceRequestProgressListenerImpl(String serviceID, 
                 SystemServiceConnectionLinks con) {
 
             this.serviceID = serviceID;
@@ -84,7 +84,7 @@ public class TestServiceRequestProtocol extends TestCase {
 
         ServiceRequestHandlerThread(
                 SystemServiceConnectionLinks requestLinks, 
-                SystemServiceRequestListener requestListener) {
+                SystemServiceRequestProgressListener requestListener) {
 
             this.requestLinks = requestLinks;
             this.protocol = 
@@ -145,8 +145,8 @@ public class TestServiceRequestProtocol extends TestCase {
             new SystemServiceConnectionLinks(conRecLink, conSendLink);
 
         // start listening for requests
-        SystemServiceRequestListenerImpl l = 
-            new SystemServiceRequestListenerImpl(serviceID, links);
+        SystemServiceRequestProgressListenerImpl l = 
+            new SystemServiceRequestProgressListenerImpl(serviceID, links);
         ServiceRequestHandlerThread sp = 
             new ServiceRequestHandlerThread(requestLinksAMS, l);
 

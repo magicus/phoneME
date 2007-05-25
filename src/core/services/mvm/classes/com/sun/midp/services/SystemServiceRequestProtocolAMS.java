@@ -44,21 +44,21 @@ final class SystemServiceRequestProtocolAMS {
     private final static int END_SESSION_STATE = 8;
     private final static int END_STATE = 9;
 
-    private SystemServiceRequestListener requestListener;
+    private SystemServiceRequestProgressListener progressListener;
 
     private int state = INVALID_STATE; 
 
     SystemServiceRequestProtocolAMS(
-            SystemServiceRequestListener requestListener) {
+            SystemServiceRequestProgressListener progressListener) {
 
         /**
          * Argument sanity check
          */
-        if (requestListener == null) {
+        if (progressListener == null) {
             throw new NullPointerException();
         }
 
-        this.requestListener = requestListener;
+        this.progressListener = progressListener;
     }
 
     SystemServiceConnectionLinks handleServiceRequest(
@@ -140,7 +140,7 @@ final class SystemServiceRequestProtocolAMS {
                     try {
                         connectionLinks = null;
                         connectionLinks = 
-                            requestListener.onServiceRequest(serviceID);
+                            progressListener.onServiceRequest(serviceID);
                     } finally {
                         if (connectionLinks == null) {
                             status = SERVICE_REQUEST_STATUS_ERROR;
@@ -202,7 +202,7 @@ final class SystemServiceRequestProtocolAMS {
 
                     // notify listener about connection passed to client
                     if (connectionLinks != null) {
-                        requestListener.onLinksPassedToClient(connectionLinks);
+                        progressListener.onLinksPassedToClient(connectionLinks);
                     }
                                                            
                     // advance to next state

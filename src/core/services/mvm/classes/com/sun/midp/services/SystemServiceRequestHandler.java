@@ -30,24 +30,47 @@ import com.sun.cldc.isolate.*;
 import com.sun.midp.links.*;
 import java.io.*;
 
+/**
+ * Handles service requests in AMS Isolate from client Isolates.
+ */
 final class SystemServiceRequestHandler {
-    final static String SERVICE_TO_CLIENT_LINK_NAME = 
-        "Service to client service request link";
 
-    final static String CLIENT_TO_SERVICE_LINK_NAME = 
-        "Client to service service request link";
+    /** Named Link name: Link to send service requests data to client */
+    final static String AMS_TO_CLIENT_LINK_NAME = 
+        "AMS to client service request link";
 
+    /** Named Link name: Link to receive service requests data from client */
+    final static String CLIENT_TO_AMS_LINK_NAME = 
+        "Client to AMS service request link";
+
+    /** Service manager */
     private SystemServiceManager serviceManager = null;
 
+
+    /**
+     * Thread to handle service requests from single client Isolate.
+     */
     class IsolateRequestHandlerThread extends Thread {
+
+        /** Requests handler instance: handles requests from client Isolate */
         private IsolateSystemServiceRequestHandler requestHandler = null;
 
+        /**
+         * Constructor.
+         *
+         * @param requestHandler IsolateSystemServiceRequestHandler instance
+         * for handling service requests from client Isolate
+         */
         IsolateRequestHandlerThread(IsolateSystemServiceRequestHandler 
                 requestHandler) {
             this.requestHandler = requestHandler;
         }
 
+        /**
+         * Thread body.
+         */
         public void run() {
+            // get a Link to listen for incoming service requests on
             SystemServiceConnectionLinks requestLinks = 
                 requestHandler.getSendReceiveLinks();
 
@@ -55,11 +78,14 @@ final class SystemServiceRequestHandler {
 
             try {
                 while (true) {
+                    // listen on Link
                     LinkMessage msg = receiveLink.receive();
+
+                    // handle service request
                     requestHandler.handleServiceRequest();
                 }
             } catch (ClosedLinkException cle) {
-                // do nothing
+                // do nothing and let the thread exit
             } catch (InterruptedIOException iioe) {
                 requestLinks.close();
             } catch (IOException ioe) {
@@ -68,30 +94,54 @@ final class SystemServiceRequestHandler {
         }
     }
 
+
+    /**
+     * Constructor.
+     *
+     * @param serviceManager service manager
+     */
     SystemServiceRequestHandler(SystemServiceManager serviceManager) {
         this.serviceManager = serviceManager;
     }
 
+    /**
+     * Creates IsolateSystemServiceRequestHandler instance for
+     * handling service requests from client Isolate.
+     *
+     * @param clientIsolate client Isolate
+     * @return IsolateSystemServiceRequestHandler instance
+     */
     IsolateSystemServiceRequestHandler newIsolateRequestHandler(
             Isolate clientIsolate) {
 
+        // create IsolateSystemServiceRequestHandler instance
         IsolateSystemServiceRequestHandler requestHandler = null;
         requestHandler = new IsolateSystemServiceRequestHandler(
                 serviceManager, clientIsolate);
+
+        // ask it for Links used for requests negotiation
         SystemServiceConnectionLinks requestLinks = 
             requestHandler.getSendReceiveLinks();
 
+        // make those Links available to client Isolate via NamedLinkPortal
         NamedLinkPortal.putLink(
-                SystemServiceRequestHandler.SERVICE_TO_CLIENT_LINK_NAME,
+                SystemServiceRequestHandler.AMS_TO_CLIENT_LINK_NAME,
                 requestLinks.getSendLink());
         NamedLinkPortal.putLink(
-                SystemServiceRequestHandler.CLIENT_TO_SERVICE_LINK_NAME,
+                SystemServiceRequestHandler.CLIENT_TO_AMS_LINK_NAME,
                 requestLinks.getReceiveLink());
 
         return requestHandler;
     }
 
-    void handleIsolateRequests(IsolateSystemServiceRequestHandler 
+    /**
+     * Start handling service requests using specified requests handler.
+     * It is assumed here that client Isolate has received Links from 
+     * NamedLinkPortal.
+     *
+     * @param requestHandler requests handler to use
+     */
+    void startHandlingIsolateRequests(IsolateSystemServiceRequestHandler 
             requestHandler) {
         new IsolateRequestHandlerThread(requestHandler).start();
     }

@@ -49,9 +49,9 @@ final class SystemServiceRequestorRemote extends SystemServiceRequestor {
         token.checkIfPermissionAllowed(Permissions.MIDP);
 
         Link receiveLink = NamedLinkPortal.getLink(
-                SystemServiceRequestHandler.SERVICE_TO_CLIENT_LINK_NAME);
+                SystemServiceRequestHandler.AMS_TO_CLIENT_LINK_NAME);
         Link sendLink = NamedLinkPortal.getLink(
-                SystemServiceRequestHandler.CLIENT_TO_SERVICE_LINK_NAME);
+                SystemServiceRequestHandler.CLIENT_TO_AMS_LINK_NAME);
         SystemServiceConnectionLinks requestLinks = null;
         requestLinks = new SystemServiceConnectionLinks(sendLink, receiveLink);
 

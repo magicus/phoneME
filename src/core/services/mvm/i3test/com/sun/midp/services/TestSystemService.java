@@ -93,28 +93,37 @@ public class TestSystemService extends TestCase {
                IOException,
                ClosedLinkException {
 
+        // register our dummy test service with service manager       
         SystemServiceManager manager = SystemServiceManager.getInstance(token);
         SimpleSystemService service = new SimpleSystemService();
         manager.registerService(service);
 
-        SystemServiceRequestHandler requestHandler = 
-            new SystemServiceRequestHandler(manager);
-
+        // start client Isolate       
         Isolate serviceIsolate = Isolate.currentIsolate();
         Isolate clientIsolate = new Isolate(
                 "com.sun.midp.services.SystemServiceIsolate", null);
         clientIsolate.start();
 
+        /* 
+         * Create IsolateSystemServiceRequestHandler for handling 
+         * service requests from client Isolate
+         */
+        SystemServiceRequestHandler requestHandler = 
+            new SystemServiceRequestHandler(manager);        
+
         IsolateSystemServiceRequestHandler isolateRequestHandler = 
             requestHandler.newIsolateRequestHandler(clientIsolate);
 
+        // put named Links to NamedLinkPortal and send them to client Isolate       
         Link namedPortalLink = Link.newLink(serviceIsolate, clientIsolate);
         Link[] clientLinks = { namedPortalLink };
         LinkPortal.setLinks(clientIsolate, clientLinks);
         NamedLinkPortal.sendLinks(namedPortalLink);
 
-        requestHandler.handleIsolateRequests(isolateRequestHandler);
+        // start handling service requests        
+        requestHandler.startHandlingIsolateRequests(isolateRequestHandler);
 
+        // wait for client Isolate to exit        
         clientIsolate.waitForExit();
         
         manager.shutdown();
