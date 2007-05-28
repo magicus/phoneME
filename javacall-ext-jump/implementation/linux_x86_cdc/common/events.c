@@ -168,6 +168,19 @@ javacall_result javacall_event_send(unsigned char* binaryBuffer,
  */
 javacall_result javacall_events_init(void) {
     int fd;
+    struct msqid_ds buf;
+
+    /* Check if the message queue already exists. */
+    fd = open(EVENTS_QID, O_RDONLY, 0);
+    if (-1 != fd) {
+        if (sizeof(events_mq) == read(fd, &events_mq, sizeof(events_mq))) {
+            if (0 == msgctl(events_mq, IPC_STAT, &buf)) {
+                close(fd);
+                return JAVACALL_OK;
+            }
+        }
+        close(fd);
+    }
 
     /* Create message queue for transmitting events between processes. */
     events_mq = msgget(IPC_PRIVATE, S_IREAD | S_IWRITE | IPC_CREAT | IPC_EXCL);
