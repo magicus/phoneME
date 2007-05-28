@@ -197,13 +197,15 @@ public class DirectPlayer extends BasicPlayer
         } else if (state == STARTED) {
             long currentTime = doGetMediaTime();
             long duration = doGetDuration();
-            
             if (currentTime != TIME_UNKNOWN && time >= currentTime) {
                 if (stopTimer != null) {
                     stopTimer.cancel();
                 }
                 stopTimer = new Timer();
                 long scheduleTime = time/1000 - currentTime/1000;
+                if (scheduleTime <= 0) {
+                    scheduleTime = 1;
+                }
                 stopTimer.schedule(new StopTimeController(), scheduleTime);
             } else {
                 if (debug) {
@@ -353,8 +355,12 @@ public class DirectPlayer extends BasicPlayer
                 stopTimer.cancel();
             }
             long currentTime = doGetMediaTime();
+            long scheduleTime = stopTime / 1000 - currentTime / 1000;
+            if (scheduleTime <= 0) {
+                scheduleTime = 1;
+            }
             stopTimer = new Timer();
-            stopTimer.schedule(new StopTimeController(), stopTime / 1000 - currentTime / 1000 );
+            stopTimer.schedule(new StopTimeController(), scheduleTime );
         }
         // #endif ]
 
@@ -557,18 +563,19 @@ public class DirectPlayer extends BasicPlayer
      * @return the duration in microseconds or <code>TIME_UNKNOWN</code>
      */
     protected long doGetDuration() {
-		boolean has_capture_locator = ( null != locator ) &&
-			( locator.startsWith( Configuration.AUDIO_CAPTURE_LOCATOR ) 
-			  || locator.startsWith( Configuration.VIDEO_CAPTURE_LOCATOR ) );
+        boolean has_capture_locator = ( null != locator ) &&
+            ( locator.startsWith( Configuration.AUDIO_CAPTURE_LOCATOR ) 
+                || locator.startsWith( Configuration.VIDEO_CAPTURE_LOCATOR ) );
 			  
-        if( has_capture_locator ) return TIME_UNKNOWN;
-        
+        if( has_capture_locator ) 
+            return Player.TIME_UNKNOWN;
+
         // for MIDI_DEVICE_LOCATOR -- always 0
 		// for TONE_DEVICE_LOCATOR -- 0 if tone sequence wasn't set
         if( !hasDataSource && !hasToneSequenceSet ) return 0; 
         
         int ret = nGetDuration(hNative);
-        if (ret != TIME_UNKNOWN) {
+        if (ret != Player.TIME_UNKNOWN) {
             return (ret * 1000);    
         }
         return ret;

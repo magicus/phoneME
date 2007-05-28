@@ -274,6 +274,7 @@ SUBSYSTEM_JSR_135_CNI_CLASSES += \
     com.sun.mmedia.DirectVolume \
     com.sun.mmedia.MMEventListener \
     com.sun.mmedia.NativeTonePlayer \
+    com.sun.mmedia.DefaultConfiguration \
 
 #
 # Native

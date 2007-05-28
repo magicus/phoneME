@@ -58,7 +58,7 @@ KNIDECL(com_sun_mmedia_MMEventListener_parseNativeEvent) {
     
     KNI_GetParameterAsObject(2, event);
     KNI_GetObjectClass(event, classHandle);
-    
+
     switch(nEvent.type) {
         case JAVACALL_EVENT_MEDIA_END_OF_MEDIA:
             fieldID = KNI_GetStaticFieldID(classHandle, EOM_EVENT_NAME, "I");
@@ -73,7 +73,7 @@ KNIDECL(com_sun_mmedia_MMEventListener_parseNativeEvent) {
     }
     if (type != -1) {
         fieldID = KNI_GetFieldID(classHandle, EVENT_TYPE_NAME, "I");
-        KNI_SetIntField(event, fieldID, nEvent.type);
+        KNI_SetIntField(event, fieldID, type);
 
         fieldID = KNI_GetFieldID(classHandle, PLAYER_ID_NAME, "I");
         KNI_SetIntField(event, fieldID, nEvent.playerId);
