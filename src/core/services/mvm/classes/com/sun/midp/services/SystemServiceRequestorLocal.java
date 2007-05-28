@@ -32,13 +32,31 @@ import java.io.*;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 
+/**
+ * Implements SystemServiceRequestor interface for the case
+ * when client Isolate is, in fact, AMS Isolate.
+ */
 final class SystemServiceRequestorLocal extends SystemServiceRequestor {
+
+    /** Service manager */
     private SystemServiceManager serviceManager;
 
+
+    /**
+     * Constructor.
+     *
+     * @param serviceManager service manager
+     */
     SystemServiceRequestorLocal(SystemServiceManager serviceManager) {
         this.serviceManager = serviceManager;
     }
     
+    /**
+     * Gets new instance.
+     *
+     * @param tokem security token
+     * @return new instance
+     */
     static SystemServiceRequestorLocal newInstance(SecurityToken token) {
         token.checkIfPermissionAllowed(Permissions.MIDP);
         
@@ -46,12 +64,26 @@ final class SystemServiceRequestorLocal extends SystemServiceRequestor {
         return new SystemServiceRequestorLocal(manager);
     }
 
+    /**
+     * Establishes connection to service.
+     *
+     * @param serviceID unique service ID
+     * @return connection to service, 
+     * or null if some reasons service request has failed (for example, 
+     * there is no such service registered)
+     */    
     public SystemServiceConnection requestService(String serviceID) {
         synchronized (this) {
             return doRequestService(serviceID);
         }
     }
 
+    /**
+     * Really establishes connection to service.
+     *
+     * @param serviceID unique service ID
+     * @return connection to service
+     */   
     private SystemServiceConnection doRequestService(String serviceID) {
         SystemService service = serviceManager.getService(serviceID);
         if (service == null) {

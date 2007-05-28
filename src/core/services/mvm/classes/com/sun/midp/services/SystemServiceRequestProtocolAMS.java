@@ -29,10 +29,20 @@ package com.sun.midp.services;
 import com.sun.midp.links.*;
 import java.io.*;
 
+/**
+ * AMS part of service request protocol.
+ */
 final class SystemServiceRequestProtocolAMS {
+    /** Status code: Ok */
     final static int SERVICE_REQUEST_STATUS_OK = 0;
+
+    /** Status code: Error */
     final static int SERVICE_REQUEST_STATUS_ERROR = 1;
 
+    /**
+     * Protocol is implemented as finite state machine.
+     * Below are its possible states.
+     */
     private final static int INVALID_STATE = -1;
     private final static int WAIT_FOR_BEGIN_SESSION_STATE = 1;
     private final static int WAIT_FOR_SERVICE_ID_STATE = 2;
@@ -44,10 +54,18 @@ final class SystemServiceRequestProtocolAMS {
     private final static int END_SESSION_STATE = 8;
     private final static int END_STATE = 9;
 
-    private SystemServiceRequestProgressListener progressListener;
-
+    /** Current state */
     private int state = INVALID_STATE; 
 
+    /** Listener to be notified about progress */
+    private SystemServiceRequestProgressListener progressListener;   
+
+
+    /**
+     * Constructor.
+     *
+     * @param progressListener request progress listener
+     */
     SystemServiceRequestProtocolAMS(
             SystemServiceRequestProgressListener progressListener) {
 
@@ -61,6 +79,13 @@ final class SystemServiceRequestProtocolAMS {
         this.progressListener = progressListener;
     }
 
+
+    /**
+     * Handles single service request.
+     *
+     * @param sendReceiveLinks pair of Links between AMS and client 
+     * Isolates for request negotiation
+     */
     SystemServiceConnectionLinks handleServiceRequest(
             SystemServiceConnectionLinks sendReceiveLinks)
         throws ClosedLinkException, 
@@ -93,6 +118,13 @@ final class SystemServiceRequestProtocolAMS {
         return connectionLinks;
     }
 
+
+    /**
+     * Really handles single service request.
+     *
+     * @param sendLink Link from AMS to client
+     * @param receiveLink Link from client to AMS
+     */
     private SystemServiceConnectionLinks doHandleServiceRequest(
             Link sendLink, Link receiveLink) 
         throws ClosedLinkException, 

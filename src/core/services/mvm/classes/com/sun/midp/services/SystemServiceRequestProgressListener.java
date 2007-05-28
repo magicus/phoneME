@@ -26,6 +26,11 @@
 
 package com.sun.midp.services;
 
+/**
+ * Internal interface for communication between AMS part of service 
+ * request protocol and whatever entity is communicating with it. 
+ * It allows us to i3test service request protocol independently.
+ */
 interface SystemServiceRequestProgressListener {
     /***
      * Callback method. Called by protocol after it recieves service ID

@@ -37,15 +37,17 @@ public abstract class SystemServiceRequestor {
     private static SystemServiceRequestor instance = null;
 
     /**
-     * Establishes connection to service
+     * Establishes connection to service.
      *
      * @param serviceID unique service ID
-     * @return connection to service
+     * @return connection to service, 
+     * or null if some reasons service request has failed (for example, 
+     * there is no such service registered)
      */
     abstract public SystemServiceConnection requestService(String serviceID);
 
     /**
-     * Gets class instance.
+     * Gets new class instance.
      *
      * @return SystemServiceRequestor class instance
      */

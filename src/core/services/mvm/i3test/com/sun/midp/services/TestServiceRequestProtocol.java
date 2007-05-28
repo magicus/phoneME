@@ -155,17 +155,14 @@ public class TestServiceRequestProtocol extends TestCase {
             new SystemServiceRequestProtocolClient(requestLinksClient);
         LinkMessage emptyMsg = LinkMessage.newStringMessage("");
         reqC2SLink.send(emptyMsg);
-        protocol.requestService(serviceID);
+        SystemServiceConnectionLinks con = protocol.requestService(serviceID);
 
         // check that service request went without errors
         Object result = sp.await();
         assertTrue("links sent without error", result == null);
         assertTrue("links received without error", l.linksPassed == true);
         
-        // check that connection returned as result of request 
-        // is expected one
-        SystemServiceConnectionLinks con = 
-            protocol.getSystemServiceConnectionLinks();
+        // check that connection returned as result of request is expected one
         assertNotSame("link not same", 
                 conSendLink, con.getSendLink());
         assertTrue("links equal", 

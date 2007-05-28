@@ -29,7 +29,14 @@ package com.sun.midp.services;
 import com.sun.midp.links.*;
 import java.io.*;
 
+
+/**
+ * Client side of service request protocol.
+ */
 final class SystemServiceRequestProtocolClient {
+    /** 
+     * Strings exchanged during service request session 
+     */
     final static String START_SESSION_STR = 
         "Starting service request";
     final static String END_SESSION_STR = 
@@ -37,6 +44,17 @@ final class SystemServiceRequestProtocolClient {
     final static String LINKS_RECEIVED_ACK_STR = 
         "Links received";
 
+    /**
+     * Messages holding those strings
+     */
+    private LinkMessage startSessionMsg = null;
+    private LinkMessage endSessionMsg = null;
+    private LinkMessage linksReceivedMsg = null;    
+
+    /**
+     * Protocol is implemented as finite state machine.
+     * Below are its possible states.
+     */    
     private final static int INVALID_STATE = -1;
     private final static int BEGIN_SESSION_STATE = 1;
     private final static int SEND_SERVICE_ID_STATE = 2;
@@ -47,15 +65,24 @@ final class SystemServiceRequestProtocolClient {
     private final static int END_SESSION_STATE = 7;
     private final static int END_STATE = 8;
 
-    private LinkMessage startSessionMsg = null;
-    private LinkMessage endSessionMsg = null;
-    private LinkMessage linksReceivedMsg = null;
+    /** Current state */
+    private int state = INVALID_STATE;   
 
+    /** Pair of Links between AMS and this Isolate for request negotiation */
     private SystemServiceConnectionLinks sendReceiveLinks = null;
+
+    /** 
+     * Service connection Links. Received from AMS as part of request session
+     */
     private SystemServiceConnectionLinks connectionLinks = null;
 
-    private int state = INVALID_STATE;
 
+    /**
+     * Constructor.
+     *
+     * @param sendReceiveLinks pair of Links between AMS and this Isolate
+     * for request negotiation
+     */
     SystemServiceRequestProtocolClient(SystemServiceConnectionLinks 
             sendReceiveLinks) {
 
@@ -81,7 +108,13 @@ final class SystemServiceRequestProtocolClient {
                 LINKS_RECEIVED_ACK_STR);
     }
 
-    void requestService(String serviceID) 
+    /**
+     * Requests connection to service.
+     *
+     * @param serviceID ID of service to request connection with
+     * @return pair of Links representing established connection
+     */
+    SystemServiceConnectionLinks requestService(String serviceID) 
         throws ClosedLinkException, 
                InterruptedIOException, 
                IOException {
@@ -94,13 +127,15 @@ final class SystemServiceRequestProtocolClient {
         } finally {
             state = INVALID_STATE; 
         }
-    }
 
-    SystemServiceConnectionLinks getSystemServiceConnectionLinks() {
         return connectionLinks;
     }
 
-
+    /**
+     * Really requests connection to service.
+     *
+     * @param serviceID ID of service to request connection with
+     */   
     private void doRequestService(String serviceID) 
         throws ClosedLinkException, 
                InterruptedIOException, 

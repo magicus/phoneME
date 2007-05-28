@@ -31,10 +31,27 @@ import java.io.*;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 
+
+/**
+ * Implements SystemServiceRequestor interface for the case
+ * when client is not in AMS Isolate and thereofre cross 
+ * Isolates communication is reqyuired.
+ */
 final class SystemServiceRequestorRemote extends SystemServiceRequestor {
+
+    /** Pair of Links between AMS and this Isolate for request negotiation */  
     private SystemServiceConnectionLinks sendReceiveLinks = null;
+
+    /** Protocol which does request negotiation */
     private SystemServiceRequestProtocolClient requestProtocol = null;
 
+    
+    /**
+     * Constructor.
+     *
+     * @param sendReceiveLinks pair of Links between AMS and this 
+     * Isolate for request negotiation
+     */
     SystemServiceRequestorRemote(
             SystemServiceConnectionLinks sendReceiveLinks) {
 
@@ -45,6 +62,12 @@ final class SystemServiceRequestorRemote extends SystemServiceRequestor {
         }
     }
 
+    /**
+     * Gets new instance.
+     *
+     * @param token security token
+     * @return new instance
+     */
     static SystemServiceRequestorRemote newInstance(SecurityToken token) {
         token.checkIfPermissionAllowed(Permissions.MIDP);
 
@@ -58,26 +81,45 @@ final class SystemServiceRequestorRemote extends SystemServiceRequestor {
         return new SystemServiceRequestorRemote(requestLinks);
     }
 
+    /**
+     * Establishes connection to service.
+     *
+     * @param serviceID unique service ID
+     * @return connection to service, 
+     * or null if some reasons service request has failed (for example, 
+     * there is no such service registered)
+     */
     public SystemServiceConnection requestService(String serviceID) {
         synchronized (this) {
             return doRequestService(serviceID);
         }
     }
 
+    /**
+     * Really establishes connection to service.
+     *
+     * @param serviceID unique service ID
+     * @return connection to service, 
+     * or null if some reasons service request has failed (for example, 
+     * there is no such service registered)
+     */    
     private SystemServiceConnection doRequestService(String serviceID) {
         if (sendReceiveLinks == null) {
             return null;
         }
 
+        /* 
+         * In case of exception we are going to panic and close 
+         * negotiation Links because something is wrong with them
+         */
         try {
             // send empty message to kick a session 
             Link sendLink = sendReceiveLinks.getSendLink();
             LinkMessage emptyMsg = LinkMessage.newStringMessage("");
             sendLink.send(emptyMsg);
 
-            requestProtocol.requestService(serviceID);
             SystemServiceConnectionLinks connectionLinks = 
-                requestProtocol.getSystemServiceConnectionLinks();
+                requestProtocol.requestService(serviceID);
 
             if (connectionLinks != null) {
                 return new SystemServiceConnectionImpl(connectionLinks);
