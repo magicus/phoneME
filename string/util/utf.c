@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <utf.h>
 
-pcsl_string_status utf8_convert_to_utf16(const jbyte * str, jsize str_length,
+pcsl_string_status pcsl_utf8_convert_to_utf16(const jbyte * str, jsize str_length,
 			      jchar * buffer, jsize buffer_length,
 			      jsize * converted_length) {
   const jbyte * const str_end = str + str_length;
@@ -121,7 +121,7 @@ pcsl_string_status utf8_convert_to_utf16(const jbyte * str, jsize str_length,
   return buffer_overflow == PCSL_TRUE ? PCSL_STRING_BUFFER_OVERFLOW : PCSL_STRING_OK;
 }
 
-pcsl_string_status utf16_convert_to_utf8(const jchar * str, jsize str_length,
+pcsl_string_status pcsl_utf16_convert_to_utf8(const jchar * str, jsize str_length,
 			      jbyte * buffer, jsize buffer_length,
 			      jsize * converted_length) {
   const jchar * const str_end = str + str_length;
@@ -207,7 +207,7 @@ pcsl_string_status utf16_convert_to_utf8(const jchar * str, jsize str_length,
  *                    in the UTF-16 code unit
  * @return status of the conversion
  */
-pcsl_string_status code_point_to_utf16_code_unit(jint code_point,
+pcsl_string_status pcsl_code_point_to_utf16_code_unit(jint code_point,
 				      jchar code_unit[2],
 				      jsize * unit_length) {
 
@@ -284,7 +284,7 @@ jsize utf16_string_length(jchar * str, jsize str_length) {
  *
  * @return number of characters put in pBuffer
  */
-int unicode_to_escaped_ascii(const jchar* str_data, const int str_len,
+int pcsl_utf16_to_escaped_ascii(const jchar* str_data, const int str_len,
                              jchar* pBuffer, int offset) {
     static jchar NUMS[] = {
         '0', '1', '2', '3', '4', '5', '6', '7',

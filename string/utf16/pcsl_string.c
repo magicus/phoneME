@@ -126,7 +126,7 @@ jsize pcsl_string_utf8_length(const pcsl_string * str) {
 
   {
     jsize utf8_length = 0;
-    pcsl_string_status status = utf16_convert_to_utf8(str->data, str->length,
+    pcsl_string_status status = pcsl_utf16_convert_to_utf8(str->data, str->length,
 					   NULL, 0, &utf8_length);
 
     if (status == PCSL_STRING_OK) {
@@ -203,7 +203,7 @@ pcsl_string_status pcsl_string_convert_to_utf8(const pcsl_string * str,
 
   {
     pcsl_string_status status =
-      utf16_convert_to_utf8(str->data, str->length,
+      pcsl_utf16_convert_to_utf8(str->data, str->length,
 			    buffer, buffer_length, converted_length);
 
     /* Do not count the terminating zero character. */
@@ -317,7 +317,7 @@ pcsl_string_status pcsl_string_convert_from_utf8(const jbyte * buffer,
 
   {
     jsize utf16_length = 0;
-    pcsl_string_status status = utf8_convert_to_utf16(buffer, buffer_length,
+    pcsl_string_status status = pcsl_utf8_convert_to_utf16(buffer, buffer_length,
 						      utf16_buffer,
 						      max_utf16_length,
 						      &utf16_length);
@@ -872,7 +872,7 @@ jint pcsl_string_index_of_from(const pcsl_string * str, jint ch,
   } else if (IS_UNICODE_CODE_POINT(ch)) {
     jchar code_unit[2];
     jsize unit_length;
-    pcsl_string_status status = code_point_to_utf16_code_unit(ch, code_unit, &unit_length);
+    pcsl_string_status status = pcsl_code_point_to_utf16_code_unit(ch, code_unit, &unit_length);
 
     if (status != PCSL_STRING_OK) {
       return -1;
@@ -961,7 +961,7 @@ jint pcsl_string_last_index_of_from(const pcsl_string * str, jint ch,
   } else if (IS_UNICODE_CODE_POINT(ch)) {
     jchar code_unit[2];
     jsize unit_length;
-    pcsl_string_status status = code_point_to_utf16_code_unit(ch, code_unit, &unit_length);
+    pcsl_string_status status = pcsl_code_point_to_utf16_code_unit(ch, code_unit, &unit_length);
 
     if (from_index >= str->length - 1) {
       from_index = str->length - 2;
@@ -1442,7 +1442,7 @@ pcsl_string_append_escaped_ascii(pcsl_string* dst, const pcsl_string* suffix) {
         int id_len = PCSL_STRING_ESCAPED_BUFFER_SIZE(suffix->length);
         id_data = (jchar*)pcsl_mem_malloc(id_len * sizeof (jchar));
         if (NULL != id_data) {
-            len = unicode_to_escaped_ascii(suffix->data, suffix->length,
+            len = pcsl_utf16_to_escaped_ascii(suffix->data, suffix->length,
                                            id_data, 0);
         }
     }
@@ -1464,3 +1464,4 @@ const pcsl_string PCSL_STRING_EMPTY =
 /* NULL string */
 const pcsl_string PCSL_STRING_NULL =
   { NULL, 0, 0 };
+
