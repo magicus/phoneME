@@ -2559,10 +2559,6 @@ public class Display {
                 }
                 // #endif ENABLE_CHAMELEON
 
-                // keep the initial clip area
-                int[] reg = new int[4];
-                screenGraphics.getClip(reg);
-
                 int x1 = x;
                 int y1 = y;
                 int anchorX = 0;
@@ -2579,13 +2575,25 @@ public class Display {
 
                 int x2 = x1 + width;
                 int y2 = y1 + height;
-
                 // set clip area and init graphics
-                screenGraphics.reset(x1, y1, x2, y2);
-                screenGraphics.drawImage(offscreen_buffer,
-                    anchorX, anchorY, Graphics.TOP | Graphics.LEFT);
-                // restore initial clip area
-                screenGraphics.reset(reg[0], reg[1], reg[2], reg[3]);
+                synchronized (screenGraphics) {
+                    // keep the initial clip area
+                    int[] reg = new int[4];
+                    screenGraphics.getClip(reg);
+                    
+                    int tranX = screenGraphics.getTranslateX();
+                    int tranY = screenGraphics.getTranslateY();
+
+                    screenGraphics.translate(-tranX, -tranY);
+                    screenGraphics.setClip(x1, y1, width, height);
+                    
+                    screenGraphics.drawImage(offscreen_buffer,
+                             anchorX, anchorY, Graphics.TOP | Graphics.LEFT);
+
+                    // restore initial clip area and translation
+                    screenGraphics.translate(tranX, tranY);
+                    screenGraphics.setClip(reg[0], reg[1], reg[2] - reg[0], reg[3] - reg[1]);
+                }
                 refresh0(displayId, x1, y1, x2, y2);
             }
         }
@@ -2986,8 +2994,10 @@ public class Display {
             isRotatedKnown = true;
             Display.WIDTH = getScreenWidth0();
             Display.HEIGHT = getScreenHeight0();
+            
             screenGraphics.setDimensions(Display.WIDTH, Display.HEIGHT);
             screenGraphics.reset();
+
             // #ifdef ENABLE_CHAMELEON
             SkinResources.adjustScreen();
 
