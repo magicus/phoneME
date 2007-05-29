@@ -285,6 +285,7 @@ public:
   bool is_interface()      const { return access_flags().is_interface(); }
   bool is_final()          const { return access_flags().is_final();     }
   bool is_abstract()       const { return access_flags().is_abstract();  }
+  bool is_super()          const { return access_flags().is_super();     }
   bool is_public()         const { return access_flags().is_public();    }
   bool is_private()        const { return access_flags().is_private();   }
   bool is_preloaded()      const { return access_flags().is_preloaded(); }

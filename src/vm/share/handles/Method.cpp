@@ -1032,6 +1032,13 @@ void Method::check_bytecodes(JVM_SINGLE_ARG_TRAPS) {
         case Bytecodes::_tableswitch:      // 0xaa
           {
             int a_bci = align_size_up(bci + 1, wordSize);
+            //CR6538939: only zero-byte padding is allowed
+            int offset = bci + 1;
+            for (; offset < a_bci; offset++) {
+              if ((jubyte)bytecode_at_raw(offset) != 0) {
+                goto error;
+              }
+            }
             int fields;
             if (code == Bytecodes::_tableswitch) {
               int raw_lo = get_native_aligned_int(a_bci + wordSize);

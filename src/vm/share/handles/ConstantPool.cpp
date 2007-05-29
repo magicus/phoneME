@@ -466,6 +466,17 @@ ConstantPool::resolve_invoke_special_at(InstanceClass *sender_class,
                                  &method_name, &method_signature);
       Throw::no_such_method_error(JVM_SINGLE_ARG_THROW_0);
     }
+  } else { //see CR6539744
+    if (sender_class->is_super() && !sender_class->equals(static_receiver_class)) {
+      if (sender_class->is_subclass_of(&static_receiver_class)) {
+        InstanceClass::Raw super_class = sender_class->super();
+        m = super_class().lookup_method(&method_name, &method_signature);
+        if (m.is_null()) {
+          Throw::no_such_method_error(JVM_SINGLE_ARG_THROW_0);
+        }
+        static_receiver_class = m().holder();        
+      }      
+    }
   }
 
   return resolve_method_ref(index, &static_receiver_class, &m 

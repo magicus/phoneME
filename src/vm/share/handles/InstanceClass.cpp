@@ -347,7 +347,7 @@ bool InstanceClass::is_method_overridden(int vtable_index) const {
 /// Find a method with matching name and signature (regardless of access
 /// flags). We start by searching the current class, and recursively walk
 /// up the class hierarchy.
-ReturnOop InstanceClass::lookup_method(Symbol* name, Symbol* signature) {
+ReturnOop InstanceClass::lookup_method(Symbol* name, Symbol* signature, bool non_static_only) {
   InstanceClass::Raw ic = this->obj();
   Method::Raw m;          // If non-null, a method with matching name+sig
   InstanceClass::Raw m_holder; // Holder of <m>
@@ -355,7 +355,7 @@ ReturnOop InstanceClass::lookup_method(Symbol* name, Symbol* signature) {
   // (1) Recursively search the method table (and walk up the class hierarchy)
   //     until we find a matching method.
   while (!ic.is_null()) {
-    m = ic().find_local_method(name, signature);
+    m = ic().find_local_method(name, signature, non_static_only);
     if (!m.is_null()) {
       break;
     }
@@ -403,9 +403,9 @@ ReturnOop InstanceClass::lookup_method(Symbol* name, Symbol* signature) {
   return m.obj();
 }
 
-ReturnOop InstanceClass::find_local_method(Symbol* name, Symbol* signature) {
+ReturnOop InstanceClass::find_local_method(Symbol* name, Symbol* signature, bool non_static_only) {
   ObjArray::Raw array = methods();
-  return find_method(&array, name, signature);
+  return find_method(&array, name, signature, non_static_only);
 }
 
 /// Adds miranda methods to a class's methods array. For an interface I and
@@ -636,7 +636,7 @@ ReturnOop InstanceClass::interface_method_at(jint itable_index) {
 }
 
 ReturnOop InstanceClass::find_method(ObjArray* class_methods, Symbol* name,
-                                     Symbol* signature) {
+                                     Symbol* signature, bool non_static_only) {
   AllocationDisabler raw_pointers_used_in_this_function;
 
   OopDesc *name_obj = name->obj();
@@ -647,7 +647,14 @@ ReturnOop InstanceClass::find_method(ObjArray* class_methods, Symbol* name,
   while (ptr < end) {
     MethodDesc *m = *ptr++;
     if (m != NULL && m->match(name_obj, sig_obj)) {
-      return m;
+      if (!non_static_only) {
+        return m;
+      } else {
+        Method::Raw method = m;
+        if (!method().is_static()) {
+          return m;
+        }
+      }
     }
   }
   return NULL;
@@ -893,7 +900,15 @@ void InstanceClass::itable_copy_down(InstanceClass* ic, int& index,
       Symbol::Raw name      = interface_method().name();
       Symbol::Raw signature = interface_method().signature();
       // Find the real method in class
-      method = lookup_method(&name, &signature);
+      method = lookup_method(&name, &signature, true);
+#ifdef AZZERT
+      if (method.not_null()) {
+        //this is very important check. Failing it could lead 
+        //to security hole
+        //see CR 6539767
+        GUARANTEE(!method().is_static(), "check");
+      }
+#endif
     }
 
     if (!access_flags().is_abstract()) {
