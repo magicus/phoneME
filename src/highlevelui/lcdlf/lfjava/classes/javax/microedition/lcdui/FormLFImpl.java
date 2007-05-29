@@ -309,12 +309,14 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             lastTraverseItem = itemLFs[traverseIndex];
         }
 
-        if (traverseIndex >= 0 && traverseIndex >= itemNum) {
-            traverseIndex--;
-        }
-
         numOfLFs--;
         itemsModified = true;
+
+        if (traverseIndex > 0 && traverseIndex >= itemNum) {
+             traverseIndex--;
+         } else if (0 == numOfLFs) {
+             traverseIndex = -1;
+         }
 
         if (itemNum < numOfLFs) {
             System.arraycopy(itemLFs, itemNum + 1, itemLFs, itemNum,

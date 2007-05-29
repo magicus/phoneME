@@ -203,7 +203,10 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         // Focus remains on the same item
         if (traverseIndex >= itemNum) {
             traverseIndex++;
+        } else if (traverseIndex == -1) {
+            traverseIndex = itemNum;
         }
+        
         lRequestInvalidate();
     }
 
@@ -256,12 +259,14 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
             lastTraverseItem = itemLFs[traverseIndex];
         }
 
-        if (traverseIndex >= 0 && traverseIndex >= itemNum) {
-            traverseIndex--;
-        }
-
         numOfLFs--;
         itemsModified = true;
+
+        if (traverseIndex > 0 && traverseIndex >= itemNum) {
+             traverseIndex--;
+         } else if (0 == numOfLFs) {
+             traverseIndex = -1;
+         }
 
         if (itemNum < numOfLFs) {
             System.arraycopy(itemLFs, itemNum + 1, itemLFs, itemNum,
