@@ -64,9 +64,6 @@ public class MultimediaModuleImpl implements JUMPModule, JUMPEventHandler {
     /** Executive process for messaging. */
     private JUMPExecutive thisProcess;
 
-    /** Message handler registration token. */
-    Object msgToken;
-
     /** Isolate manager for getting <code>JUMPIsolateProxy</code> instances. */
     JUMPIsolateFactory isolateFactory;
 
@@ -77,7 +74,7 @@ public class MultimediaModuleImpl implements JUMPModule, JUMPEventHandler {
      * @param config configuration data (ignored).
      */
     public void load(Map config) {
-        // Register this module as event handler for JSR-75.
+        // Register this module as event handler for JSR-135.
         JUMPEventQueueModule eventQueue = JUMPEventQueueModuleFactory.getInstance().getModule();
         eventQueue.registerEventHandler(135, this);
         // Get executive instance.
@@ -115,6 +112,5 @@ public class MultimediaModuleImpl implements JUMPModule, JUMPEventHandler {
             System.out.println("==> Can not send MMEvent: " + ex.getMessage());
         }
     }
-
 }
 

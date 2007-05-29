@@ -22,38 +22,13 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
- 
+
 package com.sun.mmedia;
 
-import javax.microedition.media.*;
-import javax.microedition.media.control.*;
+import com.sun.mmedia.DirectPlayer;
+import javax.microedition.media.MediaException;
 
-/**
- * Interactive MIDI Player
- * it implements MIDIControl
- */
-public final class DirectMIDI extends DirectPlayer {
-
-    private DirectMIDIControl midiCtrl;
-
-    /**
-     * It does not need data source
-     */
-    public DirectMIDI() {
-        hasDataSource = false;
-    }
-
-    protected Control doGetControl(String type) {
-        Control c = super.doGetControl(type);
-        if (c != null) return c;
-
-        if (type.equals("javax.microedition.media.control.MIDIControl")) {
-            if (midiCtrl == null) {
-	        midiCtrl = new DirectMIDIControl(this);
-            }
-            return (Control)midiCtrl;
-        }
-
-        return null;
-    }
+public interface PlayerStateSubscriber
+{
+    void PlayerRealized(DirectPlayer dp) throws MediaException;
 }

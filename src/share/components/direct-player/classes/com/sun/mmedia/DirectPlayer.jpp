@@ -1,26 +1,26 @@
 /*
  * 
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /*
@@ -43,12 +43,13 @@ import com.sun.j2me.log.LogChannels;
 
 import com.sun.mmedia.DefaultConfiguration;
 import com.sun.mmedia.DirectVolume;
-import javax.microedition.media.Manager;
+import com.sun.mmedia.PlayerStateSubscriber;
 import javax.microedition.media.Player;
 import javax.microedition.media.PlayerListener;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.Control;
 import com.sun.mmedia.Configuration;
+import com.sun.mmedia.protocol.BasicDS;
 
 // #ifndef ABB [
 import javax.microedition.media.control.StopTimeControl;
@@ -71,6 +72,8 @@ public class DirectPlayer extends BasicPlayer
     // #else ][
     protected final static boolean debug = false;
     // #endif ]    
+
+	public PlayerStateSubscriber state_subscriber = null;
 
     // Temp buffer shared by all of Player from the same isolate
     private final static int BUFFER_SIZE = 1024 * 50;
@@ -194,13 +197,15 @@ public class DirectPlayer extends BasicPlayer
         } else if (state == STARTED) {
             long currentTime = doGetMediaTime();
             long duration = doGetDuration();
-            
             if (currentTime != TIME_UNKNOWN && time >= currentTime) {
                 if (stopTimer != null) {
                     stopTimer.cancel();
                 }
                 stopTimer = new Timer();
                 long scheduleTime = time/1000 - currentTime/1000;
+                if (scheduleTime <= 0) {
+                    scheduleTime = 1;
+                }
                 stopTimer.schedule(new StopTimeController(), scheduleTime);
             } else {
                 if (debug) {
@@ -272,9 +277,12 @@ public class DirectPlayer extends BasicPlayer
             throw new MediaException("Unable to realize - initialize fail");
         }
 
+		if( null != state_subscriber )
+			state_subscriber.PlayerRealized( this );
+
         // Do buffering
         if (true == needBuffering && true == nIsNeedBuffering(hNative)) {
-            if (-1 == readAndBuffering(remained)) {
+            if (-1 == readAndBuffering(remained, 1)) {
                 throw new MediaException("Unable to realize - buffering fail");
             }
         }
@@ -306,8 +314,9 @@ public class DirectPlayer extends BasicPlayer
      */
     protected void doPrefetch() throws MediaException {
         if (debug) System.out.println("[direct] DirectPlayer.doPrefetch");
+
         // acquire device
-        if (!nAcquireDevice(hNative)) {
+        if (false == nAcquireDevice(hNative)) {
             throw new MediaException("Unable to prefetch - can't acquire device");
         }
         if (nPcmAudioPlayback(hNative)) {
@@ -346,8 +355,12 @@ public class DirectPlayer extends BasicPlayer
                 stopTimer.cancel();
             }
             long currentTime = doGetMediaTime();
+            long scheduleTime = stopTime / 1000 - currentTime / 1000;
+            if (scheduleTime <= 0) {
+                scheduleTime = 1;
+            }
             stopTimer = new Timer();
-            stopTimer.schedule(new StopTimeController(), stopTime / 1000 - currentTime / 1000 );
+            stopTimer.schedule(new StopTimeController(), scheduleTime );
         }
         // #endif ]
 
@@ -464,6 +477,7 @@ public class DirectPlayer extends BasicPlayer
      */
     protected void doDeallocate() {
         if (debug) System.out.println("[direct] DirectPlayer.doDeallocate");
+
         // release device
         nReleaseDevice(hNative);
         if (nPcmAudioPlayback(hNative)) {
@@ -549,12 +563,19 @@ public class DirectPlayer extends BasicPlayer
      * @return the duration in microseconds or <code>TIME_UNKNOWN</code>
      */
     protected long doGetDuration() {
+        boolean has_capture_locator = ( null != locator ) &&
+            ( locator.startsWith( Configuration.AUDIO_CAPTURE_LOCATOR ) 
+                || locator.startsWith( Configuration.VIDEO_CAPTURE_LOCATOR ) );
+			  
+        if( has_capture_locator ) 
+            return Player.TIME_UNKNOWN;
+
         // for MIDI_DEVICE_LOCATOR -- always 0
 		// for TONE_DEVICE_LOCATOR -- 0 if tone sequence wasn't set
         if( !hasDataSource && !hasToneSequenceSet ) return 0; 
         
         int ret = nGetDuration(hNative);
-        if (ret != TIME_UNKNOWN) {
+        if (ret != Player.TIME_UNKNOWN) {
             return (ret * 1000);    
         }
         return ret;
@@ -656,12 +677,42 @@ public class DirectPlayer extends BasicPlayer
     }
 
     /**
+     * Make additional processing of the first block (header)
+     * 
+     * @param  Source buffer
+     * @param  Length of the source buffer
+     */
+    private void processHeader(byte[] buffer, int length) {
+        if (source != null) {
+            // Additional check to differentiate sp-midi and midi
+            String mimeType = source.getContentType();
+            BasicDS ds = (BasicDS)source;
+            if ((ds != null) && mimeType.equals(Configuration.MIME_AUDIO_MIDI)) {
+                final int MAX_SP_MIDI_SEARCH = 512;
+                int maxSearch = length - 5;
+                if (maxSearch > MAX_SP_MIDI_SEARCH)
+                    maxSearch = MAX_SP_MIDI_SEARCH;
+                    
+                for (int i = 0; i < maxSearch; i++) 
+                    if ((buffer[i] == (byte)0xF0) &&  
+                        (buffer[i + 2] == (byte)0x7F) &&
+                        (buffer[i + 4] == (byte)0x0B) &&
+                        (buffer[i + 5] == (byte)0x01)) {
+                        ds.setContentType(Configuration.MIME_AUDIO_SP_MIDI);
+                        return;
+                    }
+                
+            }
+        }
+    }
+    
+    /**
      * Read bytes from stream and do buffering
      * 
      * @param   Bytes to read
      * @return  Actual read bytes or -1 if error occured
      */
-    private int readAndBuffering(long length) {
+    private int readAndBuffering(long length, int headerProcessingCnt) {
         if (debug) System.out.println("[direct] DirectPlayer.readAndBuffering " + length);
 
         int actualRead = 0;
@@ -686,6 +737,12 @@ public class DirectPlayer extends BasicPlayer
                 if (debug) System.out.println("[direct] readAndBuffering IOException");
                 return -1;
             }
+            
+            if (headerProcessingCnt > 0) {
+                processHeader(buffer, ret);
+                headerProcessingCnt--;
+            }
+                
             if (ret == -1) {
                 if (debug) System.out.println("[direct] stream.read return -1");
                 nBuffering(hNative, buffer, -1);
