@@ -24,25 +24,25 @@
  * information or have any questions.
  */
 
-#ifndef _GXUTL_IMAGE_ERRORCODES_H_
-#define _GXUTL_IMAGE_ERRORCODES_H_
+#ifndef _IMG_ERRORCODES_H_
+#define _IMG_ERRORCODES_H_
 
 /**
  * @file
- * @ingroup lowui_gxutl
+ * @ingroup lowui_img
  *
- * @brief Porting api for graphics_util library
+ * @brief Porting api for image library
  */
 
 /**
  * Status codes returned by image handling and processing functions.
  */
 typedef enum {
-    GXUTL_NATIVE_IMAGE_NO_ERROR            = 0, /** Success */
-    GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR = 1, /** Out of memory */
-    GXUTL_NATIVE_IMAGE_DECODING_ERROR      = 2, /** Problem decoding the image */
-    GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR = 3,/** Image format not supported */  
-    GXUTL_NATIVE_IMAGE_RESOURCE_LIMIT = 4 /** Image resource limit exceeded */
-}  gxutl_native_image_error_codes;
+    IMG_NATIVE_IMAGE_NO_ERROR            = 0, /** Success */
+    IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR = 1, /** Out of memory */
+    IMG_NATIVE_IMAGE_DECODING_ERROR      = 2, /** Problem decoding the image */
+    IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR = 3,/** Image format not supported */  
+    IMG_NATIVE_IMAGE_RESOURCE_LIMIT = 4 /** Image resource limit exceeded */
+}  img_native_error_codes;
 
-#endif /* _GXUTL_IMAGE_ERRORCODES_H_ */
+#endif /* _IMG_ERRORCODES_H_ */

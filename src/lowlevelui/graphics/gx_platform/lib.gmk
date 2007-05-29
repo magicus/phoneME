@@ -33,7 +33,7 @@
 ############################################################
 
 # Local module directory
-GRAPHICS_MODULE_DIR = $(SUBSYSTEM_LOWUI_DIR)/graphics/graphics_platform
+GRAPHICS_MODULE_DIR = $(SUBSYSTEM_LOWUI_DIR)/graphics/gx_platform
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(GRAPHICS_MODULE_DIR)/classes
@@ -46,7 +46,7 @@ SUBSYSTEM_GRAPHICS_JAVA_FILES += \
 # (IMPL_NOTE remove this dependency)
 
 SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/graphics_platform/include
+    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/gx_platform/include
 
 # vpath for platform_graphics module
 #

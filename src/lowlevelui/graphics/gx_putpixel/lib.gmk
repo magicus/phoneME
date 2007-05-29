@@ -33,7 +33,7 @@
 ############################################################
 
 # Local module directory
-GRAPHICS_MODULE_DIR = $(SUBSYSTEM_LOWUI_DIR)/graphics/graphics_putpixel
+GRAPHICS_MODULE_DIR = $(SUBSYSTEM_LOWUI_DIR)/graphics/gx_putpixel
 
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(GRAPHICS_MODULE_DIR)/classes
@@ -51,7 +51,7 @@ vpath % \
 # (IMPL_NOTE remove this dependency)
 
 SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/graphics_putpixel/include
+    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/gx_putpixel/include
 
 # Native files for putpixel module
 SUBSYSTEM_GRAPHICS_NATIVE_FILES += \

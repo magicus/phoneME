@@ -35,7 +35,6 @@
 #include <midp_logging.h>
 
 #include <gxutl_graphics.h>
-#include <gxutl_image_errorcodes.h>
 
 #include "gxj_intern_graphics.h"
 #include "gxj_intern_image.h"

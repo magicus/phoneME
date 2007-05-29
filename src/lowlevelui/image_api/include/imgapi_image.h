@@ -24,8 +24,8 @@
  * information or have any questions. 
  */
 
-#ifndef _IMGAPI_GRAPHICS_H_
-#define _IMGAPI_GRAPHICS_H_
+#ifndef _IMGAPI_IMAGE_H_
+#define _IMGAPI_IMAGE_H_
 
 #include <commonKNIMacros.h>
 #include <ROMStructs.h>

@@ -55,7 +55,7 @@
 extern "C" void
 gxpport_create_mutable(gxpport_mutableimage_native_handle *newImagePtr,
 		       int width, int height,
-		       gxutl_native_image_error_codes* creationErrorPtr) {
+		       img_native_error_codes* creationErrorPtr) {
   /* set optimization for all QPixmaps
      move this to startup/initialization code. */
   QPixmap::setDefaultOptimization(QPixmap::BestOptim);
@@ -66,14 +66,14 @@ gxpport_create_mutable(gxpport_mutableimage_native_handle *newImagePtr,
    */  
   QPixmap* qpixmap = new QPixmap(); /* Start with a NULL image object */
   if (NULL == qpixmap) {
-     *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+     *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
      return;
   }
 
   /* Check resource limit before really creating image memory */
   if (midpCheckResourceLimit(RSC_TYPE_IMAGE_MUT,
                              ImgRegionRscSize(width, height)) == 0) {
-     *creationErrorPtr = GXUTL_NATIVE_IMAGE_RESOURCE_LIMIT;
+     *creationErrorPtr = IMG_NATIVE_IMAGE_RESOURCE_LIMIT;
      delete qpixmap;
      return;
   }
@@ -93,7 +93,7 @@ gxpport_create_mutable(gxpport_mutableimage_native_handle *newImagePtr,
   /* return the qpixmap pointer */
   *newImagePtr = qpixmap;
 
-  *creationErrorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
+  *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
 }
 
 extern "C" void
@@ -188,7 +188,7 @@ gxpport_get_mutable_argb(
  gxpport_mutableimage_native_handle imagePtr,
  jint* rgbBuffer, int offset, int scanLength,
  int x, int y, int width, int height,
- gxutl_native_image_error_codes* errorPtr) {
+ img_native_error_codes* errorPtr) {
 
     QPixmap *qpixmap = (QPixmap *)(imagePtr);
     QImage   image(qpixmap->convertToImage());
@@ -217,7 +217,7 @@ gxpport_get_mutable_argb(
         curOffset += (scanLength - width);
     }
 
-    *errorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    *errorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
 }
 
 extern "C" QPixmap*

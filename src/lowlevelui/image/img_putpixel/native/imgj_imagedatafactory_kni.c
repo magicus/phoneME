@@ -33,7 +33,7 @@
 #include <midpMalloc.h>
 
 #include <gxutl_graphics.h>
-#include <gxutl_image_errorcodes.h>
+#include <img_errorcodes.h>
 
 #include <imgdcd_image_util.h>
 
@@ -59,15 +59,16 @@
  * @return the given 'sbuf' pointer for convenient usage,
  *	   or NULL if the image is null.
  */
+/*
 gxj_screen_buffer* gxj_get_image_screen_buffer_impl(const java_imagedata *img,
 						    gxj_screen_buffer *sbuf,
 						    jobject graphics) {
 
-    /* NOTE:
-     * Since this routine is called by every graphics operations
-     * We use ROMStruct directly instead of macros
-     * like JavaByteArray, etc, for max performance.
-     */
+    // NOTE:
+    // Since this routine is called by every graphics operations
+    // We use ROMStruct directly instead of macros
+    // like JavaByteArray, etc, for max performance.
+    //
     if (img == NULL) {
 	return NULL;
     }
@@ -75,8 +76,8 @@ gxj_screen_buffer* gxj_get_image_screen_buffer_impl(const java_imagedata *img,
     sbuf->width  = img->width;
     sbuf->height = img->height;
 
-    /* Only use nativePixelData and nativeAlphaData if
-     * pixelData is null */
+    // Only use nativePixelData and nativeAlphaData if
+    // pixelData is null 
     if (img->pixelData != NULL) {
 	sbuf->pixelData = (gxj_pixel_type *)&(img->pixelData->elements[0]);
 	sbuf->alphaData = (img->alphaData != NULL)
@@ -90,11 +91,12 @@ gxj_screen_buffer* gxj_get_image_screen_buffer_impl(const java_imagedata *img,
 #if ENABLE_BOUNDS_CHECKS
     sbuf->g = (graphics != NULL) ? GXAPI_GET_GRAPHICS_PTR(graphics) : NULL;
 #else
-    (void)graphics; /* Surpress unused parameter warning */
+    (void)graphics; // Surpress unused parameter warning
 #endif
 
     return sbuf;
 }
+*/
 
 /**
  * Decodes the given input data into a cache representation that can
@@ -124,7 +126,7 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
     MIDP_ERROR err;
     gxj_screen_buffer sbuf;
     imgdcd_image_buffer_raw *rawBuffer;
-    gxutl_native_image_error_codes creationError = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    img_native_error_codes creationError = IMG_NATIVE_IMAGE_NO_ERROR;
 
     err = imgdcd_image_get_info(srcBuffer, length,
 			    &format, (unsigned int *)&sbuf.width,
@@ -178,7 +180,7 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
 			&creationError);
 	}
 
-	if (GXUTL_NATIVE_IMAGE_NO_ERROR != creationError) {
+	if (IMG_NATIVE_IMAGE_NO_ERROR != creationError) {
 	    midpFree(rawBuffer);
 	    return MIDP_ERROR_IMAGE_CORRUPTED;
 	}
@@ -229,7 +231,7 @@ void img_get_argb(const java_imagedata * srcImageDataPtr,
 		 jint offset,
 		 jint scanlength,
 		 jint x, jint y, jint width, jint height,
-		 gxutl_native_image_error_codes * errorPtr) {
+		 img_native_error_codes * errorPtr) {
   gxj_screen_buffer sbuf;
   if (gxj_get_image_screen_buffer_impl(srcImageDataPtr, &sbuf, NULL) != NULL) {
     // rgbData[offset + (a - x) + (b - y) * scanlength] = P(a, b);
@@ -258,7 +260,7 @@ void img_get_argb(const java_imagedata * srcImageDataPtr,
     }
   }
 
-  * errorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
+  * errorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
 }
 
 /**
@@ -516,7 +518,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadPNG) {
     java_imagedata * midpImageData = NULL;
 
     /* variable to hold error codes */
-    gxutl_native_image_error_codes creationError = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    img_native_error_codes creationError = IMG_NATIVE_IMAGE_NO_ERROR;
 
     KNI_StartHandles(4);
     KNI_DeclareHandle(alphaData);
@@ -573,7 +575,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadPNG) {
 			(imgdcd_alpha_type *)image.alphaData,
 			&creationError);
 
-    if (GXUTL_NATIVE_IMAGE_NO_ERROR != creationError) {
+    if (IMG_NATIVE_IMAGE_NO_ERROR != creationError) {
         KNI_ThrowNew(midpIllegalArgumentException, NULL);
     }
 
@@ -603,7 +605,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadJPEG) {
     java_imagedata * midpImageData = NULL;
 
     /* variable to hold error codes */
-    gxutl_native_image_error_codes creationError = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    img_native_error_codes creationError = IMG_NATIVE_IMAGE_NO_ERROR;
 
     KNI_StartHandles(3);
     /* KNI_DeclareHandle(alphaData); */
@@ -647,7 +649,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadJPEG) {
 		(imgdcd_alpha_type *)image.alphaData, 
 		&creationError);
 
-    if (GXUTL_NATIVE_IMAGE_NO_ERROR != creationError) {
+    if (IMG_NATIVE_IMAGE_NO_ERROR != creationError) {
         KNI_ThrowNew(midpIllegalArgumentException, NULL);
     }
 

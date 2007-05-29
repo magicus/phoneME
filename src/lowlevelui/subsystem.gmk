@@ -48,20 +48,20 @@ SUBSYSTEM_LOWUI_DIR = $(SUBSYSTEM_DIR)/lowlevelui
 # putpixel          - putpixel graphics library, Java image storage
 #
 ifeq ($(PLATFORM), linux_gci)
-    SUBSYSTEM_GRAPHICS_MODULES = graphics_gci
+    SUBSYSTEM_GRAPHICS_MODULES = gx_gci
     SUBSYSTEM_IMAGE_MODULES = img_gci
 else
     ifeq ($(PLATFORM), linux_qte)
-        SUBSYSTEM_GRAPHICS_MODULES = graphics_platform
+        SUBSYSTEM_GRAPHICS_MODULES = gx_platform
         SUBSYSTEM_IMAGE_MODULES = img_platform
     else
         ifeq ($(PLATFORM), stubs)
             ifndef SUBSYSTEM_GRAPHICS_MODULES
-                  SUBSYSTEM_GRAPHICS_MODULES = graphics_platform
+                  SUBSYSTEM_GRAPHICS_MODULES = gx_platform
                   SUBSYSTEM_IMAGE_MODULES = img_platform
             endif
          else
-            SUBSYSTEM_GRAPHICS_MODULES = graphics_putpixel
+            SUBSYSTEM_GRAPHICS_MODULES = gx_putpixel
             SUBSYSTEM_IMAGE_MODULES = img_putpixel
           endif
     endif
@@ -90,7 +90,7 @@ include $(SUBSYSTEM_LOWUI_DIR)/graphics_util/$(LIB_MAKE_FILE)
 #              graphics.graphics_platform depends on it
 #####################################################################
 
-ifeq ($(SUBSYSTEM_GRAPHICS_MODULES), graphics_platform) 
+ifeq ($(SUBSYSTEM_GRAPHICS_MODULES), gx_platform) 
     include $(SUBSYSTEM_LOWUI_DIR)/platform_graphics_port/$(LIB_MAKE_FILE)
 endif
 
@@ -98,7 +98,7 @@ endif
 # Graphics Subsystem 
 # Description: contains graphics_platform and graphics_putpixel implementations
 #####################################################################
-ifneq ($(SUBSYSTEM_GRAPHICS_MODULES), graphics_gci)
+ifneq ($(SUBSYSTEM_GRAPHICS_MODULES), gx_gci)
 include $(SUBSYSTEM_LOWUI_DIR)/graphics/$(LIB_MAKE_FILE)
 endif
 

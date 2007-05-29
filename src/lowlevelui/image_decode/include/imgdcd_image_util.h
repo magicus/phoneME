@@ -28,11 +28,11 @@
 #define _IMGDCD_IMAGE_H_
 
 #include <midpError.h>
-#include <gxutl_image_errorcodes.h>
+#include <img_errorcodes.h>
 
 /**
  * @file
- * @ingroup lowui_gx
+ * @ingroup lowui_imgdcd
  *
  * @brief Graphics utility api for image decoding
  */
@@ -109,11 +109,11 @@ typedef struct {
  *              MIDP_ERROR_UNSUPPORTED
  *              MIDP_ERROR_IMAGE_CORRUPTED
  */
-MIDP_ERROR imgdcd_image_get_info(unsigned char *imgBuffer,
-		 	        unsigned int length,
-			        imgdcd_image_format *format,
-			        unsigned int *width,
-			        unsigned int *height);
+extern MIDP_ERROR imgdcd_image_get_info(unsigned char *imgBuffer,
+                                        unsigned int length,
+                                        imgdcd_image_format *format,
+                                        unsigned int *width,
+                                        unsigned int *height);
 
 /**
  * Decodes the given input data into a storage format used by immutable
@@ -124,11 +124,11 @@ MIDP_ERROR imgdcd_image_get_info(unsigned char *imgBuffer,
  *  @param creationErrorPtr pointer to the status of the decoding
  *         process. This function sets creationErrorPtr's value.
  */
-int decode_png(unsigned char* srcBuffer, int length, 
-	       int  width, int height,
-	       imgdcd_pixel_type *pixelData, 
-	       imgdcd_alpha_type *alphaData,
-	       gxutl_native_image_error_codes* creationErrorPtr);
+extern int decode_png(unsigned char* srcBuffer, int length, 
+                      int  width, int height,
+                      imgdcd_pixel_type *pixelData, 
+                      imgdcd_alpha_type *alphaData,
+                      img_native_error_codes* creationErrorPtr);
   
 
 /**
@@ -140,11 +140,11 @@ int decode_png(unsigned char* srcBuffer, int length,
  *  @param creationErrorPtr pointer to the status of the decoding
  *         process. This function sets creationErrorPtr's value.
  */
-void decode_jpeg (unsigned char* srcBuffer, int length,
-		  int width, int height,
-		  imgdcd_pixel_type *pixelData, 
-		  imgdcd_alpha_type *alphaData,
-		  gxutl_native_image_error_codes* creationErrorPtr);
+extern void decode_jpeg (unsigned char* srcBuffer, int length,
+                         int width, int height,
+                         imgdcd_pixel_type *pixelData, 
+                         imgdcd_alpha_type *alphaData,
+                         img_native_error_codes* creationErrorPtr);
 
 
 

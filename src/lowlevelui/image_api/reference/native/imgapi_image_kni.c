@@ -30,7 +30,7 @@
 
 #include <imgapi_image.h>
 #include <img_image.h>
-#include <gxutl_image_errorcodes.h>
+#include <img_errorcodes.h>
 
 
 /**
@@ -100,20 +100,20 @@ KNIDECL(javax_microedition_lcdui_Image_getRGB) {
             || offset + ((height - 1) * scanlength) < 0) {
             KNI_ThrowNew(midpArrayIndexOutOfBoundsException, NULL);
         } else {
-  	    gxutl_native_image_error_codes error = GXUTL_NATIVE_IMAGE_NO_ERROR;
+            img_native_error_codes error = IMG_NATIVE_IMAGE_NO_ERROR;
 
-	    SNI_BEGIN_RAW_POINTERS;
+            SNI_BEGIN_RAW_POINTERS;
 
             rgbBuffer = JavaIntArray(rgbData);
-	    img_get_argb(srcImageDataPtr, rgbBuffer,
-		       offset, scanlength,
-		       x, y, width, height, &error);
+            img_get_argb(srcImageDataPtr, rgbBuffer,
+                         offset, scanlength,
+                         x, y, width, height, &error);
 
-	    SNI_END_RAW_POINTERS;
+            SNI_END_RAW_POINTERS;
 
-	    if (error != GXUTL_NATIVE_IMAGE_NO_ERROR) {
-		KNI_ThrowNew(midpOutOfMemoryError, NULL);
-	    }
+            if (error != IMG_NATIVE_IMAGE_NO_ERROR) {
+                KNI_ThrowNew(midpOutOfMemoryError, NULL);
+            }
         }
     }
 

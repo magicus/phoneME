@@ -24,19 +24,19 @@
  * information or have any questions.
  */
 
-#ifndef _GX_IMAGE_H_
-#define _GX_IMAGE_H_
+#ifndef _IMG_IMAGE_H_
+#define _IMG_IMAGE_H_
 
 #include <commonKNIMacros.h>
 #include <midpError.h>
 
-#include <gxutl_image_errorcodes.h>
+#include <img_errorcodes.h>
 #include <imgapi_image.h>
 
 
 /**
  * @file
- * @ingroup lowui_gx
+ * @ingroup lowui_img
  *
  * @brief Porting api for graphics library
  */
@@ -66,7 +66,7 @@ extern void img_get_argb(const java_imagedata * srcImageDataPtr,
 			 jint offset,
 			 jint scanlen,
 			 jint x, jint y, jint width, jint height,
-			 gxutl_native_image_error_codes * errorPtr);
+			 img_native_error_codes * errorPtr);
 
 
 /**
@@ -98,4 +98,4 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
 }
 #endif
 
-#endif /* _GX_IMAGE_H_ */
+#endif /* _IMG_IMAGE_H_ */

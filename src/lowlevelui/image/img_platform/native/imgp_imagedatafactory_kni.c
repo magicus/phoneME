@@ -94,7 +94,7 @@ extern void img_get_argb(const java_imagedata * srcImageDataPtr,
 		       jint offset,
 		       jint scanlength,
 		       jint x, jint y, jint width, jint height,
-		       gxutl_native_image_error_codes * errorPtr) {
+		       img_native_error_codes * errorPtr) {
   gxpport_mutableimage_native_handle srcImageNativeData =
     (gxpport_mutableimage_native_handle)srcImageDataPtr->nativeImageData;    
 
@@ -131,7 +131,7 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
 				unsigned int length,
 				unsigned char** ret_dataBuffer,
 				unsigned int* ret_length) {
-    gxutl_native_image_error_codes creationError;
+    img_native_error_codes creationError;
 
     /* This external API is implemented in each platform */
     gxpport_decodeimmutable_to_platformbuffer(srcBuffer, (long)length,
@@ -141,13 +141,13 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
 
     switch (creationError) {
 
-    case GXUTL_NATIVE_IMAGE_NO_ERROR:
+    case IMG_NATIVE_IMAGE_NO_ERROR:
 	return MIDP_ERROR_NONE;
 
-    case GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR:
+    case IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR:
 	return MIDP_ERROR_OUT_MEM;
 
-    case GXUTL_NATIVE_IMAGE_DECODING_ERROR:
+    case IMG_NATIVE_IMAGE_DECODING_ERROR:
 	return MIDP_ERROR_IMAGE_CORRUPTED;
 
     default:
@@ -171,7 +171,7 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDataCopy() {
 
-    gxutl_native_image_error_codes creationError = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    img_native_error_codes creationError = IMG_NATIVE_IMAGE_NO_ERROR;
 
     /* mutable image */
     gxpport_image_native_handle srcImage;
@@ -190,12 +190,12 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDataCopy() {
 
     gxpport_createimmutable_from_mutable(srcImage, &newImage, &creationError);
 
-    if (GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR == creationError) {
+    if (IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR == creationError) {
 	KNI_ThrowNew(midpOutOfMemoryError, NULL);
-    } else if (GXUTL_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
+    } else if (IMG_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
 	KNI_ThrowNew(midpOutOfMemoryError,
                      "Resource limit exceeded for immutable image");
-    } else if (GXUTL_NATIVE_IMAGE_NO_ERROR != creationError) {
+    } else if (IMG_NATIVE_IMAGE_NO_ERROR != creationError) {
 	KNI_ThrowNew(midpIllegalArgumentException, NULL);
     } else {
 	GXAPI_GET_IMAGEDATA_PTR(dest)->nativeImageData = (jint)newImage;
@@ -234,7 +234,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDataRegion() 
     int          width = KNI_GetParameterAsInt(5);
     int              y = KNI_GetParameterAsInt(4);
     int              x = KNI_GetParameterAsInt(3);
-    gxutl_native_image_error_codes creationError = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    img_native_error_codes creationError = IMG_NATIVE_IMAGE_NO_ERROR;
 
     /* pointer to native image structure */
     gxpport_image_native_handle srcImagePtr;
@@ -266,12 +266,12 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDataRegion() 
 						   &creationError);
     }
 
-    if (GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR == creationError) {
+    if (IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR == creationError) {
 	KNI_ThrowNew(midpOutOfMemoryError, NULL);
-    } else if (GXUTL_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
+    } else if (IMG_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
 	KNI_ThrowNew(midpOutOfMemoryError,
 		     "Resource limit exceeded for immutable image");
-    } else if (GXUTL_NATIVE_IMAGE_NO_ERROR != creationError) {
+    } else if (IMG_NATIVE_IMAGE_NO_ERROR != creationError) {
 	KNI_ThrowNew(midpIllegalArgumentException, NULL);
     } else {
 	GXAPI_GET_IMAGEDATA_PTR(destImg)->nativeImageData = (jint)newImagePtr;
@@ -302,7 +302,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDecodeImage()
     gxpport_image_native_handle newImagePtr;
     int            imgWidth;
     int            imgHeight;
-    gxutl_native_image_error_codes creationError = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    img_native_error_codes creationError = IMG_NATIVE_IMAGE_NO_ERROR;
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(pngData);
@@ -331,18 +331,18 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDecodeImage()
 
 	SNI_END_RAW_POINTERS;
 
-        if (GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR == creationError) {
+        if (IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR == creationError) {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
             break;
         }
 
-        if (GXUTL_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
+        if (IMG_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
             KNI_ThrowNew(midpOutOfMemoryError,
                          "Resource limit exceeded for immutable image");
             break;
         }
 
-        if (GXUTL_NATIVE_IMAGE_NO_ERROR != creationError) {
+        if (IMG_NATIVE_IMAGE_NO_ERROR != creationError) {
             KNI_ThrowNew(midpIllegalArgumentException, NULL);
             break;
         }
@@ -369,7 +369,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRomizedImage() {
     int            imageDataArrayPtr  = KNI_GetParameterAsInt(2);
     int            imageDataArrayLength  = KNI_GetParameterAsInt(3);
     int            imgWidth, imgHeight;
-    gxutl_native_image_error_codes creationError = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    img_native_error_codes creationError = IMG_NATIVE_IMAGE_NO_ERROR;
 
     /* pointer to native image structure */
     gxpport_image_native_handle newImagePtr;
@@ -389,7 +389,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRomizedImage() {
 						  &newImagePtr,
 						  &creationError);
 
-        if (GXUTL_NATIVE_IMAGE_NO_ERROR == creationError) {
+        if (IMG_NATIVE_IMAGE_NO_ERROR == creationError) {
 	    java_imagedata * dstImageDataPtr = GXAPI_GET_IMAGEDATA_PTR(imageData);
 
             dstImageDataPtr->width   = (jint)imgWidth;
@@ -398,10 +398,10 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRomizedImage() {
             status = KNI_TRUE;
             break;
 
-        } else if (GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR == creationError) {
+        } else if (IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR == creationError) {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
             break;
-        } else if (GXUTL_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
+        } else if (IMG_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
             KNI_ThrowNew(midpOutOfMemoryError,
                          "Resource limit exceeded for immutable image");
             break;
@@ -439,7 +439,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadAndCreateImmutableImageDataFr
     int imgWidth;
     int imgHeight;
     SuiteIdType suiteId;
-    gxutl_native_image_error_codes creationError = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    img_native_error_codes creationError = IMG_NATIVE_IMAGE_NO_ERROR;
 
     /* pointer to native image structure */
     gxpport_image_native_handle newImagePtr;
@@ -470,7 +470,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadAndCreateImmutableImageDataFr
 						  &newImagePtr,
 						  &creationError);
 
-        if (GXUTL_NATIVE_IMAGE_NO_ERROR == creationError) {
+        if (IMG_NATIVE_IMAGE_NO_ERROR == creationError) {
 	    java_imagedata * dstImageDataPtr = GXAPI_GET_IMAGEDATA_PTR(imageData);
 
             dstImageDataPtr->width   = (jint)imgWidth;
@@ -478,10 +478,10 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadAndCreateImmutableImageDataFr
             dstImageDataPtr->nativeImageData  = (jint)newImagePtr;
             status = KNI_TRUE;
             break;
-	} else if (GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR == creationError) {
+	} else if (IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR == creationError) {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
             break;
-        } else if (GXUTL_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
+        } else if (IMG_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
             KNI_ThrowNew(midpOutOfMemoryError,
                          "Resource limit exceeded for immutable image");
             break;
@@ -528,7 +528,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDecodeRGBImag
     int width = KNI_GetParameterAsInt(3);
     jint *imageBuffer = NULL;
     int buflen;
-    gxutl_native_image_error_codes creationError = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    img_native_error_codes creationError = IMG_NATIVE_IMAGE_NO_ERROR;
 
     /* pointer to native image structure */
     gxpport_image_native_handle newImagePtr;
@@ -567,7 +567,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDecodeRGBImag
 
 	SNI_END_RAW_POINTERS;
 
-        if (GXUTL_NATIVE_IMAGE_NO_ERROR == creationError) {
+        if (IMG_NATIVE_IMAGE_NO_ERROR == creationError) {
 	    java_imagedata * dstImageDataPtr = GXAPI_GET_IMAGEDATA_PTR(imageData);
 
             dstImageDataPtr->height = (jint)height;
@@ -576,12 +576,12 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDecodeRGBImag
             break;
         }
 
-        if (GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR == creationError) {
+        if (IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR == creationError) {
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
             break;
         }
 
-        if (GXUTL_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
+        if (IMG_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
             KNI_ThrowNew(midpOutOfMemoryError,
                          "Resource limit exceeded for immutable image");
             break;
@@ -616,7 +616,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_createMutableImageData() {
     gxpport_mutableimage_native_handle newImagePtr = NULL;
 
     /* variable to hold error codes */
-    gxutl_native_image_error_codes creationError = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    img_native_error_codes creationError = IMG_NATIVE_IMAGE_NO_ERROR;
 
     if ((width < 0) || (height < 0)) {
         KNI_ThrowNew(midpIllegalArgumentException, NULL);
@@ -626,10 +626,10 @@ Java_javax_microedition_lcdui_ImageDataFactory_createMutableImageData() {
         gxpport_create_mutable(&newImagePtr,
 			       width, height, &creationError);
 
-        if (GXUTL_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
+        if (IMG_NATIVE_IMAGE_RESOURCE_LIMIT == creationError) {
 	    KNI_ThrowNew(midpOutOfMemoryError, "Resource limit exceeded for"
 					       " Mutable image");
-        } else if (GXUTL_NATIVE_IMAGE_NO_ERROR != creationError) {
+        } else if (IMG_NATIVE_IMAGE_NO_ERROR != creationError) {
 	    KNI_ThrowNew(midpOutOfMemoryError, NULL);
         } else {
 	    KNI_StartHandles(1);

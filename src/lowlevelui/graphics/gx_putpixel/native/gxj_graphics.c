@@ -33,11 +33,64 @@
 #include "gxj_intern_putpixel.h"
 #include "gxj_intern_image.h"
 
+#if ENABLE_BOUNDS_CHECKS
+#include <gxapi_graphics.h>
+#endif
+
 /**
  * @file
  *
  * putpixel primitive graphics. 
  */
+
+/**
+ * Create native representation for a image.
+ *
+ * @param jimg Java Image ROM structure to convert from
+ * @param sbuf pointer to Screen buffer structure to populate
+ * @param g optional Graphics object for debugging clip code.
+ *	    give NULL if don't care.
+ *
+ * @return the given 'sbuf' pointer for convenient usage,
+ *	   or NULL if the image is null.
+ */
+gxj_screen_buffer* gxj_get_image_screen_buffer_impl(const java_imagedata *img,
+						    gxj_screen_buffer *sbuf,
+						    jobject graphics) {
+
+    /* NOTE:
+     * Since this routine is called by every graphics operations
+     * We use ROMStruct directly instead of macros
+     * like JavaByteArray, etc, for max performance.
+     */
+    if (img == NULL) {
+	return NULL;
+    }
+
+    sbuf->width  = img->width;
+    sbuf->height = img->height;
+
+    /* Only use nativePixelData and nativeAlphaData if
+     * pixelData is null */
+    if (img->pixelData != NULL) {
+	sbuf->pixelData = (gxj_pixel_type *)&(img->pixelData->elements[0]);
+	sbuf->alphaData = (img->alphaData != NULL)
+			    ? (gxj_alpha_type *)&(img->alphaData->elements[0])
+			    : NULL;
+    } else {
+	sbuf->pixelData = (gxj_pixel_type *)img->nativePixelData;
+	sbuf->alphaData = (gxj_alpha_type *)img->nativeAlphaData;
+    }
+
+#if ENABLE_BOUNDS_CHECKS
+    sbuf->g = (graphics != NULL) ? GXAPI_GET_GRAPHICS_PTR(graphics) : NULL;
+#else
+    (void)graphics; /* Surpress unused parameter warning */
+#endif
+
+    return sbuf;
+}
+
 
 /**
  * Draw triangle

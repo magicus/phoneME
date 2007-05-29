@@ -282,7 +282,7 @@ decode_png
  int width, int height,
  imgdcd_pixel_type *pixelData, 
  imgdcd_alpha_type *alphaData,
- gxutl_native_image_error_codes* creationErrorPtr) {
+ img_native_error_codes* creationErrorPtr) {
 
     _imageDstData dstData;
     imageSrcPtr src = NULL;
@@ -307,11 +307,11 @@ decode_png
 
     if ((src = create_imagesrc_from_data((char **)(void*)&srcBuffer,
                                              length)) == NULL) {
-      *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+      *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
     } else if (!decode_png_image(src, (imageDstData *)(&dstData))) {
-      *creationErrorPtr = GXUTL_NATIVE_IMAGE_DECODING_ERROR;
+      *creationErrorPtr = IMG_NATIVE_IMAGE_DECODING_ERROR;
     } else {
-      *creationErrorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
+      *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
 
       /* dstData.hasAlpha == KNI_FALSE */
     }
@@ -382,7 +382,7 @@ decode_jpeg
  int width, int height,
  imgdcd_pixel_type*pixelData, 
  imgdcd_alpha_type *alphaData,
- gxutl_native_image_error_codes* creationErrorPtr) {
+ img_native_error_codes* creationErrorPtr) {
 
 #if ENABLE_JPEG
     _imageDstData dstData;
@@ -411,12 +411,12 @@ decode_jpeg
 
     if ((src = create_imagesrc_from_data((char **)(void *)&srcBuffer,
         length)) == NULL) {
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
     } else if (decode_jpeg_image((char*)srcBuffer, length,
         (char*)(pixelData), width, height) != FALSE) {
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
     } else {
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_DECODING_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_DECODING_ERROR;
     }
 
     if(src != NULL) {
@@ -428,6 +428,6 @@ decode_jpeg
     (void)length;
     (void)width; (void) height; 
     (void)pixelData; (void) alphaData;
-    *creationErrorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 #endif
 }

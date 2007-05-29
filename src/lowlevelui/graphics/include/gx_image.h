@@ -31,7 +31,6 @@
 #include <midpError.h>
 
 #include <imgapi_image.h>
-#include <gxutl_image_errorcodes.h>
 
 
 /**
