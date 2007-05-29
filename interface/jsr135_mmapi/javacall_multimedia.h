@@ -1,26 +1,26 @@
 /*
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */ 
 
 #ifndef __JAVACALL_MULTIMEDIA_H
@@ -90,6 +90,7 @@ extern "C" {
 #define JAVACALL_VIDEO_MPEG4_MIME_2  "video/mp4"
 #define JAVACALL_VIDEO_3GPP_MIME     "video/3gpp"
 #define JAVACALL_VIDEO_3GPP_MIME_2   "video/3gpp2"
+
 #define JAVACALL_AUDIO_MIDI_MIME     "audio/midi"
 #define JAVACALL_AUDIO_MIDI_MIME_2   "audio/mid"
 #define JAVACALL_AUDIO_SP_MIDI_MIME  "audio/sp-midi"
@@ -103,6 +104,9 @@ extern "C" {
 #define JAVACALL_AUDIO_TONE_MIME     "audio/x-tone-seq"
 #define JAVACALL_AUDIO_QCELP_MIME    "audio/qcelp"
 #define JAVACALL_AUDIO_QCELP_MIME_2  "audio/vnd.qcelp"
+
+#define JAVACALL_IMAGE_JPEG_MIME     "image/jpeg"
+#define JAVACALL_IMAGE_PNG_MIME      "image/png"
 
 #define JAVACALL_DEVICE_TONE_MIME    "device://tone"
 #define JAVACALL_DEVICE_MIDI_MIME    "device://midi"
@@ -174,11 +178,11 @@ typedef enum {
  */
 typedef struct {
     /** Mime type string */
-    const char* mimeType;
+    javacall_const_utf8_string mimeType;
     /** Supported protocol count */
     int         protocolCount;  
     /** Supported protocol strings for this Mime type. Can't exceed JAVACALL_MEDIA_MAX_PROTOCOL_COUNT. */
-    const char* protocols[JAVACALL_MEDIA_MAX_PROTOCOL_COUNT];
+    javacall_const_utf8_string protocols[JAVACALL_MEDIA_MAX_PROTOCOL_COUNT];
 } javacall_media_caps;
 
 /** @} */
@@ -231,7 +235,16 @@ javacall_result javacall_media_finalize(void);
  * The last item of javacall_media_caps array should hold NULL mimeType value
  * Java layer will use this NULL value as a end of item mark
  */
-javacall_media_caps* javacall_media_get_caps(void);
+const javacall_media_caps* javacall_media_get_caps(void);
+
+/**
+ * Query whether audio mixing is supported;
+ *
+ * @retval JAVACALL_TRUE    audio mixing is supported
+ * @retval JAVACALL_FALSE   audio mixing is NOT supported
+ * 
+ */
+javacall_bool javacall_media_supports_mixing();
 
 /** @} */ 
 
@@ -417,7 +430,7 @@ long javacall_media_get_time(javacall_handle handle);
 
 /**
  * Seek to specified time.
- * This function can be called during play staus or stop status
+ * This function can be called during play status or stop status
  * 
  * @param handle    Handle to the library
  * @param ms        Seek position as ms time
@@ -428,7 +441,7 @@ long javacall_media_set_time(javacall_handle handle, long ms);
  
 /**
  * Get whole media time in ms.
- * This function can be called during play staus or stop status.
+ * This function can be called during play status or stop status.
  * 
  * @param handle    Handle to the library
  * 
@@ -658,7 +671,7 @@ javacall_result javacall_media_set_video_visible(javacall_handle handle, javacal
     
 /**
  * Start get current snapshot of video data
- * When snapshot operation doen, call callback function to provide snapshot image data to Java.
+ * When snapshot operation done, call callback function to provide snapshot image data to Java.
  *
  * @param handle            Handle to the library
  * @param imageType         Snapshot image type format as unicode string. 

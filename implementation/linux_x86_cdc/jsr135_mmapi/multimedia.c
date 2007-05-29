@@ -31,6 +31,25 @@ extern "C" {
 #include "javacall_multimedia.h" 
 
 /**
+ * Get multimedia capabilities of the device.
+ * This function should return pointer to static array of javacall_media_caps value
+ * The last item of javacall_media_caps array should hold NULL mimeType value
+ * Java layer will use this NULL value as a end of item mark
+ */
+const javacall_media_caps* javacall_media_get_caps() 
+{
+    return NULL;
+}
+
+/**
+ * Query whether audio mixing is supported or not
+ */
+javacall_bool javacall_media_supports_mixing()
+{
+    return JAVACALL_FALSE;
+}
+
+/**
  * Call this function when VM starts
  * Perform global initialization operation
  * 
