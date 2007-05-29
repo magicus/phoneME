@@ -235,7 +235,7 @@ javacall_result javacall_media_finalize(void);
  * The last item of javacall_media_caps array should hold NULL mimeType value
  * Java layer will use this NULL value as a end of item mark
  */
-const javacall_media_caps* javacall_media_get_caps(void);
+const javacall_media_caps* javacall_media_get_caps();
 
 /**
  * Query whether audio mixing is supported;
