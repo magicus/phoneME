@@ -1297,11 +1297,9 @@ CVMgcUnsafeHandleException(CVMExecEnv* ee, CVMFrame* frame,
 	    be done before the frame is popped, and that no
 	    local variable slots should have been overwritten
 	    by the return value. */
-	if (CVMjvmtiThreadEventsEnabled(ee)) {
-	    CVMD_gcSafeExec(ee, {
-		    CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_TRUE, (jlong)0);
+	CVMD_gcSafeExec(ee, {
+		CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_TRUE, (jlong)0);
 	    });
-	}
 #endif
 #ifdef CVM_JVMPI
         if (CVMjvmpiEventMethodExitIsEnabled()) {
@@ -1584,6 +1582,18 @@ CVMTransitionFrame* CVMpushTransitionFrame(CVMExecEnv* ee, CVMMethodBlock* mb)
 }
 
 
+/*
+ * "frame" is the start frame.  Iteration proceeds to and includes
+ * "endFrame", so specifying endFrame == frame will scan only the
+ * current frame (but including inlined frames).  Currently,
+ * "stack" is only used to support "popFrame" below.
+ * Note: the specified frame will be set up as the first frame to be examined
+ *       when CVMframeIterateSkipSpecial() (or its derivatives e.g.
+ *       CVMframeIterateNext()) is called.  After CVMframeIterateSpecial(),
+ *       there is no current frame.  We're expected to call
+ *       CVMframeIterateSkipSpecial() immediately after to get to the first
+ *       frame.
+ */
 void
 CVMframeIterateSpecial(CVMStack *stack, CVMFrame* frame, CVMFrame *end,
     CVMFrameIterator *iter)
@@ -1664,6 +1674,15 @@ CVMframeIterateSetFlags(CVMFrameIterator *iter, CVMFrameFlags flags)
     }
 }
 
+/*
+ * "skip" is how many extra frames to skip.  Use skip==0 to see
+ * every frame.  To skip special reflection frames, set skipSpecial
+ * true.  "popFrame" is used by exception handling to pop frames
+ * as it iterates.
+ * Note: transition frames will always be skipped.  Al other frames will not
+ *       be skipped except for reflection frames depending on the value of
+ *       the skipSpecial.
+ */
 CVMBool
 CVMframeIterateSkipSpecial(CVMFrameIterator *iter,
     int skip, CVMBool skipSpecial, CVMBool popFrame)
@@ -3984,18 +4003,11 @@ CVMsyncReturnHelper(CVMExecEnv *ee, CVMFrame *frame, CVMObjectICell *retICell,
 #if (defined(CVM_JVMTI) || defined(CVM_JVMPI))
 
 CVMUint32
-CVMregisterReturnEvent(CVMExecEnv *ee, CVMUint8* pc,
+CVMregisterReturnEvent(CVMExecEnv *ee, CVMUint8 *pc, CVMUint32 return_opcode,
 		       CVMObjectICell* resultCell)
 {
-    CVMBool jvmtiThreadEventsEnabled = CVM_FALSE;
-    CVMBool jvmpiEventMethodExitIsEnabled = CVM_FALSE;
-    CVMUint32 return_opcode = pc[0];
-
-#ifdef CVM_JVMTI
-    jvmtiThreadEventsEnabled = CVMjvmtiThreadEventsEnabled(ee);
-#endif
 #ifdef CVM_JVMPI
-    jvmpiEventMethodExitIsEnabled = CVMjvmpiEventMethodExitIsEnabled();
+    CVMBool jvmpiEventMethodExitIsEnabled = CVMjvmpiEventMethodExitIsEnabled();
 #endif
 
     /** The JVMTI spec is unclear about whether the frame pop
@@ -4007,52 +4019,55 @@ CVMregisterReturnEvent(CVMExecEnv *ee, CVMUint8* pc,
 	be done before the frame is popped, and that no
 	local variable slots should have been overwritten
 	by the return value. */
-    if (jvmtiThreadEventsEnabled || jvmpiEventMethodExitIsEnabled) {
 #ifdef CVM_JVMTI
-      if (return_opcode == opc_breakpoint) {
-	    CVMD_gcSafeExec(ee, {
-            return_opcode = CVMjvmtiGetBreakpointOpcode(ee, pc, CVM_FALSE);
-          });
-      }
+    if (return_opcode == opc_breakpoint) {
+	CVMD_gcSafeExec(ee, {
+		return_opcode = CVMjvmtiGetBreakpointOpcode(ee, pc, CVM_FALSE);
+	    });
+    }
 #endif
-      /* 
-       * If we are returning a reference result, then we must save away
-       * the result in a place where gc will find it and restore later.
-       */
-      if (return_opcode == opc_areturn) {
-	    CVMassert(CVMID_icellIsNull(CVMmiscICell(ee)));
-	    CVMID_icellSetDirect(ee, CVMmiscICell(ee),
+    /* 
+     * If we are returning a reference result, then we must save away
+     * the result in a place where gc will find it and restore later.
+     */
+    if (return_opcode == opc_areturn) {
+	CVMassert(CVMID_icellIsNull(CVMmiscICell(ee)));
+	CVMID_icellSetDirect(ee, CVMmiscICell(ee),
                              CVMID_icellDirect(ee, resultCell));
-      }
+    }
     	
 #ifdef CVM_JVMTI
-      if (jvmtiThreadEventsEnabled) {
-	  CVMD_gcSafeExec(ee, {
- 	    if (return_opcode == opc_areturn) {
+    CVMD_gcSafeExec(ee, {
+	    if (return_opcode == opc_areturn) {
 		CVMjvmtiPostFramePopEvent(ee, CVM_TRUE, CVM_FALSE, 0L);
 	    } else {
 		CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE, (jlong)*(int*)resultCell);
 	    }
-	      });
-      }
+	});
 #endif
 #ifdef CVM_JVMPI
-      if (jvmpiEventMethodExitIsEnabled) {
-	    /* NOTE: JVMPI will become GC safe when calling the
-	     * profiling agent: */
-	    CVMjvmpiPostMethodExitEvent(ee);
-      }
+    if (jvmpiEventMethodExitIsEnabled) {
+	/* NOTE: JVMPI will become GC safe when calling the
+	 * profiling agent: */
+	CVMjvmpiPostMethodExitEvent(ee);
+    }
 #endif
 
-      /* Restore the return result if it is a refrence type. */
-      if (return_opcode == opc_areturn) {
-	    CVMID_icellSetDirect(ee, resultCell,
+    /* Restore the return result if it is a refrence type. */
+    if (return_opcode == opc_areturn) {
+	CVMID_icellSetDirect(ee, resultCell,
                              CVMID_icellDirect(ee, CVMmiscICell(ee)));
-	    CVMID_icellSetNull(CVMmiscICell(ee));
-      }
+	CVMID_icellSetNull(CVMmiscICell(ee));
     }
-
     return return_opcode;
+}
+
+CVMUint32
+CVMregisterReturnEventPC(CVMExecEnv *ee, CVMUint8* pc,
+		       CVMObjectICell* resultCell)
+{
+    CVMUint32 return_opcode = pc[0];
+    return CVMregisterReturnEvent(ee, pc, return_opcode, resultCell);
 }
 
 #endif /* (defined(CVM_JVMTI) || defined(CVM_JVMPI)) */
@@ -4157,11 +4172,9 @@ CVMinvokeJNIHelper(CVMExecEnv *ee, CVMMethodBlock *mb)
 
 #ifdef CVM_JVMTI
     /* %comment k001 */
-    if (CVMjvmtiThreadEventsEnabled(ee)) {
-	CVMD_gcSafeExec(ee, {
+    CVMD_gcSafeExec(ee, {
 	    CVMjvmtiPostFramePushEvent(ee);
 	});
-    }
 #endif
 
     /* Call the JNI method. topOfStack still points just below
@@ -4194,43 +4207,41 @@ CVMinvokeJNIHelper(CVMExecEnv *ee, CVMMethodBlock *mb)
 	be done before the frame is popped, and that no
 	local variable slots should have been overwritten
 	by the return value. */
-    if (CVMjvmtiThreadEventsEnabled(ee)) {
-		jlong longValue;
-		switch (returnCode) {
-		case 0:
-		    CVMD_gcSafeExec(ee, {
-			    CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE,
-						      0L);
-			});
-		    break;
-		case 1:
-		    CVMD_gcSafeExec(ee, {
-			    CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE,
-					      (jlong)*(int*)&returnValue.i);
-			});
-		    break;
-		case 2:
-		    CVMmemCopy64(&longValue, returnValue.jni.v64);
-		    CVMD_gcSafeExec(ee, {
-			    CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE,
-						      longValue);
-			});
-		    break;
-		case -1:
-		    CVMassert(CVMID_icellIsNull(CVMmiscICell(ee)));
-		    {
-			CVMObjectICell *o = returnValue.o;
-			if (o != 0) {
-			    CVMID_icellAssignDirect(ee, CVMmiscICell(ee), o);
-			}
-			CVMD_gcSafeExec(ee, {
-				CVMjvmtiPostFramePopEvent(ee, CVM_TRUE,
-							  CVM_FALSE, 0L);
-			    });
-			CVMID_icellSetNull(CVMmiscICell(ee));
-		    }
-		    break;
-		}
+    switch (returnCode) {
+	jlong longValue;
+    case 0:
+	CVMD_gcSafeExec(ee, {
+		CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE,
+					  0L);
+	    });
+	break;
+    case 1:
+	CVMD_gcSafeExec(ee, {
+		CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE,
+					  (jlong)*(int*)&returnValue.i);
+	    });
+	break;
+    case 2:
+	CVMmemCopy64(&longValue, returnValue.jni.v64);
+	CVMD_gcSafeExec(ee, {
+		CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE,
+					  longValue);
+	    });
+	break;
+    case -1:
+	CVMassert(CVMID_icellIsNull(CVMmiscICell(ee)));
+	{
+	    CVMObjectICell *o = returnValue.o;
+	    if (o != 0) {
+		CVMID_icellAssignDirect(ee, CVMmiscICell(ee), o);
+	    }
+	    CVMD_gcSafeExec(ee, {
+		    CVMjvmtiPostFramePopEvent(ee, CVM_TRUE,
+					      CVM_FALSE, 0L);
+		});
+	    CVMID_icellSetNull(CVMmiscICell(ee));
+	}
+	break;
     }
 #endif
 #ifdef CVM_JVMPI

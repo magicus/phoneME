@@ -33,6 +33,7 @@
 #define _INCLUDED_PORTING_TIME_H
 
 #include "javavm/include/porting/defs.h"
+#include "javavm/include/porting/threads.h"
 
 /*
  * Return time in milliseconds, as defined by System.currentTimeMillis()
@@ -41,7 +42,10 @@ CVMInt64 CVMtimeMillis(void);
 
 #ifdef CVM_JVMTI
 void clock_init(void);
+void thread_cpu_clock_init(CVMThreadID *threadID);
 CVMInt64 CVMtimeNanosecs(void);
+CVMInt64 CVMthreadCputime(CVMThreadID *threadID);
+CVMInt64 CVMcurrentThreadCputime();
 #endif
 
 #include CVM_HDR_TIME_H

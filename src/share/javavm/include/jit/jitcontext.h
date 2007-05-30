@@ -444,9 +444,14 @@ struct CVMJITCompilationContext {
     /* Error handler context to longjmp to */
     jmp_buf errorHandlerContext;
 
+    CVMUint16                  constantPoolSize;
     CVMJITConstantEntry*       constantPool;
     CVMUint32                  numEntriesToEmit; /* Pending unemitted */
     CVMInt32                   earliestConstantRefPC; /* "Urgency" of dump */
+
+#ifdef CVM_JIT_USE_FP_HARDWARE
+    CVMInt32                   earliestFPConstantRefPC; /* "Urgency" of dump */
+#endif
 
     CVMCompiledPcMapTable *pcMapTable;
 

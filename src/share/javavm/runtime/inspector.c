@@ -33,6 +33,8 @@
 #include "javavm/include/inspector.h"
 #include "javavm/include/indirectmem.h"
 
+#include "native/common/jni_util.h"
+
 #include "generated/offsets/java_lang_String.h"
 #ifdef CVM_CLASSLOADING
 #include "generated/offsets/java_lang_ClassLoader.h"
@@ -477,11 +479,7 @@ static void CVMgcClassReferencesDump(CVMExecEnv *ee, void *data)
     newClazzname = malloc(length);
     strcpy(newClazzname, clazzname);
     p = newClazzname;
-    p = strchr(p, '.');
-    while (p != NULL) {
-        *p++ = '/';
-        p = strchr(p, '.');
-    }
+    VerifyFixClassname(newClazzname);
 
     /* Look up the classID for the specified class: */
     clazznameID = CVMtypeidLookupClassID(ee, newClazzname, (int)length - 1);

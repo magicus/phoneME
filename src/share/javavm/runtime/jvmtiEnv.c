@@ -1786,7 +1786,7 @@ jvmti_PopFrame(jvmtiEnv* jvmtienv,
 
     CVMExecEnv *ee = CVMgetEE();
     CVMExecEnv *threadEE;
-    CVMFrame *currentFrame;
+    CVMFrame *currentFrame, *prev_prev;
 
     JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
@@ -1794,9 +1794,26 @@ jvmti_PopFrame(jvmtiEnv* jvmtienv,
 
     CVM_THREAD_LOCK(ee);
     threadEE = jthreadToExecEnv(ee, thread);
+    if (threadEE == NULL) {
+	CVM_THREAD_UNLOCK(ee);
+	return JVMTI_ERROR_INVALID_THREAD;
+    }
     if (!(threadEE->threadState & CVM_THREAD_SUSPENDED)) {
 	CVM_THREAD_UNLOCK(ee);
 	return JVMTI_ERROR_THREAD_NOT_SUSPENDED;
+    }
+    if ((threadEE->_jvmti_event_enabled._enabled_bits & NEED_FRAME_POP_BIT)) {
+	CVM_THREAD_UNLOCK(ee);
+	return JVMTI_ERROR_INTERNAL;
+    }
+    // From J2SE jvmtiEnvBase.cpp
+    // 4812902: popFrame hangs if the method is waiting at a synchronize 
+    // Catch this condition and return an error to avoid hanging.
+    // Now JVMTI spec allows an implementation to bail out with an opaque
+    // frame error.
+    if ((threadEE->threadState & (CVM_THREAD_WAITING | CVM_THREAD_OBJECT_WAIT))) {
+	CVM_THREAD_UNLOCK(ee);
+	return JVMTI_ERROR_OPAQUE_FRAME;
     }
     currentFrame = CVMeeGetCurrentFrame(threadEE);
     /*
@@ -1804,13 +1821,20 @@ jvmti_PopFrame(jvmtiEnv* jvmtienv,
      * prev(prev) frame is Java
      */
     if ((CVMframeIsJava(currentFrame) &&
-	 CVMframeIsJava(CVMframePrev(currentFrame))) ||
-
-	(CVMframeIsJava(CVMframePrev(currentFrame)) &&
-	 CVMframeIsJava(CVMframePrev(CVMframePrev(currentFrame))))) {
+	 CVMframeIsJava(CVMframePrev(currentFrame)))) {
 	threadEE->_jvmti_event_enabled._enabled_bits |= NEED_FRAME_POP_BIT;
 	CVM_THREAD_UNLOCK(ee);
+	CVMtraceJVMTI(("JVMTI: Popframe: 0x%x\n", (int)threadEE));
 	return JVMTI_ERROR_NONE;
+    }
+    if (CVMframeIsJava(CVMframePrev(currentFrame))) {
+	prev_prev = CVMframePrev(CVMframePrev(currentFrame));
+	if (CVMframeIsJava(prev_prev)) {
+	    threadEE->_jvmti_event_enabled._enabled_bits |= NEED_FRAME_POP_BIT;
+	    CVM_THREAD_UNLOCK(ee);
+	    CVMtraceJVMTI(("JVMTI: Popframe: 0x%x\n", (int)threadEE));
+	    return JVMTI_ERROR_NONE;
+	}
     }
     CVM_THREAD_UNLOCK(ee);
     return JVMTI_ERROR_OPAQUE_FRAME;
@@ -1822,50 +1846,137 @@ jvmti_PopFrame(jvmtiEnv* jvmtienv,
  * Force Early Return functions
  */ 
 
+static jvmtiError
+force_early_return(jvmtiEnv* jvmtienv, jthread thread, jvalue val,
+		   CVMUint32 opcode) {
+    CVMExecEnv *ee = CVMgetEE();
+    CVMExecEnv *threadEE;
+    CVMFrame *currentFrame;
+
+    JVMTI_ENABLED();
+    CHECK_JVMTI_ENV;
+    CHECK_PHASE(JVMTI_PHASE_LIVE);
+
+    CVM_THREAD_LOCK(ee);
+    threadEE = jthreadToExecEnv(ee, thread);
+    if (threadEE == NULL) {
+	CVM_THREAD_UNLOCK(ee);
+	return JVMTI_ERROR_INVALID_THREAD;
+    }
+    if (threadEE != ee && !(threadEE->threadState & CVM_THREAD_SUSPENDED)) {
+	CVM_THREAD_UNLOCK(ee);
+	return JVMTI_ERROR_THREAD_NOT_SUSPENDED;
+    }
+    if ((threadEE->_jvmti_event_enabled._enabled_bits & NEED_EARLY_RETURN_BIT)) {
+	CVM_THREAD_UNLOCK(ee);
+	return JVMTI_ERROR_INTERNAL;
+    }
+    // From J2SE jvmtiEnvBase.cpp
+    // 4812902: popFrame hangs if the method is waiting at a synchronize 
+    // Catch this condition and return an error to avoid hanging.
+    // Now JVMTI spec allows an implementation to bail out with an opaque
+    // frame error.
+    if ((threadEE->threadState & (CVM_THREAD_WAITING | CVM_THREAD_OBJECT_WAIT))) {
+	CVM_THREAD_UNLOCK(ee);
+	return JVMTI_ERROR_OPAQUE_FRAME;
+    }
+    currentFrame = CVMeeGetCurrentFrame(threadEE);
+    if (!CVMframeIsJava(currentFrame)) {
+	currentFrame = CVMframePrev(currentFrame);
+    }
+    if (CVMframeIsJava(currentFrame)) {
+	CVMBool is_assignable;
+	CVMMethodBlock *mb = currentFrame->mb;
+	CVMClassBlock* cb = CVMmbClassBlock(mb);
+	CVMMethodTypeID nameAndTypeID;
+	CVMSigIterator parameters;
+	CVMClassBlock* returnType;
+	char retType =
+	    CVMtypeidGetReturnType(CVMmbNameAndTypeID(currentFrame->mb));
+
+	if (retType >= CVM_TYPEID_OBJ) {
+	    nameAndTypeID =  CVMmbNameAndTypeID(mb);
+	    CVMtypeidGetSignatureIterator( nameAndTypeID, &parameters );
+	    returnType = CVMclassLookupClassWithoutLoading(ee,
+		           CVM_SIGNATURE_ITER_RETURNTYPE(parameters),
+		           CVMcbClassLoader(cb));
+
+	    CVMD_gcUnsafeExec(ee, {
+		    CVMObject *directObj = CVMID_icellDirect(ee, val.l);
+		    is_assignable =
+			CVMisAssignable(ee, CVMobjectGetClass(directObj),
+					returnType);
+		});
+	    if (!is_assignable) {
+		CVM_THREAD_UNLOCK(ee);
+		return JVMTI_ERROR_INVALID_OBJECT;
+	    }
+	}
+	threadEE->_jvmti_event_enabled._enabled_bits |= NEED_EARLY_RETURN_BIT;
+	threadEE->_jvmti_early_return_value = val;
+	threadEE->_jvmti_early_ret_opcode = opcode;
+	CVM_THREAD_UNLOCK(ee);
+	return JVMTI_ERROR_NONE;
+    }
+    return JVMTI_ERROR_OPAQUE_FRAME;
+}
+
 static jvmtiError JNICALL
-jvmti_ForceEarlyReturnObject(jvmtiEnv* env,
+jvmti_ForceEarlyReturnObject(jvmtiEnv* jvmtienv,
 			     jthread thread,
 			     jobject value) {
-    return JVMTI_ERROR_ACCESS_DENIED;
+    jvalue val;
+    val.l = value;
+    return force_early_return(jvmtienv, thread, val, opc_areturn);
 }
 
 
 static jvmtiError JNICALL
-jvmti_ForceEarlyReturnInt(jvmtiEnv* env,
+jvmti_ForceEarlyReturnInt(jvmtiEnv* jvmtienv,
 			  jthread thread,
 			  jint value) {
-    return JVMTI_ERROR_ACCESS_DENIED;
+    jvalue val;
+    val.i = value;
+    return force_early_return(jvmtienv, thread, val, opc_ireturn);
 }
 
 
 static jvmtiError JNICALL
-jvmti_ForceEarlyReturnLong(jvmtiEnv* env,
+jvmti_ForceEarlyReturnLong(jvmtiEnv* jvmtienv,
 			   jthread thread,
 			   jlong value) {
-    return JVMTI_ERROR_ACCESS_DENIED;
+    jvalue val;
+    val.j = value;
+    return force_early_return(jvmtienv, thread, val, opc_lreturn);
 }
 
 
 static jvmtiError JNICALL
-jvmti_ForceEarlyReturnFloat(jvmtiEnv* env,
+jvmti_ForceEarlyReturnFloat(jvmtiEnv* jvmtienv,
 			    jthread thread,
 			    jfloat value) {
-    return JVMTI_ERROR_ACCESS_DENIED;
+    jvalue val;
+    val.f = value;
+    return force_early_return(jvmtienv, thread, val, opc_freturn);
 }
 
 
 static jvmtiError JNICALL
-jvmti_ForceEarlyReturnDouble(jvmtiEnv* env,
+jvmti_ForceEarlyReturnDouble(jvmtiEnv* jvmtienv,
 			     jthread thread,
 			     jdouble value) {
-    return JVMTI_ERROR_ACCESS_DENIED;
+    jvalue val;
+    val.d = value;
+    return force_early_return(jvmtienv, thread, val, opc_dreturn);
 }
 
 
 static jvmtiError JNICALL
-jvmti_ForceEarlyReturnVoid(jvmtiEnv* env,
+jvmti_ForceEarlyReturnVoid(jvmtiEnv* jvmtienv,
 			   jthread thread) {
-    return JVMTI_ERROR_ACCESS_DENIED;
+    jvalue val;
+    val.j = 0L;
+    return force_early_return(jvmtienv, thread, val, opc_return);
 }
 
 
@@ -2179,6 +2290,9 @@ jvmti_SetTag(jvmtiEnv* jvmtienv,
     CHECK_JVMTI_ENV;
     CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
 
+    if (object == NULL || CVMID_icellIsNull(object)) {
+	return JVMTI_ERROR_INVALID_OBJECT;
+    }
     return CVMjvmtiTagSetTag(jvmtienv, object, tag);
 }
 
@@ -3800,9 +3914,11 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 		if ((smaps = CVMstackmapFind(ee, oldmb)) != NULL) {
 		    CVMstackmapDestroy(ee, smaps);
 		}
+		oldmb->immutX.codeX.jmd->jvmti_methodID =
+		    (CVMUint32)oldmb | CVM_METHOD_OBSOLETE;
+		oldmb->immutX.codeX.jmd->oldConstantpool =
+		    CVMcbConstantPool(oldcb);
 	    }
-	    oldmb->jvmti_methodID = (CVMUint32)oldmb | CVM_METHOD_OBSOLETE;
-	    oldmb->oldConstantpool = CVMcbConstantPool(oldcb);
 	}
 	CVMsysMutexUnlock(ee, &CVMglobals.heapLock);
 	CVMcbMethods(oldcb) = CVMcbMethods(newcb);
@@ -4420,7 +4536,9 @@ static jvmtiError JNICALL
 jvmti_IsMethodObsolete(jvmtiEnv* env,
 		       jmethodID method,
 		       jboolean* is_obsolete_ptr) {
-    *is_obsolete_ptr = CVMmbIsObsolete(method);
+    CVMMethodBlock *mb = (CVMMethodBlock*)CVMmbMethodFromID(method);
+    NOT_NULL(mb);
+    *is_obsolete_ptr = CVMmbIsObsolete(mb);
     return JVMTI_ERROR_NONE;
 }
 
@@ -5169,8 +5287,8 @@ jvmti_GetCurrentThreadCpuTime(jvmtiEnv* jvmtienv,
     CHECK_JVMTI_ENV;
     CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL(nanos_ptr);
-
-    return jvmti_GetTime(jvmtienv, nanos_ptr);
+    *nanos_ptr = CVMcurrentThreadCputime();
+    return JVMTI_ERROR_NONE;
 }
 
 
@@ -5195,6 +5313,7 @@ static jvmtiError JNICALL
 jvmti_GetThreadCpuTime(jvmtiEnv* jvmtienv,
 		       jthread thread,
 		       jlong* nanos_ptr) {
+    CVMExecEnv *targetEE;
 
     JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
@@ -5207,7 +5326,9 @@ jvmti_GetThreadCpuTime(jvmtiEnv* jvmtienv,
     *nanos_ptr = time_ns;
     return JVMTI_ERROR_NONE;
 #endif
-    return jvmti_GetTime(jvmtienv, nanos_ptr);
+    targetEE = jthreadToExecEnv(CVMgetEE(), thread);
+    *nanos_ptr = CVMthreadCputime(&targetEE->threadInfo);
+    return JVMTI_ERROR_NONE;
 }
 
 

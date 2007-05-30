@@ -103,8 +103,10 @@ jvmtiCapabilities init_always_capabilities() {
   jc.can_generate_native_method_bind_events = 1;
   jc.can_generate_vm_object_alloc_events = 1;
   jc.can_redefine_classes = 1;
-  jc.can_get_current_thread_cpu_time = 1;
-  jc.can_get_thread_cpu_time = 1;
+  if (CVMisThreadCputimeSupported()) {
+      jc.can_get_thread_cpu_time = 1;
+      jc.can_get_current_thread_cpu_time = 1;
+  }
   /*
   jc.can_retransform_classes = 1;
   jc.can_set_native_method_prefix = 1;
@@ -117,7 +119,7 @@ jvmtiCapabilities init_onload_capabilities() {
   
   memset(&jc, 0, sizeof(jc));
   jc.can_pop_frame = 1;
-  /*  jc.can_force_early_return = 1; */
+  jc.can_force_early_return = 1;
   /*  jc.can_get_source_debug_extension = 1; */
   jc.can_access_local_variables = 1;
   jc.can_maintain_original_method_order = 1;

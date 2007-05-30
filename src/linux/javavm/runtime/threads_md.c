@@ -129,7 +129,8 @@ static CVMBool
 LINUXcomputeStackTop(CVMThreadID *self)
 {
     void *sp = &self;
-    if (pthread_self() == initial_thread_id) {
+    pthread_t myself = pthread_self();
+    if (myself == initial_thread_id) {
         self->stackTop = initial_stack_top;
 #ifdef LINUX_WATCH_STACK_GROWTH
 	self->stackBottom = initial_stack_bottom;
@@ -137,13 +138,12 @@ LINUXcomputeStackTop(CVMThreadID *self)
 #endif
         return CVM_TRUE;
     } else if (pthreadGetAttr != NULL) {
-        pthread_t tid = POSIX_COOKIE(self);
         pthread_attr_t attr;
         int result;
         void *base;
         size_t size;
  
-        result = (*pthreadGetAttr)(tid, &attr);
+        result = (*pthreadGetAttr)(myself, &attr);
 	if (result != 0) {
 	    return CVM_FALSE;
 	}

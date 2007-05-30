@@ -62,6 +62,27 @@ typedef enum CVMCPUCondCode {
     CVMCPU_COND_HS = 2,     /* Do when higher or same / is unsigned >= */
     CVMCPU_COND_AL = 14,    /* Do always */
     CVMCPU_COND_NV = 15     /* Do never */
+
+#ifdef CVM_JIT_USE_FP_HARDWARE
+    /*
+     * Floating-point condition codes are necessary for using floating
+     * point hardware. They are in the same set as int condition codes,
+     * but easily distinguishable from them.
+     *
+     * Remember that by default unordered should be treated as
+     * greater than. If the UNORDERED_LT flag is set, then unordered
+     * is treated as less than.
+     */
+#define CVMCPU_COND_UNORDERED_LT	32
+    ,
+    CVMCPU_COND_FEQ = CVMCPU_COND_EQ, /* Do when equal */
+    CVMCPU_COND_FNE = CVMCPU_COND_NE, /* Do when NOT equal */
+    CVMCPU_COND_FLT = CVMCPU_COND_LT, /* Do when less than */
+    CVMCPU_COND_FGT = CVMCPU_COND_GT, /* Do when greater than */
+    CVMCPU_COND_FLE = CVMCPU_COND_LE, /* Do when less than or equal */
+    CVMCPU_COND_FGE = CVMCPU_COND_GE  /* Do when greater than or equal */
+#endif /* CVM_JIT_USE_FP_HARDWARE */
+    
 } CVMCPUCondCode;
 
 /**************************************************************
@@ -90,6 +111,20 @@ typedef enum CVMCPUCondCode {
 #define CVMCPU_STR16_OPCODE     0x004000b0  /* Store 16 bit value. */
 #define CVMCPU_LDR8U_OPCODE     0x04500000  /* Load unsigned 8 bit value. */
 #define CVMCPU_LDR8_OPCODE      0x005000d0  /* Load signed 8 bit value. */
+
+/* Floating Point Mememory reference opcodes using addressing mode 5 */
+#define CVMCPU_FLDR32_OPCODE 0x0d100a00 /* Load float 32 bit value */
+#define CVMCPU_FLDR64_OPCODE 0x0d100b00 /* Load float 64 bit value */
+#define CVMCPU_FSTR32_OPCODE 0x0d000a00 /* Store float 32 bit value */
+#define CVMCPU_FSTR64_OPCODE 0x0d000b00 /* Store float 64 bit value */
+
+/* Floating-point Memory reference opcodes: */
+/* Used only within ARM-specific code generation */
+#define CVMARM_FLDRM32_OPCODE 0x0c100a00 /* Load multiple float 32 bit value */
+#define CVMARM_FLDRM64_OPCODE 0x0c100b00 /* Load multiple float 64 bit value */
+#define CVMARM_FSTRM32_OPCODE 0x0c000a00 /* Store multiple float 32 bit value */
+#define CVMARM_FSTRM64_OPCODE 0x0c000b00 /* Store multiple float 64 bit value */
+
 
 /* 32 bit ALU opcodes: */
 #define CVMCPU_MOV_OPCODE   (0x1a << 20) /* reg32 = aluRhs32. */
@@ -121,6 +156,80 @@ typedef enum CVMCPUCondCode {
 #define CVMARM_SWP_OPCODE  0x01000090
 #endif
 #endif
+
+/* 32-bit floating point opcodes: */
+#define CVMCPU_FADD_OPCODE ((0x1c << 23) | (0x3 << 20) | (0xa << 8) \
+                          | (0x0 << 6))
+#define CVMCPU_FSUB_OPCODE ((0x1c << 23) | (0x3 << 20) | (0xa << 8) \
+                          | (0x1 << 6))
+#define CVMCPU_FMUL_OPCODE ((0x1c << 23) | (0x2 << 20) | (0xa << 8) \
+                          | (0x0 << 6))
+#define CVMCPU_FDIV_OPCODE ((0x1d << 23) | (0x0 << 20) | (0xa << 8) \
+                          | (0x0 << 6))
+#define CVMCPU_FCMP_OPCODE ((0x1d << 23) | (0x3 << 20) | (0x4 << 16) \
+                          | (0xa << 8) | (0x0 << 7) | (0x1 << 6))
+#define CVMCPU_FNEG_OPCODE ((0x1d << 23) | (0x3 << 20) | (0x1 << 16) \
+                          | (0xa << 8) | (0x0 << 7) | (0x1 << 6))
+/* Floating-point opcode to move within floating point registers: */
+#define CVMCPU_FMOV_OPCODE ((0x1d << 23) | (0x3 << 20) | (0xa << 8) \
+                          | (0x0 << 7) | (0x1 << 6)) /* FCPYS */
+
+/* 64-bit floating point opcodes: */
+#define CVMCPU_DADD_OPCODE ((0x1c << 23) | (0x3 << 20) | (0xb << 8) \
+                          | (0x0 << 6))
+#define CVMCPU_DSUB_OPCODE ((0x1c << 23) | (0x3 << 20) | (0xb << 8) \
+                          | (0x1 << 6))   
+#define CVMCPU_DMUL_OPCODE ((0x1c << 23) | (0x2 << 20) | (0xb << 8) \
+                          | (0x0 << 6))   
+#define CVMCPU_DDIV_OPCODE ((0x1d << 23) | (0x0 << 20) | (0xb << 8) \
+                          | (0x0 << 6))   
+#define CVMCPU_DCMP_OPCODE ((0x1d << 23) | (0x3 << 20) | (0x4 << 16) \
+                          | (0xb << 8) | (0x0 << 7) | (0x1 << 6))
+#define CVMCPU_DNEG_OPCODE ((0x1d << 23) | (0x3 << 20) | (0x1 << 16) \
+                          | (0xb << 8) | (0x0 << 7) | (0x1 << 6))
+/* Floating-point opcode to move within floating point registers: */
+#define CVMCPU_DMOV_OPCODE ((0x1d << 23) | (0x3 << 20) | (0xb << 8) \
+                          | (0x0 << 7) | (0x1 << 6)) /* FCPYD */
+
+
+/* Floating-point conversion opcodes: */
+/* Used only within ARM-specific code generation */
+#define CVMARM_I2F_OPCODE ((0x1d << 23) | (0x3 << 20) | (0x8 << 16) \
+                         | (0xa << 8) | (0x1 << 7) | (0x1 << 6))
+#define CVMARM_F2I_OPCODE ((0x1d << 23) | (0x3 << 20) | (0xd << 16) \
+                         | (0xa << 8) | (0x1 << 7) | (0x1 << 6)) 
+#define CVMARM_I2D_OPCODE ((0x1d << 23) | (0x3 << 20) | (0x8 << 16) \
+                         | (0xb << 8) | (0x1 << 7) | (0x1 << 6)) 
+#define CVMARM_D2I_OPCODE ((0x1d << 23) | (0x3 << 20) | (0xd << 16) \
+                         | (0xb << 8) | (0x1 << 7) | (0x1 << 6)) 
+#define CVMARM_F2D_OPCODE ((0x1d << 23) | (0x3 << 20) | (0x7 << 16) \
+                         | (0xa << 8) | (0x1 << 7) | (0x1 << 6)) 
+#define CVMARM_D2F_OPCODE ((0x1d << 23) | (0x3 << 20) | (0x7 << 16) \
+                         | (0xb << 8) | (0x1 << 7) | (0x1 << 6)) 
+
+/* Floating-point comparison opcodes: */
+/* Used only within ARM-specific code generation */
+#define CVMARM_FMSTAT_OPCODE ((0xef1fa << 8) | (0x1 << 4))
+#define CVMARM_FCMPES_OPCODE ((0x1d << 23) | (0x3 << 20) | (0x4 << 16) \
+                            | (0xa << 8) | (0x1 << 7) | (0x1 << 6))
+#define CVMARM_DCMPED_OPCODE ((0x1d << 23) | (0x3 << 20) | (0x4 << 16) \
+                            | (0xb << 8) | (0x1 << 7) | (0x1 << 6))
+
+/* Floating-point move to general purpose register opcodes: */
+/* Used only within ARM-specific code generation */
+#define CVMARM_MOVFA_OPCODE ((0xe0 << 20) | (0xa << 8) | 0x10) /* FMSR */
+#define CVMARM_MOVAF_OPCODE ((0xe1 << 20) | (0xa << 8) | 0x10) /* FMRS */
+#define CVMARM_MOVDA_OPCODE ((0xc4 << 20) | (0xb << 8) | (0x01 << 4)) /* FMDRR */
+#define CVMARM_MOVAD_OPCODE ((0xc5 << 20) | (0xb << 8) | (0x01 << 4)) /* FMRRD */
+
+
+/* Floating-point status register opcodes: */
+#define CVMARM_FPSID 0x00000000
+#define CVMARM_FPSCR 0x00000001
+#define CVMARM_FPEXC 0x00001000
+#define CVMARM_MOVSA_OPCODE ((0xee << 20) | (0xa << 8) | 0x10) /* FMXR */
+#define CVMARM_MOVAS_OPCODE ((0xeF << 20) | (0xa << 8) | 0x10) /* FMRX */
+
 
 /* 64 bit ALU opcodes:
  * NOTE: The ALU64 opcodes are actually encoded in terms of 2 32 bit ARM

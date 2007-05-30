@@ -1102,6 +1102,10 @@ CVMclassGetSystemClassLoader(CVMExecEnv* ee)
 	CVMMethodBlock* mb = 
 	    CVMclassGetStaticMethodBlock(loaderCb, methodID);
 	jobject systemClassLoader;
+#ifdef CVM_DEBUG_ASSERTS
+        CVMBool sameClassLoader;
+#endif
+        
 	CVMassert(mb != NULL);
 	systemClassLoader = 
 	    (CVMClassLoaderICell*)(*env)->CallStaticObjectMethod(
@@ -1109,12 +1113,30 @@ CVMclassGetSystemClassLoader(CVMExecEnv* ee)
 	if (CVMexceptionOccurred(ee)) {
 	    return NULL;
 	}
+        /* When sun.misc.Launcher creates the appClassLoader, it
+         * also sets the systemClassLoader in CVMglobals. */
+#ifdef CVM_DEBUG_ASSERTS
+        CVMID_icellSameObjectNullCheck(ee, CVMsystemClassLoader(ee),
+                              systemClassLoader, sameClassLoader);
+        CVMassert(sameClassLoader);
+#endif
 	if (systemClassLoader != NULL) {
-	    CVMID_icellAssign(ee, CVMsystemClassLoader(ee), systemClassLoader);
 	    CVMjniDeleteLocalRef(env, systemClassLoader);
 	}
     }
     return CVMsystemClassLoader(ee);
+}
+
+/*
+ * Set the system classloader.
+ */
+void
+CVMclassSetSystemClassLoader(CVMExecEnv* ee, jobject loader)
+{
+    CVMassert(loader != NULL);
+    if (CVMID_icellIsNull(CVMsystemClassLoader(ee))) {
+	  CVMID_icellAssign(ee, CVMsystemClassLoader(ee), loader);
+    }
 }
 
 /*
@@ -1166,6 +1188,13 @@ initPathJavaSide(JNIEnv* env, ClassInfo* info) {
     if (!info->pathComponent->javaInitialized) {
         CVMBool ok;
         jobject appclObject = CVMsystemClassLoader(CVMjniEnv2ExecEnv(env));
+
+        /*
+         * This can only be called from the AppClassLoader (the
+         * system classloader). So the CVMsystemClassLoader
+         * should not contain null.
+         */
+        CVMassert(!CVMID_icellIsNull(appclObject));
         if ((*env)->MonitorEnter(env, appclObject) == JNI_OK) {
             if (info->pathComponent->javaInitialized) {
                 ok = (*env)->MonitorExit(env, appclObject);

@@ -60,6 +60,14 @@ CVM_TARGETOBJS_SPEED +=	\
 	arm_float_cpu.o \
 	float_arch.o
 
+# For armv5, just build invokeNative_arm normally.  Otherwise, use
+# some special rules in symbian-arm/rules.mk to build it.
+
+ifeq ($(SYMBIAN_PLATFORM), armv5)
+CVM_TARGETOBJS_OTHER += \
+        invokeNative_arm.o
+endif
+
 ifeq ($(CVM_MP_SAFE), true)
 CVM_TARGETOBJS_OTHER += \
         x86_membar.o
@@ -79,17 +87,25 @@ ifeq ($(CVM_JIT), true)
 CVM_TARGETOBJS_SPACE += \
 	jit_arch.o \
 
+CVM_TARGETOBJS_OTHER += \
+	flushcache_arch.o
+
 CVM_SRCDIRS   += \
 	$(CVM_TOP)/src/$(TARGET_OS)-$(TARGET_CPU_FAMILY)/javavm/runtime/jit
 
 # Compile ccmcodecachecopy_cpu.S separately and link as a library for 'armv4'
 # target. For 'armv5' target, run CPP on the *.S files and add the generated
 # files to the MMP project file.
+ifneq ($(SYMBIAN_PLATFORM), armv5)
 JIT_CPU_O =
 CCMCODECACHECOPY_CPU_O =
 endif
+endif
 
+ifneq ($(SYMBIAN_PLATFORM), armv5)
 CVMEXT_LIB = $(CVM_OBJDIR)/cvmext.lib
+endif
+
 # Forth building JCS before CVMEXT.LIB since we need to add
 # Symbian gcc to the PATH for CCMCODECACHECOPY.LIB.
 #CLASSLIB_DEPS += $(CVM_CODEGEN_CFILES) $(CVMEXT_LIB)

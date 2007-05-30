@@ -32,6 +32,15 @@
 /* #define JVM_O_DELETE 0x10000 */
 
 #include "javavm/include/porting/java_props.h"
+#ifdef JAVASE
+/* NOTE: This is a special case.  xxx_md.h files are usually not included
+   directly, but should go through the porting later in:
+      src/share/javavm/include/porting/
+   Do not replicate this code pattern unless you really know what you are
+   doing.
+*/
+#include "jvm_md.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {

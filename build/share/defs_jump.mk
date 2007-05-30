@@ -1,4 +1,4 @@
-#
+
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -34,12 +34,19 @@ export JAVA_HOME	= $(JDK_HOME)
 
 #JUMP's binary bundle pattern file name
 BINARYBUNDLE_PATTERN_FILENAME=.binary-pattern
-JUMP_ANT_OPTIONS += -Ddist.dir=$(call POSIX2HOST,$(CVM_JUMP_BUILDDIR)) 	\
+# .jar and .zip files to compile jump classes against
+JUMP_BOOTCLASSES = $(patsubst $(CVM_BUILD_TOP)/%,%,$(CVM_BUILDTIME_CLASSESZIP) $(LIB_CLASSESJAR) $(JSROP_JARS))
+JUMP_ANT_OPTIONS += -Djump.boot.cp=$(subst $(space),$(comma),$(JUMP_BOOTCLASSES)) \
+		    -Ddist.dir=$(call POSIX2HOST,$(CVM_JUMP_BUILDDIR)) 	\
 		    -Dcdc.dir=$(call POSIX2HOST,$(CDC_DIST_DIR)) \
-		    -Dbinary.pattern.file=$(BINARYBUNDLE_PATTERN_FILENAME)  
+		    -Dbinary.pattern.file=$(BINARYBUNDLE_PATTERN_FILENAME)   
 
 ifeq ($(USE_MIDP), true)
 JUMP_ANT_OPTIONS         += -Dmidp_output_dir=$(subst $(CDC_DIST_DIR)/,,$(MIDP_OUTPUT_DIR))
+endif
+
+ifneq ($(JUMP_BUILD_PROPS_FILE),)
+JUMP_ANT_OPTIONS += -Duser.build.properties=$(JUMP_BUILD_PROPS_FILE) 
 endif
 
 # The default JUMP component location
@@ -49,6 +56,9 @@ $(error JUMP_DIR must point to the JUMP directory: $(JUMP_DIR))
 endif
 JUMP_OUTPUT_DIR         = $(CVM_JUMP_BUILDDIR)/lib
 JUMP_SRCDIR             = $(JUMP_DIR)/src
+JUMP_SCRIPTS_DIR        = $(JUMP_DIR)/tools/scripts
+
+JUMP_JSROP_JARS         = :$(subst $(space),$(PS),$(patsubst $(CVM_BUILD_TOP)%,\$$PHONEME_DIST%,$(JSROP_JARS)))
 
 #
 # JUMP_DEPENDENCIES defines what needs to be built for jump
