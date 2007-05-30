@@ -1,5 +1,5 @@
 /*
- * @(#)endianness_md.h	1.10 06/10/10
+ * @(#)defs_arch.h	1.8 06/10/10
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -25,10 +25,16 @@
  *
  */
 
-#ifndef _INCLUDED_PORTING_ENDIANNESS_MD_H
-#define _INCLUDED_PORTING_ENDIANNESS_MD_H
+#ifndef _SOLARIS_I686_DEFS_ARCH_H
+#define _SOLARIS_I686_DEFS_ARCH_H
 
-#include "javavm/include/endianness_arch.h"
+/*
+ * CVMatomicCompareAndSwap() and CVMatomicSwap() are supported.
+ */
+#define CVM_ADV_ATOMIC_CMPANDSWAP
+#define CVM_ADV_ATOMIC_SWAP
 
-#endif /* _INCLUDED_PORTING_ENDIANNESS_MD_H */
+/* CVMdynlinkSym() does not need to prepend an underscore. */
+#undef CVM_DYNLINKSYM_PREPEND_UNDERSCORE
 
+#endif /* _SOLARIS_I686_DEFS_ARCH_H */

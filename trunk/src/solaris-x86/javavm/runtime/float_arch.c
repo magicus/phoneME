@@ -1,5 +1,5 @@
 /*
- * @(#)endianness_md.h	1.10 06/10/10
+ * @(#)float_arch.c	1.11 06/10/10
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -25,10 +25,18 @@
  *
  */
 
-#ifndef _INCLUDED_PORTING_ENDIANNESS_MD_H
-#define _INCLUDED_PORTING_ENDIANNESS_MD_H
+#include "javavm/include/porting/doubleword.h"
+#include "javavm/include/porting/float.h"
+#include <math.h>
+#include <string.h>
 
-#include "javavm/include/endianness_arch.h"
-
-#endif /* _INCLUDED_PORTING_ENDIANNESS_MD_H */
-
+/*
+ * setFPMode configures the fpu registers to permit correct 
+ * float and double handling as per fdlibm.
+*/
+void setFPMode(void)
+{
+    asm("       pushl $575");
+    asm("       fldcw (%esp)");
+    asm("       popl %eax");
+}

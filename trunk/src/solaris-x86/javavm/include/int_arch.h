@@ -1,5 +1,5 @@
 /*
- * @(#)endianness_md.h	1.10 06/10/10
+ * @(#)int_arch.h	1.7 06/10/10
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -25,10 +25,11 @@
  *
  */
 
-#ifndef _INCLUDED_PORTING_ENDIANNESS_MD_H
-#define _INCLUDED_PORTING_ENDIANNESS_MD_H
+#ifndef _SOLARIS_INT_ARCH_H
+#define _SOLARIS_INT_ARCH_H
 
-#include "javavm/include/endianness_arch.h"
+/* x86 idiv instruction can cause divide-by-zero exception */
 
-#endif /* _INCLUDED_PORTING_ENDIANNESS_MD_H */
+#undef JAVA_COMPLIANT_DIV_REM
 
+#endif /* _SOLARIS_INT_ARCH_H */

@@ -1,5 +1,5 @@
 /*
- * @(#)endianness_md.h	1.10 06/10/10
+ * @(#)endianness_arch.h	1.6 06/10/10
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -25,10 +25,10 @@
  *
  */
 
-#ifndef _INCLUDED_PORTING_ENDIANNESS_MD_H
-#define _INCLUDED_PORTING_ENDIANNESS_MD_H
+#ifndef _X86_ENDIANNESS_ARCH_H
+#define _X86_ENDIANNESS_ARCH_H
 
-#include "javavm/include/endianness_arch.h"
+#define CVM_ENDIANNESS CVM_LITTLE_ENDIAN
+#define CVM_DOUBLE_ENDIANNESS CVM_LITTLE_ENDIAN
 
-#endif /* _INCLUDED_PORTING_ENDIANNESS_MD_H */
-
+#endif /* _X86_ENDIANNESS_ARCH_H */

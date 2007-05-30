@@ -1,5 +1,5 @@
 /*
- * @(#)endianness_md.h	1.10 06/10/10
+ * @(#)x86_membar.S	1.4	06/10/10
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -25,10 +25,18 @@
  *
  */
 
-#ifndef _INCLUDED_PORTING_ENDIANNESS_MD_H
-#define _INCLUDED_PORTING_ENDIANNESS_MD_H
+#include "javavm/include/asmmacros_cpu.h"
 
-#include "javavm/include/endianness_arch.h"
+	ENTRY(CVMmemoryBarrier)
 
-#endif /* _INCLUDED_PORTING_ENDIANNESS_MD_H */
-
+#ifdef PENTIUM_4
+	mfence /* P4 */
+#endif
+	sfence /* PIII */
+#if 0
+	/* save volatile regs */
+	movl	$0, %eax
+	cpuid
+	/* restore volatile regs */
+#endif
+	ret

@@ -1,5 +1,5 @@
 /*
- * @(#)endianness_md.h	1.10 06/10/10
+ * @(#)memory_arch.h	1.7 06/10/10
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -25,10 +25,13 @@
  *
  */
 
-#ifndef _INCLUDED_PORTING_ENDIANNESS_MD_H
-#define _INCLUDED_PORTING_ENDIANNESS_MD_H
+/*
+ * CPU-specific memory definitions.
+ */
 
-#include "javavm/include/endianness_arch.h"
+#ifndef _SOLARIS_X86_MEMORY_ARCH_H
+#define _SOLARIS_X86_MEMORY_ARCH_H
 
-#endif /* _INCLUDED_PORTING_ENDIANNESS_MD_H */
+#include <malloc.h>
 
+#endif /* _SOLARIS_X86_MEMORY_ARCH_H */
