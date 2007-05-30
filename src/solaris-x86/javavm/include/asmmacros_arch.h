@@ -1,5 +1,5 @@
 /*
- * @(#)endianness_md.h	1.10 06/10/10
+ * @(#)asmmacros_arch.h	1.8 06/10/10
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -25,10 +25,56 @@
  *
  */
 
-#ifndef _INCLUDED_PORTING_ENDIANNESS_MD_H
-#define _INCLUDED_PORTING_ENDIANNESS_MD_H
+/*
+ * This file defines a few asm macros whose implementations differ on
+ * different platforms.
+ */
 
-#include "javavm/include/endianness_arch.h"
+#ifndef _INCLUDED_ASMMACROS_ARCH_H
+#define _INCLUDED_ASMMACROS_ARCH_H
 
-#endif /* _INCLUDED_PORTING_ENDIANNESS_MD_H */
+#define SYM_NAME(x) x
 
+#define SYM_NAME2(x,y) x/**/y
+
+#ifdef __SUNPRO_C
+
+#define ENTRY(x)                \
+        .align 4;               \
+        .globl x;               \
+        .type x, #function;     \
+        x:
+
+#define ENTRY2(x,y)             \
+        .align 4;               \
+        .globl SYM_NAME2(x,y);  \
+        .type SYM_NAME2(x,y), #function;        \
+        SYM_NAME2(x,y):
+
+#else
+
+#define ENTRY(x)		\
+	.align 4;		\
+	.globl x;		\
+	.type x, @function;	\
+	x:
+
+#define ENTRY2(x,y)		\
+	.align 4;		\
+	.globl SYM_NAME2(x,y);	\
+	.type SYM_NAME2(x,y), @function;	\
+	SYM_NAME2(x,y):
+#endif
+
+#define SET_SIZE(x)		\
+	.size	x, (.-x)
+
+#define ALIGN(n)		\
+	.align n
+
+#define VARIABLE(x)		\
+	.data;			\
+	.type x, @object;	\
+	x:
+
+#endif /* _INCLUDED_ASMMACROS_ARCH_H */

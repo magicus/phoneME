@@ -1,5 +1,5 @@
 /*
- * @(#)endianness_md.h	1.10 06/10/10
+ * @(#)threads_arch.h	1.5 06/10/10
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -25,10 +25,11 @@
  *
  */
 
-#ifndef _INCLUDED_PORTING_ENDIANNESS_MD_H
-#define _INCLUDED_PORTING_ENDIANNESS_MD_H
+#ifndef _SOLARIS_THREAD_ARCH_H
+#define _SOLARIS_THREAD_ARCH_H
 
-#include "javavm/include/endianness_arch.h"
+typedef struct CVMThreadArchData {
+    int dummy;
+} CVMThreadArchData;
 
-#endif /* _INCLUDED_PORTING_ENDIANNESS_MD_H */
-
+#endif /* _SOLARIS_THREAD_ARCH_H */

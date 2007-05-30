@@ -1,5 +1,5 @@
 /*
- * @(#)endianness_md.h	1.10 06/10/10
+ * @(#)float_arch.h	1.11 06/10/10
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -25,10 +25,23 @@
  *
  */
 
-#ifndef _INCLUDED_PORTING_ENDIANNESS_MD_H
-#define _INCLUDED_PORTING_ENDIANNESS_MD_H
+#ifndef _SOLARIS_FLOAT_ARCH_H
+#define _SOLARIS_FLOAT_ARCH_H
 
-#include "javavm/include/endianness_arch.h"
+#undef JAVA_COMPLIANT_f2i
+#undef JAVA_COMPLIANT_f2l
+#undef NAN_CHECK_f2i
+#undef NAN_CHECK_f2l
+#undef BOUNDS_CHECK_f2l
 
-#endif /* _INCLUDED_PORTING_ENDIANNESS_MD_H */
+#define USE_NATIVE_FREM
+#undef USE_ANSI_FMOD
+#undef USE_NATIVE_FCOMPARE
+#undef USE_ANSI_FCOMPARE
 
+extern float floatRem(float, float);
+
+#define CVMfloatRem(op1, op2) \
+    floatRem((op1), (op2))
+
+#endif /* _SOLARIS_FLOAT_ARCH_H */

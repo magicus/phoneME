@@ -1,5 +1,5 @@
 /*
- * @(#)endianness_md.h	1.10 06/10/10
+ * @(#)doubleword_arch.h	1.12 06/10/10
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -25,10 +25,34 @@
  *
  */
 
-#ifndef _INCLUDED_PORTING_ENDIANNESS_MD_H
-#define _INCLUDED_PORTING_ENDIANNESS_MD_H
+#ifndef _SOLARIS_DOUBLEWORD_ARCH_H
+#define _SOLARIS_DOUBLEWORD_ARCH_H
 
-#include "javavm/include/endianness_arch.h"
+#define CAN_DO_UNALIGNED_DOUBLE_ACCESS
+#define CAN_DO_UNALIGNED_INT64_ACCESS
+#define HAVE_DOUBLE_BITS_CONVERSION
+#define NORMAL_DOUBLE_BITS_CONVERSION
+#define COPY_64_AS_INT64
+#undef COPY_64_AS_DOUBLE
+#undef JAVA_COMPLIANT_d2i
+#undef NAN_CHECK_d2l
+#undef BOUNDS_CHECK_d2l
 
-#endif /* _INCLUDED_PORTING_ENDIANNESS_MD_H */
+#define USE_NATIVE_FREM
+#undef USE_ANSI_FMOD
+#undef USE_NATIVE_FCOMPARE
+#undef USE_ANSI_FCOMPARE
 
+extern double doubleRem(double, double);
+#define CVMdoubleRem(op1, op2) \
+    doubleRem((op1), (op2))
+
+extern double doubleDiv(double, double);
+#define CVMdoubleDiv(op1, op2) \
+    doubleDiv((op1), (op2))
+
+extern double doubleMul(double, double);
+#define CVMdoubleMul(op1, op2) \
+    doubleMul((op1), (op2))
+
+#endif /* _SOLARIS_DOUBLEWORD_ARCH_H */
