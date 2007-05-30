@@ -35,8 +35,10 @@ import java.io.OutputStream;
 import java.util.*;
 
 import javax.microedition.io.*;
+
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.io.j2me.storage.*;
-import com.sun.midp.midlet.*;
 import com.sun.midp.security.*;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.log.Logging;
@@ -137,6 +139,8 @@ public class WebPublicKeyStore extends PublicKeyStore
 
     /**
      * Disable a certificate authority in the trusted keystore.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      *
      * @param name name of the authority.
      * @param enabled value of enable field
@@ -145,16 +149,8 @@ public class WebPublicKeyStore extends PublicKeyStore
             boolean enabled) {
         Vector keys;
         PublicKeyInfo keyInfo;
-        MIDletSuite midletSuite =
-            MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
 
-        if (midletSuite == null) {
-            throw new
-                IllegalStateException("This method can't be called before " +
-                                      "a suite is started.");
-        }
-
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         keys = trustedKeyStore.findKeys(name);
         if (keys == null || keys.size() <= 0) {

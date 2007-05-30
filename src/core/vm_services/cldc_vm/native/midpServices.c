@@ -34,7 +34,6 @@
 #include <sni.h>
 
 #include <midpMalloc.h>
-#include <midpUtilUTF.h>
 #include <midpServices.h>
 #include <midp_logging.h>
 #include <midp_constants_data.h>
@@ -77,8 +76,12 @@ midp_getCurrentTime(void) {
 /*=========================================================================
  * JAR helper functions
  *=======================================================================*/
-
-/**
+#if 0
+/*
+ * IMPL_NOTE: this code will be removed as soon as we find out
+ * that the full build does not break
+ */
+/* *
  * Reads an entry from a JAR file.
  *
  * @param jarName The name of the JAR file to read
@@ -87,18 +90,25 @@ midp_getCurrentTime(void) {
  *
  * @return <tt>true</tt> if the entry was read, otherwise <tt>false</tt>
  */
+/*
+* IMPL_NOTE: this function is the same as midpGetJarEntry() in midpJar.c,
+* but it uses only CLDC stuff
+*/
 jboolean
 midp_readJarEntry(const pcsl_string* jarName, const pcsl_string* entryName, jobject* entry) {
     JvmPathChar* platformJarName;
     int i;
-    int maxLen;
-    unsigned char* platformEntryName;
-    int numberOfChars;
     jboolean noerror = KNI_TRUE;
 
     GET_PCSL_STRING_DATA_AND_LENGTH(jarName)
-    GET_PCSL_STRING_DATA_AND_LENGTH(entryName)
+    /* Entry names in JARs are UTF-8. */
+    const jbyte * const platformEntryName = pcsl_string_get_utf8_data(entryName);
+
     do {
+        if (platformEntryName == NULL) {
+            noerror = KNI_FALSE;
+            break;
+        }
         /*
          * JvmPathChars can be either 16 bits or 8 bits so we can't
          * assume either.
@@ -122,35 +132,10 @@ midp_readJarEntry(const pcsl_string* jarName, const pcsl_string* entryName, jobj
 
         platformJarName[i] = 0;
 
-        /* IMPL_NOTE: could we get UTF-8 data from the very beginning? */
-
-        /* Entry names in JARs are UTF-8. */
-
-        /* Add one for the zero terminator. */
-        maxLen = (entryName_len * UTF_8_PER_UCS_2_CHAR) + 1;
-        platformEntryName = (unsigned char*)midpMalloc(maxLen);
-        if (platformEntryName == NULL) {
-            midpFree(platformJarName);
-            noerror = KNI_FALSE;
-            break;
-        }
-
-        numberOfChars = midpUTF8Encode(entryName_data, entryName_len,
-                                   (unsigned char*)platformEntryName, maxLen);
-        if (numberOfChars < 0) {
-            midpFree(platformEntryName);
-            midpFree(platformJarName);
-            noerror = KNI_FALSE;
-            break;
-        }
-
-        platformEntryName[numberOfChars] = 0;
-
         Jvm_read_jar_entry(platformJarName, (char*)platformEntryName, (jobject)*entry);
         midpFree(platformJarName);
-        midpFree(platformEntryName);
     } while(0);
-    RELEASE_PCSL_STRING_DATA_AND_LENGTH
+    pcsl_string_release_utf8_data(platformEntryName, entryName);
     RELEASE_PCSL_STRING_DATA_AND_LENGTH
     if (noerror) {
         return (KNI_IsNullHandle((jobject)*entry) == KNI_TRUE)
@@ -159,7 +144,7 @@ midp_readJarEntry(const pcsl_string* jarName, const pcsl_string* entryName, jobj
         return KNI_FALSE;
     }
 }
-
+#endif
 /**
  * Get the current isolate id from VM in case of MVM mode. 
  * For SVM, simply return 0 as an isolate ID.

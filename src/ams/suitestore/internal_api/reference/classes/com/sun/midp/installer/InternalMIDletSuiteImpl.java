@@ -26,11 +26,12 @@
 
 package com.sun.midp.installer;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 
 import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.midlet.MIDletStateHandler;
 
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
@@ -150,8 +151,8 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
     /**
      * Replace or add a property to the suite for this run only.
      *
-     * @param token token with the AMS permission set to allowed,
-     *        can be null to use the suite's permission
+     * @param token token with the com.sun.midp.ams permission set
+     *              to allowed, can be null to use the suite's permission
      * @param key the name of the property
      * @param value the value of the property
      *
@@ -163,10 +164,7 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
         if (token != null) {
             token.checkIfPermissionAllowed(Permissions.AMS);
         } else {
-            MIDletSuite current = MIDletStateHandler.
-                getMidletStateHandler().getMIDletSuite();
-
-            current.checkIfPermissionAllowed(Permissions.AMS);
+            AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
         }
 
         properties.setProperty(key, value);

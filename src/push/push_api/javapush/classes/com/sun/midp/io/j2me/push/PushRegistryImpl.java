@@ -31,6 +31,9 @@ import java.io.InterruptedIOException;
 
 import javax.microedition.io.ConnectionNotFoundException;
 
+import com.sun.j2me.security.AccessController;
+import com.sun.j2me.security.InterruptedSecurityException;
+
 import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 
@@ -40,6 +43,9 @@ import com.sun.midp.security.Permissions;
  * PushRegistry implementation that checks parameters.
  */
 public final class PushRegistryImpl {
+    /** Name of the permission permission. */
+    static final String PUSH_PERMISSION_NAME =
+        "javax.microedition.io.PushRegistry";
 
     /**
      * Hides the default constructor.
@@ -178,8 +184,9 @@ public final class PushRegistryImpl {
          * Check permissions.
          */
         try {
-            midletSuite.checkForPermission(Permissions.PUSH, null);
-        } catch (InterruptedException ie) {
+            AccessController.
+                checkPermission(PUSH_PERMISSION_NAME);
+        } catch (InterruptedSecurityException ise) {
             throw new InterruptedIOException(
                 "Interrupted while trying to ask the user permission");
         }
@@ -329,12 +336,8 @@ public final class PushRegistryImpl {
         }
 
         checkMidlet(midletSuite, midlet);
-        try {
-            midletSuite.checkForPermission(Permissions.PUSH, null);
-        } catch (InterruptedException ie) {
-            throw new RuntimeException(
-                "Interrupted while trying to ask the user permission");
-        }
+
+        AccessController.checkPermission("javax.microedition.io.PushRegistry");
 
         return ConnectionRegistry.registerAlarm(midletSuite, midlet, time);
     }

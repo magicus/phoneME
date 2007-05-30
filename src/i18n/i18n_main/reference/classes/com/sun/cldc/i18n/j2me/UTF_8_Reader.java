@@ -26,10 +26,12 @@
 
 package com.sun.cldc.i18n.j2me;
 
+import com.sun.cldc.i18n.StreamReader;
+
 import java.io.*;
 
 /** Reader for UTF-8 encoded input streams. */
-public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
+public class UTF_8_Reader extends StreamReader {
     /** signals that no byte is available, but not the end of stream */
     private static final int NO_BYTE = -2;
     /** 'replacement character' [Unicode 1.1.0] */ 
@@ -43,7 +45,7 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
      */
     private int[] readAhead;
     /* the number of UTF8 bytes that may encode one character */
-    private static final int READ_AHEAD_SIZE = 4;
+    private static final int MAX_BYTES_PER_CHAR = 4;
     /**
      * If non-zero, the last read code point must be represented by two
      * surrogate code units, and the low surrogate code unit has not yet
@@ -51,14 +53,31 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
      */
     protected int pendingSurrogate = 0;
 
+    /** information saved by mark() and later used by reset() */
+    protected class MarkInfo {
+        /** a copy of the enclosing instance's readAhead buffer
+         *  at the moment of execution of mark()
+         */
+        int[] readAhead = new int[MAX_BYTES_PER_CHAR];
+        /** a copy of the enclosing instance's pendingSurrogate
+         *  at the moment of execution of mark()
+         */
+        int pendingSurrogate = 0;
+    }
+    /** information saved by mark() and later used by reset() */
+    MarkInfo markInfo = null;
+    /** false if mark() has not been invoked yet */
+    boolean markIsSet;
+
     /** Constructs a UTF-8 reader. */
     public UTF_8_Reader() {
-        readAhead = new int[READ_AHEAD_SIZE];
+        readAhead = new int[MAX_BYTES_PER_CHAR];
     }
 
     public Reader open(InputStream in, String enc)
         throws UnsupportedEncodingException {
         super.open(in, enc);
+        markIsSet = false;
         prepareForNextChar(NO_BYTE);
         return this;
     }
@@ -243,37 +262,30 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
      */
     private void prepareForNextChar(int headByte) {
         readAhead[0] = headByte;
-        for (int i=1; i<READ_AHEAD_SIZE; i++) {
+        for (int i=1; i<MAX_BYTES_PER_CHAR; i++) {
             readAhead[i]=NO_BYTE;
         }
     }
 
     /**
-     * Tell whether this reader supports the mark() operation.
-     * The UTF-8 implementation always returns false because it does not
-     * support mark().
+     * Mark the present position in the stream.
      *
-     * @return false
-     */
-    public boolean markSupported() {
-        /*
-         * For readers mark() is in characters, since UTF-8 character are
-         * variable length, so we can't just forward this to the underlying
-         * byte InputStream like other readers do.
-         * So this reader does not support mark at this time.
-         */
-        return false;
-    }
-
-    /**
-     * Mark a read ahead character is not supported for UTF8
-     * readers.
      * @param readAheadLimit number of characters to buffer ahead
-     * @exception IOException is thrown, for all calls to this method
-     * because marking is not supported for UTF8 readers
+     * @exception  IOException  If an I/O error occurs or
+     *             marking is not supported by the underlying input stream.
      */
     public void mark(int readAheadLimit) throws IOException {
-        throw new IOException("mark() not supported");
+        if (in.markSupported()) {
+            if (markInfo == null) {
+                markInfo = new MarkInfo();
+            }
+            markInfo.pendingSurrogate = pendingSurrogate;
+            System.arraycopy(readAhead,0,markInfo.readAhead,0,MAX_BYTES_PER_CHAR);
+            markIsSet = true;
+            in.mark(readAheadLimit*MAX_BYTES_PER_CHAR);
+        } else {
+            throw new IOException("mark() not supported");
+        }
     }
 
     /**
@@ -282,7 +294,17 @@ public class UTF_8_Reader extends com.sun.cldc.i18n.StreamReader {
      * because marking is not supported for UTF8 readers
      */
     public void reset() throws IOException {
-        throw new IOException("reset() not supported");
+        if (in.markSupported()) {
+            if (markIsSet) {
+                pendingSurrogate = markInfo.pendingSurrogate;
+                System.arraycopy(markInfo.readAhead,0,readAhead,0,MAX_BYTES_PER_CHAR);
+                in.reset();
+            } else {
+                throw new IOException("reset(): no mark has been set");
+            }
+        } else {
+            throw new IOException("reset() not supported");
+        }
     }
 
     /**

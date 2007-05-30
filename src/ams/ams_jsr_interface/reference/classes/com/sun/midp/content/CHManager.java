@@ -28,6 +28,8 @@ package com.sun.midp.content;
 
 import javax.microedition.midlet.MIDlet;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.main.MIDletProxyList;
 
 import com.sun.midp.midlet.MIDletSuite;
@@ -95,13 +97,9 @@ public class CHManager {
      */
     public static CHManager getManager(SecurityToken token) {
         if (token != null) {
-            token.checkIfPermissionAllowed(Permissions.MIDP);
+            token.checkIfPermissionAllowed(Permissions.AMS);
         } else {
-            MIDletSuite msuite =
-                MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-            if (msuite != null) {
-                msuite.checkIfPermissionAllowed(Permissions.AMS);
-            }
+            AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
         }
 
 	if (manager == null) {

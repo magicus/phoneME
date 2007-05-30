@@ -1,4 +1,3 @@
-
 /*
  *   
  *
@@ -77,14 +76,13 @@ import javax.microedition.io.Connector;
 import javax.microedition.io.Connection;
 import javax.microedition.io.ConnectionNotFoundException;
 
+import com.sun.j2me.security.*;
+
 import com.sun.midp.main.Configuration;
 
 import com.sun.midp.io.ConnectionBaseAdapter;
 import com.sun.midp.io.HttpUrl;
 import com.sun.midp.io.NetworkConnectionBase;
-
-import com.sun.midp.midlet.MIDletStateHandler;
-import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
@@ -101,6 +99,9 @@ import com.sun.midp.util.Properties;
 public class Protocol extends ConnectionBaseAdapter 
     implements HttpConnection  {
 
+    /** HTTP permission name. */
+    private static final String HTTP_PERMISSION_NAME =
+        "javax.microedition.io.Connector.http";
     /** HTTP version string to use with all outgoing HTTP requests. */
     protected static final String HTTP_VERSION = "HTTP/1.1";
     /** Where to start the data in the output buffer. */
@@ -422,27 +423,23 @@ public class Protocol extends ConnectionBaseAdapter
      */
     private void checkForPermission(String name)
             throws InterruptedIOException {
-        MIDletStateHandler midletStateHandler;
-        MIDletSuite midletSuite;
-
-        midletStateHandler = MIDletStateHandler.getMidletStateHandler();
-        midletSuite = midletStateHandler.getMIDletSuite();
-
-        if (midletSuite == null) {
-            throw new IllegalStateException("This class can't be used " +
-                "before a suite is started.");
-        }
-
         name = protocol + ":" + name;
 
         try {
-            midletSuite.checkForPermission(Permissions.HTTP, name);
-            ownerTrusted = midletSuite.isTrusted();
+            AccessController.checkPermission(HTTP_PERMISSION_NAME, name);
             permissionChecked = true;
-        } catch (InterruptedException ie) {
+        } catch (InterruptedSecurityException ise) {
             throw new InterruptedIOException(
                 "Interrupted while trying to ask the user permission");
         }
+
+        try {
+            AccessController.
+                checkPermission(AccessController.TRUSTED_APP_PERMISSION_NAME);
+            ownerTrusted = true;
+        } catch (SecurityException se) {
+            ownerTrusted = false;
+        } 
     }
 
     /**

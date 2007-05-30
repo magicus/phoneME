@@ -34,11 +34,11 @@ import javax.microedition.pki.*;
 
 import com.sun.cldc.io.*;
 
+import com.sun.j2me.security.*;
+
 import com.sun.midp.ssl.*;
 
 import com.sun.midp.io.*;
-
-import com.sun.midp.midlet.*;
 
 import com.sun.midp.publickeystore.*;
 
@@ -49,6 +49,10 @@ import com.sun.midp.security.*;
  * for an SSL connection.
  */
 public class Protocol implements SecureConnection, ConnectionBaseInterface {
+
+    /** SecureConnection permission name. */
+    private static final String SECURE_CONNECTION_PERMISSION_NAME =
+        "javax.microedition.io.Connector.ssl";
 
     /**
      * Inner class to request security token from SecurityInitializer.
@@ -83,8 +87,6 @@ public class Protocol implements SecureConnection, ConnectionBaseInterface {
      */
     public Connection openPrim(String name, int mode, boolean timeouts)
             throws IOException {
-        Scheduler scheduler = Scheduler.getScheduler();
-        MIDletSuite midletSuite = scheduler.getMIDletSuite();
         HttpUrl url;
         OutputStream tcpOutputStream;
         InputStream tcpInputStream;
@@ -95,8 +97,9 @@ public class Protocol implements SecureConnection, ConnectionBaseInterface {
         }
 
         try {
-            midletSuite.checkForPermission(Permissions.SSL, "ssl:" + name);
-        } catch (InterruptedException ie) {
+            AccessController.checkPermission(
+               SECURE_CONNECTION_PERMISSION_NAME, "ssl:" + name);
+        } catch (InterruptedSecurityException ise) {
             throw new InterruptedIOException(
                 "Interrupted while trying to ask the user permission");
         }
@@ -123,9 +126,14 @@ public class Protocol implements SecureConnection, ConnectionBaseInterface {
          * system HTTP code will add a "UNTRUSTED/1.0" to the user agent
          * field for untrusted MIDlets.
          */
-        if (!midletSuite.isTrusted() && url.port == 443) {
-            throw new SecurityException(
-                "Target port denied to untrusted applications");
+        try {
+            AccessController.
+                checkPermission(AccessController.TRUSTED_APP_PERMISSION_NAME);
+        } catch (SecurityException se) {
+            if (url.port == 443) {
+                throw new SecurityException(
+                    "Target port denied to untrusted applications");
+            }
         }
             
         tcpConnection = new com.sun.midp.io.j2me.socket.Protocol();

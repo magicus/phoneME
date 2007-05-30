@@ -50,6 +50,16 @@ class Form : public QWidget
     /* Constructor of the form's container */
    Form();
 
+protected:
+   /**
+    * Finds a new widget to give the keyboard focus to, 
+    * returns TRUE if is can find a new widget and FALSE if it can't
+    *
+    * Override to notify Java.
+    */
+  bool focusNextPrevChild ( bool next );
+
+
  public slots:
    /* 
     * This slot is called by Qt when there is a change

@@ -30,13 +30,12 @@ import java.lang.String;
 
 import java.io.IOException;
 
-import com.sun.midp.midlet.MIDletStateHandler;
-import com.sun.midp.midlet.MIDletSuite; 
-
-import com.sun.midp.security.SecurityToken;
-import com.sun.midp.security.Permissions;
+import com.sun.j2me.security.AccessController;
 
 import com.sun.midp.io.Util;
+
+import com.sun.midp.security.Permissions;
+
 /**
  * This class provides a Java API for reading an entry from a Jar file stored
  * on the file system.
@@ -45,6 +44,8 @@ public class JarReader {
     /**
      * Returns the content of the given entry in the JAR file on the
      * file system given by jarFilePath.
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      *
      * @param jarFilePath file pathname of the JAR file to read. May
      *          be a relative pathname.
@@ -60,15 +61,7 @@ public class JarReader {
      */
     public static byte[] readJarEntry(String jarFilePath, String entryName)
             throws IOException {
-        MIDletStateHandler midletStateHandler =
-            MIDletStateHandler.getMidletStateHandler();
-        MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
-
-        if (midletSuite == null) {
-            throw new SecurityException(SecurityToken.STD_EX_MSG);
-        }
-
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         if (entryName.charAt(0) == '/') {
             /*

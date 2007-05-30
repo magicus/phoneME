@@ -28,15 +28,17 @@ package com.sun.midp.rms;
 
 import javax.microedition.rms.*;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
-import com.sun.midp.midlet.MIDletStateHandler;
-import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
 /**
  * A utility class for checking and removing record stores.
+ * <p>
+ * Method requires com.sun.midp.ams permission.
  */
 public class RecordStoreFactory {
 
@@ -46,6 +48,8 @@ public class RecordStoreFactory {
     /**
      * Remove all the Record Stores for a suite.
      * Called by the installer when updating a suite
+     * <p>
+     * Method requires com.sun.midp.ams permission.
      *
      * @param token security token with MIDP AMS permission
      * @param id ID of the suite
@@ -54,13 +58,7 @@ public class RecordStoreFactory {
             int id) {
 
 	if (token == null) {
-            MIDletSuite midletSuite =
-                MIDletStateHandler.getMidletStateHandler().getMIDletSuite();
-
-            // if a MIDlet suite is not scheduled, assume the JAM is calling.
-            if (midletSuite != null) {
-                midletSuite.checkIfPermissionAllowed(Permissions.AMS);
-            }
+            AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
         } else {
             token.checkIfPermissionAllowed(Permissions.AMS);
         }

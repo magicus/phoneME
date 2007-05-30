@@ -90,6 +90,8 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
 
     /**
      * Append launched suite info to the list.
+     *
+     * @param msi RunningMIDletSuiteInfo to append
      */
     synchronized void append(RunningMIDletSuiteInfo msi) {
         checkInfoArraySize();
@@ -98,9 +100,28 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
     }
 
     /**
-     * Remove suite info from the list.
+     * Updates the existing item in the list.
+     * It should be used to update the reference to the previously added object.
+     *
+     * @param oldMsi entry to update 
+     * @param newMsi new value of the entry
      */
-    synchronized void remove(MIDletSuiteInfo msi) {
+    synchronized void update(RunningMIDletSuiteInfo oldMsi,
+                             RunningMIDletSuiteInfo newMsi) {
+        for (int i = 0; i < mcount; i++) {
+            if (minfo[i] == oldMsi) {
+                minfo[i] = newMsi;
+                break;
+            }
+        }
+    }
+
+    /**
+     * Remove suite info from the list.
+     *
+     * @param msi RunningMIDletSuiteInfo to remove
+     */
+    synchronized void remove(RunningMIDletSuiteInfo msi) {
         int pos = -1;
         for (int i = 0; i < mcount; i++) {
             if (minfo[i] == msi) {

@@ -111,10 +111,6 @@ class AppManagerUI extends Form
     private static final String INSTALLER =
         "com.sun.midp.installer.GraphicalInstaller";
 
-    /** Constant for the graphical installer class name. */
-    private static final String SUITE_SELECTOR =
-        "com.sun.midp.midletsuite.Selector";
-
     /**
      * The font used to paint midlet names in the AppSelector.
      * Inner class cannot have static variables thus it has to be here.
@@ -241,7 +237,6 @@ class AppManagerUI extends Form
     Command backCmd =
         new Command(Resource.getString(ResourceConstants.BACK),
                     Command.BACK, 1);
-
 
 
     /** Command object for "Bring to foreground". */
@@ -506,8 +501,17 @@ class AppManagerUI extends Form
 
         } else if (c == updateCmd) {
 
-            manager.updateSuite(msi);
-            display.setCurrent(this);
+            if (!isInstallerRunning()) {
+                manager.updateSuite(msi);
+                display.setCurrent(this);
+            } else {
+                String alertMessage = Resource.getString(
+                    ResourceConstants.AMS_MGR_INSTALLER_IS_RUNNING);
+
+                displayError.showErrorAlert(null, null,
+                    Resource.getString(ResourceConstants.ERROR),
+                    alertMessage);
+            }
 
         } else if (c == appSettingsCmd) {
 
@@ -615,11 +619,11 @@ class AppManagerUI extends Form
                     ci.removeCommand(endCmd);
 
                     if (ci.msi.midletToRun != null &&
-                            ci.msi.midletToRun.equals(DISCOVERY_APP)) {
+                        ci.msi.midletToRun.equals(DISCOVERY_APP)) {
                         ci.setDefaultCommand(launchInstallCmd);
                     } else if (caManagerIncluded &&
-                            ci.msi.midletToRun != null &&
-                            ci.msi.midletToRun.equals(CA_MANAGER)) {
+                        ci.msi.midletToRun != null &&
+                        ci.msi.midletToRun.equals(CA_MANAGER)) {
                         ci.setDefaultCommand(launchCaManagerCmd);
                     } else {
                         if (ci.msi.enabled) {
@@ -846,7 +850,6 @@ class AppManagerUI extends Form
 
                                 if (mci.msi.proxy == null) { // Not running
                                     mci.removeCommand(launchCmd);
-
                                 }
 
                                 // running MIDlets will continue to run
@@ -860,6 +863,7 @@ class AppManagerUI extends Form
                         int oldNumberOfMidlets = mci.msi.numberOfMidlets;
                         MIDletProxy oldProxy = mci.msi.proxy;
 
+                        midletSwitcher.update(mci.msi, suiteInfo);
                         mci.msi = suiteInfo;
                         mci.msi.proxy = oldProxy;
 
@@ -896,7 +900,6 @@ class AppManagerUI extends Form
      *                  of the recently started midlet
      */
     private void append(RunningMIDletSuiteInfo suiteInfo) {
-
         MidletCustomItem ci = new MidletCustomItem(suiteInfo);
 
         if (suiteInfo.midletToRun != null &&
@@ -1276,6 +1279,29 @@ class AppManagerUI extends Form
         alert.setTimeout(Alert.FOREVER);
 
         display.setCurrent(alert);
+    }
+
+    /**
+     * Checks if the installer is currently running.
+     *
+     * @return true if the installer or discovery application is running,
+     *         false otherwise
+     */
+    private boolean isInstallerRunning() {
+        MidletCustomItem ci;
+        RunningMIDletSuiteInfo msi;
+
+        for (int i = 0; i < size(); i++) {
+            ci = (MidletCustomItem)get(i);
+            msi = ci.msi;
+            if (msi.suiteId == MIDletSuite.INTERNAL_SUITE_ID &&
+                msi.proxy != null && (DISCOVERY_APP.equals(msi.midletToRun) ||
+                                      INSTALLER.equals(msi.midletToRun))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

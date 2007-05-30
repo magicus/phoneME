@@ -109,6 +109,7 @@ static jfieldID intParam1FieldID;
 static jfieldID intParam2FieldID;
 static jfieldID intParam3FieldID;
 static jfieldID intParam4FieldID;
+static jfieldID intParam5FieldID;
 static jfieldID stringParam1FieldID;
 static jfieldID stringParam2FieldID;
 static jfieldID stringParam3FieldID;
@@ -163,6 +164,7 @@ cacheEventFieldIDs(jobject eventObj, jclass classObj) {
     intParam2FieldID = KNI_GetFieldID(classObj, "intParam2", "I");
     intParam3FieldID = KNI_GetFieldID(classObj, "intParam3", "I");
     intParam4FieldID = KNI_GetFieldID(classObj, "intParam4", "I");
+    intParam5FieldID = KNI_GetFieldID(classObj, "intParam5", "I");
 
     stringParam1FieldID = KNI_GetFieldID(classObj, "stringParam1",
                                          "Ljava/lang/String;");
@@ -474,6 +476,7 @@ static int readNativeEventCommon(int isolateId) {
     KNI_SetIntField(eventObj, intParam2FieldID, event.intParam2);
     KNI_SetIntField(eventObj, intParam3FieldID, event.intParam3);
     KNI_SetIntField(eventObj, intParam4FieldID, event.intParam4);
+    KNI_SetIntField(eventObj, intParam5FieldID, event.intParam5);
 
     SET_STRING_EVENT_FIELD(event.stringParam1, stringObj, eventObj,
                            stringParam1FieldID);
@@ -588,6 +591,7 @@ Java_com_sun_midp_events_EventQueue_sendNativeEventToIsolate(void) {
     event.intParam2 = KNI_GetIntField(eventObj, intParam2FieldID);
     event.intParam3 = KNI_GetIntField(eventObj, intParam3FieldID);
     event.intParam4 = KNI_GetIntField(eventObj, intParam4FieldID);
+    event.intParam5 = KNI_GetIntField(eventObj, intParam5FieldID);
 
     do {
         GET_STRING_EVENT_FIELD(eventObj, stringParam1FieldID, stringObj,

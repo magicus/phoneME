@@ -110,7 +110,7 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
             eventQueue, midletControllerEventProducer);
 
         // Start inbound connection watcher thread.
-        PushRegistryInternal.startListening();
+        PushRegistryInternal.startListening(internalSecurityToken);
 
         // Initialize the Content Handler Monitor of MIDlet exits
         CHManager.getManager(internalSecurityToken).initCleanupMonitor(
@@ -198,7 +198,7 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
     }
 
     /**
-     * Extends base class implementatiom with additional actions for main
+     * Extends base class implementation with additional actions for main
      * task shutdown. Update and save <code>CommandState</code> instance
      * for VM cycling mechanism.
      */
@@ -259,6 +259,9 @@ public class MIDletSuiteLoader extends CldcMIDletSuiteLoader {
         }
 
         state.save();
+
+        // Finalize JSR subsystems
+        JSRInitializer.cleanup();
     }
 
     /** Gracefully terminates VM with proper return code */

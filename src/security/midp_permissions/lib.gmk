@@ -48,7 +48,7 @@ MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_MIDP_PERMISSIONS_SOURCEPATH)
 #
 SUBSYSTEM_SECURITY_JAVA_FILES += \
   $(PERMISSIONS_DIR)/reference/classes/com/sun/midp/security/Permissions.java \
-  $(PERMISSIONS_DIR)/reference/classes/com/sun/midp/security/PermissionGroup.java \
+  $(PERMISSIONS_DIR)/reference/classes/com/sun/midp/security/PermissionGroup.java
 
 ifeq ($(USE_I3_TEST), true)
 SUBSYSTEM_SECURITY_I3TEST_JAVA_FILES += \

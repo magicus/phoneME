@@ -30,9 +30,9 @@ import javax.microedition.io.*;
 
 import javax.microedition.lcdui.*;
 
-import com.sun.midp.lcdui.*;
+import com.sun.j2me.security.AccessController;
 
-import com.sun.midp.midlet.*;
+import com.sun.midp.lcdui.*;
 
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
@@ -91,11 +91,7 @@ public final class SecurityHandler {
      *            method
      */
     public SecurityHandler(byte[] apiPermissions, String domain) {
-        MIDletStateHandler midletStateHandler =
-            MIDletStateHandler.getMidletStateHandler();
-        MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
-
-        midletSuite.checkIfPermissionAllowed(Permissions.AMS);
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
         init(apiPermissions, domain);
     }
 
@@ -131,10 +127,6 @@ public final class SecurityHandler {
      *            method
      */
     private void init(byte[] apiPermissions, String domain) {
-        MIDletStateHandler midletStateHandler =
-            MIDletStateHandler.getMidletStateHandler();
-        MIDletSuite midletSuite = midletStateHandler.getMIDletSuite();
-
         maxPermissionLevels =
             (Permissions.forDomain(domain))[Permissions.MAX_LEVELS];
 

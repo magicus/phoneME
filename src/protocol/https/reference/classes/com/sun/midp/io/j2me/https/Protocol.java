@@ -38,6 +38,8 @@ import javax.microedition.io.*;
 
 import javax.microedition.pki.*;
 
+import com.sun.j2me.security.*;
+
 import com.sun.midp.pki.*;
 
 import com.sun.midp.ssl.*;
@@ -47,8 +49,6 @@ import com.sun.midp.main.Configuration;
 import com.sun.midp.io.*;
 
 import com.sun.midp.io.j2me.http.*;
-
-import com.sun.midp.midlet.*;
 
 import com.sun.midp.publickeystore.WebPublicKeyStore;
 
@@ -96,6 +96,10 @@ import com.sun.midp.util.Properties;
  */
 public class Protocol extends com.sun.midp.io.j2me.http.Protocol
     implements HttpsConnection {
+
+    /** HTTP permission name. */
+    private static final String HTTPS_PERMISSION_NAME =
+        "javax.microedition.io.Connector.https";
 
     /** Common name label. */
     private static final String COMMON_NAME_LABEL = "CN=";
@@ -277,27 +281,24 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
      */
     private void checkForPermission(String name)
             throws InterruptedIOException {
-        MIDletStateHandler midletStateHandler;
-        MIDletSuite midletSuite;
-
-        midletStateHandler = MIDletStateHandler.getMidletStateHandler();
-        midletSuite = midletStateHandler.getMIDletSuite();
-
-        if (midletSuite == null) {
-            throw new IllegalStateException("This class can't be used " +
-                "before a suite is started.");
-        }
 
         name = protocol + ":" + name;
 
         try {
-            midletSuite.checkForPermission(Permissions.HTTPS, name);
-            ownerTrusted = midletSuite.isTrusted();
+            AccessController.checkPermission(HTTPS_PERMISSION_NAME, name);
             permissionChecked = true;
-        } catch (InterruptedException ie) {
+        } catch (InterruptedSecurityException ise) {
             throw new InterruptedIOException(
                 "Interrupted while trying to ask the user permission");
         }
+
+        try {
+            AccessController.
+                checkPermission(AccessController.TRUSTED_APP_PERMISSION_NAME);
+            ownerTrusted = true;
+        } catch (SecurityException se) {
+            ownerTrusted = false;
+        } 
     }
 
     /** 

@@ -312,7 +312,7 @@ final class ConnectionController {
             try {
                 removeRegistration(handlers[i]);
             } catch (IOException ioex) {
-                // TBD: logging
+                logError("failed to remove " + handlers[i] + ": " + ioex);
             }
         }
     }
@@ -375,9 +375,9 @@ final class ConnectionController {
                                     info.connection, info.filter,
                                     noopPermissionCallback));
                     } catch (ConnectionNotFoundException cnfe) {
-                        // TBD: proper logging
+                        logError("failed to register " + info + ": " + cnfe);
                     } catch (IOException ioex) {
-                        // TBD: proper logging
+                        logError("failed to register " + info + ": " + ioex);
                     }
                 }
             }
@@ -499,8 +499,19 @@ final class ConnectionController {
                     return;
                 }
 
-                lifecycleAdapter.launchMidlet(
-                        midpApp.midletSuiteID, midpApp.midlet);
+                try {
+                    lifecycleAdapter.launchMidlet(midpApp.midletSuiteID,
+                            midpApp.midlet);
+                } catch (Exception ex) {
+                    /* IMPL_NOTE: need to handle _all_ the exceptions. */
+                    /* TBD: uncomment when logging can be disabled
+                     * (not to interfer with unittests)
+                    logError(
+                            "Failed to launch \"" + midpApp.midlet + "\"" +
+                            " (suite ID: " + midpApp.midletSuiteID + "): " +
+                            ex);
+                     */
+                }
             }
         }
     }
@@ -595,5 +606,20 @@ final class ConnectionController {
         private Set getData(final int midletSuiteID) {
             return (Set) suiteId2data.get(new Integer(midletSuiteID));
         }
+    }
+
+    /**
+     * Logs error message.
+     *
+     * <p>
+     * TBD: common logging
+     * </p>
+     *
+     * @param message message to log
+     */
+    private static void logError(final String message) {
+        System.err.println(
+                "ERROR [" + ConnectionController.class.getName() + "]: "
+                + message);
     }
 }

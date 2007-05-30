@@ -1,6 +1,4 @@
 /*
- *
- *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -24,47 +22,18 @@
  * information or have any questions.
  */
 
-package com.sun.midp.jsr;
+package com.sun.j2me.security;
 
 /**
- * Initializes JSRs.
+ * Thrown by the access controller to indicate a permission check
+ * failed because the interrupt method was called on this thread.
  */
-public final class JSRInitializer {
+public class InterruptedSecurityException extends SecurityException {
     /**
-     * Initializes JSRs.
+     * Constructs an <code>InterrruptedSecurityException</code> with no
+     * detail message.
      */
-    public static void init() {
-// #ifdef ENABLE_JSR_75
-        com.sun.midp.jsr075.Initializer.init();
-// #endif
-
-// #ifdef ENABLE_JSR_82
-        com.sun.midp.jsr082.Initializer.init();
-// #endif
-
-// #ifdef ENABLE_JSR_184
-        com.sun.midp.jsr184.Initializer.init();
-// #endif
-
-// #ifdef ENABLE_JSR_211
-        // IMPL_NOTE: for some reason, ENABLE_JSR_211 is defined
-        // only when USE_NATIVE_AMS is true. This check is done in
-        // the JSR211 subsystem configuration files.
-        com.sun.midp.jsr211.Initializer.init();
-// #endif
-
-// #ifdef ENABLE_JSR_226
-        com.sun.pisces.PiscesFinalizer.init();
-// #endif
-
-// #ifdef ENABLE_JSR_229
-        com.sun.midp.jsr229.Initializer.init();
-// #endif
-    }
-
-    /**
-     * Finalizes JSRs.
-     */
-    public static void cleanup() {
+    public InterruptedSecurityException() {
+	super();
     }
 }

@@ -82,8 +82,30 @@ typedef struct {
 /** JPEG image buffer layout */
 typedef struct {
     unsigned char header[4];  /**< Must equal imgdcd_jpeg_header */
-    unsigned char unused[4];  /**< never used in the code */
-    unsigned char data[1];    /**< variable length byte array */
+    /** Length of data (including these 2 bytes), big-endian. */
+    unsigned char length[2];
+    unsigned char id[5];      /**< 4A, 46, 49, 46, 00 ("JFIF" string) */
+    /**
+     * JFIF format revision (often 01, 02).
+     * The most significant byte is used for major revisions;
+     * the least significant byte for minor revisions.
+     */
+    unsigned char version[2];
+    /**
+     * Units used for density:
+     *   0 - no units, densityX and densityY specify the pixel aspect ratio;
+     *   1 - densityX and densityY are dots per inch;
+     *   2 - densityX and densityY are dots per cm.
+     */
+    unsigned char units;
+    unsigned char densityX[2];     /**< Horizontal density (big-endian) */
+    unsigned char densityY[2];     /**< Vertical density (big-endian) */
+    unsigned char thumbnailWidth;  /**< 0 - no thumbnail */
+    unsigned char thumbnailHeight; /**< 0 - no thumbnail */
+    /*
+     * 3 * thumbnailWidth * thumbnailHeight bytes:
+     * 24-bit RGB values for the thumbnail pixels.
+     */
 } imgdcd_image_buffer_jpeg;
 
 /** RAW image buffer layout */
