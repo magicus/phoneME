@@ -124,11 +124,11 @@ extern MIDP_ERROR imgdcd_image_get_info(unsigned char *imgBuffer,
  *  @param creationErrorPtr pointer to the status of the decoding
  *         process. This function sets creationErrorPtr's value.
  */
-extern int decode_png(unsigned char* srcBuffer, int length, 
-                      int  width, int height,
-                      imgdcd_pixel_type *pixelData, 
-                      imgdcd_alpha_type *alphaData,
-                      img_native_error_codes* creationErrorPtr);
+extern int imgdcd_decode_png(unsigned char* srcBuffer, int length, 
+                             int  width, int height,
+                             imgdcd_pixel_type *pixelData, 
+                             imgdcd_alpha_type *alphaData,
+                             img_native_error_codes* creationErrorPtr);
   
 
 /**
@@ -140,11 +140,11 @@ extern int decode_png(unsigned char* srcBuffer, int length,
  *  @param creationErrorPtr pointer to the status of the decoding
  *         process. This function sets creationErrorPtr's value.
  */
-extern void decode_jpeg (unsigned char* srcBuffer, int length,
-                         int width, int height,
-                         imgdcd_pixel_type *pixelData, 
-                         imgdcd_alpha_type *alphaData,
-                         img_native_error_codes* creationErrorPtr);
+extern void imgdcd_decode_jpeg (unsigned char* srcBuffer, int length,
+                                int width, int height,
+                                imgdcd_pixel_type *pixelData, 
+                                imgdcd_alpha_type *alphaData,
+                                img_native_error_codes* creationErrorPtr);
 
 
 

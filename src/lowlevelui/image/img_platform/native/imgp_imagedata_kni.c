@@ -54,7 +54,7 @@ Java_javax_microedition_lcdui_ImageData_finalize() {
     KNI_DeclareHandle(thisObject);
     KNI_GetThisPointer(thisObject);
 
-    imageDataPtr = GXAPI_GET_IMAGEDATA_PTR(thisObject);
+    imageDataPtr = IMGAPI_GET_IMAGEDATA_PTR(thisObject);
 
     /*
      * Image objects with NULL nativeImageData could exist when loading

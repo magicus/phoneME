@@ -88,10 +88,10 @@ extern void img_get_argb(const java_imagedata * srcImageDataPtr,
  *		MIDP_ERROR_OUT_OF_RESOURCE,
  *		MIDP_ERROR_IMAGE_CORRUPTED
  */
-MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
-				 unsigned int length,
-				 unsigned char** ret_dataBuffer,
-				 unsigned int* ret_length);
+extern MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
+					unsigned int length,
+					unsigned char** ret_dataBuffer,
+					unsigned int* ret_length);
 
 
 #ifdef __cplusplus

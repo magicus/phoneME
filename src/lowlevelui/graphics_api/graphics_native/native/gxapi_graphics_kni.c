@@ -42,7 +42,7 @@ extern void fast_rect_8x8(void*first_pixel, int ypitch, int pixel);
 /**
  * Get a C structure representing the given <tt>ImageData</tt> class.
  */
-#define GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(handle) \
+#define GET_IMAGEDATA_PTR_FROM_GRAPHICS(handle) \
   GXAPI_GET_GRAPHICS_PTR(handle)->img != NULL ? \
   GXAPI_GET_GRAPHICS_PTR(handle)->img->imageData : \
   (java_imagedata*)NULL
@@ -53,7 +53,7 @@ extern void fast_rect_8x8(void*first_pixel, int ypitch, int pixel);
  * @param G handle to the <tt>Graphics</tt> object
  * @param ARRAY native <tt>jshort</tt> array to save the clip data
  */
-#define GXAPI_GET_CLIP(G, ARRAY) \
+#define GET_CLIP(G, ARRAY) \
     ARRAY[0] = GXAPI_GET_GRAPHICS_PTR(G)->clipX1, \
     ARRAY[1] = GXAPI_GET_GRAPHICS_PTR(G)->clipY1, \
     ARRAY[2] = GXAPI_GET_GRAPHICS_PTR(G)->clipX2, \
@@ -70,7 +70,7 @@ extern void fast_rect_8x8(void*first_pixel, int ypitch, int pixel);
  * @param Y variable representing the <tt>y</tt> coordinate to be translated;
  *        this macro sets the value of Y
  */
-#define GXAPI_TRANSLATE(G, X, Y)  \
+#define TRANSLATE(G, X, Y)  \
     (X) += GXAPI_GET_GRAPHICS_PTR((G))->transX, \
     (Y) += GXAPI_GET_GRAPHICS_PTR((G))->transY
 
@@ -108,14 +108,14 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawLine) {
     if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
         jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-        GXAPI_TRANSLATE(thisObject, x1, y1);
-        GXAPI_TRANSLATE(thisObject, x2, y2);
+        TRANSLATE(thisObject, x1, y1);
+        TRANSLATE(thisObject, x2, y2);
 
-        GXAPI_GET_CLIP(thisObject, clip);
+        GET_CLIP(thisObject, clip);
 
         gx_draw_line(GET_PIXEL(thisObject), 
                      clip, 
-                     GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
+                     GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
                      GET_LINESTYLE(thisObject), 
                      x1, y1, x2, y2);
     }
@@ -160,13 +160,13 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRect) {
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-            GXAPI_TRANSLATE(thisObject, x, y);
+            TRANSLATE(thisObject, x, y);
           
-            GXAPI_GET_CLIP(thisObject, clip);
+            GET_CLIP(thisObject, clip);
 
             gx_draw_rect(GET_PIXEL(thisObject),
                          clip,
-                         GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
+                         GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
                          GET_LINESTYLE(thisObject),
                          x, y, w, h);
         }
@@ -213,13 +213,13 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillRect) {
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-            GXAPI_TRANSLATE(thisObject, x, y);
+            TRANSLATE(thisObject, x, y);
 
-            GXAPI_GET_CLIP(thisObject, clip);
+            GET_CLIP(thisObject, clip);
 
             gx_fill_rect(GET_PIXEL(thisObject),
                          clip,
-                         GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
+                         GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
                          GET_LINESTYLE(thisObject),
                          x, y, w, h);
         }
@@ -270,13 +270,13 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRoundRect) {
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-            GXAPI_TRANSLATE(thisObject, x, y);
+            TRANSLATE(thisObject, x, y);
 
-            GXAPI_GET_CLIP(thisObject, clip);
+            GET_CLIP(thisObject, clip);
 
             gx_draw_roundrect(GET_PIXEL(thisObject),
                               clip,
-                              GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
+                              GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
                               GET_LINESTYLE(thisObject),
                               x, y, w, h, arcWidth, arcHeight);
         }
@@ -326,13 +326,13 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillRoundRect) {
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-            GXAPI_TRANSLATE(thisObject, x, y);
+            TRANSLATE(thisObject, x, y);
 
-            GXAPI_GET_CLIP(thisObject, clip);
+            GET_CLIP(thisObject, clip);
 
             gx_fill_roundrect(GET_PIXEL(thisObject),
                               clip,
-                              GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
+                              GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
                               GET_LINESTYLE(thisObject),
                               x, y, w, h, arcWidth, arcHeight);
         }
@@ -386,7 +386,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawArc) {
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {        
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-            GXAPI_TRANSLATE(thisObject, x, y);
+            TRANSLATE(thisObject, x, y);
         
 #ifdef PLATFORM_SUPPORT_CCW_ARC_ONLY
             /* this block transfer any negative number of
@@ -403,11 +403,11 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawArc) {
             startAngle = (startAngle + 360) % 360;
 #endif
 
-            GXAPI_GET_CLIP(thisObject, clip);
+            GET_CLIP(thisObject, clip);
 
             gx_draw_arc(GET_PIXEL(thisObject),
                         clip,
-                        GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
+                        GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
                         GET_LINESTYLE(thisObject),
                         x, y, w, h, startAngle, arcAngle);
         }
@@ -461,7 +461,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillArc) {
         if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
             jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-            GXAPI_TRANSLATE(thisObject, x, y);
+            TRANSLATE(thisObject, x, y);
         
 #ifdef PLATFORM_SUPPORT_CCW_ARC_ONLY
             /* Please see above for explanation */
@@ -472,11 +472,11 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillArc) {
             startAngle = (startAngle + 360) % 360;
 #endif
 
-            GXAPI_GET_CLIP(thisObject, clip);
+            GET_CLIP(thisObject, clip);
 
             gx_fill_arc(GET_PIXEL(thisObject),
                         clip,
-                        GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
+                        GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
                         GET_LINESTYLE(thisObject),
                         x, y, w, h, startAngle, arcAngle);
         }
@@ -520,15 +520,15 @@ KNIDECL(javax_microedition_lcdui_Graphics_fillTriangle) {
     if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
         jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-        GXAPI_TRANSLATE(thisObject, x1, y1);
-        GXAPI_TRANSLATE(thisObject, x2, y2);
-        GXAPI_TRANSLATE(thisObject, x3, y3);
+        TRANSLATE(thisObject, x1, y1);
+        TRANSLATE(thisObject, x2, y2);
+        TRANSLATE(thisObject, x3, y3);
       
-        GXAPI_GET_CLIP(thisObject, clip);
+        GET_CLIP(thisObject, clip);
 
         gx_fill_triangle(GET_PIXEL(thisObject),
                          clip,
-                         GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
+                         GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
                          GET_LINESTYLE(thisObject),
                          x1, y1, x2, y2, x3, y3);
     }
@@ -570,7 +570,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawString) {
         strLen = KNI_GetStringLength(str);
         if (strLen < 0) {
             KNI_ThrowNew(midpNullPointerException, NULL);
-        } else if (!gxutl_check_anchor(anchor, VCENTER)) {
+        } else if (!check_anchor(anchor, VCENTER)) {
             KNI_ThrowNew(midpIllegalArgumentException, NULL);
         } else {
             int      face, style, size;
@@ -581,15 +581,15 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawString) {
         
             DECLARE_FONT_PARAMS(font);
         
-            GXAPI_TRANSLATE(thisObject, x, y);
+            TRANSLATE(thisObject, x, y);
         
             jstr = GET_STRING_PTR(str);
         
-            GXAPI_GET_CLIP(thisObject, clip);
+            GET_CLIP(thisObject, clip);
 
             gx_draw_chars(GET_PIXEL(thisObject),
                           clip,
-                          GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
+                          GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
                           GET_LINESTYLE(thisObject),
                           face, style, size, x, y, anchor, 
                           jstr->value->elements + jstr->offset,
@@ -646,7 +646,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawSubstring) {
                       || ((offset + length) < 0)
                       || ((offset + length) > strLen)) {
             KNI_ThrowNew(midpStringIndexOutOfBoundsException, NULL);
-        } else if (!gxutl_check_anchor(anchor, VCENTER)) {
+        } else if (!check_anchor(anchor, VCENTER)) {
             KNI_ThrowNew(midpIllegalArgumentException, NULL);
         } else if (length != 0) {
             int      face, style, size;
@@ -658,15 +658,15 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawSubstring) {
         
             DECLARE_FONT_PARAMS(font);
         
-            GXAPI_TRANSLATE(thisObject, x, y);
+            TRANSLATE(thisObject, x, y);
         
             jstr = GET_STRING_PTR(str);
         
-            GXAPI_GET_CLIP(thisObject, clip);
+            GET_CLIP(thisObject, clip);
 
             gx_draw_chars(GET_PIXEL(thisObject),
                           clip,
-                          GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
+                          GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
                           GET_LINESTYLE(thisObject),
                           face, style, size, x, y, anchor,
                           jstr->value->elements + (jstr->offset + offset),
@@ -705,7 +705,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawChar) {
     KNI_GetThisPointer(thisObject);
 
     if (GRAPHICS_OP_IS_ALLOWED(thisObject)) {
-        if (!gxutl_check_anchor(anchor, VCENTER)) {
+        if (!check_anchor(anchor, VCENTER)) {
             KNI_ThrowNew(midpIllegalArgumentException, NULL);
         } else {
             int      face, style, size;
@@ -715,13 +715,13 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawChar) {
 
             DECLARE_FONT_PARAMS(font);
 
-            GXAPI_TRANSLATE(thisObject, x, y);
+            TRANSLATE(thisObject, x, y);
 
-            GXAPI_GET_CLIP(thisObject, clip);
+            GET_CLIP(thisObject, clip);
 
             gx_draw_chars(GET_PIXEL(thisObject),
                           clip,
-                          GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
+                          GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
                           GET_LINESTYLE(thisObject),
                           face, style, size, x, y, anchor, &c, 1);
         }
@@ -775,7 +775,7 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawChars) {
                       || ((offset + length) < 0)
                       || ((offset + length) > chLen)) {
             KNI_ThrowNew(midpArrayIndexOutOfBoundsException, NULL);
-        } else if (!gxutl_check_anchor(anchor, VCENTER)) {
+        } else if (!check_anchor(anchor, VCENTER)) {
             KNI_ThrowNew(midpIllegalArgumentException, NULL);
         } else if (length != 0) {
             int      face, style, size;
@@ -785,13 +785,13 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawChars) {
         
             DECLARE_FONT_PARAMS(font);
         
-            GXAPI_TRANSLATE(thisObject, x, y);
+            TRANSLATE(thisObject, x, y);
         
-            GXAPI_GET_CLIP(thisObject, clip);
+            GET_CLIP(thisObject, clip);
       
             gx_draw_chars(GET_PIXEL(thisObject),
                           clip,
-                          GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
+                          GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
                           GET_LINESTYLE(thisObject),
                           face, style, size, x, y, anchor,
                           &(JavaCharArray(ch)[offset]),
@@ -894,12 +894,12 @@ KNIDECL(javax_microedition_lcdui_Graphics_drawRGB) {
             
                     rgbBuffer = JavaIntArray(rgbData);
             
-                    GXAPI_TRANSLATE(thisObject, x, y);
+                    TRANSLATE(thisObject, x, y);
 
-                    GXAPI_GET_CLIP(thisObject, clip);
+                    GET_CLIP(thisObject, clip);
             
                     gx_draw_rgb(clip,
-                        GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject), 
+                        GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject), 
                         rgbBuffer, offset, scanlen, x, y, width, 
                         height, processAlpha);
                 }
@@ -955,22 +955,21 @@ KNIDECL(javax_microedition_lcdui_Graphics_doCopyArea) {
         gfx_width  = (int)GXAPI_GET_GRAPHICS_PTR(thisObject)->maxWidth;
         gfx_height = (int)GXAPI_GET_GRAPHICS_PTR(thisObject)->maxHeight;
 
-        GXAPI_TRANSLATE(thisObject, x_src, y_src); 
+        TRANSLATE(thisObject, x_src, y_src); 
       
         if((height < 0) || (width < 0) || (x_src < 0) || (y_src < 0) ||
            ((x_src + width) > gfx_width) || ((y_src + height) > gfx_height)) {
             KNI_ThrowNew(midpIllegalArgumentException, NULL);
         } else {
 	
-            GXAPI_TRANSLATE(thisObject, x_dest, y_dest);
+            TRANSLATE(thisObject, x_dest, y_dest);
 	
-            if (gxutl_normalize_anchor(&x_dest, &y_dest, 
-                                       width, height, anchor)) {
+            if (normalize_anchor(&x_dest, &y_dest, width, height, anchor)) {
                 jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
-                GXAPI_GET_CLIP(thisObject, clip);
+                GET_CLIP(thisObject, clip);
 
                 gx_copy_area(clip,
-                             GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
+                             GET_IMAGEDATA_PTR_FROM_GRAPHICS(thisObject),
                              x_src, y_src, width, height, 
                              x_dest, y_dest);
             }
@@ -1067,24 +1066,24 @@ KNIDECL(javax_microedition_lcdui_Graphics_render) {
             success = KNI_FALSE; //KNI_ThrowNew(midpNullPointerException, NULL);
         } else {
   	    const java_imagedata * srcImageDataPtr =
-	      GET_IMAGE_PTR(img)->imageData;
+	      IMGAPI_GET_IMAGE_PTR(img)->imageData;
 
-            GET_IMAGE_PTR(gImg) =
+            IMGAPI_GET_IMAGE_PTR(gImg) =
 	      (struct Java_javax_microedition_lcdui_Image *)
 	      (GXAPI_GET_GRAPHICS_PTR(g)->img);
-            if (KNI_IsSameObject(gImg, img) || !gxutl_check_anchor(anchor,0)) {
+            if (KNI_IsSameObject(gImg, img) || !check_anchor(anchor,0)) {
                 success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
-            } else if (!gxutl_normalize_anchor(&x, &y, srcImageDataPtr->width, 
+            } else if (!normalize_anchor(&x, &y, srcImageDataPtr->width, 
 					       srcImageDataPtr->height, 
 					       anchor)) {
                 success = KNI_FALSE;//KNI_ThrowNew(midpIllegalArgumentException, NULL);
             } else {
 	        jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 	        const java_imagedata * dstMutableImageDataPtr = 
-		  GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(g);
+		  GET_IMAGEDATA_PTR_FROM_GRAPHICS(g);
 
-                GXAPI_TRANSLATE(g, x, y);
-		GXAPI_GET_CLIP(g, clip);
+                TRANSLATE(g, x, y);
+		GET_CLIP(g, clip);
 
 		gx_render_image(srcImageDataPtr, dstMutableImageDataPtr,
 				clip, x, y);
@@ -1145,15 +1144,16 @@ KNIDECL(javax_microedition_lcdui_Graphics_renderRegion) {
         success = KNI_FALSE; //KNI_ThrowNew(midpNullPointerException, NULL);
       } else if ((transform < 0) || (transform > 7)) {
         success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
-      } else if (!gxutl_normalize_anchor(&x_dest, &y_dest,
-					 width, height, anchor)) {
+      } else if (!normalize_anchor(&x_dest, &y_dest, width, height, anchor)) {
         success = KNI_FALSE; //KNI_ThrowNew(midpIllegalArgumentException, NULL);
       } else {
-	const java_imagedata * srcImageDataPtr = GET_IMAGE_PTR(img)->imageData;
+	const java_imagedata * srcImageDataPtr = 
+	  IMGAPI_GET_IMAGE_PTR(img)->imageData;
         jint img_width = srcImageDataPtr->width;
         jint img_height = srcImageDataPtr->height;
 
-        GET_IMAGE_PTR(gImg) = (struct Java_javax_microedition_lcdui_Image *)
+        IMGAPI_GET_IMAGE_PTR(gImg) = 
+	  (struct Java_javax_microedition_lcdui_Image *)
 	                      (GXAPI_GET_GRAPHICS_PTR(g)->img);
         if (KNI_IsSameObject(gImg, img) || 
            (height < 0) || (width < 0) || (x_src < 0) || (y_src < 0) ||
@@ -1164,10 +1164,10 @@ KNIDECL(javax_microedition_lcdui_Graphics_renderRegion) {
 	  jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
 	  const java_imagedata * dstMutableImageDataPtr = 
-	    GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(g);
+	    GET_IMAGEDATA_PTR_FROM_GRAPHICS(g);
 
-	  GXAPI_TRANSLATE(g, x_dest, y_dest);
-	  GXAPI_GET_CLIP(g, clip);
+	  TRANSLATE(g, x_dest, y_dest);
+	  GET_CLIP(g, clip);
 
 	  gx_render_imageregion(srcImageDataPtr, dstMutableImageDataPtr,
 				clip, 

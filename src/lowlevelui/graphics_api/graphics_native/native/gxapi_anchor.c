@@ -48,7 +48,7 @@
  *
  */
 
-int gxutl_check_anchor(int anchor, int illegal_vpos) {
+int check_anchor(int anchor, int illegal_vpos) {
     int OK;
 
     /*optimize for most frequent case*/
@@ -77,7 +77,7 @@ int gxutl_check_anchor(int anchor, int illegal_vpos) {
  *
  * @return 1 if anchor is valid, otherwise 0.
  */
-int gxutl_normalize_anchor(jint* X, jint* Y, jint width, jint height, 
+int normalize_anchor(jint* X, jint* Y, jint width, jint height, 
 			   jint anchor) {
     /*optimize for most frequent case*/
     if (anchor == (TOP|LEFT) || anchor == 0) {

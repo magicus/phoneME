@@ -75,7 +75,7 @@ KNIDECL(javax_microedition_lcdui_Image_getRGB) {
     KNI_GetParameterAsObject(1, rgbData);
     KNI_GetThisPointer(thisObject);
 
-    srcImageDataPtr = GET_IMAGE_PTR(thisObject)->imageData;
+    srcImageDataPtr = IMGAPI_GET_IMAGE_PTR(thisObject)->imageData;
 
     img_width  = srcImageDataPtr->width;
     img_height = srcImageDataPtr->height;

@@ -24,8 +24,8 @@
  * information or have any questions.
  */
 
-#ifndef _GX_INTERN_GRAPHICS_H_
-#define _GX_INTERN_GRAPHICS_H_
+#ifndef _GXAPI_INTERN_GRAPHICS_H_
+#define _GXAPI_INTERN_GRAPHICS_H_
 
 #include <commonKNIMacros.h>
 #include <ROMStructs.h>
@@ -126,14 +126,13 @@ typedef struct Java_java_lang_String _JavaString;
  * @return 1 if anchor is valid, 0 if invalid
  *
  */
-int gxutl_check_anchor(int anchor, int illegal_vpos);
+int check_anchor(int anchor, int illegal_vpos);
 
 /**
  * Normalizes anchor coordinates to top-left coordinates.
  *
  * @return 1 if anchor is valid, 0 if invalid
  */
-int gxutl_normalize_anchor(jint* X, jint* Y, jint width, jint height, 
-                           jint anchor);
+int normalize_anchor(jint* X, jint* Y, jint width, jint height, jint anchor);
 
-#endif /* _GX_INTERN_GRAPHICS_H_ */
+#endif /* _GXAPI_INTERN_GRAPHICS_H_ */

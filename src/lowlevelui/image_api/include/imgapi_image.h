@@ -62,13 +62,13 @@ typedef struct Java_javax_microedition_lcdui_ImageData java_imagedata;
 /**
  * Get a C structure representing the given <tt>ImageData</tt> class.
  */
-#define GXAPI_GET_IMAGEDATA_PTR(handle) (unhand(java_imagedata,(handle)))
+#define IMGAPI_GET_IMAGEDATA_PTR(handle) (unhand(java_imagedata,(handle)))
 
 
 /**
  * Get a C structure representing the given <tt>Image</tt> class.
  */
-#define GET_IMAGE_PTR(handle)          (unhand(_MidpImage,(handle)))
+#define IMGAPI_GET_IMAGE_PTR(handle)          (unhand(_MidpImage,(handle)))
 
 
 #endif /* _IMGAPI_IMAGE_H_ */

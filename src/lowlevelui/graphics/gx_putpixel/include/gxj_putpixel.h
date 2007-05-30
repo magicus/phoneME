@@ -131,11 +131,6 @@ gxj_screen_buffer* gxj_get_image_screen_buffer_impl(const java_imagedata *img,
 						    gxj_screen_buffer *sbuf,
 						    jobject graphics);
 
-/**
- * Convenient macro for getting screen buffer from a Graphics's target image.
- */
-#define GXJ_GET_GRAPHICS_SCREEN_BUFFER(g,sbuf) \
-   gxj_get_image_screen_buffer_impl(GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(g),sbuf,g)
 
 #ifdef __cplusplus
 }

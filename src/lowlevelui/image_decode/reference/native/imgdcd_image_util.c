@@ -277,7 +277,7 @@ initImageDst(_imageDstPtr p) {
  *         process. This function sets creationErrorPtr's value.
  */
 int
-decode_png
+imgdcd_decode_png
 (unsigned char* srcBuffer, int length, 
  int width, int height,
  imgdcd_pixel_type *pixelData, 
@@ -330,7 +330,7 @@ decode_png
 /**
  * TBD:
  * a). use imageSrcPtr & imageDstPtr instead of direct array pointers
- * b). move to a special file, like decode_png_image() in gxj_png_decode.c
+ * b). move to a special file, like decode_png_image() in imgdcd_png_decode.c
  */
 //static bool decode_jpeg_image(imageSrcPtr src, imageDstPtr dst)
 static int decode_jpeg_image(char* inData, int inDataLen,
@@ -377,7 +377,7 @@ static int decode_jpeg_image(char* inData, int inDataLen,
  *         process. This function sets creationErrorPtr's value.
  */
 void
-decode_jpeg
+imgdcd_decode_jpeg
 (unsigned char* srcBuffer, int length,
  int width, int height,
  imgdcd_pixel_type*pixelData, 

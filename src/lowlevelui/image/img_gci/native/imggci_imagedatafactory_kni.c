@@ -32,10 +32,10 @@
 #include <midpUtilKni.h>
 #include <midpMalloc.h>
 
-#include <img_errorcodes.h>
 #include <gxutl_graphics.h>
 
 #include <imgapi_image.h>
+#include <img_errorcodes.h>
 #include <imgdcd_image_util.h>
 
 #if ENABLE_IMAGE_CACHE
@@ -45,19 +45,23 @@
 
 /** Convenenient for convert Java image object to screen buffer */
 #define getImageData(jimgData, width, height, pixelData, alphaData)       \
-       imggci_get_image_data(GXAPI_GET_IMAGEDATA_PTR(jimgData),	  \
+       imggci_get_image_data(IMGAPI_GET_IMAGEDATA_PTR(jimgData),          \
                                             width, height,        \
-					    pixelData, alphaData)
+                                            pixelData, alphaData)
 
 /** Convert 24-bit RGB color to 16bit (565) color */
 #define RGB24TORGB16(x) (((( x ) & 0x00F80000) >> 8) + \
                              ((( x ) & 0x0000FC00) >> 5) + \
-			     ((( x ) & 0x000000F8) >> 3) )
+                             ((( x ) & 0x000000F8) >> 3) )
 
 /** Convert 16-bit (565) color to 24-bit RGB color */
 #define RGB16TORGB24(x) ( ((x & 0x001F) << 3) | ((x & 0x001C) >> 2) |\
                               ((x & 0x07E0) << 5) | ((x & 0x0600) >> 1) |\
                               ((x & 0xF800) << 8) | ((x & 0xE000) << 3) )
+
+
+#define PIXEL imgdcd_pixel_type
+#define ALPHA imgdcd_alpha_type
 
 /**
  * Create native representation for a image.
@@ -68,19 +72,16 @@
  * @param pixelData to populate
  * @param alphaData to populate
  * @param g optional Graphics object for debugging clip code.
- *	    give NULL if don't care.
+ *            give NULL if don't care.
  *
  * @return KNI_TRUE if image data was retrieved 
- *	   or KNI_FALSE if the image is null.
+ *           or KNI_FALSE if the image is null.
  */
 static int imggci_get_image_data(const java_imagedata *img,
-				 int *width, int *height,
-				 imgdcd_pixel_type **pixelData,
-				 imgdcd_alpha_type **alphaData) {
-/*
-                                  jobject graphics,
-                                  java_graphics **g) {
-*/
+                                 int *width, int *height,
+                                 PIXEL **pixelData,
+                                 ALPHA **alphaData) {
+
 
     /* NOTE:
      * Since this routine is called by every graphics operations
@@ -88,7 +89,7 @@ static int imggci_get_image_data(const java_imagedata *img,
      * like JavaByteArray, etc, for max performance.
      */
     if (img == NULL) {
-	return KNI_FALSE;
+        return KNI_FALSE;
     }
 
     *width  = img->width;
@@ -97,22 +98,15 @@ static int imggci_get_image_data(const java_imagedata *img,
     /* Only use nativePixelData and nativeAlphaData if
      * pixelData is null */
     if (img->pixelData != NULL) {
-	*pixelData = (imgdcd_pixel_type *)&(img->pixelData->elements[0]);
-	*alphaData = (img->alphaData != NULL)
-	  ? (imgdcd_alpha_type *)&(img->alphaData->elements[0])
-	  : NULL;
+        *pixelData = (PIXEL *)&(img->pixelData->elements[0]);
+        *alphaData = (img->alphaData != NULL)
+          ? (ALPHA *)&(img->alphaData->elements[0])
+          : NULL;
     } else {
-	*pixelData = (imgdcd_pixel_type *)img->nativePixelData;
-	*alphaData = (imgdcd_alpha_type *)img->nativeAlphaData;
+        *pixelData = (PIXEL *)img->nativePixelData;
+        *alphaData = (ALPHA *)img->nativeAlphaData;
     }
 
-/*
-#if ENABLE_BOUNDS_CHECKS
-    *g = (graphics != NULL) ? GXAPI_GET_GRAPHICS_PTR(graphics) : NULL;
-#else
-    (void)graphics; // Surpress unused parameter warning
-#endif
-*/
     return KNI_TRUE;
 }
 
@@ -135,97 +129,97 @@ static int imggci_get_image_data(const java_imagedata *img,
  *              MIDP_ERROR_IMAGE_CORRUPTED
  */
 MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
-				 unsigned int length,
-				 unsigned char** ret_dataBuffer,
-				 unsigned int* ret_length) {
+                                 unsigned int length,
+                                 unsigned char** ret_dataBuffer,
+                                 unsigned int* ret_length) {
 
     unsigned int pixelSize, alphaSize;
     imgdcd_image_format format;
     MIDP_ERROR err;
     int width, height;
-    imgdcd_pixel_type  *pixelData;
-    imgdcd_alpha_type  *alphaData;
+    PIXEL  *pixelData;
+    ALPHA  *alphaData;
 
     imgdcd_image_buffer_raw *rawBuffer;
     img_native_error_codes creationError = IMG_NATIVE_IMAGE_NO_ERROR;
 
     err = imgdcd_image_get_info(srcBuffer, length,
-				&format, (unsigned int *)&width,
-				(unsigned int *)&height);
+                                &format, (unsigned int *)&width,
+                                (unsigned int *)&height);
     if (err != MIDP_ERROR_NONE) {
-	return err;
+        return err;
     }
 
-    pixelSize = sizeof(imgdcd_pixel_type) * width * height;
-    alphaSize = sizeof(imgdcd_alpha_type) * width * height;
+    pixelSize = sizeof(PIXEL) * width * height;
+    alphaSize = sizeof(ALPHA) * width * height;
 
     switch (format) {
 
     case IMGDCD_IMAGE_FORMAT_JPEG:
-	/* JPEG does not contain alpha data */
-	alphaSize = 0;
-	/* Fall through */
+        /* JPEG does not contain alpha data */
+        alphaSize = 0;
+        /* Fall through */
 
     case IMGDCD_IMAGE_FORMAT_PNG:
-	/* Decode PNG/JPEG to screen buffer format */
-	rawBuffer = (imgdcd_image_buffer_raw *)
-	  midpMalloc(offsetof(imgdcd_image_buffer_raw, data)+pixelSize+alphaSize);
+        /* Decode PNG/JPEG to screen buffer format */
+        rawBuffer = (imgdcd_image_buffer_raw *)
+          midpMalloc(offsetof(imgdcd_image_buffer_raw, data)+pixelSize+alphaSize);
 
-	if (rawBuffer == NULL) {
-	    return MIDP_ERROR_OUT_MEM;
-	}
+        if (rawBuffer == NULL) {
+            return MIDP_ERROR_OUT_MEM;
+        }
 
-	pixelData = (imgdcd_pixel_type *)rawBuffer->data;
+        pixelData = (PIXEL *)rawBuffer->data;
 
-	if (format == IMGDCD_IMAGE_FORMAT_PNG) {
-	    alphaData = rawBuffer->data + pixelSize;
+        if (format == IMGDCD_IMAGE_FORMAT_PNG) {
+            alphaData = rawBuffer->data + pixelSize;
 
-	    rawBuffer->hasAlpha = decode_png(srcBuffer, length,
-					     width, height,
-					     pixelData, alphaData,
-					     &creationError);
-	    if (!rawBuffer->hasAlpha) {
-		alphaData = NULL;
-		alphaSize = 0; /* Exclude alpha data */
-	    }
-	} else {
-	    alphaData = NULL;
+            rawBuffer->hasAlpha = imgdcd_decode_png(srcBuffer, length,
+                                                    width, height,
+                                                    pixelData, alphaData,
+                                                    &creationError);
+            if (!rawBuffer->hasAlpha) {
+                alphaData = NULL;
+                alphaSize = 0; /* Exclude alpha data */
+            }
+        } else {
+            alphaData = NULL;
 
-	    rawBuffer->hasAlpha = KNI_FALSE;
+            rawBuffer->hasAlpha = KNI_FALSE;
 
-	    decode_jpeg(srcBuffer, length,
-			width, height,
-		      	pixelData, alphaData,
-			&creationError);
-	}
+            imgdcd_decode_jpeg(srcBuffer, length,
+                               width, height,
+                               pixelData, alphaData,
+                               &creationError);
+        }
 
-	if (IMG_NATIVE_IMAGE_NO_ERROR != creationError) {
-	    midpFree(rawBuffer);
-	    return MIDP_ERROR_IMAGE_CORRUPTED;
-	}
+        if (IMG_NATIVE_IMAGE_NO_ERROR != creationError) {
+            midpFree(rawBuffer);
+            return MIDP_ERROR_IMAGE_CORRUPTED;
+        }
 
-	memcpy(rawBuffer->header, imgdcd_raw_header, 4);
-	rawBuffer->width  = width;	/* Use default endian */
-	rawBuffer->height = height;	/* Use default endian */
+        memcpy(rawBuffer->header, imgdcd_raw_header, 4);
+        rawBuffer->width  = width;        /* Use default endian */
+        rawBuffer->height = height;        /* Use default endian */
 
-	*ret_dataBuffer = (unsigned char *)rawBuffer;
-	*ret_length = offsetof(imgdcd_image_buffer_raw, data)+pixelSize+alphaSize;
+        *ret_dataBuffer = (unsigned char *)rawBuffer;
+        *ret_length = offsetof(imgdcd_image_buffer_raw, data)+pixelSize+alphaSize;
 
-	return MIDP_ERROR_NONE;
+        return MIDP_ERROR_NONE;
 
     case IMGDCD_IMAGE_FORMAT_RAW:
-	/* Already in screen buffer format, simply copy the data */
-	*ret_dataBuffer = (unsigned char *)midpMalloc(length);
-	if (*ret_dataBuffer == NULL) {
-	    return MIDP_ERROR_OUT_MEM;
-	} else {
-	    memcpy(*ret_dataBuffer, srcBuffer, length);
-	    *ret_length = length;
-	    return MIDP_ERROR_NONE;
-	}
+        /* Already in screen buffer format, simply copy the data */
+        *ret_dataBuffer = (unsigned char *)midpMalloc(length);
+        if (*ret_dataBuffer == NULL) {
+            return MIDP_ERROR_OUT_MEM;
+        } else {
+            memcpy(*ret_dataBuffer, srcBuffer, length);
+            *ret_length = length;
+            return MIDP_ERROR_NONE;
+        }
 
     default:
-	return MIDP_ERROR_UNSUPPORTED;
+        return MIDP_ERROR_UNSUPPORTED;
     } /* switch (image_type) */
 }
 
@@ -246,18 +240,18 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
  * @param height The height of the selected region
  */
 void img_get_argb(const java_imagedata * srcImageDataPtr,
-		 jint * rgbBuffer,
-		 jint offset,
-		 jint scanlength,
-		 jint x, jint y, jint width, jint height,
-		 img_native_error_codes * errorPtr) {
+                 jint * rgbBuffer,
+                 jint offset,
+                 jint scanlength,
+                 jint x, jint y, jint width, jint height,
+                 img_native_error_codes * errorPtr) {
 
   int srcWidth, srcHeight;
-  imgdcd_pixel_type *srcPixelData;
-  imgdcd_alpha_type *srcAlphaData;
+  PIXEL *srcPixelData;
+  ALPHA *srcAlphaData;
 
   if (getImageData(srcImageDataPtr, &srcWidth, &srcHeight, 
-		    &srcPixelData, &srcAlphaData) == KNI_TRUE) {
+                    &srcPixelData, &srcAlphaData) == KNI_TRUE) {
 
     // rgbData[offset + (a - x) + (b - y) * scanlength] = P(a, b);
     // P(a, b) = rgbData[offset + (a - x) + (b - y) * scanlength]
@@ -268,20 +262,20 @@ void img_get_argb(const java_imagedata * srcImageDataPtr,
 
     if (srcAlphaData != NULL) {
       for (b = y; b < y + height; b++) {
-	for (a = x; a < x + width; a++) {
-	  pixel = srcPixelData[b*srcWidth + a];
-	  alpha = srcAlphaData[b*srcWidth + a];
-	  rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
-	    (alpha << 24) + RGB16TORGB24(pixel);
-	}
+        for (a = x; a < x + width; a++) {
+          pixel = srcPixelData[b*srcWidth + a];
+          alpha = srcAlphaData[b*srcWidth + a];
+          rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
+            (alpha << 24) + RGB16TORGB24(pixel);
+        }
       }
     } else {
       for (b = y; b < y + height; b++) {
-	for (a = x; a < x + width; a++) {
-	  pixel = srcPixelData[b*srcWidth + a];
-	  rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
-	    RGB16TORGB24(pixel) | 0xFF000000;
-	}
+        for (a = x; a < x + width; a++) {
+          pixel = srcPixelData[b*srcWidth + a];
+          rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
+            RGB16TORGB24(pixel) | 0xFF000000;
+        }
       }
     }
   }
@@ -300,7 +294,7 @@ void img_get_argb(const java_imagedata * srcImageDataPtr,
  *    are not applicable.
  */
 static unsigned char *get_java_byte_buffer(KNIDECLARGS jobject byteArray, 
-					   int offset, int length) {
+                                           int offset, int length) {
 
     unsigned char *buffer = (unsigned char *)JavaByteArray(byteArray);
     int byteArrayLength = KNI_GetArrayLength(byteArray);
@@ -366,10 +360,10 @@ static int load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
         }
 
         imageSize = rawBuffer->width * rawBuffer->height;
-        pixelSize = sizeof(imgdcd_pixel_type) * imageSize;
+        pixelSize = sizeof(PIXEL) * imageSize;
         alphaSize = 0;
         if (rawBuffer->hasAlpha) {
-            alphaSize = sizeof(imgdcd_alpha_type) * imageSize;
+            alphaSize = sizeof(ALPHA) * imageSize;
         }
 
         /** Check data array length */
@@ -406,7 +400,7 @@ static int load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
             KNI_ThrowNew(midpOutOfMemoryError, NULL);
             break;
         }
-	    midp_set_jobject_field(KNIPASSARGS imageData, "pixelData", "[B", pixelData);
+            midp_set_jobject_field(KNIPASSARGS imageData, "pixelData", "[B", pixelData);
 
         /** New array allocation could cause GC and buffer moving */
         if (!KNI_IsNullHandle(javaBuffer)) {
@@ -415,11 +409,11 @@ static int load_imagedata_from_raw_buffer(KNIDECLARGS jobject imageData,
             rawBuffer = (imgdcd_image_buffer_raw *)
                 (nativeBuffer + offset);
         }
-	    memcpy(JavaByteArray(pixelData), rawBuffer->data, pixelSize);
+            memcpy(JavaByteArray(pixelData), rawBuffer->data, pixelSize);
 
-        GXAPI_GET_IMAGEDATA_PTR(imageData)->width =
+        IMGAPI_GET_IMAGEDATA_PTR(imageData)->width =
             (jint)rawBuffer->width;
-        GXAPI_GET_IMAGEDATA_PTR(imageData)->height =
+        IMGAPI_GET_IMAGEDATA_PTR(imageData)->height =
             (jint)rawBuffer->height;
         status = KNI_TRUE;
 
@@ -540,8 +534,8 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadPNG) {
     int            status = KNI_TRUE;
     unsigned char* srcBuffer = NULL;
     
-    imgdcd_pixel_type *imgPixelData;
-    imgdcd_alpha_type *imgAlphaData;
+    PIXEL *imgPixelData;
+    ALPHA *imgAlphaData;
 
     java_imagedata * midpImageData = NULL;
 
@@ -557,7 +551,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadPNG) {
     KNI_GetParameterAsObject(2, pngData);
     KNI_GetParameterAsObject(1, imageData);
 
-    midpImageData = GXAPI_GET_IMAGEDATA_PTR(imageData);
+    midpImageData = IMGAPI_GET_IMAGEDATA_PTR(imageData);
 
     /* assert
      * (KNI_IsNullHandle(pngData))
@@ -571,33 +565,33 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadPNG) {
 
     unhand(jbyte_array, pixelData) = midpImageData->pixelData;
     if (!KNI_IsNullHandle(pixelData)) {
-        imgPixelData = (imgdcd_pixel_type *)JavaByteArray(pixelData);
+        imgPixelData = (PIXEL *)JavaByteArray(pixelData);
         /*
          * JAVA_TRACE("loadPNG pixelData length=%d\n",
          *            JavaByteArray(pixelData)->length);
          */
     } else {
-	imgPixelData = NULL;
+        imgPixelData = NULL;
     }
 
     unhand(jbyte_array, alphaData) = midpImageData->alphaData;
     if (!KNI_IsNullHandle(alphaData)) {
-        imgAlphaData = (imgdcd_alpha_type *)JavaByteArray(alphaData);
+        imgAlphaData = (ALPHA *)JavaByteArray(alphaData);
         /*
          * JAVA_TRACE("decodePNG alphaData length=%d\n",
          *            JavaByteArray(alphaData)->length);
          */
     } else {
-	imgAlphaData = NULL;
+        imgAlphaData = NULL;
     }
 
     /* assert
      * (imagedata.pixelData != NULL && imagedata.alphaData != NULL)
      */
-    status = decode_png((srcBuffer + offset), length,
-			midpImageData->width, midpImageData->height,
-			imgPixelData, imgAlphaData,
-			&creationError);
+    status = imgdcd_decode_png((srcBuffer + offset), length,
+                               midpImageData->width, midpImageData->height,
+                               imgPixelData, imgAlphaData,
+                               &creationError);
 
     if (IMG_NATIVE_IMAGE_NO_ERROR != creationError) {
         KNI_ThrowNew(midpIllegalArgumentException, NULL);
@@ -626,8 +620,8 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadJPEG) {
     int            offset = KNI_GetParameterAsInt(3);
     unsigned char* srcBuffer = NULL;
 
-    imgdcd_pixel_type *imgPixelData;
-    imgdcd_alpha_type *imgAlphaData;
+    PIXEL *imgPixelData = NULL;
+    ALPHA *imgAlphaData = NULL;
 
     java_imagedata * midpImageData = NULL;
 
@@ -643,7 +637,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadJPEG) {
     KNI_GetParameterAsObject(2, jpegData);
     KNI_GetParameterAsObject(1, imageData);
 
-    midpImageData = GXAPI_GET_IMAGEDATA_PTR(imageData);
+    midpImageData = IMGAPI_GET_IMAGEDATA_PTR(imageData);
 
     /* assert
      * (KNI_IsNullHandle(jpegData))
@@ -657,7 +651,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadJPEG) {
 
     unhand(jbyte_array, pixelData) = midpImageData->pixelData;
     if (!KNI_IsNullHandle(pixelData)) {
-        imgPixelData = (imgdcd_pixel_type *)JavaByteArray(pixelData);
+        imgPixelData = (PIXEL *)JavaByteArray(pixelData);
         /*
          * JAVA_TRACE("loadJPEG pixelData length=%d\n",
          *            JavaByteArray(pixelData)->length);
@@ -667,10 +661,10 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadJPEG) {
     /* assert
      * (imgPixelData != NULL)
      */
-    decode_jpeg((srcBuffer + offset), length,
-		midpImageData->width, midpImageData->height, 
-		imgPixelData, imgAlphaData, 
-		&creationError);
+    imgdcd_decode_jpeg((srcBuffer + offset), length,
+                       midpImageData->width, midpImageData->height, 
+                       imgPixelData, imgAlphaData, 
+                       &creationError);
 
     if (IMG_NATIVE_IMAGE_NO_ERROR != creationError) {
         KNI_ThrowNew(midpIllegalArgumentException, NULL);
@@ -731,10 +725,10 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
         }
 
         imageSize = rawBuffer->width * rawBuffer->height;
-        pixelSize = sizeof(imgdcd_pixel_type) * imageSize;
+        pixelSize = sizeof(PIXEL) * imageSize;
         alphaSize = 0;
         if (rawBuffer->hasAlpha) {
-            alphaSize = sizeof(imgdcd_alpha_type) * imageSize;
+            alphaSize = sizeof(ALPHA) * imageSize;
         }
 
         /** Check data array length */
@@ -748,7 +742,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRomizedImage) {
             break;
         }
 
-        midpImageData = GXAPI_GET_IMAGEDATA_PTR(imageData);
+        midpImageData = IMGAPI_GET_IMAGEDATA_PTR(imageData);
 
         midpImageData->width = (jint)rawBuffer->width;
         midpImageData->height = (jint)rawBuffer->height;
@@ -785,8 +779,8 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
     int height;
     int width;
     int *rgbBuffer;
-    imgdcd_pixel_type *pixelData;
-    imgdcd_alpha_type *alphaData;
+    PIXEL *pixelData;
+    ALPHA *alphaData;
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(rgbData);
@@ -798,7 +792,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
 
     rgbBuffer = JavaIntArray(rgbData);
     if (getImageData(imageData, &width, &height, 
-		     &pixelData, &alphaData) == KNI_TRUE) {
+                     &pixelData, &alphaData) == KNI_TRUE) {
         int i;
         int len = KNI_GetArrayLength(rgbData);
         int data_length = width * height;
@@ -810,7 +804,7 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
         /* if (len != width*height) {
          *    JAVA_TRACE("len mismatch  %d !=  %d\n", len, width*height);
          * }
-		 */
+                 */
 
         if (alphaData != NULL) {
             for (i = 0; i < len; i++) {
@@ -828,12 +822,9 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRGB) {
     KNI_ReturnVoid();
 }
 
-#define PIXEL imgdcd_pixel_type
-#define ALPHA imgdcd_alpha_type
-
 static void pixelCopy(PIXEL *src, const int srcLineW, const int srcXInc,
-		      const int srcYInc, const int srcXStart,
-		      PIXEL *dst, const int w, const int h) {
+                      const int srcYInc, const int srcXStart,
+                      PIXEL *dst, const int w, const int h) {
     int x, srcX;
     PIXEL *dstPtrEnd = dst + (h * w );
 
@@ -848,11 +839,11 @@ static void pixelCopy(PIXEL *src, const int srcLineW, const int srcXInc,
 }
 
 static void pixelAndAlphaCopy(PIXEL *src, 
-			      const int srcLineW, const int srcXInc,
-			      const int srcYInc, const int srcXStart, 
-			      PIXEL *dst,
-			      const int w, const int h,
-			      const ALPHA *srcAlpha, ALPHA *dstAlpha) {
+                              const int srcLineW, const int srcXInc,
+                              const int srcYInc, const int srcXStart, 
+                              PIXEL *dst,
+                              const int w, const int h,
+                              const ALPHA *srcAlpha, ALPHA *dstAlpha) {
     int x, srcX;
     PIXEL *dstPtrEnd = dst + (h * w );
 
@@ -869,12 +860,12 @@ static void pixelAndAlphaCopy(PIXEL *src,
 }
 
 static void blit(int srcWidth, int srcHeight,
-		 const imgdcd_pixel_type *srcPixelData,
-		 const imgdcd_alpha_type *srcAlphaData,
-		 int xSrc, int ySrc, int width, int height,
-		 imgdcd_pixel_type *dstPixelData,
-		 imgdcd_alpha_type *dstAlphaData, 
-		 int transform) {
+                 PIXEL *srcPixelData,
+                 ALPHA *srcAlphaData,
+                 int xSrc, int ySrc, int width, int height,
+                 PIXEL *dstPixelData,
+                 ALPHA *dstAlphaData, 
+                 int transform) {
 
     PIXEL *srcPtr = NULL;
     int srcXInc=0, srcYInc=0, srcXStart=0;
@@ -983,12 +974,12 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRegion) {
     int              x = KNI_GetParameterAsInt(3);
 
     int srcWidth, srcHeight;
-    imgdcd_pixel_type *srcPixelData;
-    imgdcd_alpha_type *srcAlphaData;
+    PIXEL *srcPixelData;
+    ALPHA *srcAlphaData;
 
     int dstWidth, dstHeight;
-    imgdcd_pixel_type *dstPixelData;
-    imgdcd_alpha_type *dstAlphaData;
+    PIXEL *dstPixelData;
+    ALPHA *dstAlphaData;
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(srcImg);
@@ -998,13 +989,13 @@ KNIDECL(javax_microedition_lcdui_ImageDataFactory_loadRegion) {
     KNI_GetParameterAsObject(1, destImg);
 
     if ((getImageData(destImg, &dstWidth, &dstHeight, 
-		      &dstPixelData, &dstAlphaData) == KNI_TRUE) &&
+                      &dstPixelData, &dstAlphaData) == KNI_TRUE) &&
         (getImageData(srcImg, &srcWidth, &srcHeight,
-		      &srcPixelData, &srcAlphaData) == KNI_TRUE)) {
+                      &srcPixelData, &srcAlphaData) == KNI_TRUE)) {
 
       blit(srcWidth, srcHeight, srcPixelData, srcAlphaData,
-	   x, y, width, height, 
-	   dstPixelData, dstAlphaData, transform);
+           x, y, width, height, 
+           dstPixelData, dstAlphaData, transform);
     }
 
     KNI_EndHandles();

@@ -69,7 +69,7 @@ gxpport_image_native_handle gxp_get_imagedata(jobject imgData) {
     if (KNI_IsNullHandle(imgData)) {
         return NULL;
     } else {
-	return (gxpport_image_native_handle)GXAPI_GET_IMAGEDATA_PTR(imgData)->nativeImageData;
+	return (gxpport_image_native_handle)IMGAPI_GET_IMAGEDATA_PTR(imgData)->nativeImageData;
     }
 }
 
@@ -198,7 +198,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDataCopy() {
     } else if (IMG_NATIVE_IMAGE_NO_ERROR != creationError) {
 	KNI_ThrowNew(midpIllegalArgumentException, NULL);
     } else {
-	GXAPI_GET_IMAGEDATA_PTR(dest)->nativeImageData = (jint)newImage;
+	IMGAPI_GET_IMAGEDATA_PTR(dest)->nativeImageData = (jint)newImage;
     }
 
     KNI_EndHandles();
@@ -274,7 +274,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDataRegion() 
     } else if (IMG_NATIVE_IMAGE_NO_ERROR != creationError) {
 	KNI_ThrowNew(midpIllegalArgumentException, NULL);
     } else {
-	GXAPI_GET_IMAGEDATA_PTR(destImg)->nativeImageData = (jint)newImagePtr;
+	IMGAPI_GET_IMAGEDATA_PTR(destImg)->nativeImageData = (jint)newImagePtr;
     }
 
     KNI_EndHandles();
@@ -348,7 +348,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDecodeImage()
         }
 
 	{
-	  java_imagedata * dstImageDataPtr = GXAPI_GET_IMAGEDATA_PTR(imageData);
+	  java_imagedata * dstImageDataPtr = IMGAPI_GET_IMAGEDATA_PTR(imageData);
 	  dstImageDataPtr->width  = (jint)imgWidth;
 	  dstImageDataPtr->height = (jint)imgHeight;
 	  dstImageDataPtr->nativeImageData = (jint)newImagePtr;
@@ -390,7 +390,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadRomizedImage() {
 						  &creationError);
 
         if (IMG_NATIVE_IMAGE_NO_ERROR == creationError) {
-	    java_imagedata * dstImageDataPtr = GXAPI_GET_IMAGEDATA_PTR(imageData);
+	    java_imagedata * dstImageDataPtr = IMGAPI_GET_IMAGEDATA_PTR(imageData);
 
             dstImageDataPtr->width   = (jint)imgWidth;
             dstImageDataPtr->height  = (jint)imgHeight;
@@ -471,7 +471,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_loadAndCreateImmutableImageDataFr
 						  &creationError);
 
         if (IMG_NATIVE_IMAGE_NO_ERROR == creationError) {
-	    java_imagedata * dstImageDataPtr = GXAPI_GET_IMAGEDATA_PTR(imageData);
+	    java_imagedata * dstImageDataPtr = IMGAPI_GET_IMAGEDATA_PTR(imageData);
 
             dstImageDataPtr->width   = (jint)imgWidth;
             dstImageDataPtr->height  = (jint)imgHeight;
@@ -568,7 +568,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_createImmutableImageDecodeRGBImag
 	SNI_END_RAW_POINTERS;
 
         if (IMG_NATIVE_IMAGE_NO_ERROR == creationError) {
-	    java_imagedata * dstImageDataPtr = GXAPI_GET_IMAGEDATA_PTR(imageData);
+	    java_imagedata * dstImageDataPtr = IMGAPI_GET_IMAGEDATA_PTR(imageData);
 
             dstImageDataPtr->height = (jint)height;
             dstImageDataPtr->width = (jint)width;
@@ -637,7 +637,7 @@ Java_javax_microedition_lcdui_ImageDataFactory_createMutableImageData() {
 
 	    KNI_GetParameterAsObject(1, imageData);
 
-	    GXAPI_GET_IMAGEDATA_PTR(imageData)->nativeImageData =
+	    IMGAPI_GET_IMAGEDATA_PTR(imageData)->nativeImageData =
                 (jint) newImagePtr;
 	    KNI_EndHandles();
         }
