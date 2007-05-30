@@ -782,6 +782,13 @@ public abstract class ClassLoader {
 	return system.loadClass(name);
     }
 
+    /**
+     * Used only by profiling code to load classes via reflections
+     */
+    private Class findBootstrapClass(String name)
+	throws ClassNotFoundException {
+	return loadBootstrapClass(name);
+    }
 
     /**
      * Returns a bootstrap Class, or throws a ClassNotFoundException

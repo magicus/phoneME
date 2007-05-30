@@ -43,8 +43,8 @@ LINK_ARCH_LIBS		=
 # incompatiblity that prevents us from using it.
 CVM_DEFINES += -DCVM_ARM_HAS_WMMX
 
-# GCC 3.4.3 uses AAPCS callng conventions
-CVM_DEFINES += -DAAPCS -DINTEL_MONOHANS_PLATFORM
+# GCC 3.4.3 uses AAPCS calling conventions on monohans
+USE_AAPCS ?= true
 
 # These options are not enabled for linux-arm by default
 CVM_DEFINES += -DIAI_CACHEDCONSTANT -DIAI_CACHEDCONSTANT_INLINING

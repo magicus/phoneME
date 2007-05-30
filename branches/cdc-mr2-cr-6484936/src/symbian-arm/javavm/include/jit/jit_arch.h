@@ -41,6 +41,7 @@
 #include "javavm/include/jit/jitasmconstants_cpu.h"
 #include "javavm/include/jit/ccm_cpu.h"
 #include "portlibs/jit/risc/include/export/jit_risc.h"
+#include "javavm/include/flushcache_cpu.h"
 
 /*
  * The size in bytes of the region for which we want accurate profiling
@@ -52,5 +53,7 @@
 #endif
 
 #define CVMJIT_HAVE_PLATFORM_SPECIFIC_ALLOC_FREE_CODECACHE
+
+#define CVMJITflushCache CVMflushCache
 
 #endif /* _LINUX_ARM_JIT_ARCH_H */

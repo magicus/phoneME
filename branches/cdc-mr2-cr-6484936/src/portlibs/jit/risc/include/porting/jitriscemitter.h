@@ -1072,6 +1072,11 @@ CVMCPUCCALLdestroyArgs(CVMJITCompilationContext *con,
 #endif /* !CVMCPU_HAVE_PLATFORM_SPECIFIC_C_CALL_CONVENTION &&
           !CVMCPU_ALLOW_C_ARGS_BEYOND_MAX_ARG_REGS */
 
+/* Purpose: Emits a constantpool dump with a branch around. */
+extern void
+CVMRISCemitConstantPoolDumpWithBranchAround(
+    CVMJITCompilationContext* con);
+
 /* Purpose: Emits a constantpool dump with a branch around it if needed. */
 extern void
 CVMRISCemitConstantPoolDumpWithBranchAroundIfNeeded(

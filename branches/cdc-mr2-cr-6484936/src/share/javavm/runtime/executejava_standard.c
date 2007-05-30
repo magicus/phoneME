@@ -389,33 +389,19 @@ CVMdumpStats()
    debugger to coalesce single-step events. Therefore, we need to
    refetch the opcode after calling out to JVMTI. */
 
+
 #define JVMTI_PROCESS_POP_FRAME()					\
     if (ee->_jvmti_event_enabled._enabled_bits & NEED_FRAME_POP_BIT) {	\
-	OPCODE_DECL;							\
-      do {								\
-	ee->_jvmti_event_enabled._enabled_bits &= ~NEED_FRAME_POP_BIT;	\
-	CACHE_FRAME();							\
-	CACHE_TOS();							\
-	CACHE_PC();							\
-	topOfStack += CVMmbArgsSize(frame->mb);				\
-	locals = CVMframeLocals(frame);					\
-	cp = CVMframeCp(frame);						\
-	FETCH_NEXT_OPCODE(0);						\
-	if (ee->jvmtiSingleStepping && CVMjvmtiThreadEventsEnabled(ee)) { \
-	    DECACHE_TOS();						\
-	    CVMD_gcSafeExec(ee, {					\
-		    CVMjvmtiPostSingleStepEvent(ee, pc);		\
-		});							\
+	goto handle_pop_frame;						\
+    } else {								\
+	if (ee->_jvmti_event_enabled._enabled_bits & NEED_EARLY_RETURN_BIT) { \
+	    goto handle_early_return;					\
 	}								\
-      } while (ee->_jvmti_event_enabled._enabled_bits & NEED_FRAME_POP_BIT); \
-	/* Refetch opcode. See above. */				\
-	FETCH_NEXT_OPCODE(0);      					\
-	DISPATCH_OPCODE();						\
     }
 
 #define JVMTI_SINGLE_STEPPING()						\
     {									\
-	if (ee->jvmtiSingleStepping && CVMjvmtiThreadEventsEnabled(ee)) { \
+	if (ee->jvmtiSingleStepping) {					\
 	    DECACHE_PC();						\
 	    DECACHE_TOS();						\
 	    CVMD_gcSafeExec(ee, {					\
@@ -2523,9 +2509,9 @@ new_transition:
 	    TRACEIF(opc_ireturn, ("\tireturn %d\n", STACK_INT(-1)));
 	    TRACEIF(opc_areturn, ("\tareturn 0x%x\n", STACK_OBJECT(-1)));
 	    TRACEIF(opc_freturn, ("\tfreturn %f\n", STACK_FLOAT(-1)));
-	    /* fall through */
+	    goto handle_return;
         }
- 
+
     handle_return: 
 	ASMLABEL(label_handle_return);
 	{
@@ -2536,7 +2522,19 @@ new_transition:
 	    /* We might gc, so flush state. */
 	    DECACHE_PC();
 	    CVM_RESET_JAVA_TOS(frame->topOfStack, frame);
-	    return_opcode = CVMregisterReturnEvent(ee, pc, &STACK_ICELL(-1));
+#ifdef CVM_JVMTI
+	    if (ee->_jvmti_early_ret_opcode != 0) {
+		/* early return happening so process accordingly */
+		return_opcode = ee->_jvmti_early_ret_opcode;
+		ee->_jvmti_early_ret_opcode = 0;
+	        return_opcode = CVMregisterReturnEvent(ee, pc, return_opcode,
+						       &STACK_ICELL(-1));
+	    } else
+#endif
+		{
+		    return_opcode = CVMregisterReturnEventPC(ee, pc,
+							     &STACK_ICELL(-1));
+		}
 #else
 #define RETURN_OPCODE pc[0]
 #endif
@@ -2723,16 +2721,7 @@ new_transition:
 	    CVMD_gcSafeExec(ee, {
 		newOpcode = CVMjvmtiGetBreakpointOpcode(ee, pc, notify);
 	    });
-	    if (ee->_jvmti_event_enabled._enabled_bits & NEED_FRAME_POP_BIT) {
-		ee->_jvmti_event_enabled._enabled_bits &= ~NEED_FRAME_POP_BIT;
-		CACHE_FRAME();
-		CACHE_TOS();
-		CACHE_PC();
-		topOfStack += CVMmbArgsSize(frame->mb);
-		locals = CVMframeLocals(frame);
-		cp = CVMframeCp(frame);
-		CONTINUE;
-	    }
+	    JVMTI_PROCESS_POP_FRAME();
 #if defined(CVM_USELABELS)
 	    nextLabel = opclabels[newOpcode];
 	    DISPATCH_OPCODE();
@@ -3452,13 +3441,11 @@ new_transition:
 #ifdef CVM_JVMTI
 		/* %comment k001 */
 		/* Decache all curently uncached interpreter state */
-		if (CVMjvmtiThreadEventsEnabled(ee)) {
-		    DECACHE_PC();
-		    DECACHE_TOS();
-		    CVMD_gcSafeExec(ee, {
+		DECACHE_PC();
+		DECACHE_TOS();
+		CVMD_gcSafeExec(ee, {
 			CVMjvmtiPostFramePushEvent(ee);
 		    });
-		}
 #endif
 
 		/*
@@ -4118,16 +4105,7 @@ handle_jit_osr:
 	    topOfStack = CVMgetfield_quick_wHelper(ee, frame, topOfStack, 
 						   cp, pc);
 #ifdef CVM_JVMTI
-	    if (ee->_jvmti_event_enabled._enabled_bits & NEED_FRAME_POP_BIT) {
-		ee->_jvmti_event_enabled._enabled_bits &= ~NEED_FRAME_POP_BIT;
-		CACHE_FRAME();
-		CACHE_TOS();
-		CACHE_PC();
-		topOfStack += CVMmbArgsSize(frame->mb);
-		locals = CVMframeLocals(frame);
-		cp = CVMframeCp(frame);
-		CONTINUE;
-	    }
+	    JVMTI_PROCESS_POP_FRAME();
 #endif
 	    if (topOfStack == NULL) {
 		goto null_pointer_exception;
@@ -4140,16 +4118,7 @@ handle_jit_osr:
 	    topOfStack = CVMputfield_quick_wHelper(ee, frame, topOfStack,
 						   cp, pc);
 #ifdef CVM_JVMTI
-	    if (ee->_jvmti_event_enabled._enabled_bits & NEED_FRAME_POP_BIT) {
-		ee->_jvmti_event_enabled._enabled_bits &= ~NEED_FRAME_POP_BIT;
-		CACHE_FRAME();
-		CACHE_TOS();
-		CACHE_PC();
-		topOfStack += CVMmbArgsSize(frame->mb);
-		locals = CVMframeLocals(frame);
-		cp = CVMframeCp(frame);
-		CONTINUE;
-	    }
+	    JVMTI_PROCESS_POP_FRAME();
 #endif
 	    if (topOfStack == NULL) {
 		goto null_pointer_exception;
@@ -4325,6 +4294,57 @@ handle_jit_osr:
 		   pc[0], CVMopnames[pc[0]]));
 	    goto finish;
 
+#ifdef CVM_JVMTI
+
+    handle_pop_frame:
+    {
+	OPCODE_DECL;
+	do {
+	    ee->_jvmti_event_enabled._enabled_bits &= ~NEED_FRAME_POP_BIT;
+	    CACHE_FRAME();
+	    CACHE_TOS();
+	    CACHE_PC();
+	    topOfStack += CVMmbArgsSize(frame->mb);
+	    locals = CVMframeLocals(frame);
+	    cp = CVMframeCp(frame);
+	    FETCH_NEXT_OPCODE(0);
+	    if (ee->jvmtiSingleStepping) {
+		DECACHE_TOS();
+		CVMD_gcSafeExec(ee, {
+			CVMjvmtiPostSingleStepEvent(ee, pc);
+		    });
+	    }
+	} while (ee->_jvmti_event_enabled._enabled_bits & NEED_FRAME_POP_BIT);
+	/* Refetch opcode. See above. */
+	FETCH_NEXT_OPCODE(0);
+	DISPATCH_OPCODE();
+    }
+    handle_early_return:
+    {
+	/* Note: need to check if we are at top of stack already */
+	CACHE_PREV_TOS();
+	switch(ee->_jvmti_early_ret_opcode) {
+	case opc_areturn:
+	    CVMID_icellAssignDirect(ee, &STACK_ICELL(0), (CVMObjectICell*)ee->_jvmti_early_return_value.l);
+	    topOfStack++;
+	    break;
+	case opc_ireturn:
+	case opc_freturn: {
+	    STACK_INT(0) = (CVMJavaInt)ee->_jvmti_early_return_value.i;
+	    topOfStack++;
+	}
+	    break;
+	case opc_dreturn:
+	case opc_lreturn:
+	    CVMmemCopy64Helper(&STACK_INFO(0).raw,
+			       (CVMAddr *)&ee->_jvmti_early_return_value.j);
+	    topOfStack += 2;
+	    break;
+	}
+	ee->_jvmti_event_enabled._enabled_bits &= ~NEED_EARLY_RETURN_BIT;
+	goto handle_return;
+    }
+#endif
 	} /* switch(opcode) */
     } /* while (1) interpreter loop */
 

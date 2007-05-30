@@ -75,6 +75,7 @@ struct CVMBigGCBitMap {
     CVMAddr           map[1];
 };
 
+
 /*
  * CVMClassBlock - The main data structure for storing information about
  * a java class. Unlike some other VM's, this data type is not an instance
@@ -729,31 +730,32 @@ struct CVMMethodBlock {
 #define CVMJIT_MAX_INVOKE_COST  65535   /* The maximum for invokeCost */
 #endif
     CVMMethodBlockImmutable immutX;
-#ifdef CVM_JVMTI
-    /*
-     * Bit 0 used as a flag for obsolete method
-     */
-    CVMUint32 jvmti_methodID;
-    CVMConstantPool* oldConstantpool;
-#endif
 };
 
 #ifdef CVM_JVMTI
+/*
+ * Need to have consistent method IDs across class redefines.
+ * The fields were originally in the methodblock but the size of the block
+ * is hardcoded all over the jit asm code so it's now in the jmd.
+ */
 #define CVM_METHOD_OBSOLETE 1
 #define CVMmbMethodID(mb)						\
     ((jmethodID)((mb) == NULL ? 0 :					\
-		 (((mb)->jvmti_methodID == 0) ? (CVMUint32)(mb) :	\
-		  CVMmbMethodFromID((mb)->jvmti_methodID))))
+		 ((!CVMmbIsJava(mb) ||					\
+		   (mb)->immutX.codeX.jmd->jvmti_methodID == 0) ?	\
+		  (CVMUint32)(mb) :					\
+		  (CVMmbMethodFromID(mb))->immutX.codeX.jmd->jvmti_methodID)))
 #define CVMmbMethodFromID(id)			\
-    ((CVMUint32)id & ~CVM_METHOD_OBSOLETE)
+    ((CVMMethodBlock*)((CVMUint32)id & ~CVM_METHOD_OBSOLETE))
 
 #define CVMmbIsObsolete(mb)				\
-    (((mb)->jvmti_methodID & 1) == CVM_METHOD_OBSOLETE)
+    (((mb)->immutX.codeX.jmd->jvmti_methodID & 1) == CVM_METHOD_OBSOLETE)
 
 #define CVMmbSetObsolete(mb)					\
-    ((mb)->jvmti_methodID = (mb)->jvmti_methodID | CVM_METHOD_OBSOLETE)
+    ((mb)->immutX.codeX.jmd->jvmti_methodID =				\
+     (mb)->immutX.codeX.jmd->jvmti_methodID | CVM_METHOD_OBSOLETE)
 #define CVMmbConstantPool(mb)			\
-    ((CVMassert(CVMmbIsObsolete(mb)), (mb)->oldConstantpool))
+    ((CVMassert(CVMmbIsObsolete(mb)), (mb)->immutX.codeX.jmd->oldConstantpool))
 #endif
 
 #define CVMmbIsMiranda(mb)						\
@@ -999,6 +1001,13 @@ struct CVMJavaMethodDescriptor {
        CVMLineNumberEntry lineNumberTable[lineNumberTableLength];
        CVMLocalVariableEntry localVariableTable[localVariableTableLength];
        */
+#ifdef CVM_JVMTI
+    /*
+     * Bit 0 used as a flag for obsolete method
+     */
+    CVMUint32 jvmti_methodID;
+    CVMConstantPool* oldConstantpool;
+#endif
 };
 
 /*
@@ -1943,6 +1952,12 @@ CVMclassPathInit(JNIEnv* env, CVMClassPath* path, char* additionalPathString,
  */
 CVMClassLoaderICell* 
 CVMclassGetSystemClassLoader(CVMExecEnv* ee);
+
+/*
+ * Set the system class loader.
+ */
+void
+CVMclassSetSystemClassLoader(CVMExecEnv* ee, jobject loader);
 
 #ifdef CVM_INSPECTOR
 

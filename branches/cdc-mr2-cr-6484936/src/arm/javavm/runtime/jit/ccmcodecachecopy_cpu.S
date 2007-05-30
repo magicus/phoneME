@@ -30,6 +30,9 @@
  * so it is easier to copy and guarantee ordering of symbols.
  */
 
+#include "javavm/include/asmmacros_cpu.h"
+#include "javavm/include/jit/jitasmconstants.h"
+
 #ifdef __RVCT__
 	IMPORT CVMJITfixupFrames
 	IMPORT java_lang_NullPointerException_Classblock
@@ -81,9 +84,6 @@
 	IMPORT CVMtraceFramelessMethodReturn
 #endif
 #endif /* __RVCT__ */
-
-#include "javavm/include/asmmacros_cpu.h"
-#include "javavm/include/jit/jitasmconstants.h"
 
 /*
  * NOTE: Some linker such as the ARM RVCT (v2.2) linker sorts 

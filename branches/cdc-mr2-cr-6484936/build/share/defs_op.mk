@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -23,10 +23,14 @@
 #
 
 SUBSYSTEM_MAKE_FILE      = subsystem.gmk
+SUBSYSTEM_DEFS_FILE      = subsystem_defs.gmk
 JSR_INIT_PACKAGE         = com.sun.cdc.config
 JSR_INIT_CLASS           = Initializer
 
-JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239
+JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239 280
+
+# Defintion for path separator used in JSRs
+PATHSEP        ?= $(PS)
 
 # Directory which JSRs *.jar and *.so files are put to
 JSROP_LIB_DIR   = $(CVM_LIBDIR)
@@ -49,8 +53,8 @@ INCLUDED_JSROP_NUMBERS = $(patsubst USE_JSR_%=true,%,\
               $(filter %true, $(JSROP_OP_FLAGS)))
 
 # Create a list of a JSR jar files we want to build.
-JSROP_BUILD_JARS = $(foreach jsr_number,$(INCLUDED_JSROP_NUMBERS),\
-           $(JSROP_LIB_DIR)/jsr$(jsr_number).jar)
+JSROP_BUILD_JARS = $(filter-out $(JSROP_LIB_DIR)/jsr205.jar,$(foreach jsr_number,$(INCLUDED_JSROP_NUMBERS),\
+           $(JSROP_LIB_DIR)/jsr$(jsr_number).jar))
 
 # Variable which is passed to MIDP and blocks JSRs building from MIDP; looks like:
 # USE_JSR_75=false USE_JSR_82=false USE_JSR_120=false ...
@@ -76,10 +80,7 @@ HIDE_JSROP_NUMBERS = $(patsubst HIDE_JSR_%=true,%,\
 endif
 
 # The list of JSR jar files we want to hide.
-JSROP_HIDE_JARS = $(subst $(space),:,$(foreach jsr_number,$(HIDE_JSROP_NUMBERS),$(JSROP_LIB_DIR)/jsr$(jsr_number).jar))
-
-# The list of all used JSR jar files
-JSROP_JARS_LIST = $(subst $(space),:,$(JSROP_JARS))
+JSROP_HIDE_JARS = $(subst $(space),:,$(filter-out $(JSROP_LIB_DIR)/jsr205.jar,$(foreach jsr_number,$(HIDE_JSROP_NUMBERS),$(JSROP_LIB_DIR)/jsr$(jsr_number).jar)))
 
 # Generate constants classes list for the given xml file
 # generateConstantList(generatedDirectory, constantsXmlFile)
@@ -92,9 +93,7 @@ define generateConstantList
 endef
 
 # Jump API classpath
-EMPTY =
-ONESPACE = $(EMPTY) $(EMPTY)
-JSROP_JUMP_API = $(subst $(ONESPACE),$(PS),$(JUMP_API_CLASSESZIP) $(JUMP_IMPL_CLASSESZIP))
+JSROP_JUMP_API = $(subst $(space),$(PS),$(JUMP_API_CLASSESZIP))
 
 # SecOP - CDC/FP Security Optional Package
 ifeq ($(USE_SECOP),true)
@@ -145,11 +144,11 @@ endif
 # Include JSR 120
 ifeq ($(USE_JSR_120), true)
 export JSR_120_DIR ?= $(COMPONENTS_DIR)/jsr120
-JSR_120_MAKE_FILE = $(JSR_120_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
-ifeq ($(wildcard $(JSR_120_MAKE_FILE)),)
+JSR_120_DEFS_FILE = $(JSR_120_DIR)/build/$(SUBSYSTEM_DEFS_FILE)
+ifeq ($(wildcard $(JSR_120_DEFS_FILE)),)
 $(error JSR_120_DIR must point to a directory containing JSR 120 sources)
 endif
-include $(JSR_120_MAKE_FILE)
+include $(JSR_120_DEFS_FILE)
 endif
 
 # Include JSR 135
@@ -165,11 +164,11 @@ endif
 # Include JSR 172
 ifeq ($(USE_JSR_172), true)
 export JSR_172_DIR ?= $(COMPONENTS_DIR)/jsr172
-JSR_172_MAKE_FILE = $(JSR_172_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
-ifeq ($(wildcard $(JSR_172_MAKE_FILE)),)
+JSR_172_DEFS_FILE = $(JSR_172_DIR)/build/$(SUBSYSTEM_DEFS_FILE)
+ifeq ($(wildcard $(JSR_172_DEFS_FILE)),)
 $(error JSR_172_DIR must point to a directory containing JSR 172 sources)
 endif
-include $(JSR_172_MAKE_FILE)
+include $(JSR_172_DEFS_FILE)
 endif
 
 # Include JSR 177
@@ -215,11 +214,11 @@ endif
 # Include JSR 205
 ifeq ($(USE_JSR_205), true)
 export JSR_205_DIR ?= $(COMPONENTS_DIR)/jsr205
-JSR_205_MAKE_FILE = $(JSR_205_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
-ifeq ($(wildcard $(JSR_205_MAKE_FILE)),)
+JSR_205_DEFS_FILE = $(JSR_205_DIR)/build/$(SUBSYSTEM_DEFS_FILE)
+ifeq ($(wildcard $(JSR_205_DEFS_FILE)),)
 $(error JSR_205_DIR must point to a directory containing JSR 205 sources)
 endif
-include $(JSR_205_MAKE_FILE)
+include $(JSR_205_DEFS_FILE)
 endif
 
 # Include JSR 211
@@ -272,20 +271,44 @@ endif
 include $(JSR_239_MAKE_FILE)
 endif
 
+# Include JSR 280
+ifeq ($(USE_JSR_280), true)
+export JSR_280_DIR ?= $(COMPONENTS_DIR)/jsr280
+JSR_280_DEFS_FILE = $(JSR_280_DIR)/build/$(SUBSYSTEM_DEFS_FILE)
+ifeq ($(wildcard $(JSR_280_DEFS_FILE)),)
+$(error JSR_280_DIR must point to a directory containing JSR 280 sources)
+endif
+include $(JSR_280_DEFS_FILE)
+endif
+
 ifeq ($(CVM_INCLUDE_JAVACALL), true)
 JAVACALL_TARGET=$(TARGET_OS)_$(TARGET_CPU_FAMILY)
-# Check javacall makefile and include it
-ifeq ($(JAVACALL_PROJECT_DIR),)
-export JAVACALL_DIR ?= $(COMPONENTS_DIR)/javacall
-JAVACALL_MAKE_FILE = $(JAVACALL_DIR)/configuration/phoneMEAdvanced/$(JAVACALL_TARGET)/module.gmk
-else
-JAVACALL_MAKE_FILE = $(JAVACALL_PROJECT_DIR)/configuration/tiburon/$(JAVACALL_TARGET)/module.gmk
+JAVACALL_FLAGS = $(JSROP_OP_FLAGS)
+ifeq ($(USE_JAVACALL_EVENTS), true)
+JAVACALL_FLAGS += USE_COMMON=true
+JUMP_ANT_OPTIONS += -Djavacall.events.used=true
+JUMP_SRCDIRS += \
+	$(JUMP_SRCDIR)/share/impl/eventqueue/native
+JUMP_OBJECTS += \
+	jump_eventqueue_impl.o
+JUMP_DEPENDENCIES += javacall_lib
 endif
+# Check javacall makefile and include it
+export JAVACALL_DIR ?= $(COMPONENTS_DIR)/javacall
+ifeq ($(PROJECT_JAVACALL_DIR),)
+JSROP_JC_DIR = JAVACALL_DIR
+else
+JSROP_JC_DIR = PROJECT_JAVACALL_DIR
+endif
+JAVACALL_MAKE_FILE = $($(JSROP_JC_DIR))/configuration/phoneMEAdvanced/$(JAVACALL_TARGET)/module.gmk
 ifeq ($(wildcard $(JAVACALL_MAKE_FILE)),)
-$(error JAVACALL_DIR must point to a directory containing javacall implementation sources)
+$(error $(JSROP_JC_DIR) must point to a directory containing javacall implementation sources)
 endif
 include $(JAVACALL_MAKE_FILE)
 endif
+
+# The list of all used JSR jar files
+JSROP_JARS_LIST = $(subst $(space),$(PS),$(JSROP_JARS) $(JSROP_EXTRA_JARS))
 
 #Variable containing all JSROP components output dirs
 JSROP_OUTPUT_DIRS = $(foreach jsr_number,$(JSROP_NUMBERS),\
@@ -294,15 +317,19 @@ JSROP_OUTPUT_DIRS = $(foreach jsr_number,$(JSROP_NUMBERS),\
 
 CVM_INCLUDE_DIRS+= $(JSROP_INCLUDE_DIRS)
 
+ifneq ($(JAVACALL_LINKLIBS),)
+LINKLIBS_CVM    += $(JAVACALL_LINKLIBS) -L$(JSROP_LIB_DIR)
+endif
+
 ifeq ($(CVM_PRELOAD_LIB), true)
 CVM_JCC_INPUT   += $(JSROP_JARS)
 CVM_CNI_CLASSES += $(JSROP_CNI_CLASSES)
 CVM_OBJECTS     += $(JSROP_NATIVE_OBJS)
-ifneq ($(JAVACALL_LINKLIBS),)
-LINKLIBS_CVM    += $(JAVACALL_LINKLIBS) -L$(JSROP_LIB_DIR)
-endif
+JSROP_EXTRA_SEARCHPATH = $(CVM_JCC_INPUT)
 else
 CLASSLIB_DEPS   += $(JSROP_NATIVE_LIBS)
+JSROP_EXTRA_SEARCHPATH = $(CVM_BUILDTIME_CLASSESZIP) $(LIB_CLASSESJAR) \
+                         $(JCE_JARFILE_BUILD)
 endif
 
 ifeq ($(CVM_DUAL_STACK), true)

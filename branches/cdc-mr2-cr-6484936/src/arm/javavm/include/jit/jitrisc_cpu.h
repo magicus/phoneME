@@ -194,6 +194,35 @@
 #define CVMCPU_SINGLE_REG_ALIGNMENT	1
 #define CVMCPU_DOUBLE_REG_ALIGNMENT	1
 
+/*
+ * In case we opt for the FPU, we'll need these parameters too
+ */
+#ifdef CVM_JIT_USE_FP_HARDWARE
+
+#define CVMCPU_FP_MIN_INTERESTING_REG	0
+#define CVMCPU_FP_MAX_INTERESTING_REG	31
+#define CVMCPU_FP_BUSY_SET		0
+#define CVMCPU_FP_ALL_SET		0xffffffff
+#define CVMCPU_FP_NON_VOLATILE_SET	0
+#define CVMCPU_FP_VOLATILE_SET CVMCPU_FP_ALL_SET
+
+#define CVMCPU_FP_PHI_REG_SET (		\
+    1U<<0 | 1U<<1 | 1U<<2 | 1U<<3 |	\
+    1U<<4 | 1U<<5 | 1U<<6 | 1U<<7	\
+)
+
+/*
+ * Alignment parameters of floating registers
+ * All quantities in 32-bit words
+ */
+#define CVMCPU_FP_SINGLE_REG_ALIGNMENT	1
+#define CVMCPU_FP_DOUBLE_REG_ALIGNMENT	2
+
+/* Maximum offset (+/-) for a vfp load/store word instruction. */
+#define CVMARM_FP_MAX_LOADSTORE_OFFSET  (4*256-1)
+
+#endif
+
 /************************************************************************
  * CPU features - These macros define various features of the processor.
  ************************************************************************/

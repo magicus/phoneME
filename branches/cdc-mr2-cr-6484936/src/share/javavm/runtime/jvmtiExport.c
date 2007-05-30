@@ -984,6 +984,11 @@ CVMjvmtiPostFramePopEvent(CVMExecEnv* ee, CVMBool isRef,
 	return;
     }
 
+    if (!MUST_NOTIFY(ee, JVMTI_EVENT_FRAME_POP) &&
+	!MUST_NOTIFY(ee, JVMTI_EVENT_METHOD_EXIT)) {
+	return;
+    }
+
     framePrev = CVMframePrev(frame);
 
     if (framePrev == NULL) {
@@ -1021,7 +1026,7 @@ CVMjvmtiPostFramePopEvent(CVMExecEnv* ee, CVMBool isRef,
        pointers on a 32-bit architecture are 4-byte aligned, we could
        use the bit just above the "special handling bit". However, for
        now, we're going to do the slow hashtable lookup each time. */
-    {
+    if (MUST_NOTIFY(ee, JVMTI_EVENT_FRAME_POP)) {
 	struct fpop *fp = NULL;
 	CVMBool gotFramePop = CVM_FALSE;
 

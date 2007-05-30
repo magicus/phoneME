@@ -1,5 +1,5 @@
 /*
- * @(#)flushcache_arch.S	1.7 06/10/10
+ * @(#)endianness_arch.h	1.6 06/10/10
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -25,36 +25,10 @@
  *
  */
 
-#include "javavm/include/asmmacros_cpu.h"
+#ifndef _SPARC_ENDIANNESS_ARCH_H
+#define _SPARC_ENDIANNESS_ARCH_H
 
-/*
- * the cache line size of the I and D cache on the StrongARM, which
- * is the only processor we need this to be accurate for.
- */
-#define DCACHELINESIZE	32
+#define CVM_ENDIANNESS CVM_BIG_ENDIAN
+#define CVM_DOUBLE_ENDIANNESS CVM_BIG_ENDIAN
 
-	SET_SECTION_EXEC(flushcache)
-
-/*
- * Flush an address range in the dcache and all of the icache.
- */
-	ENTRY(CVMJITflushCache)
-ENTRY1(CVMJITflushCacheDoit)
-	/* First argument:	 beginning address in range */
-	/* Second argument:	 end address in range */
-
-	/* Work around linux 2.2 bug on strongARM. The dcache is not always
-	 * properly flushed if the address is in a write buffer. We only
-	 * worry about this for single word cache flushes.
-	 */
-	ldr a4, [a1]
-
-	/* Work around another linux 2.2 bug on strongARM. It does not
-	 * properly flush if the start address is not 32-byte alinged.
- 	 */
-	bic a1, a1, #DCACHELINESIZE - 1
-
-	mov a3, #0		/* flush both caches */
-	swi 0x009f0002		/* arm_syscall(2) */
-	mov pc, lr
-SET_SIZE(CVMJITflushCacheDoit)
+#endif /* _SPARC_ENDIANNESS_ARCH_H */

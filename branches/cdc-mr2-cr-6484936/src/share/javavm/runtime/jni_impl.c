@@ -4342,6 +4342,7 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 
 #ifdef CVM_JVMTI
       CVMjvmtiEnterOnloadPhase();
+      thread_cpu_clock_init(&ee->threadInfo);
 #endif
     /* Run agents */
     /* Agents run before VM is fully initialized */

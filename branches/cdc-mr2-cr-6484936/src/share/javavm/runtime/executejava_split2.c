@@ -2350,13 +2350,11 @@ return_to_compiled:
 #ifdef CVM_JVMTI
 	    /* %comment kbr001 */
 	    /* Decache all curently uncached interpreter state */
-	    if (CVMjvmtiThreadEventsEnabled(ee)) {
-		DECACHE_PC(frame);
-		DECACHE_TOS(frame);
-		CVMD_gcSafeExec(ee, {
+	    DECACHE_PC(frame);
+	    DECACHE_TOS(frame);
+	    CVMD_gcSafeExec(ee, {
 		    CVMjvmtiPostFramePushEvent(ee);
 		});
-	    }
 #endif
 
 	    /*

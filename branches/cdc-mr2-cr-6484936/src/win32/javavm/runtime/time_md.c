@@ -26,6 +26,7 @@
  */
 
 #include "javavm/include/porting/time.h"
+#include "javavm/include/interpreter.h"
 
 #ifdef WINCE
 #include <winbase.h>
@@ -63,8 +64,52 @@ void clock_init() {
  	initial_performance_count = count.QuadPart;
     }
 }
- 
- 
+
+CVMBool
+CVMisThreadCputimeSupported() {
+    // see CVMthreadCputime
+    FILETIME CreationTime;
+    FILETIME ExitTime;
+    FILETIME KernelTime;
+    FILETIME UserTime;
+
+    if (GetThreadTimes(GetCurrentThread(), &CreationTime,
+		       &ExitTime, &KernelTime, &UserTime) == 0) {
+	return CVM_FALSE;
+    } else {
+	return CVM_TRUE;
+    }
+}
+
+CVMInt64
+CVMthreadCputime(CVMThreadID *thread, CVMBool user_sys_cpu_time) {
+    // This code is copy from clasic VM -> hpi::sysThreadCPUTime
+    // If this function changes, os::is_thread_cpu_time_supported() should too
+    FILETIME CreationTime;
+    FILETIME ExitTime;
+    FILETIME KernelTime;
+    FILETIME UserTime;
+
+    if ( GetThreadTimes(thread->handle,	&CreationTime,
+			&ExitTime, &KernelTime, &UserTime) == 0)
+	return -1;
+    else
+	if (user_sys_cpu_time) {
+	    return (FT2INT64(UserTime) + FT2INT64(KernelTime)) * 100;
+	} else {
+	    return FT2INT64(UserTime) * 100;
+	}
+}
+
+void thread_cpu_clock_init(CVMThreadID *threadID) {
+    (void)threadID;
+}
+
+CVMInt64
+CVMcurrentThreadCputime() {
+    return CVMthreadCputime(&(CVMgetEE()->threadInfo), CVM_TRUE);
+}
+
 CVMInt64
 CVMtimeNanosecs(void)
 {

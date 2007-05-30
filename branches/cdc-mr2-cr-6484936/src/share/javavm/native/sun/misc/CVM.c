@@ -58,6 +58,18 @@
 #include "javavm/include/jvmti_jni.h"
 #endif
 
+/* Set the systemClassLoader */
+CNIResultCode
+CNIsun_misc_CVM_setSystemClassLoader(CVMExecEnv*ee, CVMStackVal32 *arguments,
+                                     CVMMethodBlock **p_mb)
+{
+    jobject loaderObj = &arguments[0].j.r;
+    CVMD_gcSafeExec(ee, {
+        CVMclassSetSystemClassLoader(ee, loaderObj);
+    });
+    return CNI_VOID;
+}
+
 #ifdef CVM_DEBUG_ASSERTS
 #define CVMassertOKToCopyArrayOfType(expectedType_) \
     {                                                                   \

@@ -518,6 +518,9 @@ public final class CVM {
 	}
     }
 
+    /* Set the systemClassLoader */
+    public native static void setSystemClassLoader(ClassLoader loader);
+
     /* 
      * Debug flags: The debug build of CVM has many debugging features that
      * can be enabled or disabled at runtime. There is a separate

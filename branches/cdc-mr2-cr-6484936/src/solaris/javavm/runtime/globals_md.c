@@ -109,24 +109,40 @@ CVMBool CVMinitStaticState()
     sigignore(SIGPIPE);
 
     {
-        char buf[MAXPATHLEN], *p;
-	Dl_info dlinfo;
+	char buf[MAXPATHLEN + 1], *p0, *p;
 
-	dladdr((void *)CVMinitStaticState, &dlinfo);
-	realpath((char *)dlinfo.dli_fname, buf);
-	/* get rid of .../bin/cvm */
-	p = strrchr(buf, '/');
-	if (p == NULL) {
+	Dl_info dlinfo;
+	if (dladdr((void *)CVMinitStaticState, &dlinfo)) {
+	    realpath((char *)dlinfo.dli_fname, buf);
+	    p0 = buf;
+	} else {
+	    fprintf(stderr, "Could not determine cvm path\n");
 	    return CVM_FALSE;
+	}
+
+	/* get rid of .../bin/cvm */
+	p = strrchr(p0, '/');
+	if (p == NULL) {
+	    goto badpath;
 	}
 	p = p - 4;
-	if (p > buf && strncmp(p, "/bin/", 5) == 0) {
-	    *p = '\0';
+	if (p >= p0 && strncmp(p, "/bin/", 5) == 0) {
+	    if (p == p0) {
+		p[1] = '\0'; /* this is the root directory */
+	    } else {
+		p[0] = '\0';
+	    }
 	} else {
-	    return CVM_FALSE;
+	    goto badpath;
 	}
-        return(CVMinitPathValues( &props, buf, "lib", "lib" ));
+        return( CVMinitPathValues( &props, p0, "lib", "lib" ) );
+    badpath:
+	fprintf(stderr, "Invalid path %s\n", p0);
+	fprintf(stderr, "Executable must be in a directory named \"bin\".\n");
+	return CVM_FALSE;
     }
+
+    return CVM_TRUE;
 }
 
 void CVMdestroyStaticState()

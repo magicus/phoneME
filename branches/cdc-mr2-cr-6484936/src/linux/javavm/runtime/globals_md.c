@@ -202,6 +202,11 @@ CVMBool CVMinitStaticState()
     linuxNetInit();
 
     sigignore(SIGPIPE);
+    
+#ifdef __VFP_FP__    
+    /* FIXME This is only needed for armboard5 the omap boards don't */     
+    sigignore(SIGFPE);
+#endif
 
     {
 	char buf[MAXPATHLEN + 1], *p0, *p;
@@ -256,8 +261,12 @@ CVMBool CVMinitStaticState()
 	    goto badpath;
 	}
 	p = p - 4;
-	if (p > p0 && strncmp(p, "/bin/", 5) == 0) {
-	    *p = '\0';
+	if (p >= p0 && strncmp(p, "/bin/", 5) == 0) {
+	    if (p == p0) {
+		p[1] = '\0'; /* this is the root directory */
+	    } else {
+		p[0] = '\0';
+	    }
 	} else {
 	    goto badpath;
 	}

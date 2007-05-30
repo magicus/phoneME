@@ -483,8 +483,8 @@ CVMprintSubOptionsUsageString(const CVMSubOptionData* knownSubOptions);
  * invoked with the properly subdirectory values.
  */
 extern CVMBool
-CVMinitPathValues(void *propsPtr, char *basePath,
-                  char *libPath, char *dllPath);
+CVMinitPathValues(void *propsPtr, const char *basePath,
+                  const char *libPath, const char *dllPath);
 
 /*
  * Free up the memory allocated in CVMinitPathValues().
