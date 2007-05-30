@@ -239,6 +239,7 @@ void Synchronizer::signal_waiters(StackLock* stack_lock) {
       first_waiter().wait_stack_lock()->set_waiters(&next_waiter);
     }
     first_waiter().clear_wait_stack_lock();
+    first_waiter().clear_wait_obj();
   }
 }
 
