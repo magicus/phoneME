@@ -121,7 +121,7 @@ CVMJITcpoolNeedDump(CVMJITCompilationContext* con)
 	CVMInt32 logicalAddress = CVMJITcbufGetLogicalPC(con);
 
 #ifdef CVM_JIT_USE_FP_HARDWARE
-	if (con->earliestFPConstantRefPC != MAX_LOGICAL_PC ||
+	if (con->earliestFPConstantRefPC != MAX_LOGICAL_PC &&
 	    !CVMJITcanReachAddress(con, 
 	        logicalAddress, con->earliestFPConstantRefPC,
 	        CVMJIT_FPMEMSPEC_ADDRESS_MODE, CVM_TRUE)) {
@@ -131,7 +131,7 @@ CVMJITcpoolNeedDump(CVMJITCompilationContext* con)
 	}
 #endif
 
-	if (con->earliestConstantRefPC != MAX_LOGICAL_PC || 
+	if (con->earliestConstantRefPC != MAX_LOGICAL_PC && 
 	    !CVMJITcanReachAddress(con,
 	        logicalAddress, con->earliestConstantRefPC,
 	        CVMJIT_MEMSPEC_ADDRESS_MODE, CVM_TRUE)) {

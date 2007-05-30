@@ -2985,8 +2985,10 @@ CVMJITcanReachAddress(CVMJITCompilationContext* con,
     case CVMJIT_MEMSPEC_ADDRESS_MODE: {
 	int diff;
 	int maxDiff = 
+#ifdef CVM_JIT_USE_FP_HARDWARE	
 	    mode == CVMJIT_FPMEMSPEC_ADDRESS_MODE ?
-                CVMJIT_FPMEMSPEC_ADDRESS_MODE:
+                CVMARM_FP_MAX_LOADSTORE_OFFSET:
+#endif                
                 CVMCPU_MAX_LOADSTORE_OFFSET;
 #ifdef CVMCPU_HAS_CP_REG
 	fromPC = con->target.cpLogicalPC; /* relative to cp base register */
