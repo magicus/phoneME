@@ -47,6 +47,7 @@ package sun.misc;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLClassLoader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
@@ -162,11 +163,19 @@ public class MIDletClassLoader extends URLClassLoader {
     }
 
    public InputStream
-   getResourceAsStream(final String name){
+   getResourceAsStream(String name){
 	// prohibit reading .class as a resource
 	if (name.endsWith(".class")){
 	    return null; // not allowed!
 	}
+
+        // The JAR reader cannot find the resource if the name starts with 
+        // a slash.  So we remove the leading slash if one exists.
+	if (name.startsWith("/") || name.startsWith(File.separator)) {	    
+	    name = name.substring(1);
+	}
+	
+	final String n = name;
 	// do not delegate. We only use our own URLClassLoader.findResource to
 	// look in our own JAR file. That is always allowed.
 	// Nothing else is.
@@ -174,7 +183,7 @@ public class MIDletClassLoader extends URLClassLoader {
 	retval = (InputStream) AccessController.doPrivileged(
 		new PrivilegedAction(){
 		    public Object run(){
-			URL url = findResource(name);
+			URL url = findResource(n);
 			try {
 			    return url != null ? url.openStream() : null;
 			} catch (IOException e) {
