@@ -345,3 +345,35 @@ JSR_MIDPPERMITTED_CLASSLIST = $(CVM_BUILD_TOP)/.jsrmidppermittedclasses
 # classes.
 CVM_MIDPCLASSLIST_FILES += $(JSR_MIDPPERMITTED_CLASSLIST)
 endif
+
+# Include JDBC, which can be downloaded using the following URL:
+#    http://java.sun.com/products/jdbc/download.html#cdcfp
+ifeq ($(USE_JDBC), true)
+ifeq ($(J2ME_CLASSLIB),cdc)
+$(error USE_JDBC=true requires at least J2ME_CLASSLIB=foundation)
+endif
+export JDBC_DIR ?= $(COMPONENTS_DIR)/jdbc
+JDBC_DEFS_FILE = $(JDBC_DIR)/build/share/defs_jdbc_pkg.mk
+ifeq ($(wildcard $(JDBC_DEFS_FILE)),)
+$(error JDBC_DIR must point to a directory containing JDBC sources: $(JDBC_DIR))
+endif
+include $(JDBC_DEFS_FILE)
+# fixup JDBC_PACKAGE_SRCPATH. $(JDBC_DIR)/build/share/defs_jdbc_pkg.mk uses it.
+JDBC_PACKAGE_SRCPATH = $(JDBC_DIR)/src/share/jdbc/classes
+endif
+
+# Include RMI, which can be downloaded using the following URL:
+#    http://www.sun.com/software/communitysource/j2me/rmiop/download.xml
+ifeq ($(USE_RMI), true)
+ifeq ($(J2ME_CLASSLIB),cdc)
+$(error USE_RMI=true requires at least J2ME_CLASSLIB=foundation)
+endif
+export RMI_DIR ?= $(COMPONENTS_DIR)/rmi
+RMI_DEFS_FILE = $(RMI_DIR)/build/share/defs_rmi_pkg.mk
+ifeq ($(wildcard $(RMI_DEFS_FILE)),)
+$(error RMI_DIR must point to a directory containing RMI sources: $(RMI_DIR))
+endif
+include $(RMI_DEFS_FILE)
+# fixup RMI_SRCDIR. $(RMI_DIR)/build/share/defs_rmi_pkg.mk uses it.
+RMI_SRCDIR = $(RMI_DIR)/src/share/rmi/classes
+endif
