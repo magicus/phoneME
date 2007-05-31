@@ -23,7 +23,7 @@
 #
 # @(#)GNUmakefile	1.16 06/10/10
 #
-# GNUmakefile for solaris-sparc-sun target
+# GNUmakefile for solaris-x86-sun target
 #
 
 #
@@ -47,8 +47,5 @@ CVM_JIT_USE_FP_HARDWARE ?= false
 
 # Disable CVM_JIT_REGISTER_LOCALS for x86 for now.
 CVM_JIT_REGISTER_LOCALS ?= false
-
-# assume support for "cas" on this device, unless told otherwise.
-CVM_HAS_CAS ?= true
 
 include ../share/top.mk

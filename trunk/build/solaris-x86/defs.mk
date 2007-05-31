@@ -24,23 +24,12 @@
 # @(#)defs.mk	1.14 06/10/13
 #
 
-#
-# CAS (compare and swap) support
-#
-CVM_HAS_CAS     ?= true
-CVM_FLAGS       += CVM_HAS_CAS
-CVM_HAS_CAS_CLEANUP_ACTION      = $(CVM_DEFAULT_CLEANUP_ACTION)
-ifeq ($(CVM_HAS_CAS), true)
-CVM_DEFINES     += -DCVM_HAS_CAS
-endif
-
 
 #
-# defs for linux-x86 target
+# defs for solaris-x86 target
 #
 
 CVM_TARGETOBJS_SPEED +=	\
-    float_arch.o \
     x86_float_cpu.o	\
 
 CVM_TARGETOBJS_OTHER += \
