@@ -1,5 +1,4 @@
-#
-#   
+#  
 #
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,6 +23,21 @@
 # information or have any questions.
 #
 
-LIB_GRAPHICS_UTIL_DESCRIPTION=Graphics Util Library reference implementation
-LIB_GRAPHICS_UTIL_VERSION=1.0
-LIB_GRAPHICS_UTIL_DEPENDENCY=
+############################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+############################################################
+
+# Local module dir
+GRAPHICS_API_MODULE_DIR = $(GRAPHICS_API_DIR)/gxapi_gci
+
+
+# Java files for the library
+#
+SUBSYSTEM_GRAPHICSAPI_JAVA_FILES += \
+    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Font.java \
+    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Graphics.java

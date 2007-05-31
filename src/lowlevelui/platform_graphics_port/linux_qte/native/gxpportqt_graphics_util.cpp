@@ -32,7 +32,7 @@
 #include <midp_logging.h>
 #include <midp_constants_data.h>
 
-#include <gxutl_graphics.h>
+#include <gxapi_constants.h>
 #include "gxpportqt_intern_graphics_util.h"
 
 void

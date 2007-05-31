@@ -28,7 +28,7 @@
 #include <midpEventUtil.h>
 
 #include <gx_graphics.h>
-#include <gxutl_graphics.h>
+#include <gxapi_constants.h>
 #include <gxapi_graphics.h>
 #include "gxapi_intern_graphics.h"
 

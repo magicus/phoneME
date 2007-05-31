@@ -34,7 +34,7 @@
 #include <midpMalloc.h>
 #include <midp_logging.h>
 
-#include <gxutl_graphics.h>
+#include <gxapi_constants.h>
 
 #include "gxj_intern_graphics.h"
 #include "gxj_intern_image.h"

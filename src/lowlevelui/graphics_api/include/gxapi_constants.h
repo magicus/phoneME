@@ -24,26 +24,23 @@
  * information or have any questions.
  */
 
-#ifndef _GXUTL_GRAPHICS_H_
-#define _GXUTL_GRAPHICS_H_
+#ifndef _GXAPI_CONSTANTS_H_
+#define _GXAPI_CONSTANTS_H_
 
 #include <kni.h>
 
 
 /**
- * @defgroup lowui_gxutl Graphics Utilities External Interface
- * @ingroup lowui
- */
-
-/**
  * @file
- * @ingroup lowui_gxutl
+ * @ingroup lowui_gxapi
  *
- * @brief Porting api for graphics_util library
+ * @brief Constants defined in javax.microedition.lcdui as public static final
  */
 
 /**
- * @name Reference point locations, from Graphics.java
+ * @name Reference point locations
+ * The anchor points as defined
+ * in the javax.microedition.lcdui.Graphics class
  * @{
  */
 #define HCENTER   1
@@ -57,6 +54,8 @@
 
 /**
  * @name Flags for line types
+ * The line types as defined
+ * in the javax.microedition.lcdui.Graphics class
  * @{
  */
 #define SOLID 0
@@ -97,19 +96,11 @@
  */
 #define TRANSFORM_Y_FLIP 0x1
 
-/**
- * @name Flags for LCDUIgetDisplayParams
- * @{
- */
-#define SUPPORTS_COLOR         1
-#define SUPPORTS_POINTER       2
-#define SUPPORTS_MOTION        4
-#define SUPPORTS_KEYREPEAT     8
-#define SUPPORTS_DOUBLEBUFFER 16
-/** @} */
 
 /**
  * @name Flags for font descriptors
+ * The font descriptors as defined
+ * in the javax.microedition.lcdui.Font class
  * @{
  */
 #define STYLE_PLAIN         0
@@ -126,4 +117,4 @@
 #define FACE_PROPORTIONAL  64
 /** @} */
 
-#endif /* _GXUTL_GRAPHICS_H_ */
+#endif /* _GXAPI_CONSTANTS_H_ */

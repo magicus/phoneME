@@ -67,12 +67,6 @@ else
     endif
 endif
 
-#####################################################################
-# Graphics util Subsystem
-# Description: graphics utility functions
-#####################################################################
-
-include $(SUBSYSTEM_LOWUI_DIR)/graphics_util/$(LIB_MAKE_FILE)
 
 #####################################################################
 # Image decoding  Subsystem
@@ -80,14 +74,14 @@ include $(SUBSYSTEM_LOWUI_DIR)/graphics_util/$(LIB_MAKE_FILE)
 #              image.img_putpixel and image.img_gci depend on it
 #####################################################################
 
-#ifneq ($(SUBSYSTEM_IMAGE_MODULES), graphics_platform) 
+#ifneq ($(SUBSYSTEM_IMAGE_MODULES), gx_platform) 
     include $(SUBSYSTEM_LOWUI_DIR)/image_decode/$(LIB_MAKE_FILE)
 #endif
 
 #####################################################################
 # Platform graphics port  Subsystem
 # Description: platform dependent library
-#              graphics.graphics_platform depends on it
+#              graphics.gx_platform depends on it
 #####################################################################
 
 ifeq ($(SUBSYSTEM_GRAPHICS_MODULES), gx_platform) 
@@ -96,7 +90,7 @@ endif
 
 #####################################################################
 # Graphics Subsystem 
-# Description: contains graphics_platform and graphics_putpixel implementations
+# Description: contains gx_platform and gx_putpixel implementations
 #####################################################################
 ifneq ($(SUBSYSTEM_GRAPHICS_MODULES), gx_gci)
 include $(SUBSYSTEM_LOWUI_DIR)/graphics/$(LIB_MAKE_FILE)

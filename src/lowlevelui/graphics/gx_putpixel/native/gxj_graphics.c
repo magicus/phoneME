@@ -28,6 +28,7 @@
 #include <midp_logging.h>
 
 #include <gx_graphics.h>
+#include <gxapi_constants.h>
 
 #include "gxj_intern_graphics.h"
 #include "gxj_intern_putpixel.h"

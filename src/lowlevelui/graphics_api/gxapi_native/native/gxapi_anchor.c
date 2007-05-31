@@ -24,7 +24,7 @@
  * information or have any questions.
  */
 
-#include <gxutl_graphics.h>
+#include <gxapi_constants.h>
 
 /**
  * @file

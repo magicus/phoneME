@@ -34,7 +34,7 @@
 
 
 #Local module dir
-GRAPHICS_API_MODULE_DIR=$(GRAPHICS_API_DIR)/graphics_native
+GRAPHICS_API_MODULE_DIR=$(GRAPHICS_API_DIR)/gxapi_native
 
 # Java files for the libarary
 #

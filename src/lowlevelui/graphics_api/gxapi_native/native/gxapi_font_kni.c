@@ -31,7 +31,7 @@
 #include <midpError.h>
 
 #include <gx_font.h>
-#include <gxutl_graphics.h>
+#include <gxapi_constants.h>
 #include "gxapi_intern_graphics.h"
 
 /**

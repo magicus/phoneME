@@ -32,7 +32,7 @@
 #include <midpUtilKni.h>
 #include <midpMalloc.h>
 
-#include <gxutl_graphics.h>
+#include <gxapi_constants.h>
 
 #include <imgapi_image.h>
 #include <img_errorcodes.h>
