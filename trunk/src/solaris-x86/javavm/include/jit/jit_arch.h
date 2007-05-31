@@ -34,9 +34,9 @@
 #ifdef CVM_MTASK
 #undef  CVMJIT_PATCH_BASED_GC_CHECKS
 #define CVMJIT_TRAP_BASED_GC_CHECKS
-#error CVMJIT_TRAP_BASED_GC_CHECKS
 #endif
-#undef CVMJIT_TRAP_BASED_NULL_CHECKS
+
+#define CVMJIT_TRAP_BASED_NULL_CHECKS
 
 #include "javavm/include/jit/jit_cpu.h"
 #include "javavm/include/jit/jitasmconstants_cpu.h"
