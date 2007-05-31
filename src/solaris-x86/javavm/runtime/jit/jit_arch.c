@@ -63,8 +63,8 @@ static void handleSegv(int sig, siginfo_t* info, void* ucpPtr)
 {
     struct ucontext* ucp = (struct ucontext *)ucpPtr;
     struct sigaction sa;
-    CVMUint8* pc = (CVMUint8 *)ucp->uc_mcontext.gregs[EIP];
-    CVMUint8** sp = (CVMUint8**)ucp->uc_mcontext.gregs[ESP];
+    CVMUint8* pc = (CVMUint8 *)ucp->uc_mcontext.gregs[REG_PC];
+    CVMUint8** sp = (CVMUint8**)ucp->uc_mcontext.gregs[REG_SP];
     if (CVMJITcodeCacheInCompiledMethod(pc)) {
 	/* Coming from compiled code. */
 #ifdef CVMJIT_TRAP_BASED_GC_CHECKS
@@ -84,16 +84,16 @@ static void handleSegv(int sig, siginfo_t* info, void* ucpPtr)
 		    /* set link register to return to just before the trap
 		     * instruction where incoming locals are reloaded. */
 		    *(--sp) = pc - offset;
-		    ucp->uc_mcontext.gregs[ESP] = sp;
+		    ucp->uc_mcontext.gregs[REG_SP] = sp;
 		    /* Branch to do a gc rendezvous */
-		    ucp->uc_mcontext.gregs[EIP] =
+		    ucp->uc_mcontext.gregs[REG_PC] =
 			(unsigned long)CVMCCMruntimeGCRendezvousGlue;
 		} else {
 		    /* phi handling: branch to generated code that will
 		     * spill phis, call CVMCCMruntimeGCRendezvousGlue, and
 		     * then reload phis.
 		     */
-		    ucp->uc_mcontext.gregs[EIP] += offset;
+		    ucp->uc_mcontext.gregs[REG_PC] += offset;
 		}
 		return;
 	    }
@@ -104,12 +104,12 @@ static void handleSegv(int sig, siginfo_t* info, void* ucpPtr)
         /* CVMJITmassageCompiledPC assumes a indirect call (instruction size == 2)
 	 * at pc, and will subtract 2 bytes */
 	*(--sp) = pc + 2;
-	ucp->uc_mcontext.gregs[ESP] = (unsigned long)sp;
-	ucp->uc_mcontext.gregs[EIP] =
+	ucp->uc_mcontext.gregs[REG_SP] = (unsigned long)sp;
+	ucp->uc_mcontext.gregs[REG_PC] =
 	    (unsigned long)CVMCCMruntimeThrowNullPointerExceptionGlue;
 #ifdef CVM_JIT_DEBUG
 	/* In CVMCCMruntimeThrowNullPointerExceptionGlue we check if %eax == (%esp) */
-	ucp->uc_mcontext.gregs[EAX] = pc + 2;
+	ucp->uc_mcontext.gregs[REG_R0] = pc + 2;
 #endif	
 	return;
 #endif
@@ -117,8 +117,8 @@ static void handleSegv(int sig, siginfo_t* info, void* ucpPtr)
 	/* Coming from CCM code. */
 	/* Branch to throw null pointer exception glue */
         *(--sp) = (CVMUint8*) 0xcafebabe; /* glue code expects a return address on top of stack (rr) */
-	ucp->uc_mcontext.gregs[ESP] = (unsigned long)sp;
-	ucp->uc_mcontext.gregs[EIP] =
+	ucp->uc_mcontext.gregs[REG_SP] = (unsigned long)sp;
+	ucp->uc_mcontext.gregs[REG_PC] =
 	    (unsigned long)CVMCCMruntimeThrowNullPointerExceptionGlue;
 	return;
     } else
