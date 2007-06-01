@@ -1,26 +1,26 @@
 #   
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
-# 2 only, as published by the Free Software Foundation. 
+# 2 only, as published by the Free Software Foundation.
 # 
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
-# included at /legal/license.txt). 
+# included at /legal/license.txt).
 # 
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA 
+# 02110-1301 USA
 # 
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
-# information or have any questions. 
+# information or have any questions.
 #
 
 ifeq ($(JAVACALL_DIR),)
@@ -41,7 +41,7 @@ PORTING_SOURCE+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdi
 NOTIFIER_SOURCE+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR)/*.c))))
 
 
-#From list of header files
+#Form list of header files
 JAVACALL_INCLUDE_DIR_SET_LOCAL=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_DIR)))
 JAVACALL_INCLUDE_DIR_SET=$(addprefix $(JAVACALL_DIR)/interface/,$(JAVACALL_INCLUDE_DIR_SET_LOCAL))
 JAVACALL_INCLUDE_SOURCE_FILES_SET+=$(foreach dir,$(JAVACALL_INCLUDE_DIR_SET),$(wildcard $(dir)/*.h))
@@ -68,9 +68,12 @@ endif
 ifeq ($(USE_DEBUG),true)
 BUILD=debug
 CFLAGS += -DENABLE_JAVACALL_DEBUG
+else
+BUILD=nodebug
 endif
 
 BUILD_EXT_debug=_g
+BUILD_EXT_nodebug=
 BUILD_EXT=$(BUILD_EXT_$(BUILD))
 
 ifeq ($(JAVACALL_OUTPUT_DIR),)
@@ -122,11 +125,14 @@ define make_source_bundle
 				if [ -d "$$FROM/.svn" ]; then \
 					svn export --force -q $$FROM $(SOURCE_OUTPUT_DIR)/$$path/`basename $$FROM` ; \
 				else \
-					 cp -rf $$FROM $(SOURCE_OUTPUT_DIR)/$$path ; \
+					cp -rf $$FROM $(SOURCE_OUTPUT_DIR)/$$path ; \
 				fi ; \
 				FROM=; \
 			else FROM=$$path ; \
 			fi ;\
+		done ; \
+		for path in $(2) ; do \
+			rm -rf $(SOURCE_OUTPUT_DIR)/$$path ; \
 		done
 endef
 
@@ -135,6 +141,6 @@ SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/interface/javacall_defs.h javacall/interfa
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/build javacall
 
 source_bundle:: SOURCE_OUTPUT_DIR
-	@echo  ... javacall source bundle;
-	@$(call make_source_bundle, $(SOURCE_OUTPUT_LIST))
+	@echo  ... javacall source bundle; 
+	@$(call make_source_bundle, $(SOURCE_OUTPUT_LIST), $(SOURCE_CLEANUP_LIST))
 
