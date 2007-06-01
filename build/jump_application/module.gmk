@@ -1,7 +1,7 @@
 #
 #   
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -64,6 +64,8 @@ ABSTRACTIONS_CLASSES = \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/FileConnectionPermission.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/SatsaPermission.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/LocationPermission.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/BluetoothPermission.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/OBEXPermission.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/io/Base64.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseInterface.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseAdapter.java \
@@ -71,6 +73,8 @@ ABSTRACTIONS_CLASSES = \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/io/PrivilegedConnector.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/ResourceConstants.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/StreamWriter.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/StreamReader.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/dialog/Dialog.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/dialog/MessageDialog.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/Cipher.java \
