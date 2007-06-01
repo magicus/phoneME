@@ -1324,7 +1324,7 @@ public class Graphics {
      * <code>Image</code>, {@link #copyArea copyArea} should be used instead.
      * </p>
      *
-     * @param img the specified image to be drawn
+     * @param image the specified image to be drawn
      * @param x the x coordinate of the anchor point
      * @param y the y coordinate of the anchor point
      * @param anchor the anchor point for positioning the image
@@ -1333,8 +1333,12 @@ public class Graphics {
      * @throws NullPointerException if <code>img</code> is <code>null</code>
      * @see Image
      */
-    public void drawImage(Image img, int x, int y, int anchor) {
-        if (!render(img, x, y, anchor)) {
+    public void drawImage(Image image, int x, int y, int anchor) {
+        if (image == null) {
+            throw new NullPointerException();
+        }
+
+        if (!render(image, x, y, anchor)) {
             throw new IllegalArgumentException("");
         }
     }
@@ -1436,11 +1440,14 @@ public class Graphics {
      * the bounds of the source image
      */
     public void drawRegion(Image src, 
-                                  int x_src, int y_src,
-                                  int width, int height, 
-                                  int transform,
-                                  int x_dest, int y_dest, 
-                                  int anchor) {
+                           int x_src, int y_src,
+                           int width, int height, 
+                           int transform,
+                           int x_dest, int y_dest, 
+                           int anchor) {
+        if (src == null) {
+            throw new NullPointerException();
+        }
         if (!renderRegion(src, x_src, y_src, width, height,
                           transform, x_dest, y_dest, anchor)) {
             throw new IllegalArgumentException("");

@@ -1461,18 +1461,16 @@ public class Graphics {
      * @throws NullPointerException if <code>img</code> is <code>null</code>
      * @see Image
      */
-    public void drawImage(Image img, int x, int y, int anchor) {
-
-        if (img == null) {
-            throw new NullPointerException();
-        }
+    public void drawImage(Image image, int x, int y, int anchor) {
 
         int[] point = new int[]{x, y};
-        if (!normalizeAnchor(point, img.getWidth(), img.getHeight(), anchor)) {
+        // will throw NullPointerException as expected if image is null
+        if (!normalizeAnchor(point, image.getWidth(), image.getHeight(), 
+                             anchor)) {
             throw new IllegalArgumentException();
         }
 
-        render(img, point[0] + transX, point[1]+ transY, anchor);
+        render(image, point[0] + transX, point[1]+ transY, anchor);
     }
 
     /**
@@ -1578,9 +1576,6 @@ public class Graphics {
                            int x_dest, int y_dest, 
                            int anchor) {
 
-        if (src == null) {
-            throw new NullPointerException();
-        }
         // TODO check if src is the same image as destination of this Graphics
 
         if ((transform < Sprite.TRANS_NONE) || 
@@ -1595,8 +1590,10 @@ public class Graphics {
         }
 
         // TODO check if the following needed - moved from native
-        int imgWidth = img.getWidth();
-        int imgHeight = img.getHeight();
+
+        // will generate NullPointerException if src is null as expected
+        int imgWidth = src.getWidth();
+        int imgHeight = src.getHeight();
         if ((height < 0) || (width < 0) || 
             (point[0] < 0) || (point[1] < 0) ||
            ((x_src + width) > imgWidth) || 
@@ -1604,7 +1601,7 @@ public class Graphics {
             throw new IllegalArgumentException();
         }
 
-	renderRegion(img, x_src, y_src, width, height, transform, 
+        renderRegion(src, x_src, y_src, width, height, transform, 
                      point[0] + transX, point[1]+ transY, anchor); 
     }
 
@@ -1952,7 +1949,7 @@ public class Graphics {
         if (w > width) { w = width; }
         if (h > height) { h = height; }
 
-	Graphics g = new Graphics(img.getImageData().gciDrawingSurface);
+        Graphics g = new Graphics(img.getImageData().gciDrawingSurface);
         g.img = img;
         g.setDimensions(w, h);
         g.reset();
@@ -2082,7 +2079,7 @@ public class Graphics {
     /**
      * Renders provided Image onto this Graphics object.
      *
-     * @param img the Image to be rendered
+     * @param image the Image to be rendered
      * @param x the x coordinate of the anchor point
      * @param y the y coordinate of the anchor point
      * @param anchor the anchor point for positioning the image
@@ -2090,34 +2087,34 @@ public class Graphics {
      *
      * @see Image
      */
-    boolean render(Image img, int x, int y, int anchor) {
+    boolean render(Image image, int x, int y, int anchor) {
 
         // TODO anchor
 
-        ImageData imgData = img.getImageData();
+        ImageData imgData = image.getImageData();
         if (imgData.gciMaskDrawingSurface == null) {
-	    gciImageRenderer.drawImage(imgData.gciDrawingSurface,
-				       0, 0, 
-				       imgData.getWidth(), 
-				       imgData.getHeight(),
-				       x, y);
-	 
-	} else {
-	    gciImageRenderer.maskBlit(imgData.gciDrawingSurface,
-				      imgData.gciMaskDrawingSurface,
-				      0, 0, 
-				      imgData.getWidth(), 
-				      imgData.getHeight(), 0, 0,
-				      x, y);
-	}
-	return true;
+            gciImageRenderer.drawImage(imgData.gciDrawingSurface,
+                                       0, 0, 
+                                       imgData.getWidth(), 
+                                       imgData.getHeight(),
+                                       x, y);
+         
+        } else {
+            gciImageRenderer.maskBlit(imgData.gciDrawingSurface,
+                                      imgData.gciMaskDrawingSurface,
+                                      0, 0, 
+                                      imgData.getWidth(), 
+                                      imgData.getHeight(), 0, 0,
+                                      x, y);
+        }
+        return true;
     }
 
     /**
      * Renders the specified region of the provided Image object
      * onto this Graphics object.
      *
-     * @param img  the Image object to be rendered
+     * @param image  the Image object to be rendered
      * @param x_src the x coordinate of the upper left corner of the region
      * within the source image to copy
      * @param y_src the y coordinate of the upper left corner of the region
@@ -2141,29 +2138,29 @@ public class Graphics {
      *
      * @see Image
      */
-    boolean renderRegion(Image img,
-			 int x_src, int y_src,
-			 int width, int height,
-			 int transform,
-			 int x_dest, int y_dest,
-			 int anchor) {
+    boolean renderRegion(Image image,
+                         int x_src, int y_src,
+                         int width, int height,
+                         int transform,
+                         int x_dest, int y_dest,
+                         int anchor) {
         // TODO anchor & transform
 
-        ImageData imgData = img.getImageData();
+        ImageData imgData = image.getImageData();
 
-	if (imgData.gciMaskDrawingSurface == null) {
-	    gciImageRenderer.drawImage(imgData.gciDrawingSurface,
-				       x_src, y_src, width, height, 
-				       x_dest, y_dest);
-	} else {
-	    gciImageRenderer.maskBlit(imgData.gciDrawingSurface,
-				      imgData.gciMaskDrawingSurface,
-				      x_src, y_src, width, height, 
-				      x_src, y_src,
-				      y_dest, x_dest);
-	}
+        if (imgData.gciMaskDrawingSurface == null) {
+            gciImageRenderer.drawImage(imgData.gciDrawingSurface,
+                                       x_src, y_src, width, height, 
+                                       x_dest, y_dest);
+        } else {
+            gciImageRenderer.maskBlit(imgData.gciDrawingSurface,
+                                      imgData.gciMaskDrawingSurface,
+                                      x_src, y_src, width, height, 
+                                      x_src, y_src,
+                                      y_dest, x_dest);
+        }
 
-	return true;
+        return true;
     }
 
     /**
