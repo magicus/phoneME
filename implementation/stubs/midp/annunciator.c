@@ -1,26 +1,26 @@
 /*
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #ifdef __cplusplus
@@ -89,26 +89,18 @@ javacall_result javacall_annunciator_display_network_icon(javacall_bool enableNe
     return JAVACALL_FAIL;
 }
 
-
-    
 /**
- * Set the input mode.
- * Notify the platform to show the current input mode
- * @param mode equals the new mode just set values are one of the following:
- *             JAVACALL_INPUT_MODE_LATIN_CAPS      
- *             JAVACALL_INPUT_MODE_LATIN_LOWERCASE  
- *             JAVACALL_INPUT_MODE_NUMERIC         
- *             JAVACALL_INPUT_MODE_SYMBOL    
- *             JAVACALL_INPUT_MODE_T9
+ * Turning Home indicator off or on. 
+ *
+ * @param enableHomeIndicator boolean value indicating if home indicator
+ *             icon should be enabled
  * @return <tt>JAVACALL_OK</tt> operation was supported by the device
  *         <tt>JAVACALL_FAIL</tt> or negative value on failure, or if not 
  *         supported on device
  */
-javacall_result javacall_annunciator_display_input_mode_icon(javacall_input_mode_type mode){
+javacall_result javacall_annunciator_display_home_icon(javacall_bool enableHomeIndicator) {
     return JAVACALL_FAIL;
 }
-    
-
 
 
 /**

@@ -1,26 +1,26 @@
 /*
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 #ifndef __JAVACALL_LCD_H
 #define __JAVACALL_LCD_H
@@ -66,6 +66,14 @@ extern "C" {
 #define RGB2PIXELTYPE(r,g,b)  (( ((javacall_pixel)b)>>3)&0x1f) | ( (( ((javacall_pixel)g)>>2)&0x3f) << 5) | ((( ((javacall_pixel)r)>>3)&0x1f)<<11)
 #endif
 
+/** Separate colors are 8 bits as in Java RGB */
+#ifndef GET_RED_FROM_PIXEL
+#define GET_RED_FROM_PIXEL(P)   (((P) >> 8) & 0xF8)
+#define GET_GREEN_FROM_PIXEL(P) (((P) >> 3) & 0xFC)
+#define GET_BLUE_FROM_PIXEL(P)  (((P) << 3) & 0xF8)
+#endif
+
+
 /**
  * @enum javacall_lcd_color_encoding_type
  * @brief Color encoding format
@@ -75,8 +83,10 @@ typedef enum {
     JAVACALL_LCD_COLOR_RGB565 =200,
     /** ARGB (Alpha + RGB) color format */
     JAVACALL_LCD_COLOR_ARGB   =201,
+    /** RGBA (RGB + Alpha) color format */
+    JAVACALL_LCD_COLOR_RGBA   =202,
     /** RGB888 color format */
-    JAVACALL_LCD_COLOR_RGB888 =202,
+    JAVACALL_LCD_COLOR_RGB888 =203,
     /** Other color format */
     JAVACALL_LCD_COLOR_OTHER  =199
 }javacall_lcd_color_encoding_type;
@@ -227,6 +237,12 @@ int javacall_lcd_get_screen_width();
   * Return height of screen
   */
 int javacall_lcd_get_screen_height();
+
+/**
+ * The platform should invoke this function in platform context
+ * to rotate the screen.
+ */
+void javanotify_rotation();
 
 /** @} */
 
