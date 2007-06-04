@@ -134,9 +134,9 @@ dbgsysBind(int fd, struct sockaddr *name, int namelen) {
     return bind(fd, name, namelen);
 }
 
-UINT32
+U_SOCKINT32
 dbgsysInetAddr(const char* cp) {
-    return (UINT32)inet_addr(cp);
+    return (U_SOCKINT32)inet_addr(cp);
 }
 
 unsigned long
