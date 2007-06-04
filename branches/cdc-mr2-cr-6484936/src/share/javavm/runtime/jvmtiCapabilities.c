@@ -35,6 +35,7 @@
 #include "javavm/include/signature.h"
 #include "javavm/include/globals.h"
 #include "javavm/include/bag.h"
+#include "javavm/include/porting/time.h"
 #include "javavm/include/common_exceptions.h"
 #include "javavm/include/named_sys_monitor.h"
 #include "generated/javavm/include/opcodes.h"
@@ -95,7 +96,7 @@ jvmtiCapabilities init_always_capabilities() {
   jc.can_get_source_file_name = 1;
   jc.can_get_line_numbers = 1;
   /*  jc.can_get_synthetic_attribute = 1; */
-  jc.can_get_monitor_info = 1;
+  /*  jc.can_get_monitor_info = 1; */
   /*  jc.can_get_constant_pool = 1; */
   jc.can_generate_monitor_events = 1;
   jc.can_generate_garbage_collection_events = 1;
@@ -132,10 +133,10 @@ jvmtiCapabilities init_onload_capabilities() {
   jc.can_generate_method_entry_events = 1;
   jc.can_generate_method_exit_events = 1;
   jc.can_get_owned_monitor_info = 1;
-  jc.can_get_owned_monitor_stack_depth_info = 1;
+  /*  jc.can_get_owned_monitor_stack_depth_info = 1; */
   jc.can_get_current_contended_monitor = 1;
   jc.can_tag_objects = 1;
-  /* jc.can_get_monitor_info = 1; */
+  /*  jc.can_get_monitor_info = 1; */
   jc.can_generate_object_free_events = 1;
   return jc;
 }

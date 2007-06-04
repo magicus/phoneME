@@ -28,6 +28,23 @@
 #include "javavm/include/porting/time.h"
 
 #ifdef CVM_JVMTI
+void thread_cpu_clock_init(CVMThreadID *threadID) {
+}
+
+CVMInt64
+CVMthreadCputime(CVMThreadID *thread) {
+    (void)thread;
+    return CVMtimeNanosecs();
+}
+
+CVMBool CVMisThreadCputimeSupported() {
+    return CVM_FALSE;
+}
+
+CVMInt64
+CVMcurrentThreadCputime() {
+    return CVMtimeNanosecs();
+}
 
 CVMInt64
 CVMtimeNanosecs(void)

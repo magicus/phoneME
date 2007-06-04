@@ -964,11 +964,58 @@ jvmti_GetThreadInfo(jvmtiEnv* jvmtienv,
    GetOwnedMonitorInfo or GetCurrentContendedMonitor. */
 
 static jvmtiError JNICALL
-jvmti_GetOwnedMonitorInfo(jvmtiEnv* env,
+jvmti_GetOwnedMonitorInfo(jvmtiEnv* jvmtienv,
 			  jthread thread,
 			  jint* owned_monitor_count_ptr,
 			  jobject** owned_monitors_ptr) {
+    CVMOwnedMonitor *mon;
+    CVMExecEnv *threadEE, *ee;
+    jobject *tmpPtr;
+    int count = 0;
+    int i = 0;
+    JNIEnv *env;
+
+    JVMTI_ENABLED();
+    CHECK_JVMTI_ENV;
+    CHECK_PHASE(JVMTI_PHASE_LIVE);
+    NOT_NULL(owned_monitor_count_ptr);
+    NOT_NULL(owned_monitors_ptr);
+
+    env = CVMexecEnv2JniEnv(ee);
     *owned_monitor_count_ptr = 0;
+    ee = CVMgetEE();
+    CVM_THREAD_LOCK(ee);
+    threadEE = jthreadToExecEnv(ee, thread);
+    CVM_THREAD_UNLOCK(ee);
+    mon = threadEE->objLocksOwned;
+    while (mon != NULL) {
+#ifdef CVM_DEBUG
+	CVMassert(mon->state != CVM_OWNEDMON_FREE);
+#endif
+	if (mon->object != NULL) {
+	    count++;
+	}
+	mon = mon->next;
+    }
+    if (count == 0) {
+	return JVMTI_ERROR_NONE;
+    }
+    ALLOC(jvmtienv, count * sizeof(jobject), owned_monitors_ptr);
+    mon = threadEE->objLocksOwned;
+    tmpPtr = *owned_monitors_ptr;
+    CVMID_localrootBegin(ee); {
+	CVMID_localrootDeclare(CVMObjectICell, objICell);
+	while (mon != NULL) {
+	    if (mon->object != NULL) {
+		CVMD_gcUnsafeExec(ee, {
+			CVMID_icellSetDirect(ee, objICell, mon->object);
+		    });
+		tmpPtr[i++] = (*env)->NewLocalRef(env, objICell);
+	    }
+	    mon = mon->next;
+	}
+    } CVMID_localrootEnd();
+
     return JVMTI_ERROR_NONE;
 }
 
@@ -984,10 +1031,40 @@ jvmti_GetOwnedMonitorStackDepthInfo(jvmtiEnv* env,
 
 
 static jvmtiError JNICALL
-jvmti_GetCurrentContendedMonitor(jvmtiEnv* env,
+jvmti_GetCurrentContendedMonitor(jvmtiEnv* jvmtienv,
 				 jthread thread,
 				 jobject* monitor_ptr) {
+    CVMExecEnv *threadEE, *ee;
+    CVMObjMonitor *mon;
+    JNIEnv *env;
+
+    JVMTI_ENABLED();
+    CHECK_JVMTI_ENV;
+    CHECK_PHASE(JVMTI_PHASE_LIVE);
+    NOT_NULL(monitor_ptr);
+
+    env = CVMexecEnv2JniEnv(ee);
+    ee = CVMgetEE();
+    CVM_THREAD_LOCK(ee);
+    threadEE = jthreadToExecEnv(ee, thread);
+    CVM_THREAD_UNLOCK(ee);
+
     *monitor_ptr = NULL;
+    mon = threadEE->objLockCurrent;
+    if (mon != NULL) {
+	/* there could be a monitor here somewhere */
+	if (threadEE->blockingLockEntryMonitor != NULL) {
+	    CVMID_localrootBegin(ee); {
+		CVMID_localrootDeclare(CVMObjectICell, objICell);
+		if (mon->obj != NULL) {
+		    CVMD_gcUnsafeExec(ee, {
+			    CVMID_icellSetDirect(ee, objICell, mon->obj);
+			});
+		*monitor_ptr = (*env)->NewLocalRef(env, objICell);
+		}
+	    }  CVMID_localrootEnd();
+	}
+    }
     return JVMTI_ERROR_NONE;
 }
 
@@ -2338,8 +2415,8 @@ jvmti_GetObjectsWithTags(jvmtiEnv* jvmtienv,
     if (count == 0) {
 	return JVMTI_ERROR_NONE;
     }
-    ALLOC(jvmtienv, count * sizeof(jobject), *object_result_ptr);
-    ALLOC(jvmtienv, count * sizeof(jlong), *tag_result_ptr);
+    ALLOC(jvmtienv, count * sizeof(jobject), object_result_ptr);
+    ALLOC(jvmtienv, count * sizeof(jlong), tag_result_ptr);
     count = CVMjvmtiGetObjectsWithTag(env, tags, tag_count, *object_result_ptr,
 				      *tag_result_ptr);
 
@@ -4018,10 +4095,10 @@ jvmti_GetObjectHashCode(jvmtiEnv* jvmtienv,
 
 
 static jvmtiError JNICALL
-jvmti_GetObjectMonitorUsage(jvmtiEnv* env,
+jvmti_GetObjectMonitorUsage(jvmtiEnv* jvmtienv,
 			    jobject object,
 			    jvmtiMonitorUsage* info_ptr) {
-    return JVMTI_ERROR_ACCESS_DENIED;
+    return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
 }
 
 
@@ -4104,7 +4181,7 @@ jvmti_GetFieldDeclaringClass(jvmtiEnv* jvmtienv,
     env = CVMexecEnv2JniEnv(ee);
 
     dklass = (*env)->NewLocalRef(env, CVMcbJavaInstance(CVMfbClassBlock(fb)));
-    *declaring_class_ptr = (jobject)((*env)->NewLocalRef(env, dklass));
+    *declaring_class_ptr = dklass;
     return JVMTI_ERROR_NONE;
 }
 
@@ -5516,7 +5593,7 @@ jvmti_GetSystemProperty(jvmtiEnv* jvmtienv,
 		(*env)->ExceptionClear(env);
 	    } else if (valueString != NULL) {
 		utf = (*env)->GetStringUTFChars(env, valueString, NULL);
-		ALLOC(jvmtienv, strlen(utf)+1, *value_ptr);
+		ALLOC(jvmtienv, strlen(utf)+1, value_ptr);
 		strcpy(*value_ptr, utf);
 		(*env)->ReleaseStringUTFChars(env, valueString, utf);
 	    }
@@ -5621,7 +5698,7 @@ jvmti_GetErrorName(jvmtiEnv* jvmtienv,
 	return JVMTI_ERROR_ILLEGAL_ARGUMENT;
     }
     name = _jvmti_error_names[error];
-    ALLOC(jvmtienv, strlen(name)+1, *name_ptr);
+    ALLOC(jvmtienv, strlen(name)+1, name_ptr);
     strcpy(*name_ptr, name);
     return JVMTI_ERROR_NONE;
 }
