@@ -265,15 +265,6 @@ Java_com_sun_midp_io_j2me_cbs_Protocol_receive0(void) {
                 if ((pCbsData = jsr120_cbs_pool_retrieve_next_msg(msgID)) != NULL) {
 
                     /*
-                     * A message has been retrieved successfully. Notify
-                     * the platform.
-                     */
-                    jsr120_notify_incoming_cbs(pCbsData->encodingType,
-                                               pCbsData->msgID,
-                                               pCbsData->msgBuffer,
-                                               pCbsData->msgLen);
-
-                    /*
                      * At this point, the message entry from the pool has been removed,
                      * while the message data have been preserved here, for further
                      * processing.

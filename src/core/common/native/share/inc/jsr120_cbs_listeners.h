@@ -43,6 +43,14 @@ extern "C" {
 void jsr120_cbs_message_arrival_notifier(CbsMessage* message);
 
 /**
+ * Checks whether the specified port has been registered by midlet 
+ * or push registry for receiving SMS messages.
+ *
+ * @param mdgID The message identifier to be checked
+ */
+WMA_STATUS jsr120_cbs_is_message_expected(jchar msgID);
+
+/**
  * Checks whether the message identifier has been registered by this or another
  * MIDlet for receiving CBS messages.
  *

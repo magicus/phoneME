@@ -28,9 +28,7 @@
 
 #include <jsr120_list_element.h>
 #include <jsr120_sms_pool.h>
-#include <jsr120_sms_listeners.h>
 #include <pcsl_memory.h>
-#include <suitestore_common.h>
 
 #define MAGIC_COOKEY_FOR_SMS_RECEIPT 0x7a
 #define MAGIC_COOKEY_FOR_SMS_RECEIPT_PORT 1
@@ -253,7 +251,7 @@ WMA_STATUS jsr120_sms_pool_add_msg(SmsMessage* smsMessage) {
         UNUSED_SUITE_ID, (void*)smsMessage, 0);
     jsr120_list_add_last(&SMSPool_smsMessages, newItem);
     jsr120_sms_pool_increase_count();
-    jsr120_sms_message_arrival_notifier(smsMessage);
+
     return WMA_OK;
 }
 

@@ -42,9 +42,11 @@
 #if ENABLE_WMA_LOOPBACK
 #include <jsr120_sms_structs.h>
 #include <jsr120_sms_pool.h>
+#include <jsr120_sms_listeners.h>
 #if ENABLE_JSR_205
 #include <jsr205_mms_pool.h>
 #include <jsr205_mms_protocol.h>
+#include <jsr205_mms_listeners.h>
 #endif
 #include <push_server_resource_mgmt.h>
 #endif
@@ -838,6 +840,8 @@ WMA_STATUS jsr120_sms_write(jchar msgType,
                 }
                 /* add message to pool */
                 jsr120_sms_pool_add_msg(sms);
+                /* Notify all listeners of the new message. */
+                jsr120_sms_message_arrival_notifier(sms);
 
                 status = WMA_NET_SUCCESS;
             } else {
@@ -1085,11 +1089,10 @@ WMA_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr,
 #if ENABLE_WMA_LOOPBACK
     mms = createMmsMessage(fromAddr, appID, replyToAppID, msgLen, msg);
 
-    /* Notify Push that a message has arrived and is being cached. */
-    pushsetcachedflagmms("mms://:", mms->appID);
-
     /* Add the message to the pool. */
     jsr205_mms_pool_add_msg(mms);
+    /* Notify all listeners of the new message. */
+    jsr205_mms_message_arrival_notifier(mms);
 
     /* Fake the written count as well as the "sending" status. */
     *bytesWritten = context->totalLength;

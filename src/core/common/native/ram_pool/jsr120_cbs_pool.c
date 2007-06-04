@@ -28,9 +28,7 @@
 
 #include <jsr120_list_element.h>
 #include <jsr120_cbs_pool.h>
-#include <jsr120_cbs_listeners.h>
 #include <pcsl_memory.h>
-#include <suitestore_common.h>
 
 /*
  * This is a collection of methods to maintain the pool of CBS messages
@@ -272,9 +270,6 @@ WMA_STATUS jsr120_cbs_pool_add_msg(CbsMessage* cbsMessage) {
         UNUSED_SUITE_ID, (void*)cbsMessage, 0);
     jsr120_list_add_last(&CBSPool_messages, newItem);
     jsr120_cbs_pool_increase_count();
-
-    /* Notify all listeners of the new message. */
-    jsr120_cbs_message_arrival_notifier(cbsMessage);
 
     return WMA_OK;
 }

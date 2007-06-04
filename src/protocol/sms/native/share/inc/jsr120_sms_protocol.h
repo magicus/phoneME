@@ -112,7 +112,7 @@ WMA_STATUS jsr120_send_sms(jchar msgType,
 		              jchar msgLen,
 		              jchar sourcePort,
 		              jchar destPort,
-                              /* OUT */jint *bytesSent,
+                              int handle,
                               /* OUT */void **pContext);
 
 /**
@@ -120,11 +120,12 @@ WMA_STATUS jsr120_send_sms(jchar msgType,
  * been sent. When wma_sendSMSMessage()is called, the native software platform on the target
  * device is expected to deliver the message to the network. It then calls this callback function.   
  *
- * @param bytesSent Number of bytes sent.
- *                  >= 0 on success
- *                  -1 on error
+ * @param handle Handle value returned from platform send function 
+ * @param result indication of send completed status result: Either
+ *         <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt> on failure
  */
-void jsr120_notify_sms_send_completed(jint *bytesSent);
+void jsr120_notify_sms_send_completed(int handle, WMA_STATUS result);
 
 /**
  * After calling  setSMSListeningPort(), a WMA Application will continue to listen for 
