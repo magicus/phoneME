@@ -517,7 +517,7 @@ void javanotify_network_event(javacall_network_event netEvent) {
 
 #ifdef ENABLE_JSR_120
 
-SmsMessage* jsr120_sms_new_msg_javacall(jchar  encodingType,
+static SmsMessage* jsr120_sms_new_msg_javacall(jchar  encodingType,
                                         unsigned char  msgAddr[MAX_ADDR_LEN],
                                         jchar  sourcePortNum,
                                         jchar  destPortNum,
@@ -594,7 +594,7 @@ static char* javacall_copystring(char* src) {
     return (char*)result;
 }
 
-MmsMessage* jsr205_mms_new_msg_javacall(char* fromAddress, char* appID,
+static MmsMessage* jsr205_mms_new_msg_javacall(char* fromAddress, char* appID,
     char* replyToAppID, int msgLen, unsigned char* msgBuffer) {
 
     MmsMessage* message = (MmsMessage*)javacall_malloc(sizeof(MmsMessage));
@@ -605,7 +605,9 @@ MmsMessage* jsr205_mms_new_msg_javacall(char* fromAddress, char* appID,
     message->replyToAppID = javacall_copystring(replyToAppID);
 
     message->msgLen = msgLen;
-    message->msgBuffer = (char*)memcpy((void*)javacall_malloc(msgLen), msgBuffer, msgLen);
+    if (msgLen > 0) {
+        message->msgBuffer = (char*)memcpy((void*)javacall_malloc(msgLen), msgBuffer, msgLen);
+    }
 
     return message;
 }
@@ -651,7 +653,7 @@ void javanotify_incoming_mms_available(
 
 #ifdef ENABLE_JSR_120
 
-CbsMessage* jsr120_cbs_new_msg_javacall(jchar encodingType,
+static CbsMessage* jsr120_cbs_new_msg_javacall(jchar encodingType,
                                jchar msgID,
                                jchar msgLen,
                                unsigned char* msgBuffer) {
