@@ -141,14 +141,14 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         }
 #if (ENABLE_JSR_120 || ENABLE_JSR_205)
         else
-            jsr120_check_signal(newSignal.waitingFor, newSignal.descriptor);
+            jsr120_check_signal(newSignal.waitingFor, newSignal.descriptor, newSignal.status);
 #endif
         break;
 
     case HOST_NAME_LOOKUP_SIGNAL:
     case NETWORK_WRITE_SIGNAL:
 #if (ENABLE_JSR_120 || ENABLE_JSR_205)
-        if (!jsr120_check_signal(newSignal.waitingFor, newSignal.descriptor))
+        if (!jsr120_check_signal(newSignal.waitingFor, newSignal.descriptor, newSignal.status))
 #endif
             midp_thread_signal_list(blocked_threads, blocked_threads_count,
                                     newSignal.waitingFor, newSignal.descriptor,
@@ -199,7 +199,7 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
     case WMA_MMS_READ_SIGNAL:
     case WMA_SMS_WRITE_SIGNAL:
     case WMA_MMS_WRITE_SIGNAL:
-         jsr120_check_signal(newSignal.waitingFor, newSignal.descriptor);
+         jsr120_check_signal(newSignal.waitingFor, newSignal.descriptor, newSignal.status);
          break;
 #endif
 #ifdef ENABLE_JSR_177
