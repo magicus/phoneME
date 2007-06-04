@@ -57,12 +57,13 @@ extern const char* getStrProp(const char* propName, const char* defaultValue);
  *
  * Refer to javacall_sms.h header for complete description.
  */
-int javacall_sms_send(  javacall_sms_encoding    msgType, 
+javacall_result javacall_sms_send(  javacall_sms_encoding    msgType, 
                         const unsigned char*    destAddress, 
                         const unsigned char*    msgBuffer, 
                         int                     msgBufferLen, 
                         unsigned short          sourcePort, 
-                        unsigned short          destPort) {
+                        unsigned short          destPort,
+                        int                     handle ) {
 
     javacall_handle datagramHandle;
     javacall_result ok;
@@ -97,9 +98,9 @@ int javacall_sms_send(  javacall_sms_encoding    msgType,
 
     javacall_print("## javacall: SMS sending...\n");
 
-    javanotify_sms_send_completed(JAVACALL_SMS_SENDING_RESULT_SUCCESS, 13);
+    javanotify_sms_send_completed(JAVACALL_OK, handle);
 
-    return 1;
+    return JAVACALL_OK;
 }
 
 javacall_result javacall_sms_is_service_available(void){

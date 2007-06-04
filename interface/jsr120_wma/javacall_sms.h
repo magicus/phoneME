@@ -107,19 +107,20 @@ typedef enum {
  * @param msgBufferLen the message body (payload) len
  * @param sourcePort source port of SMS message
  * @param destPort destination port of SMS message where 0 is default destination port 
- * @return handle of sent sms or <tt>0</tt> if unsuccessful
+ * @param handle handle of sent sms 
  * 
  * Note: javacall_callback_on_complete_sms_send() needs to be called to notify
  *       completion of sending operation.
  *       The returned handle will be passed to 
  *         javacall_callback_on_complete_sms_send( ) upon completion
  */
-int javacall_sms_send(  javacall_sms_encoding   msgType, 
+javacall_result javacall_sms_send(  javacall_sms_encoding   msgType, 
                         const unsigned char*    destAddress, 
                         const unsigned char*    msgBuffer, 
                         int                     msgBufferLen, 
                         unsigned short          sourcePort, 
-                        unsigned short          destPort);
+                        unsigned short          destPort,
+                        int                     handle);
 
 /**
  * The platform must have the ability to identify the port number of incoming 
@@ -203,14 +204,6 @@ int javacall_sms_get_number_of_segments(
  * @ingroup WMA
  * @{
  */    
-/**
- * @enum javacall_sms_sending_result
- * @brief SMS send result notification event type
- */
-typedef enum {
-        JAVACALL_SMS_SENDING_RESULT_SUCCESS     =1,
-        JAVACALL_SMS_SENDING_RESULT_FAILURE     =0
-} javacall_sms_sending_result;
 
 /**
  * A callback function to be called by platform to notify that an SMS 
@@ -219,13 +212,13 @@ typedef enum {
  * each sms sending completion. 
  *
  * @param result indication of send completed status result: Either
- *         <tt>JAVACALL_SMS_CALLBACK_SEND_SUCCESSFULLY</tt> on success,
- *         <tt>JAVACALL_SMS_CALLBACK_SEND_FAILED</tt> on failure
+ *         <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt> on failure
  * @param handle Handle value returned from javacall_sms_send
  */
 void javanotify_sms_send_completed(
-                        javacall_sms_sending_result result, 
-                        int                         handle);
+                        javacall_result result, 
+                        int handle);
 
 /**
  * callback that needs to be called by platform to handover an incoming SMS intended for Java 

@@ -115,15 +115,6 @@ javacall_result javacall_cbs_remove_listening_msgID(unsigned short msgID);
  */  
 
 /**
- * @enum javacall_cbs_sending_result
- * @brief CBS send result notification event type
- */
-typedef enum {
-    JAVACALL_CBS_SENDING_RESULT_SUCCESS = 1,
-    JAVACALL_CBS_SENDING_RESULT_FAILURE = 0
-} javacall_cbs_sending_result;
-
-/**
  * callback that needs to be called by platform to handover an incoming CBS intended for Java 
  *
  * After this function is called, the CBS message should be removed from platform inbox
