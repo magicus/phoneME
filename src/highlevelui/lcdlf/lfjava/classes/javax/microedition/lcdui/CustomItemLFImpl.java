@@ -388,9 +388,6 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
             clipH = g.getClipHeight();
             clipW = g.getClipWidth();
 
-            g.setColor(0);
-            g.setFont(Font.getDefaultFont());
-
             w = contentBounds[WIDTH];
             h = contentBounds[HEIGHT];
         }
@@ -400,7 +397,7 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
 
             // We prevent the CustomItem from drawing outside the bounds.
             g.preserveMIDPRuntimeGC(0, 0, contentBounds[WIDTH], contentBounds[HEIGHT]);
-            // Reset the graphics context according to
+            // Reset the graphics context
             g.resetGC();
 
             synchronized (Display.calloutLock) {
