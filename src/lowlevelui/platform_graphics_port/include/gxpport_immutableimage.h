@@ -34,7 +34,7 @@
  * @brief Porting Interface for immutable image handling 
  */
 
-#include <gxutl_image_errorcodes.h> 
+#include <img_errorcodes.h> 
 #include <gxpport_mutableimage.h>
 
 #ifdef __cplusplus
@@ -57,7 +57,7 @@ typedef void* gxpport_image_native_handle;
 void gxpport_createimmutable_from_mutable
 (gxpport_mutableimage_native_handle srcMutableImage,
  gxpport_image_native_handle* newImmutableImage,
- gxutl_native_image_error_codes* creationErrorPtr);
+ img_native_error_codes* creationErrorPtr);
 
 /**
  * Creates an immutable image that is a copy of a region
@@ -81,7 +81,7 @@ gxpport_createimmutable_from_immutableregion
  int src_width, int src_height,
  int transform,
  gxpport_image_native_handle* newImmutableImage,
- gxutl_native_image_error_codes* creationErrorPtr);
+ img_native_error_codes* creationErrorPtr);
 
 /**
  * Creates an immutable image that is a copy of a region
@@ -105,7 +105,7 @@ gxpport_createimmutable_from_mutableregion
  int src_width, int src_height,
  int transform,
  gxpport_image_native_handle* newImmutableImage,
- gxutl_native_image_error_codes* creationErrorPtr);
+ img_native_error_codes* creationErrorPtr);
 
 /**
  * Decodes the given input data into a storage format used by immutable
@@ -129,7 +129,7 @@ gxpport_decodeimmutable_from_selfidentifying
 (unsigned char* srcBuffer, int length, 
  int* ret_imgWidth, int* ret_imgHeight,
  gxpport_image_native_handle* newImmutableImage,
- gxutl_native_image_error_codes* creationErrorPtr);
+ img_native_error_codes* creationErrorPtr);
 
 /**
  * Decodes the ARGB input data into a storage format used by immutable images.
@@ -149,7 +149,7 @@ gxpport_decodeimmutable_from_argb
  int width, int height,
  jboolean processAlpha,
  gxpport_image_native_handle* newImmutableImage,
- gxutl_native_image_error_codes* creationErrorPtr);
+ img_native_error_codes* creationErrorPtr);
 
 /**
  * Renders the contents of the specified immutable image
@@ -216,7 +216,7 @@ gxpport_get_immutable_argb
 (gxpport_image_native_handle imutableImage,
  jint* rgbBuffer, int offset, int scanLength,
  int x, int y, int width, int height,
- gxutl_native_image_error_codes* errorPtr);
+ img_native_error_codes* errorPtr);
   
 /**
  * Cleans up any native resources to prepare the image to be garbage collected.
@@ -241,7 +241,7 @@ void gxpport_destroy_immutable(gxpport_image_native_handle immutableImage);
 void gxpport_decodeimmutable_to_platformbuffer
 (unsigned char* srcBuffer, long length,
  unsigned char** ret_dataBuffer, long* ret_length,
- gxutl_native_image_error_codes* creationErrorPtr);
+ img_native_error_codes* creationErrorPtr);
 
 /**
  * Loads the given input data into a storage format used by immutable
@@ -264,7 +264,7 @@ gxpport_loadimmutable_from_platformbuffer
 (unsigned char* srcBuffer, int length, jboolean isStatic,
  int* ret_imgWidth, int* ret_imgHeight,
  gxpport_image_native_handle* newImmutableImage,
- gxutl_native_image_error_codes* creationErrorPtr);
+ img_native_error_codes* creationErrorPtr);
 
 #ifdef __cplusplus
 } /* extern C */

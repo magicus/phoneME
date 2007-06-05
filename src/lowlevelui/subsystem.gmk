@@ -47,45 +47,52 @@ SUBSYSTEM_LOWUI_DIR = $(SUBSYSTEM_DIR)/lowlevelui
 #		      native image decoding and storage
 # putpixel          - putpixel graphics library, Java image storage
 #
-ifeq ($(PLATFORM), linux_qte)
-    SUBSYSTEM_GRAPHICS_MODULES = platform_graphics
+ifeq ($(PLATFORM), linux_gci)
+    SUBSYSTEM_GRAPHICS_MODULES = gx_gci
+    SUBSYSTEM_IMAGE_MODULES = img_gci
 else
-    ifneq ($(PLATFORM), linux_gci)
-      ifeq ($(PLATFORM), stubs)
-          ifndef SUBSYSTEM_GRAPHICS_MODULES
-              SUBSYSTEM_GRAPHICS_MODULES = platform_graphics
+    ifeq ($(PLATFORM), linux_qte)
+        SUBSYSTEM_GRAPHICS_MODULES = gx_platform
+        SUBSYSTEM_IMAGE_MODULES = img_platform
+    else
+        ifeq ($(PLATFORM), stubs)
+            ifndef SUBSYSTEM_GRAPHICS_MODULES
+                  SUBSYSTEM_GRAPHICS_MODULES = gx_platform
+                  SUBSYSTEM_IMAGE_MODULES = img_platform
+            endif
+         else
+            SUBSYSTEM_GRAPHICS_MODULES = gx_putpixel
+            SUBSYSTEM_IMAGE_MODULES = img_putpixel
           endif
-      else
-          SUBSYSTEM_GRAPHICS_MODULES = putpixel
-      endif
     endif
 endif
 
 
 #####################################################################
-# Graphics util Subsystem
-# Description: graphics utility functions
+# Image decoding  Subsystem
+# Description: image decoding library
+#              image.img_putpixel and image.img_gci depend on it
 #####################################################################
 
-ifneq ($(PLATFORM), linux_gci)
-include $(SUBSYSTEM_LOWUI_DIR)/graphics_util/$(LIB_MAKE_FILE)
-
+#ifneq ($(SUBSYSTEM_IMAGE_MODULES), gx_platform) 
+    include $(SUBSYSTEM_LOWUI_DIR)/image_decode/$(LIB_MAKE_FILE)
+#endif
 
 #####################################################################
 # Platform graphics port  Subsystem
 # Description: platform dependent library
-#              graphics.platform_graphics depends on it
+#              graphics.gx_platform depends on it
 #####################################################################
 
-ifeq ($(SUBSYSTEM_GRAPHICS_MODULES), platform_graphics) 
+ifeq ($(SUBSYSTEM_GRAPHICS_MODULES), gx_platform) 
     include $(SUBSYSTEM_LOWUI_DIR)/platform_graphics_port/$(LIB_MAKE_FILE)
 endif
 
 #####################################################################
 # Graphics Subsystem 
-# Description: contains platform_graphics and putpixel implementations
+# Description: contains gx_platform and gx_putpixel implementations
 #####################################################################
-
+ifneq ($(SUBSYSTEM_GRAPHICS_MODULES), gx_gci)
 include $(SUBSYSTEM_LOWUI_DIR)/graphics/$(LIB_MAKE_FILE)
 endif
 
@@ -98,6 +105,21 @@ endif
 include $(SUBSYSTEM_LOWUI_DIR)/graphics_api/$(LIB_MAKE_FILE)
 
 
+#####################################################################
+# Image Subsystem 
+# Description: contains platform_graphics and putpixel implementations
+#####################################################################
+
+include $(SUBSYSTEM_LOWUI_DIR)/image/$(LIB_MAKE_FILE)
+
+#####################################################################
+# Image api Subsystem
+# Description: Java classes for lowlevelui and
+#              and corresponding kni implementations
+#####################################################################
+
+include $(SUBSYSTEM_LOWUI_DIR)/image_api/$(LIB_MAKE_FILE)
+
 
 ####################################################################
 $(MIDP_CLASSES_ZIP) :: $(SUBSYSTEM_GRAPHICSUTIL_JAVA_FILES)
@@ -107,24 +129,36 @@ SUBSYSTEM_LOWLEVELUI_JAVA_FILES = \
     $(SUBSYSTEM_GRAPHICSUTIL_JAVA_FILES)         \
     $(SUBSYSTEM_GRAPHICSAPI_JAVA_FILES)          \
     $(SUBSYSTEM_GRAPHICS_JAVA_FILES)             \
+    $(SUBSYSTEM_IMAGEAPI_JAVA_FILES)             \
+    $(SUBSYSTEM_IMAGE_JAVA_FILES)                \
+    $(SUBSYSTEM_IMAGEDCD_JAVA_FILES)             \
     $(SUBSYSTEM_PLATFORMGRAPHICSPORT_JAVA_FILES)
 
 SUBSYSTEM_LOWLEVELUI_I3TEST_JAVA_FILES = \
     $(SUBSYSTEM_GRAPHICSUTIL_I3TEST_JAVA_FILES)         \
     $(SUBSYSTEM_GRAPHICSAPI_I3TEST_JAVA_FILES)          \
     $(SUBSYSTEM_GRAPHICS_I3TEST_JAVA_FILES)             \
+    $(SUBSYSTEM_IMAGEAPI_I3TEST_JAVA_FILES)             \
+    $(SUBSYSTEM_IMAGE_I3TEST_JAVA_FILES)                \
+    $(SUBSYSTEM_IMAGEDCD_I3TEST_JAVA_FILES)             \
     $(SUBSYSTEM_PLATFORMGRAPHICSPORT_I3TEST_JAVA_FILES)
 
 SUBSYSTEM_LOWLEVELUI_NATIVE_FILES = \
     $(SUBSYSTEM_GRAPHICSUTIL_NATIVE_FILES)         \
     $(SUBSYSTEM_GRAPHICSAPI_NATIVE_FILES)          \
     $(SUBSYSTEM_GRAPHICS_NATIVE_FILES)             \
+    $(SUBSYSTEM_IMAGEAPI_NATIVE_FILES)             \
+    $(SUBSYSTEM_IMAGE_NATIVE_FILES)                \
+    $(SUBSYSTEM_IMAGEDCD_NATIVE_FILES)             \
     $(SUBSYSTEM_PLATFORMGRAPHICSPORT_NATIVE_FILES)
 
 SUBSYSTEM_LOWLEVELUI_EXTRA_INCLUDES = \
     $(SUBSYSTEM_GRAPHICSUTIL_EXTRA_INCLUDES)        \
     $(SUBSYSTEM_GRAPHICSAPI_EXTRA_INCLUDES)         \
     $(SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES)            \
+    $(SUBSYSTEM_IMAGEAPI_EXTRA_INCLUDES)            \
+    $(SUBSYSTEM_IMAGE_EXTRA_INCLUDES)               \
+    $(SUBSYSTEM_IMAGEDCD_EXTRA_INCLUDES)            \
     $(SUBSYSTEM_PLATFORMGRAPHICSPORT_EXTRA_INCLUDES) 
 
 
@@ -132,6 +166,9 @@ SUBSYSTEM_LOWLEVELUI_EXTRA_CFLAGS = \
     $(SUBSYSTEM_GRAPHICSUTIL_EXTRA_CFLAGS)          \
     $(SUBSYSTEM_GRAPHICSAPI_EXTRA_CFLAGS)           \
     $(SUBSYSTEM_GRAPHICS_EXTRA_CFLAGS)              \
+    $(SUBSYSTEM_IMAGEAPI_EXTRA_CFLAGS)              \
+    $(SUBSYSTEM_IMAGE_EXTRA_CFLAGS)                 \
+    $(SUBSYSTEM_IMAGEDCD_EXTRA_CFLAGS)              \
     $(SUBSYSTEM_PLATFORMGRAPHICSPORT_EXTRA_CFLAGS)
 
 
@@ -140,4 +177,6 @@ SUBSYSTEM_LOWLEVELUI_EXTRA_CFLAGS = \
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += \
     $(GRAPHICS_API_DIR)/classes \
-    $(GRAPHICS_DIR)/classes
+    $(GRAPHICS_DIR)/classes \
+    $(IMAGE_API_DIR)/classes \
+    $(IMAGE_DIR)/classes

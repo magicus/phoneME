@@ -35,7 +35,8 @@
 
 #include <midpResourceLimit.h>
 
-#include <gxutl_image.h>
+#include <imgdcd_image_util.h>
+#include <img_errorcodes.h>
 #include <gxpport_immutableimage.h>
 #include <gxpportqt_image.h>
 #include "gxpportqt_intern_graphics_util.h"
@@ -58,7 +59,7 @@ typedef struct {
 
 static
 bool load_raw(QImage** qimage,
-	     gxutl_image_buffer_raw* rawImageBuffer, unsigned int length,
+	     imgdcd_image_buffer_raw* rawImageBuffer, unsigned int length,
              jboolean isStatic, int* ret_Width, int* ret_Height);
 
 /**
@@ -80,7 +81,7 @@ bool load_raw(QImage** qimage,
 extern "C" void gxpport_createimmutable_from_mutable
 (gxpport_mutableimage_native_handle srcMutableImagePtr,
  gxpport_image_native_handle *newImmutableImagePtr,
- gxutl_native_image_error_codes* creationErrorPtr) {
+ img_native_error_codes* creationErrorPtr) {
 
     /* Convert from source QPixmap to destination QImage */
     QPixmap* srcPixmap = gxpportqt_get_mutableimage_pixmap(srcMutableImagePtr);
@@ -90,28 +91,28 @@ extern "C" void gxpport_createimmutable_from_mutable
     /* Check resource limit before copying */
     if (midpCheckResourceLimit(RSC_TYPE_IMAGE_IMMUT, rscSize) == 0) {
         /* Exceeds resource limit */
-        *creationErrorPtr  = GXUTL_NATIVE_IMAGE_RESOURCE_LIMIT;
+        *creationErrorPtr  = IMG_NATIVE_IMAGE_RESOURCE_LIMIT;
         return;
     }
 
     _Platform_ImmutableImage* immutableImage =
         (_Platform_ImmutableImage*)midpMalloc(sizeof(_Platform_ImmutableImage));
     if (immutableImage == NULL) {
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
         return;
     }
 
     immutableImage->qimage = new QImage(srcPixmap->convertToImage());
     if (NULL == immutableImage->qimage) {
 	midpFree(immutableImage);
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
         return;
     }
 
     if (immutableImage->qimage->isNull()) {
         delete immutableImage->qimage;
 	midpFree(immutableImage);
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
         return;    
     }
 
@@ -125,7 +126,7 @@ extern "C" void gxpport_createimmutable_from_mutable
     immutableImage->qpixmap = NULL;
 
     *newImmutableImagePtr = immutableImage;
-    *creationErrorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
 }
 
 extern "C" void gxpport_createimmutable_from_immutableregion
@@ -134,7 +135,7 @@ extern "C" void gxpport_createimmutable_from_immutableregion
  int src_width, int src_height,
  int transform,
  gxpport_image_native_handle *newImmutableImagePtr,
- gxutl_native_image_error_codes* creationErrorPtr) {
+ img_native_error_codes* creationErrorPtr) {
 
     _Platform_ImmutableImage* srcImmutableImage = 
       (_Platform_ImmutableImage*)srcImmutableImagePtr;
@@ -145,14 +146,14 @@ extern "C" void gxpport_createimmutable_from_immutableregion
     /* Check with resource limit */
     if (midpCheckResourceLimit(RSC_TYPE_IMAGE_IMMUT, rscSize) == 0) {
         /* Exceed Resource limit */
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_RESOURCE_LIMIT;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_RESOURCE_LIMIT;
         return;
     }
 
     _Platform_ImmutableImage* immutableImage =
       (_Platform_ImmutableImage*)midpMalloc(sizeof(_Platform_ImmutableImage));
     if (immutableImage == NULL) {
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
         return;
     }
 
@@ -163,14 +164,14 @@ extern "C" void gxpport_createimmutable_from_immutableregion
                                                        src_height));
     if (NULL == immutableImage->qimage) {
 	midpFree(immutableImage);
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
         return;
     }
 
     if (immutableImage->qimage->isNull()) {
         delete immutableImage->qimage;
 	midpFree(immutableImage);
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
         return;    
     }
 
@@ -188,7 +189,7 @@ extern "C" void gxpport_createimmutable_from_immutableregion
     immutableImage->qpixmap = NULL;
 
     *newImmutableImagePtr = immutableImage;
-    *creationErrorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
 }
 
 extern "C" void gxpport_createimmutable_from_mutableregion
@@ -197,7 +198,7 @@ extern "C" void gxpport_createimmutable_from_mutableregion
  int src_width, int src_height,
  int transform,
  gxpport_image_native_handle* newImmutableImagePtr,
- gxutl_native_image_error_codes* creationErrorPtr) {
+ img_native_error_codes* creationErrorPtr) {
 
     QPixmap *srcqpixmap =
     gxpportqt_get_mutableimage_pixmap(srcMutableImagePtr);
@@ -207,20 +208,20 @@ extern "C" void gxpport_createimmutable_from_mutableregion
     /* Check resource limit */
     if (midpCheckResourceLimit(RSC_TYPE_IMAGE_IMMUT, rscSize) == 0) {
         /* Exceed Resource limit */
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_RESOURCE_LIMIT;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_RESOURCE_LIMIT;
         return;
     }
 
     QImage srcQImage = srcqpixmap->convertToImage();
     if (srcQImage.isNull()) {
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
         return;
     }
 
     _Platform_ImmutableImage* immutableImage = 
       (_Platform_ImmutableImage*)midpMalloc(sizeof(_Platform_ImmutableImage));
     if (immutableImage == NULL) {
-	*creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+	*creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
 	return;
     }
 
@@ -230,14 +231,14 @@ extern "C" void gxpport_createimmutable_from_mutableregion
                                                        src_height));
     if (NULL == immutableImage->qimage) {
 	midpFree(immutableImage);
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
         return;
     }
 
     if (immutableImage->qimage->isNull()) {
         delete immutableImage->qimage;
 	midpFree(immutableImage);
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
         return;
     }
 
@@ -255,23 +256,23 @@ extern "C" void gxpport_createimmutable_from_mutableregion
     immutableImage->qpixmap = NULL;
     
     *newImmutableImagePtr = immutableImage;
-    *creationErrorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
 }
 
 extern "C" void gxpport_decodeimmutable_from_selfidentifying
 (unsigned char* srcBuffer, int length, 
  int* imgWidth, int* imgHeight,
  gxpport_image_native_handle *newImmutableImagePtr,
- gxutl_native_image_error_codes* creationErrorPtr) {
+ img_native_error_codes* creationErrorPtr) {
     MIDP_ERROR err;
-    gxutl_image_format format;
+    imgdcd_image_format format;
     unsigned int w, h;
 
-    err = gxutl_image_get_info(srcBuffer, (unsigned int)length,
+    err = imgdcd_image_get_info(srcBuffer, (unsigned int)length,
 			       &format, &w, &h);
 
-    if (err != MIDP_ERROR_NONE || format == GXUTL_IMAGE_FORMAT_UNSUPPORTED) {
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+    if (err != MIDP_ERROR_NONE || format == IMGDCD_IMAGE_FORMAT_UNSUPPORTED) {
+        *creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
         return;
     }
 
@@ -280,7 +281,7 @@ extern "C" void gxpport_decodeimmutable_from_selfidentifying
 
     if (midpCheckResourceLimit(RSC_TYPE_IMAGE_IMMUT, rscSize) == 0) {
         /* Exceed Resource limit */
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_RESOURCE_LIMIT;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_RESOURCE_LIMIT;
         return;
     }
 
@@ -289,17 +290,17 @@ extern "C" void gxpport_decodeimmutable_from_selfidentifying
     _Platform_ImmutableImage* immutableImage =
         (_Platform_ImmutableImage*)midpMalloc(sizeof(_Platform_ImmutableImage));
     if (immutableImage == NULL) {
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
         return;
     }
 
     switch(format) {
 
-    case GXUTL_IMAGE_FORMAT_JPEG:
-    case GXUTL_IMAGE_FORMAT_PNG:
+    case IMGDCD_IMAGE_FORMAT_JPEG:
+    case IMGDCD_IMAGE_FORMAT_PNG:
         immutableImage->qimage = new QImage();
         if (NULL == immutableImage->qimage) {
-            *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+            *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
             return;
         }
 
@@ -322,9 +323,9 @@ extern "C" void gxpport_decodeimmutable_from_selfidentifying
 
         break;
 
-    case GXUTL_IMAGE_FORMAT_RAW:
+    case IMGDCD_IMAGE_FORMAT_RAW:
         loadResult = load_raw(&immutableImage->qimage,
-                             (gxutl_image_buffer_raw*)srcBuffer, 
+                             (imgdcd_image_buffer_raw*)srcBuffer, 
                              (unsigned int)length, KNI_FALSE,
                              imgWidth, imgHeight);
 	immutableImage->marker = 5;
@@ -332,13 +333,13 @@ extern "C" void gxpport_decodeimmutable_from_selfidentifying
 
     default:
 	/* Shouldn't be here */
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
         return;
     }
 
     if (!loadResult) {
 	midpFree(immutableImage);
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_DECODING_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_DECODING_ERROR;
         return;
     }
         
@@ -351,7 +352,7 @@ extern "C" void gxpport_decodeimmutable_from_selfidentifying
     immutableImage->qpixmap = NULL;
 
     *newImmutableImagePtr = immutableImage;
-    *creationErrorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
 }
 
 extern "C" void gxpport_decodeimmutable_from_argb
@@ -359,7 +360,7 @@ extern "C" void gxpport_decodeimmutable_from_argb
  int width, int height,
  jboolean processAlpha,
  gxpport_image_native_handle* newImmutableImagePtr,
- gxutl_native_image_error_codes* creationErrorPtr) {
+ img_native_error_codes* creationErrorPtr) {
 
     // use bytes as is, QT images have the same binary data layout
     QImage qimage = QImage((unsigned char*)srcBuffer, 
@@ -369,7 +370,7 @@ extern "C" void gxpport_decodeimmutable_from_argb
                            QImage::IgnoreEndian);
 
     if (qimage.isNull()) {
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_DECODING_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_DECODING_ERROR;
         return;
     }
 
@@ -378,7 +379,7 @@ extern "C" void gxpport_decodeimmutable_from_argb
 
     if (midpCheckResourceLimit(RSC_TYPE_IMAGE_IMMUT, rscSize) == 0) {
         /* Exceed Resource limit */
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_RESOURCE_LIMIT;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_RESOURCE_LIMIT;
         return;
     }
 
@@ -387,7 +388,7 @@ extern "C" void gxpport_decodeimmutable_from_argb
     _Platform_ImmutableImage* immutableImage =
         (_Platform_ImmutableImage*)midpMalloc(sizeof(_Platform_ImmutableImage));
     if (immutableImage == NULL) {
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
         return;
     }
 
@@ -395,14 +396,14 @@ extern "C" void gxpport_decodeimmutable_from_argb
     immutableImage->qimage = new QImage(qimage.copy());
     if (NULL == immutableImage->qimage) {
 	midpFree(immutableImage);
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
         return;
     }
 
     if (immutableImage->qimage->isNull()) {
         delete immutableImage->qimage;
 	midpFree(immutableImage);
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
         return;
     }
 
@@ -416,7 +417,7 @@ extern "C" void gxpport_decodeimmutable_from_argb
     immutableImage->qpixmap = NULL;
 
     *newImmutableImagePtr = immutableImage;
-    *creationErrorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
 }
 
 extern "C" void gxpport_render_immutableimage
@@ -495,7 +496,7 @@ extern "C" void gxpport_get_immutable_argb
 (gxpport_image_native_handle immutableImagePtr,
  jint* rgbBuffer, int offset, int scanLength,
  int x, int y, int width, int height,
- gxutl_native_image_error_codes* errorPtr) {
+ img_native_error_codes* errorPtr) {
 
     _Platform_ImmutableImage* immutableImage = 
         (_Platform_ImmutableImage*)immutableImagePtr;
@@ -565,7 +566,7 @@ extern "C" void gxpport_get_immutable_argb
         
     }
 
-    *errorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    *errorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
 }
 
 
@@ -599,13 +600,13 @@ void gxpport_destroy_immutable(gxpport_image_native_handle imagePtr) {
 extern "C" void gxpport_decodeimmutable_to_platformbuffer
 (unsigned char* srcBuffer, long length, 
  unsigned char** ret_dataBuffer, long* ret_length,
- gxutl_native_image_error_codes* creationErrorPtr) {
+ img_native_error_codes* creationErrorPtr) {
 
-    gxutl_image_format format;
+    imgdcd_image_format format;
     MIDP_ERROR err;
     unsigned int w, h;
 
-    err = gxutl_image_get_info(srcBuffer, (unsigned int)length,
+    err = imgdcd_image_get_info(srcBuffer, (unsigned int)length,
 			       &format, &w, &h);
     
     switch (err) {
@@ -614,23 +615,23 @@ extern "C" void gxpport_decodeimmutable_to_platformbuffer
 	break; /* continue */
 
     case MIDP_ERROR_IMAGE_CORRUPTED:
-	*creationErrorPtr = GXUTL_NATIVE_IMAGE_DECODING_ERROR;
+	*creationErrorPtr = IMG_NATIVE_IMAGE_DECODING_ERROR;
 	return;
     
     default:
-	*creationErrorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+	*creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 	return;
     }
 		     
     switch (format) {
 
-    case GXUTL_IMAGE_FORMAT_RAW:
+    case IMGDCD_IMAGE_FORMAT_RAW:
         /* already in RAW format. make a copy */
 	{
 	    unsigned char* dataBuffer = (unsigned char*) midpMalloc(length);
             
 	    if (NULL == dataBuffer) {
-		*creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+		*creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
 	    } else {
                 
 		memcpy(dataBuffer, srcBuffer, length);
@@ -638,13 +639,13 @@ extern "C" void gxpport_decodeimmutable_to_platformbuffer
 		*ret_dataBuffer = dataBuffer;
 		*ret_length = length;
 
-		*creationErrorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
+		*creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
 	    }
 	}
         break;
 
-    case GXUTL_IMAGE_FORMAT_JPEG:
-    case GXUTL_IMAGE_FORMAT_PNG:
+    case IMGDCD_IMAGE_FORMAT_JPEG:
+    case IMGDCD_IMAGE_FORMAT_PNG:
         {
             QImage qimage;
             
@@ -654,7 +655,7 @@ extern "C" void gxpport_decodeimmutable_to_platformbuffer
                 int imgHeight = qimage.height();
                 
                 if ((0 == imgWidth) || (0 == imgHeight)) {
-                    *creationErrorPtr = GXUTL_NATIVE_IMAGE_DECODING_ERROR;
+                    *creationErrorPtr = IMG_NATIVE_IMAGE_DECODING_ERROR;
                 } else {
                     QImage image;
                     if (IMAGE_DEPTH != qimage.depth()) {
@@ -663,34 +664,34 @@ extern "C" void gxpport_decodeimmutable_to_platformbuffer
                         image = qimage;
                     }
                     
-                    *ret_length = offsetof(gxutl_image_buffer_raw, data)
+                    *ret_length = offsetof(imgdcd_image_buffer_raw, data)
 				+ image.numBytes();
 
-                    gxutl_image_buffer_raw *dataBuffer =
-			(gxutl_image_buffer_raw *) midpMalloc(*ret_length);
+                    imgdcd_image_buffer_raw *dataBuffer =
+			(imgdcd_image_buffer_raw *) midpMalloc(*ret_length);
                     
                     if (NULL == dataBuffer) {
-                        *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+                        *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
                     } else {
                         dataBuffer->width    = (unsigned int)imgWidth;
                         dataBuffer->height   = (unsigned int)imgHeight;
                         dataBuffer->hasAlpha = (unsigned int)image.hasAlphaBuffer();
                         
-                        memcpy(dataBuffer->header, gxutl_raw_header, 4);
+                        memcpy(dataBuffer->header, imgdcd_raw_header, 4);
                         memcpy(dataBuffer->data, image.bits(), image.numBytes());
                         
                         *ret_dataBuffer = (unsigned char *)dataBuffer;
-                        *creationErrorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
+                        *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
                     }
                 }
             } else {
-                *creationErrorPtr = GXUTL_NATIVE_IMAGE_DECODING_ERROR;
+                *creationErrorPtr = IMG_NATIVE_IMAGE_DECODING_ERROR;
             }
         }
         break;
     
     default:
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
         break;
 
     } /* switch (format) */
@@ -700,23 +701,23 @@ extern "C" void gxpport_loadimmutable_from_platformbuffer
 (unsigned char* srcBuffer, int length, jboolean isStatic,
  int* ret_imgWidth, int* ret_imgHeight,
  gxpport_image_native_handle *newImmutableImagePtr,
- gxutl_native_image_error_codes* creationErrorPtr) {
+ img_native_error_codes* creationErrorPtr) {
 
     int rscSize;
-    gxutl_image_buffer_raw* dataBuffer = (gxutl_image_buffer_raw*)srcBuffer;
+    imgdcd_image_buffer_raw* dataBuffer = (imgdcd_image_buffer_raw*)srcBuffer;
 
     /* Check resource limit */
     rscSize = ImgRegionRscSize(NULL, dataBuffer->width, dataBuffer->height);
     if (midpCheckResourceLimit(RSC_TYPE_IMAGE_IMMUT, rscSize) == 0) {
         /* Exceed Resource limit */
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_RESOURCE_LIMIT;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_RESOURCE_LIMIT;
         return;
     }
 
     _Platform_ImmutableImage* immutableImage =
         (_Platform_ImmutableImage*)midpMalloc(sizeof(_Platform_ImmutableImage));
     if (immutableImage == NULL) {
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_OUT_OF_MEMORY_ERROR;
         return;
     }
 
@@ -725,7 +726,7 @@ extern "C" void gxpport_loadimmutable_from_platformbuffer
                 length, isStatic,
                 ret_imgWidth, ret_imgHeight)) {
 	midpFree(immutableImage);
-        *creationErrorPtr = GXUTL_NATIVE_IMAGE_DECODING_ERROR;
+        *creationErrorPtr = IMG_NATIVE_IMAGE_DECODING_ERROR;
         return;
     }
 
@@ -739,7 +740,7 @@ extern "C" void gxpport_loadimmutable_from_platformbuffer
     immutableImage->qpixmap = NULL;
 
     *newImmutableImagePtr = immutableImage;
-    *creationErrorPtr = GXUTL_NATIVE_IMAGE_NO_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
 }
 
 
@@ -784,14 +785,14 @@ extern "C" QPixmap* gxpportqt_get_immutableimage_pixmap
  * @return ret_Height the height of the decoded image
  */
 static 
-bool load_raw(QImage** qimage, gxutl_image_buffer_raw* rawImageBuffer, 
+bool load_raw(QImage** qimage, imgdcd_image_buffer_raw* rawImageBuffer, 
 	      unsigned int length,
              jboolean isStatic, int* ret_Width, int* ret_Height) {
 
     bool retVal = FALSE;
     
     /* Check buffer size */
-    if (offsetof(gxutl_image_buffer_raw, data)
+    if (offsetof(imgdcd_image_buffer_raw, data)
 	+ rawImageBuffer->width * rawImageBuffer->height * 4
 	== length) {
 

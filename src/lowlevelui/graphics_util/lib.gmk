@@ -52,7 +52,6 @@ vpath % \
 # Include path for the sub-system
 #
 SUBSYSTEM_GRAPHICSUTIL_EXTRA_INCLUDES += \
-    -I$(GRAPHICS_UTIL_DIR)/reference/native \
     -I$(GRAPHICS_UTIL_DIR)/include
 
 # I3test files
@@ -65,7 +64,5 @@ endif
 
 # Native files for the subsystem
 #
-SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
-    gxutl_image_util.c \
-    gxutl_graphics_util.c
+SUBSYSTEM_GRAPHICS_NATIVE_FILES += 
 

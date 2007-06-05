@@ -40,13 +40,4 @@ GRAPHICS_API_MODULE_DIR = $(GRAPHICS_API_DIR)/graphics_gci
 #
 SUBSYSTEM_GRAPHICSAPI_JAVA_FILES += \
     $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Font.java \
-    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Graphics.java \
-    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Image.java \
-    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/game/Sprite.java \
-    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/game/TiledLayer.java
-
-# Additional include path 
-# (IMPL_NOTE remove this dependency)
-
-SUBSYSTEM_GRAPHICSAPI_EXTRA_INCLUDES += \
-    -I$(GRAPHICS_API_MODULE_DIR)/include
+    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Graphics.java

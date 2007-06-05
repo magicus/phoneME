@@ -53,52 +53,10 @@
 typedef struct Java_javax_microedition_lcdui_Graphics   java_graphics;
 
 /**
- * Structure representing the <tt>ImageData</tt> class.
- */
-typedef struct Java_javax_microedition_lcdui_ImageData java_imagedata;
-
-/**
  * Get a C structure representing the given <tt>Graphics</tt> class.
  */
 #define GXAPI_GET_GRAPHICS_PTR(handle)       (unhand(java_graphics,(handle)))
 
-/**
- * Get a C structure representing the given <tt>ImageData</tt> class.
- */
-#define GXAPI_GET_IMAGEDATA_PTR(handle) (unhand(java_imagedata,(handle)))
 
-/**
- * Get a C structure representing the given <tt>ImageData</tt> class.
- */
-#define GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(handle) \
-  GXAPI_GET_GRAPHICS_PTR(handle)->img != NULL ? \
-  GXAPI_GET_GRAPHICS_PTR(handle)->img->imageData : \
-  (java_imagedata*)NULL
-
-/**
- * Gets the clipping region of the given graphics object.
- *
- * @param G handle to the <tt>Graphics</tt> object
- * @param ARRAY native <tt>jshort</tt> array to save the clip data
- */
-#define GXAPI_GET_CLIP(G, ARRAY) \
-    ARRAY[0] = GXAPI_GET_GRAPHICS_PTR(G)->clipX1, \
-    ARRAY[1] = GXAPI_GET_GRAPHICS_PTR(G)->clipY1, \
-    ARRAY[2] = GXAPI_GET_GRAPHICS_PTR(G)->clipX2, \
-    ARRAY[3] = GXAPI_GET_GRAPHICS_PTR(G)->clipY2
-
-/**
- * Translate the pixel location according to the translation of
- * the given graphics object.
- *
- * @param G handle to the <tt>Graphics</tt> object
- * @param X variable representing the <tt>x</tt> coordinate to be translated;
- *        this macro sets the value of X
- * @param Y variable representing the <tt>y</tt> coordinate to be translated;
- *        this macro sets the value of Y
- */
-#define GXAPI_TRANSLATE(G, X, Y)  \
-    (X) += GXAPI_GET_GRAPHICS_PTR((G))->transX, \
-    (Y) += GXAPI_GET_GRAPHICS_PTR((G))->transY
 
 #endif /* _GXAPI_GRAPHICS_H_ */

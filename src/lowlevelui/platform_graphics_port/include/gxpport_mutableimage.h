@@ -35,7 +35,7 @@
  */
 
 #include <commonKNIMacros.h>
-#include <gxutl_image_errorcodes.h> 
+#include <img_errorcodes.h> 
 
 /**
  * Opaque handle to mutable image native representation.
@@ -61,7 +61,7 @@ void
 gxpport_create_mutable(
     gxpport_mutableimage_native_handle* newImagePtr,
     int  width, int height,
-    gxutl_native_image_error_codes* creationErrorPtr);
+    img_native_error_codes* creationErrorPtr);
 
 
 /**
@@ -136,7 +136,7 @@ void gxpport_get_mutable_argb(
      gxpport_mutableimage_native_handle nativePixmap,
      jint* rgbBuffer, int offset, int scanLength,
      int x, int y, int width, int height,
-     gxutl_native_image_error_codes* errorPtr);
+     img_native_error_codes* errorPtr);
 
 
 /**

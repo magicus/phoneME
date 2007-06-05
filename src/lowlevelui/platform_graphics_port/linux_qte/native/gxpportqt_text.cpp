@@ -31,7 +31,7 @@
 #include <qteapp_export.h>
 #include <midp_logging.h>
 
-#include <gxutl_graphics.h>
+#include <gxapi_constants.h>
 #include <gxpport_graphics.h>
 #include <gxpport_font.h>
 #include <gxpportqt_image.h>

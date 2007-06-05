@@ -40,7 +40,7 @@
 void gxpport_create_mutable(gxpport_mutableimage_native_handle *newImagePtr,
                                             int width, 
                                             int height,
-                                            gxutl_native_image_error_codes* 
+                                            img_native_error_codes* 
                                             creationErrorPtr) {
     REPORT_CALL_TRACE(LC_LOWUI, "LF:STUB:gxpport_create_mutable()\n");
 
@@ -50,7 +50,7 @@ void gxpport_create_mutable(gxpport_mutableimage_native_handle *newImagePtr,
     (void)height;
     
     /* Not yet implemented */
-    *creationErrorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+    *creationErrorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 }
 
 /**
@@ -137,7 +137,7 @@ gxpport_render_mutableregion(gxpport_mutableimage_native_handle srcImagePtr,
 void gxpport_get_mutable_argb(gxpport_mutableimage_native_handle imagePtr,
 			      jint* rgbBuffer, int offset, int scanLength,
 			      int x, int y, int width, int height,
-			      gxutl_native_image_error_codes* errorPtr) {
+			      img_native_error_codes* errorPtr) {
 
     REPORT_CALL_TRACE(LC_LOWUI, "LF:STUB:gxpport_get_mutable_argb()\n");
     
@@ -152,7 +152,7 @@ void gxpport_get_mutable_argb(gxpport_mutableimage_native_handle imagePtr,
     (void)height;
 
     /* Not yet implemented */
-    *errorPtr = GXUTL_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
+    *errorPtr = IMG_NATIVE_IMAGE_UNSUPPORTED_FORMAT_ERROR;
 }
 
 /**

@@ -46,13 +46,13 @@ SUBSYSTEM_GRAPHICSAPI_EXTRA_INCLUDES += \
 ifeq ($(PLATFORM), wince)
 
 SUBSYSTEM_GRAPHICSAPI_EXTRA_INCLUDES += \
-    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/putpixel/native
+    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/gx_putpixel/native
 endif
 
 # Include platform specific module
 #
 ifeq ($(PLATFORM), linux_gci)
-  include $(GRAPHICS_API_DIR)/graphics_gci/$(LIB_MAKE_FILE)
+  include $(GRAPHICS_API_DIR)/gxapi_gci/$(LIB_MAKE_FILE)
 else
-  include $(GRAPHICS_API_DIR)/reference/$(LIB_MAKE_FILE)
+  include $(GRAPHICS_API_DIR)/gxapi_native/$(LIB_MAKE_FILE)
 endif

@@ -42,9 +42,7 @@ GRAPHICS_DIR = $(SUBSYSTEM_LOWUI_DIR)/graphics
 
 # Java files for the sub-system
 #
-SUBSYSTEM_GRAPHICS_JAVA_FILES += \
-    $(GRAPHICS_DIR)/classes/javax/microedition/lcdui/AbstractImageData.java \
-    $(GRAPHICS_DIR)/classes/javax/microedition/lcdui/AbstractImageDataFactory.java
+SUBSYSTEM_GRAPHICS_JAVA_FILES +=
 
 # Include path for the sub-system
 #

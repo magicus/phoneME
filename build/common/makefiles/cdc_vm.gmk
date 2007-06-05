@@ -131,6 +131,7 @@ BTCLASSES_ZIP = ${CDC_DIST_DIR}/btclasses.zip
 MIDP_ROMSTRUCTS_CLASSES += \
 	javax.microedition.lcdui.Graphics \
 	javax.microedition.lcdui.Image \
+	javax.microedition.lcdui.ImageData \
 	javax.microedition.lcdui.Font \
 	java.lang.String \
 	com.sun.midp.rms.RecordStoreFile \
@@ -138,10 +139,6 @@ MIDP_ROMSTRUCTS_CLASSES += \
 	com.sun.midp.io.j2me.storage.RandomAccessStream \
 	javax.microedition.lcdui.game.GameCanvas
 
-ifneq ($(PLATFORM), linux_gci)
-MIDP_ROMSTRUCTS_CLASSES += \
-	javax.microedition.lcdui.ImageData
-endif
 
 ROMSTRUCTS_H = $(MIDP_OUTPUT_DIR)/ROMStructs.h
 

@@ -35,7 +35,7 @@
 #include <midpJar.h>
 #include <suitestore_task_manager.h>
 #include <midp_constants_data.h>
-#include <gx_image.h>
+#include <img_image.h>
 #include <midpUtilKni.h>
 
 /**
@@ -133,7 +133,7 @@ static jboolean png_action(const pcsl_string * entry) {
     do {
         pngBufLen = midpGetJarEntry(handle, entry, &pngBufPtr);
 
-        if (gx_decode_data2cache(pngBufPtr, pngBufLen,
+        if (img_decode_data2cache(pngBufPtr, pngBufLen,
                 &nativeBufPtr, &nativeBufLen) != MIDP_ERROR_NONE) {
             break;
         }
