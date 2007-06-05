@@ -250,7 +250,7 @@ void img_get_argb(const java_imagedata * srcImageDataPtr,
   PIXEL *srcPixelData;
   ALPHA *srcAlphaData;
 
-  if (getImageData(srcImageDataPtr, &srcWidth, &srcHeight, 
+  if (imggci_get_image_data(srcImageDataPtr, &srcWidth, &srcHeight, 
                     &srcPixelData, &srcAlphaData) == KNI_TRUE) {
 
     // rgbData[offset + (a - x) + (b - y) * scanlength] = P(a, b);
