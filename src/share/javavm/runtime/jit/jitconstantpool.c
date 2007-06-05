@@ -206,14 +206,18 @@ CVMJITgetRuntimeConstantReference(
     CVMJITresetSymbolName(con);
 
 #ifdef CVM_JIT_USE_FP_HARDWARE
-    if (isFloat && logicalAddress < con->earliestFPConstantRefPC) {
-	/* See the farthest away constant reference */
-	con->earliestFPConstantRefPC = logicalAddress;
+    if (isFloat) {
+	if (logicalAddress < con->earliestFPConstantRefPC) {
+	    /* See the farthest away constant reference */
+	    con->earliestFPConstantRefPC = logicalAddress;
+	}
     } else
 #endif
-    if (logicalAddress < con->earliestConstantRefPC) {
-	/* See the farthest away constant reference */
-	con->earliestConstantRefPC = logicalAddress;
+    {
+	if (logicalAddress < con->earliestConstantRefPC) {
+	    /* See the farthest away constant reference */
+	    con->earliestConstantRefPC = logicalAddress;
+	}
     }
     return 0;
 }
