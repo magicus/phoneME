@@ -27,9 +27,6 @@
 #ifndef _GX_IMAGE_H_
 #define _GX_IMAGE_H_
 
-#include <commonKNIMacros.h>
-#include <midpError.h>
-
 #include <imgapi_image.h>
 
 

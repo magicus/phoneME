@@ -27,7 +27,6 @@
 #ifndef _IMG_IMAGE_H_
 #define _IMG_IMAGE_H_
 
-#include <commonKNIMacros.h>
 #include <midpError.h>
 
 #include <img_errorcodes.h>

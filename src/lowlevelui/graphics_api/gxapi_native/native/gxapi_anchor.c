@@ -25,6 +25,7 @@
  */
 
 #include <gxapi_constants.h>
+#include <kni.h>
 
 /**
  * @file

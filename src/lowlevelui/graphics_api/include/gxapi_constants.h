@@ -27,8 +27,6 @@
 #ifndef _GXAPI_CONSTANTS_H_
 #define _GXAPI_CONSTANTS_H_
 
-#include <kni.h>
-
 
 /**
  * @file
