@@ -59,6 +59,16 @@ WIN_GET_HANDLE(HANDLE fdd)
 #define WIN_GET_HANDLE(fdd)  (fdd)
 #endif
 
+#ifdef WINCE
+#define PLATFORM_PATH(p_)   (\
+    (((p_)[0] == 'c' || (p_)[0] == 'C') \
+        && (p_)[1] == ':' && (p_)[2] == '\\') \
+    ? (p_) + 2 : (p_)\
+)
+#else
+#define PLATFORM_PATH(p_)   (p_)
+#endif
+
 void WIN32ioInit()
 {
 #ifdef WINCE
@@ -255,11 +265,11 @@ CVMioFileType(const char *path)
 #ifdef WINCE
 {
   WCHAR *wc = createWCHAR(path);
-  attr = GetFileAttributes(wc); 
+  attr = GetFileAttributes(PLATFORM_PATH(wc)); 
   free(wc); 
 }
 #else
-    attr = GetFileAttributesA(path);
+    attr = GetFileAttributesA(PLATFORM_PATH(path));
 #endif
 
   if (attr == 0xFFFFFFFF) {
@@ -319,9 +329,9 @@ CVMioOpen(const char *name, CVMInt32 openMode,
 
 	if (fdIndex == -1)
 		return -1;
-
+    
 	wc = createWCHAR(name);
-	fdTable[fdIndex] = CreateFile(wc, mode, 
+	fdTable[fdIndex] = CreateFile(PLATFORM_PATH(wc), mode, 
 							FILE_SHARE_READ | FILE_SHARE_WRITE,
 							0, cFlag, FILE_ATTRIBUTE_NORMAL, 0);
 	if (fdTable[fdIndex] == INVALID_HANDLE_VALUE) {
@@ -332,7 +342,7 @@ CVMioOpen(const char *name, CVMInt32 openMode,
     free(wc);
 }
 #else
-	fd = CreateFileA(name, mode, FILE_SHARE_READ | FILE_SHARE_WRITE,
+	fd = CreateFileA(PLATFORM_PATH(name), mode, FILE_SHARE_READ | FILE_SHARE_WRITE,
                              0, cFlag, FILE_ATTRIBUTE_NORMAL, 0);
 	if (fd == INVALID_HANDLE_VALUE)
 		return -1;
