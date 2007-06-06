@@ -71,6 +71,16 @@
 #define END_WIN32_STRING  } 
 #endif
 
+#ifdef WINCE
+#define PLATFORM_PATH(p_)   (\
+    (((p_)[0] == 'c' || (p_)[0] == 'C') \
+        && (p_)[1] == ':' && (p_)[2] == '\\') \
+    ? (p_) + 2 : (p_)\
+)
+#else
+#define PLATFORM_PATH(p_)   (p_)
+#endif
+
 static struct {
     jfieldID path;
 } ids;
@@ -135,7 +145,7 @@ Java_java_io_WinNTFileSystem_getBooleanAttributes(JNIEnv *env, jobject this,
         if (pathbuf != 0) {                    
           pathbuf[0] = L'\0';
           wcscpy(pathbuf, L"\\\\?\\\0");
-          wcscat(pathbuf, path);
+          wcscat(pathbuf, PLATFORM_PATH(path));
           // We need to null terminate the unicode string here.
           pathbuf[pathlen + 4] = L'\0';
         }
@@ -143,7 +153,7 @@ Java_java_io_WinNTFileSystem_getBooleanAttributes(JNIEnv *env, jobject this,
         pathbuf = (WCHAR*)malloc((pathlen + 6) * 2);
         if (pathbuf != 0) {
           pathbuf[0] = L'\0';
-          wcscpy(pathbuf, path);
+          wcscpy(pathbuf, PLATFORM_PATH(path));
           // We need to null terminate the unicode string here.
           pathbuf[pathlen] = L'\0';
         }
@@ -194,13 +204,13 @@ JNICALL Java_java_io_WinNTFileSystem_checkAccess(JNIEnv *env, jobject this,
             if (pathbuf != 0) {                    
               pathbuf[0] = L'\0';
               wcscpy(pathbuf, L"\\\\?\\\0");
-              wcscat(pathbuf, path);
+              wcscat(pathbuf, PLATFORM_PATH(path));
               // We need to null terminate the unicode string here.
               pathbuf[pathlen + 4] = L'\0';
             }
           } else {
             pathbuf[0] = L'\0';
-            wcscpy(pathbuf, path);
+            wcscpy(pathbuf, PLATFORM_PATH(path));
             // We need to null terminate the unicode string here.
             pathbuf[pathlen] = L'\0';
           }
@@ -223,7 +233,7 @@ Java_java_io_WinNTFileSystem_getLastModifiedTime(JNIEnv *env, jobject this,
         LARGE_INTEGER modTime;
         FILETIME t;
         HANDLE h = CreateFileW(
-            path,
+            PLATFORM_PATH(path),
             /* Device query access */
             0,
             /* Share it */
@@ -256,8 +266,31 @@ Java_java_io_WinNTFileSystem_getLength(JNIEnv *env, jobject this, jobject file)
     WITH_UNICODE_PATH(env, file, ids.path, path) {
 #ifndef WINCE
         struct _stati64 sb;
-        if (_wstati64(path, &sb) == 0) {
+        if (_wstati64(PLATFORM_PATH(path), &sb) == 0) {
             rv = sb.st_size;
+        }
+#else
+        DWORD filesize_lo, filesize_hi;
+        HANDLE h = CreateFileW(
+            PLATFORM_PATH(path),
+            /* Device query access */
+            GENERIC_READ,
+            /* Share it */
+            FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            /* No security attributes */
+            NULL,
+            /* Open existing or fail */
+            OPEN_EXISTING,
+            /* Backup semantics for directories */
+            FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS,
+            /* No template file */
+            NULL);
+        if (h != INVALID_HANDLE_VALUE) {
+            filesize_lo = GetFileSize(h, &filesize_hi);
+            if (filesize_lo != 0xFFFFFFFF) {
+                rv = (filesize_hi << 32) | filesize_lo;
+            }
+            CloseHandle(h);
         }
 #endif
     } END_UNICODE_PATH(env, path);
@@ -281,13 +314,13 @@ Java_java_io_WinNTFileSystem_createFileExclusively(JNIEnv *env, jclass cls,
             if (pathbuf != 0) {
                 pathbuf[0] = L'\0';
                 wcscpy(pathbuf, L"\\\\?\\\0");
-                wcscat(pathbuf, ps);
+                wcscat(pathbuf, PLATFORM_PATH(ps));
             }
         } else {
             pathbuf = (WCHAR*)malloc((pathlen + 6) * 2);
             if (pathbuf != 0) {
                 pathbuf[0] = L'\0';
-                wcscpy(pathbuf, ps);
+                wcscpy(pathbuf, PLATFORM_PATH(ps));
             }
         }
     } END_UNICODE_STRING(env, ps);
@@ -325,14 +358,14 @@ removeFileOrDirectory(const jchar *path)
     /* Returns 0 on success */ 
     DWORD a;
 
-    SetFileAttributesW(path, 0);
-    a = GetFileAttributesW(path);
+    SetFileAttributesW(PLATFORM_PATH(path), 0);
+    a = GetFileAttributesW(PLATFORM_PATH(path));
     if (a == ((DWORD)-1)) {
         return 1;
     } else if (a & FILE_ATTRIBUTE_DIRECTORY) {
-        return !RemoveDirectoryW(path);
+        return !RemoveDirectoryW(PLATFORM_PATH(path));
     } else {
-        return !DeleteFileW(path);
+        return !DeleteFileW(PLATFORM_PATH(path));
     }
 }
 
@@ -351,13 +384,13 @@ Java_java_io_WinNTFileSystem_delete0(JNIEnv *env, jobject this, jobject file)
             if (pathbuf != 0) {
                 pathbuf[0] = L'\0';
                 wcscpy(pathbuf, L"\\\\?\\\0");
-                wcscat(pathbuf, ps);
+                wcscat(pathbuf, PLATFORM_PATH(ps));
             }
         } else {
             pathbuf = (WCHAR*)malloc((pathlen + 6) * 2);
             if (pathbuf != 0) {
                 pathbuf[0] = L'\0';
-                wcscpy(pathbuf, ps);
+                wcscpy(pathbuf, PLATFORM_PATH(ps));
             }
         }
     } END_UNICODE_PATH(env, ps);
@@ -444,7 +477,7 @@ Java_java_io_WinNTFileSystem_list(JNIEnv *env, jobject this, jobject file)
             errno = ENOMEM;
             return NULL;
         }
-        wcscpy(search_path, path);
+        wcscpy(search_path, PLATFORM_PATH(path));
     } END_UNICODE_PATH(env, path);
     fattr = GetFileAttributesW(search_path);
     if (fattr == ((DWORD)-1)) {
@@ -539,13 +572,13 @@ Java_java_io_WinNTFileSystem_createDirectory(JNIEnv *env, jobject this,
             if (pathbuf != 0) {
                 pathbuf[0] = L'\0';
                 wcscpy(pathbuf, L"\\\\?\\\0");
-                wcscat(pathbuf, ps);
+                wcscat(pathbuf, PLATFORM_PATH(ps));
             }
         } else {
             pathbuf = (WCHAR*)malloc((pathlen + 6) * 2);
             if (pathbuf != 0) {
                 pathbuf[0] = L'\0';
-                wcscpy(pathbuf, ps);
+                wcscpy(pathbuf, PLATFORM_PATH(ps));
             }
         }
     } END_UNICODE_PATH(env, ps);
@@ -575,7 +608,7 @@ Java_java_io_WinNTFileSystem_rename0(JNIEnv *env, jobject this, jobject from,
 
     WITH_UNICODE_PATH(env, from, ids.path, fromPath) {
         WITH_UNICODE_PATH(env, to, ids.path, toPath) {
-            if (_wrename(fromPath, toPath) == 0) {
+            if (_wrename(PLATFORM_PATH(fromPath), PLATFORM_PATH(toPath)) == 0) {
                 rv = JNI_TRUE;
             }
         } END_UNICODE_PATH(env, toPath);
@@ -592,7 +625,7 @@ Java_java_io_WinNTFileSystem_setLastModifiedTime(JNIEnv *env, jobject this,
 
     WITH_UNICODE_PATH(env, file, ids.path, path) {
         HANDLE h;
-        h = CreateFileW(path, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+        h = CreateFileW(PLATFORM_PATH(path), GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
                    FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS, 0);
         if (h != INVALID_HANDLE_VALUE) {
             LARGE_INTEGER modTime;
@@ -619,7 +652,7 @@ Java_java_io_WinNTFileSystem_setReadOnly(JNIEnv *env, jobject this,
 
     WITH_UNICODE_PATH(env, file, ids.path, path) {
         DWORD a;
-        a = GetFileAttributesW(path);
+        a = GetFileAttributesW(PLATFORM_PATH(path));
         if (a != ((DWORD)-1)) {
             if (SetFileAttributesW(path, a | FILE_ATTRIBUTE_READONLY))
             rv = JNI_TRUE;
