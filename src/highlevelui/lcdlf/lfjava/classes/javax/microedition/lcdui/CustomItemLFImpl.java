@@ -409,6 +409,7 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
             }
             g.restoreMIDPRuntimeGC();
         }
+        g.translate(-contentBounds[X], -contentBounds[Y]);
 
     }
 

@@ -1880,10 +1880,10 @@ public class Graphics {
         systemClipX2 = clipX2;
         systemClipY2 = clipY2;
 
-        // Preserve the translation system
-        translate(systemX, systemY);
         ax = getTranslateX();
         ay = getTranslateY();
+        // Preserve the translation system
+        translate(systemX, systemY);
     }
 
     /**
