@@ -1,7 +1,7 @@
 #
 # @(#)README.txt	1.7 06/10/25
 # 
-# Copyright  2006 Sun Microsystems, Inc. All rights reserved.
+# Copyright  2006  Sun Microsystems, Inc. All rights reserved.
 # 
 
 - Compile classes in directory A and B.

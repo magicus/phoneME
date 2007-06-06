@@ -1,7 +1,7 @@
 #
 # @(#)classesList.txt	1.4 06/10/25
 #
-# Copyright  2006 Sun Microsystems, Inc. All rights reserved.
+# Copyright  2006  Sun Microsystems, Inc. All rights reserved.
 #
 # Classes that can be pre-initialized for sharing. From running 
 # SpecJvm, eembc, embedded CaffeineMark, KBench, HelloWorld.
