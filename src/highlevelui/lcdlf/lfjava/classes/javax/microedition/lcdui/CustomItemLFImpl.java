@@ -388,22 +388,17 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
             clipH = g.getClipHeight();
             clipW = g.getClipWidth();
 
-            g.clipRect(0, 0, contentBounds[WIDTH], contentBounds[HEIGHT]);
-
-            // IMPL NOTES: We need to remember translation and clipping
-            // and restore it after this.paint (stroke as well)
-            // Color does not have to be reset since it is always set
-            // Font??
-            g.setColor(0);
-
-            g.setFont(Font.getDefaultFont());
-
             w = contentBounds[WIDTH];
             h = contentBounds[HEIGHT];
         }
 
         if (clipY + clipH >= 0 && clipY < contentBounds[HEIGHT] &&
             clipX + clipW >= 0 && clipX < contentBounds[WIDTH]) {
+
+            // We prevent the CustomItem from drawing outside the bounds.
+            g.preserveMIDPRuntimeGC(0, 0, contentBounds[WIDTH], contentBounds[HEIGHT]);
+            // Reset the graphics context
+            g.resetGC();
 
             synchronized (Display.calloutLock) {
                 try {
@@ -412,9 +407,10 @@ class CustomItemLFImpl extends ItemLFImpl implements CustomItemLF {
                     Display.handleThrowable(thr);
                 }
             }
+            g.restoreMIDPRuntimeGC();
         }
-
         g.translate(-contentBounds[X], -contentBounds[Y]);
+
     }
 
     /**
