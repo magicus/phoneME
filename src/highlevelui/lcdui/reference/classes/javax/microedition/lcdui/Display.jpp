@@ -2818,7 +2818,7 @@ public class Display {
             // Chameleon handles commands on the event thread as caused
             // by a key press or pen tap on the soft button layer
             // #else
-
+            window.handleCommandEvent(cmdId);
             /**
              * Special processing for system menu:
              * open menu if got approptiate command,

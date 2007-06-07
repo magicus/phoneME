@@ -466,8 +466,16 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         if (cmd == null) {
             return;
         }
-        dismissMenu();
+//ifndef USE_NATIVE_MENU
+        //dismissMenu();
+//endif
         processCommand(cmd);
+    }
+
+    public void commandSelected(int cmdPos) {
+        if (soft2!=null && cmdPos>=0 && cmdPos <soft2.length) {
+            commandSelected(soft2[cmdPos]);
+        }
     }
 
     /**
@@ -578,6 +586,8 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
             
             if (soft2.length > 1 ||
                 subMenu != null) {
+// ifndef USE_NATIVE_MENU
+/*	    
                 if (menuLayer == null) {
                     initMenu();
                 }
@@ -593,7 +603,8 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                 }
                 
                 requestRepaint();
-
+*/
+// endif
             } else if (soft2.length == 1) {
                 // command action
                 processCommand(soft2[0]);
@@ -720,6 +731,19 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         } else {
             labels[1] = SoftButtonSkin.TEXT_MENUCMD;
         }
+  //ifdef USE_NATIVE_MENU
+          if (soft2 != null && soft2.length > 1) {
+              //soft2.length == 1 means we don't need a popup menu.
+              setNativePopupMenu(soft2);
+          } else {
+              setNativePopupMenu(null);
+          }
+  // endif
+  // ifdef USE_NATIVE_SOFTBUTTON
+          for (int i = 0; i < SoftButtonSkin.NUM_BUTTONS; i++) {
+              setNativeSoftButton(i, labels[i]);
+          }
+  // endif
         addDirtyRegion();
         requestRepaint();
     }
@@ -801,7 +825,8 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
      * @param g the graphics context to be updated
      */
     protected void paintBody(Graphics g) {
-
+//ifndef USE_NATIVE_MENU
+/*
         g.setFont(SoftButtonSkin.FONT);
 
 
@@ -837,6 +862,8 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
                     SoftButtonSkin.BUTTON_SHD_ALIGN, buttonw);
             g.translate(-buttonx, -buttony);
         }
+*/
+//endif        
     }
 
     /**
@@ -887,5 +914,12 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
             menuLayer.update(layers);
         }
     }
+
+// ifdef USE_NATIVE_MENU
+    private native void setNativePopupMenu(Command[] popMenu);
+// endif
+// ifdef USE_NATIVE_SOFTBUTTON
+    private native void setNativeSoftButton(int index, String label);
+// endif    
 }
 

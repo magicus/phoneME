@@ -83,11 +83,6 @@ KNIDECL(com_sun_midp_chameleon_layers_SoftButtonLayer_setNativeSoftButton) {
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_chameleon_layers_SoftButtonLayer_setNativePopupMenu) {
-/** 
- * IMPL_NOTE: The events from the menu are not transfer up to java without displaying and
- * addition menu.  Disable this feature for now
- */
-#if 0
     int i;
     int numMenus = 0;
     jchar* str;
@@ -157,16 +152,6 @@ KNIDECL(com_sun_midp_chameleon_layers_SoftButtonLayer_setNativePopupMenu) {
         }
     }
     KNI_EndHandles();
-#endif
-    while (DeleteMenu(hmenuPopup, 0, MF_BYPOSITION)) {;}
-    if (!AppendMenu(hmenuPopup, MF_STRING, ID_DYNAMIC_MENU, TEXT("Menu"))) {
-        NKDbgPrintfW(TEXT("Append Menu Failed\n"));              
-    }
-    if (hwndMenuBar != hwndMenuBarPopup) {
-        ShowWindow(hwndMenuBar, SW_HIDE);
-        hwndMenuBar = hwndMenuBarPopup;
-        ShowWindow(hwndMenuBar, SW_SHOW);
-    }
     KNI_ReturnVoid();
 }
 

@@ -819,5 +819,9 @@ public class MIDPWindow extends CWindow {
                 break;
         }
     }
+
+    public void handleCommandEvent(int cmdPos) {
+        if (mainLayers[BTN_LAYER] != null)  ((SoftButtonLayer)mainLayers[BTN_LAYER]).commandSelected(cmdPos);
+    }    
 }
 
