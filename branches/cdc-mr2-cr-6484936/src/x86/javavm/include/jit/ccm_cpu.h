@@ -1,27 +1,28 @@
 /*
  * @(#)ccm_cpu.h	1.5 06/10/23
  * 
- * Portions Copyright  2000-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Portions Copyright  2000-2006 Sun Microsystems, Inc. All Rights
+ * Reserved.  Use is subject to license terms.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #ifndef _X86_CCM_CPU_H
@@ -60,10 +61,10 @@
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_DDIV
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_DREM
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_DNEG
-#undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_I2L
+#define CVMCCM_HAVE_PLATFORM_SPECIFIC_I2L
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_I2F
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_I2D
-#undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_L2I
+#define CVMCCM_HAVE_PLATFORM_SPECIFIC_L2I
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_L2F
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_L2D
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_F2I
@@ -73,8 +74,7 @@
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_D2L
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_D2F
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_LCMP
-#undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_FCMPL
-#undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_FCMPG
+#undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_FCMP
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_DCMPL
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_DCMPG
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_THROW_CLASS

@@ -211,11 +211,11 @@ public final class CVM {
 		}
 		// continue with VM execution
 	    } else if (args[i].startsWith("-XbuildOptions")) {
-		Version.printBuildOptions();
+		printBuildOptions();
 		parseStatus = ARG_PARSE_EXITVM; // Don't parse any more
 		return parseStatus;
 	    } else if (args[i].startsWith("-XshowBuildOptions")) {
-		Version.printBuildOptions();
+		printBuildOptions();
 		// continue with VM execution
 	    } else if (args[i].startsWith("-Xcvm") 
                        || args[i].startsWith("-Xjar")
@@ -861,6 +861,16 @@ public final class CVM {
     public native static boolean simpleLockGrab(Object lockObj);
     public native static void simpleLockRelease(Object lockObj);
 
+    /**
+     * Prints build options used for this build.
+     * Called by "-XbuildOptions and -XshowBuildOptions command line options.
+     */
+    public static void printBuildOptions() {
+	System.err.print(getBuildOptionString(null));
+    }
+    // NOTE: The dummy argument is just a convenient way to reserve space on
+    // stack for the return value of this CNI method.
+    private static native String getBuildOptionString(Object dummy);
     /*
      * Returns the current value of the most precise available system
      * timer, in nanoseconds.

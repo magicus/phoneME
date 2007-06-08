@@ -1,7 +1,7 @@
 #
 # @(#)readme.txt	1.9 06/10/25 
 #
-# Copyright  2006 Sun Microsystems, Inc. All rights reserved.
+# Copyright  2006  Sun Microsystems, Inc. All rights reserved.
 #
 
 This version of the JPDA has been modified from the standard
