@@ -32,8 +32,6 @@ empty:=
 comma:= ,
 space:= $(empty) $(empty)
 
-ABSPATH = $(shell cd $(1); echo `pwd`)
-
 #
 # Setup HOST_OS, HOST_CPU_FAMILY, and HOST_DEVICE. These are used
 # to assist in locating the proper tools to use.
@@ -158,12 +156,6 @@ endif
 CVM_HOST 	?= $(HOST_CPU_FAMILY)-$(HOST_DEVICE)-$(HOST_OS)
 CVM_TARGET	= $(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)
 
-# COMPONENTS_DIR is the directory that all the components are located in,
-# such as midp, pcsl, and jump. It is used for providing default locations
-# for directories like MIDP_DIR and JUMP_DIR. It must be an absolute path.
-ifndef COMPONENTS_DIR
-COMPONENTS_DIR     := $(call ABSPATH, ../../..)
-endif
 
 # Set overriding values:
 
@@ -363,8 +355,10 @@ CVM_BUILD_TOP := $(CVM_TOP)/build/$(CVM_TARGET)/$(CVM_BUILD_SUBDIR_NAME)
 CVM_LIBDIR    := $(CVM_BUILD_TOP)/lib
 
 CVM_TOP_ABS	  := $(call ABSPATH,$(CVM_TOP))
-CVM_BUILD_TOP_ABS := $(CVM_TOP_ABS)/build/$(CVM_TARGET)/$(CVM_BUILD_SUBDIR_NAME)
+CVM_BUILD_TOP_ABS := $(call ABSPATH,$(CVM_BUILD_TOP))
 CVM_LIBDIR_ABS    := $(CVM_BUILD_TOP_ABS)/lib
+
+PROFILE_DIR       ?= $(CVM_TOP)
 
 # Optional Package names
 ifneq ($(strip $(OPT_PKGS)),)
@@ -387,9 +381,9 @@ endif
 #
 # Include id makefiles.
 #
-include ../share/id_$(J2ME_CLASSLIB).mk
+include $(PROFILE_DIR)/build/share/id_$(J2ME_CLASSLIB).mk
 ifneq ($(J2ME_PLATFORM),)
--include ../share/id_$(J2ME_PLATFORM).mk
+-include $(PROFILE_DIR)/build/share/id_$(J2ME_PLATFORM).mk
 endif 
 # This is for identifying binary products, like Personal Profile for Zaurus
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/id_$(J2ME_CLASSLIB).mk
@@ -446,7 +440,7 @@ CVM_PROP_JAVA_VM_SPEC_NAME	= "Java Virtual Machine Specification"
 CVM_PROP_JAVA_VM_SPEC_VERSION	= "1.0"
 CVM_PROP_JAVA_VM_SPEC_VENDOR	= "Sun Microsystems Inc."
 #   used in src/$(CVM_TARGET)/javavm/runtime/java_props_md.c
-CVM_CLASSLIB_JAR_NAME		= "$(J2ME_CLASSLIB)$(OPT_PKGS_NAME).jar"
+CVM_CLASSLIB_JAR_NAME	       ?= "$(J2ME_CLASSLIB)$(OPT_PKGS_NAME).jar"
 #   used in src/share/javavm/runtime/utils.c
 CVM_JARFILES			= CVM_CLASSLIB_JAR_NAME
 
@@ -485,7 +479,7 @@ CVM_BUILD_DEF_VARS += \
 # be put into. Add in the optional package name.
 #
 LIB_CLASSESDIR	= $(CVM_BUILD_TOP)/$(J2ME_CLASSLIB)$(OPT_PKGS_NAME)_classes
-LIB_CLASSESJAR	= $(CVM_LIBDIR)/$(J2ME_CLASSLIB)$(OPT_PKGS_NAME).jar
+LIB_CLASSESJAR ?= $(CVM_LIBDIR_ABS)/$(J2ME_CLASSLIB)$(OPT_PKGS_NAME).jar
 
 #
 # command line flags
@@ -703,6 +697,12 @@ endif
 # ant much more verbose.
 ifneq ($(USE_VERBOSE_MAKE), true)
 CVM_ANT_OPTIONS		+= -q
+endif
+
+# Set USE_VERBOSE_JAVAC=true to get a verbose dump on how javac is compiling
+# the Java classes.
+ifeq ($(USE_VERBOSE_JAVAC), true)
+JAVAC_OPTIONS      	+= -verbose
 endif
 
 ifneq ($(CVM_DEBUG), true)
@@ -1745,7 +1745,6 @@ CVM_SHAREOBJS_SPACE += \
 	ResourceBundle.o \
 	String.o \
 	Inflater.o \
-	Version.o \
 	Vector.o \
 	StringBuffer.o
 
@@ -1868,7 +1867,11 @@ CVM_MIMEDIR	 = $(CVM_TOP)/src/$(TARGET_OS)/lib
 CVM_MIMEDATAFILE = $(CVM_LIBDIR)/content-types.properties
 
 # Name of the cvm binary
-CVM    = cvm
+ifeq ($(CVM_BUILD_SO),true)
+CVM             = $(LIB_PREFIX)cvm$(LIB_POSTFIX)
+else
+CVM             = cvm
+endif
 
 ##############################################################
 # Locate the tools.
@@ -2119,6 +2122,13 @@ SO_LINK_CMD 	= $(AT)$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $^
 JAVAC_CMD	= $(CVM_JAVAC) $(JAVAC_OPTIONS)
 JAR_CMD		= $(CVM_JAR)
 JAVA_CMD	= $(CVM_JAVA)
+
+ifeq ($(CVM_BUILD_SO),true)
+CVM_LINK_CMD   = $(SO_LINK_CMD)
+else
+CVM_LINK_CMD   = $(LINK_CMD)
+endif
+
 
 #
 # Standard classpath for libclasses compilation

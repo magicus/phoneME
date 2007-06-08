@@ -58,7 +58,7 @@ CVM_JDWP_INCLUDE_DIRS  += \
 	$(CVM_JDWP_SHAREROOT)/back \
 	$(CVM_JDWP_SHAREROOT)/back/export \
 	$(CVM_JDWP_SHAREROOT)/back/npt \
-	$(CVM_JDWP_SHAREROOT)/back/npt/$(TARGET_OS) \
+	$(CVM_JDWP_TARGETROOT)/back/npt \
 	$(CVM_JDWP_SHAREROOT)/transport/export \
 	$(CVM_JDWP_TARGETROOT)/transport/$(CVM_JDWP_TRANSPORT) \
 	$(CVM_JDWP_BUILD_TOP)
@@ -136,7 +136,7 @@ CVM_JDWP_OBJECTS  = $(patsubst %.o,$(CVM_JDWP_OBJDIR)/%.o,$(CVM_JDWP_OBJECTS0))
 CVM_JDWP_SRCDIRS  = \
 	$(CVM_JDWP_SHAREROOT)/back \
 	$(CVM_JDWP_SHAREROOT)/back/npt \
-	$(CVM_JDWP_SHAREROOT)/back/npt/$(TARGET_OS) \
+	$(CVM_JDWP_TARGETROOT)/back/npt \
 	$(CVM_JDWP_SHAREROOT)/transport \
 	$(CVM_JDWP_SHAREROOT)/transport/$(CVM_JDWP_TRANSPORT) \
 	$(CVM_JDWP_TARGETROOT)/back \

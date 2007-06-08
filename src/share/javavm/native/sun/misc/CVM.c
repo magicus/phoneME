@@ -41,6 +41,9 @@
 #include "javavm/export/jvm.h"
 #include "generated/offsets/java_lang_Thread.h"
 
+#include "jni.h"
+#include "generated/javavm/include/build_defs.h"
+
 #ifdef CVM_TRACE_JIT
 #include "javavm/include/jit/jitutils.h"
 #endif
@@ -1460,3 +1463,28 @@ CNIsun_misc_CVM_simpleLockRelease(CVMExecEnv* ee, CVMStackVal32 *arguments,
 }
 
 #endif
+
+/* Gets the VM build options as a Java string. */
+CNIResultCode
+CNIsun_misc_CVM_getBuildOptionString(CVMExecEnv* ee, CVMStackVal32 *arguments,
+				     CVMMethodBlock **p_mb)
+{
+    jobject result = NULL;
+
+    CVMD_gcSafeExec(ee, {
+        JNIEnv *env = CVMexecEnv2JniEnv(ee);
+        if ((*env)->PushLocalFrame(env, 4) == 0) {
+	    result = (*env)->NewStringUTF(env, CVM_BUILD_OPTIONS);
+            if (result != NULL) {
+                CVMID_icellAssign(ee, &arguments[0].j.r, result);
+            }
+	    (*env)->PopLocalFrame(env, NULL);
+	}
+    });
+
+    if (CVMexceptionOccurred(ee)) {
+        return CNI_EXCEPTION;
+    }
+
+    return CNI_SINGLE;
+}
