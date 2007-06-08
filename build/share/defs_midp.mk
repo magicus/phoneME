@@ -36,7 +36,7 @@ ifeq ($(USE_MIDP),true)
 ifeq ($(USE_GCI), true)
     MIDP_PLATFORM = linux_gci
 else
-    MIDP_PLATFORM = linux_fb_gcc
+    MIDP_PLATFORM ?= linux_fb_gcc
 endif
 
 
