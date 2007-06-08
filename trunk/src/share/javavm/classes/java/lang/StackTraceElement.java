@@ -52,10 +52,7 @@ public final class StackTraceElement implements java.io.Serializable {
      * Prevent inappropriate instantiation.  Only the VM creates these.
      * It creates them "magically" without invoking this constructor.
      */
-    private StackTraceElement() { 
-       if (sun.misc.BuildFlags.qAssertsEnabled)
-          assert false; 
-    }
+    private StackTraceElement() { /* assert false; */ }
 
     /**
      * Returns the name of the source file containing the execution point
