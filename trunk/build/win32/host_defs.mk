@@ -155,10 +155,10 @@ CC_CMD_SPACE	= $(call compileCC,$(CFLAGS_SPACE),$@,$<)
 CC_CMD_LOOP	= $(call compileCC,$(CFLAGS_LOOP), $@,$<)
 CC_CMD_FDLIB	= $(call compileCC,$(CFLAGS_FDLIB),$@,$<)
 
-LINK_CMD	= $(AT)$(TARGET_LINK) $(LINKFLAGS) /out:$(call POSIX2HOST,$@) $^ $(LINKLIBS)
+LINK_CMD	= $(AT)$(TARGET_LINK) $(LINKFLAGS) /out:$(call POSIX2HOST,$@) $(call POSIX2HOST,$^) $(LINKLIBS)
 
 SO_CC_CMD	= $(AT)$(TARGET_CC) $(SO_CFLAGS) /Fo$(call POSIX2HOST,$@) $(call POSIX2HOST,$<)
-SO_LINK_CMD	= $(AT)$(TARGET_LD) $(SO_LINKFLAGS) /out:$(call POSIX2HOST,$@) $^ $(SO_LINKLIBS)
+SO_LINK_CMD	= $(AT)$(TARGET_LD) $(SO_LINKFLAGS) /out:$(call POSIX2HOST,$@) $(call POSIX2HOST,$^) $(SO_LINKLIBS)
 
 # Don't let the default compiler compatibility check be done
 # since we are not using gcc
