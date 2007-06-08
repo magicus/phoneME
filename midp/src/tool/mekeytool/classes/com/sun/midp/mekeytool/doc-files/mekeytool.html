@@ -1,0 +1,269 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!--
+
+    
+ 
+  Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+
+-->
+<title>ME Key Tool</title>
+</head>
+<body bgcolor="white">
+<h2>ME Key Tool</h2>
+
+<h3>Summary</h3>
+
+Provides a command line interface to manage mobile equipment (ME) keystore
+for the MIDP implementation.
+<p>
+The ME Key Tool uses the Java<sup>tm</sup> Standard Edition
+(J2SE) keystore API to access J2SE keystores. J2SE provides the
+<a href="http://java.sun.com/j2se/1.3/docs/tooldocs/win32/keytool.html">
+command line tool</a> to manage J2SE keystores.</p>
+
+The general usage for the ME Key Tool is (from the MIDP home directory):
+<blockquote>
+  <code>java -jar bin/MEKeyTool.jar</code> <i>(command followed by  arguments for the command)</i>
+</blockquote>
+
+The ME Key Tool provides the following commands.
+<ul>
+  <li>Display usage help text</li>
+  <li>Import a public key into an ME keystore from a J2SE keystore</li>
+  <li>Delete a key from an ME keystore</li>
+  <li>List the keys in an ME keystore</li>
+</ul>
+For shell script use, when a command is successful, the status code upon
+completion will be "0" and if there is an error it will be "-1".
+
+<h3>General Argument Parsing Considerations</h3>
+
+Properly producing user friendly command line argument errors requires a
+great deal of code, and since this tool is not intended for the general
+public, this tool with have very simple option
+parsing that will lead to to some less then user friendly error conditions.
+Like the J2SE "java" command, any potentially valid value for an option will be
+accepted for that option even if it looks like a option flag. No positive
+case will be disallowed to make the errors more user friendly. Basically the
+tool will make only ensure that option values are formated according to the
+specification of the underlying Java APIs.
+
+<h3>Display Usage Help Text</h3>
+
+The command to display help text is "-help". There are no arguments for the
+command. The usage text is also displayed when JAD Tool arguments are 
+not in the correct format or missing. The usage text is:
+<blockquote><pre>
+MEKeyTool argument combinations:
+
+  -help
+  -import [-MEkeystore &lt;filename&gt;] [-keystore &lt;filename&gt;]
+          [-storepass &lt;password&gt;] -alias &lt;key alias&gt; [-domain &lt;domain&gt;]
+  -list [-MEkeystore &lt;filename&gt;]
+  -delete [-MEkeystore &lt;filename&gt;]
+          (-owner &lt;owner name&gt; | -number &lt;key number&gt;)
+
+The default for -MEkeystore is "appdb/_main.ks".
+The default for -keystore is $HOME/.keystore.
+</pre></blockquote>
+
+<h3>Importing a Public Key</h3>
+
+The ME Key Tool only imports keys contained in X.509 certificates.
+<p>
+The command for importing a public key into an ME keystore from a J2SE keystore
+is "-import". The command has the following arguments:</p>
+<ul>
+  <li>"-alias" followed by the alias of the certificate of the public key in the
+    J2SE keystore, this is required to find the certificate in the
+    keystore.</li>
+  <li>"-keystore" followed by the filename of a J2SE keystore from
+    which the get certificate. If not provided, the tool will assume
+    the filename of the keystore is $HOME/.keystore.
+    This is consistent with J2SE keytool.</li>
+  <li>"-storepass" followed by a password to unlock the keystore if
+    needed.</li>
+  <li>"-MEkeystore" followed by the filename of a ME keystore to import the
+    public key into. If not provided, the tool will assume
+    "appdb/_main.ks".</li>
+  <li>"domain" the security domain to associate with the public key. If
+    not given "untrusted" will be used.</li>
+</ul>
+
+The following steps are performed when importing a public key into an
+ME keystore.
+<ol>
+  <li>Load the ME keystore.</li>
+  <li>Get the certificate from the J2SE keystore.</li>
+  <li>Check to see if there are any keys owned by subject of the certificate
+    in the ME keystore. If there are any keys found, exit if any of the keys
+    found are a duplicate of the key in the certificate.</li>
+  <li>Create an ME key object with the subject name, validity, and key
+    from the certificate, plus the given security domain.</li>
+  <li>Add the ME key object to the loaded keystore.</li>
+  <li>Save the loaded keystore.</li>
+</ol>
+
+<h3>Listing Public Keys</h3>
+
+The command for listing the keys in an ME keystore "-list". The command has
+the following arguments:
+<ul>
+  <li>"-MEkeystore" followed by the filename of the ME keystore containing
+  the keys to list. If not provided, the tool will assume
+  "appdb/_main.ks".</li>
+</ul>
+
+Example of key listing:
+<blockquote><pre>
+Key 1
+  Owner: C=US;O=RSA Data Security, Inc.;OU=Secure Server Certification Authority
+  Valid from Tue Nov 08 19:00:00 EST 1994 to Thu Jan 07 18:59:59 EST 2010
+  Security Domain: untrusted
+Key 2
+  Owner: CN=Sun Microsystems Inc TEST CA;O=Sun Microsystems Inc
+  Valid from Mon Nov 20 16:20:50 EST 2000 to Fri Nov 20 16:20:50 EST 2009
+  Security Domain: trusted
+</pre></blockquote>
+
+The following steps are performed when listing the key in an ME keystore.
+<ol>
+  <li>Load the ME keystore.</li>
+  <li>For each key, print:
+    <ul>
+      <li>Number of the key (1 for the first)</li>
+      <li>Name of the owner</li>
+      <li>Validity</li>
+      <li>Security domain</li>
+    </ul></li>
+</ol>
+
+<h3>Deleting a Public Key</h3>
+
+The command for deleting a key from an ME keystore "-delete". The command has
+the following arguments:
+<ul>
+  <li>"-MEkeystore" followed by the filename of the ME keystore to delete a
+    public key from. If not provided, the tool will assume
+    "appdb/_main.ks".</li>
+  <li>"-owner" followed by the common name of the key's owner as presented
+    by the "-list" command. If not given the -number argument must be given.
+    If "-owner" is given "-number" must not be given.</li>
+  <li>"-number" followed by the number the key as presented
+    by the "-list" command. If not given the -owner argument must be given.
+    If "-number" is given "-owner" must not be given.</li>
+</ul>
+
+The following steps are performed when deleting a key from an ME keystore.
+<ol>
+  <li>Load the ME keystore.</li>
+  <li>If the key selected by owner, delete the first key of the owner from
+    the loaded keystore.</li>
+  <li>If the key selected by number (1 for the first), delete 
+    selected key from the loaded keystore.</li>
+  <li>Save the loaded keystore.</li>
+</ol>
+
+<h3>Error Conditions</h3>
+
+Not all error messages are created by the ME keytool code, the
+tool relies on the java.security and java.io classes to generate messages.
+So only when an error condition has a message created by the MIDP implementation code,
+will the full message be specified. This is because the message not
+under control of the MIDP implementation can change at anytime and this cannot be
+considered a bug.
+ 
+<table border="1" cellspacing="1" cellpadding="5">
+  <tr>
+    <th width="50%">Error Condition</th>
+    <th width="50%">Message to User</th>
+  </tr>
+
+  <tr>
+    <td>There is no command or arguments.</td>
+    <td>Error: No command given</td> 
+  </tr>
+
+  <tr>
+    <td>The first argument after the ME Key Tool JAR name is not a
+      command.</td>
+    <td>Error: Invalid command: &lt;invalid argument&gt;</td> 
+  </tr>
+
+  <tr>
+    <td>An argument for a command is not valid for that command.</td>
+    <td>Error: Invalid argument for &lt;command&gt; command:
+        &lt;invalid argument&gt;</td> 
+  </tr>
+
+  <tr>
+    <td>The arguments end after an option flag (command arguments that
+       start with "-") that should be followed by a value.</td>
+    <td>Error: Missing value for &lt;last argument&gt;</td>
+  </tr>
+        
+  <tr>
+    <td>-alias was not given to the import command.</td>
+    <td>Error: J2SE key alias was not given</td>
+  </tr>
+
+  <tr>
+    <td>A non-digit character in the -number argument.</td>
+    <td>Error: Invalid number for the -number argument:
+      &lt;invalid number&gt;</td>
+  </tr>
+
+  <tr>
+    <td>Neither -owner of -number given for the delete command.</td>
+    <td>Error: Neither key -owner or -number was not given</td>
+  </tr>
+        
+  <tr>
+    <td>Both -owner of -number given for the delete command.</td>
+    <td>Error: -owner and -number cannot be used together</td>
+  </tr>
+        
+  <tr>
+    <td>The key for a given owner cannot be found in the ME keystore.</td>
+    <td>Error: Key not found for: &lt;owner argument&gt;</td>
+  </tr>
+        
+  <tr>
+    <td>The key number given was out of range.</td>
+    <td>Error: Invalid number for the -number delete option:
+       &lt;key number argument&gt;</td>
+  </tr>
+
+  <tr>
+    <td>No certificate was found in the J2SE keystore with the given alias</td>
+    <td>Error: Certificate not found</td>
+  </tr>
+
+  <tr>
+    <td>The certificate found in the J2SE keystore does not have an
+      RSA public key.</td>
+    <td>Error: Key in certificate is not an RSA key</td>
+  </tr>
+
+  <tr>
+    <td>The public key to be imported is matches a key already in the ME
+      keystore belonging to the same owner.</td>
+    <td>Error: Owner already has this key in the ME keystore</td>
+  </tr>
+
+  <tr>
+    <td>Corrupted (or not a keystore file) ME keystore given</td>
+    <td>Error: input storage corrupted</td>
+  </tr>
+
+  <tr>
+    <td>Corrupted (or not a keystore file) J2SE keystore given,<br>
+       J2SE keystore password incorrect,<br>
+       or any other error condition not listed above</td>
+    <td>Error: &lt;exception message&gt;</td>
+  </tr>
+</table>
+</body>
+</html>
