@@ -135,7 +135,11 @@ endif
 	@echo "TARGET_LD     = $(TARGET_LD_PATH)"
 	@echo "TARGET_AR     = $(TARGET_AR_PATH)"
 	@echo "TARGET_RANLIB = $(TARGET_RANLIB_PATH)"
+ifeq ($(CVM_BUILD_SO), true)
+	@echo "SO_LINKFLAGS  = $(SO_LINKFLAGS)"
+else
 	@echo "LINKFLAGS  = $(LINKFLAGS)"
+endif
 	@echo "LINKLIBS   = $(LINKLIBS)"
 	@echo "ASM_FLAGS  = $(ASM_FLAGS)"
 	@echo "CCCFLAGS   = $(CCCFLAGS)"
@@ -757,7 +761,7 @@ $(CVM_BINDIR)/$(CVM) :: .generate.system_properties.c
 ifneq ($(CVM_PROVIDE_TARGET_RULES), true)
 $(CVM_BINDIR)/$(CVM) :: $(CVM_OBJECTS) $(CVM_OBJDIR)/$(CVM_ROMJAVA_O) $(CVM_FDLIB) $(CVM_SHA1OBJ)
 	@echo "Linking $@"
-	$(LINK_CMD) $(LINKLIBS_CVM)
+	$(CVM_LINK_CMD) $(LINKLIBS_CVM)
 	@echo "Done Linking $@"
 endif
 
@@ -830,8 +834,7 @@ $(LIB_CLASSESJAR):
 else
 $(LIB_CLASSESJAR): $(CVM_BUILD_TOP)/.libclasses
 	@echo ... $@	
-	$(AT)(cd $(LIB_CLASSESDIR); \
-	      $(CVM_JAR) cf $(CVM_BUILD_SUBDIR_UP)../$@ *)
+	$(AT)(cd $(LIB_CLASSESDIR); $(CVM_JAR) cf $@ *)
 endif
 
 #####################################
@@ -1061,7 +1064,7 @@ endif
 	@echo "<<<Finished binary bundle" ;
 
 ################################################
-# Include target makfiles last
+# Include target makefiles last
 ################################################
 
 -include ../$(TARGET_OS)/rules.mk

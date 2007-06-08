@@ -310,6 +310,21 @@ TARGET_OS		:= $(word 1,$(CWD_PARTS))
 TARGET_CPU_FAMILY	:= $(word 2,$(CWD_PARTS))
 TARGET_DEVICE		:= $(word 3,$(CWD_PARTS))
 
+ABSPATH = $(shell cd $(1); echo `pwd`)
+
+# COMPONENTS_DIR is the directory that all the components are located in,
+# such as midp, pcsl, and jump. It is used for providing default locations
+# for directories like MIDP_DIR and JUMP_DIR. It must be an absolute path.
+ifndef COMPONENTS_DIR
+COMPONENTS_DIR     := $(call ABSPATH, ../../..)
+endif
+
+# Include JavaSE setup if necessary:
+ifeq ($(USE_JAVASE),true)
+PROFILE_DIR ?= $(COMPONENTS_DIR)/cvmjavase
+include $(PROFILE_DIR)/build/share/top_javase.mk
+endif
+
 # Include any existing platform defs first
 ifneq ($(J2ME_PLATFORM),)
 include ../share/defs_$(J2ME_PLATFORM).mk
@@ -387,7 +402,7 @@ include  ../share/defs.mk
 -include ../share/defs_midp.mk
 -include ../share/defs_jump.mk
 -include ../share/defs_gci.mk
-include ../share/defs_$(J2ME_CLASSLIB).mk
+include $(PROFILE_DIR)/build/share/defs_$(J2ME_CLASSLIB).mk
 -include ../share/defs_op.mk
 ifneq ($(OPT_PKGS_DEFS_FILES),)
 include $(OPT_PKGS_DEFS_FILES)
@@ -404,9 +419,9 @@ include  ../share/rules.mk
 -include ../share/rules_midp.mk
 -include ../share/rules_jump.mk
 -include ../share/rules_gci.mk
-include ../share/rules_$(J2ME_CLASSLIB).mk
+include $(PROFILE_DIR)/build/share/rules_$(J2ME_CLASSLIB).mk
 ifneq ($(J2ME_PLATFORM),)
-include ../share/rules_$(J2ME_PLATFORM).mk
+include $(PROFILE_DIR)/build/share/rules_$(J2ME_PLATFORM).mk
 endif
 ifneq ($(OPT_PKGS_RULES_FILES),)
 include $(OPT_PKGS_RULES_FILES)

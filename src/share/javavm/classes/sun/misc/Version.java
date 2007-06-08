@@ -88,14 +88,4 @@ public class Version {
 		       java_vm_info + ")");
 	}
     }
-	
-    /**
-     * CVM specific: Prints build options used for this build.
-     * Called by "-XbuildOptions and -XshowBuildOptions command line options.
-     */
-    public static void printBuildOptions() {
-	PrintStream ps = System.err;
-	ps.print(getBuildOptionString());
-    }
-    private static native String getBuildOptionString();
 }
