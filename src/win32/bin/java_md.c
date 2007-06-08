@@ -371,6 +371,16 @@ int main(int argc, char *argv[])
         fprintf(stdout, "GetProcAddress() %d\n", GetLastError());
     }
 
+    if (argc == 1) {
+        static char *static_argv[] = {
+            "cvm",
+            "-f",
+            "\"\\storage card\\args.txt\"",
+            NULL
+        };
+        argv = static_argv;
+        argc = 3;
+    }
 #if 0
     NKDbgPrintfW(TEXT("exception hook %x\n"), __C_specific_handler);
 #endif
