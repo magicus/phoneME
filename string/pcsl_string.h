@@ -753,7 +753,13 @@ extern const pcsl_string PCSL_STRING_NULL;
  * If converted_length is not NULL, the number of 16-bit units in
  * the UTF-16 representation of the string is written to it.
  * If buffer is NULL, the conversion is performed, but its result is
- * not written.
+ * not written; PCSL_STRING_BUFFER_OVERFLOW is NOT returned if buffer is NULL.
+ * After encountering a sequence of bytes that does not correspond to any
+ * Unicode character, conversion continues but PCSL_STRING_EILSEQ will
+ * be returned rather than PCSL_STRING_OK.
+ * The error status PCSL_STRING_BUFFER_OVERFLOW takes priority over
+ * PCSL_STRING_EILSEQ, that is, when both the buffer is too small and
+ * there's a broken character, PCSL_STRING_BUFFER_OVERFLOW is returned.
  *
  * @param str           UTF-8 string representation
  * @param str_length    number of bytes in UTF-8 string representation
@@ -762,7 +768,10 @@ extern const pcsl_string PCSL_STRING_NULL;
  * @param converted_length
  *            storage for the number of 16-bit units in UTF-16 representation
  *            of the string
- * @return status of the operation
+ * @return status of the operation: PCSL_STRING_EINVAL if str is NULL;
+ * PCSL_STRING_BUFFER_OVERFLOW if buffer is not NULL and its size is not enough;
+ * PCSL_STRING_EILSEQ if not all bytes represent Unicode characters;
+ * PCSL_STRING_OK is everything is ok.
  */
 pcsl_string_status pcsl_utf8_convert_to_utf16(const jbyte * str, jsize str_length,
 			      jchar * buffer, jsize buffer_length,
@@ -775,7 +784,13 @@ pcsl_string_status pcsl_utf8_convert_to_utf16(const jbyte * str, jsize str_lengt
  * If converted_length is not NULL, the number of bytes in
  * the UTF-8 representation of the string is written to it.
  * If buffer is NULL, the conversion is performed, but its result is
- * not written.
+ * not written; PCSL_STRING_BUFFER_OVERFLOW is NOT returned if buffer is NULL.
+ * After encountering a sequence of 16-bit units that does not correspond to any
+ * Unicode character, conversion continues but PCSL_STRING_EILSEQ will
+ * be returned rather than PCSL_STRING_OK.
+ * The error status PCSL_STRING_BUFFER_OVERFLOW takes priority over
+ * PCSL_STRING_EILSEQ, that is, when both the buffer is too small and
+ * there's a broken character, PCSL_STRING_BUFFER_OVERFLOW is returned.
  *
  * @param str           UTF-16 string representation
  * @param str_length    number of 16-bit units in UTF-16 string representation
@@ -784,7 +799,10 @@ pcsl_string_status pcsl_utf8_convert_to_utf16(const jbyte * str, jsize str_lengt
  * @param converted_length
  *            storage for the number of bytes in UTF-8 representation
  *            of the string
- * @return status of the operation
+ * @return status of the operation: PCSL_STRING_EINVAL if str is NULL;
+ * PCSL_STRING_BUFFER_OVERFLOW if buffer is not NULL and its size is not enough;
+ * PCSL_STRING_EILSEQ if not all 16-bit units represent Unicode characters;
+ * PCSL_STRING_OK is everything is ok.
  */
 pcsl_string_status pcsl_utf16_convert_to_utf8(const jchar * str, jsize str_length,
 			      jbyte * buffer, jsize buffer_length,

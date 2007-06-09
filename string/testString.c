@@ -60,6 +60,90 @@ const jsize app_surrogate_utf16_chars_length =
   sizeof(app_surrogate_utf16_chars) / sizeof(jchar);
 const jsize app_surrogate_string_length = 2;
 
+/* 07 bits: 0xxx xxxx  -- 7f */
+/* 11 bits: 110x xxxx   10xx xxxx  -- 7ff */
+/* 16 bits: 1110 xxxx  10xx xxxx  10xx xxxx  -- ffff */
+/* 21 bits: 1111 0xxx  10xx xxxx  10xx xxxx  10xx xxxx -- 10_ffff */
+/*
+ * IMPL_NOTE not all the below code points are valid unicode characters,
+ * but it's not important for testing our algorithm
+ */
+const jchar testutf_string_16[] =
+  { (jchar)0x7f, (jchar)0x80, (jchar)0x81,
+    (jchar)0x7ff, (jchar)0x800, (jchar)0x801,
+    (jchar)0xffff, (jchar)0xd800, (jchar)0xdc00, (jchar)0xd800, (jchar)0xdc01,
+    (jchar)0xdbff, (jchar)0xdfff
+  };
+const jsize testutf_string_16_length =
+  sizeof(testutf_string_16) / sizeof(jchar);
+
+const jbyte testutf_string_8[] =
+  { 0x7f,  0xc2, 0x80,  0xc2, 0x81,
+    0xdf, 0xbf,  0xe0, 0xa0, 0x80,  0xe0, 0xa0, 0x81,
+    0xef, 0xbf, 0xbf,  0xf0, 0x90, 0x80, 0x80,  0xf0, 0x90, 0x80, 0x81,
+    0xf4, 0x8f, 0xbf, 0xbf
+  };
+const jsize testutf_string_8_length =
+  sizeof(testutf_string_8) / sizeof(jbyte);
+
+const jchar bad16_string_16[] =
+  { (jchar)0xd800, (jchar)0xdc00,
+    (jchar)0xd800,
+    (jchar)0xd800, (jchar)0xdc01,
+    (jchar)0xdc00,
+    (jchar)0xdbff, (jchar)0xdfff
+  };
+const jsize bad16_string_16_length =
+  sizeof(bad16_string_16) / sizeof(jchar);
+
+const jbyte bad16_string_8[] =
+  { 0xf0, 0x90, 0x80, 0x80,
+    '?',
+    0xf0, 0x90, 0x80, 0x81,
+    '?',
+    0xf4, 0x8f, 0xbf, 0xbf
+  };
+const jsize bad16_string_8_length =
+  sizeof(bad16_string_8) / sizeof(jbyte);
+
+#define RC ((jchar)0xfffd)
+const jbyte bad8_string_8[] =
+  { 0xc2, 0xc2, 0x81, 0x80,
+    0xc2, 'a', 0x80,
+
+    0xe0, 0xa0,  0xe0, 0xa0, 0x81,  0x80,
+    0xe0,  0xe0, 0xa0, 0x81,  0xa0, 0x80,
+    0xe0, 0xa0,  'b',  0x80,
+    0xe0,  'b',  0xa0, 0x80,
+    0xf4, 0x8f, 0xbf, 0xbf,
+
+    0xf0, 0x90, 0x80,  0xf0, 0x90, 0x80, 0x81,  0x80,
+    0xf0, 0x90,  0xf0, 0x90, 0x80, 0x81,  0x80, 0x80,
+    0xf0,  0xf0, 0x90, 0x80, 0x81,  0x90, 0x80, 0x80,
+    0xf4, 0x8f, 0xbf, 0xbf
+  };
+const jsize bad8_string_8_length =
+  sizeof(bad8_string_8) / sizeof(jbyte);
+
+const jchar bad8_string_16[] =
+  { RC, (jchar)0x81, RC,
+    RC, 'a', RC,
+    RC, (jchar)0x801, RC,
+    RC, (jchar)0x801, RC, /* RC, */
+    RC, 'b', RC,
+    RC, 'b', RC, /* RC, */
+    (jchar)0xdbff, (jchar)0xdfff,
+
+    RC, (jchar)0xd800, (jchar)0xdc01, RC,
+    RC, (jchar)0xd800, (jchar)0xdc01, RC, /* RC, */
+    RC, (jchar)0xd800, (jchar)0xdc01, RC, /* RC, RC, */
+
+    (jchar)0xdbff, (jchar)0xdfff
+  };
+const jsize bad8_string_16_length =
+  sizeof(bad8_string_16) / sizeof(jchar);
+
+
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(static_literal)
  STATIC_ASCII_LITERAL
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(static_literal);
@@ -3211,6 +3295,53 @@ static void test_pcsl_string_ends_with() {
   }
 }
 
+static void test_conv8to16(const jbyte * buf8, const jsize len8, const jchar * buf16, const jsize len16, pcsl_string_status rc_exp) {
+    jchar utf16buf[100];
+    jsize len=0;
+    pcsl_string_status rc = 0x12345678;
+    int i;
+    rc = pcsl_utf8_convert_to_utf16(buf8,len8,utf16buf,100,&len);
+    if (len!=len16) {printf("rc=%i, length %i %i\n",rc, len, len16); }
+    if (rc!=rc_exp) {printf("rc=%i, not %i\n",rc, rc_exp); }
+    assertTrue("return value not as expected",rc==rc_exp);
+    assertTrue("wrong length",len==len16);
+    for (i=0;i<len;i++) {
+        if (utf16buf[i]!=buf16[i]) {
+            printf("at %i: %x %x",i,0xffff&utf16buf[i],0xffff&buf16[i]);
+            assertTrue("data do not match",0);
+        }
+    }
+}
+static void test_conv16to8(const jchar * buf16, const jsize len16, const jbyte * buf8, const jsize len8, pcsl_string_status rc_exp) {
+    jbyte utf8buf[100];
+    jsize len=0;
+    pcsl_string_status rc = 0x12345678;
+    int i;
+    rc = pcsl_utf16_convert_to_utf8(buf16,len16,utf8buf,100,&len);
+    if (len!=len8) { printf("rc=%i, length %i %i\n",rc, len, len8); }
+    assertTrue("return value not as expected",rc==rc_exp);
+    assertTrue("wrong length",len==len8);
+    for (i=0;i<len8;i++) {
+        if (utf8buf[i]!=buf8[i]) {
+            printf("at %i: %x %x",i,0xff&utf8buf[i],0xff&buf8[i]);
+            assertTrue("data do not match",0);
+        }
+    }
+}
+static void test_pcsl_utf() {
+  /* test utf8 to utf16 conversion */
+  /* Test case 1: valid utf8 */
+  test_conv8to16(testutf_string_8,testutf_string_8_length,testutf_string_16,testutf_string_16_length,PCSL_STRING_OK);
+  /* Test case 2: invalid utf8 */
+  test_conv8to16(bad8_string_8,bad8_string_8_length,bad8_string_16,bad8_string_16_length,PCSL_STRING_EILSEQ);
+  /* test utf16 to utf8 conversion*/
+  /* Test case 1: valid utf16 */
+  test_conv16to8(testutf_string_16,testutf_string_16_length,testutf_string_8,testutf_string_8_length,PCSL_STRING_OK);
+  /* Test case 2: invalid utf16 */
+  test_conv16to8(bad16_string_16,bad16_string_16_length,bad16_string_8,bad16_string_8_length,PCSL_STRING_EILSEQ);
+
+}
+
 /**
  * Unit test framework entry point for this set of unit tests.
  *
@@ -3392,6 +3523,11 @@ void testString_runTests() {
      * pcsl_string_status pcsl_string_is_null(pcsl_string * str);
      */
     test_pcsl_string_is_null();
+
+    /*
+    *
+    */
+    test_pcsl_utf();
 
     assertTrue("String system is not active before finalization", 
 	       pcsl_string_is_active() == PCSL_TRUE);

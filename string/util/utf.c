@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <utf.h>
 
+#define UTF16_ERROR_CHAR (0xFFFD)
 pcsl_string_status pcsl_utf8_convert_to_utf16(const jbyte * str, jsize str_length,
 			      jchar * buffer, jsize buffer_length,
 			      jsize * converted_length) {
@@ -40,6 +41,7 @@ pcsl_string_status pcsl_utf8_convert_to_utf16(const jbyte * str, jsize str_lengt
   jsize output_size = 0;
   jsize output_off = 0;
   jboolean buffer_overflow = PCSL_FALSE;
+  jboolean bad_sequence = PCSL_FALSE;
 
   if (str == NULL) {
     return PCSL_STRING_EINVAL;
@@ -49,78 +51,118 @@ pcsl_string_status pcsl_utf8_convert_to_utf16(const jbyte * str, jsize str_lengt
     byte1 = *str++;
 
     if ((byte1 & 0x80) == 0){
+      /*  7 bits: 0xxx xxxx */
       output_char[0] = (jchar)byte1;
       output_size = 1;
     } else if ((byte1 & 0xe0) == 0xc0) {
+      /* 11 bits: 110x xxxx   10xx xxxx */
       if (str >= str_end) {
-	return PCSL_STRING_EILSEQ;
+        bad_sequence = PCSL_TRUE;
+        output_char[0] = UTF16_ERROR_CHAR;
+        output_size = 1;
+      } else {
+          byte2 = *str++;
+          if ((byte2 & 0xc0) != 0x80) {
+            --str;
+            bad_sequence = PCSL_TRUE;
+            output_char[0] = UTF16_ERROR_CHAR;
+            output_size = 1;
+          } else {
+            output_char[0] = (jchar)(((byte1 & 0x1f) << 6) | (byte2 & 0x3f));
+            output_size = 1;
+        }
       }
-      byte2 = *str++;
-      if ((byte2 & 0xc0) != 0x80) {
-	return PCSL_STRING_EILSEQ;
-      }
-      output_char[0] = (jchar)(((byte1 & 0x1f) << 6) | (byte2 & 0x3f));
-      output_size = 1;
     } else if ((byte1 & 0xf0) == 0xe0){
+      /* 16 bits: 1110 xxxx  10xx xxxx  10xx xxxx */
       if (str + 1 >= str_end) {
-	return PCSL_STRING_EILSEQ;
+        bad_sequence = PCSL_TRUE;
+        output_char[0] = UTF16_ERROR_CHAR;
+        output_size = 1;
+      } else {
+          byte2 = *str++;
+          byte3 = *str++;
+          if ((byte2 & 0xc0) != 0x80 || (byte3 & 0xc0) != 0x80) {
+            if ((byte2 & 0xc0) != 0x80) { str-=2; }
+            else { --str; }
+            bad_sequence = PCSL_TRUE;
+            output_char[0] = UTF16_ERROR_CHAR;
+            output_size = 1;
+          } else {
+              output_char[0] = (jchar)(((byte1 & 0x0f) << 12)
+                         | ((byte2 & 0x3f) << 6)
+                         | (byte3 & 0x3f));
+              output_size = 1;
+          }
       }
-      byte2 = *str++;
-      byte3 = *str++;
-      if ((byte2 & 0xc0) != 0x80 || (byte3 & 0xc0) != 0x80) {
-	return PCSL_STRING_EILSEQ;
-      }
-      output_char[0] = (jchar)(((byte1 & 0x0f) << 12)
-			     | ((byte2 & 0x3f) << 6)
-			     | (byte3 & 0x3f));
-      output_size = 1;
     } else if ((byte1 & 0xf8) == 0xf0) {
+      /* 21 bits: 1111 0xxx  10xx xxxx  10xx xxxx  10xx xxxx */
       if (str + 2 >= str_end) {
-	return PCSL_STRING_EILSEQ;
-      }
-      byte2 = *str++;
-      byte3 = *str++;
-      byte4 = *str++;
-      if ((byte2 & 0xc0) != 0x80 ||
-	  (byte3 & 0xc0) != 0x80 ||
-	  (byte4 & 0xc0) != 0x80) {
-	return PCSL_STRING_EILSEQ;
-      }
-      {
-	// this byte sequence is UTF16 character
-	jint ucs4 = (jint)(0x07 & byte1) << 18 |
-	  (jint)(0x3f & byte2) << 12 |
-	  (jint)(0x3f & byte3) <<  6 |
-	  (jint)(0x3f & byte4);
-	output_char[0] = (jchar)((ucs4 - 0x10000) / 0x400 + 0xd800);
-	output_char[1] = (jchar)((ucs4 - 0x10000) % 0x400 + 0xdc00);
-	output_size = 2;
+        bad_sequence = PCSL_TRUE;
+        output_char[0] = UTF16_ERROR_CHAR;
+        output_size = 1;
+      } else {
+          byte2 = *str++;
+          byte3 = *str++;
+          byte4 = *str++;
+
+          if ((byte2 & 0xc0) != 0x80 ||
+              (byte3 & 0xc0) != 0x80 ||
+              (byte4 & 0xc0) != 0x80) {
+            if ((byte2 & 0xc0) != 0x80) { str-=3; }
+            else if ((byte3 & 0xc0) != 0x80) { str-=2; }
+            else { --str; }
+
+            bad_sequence = PCSL_TRUE;
+            output_char[0] = UTF16_ERROR_CHAR;
+            output_size = 1;
+          } else {
+            // this byte sequence is UTF16 character
+            jint ucs4 = (jint)(0x07 & byte1) << 18 |
+              (jint)(0x3f & byte2) << 12 |
+              (jint)(0x3f & byte3) <<  6 |
+              (jint)(0x3f & byte4);
+            output_char[0] = (jchar)((ucs4 - 0x10000) / 0x400 + 0xd800);
+            output_char[1] = (jchar)((ucs4 - 0x10000) % 0x400 + 0xdc00);
+            output_size = 2;
+          }
       }
     } else {
-      return PCSL_STRING_EILSEQ;
+      /* remove up to two more follow-up bytes: */
+      /* total at most 3 follow-up bytes may belong to the same character */
+      const int remaining = str_end-str;
+      int n = remaining > 2 ? 2 : remaining;
+      while (n-- && (0xc0 & *str) == 0x80) str++;
+
+      bad_sequence = PCSL_TRUE;
+      output_char[0] = UTF16_ERROR_CHAR;
+      output_size = 1;
     }
 
     if (buffer_overflow == PCSL_FALSE && buffer != NULL) {
       if (output_off + output_size > buffer_length) {
-	buffer_overflow = PCSL_TRUE;
+        buffer_overflow = PCSL_TRUE;
       } else {
-	int i;
-	for (i = 0; i < output_size; i++) {
-	  buffer[output_off + i] = output_char[i];
-	}
+        /* do not need any loop because output_size is either 1 or 2 */
+        buffer[output_off] = output_char[0];
+        if (output_size == 2) {
+            buffer[output_off + 1] = output_char[1];
+        }
       }
     }
 
     output_off += output_size;
-  }
+  } /* while */
 
   if (converted_length != NULL) {
     *converted_length = output_off;
   }
 
-  return buffer_overflow == PCSL_TRUE ? PCSL_STRING_BUFFER_OVERFLOW : PCSL_STRING_OK;
+  return buffer_overflow == PCSL_TRUE ? PCSL_STRING_BUFFER_OVERFLOW
+       : bad_sequence == PCSL_TRUE ? PCSL_STRING_EILSEQ
+       : PCSL_STRING_OK;
 }
 
+#define UTF8_ERROR_CHAR ('?')
 pcsl_string_status pcsl_utf16_convert_to_utf8(const jchar * str, jsize str_length,
 			      jbyte * buffer, jsize buffer_length,
 			      jsize * converted_length) {
@@ -132,6 +174,7 @@ pcsl_string_status pcsl_utf16_convert_to_utf8(const jchar * str, jsize str_lengt
   jsize output_size = 0;
   jsize output_off = 0;
   jboolean buffer_overflow = PCSL_FALSE;
+  jboolean bad_sequence = PCSL_FALSE;
 
   if (str == NULL) {
     return PCSL_STRING_EINVAL;
@@ -147,25 +190,34 @@ pcsl_string_status pcsl_utf16_convert_to_utf8(const jchar * str, jsize str_lengt
       output_byte[1] = (jbyte)(0x80 | (input_char & 0x3f));
       output_size = 2;
     } else if (input_char >= 0xd800 && input_char <= 0xdbff) {
-      // this is <high-half zone code> in UTF-16
+      /* this is <high-half zone code> in UTF-16 */
       if (str >= str_end) {
-	return PCSL_STRING_EILSEQ;
+        bad_sequence = PCSL_TRUE;
+        output_byte[0] = (jbyte)UTF8_ERROR_CHAR;
+        output_size = 1;
       } else {
-	// check next char is valid <low-half zone code>
-	jchar low_char = *str++;
+        /* check next char is valid <low-half zone code> */
+        jchar low_char = *str++;
 
-	if (low_char < 0xdc00 || low_char > 0xdfff) {
-	  return PCSL_STRING_EILSEQ;
-	} else {
-	  int ucs4 =
-	    (input_char - 0xd800) * 0x400 + (low_char - 0xdc00) + 0x10000;
-	  output_byte[0] = (jbyte)(0xf0 | ((ucs4 >> 18)) & 0x07);
-	  output_byte[1] = (jbyte)(0x80 | ((ucs4 >> 12) & 0x3f));
-	  output_byte[2] = (jbyte)(0x80 | ((ucs4 >> 6) & 0x3f));
-	  output_byte[3] = (jbyte)(0x80 | (ucs4 & 0x3f));
-	  output_size = 4;
-	}
+        if (low_char < 0xdc00 || low_char > 0xdfff) {
+          --str;
+          bad_sequence = PCSL_TRUE;
+          output_byte[0] = (jbyte)UTF8_ERROR_CHAR;
+          output_size = 1;
+        } else {
+          int ucs4 =
+            (input_char - 0xd800) * 0x400 + (low_char - 0xdc00) + 0x10000;
+          output_byte[0] = (jbyte)(0xf0 | ((ucs4 >> 18)) & 0x07);
+          output_byte[1] = (jbyte)(0x80 | ((ucs4 >> 12) & 0x3f));
+          output_byte[2] = (jbyte)(0x80 | ((ucs4 >> 6) & 0x3f));
+          output_byte[3] = (jbyte)(0x80 | (ucs4 & 0x3f));
+          output_size = 4;
+        }
       }
+    } else if (input_char >= 0xdc00 && input_char <= 0xdfff) {
+        bad_sequence = PCSL_TRUE;
+        output_byte[0] = (jbyte)UTF8_ERROR_CHAR;
+        output_size = 1;
     } else {
       output_byte[0] = (jbyte)(0xe0 | ((input_char >> 12)) & 0x0f);
       output_byte[1] = (jbyte)(0x80 | ((input_char >> 6) & 0x3f));
@@ -175,12 +227,12 @@ pcsl_string_status pcsl_utf16_convert_to_utf8(const jchar * str, jsize str_lengt
 
     if (buffer_overflow == PCSL_FALSE && buffer != NULL) {
       if (output_off + output_size > buffer_length) {
-	buffer_overflow = PCSL_TRUE;
+        buffer_overflow = PCSL_TRUE;
       } else {
-	int i;
-	for (i = 0; i < output_size; i++) {
-	  buffer[output_off + i] = output_byte[i];
-	}
+        int i;
+        for (i = 0; i < output_size; i++) {
+          buffer[output_off + i] = output_byte[i];
+        }
       }
     }
 
@@ -192,7 +244,9 @@ pcsl_string_status pcsl_utf16_convert_to_utf8(const jchar * str, jsize str_lengt
     *converted_length = output_off;
   }
 
-  return buffer_overflow == PCSL_TRUE ? PCSL_STRING_BUFFER_OVERFLOW : PCSL_STRING_OK;
+  return buffer_overflow == PCSL_TRUE ? PCSL_STRING_BUFFER_OVERFLOW
+       : bad_sequence == PCSL_TRUE ? PCSL_STRING_EILSEQ
+       : PCSL_STRING_OK;
 }
 
 /**
