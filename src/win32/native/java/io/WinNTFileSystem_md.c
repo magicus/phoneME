@@ -646,4 +646,13 @@ Java_java_io_WinNTFileSystem_getDriveDirectory(JNIEnv *env, jobject this,
     return (*env)->NewString(env, p, wcslen(p));
 }
 
+#else
+
+JNIEXPORT jstring JNICALL
+Java_java_io_WinNTFileSystem_getDriveDirectory(JNIEnv *env, jclass ignored,
+						 jint drive)
+{
+    return JNU_NewStringPlatform(env, "/");
+}
+
 #endif

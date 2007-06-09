@@ -281,9 +281,11 @@
 					 jType, accessor)		\
 {									\
     CVMJavaInt i;							\
-    jType* bufPtr = (jType*)(buf);					\
+    unsigned char* bufPtr = (unsigned char*)(buf);                      \
     CVMassert((start) + (len) <= (arr)->length);			\
-    for (i = (start); i < (start) + (len); i++, bufPtr++) {		\
+    for (i = (start); i < (start) + (len); i++, bufPtr+=sizeof(jType)) {\
+        jType x;                                                        \
+        memcpy(&x, bufPtr, sizeof(jType));                              \
 	CVMD_arrayWrite##accessor(arr, i, *bufPtr);			\
     }									\
 }
