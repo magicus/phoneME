@@ -94,7 +94,7 @@ Java_java_io_Win32FileSystem_initIDs(JNIEnv *env, jclass cls)
 				  "path", "Ljava/lang/String;");
 }
 
-#ifndef _UNICODE
+//#ifndef _UNICODE
 
 /*
  * Defined in canonicalize_md.c
@@ -119,7 +119,8 @@ Java_java_io_Win32FileSystem_canonicalize0(JNIEnv *env, jobject this,
     return rv;
 }
 
-
+//#endif
+
 /* -- Attribute accessors -- */
 
 
@@ -155,12 +156,15 @@ Java_java_io_Win32FileSystem_checkAccess(JNIEnv *env, jobject this,
 					 jobject file, jboolean write)
 {
     jboolean rv = JNI_FALSE;
-    
+
+#ifndef WINCE   
     WITH_FIELD_PLATFORM_STRING(env, file, ids_path, path) {
 	if (_access(path, (write ? 2 : 4)) == 0) {
 	    rv = JNI_TRUE;
 	}
     } END_PLATFORM_STRING(env, path);
+#endif
+
     return rv;
 }
 
@@ -395,7 +399,8 @@ Java_java_io_Win32FileSystem_rename0(JNIEnv *env, jobject this,
                                      jobject from, jobject to)
 {
     jboolean rv = JNI_FALSE;
-    
+
+#ifndef WINCE
     WITH_FIELD_PLATFORM_STRING(env, from, ids_path, fromPath) {
 	WITH_FIELD_PLATFORM_STRING(env, to, ids_path, toPath) {
 	    if (rename(fromPath, toPath) == 0) {
@@ -403,6 +408,8 @@ Java_java_io_Win32FileSystem_rename0(JNIEnv *env, jobject this,
 	    }
 	} END_PLATFORM_STRING(env, toPath);
     } END_PLATFORM_STRING(env, fromPath);
+#endif
+
     return rv;
 }
 
@@ -456,7 +463,7 @@ Java_java_io_Win32FileSystem_setReadOnly(JNIEnv *env, jobject this,
     return rv;
 }
 
-
+#ifndef WINCE
 /* -- Filesystem interface -- */
 
 #include <direct.h>
@@ -470,6 +477,14 @@ Java_java_io_Win32FileSystem_getDriveDirectory(JNIEnv *env, jclass ignored,
     if (p == NULL) return NULL;
     if (isalpha(*p) && (p[1] == ':')) p += 2;
     return JNU_NewStringPlatform(env, p);
+}
+#else
+
+JNIEXPORT jstring JNICALL
+Java_java_io_Win32FileSystem_getDriveDirectory(JNIEnv *env, jclass ignored,
+						 jint drive)
+{
+    return JNU_NewStringPlatform(env, "/");
 }
 
 #endif

@@ -645,8 +645,7 @@ ENTRY1 ( CVMCCMruntimeLookupInterfaceMBGlue )
 
         /* Get the interface mb from the ocb's vtbl: */
         ldr     r0, [OCB, #OFFSET_CVMClassBlock_methodTablePtrX]
-        mov     r3, SOURCE_MB_IDX, asl \
-                    #CONSTANT_LOG2_CVMInterfaceTable_methodTableIndex_SIZE
+        mov     r3, SOURCE_MB_IDX, asl #CONSTANT_LOG2_CVMInterfaceTable_methodTableIndex_SIZE
         ldrh	ip, [TARGET_METHODTABLE_INDICES, r3]
 
         /* r0 = ocb->methodTablePtrX[ip]: */
