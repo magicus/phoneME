@@ -117,7 +117,7 @@ int BasicOop::current_task_id() {
   return TaskContext::current_task_id();
 }
 int BasicOop::current_task_seq() {
-  return Task::current_task_seq(Universe::current_task_id());
+  return Task::current_task_seq(TaskContext::current_task_id());
 }
 bool BasicOop::rom_contains(OopDesc *p) {
   return ROM::in_any_loaded_bundle(p);

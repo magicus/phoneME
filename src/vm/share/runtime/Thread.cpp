@@ -744,7 +744,7 @@ void real_time_tick(int delay_time) {
   }
 
 #if ENABLE_PERFORMANCE_COUNTERS
-  jvm_perf_count.num_of_timer_ticks ++;
+  jvm_perf_count[TaskContext::current_task_id()].num_of_timer_ticks ++;
 #endif
 
 #if ENABLE_PROFILER

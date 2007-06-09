@@ -417,6 +417,13 @@ void Task::cleanup_terminated_task(int id JVM_TRAPS) {
     ObjectHeap::on_task_termination(task);
     tlist().obj_at_clear(id);
 
+#if ENABLE_PERFORMANCE_COUNTERS
+    tty->cr();
+    tty->print_cr("TASK %d TERMINATED", id);
+    tty->cr();
+    JVM::print_performance_counters();
+#endif
+
     _num_tasks--;
 
     // _current_thread == NULL means the current task is being terminated,

@@ -1879,7 +1879,7 @@ extern "C" {
   extern _KNI_HandleInfo*
                   last_kni_handle_info;
   extern struct _JVM_PerformanceCounters
-                  jvm_perf_count;
+                  jvm_perf_count[MAX_TASKS];
 
   extern Oop*     last_raw_handle;
   extern OopDesc**_old_generation_end;
@@ -2610,10 +2610,10 @@ typedef class SourceROMWriter CurrentSourceROMWriter;
 
 #if ENABLE_PERFORMANCE_COUNTERS
 #define PERFORMANCE_COUNTER_INCREMENT(name, value) \
-        jvm_perf_count.name += value
+        jvm_perf_count[TaskContext::current_task_id()].name += value
 #define PERFORMANCE_COUNTER_SET_MAX(name, value) \
-        if (jvm_perf_count.name < value) { \
-          jvm_perf_count.name = value; \
+        if (jvm_perf_count[TaskContext::current_task_id()].name < value) { \
+          jvm_perf_count[TaskContext::current_task_id()].name = value; \
         }
 #else
 #define PERFORMANCE_COUNTER_INCREMENT(name, value)

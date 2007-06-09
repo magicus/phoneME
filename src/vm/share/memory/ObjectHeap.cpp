@@ -3019,7 +3019,8 @@ inline void ObjectHeap::internal_collect_prologue(size_t min_free_after_collecti
 #if ENABLE_TTY_TRACE
   if (TraceGC) {
 #if ENABLE_PERFORMANCE_COUNTERS
-    TTY_TRACE_CR(("TraceGC: Starting GC #%d", jvm_perf_count.num_of_gc));
+    TTY_TRACE_CR(("TraceGC: Starting GC #%d", 
+        jvm_perf_count[TaskContext::current_task_id()].num_of_gc));
 #endif
     TTY_TRACE_CR(("Heap 0x%x-0x%x, 0x%x-0x%x",
                   _heap_start, _old_generation_end,

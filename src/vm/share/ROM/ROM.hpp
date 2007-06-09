@@ -279,7 +279,7 @@ struct ROM_PerformanceCounters {
 #endif
 };
 
-extern ROM_PerformanceCounters rom_perf_counts;
+extern ROM_PerformanceCounters rom_perf_counts[MAX_TASKS];
 #endif
 
 
@@ -287,7 +287,8 @@ extern ROM_PerformanceCounters rom_perf_counts;
   #define ROM_DETAILED_PERFORMANCE_COUNTER_START() \
     jlong __start_time = Os::elapsed_counter() 
   #define ROM_DETAILED_PERFORMANCE_COUNTER_END(x)  \
-    rom_perf_counts.x  += Os::elapsed_counter() - __start_time
+    rom_perf_counts[TaskContext::current_task_id()].x \
+        += Os::elapsed_counter() - __start_time
 #else
   #define ROM_DETAILED_PERFORMANCE_COUNTER_START()
   #define ROM_DETAILED_PERFORMANCE_COUNTER_END(x)
@@ -384,7 +385,7 @@ public:
   static int number_of_system_classes() { return _rom_number_of_java_classes; }
 
 #if ENABLE_PERFORMANCE_COUNTERS
-  static void ROM_print_hrticks(void print_hrticks(const char *, julong));
+  static void ROM_print_hrticks(void print_hrticks(const char *, julong), int task_id);
 #endif
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT

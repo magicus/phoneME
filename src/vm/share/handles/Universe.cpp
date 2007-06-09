@@ -689,6 +689,11 @@ bool Universe::bootstrap_with_rom(const JvmPathChar* classpath) {
   create_main_thread_mirror(JVM_SINGLE_ARG_MUST_SUCCEED);
 
   Thread::set_current(Thread::current());
+
+#if ENABLE_PERFORMANCE_COUNTERS
+  JVM_ResetPerformanceCounters(TaskContext::current_task_id());
+#endif
+
   Scheduler::start(Thread::current() JVM_MUST_SUCCEED);
   Thread::current()->initialize_main(JVM_SINGLE_ARG_MUST_SUCCEED);
 

@@ -891,7 +891,7 @@ static inline void init_clock_ticks(void) {
 
 jlong Os::elapsed_counter() {
 #if ENABLE_PERFORMANCE_COUNTERS
-  jvm_perf_count.hrtick_read_count++;
+  jvm_perf_count[TaskContext::current_task_id()].hrtick_read_count++;
 #endif
 
 #if NEED_XSCALE_PMU_CYCLE_COUNTER

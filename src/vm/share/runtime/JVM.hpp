@@ -126,7 +126,9 @@ private:
 
   static void calibrate_hrticks() PRODUCT_NOCOUNTER_RETURN;
   static void calibrate_cpu() PRODUCT_NOCOUNTER_RETURN;
+public:
   static void print_performance_counters() PRODUCT_NOCOUNTER_RETURN;
+private:
 
 #if ENABLE_MEASURE_NATIVE_STACK
   static void measure_native_stack(bool measure);

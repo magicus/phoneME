@@ -91,6 +91,10 @@ void Java_com_sun_cldc_isolate_Isolate_nativeStart(JVM_SINGLE_ARG_TRAPS) {
     }
   }
 
+#if ENABLE_PERFORMANCE_COUNTERS
+  JVM_ResetPerformanceCounters(id);
+#endif
+
   // save current thread pointer, no non-raw handles please!
   Thread::Raw current = Thread::current();
   Thread::set_current(&saved);

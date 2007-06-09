@@ -562,8 +562,8 @@ typedef struct _JVM_PerformanceCounters {
 
 } JVM_PerformanceCounters;
 
-void JVM_ResetPerformanceCounters();
-JVM_PerformanceCounters* JVM_GetPerformanceCounters();
+void JVM_ResetPerformanceCounters(int task_id);
+JVM_PerformanceCounters* JVM_GetPerformanceCounters(int task_id);
 
 #endif  /* ENABLE_PERFORMANCE_COUNTERS */
 

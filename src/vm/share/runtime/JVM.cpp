@@ -309,7 +309,9 @@ inline bool JVM::initialize( void ) {
 
   // it must be after Os::initialize(), as depends on hrtick frequency
 #if ENABLE_PERFORMANCE_COUNTERS
-  JVM_ResetPerformanceCounters();
+  for (int task_id = 0; task_id < MAX_TASKS; task_id++) {
+    JVM_ResetPerformanceCounters(task_id);
+  }
 #endif
 
 #ifndef PRODUCT
@@ -1115,7 +1117,8 @@ extern "C" jint JVM_CreateAppImage(const JvmPathChar *jarFile,
 
 
 #if ENABLE_PERFORMANCE_COUNTERS
-JVM_PerformanceCounters jvm_perf_count;
+
+struct _JVM_PerformanceCounters jvm_perf_count[MAX_TASKS];
 
 extern "C" void vm_mips_4(int);
 extern "C" void vm_mips_4_end(int);
@@ -1176,14 +1179,14 @@ void JVM::calibrate_cpu() {
 }
 
 void JVM::calibrate_hrticks() {
-  jlong saved = jvm_perf_count.hrtick_read_count;
+  jlong saved = jvm_perf_count[TaskContext::current_task_id()].hrtick_read_count;
   jlong started = Os::elapsed_counter();
   for (int i=1000; i>0; i--) {
     Os::elapsed_counter();
   }
   jlong end = Os::elapsed_counter();
-  jvm_perf_count.hrtick_overhead_per_1000 = end - started;
-  jvm_perf_count.hrtick_read_count = saved;
+  jvm_perf_count[TaskContext::current_task_id()].hrtick_overhead_per_1000 = end - started;
+  jvm_perf_count[TaskContext::current_task_id()].hrtick_read_count = saved;
 }
 
 
@@ -1197,23 +1200,35 @@ void JVM::calibrate_hrticks() {
  * the places to enable it.
  */
 extern "C" void jvm_start_call_vm() {
-  jvm_perf_count.total_in_vm_hrticks -= Os::elapsed_counter();
+  jvm_perf_count[TaskContext::current_task_id()].total_in_vm_hrticks 
+      -= Os::elapsed_counter();
 }
 
 extern "C" void jvm_end_call_vm() {
-  jvm_perf_count.total_in_vm_hrticks += Os::elapsed_counter();
+  jvm_perf_count[TaskContext::current_task_id()].total_in_vm_hrticks 
+      += Os::elapsed_counter();
 }
 
-extern "C" void JVM_ResetPerformanceCounters() {
-  JVM_PerformanceCounters *pc = &jvm_perf_count;
+extern "C" void JVM_ResetPerformanceCounters(int task_id) {
+  if (task_id < 0 || task_id >= MAX_TASKS) {
+    SHOULD_NOT_REACH_HERE();
+    return;
+  }
+
+  JVM_PerformanceCounters *pc = &jvm_perf_count[task_id];
   jvm_memset(pc, 0, sizeof(*pc));
 
   pc->vm_start_hrtick = Os::elapsed_counter();
   pc->hrtick_frequency = Os::elapsed_frequency();
 }
 
-extern "C" JVM_PerformanceCounters* JVM_GetPerformanceCounters() {
-  JVM_PerformanceCounters *pc = &jvm_perf_count;
+extern "C" JVM_PerformanceCounters* JVM_GetPerformanceCounters(int task_id) {
+  if (task_id < 0 || task_id >= MAX_TASKS) {
+    SHOULD_NOT_REACH_HERE();
+    return NULL;
+  }
+
+  JVM_PerformanceCounters *pc = &jvm_perf_count[task_id];
 
   pc->mem_used          = ObjectHeap::used_memory();
   pc->mem_free          = ObjectHeap::free_memory();
@@ -1226,8 +1241,8 @@ extern "C" JVM_PerformanceCounters* JVM_GetPerformanceCounters() {
 
 static inline jdouble msec_scale(jlong val) {
   return jvm_dmul(jvm_ddiv(jvm_l2d(val),
-                           jvm_l2d(jvm_perf_count.hrtick_frequency)),
-                  1000.0);
+     jvm_l2d(jvm_perf_count[TaskContext::current_task_id()].hrtick_frequency)),
+     1000.0);
 }
 
 void JVM::print_performance_counters() {
@@ -1244,123 +1259,113 @@ void JVM::print_performance_counters() {
     return;
   }
 
-  JVM_PerformanceCounters *pc = JVM_GetPerformanceCounters();
-  jlong elapsed = (pc->vm_current_hrtick - pc->vm_start_hrtick);
+  for (int task_id = 0; task_id < MAX_TASKS; task_id++) {
+    if (!Universe::is_valid_task_id(task_id)) {
+      continue;
+    }
+    tty->print_cr("PERFORMANCE COUNTERS FOR TASK %d", task_id);
 
-  julong avg_compile_hrticks_xmax = 0;
-  julong avg_compiled_method_xmax = 0;
-  julong avg_compile_mem_xmax = 0;
+    JVM_PerformanceCounters *pc = JVM_GetPerformanceCounters(task_id);
+    jlong elapsed = (pc->vm_current_hrtick - pc->vm_start_hrtick);
 
-  if (pc->num_of_compilations > (jlong)1) {
-    avg_compile_hrticks_xmax =
+    julong avg_compile_hrticks_xmax = 0;
+    julong avg_compiled_method_xmax = 0;
+    julong avg_compile_mem_xmax = 0;
+
+    if (pc->num_of_compilations > (jlong)1) {
+      avg_compile_hrticks_xmax =
         (pc->total_compile_hrticks - pc->max_compile_hrticks) /
         (pc->num_of_compilations - (jlong)1);
-    avg_compiled_method_xmax =
+      avg_compiled_method_xmax =
         (pc->total_compiled_methods - pc->max_compiled_method) /
         (pc->num_of_compilations - (jlong)1);
-    avg_compile_mem_xmax =
+      avg_compile_mem_xmax =
         (pc->total_compile_mem - pc->max_compile_mem) /
         (pc->num_of_compilations - (jlong)1);
-  }
+    }
 
-  tty->cr();
-  JVM::calibrate_hrticks();
-
-  jlong hrtick_read_overhead = 0;
-  if (pc->hrtick_overhead_per_1000 > 0) {
-    // This is total time spent reading the high-res clock during this
-    // VM execution. If you see a high value that means the performance
-    // counters are somewhat skewed, and you should try to make the high-res
-    // clock more light-weight.
-    hrtick_read_overhead = 
-        pc->hrtick_read_count * pc->hrtick_overhead_per_1000 / jlong(1000);
-  }
-  P_LNG(A, "hrtick_frequency",         pc->hrtick_frequency);
-  P_HRT(A, "hrtick_overhead_per_1000", pc->hrtick_overhead_per_1000);
-  P_LNG(A, "hrtick_read_count",        pc->hrtick_read_count);
-  P_HRT(A, "hrtick_read_overhead",     hrtick_read_overhead);
-
-  P_HRT(A, "elapsed", elapsed);
-
-  // Thread counters
-  //
-  P_INT(T, "num_of_threads at exit",pc->num_of_threads);
-  P_INT(A, "num_of_timer_ticks",    pc->num_of_timer_ticks, "%9d");
-  if (pc->num_of_timer_ticks > 0) {
-    jdouble ms_per_tick = jvm_ddiv(msec_scale(elapsed),
-                                   jvm_i2d(pc->num_of_timer_ticks));
-    tty->print_cr(" or %.2lf ms per tick", ms_per_tick);
-  } else {
     tty->cr();
-  }
-  P_HRT(T, "total_event_hrticks",   pc->total_event_hrticks);
-  P_INT(T, "total_event_checks",    (int)pc->total_event_checks);
+    //JVM::calibrate_hrticks();
+    //tty->cr();
+    P_LNG(A, "hrtick_frequency",   pc->hrtick_frequency);
+    P_HRT(A, "elapsed", elapsed);
+    
+    // Thread counters
+    //
+    P_INT(T, "num_of_threads at exit",pc->num_of_threads);
+    P_INT(A, "num_of_timer_ticks",    pc->num_of_timer_ticks, "%9d");
+    if (pc->num_of_timer_ticks > 0) {
+      jdouble ms_per_tick = jvm_ddiv(msec_scale(elapsed),
+                                     jvm_i2d(pc->num_of_timer_ticks));
+      tty->print_cr(" or %.2lf ms per tick", ms_per_tick);
+    } else {
+      tty->cr();
+    }
+    P_HRT(T, "total_event_hrticks",   pc->total_event_hrticks);
+    P_INT(T, "total_event_checks",    (int)pc->total_event_checks);
+    
+    // GC counters
+    //
+    P_INT(G, "mem_total",             pc->mem_total);
+    P_INT(G, "mem_free",              pc->mem_free);
+    P_INT(G, "mem_used",              pc->mem_used);
+    P_INT(G, "total allocated bytes", pc->mem_used + pc->total_bytes_collected);
+    P_INT(A, "num_of_gc",             pc->num_of_gc);
+    P_INT(G, "num_of_full_gc",        pc->num_of_full_gc);
+    P_INT(G, "num_of_compiler_gc",    pc->num_of_compiler_gc);
+    P_INT(G, "total_bytes_collected", pc->total_bytes_collected);
 
-  // GC counters
-  //
-  P_INT(G, "mem_total",             pc->mem_total);
-  P_INT(G, "mem_free",              pc->mem_free);
-  P_INT(G, "mem_used",              pc->mem_used);
-  P_INT(G, "total allocated bytes", pc->mem_used + pc->total_bytes_collected);
-  P_INT(A, "num_of_gc",             pc->num_of_gc);
-  P_INT(G, "num_of_full_gc",        pc->num_of_full_gc);
-  P_INT(G, "num_of_compiler_gc",    pc->num_of_compiler_gc);
-  P_INT(G, "total_bytes_collected", pc->total_bytes_collected);
+    P_HRT(A, "total_gc_hrticks",      pc->total_gc_hrticks);
+    P_HRT(G, "max_gc_hrticks",        pc->max_gc_hrticks);
+    P_CR (G);
 
-  P_HRT(A, "total_gc_hrticks",      pc->total_gc_hrticks);
-  P_HRT(G, "max_gc_hrticks",        pc->max_gc_hrticks);
-  P_CR (G);
-
-  // Other counters
-  //
-  P_HRT(O, "total_in_vm_count",    pc->total_in_vm_hrticks);
-  P_CR (O);
+    // Other counters
+    //
+    P_HRT(O, "total_in_vm_count",    pc->total_in_vm_hrticks);
+    P_CR (O);
 
 #if USE_BINARY_IMAGE_LOADER
-  P_HRT(L, "binary_link_hrticks",  pc->binary_link_hrticks);
-  P_HRT(L, "binary_load_hrticks",  pc->binary_load_hrticks);
+    P_HRT(L, "binary_link_hrticks",  pc->binary_link_hrticks);
+    P_HRT(L, "binary_load_hrticks",  pc->binary_load_hrticks);
 #endif
 
-  P_INT(L, "num_of_class_loaded",  pc->num_of_class_loaded);
-  P_HRT(A, "total_load_hrticks",   pc->total_load_hrticks);
-  P_HRT(L, "max_load_hrticks",     pc->max_load_hrticks);
-  P_HRT(A, "total_verify_hrticks", pc->total_verify_hrticks);
-  P_HRT(L, "max_verify_hrticks",   pc->max_verify_hrticks);
+    P_INT(L, "num_of_class_loaded",  pc->num_of_class_loaded);
+    P_HRT(A, "total_load_hrticks",   pc->total_load_hrticks);
+    P_HRT(L, "max_load_hrticks",     pc->max_load_hrticks);
+    P_HRT(A, "total_verify_hrticks", pc->total_verify_hrticks);
+    P_HRT(L, "max_verify_hrticks",   pc->max_verify_hrticks);
+    P_CR (L);
 
-  P_INT(L, "num_of_romizer_steps", pc->num_of_romizer_steps);
-  P_HRT(L, "total_romizer_hrticks",pc->total_romizer_hrticks);
-  P_HRT(L, "max_romizer_hrticks",  pc->max_romizer_hrticks);
-  P_CR (L);
+    P_INT(C, "num_of_compilations",      pc->num_of_compilations);
+    P_INT(C, "           finished",      pc->num_of_compilations_finished);
+    P_INT(C, "       resume count",      pc->compilation_resume_count);
+    P_INT(C, "             failed",      pc->num_of_compilations_failed);
+    P_INT(C, "total_compiled_bytecodes", (int)pc->total_compiled_bytecodes);
+    P_INT(C, "max_compiled_bytecodes",   (int)pc->max_compiled_bytecodes);
+    P_HRT(A, "compile total",            pc->total_compile_hrticks);
+    P_HRT(C, "        max",              pc->max_compile_hrticks);
+    P_HRT(C, "        avg (excl max)",   avg_compile_hrticks_xmax);
 
-  P_INT(C, "num_of_compilations",      pc->num_of_compilations);
-  P_INT(C, "           finished",      pc->num_of_compilations_finished);
-  P_INT(C, "       resume count",      pc->compilation_resume_count);
-  P_INT(C, "             failed",      pc->num_of_compilations_failed);
-  P_INT(C, "total_compiled_bytecodes", (int)pc->total_compiled_bytecodes);
-  P_INT(C, "max_compiled_bytecodes",   (int)pc->max_compiled_bytecodes);
-  P_HRT(A, "compile total",            pc->total_compile_hrticks);
-  P_HRT(C, "        max",              pc->max_compile_hrticks);
-  P_HRT(C, "        avg (excl max)",   avg_compile_hrticks_xmax);
+    P_INT(C, "compile_mem total",        (int)pc->total_compile_mem);
+    P_INT(C, "        max",              (int)pc->max_compile_mem, "%9d");
+    if (C || PrintAllPerformanceCounters) {
+      tty->print_cr(" avg (excl max) = %d", avg_compile_mem_xmax);
+    }
 
-  P_INT(C, "compile_mem total",        (int)pc->total_compile_mem);
-  P_INT(C, "        max",              (int)pc->max_compile_mem, "%9d");
-  if (C || PrintAllPerformanceCounters) {
-    tty->print_cr(" avg (excl max) = %d", avg_compile_mem_xmax);
-  }
+    P_INT(C, "compiled_methods total",   (int)pc->total_compiled_methods);
+    P_INT(C, "        max",              (int)pc->max_compiled_method, "%9d");
+    if (C || PrintAllPerformanceCounters) {
+      tty->print_cr(" avg (excl max) = %d", avg_compiled_method_xmax);
+    }
 
-  P_INT(C, "compiled_methods total",   (int)pc->total_compiled_methods);
-  P_INT(C, "        max",              (int)pc->max_compiled_method, "%9d");
-  if (C || PrintAllPerformanceCounters) {
-    tty->print_cr(" avg (excl max) = %d", avg_compiled_method_xmax);
-  }
+    P_INT(C, "uncommon_traps_generated", pc->uncommon_traps_generated);
+    P_INT(C, "uncommon_traps_taken",     pc->uncommon_traps_taken);
+    P_CR (C);
 
-  P_INT(C, "uncommon_traps_generated", pc->uncommon_traps_generated);
-  P_INT(C, "uncommon_traps_taken",     pc->uncommon_traps_taken);
-  P_CR (C);
-
-  if (UseROM) {
-    tty->cr();
-    ROM::ROM_print_hrticks(print_hrticks);
+    if (UseROM) {
+      tty->cr();
+      ROM::ROM_print_hrticks(print_hrticks, task_id);
+    }
   }
 
 #if ENABLE_COMPILER

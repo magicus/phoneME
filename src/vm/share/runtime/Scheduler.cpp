@@ -1506,8 +1506,8 @@ void Scheduler::check_blocked_threads(jlong timeout) {
 
 #if ENABLE_PERFORMANCE_COUNTERS
   jlong elapsed = Os::elapsed_counter() - start_time;
-  jvm_perf_count.total_event_hrticks += elapsed;
-  jvm_perf_count.total_event_checks ++;
+  jvm_perf_count[TaskContext::current_task_id()].total_event_hrticks += elapsed;
+  jvm_perf_count[TaskContext::current_task_id()].total_event_checks ++;
 #endif
 
 #if ENABLE_WTK_PROFILER
@@ -1691,8 +1691,8 @@ jlong Scheduler::time_slice(JVM_SINGLE_ARG_TRAPS) {
 #if ENABLE_PERFORMANCE_COUNTERS
   if (_slave_mode_yield_start_time != -1) {
     jlong elapsed = Os::elapsed_counter() - _slave_mode_yield_start_time;
-    jvm_perf_count.total_event_hrticks += elapsed;
-    jvm_perf_count.total_event_checks ++;
+    jvm_perf_count[TaskContext::current_task_id()].total_event_hrticks += elapsed;
+    jvm_perf_count[TaskContext::current_task_id()].total_event_checks ++;
   }
 #endif
 

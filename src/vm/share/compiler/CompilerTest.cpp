@@ -330,7 +330,8 @@ void CompilerTest::test_compile(Method *method JVM_TRAPS) {
   }
 #endif
 
-  JVM_PerformanceCounters *pc = JVM_GetPerformanceCounters();
+  JVM_PerformanceCounters *pc = 
+      JVM_GetPerformanceCounters(TaskContext::current_task_id());
   if (CollectBeforeCompilerTest) {
     Os::suspend_profiler();
     {

@@ -3574,7 +3574,8 @@ void ROMOptimizer::precompile_methods(JVM_SINGLE_ARG_TRAPS) {
   InstanceClass::Fast holder;
   int precompile_size = precompile_method_list()->size();
   for (int i=0; i < precompile_size; i++) {
-    AZZERT_ONLY(int old = jvm_perf_count.uncommon_traps_generated;)
+    AZZERT_ONLY(int old = 
+        jvm_perf_count[TaskContext::current_task_id()].uncommon_traps_generated;)
     method = precompile_method_list()->element_at(i);
     holder = method().holder();
 
@@ -3621,7 +3622,7 @@ void ROMOptimizer::precompile_methods(JVM_SINGLE_ARG_TRAPS) {
     method().compile(-1, false JVM_CHECK);
 
     // IMPL_NOTE: we can't deal with uncommon traps inside AOT-compiled code
-    GUARANTEE(jvm_perf_count.uncommon_traps_generated == old,
+    GUARANTEE(jvm_perf_count[Universe::current_task_id()].uncommon_traps_generated == old,
               "Uncommon trap in AOT-compiled code");
 
 #if 0

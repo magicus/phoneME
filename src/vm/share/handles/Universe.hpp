@@ -152,6 +152,31 @@ private:
                                      ObjArray *d);
   static inline ReturnOop new_task_list(JVM_SINGLE_ARG_TRAPS);
 public:
+  static bool is_valid_task_id(int task_id) {
+    if (task_id < 0 || task_id >= MAX_TASKS) {
+      return false;
+    }
+    TaskList::Raw tlist = Universe::task_list();
+    if (tlist.is_null()) {
+      return false;
+    }
+
+    const int len = tlist().length();
+    
+    if (task_id >= len) {
+      return false;
+    }
+
+    return tlist().obj_at(task_id) != NULL;
+  }
+#else
+  static bool is_valid_task_id(int task_id) {
+    return task_id == 0;
+  }
+  static int current_task_id() {
+    return 0;
+  }
+
 #endif //ENABLE_ISOLATES
   static void set_current_task(int task_id);
 
