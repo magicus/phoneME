@@ -56,6 +56,14 @@ CVMJITflushCache(void* begin, void* end)
 #include <signal.h>
 #include <sys/ucontext.h>
 
+/* REG_PC and REG_SP are already defined for solaris 10 but not solaris 8. */
+#ifndef REG_PC
+#define REG_PC  PC
+#endif
+#ifndef REG_SP
+#define REG_SP  SP
+#endif 
+
 /*
  * SEGV handler
  * SVMC_JIT. Need to implement chained SEGV handler.
