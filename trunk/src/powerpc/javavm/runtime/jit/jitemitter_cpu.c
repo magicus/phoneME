@@ -221,6 +221,20 @@
 #define PPC_STFSX_OPCODE   (31u << PPC_OPCODE_SHIFT | 663u << 1)
 #endif
 
+#ifdef CVM_PPC_E500V1
+/* e500 opcodes. */
+#define PPC_E500_EFSADD_OPCODE    (4u << PPC_OPCODE_SHIFT | 0x2C0)
+#define PPC_E500_EFSSUB_OPCODE    (4u << PPC_OPCODE_SHIFT | 0x2C1)
+#define PPC_E500_EFSMUL_OPCODE    (4u << PPC_OPCODE_SHIFT | 0x2C8)
+#define PPC_E500_EFSDIV_OPCODE    (4u << PPC_OPCODE_SHIFT | 0x2C9)
+#define PPC_E500_EFSNEG_OPCODE    (4u << PPC_OPCODE_SHIFT | 0x2C6)
+#define PPC_E500_EFSCFSI_OPCODE   (4u << PPC_OPCODE_SHIFT | 0x2D1)
+#define PPC_E500_EFSCTSI_OPCODE   (4u << PPC_OPCODE_SHIFT | 0x2D5)
+#define PPC_E500_EFSCMPEQ_OPCODE  (4u << PPC_OPCODE_SHIFT | 0x2CE)
+#define PPC_E500_EFSCMPLT_OPCODE  (4u << PPC_OPCODE_SHIFT | 0x2CD)
+#define PPC_E500_EFSCMPGT_OPCODE  (4u << PPC_OPCODE_SHIFT | 0x2CC)
+#endif
+
 /**************************************************************
  * PowerPC condition code related stuff. PowerPC doesn't have
  * simple 4-bit (N, Z, V, and C) condition codes like ARM and 
@@ -629,6 +643,12 @@ static const char *getALUOpcodeName(CVMUint32 ppcOpcode)
     case PPC_XOR_OPCODE:     name = "xor"; break;
     case PPC_XORI_OPCODE:    name = "xori"; break;
     case PPC_XORIS_OPCODE:   name = "xoris"; break;
+#ifdef CVM_PPC_E500V1
+    case PPC_E500_EFSADD_OPCODE: name = "efsadd"; break;
+    case PPC_E500_EFSSUB_OPCODE: name = "efssub"; break;
+    case PPC_E500_EFSMUL_OPCODE: name = "efsmul"; break;
+    case PPC_E500_EFSDIV_OPCODE: name = "efsdiv"; break;
+#endif
 
     default:
         CVMconsolePrintf("Unknown opcode 0x%08x", ppcOpcode);
@@ -1559,6 +1579,44 @@ CVMCPUemitUnaryALU(CVMJITCompilationContext *con, int opcode,
 	});
         break;
     }
+#ifdef CVM_PPC_E500V1
+    case CVME500_FNEG_OPCODE: {
+	CVMassert(!setcc);
+	emitInstruction(con, PPC_E500_EFSNEG_OPCODE |
+			destRegID << PPC_RD_SHIFT |
+			srcRegID << PPC_RA_SHIFT);
+	CVMtraceJITCodegenExec({
+	    printPC(con);
+	    CVMconsolePrintf("	efsneg	r%s, r%s",
+			     regName(destRegID), regName(srcRegID));
+	});
+        break;
+    }
+    case CVME500_I2F_OPCODE: {
+	CVMassert(!setcc);
+	emitInstruction(con, PPC_E500_EFSCFSI_OPCODE |
+			destRegID << PPC_RD_SHIFT |
+			srcRegID << PPC_RB_SHIFT);
+	CVMtraceJITCodegenExec({
+	    printPC(con);
+	    CVMconsolePrintf("	efscfsi	r%s, r%s",
+			     regName(destRegID), regName(srcRegID));
+	});
+        break;
+    }
+    case CVME500_F2I_OPCODE: {
+	CVMassert(!setcc);
+	emitInstruction(con, PPC_E500_EFSCTSI_OPCODE |
+			destRegID << PPC_RD_SHIFT |
+			srcRegID << PPC_RB_SHIFT);
+	CVMtraceJITCodegenExec({
+	    printPC(con);
+	    CVMconsolePrintf("	efsctsi	r%s, r%s",
+			     regName(destRegID), regName(srcRegID));
+	});
+        break;
+    }
+#endif
     default:
         CVMassert(CVM_FALSE);
     }
@@ -1751,6 +1809,20 @@ static const CVMPPCBinaryALUOpcode ppcBinaryALUOpcodes[] = {
     /* CVMPPC_XORIS_OPCODE */
     { 0 /*invalid*/,  0 /*invalid*/, PPC_XORIS_OPCODE,  0 /*invalid*/,
      PPC_RA_SHIFT, PPC_RS_SHIFT, PPC_RB_SHIFT},
+#ifdef CVM_PPC_E500V1
+    /* CVME500_FADD_OPCODE */  
+    {PPC_E500_EFSADD_OPCODE, 0 /*invalid*/,  0 /*invalid*/,  0 /*invalid*/,
+     PPC_RD_SHIFT, PPC_RA_SHIFT, PPC_RB_SHIFT},
+    /* CVME500_FSUB_OPCODE */  
+    {PPC_E500_EFSSUB_OPCODE, 0 /*invalid*/,  0 /*invalid*/,  0 /*invalid*/,
+     PPC_RD_SHIFT, PPC_RA_SHIFT, PPC_RB_SHIFT},
+    /* CVME500_FMUL_OPCODE */  
+    {PPC_E500_EFSMUL_OPCODE, 0 /*invalid*/,  0 /*invalid*/,  0 /*invalid*/,
+     PPC_RD_SHIFT, PPC_RA_SHIFT, PPC_RB_SHIFT},
+    /* CVME500_FDIV_OPCODE */  
+    {PPC_E500_EFSDIV_OPCODE, 0 /*invalid*/,  0 /*invalid*/,  0 /*invalid*/,
+     PPC_RD_SHIFT, PPC_RA_SHIFT, PPC_RB_SHIFT},
+#endif
 };
 
 #ifdef CVM_JIT_USE_FP_HARDWARE
@@ -1821,7 +1893,12 @@ CVMCPUemitBinaryALU(CVMJITCompilationContext* con,
               opcode == CVMCPU_AND_OPCODE  || opcode == CVMPPC_ANDIS_OPCODE ||
 	      opcode == CVMCPU_OR_OPCODE   || opcode == CVMPPC_ORIS_OPCODE ||
               opcode == CVMCPU_XOR_OPCODE  || opcode == CVMPPC_XORIS_OPCODE || 
-              opcode == CVMPPC_ADDE_OPCODE || opcode == CVMPPC_SUBE_OPCODE);
+              opcode == CVMPPC_ADDE_OPCODE || opcode == CVMPPC_SUBE_OPCODE ||
+#ifdef CVM_PPC_E500V1
+	      opcode == CVME500_FADD_OPCODE || opcode == CVME500_FSUB_OPCODE ||
+	      opcode == CVME500_FMUL_OPCODE || opcode == CVME500_FDIV_OPCODE ||
+#endif
+	      0);
 
     if (setcc || tokenType == CVMPPC_ALURHS_CONSTANT) {
 	/* ADD/SUB with carry can't also setcc or be imm alurhs */
@@ -1829,6 +1906,13 @@ CVMCPUemitBinaryALU(CVMJITCompilationContext* con,
 		  opcode != CVMPPC_SUBE_OPCODE);
 	/* ADDIS can't also setcc */
 	CVMassert(!(setcc && opcode == CVMPPC_ADDIS_OPCODE));
+#ifdef CVM_PPC_E500V1
+	/* FP instructions can't setcc or be imm alurhs */
+	CVMassert(opcode != CVME500_FADD_OPCODE &&
+		  opcode != CVME500_FSUB_OPCODE && 
+		  opcode != CVME500_FMUL_OPCODE &&
+		  opcode != CVME500_FDIV_OPCODE); 
+#endif
     }
 
     if (tokenType == CVMPPC_ALURHS_REGISTER) {
@@ -3385,3 +3469,61 @@ CVMJITemitLoadConstantAddress(CVMJITCompilationContext* con,
 }
 #endif /* IAI_CACHEDCONSTANT */
 
+#ifdef CVM_PPC_E500V1
+#ifdef CVM_TRACE_JIT
+/* Purpose: Returns the name of the specified opcode. */
+static const char *getE500CompareOpcodeName(CVMUint32 e500opcode)
+{
+    const char *name = NULL;
+    switch (e500opcode) {
+      case PPC_E500_EFSCMPEQ_OPCODE: name = "efscmpeq"; break;
+      case PPC_E500_EFSCMPLT_OPCODE: name = "efscmplt"; break;
+      case PPC_E500_EFSCMPGT_OPCODE: name = "efscmpgt"; break;
+      default:
+	CVMconsolePrintf("Unknown opcode 0x%08x", e500opcode);
+	CVMassert(CVM_FALSE); /* Unknown opcode name */
+    }
+    return name;  
+}
+#endif
+
+/*
+ * Purpose: Emit the proper opcode for a floating point test of the
+ * given condition.
+ */
+void
+CVME500emitFCompare(
+    CVMJITCompilationContext* con,
+    CVMCPUCondCode condCode,
+    int lhsRegID, int rhsRegID)
+{
+    CVMUint32 e500opcode;
+
+    switch (condCode) {
+      case CVMCPU_COND_EQ:
+	e500opcode = PPC_E500_EFSCMPEQ_OPCODE;
+	break;
+      case CVMCPU_COND_LT:
+	e500opcode = PPC_E500_EFSCMPLT_OPCODE;
+	break;
+      case CVMCPU_COND_GT:
+	e500opcode = PPC_E500_EFSCMPGT_OPCODE;
+	break;
+      default:
+	CVMassert(CVM_FALSE);
+	e500opcode = 0;
+	break;
+    }
+
+    emitInstruction(con, e500opcode |
+                    lhsRegID << PPC_RA_SHIFT | rhsRegID << PPC_RB_SHIFT);
+
+    CVMtraceJITCodegenExec({
+	    printPC(con);
+	    CVMconsolePrintf("\t%s r%d, r%d",
+			     getE500CompareOpcodeName(e500opcode),
+			     lhsRegID, rhsRegID);
+	});
+    CVMJITdumpCodegenComments(con);
+}
+#endif

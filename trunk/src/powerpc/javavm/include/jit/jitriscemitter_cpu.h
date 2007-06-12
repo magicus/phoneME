@@ -286,6 +286,18 @@ CVMPPCemitTernaryFP(CVMJITCompilationContext* con,
 		    int regidA, int regidC, int regidB);
 #endif
 
+#ifdef CVM_PPC_E500V1
+/*
+ * Purpose: Emit the proper opcode for a floating point test of the
+ * given condition.
+ */
+extern void
+CVME500emitFCompare(
+    CVMJITCompilationContext* con,
+    CVMCPUCondCode condCode,
+    int lhsRegID, int rhsRegID);
+#endif
+
 #include "javavm/include/jit/jitriscemitter_arch.h"
 
 #endif /* _INCLUDED_JITRISCEMITTER_CPU_H */
