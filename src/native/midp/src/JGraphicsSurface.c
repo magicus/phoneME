@@ -36,6 +36,8 @@
 #include <midpLCDUI.h>
 #include <images.h>
 
+#include "javacall_logging.h"
+
 #define SURFACE_NATIVE_PTR 0
 #define SURFACE_GRAPHICS 1
 #define SURFACE_LAST SURFACE_GRAPHICS
@@ -140,7 +142,7 @@ surface_acquire(AbstractSurface* surface, jobject surfaceHandle) {
         surface->super.height = pVDC->height;
         surface->super.scanlineStride = pVDC->width;
         
-        if (img->alphaData != NULL) {
+        if (img != NULL && img->alphaData != NULL) {
             surface->super.imageType = TYPE_USHORT_5658;
             surface->super.alphaData = &img->alphaData->elements[0];        
         } else {

@@ -49,6 +49,8 @@ static void surface_acquire(AbstractSurface* surface, jobject surfaceHandle);
 static void surface_release(AbstractSurface* surface, jobject surfaceHandle);
 static void surface_cleanup(AbstractSurface* surface);
 
+extern VDC screenBuffer;
+
 VDC *
 setupImageVDC(jobject img, VDC *vdc);
 
@@ -84,9 +86,10 @@ Java_com_sun_pisces_ImageExtender_drawImageInternal() {
     // We need to acquire alphaData, because setupVDC had set it to NULL
     img = (_MidpImage *) getMidpGraphicsPtr(destinationHandle)->img;
         
-    if (img->alphaData != NULL) {
-        pVDC->alphaData = &img->alphaData->elements[0];        
+    if (img != NULL && img->alphaData != NULL) {
+       pVDC->alphaData = &img->alphaData->elements[0];        
     }
+    
     
     setupImageVDC(imageHandle, &svdc);
     if (svdc.alphaData != NULL && opacity != 0) {
