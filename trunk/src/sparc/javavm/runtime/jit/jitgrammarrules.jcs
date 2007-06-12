@@ -32,16 +32,12 @@
 // NOTE: By providing a cost of 40, the default "reg32 reg32" rules
 // are overridden, but the "reg32 ICONST_32" rules are not.
 //
-reg32: IDIV32 reg32 reg32 : 40 : : : :{
-	CVMRMResource* operand = popResource(con);
-        pushALURhsResource(con, operand);
-        wordBinaryOp(con, CVMSPARC_DIV_OPCODE, $$, GET_REGISTER_GOALS);
-    };
-reg32: IREM32 reg32 reg32 : 40 : : : :{
-	CVMRMResource* operand = popResource(con);
-        pushALURhsResource(con, operand);
-        wordBinaryOp(con, CVMSPARC_REM_OPCODE, $$, GET_REGISTER_GOALS);
-    };
+reg32: IDIV32 reg32 reg32 : 40 : : : CVM_NEED_WORD_BINARY_OP_WITH_REG32_RHS :
+	wordBinaryOpWithReg32Rhs(con, CVMSPARC_DIV_OPCODE, $$,
+	    GET_REGISTER_GOALS);
+reg32: IREM32 reg32 reg32 : 40 : : : CVM_NEED_WORD_BINARY_OP_WITH_REG32_RHS :
+	wordBinaryOpWithReg32Rhs(con, CVMSPARC_REM_OPCODE, $$,
+	    GET_REGISTER_GOALS);
 
 //
 // See if AND of a constant is encodeable as ANDN of ~constant,using
