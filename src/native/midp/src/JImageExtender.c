@@ -64,8 +64,9 @@ Java_com_sun_pisces_ImageExtender_drawImageInternal() {
     float opacity;
     VDC vdc, svdc;
     VDC* pVDC;
+    _MidpImage * img;
     
-    KNI_StartHandles(5);
+    KNI_StartHandles(2);
     KNI_DeclareHandle(destinationHandle);
     KNI_DeclareHandle(imageHandle);
     
@@ -79,38 +80,82 @@ Java_com_sun_pisces_ImageExtender_drawImageInternal() {
     
     pVDC = setupVDC(destinationHandle, &vdc);
     pVDC = getVDC(pVDC);
-    setupImageVDC(imageHandle, &svdc);
     
+    // We need to acquire alphaData, because setupVDC had set it to NULL
+    img = (_MidpImage *) getMidpGraphicsPtr(destinationHandle)->img;
+        
+    if (img->alphaData != NULL) {
+        pVDC->alphaData = &img->alphaData->elements[0];        
+    }
+    
+    setupImageVDC(imageHandle, &svdc);
     if (svdc.alphaData != NULL && opacity != 0) {
-        for(yy = 0 ; yy < svdc.height; yy++) {
-            for(xx = 0; xx < svdc.width; xx++) {
-                soffset = yy * svdc.width + xx;
-                sa = (int) (*(svdc.alphaData + soffset) & 0xff) * opacity + 0.5;
-                sam = 255 - sa;
-                if (sa != 0) {
-                    offset = (yy + y) * pVDC->width + xx + x;
-                    
-                    srgb = *((unsigned short *) (svdc.hdc + soffset));
-                    rgb = *((unsigned short *) (pVDC->hdc + offset));
-                    
-                    r =  rgb >> 11;
-                    g = (rgb >> 5) & 0x3f;
-                    b =  rgb &  0x1f;
-                    
-                    sr =  srgb >> 11;
-                    sg = (srgb >> 5) & 0x3f;
-                    sb =  srgb &  0x1f;
-                    
-                    dr = (sr * sa + sam * r) / (255);
-                    db = (sb * sa + sam * b) / (255);
-                    dg = (sg * sa + sam * g) / (255);
-                     
-                    *((unsigned short *) (pVDC->hdc + offset)) = 
-                    ((dr & 0x1f) << 11) + ((dg & 0x3f) << 5) + (db & 0x1f);
-                }                        
+        if (pVDC->alphaData != NULL) {
+            for(yy = 0 ; yy < svdc.height; yy++) {
+                for(xx = 0; xx < svdc.width; xx++) {
+                    soffset = yy * svdc.width + xx;
+                    sa = (int) (*(svdc.alphaData + soffset) & 0xff) * opacity + 0.5;
+                    sam = 255 - sa;
+                    if (sa != 0) {
+                        offset = (yy + y) * pVDC->width + xx + x;
+                        
+                        srgb = *((unsigned short *) (svdc.hdc + soffset));
+    
+                        rgb = *((unsigned short *) (pVDC->hdc + offset));
+                        
+                        r =  rgb >> 11;
+                        g = (rgb >> 5) & 0x3f;
+                        b =  rgb &  0x1f;
+                        
+                        sr =  srgb >> 11;
+                        sg = (srgb >> 5) & 0x3f;
+                        sb =  srgb &  0x1f;
+                        
+                        dr = (sr * sa + sam * r) / (255);
+                        db = (sb * sa + sam * b) / (255);
+                        dg = (sg * sa + sam * g) / (255);
+                         
+                        *((unsigned short *) (pVDC->hdc + offset)) = 
+                        ((dr & 0x1f) << 11) + ((dg & 0x3f) << 5) + (db & 0x1f);
+                        
+                        *(pVDC->alphaData + offset) = sa;
+                    }                        
+                }
             }
-        }
-    } else {
+        } else {
+        
+            for(yy = 0 ; yy < svdc.height; yy++) {
+                for(xx = 0; xx < svdc.width; xx++) {
+                    soffset = yy * svdc.width + xx;
+                    sa = (int) (*(svdc.alphaData + soffset) & 0xff) * opacity + 0.5;
+                    sam = 255 - sa;
+                    if (sa != 0) {
+                        offset = (yy + y) * pVDC->width + xx + x;
+                        
+                        srgb = *((unsigned short *) (svdc.hdc + soffset));
+    
+                        rgb = *((unsigned short *) (pVDC->hdc + offset));
+                        
+                        r =  rgb >> 11;
+                        g = (rgb >> 5) & 0x3f;
+                        b =  rgb &  0x1f;
+                        
+                        sr =  srgb >> 11;
+                        sg = (srgb >> 5) & 0x3f;
+                        sb =  srgb &  0x1f;
+                        
+                        dr = (sr * sa + sam * r) / (255);
+                        db = (sb * sa + sam * b) / (255);
+                        dg = (sg * sa + sam * g) / (255);
+                         
+                        *((unsigned short *) (pVDC->hdc + offset)) = 
+                        ((dr & 0x1f) << 11) + ((dg & 0x3f) << 5) + (db & 0x1f);
+                    }                        
+                }
+            }
+        } 
+    }
+    else {
         for(yy = 0 ; yy < svdc.height; yy++) {
             for(xx = 0; xx < svdc.width; xx++) {
                 offset = (yy + y) * pVDC->width + xx + x;
