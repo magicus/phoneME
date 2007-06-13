@@ -1287,9 +1287,20 @@ void JVM::print_performance_counters() {
     tty->cr();
     //JVM::calibrate_hrticks();
     //tty->cr();
+    jlong hrtick_read_overhead = 0; 
+    if (pc->hrtick_overhead_per_1000 > 0) { 
+      // This is total time spent reading the high-res clock during this 
+      // VM execution. If you see a high value that means the performance 
+      // counters are somewhat skewed, and you should try to make the high-res 
+      // clock more light-weight. 
+      hrtick_read_overhead =  
+      pc->hrtick_read_count * pc->hrtick_overhead_per_1000 / jlong(1000); 
+    } 
+
     P_LNG(A, "hrtick_frequency",   pc->hrtick_frequency);
     P_HRT(A, "hrtick_overhead_per_1000", pc->hrtick_overhead_per_1000); 
-    P_LNG(A, "hrtick_read_count",        pc->hrtick_read_count); 
+    P_LNG(A, "hrtick_read_count",        pc->hrtick_read_count);
+    P_HRT(A, "hrtick_read_overhead",     hrtick_read_overhead);
 
     P_HRT(A, "elapsed", elapsed);
     
