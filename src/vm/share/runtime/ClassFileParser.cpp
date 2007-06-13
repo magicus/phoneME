@@ -1759,10 +1759,21 @@ ReturnOop ClassFileParser::parse_class_internal(ClassParserState *stack JVM_TRAP
   ObjArray::Fast methods = parse_methods(&state, &cp,
                                          access_flags, has_native_methods
                                          JVM_CHECK_0);
-  if (!access_flags.is_interface()) {
+
+  TypeArray::Fast all_super_interfaces;
+  TypeArray::Fast bitmap;
+  if (!access_flags.is_interface() && access_flags.is_abstract() && local_interfaces().length() > 0) {    
+    int bitmap_size = Universe::number_of_java_classes() / BitsPerWord + 1;
+    bitmap = Universe::new_int_array(bitmap_size JVM_CHECK_0);
+    int all_interface_count = count_interfaces(local_interfaces.obj(), bitmap.obj());    
+    all_super_interfaces = Universe::new_short_array(all_interface_count JVM_CHECK_0);
+    jvm_memset(bitmap().base_address(), 0, bitmap_size*sizeof(int));
+    int found = found_all_interfaces(local_interfaces.obj(), all_super_interfaces.obj(), 0, bitmap.obj());
+    GUARANTEE(found == all_interface_count, "calculation check");
+    (void)found;
     methods = InstanceClass::add_miranda_methods(&super_class,
                                                  &methods,
-                                                 &local_interfaces,
+                                                 &all_super_interfaces,
                                                  &class_name JVM_CHECK_0);
   }
 
@@ -1967,7 +1978,192 @@ ReturnOop ClassFileParser::parse_class_internal(ClassParserState *stack JVM_TRAP
   // completed loading of the top stack element
   stack->pop();
   state().set_result(&this_class);
+
+  if (this_class().is_super()) { //see CR6552040
+    resolve_invoke_special_virtual_conflicts(&this_class JVM_CHECK_0);
+  }
+
   return this_class.obj();
+}
+
+int ClassFileParser::count_interfaces(OopDesc* local_interface_indices_obj, OopDesc* bitmap_obj) {
+  TypeArray::Raw local_interface_indices = local_interface_indices_obj;
+  TypeArray::Raw bitmap = bitmap_obj;
+  int length = local_interface_indices().length();
+  int total_size = length;
+  int i = 0;     
+  for (; i < length; i++) {
+    int id = local_interface_indices().ushort_at(i);
+    int bitmap_offset = id / BitsPerWord;
+    int bitmap_mask = 1 << (id % BitsPerWord);
+    if (bitmap().int_at(bitmap_offset) & bitmap_mask) continue; //were here
+    bitmap().int_at_put(bitmap_offset, bitmap().int_at(bitmap_offset) | bitmap_mask);
+    InstanceClass::Raw cls = Universe::class_from_id(id);    
+    total_size += count_interfaces(cls().local_interfaces(), bitmap_obj);
+  }
+  return total_size;
+}
+int ClassFileParser::found_all_interfaces(OopDesc* local_interface_indices_obj, 
+                                          OopDesc* all_interface_indices_obj, 
+                                          int already_in_table,
+                                          OopDesc* bitmap_obj) {
+  TypeArray::Raw local_interface_indices = local_interface_indices_obj;
+  TypeArray::Raw all_interface_indices = all_interface_indices_obj;
+  TypeArray::Raw bitmap = bitmap_obj;
+  int size = local_interface_indices().length();
+  TypeArray::array_copy(&local_interface_indices, 0, &all_interface_indices, already_in_table, size);
+  already_in_table += size;  
+  int i = 0;   
+  for (; i < size; i++) {
+    int id = local_interface_indices().ushort_at(i);
+    int bitmap_offset = id / BitsPerWord;
+    int bitmap_mask = 1 << (id % BitsPerWord);
+    if (bitmap().int_at(bitmap_offset) & bitmap_mask) continue; //were here
+    bitmap().int_at_put(bitmap_offset, bitmap().int_at(bitmap_offset) | bitmap_mask);
+    InstanceClass::Raw cls = Universe::class_from_id(id);    
+    already_in_table = found_all_interfaces(cls().local_interfaces(), all_interface_indices_obj, 
+                                            already_in_table, bitmap_obj);
+  }
+  return already_in_table;
+}
+
+void ClassFileParser::resolve_invoke_special_virtual_conflicts(InstanceClass* this_klass JVM_TRAPS) {
+  UsingFastOops fast;
+  ConstantPool::Fast cp = this_klass->constants();
+  int cp_length = cp().length();
+  int bitmap_length = cp_length / BitsPerWord + 1;
+  TypeArray::Fast invoke_virtual_indexes = Universe::new_int_array(bitmap_length JVM_CHECK);
+  TypeArray::Fast invoke_special_indexes = Universe::new_int_array(bitmap_length JVM_CHECK);  
+  
+  fill_in_invoke_indexes(this_klass, &invoke_special_indexes, &invoke_virtual_indexes);
+
+  int count = 0;
+  int i = 0;
+  for (; i < bitmap_length; i++) {
+    int collision = invoke_special_indexes().int_at(i) & 
+                       invoke_virtual_indexes().int_at(i);
+    if (collision) {      
+      while (collision) {
+        if (collision & 1) {
+          count++;
+        }
+        collision >>= 1;
+      }
+    }
+  }
+  if (count == 0) return; //nothing to do
+  if (count + cp_length > 65535) { //overflow
+    Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW);
+  }
+  TypeArray::Fast relocation_map = Universe::new_short_array(2*count JVM_CHECK);
+
+  count = 0;
+  for (i = 0; i < bitmap_length; i++) {
+    int collision = invoke_special_indexes().int_at(i) & 
+                       invoke_virtual_indexes().int_at(i);
+    if (collision) {      
+      int offset = 0;
+      while (collision) {        
+        if (collision & 1) {
+          relocation_map().ushort_at_put(2*count, i*BitsPerWord + offset);
+          relocation_map().ushort_at_put(2*count + 1, cp_length + count);          
+          count++;
+        }
+        offset++;
+        collision >>= 1;
+      }
+    }
+  }
+
+  ConstantPool::Fast new_cp = Universe::new_constant_pool(count + cp_length JVM_CHECK);
+  clone_invoke_special_virtual_conflicts(this_klass, &cp, &new_cp, &relocation_map, 2*count);
+  ClassInfo::Fast klass_info = this_klass->class_info();
+  klass_info().set_constants(&new_cp);
+}
+
+void ClassFileParser::fill_in_invoke_indexes(InstanceClass* this_klass, 
+                                             TypeArray* invoke_sp_ids, 
+                                             TypeArray* invoke_vi_ids) {
+  ObjArray::Raw methods = this_klass->methods();
+  Method::Raw method;
+  int i = 0;
+  for (; i < methods().length(); i++) {
+    method = methods().obj_at(i);
+    int bci = 0;
+    int code_length = method().code_size();
+    while (bci < code_length) {
+      Bytecodes::Code code = method().bytecode_at(bci);
+      if (code == Bytecodes::_invokespecial) {
+        int index = method().get_java_ushort(bci+1);
+        int idx1 = index / BitsPerWord;
+        int idx2 = index % BitsPerWord;
+        int map = invoke_sp_ids->int_at(idx1);
+        map = map | (1 << idx2);
+        invoke_sp_ids->int_at_put(idx1, map);
+      } else if (code == Bytecodes::_invokevirtual) {
+        int index = method().get_java_ushort(bci+1);
+        int idx1 = index / BitsPerWord;
+        int idx2 = index % BitsPerWord;
+        int map = invoke_vi_ids->int_at(idx1);
+        map = map | (1 << idx2);
+        invoke_vi_ids->int_at_put(idx1, map);
+      }
+      int len = Bytecodes::length_for(code);
+      if (len == 0) {
+        len = Bytecodes::wide_length_for(&method, bci, code);
+      }
+      bci += len;
+    }
+  }  
+}
+
+void ClassFileParser::clone_invoke_special_virtual_conflicts(InstanceClass* this_klass, 
+                                                             ConstantPool* old_cp, 
+                                                             ConstantPool* new_cp, 
+                                                             TypeArray* relocation_map,
+                                                             int map_size) {
+  TypeArray::Raw old_tags = old_cp->tags();
+  int cp_length = old_cp->length();
+  TypeArray::Raw new_tags = new_cp->tags();
+  TypeArray::array_copy(&old_tags, 0, &new_tags, 0, cp_length);
+  void* old_cp_base_address = old_cp->base_address();
+  void* new_cp_base_address = new_cp->base_address();
+  jvm_memcpy(new_cp_base_address, old_cp_base_address, cp_length*sizeof(int));
+  int i = 0;
+  for (; i < map_size; i+=2) {
+    int old_offset = relocation_map->ushort_at(i);
+    int new_offset = relocation_map->ushort_at(i+1);
+    new_cp->tag_at_put(new_offset, old_cp->tag_value_at(old_offset));
+    new_cp->value32_at_put(new_offset, old_cp->value32_at(old_offset));
+  }
+  ObjArray::Raw methods = this_klass->methods();
+  //updating invoke_special indexes in methods
+  Method::Raw method;
+  for (i = 0; i < methods().length(); i++) {
+    method = methods().obj_at(i);
+    if (method.is_null()) continue;
+    method().set_constants(new_cp);
+    int bci = 0;
+    int code_length = method().code_size();
+    while (bci < code_length) {
+      Bytecodes::Code code = method().bytecode_at(bci);
+      if (code == Bytecodes::_invokespecial) {
+        int cp_index = method().get_java_ushort(bci+1);
+        int j = 0;
+        for (; j < map_size; j+=2) {
+          int old_cp_index = relocation_map->ushort_at(j);
+          if (old_cp_index == cp_index) {
+            method().put_java_ushort(bci+1, relocation_map->ushort_at(j+1));            
+          }
+        }
+      }
+      int len = Bytecodes::length_for(code);
+      if (len == 0) {
+        len = Bytecodes::wide_length_for(&method, bci, code);
+      }
+      bci += len;
+    }
+  }
 }
 
 void ClassFileParser::update_fields(ConstantPool* cp, TypeArray* fields, 

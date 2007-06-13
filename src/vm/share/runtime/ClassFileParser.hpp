@@ -68,6 +68,14 @@ class ClassFileParser: public StackObj {
 #else
 #define parse_class_internal parse_class
 #endif
+  static void resolve_invoke_special_virtual_conflicts(InstanceClass* this_class JVM_TRAPS);
+  static void fill_in_invoke_indexes(InstanceClass* this_class, TypeArray* invoke_sp_ids, 
+                                     TypeArray* invoke_vi_ids);
+  static void ClassFileParser::clone_invoke_special_virtual_conflicts(InstanceClass* this_klass, 
+                                                             ConstantPool* old_cp, 
+                                                             ConstantPool* new_cp, 
+                                                             TypeArray* relocation_map,
+                                                             int delta);  
   static bool is_package_restricted(Symbol *class_name);
   // Needed for lazy error throwing
   static ReturnOop new_lazy_error_method(Method* method,
@@ -156,6 +164,9 @@ class ClassFileParser: public StackObj {
                                     ConstantPool* cp, bool *resolved JVM_TRAPS);
   ReturnOop parse_interfaces(ConstantPool* cp, TypeArray* interface_indices
                              JVM_TRAPS);
+  static int count_interfaces(OopDesc* local_interface_indices, OopDesc* bitmap);
+  static int found_all_interfaces(OopDesc* local_interface_indices, OopDesc* all_interface_indices, 
+                                  int already_in_table, OopDesc* bitmap);
 
   // Field parsing
   void parse_field_attributes(ConstantPool* cp, 

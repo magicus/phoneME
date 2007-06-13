@@ -496,6 +496,9 @@ class ConstantPool: public Oop {
   jint value32_at(int index) {
     return int_field(offset_from_index(index));
   }
+  void value32_at_put(int index, jint value) {
+    int_field_put(offset_from_index(index), value);
+  }
   jlong value64_at(int index) {
     GUARANTEE(tag_at(index).is_long() || tag_at(index).is_double(),
               "Corrupted constant pool");
