@@ -1288,6 +1288,9 @@ void JVM::print_performance_counters() {
     //JVM::calibrate_hrticks();
     //tty->cr();
     P_LNG(A, "hrtick_frequency",   pc->hrtick_frequency);
+    P_HRT(A, "hrtick_overhead_per_1000", pc->hrtick_overhead_per_1000); 
+    P_LNG(A, "hrtick_read_count",        pc->hrtick_read_count); 
+
     P_HRT(A, "elapsed", elapsed);
     
     // Thread counters
@@ -1334,6 +1337,11 @@ void JVM::print_performance_counters() {
     P_HRT(L, "max_load_hrticks",     pc->max_load_hrticks);
     P_HRT(A, "total_verify_hrticks", pc->total_verify_hrticks);
     P_HRT(L, "max_verify_hrticks",   pc->max_verify_hrticks);
+
+    P_INT(L, "num_of_romizer_steps", pc->num_of_romizer_steps); 
+    P_HRT(L, "total_romizer_hrticks",pc->total_romizer_hrticks); 
+    P_HRT(L, "max_romizer_hrticks",  pc->max_romizer_hrticks); 
+
     P_CR (L);
 
     P_INT(C, "num_of_compilations",      pc->num_of_compilations);

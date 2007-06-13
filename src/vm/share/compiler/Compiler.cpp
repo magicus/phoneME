@@ -1237,8 +1237,8 @@ void Compiler::p() {
 void Compiler::init_performance_counters(bool is_resume) {
   _start_time = Os::elapsed_counter();
   _mem_before_compile = 
-      ObjectHeap::used_memory() + 
-      jvm_perf_count[TaskContext::current_task_id()].total_bytes_collected;
+  ObjectHeap::used_memory() + 
+     jvm_perf_count[TaskContext::current_task_id()].total_bytes_collected;
   _gc_before_compile = jvm_perf_count[TaskContext::current_task_id()].num_of_gc;
 
   if (is_resume) {
