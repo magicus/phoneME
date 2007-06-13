@@ -53,7 +53,7 @@ LINKLIBS += /nodefaultlib:libc.lib /nodefaultlib:libcd.lib \
 	/nodefaultlib:msvcrt.lib /nodefaultlib:msvcrtd.lib \
 	/nodefaultlib:oldnames.lib
 
-#LINKEXE_FLAGS += /entry:mainACRTStartup
+LINKEXE_FLAGS += /entry:mainACRTStartup
 
 LINKEXE_LIBS += /nodefaultlib:oldnames.lib \
 	/nodefaultlib:libcmt.lib /nodefaultlib:libcmtd.lib \
