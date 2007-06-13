@@ -138,7 +138,7 @@ KNIDECL(com_sun_midp_chameleon_layers_SoftButtonLayer_setNativePopupMenu) {
         }
     }
 
-    if (numMenus == 0) {
+	if (numMenus <= 0) {
         if (hwndMenuBar != hwndMenuBarSimple) {
             ShowWindow(hwndMenuBar, SW_HIDE);
             hwndMenuBar = hwndMenuBarSimple;

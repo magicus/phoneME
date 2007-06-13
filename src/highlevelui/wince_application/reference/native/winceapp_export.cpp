@@ -36,7 +36,7 @@
 #include <sipapi.h>
 #include <tpcshell.h>
 
-#define JWC_WINCE_USE_DIRECT_DRAW 0
+#define JWC_WINCE_USE_DIRECT_DRAW 1
 
 #if JWC_WINCE_USE_DIRECT_DRAW /* defined in <midp_constants_data.h> */
 #include <ddraw.h>
@@ -509,7 +509,12 @@ DWORD WINAPI CreateWinCEWindow(LPVOID lpParam) {
 }
 
 void winceapp_init() {
+    char s[128];
+    sprintf(s, "Creating Thread\n");
+    writeStandardIO(1, &s, strlen(s));
     eventThread = CreateThread(NULL, 0, CreateWinCEWindow, 0, 0, NULL);
+    sprintf(s, "Thread Created\n");
+    writeStandardIO(1, &s, strlen(s));
 }
 
 static jint mapKey(WPARAM wParam, LPARAM lParam) {
@@ -737,6 +742,11 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                  pSignalResult->waitingFor = UI_SIGNAL;
                  pMidpEventResult->DISPLAY = gForegroundDisplayId;
                  sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult));
+                 if (hwndMenuBar != hwndMenuBarSimple) {
+                     ShowWindow(hwndMenuBar, SW_HIDE);
+                    hwndMenuBar = hwndMenuBarSimple;
+                    ShowWindow(hwndMenuBar, SW_SHOW);
+                 }
                 /* for some reason windows will send us a CANCELMODE message
                  * afterwards
                  */
@@ -878,9 +888,10 @@ static void process_skipped_refresh() {
              * Let's schedule a timer again, in case we go into a
              * hint_is_painting block but don't actually call refresh0()!
              */
-            SetTimer(hwndMain, EVENT_TIMER_ID+1, (UINT)50, NULL);
+            SetTimer(hwndMain, EVENT_TIMER_ID+1, (UINT)60, NULL);
         } else {
-            winceapp_refresh(dirty_x1, dirty_y1, dirty_x2, dirty_y2);
+            winceapp_refresh(0, 0, CHAM_WIDTH, CHAM_HEIGHT);     
+//			winceapp_refresh(dirty_x1, dirty_y1, dirty_x2, dirty_y2);
             has_skipped_refresh = 0;
         }
     }
@@ -1096,7 +1107,7 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
     DWORD lag;
 
     int has_recent_input =
-        ((now < lastUserInputTick) || ((now - lastUserInputTick) < 50));
+        ((now < lastUserInputTick) || ((now - lastUserInputTick) < 60));
 
     if (hint_is_canvas_painting || has_recent_input) {
         /* Make it around 60FPS, so even if we are a little off, we should
@@ -1107,7 +1118,7 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
          */
         lag = 15;
     } else {
-        lag = 30;
+        lag = 60;
     }
 
     if ((now < lastPaintedTick) || ((now - lastPaintedTick) > lag)) {
@@ -1121,7 +1132,7 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
              * there's no more refresh coming.
              */
             KillTimer(hwndMain, EVENT_TIMER_ID+1);
-            SetTimer(hwndMain, EVENT_TIMER_ID+1, (UINT)50, NULL);
+            SetTimer(hwndMain, EVENT_TIMER_ID+1, (UINT)60, NULL);
 
             dirty_x1 = x1;
             dirty_y1 = y1;
