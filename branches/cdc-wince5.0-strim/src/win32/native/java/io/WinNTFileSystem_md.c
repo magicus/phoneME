@@ -631,8 +631,10 @@ Java_java_io_WinNTFileSystem_setReadOnly(JNIEnv *env, jobject this,
 /* -- Filesystem interface -- */
 
 #ifndef WINCE
-
 #include <direct.h>
+#else
+#include "fs_util_md.h"
+#endif
 
 JNIEXPORT jobject JNICALL
 Java_java_io_WinNTFileSystem_getDriveDirectory(JNIEnv *env, jobject this, 
@@ -645,14 +647,3 @@ Java_java_io_WinNTFileSystem_getDriveDirectory(JNIEnv *env, jobject this,
     if (iswalpha(*p) && (p[1] == L':')) p += 2;
     return (*env)->NewString(env, p, wcslen(p));
 }
-
-#else
-
-JNIEXPORT jstring JNICALL
-Java_java_io_WinNTFileSystem_getDriveDirectory(JNIEnv *env, jclass ignored,
-						 jint drive)
-{
-    return JNU_NewStringPlatform(env, "/");
-}
-
-#endif
