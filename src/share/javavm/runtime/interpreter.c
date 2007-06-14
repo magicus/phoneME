@@ -3503,6 +3503,34 @@ CVMisSpecialSuperCall(CVMClassBlock* currClass, CVMMethodBlock* mb) {
     return CVM_FALSE;
 }
 
+/* 
+ * CVMlookupSpecialSuperMethod - Find matching declared method in a
+ * super class of currClass.
+ */
+
+CVMMethodBlock*
+CVMlookupSpecialSuperMethod(CVMExecEnv* ee,
+			    CVMClassBlock* currClass,
+			    CVMMethodTypeID methodID) {
+    CVMClassBlock* supercb = CVMcbSuperclass(currClass);
+    CVMMethodBlock* mb = NULL;
+    while (supercb != NULL) {
+	mb = CVMclassGetDeclaredMethodBlockFromTID(supercb, methodID);
+	if (mb != NULL &&
+	    !CVMmbIs(mb, STATIC) &&
+	    !CVMmbIs(mb, PRIVATE)) {
+	    break;
+	}
+	mb = NULL;
+	supercb = CVMcbSuperclass(supercb);
+    }
+    CVMassert(mb != NULL);
+    CVMassert(CVMmbIs(mb, PUBLIC) ||
+	      CVMmbIs(mb, PROTECTED) ||
+	      CVMisSameClassPackage(ee, CVMmbClassBlock(mb), currClass));
+    return mb;
+}
+
 #ifndef CVM_TRUSTED_CLASSLOADERS
 /* Purpose: Checks to see if OK to instantiate of the specified class.  Will
             throw an InstantiationError if not OK. */
