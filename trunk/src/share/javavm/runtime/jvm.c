@@ -1318,6 +1318,7 @@ CVMgcUnsafeFillInStackTrace(CVMExecEnv *ee, CVMThrowableICell* throwableICell)
     CVMframeIterate(startFrame, &iter);
     while (CVMframeIterateNext(&iter)) {
 	CVMMethodBlock* mb = CVMframeIterateGetMb(&iter);
+	CVMJavaInt lineno;
 	noMoreFrameSkips = CVM_FALSE;
 
 	/* ignore all frames that are just part of the <init> of
@@ -1335,7 +1336,6 @@ CVMgcUnsafeFillInStackTrace(CVMExecEnv *ee, CVMThrowableICell* throwableICell)
 	}
 
 	/* store the line number and the method index in the pcArray */
-	CVMJavaInt lineno;
 	if (CVMmbIs(mb, NATIVE)) {
 	    lineno = -2; /* a native method has -2 as its lineno */
 	} else {
