@@ -309,7 +309,9 @@ inline bool JVM::initialize( void ) {
 
   // it must be after Os::initialize(), as depends on hrtick frequency
 #if ENABLE_PERFORMANCE_COUNTERS
-  JVM_ResetPerformanceCounters(0);
+  for (int task_id = 0; task_id < MAX_TASKS; task_id++) {
+    JVM_ResetPerformanceCounters(task_id);
+  }
 #endif
 
 #ifndef PRODUCT
@@ -1176,15 +1178,15 @@ void JVM::calibrate_cpu() {
 #endif
 }
 
-void JVM::calibrate_hrticks() {
+jlong JVM::calibrate_hrticks() {
   jlong saved = jvm_perf_count[TaskContext::current_task_id()].hrtick_read_count;
   jlong started = Os::elapsed_counter();
   for (int i=1000; i>0; i--) {
     Os::elapsed_counter();
   }
   jlong end = Os::elapsed_counter();
-  jvm_perf_count[TaskContext::current_task_id()].hrtick_overhead_per_1000 = end - started;
   jvm_perf_count[TaskContext::current_task_id()].hrtick_read_count = saved;
+  return end - started;
 }
 
 
@@ -1257,6 +1259,8 @@ void JVM::print_performance_counters() {
     return;
   }
 
+  const jlong hrtick_overhead_per_1000 = calibrate_hrticks();
+
   for (int task_id = 0; task_id < MAX_TASKS; task_id++) {
     if (!Task::is_valid_task_id(task_id)) {
       continue;
@@ -1284,23 +1288,19 @@ void JVM::print_performance_counters() {
 
     tty->cr();
 
-    if (task_id == 0) {
-      // print high res overhead only for the first isolate
-      JVM::calibrate_hrticks();
-      jlong hrtick_read_overhead = 0; 
-      if (pc->hrtick_overhead_per_1000 > 0) { 
-        // This is total time spent reading the high-res clock during this 
-        // VM execution. If you see a high value that means the performance 
-        // counters are somewhat skewed, and you should try to make the high-res 
-        // clock more light-weight. 
-        hrtick_read_overhead =  
-        pc->hrtick_read_count * pc->hrtick_overhead_per_1000 / jlong(1000); 
-      } 
-      P_HRT(A, "hrtick_read_overhead",     hrtick_read_overhead);
-    }
+    jlong hrtick_read_overhead = 0; 
+    if (hrtick_overhead_per_1000 > 0) { 
+      // This is total time spent reading the high-res clock during this 
+      // VM execution. If you see a high value that means the performance 
+      // counters are somewhat skewed, and you should try to make the high-res 
+      // clock more light-weight. 
+      hrtick_read_overhead =  
+        pc->hrtick_read_count * hrtick_overhead_per_1000 / jlong(1000); 
+    } 
+    P_HRT(A, "hrtick_read_overhead",     hrtick_read_overhead);
+    P_HRT(A, "hrtick_overhead_per_1000", hrtick_overhead_per_1000);
 
     P_LNG(A, "hrtick_frequency",   pc->hrtick_frequency);
-    P_HRT(A, "hrtick_overhead_per_1000", pc->hrtick_overhead_per_1000); 
     P_LNG(A, "hrtick_read_count",        pc->hrtick_read_count);
 
     P_HRT(A, "elapsed", elapsed);

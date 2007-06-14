@@ -554,9 +554,6 @@ typedef struct _JVM_PerformanceCounters {
    *----------------------------------------------------------------------*/
   jlong hrtick_frequency;      /* How many high-resolution ticks are 
                                 * generated per second. */
-  jlong hrtick_overhead_per_1000;/* How many hrticks does it take to read
-                                * the high-res clock for 1000 times in a tight
-                                * loop. */
   jlong hrtick_read_count;     /* How many times have we read the high-res
                                 * clock */
 

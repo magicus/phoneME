@@ -422,6 +422,7 @@ void Task::cleanup_terminated_task(int id JVM_TRAPS) {
     tty->print_cr("TASK %d TERMINATED", id);
     tty->cr();
     JVM::print_performance_counters();
+    JVM_ResetPerformanceCounters(id);
 #endif
 
     _num_tasks--;
