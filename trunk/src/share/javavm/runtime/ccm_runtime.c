@@ -1439,25 +1439,26 @@ CVMCCMruntimeResolveSpecialMethodBlock(CVMCCExecEnv *ccee, CVMExecEnv *ee,
     currentCb = CVMeeGetCurrentFrameCb(ee);
     if (CVMisSpecialSuperCall(currentCb, mb)) {
         /* NOTE: In the quickener, the following test is done:
-           new_mb = CVMcbMethodTableSlot(CVMcbSuperclass(currentCb),
-                                         CVMmbMethodTableIndex(mb));
+           new_mb = CVMlookupSpecialSuperMethod(ee, currClass, methodID);
            if (new_mb == mb)
                 quicken to invokenonvirtual.
            else
                 quicken to invokesuper and store method index (computed from
-                CVMmbMethodTableIndex(mb)) in the opcode operand.
+                CVMmbMethodTableIndex(new_mb)) in the opcode operand.
 
-           In the interpreter, invokevirtual would invoke the mb in the CP
-           entry.  And invokesuper would use the store method index to compute
+           In the interpreter, invokenonvirtual would invoke the mb in the CP
+           entry, and invokesuper would use the stored method index to compute
            the mb in such a way that results in the same mb as new_mb above.
 
            Hence, for the case of the CCM runtime, regardless of whether new_mb
            equals mb or not, we effectively always end up using the value in
-           new_mb anyway.  So, we can simplify all the steps above into the
-           following:
+           new_mb anyway.  So, we can simplify logic above into just the
+	   new_mb lookup.
         */
-        mb = CVMcbMethodTableSlot(CVMcbSuperclass(currentCb),
-                                  CVMmbMethodTableIndex(mb));
+	CVMMethodTypeID methodID = CVMmbNameAndTypeID(mb);
+	/* Find matching declared method in a super class. */
+	mb = CVMlookupSpecialSuperMethod(ee, currentCb, methodID);
+
     }
 
     CVMassert(cachedConstant != NULL);

@@ -6124,8 +6124,9 @@ translateRange(CVMJITCompilationContext* con,
                 }
 #endif
                 if (CVMisSpecialSuperCall(currClass, targetMb)) {
-                    new_mb = CVMcbMethodTableSlot(CVMcbSuperclass(currClass),
-                                CVMmbMethodTableIndex(targetMb));
+		    CVMMethodTypeID methodID = CVMmbNameAndTypeID(targetMb);
+		    /* Find matching declared method in a super class. */
+		    new_mb = CVMlookupSpecialSuperMethod(ee, currClass, methodID);
                 }
 		CVMassert(fallThru);
 		mc->startPC = absPc;
@@ -6139,7 +6140,7 @@ translateRange(CVMJITCompilationContext* con,
 		    }
                 } else {
                     if (doInvokeSuper(con, curbk,
-                                      CVMmbMethodTableIndex(targetMb)))
+                                      CVMmbMethodTableIndex(new_mb)))
 		    {
 			/* Did inlining. Time to execute out of new context */
 			mc->startPC += instrLength;
