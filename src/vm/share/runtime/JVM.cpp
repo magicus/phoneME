@@ -309,9 +309,7 @@ inline bool JVM::initialize( void ) {
 
   // it must be after Os::initialize(), as depends on hrtick frequency
 #if ENABLE_PERFORMANCE_COUNTERS
-  for (int task_id = 0; task_id < MAX_TASKS; task_id++) {
-    JVM_ResetPerformanceCounters(task_id);
-  }
+  JVM_ResetPerformanceCounters(0);
 #endif
 
 #ifndef PRODUCT
@@ -1260,7 +1258,7 @@ void JVM::print_performance_counters() {
   }
 
   for (int task_id = 0; task_id < MAX_TASKS; task_id++) {
-    if (!Universe::is_valid_task_id(task_id)) {
+    if (!Task::is_valid_task_id(task_id)) {
       continue;
     }
     tty->print_cr("PERFORMANCE COUNTERS FOR TASK %d", task_id);

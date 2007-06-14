@@ -257,10 +257,10 @@ bool BinaryROMWriter::execute(JVM_SINGLE_ARG_TRAPS) {
 
 #if ENABLE_PERFORMANCE_COUNTERS
   jlong elapsed = Os::elapsed_counter() - start_time;
-  jvm_perf_count.num_of_romizer_steps ++;
-  jvm_perf_count.total_romizer_hrticks += elapsed;
-  if (jvm_perf_count.max_romizer_hrticks < elapsed) {
-      jvm_perf_count.max_romizer_hrticks = elapsed;
+  jvm_perf_count[TaskContext::current_task_id()].num_of_romizer_steps ++;
+  jvm_perf_count[TaskContext::current_task_id()].total_romizer_hrticks += elapsed;
+  if (jvm_perf_count[TaskContext::current_task_id()].max_romizer_hrticks < elapsed) {
+      jvm_perf_count[TaskContext::current_task_id()].max_romizer_hrticks = elapsed;
   }
 #endif
 
