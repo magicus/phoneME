@@ -40,8 +40,9 @@ import javax.microedition.lcdui.CommandListener;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.lcdui.DisplayEventHandler;
 import com.sun.midp.lcdui.DisplayEventHandlerFactory;
-import com.sun.midp.security.SecurityInitializer;
 import com.sun.midp.security.ImplicitlyTrustedClass;
+
+import com.sun.j2me.security.SecurityTokenInitializer;
 
 /**
  * This class represents simple dialog form.
@@ -54,14 +55,14 @@ public class Dialog implements CommandListener {
     public static final int CONFIRMED = 1;
 
     /**
-     * Inner class to request security token from SecurityInitializer.
-     * SecurityInitializer should be able to check this inner class name.
+     * Inner class to request security token from SecurityTokenInitializer.
+     * SecurityTokenInitializer should be able to check this inner class name.
     */
     static private class SecurityTrusted
         implements ImplicitlyTrustedClass { };
 
     /** This class has a different security domain than the Application */
-    static private SecurityToken token = SecurityInitializer
+    static private SecurityToken token = SecurityTokenInitializer
         .requestToken(new SecurityTrusted());
 
     /** Caches the display manager reference. */

@@ -24,6 +24,8 @@
 
 package com.sun.j2me.security;
 
+import com.sun.midp.security.Permissions;
+
 /**
  * Satsa access permissions.
  */
@@ -45,9 +47,13 @@ public class SatsaPermission extends Permission {
         new SatsaPermission("javax.microedition.jcrmi.connection", null);
 
     static public SatsaPermission SIGN_SERVICE =
-        new SatsaPermission("javax.microedition.pki.signservice", null);
-    
+        new SatsaPermission("javax.microedition.pki.signservice", null, Permissions.SIGN_SERVICE);
+
     public SatsaPermission(String permission, String resource) {
         super(permission, resource);
+    }
+
+    public SatsaPermission(String permission, String resource, int id) {
+        super(permission, resource, id);
     }
 }

@@ -105,15 +105,15 @@ public class FileAccess {
         }
     }
 
-    public InputStream openInputStream() {
+    public InputStream openInputStream() throws IOException {
         return inputStream instanceof InputStream ? (InputStream)inputStream : null;
     }
 
-    public DataOutputStream openDataOutputStream() {
+    public DataOutputStream openDataOutputStream() throws IOException {
         return outputStream instanceof DataOutputStream ? (DataOutputStream)outputStream : null;
     }
 
-    public void truncate(int i) {
+    public void truncate(int i) throws IOException {
     }
     
 }

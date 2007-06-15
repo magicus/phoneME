@@ -61,15 +61,32 @@ JSROP_ABSTRACTS_JAVA_FILES = \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/security/SatsaPermission.java \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/ConnectionBaseInterface.java \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/ConnectionBaseAdapter.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/FileAccess.java \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/PrivilegedConnector.java \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/i18n/Resource.java \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/i18n/ResourceConstants.java 
 
 ifeq ($(USE_JSR_177), true)
-JSROP_ABSTRACTS_JAVA_FILES = \
+JSROP_ABSTRACTS_JAVA_FILES += \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/security/SecurityTokenInitializer.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/FileAccess.java \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/dialog/Dialog.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/dialog/MessageDialog.java
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/dialog/MessageDialog.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/Util.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/Cipher.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/RSAPublicKey.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/NoSuchAlgorithmException.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/IllegalBlockSizeException.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/BadPaddingException.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/ShortBufferException.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/InvalidKeyException.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/InvalidAlgorithmParameterException.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/NoSuchPaddingException.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/CryptoParameter.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/SecretKey.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/IvParameter.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/Key.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/MessageDigest.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/DigestException.java
 endif
 
 #####################################################

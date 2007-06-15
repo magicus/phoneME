@@ -32,11 +32,19 @@ public class Permission {
     private String name;
     
     private String resource;
+
+    private int id;
     
     /** Creates a new instance of PIMPermissions */
     public Permission(String name, String resource) {
+        this(name, resource, 0);        
+    }
+
+    /** Creates a new instance of PIMPermissions */
+    public Permission(String name, String resource, int id) {
         this.name = name;
         this.resource = resource;
+        this.id = id;
     }
     
     /** Returns name of permission */
@@ -47,6 +55,10 @@ public class Permission {
     /** Returns resource of permission */
     public String getResource() {
         return resource;
+    }
+
+    public int getId() {
+        return id;
     }
     
 }

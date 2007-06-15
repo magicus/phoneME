@@ -63,6 +63,10 @@ public final class SecretKey implements Key {
         secret = Util.cloneSubarray(key, offset, len);
     }
 
+    public static SecretKey getInstance(byte[] key, int offset, int len, String algorithm){
+        return new SecretKey(key, offset, len, algorithm);
+    }
+
     /** 
      * Returns the name of the algorithm associated with this secret key.
      *

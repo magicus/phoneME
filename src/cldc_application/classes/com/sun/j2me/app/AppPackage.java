@@ -25,6 +25,7 @@
 package com.sun.j2me.app;
 
 import com.sun.j2me.security.Permission;
+import com.sun.midp.midlet.MIDletStateHandler;
 
 /**
  * Abstraction for application package
@@ -67,6 +68,8 @@ public class AppPackage {
      *  thread while asking user
      */
     public void checkForPermission(Permission p) throws InterruptedException {
+        MIDletStateHandler.getMidletStateHandler().getMIDletSuite().
+                        checkForPermission(p.getId(), null);
     }    
     
     /**
