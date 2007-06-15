@@ -126,7 +126,6 @@ public class SlotFactory {
      * Creates specified card slot for the specified device.
      *
      * @param slot Global slot number
-     * @param securityToken Security token for the slot
      * @return CardSlot object or null if slot number is out of bounds
      * @throws IOException If CardSlot creation failed
      * @throws CardDeviceException If something wrong with the configuration

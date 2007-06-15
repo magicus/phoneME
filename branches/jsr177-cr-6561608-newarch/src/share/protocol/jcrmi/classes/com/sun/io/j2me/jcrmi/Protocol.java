@@ -31,8 +31,9 @@ import com.sun.j2me.security.SatsaPermission;
 import java.io.*;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.security.GeneralSecurityException;
-import java.security.MessageDigest;
+import com.sun.j2me.crypto.NoSuchAlgorithmException;
+import com.sun.j2me.crypto.DigestException;
+import com.sun.j2me.crypto.MessageDigest;
 import javax.microedition.io.Connection;
 import javax.microedition.io.StreamConnection;
 import javax.microedition.jcrmi.JavaCardRMIConnection;
@@ -211,8 +212,8 @@ public class Protocol
         putShort(0x0202);
 
         try {
-            SHA = MessageDigest.getInstance("SHA-1");
-        } catch (GeneralSecurityException e) {
+            SHA = new MessageDigest("SHA-1");
+        } catch (NoSuchAlgorithmException e) {
             // Ignore this exception
         }
 
@@ -578,14 +579,12 @@ public class Protocol
 
         byte[] buf = Utils.stringToBytes(hashString);
 
-        SHA.reset();
-        SHA.update(buf, 0, buf.length);
         try {
-            SHA.digest(APDUBuffer, offset, SHA.getDigestLength());
-        } catch (GeneralSecurityException e) {
+            SHA.operate(buf, buf.length, APDUBuffer, offset);
+        } catch (DigestException e) {
             throw new RemoteException("SHA1 error");
-        }
-
+        }        
+        
         offset += 2;
 
         if (params != null) {

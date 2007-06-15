@@ -26,8 +26,6 @@
 
 package com.sun.io.j2me.apdu;
 
-//import com.sun.midp.security.SecurityToken;
-
 /**
  * This class represents a handle for APDU connection.
  */
@@ -41,8 +39,6 @@ public class Handle {
     Slot cardSlot;
     /** Is this connection opened? */
     boolean opened;
-    /** Security token used by this connection. */
-//    public SecurityToken token;
     /** FCI received from selected application. */
     byte[] FCI;
     
@@ -68,14 +64,11 @@ public class Handle {
      * Creates a new handle with specified parameters.
      * @param slot slot number
      * @param channel channel number
-     * @param token security token
      */
-//    Handle(int slot, int channel, SecurityToken token) {
     Handle(int slot, int channel) {
 
         this.slot = slot;
         this.channel = channel;
-//        this.token = token;
         this.cardSlot = APDUManager.slots[slot];
         this.FCI = cardSlot.FCI;
         this.opened = true;

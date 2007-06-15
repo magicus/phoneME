@@ -39,7 +39,7 @@ public class Protocol implements ConnectionBaseInterface {
             Class.forName("com.sun.io.j2me.jcrmi.Protocol").newInstance();
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
     }
 

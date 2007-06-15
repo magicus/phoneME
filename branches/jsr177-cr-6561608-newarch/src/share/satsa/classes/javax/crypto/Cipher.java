@@ -132,8 +132,8 @@ public class Cipher {
         throws NoSuchAlgorithmException, NoSuchPaddingException {
 
         try {
-            return new
-                Cipher(com.sun.j2me.crypto.Cipher.getInstance(transformation));
+            return new Cipher(
+                com.sun.j2me.crypto.Cipher.getNewInstance(transformation));
         } catch (com.sun.j2me.crypto.NoSuchAlgorithmException e) {
             throw new NoSuchAlgorithmException(e.getMessage());
         } catch (com.sun.j2me.crypto.NoSuchPaddingException e) {
@@ -221,7 +221,7 @@ public class Cipher {
     public final void init(int opmode, Key key, AlgorithmParameterSpec params)
         throws InvalidKeyException, InvalidAlgorithmParameterException {
 
-        Key cipherKey;
+        com.sun.j2me.crypto.Key cipherKey;
         com.sun.j2me.crypto.CryptoParameter cryptoParameter;
 
         if (opmode == DECRYPT_MODE) {
@@ -258,7 +258,7 @@ public class Cipher {
         }
 
         try {
-             cipher.init(opmode, cipherKey, cryptoParameter);
+             cipher.init(opmode, cipherKey.getKey(), cryptoParameter);
         } catch (com.sun.j2me.crypto.InvalidKeyException e) {
             throw new InvalidKeyException(e.getMessage());
         } catch (com.sun.j2me.crypto.InvalidAlgorithmParameterException e) {
