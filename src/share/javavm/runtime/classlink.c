@@ -827,9 +827,15 @@ CVMclassPrepareMethods(CVMExecEnv* ee, CVMClassBlock* cb)
      */
 
     if (nextMethodTableIdx > CVM_LIMIT_NUM_METHODTABLE_ENTRIES) {
+#ifdef JAVASE
+        CVMthrowOutOfMemoryError(ee, 
+			      "Class %C exceeds 64K method table size limit",
+                               cb);
+#else
         CVMthrowInternalError(ee, 
 			      "Class %C exceeds 64K method table size limit",
 			      cb);
+#endif
 	goto fail;
     }
 
@@ -1242,9 +1248,15 @@ CVMclassPrepareInterfaces(CVMExecEnv* ee, CVMClassBlock* cb)
 
     /* Make sure there is room for the miranda methods. */
     if (mcount + n_miranda_methods > CVM_LIMIT_NUM_METHODTABLE_ENTRIES) {
+#ifdef JAVASE
+        CVMthrowOutOfMemoryError(ee, 
+			      "Class %C exceeds 64K method table size limit",
+                               cb);
+#else
         CVMthrowInternalError(ee, 
 			      "Class %C exceeds 64K method table size limit",
 			      cb);
+#endif
 	return CVM_FALSE;
     }
 

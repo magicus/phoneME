@@ -75,11 +75,21 @@ CVMioOpen(const char *name, CVMInt32 openMode,
         while ((p > newName) && (*p == '/')) {
             *p-- = '\0';
         }
+#ifdef JAVASE
+        fd = open64(newName, openMode & (~JVM_O_DELETE), filePerm);
+        if (openMode & JVM_O_DELETE) unlink(newName);
+#else
         fd = open64(newName, openMode, filePerm);
+#endif
         free(newName);
     }
     else {
+#ifdef JAVASE
+        fd = open64(name, openMode & (~JVM_O_DELETE), filePerm);
+        if (openMode & JVM_O_DELETE) unlink(name);
+#else
         fd = open64(name, openMode, filePerm);
+#endif
     }
     if (fd >= 0) {
 	int mode;
