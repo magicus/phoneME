@@ -57,7 +57,7 @@ LINKEXE_FLAGS += /entry:mainACRTStartup
 
 LINKEXE_LIBS += /nodefaultlib:oldnames.lib \
 	/nodefaultlib:libcmt.lib /nodefaultlib:libcmtd.lib \
-	coredll.lib corelibc.lib
+	coredll.lib
 
 ################################################
 # Setup INCLUDE, LIB, and PATH for the VC tools.
