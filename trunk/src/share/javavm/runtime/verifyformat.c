@@ -153,6 +153,13 @@ static void CNerror(CFcontext *context, char *name);
 static void UVerror(CFcontext *context);
 static void CFnomem(CFcontext *context);
 
+/* JAVA SE reports different error on bytecode verification */
+#ifndef JAVASE
+#define CVerror CFerror
+#else
+static void CVerror(CFcontext *context, char *fmt, ...);
+#endif
+
 static void 
 verify_static_constant(CFcontext *context, utf_str *sig, unsigned int index);
 
@@ -205,6 +212,7 @@ skip_over_field_signature(char *name, jboolean void_okay,
  * -2: class format error
  * -3: unsupported version error
  * -4: bad class name error
+ * -5: generic verification errors
  *
  * Also fills in the class_size_info structure which contains size 
  * information of verious class components.
@@ -214,6 +222,7 @@ skip_over_field_signature(char *name, jboolean void_okay,
 #define CF_ERR (-2)
 #define CF_UVERR (-3)
 #define CF_BADNAME (-4)
+#define CF_VERR (-5)
 #define LOCAL_BUFFER_SIZE 75
 
 jint
@@ -802,7 +811,7 @@ static void ParseCode(CFcontext *context, utf_str *mb_name,
 	 */
 	if (start_pc >= code_length || end_pc > code_length ||
             end_pc <= start_pc || handler_pc >= code_length)
-	    CFerror(context, "Invalid start_pc/length in exception table");
+	    CVerror(context, "Invalid start_pc/length in exception table");
 
 	if (catch_type_entry != 0){
 	    verify_constant_entry(context, catch_type_entry, JVM_CONSTANT_Class,
@@ -828,7 +837,7 @@ static void ParseCode(CFcontext *context, utf_str *mb_name,
     }
 
     if (context->ptr != end_ptr) 
-	CFerror(context, "Code segment has wrong length");
+	CVerror(context, "Code segment has wrong length");
 }
 
 #ifdef CVM_SPLIT_VERIFY
@@ -2007,6 +2016,25 @@ CFerror(CFcontext *context, char *format, ...)
     context->err_code = CF_ERR;
     longjmp(context->jump_buffer, 1);
 }
+
+#ifdef JAVASE
+static void
+CVerror(CFcontext *context, char *format, ...)
+{
+    va_list args;
+    int n = 0;
+    va_start(args, format);
+    if (context->class_name)
+        n = jio_snprintf(context->msg, context->msg_len, "%s (", 
+			 context->class_name);
+    n += jio_vsnprintf(context->msg + n, context->msg_len - n, format, args);
+    if (context->class_name)
+        jio_snprintf(context->msg + n, context->msg_len - n, ")");
+    va_end(args);
+    context->err_code = CF_VERR;
+    longjmp(context->jump_buffer, 1);
+}
+#endif
 
 static void
 CNerror(CFcontext *context, char *name)

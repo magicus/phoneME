@@ -839,6 +839,12 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 	    CVMthrowNoClassDefFoundError(ee, "%s", buf);
             goto doCleanup;
 	}
+#ifdef JAVASE
+	if (res == -5) { /* verify error, failure in byte code verification */
+	    CVMthrowVerifyError(ee, "%s", buf);
+            goto doCleanup;
+	}
+#endif
 	context->needsVerify = !(CVMBool)measure_only;
     }
 
@@ -1432,7 +1438,11 @@ CVMoutOfMemoryHandler(CVMExecEnv* ee, CICcontext *context)
 static void
 CVMlimitHandler(CVMExecEnv* ee, CICcontext *context, char* comment)
 {
+#ifdef JAVASE
+    context->exceptionCb = CVMsystemClass(java_lang_OutOfMemoryError);
+#else
     context->exceptionCb = CVMsystemClass(java_lang_InternalError);
+#endif
     context->exceptionMsg = comment;
     longjmp(context->jump_buffer, 1);
 }

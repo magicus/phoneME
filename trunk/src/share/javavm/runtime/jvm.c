@@ -72,6 +72,10 @@
 #include "javavm/include/jit_common.h"
 #endif
 
+#ifdef JAVASE
+#include "javavm/include/se_init.h"
+#endif
+
 JNIEXPORT jint JNICALL
 JVM_GetInterfaceVersion(void)
 {
@@ -3731,7 +3735,7 @@ JVM_InitProperties(JNIEnv *env, jobject props, java_props_t* sprops)
      * key and value, and also to make sure that we have a properties
      * table at hand and not just a hashtable.
      */
-    jmethodID putID = (*env)->GetMethodID(env,
+    jmethodID putID = (*env)->GetMethodID(env, 
 					  (*env)->GetObjectClass(env, props),
 					  "setProperty",
             "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;");
@@ -3767,6 +3771,12 @@ JVM_InitProperties(JNIEnv *env, jobject props, java_props_t* sprops)
     PUTPROP_ForPlatformCString(props, "java.library.builtin.net",  "yes");
     PUTPROP_ForPlatformCString(props, "java.library.builtin.math", "yes");
     PUTPROP_ForPlatformCString(props, "java.library.builtin.zip",  "yes");
+
+#ifdef JAVASE
+    if (!CVMinitJavaSEProperties(env, putID, props)) {
+	return NULL;
+    }
+#endif
 
     return (*env)->NewLocalRef(env, props);
 }
@@ -3816,27 +3826,49 @@ JVM_DisableCompiler(JNIEnv *env, jclass compCls)
 
 #ifdef JAVASE
 
+/* Need to temporarily define JVM_Socket for compatibility with
+ * J2SE Net libraries that haven't been recompiled with CVM headers
+ */
+#undef JVM_Socket
+JNIEXPORT jint JNICALL
+JVM_Socket(jint domain, jint type, jint protocol)
+{
+    return CVMnetSocket(domain, type, protocol);
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_SupportsCX8()
+{
+    return (CVM_FALSE);
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_CX8Field(JNIEnv *env, jobject obj, jfieldID fid, jlong oldVal, jlong newVal)
+{
+    return (CVM_FALSE);
+}
+
+JNIEXPORT jint JNICALL
+JVM_InitializeSocketLibrary()
+{
+    return(CVM_TRUE);
+}
+
 JNIEXPORT void * JNICALL
 JVM_RegisterSignal(jint sig, void *handler)
 {
-    CVMconsolePrintf("JVM_RegisterSignal() not implemented yet!\n");
-    CVMassert(CVM_FALSE);
-    return (void *)NULL;
+    return (void *)-1;
 }
 
 JNIEXPORT jboolean JNICALL
 JVM_RaiseSignal(jint sig)
 {
-    CVMconsolePrintf("JVM_RaiseSignal() not implemented yet!\n");
-    CVMassert(CVM_FALSE);
-    return CVM_TRUE;
+    return CVM_FALSE;
 }
 
 JNIEXPORT jint JNICALL
 JVM_FindSignal(const char *name)
 {
-    CVMconsolePrintf("JVM_FindSignal() not implemented yet!\n");
-    CVMassert(CVM_FALSE);
     return -1;
 }
 

@@ -253,7 +253,55 @@ CVMBool CVMinitStaticState()
 	} else {
 	    goto badpath;
 	}
+#ifdef JAVASE
+        {
+	    /* 
+	     * We need to determine if we are running a JDK or JRE 
+	     * Also need to make determination of java home based on 
+	     * the location of libjvm and not java executable.
+	     *
+	     * Determine if arch property is set by the time this code
+	     * is executed.
+	     */
+	    char libpath[MAXPATHLEN+1];
+	    char archlib[MAXPATHLEN+1];
+	    char javahomepath[MAXPATHLEN+1];
+	    struct stat statbuf;
+	    char *dllpath;
+
+	    /* Test to see if JAVA_HOME/jre/lib exists 
+	     * If it exists, we are running in a JDK
+	     * If it doesn't exist, we are running in a JRE
+	     */
+	    strcpy(javahomepath, p0);
+	    strcpy(libpath, p0);
+	    strcat(libpath, "/jre/lib");
+	    if (stat(libpath, &statbuf) == -1) {
+		strcpy(libpath, p0);
+		strcat(libpath, "/lib");
+	    }
+	    else {
+		/* Make javahomepath point to javahome/jre */
+		strcat(javahomepath, "/jre");
+	    }
+
+	    /* 
+	     * Construct native library path from LD_LIBRARY_PATH 
+	     * If it's not set, then we set the lib/ARCH directory.
+	     */
+	    dllpath = getenv("LD_LIBRARY_PATH");
+	    if ( dllpath == NULL ) {
+		strcpy(archlib, libpath);
+		strcat(archlib, "/");
+		strcat(archlib, ARCH);
+		dllpath = archlib;
+	    }
+
+	    return (CVMinitPathValues(&props, javahomepath, libpath, dllpath));
+        }
+#else
         return( CVMinitPathValues( &props, p0, "lib", "lib" ) );
+#endif
     badpath:
 	fprintf(stderr, "Invalid path %s\n", p0);
 	fprintf(stderr, "Executable must be in a directory named \"bin\".\n");
@@ -275,3 +323,11 @@ const CVMProperties *CVMgetProperties()
 {
     return &props;
 }
+
+#ifdef JAVASE
+const char *CVMgetJavaHomePath()
+{
+    return props.java_home;
+}
+#endif
+
