@@ -47,13 +47,13 @@ static HANDLE standardin, standardout, standarderr;
 
 static void
 initializeFileHandlers() {
-   standardin = CreateFile(_T("\\Storage Card\\IN.txt"), GENERIC_READ, 
+   standardin = CreateFile(_T("\\IN.txt"), GENERIC_READ, 
                        FILE_SHARE_READ | FILE_SHARE_WRITE,
                        0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-   standardout = CreateFile(_T("\\Storage Card\\OUT.txt"), GENERIC_WRITE, 
+   standardout = CreateFile(_T("\\OUT.txt"), GENERIC_WRITE, 
                         FILE_SHARE_READ | FILE_SHARE_WRITE,
                         0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_NO_BUFFERING, 0);
-   standarderr = CreateFile(_T("\\Storage Card\\ERR.txt"), GENERIC_WRITE, 
+   standarderr = CreateFile(_T("\\ERR.txt"), GENERIC_WRITE, 
                         FILE_SHARE_READ | FILE_SHARE_WRITE,
                         0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_NO_BUFFERING, 0);
 }
