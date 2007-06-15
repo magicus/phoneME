@@ -38,7 +38,7 @@ VC_PATH          = $(VS8_PATH)/VC
 PLATFORM_TOOLS_PATH	= $(VC_PATH)/ce/bin/x86_arm
 COMMON_TOOLS_PATH	= $(VS8_PATH)/Common7/Tools/Bin
 
-LINKEXE_LIBS += /nodefaultlib:libc.lib
+LINKEXE_LIBS += /nodefaultlib:libc.lib corelibc.lib
 WIN_LINKLIBS += corelibc.lib
 
 include ../win32/wince50_defs.mk
