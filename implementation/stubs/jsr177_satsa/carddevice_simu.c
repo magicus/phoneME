@@ -267,10 +267,6 @@ void javacall_carddevice_set_error(const char *fmt, ...) {
     (void)fmt;
 }
 
-int javacall_carddevice_vsnprintf(char *buffer, int len, const char *fmt, va_list ap) {
-    return 0;
-}
-
 /** 
  * Retrieves error message into the provided buffer and clears state.
  * @param buf Buffer to store message

@@ -279,8 +279,6 @@ javacall_result javacall_carddevice_xfer_data_start(char *tx_buffer, javacall_in
 javacall_result javacall_carddevice_xfer_data_finish(char *tx_buffer, javacall_int32 tx_size,
     char *rx_buffer, javacall_int32 *rx_size, void *context);
 
-javacall_int32 javacall_carddevice_vsnprintf(char *buffer, javacall_int32 len, const char *fmt, va_list ap);
-
 /** @} */
 
 

@@ -1398,15 +1398,11 @@ void javacall_carddevice_set_error(const char *fmt, ...) {
     
 	va_start(ap, fmt);
     len += sprintf(print_buffer + len, "CARDDEVICE ERROR: ");
-    len += javacall_carddevice_vsnprintf(print_buffer + len, PRINT_BUFFER_SIZE - len, fmt, ap);
+    len += _vsnprintf(print_buffer + len, PRINT_BUFFER_SIZE - len, fmt, ap);
     len += sprintf(print_buffer + len, "\n");
 	javacall_print(print_buffer);
 	va_end(ap);
 
-}
-
-int javacall_carddevice_vsnprintf(char *buffer, javacall_int32 len, const char *fmt, va_list ap) {
-    return _vsnprintf(buffer, len, fmt, ap);
 }
 
 /** 
