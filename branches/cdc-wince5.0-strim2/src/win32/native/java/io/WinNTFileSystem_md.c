@@ -631,8 +631,24 @@ Java_java_io_WinNTFileSystem_setReadOnly(JNIEnv *env, jobject this,
 /* -- Filesystem interface -- */
 
 #ifndef WINCE
-
 #include <direct.h>
+#else
+
+// MSDN comments that because some mobile device operating systems 
+// do not have current directory functionality, this method to get
+// current working directory is not supported.
+
+wchar_t* _wgetdcwd(int drive, wchar_t *buf, int maxlen) {
+    const wchar_t *root = L"\\";
+    int len = wcslen(root);
+    if (len >= maxlen) {
+        return NULL;
+    }
+	wcscpy(buf, root);
+	return buf;
+}
+
+#endif
 
 JNIEXPORT jobject JNICALL
 Java_java_io_WinNTFileSystem_getDriveDirectory(JNIEnv *env, jobject this, 
@@ -645,5 +661,3 @@ Java_java_io_WinNTFileSystem_getDriveDirectory(JNIEnv *env, jobject this,
     if (iswalpha(*p) && (p[1] == L':')) p += 2;
     return (*env)->NewString(env, p, wcslen(p));
 }
-
-#endif
