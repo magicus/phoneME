@@ -286,7 +286,7 @@
     for (i = (start); i < (start) + (len); i++, bufPtr+=sizeof(jType)) {\
         jType x;                                                        \
         memcpy(&x, bufPtr, sizeof(jType));                              \
-	CVMD_arrayWrite##accessor(arr, i, *bufPtr);			\
+	CVMD_arrayWrite##accessor(arr, i, x);				\
     }									\
 }
 
