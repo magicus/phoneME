@@ -107,7 +107,7 @@ public abstract class Signature  {
         try {
             return new SignatureImpl(algorithm,
                 com.sun.midp.crypto.Signature.getInstance(algorithm));
-        } catch (com.sun.j2me.crypto.NoSuchAlgorithmException e) {
+        } catch (com.sun.midp.crypto.NoSuchAlgorithmException e) {
             throw new NoSuchAlgorithmException(e.getMessage());
         }
     }
@@ -129,8 +129,8 @@ public abstract class Signature  {
         }
 
         try {
-            sign.initVerify(((RSAPublicKey)publicKey).getKey());
-        } catch (com.sun.j2me.crypto.InvalidKeyException e) {
+            sign.initVerify((com.sun.midp.crypto.PublicKey)((RSAPublicKey)publicKey).getKey().getKey());
+        } catch (com.sun.midp.crypto.InvalidKeyException e) {
             throw new InvalidKeyException(e.getMessage());
         }
     }

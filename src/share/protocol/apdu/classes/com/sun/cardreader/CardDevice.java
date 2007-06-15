@@ -87,7 +87,6 @@ public abstract class CardDevice {
      * not an abstract method because most devices don't need it.
      *
      * @param slot Slot number
-     * @param token Security token for this slot
      * @throws IOException If slot opening failed.
      */
     public void openSlot(int slot) throws IOException {

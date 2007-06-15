@@ -173,7 +173,6 @@ class WIMApplication {
     /**
      * Creates connection with WIM application (WIM spec, 11.3.3) on
      * card in specified slot. Doesn't throw exceptions.
-     * @param token security token
      * @param slotNum the slot number
      * @param securityElementID identifies the security element
      * @param readOnly if true WIM data can be protected

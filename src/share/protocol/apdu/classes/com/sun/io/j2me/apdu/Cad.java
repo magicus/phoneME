@@ -89,7 +89,6 @@ class Cad {
     /**
      * Constructor for CADClient.
      * @param slot Global slot number
-     * @param securityToken Security token for this class
      * @throws IOException if there any problems in opening the socket or
      * streams or powering up the card.
      */

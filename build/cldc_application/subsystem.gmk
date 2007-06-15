@@ -37,7 +37,6 @@
 # Source files for the ( satsa ) module
 #
 MODULE_SATSA_COMMON_JAVA_FILES += \
-    $(JSR_177_COMMON)/classes/com/sun/satsa/security/SecurityInitializer.java \
     $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/lang/UnsupportedOperationException.java
 
 # Same classes are included in JSR 172 as well.
@@ -94,21 +93,35 @@ ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
 vpath % $(JSR_177_DIR)/src/cldc_application/protocol/apdu/native
 endif
 
+# Definition for the build directory
+#
+JSR_177_BUILD_DIR       = $(MIDP_OUTPUT_DIR)
+JSR_177_GENERATED_DIR   = $(GENERATED_DIR)
+
 # Java card constants
 #
 JAVACARD_CLASSES = $(MIDP_OUTPUT_DIR)/javacard_classes
+
+# Java card constants
+#
+JSR_177_BINDIR=$(BINDIR)/..
+JCRMIC_TOOL = $(JSR_177_BINDIR)/$(JCRMIC_ARCHIVE)
+SIM_TEST    = $(JSR_177_BUILD_DIR)/.sim_test
+
+ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
+    SIM_TOOL = $(SIM_TEST) $(APPLETS) $(JC_EEPROM_IMAGE)
+endif
 
 # Tools and applets
 #
 JSR177_JAVAC ?= $(JAVAC_CMD)
 
 ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
-all_tools :: $(JAVACARD_CLASSES) $(BINDIR) $(JCRMIC_TOOL) $(ACL_DATA_DIRS) \
-             $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java $(SIM_TOOL)
+all_tools :: $(JAVACARD_CLASSES) $(JSR_177_BINDIR) $(JCRMIC_TOOL) $(SIM_TOOL)
 
 JSR177_JAVA ?= $(JAVA_CMD)
 else
-all_tools :: $(JAVACARD_CLASSES) $(BINDIR) $(JCRMIC_TOOL) $(ACL_DATA_DIRS) \
+all_tools :: $(JAVACARD_CLASSES) $(JSR_177_BINDIR) $(JCRMIC_TOOL) $(ACL_DATA_DIRS) \
              $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java 
 endif
 
@@ -116,3 +129,15 @@ endif
 #
 SUBSYSTEM_CONFIGURATION_INPUT_FILES += $(JSR_177_PROPERTY_FILES)
 
+# Native documentation to include in porting interfaces
+DOXYGEN_INPUT_LIST += \
+	$(JSR_177_DIR)/src/cldc_application/protocol/apdu/include/carddevice.h
+
+#Include files
+MODULE_SATSA_APDU_EXTRA_INCLUDES += \
+    -I$(JSR_177_DIR)/src/cldc_application/protocol/apdu/include
+
+SUBSYSTEM_SATSA_EXTRA_INCLUDES = \
+    $(MODULE_SATSA_APDU_EXTRA_INCLUDES)
+
+EXTRA_INCLUDES += $(SUBSYSTEM_SATSA_EXTRA_INCLUDES)

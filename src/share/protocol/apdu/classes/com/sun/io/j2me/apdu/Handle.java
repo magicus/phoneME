@@ -64,7 +64,6 @@ public class Handle {
      * Creates a new handle with specified parameters.
      * @param slot slot number
      * @param channel channel number
-     * @param token security token
      */
     Handle(int slot, int channel) {
 

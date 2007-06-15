@@ -91,6 +91,11 @@ ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
 vpath % $(JSR_177_DIR)/src/jump_application/protocol/apdu/native
 endif
 
+# Definition for the build directory
+#
+JSR_177_BUILD_DIR       = $(JSROP_BUILD_DIR)/jsr177
+JSR_177_GENERATED_DIR   = $(JSR_177_BUILD_DIR)/generated
+
 # Include properties fod CDC VM
 JSR_177_PROPERTY_FILES += $(JSR_177_DIR)/src/jump_application/config/properties_jsr177_cdc.xml        
 
@@ -110,21 +115,25 @@ $(JSR_177_INITIALIZER): $(CONFIGURATOR_JAR_FILE)
 #
 JAVACARD_CLASSES = $(JSR_177_BUILD_DIR)/javacard_classes
 
+# Java card constants
+#
+JSR_177_BINDIR=$(JSR_177_BUILD_DIR)/bin
+JCRMIC_TOOL = $(JSR_177_BINDIR)/$(JCRMIC_ARCHIVE)
+SIM_TEST    = $(JSR_177_BUILD_DIR)/.sim_test
+
+ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
+    SIM_TOOL = $(SIM_TEST) $(APPLETS) $(JC_EEPROM_IMAGE)
+endif
+
 # Tools and applets
 #
 JSR177_JAVAC ?= $(CVM_JAVAC)
 
 ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
-TOOLS = $(JAVACARD_CLASSES) $(BINDIR) $(JCRMIC_TOOL) $(ACL_DATA_DIRS) \
-        $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java $(SIM_TOOL)
+TOOLS = $(JAVACARD_CLASSES) $(JSR_177_BINDIR) $(JCRMIC_TOOL) $(SIM_TOOL)
 
 JSR177_JAVA ?= $(CVM_JAVA)
 else
-TOOLS = $(JAVACARD_CLASSES) $(BINDIR) $(JCRMIC_TOOL) $(ACL_DATA_DIRS) \
+TOOLS = $(JAVACARD_CLASSES) $(JSR_177_BINDIR) $(JCRMIC_TOOL) $(ACL_DATA_DIRS) \
         $(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java 
 endif
-
-BINDIR=$(JSR_177_BUILD_DIR)/bin
-$(BINDIR):
-	@echo " ... creating directories" $@
-	$(AT)mkdir -p $@

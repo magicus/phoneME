@@ -62,8 +62,7 @@ public class TestCad extends TestCase {
 
         if (!stub_flag) {
             int slot = 0;
-            SecurityToken token = null;
-            Cad cad = new Cad(slot, token);
+            Cad cad = new Cad(slot);
             byte[] request = {
                 (byte)0x00, (byte)0xA4, 
                     (byte)0x04, (byte)0x00, (byte)0x08,

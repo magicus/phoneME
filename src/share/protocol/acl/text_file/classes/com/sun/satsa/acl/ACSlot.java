@@ -31,9 +31,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import com.sun.j2me.io.FileAccess;
-//import com.sun.midp.security.ImplicitlyTrustedClass;
-//import com.sun.midp.security.SecurityToken;
-//import com.sun.satsa.security.SecurityInitializer;
 
 import javax.microedition.io.Connector;
 
@@ -42,17 +39,6 @@ import javax.microedition.io.Connector;
  * card slot.
  */
 public class ACSlot{
-
-    /**
-     * Inner class to request security token from SecurityInitializer.
-     * SecurityInitializer should be able to check this inner class name.
-     */
-//    static private class SecurityTrusted
-//        implements ImplicitlyTrustedClass {};
-
-    /** This class has a different security domain than the MIDlet suite */
-//    private static SecurityToken classSecurityToken =
-//        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /**
      * Constructs an instance of an access control file object.

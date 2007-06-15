@@ -30,6 +30,7 @@
 #include <midpServices.h>
 #include <midp_thread.h>
 #include <midp_properties_port.h>
+#include <carddevice.h>
 
 #include <javacall_carddevice.h>
 
@@ -170,15 +171,6 @@ err:
 end:
     KNI_ReturnInt(result);
 }
-
-/* This constant is used only in javacall_carddevice_reset_start and javacall_carddevice_reset_finish functions. */
-#define SIGNAL_RESET    0x7781
-
-/* This constant is used only in javacall_carddevice_xfer_data_start and javacall_carddevice_xfer_data_finish functions. */
-#define SIGNAL_XFER     0x7782
-
-/* This constant is used only in javacall_carddevice_lock and javacall_carddevice_unlock functions. */
-#define SIGNAL_LOCK     0x7783
 
 /**
  * Performs reset of the card in the slot. This method must be called within
