@@ -88,6 +88,10 @@ extern "C" {
 /* */
 #define JAVACALL_VIDEO_MPEG4_MIME    "video/mp4v-es"
 #define JAVACALL_VIDEO_MPEG4_MIME_2  "video/mp4"
+#define JAVACALL_VIDEO_WMV_MIME      "video/x-ms-wmv"
+#define JAVACALL_AUDIO_WMA_MIME      "audio/x-ms-wma"
+#define JAVACALL_VIDEO_AVI_MIME      "video/avi"
+#define JAVACALL_VIDEO_MPEG1_MIME    "video/mpeg"
 #define JAVACALL_VIDEO_3GPP_MIME     "video/3gpp"
 #define JAVACALL_VIDEO_3GPP_MIME_2   "video/3gpp2"
 
@@ -95,9 +99,12 @@ extern "C" {
 #define JAVACALL_AUDIO_MIDI_MIME_2   "audio/mid"
 #define JAVACALL_AUDIO_SP_MIDI_MIME  "audio/sp-midi"
 #define JAVACALL_AUDIO_WAV_MIME      "audio/x-wav"
+#define JAVACALL_AUDIO_WAV_MIME_2    "audio/wav"
 #define JAVACALL_AUDIO_MP3_MIME      "audio/mpeg"
 #define JAVACALL_AUDIO_MP3_MIME_2    "audio/mp3"
+#define JAVACALL_AUDIO_MP3_MIME_3    "audio/x-mpeg"
 #define JAVACALL_AUDIO_AMR_MIME      "audio/amr"
+#define JAVACALL_AUDIO_AMRNB_MIME    "audio/amrnb"
 #define JAVACALL_AUDIO_MPEG4_MIME    "audio/mp4a-latm"
 #define JAVACALL_AUDIO_MPEG4_MIME_2  "audio/mp4"
 #define JAVACALL_AUDIO_AAC_MIME      "audio/aac"
@@ -149,6 +156,15 @@ typedef enum {
     JAVACALL_CAPTURE_VIDEO = 12,
     /** Interactive MIDI */
     JAVACALL_INTERACTIVE_MIDI = 13, 
+    /** WMV video      */
+    JAVACALL_VIDEO_WMV = 14,
+    /** WMA audio      */
+    JAVACALL_AUDIO_WMA = 15,
+    /** AVI video      */
+    JAVACALL_VIDEO_AVI = 16,
+    /** MPEG1 video      */
+    JAVACALL_VIDEO_MPEG1 = 17,
+    
     JAVACALL_END_OF_TYPE
 } javacall_media_type;
 
@@ -779,7 +795,8 @@ javacall_result javacall_media_seek_to_frame(javacall_handle handle,
  * @retval JAVACALL_OK      Success
  * @retval JAVACALL_FAIL    Fail
  */
-javacall_result javacall_media_skip_frames(javacall_handle handle, long framesToSkip);
+javacall_result javacall_media_skip_frames(javacall_handle handle, long framesToSkip, 
+                                           /*OUT*/long* actualFramesSkipped);
 
 /** @} */ 
 
@@ -820,7 +837,8 @@ javacall_result javacall_media_get_metadata_key_counts(javacall_handle handle,
  * @retval JAVACALL_FAIL            Fail
  */
 javacall_result javacall_media_get_metadata_key(javacall_handle handle, 
-                                                long index, long bufLength, /*OUT*/ char* keyBuf);
+                                                long index, long bufLength, 
+                                                /*OUT*/ javacall_utf16* keyBuf);
 
 /**
  * Get meta data value strings by using meta data key string
@@ -836,7 +854,8 @@ javacall_result javacall_media_get_metadata_key(javacall_handle handle,
  * @retval JAVACALL_FAIL            Fail
  */
 javacall_result javacall_media_get_metadata(javacall_handle handle, 
-                                            const char* key, long bufLength, /*OUT*/ char* dataBuf);
+                                            const javacall_utf16* key, long bufLength, 
+                                            /*OUT*/ javacall_utf16* dataBuf);
 
 /** @}*/
 
