@@ -758,19 +758,18 @@ ThrowExceptionStub::allocate_or_share(RuntimeException rte JVM_TRAPS) {
 void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(throw_exception_stub);
 
-  UsingFastOops fast_oops;
   CodeGenerator* gen = Compiler::code_generator();
   VirtualStackFrame* frame = Compiler::frame();
-  InstanceClass::Fast klass = exception_class(get_rte());
 
   // We don't support inlining of methods with exception handlers,
   // so only root method can have exception handlers
+  UsingFastOops fast_oops;
   Method::Fast method = Compiler::root()->method();
   const int current_bci = Compiler::root()->bci();
 
   Value exception(T_OBJECT);
-  int handler_bci = method().exception_handler_bci_for(&klass, current_bci
-                                                       JVM_CHECK);
+  const int handler_bci = method().exception_handler_bci_for(
+                      exception_class(get_rte()), current_bci JVM_CHECK);
   BinaryAssembler::Label stub = entry_label();
 
 #if ENABLE_NPCE

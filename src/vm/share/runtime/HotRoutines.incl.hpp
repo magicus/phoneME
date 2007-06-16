@@ -665,9 +665,8 @@ int ConstantPool::name_and_type_ref_index_at(int index JVM_TRAPS) {
   TypeArray::Raw ta = tags();
   jubyte *tag_base = (jubyte*)ta().base_address();
   jint   *val_base = (jint*) ( (int)(obj()) + base_offset() );
-  const jushort len = length();
-  jint ref_index;
-  jushort name_and_type_index;
+  int len = length();
+  jint ref_index, name_and_type_index;
 
   if ((juint)index >= (juint)len) {
     goto error;
@@ -681,11 +680,11 @@ int ConstantPool::name_and_type_ref_index_at(int index JVM_TRAPS) {
     }
   }
 
-  name_and_type_index = extract_high_jushort_from_jint(ref_index);
+  name_and_type_index = extract_high_jshort_from_jint(ref_index);
 
   //WAS: cp_check_0(is_within_bounds(name_and_type_index));
   //WAS: cp_check_0(tag_at(name_and_type_index).is_name_and_type());
-  if (name_and_type_index >= len) {
+  if ((juint)name_and_type_index >= (juint)len) {
     goto error;
   }
 

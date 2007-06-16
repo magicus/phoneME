@@ -153,7 +153,13 @@ public:
 
   // Branch if integer comparison satisfies condition.
   void branch_if(BytecodeClosure::cond_op condition, int destination, 
-                 Value& op1, Value& op2 JVM_TRAPS); 
+                 Value& op1, Value& op2, const bool flags_set JVM_TRAPS); 
+
+  // Branch if integer comparison satisfies condition.
+  void branch_if(BytecodeClosure::cond_op condition, int destination, 
+                 Value& op1, Value& op2 JVM_TRAPS) {
+    branch_if( condition, destination, op1, op2, false JVM_NO_CHECK );
+  }
 
   bool forward_branch_optimize(int next_bci,
                                BytecodeClosure::cond_op condition,

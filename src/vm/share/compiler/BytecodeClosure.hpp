@@ -261,6 +261,10 @@ class BytecodeClosure : public StackObj {
     return method_size( method() );
   }
 
+  int branch_destination( const int bci ) const {
+    return method()->branch_destination( bci );
+  }
+
   void initialize(Method* method);
 
   static void verify() {

@@ -461,10 +461,13 @@ public:
     return bci + bytecode_length_for( bci );
   }
 
+  int branch_destination( const int bci ) const {
+    return bci + get_java_short(bci+1);
+  }
+
   // Returns the handler bci for a given exception class and a given bytecode
   // index. Returns -1 if no handler is available.
-  jint exception_handler_bci_for(JavaClass* exception_class,
-                                 jint bci JVM_TRAPS);
+  jint exception_handler_bci_for(OopDesc* exception_klass, jint bci JVM_TRAPS);
 
   // Does any exception handle cover bci for *any* exception type?
   bool exception_handler_exists_for(jint bci);

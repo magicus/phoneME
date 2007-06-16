@@ -209,12 +209,12 @@ ReturnOop Method::signature() const {
   return raw_constants_base()[signature_index()];
 }
 
-jint Method::exception_handler_bci_for(JavaClass* exception_class,
+jint Method::exception_handler_bci_for(OopDesc* exception_klass,
                                        jint bci JVM_TRAPS) {
   UsingFastOops fast_oops;
+  JavaClass::Fast    exception_class = exception_klass;
   ConstantPool::Fast cp = constants();
   TypeArray::Fast    et = exception_table();
-  JavaClass::Fast    catch_type;
   GUARANTEE((et().length() % 4) == 0, "Sanity check");
 
   for (int i = 0; i < et().length(); i+=4) {
@@ -225,9 +225,10 @@ jint Method::exception_handler_bci_for(JavaClass* exception_class,
         return et().ushort_at(i + 2);
       }
       // Check that the class of the exception is a subclass of the catch type.
-      catch_type = cp().klass_at(et().ushort_at(i + 3) JVM_CHECK_(-1));
+      JavaClass::Raw catch_type =
+        cp().klass_at(et().ushort_at(i + 3) JVM_CHECK_(-1));
       if (catch_type.equals(exception_class) ||
-          exception_class->is_subtype_of(&catch_type)) {
+          exception_class().is_subtype_of(&catch_type)) {
         return et().ushort_at(i + 2);
       }
     }
@@ -1033,8 +1034,7 @@ void Method::check_bytecodes(JVM_SINGLE_ARG_TRAPS) {
           {
             int a_bci = align_size_up(bci + 1, wordSize);
             //CR6538939: only zero-byte padding is allowed
-            int offset = bci + 1;
-            for (; offset < a_bci; offset++) {
+            for (int offset = bci; ++offset < a_bci; ) {
               if ((jubyte)bytecode_at_raw(offset) != 0) {
                 goto error;
               }
@@ -1701,7 +1701,7 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
       {
         const BytecodeClosure::cond_op op = BytecodeClosure::cond_op
           (code - Bytecodes::_ifeq + BytecodeClosure::eq);
-        blk->branch_if(op,  bci + get_java_short(bci+1) JVM_NO_CHECK);
+        blk->branch_if(op, branch_destination(bci) JVM_NO_CHECK);
       }
       break;
 
@@ -1723,7 +1723,7 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
       {
         const BytecodeClosure::cond_op op = BytecodeClosure::cond_op
           (code - Bytecodes::_if_icmpeq + BytecodeClosure::eq);
-        blk->branch_if_icmp(op, bci + get_java_short(bci+1) JVM_NO_CHECK);
+        blk->branch_if_icmp(op, branch_destination(bci) JVM_NO_CHECK);
       }
       break;
 
@@ -1750,7 +1750,7 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
     case Bytecodes::_if_acmpne: {
       const BytecodeClosure::cond_op op = BytecodeClosure::cond_op
         (code - Bytecodes::_if_acmpeq + BytecodeClosure::eq);
-      blk->branch_if_acmp(op, bci + get_java_short(bci+1) JVM_NO_CHECK);
+      blk->branch_if_acmp(op, branch_destination(bci) JVM_NO_CHECK);
       break;
     }
     case Bytecodes::_goto_w          :
@@ -1987,7 +1987,7 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
     break;
 
   case Bytecodes::_goto:
-    blk->branch(bci + get_java_short(bci+1) JVM_NO_CHECK);
+    blk->branch(branch_destination(bci) JVM_NO_CHECK);
     break;
 
   case Bytecodes::_sipush:

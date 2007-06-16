@@ -891,7 +891,7 @@ JavaFrame::find_exception_frame(Thread* thread,
       if (!killing_thread) { 
         exception_bci = frame.as_JavaFrame().bci();
         // We just ignore any exceptions, and return -1 if that happens
-        bci = method().exception_handler_bci_for(&exception_class,
+        bci = method().exception_handler_bci_for(exception_class(),
                                                  exception_bci JVM_CHECK_0);
       }
       if (bci >= 0) { 

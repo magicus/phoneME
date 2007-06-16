@@ -78,6 +78,10 @@ void BytecodeCompileClosure::frame_push(Value &value) {
 
 #define __ code_generator()->
 
+void BytecodeCompileClosure::osr_entry(JVM_SINGLE_ARG_TRAPS) {
+  __ osr_entry( JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM );
+}
+
 // Push operations.
 void BytecodeCompileClosure::push_int(jint value JVM_TRAPS) {
   JVM_IGNORE_TRAPS;
@@ -275,6 +279,36 @@ void BytecodeCompileClosure::store_array(BasicType kind JVM_TRAPS) {
   }
 }
 
+#if ENABLE_CONDITIONAL_BRANCH_OPTIMIZATIONS
+void BytecodeCompileClosure::branch_if_flags(JVM_SINGLE_ARG_TRAPS) {
+  const int bci = get_next_bci();
+  if( bci > 0 ) {
+    const Bytecodes::Code code = bytecode_at(bci);
+    const unsigned offset = unsigned(code) - Bytecodes::_ifeq;
+    if( offset <= unsigned(Bytecodes::_ifle - Bytecodes::_ifeq) ) {
+      const cond_op cond = cond_op(offset + BytecodeClosure::eq);
+      const int dest = branch_destination(bci);
+      set_bytecode(bci);
+      set_default_next_bytecode_index(bci);
+      Compiler::set_bci(bci); // Is it really necessary?
+
+      // Insert OSR entries for backward branches.
+      if( dest < bci || is_active_bci() ) {
+        osr_entry(JVM_SINGLE_ARG_CHECK);
+      }
+
+      // Pop argument
+      PoppedValue op1(T_INT);
+      Value op2(T_INT);
+      op2.set_int(0);
+
+      __ branch_if(cond, dest, op1, op2, true JVM_NO_CHECK_AT_BOTTOM);
+      set_jump_from_current_bci( dest );
+    }
+  }
+}
+#endif
+
 void BytecodeCompileClosure::binary(BasicType kind, binary_op op JVM_TRAPS) {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(binary);
 
@@ -304,6 +338,18 @@ void BytecodeCompileClosure::binary(BasicType kind, binary_op op JVM_TRAPS) {
 
   if (!CURRENT_HAS_PENDING_EXCEPTION) {
     frame_push(result);
+#if ENABLE_CONDITIONAL_BRANCH_OPTIMIZATIONS
+    #define DEF( name ) | (1 << bin_##name)
+    enum { ops = 0
+      DEF( add ) DEF( sub )
+      DEF( shl ) DEF( shr ) DEF( ushr )
+      DEF( and ) DEF( or  ) DEF( xor  )      
+    };
+    #undef DEF
+    if( kind == T_INT && !result.is_immediate() && ((ops >> op) & 1) ) {
+      branch_if_flags(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
+    }
+#endif
   }
 }
 
@@ -336,6 +382,11 @@ void BytecodeCompileClosure::unary(BasicType kind, unary_op op JVM_TRAPS) {
 
   if (!CURRENT_HAS_PENDING_EXCEPTION) {
     frame_push(result);
+#if ENABLE_CONDITIONAL_BRANCH_OPTIMIZATIONS
+    if( kind == T_INT && !result.is_immediate() && op == una_neg ) {
+      branch_if_flags(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
+    }
+#endif
   }
 }
 
@@ -530,37 +581,25 @@ void BytecodeCompileClosure::swap(JVM_SINGLE_ARG_TRAPS)    {
 void BytecodeCompileClosure::branch(int dest JVM_TRAPS) {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(branch);
   
-  const bool back_branch = dest < bci();
-
   // Insert OSR entries for backward branches.
-  if (back_branch) {
-    __ osr_entry(JVM_SINGLE_ARG_CHECK);
+  if (dest < bci()) {
+    osr_entry(JVM_SINGLE_ARG_CHECK);
   }
   __ branch(dest JVM_NO_CHECK_AT_BOTTOM);
-
-#if ENABLE_CODE_PATCHING
-  // set bci we jump from
-  if (back_branch) {
-    set_jump_from_bci(bci());
-  }
-#endif
+  set_jump_from_current_bci( dest );
 }
 
 void BytecodeCompileClosure::branch_if(cond_op cond, int dest JVM_TRAPS) {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(branch_if);
 
-  const bool back_branch = dest < bci();
   // Insert OSR entries for backward branches.
-  if (back_branch || is_active_bci()) {
-    __ osr_entry(JVM_SINGLE_ARG_CHECK);
+  if (dest < bci() || is_active_bci()) {
+    osr_entry(JVM_SINGLE_ARG_CHECK);
   }
-  BasicType kind;
+  BasicType kind( T_INT );
   switch (cond) {
-    case null: case nonnull : {
+    case null: case nonnull :
       kind = T_OBJECT; break;
-    default:
-      kind = T_INT;    break;
-    }
   }
 
   // Pop argument
@@ -569,26 +608,18 @@ void BytecodeCompileClosure::branch_if(cond_op cond, int dest JVM_TRAPS) {
   op2.set_int(0);
 
   __ branch_if(cond, dest, op1, op2 JVM_NO_CHECK_AT_BOTTOM);
-
-#if ENABLE_CODE_PATCHING
-  // set bci we jump from
-  if (back_branch) {
-    set_jump_from_bci(bci());
-  }
-#endif
+  set_jump_from_current_bci( dest );
 }
 
 void BytecodeCompileClosure::branch_if_icmp(cond_op cond, int dest JVM_TRAPS) {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(branch_if_icmp);
 
-  const bool back_branch = dest < bci();
   // Insert OSR entries for backward branches.
-  if (back_branch || is_active_bci()) {
+  if (dest < bci() || is_active_bci()) {
       
     //cse     
-    record_passable_statue_of_osr_entry(dest);
-      
-    __ osr_entry(JVM_SINGLE_ARG_CHECK);
+    record_passable_statue_of_osr_entry(dest);      
+    osr_entry(JVM_SINGLE_ARG_CHECK);
   }
 
   // Pop arguments
@@ -597,22 +628,15 @@ void BytecodeCompileClosure::branch_if_icmp(cond_op cond, int dest JVM_TRAPS) {
 
   // Branch
   __ branch_if(cond, dest, op1, op2 JVM_NO_CHECK_AT_BOTTOM);
-
-#if ENABLE_CODE_PATCHING
-  // set bci we jump from
-  if (back_branch) {
-    set_jump_from_bci(bci());
-  }
-#endif
+  set_jump_from_current_bci( dest );
 }
 
 void BytecodeCompileClosure::branch_if_acmp(cond_op cond, int dest JVM_TRAPS) {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(branch_if_acmp);
 
-  const bool back_branch = dest < bci();
   // Insert OSR entries for backward branches.
-  if (back_branch || is_active_bci()) {
-    __ osr_entry(JVM_SINGLE_ARG_CHECK);
+  if (dest < bci() || is_active_bci()) {
+    osr_entry(JVM_SINGLE_ARG_CHECK);
   }
 
   // Pop arguments
@@ -621,13 +645,7 @@ void BytecodeCompileClosure::branch_if_acmp(cond_op cond, int dest JVM_TRAPS) {
 
   // Branch
   __ branch_if(cond, dest, op1, op2 JVM_NO_CHECK_AT_BOTTOM);
-
-#if ENABLE_CODE_PATCHING
-  // set bci we jump from
-  if (back_branch) {
-    set_jump_from_bci(bci());
-  }
-#endif
+  set_jump_from_current_bci( dest );
 }
 
 void BytecodeCompileClosure::compare(BasicType kind, cond_op cond JVM_TRAPS) {
@@ -1698,7 +1716,7 @@ void BytecodeCompileClosure::direct_invoke(int index, bool must_do_null_check
   InstanceClass::Fast holder = callee().holder();
 
   if (is_active_bci()) {
-    __ osr_entry(JVM_SINGLE_ARG_CHECK);
+    osr_entry(JVM_SINGLE_ARG_CHECK);
   }
 
 #if ENABLE_ISOLATES
@@ -1848,7 +1866,7 @@ void BytecodeCompileClosure::invoke_interface(int index, int num_of_args
     BasicType result_type= cp()->tag_at(index).resolved_interface_method_type();
 
     if (is_active_bci()) {
-      __ osr_entry(JVM_SINGLE_ARG_CHECK);
+      osr_entry(JVM_SINGLE_ARG_CHECK);
     }
 
     // Call the method.
@@ -1868,7 +1886,7 @@ void BytecodeCompileClosure::fast_invoke_virtual(int index JVM_TRAPS) {
                                                           class_id);
 
   if (is_active_bci()) {
-    __ osr_entry(JVM_SINGLE_ARG_CHECK);
+    osr_entry(JVM_SINGLE_ARG_CHECK);
   }
 
   // Get the class from the constant pool.
@@ -1943,7 +1961,7 @@ void BytecodeCompileClosure::fast_invoke_special(int index JVM_TRAPS) {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(fast_invoke_special);
 
   if (is_active_bci()) {
-    __ osr_entry(JVM_SINGLE_ARG_CHECK);
+    osr_entry(JVM_SINGLE_ARG_CHECK);
   }
 
   UsingFastOops fast_oops;
@@ -2275,8 +2293,6 @@ void BytecodeCompileClosure::record_passable_statue_of_osr_entry(int dest) {
 bool BytecodeCompileClosure::code_eliminate_prologue(Bytecodes::Code code) {
   // IMPL_NOTE: need to revisit for inlining
   if (!Compiler::is_inlining()) {
-    Method * method = Compiler::current()->method();
-
     jint bci_after_elimination = not_found;
     //can_decrease_stack mean the code will
     //consume the items of the operation stack
@@ -2287,13 +2303,13 @@ bool BytecodeCompileClosure::code_eliminate_prologue(Bytecodes::Code code) {
   
       GUARANTEE(bci_after_elimination != not_found, "cse match error")
       //next bci to be compiled, cse will skip some byte code here.
-      set_default_next_bytecode_index(method, bci_after_elimination);
+      set_default_next_bytecode_index(bci_after_elimination);
       Compiler::set_bci(next_bytecode_index());
       //skip the compilation of current bci
       return true;
     }
     
-    method->wipe_out_dirty_recorded_snippet(Compiler::bci(), code);
+    method()->wipe_out_dirty_recorded_snippet(Compiler::bci(), code);
   }
 
   //if we aborted in previous bci, we reset and start a new code snippet tracking.

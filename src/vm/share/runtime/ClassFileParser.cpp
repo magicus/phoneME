@@ -1620,7 +1620,7 @@ bool ClassFileParser::parse_class_0(ClassParserState *stack JVM_TRAPS) {
     //file may not have any of the other flags in Table 4.1 set."
     cpf_check_0(access_flags.is_abstract() && !access_flags.is_super(), 
             bad_class_flags);
-} else {
+  } else {
     cpf_check_0(!(access_flags.is_final() && access_flags.is_abstract()), 
             bad_class_flags);
   }
@@ -1978,11 +1978,9 @@ ReturnOop ClassFileParser::parse_class_internal(ClassParserState *stack JVM_TRAP
   // completed loading of the top stack element
   stack->pop();
   state().set_result(&this_class);
-
   if (this_class().is_super()) { //see CR6552040
     resolve_invoke_special_virtual_conflicts(&this_class JVM_CHECK_0);
   }
-
   return this_class.obj();
 }
 

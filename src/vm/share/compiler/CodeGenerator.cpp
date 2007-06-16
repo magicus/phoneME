@@ -595,7 +595,8 @@ void CodeGenerator::branch(int destination JVM_TRAPS) {
 
 
 void CodeGenerator::branch_if(BytecodeClosure::cond_op condition,
-                              int destination, Value& op1, Value& op2 JVM_TRAPS) {
+       int destination, Value& op1, Value& op2, const bool flags_set JVM_TRAPS)
+{
   if (op1.is_immediate()) {
     if (op2.is_immediate()) {
       if (compare(condition, op1.as_int(), op2.as_int())) {
@@ -605,27 +606,30 @@ void CodeGenerator::branch_if(BytecodeClosure::cond_op condition,
       }
     } else { 
       branch_if(BytecodeClosure::reverse(condition), destination,
-                op2, op1 JVM_NO_CHECK_AT_BOTTOM);
+                op2, op1, flags_set JVM_NO_CHECK_AT_BOTTOM);
     }
   } else { 
-    int next_bci = Compiler::closure()->next_bytecode_index();
-    if (destination > next_bci && destination - next_bci < 15) {
-      if (OptimizeForwardBranches) { 
-        bool opt = forward_branch_optimize(next_bci, condition, destination,
-                                           op1, op2 JVM_CHECK);
+    if( OptimizeForwardBranches ) {
+      const int next_bci = Compiler::closure()->next_bytecode_index();
+      if( destination > next_bci && destination - next_bci < 15 ) {
+	    const bool opt = forward_branch_optimize(next_bci, condition,
+                                        destination, op1, op2 JVM_CHECK);
         if (opt) {
           return;
         }
       }
     }
-    branch_if_do(condition, op1, op2, destination JVM_NO_CHECK_AT_BOTTOM); 
+    if( !flags_set ) {
+      cmp_values(op1, op2, condition);
+    }
+    conditional_jump(condition, destination, true JVM_NO_CHECK_AT_BOTTOM);
   }
 }
 
 bool CodeGenerator::is_inline_exception_allowed(int rte JVM_TRAPS) {
   Method* m = Compiler::root()->method();
-  bool has_monitors = m->access_flags().is_synchronized() ||
-                      m->access_flags().has_monitor_bytecodes();
+  const bool has_monitors = m->access_flags().is_synchronized() ||
+                            m->access_flags().has_monitor_bytecodes();
   if (has_monitors) {
     return false;
   }
@@ -638,11 +642,9 @@ bool CodeGenerator::is_inline_exception_allowed(int rte JVM_TRAPS) {
   GUARANTEE(rte == ThrowExceptionStub::rte_null_pointer || 
             rte == ThrowExceptionStub::rte_array_index_out_of_bounds,"sanity");
 
-  UsingFastOops fast_oops;
-  InstanceClass::Fast klass = ThrowExceptionStub::exception_class(rte);
-  int handler_bci = m->exception_handler_bci_for(&klass, bci()
-                                                        JVM_CHECK_0);
-  return (handler_bci == -1);
+  const int handler_bci = m->exception_handler_bci_for(
+    ThrowExceptionStub::exception_class(rte), bci() JVM_NO_CHECK);
+  return handler_bci == -1;
 }
 
 void CodeGenerator::maybe_null_check(Value& value JVM_TRAPS) {

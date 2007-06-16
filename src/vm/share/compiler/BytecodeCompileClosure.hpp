@@ -50,29 +50,41 @@ class BytecodeCompileClosure: public BytecodeClosure {
     _compiler = compiler;
   }
 #if ENABLE_CODE_PATCHING
-  static void set_jump_from_bci(int bci) {
-    _jump_from_bci = bci;
-  }
   static int jump_from_bci() {
     return _jump_from_bci;
   }
+  static void set_jump_from_bci(int bci) {
+    _jump_from_bci = bci;
+  }
+  void set_jump_from_current_bci(const int dest) {
+    const int current= bci();
+    if( dest < current ) {
+      set_jump_from_bci( bci );
+    }
+  }
+#else
+  static void set_jump_from_current_bci(const int /*dest*/) {}
 #endif  
-  void set_active_bci(int bci) {
+  void set_active_bci(const int bci) {
     _active_bci = bci;
   }
-  int active_bci() const {
+  int active_bci(void) const {
     return _active_bci;
   }
-  bool is_active_bci() const {
-    return _active_bci == bci();
+  bool is_active_bci(const int bci) const {
+    return _active_bci == bci;
   }
+  bool is_active_bci(void) const {
+    return is_active_bci( bci() );
+  }
+
   void set_has_clinit(bool val) {
     _has_clinit = val;
   }
-  bool has_clinit() {
+  bool has_clinit(void) const {
     return _has_clinit;
   }
-  void signal_output_overflow() {
+  void signal_output_overflow(void) {
     _has_overflown_output = (jubyte)true;
   }
   // Epilogue and prologue.
@@ -127,6 +139,9 @@ class BytecodeCompileClosure: public BytecodeClosure {
   virtual void branch_if     (cond_op cond, int dest JVM_TRAPS);
   virtual void branch_if_icmp(cond_op cond, int dest JVM_TRAPS);
   virtual void branch_if_acmp(cond_op cond, int dest JVM_TRAPS);
+#if ENABLE_CONDITIONAL_BRANCH_OPTIMIZATIONS
+  void branch_if_flags(JVM_SINGLE_ARG_TRAPS);
+#endif
 
   // Compare operations.
   virtual void compare(BasicType kind, cond_op cond JVM_TRAPS);
@@ -245,6 +260,7 @@ private:
   void throw_null_pointer_exception(JVM_SINGLE_ARG_TRAPS);
   void array_check(Value& array, Value& index JVM_TRAPS);
 
+  void osr_entry(JVM_SINGLE_ARG_TRAPS);
 #if ENABLE_ISOLATES
   // Determine the requirement for a class initialization barrier
   // when using a class. The access_static_var flag indicate that

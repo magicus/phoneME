@@ -78,10 +78,8 @@ class InstanceClass: public JavaClass {
     return (oop_map_at(first_static_map_offset()) != OopMapSentinel);
   }
 
-  ReturnOop lookup_method(Symbol* name, Symbol* signature) {
-    return lookup_method(name, signature, false);
-  }
-  ReturnOop lookup_method(Symbol* name, Symbol* signature, bool non_static_only);
+  ReturnOop lookup_method(Symbol* name, Symbol* signature,
+                          const bool non_static_only = false);
 
   // Returns the Method.
   // interface_class_id = class_id of interface that declares the method
@@ -139,17 +137,11 @@ class InstanceClass: public JavaClass {
   }
 #endif
 
-  ReturnOop find_local_method(Symbol* name, Symbol* signature) {
-    return find_local_method(name, signature, false);
-  }
-  ReturnOop find_local_method(Symbol* name, Symbol* signature, bool non_static_only);
+  ReturnOop find_local_method(Symbol* name, Symbol* signature,
+                              const bool non_static_only = false);
 
   static ReturnOop find_method(ObjArray* class_methods, Symbol* name,
-    Symbol* signature) {
-      return find_method(class_methods, name, signature, false);
-    }
-  static ReturnOop find_method(ObjArray* class_methods, Symbol* name,
-                               Symbol* signature, bool non_static_only);
+                     Symbol* signature, const bool non_static_only = false);
 
   ReturnOop interface_method_at(jint itable_index);
 

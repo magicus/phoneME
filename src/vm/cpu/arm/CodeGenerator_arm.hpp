@@ -74,10 +74,12 @@ void call_from_compiled_code(const Method* callee, Register dst, int offset,
                                bool speed JVM_TRAPS);
 
   // BinaryAssembler.
-  void arithmetic(Opcode opcode, Value& result, Value& op1, Value& op2);
-  void larithmetic(Opcode opcode1, Opcode opcode2, Value& result, Value& op1,
-                   Value& op2);
-  void shift(Shift shifter, Value& result, Value& op1, Value& op2);
+  void arithmetic(Opcode opcode, Value& result, Value& op1, Value& op2,
+                  const CCMode cc = no_CC);
+  void larithmetic(Opcode opcode1, Opcode opcode2,
+                  Value& result, Value& op1, Value& op2);
+  void shift(Shift shifter, Value& result, Value& op1, Value& op2,
+                  const CCMode cc = no_CC);
 
   void call_simple_c_runtime(Value& result, address runtime_func, 
                           Value& op1, Value& op2) { 

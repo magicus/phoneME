@@ -1456,6 +1456,8 @@ void CodeGenerator::int_binary_do(Value& result, Value& op1, Value& op2,
     /* bin_rsb */ _rsb,
   };
 
+  const CCMode cc = CCMode(ENABLE_CONDITIONAL_BRANCH_OPTIMIZATIONS);
+
   switch (op) {
     case BytecodeClosure::bin_sub  :
     case BytecodeClosure::bin_rsb  :
@@ -1465,16 +1467,16 @@ void CodeGenerator::int_binary_do(Value& result, Value& op1, Value& op2,
     case BytecodeClosure::bin_or   :
       GUARANTEE(int(op) >= 0 && op < sizeof(table), "sanity");
       GUARANTEE(table[op] != 0xff, "sanity");
-      arithmetic((Opcode)(table[op]), result, op1, op2);
+      arithmetic((Opcode)(table[op]), result, op1, op2, cc);
       break;
     case BytecodeClosure::bin_shr  :
-      shift (asr, result, op1, op2);
+      shift (asr, result, op1, op2, cc);
       break;
     case BytecodeClosure::bin_shl  :
-      shift (lsl, result, op1, op2);
+      shift (lsl, result, op1, op2, cc);
       break;
     case BytecodeClosure::bin_ushr :
-      shift (lsr, result, op1, op2);
+      shift (lsr, result, op1, op2, cc);
       break;
     case BytecodeClosure::bin_mul  :
       imul (result, op1, op2 JVM_NO_CHECK_AT_BOTTOM);
@@ -1516,7 +1518,7 @@ void CodeGenerator::int_unary_do(Value& result, Value& op1,
   const Register opReg  = op1.lo_register();
   switch (op) {
     case BytecodeClosure::una_neg  :
-      rsb(resReg, opReg, zero);
+      rsb(resReg, opReg, zero, CCMode(ENABLE_CONDITIONAL_BRANCH_OPTIMIZATIONS));
       break;
     case BytecodeClosure::una_abs  :
       add(resReg, opReg, zero, set_CC);
@@ -1665,7 +1667,8 @@ void CodeGenerator::long_unary_do(Value& result, Value& op1,
 }
 
 void CodeGenerator::arithmetic(Opcode opcode,
-                               Value& result, Value& op1, Value& op2) {
+                      Value& result, Value& op1, Value& op2, const CCMode cc)
+{
   assign_register(result, op1);
 
   const Register resReg = result.lo_register();
@@ -1673,10 +1676,10 @@ void CodeGenerator::arithmetic(Opcode opcode,
   if (op2.is_immediate()) {
     CompilerLiteralAccessor cla;
     arith_imm(opcode,
-              resReg, op1Reg, op2.as_int(), &cla);
+              resReg, op1Reg, op2.as_int(), &cla, cc);
   } else {
     arith(opcode,
-          resReg, op1Reg, reg(op2.lo_register()));
+          resReg, op1Reg, reg(op2.lo_register()), cc);
   }
 }
 
@@ -1797,7 +1800,8 @@ void CodeGenerator::idiv_rem(Value& result, Value& op1, Value& op2,
   }
 }
 
-void CodeGenerator::shift(Shift shifter, Value& result, Value& op1, Value& op2)
+void CodeGenerator::shift(Shift shifter, Value& result, Value& op1, Value& op2,
+                  const CCMode cc)
 {
   if (op2.is_immediate()) {
     assign_register(result, op1);
@@ -1807,15 +1811,15 @@ void CodeGenerator::shift(Shift shifter, Value& result, Value& op1, Value& op2)
     // don't actually mean "shift right by zero"
     int shift = (op2.as_int() & 0x1f);
     if (shift == 0) {
-      mov_reg(resReg, op1.lo_register());
+      mov_reg(resReg, op1.lo_register(), cc);
     } else {
-      mov(resReg, imm_shift(op1.lo_register(), shifter, shift));
+      mov(resReg, imm_shift(op1.lo_register(), shifter, shift), cc);
     }
   } else {
     assign_register(result, op2); // result & op1 can't be same
     const Register resReg = result.lo_register();
     andr(resReg, op2.lo_register(), imm(0x1f));
-    mov(resReg, reg_shift(op1.lo_register(), shifter, resReg));
+    mov(resReg, reg_shift(op1.lo_register(), shifter, resReg), cc);
   }
 }
 
