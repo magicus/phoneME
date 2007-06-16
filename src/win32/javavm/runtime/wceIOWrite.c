@@ -52,10 +52,10 @@ initializeFileHandlers() {
                        0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
    standardout = CreateFile(_T("\\OUT.txt"), GENERIC_WRITE, 
                         FILE_SHARE_READ | FILE_SHARE_WRITE,
-                        0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_NO_BUFFERING, 0);
+                        0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
    standarderr = CreateFile(_T("\\ERR.txt"), GENERIC_WRITE, 
                         FILE_SHARE_READ | FILE_SHARE_WRITE,
-                        0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_NO_BUFFERING, 0);
+                        0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 }
 
 int 
