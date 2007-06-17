@@ -147,55 +147,6 @@ Java_java_io_Win32FileSystem_getBooleanAttributes(JNIEnv *env, jobject this,
     return rv;
 }
 
-#ifdef WINCE
-
-/* 
- * Implementations of the file routines needed to satisfy 
- * JNI bindings only. They should not be called when WINCE 
- * is defined, since Java_java_io_WinNTFileSystem methods 
- * are used instead.
- */
-int _access(const char *path, int mode) {
-    FILE *f;
-    if (path == NULL ||
- 			(f = fopen(path, "r")) == NULL) {
-    	return -1;
-    }
-    fclose(f);
-    return 0;
-}
-
-int rename(const char *oldpath, const char *newpath) {
-    wchar_t woldpath[_MAX_PATH];
-    wchar_t wnewpath[_MAX_PATH];
-
-    if (oldpath == NULL || newpath == NULL) {
-        return -1;
-    }
-    mbstowcs(woldpath, oldpath, _MAX_PATH);
-    mbstowcs(wnewpath, newpath, _MAX_PATH);
-    if (_wrename(woldpath, wnewpath) == 0) {
-		return 0;
-    }
-    return -1;
-}
-
-// MSDN comments that because some mobile device operating systems 
-// do not have current directory functionality, this method to get
-// current working directory is not supported.
-
-char* _getdcwd(int drive, char *buf, int maxlen) {
-    const char *root = "\\";
-    int len = strlen(root);
-    if (len >= maxlen) {
-        return NULL;
-    }
-	strcpy(buf, root);
-	return buf;
-}
-
-#endif
-
 JNIEXPORT jboolean JNICALL
 Java_java_io_Win32FileSystem_checkAccess(JNIEnv *env, jobject this,
 					 jobject file, jboolean write)
