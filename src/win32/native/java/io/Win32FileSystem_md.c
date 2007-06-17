@@ -35,7 +35,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <windows.h>
-#include <assert.h>
 #ifndef WINCE
 #include <io.h>
 #endif

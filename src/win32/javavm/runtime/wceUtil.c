@@ -306,15 +306,12 @@ wchar_t* _wgetdcwd(int drive, wchar_t *wbuf, int maxlen) {
     (void)drive;
 
     if (GetCurrentDirectory(MAX_PATH, buf) > 0) {
-        if (mbstowcs(wbuf, buf, maxlen) <= 0) {
-            return NULL;
-        } else {
+        if (mbstowcs(wbuf, buf, maxlen) > 0) {
             return wbuf;
         }
     }
 	return NULL;
 }
-
 
 _CRTIMP void * __cdecl calloc(size_t num, size_t size) {
     size_t len = num * size;
@@ -346,16 +343,6 @@ int _waccess(const wchar_t* path, int amode)
     return 0;
 }
 
-wchar_t *
-_wfullpath(wchar_t *absPath, const wchar_t *relPath, size_t maxLength)
-{
-    if (wcslen(relPath) >= maxLength) {
-	return NULL;
-    }
-    wcscpy(absPath, relPath);
-    return absPath;
-}
-
 int 
 _access(const char *path, int amode) 
 {
@@ -368,6 +355,16 @@ _access(const char *path, int amode)
     mbstowcs(wpath, path, MAX_PATH);
     return _waccess(wpath, amode);
 
+}
+
+wchar_t *
+_wfullpath(wchar_t *absPath, const wchar_t *relPath, size_t maxLength)
+{
+    if (wcslen(relPath) >= maxLength) {
+	return NULL;
+    }
+    wcscpy(absPath, relPath);
+    return absPath;
 }
 
 #if _WIN32_WCE < 300
