@@ -262,10 +262,19 @@ CVMBool CVMinitStaticState()
 	     *
 	     * Determine if arch property is set by the time this code
 	     * is executed.
+	     *
+	     * NOTE: libpath, archlib, and javahomepath below will be
+	     * filled with the contents of p0 which is less or equal
+	     * to MAXPATHLEN in size (based on its setup above).
+	     * Since we are potentially concatinating "/jre/lib",
+	     * ARCH, and "/jre" to libpath, archlib, and javahomepath
+	     * respectively, we need to add their lengths to the
+	     * allocated space for the respective path strings.  This
+	     * ensures that we will not have an overflow situation.
 	     */
-	    char libpath[MAXPATHLEN+1];
-	    char archlib[MAXPATHLEN+1];
-	    char javahomepath[MAXPATHLEN+1];
+	    char libpath[MAXPATHLEN+1+sizeof("/jre/lib")];
+	    char archlib[MAXPATHLEN+1+sizeof(ARCH)];
+	    char javahomepath[MAXPATHLEN+1+sizeof("/jre")];
 	    struct stat statbuf;
 	    char *dllpath;
 
