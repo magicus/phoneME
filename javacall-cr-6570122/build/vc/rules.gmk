@@ -46,13 +46,13 @@ endif
 
 local_vc: $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib
 
-ifeq ($(TARGET_CPU),arm)
-CC=clarm.exe
-CXX=clarm.exe
-else
+#ifeq ($(TARGET_CPU),arm)
+#CC=clarm.exe
+#CXX=clarm.exe
+#else
 CC=cl.exe
 CXX=cl.exe
-endif
+#endif
 RC=rc.exe
 
 LOCAL_CFLAGS_debug = -Gm -GX -Zi -Od -D_DEBUG -D_MBCS -D_LIB -YX -FD -GZ -W3
@@ -75,7 +75,7 @@ CPPFLAGS+= $(SPECIFIC_DEFINITIONS)
 
 AR=lib.exe 
 ifeq ($(TARGET_CPU),arm)
-ARFLAGS=-nologo -MACHINE:ARM
+ARFLAGS=-nologo -MACHINE:ARM -DARM -D_ARM
 else
 ARFLAGS=-nologo -MACHINE:X86
 endif
