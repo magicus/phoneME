@@ -310,8 +310,13 @@ CVMclassPrepareFields(CVMExecEnv* ee, CVMClassBlock* cb)
     numFieldWords += numSuperFieldWords;
 
     if (numFieldWords > CVM_LIMIT_OBJECT_NUMFIELDWORDS) {
+#ifdef JAVASE
+        CVMthrowOutOfMemoryError(
+            ee, "Class %C exceeds the 64K byte object size limit", cb);
+#else
         CVMthrowInternalError(
             ee, "Class %C exceeds the 64K byte object size limit", cb);
+#endif
 	return CVM_FALSE;
     }
 
@@ -829,12 +834,10 @@ CVMclassPrepareMethods(CVMExecEnv* ee, CVMClassBlock* cb)
     if (nextMethodTableIdx > CVM_LIMIT_NUM_METHODTABLE_ENTRIES) {
 #ifdef JAVASE
         CVMthrowOutOfMemoryError(ee, 
-			      "Class %C exceeds 64K method table size limit",
-                               cb);
+	    "Class %C exceeds 64K method table size limit", cb);
 #else
         CVMthrowInternalError(ee, 
-			      "Class %C exceeds 64K method table size limit",
-			      cb);
+	    "Class %C exceeds 64K method table size limit", cb);
 #endif
 	goto fail;
     }
@@ -1250,12 +1253,10 @@ CVMclassPrepareInterfaces(CVMExecEnv* ee, CVMClassBlock* cb)
     if (mcount + n_miranda_methods > CVM_LIMIT_NUM_METHODTABLE_ENTRIES) {
 #ifdef JAVASE
         CVMthrowOutOfMemoryError(ee, 
-			      "Class %C exceeds 64K method table size limit",
-                               cb);
+            "Class %C exceeds 64K method table size limit", cb);
 #else
         CVMthrowInternalError(ee, 
-			      "Class %C exceeds 64K method table size limit",
-			      cb);
+            "Class %C exceeds 64K method table size limit", cb);
 #endif
 	return CVM_FALSE;
     }
