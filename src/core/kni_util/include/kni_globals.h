@@ -49,7 +49,7 @@
  *
  * This buffer is not used to pass data from one function to another.
  */
-extern unsigned char gKNIBuffer[KNI_BUFFER_SIZE];
+extern char gKNIBuffer[KNI_BUFFER_SIZE];
     
 #endif /* KNI_GLOBALS_H */
 

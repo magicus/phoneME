@@ -61,6 +61,12 @@ static unsigned char STRING_ENCODING_USASCII;
 static unsigned char STRING_ENCODING_UTF8;
 
 /* Binary skin file data array pointers */
+/*
+ * These buffers may contain the following types of values:
+ * - unsigned values for data length and encoding
+ * - US-ASCII characters in the range 0..127
+ * - UTF-8 octets in the range 0..255
+ */
 static unsigned char* gsSkinFileDataStart = NULL;
 static unsigned char* gsSkinFileDataEnd = NULL;
 static unsigned char* gsSkinFileDataPos = NULL;
@@ -273,7 +279,7 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_beginReadingSkinFi
         }
 
         bytesRead = storageRead(&errorStr, fileHandle, 
-                gsSkinFileDataStart, fileSize);
+                (char*)gsSkinFileDataStart, fileSize);
         if (errorStr != NULL) {
             KNI_ThrowNew(midpIOException, errorStr);
             storageFreeError(errorStr);
@@ -335,7 +341,7 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_readByteArray) {
             break;
         }
 
-        KNI_SetRawArrayRegion(returnArray, 0, arrayLength, gsSkinFileDataPos);
+        KNI_SetRawArrayRegion(returnArray, 0, arrayLength, (jbyte*)gsSkinFileDataPos);
         gsSkinFileDataPos += arrayLength;
 
     } while (0);
@@ -374,7 +380,7 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_readIntArray) {
         /*
          * And finally read data into it
          */
-        KNI_SetRawArrayRegion(returnArray, 0, totalBytes, gsSkinFileDataPos);
+        KNI_SetRawArrayRegion(returnArray, 0, totalBytes, (jbyte*)gsSkinFileDataPos);
         gsSkinFileDataPos += totalBytes;
 
     } while (0);
@@ -458,7 +464,7 @@ KNIDECL(com_sun_midp_chameleon_skins_resources_LoadedSkinData_readStringArray) {
                 /* and create string from it */
                 KNI_NewString(stringChars, stringLength, stringHandle);
             } else if (encoding == STRING_ENCODING_UTF8) {
-                KNI_NewStringUTF(gsSkinFileDataPos, stringHandle);
+                KNI_NewStringUTF((char*)gsSkinFileDataPos, stringHandle);
             } else {
                 KNI_ThrowNew(midpIllegalStateException, 
                         "Illegal skin string encoding");
