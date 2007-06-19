@@ -158,4 +158,249 @@ loop_16_176
 
         LTORG
 	ENDP
+
+	EXPORT  unclipped_blit
+unclipped_blit  PROC
+	stmfd	sp, {r4 - fp, lr}
+	ldr	r12, [sp, #4]
+	ldr	lr, [sp]
+	sub	r3, r3, r12
+	sub	r1, r1, r12
+	orrs	r4, r3, r1
+	beq	L351
+	cmp	r12, #2
+	beq	L340
+L341
+	tst	r0, #2
+	bne	L344
+	tst	r2, #2
+	bne	L343
+L342
+	subs	r12, r12, #32
+	bcc	L346
+L345
+	ldmia	r2!, {r4 - fp}
+	subs	r12, r12, #32
+	stmia	r0!, {r4 - fp}
+	bcs	L345
+L346
+	tst	r12, #16
+	ldmneia	r2!, {r4 - r7}
+	stmneia	r0!, {r4 - r7}
+	tst	r12, #8
+	ldmneia	r2!, {r4, r5}
+	stmneia	r0!, {r4, r5}
+	tst	r12, #4
+	ldrne	r4, [r2], #4
+	strne	r4, [r0], #4
+	tst	r12, #2
+	ldrneh	r4, [r2], #2
+	strneh	r4, [r0], #2
+	subs	lr, lr, #1
+	ldrne	r12, [sp, #4]
+	addne	r2, r2, r3
+	addne	r0, r0, r1
+	bne	L341
+	ldmeqea	sp, {r4 - fp, pc}
+L344
+	ldrh	r4, [r2], #2
+	sub	r12, r12, #2
+	strh	r4, [r0], #2
+	tst	r2, #2
+	beq	L342
+L343
+	ldrh	r4, [r2], #2
+	subs	r12, r12, #18
+	bcc	L348
+L347
+	ldmia	r2!, {r6 - r9}
+	subs	r12, r12, #16
+	orr	r4, r4, r6, lsl #16
+	mov	r5, r6, lsr #16
+	orr	r5, r5, r7, lsl #16
+	mov	r6, r7, lsr #16
+	orr	r6, r6, r8, lsl #16
+	mov	r7, r8, lsr #16
+	orr	r7, r7, r9, lsl #16
+	stmia	r0!, {r4 - r7}
+	mov	r4, r9, lsr #16
+	bcs	L347
+L348
+	tst	r12, #8
+	beq	L349
+	ldmia	r2!, {r6, r7}
+	orr	r4, r4, r6, lsl #16
+	mov	r5, r6, lsr #16
+	orr	r5, r5, r7, lsl #16
+	stmia	r0!, {r4, r5}
+	mov	r4, r7, lsr #16
+L349
+	tst	r12, #4
+	beq	L350
+	ldr	r6, [r2], #4
+	orr	r5, r4, r6, lsl #16
+	str	r5, [r0], #4
+	mov	r4, r6, lsr #16
+L350
+	strh	r4, [r0], #2
+	tst	r12, #2
+	ldrneh	r4, [r2], #2
+	strneh	r4, [r0], #2
+	subs	lr, lr, #1
+	ldrne	r12, [sp, #4]
+	addne	r2, r2, r3
+	addne	r0, r0, r1
+	bne	L341
+	ldmeqea	sp, {r4 - fp, pc}
+L340
+	ldrh	r4, [r2], +r3
+	subs	lr, lr, #1
+	strh	r4, [r0], +r1
+	bne	L340
+	ldmeqea	sp, {r4 - fp, pc}
+L351
+	mul	r12, lr, r12
+	mov	lr, #1
+	subs	r12, r12, #0x200
+	bcc	L353
+L352
+	ldmia	r2!, {r4 - fp}
+	stmia	r0!, {r4 - fp}
+	ldmia	r2!, {r4 - fp}
+	stmia	r0!, {r4 - fp}
+	ldmia	r2!, {r4 - fp}
+	stmia	r0!, {r4 - fp}
+	ldmia	r2!, {r4 - fp}
+	stmia	r0!, {r4 - fp}
+	ldmia	r2!, {r4 - fp}
+	stmia	r0!, {r4 - fp}
+	ldmia	r2!, {r4 - fp}
+	stmia	r0!, {r4 - fp}
+	ldmia	r2!, {r4 - fp}
+	stmia	r0!, {r4 - fp}
+	ldmia	r2!, {r4 - fp}
+	stmia	r0!, {r4 - fp}
+	ldmia	r2!, {r4 - fp}
+	stmia	r0!, {r4 - fp}
+	ldmia	r2!, {r4 - fp}
+	stmia	r0!, {r4 - fp}
+	ldmia	r2!, {r4 - fp}
+	stmia	r0!, {r4 - fp}
+	ldmia	r2!, {r4 - fp}
+	stmia	r0!, {r4 - fp}
+	ldmia	r2!, {r4 - fp}
+	stmia	r0!, {r4 - fp}
+	ldmia	r2!, {r4 - fp}
+	stmia	r0!, {r4 - fp}
+	ldmia	r2!, {r4 - fp}
+	stmia	r0!, {r4 - fp}
+	ldmia	r2!, {r4 - fp}
+	subs	r12, r12, #0x200
+	stmia	r0!, {r4 - fp}
+	bcs	L352
+L353
+	adds	r12, r12, #0x200
+	ldmeqea	sp, {r4 - fp, pc}
+	bne	L341
+
+        LTORG
+unclipped_blit	ENDP
+
+	EXPORT  asm_draw_rgb
+asm_draw_rgb    PROC
+	stmfd	sp, {r4 - fp, lr}
+	ldmfd	sp, {r10, fp}
+L355
+	tst	r2, #2
+	bne	L354
+	subs	lr, r10, #4
+	blt	L357
+L356
+	;  load rgb1, rgb2, rgb3, rgb4
+	ldmia	r0!, {r4 - r7}
+	subs	lr, lr, #4
+	;  convert rgb1
+	and	r12, r4, #248
+	mov	r8, r12, lsr #3
+	and	r12, r4, #0xfc00
+	orr	r8, r8, r12, lsr #5
+	and	r12, r4, #0xf80000
+	orr	r8, r8, r12, lsr #8
+	;  convert rgb2
+	and	r12, r5, #248
+	orr	r8, r8, r12, lsl #13
+	and	r12, r5, #0xfc00
+	orr	r8, r8, r12, lsl #11
+	and	r12, r5, #0xf80000
+	orr	r8, r8, r12, lsl #8
+	;  convert rgb3
+	and	r12, r6, #248
+	mov	r9, r12, lsr #3
+	and	r12, r6, #0xfc00
+	orr	r9, r9, r12, lsr #5
+	and	r12, r6, #0xf80000
+	orr	r9, r9, r12, lsr #8
+	;  convert rgb4
+	and	r12, r7, #248
+	orr	r9, r9, r12, lsl #13
+	and	r12, r7, #0xfc00
+	orr	r9, r9, r12, lsl #11
+	and	r12, r7, #0xf80000
+	orr	r9, r9, r12, lsl #8
+	;  store four pixels
+	stmia	r2!, {r8, r9}
+	bge	L356
+L357
+	tst	lr, #2
+	beq	L358
+	ldmia	r0!, {r4, r5}
+	;  convert rgb1
+	and	r12, r4, #248
+	mov	r8, r12, lsr #3
+	and	r12, r4, #0xfc00
+	orr	r8, r8, r12, lsr #5
+	and	r12, r4, #0xf80000
+	orr	r8, r8, r12, lsr #8
+	;  convert rgb2
+	and	r12, r5, #248
+	orr	r8, r8, r12, lsl #13
+	and	r12, r5, #0xfc00
+	orr	r8, r8, r12, lsl #11
+	and	r12, r5, #0xf80000
+	orr	r8, r8, r12, lsl #8
+	;  store two pixels
+	str	r8, [r2], #4
+L358
+	tst	lr, #1
+	beq	L359
+	ldr	r4, [r0], #4
+	and	r12, r4, #248
+	mov	r8, r12, lsr #3
+	and	r12, r4, #0xfc00
+	orr	r8, r8, r12, lsr #5
+	and	r12, r4, #0xf80000
+	orr	r8, r8, r12, lsr #8
+	strh	r8, [r2], #2
+L359
+	subs	fp, fp, #1
+	add	r0, r0, r1, lsl #2
+	add	r2, r2, r3, lsl #1
+	bne	L355
+	ldmeqea	sp, {r4 - fp, pc}
+L354
+	ldr	r4, [r0], #4
+	subs	lr, r10, #5
+	and	r12, r4, #248
+	mov	r8, r12, lsr #3
+	and	r12, r4, #0xfc00
+	orr	r8, r8, r12, lsr #5
+	and	r12, r4, #0xf80000
+	orr	r8, r8, r12, lsr #8
+	strh	r8, [r2], #2
+	bge	L356
+	blt	L357
+
+        LTORG
+asm_draw_rgb	ENDP
+
 	END
