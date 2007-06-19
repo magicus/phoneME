@@ -85,8 +85,6 @@ static char *properties[PROP_NUMBER] = { hostsandports,
                                          satselectapdu };
 
 /** Configuration property name */
-static char *saved_hostsandports = NULL;
-static char *saved_satselectapdu = NULL;
 static char *saved_properties[PROP_NUMBER];
 
 /**
@@ -98,6 +96,10 @@ static struct {
     /** Length of the command. */
     int len;
 } satselectcmd;
+
+/* Is 0 slot SAT slot */
+#define NOT_INITIALIZED -1
+static int IsSatSlot = NOT_INITIALIZED;
 
 /**
  * Is the driver already initialized.
@@ -111,7 +113,7 @@ static pthread_mutex_t locked = PTHREAD_MUTEX_INITIALIZER;
 /**
  * Verbose level of the driver.
  */
-javacall_bool jsr177_verbose = JAVACALL_TRUE;
+javacall_bool jsr177_verbose = JAVACALL_FALSE;
 
 /* local functions */
 static int isoOut(int slot, char *command, javacall_int32 length, char *response, 
@@ -189,9 +191,6 @@ javacall_result javacall_carddevice_init() {
     }
     current_slot = -1;
 
-    saved_properties[0] = saved_hostsandports;
-    saved_properties[1] = saved_satselectapdu;
-
     javacall_carddevice_clear_error();
     DriverInitialized = JAVACALL_TRUE;
     pthread_mutex_unlock(&locked);
@@ -226,6 +225,7 @@ javacall_result javacall_carddevice_finalize() {
 
     free(satselectcmd.command);
 
+    IsSatSlot = NOT_INITIALIZED;
     DriverInitialized = JAVACALL_FALSE;
     return JAVACALL_OK;
 }
@@ -521,6 +521,8 @@ javacall_result javacall_carddevice_reset_start(char *atr, javacall_int32 *atr_s
     }
     *atr_size = bytes;
     slots[current_slot].events = 0;
+
+    IsSatSlot = NOT_INITIALIZED;
 
     return JAVACALL_OK;
 
