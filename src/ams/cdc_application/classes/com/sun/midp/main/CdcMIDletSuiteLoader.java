@@ -35,6 +35,7 @@ import com.sun.midp.installer.InternalMIDletSuiteImpl;
 import com.sun.midp.lcdui.*;
 import com.sun.midp.midlet.*;
 import com.sun.midp.midletsuite.*;
+import com.sun.midp.security.*;
 
 /**
  * The first class loaded in VM by midp_run_midlet_with_args to initialize
@@ -234,7 +235,19 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      *
      * @param displayId Display ID
      */
-    private native void setForegroundInNativeState(int displayId);
+    public static void setForegroundInNativeState(SecurityToken token,
+                                                  int displayId) {
+        token.checkIfPermissionAllowed(Permissions.AMS);
+        setForegroundInNativeState(displayId);
+    }
+
+    /**
+     * Set foreground display native state, so the native code will know
+     * which display can draw.
+     *
+     * @param displayId Display ID
+     */
+    private static native void setForegroundInNativeState(int displayId);
 
     /**
      * Gets AMS error message by generic error code.
