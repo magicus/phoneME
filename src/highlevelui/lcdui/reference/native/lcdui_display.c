@@ -37,6 +37,8 @@
 
 #include <lcdlf_export.h>
 #include <midpEventUtil.h>
+#include <gxj_putpixel.h>
+#include <gxapi_graphics.h>
 
 
 /**
@@ -166,3 +168,30 @@ KNIDECL(javax_microedition_lcdui_Display_getScreenWidth0) {
     int height = lcdlf_get_screen_width();
     KNI_ReturnInt(height);
 }
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(javax_microedition_lcdui_Display_directFlush) {
+    jboolean success = KNI_FALSE;
+    int height  = KNI_GetParameterAsInt(3);
+
+    KNI_StartHandles(3);
+    KNI_DeclareHandle(img);
+    KNI_DeclareHandle(g);
+
+    KNI_GetParameterAsObject(2, img);
+    KNI_GetParameterAsObject(1, g);
+
+    if (!KNI_IsNullHandle(img)) {
+        gxj_pixel_type* buffer = NULL;
+        const java_imagedata * srcImageDataPtr =  (unhand(struct Java_javax_microedition_lcdui_Image,img))->imageData;
+        int width = srcImageDataPtr->width;
+        if (srcImageDataPtr->pixelData != NULL) {
+            buffer = (gxj_pixel_type *)&(srcImageDataPtr->pixelData->elements[0]);
+            success = lcd_direct_flush(buffer, height, width);
+        }
+    }
+
+    KNI_EndHandles();
+
+    KNI_ReturnBoolean(success);
+} 

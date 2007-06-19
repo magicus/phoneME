@@ -2468,6 +2468,10 @@ public class Display {
     }
     // #endif
 
+    // Flush the screen graphics at 0,0, CHAM_WIDTH with variable height.
+    // offscreen_buffer must be aligned to the top-left of the screen
+    native boolean directFlush(Graphics graphics, Image offscreen_buffer,  int height);
+ 
     /**
      * ************* Inner Class, DisplayAccesImpl
      */
@@ -2581,6 +2585,22 @@ public class Display {
                     int[] reg = new int[4];
                     screenGraphics.getClip(reg);
                     
+                    if (d instanceof javax.microedition.lcdui.game.GameCanvas) {
+                        if (x == 0 && 
+                            x2 == WIDTH &&
+                            y == 0 &&  
+                            offscreen_buffer.getWidth() == WIDTH && 
+                            offscreen_buffer.getHeight() == HEIGHT &&
+                            //check offscreen_buffer whether rotated
+                           (Display.this.window).getBodyAnchorX() == 0 && 
+                           (Display.this.window).getBodyAnchorY() == 0) {
+                           if (directFlush(screenGraphics, offscreen_buffer, y2)) {
+                                // No need to draw to the back buffer. We have
+                                // directly flushed to the front buffer.
+                               return;
+                           }
+                        }
+                    }                     
                     int tranX = screenGraphics.getTranslateX();
                     int tranY = screenGraphics.getTranslateY();
 
