@@ -514,10 +514,49 @@ KNI_SetObjectArrayElement(jobjectArray array, jsize index, jobject fromHandle)
 		       CVMID_icellDirect(CVMgetEE(), fromHandle));
 }
 
+#ifndef CVMGC_HAS_NONREF_BARRIERS
+#ifdef CVM_DEBUG_ASSERTS
+static void
+KNI_VerifyRawArrayArgs(CVMArrayOfByte *arrayObj, jsize offset, jsize n)
+{
+    CVMClassBlock *arrayCb = CVMobjectGetClass(arrayObj);
+    CVMassert(n + offset <= (arrayObj->length * CVMarrayElemSize(arrayCb)));
+    switch (CVMarrayBaseType(arrayCb)) {
+    case CVM_T_CHAR:
+    case CVM_T_BYTE:
+    case CVM_T_SHORT:
+    case CVM_T_INT:
+    case CVM_T_LONG:
+    case CVM_T_FLOAT:
+    case CVM_T_DOUBLE: {
+	break;
+    }
+    default:
+	CVMassert(CVM_FALSE);
+    }
+}
+#endif /* CVM_DEBUG_ASSERTS */
+#endif
+
+
 KNIEXPORT void
 KNI_GetRawArrayRegion(jarray array, jsize offset,
 		      jsize n, jbyte* dstBuffer)
 {
+#ifndef CVMGC_HAS_NONREF_BARRIERS
+    CVMArrayOfByte *arrayObj =
+	(CVMArrayOfByte*) CVMID_icellDirect(CVMgetEE(), array);
+#ifdef CVM_DEBUG_ASSERTS
+    KNI_VerifyRawArrayArgs(arrayObj, offset, n);
+#endif /* CVM_DEBUG_ASSERTS */
+    CVMmemmoveByte((void*)dstBuffer, (void*)&arrayObj->elems[offset], n);
+
+#else /* CVMGC_HAS_NONREF_BARRIERS */
+
+#error "CVM_KNI=true nto supported when there are non-ref GC barriers."
+    /* TODO: The code below is broken if either srcBuffer is not aligned
+       properly, or "n" is not a multiple of the array element type size.
+    */
     CVMObject *obj = CVMID_icellDirect(CVMgetEE(), array);
     CVMClassBlock *arrayCb = CVMobjectGetClass(obj);
 
@@ -561,12 +600,28 @@ KNI_GetRawArrayRegion(jarray array, jsize offset,
 	CVMassert(CVM_FALSE);
     }
 
+#endif /* CVMGC_HAS_NONREF_BARRIERS */
 }
 
 KNIEXPORT void
 KNI_SetRawArrayRegion(jarray array, jsize offset,
 		      jsize n, const jbyte* srcBuffer)
 {
+#ifndef CVMGC_HAS_NONREF_BARRIERS
+
+    CVMArrayOfByte *arrayObj =
+	(CVMArrayOfByte*)CVMID_icellDirect(CVMgetEE(), array);
+#ifdef CVM_DEBUG_ASSERTS
+    KNI_VerifyRawArrayArgs(arrayObj, offset, n);
+#endif /* CVM_DEBUG_ASSERTS */
+    CVMmemmoveByte((void*)&arrayObj->elems[offset], (void*)srcBuffer, n);
+
+#else /* CVMGC_HAS_NONREF_BARRIERS */
+
+#error "CVM_KNI=true not supported when there are non-ref GC barriers."
+    /* TODO: The code below is broken if either srcBuffer is not aligned
+       properly, or "n" is not a multiple of the array element type size.
+    */
     CVMObject *obj = CVMID_icellDirect(CVMgetEE(), array);
     CVMClassBlock *arrayCb = CVMobjectGetClass(obj);
 
@@ -609,11 +664,5 @@ KNI_SetRawArrayRegion(jarray array, jsize offset,
     default:
 	CVMassert(CVM_FALSE);
     }
+#endif /* CVMGC_HAS_NONREF_BARRIERS */
 }
-
-
-
-
-
-
-
