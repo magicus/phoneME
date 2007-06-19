@@ -164,12 +164,12 @@ unclipped_blit  PROC
 	stmfd	sp, {r4 - fp, lr}
 	ldr	r12, [sp, #4]
 	ldr	lr, [sp]
+	cmp	r12, #2
+	beq	L340
 	sub	r3, r3, r12
 	sub	r1, r1, r12
 	orrs	r4, r3, r1
 	beq	L351
-	cmp	r12, #2
-	beq	L340
 L341
 	tst	r0, #2
 	bne	L344
