@@ -508,12 +508,7 @@ DWORD WINAPI CreateWinCEWindow(LPVOID lpParam) {
 }
 
 void winceapp_init() {
-    char s[128];
-    sprintf(s, "Creating Thread\n");
-    writeStandardIO(1, &s, strlen(s));
     eventThread = CreateThread(NULL, 0, CreateWinCEWindow, 0, 0, NULL);
-    sprintf(s, "Thread Created\n");
-    writeStandardIO(1, &s, strlen(s));
 }
 
 static jint mapKey(WPARAM wParam, LPARAM lParam) {
@@ -684,10 +679,6 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         return DefWindowProc(hwnd, msg, wp, lp);
 
     case WM_TIMER:
-        if (wp == EVENT_TIMER_ID+1) {
-            KillTimer(hwndMain, EVENT_TIMER_ID+1);
-            process_skipped_refresh();
-        }
         return 0;
 
     case WM_COMMAND:
@@ -877,23 +868,7 @@ void winceapp_finalize() {
 }
 
 static void process_skipped_refresh() {
-    if (has_skipped_refresh) {
-        must_refresh = 1;
-        if (hint_is_painting) {
-            /* Some Java code is already painting to the back buffer,
-             * and will soon call winceapp_refresh to refresh. There's
-             * need for us to paint now.
-
-             * Let's schedule a timer again, in case we go into a
-             * hint_is_painting block but don't actually call refresh0()!
-             */
-            SetTimer(hwndMain, EVENT_TIMER_ID+1, (UINT)60, NULL);
-        } else {
-            winceapp_refresh(0, 0, CHAM_WIDTH, CHAM_HEIGHT);     
-//			winceapp_refresh(dirty_x1, dirty_y1, dirty_x2, dirty_y2);
-            has_skipped_refresh = 0;
-        }
-    }
+    winceapp_refresh(0, 0, CHAM_WIDTH, CHAM_HEIGHT);         
 }
 
 int isScreenFullyVisible() {
@@ -1078,10 +1053,6 @@ static void gdiRefreshBitmap(HDC hdc, int x, int y, int width, int height,
     // x is always 0 and width is always VRAM.width 
     SetDIBitsToDevice(hdc, dx, dy + y, CHAM_WIDTH, height, 
                      x, CHAM_HEIGHT - y - height, 0, CHAM_HEIGHT, gb.destBits, &gb.bi, DIB_RGB_COLORS);
-
-//    /* IMPL_NOTE: don't need to copy the entire screen */
-//    SetDIBitsToDevice(hdc, dx, dy, CHAM_WIDTH, CHAM_HEIGHT, 0, 0, 0,
-//                      CHAM_HEIGHT, gb.destBits, &gb.bi, DIB_RGB_COLORS);
 }
 
 /**
@@ -1097,82 +1068,6 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
     if (!midpPaintAllowed) {
         return;
     }
-
-    /* Let's try to limit the actual
-     * rate of copying to the front buffer to no more than 60FPS to
-     * save power (and make benchmarks happy).
-     */
-    DWORD now = GetTickCount();
-    DWORD lag;
-
-    int has_recent_input =
-        ((now < lastUserInputTick) || ((now - lastUserInputTick) < 60));
-
-    if (hint_is_canvas_painting || has_recent_input) {
-        /* Make it around 60FPS, so even if we are a little off, we should
-         * still be over 30FPS for Canvas.
-         *
-         * Also, for non canvas screens, if the user has recently pressed
-         * a key, repaint more responsively.
-         */
-        lag = 15;
-    } else {
-        lag = 60;
-    }
-
-    if ((now < lastPaintedTick) || ((now - lastPaintedTick) > lag)) {
-        /* We have gone too long without a repaint. Do it now. */
-        must_refresh = 1;
-    }
-
-    if (!must_refresh) {
-        if (!has_skipped_refresh) {
-            /* Schedule a Windows timer to refresh the screen, in case
-             * there's no more refresh coming.
-             */
-            KillTimer(hwndMain, EVENT_TIMER_ID+1);
-            SetTimer(hwndMain, EVENT_TIMER_ID+1, (UINT)60, NULL);
-
-            dirty_x1 = x1;
-            dirty_y1 = y1;
-            dirty_x2 = x2;
-            dirty_y2 = y2;
-
-            has_skipped_refresh = 1;
-        } else {
-            if (dirty_x1 > x1) {
-                dirty_x1 = x1;
-            }
-            if (dirty_y1 > y1) {
-                dirty_y1 = y1;
-            }
-            if (dirty_x2 < x2) {
-                dirty_x2 = x2;
-            }
-            if (dirty_y2 < y2) {
-                dirty_y2 = y2;
-            }
-        }
-        return;
-    }
-
-    if (has_skipped_refresh) {
-        if (x1 > dirty_x1) {
-            x1 = dirty_x1;
-        }
-        if (y1 > dirty_y1) {
-            y1 = dirty_y1;
-        }
-        if (x2 < dirty_x2) {
-            x2 = dirty_x2;
-        }
-        if (y2 < dirty_y2) {
-            y2 = dirty_y2;
-        }
-    }
-    has_skipped_refresh = 0;
-    must_refresh = 0;
-    lastPaintedTick = now;
 
     if(x2 > CHAM_WIDTH) {
         x2 = CHAM_WIDTH;
@@ -1262,7 +1157,7 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
         endDirectPaint();
 }
 
-jboolean lcd_direct_flush(gxj_pixel_type *src, int height) {
+jboolean lcd_direct_flush(gxj_pixel_type *src, int height, int width) {
     if (!midpPaintAllowed) {
         return FALSE;
     }
@@ -1272,6 +1167,80 @@ jboolean lcd_direct_flush(gxj_pixel_type *src, int height) {
     jboolean success = KNI_FALSE;
 
     gxj_pixel_type *dst = startDirectPaint(dstWidth, dstHeight, dstYPitch);
+#if ENABLE_WINCE_DIRECT_DRAW /* ENABLE_WINCE_DIRECT_DRAW */    
+    static gxj_pixel_type * lastSrc = NULL; //last flush src
+    static DWORD lastTime = 0; //last flush time
+    static int lastHeight =0; //unflushed accumulated height
+    DWORD nowTime;
+
+    if (!midpPaintAllowed) {
+        return KNI_TRUE;
+    }
+
+    if (isScreenRotated()) return KNI_FALSE; //rotated screen doesn't support directDraw
+
+    nowTime = GetTickCount();
+    if (lastSrc == src) {
+        if (nowTime-lastTime > 40) { //25 frames/s
+            if (lastHeight > height) {
+		height = lastHeight;
+	    }
+        } else {
+            if (lastHeight < height) { 
+		lastHeight =height;
+	    }
+            return KNI_TRUE;
+        }
+    } else {
+        if (g_pDDSvramDirect) {
+	    g_pDDSvramDirect->Release();
+	    g_pDDSvramDirect = NULL;
+        }
+	init_DirectDraw();
+	attach_vmem_to_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT, &g_pDDSvramDirect);
+        lastSrc = src;
+    }
+    lastHeight = 0;
+    lastTime = nowTime;
+
+    if (g_pDDSvramDirect == NULL) {
+	attach_vmem_to_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT, &g_pDDSvramDirect);
+    }
+    if (g_pDDSvramDirect == NULL) {
+	return KNI_FALSE;
+    }
+
+    if (height > CHAM_HEIGHT) {
+        height = CHAM_HEIGHT;
+    }
+
+    do {
+        if (KNI_FALSE == startDirectPaint(dstWidth, dstHeight, dstYPitch)) {
+            break;
+        }
+
+        if (dstWidth == CHAM_WIDTH 
+            && height <= dstHeight 
+            && width == CHAM_WIDTH 
+            && dstYPitch == (int)(dstWidth * sizeof(gxj_pixel_type))) {
+
+            RECT srcRect;
+            srcRect.top = 0;
+            srcRect.left = 0;
+            srcRect.bottom = height;
+            srcRect.right = width;
+
+            RECT dstRect;
+            dstRect.top = rcVisibleDesktop.top;
+            dstRect.left = 0;
+            dstRect.bottom = height + rcVisibleDesktop.top;
+            dstRect.right = width;
+            
+            HRESULT ret = g_pDDSPrimary->Blt(&dstRect, g_pDDSvramDirect, &srcRect, 0, NULL);
+            if (ret == DD_OK)  success = KNI_TRUE;
+        }
+    } while(0);
+#else  /* !ENABLE_WINCE_DIRECT_DRAW */
     if (dst != NULL) {
         if (dstWidth == CHAM_WIDTH && height <= dstHeight &&
             dstYPitch == (int)(dstWidth * sizeof(gxj_pixel_type))) {
@@ -1284,10 +1253,9 @@ jboolean lcd_direct_flush(gxj_pixel_type *src, int height) {
              * and then copied to LCD using winceapp_refresh();
              */
         }
-
-        endDirectPaint();
-    }
-
+    }        
+#endif /* ENABLE_WINCE_DIRECT_DRAW */    
+    endDirectPaint();    
     return success;
 }
 
