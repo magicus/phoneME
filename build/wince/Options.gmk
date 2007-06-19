@@ -83,7 +83,10 @@ USE_PORTING_DEMOS       = false
 USE_SERVER_SOCKET       = true
 
 # JPEG decoding for putpixel
-aUSE_JPEG               = false
+USE_JPEG               = false
+
+# Wince direct draw support
+USE_WINCE_DIRECTDRAW    = false
 
 # RESOURCE MANAGEMENT POLICY
 USE_FIXED               = false

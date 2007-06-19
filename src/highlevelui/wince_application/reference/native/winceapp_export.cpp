@@ -36,9 +36,8 @@
 #include <sipapi.h>
 #include <tpcshell.h>
 
-#define JWC_WINCE_USE_DIRECT_DRAW 1
 
-#if JWC_WINCE_USE_DIRECT_DRAW /* defined in <midp_constants_data.h> */
+#if ENABLE_WINCE_DIRECT_DRAW
 #include <ddraw.h>
 #endif
 
@@ -106,7 +105,7 @@ static jboolean reverse_orientation;
 
 
 
-#if JWC_WINCE_USE_DIRECT_DRAW
+#if ENABLE_WINCE_DIRECT_DRAW
 LPDIRECTDRAW                g_pDD = NULL;
 LPDIRECTDRAWSURFACE         g_pDDSPrimary = NULL;
 LPDIRECTDRAWSURFACE g_pDDSvram = NULL;
@@ -250,7 +249,7 @@ static void updateVisibleDesktop() {
     rcVisibleDesktop = sipinfo.rcVisibleDesktop;
 }
 
-#if JWC_WINCE_USE_DIRECT_DRAW
+#if ENABLE_WINCE_DIRECT_DRAW
 static void init_DirectDraw() {
     /**
      * Note: if DirectDraw fails to initialize, we will use GDI to
@@ -399,7 +398,7 @@ static void attach_vmem_to_memory_surface(void* pVmem, int width, int height,
         *ppDDSurface = pDDS;
     }
 }
-#endif /* JWC_WINCE_USE_DIRECT_DRAW */
+#endif /* ENABLE_WINCE_DIRECT_DRAW */
 
 /**
  * Initializes the WINCE native resources.
@@ -487,7 +486,7 @@ DWORD WINAPI CreateWinCEWindow(LPVOID lpParam) {
 
     updateVisibleDesktop();
 
-#if JWC_WINCE_USE_DIRECT_DRAW
+#if ENABLE_WINCE_DIRECT_DRAW
     init_DirectDraw();
 #else
     if (GXOpenDisplay(hwndMain, 0) == 0) {
@@ -909,7 +908,7 @@ int isScreenFullyVisible() {
     }
 }
 
-#if JWC_WINCE_USE_DIRECT_DRAW
+#if ENABLE_WINCE_DIRECT_DRAW
 int isScreenRotated() {
     if (JWC_WINCE_SMARTPHONE) {
         /* No SIP window or screen rotation on SmartPhone (presumably ...) */
@@ -930,7 +929,7 @@ static gxj_pixel_type*
 startDirectPaint(int &dstWidth, int &dstHeight, int &dstYPitch) {
     gxj_pixel_type *dst = NULL;
 
-#if JWC_WINCE_USE_DIRECT_DRAW
+#if ENABLE_WINCE_DIRECT_DRAW
     if (isScreenRotated() || !isScreenFullyVisible() || editBoxShown) {
         /* DDraw is not very reliable on an rotated screen. Use GDI instead. */
         return NULL;
@@ -1006,7 +1005,7 @@ startDirectPaint(int &dstWidth, int &dstHeight, int &dstYPitch) {
 }
 
 static void endDirectPaint() {
-#if JWC_WINCE_USE_DIRECT_DRAW
+#if ENABLE_WINCE_DIRECT_DRAW
     g_pDDSPrimary->Unlock(NULL);
 #else
     GXEndDraw();
@@ -1198,7 +1197,7 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
     gxj_pixel_type *dst = startDirectPaint(dstWidth, dstHeight, dstYPitch);
     int maxY = dstHeight - titleHeight - menuHeight - virtualKeyboardHeight;
     
-#if JWC_WINCE_USE_DIRECT_DRAW
+#if ENABLE_WINCE_DIRECT_DRAW
     if (y2 > maxY) {
         y2 = maxY;
     }
@@ -1229,7 +1228,7 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
 
     HRESULT ret = g_pDDSPrimary->Blt(&dstRect, g_pDDSvram, &srcRect, 0, NULL); 
 
-#else /* !JWC_WINCE_USE_DIRECT_DRAW */
+#else /* !ENABLE_WINCE_DIRECT_DRAW */
 
     if (dst != NULL) {
         srcWidth = x2 - x1;
@@ -1259,7 +1258,7 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
             }
         }
     } 
-#endif /* JWC_WINCE_USE_DIRECT_DRAW */
+#endif /* ENABLE_WINCE_DIRECT_DRAW */
         endDirectPaint();
 }
 
@@ -1330,7 +1329,7 @@ jboolean drawBackLight(AncBacklightState mode) {
  * be the same as the (width * sizeof(gxj_pixel_type).
  */
 HDC getScreenBufferHDC(gxj_pixel_type *buffer, int width, int height) {
-#if JWC_WINCE_USE_DIRECT_DRAW
+#if ENABLE_WINCE_DIRECT_DRAW
     /*  pDDS and cachedHDC must both be NULL or both be non-NULL */
     static LPDIRECTDRAWSURFACE pDDS = NULL;
     static HDC cachedHDC = NULL;
@@ -1391,7 +1390,7 @@ HDC getScreenBufferHDC(gxj_pixel_type *buffer, int width, int height) {
     return cachedHDC;
 #else    
     return NULL;
-#endif /* JWC_WINCE_USE_DIRECT_DRAW */
+#endif /* ENABLE_WINCE_DIRECT_DRAW */
     
 }
 

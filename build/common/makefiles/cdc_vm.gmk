@@ -74,6 +74,12 @@ ifeq ($(USE_DIRECTFB), true)
     EXTRA_CFLAGS    += -DDIRECTFB
 endif
 
+ifeq ($(USE_WINCE_DIRECTDRAW), true)
+   EXTRA_CFLAGS += -DENABLE_WINCE_DIRECT_DRAW=1
+else
+   EXTRA_CFLAGS += -DENABLE_WINCE_DIRECT_DRAW=0
+endif
+
 #----------------------------------------------------------------------
 # CDC_DIST_DIR --
 #
