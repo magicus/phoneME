@@ -60,6 +60,7 @@ endif
 
 include $(SUBSYSTEM_AMS_DIR)/ams_api/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/ams_base/lib.gmk
+include $(SUBSYSTEM_AMS_DIR)/ams_base_cldc/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/ams_util/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/ams_jsr_interface/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/app_image_gen_base/lib.gmk
