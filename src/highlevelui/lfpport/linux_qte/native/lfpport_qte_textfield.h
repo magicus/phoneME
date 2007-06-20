@@ -154,12 +154,12 @@ public:
     /**
      * Override QMultLineEdit::backspace to format phone string
      */
-    void TextFieldBody::backspace();
+    void backspace();
 
     /**
      * Override QMultLineEdit::del to format phone string
      */
-    void TextFieldBody::del();
+    void del();
 
     /** This text field's input constraints, if any. As discussed in the
      * <i>MIDP Specification</i>, an input constraint makes it easier for
