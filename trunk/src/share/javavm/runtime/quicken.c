@@ -369,16 +369,26 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 	    newOpcode = opc_instanceof_quick;
 	    break;
 	case opc_ldc:
-	    if (CVMcpTypeIs(cp, cpIndex, StringICell)) {
+	    switch (CVMcpEntryType(cp, cpIndex)) {
+	    case CVM_CONSTANT_StringICell:
 		newOpcode = opc_aldc_ind_quick;
-	    } else {
+		break;
+	    case CVM_CONSTANT_ClassBlock:
+		CVMpanic("Trying to quicken ldc of type Class");
+		break;
+	    default:
 		newOpcode = opc_ldc_quick;
 	    }
 	    break;
 	case opc_ldc_w:
-	    if (CVMcpTypeIs(cp, cpIndex, StringICell)) {
+	    switch (CVMcpEntryType(cp, cpIndex)) {
+	    case CVM_CONSTANT_StringICell:
 		newOpcode = opc_aldc_ind_w_quick;
-	    } else {
+		break;
+	    case CVM_CONSTANT_ClassBlock:
+		CVMpanic("Trying to quicken ldc of type Class");
+		break;
+	    default:
 		newOpcode = opc_ldc_w_quick;
 	    }
 	    break;

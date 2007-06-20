@@ -373,6 +373,7 @@ struct context_type {
 
     fullinfo_type object_info;	/* fullinfo for java/lang/Object */
     fullinfo_type string_info;	/* fullinfo for java/lang/String */
+    fullinfo_type class_info;	/* fullinfo for java/lang/Class */
     fullinfo_type throwable_info; /* fullinfo for java/lang/Throwable */
     fullinfo_type cloneable_info; /* fullinfo for java/lang/Cloneable */
     fullinfo_type serializable_info; /* fullinfo for java/io/Serializable */
@@ -405,6 +406,9 @@ struct context_type {
 
     /* Jump here on any error. */
     jmp_buf jump_buffer;
+
+    /* Class file version we are checking against */
+    int major_version;
 };
 
 /*
@@ -828,6 +832,9 @@ VerifyClass(CVMExecEnv *ee, CVMClassBlock *cb, char *buffer, jint len)
 	return JNI_FALSE;
     }
     memset(context, 0, sizeof(context_type));
+
+    context->major_version = cb->major_version;
+
     context->message = buffer;
     context->message_buf_len = len;
 
@@ -854,6 +861,8 @@ VerifyClass(CVMExecEnv *ee, CVMClassBlock *cb, char *buffer, jint len)
 	    make_class_info(context, CVMsystemClass(java_lang_Object));
 	context->string_info = 
 	    make_class_info(context, CVMsystemClass(java_lang_String));
+	context->class_info = 
+	    make_class_info(context, CVMsystemClass(java_lang_Class));
 	context->throwable_info = 
 	    make_class_info(context, CVMsystemClass(java_lang_Throwable));
 	context->cloneable_info = 
@@ -1198,6 +1207,9 @@ verify_opcode_operands(context_type *context, int inumber, int offset)
 	int key = code[offset + 1];
 	int types = (1 << CVM_CONSTANT_Integer) | (1 << CVM_CONSTANT_Float) |
 	                    (1 << CVM_CONSTANT_StringICell);
+	if (context->major_version >= 49) {
+	    types |= (1 << CVM_CONSTANT_ClassTypeID);
+	}
 	this_idata->operand.i = key;
 	verify_constant_pool_type(context, key, types);
 	break;
@@ -1208,6 +1220,9 @@ verify_opcode_operands(context_type *context, int inumber, int offset)
 	int key = (code[offset + 1] << 8) + code[offset + 2];
 	int types = (1 << CVM_CONSTANT_Integer) | (1 << CVM_CONSTANT_Float) |
 	    (1 << CVM_CONSTANT_StringICell);
+	if (context->major_version >= 49) {
+	    types |= (1 << CVM_CONSTANT_ClassTypeID);
+	}
 	this_idata->operand.i = key;
 	verify_constant_pool_type(context, key, types);
 	break;
@@ -2576,6 +2591,10 @@ push_stack(context_type *context, int inumber, stack_info_type *new_stack_info)
 		case CVM_CONSTANT_StringICell: 
 		    stack_results = "A"; 
 		    full_info = context->string_info;
+		    break;
+		case CVM_CONSTANT_ClassTypeID:
+		    stack_results = "A"; 
+		    full_info = context->class_info;
 		    break;
 		default:
 		    CCerror(context, "Internal error #3");

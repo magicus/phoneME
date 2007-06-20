@@ -82,7 +82,7 @@ struct CVMBigGCBitMap {
  * javaInstance field, is simply a 1 field java class that points
  * back to its CVMClassBlock.
  *
- * WARNING: if you change anything in this sturcture then you need to
+ * WARNING: if you change anything in this structure then you need to
  * fix up CVM_INIT_CLASSBLOCK.
  */
 struct CVMClassBlock {
@@ -205,6 +205,10 @@ struct CVMClassBlock {
     /* Pointer to inner classes information. NULL if there is none. */
     /* %comment c */
     CVMInnerClassesInfo* innerClassesInfoX;
+
+    /* class file version <major_version>.<minor_version> */
+    CVMUint16        major_version;
+    CVMUint16        minor_version;
 };
 
 #ifdef CVM_CLASSLOADING
