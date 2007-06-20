@@ -960,6 +960,9 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
     context->minor_version = get2bytes(context);
     context->major_version = get2bytes(context);
 
+    cb->major_version = context->major_version;
+    cb->minor_version = context->minor_version;
+
     CVMreadConstantPool(ee, context);
     cp = context->cp;
     utf8Cp = context->utf8Cp;

@@ -39,7 +39,7 @@ typedef unsigned short unicode;
 
 #define JAVA_CLASSFILE_MAGIC                 0xCafeBabe
 #define JAVA_MIN_SUPPORTED_VERSION           45
-#define JAVA_MAX_SUPPORTED_VERSION           48
+#define JAVA_MAX_SUPPORTED_VERSION           49
 #define JAVA_MAX_SUPPORTED_MINOR_VERSION     0
 
 /* align byte code */
