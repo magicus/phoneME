@@ -48,5 +48,6 @@ PLATFORM_LIB_DIRS	= Lib/Armv4i
 CVM_JIT ?= true
 
 WIN32_PLATFORM = wince
+JAVACALL_TARGET=wince_arm
 
 include ../share/top.mk
