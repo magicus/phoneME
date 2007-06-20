@@ -24,28 +24,4 @@
 # information or have any questions.
 #
 
-LIB_EXPORT_JAVA_FILES= \
-    com/sun/midp/main/CommandState.java \
-    com/sun/midp/main/DisplayController.java \
-    com/sun/midp/main/DisplayControllerListener.java \
-    com/sun/midp/main/MIDletControllerEventConsumer.java \
-    com/sun/midp/main/MIDletControllerEventProducer.java \
-    com/sun/midp/main/MIDletProxy.java \
-    com/sun/midp/main/MIDletProxyList.java \
-    com/sun/midp/main/MIDletProxyListListener.java \
-    com/sun/midp/main/MIDletSuiteLoader.java \
-    com/sun/midp/main/MIDletSuiteUtils.java \
-    com/sun/midp/main/AbstractMIDletSuiteLoader.java \
-    com/sun/midp/main/CldcMIDletSuiteLoader.java
-
-LIB_HEADER_FILES= \
-    imageCache.h \
-    midpAMS.h \
-    midp_ams_status.h \
-    midpCommandState.h \
-    midp_foreground_id.h \
-    midpInflateint.h \
-    midpInflatetables.h \
-    midpInit.h \
-    midpMIDletProxyList.h \
-    midpMidletSuiteUtils.h
+include $(CURDIR)/../../../build/share/genroot.make
