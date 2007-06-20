@@ -106,19 +106,24 @@ endif
 
 # If any JSR is built include JSROP abstractions building
 ifneq ($(INCLUDED_JSROP_NUMBERS),)
-# Check Jump building
-ifneq ($(USE_JUMP), true)
-$(error JSR optional packages require Jump to be supported. USE_JUMP must be true.)
+ifeq ($(USE_ABSTRACTIONS),true)
+export ABSTRACTIONS_DIR ?= $(COMPONENTS_DIR)/abstractions
+
+ifeq ($(PROJECT_ABSTRACTIONS_DIR),)
+JSROP_ABSTR_DIR = $(ABSTRACTIONS_DIR)
+else
+JSROP_ABSTR_DIR = $(PROJECT_ABSTRACTIONS_DIR)
 endif
 
-export ABSTRACTIONS_DIR ?= $(COMPONENTS_DIR)/abstractions
-ABSTRACTIONS_MAKE_FILE = $(ABSTRACTIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ABSTRACTIONS_MAKE_FILE = $(JSROP_ABSTR_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 ifeq ($(wildcard $(ABSTRACTIONS_MAKE_FILE)),)
 $(error ABSTRACTIONS_DIR must point to a directory containing JSROP abstractions sources)
 endif
 include $(ABSTRACTIONS_MAKE_FILE)
 
 JSROP_JARS=$(ABSTRACTIONS_JAR) $(JSROP_BUILD_JARS)
+
+endif
 endif
 
 # Include JSR 75
@@ -154,7 +159,12 @@ endif
 # Include JSR 135
 ifeq ($(USE_JSR_135), true)
 export JSR_135_DIR ?= $(COMPONENTS_DIR)/jsr135
-JSR_135_MAKE_FILE = $(JSR_135_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(PROJECT_JSR_135_DIR),)
+JSROP_JSR135_DIR = $(JSR_135_DIR)
+else
+JSROP_JSR135_DIR = $(PROJECT_JSR_135_DIR)
+endif
+JSR_135_MAKE_FILE = $(JSROP_JSR135_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 ifeq ($(wildcard $(JSR_135_MAKE_FILE)),)
 $(error JSR_135_DIR must point to a directory containing JSR 135 sources)
 endif
@@ -282,16 +292,18 @@ include $(JSR_280_DEFS_FILE)
 endif
 
 ifeq ($(CVM_INCLUDE_JAVACALL), true)
-JAVACALL_TARGET=$(TARGET_OS)_$(TARGET_CPU_FAMILY)
+JAVACALL_TARGET?=$(TARGET_OS)_$(TARGET_CPU_FAMILY)
 JAVACALL_FLAGS = $(JSROP_OP_FLAGS)
 ifeq ($(USE_JAVACALL_EVENTS), true)
 JAVACALL_FLAGS += USE_COMMON=true
+ifeq ($(USE_JUMP), true)
 JUMP_ANT_OPTIONS += -Djavacall.events.used=true
 JUMP_SRCDIRS += \
 	$(JUMP_SRCDIR)/share/impl/eventqueue/native
 JUMP_OBJECTS += \
 	jump_eventqueue_impl.o
 JUMP_DEPENDENCIES += javacall_lib
+endif
 endif
 # Check javacall makefile and include it
 export JAVACALL_DIR ?= $(COMPONENTS_DIR)/javacall
