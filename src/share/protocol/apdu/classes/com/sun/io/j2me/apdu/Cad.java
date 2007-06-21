@@ -301,10 +301,13 @@ class Cad {
 
         // Test if 'POWER UP' is needed or a card was changed
         if (!isAlive()) {
-            if (cardSlot.isSAT()) {
-                throw new ConnectionNotFoundException("SIM not found");
-            }
-            else {
+            try {
+                if (cardSlot.isSAT()) {
+                    throw new ConnectionNotFoundException("SIM not found");
+                } else {
+                    throw new ConnectionNotFoundException("SmartCard not found");
+                }
+            } catch (IOException e) {
                 throw new ConnectionNotFoundException("SmartCard not found");
             }            
         }

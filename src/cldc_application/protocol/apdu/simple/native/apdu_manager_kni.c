@@ -133,6 +133,9 @@ KNIDECL(com_sun_io_j2me_apdu_APDUManager_isSAT) {
     char *err_msg;
     char *buffer;
     int slotIndex = KNI_GetParameterAsInt(1);
+    MidpReentryData* info;
+    javacall_result status_code;
+    void *context = NULL;
     
     status_code = javacall_carddevice_lock();
     if (status_code != JAVACALL_OK) {
@@ -145,7 +148,20 @@ KNIDECL(com_sun_io_j2me_apdu_APDUManager_isSAT) {
         }  
     }
     
-    if (javacall_carddevice_is_sat(slotIndex, &result) != JAVACALL_OK) {
+    info = (MidpReentryData*)SNI_GetReentryData(NULL);
+    if (info == NULL) {
+        status_code = javacall_carddevice_is_sat_start(slotIndex, &result, &context);
+    } else {
+        context = info->pResult;
+        status_code = javacall_carddevice_is_sat_finish(slotIndex, &result, context);
+    }
+
+    if (status_code == JAVACALL_WOULD_BLOCK) {
+        midp_thread_wait(CARD_READER_DATA_SIGNAL, SIGNAL_XFER, context);
+        goto end;
+    }
+
+    if (status_code != JAVACALL_OK) {
 err:
         buffer = malloc(BUFFER_SIZE);
         if (buffer == NULL) {
@@ -160,6 +176,7 @@ err:
             free(buffer);            
         }        
         KNI_ThrowNew(jsropIOException, err_msg);
+        result = JAVACALL_FALSE;
         goto end;
     }
 
