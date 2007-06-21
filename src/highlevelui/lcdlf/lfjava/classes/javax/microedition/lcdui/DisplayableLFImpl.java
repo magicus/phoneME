@@ -32,7 +32,6 @@ import com.sun.midp.lcdui.GameMap;
 import com.sun.midp.lcdui.GameCanvasLFImpl;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
-import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.skins.*;
 
 
@@ -845,6 +844,108 @@ class DisplayableLFImpl implements DisplayableLF {
         lRequestPaint(0, 0, viewport[WIDTH], viewport[HEIGHT]);
     }
 
+    /** Last time the invalidate request was accepted */
+    private long lastTimeInvalidate = 0;
+
+    /** Timer to schedule delayed invalidate task */
+    private InvalidateTimer invalidateTimer = new InvalidateTimer();
+
+    /** The time in millisecond to delay sequential invalidate requests */
+    private final int INVALIDATE_REQUESTS_DELAY = 40; // 25 fps
+
+    /**
+     * Invalidate timer class is designed to postpone too frequent
+     * requests for Displayable invalidation.
+     *
+     * IMPL_NOTE: The methods cancel() and adjust() are to be as fast
+     *   as possible, so method run() has simplified synchronization
+     *   that enables cancelled invalidate request to be done on thread
+     *   wake up.
+     */
+    class InvalidateTimer implements Runnable {
+        /** The time to postpone an inavlidate request for */
+        private long delay = -1;
+        /** Indicates whether invalidate timer thread is started */
+        private boolean started = false;
+
+        /**
+         * Cancel postponed invalidate request.
+         * If invalidate timer thread is started, it will be stopped on wake up.
+         */
+        synchronized void cancel() {
+            delay = -1;
+        }
+
+        /** Wait until postponed invalidate request can be done or cancelled */
+        public void run() {
+            long sleepTime;
+            while ((sleepTime = delay) > 0) {
+                try {
+                    delay = 0;
+                    Thread.sleep(sleepTime);
+                    // While thread was sleeping the postponed request
+                    // could be cancelled or adjusted to a later time
+                    if (delay < 0) break;
+                    if (delay > 0) continue;
+                    invalidate();
+                } catch (InterruptedException ie) {}
+            }
+            synchronized(this) {
+                started = false;
+            }
+        }
+        /**
+         * Schedule postponed invalidate request to be done later,
+         * start invalidate timer thread if it has not been started yet.
+         * @param time time to postpone the invalidate request for
+         */
+        synchronized void adjust(long time) {
+            delay = time;
+            if (!started) {
+                started = true;
+                new Thread(this).start();
+            }
+        }
+
+        /** Do postponed invalidate request */
+        synchronized void invalidate() {
+            synchronized (Display.LCDUILock) {
+                if (delay != 0) return;
+                lRequestInvalidateImpl();
+            }
+            lastTimeInvalidate = System.currentTimeMillis();
+            delay = -1;
+        }
+    }
+
+    /**
+     * Called to schedule an "invalidate" for this Displayable.
+     * The method recalls internal implementation of invalidate
+     * request limiting the rate of requests to be not bigger than
+     * a predefined constant.
+     *
+     * SNC NOTE: Caller should hold LCDUILock.
+     */
+    void lRequestInvalidate() {
+        long invalidateDelta =
+                System.currentTimeMillis() - lastTimeInvalidate;
+        if (invalidateDelta >= INVALIDATE_REQUESTS_DELAY ) {
+            invalidateTimer.cancel();
+            lRequestInvalidateImpl();
+            lastTimeInvalidate += invalidateDelta;
+
+        } else {
+            // Postpone too frequent invalidate requests
+            //
+            // IMPL_NOTE: It is possible the last invalidate request
+            //   in a sequence will be delayed for a time bigger than
+            //   INVALIDATE_REQUESTS_DELAY, since invalidate timer thread
+            //   adjusts the time on wake up only.
+            invalidateTimer.adjust(
+                INVALIDATE_REQUESTS_DELAY - invalidateDelta);
+        }
+    }
+
     /**
      * Called to schedule an "invalidate" for this Displayable. Invalidation
      * is caused by things like size changes, content changes, or spontaneous
@@ -852,7 +953,7 @@ class DisplayableLFImpl implements DisplayableLF {
      *
      * SYNC NOTE: Caller should hold LCDUILock.
      */
-    void lRequestInvalidate() {
+    void lRequestInvalidateImpl() {
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_FORM_LAYOUT,
@@ -866,7 +967,7 @@ class DisplayableLFImpl implements DisplayableLF {
             invalidScroll = true;
         }
     }
-    
+
     // ************************************************************
     //  private methods
     // ************************************************************
