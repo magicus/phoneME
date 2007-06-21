@@ -63,6 +63,17 @@ SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
     gxj_putpixel.c \
     gxj_text.c
 
+ifeq ($(TARGET_PLATFORM), wince)
+ifeq ($(TARGET_CPU), arm)
+
+OBJ_FILES += $(OBJ_DIR)/gxj_graphics_asm_wince.o
+$(OBJ_DIR)/gxj_graphics_asm_wince.o: \
+    $(GRAPHICS_MODULE_DIR)/native/gxj_graphics_asm_wince.s
+	$(ASM) -o $@ $<
+
+endif
+endif
+
 # JPEG libray use with Putpixel
     ifeq ($(USE_JPEG), true)
 	vpath % $(JPEG_DIR)
