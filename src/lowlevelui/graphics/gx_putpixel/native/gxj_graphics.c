@@ -198,9 +198,11 @@ static __inline jint alphaComposition(jint src, jint dst) {
     return (((jint)Rr) << 16) | (((jint)Gr) << 8) | Br;
 }
 
-extern void asm_draw_rgb(jint* src, int srcSpan, unsigned short* dst,
-	int dstSpan, int width, int height);
 
+#if (UNDER_CE)
+extern void asm_draw_rgb(jint* src, int srcSpan, unsigned short* dst,
+    int dstSpan, int width, int height);
+#endif
 
 /** Draw image in RGB format */
 void
@@ -208,9 +210,9 @@ gx_draw_rgb(const jshort *clip,
 	     const java_imagedata *dst, jint *rgbData,
              jint offset, jint scanlen, jint x, jint y,
              jint width, jint height, jboolean processAlpha) {
-    int a, b;
-    int sbufRowIndex, dataRowIndex;
-    
+    int a, b, diff;
+    int dataRowIndex, sbufRowIndex;
+
     gxj_screen_buffer screen_buffer;
     gxj_screen_buffer* sbuf = (gxj_screen_buffer*) getScreenBuffer(
       gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL));
@@ -223,56 +225,64 @@ gx_draw_rgb(const jshort *clip,
 
     REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_rgb()\n");
 
-    if (x < clipX1) {
-      width -= (clipX1 - x);
-      offset += (clipX1 - x);
-      x = clipX1;
+    diff = clipX1 - x;
+    if (diff > 0) {
+        width -= diff;
+        offset += diff;
+        x = clipX1;
     }
     if (x + width > clipX2) {
-      width = clipX2 - x;
+        width = clipX2 - x;
     }
-    if (y < clipY1) {
-      height -= (clipY1 - y);
-      offset += (clipY1 - y) * scanlen;
-      y = clipY1;
+    diff = clipY1 - y;
+    if (diff > 0) {
+        height -= diff;
+        offset += diff * scanlen;
+        y = clipY1;
     }
     if (y + height > clipY2) {
-      height = clipY2 - y;
+        height = clipY2 - y;
     }
     if (width <= 0 || height <= 0) {
-      return;
+        return;
     }
 
+#if (UNDER_CE)
     if (!processAlpha) {
-      asm_draw_rgb(rgbData + offset, scanlen - width,
-                   sbuf->pixelData + sbufWidth * y + x, sbufWidth - width,
-                   width, height);
-    } else {
-      CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
-      dataRowIndex = 0;
-      sbufRowIndex = y * sbufWidth;
-      for (b = y; b < y + height;
-          b++, dataRowIndex += scanlen,
-          sbufRowIndex += sbufWidth) {
-          for (a = x; a < x + width; a++) {
-              jint value = rgbData[offset + (a - x) + dataRowIndex];
-              int idx = sbufRowIndex + a;
-              CHECK_PTR_CLIP(sbuf, &(sbuf->pixelData[idx]));
-              
-              if (/* !processAlpha || */ ((value & 0xff000000) == 0xff000000)) {
-                  sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
-              } else {
-                  if ((value & 0xff000000) != 0) {                        
-                      jint background = GXJ_RGB16TORGB24(sbuf->pixelData[idx]);
-                      jint composition = alphaComposition(value, background);
-                      sbuf->pixelData[idx] = GXJ_RGB24TORGB16(composition);
-                  }
-              }
-          } /* loop by rgb data columns */
-      } /* loop by rgb data rows */
+        asm_draw_rgb(rgbData + offset, scanlen - width,
+            sbuf->pixelData + sbufWidth * y + x,
+            sbufWidth - width, width, height);
+        return;
     }
-}
+#endif
 
+    CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
+    dataRowIndex = 0;
+    sbufRowIndex = y * sbufWidth;
+
+    for (b = y; b < y + height;
+        b++, dataRowIndex += scanlen,
+        sbufRowIndex += sbufWidth) {
+
+        for (a = x; a < x + width; a++) {
+            jint value = rgbData[offset + (a - x) + dataRowIndex];
+            int idx = sbufRowIndex + a;
+
+            CHECK_PTR_CLIP(sbuf, &(sbuf->pixelData[idx]));
+
+            if (!processAlpha || (value & 0xff000000) == 0xff000000) {
+                // Pixel has no alpha or no transparency
+                sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
+            } else {
+                if ((value & 0xff000000) != 0) {
+                    jint background = GXJ_RGB16TORGB24(sbuf->pixelData[idx]);
+                    jint composition = alphaComposition(value, background);
+                    sbuf->pixelData[idx] = GXJ_RGB24TORGB16(composition);
+                }
+            }
+        } /* loop by rgb data columns */
+    } /* loop by rgb data rows */
+}
 
 /**
  * Obtain the color that will be final shown 

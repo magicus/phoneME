@@ -24,10 +24,20 @@
 ; ARM in-line assembler in C source files.
 
 	AREA |.text|, CODE
+
+; void fast_pixel_set(void* mem, int value, int number_of_pixels);
+;
+; Perform fast consecutive setting of pixel on raster 32-bits at a time,
+; this function is similar to memset, with the exception that the value is
+; 16bit wide instead of 8bit, and that number of pixels is counter is in
+; 16bits, instead of bytes
+;
+; mem              - address of raster to fill
+; value            - uint16 color value to fill
+; number_of_pixels - number of pixels to fill
+;                    (total bytes set is 2*number_of_pixels)
+
 	EXPORT	fast_pixel_set
-
-; ARGS(void* mem, int value, int number_of_pixels)
-
 fast_pixel_set PROC
 	add     r2, r0, r2, lsl #1
 	add     r3, r1, r1, lsl #0x10
@@ -158,6 +168,21 @@ loop_16_176
 
         LTORG
 	ENDP
+
+
+; void unclipped_blit(unsigned short *dstRaster, int dstSpan,
+;   unsigned short *srcRaster, int srcSpan, int height, int width,
+;   gxj_screen_buffer *dst);
+;
+; Low level simple blit of 16bit pixels from src to dst
+;
+; srcRaster - short* aligned pointer into source of pixels
+; dstRaster - short* aligned pointer into destination
+; srcSpan   - number of bytes per scanline of srcRaster (must be even)
+; dstSpan   - number of bytes per scanline of dstRaster (must be even)
+; width     - number of bytes to copy per scanline (must be even)
+; height    - number of scanlines to copy
+; Note: There is a special case for blitting a 16x16 image to an aligned dst
 
 	EXPORT  unclipped_blit
 unclipped_blit  PROC
@@ -305,6 +330,16 @@ L353
 
         LTORG
 unclipped_blit	ENDP
+
+; void asm_draw_rgb(jint* src, int srcSpan, unsigned short* dst,
+;    int dstSpan, int width, int height);
+;
+; src       - source RGB data pointer
+; srcSpan   - source line span value, width+srcSpan is source scanline length
+; dst       - dest pointer
+; dstSpan   - dest line span value, width+dstSpan is dest scanline length
+; width     - width to draw
+; height    - height to draw
 
 	EXPORT  asm_draw_rgb
 asm_draw_rgb    PROC
