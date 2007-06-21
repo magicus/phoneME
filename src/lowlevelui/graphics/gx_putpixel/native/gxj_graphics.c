@@ -182,7 +182,7 @@ gx_copy_area(const jshort *clip,
  * @param dst destination pixel value in 32bit RGB format.
  * @return result pixel value in 32bit RGB format.
  */
-static __inline jint alphaComposition(jint src, jint dst) {
+static jint alphaComposition(jint src, jint dst) {
     unsigned char As = (unsigned char)(src >> 24);
 
     unsigned char Rr = ADD_COLORS(
