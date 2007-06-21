@@ -106,7 +106,6 @@ endif
 
 # If any JSR is built include JSROP abstractions building
 ifneq ($(INCLUDED_JSROP_NUMBERS),)
-ifeq ($(USE_ABSTRACTIONS),true)
 export ABSTRACTIONS_DIR ?= $(COMPONENTS_DIR)/abstractions
 
 ifeq ($(PROJECT_ABSTRACTIONS_DIR),)
@@ -123,7 +122,6 @@ include $(ABSTRACTIONS_MAKE_FILE)
 
 JSROP_JARS=$(ABSTRACTIONS_JAR) $(JSROP_BUILD_JARS)
 
-endif
 endif
 
 # Include JSR 75

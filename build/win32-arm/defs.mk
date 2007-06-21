@@ -29,7 +29,7 @@
 CVM_DEFINES	+= -DARM -D_ARM
 # __RVCT__ indicates ARM syntax rather than GAS syntax
 CVM_DEFINES	+= -D__RVCT__
-TARGET_CC	= CL.EXE
+TARGET_CC	= CLARM.EXE
 TARGET_AS	= ARMASM.EXE
 
 CCMCODECACHECOPY_CPU_O	= ccmcodecachecopy_arch.o
