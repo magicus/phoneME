@@ -33,7 +33,8 @@ endif
 
 include $(JAVACALL_DIR)/build/common.gmk
 
-TEMP=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
+TEMP1=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
+TEMP=$(patsubst %.cpp,%.obj,$(TEMP1))
 ifneq ($(FILTER_OBJECTS)x,x)
 PORTING_OBJECTS+=$(filter-out $(FILTER_OBJECTS),$(TEMP))
 else # ifneq ($(FILTER_OBJECTS)x,x)
