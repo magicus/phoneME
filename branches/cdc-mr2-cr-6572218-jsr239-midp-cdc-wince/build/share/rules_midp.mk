@@ -56,7 +56,7 @@ initbuild_profile::
 #
 $(CVM_ROMJAVA_LIST): $(MIDP_CLASSES_ZIP)
 
-$(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
+$(MIDP_CLASSES_ZIP):: $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	@echo "====> start building MIDP classes"
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
