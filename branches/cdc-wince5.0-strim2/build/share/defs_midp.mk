@@ -82,7 +82,7 @@ VERIFY_BUILD_ENV	?=
 #CONFIGURATION_OVERRIDE	?= MEASURE_STARTUP=true 
 USE_QT_FB		?= false
 USE_DIRECTFB		?= false
-USE_WINCE_DIRECTDRAW    ?= false
+USE_DIRECTDRAW          ?= false
 # The MIDP makefiles should be fixed to not require CLDC_DIST_DIR for CDC build.
 USE_CONFIGURATOR	?= true
 

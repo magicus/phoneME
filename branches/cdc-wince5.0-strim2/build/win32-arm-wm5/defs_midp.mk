@@ -27,4 +27,4 @@
 
 MIDP_LIBS += ddraw.lib
 
-USE_WINCE_DIRECTDRAW = true
+USE_DIRECTDRAW = true
