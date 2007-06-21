@@ -104,22 +104,22 @@ endif
 include $(SECOP_DIR)/build/share/$(SUBSYSTEM_MAKE_FILE)
 endif
 
-# If any JSR is built include JSROP abstractions building
-ifneq ($(INCLUDED_JSROP_NUMBERS),)
-# Check Jump building
-ifneq ($(USE_JUMP), true)
-$(error JSR optional packages require Jump to be supported. USE_JUMP must be true.)
-endif
-
-export ABSTRACTIONS_DIR ?= $(COMPONENTS_DIR)/abstractions
-ABSTRACTIONS_MAKE_FILE = $(ABSTRACTIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
-ifeq ($(wildcard $(ABSTRACTIONS_MAKE_FILE)),)
-$(error ABSTRACTIONS_DIR must point to a directory containing JSROP abstractions sources)
-endif
-include $(ABSTRACTIONS_MAKE_FILE)
-
-JSROP_JARS=$(ABSTRACTIONS_JAR) $(JSROP_BUILD_JARS)
-endif
+## If any JSR is built include JSROP abstractions building
+#ifneq ($(INCLUDED_JSROP_NUMBERS),)
+## Check Jump building
+#ifneq ($(USE_JUMP), true)
+#$(error JSR optional packages require Jump to be supported. USE_JUMP must be true.)
+#endif
+#
+#export ABSTRACTIONS_DIR ?= $(COMPONENTS_DIR)/abstractions
+#ABSTRACTIONS_MAKE_FILE = $(ABSTRACTIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+#ifeq ($(wildcard $(ABSTRACTIONS_MAKE_FILE)),)
+#$(error ABSTRACTIONS_DIR must point to a directory containing JSROP abstractions sources)
+#endif
+#include $(ABSTRACTIONS_MAKE_FILE)
+#
+#JSROP_JARS=$(ABSTRACTIONS_JAR) $(JSROP_BUILD_JARS)
+#endif
 
 # Include JSR 75
 ifeq ($(USE_JSR_75), true)
@@ -264,7 +264,7 @@ endif
 # Include JSR 239
 ifeq ($(USE_JSR_239), true)
 export JSR_239_DIR ?= $(COMPONENTS_DIR)/jsr239
-JSR_239_MAKE_FILE = $(JSR_239_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+JSR_239_MAKE_FILE = $(JSR_239_DIR)/src/cldc-oi/config/$(SUBSYSTEM_MAKE_FILE)
 ifeq ($(wildcard $(JSR_239_MAKE_FILE)),)
 $(error JSR_239_DIR must point to a directory containing JSR 239 sources)
 endif
