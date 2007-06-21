@@ -38,20 +38,16 @@ public class SatsaPermission extends Permission {
     static String APDU_CONNECTION = "javax.microedition.apdu.connection#";
 
     static public SatsaPermission APDU_CHANNEL0_SAT_OPEN =
-        new SatsaPermission(APDU_CHANNEL0 + APDU_SAT_OPEN, null);
+        new SatsaPermission(APDU_CHANNEL0 + APDU_SAT_OPEN, null, Permissions.APDU_CHANNEL0);
     
     static public SatsaPermission APDU_CONNECTION_OPEN =
-        new SatsaPermission(APDU_CONNECTION + APDU_OPEN, null);
+        new SatsaPermission(APDU_CONNECTION + APDU_OPEN, null, Permissions.APDU_CONNECTION);
 
-    static public SatsaPermission JCRMI_CONNECTION = 
-        new SatsaPermission("javax.microedition.jcrmi.connection", null);
+    static public SatsaPermission JCRMI_CONNECTION =
+        new SatsaPermission("javax.microedition.jcrmi.connection", null, Permissions.JCRMI_CONNECTION);
 
     static public SatsaPermission SIGN_SERVICE =
         new SatsaPermission("javax.microedition.pki.signservice", null, Permissions.SIGN_SERVICE);
-
-    public SatsaPermission(String permission, String resource) {
-        super(permission, resource);
-    }
 
     public SatsaPermission(String permission, String resource, int id) {
         super(permission, resource, id);

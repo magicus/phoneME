@@ -53,9 +53,9 @@ public abstract class Cipher {
      * Need because Class.newInstance does not take args.
      *
      * @param mode the chaining mode parsed from the transformation parameter
-     *             of getInstance and upper cased
+     *             of getNewInstance and upper cased
      * @param padding the paddinge parsed from the transformation parameter of
-     *                getInstance and upper cased
+     *                getNewInstance and upper cased
      *
      * @exception NoSuchPaddingException if <code>transformation</code>
      * contains a padding scheme that is not available.
@@ -81,7 +81,7 @@ public abstract class Cipher {
      * @exception NoSuchPaddingException if <code>transformation</code>
      * contains a padding scheme that is not available.
      */
-    public static final Cipher getInstance(String transformation)
+    public static final Cipher getNewInstance(String transformation)
             throws NoSuchAlgorithmException, NoSuchPaddingException {
 
         Cipher cipher = null;

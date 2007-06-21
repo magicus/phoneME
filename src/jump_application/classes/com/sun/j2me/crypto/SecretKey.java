@@ -26,12 +26,10 @@
 
 package com.sun.j2me.crypto;
 
-import java.security.Key;
-
 /**
  * Implements the base interface for keys used in symmetric algorithms.
  */ 
-public final class SecretKey implements Key {
+public final class SecretKey implements Key, java.security.Key {
     /** Type of key, e.g. DES, RSA etc. */
     String alg;
 
@@ -59,7 +57,7 @@ public final class SecretKey implements Key {
      *                  with the given key material.
      */
     public SecretKey(byte[] key, int offset, int len, String algorithm) {
-	alg = algorithm;
+	    alg = algorithm;
         secret = Util.cloneSubarray(key, offset, len);
     }
 
@@ -92,5 +90,9 @@ public final class SecretKey implements Key {
      */
     public byte[] getEncoded() { 
         return Util.cloneArray(secret);
+    }
+
+    public java.security.Key getKey() {
+        return this;
     }
 }

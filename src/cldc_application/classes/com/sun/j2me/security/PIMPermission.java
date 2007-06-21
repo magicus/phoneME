@@ -24,6 +24,8 @@
 
 package com.sun.j2me.security;
 
+import com.sun.midp.security.Permissions;
+
 public class PIMPermission extends Permission {
     
     static String LIST_ACCESS_READ  = "read";
@@ -34,19 +36,19 @@ public class PIMPermission extends Permission {
     static String LIST_TYPE_TODO    = "javax.microedition.pim.ToDoList";
     
     static public PIMPermission CONTACT_READ  = new PIMPermission(LIST_TYPE_CONTACT,
-                                                            LIST_ACCESS_READ);
+                                                            LIST_ACCESS_READ, Permissions.PIM_CONTACT_READ);
     static public PIMPermission CONTACT_WRITE = new PIMPermission(LIST_TYPE_CONTACT,
-                                                            LIST_ACCESS_WRITE);
+                                                            LIST_ACCESS_WRITE, Permissions.PIM_CONTACT_WRITE);
     static public PIMPermission EVENT_READ    = new PIMPermission(LIST_TYPE_EVENT,
-                                                            LIST_ACCESS_READ);
+                                                            LIST_ACCESS_READ, Permissions.PIM_EVENT_READ);
     static public PIMPermission EVENT_WRITE   = new PIMPermission(LIST_TYPE_EVENT,
-                                                            LIST_ACCESS_WRITE);
+                                                            LIST_ACCESS_WRITE, Permissions.PIM_EVENT_WRITE);
     static public PIMPermission TODO_READ     = new PIMPermission(LIST_TYPE_TODO,
-                                                            LIST_ACCESS_READ);
+                                                            LIST_ACCESS_READ, Permissions.PIM_TODO_READ);
     static public PIMPermission TODO_WRITE    = new PIMPermission(LIST_TYPE_TODO,
-                                                            LIST_ACCESS_WRITE);
-    
-    public PIMPermission(String name, String resource) {
-        super(name, resource);
+                                                            LIST_ACCESS_WRITE, Permissions.PIM_TODO_WRITE);
+
+    public PIMPermission(String name, String resource, int id) {
+        super(name, resource, id);
     }
 }
