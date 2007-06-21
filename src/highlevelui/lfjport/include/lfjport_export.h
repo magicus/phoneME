@@ -44,7 +44,6 @@
 extern "C" {
 #endif
 
-#include <java_types.h>
 #include <gxapi_graphics.h>
 #include <imgapi_image.h>
 
