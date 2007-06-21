@@ -24,7 +24,6 @@
  * information or have any questions.
  */
 
-#include <midp_logging.h>
 #include <lfjport_export.h>
 
 
@@ -74,8 +73,6 @@ void lfjport_refresh(int x1, int y1, int x2, int y2)
  */
 int lfjport_set_vertical_scroll(int scrollPosition, int scrollProportion)
 {
-    REPORT_CALL_TRACE2(LC_HIGHUI, "LF:STUB:lfjport_ui_setVerticalScroll(%3d, %3d)\n",
-                       scrollPosition, scrollProportion);
 
     /* Suppress unused parameter warnings */
     (void)scrollPosition;
@@ -92,8 +89,6 @@ int lfjport_set_vertical_scroll(int scrollPosition, int scrollProportion)
  *             false for normal
  */
 void lfjport_set_fullscreen_mode(jboolean mode) {
-    REPORT_CALL_TRACE1(LC_HIGHUI, "LF:STUB:lfjport_ui_setFullScreenMode(%1)\n",
-                       mode);
 
     (void)mode;
     return;
@@ -103,7 +98,7 @@ void lfjport_set_fullscreen_mode(jboolean mode) {
  * Resets native resources when foreground is gained by a new display.
  */
 void lfjport_gained_foreground() {
-    REPORT_CALL_TRACE(LC_HIGHUI, "LF:STUB:gainedForeground()\n");
+
 }
 
 /**
