@@ -37,7 +37,7 @@ public final class ImageExtender {
     }
     
     public static void drawImage(Graphics destination, int x, int y, int w, 
-                                 int h, Image source, float opacity) {
+                                 int h, Image source, float opacity) {                                          
         drawImageInternal(destination, x, y, w, h, source, opacity);
     }
     

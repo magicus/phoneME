@@ -40,6 +40,10 @@
 #define SURFACE_GRAPHICS 1
 #define SURFACE_LAST SURFACE_GRAPHICS
 
+#define GRAPHICS_TRANSX 0
+#define GRAPHICS_TRANSY 1
+#define GRAPHICS_LAST GRAPHICS_TRANSY
+
 static jfieldID fieldIds[SURFACE_LAST + 1];
 static jboolean fieldIdsInitialized = KNI_FALSE;
 
@@ -49,10 +53,40 @@ static void surface_acquire(AbstractSurface* surface, jobject surfaceHandle);
 static void surface_release(AbstractSurface* surface, jobject surfaceHandle);
 static void surface_cleanup(AbstractSurface* surface);
 
+static jfieldID graphicsFieldIds[GRAPHICS_LAST + 1];
+
 extern VDC screenBuffer;
 
 VDC *
 setupImageVDC(jobject img, VDC *vdc);
+
+static jboolean
+initializeGDFieldIds() {
+    static const FieldDesc graphicsFieldDesc[GRAPHICS_LAST + 1] = {
+                                                       { "transX", "I" },
+                                                       { "transY", "I" }
+                                                      };            
+    jboolean retVal;
+
+    if (fieldIdsInitialized) {
+        return KNI_TRUE;
+    }
+
+    retVal = KNI_FALSE;
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(graphicsHndl);
+
+    KNI_FindClass("javax/microedition/lcdui/Graphics", graphicsHndl);
+
+    if (!KNI_IsNullHandle(graphicsHndl) && initializeFieldIds(graphicsFieldIds, graphicsHndl, graphicsFieldDesc)) {
+        retVal = KNI_TRUE;
+        fieldIdsInitialized = KNI_TRUE;
+    }
+
+    KNI_EndHandles();
+    return retVal;
+}
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_ImageExtender_drawImageInternal() {
@@ -68,6 +102,8 @@ Java_com_sun_pisces_ImageExtender_drawImageInternal() {
     VDC* pVDC;
     _MidpImage * img;
     
+    initializeGDFieldIds();
+    
     KNI_StartHandles(2);
     KNI_DeclareHandle(destinationHandle);
     KNI_DeclareHandle(imageHandle);
@@ -82,6 +118,11 @@ Java_com_sun_pisces_ImageExtender_drawImageInternal() {
     
     pVDC = setupVDC(destinationHandle, &vdc);
     pVDC = getVDC(pVDC);
+    
+    x += KNI_GetIntField(destinationHandle, 
+                            graphicsFieldIds[GRAPHICS_TRANSX]);
+    y += KNI_GetIntField(destinationHandle, 
+                            graphicsFieldIds[GRAPHICS_TRANSY]);
     
     // We need to acquire alphaData, because setupVDC had set it to NULL
     img = (_MidpImage *) getMidpGraphicsPtr(destinationHandle)->img;
@@ -171,6 +212,8 @@ Java_com_sun_pisces_ImageExtender_drawImageInternal() {
     KNI_ReturnVoid();
 }
 
+#include "javacall_logging.h"
+
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_ImageExtender_cleanImageInternal() {
     int x;
@@ -179,27 +222,21 @@ Java_com_sun_pisces_ImageExtender_cleanImageInternal() {
     
     KNI_StartHandles(1);
     KNI_DeclareHandle(imageHandle);
-    
+
     KNI_GetParameterAsObject(1, imageHandle);
     
     setupImageVDC(imageHandle, &svdc);
     
     if (svdc.hdc != NULL) {
-        count = (svdc.height * svdc.width) >> 1;
+        count = svdc.height * svdc.width;
         for (x = 0; x < count; x++) {
-            *((int *) (svdc.hdc + x)) = 0; 
-        }
-        if ((count % 2) != 0) {
-            *((unsigned short *) (svdc.hdc + (count << 1) + 1)) = 0;
+            *((unsigned short *) (svdc.hdc + x)) = 0; 
         }
         if (svdc.alphaData != NULL) {
-            alpha_count = (svdc.height * svdc.width) >> 2;
+            alpha_count = svdc.height * svdc.width;
             count = (svdc.height * svdc.width) % 4;
             for (x = 0; x < alpha_count; x++) {
-                *((int *) (svdc.alphaData + x)) = 0;
-            }
-            for (x = 0; x < count; x++) {
-                *((jbyte *) (svdc.alphaData + (alpha_count << 2) + x)) = 0;
+                *((char *) (svdc.alphaData + x)) = 0;
             }
         }
     }
