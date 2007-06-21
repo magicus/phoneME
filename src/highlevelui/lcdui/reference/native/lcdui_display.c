@@ -37,9 +37,8 @@
 
 #include <lcdlf_export.h>
 #include <midpEventUtil.h>
-#include <gxj_putpixel.h>
 #include <gxapi_graphics.h>
-
+#include <imgapi_image.h>
 
 /**
  * Calls platform specific function to redraw a portion of the display.
@@ -182,13 +181,9 @@ KNIDECL(javax_microedition_lcdui_Display_directFlush) {
     KNI_GetParameterAsObject(1, g);
 
     if (!KNI_IsNullHandle(img)) {
-        gxj_pixel_type* buffer = NULL;
-        const java_imagedata * srcImageDataPtr =  (unhand(struct Java_javax_microedition_lcdui_Image,img))->imageData;
-        int width = srcImageDataPtr->width;
-        if (srcImageDataPtr->pixelData != NULL) {
-            buffer = (gxj_pixel_type *)&(srcImageDataPtr->pixelData->elements[0]);
-            success = lcd_direct_flush(buffer, height, width);
-        }
+      success = lcdlf_direct_flush(GXAPI_GET_GRAPHICS_PTR(g), 
+				   IMGAPI_GET_IMAGE_PTR(img)->imageData,
+				   height);
     }
 
     KNI_EndHandles();

@@ -37,6 +37,9 @@
 #include <midpEvents.h>
 #include <midpServices.h>
 
+#include <gxapi_graphics.h>
+#include <imgapi_image.h>
+
 /* The MIDP windows procedure must put its results here. */
 extern MidpReentryData* pSignalResult;
 extern MidpEvent* pMidpEventResult;
@@ -85,12 +88,12 @@ extern HWND winceapp_get_window_handle();
 /**
  * Return screen width
  */
-extern int get_screen_width();
+extern int winceapp_get_screen_width();
 
 /**
  * Return screen height
  */
-extern int get_screen_height();
+extern int winceapp_get_screen_height();
 
 /**
  * Invert screen rotation flag
@@ -109,6 +112,21 @@ extern void winceapp_set_window_handle(HWND hwnd);
 
 extern LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp,
                                          LPARAM lp);
+
+/**
+ * Flushes the offscreen buffer directly to the device screen.
+ * The size of the buffer flushed is defined by offscreen buffer width
+ * and passed in height. 
+ * Offscreen_buffer must be aligned to the top-left of the screen and
+ * its width must be the same as the device screen width.
+ * @param graphics The Graphics instance associated with the screen.
+ * @param offscreen_buffer The offscreen buffer to be flushed
+ * @param h The height to be flushed
+ * @return KNI_TRUE if direct_flush was successful, KNI_FALSE - otherwise
+ */
+extern jboolean winceapp_direct_flush(const java_graphics *g, 
+		    	              const java_imagedata *offscreen_buffer, 
+                                      int h);
 
 extern BOOL sendMidpKeyEvent(MidpEvent* event, int size);
 

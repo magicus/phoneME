@@ -176,3 +176,8 @@ SUBSYSTEM_LCDUI_I3TEST_JAVA_FILES += \
       $(LCDUI_CLASSES_DIR)/i3test/javax/microedition/lcdui/TestNewSetCurrent.java
   endif
 endif
+
+# Define Jpp
+ifeq ($(USE_DIRECTDRAW), true)
+  JPP_DEFS += -DENABLE_DIRECT_DRAW
+endif
