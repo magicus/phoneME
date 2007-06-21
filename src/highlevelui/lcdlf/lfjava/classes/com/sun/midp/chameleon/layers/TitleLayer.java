@@ -29,8 +29,10 @@ package com.sun.midp.chameleon.layers;
 import com.sun.midp.lcdui.Text;
 import com.sun.midp.chameleon.CLayer;
 import javax.microedition.lcdui.*;
+import com.sun.midp.chameleon.MIDPWindow;
 import com.sun.midp.chameleon.skins.ScreenSkin;
 import com.sun.midp.chameleon.skins.TitleSkin;
+import com.sun.midp.chameleon.skins.TickerSkin;
 
 /**
  * A basic "title" layer. This layer holds a screens title information.
@@ -160,6 +162,11 @@ public class TitleLayer extends CLayer {
     public void update(CLayer[] layers) {
         super.update(layers);
         setAnchor();
+        CLayer t = layers[MIDPWindow.TICKER_LAYER];
+        if (t.isVisible() && TickerSkin.ALIGN == Graphics.TOP) {
+            bounds[Y] = t.bounds[Y] + t.bounds[H];
+        }
+
     }
 
 }

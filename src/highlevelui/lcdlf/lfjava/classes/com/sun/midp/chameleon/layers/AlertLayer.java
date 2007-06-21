@@ -94,41 +94,48 @@ public class AlertLayer extends BodyLayer {
      * Align alert depend on skin
      */
     public void setAnchor() {
-
+        
         bounds[W] = AlertSkin.WIDTH;
         bounds[H] = AlertSkin.HEIGHT;
         
         switch (AlertSkin.ALIGN_X) {
-            case Graphics.LEFT:
-                bounds[X] = 0;
-                break;
-            case Graphics.RIGHT:
-                bounds[X] = ScreenSkin.WIDTH - bounds[W];
-                break;
-            case Graphics.HCENTER:
-            default:
-                bounds[X] = (ScreenSkin.WIDTH - bounds[W]) / 2;
-                break;
+        case Graphics.LEFT:
+            bounds[X] = 0;
+            break;
+        case Graphics.RIGHT:
+            bounds[X] = ScreenSkin.WIDTH - bounds[W];
+            break;
+        case Graphics.HCENTER:
+        default:
+            bounds[X] = (ScreenSkin.WIDTH - bounds[W]) >> 1;
+            break;
         }
         switch (AlertSkin.ALIGN_Y) {
-            case Graphics.TOP:
-                bounds[Y] = 0;
-                break;
-            case Graphics.VCENTER:
-                bounds[Y] = (ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT -
-                    bounds[H]) / 2;
-                if (alert != null && alert.getTicker() != null) {
-                    bounds[Y] -= TickerSkin.HEIGHT;
-                }
-                break;
-            case Graphics.BOTTOM:
-            default:
-                bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT -
-                    bounds[H];
-                if (alert != null && alert.getTicker() != null) {
-                    bounds[Y] -= TickerSkin.HEIGHT;
-                }
-                break;
+        case Graphics.TOP:
+            bounds[Y] = 0;
+            if (alert != null &&
+                alert.getTicker() != null &&
+                TickerSkin.ALIGN == Graphics.TOP) {
+                bounds[Y] += TickerSkin.HEIGHT;
+            } 
+            break;
+        case Graphics.VCENTER:
+            bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT - bounds[H];
+            if (alert != null && alert.getTicker() != null) {
+                bounds[Y] -= TickerSkin.HEIGHT;
+            }
+            bounds[Y] >>= 1;
+            break;
+        case Graphics.BOTTOM:
+        default:
+            bounds[Y] = ScreenSkin.HEIGHT - SoftButtonSkin.HEIGHT -
+                bounds[H];
+            if (alert != null &&
+                alert.getTicker() != null &&
+                TickerSkin.ALIGN != Graphics.TOP) {
+                bounds[Y] -= TickerSkin.HEIGHT;
+            }
+            break;
         }
     }
 
