@@ -135,6 +135,8 @@ public class Protocol implements APDUConnection, ConnectionBaseInterface,
                 satSlot = APDUManager.isSatSlot(slot);
             } catch (IllegalArgumentException e) {
                 satSlot = false;
+            } catch (IOException e) {
+                satSlot = false;
             }
             if (!satSlot) {
                 throw new ConnectionNotFoundException("Invalid slot for SIM");

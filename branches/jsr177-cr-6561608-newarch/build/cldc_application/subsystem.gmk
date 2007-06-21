@@ -141,3 +141,28 @@ SUBSYSTEM_SATSA_EXTRA_INCLUDES = \
     $(MODULE_SATSA_APDU_EXTRA_INCLUDES)
 
 EXTRA_INCLUDES += $(SUBSYSTEM_SATSA_EXTRA_INCLUDES)
+
+# i3test for jsr 177
+#
+ifeq ($(USE_I3_TEST), true)
+SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES += \
+	$(JSR_177_DIR)/src/cldc_application/test/i3test/com/sun/satsa/utils/TestIA5.java 
+ifeq ($(USE_RESTRICTED_CRYPTO), true)
+SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES += \
+	$(JSR_177_DIR)/src/cldc_application/test/i3test/com/sun/satsa/crypto/TestRC4.java 
+endif
+ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
+ifeq ($(JSR_177_APDU_MANAGER),carddevice)
+SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES += \
+	$(JSR_177_DIR)/src/cldc_application/test/i3test/com/sun/io/j2me/apdu/TestCad.java \
+	$(JSR_177_DIR)/src/cldc_application/test/i3test/com/sun/cardreader/TestSlotFactory.java \
+	$(JSR_177_DIR)/src/cldc_application/test/i3test/com/sun/satsa/pki/TestPKI.java
+
+ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
+SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES += \
+	$(JSR_177_DIR)/src/cldc_application/test/i3test/com/sun/cardreader/TestGemplus1.java
+endif
+endif
+endif
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES)
+endif

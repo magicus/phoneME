@@ -66,7 +66,7 @@ KNIDECL (com_sun_io_j2me_apdu_APDUManager_init0) {
     const char *prop_value;
 
     prop_value = jumpGetInternalProp(hostsandports, prop_buf, PROP_BUF_SIZE);
-	if (prop_value != NULL) {
+    if (prop_value != NULL) {
         status = javacall_carddevice_set_property(hostsandports, prop_value);
         if (status != JAVACALL_OK) {
             goto err;
@@ -135,6 +135,7 @@ KNIDECL(com_sun_io_j2me_apdu_APDUManager_isSAT) {
     char *err_msg;
     char *buffer;
     javacall_result status_code;
+    void *context = NULL;
     jboolean slot_locked = KNI_FALSE;
 
     // Global lock - if in native!!!    
@@ -159,7 +160,16 @@ KNIDECL(com_sun_io_j2me_apdu_APDUManager_isSAT) {
 
     slot_locked = KNI_TRUE;
     
-    if (javacall_carddevice_is_sat(slotIndex, &result) != JAVACALL_OK) {
+    status_code = javacall_carddevice_is_sat_start(slotIndex, &result, &context);
+    while (status_code == JAVACALL_WOULD_BLOCK) {
+        CVMD_gcSafeExec(_ee, {
+            if (jumpEventWait(cardReaderEvent) == 0) {
+                status_code = javacall_carddevice_is_sat_finish(slotIndex, &result, context);                
+            }
+        });
+    }
+
+    if (status_code != JAVACALL_OK) {
     err:
         buffer = malloc(BUFFER_SIZE);
         if (buffer == NULL) {
@@ -340,7 +350,7 @@ KNIDECL (com_sun_io_j2me_apdu_APDUManager_exchangeAPDU0) {
     void *context = NULL;
     javacall_result status_code;
     JAVACALL_CARD_MOVEMENT movements;
-    javacall_int32 tx_length, tx_length_max, rx_length, rx_length_max;
+    javacall_int32 tx_length, tx_length_max, rx_length = 0, rx_length_max;
     char *tx_buffer, *rx_buffer;
     char *cur;
     int Lc, Le;
@@ -644,7 +654,7 @@ destroy_end:
     jumpEventDestroy(cardReaderEvent);
 
 free_end:
-    KNI_SetRawArrayRegion(response_handle, 0, rx_length,(jbyte *)rx_buffer);    
+    KNI_SetRawArrayRegion(response_handle, 0, retcode,(jbyte *)rx_buffer);    
     free(tx_buffer);
     free(rx_buffer);    
     

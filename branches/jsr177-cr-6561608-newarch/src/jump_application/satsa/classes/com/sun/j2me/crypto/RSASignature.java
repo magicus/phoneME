@@ -65,7 +65,7 @@ public class RSASignature {
         md = messageDigest;
 
         try {
-            c = Cipher.getInstance("RSA");
+            c = Cipher.getNewInstance("RSA");
         } catch (NoSuchPaddingException e) {
             // we used the default mode and padding this should not happen
             throw new NoSuchAlgorithmException();
