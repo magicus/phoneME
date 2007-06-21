@@ -88,7 +88,8 @@ javacall_result javacall_media_finalize(void) {
  * 
  * @return              Handle of native library. if fail return NULL.
  */
-javacall_handle javacall_media_create(int isolateId, int playerId, 
+javacall_handle javacall_media_create(int isolateId,
+                                      int playerId, 
                                       const javacall_utf16* mime, 
                                       long mimeLength,
                                       const javacall_utf16* uri, 
@@ -569,7 +570,7 @@ javacall_result javacall_media_get_metadata_key_counts(javacall_handle handle, /
  */
 javacall_result javacall_media_get_metadata_key(javacall_handle handle, 
                                                 long index, long bufLength, 
-                                                /*OUT*/ char* keyBuf) {
+                                                /*OUT*/ javacall_utf16* keyBuf) {
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
@@ -588,8 +589,9 @@ javacall_result javacall_media_get_metadata_key(javacall_handle handle,
  * @retval JAVACALL_FAIL            Fail
  */
 javacall_result javacall_media_get_metadata(javacall_handle handle, 
-                                            const char* key, long bufLength, 
-                                            /*OUT*/ char* dataBuf) {
+                                            const javacall_utf16* key, 
+                                            long bufLength, 
+                                            /*OUT*/ javacall_utf16* dataBuf) {
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
