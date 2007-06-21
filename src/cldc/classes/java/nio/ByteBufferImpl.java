@@ -65,7 +65,7 @@ class ByteBufferImpl extends ByteBuffer {
     static native void _putFloats(int address,
                                   float[] dst, int offset, int length);
 
-    native private void finalize();
+    native protected void finalize();
 
     ByteBufferImpl(int capacity, byte[] array, int arrayOffset,
                    ByteBuffer directParent) {

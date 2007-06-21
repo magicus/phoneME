@@ -37,7 +37,7 @@
 
 /*  static native int _allocNative ( int capacity ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_java_nio_ByteBufferImpl__1allocNative() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1allocNative) {
 
     jint capacity = KNI_GetParameterAsInt(1);
 
@@ -54,7 +54,7 @@ Java_java_nio_ByteBufferImpl__1allocNative() {
 
 /*  static native void _copyBytes ( int srcAddress , int dstAddress , int bytes ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_java_nio_ByteBufferImpl__1copyBytes() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1copyBytes) {
 
     jint srcAddress = KNI_GetParameterAsInt(1);
     jint dstAddress = KNI_GetParameterAsInt(2);
@@ -72,7 +72,7 @@ Java_java_nio_ByteBufferImpl__1copyBytes() {
 
 /*  static native byte _getByte ( int address ) ; */
 KNIEXPORT KNI_RETURNTYPE_BYTE
-Java_java_nio_ByteBufferImpl__1getByte() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1getByte) {
 
     jint address = KNI_GetParameterAsInt(1);
 
@@ -87,7 +87,7 @@ Java_java_nio_ByteBufferImpl__1getByte() {
 
 /*  static native void _getBytes ( int address , byte [ ] dst , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_java_nio_ByteBufferImpl__1getBytes() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1getBytes) {
 
     jint address = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -110,7 +110,7 @@ Java_java_nio_ByteBufferImpl__1getBytes() {
 
 /*  static native void _putByte ( int address , byte value ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_java_nio_ByteBufferImpl__1putByte() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1putByte) {
 
     jint address = KNI_GetParameterAsInt(1);
     jbyte value = KNI_GetParameterAsByte(2);
@@ -126,7 +126,7 @@ Java_java_nio_ByteBufferImpl__1putByte() {
 
 /*  static native void _putBytes ( int address , byte [ ] dst , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_java_nio_ByteBufferImpl__1putBytes() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1putBytes) {
 
     jint address = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -150,7 +150,7 @@ Java_java_nio_ByteBufferImpl__1putBytes() {
 
 /*  static native short _getShort ( int address ) ; */
 KNIEXPORT KNI_RETURNTYPE_SHORT
-Java_java_nio_ByteBufferImpl__1getShort() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1getShort) {
 
     jint address = KNI_GetParameterAsInt(1);
 
@@ -165,7 +165,7 @@ Java_java_nio_ByteBufferImpl__1getShort() {
 
 /*  static native void _getShorts ( int address , short [ ] dst , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_java_nio_ByteBufferImpl__1getShorts() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1getShorts) {
 
     jint address = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -191,7 +191,7 @@ Java_java_nio_ByteBufferImpl__1getShorts() {
 
 /*  static native void _putShort ( int address , short value ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_java_nio_ByteBufferImpl__1putShort() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1putShort) {
 
     jint address = KNI_GetParameterAsInt(1);
     jshort value = KNI_GetParameterAsShort(2);
@@ -207,7 +207,7 @@ Java_java_nio_ByteBufferImpl__1putShort() {
 
 /*  static native void _putShorts ( int address , short [ ] dst , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_java_nio_ByteBufferImpl__1putShorts() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1putShorts) {
 
     jint address = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -233,7 +233,7 @@ Java_java_nio_ByteBufferImpl__1putShorts() {
 
 /*  static native int _getInt ( int address ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_java_nio_ByteBufferImpl__1getInt() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1getInt) {
 
     jint address = KNI_GetParameterAsInt(1);
 
@@ -248,7 +248,7 @@ Java_java_nio_ByteBufferImpl__1getInt() {
 
 /*  static native void _getInts ( int address , int [ ] dst , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_java_nio_ByteBufferImpl__1getInts() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1getInts) {
 
     jint address = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -274,7 +274,7 @@ Java_java_nio_ByteBufferImpl__1getInts() {
 
 /*  static native void _putInt ( int address , int value ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_java_nio_ByteBufferImpl__1putInt() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1putInt) {
 
     jint address = KNI_GetParameterAsInt(1);
     jint value = KNI_GetParameterAsInt(2);
@@ -290,7 +290,7 @@ Java_java_nio_ByteBufferImpl__1putInt() {
 
 /*  static native void _putInts ( int address , int [ ] dst , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_java_nio_ByteBufferImpl__1putInts() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1putInts) {
 
     jint address = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -316,7 +316,7 @@ Java_java_nio_ByteBufferImpl__1putInts() {
 
 /*  static native float _getFloat ( int address ) ; */
 KNIEXPORT KNI_RETURNTYPE_FLOAT
-Java_java_nio_ByteBufferImpl__1getFloat() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1getFloat) {
 
     jint address = KNI_GetParameterAsInt(1);
 
@@ -331,7 +331,7 @@ Java_java_nio_ByteBufferImpl__1getFloat() {
 
 /*  static native void _getFloats ( int address , float [ ] dst , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_java_nio_ByteBufferImpl__1getFloats() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1getFloats) {
 
     jint address = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -357,7 +357,7 @@ Java_java_nio_ByteBufferImpl__1getFloats() {
 
 /*  static native void _putFloat ( int address , float value ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_java_nio_ByteBufferImpl__1putFloat() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1putFloat) {
 
     jint address = KNI_GetParameterAsInt(1);
     jfloat value = KNI_GetParameterAsFloat(2);
@@ -373,7 +373,7 @@ Java_java_nio_ByteBufferImpl__1putFloat() {
 
 /*  static native void _putFloats ( int address , float [ ] dst , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_java_nio_ByteBufferImpl__1putFloats() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl__1putFloats) {
 
     jint address = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -401,7 +401,7 @@ Java_java_nio_ByteBufferImpl__1putFloats() {
 
 /*  static native void _getBytes ( int address , byte [ ] dst , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_BufferManager__1getBytes() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_BufferManager__1getBytes) {
 
     jint address = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -429,7 +429,7 @@ typedef struct Java_java_nio_ByteBufferImpl _byte_buffer_impl;
 #define getByteBuffer(handle) (unhand(_byte_buffer_impl,(handle)))
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_java_nio_ByteBufferImpl_finalize() {
+KNI_DECLARE_METHOD(Java_java_nio_ByteBufferImpl_finalize) {
     _byte_buffer_impl* buffer;
     void* native_buffer_address;
 
@@ -438,11 +438,14 @@ Java_java_nio_ByteBufferImpl_finalize() {
     KNI_GetThisPointer(thisObject);
 
     buffer = getByteBuffer(thisObject);
+
+#if NOT_CURRENTLY_USED    
     native_buffer_address = (void*)buffer->arrayOffset;
 
     if (native_buffer_address && !buffer->directParent) {        
         JSR239_free(native_buffer_address);
     }
+#endif // NOT_CURRENTLY_USED
 
     KNI_EndHandles();
     KNI_ReturnVoid();

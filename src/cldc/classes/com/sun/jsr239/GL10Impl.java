@@ -1059,24 +1059,6 @@ public class GL10Impl implements GL10, GL10Ext {
             throwIAE(Errors.GL_NOT_DIRECT);
         }
 
-        // Only record details if this is a legal operation
-        if ((size == 4) && 
-            (type == GL_UNSIGNED_BYTE ||
-             type == GL_FIXED ||
-             type == GL_FLOAT) &&
-            (stride >= 0)) {
-            BufferManager.releaseBuffer(pointerBuffer[COLOR_POINTER]);
-            BufferManager.useBuffer(pointer);
-            
-            pointerBuffer[COLOR_POINTER] = pointer;
-            pointerSize[COLOR_POINTER] = size;
-            pointerType[COLOR_POINTER] = type;
-            pointerStride[COLOR_POINTER] = stride;
-            int nbytes = bufferTypeSize(pointer);
-            pointerRemaining[COLOR_POINTER] = pointer.remaining()*nbytes;
-            pointerOffset[COLOR_POINTER] = 0;
-        }
-
         q(CMD_COLOR_POINTER, 4);
         q(size);
         q(type);
@@ -1316,8 +1298,6 @@ public class GL10Impl implements GL10, GL10Ext {
     public synchronized void glDrawArrays(int mode, int first, int count) {
         checkThread();
 
-        checkBounds(first + count - 1);
-
         q(CMD_DRAW_ARRAYS, 3);
         q(mode);
         q(first);
@@ -1391,53 +1371,6 @@ public class GL10Impl implements GL10, GL10Ext {
         if (!isDirect(indices)) {
             indices = createDirectCopy(indices);
             isReadOnly = true;
-        }
-
-        // No need to bounds check if there will be a type error
-        if (type == GL_UNSIGNED_BYTE ||
-            type == GL_UNSIGNED_SHORT) {
-            int nbytes = (type == GL_UNSIGNED_BYTE) ? 1 : 2;
-
-            if (count > indices.remaining()) {
-                throw new ArrayIndexOutOfBoundsException(
-                                                        Errors.VBO_OFFSET_OOB);
-            }
-            
-            if (DEBUG_MEM) {
-                System.out.print("glDrawElements: Allocating bufferData " +
-                                 count*nbytes);
-            }
-            byte[] bufferData = new byte[count*nbytes];
-            BufferManager.getBytes(indices, 0, bufferData, 0, count*nbytes);
-
-            if (DEBUG_MEM) {
-                System.out.println(": done");
-                System.out.print("glDrawElements: Allocating indexArray " +
-                                 count);
-            }
-            int[] indexArray = new int[count];
-            boolean isBigEndian = GLConfiguration.IS_BIG_ENDIAN;
-            if (DEBUG_MEM) {
-                System.out.println(": done");
-            }
-
-            if (type == GL_UNSIGNED_BYTE) {
-                for (int i = 0; i < count; i++) {
-                    indexArray[i] = bufferData[i] & 0xff;
-                }
-            } else if (type == GL_UNSIGNED_SHORT) {
-                for (int i = 0; i < count; i++) {
-                    int b0 = bufferData[2*i] & 0xff;
-                    int b1 = bufferData[2*i + 1] & 0xff;
-                    if (isBigEndian) {
-                        indexArray[i] = (b0 << 8) | b1;
-                    } else {
-                        indexArray[i] = (b1 << 8) | b0;
-                    }
-                }
-            }
-
-            checkIndices(indexArray);
         }
 
         q(CMD_DRAW_ELEMENTSB, 4);
@@ -2603,24 +2536,6 @@ public class GL10Impl implements GL10, GL10Ext {
             throwIAE(Errors.GL_NOT_DIRECT);
         }
 
-        if ((size >= 2 && size <= 4) && 
-            (type == GL_BYTE ||
-             type == GL_SHORT ||
-             type == GL_FIXED ||
-             type == GL_FLOAT) &&
-            (stride >= 0)) {
-            BufferManager.releaseBuffer(pointerBuffer[TEX_COORD_POINTER]);
-            BufferManager.useBuffer(pointer);
-
-            pointerBuffer[TEX_COORD_POINTER] = pointer;
-            pointerSize[TEX_COORD_POINTER] = size;
-            pointerType[TEX_COORD_POINTER] = type;
-            pointerStride[TEX_COORD_POINTER] = stride;
-            int nbytes = bufferTypeSize(pointer);
-            pointerRemaining[TEX_COORD_POINTER] = pointer.remaining()*nbytes;
-            pointerOffset[TEX_COORD_POINTER] = 0;
-        }
-
         q(CMD_TEX_COORD_POINTER, 4);
         q(size);
         q(type);
@@ -3035,25 +2950,6 @@ public class GL10Impl implements GL10, GL10Ext {
         }
         if (!isDirect(pointer)) {
             throwIAE(Errors.GL_NOT_DIRECT);
-        }
-
-        // Only record details if this is a legal operation
-        if ((size >= 2 && size <= 4) && 
-            (type == GL_BYTE ||
-             type == GL_SHORT ||
-             type == GL_FIXED ||
-             type == GL_FLOAT) &&
-            (stride >= 0)) {
-            BufferManager.releaseBuffer(pointerBuffer[VERTEX_POINTER]);
-            BufferManager.useBuffer(pointer);
-
-            pointerBuffer[VERTEX_POINTER] = pointer;
-            pointerSize[VERTEX_POINTER] = size;
-            pointerType[VERTEX_POINTER] = type;
-            pointerStride[VERTEX_POINTER] = stride;
-            int nbytes = bufferTypeSize(pointer);
-            pointerRemaining[VERTEX_POINTER] = pointer.remaining()*nbytes;
-            pointerOffset[VERTEX_POINTER] = 0;
         }
 
         q(CMD_VERTEX_POINTER, 4);

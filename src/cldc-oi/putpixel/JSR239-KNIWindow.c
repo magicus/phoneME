@@ -25,9 +25,7 @@
 #include "JSR239-KNIInterface.h"
 
 #include <string.h>
-#include <gxj_putpixel.h>
-#include <midp_constants_data.h>
-#include <lcdlf_export.h>
+#include <commonKNIMacros.h>
 
 #undef DEBUG
 
@@ -42,27 +40,29 @@
  * @param graphicshandle   A KNI handle to a graphics object.
  * @return A pointer to the graphics buffer.
  */
-static gxj_pixel_type* getGraphicsBuffer(jobject graphicsHandle) {
-    gxj_screen_buffer sbuf;
-    gxj_screen_buffer* gimg;
-    gxj_pixel_type* dbuffer;
+static unsigned short* getGraphicsBuffer(jobject graphicsHandle) {
+#if NOT_CURRENTLY_USED
+    jobject gimg;
+    getMidpImagePtr(gimg) = 
+		(struct Java_javax_microedition_lcdui_ImageImpl *)(getMidpGraphicsPtr(graphicsHandle)->img);
 
-    gimg = GXJ_GET_GRAPHICS_SCREEN_BUFFER(graphicsHandle, &sbuf);
+    // getMidpImagePtr(gimg) = getMidpGraphicsPtr(graphicsHandle)->destination;
+#ifdef DEBUG
     if (gimg == NULL) {
-        dbuffer = gxj_system_screen_buffer.pixelData;
-    } else {
-        dbuffer = gimg->pixelData;
+        printf("  [ ] gimg == NULL");
     }
-
-    return dbuffer;
+#endif
+    return getMidpImagePtr(gimg)->pixelData;
+#endif // NOT_CURRENTLY_USED
+    return NULL;
 }
 
 /* Copy MIDP screen buffer */
 
 void
-JSR239_getWindowContents(jobject graphicsHandle, jint deltaHeight,
-    JSR239_Pixmap *dst) {
+JSR239_getWindowContents(KNIDECLARGS jobject graphicsHandle, jint deltaHeight, JSR239_Pixmap *dst) {
 
+#if NOT_CURRENTLY_USED
     void* src;
 
     KNI_StartHandles(1);
@@ -89,7 +89,7 @@ JSR239_getWindowContents(jobject graphicsHandle, jint deltaHeight,
 
         src = (void*)getGraphicsBuffer(graphicsHandle);
 
-        /* IMPL_NOTE: get clip sizes into account. */
+        // IMPL_NOTE: get clip sizes into account.
         copyFromScreenBuffer(dst, src, 0, 0, dst->width, dst->height,
             deltaHeight);
     }
@@ -99,14 +99,15 @@ JSR239_getWindowContents(jobject graphicsHandle, jint deltaHeight,
 #endif
 
     KNI_EndHandles();
+#endif // NOT_CURRENTLY_USED
 }
 
 /* Copy engine buffer back to MIDP */
 void
-JSR239_putWindowContents(jobject graphicsHandle,
+JSR239_putWindowContents(KNIDECLARGS jobject graphicsHandle,
                          jint delta_height,
                          JSR239_Pixmap *src, jint flipY) {
-
+#if NOT_CURRENTLY_USED
     void* s;
     void* d;
 
@@ -147,10 +148,10 @@ JSR239_putWindowContents(jobject graphicsHandle,
         printf("  min height = %d\n", min_height);
 #endif
 
-        /* IMPL_NOTE: get clip sizes into account. */
+        // IMPL_NOTE: get clip sizes into account.
         copyToScreenBuffer(src, delta_height, flipY);
 
-        /* src->screen_buffer is an output of copyToScreenBuffer function. */
+        // src->screen_buffer is an output of copyToScreenBuffer function.
         s = (void*)src->screen_buffer;
         d = (void*)getGraphicsBuffer(graphicsHandle);
 
@@ -162,7 +163,7 @@ JSR239_putWindowContents(jobject graphicsHandle,
         printf("JSR239: offscreen buffer data is incorrect.\n");
 #endif
         } else {
-            /* Source data must be in 16bit 565 format. */
+            // Source data must be in 16bit 565 format.
             JSR239_memcpy(d, s,
                 dest_width * min_height * sizeof(gxj_pixel_type));
         }
@@ -173,4 +174,5 @@ JSR239_putWindowContents(jobject graphicsHandle,
 #endif
 
     KNI_EndHandles();
+#endif // NOT_CURRENTLY_USED
 }

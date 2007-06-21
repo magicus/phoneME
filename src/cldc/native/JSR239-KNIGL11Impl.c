@@ -1972,7 +1972,7 @@ runQueue(int *q, int count)
 
 /*  private native int _getNativeAddress ( Buffer buffer ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_jsr239_GL10Impl__1getNativeAddress() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1getNativeAddress) {
 
     jint offset = KNI_GetParameterAsInt(2);
     jint nativeAddress;
@@ -2028,7 +2028,7 @@ Java_com_sun_jsr239_GL10Impl__1getNativeAddress() {
 
 /*  private native void _glGenBuffers ( int n , int [ ] buffers , int offset ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGenBuffers() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGenBuffers) {
 
     jint n = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -2057,7 +2057,7 @@ Java_com_sun_jsr239_GL10Impl__1glGenBuffers() {
 
 /*  private native void _glGenTextures ( int n , int [ ] textures , int offset ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGenTextures() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGenTextures) {
 
     jint n = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -2089,7 +2089,7 @@ Java_com_sun_jsr239_GL10Impl__1glGenTextures() {
 
 /*  private native int _glGetError ( ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_jsr239_GL10Impl__1glGetError() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetError) {
 
     jint returnValue = (jint)glGetError();
     DEBUG_FLUSH_OR_FINISH;
@@ -2099,7 +2099,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetError() {
 
 /* private native void _glGenerateError ( int error ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGenerateError() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGenerateError) {
 
     jint error = KNI_GetParameterAsInt(1);
 
@@ -2120,7 +2120,7 @@ Java_com_sun_jsr239_GL10Impl__1glGenerateError() {
 
 /*  private native void _glGetIntegerv ( int pname , int [ ] params , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetIntegerv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetIntegerv) {
 
     jint pname = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -2154,7 +2154,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetIntegerv() {
 
 /*  private native String _glGetString ( int name ) ; */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-Java_com_sun_jsr239_GL10Impl__1glGetString() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetString) {
 
     jint name = KNI_GetParameterAsInt(1);
     const GLubyte *string;
@@ -2178,7 +2178,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetString() {
 
 /*  private native void _glGetBooleanv ( int pname , int [ ] params , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetBooleanv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetBooleanv) {
 
     jint pname = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -2216,7 +2216,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetBooleanv() {
 
 /*  private native void _glGetFixedv ( int pname , int [ ] params , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetFixedv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetFixedv) {
 
     jint pname = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -2250,7 +2250,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetFixedv() {
 
 /*  private native void _glGetFloatv ( int pname , float [ ] params , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetFloatv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetFloatv) {
 
     jint pname = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -2284,7 +2284,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetFloatv() {
 
 /*  private native void _glGetLightfv ( int light , int pname , float [ ] params , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetLightfv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetLightfv) {
 
     jint light = KNI_GetParameterAsInt(1);
     jint pname = KNI_GetParameterAsInt(2);
@@ -2319,7 +2319,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetLightfv() {
 
 /*  private native void _glGetLightxv ( int light , int pname , int [ ] params , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetLightxv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetLightxv) {
 
     jint light = KNI_GetParameterAsInt(1);
     jint pname = KNI_GetParameterAsInt(2);
@@ -2354,7 +2354,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetLightxv() {
 
 /*  private native void _glGetMaterialfv ( int face , int pname , float [ ] params , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetMaterialfv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetMaterialfv) {
 
     jint face = KNI_GetParameterAsInt(1);
     jint pname = KNI_GetParameterAsInt(2);
@@ -2389,7 +2389,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetMaterialfv() {
 
 /*  private native void _glGetMaterialxv ( int face , int pname , int [ ] params , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetMaterialxv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetMaterialxv) {
 
     jint face = KNI_GetParameterAsInt(1);
     jint pname = KNI_GetParameterAsInt(2);
@@ -2424,7 +2424,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetMaterialxv() {
 
 /*  private native void _glGetTexEnvfv ( int env , int pname , float [ ] params , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetTexEnvfv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetTexEnvfv) {
 
     jint env = KNI_GetParameterAsInt(1);
     jint pname = KNI_GetParameterAsInt(2);
@@ -2459,7 +2459,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetTexEnvfv() {
 
 /*  private native void _glGetTexEnviv ( int env , int pname , int [ ] params , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetTexEnviv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetTexEnviv) {
 
     jint env = KNI_GetParameterAsInt(1);
     jint pname = KNI_GetParameterAsInt(2);
@@ -2494,7 +2494,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetTexEnviv() {
 
 /*  private native void _glGetTexEnvxv ( int env , int pname , int [ ] params , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetTexEnvxv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetTexEnvxv) {
 
     jint env = KNI_GetParameterAsInt(1);
     jint pname = KNI_GetParameterAsInt(2);
@@ -2529,7 +2529,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetTexEnvxv() {
 
 /*  private native void _glGetTexParameterfv ( int target , int pname , float [ ] params , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetTexParameterfv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetTexParameterfv) {
 
     jint target = KNI_GetParameterAsInt(1);
     jint pname = KNI_GetParameterAsInt(2);
@@ -2564,7 +2564,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetTexParameterfv() {
 
 /*  private native void _glGetTexParameteriv ( int target , int pname , int [ ] params , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetTexParameteriv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetTexParameteriv) {
 
     jint target = KNI_GetParameterAsInt(1);
     jint pname = KNI_GetParameterAsInt(2);
@@ -2599,7 +2599,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetTexParameteriv() {
 
 /*  private native void _glGetTexParameterxv ( int target , int pname , int [ ] params , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetTexParameterxv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetTexParameterxv) {
 
     jint target = KNI_GetParameterAsInt(1);
     jint pname = KNI_GetParameterAsInt(2);
@@ -2634,7 +2634,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetTexParameterxv() {
 
 /*  private native void _glGetBufferParameteriv ( int target , int pname , int [ ] params , int offset , int length ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetBufferParameteriv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetBufferParameteriv) {
 
     jint target = KNI_GetParameterAsInt(1);
     jint pname = KNI_GetParameterAsInt(2);
@@ -2669,7 +2669,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetBufferParameteriv() {
 
 /*  private native void _glGetClipPlanef ( int pname , float [ ] eqn , int offset ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetClipPlanef() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetClipPlanef) {
 
     jint pname = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -2698,7 +2698,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetClipPlanef() {
 
 /*  private native void _glGetClipPlanex ( int pname , int [ ] eqn , int offset ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetClipPlanex() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetClipPlanex) {
 
     jint pname = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
@@ -2727,7 +2727,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetClipPlanex() {
 
 /*  private native int _glIsBuffer ( int buffer ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_jsr239_GL10Impl__1glIsBuffer() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glIsBuffer) {
 
     jint buffer = KNI_GetParameterAsInt(1);
 
@@ -2738,7 +2738,7 @@ Java_com_sun_jsr239_GL10Impl__1glIsBuffer() {
 
 /*  private native int _glIsEnabled ( int cap ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_jsr239_GL10Impl__1glIsEnabled() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glIsEnabled) {
 
     jint cap = KNI_GetParameterAsInt(1);
 
@@ -2749,7 +2749,7 @@ Java_com_sun_jsr239_GL10Impl__1glIsEnabled() {
 
 /*  private native int _glIsTexture ( int texture ) ; */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_jsr239_GL10Impl__1glIsTexture() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glIsTexture) {
 
     jint texture = KNI_GetParameterAsInt(1);
 
@@ -2760,7 +2760,7 @@ Java_com_sun_jsr239_GL10Impl__1glIsTexture() {
 
 /*  private native void _glReadPixelsPtr ( int x , int y , int width , int height , int format , int type , int pointer ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glReadPixelsPtr() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glReadPixelsPtr) {
 
     GLint x = (GLint)KNI_GetParameterAsInt(1);
     GLint y = (GLint)KNI_GetParameterAsInt(2);
@@ -2779,7 +2779,7 @@ Java_com_sun_jsr239_GL10Impl__1glReadPixelsPtr() {
 
 /*  private native void _glReadPixelsByte ( int x , int y , int width , int height , int format , int type , byte [ ] array , int offset ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glReadPixelsByte() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glReadPixelsByte) {
 
     GLint x = (GLint)KNI_GetParameterAsInt(1);
     GLint y = (GLint)KNI_GetParameterAsInt(2);
@@ -2825,7 +2825,7 @@ Java_com_sun_jsr239_GL10Impl__1glReadPixelsByte() {
 
 /*  private native void _glReadPixelsInt ( int x , int y , int width , int height , int format , int type , int [ ] array , int offset ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glReadPixelsInt() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glReadPixelsInt) {
     GLint x = (GLint)KNI_GetParameterAsInt(1);
     GLint y = (GLint)KNI_GetParameterAsInt(2);
     GLsizei width = (GLsizei)KNI_GetParameterAsInt(3);
@@ -2861,7 +2861,7 @@ Java_com_sun_jsr239_GL10Impl__1glReadPixelsInt() {
 
 /*  private native int     _glQueryMatrixxOES(int[] mantissa, int mantissaOffset, int[] exponent, int exponentOffset); */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glQueryMatrixxOES() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glQueryMatrixxOES) {
     GLint mantissa[16], exponent[16];
 
     GLint mantissaOffset = (GLint)KNI_GetParameterAsInt(2);
@@ -2891,7 +2891,7 @@ Java_com_sun_jsr239_GL10Impl__1glQueryMatrixxOES() {
 
 /*  private native int _glGetTexGenfv(int coord, int pname, float[] params, int offset, int length); */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_jsr239_GL10Impl__1glGetTexGenfv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetTexGenfv) {
 
     GLenum coord = (GLenum)KNI_GetParameterAsInt(1);
     GLenum pname = (GLenum)KNI_GetParameterAsInt(2);
@@ -2926,7 +2926,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetTexGenfv() {
 
 /* private native int _glGetTexGeniv(int coord, int pname, int[] params, int offset, int length); */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_jsr239_GL10Impl__1glGetTexGeniv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetTexGeniv) {
 
     GLenum coord = (GLenum)KNI_GetParameterAsInt(1);
     GLenum pname = (GLenum)KNI_GetParameterAsInt(2);
@@ -2960,7 +2960,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetTexGeniv() {
 
 /* private native int _glGetTexGenxv(int coord, int pname, int[] params, int offset, int length); */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_jsr239_GL10Impl__1glGetTexGenxv() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetTexGenxv) {
 
     GLenum coord = (GLenum)KNI_GetParameterAsInt(1);
     GLenum pname = (GLenum)KNI_GetParameterAsInt(2);
@@ -2994,7 +2994,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetTexGenxv() {
 
 /*  private native int _glIsRenderbufferOES(int renderbuffer); */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_jsr239_GL10Impl__1glIsRenderbufferOES() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glIsRenderbufferOES) {
     GLuint renderbuffer = KNI_GetParameterAsInt(1);
     jint returnValue = 0;
 
@@ -3008,7 +3008,7 @@ Java_com_sun_jsr239_GL10Impl__1glIsRenderbufferOES() {
 
 /*  private native void _glGenRenderbuffersOES(int n, int[] renderbuffers, int offset) */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGenRenderbuffersOES() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGenRenderbuffersOES) {
     jint n = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
     GLuint *renderbuffers;
@@ -3041,7 +3041,7 @@ Java_com_sun_jsr239_GL10Impl__1glGenRenderbuffersOES() {
 
 /*  private native void _glGetRenderbufferParameterivOES(int target, int pname, int[] params, int offset, int length) */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetRenderbufferParameterivOES() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetRenderbufferParameterivOES) {
     GLenum target = (GLenum)KNI_GetParameterAsInt(1);
     GLenum pname = (GLenum)KNI_GetParameterAsInt(2);
     GLenum offset = (GLenum)KNI_GetParameterAsInt(4);
@@ -3075,7 +3075,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetRenderbufferParameterivOES() {
 
 /*  private native int _glIsFramebufferOES(int framebuffer); */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_jsr239_GL10Impl__1glIsFramebufferOES() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glIsFramebufferOES) {
     GLuint framebuffer = (GLuint)KNI_GetParameterAsInt(1);
     jint returnValue = 0;
 
@@ -3089,7 +3089,7 @@ Java_com_sun_jsr239_GL10Impl__1glIsFramebufferOES() {
 
 /* private native void _glGenFramebuffersOES(int n, int[] framebuffers, int offset); */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGenFramebuffersOES() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGenFramebuffersOES) {
     jint n = KNI_GetParameterAsInt(1);
     jint offset = KNI_GetParameterAsInt(3);
     GLuint *framebuffers;
@@ -3122,7 +3122,7 @@ Java_com_sun_jsr239_GL10Impl__1glGenFramebuffersOES() {
 
 /* private native int _glCheckFramebufferStatusOES(int target); */
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_jsr239_GL10Impl__1glCheckFramebufferStatusOES() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glCheckFramebufferStatusOES) {
     GLenum target = KNI_GetParameterAsInt(1);
 
     jint returnValue = 0;
@@ -3137,7 +3137,7 @@ Java_com_sun_jsr239_GL10Impl__1glCheckFramebufferStatusOES() {
 
 /* private native void _glGetFramebufferAttachmentParameterivOES(int target, int attachment, int pname, int[] params, int offset, int length); */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1glGetFramebufferAttachmentParameterivOES() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1glGetFramebufferAttachmentParameterivOES) {
     GLenum target = (GLenum)KNI_GetParameterAsInt(1);
     GLenum attachment = (GLenum)KNI_GetParameterAsInt(2);
     GLenum pname = (GLenum)KNI_GetParameterAsInt(3);
@@ -3176,7 +3176,7 @@ Java_com_sun_jsr239_GL10Impl__1glGetFramebufferAttachmentParameterivOES() {
 
 /*  private native void _execute ( int [ ] queue , int count ) ; */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_jsr239_GL10Impl__1execute() {
+KNI_DECLARE_METHOD(Java_com_sun_jsr239_GL10Impl__1execute) {
 
     jint theQueue[GL_COMMAND_QUEUE_SIZE];
     jint size;

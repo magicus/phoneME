@@ -57,7 +57,7 @@ final class EGLSurfaceImpl extends EGLSurface {
         }
     }
 
-    private native void finalize();
+    protected native void finalize();
     
     public int nativeId() {
 	return nativeId;

@@ -26,14 +26,17 @@ package javax.microedition.khronos.egl;
 
 import javax.microedition.khronos.opengles.*;
 import com.sun.jsr239.*;
-import com.sun.midp.lcdui.GameMap;
+// import com.sun.midp.lcdui.GameMap;
 
 import javax.microedition.lcdui.Graphics;
 
 import java.lang.ref.WeakReference;
 import java.util.Enumeration;
 
-class EGL10Impl implements EGL10 {
+public class EGL10Impl implements EGL10 {
+    public static int GWIDTH = 176;
+    public static int GHEIGHT = 220;
+ 
 
     static EGL10Impl theInstance;
 
@@ -289,10 +292,32 @@ class EGL10Impl implements EGL10 {
 	    throwIAE(Errors.EGL_NUM_CONFIG_SHORT);
 	}
 
+	///////////////////////////////////////////////////////////////////
+	    int attrib_size = attrib_list != null ? 0 : attrib_list.length;
+            int[] new_attrib_list = new int[attrib_size + 5];
+
+	    int sidx = 0;
+	    int didx = 0;
+	    while (sidx < attrib_size - 1) {
+		if (attrib_list[sidx] == EGL_DEPTH_SIZE) {
+		    sidx += 2;
+		    continue;
+		} else if (attrib_list[sidx] == EGL_NONE) {
+		    break;
+		}
+
+		new_attrib_list[didx++] = attrib_list[sidx++];
+		new_attrib_list[didx++] = attrib_list[sidx++];
+	    }
+	    new_attrib_list[didx++] = EGL_DEPTH_SIZE;
+	    new_attrib_list[didx++] = 16;
+	    new_attrib_list[didx]   = EGL_NONE;
+	///////////////////////////////////////////////////////////////////
+
 	int[] iconfigs = (configs == null) ? null : new int[config_size];
 	boolean success = EGL_TRUE ==
 	    _eglChooseConfig(((EGLDisplayImpl)display).nativeId(),
-			     attrib_list,
+			     new_attrib_list,
 			     iconfigs,
 			     config_size,
 			     num_config);
@@ -409,11 +434,11 @@ class EGL10Impl implements EGL10 {
 	EGLSurfaceImpl surface;
 	int strategy = _getWindowStrategy(winGraphics);
 	if (strategy == STRATEGY_USE_WINDOW) {
-	    int winId = _getWindowNativeID(winGraphics);
+	    int winId = _getWindowNativeID(winGraphics); 
 	    int surf =
 		_eglCreateWindowSurface(displayId, configId,
 					winId,
-					attrib_list);
+					attrib_list);	    
 	    surface = EGLSurfaceImpl.getInstance(surf, width, height);
 	} else if (strategy == STRATEGY_USE_PIXMAP) {
         int pixmapPointer = createWindowPixmap(displayId, configId,
@@ -425,9 +450,9 @@ class EGL10Impl implements EGL10 {
 					attrib_list);
 	    surface = EGLSurfaceImpl.getInstance(surf, width, height);
 	    surface.setPixmapPointer(pixmapPointer);
-    } else if (strategy == STRATEGY_USE_PBUFFER) {
-        int attrib_size = (attrib_list != null) ? attrib_list.length : 0;
-        int[] new_attrib_list = new int[attrib_size + 5];
+	} else if (strategy == STRATEGY_USE_PBUFFER) {
+            int attrib_size = (attrib_list != null) ? attrib_list.length : 0;
+            int[] new_attrib_list = new int[attrib_size + 5];
 
 	    int sidx = 0;
 	    int didx = 0;
@@ -453,6 +478,10 @@ class EGL10Impl implements EGL10 {
 		_eglCreatePbufferSurface(displayId, configId,
 					 new_attrib_list);
 	    surface = EGLSurfaceImpl.getInstance(surf, width, height);
+	    int pixmapPointer =
+                _getWindowPixmap(displayId, configId,
+                                 winGraphics, width, height);
+	    surface.setPixmapPointer(pixmapPointer);
 	} else {
 	    // This should never happen
 	    throw new RuntimeException(Errors.EGL_CANT_HAPPEN);
@@ -507,8 +536,8 @@ class EGL10Impl implements EGL10 {
 	}
 
         Graphics imageGraphics = (Graphics)pixmap;
-        int width = GameMap.getGraphicsAccess().getGraphicsWidth(imageGraphics);
-        int height = GameMap.getGraphicsAccess().getGraphicsHeight(imageGraphics);
+        int width = GWIDTH; // GameMap.getGraphicsAccess().getGraphicsWidth(imageGraphics);
+        int height = GHEIGHT; // GameMap.getGraphicsAccess().getGraphicsHeight(imageGraphics);
 
         int displayId = ((EGLDisplayImpl)display).nativeId();
         int configId = ((EGLConfigImpl)config).nativeId();
@@ -845,30 +874,32 @@ class EGL10Impl implements EGL10 {
     }
     
     public synchronized boolean eglWaitGL() {
+
 	// Ensure all queued commands have been submitted to the GL
 
+        GL10Impl.grabContext();
         EGLContextImpl cimpl = (EGLContextImpl)eglGetCurrentContext();
     GL currGL = cimpl.getGL();
 	((GL10Impl)currGL).qflush();
 
-        GL10Impl.grabContext();
  	boolean returnValue = EGL_TRUE == _eglWaitGL();
 
         EGLSurfaceImpl currentDrawSurface = cimpl.getDrawSurfaceImpl();
 
-        if (currentDrawSurface != null) {
+        if (currentDrawSurface != null && 
+            currentDrawSurface.getPixmapPointer() != 0) {
             final Graphics targetGraphics = currentDrawSurface.getTarget();
             // Creator is null if Graphics is obtained from Image.
             // In case of Image there are no manus and hence no
             // shift is required.
-            final Object creator = (targetGraphics != null) ?
-              GameMap.getGraphicsAccess().getGraphicsCreator(
-                      targetGraphics) : null;
+            // final Object creator = (targetGraphics != null) ?
+            //  GameMap.getGraphicsAccess().getGraphicsCreator(
+            //          targetGraphics) : null;
             int deltaHeight = 0;
-            if (creator != null) {
-                deltaHeight = _getFullDisplayHeight() -
-                 GameMap.getGraphicsAccess().getGraphicsHeight(targetGraphics);
-            }
+            //if (creator != null) {
+            //    deltaHeight = _getFullDisplayHeight() -
+            //     GameMap.getGraphicsAccess().getGraphicsHeight(targetGraphics);
+            //}
             _putWindowContents(targetGraphics,
                     deltaHeight,
                     currentDrawSurface.getPixmapPointer());
@@ -881,24 +912,27 @@ class EGL10Impl implements EGL10 {
     
     public synchronized boolean eglWaitNative(int engine,
                                               Object bindTarget) {
+
+
         EGLContextImpl cimpl = (EGLContextImpl)eglGetCurrentContext();
         // IMPL_NOTE: should we really check for cimpl == null here?
         if (cimpl != null) {
             EGLSurfaceImpl currentDrawSurface = cimpl.getDrawSurfaceImpl();
 
-            if (currentDrawSurface != null) {
+            if (currentDrawSurface != null &&
+                currentDrawSurface.getPixmapPointer() != 0) {
                 Graphics targetGraphics = currentDrawSurface.getTarget();
                 // Creator is null if Graphics is obtained from Image.
                 // In case of Image there are no manus and hence no
                 // shift is required.
-                Object creator = (targetGraphics != null) ?
-                  GameMap.getGraphicsAccess().getGraphicsCreator(
-                          targetGraphics) : null;
+                //Object creator = (targetGraphics != null) ?
+                //  GameMap.getGraphicsAccess().getGraphicsCreator(
+                //          targetGraphics) : null;
                 int deltaHeight = 0;
-                if (creator != null) {
-                    deltaHeight = _getFullDisplayHeight() -
-                        GameMap.getGraphicsAccess().getGraphicsHeight(targetGraphics);
-                }
+                //if (creator != null) {
+                //    deltaHeight = _getFullDisplayHeight() -
+                //        GameMap.getGraphicsAccess().getGraphicsHeight(targetGraphics);
+                //}
                 _getWindowContents(targetGraphics, deltaHeight,
                                    currentDrawSurface.getPixmapPointer());
             } else {
@@ -909,8 +943,8 @@ class EGL10Impl implements EGL10 {
         GL10Impl.grabContext();
         boolean retval = EGL_TRUE == _eglWaitNative(engine);
         return retval;
-    }
-    
+    }     
+
     public synchronized boolean eglSwapBuffers(EGLDisplay display,
                                                EGLSurface surface) {
 	if (display == null) {
@@ -954,14 +988,14 @@ class EGL10Impl implements EGL10 {
         // Creator is null if Graphics is obtained from Image.
         // In case of Image there are no manus and hence no
         // shift is required.
-        final Object creator = (targetGraphics != null) ?
-                GameMap.getGraphicsAccess().getGraphicsCreator(
-                    targetGraphics) : null;
+        // final Object creator = (targetGraphics != null) ?
+        //         GameMap.getGraphicsAccess().getGraphicsCreator(
+        //             targetGraphics) : null;
         int deltaHeight = 0;
-        if (creator != null) {
-            deltaHeight = _getFullDisplayHeight() -
-                GameMap.getGraphicsAccess().getGraphicsHeight(targetGraphics);
-        }
+        // if (creator != null) {
+        //     deltaHeight = _getFullDisplayHeight() -
+        //         GameMap.getGraphicsAccess().getGraphicsHeight(targetGraphics);
+        // }
         int pixmapPointer;
 
         boolean retval;

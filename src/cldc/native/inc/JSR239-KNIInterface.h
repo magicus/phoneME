@@ -50,6 +50,10 @@ typedef struct {
   int atab[256], rtab[256], gtab[256], btab[256];
 } JSR239_Pixmap;
 
+#define KNI_DECLARE_METHOD(methodname)		\
+         methodname(CVMExecEnv* _ee,		\
+	  	    CVMStackVal32* _arguments,	\
+		    CVMMethodBlock** _p_mb)
 
 #ifdef __cplusplus
 extern "C" {

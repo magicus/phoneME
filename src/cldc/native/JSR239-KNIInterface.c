@@ -24,6 +24,11 @@
 
 #include "JSR239-KNIInterface.h"
 
+// #include "wince_javacall_impl.h"
+#include <windows.h>
+
+// extern HWND javaImpl_getMainWindowHandle();
+
 #ifdef DEBUG
 #include <stdio.h>
 #endif
@@ -46,7 +51,7 @@ JSR239_getWindowStrategy(jobject winHandle) {
     printf("JSR239_getWindowStrategy\n");
 #endif
 
-    return STRATEGY_USE_PIXMAP;
+     return STRATEGY_USE_WINDOW;
 }
 
 
@@ -62,8 +67,8 @@ JSR239_getWindowNativeID(jobject winHandle) {
 #ifdef DEBUG
     printf("JSR239_getWindowNativeID\n");
 #endif
-
-    return -1;
+//    return javaImpl_getMainWindowHandle();
+    return NULL;
 }
 
 
