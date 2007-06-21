@@ -157,6 +157,7 @@ asm volatile(
 #define ASM_LOOPOPTIMIZE 1 /* collapse multiple scanlines to 1 */
 #endif 
 
+#if (!UNDER_CE)
 void unclipped_blit(unsigned short *dstRaster, int dstSpan,
 		    unsigned short *srcRaster, int srcSpan,
 		    int height, int width, gxj_screen_buffer *dst) {
@@ -422,6 +423,7 @@ void unclipped_blit(unsigned short *dstRaster, int dstSpan,
 #endif
 }
 
+#endif // !UNDER_CE
 
 #ifdef __cplusplus
 }
