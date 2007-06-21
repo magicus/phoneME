@@ -1,0 +1,155 @@
+#!/bin/sh
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#  
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+#  
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+#  
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+#  
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+#  
+#  runxinstall is a script to help install, uninstall, and list installed 
+#  content within a JUMP system.  runxinstall differs from runinstall in that
+#  this tool runs within the JUMP Executive process.
+#
+# Available commands:
+#   Command: runxinstall install <content descriptor URL>
+#   Desc.  : install content from specified descriptor file
+#   Example: runxinstall install file:///home/user/content.jad
+#
+#   Command runxinstall install_all <provisioning server URL>
+#   Desc.  : install all content from specified provisioning server url
+#
+#   Command: runxinstall uninstall <app model> <id>
+#   Desc.  : uinstall application with specified app model and id number
+#   Example: runxinstall uninstall xlet 7
+#            runxinstall uninstall midlet 2
+#            runxinstall uninstall main 5
+#
+#   Command: runxinstall uninstall_all
+#   Desc.  : uninstall all installed content
+#         
+#   Command: runxinstall list
+#   Desc.  : print a list of the titles of all installed content
+#
+#   runxinstall info
+#   Desc.  : print out information about each installed application
+#
+########################### VARIABLE EXPLANATION ################################
+#
+# Name:  PHONEME_DIR
+# Desc:  Location of the root of the phoneme workspace.  This should only be used for
+#        linux-86-suse or linux-arm-zaurus builds which are run from within a
+#        development workspace.
+# Dflt:  /home/$WHOAMI/phoneme
+#
+# Name:  PHONEME_DIST
+# Desc:  Location of the phoneme build
+# Dflt:  On linux-x86-suse, default is $PHONEME_DIR/build/linux-x86-suse/$CDC_SUBDIR
+#        On linux-arm-zaurus, default is /home/cdcams.
+#
+# Name:  CDC_SUBDIR
+# Desc:  Subdirectory name of phoneme build
+# Dflt:  jump
+#
+# Name:  JUMP_CONTENT_STORE_DIR
+# Desc:  Root of content store
+# Dflt:  data (default value is determined in modules-config.properties)
+#
+# Name:  USE_GCI
+# Desc:  Determines if GCI/directfb will be used to display
+# Dflt:  false
+#
+# Name:  USE_QVFB
+# Desc:  Decides if Qtopia's qvfb is used for display purposes, will automatically
+#         start if set to true.
+# Dflt:  false
+#
+# Name:  PROVISIONING_SERVER_URL
+# Desc:  URL to a provisioning server
+# Dflt:  None
+#
+
+WHOAMI=`whoami`
+
+PHONEME_PLATFORM=`uname -a | cut -d ' ' -f 12`
+if [ "$PHONEME_PLATFORM" = "unknown" ] ; then
+  PHONEME_PLATFORM=`uname -a | cut -d ' ' -f 11`
+fi
+
+# PHONEME_DIR is primarily used when running from a build within your workspace.
+# It sets PHONEME_DIST, which is the important variable for determining the location
+# of the build.  PHONEME_DIR is strategically used to determine PHONEME_DIST.
+# Note: PHONEME_DIR is when PHONEME_DIST is set by the user.
+if [ -z "$PHONEME_DIR" ] ; then
+    export PHONEME_DIR=/home/$WHOAMI/phoneme
+fi
+
+# Subdirectory name used in Phoneme build
+if [ -z "$CDC_SUBDIR" ] ; then
+    export CDC_SUBDIR=jump
+fi
+
+### Try to determine a default build platform.
+### This is just a simple way to determine it.
+### This should be adjusted to fit more platforms.
+if [ -z "$DEFAULT_LINUX_PLATFORM" ] ; then
+  tmp=`uname -a | awk '{ print $3 }' | grep generic`
+  if [ "$tmp" != "" ] ; then
+    DEFAULT_LINUX_PLATFORM=linux-x86-generic
+  else
+    DEFAULT_LINUX_PLATFORM=linux-x86-suse  
+  fi
+fi
+
+################# ZAURUS SECTION ########################
+if [ "$PHONEME_PLATFORM" = "armv5tel" ] ; then
+   if [ -z "$PHONEME_DIST" ] ; then
+       export PHONEME_DIST=/home/cdcams    
+   fi
+   export USE_JIT=true
+   export LOGNAME=$WHOAMI
+   export QTDIR=/home/QtPalmtop
+   export USE_QVFB=false
+################ LINUX X86 SECTION ######################
+elif [ "$PHONEME_PLATFORM" = "i686" ] ; then
+   if [ -z "$PHONEME_DIST" ] ; then
+       export PHONEME_DIST=$PHONEME_DIR/build/$DEFAULT_LINUX_PLATFORM/$CDC_SUBDIR
+   fi
+fi
+
+RUNJUMP=$PHONEME_DIST/bin/runjump
+TMP_FILE=/tmp/${WHOAMI}.jump.properties
+
+PRESENTATION_MODE=com.sun.jumpimpl.presentation.installer.InstallerTool
+
+ARG1="jump.presentation.installer.arg1=$1"
+ARG2="jump.presentation.installer.arg2=$2"
+ARG3="jump.presentation.installer.arg3=$3"
+PROPERTIES="jump.installer.verbose=true jump.presentation=$PRESENTATION_MODE jump.installer.provisionURL=$PROVISIONING_SERVER_URL $ARG1 $ARG2 $ARG3"
+
+rm -f $TMP_FILE
+touch $TMP_FILE
+for property in $PROPERTIES; do \
+  echo $property >> $TMP_FILE
+done;
+
+COMMAND="$RUNJUMP system --config-file $TMP_FILE"
+echo $COMMAND
+$COMMAND
