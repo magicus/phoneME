@@ -834,7 +834,7 @@ $(LIB_CLASSESJAR):
 else
 $(LIB_CLASSESJAR): $(CVM_BUILD_TOP)/.libclasses
 	@echo ... $@	
-	$(AT)(cd $(LIB_CLASSESDIR); $(CVM_JAR) cf $@ *)
+	$(AT)(cd $(LIB_CLASSESDIR); $(CVM_JAR) cf $(call POSIX2HOST, $@) *)
 endif
 
 #####################################
@@ -857,7 +857,7 @@ $(CVM_DERIVEDROOT)/jni/.time.stamp : $(LIB_CLASSESJAR)
 		echo ... generating jni class headers ;		\
 		$(CVM_JAVAH) -jni					\
 			-d $(CVM_DERIVEDROOT)/jni			\
-			-classpath $(LIB_CLASSESJAR)$(JSR_JNI_CLASSPATH) \
+			-classpath $(call POSIX2HOST, $(LIB_CLASSESJAR))$(JSR_JNI_CLASSPATH) \
 			-bootclasspath $(CVM_BUILDTIME_CLASSESZIP)	\
 			$(JSR_JNI_CLASSES) @$(CVM_BUILD_TOP)/.javahclasses.list ;		\
 	fi
