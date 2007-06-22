@@ -24,14 +24,6 @@
 
 package com.sun.j2me.security;
 
-import java.util.Hashtable;
-import java.util.Enumeration;
-
-import com.sun.midp.midlet.MIDletStateHandler;
-import com.sun.midp.midlet.MIDletSuite;
-
-import com.sun.midp.security.Permissions;
-
 /** 
  * The AccessController class is used for access control operations
  * and decisons. This is class is used by code that must compile in a
@@ -51,10 +43,32 @@ public final class AccessController {
     public static final String TRUSTED_APP_PERMISSION_NAME =
         "com.sun.j2me.trustedApp";
 
+    /** Access control context for the application running in this isolate. */
+    private static AccessControlContext context;
+
     /** 
      * Don't allow anyone to instantiate an AccessController
      */
     private AccessController() { }
+
+    /**
+     * Called to set the access control context for the application running
+     * in this isolate.
+     *
+     * @param accessControlContext access control context for the application
+     *       running in the isolate
+     *
+     * @exception SecurityException if the context is already set
+     */
+    public static void setAccessControlContext(
+        AccessControlContext accessControlContext) {
+
+        if (context != null) {
+            throw new SecurityException("context already set");
+        }
+
+        context = accessControlContext;
+    }
 
     /** 
      * Determines whether the access request indicated by the
@@ -75,7 +89,7 @@ public final class AccessController {
     public static void checkPermission(String name)
         throws SecurityException {
 
-        checkPermission(name, null, null);
+        checkPermission(name, null);
     }
 
     /**
@@ -123,40 +137,12 @@ public final class AccessController {
      */
     public static synchronized void checkPermission(String name,
             String resource, String extraValue) throws SecurityException {
-        MIDletStateHandler midletStateHandler;
-        MIDletSuite midletSuite;
-        int permissionId;
 
-        midletStateHandler = MIDletStateHandler.getMidletStateHandler();
-        midletSuite = midletStateHandler.getMIDletSuite();
-
-        if (midletSuite == null) {
-            throw new IllegalStateException("no suite loaded");
+        if (context == null) {
+            throw new SecurityException("not security context set");
         }
 
-        if (TRUSTED_APP_PERMISSION_NAME.equals(name)) {
-            // This is really just a trusted suite check.
-            if (midletSuite.isTrusted()) {
-                return;
-            }
-
-            throw new SecurityException("suite not trusted");
-        }
-
-        permissionId = Permissions.getId(name);
-
-        if (permissionId == Permissions.AMS ||
-                permissionId == Permissions.MIDP) {
-            // These permission checks cannot block
-            midletSuite.checkIfPermissionAllowed(permissionId);
-        } else {
-            try {
-                midletSuite.checkForPermission(permissionId, resource,
-                                                extraValue);
-            } catch (InterruptedException ie) {
-                throw new InterruptedSecurityException();
-            }
-        }
+        context.checkPermission(name, resource, extraValue);
     }
 }
 

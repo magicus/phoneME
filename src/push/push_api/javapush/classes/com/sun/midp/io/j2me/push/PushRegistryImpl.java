@@ -337,7 +337,7 @@ public final class PushRegistryImpl {
 
         checkMidlet(midletSuite, midlet);
 
-        AccessController.checkPermission("javax.microedition.io.PushRegistry");
+        AccessController.checkPermission(PUSH_PERMISSION_NAME);
 
         return ConnectionRegistry.registerAlarm(midletSuite, midlet, time);
     }

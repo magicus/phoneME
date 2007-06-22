@@ -53,6 +53,7 @@ SUBSYSTEM_AMS_EXTRA_INCLUDES += \
     -I$(SUBSYSTEM_AMS_DIR)/ams_base_cldc/include
 
 SUBSYSTEM_AMS_JAVA_FILES += \
+    $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/CldcAccessControlContext.java \
     $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/CldcForegroundController.java \
     $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/CldcMIDletLoader.java \
     $(AMS_BASE_CLDC_DIR)/classes/com/sun/midp/main/CldcMIDletStateListener.java \
