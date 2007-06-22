@@ -1370,6 +1370,7 @@ endRenderingImpl(Renderer* rdr) {
         y0 = clamp(y0, bMinY, bMaxY);
         y1 = clamp(y1, bMinY, bMaxY);
 
+        
         fillRectSrcOver(rdr, rdr->_data, rdr->_imageType,
                         rdr->_imageOffset,
                         rdr->_imageScanlineStride,
@@ -1378,7 +1379,7 @@ endRenderingImpl(Renderer* rdr) {
                         rdr->_width, rdr->_height,
                         x0, y0, x1, y1,
                         rdr->_cred, rdr->_cgreen, rdr->_cblue);
-
+        
         rdr->_bboxX0 = x0 >> rdr->_SUBPIXEL_LG_POSITIONS_X;
         rdr->_bboxY0 = y0 >> rdr->_SUBPIXEL_LG_POSITIONS_Y;
         rdr->_bboxX1 = (x1 + rdr->_SUBPIXEL_POSITIONS_X - 1) >>
@@ -1495,7 +1496,7 @@ computeCrossingsForEdge(Renderer *rdr, jint index,
 
     orientation = rdr->_edges[index + 4];
     y = minY;
-    lx = (jlong)(y - iy0)*dx/dy + ix0;
+    lx = ((jlong)(y - iy0)*dx)/dy + ix0;
     addCrossing(rdr, y >> rdr->_YSHIFT, (jint)(lx >> rdr->_XSHIFT), 
                 orientation);
 
@@ -1937,8 +1938,8 @@ emitQuadrants(Pipeline* pipeline, jint cx, jint cy,
         jint incr, idx, j;
         if (pass == 1 || pass == 2) xsign = -1;
         if (pass == 2 || pass == 3) ysign = -1;
-        incr = 2*xsign*ysign;
-        idx = (incr > 0) ? 0 : 2*nPoints - 2;
+        incr = (xsign*ysign) << 1;
+        idx = (incr > 0) ? 0 : (nPoints << 1) - 2;
 
         for (j = 0; j < nPoints; j++) {
             PIPELINE_LINETO(pipeline, cx + xsign*points[idx],
@@ -1963,9 +1964,9 @@ emitOval(Pipeline* pipeline, jint cx, jint cy, jint rx, jint ry,
 
     PIPELINE_MOVETO(pipeline, cx + rx, cy);
 
-    nPoints >>= 2;
+    nPoints = nPoints >> 2;
     nSize = nPoints << 1;
-    REALLOC(rdr->_ovalPoints, jint, nSize, rdr->_ovalPoints_length << 1);
+    REALLOC(rdr->_ovalPoints, jint, nSize, rdr->_ovalPoints_length * 2);
     ASSERT_ALLOC(rdr->_ovalPoints);
 
     points = rdr->_ovalPoints;
@@ -1983,6 +1984,9 @@ emitOval(Pipeline* pipeline, jint cx, jint cy, jint rx, jint ry,
     PIPELINE_CLOSE(pipeline);
 }
 
+extern int 
+toPiscesCoords(unsigned int ff);
+
 // Emit the outline of an oval, offset by pen radius lw2
 // The interior path may self-intersect, but this is handled
 // by using a WIND_NON_ZERO wining rule
@@ -1996,16 +2000,16 @@ emitOffsetOval(Pipeline* pipeline, jint cx, jint cy, jint rx, jint ry,
     jint* points;
     jint j;
 
-    jdouble drx = rx/65536.0;
-    jdouble dry = ry/65536.0;
-    jdouble dlw2 = lw2/65536.0;
+    jdouble drx = rx/65536.0f;
+    jdouble dry = ry/65536.0f;
+    jdouble dlw2 = lw2/65536.0f;
 
     jint idx = 0;
     jint nSize;
 
     PIPELINE_MOVETO(pipeline, cx + rx + lw2*incr, cy);
 
-    nPoints >>= 2;
+    nPoints = nPoints >> 2;
     nSize = nPoints << 1;
     REALLOC(rdr->_ovalPoints, jint, nSize, rdr->_ovalPoints_length * 2);
     ASSERT_ALLOC(rdr->_ovalPoints);
@@ -2022,8 +2026,8 @@ emitOffsetOval(Pipeline* pipeline, jint cx, jint cy, jint rx, jint ry,
         jdouble dpx = cosTheta*(drx + incr*dry*den);
         jdouble dpy = sinTheta*(dry + incr*drx*den);
 
-        jint px = (jint)(dpx*65536.0);
-        jint py = (jint)(dpy*65536.0);
+        jint px = (jint)toPiscesCoords(dpx);
+        jint py = (jint)toPiscesCoords(dpy);
 
         points[idx++] = px;
         points[idx++] = py;
@@ -2253,8 +2257,8 @@ fillOrDrawArc(Renderer* rdr, jint x, jint y, jint width, jint height,
     cx = x + w2;
     cy = y + h2;
 
-    startAngle = (jint)(((jlong)startAngle*PISCES_TWO_PI)/(360*65536));
-    arcAngle = (jint)(((jlong)arcAngle*PISCES_TWO_PI)/(360*65536));
+    startAngle = (jint)(((jlong)startAngle*PISCES_TWO_PI)/(360 << 16));
+    arcAngle = (jint)(((jlong)arcAngle*PISCES_TWO_PI)/(360 << 16));
 
     endAngle = startAngle + arcAngle;
 
