@@ -1981,14 +1981,14 @@ emitOval(Pipeline* pipeline, jint cx, jint cy, jint rx, jint ry,
 
     PIPELINE_MOVETO(pipeline, cx + rx, cy);
 
-    nPoints /= 4;
-    nSize = 2*nPoints;
-    REALLOC(rdr->_ovalPoints, jint, nSize, rdr->_ovalPoints_length * 2);
+    nPoints >>= 2;
+    nSize = nPoints << 1;
+    REALLOC(rdr->_ovalPoints, jint, nSize, rdr->_ovalPoints_length << 1);
     ASSERT_ALLOC(rdr->_ovalPoints);
 
     points = rdr->_ovalPoints;
     for (j = 0; j < nPoints; j++) {
-        jint theta = i*PISCES_TWO_PI/(4*nPoints);
+        jint theta = i*PISCES_TWO_PI/(nPoints << 2);
         jint ox = piscesmath_cos(theta);
         jint oy = piscesmath_sin(theta);
         points[idx++] = (jint)((jlong)rx*ox >> 16);
@@ -2023,8 +2023,8 @@ emitOffsetOval(Pipeline* pipeline, jint cx, jint cy, jint rx, jint ry,
 
     PIPELINE_MOVETO(pipeline, cx + rx + lw2*incr, cy);
 
-    nPoints /= 4;
-    nSize = 2*nPoints;
+    nPoints >>= 2;
+    nSize = nPoints << 1;
     REALLOC(rdr->_ovalPoints, jint, nSize, rdr->_ovalPoints_length * 2);
     ASSERT_ALLOC(rdr->_ovalPoints);
 

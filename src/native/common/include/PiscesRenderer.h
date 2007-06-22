@@ -172,6 +172,9 @@
  * Typedef to struct _Renderer.
  */
 typedef struct _Renderer {
+    /** 
+     * Rule specifying how inner part of polygon is recognized.
+     */         
     jint _windingRule;
 
     // Flat color or (Java2D) linear gradient
@@ -184,15 +187,15 @@ typedef struct _Renderer {
     jint _ored, _ogreen, _oblue, _oalpha;
 
     // Gradient paint
-    jint _lgradient_x0; /// 
+    jint _lgradient_x0; // starting point of gradient 
     jint _lgradient_y0;
-    jint _lgradient_x1;
+    jint _lgradient_x1; // end point of line along 
     jint _lgradient_y1;
-    jint _lgradient_c0;
-    jint _lgradient_c1;
-    jint _lgradient_cyclic;
+    jint _lgradient_c0; // color at point [x0, y0] 
+    jint _lgradient_c1; // color at point [x1, y1]
+    jint _lgradient_cyclic; // is gradient with repetition
 
-    jfloat _lgradient_fx0;
+    jfloat _lgradient_fx0; 
     jfloat _lgradient_fy0;
     jfloat _lgradient_fx1;
     jfloat _lgradient_fy1;

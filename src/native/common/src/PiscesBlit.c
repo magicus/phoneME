@@ -42,8 +42,11 @@ static INLINE void blendSrcOver8888(jint *intData, jint aval,
                              jint sred, jint sgreen, jint sblue);
 static INLINE void blendSrcOver8888_pre(jint *intData, jint aval, jint sred, 
                                  jint sgreen, jint sblue); 
-                                                             
-static INLINE void blendSrcOver565(jshort *shortData, jint pix);
+#ifndef ARM                                                             
+	static INLINE void blendSrcOver565(jshort *shortData, jint pix);
+#else
+	extern void blendSrcOver565(jshort *shortData, jint pix);
+#endif
 static INLINE void blendSrcOver8(jbyte *byteData, jint aval, jint cgray);
 
 static INLINE void blendSrc8888(jint *intData, jint aval, jint aaval,
@@ -1148,6 +1151,7 @@ blitSrcOver8888_pre(Renderer *rdr, jint height) {
     }
 }
 
+
 void
 blitSrcOver565(Renderer *rdr, jint height) {
     jint j;
@@ -1171,10 +1175,10 @@ blitSrcOver565(Renderer *rdr, jint height) {
     jint *alphaMap = rdr->_colorAlphaMap;
 
     jbyte *a, *am;
-
+	
     cval = (jshort)((cred5 << 11) | (cgreen6 << 5) | (cblue5));
 
-    for (j = 0; j < height; j++) {
+    for (j = height - 1; j >= 0; j--) {
         minX = minTouched[j];
         maxX = maxTouched[j];
         aidx = alphaOffset + minX;
@@ -2052,6 +2056,7 @@ blendSrcOver8888_pre(jint *intData,
     *intData = (oalpha << 24) | (ored << 16) | (ogreen << 8) | oblue;
 }
 
+#ifndef ARM
 static void
 blendSrcOver565(jshort *shortData, jint pix) {
     /* assume cred, cgreen, cblue are at the correct bit depths */
@@ -2068,6 +2073,7 @@ blendSrcOver565(jshort *shortData, jint pix) {
                  ((dwAlphaGtemp + (((coG - dwAlphaGtemp) * dw6bitOpacity) 
                                     >> 6)) & 0x07e0);
 }
+#endif
 
 static void
 blendSrcOver8(jbyte *byteData,

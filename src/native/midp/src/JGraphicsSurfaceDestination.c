@@ -32,9 +32,8 @@
 
 #include <pcsl_memory.h>
 
-#include <gxapi_graphics.h>
-#include <gx_graphics.h>
-
+#include <midpGraphics.h>
+#include <midpLCDUI.h>
 #include <sni.h>
 #include <commonKNIMacros.h>
 
@@ -126,7 +125,7 @@ Java_com_sun_pisces_GraphicsSurfaceDestination_drawRGBImpl() {
 
         SNI_BEGIN_RAW_POINTERS;
 
-        tempArray = &JavaIntArray(arrayHandle)[offset];
+        tempArray = JavaIntArray(arrayHandle)->elements + offset;
 
         pisces_drawRGB(graphicsHandle, tempArray, scanLength,
                        x, y, width,
@@ -152,10 +151,8 @@ static jboolean pisces_drawRGB(jobject graphicsHandle,
                                jfloat opacity) {
 
     jboolean retVal = KNI_FALSE; //assume failure
-    jshort clip[4]; /* Defined in Graphics.java as 4 shorts */
 
-    GXAPI_TRANSLATE(graphicsHandle, x, y);
-    GXAPI_GET_CLIP(graphicsHandle, clip);
+    GRAPHICS* graphics = getMidpGraphicsPtr(graphicsHandle);
 
     if (opacity < 1.0) {
         jint* tempArray = (jint*)pcsl_mem_malloc(width * height * sizeof(jint));
@@ -164,6 +161,7 @@ static jboolean pisces_drawRGB(jobject graphicsHandle,
             //Failed!
             //retVal = KNI_FALSE;
         } else {
+            VDC vdc;
 
             /* Premultiply the alpha value in the pixels with opacity */
             /* IMPL_NOTE : this is ineffcient and allocates memory. 
@@ -173,15 +171,16 @@ static jboolean pisces_drawRGB(jobject graphicsHandle,
                           opacity,
                           tempArray);
 
-            gx_draw_rgb(clip,
-                        GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(graphicsHandle),
-                        tempArray,
-                        0,
-                        scanLength,
-                        x,
-                        y,
-                        width, height,
-                        KNI_TRUE);
+            LCDUIdrawRGB(graphics, 
+                         setupVDC(graphicsHandle, &vdc), 
+                         tempArray, 
+                         0, 
+                         scanLength, 
+                         x + graphics->transX, 
+                         y + graphics->transY, 
+                         width, 
+                         height, 
+                         KNI_TRUE);
 
             pcsl_mem_free(tempArray);
 
@@ -189,15 +188,18 @@ static jboolean pisces_drawRGB(jobject graphicsHandle,
         }
 
     } else {
-        gx_draw_rgb(clip,
-                    GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(graphicsHandle),
-                    argb,
-                    0,
-                    scanLength,
-                    x,
-                    y,
-                    width, height,
-                    KNI_TRUE);
+        VDC vdc;
+
+        LCDUIdrawRGB(graphics, 
+                     setupVDC(graphicsHandle, &vdc), 
+                     argb, 
+                     0, 
+                     scanLength, 
+                     x + graphics->transX, 
+                     y + graphics->transY, 
+                     width, 
+                     height, 
+                     KNI_TRUE);
 
         retVal = KNI_TRUE;
     }
