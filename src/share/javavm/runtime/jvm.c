@@ -1213,7 +1213,9 @@ CVMgcUnsafeFillInStackTrace(CVMExecEnv *ee, CVMThrowableICell* throwableICell)
     CVMMethodBlock*    mb;
     CVMArrayOfRef*     backtrace;
     CVMArrayOfInt*     pcArray;
+#ifdef CVM_JIT
     CVMArrayOfBoolean* isCompiledArray = NULL;
+#endif
     CVMObject*         tempObj;
     CVMInt32           backtraceSize;
     CVMInt32           count;
@@ -1455,7 +1457,9 @@ static CVMObjectICell* CVMgetStackTraceElement(CVMExecEnv *ee,
 
     CVMID_localrootBegin(ee) {
         CVMID_localrootDeclare(CVMArrayOfRefICell, backtraceICell);
+#ifdef CVM_JIT
         CVMID_localrootDeclare(CVMArrayOfBooleanICell, isCompiledArrayICell);
+#endif
         CVMID_localrootDeclare(CVMArrayOfIntICell, pcArrayICell);
         CVMID_localrootDeclare(CVMObjectICell, tempICell);
         CVMID_localrootDeclare(CVMStringICell, stringICell);
