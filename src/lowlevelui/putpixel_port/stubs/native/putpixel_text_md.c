@@ -37,7 +37,7 @@ int pdLCDUIdrawChars(int pixel, const jshort *clip, void *dst, int dotted,
                      int x, int y, int anchor, 
                      const jchar *chararray, int n) {
     
-    return KNI_FALSE;                                                      
+    return KNI_FALSE;
 }                           
 
 int pdLCDUIgetFontInfo(int face, int style, int size,
@@ -47,5 +47,5 @@ int pdLCDUIgetFontInfo(int face, int style, int size,
 
 int pdLCDUIcharsWidth(int face, int style, int size,
                       const jchar *charArray, int n){
-    return KNI_FALSE;                          
+    return -1;
 }

@@ -78,7 +78,7 @@ extern "C" {
 
 #ifdef WIN32_PLATFORM_PSPC
 // comment this line to use JAVA font
-#define USE_NATIVE_FONT 1
+#define USE_NATIVE_FONT 0
 #else // smartphone, we use Java font now and may find a suitable font for it later.
 #define USE_NATIVE_FONT 0
 #endif
