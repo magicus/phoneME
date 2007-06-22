@@ -27,6 +27,7 @@
 #include <JAbstractSurface.h>
 
 #include <KNIUtil.h>
+#include <midpPiscesUtils.h>
 
 #include <PiscesUtil.h>
 #include <PiscesSysutils.h>
@@ -128,7 +129,7 @@ Java_com_sun_pisces_ImageExtender_drawImageInternal() {
     img = (_MidpImage *) getMidpGraphicsPtr(destinationHandle)->img;
         
     if (img != NULL && img->alphaData != NULL) {
-       pVDC->alphaData = &img->alphaData->elements[0];        
+       pVDC->alphaData = PISCES_GET_DATA_POINTER(img->alphaData);        
     }
     
     

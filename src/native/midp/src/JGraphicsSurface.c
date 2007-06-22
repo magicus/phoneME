@@ -27,6 +27,7 @@
 #include <JAbstractSurface.h>
 
 #include <KNIUtil.h>
+#include <midpPiscesUtils.h>
 
 #include <PiscesUtil.h>
 #include <PiscesSysutils.h>
@@ -144,7 +145,7 @@ surface_acquire(AbstractSurface* surface, jobject surfaceHandle) {
         
         if (img != NULL && img->alphaData != NULL) {
             surface->super.imageType = TYPE_USHORT_5658;
-            surface->super.alphaData = &img->alphaData->elements[0];        
+            surface->super.alphaData = PISCES_GET_DATA_POINTER(img->alphaData);        
         } else {
             surface->super.imageType = TYPE_USHORT_565_RGB;
             surface->super.alphaData = NULL;
