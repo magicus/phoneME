@@ -1544,7 +1544,7 @@ CVMTransitionFrame* CVMpushTransitionFrame(CVMExecEnv* ee, CVMMethodBlock* mb)
     CVMpushFrame(ee, &ee->interpreterStack, frame, frame->topOfStack,
 		 /* transition frame size in words plus argument size */
 		 CVM_TRANSITIONFRAME_SIZE / sizeof(CVMStackVal32)
-		 + CVMmbArgsSize(mb),
+		 + (CVMmbArgsSize(mb) > 2 ? CVMmbArgsSize(mb) : 2),
 		 0,         /* frame offset (no local variables) */
 		 CVM_FRAMETYPE_TRANSITION, mb,
 		 CVM_TRUE, /* commit */
