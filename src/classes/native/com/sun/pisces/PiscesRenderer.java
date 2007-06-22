@@ -107,20 +107,10 @@ public final class PiscesRenderer extends PathSink
         messageShown = true;
     }
 
-    public void connectSurface(AbstractSurface surface) {
-        if (!messageShown) {
-            System.out.println("Connecting surface");
-        }
-        this.surface = surface;
-        connect();
-        messageShown = true;
-    }
     private static native void staticInitialize(int strokeXBias, 
             int strokeYBias);
 
     private native void initialize();
-    
-    private native void connect();
     
     public native void setAntialiasing(boolean antialiasingOn);
 

@@ -35,15 +35,11 @@
 #include <midpGraphics.h>
 
 #define SURFACE_NATIVE_PTR 0
-#define SURFACE_LAST SURFACE_NATIVE_PTR
-
-#define getScreenBuffer(sbuf) \
-    ((sbuf == NULL) ? (&gxj_system_screen_buffer) : sbuf)
+#define SURFACE_GRAPHICS 1
+#define SURFACE_LAST SURFACE_GRAPHICS
 
 static jfieldID fieldIds[SURFACE_LAST + 1];
 static jboolean fieldIdsInitialized = KNI_FALSE;
-
-static jint count = 0;
 
 static jboolean initializeSurfaceFieldIds(jobject objectHandle);
 
@@ -53,40 +49,21 @@ static void surface_cleanup(AbstractSurface* surface);
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_GraphicsSurface_initialize() {
-    KNI_StartHandles(2);
+    KNI_StartHandles(1);
     KNI_DeclareHandle(objectHandle);
-    KNI_DeclareHandle(graphicsHandle);
-
-    jint xoffset = KNI_GetParameterAsInt(2);
-    jint yoffset = KNI_GetParameterAsInt(3);
-    jint dataType = KNI_GetParameterAsInt(4);
 
     AbstractSurface* surface;
 
-    VDC vdc;
-    VDC *pVDC = NULL;
-    
     KNI_GetThisPointer(objectHandle);
-    KNI_GetParameterAsObject(1, graphicsHandle);
 
     if (surface_initialize(objectHandle)
             && initializeSurfaceFieldIds(objectHandle)) {
         surface = my_malloc(AbstractSurface, 1);
+        
         if (surface != NULL) {
-            
-            pVDC = setupVDC(graphicsHandle, &vdc);          
-            pVDC = getVDC(pVDC);        
-            
-            surface->super.width = pVDC->width;
-            surface->super.height = pVDC->height;   
-          
-            surface->super.data = pVDC->hdc;
-            
-            surface->super.offset = yoffset * pVDC->width + xoffset;
-            surface->super.scanlineStride = pVDC->width;
+            surface->super.offset = 0;
             surface->super.pixelStride = 1;
-            surface->super.imageType = dataType;
-
+            surface->super.imageType = TYPE_USHORT_565_RGB;
 
             surface->acquire = surface_acquire;
             surface->release = surface_release;
@@ -110,6 +87,7 @@ static jboolean
 initializeSurfaceFieldIds(jobject objectHandle) {
     static const FieldDesc surfaceFieldDesc[] = {
                 { "nativePtr", "J" },
+                { "g", "Ljavax/microedition/lcdui/Graphics;" },
                 { NULL, NULL }
             };
 
@@ -137,10 +115,32 @@ initializeSurfaceFieldIds(jobject objectHandle) {
 
 static void
 surface_acquire(AbstractSurface* surface, jobject surfaceHandle) {
-    // do nothing
-    // IMPL NOTE : to fix warning : unused parameter
-    (void)surface;
-    (void)surfaceHandle;
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(graphicsHandle);
+
+    KNI_GetObjectField(surfaceHandle, fieldIds[SURFACE_GRAPHICS], 
+                       graphicsHandle);
+
+    if (!KNI_IsNullHandle(graphicsHandle)) {
+        VDC vdc;
+        VDC* pVDC;
+        
+        pVDC = setupVDC(graphicsHandle, &vdc);
+        pVDC = getVDC(pVDC);
+        
+        surface->super.data = pVDC->hdc;
+        surface->super.width = pVDC->width;
+        surface->super.height = pVDC->height;
+        surface->super.scanlineStride = pVDC->width;
+    } else {
+        /* 
+         * This is not a correct error type to be reported here. For correct
+         * reporting, Pisces error handling needs to be redesigned.
+         */
+        setMemErrorFlag();
+    }
+
+    KNI_EndHandles();
 }
 
 static void
@@ -153,6 +153,6 @@ surface_release(AbstractSurface* surface, jobject surfaceHandle) {
 
 static void
 surface_cleanup(AbstractSurface* surface) {
-    //my_free(surface->super.data);
     (void)surface;
 }
+
