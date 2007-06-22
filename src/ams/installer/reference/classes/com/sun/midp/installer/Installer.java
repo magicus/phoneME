@@ -2504,8 +2504,8 @@ public abstract class Installer {
  * Implements the permission checking interface using the permission of
  * the suite being installed.
  */
-class AccessControl extends AccessControlContextAdapter implements
-    AccessControlContext {
+class AccessControl extends AccessControlContextAdapter {
+
     /** Rreference to the MIDlet suite. */
     private MIDletSuite suite;
 

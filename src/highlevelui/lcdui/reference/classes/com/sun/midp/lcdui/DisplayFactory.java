@@ -26,6 +26,8 @@
 
 package com.sun.midp.lcdui;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 import javax.microedition.lcdui.Display;
@@ -51,7 +53,8 @@ public class DisplayFactory {
     /**
      * Gets the <code>Display</code> object by owner name.
      *
-     * @param token security token for authorizing the caller
+     * @param token security token for authorizing the caller for the
+     *    com.sun.midp permission.
      * @param owner name of the owner of the display, the owner can be
      *
      * @return the display object that application can use for its user
@@ -61,6 +64,23 @@ public class DisplayFactory {
      */
     public static Display getDisplay(SecurityToken token, String owner) {
         token.checkIfPermissionAllowed(Permissions.MIDP);
+        return displayTunnel.getDisplay(owner);
+    }
+
+    /**
+     * Gets the <code>Display</code> object by owner name.
+     * The caller must be granted the com.sun.midp permission.
+     *
+     * @param owner name of the owner of the display, the owner can be
+     *
+     * @return the display object that application can use for its user
+     * interface
+     *
+     * @throws NullPointerException if <code>owner</code> is <code>null</code>
+     */
+    public static Display getDisplay(String owner) {
+        AccessController.checkPermission(Permissions.MIDP_PERMISSION_NAME);
+
         return displayTunnel.getDisplay(owner);
     }
 } 

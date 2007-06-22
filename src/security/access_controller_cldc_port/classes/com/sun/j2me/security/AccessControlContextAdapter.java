@@ -27,7 +27,9 @@ package com.sun.j2me.security;
 /** 
  * A class help implement the AccessControlContext interface.
  */
-public abstract class AccessControlContextAdapter {
+public abstract class AccessControlContextAdapter
+    implements AccessControlContext {
+
     /** 
      * Determines whether the access request indicated by the
      * specified permission should be allowed or denied, based on
