@@ -885,8 +885,8 @@ class DisplayableLFImpl implements DisplayableLF {
                     Thread.sleep(sleepTime);
                     // While thread was sleeping the postponed request
                     // could be cancelled or adjusted to a later time
-                    if (delay < 0) break;
-                    if (delay > 0) continue;
+                    if (delay < 0) { break; }
+                    if (delay > 0) { continue; }
                     invalidate();
                 } catch (InterruptedException ie) {}
             }
@@ -907,14 +907,20 @@ class DisplayableLFImpl implements DisplayableLF {
             }
         }
 
-        /** Do postponed invalidate request */
-        synchronized void invalidate() {
+        /**
+         * Process postponed invalidate request.
+         * IMPL_NOTE: Method has no synchronization to not block
+         *   adjust() and cancel() in the case LCDUILock is awaited.
+         *   In the worst case excessive invalidate request will be done.
+         */
+        private void invalidate() {
             synchronized (Display.LCDUILock) {
-                if (delay != 0) return;
-                lRequestInvalidateImpl();
+                if (delay == 0) {
+                    lRequestInvalidateImpl();
+                    lastTimeInvalidate = System.currentTimeMillis();
+                    delay = -1;
+                }
             }
-            lastTimeInvalidate = System.currentTimeMillis();
-            delay = -1;
         }
     }
 
@@ -935,8 +941,7 @@ class DisplayableLFImpl implements DisplayableLF {
             lastTimeInvalidate += invalidateDelta;
 
         } else {
-            // Postpone too frequent invalidate requests
-            //
+            // Postpone too frequent invalidate requests.
             // IMPL_NOTE: It is possible the last invalidate request
             //   in a sequence will be delayed for a time bigger than
             //   INVALIDATE_REQUESTS_DELAY, since invalidate timer thread
