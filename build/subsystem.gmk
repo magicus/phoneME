@@ -44,6 +44,11 @@ endif
 # Directories for each internal workspace
 INTERNAL_PISCES_DIR=$(PISCES_DIR)
 
+# Pisces defines
+ifdef PISCES_USE_JWC_OLD_IMPLEMENTATION
+  EXTRA_CFLAGS += -DPISCES_USE_JWC_OLD_IMPLEMENTATION
+endif
+
 # Implementation APIs in pisces
 SUBSYSTEM_PISCES_JAVA_FILES_SOURCEPATH=\
 $(INTERNAL_PISCES_DIR)/src/classes/common
@@ -140,7 +145,8 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/NativeFinalizer.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesFinalizer.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesLibrary.java \
-            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/GraphicsSurface.java 
+            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/GraphicsSurface.java \
+            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/ImageExtender.java
 
 #            $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/NativeSurface.java 
 #            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/GraphicsSurfaceDestination.java 
@@ -187,7 +193,8 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
                 JPiscesRenderer.c \
                 JTransform.c \
                 KNIUtil.c \
-                JGraphicsSurface.c
+                JGraphicsSurface.c \
+                JImageExtender.c
 
 #                JGraphicsSurfaceDestination.c 
 #                JNativeSurface.c 
@@ -215,6 +222,7 @@ SUBSYSTEM_PISCES_NATIVE_FILES += \
 
 SUBSYSTEM_PISCES_INCLUDES += \
     $(INTERNAL_PISCES_INCLUDES)
+    
 
 # Append Pisces source bundle creation to target
 source_bundle:: pisces_source_bundle
