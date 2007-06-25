@@ -1687,7 +1687,7 @@ CVMframeIterateSkipSpecial(CVMFrameIterator *iter,
 
 #ifdef CVM_JIT
     if (iter->jitFrame) {
-	if (!CVMJITframeIterateSkip(&iter->jit, 0, skipSpecial, popFrame)) {
+	if (!CVMJITframeIterateSkip(&iter->jit, skipSpecial, popFrame)) {
 	    iter->jitFrame = CVM_FALSE;
 	    goto again;
 	}
@@ -1707,7 +1707,7 @@ CVMframeIterateSkipSpecial(CVMFrameIterator *iter,
 #ifdef CVM_JIT
 	if (!iter->jitFrame && CVMframeIsCompiled(frame)) {
 	    CVMJITframeIterate(frame, &iter->jit);
-	    if (CVMJITframeIterateSkip(&iter->jit, 0, skipSpecial, popFrame)) {
+	    if (CVMJITframeIterateSkip(&iter->jit, skipSpecial, popFrame)) {
 		iter->jitFrame = CVM_TRUE;
 	    } else {
 		goto again;
@@ -1716,7 +1716,7 @@ CVMframeIterateSkipSpecial(CVMFrameIterator *iter,
 	if (iter->jitFrame) {
 	    if (skip > 0) {
 		do {
-		    if (!CVMJITframeIterateSkip(&iter->jit, 0, skipSpecial,
+		    if (!CVMJITframeIterateSkip(&iter->jit, skipSpecial,
 			popFrame))
 		    {
 			iter->jitFrame = CVM_FALSE;
