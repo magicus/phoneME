@@ -191,6 +191,7 @@ CVMJITframeIterate(CVMFrame* frame, CVMJITFrameIterator *iter)
     iter->mb = mb;
     iter->pcOffset = pcOffset;
     iter->index = -1;
+    iter->invokePC = -1;
 
     /* No inlining in this method. So we can trust the frame */
     if (inliningInfo == NULL) {
@@ -217,29 +218,28 @@ CVMJITframeIterate(CVMFrame* frame, CVMJITFrameIterator *iter)
  * "backwards".  
  */
 CVMBool
-CVMJITframeIterateSkip(CVMJITFrameIterator *iter, int skip,
+CVMJITframeIterateSkip(CVMJITFrameIterator *iter,
     CVMBool skipArtificial, CVMBool popFrame)
 {
     CVMInt32 pcOffset = iter->pcOffset;
-    CVMBool found;
+    CVMInt32 lastIndex = iter->index;
 
-    do {
-	++iter->index;
-	found = CVM_FALSE;
-	while (iter->index < iter->numEntries) {
-	    CVMCompiledInliningInfoEntry* iEntry =
-		&iter->inliningEntries[iter->index];
-	
-	    if (iEntry->pcOffset1 <= pcOffset && pcOffset < iEntry->pcOffset2 &&
-		!(skipArtificial &&
-		    (iEntry->flags & CVM_FRAMEFLAG_ARTIFICIAL) != 0))
+    ++iter->index;
+    while (iter->index < iter->numEntries) {
+	CVMCompiledInliningInfoEntry* iEntry =
+	    &iter->inliningEntries[iter->index];
+    
+	if (iEntry->pcOffset1 <= pcOffset && pcOffset < iEntry->pcOffset2) {
+	    if (skipArtificial &&
+		(iEntry->flags & CVM_FRAMEFLAG_ARTIFICIAL) != 0)
 	    {
-		    found = CVM_TRUE;
-		    break;
+		lastIndex = iter->index;
+	    } else {
+		break;
 	    }
-	    ++iter->index;
 	}
-    } while (found && --skip > 0);
+	++iter->index;
+    }
 
     if (iter->index == iter->numEntries && skipArtificial &&
 	(iter->frame->flags & CVM_FRAMEFLAG_ARTIFICIAL) != 0)
@@ -247,17 +247,17 @@ CVMJITframeIterateSkip(CVMJITFrameIterator *iter, int skip,
 	++iter->index;
     }
 
-    if (!found && skip > 0) {
-	CVMassert(iter->index == iter->numEntries);
-	--skip;
-	++iter->index;
-    }
-
     if (popFrame) {
-	/* update frame TOS and PC */
+	/* perhaps when we support inlined exception handlers... */
     }
 
     if (iter->index <= iter->numEntries) {
+	CVMassert(lastIndex != iter->index);
+	if (lastIndex != -1) {
+	    iter->invokePC = iter->inliningEntries[lastIndex].invokePC;
+	} else {
+	    iter->invokePC = -1;
+	}
 	return CVM_TRUE;
     }
     return CVM_FALSE;
@@ -267,7 +267,7 @@ CVMUint32
 CVMJITframeIterateCount(CVMJITFrameIterator *iter, CVMBool skipArtificial)
 {
     CVMUint32 count = 0;
-    while (CVMJITframeIterateSkip(iter, 1, skipArtificial, CVM_FALSE)) {
+    while (CVMJITframeIterateSkip(iter, skipArtificial, CVM_FALSE)) {
 	++count;
     }
     return count;
@@ -306,12 +306,41 @@ CVMJITframeIterateGetJavaPc(CVMJITFrameIterator *iter)
     * Get the java pc of the frame. This is a bit tricky for compiled
     * frames since we need to map from the compiled pc to the java pc.
     */
-    CVMFrame *frame;
-    if (iter->index == iter->numEntries) {
-	frame = iter->frame;
-	return CVMpcmapCompiledPcToJavaPc(frame->mb, CVMcompiledFramePC(frame));
+    if (iter->invokePC != -1) {
+	/* The invokePC will be set if we have iterated through
+	   an inlined frame already. */
+	CVMUint16 invokePC = iter->invokePC;
+	CVMMethodBlock *mb = CVMJITframeIterateGetMb(iter);
+	CVMUint8 *pc = CVMmbJavaCode(mb) + invokePC;
+	CVMassert(CVMbcAttr(*pc, INVOCATION));
+
+#ifdef CVM_DEBUG_ASSERTS
+	if (iter->index == iter->numEntries) {
+	    /*
+	     * We have reached the initial Java frame.
+	     * Check that the pc-map table and inlining
+	     * table don't totally disagree.
+	     */
+	    CVMFrame *frame = iter->frame;
+	    CVMUint8 *pc0 = CVMpcmapCompiledPcToJavaPc(frame->mb,
+		CVMcompiledFramePC(frame));
+	    CVMassert(pc0 <= pc && pc0 >= CVMmbJavaCode(mb));
+	    /* Should map to the same line number, at least,
+	       but we don't check that here. */
+	}
+#endif
+
+	return pc;
+    } else if (iter->index == iter->numEntries) {
+	/* We have reached the initial Java frame, without
+	   seeing an inlined frame.  Rely on the pc map
+	   table. */
+	CVMFrame *frame = iter->frame;
+	return CVMpcmapCompiledPcToJavaPc(frame->mb,
+	    CVMcompiledFramePC(frame));
     } else {
-	/* No support for inlined frames yet */
+	/* We must be in the top-most inlined method, so
+	   we have no PC information. */
 	return NULL;
     }
 }
@@ -546,7 +575,7 @@ CVMcompiledFrameScanner(CVMExecEnv* ee,
 
 	    /* Scan sync objects until we get to the handler frame */
 
-	    while (CVMJITframeIterateSkip(&iter, 0, CVM_FALSE, CVM_FALSE)) {
+	    while (CVMJITframeIterateSkip(&iter, CVM_FALSE, CVM_FALSE)) {
 		if (CVMJITframeIterateContainsPc(&iter, off)) {
 		    foundHandler = CVM_TRUE;
 		    break;
@@ -669,7 +698,7 @@ skip_opstack:
 
 	CVMJITframeIterate(frame, &iter);
 
-	while (CVMJITframeIterateSkip(&iter, 0, CVM_FALSE, CVM_FALSE)) {
+	while (CVMJITframeIterateSkip(&iter, CVM_FALSE, CVM_FALSE)) {
 	    CVMMethodBlock *mb  = CVMJITframeIterateGetMb(&iter);
 	    CVMClassBlock* cb = CVMmbClassBlock(mb);
 	    CVMscanClassIfNeeded(ee, cb, callback, data);
@@ -696,7 +725,7 @@ check_inlined_sync:
 
 	CVMJITframeIterate(frame, &iter);
 
-	while (CVMJITframeIterateSkip(&iter, 0, CVM_FALSE, CVM_FALSE)) {
+	while (CVMJITframeIterateSkip(&iter, CVM_FALSE, CVM_FALSE)) {
 	    CVMMethodBlock *mb  = CVMJITframeIterateGetMb(&iter);
 	    if (CVMmbIs(mb, SYNCHRONIZED)) {
 		CVMObjectICell* objICell = CVMJITframeIterateSyncObject(&iter);
