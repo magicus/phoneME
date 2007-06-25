@@ -54,6 +54,27 @@ javacall_result javacall_media_finalize(void) {
 }
 
 /**
+ * Get multimedia capabilities of the device.
+ * This function should return pointer to static array of javacall_media_caps value
+ * The last item of javacall_media_caps array should hold NULL mimeType value
+ * Java layer will use this NULL value as a end of item mark
+ */
+const javacall_media_caps* javacall_media_get_caps() {
+    return NULL;
+}
+
+/**
+ * Query whether audio mixing is supported;
+ *
+ * @retval JAVACALL_TRUE    audio mixing is supported
+ * @retval JAVACALL_FALSE   audio mixing is NOT supported
+ * 
+ */
+javacall_bool javacall_media_supports_mixing() {
+    return JAVACALL_FALSE;
+}
+
+/**
  * Java MMAPI call this function to create native media handler.
  * This function is called at the first time to initialize native library.
  * You can do your own initializatio job from this function.
@@ -260,6 +281,16 @@ long javacall_media_set_time(javacall_handle handle, long ms) {
  */
 long javacall_media_get_duration(javacall_handle handle) {
     return -1;
+}
+
+/**
+ * Return true if player requires PCM Audio resources
+ * 
+ * @retval JAVACALL_TRUE      Player supports PCM Audio playback
+ * @retval JAVACALL_FALSE     Player does not support PCM Audio playback
+ */
+javacall_bool javacall_media_pcmaudio_device_required() {
+    return JAVACALL_FALSE;
 }
 
 /**

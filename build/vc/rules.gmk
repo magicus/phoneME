@@ -52,7 +52,7 @@ CXX=cl.exe
 RC=rc.exe
 
 LOCAL_CFLAGS_debug = -Gm -GX -Zi -Od -D_DEBUG -D_MBCS -D_LIB -YX -FD -GZ -W3
-LOCAL_CFLAGS=-ML -GX -O2 -D_MBCS -D_LIB /YX -FD -W3  
+LOCAL_CFLAGS=-ML -GX -O2 -D_MBCS -D_LIB /YX -FD -W3
 
 ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
     define fixcygpath
@@ -70,7 +70,11 @@ CPPFLAGS+= -I`$(call fixcygpath, $(JAVACALL_OUTPUT_INCLUDE_DIR))`
 CPPFLAGS+= $(SPECIFIC_DEFINITIONS)
 
 AR=lib.exe 
+ifeq ($(TARGET_CPU),arm)
+ARFLAGS=-nologo -MACHINE:ARM
+else
 ARFLAGS=-nologo -MACHINE:X86
+endif
 
 OUTPUT_OPTION=-Fo`$(call fixcygpath, $@)` \
               -Fp$(JAVACALL_OUTPUT_OBJ_DIR)/javacall \
