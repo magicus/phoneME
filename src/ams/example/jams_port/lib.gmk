@@ -72,10 +72,6 @@ ifeq ($(TARGET_PLATFORM), wince)
 
   OBJ_FILES += $(OBJ_DIR)/resources.res
 
-  ifeq ($(TARGET_CPU), arm)
-    OBJ_FILES += $(OBJ_DIR)/gxj_graphics_asm_wince.o
-  endif
-
   $(OBJ_DIR)/resources.res: $(CEDIR)/resources.rc $(CEDIR)/resources.h
 	@echo " ... $@" $(LOG)
 	$(A)$(RC) -D_WIN32_WCE=$(CEVersion) /I"${EVC_INCLUDE_PATH}" \
@@ -83,8 +79,4 @@ ifeq ($(TARGET_PLATFORM), wince)
 	  /I"$(PCSL_OUTPUT_DIR)/$(TARGET_PLATFORM)_$(TARGET_CPU)/inc" \
 	  $(RC_DEFS) -DUNDER_CE=$(CEVersion) /d "UNICODE" /d "_UNICODE" \
 	  /fo`$(call fixcygpath,$@ $(CEDIR)/resources.rc)`
-
-  $(OBJ_DIR)/gxj_graphics_asm_wince.o: \
-	$(MIDP_DIR)/src/lowlevelui/platform_graphics_port/wince/gxj_graphics_asm_wince.s
-	$(ASM) -o $@ $<
 endif

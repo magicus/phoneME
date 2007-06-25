@@ -199,66 +199,90 @@ static jint alphaComposition(jint src, jint dst) {
 }
 
 
+#if (UNDER_CE)
+extern void asm_draw_rgb(jint* src, int srcSpan, unsigned short* dst,
+    int dstSpan, int width, int height);
+#endif
+
 /** Draw image in RGB format */
 void
 gx_draw_rgb(const jshort *clip,
 	     const java_imagedata *dst, jint *rgbData,
              jint offset, jint scanlen, jint x, jint y,
              jint width, jint height, jboolean processAlpha) {
-    int a, b;
-    int sbufWidth;
-
-    int dataRowIndex = 0;
-    int sbufRowIndex = 0;
+    int a, b, diff;
+    int dataRowIndex, sbufRowIndex;
 
     gxj_screen_buffer screen_buffer;
+    gxj_screen_buffer* sbuf = (gxj_screen_buffer*) getScreenBuffer(
+      gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL));
+    int sbufWidth = sbuf->width;
+
     const jshort clipX1 = clip[0];
     const jshort clipY1 = clip[1];
     const jshort clipX2 = clip[2];
     const jshort clipY2 = clip[3];
-    gxj_screen_buffer *sbuf =
-        gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
-    sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
-    sbufWidth = sbuf->width;
 
     REPORT_CALL_TRACE(LC_LOWUI, "gx_draw_rgb()\n");
 
+    diff = clipX1 - x;
+    if (diff > 0) {
+        width -= diff;
+        offset += diff;
+        x = clipX1;
+    }
+    if (x + width > clipX2) {
+        width = clipX2 - x;
+    }
+    diff = clipY1 - y;
+    if (diff > 0) {
+        height -= diff;
+        offset += diff * scanlen;
+        y = clipY1;
+    }
+    if (y + height > clipY2) {
+        height = clipY2 - y;
+    }
+    if (width <= 0 || height <= 0) {
+        return;
+    }
+
+#if (UNDER_CE)
+    if (!processAlpha) {
+        asm_draw_rgb(rgbData + offset, scanlen - width,
+            sbuf->pixelData + sbufWidth * y + x,
+            sbufWidth - width, width, height);
+        return;
+    }
+#endif
+
     CHECK_SBUF_CLIP_BOUNDS(sbuf, clip);
+    dataRowIndex = 0;
     sbufRowIndex = y * sbufWidth;
 
     for (b = y; b < y + height;
         b++, dataRowIndex += scanlen,
         sbufRowIndex += sbufWidth) {
 
-        if (b >= clipY2) return;
-        if (b <  clipY1) continue;
-
         for (a = x; a < x + width; a++) {
-
             jint value = rgbData[offset + (a - x) + dataRowIndex];
             int idx = sbufRowIndex + a;
 
-            if (a >= clipX2) break;
-            if (a < clipX1) {
-                // JAVA_TRACE("drawRGB:A OutOfBounds %d   %d %d %d %d\n", idx,
-                //     a, b, sbuf->width, sbuf->height);
+            CHECK_PTR_CLIP(sbuf, &(sbuf->pixelData[idx]));
+
+            if (!processAlpha || (value & 0xff000000) == 0xff000000) {
+                // Pixel has no alpha or no transparency
+                sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
             } else {
-                CHECK_PTR_CLIP(sbuf, &(sbuf->pixelData[idx]));
-                if (!processAlpha || ((value & 0xff000000) == 0xff000000)) {
-                    sbuf->pixelData[idx] = GXJ_RGB24TORGB16(value);
-                } else {
-                    if ((value & 0xff000000) != 0) {                        
-                        jint background = GXJ_RGB16TORGB24(sbuf->pixelData[idx]);
-                        jint composition = alphaComposition(value, background);
-                        sbuf->pixelData[idx] = GXJ_RGB24TORGB16(composition);
-                    }
+                if ((value & 0xff000000) != 0) {
+                    jint background = GXJ_RGB16TORGB24(sbuf->pixelData[idx]);
+                    jint composition = alphaComposition(value, background);
+                    sbuf->pixelData[idx] = GXJ_RGB24TORGB16(composition);
                 }
             }
         } /* loop by rgb data columns */
     } /* loop by rgb data rows */
 }
-
-
 
 /**
  * Obtain the color that will be final shown 
