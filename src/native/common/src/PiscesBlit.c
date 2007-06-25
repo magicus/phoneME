@@ -43,12 +43,8 @@ static INLINE void blendSrcOver8888(jint *intData, jint aval,
 static INLINE void blendSrcOver5658(unsigned short *shortData, jbyte *alphaData,
                                  jint aval, jint sred, jint sgreen, jint sblue);                             
 static INLINE void blendSrcOver8888_pre(jint *intData, jint aval, jint sred, 
-                                 jint sgreen, jint sblue); 
-#ifndef ARM                                                             
-	static INLINE void blendSrcOver565(jshort *shortData, jint pix);
-#else
-	extern void blendSrcOver565(jshort *shortData, jint pix);
-#endif
+                                 jint sgreen, jint sblue);                                                              
+static INLINE void blendSrcOver565(jshort *shortData, jint pix);
 
 static INLINE void blendSrcOver8(jbyte *byteData, jint aval, jint cgray);
 
@@ -2439,7 +2435,7 @@ blendSrcOver8888_pre(jint *intData,
     *intData = (oalpha << 24) | (ored << 16) | (ogreen << 8) | oblue;
 }
 
-#ifndef ARM
+
 static void
 blendSrcOver565(jshort *shortData, jint pix) {
     /* assume cred, cgreen, cblue are at the correct bit depths */
@@ -2456,7 +2452,6 @@ blendSrcOver565(jshort *shortData, jint pix) {
                  ((dwAlphaGtemp + (((coG - dwAlphaGtemp) * dw6bitOpacity) 
                                     >> 6)) & 0x07e0);
 }
-#endif
 
 
 static void
