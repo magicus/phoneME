@@ -176,39 +176,51 @@ loop_16_176
 ;
 ; Low level simple blit of 16bit pixels from src to dst
 ;
-; srcRaster - short* aligned pointer into source of pixels
-; dstRaster - short* aligned pointer into destination
-; srcSpan   - number of bytes per scanline of srcRaster (must be even)
-; dstSpan   - number of bytes per scanline of dstRaster (must be even)
-; width     - number of bytes to copy per scanline (must be even)
-; height    - number of scanlines to copy
-; Note: There is a special case for blitting a 16x16 image to an aligned dst
+; r0:  dstRaster - short* aligned pointer into destination
+; r1:  dstSpan   - number of bytes per scanline of dstRaster (must be even)
+; r2:  srcRaster - short* aligned pointer into source of pixels
+; r3:  srcSpan   - number of bytes per scanline of srcRaster (must be even)
+; r12: width     - number of bytes to copy per scanline (must be even)
+; lr:  height    - number of scanlines to copy
+;
+; r4-r11: spare registers used in data transfer
 
 	EXPORT  unclipped_blit
 unclipped_blit  PROC
-	stmfd	sp, {r4 - fp, lr}
-	ldr	r12, [sp, #4]
-	ldr	lr, [sp]
+	stmfd	sp, {r4 - r11, lr}
+	ldr	r12, [sp, #4]      ; load width from stack
+	ldr	lr, [sp]           ; load height from stack
+
+	; check for a special case: width == 2 (one column to copy)
 	cmp	r12, #2
-	beq	L340
+	beq	one_column
+	; check for another special case: dstSpan == srcSpan == width
 	sub	r3, r3, r12
 	sub	r1, r1, r12
 	orrs	r4, r3, r1
-	beq	L351
-L341
+	beq	through_blit
+
+start_row
+        ; is dstRaster word-aligned?
 	tst	r0, #2
-	bne	L344
+	bne	unaligned_dst
+	; is srcRaster word-aligned?
 	tst	r2, #2
-	bne	L343
-L342
+	bne	unaligned_to_aligned
+
+aligned_to_aligned
 	subs	r12, r12, #32
-	bcc	L346
-L345
-	ldmia	r2!, {r4 - fp}
+	blo	blit_small
+
+blit_32
+        ; 32-byte copying loop
+	ldmia	r2!, {r4 - r11}
 	subs	r12, r12, #32
-	stmia	r0!, {r4 - fp}
-	bcs	L345
-L346
+	stmia	r0!, {r4 - r11}
+	bhs	blit_32
+
+blit_small
+        ; a single pass to copy up to 30 remaining bytes
 	tst	r12, #16
 	ldmneia	r2!, {r4 - r7}
 	stmneia	r0!, {r4 - r7}
@@ -221,23 +233,31 @@ L346
 	tst	r12, #2
 	ldrneh	r4, [r2], #2
 	strneh	r4, [r0], #2
+
+	; decrease row count and repeat the above procedure
 	subs	lr, lr, #1
 	ldrne	r12, [sp, #4]
 	addne	r2, r2, r3
 	addne	r0, r0, r1
-	bne	L341
-	ldmeqea	sp, {r4 - fp, pc}
-L344
+	bne	start_row
+	ldmeqea	sp, {r4 - r11, pc}
+
+unaligned_dst
+        ; copy a single pixel and thus make dstRaster word-aligned
 	ldrh	r4, [r2], #2
 	sub	r12, r12, #2
 	strh	r4, [r0], #2
 	tst	r2, #2
-	beq	L342
-L343
+	beq	aligned_to_aligned
+
+unaligned_to_aligned
 	ldrh	r4, [r2], #2
 	subs	r12, r12, #18
-	bcc	L348
-L347
+	blo	blit_8
+
+blit_16
+        ; the loop copies unaligned 16-byte blocks
+        ; the half-words need to be recombined
 	ldmia	r2!, {r6 - r9}
 	subs	r12, r12, #16
 	orr	r4, r4, r6, lsl #16
@@ -249,84 +269,98 @@ L347
 	orr	r7, r7, r9, lsl #16
 	stmia	r0!, {r4 - r7}
 	mov	r4, r9, lsr #16
-	bcs	L347
-L348
+	bhs	blit_16
+
+        ; a single pass to copy unaligned blocks of 8, 4 and 2 bytes
+blit_8
 	tst	r12, #8
-	beq	L349
+	beq	blit_4
 	ldmia	r2!, {r6, r7}
 	orr	r4, r4, r6, lsl #16
 	mov	r5, r6, lsr #16
 	orr	r5, r5, r7, lsl #16
 	stmia	r0!, {r4, r5}
 	mov	r4, r7, lsr #16
-L349
+blit_4
 	tst	r12, #4
-	beq	L350
+	beq	blit_2
 	ldr	r6, [r2], #4
 	orr	r5, r4, r6, lsl #16
 	str	r5, [r0], #4
 	mov	r4, r6, lsr #16
-L350
+blit_2
 	strh	r4, [r0], #2
 	tst	r12, #2
 	ldrneh	r4, [r2], #2
 	strneh	r4, [r0], #2
+
+	; go the next row
 	subs	lr, lr, #1
 	ldrne	r12, [sp, #4]
 	addne	r2, r2, r3
 	addne	r0, r0, r1
-	bne	L341
-	ldmeqea	sp, {r4 - fp, pc}
-L340
+	bne	start_row
+	ldmeqea	sp, {r4 - r11, pc}
+
+one_column
 	ldrh	r4, [r2], +r3
 	subs	lr, lr, #1
 	strh	r4, [r0], +r1
-	bne	L340
-	ldmeqea	sp, {r4 - fp, pc}
-L351
+	bne	one_column
+	ldmeqea	sp, {r4 - r11, pc}
+
+through_blit
+        ; there is no interval between rows -
+        ; we may consider that width = width * height and height = 1
 	mul	r12, lr, r12
 	mov	lr, #1
-	subs	r12, r12, #0x200
-	bcc	L353
-L352
-	ldmia	r2!, {r4 - fp}
-	stmia	r0!, {r4 - fp}
-	ldmia	r2!, {r4 - fp}
-	stmia	r0!, {r4 - fp}
-	ldmia	r2!, {r4 - fp}
-	stmia	r0!, {r4 - fp}
-	ldmia	r2!, {r4 - fp}
-	stmia	r0!, {r4 - fp}
-	ldmia	r2!, {r4 - fp}
-	stmia	r0!, {r4 - fp}
-	ldmia	r2!, {r4 - fp}
-	stmia	r0!, {r4 - fp}
-	ldmia	r2!, {r4 - fp}
-	stmia	r0!, {r4 - fp}
-	ldmia	r2!, {r4 - fp}
-	stmia	r0!, {r4 - fp}
-	ldmia	r2!, {r4 - fp}
-	stmia	r0!, {r4 - fp}
-	ldmia	r2!, {r4 - fp}
-	stmia	r0!, {r4 - fp}
-	ldmia	r2!, {r4 - fp}
-	stmia	r0!, {r4 - fp}
-	ldmia	r2!, {r4 - fp}
-	stmia	r0!, {r4 - fp}
-	ldmia	r2!, {r4 - fp}
-	stmia	r0!, {r4 - fp}
-	ldmia	r2!, {r4 - fp}
-	stmia	r0!, {r4 - fp}
-	ldmia	r2!, {r4 - fp}
-	stmia	r0!, {r4 - fp}
-	ldmia	r2!, {r4 - fp}
-	subs	r12, r12, #0x200
-	stmia	r0!, {r4 - fp}
-	bcs	L352
-L353
-	adds	r12, r12, #0x200
-	ldmeqea	sp, {r4 - fp, pc}
-	bne	L341
+
+	; usualy we come here when blitting the whole screen,
+	; that's why we prefer to count by the large blocks of 512 bytes
+	subs	r12, r12, #512
+	blo	through_blit_small
+
+through_blit_512
+	ldmia	r2!, {r4 - r11}
+	stmia	r0!, {r4 - r11}
+	ldmia	r2!, {r4 - r11}
+	stmia	r0!, {r4 - r11}
+	ldmia	r2!, {r4 - r11}
+	stmia	r0!, {r4 - r11}
+	ldmia	r2!, {r4 - r11}
+	stmia	r0!, {r4 - r11}
+	ldmia	r2!, {r4 - r11}
+	stmia	r0!, {r4 - r11}
+	ldmia	r2!, {r4 - r11}
+	stmia	r0!, {r4 - r11}
+	ldmia	r2!, {r4 - r11}
+	stmia	r0!, {r4 - r11}
+	ldmia	r2!, {r4 - r11}
+	stmia	r0!, {r4 - r11}
+	ldmia	r2!, {r4 - r11}
+	stmia	r0!, {r4 - r11}
+	ldmia	r2!, {r4 - r11}
+	stmia	r0!, {r4 - r11}
+	ldmia	r2!, {r4 - r11}
+	stmia	r0!, {r4 - r11}
+	ldmia	r2!, {r4 - r11}
+	stmia	r0!, {r4 - r11}
+	ldmia	r2!, {r4 - r11}
+	stmia	r0!, {r4 - r11}
+	ldmia	r2!, {r4 - r11}
+	stmia	r0!, {r4 - r11}
+	ldmia	r2!, {r4 - r11}
+	stmia	r0!, {r4 - r11}
+	ldmia	r2!, {r4 - r11}
+	subs	r12, r12, #512
+	stmia	r0!, {r4 - r11}
+	bhs	through_blit_512
+
+through_blit_small
+        ; smaller blocks can be easily handled by the general routine
+	adds	r12, r12, #512
+	ldmeqea	sp, {r4 - r11, pc}
+	bne	start_row
 
         LTORG
 unclipped_blit	ENDP
@@ -334,23 +368,30 @@ unclipped_blit	ENDP
 ; void asm_draw_rgb(jint* src, int srcSpan, unsigned short* dst,
 ;    int dstSpan, int width, int height);
 ;
-; src       - source RGB data pointer
-; srcSpan   - source line span value, width+srcSpan is source scanline length
-; dst       - dest pointer
-; dstSpan   - dest line span value, width+dstSpan is dest scanline length
-; width     - width to draw
-; height    - height to draw
+; r0:  src     - source RGB data pointer
+; r1:  srcSpan - source line span value, width+srcSpan is source scanline length
+; r2:  dst     - dest pointer
+; r3:  dstSpan - dest line span value, width+dstSpan is dest scanline length
+; r10: width   - width to draw
+; r11: height  - height to draw
 
 	EXPORT  asm_draw_rgb
 asm_draw_rgb    PROC
-	stmfd	sp, {r4 - fp, lr}
-	ldmfd	sp, {r10, fp}
-L355
+	stmfd	sp, {r4 - r11, lr}
+	ldmfd	sp, {r10, r11}
+
+row_loop
+        ;  is dst word-aligned?
 	tst	r2, #2
-	bne	L354
+	bne	unaligned_row
+
+	;  width < 4 ?
 	subs	lr, r10, #4
-	blt	L357
-L356
+	blt	pixels2
+
+	;  this loop converts four 32-bit values
+	;  to four 16-bit pixels and puts them to word-aligned dst
+pixels4_loop
 	;  load rgb1, rgb2, rgb3, rgb4
 	ldmia	r0!, {r4 - r7}
 	subs	lr, lr, #4
@@ -384,10 +425,13 @@ L356
 	orr	r9, r9, r12, lsl #8
 	;  store four pixels
 	stmia	r2!, {r8, r9}
-	bge	L356
-L357
+	bge	pixels4_loop
+
+pixels2
+        ;  here we convert and put two pixels to word-aligned dst
 	tst	lr, #2
-	beq	L358
+	beq	pixel1
+	;  load two pixels
 	ldmia	r0!, {r4, r5}
 	;  convert rgb1
 	and	r12, r4, #248
@@ -405,9 +449,11 @@ L357
 	orr	r8, r8, r12, lsl #8
 	;  store two pixels
 	str	r8, [r2], #4
-L358
+
+pixel1
+        ;  the final pixel in row (if any)
 	tst	lr, #1
-	beq	L359
+	beq	row_done
 	ldr	r4, [r0], #4
 	and	r12, r4, #248
 	mov	r8, r12, lsr #3
@@ -416,13 +462,17 @@ L358
 	and	r12, r4, #0xf80000
 	orr	r8, r8, r12, lsr #8
 	strh	r8, [r2], #2
-L359
-	subs	fp, fp, #1
+
+row_done
+        ;  decrease row count, update src & dst and repeat from the beginning
+	subs	r11, r11, #1
 	add	r0, r0, r1, lsl #2
 	add	r2, r2, r3, lsl #1
-	bne	L355
-	ldmeqea	sp, {r4 - fp, pc}
-L354
+	bne	row_loop
+	ldmeqea	sp, {r4 - r11, pc}
+
+unaligned_row
+        ;  convert and put the first pixel thus making dst word-aligned
 	ldr	r4, [r0], #4
 	subs	lr, r10, #5
 	and	r12, r4, #248
@@ -432,8 +482,8 @@ L354
 	and	r12, r4, #0xf80000
 	orr	r8, r8, r12, lsr #8
 	strh	r8, [r2], #2
-	bge	L356
-	blt	L357
+	bge	pixels4_loop
+	blt	pixels2
 
         LTORG
 asm_draw_rgb	ENDP
