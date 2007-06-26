@@ -87,7 +87,9 @@ define makeExtraJar
 	    for jar in $(4); do if $(UNZIP) -l $$jar $$class | grep "$$class" >/dev/null; then \
 	        $(UNZIP) -qo $$jar $$class -d $(5); break; \
 	    fi; done; \
-	    if !(test -r $(5)/$$class); then echo "Error: could not find $$class"; fi; \
+	    if !(test -r $(5)/$$class); then \
+                echo "Error: could not find $$class needed for $(1)"; exit 1; \
+            fi; \
 	fi; done
         $(AT)if (test -r $(5)); then \
 	    @echo ...$(1); \
