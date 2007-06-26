@@ -87,10 +87,14 @@ define makeExtraJar
 	    for jar in $(4); do if $(UNZIP) -l $$jar $$class | grep "$$class" >/dev/null; then \
 	        $(UNZIP) -qo $$jar $$class -d $(5); break; \
 	    fi; done; \
-	    if !(test -r $(5)/$$class); then echo "Error: could not find $$class"; fi; \
+	    if !(test -r $(5)/$$class); then \
+                echo "Error: could not find $$class needed for $(1)"; exit 1; \
+            fi; \
 	fi; done
-	@echo ...$(1)
-	$(AT)$(CVM_JAR) cf $(1) -C $(5) .
+        $(AT)if (test -r $(5)); then \
+	    @echo ...$(1); \
+	    $(CVM_JAR) cf $(1) -C $(5) .;\
+        fi
 endef
 
 # makeJSRExtraJar(jsrNumber)
