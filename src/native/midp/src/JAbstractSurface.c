@@ -189,7 +189,7 @@ Java_com_sun_pisces_AbstractSurface_setRGB() {
 
         SNI_BEGIN_RAW_POINTERS;
 
-        tempArray = JavaIntArray(arrayHandle)->elements + offset;
+        tempArray = PISCES_GET_DATA_POINTER(JavaIntArray(arrayHandle)) + offset;
 
         ACQUIRE_SURFACE(surface, objectHandle);
         surface_setRGB(surface, x, y, width, height, tempArray, scanLength);
