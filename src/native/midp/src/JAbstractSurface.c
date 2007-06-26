@@ -28,6 +28,7 @@
 
 #include <KNIUtil.h>
 #include <PiscesSysutils.h>
+#include <midpPiscesUtils.h>
 
 #include <PiscesSurface.inl>
 
