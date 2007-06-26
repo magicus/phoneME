@@ -404,12 +404,6 @@ SUBSYSTEM_SATSA_NATIVE_FILES = \
 EXTRA_CFLAGS += -DENABLE_JSR_177
 JPP_DEFS += -DENABLE_JSR_177
 
-# Specify romizer configuration file for the jsr
-# and path where the file is located
-#
-ROMGEN_INCLUDE_PATHS += $(JSR_177_DIR)/src/share/config
-ROMGEN_CFG_FILES     += satsa_rom.cfg
-
 # Tools and applets
 #
 $(JSR_177_BINDIR):
