@@ -1,25 +1,25 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
- * 
+ * 2 only, as published by the Free Software Foundation.
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
- * 
+ * included at /legal/license.txt).
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
- * 
+ * 02110-1301 USA
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include <sys/types.h>
@@ -39,18 +39,18 @@ static int internal_select_pipe(int fd, unsigned int serial);
 JUMPEvent jumpEventCreate() {
     struct _JUMPEventIMPL_tag *evt;
     JUMPEvent oevt = malloc(sizeof *oevt);
-    
+
     if (oevt == NULL) {
         LOG("No memory");
         return NULL;
     }
-    
+
     evt = getOpaque(oevt);
     evt->magic = JUMP_EVENTS_MAGIC_MD;
     evt->flag = 0;
     pthread_mutex_init(&evt->locked, NULL);
     evt->listeners = NULL;
-    
+
     return oevt;
 }
 
@@ -101,7 +101,7 @@ static int internal_select_pipe(int fd, unsigned int serial) {
     fd_set except_fds;
     int num_fds = 0, num_ready;
     unsigned int buf[2];
-    
+
     FD_ZERO(&read_fds);
     FD_ZERO(&write_fds);
     FD_ZERO(&except_fds);
@@ -156,7 +156,7 @@ int jumpEventWait(JUMPEvent oevt) {
         goto done;
     }
     pthread_mutex_unlock(&evt->locked);
-    
+
     listener = malloc(sizeof *listener);
     if (listener == NULL) {
         LOG("No memory");
@@ -194,7 +194,7 @@ int jumpEventWait(JUMPEvent oevt) {
         goto done;
     }
     result = 0;
-    
+
 done:
     return result;
 }
@@ -202,11 +202,11 @@ done:
 static int internal_fire_event(struct _JUMPEventIMPL_tag *evt, int failed) {
     struct _JUMPEventListener_tag *p;
     int result = 0;
-    
+
 /* must be called when the mutex is locked */
     for (p = evt->listeners; p != NULL; p = p->next) {
         unsigned int buf[2];
-        
+
         buf[0] = p->serial;
         buf[1] = failed;
         if (!p->done) {
@@ -223,7 +223,7 @@ static int internal_fire_event(struct _JUMPEventIMPL_tag *evt, int failed) {
 }
 
 static void internal_remove_listeners(struct _JUMPEventListener_tag *p) {
-    
+
     while (p != NULL) {
         struct _JUMPEventListener_tag *pv = p;
         p = p->next;
@@ -235,7 +235,7 @@ static void internal_remove_listeners(struct _JUMPEventListener_tag *p) {
 
 int jumpEventHappens(JUMPEvent oevt) {
     struct _JUMPEventIMPL_tag *evt = getOpaque(oevt);
-    struct _JUMPEventListener_tag *p;
+    //struct _JUMPEventListener_tag *p;
     int result = 0;
 
     if (evt->magic != JUMP_EVENTS_MAGIC_MD) {
