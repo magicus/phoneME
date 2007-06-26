@@ -89,6 +89,12 @@ JSROP_ABSTRACTS_JAVA_FILES += \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/DigestException.java
 endif
 
+# Specify romizer configuration file for the jsr
+# and path where the file is located
+#
+ROMGEN_INCLUDE_PATHS += $(JSROP_ABSTRACTS_DIR)/src/cldc_application/config
+ROMGEN_CFG_FILES     += abstractions_rom.cfg
+
 #####################################################
 JTWI_NATIVE_FILES  += $(JSROP_ABSTRACTS_NATIVES)
 EXTRA_INCLUDES	   += $(JSROP_ABSTRACTS_INCLUDES)
