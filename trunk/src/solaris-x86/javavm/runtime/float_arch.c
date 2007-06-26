@@ -1,5 +1,5 @@
 /*
- * @(#)float_arch.h	1.8 06/10/10
+ * @(#)float_arch.c	1.11 06/10/10
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -25,21 +25,18 @@
  *
  */
 
-#ifndef _SOLARIS_FLOAT_ARCH_H
-#define _SOLARIS_FLOAT_ARCH_H
+#include "javavm/include/porting/doubleword.h"
+#include "javavm/include/porting/float.h"
+#include <math.h>
+#include <string.h>
 
-#define NAN_CHECK_f2i
-#define NAN_CHECK_f2l
-
-#undef USE_NATIVE_FREM
-#define USE_ANSI_FMOD
-#undef USE_NATIVE_FCOMPARE
-#define USE_ANSI_FCOMPARE
-
-#ifdef __GNUC__
-#define BOUNDS_CHECK_f2l
-#endif
-
-#define setFPMode()     {} 
-
-#endif /* _SOLARIS_FLOAT_ARCH_H */
+/*
+ * setFPMode configures the fpu registers to permit correct 
+ * float and double handling as per fdlibm.
+*/
+void setFPMode(void)
+{
+    asm("       pushl $575");
+    asm("       fldcw (%esp)");
+    asm("       popl %eax");
+}
