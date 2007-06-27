@@ -75,35 +75,37 @@ endif
 endif
 
 # JPEG libray use with Putpixel
-    ifeq ($(USE_JPEG), true)
-	vpath % $(JPEG_DIR)
-	SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += -I$(JPEG_DIR)
-	SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
-		jcomapi.c \
-		jdapimin.c \
-		jdapistd.c \
-		jdcoefct.c \
-		jdcolor.c \
-		jddctmgr.c \
-		jdhuff.c \
-		jdinput.c \
-		jdmainct.c \
-		jdmarker.c \
-		jdmaster.c \
-		jdmerge.c \
-		jdphuff.c \
-		jdpostct.c \
-		jdsample.c \
-		jerror.c \
-		jidctfst.c \
-		jidctred.c \
-		jmemmgr.c \
-		jmemnobs.c \
-		jpegdecoder.c \
-		jquant1.c \
-		jquant2.c \
-		jutils.c
-    endif
+ifeq ($(USE_JPEG), true)
+
+vpath % $(JPEG_DIR)
+SUBSYSTEM_GRAPHICS_EXTRA_INCLUDES += -I$(JPEG_DIR)
+SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
+    jcomapi.c \
+    jdapimin.c \
+    jdapistd.c \
+    jdcoefct.c \
+    jdcolor.c \
+    jddctmgr.c \
+    jdhuff.c \
+    jdinput.c \
+    jdmainct.c \
+    jdmarker.c \
+    jdmaster.c \
+    jdmerge.c \
+    jdphuff.c \
+    jdpostct.c \
+    jdsample.c \
+    jerror.c \
+    jidctfst.c \
+    jidctred.c \
+    jmemmgr.c \
+    jmemnobs.c \
+    jpegdecoder.c \
+    jquant1.c \
+    jquant2.c \
+    jutils.c
+
+endif
 
 # I3test files
 ifeq ($(USE_I3_TEST), true)
