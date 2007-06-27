@@ -133,11 +133,12 @@ struct CVMClassBlock {
     CVMUint16        fieldCountX;       /* # entries in fields array */
     CVMUint16        methodTableCountX; /* # of entries in methodTable array */
 					/* but see also CVMcbBasicTypeCode   */
-    CVMUint8	     accessFlagsX;      /* access using CVMcbIs macro */
+    CVMUint16	     accessFlagsX;      /* access using CVMcbIs macro */
     volatile CVMUint8 runtimeFlagsX;    /* Runtime flags except INITIALIZED 
 					 * and ERROR state. See notes below
 					 * around the CVM_CLASS_* flag
 					 * definitions for detail */
+#ifdef CVM_LVM
     CVMUint16        lvmClassIndexX;    /* Reserved for future use. */
 					/* %begin lvm
 					 * Used by LVM. Non-zero if the class
@@ -147,6 +148,7 @@ struct CVMClassBlock {
 					 * from a per-LVM info buffer in 
 					 * LVM-enabled mode.
 					 * %end lvm */
+#endif
     CVMUint16        instanceSizeX;     /* instance size in bytes */
     CVMUint16        numStaticRefsX;    /* # of statics that are ref types,
 					   but only for dynamic classes */
@@ -654,9 +656,11 @@ struct CVMMethodBlockImmutable {
     CVMMethodTypeID  nameAndTypeIDX;/* name and type */
     CVMUint16  methodTableIndexX;/* index of this method into cb.methodTable */
     CVMUint8   argsSizeX;     /* calculated based on signature and if static */
-    CVMUint8   invokerIdxX;   /* index of method invoker to use */
-    CVMUint8   accessFlagsX;  /* could be merged with invokerIdx */
     CVMUint8   methodIndexX;  /* index into CB.methods[].mb[] of this method */
+
+    /* Top 4 bits for the invoker type. Bottom 12 bits for the access flags. */
+    CVMUint16  invokerAndAccessFlagsX;
+
     CVMUint16  checkedExceptionsOffsetX; /* index into CB.checkedExceptions */
     union {   /* code specific method information */
 	CVMJavaMethodDescriptor* jmd;        /* more info for java methods */
@@ -782,7 +786,29 @@ struct CVMMethodArray {
 #define CVMmbMirandaInterfaceMb(mb)    ((mb)->immutX.codeX.interfaceMb)
 #endif
 
-#define CVMmbAccessFlags(mb)           ((mb)->immutX.accessFlagsX)
+#define CVMmbAccessFlags(mb) \
+    ((mb)->immutX.invokerAndAccessFlagsX & CVM_METHOD_ACC_FLAGS_MASK)
+#define CVMmbSetAccessFlags(mb, flags_) { \
+	CVMUint16 invokerAndAccessFlags = (mb)->immutX.invokerAndAccessFlagsX; \
+	CVMUint16 invoker = invokerAndAccessFlags & ~CVM_METHOD_ACC_FLAGS_MASK; \
+	CVMassert((flags_) <= CVM_METHOD_ACC_FLAGS_MASK); \
+	(mb)->immutX.invokerAndAccessFlagsX = \
+	    invoker | ((flags_) & CVM_METHOD_ACC_FLAGS_MASK); \
+    }
+
+/* Sets the invokerIdx and access flags in the given CVMMethodBlockImmutable
+   record.  This is only currently used by the preloader. */
+#define CVMprivateMbImmSetInvokerAndAccessFlags(mbImm, invokerIdx_, flags_) { \
+	CVMUint16 invokerIdx;					 \
+	CVMUint16 accessFlags;					 \
+	invokerIdx = (invokerIdx_);				 \
+	accessFlags = (flags_);					 \
+	CVMassert(invokerIdx <= CVM_METHOD_INVOKER_MASK);	 \
+	CVMassert(accessFlags <= CVM_METHOD_ACC_FLAGS_MASK);	 \
+	mbImm->invokerAndAccessFlagsX =				 \
+	    (invokerIdx << CVM_METHOD_INVOKER_SHIFT) | accessFlags; \
+    }
+
 #define CVMmbArgsSize(mb)              ((mb)->immutX.argsSizeX)
 #define CVMmbCapacity(mb)	       (CVMjmdMaxCapacity(CVMmbJmd(mb)))
 /* This macro returns either NULL or an CVMCheckedExceptions* which is
@@ -803,7 +829,16 @@ struct CVMMethodArray {
 #define CVMmbExceptionTable(mb)        (CVMjmdExceptionTable(CVMmbJmd(mb)))
 #define CVMmbExceptionTableLength(mb)  \
      (CVMjmdExceptionTableLength(CVMmbJmd(mb)))
-#define CVMmbInvokerIdx(mb)            ((mb)->immutX.invokerIdxX)
+
+#define CVMmbInvokerIdx(mb) \
+    ((mb)->immutX.invokerAndAccessFlagsX >> CVM_METHOD_INVOKER_SHIFT)
+#define CVMmbSetInvokerIdx(mb, invokerType) {					\
+	CVMUint16 invokerAndAccessFlags = (mb)->immutX.invokerAndAccessFlagsX; \
+	CVMUint16 flags = invokerAndAccessFlags & CVM_METHOD_ACC_FLAGS_MASK; \
+	(mb)->immutX.invokerAndAccessFlagsX = \
+	    ((invokerType) << CVM_METHOD_INVOKER_SHIFT) | flags; \
+    }
+
 #define CVMmbJavaCode(mb)              (CVMjmdCode(CVMmbJmd(mb)))
 #define CVMmbLineNumberTable(mb)       (CVMjmdLineNumberTable(CVMmbJmd(mb)))
 #define CVMmbLineNumberTableLength(mb) \
@@ -1253,12 +1288,15 @@ enum {
     CVM_INVOKE_JNI_SYNC_METHOD,
     CVM_INVOKE_ABSTRACT_METHOD,
     CVM_INVOKE_NONPUBLIC_MIRANDA_METHOD,
-    CVM_INVOKE_MISSINGINTERFACE_MIRANDA_METHOD
+    CVM_INVOKE_MISSINGINTERFACE_MIRANDA_METHOD,
 #ifdef CVM_CLASSLOADING
-    ,
-    CVM_INVOKE_LAZY_JNI_METHOD
+    CVM_INVOKE_LAZY_JNI_METHOD,
 #endif
+    CVM_NUM_INVOKER_TYPES
 };
+
+#define CVM_METHOD_INVOKER_SHIFT   12  /* top 4 bits in the CVMUint16 */
+#define CVM_METHOD_INVOKER_MASK    0xf /* 4 bits only */
 
 /* 
  * Class, field, and method access and modifier flags. Some of these
@@ -1270,6 +1308,10 @@ enum {
  *   CVM_METHOD_ACC_PRIVATE == CVM_FIELD_ACC_PRIVATE
  * If these are not met, some of the code for reflection and object
  * serialization will have to be reworked.)
+ *
+ * NOTE: ACC_PUBLIC, ACC_PRIVATE, and ACC_PROTECTED are encoded differently
+ *       from the other flags.  These 3 are encoded in 2 bits shared between
+ *       them instead of being assigned 1 bit each.
  */
 #define CVM_CLASS_ACC_PUBLIC        0x01 /* visible to everyone */
 #define CVM_CLASS_ACC_PRIMITIVE     0x02 /* primitive type class */
@@ -1277,16 +1319,21 @@ enum {
 #define CVM_CLASS_ACC_REFERENCE     0x08 /* is a flavor of weak reference */
 #define CVM_CLASS_ACC_FINAL         0x10 /* no further subclassing */
 #define CVM_CLASS_ACC_SUPER         0x20 /* funky handling of invokespecial */
-#define CVM_CLASS_ACC_INTERFACE     0x40 /* class is an interface */
-#define CVM_CLASS_ACC_ABSTRACT      0x80 /* may not be instantiated */
+#define CVM_CLASS_ACC_INTERFACE     0x200  /* class is an interface */
+#define CVM_CLASS_ACC_ABSTRACT      0x400  /* may not be instantiated */
+#define CVM_CLASS_ACC_SYNTHETIC     0x1000 /* Not in source. */
+#define CVM_CLASS_ACC_ANNOTATION    0x2000 /* Declared as an annotation type.*/
+#define CVM_CLASS_ACC_ENUM          0x4000 /* Declared as enum type. */
 
 #define CVM_FIELD_ACC_PUBLIC        0x01 /* visible to everyone */
-#define CVM_FIELD_ACC_PRIVATE       0x02 /* visible only to defining class */
-#define CVM_FIELD_ACC_PROTECTED     0x04 /* visible to subclasses */
+#define CVM_FIELD_ACC_PRIVATE       0x03 /* visible only to defining class */
+#define CVM_FIELD_ACC_PROTECTED     0x02 /* visible to subclasses */
 #define CVM_FIELD_ACC_STATIC        0x08 /* instance variable is static */
 #define CVM_FIELD_ACC_FINAL         0x10 /* no subclassing/overriding */
 #define CVM_FIELD_ACC_VOLATILE      0x40 /* cannot cache in registers */
 #define CVM_FIELD_ACC_TRANSIENT     0x80 /* not persistent */
+#define CVM_FIELD_ACC_SYNTHETIC     0x04 /* Not in source. */
+#define CVM_FIELD_ACC_ENUM          0x20 /* Declared as enum type. */
 
 #define CVM_METHOD_ACC_PUBLIC       CVM_FIELD_ACC_PUBLIC     /* invariant */
 #define CVM_METHOD_ACC_PRIVATE      CVM_FIELD_ACC_PRIVATE    /* invariant */
@@ -1294,8 +1341,27 @@ enum {
 #define CVM_METHOD_ACC_STATIC       0x08 /* method is static */
 #define CVM_METHOD_ACC_FINAL        0x10 /* no further overriding */
 #define CVM_METHOD_ACC_SYNCHRONIZED 0x20 /* wrap method call in monitor lock */
-#define CVM_METHOD_ACC_NATIVE       0x40 /* implemented in C */
-#define CVM_METHOD_ACC_ABSTRACT     0x80 /* no definition provided */
+#define CVM_METHOD_ACC_BRIDGE       0x40 /* Bridge generated by javac. */
+#define CVM_METHOD_ACC_VARARGS      0x80 /* Declared with varargs. */
+#define CVM_METHOD_ACC_NATIVE      0x100 /* implemented in C */
+#define CVM_METHOD_ACC_ABSTRACT    0x400 /* no definition provided */
+#define CVM_METHOD_ACC_STRICT      0x200 /* floating point is strict. */
+#define CVM_METHOD_ACC_SYNTHETIC    0x04 /* Not in source. */
+
+/* CVM_MEMBER_PPP_MASK is used for masking the 3 flags: ACC_PUBLIC,
+   ACC_PRIVATE, and ACC_PROTECTED.  The "PPP" refers to the 3 Ps of the
+   encoded flags that it masks.
+*/
+#define CVM_MEMBER_PPP_MASK \
+    (CVM_FIELD_ACC_PUBLIC | CVM_FIELD_ACC_PRIVATE | CVM_FIELD_ACC_PROTECTED)
+
+/* CVM_METHOD_ACC_FLAGS_MASK is the mask of all method ACC flags. */
+#define CVM_METHOD_ACC_FLAGS_MASK \
+    (CVM_MEMBER_PPP_MASK   | CVM_METHOD_ACC_STATIC | \
+     CVM_METHOD_ACC_FINAL  | CVM_METHOD_ACC_SYNCHRONIZED  | \
+     CVM_METHOD_ACC_BRIDGE | CVM_METHOD_ACC_VARARGS | \
+     CVM_METHOD_ACC_NATIVE | CVM_METHOD_ACC_ABSTRACT | \
+     CVM_METHOD_ACC_STRICT | CVM_METHOD_ACC_SYNTHETIC)
 
 /*
  * Test for specific access flags 
@@ -1303,11 +1369,18 @@ enum {
 #define CVMprivateThingIs(thing_, what_, flag_) \
     ((((thing_)->accessFlagsX) & CVM_##what_##_ACC_##flag_) != 0)
 
+#define CVMmemberPPPAccessIs(accessFlags_, what_, flag_) \
+    (((accessFlags_) & CVM_MEMBER_PPP_MASK) == CVM_##what_##_ACC_##flag_)
+
 #define CVMfbIs(fb_, flag_) \
-    CVMprivateThingIs(fb_, FIELD, flag_)
+    ((CVM_FIELD_ACC_##flag_ & CVM_MEMBER_PPP_MASK) ? \
+     CVMmemberPPPAccessIs((fb_)->accessFlagsX, FIELD, flag_) : \
+     CVMprivateThingIs(fb_, FIELD, flag_))
 
 #define CVMmbIs(mb_, flag_) \
-    ((((mb_)->immutX.accessFlagsX) & CVM_METHOD_ACC_##flag_) != 0)
+    ((CVM_METHOD_ACC_##flag_ & CVM_MEMBER_PPP_MASK) ? \
+     CVMmemberPPPAccessIs((mb_)->immutX.invokerAndAccessFlagsX, METHOD, flag_) : \
+     ((((mb_)->immutX.invokerAndAccessFlagsX) & CVM_METHOD_ACC_##flag_) != 0))
 
 #define CVMjmdIs(jmd_, flag_) \
     ((CVMjmdFlags(jmd_) & CVM_JMD_##flag_) != 0)
@@ -1350,6 +1423,11 @@ enum {
 /*
  * Put the string representation of the class in
  */
+#ifdef CVM_LVM
+#define CVM_PRIVATE_LVM_CLASS_INDEX(index) (index),
+#else
+#define CVM_PRIVATE_LVM_CLASS_INDEX(index) 
+#endif
 #define CVM_INIT_CLASSBLOCK(gcMap, classname, classnameString,		\
                         superclass, constantpool,			\
                         interfaces, methods, fields, statics,		\
@@ -1369,7 +1447,8 @@ enum {
 			  (CVMFieldArray *)fields, {statics},		\
 			  constantpool_count, method_count,		\
 			  field_count, method_table_count,		\
-			  access_flags, runtime_flags, lvm_class_index,	\
+			  access_flags, runtime_flags,                  \
+			  CVM_PRIVATE_LVM_CLASS_INDEX(lvm_class_index)	\
 			  instance_size, 0,				\
 			  (CVMClassICell*)javaInstance,			\
 			  CVM_INIT_NAMESTRING(classnameString)		\

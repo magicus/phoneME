@@ -258,8 +258,10 @@ unpack(CVMMethodBlockImmutable* mbImm,
     CVM_DO_MB_UNPACK_FROM_COMPRESSED(checkedExceptionsOffsetX);
     CVM_DO_MB_UNPACK_FROM_COMPRESSED(codeX.jmd);
     mbImm->argsSizeX = argsInvokerAccess[mbComp->entryIdxX * 3];
-    mbImm->invokerIdxX = argsInvokerAccess[mbComp->entryIdxX * 3 + 1];
-    mbImm->accessFlagsX = argsInvokerAccess[mbComp->entryIdxX * 3 + 2];
+
+    CVMprivateMbImmSetInvokerAndAccessFlags(mbImm,
+        argsInvokerAccess[mbComp->entryIdxX * 3 + 1],
+        argsInvokerAccess[mbComp->entryIdxX * 3 + 2]);
 }
 
 #ifdef CVM_DEBUG_ASSERTS

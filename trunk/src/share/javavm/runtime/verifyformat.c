@@ -582,7 +582,7 @@ verify_innerclasses_attribute(CFcontext *context)
 	unsigned short ooff  = (unsigned short)get2bytes(context); /* outer_class_info_index */
 	unsigned short inoff = (unsigned short)get2bytes(context); /* inner_name_index       */
 	unsigned short iacc  = (unsigned short)get2bytes(context); /* inner_class_access_flg */
-    
+
 	verify_constant_entry(context, ioff, JVM_CONSTANT_Class,
 			      "inner_class_info_index");
 	
@@ -1255,6 +1255,32 @@ verify_legal_class_modifiers(CFcontext *context, unsigned int access)
     if (MEASURE_ONLY)
         return;
 
+    /* Need the following version number check in order to pass the following
+       tests in the CDC TCK:
+       1. vm/classfmt/atr/atrinc211/atrinc21101m1/atrinc21101m1.html
+          classfile version: 45.3, class access flags: 0xfe90
+       2. vm/classfmt/clf/clfacc006/clfacc00601m1/clfacc00601m1.html
+          classfile version: 45.3, class access flags: 0x7001
+       3. vm/classfmt/clf/clfacc006/clfacc00603m1/clfacc00603m1.html:
+          classfile version: 45.3, class access flags: 0x7031
+
+       In all these cases, the class access flags have illegal bits set for
+       classfile version 45.3.  The VM spec says that unused bits should be
+       set to zero for future use.  If these bits have values set, a VM which
+       is capable of digesting a later classfile version should be able to
+       throw a ClassFormatError if these bits are malformed.  In the case of
+       the above TCK tests, the access flag bits are malformed.  However,
+       the tests are erroneously expecting the VM to ignore these bits
+       instead.
+
+       This check has been added here to work around these bug that have been
+       filed against in the CDC TCK (CR 6574335, 6574338).  This check may
+       be eliminated later depending on how the TCK bugs are resolved.
+     */
+    if (context->major_version < 49) {
+	access &= ~(JVM_ACC_SYNTHETIC | JVM_ACC_ANNOTATION | JVM_ACC_ENUM);
+    }
+
 #ifdef CVM_DUAL_STACK
     if (!context->isCLDCClass) {
 #endif
@@ -1268,8 +1294,13 @@ verify_legal_class_modifiers(CFcontext *context, unsigned int access)
     }
 #endif
 
+    if (access & JVM_ACC_ANNOTATION) {
+	if (!(access & JVM_ACC_INTERFACE)) {
+	    goto failed;
+	}
+    }
     if (access & JVM_ACC_INTERFACE) {
-        if ((access & JVM_ACC_ABSTRACT) == 0)
+        if (!(access & JVM_ACC_ABSTRACT))
 	    goto failed;
 	if (access & JVM_ACC_FINAL)
 	    goto failed;
@@ -1305,7 +1336,8 @@ verify_legal_field_modifiers(CFcontext *context, unsigned int access,
 	    goto failed;
     } else {
         /* interface fields */
-        if (access & ~(JVM_ACC_STATIC | JVM_ACC_FINAL | JVM_ACC_PUBLIC))
+        if (access & ~(JVM_ACC_STATIC | JVM_ACC_FINAL | JVM_ACC_PUBLIC |
+		       JVM_ACC_SYNTHETIC))
 	    goto failed;
         if (!(access & JVM_ACC_STATIC) ||
 	    !(access & JVM_ACC_FINAL) ||
@@ -1327,12 +1359,8 @@ verify_legal_method_modifiers(CFcontext *context, unsigned int access,
 
     /* Abstract methods cannot have these other flags set. */
     if ((access & JVM_ACC_ABSTRACT) &&
-        ((access & JVM_ACC_FINAL) ||
-         (access & JVM_ACC_NATIVE) ||
-         (access & JVM_ACC_PRIVATE) ||
-         (access & JVM_ACC_STATIC) ||
-         (access & JVM_ACC_STRICT) ||
-         (access & JVM_ACC_SYNCHRONIZED))) {
+        (access & (JVM_ACC_FINAL | JVM_ACC_NATIVE | JVM_ACC_PRIVATE |
+		   JVM_ACC_STATIC | JVM_ACC_STRICT | JVM_ACC_SYNCHRONIZED))) {
         goto failed;
     }
 
@@ -1340,23 +1368,9 @@ verify_legal_method_modifiers(CFcontext *context, unsigned int access,
         /* class or instance methods */
         if (utfcmp(name, "<init>") == 0) {
             /* The STRICT bit is new as of 1.2. */
-            if (access & ~(JVM_ACC_PUBLIC
-                            | JVM_ACC_PROTECTED
-                            | JVM_ACC_PRIVATE
-                            | JVM_ACC_STRICT))
-	        goto failed;
-        } else {
-	    if (access & JVM_ACC_ABSTRACT) {
-	        if ((access & JVM_ACC_FINAL) ||
-		    (access & JVM_ACC_NATIVE) /* || 
-	            This is commented out until after javac is fixed so that it 
-	            rejects abstract synchronized methods.
-		    (access & JVM_ACC_SYNCHRONIZED)*/)
-		    goto failed;
-	    }
-	    if ((access & JVM_ACC_PRIVATE) && (access & JVM_ACC_ABSTRACT))
-	        goto failed;
-	    if ((access & JVM_ACC_STATIC) && (access & JVM_ACC_ABSTRACT))
+            if (access & ~(JVM_ACC_PUBLIC | JVM_ACC_PROTECTED |
+			   JVM_ACC_PRIVATE | JVM_ACC_STRICT |
+			   JVM_ACC_VARARGS | JVM_ACC_SYNTHETIC))
 	        goto failed;
         }
     } else {
