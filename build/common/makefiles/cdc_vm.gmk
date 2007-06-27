@@ -46,7 +46,7 @@ ifeq ($(USE_QT_FB), true)
     ifeq ($(HOST_QTLIBDIR),)
         HOST_QTLIBDIR = $(QTOPIA_SDK_DIR)/lib
     endif
-    
+
     ifeq ($(TARGET_QTLIBDIR),)
         TARGET_QTLIBDIR = $(QTOPIA_SDK_DIR)/lib
     endif
@@ -62,7 +62,7 @@ ifeq ($(USE_DIRECTFB), true)
     ifeq ($(HOST_DIRECTFBLIBDIR),)
         HOST_DIRECTFBLIBDIR = $(DIRECTFB_INSTALL_DIR)/lib
     endif
-    
+
     ifeq ($(TARGET_DIRECTFBLIBDIR),)
         TARGET_DIRECTFBLIBDIR = $(DIRECTFB_INSTALL_DIR)/lib
     endif
@@ -70,7 +70,7 @@ ifeq ($(USE_DIRECTFB), true)
     EXTRA_INCLUDES  += -I$(DIRECTFB_INSTALL_DIR)/include/directfb
     LIBS            += -Wl,-rpath,$(TARGET_DIRECTFBLIBDIR) 
     LIBS            += -L$(HOST_DIRECTFBLIBDIR) -ldirectfb
-    
+
     EXTRA_CFLAGS    += -DDIRECTFB
 endif
 
@@ -94,10 +94,6 @@ define cdc_dist_dir_help
 endef
 
 
-CDC_CLASSES_ZIP     = $(CDC_DIST_DIR)/btclasses.zip
-PROFILE_CLASSES_ZIP = $(CDC_DIST_DIR)/lib/${J2ME_CLASSLIB}.jar
-CDCTEST_CLASSES_ZIP = $(CDC_DIST_DIR)/testclasses.zip
-
 # CDC VM exported include directory
 #
 CDC_TARGET_CPU_i386 = x86
@@ -116,17 +112,6 @@ ifeq ($(USE_QT_FB), true)
 VM_INCLUDES += -I$(QTOPIA_SDK_DIR)/include -I$(QTOPIA_SDK_DIR)/include/qpe
 endif
 
-VM_BOOTCLASSPATH = $(CDC_CLASSES_ZIP)$(PATHSEP)${PROFILE_CLASSES_ZIP}
-ifeq ($(CVM_INCLUDE_JUMP), true)    
-    EMPTY :=
-    ONESPACE := $(EMPTY) $(EMPTY)
-    VM_BOOTCLASSPATH := $(subst $(ONESPACE),$(PATHSEP),$(strip $(VM_BOOTCLASSPATH) $(JUMP_API_CLASSESZIP)))
-endif
-
-BTCLASSES     = ${CDC_DIST_DIR}/btclasses
-BTCLASSES_ZIP = ${CDC_DIST_DIR}/btclasses.zip
-
-
 # Generate ROMStructs.h
 MIDP_ROMSTRUCTS_CLASSES += \
 	javax.microedition.lcdui.Graphics \
@@ -144,10 +129,11 @@ ROMSTRUCTS_H = $(MIDP_OUTPUT_DIR)/ROMStructs.h
 
 $(ROMSTRUCTS_H): $(MIDP_CLASSES_ZIP)
 	@echo "creating $@..."
-	@$(JDK_DIR)/bin/javah -old -bootclasspath $(BTCLASSES_ZIP) \
+	$(AT)$(JDK_DIR)/bin/javah -old \
+		-bootclasspath $(CVM_BUILDTIME_CLASSESZIP) \
 		-classpath $^ -o $@ \
 		$(MIDP_ROMSTRUCTS_CLASSES)
-	@perl $(MIDP_DIR)/build/common/genROMStructs.pl $@
+	$(AT)perl $(MIDP_DIR)/build/common/genROMStructs.pl $@
 
 #
 # Create a separate zip file that contains classes excluded
@@ -182,33 +168,17 @@ MIDP_EXCLUDED_JAVA_FILES = \
 # Create the MIDP_EXCLUDED_CLASS_ZIP for the signature test.
 $(MIDP_EXCLUDED_CLASS_ZIP) : $(MIDP_EXCLUDED_JAVA_FILES)
 	@echo "creating $@..."
-	@mkdir -p $(MIDP_EXCLUDED_CLASS_DIR)
-	@$(JDK_DIR)/bin/javac \
-		-bootclasspath $(VM_BOOTCLASSPATH):$(MIDP_CLASSES_ZIP) \
+	$(AT)mkdir -p $(MIDP_EXCLUDED_CLASS_DIR)
+	$(AT)$(JDK_DIR)/bin/javac \
+		-bootclasspath $(VM_BOOTCLASSPATH)$(PATHSEP)$(MIDP_CLASSES_ZIP) \
 		-d $(MIDP_EXCLUDED_CLASS_DIR) \
 		$(MIDP_EXCLUDED_JAVA_FILES)
-	@cd $(MIDP_EXCLUDED_CLASS_DIR); zip -r -q $@ *
-
-#
-# A way to add MIDP classes to be romized by CVM:
-# in LF build directory:    make newrom
-# in CDC build dir:         make
-#
-newrom:
-	@cd $(MIDP_OUTPUT_DIR)/classes; jar uvf ${BTCLASSES_ZIP} .
-	@cd ${BTCLASSES}/../${J2ME_CLASSLIB}_classes/; \
-		jar uvf ${BTCLASSES_ZIP} java/util/Timer* 
-	@ls -l ${BTCLASSES_ZIP}
-
-oldrom:
-	@echo restoring CVM original btclasses.zip
-	@cd ${BTCLASSES}; jar cvf ${BTCLASSES_ZIP} .
-	@ls -l ${BTCLASSES_ZIP}
+	$(AT)cd $(MIDP_EXCLUDED_CLASS_DIR); zip -r -q $@ *
 
 # The CDC build cannot compile the following files yet. 
 cdc_dummies:
-	@mkdir -p $(GENERATED_DIR)
-	@for i in jvmconfig.h ; do \
+	$(AT)mkdir -p $(GENERATED_DIR)
+	$(AT)for i in jvmconfig.h ; do \
 	    if test ! -f $(GENERATED_DIR)/$$i; then \
 		echo "creating dummy $$i"; \
 		echo '// empty' > $(GENERATED_DIR)/$$i; \
