@@ -23,7 +23,6 @@
  */
 package com.sun.midp.jump.push.executive.persistence;
 
-import com.sun.jump.module.contentstore.InMemoryContentStore;
 import junit.framework.*;
 import java.io.IOException;
 import java.util.HashMap;

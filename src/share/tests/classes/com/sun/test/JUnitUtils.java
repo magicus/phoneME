@@ -22,24 +22,30 @@
  * information or have any questions.
  */
 
-package com.sun.midp.jump.push.executive;
+package com.sun.test;
 
-/** Proxying lifecycle adapter. */
-final class ProxyLifecycleAdapter implements LifecycleAdapter {
-    /** Adapter to proxy to. */
-    private LifecycleAdapter lifecycleAdapter = null;
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
+/** Various JUnit utilities. */
+public final class JUnitUtils {
+    /** Hidden ctor. */
+    private JUnitUtils() { }
 
     /**
-     * Sets a proxy.
+     * Forms a suite.
      *
-     * @param adapter proxy to use
+     * @param allTestsClass AllTests class
+     * @param tests tests of the suite
+     *
+     * @return test suite to run
      */
-    public void setProxy(final LifecycleAdapter adapter) {
-        lifecycleAdapter = adapter;
-    }
-
-    /** {@inheritDoc} */
-    public void launchMidlet(final int midletSuiteID, final String midlet) {
-        lifecycleAdapter.launchMidlet(midletSuiteID, midlet);
+    public static Test createSuite(final Class allTestsClass, final Class [] tests) {
+        final String title = allTestsClass.getPackage().getName();
+        final TestSuite suite = new TestSuite(title);
+        for (int i = 0; i < tests.length; i++) {
+            suite.addTestSuite(tests[i]);
+        }
+        return suite;
     }
 }

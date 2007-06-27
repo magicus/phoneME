@@ -166,7 +166,7 @@ public final class ConnectionControllerTest extends TestCase {
     }
 
     private static Store createStore() throws IOException {
-        return StoreUtils.createInMemoryPushStore();
+        return StoreUtils.getInstance().getStore();
     }
 
     private final ReservationDescriptorFactory rdf =
@@ -195,19 +195,6 @@ public final class ConnectionControllerTest extends TestCase {
     private ConnectionController createConnectionController(
             final Store store) {
         return createConnectionController(store, new ListingLifecycleAdapter());
-    }
-
-    private ConnectionController.ReservationHandler
-        createFakeReservationHandler(
-            final ConnectionController connectionController,
-            final int midletSuiteId,
-            final String midlet,
-            final String connection,
-            final String filter) throws IOException {
-        final ReservationDescriptor descriptor =
-                new MockReservationDescriptor(connection, filter);
-        return connectionController
-                .new ReservationHandler(midletSuiteId, midlet, descriptor);
     }
 
     private ConnectionController.ReservationHandler
@@ -425,7 +412,7 @@ public final class ConnectionControllerTest extends TestCase {
     private void checkStoreEmpty(final Store store) {
         store.listConnections(new Store.ConnectionsConsumer() {
             public void consume(
-                    final int id, final JUMPConnectionInfo [] infos) {
+                    final int id, final ConnectionInfo [] infos) {
                 fail("store must be empty");
             }
         });
@@ -435,12 +422,12 @@ public final class ConnectionControllerTest extends TestCase {
             final Store store,
             final int midletSuiteId, final String midlet,
             final String connection, final String filter) {
-        final JUMPConnectionInfo info =
-                new JUMPConnectionInfo(connection, midlet, filter);
+        final ConnectionInfo info =
+                new ConnectionInfo(connection, midlet, filter);
 
         store.listConnections(new Store.ConnectionsConsumer() {
             public void consume(
-                    final int id, final JUMPConnectionInfo [] infos) {
+                    final int id, final ConnectionInfo [] infos) {
                 assertEquals(id, midletSuiteId);
                 assertEquals(1, infos.length);
                 assertEquals(info, infos[0]);
@@ -719,7 +706,6 @@ public final class ConnectionControllerTest extends TestCase {
     public void testUnregisterConnectionInEmptyController() throws IOException {
         final int midletSuiteId = 123;
         final String connection = "foo://bar";
-        final String filter = "*.123";
 
         final Store store = createStore();
 
@@ -1046,18 +1032,18 @@ public final class ConnectionControllerTest extends TestCase {
         // But check that all the connections reside in the persistent store
         store.listConnections(new Store.ConnectionsConsumer() {
             public void consume(
-                    final int id, final JUMPConnectionInfo [] infos) {
+                    final int id, final ConnectionInfo [] infos) {
                 switch (id) {
                 case midletSuiteId1:
-                    assertSetsEqualDeep(new JUMPConnectionInfo [] {
-                        new JUMPConnectionInfo(midlet1, connection1, filter1),
-                        new JUMPConnectionInfo(midlet2, connection2, filter2),
+                    assertSetsEqualDeep(new ConnectionInfo [] {
+                        new ConnectionInfo(midlet1, connection1, filter1),
+                        new ConnectionInfo(midlet2, connection2, filter2),
                     }, infos);
                     break;
 
                 case midletSuiteId2:
-                    assertSetsEqualDeep(new JUMPConnectionInfo [] {
-                        new JUMPConnectionInfo(midlet3, connection3, filter3),
+                    assertSetsEqualDeep(new ConnectionInfo [] {
+                        new ConnectionInfo(midlet3, connection3, filter3),
                     }, infos);
                     break;
 
@@ -1153,7 +1139,7 @@ public final class ConnectionControllerTest extends TestCase {
         final Store store = createStore();
         for (int i = 0; i < registrations.length; i++) {
             final Registration r = registrations[i];
-            final JUMPConnectionInfo info = new JUMPConnectionInfo(
+            final ConnectionInfo info = new ConnectionInfo(
                     r.connection, r.app.midlet, r.filter);
             store.addConnection(r.app.midletSuiteID, info);
         }
@@ -1246,10 +1232,10 @@ public final class ConnectionControllerTest extends TestCase {
 
         cc.registerConnection(midletSuiteId, midlet, descriptor);
 
-        lifecycleAdapter.lifecycleAdapter = throwingLifecycleAdapter;
+        lifecycleAdapter.setProxy(throwingLifecycleAdapter);
         pingDescriptor(descriptor);
 
-        lifecycleAdapter.lifecycleAdapter = listingLifecycleAdapter;
+        lifecycleAdapter.setProxy(listingLifecycleAdapter);
         pingDescriptor(descriptor);
         assertTrue(listingLifecycleAdapter
                 .hasBeenInvokedOnceFor(midletSuiteId, midlet));

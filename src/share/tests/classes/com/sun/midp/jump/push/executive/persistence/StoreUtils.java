@@ -28,10 +28,12 @@ import com.sun.jump.module.contentstore.InMemoryContentStore;
 import com.sun.jump.module.contentstore.JUMPStoreHandle;
 import java.io.IOException;
 
-public final class StoreUtils {
-    /** Hides default constructor: it's utility class. */
-    private StoreUtils() { }
+/** Jump variant of <code>StoreUtils</code>. */
+public final class StoreUtils extends AbstractStoreUtils {
+    /** Hides a constructor. */
+    protected StoreUtils() { }
 
+    /** {@inheritDoc} */
     public static StoreOperationManager createInMemoryManager(
             final String [] dirs) throws IOException {
         final StoreOperationManager storeManager =
@@ -46,10 +48,33 @@ public final class StoreUtils {
         return storeManager;
     }
 
-    public static Store createInMemoryPushStore() throws IOException {
-        final String [] DIRS = {
-            Store.CONNECTIONS_DIR, Store.ALARMS_DIR
+    /** Jump-specific impl of <code>Refresher</code>. */
+    private static class MyRefresher implements Refresher {
+        /** Content-store dirs. */
+        private static final String [] DIRS = {
+                JUMPStoreImpl.CONNECTIONS_DIR, JUMPStoreImpl.ALARMS_DIR
         };
-        return new Store(createInMemoryManager(DIRS));
+
+        /** <code>StoreOperationManager</code> to use. */
+        private final StoreOperationManager som;
+
+        /**
+         * Default ctor.
+         *
+         * @throws IOException if creation fails
+         */
+        MyRefresher() throws IOException {
+            som = createInMemoryManager(DIRS);
+        }
+
+        /** {@inheritDoc} */
+        public Store getStore() throws IOException {
+            return new JUMPStoreImpl(som);
+        }
+    }
+
+    /** {@inheritDoc} */
+    public Refresher getRefresher() throws IOException {
+        return new MyRefresher();
     }
 }

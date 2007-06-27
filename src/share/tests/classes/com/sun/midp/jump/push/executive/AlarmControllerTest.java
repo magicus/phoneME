@@ -38,7 +38,7 @@ public final class AlarmControllerTest extends TestCase {
     }
 
     private static Store createStore() throws IOException {
-        return StoreUtils.createInMemoryPushStore();
+        return StoreUtils.getInstance().getStore();
     }
 
     private static AlarmController createAlarmController(
@@ -445,12 +445,12 @@ public final class AlarmControllerTest extends TestCase {
         final AlarmController alarmController =
                 createAlarmController(lifecycleAdapter);
 
-        lifecycleAdapter.lifecycleAdapter = throwingLifecycleAdapter;
+        lifecycleAdapter.setProxy(throwingLifecycleAdapter);
         registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET, ALARM_DELTA);
         Thread.sleep(WAIT_DELAY);
 
         // And now check that everything is ok despite of previously thrown adapter
-        lifecycleAdapter.lifecycleAdapter = listingLifecycleAdapter;
+        lifecycleAdapter.setProxy(listingLifecycleAdapter);
         registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET, ALARM_DELTA);
         Thread.sleep(WAIT_DELAY);
         alarmController.dispose();

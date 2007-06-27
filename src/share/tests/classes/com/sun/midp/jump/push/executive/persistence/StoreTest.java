@@ -23,7 +23,7 @@
  */
 package com.sun.midp.jump.push.executive.persistence;
 
-import com.sun.midp.jump.push.executive.JUMPConnectionInfo;
+import com.sun.midp.jump.push.executive.ConnectionInfo;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -42,22 +42,22 @@ public final class StoreTest extends TestCase {
         new String [] {"datagram://:17", "com.sun.QuuuuxMidlet", "12.34"},
     };
 
-    private static JUMPConnectionInfo createConnectionInfo(final int index) {
+    private static ConnectionInfo createConnectionInfo(final int index) {
         final String [] info = SAMPLE_CONNECTIONS[index];
-        return new JUMPConnectionInfo(info[0], info[1], info[2]);
+        return new ConnectionInfo(info[0], info[1], info[2]);
     }
 
-    private static JUMPConnectionInfo [] createConnectionInfos(
+    private static ConnectionInfo [] createConnectionInfos(
             final int [] indices) {
-        final JUMPConnectionInfo [] cns
-                = new JUMPConnectionInfo[indices.length];
+        final ConnectionInfo [] cns
+                = new ConnectionInfo[indices.length];
         for (int i = 0; i < cns.length; i++) {
             cns[i] = createConnectionInfo(indices[i]);
         }
         return cns;
     }
 
-    private static HashSet toSet(final JUMPConnectionInfo [] cns) {
+    private static HashSet toSet(final ConnectionInfo [] cns) {
         return new HashSet(Arrays.asList(cns));
     }
 
@@ -91,15 +91,12 @@ public final class StoreTest extends TestCase {
     }
 
     static private final class Checker {
-        final StoreOperationManager storeManager;
+        final AbstractStoreUtils.Refresher refresher =
+            StoreUtils.getInstance().getRefresher();
         final Store store;
 
         Checker() throws IOException {
-            final String [] DIRS = {
-                Store.CONNECTIONS_DIR, Store.ALARMS_DIR
-            };
-            storeManager = StoreUtils.createInMemoryManager(DIRS);
-            store = new Store(storeManager);
+            store = refresher.getStore();
         }
 
         private void checkConnections(
@@ -110,7 +107,7 @@ public final class StoreTest extends TestCase {
             store.listConnections(new Store.ConnectionsConsumer() {
                 public void consume(
                         final int suiteId,
-                        final JUMPConnectionInfo [] cns) {
+                        final ConnectionInfo [] cns) {
                     assertNull("reported twice: " + suiteId,
                             actual.put(new Integer(suiteId), toSet(cns)));
                 }
@@ -141,7 +138,7 @@ public final class StoreTest extends TestCase {
             checkAlarms(store, expectedAlarms);
 
             // And check that when the data are reread, we're ok
-            final Store fresh = new Store(storeManager);
+            final Store fresh = refresher.getStore();
 
             checkConnections(fresh, expectedConnections);
             checkAlarms(fresh, expectedAlarms);
@@ -178,14 +175,6 @@ public final class StoreTest extends TestCase {
         void removeAlarm(final int suiteId, final String midlet)
                 throws IOException {
             store.removeAlarm(suiteId, midlet);
-        }
-    }
-
-    public void testCtor() throws IOException {
-        try {
-            new Store(null);
-            fail("should throw IllegalArgumentException");
-        } catch (IllegalArgumentException _) {
         }
     }
 
@@ -252,7 +241,6 @@ public final class StoreTest extends TestCase {
     private static final int suite1 = 239;
     private static final int suite2 = 1977;
     private static final int suite3 = 2006;
-    private static final int suite4 = 1024;
 
     // NB: No connections for suites 2 and 4
     private static final Map ecRealistic = new ExpectedConnections()
@@ -328,7 +316,6 @@ public final class StoreTest extends TestCase {
     private static final String midlet2 = "com.sun.bar";
     private static final long time2 = 1977L;
     private static final int suiteId2 = 239;
-    private static final String midlet3 = "com.sun.qux";
     private static final long time3 = 2007L;
 
     private static final Map ea = new ExpectedAlarms()
