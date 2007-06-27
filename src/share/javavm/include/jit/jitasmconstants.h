@@ -73,18 +73,16 @@
 #define OFFSET_CVMMethodBlock_cbX				12
 #define OFFSET_CVMMethodBlock_methodTableIndexX			20
 #define OFFSET_CVMMethodBlock_argsSizeX				22
-#define OFFSET_CVMMethodBlock_invokerIdxX                       23
-#define OFFSET_CVMMethodBlock_accessFlagsX			24
-#define OFFSET_CVMMethodBlock_methodIndexX			25
+#define OFFSET_CVMMethodBlock_methodIndexX			23
+#define OFFSET_CVMMethodBlock_invokerAndAccessFlagsX            24
 #define OFFSET_CVMMethodBlock_codeX				28
 #define CONSTANT_CVMMethodBlock_size                            32
 #else
 #define OFFSET_CVMMethodBlock_jitInvokerX			0
 #define OFFSET_CVMMethodBlock_methodTableIndexX                 16
 #define OFFSET_CVMMethodBlock_argsSizeX                         18
-#define OFFSET_CVMMethodBlock_invokerIdxX                       19
-#define OFFSET_CVMMethodBlock_accessFlagsX                      20
-#define OFFSET_CVMMethodBlock_methodIndexX                      21
+#define OFFSET_CVMMethodBlock_methodIndexX                      19
+#define OFFSET_CVMMethodBlock_invokerAndAccessFlagsX            20
 #define OFFSET_CVMMethodBlock_codeX                             24
 #define CONSTANT_CVMMethodBlock_size                            28
 #endif
@@ -207,8 +205,8 @@
 
 #define CONSTANT_METHOD_ACC_STATIC				0x08
 #define CONSTANT_METHOD_ACC_SYNCHRONIZED			0x20
-#define CONSTANT_METHOD_ACC_NATIVE				0x40
-#define CONSTANT_METHOD_ACC_ABSTRACT                            0x80
+#define CONSTANT_METHOD_ACC_NATIVE			        0x100
+#define CONSTANT_METHOD_ACC_ABSTRACT                            0x400
 
 #define CONSTANT_INVOKE_CNI_METHOD				2
 #define CONSTANT_INVOKE_JNI_METHOD				3

@@ -2580,9 +2580,9 @@ CVMverifyMemberAccess3(CVMExecEnv* ee,
 #undef IsPublic
 #undef IsProtected
 #undef IsPrivate
-#define IsPublic(x)	((x) & CVM_METHOD_ACC_PUBLIC)
-#define IsProtected(x)	((x) & CVM_METHOD_ACC_PROTECTED)
-#define IsPrivate(x)	((x) & CVM_METHOD_ACC_PRIVATE)
+#define IsPublic(x)	CVMmemberPPPAccessIs((x), FIELD, PUBLIC)
+#define IsProtected(x)	CVMmemberPPPAccessIs((x), FIELD, PROTECTED)
+#define IsPrivate(x)	CVMmemberPPPAccessIs((x), FIELD, PRIVATE)
 
     if (currentClass == NULL ||
         currentClass == memberClass ||
@@ -3171,15 +3171,15 @@ CVMlookupNativeMethodCode(CVMExecEnv* ee, CVMMethodBlock* mb)
      */
     CVMmbNativeCode(mb) = nativeCode;
     if (mangleType == CVM_MangleMethodName_CNI_SHORT) {
-	CVMmbInvokerIdx(mb) = CVM_INVOKE_CNI_METHOD;
+	CVMmbSetInvokerIdx(mb, CVM_INVOKE_CNI_METHOD);
 #if CVM_JIT
 	CVMmbJitInvoker(mb) = (void*)CVMCCMinvokeCNIMethod;
 #endif
     } else {
 	if (CVMmbIs(mb, SYNCHRONIZED)) {
-	    CVMmbInvokerIdx(mb) = CVM_INVOKE_JNI_SYNC_METHOD;
+	    CVMmbSetInvokerIdx(mb, CVM_INVOKE_JNI_SYNC_METHOD);
 	} else {
-	    CVMmbInvokerIdx(mb) = CVM_INVOKE_JNI_METHOD;
+	    CVMmbSetInvokerIdx(mb, CVM_INVOKE_JNI_METHOD);
 	}
 #if CVM_JIT
 	CVMmbJitInvoker(mb) = (void*)CVMCCMinvokeJNIMethod;

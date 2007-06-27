@@ -497,7 +497,7 @@ CVMclassCreateArrayClass(CVMExecEnv* ee, CVMClassTypeID arrayTypeId,
     /*
      * We are as public as our element class
      */
-    elemClassAccess = (CVMcbAccessFlags(elemCb) & CVM_CLASS_ACC_PUBLIC);
+    elemClassAccess = CVMcbIs(elemCb, PUBLIC);
     CVMcbAccessFlags(arrayCb) =
 	elemClassAccess | CVM_CLASS_ACC_ABSTRACT | CVM_CLASS_ACC_FINAL;
 
@@ -970,16 +970,17 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
     {
 	CVMUint16 accessFlags = 
 	    get2bytes(context) & JVM_RECOGNIZED_CLASS_MODIFIERS;
-	/*
-	 * Our internal flags do not map one-to-one with class file flags. We
-	 * need to remap flags that have values greater than 0x80.
-	 */
-	CVMassert(JVM_ACC_PUBLIC == CVM_CLASS_ACC_PUBLIC);
-	CVMassert(JVM_ACC_FINAL == CVM_CLASS_ACC_FINAL);
-	CVMassert(JVM_ACC_SUPER == CVM_CLASS_ACC_SUPER);
+
+	CVMassert(JVM_ACC_PUBLIC     == CVM_CLASS_ACC_PUBLIC);
+	CVMassert(JVM_ACC_FINAL      == CVM_CLASS_ACC_FINAL);
+	CVMassert(JVM_ACC_SUPER      == CVM_CLASS_ACC_SUPER);
+	CVMassert(JVM_ACC_INTERFACE  == CVM_CLASS_ACC_INTERFACE);
+	CVMassert(JVM_ACC_ABSTRACT   == CVM_CLASS_ACC_ABSTRACT);
+	CVMassert(JVM_ACC_SYNTHETIC  == CVM_CLASS_ACC_SYNTHETIC);
+	CVMassert(JVM_ACC_ANNOTATION == CVM_CLASS_ACC_ANNOTATION);
+	CVMassert(JVM_ACC_ENUM       == CVM_CLASS_ACC_ENUM);
+
 	if (accessFlags & JVM_ACC_INTERFACE) {
-	    accessFlags &= ~JVM_ACC_INTERFACE;
-	    accessFlags |= CVM_CLASS_ACC_INTERFACE;
 #ifdef CVM_DUAL_STACK
             if (!isCLDCClass) {
 #endif
@@ -991,11 +992,6 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
             }
 #endif
 	}
-	if (accessFlags & JVM_ACC_ABSTRACT) {
-	    accessFlags &= ~JVM_ACC_ABSTRACT;
-	    accessFlags |= CVM_CLASS_ACC_ABSTRACT;
-	}
-	CVMassert(accessFlags <= 255); /* must fit in one byte */
 	CVMcbAccessFlags(cb) = accessFlags;
     }
 
@@ -1038,7 +1034,7 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 	i = 0;
 	while (i < CVMcbFieldCount(cb)) {
 	    CVMFieldBlock* fb = CVMcbFieldSlot(cb, i);
-	    CVMUint16 accessFlags; 
+	    CVMUint16 accessFlags, newAccessFlags;
 	    CVMUtf8* fieldname;
 	    CVMUtf8* fieldsig;
 
@@ -1050,16 +1046,45 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 	     * file flags, although in the case of field access flags they
 	     * do. Make sure the following invariants are met.
 	     */
-	    CVMassert(JVM_ACC_PUBLIC    == CVM_FIELD_ACC_PUBLIC);
-	    CVMassert(JVM_ACC_PRIVATE   == CVM_FIELD_ACC_PRIVATE);
-	    CVMassert(JVM_ACC_PROTECTED == CVM_FIELD_ACC_PROTECTED);
 	    CVMassert(JVM_ACC_STATIC    == CVM_FIELD_ACC_STATIC);
 	    CVMassert(JVM_ACC_FINAL     == CVM_FIELD_ACC_FINAL);
 	    CVMassert(JVM_ACC_VOLATILE  == CVM_FIELD_ACC_VOLATILE);
 	    CVMassert(JVM_ACC_TRANSIENT == CVM_FIELD_ACC_TRANSIENT);
+
 	    accessFlags = get2bytes(context) & JVM_RECOGNIZED_FIELD_MODIFIERS;
-	    CVMassert(accessFlags <= 255); /* must fit in one byte */
-	    CVMfbAccessFlags(fb) = accessFlags;
+
+	    newAccessFlags = accessFlags & 
+		~(JVM_ACC_PUBLIC | JVM_ACC_PRIVATE | JVM_ACC_PROTECTED |
+		  JVM_ACC_SYNTHETIC | JVM_ACC_ENUM);
+
+	    /* In the event that more than one of the private, protected, and
+	       public flags are set (which is not allowed by the VM spec), we
+	       always set it to private to be conservative.  This can only
+	       occur with unverified code that isn't conforming to the spec.
+	    */
+#undef JVM_PPP_MASK
+#define JVM_PPP_MASK  (JVM_ACC_PUBLIC |JVM_ACC_PROTECTED | JVM_ACC_PRIVATE)
+	    if ((accessFlags & JVM_PPP_MASK) == JVM_ACC_PUBLIC) {
+		/* Is public. */
+		newAccessFlags |= CVM_FIELD_ACC_PUBLIC;
+	    } else if ((accessFlags & JVM_PPP_MASK) == JVM_ACC_PROTECTED) {
+		/* Is protected. */
+		newAccessFlags |= CVM_FIELD_ACC_PROTECTED;
+	    } else if ((accessFlags & JVM_PPP_MASK) == 0) {
+		/* Default access.  Don't set any bits. */
+	    } else {
+		/* Is private or illegal.  Either way, treat as private. */
+		newAccessFlags |= CVM_FIELD_ACC_PRIVATE;
+	    }
+
+	    if (accessFlags & JVM_ACC_SYNTHETIC) {
+		newAccessFlags |= CVM_FIELD_ACC_SYNTHETIC;
+	    }
+	    if (accessFlags & JVM_ACC_ENUM) {
+		newAccessFlags |= CVM_FIELD_ACC_ENUM;
+	    }
+	    CVMassert(newAccessFlags <= 255); /* must fit in one byte */
+	    CVMfbAccessFlags(fb) = newAccessFlags;
 
 	    cpIdx = get2bytes(context);
 	    fieldname = CVMcpGetUtf8(utf8Cp, cpIdx);
@@ -1146,7 +1171,7 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 	i = 0;
 	while (i < CVMcbMethodCount(cb)) {
 	    CVMMethodBlock* mb = CVMcbMethodSlot(cb, i);
-	    CVMUint16 accessFlags; 
+	    CVMUint16 accessFlags, newAccessFlags;
 	    CVMUtf8* methodName;
 	    CVMUtf8* methodSig;
 	    CVMBool  isStrict = CVM_FALSE;
@@ -1155,27 +1180,48 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 	     * Our internal flags do not map one-to-one with class file flags.
 	     * We need to remap flags that have values greater than 0x80.
 	     */
-	    CVMassert(JVM_ACC_PUBLIC        == CVM_METHOD_ACC_PUBLIC);
-	    CVMassert(JVM_ACC_PRIVATE       == CVM_METHOD_ACC_PRIVATE);
-	    CVMassert(JVM_ACC_PROTECTED     == CVM_METHOD_ACC_PROTECTED);
 	    CVMassert(JVM_ACC_STATIC        == CVM_METHOD_ACC_STATIC);
 	    CVMassert(JVM_ACC_FINAL         == CVM_METHOD_ACC_FINAL);
 	    CVMassert(JVM_ACC_SYNCHRONIZED  == CVM_METHOD_ACC_SYNCHRONIZED);
+	    CVMassert(JVM_ACC_BRIDGE        == CVM_METHOD_ACC_BRIDGE);
+	    CVMassert(JVM_ACC_VARARGS       == CVM_METHOD_ACC_VARARGS);
+	    CVMassert(JVM_ACC_NATIVE        == CVM_METHOD_ACC_NATIVE);
+	    CVMassert(JVM_ACC_ABSTRACT      == CVM_METHOD_ACC_ABSTRACT);
+
 	    accessFlags = get2bytes(context) & JVM_RECOGNIZED_METHOD_MODIFIERS;
-	    if (accessFlags & JVM_ACC_NATIVE) {
-		accessFlags &= ~JVM_ACC_NATIVE;
-		accessFlags |= CVM_METHOD_ACC_NATIVE;
+
+	    newAccessFlags = accessFlags & 
+		~(JVM_ACC_PUBLIC | JVM_ACC_PRIVATE | JVM_ACC_PROTECTED |
+		  JVM_ACC_SYNTHETIC | JVM_ACC_STRICT);
+
+	    /* In the event that more than one of the private, protected, and
+	       public flags are set (which is not allowed by the VM spec), we
+	       always set it to private to be conservative.  This can only
+	       occur with unverified code that isn't conforming to the spec.
+	    */
+#undef JVM_PPP_MASK
+#define JVM_PPP_MASK  (JVM_ACC_PUBLIC |JVM_ACC_PROTECTED | JVM_ACC_PRIVATE)
+	    if ((accessFlags & JVM_PPP_MASK) == JVM_ACC_PUBLIC) {
+		/* Is public. */
+		newAccessFlags |= CVM_FIELD_ACC_PUBLIC;
+	    } else if ((accessFlags & JVM_PPP_MASK) == JVM_ACC_PROTECTED) {
+		/* Is protected. */
+		newAccessFlags |= CVM_FIELD_ACC_PROTECTED;
+	    } else if ((accessFlags & JVM_PPP_MASK) == 0) {
+		/* Default access.  Don't set any bits. */
+	    } else {
+		/* Is private or illegal.  Either way, treat as private. */
+		newAccessFlags |= CVM_FIELD_ACC_PRIVATE;
 	    }
-	    if (accessFlags & JVM_ACC_ABSTRACT) {
-		accessFlags &= ~JVM_ACC_ABSTRACT;
-		accessFlags |= CVM_METHOD_ACC_ABSTRACT;
-	    }		
+
+	    if (accessFlags & JVM_ACC_SYNTHETIC) {
+		newAccessFlags |= CVM_METHOD_ACC_SYNTHETIC;
+	    }
 	    if (accessFlags & JVM_ACC_STRICT) {
-		accessFlags &= ~JVM_ACC_STRICT;
+		newAccessFlags |= CVM_METHOD_ACC_STRICT;
 		isStrict = CVM_TRUE;
-	    }		
-	    CVMassert(accessFlags <= 255); /* must fit in one byte */
-	    CVMmbAccessFlags(mb) = accessFlags;
+	    }
+	    CVMmbSetAccessFlags(mb, newAccessFlags);
 
 	    CVMmbMethodIndex(mb) = i % 256;/* must be done before setting cb */
 	    CVMmbClassBlock(mb) = cb;
@@ -1204,7 +1250,7 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 	    if (CVMtypeidIsStaticInitializer(CVMmbNameAndTypeID(mb))) {
 		/* The VM ignores the access flags of <clinit>. We reset the
 		 * access flags to avoid future errors in the VM */
-		CVMmbAccessFlags(mb) = JVM_ACC_STATIC;
+		CVMmbSetAccessFlags(mb, CVM_METHOD_ACC_STATIC);
 		context->in_clinit = CVM_TRUE;
 
 		/* Here we just set the HAS_STATICS_OR_CLINIT flag 
