@@ -54,6 +54,7 @@ typedef struct {
     CVMInt32 pcOffset;
     CVMInt32 index;
     CVMInt32 numEntries;
+    CVMInt32 invokePC;
 } CVMJITFrameIterator;
 
 /*
@@ -65,7 +66,7 @@ extern void
 CVMJITframeIterate(CVMFrame* frame, CVMJITFrameIterator* iter);
 
 extern CVMBool
-CVMJITframeIterateSkip(CVMJITFrameIterator* iter, int skip,
+CVMJITframeIterateSkip(CVMJITFrameIterator* iter,
     CVMBool skipArtificial, CVMBool popFrame);
 
 #define CVMJITframeIterateNext(iter)	\
@@ -191,7 +192,12 @@ typedef enum {
 #define CVMJIT_DEFAULT_MIN_INLINE_CODELEN   16
 #define CVMJIT_DEFAULT_MAX_WORKING_MEM      (1024*1024)
 #define CVMJIT_DEFAULT_MAX_COMP_METH_SIZE   (64*1024 - 1)
+#ifndef JAVASE
 #define CVMJIT_DEFAULT_CODE_CACHE_SIZE      512*1024
+#else
+#define CVMJIT_DEFAULT_CODE_CACHE_SIZE      2*1024*1024
+#endif
+
 #define CVMJIT_DEFAULT_UPPER_CCACHE_THR     95
 /* NOTE: the default of -1 for lower code cache threshold is
    significant. See CVMJITcodeCacheInit */

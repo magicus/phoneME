@@ -369,16 +369,26 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 	    newOpcode = opc_instanceof_quick;
 	    break;
 	case opc_ldc:
-	    if (CVMcpTypeIs(cp, cpIndex, StringICell)) {
+	    switch (CVMcpEntryType(cp, cpIndex)) {
+	    case CVM_CONSTANT_StringICell:
 		newOpcode = opc_aldc_ind_quick;
-	    } else {
+		break;
+	    case CVM_CONSTANT_ClassBlock:
+		CVMpanic("Trying to quicken ldc of type Class");
+		break;
+	    default:
 		newOpcode = opc_ldc_quick;
 	    }
 	    break;
 	case opc_ldc_w:
-	    if (CVMcpTypeIs(cp, cpIndex, StringICell)) {
+	    switch (CVMcpEntryType(cp, cpIndex)) {
+	    case CVM_CONSTANT_StringICell:
 		newOpcode = opc_aldc_ind_w_quick;
-	    } else {
+		break;
+	    case CVM_CONSTANT_ClassBlock:
+		CVMpanic("Trying to quicken ldc of type Class");
+		break;
+	    default:
 		newOpcode = opc_ldc_w_quick;
 	    }
 	    break;
@@ -433,14 +443,15 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 	    break;
 	case opc_invokespecial: {
 	    CVMMethodBlock* new_mb = mb;
+	    CVMMethodTypeID methodID = CVMmbNameAndTypeID(mb);
 	    CVMClassBlock* currClass = CVMeeGetCurrentFrameCb(ee);
 	    if (CVMisSpecialSuperCall(currClass, mb)) {
-		new_mb = CVMcbMethodTableSlot(CVMcbSuperclass(currClass),
-					      CVMmbMethodTableIndex(mb));
+		/* Find matching declared method in a super class. */
+		new_mb = CVMlookupSpecialSuperMethod(ee, currClass, methodID);
 	    }
 	    if (mb == new_mb) {
 		if (CVMmbClassBlock(mb) == CVMsystemClass(java_lang_Object) &&
-		    CVMmbNameAndTypeID(mb) == CVMglobals.initTid) {
+		    methodID == CVMglobals.initTid) {
 		    /* we can ignore all calls to Object.<init> */
 		    newOpcode = opc_invokeignored_quick;
 		    CVMassert(CVMmbArgsSize(mb) == 1);
@@ -452,8 +463,8 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 		}
 	    } else {
 		newOpcode = opc_invokesuper_quick;
-		operand1 = CVMmbMethodTableIndex(mb) >> 8;
-		operand2 = CVMmbMethodTableIndex(mb) & 0xFF;
+		operand1 = CVMmbMethodTableIndex(new_mb) >> 8;
+		operand2 = CVMmbMethodTableIndex(new_mb) & 0xFF;
 		changesOperands = CVM_TRUE;
 	    }
 	    break;

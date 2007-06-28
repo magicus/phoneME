@@ -47,6 +47,18 @@
 /*
  * The default min and max sizes of the heap
  */
+#ifdef JAVASE
+#ifndef CVM_DEFAULT_MAX_HEAP_SIZE_IN_BYTES
+#define CVM_DEFAULT_MAX_HEAP_SIZE_IN_BYTES (32 * 1024 * 1024)
+#endif
+#ifndef CVM_DEFAULT_MIN_HEAP_SIZE_IN_BYTES
+#define CVM_DEFAULT_MIN_HEAP_SIZE_IN_BYTES (4 * 1024 * 1024)
+#endif
+#ifndef CVM_DEFAULT_START_HEAP_SIZE_IN_BYTES
+#define CVM_DEFAULT_START_HEAP_SIZE_IN_BYTES (4 * 1024 * 1024)
+#endif
+#endif
+
 #ifndef CVM_DEFAULT_MAX_HEAP_SIZE_IN_BYTES
 #define CVM_DEFAULT_MAX_HEAP_SIZE_IN_BYTES (5 * 1024 * 1024)
 #endif

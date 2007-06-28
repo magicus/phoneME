@@ -72,6 +72,10 @@
 #include "javavm/include/jit_common.h"
 #endif
 
+#ifdef JAVASE
+#include "javavm/include/se_init.h"
+#endif
+
 JNIEXPORT jint JNICALL
 JVM_GetInterfaceVersion(void)
 {
@@ -383,20 +387,24 @@ JVM_GetClassModifiers(JNIEnv *env, jclass cls)
 	}
     }
 
-    /*
-     * It not a member class. We need to translate the flags since they
-     * were modified to make CVMcbAccessFlags() fit in one byte.
-     */
+    /* If we get here, then the class is not a member class. */
+
+    /* The implementation of JVM_GetClassModifiers() needs to conform to the
+       specification of Class.getModifiers().  Acording to that spec, the
+       only bits of relevance to this method are public, final, interface,
+       and abstract.  The spec also mentioned private, protected, and static
+       but those don't exist in the VM spec for class access flags.
+    */
     {
-	jint access = 0;
-	if (CVMcbIs(cb, PUBLIC))
-	    access |= JVM_ACC_PUBLIC;
-	if (CVMcbIs(cb, FINAL))
-	    access |= JVM_ACC_FINAL;
-	if (CVMcbIs(cb, INTERFACE))
-	    access |= JVM_ACC_INTERFACE;
-	if (CVMcbIs(cb, ABSTRACT))
-	    access |= JVM_ACC_ABSTRACT;
+	jint access = CVMcbAccessFlags(cb);
+
+	CVMassert(JVM_ACC_PUBLIC     == CVM_CLASS_ACC_PUBLIC);
+	CVMassert(JVM_ACC_FINAL      == CVM_CLASS_ACC_FINAL);
+	CVMassert(JVM_ACC_INTERFACE  == CVM_CLASS_ACC_INTERFACE);
+	CVMassert(JVM_ACC_ABSTRACT   == CVM_CLASS_ACC_ABSTRACT);
+
+	access &= (JVM_ACC_PUBLIC | JVM_ACC_FINAL | JVM_ACC_INTERFACE |
+		   JVM_ACC_ABSTRACT);
 	return access;
     }
 }
@@ -1205,47 +1213,42 @@ CVMgcUnsafeFillInStackTrace(CVMExecEnv *ee, CVMThrowableICell* throwableICell)
 {
 #ifdef CVM_DEBUG_STACKTRACES
     CVMFrame*          startFrame;
-    CVMFrame*          frame;
+    CVMFrameIterator   iter;
     CVMMethodBlock*    mb;
     CVMArrayOfRef*     backtrace;
     CVMArrayOfInt*     pcArray;
+#ifdef CVM_JIT
     CVMArrayOfBoolean* isCompiledArray = NULL;
+#endif
     CVMObject*         tempObj;
     CVMInt32           backtraceSize;
     CVMInt32           count;
- 
-    startFrame = CVMeeGetCurrentFrame(ee);
+    CVMBool            noMoreFrameSkips;
 
-    /* Go backwards, removing all frames that are just part of the <init> of
-     * the throwable object.
-     */
-    mb = startFrame->mb;
-    if (mb != NULL) { /* NULL indicates the initial dummy frame */
-	if (mb == CVMglobals.java_lang_Throwable_fillInStackTrace) {
-	    startFrame = CVMframePrev(startFrame);
-	}
-	mb = startFrame->mb;
-		
-	while (mb != NULL && CVMtypeidIsConstructor(CVMmbNameAndTypeID(mb)) &&
-	       CVMisSubclassOf(ee, CVMmbClassBlock(mb), 
-			       CVMsystemClass(java_lang_Throwable))) {
-	    startFrame = CVMframePrev(startFrame);
-	    mb = startFrame->mb;
-	}
-	if (CVMlocalExceptionOccurred(ee)) {
-		return;
-	}
-    }
+    startFrame = CVMeeGetCurrentFrame(ee);
 
     /* how many useful frames are there on the stack? */
     CVMD_gcSafeExec(ee, {
+        noMoreFrameSkips = CVM_FALSE;
 	backtraceSize = 0;
-	frame = startFrame;
-	while (frame != NULL) {
-	    if (frame->mb != NULL && !CVMframeIsTransition(frame)) {
-		backtraceSize++;
+        CVMframeIterate(startFrame, &iter);
+	while (CVMframeIterateNext(&iter)) {
+	    mb = CVMframeIterateGetMb(&iter);
+	    /* ignore all frames that are just part of the <init> of
+	     * the throwable object. */
+	    if (!noMoreFrameSkips) {
+		if (mb == CVMglobals.java_lang_Throwable_fillInStackTrace) {
+		    continue;
+		} else if (CVMtypeidIsConstructor(CVMmbNameAndTypeID(mb)) &&
+			   CVMisSubclassOf(ee, CVMmbClassBlock(mb), 
+				CVMsystemClass(java_lang_Throwable))) {
+		    continue;
+		} else {
+		    noMoreFrameSkips = CVM_TRUE;
+		}
 	    }
-	    frame = CVMframePrev(frame);
+
+	    backtraceSize++;
 	}
     });
 
@@ -1321,75 +1324,73 @@ CVMgcUnsafeFillInStackTrace(CVMExecEnv *ee, CVMThrowableICell* throwableICell)
     /* 
      * Fill in the pcArray, isCompiledArray, and the backtrace array.
      */
-    frame = startFrame;
     count = 0;
-    while (frame != NULL) {
-	CVMMethodBlock* mb = frame->mb;
-	/*
-	 * We don't want to stay gcunsafe for too long, so we periodically
-	 * offer a checkpoint. We need to restore backtrace, pcArray and
-	 * isCompiledArray if a gc happened.
-	 */
-	CVMD_gcSafeCheckPoint(ee, {}, {
-	    CVMD_fieldReadRef(CVMID_icellDirect(ee, throwableICell),
-			      CVMoffsetOfjava_lang_Throwable_backtrace,
-			      tempObj);	    
-	    backtrace = (CVMArrayOfRef*)tempObj;
-	    CVMD_arrayReadRef(backtrace, 0, tempObj);
-	    pcArray = (CVMArrayOfInt*)tempObj;
-	    CVMD_arrayReadRef(backtrace, 1, tempObj);
-	    isCompiledArray = (CVMArrayOfBoolean*)tempObj;
-	});
+    CVMframeIterate(startFrame, &iter);
+    while (CVMframeIterateNext(&iter)) {
+	CVMMethodBlock* mb = CVMframeIterateGetMb(&iter);
+	CVMJavaInt lineno;
+	noMoreFrameSkips = CVM_FALSE;
 
-	if (mb != NULL && !CVMframeIsTransition(frame)) {
-	    /* store the line number and the method index in the pcArray */
-            CVMJavaInt lineno;
-	    if (CVMmbIs(mb, NATIVE)) {
-		lineno = -2; /* a native method has -2 as its lineno */
+	/* ignore all frames that are just part of the <init> of
+	 * the throwable object. */
+	if (!noMoreFrameSkips) {
+	    if (mb == CVMglobals.java_lang_Throwable_fillInStackTrace) {
+		continue;
+	    } else if (CVMtypeidIsConstructor(CVMmbNameAndTypeID(mb)) &&
+		CVMisSubclassOf(ee, CVMmbClassBlock(mb), 
+				CVMsystemClass(java_lang_Throwable))) {
+		continue;
 	    } else {
-		CVMUint8*  javaPc;
-	        CVMUint16 javaPcOffset;
+		noMoreFrameSkips = CVM_TRUE;
+	    }
+	}
+
+	/* store the line number and the method index in the pcArray */
+	if (CVMmbIs(mb, NATIVE)) {
+	    lineno = -2; /* a native method has -2 as its lineno */
+	} else {
+	    CVMUint8* javaPc;
+	    CVMUint16 javaPcOffset;
 #ifdef CVM_JIT
-		CVMBool    isCompiled = CVMframeIsCompiled(frame);
-		CVMD_arrayWriteBoolean(isCompiledArray, count,
-				       (CVMJavaBoolean)isCompiled);
-		if (isCompiled) {
-		    javaPc = CVMpcmapCompiledPcToJavaPc(
-                        mb, CVMcompiledFramePC(frame));
-		    if (javaPc == NULL) {
-			javaPc = CVMmbJavaCode(mb);
-		    }
-		} else
+	    CVMBool isCompiled;
+	    if (CVMframeIterateIsInlined(&iter)) {
+		isCompiled = CVM_TRUE;
+	    } else {
+		CVMFrame* frame = CVMframeIterateGetFrame(&iter);
+		CVMassert(frame->mb == mb);
+		isCompiled = CVMframeIsCompiled(frame);
+	    }
+	    CVMD_arrayWriteBoolean(isCompiledArray, count,
+				   (CVMJavaBoolean)isCompiled);
 #endif
-	        {
-		    javaPc = CVMframePc(frame);
-		}
-		javaPcOffset = (javaPc - CVMmbJavaCode(mb));
-	        /* We must eagerly compute the line number information for
-	         * <clinit> because the jmd may be freed after the <clinit>
-		 * is run. So we just get the lineno information for all.
-	         */
+	    javaPc = CVMframeIterateGetJavaPc(&iter);
+	    if (javaPc == NULL) {
+		javaPc = CVMmbJavaCode(mb);
+	    }
+	    javaPcOffset = (javaPc - CVMmbJavaCode(mb));
+	    
+	    /* We must eagerly compute the line number information for
+	     * <clinit> because the jmd may be freed after the <clinit>
+	     * is run. So we just get the lineno information for all.
+	     */
 #ifdef CVM_DEBUG_CLASSINFO
-                lineno = CVMpc2lineno(mb, javaPcOffset);
+	    lineno = CVMpc2lineno(mb, javaPcOffset);
 #else
-                lineno = -1;
+	    lineno = -1;
 #endif
-	    }
-
-	    CVMD_arrayWriteInt(pcArray, count, (CVMJavaInt)
-			       ((lineno << 16) |
-				(CVMmbMethodIndex(mb) & 0xffff)));
-	    /* Write the class object into the backtrace array. */
-	    {
-		CVMClassICell* classICell = 
-		    CVMcbJavaInstance(CVMmbClassBlock(mb));
-		CVMD_arrayWriteRef(backtrace, count + 2, 
-				   CVMID_icellDirect(ee, classICell));
-	    }
-
-	    count++;
-        }
-	frame = CVMframePrev(frame);
+	}
+	
+	CVMD_arrayWriteInt(pcArray, count, (CVMJavaInt)
+			   ((lineno << 16) |
+			    (CVMmbMethodIndex(mb) & 0xffff)));
+	/* Write the class object into the backtrace array. */
+	{
+	    CVMClassICell* classICell = 
+		CVMcbJavaInstance(CVMmbClassBlock(mb));
+	    CVMD_arrayWriteRef(backtrace, count + 2, 
+			       CVMID_icellDirect(ee, classICell));
+	}
+	count++;
     } 
 
     CVMassert(count + 2 == CVMD_arrayGetLength(backtrace));
@@ -1460,7 +1461,10 @@ static CVMObjectICell* CVMgetStackTraceElement(CVMExecEnv *ee,
 
     CVMID_localrootBegin(ee) {
         CVMID_localrootDeclare(CVMArrayOfRefICell, backtraceICell);
-        CVMID_localrootDeclare(CVMArrayOfRefICell, tempArrayICell);
+#ifdef CVM_JIT
+        CVMID_localrootDeclare(CVMArrayOfBooleanICell, isCompiledArrayICell);
+#endif
+        CVMID_localrootDeclare(CVMArrayOfIntICell, pcArrayICell);
         CVMID_localrootDeclare(CVMObjectICell, tempICell);
         CVMID_localrootDeclare(CVMStringICell, stringICell);
 
@@ -1496,23 +1500,23 @@ static CVMObjectICell* CVMgetStackTraceElement(CVMExecEnv *ee,
          *
          */
         CVMID_arrayReadRef(ee, backtraceICell, 0, tempICell);
-        CVMID_icellAssign(ee, tempArrayICell,
-                          (CVMArrayOfRefICell*)tempICell);
-        if (CVMID_icellIsNull(tempArrayICell)) {
+        CVMID_icellAssign(ee, pcArrayICell,
+                          (CVMArrayOfIntICell*)tempICell);
+        if (CVMID_icellIsNull(pcArrayICell)) {
             goto failed_goto_localRootEnd;
         }
-        CVMID_arrayReadInt(ee, tempArrayICell, index, linenoInfo);
+        CVMID_arrayReadInt(ee, pcArrayICell, index, linenoInfo);
 
 #ifdef CVM_JIT
         /* The 2nd element of the backtrace array is an array of 
          * isCompiled values. */
         CVMID_arrayReadRef(ee, backtraceICell, 1, tempICell);
-        CVMID_icellAssign(ee, tempArrayICell,
-                          (CVMArrayOfRefICell*)tempICell);
-        if (CVMID_icellIsNull(tempArrayICell)) {
+        CVMID_icellAssign(ee, isCompiledArrayICell,
+                          (CVMArrayOfBooleanICell*)tempICell);
+        if (CVMID_icellIsNull(isCompiledArrayICell)) {
             goto failed_goto_localRootEnd;
         }
-        CVMID_arrayReadBoolean(ee, tempArrayICell, index, isCompiled);
+        CVMID_arrayReadBoolean(ee, isCompiledArrayICell, index, isCompiled);
 #endif
 
         /* Get the indexed backtrace element. It's java.lang.Class
@@ -3739,7 +3743,7 @@ JVM_InitProperties(JNIEnv *env, jobject props, java_props_t* sprops)
      * key and value, and also to make sure that we have a properties
      * table at hand and not just a hashtable.
      */
-    jmethodID putID = (*env)->GetMethodID(env,
+    jmethodID putID = (*env)->GetMethodID(env, 
 					  (*env)->GetObjectClass(env, props),
 					  "setProperty",
             "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;");
@@ -3775,6 +3779,12 @@ JVM_InitProperties(JNIEnv *env, jobject props, java_props_t* sprops)
     PUTPROP_ForPlatformCString(props, "java.library.builtin.net",  "yes");
     PUTPROP_ForPlatformCString(props, "java.library.builtin.math", "yes");
     PUTPROP_ForPlatformCString(props, "java.library.builtin.zip",  "yes");
+
+#ifdef JAVASE
+    if (!CVMinitJavaSEProperties(env, putID, props)) {
+	return NULL;
+    }
+#endif
 
     return (*env)->NewLocalRef(env, props);
 }
@@ -3824,27 +3834,49 @@ JVM_DisableCompiler(JNIEnv *env, jclass compCls)
 
 #ifdef JAVASE
 
+/* Need to temporarily define JVM_Socket for compatibility with
+ * J2SE Net libraries that haven't been recompiled with CVM headers
+ */
+#undef JVM_Socket
+JNIEXPORT jint JNICALL
+JVM_Socket(jint domain, jint type, jint protocol)
+{
+    return CVMnetSocket(domain, type, protocol);
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_SupportsCX8()
+{
+    return (CVM_FALSE);
+}
+
+JNIEXPORT jboolean JNICALL
+JVM_CX8Field(JNIEnv *env, jobject obj, jfieldID fid, jlong oldVal, jlong newVal)
+{
+    return (CVM_FALSE);
+}
+
+JNIEXPORT jint JNICALL
+JVM_InitializeSocketLibrary()
+{
+    return(CVM_TRUE);
+}
+
 JNIEXPORT void * JNICALL
 JVM_RegisterSignal(jint sig, void *handler)
 {
-    CVMconsolePrintf("JVM_RegisterSignal() not implemented yet!\n");
-    CVMassert(CVM_FALSE);
-    return (void *)NULL;
+    return (void *)-1;
 }
 
 JNIEXPORT jboolean JNICALL
 JVM_RaiseSignal(jint sig)
 {
-    CVMconsolePrintf("JVM_RaiseSignal() not implemented yet!\n");
-    CVMassert(CVM_FALSE);
-    return CVM_TRUE;
+    return CVM_FALSE;
 }
 
 JNIEXPORT jint JNICALL
 JVM_FindSignal(const char *name)
 {
-    CVMconsolePrintf("JVM_FindSignal() not implemented yet!\n");
-    CVMassert(CVM_FALSE);
     return -1;
 }
 

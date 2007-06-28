@@ -35,7 +35,8 @@ export JAVA_HOME	= $(JDK_HOME)
 #JUMP's binary bundle pattern file name
 BINARYBUNDLE_PATTERN_FILENAME=.binary-pattern
 # .jar and .zip files to compile jump classes against
-JUMP_BOOTCLASSES = $(patsubst $(CVM_BUILD_TOP)/%,%,$(CVM_BUILDTIME_CLASSESZIP) $(LIB_CLASSESJAR) $(JSROP_JARS))
+JUMP_BOOTCLASSES0 = $(patsubst $(CVM_BUILD_TOP)/%,%,$(CVM_BUILDTIME_CLASSESZIP) $(LIB_CLASSESJAR) $(JSROP_JARS))
+JUMP_BOOTCLASSES = $(patsubst $(CVM_BUILD_TOP_ABS)/%,%,$(JUMP_BOOTCLASSES0))
 JUMP_ANT_OPTIONS += -Djump.boot.cp=$(subst $(space),$(comma),$(JUMP_BOOTCLASSES)) \
 		    -Ddist.dir=$(call POSIX2HOST,$(CVM_JUMP_BUILDDIR)) 	\
 		    -Dcdc.dir=$(call POSIX2HOST,$(CDC_DIST_DIR)) \

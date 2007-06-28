@@ -2041,9 +2041,9 @@ CVMBool
 CVMinitPathValues(void *propsPtr, const char *basePath,
                   const char *libPath, const char *dllPath)
 {
-    char *p, *p0;
+    char *p, *p0, *pEnd;
     int i;
-    size_t size, len;
+    size_t size, len, libPathLen;
     CVMProperties *props = (CVMProperties *)propsPtr;
     static const char *const jarNames[] = { CVM_JARFILES, NULL };
     char *localBasePath;
@@ -2062,16 +2062,28 @@ CVMinitPathValues(void *propsPtr, const char *basePath,
     /* Enough space for java_home, including a string terminator */
     size = len + 1;
     /* Space for dll_dir, including a path delimiter & string terminator */
-    size += len + sizeof(char) + strlen(dllPath) + 1;
+    size += strlen(dllPath) + 1;
+    /* Check if dllPath is absolute or relative to the basePath: */
+    if ( dllPath[0] !=  CVM_PATH_LOCAL_DIR_SEPARATOR ) {
+	/* dllPath is a relative path and will need to be prefixed with the
+	   basePath: add space for the basePath and a path delimiter: */
+        size += len + sizeof(char);
+    }
     /* Now add space for the entries in the sysclasspath */
+    libPathLen = strlen(libPath);
     for (i = 0; jarNames[ i ] != NULL; i++) {
         /* If in the midst of the path, add a path delimiter */
         if (i > 0 ) {
             size += strlen(CVM_PATH_CLASSPATH_SEPARATOR);
         }
         /* Space for the next entry, including two path delimiters */
-        size += len + sizeof(char) + strlen(libPath) +
-                sizeof(char) + strlen(jarNames[i]);
+	size += libPathLen + sizeof(char) + strlen(jarNames[i]);
+	/* Check if libPath is absolute or relative to the basePath: */
+        if ( libPath[0] !=  CVM_PATH_LOCAL_DIR_SEPARATOR ) {
+	    /* libPath is a relative path and will need to be prefixed with the
+	       basePath: add space for the basePath and a path delimiter: */
+            size += len + sizeof(char);
+	}
     }
     /* Now the final terminator for the sysclasspath. */
     size++;
@@ -2114,13 +2126,21 @@ CVMinitPathValues(void *propsPtr, const char *basePath,
     }
 
     /* Record path to native libraries */
-    strcpy(p, localBasePath);
+    /* Check if dllPath is absolute or relative to the basePath: */
+    if (dllPath[0] == CVM_PATH_LOCAL_DIR_SEPARATOR) {
+	/* dllPath is absolute: just copy it: */
+        strcpy(p, dllPath);
+    } else {
+	/* dllPath is relative: prefix basePath and path delimiter: */
+        strcpy(p, localBasePath);
+	pEnd = p + strlen(p);
+	*pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
+	strcpy(pEnd, dllPath);
+    }
 
-    *(p+strlen(p)) = CVM_PATH_LOCAL_DIR_SEPARATOR;
-    *(p+strlen(p)+1) = '\0';
-    strcat(p, dllPath);
     props->dll_dir = p;
     props->library_path = p;
+
     p += strlen(p) + 1;
     /* Record boot class path */
     *p = '\0';
@@ -2128,13 +2148,20 @@ CVMinitPathValues(void *propsPtr, const char *basePath,
         if (i > 0) {
             strcat(p, CVM_PATH_CLASSPATH_SEPARATOR);
         }
-        strcat(p, localBasePath);
-        *(p+strlen(p)) = CVM_PATH_LOCAL_DIR_SEPARATOR;
-        *(p+strlen(p)+1) = '\0'; 
-        strcat(p, libPath);
-        *(p+strlen(p)) = CVM_PATH_LOCAL_DIR_SEPARATOR;
-        *(p+strlen(p)+1) = '\0'; 
-        strcat(p, jarNames[i]);
+	/* Check if libPath is absolute or relative to the basePath: */
+        if (libPath[0] == CVM_PATH_LOCAL_DIR_SEPARATOR) {
+	    /* libPath is absolute: just copy it: */
+	    strcat(p, libPath);
+	} else {
+	    /* libPath is relative: prefix basePath and delimiter: */
+	    strcat(p, localBasePath);
+	    pEnd = p+strlen(p);
+	    *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
+	    strcpy(pEnd, libPath);
+	}
+	pEnd = p+strlen(p);
+        *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
+        strcpy(pEnd, jarNames[i]);
     }
     props->sysclasspath = p;
     p += strlen(p) + 1;
@@ -2144,16 +2171,22 @@ CVMinitPathValues(void *propsPtr, const char *basePath,
      * value to "lib/ext" so that we can see the sunjce_provider.jar
      * jarfile.
      */
-    *p = '\0';
-    strcat(p, localBasePath);
-    *(p+strlen(p)) = CVM_PATH_LOCAL_DIR_SEPARATOR;
-    *(p+strlen(p)+1) = '\0';
-    strcat(p, libPath);
-    *(p+strlen(p)) = CVM_PATH_LOCAL_DIR_SEPARATOR;
-    *(p+strlen(p)+1) = '\0';
-    strcat(p, "ext");
+    /* Check if libPath is absolute or relative to the basePath: */
+    if (libPath[0] == CVM_PATH_LOCAL_DIR_SEPARATOR) {
+	/* libPath is absolute: just copy it: */
+	strcpy(p, libPath);
+    } else {
+	strcpy(p, localBasePath);
+	pEnd = p+strlen(p);
+	*pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
+	strcpy(pEnd, libPath);
+    }
+    pEnd = p+strlen(p);
+    *pEnd++ = CVM_PATH_LOCAL_DIR_SEPARATOR;
+    strcpy(pEnd, "ext");
     props->ext_dirs = p;
-    p += strlen(p) + 1;
+    CVMassert((pEnd + 4) == (p + strlen(p) + 1));
+    p = pEnd + 4;
 #else
     props->ext_dirs = "";
 #endif /* CVM_HAS_JCE */

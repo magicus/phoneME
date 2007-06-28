@@ -292,11 +292,9 @@ Java_java_lang_System_mapLibraryName(JNIEnv *env, jclass ign, jstring libname)
     cpchars(chars, JNI_LIB_PREFIX, prefix_len);
     (*env)->GetStringRegion(env, libname, 0, len, chars + prefix_len);
     len += prefix_len;
-#ifndef JAVASE
 #ifdef CVM_DEBUG
     chars[len++] = '_';
     chars[len++] = 'g';
-#endif
 #endif
     cpchars(chars + len, JNI_LIB_SUFFIX, suffix_len);
     len += suffix_len;

@@ -28,8 +28,6 @@
 #include <e32std.h>
 
 extern "C" {
-#include "javavm/include/defs.h"
-#include "javavm/include/porting/jit/jit.h"
 #include "javavm/include/flushcache_cpu.h"
 }
 
