@@ -28,11 +28,13 @@ information or have any questions.
     Contains targets for compiling and running test classes
   -->
   <property name = "midpclasses.zip" value = "${cdc.dir}/lib/midpclasses.zip"/>
+  <property name = "midpjuniclasses.zip" value = "${cdc.dir}/lib/midpjunitclasses.zip"/>
 
   <target name="build-tests-init" depends="set-properties, set-tools">
     <path id="junit.cp">
       <pathelement path="${junit3.8.jar}"/>
       <pathelement path="${midpclasses.zip}"/>
+      <pathelement path="${midpjuniclasses.zip}"/>
     </path>
   </target>
 
