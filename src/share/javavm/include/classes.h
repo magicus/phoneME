@@ -1493,8 +1493,8 @@ enum {
     {									\
         CVM_INIT_METHODBLOCK_CB_FIELD(cb)     				\
 	nameAndTypeID, methodTableIndex,				\
-	argsSize, invokerIdx,						\
-	accessFlags, methodIndex,					\
+	argsSize, methodIndex,						\
+	(invokerIdx << CVM_METHOD_INVOKER_SHIFT) | accessFlags,		\
 	checkedExceptionsOffset, {(CVMJavaMethodDescriptor*)code}	\
     }
 
