@@ -51,12 +51,27 @@ import javacard.framework.service.ServiceException;
 
 import com.sun.j2me.main.Configuration;
 
+import com.sun.j2me.security.TrustedClass;
+import com.sun.j2me.security.Token;
+import com.sun.satsa.security.SecurityInitializer;
+
 /**
  * JCRMI connection to card application.
  */
 public class Protocol
     implements JavaCardRMIConnection, ConnectionBaseInterface,
 	       StreamConnection {
+
+    /*
+     * Inner class to request security token from SecurityTokenInitializer.
+     * SecurityTokenInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements TrustedClass { };
+
+    /** This class has a different security domain than the App suite */
+    private static Token securityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /**
      * Size of APDU buffer.
@@ -1027,7 +1042,7 @@ public class Protocol
         String method = null;
         method = verifier.preparePIN(pinID, uPinID, action,
                                     internalReference.getClassName());
-        Object[] pins = verifier.enterPIN(action);
+        Object[] pins = verifier.enterPIN(action, securityToken);
 
         if (pins == null) {
             return PINENTRY_CANCELLED;

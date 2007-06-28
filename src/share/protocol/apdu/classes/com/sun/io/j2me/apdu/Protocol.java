@@ -38,6 +38,10 @@ import com.sun.satsa.util.Utils;
 
 import java.io.*;
 
+import com.sun.j2me.security.TrustedClass;
+import com.sun.j2me.security.Token;
+import com.sun.satsa.security.SecurityInitializer;
+
 /**
  * This is the implementation class for APDUConnection interface and provides
  * a high-level API to the J2ME applications allowing them to connect and
@@ -52,6 +56,17 @@ import java.io.*;
  */
 public class Protocol implements APDUConnection, ConnectionBaseInterface,
                                  StreamConnection {
+
+    /*
+     * Inner class to request security token from SecurityTokenInitializer.
+     * SecurityTokenInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements TrustedClass { };
+
+    /** This class has a different security domain than the App suite */
+    private static Token securityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /**
      * This object verifies access rights of the MIDlet.
@@ -515,7 +530,7 @@ public class Protocol implements APDUConnection, ConnectionBaseInterface,
 
         int header = verifier.preparePIN(pinID, uPinID, action);
 
-        Object[] pins = verifier.enterPIN(action);
+        Object[] pins = verifier.enterPIN(action, securityToken);
 
         if (pins == null) {
             return null;

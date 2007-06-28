@@ -36,6 +36,9 @@
 
 # Source files for the ( satsa ) module
 #
+MODULE_SATSA_COMMON_JAVA_FILES += \
+    $(JSR_177_DIR)/src/jump_application/common/classes/com/sun/satsa/security/SecurityInitializer.java
+
 ifneq ($(USE_SECOP),true)
 MODULE_SATSA_CRYPTO_JAVA_FILES += \
     $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/BadPaddingException.java \

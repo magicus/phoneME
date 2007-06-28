@@ -30,6 +30,8 @@ import com.sun.j2me.i18n.Resource;
 import com.sun.j2me.i18n.ResourceConstants;
 import com.sun.j2me.dialog.MessageDialog;
 
+import com.sun.j2me.security.Token;
+
 /** Implements PIN entry dialog. */
 public class PINEntryDialog {
 
@@ -38,20 +40,21 @@ public class PINEntryDialog {
     /** Attributes of the 2nd PIN. */
     private PINAttributes pin2;
     /** PIN data. */
-    private Object[] data;    
+    private Object[] data;
 
     /**
      * Construct PIN dialog.
      *
      * @param action PIN entry operation identifier.
-     * @param attr1 1st PIN attributes.
-     * @param attr2 2nd PIN attributes.
+     * @param attr1 1st PIN attributes
+     * @param attr2 2nd PIN attributes
+     * @param token security token
      * @exception InterruptedException if another thread interrupts the
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
     public PINEntryDialog(int action,
-                          PINAttributes attr1, PINAttributes attr2)
+                          PINAttributes attr1, PINAttributes attr2, Token token)
             throws InterruptedException {
 
         String title = null;
@@ -118,7 +121,7 @@ public class PINEntryDialog {
 
         data = MessageDialog.enterPins(title,
                                        label1, pin1.isNumeric(), pin1.getMaxLength(),
-                                       label2, pin2IsNumeric, pin2Length);
+                                       label2, pin2IsNumeric, pin2Length, token);
     }
 
     /**
