@@ -67,7 +67,8 @@ JSROP_ABSTRACTS_JAVA_FILES = \
 
 ifeq ($(USE_JSR_177), true)
 JSROP_ABSTRACTS_JAVA_FILES += \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/security/SecurityTokenInitializer.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/security/TrustedClass.java \
+    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/security/Token.java \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/FileAccess.java \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/dialog/Dialog.java \
     $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/dialog/MessageDialog.java \

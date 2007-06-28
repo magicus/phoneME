@@ -36,11 +36,11 @@ public class FileConnectionPermission extends Permission {
     static String FILE_CONNECTION = "javax.microedition.io.file.FileConnection#";
 
     static public FileConnectionPermission READ =
-        new FileConnectionPermission(FILE_CONNECTION + ACCESS_READ, null, Permissions.FILE_CONNECTION_READ);
+        new FileConnectionPermission(FILE_CONNECTION + ACCESS_READ, null);
     static public FileConnectionPermission WRITE =
-        new FileConnectionPermission(FILE_CONNECTION + ACCESS_WRITE, null, Permissions.FILE_CONNECTION_WRITE);
+        new FileConnectionPermission(FILE_CONNECTION + ACCESS_WRITE, null);
 
-    public FileConnectionPermission(String name, String resource, int id) {
-        super(name, resource, id);
+    public FileConnectionPermission(String name, String resource) {
+        super(name, resource);
     }
 }

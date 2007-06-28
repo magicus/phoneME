@@ -104,7 +104,10 @@ ABSTRACTIONS_CLASSES = \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/SecureRandom.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/MessageDigest.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/DigestException.java \
-    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/Key.java
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/crypto/Key.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/TrustedClass.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/Token.java
+
 
 #####################################################
 ABSTRACTIONS_NATIVE_OBJS     = $(patsubst %.c,$(CVM_OBJDIR)/%.o,$(ABSTRACTIONS_NATIVES))

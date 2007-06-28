@@ -30,9 +30,7 @@ import com.sun.midp.io.j2me.storage.File;
 import com.sun.midp.io.j2me.storage.RandomAccessStream;
 import com.sun.midp.configurator.Constants;
 
-import com.sun.midp.security.ImplicitlyTrustedClass;
-import com.sun.midp.security.SecurityToken;
-import com.sun.j2me.security.SecurityTokenInitializer;
+import com.sun.j2me.security.Token;
 
 import java.io.DataOutputStream;
 import java.io.InputStream;
@@ -48,25 +46,14 @@ public class FileAccess {
 
     public static int INTERNAL_STORAGE_ID = Constants.INTERNAL_STORAGE_ID;
 
-    /*
-     * Inner class to request security token from SecurityTokenInitializer.
-     * SecurityTokenInitializer should be able to check this inner class name.
-     */
-    static private class SecurityTrusted
-        implements ImplicitlyTrustedClass {};
-
-    /** This class has a different security domain than the MIDlet suite */
-    private static SecurityToken classSecurityToken =
-        SecurityTokenInitializer.requestToken(new SecurityTrusted());
-    
     /**
      * Prevents of creating a new instance of FileAccess
      */
     private FileAccess() {
     }
 
-    private FileAccess(String name) {
-        this.storage = new RandomAccessStream(classSecurityToken);        
+    private FileAccess(String name, Token securityToken) {
+        this.storage = new RandomAccessStream(securityToken.getSecurityToken());        
         this.name = name;
     }
 
@@ -84,8 +71,8 @@ public class FileAccess {
         return File.getStorageRoot(storageId);
     }
 
-    public static FileAccess getInstance(String fileName) {
-        return new FileAccess(fileName);
+    public static FileAccess getInstance(String fileName, Token securityToken) {
+        return new FileAccess(fileName, securityToken);
     }
 
     public void connect(int accessType) throws IOException {

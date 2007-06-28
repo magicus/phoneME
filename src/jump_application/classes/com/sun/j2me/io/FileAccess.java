@@ -34,6 +34,8 @@ import java.io.File;
 import javax.microedition.io.Connector;
 import com.sun.j2me.main.Configuration;
 
+import com.sun.j2me.security.Token;
+
 /**
  * Provides abstraction for working with files
  */
@@ -42,6 +44,7 @@ public class FileAccess {
     private String name;
     private Object outputStream;
     private Object inputStream;
+    private Token  securityToken;
 
     public static int INTERNAL_STORAGE_ID = 0;
     
@@ -51,8 +54,9 @@ public class FileAccess {
     private FileAccess() {
     }
     
-    private FileAccess(String name) {
+    private FileAccess(String name, Token securityToken) {
         this.name = name;
+        this.securityToken = securityToken;
     }
 
     /**
@@ -74,8 +78,8 @@ public class FileAccess {
         return storagePath;
     }
 
-    public static FileAccess getInstance(String fileName) {
-        return new FileAccess(fileName);
+    public static FileAccess getInstance(String fileName, Token securityToken) {
+        return new FileAccess(fileName, securityToken);
     }
     
     public void connect(int accessType) throws IOException {
