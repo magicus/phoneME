@@ -32,9 +32,9 @@
 #ifndef _SOLARIS_SYNC_i686_H
 #define _SOLARIS_SYNC_i686_H
 
-#if defined(__i686__) || defined(__tune_pentiumpro__)
+#if defined(__i386__)
 #else
-#error Need i686 compiler support
+#error Need i386 compiler support
 #endif
 
 /* Use atomic operation for fast locking on x86 */

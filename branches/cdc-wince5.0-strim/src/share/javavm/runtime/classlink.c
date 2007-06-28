@@ -310,8 +310,13 @@ CVMclassPrepareFields(CVMExecEnv* ee, CVMClassBlock* cb)
     numFieldWords += numSuperFieldWords;
 
     if (numFieldWords > CVM_LIMIT_OBJECT_NUMFIELDWORDS) {
+#ifdef JAVASE
+        CVMthrowOutOfMemoryError(
+            ee, "Class %C exceeds the 64K byte object size limit", cb);
+#else
         CVMthrowInternalError(
             ee, "Class %C exceeds the 64K byte object size limit", cb);
+#endif
 	return CVM_FALSE;
     }
 
@@ -614,13 +619,13 @@ CVMclassPrepareMethods(CVMExecEnv* ee, CVMClassBlock* cb)
 #endif
         /* Set the CVMmbInvokerIdx() for the method. */
 	if (CVMmbIs(mb, ABSTRACT)) {
-	    CVMmbInvokerIdx(mb) = CVM_INVOKE_ABSTRACT_METHOD;
+	    CVMmbSetInvokerIdx(mb, CVM_INVOKE_ABSTRACT_METHOD);
 	} else if (CVMmbIs(mb, NATIVE)) {
-	    CVMmbInvokerIdx(mb) = CVM_INVOKE_LAZY_JNI_METHOD;
+	    CVMmbSetInvokerIdx(mb, CVM_INVOKE_LAZY_JNI_METHOD);
 	} else if (CVMmbIs(mb, SYNCHRONIZED)) {
-	    CVMmbInvokerIdx(mb) = CVM_INVOKE_JAVA_SYNC_METHOD;
+	    CVMmbSetInvokerIdx(mb, CVM_INVOKE_JAVA_SYNC_METHOD);
 	} else {
-	    CVMmbInvokerIdx(mb) = CVM_INVOKE_JAVA_METHOD;
+	    CVMmbSetInvokerIdx(mb, CVM_INVOKE_JAVA_METHOD);
 	}
 
 	/*
@@ -827,9 +832,13 @@ CVMclassPrepareMethods(CVMExecEnv* ee, CVMClassBlock* cb)
      */
 
     if (nextMethodTableIdx > CVM_LIMIT_NUM_METHODTABLE_ENTRIES) {
+#ifdef JAVASE
+        CVMthrowOutOfMemoryError(ee, 
+	    "Class %C exceeds 64K method table size limit", cb);
+#else
         CVMthrowInternalError(ee, 
-			      "Class %C exceeds 64K method table size limit",
-			      cb);
+	    "Class %C exceeds 64K method table size limit", cb);
+#endif
 	goto fail;
     }
 
@@ -1242,9 +1251,13 @@ CVMclassPrepareInterfaces(CVMExecEnv* ee, CVMClassBlock* cb)
 
     /* Make sure there is room for the miranda methods. */
     if (mcount + n_miranda_methods > CVM_LIMIT_NUM_METHODTABLE_ENTRIES) {
+#ifdef JAVASE
+        CVMthrowOutOfMemoryError(ee, 
+            "Class %C exceeds 64K method table size limit", cb);
+#else
         CVMthrowInternalError(ee, 
-			      "Class %C exceeds 64K method table size limit",
-			      cb);
+            "Class %C exceeds 64K method table size limit", cb);
+#endif
 	return CVM_FALSE;
     }
 
@@ -1306,7 +1319,7 @@ CVMclassPrepareInterfaces(CVMExecEnv* ee, CVMClassBlock* cb)
 		    CVMmbClassBlock(mb) = cb;
 		    CVMmbMethodTableIndex(mb) = mcount;
 		    CVMmbArgsSize(mb)         = CVMmbArgsSize(imb);
-		    CVMmbAccessFlags(mb)      = CVMmbAccessFlags(imb);
+		    CVMmbSetAccessFlags(mb, CVMmbAccessFlags(imb));
 		    CVMmbMethodIndex(mb)      = n_miranda_methods;
 		    CVMmbClassBlock(mb)       = cb;
 		    CVMcbInterfaceMethodTableIndex(cb, i, j) = mcount;
@@ -1318,8 +1331,8 @@ CVMclassPrepareInterfaces(CVMExecEnv* ee, CVMClassBlock* cb)
 		    if (methodIndex != ILLEGAL_ACCESS) {
 			CVMmbNameAndTypeID(mb) = CVMtypeidCloneMethodID(
                             ee, CVMmbNameAndTypeID(imb));
-			CVMmbInvokerIdx(mb) = 
-			    CVM_INVOKE_MISSINGINTERFACE_MIRANDA_METHOD;
+			CVMmbSetInvokerIdx(mb, 
+			    CVM_INVOKE_MISSINGINTERFACE_MIRANDA_METHOD);
 		    } else {
 			/* 
 			 * create a *fake* name that begins with '+', not
@@ -1372,8 +1385,8 @@ CVMclassPrepareInterfaces(CVMExecEnv* ee, CVMClassBlock* cb)
 			    free(miranda_method_range);
 			    return CVM_FALSE;
 			}
-			CVMmbInvokerIdx(mb) = 
-			    CVM_INVOKE_NONPUBLIC_MIRANDA_METHOD;
+			CVMmbSetInvokerIdx(mb,
+			    CVM_INVOKE_NONPUBLIC_MIRANDA_METHOD);
 		    }
 		    /* 
 		     * WARNING: this must be done after setting up 

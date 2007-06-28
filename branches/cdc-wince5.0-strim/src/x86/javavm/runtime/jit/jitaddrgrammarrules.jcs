@@ -172,8 +172,11 @@ regAddr: FETCHADDR arrayIndex : 20 : :  : : {
         fetchArraySlot(con, CVMRM_INT_REGS(con), $$, GET_REGISTER_GOALS);
     };
 
+regPtr: regAddr : 0 : : : : ;
+regPtr: regObj : 0 : : : : ;
+
 // Purpose: value = FETCHADDR(FIELDREFADDR(obj,fieldOffset))
-regAddr: FETCHADDR FIELDREFADDR regObj memSpec : 10 :
+regAddr: FETCHADDR FIELDREFADDR regPtr memSpec : 10 :
     GETFIELD_SYNTHESIS(con, $$); : GETFIELD_INHERITANCE(con, $$); : : {
         CVMJITprintCodegenComment(("Do getfield:"));
         CVMJITaddCodegenComment((con, "valueObj"));

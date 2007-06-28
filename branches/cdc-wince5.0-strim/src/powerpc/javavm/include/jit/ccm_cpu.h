@@ -125,6 +125,16 @@
 #undef  CVMCCM_HAVE_PLATFORM_SPECIFIC_D2F
 #endif
 
+#ifdef CVM_PPC_E500V1
+#define CVMCCM_HAVE_PLATFORM_SPECIFIC_FADD
+#define CVMCCM_HAVE_PLATFORM_SPECIFIC_FSUB
+#define CVMCCM_HAVE_PLATFORM_SPECIFIC_FMUL
+#define CVMCCM_HAVE_PLATFORM_SPECIFIC_FDIV
+#define CVMCCM_HAVE_PLATFORM_SPECIFIC_FNEG
+#define CVMCCM_HAVE_PLATFORM_SPECIFIC_I2F
+#define CVMCCM_HAVE_PLATFORM_SPECIFIC_F2I
+#endif
+
 /*
  * The following #define/#undef are used to determine whether to include the
  * shared C implementations of these CCM intrinsic helpers in the build

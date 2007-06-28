@@ -189,12 +189,10 @@ void CVMJITassertMiscJITAssumptions(void)
 	      offsetof(CVMMethodBlock, immutX.methodTableIndexX));
     CVMassert(OFFSET_CVMMethodBlock_argsSizeX ==
 	      offsetof(CVMMethodBlock, immutX.argsSizeX));
-    CVMassert(OFFSET_CVMMethodBlock_invokerIdxX ==
-	      offsetof(CVMMethodBlock, immutX.invokerIdxX));
-    CVMassert(OFFSET_CVMMethodBlock_accessFlagsX ==
-	      offsetof(CVMMethodBlock, immutX.accessFlagsX));
     CVMassert(OFFSET_CVMMethodBlock_methodIndexX ==
 	      offsetof(CVMMethodBlock, immutX.methodIndexX));
+    CVMassert(OFFSET_CVMMethodBlock_invokerAndAccessFlagsX ==
+	      offsetof(CVMMethodBlock, immutX.invokerAndAccessFlagsX));
     CVMassert(OFFSET_CVMMethodBlock_codeX ==
 	      offsetof(CVMMethodBlock, immutX.codeX));
     CVMassert(CONSTANT_CVMMethodBlock_size == sizeof(CVMMethodBlock));

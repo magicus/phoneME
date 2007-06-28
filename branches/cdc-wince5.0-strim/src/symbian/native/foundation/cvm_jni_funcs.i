@@ -217,7 +217,6 @@ ENTRY(Java_java_lang_Throwable_getStackTraceDepth) ENTRY_SEP
 ENTRY(Java_java_lang_Throwable_getStackTraceElement) ENTRY_SEP
 ENTRY(Java_java_util_TimeZone_getSystemGMTOffsetID) ENTRY_SEP
 ENTRY(Java_java_util_TimeZone_getSystemTimeZoneID) ENTRY_SEP
-ENTRY(Java_sun_misc_Version_getBuildOptionString) ENTRY_SEP
 ENTRY(Java_java_util_zip_ZipEntry_initFields) ENTRY_SEP
 ENTRY(Java_java_util_zip_ZipEntry_initIDs) ENTRY_SEP
 ENTRY(Java_java_util_jar_JarFile_getMetaInfEntryNames) ENTRY_SEP

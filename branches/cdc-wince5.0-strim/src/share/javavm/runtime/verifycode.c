@@ -373,6 +373,7 @@ struct context_type {
 
     fullinfo_type object_info;	/* fullinfo for java/lang/Object */
     fullinfo_type string_info;	/* fullinfo for java/lang/String */
+    fullinfo_type class_info;	/* fullinfo for java/lang/Class */
     fullinfo_type throwable_info; /* fullinfo for java/lang/Throwable */
     fullinfo_type cloneable_info; /* fullinfo for java/lang/Cloneable */
     fullinfo_type serializable_info; /* fullinfo for java/io/Serializable */
@@ -395,8 +396,10 @@ struct context_type {
     CVMBool	method_has_jsr;
     CVMBool	method_has_switch;
 
+#if 0 /* See comment in verify_field(). */
     /* these fields are per field */
     CVMFieldBlock *fb;
+#endif
 
     /* Used by the space allocator */
     struct CCpool *CCroot, *CCcurrent;
@@ -405,6 +408,9 @@ struct context_type {
 
     /* Jump here on any error. */
     jmp_buf jump_buffer;
+
+    /* Class file version we are checking against */
+    int major_version;
 };
 
 /*
@@ -517,9 +523,10 @@ typedef struct mask_type mask_type;
 
 static void verify_method(context_type *context, CVMClassBlock *cb,
 			  CVMMethodBlock *mb);
+#if 0 /* See comment in verify_field(). */
 static void verify_field(context_type *context, CVMClassBlock *cb,
 			 CVMFieldBlock *fb);
-
+#endif
 static void verify_opcode_operands (context_type *, int inumber, int offset);
 static void set_protected(context_type *, int inumber, int key, opcode_type);
 static jboolean is_superclass(context_type *, fullinfo_type);
@@ -828,6 +835,9 @@ VerifyClass(CVMExecEnv *ee, CVMClassBlock *cb, char *buffer, jint len)
 	return JNI_FALSE;
     }
     memset(context, 0, sizeof(context_type));
+
+    context->major_version = cb->major_version;
+
     context->message = buffer;
     context->message_buf_len = len;
 
@@ -837,7 +847,9 @@ VerifyClass(CVMExecEnv *ee, CVMClassBlock *cb, char *buffer, jint len)
     /* Set invalid method/field index of the context, in case anyone 
        calls CCerror */
     context->mb = 0;
+#if 0 /* See comment in verify_field(). */
     context->fb = 0;
+#endif
 
     /* Don't call CCerror or anything that can call it above the setjmp! */
     if (!setjmp(context->jump_buffer)) {
@@ -854,6 +866,8 @@ VerifyClass(CVMExecEnv *ee, CVMClassBlock *cb, char *buffer, jint len)
 	    make_class_info(context, CVMsystemClass(java_lang_Object));
 	context->string_info = 
 	    make_class_info(context, CVMsystemClass(java_lang_String));
+	context->class_info = 
+	    make_class_info(context, CVMsystemClass(java_lang_Class));
 	context->throwable_info = 
 	    make_class_info(context, CVMsystemClass(java_lang_Throwable));
 	context->cloneable_info = 
@@ -898,9 +912,11 @@ VerifyClass(CVMExecEnv *ee, CVMClassBlock *cb, char *buffer, jint len)
 	    context->superclass_info = 0;
 	}
     
-	/* Look at each method */
+	/* Look at each member */
+#if 0 /* See comment in verify_field(). */
 	for (i = CVMcbFieldCount(cb); --i >= 0;)  
 	    verify_field(context, cb, CVMcbFieldSlot(cb, i));
+#endif
 	for (i = CVMcbMethodCount(cb); --i >= 0;) 
 	    verify_method(context, cb, CVMcbMethodSlot(cb, i));
 	result = JNI_TRUE;
@@ -920,19 +936,29 @@ VerifyClass(CVMExecEnv *ee, CVMClassBlock *cb, char *buffer, jint len)
     return result;
 }
 
+/* NOTE: the format verifier in (verifyformat.c) that runs before this will
+   ensure that the field cannot be public, private, or protected at the
+   same time.  Hence, this check is superflous.  It is left here just for
+   reference.  This verify_field() function is left here to preserve the
+   structure and flow of the code verifier in case other field verification
+   work needs to be done here in the future.
+*/
+#if 0
 static void
 verify_field(context_type *context, CVMClassBlock *cb, CVMFieldBlock *fb)
 {
     int access_bits = CVMfbAccessFlags(fb);
     context->fb = fb;
 
-    if (  ((access_bits & CVM_FIELD_ACC_PUBLIC) != 0) && 
-	  ((access_bits & (CVM_FIELD_ACC_PRIVATE | CVM_FIELD_ACC_PROTECTED))
-	   != 0)) {
+    if (CVMmemberPPPAccessIs(access_bits, FIELD, PUBLIC) && 
+	(CVMmemberPPPAccessIs(access_bits, FIELD, PRIVATE) ||
+	 CVMmemberPPPAccessIs(access_bits, FIELD, PROTECTED))) {
         CCerror(context, "Inconsistent access bits.");
     } 
+
     context->fb = 0;
 }
+#endif
 
 
 /* Verify the code of one method */
@@ -973,11 +999,18 @@ verify_method(context_type *context, CVMClassBlock *cb, CVMMethodBlock* mb)
     }
 #endif
 
-    if (((access_bits & CVM_METHOD_ACC_PUBLIC) != 0) && 
-	((access_bits & (CVM_METHOD_ACC_PRIVATE | CVM_METHOD_ACC_PROTECTED))
-	 != 0)) {
+#if 0
+    /* NOTE: the format verifier in (verifyformat.c) that runs before this will
+       ensure that the field cannot be public, private, or protected at the
+       same time.  Hence, this check is superflous.  It is left here just for
+       reference.
+    */
+    if (CVMmemberPPPAccessIs(access_bits, METHOD, PUBLIC) && 
+	(CVMmemberPPPAccessIs(access_bits, METHOD, PRIVATE) ||
+	 CVMmemberPPPAccessIs(access_bits, METHOD, PROTECTED))) {
 	CCerror(context, "Inconsistent access bits.");
     } 
+#endif
     context->method_has_jsr = CVM_FALSE;
     context->method_has_switch = CVM_FALSE;
 
@@ -1198,6 +1231,9 @@ verify_opcode_operands(context_type *context, int inumber, int offset)
 	int key = code[offset + 1];
 	int types = (1 << CVM_CONSTANT_Integer) | (1 << CVM_CONSTANT_Float) |
 	                    (1 << CVM_CONSTANT_StringICell);
+	if (context->major_version >= 49) {
+	    types |= (1 << CVM_CONSTANT_ClassTypeID);
+	}
 	this_idata->operand.i = key;
 	verify_constant_pool_type(context, key, types);
 	break;
@@ -1208,6 +1244,9 @@ verify_opcode_operands(context_type *context, int inumber, int offset)
 	int key = (code[offset + 1] << 8) + code[offset + 2];
 	int types = (1 << CVM_CONSTANT_Integer) | (1 << CVM_CONSTANT_Float) |
 	    (1 << CVM_CONSTANT_StringICell);
+	if (context->major_version >= 49) {
+	    types |= (1 << CVM_CONSTANT_ClassTypeID);
+	}
 	this_idata->operand.i = key;
 	verify_constant_pool_type(context, key, types);
 	break;
@@ -1512,10 +1551,20 @@ set_protected(context_type *context, int inumber, int key, opcode_type opcode)
 
         if (access == -1) {
              /* field/method not found, detected at runtime. */
-	} else if (access & CVM_METHOD_ACC_PROTECTED) {
-	    if ((access & CVM_METHOD_ACC_PRIVATE) ||
+        } else if (CVMmemberPPPAccessIs(access, FIELD, PROTECTED)) {
+
+	    /* NOTE: the format verifier in (verifyformat.c) that runs before
+	       this will ensure that the field cannot be public, private, or
+	       protected at the same time.  Hence, this check for the
+	       PRIVATE flag is superflous.  It is left here in the comment
+	       just for reference.
+
+	    if (CVMmemberPPPAccessIs(access, FIELD, PRIVATE) ||
 		!CVMisSameClassPackage(ee, calledClass, context->class))
+	    */
+	    if (!CVMisSameClassPackage(ee, calledClass, context->class)) {
 		context->instruction_data[inumber].protected = JNI_TRUE;
+	    }
 	}
     }
 }
@@ -2577,6 +2626,10 @@ push_stack(context_type *context, int inumber, stack_info_type *new_stack_info)
 		    stack_results = "A"; 
 		    full_info = context->string_info;
 		    break;
+		case CVM_CONSTANT_ClassTypeID:
+		    stack_results = "A"; 
+		    full_info = context->class_info;
+		    break;
 		default:
 		    CCerror(context, "Internal error #3");
 		    stack_results = "";	/* Never reached: keep lint happy */
@@ -3467,12 +3520,14 @@ CCerror (context_type *context, char *format, ...)
 	n += jio_snprintf(context->message, context->message_buf_len,
 			  "(class: %!C, method: %!M)", 
 			  classname, methodname);
+#if 0 /* See comment in verify_field(). */
     } else if (context->fb != 0 ) {
         CVMFieldTypeID fieldname =
 	    CVMfbNameAndTypeID(context->fb);
 	n += jio_snprintf(context->message, context->message_buf_len,
 			  "(class: %!C, field: %!F) ", 
 			  classname, fieldname);
+#endif
     } else {
         n += jio_snprintf(context->message, context->message_buf_len,
 			  "(class: %!C) ", classname);

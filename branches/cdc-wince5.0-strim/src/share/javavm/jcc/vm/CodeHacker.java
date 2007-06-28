@@ -252,7 +252,7 @@ class CodeHacker {
 		    co = c[(int)code[loc+1]&0xff];
 		    if (co instanceof StringConstant) {
 			code[loc] = (byte)Const.opc_aldc_quick;
-		    } else {
+		    } else if (!(co instanceof ClassConstant)) {
 			code[loc] = (byte)Const.opc_ldc_quick;
 		    }
 		    co.incldcReference();
@@ -297,7 +297,7 @@ class CodeHacker {
 		case Const.opc_ldc_w:
 		    if (co instanceof StringConstant) {
 			code[loc] = (byte)Const.opc_aldc_w_quick;
-		    } else {
+		    } else if (!( co instanceof ClassConstant)) {
 			code[loc] = (byte)Const.opc_ldc_w_quick;
 		    }
 		    co.incldcReference();

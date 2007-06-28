@@ -544,6 +544,28 @@ memSpec: reg32 : 0 : : : : {
 
 %{
 static void
+wordUnaryOp(
+    CVMJITCompilationContext* con,
+    int opcode,
+    CVMJITIRNodePtr thisNode,
+    CVMRMregset target,
+    CVMRMregset avoid)
+{
+    CVMRMResource* src = popResource(con);
+    CVMRMResource* dest = CVMRMgetResource(CVMRM_INT_REGS(con),
+					   target, avoid, 1);
+
+    CVMRMpinResource(CVMRM_INT_REGS(con), src,
+		     CVMRM_ANY_SET, CVMRM_EMPTY_SET);
+    CVMCPUemitUnaryALU(con, opcode,
+	CVMRMgetRegisterNumber(dest), CVMRMgetRegisterNumber(src),
+	CVMJIT_NOSETCC);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), src);
+    CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, thisNode);
+    pushResource(con, dest);
+}
+
+static void
 wordBinaryOp(
     CVMJITCompilationContext* con,
     int opcode,
@@ -618,6 +640,21 @@ wordBinaryOp(
     CVMRMoccupyAndUnpinResource(rc, dest, thisNode);
     pushResource(con, dest);
 }
+
+#ifdef CVM_NEED_WORD_BINARY_OP_WITH_REG32_RHS
+static void
+wordBinaryOpWithReg32Rhs(
+    CVMJITCompilationContext* con,
+    int opcode,
+    CVMJITIRNodePtr thisNode,
+    CVMRMregset target,
+    CVMRMregset avoid)
+{
+    CVMRMResource* operand = popResource(con);
+    pushALURhsResource(con, operand);
+    wordBinaryOp(con, opcode, thisNode, target, avoid);
+}
+#endif
 
 /* Purpose: Emits a call to a Unary CCM helper. */
 static void
@@ -1512,20 +1549,8 @@ reg32: CLASS_BLOCK : 20 : : : : {
 	pushResource(con, src);
     };
 
-reg32: INEG32 reg32 : 10 : : : :{
-	CVMRMResource* src = popResource(con);
-	CVMRMResource* dest = CVMRMgetResource(CVMRM_INT_REGS(con),
-					       GET_REGISTER_GOALS, 1);
-
-	CVMRMpinResource(CVMRM_INT_REGS(con), src,
-			 CVMRM_ANY_SET, CVMRM_EMPTY_SET);
-        CVMCPUemitUnaryALU(con, CVMCPU_NEG_OPCODE,
-            CVMRMgetRegisterNumber(dest), CVMRMgetRegisterNumber(src),
-	    CVMJIT_NOSETCC);
-	CVMRMrelinquishResource(CVMRM_INT_REGS(con), src);
-	CVMRMoccupyAndUnpinResource(CVMRM_INT_REGS(con), dest, $$);
-	pushResource(con, dest);
-    };
+reg32: INEG32 reg32 : 10 : : : :
+	wordUnaryOp(con, CVMCPU_NEG_OPCODE, $$, GET_REGISTER_GOALS);
 
 %{
 #ifdef CVMJIT_INTRINSICS

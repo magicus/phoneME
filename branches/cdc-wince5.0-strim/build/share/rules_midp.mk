@@ -72,6 +72,8 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
 	             MIDP_CLASSES_ZIP=$(MIDP_CLASSES_ZIP) \
 	             MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
+		     VM_BOOTCLASSPATH=$(VM_BOOTCLASSPATH) \
+		     CVM_BUILDTIME_CLASSESZIP=$(CVM_BUILDTIME_CLASSESZIP) \
 	             $(MIDP_JSROP_USE_FLAGS) \
 	             rom -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
 	@echo "<==== end building MIDP classes"
@@ -130,6 +132,7 @@ $(RUNMIDLET): force_midp_build
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
 	             MIDP_CLASSES_ZIP=$(MIDP_CLASSES_ZIP) \
 	             MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
+		     VM_BOOTCLASSPATH=$(VM_BOOTCLASSPATH) \
 	             $(MIDP_JSROP_USE_FLAGS) \
 	             -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
 ifneq ($(USE_JUMP), true)

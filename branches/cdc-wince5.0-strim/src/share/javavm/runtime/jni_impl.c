@@ -738,7 +738,7 @@ CVMjniRegisterNatives(JNIEnv *env, jclass clazz,
 	    CVMassert(CVMmbJitInvoker(mb) == (void*)CVMCCMinvokeJNIMethod);
 #endif
 	} else {
-	    CVMmbInvokerIdx(mb) = invoker;
+	    CVMmbSetInvokerIdx(mb, invoker);
 	    CVMmbNativeCode(mb) = (CVMUint8 *)nativeProc;
 #ifdef CVM_JIT
 	    CVMmbJitInvoker(mb) = (void*)CVMCCMinvokeJNIMethod;
@@ -767,7 +767,7 @@ CVMjniUnregisterNatives(JNIEnv *env, jclass clazz)
         CVMMethodBlock* mb = CVMcbMethodSlot(cb, i);
 
 	if (CVMmbIs(mb, NATIVE)) {
-	    CVMmbInvokerIdx(mb) = CVM_INVOKE_LAZY_JNI_METHOD;
+	    CVMmbSetInvokerIdx(mb, CVM_INVOKE_LAZY_JNI_METHOD);
 	    CVMmbNativeCode(mb) = NULL;
 #ifdef CVM_JIT
 	    CVMmbJitInvoker(mb) = (void*)CVMCCMletInterpreterDoInvoke;

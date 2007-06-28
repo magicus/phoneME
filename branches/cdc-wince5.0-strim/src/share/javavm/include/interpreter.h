@@ -1164,6 +1164,11 @@ CVMquickenOpcode(CVMExecEnv* ee, CVMUint8* pc,
 extern CVMBool
 CVMisSpecialSuperCall(CVMClassBlock* currClass, CVMMethodBlock* mb);
 
+CVMMethodBlock*
+CVMlookupSpecialSuperMethod(CVMExecEnv* ee,
+			    CVMClassBlock* currClass,
+			    CVMMethodTypeID methodID);
+
 #ifndef CVM_TRUSTED_CLASSLOADERS
 
 /* Purpose: Checks to see if OK to instantiate of the specified class.  Will

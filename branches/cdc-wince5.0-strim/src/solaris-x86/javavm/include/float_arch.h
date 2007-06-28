@@ -44,4 +44,6 @@ extern float floatRem(float, float);
 #define CVMfloatRem(op1, op2) \
     floatRem((op1), (op2))
 
+extern void setFPMode(void);
+
 #endif /* _SOLARIS_FLOAT_ARCH_H */

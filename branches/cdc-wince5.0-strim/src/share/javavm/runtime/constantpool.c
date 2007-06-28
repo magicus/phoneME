@@ -698,7 +698,7 @@ CVMcpResolveMethodref(CVMExecEnv* ee,
     CVMInt32 access;
 
 #undef IsProtected
-#define IsProtected(x)	((x) & CVM_METHOD_ACC_PROTECTED)
+#define IsProtected(x)	CVMmemberPPPAccessIs((x), METHOD, PROTECTED)
 
     /*
      * The method must not be a method of an interface class.
@@ -773,7 +773,7 @@ CVMcpResolveMethodref(CVMExecEnv* ee,
 	(cb == CVMsystemClass(java_lang_Object)) &&
 	CVMtypeidIsArray(CVMcbClassName(methodCb))) {
       CVMassert(IsProtected(access));
-      access &= ~CVM_METHOD_ACC_PROTECTED;
+      access &= ~CVM_MEMBER_PPP_MASK;
       access |= CVM_METHOD_ACC_PUBLIC;
     }
 

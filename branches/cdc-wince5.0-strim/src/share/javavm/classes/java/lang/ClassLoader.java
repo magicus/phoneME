@@ -630,7 +630,7 @@ public abstract class ClassLoader {
     }
 
     private static boolean checkName(String name) {
-        if (name ==null)
+        if (name == null || name.length() == 0)
             return true;
         if (name.indexOf('/') != -1)
             return false;
