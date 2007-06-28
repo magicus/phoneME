@@ -105,6 +105,7 @@ MIDP_CLASSESZIP_DEPS	=
 
 ifneq ($(CVM_PRELOAD_LIB), true)
 MIDP_CLASSES_ZIP	?= $(CVM_LIBDIR_ABS)/midpclasses.zip
+MIDP_JUNIT_CLASSES_ZIP ?= $(CVM_LIBDIR_ABS)/midpjunitclasses.zip
 MIDP_SHARED_LIB		?= $(CVM_LIBDIR_ABS)/libmidp$(LIB_POSTFIX)
 else
 MIDP_CLASSES_ZIP	?= $(MIDP_OUTPUT_DIR)/classes.zip

@@ -110,7 +110,7 @@ define check_JUNIT_JAR
 	$(AT)($(CVM_JAR) tf $(JUNIT_JAR) > /dev/null || (echo "JUNIT_JAR appears to be invalid or missing: [$(JUNIT_JAR)]" ; exit -1))
 endef
 
-build-unittests::
+build-unittests:: build-midp-unittests
 	@echo "====> start building jump unit-tests"
 	$(check_JUNIT_JAR)
 	$(AT)(cd $(JUMP_DIR); $(CVM_ANT) $(BUILD_UNITTEST_ANT_OPTIONS) -f build/build.xml only-build-unittests)
