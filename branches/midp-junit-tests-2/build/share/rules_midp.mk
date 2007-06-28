@@ -78,6 +78,33 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             rom -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
 	@echo "<==== end building MIDP classes"
 
+.PHONY: build-midp-unittests
+build-midp-unittests:
+ifeq ($(USE_JUNIT_TEST), true)
+	@echo "====> start building MIDP unit-tests"
+	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
+		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
+ 	             PROFILE_CLASSES_ZIP=$(LIB_CLASSESJAR) \
+	             TARGET_CPU=$(TARGET_CPU) USE_DEBUG=$(USE_DEBUG) \
+	             USE_SSL=$(USE_SSL) \
+	             USE_RESTRICTED_CRYPTO=$(USE_RESTRICTED_CRYPTO) \
+	             VERIFY_BUILD_ENV= \
+	             CONFIGURATION_OVERRIDE=$(CONFIGURATION_OVERRIDE) \
+	             USE_QT_FB=$(USE_QT_FB) USE_DIRECTFB=$(USE_DIRECTFB) \
+	             USE_SSL=$(USE_SSL) USE_CONFIGURATOR=$(USE_CONFIGURATOR) \
+	             USE_VERBOSE_MAKE=$(USE_VERBOSE_MAKE) \
+	             PCSL_PLATFORM=$(PCSL_PLATFORM) \
+	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
+	             MIDP_CLASSES_ZIP=$(MIDP_CLASSES_ZIP) \
+	             MIDP_JUNIT_CLASSES_ZIP=$(MIDP_JUNIT_CLASSES_ZIP) \
+	             MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
+	             $(MIDP_JSROP_USE_FLAGS) \
+	             $(MIDP_JUNIT_CLASSES_ZIP) -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
+	@echo "<==== end building MIDP unit-tests"
+endif
+
+build-unittests:: build-midp-unittests
+
 #
 # Build the source bundle
 #
