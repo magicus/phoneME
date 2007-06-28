@@ -306,12 +306,12 @@ public class BodyLayer extends CLayer
         if (layers[MIDPWindow.PTI_LAYER] != null && layers[MIDPWindow.PTI_LAYER].isVisible()) {
             bounds[H] -= layers[MIDPWindow.PTI_LAYER].bounds[H];
         }
+        bounds[Y] = layers[MIDPWindow.TITLE_LAYER].bounds[Y];
         if (layers[MIDPWindow.TITLE_LAYER].isVisible()) {
-            bounds[Y] = layers[MIDPWindow.TITLE_LAYER].bounds[H];
+            bounds[Y] += layers[MIDPWindow.TITLE_LAYER].bounds[H];
             bounds[H] -= layers[MIDPWindow.TITLE_LAYER].bounds[H];
-        } else {
-            bounds[Y] = 0;
         }
+        
         if (layers[MIDPWindow.TICKER_LAYER].isVisible()) {
             bounds[H] -= layers[MIDPWindow.TICKER_LAYER].bounds[H];
         }

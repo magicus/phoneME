@@ -483,6 +483,12 @@ public class SkinResources {
         if ((num & SkinResourcesConstants.RIGHT) != 0) {
             rv |= Graphics.RIGHT;
         }
+        if ((num & SkinResourcesConstants.VCENTER) != 0) {
+            rv |= Graphics.VCENTER;
+        }
+        if ((num & SkinResourcesConstants.HCENTER) != 0) {
+            rv |= Graphics.HCENTER;
+        }
 
         return rv;
     }

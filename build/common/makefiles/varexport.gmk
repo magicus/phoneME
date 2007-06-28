@@ -198,17 +198,18 @@ varexport: $(MIDP_OUTPUT_DIR)
 	@#echo ======================================================
 	$(A)echo >$(VLF)
 	$(A)echo "# Build settings. Generated file." >>$(VLF)
+	$(A)echo "# current directory: `$(RELDIR) $(CURDIR) - $(MIDP_DIR) $(LIMITDIR) $(FN_SEP) MIDP_DIR`" >>$(VLF)
 	$(A)#
 	$(A)#
 	$(A)for I in $(XOPTIONVARLIST); do echo $$I >>$(VLF); done
 	$(A)echo "# =====================================================" >>$(VLF)
 	$(A)#
 	$(A)#
-	$(A)for I in $(XSETVARLIST); do N=`echo $$I | sed "s/\([^\=]*\).*/\1/"`; echo ifdef $$N >>$(VLF); echo $$I >>$(VLF); echo endif >>$(VLF); done
+	$(A)for I in $(XSETVARLIST); do N=`echo $$I | sed "s/\([^\=]*\).*/\1/"`; echo ifndef $$N >>$(VLF); echo $$I >>$(VLF); echo endif >>$(VLF); done
 	$(A)echo "# =====================================================" >>$(VLF)
 	$(A)#
 	$(A)#
-	$(A)for I in $(XSETPATHVARLIST); do N=`echo $$I | sed "s/\([^\=]*\).*/\1/"`; P=`echo $$I | sed "s/\([^\=]*\)=\(.*\)/\2/"`; echo ifdef $$N >>$(VLF); echo $$N=`$(RELDIR) $$P - $(MIDP_DIR) $(LIMITDIR) $(FN_SEP) MIDP_DIR` >>$(VLF); echo endif >>$(VLF); done
+	$(A)for I in $(XSETPATHVARLIST); do N=`echo $$I | sed "s/\([^\=]*\).*/\1/"`; P=`echo $$I | sed "s/\([^\=]*\)=\(.*\)/\2/"`; echo ifndef $$N >>$(VLF); echo $$N=`$(RELDIR) $$P - $(MIDP_DIR) $(LIMITDIR) $(FN_SEP) MIDP_DIR` >>$(VLF); echo endif >>$(VLF); done
 	@echo created $(VLF)
 	@#echo ======================================================
 

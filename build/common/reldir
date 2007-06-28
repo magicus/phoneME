@@ -33,10 +33,20 @@ AWK=gawk
 fi
 
 # $1 -- path to be converted to relative
-# $2 -- base path
-# $3 -- limit path -- return an empty string if $1 is not a subdirectory of $3
-# $4 -- directory separator character, optional, "/" unless "\\" is specified
+# $2 -- dash, necessary to detect an empty $1
+# $3 -- base path
+# $4 -- limit path -- return an empty string if $1 is not a subdirectory of $3
+# $5 -- directory separator character, optional, "/" unless "\\" is specified
+# $6 -- variable name for the base path in the output;
+#       for example, if it is MYDIR, the output path will start with "$(MYDIR)/"
 echo "$1" "$2" "$3" "$4" "$5" "$6" | $AWK '
+
+# remove the trailing slash from path
+# path -- path to be modified
+function striptrailingslash(path) {
+    gsub(/\/$/,"",path);
+    return path;
+}
 
 # if sep == "\\", replace backslashes in path with slashes
 # also, if sep == "\\", lowercase the path
@@ -240,6 +250,6 @@ function fmain(targetpath,dash,base,limit,sep,varname) {
 }
 BEGIN { FS=" ";}
 {
-    print fmain($1, $2, $3, $4, $5, $6);
+    print striptrailingslash(fmain($1, $2, $3, $4, $5, $6));
 }
 '

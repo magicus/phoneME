@@ -24,6 +24,8 @@
 
 package com.sun.midp.main;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.midlet.*;
 import com.sun.midp.lcdui.*;
 import com.sun.midp.midletsuite.*;
@@ -106,6 +108,19 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
             internalSecurityToken,
             midletStateHandler,
             eventQueue);
+    }
+
+    /**
+     * Does all initialization for already created objects of a MIDlet suite
+     * environment. Subclasses can also extend the initialization with
+     * various global system initializations needed for all suites.
+     * The MIDlet suite has been created at this point, so it can be
+     * used to initialize any per suite data.
+     */
+    protected void initSuiteEnvironment() {
+        /* Set up permission checking for this suite. */
+        AccessController.setAccessControlContext(
+            new CldcAccessControlContext(midletSuite));
     }
 
     /**

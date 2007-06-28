@@ -42,6 +42,8 @@ import java.io.ByteArrayInputStream;
 
 import javax.microedition.io.ConnectionNotFoundException;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.midp.security.SecurityHandler;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
@@ -49,7 +51,6 @@ import com.sun.midp.security.Permissions;
 import com.sun.midp.main.MIDletSuiteVerifier;
 import com.sun.midp.main.MIDletAppImageGenerator;
 
-import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
@@ -1825,13 +1826,7 @@ public abstract class JUMPInstaller {
      * @param domain name of a security domain
      */
     public void setUnsignedSecurityDomain(String domain) {
-        MIDletSuite midletSuite = MIDletStateHandler.
-            getMidletStateHandler().getMIDletSuite();
-
-        // if a MIDlet suite is not started, assume the JAM is calling.
-        if (midletSuite != null) {
-            midletSuite.checkIfPermissionAllowed(Permissions.MIDP);
-        }
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
 
         unsignedSecurityDomain = domain;
     }
