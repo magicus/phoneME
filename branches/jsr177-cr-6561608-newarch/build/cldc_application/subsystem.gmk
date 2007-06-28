@@ -37,7 +37,8 @@
 # Source files for the ( satsa ) module
 #
 MODULE_SATSA_COMMON_JAVA_FILES += \
-    $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/lang/UnsupportedOperationException.java
+    $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/lang/UnsupportedOperationException.java \
+    $(JSR_177_DIR)/src/cldc_application/common/classes/com/sun/satsa/security/SecurityInitializer.java
 
 # Same classes are included in JSR 172 as well.
 # Avoid double inclusion.

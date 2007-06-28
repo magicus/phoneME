@@ -29,6 +29,8 @@ package com.sun.satsa.acl;
 import java.util.Vector;
 import java.lang.SecurityException;
 
+import com.sun.j2me.security.Token;
+
 /**
  * This class represents a set of ACL permissions.
  */
@@ -154,14 +156,15 @@ public class ACLPermissions {
     /**
      * Requests the user to enter the PIN value(s).
      * @param action PIN operation identifier.
+     * @param token security token
      * @return null if operation was cancelled or the array that contains
      * byte array(s) with PIN value(s).
      */
-    public Object[] enterPIN(int action) {
+    public Object[] enterPIN(int action, Token token) {
         PINEntryDialog dialog;
 
         try {
-            dialog = new PINEntryDialog(action, attr1, attr2);
+            dialog = new PINEntryDialog(action, attr1, attr2, token);
         } catch (InterruptedException e) {
             throw new SecurityException("Interrupted");
         }

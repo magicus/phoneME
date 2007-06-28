@@ -34,11 +34,26 @@ import com.sun.j2me.io.FileAccess;
 
 import javax.microedition.io.Connector;
 
+import com.sun.j2me.security.TrustedClass;
+import com.sun.j2me.security.Token;
+import com.sun.satsa.security.SecurityInitializer;
+
 /**
  * This class represents access control file that describes permissions for one
  * card slot.
  */
 public class ACSlot{
+
+    /*
+     * Inner class to request security token from SecurityTokenInitializer.
+     * SecurityTokenInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements TrustedClass { };
+
+    /** This class has a different security domain than the App suite */
+    private static Token securityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /**
      * Constructs an instance of an access control file object.
@@ -60,7 +75,7 @@ public class ACSlot{
         try {
             String storeName = FileAccess.getStorageRoot(FileAccess.INTERNAL_STORAGE_ID) +
 	        "acl_" + slotNum;
-            storage = FileAccess.getInstance(storeName);
+            storage = FileAccess.getInstance(storeName, securityToken);
             storage.connect(Connector.READ);
             permIS = storage.openInputStream();
         } catch (IOException e) {
