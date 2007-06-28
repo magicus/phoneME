@@ -1421,7 +1421,7 @@ blitSrcOver565(Renderer *rdr, jint height) {
 	
     cval = (jshort)((cred5 << 11) | (cgreen6 << 5) | (cblue5));
 
-    for (j = height - 1; j >= 0; j--) {
+    for (j = 0; j < height; j++) {
         minX = minTouched[j];
         maxX = maxTouched[j];
         aidx = alphaOffset + minX;

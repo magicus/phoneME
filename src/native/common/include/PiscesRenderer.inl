@@ -2027,8 +2027,8 @@ emitOffsetOval(Pipeline* pipeline, jint cx, jint cy, jint rx, jint ry,
 
     PIPELINE_MOVETO(pipeline, cx + rx + lw2*incr, cy);
 
-    nPoints = nPoints >> 2;
-    nSize = nPoints << 1;
+    nPoints /= 4;
+    nSize = 2*nPoints;
     REALLOC(rdr->_ovalPoints, jint, nSize, rdr->_ovalPoints_length * 2);
     ASSERT_ALLOC(rdr->_ovalPoints);
 
