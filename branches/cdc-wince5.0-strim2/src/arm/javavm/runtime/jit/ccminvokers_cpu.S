@@ -242,7 +242,7 @@ ENTRY1( CVMARMhandleGCAtInvoke)
 	 * yet "committed" to the stack, and as such, cannot be located 
 	 * by GC. 
 	 */
-        ldrb r1, [r1, #OFFSET_CVMMethodBlock_accessFlagsX]
+        ldrh r1, [r1, #OFFSET_CVMMethodBlock_invokerAndAccessFlagsX]
         tst  r1, #CONSTANT_METHOD_ACC_SYNCHRONIZED
 	
 	/* Synchronized method if result of 'tst' is 'ne'. Stash
@@ -280,7 +280,7 @@ ENTRY1( CVMARMhandleGCAtInvoke)
 	 * again to see if we should restore 'receiverObjX'
 	 * from miscICell.
 	 */
-        ldrb r2, [r1, #OFFSET_CVMMethodBlock_accessFlagsX]
+        ldrh r2, [r1, #OFFSET_CVMMethodBlock_invokerAndAccessFlagsX]
         tst  r2, #CONSTANT_METHOD_ACC_SYNCHRONIZED
         beq  CVMARMgcPatchPointAtInvokeLocal
 
@@ -589,7 +589,7 @@ LABEL(CVMARMgcPatchPointAtInvokeLocal)
 	; newly pushed frame into a safe location. The new frame is not
 	; yet "committed" to the stack, and as such, cannot be located
 	; by GC.
-        ldrb r1, [r1, #OFFSET_CVMMethodBlock_accessFlagsX]
+        ldrh r1, [r1, #OFFSET_CVMMethodBlock_invokerAndAccessFlagsX]
         tst  r1, #CONSTANT_METHOD_ACC_SYNCHRONIZED
 	
 	; Synchronized method if result of 'tst' is 'ne'. Stash
@@ -622,7 +622,7 @@ LABEL(CVMARMgcPatchPointAtInvokeLocal)
 	; again to see if we should restore 'receiverObjX'
 	; from miscICell.
 	;
-        ldrb r2, [r1, #OFFSET_CVMMethodBlock_accessFlagsX]
+        ldrh r2, [r1, #OFFSET_CVMMethodBlock_invokerAndAccessFlagsX]
         tst  r2, #CONSTANT_METHOD_ACC_SYNCHRONIZED
         beq  CVMARMgcPatchPointAtInvokeLocal
 

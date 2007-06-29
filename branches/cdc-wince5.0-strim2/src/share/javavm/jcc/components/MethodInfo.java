@@ -660,6 +660,7 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
 	    if (c instanceof StringConstant) return;
 	    if (c instanceof SingleValueConstant) return;
 	    if (c instanceof DoubleValueConstant) return;
+	    if (c instanceof ClassConstant) return;
 	    expected = "Directly loadable constant";
 	    break foundBad;
 	case CP_STRING:

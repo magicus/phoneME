@@ -26,6 +26,7 @@
 
 #include "javavm/include/porting/sync.h"
 #include "javavm/include/porting/threads.h"
+#include "javavm/include/porting/float.h"	/* for setFPMode() */
 #include "javavm/include/porting/globals.h"
 #include <thread.h>
 #include <synch.h>
@@ -436,7 +437,7 @@ CVMcondvarWait(CVMCondVar* c, CVMMutex* m, CVMJavaLong millis)
 #ifdef SOLARIS_ACQUIRES_LOCK_BEFORE_CALLING_HANDLER
     POSIXmutexLock(&m->pmtx);
 #endif
-
+    setFPMode();
     return result;
 }
 

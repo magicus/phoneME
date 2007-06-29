@@ -399,7 +399,7 @@ ENTRY( CVMSPARChandleGCAtInvoke)
 	! newly pushed frame into a safe location. The new frame is not
 	! yet "committed" to the stack, and as such, cannot be located
 	! by GC.
-        lbz	r0, OFFSET_CVMMethodBlock_accessFlagsX(r4)
+        lduh	r0, OFFSET_CVMMethodBlock_invokerAndAccessFlagsX(r4)
         andi.	r0, r0, CONSTANT_METHOD_ACC_SYNCHRONIZED
 	
 	! Synchronized method if result of 'tst' is 'ne'. Stash
@@ -431,7 +431,7 @@ notSync:
 	! again to see if we should restore 'receiverObjX'
 	! from miscICell.
 	!
-        lbz	r0, OFFSET_CVMMethodBlock_accessFlagsX(r4)
+        lduh	r0, OFFSET_CVMMethodBlock_invokerAndAccessFlagsX(r4)
         andi.	r0, r0, CONSTANT_METHOD_ACC_SYNCHRONIZED
         beq	SYM_NAME(CVMSPARCgcPatchPointAtInvoke)
 

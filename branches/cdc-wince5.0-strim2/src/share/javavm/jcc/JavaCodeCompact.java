@@ -641,6 +641,9 @@ public class JavaCodeCompact extends LinkerUtil {
 
 	for (int i = 0; i < totalclasses; i++) {
             classes[i].ci.relocateAndPackCode(noCodeCompaction);
+	    if (doShared) {
+		classes[i].ci.constants = sharedConstant.getConstants();
+	    }
 	}
 
 	if ( ! good ) return false;

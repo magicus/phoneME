@@ -25,6 +25,7 @@
  *
  */
 
+#include "javavm/include/porting/float.h"	/* for setFPMode() */
 #include "javavm/include/porting/threads.h"
 #include "javavm/include/porting/sync.h"
 #include <thread.h>
@@ -95,6 +96,7 @@ CVMthreadAttach(CVMThreadID *self, CVMBool orphan)
 	}
 	self->stackTop = (char *)stack.ss_sp - stackSize;
     }
+    setFPMode();
     return POSIXthreadAttach(self, orphan);
 }
 

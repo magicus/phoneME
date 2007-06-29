@@ -175,7 +175,9 @@ CVMioNativePath(char *path)
 	*dst++ = *src++;
 	colon = dst;
 	*dst++ = ':'; src++;
-    } else {
+    } else
+#endif
+    {
 	src = path;
 	if (isfilesep(src[0]) && isfilesep(src[1])) {
 	    /* UNC pathname: Retain first separator; leave src pointed at
@@ -186,7 +188,6 @@ CVMioNativePath(char *path)
 	    path[0] = '\\';	/* Force first separator to '\\' */
 	}
     }
-#endif
 
     /* Remove redundant separators from remainder of path, forcing all
        separators to be '\\' rather than '/' */
@@ -199,7 +200,7 @@ CVMioNativePath(char *path)
 		if (colon == dst - 2) break;                      /* "z:\\" */
 #endif
 		if (dst == path + 1) break;                       /* "\\" */
-#ifndef WINCE
+
 		if (dst == path + 2 && isfilesep(path[0])) {
 		    /* "\\\\" is not collapsed to "\\" because "\\\\" marks the
 		       beginning of a UNC pathname.  Even though it is not, by
@@ -210,7 +211,7 @@ CVMioNativePath(char *path)
 		       directory of the current drive. */
 		    break;
 		}
-#endif
+
 		dst--;		/* Path does not denote a root directory, so
 				   remove trailing separator */
 		break;
