@@ -1,26 +1,26 @@
 #   
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
-# 2 only, as published by the Free Software Foundation. 
+# 2 only, as published by the Free Software Foundation.
 # 
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
-# included at /legal/license.txt). 
+# included at /legal/license.txt).
 # 
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA 
+# 02110-1301 USA
 # 
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
-# information or have any questions. 
+# information or have any questions.
 #
 
 .PHONY: all pre_target local_vc post_target
@@ -51,8 +51,8 @@ CC=cl.exe
 CXX=cl.exe
 RC=rc.exe
 
-LOCAL_CFLAGS_debug = -Gm -GX -Zi -Od -D_DEBUG -D_MBCS -D_LIB -YX -FD -GZ -W3
-LOCAL_CFLAGS=-ML -GX -O2 -D_MBCS -D_LIB /YX -FD -W3
+LOCAL_CFLAGS_debug = -MDd -Gm -GX -Zi -Od -D_DEBUG -D_MBCS -D_LIB -YX -FD -GZ -W3
+LOCAL_CFLAGS_nodebug = -MD -GX -O2 -D_MBCS -D_LIB /YX -FD -W3  
 
 ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
     define fixcygpath
@@ -69,6 +69,9 @@ CFLAGS=-nologo $(LOCAL_CFLAGS_$(BUILD))
 CPPFLAGS+= -I`$(call fixcygpath, $(JAVACALL_OUTPUT_INCLUDE_DIR))`
 CPPFLAGS+= $(SPECIFIC_DEFINITIONS)
 
+ADDITIONAL_RC_INCLUDE_DIRS += $(RESOURCE_IMAGES_DIR) 
+RCFLAGS += $(foreach dir,$(ADDITIONAL_RC_INCLUDE_DIRS),/i`$(call fixcygpath, $(dir))`) 
+
 AR=lib.exe 
 ifeq ($(TARGET_CPU),arm)
 ARFLAGS=-nologo -MACHINE:ARM
@@ -82,7 +85,7 @@ OUTPUT_OPTION=-Fo`$(call fixcygpath, $@)` \
 
 $(JAVACALL_OUTPUT_LIB_DIR)/%.res: %.rc
 	@echo "...compiling resources ... "
-	@$(RC) /l 0x409 /d "NDEBUG" /fo`$(call fixcygpath, $@)` `$(call fixcygpath, $<)`
+	@$(RC) $(RCFLAGS) /l 0x409 /d "NDEBUG" /fo`$(call fixcygpath, $@)` `$(call fixcygpath, $<)`
 
 $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.cpp
 	@echo -n "...compiling: "

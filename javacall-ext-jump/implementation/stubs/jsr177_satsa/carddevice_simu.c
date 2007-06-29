@@ -89,15 +89,39 @@ javacall_result javacall_carddevice_get_slot_count(int *slot_cnt) {
  * @param result <code>JAVACALL_TRUE</code> if the slot is dedicated for SAT,
  *               <code>JAVACALL_FALSE</code> otherwise
  * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_WOULD_BLOCK caller must call 
+ *         the javacall_carddevice_is_sat_finish function to complete 
+ *         the operation
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_is_sat(int slot, javacall_bool *result) {
-    if (slot == 0) {
-        *result = JAVACALL_TRUE;
-    } else {
-        *result = JAVACALL_FALSE;
-    }return JAVACALL_NOT_IMPLEMENTED;
+javacall_result javacall_carddevice_is_sat_start(javacall_int32 slot,
+                                                 javacall_bool *result,
+                                                 void **context) {
+    (void)slot;    
+    (void)context;
+    *result = JAVACALL_FALSE;
+    return JAVACALL_NOT_IMPLEMENTED;
+}
+
+/** 
+ * Checks if this slot is SAT slot.
+ * @param slot Slot number.
+ * @param result <code>JAVACALL_TRUE</code> if the slot is dedicated for SAT,
+ *               <code>JAVACALL_FALSE</code> otherwise
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_WOULD_BLOCK caller must call 
+ *         this function again to complete the operation
+ *         JAVACALL_FAIL otherwise
+ */
+javacall_result javacall_carddevice_is_sat_finish(javacall_int32 slot,
+                                                 javacall_bool *result,
+                                                 void *context) {
+    (void)slot;    
+    (void)context;
+    *result = JAVACALL_FALSE;
+    return JAVACALL_NOT_IMPLEMENTED;
 }
 
 /** 
@@ -241,10 +265,6 @@ void javacall_carddevice_clear_error() {
  */
 void javacall_carddevice_set_error(const char *fmt, ...) {
     (void)fmt;
-}
-
-int javacall_carddevice_vsnprintf(char *buffer, int len, const char *fmt, va_list ap) {
-    return 0;
 }
 
 /** 

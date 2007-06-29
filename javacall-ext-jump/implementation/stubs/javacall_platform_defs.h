@@ -22,6 +22,7 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */ 
+
 #ifndef __JAVACALL_PLATFORM_DEFINE_H_
 #define __JAVACALL_PLATFORM_DEFINE_H_
 

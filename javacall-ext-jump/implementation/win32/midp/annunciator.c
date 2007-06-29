@@ -1,26 +1,26 @@
 /*
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 /**
@@ -31,47 +31,77 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <windows.h>
 
 #include "javacall_annunciator.h"
 #include "javacall_lcd.h"
+
 #include "local_defs.h"
 
-
-#include "img/img_lock.h"
+#include "img/topbar.h"
 #include "img/img_network.h"
-#include "img/img_caps.h"
-#include "img/img_lowercase.h"
-#include "img/img_numeric.h"
-#include "img/img_symbols.h"
-#include "img/img_T9.h"
+#include "img/img_home.h"
+#include "img/img_trusted.h"
+
+static javacall_bool trustedOn = JAVACALL_FALSE;
+static javacall_bool networkOn = JAVACALL_FALSE;
+static javacall_bool homeOn = JAVACALL_FALSE;
+
+extern javacall_pixel* getTopbarBuffer(int* screenWidth, int* screenHeight);
+
+/**
+ * Premultiply color components by it's corresponding alpha component.
+ *
+ * Formula: Cs = Csr * As (for source pixel),
+ *          Cd = Cdr * Ad (analog for destination pixel).
+ *
+ * @param C one of the raw color components of the pixel (Csr or Cdr in the formula).
+ * @param A the alpha component of the source pixel (As or Ad in the formula).
+ * @return color component in premultiplied form.
+ */
+#define PREMULTUPLY_ALPHA(C, A) \
+    (unsigned char)( (int)(C) * (A) / 0xff )
 
 
-javacall_bool first_time = JAVACALL_TRUE;
-static int screenWidth = 0;
-static int screenHeight = 0;
-static javacall_lcd_color_encoding_type colorEncoding;
+/**
+ * The source is composited over the destination (Porter-Duff Source Over
+ * Destination rule).
+ *
+ * Formula: Cr = Cs + Cd*(1-As)
+ *
+ * Note: the result is always equal or less than 0xff, i.e. overflow is impossible.
+ *
+ * @param Cs a color component of the source pixel in premultiplied form
+ * @param As the alpha component of the source pixel
+ * @param Cd a color component of the destination pixel in premultiplied form
+ * @return a color component of the result in premultiplied form
+ */
+#define ADD_PREMULTIPLIEDCOLORS_SRCOVER(Cs, As, Cd) \
+    (unsigned char)( (int)(Cs) + (int)(Cd) * (0xff - (As)) / 0xff )
 
-void util_lcd_init(void) {
+    
+/**
+ * Combine separate source and destination color components.
+ *
+ * Note: all backround pixels are treated as full opaque.
+ *
+ * @param Csr one of the raw color components of the source pixel
+ * @param As the alpha component of the source pixel
+ * @param Cdr one of the raw color components of the destination pixel
+ * @return a color component of the result in premultiplied form
+ */
+#define ADD_COLORS(Csr, As, Cdr) \
+    ADD_PREMULTIPLIEDCOLORS_SRCOVER( \
+            PREMULTUPLY_ALPHA(Csr, As), \
+            As, \
+            PREMULTUPLY_ALPHA(Cdr, 0xff) )
 
-    if (first_time) {
-        javacall_lcd_get_screen(JAVACALL_LCD_SCREEN_PRIMARY,
-                                &screenWidth, &screenHeight, NULL);
-    }
-    javacall_lcd_flush();
-    first_time = JAVACALL_FALSE;
 
-}
-
-void util_clear_screen(unsigned short *scrn, int screenSize) {
-
-    int index;
-
-    for (index = 0; index < screenSize; index++) {
-        scrn[index] = RGB2PIXELTYPE(255, 255, 255);
-    }
-}
-
-void util_draw_bitmap(unsigned char *bitmap_rgb,
+/**
+ * Draws image from raw data array to top bar offscreen buffer
+ */
+void util_draw_bitmap(const unsigned char *bitmap_data, 
+                      javacall_lcd_color_encoding_type color_format,
                       int bitmap_width,
                       int bitmap_height,
                       int screen_top,
@@ -82,10 +112,24 @@ void util_draw_bitmap(unsigned char *bitmap_rgb,
     unsigned negy, negx;
     javacall_pixel *scrn;
     int startx, starty;
+    int screenWidth = 0;
+    int screenHeight = 0;
 
-    scrn = javacall_lcd_get_screen(JAVACALL_LCD_SCREEN_PRIMARY,
-                                   &screenWidth, &screenHeight, &colorEncoding);
-    ////
+    unsigned char bytesPerPix = 3;
+
+    if (color_format == JAVACALL_LCD_COLOR_RGB888) {
+        bytesPerPix = 3;
+    } else if (color_format == JAVACALL_LCD_COLOR_RGBA) {
+        bytesPerPix = 4;
+    } else {
+        return;
+    }
+
+    scrn = getTopbarBuffer(&screenWidth, &screenHeight);
+    if (NULL == scrn) {
+        return;
+    }
+
     startx = screen_left < 0 ? 0 : screen_left;
     starty = screen_top < 0 ? 0 : screen_top;
 
@@ -101,33 +145,62 @@ void util_draw_bitmap(unsigned char *bitmap_rgb,
     bitmap_horizontal_gap = 0;
 
     if (startx + bitmap_width > screenWidth) {
-        bitmap_horizontal_gap = 3 * (bitmap_width - (screenWidth - startx));
+        bitmap_horizontal_gap = bytesPerPix * (bitmap_width - (screenWidth - startx));
         bitmap_width = screenWidth - startx;
     }
     if (starty + bitmap_height > screenHeight) {
         bitmap_height = screenHeight - starty;
     }
 
-    //srcraster=src->pixels+negy*src->x+negx;
-    //scrn=scrn+starty*screenWidth+startx;
-    bitmap_rgb = bitmap_rgb + negy * screenWidth + negx;
-    /////
+    bitmap_data = bitmap_data + negy * screenWidth * bytesPerPix + negx * bytesPerPix;
 
     for (y = screen_top; y < screen_top + bitmap_height; y++) {
         for (x = screen_left; x < screen_left + bitmap_width; x++) {
             if ((y >= 0) && (x >= 0) && (y < screenHeight) && (x < screenWidth)) {
-                unsigned short r = *bitmap_rgb++;
-                unsigned short g = *bitmap_rgb++;
-                unsigned short b = *bitmap_rgb++;
+                unsigned char r = *bitmap_data++;
+                unsigned char g = *bitmap_data++;
+                unsigned char b = *bitmap_data++;
 
+                if (color_format == JAVACALL_LCD_COLOR_RGBA) {
+                  javacall_pixel pix = scrn[(y * screenWidth) + x];
+                  unsigned char rd = GET_RED_FROM_PIXEL(pix);
+                  unsigned char gd = GET_GREEN_FROM_PIXEL(pix);
+                  unsigned char bd = GET_BLUE_FROM_PIXEL(pix);
+                  unsigned char alpha = *bitmap_data++;
+
+                  r = ADD_COLORS(r, alpha, rd);
+                  g = ADD_COLORS(g, alpha, gd);
+                  b = ADD_COLORS(b, alpha, bd);
+                }                
                 scrn[(y * screenWidth) + x] = RGB2PIXELTYPE(r, g, b);
-                //scrn[(y*screenWidth)+x]= tmp;
             }
         }
-        bitmap_rgb += bitmap_horizontal_gap;
+        bitmap_data += bitmap_horizontal_gap;
     }
+
 }
 
+/**
+ * Redraws top bar 
+ */
+void drawTopbarImage(void) {
+
+    util_draw_bitmap((unsigned char*)topbar_data, topbar_color_format, topBarWidth, topBarHeight, 0, 0);
+
+    if (networkOn) {
+        util_draw_bitmap(network_data, network_color_format, network_width, network_height, 0, network_x);
+    }
+
+    if (trustedOn) {
+        util_draw_bitmap(trusted_data, trusted_color_format, trusted_width, trusted_height, 0, trusted_x);
+    }
+
+    if (homeOn) {
+        util_draw_bitmap(home_data, home_color_format, home_width, home_height, 0, home_x);
+    }
+
+    javacall_lcd_flush();
+}
 
 /**
  * Turn device's Vibrate on/off
@@ -140,9 +213,6 @@ void util_draw_bitmap(unsigned char *bitmap_rgb,
  */
 javacall_result javacall_annunciator_vibrate(javacall_bool enableVibrate) {
 
-    sprintf(print_buffer, "Vibrate %s\n",
-            enableVibrate ? "Enabled" : "Disabled");
-    javacall_print(print_buffer);
     return JAVACALL_FAIL;
 
 }
@@ -161,8 +231,6 @@ javacall_result javacall_annunciator_vibrate(javacall_bool enableVibrate) {
  */
 javacall_result javacall_annunciator_flash_backlight(javacall_bool enableBacklight) {
 
-    sprintf(print_buffer, "Backlight %s\n", enableBacklight ? "Enabled" : "Disabled");
-    javacall_print(print_buffer);
     return JAVACALL_FAIL;
 }
 
@@ -178,27 +246,12 @@ javacall_result javacall_annunciator_flash_backlight(javacall_bool enableBacklig
  */
 javacall_result javacall_annunciator_display_trusted_icon(javacall_bool enableTrustedIcon) {
 
-#if 0
-    javacall_pixel *scrn;
+    trustedOn = enableTrustedIcon;
 
-    scrn = javacall_lcd_get_screen(JAVACALL_LCD_SCREEN_PRIMARY,
-                                   &screenWidth, &screenHeight, &colorEncoding);
-
-    if (enableTrustedIcon) {
-        util_draw_bitmap(lock_data, lock_width, lock_height, 0, 0);
-        javacall_lcd_flush();
-
-    } else {
-        util_clear_screen(scrn, (screenWidth * screenHeight));
-        javacall_lcd_flush();
-    }
-#endif
-
-    sprintf(print_buffer, "Trusted Icon %s\n",
-            enableTrustedIcon ? "Enabled" : "Disabled");
-    javacall_print(print_buffer);
+    drawTopbarImage();
 
     return JAVACALL_OK;
+
 }
 
 /**
@@ -212,140 +265,30 @@ javacall_result javacall_annunciator_display_trusted_icon(javacall_bool enableTr
  */
 javacall_result javacall_annunciator_display_network_icon(javacall_bool enableNetworkIndicator) {
 
-#if 0
-    javacall_pixel *scrn;
-    javacall_bool indicator_on;
+    networkOn = enableNetworkIndicator;
 
-    //javacall_print(print_buffer);  // Much info on screen
-
-    indicator_on = JAVACALL_FALSE;
-    util_lcd_init();
-    scrn = javacall_lcd_get_screen(JAVACALL_LCD_SCREEN_PRIMARY,
-                                   &screenWidth, &screenHeight, &colorEncoding);
-    if (enableNetworkIndicator) {
-        indicator_on = JAVACALL_TRUE;
-
-        util_draw_bitmap(network_data, network_width, network_height, 0, 0);
-        javacall_lcd_flush();
-
-    } else {
-        indicator_on = JAVACALL_FALSE;
-        util_clear_screen(scrn, (screenWidth * screenHeight));
-        javacall_lcd_flush();
-    }
-#endif
-
-    sprintf(print_buffer, "Network Icon %s\n",
-            enableNetworkIndicator ? "Enabled" : "Disabled");
-    javacall_print (print_buffer);
+    drawTopbarImage();
 
     return JAVACALL_OK;
-
 }
 
 /**
- * Set the input mode.
- * Notify the platform to show the current input mode
- * @param mode equals the new mode just set values are one of the following:
- *             JAVACALL_INPUT_MODE_LATIN_CAPS
- *             JAVACALL_INPUT_MODE_LATIN_LOWERCASE
- *             JAVACALL_INPUT_MODE_NUMERIC
- *             JAVACALL_INPUT_MODE_SYMBOL
- *             JAVACALL_INPUT_MODE_T9
+ * Turning Home indicator off or on. 
+ *
+ * @param enableHomeIndicator boolean value indicating if home indicator
+ *             icon should be enabled
  * @return <tt>JAVACALL_OK</tt> operation was supported by the device
- *         <tt>JAVACALL_FAIL</tt> or negative value on failure, or if not
+ *         <tt>JAVACALL_FAIL</tt> or negative value on failure, or if not 
  *         supported on device
  */
-javacall_result javacall_annunciator_display_input_mode_icon(javacall_input_mode_type mode) {
-    
-    static char input_mode_types[][20] = {
-      "LATIN_CAPS",
-      "LATIN_LOWERCASE",
-      "NUMERIC",
-      "SYMBOL",
-      "T9",
-      "OFF"
-    };
-    char *type;
+javacall_result javacall_annunciator_display_home_icon(javacall_bool enableHomeIndicator) {
+    homeOn = enableHomeIndicator;
 
-    switch (mode) {
-    case JAVACALL_INPUT_MODE_LATIN_CAPS:
-        type = input_mode_types[0];
-        break;
-    case JAVACALL_INPUT_MODE_LATIN_LOWERCASE:
-        type = input_mode_types[1];
-        break;
-    case JAVACALL_INPUT_MODE_NUMERIC:
-        type = input_mode_types[2];
-        break;
-    case JAVACALL_INPUT_MODE_SYMBOL:
-        type = input_mode_types[3];
-        break;
-    case JAVACALL_INPUT_MODE_T9:
-        type = input_mode_types[4];
-        break;
-    case JAVACALL_INPUT_MODE_OFF:
-        type = input_mode_types[5];
-        break;
-    default:
-        javacall_print ("Invalid input mode ");
-        javacall_print (itoa(mode, print_buffer, 10));
-	javacall_print (".\n");
-        return JAVACALL_INVALID_ARGUMENT;
-        break;
-    };
-
-    javacall_print ("Setting input mode to ");
-    javacall_print (type);
-    javacall_print (".\n");
+    drawTopbarImage();
 
     return JAVACALL_OK;
-
-#if 0
-    javacall_pixel *scrn;
-    javacall_bool indicator_on;
-
-    sprintf(print_buffer, "Setting input mode to %d\n", mode);
-    javacall_print(print_buffer);
-
-    indicator_on = JAVACALL_FALSE;
-    util_lcd_init();
-    scrn = javacall_lcd_get_screen(JAVACALL_LCD_SCREEN_PRIMARY,
-                                   &screenWidth, &screenHeight, &colorEncoding);
-
-    switch (mode) {
-    case JAVACALL_INPUT_MODE_LATIN_CAPS:
-        util_clear_screen(scrn, (screenWidth * screenHeight));
-        util_draw_bitmap(caps_data, caps_width, caps_height, 0, 0);
-        javacall_lcd_flush();
-        break;
-    case JAVACALL_INPUT_MODE_LATIN_LOWERCASE:
-        util_clear_screen(scrn, (screenWidth * screenHeight));
-        util_draw_bitmap(lowCase_data, lowCase_width, lowCase_height, 0, 0);
-        javacall_lcd_flush();
-        break;
-    case JAVACALL_INPUT_MODE_NUMERIC:
-        util_clear_screen(scrn, (screenWidth * screenHeight));
-        util_draw_bitmap(numeric_data, numeric_width, numeric_height, 0, 0);
-        javacall_lcd_flush();
-        break;
-    case JAVACALL_INPUT_MODE_SYMBOL:
-        util_clear_screen(scrn, (screenWidth * screenHeight));
-        util_draw_bitmap(symbol_data, symbol_width, symbol_height, 0, 0);
-        javacall_lcd_flush();
-        break;
-    case JAVACALL_INPUT_MODE_T9:
-        util_clear_screen(scrn, (screenWidth * screenHeight));
-        util_draw_bitmap(t9_data, t9_width, t9_height, 0, 0);
-        javacall_lcd_flush();
-        break;
-    default:
-        break;
-    }
-
-#endif
-    return JAVACALL_NOT_IMPLEMENTED;
 }
+ 
 
 /**
  * Play a sound of the given type.
@@ -390,20 +333,3 @@ javacall_result javacall_annunciator_play_audible_tone(javacall_audible_tone_typ
     return JAVACALL_OK;
 }
 
-
-/**
- * Controls the secure connection indicator.
- *
- * The secure connection indicator will be displayed when SSL
- * or HTTPS connection is active.
- *
- * @param enableIndicator boolean value indicating if the secure
- * icon should be enabled
- * @return <tt>JAVACALL_OK</tt> operation was supported by the device
- * <tt>JAVACALL_FAIL</tt> or negative value on failure, or if not
- * supported on device
- */
-javacall_result javacall_annunciator_display_secure_network_icon(
-        javacall_bool enableIndicator) {
-    return JAVACALL_OK;
-}
