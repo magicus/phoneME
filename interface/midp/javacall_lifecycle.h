@@ -1,26 +1,26 @@
 /*
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 #ifndef __JAVACALL_LIFECYCLE_H_
 #define __JAVACALL_LIFECYCLE_H_
@@ -65,36 +65,36 @@ extern "C" {
  */ 
 
 /**
- * The platfrom should invoke this function in platform context to start
+ * The platform should invoke this function in platform context to start
  * Java.
  */
 void javanotify_start(void);
 
 /**
- * The platfrom should invoke this function in platform context to pause
+ * The platform should invoke this function in platform context to pause
  * Java.
  */
 void javanotify_pause(void);
 
 /**
- * The platfrom should invoke this function in platform context to end pause
+ * The platform should invoke this function in platform context to end pause
  * and resume Java.
  */
 void javanotify_resume(void);
 /**
- * The platfrom should invoke this function in platform context to pause
+ * The platform should invoke this function in platform context to pause
  * Java bytecode execution (without invoking pauseApp)
  */
 void javanotify_internal_pause(void);
 
 /**
- * The platfrom should invoke this function in platform context to end
+ * The platform should invoke this function in platform context to end
  * an internal pause and resume Java bytecode processing
  */
 void javanotify_internal_resume(void);
 
 /**
- * The platfrom should invoke this function in platform context to end Java.
+ * The platform should invoke this function in platform context to end Java.
  */
 void javanotify_shutdown(void);
 
@@ -112,6 +112,42 @@ void javanotify_shutdown(void);
  *
  */
 void javanotify_install_midlet(const char * httpUrl);
+
+/**
+ * A notification function for telling Java to perform installation of
+ * a content via http, for SprintAMS.
+ *
+ * This function requires that the descriptor (JADfile, or GCDfile)
+ * has already been downloaded and resides somewhere on the file system.
+ * The function also requires the full URL that was used to download the
+ * file.
+ * 
+ * The given URL should be of the form http://www.sun.com/a/b/c/d.jad
+ * or http://www.sun.com/a/b/c/d.gcd.  
+ * Java will start a graphical installer which will download the content
+ * fom the Internet.
+ *
+ * @param httpUrl null-terminated http URL string of the content 
+ *        descriptor. The URL is of the following form:
+ *        http://www.website.com/a/b/c/d.jad
+ * @param descFilePath full path of the descriptor file which is of the 
+ *        form:
+ *        /a/b/c/d.jad  or /a/b/c/d.gcd
+ * @param descFilePathLen length of the file path
+ * @param isJadFile set to TRUE if the mime type of of the downloaded
+ *        descriptor file is <tt>text/vnd.sun.j2me.app-descriptor</tt>. If 
+ *        the mime type is anything else (e.g., <tt>text/x-pcs-gcd</tt>), 
+ *        this must be set to FALSE.
+ * @param isSilent set to TRUE if the content is to be installed silently,
+ *        without intervention from the user. (e.g., in the case of SL
+ *        or SI messages)
+ * 
+ */
+void javanotify_install_content(const char * httpUrl,
+                                const javacall_utf16* descFilePath,
+                                int descFilePathLen,
+                                javacall_bool isJadFile,
+                                javacall_bool isSilent);
 
 /**
  * A notification function for telling Java to perform installation of
@@ -148,7 +184,7 @@ typedef enum {
 } javacall_lifecycle_tck_domain;
 
 /**
- * The platfrom should invoke this function in platform context to start
+ * The platform should invoke this function in platform context to start
  * the Java VM and run TCK.
  *
  * @param url the http location of the TCK server
@@ -158,7 +194,7 @@ typedef enum {
 void javanotify_start_tck(char* url, javacall_lifecycle_tck_domain domain);
 
 /**
- * The platfrom should invoke this function in platform context to start
+ * The platform should invoke this function in platform context to start
  * the Java VM and run i3test framework.
  *
  * @param arg1 optional argument 1
@@ -169,7 +205,7 @@ void javanotify_start_tck(char* url, javacall_lifecycle_tck_domain domain);
 void javanotify_start_i3test(char* arg1, char* arg2);
 
 /**
- * The platfrom should invoke this function in platform context to start
+ * The platform should invoke this function in platform context to start
  * the Java VM and run installed Java Content Handler.
  *
  * @param handlerID launched Content Handler ID
@@ -181,7 +217,7 @@ void javanotify_start_i3test(char* arg1, char* arg2);
 void javanotify_start_handler(char* handlerID, char* url, char* action);
 
 /**
- * The platfrom should invoke this function in platform context to start
+ * The platform should invoke this function in platform context to start
  * the Java VM with arbitrary arguments.
  *
  * @param argc number of command-line arguments
@@ -317,13 +353,17 @@ void javacall_schedule_vm_timeslice(void);
  */
 javacall_int64 javanotify_vm_timeslice(void); 
 
+/**
+ * The platform should invoke this function in platform context 
+ * to select another running application to be the foreground.
+ */
+void javanotify_select_foreground_app(void);
 
 /**
- * The platfrom should invoke this function in platform context 
- * to switch the current foreground midlet to background midlet.
- * Task Manger may be foreground after this call.
+ * The platform should invoke this function in platform context 
+ * to bring the Application Manager Screen to foreground.
  */
-void javanotify_switchforeground(void);
+void javanotify_switch_to_ams(void);
 
 /** @} */
 

@@ -6,22 +6,22 @@
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include <stdio.h>
@@ -106,8 +106,6 @@ static char *properties[PROP_NUMBER] = { hostsandports,
                                          satselectapdu };
 
 /** Configuration property name */
-static char *saved_hostsandports = NULL;
-static char *saved_satselectapdu = NULL;
 static char *saved_properties[PROP_NUMBER];
 
 /**
@@ -127,6 +125,11 @@ static javacall_bool DriverInitialized = JAVACALL_FALSE;
 
 #define CARDDEVICE_MUTEX_NAME       "CardDevice_MuteX"
 #define CARDDEVICE_MUTEX_TIMEOUT    300
+
+/* Is 0 slot SAT slot */
+#define NOT_INITIALIZED -1
+static int IsSatSlot = NOT_INITIALIZED;
+
 /**
  * Mutex for device locking.
  */
@@ -152,7 +155,6 @@ static int cmdPowerDown(int slot);
 static int cmdReset(int slot, char *atr, int atr_size);
 static char computeLRC(char *buf, int length);
 static char make_hex(int val);
-static javacall_bool select_file(char *data, int data_length);
 
 /** 
  * Initializes the driver. This is not thread-safe function.
@@ -224,9 +226,6 @@ javacall_result javacall_carddevice_init() {
     }
     current_slot = -1;
 
-    saved_properties[0] = saved_hostsandports;
-    saved_properties[1] = saved_satselectapdu;
-
     javacall_carddevice_clear_error();
     DriverInitialized = JAVACALL_TRUE;
     ReleaseMutex(locked);
@@ -261,6 +260,7 @@ javacall_result javacall_carddevice_finalize() {
 
     javacall_free(satselectcmd.command);
 
+    IsSatSlot = NOT_INITIALIZED;
     DriverInitialized = JAVACALL_FALSE;
     return JAVACALL_OK;
 }
@@ -449,29 +449,6 @@ javacall_result javacall_carddevice_get_slot_count(javacall_int32 *slot_cnt) {
 }
 
 /** 
- * Checks if this slot is SAT slot.
- * @param slot Slot number.
- * @param result <code>JAVACALL_TRUE</code> if the slot is dedicated for SAT,
- *               <code>JAVACALL_FALSE</code> otherwise
- * @return JAVACALL_OK if all done successfuly
- *         JAVACALL_NOT_IMPLEMENTED when the stub was called
- *         JAVACALL_FAIL otherwise
- */
-javacall_result javacall_carddevice_is_sat(javacall_int32 slot, javacall_bool *result) {
-    if (!DriverInitialized) {
-        javacall_carddevice_set_error("Driver is not initialized");
-        return JAVACALL_FAIL;
-    }
-
-    if (slot == 0) {
-        *result = select_file(satselectcmd.command, satselectcmd.len);
-    } else {
-        *result = JAVACALL_FALSE;
-    }
-    return JAVACALL_OK;
-}
-
-/** 
  * Sends 'RESET' ('POWER UP') command to device and gets ATR 
  * into specified buffer.
  * @param atr Buffer to store ATR.
@@ -498,6 +475,8 @@ static javacall_result javacall_carddevice_reset(char *atr, javacall_int32 *atr_
     }
     *atr_size = bytes;
     slots[current_slot].events = 0;
+
+    IsSatSlot = NOT_INITIALIZED;
 
     return JAVACALL_OK;
 
@@ -1310,6 +1289,100 @@ javacall_result javacall_carddevice_xfer_data_finish(char *tx_buffer,
 }
 
 /** 
+ * Checks if this slot is SAT slot.
+ * @param slot Slot number.
+ * @param result <code>JAVACALL_TRUE</code> if the slot is dedicated for SAT,
+ *               <code>JAVACALL_FALSE</code> otherwise
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_WOULD_BLOCK caller must call 
+ *         the javacall_carddevice_is_sat_finish function to complete 
+ *         the operation
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
+ */
+javacall_result javacall_carddevice_is_sat_start(javacall_int32 slot,
+                                                 javacall_bool *result,
+                                                 void **context) {
+    javacall_int32 rx_length;    
+    unsigned char rx_buffer[2];
+    javacall_result status;
+
+    if (!DriverInitialized) {
+        javacall_carddevice_set_error("Driver is not initialized");
+        return JAVACALL_FAIL;
+    }
+
+    if (slot == 0) { 
+        if (IsSatSlot != NOT_INITIALIZED) {
+            *result = IsSatSlot;
+		    return JAVACALL_OK;
+        }        
+    }
+    else {
+        *result = JAVACALL_FALSE;
+		return JAVACALL_OK;
+    }
+
+	rx_length = sizeof rx_buffer;
+    status = javacall_carddevice_xfer_data_start(satselectcmd.command, satselectcmd.len, (char *)rx_buffer,
+                                                 &rx_length, context);
+	if (status != JAVACALL_OK) {
+        *result = JAVACALL_FALSE;
+		return status;
+	}
+	
+    if (rx_buffer[0] == 0x90  &&  rx_buffer[1] == 0x00)        
+        *result = JAVACALL_TRUE;        
+    else
+        *result = JAVACALL_FALSE;
+
+    IsSatSlot = *result;
+    
+    return JAVACALL_OK;
+}
+
+/** 
+ * Checks if this slot is SAT slot.
+ * @param slot Slot number.
+ * @param result <code>JAVACALL_TRUE</code> if the slot is dedicated for SAT,
+ *               <code>JAVACALL_FALSE</code> otherwise
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_WOULD_BLOCK caller must call 
+ *         this function again to complete the operation
+ *         JAVACALL_FAIL otherwise
+ */
+javacall_result javacall_carddevice_is_sat_finish(javacall_int32 slot,
+                                                 javacall_bool *result,
+                                                 void *context) {
+    javacall_int32 rx_length;
+    unsigned char rx_buffer[2];
+    javacall_result status;
+
+    if (!DriverInitialized) {
+        javacall_carddevice_set_error("Driver is not initialized");
+        return JAVACALL_FAIL;
+    }
+
+	rx_length = sizeof rx_buffer;
+    status = javacall_carddevice_xfer_data_finish(satselectcmd.command, satselectcmd.len, (char *)rx_buffer,
+                                                 &rx_length, context);
+	if (status != JAVACALL_OK) {
+        *result = JAVACALL_FALSE;
+		return status;
+	}
+	
+    if (rx_buffer[0] == 0x90  &&  rx_buffer[1] == 0x00)
+        *result = JAVACALL_TRUE;        
+    else
+        *result = JAVACALL_FALSE;
+
+    IsSatSlot = *result;
+
+    return JAVACALL_OK;
+}
+
+/** 
  * Clears error state.
  */
 void javacall_carddevice_clear_error() { // empty
@@ -1325,15 +1398,11 @@ void javacall_carddevice_set_error(const char *fmt, ...) {
     
 	va_start(ap, fmt);
     len += sprintf(print_buffer + len, "CARDDEVICE ERROR: ");
-    len += javacall_carddevice_vsnprintf(print_buffer + len, PRINT_BUFFER_SIZE - len, fmt, ap);
+    len += _vsnprintf(print_buffer + len, PRINT_BUFFER_SIZE - len, fmt, ap);
     len += sprintf(print_buffer + len, "\n");
 	javacall_print(print_buffer);
 	va_end(ap);
 
-}
-
-int javacall_carddevice_vsnprintf(char *buffer, javacall_int32 len, const char *fmt, va_list ap) {
-    return _vsnprintf(buffer, len, fmt, ap);
 }
 
 /** 
@@ -1344,31 +1413,4 @@ int javacall_carddevice_vsnprintf(char *buffer, javacall_int32 len, const char *
  */
 javacall_bool javacall_carddevice_get_error(char *buf, javacall_int32 buf_size) {
     return JAVACALL_FALSE;
-}
-
-/**
- * Sends 'select' command 
- * @data        'select' command with file identifier
- * @data_length length 'select' command with file identifier
- * @return JAVACALL_TRUE file with identifier <code>id</code> was successfully selected
- *         JAVACALL_FALSE otherwise
- */
-javacall_bool select_file(char *data, int data_length) {
-    javacall_int32 rx_length;
-    void *context;
-    unsigned char rx_buffer[2];
-
-	if (data == NULL  ||  data_length == 0) {
-    	return JAVACALL_FALSE;
-	} 
-
-	rx_length = sizeof rx_buffer;
-	if ((javacall_carddevice_xfer_data_start(data, data_length, (char *)rx_buffer, &rx_length, &context))!=JAVACALL_OK) {
-		return JAVACALL_FALSE;
-	}
-	
-    if (rx_buffer[0] == 0x90  &&  rx_buffer[1] == 0x00)
-        return JAVACALL_TRUE;
-    else
-        return JAVACALL_FALSE;
 }

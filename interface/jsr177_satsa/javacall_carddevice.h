@@ -6,22 +6,22 @@
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 #ifndef __JAVACALL_CARDDEVICE_H_
 #define __JAVACALL_CARDDEVICE_H_
@@ -157,10 +157,30 @@ javacall_result javacall_carddevice_get_slot_count(javacall_int32 *slot_cnt);
  * @param result <code>JAVACALL_TRUE</code> if the slot is dedicated for SAT,
  *               <code>JAVACALL_FALSE</code> otherwise
  * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_WOULD_BLOCK caller must call 
+ *         the javacall_carddevice_is_sat_finish function to complete 
+ *         the operation
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_is_sat(javacall_int32 slot, javacall_bool *result);
+javacall_result javacall_carddevice_is_sat_start(javacall_int32 slot,
+                                                 javacall_bool *result,
+                                                 void **context);
+
+/** 
+ * Checks if this slot is SAT slot.
+ * @param slot Slot number.
+ * @param result <code>JAVACALL_TRUE</code> if the slot is dedicated for SAT,
+ *               <code>JAVACALL_FALSE</code> otherwise
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_WOULD_BLOCK caller must call 
+ *         this function again to complete the operation
+ *         JAVACALL_FAIL otherwise
+ */
+javacall_result javacall_carddevice_is_sat_finish(javacall_int32 slot,
+                                                 javacall_bool *result,
+                                                 void *context);
 
 /** 
  * Sends 'RESET' command to device and gets ATR into specified buffer.
@@ -258,8 +278,6 @@ javacall_result javacall_carddevice_xfer_data_start(char *tx_buffer, javacall_in
  */
 javacall_result javacall_carddevice_xfer_data_finish(char *tx_buffer, javacall_int32 tx_size,
     char *rx_buffer, javacall_int32 *rx_size, void *context);
-
-javacall_int32 javacall_carddevice_vsnprintf(char *buffer, javacall_int32 len, const char *fmt, va_list ap);
 
 /** @} */
 
