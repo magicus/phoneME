@@ -33,10 +33,13 @@
 #
 #For 'midp' USE_MIDP and MIDP_JC_IMPL_PATH variables are used
 
-JSR_LIST = MIDP JSR_120 JSR_135 JSR_177 JSR_211
+JSR_LIST = COMMON MIDP JSR_120 JSR_135 JSR_177 JSR_211
 
 USE_MIDP=true
 MIDP_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/stubs
+
+USE_COMMON=true
+COMMON_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/stubs
 
 JSR_120_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/stubs
 
