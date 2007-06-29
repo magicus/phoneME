@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.satsa.pki;
@@ -46,6 +46,8 @@ import java.io.IOException;
 import java.util.Vector;
 import java.util.Calendar;
 import java.util.TimeZone;
+
+import com.sun.j2me.security.Token;
 
 /**
  * This class provides interface to WIM card application.
@@ -173,7 +175,6 @@ class WIMApplication {
     /**
      * Creates connection with WIM application (WIM spec, 11.3.3) on
      * card in specified slot. Doesn't throw exceptions.
-     * @param token security token
      * @param slotNum the slot number
      * @param securityElementID identifies the security element
      * @param readOnly if true WIM data can be protected
@@ -735,7 +736,7 @@ class WIMApplication {
      * PIN_BLOCKED - if the PIN is blocked; PIN_CANCELLED - if user
      * cancelled PIN entry dialog
      */
-    private int checkPIN(PINAttributes pin) {
+    private int checkPIN(PINAttributes pin, Token token) {
 
         while (true) {
 
@@ -754,7 +755,7 @@ class WIMApplication {
 				     .getString(ResourceConstants
 						.JSR177_WIM_PIN_BLOCKED) + ":\n" +
 				     pin.label,
-				     false);
+                     false, token);
                 } catch (InterruptedException e) {}
                 return PIN_BLOCKED;
             }
@@ -763,7 +764,7 @@ class WIMApplication {
             PINEntryDialog dialog;
             try {
                 dialog = new PINEntryDialog(ACLPermissions.CMD_VERIFY,
-                        pin, null);
+                        pin, null, token);
             } catch (InterruptedException e) {
                 return PIN_CANCELLED;
             }
@@ -796,7 +797,7 @@ class WIMApplication {
 				 Resource
 				 .getString(ResourceConstants
 					    .JSR177_WIM_PIN_NOT_VERIFIED),
-				 false);
+                 false, token);
             } catch (InterruptedException e) {}
         }
     }
@@ -813,6 +814,7 @@ class WIMApplication {
      * @param forceKeyGen if set to true a new key must be generated
      * @param keyIDs IDs of keys for which CSRs were generated earlier.
      * If the new CSR is generated, the key ID is added into this vector.
+     * @param token security token
      * @return the new CSR or null if operation cancelled
      * @throws UserCredentialManagerException if key is not found
      * @throws CMSMessageSignatureServiceException if CSR generation
@@ -821,7 +823,7 @@ class WIMApplication {
      * number of incorrect PIN entries
      */
     public byte[] generateCSR(String nameInfo, int keyLen, int keyUsage,
-                              boolean forceKeyGen, Vector keyIDs)
+                              boolean forceKeyGen, Vector keyIDs, Token token)
             throws UserCredentialManagerException,
             CMSMessageSignatureServiceException {
 
@@ -871,7 +873,7 @@ class WIMApplication {
                     Resource.getString(ResourceConstants.
                         JSR177_CERTIFICATE_KEYLENGTH) + ": " +
                     keyLen,
-                true) == Dialog.CANCELLED) {
+                true, token) == Dialog.CANCELLED) {
                 return null;
             }
         } catch (InterruptedException e) {
@@ -881,7 +883,7 @@ class WIMApplication {
         int keyId = -1;
         if (forceKeyGen) {
             try {
-                keyId = generateKey(keyLen, keyUsage);
+                keyId = generateKey(keyLen, keyUsage, token);
             } catch (IOException ioe) { // ignored
             } catch (InterruptedException ie) { // ignored
             }
@@ -984,7 +986,7 @@ class WIMApplication {
 
         // the key is found and loaded
         // check PIN for signature operation
-        int pinStatus = checkPIN(getPIN(key.authId));
+        int pinStatus = checkPIN(getPIN(key.authId), token);
 
         if (pinStatus == PIN_CANCELLED) {
             return null;
@@ -1051,12 +1053,13 @@ class WIMApplication {
      * Generates new key.
      * @param keyLen key length
      * @param keyUsage key usage
+     * @param token security token
      * @return key reference or -1 if the key generation is not
      * supported or -2 if key cannot be generated
      * @throws IOException if I/O error occurs
      * @throws InterruptedException if interrupted
      */
-    int generateKey(int keyLen, int keyUsage) throws IOException,
+    int generateKey(int keyLen, int keyUsage, Token token) throws IOException,
             InterruptedException {
 
         boolean nonRepudiation = (keyUsage ==
@@ -1083,7 +1086,7 @@ class WIMApplication {
 
         if (nonRepudiation) {
             // must create new PIN
-            String[] pinInfo = MessageDialog.enterNewPIN();
+            String[] pinInfo = MessageDialog.enterNewPIN(token);
             if (pinInfo == null) {
                 return -1;
             }
@@ -1245,13 +1248,14 @@ class WIMApplication {
      * @param top chain of certificates from pkiPath
      * @param keyIDs vector that contains identifiers of keys for which
      * certificates are expected
+     * @param token security token
      * @return  operation result
      * @throws IllegalArgumentException if certificate parsing error
      * occurs or label is not unique or user credential exists already
      * @throws SecurityException if a PIN is blocked due to an excessive
      * number of incorrect PIN entries
      */
-    public int addCredential(String label, TLV top, Vector keyIDs) {
+    public int addCredential(String label, TLV top, Vector keyIDs, Token token) {
 
         // load existing certificates
         try {
@@ -1410,7 +1414,7 @@ class WIMApplication {
         // check PINs
         for (int i = 0; i < updatePIN.length; i++) {
             if (updatePIN[i]) {
-                int pinStatus = checkPIN(PINs[i]);
+                int pinStatus = checkPIN(PINs[i], token);
                 if (pinStatus == PIN_CANCELLED) {
                     return CANCEL;
                 }
@@ -1605,11 +1609,12 @@ class WIMApplication {
      * certificate.
      * @param isn the DER encoded ASN.1 structure that contains the
      * certificate issuer and serial number
+     * @param token security token
      * @return operation result
      * @throws SecurityException if a PIN is blocked due to an excessive
      * number of incorrect PIN entries
      */
-    public int removeCredential(String label, TLV isn) {
+    public int removeCredential(String label, TLV isn, Token token) {
 
         // load existing certificates (excluding trusted - can't delete
         // them)
@@ -1658,7 +1663,7 @@ class WIMApplication {
                         JSR177_CERTIFICATE_LABEL) + ": " +
                     cert.label + "\n\n" +
                     Certificate.getInfo(cert.cert) + "\n\n",
-                true) == Dialog.CANCELLED) {
+                true, token) == Dialog.CANCELLED) {
                 return CANCEL;
             }
         } catch (InterruptedException e) {
@@ -1668,7 +1673,7 @@ class WIMApplication {
         startUpdate();
         try {
             doRemove(chain, count);
-            int pinStatus = checkPIN(PINs[0]);
+            int pinStatus = checkPIN(PINs[0], token);
             if (pinStatus == PIN_CANCELLED) {
                 return CANCEL;
             }
@@ -2147,13 +2152,14 @@ class WIMApplication {
      * @param options signature content options
      * @param caNames array that contains parsed names of certificate
      * authorities
+     * @param token security token
      * @return the DER encoded signature, null if the signature
      * generation was cancelled by the user before completion
      * @throws CMSMessageSignatureServiceException if an error occurs
      * during signature generation
      */
     public byte[] generateSignature(boolean nonRepudiation, byte[] data,
-                                    int options, TLV[] caNames)
+                                    int options, TLV[] caNames, Token token)
             throws CMSMessageSignatureServiceException {
 
         // load existing certificates
@@ -2173,7 +2179,7 @@ class WIMApplication {
         }
 
         // select certificate
-        Vector chain = selectChain(chains);
+        Vector chain = selectChain(chains, token);
         if (chain == null) {
             return null;
         }
@@ -2182,7 +2188,7 @@ class WIMApplication {
         PrivateKey key = getPrivateKey(cert.id);
         PINAttributes pin = getPIN(key.authId);
 
-        int pinStatus = checkPIN(pin);
+        int pinStatus = checkPIN(pin, token);
 
         if (pinStatus == PIN_BLOCKED) {
             throw new SecurityException();
@@ -2427,9 +2433,10 @@ class WIMApplication {
     /**
      * Allows user to select certificate or cancel signature operation.
      * @param chains array of certifcate chains
+     * @param token security token
      * @return user selected certificate chain
      */
-    private Vector selectChain(Vector chains) {
+    private Vector selectChain(Vector chains, Token token) {
 
         String[] labels = new String[chains.size()];
         for (int i = 0; i < chains.size(); i++) {
@@ -2448,7 +2455,7 @@ class WIMApplication {
 					   .AMS_CONFIRMATION),
                         Resource.getString(ResourceConstants
 					   .JSR177_CERTIFICATE_USED) +
-                        labels[0], true) != Dialog.CANCELLED) {
+                        labels[0], true, token) != Dialog.CANCELLED) {
                     chainIndex = 0;
                 }
             } else {
@@ -2459,7 +2466,7 @@ class WIMApplication {
 					   .JSR177_SELECT_CERTIFICATE),
                         Resource.getString(ResourceConstants
 					   .JSR177_CERTIFICATES_AVAILABLE),
-                        labels);
+                        labels, token);
             }
         } catch (InterruptedException e) {}
 

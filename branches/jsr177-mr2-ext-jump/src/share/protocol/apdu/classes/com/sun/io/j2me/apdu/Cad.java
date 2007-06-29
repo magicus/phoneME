@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
  
 
@@ -89,7 +89,6 @@ class Cad {
     /**
      * Constructor for CADClient.
      * @param slot Global slot number
-     * @param securityToken Security token for this class
      * @throws IOException if there any problems in opening the socket or
      * streams or powering up the card.
      */
@@ -302,10 +301,13 @@ class Cad {
 
         // Test if 'POWER UP' is needed or a card was changed
         if (!isAlive()) {
-            if (cardSlot.isSAT()) {
-                throw new ConnectionNotFoundException("SIM not found");
-            }
-            else {
+            try {
+                if (cardSlot.isSAT()) {
+                    throw new ConnectionNotFoundException("SIM not found");
+                } else {
+                    throw new ConnectionNotFoundException("SmartCard not found");
+                }
+            } catch (IOException e) {
                 throw new ConnectionNotFoundException("SmartCard not found");
             }            
         }

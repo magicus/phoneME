@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include <kni.h>
@@ -60,7 +60,7 @@ KNIDECL (com_sun_cardreader_PlatformCardDevice_init0) {
     const char *prop_value;
     
     prop_value = jumpGetInternalProp(hostsandports, prop_buf, PROP_BUF_SIZE);
-	if (prop_value != NULL) {
+    if (prop_value != NULL) {
         status = javacall_carddevice_set_property(hostsandports, prop_value);
         if (status != JAVACALL_OK) {
             goto err;
@@ -261,16 +261,31 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_cardreader_PlatformCardDevice_isSatSlot0) {
     jint retcode;
     javacall_bool result;
+    void *context = NULL;
+    javacall_result status_code;
     int slotIndex = KNI_GetParameterAsInt(1);
-    if (javacall_carddevice_is_sat(slotIndex, &result) == JAVACALL_OK) {
+
+    cardReaderEvent = jumpEventCreate();
+    status_code = javacall_carddevice_is_sat_start(slotIndex, &result, &context);
+    while (status_code == JAVACALL_WOULD_BLOCK) {
+        CVMD_gcSafeExec(_ee, {
+            if (jumpEventWait(cardReaderEvent) == 0) {
+                status_code = javacall_carddevice_is_sat_finish(slotIndex, &result, context);                
+            }
+        });
+    }
+    jumpEventDestroy(cardReaderEvent);
+
+    if (status_code != JAVACALL_OK) {
+        retcode = -1;
+    } else {
         if (result == JAVACALL_FALSE) {
             retcode = 0;
         } else {
             retcode = 1;
         }
-    } else {
-        retcode = -1;
     }
+
     KNI_ReturnInt(retcode);
 }
 

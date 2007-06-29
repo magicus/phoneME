@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.io.j2me.apdu;
@@ -38,6 +38,10 @@ import com.sun.satsa.util.Utils;
 
 import java.io.*;
 
+import com.sun.j2me.security.TrustedClass;
+import com.sun.j2me.security.Token;
+import com.sun.satsa.security.SecurityInitializer;
+
 /**
  * This is the implementation class for APDUConnection interface and provides
  * a high-level API to the J2ME applications allowing them to connect and
@@ -52,6 +56,17 @@ import java.io.*;
  */
 public class Protocol implements APDUConnection, ConnectionBaseInterface,
                                  StreamConnection {
+
+    /*
+     * Inner class to request security token from SecurityTokenInitializer.
+     * SecurityTokenInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements TrustedClass { };
+
+    /** This class has a different security domain than the App suite */
+    private static Token securityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /**
      * This object verifies access rights of the MIDlet.
@@ -134,6 +149,8 @@ public class Protocol implements APDUConnection, ConnectionBaseInterface,
                 APDUManager.initACL(slot);
                 satSlot = APDUManager.isSatSlot(slot);
             } catch (IllegalArgumentException e) {
+                satSlot = false;
+            } catch (IOException e) {
                 satSlot = false;
             }
             if (!satSlot) {
@@ -513,7 +530,7 @@ public class Protocol implements APDUConnection, ConnectionBaseInterface,
 
         int header = verifier.preparePIN(pinID, uPinID, action);
 
-        Object[] pins = verifier.enterPIN(action);
+        Object[] pins = verifier.enterPIN(action, securityToken);
 
         if (pins == null) {
             return null;

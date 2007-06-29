@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include <kni.h>
@@ -30,6 +30,7 @@
 #include <midpServices.h>
 #include <midp_thread.h>
 #include <midp_properties_port.h>
+#include <carddevice.h>
 
 #include <javacall_carddevice.h>
 
@@ -132,6 +133,9 @@ KNIDECL(com_sun_io_j2me_apdu_APDUManager_isSAT) {
     char *err_msg;
     char *buffer;
     int slotIndex = KNI_GetParameterAsInt(1);
+    MidpReentryData* info;
+    javacall_result status_code;
+    void *context = NULL;
     
     status_code = javacall_carddevice_lock();
     if (status_code != JAVACALL_OK) {
@@ -144,7 +148,20 @@ KNIDECL(com_sun_io_j2me_apdu_APDUManager_isSAT) {
         }  
     }
     
-    if (javacall_carddevice_is_sat(slotIndex, &result) != JAVACALL_OK) {
+    info = (MidpReentryData*)SNI_GetReentryData(NULL);
+    if (info == NULL) {
+        status_code = javacall_carddevice_is_sat_start(slotIndex, &result, &context);
+    } else {
+        context = info->pResult;
+        status_code = javacall_carddevice_is_sat_finish(slotIndex, &result, context);
+    }
+
+    if (status_code == JAVACALL_WOULD_BLOCK) {
+        midp_thread_wait(CARD_READER_DATA_SIGNAL, SIGNAL_XFER, context);
+        goto end;
+    }
+
+    if (status_code != JAVACALL_OK) {
 err:
         buffer = malloc(BUFFER_SIZE);
         if (buffer == NULL) {
@@ -159,6 +176,7 @@ err:
             free(buffer);            
         }        
         KNI_ThrowNew(jsropIOException, err_msg);
+        result = JAVACALL_FALSE;
         goto end;
     }
 
@@ -170,15 +188,6 @@ err:
 end:
     KNI_ReturnInt(result);
 }
-
-/* This constant is used only in javacall_carddevice_reset_start and javacall_carddevice_reset_finish functions. */
-#define SIGNAL_RESET    0x7781
-
-/* This constant is used only in javacall_carddevice_xfer_data_start and javacall_carddevice_xfer_data_finish functions. */
-#define SIGNAL_XFER     0x7782
-
-/* This constant is used only in javacall_carddevice_lock and javacall_carddevice_unlock functions. */
-#define SIGNAL_LOCK     0x7783
 
 /**
  * Performs reset of the card in the slot. This method must be called within
