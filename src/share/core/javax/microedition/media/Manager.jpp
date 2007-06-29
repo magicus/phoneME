@@ -35,6 +35,7 @@ import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 import com.sun.mmedia.BasicPlayer;
 import com.sun.mmedia.TonePlayer;
+import com.sun.mmedia.RTSPPlayer;
 import com.sun.mmedia.Configuration;
 import com.sun.mmedia.protocol.*;
 import com.sun.mmedia.DefaultConfiguration;
@@ -884,12 +885,23 @@ public final class Manager {
                 theProtocol = locStr.substring(0, idx);
             }
         }
-        String contentType = source.getContentType();
         
-        if (contentType == null)
-            throw new MediaException(PL_ERR_SH + "Unknown or unsupported media type");
+        BasicPlayer p = null;
+        
+        if( null != theProtocol && theProtocol.equals( "rtsp" ) )
+        {
+			p = new RTSPPlayer();
+        }
+        else
+        {
+			String contentType = source.getContentType();
+        
+			if (contentType == null)
+				throw new MediaException(PL_ERR_SH + "Unknown or unsupported media type");
 
-        BasicPlayer p = getPlayerFromType(contentType);
+			p = getPlayerFromType(contentType);
+		}
+        
         p.setSource(source);
         
         return p;
