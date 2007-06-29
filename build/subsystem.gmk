@@ -34,6 +34,10 @@
 #
 ######################################################################
 
+ifeq ($(JSR_177_DIR),)
+$(error JSR_177_DIR is not set.)
+endif
+
 # Adds to global SUBSYSTEMS list
 #
 SUBSYSTEMS += satsa
@@ -392,17 +396,27 @@ ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
     SAT_SCRIPT_PATH = $(JAVACARD_CLASSES)/jc_script
 endif
 
-ifeq ($(TARGET_VM), cldc_vm)
-include $(JSR_177_DIR)/build/cldc_application/subsystem.gmk
-else 
-include $(JSR_177_DIR)/build/jump_application/subsystem.gmk
-endif
-
 SUBSYSTEM_SATSA_NATIVE_FILES = \
     $(MODULE_SATSA_APDU_NATIVE_FILES)
 
 EXTRA_CFLAGS += -DENABLE_JSR_177
 JPP_DEFS += -DENABLE_JSR_177
+
+ifeq ($(JSR_177_PROJECT_CFG),)
+ifeq ($(TARGET_VM), cldc_vm)
+include $(JSR_177_DIR)/build/cldc_application/subsystem.gmk
+else
+ifeq ($(USE_JUMP), true)
+include $(JSR_177_DIR)/build/jump_application/subsystem.gmk
+endif
+endif
+else
+include $(JSR_177_PROJECT_CFG)
+endif
+
+ifneq ($(TARGET_VM), cldc_vm)
+include $(JSR_177_DIR)/build/cdc_share/subsystem.gmk
+endif
 
 # Tools and applets
 #
@@ -582,37 +596,6 @@ endif
 $(JAVACARD_CLASSES):
 	@echo " ... creating directories" $@
 	$(AT)mkdir -p $@
-
-JSR_177_LIB_NAME        = jsr177
-JSR_177_JAR             = $(JSROP_LIB_DIR)/$(JSR_177_LIB_NAME).jar
-JSR_177_NATIVE_LIB      = $(JSROP_LIB_DIR)/$(LIB_PREFIX)$(JSR_177_LIB_NAME)$(LIB_POSTFIX)
-JSR_177_NATIVE_OBJS     = $(patsubst %.c,$(JSROP_OBJ_DIR)/%.o,$(SUBSYSTEM_SATSA_NATIVE_FILES))
-
-SUBSYSTEM_JSR_177_JAVA_FILES = $(SUBSYSTEM_SATSA_JAVA_FILES)
-
-JPP_DEFS             += -DENABLE_JSR_177
-JSROP_NATIVE_OBJS    += $(JSR_177_NATIVE_OBJS)
-JSROP_CNI_CLASSES    += $(SUBSYSTEM_SATSA_CNI_CLASSES)
-JSROP_NATIVE_LIBS    += $(JSR_177_NATIVE_LIB)
-
-JSR_177_API_CLASSLIST = $(JSR_177_DIR)/build/satsa_api.txt
-JSR_177_API_CLASSES   = $(call readClassList, $(JSR_177_API_CLASSLIST))
-JSR_177_EXTRA_JAR     = $(JSROP_LIB_DIR)/$(JSR_177_LIB_NAME)_extras.jar
-JSROP_EXTRA_JARS     += $(JSR_177_EXTRA_JAR)
-
-CVM_INCLUDE_JAVACALL  = true
-
-$(JSR_177_JAR):  $(SUBSYSTEM_JSR_177_JAVA_FILES) $(TOOLS)
-	$(call compileJSRClasses,177)
-
-$(JSR_177_EXTRA_JAR): $(JSR_177_JAR)
-	$(call makeJSRExtraJar,177)
-
-$(JSR_177_NATIVE_OBJS): javacall_lib
-
-$(JSR_177_NATIVE_LIB): $(JSR_177_NATIVE_OBJS) $(ABSTRACTIONS_NATIVE_LIBRARY)
-	@echo "Linking $@"
-	$(AT)$(call makeSharedLibrary, $(JSR_177_NATIVE_OBJS))	
 
 # Append SATSA source bundle creation to target
 source_bundle:: satsa_source_bundle

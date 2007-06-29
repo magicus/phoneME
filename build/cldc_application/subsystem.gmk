@@ -44,8 +44,8 @@ MODULE_SATSA_COMMON_JAVA_FILES += \
 # Avoid double inclusion.
 ifneq ($(USE_JSR_172), true)
 MODULE_SATSA_COMMON_JAVA_FILES += \
-    $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/rmi/Remote.java \
-    $(JSR_177_DIR)/src/cldc_application/satsa/classes/java/rmi/RemoteException.java
+    $(JSR_177_DIR)/src/share/satsa/classes/java/rmi/Remote.java \
+    $(JSR_177_DIR)/src/share/satsa/classes/java/rmi/RemoteException.java
 endif
 
 MODULE_SATSA_CRYPTO_JAVA_FILES += \
