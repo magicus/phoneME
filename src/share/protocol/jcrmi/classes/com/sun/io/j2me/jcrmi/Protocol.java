@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.io.j2me.jcrmi;
@@ -31,8 +31,9 @@ import com.sun.j2me.security.SatsaPermission;
 import java.io.*;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.security.GeneralSecurityException;
-import java.security.MessageDigest;
+import com.sun.j2me.crypto.NoSuchAlgorithmException;
+import com.sun.j2me.crypto.DigestException;
+import com.sun.j2me.crypto.MessageDigest;
 import javax.microedition.io.Connection;
 import javax.microedition.io.StreamConnection;
 import javax.microedition.jcrmi.JavaCardRMIConnection;
@@ -50,12 +51,27 @@ import javacard.framework.service.ServiceException;
 
 import com.sun.j2me.main.Configuration;
 
+import com.sun.j2me.security.TrustedClass;
+import com.sun.j2me.security.Token;
+import com.sun.satsa.security.SecurityInitializer;
+
 /**
  * JCRMI connection to card application.
  */
 public class Protocol
     implements JavaCardRMIConnection, ConnectionBaseInterface,
 	       StreamConnection {
+
+    /*
+     * Inner class to request security token from SecurityTokenInitializer.
+     * SecurityTokenInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements TrustedClass { };
+
+    /** This class has a different security domain than the App suite */
+    private static Token securityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /**
      * Size of APDU buffer.
@@ -211,8 +227,8 @@ public class Protocol
         putShort(0x0202);
 
         try {
-            SHA = MessageDigest.getInstance("SHA-1");
-        } catch (GeneralSecurityException e) {
+            SHA = new MessageDigest("SHA-1");
+        } catch (NoSuchAlgorithmException e) {
             // Ignore this exception
         }
 
@@ -578,14 +594,12 @@ public class Protocol
 
         byte[] buf = Utils.stringToBytes(hashString);
 
-        SHA.reset();
-        SHA.update(buf, 0, buf.length);
         try {
-            SHA.digest(APDUBuffer, offset, SHA.getDigestLength());
-        } catch (GeneralSecurityException e) {
+            SHA.operate(buf, buf.length, APDUBuffer, offset);
+        } catch (DigestException e) {
             throw new RemoteException("SHA1 error");
-        }
-
+        }        
+        
         offset += 2;
 
         if (params != null) {
@@ -1028,7 +1042,7 @@ public class Protocol
         String method = null;
         method = verifier.preparePIN(pinID, uPinID, action,
                                     internalReference.getClassName());
-        Object[] pins = verifier.enterPIN(action);
+        Object[] pins = verifier.enterPIN(action, securityToken);
 
         if (pins == null) {
             return PINENTRY_CANCELLED;

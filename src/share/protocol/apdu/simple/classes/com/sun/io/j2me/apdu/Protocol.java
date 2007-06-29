@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.io.j2me.apdu;
@@ -30,15 +30,17 @@ import com.sun.j2me.app.AppPackage;
 import com.sun.j2me.security.SatsaPermission;
 import javax.microedition.io.*;
 import javax.microedition.apdu.*;
-//import com.sun.midp.security.SecurityToken;
 import com.sun.j2me.io.ConnectionBaseInterface;
 import com.sun.satsa.acl.ACLPermissions;
 import com.sun.satsa.acl.AccessControlManager;
 import com.sun.satsa.acl.APDUPermissions;
 import com.sun.satsa.util.Utils;
-//import com.sun.satsa.security.SecurityInitializer;
 
 import java.io.*;
+
+import com.sun.j2me.security.TrustedClass;
+import com.sun.j2me.security.Token;
+import com.sun.satsa.security.SecurityInitializer;
 
 /**
  * This is the implementation class for APDUConnection interface and provides
@@ -55,16 +57,16 @@ import java.io.*;
 public class Protocol implements APDUConnection, ConnectionBaseInterface,
                                  StreamConnection {
 
-    /**
-     * Inner class to request security token from SecurityInitializer.
-     * SecurityInitializer should be able to check this inner class name.
+    /*
+     * Inner class to request security token from SecurityTokenInitializer.
+     * SecurityTokenInitializer should be able to check this inner class name.
      */
-//    static private class SecurityTrusted
-//        implements ImplicitlyTrustedClass {};
+    static private class SecurityTrusted
+        implements TrustedClass { };
 
-    /** This class has a different security domain than the MIDlet suite */
-//    private static SecurityToken classSecurityToken =
-//        SecurityInitializer.requestToken(new SecurityTrusted());
+    /** This class has a different security domain than the App suite */
+    private static Token securityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /**
      * This object verifies access rights of the MIDlet.
@@ -152,7 +154,6 @@ public class Protocol implements APDUConnection, ConnectionBaseInterface,
             if (!satSlot) {
                 throw new ConnectionNotFoundException("Invalid slot for SIM");
             }
-//            h = APDUManager.openSATConnection(slot, classSecurityToken);
             h = APDUManager.openSATConnection(slot);
             openForSAT = true;
         } else {
@@ -183,15 +184,12 @@ public class Protocol implements APDUConnection, ConnectionBaseInterface,
                 throw new IllegalArgumentException("Invalid AID");
             }
 
-//            APDUManager.initACL(slot, classSecurityToken);
             APDUManager.initACL(slot);
             verifier = AccessControlManager
                 .getAPDUPermissions(slot,
                 apdu,
                 appPackage.getCA());
 
-//            h = APDUManager.selectApplication(apdu, slot,
-//                                              classSecurityToken);
             h = APDUManager.selectApplication(apdu, slot);
         }
         return this;
@@ -530,8 +528,7 @@ public class Protocol implements APDUConnection, ConnectionBaseInterface,
 
         int header = verifier.preparePIN(pinID, uPinID, action);
 
-//        Object[] pins = verifier.enterPIN(classSecurityToken, action);
-        Object[] pins = verifier.enterPIN(action);
+        Object[] pins = verifier.enterPIN(action, securityToken);
 
         if (pins == null) {
             return null;

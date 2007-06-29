@@ -6,22 +6,22 @@
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
-# 2 only, as published by the Free Software Foundation. 
+# 2 only, as published by the Free Software Foundation.
 # 
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
-# included at /legal/license.txt). 
+# included at /legal/license.txt).
 # 
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA 
+# 02110-1301 USA
 # 
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
-# information or have any questions. 
+# information or have any questions.
 #
 ######################################################################
 #
@@ -367,18 +367,11 @@ ifeq ($(JSR_177_APDU_MANAGER),carddevice)
     endif
 endif
 
-# Definition for the build directory
-#
-JSR_177_BUILD_DIR       = $(JSROP_BUILD_DIR)/jsr177
-JSR_177_GENERATED_DIR   = $(JSR_177_BUILD_DIR)/generated
-
 # Java card constants
 #
 JCRMIC_PROPERTIES = com/sun/satsa/jcrmic/jcrmic.properties
 JCRMIC_MANIFEST_FILE = jcrmic.manifest
 JCRMIC_ARCHIVE = jcrmic.jar
-JCRMIC_TOOL = $(BINDIR)/$(JCRMIC_ARCHIVE)
-SIM_TEST    = $(JSR_177_BUILD_DIR)/.sim_test
 
 ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
     ifndef JC_DIR
@@ -395,38 +388,15 @@ ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
     JC_SCRIPTGEN=$(JC_DIR)/lib/scriptgen.jar
     JC_APDUTOOL_CLASSPATH="$(JC_DIR)/lib/apduio.jar$(PATHSEP)$(JC_DIR)/lib/apdutool.jar"
 
-    JC_EEPROM_IMAGE = $(BINDIR)/jc_eeprom_image
+    JC_EEPROM_IMAGE = $(JSR_177_BINDIR)/jc_eeprom_image
     SAT_SCRIPT_PATH = $(JAVACARD_CLASSES)/jc_script
-    
-    SIM_TOOL = $(SIM_TEST) $(APPLETS) $(JC_EEPROM_IMAGE)
 endif
 
-# i3test for jsr 177
-#
-ifeq ($(USE_I3_TEST), true)
-SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES += \
-	$(JSR_177_DIR)/src/share/test/i3test/com/sun/satsa/utils/TestIA5.java 
-ifeq ($(USE_RESTRICTED_CRYPTO), true)
-SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES += \
-	$(JSR_177_DIR)/src/share/test/i3test/com/sun/satsa/crypto/TestRC4.java 
+ifeq ($(TARGET_VM), cldc_vm)
+include $(JSR_177_DIR)/build/cldc_application/subsystem.gmk
+else 
+include $(JSR_177_DIR)/build/jump_application/subsystem.gmk
 endif
-ifeq ($(JSR_177_APDU_PLATFORM_API), simulator)
-SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES += \
-	$(JSR_177_DIR)/src/share/test/i3test/com/sun/satsa/pki/TestPKI.java
-ifeq ($(JSR_177_APDU_MANAGER),carddevice)
-SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES += \
-	$(JSR_177_DIR)/src/share/test/i3test/com/sun/io/j2me/apdu/TestCad.java \
-	$(JSR_177_DIR)/src/share/test/i3test/com/sun/cardreader/TestSlotFactory.java
-
-ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
-SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES += \
-	$(JSR_177_DIR)/src/share/test/i3test/com/sun/cardreader/TestGemplus1.java
-endif
-endif
-endif
-JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_177_I3TEST_JAVA_FILES)
-endif
-#
 
 SUBSYSTEM_SATSA_NATIVE_FILES = \
     $(MODULE_SATSA_APDU_NATIVE_FILES)
@@ -434,20 +404,11 @@ SUBSYSTEM_SATSA_NATIVE_FILES = \
 EXTRA_CFLAGS += -DENABLE_JSR_177
 JPP_DEFS += -DENABLE_JSR_177
 
-# Specify romizer configuration file for the jsr
-# and path where the file is located
-#
-ROMGEN_INCLUDE_PATHS += $(JSR_177_DIR)/src/share/config
-ROMGEN_CFG_FILES     += satsa_rom.cfg
-
-ifeq ($(TARGET_VM), cldc)
-include $(JSR_177_DIR)/src/cldc_application/config/subsystem.gmk
-else 
-include $(JSR_177_DIR)/src/jump_application/config/subsystem.gmk
-endif
-
 # Tools and applets
 #
+$(JSR_177_BINDIR):
+	@echo " ... creating directories" $@
+	$(AT)mkdir -p $@
 
 # jcrmic tool
 #
@@ -457,7 +418,7 @@ $(JCRMIC_TOOL): $(JCRMIC_SOURCES)
 	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/jcrmic/$(JCRMIC_PROPERTIES) $(JAVACARD_CLASSES)/$(JCRMIC_PROPERTIES)
 	$(AT)cp -f $(JSR_177_DIR)/src/share/tool/jcrmic/$(JCRMIC_MANIFEST_FILE) $(JAVACARD_CLASSES)/$(JCRMIC_MANIFEST_FILE)
 	$(AT)(cd $(JAVACARD_CLASSES) ; $(JAR_CMD) cfm $(JCRMIC_ARCHIVE) $(JCRMIC_MANIFEST_FILE) com/sun/satsa/jcrmic )
-	$(AT)mv $(JAVACARD_CLASSES)/$(JCRMIC_ARCHIVE) $(BINDIR)/$(JCRMIC_ARCHIVE)
+	$(AT)mv $(JAVACARD_CLASSES)/$(JCRMIC_ARCHIVE) $(JCRMIC_TOOL)
 	
 # acl_data tool
 #
@@ -490,7 +451,7 @@ ACL_DATA_SOURCES =                                              \
     $(JSR_177_DIR)/src/share/tool/acl_data/PINAttributes.java   \
     $(JSR_177_DIR)/src/share/tool/acl_data/Utils.java
 
-$(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java: $(JSR_177_DIR)/src/share/tool/acl_data/acl_0
+$(JSR_177_GENERATED_DIR)/classes/$(JC_ACL_APPLET_PATH)/Data.java: $(ACL_DATA_DIRS) $(JSR_177_DIR)/src/share/tool/acl_data/acl_0
 	@echo " ... generating " $@
 	$(AT)$(JSR177_JAVAC) -source 1.4 -encoding utf-8 -d $(ACL_DATA_CLASSES) -classpath $(ACL_DATA_CLASSES) $(ACL_DATA_SOURCES)
 	$(AT)$(JSR177_JAVA) -classpath $(ACL_DATA_CLASSES) acl_data.Main $(JSR_177_DIR)/src/share/tool/acl_data/acl_0 \
@@ -516,7 +477,7 @@ WIM_DATA_SOURCES =                                         \
     $(JSR_177_DIR)/src/share/tool/wim_data/TLV.java        \
     $(JSR_177_DIR)/src/share/tool/wim_data/Utils.java
     
-$(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)/Data.java: $(JSR_177_DIR)/src/share/tool/wim_data/Main.java
+$(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)/Data.java: $(WIM_DATA_DIRS) $(JSR_177_DIR)/src/share/tool/wim_data/Main.java
 	@echo " ... generating " $@
 	$(AT)$(JSR177_JAVAC) -source 1.4 -encoding utf-8 -d $(WIM_DATA_CLASSES) -classpath $(WIM_DATA_CLASSES) $(WIM_DATA_SOURCES)
 	$(AT)$(JSR177_JAVA) -classpath $(WIM_DATA_CLASSES) wim_data.Main $(JSR_177_GENERATED_DIR)/classes/$(JC_PKI_APPLET_PATH)/ \
@@ -539,9 +500,9 @@ $(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/javacard/toolkit.cap: $(SIM_TOOLKIT_SOUR
 
 TOOLKIT_EXP=$(JAVACARD_CLASSES)/api_export_files/$(SIM_TOOLKIT_PATH)/javacard/toolkit.exp
 TOOLKIT_CLASSES=$(foreach class,$(subst .java,.class,$(notdir $(SIM_TOOLKIT_SOURCES))),$(JAVACARD_CLASSES)/$(SIM_TOOLKIT_PATH)/$(class))
-$(JAVACARD_CLASSES)/$(JC_SAT_APPLET_PATH)/javacard/satapplet.cap: $(ACL_DATA_DIRS) $(JC_SAT_APPLET_SOURCES) $(TOOLKIT_CLASSES) $(TOOLKIT_EXP)
+$(JAVACARD_CLASSES)/$(JC_SAT_APPLET_PATH)/javacard/satapplet.cap: $(JC_SAT_APPLET_SOURCES) $(TOOLKIT_CLASSES) $(TOOLKIT_EXP)
 $(JAVACARD_CLASSES)/$(JC_GSM_APPLET_PATH)/javacard/gsmapplet.cap: $(JC_GSM_APPLET_SOURCES) $(TOOLKIT_CLASSES) $(TOOLKIT_EXP)
-$(JAVACARD_CLASSES)/$(JC_PKI_APPLET_PATH)/javacard/pkiapplet.cap: $(WIM_DATA_DIRS) $(JC_PKI_APPLET_SOURCES)
+$(JAVACARD_CLASSES)/$(JC_PKI_APPLET_PATH)/javacard/pkiapplet.cap: $(JC_PKI_APPLET_SOURCES)
 $(JAVACARD_CLASSES)/$(JC_ACL_APPLET_PATH)/javacard/aclapplet.cap: $(JC_ACL_APPLET_SOURCES)
 
 SCRS = $(foreach app, $(APPLETS_LIST), $(JAVACARD_CLASSES)/$(app).scr)

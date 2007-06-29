@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.satsa.acl;
@@ -29,6 +29,8 @@ package com.sun.satsa.acl;
 import com.sun.j2me.i18n.Resource;
 import com.sun.j2me.i18n.ResourceConstants;
 import com.sun.j2me.dialog.MessageDialog;
+
+import com.sun.j2me.security.Token;
 
 /** Implements PIN entry dialog. */
 public class PINEntryDialog {
@@ -38,20 +40,21 @@ public class PINEntryDialog {
     /** Attributes of the 2nd PIN. */
     private PINAttributes pin2;
     /** PIN data. */
-    private Object[] data;    
+    private Object[] data;
 
     /**
      * Construct PIN dialog.
      *
      * @param action PIN entry operation identifier.
-     * @param attr1 1st PIN attributes.
-     * @param attr2 2nd PIN attributes.
+     * @param attr1 1st PIN attributes
+     * @param attr2 2nd PIN attributes
+     * @param token security token
      * @exception InterruptedException if another thread interrupts the
      *   calling thread while this method is waiting to preempt the
      *   display.
      */
     public PINEntryDialog(int action,
-                          PINAttributes attr1, PINAttributes attr2)
+                          PINAttributes attr1, PINAttributes attr2, Token token)
             throws InterruptedException {
 
         String title = null;
@@ -118,7 +121,7 @@ public class PINEntryDialog {
 
         data = MessageDialog.enterPins(title,
                                        label1, pin1.isNumeric(), pin1.getMaxLength(),
-                                       label2, pin2IsNumeric, pin2Length);
+                                       label2, pin2IsNumeric, pin2Length, token);
     }
 
     /**

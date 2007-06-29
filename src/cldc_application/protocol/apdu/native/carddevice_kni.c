@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 #include <kni.h>
@@ -30,6 +30,7 @@
 #include <midpServices.h>
 #include <midp_thread.h>
 #include <midp_properties_port.h>
+#include <carddevice.h>
 
 #include <javacall_carddevice.h>
 
@@ -137,15 +138,6 @@ KNIDECL(com_sun_cardreader_PlatformCardDevice_finalize0) {
     javacall_carddevice_finalize();
     KNI_ReturnVoid();
 }
-
-/* This constant is used only in javacall_carddevice_reset_start and javacall_carddevice_reset_finish functions. */
-#define SIGNAL_RESET    0x7781
-
-/* This constant is used only in javacall_carddevice_xfer_data_start and javacall_carddevice_xfer_data_finish functions. */
-#define SIGNAL_XFER     0x7782
-
-/* This constant is used only in javacall_carddevice_lock and javacall_carddevice_unlock functions. */
-#define SIGNAL_LOCK     0x7783
 
 /**
  * Performs platform lock of the device.
@@ -256,16 +248,36 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_cardreader_PlatformCardDevice_isSatSlot0) {
     jint retcode;
     javacall_bool result;
+    MidpReentryData* info;
+    javacall_result status_code;
+    void *context = NULL;
+
     int slotIndex = KNI_GetParameterAsInt(1);
-    if (javacall_carddevice_is_sat(slotIndex, &result) == JAVACALL_OK) {
+    info = (MidpReentryData*)SNI_GetReentryData(NULL);
+
+    if (info == NULL) {
+        status_code = javacall_carddevice_is_sat_start(slotIndex, &result, &context);
+    } else {
+        context = info->pResult;
+        status_code = javacall_carddevice_is_sat_finish(slotIndex, &result, context);
+    }
+
+    if (status_code == JAVACALL_WOULD_BLOCK) {
+        midp_thread_wait(CARD_READER_DATA_SIGNAL, SIGNAL_XFER, context);
+        goto end;
+    }
+
+    if (status_code != JAVACALL_OK) {
+        retcode = -1;
+    } else {
         if (result == JAVACALL_FALSE) {
             retcode = 0;
         } else {
             retcode = 1;
         }
-    } else {
-        retcode = -1;
     }
+
+end:
     KNI_ReturnInt(retcode);
 }
 

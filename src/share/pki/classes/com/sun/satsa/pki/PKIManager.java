@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.satsa.pki;
@@ -46,6 +46,10 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Vector;
 
+import com.sun.j2me.security.TrustedClass;
+import com.sun.j2me.security.Token;
+import com.sun.satsa.security.SecurityInitializer;
+
 /**
  * This class provides implementation of methods defined by
  * javax.microedition.pki.UserCredentialManager and
@@ -60,6 +64,17 @@ public class PKIManager {
     public static final int AUTHENTICATE_STRING    = 1;
     /** Signature operation identifier. */
     public static final int SIGN_STRING            = 2;
+
+    /*
+     * Inner class to request security token from SecurityTokenInitializer.
+     * SecurityTokenInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+        implements TrustedClass { };
+
+    /** This class has a different security domain than the App suite */
+    private static Token securityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /**
      * Storage name for identifiers of public keys for which
@@ -139,7 +154,7 @@ public class PKIManager {
                 try {
                     Vector CSRs = loadCSRList();
                     byte[] CSR = w.generateCSR(nameInfo, keyLen,
-                                           keyUsage, forceKeyGen, CSRs);
+                                           keyUsage, forceKeyGen, CSRs, securityToken);
                     storeCSRList(CSRs);
                     return CSR;
                 } finally {
@@ -155,7 +170,7 @@ public class PKIManager {
                             Resource.getString(ResourceConstants
 					   .JSR177_WIM_NOT_FOUND),
                         securityElementPrompt,
-                        true) != -1) {
+                        true, securityToken) != -1) {
                         continue;
                     }
                 } catch (InterruptedException e) {}
@@ -219,7 +234,7 @@ public class PKIManager {
                 Resource.getString(ResourceConstants.JSR177_CERTIFICATE_LABEL) +
                 ": " + certDisplayName + "\n\n" +
                 info + "\n\n",
-                true) == Dialog.CANCELLED) {
+                true, securityToken) == Dialog.CANCELLED) {
                 return false;
             }
         } catch (InterruptedException e) {
@@ -241,7 +256,7 @@ public class PKIManager {
                 continue;
             }
             try {
-                int result = w.addCredential(certDisplayName, t, CSRs);
+                int result = w.addCredential(certDisplayName, t, CSRs, securityToken);
                 if (result == WIMApplication.SUCCESS) {
                     storeCSRList(CSRs);
                     return true;
@@ -326,7 +341,7 @@ public class PKIManager {
                     continue;
                 }
                 try {
-                    int result = w.removeCredential(certDisplayName, isn);
+                    int result = w.removeCredential(certDisplayName, isn, securityToken);
                     if (result == WIMApplication.SUCCESS) {
                         return true;
                     }
@@ -349,7 +364,7 @@ public class PKIManager {
                             Resource.getString(
                                 ResourceConstants.JSR177_WIM_NOT_FOUND),
                             securityElementPrompt,
-                            true) != -1) {
+                            true, securityToken) != -1) {
                         continue;
                     }
                 } catch (InterruptedException e) {}
@@ -426,7 +441,7 @@ public class PKIManager {
 				 Resource
 				 .getString(ResourceConstants
                      .JSR177_STRING_TO_SIGN) +
-				 string, true) != 1) {
+				 string, true, securityToken) != 1) {
                     return null;
                 }
             } catch (InterruptedException e) {
@@ -450,7 +465,7 @@ public class PKIManager {
                 }
                 try {
                     return w.generateSignature(action == SIGN_STRING,
-                                                  data, options, names);
+                                                  data, options, names, securityToken);
                 } finally {
                     w.done();
                 }
@@ -462,7 +477,7 @@ public class PKIManager {
                     if (MessageDialog.showMessage(
                         Resource.getString(ResourceConstants
 					   .JSR177_WIM_NOT_FOUND),
-                        securityElementPrompt, true) != -1) {
+                        securityElementPrompt, true, securityToken) != -1) {
                         continue;
                     }
                 } catch (InterruptedException e) {}
@@ -490,7 +505,7 @@ public class PKIManager {
 
     	String storeName = FileAccess.getStorageRoot(
 	    FileAccess.INTERNAL_STORAGE_ID) + CSR_ID_FILE;
-    	FileAccess storage = FileAccess.getInstance(storeName);
+        FileAccess storage = FileAccess.getInstance(storeName, securityToken);
         DataInputStream dis;
 
         try {
@@ -543,7 +558,7 @@ public class PKIManager {
 
         String storeName = FileAccess.getStorageRoot(
 	    FileAccess.INTERNAL_STORAGE_ID) + CSR_ID_FILE;
-        FileAccess storage = FileAccess.getInstance(storeName);
+        FileAccess storage = FileAccess.getInstance(storeName, securityToken);
 
         DataOutputStream dos;
 

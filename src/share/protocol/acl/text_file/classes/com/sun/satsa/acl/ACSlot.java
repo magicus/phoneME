@@ -1,27 +1,27 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.satsa.acl;
@@ -31,11 +31,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import com.sun.j2me.io.FileAccess;
-//import com.sun.midp.security.ImplicitlyTrustedClass;
-//import com.sun.midp.security.SecurityToken;
-//import com.sun.satsa.security.SecurityInitializer;
 
 import javax.microedition.io.Connector;
+
+import com.sun.j2me.security.TrustedClass;
+import com.sun.j2me.security.Token;
+import com.sun.satsa.security.SecurityInitializer;
 
 /**
  * This class represents access control file that describes permissions for one
@@ -43,16 +44,16 @@ import javax.microedition.io.Connector;
  */
 public class ACSlot{
 
-    /**
-     * Inner class to request security token from SecurityInitializer.
-     * SecurityInitializer should be able to check this inner class name.
+    /*
+     * Inner class to request security token from SecurityTokenInitializer.
+     * SecurityTokenInitializer should be able to check this inner class name.
      */
-//    static private class SecurityTrusted
-//        implements ImplicitlyTrustedClass {};
+    static private class SecurityTrusted
+        implements TrustedClass { };
 
-    /** This class has a different security domain than the MIDlet suite */
-//    private static SecurityToken classSecurityToken =
-//        SecurityInitializer.requestToken(new SecurityTrusted());
+    /** This class has a different security domain than the App suite */
+    private static Token securityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
 
     /**
      * Constructs an instance of an access control file object.
@@ -74,7 +75,7 @@ public class ACSlot{
         try {
             String storeName = FileAccess.getStorageRoot(FileAccess.INTERNAL_STORAGE_ID) +
 	        "acl_" + slotNum;
-            storage = FileAccess.getInstance(storeName);
+            storage = FileAccess.getInstance(storeName, securityToken);
             storage.connect(Connector.READ);
             permIS = storage.openInputStream();
         } catch (IOException e) {
