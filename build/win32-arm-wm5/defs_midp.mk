@@ -33,4 +33,4 @@ endif
 
 # need revisit : generate list of required platform specific libs
 # JSR 75
-MIDP_LIBS += cellcore.lib ole32.lib
+MIDP_LIBS += cellcore.lib ole32.lib note_prj.lib
