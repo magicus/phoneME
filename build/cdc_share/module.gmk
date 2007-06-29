@@ -27,6 +27,10 @@
 # start dirs for java source trees
 ABSTRACTIONS_CDC_JAVASRCDIRS = \
         $(ABSTRACTIONS_DIR)/src/cdc_share/classes
+        
+# dirs containing hative header files (.h)
+ABSTRACTIONS_INCLUDE_DIRS += \
+    $(ABSTRACTIONS_DIR)/src/share/include
 
 # classes
 ABSTRACTIONS_CLASSES += \

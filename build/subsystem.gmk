@@ -42,10 +42,6 @@ endif
 include $(ABSTRACTIONS_DIR)/build/cdc_share/module.gmk
 endif
 
-# dirs containing hative header files (.h)
-ABSTRACTIONS_INCLUDE_DIRS += \
-    $(ABSTRACTIONS_DIR)/src/share/include \
-
 printconfig::
 	@echo "ABSTRACTIONS_DIR          = $(ABSTRACTIONS_DIR)"
 	@echo "PROJECT_ABSTRACTIONS_DIR  = $(PROJECT_ABSTRACTIONS_DIR)"
