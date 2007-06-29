@@ -78,7 +78,8 @@ ABSTRACTIONS_CLASSES += \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/DigestException.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/Key.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/dialog/Dialog.java \
-    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/dialog/MessageDialog.java
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/dialog/MessageDialog.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/io/FileAccess.java
     
 CVM_CNI_CLASSES += com.sun.j2me.crypto.ARC4 \
                    com.sun.j2me.crypto.RSA
