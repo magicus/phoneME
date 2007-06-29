@@ -24,6 +24,8 @@
 
 package com.sun.j2me.security;
 
+import com.sun.midp.security.Permissions;
+
 /**
  * FileConnection access permissions.
  */

@@ -32,7 +32,7 @@ import java.security.PublicKey;
  * Specifies the RSA public key interface. An RSA key is not ready for
  * us until both the modulus and exponent have been set.
  */
-public final class RSAPublicKey extends RSAKey implements PublicKey {
+public final class RSAPublicKey extends RSAKey implements PublicKey, Key {
     /**
      * Constructor for RSA public key.
      *
@@ -56,5 +56,9 @@ public final class RSAPublicKey extends RSAKey implements PublicKey {
     public RSAPublicKey(byte[] modulus, int modOffset, int modLen,
                         byte[] exponent, int expOffset, int expLen) {
         super(modulus, modOffset, modLen, exponent, expOffset, expLen);
+    }
+
+    public java.security.Key getKey() {
+        return this;
     }
 }

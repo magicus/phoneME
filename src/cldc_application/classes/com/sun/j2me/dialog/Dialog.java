@@ -37,11 +37,10 @@ import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.CommandListener;
 
 /** MIDP dependencies - internal API */
-import com.sun.midp.security.SecurityToken;
 import com.sun.midp.lcdui.DisplayEventHandler;
 import com.sun.midp.lcdui.DisplayEventHandlerFactory;
-import com.sun.midp.security.SecurityInitializer;
-import com.sun.midp.security.ImplicitlyTrustedClass;
+
+import com.sun.j2me.security.Token;
 
 /**
  * This class represents simple dialog form.
@@ -52,17 +51,6 @@ public class Dialog implements CommandListener {
     public static final int CANCELLED = -1;
     /** Answer that indicates successful completion. */
     public static final int CONFIRMED = 1;
-
-    /**
-     * Inner class to request security token from SecurityInitializer.
-     * SecurityInitializer should be able to check this inner class name.
-    */
-    static private class SecurityTrusted
-        implements ImplicitlyTrustedClass { };
-
-    /** This class has a different security domain than the Application */
-    static private SecurityToken token = SecurityInitializer
-        .requestToken(new SecurityTrusted());
 
     /** Caches the display manager reference. */
     private DisplayEventHandler displayEventHandler;
@@ -115,9 +103,9 @@ public class Dialog implements CommandListener {
      * @return user's answer
      * @throws InterruptedException if interrupted
      */
-    public int waitForAnswer() throws InterruptedException {
+    public int waitForAnswer(Token token) throws InterruptedException {
         if (displayEventHandler == null) {
-            displayEventHandler = DisplayEventHandlerFactory.getDisplayEventHandler(token);
+            displayEventHandler = DisplayEventHandlerFactory.getDisplayEventHandler(token.getSecurityToken());
         }
         preemptToken = displayEventHandler.preemptDisplay(form, true);
 

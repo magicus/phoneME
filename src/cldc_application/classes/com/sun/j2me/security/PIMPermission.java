@@ -24,6 +24,8 @@
 
 package com.sun.j2me.security;
 
+import com.sun.midp.security.Permissions;
+
 public class PIMPermission extends Permission {
     
     static String LIST_ACCESS_READ  = "read";
@@ -45,7 +47,7 @@ public class PIMPermission extends Permission {
                                                             LIST_ACCESS_READ);
     static public PIMPermission TODO_WRITE    = new PIMPermission(LIST_TYPE_TODO,
                                                             LIST_ACCESS_WRITE);
-    
+
     public PIMPermission(String name, String resource) {
         super(name, resource);
     }

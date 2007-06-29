@@ -1,69 +1,40 @@
 /*
  *   
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.j2me.crypto;
 
-import java.security.Key;
-
 /**
  * Implements an abstract class that generalizes all ciphers. It is
  * modelled after javax.crypto.Cipher.
- */ 
-public abstract class Cipher {
-    /**
-     * Flag to indicate the current cipher algorithm is unknown.
-     */
-    protected static final int MODE_UNINITIALIZED = 0;
-    
-    /** Used in init to indicate encryption mode. */
-    public static final int ENCRYPT_MODE      = 1;
+ */
+public abstract class Cipher extends com.sun.midp.crypto.Cipher {
+    /** Cipher implementation object. */
+    private com.sun.midp.crypto.Cipher cipher;
 
-    /** Used in init to indicate decryption mode. */
-    public static final int DECRYPT_MODE      = 2;
-
-    /** Protected constructor. */
-    protected Cipher() {
-    }
-    
-    /**
-     * Called by the factory method to set the mode and padding parameters.
-     * Need because Class.newInstance does not take args.
-     *
-     * @param mode the chaining mode parsed from the transformation parameter
-     *             of getNewInstance and upper cased
-     * @param padding the paddinge parsed from the transformation parameter of
-     *                getNewInstance and upper cased
-     *
-     * @exception NoSuchPaddingException if <code>transformation</code>
-     * contains a padding scheme that is not available.
-     */
-    protected abstract void setChainingModeAndPadding(String mode,
-        String padding) throws NoSuchPaddingException;
-    
-    /**
+   /**
      * Generates a <code>Cipher</code> object that implements the specified
      * transformation.
      *
@@ -83,84 +54,14 @@ public abstract class Cipher {
      */
     public static final Cipher getNewInstance(String transformation)
             throws NoSuchAlgorithmException, NoSuchPaddingException {
-
-        Cipher cipher = null;
-        String alg = ("" + transformation).toUpperCase().trim();
-        String chainingMode = "";
-        String padding = "";
-
-        if (alg.indexOf("/") != -1) {
-            int first = alg.indexOf("/");
-            int second = alg.indexOf("/", first + 1);
-            if (second == alg.lastIndexOf('/')) {
-                chainingMode = alg.substring(first + 1, second).trim();
-                padding = alg.substring(second + 1).trim();
-                alg = alg.substring(0, first).trim();
-            }
-        }
-
-        // We have the generic equivalent of RC4: ARC4 or ARCFOUR.
-        if (alg.equals("RC4") || alg.equals("ARCFOUR")) {
-            alg = "ARC4";
-        }
-
         try {
-            Class cipherClass;
-
-            cipherClass = Class.forName("com.sun.j2me.crypto." + alg);
-            cipher = (Cipher)cipherClass.newInstance();
-        } catch (Throwable t) {
-            throw new NoSuchAlgorithmException(transformation);
+            return (com.sun.j2me.crypto.Cipher)com.sun.midp.crypto.Cipher.getInstance(transformation);
         }
-
-        try {
-            cipher.setChainingModeAndPadding(chainingMode, padding);
-        } catch (IllegalArgumentException iae) {
-	    // throw NoSuchAlgorithmException if the chainingMode is invalid
-	    // (setChainingModeAndPadding() throws IllegalArgumentException
-	    // in this case)
-            throw new NoSuchAlgorithmException(transformation);
-	}
-        
-        return cipher;
-    }
-
-    /**
-     * Initializes this cipher with a key.
-     *
-     * <p>The cipher is initialized for one of the following operations:
-     * encryption, decryption,  depending
-     * on the value of <code>opmode</code>.
-     *
-     * <p>If this cipher requires any algorithm parameters that cannot be
-     * derived from the given <code>key</code>, the underlying cipher
-     * implementation is supposed to generate the required parameters itself
-     * (using provider-specific default or random values) if it is being
-     * initialized for encryption, and raise an
-     * <code>InvalidKeyException</code> if it is being
-     * initialized for decryption.
-     *
-     * <p>Note that when a Cipher object is initialized, it loses all
-     * previously-acquired state. In other words, initializing a Cipher is
-     * equivalent to creating a new instance of that Cipher and initializing
-     * it.
-     *
-     * @param opmode the operation mode of this cipher (this is one of
-     * the following:
-     * <code>ENCRYPT_MODE</code> or <code>DECRYPT_MODE</code>)
-     * @param key the key
-     *
-     * @exception InvalidKeyException if the given key is inappropriate for
-     * initializing this cipher, or if this cipher is being initialized for
-     * decryption and requires algorithm parameters that cannot be
-     * determined from the given key, or if the given key has a keysize that
-     * exceeds the maximum allowable keysize.
-     */
-    public void init(int opmode, Key key) throws InvalidKeyException {
-        try {
-            init(opmode, key, null);
-        } catch (InvalidAlgorithmParameterException e) {
-            throw new InvalidKeyException();
+        catch (com.sun.midp.crypto.NoSuchAlgorithmException e) {
+            throw new NoSuchAlgorithmException(e.getMessage());
+        }
+        catch (com.sun.midp.crypto.NoSuchPaddingException e) {
+            throw new NoSuchPaddingException(e.getMessage());
         }
     }
 
@@ -201,8 +102,16 @@ public abstract class Cipher {
      * algorithm parameters imply a cryptographic strength that would exceed
      * the legal limits.
      */
-    public abstract void init(int opmode, Key key, CryptoParameter params)
-        throws InvalidKeyException, InvalidAlgorithmParameterException;
+    public void init(int opmode, com.sun.midp.crypto.Key key, CryptoParameter params)
+        throws InvalidKeyException, InvalidAlgorithmParameterException {
+        try {
+            cipher.init(opmode, key, params);
+        } catch (com.sun.midp.crypto.InvalidKeyException e) {
+            throw new InvalidKeyException();
+        } catch (com.sun.midp.crypto.InvalidAlgorithmParameterException e) {
+            throw new InvalidAlgorithmParameterException();
+        }
+    }
 
     /**
      * Continues a multiple-part encryption or decryption operation
@@ -241,9 +150,15 @@ public abstract class Cipher {
      * @exception ShortBufferException if the given output buffer is too small
      * to hold the result
      */
-    public abstract int update(byte[] input, int inputOffset, int inputLen,
+    public int update(byte[] input, int inputOffset, int inputLen,
                                byte[] output, int outputOffset)
-        throws IllegalStateException, ShortBufferException;
+        throws IllegalStateException, ShortBufferException { 
+        try {
+            return cipher.update(input, inputOffset, inputLen, output, outputOffset);
+        } catch (com.sun.midp.crypto.ShortBufferException e) {
+            throw new ShortBufferException();
+        }
+    }
 
     /**
      * Encrypts or decrypts data in a single-part operation, or finishes a
@@ -298,19 +213,19 @@ public abstract class Cipher {
      * and (un)padding has been requested, but the decrypted data is not
      * bounded by the appropriate padding bytes
      */
-    public abstract int doFinal(byte[] input, int inputOffset, int inputLen,
+    public int doFinal(byte[] input, int inputOffset, int inputLen,
         byte[] output, int outputOffset)
         throws IllegalStateException, ShortBufferException,
-               IllegalBlockSizeException, BadPaddingException;
-
-    /**
-     * Returns the initialization vector (IV) in a new buffer.
-     * This is useful in the case where a random IV was created.
-     * @return the initialization vector in a new buffer,
-     * or <code>null</code> if the underlying algorithm does
-     * not use an IV, or if the IV has not yet been set.
-     */
-    public byte[] getIV() {
-        return null;
+               IllegalBlockSizeException, BadPaddingException { 
+        try {
+            return cipher.doFinal(input, inputOffset, inputLen, output, outputOffset);
+        } catch (com.sun.midp.crypto.ShortBufferException e) {
+            throw new ShortBufferException();
+        } catch (com.sun.midp.crypto.IllegalBlockSizeException e) {
+            throw new IllegalBlockSizeException();
+        } catch (com.sun.midp.crypto.BadPaddingException e) {
+            throw new BadPaddingException();
+        }
+    
     }
 }

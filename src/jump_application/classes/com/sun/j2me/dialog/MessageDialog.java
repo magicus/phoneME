@@ -29,6 +29,8 @@ package com.sun.j2me.dialog;
 import com.sun.j2me.i18n.Resource;
 import com.sun.j2me.i18n.ResourceConstants;
 
+import com.sun.j2me.security.Token;
+
 /**
  * Provides methods for simple messages and requests.
  */
@@ -40,11 +42,13 @@ public class MessageDialog {
      * @param title dialog title
      * @param message message text
      * @param withCancel show Cancel button
+     * @param token security token
      * @return -1 if user cancelled dialog, 1 otherwise
      * @throws InterruptedException if interrupted
      */
     public static int showMessage(String title,
-                           String message, boolean withCancel)
+                           String message, boolean withCancel,
+                           Token token)
             throws InterruptedException {
 
         Dialog d = new Dialog(title, withCancel);
@@ -58,12 +62,13 @@ public class MessageDialog {
      * @param title dialog title
      * @param label list label
      * @param list elements of the list
+     * @param token security token
      * @return -1 if user cancelled dialog, index of chosen item
      * otherwise
      * @throws InterruptedException if interrupted
      */
     public static int chooseItem(String title,
-                          String label, String[] list)
+                          String label, String[] list, Token token)
             throws InterruptedException {
 
         Dialog d = new Dialog(title, true);
@@ -86,11 +91,12 @@ public class MessageDialog {
 
     /**
      * Displays dialog with new PIN parameters.
+     * @param token security token
      * @return array of strings or null if cancelled. Array contains new
      * PIN label and PIN value.
      * @throws InterruptedException  if interrupted
      */
-    public static String[] enterNewPIN()
+    public static String[] enterNewPIN(Token token)
             throws InterruptedException {
         String label = ""; /* New pin's label */
         String pin1 = "";  /* New pin's value */
@@ -146,13 +152,15 @@ public class MessageDialog {
      * @param label2 PIN2 label
      * @param pin2IsNumeric PIN2 is a numbere     
      * @param pin2Length length of the PIN2 text field
+     * @param token security token
      * @return null if PIN entry was cancelled by user, otherwise an array
      * containing PIN value(s).
      * @throws InterruptedException  if interrupted
      */
     public static Object[] enterPins(String title,
                       String label1, boolean pin1IsNumeric, int pin1Length,
-                      String label2, boolean pin2IsNumeric, int pin2Length)
+                      String label2, boolean pin2IsNumeric, int pin2Length,
+                      Token token)
            throws InterruptedException {
         String data1 = "";  /* First pin to enter */
         String data2 = "";  /* Second pin to enter */

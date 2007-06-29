@@ -34,12 +34,12 @@ public class Configuration {
     }
 
     /*
-     * Returns system property value by key
+     * Returns internal property value by key
      * @param key property key
      * @return property value
      */
     public static String getProperty(String key) {
-        return System.getProperty(key);
+        return com.sun.midp.main.Configuration.getProperty(key);
     }
 
     /**
@@ -60,18 +60,6 @@ public class Configuration {
      * @exception  IllegalArgumentException if <code>key</code> is empty.
      */
     public static int getIntProperty(String key, int def) {
-        String prop = getProperty(key);
-        if (prop == null) {
-            return def;
-        }
-
-        try {
-            int temp = Integer.parseInt(prop);
-            return temp;
-        } catch (NumberFormatException nfe) {
-            // keep the default
-        }
-
-        return def;
+        return com.sun.midp.main.Configuration.getIntProperty(key, def);        
     }
 }

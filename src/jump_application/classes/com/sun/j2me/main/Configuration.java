@@ -28,7 +28,7 @@ import java.util.Properties;
 import java.util.Hashtable;
 
 /**
- * Intermediate class for getting system properties
+ * Intermediate class for getting internal properties
  */
 public class Configuration {
 
