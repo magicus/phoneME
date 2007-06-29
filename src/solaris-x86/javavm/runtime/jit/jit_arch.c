@@ -61,7 +61,7 @@ CVMJITflushCache(void* begin, void* end)
 #define REG_PC  PC
 #endif
 #ifndef REG_SP
-#define REG_SP  SP
+#define REG_SP  USP
 #endif 
 
 /*

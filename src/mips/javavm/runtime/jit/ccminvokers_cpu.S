@@ -404,7 +404,7 @@ CVMMIPShandleGCAtInvoke:
 	 * yet "committed" to the stack, and as such, cannot be located
 	 * by GC.
 	 */
-        lbu	a1, OFFSET_CVMMethodBlock_accessFlagsX(a1)
+        lhu	a1, OFFSET_CVMMethodBlock_invokerAndAccessFlagsX(a1)
 	andi	a1, a1, CONSTANT_METHOD_ACC_SYNCHRONIZED
 	beq	a1, zero, 1f
 	
@@ -438,7 +438,7 @@ CVMMIPShandleGCAtInvoke:
 	  again to see if we should restore 'receiverObjX'
 	  from miscICell.
 	*/
-        lbu	a2, OFFSET_CVMMethodBlock_accessFlagsX(a1)
+        lhu	a2, OFFSET_CVMMethodBlock_invokerAndAccessFlagsX(a1)
 	andi	a2, a2, CONSTANT_METHOD_ACC_SYNCHRONIZED
         beq	a2, zero, mipsGcPatchPointAtInvoke
 

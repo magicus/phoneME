@@ -145,7 +145,7 @@ public class CVMMethodStats implements Comparator {
     public void dump(runtime.CCodeWriter out) {
 	int numElements = Math.min(256, tableIdx);
 	out.println();
-	out.println("const CVMUint8 argsInvokerAccess[] = {");
+	out.println("const CVMUint16 argsInvokerAccess[] = {");
 	for (int i = 0; i < numElements; i++) {
 	    out.print("    /* idx="+i+", refcount="+table[i].refcount+" */ ");
 	    out.println(table[i].argsSize + ", "+table[i].invoker+", "+

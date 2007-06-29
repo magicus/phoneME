@@ -39,6 +39,12 @@ else
     MIDP_PLATFORM ?= linux_fb_gcc
 endif
 
+# bootclasspath classes needed to compile midp
+VM_BOOTCLASSPATH0	= $(CVM_BUILDTIME_CLASSESZIP) $(LIB_CLASSESJAR)
+ifeq ($(USE_JUMP), true)    
+    VM_BOOTCLASSPATH0	+= $(JUMP_API_CLASSESZIP)
+endif
+VM_BOOTCLASSPATH = $(subst $(space),$(PS),$(VM_BOOTCLASSPATH0))
 
 #
 # Target tools directory for compiling both PCSL and MIDP.
@@ -116,13 +122,12 @@ LINKLIBS 		+= $(MIDP_LIBS)
 endif
 
 -include $(MIDP_DEFS_CDC_MK)
+
 ifeq ($(CVM_PRELOAD_LIB), true)
 # Add MIDP classes to JCC input list so they can be romized.
 CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_CLASSES_ZIP)
-
 # Add MIDP CNI classes to CVM_CNI_CLASSES
 CVM_CNI_CLASSES += $(MIDP_CNI_CLASSES)
-
 endif
 
 endif

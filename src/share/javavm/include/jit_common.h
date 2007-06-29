@@ -54,6 +54,7 @@ typedef struct {
     CVMInt32 pcOffset;
     CVMInt32 index;
     CVMInt32 numEntries;
+    CVMInt32 invokePC;
 } CVMJITFrameIterator;
 
 /*
@@ -65,7 +66,7 @@ extern void
 CVMJITframeIterate(CVMFrame* frame, CVMJITFrameIterator* iter);
 
 extern CVMBool
-CVMJITframeIterateSkip(CVMJITFrameIterator* iter, int skip,
+CVMJITframeIterateSkip(CVMJITFrameIterator* iter,
     CVMBool skipArtificial, CVMBool popFrame);
 
 #define CVMJITframeIterateNext(iter)	\

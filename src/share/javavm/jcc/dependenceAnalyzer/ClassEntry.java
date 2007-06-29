@@ -414,6 +414,9 @@ public class ClassEntry extends DependenceNode implements MemberArcTypes {
 		    ConstantObject o = cpool[ (int)code[locs[j]+1]&0xff ];
 		    if ( o instanceof StringConstant ){
 			makeString( md );
+		    } else if ( o instanceof ClassConstant ){
+			conditionalClassReference( md,
+			    (ClassConstant) o, ARC_CLASS );
 		    }
 		}
 		locs = mi.wideConstantRefInstructions;
@@ -445,6 +448,9 @@ public class ClassEntry extends DependenceNode implements MemberArcTypes {
 			ConstantObject o = cpool[ getUnsignedShort( code, locs[j]+1 ) ];
 			if ( o instanceof StringConstant ){
 			    makeString( md );
+			} else if ( o instanceof ClassConstant ){
+			    conditionalClassReference( md,
+				(ClassConstant) o, ARC_CLASS );
 			}
 			break;
 		    }

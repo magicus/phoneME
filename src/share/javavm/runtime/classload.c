@@ -623,8 +623,7 @@ searchPathAndFindClassInfo(CVMExecEnv* ee, const char* classname,
 			CVM_PATH_LOCAL_DIR_SEPARATOR,
 			classname, CVM_PATH_CLASSFILEEXT);
 	    info->pathComponent = currEntry;
-	    getClassInfoFromFile(ee, CVMioNativePath(filename),
-				 dirname, info);
+	    getClassInfoFromFile(ee, filename, dirname, info);
 	} else if (currEntry->type == CVM_CPE_ZIP) {
 	    /* Look for class file in specified bootclasspath zip file. */
 
@@ -1429,14 +1428,13 @@ classPathInit(JNIEnv* env, CVMClassPath* classPath,
 		CVMtraceClassLoading(("CL: Added directory \"%s\" to the "
 				      "classpath\n", currPath));
 		currEntry->type = CVM_CPE_DIR;
-		currEntry->path = strdup(CVMioNativePath(currPath));
+		currEntry->path = strdup(currPath);
 	    } else if (fileType == CVM_IO_FILETYPE_REGULAR) {
 		/* it's a zip file */
                 char canonicalPath[CVM_PATH_MAXLEN];
 		char* msg = NULL;
 		jzfile* zip;
 
-		CVMioNativePath(currPath);
 		if (CVMcanonicalize(currPath, canonicalPath, CVM_PATH_MAXLEN)
 		    < 0) {
 		    CVMdebugPrintf(("Bad classpath name: \"%s\"\n",

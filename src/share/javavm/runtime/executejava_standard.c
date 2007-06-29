@@ -1200,6 +1200,46 @@ CVMinvokeInterfaceHelper(CVMExecEnv* ee, CVMStackVal32* topOfStack,
     }
 }
 
+static CVMBool
+CVMloadConstantHelper(CVMExecEnv *ee, CVMStackVal32* topOfStack,
+    CVMConstantPool* cp, CVMUint16 cpIndex, CVMUint8* pc)
+{
+    switch (CVMcpEntryType(cp, cpIndex)) {
+    case CVM_CONSTANT_ClassTypeID:
+    {
+	CVMBool resolved;
+	CVMD_gcSafeExec(ee, {
+	    resolved = CVMcpResolveEntry(ee, cp, cpIndex);
+	});
+	if (!resolved) {
+	    return CVM_FALSE;
+	}
+    }
+    case CVM_CONSTANT_ClassBlock: {
+	CVMClassBlock *cb = CVMcpGetCb(cp, cpIndex);
+	CVMID_icellAssignDirect(ee, &STACK_ICELL(0), CVMcbJavaInstance(cb));
+	TRACE(("\t%s #%d => %C\n", CVMopnames[pc[0]],
+	       cpIndex, cb));
+	return CVM_TRUE;
+    }
+    default:
+	return CVM_FALSE;
+    }
+}
+
+static CVMBool
+CVMldcHelper(CVMExecEnv *ee, CVMStackVal32* topOfStack,
+    CVMConstantPool* cp, CVMUint8* pc)
+{
+    return CVMloadConstantHelper(ee, topOfStack, cp, pc[1], pc);
+}
+
+static CVMBool
+CVMldc_wHelper(CVMExecEnv *ee, CVMStackVal32* topOfStack,
+    CVMConstantPool* cp, CVMUint8* pc)
+{
+    return CVMloadConstantHelper(ee, topOfStack, cp, GET_INDEX(pc + 1), pc);
+}
 
 static void
 CVMldc2_wHelper(CVMStackVal32* topOfStack, CVMConstantPool* cp, CVMUint8* pc)
@@ -4141,14 +4181,39 @@ handle_jit_osr:
         CASE_ND(opc_invokestatic)
 	CASE_ND(opc_invokeinterface)
 	CASE_ND(opc_new)
-        CASE_ND(opc_ldc)
-        CASE_ND(opc_ldc_w)
 	CASE_ND(opc_ldc2_w)
 	CASE_ND(opc_anewarray)
 	CASE_ND(opc_checkcast)
 	CASE_ND(opc_instanceof)
 	CASE_ND(opc_multianewarray)
 	    goto quicken_opcode_noclobber;
+        CASE(opc_ldc, 2)
+	{
+	    /* we may become gc-safe */
+	    DECACHE_TOS();
+	    DECACHE_PC();
+	    if (!CVMldcHelper(ee, topOfStack, cp, pc)) {
+		if (CVMlocalExceptionOccurred(ee)) {
+		    goto handle_exception;
+		}
+		goto quicken_opcode_noclobber;
+	    }
+	    UPDATE_PC_AND_TOS_AND_CONTINUE(2, 1);
+	}
+        CASE(opc_ldc_w, 3)
+	{
+	    /* we may become gc-safe */
+	    DECACHE_TOS();
+	    DECACHE_PC();
+	    if (!CVMldc_wHelper(ee, topOfStack, cp, pc)) {
+		if (CVMlocalExceptionOccurred(ee)) {
+		    goto handle_exception;
+		}
+		goto quicken_opcode_noclobber;
+	    }
+	    UPDATE_PC_AND_TOS_AND_CONTINUE(3, 1);
+	}
+
 	{	    
 	    CVMQuickenReturnCode retCode;
 	    CVMClassBlock *cb;

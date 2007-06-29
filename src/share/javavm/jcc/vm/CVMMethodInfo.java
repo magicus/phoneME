@@ -101,8 +101,6 @@ CVMMethodInfo extends VMMethodInfo implements Const, CVMConst {
 		hasJsr = true;
 		break;
 
-	    case opc_ldc:
-	    case opc_ldc_w:
 	    case opc_ldc2_w:
 	    case opc_getstatic:
 	    case opc_putstatic:
@@ -119,6 +117,26 @@ CVMMethodInfo extends VMMethodInfo implements Const, CVMConst {
 	    case opc_multianewarray:
 		impureCode = true; // all get quicked.
 		break;
+
+	    // We don't currently quicken ldc of a Class constant
+	    case opc_ldc:
+	    {
+		ConstantObject co =
+		    method.parent.constants[(int)code[i + 1] & 0xff];
+		if (!(co instanceof ClassConstant)) {
+		    impureCode = true; // all the rest get quickened.
+		}
+		break;
+	    }
+	    case opc_ldc_w:
+	    {
+		int index = method.getUnsignedShort(i + 1);
+		ConstantObject co = method.parent.constants[index];
+		if (!(co instanceof ClassConstant)) {
+		    impureCode = true; // all the rest get quickened.
+		}
+		break;
+	    }
 	    }
 	}
 	codeExamined = true;

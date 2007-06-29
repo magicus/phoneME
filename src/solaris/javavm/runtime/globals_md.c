@@ -42,6 +42,16 @@
 #include "javavm/include/globals.h"
 #endif
 
+#if !defined(CVM_MP_SAFE)
+#include <sys/types.h>
+#include <sys/processor.h>
+#include <sys/procset.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <procfs.h>
+#endif /* !CVM_MP_SAFE */
 
 CVMBool CVMinitVMTargetGlobalState()
 {
@@ -108,6 +118,49 @@ CVMBool CVMinitStaticState()
 
     sigignore(SIGPIPE);
 
+#if !defined(CVM_MP_SAFE)
+    { /* pin this process and all its LWPs to the same processor. */
+	int rc;
+	id_t pid;
+	processorid_t cpu;
+	
+	pid = getpid();
+	if (pid < 0) {
+	    perror("getpid()");
+	    return CVM_FALSE;
+	}
+
+	rc = processor_bind(P_PID, pid, PBIND_QUERY, &cpu);
+	if (rc < 0) {
+	     perror("processor_bind(PBIND_QUERY)");
+	     cpu = PBIND_NONE;
+	}
+	if (cpu == PBIND_NONE)  /* not already bound  */
+	{ 
+	    /* get psinfo from /proc filesyeste */
+	    psinfo_t psinfo;
+	    int fd = open("/proc/self/psinfo", O_RDONLY);
+	    if (fd < 0) {
+		perror("/proc/self/psinfo");
+	    } else {
+		if (read(fd, &psinfo, sizeof(psinfo)) == sizeof(psinfo)) {
+		    cpu = psinfo.pr_lwp.pr_onpro;
+		} else {
+		    printf("WARNING: failed to read psinfo");
+		}
+		close(fd);
+	    }
+	}
+	rc = 0;
+	if (cpu != PBIND_NONE) {
+	    rc = processor_bind(P_PID, pid, cpu, NULL);
+	}
+	if (cpu == PBIND_NONE || rc < 0) {
+	    printf("WARNING: Unable to bind to a cpu\n");
+	}
+    }
+#endif
+
     {
 	char buf[MAXPATHLEN + 1], *p0, *p;
 
@@ -135,14 +188,12 @@ CVMBool CVMinitStaticState()
 	} else {
 	    goto badpath;
 	}
-        return( CVMinitPathValues( &props, p0, "lib", "lib" ) );
+	return( CVMinitPathValues( &props, p0, "lib", "lib" ) );
     badpath:
 	fprintf(stderr, "Invalid path %s\n", p0);
 	fprintf(stderr, "Executable must be in a directory named \"bin\".\n");
 	return CVM_FALSE;
     }
-
-    return CVM_TRUE;
 }
 
 void CVMdestroyStaticState()

@@ -30,6 +30,7 @@
 #
 
 CVM_TARGETOBJS_SPEED +=	\
+    float_arch.o \
     x86_float_cpu.o	\
 
 CVM_TARGETOBJS_OTHER += \

@@ -95,7 +95,9 @@
  * You can add more #defines to this list as newer ones become available.
  */
 #if defined(__ARM_ARCH_5__)  || defined(__ARM_ARCH_5T__) || \
-    defined(__ARM_ARCH_5E__) || defined(__ARM_ARCH_5TE__)
+    defined(__ARM_ARCH_5E__) || defined(__ARM_ARCH_5TE__) || \
+    defined(__ARM_ARCH_6J__) || defined(__ARM_ARCH_6ZK__) || \
+    defined(__ARM_ARCH_6K__)
 #define IAI_IDIV
 #endif
 
@@ -196,10 +198,11 @@
  * Preload the memory to be allocated for the next objects 
  * into the cache in CCM allocators.
  *
- * PLD is only supported if __ARM_ARCH_4__, __ARM_ARCH_4T__
- * and __ARM_ARCH_5T__ is not #defined.
+ * PLD is only supported is only supported on ARM v5TE and later.
  */
-#if !defined(__ARM_ARCH_4__) && !defined(__ARM_ARCH_4T__) && !defined(__ARM_ARCH_5T__)
+#if defined(__ARM_ARCH_5TE__)  || \
+    defined(__ARM_ARCH_6J__) || defined(__ARM_ARCH_6ZK__) || \
+    defined(__ARM_ARCH_6K__)
 #define IAI_PRELOAD_NEW_OBJECT
 #endif
 

@@ -54,6 +54,7 @@
 #include "javavm/include/jit/jitmemory.h"
 #include "javavm/include/jit/jitstats.h"
 #include "javavm/include/jit/jitdebug.h"
+#include "javavm/include/jit/jitasmconstants.h"
 
 #ifdef CVM_HW
 #include "include/hw.h"
@@ -2926,6 +2927,68 @@ doStaticFieldRef(CVMJITCompilationContext* con,
 	memRead(con, staticRefNode, typeTag);
     } else {
 	memWrite(con, curbk, staticRefNode, typeTag, valueNode);
+    }
+}
+
+/*
+ * Load the Class object from the CB.  Resolve the constant pool
+ * entry first if necessary.
+ */
+static void
+doJavaInstanceRead(CVMJITCompilationContext* con, 
+		   CVMJITIRBlock*   curbk,
+		   CVMConstantPool* cp,
+		   CVMUint16        cpIndex,
+		   CVMClassBlock*   currCb)
+{
+    CVMExecEnv *ee = con->ee;
+    CVMJITIRNode *javaInstanceRefNode;
+
+    if (CVMcpCheckResolvedAndGetTID(ee, currCb, cp, cpIndex, NULL)) {
+	/*
+	   CB is resolved.  Load the value of CVMcbJavaInstance(cb),
+	   which is at a fixed address.
+        */
+	CVMClassBlock *cpCb = CVMcpGetCb(cp, cpIndex);
+	/* FETCHADDR(STATICADDR(CVMcbJavaInstance(cb))) */
+	javaInstanceRefNode =
+	    CVMJITirnodeNewConstantStaticFieldAddress(con,
+		(CVMAddr)CVMcbJavaInstance(cpCb));
+    } else {
+	/*
+	   CB is not resolved.  Resolve it, then fetch
+	   CVMcbJavaInstance(cb) using a FIELD_REF expression.
+        */
+	CVMJITIRNode *cbNode = CVMJITirnodeNewResolveNode(
+	    con, cpIndex, curbk, 0, CVMJIT_CONST_CB_UNRESOLVED);
+	CVMJITIRNode *fieldOffsetNode =
+	    CVMJITirnodeNewConstantJavaNumeric32(con,
+		OFFSET_CVMClassBlock_javaInstanceX,
+		CVM_TYPEID_INT);
+	/* FETCHADDR(FIELDADDR(cb, javaInstanceX)) */
+	javaInstanceRefNode = CVMJITirnodeNewUnaryOp(con,
+	    CVMJIT_ENCODE_FETCH(CVMJIT_TYPEID_ADDRESS),
+	    CVMJITirnodeNewBinaryOp(con,
+		CVMJIT_ENCODE_FIELD_REF(CVMJIT_TYPEID_ADDRESS), 
+		cbNode, fieldOffsetNode));
+    }
+    {
+	/*
+	   We have the cb->javaInstanceX value now, which
+	   points to an ICell.  Fetch the object from the
+	   ICell.
+	 */
+
+	/* fetchNode: FETCHOBJ(STATICOBJ(javaInstanceRefNode)) */
+	CVMJITIRNode *fetchNode = CVMJITirnodeNewUnaryOp(con,
+	    CVMJIT_ENCODE_FETCH(CVM_TYPEID_OBJ),
+	    CVMJITirnodeNewUnaryOp(con,
+		CVMJIT_ENCODE_STATIC_FIELD_REF(CVM_TYPEID_OBJ),
+		javaInstanceRefNode));
+
+	/* We could even treat this like a getfield and cache it. */
+
+	CVMJITirnodeStackPush(con, fetchNode);
     }
 }
 
@@ -6634,20 +6697,40 @@ translateRange(CVMJITCompilationContext* con,
 
         case opc_ldc: {
             CVMUint8 cpIndex = absPc[1];
-	    if (CVMcpTypeIs(cp, cpIndex, StringICell)) {
+	    switch (CVMcpEntryType(cp, cpIndex)) {
+	    case CVM_CONSTANT_StringICell:
 		pushConstantStringICell(con, CVMcpGetStringICell(cp, cpIndex));
-	    } else {
+		break;
+	    case CVM_CONSTANT_Integer:
+	    case CVM_CONSTANT_Float:
 		pushConstant32(con, CVMcpGetVal32(cp, cpIndex).i);
+		break;
+	    case CVM_CONSTANT_ClassTypeID:
+	    case CVM_CONSTANT_ClassBlock:
+		doJavaInstanceRead(con, curbk, cp, cpIndex, cb);
+		break;
+	    default:
+		CVMJITerror(con, CANNOT_COMPILE, "unknown ldc operand");
 	    }
 	    break;
 	}
 
         case opc_ldc_w: {
             CVMUint16 cpIndex = CVMgetUint16(absPc+1);
-	    if (CVMcpTypeIs(cp, cpIndex, StringICell)) {
+	    switch (CVMcpEntryType(cp, cpIndex)) {
+	    case CVM_CONSTANT_StringICell:
 		pushConstantStringICell(con, CVMcpGetStringICell(cp, cpIndex));
-	    } else {
+		break;
+	    case CVM_CONSTANT_Integer:
+	    case CVM_CONSTANT_Float:
 		pushConstant32(con, CVMcpGetVal32(cp, cpIndex).i);
+		break;
+	    case CVM_CONSTANT_ClassTypeID:
+	    case CVM_CONSTANT_ClassBlock:
+		doJavaInstanceRead(con, curbk, cp, cpIndex, cb);
+		break;
+	    default:
+		CVMJITerror(con, CANNOT_COMPILE, "unknown ldc operand");
 	    }
 	    break;
 	}

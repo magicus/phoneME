@@ -387,20 +387,24 @@ JVM_GetClassModifiers(JNIEnv *env, jclass cls)
 	}
     }
 
-    /*
-     * It not a member class. We need to translate the flags since they
-     * were modified to make CVMcbAccessFlags() fit in one byte.
-     */
+    /* If we get here, then the class is not a member class. */
+
+    /* The implementation of JVM_GetClassModifiers() needs to conform to the
+       specification of Class.getModifiers().  Acording to that spec, the
+       only bits of relevance to this method are public, final, interface,
+       and abstract.  The spec also mentioned private, protected, and static
+       but those don't exist in the VM spec for class access flags.
+    */
     {
-	jint access = 0;
-	if (CVMcbIs(cb, PUBLIC))
-	    access |= JVM_ACC_PUBLIC;
-	if (CVMcbIs(cb, FINAL))
-	    access |= JVM_ACC_FINAL;
-	if (CVMcbIs(cb, INTERFACE))
-	    access |= JVM_ACC_INTERFACE;
-	if (CVMcbIs(cb, ABSTRACT))
-	    access |= JVM_ACC_ABSTRACT;
+	jint access = CVMcbAccessFlags(cb);
+
+	CVMassert(JVM_ACC_PUBLIC     == CVM_CLASS_ACC_PUBLIC);
+	CVMassert(JVM_ACC_FINAL      == CVM_CLASS_ACC_FINAL);
+	CVMassert(JVM_ACC_INTERFACE  == CVM_CLASS_ACC_INTERFACE);
+	CVMassert(JVM_ACC_ABSTRACT   == CVM_CLASS_ACC_ABSTRACT);
+
+	access &= (JVM_ACC_PUBLIC | JVM_ACC_FINAL | JVM_ACC_INTERFACE |
+		   JVM_ACC_ABSTRACT);
 	return access;
     }
 }
@@ -1213,7 +1217,9 @@ CVMgcUnsafeFillInStackTrace(CVMExecEnv *ee, CVMThrowableICell* throwableICell)
     CVMMethodBlock*    mb;
     CVMArrayOfRef*     backtrace;
     CVMArrayOfInt*     pcArray;
+#ifdef CVM_JIT
     CVMArrayOfBoolean* isCompiledArray = NULL;
+#endif
     CVMObject*         tempObj;
     CVMInt32           backtraceSize;
     CVMInt32           count;
@@ -1455,7 +1461,9 @@ static CVMObjectICell* CVMgetStackTraceElement(CVMExecEnv *ee,
 
     CVMID_localrootBegin(ee) {
         CVMID_localrootDeclare(CVMArrayOfRefICell, backtraceICell);
+#ifdef CVM_JIT
         CVMID_localrootDeclare(CVMArrayOfBooleanICell, isCompiledArrayICell);
+#endif
         CVMID_localrootDeclare(CVMArrayOfIntICell, pcArrayICell);
         CVMID_localrootDeclare(CVMObjectICell, tempICell);
         CVMID_localrootDeclare(CVMStringICell, stringICell);

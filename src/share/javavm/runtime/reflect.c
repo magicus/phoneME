@@ -2059,7 +2059,7 @@ CVMreflectCheckAccess(CVMExecEnv* ee,
        let's make sure some invariants are met */
     CVMassert(CVM_METHOD_ACC_PROTECTED == CVM_FIELD_ACC_PROTECTED);
 
-#define IsProtected(x)	((x) & CVM_METHOD_ACC_PROTECTED)
+#define IsProtected(x)	CVMmemberPPPAccessIs((x), FIELD, PROTECTED)
 
     CVMassert(ee != NULL);
 
