@@ -105,6 +105,8 @@ public class DatagramObject extends UniversalOutputStream implements Datagram {
         DatagramObject ref = (DatagramObject)reference;
 	host = ref.host;
 	port = ref.port;
+        if (host == null) 
+            throw new IllegalArgumentException("NULL datagram address");
 	dgram.setAddress(ref.dgram.getAddress());
 	dgram.setPort(port);
     }
