@@ -92,7 +92,7 @@ define makeExtraJar
             fi; \
 	fi; done
         $(AT)if (test -r $(5)); then \
-	    @echo ...$(1); \
+	    echo ...$(1); \
 	    $(CVM_JAR) cf $(1) -C $(5) .;\
         fi
 endef
