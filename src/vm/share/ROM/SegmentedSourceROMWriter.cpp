@@ -85,16 +85,27 @@ void SegmentedSourceROMWriter::init_declare_stream() {
 }
 
 PathChar* SegmentedSourceROMWriter::rom_tmp_segment_file(int index) {
-  const int n = index % 100;
-  FilePath::rom_tmp_segment_file[9] = (JvmPathChar)((n / 10) + '0');
-  FilePath::rom_tmp_segment_file[10] = (JvmPathChar)((n % 10) + '0');
+  const int n = index % 1000;
+  // printf("  [ ] SegmentedSourceROMWriter::rom_tmp_segment_file index = %d (%d, %d, %d)\n", index, n / 100, (n % 100) / 10, n % 10);
+  FilePath::rom_tmp_segment_file[9] = (JvmPathChar)((n / 100) + '0');
+  FilePath::rom_tmp_segment_file[10] = (JvmPathChar)((n % 100) / 10 + '0');
+  FilePath::rom_tmp_segment_file[11] = (JvmPathChar)((n % 10) + '0');
+  for (int i = 0; i < 16; i++) {
+  	printf("%c", FilePath::rom_tmp_segment_file[i]);
+  }
+  printf("\n");
   return FilePath::rom_tmp_segment_file;
 }
 
 PathChar* SegmentedSourceROMWriter::rom_segment_file(int index) {
-  const int n = index % 100;
-  FilePath::rom_segment_file[9] = (JvmPathChar)((n / 10) + '0');
-  FilePath::rom_segment_file[10] = (JvmPathChar)((n % 10) + '0');
+  const int n = index % 1000;
+  FilePath::rom_segment_file[9] = (JvmPathChar)((n / 100) + '0');
+  FilePath::rom_segment_file[10] = (JvmPathChar)((n % 100) / 10 + '0');
+  FilePath::rom_segment_file[11] = (JvmPathChar)((n % 10) + '0');
+  for (int i = 0; i < 16; i++) {
+  	printf("%c", FilePath::rom_segment_file[i]);
+  }
+  printf("\n");
   return FilePath::rom_segment_file;
 }
 
@@ -292,6 +303,103 @@ void SegmentedSourceROMWriter::write_compiled_text_reference(FileStream* stream,
   } else {
     stream->print("TEXT%d(0x%08x + %d)", pass, local_offset, delta/4);      
   }  
+}
+
+/**
+ * Writes _rom_text_klass_table, which is used by non-PRODUCT modes
+ * to get the "klass" field of objects in the TEXT block. Most
+ * of these objects have their "klass" field skipped to save
+ * footprint.
+ */
+void SegmentedSourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
+  tty->print_cr("Writing text_klass_table ...");
+
+  int i;
+
+  UsingFastOops fast_oops;  
+  ROMizerHashEntry::Fast info;
+  Oop::Fast oop;
+  Oop::Fast klass;
+  Oop::Fast record;
+  int count = 0;
+  TextKlassLookupTable::Fast table;
+  table().initialize(NUM_TEXT_KLASS_BUCKETS, 0 JVM_CHECK);
+
+  //
+  // (1) Iterate over all objects in the _info_table, and add them into
+  //     TextKlassLookupTable
+  //
+  for (int bucket=0; bucket<INFO_TABLE_SIZE; bucket++) {
+    for (info = info_table()->obj_at(bucket); !info.is_null(); ) {
+      oop = info().referent(); // get the object
+      if (oop.not_null()) {
+        // Why would it be NULL?
+        if (is_text_subtype(info().type())) 
+        {
+          table().put(&oop JVM_CHECK);
+          count++;
+        }
+      }
+      info = info().next(); // move onto the next link
+    }
+  }
+
+  main_stream()->print_cr("#ifndef PRODUCT");
+  OffsetVector sorter;
+  sorter.initialize(JVM_SINGLE_ARG_CHECK);
+
+  printf("  [ ] current stream index = %d\n", stream_index());
+  //
+  // (2) Print out the individual buckets
+  //
+
+  for (i=0; i < NUM_TEXT_KLASS_BUCKETS; i++) {
+
+    int num_written = 0;
+    sorter.flush();
+    main_stream()->print("static const int klass_table_%d[] = {\n\t", i);
+    record = table().get_record_at(i);
+
+    // Sort the content of each bucket, so that we have the same output
+    // when romizing on different hosts.
+    while (!record.is_null()) {
+      oop = table().get_key_from_record(&record);
+      record = table().get_next_record(&record);
+      sorter.add_element(&oop JVM_CHECK);
+    }
+
+    sorter.sort();
+
+    for (int n=0; n<sorter.size(); n++) {
+      oop = sorter.element_at(n);
+      klass = oop.klass();
+      if (GenerateROMComments && VerbosePointers) {
+        main_stream()->print("/* (0x%x)->klass = 0x%x*/ ", 
+                      (int)(oop.obj()), (int)(klass.obj()));
+      }
+      num_written ++;
+      write_reference(&oop, TEXT_BLOCK, main_stream() JVM_CHECK);
+      main_stream()->print(", ");
+      write_reference(&klass, TEXT_BLOCK, main_stream() JVM_CHECK);
+      if (GenerateROMComments || ((num_written % 2) == 0)) {
+        main_stream()->print(",\n\t");
+      } else {
+        main_stream()->print(", ");
+      }
+    }
+    main_stream()->print_cr("0, 0 };");
+  }
+
+  // Print the table, which points to all the buckets.
+  main_stream()->print_cr("const int  _rom_text_klass_table_size = %d;", 
+                           NUM_TEXT_KLASS_BUCKETS);
+  main_stream()->print_cr("const int* _rom_text_klass_table[] = {");
+  for (i=0; i < NUM_TEXT_KLASS_BUCKETS; i++) {
+    main_stream()->print_cr("\t(const int*)klass_table_%d, ", i);
+  }
+  main_stream()->print_cr("};");
+
+  main_stream()->print_cr("#endif /*  PRODUCT */");
 }
 
 #endif // ENABLE_ROM_GENERATOR && USE_SEGMENTED_TEXT_BLOCK_WRITER

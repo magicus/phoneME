@@ -70,13 +70,13 @@ JvmPathChar FilePath::rom_image_generated_file[] = {
     // 0-terminated
 };
 JvmPathChar FilePath::rom_tmp_segment_file[] = {
-  'R','O','M','_','m','a','i','n','_','?','?','.','t','m','p', 0 // 0-terminated
+  'R','O','M','_','m','a','i','n','_','?','?','?','.','t','m','p', 0 // 0-terminated
 };
 JvmPathChar FilePath::rom_stuff_file[] = {
   'R','O','M','_','s','t','u','f','f','.','t','m','p', 0 // 0-terminated
 };
 JvmPathChar FilePath::rom_segment_file[] = {
-  'R','O','M','I','m','a','g','e','_','?','?','.','c','p','p', 0 // 0-terminated
+  'R','O','M','I','m','a','g','e','_','?','?','?','.','c','p','p', 0 // 0-terminated
 };
 #endif // ENABLE_SEGMENTED_ROM_TEXT_BLOCK
 #endif

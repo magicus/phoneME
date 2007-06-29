@@ -83,6 +83,9 @@ private:
   // &_main_segment_streams[ROM::STUFF_STREAM_INDEX].
   FileStream* _stuff_stream;
   FileStream _main_segment_streams[ROM::SEGMENTS_STREAMS_COUNT]; 
+public: 
+  int stream_index() {return _stream_ind;}
+  virtual void write_text_klass_table(JVM_SINGLE_ARG_TRAPS);
 };
 
 #endif // ENABLE_ROM_GENERATOR && USE_SEGMENTED_TEXT_BLOCK_WRITER

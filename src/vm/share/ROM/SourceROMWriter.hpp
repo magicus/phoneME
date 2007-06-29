@@ -26,6 +26,29 @@
 
 #if ENABLE_ROM_GENERATOR && USE_SOURCE_IMAGE_GENERATOR
 
+class TextKlassLookupTable : public ROMLookupTable {
+public:
+  HANDLE_DEFINITION(TextKlassLookupTable, ROMLookupTable);
+
+  void initialize(int num_buckets, int num_attributes JVM_TRAPS) {
+    ROMLookupTable::initialize(num_buckets, num_attributes JVM_CHECK);
+    set_hashcode_func((hashcode_func_type)&TextKlassLookupTable::_hashcode);
+  }
+
+  juint _hashcode(Oop *obj) {
+    SETUP_ERROR_CHECKER_ARG;
+    ROMWriter* romwriter = ROMWriter::singleton();
+#if USE_SEGMENTED_TEXT_BLOCK_WRITER
+    juint byte_offset = romwriter->loc_offset_of(obj JVM_NO_CHECK);
+#else
+    juint byte_offset = romwriter->offset_of(obj JVM_NO_CHECK);
+#endif
+    juint code = byte_offset / 4;
+    GUARANTEE(!CURRENT_HAS_PENDING_EXCEPTION, "sanity");
+    return code;
+  }
+};
+
 class SourceObjectWriter;  // Forward reference
 
 class SourceROMWriter : public ROMWriter {
@@ -110,9 +133,8 @@ private:
   virtual void write_text_reference(FileStream* stream, int offset);
   virtual void write_compiled_text_reference(FileStream* stream,int offset, 
                                              int delta);
-  bool is_text_subtype(int type);
-
 protected:
+  bool is_text_subtype(int type);
   virtual void write_data_body(SourceObjectWriter* obj_writer JVM_TRAPS);
   virtual void write_heap_body(SourceObjectWriter* obj_writer JVM_TRAPS);
   virtual void write_stuff_body(SourceObjectWriter* obj_writer JVM_TRAPS);
@@ -133,7 +155,7 @@ public:
   virtual void init_streams();
   virtual void write_copyright(Stream *stream, bool c_style_comments);
 
-  void write_text_klass_table(JVM_SINGLE_ARG_TRAPS);
+  virtual void write_text_klass_table(JVM_SINGLE_ARG_TRAPS);
 
   virtual void write_objects(JVM_SINGLE_ARG_TRAPS);
   virtual void find_offsets(JVM_SINGLE_ARG_TRAPS);

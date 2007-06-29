@@ -417,8 +417,6 @@ public:
     SHORT_SHORT         = 0x00     /* 0:0:0:0 */
   };
 
-#define NUM_TEXT_KLASS_BUCKETS 128
-
   void visit_already_seen(RomOopVisitor *visitor, int npass JVM_TRAPS);
   void visit_all_objects(RomOopVisitor *visitor, int npass JVM_TRAPS);
   void visit_rom_hashtable(ObjArray *table JVM_TRAPS);
