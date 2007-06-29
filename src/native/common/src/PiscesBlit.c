@@ -2377,7 +2377,6 @@ blendSrcOver5658(unsigned short *shortData, jbyte * alphaData,
                  jint aval,
                  jint sred, jint sgreen, jint sblue) {
     jint denom;
-
     unsigned short sval = *shortData;
     /* *alphaData is signed type (jbyte), therefor we need to avoid overflow with
        & 0xff operation */

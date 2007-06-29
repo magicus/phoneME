@@ -33,10 +33,6 @@
 #include <PiscesSysutils.h>
 #include <commonKNIMacros.h>
 
-#include <midpGraphics.h>
-#include <midpLCDUI.h>
-#include <images.h>
-
 #define SURFACE_NATIVE_PTR 0
 #define SURFACE_GRAPHICS 1
 #define SURFACE_LAST SURFACE_GRAPHICS
@@ -45,52 +41,38 @@
 #define GRAPHICS_TRANSY 1
 #define GRAPHICS_LAST GRAPHICS_TRANSY
 
-static jfieldID fieldIds[SURFACE_LAST + 1];
 static jboolean fieldIdsInitialized = KNI_FALSE;
-
-static jboolean initializeSurfaceFieldIds(jobject objectHandle);
-
-static void surface_acquire(AbstractSurface* surface, jobject surfaceHandle);
-static void surface_release(AbstractSurface* surface, jobject surfaceHandle);
-static void surface_cleanup(AbstractSurface* surface);
 
 static jfieldID graphicsFieldIds[GRAPHICS_LAST + 1];
 
-extern VDC screenBuffer;
-
-VDC *
-setupImageVDC(jobject img, VDC *vdc);
-
 static jboolean
 initializeGDFieldIds() {
-    static const FieldDesc graphicsFieldDesc[GRAPHICS_LAST + 1] = {
+    static const FieldDesc graphicsFieldDesc[GRAPHICS_LAST + 2] = {
                                                        { "transX", "I" },
-                                                       { "transY", "I" }
+                                                       { "transY", "I" },
+                                                       { NULL, NULL}
                                                       };            
     jboolean retVal;
 
     if (fieldIdsInitialized) {
         return KNI_TRUE;
     }
-
+    
     retVal = KNI_FALSE;
-
     KNI_StartHandles(1);
     KNI_DeclareHandle(graphicsHndl);
-
     KNI_FindClass("javax/microedition/lcdui/Graphics", graphicsHndl);
-
     if (!KNI_IsNullHandle(graphicsHndl) && initializeFieldIds(graphicsFieldIds, graphicsHndl, graphicsFieldDesc)) {
         retVal = KNI_TRUE;
         fieldIdsInitialized = KNI_TRUE;
     }
-
     KNI_EndHandles();
     return retVal;
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_ImageExtender_drawImageInternal() {
+#ifdef PISCES_USE_JWC_OLD_IMPLEMENTATION  
     int w, h, offset, xx, yy, x, y;
     int soffset;
     unsigned short rgb, srgb;
@@ -99,6 +81,7 @@ Java_com_sun_pisces_ImageExtender_drawImageInternal() {
     int sr, sg, sb;
     int sa, sam;
     float opacity;
+
     VDC vdc, svdc;
     VDC* pVDC;
     _MidpImage * img;
@@ -116,10 +99,11 @@ Java_com_sun_pisces_ImageExtender_drawImageInternal() {
     y = KNI_GetParameterAsInt(3);
     x = KNI_GetParameterAsInt(2);
     KNI_GetParameterAsObject(1, destinationHandle);
-    
+
+
     pVDC = setupVDC(destinationHandle, &vdc);
     pVDC = getVDC(pVDC);
-    
+
     x += KNI_GetIntField(destinationHandle, 
                             graphicsFieldIds[GRAPHICS_TRANSX]);
     y += KNI_GetIntField(destinationHandle, 
@@ -160,8 +144,8 @@ Java_com_sun_pisces_ImageExtender_drawImageInternal() {
                         db = (sb * sa + sam * b) / (255);
                         dg = (sg * sa + sam * g) / (255);
                          
-                        *((unsigned short *) (pVDC->hdc + offset)) = 
-                        ((dr & 0x1f) << 11) + ((dg & 0x3f) << 5) + (db & 0x1f);
+                        *((unsigned short *) (pVDC->hdc + offset)) =
+                                               ((dr & 0x1f) << 11) + ((dg & 0x3f) << 5) + (db & 0x1f);
                         
                         *(pVDC->alphaData + offset) = sa;
                     }                        
@@ -194,7 +178,7 @@ Java_com_sun_pisces_ImageExtender_drawImageInternal() {
                         dg = (sg * sa + sam * g) / (255);
                          
                         *((unsigned short *) (pVDC->hdc + offset)) = 
-                        ((dr & 0x1f) << 11) + ((dg & 0x3f) << 5) + (db & 0x1f);
+                                                ((dr & 0x1f) << 11) + ((dg & 0x3f) << 5) + (db & 0x1f);
                     }                        
                 }
             }
@@ -205,18 +189,147 @@ Java_com_sun_pisces_ImageExtender_drawImageInternal() {
             for(xx = 0; xx < svdc.width; xx++) {
                 offset = (yy + y) * pVDC->width + xx + x;
                 *((unsigned short *) (pVDC->hdc + offset)) = 
-                *((unsigned short *) (svdc.hdc + yy * svdc.width + xx));    
+                                *((unsigned short *) (svdc.hdc + yy * svdc.width + xx));    
             }
         }
     }
     KNI_EndHandles();
     KNI_ReturnVoid();
-}
+#else
+    int w, h, offset, xx, yy, x, y;
+    int soffset;
+    unsigned short rgb, srgb;
+    int r, g, b;
+    int dr, dg, db;
+    int sr, sg, sb;
+    unsigned char sa, sam;
+    float opacity;
+    gxj_screen_buffer *sbuf;
+    gxj_screen_buffer screen_buffer;
+    unsigned short * srcData;
+    unsigned char * srcAlpha;
+    
+    _MidpImage * img;
+    java_imagedata * imgsrc;
+    java_graphics * gr;
 
-#include "javacall_logging.h"
+    initializeGDFieldIds();
+
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(destinationHandle);
+    KNI_DeclareHandle(imageHandle);
+    opacity = KNI_GetParameterAsFloat(7);
+    KNI_GetParameterAsObject(6, imageHandle);
+    w = KNI_GetParameterAsInt(5);
+    h = KNI_GetParameterAsInt(4);
+    y = KNI_GetParameterAsInt(3);
+    x = KNI_GetParameterAsInt(2);
+    KNI_GetParameterAsObject(1, destinationHandle);
+    
+    gr = GXAPI_GET_GRAPHICS_PTR(destinationHandle);
+    
+    if (gr != NULL) {
+
+            sbuf = gxj_get_image_screen_buffer_impl((gr != NULL && gr->img != NULL)?gr->img->imageData:NULL, 
+              &screen_buffer, destinationHandle);
+             sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+    } else {
+       sbuf = NULL;
+    }    
+    
+
+    x += KNI_GetIntField(destinationHandle, 
+                            graphicsFieldIds[GRAPHICS_TRANSX]);
+    y += KNI_GetIntField(destinationHandle, 
+                          graphicsFieldIds[GRAPHICS_TRANSY]);
+    
+    img= IMGAPI_GET_IMAGE_PTR(imageHandle);
+    imgsrc = img->imageData;
+    
+    srcData = (unsigned short *) &imgsrc->pixelData->elements[0];
+    srcAlpha = (unsigned char *) &imgsrc->alphaData->elements[0];
+
+    if (srcAlpha != NULL && opacity != 0) {
+        if (sbuf->alphaData != NULL) {
+            for(yy = 0 ; yy < imgsrc->height; yy++) {
+                for(xx = 0; xx < imgsrc->width; xx++) {
+                    soffset = yy * imgsrc->width + xx;
+                    sa =  srcAlpha[soffset] * opacity + 0.5;
+                    sam = 255 - sa;
+                    if (sa != 0) {
+                      offset = (yy + y) * sbuf->width + xx + x;
+                        
+                        srgb = *((unsigned short *) (srcData + soffset));
+    
+                        rgb = *((unsigned short *) sbuf->pixelData + offset);
+                        
+                        r =  rgb >> 11;
+                        g = (rgb >> 5) & 0x3f;
+                        b =  rgb &  0x1f;
+                        
+                        sr =  srgb >> 11;
+                        sg = (srgb >> 5) & 0x3f;
+                        sb =  srgb &  0x1f;
+                        
+                        dr = (sr * sa + sam * r) / (255);
+                        db = (sb * sa + sam * b) / (255);
+                        dg = (sg * sa + sam * g) / (255);
+                         
+                        *((unsigned short *) sbuf->pixelData + offset) = 
+                            ((dr & 0x1f) << 11) + ((dg & 0x3f) << 5) + (db & 0x1f);
+                        *((unsigned char *) sbuf->alphaData + offset) = sa;
+                    }                        
+                }
+            }
+        } else {
+            for(yy = 0 ; yy < imgsrc->height; yy++) {
+                for(xx = 0; xx < imgsrc->width; xx++) {
+                    soffset = yy * imgsrc->width + xx;
+                    sa = (int) ((*((unsigned char *)imgsrc->alphaData->elements + soffset)) & 0xff) * opacity + 0.5;
+                    sam = 255 - sa;
+                    if (sa != 0)
+                      {
+                        offset = (yy + y) * sbuf->width + xx + x;
+                        
+                        srgb = *((unsigned short *) imgsrc->pixelData->elements + soffset);
+    
+                        rgb = *((unsigned short *) sbuf->pixelData + offset);
+                        
+                        r =  rgb >> 11;
+                        g = (rgb >> 5) & 0x3f;
+                        b =  rgb &  0x1f;
+                        
+                        sr =  srgb >> 11;
+                        sg = (srgb >> 5) & 0x3f;
+                        sb =  srgb &  0x1f;
+                        
+                        dr = (sr * sa + sam * r) / (255);
+                        db = (sb * sa + sam * b) / (255);
+                        dg = (sg * sa + sam * g) / (255);
+                         
+                        *((unsigned short *) sbuf->pixelData + offset) =                                                               ((dr & 0x1f) << 11) + ((dg & 0x3f) << 5) + (db & 0x1f);
+                    }                        
+                }
+            }
+        } 
+    }
+    else {
+        for(yy = 0 ; yy < imgsrc->height; yy++) {
+            for(xx = 0; xx < imgsrc->width; xx++) {
+                offset = (yy + y) * sbuf->width + xx + x;
+                *((unsigned short *) (sbuf->pixelData + offset)) =
+                  *((unsigned short *) (imgsrc->pixelData + yy * imgsrc->width + xx));    
+            }
+        }
+    }
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+#endif    
+}
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_pisces_ImageExtender_cleanImageInternal() {
+#ifdef PISCES_USE_JWC_OLD_IMPLEMENTATION          
     int x;
     int count, alpha_count;
     VDC svdc;
@@ -244,4 +357,32 @@ Java_com_sun_pisces_ImageExtender_cleanImageInternal() {
     
     KNI_EndHandles();
     KNI_ReturnVoid();
+#else
+    int x;
+    int count, alpha_count;
+    java_imagedata * imgdst;
+    
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(imageHandle);
+
+    KNI_GetParameterAsObject(1, imageHandle);
+
+    imgdst = IMGAPI_GET_IMAGE_PTR(imageHandle)->imageData;
+    
+    if (imgdst->pixelData->elements) {
+        count = imgdst->height * imgdst->width;
+        for (x = 0; x < count; x++) {
+            *((unsigned short *) imgdst->pixelData->elements + x) = 0; 
+        }
+        if (imgdst->alphaData != NULL && imgdst->alphaData->elements != NULL) {
+            alpha_count = imgdst->height * imgdst->width;
+            for (x = 0; x < alpha_count; x++) {
+                *((char *) imgdst->alphaData->elements + x) = 0;
+            }
+        }
+    }
+    
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+#endif    
 }

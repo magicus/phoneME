@@ -31,6 +31,7 @@
 #include <JAbstractSurface.h>
 #include <JTransform.h>
 
+#include <midpPiscesUtils.h>
 #include <PiscesSysutils.h>
 
 #include <PiscesRenderer.inl>
@@ -617,7 +618,7 @@ Java_com_sun_pisces_PiscesRenderer_setLinearGradientImpl() {
 
     SNI_BEGIN_RAW_POINTERS;
 
-    ramp = JavaIntArray(rampHandle)->elements;
+    ramp = PISCES_GET_DATA_POINTER(JavaIntArray(rampHandle));
 
     rdr->_gradient_cycleMethod = cycleMethod;
     renderer_setLinearGradient(rdr, x0, y0, x1, y1,
@@ -659,7 +660,7 @@ Java_com_sun_pisces_PiscesRenderer_setRadialGradientImpl() {
 
     SNI_BEGIN_RAW_POINTERS;
 
-    ramp = JavaIntArray(rampHandle)->elements;
+    ramp = PISCES_GET_DATA_POINTER( JavaIntArray(rampHandle));
 
     rdr->_gradient_cycleMethod = cycleMethod;
     renderer_setRadialGradient(rdr, cx, cy, fx, fy, radius,
@@ -1280,8 +1281,8 @@ Java_com_sun_pisces_PiscesRenderer_setPathData() {
 
     SNI_BEGIN_RAW_POINTERS;
 
-    data = (unsigned int*)JavaIntArray(dataHandle)->elements;
-    commands = JavaByteArray(commandsHandle)->elements;
+    data = (unsigned int*)PISCES_GET_DATA_POINTER(JavaIntArray(dataHandle));
+    commands = PISCES_GET_DATA_POINTER(JavaByteArray(commandsHandle));
 
     for (idx = nCommands; idx; --idx) {
         switch (*commands++) {

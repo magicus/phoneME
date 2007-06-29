@@ -22,7 +22,6 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional 
  * information or have any questions. 
  */
-#include<stdio.h>
 
 #include <JAbstractSurface.h>
 
@@ -32,12 +31,6 @@
 #include <PiscesUtil.h>
 #include <PiscesSysutils.h>
 #include <commonKNIMacros.h>
-
-#include <midpGraphics.h>
-#include <midpLCDUI.h>
-#include <images.h>
-
-#include "javacall_logging.h"
 
 #define SURFACE_NATIVE_PTR 0
 #define SURFACE_GRAPHICS 1
@@ -100,7 +93,7 @@ initializeSurfaceFieldIds(jobject objectHandle) {
     jboolean retVal;
 
     if (fieldIdsInitialized) {
-        return KNI_TRUE;
+      return KNI_TRUE;
     }
 
     retVal = KNI_FALSE;
@@ -126,26 +119,39 @@ surface_acquire(AbstractSurface* surface, jobject surfaceHandle) {
 
     KNI_GetObjectField(surfaceHandle, fieldIds[SURFACE_GRAPHICS], 
                        graphicsHandle);
-
+    
     if (!KNI_IsNullHandle(graphicsHandle)) {
+#ifdef PISCES_USE_JWC_OLD_IMPLEMENTATION      
         VDC vdc;
         VDC* pVDC;
-        _MidpImage * img;
         
         pVDC = setupVDC(graphicsHandle, &vdc);
         pVDC = getVDC(pVDC);
-        
-        img = (_MidpImage *) getMidpGraphicsPtr(graphicsHandle)->img;
-        
-        
+
         surface->super.data = pVDC->hdc;
+#else
+        java_graphics * gr;
+        gxj_screen_buffer *pVDC;
+        gxj_screen_buffer screen_buffer;
+        
+        gr = GXAPI_GET_GRAPHICS_PTR(graphicsHandle);
+        
+        if (gr != NULL) {
+          pVDC = gxj_get_image_screen_buffer_impl((gr != NULL && gr->img != NULL)?gr->img->imageData:NULL, 
+              &screen_buffer, graphicsHandle);
+             pVDC = (gxj_screen_buffer *)getScreenBuffer(pVDC);
+        }
+        
+        surface->super.data = pVDC->pixelData;
+#endif
+        
         surface->super.width = pVDC->width;
         surface->super.height = pVDC->height;
         surface->super.scanlineStride = pVDC->width;
         
-        if (img != NULL && img->alphaData != NULL) {
+        if (pVDC != NULL && pVDC->alphaData != NULL) {
             surface->super.imageType = TYPE_USHORT_5658;
-            surface->super.alphaData = PISCES_GET_DATA_POINTER(img->alphaData);        
+            surface->super.alphaData = pVDC->alphaData;
         } else {
             surface->super.imageType = TYPE_USHORT_565_RGB;
             surface->super.alphaData = NULL;
