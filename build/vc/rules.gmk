@@ -79,6 +79,8 @@ else
 ARFLAGS=-nologo -MACHINE:X86
 endif
 
+LOCAL_CFLAGS_$(BUILD) += $(PLATFORM_FLAGS)
+
 OUTPUT_OPTION=-Fo`$(call fixcygpath, $@)` \
               -Fp$(JAVACALL_OUTPUT_OBJ_DIR)/javacall \
               -Fd$(JAVACALL_OUTPUT_OBJ_DIR)/javacall
