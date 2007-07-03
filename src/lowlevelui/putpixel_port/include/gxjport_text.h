@@ -24,28 +24,41 @@
  * information or have any questions.
  */
 
-#include <kni.h>
+#ifndef _GXJPORT_TEXT_H
+#define _GXJPORT_TEXT_H
+
+
+/**
+ * @defgroup lowui_gx Common Putpixel And Platform Graphics External Interface
+ * @ingroup lowui
+ */
 
 /**
  * @file
+ * @ingroup lowui_gx
  *
- * platform dependent character drawing
+ * @brief Porting api for graphics library
  */
- 
-int pdLCDUIdrawChars(int pixel, const jshort *clip, void *dst, int dotted,
-                     int face, int style, int size,
-                     int x, int y, int anchor, 
-                     const jchar *chararray, int n) {
-    
-    return KNI_FALSE;
-}                           
 
-int pdLCDUIgetFontInfo(int face, int style, int size,
-                       int *ascent, int *descent, int *leading) {
-    return KNI_FALSE;
-}                            
+#include <kni.h>
 
-int pdLCDUIcharsWidth(int face, int style, int size,
-                      const jchar *charArray, int n){
-    return -1;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int gxjport_draw_chars(int pixel,const jshort *clip, void *dst, int dotted,
+                       int face, int style, int size,
+                       int x, int y, int anchor,
+                       const jchar *chararray, int n);
+
+int gxjport_get_font_info(int face, int style, int size,
+                          int *ascent, int *descent, int *leading);
+
+int gxjport_get_chars_width(int face, int style, int size,
+                            const jchar *charArray, int n);
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* _GXJPORT_TEXT_H */

@@ -28,7 +28,7 @@
 #include <midp_logging.h>
 
 #include <gxapi_constants.h>
-#include <gxj_putpixel_text_md.h>
+#include <gxjport_text.h>
 
 #include "gxj_intern_graphics.h"
 #include "gxj_intern_putpixel.h"
@@ -213,8 +213,8 @@ gx_draw_chars(jint pixel, const jshort *clip,
         yDest -= fontHeight - fontDescent;
     }
 
-    result = pdLCDUIdrawChars(pixel, clip, dest, dotted, face, style, size,
-                              xDest, yDest, anchor, charArray, n);
+    result = gxjport_draw_chars(pixel, clip, dest, dotted, face, style, size,
+                                xDest, yDest, anchor, charArray, n);
     if (result == KNI_TRUE) { 
         return;
     }
@@ -345,8 +345,8 @@ gx_get_fontinfo(int face, int style, int size,
 
     REPORT_CALL_TRACE(LC_LOWUI, "LCDUIgetFontInfo()\n");
 
-    result = pdLCDUIgetFontInfo(face, style, size,
-                                ascent, descent, leading);
+    result = gxjport_get_font_info(face, style, size,
+                                   ascent, descent, leading);
     if (result == KNI_TRUE) { 
         return;
     }
@@ -382,7 +382,7 @@ gx_get_charswidth(int face, int style, int size,
 
     REPORT_CALL_TRACE(LC_LOWUI, "LCDUIcharsWidth()\n");
 
-    width = pdLCDUIcharsWidth(face, style, size, charArray, n); 
+    width = gxjport_get_chars_width(face, style, size, charArray, n); 
     if (width > 0) {
         return width;
     }

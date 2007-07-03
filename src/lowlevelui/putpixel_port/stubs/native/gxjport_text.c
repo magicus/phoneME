@@ -25,50 +25,27 @@
  */
 
 #include <kni.h>
-#include <gxapi_constants.h>
-#include <gxj_putpixel.h>
-#include "font_internal.h"
 
 /**
  * @file
  *
  * platform dependent character drawing
  */
-
-int pdLCDUIdrawChars(jint pixel, const jshort *clip, 
-                     gxj_screen_buffer *sbuf, int dotted,
-                     int face, int style, int size,
-                     int x, int y, int anchor, 
-                     const jchar *charArray, int n) {
-    if (!gfFontInit) {
-        gfFontInit = 1;
-        wince_init_fonts();
-    }
-
-    gx_port_draw_chars(pixel, clip, sbuf, dotted,
-        face, style, size, x, y, (TOP | LEFT), charArray, n);
-
-    return KNI_TRUE;
+ 
+int gxjport_draw_chars(int pixel, const jshort *clip, void *dst, int dotted,
+                       int face, int style, int size,
+                       int x, int y, int anchor,
+                       const jchar *chararray, int n) {
+    
+    return KNI_FALSE;
 }                           
 
-int pdLCDUIgetFontInfo(int face, int style, int size,
-                       int *ascent, int *descent, int *leading) {
-    if (!gfFontInit) {
-        gfFontInit = 1;
-        wince_init_fonts();
-    }
-
-    gx_port_get_fontinfo(face, style, size, ascent, descent, leading);
-
-    return KNI_TRUE;
+int gxjport_get_font_info(int face, int style, int size,
+                          int *ascent, int *descent, int *leading) {
+    return KNI_FALSE;
 }                            
 
-int pdLCDUIcharsWidth(int face, int style, int size,
-                      const jchar *charArray, int n) {
-    if (!gfFontInit) {
-        gfFontInit = 1;
-        wince_init_fonts();
-    }
-
-    return gx_port_get_charswidth(face, style, size, charArray, n);
+int gxjport_get_chars_width(int face, int style, int size,
+                            const jchar *charArray, int n) {
+    return -1;
 }
