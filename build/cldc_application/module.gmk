@@ -48,46 +48,46 @@ JSROP_ABSTRACTS_JAVASRCDIRS = \
         $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes
 
 # classes
-JSROP_ABSTRACTS_JAVA_FILES = \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/app/AppPackage.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/app/AppIsolate.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/app/AppModel.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/log/LogChannels.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/log/Logging.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/main/Configuration.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/security/PIMPermission.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/security/Permission.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/security/FileConnectionPermission.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/security/SatsaPermission.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/ConnectionBaseInterface.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/ConnectionBaseAdapter.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/PrivilegedConnector.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/i18n/Resource.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/i18n/ResourceConstants.java 
+ABSTRACTIONS_CLASSES = \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/app/AppPackage.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/app/AppIsolate.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/app/AppModel.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/log/LogChannels.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/log/Logging.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/main/Configuration.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/PIMPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/Permission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/FileConnectionPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/SatsaPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseInterface.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseAdapter.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/PrivilegedConnector.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/i18n/ResourceConstants.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/TrustedClass.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/Token.java
 
 ifeq ($(USE_JSR_177), true)
-JSROP_ABSTRACTS_JAVA_FILES += \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/security/TrustedClass.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/security/Token.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/io/FileAccess.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/dialog/Dialog.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/dialog/MessageDialog.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/Util.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/Cipher.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/RSAPublicKey.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/NoSuchAlgorithmException.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/IllegalBlockSizeException.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/BadPaddingException.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/ShortBufferException.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/InvalidKeyException.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/InvalidAlgorithmParameterException.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/NoSuchPaddingException.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/CryptoParameter.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/SecretKey.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/IvParameter.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/Key.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/MessageDigest.java \
-    $(JSROP_ABSTRACTS_DIR)/src/cldc_application/classes/com/sun/j2me/crypto/DigestException.java
+ABSTRACTIONS_CLASSES += \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/FileAccess.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/dialog/Dialog.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/dialog/MessageDialog.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/Util.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/Cipher.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/RSAPublicKey.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchAlgorithmException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/IllegalBlockSizeException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/BadPaddingException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/ShortBufferException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/InvalidKeyException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/InvalidAlgorithmParameterException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchPaddingException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/CryptoParameter.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/SecretKey.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/IvParameter.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/Key.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/MessageDigest.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/DigestException.java
 endif
 
 # Specify romizer configuration file for the jsr
@@ -100,18 +100,11 @@ ROMGEN_CFG_FILES     += abstractions_rom.cfg
 JTWI_NATIVE_FILES  += $(JSROP_ABSTRACTS_NATIVES)
 EXTRA_INCLUDES	   += $(JSROP_ABSTRACTS_INCLUDES)
 
-source_bundle:: abstrats_source_bundle
-
-# Create ABSTRACTS source in subdir 'abstracts/'
-ABSTRACTS_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/abstracts
-
-# Copy and filter abstracts source in ABSTRACTS_SOURCE_OUTPUT_DIR
-abstracts_source_bundle: SOURCE_OUTPUT_DIR
-	@echo " ... ABSTRACTS source bundle" $(LOG)
-	@$(call re_src_filter,$(JSROP_ABSTRACTS_DIR),$(ABSTRACTS_SOURCE_OUTPUT_DIR),src)
-
-$(MIDP_CLASSES_ZIP):: $(JSROP_ABSTRACTS_JAVA_FILES)
+$(MIDP_CLASSES_ZIP):: $(ABSTRACTIONS_CLASSES)
 	$(appendjavafiles)
 
+# Copy and filter abstractions source in ABSTRACTIONS_SOURCE_OUTPUT_DIR
+abstractions_source_bundle:: $(ABSTRACTIONS_DIR)
+	$(AT)$(call source_bundle_filter,$(ABSTRACTIONS_DIR),$(ABSTRACTIONS_SOURCE_OUTPUT_DIR),src/cldc_application build/cldc_application )
 
 
