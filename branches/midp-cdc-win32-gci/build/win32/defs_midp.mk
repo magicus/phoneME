@@ -36,8 +36,13 @@ PCSL_MAKE_OPTIONS = USE_CYGWIN=true
 # MIDP defs
 #
 
-MIDP_PLATFORM     = $(WIN32_PLATFORM)
-MIDP_MAKEFILE_DIR = build/$(WIN32_PLATFORM)
+ifeq ($(USE_GCI), true)
+    MIDP_PLATFORM ?= win32_gci
+else
+    MIDP_PLATFORM ?= $(WIN32_PLATFORM)
+endif
+
+MIDP_MAKEFILE_DIR = build/$(MIDP_PLATFORM)
 
 CONFIGURATION_OVERRIDE	= \
         $(MIDP_DIR)/src/configuration/wince/sp176x220.xml
