@@ -858,7 +858,7 @@ $(CVM_DERIVEDROOT)/jni/.time.stamp : $(LIB_CLASSESJAR)
 		$(CVM_JAVAH) -jni					\
 			-d $(CVM_DERIVEDROOT)/jni			\
 			-classpath $(call POSIX2HOST, $(LIB_CLASSESJAR))$(JSR_JNI_CLASSPATH) \
-			-bootclasspath $(CVM_BUILDTIME_CLASSESZIP)	\
+			-bootclasspath $(call POSIX2HOST, $(CVM_BUILDTIME_CLASSESZIP))	\
 			$(JSR_JNI_CLASSES) @$(CVM_BUILD_TOP)/.javahclasses.list ;		\
 	fi
 	@touch $@
