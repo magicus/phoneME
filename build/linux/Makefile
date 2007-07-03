@@ -55,7 +55,7 @@ CC = gcc
 LD = gcc
 
 DEBUG_FLAG =  
-LDFLAGS =
+LDFLAGS = -static
 
 ifeq ($(DEBUG), true)
    DEBUG_FLAG = -g 
