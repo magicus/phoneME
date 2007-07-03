@@ -140,3 +140,7 @@ $(ABSTRACTIONS_NATIVE_OBJS): javacall_lib
 $(ABSTRACTIONS_NATIVE_LIBRARY) :: $(ABSTRACTIONS_NATIVE_OBJS)
 	@echo "Linking $@"
 	$(SO_LINK_CMD) $(JAVACALL_LINKLIBS) -L$(JSROP_LIB_DIR)
+
+# Copy and filter abstractions source in ABSTRACTIONS_SOURCE_OUTPUT_DIR
+abstractions_source_bundle:: $(ABSTRACTIONS_DIR)
+	$(AT)$(call source_bundle_filter,$(ABSTRACTIONS_DIR),$(ABSTRACTIONS_SOURCE_OUTPUT_DIR),src/cdc_share build/cdc_share )

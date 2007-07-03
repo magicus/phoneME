@@ -103,5 +103,8 @@ EXTRA_INCLUDES	   += $(JSROP_ABSTRACTS_INCLUDES)
 $(MIDP_CLASSES_ZIP):: $(ABSTRACTIONS_CLASSES)
 	$(appendjavafiles)
 
+# Copy and filter abstractions source in ABSTRACTIONS_SOURCE_OUTPUT_DIR
+abstractions_source_bundle:: $(ABSTRACTIONS_DIR)
+	$(AT)$(call source_bundle_filter,$(ABSTRACTIONS_DIR),$(ABSTRACTIONS_SOURCE_OUTPUT_DIR),src/cldc_application build/cldc_application )
 
 

@@ -71,3 +71,8 @@ ABSTRACTIONS_CLASSES = \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/ResourceConstants.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/StreamWriter.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/StreamReader.java
+    
+# Copy and filter abstractions source in ABSTRACTIONS_SOURCE_OUTPUT_DIR
+abstractions_source_bundle:: $(ABSTRACTIONS_DIR)
+	$(AT)$(call source_bundle_filter,$(ABSTRACTIONS_DIR),$(ABSTRACTIONS_SOURCE_OUTPUT_DIR),src/jump_application build/jump_application )
+
