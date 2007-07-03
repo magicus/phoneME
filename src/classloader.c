@@ -942,7 +942,7 @@ createInternalClass0(CICcontext *context, ClassClass *cb,
             if (have_inner_classes) {
                 JAVA_ERROR(context, "Duplicate InnerClasses attribute");
             }
-            have_inner_classes = FALSE;
+            have_inner_classes = TRUE;
 
             ucb->inner_classes_count = count;
             ucb->inner_classes = thisInnerClass;
