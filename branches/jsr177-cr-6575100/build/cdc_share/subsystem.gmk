@@ -173,3 +173,7 @@ $(JSR_177_NATIVE_OBJS): javacall_lib
 $(JSR_177_NATIVE_LIB): $(JSR_177_NATIVE_OBJS) $(ABSTRACTIONS_NATIVE_LIBRARY)
 	@echo "Linking $@"
 	$(AT)$(call makeSharedLibrary, $(JSR_177_NATIVE_OBJS))
+
+# Copy and filter SATSA source in SATSA_SOURCE_OUTPUT_DIR
+satsa_source_bundle:: $(JSR_177_DIR)
+	$(AT)$(call source_bundle_filter,$(JSR_177_DIR),$(SATSA_SOURCE_OUTPUT_DIR), build/cdc_share src/cdc_share)	
