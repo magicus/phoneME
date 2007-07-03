@@ -30,7 +30,6 @@
 
 #include <string.h>
 #include <stdlib.h> /* strtol() */
-#include <errno.h>
 
 #include <javacall_memory.h>
 #include <javacall_logging.h>
