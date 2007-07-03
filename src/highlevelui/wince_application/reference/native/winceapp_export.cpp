@@ -46,7 +46,6 @@
 
 #include "resources.h"
 
-
 /**
  * The functions exported by gx.h use C++ linkage, hence this file
  * must be C++.
@@ -1185,6 +1184,16 @@ HDC getScreenBufferHDC(gxj_pixel_type *buffer, int width, int height) {
 
     DDSURFACEDESC ddsd;
     HRESULT hRet;
+
+    if (g_pDD == NULL) {
+        init_DirectDraw();
+        if (g_pDD == NULL) {
+            /* DirectDraw failed to initialize. 
+             * Let's use GDI to Blit to the LCD. 
+             */
+            return NULL;
+        }
+    }
 
     if (buffer == cachedBuffer && cachedHDC != NULL && !pDDS->IsLost()) {
         /* Note: after screen rotation has happened, the pDDS surface may

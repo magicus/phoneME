@@ -28,6 +28,7 @@
 #include <midp_logging.h>
 
 #include <gxapi_constants.h>
+#include <gxjport_text.h>
 
 #include "gxj_intern_graphics.h"
 #include "gxj_intern_putpixel.h"
@@ -169,12 +170,15 @@ gx_draw_chars(jint pixel, const jshort *clip,
     int yCharSource;
     int fontWidth;
     int fontHeight;
+    int fontAscent;
     int fontDescent;
+    int fontLeading;
     int clipX1 = clip[0];
     int clipY1 = clip[1];
     int clipX2 = clip[2];
     int clipY2 = clip[3];
     int diff;
+    int result;
     gxj_screen_buffer screen_buffer;
     gxj_screen_buffer *dest = 
       gxj_get_image_screen_buffer_impl(dst, &screen_buffer, NULL);
@@ -182,20 +186,14 @@ gx_draw_chars(jint pixel, const jshort *clip,
 
     REPORT_CALL_TRACE(LC_LOWUI, "LCDUIdrawChars()\n");
 
-    /* Surpress unused parameter warnings */
-    (void)dotted;
-    (void)face;
-    (void)size;
-    (void)style;
-
     if (n <= 0) {
         /* nothing to do */
         return;
     }
 
-    fontWidth = FontBitmaps[1][FONT_WIDTH];
-    fontHeight = FontBitmaps[1][FONT_HEIGHT];
-    fontDescent = FontBitmaps[1][FONT_DESCENT];
+    gx_get_fontinfo(face, style, size, &fontAscent, &fontDescent, &fontLeading);
+    fontWidth = gx_get_charswidth(face, style, size, charArray, n);
+    fontHeight = fontAscent + fontDescent + fontLeading;
 
     xDest = x;
     if (anchor & RIGHT) {
@@ -214,6 +212,16 @@ gx_draw_chars(jint pixel, const jshort *clip,
     if (anchor & BASELINE) {
         yDest -= fontHeight - fontDescent;
     }
+
+    result = gxjport_draw_chars(pixel, clip, dest, dotted, face, style, size,
+                                xDest, yDest, anchor, charArray, n);
+    if (result == KNI_TRUE) { 
+        return;
+    }
+
+    fontWidth = FontBitmaps[1][FONT_WIDTH];
+    fontHeight = FontBitmaps[1][FONT_HEIGHT];
+    fontDescent = FontBitmaps[1][FONT_DESCENT];
 
     width = fontWidth * n;
     yLimit = fontHeight;
@@ -333,13 +341,15 @@ gx_draw_chars(jint pixel, const jshort *clip,
 void
 gx_get_fontinfo(int face, int style, int size, 
 		int *ascent, int *descent, int *leading) {
+    int result;
 
     REPORT_CALL_TRACE(LC_LOWUI, "LCDUIgetFontInfo()\n");
 
-    /* Surpress unused parameter warnings */
-    (void)face;
-    (void)size;
-    (void)style;
+    result = gxjport_get_font_info(face, style, size,
+                                   ascent, descent, leading);
+    if (result == KNI_TRUE) { 
+        return;
+    }
 
     *ascent  = FontBitmaps[1][FONT_ASCENT];
     *descent = FontBitmaps[1][FONT_DESCENT];
@@ -368,14 +378,14 @@ gx_get_fontinfo(int face, int style, int size,
 int
 gx_get_charswidth(int face, int style, int size, 
 		  const jchar *charArray, int n) {
+    int width;
 
     REPORT_CALL_TRACE(LC_LOWUI, "LCDUIcharsWidth()\n");
 
-    /* Surpress unused parameter warnings */
-    (void)face;
-    (void)size;
-    (void)style;
-    (void)charArray;
+    width = gxjport_get_chars_width(face, style, size, charArray, n); 
+    if (width > 0) {
+        return width;
+    }
 
     return n * FontBitmaps[1][FONT_WIDTH];
 }

@@ -86,6 +86,8 @@ endif
 
 ifeq ($(SUBSYSTEM_GRAPHICS_MODULES), gx_platform) 
     include $(SUBSYSTEM_LOWUI_DIR)/platform_graphics_port/$(LIB_MAKE_FILE)
+else
+    include $(SUBSYSTEM_LOWUI_DIR)/putpixel_port/$(LIB_MAKE_FILE)
 endif
 
 #####################################################################
