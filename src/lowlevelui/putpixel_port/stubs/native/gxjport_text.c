@@ -36,16 +36,41 @@ int gxjport_draw_chars(int pixel, const jshort *clip, void *dst, int dotted,
                        int face, int style, int size,
                        int x, int y, int anchor,
                        const jchar *chararray, int n) {
+    (void)pixel;
+    (void)clip;
+    (void)dst;
+    (void)dotted;
+    (void)face;
+    (void)style;
+    (void)size;
+    (void)x;
+    (void)y;
+    (void)anchor;
+    (void)chararray;
+    (void)n;
     
     return KNI_FALSE;
 }                           
 
 int gxjport_get_font_info(int face, int style, int size,
                           int *ascent, int *descent, int *leading) {
+    (void)face;
+    (void)style;
+    (void)size;
+    (void)ascent;
+    (void)descent;
+    (void)leading;
+                          
     return KNI_FALSE;
 }                            
 
 int gxjport_get_chars_width(int face, int style, int size,
                             const jchar *charArray, int n) {
+    (void)face;
+    (void)style;
+    (void)size;
+    (void)charArray;
+    (void)n;
+
     return -1;
 }
