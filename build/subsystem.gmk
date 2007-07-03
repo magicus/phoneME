@@ -402,18 +402,6 @@ SUBSYSTEM_SATSA_NATIVE_FILES = \
 EXTRA_CFLAGS += -DENABLE_JSR_177
 JPP_DEFS += -DENABLE_JSR_177
 
-ifeq ($(JSR_177_PROJECT_CFG),)
-ifeq ($(TARGET_VM), cldc_vm)
-include $(JSR_177_DIR)/build/cldc_application/subsystem.gmk
-else
-ifeq ($(USE_JUMP), true)
-include $(JSR_177_DIR)/build/jump_application/subsystem.gmk
-endif
-endif
-else
-include $(JSR_177_PROJECT_CFG)
-endif
-
 ifneq ($(TARGET_VM), cldc_vm)
 include $(JSR_177_DIR)/build/cdc_share/subsystem.gmk
 endif
@@ -604,9 +592,11 @@ source_bundle:: satsa_source_bundle
 SATSA_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr177
 
 # Copy and filter SATSA source in SATSA_SOURCE_OUTPUT_DIR
-satsa_source_bundle: $(JSR_177_DIR)
+satsa_source_bundle:: $(JSR_177_DIR)
 	@echo " ... JSR 177 source bundle" $(LOG)
-	$(AT)$(call source_bundle_filter,$(JSR_177_DIR),$(SATSA_SOURCE_OUTPUT_DIR),build src)
+	$(AT)$(call source_bundle_filter,$(JSR_177_DIR),$(SATSA_SOURCE_OUTPUT_DIR), src/share)
+	$(AT)mkdir $(SATSA_SOURCE_OUTPUT_DIR)/build
+	$(AT)cp -f $(JSR_177_DIR)/build/subsystem.gmk $(SATSA_SOURCE_OUTPUT_DIR)/build/subsystem.gmk
 
 # Subsystem verify rules
 #
@@ -635,3 +625,10 @@ jsr177_display:
 	@echo   "JSR_177_APDU_PLATFORM_API   = ""$(JSR_177_APDU_PLATFORM_API)" $(LOG)
 	@echo   "" $(LOG)
 
+ifeq ($(TARGET_VM), cldc_vm)
+include $(JSR_177_DIR)/build/cldc_application/subsystem.gmk
+else
+ifeq ($(USE_JUMP), true)
+include $(JSR_177_DIR)/build/jump_application/subsystem.gmk
+endif
+endif
