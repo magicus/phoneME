@@ -376,19 +376,22 @@ J2ME_CLASSLIB		?= cdc
 
 # MIDP requires at least foundation
 ifeq ($(USE_MIDP),true)
-    ifeq ($(J2ME_CLASSLIB), cdc)
-	J2ME_CLASSLIB = foundation
-    endif
+ifeq ($(J2ME_CLASSLIB), cdc)
+$(warning Forcing J2ME_CLASSLIB=foundation because USE_MIDP=true requires foundation)
+J2ME_CLASSLIB = foundation
+endif
 endif
 
 # JUMP requires at least basis
 ifeq ($(USE_JUMP),true)
-   ifeq ($(J2ME_CLASSLIB), cdc)
-      override J2ME_CLASSLIB = basis
-   endif
-   ifeq ($(J2ME_CLASSLIB), foundation)
-      override J2ME_CLASSLIB = basis
-   endif
+ifeq ($(J2ME_CLASSLIB), cdc)
+override J2ME_CLASSLIB = basis
+$(warning Forcing J2ME_CLASSLIB=basis because USE_JUMP=true requires basis)
+endif
+ifeq ($(J2ME_CLASSLIB), foundation)
+override J2ME_CLASSLIB = basis
+$(warning Forcing J2ME_CLASSLIB=basis because USE_JUMP=true requires basis)
+endif
 endif   # USE_JUMP
 
 # The "all" rule below must come before pulling in any makefiles with rules
