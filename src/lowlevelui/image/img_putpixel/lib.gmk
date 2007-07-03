@@ -41,8 +41,15 @@ MIDP_JAVADOC_SOURCEPATH += $(IMAGE_MODULE_DIR)/classes
 # Java files for the putpixel module
 #
 SUBSYSTEM_IMAGE_JAVA_FILES += \
-    $(IMAGE_MODULE_DIR)/classes/javax/microedition/lcdui/ImageData.java \
-    $(IMAGE_MODULE_DIR)/classes/javax/microedition/lcdui/ImageDataFactory.java
+    $(IMAGE_MODULE_DIR)/classes/javax/microedition/lcdui/ImageData.java
+
+ifeq ($(TARGET_VM), cdc_vm)
+SUBSYSTEM_IMAGE_JAVA_FILES += \
+     $(IMAGE_MODULE_DIR)/cdc_application/classes/javax/microedition/lcdui/ImageDataFactory.java
+else
+SUBSYSTEM_IMAGE_JAVA_FILES += \
+     $(IMAGE_MODULE_DIR)/classes/javax/microedition/lcdui/ImageDataFactory.java
+endif
 
 # vpath for putixel module
 #
