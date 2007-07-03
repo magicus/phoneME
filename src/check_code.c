@@ -524,11 +524,12 @@ verify_method(context_type *context, struct methodblock *mb)
            (long)mb);
     }
 #endif
-
-    if (((access_bits & ACC_PUBLIC) != 0) && 
-    ((access_bits & (ACC_PRIVATE | ACC_PROTECTED)) != 0)) {
-    CCerror(context, "Inconsistent access bits.");
-    } 
+    if (strcmp(mb->fb.name, "<clinit>") != 0) { //see CR4500212
+      if (((access_bits & ACC_PUBLIC) != 0) && 
+      ((access_bits & (ACC_PRIVATE | ACC_PROTECTED)) != 0)) {
+      CCerror(context, "Inconsistent access bits.");
+      } 
+    }
 
     if ((access_bits & (ACC_ABSTRACT | ACC_NATIVE)) != 0) { 
     /* not much to do for abstract or native methods */

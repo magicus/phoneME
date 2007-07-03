@@ -861,7 +861,8 @@ createInternalClass0(CICcontext *context, ClassClass *cb,
         for (j = 0; j < attribute_count; j++) {
             char *attr_name = getAsciz(context, FALSE);
             if (strcmp(attr_name, "Code") == 0) {
-                if  ((mb->fb.access & (ACC_NATIVE | ACC_ABSTRACT))==0) {
+                if  (((mb->fb.access & (ACC_NATIVE | ACC_ABSTRACT))==0) 
+                      || (strcmp(mb->fb.name, "<clinit>") == 0)) {
                     ReadInCode(context, mb);
                 } else { 
                     JAVA_ERROR(context, "Abstract and native methods cannot "
