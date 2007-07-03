@@ -29,6 +29,7 @@ CVM_MIDP_BUILDDIR	= $(CDC_DIST_DIR)/midp
 ifeq ($(USE_MIDP),true)
 
 # Include target specific makefiles first
+-include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_midp.mk
 -include ../$(TARGET_CPU_FAMILY)/defs_midp.mk
 -include ../$(TARGET_OS)/defs_midp.mk
 
