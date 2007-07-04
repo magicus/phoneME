@@ -45,17 +45,14 @@ endif
 # Copy files from specified sub directories that are under svn controlled.
 # Usage: source_bundle_filter(src_dir, output_dir, sub_dir_list)
 define source_bundle_filter
-	if [ -d "$(1)/.svn" ]; then \
-		(for i in $(3); do \
-			mkdir -p $(2)/$$i; \
-			svn export --force -q $(1)/$$i $(2)/$$i; \
-		done); \
-	else \
-		mkdir -p $(2); \
-		(for i in $(3); do \
-			cp -rp $(1)/$$i $(2)/$$i; \
-		done); \
-	fi
+		for i in $(3); do \
+		    mkdir -p $(2)/$$i; \
+            if [ -d "$(1)/.svn" ]; then \
+			    svn export --force -q $(1)/$$i $(2)/$$i; \
+            else \
+			    cp -rp $(1)/$$i/* $(2)/$$i; \
+            fi \
+		done
 endef
 
 # compileJavaClasses(outputDir, javaFiles, extraJavacOptions)
