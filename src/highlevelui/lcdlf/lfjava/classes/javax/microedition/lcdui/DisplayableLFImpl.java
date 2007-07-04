@@ -34,7 +34,6 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.chameleon.skins.*;
 
-
 /**
 * This is the look &amp; feel implementation for Displayable.
 */
@@ -844,81 +843,118 @@ class DisplayableLFImpl implements DisplayableLF {
         lRequestPaint(0, 0, viewport[WIDTH], viewport[HEIGHT]);
     }
 
+
+    /**
+     * IMPL_NOTE: Invalidate requests are served with a limited rate to
+     *   not exceed 25 fps, i.e. 40 ms delay is enabled between sequential
+     *   requests. More frequent requests are ignored, the invalidate
+     *   request timer guarantees they will be processed in a predefined
+     *   time frame (INVALIDATE_REQUESTS_GRACE).
+     */
+
     /** Last time the invalidate request was accepted */
     private long lastTimeInvalidate = 0;
 
     /** Timer to schedule delayed invalidate task */
     private InvalidateTimer invalidateTimer = new InvalidateTimer();
 
-    /** The time in millisecond to delay sequential invalidate requests */
-    private final int INVALIDATE_REQUESTS_DELAY = 40; // 25 fps
+    /** The time in milliseconds between sequential invalidate requests */
+    private final int INVALIDATE_REQUESTS_PERIOD = 40; // 40ms is 25fps
+
+    /** Grace period to process last unserved invalidate request */
+    private final int INVALIDATE_REQUESTS_GRACE = 80; // ms
 
     /**
      * Invalidate timer class is designed to postpone too frequent
      * requests for Displayable invalidation.
      *
-     * IMPL_NOTE: The methods cancel() and adjust() are to be as fast
+     * IMPL_NOTE: The methods cancel() and schedule() are to be as fast
      *   as possible, so method run() has simplified synchronization
      *   that enables cancelled invalidate request to be done on thread
      *   wake up.
      */
     class InvalidateTimer implements Runnable {
         /** The time to postpone an inavlidate request for */
-        private long delay = -1;
-        /** Indicates whether invalidate timer thread is started */
-        private boolean started = false;
+        private long delay = 0;
+
+        /** Invalidate timer states */
+
+        final int DEAD = 0;      // Timer thread is not started
+        final int WAITING = 1;   // Thread is waiting to request invalidate
+        final int ACTIVATED = 2; // Timer is activated to request invalidate
+        final int IDLE = 3;      // Invalidate request is not scheduled:
+                                 //   timer is either done, or cancelled
+
+        /** State of the invalidate timer */
+        private int state = DEAD;
 
         /**
          * Cancel postponed invalidate request.
          * If invalidate timer thread is started, it will be stopped on wake up.
          */
         synchronized void cancel() {
-            delay = -1;
+            if (state != DEAD) {
+                state = IDLE;
+                delay = 0;
+            }
         }
 
         /** Wait until postponed invalidate request can be done or cancelled */
         public void run() {
-            long sleepTime;
-            while ((sleepTime = delay) > 0) {
+            while (true) {
+                long sleepTime;
+                synchronized(this) {
+                    if (state == WAITING) {
+                        state = ACTIVATED;
+                        sleepTime = delay;
+                    } else {
+                        // Terminate timer thread
+                        state = DEAD;
+                        delay = 0;
+                        return;
+                    }
+                }
                 try {
-                    delay = 0;
                     Thread.sleep(sleepTime);
-                    // While thread was sleeping the postponed request
-                    // could be cancelled or adjusted to a later time
-                    if (delay < 0) { break; }
-                    if (delay > 0) { continue; }
+                } catch (InterruptedException ie) {
+                    // Consider interruption as wakeup
+                }
+                if (state == ACTIVATED){
                     invalidate();
-                } catch (InterruptedException ie) {}
-            }
-            synchronized(this) {
-                started = false;
+                }
             }
         }
+
         /**
          * Schedule postponed invalidate request to be done later,
          * start invalidate timer thread if it has not been started yet.
          * @param time time to postpone the invalidate request for
          */
-        synchronized void adjust(long time) {
-            delay = time;
-            if (!started) {
-                started = true;
-                new Thread(this).start();
+        synchronized void schedule(long time) {
+            if (state == IDLE || state == DEAD) {
+                delay = time;
+                if (state == DEAD) {
+                    state = WAITING;
+                    new Thread(this).start();
+                } else {
+                    state = WAITING;
+                }
             }
         }
 
-        /**
-         * Process postponed invalidate request.
-         * IMPL_NOTE: Method has no synchronization to not block
-         *   adjust() and cancel() in the case LCDUILock is awaited.
-         *   In the worst case excessive invalidate request will be done.
-         */
+        /** Process scheduled invalidate request. */
         private void invalidate() {
             synchronized (Display.LCDUILock) {
-                if (delay == 0) {
+                // While LCDUILock was awaited, the timer state could be changed
+                if (state == ACTIVATED) {
                     lRequestInvalidateImpl();
+
+                    // IMPL_NOTE: No sync on timer instance since LCDUILock
+                    //   guarantees other timer methods can't be called
+                    //   from the only caller lRequestInvalidate()
                     lastTimeInvalidate = System.currentTimeMillis();
-                    delay = -1;
+                    state = IDLE;
+                    delay = 0;
                 }
             }
         }
@@ -933,21 +969,16 @@ class DisplayableLFImpl implements DisplayableLF {
      * SNC NOTE: Caller should hold LCDUILock.
      */
     void lRequestInvalidate() {
-        long invalidateDelta =
-                System.currentTimeMillis() - lastTimeInvalidate;
-        if (invalidateDelta >= INVALIDATE_REQUESTS_DELAY ) {
+        long timePassed = System.currentTimeMillis() - lastTimeInvalidate;
+        if (timePassed > INVALIDATE_REQUESTS_PERIOD) {
             invalidateTimer.cancel();
             lRequestInvalidateImpl();
-            lastTimeInvalidate += invalidateDelta;
+            lastTimeInvalidate += timePassed;
 
         } else {
             // Postpone too frequent invalidate requests.
-            // IMPL_NOTE: It is possible the last invalidate request
-            //   in a sequence will be delayed for a time bigger than
-            //   INVALIDATE_REQUESTS_DELAY, since invalidate timer thread
-            //   adjusts the time on wake up only.
-            invalidateTimer.adjust(
-                INVALIDATE_REQUESTS_DELAY - invalidateDelta);
+            invalidateTimer.schedule(
+                INVALIDATE_REQUESTS_GRACE - timePassed);
         }
     }
 
