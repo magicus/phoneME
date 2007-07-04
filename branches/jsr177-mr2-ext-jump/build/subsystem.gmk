@@ -595,7 +595,7 @@ SATSA_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr177
 satsa_source_bundle:: $(JSR_177_DIR)
 	@echo " ... JSR 177 source bundle" $(LOG)
 	$(AT)$(call source_bundle_filter,$(JSR_177_DIR),$(SATSA_SOURCE_OUTPUT_DIR), src/share)
-	$(AT)mkdir $(SATSA_SOURCE_OUTPUT_DIR)/build
+	$(AT)mkdir -p $(SATSA_SOURCE_OUTPUT_DIR)/build
 	$(AT)cp -f $(JSR_177_DIR)/build/subsystem.gmk $(SATSA_SOURCE_OUTPUT_DIR)/build/subsystem.gmk
 
 # Subsystem verify rules
