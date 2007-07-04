@@ -46,9 +46,13 @@ SUBSYSTEM_JSR172_PACKAGES = \
    javax.microedition.xml.rpc \
    javax.xml.namespace \
    javax.xml.parsers \
-   javax.xml.rpc \
+   javax.xml.rpc
+
+ifneq ($(USE_JSR_280), true)
+SUBSYSTEM_JSR172_PACKAGES += \
    org.xml.sax \
    org.xml.sax.helpers
+endif
 
 MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_JSR172_SOURCEPATH)
 MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_JSR172_PACKAGES)
@@ -77,8 +81,13 @@ SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
 
 # ri_jaxp 
 #
+INTERNAL_JSR_172_EGREP = | egrep -v 'SCCS'
+ifeq ($(USE_JSR_280), true)
+INTERNAL_JSR_172_EGREP += | egrep -v 'org/xml/sax' | egrep -v 'javax/xml/parsers'
+INTERNAL_JSR_172_EGREP += | egrep -v 'Parser.java' | egrep -v 'ParserFactory.java'
+endif
 INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES := \
-       	$(shell (find $(INTERNAL_JSR_172_RI_DIR)/jaxp -name '*.java' | egrep -v 'SCCS'))
+       	$(shell (find $(INTERNAL_JSR_172_RI_DIR)/jaxp -name '*.java' $(INTERNAL_JSR_172_EGREP)))
 
 # ri_jaxrpc
 #
