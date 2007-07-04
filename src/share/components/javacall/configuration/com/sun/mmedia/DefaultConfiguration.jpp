@@ -71,7 +71,7 @@ public class DefaultConfiguration extends Configuration {
         {MIME_AUDIO_MIDI_2, "com.sun.mmedia.DirectPlayer"},
         {MIME_AUDIO_SP_MIDI, "com.sun.mmedia.DirectPlayer"},
     // #ifndef ABB [
-/*
+
         {MIME_AUDIO_MP3, "com.sun.mmedia.DirectPlayer"},
         {MIME_AUDIO_MP3_2, "com.sun.mmedia.DirectPlayer"},
         {MIME_AUDIO_MP4, "com.sun.mmedia.DirectPlayer"},
@@ -83,7 +83,7 @@ public class DefaultConfiguration extends Configuration {
         {MIME_VIDEO_3GPP_2, "com.sun.mmedia.DirectVideo"},
         {MIME_VIDEO_MPEG, "com.sun.mmedia.DirectVideo"},
         {MIME_VIDEO_MPEG4, "com.sun.mmedia.DirectVideo"},
-*/
+
 // #ifdef ENABLE_INDIRECT_VIDEO [        
         {MIME_IMAGE_GIF, "com.sun.mmedia.GIFPlayer"},
 // #endif ]        
@@ -446,7 +446,7 @@ public class DefaultConfiguration extends Configuration {
             // #endif ]
                 };
         }
-/*
+
         if (content_type.equals(MIME_AUDIO_MP3) ||
             content_type.equals(MIME_AUDIO_MP3_2)) {
             return new String[]{
@@ -510,7 +510,7 @@ public class DefaultConfiguration extends Configuration {
             // #endif ]
             };
         }
-*/
+
 
     // #ifdef VIDEO_CAPTURE [
         if (content_type.equals(MIME_IMAGE_PNG)) {
