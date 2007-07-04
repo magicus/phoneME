@@ -849,7 +849,7 @@ class DisplayableLFImpl implements DisplayableLF {
      *   not exceed 25 fps, i.e. 40 ms delay is enabled between sequential
      *   requests. More frequent requests are ignored, the invalidate
      *   request timer guarantees they will be processed in a predefined
-     *   time frame (INVALIDATE_REQUESTS_GRACE).
+     *   time frame.
      */
 
     /** Last time the invalidate request was accepted */
@@ -859,7 +859,7 @@ class DisplayableLFImpl implements DisplayableLF {
     private InvalidateTimer invalidateTimer = new InvalidateTimer();
 
     /** The time in milliseconds between sequential invalidate requests */
-    private final int INVALIDATE_REQUESTS_PERIOD = 40; // 40ms is 25fps
+    private final int INVALIDATE_REQUESTS_PERIOD = 40; // 40 ms is 25 fps
 
     /** Grace period to process last unserved invalidate request */
     private final int INVALIDATE_REQUESTS_GRACE = 80; // ms
@@ -874,19 +874,18 @@ class DisplayableLFImpl implements DisplayableLF {
      *   wake up.
      */
     class InvalidateTimer implements Runnable {
-        /** The time to postpone an inavlidate request for */
-        private long delay = 0;
 
         /** Invalidate timer states */
-
-        final int DEAD = 0;      // Timer thread is not started
-        final int WAITING = 1;   // Thread is waiting to request invalidate
-        final int ACTIVATED = 2; // Timer is activated to request invalidate
-        final int IDLE = 3;      // Invalidate request is not scheduled:
-                                 //   timer is either done, or cancelled
-
-        /** State of the invalidate timer */
-        private int state = DEAD;
+        final static int DEAD = -1;      // Timer thread is not started
+        final static int ACTIVATED = -2; // Timer is activated to request invalidate on wakeup
+        final static int IDLE = -3;      // Invalidate request is not scheduled since
+                                         //   timer is either done, or cancelled
+        /**
+         * State of the invalidate timer.
+         * A positive value is one more timer state meaning
+         * the time to wait to process inavlidate request.
+         */
+        private long state = DEAD;
 
         /**
          * Cancel postponed invalidate request.
@@ -895,7 +894,6 @@ class DisplayableLFImpl implements DisplayableLF {
         synchronized void cancel() {
             if (state != DEAD) {
                 state = IDLE;
-                delay = 0;
             }
         }
 
@@ -904,13 +902,12 @@ class DisplayableLFImpl implements DisplayableLF {
             while (true) {
                 long sleepTime;
                 synchronized(this) {
-                    if (state == WAITING) {
+                    if (state > 0) {
+                        sleepTime = state;
                         state = ACTIVATED;
-                        sleepTime = delay;
                     } else {
                         // Terminate timer thread
                         state = DEAD;
-                        delay = 0;
                         return;
                     }
                 }
@@ -931,21 +928,18 @@ class DisplayableLFImpl implements DisplayableLF {
          * @param time time to postpone the invalidate request for
          */
         synchronized void schedule(long time) {
-            if (state == IDLE || state == DEAD) {
-                delay = time;
-                if (state == DEAD) {
-                    state = WAITING;
-                    new Thread(this).start();
-                } else {
-                    state = WAITING;
-                }
+            if (state == IDLE) {
+                state = time;
+            } else if (state == DEAD) {
+                state = time;
+                new Thread(this).start();
             }
         }
 
         /** Process scheduled invalidate request. */
         private void invalidate() {
             synchronized (Display.LCDUILock) {
-                // While LCDUILock was awaited, the timer state could be changed
+                // While LCDUILock was awaited, the state could be changed
                 if (state == ACTIVATED) {
                     lRequestInvalidateImpl();
 
@@ -954,7 +948,6 @@ class DisplayableLFImpl implements DisplayableLF {
                     //   from the only caller lRequestInvalidate()
                     lastTimeInvalidate = System.currentTimeMillis();
                     state = IDLE;
-                    delay = 0;
                 }
             }
         }
