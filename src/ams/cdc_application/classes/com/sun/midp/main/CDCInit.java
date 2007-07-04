@@ -30,6 +30,9 @@ import java.io.File;
  * Initialize the CDC environment for MIDlet execution.
  */
 public class CDCInit {
+    /** True, if the system is initialized. */
+    private static boolean initialized;
+
     /**
      * Performs CDC API initialization.
      *
@@ -38,6 +41,12 @@ public class CDCInit {
      * non-rommized build
      */
     public static void init(String midpHome, String nativeLib) {
+        if (initialized) {
+            return;
+        }
+
+        initialized = true;
+
         try {
             if (nativeLib != null) {
                 System.loadLibrary(nativeLib);
