@@ -80,7 +80,7 @@ HIDE_JSROP_NUMBERS = $(patsubst HIDE_JSR_%=true,%,\
 endif
 
 # The list of JSR jar files we want to hide.
-JSROP_HIDE_JARS = $(subst $(space),:,$(filter-out $(JSROP_LIB_DIR)/jsr205.jar,$(foreach jsr_number,$(HIDE_JSROP_NUMBERS),$(JSROP_LIB_DIR)/jsr$(jsr_number).jar)))
+JSROP_HIDE_JARS = $(subst $(space),$(PS),$(filter-out $(JSROP_LIB_DIR)/jsr205.jar,$(foreach jsr_number,$(HIDE_JSROP_NUMBERS),$(JSROP_LIB_DIR)/jsr$(jsr_number).jar)))
 
 # Generate constants classes list for the given xml file
 # generateConstantList(generatedDirectory, constantsXmlFile)
