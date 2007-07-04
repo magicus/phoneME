@@ -446,7 +446,7 @@ public class DefaultConfiguration extends Configuration {
             // #endif ]
                 };
         }
-/*
+
         if (content_type.equals(MIME_AUDIO_MP3) ||
             content_type.equals(MIME_AUDIO_MP3_2)) {
             return new String[]{
@@ -510,7 +510,7 @@ public class DefaultConfiguration extends Configuration {
             // #endif ]
             };
         }
-*/
+
 
     // #ifdef VIDEO_CAPTURE [
         if (content_type.equals(MIME_IMAGE_PNG)) {
