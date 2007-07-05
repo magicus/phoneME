@@ -891,9 +891,11 @@ class DisplayableLFImpl implements DisplayableLF {
          * Cancel postponed invalidate request.
          * If invalidate timer thread is started, it will be stopped on wake up.
          */
-        synchronized void cancel() {
-            if (state != DEAD) {
-                state = IDLE;
+        void cancel() {
+            synchronized(Display.LCDUILock) {
+                if (state != DEAD) {
+                    state = IDLE;
+                }
             }
         }
 
@@ -901,7 +903,7 @@ class DisplayableLFImpl implements DisplayableLF {
         public void run() {
             while (true) {
                 long sleepTime;
-                synchronized(this) {
+                synchronized(Display.LCDUILock) {
                     if (state > 0) {
                         sleepTime = state;
                         state = ACTIVATED;
@@ -927,12 +929,14 @@ class DisplayableLFImpl implements DisplayableLF {
          * start invalidate timer thread if it has not been started yet.
          * @param time time to postpone the invalidate request for
          */
-        synchronized void schedule(long time) {
-            if (state == IDLE) {
-                state = time;
-            } else if (state == DEAD) {
-                state = time;
-                new Thread(this).start();
+        void schedule(long time) {
+            synchronized (Display.LCDUILock) {
+                if (state == IDLE) {
+                    state = time;
+                } else if (state == DEAD) {
+                    state = time;
+                    new Thread(this).start();
+                }
             }
         }
 
@@ -942,10 +946,6 @@ class DisplayableLFImpl implements DisplayableLF {
                 // While LCDUILock was awaited, the state could be changed
                 if (state == ACTIVATED) {
                     lRequestInvalidateImpl();
-
-                    // IMPL_NOTE: No sync on timer instance since LCDUILock
-                    //   guarantees other timer methods can't be called
-                    //   from the only caller lRequestInvalidate()
                     lastTimeInvalidate = System.currentTimeMillis();
                     state = IDLE;
                 }
