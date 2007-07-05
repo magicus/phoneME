@@ -32,9 +32,7 @@ import com.sun.midp.lcdui.GameMap;
 import com.sun.midp.lcdui.GameCanvasLFImpl;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
-import com.sun.midp.configurator.Constants;
 import com.sun.midp.chameleon.skins.*;
-
 
 /**
 * This is the look &amp; feel implementation for Displayable.
@@ -845,6 +843,138 @@ class DisplayableLFImpl implements DisplayableLF {
         lRequestPaint(0, 0, viewport[WIDTH], viewport[HEIGHT]);
     }
 
+
+    /**
+     * IMPL_NOTE: Invalidate requests are served with a limited rate to
+     *   not exceed 25 fps, i.e. 40 ms delay is enabled between sequential
+     *   requests. More frequent requests are ignored, the invalidate
+     *   request timer guarantees they will be processed in a predefined
+     *   time frame.
+     */
+
+    /** Last time the invalidate request was accepted */
+    private long lastTimeInvalidate = 0;
+
+    /** Timer to schedule delayed invalidate task */
+    private InvalidateTimer invalidateTimer = new InvalidateTimer();
+
+    /** The time in milliseconds between sequential invalidate requests */
+    private final int INVALIDATE_REQUESTS_PERIOD = 40; // 40 ms is 25 fps
+
+    /** Grace period to process last unserved invalidate request */
+    private final int INVALIDATE_REQUESTS_GRACE = 80; // ms
+
+    /**
+     * Invalidate timer class is designed to postpone too frequent
+     * requests for Displayable invalidation.
+     *
+     * IMPL_NOTE: The methods cancel() and schedule() are to be as fast
+     *   as possible, so method run() has simplified synchronization
+     *   that enables cancelled invalidate request to be done on thread
+     *   wake up.
+     */
+    class InvalidateTimer implements Runnable {
+
+        /** Invalidate timer states */
+        final static int DEAD = -1;      // Timer thread is not started
+        final static int ACTIVATED = -2; // Timer is activated to request invalidate on wakeup
+        final static int IDLE = -3;      // Invalidate request is not scheduled since
+                                         //   timer is either done, or cancelled
+        /**
+         * State of the invalidate timer.
+         * A positive value is one more timer state meaning
+         * the time to wait to process inavlidate request.
+         */
+        private long state = DEAD;
+
+        /**
+         * Cancel postponed invalidate request.
+         * If invalidate timer thread is started, it will be stopped on wake up.
+         */
+        void cancel() {
+            synchronized(Display.LCDUILock) {
+                if (state != DEAD) {
+                    state = IDLE;
+                }
+            }
+        }
+
+        /** Wait until postponed invalidate request can be done or cancelled */
+        public void run() {
+            while (true) {
+                long sleepTime;
+                synchronized(Display.LCDUILock) {
+                    if (state > 0) {
+                        sleepTime = state;
+                        state = ACTIVATED;
+                    } else {
+                        // Terminate timer thread
+                        state = DEAD;
+                        return;
+                    }
+                }
+                try {
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException ie) {
+                    // Consider interruption as wakeup
+                }
+                if (state == ACTIVATED){
+                    invalidate();
+                }
+            }
+        }
+
+        /**
+         * Schedule postponed invalidate request to be done later,
+         * start invalidate timer thread if it has not been started yet.
+         * @param time time to postpone the invalidate request for
+         */
+        void schedule(long time) {
+            synchronized (Display.LCDUILock) {
+                if (state == IDLE) {
+                    state = time;
+                } else if (state == DEAD) {
+                    state = time;
+                    new Thread(this).start();
+                }
+            }
+        }
+
+        /** Process scheduled invalidate request. */
+        private void invalidate() {
+            synchronized (Display.LCDUILock) {
+                // While LCDUILock was awaited, the state could be changed
+                if (state == ACTIVATED) {
+                    lRequestInvalidateImpl();
+                    lastTimeInvalidate = System.currentTimeMillis();
+                    state = IDLE;
+                }
+            }
+        }
+    }
+
+    /**
+     * Called to schedule an "invalidate" for this Displayable.
+     * The method recalls internal implementation of invalidate
+     * request limiting the rate of requests to be not bigger than
+     * a predefined constant.
+     *
+     * SYNC NOTE: Caller should hold LCDUILock.
+     */
+    void lRequestInvalidate() {
+        long timePassed = System.currentTimeMillis() - lastTimeInvalidate;
+        if (timePassed > INVALIDATE_REQUESTS_PERIOD) {
+            invalidateTimer.cancel();
+            lRequestInvalidateImpl();
+            lastTimeInvalidate += timePassed;
+
+        } else {
+            // Postpone too frequent invalidate requests.
+            invalidateTimer.schedule(
+                INVALIDATE_REQUESTS_GRACE - timePassed);
+        }
+    }
+
     /**
      * Called to schedule an "invalidate" for this Displayable. Invalidation
      * is caused by things like size changes, content changes, or spontaneous
@@ -852,7 +982,7 @@ class DisplayableLFImpl implements DisplayableLF {
      *
      * SYNC NOTE: Caller should hold LCDUILock.
      */
-    void lRequestInvalidate() {
+    void lRequestInvalidateImpl() {
         if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
             Logging.report(Logging.INFORMATION, 
                            LogChannels.LC_HIGHUI_FORM_LAYOUT,
@@ -866,7 +996,7 @@ class DisplayableLFImpl implements DisplayableLF {
             invalidScroll = true;
         }
     }
-    
+
     // ************************************************************
     //  private methods
     // ************************************************************
