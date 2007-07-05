@@ -64,7 +64,7 @@ typedef struct _InvocParams {
     javacall_utf16_string* args;             /**< The arguments */
     int                   dataLen;           /**< The length of the data in bytes */
     void*                 data;              /**< The data; may be NULL */
-    int                   responseRequired   /**< If not 0 , then the invoking application 
+    int                   responseRequired;   /**< If not 0 , then the invoking application 
                                                   requires a response to the Invocation. */
 } javacall_chapi_invocation;
 

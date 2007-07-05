@@ -78,23 +78,39 @@ static const WCHAR* EXTENSION=L"Extension";
 #define MAX_BUFFER 512
 #define KEY_VOLATILENESS REG_OPTION_VOLATILE
 
+/**
+ * Perform initialization of registry API
+ *
+ * @return JAVACALL_OK if initialization was successful, error code otherwise
+ */
+javacall_result javacall_chapi_init_registry(void){
+
+}
+
+/**
+ * Finalize API, clean all used resources.
+ *
+ * @return nothing
+ */
+void javacall_chapi_finalize_registry(void){
+
+}
 
 
 //register java handler
-int register_handler(
-        const unsigned short* content_handler_id,
-		const unsigned short* content_handler_friendly_name,
-		const unsigned short* suite_id,
-        const unsigned short* class_name,
-		int flag,
-        const unsigned short** types,     int nTypes,
-        const unsigned short** suffixes,  int nSuffixes,
-        const unsigned short** actions,   int nActions,  
-        const unsigned short** locales,   int nLocales,
-        const unsigned short** action_names, int nActionNames,
-        const unsigned short** accesses,  int nAccesses,
-		const registry_value_pair* additional_keys, int nKeys,
-		const unsigned short* default_icon_path){
+javacall_result javacall_chapi_register_handler(
+			javacall_const_utf16_string content_handler_id,
+			javacall_const_utf16_string content_handler_friendly_appname,
+			int suite_id,
+			javacall_const_utf16_string class_name,
+			javacall_chapi_handler_registration_type flag,
+			javacall_const_utf16_string* content_types,     int nTypes,
+			javacall_const_utf16_string* suffixes,  int nSuffixes,
+			javacall_const_utf16_string* actions,   int nActions,  
+			javacall_const_utf16_string* locales,   int nLocales,
+			javacall_const_utf16_string* action_names, int nActionNames,
+			javacall_const_utf16_string* access_allowed_ids,  int nAccesses)
+{
 
 HKEY key=0,subkey=0, shellkey=0, actionkey=0, commandkey=0, mimekey=0, chapikey=0;
 LONG result;
@@ -382,7 +398,7 @@ static int suffix_belongs_to_handler(const unsigned short* content_handler_id,co
 	return 0;
 }
 
-int enum_suffixes(const unsigned short* content_handler_id, int* pos_id, /*OUT*/ short*  buffer, int* length){
+javacall_result javacall_chapi_enum_suffixes(javacall_const_utf16_string content_handler_id, int* pos_id, /*OUT*/ javacall_utf16*  suffix_out, int* length){
 	LONG result=ERROR_SUCCESS;
 	DWORD index=(DWORD)*pos_id;
 	int found = 0;
@@ -416,7 +432,7 @@ int enum_suffixes(const unsigned short* content_handler_id, int* pos_id, /*OUT*/
 
 
 
-int enum_types(const unsigned short* content_handler_id, /*OUT*/ int* pos_id, short*  buffer, int* length){
+javacall_result javacall_chapi_enum_types(javacall_const_utf16_string content_handler_id, /*OUT*/ int* pos_id, javacall_utf16*  type_out, int* length){
 	HKEY mimekey,typekey,chapikey; 
 	LONG result=ERROR_SUCCESS;
 	DWORD index=(DWORD)*pos_id;
@@ -479,7 +495,7 @@ int enum_types(const unsigned short* content_handler_id, /*OUT*/ int* pos_id, sh
 	return result;
 }
 
-int get_content_handler_friendly_name(const unsigned short* content_handler_id,  short*  buf, int* length){
+javacall_result javacall_chapi_get_content_handler_friendly_appname(javacall_const_utf16_string content_handler_id, /*OUT*/ javacall_utf16*  handler_frienfly_appname_out, int* length){
 	return read_string(content_handler_id, NULL, buf, length);
 }
 
@@ -496,7 +512,7 @@ int get_flag(const unsigned short* content_handler_id,  int* val){
 	return read_int(content_handler_id, FLAG, val);
 }
 
-int enum_actions(const unsigned short* content_handler_id, /*OUT*/ int* pos_id, short*  buffer, int* length){
+javacall_result javacall_chapi_enum_actions(javacall_const_utf16_string content_handler_id, /*OUT*/ int* pos_id, javacall_utf16*  action_out, int* length){
 	HKEY key,shellkey=0; 
 	LONG result;
 	DWORD index=(DWORD)*pos_id;
@@ -521,7 +537,7 @@ int enum_actions(const unsigned short* content_handler_id, /*OUT*/ int* pos_id, 
 }
 
 
-int enum_action_locales(const unsigned short* content_handler_id, /*OUT*/ int* pos_id, short*  buffer, int* length){
+javacall_result javacall_chapi_enum_action_locales(javacall_const_utf16_string content_handler_id, /*OUT*/ int* pos_id, javacall_utf16* locale_out, int* length){
 	HKEY key,shellkey=0,actionkey; 
 	LONG result;
 	DWORD index=(DWORD)*pos_id;
@@ -562,7 +578,7 @@ int enum_action_locales(const unsigned short* content_handler_id, /*OUT*/ int* p
 	return result;
 }
 
-int get_local_action_name(const unsigned short* content_handler_id, const unsigned short* action, const unsigned short* locale, short*  buffer, int* length){
+javacall_result javacall_chapi_get_local_action_name(javacall_const_utf16_string content_handler_id, javacall_const_utf16_string action, javacall_const_utf16_string locale, javacall_utf16*  local_action_out, int* length){
 	HKEY key,shellkey=0,actionkey; 
 	LONG result;
 	int type;
@@ -588,7 +604,7 @@ int get_local_action_name(const unsigned short* content_handler_id, const unsign
 	return result;
 }
 
-int enum_trusted_callers(const unsigned short* content_handler_id, int* pos_id, /*OUT*/ short*  buffer, int* length){
+javacall_result javacall_chapi_enum_access_allowed_callers(javacall_const_utf16_string content_handler_id, int* pos_id, /*OUT*/ javacall_utf16*  access_allowed_out, int* length){
 	HKEY key; 
 	LONG result;
 	DWORD type;
@@ -660,7 +676,7 @@ int count=0, len, length, i;
 	return result;
 }
 
-int unregister_handler(const unsigned short* content_handler_id){
+javacall_result javacall_chapi_unregister_handler(javacall_const_utf16_string content_handler_id){
 	HKEY key=0,subkey=0,mimekey,typekey, prefixkey, chapikey;
 	WCHAR buffer[MAX_BUFFER], name[MAX_BUFFER];
 	LONG result;
@@ -755,7 +771,7 @@ int unregister_handler(const unsigned short* content_handler_id){
 }
 
 
-int enum_handlers_by_suffix(const unsigned short* suffix, int* pos_handle, /*OUT*/ short*  buffer, int* length){
+javacall_result javacall_chapi_enum_handlers_by_suffix(javacall_const_utf16_string suffix, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length){
 HKEY key=0,progskey;
 int index = *pos_handle;
 DWORD type;
@@ -786,7 +802,7 @@ LONG result;
 	return result;
 }
 
-int enum_handlers_by_type(const unsigned short* mimetype, int* pos_handle, /*OUT*/ short*  buffer, int* length){
+javacall_result javacall_chapi_enum_handlers_by_type(javacall_const_utf16_string content_type, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length){
 HKEY key=0,mimekey,progskey;
 int index = *pos_handle;
 DWORD type;
@@ -836,7 +852,7 @@ int len = MAX_BUFFER;
 	return result;
 }
 
-int enum_handlers_by_action(const unsigned short* action, int* pos_handle, /*OUT*/ short*  buffer, int* length){
+javacall_result javacall_chapi_enum_handlers_by_action(javacall_const_utf16_string action, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length){
 HKEY key, shellkey;
 LONG result=ERROR_SUCCESS;
 DWORD index=(DWORD)*pos_handle;
@@ -877,7 +893,11 @@ int maxlen = *length;
 	return result;
 }
 
-int enum_handlers_by_suit_id(const unsigned short* suit_id, int* pos_handle, /*OUT*/ short*  buffer, int* length){
+javacall_result javacall_chapi_enum_handlers_by_suite_id(
+		 int suite_id,
+		 int* pos_id, 
+		 /*OUT*/ javacall_utf16*  handler_id_out,
+        int* length){
 HKEY key;
 LONG result=ERROR_SUCCESS;
 DWORD index=(DWORD)*pos_handle;
@@ -915,7 +935,7 @@ int len = MAX_BUFFER;
 }
 
 
-int enum_handlers(int* pos_handle, /*OUT*/ short*  buffer, int* length){
+javacall_result javacall_chapi_enum_handlers(int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length){
 
 HKEY key, shellkey;
 LONG result=ERROR_SUCCESS;
@@ -953,10 +973,12 @@ while  (!found && result != ERROR_NO_MORE_ITEMS){
 }
 
 
-int get_handler_info(const unsigned short* content_handler_id,
-				   /*OUT*/  short*  suit_id, int* suit_id_len,
-				   short*  classname, int* classname_len,
-				   int *flag){
+javacall_result javacall_chapi_get_handler_info(javacall_const_utf16_string content_handler_id,
+					/*OUT*/
+					int*  suite_id_out,
+					javacall_utf16*  classname_out, int* classname_len,
+ 			        javacall_chapi_handler_registration_type *flag_out)
+{
 
 
 	HKEY key; 
@@ -986,7 +1008,8 @@ int get_handler_info(const unsigned short* content_handler_id,
 
 }
 
-int is_trusted(const unsigned short* content_handler_id, const unsigned short* caller_id){
+javacall_bool javacall_chapi_is_access_allowed(javacall_const_utf16_string content_handler_id, javacall_const_utf16_string caller_id)
+{
 
 	HKEY key; 
 	LONG result;
@@ -1015,7 +1038,7 @@ int is_trusted(const unsigned short* content_handler_id, const unsigned short* c
 	return 0;
 }
 
-int is_action_supported(const unsigned short* content_handler_id, const unsigned short* action){
+javacall_bool javacall_chapi_is_action_supported(javacall_const_utf16_string content_handler_id, javacall_const_utf16_string action){
 	HKEY key, shellkey; 
 	LONG result;
 	int found = 0;
@@ -1037,4 +1060,8 @@ int is_action_supported(const unsigned short* content_handler_id, const unsigned
 	}
 
 	return found;
+}
+
+
+void javacall_chapi_enum_finish(int pos_id){
 }
