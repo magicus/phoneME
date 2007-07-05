@@ -959,7 +959,7 @@ class DisplayableLFImpl implements DisplayableLF {
      * request limiting the rate of requests to be not bigger than
      * a predefined constant.
      *
-     * SNC NOTE: Caller should hold LCDUILock.
+     * SYNC NOTE: Caller should hold LCDUILock.
      */
     void lRequestInvalidate() {
         long timePassed = System.currentTimeMillis() - lastTimeInvalidate;
