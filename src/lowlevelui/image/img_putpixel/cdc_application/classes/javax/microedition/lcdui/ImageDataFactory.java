@@ -172,7 +172,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
 
                 ClassLoader loader = cl.getClassLoader();
                 if (i == 0 || loader != lastFailedLoader) {
-                    is = loader.getResourceAsStream(name);
+                    is = cl.getResourceAsStream(name);
                     if (is != null) {
                         createImageFromStream(data,
                                   cl.getResourceAsStream(name));
