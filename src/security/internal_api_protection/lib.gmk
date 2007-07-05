@@ -43,10 +43,13 @@ SUBSYSTEM_INTERNAL_API_PROTECTION_SOURCEPATH += $(INTERNAL_API_PROTECTION_DIR)/r
 
 MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_INTERNAL_API_PROTECTION_SOURCEPATH)
 
+SECURITY_INITIALIZER_SOURCE = \
+    $(PROJECT_MIDP_DIR)/src/security/internal_api_protection/reference/classes/com/sun/midp/security/SecurityInitializer.jpp
+
 #
 # Jpp files that need pre-processing
 #
-$(GENERATED_DIR)/classes/com/sun/midp/security/SecurityInitializer.java: $(INTERNAL_API_PROTECTION_DIR)/reference/classes/com/sun/midp/security/SecurityInitializer.jpp
+$(GENERATED_DIR)/classes/com/sun/midp/security/SecurityInitializer.java: $(SECURITY_INITIALIZER_SOURCE)
 	@$(call runjpp,$^,$@)
 
 #
@@ -55,5 +58,5 @@ $(GENERATED_DIR)/classes/com/sun/midp/security/SecurityInitializer.java: $(INTER
 SUBSYSTEM_SECURITY_JAVA_FILES += \
     $(INTERNAL_API_PROTECTION_DIR)/reference/classes/com/sun/midp/security/ImplicitlyTrustedClass.java \
     $(GENERATED_DIR)/classes/com/sun/midp/security/SecurityInitializer.java \
-    $(INTERNAL_API_PROTECTION_DIR)/reference/classes/com/sun/midp/security/SecurityInitializerImpl.java \
+    $(PROJECT_MIDP_DIR)/src/security/internal_api_protection/reference/classes/com/sun/midp/security/SecurityInitializerImpl.java \
     $(INTERNAL_API_PROTECTION_DIR)/reference/classes/com/sun/midp/security/SecurityToken.java
