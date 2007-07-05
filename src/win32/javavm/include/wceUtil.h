@@ -54,7 +54,7 @@
 
 #define JAVAI_API _declspec(dllexport)
 
-JAVAI_API WCHAR *createWCHAR(const char *);
+JAVAI_API wchar_t *createWCHAR(const char *);
 JAVAI_API char  *createMCHAR(const wchar_t *);
 JAVAI_API char  *strerror(int err);
 JAVAI_API char  *getenv(const char* name);
