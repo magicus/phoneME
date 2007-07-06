@@ -60,10 +60,10 @@ typedef struct _JSROP_EVENT_QUEUE {
 #define EVENT_LIST_MUTEX_NAME L"JC_EQListMuteX"
 #define EVENT_MUTEX_NAME      L"JC_EventMuteX"
 #define EVENT_EVENT_NAME      L"JC_EventNewEvenT"
-#define MUTEX_TIMEOUT         500
+#define MUTEX_TIMEOUT         1000
 
 static EventQueue *eq_list_head = NULL;
-static HANDLE eq_list_mutex = INVALID_HANDLE_VALUE;
+static HANDLE eq_list_mutex = NULL;
 
 static TCHAR *make_object_name(TCHAR *buf, TCHAR *prefix, int no);
 static javacall_result create_event_queue(EventQueue **handle,int subsystem_id);
@@ -81,7 +81,7 @@ static javacall_bool checkForEvents(EventQueue *q, long timeout);
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result javacall_events_init() {
-    if (eq_list_mutex != INVALID_HANDLE_VALUE) { // already init'ed
+    if (eq_list_mutex != NULL) { // already init'ed
         return JAVACALL_OK;
     }
     eq_list_mutex = CreateMutex(
@@ -89,7 +89,7 @@ javacall_result javacall_events_init() {
         FALSE,      // initially not owned
         EVENT_LIST_MUTEX_NAME); // named object
     
-    if (eq_list_mutex == INVALID_HANDLE_VALUE) {
+    if (eq_list_mutex == NULL) {
         return JAVACALL_FAIL;
     }
     return JAVACALL_OK;
@@ -106,7 +106,7 @@ javacall_result javacall_events_init() {
 javacall_result javacall_events_finalize() {
     EventQueue *q, *q0;
     
-    if (eq_list_mutex == INVALID_HANDLE_VALUE) { // already closed
+    if (eq_list_mutex == NULL) { // already closed
         return JAVACALL_FAIL;
     }
     
@@ -117,17 +117,17 @@ javacall_result javacall_events_finalize() {
     if (eq_list_head != NULL) { // the queue list is not empty
         for (q = eq_list_head; q != NULL; q = q->next) {
             q->closing = TRUE;
-            if (q->events_mutex != INVALID_HANDLE_VALUE) {
+            if (q->events_mutex != NULL) {
                 CloseHandle(q->events_mutex);
-                q->events_mutex = INVALID_HANDLE_VALUE;
+                q->events_mutex = NULL;
             }
-            if (q->events_handle != INVALID_HANDLE_VALUE) {
+            if (q->events_handle != NULL) {
                 CloseHandle(q->events_handle);
-                q->events_handle = INVALID_HANDLE_VALUE;
+                q->events_handle = NULL;
             }
         }
         CloseHandle(eq_list_mutex);
-        eq_list_mutex = INVALID_HANDLE_VALUE;
+        eq_list_mutex = NULL;
         // give time for receiving errors
         Sleep(500);
         // free memory
@@ -146,7 +146,7 @@ javacall_result javacall_events_finalize() {
         }
     } else {
         CloseHandle(eq_list_mutex);
-        eq_list_mutex = INVALID_HANDLE_VALUE;
+        eq_list_mutex = NULL;
     }
     return JAVACALL_OK;
 }
@@ -219,7 +219,7 @@ javacall_result javacall_event_receive(
     
     ok= ok && (totalRead != 0);
     if (outEventLen != NULL) {
-        *outEventLen = ok ? totalRead : 0;
+        *outEventLen = ok ? totalRead + sizeof (javacall_int32) : 0;
     }
     return ok ? JAVACALL_OK : JAVACALL_FAIL;
 }
@@ -300,7 +300,7 @@ static javacall_result create_event_queue(EventQueue **handle,
         FALSE,      // initially not owned
         make_object_name(object_name, EVENT_MUTEX_NAME, subsystem_id)
     );
-    if (q->events_mutex == INVALID_HANDLE_VALUE) {
+    if (q->events_mutex == NULL) {
         free(q);
         return JAVACALL_FAIL;
     }
@@ -311,12 +311,13 @@ static javacall_result create_event_queue(EventQueue **handle,
         FALSE,      // initial state is signaled
         make_object_name(object_name, EVENT_EVENT_NAME, subsystem_id)
     );
-    if (q->events_mutex == INVALID_HANDLE_VALUE) {
+    if (q->events_mutex == NULL) {
         CloseHandle(q->events_mutex);
         free(q);
         return JAVACALL_FAIL;
     }
     q->closing = FALSE;
+    q->subsystem_id = subsystem_id;
     q->next = NULL;
     *handle = q;
     return JAVACALL_OK;
