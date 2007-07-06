@@ -49,3 +49,10 @@ ENTRY ( CVMatomicSwapImpl )
 
 SET_SIZE(atomicSwap)
 
+
+#ifdef CVM_MP_SAFE
+ENTRY(CVMmemoryBarrier)
+	mov	r0, #0
+	mcr	p15, 0, r0, c7, c10, 4 /* data synchronization barrier */
+	mov	pc, lr
+#endif
