@@ -118,6 +118,8 @@ abstract class CldcMIDletSuiteLoader extends AbstractMIDletSuiteLoader {
      * used to initialize any per suite data.
      */
     protected void initSuiteEnvironment() {
+        super.initSuiteEnvironment();
+
         /* Set up permission checking for this suite. */
         AccessController.setAccessControlContext(
             new CldcAccessControlContext(midletSuite));

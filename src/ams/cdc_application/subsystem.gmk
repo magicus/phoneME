@@ -67,6 +67,7 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(CDC_AMS_DIR)/classes/com/sun/midp/content/CHManager.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/installer/OtaNotifier.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/CDCInit.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcAccessControlContext.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcMIDletLoader.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcMIDletSuiteLoader.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletAppImageGenerator.java \

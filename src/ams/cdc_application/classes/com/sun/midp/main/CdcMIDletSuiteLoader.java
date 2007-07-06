@@ -29,6 +29,7 @@ package com.sun.midp.main;
 import javax.microedition.io.ConnectionNotFoundException;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.midlet.MIDlet;
+import com.sun.j2me.security.AccessController;
 import com.sun.midp.log.*;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.installer.InternalMIDletSuiteImpl;
@@ -147,9 +148,12 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
     protected void initSuiteEnvironment() {
         super.initSuiteEnvironment();
 
-        // Init internal state from the restored command state
         externalAppId = 0;
         midletDisplayName = null;
+
+        /* Set up permission checking for this suite. */
+        AccessController.setAccessControlContext(
+            new CdcAccessControlContext(midletSuite));
     }
 
 

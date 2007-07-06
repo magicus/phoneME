@@ -154,8 +154,9 @@ class ImageDataFactory implements AbstractImageDataFactory {
          * proceed to load and create image normally.
          */
         if (!loadCachedImage(data, name)) {
-            int i = 1;
-            InputStream is = this.getClass().getResourceAsStream(name);
+            int i = 0;
+            InputStream is = null;
+            ClassLoader lastFailedLoader = null;
             
             /* The midlet might be loaded by a different classloader.
              * So we need to use that classloader to find the resource.
@@ -163,16 +164,25 @@ class ImageDataFactory implements AbstractImageDataFactory {
              * but there is no other easier way to get the correct
              * classloader. */
             while (is == null) {
-                Class cl = sun.misc.CVM.getCallerClass(i++);
+                Class cl = sun.misc.CVM.getCallerClass(i);
                 if (cl == null) {
-		    return null;
-		}
-                is = cl.getResourceAsStream(name);
-                if (is != null) {
-                    createImageFromStream(data,
-                                  cl.getResourceAsStream(name));
+		    createImageFromStream(data, null);
                     return data;
 		}
+
+                ClassLoader loader = cl.getClassLoader();
+                if (i == 0 || loader != lastFailedLoader) {
+                    is = cl.getResourceAsStream(name);
+                    if (is != null) {
+                        createImageFromStream(data,
+                                  cl.getResourceAsStream(name));
+                        return data;
+		    } else {
+		        lastFailedLoader = loader;
+		    }
+		}
+
+                i++; /* the next caller */
 	    }
         }
 
