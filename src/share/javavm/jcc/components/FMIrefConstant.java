@@ -70,10 +70,10 @@ class FMIrefConstant extends ConstantObject
 	sigIndex = in.readUnsignedShort();
     }
 
-    public void resolve( ConstantObject table[] ){
+    public void resolve( ConstantPool cp ){
 	if (resolved) return;
-	sig = (NameAndTypeConstant)table[sigIndex];
-	clas = (ClassConstant)table[classIndex];
+	sig = (NameAndTypeConstant)cp.elementAt(sigIndex);
+	clas = (ClassConstant)cp.elementAt(classIndex);
 	resolved = true;
     }
 

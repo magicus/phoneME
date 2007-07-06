@@ -70,11 +70,11 @@ class LocalVariableTableAttribute extends Attribute
 
 
     public static Attribute
-    readAttribute(DataInput i, ConstantObject constants[]) throws IOException{
+    readAttribute(DataInput i, ConstantPool cp) throws IOException{
 	UnicodeConstant name;
 
-	name = (UnicodeConstant)constants[i.readUnsignedShort()];
-	return finishReadAttribute( i, name, constants );
+	name = (UnicodeConstant)cp.elementAt(i.readUnsignedShort());
+	return finishReadAttribute( i, name, cp );
     }
 
     //
@@ -85,7 +85,7 @@ class LocalVariableTableAttribute extends Attribute
     finishReadAttribute(
 	DataInput in,
 	UnicodeConstant name,
-	ConstantObject constants[])
+	ConstantPool cp)
 	throws IOException
     {
 	int l;
@@ -95,6 +95,7 @@ class LocalVariableTableAttribute extends Attribute
 	l  = in.readInt();
 	n  = in.readUnsignedShort();
 	d = new LocalVariableTableEntry[ n ];
+	ConstantObject[] constants = cp.getConstants();
 	for ( int i = 0; i < n; i++ ){
 	    d[i] = new
 		LocalVariableTableEntry( in.readUnsignedShort(),

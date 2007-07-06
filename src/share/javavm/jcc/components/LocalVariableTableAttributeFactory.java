@@ -34,8 +34,8 @@ class LocalVariableTableAttributeFactory extends AttributeFactory {
     public static AttributeFactory instance = new LocalVariableTableAttributeFactory();
 
     Attribute finishReadAttribute(
-	DataInput in, UnicodeConstant name, ConstantObject constants[] )
+	DataInput in, UnicodeConstant name, ConstantPool cp )
 	throws IOException{
-	    return LocalVariableTableAttribute.finishReadAttribute( in, name, constants );
+	    return LocalVariableTableAttribute.finishReadAttribute( in, name, cp );
     }
 }
