@@ -43,6 +43,6 @@ vpath % $(PUTPIXEL_PORT_STUBS_DIR)/native
 # Native files for the sub-system
 #
 SUBSYSTEM_GRAPHICS_NATIVE_FILES += \
-    putpixel_text_md.c \
+    gxjport_text.c \
     font.c
 

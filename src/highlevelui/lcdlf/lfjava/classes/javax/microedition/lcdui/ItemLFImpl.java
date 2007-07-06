@@ -379,7 +379,6 @@ abstract class ItemLFImpl implements ItemLF {
      * @param h - the new height of the item
      */
     void lSetSize(int w, int h) {
-        //        System.out.println("set size: w=" + w + " h=" + h);
         bounds[WIDTH] = w;
         bounds[HEIGHT] = h;
     }
@@ -1149,10 +1148,7 @@ abstract class ItemLFImpl implements ItemLF {
         // NTS: This may need to special case StringItem?
         g.setColor(ScreenSkin.COLOR_TRAVERSE_IND);
 
-        g.drawRect(x + contentBounds[X] + ScreenSkin.PAD_FORM_ITEMS - 2,
-                   y + contentBounds[Y] + ScreenSkin.PAD_FORM_ITEMS - 2,
-                   contentBounds[WIDTH] + ScreenSkin.PAD_FORM_ITEMS - 2,
-                   contentBounds[HEIGHT] + ScreenSkin.PAD_FORM_ITEMS - 2);
+        g.drawRect(x + 1, y + 1, bounds[WIDTH] - 2, bounds[HEIGHT]- 2);
     }
     
 

@@ -233,6 +233,7 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
      * Set foreground display native state, so the native code will know
      * which display can draw.
      *
+     * @param token token with the "com.sun.midp.ams" permission allowed
      * @param displayId Display ID
      */
     public static void setForegroundInNativeState(SecurityToken token,
