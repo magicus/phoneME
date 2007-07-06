@@ -698,6 +698,8 @@ end:
 
 void javanotify_carddevice_event(javacall_carddevice_event event,
                                  void *context) {
+    threadMutexLock(cardReaderMutex);
     threadCondSignal(cardReaderCond);    
+    threadMutexUnlock(cardReaderMutex);
     return;
 }
