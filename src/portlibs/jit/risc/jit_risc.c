@@ -64,8 +64,15 @@ CVMJITdoStartOfCodegenRuleAction(CVMJITCompilationContext *con, int ruleno,
                                  const char *description, CVMJITIRNode* node)
 {
     /* Check to see if we need a constantpool dump.  If so, emit the dump
-       with a branch around it: */
-    CVMRISCemitConstantPoolDumpWithBranchAroundIfNeeded(con);
+       with a branch around it. However, don't do this before emitting the
+       first instruction for a basic block. Otherwise the MAP_PC address
+       won't be computed properly (see logic in MAP_PC rule).
+    */
+    if (CVMJITcbufGetLogicalPC(con) !=
+	con->currentCompilationBlock->logicalAddress)
+    {
+	CVMRISCemitConstantPoolDumpWithBranchAroundIfNeeded(con);
+    }
 
     /* The following is intentionally left here to assist in future codegen
        rules debugging needs if necessary: */
