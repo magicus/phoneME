@@ -32,16 +32,12 @@ ABSTRACTIONS_SRCDIRS = \
 # names of native source files (like 'file.c')
 ABSTRACTIONS_NATIVES = \
 	KNIAppIsolate.c \
-	internal_props.c \
-	exceptions.c \
 	shared_memory.c \
 	shared_memory_md.c \
-	jump_events_impl.c \
-    kni_utils.c
+	jump_events_impl.c
 
 # dirs containing hative header files (.h)
 ABSTRACTIONS_INCLUDE_DIRS = \
-    $(ABSTRACTIONS_DIR)/src/jump_application/native/include \
     $(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_OS)
 
 # start dirs for java source trees

@@ -30,7 +30,14 @@ ABSTRACTIONS_CDC_JAVASRCDIRS = \
         
 # dirs containing hative header files (.h)
 ABSTRACTIONS_INCLUDE_DIRS += \
-    $(ABSTRACTIONS_DIR)/src/share/include
+    $(ABSTRACTIONS_DIR)/src/share/include \
+    $(ABSTRACTIONS_DIR)/src/cdc_share/native/include
+
+ABSTRACTIONS_NATIVES += \
+	os_sync.c \
+    internal_props.c \
+	exceptions.c \
+	kni_utils.c
 
 # classes
 ABSTRACTIONS_CLASSES += \
@@ -40,7 +47,8 @@ ABSTRACTIONS_CLASSES += \
 ifeq ($(USE_JSR_177), true)
 # dirs containing native source files
 ABSTRACTIONS_SRCDIRS += \
-	$(ABSTRACTIONS_DIR)/src/cdc_share/native/share
+	$(ABSTRACTIONS_DIR)/src/cdc_share/native/share \
+  	$(ABSTRACTIONS_DIR)/src/cdc_share/native/$(TARGET_OS)
 
 # names of native source files (like 'file.c')
 ABSTRACTIONS_NATIVES += \
