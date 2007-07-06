@@ -27,8 +27,7 @@
 #include <kni.h>
 #include <sni.h>
 #include <jsrop_exceptions.h>
-#include <JUMPEvents.h>
-#include "javavm/include/porting/sync.h"
+#include <thread_sync.h>
 #include <internal_props.h>
 
 #include <javacall_carddevice.h>
@@ -42,6 +41,10 @@ static char cardDeviceException[] =
 /** Configuration property name */
 static char hostsandports[] = "com.sun.io.j2me.apdu.hostsandports";
 static char satselectapdu[] = "com.sun.io.j2me.apdu.satselectapdu";
+
+/** Thread synchronization variables */
+static ThreadMutex cardReaderMutex;
+static ThreadCond cardReaderCond;
 
 #define BUFFER_SIZE 128
 #define PROP_BUF_SIZE 128
@@ -58,27 +61,39 @@ static char satselectapdu[] = "com.sun.io.j2me.apdu.satselectapdu";
  */
 KNIEXPORT KNI_RETURNTYPE_INT 
 KNIDECL (com_sun_io_j2me_apdu_APDUManager_init0) {
-    javacall_int32 retcode;
+    javacall_int32 retcode = -1;
     javacall_result status;
     char *err_msg;
     char *buffer;
     char prop_buf[PROP_BUF_SIZE];
     const char *prop_value;
 
-    prop_value = jumpGetInternalProp(hostsandports, prop_buf, PROP_BUF_SIZE);
+    prop_value = getInternalProperty(hostsandports, prop_buf, PROP_BUF_SIZE);
     if (prop_value != NULL) {
         status = javacall_carddevice_set_property(hostsandports, prop_value);
         if (status != JAVACALL_OK) {
             goto err;
         }
 
-        prop_value = jumpGetInternalProp(satselectapdu, prop_buf, PROP_BUF_SIZE);
+        prop_value = getInternalProperty(satselectapdu, prop_buf, PROP_BUF_SIZE);
         status = javacall_carddevice_set_property(satselectapdu, prop_value);
         if (status != JAVACALL_OK) {
             goto err;
         }
     }
-    
+ 
+    cardReaderMutex = threadMutexCreate();
+    if (cardReaderMutex == NULL) {
+        goto sync_err;
+    }
+
+    cardReaderCond = threadCondCreate(cardReaderMutex);
+    if (cardReaderCond == NULL) {
+sync_err:
+        KNI_ThrowNew(cardDeviceException, "Thread synchronization failed");
+        goto end;
+    }
+
     status = javacall_carddevice_init();
     if (status == JAVACALL_NOT_IMPLEMENTED) {
         
@@ -116,7 +131,6 @@ end:
     KNI_ReturnInt((jint)retcode);
 }
 
-JUMPEvent cardReaderEvent;
 /**
  * Checks if this slot is SAT slot. This method is invoked once after a reset of
  * the card.
@@ -141,14 +155,20 @@ KNIDECL(com_sun_io_j2me_apdu_APDUManager_isSAT) {
     // Global lock - if in native!!!    
     int slotIndex = KNI_GetParameterAsInt(1);
     
-    cardReaderEvent = jumpEventCreate();
+    CVMD_gcSafeExec(_ee, {
+        if (threadMutexLock(cardReaderMutex) != THREAD_SYNC_OK) {
+            KNI_ThrowNew(jsropIOException, "Thread synchronization failed");
+            goto end;
+        }
+    });
+
     do { 
         status_code=javacall_carddevice_lock();
         switch (status_code) {
         case JAVACALL_WOULD_BLOCK:
             CVMD_gcSafeExec(_ee, {
-                jumpEventWait(cardReaderEvent);
-            });            
+                threadCondWait(cardReaderCond, 0);
+            });
             break;
         case JAVACALL_OK:
             break;
@@ -163,7 +183,7 @@ KNIDECL(com_sun_io_j2me_apdu_APDUManager_isSAT) {
     status_code = javacall_carddevice_is_sat_start(slotIndex, &result, &context);
     while (status_code == JAVACALL_WOULD_BLOCK) {
         CVMD_gcSafeExec(_ee, {
-            if (jumpEventWait(cardReaderEvent) == 0) {
+            if (threadCondWait(cardReaderCond, 0) == THREAD_SYNC_OK) {
                 status_code = javacall_carddevice_is_sat_finish(slotIndex, &result, context);                
             }
         });
@@ -191,9 +211,10 @@ KNIDECL(com_sun_io_j2me_apdu_APDUManager_isSAT) {
         slot_locked = KNI_FALSE;
     }
  
-    //GlobalUnlock - if in native !!!
-        
-    jumpEventDestroy(cardReaderEvent);
+    //GlobalUnlock - if in native !!!        
+    threadMutexUnlock(cardReaderMutex);
+
+end:
     KNI_ReturnInt(result);
 }
 
@@ -240,13 +261,19 @@ KNIDECL(com_sun_io_j2me_apdu_APDUManager_reset0) {
     }
     
     atr_length = sizeof atr_buffer;
-    cardReaderEvent = jumpEventCreate();
+    CVMD_gcSafeExec(_ee, {
+        if (threadMutexLock(cardReaderMutex) != THREAD_SYNC_OK) {
+            KNI_ThrowNew(jsropIOException, "Thread synchronization failed");
+            goto end;
+        }
+    });
+
     do { 
         status_code=javacall_carddevice_lock();
         switch (status_code) {
         case JAVACALL_WOULD_BLOCK:
             CVMD_gcSafeExec(_ee, {
-                jumpEventWait(cardReaderEvent);
+                threadCondWait(cardReaderCond, 0);
             });            
             break;
         case JAVACALL_OK:
@@ -269,7 +296,7 @@ KNIDECL(com_sun_io_j2me_apdu_APDUManager_reset0) {
     
     while (status_code == JAVACALL_WOULD_BLOCK) {
         CVMD_gcSafeExec(_ee, {
-            if (jumpEventWait(cardReaderEvent) == 0) {
+            if (threadCondWait(cardReaderCond, 0) == THREAD_SYNC_OK) {
                 status_code = javacall_carddevice_reset_finish(atr_buffer, &atr_length, context);                
             }
         });        
@@ -297,7 +324,7 @@ KNIDECL(com_sun_io_j2me_apdu_APDUManager_reset0) {
             slot_locked = KNI_FALSE;
         }
         
-        jumpEventDestroy(cardReaderEvent);
+        threadMutexUnlock(cardReaderMutex);
         goto end;
     }
     
@@ -316,7 +343,7 @@ KNIDECL(com_sun_io_j2me_apdu_APDUManager_reset0) {
     SNI_NewArray(SNI_BYTE_ARRAY, atr_length, atr_handle);
     KNI_SetRawArrayRegion(atr_handle, 0, atr_length, (jbyte*)atr_buffer);
     
-    jumpEventDestroy(cardReaderEvent);
+    threadMutexUnlock(cardReaderMutex);
 
 end:
     //GlobalUnlock - if in native !!!
@@ -511,13 +538,19 @@ KNIDECL (com_sun_io_j2me_apdu_APDUManager_exchangeAPDU0) {
 
     cur = rx_buffer;
 
-    cardReaderEvent = jumpEventCreate();
+    CVMD_gcSafeExec(_ee, {
+        if (threadMutexLock(cardReaderMutex) != THREAD_SYNC_OK) {
+            KNI_ThrowNew(jsropIOException, "Thread synchronization failed");
+            goto free_end;
+        }
+    });
+
     do { 
         status_code=javacall_carddevice_lock();
         switch (status_code) {
         case JAVACALL_WOULD_BLOCK:
             CVMD_gcSafeExec(_ee, {
-                jumpEventWait(cardReaderEvent);
+                threadCondWait(cardReaderCond, 0);
             });            
             break;
         case JAVACALL_OK:
@@ -567,7 +600,7 @@ KNIDECL (com_sun_io_j2me_apdu_APDUManager_exchangeAPDU0) {
 
         while (status_code == JAVACALL_WOULD_BLOCK) {
             CVMD_gcSafeExec(_ee, {
-                if (jumpEventWait(cardReaderEvent) == 0) {
+                if (threadCondWait(cardReaderCond, 0) == THREAD_SYNC_OK) {
                     status_code = javacall_carddevice_xfer_data_finish(tx_buffer, 
                                                                        tx_length, 
                                                                        cur, 
@@ -651,7 +684,7 @@ unlock_end:
     }
 
 destroy_end:
-    jumpEventDestroy(cardReaderEvent);
+    threadMutexUnlock(cardReaderMutex);
 
 free_end:
     KNI_SetRawArrayRegion(response_handle, 0, retcode,(jbyte *)rx_buffer);    
@@ -665,6 +698,6 @@ end:
 
 void javanotify_carddevice_event(javacall_carddevice_event event,
                                  void *context) {
-    jumpEventHappens((JUMPEvent)cardReaderEvent);    
+    threadCondSignal(cardReaderCond);    
     return;
 }

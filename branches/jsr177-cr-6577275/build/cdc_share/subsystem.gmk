@@ -96,6 +96,18 @@ MODULE_SATSA_CRYPTO_JAVA_FILES += \
 
 endif
 
+# Define APDU sources which depend on options
+#
+# JSR_177_APDU_MANAGER=simple
+ifeq ($(JSR_177_APDU_MANAGER),simple)
+vpath % $(JSR_177_DIR)/src/cdc_share/protocol/apdu/simple/native
+endif
+
+# JSR_177_APDU_MANAGER=carddevice & JSR_177_APDU_CARDDEVICE=platformcarddevice
+ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
+vpath % $(JSR_177_DIR)/src/cdc_share/protocol/apdu/native
+endif
+
 # Definition for the build directory
 #
 JSR_177_BUILD_DIR       = $(JSROP_BUILD_DIR)/jsr177
