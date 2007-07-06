@@ -72,6 +72,8 @@ USE_NATIVE_AMS          = false
 USE_NAMS_TEST_SERVICE   = false
 USE_RAW_AMS_IMAGES      = false
 USE_NATIVE_PTI          = false
+USE_GCI                 = false
+USE_DIRECTDRAW          = false
 
 # DEBUG
 USE_DEBUG               = false

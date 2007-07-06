@@ -37,7 +37,8 @@
 
 #include <lcdlf_export.h>
 #include <midpEventUtil.h>
-
+#include <gxapi_graphics.h>
+#include <imgapi_image.h>
 
 /**
  * Calls platform specific function to redraw a portion of the display.
@@ -166,3 +167,26 @@ KNIDECL(javax_microedition_lcdui_Display_getScreenWidth0) {
     int height = lcdlf_get_screen_width();
     KNI_ReturnInt(height);
 }
+
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(javax_microedition_lcdui_Display_directFlush) {
+    jboolean success = KNI_FALSE;
+    int height  = KNI_GetParameterAsInt(3);
+
+    KNI_StartHandles(3);
+    KNI_DeclareHandle(img);
+    KNI_DeclareHandle(g);
+
+    KNI_GetParameterAsObject(2, img);
+    KNI_GetParameterAsObject(1, g);
+
+    if (!KNI_IsNullHandle(img)) {
+      success = lcdlf_direct_flush(GXAPI_GET_GRAPHICS_PTR(g), 
+				   IMGAPI_GET_IMAGE_PTR(img)->imageData,
+				   height);
+    }
+
+    KNI_EndHandles();
+
+    KNI_ReturnBoolean(success);
+} 

@@ -196,10 +196,6 @@
             Name="JWC_WINCE_MENU_HEIGHT"
             Value="26"
             Comment="Height of the WinCE menu at the bottom of LCD"/>
-  <constant Type="int"
-            Name="JWC_WINCE_USE_DIRECT_DRAW"
-            Value="0"
-            Comment="Use DirectDraw to refresh the screen."/>
  </constant_class>
 </constants>
 </configuration>

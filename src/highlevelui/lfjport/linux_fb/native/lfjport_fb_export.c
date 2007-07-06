@@ -95,7 +95,7 @@ jboolean lfjport_get_reverse_orientation()
  */
 int lfjport_get_screen_width()
 {
-    return get_screen_width();
+    return fbapp_get_screen_width();
 }
 
 /**
@@ -103,7 +103,7 @@ int lfjport_get_screen_width()
  */
 int lfjport_get_screen_height()
 {
-    return get_screen_height();
+    return fbapp_get_screen_height();
 }
 
 
@@ -151,6 +151,23 @@ jboolean lfjport_is_fullscreen_mode() {
  */
 void lfjport_gained_foreground() {
   REPORT_CALL_TRACE(LC_HIGHUI, "LF:STUB:gainedForeground()\n");
+}
+
+/**
+ * Flushes the offscreen buffer directly to the device screen.
+ * The size of the buffer flushed is defined by offscreen buffer width
+ * and passed in height. 
+ * Offscreen_buffer must be aligned to the top-left of the screen and
+ * its width must be the same as the device screen width.
+ * @param graphics The Graphics handle associated with the screen.
+ * @param offscreen_buffer The ImageData handle associated with 
+ *                         the offscreen buffer to be flushed
+ * @param h The height to be flushed
+ * @return KNI_TRUE if direct_flush was successful, KNI_FALSE - otherwise
+ */
+jboolean lfjport_direct_flush(const java_graphics *g, 
+		  	      const java_imagedata *offscreen_buffer, int h) {
+  return KNI_FALSE;
 }
 
 #ifdef __cplusplus

@@ -24,7 +24,6 @@
  * information or have any questions.
  */
 
-#include <midp_logging.h>
 #include <lfjport_export.h>
 
 
@@ -74,8 +73,6 @@ void lfjport_refresh(int x1, int y1, int x2, int y2)
  */
 int lfjport_set_vertical_scroll(int scrollPosition, int scrollProportion)
 {
-    REPORT_CALL_TRACE2(LC_HIGHUI, "LF:STUB:lfjport_ui_setVerticalScroll(%3d, %3d)\n",
-                       scrollPosition, scrollProportion);
 
     /* Suppress unused parameter warnings */
     (void)scrollPosition;
@@ -92,8 +89,6 @@ int lfjport_set_vertical_scroll(int scrollPosition, int scrollProportion)
  *             false for normal
  */
 void lfjport_set_fullscreen_mode(jboolean mode) {
-    REPORT_CALL_TRACE1(LC_HIGHUI, "LF:STUB:lfjport_ui_setFullScreenMode(%1)\n",
-                       mode);
 
     (void)mode;
     return;
@@ -103,7 +98,7 @@ void lfjport_set_fullscreen_mode(jboolean mode) {
  * Resets native resources when foreground is gained by a new display.
  */
 void lfjport_gained_foreground() {
-    REPORT_CALL_TRACE(LC_HIGHUI, "LF:STUB:gainedForeground()\n");
+
 }
 
 /**
@@ -125,6 +120,7 @@ jboolean lfjport_get_reverse_orientation()
  * Return screen width
  */
 int lfjport_get_screen_width() {
+  /* TODO need to be ported */
     return 176;
 }
 
@@ -132,5 +128,23 @@ int lfjport_get_screen_width() {
  *  Return screen height
  */
 int lfjport_get_screen_height() {
+  /* TODO need to be ported */
     return 210;
+}
+
+/**
+ * Flushes the offscreen buffer directly to the device screen.
+ * The size of the buffer flushed is defined by offscreen buffer width
+ * and passed in height. 
+ * Offscreen_buffer must be aligned to the top-left of the screen and
+ * its width must be the same as the device screen width.
+ * @param graphics The Graphics handle associated with the screen.
+ * @param offscreen_buffer The ImageData handle associated with 
+ *                         the offscreen buffer to be flushed
+ * @param h The height to be flushed
+ * @return KNI_TRUE if direct_flush was successful, KNI_FALSE - otherwise
+ */
+jboolean lfjport_direct_flush(const java_graphics *g, 
+		  	      const java_imagedata *offscreen_buffer, int h) {
+   return KNI_FALSE;
 }

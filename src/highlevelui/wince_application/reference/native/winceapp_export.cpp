@@ -36,7 +36,8 @@
 #include <sipapi.h>
 #include <tpcshell.h>
 
-#if JWC_WINCE_USE_DIRECT_DRAW /* defined in <midp_constants_data.h> */
+
+#if ENABLE_DIRECT_DRAW
 #include <ddraw.h>
 #endif
 
@@ -68,6 +69,8 @@ extern "C" {
 #include <midpEventUtil.h>
 #include <midp_foreground_id.h>
 #include <midp_mastermode_port.h>
+#include <anc_indicators.h>
+
 
 /* global variables defined in midp_msgQueue_md.c */
 extern int inMidpEventLoop;
@@ -101,9 +104,12 @@ static jboolean reverse_orientation;
 
 
 
-#if JWC_WINCE_USE_DIRECT_DRAW
+#if ENABLE_DIRECT_DRAW
 LPDIRECTDRAW                g_pDD = NULL;
 LPDIRECTDRAWSURFACE         g_pDDSPrimary = NULL;
+LPDIRECTDRAWSURFACE g_pDDSvram = NULL;
+LPDIRECTDRAWSURFACE g_pDDSvramDirect = NULL; //vram surface for direct flush
+LPDIRECTDRAWCLIPPER g_pDDClipper = NULL;
 #else
 static GXDisplayProperties gxDispProps;
 #endif
@@ -221,7 +227,8 @@ static void createEditors() {
     /* Create the Text controls for text input. They are not visible yet. */
     DWORD dwStyle = WS_CHILD | WS_BORDER | ES_LEFT | ES_AUTOHSCROLL;
     hwndTextField = CreateWindow(TEXT("edit"),  TEXT(""), dwStyle,
-                                 0, 0, 40, 40, hwndMain, 0, GetModuleHandle(NULL), NULL);
+                                 0, 0, 40, 40, hwndMain, 0, 
+				 GetModuleHandle(NULL), NULL);
     SendMessage(hwndTextField, EM_SETLIMITTEXT, 2048, 0);
     oldTextFieldProc = (WNDPROC)GetWindowLong(hwndTextField, GWL_WNDPROC);
     SetWindowLong(hwndTextField, GWL_WNDPROC, (LONG)&myTextFieldProc);
@@ -242,7 +249,7 @@ static void updateVisibleDesktop() {
     rcVisibleDesktop = sipinfo.rcVisibleDesktop;
 }
 
-#if JWC_WINCE_USE_DIRECT_DRAW
+#if ENABLE_DIRECT_DRAW
 static void init_DirectDraw() {
     /**
      * Note: if DirectDraw fails to initialize, we will use GDI to
@@ -263,14 +270,142 @@ static void init_DirectDraw() {
 
     wince_init_fonts();
 }
-#endif
+
+
+static void release_DirectDraw() {
+    if (NULL != g_pDD) {
+    	if (NULL != g_pDDSPrimary) {
+		g_pDDSPrimary->SetClipper(NULL);
+    		g_pDDSPrimary->Release();
+    		g_pDDSPrimary = NULL;
+    	}
+
+    	if (NULL != g_pDDSvram) {
+    	    g_pDDSvram->Release();
+    	    g_pDDSvram = NULL;
+    	}
+
+    	if (NULL != g_pDDSvramDirect) {
+    	    g_pDDSvramDirect->Release();
+    	    g_pDDSvramDirect = NULL;
+	}
+
+	if (g_pDDClipper) {
+           g_pDDClipper->Release();
+           g_pDDClipper = NULL;
+       }
+
+    	g_pDD->Release();
+    	g_pDD = NULL;
+    }
+    return;
+}
+
+/**
+ * Create primary surface
+ */
+static void create_primary_surface(LPDIRECTDRAWSURFACE* pDDSurface) {
+    ASSERT(g_pDD);
+    ASSERT(pDDSurface);
+
+    HRESULT hRet;
+    DDSURFACEDESC ddsd;
+
+    // Create the primary surface with 0 back buffer
+    ZeroMemory(&ddsd, sizeof(DDSURFACEDESC));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE ;
+    hRet = g_pDD->CreateSurface(&ddsd, pDDSurface, NULL);
+    
+    if (hRet != DD_OK) {
+        *pDDSurface = NULL;
+    }
+}
+
+/**
+ * Attach clipper to the surface
+ */
+static void attach_clipper(LPDIRECTDRAWSURFACE pDDSurface, 
+    LPDIRECTDRAWCLIPPER* ppDDClipper) {
+    
+    ASSERT(g_pDD);
+    ASSERT(pDDSurface);
+    ASSERT(ppDDClipper);
+
+    LPDIRECTDRAWCLIPPER pDDClipper = NULL;
+    HRESULT hRet;
+    
+    do {
+        hRet = g_pDD->CreateClipper(0, &pDDClipper, NULL);
+        if (hRet != DD_OK) {
+            break;
+        }
+        hRet = pDDClipper->SetHWnd(0, hwndMain);
+        if (hRet != DD_OK) {
+            break;
+        }
+        hRet = pDDSurface->SetClipper(pDDClipper);
+    } while(0);
+
+    if (hRet != DD_OK) {
+        if (pDDClipper) {
+            pDDClipper->Release();
+            pDDClipper = NULL;
+        }
+    }
+
+    *ppDDClipper = pDDClipper;
+}
+
+/**
+ * Attach video memory to memory based DD surface
+ */
+static void attach_vmem_to_memory_surface(void* pVmem, int width, int height, 
+    LPDIRECTDRAWSURFACE* ppDDSurface) {
+
+    ASSERT(g_pDD);
+    ASSERT(pVmem);
+    ASSERT(ppDDSurface);
+
+    DDSURFACEDESC ddsd;
+    LPDIRECTDRAWSURFACE pDDS = NULL;
+
+    ZeroMemory(&ddsd, sizeof(DDSURFACEDESC));
+    ZeroMemory(&ddsd.ddpfPixelFormat, sizeof(DDPIXELFORMAT));
+
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_LPSURFACE
+        | DDSD_PITCH | DDSD_PIXELFORMAT | DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;
+    ddsd.dwWidth = width;
+    ddsd.dwHeight = height;
+    ddsd.lPitch = (LONG)sizeof(gxj_pixel_type) * width;
+    ddsd.lpSurface = pVmem;
+
+    // Set up the pixel format for 16-bit RGB (5-6-5).
+    ddsd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
+    ddsd.ddpfPixelFormat.dwRBitMask    = 0x1f << 11;
+    ddsd.ddpfPixelFormat.dwGBitMask    = 0x3f << 5;
+    ddsd.ddpfPixelFormat.dwBBitMask    = 0x1f;
+
+    HRESULT hRet = g_pDD->CreateSurface(&ddsd, &pDDS, NULL);
+    if (hRet != DD_OK) {
+        *ppDDSurface = NULL;
+    } else {
+        *ppDDSurface = pDDS;
+    }
+}
+#endif /* ENABLE_DIRECT_DRAW */
 
 /**
  * Initializes the WINCE native resources.
  */
 
-static PTCHAR    _szAppName    = TEXT("jwc1.1.3 (svm)");
-static PTCHAR    _szTitle      = TEXT("jwc1.1.3 (svm)");
+static PTCHAR    _szAppName    = TEXT("SunJWCWindow");
+static PTCHAR    _szTitle      = TEXT("SunJWCWindow");
 static HINSTANCE _hInstance;
 
 static BOOL InitApplication(HINSTANCE hInstance) {
@@ -341,7 +476,8 @@ DWORD WINAPI CreateWinCEWindow(LPVOID lpParam) {
     gxj_system_screen_buffer.width = CHAM_WIDTH;
     gxj_system_screen_buffer.height = CHAM_HEIGHT;
     gxj_system_screen_buffer.alphaData = 0;
-    gxj_system_screen_buffer.pixelData = (gxj_pixel_type *)midpMalloc(screenSize);
+    gxj_system_screen_buffer.pixelData = 
+      (gxj_pixel_type *)midpMalloc(screenSize);
     memset(gxj_system_screen_buffer.pixelData, 0xff, screenSize);
 
     if (!init_windows(GetModuleHandle(NULL), SW_SHOW)) {
@@ -351,7 +487,7 @@ DWORD WINAPI CreateWinCEWindow(LPVOID lpParam) {
 
     updateVisibleDesktop();
 
-#if JWC_WINCE_USE_DIRECT_DRAW
+#if ENABLE_DIRECT_DRAW
     init_DirectDraw();
 #else
     if (GXOpenDisplay(hwndMain, 0) == 0) {
@@ -447,7 +583,9 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             mbi.hInstRes = instanceMain;
 
             if (SHCreateMenuBar(&mbi) == FALSE) {
-                /* Couldn't create the menu bar.  Fail creation of the window. */
+                /* Couldn't create the menu bar.  
+		 * Fail creation of the window. 
+		 */
                 return -1;
             } else {
                 hwndMenuBarSimple = mbi.hwndMB;
@@ -471,10 +609,11 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             mbi.hInstRes = instanceMain;
 
             if (SHCreateMenuBar(&mbi) == FALSE) {
-                /* Couldn't create the menu bar.  Fail creation of the window. */
+                /* Couldn't create the menu bar.  
+		 * Fail creation of the window. 
+		 */
                 return -1;
             } else {
-              hwndMenuBarPopup = mbi.hwndMB;
 
                 /* Get a handle to the popup menu, which will host the
                  * Commands of the current MIDP screen.
@@ -483,8 +622,8 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 tbbi.cbSize = sizeof(tbbi);
                 tbbi.dwMask = TBIF_LPARAM;
 
-
-                if (!SendMessage(hwndMenuBarPopup, TB_GETBUTTONINFO, IDM_SOFTBTN_0, (LPARAM)&tbbi)) {
+                if (!SendMessage(hwndMenuBarPopup, TB_GETBUTTONINFO, 
+				 IDM_SOFTBTN_0, (LPARAM)&tbbi)) {
                   err = GetLastError();
                 }
 
@@ -540,15 +679,12 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 GetWindowRect(hWndInputPanel, &virtualKeyboardRect);
             }
         }
-        virtualKeyboardHeight = virtualKeyboardRect.bottom - virtualKeyboardRect.top;
+        virtualKeyboardHeight = 
+	  virtualKeyboardRect.bottom - virtualKeyboardRect.top;
     }
         return DefWindowProc(hwnd, msg, wp, lp);
 
     case WM_TIMER:
-        if (wp == EVENT_TIMER_ID+1) {
-            KillTimer(hwndMain, EVENT_TIMER_ID+1);
-            process_skipped_refresh();
-        }
         return 0;
 
     case WM_COMMAND:
@@ -593,36 +729,36 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             /* for some reason windows will send us a CANCELMODE message
              * afterwards
              */
-            ignoreCancelMode ++;
+            ignoreCancelMode++;
             return 0;
         default:
-            /* IMPL_NOTE The events from the menu are not transfer up to 
-             *  java without displaying and addition menu.  
-             * Only a MIDP_COMMAND_EVENT should be used.  Disabling this feature for now.
+            /* IMPL_NOTE The events from the menu are not transfer up to  
+             *  java without displaying and addition menu.   
+             * Only a MIDP_COMMAND_EVENT should be used.  Disabling this feature for now. 
              */
             if (cmd >= ID_DYNAMIC_MENU) {
-                pMidpEventResult->type = MIDP_KEY_EVENT;
-                pMidpEventResult->CHR = ((cmd - ID_DYNAMIC_MENU)==IDM_SOFTBTN_0)
-                                           ? KEYMAP_KEY_SOFT1:KEYMAP_KEY_SOFT2;
-                pMidpEventResult->ACTION = KEYMAP_STATE_RELEASED;
-                pSignalResult->waitingFor = UI_SIGNAL;
-                pMidpEventResult->DISPLAY = gForegroundDisplayId;
-                sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult));
-                /* This command comes from a menu item dynamically
-                 * created in the native method
-                 */
-                /* Disabled
-                 SoftButtonLayer.setNativePopupMenu()
+                pMidpEventResult->type = MIDP_KEY_EVENT; 
+                pMidpEventResult->CHR = ((cmd - ID_DYNAMIC_MENU)==IDM_SOFTBTN_0) 
+                                           ? KEYMAP_KEY_SOFT1:KEYMAP_KEY_SOFT2; 
+                pMidpEventResult->ACTION = KEYMAP_STATE_RELEASED; 
+                pSignalResult->waitingFor = UI_SIGNAL; 
+                pMidpEventResult->DISPLAY = gForegroundDisplayId; 
+                sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult)); 
+                /* This command comes from a menu item dynamically 
+                 * created in the native method 
+                 */ 
+                /* Disabled 
+                 SoftButtonLayer.setNativePopupMenu() 
                  pMidpEventResult->type = MIDP_COMMAND_EVENT;
                  pMidpEventResult->COMMAND = (cmd - ID_DYNAMIC_MENU);
                  pSignalResult->waitingFor = UI_SIGNAL;
                  pMidpEventResult->DISPLAY = gForegroundDisplayId;
                  sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult));
-                */  
+		*/
                 /* for some reason windows will send us a CANCELMODE message
                  * afterwards
                  */
-                ignoreCancelMode ++;
+                ignoreCancelMode++;
                 return 0;
             } else {
                 return DefWindowProc(hwnd, msg, wp, lp);
@@ -653,7 +789,7 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         if (!ignoreCancelMode) {
             disablePaint();
         } else {
-            ignoreCancelMode --;
+            ignoreCancelMode--;
         }
         /* We have to do this, or else windows is unhappy. */
         return DefWindowProc(hwnd, msg, wp, lp);
@@ -750,22 +886,8 @@ void winceapp_finalize() {
 }
 
 static void process_skipped_refresh() {
-    if (has_skipped_refresh) {
-        must_refresh = 1;
-        if (hint_is_painting) {
-            /* Some Java code is already painting to the back buffer,
-             * and will soon call winceapp_refresh to refresh. There's
-             * need for us to paint now.
-
-             * Let's schedule a timer again, in case we go into a
-             * hint_is_painting block but don't actually call refresh0()!
-             */
-            SetTimer(hwndMain, EVENT_TIMER_ID+1, (UINT)200, NULL);
-        } else {
-            winceapp_refresh(dirty_x1, dirty_y1, dirty_x2, dirty_y2);
-            has_skipped_refresh = 0;
-        }
-    }
+    winceapp_refresh(0, 0, CHAM_WIDTH, 
+                     CHAM_HEIGHT);         
 }
 
 int isScreenFullyVisible() {
@@ -776,11 +898,12 @@ int isScreenFullyVisible() {
         /* This is false if the screen has been rotated or SIP is up */
         int w = rcVisibleDesktop.right - rcVisibleDesktop.left;
         int h = rcVisibleDesktop.bottom - rcVisibleDesktop.top;
-        return (w >= CHAM_WIDTH && h >= CHAM_HEIGHT);
+        return (w >= CHAM_WIDTH && 
+                h >= CHAM_HEIGHT);
     }
 }
 
-#if JWC_WINCE_USE_DIRECT_DRAW
+#if ENABLE_DIRECT_DRAW
 int isScreenRotated() {
     if (JWC_WINCE_SMARTPHONE) {
         /* No SIP window or screen rotation on SmartPhone (presumably ...) */
@@ -801,48 +924,71 @@ static gxj_pixel_type*
 startDirectPaint(int &dstWidth, int &dstHeight, int &dstYPitch) {
     gxj_pixel_type *dst = NULL;
 
-#if JWC_WINCE_USE_DIRECT_DRAW
+#if ENABLE_DIRECT_DRAW
     if (isScreenRotated() || !isScreenFullyVisible() || editBoxShown) {
         /* DDraw is not very reliable on an rotated screen. Use GDI instead. */
         return NULL;
     }
 
     if (g_pDD == NULL) {
-        /* DirectDraw failed to initialize. Let's use GDI to Blit to the LCD. */
+        init_DirectDraw();
+        if (g_pDD == NULL) {
+        /* DirectDraw failed to initialize. 
+	 * Let's use GDI to Blit to the LCD. 
+	 */
         return NULL;
     }
-
-    HRESULT hRet;
-    DDSURFACEDESC surfaceDesc;
-    DDSURFACEDESC ddsd;
+    }
 
     if (g_pDDSPrimary == NULL) {
-        /* Create the primary surface with 0 back buffer */
-        memset(&ddsd, 0, sizeof(ddsd));
-        ddsd.dwSize = sizeof(ddsd);
-        ddsd.dwFlags = DDSD_CAPS;
-        ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE ;
-        hRet = g_pDD->CreateSurface(&ddsd, &g_pDDSPrimary, NULL);
-        if (hRet != DD_OK) {
-            g_pDDSPrimary = NULL;
+        create_primary_surface(&g_pDDSPrimary);
+        if (g_pDDSPrimary == NULL) {
+            return NULL;
+        }
+        attach_clipper(g_pDDSPrimary, &g_pDDClipper);
+    }
+
+    if (g_pDDSvram == NULL) {
+        attach_vmem_to_memory_surface(gxj_system_screen_buffer.pixelData, 
+				      CHAM_WIDTH, 
+				      CHAM_HEIGHT, 
+                                      &g_pDDSvram);
+        if (g_pDDSvram == NULL) {            
             return NULL;
         }
     }
 
+    DDSURFACEDESC surfaceDesc;
+    HRESULT hRet = S_OK;
+    memset(&surfaceDesc, 0 , sizeof(surfaceDesc));
     surfaceDesc.dwSize = sizeof(surfaceDesc);
-    hRet = g_pDDSPrimary->Lock(NULL, &surfaceDesc,
-                               DDLOCK_DISCARD | DDLOCK_WRITEONLY, NULL);
+    hRet = g_pDDSPrimary->GetSurfaceDesc(&surfaceDesc);
+    dst = (gxj_pixel_type*)surfaceDesc.lpSurface;
     if (hRet == DD_OK) {
-        dst = (gxj_pixel_type*)surfaceDesc.lpSurface;
         dstWidth = surfaceDesc.dwWidth;
         dstHeight = surfaceDesc.dwHeight;
         dstYPitch = surfaceDesc.lPitch;
     } else {
-        /* Release the DD resources. Maybe we'd get lucky and can allocate
-         * it next time.
-         */
+        // Release the DD resources. Maybe we'd get lucky and can allocate
+        // it next time.
+        if (hRet == DDERR_SURFACELOST) { //restore it before release it
+            HRESULT hr2 = g_pDDSPrimary->Restore();
+	    }
+        g_pDDSPrimary->SetClipper(NULL);
+        if (g_pDDClipper) {
+	        g_pDDClipper->Release();
+	        g_pDDClipper = NULL;
+        }
         g_pDDSPrimary->Release();
         g_pDDSPrimary = NULL;
+        if (g_pDDSvram) {
+	        g_pDDSvram->Release();
+	        g_pDDSvram = NULL;
+        }
+        if (g_pDDSvramDirect) {
+	        g_pDDSvramDirect->Release();
+	        g_pDDSvramDirect = NULL;
+        }
         return NULL;
     }
 #else
@@ -859,7 +1005,7 @@ startDirectPaint(int &dstWidth, int &dstHeight, int &dstYPitch) {
 }
 
 static void endDirectPaint() {
-#if JWC_WINCE_USE_DIRECT_DRAW
+#if ENABLE_DIRECT_DRAW
     g_pDDSPrimary->Unlock(NULL);
 #else
     GXEndDraw();
@@ -874,60 +1020,6 @@ static struct {
     unsigned char *destBits;
 } gb = {NULL};
 
-static void gdiRefreshBitmap(HDC hdc, int x, int y, int width, int height,
-                             int dx, int dy) {
-    if (gb.hdcMem == NULL) {
-        gb.bi.bmiHeader.biSize          = sizeof(gb.bi.bmiHeader);
-        gb.bi.bmiHeader.biWidth         = CHAM_WIDTH;
-        gb.bi.bmiHeader.biHeight        = -CHAM_HEIGHT;
-        gb.bi.bmiHeader.biPlanes        = 1;
-        gb.bi.bmiHeader.biBitCount      = sizeof (long) * 8;
-        gb.bi.bmiHeader.biCompression   = BI_RGB;
-        gb.bi.bmiHeader.biSizeImage     = width * height * sizeof (long);
-        gb.bi.bmiHeader.biXPelsPerMeter = 0;
-        gb.bi.bmiHeader.biYPelsPerMeter = 0;
-        gb.bi.bmiHeader.biClrUsed       = 0;
-        gb.bi.bmiHeader.biClrImportant  = 0;
-
-        gb.hdcMem = CreateCompatibleDC(hdc);
-        gb.destHBmp = CreateDIBSection(gb.hdcMem, &gb.bi, DIB_RGB_COLORS,
-                                       (void**)(&gb.destBits), NULL, 0);
-
-        if (gb.destBits != NULL) {
-            gb.oobj = SelectObject(gb.hdcMem, gb.destHBmp);
-            SelectObject(gb.hdcMem, gb.oobj);
-        }
-        x = 0;
-        y = 0;
-        width = CHAM_WIDTH;
-        height = CHAM_HEIGHT;
-    }
-
-    gxj_pixel_type* pixels = gxj_system_screen_buffer.pixelData;
-    int i, j;
-
-    for (j = 0; j < height; j++) {
-        pixels = &gxj_system_screen_buffer.pixelData[(y + j) * CHAM_WIDTH + x];
-        unsigned char *destPtr =
-            gb.destBits + (((y + j) * CHAM_WIDTH + x) * sizeof(long));
-
-        for (i = 0; i < width; i++) {
-            gxj_pixel_type pixel = *pixels++;
-            int r = GXJ_GET_RED_FROM_PIXEL(pixel);
-            int g = GXJ_GET_GREEN_FROM_PIXEL(pixel);
-            int b = GXJ_GET_BLUE_FROM_PIXEL(pixel);
-
-            *destPtr++ = b; /* dest pixels is to be in BGRA order */
-            *destPtr++ = g;
-            *destPtr++ = r;
-             destPtr++;
-        }
-    }
-
-    /* IMPL_NOTE: don't need to copy the entire screen */
-    SetDIBitsToDevice(hdc, dx, dy, CHAM_WIDTH, CHAM_HEIGHT, 0, 0, 0,
-                      CHAM_HEIGHT, gb.destBits, &gb.bi, DIB_RGB_COLORS);
-}
 
 /**
  * Bridge function to request a repaint
@@ -943,103 +1035,66 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
         return;
     }
 
-    /* Let's try to limit the actual
-     * rate of copying to the front buffer to no more than 60FPS to
-     * save power (and make benchmarks happy).
-     */
-    DWORD now = GetTickCount();
-    DWORD lag;
-
-    int has_recent_input =
-        ((now < lastUserInputTick) || ((now - lastUserInputTick) < 200));
-
-    if (hint_is_canvas_painting || has_recent_input) {
-        /* Make it around 60FPS, so even if we are a little off, we should
-         * still be over 30FPS for Canvas.
-         *
-         * Also, for non canvas screens, if the user has recently pressed
-         * a key, repaint more responsively.
-         */
-        lag = 15;
-    } else {
-        lag = 200;
+    if(x2 > CHAM_WIDTH) {
+        x2 = CHAM_WIDTH;
     }
-
-    if ((now < lastPaintedTick) || ((now - lastPaintedTick) > lag)) {
-        /* We have gone too long without a repaint. Do it now. */
-        must_refresh = 1;
+    
+    if(y2 > CHAM_HEIGHT) {
+        y2 = CHAM_HEIGHT;
     }
-
-    if (!must_refresh) {
-        if (!has_skipped_refresh) {
-            /* Schedule a Windows timer to refresh the screen, in case
-             * there's no more refresh coming.
-             */
-            KillTimer(hwndMain, EVENT_TIMER_ID+1);
-            SetTimer(hwndMain, EVENT_TIMER_ID+1, (UINT)200, NULL);
-
-            dirty_x1 = x1;
-            dirty_y1 = y1;
-            dirty_x2 = x2;
-            dirty_y2 = y2;
-
-            has_skipped_refresh = 1;
-        } else {
-            if (dirty_x1 > x1) {
-                dirty_x1 = x1;
-            }
-            if (dirty_y1 > y1) {
-                dirty_y1 = y1;
-            }
-            if (dirty_x2 < x2) {
-                dirty_x2 = x2;
-            }
-            if (dirty_y2 < y2) {
-                dirty_y2 = y2;
-            }
-        }
-        return;
-    }
-
-
-    if (has_skipped_refresh) {
-        if (x1 > dirty_x1) {
-            x1 = dirty_x1;
-        }
-        if (y1 > dirty_y1) {
-            y1 = dirty_y1;
-        }
-        if (x2 < dirty_x2) {
-            x2 = dirty_x2;
-        }
-        if (y2 < dirty_y2) {
-            y2 = dirty_y2;
-        }
-    }
-    has_skipped_refresh = 0;
-    must_refresh = 0;
-    lastPaintedTick = now;
 
     gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
     int srcWidth, srcHeight;
     int dstWidth, dstHeight, dstYPitch;
 
     /* Make sure the copied lines are 4-byte aligned for faster memcpy */
-    if ((x1 & 2) == 1) {
+    if ((x1 & 0x01) == 1) {
         x1 -= 1;
     }
-    if ((x2 & 2) == 1) {
+    if ((x2 & 0x01) == 1) {
         x2 += 1;
     }
+
+    gxj_pixel_type *dst = startDirectPaint(dstWidth, dstHeight, dstYPitch);
+    int maxY = dstHeight - titleHeight - menuHeight - virtualKeyboardHeight;
+    
+#if ENABLE_DIRECT_DRAW
+    if (y2 > maxY) {
+        y2 = maxY;
+    }
+    if (x2 > dstWidth) {
+        x2 = dstWidth;
+    }
+
     srcWidth = x2 - x1;
     srcHeight = y2 - y1;
 
-    gxj_pixel_type *dst = startDirectPaint(dstWidth, dstHeight, dstYPitch);
+    if (srcWidth <= 0 || srcHeight <= 0)  {
+        endDirectPaint();
+        // it is possible srcHeight<0 when SIP shown and java refresh 
+        // the lower part screen(system menu up/dn,etc.)
+        return;
+    }
+
+    RECT srcRect, dstRect;
+    srcRect.top = y1;
+    srcRect.left = x1;
+    srcRect.bottom = y2;
+    srcRect.right = x2;
+
+    dstRect.top = y1 + rcVisibleDesktop.top;
+    dstRect.left = x1;
+    dstRect.bottom = y2 + rcVisibleDesktop.top;
+    dstRect.right = x2;
+
+    HRESULT ret = g_pDDSPrimary->Blt(&dstRect, g_pDDSvram, &srcRect, 0, NULL); 
+
+#else /* !ENABLE_DIRECT_DRAW */
+
     if (dst != NULL) {
-        /* If we are running a binary whose CHAM_WIDTH and CHAM_HEIGHT
-         * is too big for the LCD on the device, don't draw outside the LCD.
-         */
-        int maxY = dstHeight - titleHeight - menuHeight - virtualKeyboardHeight;
+        srcWidth = x2 - x1;
+        srcHeight = y2 - y1;
+        
         if (y2 > maxY) {
             y2 = maxY;
         }
@@ -1055,7 +1110,9 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
 
         if (x1 == 0 && srcWidth == CHAM_WIDTH && dstWidth == srcWidth &&
             dstYPitch == dstWidth * 2) {
-            memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type) * (srcHeight - virtualKeyboardHeight /* assuming srcHeight=full height ?*/));
+	    /* assuming srcHeight==full height ? */ 
+            memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type) * 
+		             (srcHeight - virtualKeyboardHeight));
         } else {
             for (; y1 < y2; y1++) {
                 memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type));
@@ -1063,62 +1120,108 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
                 dst = (gxj_pixel_type*)( ((int)dst) + dstYPitch );
             }
         }
-
+    } 
+#endif /* ENABLE_DIRECT_DRAW */
         endDirectPaint();
-    } else {
-        /* Use GDI to draw to the screen. Most likely the user has
-         * changed the screen orientation (or DirectDraw is not available)
-         */
-        HDC hdc;
-        PAINTSTRUCT ps;
-        RECT myRect;
-
-        /* dst{X1,Y1,X2,Y2} is the rectangle that we will render into.
-         * In screen coordinates.
-         */
-        int dstX1 = rcVisibleDesktop.left;
-        int dstY1 = rcVisibleDesktop.top;
-        int dstX2 = rcVisibleDesktop.right; /* exclusive */
-        int dstY2 = rcVisibleDesktop.bottom; /* exclusive */
-
-        dstWidth = dstX2 - dstX1;
-        dstHeight = dstY2 - dstY1 - menuHeight - virtualKeyboardHeight;
-
-        /* Invalidate the whole window (but don't erase it). This allows
-         * subsequent operations to paint into the window
-         */
-        GetClientRect(hwndMain, &myRect);
-        InvalidateRect(hwndMain, &myRect, FALSE);
-
-        /* If the CHAM canvas is too small, center it in the output region. */
-        int dx = 0, dy = 0;
-        if (dstWidth > CHAM_WIDTH) {
-            dx = (dstWidth - CHAM_WIDTH) / 2;
-        }
-        if (dstHeight > CHAM_HEIGHT) {
-            dy = (dstHeight - CHAM_HEIGHT) / 2;
-        }
-
-        /* dx += dstX1; */
-        /* dy += dstY1; */
-
-        hdc = BeginPaint(hwndMain, &ps);
-        gdiRefreshBitmap(hdc, x1, y1, x2-x1, y2-y1, dx, dy);
-
-        EndPaint(hwndMain, &ps);
-    }
 }
 
-jboolean lcd_direct_flush(gxj_pixel_type *src, int height) {
+jboolean winceapp_direct_flush(const java_graphics *g,
+			       const java_imagedata *srcImageDataPtr, 
+			       int height) {
     if (!midpPaintAllowed) {
         return FALSE;
     }
 
-
-    int dstWidth, dstHeight, dstYPitch;
+    int width, dstWidth, dstHeight, dstYPitch;
     jboolean success = KNI_FALSE;
+    gxj_pixel_type* src = NULL;
+    gxj_pixel_type* dst = NULL;
+;
+    if (srcImageDataPtr == NULL || srcImageDataPtr->pixelData == NULL) {
+      return KNI_FALSE;
+    }
+    width = srcImageDataPtr->width;
+    src = (gxj_pixel_type *)&(srcImageDataPtr->pixelData->elements[0]);
+    dst = startDirectPaint(dstWidth, dstHeight, dstYPitch);
 
-    gxj_pixel_type *dst = startDirectPaint(dstWidth, dstHeight, dstYPitch);
+#if ENABLE_DIRECT_DRAW /* ENABLE_DIRECT_DRAW */    
+    static gxj_pixel_type * lastSrc = NULL; //last flush src
+    static DWORD lastTime = 0; //last flush time
+    static int lastHeight =0; //unflushed accumulated height
+    DWORD nowTime;
+
+    if (!midpPaintAllowed) {
+        return KNI_TRUE;
+    }
+
+    // rotated screen doesn't support directDraw
+    if (isScreenRotated()) return KNI_FALSE;
+
+    nowTime = GetTickCount();
+    if (lastSrc == src) {
+        if (nowTime-lastTime > 40) { //25 frames/s
+            if (lastHeight > height) {
+		height = lastHeight;
+	    }
+        } else {
+            if (lastHeight < height) { 
+		lastHeight =height;
+	    }
+            return KNI_TRUE;
+        }
+    } else {
+        if (g_pDDSvramDirect) {
+	    g_pDDSvramDirect->Release();
+	    g_pDDSvramDirect = NULL;
+        }
+	init_DirectDraw();
+	attach_vmem_to_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT, 
+				      &g_pDDSvramDirect);
+        lastSrc = src;
+    }
+    lastHeight = 0;
+    lastTime = nowTime;
+
+    if (g_pDDSvramDirect == NULL) {
+	attach_vmem_to_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT, 
+				      &g_pDDSvramDirect);
+    }
+    if (g_pDDSvramDirect == NULL) {
+	return KNI_FALSE;
+    }
+
+    if (height > CHAM_HEIGHT) {
+        height = CHAM_HEIGHT;
+    }
+
+    do {
+        if (KNI_FALSE == startDirectPaint(dstWidth, dstHeight, dstYPitch)) {
+            break;
+        }
+
+        if (dstWidth == CHAM_WIDTH 
+            && height <= dstHeight 
+            && width == CHAM_WIDTH 
+            && dstYPitch == (int)(dstWidth * sizeof(gxj_pixel_type))) {
+
+            RECT srcRect;
+            srcRect.top = 0;
+            srcRect.left = 0;
+            srcRect.bottom = height;
+            srcRect.right = width;
+
+            RECT dstRect;
+            dstRect.top = rcVisibleDesktop.top;
+            dstRect.left = 0;
+            dstRect.bottom = height + rcVisibleDesktop.top;
+            dstRect.right = width;
+            
+            HRESULT ret = g_pDDSPrimary->Blt(&dstRect, g_pDDSvramDirect, 
+					     &srcRect, 0, NULL);
+            if (ret == DD_OK)  success = KNI_TRUE;
+        }
+    } while(0);
+#else  /* !ENABLE_DIRECT_DRAW */
     if (dst != NULL) {
         if (dstWidth == CHAM_WIDTH && height <= dstHeight &&
             dstYPitch == (int)(dstWidth * sizeof(gxj_pixel_type))) {
@@ -1127,14 +1230,14 @@ jboolean lcd_direct_flush(gxj_pixel_type *src, int height) {
             memcpy(dst, src, bytes);
             success = KNI_TRUE;
         } else {
-            /* Take the slow path of drawing first into gxj_system_screen_buffer
+            /* Take the slow path of drawing first into 
+             * gxj_system_screen_buffer
              * and then copied to LCD using winceapp_refresh();
              */
         }
-
-        endDirectPaint();
-    }
-
+    }        
+#endif /* ENABLE_DIRECT_DRAW */    
+    endDirectPaint();    
     return success;
 }
 
@@ -1176,7 +1279,7 @@ jboolean drawBackLight(AncBacklightState mode) {
  * be the same as the (width * sizeof(gxj_pixel_type).
  */
 HDC getScreenBufferHDC(gxj_pixel_type *buffer, int width, int height) {
-#if JWC_WINCE_USE_DIRECT_DRAW
+#if ENABLE_DIRECT_DRAW
     /*  pDDS and cachedHDC must both be NULL or both be non-NULL */
     static LPDIRECTDRAWSURFACE pDDS = NULL;
     static HDC cachedHDC = NULL;
@@ -1245,8 +1348,10 @@ HDC getScreenBufferHDC(gxj_pixel_type *buffer, int width, int height) {
 
     cachedBuffer = buffer;
     return cachedHDC;
-#endif /* JWC_WINCE_USE_DIRECT_DRAW */
+#else    
     return NULL;
+#endif /* ENABLE_DIRECT_DRAW */
+    
 }
 
 /**
@@ -1369,7 +1474,8 @@ KNIDECL(javax_microedition_lcdui_TextFieldLFImpl_getNativeEditorContent) {
         int strLen = GetWindowTextLength(hwndTextActive);
         jchar *tmp = (jchar*)midpMalloc((strLen + 1) * sizeof(jchar));
         if (tmp) {
-            GetWindowText(hwndTextActive, (LPTSTR)tmp, strLen+1); /* 0-terminated */
+	  /* 0-terminated */
+            GetWindowText(hwndTextActive, (LPTSTR)tmp, strLen+1);
             SNI_NewArray(SNI_CHAR_ARRAY, strLen, chars);
             if (!KNI_IsNullHandle(chars)) {
                 memcpy(JavaCharArray(chars), tmp, strLen*sizeof(jchar));
@@ -1415,7 +1521,8 @@ KNIDECL(com_sun_midp_chameleon_MIDPWindow_disableAndSyncNativeEditor) {
         int strLen = GetWindowTextLength(hwndTextActive);
         jchar *tmp = (jchar*)midpMalloc((strLen + 1) * sizeof(jchar));
         if (tmp) {
-            GetWindowText(hwndTextActive, (LPTSTR)tmp, strLen+1); /* 0-terminated */
+	    /* 0-terminated */
+            GetWindowText(hwndTextActive, (LPTSTR)tmp, strLen+1);
             WORD w = (WORD)SendMessage(hwndTextActive, EM_GETSEL, 0, 0L);
             int caret = LOWORD(w);
 
@@ -1468,8 +1575,8 @@ KNIDECL(com_sun_midp_midlet_MIDletPeer_dismissNativeEditors) {
  */
 jboolean winceapp_reverse_orientation() {
     reverse_orientation = !reverse_orientation;
-    gxj_system_screen_buffer.width = get_screen_width();
-    gxj_system_screen_buffer.height = get_screen_height();
+    gxj_system_screen_buffer.width = winceapp_get_screen_width();
+    gxj_system_screen_buffer.height = winceapp_get_screen_height();
     return reverse_orientation;
 }
 
@@ -1483,7 +1590,7 @@ jboolean winceapp_get_reverse_orientation() {
 /**
  * Return screen width
  */
-int get_screen_width() {
+int winceapp_get_screen_width() {
     if (reverse_orientation) {
         return CHAM_HEIGHT;
     } else {
@@ -1495,7 +1602,7 @@ int get_screen_width() {
 /**
  * Return screen height
  */
-int get_screen_height() {
+int winceapp_get_screen_height() {
     if (reverse_orientation) {
         return CHAM_WIDTH;
     } else {
