@@ -161,13 +161,13 @@ ClassClass {
     adjustSymbolicConstants(UnresolvedReferenceList missingObjects);
 
     public static boolean 
-    isPartiallyResolved( ConstantObject[] consts ){
-        if ( consts == null ) return false; // no const!
-        int nconst = consts.length;
+    isPartiallyResolved( ConstantPool cp ){
+        int nconst = cp.getLength();
         if ( nconst == 0 ) return false; // no const!
 
         // first see if we have anything that needs our attention.
         int nsymbolic = 0;
+	ConstantObject[] consts = cp.getConstants();
         for( int i = 1; i < nconst; i += consts[i].nSlots ){
             ConstantObject o = consts[i];
             if (!o.isResolved()) {
