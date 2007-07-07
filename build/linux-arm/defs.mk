@@ -86,9 +86,7 @@ CVM_SRCDIRS   += \
 CVM_INCLUDE_DIRS  += \
 	$(CVM_TOP)/src/$(TARGET_OS)-$(TARGET_CPU_FAMILY)
 
-ifeq ($(CVM_FORCE_HARD_FLOAT), true)
-	CVM_DEFINES     += -DCVM_FORCE_HARD_FLOAT
-else
+ifneq ($(CVM_FORCE_HARD_FLOAT), true)
 ifeq ($(USE_GCC2), true)
 	CC_ARCH_FLAGS   += -msoft-float
 	ASM_ARCH_FLAGS  += -msoft-float
