@@ -167,6 +167,9 @@ void lfjport_gained_foreground() {
  */
 jboolean lfjport_direct_flush(const java_graphics *g, 
 		  	      const java_imagedata *offscreen_buffer, int h) {
+  (void)g; 
+  (void)offscreen_buffer;
+  (void)h;
   return KNI_FALSE;
 }
 
