@@ -39,7 +39,7 @@
 static jfieldID fieldIds[TRANSFORM_LAST + 1];
 static jboolean fieldIdsInitialized = KNI_FALSE;
 
-static jboolean initializeTransformFieldIds(jobject objectHandle);
+static jboolean initializeTransformFieldIds(CVMExecEnv* _ee, jobject objectHandle);
 
 void
 transform_get4(Transform4* transform, jobject object) {
@@ -78,13 +78,13 @@ transform_set6(jobject object, const Transform6* transform) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_Transform6_initialize() {
+KNIDECL(com_sun_pisces_Transform6_initialize) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(objectHandle);
 
     KNI_GetThisPointer(objectHandle);
 
-    if (!initializeTransformFieldIds(objectHandle)) {
+    if (!initializeTransformFieldIds(_ee, objectHandle)) {
         KNI_ThrowNew("java/lang/IllegalStateException", "");
     }
 
@@ -95,7 +95,7 @@ Java_com_sun_pisces_Transform6_initialize() {
 }
 
 static jboolean
-initializeTransformFieldIds(jobject objectHandle) {
+initializeTransformFieldIds(CVMExecEnv* _ee, jobject objectHandle) {
     static const FieldDesc transformFieldDesc[] = {
                 { "m00", "I"
                 },
@@ -120,7 +120,7 @@ initializeTransformFieldIds(jobject objectHandle) {
 
     KNI_GetObjectClass(objectHandle, classHandle);
 
-    if (initializeFieldIds(fieldIds, classHandle, transformFieldDesc)) {
+    if (initializeFieldIds(_ee, fieldIds, classHandle, transformFieldDesc)) {
         retVal = KNI_TRUE;
         fieldIdsInitialized = KNI_TRUE;
     }

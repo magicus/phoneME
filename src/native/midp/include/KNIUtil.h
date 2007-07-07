@@ -36,10 +36,10 @@ typedef struct _FieldDesc {
 }
 FieldDesc;
 
-jboolean initializeFieldIds(jfieldID* dest,
+jboolean initializeFieldIds(CVMExecEnv* _ee, jfieldID* dest,
                             jclass classHandle, const FieldDesc* fields);
 
-jboolean initializeStaticFieldIds(jfieldID* dest,
+jboolean initializeStaticFieldIds(CVMExecEnv* _ee, jfieldID* dest,
                                   jclass classHandle, const FieldDesc* fields);
 
 #endif

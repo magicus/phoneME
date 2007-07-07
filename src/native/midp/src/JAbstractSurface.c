@@ -40,23 +40,27 @@
 static jfieldID fieldIds[SURFACE_LAST + 1];
 static jboolean fieldIdsInitialized = KNI_FALSE;
 
-static jboolean initializeSurfaceFieldIds(jobject objectHandle);
-
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_AbstractSurface_nativeFinalize() {
+KNIDECL(com_sun_pisces_AbstractSurface_nativeFinalize) {
+    jboolean success = KNI_FALSE;
+
     KNI_StartHandles(1);
     KNI_DeclareHandle(objectHandle);
 
     KNI_GetThisPointer(objectHandle);
 
-    surface_finalize(objectHandle);
+    success = surface_finalize(_ee, objectHandle);
+    if ( KNI_FALSE == success ) {
+            KNI_ThrowNew("java/lang/OutOfMemoryError",
+                         "Allocation of internal renderer buffer failed.");
+    }
 
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_pisces_AbstractSurface_getWidth() {
+KNIDECL(com_sun_pisces_AbstractSurface_getWidth) {
     jint width;
 
     KNI_StartHandles(1);
@@ -75,7 +79,7 @@ Java_com_sun_pisces_AbstractSurface_getWidth() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-Java_com_sun_pisces_AbstractSurface_getHeight() {
+KNIDECL(com_sun_pisces_AbstractSurface_getHeight) {
     jint height;
 
     KNI_StartHandles(1);
@@ -94,7 +98,7 @@ Java_com_sun_pisces_AbstractSurface_getHeight() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_AbstractSurface_getRGB() {
+KNIDECL(com_sun_pisces_AbstractSurface_getRGB) {
     KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);
     KNI_DeclareHandle(arrayHandle);
@@ -158,7 +162,7 @@ Java_com_sun_pisces_AbstractSurface_getRGB() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_AbstractSurface_setRGB() {
+KNIDECL(com_sun_pisces_AbstractSurface_setRGB) {
     KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);
     KNI_DeclareHandle(arrayHandle);
@@ -203,7 +207,7 @@ Java_com_sun_pisces_AbstractSurface_setRGB() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_AbstractSurface_drawSurfaceImpl() {
+KNIDECL(com_sun_pisces_AbstractSurface_drawSurfaceImpl) {
     KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);
     KNI_DeclareHandle(surfaceHandle);
@@ -245,7 +249,7 @@ Java_com_sun_pisces_AbstractSurface_drawSurfaceImpl() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_AbstractSurface_drawRGBImpl() {
+KNIDECL(com_sun_pisces_AbstractSurface_drawRGBImpl) {
     KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);
     KNI_DeclareHandle(arrayHandle);
@@ -292,41 +296,13 @@ Java_com_sun_pisces_AbstractSurface_drawRGBImpl() {
 }
 
 AbstractSurface*
-surface_get(jobject surfaceHandle) {
+surface_get(CVMExecEnv* ee, jobject surfaceHandle) {
     return (AbstractSurface*)JLongToPointer(
                KNI_GetLongField(surfaceHandle, fieldIds[SURFACE_NATIVE_PTR]));
 }
 
 jboolean
-surface_initialize(jobject surfaceHandle) {
-    return initializeSurfaceFieldIds(surfaceHandle);
-}
-
-void
-surface_finalize(jobject objectHandle) {
-    AbstractSurface* surface;
-
-    if (!fieldIdsInitialized) {
-        return;
-    }
-
-    surface = (AbstractSurface*)JLongToPointer(
-                  KNI_GetLongField(objectHandle, fieldIds[SURFACE_NATIVE_PTR]));
-
-    if (surface != NULL) {
-        surface->cleanup(surface);
-        surface_dispose(&surface->super);
-        KNI_SetLongField(objectHandle, fieldIds[SURFACE_NATIVE_PTR], (jlong)0);
-
-        if (KNI_TRUE == readAndClearMemErrorFlag()) {
-            KNI_ThrowNew("java/lang/OutOfMemoryError",
-                         "Allocation of internal renderer buffer failed.");
-        }
-    }
-}
-
-static jboolean
-initializeSurfaceFieldIds(jobject objectHandle) {
+surface_initialize(CVMExecEnv* _ee, jobject surfaceHandle) {
     static const FieldDesc surfaceFieldDesc[] = {
                 { "nativePtr", "J" },
                 { NULL, NULL }
@@ -343,13 +319,35 @@ initializeSurfaceFieldIds(jobject objectHandle) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(classHandle);
 
-    KNI_GetObjectClass(objectHandle, classHandle);
+    KNI_GetObjectClass(surfaceHandle, classHandle);
 
-    if (initializeFieldIds(fieldIds, classHandle, surfaceFieldDesc)) {
+    if (initializeFieldIds(_ee, fieldIds, classHandle, surfaceFieldDesc)) {
         retVal = KNI_TRUE;
         fieldIdsInitialized = KNI_TRUE;
     }
 
     KNI_EndHandles();
     return retVal;
+}
+
+jboolean
+surface_finalize(CVMExecEnv* ee, jobject objectHandle) {
+    AbstractSurface* surface;
+
+    if (!fieldIdsInitialized) {
+        return KNI_TRUE;
+    }
+
+    surface = (AbstractSurface*)JLongToPointer(
+                  KNI_GetLongField(objectHandle, fieldIds[SURFACE_NATIVE_PTR]));
+
+    if (surface != NULL) {
+        surface->cleanup(surface);
+        surface_dispose(&surface->super);
+        KNI_SetLongField(objectHandle, fieldIds[SURFACE_NATIVE_PTR], (jlong)0);
+
+        if (KNI_TRUE == readAndClearMemErrorFlag()) {
+            return KNI_FALSE;
+        }
+    }
 }

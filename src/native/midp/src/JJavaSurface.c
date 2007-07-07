@@ -55,7 +55,7 @@ typedef struct _JavaSurface {
 } JavaSurface;
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_JavaSurface_initialize() {
+KNIDECL(com_sun_pisces_JavaSurface_initialize) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(objectHandle);
 

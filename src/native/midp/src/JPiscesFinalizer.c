@@ -31,8 +31,7 @@
  * private native void finalize();
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_PiscesFinalizer_finalize()
-{
+KNIDECL(com_sun_pisces_PiscesFinalizer_finalize) {
     pisces_moduleFinalize();
     KNI_ReturnVoid();
 }

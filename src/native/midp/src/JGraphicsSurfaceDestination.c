@@ -84,7 +84,7 @@ static void premulOpacity(jint* srcArray, jint scanLength,
                           jint* dstArray);
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_GraphicsSurfaceDestination_initialize() {
+KNIDECL(com_sun_pisces_GraphicsSurfaceDestination_initialize) {
 
     /* don't do anything here (see the throw above)! */
 
@@ -92,7 +92,7 @@ Java_com_sun_pisces_GraphicsSurfaceDestination_initialize() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_GraphicsSurfaceDestination_drawSurfaceImpl() {
+KNIDECL(com_sun_pisces_GraphicsSurfaceDestination_drawSurfaceImpl) {
     KNI_StartHandles(2);
     KNI_DeclareHandle(graphicsHandle);
     KNI_DeclareHandle(surfaceHandle);
@@ -110,7 +110,7 @@ Java_com_sun_pisces_GraphicsSurfaceDestination_drawSurfaceImpl() {
     KNI_GetParameterAsObject(1, graphicsHandle);
     KNI_GetParameterAsObject(2, surfaceHandle);
 
-    surface = &surface_get(surfaceHandle)->super;
+    surface = &surface_get(_ee, surfaceHandle)->super;
 
     CORRECT_DIMS(surface, srcX, srcY, width, height, dstX, dstY);
 
@@ -139,7 +139,7 @@ Java_com_sun_pisces_GraphicsSurfaceDestination_drawSurfaceImpl() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_GraphicsSurfaceDestination_drawRGBImpl() {
+KNIDECL(com_sun_pisces_GraphicsSurfaceDestination_drawRGBImpl) {
     KNI_StartHandles(2);
     KNI_DeclareHandle(graphicsHandle);
     KNI_DeclareHandle(arrayHandle);

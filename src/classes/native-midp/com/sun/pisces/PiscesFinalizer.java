@@ -55,5 +55,5 @@ public class PiscesFinalizer {
     /**
      * Uninitializes native Pisces module.
      */
-    private native void finalize();
+    protected native void finalize();
 }

@@ -27,7 +27,7 @@
 #include <KNIUtil.h>
 
 jboolean
-initializeFieldIds(jfieldID* dest,
+initializeFieldIds(CVMExecEnv* _ee, jfieldID* dest,
                    jclass classHandle, const FieldDesc* fields) {
     jboolean retVal = KNI_TRUE;
 
@@ -45,7 +45,7 @@ initializeFieldIds(jfieldID* dest,
 }
 
 jboolean
-initializeStaticFieldIds(jfieldID* dest,
+initializeStaticFieldIds(CVMExecEnv* _ee, jfieldID* dest,
                          jclass classHandle, const FieldDesc* fields) {
     jboolean retVal = KNI_TRUE;
 

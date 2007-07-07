@@ -34,7 +34,7 @@ class NativeFinalizer {
             super(renderer);
         }
         
-        private native void finalize();
+        protected native void finalize();
     };
 
     private static final class SurfaceNativeFinalizer extends NativeFinalizer {
@@ -42,7 +42,7 @@ class NativeFinalizer {
             super(surface);
         }
         
-        private native void finalize();
+        protected native void finalize();
     };
     
     private NativeFinalizer(NativeFinalization forObject) {

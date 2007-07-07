@@ -56,8 +56,8 @@ AbstractSurface;
 
 #endif // PISCES_JAVA_SURFACE_SUPPORT
 
-AbstractSurface* surface_get(jobject surfaceHandle);
-jboolean surface_initialize(jobject surfaceHandle);
-void surface_finalize(jobject objectHandle);
+AbstractSurface* surface_get(CVMExecEnv* _ee, jobject surfaceHandle);
+jboolean surface_initialize(CVMExecEnv* _ee, jobject surfaceHandle);
+jboolean surface_finalize(CVMExecEnv* _ee, jobject objectHandle);
 
 #endif
