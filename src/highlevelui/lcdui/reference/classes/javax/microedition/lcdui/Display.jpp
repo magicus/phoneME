@@ -2197,6 +2197,23 @@ public class Display {
 /*
  * ************* private methods
  */
+
+    // #ifdef ENABLE_DIRECT_DRAW
+    /**
+     * Flushes the offscreen buffer directly to the device screen.
+     * The size of the buffer flushed is defined by offscreen buffer width
+     * and passed in height. 
+     * Offscreen_buffer must be aligned to the top-left of the screen and
+     * its width must be the same as the device screen width.
+     * @param graphics The Graphics instance associated with the screen.
+     * @param offscreen_buffer The offscreen buffer to be flushed
+     * @param height The height to be flushed
+     * @return KNI_TRUE if direct_flush was successful, KNI_FALSE - otherwise
+     */
+    private native boolean directFlush(Graphics graphics, 
+                                       Image offscreen_buffer, int height);
+    // #endif ENABLE_DIRECT_DRAW
+
     /**
      * Resets native resources on a foreground change
      *
@@ -2204,9 +2221,6 @@ public class Display {
      */
     private native void gainedForeground0(int displayId);
 
-/*
- * ************* private methods
- */
 
     /**
      * Control the drawing of the trusted <code>MIDlet<code> icon in native.
@@ -2467,7 +2481,7 @@ public class Display {
         }
     }
     // #endif
-
+ 
     /**
      * ************* Inner Class, DisplayAccesImpl
      */
@@ -2581,6 +2595,22 @@ public class Display {
                     int[] reg = new int[4];
                     screenGraphics.getClip(reg);
                     
+                   // #ifdef ENABLE_DIRECT_DRAW 
+                    if (d instanceof javax.microedition.lcdui.game.GameCanvas) {
+                        if (x == 0 && x2 == WIDTH && y == 0 &&  
+                            offscreen_buffer.getWidth() == WIDTH && 
+                            offscreen_buffer.getHeight() == HEIGHT &&
+                            //check offscreen_buffer whether rotated
+                            anchorX == 0 && anchorY == 0) {
+                           if (directFlush(screenGraphics, offscreen_buffer, y2)) {
+                                // No need to draw to the back buffer. We have
+                                // directly flushed to the front buffer.
+                               return;
+                           }
+                        }
+                    }
+                    // #endif ENABLE_DIRECT_DRAW
+
                     int tranX = screenGraphics.getTranslateX();
                     int tranY = screenGraphics.getTranslateY();
 

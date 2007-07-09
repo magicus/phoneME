@@ -44,6 +44,9 @@
 #include <midpEvents.h>
 #include <midpServices.h>
 
+#include <gxapi_graphics.h>
+#include <imgapi_image.h>
+
 /**
  * @name WndProc globals
  * The MIDP windows procedure puts its results here.
@@ -99,12 +102,12 @@ extern void win32app_refresh(int x, int y, int w, int h);
 /**
  * Return screen width
  */
-extern int get_screen_width();
+extern int win32app_get_screen_width();
 
 /**
  * Return screen height
  */
-extern int get_screen_height();
+extern int win32app_get_screen_height();
 
 /**
  * Invert screen rotation flag
@@ -121,6 +124,21 @@ extern jboolean win32app_get_reverse_orientation();
  * Returns the handle of the main application window.
  */
 extern HWND win32app_get_window_handle();
+
+/**
+ * Flushes the offscreen buffer directly to the device screen.
+ * The size of the buffer flushed is defined by offscreen buffer width
+ * and passed in height. 
+ * Offscreen_buffer must be aligned to the top-left of the screen and
+ * its width must be the same as the device screen width.
+ * @param graphics The Graphics instance associated with the screen.
+ * @param offscreen_buffer The offscreen buffer to be flushed
+ * @param h The height to be flushed
+ * @return KNI_TRUE if direct_flush was successful, KNI_FALSE - otherwise
+ */
+extern jboolean win32app_direct_flush(const java_graphics *g, 
+		    	              const java_imagedata *offscreen_buffer, 
+                                      int h);
 
 #ifdef __cplusplus
 }

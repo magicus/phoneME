@@ -99,7 +99,7 @@ void fbapp_init() {
 
     checkDeviceType();
     initScreenBuffer(
-        get_screen_width(), get_screen_height());
+        fbapp_get_screen_width(), fbapp_get_screen_height());
     connectFrameBuffer();
 }
 
@@ -132,14 +132,14 @@ void fbapp_set_fullscreen_mode(int mode) {
     if (isFullScreen != mode) {
         isFullScreen = mode;
         resizeScreenBuffer(
-            get_screen_width(),
-            get_screen_height());
+            fbapp_get_screen_width(),
+            fbapp_get_screen_height());
         clearScreen();
     }
 }
 
 /** Return screen width */
-int get_screen_width() {
+int fbapp_get_screen_width() {
     if (reverse_orientation) {
         return (isFullScreen == 1) ?
             CHAM_FULLHEIGHT : CHAM_HEIGHT;
@@ -150,7 +150,7 @@ int get_screen_width() {
 }
 
 /** Return screen height */
-int get_screen_height() {
+int fbapp_get_screen_height() {
     if (reverse_orientation) {
         return (isFullScreen == 1) ?
             CHAM_FULLWIDTH : CHAM_WIDTH;
@@ -161,12 +161,12 @@ int get_screen_height() {
 }
 
 /** Return screen x */
-int get_screen_x() {
+int fbapp_get_screen_x() {
     return getScreenX(reverse_orientation);
 }
 
 /** Return screen x */
-int get_screen_y() {
+int fbapp_get_screen_y() {
     return getScreenY(reverse_orientation);
 }
 
@@ -177,8 +177,8 @@ jboolean fbapp_get_reverse_orientation() {
 
 /** Clip rectangle requested for refresh according to screen geometry */
 static void clipRect(int *x1, int *y1, int *x2, int *y2) {
-    int width = get_screen_width();
-    int height = get_screen_height();
+    int width = fbapp_get_screen_width();
+    int height = fbapp_get_screen_height();
 
     if (*x1 < 0) { *x1 = 0; }
     if (*y1 < 0) { *y1 = 0; }

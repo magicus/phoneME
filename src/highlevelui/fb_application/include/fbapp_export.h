@@ -117,22 +117,22 @@ extern void fbapp_map_keycode_to_event(
 /**
  * Query frame buffer device for screen width
  */ 
-extern int get_screen_width();
+extern int fbapp_get_screen_width();
 
 /**
  * Query frame buffer device for screen height
  */ 
-extern int get_screen_height();
+extern int fbapp_get_screen_height();
 
 /**
  * Query frame buffer device for screen x
  */ 
-extern int get_screen_x();
+extern int fbapp_get_screen_x();
 
 /**
  * Query frame buffer device for screen y
  */ 
-extern int get_screen_y();
+extern int fbapp_get_screen_y();
 
 #ifdef __cplusplus
 }

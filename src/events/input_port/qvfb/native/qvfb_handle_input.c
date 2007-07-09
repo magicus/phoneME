@@ -157,10 +157,10 @@ void handle_pointer_port(MidpReentryData* pNewSignal, MidpEvent* pNewMidpEvent) 
 
     pNewMidpEvent->type = MIDP_PEN_EVENT;
 
-    screenX = get_screen_x();
-    screenY = get_screen_y();
-    maxX = get_screen_width();
-    maxY = get_screen_height();
+    screenX = fbapp_get_screen_x();
+    screenY = fbapp_get_screen_y();
+    maxX = fbapp_get_screen_width();
+    maxY = fbapp_get_screen_height();
 
     d1 = (((int)mouseBuf[3]) << 24) +
         (((int)mouseBuf[2]) << 16) +
