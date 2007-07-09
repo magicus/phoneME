@@ -38,6 +38,134 @@
 #include <stdio.h>
 #include <windows.h>
 
+typedef enum search_handle_type{
+	ENUM_HANDLERS,
+	ENUM_SUFFIXES,
+	ENUM_TYPES,
+	ENUM_ACTIONS,
+	ENUM_LOCALES,
+	ENUM_TRUSTED_CALLERS,
+	ENUM_BY_SUFFIX,
+	ENUM_BY_TYPE,
+	ENUM_BY_ACTION,
+	ENUM_BU_SUITE,
+	ENUM_BY_PREFIX
+} search_handle_type;
+
+typedef struct tag_enum_handlers_handle {
+	search_handle_type type; 
+	
+} enum_handlers_handle;
+
+typedef struct tag_enum_suffixes_handle {
+	search_handle_type type; 
+	
+} enum_suffixes_handle;
+
+typedef struct tag_enum_types_handle {
+	search_handle_type type; 
+	
+} enum_types_handle;
+
+typedef struct tag_enum_actions_handle {
+	search_handle_type type; 
+	
+} enum_actions_handle;
+
+typedef struct tag_enum_locales_handle {
+	search_handle_type type; 
+	
+} enum_locales_handle;
+
+typedef struct tag_enum_trusted_callers_handle {
+	search_handle_type type; 
+	
+} enum_trusted_callers_handle;
+
+typedef struct tag_enum_by_suffix_handle {
+	search_handle_type type; 
+	
+} enum_by_suffix_handle;
+
+typedef struct tag_enum_by_type_handle {
+	search_handle_type type; 
+	
+} enum_by_type_handle;
+
+typedef struct tag_enum_by_action_handle {
+	search_handle_type type; 
+	
+} enum_by_action_handle;
+
+typedef struct tag_enum_bu_suite_handle {
+	search_handle_type type; 
+	
+} enum_bu_suite_handle;
+
+typedef struct tag_enum_by_prefix_handle {
+	search_handle_type type; 
+	
+} enum_by_prefix_handle;
+
+/**
+ * Finish enumeration call. Clean enumeration position handle
+ * This method is called after caller finished to enumerate by some parameter
+ * Can be used by implementation to cleanup object referenced by pos_id if required
+ *
+ * @param pos_id position handle used by enumeration method call, if pos_id is zero it should be ignored
+ * @return nothing
+ */
+void javacall_chapi_enum_finish(int pos_id){
+	if (pos_id==0) return;
+	switch ((*(search_handle_type*)pos_id)){
+		case ENUM_HANDLERS: {
+            
+			break;	
+		}
+		case ENUM_SUFFIXES: {
+		   
+			break;	
+		}
+		case ENUM_TYPES: {
+
+			break;	
+		}
+		case ENUM_ACTIONS: {
+						  
+  		   break;	
+		}
+		case ENUM_LOCALES: {
+						  
+		  break;	
+		}
+		case ENUM_TRUSTED_CALLERS: {
+							  
+		  break;	
+		}
+		case ENUM_BY_SUFFIX: {
+							
+			break;	
+		}
+		case ENUM_BY_TYPE: {
+						  
+		  break;	
+		}
+		case ENUM_BY_ACTION: {
+							
+			break;	
+		}
+		case ENUM_BU_SUITE: {
+		  break;	
+		}
+		case ENUM_BY_PREFIX: {
+			break;	
+		}
+	}
+}
+
+
+
+#define MAX_BUFFER 512
 static int getInvokerPath(WCHAR* buffer){
 	wcscpy(buffer,L"C:\\TI\\WORK\\jsr211\\Invoker\\Debug\\Invoker.exe");
 	return wcslen(buffer);
@@ -52,6 +180,167 @@ static int wblen(const WCHAR* wstr){
 	return sizeof(unsigned short)*(wcslen(wstr)+1);
 }
 
+static int read_array(const unsigned short* key_name, const unsigned short* value_name, short* buffer, int* length){
+	HKEY key=0; 
+	LONG result;
+	int l;
+	DWORD type;
+
+	if (!length || (*length && !buffer)) return -1;
+
+	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,key_name,0,KEY_QUERY_VALUE,&key);
+	if (result != ERROR_SUCCESS) return JAVACALL_CHAPI_ERROR_NOT_FOUND;
+
+	l = *length;
+	result = RegQueryValueEx(key,value_name,0,&type,(LPBYTE)buffer,&l);
+
+	if (result == ERROR_SUCCESS){
+		if (type == REG_MULTI_SZ) {
+			*length = l;
+		} else
+	    if (type == REG_SZ) {
+			if (*length)  {
+				if (*length<l+1) 
+					result = -1; 
+				else {
+					buffer[l]=0;
+				}
+			}
+			*length = l+1;
+		} else {
+			if (result != ERROR_MORE_DATA) *length = 0;
+			result = -1;
+		}
+	}
+
+	RegCloseKey(key);
+	return result;
+}
+
+static int read_string(const unsigned short* key_name, const unsigned short* value_name, short* buffer, int* length){
+	HKEY key; 
+	LONG result;
+	DWORD type;
+
+	if (!length || (*length && !buffer)) return -1;
+
+	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,key_name,0,KEY_QUERY_VALUE,&key);
+	if (result != ERROR_SUCCESS) return JAVACALL_CHAPI_ERROR_NOT_FOUND;
+
+	result = RegQueryValueEx(key,value_name,0,&type,(LPBYTE)buffer,length);
+
+	RegCloseKey(key);
+
+	return result;
+}
+
+static int read_int(const unsigned short* key_name, const unsigned short* value_name, DWORD* res){
+	HKEY key; 
+	LONG result;
+	DWORD type;
+	int len;
+
+	if (!res) return -1;
+
+	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,key_name,0,KEY_QUERY_VALUE,&key);
+	if (result != ERROR_SUCCESS) return JAVACALL_CHAPI_ERROR_NOT_FOUND;
+
+	len = sizeof(DWORD);
+	result = RegQueryValueEx(key,value_name,0,&type,(LPBYTE)res,&len);
+
+	RegCloseKey(key);
+
+	return result;
+}
+
+static int enum_keys(const unsigned short* searched_value_name, const unsigned short* searched_value_value, int* pos_id, short*  buffer, int* length){
+	HKEY key; 
+	LONG result=ERROR_SUCCESS;
+	DWORD index=(DWORD)pos_id;
+	WCHAR valbuf[MAX_BUFFER];
+	DWORD type;
+	int len;
+	int maxlen = *length;
+
+	if (!length || (*length && !buffer)) return -1;
+	
+	while  ( result == ERROR_SUCCESS){
+		*length = maxlen;
+		result = RegEnumKeyEx(HKEY_CLASSES_ROOT, index++, buffer, length, 0, NULL, NULL, NULL);
+
+		if (result == ERROR_SUCCESS) {
+			result = RegOpenKeyEx(HKEY_CLASSES_ROOT,buffer,0,KEY_QUERY_VALUE,&key);
+			if (result == ERROR_SUCCESS) {
+				len = MAX_BUFFER;
+				result = RegQueryValueEx(key,searched_value_name,0,&type,(LPBYTE)valbuf,&len);
+				RegCloseKey(key);
+				if (!wcscmp(searched_value_value,valbuf)) break;
+			}
+		}
+	}
+
+	*pos_id=index;
+
+	if (result != ERROR_SUCCESS){
+		if (result != ERROR_MORE_DATA) *length = 0;
+		if (buffer) *buffer=0;
+	}
+
+	return result;
+}
+
+
+static int suffix_belongs_to_handler(const unsigned short* content_handler_id,const unsigned short* suffix){
+	HKEY key; 
+	LONG result=ERROR_SUCCESS;
+	WCHAR valbuf[MAX_BUFFER];
+	DWORD type;
+	int len=MAX_BUFFER;
+
+	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,suffix,0,KEY_QUERY_VALUE,&key);
+	if (result == ERROR_SUCCESS) {
+		result = RegQueryValueEx(key,NULL,0,&type,(LPBYTE)valbuf,&len);
+		RegCloseKey(key);
+		if (!wcscmp(content_handler_id,valbuf)) return 1;
+	}
+	return 0;
+}
+
+
+static int get_key_value(const unsigned short* content_handler_id,  const unsigned short* key_name, short*  buf, int* length){
+	return read_string(content_handler_id, key_name, buf, length);
+}
+
+static int delete_subkeys(HKEY key){
+	LONG result;
+	HKEY subkey;
+	WCHAR* buf;
+	int count=0, len, length, i;
+	
+	result = RegQueryInfoKey(key,NULL,NULL,NULL,&count,&len,NULL,NULL,NULL,NULL,NULL,NULL);
+	if (result != ERROR_SUCCESS) return result;
+	
+	len++;
+	buf = malloc(len * 2);
+	if (!buf) return -1;
+	
+	for (i=count-1;i>=0;--i){
+		length = len;
+		result = RegEnumKeyEx(key, i, buf, &length, NULL, NULL, NULL, NULL);
+		if (result != ERROR_SUCCESS) break;
+		
+		result = RegOpenKeyEx(key,buf,0,KEY_ALL_ACCESS,&subkey);
+		if (result == ERROR_SUCCESS) {
+			result = delete_subkeys(subkey);
+		}
+		RegCloseKey(subkey);
+		RegDeleteKey(key, buf);
+	}
+	
+	free(buf);
+	
+	return result;
+}
 
 /************************************************************************************************/
 /*										PUBLIC PART												*/
@@ -75,7 +364,7 @@ static const WCHAR* FLAG=L"Flag";
 static const WCHAR* EXTENSION=L"Extension";
 
 
-#define MAX_BUFFER 512
+//set KEY_VOLATILENESS to REG_OPTION_VOLATILE if you want all registration information be deleted on reboot or 0 to persist
 #define KEY_VOLATILENESS REG_OPTION_VOLATILE
 
 /**
@@ -84,7 +373,7 @@ static const WCHAR* EXTENSION=L"Extension";
  * @return JAVACALL_OK if initialization was successful, error code otherwise
  */
 javacall_result javacall_chapi_init_registry(void){
-
+	return JAVACALL_OK;
 }
 
 /**
@@ -109,7 +398,7 @@ javacall_result javacall_chapi_register_handler(
 			javacall_const_utf16_string* actions,   int nActions,  
 			javacall_const_utf16_string* locales,   int nLocales,
 			javacall_const_utf16_string* action_names, int nActionNames,
-			javacall_const_utf16_string* access_allowed_ids,  int nAccesses)
+			javacall_const_utf16_string* accesses,  int nAccesses)
 {
 
 HKEY key=0,subkey=0, shellkey=0, actionkey=0, commandkey=0, mimekey=0, chapikey=0;
@@ -130,22 +419,16 @@ if (result == ERROR_SUCCESS){
 result = RegCreateKeyEx(HKEY_CLASSES_ROOT,content_handler_id,0,NULL, KEY_VOLATILENESS,KEY_WRITE,NULL,&key, NULL);
 if (result != ERROR_SUCCESS) return result;
 
-result = RegSetValueEx(key,NULL,0,REG_SZ, (CONST BYTE*)content_handler_friendly_name, wblen(content_handler_friendly_name));
+result = RegSetValueEx(key,NULL,0,REG_SZ, (CONST BYTE*)content_handler_friendly_appname, wblen(content_handler_friendly_appname));
 
 if (result == ERROR_SUCCESS)
-	result = RegSetValueEx(key,SUITE_ID,0,REG_SZ, (CONST BYTE*)suite_id, wblen(suite_id));
+	result = RegSetValueEx(key,FLAG,0,REG_DWORD, (CONST BYTE*)&suite_id, sizeof(DWORD));
 
 if (result == ERROR_SUCCESS)
 	result = RegSetValueEx(key,CLASS_NAME,0,REG_SZ, (CONST BYTE*)class_name, wblen(class_name));
 
 if (result == ERROR_SUCCESS)
 	result = RegSetValueEx(key,FLAG,0,REG_DWORD, (CONST BYTE*)&flag, sizeof(DWORD));
-
-
-if (result == ERROR_SUCCESS)
-for (i=0;i<nKeys;++i){
-	RegSetValueEx(key,additional_keys[i].key,0,REG_SZ, (CONST BYTE*)additional_keys[i].value, wblen(additional_keys[i].value));
-}
 
 if (result == ERROR_SUCCESS){
 	int len=0;
@@ -163,12 +446,8 @@ if (result == ERROR_SUCCESS)
 
 
 if (result == ERROR_SUCCESS){
-	if (default_icon_path){
-		result = RegSetValueEx(subkey,CLASS_NAME,0,REG_SZ, (CONST BYTE*)default_icon_path, wblen(default_icon_path));
-	} else {
 		int len = getDefaultIconPath(buffer);
 		result = RegSetValueEx(subkey,NULL,0,REG_SZ, (CONST BYTE*)buffer, (len+1)*2);
-	}
 }
 
 if (result == ERROR_SUCCESS){
@@ -251,11 +530,11 @@ if (suffixes){
 }
 
 // assign handler to mime types
-if (types){
+if (content_types){
 	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,MIME_CONTENTTYPE_BASE,0,KEY_WRITE,&mimekey);
 	if (result == ERROR_SUCCESS) {
 		for (i=0; i < nTypes; ++i){
-			result = RegCreateKeyEx(mimekey,types[i],0,NULL,KEY_VOLATILENESS,KEY_WRITE,NULL,&key,NULL);
+			result = RegCreateKeyEx(mimekey,content_types[i],0,NULL,KEY_VOLATILENESS,KEY_WRITE,NULL,&key,NULL);
 			if (result == ERROR_SUCCESS) {
 				result = RegCreateKeyEx(key,CHAPIHANDLER,0,NULL,KEY_VOLATILENESS,KEY_WRITE,NULL,&chapikey,NULL);
 				if (result == ERROR_SUCCESS) {
@@ -268,166 +547,45 @@ if (types){
 		RegCloseKey(mimekey);
 	}
 }
-
-return result;
-}
-
-static int read_array(const unsigned short* key_name, const unsigned short* value_name, short* buffer, int* length){
-	HKEY key=0; 
-	LONG result;
-	int l;
-	DWORD type;
-
-	if (!length || (*length && !buffer)) return -1;
-
-	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,key_name,0,KEY_QUERY_VALUE,&key);
-	if (result != ERROR_SUCCESS) return ERROR_HANDLER_DOESNOT_EXIST;
-
-	l = *length;
-	result = RegQueryValueEx(key,value_name,0,&type,(LPBYTE)buffer,&l);
-
-	if (result == ERROR_SUCCESS){
-		if (type == REG_MULTI_SZ) {
-			*length = l;
-		} else
-	    if (type == REG_SZ) {
-			if (*length)  {
-				if (*length<l+1) 
-					result = -1; 
-				else {
-					buffer[l]=0;
-				}
-			}
-			*length = l+1;
-		} else {
-			if (result != ERROR_MORE_DATA) *length = 0;
-			result = -1;
-		}
-	}
-
-	RegCloseKey(key);
-	return result;
-}
-
-static int read_string(const unsigned short* key_name, const unsigned short* value_name, short* buffer, int* length){
-	HKEY key; 
-	LONG result;
-	DWORD type;
-
-	if (!length || (*length && !buffer)) return -1;
-
-	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,key_name,0,KEY_QUERY_VALUE,&key);
-	if (result != ERROR_SUCCESS) return ERROR_HANDLER_DOESNOT_EXIST;
-
-	result = RegQueryValueEx(key,value_name,0,&type,(LPBYTE)buffer,length);
-
-	RegCloseKey(key);
-
-	return result;
-}
-
-static int read_int(const unsigned short* key_name, const unsigned short* value_name, DWORD* res){
-	HKEY key; 
-	LONG result;
-	DWORD type;
-	int len;
-
-	if (!res) return -1;
-
-	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,key_name,0,KEY_QUERY_VALUE,&key);
-	if (result != ERROR_SUCCESS) return ERROR_HANDLER_DOESNOT_EXIST;
-
-	len = sizeof(DWORD);
-	result = RegQueryValueEx(key,value_name,0,&type,(LPBYTE)res,&len);
-
-	RegCloseKey(key);
-
-	return result;
-}
-
-static int enum_keys(const unsigned short* searched_value_name, const unsigned short* searched_value_value, int* pos_id, short*  buffer, int* length){
-	HKEY key; 
-	LONG result=ERROR_SUCCESS;
-	DWORD index=(DWORD)pos_id;
-	WCHAR valbuf[MAX_BUFFER];
-	DWORD type;
-	int len;
-	int maxlen = *length;
-
-	if (!length || (*length && !buffer)) return -1;
-	
-	while  ( result == ERROR_SUCCESS){
-		*length = maxlen;
-		result = RegEnumKeyEx(HKEY_CLASSES_ROOT, index++, buffer, length, 0, NULL, NULL, NULL);
-
-		if (result == ERROR_SUCCESS) {
-			result = RegOpenKeyEx(HKEY_CLASSES_ROOT,buffer,0,KEY_QUERY_VALUE,&key);
-			if (result == ERROR_SUCCESS) {
-				len = MAX_BUFFER;
-				result = RegQueryValueEx(key,searched_value_name,0,&type,(LPBYTE)valbuf,&len);
-				RegCloseKey(key);
-				if (!wcscmp(searched_value_value,valbuf)) break;
-			}
-		}
-	}
-
-	*pos_id=index;
-
-	if (result != ERROR_SUCCESS){
-		if (result != ERROR_MORE_DATA) *length = 0;
-		if (buffer) *buffer=0;
-	}
-
-	return result;
-}
-
-
-static int suffix_belongs_to_handler(const unsigned short* content_handler_id,const unsigned short* suffix){
-	HKEY key; 
-	LONG result=ERROR_SUCCESS;
-	WCHAR valbuf[MAX_BUFFER];
-	DWORD type;
-	int len=MAX_BUFFER;
-
-	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,suffix,0,KEY_QUERY_VALUE,&key);
-	if (result == ERROR_SUCCESS) {
-		result = RegQueryValueEx(key,NULL,0,&type,(LPBYTE)valbuf,&len);
-		RegCloseKey(key);
-		if (!wcscmp(content_handler_id,valbuf)) return 1;
-	}
-	return 0;
+ 
+return (result == ERROR_SUCCESS)? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 javacall_result javacall_chapi_enum_suffixes(javacall_const_utf16_string content_handler_id, int* pos_id, /*OUT*/ javacall_utf16*  suffix_out, int* length){
-	LONG result=ERROR_SUCCESS;
+	LONG result;
 	DWORD index=(DWORD)*pos_id;
 	int found = 0;
 	int maxlen = *length;
 
-	if (!length || (*length && !buffer)) return -1;
+	if (!length || !suffix_out || !pos_id) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
 
-	while  (!found && result != ERROR_NO_MORE_ITEMS){
+	while  (1){
 		*length = maxlen;
-		result = RegEnumKeyEx(HKEY_CLASSES_ROOT, index++, buffer, length, 0, NULL, NULL, NULL);
 
-		if (result == ERROR_SUCCESS) {
-			if (buffer[0]=='.'){
-				if (!content_handler_id || suffix_belongs_to_handler(content_handler_id,buffer)){
-					found =1;
-					break;
-				}
+		result = RegEnumKeyEx(HKEY_CLASSES_ROOT, index, suffix_out, length, 0, NULL, NULL, NULL);
+
+		if (result == ERROR_MORE_DATA) {
+			return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
+		}
+
+		if (result != ERROR_SUCCESS) break;
+
+		if (suffix_out[0]=='.'){
+			if (!content_handler_id || suffix_belongs_to_handler(content_handler_id,suffix_out)){
+				*pos_id=index+1;
+				return JAVACALL_OK;
 			}
 		}
+		index++;
 	}
 
-	if (!found){
-		if (result != ERROR_MORE_DATA) *length = 0;
-		if (buffer) *buffer=0;
-	}
-
-	*pos_id=index;
-
-	return result;
+	if (result == ERROR_MORE_DATA) 
+		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
+	
+	if (result == ERROR_NO_MORE_ITEMS) 
+		return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+	
+	return JAVACALL_FAIL;
 }
 
 
@@ -441,75 +599,67 @@ javacall_result javacall_chapi_enum_types(javacall_const_utf16_string content_ha
 	int len, found = 0;
 	int maxlen = *length;
 
-	if (!length || (*length && !buffer)) return -1;
+	if (!length || !type_out || !pos_id) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
 
 	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,MIME_CONTENTTYPE_BASE,0,KEY_READ,&mimekey);
 	if (result == ERROR_SUCCESS) {
-		while  (!found && result != ERROR_NO_MORE_ITEMS){
+		while  (result == ERROR_SUCCESS){
 			*length = maxlen;
-			result = RegEnumKeyEx(mimekey, index++, buffer, length, 0, NULL, NULL, NULL);
+			result = RegEnumKeyEx(mimekey, index, type_out, length, 0, NULL, NULL, NULL);
+			if (result != ERROR_SUCCESS) break; 
+			if (!content_handler_id) {
+				found =1;
+				break;
+			} else {
+				result = RegOpenKeyEx(mimekey,type_out,0,KEY_READ,&typekey);
+				if (result != ERROR_SUCCESS) break; 
 
-			if (result == ERROR_SUCCESS) {
-				if (!content_handler_id) {
-					found =1;
+				result = RegOpenKeyEx(typekey,CHAPIHANDLER,0,KEY_READ,&chapikey);
+				if (result == ERROR_SUCCESS) {
+					int i=0;
+					while (1){
+						len = MAX_BUFFER;
+						if (ERROR_SUCCESS == RegEnumValue(chapikey,i++,valbuf,&len,0,0,0,0)){
+							if (!wcscmp(content_handler_id,valbuf)) {
+								found = 1;
+								break;
+							}
+						} else break;
+					}
+					RegCloseKey(chapikey);
 				} else {
-					result = RegOpenKeyEx(mimekey,buffer,0,KEY_READ,&typekey);
+					len = MAX_BUFFER;
+					result = RegQueryValueEx(typekey,EXTENSION,0,&type,(LPBYTE)valbuf,&len);
 					if (result == ERROR_SUCCESS) {
-						result = RegOpenKeyEx(typekey,CHAPIHANDLER,0,KEY_READ,&chapikey);
-						if (result == ERROR_SUCCESS) {
-							int i=0;
-							while (1){
-								len = MAX_BUFFER;
-								if (ERROR_SUCCESS == RegEnumValue(chapikey,i++,valbuf,&len,0,0,0,0)){
-									if (!wcscmp(content_handler_id,valbuf)) {
-										found = 1;
-										break;
-									}
-								} else break;
-							}
-							RegCloseKey(chapikey);
-						} else {
-							len = MAX_BUFFER;
-							result = RegQueryValueEx(typekey,EXTENSION,0,&type,(LPBYTE)valbuf,&len);
-							if (result == ERROR_SUCCESS) {
-								if (suffix_belongs_to_handler(content_handler_id,valbuf)) {
-									found = 1;
-									break;
-								}
-							}
+						if (suffix_belongs_to_handler(content_handler_id,valbuf)) {
+							found = 1;
+							break;
 						}
-						RegCloseKey(typekey);
 					}
 				}
+				RegCloseKey(typekey);
 			}
+			index++;
 		}
 		RegCloseKey(mimekey);
 	}
-
-	if (!found){
-		if (result != ERROR_MORE_DATA) *length = 0;
-		if (buffer) *buffer=0;
+	if (found){
+		*pos_id=index + 1;
+		return JAVACALL_OK;
 	}
 
-	*pos_id=index;
-	return result;
+	if (result == ERROR_MORE_DATA) 
+		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
+	
+	if (result == ERROR_NO_MORE_ITEMS) 
+		return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+
+	return JAVACALL_FAIL;
+
 }
 
 javacall_result javacall_chapi_get_content_handler_friendly_appname(javacall_const_utf16_string content_handler_id, /*OUT*/ javacall_utf16*  handler_frienfly_appname_out, int* length){
-	return read_string(content_handler_id, NULL, buf, length);
-}
-
-
-int get_suite_id(const unsigned short* content_handler_id,  short*  buf, int* length){
-	return read_string(content_handler_id, SUITE_ID, buf, length);
-}
-
-int get_class_name(const unsigned short* content_handler_id,  short*  buf, int* length){
-	return read_string(content_handler_id, CLASS_NAME, buf, length);
-}
-
-int get_flag(const unsigned short* content_handler_id,  int* val){
-	return read_int(content_handler_id, FLAG, val);
+	return read_string(content_handler_id, NULL, handler_frienfly_appname_out, length);
 }
 
 javacall_result javacall_chapi_enum_actions(javacall_const_utf16_string content_handler_id, /*OUT*/ int* pos_id, javacall_utf16*  action_out, int* length){
@@ -519,21 +669,31 @@ javacall_result javacall_chapi_enum_actions(javacall_const_utf16_string content_
 	DWORD len=0;
 	DWORD sumlen=0;
 
-	if (!length || (*length && !buffer)) return -1;
+	if (!length || !action_out || !pos_id) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
 
 	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,content_handler_id,0,KEY_READ,&key);
-	if (result != ERROR_SUCCESS) return ERROR_HANDLER_DOESNOT_EXIST;
+	if (result != ERROR_SUCCESS) return JAVACALL_CHAPI_ERROR_NOT_FOUND;
 
 	result = RegOpenKeyEx(key,SHELL,0,KEY_READ,&shellkey);
 	RegCloseKey(key);
 
 	if (result == ERROR_SUCCESS){
-		result = RegEnumKeyEx(shellkey,index++, buffer, length, NULL, NULL, NULL, NULL);
+		result = RegEnumKeyEx(shellkey,index, action_out, length, NULL, NULL, NULL, NULL);
 		RegCloseKey(shellkey);
 	}
 
-	*pos_id=index;
-	return result;
+	if (result == ERROR_SUCCESS){
+		*pos_id=index + 1;
+		return JAVACALL_OK;
+	} 
+
+	if (result == ERROR_MORE_DATA) 
+		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
+	
+	if (result == ERROR_NO_MORE_ITEMS) 
+		return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+	
+	return JAVACALL_FAIL;
 }
 
 
@@ -546,10 +706,10 @@ javacall_result javacall_chapi_enum_action_locales(javacall_const_utf16_string c
 	int kv;
 	
 
-	if (!length || (*length && !buffer)) return -1;
+	if (!length || !locale_out || !pos_id)  return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
 
 	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,content_handler_id,0,KEY_READ,&key);
-	if (result != ERROR_SUCCESS) return ERROR_HANDLER_DOESNOT_EXIST;
+	if (result != ERROR_SUCCESS) return JAVACALL_CHAPI_ERROR_NOT_FOUND;
 
 	result = RegOpenKeyEx(key,SHELL,0,KEY_READ,&shellkey);
 	RegCloseKey(key);
@@ -561,7 +721,7 @@ javacall_result javacall_chapi_enum_action_locales(javacall_const_utf16_string c
 			if (result == ERROR_SUCCESS){
 				result = RegQueryInfoKey(actionkey, NULL,NULL,NULL,NULL,NULL,NULL,&kv,NULL,NULL,NULL,NULL);			
 				if (result == ERROR_SUCCESS){
-					result = RegEnumValue(actionkey,index++,buffer,length,0,0,0,0);
+					result = RegEnumValue(actionkey,index,locale_out,length,0,0,0,0);
 				}
 				RegCloseKey(actionkey);
 			}
@@ -570,12 +730,17 @@ javacall_result javacall_chapi_enum_action_locales(javacall_const_utf16_string c
 	}
 
 	if (result == ERROR_SUCCESS){
-		*pos_id=index;
-	} else {
-		if (buffer) buffer[0]=0;
-		if (result != ERROR_MORE_DATA) *length=0;
-	}
-	return result;
+		*pos_id=index + 1;
+		return JAVACALL_OK;
+	} 
+
+	if (result == ERROR_MORE_DATA) 
+		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
+
+	if (result == ERROR_NO_MORE_ITEMS) 
+		return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+	
+	return JAVACALL_FAIL;
 }
 
 javacall_result javacall_chapi_get_local_action_name(javacall_const_utf16_string content_handler_id, javacall_const_utf16_string action, javacall_const_utf16_string locale, javacall_utf16*  local_action_out, int* length){
@@ -584,10 +749,10 @@ javacall_result javacall_chapi_get_local_action_name(javacall_const_utf16_string
 	int type;
 	
 
-	if (!length || (*length && !buffer)) return -1;
+	if (!length || !local_action_out) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
 
 	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,content_handler_id,0,KEY_READ,&key);
-	if (result != ERROR_SUCCESS) return ERROR_HANDLER_DOESNOT_EXIST;
+	if (result != ERROR_SUCCESS) return JAVACALL_CHAPI_ERROR_NOT_FOUND;
 
 	result = RegOpenKeyEx(key,SHELL,0,KEY_READ,&shellkey);
 	RegCloseKey(key);
@@ -595,13 +760,16 @@ javacall_result javacall_chapi_get_local_action_name(javacall_const_utf16_string
 	if (result == ERROR_SUCCESS){
 		result = RegOpenKeyEx(shellkey,action,0,KEY_READ,&actionkey);
 		if (result == ERROR_SUCCESS){
-			result = RegQueryValueEx(actionkey,locale,0,&type,(LPBYTE)buffer,length);
+			result = RegQueryValueEx(actionkey,locale,0,&type,(LPBYTE)local_action_out,length);
 			RegCloseKey(actionkey);
 		}
 		RegCloseKey(shellkey);
 	}
 
-	return result;
+	if (result == ERROR_MORE_DATA) 
+		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
+	
+	return JAVACALL_FAIL;
 }
 
 javacall_result javacall_chapi_enum_access_allowed_callers(javacall_const_utf16_string content_handler_id, int* pos_id, /*OUT*/ javacall_utf16*  access_allowed_out, int* length){
@@ -612,10 +780,10 @@ javacall_result javacall_chapi_enum_access_allowed_callers(javacall_const_utf16_
 	short buf[MAX_BUFFER];
 	int i,len=MAX_BUFFER;
 
-	if (!length || (*length && !buffer)) return -1;
+	if (!length || !access_allowed_out || !pos_id) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
 
 	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,content_handler_id,0,KEY_QUERY_VALUE,&key);
-	if (result != ERROR_SUCCESS) return ERROR_HANDLER_DOESNOT_EXIST;
+	if (result != ERROR_SUCCESS) return JAVACALL_CHAPI_ERROR_NOT_FOUND;
 
 	result = RegQueryValueEx(key,ACCESSES,0,&type,(LPBYTE)buf,&len);
 	RegCloseKey(key);
@@ -624,57 +792,29 @@ javacall_result javacall_chapi_enum_access_allowed_callers(javacall_const_utf16_
 		short* b = buf;
 		for (i=0;i<index;++i){
 			b = b+wcslen(b)+1;
-			if (!*b) return ERROR_NO_MORE_ELEMENTS;
+			if (!*b) return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
 		}
 		len = wcslen(b);
 		if (*length < len) {
 			*length = len;
-			if (buffer) buffer[0]=0;
-			return ERROR_MORE_DATA;
+			return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
 		}
 		*length = len;
-		if (buffer) wcscpy(buffer,b);
+		wcscpy(access_allowed_out, b);
+		* pos_id = index+1;
+		return JAVACALL_OK;
 	}
 	
-
-	return result;
+	if (result == ERROR_MORE_DATA) 
+		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
+	
+	if (result == ERROR_NO_MORE_ITEMS) 
+		return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+	
+	return JAVACALL_FAIL;
 }
 
 
-int get_key_value(const unsigned short* content_handler_id,  const unsigned short* key_name, short*  buf, int* length){
-	return read_string(content_handler_id, key_name, buf, length);
-}
-
-static int delete_subkeys(HKEY key){
-LONG result;
-HKEY subkey;
-WCHAR* buf;
-int count=0, len, length, i;
-
-	result = RegQueryInfoKey(key,NULL,NULL,NULL,&count,&len,NULL,NULL,NULL,NULL,NULL,NULL);
-	if (result != ERROR_SUCCESS) return result;
-
-	len++;
-	buf = malloc(len * 2);
-	if (!buf) return -1;
-
-	for (i=count-1;i>=0;--i){
-		length = len;
-		result = RegEnumKeyEx(key, i, buf, &length, NULL, NULL, NULL, NULL);
-		if (result != ERROR_SUCCESS) break;
-
-		result = RegOpenKeyEx(key,buf,0,KEY_ALL_ACCESS,&subkey);
-		if (result == ERROR_SUCCESS) {
-			result = delete_subkeys(subkey);
-		}
-		RegCloseKey(subkey);
-		RegDeleteKey(key, buf);
-	}
-
-	free(buf);
-
-	return result;
-}
 
 javacall_result javacall_chapi_unregister_handler(javacall_const_utf16_string content_handler_id){
 	HKEY key=0,subkey=0,mimekey,typekey, prefixkey, chapikey;
@@ -682,7 +822,7 @@ javacall_result javacall_chapi_unregister_handler(javacall_const_utf16_string co
 	LONG result;
 	DWORD type;
 	int count, length, i , kc, kv;
-	if (!content_handler_id || !*content_handler_id) return -1;
+	if (!content_handler_id || !*content_handler_id) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
 
 	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,MIME_CONTENTTYPE_BASE,0,KEY_READ,&mimekey);
 	if (result == ERROR_SUCCESS){
@@ -773,19 +913,23 @@ javacall_result javacall_chapi_unregister_handler(javacall_const_utf16_string co
 
 javacall_result javacall_chapi_enum_handlers_by_suffix(javacall_const_utf16_string suffix, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length){
 HKEY key=0,progskey;
-int index = *pos_handle;
+int index;
 DWORD type;
 LONG result;
+
+	if (!length || !handler_id_out || !pos_id) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+
+	index = *pos_id;
 
 	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,suffix,0,KEY_READ,&key);
 	if (result != ERROR_SUCCESS) return result;
 
 	if (index == 0){
-		result = RegQueryValueEx(key,NULL,0,&type,(LPBYTE)buffer,length);
+		result = RegQueryValueEx(key,NULL,0,&type,(LPBYTE)handler_id_out,length);
 	} else {
 		result = RegOpenKeyEx(key,OPENWITH,0,KEY_READ,&progskey);
 		if (result == ERROR_SUCCESS) {
-			result = RegEnumValue(progskey, index-1, buffer, length, NULL,NULL,NULL,NULL);
+			result = RegEnumValue(progskey, index-1, handler_id_out, length, NULL,NULL,NULL,NULL);
 			RegCloseKey(progskey);
 		}
 	}
@@ -793,40 +937,47 @@ LONG result;
 	RegCloseKey(key);
 
 	if (result == ERROR_SUCCESS) {
-		*pos_handle=index+1;
-	} else {
-		if (buffer) buffer[0]=0;
-		if (result != ERROR_MORE_DATA) *length = 0;
+		*pos_id = index + 1;
+		return JAVACALL_OK;
 	}
+
+	if (result == ERROR_MORE_DATA) 
+		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
 	
-	return result;
+	if (result == ERROR_NO_MORE_ITEMS) 
+		return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+	
+	return JAVACALL_FAIL;
 }
 
 javacall_result javacall_chapi_enum_handlers_by_type(javacall_const_utf16_string content_type, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length){
 HKEY key=0,mimekey,progskey;
-int index = *pos_handle;
+int index;
 DWORD type;
 LONG result;
 unsigned short valbuf[MAX_BUFFER];
 int len = MAX_BUFFER;
 
+	if (!length || !handler_id_out || !pos_id) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+
+	index = *pos_id;
+
 	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,MIME_CONTENTTYPE_BASE,0,KEY_READ,&mimekey);
-	if (result != ERROR_SUCCESS) return result;
+	if (result != ERROR_SUCCESS) return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
 
-	result = RegOpenKeyEx(mimekey,mimetype,0,KEY_READ,&key);
+	result = RegOpenKeyEx(mimekey,content_type,0,KEY_READ,&key);
 	RegCloseKey(mimekey);
-
-	if (result != ERROR_SUCCESS) return result;
+	if (result != ERROR_SUCCESS) return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
 
 	if ((index>>16) == 0){
 		result = RegOpenKeyEx(key,CHAPIHANDLER,0,KEY_READ,&progskey);
 		if (result == ERROR_SUCCESS) {
-			result = RegEnumValue(progskey, index++, buffer, length, NULL,NULL,NULL,NULL);
+			result = RegEnumValue(progskey, index++, handler_id_out, length, NULL,NULL,NULL,NULL);
 			RegCloseKey(progskey);
 			
 		}
 		if (result != ERROR_SUCCESS) {
-			index = 0x10000;
+			index = 0x0;
 		}
 	}
 
@@ -834,7 +985,7 @@ int len = MAX_BUFFER;
 		result = RegQueryValueEx(key,EXTENSION,0,&type,(LPBYTE)valbuf,&len);
 		if (result == ERROR_SUCCESS) {
 			int sufindex = (index>>16) - 1 ;
-			result =  enum_handlers_by_suffix(valbuf, &sufindex, buffer, length);
+			result =  javacall_chapi_enum_handlers_by_suffix(valbuf, &sufindex, handler_id_out, length);
 			index = (sufindex + 1) << 16;
 		}
 	}
@@ -843,30 +994,36 @@ int len = MAX_BUFFER;
 	RegCloseKey(key);
 
 	if (result == ERROR_SUCCESS) {
-		*pos_handle=index;
-	} else {
-		if (buffer) buffer[0]=0;
-		if (result != ERROR_MORE_DATA) *length = 0;
+		*pos_id = index + 1;
+		return JAVACALL_OK;
 	}
 	
-	return result;
+	if (result == ERROR_MORE_DATA) 
+		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
+	
+	if (result == ERROR_NO_MORE_ITEMS) 
+		return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+	
+	return JAVACALL_FAIL;
 }
 
 javacall_result javacall_chapi_enum_handlers_by_action(javacall_const_utf16_string action, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length){
 HKEY key, shellkey;
 LONG result=ERROR_SUCCESS;
-DWORD index=(DWORD)*pos_handle;
+DWORD index=(DWORD)*pos_id;
 int found = 0;
 int maxlen = *length;
 
-	if (!length || (*length && !buffer)) return -1;
+	if (!length || !handler_id_out || !pos_id) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+
+	index=(DWORD)*pos_id;
 
 	while  (!found && result != ERROR_NO_MORE_ITEMS){
 		*length = maxlen;
-		result = RegEnumKeyEx(HKEY_CLASSES_ROOT, index++, buffer, length, 0, NULL, NULL, NULL);
+		result = RegEnumKeyEx(HKEY_CLASSES_ROOT, index++, handler_id_out, length, 0, NULL, NULL, NULL);
 
 		if (result == ERROR_SUCCESS) {
-			result = RegOpenKeyEx(HKEY_CLASSES_ROOT, buffer,0,KEY_READ,&key);
+			result = RegOpenKeyEx(HKEY_CLASSES_ROOT, handler_id_out,0,KEY_READ,&key);
 			if (result == ERROR_SUCCESS) {
 				result = RegOpenKeyEx(key,SHELL,0,KEY_READ,&shellkey);
 				RegCloseKey(key);
@@ -883,14 +1040,19 @@ int maxlen = *length;
 		}
 	}
 
-	if (!found){
-		if (result != ERROR_MORE_DATA) *length = 0;
-		if (buffer) *buffer=0;
+	
+	if (result == ERROR_SUCCESS) {
+		*pos_id = index + 1;
+		return JAVACALL_OK;
 	}
-
-	*pos_handle=index;
-
-	return result;
+	
+	if (result == ERROR_MORE_DATA) 
+		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
+	
+	if (result == ERROR_NO_MORE_ITEMS) 
+		return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+	
+	return JAVACALL_FAIL;
 }
 
 javacall_result javacall_chapi_enum_handlers_by_suite_id(
@@ -900,23 +1062,25 @@ javacall_result javacall_chapi_enum_handlers_by_suite_id(
         int* length){
 HKEY key;
 LONG result=ERROR_SUCCESS;
-DWORD index=(DWORD)*pos_handle;
+DWORD index;
 int found = 0;
 int maxlen = *length;
 int type;
 unsigned short valbuf[MAX_BUFFER];
 int len = MAX_BUFFER;
 
-	if (!length || (*length && !buffer)) return -1;
+if (!length || !handler_id_out || !pos_id) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+index=(DWORD)*pos_id;
 
 	while  (!found && result != ERROR_NO_MORE_ITEMS){
 		*length = maxlen;
-		result = RegEnumKeyEx(HKEY_CLASSES_ROOT, index++, buffer, length, 0, NULL, NULL, NULL);
+		result = RegEnumKeyEx(HKEY_CLASSES_ROOT, index++, handler_id_out, length, 0, NULL, NULL, NULL);
 		if (result == ERROR_SUCCESS) {
-			result = RegOpenKeyEx(HKEY_CLASSES_ROOT, buffer,0,KEY_READ,&key);
+			result = RegOpenKeyEx(HKEY_CLASSES_ROOT, handler_id_out,0,KEY_READ,&key);
 			if (result == ERROR_SUCCESS) {
+				len = MAX_BUFFER;
 				result = RegQueryValueEx(key,SUITE_ID,0,&type,(LPBYTE)valbuf,&len);
-				if (result == ERROR_SUCCESS && !wcscmp(valbuf,suit_id)) {
+				if (result == ERROR_SUCCESS && ((int)valbuf == suite_id)) {
 					found =1;
 				}
 				RegCloseKey(key);
@@ -924,14 +1088,19 @@ int len = MAX_BUFFER;
 		}
 	}
 
-	if (!found){
-		if (result != ERROR_MORE_DATA) *length = 0;
-		if (buffer) *buffer=0;
+	
+	if (result == ERROR_SUCCESS) {
+		*pos_id = index + 1;
+		return JAVACALL_OK;
 	}
-
-	*pos_handle=index;
-
-	return result;
+	
+	if (result == ERROR_MORE_DATA) 
+		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
+	
+	if (result == ERROR_NO_MORE_ITEMS) 
+		return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+	
+	return JAVACALL_FAIL;
 }
 
 
@@ -939,17 +1108,17 @@ javacall_result javacall_chapi_enum_handlers(int* pos_id, /*OUT*/ javacall_utf16
 
 HKEY key, shellkey;
 LONG result=ERROR_SUCCESS;
-DWORD index=(DWORD)*pos_handle;
+DWORD index=(DWORD)*pos_id;
 int found = 0;
 int maxlen = *length;
 
-if (!length || (*length && !buffer)) return -1;
+if (!length || !handler_id_out || !pos_id) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
 
 while  (!found && result != ERROR_NO_MORE_ITEMS){
 		*length = maxlen;
-		result = RegEnumKeyEx(HKEY_CLASSES_ROOT, index++, buffer, length, 0, NULL, NULL, NULL);
+		result = RegEnumKeyEx(HKEY_CLASSES_ROOT, index++, handler_id_out, length, 0, NULL, NULL, NULL);
 		if (result == ERROR_SUCCESS) {
-			result = RegOpenKeyEx(HKEY_CLASSES_ROOT, buffer,0,KEY_READ,&key);
+			result = RegOpenKeyEx(HKEY_CLASSES_ROOT, handler_id_out,0,KEY_READ,&key);
 			if (result == ERROR_SUCCESS) {
 				result = RegOpenKeyEx(key, SHELL,0,KEY_READ,&shellkey);
 				if (result == ERROR_SUCCESS) {
@@ -961,14 +1130,18 @@ while  (!found && result != ERROR_NO_MORE_ITEMS){
 		}
 	}
 
-	if (!found){
-		if (result != ERROR_MORE_DATA) *length = 0;
-		if (buffer) *buffer=0;
+	if (result == ERROR_SUCCESS) {
+		*pos_id = index + 1;
+		return JAVACALL_OK;
 	}
-
-	*pos_handle=index;
-
-	return result;
+	
+	if (result == ERROR_MORE_DATA) 
+		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
+	
+	if (result == ERROR_NO_MORE_ITEMS) 
+		return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+	
+	return JAVACALL_FAIL;
 
 }
 
@@ -986,19 +1159,20 @@ javacall_result javacall_chapi_get_handler_info(javacall_const_utf16_string cont
 	DWORD type;
 
 	result = RegOpenKeyEx(HKEY_CLASSES_ROOT,content_handler_id,0,KEY_QUERY_VALUE,&key);
-	if (result != ERROR_SUCCESS) return ERROR_HANDLER_DOESNOT_EXIST;
+	if (result != ERROR_SUCCESS) return JAVACALL_CHAPI_ERROR_NOT_FOUND;
 
-	if (result == ERROR_SUCCESS && suit_id){
-		result = RegQueryValueEx(key,SUITE_ID,0,&type,(LPBYTE)suit_id,suit_id_len);
+	if (result == ERROR_SUCCESS && suite_id_out){
+		int len =  sizeof(DWORD);
+		result = RegQueryValueEx(key,SUITE_ID,0,&type,(LPBYTE)suite_id_out, &len);
 	}
 
-	if (result == ERROR_SUCCESS && classname){
-		result = RegQueryValueEx(key,CLASS_NAME,0,&type,(LPBYTE)classname,classname_len);
+	if (result == ERROR_SUCCESS && classname_out){
+		result = RegQueryValueEx(key,CLASS_NAME,0, &type, (LPBYTE)classname_out, classname_len);
 	}
 
-	if (result == ERROR_SUCCESS && flag){
+	if (result == ERROR_SUCCESS && flag_out){
 		int len = sizeof(DWORD);
-		result = RegQueryValueEx(key,FLAG,0,&type,(LPBYTE)flag,&len);
+		result = RegQueryValueEx(key,FLAG,0,&type,(LPBYTE)flag_out, &len);
 	}
 
 	RegCloseKey(key);
@@ -1063,5 +1237,3 @@ javacall_bool javacall_chapi_is_action_supported(javacall_const_utf16_string con
 }
 
 
-void javacall_chapi_enum_finish(int pos_id){
-}
