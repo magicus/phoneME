@@ -86,6 +86,12 @@ KNIDECL(com_sun_pisces_NativeFinalizer_0004RendererNativeFinalizer_finalize) {
     KNI_ReturnVoid();
 }
 
+void Java_com_sun_pisces_NativeFinalizer_00024SurfaceNativeFinalizer_finalize () {
+}
+
+void Java_com_sun_pisces_NativeFinalizer_00024RendererNativeFinalizer_finalize () {
+}
+
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_pisces_NativeFinalizer_00024SurfaceNativeFinalizer_finalize) {
     KNI_StartHandles(2);
