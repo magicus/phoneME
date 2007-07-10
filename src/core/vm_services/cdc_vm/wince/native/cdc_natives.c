@@ -179,7 +179,7 @@ midpFinalizeUI(void) {
     lcdlf_ui_finalize();
 
     //IMPL_NOTE: pushclose();
-    finalizeCommandState();
+    //finalizeCommandState();
 
     //FinalizeEvents();
 
@@ -419,7 +419,7 @@ KNIDECL(com_sun_midp_events_NativeEventMonitor_waitForNativeEvent) {
 
     do {
         CVMD_gcSafeExec(_ee, {
-            ready = WaitForSingleObject(controlPipe[0], 200);
+            ready = WaitForSingleObject(controlPipe[0], 50);
         });
 
         KNI_StartHandles(3);
@@ -700,9 +700,9 @@ DUMMY(pushdeletesuite)
 DUMMY(midpStoreEventAndSignalForeground)
 
 int getCurrentIsolateId() {return 0;}
+int midpGetAmsIsolateId() {return 0;}
 
 /* IMPL_NOTE - removed duplicate
- * int midpGetAmsIsolateId() {return 0;}
  * DUMMY(midp_getCurrentThreadId)
  */
 
