@@ -66,13 +66,6 @@ OopDesc* (*ObjectHeap::temp_allocator) (size_t size JVM_TRAPS)
 
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
 OopDesc** ObjectHeap::_saved_compiler_area_top_quick;
-void ObjectHeap::save_compiler_area_top_fast() {
-  _saved_compiler_area_top_quick = _compiler_area_top;
-}
-
-void ObjectHeap::update_compiler_area_top_fast() {
-  _compiler_area_top = _saved_compiler_area_top_quick;
-}
 #endif 
 
 #define CACHE_QUICK_VAR(v) _quick_vars.v = _ ## v
@@ -1933,9 +1926,9 @@ void ObjectHeap::check_marking_stack_overflow() {
 }
 
 void ObjectHeap::mark_forward_pointer(OopDesc** p) {
-  OopDesc* obj = *p;
   GUARANTEE(p >= _collection_area_start && p < _inline_allocation_top,"Sanity");
-  if ((OopDesc**)obj > p && (OopDesc**)obj < _inline_allocation_top) {
+  OopDesc** obj = (OopDesc**)(*p);
+  if (obj > p && obj < _inline_allocation_top) {
     set_bit_for(p);
     if (TraceGC) {
        TTY_TRACE_CR(("   0x%x => 0x%x forward marked", p, obj));
@@ -1945,7 +1938,8 @@ void ObjectHeap::mark_forward_pointer(OopDesc** p) {
 
 inline OopDesc** ObjectHeap::mark_forward_pointers() {
   OopDesc** p = _collection_area_start;
-  OopDesc** end_scan = _inline_allocation_top;
+  OopDesc** const inline_allocation_top = _inline_allocation_top;
+  OopDesc** const end_scan = inline_allocation_top;
   address bitvector_base = _bitvector_base;
   while (p < end_scan && test_bit_for(p, bitvector_base)) {
     // By marking the pointers in the fixed part of young space, we can
@@ -1953,20 +1947,17 @@ inline OopDesc** ObjectHeap::mark_forward_pointers() {
     // need to mark pointers to "moving space".  But we don't yet know where
     // that barrier is, so we mark all forward pointers.
     FarClassDesc* const blueprint = ((OopDesc*)p)->blueprint();
-    const jint instance_size = blueprint->instance_size_as_jint();
+    jint instance_size = blueprint->instance_size_as_jint();
     if (instance_size > 0) {
       // This is a common case: (non-array) Java object instance. In-line
       // OopDesc::oops_do_for() to make it run faster.
-      jbyte* map = (jbyte*)blueprint->embedded_oop_map();
-      OopDesc** base = p;
-      OopDesc** inline_allocation_top = _inline_allocation_top;
-      while (true) {
-        jint entry = (jint)(*map++);
+      const jbyte* map = (jbyte*)blueprint->embedded_oop_map();      
+      for( OopDesc** base = p;; ) {
+        const jint entry = jint(*map++);
         if (entry > 0) {
           base += entry;
-          OopDesc* obj = *base;
-          if ((OopDesc**)obj > base && 
-              (OopDesc**)obj < inline_allocation_top) {
+          OopDesc** obj = (OopDesc**)(*base);
+          if (obj > base && obj < inline_allocation_top) {
             set_bit_for(base, bitvector_base);
             if (TraceGC) {
               TTY_TRACE_CR(("   0x%x => 0x%x forward marked", base, obj));
@@ -1979,17 +1970,16 @@ inline OopDesc** ObjectHeap::mark_forward_pointers() {
           base += (OopMapEscape - 1);
         }
       }
-      p = DERIVED(OopDesc**, p, instance_size);
     } else {
       ((OopDesc*)p)->oops_do_for(blueprint, mark_forward_pointer);
-      size_t size = ((OopDesc*)p)->object_size();
+      instance_size = ((OopDesc*)p)->object_size();
 
-      if (TraceGC) {
-        TTY_TRACE_CR(("TraceGC: 0x%x - 0x%x (size %d) fixed",
-                      p, DERIVED(OopDesc**, p, size), size));
-      }
-      p = DERIVED(OopDesc**, p, size);
     }
+    if (TraceGC) {
+      TTY_TRACE_CR(("TraceGC: 0x%x - 0x%x (size %d) fixed",
+                    p, DERIVED(OopDesc**, p, instance_size), instance_size));
+    }
+    p = DERIVED(OopDesc**, p, instance_size);
   }
   return p;
 }
@@ -2021,11 +2011,11 @@ inline OopDesc* ObjectHeap::rom_oop_from_offset(size_t offset) {
 #if ENABLE_SEGMENTED_ROM_TEXT_BLOCK
     return (OopDesc*)(int(ROM::min_text_seg_addr()) + offset);
 #else
-    return (OopDesc*)(int(&_rom_text_block[0]) + offset);
+    return (OopDesc*)(int(_rom_text_block) + offset);
 #endif
   } else {
     offset --;
-    return (OopDesc*)(int(&_rom_data_block[0]) + offset);
+    return (OopDesc*)(int(_rom_data_block) + offset);
   }
 }
 #endif // !ENABLE_HEAP_NEARS_IN_HEAP 
@@ -3522,7 +3512,7 @@ void ObjectHeap::write_barrier_oops_do(void do_oop(OopDesc**),
   WRITE_BARRIER_OOPS_LOOP_END;
 }
 
-void ObjectHeap::expand_young_generation() {
+void ObjectHeap::expand_young_generation( void ) {
   set_inline_allocation_end( _compiler_area_start );
   verify_layout();
 }
@@ -3673,9 +3663,25 @@ inline void ObjectHeap::compiler_area_move_compiled_method (
     TTY_TRACE_CR(("TraceGC: moving compiled method [%d] %p => %p, %d bytes",
       index, src, dst, src->object_size() ));
   }
+#if ENABLE_JVMPI_PROFILE 
+  if( UseJvmpiProfiler && 
+      JVMPIProfile::VMjvmpiEventCompiledMethodUnloadIsEnabled() ){
+    const MethodDesc* method_desc = src->method();
+    const jint method_id = method_desc->method_id();
+    JVMPIProfile::VMjvmpiPostCompiledMethodUnloadEvent(method_id);
+  }
+#endif
 
   CompiledMethodCache::Map[index] = dst;
-  jvm_memmove(dst, src, src->object_size() );  
+  jvm_memmove(dst, src, src->object_size() );
+
+#if ENABLE_JVMPI_PROFILE 
+  if( UseJvmpiProfiler &&
+      JVMPIProfile::VMjvmpiEventCompiledMethodLoadIsEnabled() ) {
+    CompiledMethod::Raw compiled_method( dst );   
+    JVMPIProfile::VMjvmpiPostCompiledMethodLoadEvent(compiled_method);
+  }
+#endif
 }
 
 inline void ObjectHeap::compiler_area_compact( const int last_moving_up ) {
@@ -3706,31 +3712,7 @@ inline void ObjectHeap::compiler_area_compact( const int last_moving_up ) {
       const CompiledMethodDesc* const src = CompiledMethodCache::Map[i];
       CompiledMethodDesc* const dst =
         DERIVED(CompiledMethodDesc*, src, (int)src->_klass);
-
-#if ENABLE_JVMPI_PROFILE 
-      // compiled code has been moved, so send compiled method unload event
-      if(UseJvmpiProfiler && 
-         JVMPIProfile::VMjvmpiEventCompiledMethodUnloadIsEnabled()){
-        MethodDesc* method_desc = src->method();
-        jint method_id = method_desc->method_id();
-        JVMPIProfile::VMjvmpiPostCompiledMethodUnloadEvent(method_id);
-      }
-      int cs = src->object_size();
-#endif
-
       compiler_area_move_compiled_method( dst, src, i );
-
-#if ENABLE_JVMPI_PROFILE 
-      // compiled method has been moved to new location, send compiled method load event
-      if(UseJvmpiProfiler && 
-         JVMPIProfile::VMjvmpiEventCompiledMethodLoadIsEnabled()) {
-        UsingFastOops fast_oops;
-      
-        CompiledMethod::Fast compiled_method = dst;   
-        JVMPIProfile::VMjvmpiPostCompiledMethodLoadEvent(compiled_method);
-      }
-#endif
-
       dst->_klass = compiled_method_class;
     }
   }
@@ -3741,31 +3723,7 @@ inline void ObjectHeap::compiler_area_compact( const int last_moving_up ) {
       CompiledMethodDesc* const dst =
         DERIVED(CompiledMethodDesc*, src, (int)src->_klass);
       if( src != dst ) {
-        
-#if ENABLE_JVMPI_PROFILE 
-        // compiled code has been moved, so send compiled method unload event
-        if(UseJvmpiProfiler && 
-           JVMPIProfile::VMjvmpiEventCompiledMethodUnloadIsEnabled()) {
-        MethodDesc* method_desc = src->method();
-        jint method_id = method_desc->method_id();
-        JVMPIProfile::VMjvmpiPostCompiledMethodUnloadEvent(method_id);
-        }
-        int cs = src->object_size();
-#endif               
         compiler_area_move_compiled_method( dst, src, i );
-
-#if ENABLE_JVMPI_PROFILE 
-        // compiled method has been moved to new location, send compiled method load event
-        if(UseJvmpiProfiler && 
-           JVMPIProfile::VMjvmpiEventCompiledMethodLoadIsEnabled()) {
-          UsingFastOops fast_oops;
-          
-          CompiledMethod::Fast compiled_method = dst;    
-          JVMPIProfile::VMjvmpiPostCompiledMethodLoadEvent(compiled_method);
-        }
-#endif
-
-
       }
       dst->_klass = compiled_method_class;
     }
@@ -3828,16 +3786,17 @@ inline void ObjectHeap::compiler_area_update_pointers( void ) {
   #undef compiler_area_contains
 }
 
-CompiledMethodDesc* ObjectHeap::method_contain_instruction_of(void* pc){
-  CompiledMethodDesc * p   = (CompiledMethodDesc *)_compiler_area_start;
-  CompiledMethodDesc * end = (CompiledMethodDesc *)_compiler_area_top;
-  while (p < end) {
-    if( ( (unsigned long) pc >(unsigned long) p) && 
-        ( (unsigned long) pc <( (unsigned long)p + p->object_size() ))  ){
-        return p;
+CompiledMethodDesc* ObjectHeap::method_contains_instruction_of(void* pc){
+  if( pc < (CompiledMethodDesc*)_compiler_area_top ) {
+    CompiledMethodDesc* next = (CompiledMethodDesc*)_compiler_area_start;
+    if( pc > next ) {
+      CompiledMethodDesc* p;
+      while( (p = next) < pc ) {
+        next = DERIVED(CompiledMethodDesc*, p, p->object_size());
+      }
+      return p;
     }
-    p = DERIVED(CompiledMethodDesc*, p, p->object_size());
-  }   
+  }
   return NULL;
 }
 

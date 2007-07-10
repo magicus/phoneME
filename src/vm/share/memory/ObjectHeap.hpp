@@ -314,7 +314,7 @@ public:
 
   //found the compiled method which contains the instruction pointed 
   //by pc parameter
-  static CompiledMethodDesc* method_contain_instruction_of(void* pc);
+  static CompiledMethodDesc* method_contains_instruction_of(void* pc);
 
   // Finalization support
 private:
@@ -933,11 +933,15 @@ private:
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
 public:
   //save the compiler area top before doing code scheduling
-  static void save_compiler_area_top_fast();
+  static void save_compiler_area_top_fast( void ) {
+    _saved_compiler_area_top_quick = _compiler_area_top;
+  }
 
   //restore the compiler area top to the value stored before scheduling.
   //free the memory allocated during code scheduling quickly
-  static void update_compiler_area_top_fast();
+  static void update_compiler_area_top_fast( void ) {
+    _compiler_area_top = _saved_compiler_area_top_quick;
+  }
 private:
   static OopDesc** _saved_compiler_area_top_quick;
 #endif

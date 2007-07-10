@@ -654,7 +654,7 @@ static void handle_segv_siginfo_npe(int sig, siginfo_t* info, void* ucpPtr) {
     TTY_TRACE(("Memory access error\nPlease report the bug\n"));
   }
   
-  CompiledMethodDesc *cmd = ObjectHeap::method_contain_instruction_of((void *)pc);
+  CompiledMethodDesc *cmd = ObjectHeap::method_contains_instruction_of((void *)pc);
   
   if( cmd == NULL){
     TTY_TRACE(("Memory access error\nPlease report the bug\n"));

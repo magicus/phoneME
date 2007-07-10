@@ -280,7 +280,7 @@ JavaFrame::find_compiled_method( const address frame_pc ) {
   jint code_size = method_desc->code_size();
   if ( code_size < offset && offset > 0 ) {
   	//this is a unlinked method which is still be used
-    	method_desc = ObjectHeap::method_contain_instruction_of(frame_pc);
+    	method_desc = ObjectHeap::method_contains_instruction_of(frame_pc);
 	CompiledMethod::Raw ncm = method_desc;
 	return method_desc;
   }
