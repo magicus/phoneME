@@ -176,7 +176,7 @@ $(MIDP_EXCLUDED_CLASS_ZIP) : $(MIDP_EXCLUDED_JAVA_FILES)
 	@echo "creating $@..."
 	$(AT)mkdir -p $(MIDP_EXCLUDED_CLASS_DIR)
 	$(AT)$(JDK_DIR)/bin/javac \
-		-bootclasspath $(VM_BOOTCLASSPATH)$(PATHSEP)$(MIDP_CLASSES_ZIP) \
+		-bootclasspath "$(VM_BOOTCLASSPATH)$(PATHSEP)$(MIDP_CLASSES_ZIP)" \
 		-d $(MIDP_EXCLUDED_CLASS_DIR) \
 		$(MIDP_EXCLUDED_JAVA_FILES)
 	$(AT)cd $(MIDP_EXCLUDED_CLASS_DIR); zip -r -q $@ *

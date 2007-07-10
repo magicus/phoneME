@@ -452,7 +452,7 @@ define compilefiles
 			f2= ; \
 		fi ; \
 		$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(JAVAC_OUT_DIR) \
-			-bootclasspath $(BOOTCLASSPATH) \
+			-bootclasspath "$(BOOTCLASSPATH)" \
 			-classpath $(CLASSBINDIR) $$f1 $$f2 || exit 1; \
 		if test "$(TARGET_VM)" = "cldc_vm"; then \
 		    num=`find $(VERIFYDIR) -type f -print | wc -l`; \
