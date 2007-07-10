@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -20,8 +20,6 @@
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions. 
-#
-# @(#)wm5_defs.mk	1.2 06/10/10
 #
 # defs for Windows Mobile 5 target
 #
@@ -46,3 +44,5 @@ include ../win32/wince50_defs.mk
 CVM_DEFINES +=  -DPOCKETPC
 CC_ARCH_FLAGS  = /GS-
 TARGET_CC      = CL.EXE 
+LIBPATH += /LIBPATH:"$(VC_DIR)/ce/lib/armv4i"
+LIBPATH += /LIBPATH:"$(VC_DIR)/ce/atlmfc/lib/armv4i"

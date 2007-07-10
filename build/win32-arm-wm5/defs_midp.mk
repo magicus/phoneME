@@ -28,9 +28,5 @@
 USE_DIRECTDRAW = true
 
 ifeq ($(USE_DIRECTDRAW), true)
-MIDP_LIBS += ddraw.lib
+WIN_LINKLIBS += ddraw.lib
 endif
-
-# need revisit : generate list of required platform specific libs
-# JSR 75
-MIDP_LIBS += cellcore.lib ole32.lib note_prj.lib
