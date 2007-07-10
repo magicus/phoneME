@@ -188,7 +188,7 @@ class MIDPConfig{
            /* Either the parameter was bad or didn't get passed in.  Use default.  */
            midpBase = new URL[1];
 	   try {
-	      midpBase[0] = new URL("file://".concat(defaultMidpJarPath));
+	      midpBase[0] = new File(defaultMidpJarPath).toURI().toURL();
            }catch(java.io.IOException e){
 	      // DEBUG System.err.println("initMidpImplementation URL Creation:");
 	      e.printStackTrace();
@@ -244,7 +244,7 @@ class MIDPConfig{
            /* Either the parameter was bad or didn't get passed in.  Use default.  */
            urls = new URL[1];
 	   try {
-	      urls[0] = new URL("file://".concat(defaultMidpJarPath));
+	      urls[0] = new File(defaultMidpJarPath).toURI().toURL();
            }catch(java.io.IOException e){
 	      // DEBUG System.err.println("initMidpImplementation URL Creation:");
 	      e.printStackTrace();
@@ -362,7 +362,7 @@ class MIDPConfig{
 	midJarURL = new URL[nComponents];
 	try {
 	    for (int i=0; i<nComponents; i++){
-		midJarURL[i] = new URL("file://".concat(midPath[i]));
+		midJarURL[i] = new File(midPath[i]).toURI().toURL();
 	    }
 	}catch(Exception e){
 	    System.err.println("URL Creation:");
