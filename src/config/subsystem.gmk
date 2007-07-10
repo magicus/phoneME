@@ -42,7 +42,6 @@ endif
 SUBSYSTEM_JSR172_PACKAGES = \
    com.sun.j2mews.sg \
    com.sun.j2mews.xml.rpc \
-   com.sun.ukit.jaxp \
    javax.microedition.xml.rpc \
    javax.xml.namespace \
    javax.xml.parsers \
@@ -50,6 +49,7 @@ SUBSYSTEM_JSR172_PACKAGES = \
 
 ifneq ($(USE_JSR_280), true)
 SUBSYSTEM_JSR172_PACKAGES += \
+   com.sun.ukit.jaxp \
    org.xml.sax \
    org.xml.sax.helpers
 endif
@@ -81,15 +81,14 @@ SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
 
 # ri_jaxp 
 #
+
+ifneq ($(USE_JSR_280), true)
 INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES = \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Input.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/ReaderUTF16.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/ReaderUTF8.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Pair.java \
-        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Attrs.java
-
-ifneq ($(USE_JSR_280), true)
-INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES += \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Attrs.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/helpers/DefaultHandler.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/InputSource.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/SAXNotSupportedException.java \
