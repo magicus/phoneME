@@ -1146,6 +1146,47 @@ while  (!found && result != ERROR_NO_MORE_ITEMS){
 }
 
 
+javacall_result javacall_chapi_enum_handlers_by_id_prefix(javacall_const_utf16_string full_handler_id, int* pos_id, /*OUT*/ javacall_utf16*  handler_id_out, int* length){
+	HKEY key, shellkey;
+	LONG result=ERROR_SUCCESS;
+	DWORD index=(DWORD)*pos_id;
+	int found = 0;
+	int maxlen = *length;
+	
+	if (!length || !handler_id_out || !pos_id) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
+	
+	while  (!found && result == ERROR_SUCCESS){
+		*length = maxlen;
+		result = RegEnumKeyEx(HKEY_CLASSES_ROOT, index++, handler_id_out, length, 0, NULL, NULL, NULL);
+		if (result == ERROR_SUCCESS) {
+			result = RegOpenKeyEx(HKEY_CLASSES_ROOT, handler_id_out,0,KEY_READ,&key);
+			if (result == ERROR_SUCCESS) {
+				if (wcsstr(full_handler_id,handler_id_out) == full_handler_id)
+				result = RegOpenKeyEx(key, SHELL,0,KEY_READ,&shellkey);
+				if (result == ERROR_SUCCESS) {
+					found =1;
+					RegCloseKey(shellkey);
+				}
+				RegCloseKey(key);
+			}
+		}
+	}
+	
+	if (result == ERROR_SUCCESS) {
+		*pos_id = index + 1;
+		return JAVACALL_OK;
+	}
+	
+	if (result == ERROR_MORE_DATA) 
+		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
+	
+	if (result == ERROR_NO_MORE_ITEMS) 
+		return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+	
+	return JAVACALL_FAIL;
+
+}
+
 javacall_result javacall_chapi_get_handler_info(javacall_const_utf16_string content_handler_id,
 					/*OUT*/
 					int*  suite_id_out,
