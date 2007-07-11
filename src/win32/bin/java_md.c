@@ -62,7 +62,7 @@ ansiJavaMain0(int argc, const char **argv, JNI_CreateJavaVM_func *f)
       char*       argsBuf;
       FILE*       fd;
 
-      fd = fopen(filename, "r");
+      fd = fopen(filename, "rb");
       if (fd == NULL) {
 #if 0
     perror("fopen");
