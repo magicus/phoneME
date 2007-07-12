@@ -245,7 +245,7 @@ define buildClassesList
 endef
 else
 define buildClassesList
-	echo $(2) >> $(CVM_BUILD_TOP)/$(1).plist
+	@echo $(2) >> $(CVM_BUILD_TOP)/$(1).plist
 endef
 endif
 
@@ -342,29 +342,29 @@ $(CVM_BUILD_TOP)/%.list : $(CVM_BUILD_TOP)/%.plist
 
 $(CVM_BUILD_TOP)/.libclasses.plist : $(CLASSLIB_CLASS_FILES) $(CLASSLIB_JAR_FILES)
 ifeq ($(EVAL_SUPPORTED),true)
-	@echo $(BUILDjavahclasses) > $(CVM_BUILD_TOP)/.javahclasses.list
-	@echo $(BUILD.libclasses) > $@
+	@printf %s "$(BUILDjavahclasses)" > $(CVM_BUILD_TOP)/.javahclasses.list
+	@printf %s "$(BUILD.libclasses)" > $@
 else
 	@touch $@
 endif
 
 $(CVM_BUILD_TOP)/.btclasses.plist : $(BUILDTIME_CLASS_FILES)
 ifeq ($(EVAL_SUPPORTED),true)
-	@echo $(BUILD.btclasses) > $@
+	@printf %s "$(BUILD.btclasses)" > $@
 else
 	@touch $@
 endif
 
 $(CVM_BUILD_TOP)/.testclasses.plist : $(TEST_CLASS_FILES)
 ifeq ($(EVAL_SUPPORTED),true)
-	@echo $(BUILD.testclasses) > $@
+	@printf %s "$(BUILD.testclasses)" > $@
 else
 	@touch $@
 endif
 
 $(CVM_BUILD_TOP)/.democlasses.plist : $(DEMO_CLASS_FILES)
 ifeq ($(EVAL_SUPPORTED),true)
-	@echo $(BUILD.democlasses) > $@
+	@printf %s "$(BUILD.democlasses)" > $@
 else
 	@touch $@
 endif
