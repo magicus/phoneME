@@ -35,6 +35,9 @@ PS ?= :
 HOST2POSIX ?= $(1)
 POSIX2HOST ?= $(1)
 POSIX2HOST_CMD ?= echo $(1)
+POSIX2HOST_FILTER ?= cat
+HOST2POSIX_CMD ?= echo $(1)
+HOST2POSIX_FILTER ?= cat
 
 ifneq ($(USE_VERBOSE_MAKE), true)
 	AT=@
