@@ -103,10 +103,10 @@ public abstract class AbstractSurface implements Surface, NativeFinalization {
     }
     
     protected long nativePtr = 0L;
-    private final NativeFinalizer finalizer;
+    //private final NativeFinalizer finalizer;
 
     protected AbstractSurface() {
-        this.finalizer = NativeFinalizer.createInstance(this);
+        //this.finalizer = NativeFinalizer.createInstance(this);
     }
         
     public SurfaceDestination createSurfaceDestination() {

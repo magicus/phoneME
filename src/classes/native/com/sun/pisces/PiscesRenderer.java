@@ -41,7 +41,7 @@ public final class PiscesRenderer extends PathSink
     long nativePtr = 0L;
     final AbstractSurface surface;
 
-    private final NativeFinalizer finalizer;
+    //private final NativeFinalizer finalizer;
         
     static {
         String strValue;
@@ -101,7 +101,7 @@ public final class PiscesRenderer extends PathSink
             System.out.println("Using Pisces Renderer (native version)");
         }
 
-        this.finalizer = NativeFinalizer.createInstance(this);
+        //this.finalizer = NativeFinalizer.createInstance(this);
         this.surface = surface;
         initialize();
         messageShown = true;
