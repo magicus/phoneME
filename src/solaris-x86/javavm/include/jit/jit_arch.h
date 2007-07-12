@@ -58,4 +58,9 @@ X86JITgoNative(CVMObject *exceptionObject, CVMExecEnv *ee,
 #define CVMJITgoNative X86JITgoNative
 #endif
 
+#ifndef _ASM
+extern CVMBool
+solarisJITSyncInitArch();
+#endif
+
 #endif /* _SOLARIS_X86_JIT_ARCH_H */
