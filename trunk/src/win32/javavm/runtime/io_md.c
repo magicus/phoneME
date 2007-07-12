@@ -614,8 +614,10 @@ CVMioWrite(CVMInt32 fd, const void *buf, CVMUint32 nBytes)
        case 1:
        case 2:
           if (h == INVALID_HANDLE_VALUE) { 
-             bytes = writeStandardIO(fd, buf, nBytes);
-             b = ((bytes == -1) ? 0 : 1);
+             /* Silently ignore errors */
+             (void)writeStandardIO(fd, buf, nBytes);
+             bytes = nBytes;
+             b = 1;
              break;
           }
        default: 
