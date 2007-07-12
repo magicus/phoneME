@@ -25,6 +25,7 @@
  */
 
 #include <stdio.h>
+#include <winbase.h>
 
 #include <pcsl_file.h>
 #include <pcsl_memory.h>
@@ -138,24 +139,22 @@ int pcsl_file_write(void *handle, unsigned char* buffer, long length)
  */
 int pcsl_file_unlink(const pcsl_string * fileName)
 {
-#if 0
     int status;
-    const jbyte * pszOsFilename = pcsl_string_get_utf8_data(fileName);
+    const jchar * pszOsFilename = pcsl_string_get_utf16_data(fileName);
 
     if (pszOsFilename == NULL) {
-      return -1;
+        return -1;
     }
 
-    status = remove((char*)pszOsFilename);
+    if (DeleteFile(pszOsFilename) == 0) {
+        status = -1;
+    } else {
+        status = 0;
+    }
 
-    pcsl_string_release_utf8_data(pszOsFilename, fileName);
-
+    pcsl_string_release_utf16_data(pszOsFilename, fileName);
     return status;
-#else
-    return -1;
-#endif
 }
-
 
 /**
  * The  truncate function is used to truncate the size of an open file in storage.
@@ -249,36 +248,29 @@ int pcsl_file_commitwrite(void *handle)
 int pcsl_file_rename(const pcsl_string * oldName,
          const pcsl_string * newName)
 {
-#if 0
     int status;
-    const jbyte * pszOldFilename = pcsl_string_get_utf8_data(oldName);
+    const jchar * pszOldFilename = pcsl_string_get_utf16_data(oldName);
 
-    if (pszOldFilename == NULL) {
-      return -1;
+    if(pszOldFilename == NULL) {
+	    return -1;
+    } else {
+        const jchar * pszNewFilename = pcsl_string_get_utf16_data(newName);
+
+        if(pszNewFilename == NULL) {
+            pcsl_string_release_utf16_data(pszOldFilename, oldName);
+	        return -1;
+        }
+
+        if (MoveFile(pszOldFilename, pszNewFilename) == 0) {
+        	status = -1;
+        } else {
+	        status = 0;
+        }
+        pcsl_string_release_utf16_data(pszNewFilename, newName);
     }
 
-    {
-      const jbyte * pszNewFilename = pcsl_string_get_utf8_data(newName);
-
-      if (pszNewFilename == NULL) {
-  pcsl_string_release_utf8_data(pszOldFilename, oldName);
-  return -1;
-      }
-
-      if (rename((char*)pszOldFilename, (char*)pszNewFilename) < 0) {
-        status = -1;
-      } else {
-        status = 0;
-      }
-
-      pcsl_string_release_utf8_data(pszOldFilename, oldName);
-      pcsl_string_release_utf8_data(pszNewFilename, newName);
-
-      return status;
-    }
-#else
-    return -1;
-#endif
+    pcsl_string_release_utf16_data(pszOldFilename, oldName);
+    return status;
 }
 
 /**
