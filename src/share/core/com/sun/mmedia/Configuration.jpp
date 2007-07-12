@@ -124,6 +124,16 @@ public abstract class Configuration {
      */
     public final static String MIME_VIDEO_MPEG4 = "video/mp4";
 
+    /**
+     * WMV video mime type
+     */
+    public final static String MIME_VIDEO_WMV = "video/x-ms-wmv";
+    
+    /**
+     * AVI video mime type
+     */
+    public final static String MIME_VIDEO_AVI = "video/avi";
+    
     public final static String TONE_DEVICE_LOCATOR = javax.microedition.media.Manager.TONE_DEVICE_LOCATOR; //"device://tone";
 // #ifndef ABB [
     public final static String MIDI_DEVICE_LOCATOR = javax.microedition.media.Manager.MIDI_DEVICE_LOCATOR; //"device://midi";

@@ -28,11 +28,11 @@ package com.sun.mmedia;
 import java.util.*;
 import java.lang.IllegalArgumentException;
 import java.lang.IllegalStateException;
-import javax.microedition.lcdui.Image;
-import javax.microedition.lcdui.Graphics;
-import javax.microedition.lcdui.Item;
-import javax.microedition.lcdui.Canvas;
-import javax.microedition.lcdui.CustomItem;
+//import javax.microedition.lcdui.Image;
+//import javax.microedition.lcdui.Graphics;
+//import javax.microedition.lcdui.Item;
+//import javax.microedition.lcdui.Canvas;
+//import javax.microedition.lcdui.CustomItem;
 import javax.microedition.media.Control;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.VideoControl;
@@ -41,13 +41,12 @@ import javax.microedition.media.PlayerListener;
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 
-
 /**
  * Video direct player
  * it implements VideoControl
  */
 public class DirectVideo extends DirectPlayer implements 
-    VideoControl, MIDPVideoPainter {
+    VideoControl/*, MIDPVideoPainter*/ {
 
     private final int SCREEN_WIDTH = nGetScreenWidth();
     private final int SCREEN_HEIGHT = nGetScreenHeight();
@@ -62,8 +61,8 @@ public class DirectVideo extends DirectPlayer implements
     private final static int FAKE_PREVIEW_INTERVAL = 250;
     
     // Canvas and item reference
-    private Canvas canvas;
-    private DVItem item;
+    //private Canvas canvas;
+    //private DVItem item;
 
     // original video size    
     private int sw;
@@ -84,7 +83,7 @@ public class DirectVideo extends DirectPlayer implements
     // current display mode
     private int displayMode = -1;
     // MMHelper to communicate with Canvas
-    private MMHelper mmh = null;
+    //private MMHelper mmh = null;
     // Lock
     private Object boundLock = new Object();
 
@@ -129,6 +128,7 @@ public class DirectVideo extends DirectPlayer implements
     /**
      * Is in clipping area?
      */
+    /*
     private boolean isInClippingArea(Graphics g, int x, int y, int w, int h) {
         int diffx = g.getTranslateX();
         int diffy = g.getTranslateY();
@@ -154,10 +154,11 @@ public class DirectVideo extends DirectPlayer implements
 
         return true;
     }
-
+    */
     /**
      *
      */
+    /*
     private void setTranslatedVideoLocation(Graphics g, int x, int y, int w, int h) {
         int diffx = g.getTranslateX();
         int diffy = g.getTranslateY();
@@ -202,10 +203,11 @@ public class DirectVideo extends DirectPlayer implements
             nSetLocation(hNative, px, py, pw, ph);
         }
     }
-
+    */
     /**
      * Prepare direct video rendering surface
      */
+    /*
     private void prepareVideoSurface(Graphics g, int x, int y, int w, int h) {
         if (debug) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI, 
@@ -221,10 +223,11 @@ public class DirectVideo extends DirectPlayer implements
             nSetVisible(hNative, true);
         }
     }
-
+    */
     /**
      * Prepare clipped preview region by using alpha channel masking
      */
+    /*
     private void prepareClippedPreview(Graphics g, int x, int y, int w, int h) {
         if (1 == nSetAlpha(true, ALPHA_COLOR)) {
             g.setColor(0, 0, 8);    // IMPL NOTE - Consider RGB565 conversion
@@ -239,10 +242,11 @@ public class DirectVideo extends DirectPlayer implements
             }
         }
     }
-
+    */
     /**
      * request to repaint
      */
+    /*
     private void repaint() {
         if (canvas != null) {
             canvas.repaint();
@@ -250,10 +254,11 @@ public class DirectVideo extends DirectPlayer implements
             item.forcePaint();
         }
     }
-
+    */
     /**
      * request to repaint canvas and wait until that processed
      */
+    /*
     private void repaintAndWait() {
         if (canvas != null) {
             canvas.repaint();
@@ -262,7 +267,7 @@ public class DirectVideo extends DirectPlayer implements
             item.forcePaint();
         }
     }
-
+    */
     /**
      * Check mode value
      */
@@ -307,7 +312,7 @@ public class DirectVideo extends DirectPlayer implements
 
     protected boolean doStart() {
         started = true;
-        repaintAndWait();
+        //repaintAndWait();
         return super.doStart();
     }
 
@@ -326,7 +331,8 @@ public class DirectVideo extends DirectPlayer implements
         }     
         
         Object ret = null;
-        
+
+        /*
         if (displayMode != -1) {
             throw new IllegalStateException("mode already set");
         }
@@ -364,7 +370,8 @@ public class DirectVideo extends DirectPlayer implements
             ret = (Object)item;
             visible = true;
         }
-        
+        */
+
         return ret;
     }
 
@@ -383,7 +390,7 @@ public class DirectVideo extends DirectPlayer implements
                 dy = y;
             }
             if (dw != 0 && dh !=0) {
-                repaintAndWait();
+                //repaintAndWait();
             }
         }
     }
@@ -409,13 +416,16 @@ public class DirectVideo extends DirectPlayer implements
             dw = width;
             dh = height;
         }
+
+        /*
         if (item != null) {
             // this will raise sizeChanged event
             // and sizeChanged shall raise paint event also
             item.setPreferredSize(width, height);
         }
         repaintAndWait();
-        
+        */
+
         if (sizeChanged) {
             sendEvent(PlayerListener.SIZE_CHANGED, this);
         }
@@ -468,7 +478,7 @@ public class DirectVideo extends DirectPlayer implements
         this.visible = visible;
 
         if (old != visible) {
-            repaintAndWait();
+            //repaintAndWait();
         }
 
         if (visible == false && hNative != 0) {
@@ -500,6 +510,7 @@ public class DirectVideo extends DirectPlayer implements
      * Notice: This have to be done before device painting action
      * Zoran ESDK use mask color to draw direct video
      */
+    /*
     public void paintVideo(Graphics g) {
         int x, y, w, h;
         
@@ -531,7 +542,7 @@ public class DirectVideo extends DirectPlayer implements
             }
         }
     }
-
+    */
     /**
      * Hide video preview (called from CanvasLFImpl)
      */
@@ -542,7 +553,7 @@ public class DirectVideo extends DirectPlayer implements
         }
         hidden = true;
         nSetAlpha(true, ALPHA_COLOR);
-        repaint();
+        //repaint();
     }
 
     /**
@@ -555,7 +566,7 @@ public class DirectVideo extends DirectPlayer implements
         }
         hidden = false;
         nSetAlpha(false, ALPHA_COLOR);        
-        repaint();
+        //repaint();
     }
 
     // Inner class ///////////////////////////////////////////////////////////
@@ -563,6 +574,7 @@ public class DirectVideo extends DirectPlayer implements
     /**
      * Support USE_GUI_PRIMITIVE mode
      */
+    /*
     class DVItem extends CustomItem {
 
         DVItem(String label) {
@@ -638,6 +650,6 @@ public class DirectVideo extends DirectPlayer implements
             repaint();
         }
     }
-
+    */
 }
 
