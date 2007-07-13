@@ -375,9 +375,30 @@ CVMpreloaderInit()
      */
     {
 	int i;
+	CVMInt32 randomHash = CVMrandomNext();
 	CVMClassBlock* classcb =
 	    CVM_OBJHDR_CLASS_INIT(CVMsystemClass(java_lang_Class));
-	
+
+	/* Make sure that the random number generator (RNG) has been
+	   initialized.  We test this my fetching the next random number.
+	   It is not probable that the next random number is identical to the
+	   current one.  If it happens to be, then we call the RNG again for
+	   yet another number.  If we get 5 same numbers consecutively, then
+	   either the RNG is not initialized, or it is not very random at all.
+	   Either case, we will fail the assertion in that case.  We need to
+	   assert this because the initialization of ROMized object hashcodes
+	   below depends on this functionality.
+
+	   NOTE: This assertion is meant to be a warning to the VM engineer
+	         in case some changes are made to the RNG or its initialization
+		 that causes it to be useless for the purpose of initializing
+		 the romized object hashcodes.
+	*/
+	CVMassert((randomHash != CVMrandomNext()) ||
+		  (randomHash != CVMrandomNext()) ||
+		  (randomHash != CVMrandomNext()) ||
+		  (randomHash != CVMrandomNext()));
+
 	for (i = 0; i < CVM_nTotalROMClasses; ++i) {
 	    const CVMClassBlock* cb = CVM_ROMClassblocks[i];
 	    struct java_lang_Class ** cbInstanceICell = 
@@ -389,6 +410,7 @@ CVMpreloaderInit()
 	    hash = ((CVMAddr)cbInstance >> 4) ^ ((CVMAddr)cb >> 5);
 	    hash = (((CVMUint32)hash >> shift) |
 		    ((CVMUint32)hash << (32 - shift)));
+	    hash = hash ^ randomHash;
 
 	    cbInstance->hdr.clas = classcb;
 	    cbInstance->hdr.various32 = CVM_OBJHDR_VARIOUS_INIT(hash);
@@ -402,6 +424,7 @@ CVMpreloaderInit()
      * and construct the matching Java instances
      */
     {
+	CVMInt32 randomHash = CVMrandomNext();
 	struct java_lang_String* strPtr = CVM_ROMStrings;
 	CVMUint32 i, j;
 	CVMUint32 offset = 0;
@@ -423,6 +446,7 @@ CVMpreloaderInit()
 		       ((CVMAddr)cb << ((offset + strLen) & 0x1f));
 		hash = ((CVMUint32)hash << shift) |
 		       ((CVMUint32)hash >> (32 - shift));
+		hash = hash ^ randomHash;
 
 		strPtr->hdr.clas = cb;
 		strPtr->hdr.various32 = CVM_OBJHDR_VARIOUS_INIT(hash);
