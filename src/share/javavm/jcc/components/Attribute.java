@@ -120,7 +120,7 @@ class Attribute extends ClassComponent
     public static Attribute[] 
     readAttributes(
 	DataInput i,
-	ConstantPool cp,
+	ConstantObject constants[],
 	Hashtable typetable,
 	boolean verbose)
 	throws IOException
@@ -132,7 +132,6 @@ class Attribute extends ClassComponent
 	}
 	if (nattr == 0) return null;
 	Attribute a[] = new Attribute[nattr];
-	ConstantObject constants[] = cp.getConstants();
 	for (int j = 0; j < nattr; j++){
 	    UnicodeConstant name = (UnicodeConstant)constants[
 					i.readUnsignedShort()];
@@ -141,7 +140,7 @@ class Attribute extends ClassComponent
 	    if ( afact == null )
 		afact = UninterpretedAttributeFactory.instance;
 
-	    a[j] = afact.finishReadAttribute(i, name, cp);
+	    a[j] = afact.finishReadAttribute(i, name, constants);
 	}
 	return a;
     }

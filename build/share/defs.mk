@@ -2083,7 +2083,7 @@ endif
 # 	command line option for C include directories.
 ALL_INCLUDE_DIRS	= $(PROFILE_INCLUDE_DIRS) $(CVM_INCLUDE_DIRS)
 ALL_INCLUDE_FLAGS	= \
-	$(foreach dir,$(call POSIX2HOST,$(ALL_INCLUDE_DIRS)),-I$(dir))
+	$(foreach dir,$(ALL_INCLUDE_DIRS),-I$(call POSIX2HOST,$(dir)))
 
 CPPFLAGS 	+= $(CVM_DEFINES) $(ALL_INCLUDE_FLAGS)
 CFLAGS_SPEED   	= $(CFLAGS) $(CCFLAGS_SPEED) $(CPPFLAGS)

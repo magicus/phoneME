@@ -1311,28 +1311,20 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 
  
     // return address of this constant pool.
-    private String writeConstants(ConstantPool cp, 
+    private String writeConstants(ConstantObject constants[], 
 				  String name,
 				  boolean export) {
-	ConstantObject constants[] = cp.getConstants();
+	boolean doTypeTable = false;
 	int clen = constants.length;
 	if ( (clen == 0) || (clen == 1 ) ){
 	    return "0";
 	}
-
-	// Check if we need a type table.  When we write the class, we
-	// check for unquickened bytecodes.  If we find any, we mark
-	// the constant pool as needing a type table.  The check for
-	// unresolved entries should be redundant, because unreferenced
-	// entries should have been removed, and referenced entries
-	// should have an unquickened reference.
-
-	boolean doTypeTable = cp.needsTypeTable() ||
-	    ClassClass.isPartiallyResolved(cp);
-
-if (doTypeTable) {
-System.err.println("NEEDS TYPE TABLE");
-}
+	for ( int i = 1; i < clen; i+=constants[i].nSlots ){
+	    if ( ! constants[i].isResolved() ){
+		doTypeTable = true;
+		break;
+	    }
+	}
 	if ( doTypeTable && !classLoading ){
 	    // in future, do something more useful here.
 	    System.err.println(Localizer.getString("cwriter.no_class_loading"));
@@ -2192,10 +2184,10 @@ System.err.println("NEEDS TYPE TABLE");
 		constantPoolName = sharedConstantPoolName + "_cp";
 		constantPoolSize = sharedConstantPoolSize;
 	    } else {
-		ConstantPool cpool = c.ci.getConstantPool();
+		ConstantObject cpool[] = c.ci.constants;
 		constantPoolName = writeConstants(cpool, c.getNativeName(),
 						  false);
-		constantPoolSize = cpool.getLength();
+		constantPoolSize = cpool.length;
 	    }
 	}
 
@@ -2204,10 +2196,11 @@ System.err.println("NEEDS TYPE TABLE");
 
     }
 
-    private void processStrings( ConstantPool cp ){
-	int n = cp.getLength();
+    private void processStrings( ConstantObject cp[] ){
+	if ( cp == null ) return;
+	int n = cp.length;
 	for ( int i = 1; i < n; ){
-	    ConstantObject obj = cp.elementAt(i);
+	    ConstantObject obj = cp[i];
 	    if ( obj instanceof StringConstant ){
 		stringTable.intern( (StringConstant) obj );
 	    }
@@ -2219,7 +2212,7 @@ System.err.println("NEEDS TYPE TABLE");
 	FieldInfo f[] = c.fields;
 	int fieldCount = ( f== null ) ? 0 : f.length;
 	if ( ! doShared ){
-	    processStrings( c.getConstantPool() );
+	    processStrings( c.constants );
 	}
 	//
 	// make sure that strings appearing ONLY as static final
@@ -2845,13 +2838,15 @@ System.err.println("NEEDS TYPE TABLE");
 	ClassClass arrayOfClasses[] = ClassClass.getClassVector( classMaker );
 	ClassClass.setTypes();
 	int nClasses = arrayOfClasses.length;
+	ConstantObject[] sharedConstantsArray = null;
 
 	classes = new CVMClass[nClasses];
 
 	if (sharedconsts != null) {
 	    doShared = true;
 	    sharedConstantPoolName = "CVMSharedConstantPool";
-	    sharedConstantPoolSize = sharedconsts.getLength();
+	    sharedConstantsArray = sharedconsts.getConstants();
+	    sharedConstantPoolSize = sharedConstantsArray.length;
 	    if (sharedConstantPoolSize > 0xffff) {
 		// More than 64K constants are not allowed
 		throw new Error("Constant pool overflow: 64k constants"+
@@ -2878,7 +2873,7 @@ System.err.println("NEEDS TYPE TABLE");
 	// write out some constant pool stuff here,
 	// if we're doing one big shared one...
 	// gutted out for now...
-	if ( doShared ) processStrings( sharedconsts );
+	if ( doShared ) processStrings( sharedConstantsArray );
 
 	if (verbose && doWrite) {
 	    System.out.println(Localizer.getString("cwriter.writing_classes"));
@@ -2894,6 +2889,12 @@ System.err.println("NEEDS TYPE TABLE");
 		CVMInterfaceMethodTable.writeInterfaceTables(classes,
 		    auxOut, headerOut);
 		int nStaticWords = writeStaticStore( classes );
+		if (doShared) {
+		    // Dump the shared constant pool
+		    writeConstants(sharedConstantsArray, 
+				   sharedConstantPoolName,
+				   true /* export c.p. ref */);
+		}
 
 		/* The number of necessary slots for clinitEE + 1.
 		 * Index of a class that doesn't have <clinit> is always 0.
@@ -2927,14 +2928,6 @@ System.err.println("NEEDS TYPE TABLE");
 			openNextClassFile();
 		    }
 		}
-
-		if (doShared) {
-		    // Dump the shared constant pool
-		    writeConstants(sharedconsts, 
-				   sharedConstantPoolName,
-				   true /* export c.p. ref */);
-		}
-
 		writeClassList();
 
 		writeCVMNameAndTypeTables();

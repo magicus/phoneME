@@ -46,11 +46,7 @@ Java_java_io_FileSystem_getFileSystem(JNIEnv *env, jclass ignored)
     onNT = JNI_TRUE;
 #endif
     if (onNT) {
-#ifdef WINCE
-        return JNU_NewObjectByName(env, "java/io/WinCEFileSystem", "()V");
-#else
         return JNU_NewObjectByName(env, "java/io/WinNTFileSystem", "()V");
-#endif
     } else {
         return JNU_NewObjectByName(env, "java/io/Win32FileSystem", "()V");
     }

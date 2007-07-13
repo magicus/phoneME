@@ -29,8 +29,6 @@
 #####################################
 
 
-$(eval EVAL_SUPPORTED=true)
-
 # CVM include directories used to be specified with CVM_INCLUDES, and included
 # the -I option. Now they are specified with CVM_INCLUDE_DIRS and do not
 # include the -I option.
@@ -238,32 +236,22 @@ endif
 # Build various lists of classes to be compiled
 #
 
-# buildClassesList(classesTarget,class)
-ifeq ($(EVAL_SUPPORTED),true)
+# buildClassesList(classesTarget,classesList,class)
 define buildClassesList
-	$(eval BUILD$(1) += $(2))
+	@echo $(call POSIX2HOST,$(3)) >>$(CVM_BUILD_TOP)/$(2)
+	@touch $(CVM_BUILD_TOP)/$(1)
 endef
-else
-define buildClassesList
-	@echo $(2) >> $(CVM_BUILD_TOP)/$(1).plist
-endef
-endif
 
 # Non-preloaded classes except for test classes
 ifneq ($(CVM_PRELOAD_LIB), true)
 $(LIB_CLASSESDIR)/%.class: %.java
-ifeq ($(EVAL_SUPPORTED),true)
-	$(eval BUILDjavahclasses += $(subst /,.,$*))
-else
 	@echo $(subst /,.,$*) >>$(CVM_BUILD_TOP)/.javahclasses.list
-endif
-	$(call buildClassesList,.libclasses,$?)
+	$(call buildClassesList,.libclasses,.libclasses.list,$?)
 endif
 
 # preloaded classes except for test classes
-
 $(CVM_BUILDTIME_CLASSESDIR)/%.class: %.java
-	$(call buildClassesList,.btclasses,$?)
+	$(call buildClassesList,.btclasses,.btclasses.list,$?)
 
 # TODO: Build a jsr jar file and have a rule that makes the jar file
 # dependent on all the source files, and builds a list of files to
@@ -282,11 +270,11 @@ $(CVM_BUILDTIME_CLASSESDIR)/%.class: %.java
 
 # Test classes
 $(CVM_TEST_CLASSESDIR)/%.class: %.java
-	$(call buildClassesList,.testclasses,$?)
+	$(call buildClassesList,.testclasses,.testclasses.list,$?)
 
 # demo classes
 $(CVM_DEMO_CLASSESDIR)/%.class: %.java
-	$(call buildClassesList,.democlasses,$?)
+	$(call buildClassesList,.democlasses,.democlasses.list,$?)
 
 #
 # Convert the class lists to names of class files so they can be javac'd.
@@ -310,7 +298,6 @@ TEST_CLASS_FILES = \
 
 DEMO_CLASS0 = $(subst .,/,$(CVM_DEMO_CLASSES))
 DEMO_CLASS_FILES = $(patsubst %,$(CVM_DEMO_CLASSESDIR)/%.class,$(DEMO_CLASS0))
-
 
 # Convert list of Java source directories to colon-separated paths
 JAVACLASSES_SRCPATH = \
@@ -336,51 +323,18 @@ endif
 # Convert list of jar files to colon-separated path
 TEST_JARFILES = $(subst $(space),$(PS),$(strip $(CVM_TEST_JARFILES)))
 
-$(CVM_BUILD_TOP)/%.list : $(CVM_BUILD_TOP)/%.plist
-	@$(POSIX2HOST_FILTER) < $< > $@
-	@$(RM) $<
-
-$(CVM_BUILD_TOP)/.libclasses.plist : $(CLASSLIB_CLASS_FILES) $(CLASSLIB_JAR_FILES)
-ifeq ($(EVAL_SUPPORTED),true)
-	@printf %s "$(BUILDjavahclasses)" > $(CVM_BUILD_TOP)/.javahclasses.list
-	@printf %s "$(BUILD.libclasses)" > $@
-else
-	@touch $@
-endif
-
-$(CVM_BUILD_TOP)/.btclasses.plist : $(BUILDTIME_CLASS_FILES)
-ifeq ($(EVAL_SUPPORTED),true)
-	@printf %s "$(BUILD.btclasses)" > $@
-else
-	@touch $@
-endif
-
-$(CVM_BUILD_TOP)/.testclasses.plist : $(TEST_CLASS_FILES)
-ifeq ($(EVAL_SUPPORTED),true)
-	@printf %s "$(BUILD.testclasses)" > $@
-else
-	@touch $@
-endif
-
-$(CVM_BUILD_TOP)/.democlasses.plist : $(DEMO_CLASS_FILES)
-ifeq ($(EVAL_SUPPORTED),true)
-	@printf %s "$(BUILD.democlasses)" > $@
-else
-	@touch $@
-endif
-
 .delete.libclasses.list:
-	@$(RM) $(CVM_BUILD_TOP)/.libclasses.*list
+	@$(RM) $(CVM_BUILD_TOP)/.libclasses.list
 	@$(RM) $(CVM_BUILD_TOP)/.javahclasses.list
 
 .delete.btclasses.list:
-	@$(RM) $(CVM_BUILD_TOP)/.btclasses.*list
+	@$(RM) $(CVM_BUILD_TOP)/.btclasses.list
 
 .delete.testclasses.list:
-	@$(RM) $(CVM_BUILD_TOP)/.testclasses.*list
+	@$(RM) $(CVM_BUILD_TOP)/.testclasses.list
 
 .delete.democlasses.list:
-	@$(RM) $(CVM_BUILD_TOP)/.democlasses.*list
+	@$(RM) $(CVM_BUILD_TOP)/.democlasses.list
 
 .report.libclasses.list:
 	@echo "Checking for $(J2ME_PRODUCT_NAME) classes to compile ..."
@@ -394,7 +348,7 @@ endif
 .report.democlasses.list:
 	@echo "Checking for demo classes to compile ..."
 
-.compile.libclasses: $(CVM_BUILD_TOP)/.libclasses.list
+.compile.libclasses:
 	$(AT)if [ -s $(CVM_BUILD_TOP)/.libclasses.list ] ; then		\
 		echo "Compiling $(J2ME_PRODUCT_NAME) classes...";	\
 		$(JAVAC_CMD)						\
@@ -403,10 +357,9 @@ endif
 			-classpath $(JAVACLASSES_CLASSPATH)             \
 			-sourcepath $(JAVACLASSES_SRCPATH)		\
 			@$(CVM_BUILD_TOP)/.libclasses.list ;		\
-		touch $(CVM_BUILD_TOP)/.libclasses;			\
 	fi
 
-.compile.btclasses: $(CVM_BUILD_TOP)/.btclasses.list
+.compile.btclasses:
 	$(AT)if [ -s $(CVM_BUILD_TOP)/.btclasses.list ] ; then		\
 		echo "Compiling build-time classes...";			\
 		$(JAVAC_CMD)						\
@@ -415,10 +368,9 @@ endif
 			-classpath $(CVM_BUILDTIME_CLASSESDIR)$(PS)$(OPTPKGS_CLASSPATH)		\
 			-sourcepath $(JAVACLASSES_SRCPATH)		\
 			@$(CVM_BUILD_TOP)/.btclasses.list ;		\
-		touch $(CVM_BUILD_TOP)/.btclasses;			\
 	fi
 
-.compile.testclasses: $(CVM_BUILD_TOP)/.testclasses.list
+.compile.testclasses:
 	$(AT)if [ -s $(CVM_BUILD_TOP)/.testclasses.list ] ; then	\
 		echo "Compiling test classes...";			\
 		cp -f $(CVM_TESTCLASSES_SRCDIR)/TestSyncLocker.class	\
@@ -430,10 +382,9 @@ endif
 			-classpath $(CVM_TEST_CLASSESDIR)$(PS)$(TEST_JARFILES) \
 			-sourcepath $(TESTCLASSES_SRCPATH)		\
 			@$(CVM_BUILD_TOP)/.testclasses.list ;		\
-		touch $(CVM_BUILD_TOP)/.testclasses;			\
 	fi
 
-.compile.democlasses: $(CVM_BUILD_TOP)/.democlasses.list
+.compile.democlasses:
 	$(AT)if [ -s $(CVM_BUILD_TOP)/.democlasses.list ] ; then	\
 		echo "Compiling demo classes...";			\
 		$(JAVAC_CMD)						\
@@ -443,7 +394,6 @@ endif
 			-classpath $(CVM_DEMO_CLASSESDIR) 		\
 			-sourcepath $(CVM_DEMOCLASSES_SRCPATH)		\
 			@$(CVM_BUILD_TOP)/.democlasses.list ;	\
-		touch $(CVM_BUILD_TOP)/.democlasses;			\
 	fi
 
 #
@@ -453,13 +403,13 @@ endif
 #     test classes
 #     demo classes
 # 
-$(J2ME_CLASSLIB)classes:: .delete.libclasses.list .report.libclasses.list .compile.libclasses
+$(J2ME_CLASSLIB)classes:: .delete.libclasses.list .report.libclasses.list $(CLASSLIB_CLASS_FILES) $(CLASSLIB_JAR_FILES) .compile.libclasses
 
-btclasses: .delete.btclasses.list .report.btclasses.list .compile.btclasses
+btclasses: .delete.btclasses.list .report.btclasses.list $(BUILDTIME_CLASS_FILES) .compile.btclasses
 
-testclasses:: .delete.testclasses.list .report.testclasses.list .compile.testclasses
+testclasses:: .delete.testclasses.list .report.testclasses.list $(TEST_CLASS_FILES) .compile.testclasses
 
-democlasses:: .delete.democlasses.list .report.democlasses.list .compile.democlasses
+democlasses:: .delete.democlasses.list .report.democlasses.list $(DEMO_CLASS_FILES) .compile.democlasses
 
 #
 # Unit-testing related targets
@@ -507,10 +457,6 @@ endif
 # 7) Build the CVM
 # 8) Create miscellneous files needed for the installation.
 #####################################
-
-# As a performance improvement, evaluate some flags in case
-# they contain shell commands.
-$(J2ME_CLASSLIB):: CPPFLAGS := $(CPPFLAGS)
 
 $(J2ME_CLASSLIB):: initbuild
 $(J2ME_CLASSLIB):: btclasses $(CVM_BUILDTIME_CLASSESZIP)
@@ -912,7 +858,7 @@ $(CVM_DERIVEDROOT)/jni/.time.stamp : $(LIB_CLASSESJAR)
 		$(CVM_JAVAH) -jni					\
 			-d $(CVM_DERIVEDROOT)/jni			\
 			-classpath $(call POSIX2HOST, $(LIB_CLASSESJAR))$(JSR_JNI_CLASSPATH) \
-			-bootclasspath $(call POSIX2HOST,$(CVM_BUILDTIME_CLASSESZIP))	\
+			-bootclasspath $(CVM_BUILDTIME_CLASSESZIP)	\
 			$(JSR_JNI_CLASSES) @$(CVM_BUILD_TOP)/.javahclasses.list ;		\
 	fi
 	@touch $@

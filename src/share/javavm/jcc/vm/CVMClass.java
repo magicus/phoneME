@@ -194,19 +194,20 @@ CVMClass extends ClassClass implements Const, CVMConst, CVMTypeCode {
 
     public boolean
     adjustSymbolicConstants(UnresolvedReferenceList missingReferences){
-	ConstantPool cp = ci.getConstantPool();
+	ConstantObject consts[] = ci.constants;
+	int nconst = consts.length;
 
-	if (!isPartiallyResolved(cp)) {
+	if (!isPartiallyResolved(consts)) {
 	    return true;
 	}
-	makeResolvable(cp, missingReferences, ci.className);
+	makeResolvable(consts, missingReferences, ci.className);
 	impureConstants = true;
 	return false;
     }
 
     public static void
     makeResolvable(
-	ConstantPool cp,
+	ConstantObject consts[],
 	UnresolvedReferenceList missingReferences,
 	String source)
     {
@@ -216,8 +217,7 @@ CVMClass extends ClassClass implements Const, CVMConst, CVMTypeCode {
 	// Mark the pool as impure and emit a bunch of warning
 	// messages. We don't need to add utf8's to the pool!
 	//
-	ConstantObject consts[] = cp.getConstants();
-	int nconst = cp.getLength();
+	int nconst = consts.length;
         for( int i = 1; i < nconst; i += consts[i].nSlots ){
             ConstantObject o;
 	    String className;

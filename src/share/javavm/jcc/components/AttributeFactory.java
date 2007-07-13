@@ -34,7 +34,7 @@ class AttributeFactory
 {
     abstract Attribute finishReadAttribute(
 	DataInput in, UnicodeConstant name,
-	ConstantPool cp)
+	ConstantObject constants[] )
 	throws IOException;
 }
 

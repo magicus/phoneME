@@ -76,7 +76,7 @@ class FieldInfo extends ClassMemberInfo {
     // Read attributes from classfile
     private void
     readAttributes( DataInput in ) throws IOException {
-	fieldAttributes = Attribute.readAttributes( in, parent.getConstantPool(), fieldAttributeTypes, false );
+	fieldAttributes = Attribute.readAttributes( in, parent.constants, fieldAttributeTypes, false );
     }
 
     // Read field from classfile
@@ -88,9 +88,6 @@ class FieldInfo extends ClassMemberInfo {
 	FieldInfo fi = new FieldInfo( name, sig, acc, p );
 	fi.readAttributes(in );
 
-	ConstantPool cp = p.getConstantPool();
-        String cpEntryName = cp.elementAt(name).toString();
-
         // If this field is on an exclude list, discard it.
         if ( excludeList != null && excludeList.size() > 0 ) {
             // See if this field is to be discarded. The vector holds
@@ -99,19 +96,20 @@ class FieldInfo extends ClassMemberInfo {
             for (int i = 0 ; i < excludeList.size() ; i++) {
                 MemberNameTriple t =
                     (MemberNameTriple)excludeList.elementAt(i);
-                if (t.sameMember(p.className, cpEntryName, null)) {
+                if (t.sameMember(p.className, p.constants[name].toString(),
+                                 null)) {
                     excludeList.remove(i);
                     return (FieldInfo)null;
                 } 
             }
         }
-	fi.resolve( cp );
+	fi.resolve( p.constants );
 	return fi;
     }
 
-    public void resolve( ConstantPool cp ){
+    public void resolve( ConstantObject table[] ){
 	if ( resolved ) return;
-	super.resolve( cp );
+	super.resolve( table );
 	/*
 	 * Parse attributes.
 	 * If we find a value attribute, pick it out

@@ -24,8 +24,6 @@
  * information or have any questions. 
  *
  */
-
-#include "javavm/include/porting/defs.h"
 #include "javavm/include/asmmacros_cpu.h"
 
 	SET_SECTION_EXEC(invokeNative_arm)
@@ -258,7 +256,7 @@ LABEL(ret_s64)
 	LDMFD	sp!, {SAVESET, lr}
 	BR_REG(lr)
 
-#ifdef CVM_ARM_FLOAT_RESULT_IN_FLOAT_REGISTER	
+#ifdef CVM_FORCE_HARD_FLOAT	
 LABEL(ret_f32)	
 	stfs	f0,[a4]
 	mov	a1,#1	/* 1 indicates single-word return */
@@ -286,7 +284,7 @@ LABEL(ret_jumps)
 	WORD(ret_s32)		/* char */
 	WORD(ret_s64)		/* long */
 	WORD(ret_s32)		/* byte */
-#ifdef CVM_ARM_FLOAT_RESULT_IN_FLOAT_REGISTER	
+#ifdef CVM_FORCE_HARD_FLOAT	
 	WORD(ret_f32)		/* float */
 	WORD(ret_f64)		/* double */
 #else

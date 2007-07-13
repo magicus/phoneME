@@ -108,12 +108,13 @@ class CodeAttribute extends Attribute
     }
 
     public static Attribute
-    readAttribute(DataInput i, ConstantPool cp)
+    readAttribute(DataInput i, ConstantObject constants[])
 	throws IOException
     {
-	UnicodeConstant name =
-	    (UnicodeConstant)cp.elementAt(i.readUnsignedShort());
-	return finishReadAttribute(i, name, cp);
+	UnicodeConstant name;
+
+	name = (UnicodeConstant)constants[i.readUnsignedShort()];
+	return finishReadAttribute( i, name, constants);
     }
 
     //
@@ -124,7 +125,7 @@ class CodeAttribute extends Attribute
     finishReadAttribute(
 	DataInput in,
 	UnicodeConstant name,
-	ConstantPool cp)
+	ConstantObject constants[])
 	throws IOException
     {
 	int l;
@@ -143,7 +144,6 @@ class CodeAttribute extends Attribute
 
 	int tableSize = in.readUnsignedShort();
 	exceptionTable = new ExceptionEntry[tableSize];
-	ConstantObject constants[] = cp.getConstants();
 	for (int j = 0; j < tableSize; j++) {
 	    int sPC = in.readUnsignedShort();
 	    int e = in.readUnsignedShort();
@@ -158,7 +158,7 @@ class CodeAttribute extends Attribute
 	    exceptionTable[j] = new ExceptionEntry(sPC, e, h, ctype);
 	}
 
-	Attribute a[] = Attribute.readAttributes(in, cp,
+	Attribute a[] = Attribute.readAttributes(in, constants,
 						 codeAttributeTypes, false);
 	return new CodeAttribute(name, l, nstack, nlocals,
 				 code, exceptionTable, a);

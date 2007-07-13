@@ -50,9 +50,4 @@
 */
 #define CVM_ADV_SPINLOCK
 
-/* non-VFP hard float returns result in a float register. */
-#if !defined(__SOFTFP__) && !defined(__VFP_FP__)	
-#define CVM_ARM_FLOAT_RESULT_IN_FLOAT_REGISTER
-#endif
-
 #endif /* _LINUX_SARM_DEFS_ARCH_H */

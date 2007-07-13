@@ -45,8 +45,9 @@ abstract class ClassComponent
     abstract public void write( DataOutput o ) throws IOException;
 
 
-    public void resolve( ConstantPool table ){
+    public void resolve( ConstantObject table[] ){
 	// by default, just note that we're resolved.
 	resolved = true;
     }
+
 }

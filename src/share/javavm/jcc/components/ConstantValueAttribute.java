@@ -60,19 +60,28 @@ class ConstantValueAttribute extends Attribute
 	//data.incReference();
     }
 
+
+    public static Attribute
+    readAttribute( DataInput i, ConstantObject constants[] ) throws IOException{
+	UnicodeConstant name;
+
+	name = (UnicodeConstant)constants[i.readUnsignedShort()];
+	return finishReadAttribute( i, name, constants );
+    }
+
     //
     // for those cases where we already read the name index
     // and know that its not something requiring special handling.
     //
     public static Attribute
-    finishReadAttribute( DataInput i, UnicodeConstant name, ConstantPool cp ) throws IOException {
+    finishReadAttribute( DataInput i, UnicodeConstant name, ConstantObject constants[] ) throws IOException {
 	int l;
 	int n;
 	ConstantObject d;
 
 	l  = i.readInt();
 	n  = i.readUnsignedShort();
-	d  = cp.elementAt(n);
+	d  = constants[n];
 	return new ConstantValueAttribute( name, l, d );
     }
 

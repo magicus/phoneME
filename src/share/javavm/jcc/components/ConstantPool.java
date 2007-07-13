@@ -65,18 +65,13 @@ class ConstantPool implements Comparator {
     protected int		n;
     protected ConstantObject constants[]= null;
     protected boolean	locked = false;
-    private boolean	impureConstants = false;
-    private boolean	needsTypeTable = false;
+    public boolean   impureConstants = false;
 
     public ConstantPool(){
 	h = new Hashtable( 500, 0.7f );
 	t = new Vector();
 	t.addElement(null ); // 0th element is string of length 0.
 	n = 1;
-    }
-
-    public ConstantPool(ConstantObject[] c) {
-	constants = c;
     }
     
     /**
@@ -179,19 +174,6 @@ class ConstantPool implements Comparator {
 	return (ConstantObject)h.get( s ); // may be null
     }
 
-    public boolean needsTypeTable() {
-	// unquickened bytecodes
-	return needsTypeTable;
-    }
-
-    public void setNeedsTypeTable() {
-	needsTypeTable = true;
-    }
-
-    public ConstantObject elementAt(int i) {
-	return getConstants()[i];
-    }
-
     public ConstantObject[]
     getConstants(){
 	if ( constants != null )
@@ -199,10 +181,6 @@ class ConstantPool implements Comparator {
 	constants = new ConstantObject[ t.size() ];
 	t.copyInto( constants );
 	return constants;
-    }
-
-    public int getLength() {
-	return getConstants().length;
     }
 
     public Enumeration
@@ -216,7 +194,7 @@ class ConstantPool implements Comparator {
     public void
     unlock(){ locked = false; }
 
-    private int
+    public int
     read( DataInput in ) throws IOException {
 	int n = in.readUnsignedShort();
 	ConstantObject c[] = new ConstantObject[n];
@@ -228,7 +206,7 @@ class ConstantPool implements Comparator {
 	//    System.err.println("\t#"+i+"\t"+c[i].toString() );
 	//}
 	for (int i = 1; i < n; i+=c[i].nSlots ){
-	    c[i].resolve( this );
+	    c[i].resolve( c );
 	}
 	for (int i = 1; i < n; i+=c[i].nSlots ){
 	    add( c[i] );
@@ -255,7 +233,7 @@ class ConstantPool implements Comparator {
      * Naturally, we preserve the null entries.
      *
      */
-    private void smashConstantPool(){
+    public void smashConstantPool(){
 	int nNew = 1;
 	ConstantObject o;
 	// first, count and index.

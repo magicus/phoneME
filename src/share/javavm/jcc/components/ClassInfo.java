@@ -63,9 +63,7 @@ class ClassInfo
     // Tables for all fields, methods and constants of this class
     public FieldInfo		fields[];
     public MethodInfo		methods[];
-    private static ConstantPool	nullCP =
-	new ConstantPool(new ConstantObject[0]);
-    private ConstantPool	cp = nullCP;
+    public ConstantObject	constants[];
     private ConstantObject	oldConstants[];
     public ClassConstant	interfaces[];
 
@@ -163,19 +161,18 @@ class ClassInfo
 
 
     // Read in the constants from a classfile
-    private void readConstantPool( DataInput in ) throws IOException {
+    void readConstantPool( DataInput in ) throws IOException {
 	int num = in.readUnsignedShort();
 
 	if(verbose){
 	    log.println(Localizer.getString("classinfo.reading_entries_in_constant_pool", Integer.toString(num)));
 	}
-	ConstantObject[] constants = new ConstantObject[num];
+	constants = new ConstantObject[num];
 	for (int i = 1; i < num; i+=constants[i].nSlots) {
 	    constants[i] = ConstantObject.readObject( in );
 	    constants[i].index = i;
 	    constants[i].containingClass = this;
 	}
-	cp = new ConstantPool(constants);
     }
 
 
@@ -188,9 +185,8 @@ class ClassInfo
 	if (verbose){
 	    log.println(Localizer.getString("classinfo.>>>resolving_constants"));
 	}
-	ConstantObject constants[] = cp.getConstants();
 	for (int i = 1; i < constants.length; i+=constants[i].nSlots) {
-	    constants[i].resolve( cp );
+	    constants[i].resolve( constants );
 	}
     }
 
@@ -201,7 +197,6 @@ class ClassInfo
      */
     public void
     findUndefinedClasses(Set undefClasses){
-	ConstantObject constants[] = cp.getConstants();
 	for (int i = 1; i < constants.length; i+=constants[i].nSlots) {
 	    if (constants[i].tag == Const.CONSTANT_CLASS){
 		ClassConstant c = (ClassConstant) constants[i];
@@ -242,7 +237,6 @@ class ClassInfo
      * Naturally, we preserve the null entries.
      */
     public void smashConstantPool(){
-	ConstantObject constants[] = cp.getConstants();
 	int nOld = constants.length;
 	int nNew = 1;
 	ConstantObject o;
@@ -271,15 +265,7 @@ class ClassInfo
 	    }
 	}
 	oldConstants = constants;
-	cp = new ConstantPool(newConstants);
-    }
-
-    public ConstantPool getConstantPool() {
-	return cp;
-    }
-
-    public void setConstantPool(ConstantPool c) {
-	cp = c;
+	constants = newConstants;
     }
 
 
@@ -291,7 +277,6 @@ class ClassInfo
 		"classinfo.reading_interfaces_implemented", Integer.toString(count)));
 	}
 	interfaces = new ClassConstant[count];
-	ConstantObject constants[] = cp.getConstants();
 	for (int i = 0; i < count; i++) {
 	    interfaces[i] = (ClassConstant) constants[in.readUnsignedShort()];
 	}
@@ -359,7 +344,6 @@ class ClassInfo
 	    log.println(Localizer.getString("classinfo.reading_attributes", Integer.toString(count)));
 	}
 
-	ConstantObject constants[] = cp.getConstants();
 	for (int i = 0; i < count; i++) {
 	    int nameIndex = in.readUnsignedShort();
 	    int bytes = in.readInt();
@@ -406,8 +390,6 @@ class ClassInfo
 
 	readConstantPool( in );
 	resolveConstants( );
-
-	ConstantObject constants[] = cp.getConstants();
 
 	access = in.readUnsignedShort();
 	thisClass = (ClassConstant) constants[in.readUnsignedShort()];
@@ -758,7 +740,7 @@ class ClassInfo
 	// then count references from code
 	if ( methods != null ){
 	    for ( int i = 0; i < methods.length; i++ ){
-		methods[i].countConstantReferences( cp, isRelocatable );
+		methods[i].countConstantReferences( constants, isRelocatable );
 	    }
 	}
 	Attribute.countConstantReferences(classAttributes, isRelocatable);
@@ -777,7 +759,7 @@ class ClassInfo
      */
     public void
     validateConstantPool(){
-	ConstantObject[] constantPool = cp.getConstants();
+	ConstantObject constantPool[] = constants;
 	if (constantPool == null)
 	    return; // it can happen!
 	int nConsts = constantPool.length;
@@ -844,7 +826,7 @@ class ClassInfo
 	    innerClassAttr.validate();
 	if (sharedPool == null){
 	    // not sharing. Use our own pool.
-	    constantPool = cp.getConstants();
+	    constantPool = constants;
 	    // sweep our pool
 	    validateConstantPool();
 	}else{
@@ -900,8 +882,7 @@ class ClassInfo
     }
 
     private static void
-    dumpConstantTable( PrintStream o, String title, ConstantPool cp ){
-	ConstantObject t[] = cp.getConstants();
+    dumpConstantTable( PrintStream o, String title, ConstantObject t[] ){
 	int n;
 	if ( (t == null) || ((n=t.length) == 0) ) return;
 	o.print( title ); o.println(/*NOI18N*/"["+n+/*NOI18N*/"]:");
@@ -939,7 +920,7 @@ class ClassInfo
 	    dumpMemberTable( o, /*NOI18N*/"Fieldtable", fieldtable );
 	if ( methodtable != null )
 	    dumpMemberTable( o, /*NOI18N*/"Methodtable", methodtable );
-	dumpConstantTable( o, /*NOI18N*/"Constants", cp );
+	dumpConstantTable( o, /*NOI18N*/"Constants", constants );
     }
 
     public static boolean resolveSupers(){
@@ -972,7 +953,6 @@ class ClassInfo
 
     // write constants back out, just like we read them in.
     void writeConstantPool( DataOutput out ) throws IOException {
-	ConstantObject constants[] = cp.getConstants();
 	int num = constants==null ? 0 : constants.length;
 	if(verbose){
 	    log.println(Localizer.getString("classinfo.writing_constant_pool_entries", Integer.toString(num)));
@@ -1063,7 +1043,7 @@ class ClassInfo
     // Convert ldc to ldc2
     public void relocateAndPackCode(boolean noCodeCompaction) {
         for ( int i = 0; i < methods.length; i++ )
-            methods[i].relocateAndPackCode(cp, noCodeCompaction); 
+            methods[i].relocateAndPackCode(constants, noCodeCompaction); 
     }
 
     // Pass lists of excluded methods & fields to the MethodInfo

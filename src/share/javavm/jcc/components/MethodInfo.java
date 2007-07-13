@@ -245,11 +245,11 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
 
     // Read in method attributes from classfile
     void
-    readAttributes( DataInput in, ConstantPool cp, boolean readCode)
+    readAttributes( DataInput in, ConstantObject constants[], boolean readCode)
 	throws IOException
     {
 
-	methodAttributes = Attribute.readAttributes(in, cp,
+	methodAttributes = Attribute.readAttributes(in, constants,
 						    methodAttributeTypes, false);
 
 	// NOTE: The above reads in the code as well. We might want to
@@ -285,19 +285,14 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
 	MethodInfo m = new MethodInfo( name, sig, access, p );
 	// the bad thing is, we really cannot go far
 	// without resolving. So we resolve here.
-
-	ConstantPool cp = p.getConstantPool();
-
-	m.resolve(cp);
+	m.resolve(p.constants);
 
 	m.argsSize = Util.argsSize(m.type.string);
 	if ((m.access & ACC_STATIC) == 0) {
 	    m.argsSize++;
 	}
 
-	m.readAttributes(in, cp, readCode);
-
-	ConstantObject[] constants = cp.getConstants();
+	m.readAttributes(in, p.constants, readCode);
 
         // Check to make sure this method isn't marked for exclusion
         if ( excludeList != null && excludeList.size() > 0 ) {
@@ -305,11 +300,11 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
             // the signature of methods to be excluded parsed into
             // class, method & type portions.
             for (int i = 0 ; i < excludeList.size() ; i++) {
-                String paramlist = constants[sig].toString();
+                String paramlist = p.constants[sig].toString();
                 paramlist = paramlist.substring(0, paramlist.indexOf(')')+1);
                 MemberNameTriple t =
                     (MemberNameTriple)excludeList.elementAt(i);
-                if (t.sameMember(p.className, constants[name].toString(),
+                if (t.sameMember(p.className, p.constants[name].toString(),
                                  paramlist)) {
                     excludeList.remove(i);
                     return (MethodInfo)null;
@@ -504,8 +499,7 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
 
 
     public void
-    countConstantReferences( ConstantPool cp, boolean isRelocatable ){
-	ConstantObject table[] = cp.getConstants();
+    countConstantReferences( ConstantObject table[], boolean isRelocatable ){
 	super.countConstantReferences(isRelocatable);
 	Attribute.countConstantReferences( methodAttributes, isRelocatable );
 	Attribute.countConstantReferences( codeAttributes, isRelocatable );
@@ -1273,13 +1267,11 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
     // Case 2: smash code
     // ldc_w_quick has index which is less than 255. Change to use
     // ldc_w.
-    public void relocateAndPackCode (ConstantPool cp,
+    public void relocateAndPackCode (ConstantObject co[],
 				     boolean noCodeCompaction) {
 
         if (code == null)
             return;
-
-	ConstantObject[] co = cp.getConstants();
 
         int opcode, adjustment = 0;
         int newOffsets[] = new int[code.length];

@@ -29,7 +29,7 @@ package dependenceAnalyzer;
 import util.*;
 import java.util.*;
 import components.*;
-import consts.Const;
+import Const;
 
 /*
  * Class ClassEntry is for use with Member-level dependence analysis.
@@ -399,12 +399,17 @@ public class ClassEntry extends DependenceNode implements MemberArcTypes {
 	}
     doCode:
 	if ( mi.code != null ){
-	    byte code[] = mi.code;
 	    try {
-		int  locs[] = mi.getLdcInstructions();
-		ConstantObject cpool[] =
-		    mi.parent.getConstantPool().getConstants();
-
+		mi.findConstantReferences();
+	    } catch ( DataFormatException e ){
+		System.out.println(this);
+		e.printStackTrace();
+		break doCode;
+	    }
+	    byte code[] = mi.code;
+	    int  locs[] = mi.ldcInstructions;
+	    ConstantObject cpool[] = mi.parent.constants;
+	    try {
 		for ( int j = 0; j < locs.length; j++ ){
 		    ConstantObject o = cpool[ (int)code[locs[j]+1]&0xff ];
 		    if ( o instanceof StringConstant ){
@@ -414,7 +419,7 @@ public class ClassEntry extends DependenceNode implements MemberArcTypes {
 			    (ClassConstant) o, ARC_CLASS );
 		    }
 		}
-		locs = mi.getWideConstantRefInstructions();
+		locs = mi.wideConstantRefInstructions;
 		for ( int j = 0; j < locs.length; j++ ){
 		    FMIrefConstant fref;
 

@@ -477,7 +477,7 @@ class CodeHacker {
 
     public boolean
     quickenCode( ClassInfo c ){
-	ConstantObject constants[] = c.getConstantPool().getConstants();
+	ConstantObject constants[] = c.constants;
 	MethodInfo     method[]= c.methods;
 	int n = method.length;
 	int i = 0;

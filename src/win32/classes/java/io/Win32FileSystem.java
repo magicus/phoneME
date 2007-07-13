@@ -292,7 +292,7 @@ class Win32FileSystem extends FileSystem {
 	return normalize(System.getProperty("user.dir"));
     }
 
-    String getDrive(String path) {
+    private String getDrive(String path) {
 	int pl = prefixLength(path);
 	return (pl == 3) ? path.substring(0, 2) : null;
     }

@@ -84,7 +84,7 @@ class ClassDictionary {
 	InputStream fin = finder.findClassFile( cname );
 	if ( fin == null ) return null;
 	ClassFile f = new ClassFile( cname, fin, false );
-	if ( ! f.readClassFile()){
+	if ( ! f.readClassFile( null )){
 	    f.dump(System.err);
 	    return null;
 	}

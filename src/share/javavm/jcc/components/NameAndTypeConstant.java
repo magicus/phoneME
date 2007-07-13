@@ -65,10 +65,10 @@ class NameAndTypeConstant extends ConstantObject {
 	return new NameAndTypeConstant( t, i.readUnsignedShort(), i.readUnsignedShort() );
     }
 
-    public void resolve( ConstantPool cp ){
+    public void resolve( ConstantObject table[] ){
 	if ( resolved ) return;
-	name = (UnicodeConstant)cp.elementAt(nameIndex);
-	type = (UnicodeConstant)cp.elementAt(typeIndex);
+	name = (UnicodeConstant)table[nameIndex];
+	type = (UnicodeConstant)table[typeIndex];
 	resolved = true;
     }
 

@@ -496,7 +496,7 @@ public class JavaCodeCompact extends LinkerUtil {
 	// Now dredge through all class constant pools.
 	for ( int cno = 0; cno < nclasses; cno++ ){
 	    ClassInfo c = classTable[cno];
-	    ConstantObject ctable[] = c.getConstantPool().getConstants();
+	    ConstantObject ctable[] = c.constants;
 	    if ( ctable == null ) continue;
 	    int n = ctable.length;
 	    for( int i = 1; i < n; i++ ){
@@ -610,7 +610,9 @@ public class JavaCodeCompact extends LinkerUtil {
 	    sharedConstant.doSort();
 
 	    // run via the shared constant pool once.
-	    if (ClassClass.isPartiallyResolved(sharedConstant)) {
+	    if (ClassClass.isPartiallyResolved(
+		sharedConstant.getConstants()))
+	    {
 		sharedConstant = classMaker.makeResolvable(
 		    sharedConstant, missingObjects, "shared constant pool");
 	    }
@@ -640,7 +642,7 @@ public class JavaCodeCompact extends LinkerUtil {
 	for (int i = 0; i < totalclasses; i++) {
             classes[i].ci.relocateAndPackCode(noCodeCompaction);
 	    if (doShared) {
-		classes[i].ci.setConstantPool(sharedConstant);
+		classes[i].ci.constants = sharedConstant.getConstants();
 	    }
 	}
 
@@ -816,15 +818,14 @@ public class JavaCodeCompact extends LinkerUtil {
     // associated with a ClassInfo to the shared constant pool.
     private void mergeConstantsIntoSharedPool(ClassInfo cinfo, 
 					      ConstantPool cp) {
-	ConstantObject[] constants = cinfo.getConstantPool().getConstants();
-        for (int j = 0; j < constants.length; j++) {
-	    ConstantObject thisConst = constants[j];
+        for (int j = 0; j < cinfo.constants.length; j++) {
+	    ConstantObject thisConst = cinfo.constants[j];
             if (thisConst == null)
                 continue;
 
             int count = thisConst.references;
 	    if (count > 0) {
-		constants[j] = cp.add(thisConst);
+		cinfo.constants[j] = cp.add(thisConst);
 	    }
         }
 

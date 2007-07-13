@@ -59,9 +59,9 @@ class StringConstant extends ConstantObject
 	return new StringConstant( t, i.readUnsignedShort() );
     }
 
-    public void resolve( ConstantPool cp ){
+    public void resolve( ConstantObject table[] ){
 	if (resolved) return;
-	str = (UnicodeConstant)cp.elementAt(strIndex);
+	str = (UnicodeConstant)table[strIndex];
 	resolved = true;
     }
 

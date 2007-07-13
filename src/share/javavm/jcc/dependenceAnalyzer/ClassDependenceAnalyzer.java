@@ -142,7 +142,7 @@ public class ClassDependenceAnalyzer extends DependenceAnalyzer {
 	// find all the constants mentioned in the constant
 	// pool. Call them dependences.
 	//
-	ConstantObject ctable[] = ci.getConstantPool().getConstants();
+	ConstantObject ctable[] = ci.constants;
 	if ( ctable != null ){
 	    int nconst = ctable.length;
 	    for ( int i = 0; i < nconst ; i++ ){
@@ -178,7 +178,7 @@ public class ClassDependenceAnalyzer extends DependenceAnalyzer {
 	    return null;
 	}
 	ClassFile cf = new ClassFile( className, classFileStream, false );
-	if ( ! cf.readClassFile() ){
+	if ( ! cf.readClassFile( null ) ){
 	    return null;
 	}
 	return cf.clas;

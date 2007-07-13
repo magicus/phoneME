@@ -126,6 +126,7 @@ class ArrayClassInfo extends ClassInfo {
 	throws DataFormatException
     {
 	super(v);
+	constants = new ConstantObject[0];
 	arrayClassNumber = nFake++;
 	baseClass = base;
 	className = s;

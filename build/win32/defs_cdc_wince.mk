@@ -24,7 +24,7 @@
 # @(#)defs_cdc_wince.mk	1.4 06/10/10
 #
 
-CLASSLIB_CLASSES += java.io.WinCEFileSystem
+CLASSLIB_CLASSES += java.io.WinNTFileSystem
 CLASSLIB_CLASSES += java.io.Win32FileSystem
 CLASSLIB_CLASSES += java.net.WinCEDatagramSocketImpl
 

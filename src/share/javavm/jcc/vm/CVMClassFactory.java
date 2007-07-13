@@ -104,7 +104,7 @@ public class CVMClassFactory implements VMClassFactory, Comparator {
 	//
 	// For the CVM, this is actually pretty trivial stuff...
         //
-	CVMClass.makeResolvable(cp, missingRefs, source);
+	CVMClass.makeResolvable(cp.getConstants(), missingRefs, source);
 	return cp;
     }
 

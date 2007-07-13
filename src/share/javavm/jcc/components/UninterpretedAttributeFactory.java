@@ -33,7 +33,7 @@ class UninterpretedAttributeFactory extends AttributeFactory {
     public static AttributeFactory instance = new UninterpretedAttributeFactory();
 
     Attribute finishReadAttribute(
-	DataInput in, UnicodeConstant name, ConstantPool cp )
+	DataInput in, UnicodeConstant name, ConstantObject constants[] )
 	throws IOException{
 	    return UninterpretedAttribute.finishReadAttribute( in, name );
     }
