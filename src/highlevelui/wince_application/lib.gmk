@@ -43,5 +43,4 @@ SUBSYSTEM_APP_EXTRA_INCLUDES += -I$(SUBSYSTEM_APP_DIR)/resources
 vpath % $(SUBSYSTEM_APP_DIR)/reference/native
 
 SUBSYSTEM_APP_NATIVE_FILES += \
-    winceapp_export.cpp \
-    winceapp_menu.c
+    winceapp_export.cpp

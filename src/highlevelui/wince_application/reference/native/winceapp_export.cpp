@@ -45,7 +45,6 @@
 #include <swvapi.h>
 #endif
 
-#include "resources.h"
 
 /**
  * The functions exported by gx.h use C++ linkage, hence this file
@@ -76,13 +75,6 @@ extern "C" {
 extern int inMidpEventLoop;
 extern int lastWmSettingChangeTick;
 
-/* global variables shared by all wince code that deal with native widgets */
-HWND hwndMenuBar       = NULL; /* The currently displayed menu bar. */
-HWND hwndMenuBarSimple = NULL; /* The menu bar with only 2 soft buttons. */
-HWND hwndMenuBarPopup  = NULL; /* The menu bar with a popup menu. */
-HMENU hmenuPopup       = NULL; /* the menu used to display the MIDP commands */
-HMENU hmenuMain        = NULL; /* Handle to the main menu */
-
 gxj_screen_buffer gxj_system_screen_buffer;
 
 static HWND hwndMain = NULL;
@@ -95,9 +87,7 @@ static int editBoxShown = 0;
 static int editCHX, editCHY, editCHW, editCHH; /* in CHAM coordinates */
 static int inited = 0;
 static int titleHeight = JWC_WINCE_TITLE_HEIGHT;
-static int menuHeight = JWC_WINCE_MENU_HEIGHT;
 static RECT rcVisibleDesktop;
-static int virtualKeyboardHeight = 0; /* 0 = hide */
 static HANDLE eventThread;
 static HINSTANCE instanceMain;
 static jboolean reverse_orientation;
@@ -496,7 +486,7 @@ DWORD WINAPI CreateWinCEWindow(LPVOID lpParam) {
     gxDispProps = GXGetDisplayProperties();
 #endif
 
-    createEditors();
+    // createEditors();
 
 #ifdef ENABLE_JSR_184
     engine_initialize();
@@ -572,76 +562,6 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 
     switch (msg) {
     case WM_CREATE:
-        {
-            SHMENUBARINFO mbi;
-
-            /* Create the menu bar with two simple soft buttons */
-            ZeroMemory(&mbi, sizeof(SHMENUBARINFO));
-            mbi.cbSize = sizeof(SHMENUBARINFO);
-            mbi.hwndParent = hwnd;
-            mbi.nToolBarId = ID_MENU_SIMPLE;
-            mbi.hInstRes = instanceMain;
-
-            if (SHCreateMenuBar(&mbi) == FALSE) {
-                /* Couldn't create the menu bar.  
-		 * Fail creation of the window. 
-		 */
-                return -1;
-            } else {
-                hwndMenuBarSimple = mbi.hwndMB;
-
-                /* In order to make the Back button work properly,
-                 * it's necessary to override it and then call the
-                 * appropriate SH API
-                 */
-                SendMessage(mbi.hwndMB, SHCMBM_OVERRIDEKEY, VK_TBACK,
-                            MAKELPARAM(SHMBOF_NODEFAULT | SHMBOF_NOTIFY,
-                                       SHMBOF_NODEFAULT | SHMBOF_NOTIFY));
-            }
-
-            /* Create the menu bar with a popup menu. This is used if
-             * the current MIDP screen has more than 2 Commands.
-             */
-            ZeroMemory(&mbi, sizeof(SHMENUBARINFO));
-            mbi.cbSize = sizeof(SHMENUBARINFO);
-            mbi.hwndParent = hwnd;
-            mbi.nToolBarId = ID_MENU_POPUP;
-            mbi.hInstRes = instanceMain;
-
-            if (SHCreateMenuBar(&mbi) == FALSE) {
-                /* Couldn't create the menu bar.  
-		 * Fail creation of the window. 
-		 */
-                return -1;
-            } else {
-
-                /* Get a handle to the popup menu, which will host the
-                 * Commands of the current MIDP screen.
-                 */
-                TBBUTTONINFO tbbi = {0};
-                tbbi.cbSize = sizeof(tbbi);
-                tbbi.dwMask = TBIF_LPARAM;
-
-                if (!SendMessage(hwndMenuBarPopup, TB_GETBUTTONINFO, 
-				 IDM_SOFTBTN_0, (LPARAM)&tbbi)) {
-                  err = GetLastError();
-                }
-
-                hmenuPopup = (HMENU)tbbi.lParam;
-
-                /* In order to make the Back button work properly,
-                 * it's necessary to override it and then call the
-                 * appropriate SH API
-                 */
-                SendMessage(mbi.hwndMB, SHCMBM_OVERRIDEKEY, VK_TBACK,
-                            MAKELPARAM(SHMBOF_NODEFAULT | SHMBOF_NOTIFY,
-                                       SHMBOF_NODEFAULT | SHMBOF_NOTIFY));
-            }
-
-            hwndMenuBar = hwndMenuBarSimple;
-            ShowWindow(hwndMenuBarSimple, SW_SHOW);
-            ShowWindow(hwndMenuBarPopup, SW_HIDE);
-        }
         return 0;
 
     case WM_HOTKEY:
@@ -672,6 +592,7 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         updateEditorForRotation();
         lastWmSettingChangeTick = GetTickCount();
         /* Handle Virtual Keyboard change */
+	/*
         RECT virtualKeyboardRect = {0, 0};
         HWND hWndInputPanel = FindWindow(TEXT("SipWndClass"), NULL);
         if (hWndInputPanel != NULL) {
@@ -682,6 +603,7 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         virtualKeyboardHeight = 
 	  virtualKeyboardRect.bottom - virtualKeyboardRect.top;
     }
+	*/
         return DefWindowProc(hwnd, msg, wp, lp);
 
     case WM_TIMER:
@@ -716,53 +638,8 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 enablePaint();
             }
             return 0;
-        case IDM_SOFTBTN_0:
-        case IDM_SOFTBTN_1:
-            pMidpEventResult->type = MIDP_KEY_EVENT;
-            pMidpEventResult->CHR = (cmd==IDM_SOFTBTN_0) ? 
-                KEYMAP_KEY_SOFT1:KEYMAP_KEY_SOFT2;
-            pMidpEventResult->ACTION = KEYMAP_STATE_RELEASED;
-            pSignalResult->waitingFor = UI_SIGNAL;             
-            pMidpEventResult->DISPLAY = gForegroundDisplayId;
-            sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult));
-
-            /* for some reason windows will send us a CANCELMODE message
-             * afterwards
-             */
-            ignoreCancelMode++;
-            return 0;
         default:
-            /* IMPL_NOTE The events from the menu are not transfer up to  
-             *  java without displaying and addition menu.   
-             * Only a MIDP_COMMAND_EVENT should be used.  Disabling this feature for now. 
-             */
-            if (cmd >= ID_DYNAMIC_MENU) {
-                pMidpEventResult->type = MIDP_KEY_EVENT; 
-                pMidpEventResult->CHR = ((cmd - ID_DYNAMIC_MENU)==IDM_SOFTBTN_0) 
-                                           ? KEYMAP_KEY_SOFT1:KEYMAP_KEY_SOFT2; 
-                pMidpEventResult->ACTION = KEYMAP_STATE_RELEASED; 
-                pSignalResult->waitingFor = UI_SIGNAL; 
-                pMidpEventResult->DISPLAY = gForegroundDisplayId; 
-                sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult)); 
-                /* This command comes from a menu item dynamically 
-                 * created in the native method 
-                 */ 
-                /* Disabled 
-                 SoftButtonLayer.setNativePopupMenu() 
-                 pMidpEventResult->type = MIDP_COMMAND_EVENT;
-                 pMidpEventResult->COMMAND = (cmd - ID_DYNAMIC_MENU);
-                 pSignalResult->waitingFor = UI_SIGNAL;
-                 pMidpEventResult->DISPLAY = gForegroundDisplayId;
-                 sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult));
-		*/
-                /* for some reason windows will send us a CANCELMODE message
-                 * afterwards
-                 */
-                ignoreCancelMode++;
-                return 0;
-            } else {
                 return DefWindowProc(hwnd, msg, wp, lp);
-            }
         }
         break;
 
@@ -834,7 +711,7 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult));
         }
         return 0;
-
+    }
     case WM_KEYDOWN: /* fall through */
     case WM_KEYUP:
         return process_key(hwnd, msg, wp, lp);
@@ -1056,7 +933,7 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
     }
 
     gxj_pixel_type *dst = startDirectPaint(dstWidth, dstHeight, dstYPitch);
-    int maxY = dstHeight - titleHeight - menuHeight - virtualKeyboardHeight;
+    int maxY = dstHeight - titleHeight;
     
 #if ENABLE_DIRECT_DRAW
     if (y2 > maxY) {
@@ -1111,8 +988,7 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
         if (x1 == 0 && srcWidth == CHAM_WIDTH && dstWidth == srcWidth &&
             dstYPitch == dstWidth * 2) {
 	    /* assuming srcHeight==full height ? */ 
-            memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type) * 
-		             (srcHeight - virtualKeyboardHeight));
+            memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type) * srcHeight);
         } else {
             for (; y1 < y2; y1++) {
                 memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type));
@@ -1225,7 +1101,7 @@ jboolean winceapp_direct_flush(const java_graphics *g,
     if (dst != NULL) {
         if (dstWidth == CHAM_WIDTH && height <= dstHeight &&
             dstYPitch == (int)(dstWidth * sizeof(gxj_pixel_type))) {
-            int bytes = dstYPitch * (height - virtualKeyboardHeight);
+            int bytes = dstYPitch * height;
             dst = (gxj_pixel_type*)( ((int)dst) + titleHeight * dstYPitch);
             memcpy(dst, src, bytes);
             success = KNI_TRUE;
@@ -1609,26 +1485,4 @@ int winceapp_get_screen_height() {
         return CHAM_HEIGHT;
     }
 }
-
-static TCHAR menus[2][20];
-
-void native_set_softbutton(int index, jchar *label, int labelLen) {
-    int i;
-    if (labelLen > 19) {
-        labelLen = 19;
-    }
-    for (i=0; i<labelLen; i++) {
-        menus[index][i] = (TCHAR)label[i];
-    }
-    menus[index][labelLen] = 0;
-
-    TBBUTTONINFO tbbi = {0};
-    tbbi.cbSize = sizeof(tbbi);
-    tbbi.dwMask = TBIF_TEXT;
-    tbbi.pszText = menus[index];
-    tbbi.cchText = labelLen;
-    SendMessage(hwndMenuBar, TB_SETBUTTONINFO, index+IDM_SOFTBTN_0,
-                (LPARAM)&tbbi);
-}
-
 } /* extern "C" */

@@ -51,11 +51,11 @@
             Comment="(Chameleon Only) display width (QVA PocketPC)"/>
   <constant Type="int"
             Name="CHAM_HEIGHT"
-            Value="268"
+            Value="294"
             Comment="(Chameleon Only) display height (QVA PocketPC)"/>
   <constant Type="int"
             Name="CHAM_FULLHEIGHT"
-            Value="268"
+            Value="294"
             Comment="(Chameleon Only) full display height (QVA PocketPC)"/>
   <constant Type="boolean"
             Name="TRAVERSAL2D"
@@ -71,7 +71,7 @@
             Comment="(Fixed) full display width"/>
   <constant Type="int"
             Name="FULLHEIGHT"
-            Value="268" 
+            Value="294" 
             Comment="(Fixed) full display height"/>
   <constant Type="int"
             Name="NORMALWIDTH"
@@ -79,7 +79,7 @@
             Comment="(Fixed) normal width"/>
   <constant Type="int"
             Name="NORMALHEIGHT"
-            Value="268" 
+            Value="294" 
             Comment="(Fixed) normal height"/>
   <constant Type="int"
             Name="VERT_SCROLLBAR_WIDTH"
@@ -192,10 +192,6 @@
             Name="JWC_WINCE_TITLE_HEIGHT"
             Value="26"
             Comment="Height of the WinCE title at the top of LCD"/>
-  <constant Type="int"
-            Name="JWC_WINCE_MENU_HEIGHT"
-            Value="26"
-            Comment="Height of the WinCE menu at the bottom of LCD"/>
  </constant_class>
 </constants>
 </configuration>
