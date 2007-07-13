@@ -426,6 +426,8 @@ static BOOL InitInstance(HINSTANCE hInstance, int CmdShow) {
                                CW_USEDEFAULT,
                                NULL, NULL, hInstance, NULL);
 
+    SHFullScreen(_hwndMain, SHFS_HIDESIPBUTTON);
+
     if (!_hwndMain) {
         return FALSE;
     }
