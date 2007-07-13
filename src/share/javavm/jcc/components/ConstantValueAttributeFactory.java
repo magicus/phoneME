@@ -34,9 +34,9 @@ class ConstantValueAttributeFactory extends AttributeFactory {
     public static AttributeFactory instance = new ConstantValueAttributeFactory();
 
     Attribute finishReadAttribute(
-	DataInput in, UnicodeConstant name, ConstantObject constants[] )
+	DataInput in, UnicodeConstant name, ConstantPool cp)
 	throws IOException
     {
-	return ConstantValueAttribute.finishReadAttribute(in, name, constants);
+	return ConstantValueAttribute.finishReadAttribute(in, name, cp);
     }
 }

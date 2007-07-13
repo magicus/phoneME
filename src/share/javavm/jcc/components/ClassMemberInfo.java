@@ -66,12 +66,11 @@ class ClassMemberInfo extends ClassComponent {
 	return ( (access & Const.ACC_FINAL) != 0 );
     }
 
-
     public void
-    resolve( ConstantObject table[] ){
+    resolve( ConstantPool cp ){
 	if ( resolved ) return;
-	name     = (UnicodeConstant)table[nameIndex];
-	type     = (UnicodeConstant)table[typeIndex];
+	name     = (UnicodeConstant)cp.elementAt(nameIndex);
+	type     = (UnicodeConstant)cp.elementAt(typeIndex);
 	resolved = true;
     }
 

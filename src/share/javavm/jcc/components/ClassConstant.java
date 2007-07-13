@@ -75,9 +75,9 @@ class ClassConstant extends ConstantObject
     }
 
     public void
-    resolve( ConstantObject table[] ){
+    resolve( ConstantPool cp ){
 	if (resolved) return;
-	name = (UnicodeConstant)table[nameIndex];
+	name = (UnicodeConstant)cp.elementAt(nameIndex);
 	resolved = true;
     }
 
