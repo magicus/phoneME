@@ -292,7 +292,11 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
         if (!(dst = wcp(dst, dend, L'\0', src, p)))
             return -1;
         src = p;
-    } else {
+    } else
+#ifdef WINCE
+    if (src[0] != L'\\')
+#endif
+    {
         /* Invalid path */
         errno = EINVAL;
         return -1;

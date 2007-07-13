@@ -125,11 +125,12 @@ abstract class ConstantObject extends ClassComponent implements Cloneable
 		throw new ValidationException("Constant index incorrect", this);
 	    }
 	} else {
-	    int upperBound = containingClass.constants.length;
+	    ConstantPool cp = containingClass.getConstantPool();
+	    int upperBound = cp.getLength();
 	    if (this.index <= 0 || this.index >= upperBound ){
 		throw new ValidationException("Constant index out of range", this);
 	    }
-	    if (this != containingClass.constants[this.index]){
+	    if (this != cp.elementAt(this.index)){
 		throw new ValidationException("Constant index incorrect", this);
 	    }
 	}
