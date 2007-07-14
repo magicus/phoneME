@@ -29,6 +29,14 @@ JSR_INIT_CLASS           = Initializer
 
 JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239 280
 
+ifeq ($(USE_JSR_135),true)
+MIDP_USE_JSR_135=true
+else
+MIDP_USE_JSR_135=false
+endif
+
+USE_JSR_135:=false
+
 # Defintion for path separator used in JSRs
 PATHSEP        ?= $(PS)
 
@@ -58,12 +66,13 @@ JSROP_BUILD_JARS = $(filter-out $(JSROP_LIB_DIR)/jsr205.jar,$(foreach jsr_number
 
 # Variable which is passed to MIDP and blocks JSRs building from MIDP; looks like:
 # USE_JSR_75=false USE_JSR_82=false USE_JSR_120=false ...
+
 MIDP_JSROP_USE_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),USE_JSR_$(jsr_number)=false)
 
 MIDP_JSROP_USE_FLAGS += JSR_INIT_PACKAGE=com.sun.cdc.config
 MIDP_JSROP_USE_FLAGS += JSR_INIT_CLASS=Initializer
 
-MIDP_JSROP_USE_FLAGS += USE_JSR_135=$(USE_JSR_135)
+MIDP_JSROP_USE_FLAGS += USE_JSR_135=$(MIDP_USE_JSR_135)
 MIDP_JSROP_USE_FLAGS += JSR_135_DIR=$(JSR_135_DIR)
 MIDP_JSROP_USE_FLAGS += PROJECT_JSR_135_DIR=$(PROJECT_JSR_135_DIR)
 MIDP_JSROP_USE_FLAGS += JSR_135_GENERATED_DIR:=$(call ABSPATH,$(JSR_135_GENERATED_DIR))

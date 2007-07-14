@@ -169,17 +169,18 @@ endif
 ###########
 # romjava.c files
 ###########
-
-CVM_JCC_INPUT_FILES = $(filter-out -%,$(CVM_JCC_INPUT))
+CVM_JCC_INPUT_FILES = $(filter-out %abstractions.jar, $(filter-out %jsr135.jar, $(filter-out -%,$(CVM_JCC_INPUT))))
 
 $(CVM_ROMJAVA_LIST): $(CVM_JCC_INPUT_FILES) $(CVM_JCC_DEPEND)
-	@echo "jcc romjava.c files"
-	$(AT)$(CVM_JAVA) -cp $(CVM_JCC_CLASSPATH) -Xmx256m JavaCodeCompact \
+	@echo "jcc romjava.c files, CVM_JCC_INPUT_FILES=$(CVM_JCC_INPUT_FILES)"
+	@echo "==============================================================="
+	$(CVM_JAVA) -cp $(CVM_JCC_CLASSPATH) -Xmx256m JavaCodeCompact \
 		$(CVM_JCC_OPTIONS) \
 		-maxSegmentSize $(CVM_ROMJAVA_CLASSES_PER_FILE) \
 		-o $(CVM_ROMJAVA_CPATTERN) \
-		$(call POSIX2HOST,$(CVM_JCC_INPUT)) \
+		$(call POSIX2HOST,$(filter-out %abstractions.jar,$(filter-out %jsr135.jar,$(CVM_JCC_INPUT)))) \
 		$(CVM_JCC_CL_INPUT) $(CVM_JCC_APILISTER_OPTIONS)
+	@echo "==============================================================="
 
 ###########
 # romjava.o  is made by compiling all the .c files and linking the result
