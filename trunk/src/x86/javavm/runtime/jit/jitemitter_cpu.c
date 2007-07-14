@@ -3763,7 +3763,7 @@ getcc(char *buf, CVMX86Condition cc)
      case CVMX86greater:
 	ccStr = "g"; break;
      case CVMX86greaterEqual:
-    ccStr = "ge"; break;
+        ccStr = "ge"; break;
      case CVMX86belowEqual:
 	ccStr = "be"; break;
      case CVMX86above:
@@ -3786,6 +3786,7 @@ getcc(char *buf, CVMX86Condition cc)
 	ccStr = "np"; break;
      default:
 	CVMconsolePrintf("Unknown condition code %d\n", cc);
+	ccStr = NULL;
 	CVMassert(CVM_FALSE);
   }
   strncpy(buf, ccStr, 3);
@@ -5180,6 +5181,7 @@ printAddress(CVMX86Address addr)
 	scaleFac = 8;
 	break;
       default:
+	scaleFac = 0;
 	CVMassert(0);
       }
       getRegName(baseregbuf, addr._base);
@@ -5204,6 +5206,7 @@ printAddress(CVMX86Address addr)
 	scaleFac = 8;
 	break;
       default:
+	scaleFac = 0;
 	CVMassert(0);
       }
       getRegName(baseregbuf, addr._base);
