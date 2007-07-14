@@ -117,7 +117,7 @@ class DisplayEventHandlerImpl implements DisplayEventHandler,
      *                status bar for every display of this suite
      */
     public void setTrustedState(boolean drawTrustedIcon) {
-        Display.setTrustedState(drawTrustedIcon);
+        displayContainer.setTrustedState(drawTrustedIcon);
     }
 
     /**

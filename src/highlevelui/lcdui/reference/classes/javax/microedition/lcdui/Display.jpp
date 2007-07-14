@@ -403,10 +403,10 @@ public class Display {
     static int HEIGHT;
 
     /**
-     * True, if this displays need to draw the trusted icon
+     * True, if this display need to draw the trusted icon
      * in the top status bar.
      */
-    static boolean drawSuiteTrustedIcon;
+    boolean drawSuiteTrustedIcon;
 
     /** ID of this Display. */
     int displayId;
@@ -746,7 +746,7 @@ public class Display {
      * @param drawTrustedIcon true, to draw the trusted icon in the upper
      *                status bar for every display of this suite
      */
-    static void setTrustedState(boolean drawTrustedIcon) {
+    void setTrustedState(boolean drawTrustedIcon) {
         drawSuiteTrustedIcon = drawTrustedIcon;
     }
 
@@ -2679,6 +2679,18 @@ public class Display {
         public ForegroundEventConsumer getForegroundEventConsumer() {
             return Display.this.foregroundConsumer;
         }
+
+        /**
+         * Sets the trusted state of this display.
+         * @param drawTrustedIcon true, to draw the trusted icon
+         *     in the upper status bar for this display
+         * DisplayAccess I/F method.
+         */
+        public void setTrustedState(boolean drawTrustedIcon) {
+            Display.this.setTrustedState(drawTrustedIcon);    
+        }
+
+
     } // END DisplayAccessImpl Class
 
 

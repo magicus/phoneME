@@ -137,4 +137,11 @@ public interface DisplayAccess {
      * @return Consumer of foreground events that go through this display
      */
     public ForegroundEventConsumer getForegroundEventConsumer();
+
+    /**
+     * Sets the trusted state of this display.
+     * @param drawTrustedIcon true, to draw the trusted icon in the upper
+     *                status bar for this display
+     */
+    public void setTrustedState(boolean drawTrustedIcon);
 }

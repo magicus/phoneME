@@ -43,6 +43,12 @@ public class DisplayContainer {
     /** Last local Display count used to create Display ID */
     private int lastLocalDisplayId;
 
+    /**
+     * True, if all displays of the suite need to draw the trusted
+     * icon in the top status bar.
+     */
+    private boolean drawSuiteTrustedIcon = false;
+    
     /** Active displays. */
     private Vector displays = new Vector(5, 5);
 
@@ -70,6 +76,7 @@ public class DisplayContainer {
             int newId = createDisplayId();
             da.setDisplayId(newId);
             displays.addElement(da);
+            da.setTrustedState(drawSuiteTrustedIcon);
         }
     }
     
@@ -195,4 +202,22 @@ public class DisplayContainer {
 
         return id;
     }
+
+
+    /**
+     * Sets the trusted state of the holded displays.
+     * DisplayEventHandler I/F method.
+     *
+     * @param drawTrustedIcon true, to draw the trusted icon in the upper
+     *                status bar for every display of this suite
+     */
+    public synchronized void setTrustedState(boolean drawTrustedIcon) {
+        drawSuiteTrustedIcon = drawTrustedIcon;
+        int size = displays.size();
+        for (int i = 0; i < size; i++) {
+            DisplayAccess da = (DisplayAccess)displays.elementAt(i);
+            da.setTrustedState(drawTrustedIcon);
+        }
+    }
+
 }
