@@ -50,8 +50,17 @@ public class File {
     /** Caches the storage root to save repeated native method calls. */
     private static String storageRoot = null;
 
+    /** Indicates which storage root is being cached. */
+    private static int storageRootId;
+
     /** Caches the configuration root to save repeated native method calls. */
     private static String configRoot = null;
+
+    /** Indicates which configuration root is being cached. */
+    private static int configRootId;
+
+    /** Prevents race conditions. */
+    private static Object mutex = new Object();
 
     /**
      * Returns the root to build storage filenames including an needed
@@ -64,11 +73,14 @@ public class File {
      *         storage.
      */
     public static String getStorageRoot(int storageId) {
-        if (storageRoot == null) {
-            storageRoot = initStorageRoot(storageId);
-        }
+        synchronized (mutex) {
+            if (storageRoot == null || storageId != storageRootId) {
+                storageRoot = initStorageRoot(storageId);
+                storageRootId = storageId;
+            }
 
-        return storageRoot;
+            return storageRoot;
+        }
     }
 
     /**
@@ -83,11 +95,14 @@ public class File {
      *     persistant storage.
      */
     public static String getConfigRoot(int storageId) {
-        if (configRoot == null) {
-            configRoot = initConfigRoot(storageId);
-        }
+        synchronized (mutex) {
+            if (configRoot == null || storageId != configRootId) {
+                configRoot = initConfigRoot(storageId);
+                configRootId = storageId;
+            }
 
-        return configRoot;
+            return configRoot;
+        }
     }
 
     /**
