@@ -190,13 +190,13 @@ KNIDECL(com_sun_mmedia_DirectVideo_nSetVisible) {
 /*  private native int nGetScreenHeight ( ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectVideo_nGetScreenHeight) {
-    KNI_ReturnInt(javacall_lcd_get_screen_height()/* FIXME: shoud be: lcdlf_get_screen_height()*/);
+    KNI_ReturnInt(0/* FIXME: shoud be: lcdlf_get_screen_height()*/);
 }
 
 /*  private native int nGetScreenWidth ( ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectVideo_nGetScreenWidth) {
-    KNI_ReturnInt(javacall_lcd_get_screen_width()/* FIXME: should be: lcdlf_get_screen_width()*/);  
+    KNI_ReturnInt(0/* FIXME: should be: lcdlf_get_screen_width()*/);  
 }
 
 /*  private native int nSetAlpha (boolean on, int color) ; */

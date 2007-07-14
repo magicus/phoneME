@@ -50,8 +50,9 @@ public class DirectVideo extends DirectPlayer implements
     VideoControl, MIDPVideoPainter {
 
 /* FIXME: these can swap when device screen orientation changes, so they cannot be final */
-    private final int SCREEN_WIDTH = nGetScreenWidth();
-    private final int SCREEN_HEIGHT = nGetScreenHeight();
+/* FIXME: native methods return 0 */
+    private final int SCREEN_WIDTH = 240;//nGetScreenWidth();
+    private final int SCREEN_HEIGHT = 240;//nGetScreenHeight();
     private final int DEFAULT_WIDTH = 80;
     private final int DEFAULT_HEIGHT = 80;
     private final int ALPHA_COLOR = 1;
