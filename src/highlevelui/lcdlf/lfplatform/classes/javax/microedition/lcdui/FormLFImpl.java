@@ -1748,10 +1748,26 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         }
         int scrollPos = getScrollPosition0();        
         // If the Item's top is within the viewport, return true
-        return !(item.bounds[Y] > scrollPos + viewportHeight ||
-                 item.bounds[Y] + item.bounds[HEIGHT] < scrollPos);
+        return !(item.bounds[Y] >= scrollPos + viewportHeight ||
+                 item.bounds[Y] + item.bounds[HEIGHT] <= scrollPos);
     }
 
+    /**
+     * Determine how much the given item is visible in the current viewport.
+     *
+     * @param item the item to determine visibility
+     * @return the percentage of visible item area rated from 0 to 100
+     * 0 - item is not visible,
+     * 100 - item is completely visible
+     * 1 - 99 - item is partially visible 
+     */
+    int howMuchItemVisible(ItemLFImpl item) {
+        int[] visibleArea = new int[4];
+        setVisRect(item, visibleArea);
+        return item.bounds[HEIGHT] > 0 ?
+            (visibleArea[HEIGHT] * 100 / item.bounds[HEIGHT]) : 0;
+    }
+    
     /**
      * Determine if the given item is at completely visible
      * in the current viewport.
@@ -1998,12 +2014,28 @@ class FormLFImpl extends DisplayableLFImpl implements FormLF {
         // left to right - this ensures we move line by line searching
         // for an interactive item. When paging "up", we search from
         // right to left.
-        int nextIndex = (dir == Canvas.DOWN || dir == CustomItem.NONE)
-            ? getNextInteractiveItem(
-                itemsCopy, Canvas.RIGHT, traverseIndexCopy)
-            : getNextInteractiveItem(
 
-                itemsCopy, Canvas.LEFT, traverseIndexCopy);
+
+        int nextIndex = traverseIndexCopy, curIndex = traverseIndexCopy;
+        int maxRate = traverseIndexCopy > -1 ?
+            howMuchItemVisible(itemsCopy[traverseIndexCopy]) : 0;
+        
+        while (maxRate < 100) {
+            curIndex = getNextInteractiveItem(itemsCopy,
+                                              (dir == Canvas.DOWN || dir == CustomItem.NONE) ?
+                                              Canvas.RIGHT : Canvas.LEFT,
+                                              curIndex);
+            if (curIndex != -1) {
+                int rate  = howMuchItemVisible(itemsCopy[curIndex]);
+                if (rate > maxRate) {
+                    maxRate = rate;
+                    nextIndex = curIndex;
+                }
+            } else {
+                // no more interractive items on the screen 
+                break;
+            }
+        }
         
         if (traverseIndexCopy > -1 && traverseIndexCopy < itemsCopy.length) {
             if (nextIndex != -1 || 
