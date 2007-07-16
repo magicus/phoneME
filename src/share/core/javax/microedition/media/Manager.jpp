@@ -735,6 +735,7 @@ public final class Manager {
         ds.setContentType(type);
         
         try {
+            System.out.println("Calling createPlayer(ds)");
             return createPlayer(ds);
         } catch (IOException ex) {
             throw new MediaException(PL_ERR + ex.getMessage());
@@ -822,11 +823,14 @@ public final class Manager {
     private static BasicPlayer getPlayerFromType(String type) throws IOException,
         MediaException {
         String className;
+       System.out.println( "getPlayerFromType, debug=" + debug );
 
-        if ((type == null) ||
-            (className = config.getHandler(type)) == null) {
+        className = config.getHandler(type);
+               if ((type == null) || className == null) {
             throw new MediaException(PL_ERR_SH + "Mime type " + type + " is not supported");
         }
+
+        System.out.println( "className='" + className + "'" );
 
         BasicPlayer p = null;
 
@@ -837,7 +841,7 @@ public final class Manager {
             Class handlerClass = Class.forName(className);
             p = (BasicPlayer) handlerClass.newInstance();
         } catch (Exception e) {
-            if (debug) System.out.println("Class not found " + className);
+            System.out.println("Class not found " + className);
             throw new MediaException(PL_ERR + e.getMessage());
         }
         return p;
@@ -899,6 +903,7 @@ public final class Manager {
 			if (contentType == null)
 				throw new MediaException(PL_ERR_SH + "Unknown or unsupported media type");
 
+            System.out.println( "Calling getPlayerFromType('"+contentType+"')" );
 			p = getPlayerFromType(contentType);
 		}
         
