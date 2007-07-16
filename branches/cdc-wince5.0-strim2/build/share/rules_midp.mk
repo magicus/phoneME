@@ -39,6 +39,7 @@ initbuild_profile::
 	             NETWORK_MODULE=$(NETWORK_MODULE) \
 	             PCSL_OUTPUT_DIR=$(PCSL_OUTPUT_DIR) \
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
+                 USE_DEBUG=$(CVM_DEBUG) \
 	             -C $(PCSL_DIR) $(PCSL_MAKE_OPTIONS)
 	@echo "<==== end pcsl build"
 
