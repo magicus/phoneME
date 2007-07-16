@@ -32,7 +32,11 @@
 #include "javacall_chapi_registry.h"
 
 #define WIN32_LEAN_AND_MEAN
+
+#ifndef UNICODE
 #define UNICODE
+#define _UNICODE
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -262,9 +266,9 @@ static int enum_keys(const unsigned short* searched_value_name, const unsigned s
 	int len;
 	int maxlen = *length;
 
-	if (!length || (*length && !buffer)) return -1;
+	if (!length || !buffer || !pos_id) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
 	
-	while  ( result == ERROR_SUCCESS){
+	while  (1){
 		*length = maxlen;
 		result = RegEnumKeyEx(HKEY_CLASSES_ROOT, index++, buffer, length, 0, NULL, NULL, NULL);
 
@@ -274,17 +278,24 @@ static int enum_keys(const unsigned short* searched_value_name, const unsigned s
 				len = MAX_BUFFER;
 				result = RegQueryValueEx(key,searched_value_name,0,&type,(LPBYTE)valbuf,&len);
 				RegCloseKey(key);
-				if (!wcscmp(searched_value_value,valbuf)) break;
+				if (result == ERROR_SUCCESS && !wcscmp(searched_value_value,valbuf)) break;
 			}
-		}
+		} else break;
 	}
 
-	*pos_id=index;
-
-	if (result != ERROR_SUCCESS){
-		if (result != ERROR_MORE_DATA) *length = 0;
-		if (buffer) *buffer=0;
+	if (result == ERROR_SUCCESS){
+		*pos_id=index;
+		return JAVACALL_OK;
 	}
+	
+	if (result == ERROR_MORE_DATA) 
+		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
+	
+	if (result == ERROR_NO_MORE_ITEMS) 
+		return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
+	
+	*length = 0;
+	if (buffer) *buffer=0;
 
 	return result;
 }
@@ -562,7 +573,7 @@ javacall_result javacall_chapi_enum_suffixes(javacall_const_utf16_string content
 	while  (1){
 		*length = maxlen;
 
-		result = RegEnumKeyEx(HKEY_CLASSES_ROOT, index, suffix_out, length, 0, NULL, NULL, NULL);
+		result = RegEnumKeyEx(HKEY_CLASSES_ROOT, index++, suffix_out, length, 0, NULL, NULL, NULL);
 
 		if (result == ERROR_MORE_DATA) {
 			return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
@@ -572,15 +583,11 @@ javacall_result javacall_chapi_enum_suffixes(javacall_const_utf16_string content
 
 		if (suffix_out[0]=='.'){
 			if (!content_handler_id || suffix_belongs_to_handler(content_handler_id,suffix_out)){
-				*pos_id=index+1;
+				*pos_id=index;
 				return JAVACALL_OK;
 			}
 		}
-		index++;
 	}
-
-	if (result == ERROR_MORE_DATA) 
-		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
 	
 	if (result == ERROR_NO_MORE_ITEMS) 
 		return JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS;
@@ -644,7 +651,7 @@ javacall_result javacall_chapi_enum_types(javacall_const_utf16_string content_ha
 		RegCloseKey(mimekey);
 	}
 	if (found){
-		*pos_id=index + 1;
+		*pos_id=index;
 		return JAVACALL_OK;
 	}
 
@@ -1042,7 +1049,7 @@ int maxlen = *length;
 
 	
 	if (result == ERROR_SUCCESS) {
-		*pos_id = index + 1;
+		*pos_id = index;
 		return JAVACALL_OK;
 	}
 	
@@ -1090,7 +1097,7 @@ index=(DWORD)*pos_id;
 
 	
 	if (result == ERROR_SUCCESS) {
-		*pos_id = index + 1;
+		*pos_id = index;
 		return JAVACALL_OK;
 	}
 	
@@ -1114,7 +1121,7 @@ int maxlen = *length;
 
 if (!length || !handler_id_out || !pos_id) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
 
-while  (!found && result != ERROR_NO_MORE_ITEMS){
+while  (!found){
 		*length = maxlen;
 		result = RegEnumKeyEx(HKEY_CLASSES_ROOT, index++, handler_id_out, length, 0, NULL, NULL, NULL);
 		if (result == ERROR_SUCCESS) {
@@ -1127,11 +1134,11 @@ while  (!found && result != ERROR_NO_MORE_ITEMS){
 				}
 				RegCloseKey(key);
 			}
-		}
+		} else break;
 	}
 
 	if (result == ERROR_SUCCESS) {
-		*pos_id = index + 1;
+		*pos_id = index;
 		return JAVACALL_OK;
 	}
 	
@@ -1155,7 +1162,7 @@ javacall_result javacall_chapi_enum_handlers_by_id_prefix(javacall_const_utf16_s
 	
 	if (!length || !handler_id_out || !pos_id) return JAVACALL_CHAPI_ERROR_BAD_PARAMS;
 	
-	while  (!found && result == ERROR_SUCCESS){
+	while  (!found){
 		*length = maxlen;
 		result = RegEnumKeyEx(HKEY_CLASSES_ROOT, index++, handler_id_out, length, 0, NULL, NULL, NULL);
 		if (result == ERROR_SUCCESS) {
@@ -1164,16 +1171,16 @@ javacall_result javacall_chapi_enum_handlers_by_id_prefix(javacall_const_utf16_s
 				if (wcsstr(full_handler_id,handler_id_out) == full_handler_id)
 				result = RegOpenKeyEx(key, SHELL,0,KEY_READ,&shellkey);
 				if (result == ERROR_SUCCESS) {
-					found =1;
+					found = 1;
 					RegCloseKey(shellkey);
 				}
 				RegCloseKey(key);
 			}
-		}
+		} else break;
 	}
 	
 	if (result == ERROR_SUCCESS) {
-		*pos_id = index + 1;
+		*pos_id = index;
 		return JAVACALL_OK;
 	}
 	
