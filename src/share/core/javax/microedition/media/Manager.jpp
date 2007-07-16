@@ -823,8 +823,8 @@ public final class Manager {
         MediaException {
         String className;
 
-        if ((type == null) ||
-            (className = config.getHandler(type)) == null) {
+        className = config.getHandler(type);
+               if ((type == null) || className == null) {
             throw new MediaException(PL_ERR_SH + "Mime type " + type + " is not supported");
         }
 
@@ -837,7 +837,7 @@ public final class Manager {
             Class handlerClass = Class.forName(className);
             p = (BasicPlayer) handlerClass.newInstance();
         } catch (Exception e) {
-            if (debug) System.out.println("Class not found " + className);
+            if(debug) System.out.println("Class not found " + className);
             throw new MediaException(PL_ERR + e.getMessage());
         }
         return p;
