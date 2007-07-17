@@ -86,8 +86,11 @@ public class LogChannels {
    /** Event queue module channel */
    public final static int LC_EVENTS = 9500;
 
+   /** JSR180 module channel */
+   public final static int LC_JSR180 = 10000;
+
    /** File Storage module channel */
-   public final static int LC_STORAGE = 10000;
+   public final static int LC_STORAGE = 11000;
 
    /** Push registry module channel */
    public final static int LC_PUSH = 10500;

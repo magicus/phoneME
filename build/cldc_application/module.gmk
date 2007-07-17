@@ -65,7 +65,8 @@ ABSTRACTIONS_CLASSES = \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/i18n/ResourceConstants.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/TrustedClass.java \
-    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/Token.java
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/Token.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/SecurityTokenInitializer.java
 
 ifeq ($(USE_JSR_177), true)
 ABSTRACTIONS_CLASSES += \
