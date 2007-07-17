@@ -2157,7 +2157,7 @@ public class Graphics {
                                       imgData.gciMaskDrawingSurface,
                                       x_src, y_src, width, height, 
                                       x_src, y_src,
-                                      y_dest, x_dest);
+                                      x_dest, y_dest);
         }
 
         return true;

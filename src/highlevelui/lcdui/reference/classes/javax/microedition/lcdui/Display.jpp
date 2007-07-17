@@ -1985,69 +1985,80 @@ public class Display {
             currentCopy = current;
         }
 
-        // #ifdef ENABLE_CHAMELEON
-        if (window.setGraphicsForCanvas(screenGraphics)) {
-            // If the window is not dirty and we are repainting it
-            // is likely the optimization whereby there is a canvas
-            // performing repaints and we can bypass chameleon
+	try {
+		// #ifdef ENABLE_GCI
+		gciScreenWidget.getDrawingSurface().renderingBegin();
+		// #endif
+		// #ifdef ENABLE_CHAMELEON
+		if (window.setGraphicsForCanvas(screenGraphics)) {
+		    // If the window is not dirty and we are repainting it
+		    // is likely the optimization whereby there is a canvas
+		    // performing repaints and we can bypass chameleon
 
-            // Copy the clip now (before the application has a chance
-            // to modify it in its paint method) for later use as the
-            // dirty region for refresh0(). The getClip() method
-            // returns the clip in translated coordinates, so we need
-            // to untranslate it before passing to refresh0(), which
-            // requires absolute coordinates.
+		    // Copy the clip now (before the application has a chance
+		    // to modify it in its paint method) for later use as the
+		    // dirty region for refresh0(). The getClip() method
+		    // returns the clip in translated coordinates, so we need
+		    // to untranslate it before passing to refresh0(), which
+		    // requires absolute coordinates.
 
-            screenGraphics.getClip(region); /* x1, y1, x2, y2 */
-            int tx = screenGraphics.getTranslateX();
-            int ty = screenGraphics.getTranslateY();
-            region[0] += tx;
-            region[1] += ty;
-            region[2] += tx;
-            region[3] += ty;
+		    screenGraphics.getClip(region); /* x1, y1, x2, y2 */
+		    int tx = screenGraphics.getTranslateX();
+		    int ty = screenGraphics.getTranslateY();
+		    region[0] += tx;
+		    region[1] += ty;
+		    region[2] += tx;
+		    region[3] += ty;
 
-            currentCopy.uCallPaint(screenGraphics, null);
-            // SetFullScreenMode TCK test fails unless the following
-            // translate is present
-            screenGraphics.translate(-screenGraphics.getTranslateX(),
-	                             -screenGraphics.getTranslateY());
-            refresh0(displayId, region[0], region[1], region[2], region[3]);
-        } else {
-            // Chameleon redirects the paint call through its layer logic,
-            // eventually resulting in a call back to the Chameleon Display
-            // Tunnel, and possible into application code if the current
-            // displayable is a canvas or gamecanvas.
-            window.callPaint(screenGraphics, graphicsQ);
+		    currentCopy.uCallPaint(screenGraphics, null);
+		    // SetFullScreenMode TCK test fails unless the following
+		    // translate is present
+		    screenGraphics.translate(-screenGraphics.getTranslateX(),
+					     -screenGraphics.getTranslateY());
+		    refresh0(displayId, region[0], region[1], region[2], region[3]);
+		} else {
+		    // Chameleon redirects the paint call through its layer logic,
+		    // eventually resulting in a call back to the Chameleon Display
+		    // Tunnel, and possible into application code if the current
+		    // displayable is a canvas or gamecanvas.
+		    window.callPaint(screenGraphics, graphicsQ);
 
-            // IMPL NOTE: This code block should really be a method inside CGraphics
-            // with its own native call to the refresh function. Until that
-            // can be refactored, we'll do it here.
-            Object[] refreshQ = graphicsQ.getRefreshRegions();
-            int[] subregion;
-            for (int i = 0; i < refreshQ.length; i++) {
-                subregion = (int[])refreshQ[i]; /* x, y, w, h */
-                if (CGraphicsQ.DEBUG) {
-                    System.err.println("Refresh(): "
-			+ subregion[0] + ", " + subregion[1] + ", "
-			+ subregion[2] + ", " + subregion[3]);
-                }
-                // Be sure to convert the regions which are x,y,w,h to
-                // x1, y1, x2, y2
-                refresh0(displayId, subregion[0], subregion[1],
-			 subregion[0] + subregion[2],
-			 subregion[1] + subregion[3]);
-            }
-        }
-        // #else
-        if (currentCopy.uIsScrollNative()) {
-            screenGraphics.reset();
-            currentCopy.uCallPaint(screenGraphics, target);
-        } else {
-            screenGraphics.reset(x1, y1, x2, y2);
-            currentCopy.uCallPaint(screenGraphics, target);
-            refresh0(displayId, x1, y1, x2, y2);
-        }
-        // #endif ENABLE_CHAMELEON
+		    // IMPL NOTE: This code block should really be a method inside CGraphics
+		    // with its own native call to the refresh function. Until that
+		    // can be refactored, we'll do it here.
+		    Object[] refreshQ = graphicsQ.getRefreshRegions();
+		    int[] subregion;
+		    for (int i = 0; i < refreshQ.length; i++) {
+			subregion = (int[])refreshQ[i]; /* x, y, w, h */
+			if (CGraphicsQ.DEBUG) {
+			    System.err.println("Refresh(): "
+				+ subregion[0] + ", " + subregion[1] + ", "
+				+ subregion[2] + ", " + subregion[3]);
+			}
+			// Be sure to convert the regions which are x,y,w,h to
+			// x1, y1, x2, y2
+			refresh0(displayId, subregion[0], subregion[1],
+				 subregion[0] + subregion[2],
+				 subregion[1] + subregion[3]);
+		    }
+		}
+		// #else
+		if (currentCopy.uIsScrollNative()) {
+		    screenGraphics.reset();
+		    currentCopy.uCallPaint(screenGraphics, target);
+		} else {
+		    screenGraphics.reset(x1, y1, x2, y2);
+		    currentCopy.uCallPaint(screenGraphics, target);
+		    refresh0(displayId, x1, y1, x2, y2);
+		}
+		// #endif ENABLE_CHAMELEON
+	}
+	finally {
+		// #ifdef ENABLE_GCI
+		int[] bounds = {x1,y1,x2,y2};
+		gciScreenWidget.getDrawingSurface().renderingEnd(bounds);
+		// #endif
+	}
     }
 
     /**
@@ -2557,75 +2568,87 @@ public class Display {
         public void flush(Displayable d, Image offscreen_buffer,
                    int x, int y, int width, int height) {
 
-            synchronized (LCDUILock) {
-                // #ifdef ENABLE_CHAMELEON
-                if (paintSuspended
-                    || !hasForeground
-                    || d.displayableLF != current
-                    || ((Display.this.window).systemMenuUp())) {
-                    return;
-                }
-                // #else
-                if (paintSuspended
-                    || !hasForeground
-                    || d.displayableLF != current) {
-                    return;
-                }
-                // #endif ENABLE_CHAMELEON
+	    try {
+		// #ifdef ENABLE_GCI
+		gciScreenWidget.getDrawingSurface().renderingBegin();
+		// #endif
+		    synchronized (LCDUILock) {
+			// #ifdef ENABLE_CHAMELEON
+			if (paintSuspended
+			    || !hasForeground
+			    || d.displayableLF != current
+			    || ((Display.this.window).systemMenuUp())) {
+			    return;
+			}
+			// #else
+			if (paintSuspended
+			    || !hasForeground
+			    || d.displayableLF != current) {
+			    return;
+			}
+			// #endif ENABLE_CHAMELEON
 
-                int x1 = x;
-                int y1 = y;
-                int anchorX = 0;
-                int anchorY = 0;
+			int x1 = x;
+			int y1 = y;
+			int anchorX = 0;
+			int anchorY = 0;
 
-                // #ifdef ENABLE_CHAMELEON
-                // Draw the off-screen buffer into the area that takes the title
-                // and ticker bar heights into account.
-                anchorX = (Display.this.window).getBodyAnchorX();
-                anchorY = (Display.this.window).getBodyAnchorY();
-                x1 += anchorX;
-                y1 += anchorY;
-                // #endif ENABLE_CHAMELEON
+			// #ifdef ENABLE_CHAMELEON
+			// Draw the off-screen buffer into the area that takes the title
+			// and ticker bar heights into account.
+			anchorX = (Display.this.window).getBodyAnchorX();
+			anchorY = (Display.this.window).getBodyAnchorY();
+			x1 += anchorX;
+			y1 += anchorY;
+			// #endif ENABLE_CHAMELEON
 
-                int x2 = x1 + width;
-                int y2 = y1 + height;
-                // set clip area and init graphics
-                synchronized (screenGraphics) {
-                    // keep the initial clip area
-                    int[] reg = new int[4];
-                    screenGraphics.getClip(reg);
-                    
-                   // #ifdef ENABLE_DIRECT_DRAW 
-                    if (d instanceof javax.microedition.lcdui.game.GameCanvas) {
-                        if (x == 0 && x2 == WIDTH && y == 0 &&  
-                            offscreen_buffer.getWidth() == WIDTH && 
-                            offscreen_buffer.getHeight() == HEIGHT &&
-                            //check offscreen_buffer whether rotated
-                            anchorX == 0 && anchorY == 0) {
-                           if (directFlush(screenGraphics, offscreen_buffer, y2)) {
-                                // No need to draw to the back buffer. We have
-                                // directly flushed to the front buffer.
-                               return;
-                           }
-                        }
-                    }
-                    // #endif ENABLE_DIRECT_DRAW
+			int x2 = x1 + width;
+			int y2 = y1 + height;
+			// set clip area and init graphics
+			synchronized (screenGraphics) {
+			    // keep the initial clip area
+			    int[] reg = new int[4];
+			    screenGraphics.getClip(reg);
+			    
+			   // #ifdef ENABLE_DIRECT_DRAW 
+			    if (d instanceof javax.microedition.lcdui.game.GameCanvas) {
+				if (x == 0 && x2 == WIDTH && y == 0 &&  
+				    offscreen_buffer.getWidth() == WIDTH && 
+				    offscreen_buffer.getHeight() == HEIGHT &&
+				    //check offscreen_buffer whether rotated
+				    anchorX == 0 && anchorY == 0) {
+				   if (directFlush(screenGraphics, offscreen_buffer, y2)) {
+					// No need to draw to the back buffer. We have
+					// directly flushed to the front buffer.
+				       return;
+				   }
+				}
+			    }
+			    // #endif ENABLE_DIRECT_DRAW
 
-                    int tranX = screenGraphics.getTranslateX();
-                    int tranY = screenGraphics.getTranslateY();
+			    int tranX = screenGraphics.getTranslateX();
+			    int tranY = screenGraphics.getTranslateY();
 
-                    screenGraphics.translate(-tranX, -tranY);
-                    screenGraphics.setClip(x1, y1, width, height);
-                    
-                    screenGraphics.drawImage(offscreen_buffer,
-                             anchorX, anchorY, Graphics.TOP | Graphics.LEFT);
+			    screenGraphics.translate(-tranX, -tranY);
+			    screenGraphics.setClip(x1, y1, width, height);
+			    
+			    screenGraphics.drawImage(offscreen_buffer,
+				     anchorX, anchorY, Graphics.TOP | Graphics.LEFT);
 
-                    // restore initial clip area and translation
-                    screenGraphics.translate(tranX, tranY);
-                    screenGraphics.setClip(reg[0], reg[1], reg[2] - reg[0], reg[3] - reg[1]);
-                }
-                refresh0(displayId, x1, y1, x2, y2);
-            }
+			    // restore initial clip area and translation
+			    screenGraphics.translate(tranX, tranY);
+			    screenGraphics.setClip(reg[0], reg[1], reg[2] - reg[0], reg[3] - reg[1]);
+			}
+			refresh0(displayId, x1, y1, x2, y2);
+		    }
+	    }
+	    finally {
+		// #ifdef ENABLE_GCI
+		int[] bounds = {x,y,x+width,y+height};
+		gciScreenWidget.getDrawingSurface().renderingEnd(bounds);
+		// #endif
+	    }
+	
         }
 
         /**
