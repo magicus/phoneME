@@ -679,7 +679,6 @@ KNIDECL(com_sun_midp_events_EventQueue_sendShutdownEvent) {
 #ifdef DIRECTFB
     fbapp_close_window();
 #endif
-    exit(0);
     KNI_ReturnVoid();
 }
 

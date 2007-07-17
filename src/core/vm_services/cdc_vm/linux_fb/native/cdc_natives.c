@@ -748,7 +748,6 @@ KNIDECL(com_sun_midp_events_EventQueue_sendShutdownEvent) {
 #ifdef DIRECTFB
     directfbapp_close_window();
 #endif
-    exit(0);
     KNI_ReturnVoid();
 }
 

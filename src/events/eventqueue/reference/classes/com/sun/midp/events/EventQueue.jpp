@@ -448,6 +448,8 @@ public class EventQueue implements Runnable {
             throw new IllegalStateException("Shutdown called in event thread");
         }
 
+	post(new Event(EventTypes.EVENT_QUEUE_SHUTDOWN));
+	// Send native shutdown event
 	sendShutdownEvent();
 
         synchronized (eventQueueThread) {
