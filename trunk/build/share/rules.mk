@@ -510,7 +510,8 @@ endif
 
 # As a performance improvement, evaluate some flags in case
 # they contain shell commands.
-$(J2ME_CLASSLIB):: CPPFLAGS := $(CPPFLAGS)
+# FIXME: Disabled because this causes GCI build failures
+#$(J2ME_CLASSLIB):: CPPFLAGS := $(CPPFLAGS)
 
 $(J2ME_CLASSLIB):: initbuild
 $(J2ME_CLASSLIB):: btclasses $(CVM_BUILDTIME_CLASSESZIP)
