@@ -207,7 +207,9 @@ abstract class AbstractMIDletSuiteLoader
             midletSuite.close();
         }
 
-        lcduiEnvironment.shutDown();
+        if (lcduiEnvironment != null) {
+            lcduiEnvironment.shutDown();
+        }
     }
 
     /**
