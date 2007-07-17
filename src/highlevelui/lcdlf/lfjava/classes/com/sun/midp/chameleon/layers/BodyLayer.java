@@ -30,6 +30,7 @@ import com.sun.midp.chameleon.*;
 import javax.microedition.lcdui.*;
 import com.sun.midp.chameleon.skins.ScrollIndSkin;
 import com.sun.midp.chameleon.skins.ScreenSkin;
+import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
 
 /**
  * Basic layer containing the application area of the display. This layer
@@ -207,7 +208,9 @@ public class BodyLayer extends CLayer
      */
     public void removeNotify(CWindow owner) {
         if (scrollInd != null && owner != null) {
-            if (owner.removeLayer(scrollInd) && scrollInd.isVisible()) {
+            if (owner.removeLayer(scrollInd) &&
+                ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR &&
+                scrollInd.isVisible()) {
                 bounds[W] += scrollInd.bounds[W];
             }
         }
@@ -224,7 +227,9 @@ public class BodyLayer extends CLayer
                 scrollInd.setListener(null);
 
                 if (owner != null) {
-                    if (owner.removeLayer(scrollInd) && vis) {
+                    if (owner.removeLayer(scrollInd) &&
+                        ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR &&
+                        vis) {
                         bounds[W] += scrollInd.bounds[W];
                         addDirtyRegion();
                     }
@@ -268,9 +273,11 @@ public class BodyLayer extends CLayer
                 if (scrollVisible) {
                     scrollInd.setBounds();
                 }
-                int w = scrollInd.bounds[W];
-                bounds[W] += scrollVisible? -w: +w;
-                addDirtyRegion();
+                if (ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR) {
+                    int w = scrollInd.bounds[W];
+                    bounds[W] += scrollVisible? -w: +w;
+                    addDirtyRegion();
+                }
                 return true;
             }
         }
@@ -321,7 +328,8 @@ public class BodyLayer extends CLayer
 
         if (scrollInd != null) {
             scrollInd.update(layers);
-            if (scrollInd.isVisible()) {
+            if (ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR &&
+                scrollInd.isVisible()) {
                 bounds[W] -= scrollInd.bounds[W];
             }
         }
