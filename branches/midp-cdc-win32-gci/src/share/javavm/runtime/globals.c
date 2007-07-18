@@ -747,6 +747,11 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     gs->rawMonitorList = NULL;
 #endif
 
+    /*
+     * Random number generator
+     */
+    CVMrandomInit();
+
     CVMpreloaderInit();
 
     gs->threadList = NULL;
@@ -977,11 +982,6 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
      * Stackmap computer
      */
     CVMstackmapComputerInit();
-
-    /*
-     * Random number generator
-     */
-    CVMrandomInit();
 
 #ifdef CVM_TIMESTAMPING
     /*
