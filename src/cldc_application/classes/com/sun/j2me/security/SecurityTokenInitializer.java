@@ -37,7 +37,7 @@ public final class SecurityTokenInitializer {
      */
     final public static Token requestToken(
             TrustedClass trusted) {
-        SecurityInitializer.requestToken(trusted);
+        return new Token(SecurityInitializer.requestToken(trusted));
     }
 
 }
