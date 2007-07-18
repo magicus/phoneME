@@ -546,7 +546,7 @@ public class DefaultConfiguration extends Configuration {
             // #endif ]
             };
         }
-/*
+
         if (content_type.equals(MIME_VIDEO_3GPP)) {
             return new String[]{
                 "http",
@@ -594,7 +594,7 @@ public class DefaultConfiguration extends Configuration {
             // #endif ]
             };
         }
-*/
+
         if (content_type.equals(MIME_IMAGE_GIF)) {
             return new String[]{
                 "http",
@@ -658,8 +658,10 @@ public class DefaultConfiguration extends Configuration {
     public VideoRenderer getVideoRenderer(BasicPlayer player, 
                                           int sourceWidth, 
                                           int sourceHeight) {
-    // #ifdef ENABLE_INDIRECT_VIDEO [ 
-        return ModelVideoRenderer.getVideoRenderer(player, sourceWidth, sourceHeight);                                         
+    // #ifdef ENABLE_INDIRECT_VIDEO [
+        // workaround for demo only
+        //return ModelVideoRenderer.getVideoRenderer(player, sourceWidth, sourceHeight);
+        return new MIDPVideoRenderer(player, sourceWidth, sourceWidth);
     // #else ][
         return null;
     // #endif ]
