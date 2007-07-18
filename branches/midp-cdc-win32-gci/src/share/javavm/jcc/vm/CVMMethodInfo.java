@@ -78,6 +78,8 @@ CVMMethodInfo extends VMMethodInfo implements Const, CVMConst {
     }
 
     private void examineCode( ) throws DataFormatException {
+	ConstantPool cp = method.parent.getConstantPool();
+	boolean needsTypeTable = false;
 	impureCode = false;
 	mustAlign  = false;
 	hasJsr     = false;
@@ -121,23 +123,29 @@ CVMMethodInfo extends VMMethodInfo implements Const, CVMConst {
 	    // We don't currently quicken ldc of a Class constant
 	    case opc_ldc:
 	    {
-		ConstantObject co =
-		    method.parent.constants[(int)code[i + 1] & 0xff];
+		ConstantObject co = cp.elementAt((int)code[i + 1] & 0xff);
 		if (!(co instanceof ClassConstant)) {
 		    impureCode = true; // all the rest get quickened.
+		} else {
+		    needsTypeTable = true;
 		}
 		break;
 	    }
 	    case opc_ldc_w:
 	    {
 		int index = method.getUnsignedShort(i + 1);
-		ConstantObject co = method.parent.constants[index];
+		ConstantObject co = cp.elementAt(index);
 		if (!(co instanceof ClassConstant)) {
 		    impureCode = true; // all the rest get quickened.
+		} else {
+		    needsTypeTable = true;
 		}
 		break;
 	    }
 	    }
+	}
+	if (impureCode || needsTypeTable) {
+	    cp.setNeedsTypeTable();
 	}
 	codeExamined = true;
     }
@@ -234,7 +242,7 @@ CVMMethodInfo extends VMMethodInfo implements Const, CVMConst {
 	} else { 
 	    return;
 	}
-	ConstantObject[] cp = method.parent.constants;
+	ConstantObject[] cp = method.parent.getConstantPool().getConstants();
 	byte[] code = method.code;
 	byte[] rewrite;
 	int tmi = 0;			// target method index

@@ -62,7 +62,6 @@ class PrimitiveClassInfo extends ClassInfo {
 	this.slotsize = slotsize;
 	this.elementsize = elementsize;
 	access = Const.ACC_FINAL | Const.ACC_ABSTRACT | Const.ACC_PUBLIC; 
-	constants = new ConstantObject[0];
 	methods = new MethodInfo[0];
 	fields  = new FieldInfo[0];
 	ClassTable.enterPrimitiveClass(this);
