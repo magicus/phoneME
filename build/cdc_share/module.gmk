@@ -68,7 +68,7 @@ ABSTRACTIONS_NATIVES += \
 # classes
 ABSTRACTIONS_CLASSES += \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/Cipher.java \
-    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchPaddingException.java \    
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchPaddingException.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/InvalidKeyException.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/InvalidAlgorithmParameterException.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/ShortBufferException.java \
@@ -94,7 +94,7 @@ ABSTRACTIONS_CLASSES += \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/CryptoParameter.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/Util.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/PRand.java \
-    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/SecureRandom.java \    
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/SecureRandom.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/Key.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/dialog/Dialog.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/dialog/MessageDialog.java \
