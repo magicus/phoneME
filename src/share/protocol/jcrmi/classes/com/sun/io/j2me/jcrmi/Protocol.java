@@ -597,7 +597,7 @@ public class Protocol
         SHA.reset();
         SHA.update(buf, 0, buf.length);
         try {
-            SHA.digest(APDUBuffer, offset, messageDigest.getDigestLength());
+            SHA.digest(APDUBuffer, offset, SHA.getDigestLength());
         } catch (DigestException e) {
             throw new RemoteException("SHA1 error");
         }        
