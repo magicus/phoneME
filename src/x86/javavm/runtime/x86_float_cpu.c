@@ -29,6 +29,7 @@
 #include "javavm/include/porting/ansi/string.h"
 
 #include <math.h> /* fmod */
+#include <strings.h> /* bcopy */
 
 #if (!defined(JAVA_COMPLIANT_f2i) && !defined(NAN_CHECK_f2i))
 

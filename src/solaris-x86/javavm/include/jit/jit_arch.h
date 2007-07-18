@@ -43,6 +43,8 @@
 #include "javavm/include/jit/ccm_cpu.h"
 #include "javavm/include/jit/jit_cisc.h"
 
+#define CVMJIT_HAVE_PLATFORM_SPECIFIC_ALLOC_FREE_CODECACHE
+
 /*
  * The size in bytes of the region for which we want accurate profiling
  * information. In this case, we want to be accurate to within an instruction.
@@ -56,6 +58,11 @@ X86JITgoNative(CVMObject *exceptionObject, CVMExecEnv *ee,
              CVMCompiledFrame *jfp, CVMUint8 *pc);
 
 #define CVMJITgoNative X86JITgoNative
+#endif
+
+#ifndef _ASM
+extern CVMBool
+solarisJITSyncInitArch();
 #endif
 
 #endif /* _SOLARIS_X86_JIT_ARCH_H */
