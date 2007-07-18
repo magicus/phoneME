@@ -62,6 +62,7 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
     SUBSYSTEM_PISCES_JAVA_FILES_SOURCEPATH +=\
     $(PATHSEP)$(INTERNAL_PISCES_DIR)/src/classes/native\
     $(PATHSEP)$(INTERNAL_PISCES_DIR)/src/classes/native-midp
+    $(PATHSEP)$(INTERNAL_PISCES_DIR)/src/classes/native-jwc
 endif
 
 INTERNAL_PISCES_CONFIG_DIR = \
