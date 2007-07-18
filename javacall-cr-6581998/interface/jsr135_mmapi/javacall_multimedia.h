@@ -112,6 +112,7 @@ extern "C" {
 #define JAVACALL_AUDIO_MP3_MIME_3    "audio/x-mpeg"
 #define JAVACALL_AUDIO_AMR_MIME      "audio/amr"
 #define JAVACALL_AUDIO_AMRNB_MIME    "audio/amrnb"
+#define JAVACALL_AUDIO_AMR_WB_MIME   "audio/amr-wb"
 #define JAVACALL_AUDIO_MPEG4_MIME    "audio/mp4a-latm"
 #define JAVACALL_AUDIO_MPEG4_MIME_2  "audio/mp4"
 #define JAVACALL_AUDIO_AAC_MIME      "audio/aac"
