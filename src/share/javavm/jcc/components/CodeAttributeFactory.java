@@ -34,8 +34,8 @@ class CodeAttributeFactory extends AttributeFactory {
     public static AttributeFactory instance = new CodeAttributeFactory();
 
     Attribute finishReadAttribute(
-	DataInput in, UnicodeConstant name, ConstantObject constants[]) throws IOException
+	DataInput in, UnicodeConstant name, ConstantPool cp) throws IOException
     {
-	    return CodeAttribute.finishReadAttribute(in, name, constants);
+	    return CodeAttribute.finishReadAttribute(in, name, cp);
     }
 }

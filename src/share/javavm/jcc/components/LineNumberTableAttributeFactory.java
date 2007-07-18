@@ -34,7 +34,7 @@ class LineNumberTableAttributeFactory extends AttributeFactory {
     public static AttributeFactory instance = new LineNumberTableAttributeFactory();
 
     Attribute finishReadAttribute(
-	DataInput in, UnicodeConstant name, ConstantObject constants[] )
+	DataInput in, UnicodeConstant name, ConstantPool cp )
 	throws IOException{
 	    return LineNumberTableAttribute.finishReadAttribute( in, name );
     }

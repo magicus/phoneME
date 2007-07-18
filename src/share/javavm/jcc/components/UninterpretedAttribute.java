@@ -90,7 +90,7 @@ class UninterpretedAttribute extends Attribute
     }
 
     //
-    // for those cases where we alread read the name index
+    // for those cases where we already read the name index
     // and know that its not something requiring special handling.
     //
     public static Attribute

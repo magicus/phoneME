@@ -127,9 +127,9 @@
  *       shared list as well.
  */
 
-/* Disable strict math intrinsics if using hard float, because the JIT
-   assumes soft float calling conventions when calling them. */
-#ifdef CVM_FORCE_HARD_FLOAT
+/* Disable strict math intrinsics if result is returned in a float register,
+   because the JIT assumes soft float calling conventions when calling them. */
+#ifdef CVM_ARM_FLOAT_RESULT_IN_FLOAT_REGISTER
 #define CVMCCM_DISABLE_SHARED_STRICTMATH_COS_INTRINSIC
 #define CVMCCM_DISABLE_SHARED_STRICTMATH_SIN_INTRINSIC
 #define CVMCCM_DISABLE_SHARED_STRICTMATH_TAN_INTRINSIC

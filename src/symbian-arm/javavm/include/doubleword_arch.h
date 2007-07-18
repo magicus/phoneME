@@ -43,7 +43,7 @@
 #undef USE_ANSI_FCOMPARE
 
 #ifdef CVM_JIT
-#ifndef CVM_FORCE_HARD_FLOAT
+#ifndef CVM_ARM_FLOAT_RESULT_IN_FLOAT_REGISTER		
 /* Following are called from C functions. */
 extern CVMJavaDouble
 CVMCCMruntimeDAdd_C(CVMJavaDouble value1, CVMJavaDouble value2);

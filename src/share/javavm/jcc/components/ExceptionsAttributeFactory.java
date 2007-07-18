@@ -34,8 +34,8 @@ class ExceptionsAttributeFactory extends AttributeFactory {
     public static AttributeFactory instance = new ExceptionsAttributeFactory();
 
     Attribute finishReadAttribute(
-	DataInput in, UnicodeConstant name, ConstantObject constants[] )
+	DataInput in, UnicodeConstant name, ConstantPool cp )
 	throws IOException{
-	    return ExceptionsAttribute.finishReadAttribute( in, name, constants );
+	    return ExceptionsAttribute.finishReadAttribute( in, name, cp );
     }
 }
