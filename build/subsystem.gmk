@@ -136,7 +136,9 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
             $(INTERNAL_PISCES_DIR)/src/classes/native
     INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR := \
             $(INTERNAL_PISCES_DIR)/src/classes/native-midp
-
+    INTERNAL_PISCES_NATIVE-JWC_CLASSES_DIR := \
+            $(INTERNAL_PISCES_DIR)/src/classes/native-jwc
+            
     INTERNAL_PISCES_JAVA_FILES += \
             $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/AbstractSurface.java \
             $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/NativeFinalization.java \
@@ -146,8 +148,8 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/NativeFinalizer.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesFinalizer.java \
             $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/PiscesLibrary.java \
-            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/GraphicsSurface.java \
-            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/ImageExtender.java
+            $(INTERNAL_PISCES_NATIVE-JWC_CLASSES_DIR)/com/sun/pisces/GraphicsSurface.java \
+            $(INTERNAL_PISCES_NATIVE-JWC_CLASSES_DIR)/com/sun/pisces/ImageExtender.java
 
 #            $(INTERNAL_PISCES_NATIVE_CLASSES_DIR)/com/sun/pisces/NativeSurface.java 
 #            $(INTERNAL_PISCES_NATIVE-MIDP_CLASSES_DIR)/com/sun/pisces/GraphicsSurfaceDestination.java 
