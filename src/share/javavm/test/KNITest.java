@@ -51,19 +51,22 @@ public class KNITest {
 	if (testIntArgs(20,100000,55) != 20*100000+55) {
 	    error("testIntArg()");
 	}
-	if (testFloatArgs(20.0f,100000.0f,55.0f) != 20.0*100000.0+55.0) {
+	if (testFloatArgs(20.03f,  100000.011f,  55.123f) !=
+	                  20.03f * 100000.011f + 55.123f) {
 	    error("testFloatArgs()");
 	}
 	if (testLongArgs(20,100000,55) != 20*100000+55) {
 	    error("testLongArgs()");
 	}
-	if (testDoubleArgs(20.0,100000.0,55.0) != 20.0*100000.0+55.0) {
+	if (testDoubleArgs(20.03d,  100000.011d,  55.123d) !=
+	                   20.03d * 100000.011d + 55.123d) {
 	    error("testDoubleArgs()");
 	}
 	if (testIntLongArgs(20,100000,55) != 20*100000+55) {
 	    error("testIntLongArgs()");
 	}
-	if (testFloatDoubleArgs(20.0d,100000.0f,55.0d) != 20.0*100000.0+55.0) {
+	if (testFloatDoubleArgs(20.03d,  100000.011f,  55.123d) !=
+	                        20.03d * 100000.011f + 55.123d) {
 	    error("testFloatDoubleArgs()");
 	}
 	if (kniTest.testVirtualArg(55) != 2*55) {
