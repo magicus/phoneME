@@ -108,9 +108,9 @@ static void handleSegv(int sig, siginfo_t* info, void* ucpPtr)
 	ucp->uc_mcontext.gregs[REG_ESP] = (unsigned long)sp;
 	ucp->uc_mcontext.gregs[REG_EIP] =
 	    (unsigned long)CVMCCMruntimeThrowNullPointerExceptionGlue;
-#ifdef CVM_JIT_DEBUG
+#ifdef CVM_DEBUG_ASSERTS
 	/* In CVMCCMruntimeThrowNullPointerExceptionGlue we check if %eax == (%esp) */
-	ucp->uc_mcontext.gregs[REG_EAX] = pc + 2;
+	ucp->uc_mcontext.gregs[REG_EAX] =  (unsigned long)pc + 2;
 #endif	
 	return;
 #endif
