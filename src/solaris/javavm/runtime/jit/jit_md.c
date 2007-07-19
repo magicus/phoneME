@@ -30,8 +30,36 @@
 #include "javavm/include/jit/jit.h"
 #include "javavm/include/porting/jit/jit.h"
 
-#ifdef CVMJIT_TRAP_BASED_GC_CHECKS
 #include <sys/mman.h>
+
+
+#ifdef CVMJIT_HAVE_PLATFORM_SPECIFIC_ALLOC_FREE_CODECACHE
+
+/* The following is needed to supported an executable code cache
+   with some Solaris releases.
+*/
+void *
+CVMJITallocCodeCache(CVMSize *size)
+{
+    void* s = mmap(0, *size, 
+          PROT_EXEC | PROT_READ | PROT_WRITE, 
+          MAP_PRIVATE | MAP_ANON, -1, 0);
+    if (s == MAP_FAILED) {
+        return NULL;
+    }
+    return s;
+}
+
+void
+CVMJITfreeCodeCache(void *start)
+{
+    munmap(start, CVMglobals.jit.codeCacheSize);
+}
+
+#endif /* CVMJIT_HAVE_PLATFORM_SPECIFIC_ALLOC_FREE_CODECACHE */
+
+
+#ifdef CVMJIT_TRAP_BASED_GC_CHECKS
 
 /*
  * Enable gc rendezvous points in compiled code by denying access to

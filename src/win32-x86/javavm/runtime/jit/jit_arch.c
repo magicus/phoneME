@@ -113,12 +113,12 @@ static DWORD handleException(struct _EXCEPTION_POINTERS *ep, DWORD code, DWORD *
         ep->ContextRecord->Esp = (DWORD)sp;
         ep->ContextRecord->Eip =
            (unsigned long)CVMCCMruntimeThrowNullPointerExceptionGlue;
-#ifdef CVM_JIT_DEBUG
+#ifdef CVM_DEBUG_ASSERTS
 	/* 
          * In CVMCCMruntimeThrowNullPointerExceptionGlue we check if 
          * %eax == (%esp)
          */
-        ep->ContextRecord->Eax = pc + 2;
+        ep->ContextRecord->Eax = (DWORD)pc + 2;
 #endif
         return EXCEPTION_CONTINUE_EXECUTION;
        }

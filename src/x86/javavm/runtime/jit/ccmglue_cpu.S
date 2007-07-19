@@ -38,7 +38,7 @@
 #include "javavm/include/jit/jitcisc_cpu.h"
 #include "javavm/include/porting/sync.h"
 
-#ifdef CVM_JIT_DEBUG
+#ifdef CVM_DEBUG_ASSERTS
 .file "ccmglue_cpu.S"
 ccmglue_cpu_filename:
 .string "ccmglue_cpu.S"
@@ -424,7 +424,7 @@ ENTRY(CVMCCMruntimeMonitorEnterGlue )
 #else
 
 	cmpl	$0, A3
-#ifdef CVM_JIT_DEBUG
+#ifdef CVM_DEBUG_ASSERTS
 	movl	(%esp), A1
 #endif
 	je	SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlue)
@@ -604,7 +604,7 @@ ENTRY(CVMCCMruntimeMonitorExitGlue )
 
 #else
 	cmpl	$0, A3
-#ifdef CVM_JIT_DEBUG
+#ifdef CVM_DEBUG_ASSERTS
 	movl	(%esp), A1
 #endif
 	je	SYM_NAME(CVMCCMruntimeThrowNullPointerExceptionGlue)
@@ -754,7 +754,7 @@ ENTRY(CVMCCMruntimeThrowNullPointerExceptionGlue )
 	ffree	%st(5)
 	ffree	%st(6)
 	ffree	%st(7)
-#if defined(CVM_JIT_DEBUG) && defined(CVMJIT_TRAP_BASED_NULL_CHECKS)
+#if defined(CVM_DEBUG_ASSERTS) && defined(CVMJIT_TRAP_BASED_NULL_CHECKS)
 	cmpl	(%esp), A1	/* see handleSegv */
 	je	CVMCCMruntimeThrowNullPointerExceptionGlue_passed_assert
 	pushl	$CVMCCMruntimeThrowNullPointerExceptionGlue_assert_expression
