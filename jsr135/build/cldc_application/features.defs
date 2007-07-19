@@ -1,0 +1,233 @@
+#
+# 
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+#
+
+#
+#
+# Define the FEATURE_DEFINES variable
+
+ifeq ($(ABB),true)
+JPP_DEFS += -DABB
+endif
+
+ifeq ($(DIRECT_RECORD),true)
+EXTRA_CFLAGS += -DENABLE_MEDIA_RECORD
+JPP_DEFS += -DRECORD
+endif
+
+ifeq ($(DIRECT_MIDI_CONTROL),true)
+JPP_DEFS += -DMIDI_CONTROL
+endif
+
+ifeq ($(DIRECT_TEST), true)
+JPP_DEFS += -DTEST
+endif
+
+ifeq ($(INDIRECT_VIDEO_PLAYER),true)
+JPP_DEFS += -DENABLE_INDIRECT_VIDEO
+endif
+
+ifeq ($(WAVE_PLAYER),true)
+JPP_DEFS += -DWAVE_PLAYER
+endif
+
+ifeq ($(AMR_PLAYER),true)
+JPP_DEFS += -DAMR_PLAYER
+else
+OTHER_SRC_EXCLUDES += -x src/common/share/native/amr\*
+endif
+
+ifeq ($(MIDI_TONE_PLAYER),true)
+JPP_DEFS += -DMIDI_TONE_PLAYER
+endif
+
+ifeq ($(TONE_PLAYER),true)
+JPP_DEFS += -DTONE_PLAYER
+endif
+
+ifeq ($(MIDI_PLAYER),true)
+JPP_DEFS += -DMIDI_PLAYER
+endif
+
+ifeq ($(INTERACTIVE_MIDI),true)
+JPP_DEFS += -DINTERACTIVE_MIDI
+endif
+
+ifeq ($(NATIVE_TONE_PLAYER),true)
+JPP_DEFS += -DNATIVE_TONE_PLAYER
+endif
+
+ifeq ($(MIDI_TONE_PLAYER),true)
+JPP_DEFS += -DMIDI_TONE_PLAYER
+endif
+
+ifeq ($(RTP_PLAYER),true)
+JPP_DEFS += -DRTP_PLAYER
+endif
+
+ifeq ($(RTSP_PLAYER),true)
+JPP_DEFS += -DRTSP_PLAYER
+endif
+
+ifeq ($(MNG_PLAYER),true)
+JPP_DEFS += -DMNG_PLAYER
+endif
+
+ifeq ($(GIF_PLAYER),true)
+JPP_DEFS += -DGIF_PLAYER
+endif
+
+ifeq ($(MMX_PLAYER),true)
+JPP_DEFS += -DMMX_PLAYER
+endif
+
+ifeq ($(AUDIO_CAPTURE),true)
+JPP_DEFS += -DAUDIO_CAPTURE -DCAPTURE
+endif
+
+ifeq ($(MPA_PLAYER),true)
+JPP_DEFS += -DMPA_PLAYER
+endif
+
+ifeq ($(QPE_PLAYER),true)
+JPP_DEFS += -DQPE_PLAYER
+endif
+
+ifeq ($(MPEG_PLAYER),true)
+JPP_DEFS += -DMPEG_PLAYER
+endif
+
+ifeq ($(VIDEO_CAPTURE),true)
+JPP_DEFS += -DVIDEO_CAPTURE -DCAPTURE
+DIRECT_CAMERA_PLAYER=true
+endif
+
+ifeq ($(RTP_MPA),true)
+JPP_DEFS += -DRTP_MPA
+endif
+
+ifeq ($(RTP_JPEG),true)
+JPP_DEFS += -DRTP_JPEG
+endif
+
+ifeq ($(RTP_H263),true)
+JPP_DEFS += -DRTP_H263
+endif
+
+ifeq ($(RTP_GSM),true)
+JPP_DEFS += -DRTP_GSM
+endif
+
+ifeq ($(RTP_PCMU),true)
+JPP_DEFS += -DRTP_PCMU
+endif
+
+ifeq ($(MAP),true)
+JPP_DEFS += -DMAP
+ ifneq ($(SW_MIXER),)
+  JPP_DEFS += -DMMAPI_USE_SOFTWARE_MIXER
+ endif
+ ifeq ($(MIDI_PLAYER),true)
+  JPP_DEFS += -DMMAPI_USE_SEQUENCER
+ endif
+endif
+
+ifeq ($(JPEG_SNAPSHOT),true)
+JPP_DEFS += -DJPEG_SNAPSHOT
+endif
+
+ifeq ($(WAV_RECORD_CONTROL),true)
+JPP_DEFS += -DWAV_RECORD_CONTROL
+endif
+
+ifeq ($(WAV_RATE_CONTROL),true)
+JPP_DEFS += -DWAV_RATE_CONTROL
+endif
+
+ifeq ($(DSHOW_PLAYER),true)
+JPP_DEFS += -DDSHOW_PLAYER
+endif
+
+ifeq ($(HALF_DUPLEX),true)
+JPP_DEFS += -DHALF_DUPLEX
+endif
+
+ifeq ($(GSM_PLAYER),true)
+FEATURE_DEFINES += -DGSM_PLAYER
+endif
+
+ifeq ($(PCMU_PLAYER),true)
+JPP_DEFS += -DPCMU_PLAYER
+endif
+
+ifeq ($(JPEG_PLAYER),true)
+JPP_DEFS += -DJPEG_PLAYER
+endif
+
+ifeq ($(H263_PLAYER),true)
+JPP_DEFS += -DH263_PLAYER
+endif
+
+ifneq ($(MAX_MIXER_LINES),)
+JPP_DEFS += -DMMAPI_MAX_LINES=$(MAX_MIXER_LINES)
+endif
+
+ifneq ($(MAX_WAVE_LINES),)
+JPP_DEFS += -DMMAPI_MAX_WAVES=$(MAX_WAVE_LINES)
+endif
+
+ifneq ($(MAX_TONE_LINES),)
+JPP_DEFS += -DMMAPI_MAX_TONES=$(MAX_TONE_LINES)
+endif
+
+ifeq ($(NATIVE_VIDEO_TRANSFERS),true)
+JPP_DEFS += -DNATIVE_VIDEO_TRANSFERS
+endif
+
+JPP_DEFS += -DMAX_DOWNLOAD_LENGTH=$(MAX_DOWNLOAD_LENGTH)
+
+ifeq ($(USE_MIDP_MALLOC), true)
+   JPP_DEFS += -DENABLE_MIDP_MALLOC=1
+endif
+
+ifeq ($(VF_AUDIO3D),true)
+   JPP_DEFS += -DVF_AUDIO3D
+endif
+
+ifeq ($(VF_BARCODE),true)
+   JPP_DEFS += -DVF_BARCODE -DCAPTURE
+endif
+
+ifeq ($(USE_FILE_CONNECTION),true)
+   JPP_DEFS += -DUSE_FILE_CONNECTION
+endif
+
+ifeq ($(NATIVE_PLAYER),true)
+JPP_DEFS += -DNATIVE_PLAYER
+endif
+
+ifeq ($(NATIVE_TS_PLAYER),true)
+JPP_DEFS += -DNATIVE_TS_PLAYER
+endif
