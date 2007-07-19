@@ -1021,17 +1021,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             return;
         }
         
-        // Special case: It could be that no item in the current view
-        // is interactive, and thus the traverseIndexCopy is -1. If we
-        // are scrolling upwards, we artificially set it to be the last
-        // item on the form (+1) so that the getNextInteractiveItem()
-        // routine will subsequently reduce it by 1 and start searching
-        // for an interactive item from the bottom of the form upwards.
-        if (dir == Canvas.UP && traverseIndexCopy == -1) {
-            traverseIndexCopy = itemsCopy.length;
-        }
-
-        if (traverseIndexCopy > -1 && traverseIndexCopy < itemsCopy.length) {
+        if (traverseIndexCopy > -1) {
             // If there is a traversable item, we go ahead and traverse
             // to it. We do *not* scroll at all under these circumstances
             // because we have just performed a fresh page view (or scroll)
@@ -1047,12 +1037,28 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             int maxRate = traverseIndexCopy > -1 ?
                 howMuchItemVisible(itemsCopy[traverseIndexCopy]) : 0;
             
+            // Special case: It could be that no item in the current view
+            // is interactive
+            if (curIndex == -1 && (dir == Canvas.UP || dir == Canvas.LEFT)) { 
+                // If traverseIndexCopy equals to -1 and  we are scrolling upwards, we artificially
+                // set it to be the last item on the form (+1) so that it will be subsequently
+                // decreased by 1 and start searching for an interactive item from the bottom
+                // of the form upwards.
+                curIndex = itemsCopy.length;
+            } else if (curIndex == itemsCopy.length &&
+                       (dir == Canvas.DOWN || dir == Canvas.RIGHT)) {
+                // If the traverseIndexCopy equals to items.length. If we are scrolling downwards,
+                // we artificially set it to be the first item on the form (-1) so that it will be
+                // subsequently increased by 1 and start searching for an interactive item from the
+                // top of the form downwards.
+                curIndex = -1;
+            }
+            
             while (maxRate < 100) {
                 curIndex = getNextInteractiveItem(itemsCopy,
-                                                  (dir == Canvas.DOWN || dir == CustomItem.NONE) ?
-                                                  Canvas.RIGHT : Canvas.LEFT,
+                                                  dir == CustomItem.NONE ? Canvas.RIGHT : dir,
                                                   curIndex);
-                if (curIndex != -1) {
+                if (curIndex > -1) {
                     int rate  = howMuchItemVisible(itemsCopy[curIndex]);
                     if (rate > maxRate) {
                         maxRate = rate;
@@ -1064,15 +1070,12 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 }
             }
             
-            if (traverseIndexCopy > -1 && traverseIndexCopy < itemsCopy.length) {
-                if (nextIndex != -1 && nextIndex != traverseIndexCopy) {
-                    // It could be we need to traverse out of a current
-                    // item before paging
-                    itemsCopy[traverseIndexCopy].uCallTraverseOut();
-                    synchronized (Display.LCDUILock) {
-                        traverseIndex = -1;  // reset real index
-                        traverseIndexCopy = traverseIndex;
-                    }
+            if (nextIndex != traverseIndexCopy && traverseIndexCopy > -1 && nextIndex > -1) {
+                // It could be we need to traverse out of a current
+                // item before paging
+                itemsCopy[traverseIndexCopy].uCallTraverseOut();
+                synchronized (Display.LCDUILock) {
+                    traverseIndex = traverseIndexCopy = -1;  // reset real index
                 }
             } 
             /*
@@ -1307,23 +1310,23 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             
             while (true) {
                 switch (dir) {
-                    case Canvas.UP:
-                    case Canvas.LEFT:
-                        index -= 1;
-                        break;
-                    case Canvas.DOWN:
-                    case Canvas.RIGHT:
-                        index += 1;
-                        break;
-                    case CustomItem.NONE:
-                        // no - op
-                        break;
-                    default:
-                        // for safety/completeness.
-                        Logging.report(Logging.ERROR, 
-                                       LogChannels.LC_HIGHUI_FORM_LAYOUT,
-                                       "FormLFImpl: dir=" + dir);
-                        return index;
+                case Canvas.UP:
+                case Canvas.LEFT:
+                    index--;
+                    break;
+                case Canvas.DOWN:
+                case Canvas.RIGHT:
+                    index++;
+                    break;
+                case CustomItem.NONE:
+                    // no - op
+                    break;
+                default:
+                    // for safety/completeness.
+                    Logging.report(Logging.ERROR, 
+                                   LogChannels.LC_HIGHUI_FORM_LAYOUT,
+                                   "FormLFImpl: dir=" + dir);
+                    return index;
                 }
 
                 // If we've exhausted the set, stop looking                
