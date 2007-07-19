@@ -178,7 +178,10 @@ ASM_FLAGS     	:= $(subst -c,-P -D__SUNPRO_C=1,$(ASM_FLAGS))
 endif
 
 ifneq ($(CVM_TOOLS_BUILD), true)
-LINKLIBS 	= -lpthread -lm -lnsl -lsocket -ldl -lposix4 $(LINK_ARCH_LIBS)
+LINKLIBS 	= -lpthread -lm -lnsl -lsocket -lposix4 $(LINK_ARCH_LIBS)
+ifneq ($(CVM_EMBEDDED_SOLARIS), true)
+LINKLIBS 	+= -ldl
+endif
 endif
 
 #
