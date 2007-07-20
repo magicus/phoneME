@@ -404,6 +404,8 @@ JPP_DEFS += -DENABLE_JSR_177
 
 ifneq ($(TARGET_VM), cldc_vm)
 include $(JSR_177_DIR)/build/cdc_share/subsystem.gmk
+else
+include $(JSR_177_DIR)/build/cldc_application/subsystem.gmk
 endif
 
 # Tools and applets
@@ -624,7 +626,3 @@ jsr177_display:
 	@echo   "JSR_177_APDU_CARDDEVICE     = ""$(JSR_177_APDU_CARDDEVICE)" $(LOG)
 	@echo   "JSR_177_APDU_PLATFORM_API   = ""$(JSR_177_APDU_PLATFORM_API)" $(LOG)
 	@echo   "" $(LOG)
-
-ifeq ($(TARGET_VM), cldc_vm)
-include $(JSR_177_DIR)/build/cldc_application/subsystem.gmk
-endif
