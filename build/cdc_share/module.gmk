@@ -47,7 +47,17 @@ ABSTRACTIONS_NATIVES += \
 # classes
 ABSTRACTIONS_CLASSES += \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/TrustedClass.java \
-    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/Token.java
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/Token.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/SecurityTokenInitializer.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/MessageDigest.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchAlgorithmException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/DigestException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/log/LogChannels.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/log/Logging.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/io/Base64.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseInterface.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseAdapter.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/io/PrivilegedConnector.java
 
 ifeq ($(USE_JSR_177), true)
 # names of native source files (like 'file.c')
@@ -59,7 +69,6 @@ ABSTRACTIONS_NATIVES += \
 ABSTRACTIONS_CLASSES += \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/Cipher.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchPaddingException.java \
-    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchAlgorithmException.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/InvalidKeyException.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/InvalidAlgorithmParameterException.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/ShortBufferException.java \
@@ -86,8 +95,6 @@ ABSTRACTIONS_CLASSES += \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/Util.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/PRand.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/SecureRandom.java \
-    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/MessageDigest.java \
-    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/DigestException.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/Key.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/dialog/Dialog.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/dialog/MessageDialog.java \

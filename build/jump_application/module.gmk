@@ -49,8 +49,6 @@ ABSTRACTIONS_CLASSES = \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/app/AppPackage.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/app/AppIsolate.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/app/AppModel.java \
-    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/log/LogChannels.java \
-    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/log/Logging.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/main/Configuration.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/PIMPermission.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/Permission.java \
@@ -59,10 +57,6 @@ ABSTRACTIONS_CLASSES = \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/LocationPermission.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/BluetoothPermission.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/OBEXPermission.java \
-    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/io/Base64.java \
-    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseInterface.java \
-    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseAdapter.java \
-    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/io/PrivilegedConnector.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/ResourceConstants.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/StreamWriter.java \

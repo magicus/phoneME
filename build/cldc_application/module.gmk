@@ -65,7 +65,11 @@ ABSTRACTIONS_CLASSES = \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/i18n/ResourceConstants.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/TrustedClass.java \
-    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/Token.java
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/Token.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/SecurityTokenInitializer.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/MessageDigest.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/DigestException.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchAlgorithmException.java \
 
 ifeq ($(USE_JSR_177), true)
 ABSTRACTIONS_CLASSES += \
@@ -75,7 +79,6 @@ ABSTRACTIONS_CLASSES += \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/Util.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/Cipher.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/RSAPublicKey.java \
-    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchAlgorithmException.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/IllegalBlockSizeException.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/BadPaddingException.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/ShortBufferException.java \
@@ -85,9 +88,7 @@ ABSTRACTIONS_CLASSES += \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/CryptoParameter.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/SecretKey.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/IvParameter.java \
-    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/Key.java \
-    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/MessageDigest.java \
-    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/DigestException.java
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/crypto/Key.java
 endif
 
 # Specify romizer configuration file for the jsr

@@ -60,14 +60,24 @@ public class MessageDigest {
         }
     }
 
-    public void operate(byte[] input, int len, byte[] buf, int offset) throws DigestException  {
+    public void reset() {
         messageDigest.reset();
-        messageDigest.update(input, 0, len);
+    }
+
+    public void update(byte[] input, int offset, int len) {
+        messageDigest.update(input, offset, len);
+    }
+
+    public void digest(byte[] buf, int offset, int len) throws DigestException {
         try {
-            messageDigest.digest(buf, offset, messageDigest.getDigestLength());
+            messageDigest.digest(buf, offset, len);
         } catch (java.security.DigestException e) {
             throw new DigestException(e.getMessage());
         }
-    }    
+    }
+
+    public int getDigestLength() {
+        return messageDigest.getDigestLength();
+    }
 
 }
