@@ -64,7 +64,7 @@ SUBSYSTEM_IMAGEDCD_NATIVE_FILES += \
     imgdcd_png_decode.c
 
 # JPEG libray use with Putpixel
-    ifeq ($(USE_JPEG), true)
+ifeq ($(USE_JPEG), true)
 	vpath % $(JPEG_DIR)
 	SUBSYSTEM_IMAGEDCD_EXTRA_INCLUDES += -I$(JPEG_DIR)
 	SUBSYSTEM_IMAGEDCD_NATIVE_FILES += \
@@ -92,4 +92,4 @@ SUBSYSTEM_IMAGEDCD_NATIVE_FILES += \
 		jquant1.c \
 		jquant2.c \
 		jutils.c
-   endif
+endif
