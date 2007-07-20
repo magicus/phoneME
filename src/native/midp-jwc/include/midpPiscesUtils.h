@@ -27,18 +27,6 @@
 #ifndef MIDP_PISCES_UTILS_H
 #define MIDP_PISCES_UTILS_H
                                   
-#   ifdef PISCES_USE_JWC_OLD_IMPLEMENTATION //es-gate-1 implementation
-#       define PISCES_GET_DATA_POINTER(array) &array->elements[0]
-#       include <midpGraphics.h>
-#       include <midpLCDUI.h>
-#       include <images.h>
-
-extern VDC screenBuffer;
-
-VDC *
-setupImageVDC(jobject img, VDC *vdc);
-
-#   else // irbis implementation
 #       define PISCES_GET_DATA_POINTER(array) array
 #       include <imgapi_image.h>
 #       include <gxapi_graphics.h>
@@ -47,8 +35,6 @@ setupImageVDC(jobject img, VDC *vdc);
 
 
 #define getScreenBuffer(sbuf) \
-    ((sbuf == NULL) ? (&gxj_system_screen_buffer) : sbuf)
-
-#   endif //PISCES_USE_JWC_OLD_IMPLEMENTATION                                 
+    ((sbuf == NULL) ? (&gxj_system_screen_buffer) : sbuf)                                 
 
 #endif //MIDP_PISCES_UTILS_H

@@ -121,15 +121,6 @@ surface_acquire(AbstractSurface* surface, jobject surfaceHandle) {
                        graphicsHandle);
     
     if (!KNI_IsNullHandle(graphicsHandle)) {
-#ifdef PISCES_USE_JWC_OLD_IMPLEMENTATION      
-        VDC vdc;
-        VDC* pVDC;
-        
-        pVDC = setupVDC(graphicsHandle, &vdc);
-        pVDC = getVDC(pVDC);
-
-        surface->super.data = pVDC->hdc;
-#else
         java_graphics * gr;
         gxj_screen_buffer *pVDC;
         gxj_screen_buffer screen_buffer;
@@ -137,13 +128,13 @@ surface_acquire(AbstractSurface* surface, jobject surfaceHandle) {
         gr = GXAPI_GET_GRAPHICS_PTR(graphicsHandle);
         
         if (gr != NULL) {
-          pVDC = gxj_get_image_screen_buffer_impl((gr != NULL && gr->img != NULL)?gr->img->imageData:NULL, 
-              &screen_buffer, graphicsHandle);
+          pVDC = gxj_get_image_screen_buffer_impl(
+                        (gr != NULL && gr->img != NULL)?gr->img->imageData:NULL, 
+                        &screen_buffer, graphicsHandle);
              pVDC = (gxj_screen_buffer *)getScreenBuffer(pVDC);
         }
         
         surface->super.data = pVDC->pixelData;
-#endif
         
         surface->super.width = pVDC->width;
         surface->super.height = pVDC->height;

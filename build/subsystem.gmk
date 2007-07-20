@@ -45,7 +45,7 @@ endif
 INTERNAL_PISCES_DIR=$(PISCES_DIR)
 
 # Pisces defines
-ifdef PISCES_USE_JWC_OLD_IMPLEMENTATION
+ifeq ($(PISCES_USE_JWC_OLD_IMPLEMENTATION), true)
   EXTRA_CFLAGS += -DPISCES_USE_JWC_OLD_IMPLEMENTATION
 endif
 
@@ -177,10 +177,24 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
     vpath % $(INTERNAL_PISCES_DIR)/src/native/common/src
     vpath % $(INTERNAL_PISCES_DIR)/src/native/midp/src
 
+ifeq ($(PISCES_USE_JWC_OLD_IMPLEMENTATION), true)
+    vpath % $(INTERNAL_PISCES_DIR)/src/native/midp-jwc-old/src
+else    
+    vpath % $(INTERNAL_PISCES_DIR)/src/native/midp-jwc/src
+endif    
+
     INTERNAL_PISCES_INCLUDES += \
             -I$(INTERNAL_PISCES_DIR)/src/native/common/include \
-            -I$(INTERNAL_PISCES_DIR)/src/native/midp/include \
-
+            -I$(INTERNAL_PISCES_DIR)/src/native/midp/include
+            
+ifeq ($(PISCES_USE_JWC_OLD_IMPLEMENTATION), true)
+    INTERNAL_PISCES_INCLUDES += \
+            -I$(INTERNAL_PISCES_DIR)/src/native/midp-jwc-old/include
+else            
+    INTERNAL_PISCES_INCLUDES += \
+            -I$(INTERNAL_PISCES_DIR)/src/native/midp-jwc/include
+endif
+            
     INTERNAL_PISCES_SRC_FILES += \
                 PiscesBlit.c \
                 PiscesLibrary.c \
