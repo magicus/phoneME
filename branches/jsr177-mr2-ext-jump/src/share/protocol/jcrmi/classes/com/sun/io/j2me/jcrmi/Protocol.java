@@ -594,8 +594,10 @@ public class Protocol
 
         byte[] buf = Utils.stringToBytes(hashString);
 
+        SHA.reset();
+        SHA.update(buf, 0, buf.length);
         try {
-            SHA.operate(buf, buf.length, APDUBuffer, offset);
+            SHA.digest(APDUBuffer, offset, SHA.getDigestLength());
         } catch (DigestException e) {
             throw new RemoteException("SHA1 error");
         }        
