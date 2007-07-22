@@ -27,6 +27,10 @@ package com.sun.midp.security;
 
 import com.sun.midp.log.Logging;
 
+// #ifdef ENABLE_CDC
+   import com.sun.j2me.security.*;
+// #endif ENABLE_CDC
+
 /**
  * A utility class that initializes internal security. Creates the internal
  * security token and supports its distribution to various packages around
@@ -90,6 +94,16 @@ public final class SecurityInitializer {
      */
     public static SecurityToken requestToken(
             ImplicitlyTrustedClass trusted) throws SecurityException {
+
+// #ifdef ENABLE_CDC
+        try {
+            AccessController.checkPermission("com.sun.midp");
+            return impl.internalSecurityToken;
+        } catch (SecurityException se) {
+            // fall through to request a token using the class list
+        }
+// #endif ENABLE_CDC
+
         return impl.requestToken(trusted);
     }
 
