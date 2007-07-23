@@ -91,14 +91,9 @@ void SegmentedSourceROMWriter::init_declare_stream() {
 
 PathChar* SegmentedSourceROMWriter::rom_tmp_segment_file(int index) {
   const int n = index % 1000;
-  // printf("  [ ] SegmentedSourceROMWriter::rom_tmp_segment_file index = %d (%d, %d, %d)\n", index, n / 100, (n % 100) / 10, n % 10);
   FilePath::rom_tmp_segment_file[9] = (JvmPathChar)((n / 100) + '0');
   FilePath::rom_tmp_segment_file[10] = (JvmPathChar)((n % 100) / 10 + '0');
   FilePath::rom_tmp_segment_file[11] = (JvmPathChar)((n % 10) + '0');
-//  for (int i = 0; i < 16; i++) {
-//  	printf("%c", FilePath::rom_tmp_segment_file[i]);
-//  }
-//  printf("\n");
   return FilePath::rom_tmp_segment_file;
 }
 
@@ -107,10 +102,6 @@ PathChar* SegmentedSourceROMWriter::rom_segment_file(int index) {
   FilePath::rom_segment_file[9] = (JvmPathChar)((n / 100) + '0');
   FilePath::rom_segment_file[10] = (JvmPathChar)((n % 100) / 10 + '0');
   FilePath::rom_segment_file[11] = (JvmPathChar)((n % 10) + '0');
-//  for (int i = 0; i < 16; i++) {
-//  	printf("%c", FilePath::rom_segment_file[i]);
-//  }
-//  printf("\n");
   return FilePath::rom_segment_file;
 }
 
@@ -317,8 +308,6 @@ void SegmentedSourceROMWriter::write_compiled_text_reference(FileStream* stream,
  * footprint.
  */
 void SegmentedSourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
-  tty->print_cr("Writing text_klass_table ...");
-
   int i;
 
   UsingFastOops fast_oops;  
@@ -353,7 +342,6 @@ void SegmentedSourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
   OffsetVector sorter;
   sorter.initialize(JVM_SINGLE_ARG_CHECK);
 
-  tty->print_cr("  [ ] current stream index = %d", stream_index());
   //
   // (2) Print out the individual buckets
   //

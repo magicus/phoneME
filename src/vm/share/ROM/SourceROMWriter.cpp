@@ -333,7 +333,7 @@ void SourceROMWriter::write_copyright(Stream *stream, bool c_style_comments) {
 void SourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
   tty->print_cr("Writing text_klass_table ...");
 
-  int i;
+  int num_buckets = NUM_TEXT_KLASS_BUCKETS, i;
 
   UsingFastOops fast_oops;  
   ROMizerHashEntry::Fast info;
@@ -342,7 +342,7 @@ void SourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
   Oop::Fast record;
   int count = 0;
   TextKlassLookupTable::Fast table;
-  table().initialize(NUM_TEXT_KLASS_BUCKETS, 0 JVM_CHECK);
+  table().initialize(num_buckets, 0 JVM_CHECK);
 
   //
   // (1) Iterate over all objects in the _info_table, and add them into
@@ -371,8 +371,7 @@ void SourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
   // (2) Print out the individual buckets
   //
 
-  for (i=0; i < NUM_TEXT_KLASS_BUCKETS; i++) {
-
+  for (i=0; i<num_buckets; i++) {
     int num_written = 0;
     sorter.flush();
     main_stream()->print("static const int klass_table_%d[] = {\n\t", i);
@@ -409,10 +408,9 @@ void SourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
   }
 
   // Print the table, which points to all the buckets.
-  main_stream()->print_cr("const int  _rom_text_klass_table_size = %d;", 
-                           NUM_TEXT_KLASS_BUCKETS);
+  main_stream()->print_cr("const int  _rom_text_klass_table_size = %d;", num_buckets);
   main_stream()->print_cr("const int* _rom_text_klass_table[] = {");
-  for (i=0; i < NUM_TEXT_KLASS_BUCKETS; i++) {
+  for (i=0; i<num_buckets; i++) {
     main_stream()->print_cr("\t(const int*)klass_table_%d, ", i);
   }
   main_stream()->print_cr("};");

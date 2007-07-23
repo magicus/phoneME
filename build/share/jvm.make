@@ -626,7 +626,6 @@ $(GENERATED_ROM_FILE): $(ROM_GENERATOR) $(CLDC_ZIP) \
                        $(WorkSpace)/src/vm/cldc_rom.cfg \
                        $(WorkSpace)/src/vm/cldcx_rom.cfg \
                        $(WorkSpace)/src/vm/cldctest_rom.cfg
-	$(A)echo "ROM_SEGMENTS = $(ROM_SEGMENTS)" 
 	$(ROM_GENERATOR) -cp $(ROM_GEN_CLASSPATH) $(ROM_GEN_ARG) -romize
 	$(A)mv ROMImage*.*pp `dirname $@`;
 	$(A)mv ROMLog.txt $(GEN_DIR)
@@ -1822,7 +1821,6 @@ $(ANIX_LIB): $(JVM_LIB) $(ANIX_OBJS)
 
 $(JVM_EXE): $(CLDC_ZIP) $(EXE_OBJS) $(JVM_LIB) $(JVMX_LIB) $(JVMTEST_LIB)
 	$(A)echo "linking $@ ... "
-	$(A)echo "ROM_SEGMENTS_OBJS = $(ROM_SEGMENTS_OBJS)" 
 	$(A)$(LINK) -o $@ $(EXE_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) \
 	     $(PCSL_LIBS) $(LINK_FLAGS)
 	$(A)if [ "$(ENABLE_MAP_FILE)" != "false" ] &&             \
