@@ -73,6 +73,11 @@ void SegmentedSourceROMWriter::write_forward_declarations(FileStream* stream) {
     stream->print_cr("extern const int _rom_text_block%i[];", i);
   }
   stream->cr();
+
+  for (int i = 0; i < NUM_TEXT_KLASS_BUCKETS; i++) {
+    stream->print_cr("extern const int klass_table_%i[];", i);
+  }
+  stream->cr();
 }
 
 void SegmentedSourceROMWriter::init_declare_stream() {
@@ -90,10 +95,10 @@ PathChar* SegmentedSourceROMWriter::rom_tmp_segment_file(int index) {
   FilePath::rom_tmp_segment_file[9] = (JvmPathChar)((n / 100) + '0');
   FilePath::rom_tmp_segment_file[10] = (JvmPathChar)((n % 100) / 10 + '0');
   FilePath::rom_tmp_segment_file[11] = (JvmPathChar)((n % 10) + '0');
-  for (int i = 0; i < 16; i++) {
-  	printf("%c", FilePath::rom_tmp_segment_file[i]);
-  }
-  printf("\n");
+//  for (int i = 0; i < 16; i++) {
+//  	printf("%c", FilePath::rom_tmp_segment_file[i]);
+//  }
+//  printf("\n");
   return FilePath::rom_tmp_segment_file;
 }
 
@@ -102,10 +107,10 @@ PathChar* SegmentedSourceROMWriter::rom_segment_file(int index) {
   FilePath::rom_segment_file[9] = (JvmPathChar)((n / 100) + '0');
   FilePath::rom_segment_file[10] = (JvmPathChar)((n % 100) / 10 + '0');
   FilePath::rom_segment_file[11] = (JvmPathChar)((n % 10) + '0');
-  for (int i = 0; i < 16; i++) {
-  	printf("%c", FilePath::rom_segment_file[i]);
-  }
-  printf("\n");
+//  for (int i = 0; i < 16; i++) {
+//  	printf("%c", FilePath::rom_segment_file[i]);
+//  }
+//  printf("\n");
   return FilePath::rom_segment_file;
 }
 
@@ -125,7 +130,7 @@ void SegmentedSourceROMWriter::init_streams() {
 
 FileStream* SegmentedSourceROMWriter::set_stream(int index) {
   GUARANTEE(index >= ROM::MAIN_SEGMENT_INDEX &&
-            index <  ROM::SEGMENTS_STREAMS_COUNT, "Sanity");
+            index <= ROM::SEGMENTS_STREAMS_COUNT, "Sanity");
   _stream_ind = index;
   return main_stream();
 }
@@ -348,16 +353,19 @@ void SegmentedSourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
   OffsetVector sorter;
   sorter.initialize(JVM_SINGLE_ARG_CHECK);
 
-  printf("  [ ] current stream index = %d\n", stream_index());
+  tty->print_cr("  [ ] current stream index = %d", stream_index());
   //
   // (2) Print out the individual buckets
   //
 
+  const int saved_stream = stream_index();
   for (i=0; i < NUM_TEXT_KLASS_BUCKETS; i++) {
+    set_stream(stream_index() + 1);
+    write_segment_header();
 
     int num_written = 0;
     sorter.flush();
-    main_stream()->print("static const int klass_table_%d[] = {\n\t", i);
+    main_stream()->print("\nconst int klass_table_%d[] = {\n\t", i);
     record = table().get_record_at(i);
 
     // Sort the content of each bucket, so that we have the same output
@@ -387,8 +395,10 @@ void SegmentedSourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
         main_stream()->print(", ");
       }
     }
-    main_stream()->print_cr("0, 0 };");
+    main_stream()->print_cr("0, 0 };\n");
+    write_segment_footer();
   }
+  set_stream(saved_stream);
 
   // Print the table, which points to all the buckets.
   main_stream()->print_cr("const int  _rom_text_klass_table_size = %d;", 

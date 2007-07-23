@@ -410,7 +410,7 @@ public:
     DATA_STREAM_INDEX = TEXT_BLOCK_SEGMENTS_COUNT, // DATA stream index
     HEAP_STREAM_INDEX,               // HEAP stream index;
     STUFF_STREAM_INDEX,              // Other ROM objects;
-    SEGMENTS_STREAMS_COUNT = STUFF_STREAM_INDEX + NUM_TEXT_KLASS_BUCKETS,          
+    SEGMENTS_STREAMS_COUNT = STUFF_STREAM_INDEX + NUM_TEXT_KLASS_BUCKETS + 1,          
                                      // Number of pieces, ROMImage.cpp 
                                      // is divided into. {13 files} =
                                      //   {10 files, TEXT block parts} +

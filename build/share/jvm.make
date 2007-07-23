@@ -626,6 +626,7 @@ $(GENERATED_ROM_FILE): $(ROM_GENERATOR) $(CLDC_ZIP) \
                        $(WorkSpace)/src/vm/cldc_rom.cfg \
                        $(WorkSpace)/src/vm/cldcx_rom.cfg \
                        $(WorkSpace)/src/vm/cldctest_rom.cfg
+	$(A)echo "ROM_SEGMENTS = $(ROM_SEGMENTS)" 
 	$(ROM_GENERATOR) -cp $(ROM_GEN_CLASSPATH) $(ROM_GEN_ARG) -romize
 	$(A)mv ROMImage*.*pp `dirname $@`;
 	$(A)mv ROMLog.txt $(GEN_DIR)
@@ -1768,19 +1769,8 @@ EXE_OBJS +=         ROMImage$(OBJ_SUFFIX)
 
 ifeq ($(SeparateROMImage), true)
 ifeq ($(CompileROMImageSeparately), true)
-ROM_SEGMENTS_OBJS = ROMImage_00$(OBJ_SUFFIX) \
-		            ROMImage_01$(OBJ_SUFFIX) \
-		            ROMImage_02$(OBJ_SUFFIX) \
-		            ROMImage_03$(OBJ_SUFFIX) \
-		            ROMImage_04$(OBJ_SUFFIX) \
-		            ROMImage_05$(OBJ_SUFFIX) \
-		            ROMImage_06$(OBJ_SUFFIX) \
-		            ROMImage_07$(OBJ_SUFFIX) \
-		            ROMImage_08$(OBJ_SUFFIX) \
-		            ROMImage_09$(OBJ_SUFFIX) \
-		            ROMImage_10$(OBJ_SUFFIX) \
-		            ROMImage_11$(OBJ_SUFFIX) \
-		            ROMImage_12$(OBJ_SUFFIX)
+
+ROM_SEGMENTS_OBJS = $(foreach num,$(shell seq -w 0 140),ROMImage_$(num)$(OBJ_SUFFIX))
 
 EXE_OBJS := $(subst ROMImage$(OBJ_SUFFIX),,$(EXE_OBJS))
 EXE_OBJS += $(ROM_SEGMENTS_OBJS)
@@ -1788,20 +1778,7 @@ $(ROM_SEGMENTS_OBJS): $(GENERATED_ROM_FILE)
 
 endif
 
-ROM_SEGMENTS = $(GEN_DIR)/ROMImage_00.cpp \
-               $(GEN_DIR)/ROMImage_01.cpp \
-               $(GEN_DIR)/ROMImage_02.cpp \
-               $(GEN_DIR)/ROMImage_03.cpp \
-               $(GEN_DIR)/ROMImage_04.cpp \
-               $(GEN_DIR)/ROMImage_05.cpp \
-               $(GEN_DIR)/ROMImage_06.cpp \
-               $(GEN_DIR)/ROMImage_07.cpp \
-               $(GEN_DIR)/ROMImage_08.cpp \
-               $(GEN_DIR)/ROMImage_09.cpp \
-               $(GEN_DIR)/ROMImage_10.cpp \
-               $(GEN_DIR)/ROMImage_11.cpp \
-               $(GEN_DIR)/ROMImage_12.cpp \
-               $(GEN_DIR)/ROMImageGenerated.hpp
+ROM_SEGMENTS = $(foreach num,$(shell seq -w 0 140),$(GEN_DIR)/ROMImage_$(num).cpp)
 
 # Use $(GENERATED_ROM_FILE) as a marker to regenerate $(ROM_SEGMENTS).
 # Add $(ROM_SEGMENTS) into the set of prerequisites of $(GENERATED_ROM_FILE),
@@ -1845,6 +1822,7 @@ $(ANIX_LIB): $(JVM_LIB) $(ANIX_OBJS)
 
 $(JVM_EXE): $(CLDC_ZIP) $(EXE_OBJS) $(JVM_LIB) $(JVMX_LIB) $(JVMTEST_LIB)
 	$(A)echo "linking $@ ... "
+	$(A)echo "ROM_SEGMENTS_OBJS = $(ROM_SEGMENTS_OBJS)" 
 	$(A)$(LINK) -o $@ $(EXE_OBJS) $(JVMX_LIB) $(JVMTEST_LIB) $(JVM_LIB) \
 	     $(PCSL_LIBS) $(LINK_FLAGS)
 	$(A)if [ "$(ENABLE_MAP_FILE)" != "false" ] &&             \
