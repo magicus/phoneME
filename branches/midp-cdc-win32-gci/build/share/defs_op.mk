@@ -182,7 +182,12 @@ endif
 # Include JSR 177
 ifeq ($(USE_JSR_177), true)
 export JSR_177_DIR ?= $(COMPONENTS_DIR)/jsr177
-JSR_177_MAKE_FILE = $(JSR_177_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(PROJECT_JSR_177_DIR),)
+JSROP_JSR177_DIR = $(JSR_177_DIR)
+else
+JSROP_JSR177_DIR = $(PROJECT_JSR_177_DIR)
+endif
+JSR_177_MAKE_FILE = $(JSROP_JSR177_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 ifeq ($(wildcard $(JSR_177_MAKE_FILE)),)
 $(error JSR_177_DIR must point to a directory containing JSR 177 sources)
 endif
