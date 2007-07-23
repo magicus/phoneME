@@ -60,7 +60,7 @@ public class TransportHeader {
 
 	// profile:
 	int start = end + 1;
-	end = str.indexOf( "/", start);
+	end = str.indexOf( ";", start);
 
 	profile = str.substring( start, end);
 

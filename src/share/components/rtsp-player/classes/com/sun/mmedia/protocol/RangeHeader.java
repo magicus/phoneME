@@ -13,7 +13,14 @@ public class RangeHeader {
 
         String startPosStr = str.substring(start, end);
 
-        startPos = Long.parseLong(startPosStr);
+        if (startPosStr.equals("now"))
+        {
+            startPos = 0; //IMPL_NOTE: not sure it must actually be zero.
+        }
+        else
+        {
+            startPos = Long.parseLong(startPosStr);
+        }
     }
 
     public long getStartPos() {
