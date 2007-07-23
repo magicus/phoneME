@@ -643,6 +643,10 @@ initCstates()
 
 static const CVMSubOptionData knownOptSubOptions[] = {
 
+#ifdef CVM_HAS_PLATFORM_SPECIFIC_SUBOPTIONS
+#include "javavm/include/opt_md.h"
+#endif
+
     {"stackChunkSize", "Java stack chunk size",
 	CVM_INTEGER_OPTION,
 #ifdef CVM_JIT
