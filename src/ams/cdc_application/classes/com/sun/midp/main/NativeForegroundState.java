@@ -1,5 +1,5 @@
 /*
- *   
+ *
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -24,18 +24,32 @@
  * information or have any questions.
  */
 
-#include <midp_foreground_id.h>
+package com.sun.midp.main;
 
-#include <kni.h>
-#include <jvm.h>
+import com.sun.midp.security.*;
 
-/**
- * Sets the foreground display. 0 equals no display
- *
- * @param displayId ID of the foreground Display
- */
-KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_main_CdcMIDletSuiteLoader_setForegroundInNativeState) {
-    gForegroundDisplayId = KNI_GetParameterAsInt(1);
-    KNI_ReturnVoid();
+/** This class enables the native foreground state to be changed. */
+public class NativeForegroundState {
+    /** This class only has static methods. */
+    private NativeForegroundState() {}
+
+    /**
+     * Set foreground display native state, so the native code will know
+     * which display can draw.
+     *
+     * @param token token with the "com.sun.midp.ams" permission allowed
+     * @param displayId Display ID
+     */
+    public static void setState(SecurityToken token, int displayId) {
+        token.checkIfPermissionAllowed(Permissions.AMS);
+        setState(displayId);
+    }
+
+    /**
+     * Set foreground display native state, so the native code will know
+     * which display can draw.
+     *
+     * @param displayId Display ID
+     */
+    private static native void setState(int displayId);
 }

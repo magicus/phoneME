@@ -71,12 +71,13 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcMIDletLoader.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcMIDletSuiteLoader.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletAppImageGenerator.java \
-    $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/NativeForegroundState.java
 
 vpath % $(CDC_AMS_DIR)/native
 
 SUBSYSTEM_AMS_NATIVE_FILES += \
-   CdcMIDletSuiteLoader.c
+   NativeForegroundState.c
 
 ifdef INCLUDE_SHELL_SCRIPTS
   SUBSYSTEM_AMS_LAZY_MAKEFILES += \

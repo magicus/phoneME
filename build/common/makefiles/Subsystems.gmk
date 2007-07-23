@@ -67,7 +67,11 @@ else
     ifeq ($(CVM_INCLUDE_JUMP), true)
       include $(SUBSYSTEM_DIR)/ams/jump_application/$(SUBSYSTEM_MAKE_FILE)
     else
-      include $(SUBSYSTEM_DIR)/ams/cdc_application/$(SUBSYSTEM_MAKE_FILE)
+      ifeq ($(USE_OEM_AMS), true)
+        include $(OEM_AMS_DIR)/$(SUBSYSTEM_MAKE_FILE)
+      else
+        include $(SUBSYSTEM_DIR)/ams/cdc_application/$(SUBSYSTEM_MAKE_FILE)
+      endif
     endif
   endif
 endif

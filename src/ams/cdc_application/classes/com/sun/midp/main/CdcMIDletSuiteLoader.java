@@ -235,27 +235,6 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
     }
 
     /**
-     * Set foreground display native state, so the native code will know
-     * which display can draw.
-     *
-     * @param token token with the "com.sun.midp.ams" permission allowed
-     * @param displayId Display ID
-     */
-    public static void setForegroundInNativeState(SecurityToken token,
-                                                  int displayId) {
-        token.checkIfPermissionAllowed(Permissions.AMS);
-        setForegroundInNativeState(displayId);
-    }
-
-    /**
-     * Set foreground display native state, so the native code will know
-     * which display can draw.
-     *
-     * @param displayId Display ID
-     */
-    private static native void setForegroundInNativeState(int displayId);
-
-    /**
      * Gets AMS error message by generic error code.
      *
      * @param errorCode generic error code
@@ -434,7 +413,7 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
             return;
         }
 
-        setForegroundInNativeState(displayId);
+        NativeForegroundState.setState(internalSecurityToken, displayId);
 
         fc.handleDisplayForegroundNotifyEvent();
     }

@@ -53,7 +53,7 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.log.LoggingBase \
         com.sun.midp.main.CDCInit \
         com.sun.midp.main.Configuration \
-        com.sun.midp.main.CdcMIDletSuiteLoader \
+        com.sun.midp.main.NativeForegroundState \
         com.sun.midp.midletsuite.InstallInfo \
         com.sun.midp.midletsuite.MIDletSuiteImpl \
         com.sun.midp.midletsuite.MIDletSuiteStorage \
