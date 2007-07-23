@@ -53,5 +53,5 @@ MIDP_OBJECTS      = \
 
 LIBPATH           = /libpath:$(call POSIX2HOST,$(PCSL_OUTPUT_DIR)/$(PCSL_TARGET)/lib)
 MIDP_LIBS         = libpcsl_file.lib libpcsl_memory.lib libpcsl_print.lib \
-                    libpcsl_string.lib libpcsl_network.lib Ws2.lib gx.lib aygshell.lib ddraw.lib
+                    libpcsl_string.lib libpcsl_network.lib Ws2.lib gx.lib aygshell.lib
                              
