@@ -1,5 +1,5 @@
 /*
- * @(#)globals_md.h	1.5 06/10/10
+ * @(#)opt_md.h	1.0 07/07/05
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -24,21 +24,7 @@
  * information or have any questions. 
  *
  */
-
-#ifndef _WIN32_GLOBALS_MD_H
-#define _WIN32_GLOBALS_MD_H
-
-struct CVMTargetGlobalState {
-    /*
-     * Global variables for the target go here.
-     */
-    int dummy;
-    /* for wceIOWrite to use */
-    char *stdioPrefix;
-};
-
-#if _MSC_VER >= 1300
-#undef INTERFACE
-#endif
-
-#endif /* _WIN32_GLOBALS_MD_H */
+    {"stdioPrefix", "prefix for stdio files",
+        CVM_STRING_OPTION,
+    {{0, (CVMAddr)"\\", 0}},
+        &CVMglobals.target.stdioPrefix}, 

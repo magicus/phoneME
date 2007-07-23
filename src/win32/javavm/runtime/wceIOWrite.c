@@ -38,24 +38,52 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "jni.h"
 #include "javavm/include/porting/io.h"
 #include "javavm/include/io_md.h"
 #include "javavm/include/wceUtil.h"
+#include "javavm/include/globals.h"
 
 int initialized = 0;
 static HANDLE standardin, standardout, standarderr;
+char *memoryBuffer=NULL;
 
-static void
+static int
 initializeFileHandlers() {
-   standardin = CreateFile(_T("\\IN.txt"), GENERIC_READ, 
-                       FILE_SHARE_READ | FILE_SHARE_WRITE,
-                       0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-   standardout = CreateFile(_T("\\OUT.txt"), GENERIC_WRITE, 
-                        FILE_SHARE_READ | FILE_SHARE_WRITE,
-                        0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-   standarderr = CreateFile(_T("\\ERR.txt"), GENERIC_WRITE, 
-                        FILE_SHARE_READ | FILE_SHARE_WRITE,
-                        0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    char *consolePrefix=NULL;
+    TCHAR *inStr=NULL, *errStr=NULL, *outStr=NULL, *prefixStr=NULL;
+
+    if (CVMglobals.target.stdioPrefix == NULL) {
+        return 0;
+    }
+
+    consolePrefix = CVMglobals.target.stdioPrefix;
+    if (strlen(consolePrefix) > 0) {
+        prefixStr = createTCHAR(consolePrefix);
+    }
+    else {
+        prefixStr = _tcsdup(_T("\\"));
+    }
+    inStr = (TCHAR*)malloc(sizeof(TCHAR)*(strlen("\\IN.txt") + _tcslen(prefixStr)+1));
+    _stprintf(inStr, _T("%s\\IN.txt"), prefixStr);
+    standardin = CreateFile(inStr, GENERIC_READ, 
+                           FILE_SHARE_READ | FILE_SHARE_WRITE,
+                           0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    outStr = (TCHAR*)malloc(sizeof(TCHAR)*(strlen("\\OUT.txt") + _tcslen(prefixStr)+1));
+    _stprintf(outStr, _T("%s\\OUT.txt"), prefixStr);
+    standardout = CreateFile(outStr, GENERIC_WRITE, 
+                             FILE_SHARE_READ | FILE_SHARE_WRITE,
+                             0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    errStr = (TCHAR*)malloc(sizeof(TCHAR)*(strlen("\\ERR.txt") + _tcslen(prefixStr)+1));
+    _stprintf(errStr, _T("%s\\ERR.txt"), prefixStr);
+    standarderr = CreateFile(errStr, GENERIC_WRITE, 
+                            FILE_SHARE_READ | FILE_SHARE_WRITE,
+                            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    if (inStr != NULL) free(inStr);
+    if (outStr != NULL) free(outStr);
+    if (errStr != NULL) free(errStr);
+    if (prefixStr != NULL) freeTCHAR(prefixStr);
+    return 1;
 }
 
 int 
@@ -65,9 +93,29 @@ writeStandardIO(CVMInt32 fd, const void *buf, CVMUint32 nBytes) {
    int b = 0;
 
    if (!initialized) {
-      initialized = 1;
-      initializeFileHandlers();
+        initialized = initializeFileHandlers();
    }
+
+    if (!initialized) {
+        if (memoryBuffer == NULL)
+            memoryBuffer = (char*) malloc(sizeof(char) * nBytes +1);
+        else
+            memoryBuffer = (char*)realloc((char*)memoryBuffer, 
+                                          sizeof(char)*(strlen(memoryBuffer) + nBytes + 1));
+        strcat(memoryBuffer, buf);
+    } else if (memoryBuffer != NULL) {
+        if (fd == 1) {
+            if (standardout != INVALID_HANDLE_VALUE) {
+                WriteFile(standardout, memoryBuffer, strlen(memoryBuffer), &bytes, NULL);
+            }
+        } else if (fd == 2) {
+            if (standarderr != INVALID_HANDLE_VALUE) {
+                WriteFile(standarderr, memoryBuffer, strlen(memoryBuffer), &bytes, NULL);
+            }
+        }
+        free(memoryBuffer);
+        memoryBuffer = NULL;
+    }
 
    if (fd == 1) { /* stdout */
       if (standardout != INVALID_HANDLE_VALUE) {
@@ -80,6 +128,7 @@ writeStandardIO(CVMInt32 fd, const void *buf, CVMUint32 nBytes) {
    } else {
       NKDbgPrintfW(TEXT("Wrong file handler at writeStandardIO: %d"), fd);
    } 
+   return nBytes;
    if (b) {
       return bytes;
    } else {
@@ -94,26 +143,24 @@ readStandardIO(CVMInt32 fd, void *buf, CVMUint32 nBytes) {
    int b = 0;
 
    if (!initialized) {
-      initialized = 1;
-      initializeFileHandlers();
+        initialized = initializeFileHandlers();
    }
 
    if (standardin != INVALID_HANDLE_VALUE) { 
       b = ReadFile(standardin, buf, nBytes, &bytes, NULL);
    }
 
-   if (b) {
-      return bytes;
+  if (b) {
+     return bytes;
    } else {
-      return 0;
+     return 0;
    }
 }
 
 void
 initializeStandardIO() {
    if (!initialized) {
-      initialized = 1;
-      initializeFileHandlers();
-   }
+      initialized = initializeFileHandlers();
+    }
 }
 
