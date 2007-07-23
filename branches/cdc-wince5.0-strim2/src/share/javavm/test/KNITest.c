@@ -68,9 +68,9 @@ KNIDECL(KNITest_testLongArgs) {
 
 KNIEXPORT KNI_RETURNTYPE_DOUBLE
 KNIDECL(KNITest_testDoubleArgs) {
-    jlong x = KNI_GetParameterAsDouble(1);
-    jlong y = KNI_GetParameterAsDouble(3);
-    jlong z = KNI_GetParameterAsDouble(5);
+    jdouble x = KNI_GetParameterAsDouble(1);
+    jdouble y = KNI_GetParameterAsDouble(3);
+    jdouble z = KNI_GetParameterAsDouble(5);
     KNI_ReturnDouble(x*y+z);
 }
 
