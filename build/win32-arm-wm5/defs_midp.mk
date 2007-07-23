@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -25,6 +25,12 @@
 # MIDP defs for WinCE 5.0 target
 #
 
-MIDP_LIBS += ddraw.lib
-
 USE_DIRECTDRAW = true
+
+ifeq ($(USE_DIRECTDRAW), true)
+MIDP_LIBS += ddraw.lib
+endif
+
+# need revisit : generate list of required platform specific libs
+# JSR 75
+MIDP_LIBS += cellcore.lib ole32.lib note_prj.lib
