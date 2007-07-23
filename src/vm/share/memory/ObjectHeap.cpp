@@ -738,9 +738,9 @@ void LiveRange::set_next_live(OopDesc** p) {
 void LiveRange::set_next_dead(OopDesc** p) {
   size_t first_word = (size_t) *_position;
   if (first_word == 0x1) {
-    *_position = (OopDesc*) ((size_t) p | 0x1);
+    _position[0] = (OopDesc*) ((size_t) p | 0x1);
   } else {
-    *(_position+1) = (OopDesc*) p;
+    _position[1] = (OopDesc*) p;
   }
 }
 
@@ -1936,7 +1936,7 @@ void ObjectHeap::mark_forward_pointer(OopDesc** p) {
   }
 }
 
-inline OopDesc** ObjectHeap::mark_forward_pointers() {
+inline OopDesc** ObjectHeap::mark_forward_pointers( void ) {
   OopDesc** p = _collection_area_start;
   OopDesc** const inline_allocation_top = _inline_allocation_top;
   OopDesc** const end_scan = inline_allocation_top;
@@ -2036,6 +2036,9 @@ inline void ObjectHeap::compute_new_object_locations() {
   const int  slice_size             = _slice_size;
   const int  slice_shift            = _slice_shift;
   address bitvector_base            = _bitvector_base;
+
+  const juint* const last_bitvector_word_ptr =
+    get_bitvectorword_for_unaligned(inline_allocation_top);
 
   bool split_space = (old_generation_end != young_generation_start);
   bool compaction_started = false;
@@ -2141,16 +2144,14 @@ inline void ObjectHeap::compute_new_object_locations() {
 
       // Find next live object by scanning bitmap
       // Compute value of next_bitvector_word_ptr, next_p and bits
-      juint *bitvector_word_ptr = get_bitvectorword_for_unaligned(p);
-      int trash_bits =
+      juint* bitvector_word_ptr = get_bitvectorword_for_unaligned(p);
+      const int trash_bits =
           p - ObjectHeap::get_aligned_for_bitvectorword(bitvector_word_ptr);
       GUARANTEE(0 <= trash_bits && trash_bits <= 31, "Sanity");
 
       juint bitword = *bitvector_word_ptr & ~((1 << (trash_bits)) - 1);
 
       // Find non-zero bitvector word (if any)
-      juint* last_bitvector_word_ptr =
-         get_bitvectorword_for_unaligned(inline_allocation_top);
       while (bitvector_word_ptr <= last_bitvector_word_ptr && bitword == 0) {
         bitword = *++bitvector_word_ptr;
       }
