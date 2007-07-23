@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -20,8 +20,6 @@
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions. 
-#
-# @(#)host_defs.mk	1.10 06/10/24
 #
 
 ifeq ($(HOST_DEVICE), Interix)
@@ -94,9 +92,11 @@ ifeq ($(CVM_DEBUG), true)
 DEBUG_LINKFLAGS = /debug
 MT_DLL_FLAGS = /MDd
 MT_EXE_FLAGS = /MTd
+VC_DEBUG_POSTFIX = d
 else
 MT_DLL_FLAGS = /MD
 MT_EXE_FLAGS = /MT
+VC_DEBUG_POSTFIX = 
 endif
 MT_FLAGS = $(MT_DLL_FLAGS)
 CCFLAGS += $(MT_FLAGS)
@@ -121,7 +121,7 @@ endif
 else
 LINKFLAGS	=
 endif
-LINKLIBS = $(WIN_LINKLIBS) $(LINK_ARCH_LIBS) $(LIBPATH)
+LINKLIBS = $(sort $(WIN_LINKLIBS)) $(LINK_ARCH_LIBS) $(LIBPATH)
 LINKLIBS_JCS    =
 
 SO_LINKLIBS	= $(LINKLIBS) $(LIBPATH)
