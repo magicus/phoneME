@@ -84,7 +84,6 @@
 
 #define ids_path	JNI_STATIC_MD(java_io_Win32FileSystem, ids_path)
 
-
 JNIEXPORT void JNICALL
 Java_java_io_Win32FileSystem_initIDs(JNIEnv *env, jclass cls)
 {
@@ -93,8 +92,6 @@ Java_java_io_Win32FileSystem_initIDs(JNIEnv *env, jclass cls)
     ids_path = (*env)->GetFieldID(env, fileClass,
 				  "path", "Ljava/lang/String;");
 }
-
-#ifndef _UNICODE
 
 /*
  * Defined in canonicalize_md.c
@@ -148,7 +145,6 @@ Java_java_io_Win32FileSystem_getBooleanAttributes(JNIEnv *env, jobject this,
     
     return rv;
 }
-
 
 JNIEXPORT jboolean JNICALL
 Java_java_io_Win32FileSystem_checkAccess(JNIEnv *env, jobject this,
@@ -459,7 +455,9 @@ Java_java_io_Win32FileSystem_setReadOnly(JNIEnv *env, jobject this,
 
 /* -- Filesystem interface -- */
 
+#ifndef _UNICODE
 #include <direct.h>
+#endif
 
 JNIEXPORT jobject JNICALL
 Java_java_io_Win32FileSystem_getDriveDirectory(JNIEnv *env, jclass ignored,
@@ -471,8 +469,6 @@ Java_java_io_Win32FileSystem_getDriveDirectory(JNIEnv *env, jclass ignored,
     if (isalpha(*p) && (p[1] == ':')) p += 2;
     return JNU_NewStringPlatform(env, p);
 }
-
-#endif
 
 JNIEXPORT jint JNICALL
 Java_java_io_Win32FileSystem_listRoots0(JNIEnv *env, jclass ignored)

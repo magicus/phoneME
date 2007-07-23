@@ -35,7 +35,11 @@ VS8_PATH         = $(call WIN2POSIX,$(VS8_DIR))
 VC_DIR           = $(VS8_DIR)/VC
 VC_PATH          = $(VS8_PATH)/VC
 
-LINKEXE_LIBS += /nodefaultlib:libc.lib
+PLATFORM_TOOLS_PATH	= $(VC_PATH)/ce/bin/x86_arm
+COMMON_TOOLS_PATH	= $(VS8_PATH)/Common7/Tools/Bin
+
+LINKEXE_LIBS += /nodefaultlib:libc.lib corelibc.lib
+WIN_LINKLIBS += corelibc.lib
 
 include ../win32/wince50_defs.mk
 
