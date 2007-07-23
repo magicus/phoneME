@@ -136,7 +136,9 @@ $(RUNMIDLET): force_midp_build
 	             $(MIDP_JSROP_USE_FLAGS) \
 	             -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
 ifneq ($(USE_JUMP), true)
+  ifeq ($(INCLUDE_SHELL_SCRIPTS), true)
 	$(AT)cp $@ $(CVM_BINDIR)
+  endif
 endif
 	@echo "<==== end building MIDP natives"
 
