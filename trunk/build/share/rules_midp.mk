@@ -75,6 +75,8 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 		     VM_BOOTCLASSPATH=$(VM_BOOTCLASSPATH) \
 		     CVM_BUILDTIME_CLASSESZIP=$(CVM_BUILDTIME_CLASSESZIP) \
 	             $(MIDP_JSROP_USE_FLAGS) \
+	             USE_OEM_AMS=$(USE_OEM_AMS) \
+	             OEM_AMS_DIR=$(OEM_AMS_DIR) \
 	             rom -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
 	@echo "<==== end building MIDP classes"
 
