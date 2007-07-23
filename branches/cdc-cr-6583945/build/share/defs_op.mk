@@ -294,6 +294,16 @@ endif
 include $(JSR_280_DEFS_FILE)
 endif
 
+# Include API Extensions
+ifeq ($(USE_API_EXTENSIONS), true)
+API_EXTENSIONS_MAKE_FILE = $(API_EXTENSIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(API_EXTENSIONS_MAKE_FILE)),)
+$(error API_EXTENSIONS_MAKE_FILE must point to a directory containing API Extensions sources)
+endif
+include $(API_EXTENSIONS_MAKE_FILE)
+JSROP_JARS=$(API_EXTENSIONS_JAR) $(JSROP_BUILD_JARS)
+endif
+
 ifeq ($(CVM_INCLUDE_JAVACALL), true)
 JAVACALL_TARGET?=$(TARGET_OS)_$(TARGET_CPU_FAMILY)
 JAVACALL_FLAGS = $(JSROP_OP_FLAGS)
