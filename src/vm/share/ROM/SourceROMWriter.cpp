@@ -333,7 +333,7 @@ void SourceROMWriter::write_copyright(Stream *stream, bool c_style_comments) {
 void SourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
   tty->print_cr("Writing text_klass_table ...");
 
-  int num_buckets = NUM_TEXT_KLASS_BUCKETS, i;
+  int i;
 
   UsingFastOops fast_oops;  
   ROMizerHashEntry::Fast info;
@@ -342,7 +342,7 @@ void SourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
   Oop::Fast record;
   int count = 0;
   TextKlassLookupTable::Fast table;
-  table().initialize(num_buckets, 0 JVM_CHECK);
+  table().initialize(NUM_TEXT_KLASS_BUCKETS, 0 JVM_CHECK);
 
   //
   // (1) Iterate over all objects in the _info_table, and add them into
@@ -370,11 +370,21 @@ void SourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
   //
   // (2) Print out the individual buckets
   //
-
-  for (i=0; i<num_buckets; i++) {
+#if ENABLE_SEGMENTED_CLASS_TABLE
+  const int saved_stream = stream_index();
+#endif
+  for (i=0; i<NUM_TEXT_KLASS_BUCKETS; i++) {
+#if ENABLE_SEGMENTED_CLASS_TABLE
+    set_stream(stream_index() + 1);
+    write_segment_header();
+#endif
     int num_written = 0;
     sorter.flush();
+#if ENABLE_SEGMENTED_CLASS_TABLE
+    main_stream()->print("const int klass_table_%d[] = {\n\t", i);
+#else
     main_stream()->print("static const int klass_table_%d[] = {\n\t", i);
+#endif
     record = table().get_record_at(i);
 
     // Sort the content of each bucket, so that we have the same output
@@ -405,12 +415,18 @@ void SourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
       }
     }
     main_stream()->print_cr("0, 0 };");
+#if ENABLE_SEGMENTED_CLASS_TABLE
+    write_segment_footer();
+#endif
   }
+#if ENABLE_SEGMENTED_CLASS_TABLE
+  set_stream(saved_stream);
+#endif
 
   // Print the table, which points to all the buckets.
-  main_stream()->print_cr("const int  _rom_text_klass_table_size = %d;", num_buckets);
+  main_stream()->print_cr("const int  _rom_text_klass_table_size = %d;", NUM_TEXT_KLASS_BUCKETS);
   main_stream()->print_cr("const int* _rom_text_klass_table[] = {");
-  for (i=0; i<num_buckets; i++) {
+  for (i=0; i<NUM_TEXT_KLASS_BUCKETS; i++) {
     main_stream()->print_cr("\t(const int*)klass_table_%d, ", i);
   }
   main_stream()->print_cr("};");

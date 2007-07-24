@@ -127,6 +127,11 @@ private:
   virtual void write_segment_header() {}
   virtual void write_segment_footer() {}
 
+#if ENABLE_SEGMENTED_CLASS_TABLE
+  virtual FileStream* set_stream(int index) {return NULL;}
+  virtual int stream_index() {return ROM::MAIN_SEGMENT_INDEX;}
+#endif
+
   void write_general_reference(FileStream* stream, int offset, 
                                int delta, const char* block_name);
   void write_method_comments(FileStream* stream, CompiledMethod* cm);
@@ -155,7 +160,7 @@ public:
   virtual void init_streams();
   virtual void write_copyright(Stream *stream, bool c_style_comments);
 
-  virtual void write_text_klass_table(JVM_SINGLE_ARG_TRAPS);
+  void write_text_klass_table(JVM_SINGLE_ARG_TRAPS);
 
   virtual void write_objects(JVM_SINGLE_ARG_TRAPS);
   virtual void find_offsets(JVM_SINGLE_ARG_TRAPS);

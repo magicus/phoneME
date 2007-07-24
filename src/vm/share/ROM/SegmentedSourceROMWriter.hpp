@@ -70,7 +70,10 @@ private:
   PathChar* rom_segment_file(int index);
   void save_file_streams();
   void restore_file_streams();
-  FileStream* set_stream(int index);
+  virtual FileStream* set_stream(int index);
+#if ENABLE_SEGMENTED_CLASS_TABLE
+  virtual int stream_index() {return _stream_ind;}
+#endif
   void copy_from_tmp(int pass_ind);
   void partial_write_objects(int pass_num, int block_size, 
     SourceObjectWriter* writer JVM_TRAPS);
@@ -83,9 +86,6 @@ private:
   // &_main_segment_streams[ROM::STUFF_STREAM_INDEX].
   FileStream* _stuff_stream;
   FileStream _main_segment_streams[ROM::SEGMENTS_STREAMS_COUNT]; 
-public: 
-  int stream_index() {return _stream_ind;}
-  virtual void write_text_klass_table(JVM_SINGLE_ARG_TRAPS);
 };
 
 #endif // ENABLE_ROM_GENERATOR && USE_SEGMENTED_TEXT_BLOCK_WRITER

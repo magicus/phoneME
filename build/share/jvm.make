@@ -1769,7 +1769,11 @@ EXE_OBJS +=         ROMImage$(OBJ_SUFFIX)
 ifeq ($(SeparateROMImage), true)
 ifeq ($(CompileROMImageSeparately), true)
 
+ifeq ($(ENABLE_SEGMENTED_CLASS_TABLE), true)
 ROM_SEGMENTS_OBJS = $(foreach num,$(shell seq -w 0 140),ROMImage_$(num)$(OBJ_SUFFIX))
+else
+ROM_SEGMENTS_OBJS = $(foreach num,$(shell seq -w 0 12),ROMImage_$(num)$(OBJ_SUFFIX))
+endif
 
 EXE_OBJS := $(subst ROMImage$(OBJ_SUFFIX),,$(EXE_OBJS))
 EXE_OBJS += $(ROM_SEGMENTS_OBJS)
@@ -1777,7 +1781,11 @@ $(ROM_SEGMENTS_OBJS): $(GENERATED_ROM_FILE)
 
 endif
 
+ifeq ($(ENABLE_SEGMENTED_CLASS_TABLE), true)
 ROM_SEGMENTS = $(foreach num,$(shell seq -w 0 140),$(GEN_DIR)/ROMImage_$(num).cpp)
+else
+ROM_SEGMENTS = $(foreach num,$(shell seq -w 0 12),$(GEN_DIR)/ROMImage_$(num).cpp)
+endif
 
 # Use $(GENERATED_ROM_FILE) as a marker to regenerate $(ROM_SEGMENTS).
 # Add $(ROM_SEGMENTS) into the set of prerequisites of $(GENERATED_ROM_FILE),

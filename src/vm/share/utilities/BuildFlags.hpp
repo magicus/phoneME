@@ -501,6 +501,9 @@
 // ENABLE_CODE_PATCHING                 0,0 Use code patching mechanism for
 //                                          timer tick checking optimizations.
 //
+// ENABLE_SEGMENTED_CLASS_TABLE         0,0 Split the class table inside ROM text 
+//                                          block into several segments.
+//
 //============================================================================
 // ENABLE_FLAGS_END }}
 //============================================================================
@@ -701,6 +704,10 @@
 
 #if !ENABLE_TIMER_THREAD && !SUPPORTS_TIMER_INTERRUPT
 #error "TIMER_INTERRUPT is not supported in this configuration"
+#endif
+
+#if ENABLE_SEGMENTED_CLASS_TABLE && !ENABLE_SEGMENTED_ROM_TEXT_BLOCK
+#error "ENABLE_SEGMENTED_CLASS_TABLE is not supported in this configuration"
 #endif
 
 //
