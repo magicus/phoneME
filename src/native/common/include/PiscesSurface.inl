@@ -35,19 +35,19 @@ static INLINE void surface_dispose(Surface* surface);
 static INLINE void surface_setRGB(Surface* dstSurface, jint x, jint y,
                                   jint width, jint height, jint* data,
                                   jint scanLength);
-static INLINE void surface_drawSurface(Surface* dstSurface, jint dstX,
+/*static INLINE void surface_drawSurface(Surface* dstSurface, jint dstX,
                                        jint dstY, jint width, jint height,
                                        Surface* srcSurface, jint srcX,
                                        jint srcY, jfloat opacity);
 static INLINE void surface_drawRGB(Surface* dstSurface, jint x, jint y,
                                    jint width, jint height, jint* data,
-                                   jint scanLength, jfloat opacity);
+                                   jint scanLength, jfloat opacity);*/
 
 static void setRGB(jint* src, jint srcScanLength, jint* dst, jint dstScanLength,
                    jint width, jint height);
-static void drawRGB(jint* src, jint srcScanLength, jint* dst,
+/*static void drawRGB(jint* src, jint srcScanLength, jint* dst,
                     jint dstScanLength, jint width, jint height,
-                    jfloat opacity);
+                    jfloat opacity);*/
 
 static INLINE void
 surface_dispose(Surface* surface) {
@@ -61,7 +61,7 @@ surface_setRGB(Surface* dstSurface, jint x, jint y,
            dstSurface->width, data, scanLength, width, height);
 }
 
-static INLINE void
+/*static INLINE void
 surface_drawSurface(Surface* dstSurface, jint dstX, jint dstY, jint width,
                     jint height, Surface* srcSurface, jint srcX, jint srcY,
                     jfloat opacity) {
@@ -76,7 +76,7 @@ surface_drawRGB(Surface* dstSurface, jint x, jint y, jint width, jint height,
                 jint* data, jint scanLength, jfloat opacity) {
     drawRGB((jint*)dstSurface->data + y * dstSurface->width + x, 
             dstSurface->width, data, scanLength, width, height, opacity);
-}
+}*/
 
 static void
 setRGB(jint* dst, jint dstScanLength, jint* src, jint srcScanLength,
@@ -94,7 +94,7 @@ setRGB(jint* dst, jint dstScanLength, jint* src, jint srcScanLength,
     }
 }
 
-static void
+/*static void
 drawRGB(jint* dst, jint dstScanLength, jint* src, jint srcScanLength,
         jint width, jint height, jfloat opacity) {
     jint srcScanRest = srcScanLength - width;
@@ -136,4 +136,4 @@ drawRGB(jint* dst, jint dstScanLength, jint* src, jint srcScanLength,
         src += srcScanRest;
         dst += dstScanRest;
     }
-}
+}*/
