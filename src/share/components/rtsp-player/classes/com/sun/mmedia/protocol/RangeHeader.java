@@ -5,8 +5,8 @@
 package com.sun.mmedia.rtsp.protocol;
 
 public class RangeHeader {
+    public final long NOW = -1;
     private long startPos;
-
     public RangeHeader(String str) {
         int start = str.indexOf('=') + 1;
         int end = str.indexOf('-');
@@ -15,7 +15,7 @@ public class RangeHeader {
 
         if (startPosStr.equals("now"))
         {
-            startPos = 0; //IMPL_NOTE: not sure it must actually be zero.
+            startPos = NOW;
         }
         else
         {

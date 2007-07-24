@@ -305,7 +305,7 @@ public class DefaultConfiguration extends Configuration {
         }
     // #endif ]
 
-    // #ifdef RTSP_PLAYER [
+    // #ifdef USE_RTSP [
         if (protocol.equals("rtsp")) {
 			if( nIsAmrSupported() )
 			{
@@ -382,7 +382,7 @@ public class DefaultConfiguration extends Configuration {
             // #ifdef USE_FILE_CONNECTION [
                 "file",
             // #endif ]
-            // #ifdef RTSP_PLAYER [
+            // #ifdef USE_RTSP [
                 "rtsp",
             // #endif ]
                 };
@@ -412,7 +412,7 @@ public class DefaultConfiguration extends Configuration {
             // #ifdef USE_FILE_CONNECTION [
                 "file",
             // #endif ]
-            // #ifdef RTSP_PLAYER [
+            // #ifdef USE_RTSP [
                 "rtsp",                
             // #endif ]
                 };
@@ -458,6 +458,9 @@ public class DefaultConfiguration extends Configuration {
             // #ifdef USE_FILE_CONNECTION [
                 "file",
             // #endif ]
+            // #ifdef USE_RTSP [
+                "rtsp",
+            // #endif ]
             };
         }
 
@@ -467,7 +470,7 @@ public class DefaultConfiguration extends Configuration {
             // #ifdef USE_FILE_CONNECTION [
                 "file",
             // #endif ]
-            // #ifdef RTSP_PLAYER [
+            // #ifdef USE_RTSP [
                 "rtsp",
             // #endif ]
             };
@@ -479,7 +482,7 @@ public class DefaultConfiguration extends Configuration {
             // #ifdef USE_FILE_CONNECTION [
                 "file",
             // #endif ]
-            // #ifdef RTSP_PLAYER [
+            // #ifdef USE_RTSP [
                 "rtsp",
             // #endif ]
             };        
@@ -509,7 +512,7 @@ public class DefaultConfiguration extends Configuration {
             // #ifdef USE_FILE_CONNECTION [
                 "file",
             // #endif ]
-            // #ifdef RTSP_PLAYER [
+            // #ifdef USE_RTSP [
                 "rtsp",
             // #endif ]
             };
@@ -530,7 +533,7 @@ public class DefaultConfiguration extends Configuration {
             // #ifdef USE_FILE_CONNECTION [
                 "file",
             // #endif ]
-            // #ifdef RTSP_PLAYER [
+            // #ifdef USE_RTSP [
                 "rtsp",
             // #endif ]
             };
@@ -541,7 +544,7 @@ public class DefaultConfiguration extends Configuration {
             // #ifdef USE_FILE_CONNECTION [
                 "file",
             // #endif ]
-            // #ifdef RTSP_PLAYER [
+            // #ifdef USE_RTSP [
                 "rtsp",
             // #endif ]
             };
@@ -553,7 +556,7 @@ public class DefaultConfiguration extends Configuration {
             // #ifdef USE_FILE_CONNECTION [
                 "file",
             // #endif ]
-            // #ifdef RTSP_PLAYER [
+            // #ifdef USE_RTSP [
                 "rtsp",
             // #endif ]
             };
@@ -565,7 +568,7 @@ public class DefaultConfiguration extends Configuration {
             // #ifdef USE_FILE_CONNECTION [
                 "file",
             // #endif ]
-            // #ifdef RTSP_PLAYER [
+            // #ifdef USE_RTSP [
                 "rtsp",
             // #endif ]
             };
@@ -577,7 +580,7 @@ public class DefaultConfiguration extends Configuration {
             // #ifdef USE_FILE_CONNECTION [
                 "file",
             // #endif ]
-            // #ifdef RTSP_PLAYER [
+            // #ifdef USE_RTSP [
                 "rtsp",
             // #endif ]
             };
@@ -589,7 +592,7 @@ public class DefaultConfiguration extends Configuration {
             // #ifdef USE_FILE_CONNECTION [
                 "file",
             // #endif ]
-            // #ifdef RTSP_PLAYER [
+            // #ifdef USE_RTSP [
                 "rtsp",
             // #endif ]
             };
