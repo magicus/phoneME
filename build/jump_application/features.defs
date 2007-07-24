@@ -87,10 +87,6 @@ ifeq ($(RTP_PLAYER),true)
 JPP_DEFS += -DRTP_PLAYER
 endif
 
-ifeq ($(RTSP_PLAYER),true)
-JPP_DEFS += -DRTSP_PLAYER
-endif
-
 ifeq ($(MNG_PLAYER),true)
 JPP_DEFS += -DMNG_PLAYER
 endif
@@ -222,6 +218,10 @@ endif
 
 ifeq ($(USE_FILE_CONNECTION),true)
    JPP_DEFS += -DUSE_FILE_CONNECTION
+endif
+
+ifeq ($(USE_RTSP),true)
+JPP_DEFS += -DUSE_RTSP
 endif
 
 ifeq ($(NATIVE_PLAYER),true)

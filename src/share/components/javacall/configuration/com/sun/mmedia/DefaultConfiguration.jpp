@@ -458,6 +458,9 @@ public class DefaultConfiguration extends Configuration {
             // #ifdef USE_FILE_CONNECTION [
                 "file",
             // #endif ]
+            // #ifdef USE_RTSP [
+                "rtsp",
+            // #endif ]
             };
         }
 

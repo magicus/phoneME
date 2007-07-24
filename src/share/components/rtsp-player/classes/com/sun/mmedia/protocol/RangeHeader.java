@@ -5,15 +5,22 @@
 package com.sun.mmedia.rtsp.protocol;
 
 public class RangeHeader {
+    public final long NOW = -1;
     private long startPos;
-
     public RangeHeader(String str) {
         int start = str.indexOf('=') + 1;
         int end = str.indexOf('-');
 
         String startPosStr = str.substring(start, end);
 
-        startPos = Long.parseLong(startPosStr);
+        if (startPosStr.equals("now"))
+        {
+            startPos = NOW;
+        }
+        else
+        {
+            startPos = Long.parseLong(startPosStr);
+        }
     }
 
     public long getStartPos() {
