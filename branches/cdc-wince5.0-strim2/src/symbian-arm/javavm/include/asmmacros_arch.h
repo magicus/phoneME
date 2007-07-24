@@ -32,6 +32,8 @@
 #undef  POUND
 #define POUND #
 
+#define ARM /* empty */
+
 #define PRESERVE8 /* empty */
 
 #define SET_SECTION_EXEC(x)
@@ -73,6 +75,8 @@
 #define IMPORT(x)
 
 #else /* __RVCT__ */
+
+#define ARM /* ARM */
 
 #define PRESERVE8 PRESERVE8
 
