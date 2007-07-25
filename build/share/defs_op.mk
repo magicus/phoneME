@@ -301,7 +301,7 @@ ifeq ($(wildcard $(API_EXTENSIONS_MAKE_FILE)),)
 $(error API_EXTENSIONS_MAKE_FILE must point to a directory containing API Extensions sources)
 endif
 include $(API_EXTENSIONS_MAKE_FILE)
-JSROP_JARS+= $(API_EXTENSIONS_JAR)
+JSROP_JARS += $(API_EXTENSIONS_JAR)
 endif
 
 ifeq ($(CVM_INCLUDE_JAVACALL), true)
