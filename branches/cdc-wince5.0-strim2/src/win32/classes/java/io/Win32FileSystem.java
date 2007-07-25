@@ -349,6 +349,15 @@ class Win32FileSystem extends FileSystem {
     private ExpiringCache prefixCache = new ExpiringCache();
 
     public String canonicalize(String path) throws IOException {
+// *** FIXME - temporary workaround for canonicalize problem FIXME
+if (path.startsWith("\\\\")) {
+  path = path.substring(1);
+}
+if (path.startsWith("..\\..\\..\\")) {
+   String subpath = path.substring(9);
+   path = new String("\\mbs-prof-minimal\\"+subpath);
+}
+// ***END FIXME - temporary workaround for canonicalize problem FIXME
         if (!useCanonCaches) {
             return canonicalize0(path);
         } else {

@@ -247,6 +247,7 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
     WCHAR path[1024];    /* Working copy of path */
     WCHAR *src, *dst, *dend, c;
 
+//printf("wcanonicalize: orig_path = %s\n", orig_path);
     /* Reject paths that contain wildcards */
     if (wwild(orig_path)) {
         errno = EINVAL;
@@ -259,6 +260,7 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
     if(!_wfullpath(path, orig_path, sizeof(path)/2)) {
         return -1;
     }
+//printf("wcanonicalize: path = %s\n", path);
 
     if (wdots(path)) /* Check for phohibited combinations of dots */
         return -1;
@@ -267,6 +269,7 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
     dst = result;        /* Place results here */
     dend = dst + size;        /* Don't go to or past here */
 
+//printf("wcanonicalize: src = %s\n", src);
     /* Copy prefix, assuming path is absolute */
     c = src[0];
     if (((c <= L'z' && c >= L'a') || (c <= L'Z' && c >= L'A'))
@@ -278,15 +281,18 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
         }
 
         src += 2;
-    } else if ((src[0] == L'\\') && (src[1] == L'\\')) {
+// *** FIXME - temporary workaround for canonicalize problem FIXME
+    } else if (0) {
+/////    } else if ((src[0] == L'\\') && (src[1] == L'\\')) {
         /* UNC pathname */
         WCHAR *p;
         p = wnextsep(src + 2);    /* Skip past host name */
         if (!*p) {
             /* A UNC pathname must begin with "\\\\host\\share",
                so reject this path as invalid if there is no share name */
-            errno = EINVAL;
-            return -1;
+// *** FIXME - temporary workaround for canonicalize problem FIXME
+//            errno = EINVAL;
+//            return -1;
         }
         p = wnextsep(p + 1);    /* Skip past share name */
         if (!(dst = wcp(dst, dend, L'\0', src, p)))
@@ -298,8 +304,9 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
 #endif
     {
         /* Invalid path */
-        errno = EINVAL;
-        return -1;
+// *** FIXME - temporary workaround for canonicalize problem FIXME
+//        errno = EINVAL;
+//        return -1;
     }
     /* At this point we have copied either a drive specifier ("z:") or a UNC
        prefix ("\\\\host\\share") to the result buffer, and src points to the
