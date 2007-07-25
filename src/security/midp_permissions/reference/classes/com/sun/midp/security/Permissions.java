@@ -193,6 +193,12 @@ public final class Permissions {
     public static final int AMMS_CAMERA_SHUTTERFEEDBACK = 50;
     /** javax.microedition.amms.control.tuner.setPreset permission ID. */
     public static final int AMMS_TUNER_SETPRESET = 51;
+    /** javax.microedition.io.Connector.sensor permission ID. */
+    public static final int SENSOR = 52;
+    /** javax.microedition.io.Connector.PrivateSensor permission ID. */
+    public static final int PRIVATE_SENSOR = 53;
+    /** javax.microedition.io.Connector.ProtectedSensor permission ID. */
+    public static final int PROTECTED_SENSOR = 54;
 
     /*
      * IMPL_NOTE: if this value is changed, the appropriate change should be
@@ -202,7 +208,7 @@ public final class Permissions {
      * ENABLE_CONTROL_ARGS_FROM_JAD=false).
      */
     /** Number of permissions. */
-    public static final int NUMBER_OF_PERMISSIONS = 52;
+    public static final int NUMBER_OF_PERMISSIONS = 55;
 
     /** Never allow the permission. */
     public static final byte NEVER = 0;
@@ -359,6 +365,15 @@ public final class Permissions {
         ResourceConstants.PERMISSION_CALL_CONTROL_QUE, 0,
         BLANKET, ONESHOT, ONESHOT, ONESHOT);
 
+    /** Sensor permission group. */
+    static final PermissionGroup SENSOR_GROUP = new PermissionGroup(
+        ResourceConstants.AMS_MGR_SENSOR_SETTINGS,
+        ResourceConstants.AMS_MGR_SENSOR_SETTINGS_QUE,
+        ResourceConstants.AMS_MGR_SENSOR_SETTINGS_QUE_DONT,
+        ResourceConstants.PERMISSION_SENSOR_TITLE,
+        ResourceConstants.PERMISSION_SENSOR_QUE, 0,
+        BLANKET, ONESHOT, ONESHOT, ONESHOT);
+
     /** Permission specifications. */
     static final PermissionSpec[] permissionSpecs = {
         new PermissionSpec(MIDP_PERMISSION_NAME, NEVER_GROUP),
@@ -468,7 +483,13 @@ public final class Permissions {
             MULTIMEDIA_GROUP),
         new PermissionSpec(
             "javax.microedition.amms.control.tuner.setPreset",
-            WRITE_USER_DATA_GROUP)
+            WRITE_USER_DATA_GROUP),
+        new PermissionSpec("javax.microedition.io.Connector.sensor",
+            SENSOR_GROUP),
+        new PermissionSpec("javax.microedition.sensor.PrivateSensor",
+            SENSOR_GROUP),
+        new PermissionSpec("javax.microedition.sensor.ProtectedSensor",
+            SENSOR_GROUP)
     };
 
     /**
@@ -673,7 +694,7 @@ public final class Permissions {
      * @return array of permission groups
      */
     public static PermissionGroup[] getSettingGroups() {
-        PermissionGroup[] groups = new PermissionGroup[12];
+        PermissionGroup[] groups = new PermissionGroup[13];
 
         groups[0] = NET_ACCESS_GROUP;
         groups[1] = SEND_MESSAGE_GROUP;
@@ -687,6 +708,7 @@ public final class Permissions {
         groups[9] = SMART_CARD_GROUP;
         groups[10] = AUTHENTICATION_GROUP;
         groups[11] = CALL_CONTROL_GROUP;
+        groups[12] = SENSOR_GROUP;
 
         return groups;
     }
