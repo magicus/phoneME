@@ -342,7 +342,7 @@ void SourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
   Oop::Fast record;
   int count = 0;
   TextKlassLookupTable::Fast table;
-  table().initialize(NUM_TEXT_KLASS_BUCKETS, 0 JVM_CHECK);
+  table().initialize(ROM::TEXT_KLASS_BUCKETS_COUNT, 0 JVM_CHECK);
 
   //
   // (1) Iterate over all objects in the _info_table, and add them into
@@ -373,7 +373,7 @@ void SourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
 #if ENABLE_SEGMENTED_CLASS_TABLE
   const int saved_stream = stream_index();
 #endif
-  for (i=0; i<NUM_TEXT_KLASS_BUCKETS; i++) {
+  for (i=0; i<ROM::TEXT_KLASS_BUCKETS_COUNT; i++) {
 #if ENABLE_SEGMENTED_CLASS_TABLE
     set_stream(stream_index() + 1);
     write_segment_header();
@@ -424,9 +424,10 @@ void SourceROMWriter::write_text_klass_table(JVM_SINGLE_ARG_TRAPS) {
 #endif
 
   // Print the table, which points to all the buckets.
-  main_stream()->print_cr("const int  _rom_text_klass_table_size = %d;", NUM_TEXT_KLASS_BUCKETS);
+  main_stream()->print_cr("const int  _rom_text_klass_table_size = %d;", 
+    ROM::TEXT_KLASS_BUCKETS_COUNT);
   main_stream()->print_cr("const int* _rom_text_klass_table[] = {");
-  for (i=0; i<NUM_TEXT_KLASS_BUCKETS; i++) {
+  for (i=0; i<ROM::TEXT_KLASS_BUCKETS_COUNT; i++) {
     main_stream()->print_cr("\t(const int*)klass_table_%d, ", i);
   }
   main_stream()->print_cr("};");

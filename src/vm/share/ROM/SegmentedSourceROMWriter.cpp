@@ -75,7 +75,7 @@ void SegmentedSourceROMWriter::write_forward_declarations(FileStream* stream) {
   stream->cr();
 
 #if ENABLE_SEGMENTED_CLASS_TABLE 
-  for (int i = 0; i < NUM_TEXT_KLASS_BUCKETS; i++) {
+  for (int i = 0; i < ROM::TEXT_KLASS_BUCKETS_COUNT; i++) {
     stream->print_cr("extern const int klass_table_%i[];", i);
   }
   stream->cr();
@@ -98,9 +98,9 @@ PathChar* SegmentedSourceROMWriter::rom_tmp_segment_file(int index) {
   FilePath::rom_tmp_segment_file[10] = (JvmPathChar)((n % 100) / 10 + '0');
   FilePath::rom_tmp_segment_file[11] = (JvmPathChar)((n % 10) + '0');
 #else
-  const int n = index % 100; 
-  FilePath::rom_tmp_segment_file[9] = (JvmPathChar)((n / 10) + '0'); 
-  FilePath::rom_tmp_segment_file[10] = (JvmPathChar)((n % 10) + '0'); 
+  const int n = index % 100;
+  FilePath::rom_tmp_segment_file[9] = (JvmPathChar)((n / 10) + '0');
+  FilePath::rom_tmp_segment_file[10] = (JvmPathChar)((n % 10) + '0');
 #endif
   return FilePath::rom_tmp_segment_file;
 }
@@ -112,9 +112,9 @@ PathChar* SegmentedSourceROMWriter::rom_segment_file(int index) {
   FilePath::rom_segment_file[10] = (JvmPathChar)((n % 100) / 10 + '0');
   FilePath::rom_segment_file[11] = (JvmPathChar)((n % 10) + '0');
 #else
-  const int n = index % 100; 
-  FilePath::rom_segment_file[9] = (JvmPathChar)((n / 10) + '0'); 
-  FilePath::rom_segment_file[10] = (JvmPathChar)((n % 10) + '0'); 
+  const int n = index % 100;
+  FilePath::rom_segment_file[9] = (JvmPathChar)((n / 10) + '0');
+  FilePath::rom_segment_file[10] = (JvmPathChar)((n % 10) + '0');
 #endif
   return FilePath::rom_segment_file;
 }

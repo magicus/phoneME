@@ -121,6 +121,12 @@ ifndef BUILD_VERSION
 BUILD_VERSION       = internal
 endif
 
+ifeq ($(ENABLE_SEGMENTED_CLASS_TABLE), true)
+ROM_SEGMENTS_COUNT = 140
+else
+ROM_SEGMENTS_COUNT = 12
+endif
+
 #----------------------------------------------------------------------
 #
 # Platform configuration section:
@@ -1048,19 +1054,8 @@ endif
 
 ifeq ($(SeparateROMImage), true)
 ifeq ($(CompileROMImageSeparately), true)
-ROM_SEGMENTS_OBJS = ROMImage_00.obj \
-                    ROMImage_01.obj \
-                    ROMImage_02.obj \
-                    ROMImage_03.obj \
-                    ROMImage_04.obj \
-                    ROMImage_05.obj \
-                    ROMImage_06.obj \
-                    ROMImage_07.obj \
-                    ROMImage_08.obj \
-                    ROMImage_09.obj \
-                    ROMImage_10.obj \
-                    ROMImage_11.obj \
-                    ROMImage_12.obj
+
+ROM_SEGMENTS_OBJS = $(foreach num,$(shell seq -w 0 $(ROM_SEGMENTS_COUNT)),ROMImage_$(num).obj))
 
 EXE_OBJS := $(subst ROMImage.obj,,$(EXE_OBJS))
 EXE_OBJS += $(ROM_SEGMENTS_OBJS)
@@ -1068,20 +1063,8 @@ $(ROM_SEGMENTS_OBJS): $(GENERATED_ROM_FILE)
 
 endif
 
-ROM_SEGMENTS = $(GEN_DIR)/ROMImage_00.cpp \
-               $(GEN_DIR)/ROMImage_01.cpp \
-               $(GEN_DIR)/ROMImage_02.cpp \
-               $(GEN_DIR)/ROMImage_03.cpp \
-               $(GEN_DIR)/ROMImage_04.cpp \
-               $(GEN_DIR)/ROMImage_05.cpp \
-               $(GEN_DIR)/ROMImage_06.cpp \
-               $(GEN_DIR)/ROMImage_07.cpp \
-               $(GEN_DIR)/ROMImage_08.cpp \
-               $(GEN_DIR)/ROMImage_09.cpp \
-               $(GEN_DIR)/ROMImage_10.cpp \
-               $(GEN_DIR)/ROMImage_11.cpp \
-               $(GEN_DIR)/ROMImage_12.cpp \
-               $(GEN_DIR)/ROMImageGenerated.hpp
+ROM_SEGMENTS = $(foreach file,$(ROM_SEGMENTS_OBJS),$(GEN_DIR)/$(subst ".obj",".cpp",$(file)))
+ROM_SEGMENTS += $(GEN_DIR)/ROMImageGenerated.hpp
 
 # Use $(GENERATED_ROM_FILE) as a marker to regenerate $(ROM_SEGMENTS).
 # Add $(ROM_SEGMENTS) into the set of prerequisites of $(GENERATED_ROM_FILE),
@@ -1358,19 +1341,8 @@ resources.res: $(WorkSpace)/src/vm/os/wince/resources.rc \
 
 ifeq ($(SeparateROMImage), true)
 ifeq ($(CompileROMImageSeparately), true)
-ROM_SEGMENTS_OBJS = ROMImage_00.obj \
-		            ROMImage_01.obj \
-		            ROMImage_02.obj \
-		            ROMImage_03.obj \
-		            ROMImage_04.obj \
-		            ROMImage_05.obj \
-		            ROMImage_06.obj \
-		            ROMImage_07.obj \
-		            ROMImage_08.obj \
-		            ROMImage_09.obj \
-		            ROMImage_10.obj \
-		            ROMImage_11.obj \
-		            ROMImage_12.obj
+
+ROM_SEGMENTS_OBJS = $(foreach num,$(shell seq -w 0 $(ROM_SEGMENTS_COUNT)),ROMImage_$(num).obj))
 		            
 EXE_OBJS := $(subst ROMImage.obj,,$(EXE_OBJS))
 EXE_OBJS += $(ROM_SEGMENTS_OBJS)
@@ -1378,20 +1350,8 @@ $(ROM_SEGMENTS_OBJS): $(GENERATED_ROM_FILE)
 
 endif
 
-ROM_SEGMENTS = $(GEN_DIR)/ROMImage_00.cpp \
-               $(GEN_DIR)/ROMImage_01.cpp \
-               $(GEN_DIR)/ROMImage_02.cpp \
-               $(GEN_DIR)/ROMImage_03.cpp \
-               $(GEN_DIR)/ROMImage_04.cpp \
-               $(GEN_DIR)/ROMImage_05.cpp \
-               $(GEN_DIR)/ROMImage_06.cpp \
-               $(GEN_DIR)/ROMImage_07.cpp \
-               $(GEN_DIR)/ROMImage_08.cpp \
-               $(GEN_DIR)/ROMImage_09.cpp \
-               $(GEN_DIR)/ROMImage_10.cpp \
-               $(GEN_DIR)/ROMImage_11.cpp \
-               $(GEN_DIR)/ROMImage_12.cpp \
-               $(GEN_DIR)/ROMImageGenerated.hpp
+ROM_SEGMENTS = $(foreach file,$(ROM_SEGMENTS_OBJS),$(GEN_DIR)/$(subst ".obj",".cpp",$(file)))
+ROM_SEGMENTS += $(GEN_DIR)/ROMImageGenerated.hpp
 
 # Use $(GENERATED_ROM_FILE) as a marker to regenerate $(ROM_SEGMENTS).
 # Add $(ROM_SEGMENTS) into the set of prerequisites of $(GENERATED_ROM_FILE),
@@ -1769,11 +1729,7 @@ EXE_OBJS +=         ROMImage$(OBJ_SUFFIX)
 ifeq ($(SeparateROMImage), true)
 ifeq ($(CompileROMImageSeparately), true)
 
-ifeq ($(ENABLE_SEGMENTED_CLASS_TABLE), true)
-ROM_SEGMENTS_OBJS = $(foreach num,$(shell seq -w 0 140),ROMImage_$(num)$(OBJ_SUFFIX))
-else
-ROM_SEGMENTS_OBJS = $(foreach num,$(shell seq -w 0 12),ROMImage_$(num)$(OBJ_SUFFIX))
-endif
+ROM_SEGMENTS_OBJS = $(foreach num,$(shell seq -w 0 $(ROM_SEGMENTS_COUNT)),ROMImage_$(num)$(OBJ_SUFFIX))
 
 EXE_OBJS := $(subst ROMImage$(OBJ_SUFFIX),,$(EXE_OBJS))
 EXE_OBJS += $(ROM_SEGMENTS_OBJS)
@@ -1781,11 +1737,8 @@ $(ROM_SEGMENTS_OBJS): $(GENERATED_ROM_FILE)
 
 endif
 
-ifeq ($(ENABLE_SEGMENTED_CLASS_TABLE), true)
-ROM_SEGMENTS = $(foreach num,$(shell seq -w 0 140),$(GEN_DIR)/ROMImage_$(num).cpp)
-else
-ROM_SEGMENTS = $(foreach num,$(shell seq -w 0 12),$(GEN_DIR)/ROMImage_$(num).cpp)
-endif
+ROM_SEGMENTS = $(foreach file,$(ROM_SEGMENTS_OBJS),$(GEN_DIR)/$(subst $(OBJ_SUFFIX),.cpp,$(file)))
+ROM_SEGMENTS += $(GEN_DIR)/ROMImageGenerated.hpp
 
 # Use $(GENERATED_ROM_FILE) as a marker to regenerate $(ROM_SEGMENTS).
 # Add $(ROM_SEGMENTS) into the set of prerequisites of $(GENERATED_ROM_FILE),

@@ -402,16 +402,16 @@ private:
   static void relocate_data_block();
 public:
 
-  #define NUM_TEXT_KLASS_BUCKETS 128
 #if ENABLE_SEGMENTED_ROM_TEXT_BLOCK
   enum {
+    TEXT_KLASS_BUCKETS_COUNT   = 128,
     MAIN_SEGMENT_INDEX         = -1, // Index of ROMImage.cpp stream;
     TEXT_BLOCK_SEGMENTS_COUNT  = 10, // Number of TEXT block parts;
     DATA_STREAM_INDEX = TEXT_BLOCK_SEGMENTS_COUNT, // DATA stream index
     HEAP_STREAM_INDEX,               // HEAP stream index;
     STUFF_STREAM_INDEX,              // Other ROM objects;
 #if ENABLE_SEGMENTED_CLASS_TABLE
-    SEGMENTS_STREAMS_COUNT = STUFF_STREAM_INDEX + NUM_TEXT_KLASS_BUCKETS + 1,
+    SEGMENTS_STREAMS_COUNT = STUFF_STREAM_INDEX + TEXT_KLASS_BUCKETS_COUNT + 1,
                                      // Number of pieces, ROMImage.cpp 
                                      // is divided into. {13 files} =
                                      //   {10 files, TEXT block parts} +
