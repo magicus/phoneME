@@ -1055,7 +1055,7 @@ endif
 ifeq ($(SeparateROMImage), true)
 ifeq ($(CompileROMImageSeparately), true)
 
-ROM_SEGMENTS_OBJS = $(foreach num,$(shell seq -w 0 $(ROM_SEGMENTS_COUNT)),ROMImage_$(num).obj))
+ROM_SEGMENTS_OBJS = $(foreach num,$(shell seq --format=%03g 0 $(ROM_SEGMENTS_COUNT)),ROMImage_$(num).obj))
 
 EXE_OBJS := $(subst ROMImage.obj,,$(EXE_OBJS))
 EXE_OBJS += $(ROM_SEGMENTS_OBJS)
@@ -1063,7 +1063,7 @@ $(ROM_SEGMENTS_OBJS): $(GENERATED_ROM_FILE)
 
 endif
 
-ROM_SEGMENTS = $(foreach file,$(ROM_SEGMENTS_OBJS),$(GEN_DIR)/$(subst ".obj",".cpp",$(file)))
+ROM_SEGMENTS = $(addprefix $(GEN_DIR)/,$(subst .obj,.cpp,$(ROM_SEGMENTS_OBJS)))
 ROM_SEGMENTS += $(GEN_DIR)/ROMImageGenerated.hpp
 
 # Use $(GENERATED_ROM_FILE) as a marker to regenerate $(ROM_SEGMENTS).
@@ -1342,7 +1342,7 @@ resources.res: $(WorkSpace)/src/vm/os/wince/resources.rc \
 ifeq ($(SeparateROMImage), true)
 ifeq ($(CompileROMImageSeparately), true)
 
-ROM_SEGMENTS_OBJS = $(foreach num,$(shell seq -w 0 $(ROM_SEGMENTS_COUNT)),ROMImage_$(num).obj))
+ROM_SEGMENTS_OBJS = $(foreach num,$(shell seq --format=%03g 0 $(ROM_SEGMENTS_COUNT)),ROMImage_$(num).obj))
 		            
 EXE_OBJS := $(subst ROMImage.obj,,$(EXE_OBJS))
 EXE_OBJS += $(ROM_SEGMENTS_OBJS)
@@ -1350,7 +1350,7 @@ $(ROM_SEGMENTS_OBJS): $(GENERATED_ROM_FILE)
 
 endif
 
-ROM_SEGMENTS = $(foreach file,$(ROM_SEGMENTS_OBJS),$(GEN_DIR)/$(subst ".obj",".cpp",$(file)))
+ROM_SEGMENTS = $(addprefix $(GEN_DIR)/,$(subst .obj,.cpp,$(ROM_SEGMENTS_OBJS)))
 ROM_SEGMENTS += $(GEN_DIR)/ROMImageGenerated.hpp
 
 # Use $(GENERATED_ROM_FILE) as a marker to regenerate $(ROM_SEGMENTS).
@@ -1729,7 +1729,7 @@ EXE_OBJS +=         ROMImage$(OBJ_SUFFIX)
 ifeq ($(SeparateROMImage), true)
 ifeq ($(CompileROMImageSeparately), true)
 
-ROM_SEGMENTS_OBJS = $(foreach num,$(shell seq -w 0 $(ROM_SEGMENTS_COUNT)),ROMImage_$(num)$(OBJ_SUFFIX))
+ROM_SEGMENTS_OBJS = $(foreach num,$(shell seq --format=%03g 0 $(ROM_SEGMENTS_COUNT)),ROMImage_$(num)$(OBJ_SUFFIX))
 
 EXE_OBJS := $(subst ROMImage$(OBJ_SUFFIX),,$(EXE_OBJS))
 EXE_OBJS += $(ROM_SEGMENTS_OBJS)
@@ -1737,7 +1737,7 @@ $(ROM_SEGMENTS_OBJS): $(GENERATED_ROM_FILE)
 
 endif
 
-ROM_SEGMENTS = $(foreach file,$(ROM_SEGMENTS_OBJS),$(GEN_DIR)/$(subst $(OBJ_SUFFIX),.cpp,$(file)))
+ROM_SEGMENTS = $(addprefix $(GEN_DIR)/,$(subst $(OBJ_SUFFIX),.cpp,$(ROM_SEGMENTS_OBJS)))
 ROM_SEGMENTS += $(GEN_DIR)/ROMImageGenerated.hpp
 
 # Use $(GENERATED_ROM_FILE) as a marker to regenerate $(ROM_SEGMENTS).

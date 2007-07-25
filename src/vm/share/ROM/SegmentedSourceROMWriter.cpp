@@ -92,30 +92,18 @@ void SegmentedSourceROMWriter::init_declare_stream() {
 }
 
 PathChar* SegmentedSourceROMWriter::rom_tmp_segment_file(int index) {
-#if ENABLE_SEGMENTED_CLASS_TABLE
   const int n = index % 1000;
   FilePath::rom_tmp_segment_file[9] = (JvmPathChar)((n / 100) + '0');
   FilePath::rom_tmp_segment_file[10] = (JvmPathChar)((n % 100) / 10 + '0');
   FilePath::rom_tmp_segment_file[11] = (JvmPathChar)((n % 10) + '0');
-#else
-  const int n = index % 100;
-  FilePath::rom_tmp_segment_file[9] = (JvmPathChar)((n / 10) + '0');
-  FilePath::rom_tmp_segment_file[10] = (JvmPathChar)((n % 10) + '0');
-#endif
   return FilePath::rom_tmp_segment_file;
 }
 
 PathChar* SegmentedSourceROMWriter::rom_segment_file(int index) {
-#if ENABLE_SEGMENTED_CLASS_TABLE
   const int n = index % 1000;
   FilePath::rom_segment_file[9] = (JvmPathChar)((n / 100) + '0');
   FilePath::rom_segment_file[10] = (JvmPathChar)((n % 100) / 10 + '0');
   FilePath::rom_segment_file[11] = (JvmPathChar)((n % 10) + '0');
-#else
-  const int n = index % 100;
-  FilePath::rom_segment_file[9] = (JvmPathChar)((n / 10) + '0');
-  FilePath::rom_segment_file[10] = (JvmPathChar)((n % 10) + '0');
-#endif
   return FilePath::rom_segment_file;
 }
 
