@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -121,7 +121,7 @@ endef
 
 #Command for building shared libraries
 define makeSharedLibrary
-	$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $(1) $(JSROP_LINKLIBS) -L$(JSROP_LIB_DIR)
+	$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $(1) $(JSROP_LINKLIBS)
 endef
 
 # Command for reading API classes list from file
