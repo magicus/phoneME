@@ -46,3 +46,11 @@ CC_ARCH_FLAGS  = /GS-
 TARGET_CC      = CL.EXE 
 LIBPATH += /LIBPATH:"$(VC_DIR)/ce/lib/armv4i"
 LIBPATH += /LIBPATH:"$(VC_DIR)/ce/atlmfc/lib/armv4i"
+
+#####
+##### FIXME: Adding this here to force dependency in PCSL makefiles to build
+#####  with Microsoft Visual Studio 2005 (which is needed for Windows Mobile
+#####  5.0 & 6.0 builds).  Need to change to eventually unify how Makefiles
+#####  deal with Compiler variables in both CDC and CLDC based builds.
+USE_VS2005=true
+
