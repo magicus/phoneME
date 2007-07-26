@@ -259,6 +259,12 @@ Java_java_io_WinNTFileSystem_getLength(JNIEnv *env, jobject this, jobject file)
         if (_wstati64(path, &sb) == 0) {
             rv = sb.st_size;
         }
+#else
+        WIN32_FILE_ATTRIBUTE_DATA fileAttributes;
+
+        if (GetFileAttributesEx(path, GetFileExInfoStandard, (LPVOID)&fileAttributes)) {
+            rv = ((jlong)fileAttributes.nFileSizeHigh << 32) + fileAttributes.nFileSizeLow;
+        }
 #endif
     } END_UNICODE_PATH(env, path);
     return rv;
