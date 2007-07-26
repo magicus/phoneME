@@ -295,7 +295,7 @@ endif
 # Description: JSR 256
 #####################################################################
 ifeq ($(USE_JSR_256), true)
-include $(JSR_256_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_256_DIR)/src/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
