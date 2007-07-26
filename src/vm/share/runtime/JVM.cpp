@@ -149,6 +149,9 @@ void JVM::stop(int code) {
     // of JVM::run), all of the handles will be pointing to unused space on
     // the C stack. So let's invalidate them.
     _last_handle = NULL;
+#ifdef AZZERT    
+    last_raw_handle = NULL;
+#endif
     current_thread_to_primordial();
   }
 }
