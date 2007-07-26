@@ -487,7 +487,8 @@ KNIDECL(com_sun_midp_events_NativeEventMonitor_waitForNativeEvent) {
                 /* Need to set the event DISPLAY (intParam4) to forground. See
                    midpStoreEventAndSignalForeground() in midpEventUtil.c. */
                 newMidpEvent.DISPLAY = gForegroundDisplayId;
-                if (newSignal.waitingFor == UI_SIGNAL) {
+                if (newSignal.waitingFor == UI_SIGNAL
+                    || newSignal.waitingFor == AMS_SIGNAL) {
                     KNI_SetIntField(eventObj, typeFieldID, newMidpEvent.type);
                     KNI_SetIntField(eventObj, intParam1FieldID,
                                     newMidpEvent.intParam1);
