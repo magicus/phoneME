@@ -24,17 +24,15 @@
 #ifndef __JSROP_MEMORY_MD_H
 #define __JSROP_MEMORY_MD_H
 
-#include "javavm/include/porting/memory.h"
-
 #if defined __cplusplus 
-extern "C" { 
-#endif /* __cplusplus */
+    /* by C++98, C memory routines are placed at cstdlib */
+    #include <cstdlib>
+#else
+    /* by C90 and C99, memory routines are placed at stdlib.h */
+    #include <stdlib.h>
+#endif
 
-#define MALLOC(size) ((void *)CVMmemalignAlloc(sizeof(int), (size_t)size))
-#define FREE(addr)   CVMmemalignFree(addr)
+#define MALLOC(size) malloc((size))
+#define FREE(addr)   free((addr))
 
-#if defined __cplusplus 
-} 
-#endif /* __cplusplus */
 #endif /* __JSROP_MEMORY_H */
-
