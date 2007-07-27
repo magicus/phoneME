@@ -57,7 +57,17 @@ ABSTRACTIONS_CLASSES += \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/io/Base64.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseInterface.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseAdapter.java \
-    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/io/PrivilegedConnector.java
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/io/PrivilegedConnector.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStore.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordFilter.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordComparator.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordEnumeration.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/InvalidRecordIDException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreNotOpenException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreFullException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreNotFoundException.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreInvocationHandler.java
 
 ifeq ($(USE_JSR_177), true)
 # names of native source files (like 'file.c')
