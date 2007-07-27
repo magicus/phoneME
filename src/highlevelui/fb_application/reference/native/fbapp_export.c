@@ -258,15 +258,10 @@ void fbapp_map_keycode_to_event(
 
     case KEYMAP_KEY_END:
         if (isPressed) {
-#if ENABLE_MULTIPLE_ISOLATES
             pNewSignal->waitingFor = AMS_SIGNAL;
             pNewMidpEvent->type = MIDLET_DESTROY_REQUEST_EVENT;
             pNewMidpEvent->DISPLAY = gForegroundDisplayId;
             pNewMidpEvent->intParam1 = gForegroundIsolateId;
-#else
-            pNewSignal->waitingFor = UI_SIGNAL;
-            pNewMidpEvent->type = DESTROY_MIDLET_EVENT;
-#endif
         } else {
             /* ignore it */
         }
