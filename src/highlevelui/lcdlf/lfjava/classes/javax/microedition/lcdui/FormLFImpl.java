@@ -920,6 +920,9 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         int traverseIndexCopy = -1;
         
         synchronized (Display.LCDUILock) {
+            keepFocusOnTheScreen = traverseIndex != -1 ?
+                itemPartiallyVisible(itemLFs[traverseIndex]) : false;
+            
             if (firstShown) {
                 super.layout(); // moved from LayoutManager
                 LayoutManager.instance().lLayout(LayoutManager.FULL_LAYOUT,
@@ -937,6 +940,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             }
             if (resetToTop) {
                 traverseIndex = -1;
+                keepFocusOnTheScreen = false;
                 viewable[Y] = 0;
                 viewable[X] = 0;
             } else {
@@ -1015,7 +1019,10 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             uRequestPaint(); // request to paint contents area
             
             synchronized (Display.LCDUILock) {
-                lScrollToItem(itemsCopy[traverseIndexCopy].item);
+                if (keepFocusOnTheScreen) {
+                    lScrollToItem(itemsCopy[traverseIndexCopy].item);
+                    keepFocusOnTheScreen = false;
+                }
             }
             setupScroll();
             return;
@@ -2251,6 +2258,12 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
      * optimization flag
      */
     boolean firstShown = true;
+
+    /**
+     * flag indicates if the focused item is required to be bisible
+     * in the current viewport 
+     */
+    boolean keepFocusOnTheScreen = false;
 
     /**
      * Item that was made visible using display.setCurrentItem() call
