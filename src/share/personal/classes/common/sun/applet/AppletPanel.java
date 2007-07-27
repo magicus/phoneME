@@ -34,6 +34,7 @@ import java.net.MalformedURLException;
 import java.net.SocketPermission;
 import java.net.UnknownHostException;
 import java.net.InetAddress;
+import java.net.JarURLConnection;
 import java.awt.*;
 import java.awt.event.*;
 import java.applet.*;
@@ -805,15 +806,21 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
 
         perms.add(new RuntimePermission("createClassLoader"));
         Permission p;
+        java.net.URLConnection urlConnection = null;
         try {
-            p = codebase.openConnection().getPermission();
+            urlConnection = codebase.openConnection();
+            p = urlConnection.getPermission();
         } catch (java.io.IOException ioe) {
             p = null;
         }
+
+        if (p != null)
+            perms.add(p);
+
         if (p instanceof FilePermission) {
             String path = p.getName();
             int endIndex = path.lastIndexOf(File.separatorChar);
-            perms.add(p);
+
             if (endIndex != -1) {
                 path = path.substring(0, endIndex + 1);
                 if (path.endsWith(File.separator)) {
@@ -822,12 +829,13 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
                 perms.add(new FilePermission(path, "read"));
             }
         } else {
-            String host = codebase.getHost();
-            if (host == null)
-                host = "localhost";
-            perms.add(new SocketPermission(host, "connect, accept"));
-            if (p != null)
-                perms.add(p);
+            URL locUrl = codebase;
+            if (urlConnection instanceof JarURLConnection) {
+                locUrl = ((JarURLConnection) urlConnection).getJarFileURL();
+            }
+            String host = locUrl.getHost();
+            if (host != null && (host.length() > 0))
+                perms.add(new SocketPermission(host, "connect, accept"));
         }
         ProtectionDomain domain =
             new ProtectionDomain(new CodeSource(codebase, null), perms);
