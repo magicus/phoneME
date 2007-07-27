@@ -105,7 +105,7 @@ public class DisplayContainer {
      *
      * @return a display access object or null if not found
      */
-    synchronized DisplayAccess findDisplayById(int displayId) {
+    public synchronized DisplayAccess findDisplayById(int displayId) {
         int size = displays.size();
 
         for (int i = 0; i < size; i++) {
