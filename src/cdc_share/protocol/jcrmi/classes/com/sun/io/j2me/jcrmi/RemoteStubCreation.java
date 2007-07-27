@@ -52,23 +52,22 @@ class RemoteStubCreation {
          * IMPL_NOTE Thread.currentThread().getContextClassLoader() method shall be
          * used in future
          */      
-
-        ClassLoader classLoader = MIDPConfig.getMIDletClassLoader();
-
-        if (classLoader == null) {
-            Class clazz;
+        ClassLoader classLoader;
             
-            for (int i = 0; ; i++) {
-                clazz = CVM.getCallerClass(i);
+        for (int i = 0; ; i++) {
+            Class clazz = CVM.getCallerClass(i);
                 
-                if (clazz == null) {
-                    throw new IllegalStateException("Application's class loader was not found");
-                }
-                
-                classLoader = CVM.getCallerClass(i).getClassLoader();
-                if (classLoader instanceof CDCAppClassLoader) {
-                    break;
-                }
+            if (clazz == null) {
+                throw new IllegalStateException("Application's class loader was not found");
+            }
+
+            /* 
+             * IMPL_NOTE: CDCAppClassLoader is planned to use for CDC application.
+             * CDC application now is not supported
+             */
+            classLoader = clazz.getClassLoader();
+            if ((classLoader instanceof CDCAppClassLoader) || (classLoader instanceof MIDletClassLoader)) {
+                break;
             }
         }
 
