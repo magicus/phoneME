@@ -37,6 +37,7 @@ import java.security.PermissionCollection;
 import java.security.Permissions;
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.io.BufferedReader;
 import java.util.Vector;
 import java.net.MalformedURLException;
@@ -440,5 +441,25 @@ class MIDPConfig{
                                     midpImplCL,
                                     enableFilter,
                                     auxClassLoader);
+    }
+
+    /*
+     * Get the MIDletClassLoader instance that loads the caller
+     * midlet class.
+     */
+    public static MIDletClassLoader
+    getMIDletClassLoader() {
+        int i = 1; /* skip the direct caller, who must be system code */
+        ClassLoader loader = null;
+        Class cl = CVM.getCallerClass(i);
+
+        while (cl != null) {
+            loader = cl.getClassLoader();
+            if (loader instanceof MIDletClassLoader) {
+                return (MIDletClassLoader)loader;
+            }
+            cl = CVM.getCallerClass(++i);
+	}
+        return null;
     }
 }
