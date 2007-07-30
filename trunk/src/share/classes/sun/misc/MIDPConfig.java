@@ -462,4 +462,39 @@ class MIDPConfig{
 	}
         return null;
     }
+
+    /* 
+     * A utility method used to load resources using the caller's
+     * classloaders. This is useful when application and system
+     * code are loaded by different classloaders.
+     */
+    public static InputStream
+    getResourceAsStream(String name){
+        int i = 1; /* skip tha caller, which must be system code */
+        InputStream is = null;
+        ClassLoader lastFailedLoader = null;
+        
+        /* This is a bit slow since we need to walk up the stack.
+         * Because we don't know which classloader to load the resource,
+         * so we have to do it the hard way. */
+        while (is == null) {
+            Class cl = sun.misc.CVM.getCallerClass(i);
+            if (cl == null) { /* reach the top of the stack */
+	        break;
+	    }
+
+            ClassLoader loader = cl.getClassLoader();
+            if (i == 1 || loader != lastFailedLoader) {
+                is = cl.getResourceAsStream(name);
+                if (is != null) {
+                    break;
+		} else {
+		    lastFailedLoader = loader;
+		}
+	    }
+
+            i++; /* the next caller */
+	}
+        return is;
+    }
 }
