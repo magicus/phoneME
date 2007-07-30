@@ -57,28 +57,33 @@ public class RecordStore {
 
     static {
 	    try {
+            ClassLoader classLoader = sun.misc.MIDPConfig.getMIDPImplementationClassLoader();
+            if (classLoader == null) {
+                throw new RuntimeException("Cannot get ClassLoader");
+            }
+            
             /* Classes */
-            clazz = Class.forName("javax.microedition.rms.RecordStore");
-            recordEnumerationClass = Class.forName("javax.microedition.rms.RecordEnumeration");            
+            clazz = Class.forName("javax.microedition.rms.RecordStore", true, classLoader);
+            recordEnumerationClass = Class.forName("javax.microedition.rms.RecordEnumeration", true, classLoader);
 
             /* Exceptions */
-            recordStoreException = Class.forName("javax.microedition.rms.RecordStoreException");
-            recordStoreFullException = Class.forName("javax.microedition.rms.RecordStoreFullException");
-            recordStoreNotFoundException = Class.forName("javax.microedition.rms.RecordStoreNotFoundException");
-            recordStoreNotOpenException = Class.forName("javax.microedition.rms.RecordStoreNotOpenException");
-            invalidRecordIDException = Class.forName("javax.microedition.rms.InvalidRecordIDException");
+            recordStoreException = Class.forName("javax.microedition.rms.RecordStoreException", true, classLoader);
+            recordStoreFullException = Class.forName("javax.microedition.rms.RecordStoreFullException", true, classLoader);
+            recordStoreNotFoundException = Class.forName("javax.microedition.rms.RecordStoreNotFoundException", true, classLoader);
+            recordStoreNotOpenException = Class.forName("javax.microedition.rms.RecordStoreNotOpenException", true, classLoader);
+            invalidRecordIDException = Class.forName("javax.microedition.rms.InvalidRecordIDException", true, classLoader);
 
             /* Methods */
             openRecordStoreMethod = clazz.getMethod("openRecordStore", new Class[] { String.class, boolean.class });
 
-            Class recordFilter = Class.forName("javax.microedition.rms.RecordFilter");
-            Class recordComparator = Class.forName("javax.microedition.rms.RecordComparator");
+            Class recordFilter = Class.forName("javax.microedition.rms.RecordFilter", true, classLoader);
+            Class recordComparator = Class.forName("javax.microedition.rms.RecordComparator", true, classLoader);
             enumerateRecordsMethod = clazz.getMethod("enumerateRecords", new Class[] { recordFilter,
                  recordComparator, boolean.class });
 
             getRecordMethod = clazz.getMethod("getRecord", new Class[] { int.class });
         } catch (ClassNotFoundException cnfe) {
-            throw new Error("Record store is not available");
+            throw new Error("Record store is not available" + cnfe.getMessage());
         } catch (NoSuchMethodException nsme) {
 	        throw new Error("Record store is not available");
 	    } 
