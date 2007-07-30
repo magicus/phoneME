@@ -375,11 +375,43 @@ include $(JSR_234_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
+
+ifeq ($(USE_ABSTRACTIONS), true)
+ifeq ($(PROJECT_ABSTRACTIONS_DIR),)
+JSROP_ABSTRACTIONS_DIR = $(ABSTRACTIONS_DIR)
+else
+JSROP_ABSTRACTIONS_DIR = $(PROJECT_ABSTRACTIONS_DIR)
+endif
+
+ABSTRACTIONS_MAKE_FILE = $(JSROP_ABSTRACTIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+
+ifeq ($(wildcard $(ABSTRACTIONS_MAKE_FILE)),)
+$(error ABSTRACTIONS_DIR ($(ABSTRACTIONS_DIR),$(PROJECT_ABSTRACTIONS_DIR))must point to a directory containing ABSTRACTIONS sources, '$(ABSTRACTIONS_MAKE_FILE)' not found)
+endif
+
+include $(ABSTRACTIONS_MAKE_FILE)
+endif
+
+#####################################################################
 # Multimedia Subsystem
 # Description: JSR 135
 #####################################################################
+#ifeq ($(USE_JSR_135), true)
+#include $(JSR_135_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+#endif
+
 ifeq ($(USE_JSR_135), true)
-include $(JSR_135_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+export JSR_135_DIR ?= $(COMPONENTS_DIR)/jsr135
+ifeq ($(PROJECT_JSR_135_DIR),)
+JSROP_JSR135_DIR = $(JSR_135_DIR)
+else
+JSROP_JSR135_DIR = $(PROJECT_JSR_135_DIR)
+endif
+JSR_135_MAKE_FILE = $(JSROP_JSR135_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_135_MAKE_FILE)),)
+$(error JSR_135_DIR must point to a directory containing JSR 135 sources)
+endif
+include $(JSR_135_MAKE_FILE)
 endif
 
 #####################################################################
