@@ -2610,10 +2610,10 @@ typedef class SourceROMWriter CurrentSourceROMWriter;
 
 #if ENABLE_PERFORMANCE_COUNTERS
 #define PERFORMANCE_COUNTER_INCREMENT(name, value) \
-        jvm_perf_count[TaskContext::current_task_id()].name += value
+        Universe::current_perf_counts()->name += value
 #define PERFORMANCE_COUNTER_SET_MAX(name, value) \
-        if (jvm_perf_count[TaskContext::current_task_id()].name < value) { \
-          jvm_perf_count[TaskContext::current_task_id()].name = value; \
+        if (Universe::current_perf_counts()->name < value) { \
+          Universe::current_perf_counts()->name = value; \
         }
 #else
 #define PERFORMANCE_COUNTER_INCREMENT(name, value)
