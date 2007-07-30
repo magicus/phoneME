@@ -120,7 +120,8 @@ endif
 include $(ABSTRACTIONS_MAKE_FILE)
 
 JSROP_JARS=$(ABSTRACTIONS_JAR) $(JSROP_BUILD_JARS)
-
+# abstractions required javacall types
+CVM_INCLUDE_JAVACALL=true
 endif
 
 # Include JSR 75
