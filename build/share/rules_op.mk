@@ -157,7 +157,7 @@ $(JSR_CDCRESTRICTED_CLASSLIST): $(JSROP_JARS)
 $(JSR_MIDPPERMITTED_CLASSLIST): $(JSROP_JARS)
 	@echo "Generating MIDP permitted JSR class list ...";
 	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister \
-	    -listapi:include=java/*,include=javax/*,include=javacard/*,include=org/xml/sax/*,include=org/w3c/dom/*,input=$(JSROP_JARS_LIST)$(PS)$(MIDP_CLASSES_ZIP),cout=$(JSR_MIDPPERMITTED_CLASSLIST)
+	    -listapi:include=java/*,include=javax/*,include=javacard/*,include=org/xml/sax/*,include=org/w3c/dom/*,$(API_EXTENSIONS_LIST),input=$(JSROP_JARS_LIST)$(PS)$(MIDP_CLASSES_ZIP),cout=$(JSR_MIDPPERMITTED_CLASSLIST)
 endif
 
 clean::
