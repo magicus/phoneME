@@ -27,7 +27,7 @@ SUBSYSTEM_DEFS_FILE      = subsystem_defs.gmk
 JSR_INIT_PACKAGE         = com.sun.cdc.config
 JSR_INIT_CLASS           = Initializer
 
-JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239 280
+JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239 256 280
 
 # Defintion for path separator used in JSRs
 PATHSEP        ?= $(PS)
@@ -269,6 +269,16 @@ ifeq ($(wildcard $(JSR_239_MAKE_FILE)),)
 $(error JSR_239_DIR must point to a directory containing JSR 239 sources)
 endif
 include $(JSR_239_MAKE_FILE)
+endif
+
+# Include JSR 256
+ifeq ($(USE_JSR_256), true)
+export JSR_256_DIR ?= $(COMPONENTS_DIR)/jsr256
+JSR_256_DEFS_FILE = $(JSR_256_DIR)/build/cdc_share/$(SUBSYSTEM_DEFS_FILE)
+ifeq ($(wildcard $(JSR_256_DEFS_FILE)),)
+$(error JSR_256_DIR must point to a directory containing JSR 256 sources)
+endif
+include $(JSR_256_DEFS_FILE)
 endif
 
 # Include JSR 280
