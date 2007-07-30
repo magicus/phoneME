@@ -874,7 +874,11 @@ $(CVM_TEST_CLASSESZIP): $(CVM_BUILD_TOP)/.testclasses
 
 $(CVM_DEMO_CLASSESJAR): $(CVM_BUILD_TOP)/.democlasses
 	@echo ... $@
-	$(AT)for dir in $(CVM_DEMOCLASSES_SRCDIRS); do files=`(cd $$dir; find . -name SCCS -prune -o -name .svn -prune -o -type f -print)`; (cd $$dir; tar -cf - $$files) | (cd $(CVM_DEMO_CLASSESDIR); tar -xf - ); done 
+	$(AT)for dir in $(CVM_DEMOCLASSES_SRCDIRS); do \
+	    files=`(cd $$dir; find . -name .svn -prune -o -type f -print)`; \
+	    (cd $$dir; tar -cf - $$files) | \
+		(cd $(CVM_DEMO_CLASSESDIR); tar -xf - ); \
+	done 
 	$(AT)(cd $(CVM_DEMO_CLASSESDIR); $(ZIP) -r -q - *) > $(CVM_CLASSES_TMP)
 	$(AT)mv -f $(CVM_CLASSES_TMP) $@
 
