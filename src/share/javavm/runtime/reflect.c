@@ -1002,7 +1002,7 @@ CVMreflectNewJavaLangReflectMethod(CVMExecEnv* ee,
 			    CVM_FALSE);
     }
 abort:
-    CVMassert(CVMID_icellIsNull(result) == CVMexceptionOccurred(ee));
+    CVMassert(CVMID_icellIsNull(result) == CVMlocalExceptionOccurred(ee));
     CVMID_localrootEnd();
 }
 

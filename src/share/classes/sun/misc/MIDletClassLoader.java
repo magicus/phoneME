@@ -67,13 +67,21 @@ public class MIDletClassLoader extends URLClassLoader {
     private HashSet badMidletClassnames = new HashSet();
     private MIDPImplementationClassLoader implementationClassLoader;
     private AccessControlContext ac = AccessController.getContext();
+    /*
+     * If the filter is disabled, all classes on the bootclasspath
+     * can be accessed from midlet.
+     */
+    private boolean enableFilter;
+    private ClassLoader auxClassLoader;
 
     public MIDletClassLoader(
 	URL base[],
 	String systemPkgs[],
 	PermissionCollection pc,
 	MemberFilter mf,
-	MIDPImplementationClassLoader  parent)
+	MIDPImplementationClassLoader  parent,
+        boolean enableFilter,
+        ClassLoader auxClassLoader)
     {
 	super(base, parent);
 	myBase = base;
@@ -81,6 +89,8 @@ public class MIDletClassLoader extends URLClassLoader {
 	memberChecker = mf;
 	perms = pc;
 	implementationClassLoader = parent;
+        this.enableFilter = enableFilter;
+        this.auxClassLoader = auxClassLoader;
     }
 
 
@@ -122,7 +132,9 @@ public class MIDletClassLoader extends URLClassLoader {
 	try {
 	    // memberChecker will throw an Error if it doesn't like
 	    // the class.
-	    memberChecker.checkMemberAccessValidity(newClass);
+            if (enableFilter) {
+	        memberChecker.checkMemberAccessValidity(newClass);
+            }
 	    return newClass;
 	} catch (Error e){
 	    // If this happens, act as if we cannot find the class.
@@ -151,9 +163,16 @@ public class MIDletClassLoader extends URLClassLoader {
 	if (resultClass == null){
 	    resultClass = loadFromUrl(classname);
 	    if (resultClass == null){
-		resultClass = implementationClassLoader.loadClass(classname,
-								  false, true);
+		resultClass = implementationClassLoader.loadClass(
+                    classname, false, enableFilter);
 	    }
+	}
+        /*
+         * If MIDletClassLoader and the parents failed to
+         * load the class, try the auxClassLoader.
+         */
+        if (resultClass == null && auxClassLoader != null) {
+            auxClassLoader.loadClass(classname);
 	}
 	if (resultClass == null)
 	    throw new ClassNotFoundException(classname);
