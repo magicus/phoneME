@@ -329,6 +329,9 @@
 //                                    counters. These counters may skew
 //                                    execution time.
 //
+// ENABLE_PERFORMANCE_COUNTERS_PER_ISOLATE 1,0 Enable performance counters 
+//                                    per Isolate.
+//
 // ENABLE_PRODUCT_PRINT_STACK    -,0  Include the debug function
 //                                    pss() in product build (useful
 //                                    for diagnosing deadlocks.
@@ -701,6 +704,11 @@
 
 #if !ENABLE_TIMER_THREAD && !SUPPORTS_TIMER_INTERRUPT
 #error "TIMER_INTERRUPT is not supported in this configuration"
+#endif
+
+#if ENABLE_PERFORMANCE_COUNTERS_PER_ISOLATE && \
+    (!ENABLE_ISOLATES || !ENABLE_PERFORMANCE_COUNTERS)
+#error "ENABLE_PERFORMANCE_COUNTERS_PER_ISOLATE is not supported in this configuration"
 #endif
 
 //

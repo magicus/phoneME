@@ -418,7 +418,7 @@ void Compiler::set_impossible_to_compile(Method *method, const char why[]) {
     }
 #endif
 #if ENABLE_PERFORMANCE_COUNTERS
-    jvm_perf_count[TaskContext::current_task_id()].num_of_compilations_failed++;
+    Universe::current_perf_counts()->num_of_compilations_failed++;
 #endif
   }
 
@@ -483,7 +483,7 @@ ReturnOop Compiler::allocate_and_compile(const int compiled_code_factor
 #if ENABLE_PERFORMANCE_COUNTERS
     if (VerbosePointers) {
       tty->print("#%d: ", 
-          jvm_perf_count[TaskContext::current_task_id()].num_of_compilations);
+          Universe::current_perf_counts()->num_of_compilations);
     }
 #endif
     tty->print("(bci=%d) Compiling ", 
@@ -1238,11 +1238,11 @@ void Compiler::init_performance_counters(bool is_resume) {
   _start_time = Os::elapsed_counter();
   _mem_before_compile = 
   ObjectHeap::used_memory() + 
-     jvm_perf_count[TaskContext::current_task_id()].total_bytes_collected;
-  _gc_before_compile = jvm_perf_count[TaskContext::current_task_id()].num_of_gc;
+     Universe::current_perf_counts()->total_bytes_collected;
+  _gc_before_compile = Universe::current_perf_counts()->num_of_gc;
 
   if (is_resume) {
-    jvm_perf_count[TaskContext::current_task_id()].compilation_resume_count ++;
+    Universe::current_perf_counts()->compilation_resume_count ++;
   }
 }
 
@@ -1250,9 +1250,9 @@ void Compiler::update_performance_counters(bool /*is_resume*/,
                                            OopDesc *result) {
   {
     const jlong elapsed = Os::elapsed_counter() - _start_time;
-    jvm_perf_count[TaskContext::current_task_id()].total_compile_hrticks += elapsed;
-    if (jvm_perf_count[TaskContext::current_task_id()].max_compile_hrticks < elapsed) {
-      jvm_perf_count[TaskContext::current_task_id()].max_compile_hrticks = elapsed;
+    Universe::current_perf_counts()->total_compile_hrticks += elapsed;
+    if (Universe::current_perf_counts()->max_compile_hrticks < elapsed) {
+      Universe::current_perf_counts()->max_compile_hrticks = elapsed;
       //Symbol n = method()->name();
       //tty->print("<<<%d (%d)", (jint)(elapsed), is_resume);
       //n.print_symbol_on(tty);
@@ -1260,36 +1260,36 @@ void Compiler::update_performance_counters(bool /*is_resume*/,
     }
   }
 
-  jvm_perf_count[TaskContext::current_task_id()].num_of_compilations ++;
+  Universe::current_perf_counts()->num_of_compilations ++;
   {
     const int mem_used = ObjectHeap::used_memory() +
-      jvm_perf_count[TaskContext::current_task_id()].total_bytes_collected - _mem_before_compile;
-    jvm_perf_count[TaskContext::current_task_id()].total_compile_mem += mem_used;
-    if (jvm_perf_count[TaskContext::current_task_id()].max_compile_mem < mem_used) {
-      jvm_perf_count[TaskContext::current_task_id()].max_compile_mem = mem_used;
+      Universe::current_perf_counts()->total_bytes_collected - _mem_before_compile;
+    Universe::current_perf_counts()->total_compile_mem += mem_used;
+    if (Universe::current_perf_counts()->max_compile_mem < mem_used) {
+      Universe::current_perf_counts()->max_compile_mem = mem_used;
     }
   }
 
   if( result ) {
     {
       int code_size = ((CompiledMethodDesc*)result)->object_size();
-      jvm_perf_count[TaskContext::current_task_id()].total_compiled_methods += code_size;
-      if (jvm_perf_count[TaskContext::current_task_id()].max_compiled_method < code_size) {
-        jvm_perf_count[TaskContext::current_task_id()].max_compiled_method = code_size;
+      Universe::current_perf_counts()->total_compiled_methods += code_size;
+      if (Universe::current_perf_counts()->max_compiled_method < code_size) {
+        Universe::current_perf_counts()->max_compiled_method = code_size;
       }
     }
     {
       const int code_size = method()->code_size();
-      jvm_perf_count[TaskContext::current_task_id()].total_compiled_bytecodes += code_size;
-      if (jvm_perf_count[TaskContext::current_task_id()].max_compiled_bytecodes < code_size) {
-        jvm_perf_count[TaskContext::current_task_id()].max_compiled_bytecodes = code_size;
+      Universe::current_perf_counts()->total_compiled_bytecodes += code_size;
+      if (Universe::current_perf_counts()->max_compiled_bytecodes < code_size) {
+        Universe::current_perf_counts()->max_compiled_bytecodes = code_size;
       }
     }
-    jvm_perf_count[TaskContext::current_task_id()].num_of_compilations_finished ++;
+    Universe::current_perf_counts()->num_of_compilations_finished ++;
   }
 
-  jvm_perf_count[TaskContext::current_task_id()].num_of_compiler_gc +=
-    jvm_perf_count[TaskContext::current_task_id()].num_of_gc - _gc_before_compile;
+  Universe::current_perf_counts()->num_of_compiler_gc +=
+    Universe::current_perf_counts()->num_of_gc - _gc_before_compile;
 }
 
 #if ENABLE_DETAILED_PERFORMANCE_COUNTERS

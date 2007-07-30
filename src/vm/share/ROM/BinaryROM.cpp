@@ -1118,7 +1118,7 @@ bool ROM::link_dynamic(Task* task, FilePath* unicode_file JVM_TRAPS) {
 
 #if ENABLE_PERFORMANCE_COUNTERS
   const jlong link_elapsed = Os::elapsed_counter() - link_start_time;
-  jvm_perf_count[TaskContext::current_task_id()].binary_link_hrticks 
+  Universe::current_perf_counts()->binary_link_hrticks 
       += link_elapsed;
 #endif
 
@@ -1142,8 +1142,8 @@ bool ROM::link_dynamic(Task* task, FilePath* unicode_file JVM_TRAPS) {
 
 #if ENABLE_PERFORMANCE_COUNTERS
   jlong elapsed = Os::elapsed_counter() - start_time;
-  jvm_perf_count[TaskContext::current_task_id()].binary_load_hrticks += elapsed;
-  jvm_perf_count[TaskContext::current_task_id()].total_load_hrticks += elapsed;
+  Universe::current_perf_counts()->binary_load_hrticks += elapsed;
+  Universe::current_perf_counts()->total_load_hrticks += elapsed;
 #endif
 
   if( VerifyGC ) {

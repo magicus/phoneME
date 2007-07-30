@@ -167,7 +167,7 @@ void CodeGenerator::uncommon_trap(JVM_SINGLE_ARG_TRAPS) {
   }
 
 #if ENABLE_PERFORMANCE_COUNTERS
-  jvm_perf_count[TaskContext::current_task_id()].uncommon_traps_generated ++;
+  Universe::current_perf_counts()->uncommon_traps_generated ++;
 #endif
 
   // Terminate the current compilation string.

@@ -35,6 +35,10 @@ bool Universe::_is_bootstrapping  = true;
 bool Universe::_before_main       = true;
 bool Universe::_is_stopping       = false;
 
+#if ENABLE_PERFORMANCE_COUNTERS
+JVM_PerformanceCounters* Universe::_current_perf_counts = NULL;
+#endif
+
 #if ENABLE_JVMPI_PROFILE
 jint Universe::_number_of_java_methods = 0;
 #endif

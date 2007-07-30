@@ -474,10 +474,10 @@ ReturnOop SystemDictionary::resolve(LoaderContext *loader_ctx JVM_TRAPS) {
 #if ENABLE_PERFORMANCE_COUNTERS
   jlong elapsed = Os::elapsed_counter() - start_time;
 
-  jvm_perf_count[TaskContext::current_task_id()].num_of_class_loaded++;
-  jvm_perf_count[TaskContext::current_task_id()].total_load_hrticks += elapsed;
-  if (jvm_perf_count[TaskContext::current_task_id()].max_load_hrticks < elapsed) {
-      jvm_perf_count[TaskContext::current_task_id()].max_load_hrticks = elapsed;
+  Universe::current_perf_counts()->num_of_class_loaded++;
+  Universe::current_perf_counts()->total_load_hrticks += elapsed;
+  if (Universe::current_perf_counts()->max_load_hrticks < elapsed) {
+      Universe::current_perf_counts()->max_load_hrticks = elapsed;
   }
 #endif
 

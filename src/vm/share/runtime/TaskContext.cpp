@@ -182,6 +182,9 @@ void TaskContext::set_current_task(int task_id) {
   *Universe::current_task_obj() = task.obj();
 
   if (task_id != _global_context._current_task_id) {
+#if ENABLE_PERFORMANCE_COUNTERS && ENABLE_PERFORMANCE_COUNTERS_PER_ISOLATE
+    Universe::set_current_perf_counts(&jvm_perf_count[task_id]);
+#endif
     Task::Raw prev_task = Universe::task_from_id(_global_context._current_task_id);
     if (prev_task.not_null()) {
       prev_task().set_class_count(_global_context._number_of_java_classes);

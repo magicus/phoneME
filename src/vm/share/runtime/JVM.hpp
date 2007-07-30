@@ -124,11 +124,15 @@ private:
   static void initialize_non_product();
 #endif
 
-  static jlong calibrate_hrticks() PRODUCT_NOCOUNTER_RETURN;
+  static jlong calibrate_hrticks() PRODUCT_NOCOUNTER_RETURN0;
   static void calibrate_cpu() PRODUCT_NOCOUNTER_RETURN;
 public:
   static void print_performance_counters() PRODUCT_NOCOUNTER_RETURN;
 private:
+#if ENABLE_PERFORMANCE_COUNTERS
+  static void print_performance_counters(JVM_PerformanceCounters *pc, 
+                jlong overhead) PRODUCT_NOCOUNTER_RETURN;
+#endif
 
 #if ENABLE_MEASURE_NATIVE_STACK
   static void measure_native_stack(bool measure);

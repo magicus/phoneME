@@ -314,7 +314,20 @@ private:
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
   static bool name_matches_pattern(const char* name, int name_len, 
                                    const char* pattern, int pattern_len);  
- 
+
+#if ENABLE_PERFORMANCE_COUNTERS
+  static void set_current_perf_counts(JVM_PerformanceCounters* perf_counts) {
+    _current_perf_counts = perf_counts;
+  }
+
+  static JVM_PerformanceCounters* current_perf_counts() {
+    if (_current_perf_counts == NULL) {
+      _current_perf_counts = &jvm_perf_count[0];
+    }
+    return _current_perf_counts;
+  }
+#endif
+                                   
  private:
   typedef OopDesc* Allocator(size_t size JVM_TRAPS);
 
@@ -347,6 +360,10 @@ private:
   static bool  _before_main;
   static bool  _is_stopping;
   static bool  _is_compilation_allowed;
+
+#if ENABLE_PERFORMANCE_COUNTERS
+  static JVM_PerformanceCounters *_current_perf_counts;
+#endif
 
 #if ENABLE_JVMPI_PROFILE 
   // for set method id

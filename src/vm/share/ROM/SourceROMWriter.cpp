@@ -106,10 +106,10 @@ bool SourceROMWriter::execute(JVM_SINGLE_ARG_TRAPS) {
 
 #if ENABLE_PERFORMANCE_COUNTERS
   jlong elapsed = Os::elapsed_counter() - start_time;
-  jvm_perf_count[TaskContext::current_task_id()].num_of_romizer_steps ++;
-  jvm_perf_count[TaskContext::current_task_id()].total_romizer_hrticks += elapsed;
-  if (jvm_perf_count[TaskContext::current_task_id()].max_romizer_hrticks < elapsed) {
-      jvm_perf_count[TaskContext::current_task_id()].max_romizer_hrticks = elapsed;
+  Universe::current_perf_counts()->num_of_romizer_steps ++;
+  Universe::current_perf_counts()->total_romizer_hrticks += elapsed;
+  if (Universe::current_perf_counts()->max_romizer_hrticks < elapsed) {
+      Universe::current_perf_counts()->max_romizer_hrticks = elapsed;
   }
 #endif
 

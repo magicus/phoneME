@@ -103,7 +103,7 @@ void Verifier::verify_class(InstanceClass* ic JVM_TRAPS) {
 #if ENABLE_PERFORMANCE_COUNTERS
   jlong start_time = Os::elapsed_counter();
   jlong last_load_hrticks = 
-      jvm_perf_count[TaskContext::current_task_id()].total_load_hrticks;
+      Universe::current_perf_counts()->total_load_hrticks;
 #endif
 
   _is_active = true;
@@ -144,11 +144,11 @@ void Verifier::verify_class(InstanceClass* ic JVM_TRAPS) {
   // to meausre the effect of only verification itself (so that we can
   // estimate the effect of turning off verification).
   jlong elapsed = Os::elapsed_counter() - start_time + 
-      last_load_hrticks - jvm_perf_count[TaskContext::current_task_id()].total_load_hrticks;
+      last_load_hrticks - Universe::current_perf_counts()->total_load_hrticks;
 
-  jvm_perf_count[TaskContext::current_task_id()].total_verify_hrticks += elapsed;
-  if (jvm_perf_count[TaskContext::current_task_id()].max_verify_hrticks < elapsed) {
-      jvm_perf_count[TaskContext::current_task_id()].max_verify_hrticks = elapsed;
+  Universe::current_perf_counts()->total_verify_hrticks += elapsed;
+  if (Universe::current_perf_counts()->max_verify_hrticks < elapsed) {
+      Universe::current_perf_counts()->max_verify_hrticks = elapsed;
   }
 #endif
 

@@ -950,7 +950,7 @@ extern "C" {
     AZZERT_ONLY(frame.verify());
 
 #if ENABLE_PERFORMANCE_COUNTERS
-    jvm_perf_count[TaskContext::current_task_id()].uncommon_traps_taken ++;
+    Universe::current_perf_counts()->uncommon_traps_taken ++;
 #endif
 
     CompiledMethod::Raw trapper = frame.compiled_method();
