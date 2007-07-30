@@ -1094,11 +1094,14 @@ endif
 ifeq ($(CVM_KNI), true)
     CVM_SHAREOBJS_SPACE += \
 	kni_impl.o \
-	KNITest.o  \
 	sni_impl.o
     CVM_TEST_CLASSES += KNITest
+ifeq ($(CVM_PRELOAD_TEST),true)
+    CVM_SHAREOBJS_SPACE += \
+	KNITest.o
     CVM_SRCDIRS += $(CVM_TESTCLASSES_SRCDIR)
     CVM_CNI_CLASSES += KNITest
+endif
 endif
 
 #

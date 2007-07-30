@@ -37,6 +37,7 @@ import java.security.PermissionCollection;
 import java.security.Permissions;
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.io.BufferedReader;
 import java.util.Vector;
 import java.net.MalformedURLException;
@@ -46,7 +47,7 @@ class MIDPConfig{
     /* The MIDP library classloader */
     private static MIDPImplementationClassLoader midpImplCL;
     /* The midlet classloader */
-    private static MIDletClassLoader midletCL;
+    /*private static MIDletClassLoader midletCL;*/
     /* The MemberFilter */
     private static MemberFilter memberFilter;
 
@@ -336,33 +337,41 @@ class MIDPConfig{
 
     }
 
-    public static MIDletClassLoader
-    getMIDletClassLoader() {
-        return midletCL;
-    }
-
     /*
      * This version allows the caller to specify a set of permissions.
-     * This is less useful than the usual version, which grants the permissions
-     * we plan on granting to MIDlets.
+     * This is less useful than the usual version, which grants the 
+     * permissions we plan on granting to MIDlets.
+     *
+     * The 'enableFilter' argument specifies that if the API hiding
+     * filter is being enabled. If the filter is enabled, midlet
+     * can only access CLDC/MIDP classes. If the filter is disabled,
+     * midlet can access all classes on the bootclasspath, including
+     * all the CDC classes.
+     *
+     * The 'auxClassLoader' is a helper classloader used when the
+     * MIDletClassLoader and its parents fail to load the requested
+     * class. 
      */
     private static MIDletClassLoader
     newMIDletClassLoader(
-	String midPath[], MemberFilter mf, PermissionCollection perms,
-	MIDPImplementationClassLoader implClassLdr)
+	String midpPath[], MemberFilter mf,
+        PermissionCollection perms,
+	MIDPImplementationClassLoader implClassLdr,
+        boolean enableFilter,
+        ClassLoader auxClassLoader)
     {
-        if (midletCL != null) {
+        if (midpImplCL == null) {
             throw new InternalError(
-                "The MIDletClassLoader is already created");
+	        "Need to create the parent MIDPImplementationClassLoader first");
         }
 
 	URL midJarURL[];
-	int nComponents = midPath.length;
+	int nComponents = midpPath.length;
 
 	midJarURL = new URL[nComponents];
 	try {
 	    for (int i=0; i<nComponents; i++){
-		midJarURL[i] = new File(midPath[i]).toURI().toURL();
+		midJarURL[i] = new File(midpPath[i]).toURI().toURL();
 	    }
 	}catch(Exception e){
 	    System.err.println("URL Creation:");
@@ -370,8 +379,10 @@ class MIDPConfig{
 	    return null;
 	}
 	//DEBUG  System.out.println("Constructing MIDletClassLoader with permissions "+perms);
-	midletCL = new MIDletClassLoader(midJarURL, systemPackages,
-					 perms, mf, implClassLdr);
+	MIDletClassLoader midletCL = new MIDletClassLoader(
+                                           midJarURL, systemPackages,
+					   perms, mf, implClassLdr,
+                                           enableFilter, auxClassLoader);
 
 	return midletCL;
     }
@@ -379,31 +390,76 @@ class MIDPConfig{
     /*
      * This version allows the caller to specify a set of permissions.
      * The parent classloader is the MIDPImplementationClassLoader.
+     * The API hiding filter is enabled.
      */
     public static MIDletClassLoader
     newMIDletClassLoader(
-	String midPath[], PermissionCollection perms)
+	String midpPath[], PermissionCollection perms)
     {
-        return newMIDletClassLoader(midPath,
+        return newMIDletClassLoader(midpPath,
                                     memberFilter,
                                     perms,
-                                    midpImplCL);
+                                    midpImplCL,
+                                    true,
+                                    null);
     }
 
     /*
      * Use the default midlet permission collection. The parent classloader
-     * is the MIDPImplementationClassLoader.
+     * is the MIDPImplementationClassLoader. The API hiding filter is
+     * enabled.
      */
     public static MIDletClassLoader
-    newMIDletClassLoader(String midPath[])
+    newMIDletClassLoader(String midpPath[])
     {
-        if (midpImplCL == null) {
-            throw new InternalError(
-	        "Need to create the parent MIDPImplementationClassLoader first");
-        }
-	return newMIDletClassLoader(midPath,
+	return newMIDletClassLoader(midpPath,
                                     memberFilter,
                                     midletPermissions,
-                                    midpImplCL);
+                                    midpImplCL,
+                                    true,
+                                    null);
+    }
+
+    /*
+     * The 'enableFilter' argument specifies that if the API hiding
+     * filter is being enabled. If the filter is enabled, midlet
+     * can only access CLDC/MIDP classes. If the filter is disabled,
+     * midlet can access all classes on the bootclasspath, including
+     * all the CDC classes.
+     *
+     * The 'auxClassLoader' is a helper classloader used when the
+     * MIDletClassLoader and its parents fail to load the requested
+     * class. 
+     */
+    public static MIDletClassLoader
+    newMIDletClassLoader(String midpPath[], boolean enableFilter,
+                         ClassLoader auxClassLoader)
+    {
+	return newMIDletClassLoader(midpPath,
+                                    memberFilter,
+                                    midletPermissions,
+                                    midpImplCL,
+                                    enableFilter,
+                                    auxClassLoader);
+    }
+
+    /*
+     * Get the MIDletClassLoader instance that loads the caller
+     * midlet class.
+     */
+    public static MIDletClassLoader
+    getMIDletClassLoader() {
+        int i = 1; /* skip the direct caller, who must be system code */
+        ClassLoader loader = null;
+        Class cl = CVM.getCallerClass(i);
+
+        while (cl != null) {
+            loader = cl.getClassLoader();
+            if (loader instanceof MIDletClassLoader) {
+                return (MIDletClassLoader)loader;
+            }
+            cl = CVM.getCallerClass(++i);
+	}
+        return null;
     }
 }
