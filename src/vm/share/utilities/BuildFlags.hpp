@@ -711,6 +711,10 @@
 #error "ENABLE_PERFORMANCE_COUNTERS_PER_ISOLATE is not supported in this configuration"
 #endif
 
+#if ENABLE_DETAILED_PERFORMANCE_COUNTERS && !ENABLE_PERFORMANCE_COUNTERS
+#error "ENABLE_DETAILED_PERFORMANCE_COUNTERS is not supported in this configuration"
+#endif
+
 //
 // USE_SINGLE_METHOD_FLUSHING         During code patching use the single 
 //                                    flush icache for the method instead of

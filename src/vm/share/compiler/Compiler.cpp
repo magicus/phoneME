@@ -190,7 +190,7 @@ void Compiler::initialize() {
   jvm_memset(&_suspended_compiler_state, 0, sizeof(_suspended_compiler_state));
   jvm_memset(&_suspended_compiler_context, 0, 
              sizeof(_suspended_compiler_context));
-#if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
+#if ENABLE_DETAILED_PERFORMANCE_COUNTERS
   jvm_memset(&comp_perf_counts, 0, sizeof(comp_perf_counts));
 #endif
   _estimated_frame_time = 30;

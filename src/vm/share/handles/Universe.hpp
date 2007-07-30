@@ -362,7 +362,7 @@ private:
   static bool  _is_compilation_allowed;
 
 #if ENABLE_PERFORMANCE_COUNTERS
-  static JVM_PerformanceCounters *_current_perf_counts;
+  static JVM_PerformanceCounters* _current_perf_counts;
 #endif
 
 #if ENABLE_JVMPI_PROFILE 

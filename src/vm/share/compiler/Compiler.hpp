@@ -577,7 +577,7 @@ class Compiler: public StackObj {
 
   static void oops_do( void do_oop(OopDesc**) );
 
-#if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
+#if ENABLE_DETAILED_PERFORMANCE_COUNTERS
   static void print_detailed_performance_counters();
 #else 
   static void print_detailed_performance_counters() {}
@@ -846,7 +846,7 @@ private:
 #endif
 };
 
-#if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
+#if ENABLE_DETAILED_PERFORMANCE_COUNTERS
 
 #define FOR_ALL_COMPILER_PERFORMANCE_COUNTERS(template) \
   template(method_entry, 0)                             \

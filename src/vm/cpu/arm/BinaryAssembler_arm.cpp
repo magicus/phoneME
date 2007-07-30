@@ -158,7 +158,7 @@ void BinaryAssembler::signal_output_overflow() {
 }
 
 void BinaryAssembler::emit_raw(int instr) {
-#if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
+#if ENABLE_DETAILED_PERFORMANCE_COUNTERS
   GUARANTEE(COMPILER_PERFORMANCE_COUNTER_ACTIVE(), "Sanity");
 #endif
   BinaryAssembler* ba = instance();
