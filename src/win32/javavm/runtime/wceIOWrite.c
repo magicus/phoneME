@@ -97,12 +97,13 @@ writeStandardIO(CVMInt32 fd, const void *buf, CVMUint32 nBytes) {
    }
 
     if (!initialized) {
-        if (memoryBuffer == NULL)
-            memoryBuffer = (char*) malloc(sizeof(char) * nBytes +1);
-        else
+        if (memoryBuffer == NULL) {
+            memoryBuffer = (char*)malloc(sizeof(char)*(nBytes + 1));
+            *memoryBuffer = '\0';
+        } else
             memoryBuffer = (char*)realloc((char*)memoryBuffer, 
                                           sizeof(char)*(strlen(memoryBuffer) + nBytes + 1));
-        strcat(memoryBuffer, buf);
+        strncat(memoryBuffer, buf, nBytes);
     } else if (memoryBuffer != NULL) {
         if (fd == 1) {
             if (standardout != INVALID_HANDLE_VALUE) {
