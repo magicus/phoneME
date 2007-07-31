@@ -284,7 +284,7 @@ endif
 # Include JSR 280
 ifeq ($(USE_JSR_280), true)
 export JSR_280_DIR ?= $(COMPONENTS_DIR)/jsr280
-JSR_280_DEFS_FILE = $(JSR_280_DIR)/build/$(SUBSYSTEM_DEFS_FILE)
+JSR_280_DEFS_FILE = $(JSR_280_DIR)/build/cdc_share/$(SUBSYSTEM_DEFS_FILE)
 ifeq ($(wildcard $(JSR_280_DEFS_FILE)),)
 $(error JSR_280_DIR must point to a directory containing JSR 280 sources)
 endif
