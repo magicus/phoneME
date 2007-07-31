@@ -121,7 +121,7 @@ endef
 
 #Command for building shared libraries
 define makeSharedLibrary
-	$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $(1) $(JSROP_LINKLIBS) -L$(JSROP_LIB_DIR)
+	$(TARGET_LD) $(SO_LINKFLAGS) $(LD_OUTPUT_OPTION)$@ $(1) $(JSROP_LINKLIBS) $(LD_LIBPATH_OPTION)$(JSROP_LIB_DIR)
 endef
 
 # Command for reading API classes list from file

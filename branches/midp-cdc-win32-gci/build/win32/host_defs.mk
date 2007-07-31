@@ -46,9 +46,11 @@ override GENERATEMAKEFILES = false
 # Specify all the host and target tools. 
 # CC and AS are specific in the win32-<cpu>/defs.mk file.
 #
-TARGET_LD		= $(TARGET_LINK)
-TARGET_LINK		= LINK.EXE
-TARGET_AR		= $(TARGET_LINK) -lib /nologo
+TARGET_LD		    = $(TARGET_LINK)
+TARGET_LINK		    = LINK.EXE
+LD_OUTPUT_OPTION    = /out:
+LD_LIBPATH_OPTION   = /libpath:
+TARGET_AR		    = $(TARGET_LINK) -lib /nologo
 TARGET_AR_CREATE	= $(TARGET_AR) /out:$(1)
 TARGET_AR_UPDATE	= true $(TARGET_AR_CREATE)
 
