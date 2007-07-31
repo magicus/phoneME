@@ -2164,5 +2164,10 @@ endif
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)/defs.mk
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs.mk
 
+# Fallback - has to be set explicitly
+EMPTY=
+LD_OUTPUT_OPTION    ?= $(EMPTY)-o $(EMPTY)
+LD_LIBPATH_OPTION   ?= -L
+
 # Root directory for unittests reports
 REPORTS_DIR ?= $(call POSIX2HOST,$(CDC_DIST_DIR)/reports)
