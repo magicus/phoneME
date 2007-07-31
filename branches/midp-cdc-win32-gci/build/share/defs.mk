@@ -2165,8 +2165,7 @@ endif
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs.mk
 
 # Fallback - has to be set explicitly
-EMPTY=
-LD_OUTPUT_OPTION    ?= $(EMPTY)-o $(EMPTY)
+LD_OUTPUT_OPTION    ?= -o$(space)
 LD_LIBPATH_OPTION   ?= -L
 
 # Root directory for unittests reports
