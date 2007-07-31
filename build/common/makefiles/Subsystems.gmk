@@ -233,7 +233,7 @@ endif
 
 ifeq ($(USE_JSR_280), true)
 JPP_DEFS += -DENABLE_JSR_280
-include $(JSR_280_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_280_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
@@ -295,7 +295,7 @@ endif
 # Description: JSR 256
 #####################################################################
 ifeq ($(USE_JSR_256), true)
-include $(JSR_256_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_256_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
