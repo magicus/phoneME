@@ -55,6 +55,7 @@ ABSTRACTIONS_CLASSES = \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/FileConnectionPermission.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/SatsaPermission.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/LocationPermission.java \
+    $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/SensorPermission.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/BluetoothPermission.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/security/OBEXPermission.java \
     $(ABSTRACTIONS_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \
