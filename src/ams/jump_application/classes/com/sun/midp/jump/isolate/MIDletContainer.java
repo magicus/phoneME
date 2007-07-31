@@ -36,6 +36,8 @@ import javax.microedition.lcdui.Displayable;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 
+import com.sun.j2me.security.AccessController;
+
 import com.sun.jump.common.JUMPApplication;
 import com.sun.jump.common.JUMPAppModel;
 
@@ -54,6 +56,7 @@ import com.sun.midp.lcdui.*;
 import com.sun.midp.log.*;
 
 import com.sun.midp.main.CDCInit;
+import com.sun.midp.main.CdcAccessControlContext;
 import com.sun.midp.main.CdcMIDletLoader;
 
 import com.sun.midp.midlet.*;
@@ -207,6 +210,9 @@ public class MIDletContainer extends JUMPAppContainer implements
             }
 
             midletClassName = MIDletApplication.getMIDletClassName(app);
+
+            AccessController.setAccessControlContext(
+                new CdcAccessControlContext(midletSuite));
 
             midletStateHandler.startSuite(midletSuite, midletClassName);
         } catch (Throwable e) {

@@ -84,6 +84,7 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(MIDLET_API_DIR)/classes/com/sun/midp/midlet/Scheduler.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/installer/OtaNotifier.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/CDCInit.java \
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcAccessControlContext.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcMIDletLoader.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletAppImageGenerator.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java \
@@ -96,7 +97,6 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/JUMPInstallerInterface.java \
     $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/MIDLETInstallerImpl.java \
     $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/StorageAccessInterface.java \
-    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/installer/TrustedMIDletSuiteInfo.java \
     $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/isolate/MIDletContainer.java \
     $(JUMP_AMS_DIR)/classes/com/sun/midp/midlet/MIDletPeer.java \
     $(JUMP_AMS_DIR)/classes/com/sun/midp/midlet/MIDletStateHandler.java \

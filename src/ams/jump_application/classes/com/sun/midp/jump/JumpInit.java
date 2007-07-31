@@ -24,18 +24,13 @@
 
 package com.sun.midp.jump;
 
-import java.lang.reflect.Field; 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import com.sun.midp.midlet.MIDletStateHandler;
-import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.jump.installer.TrustedMIDletSuiteInfo;
+import com.sun.j2me.security.AccessControlContextAdapter;
+import com.sun.j2me.security.AccessController;
 
 /**
  * Initialize the JUMP executive environment for using midp code.
  */
 public class JumpInit {
-
     /*
      * Initialization for the jump executive.
      *
@@ -45,7 +40,6 @@ public class JumpInit {
      * @param home path to the MIDP home directory.
      */
     public static void init(String midpHome) {
-
 	// First, load the midp natives.   
         try {
             String n = System.getProperty("sun.midp.library.name", "midp");
@@ -53,39 +47,11 @@ public class JumpInit {
         } catch (UnsatisfiedLinkError err) {}
 
 
+        AccessController.setAccessControlContext(
+            new AccessControlContextImpl());
+
         if (!initMidpStorage(midpHome)) {
            throw new RuntimeException("MIDP suite store initialization failed");
-        }
-
-	/** 
-	 * Making the runtime believe that this is a trusted midlet suite.
-	 * This is needed because in midp's code, security check is often done
-	 * by checking the executing midlet suite's security token.
-	 * See com.sun.midp.jump.installer.TrustedMIDletSuiteInfo for more
-	 * information.
-	 * 
-	 * FIXME: this should go away once the midp-on-cdc starts using
-	 * cdc style permission checking.
-	 **/
-	
-        final MIDletStateHandler handler = MIDletStateHandler.getMidletStateHandler();
-        MIDletSuite suite = handler.getMIDletSuite();
-        if (suite == null) {
-           AccessController.doPrivileged(new PrivilegedAction() {
-              public Object run() {
-      
-                try {
-                    Class clazz = MIDletStateHandler.class;
-                    Field midletSuiteField = clazz.getDeclaredField("midletSuite");
-
-                    midletSuiteField.setAccessible(true);
-      
-                    midletSuiteField.set(handler, new TrustedMIDletSuiteInfo());
-
-                } catch (Exception e) { e.printStackTrace(); }
-                    return null;
-               }
-            });
         }
      }
   
@@ -98,3 +64,39 @@ public class JumpInit {
      */
     static native boolean initMidpStorage(String midpHome);
 }
+
+class AccessControlContextImpl extends AccessControlContextAdapter {
+    /** Only this package can create an object of this class. */
+    AccessControlContextImpl() {
+    }
+
+    /**
+     * Checks for permission and throw an exception if not allowed.
+     * May block to ask the user a question.
+     * <p>
+     * If the permission check failed because an InterruptedException was
+     * thrown, this method will throw a InterruptedSecurityException.
+     *
+     * @param permission ID of the permission to check for,
+     *      the ID must be from
+     *      {@link com.sun.midp.security.Permissions}
+     * @param resource string to insert into the question, can be null if
+     *        no %2 in the question
+     * @param extraValue string to insert into the question,
+     *        can be null if no %3 in the question
+     *
+     * @param name name of the requested permission
+     * 
+     * @exception SecurityException if the specified permission
+     * is not permitted, based on the current security policy
+     * @exception InterruptedException if another thread interrupts the
+     *   calling thread while this method is waiting to preempt the
+     *   display.
+     */
+    public void checkPermissionImpl(String name, String resource,
+            String extraValue) throws SecurityException, InterruptedException {
+        // This is the jump executive every thing running is trusted
+        return;
+    }
+}
+
