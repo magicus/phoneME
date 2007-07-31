@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -20,8 +20,6 @@
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions. 
-#
-# @(#)host_defs.mk	1.10 06/10/24
 #
 
 ifeq ($(HOST_DEVICE), Interix)
@@ -104,19 +102,21 @@ CCFLAGS += $(MT_FLAGS)
 ifeq ($(CVM_DLL),true)
 CVM_IMPL_LIB	= $(CVM_BUILD_SUBDIR_NAME)/bin/cvmi.lib
 
-ifeq ($CVM_PRELOAD_LIB,true)
+ifeq ($CVM_STATICLINK_LIBS,true)
 LINKFLAGS	= /implib:$(CVM_IMPL_LIB) /export:jio_snprintf $(SO_LINKFLAGS)
 else
 LINKFLAGS	= /implib:$(CVM_IMPL_LIB) $(SO_LINKFLAGS) /export:jio_snprintf \
             /export:CVMexpandStack /export:CVMtimeMillis \
-            /export:CVMIDprivate_allocateLocalRootUnsafe /export:CVMglobals \
-            /export:CVMsystemPanic /export:CVMcsRendezvous /export:CVMconsolePrintf
+            /export:CVMIDprivate_allocateLocalRootUnsafe /export:CVMglobals,DATA \
+            /export:CVMsystemPanic /export:CVMcsRendezvous /export:CVMconsolePrintf \
+            /export:CVMthrowOutOfMemoryError /export:CVMthrowNoSuchMethodError \
+            /export:CVMthrowIllegalArgumentException
 
 ifeq ($(CVM_DEBUG), true)
 LINKFLAGS	+= /export:CVMassertHook /export:CVMdumpStack
 endif
 
-endif            
+endif
 
 else
 LINKFLAGS	=
