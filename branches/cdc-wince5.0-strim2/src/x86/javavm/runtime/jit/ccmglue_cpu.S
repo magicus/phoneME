@@ -38,6 +38,10 @@
 #include "javavm/include/jit/jitcisc_cpu.h"
 #include "javavm/include/porting/sync.h"
 
+#if (CVM_FASTLOCK_TYPE != CVM_FASTLOCK_ATOMICOPS)
+#error "Only CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS supported"
+#endif
+
 #ifdef CVM_DEBUG_ASSERTS
 .file "ccmglue_cpu.S"
 ccmglue_cpu_filename:
@@ -464,10 +468,9 @@ ENTRY(CVMCCMruntimeMonitorEnterGlue )
 	# lockrec->object = obj:
 	movl	OBJ, OFFSET_CVMOwnedMonitor_object(LOCKREC)
 
-#if (CVM_FASTLOCK_TYPE != CVM_FASTLOCK_NONE) 
 	# lockrec->count = 1:
-	movl	$1, OFFSET_CVMOwnedMonitor_count(LOCKREC)		/* Initial lock re-entry count */
-#endif
+	/* Initial lock re-entry count */
+	movl	$1, OFFSET_CVMOwnedMonitor_count(LOCKREC) 
 #ifdef CVM_DEBUG
 	# lockrec->state = CONSTANT_CVM_OWNEDMON_OWNED:
 	movl	$CONSTANT_CVM_OWNEDMON_OWNED, OFFSET_CVMOwnedMonitor_state(LOCKREC)
@@ -520,9 +523,7 @@ ENTRY(CVMCCMruntimeMonitorEnterGlue )
 _monenterFastFailed:
 #ifdef CVM_DEBUG
 	# lockrec->state = CONSTANT_CVM_OWNEDMON_FREE:
-#if (CVM_FASTLOCK_TYPE != CVM_FASTLOCK_NONE) 
 	movl	$0, OFFSET_CVMOwnedMonitor_count(LOCKREC)
-#endif        
 	movl	$CONSTANT_CVM_OWNEDMON_FREE, OFFSET_CVMOwnedMonitor_state(LOCKREC)
 #endif
 
@@ -546,22 +547,19 @@ _monenterFastFailed:
 #define EXPECTED_CNT    A1
 #define NEW_COUNT       A4
 
-#if (CVM_FASTLOCK_TYPE != CVM_FASTLOCK_NONE) 
 	# If we get here, then we are re-entering the lock:
 	movl	OFFSET_CVMOwnedMonitor_count(LOCKREC), EXPECTED_CNT
 	cmpl	$CONSTANT_CVM_INVALID_REENTRY_COUNT, EXPECTED_CNT
 	je	_monenterFastReentryFailed
-#endif        
-
 	movl	EXPECTED_CNT, NEW_COUNT
 	incl	NEW_COUNT
-#if (CVM_FASTLOCK_TYPE != CVM_FASTLOCK_NONE) 
 	CVMJITX86_CMPXCHG(NEW_COUNT, OFFSET_CVMOwnedMonitor_count(LOCKREC))
-	/* cmpxchg sets ZF := OFFSET_CVMOwnedMonitor_count(LOCKREC) == EXPECTED_CNT */
-	jne	_monenterFastReentryFailed
-#endif
 #undef EXPECTED_CNT
 #undef NEW_COUNT
+	/* Reload EE since it was clobbered by NEW_COUNT */
+	movl    4 + OFFSET_CVMCCExecEnv_ee(%esp), EE
+	/* cmpxchg sets ZF := OFFSET_CVMOwnedMonitor_count(LOCKREC) == EXPECTED_CNT */
+	jne	_monenterFastReentryFailed
 
 	movl	4 + OFFSET_CVMCCExecEnv_ccmStorage(%esp), %esi
 	ret
@@ -649,22 +647,18 @@ ENTRY(CVMCCMruntimeMonitorExitGlue )
 #define EXPECTED_CNT    A1
 #define NEW_COUNT       A4
 
-#if (CVM_FASTLOCK_TYPE != CVM_FASTLOCK_NONE) 
 	/* If we get here, then the current thread does own the monitor,
            and all is well.  Proceed with unlocking: */
 	movl	OFFSET_CVMOwnedMonitor_count(LOCKREC), EXPECTED_CNT
 	cmpl	$CONSTANT_CVM_INVALID_REENTRY_COUNT, EXPECTED_CNT
 	je	_monexitFastTryUnlockFailed
-#endif
 	movl	EXPECTED_CNT, NEW_COUNT
 	decl	NEW_COUNT
 	jz	_monexitDoUnlock	/* If zero, then unlock */
 
-#if (CVM_FASTLOCK_TYPE != CVM_FASTLOCK_NONE) 
 	/* new monitor count > 0, so just update it and we're done */
 	CVMJITX86_CMPXCHG(NEW_COUNT, OFFSET_CVMOwnedMonitor_count(LOCKREC))
 	jne	_monexitFastTryUnlockFailed
-#endif	
 	/* we're done! monitor count was successfully decrement */
 	movl	4 + OFFSET_CVMCCExecEnv_ccmStorage(%esp), %esi
 	ret	/* return to caller */
@@ -684,9 +678,7 @@ _monexitDoUnlock:
 
 #ifdef CVM_DEBUG
 	# Make the lockrec play nice with the debug assertions:
-#if (CVM_FASTLOCK_TYPE != CVM_FASTLOCK_NONE) 
 	movl	$0, OFFSET_CVMOwnedMonitor_count(LOCKREC)
-#endif        
 	movl	$CONSTANT_CVM_OWNEDMON_FREE, OFFSET_CVMOwnedMonitor_state(LOCKREC)
 	
 	movl	$0, OFFSET_CVMOwnedMonitor_u_fast_bits(LOCKREC)

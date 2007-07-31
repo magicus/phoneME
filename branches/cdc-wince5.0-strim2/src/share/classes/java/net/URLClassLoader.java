@@ -489,10 +489,9 @@ public class URLClassLoader extends SecureClassLoader {
 		locUrl = ((JarURLConnection)urlConnection).getJarFileURL();
 	    }
 	    String host = locUrl.getHost();
-	    if (host == null)
-		host = "localhost";
-	    p = new SocketPermission(host,
-		SecurityConstants.SOCKET_CONNECT_ACCEPT_ACTION);
+	    if (host != null && (host.length() > 0))
+	        p = new SocketPermission(host,
+		              SecurityConstants.SOCKET_CONNECT_ACCEPT_ACTION);
 	}
 
 	// make sure the person that created this class loader
