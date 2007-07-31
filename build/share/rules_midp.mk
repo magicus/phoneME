@@ -79,6 +79,8 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             $(MIDP_JSROP_USE_FLAGS) \
 	             USE_OEM_AMS=$(USE_OEM_AMS) \
 	             OEM_AMS_DIR=$(OEM_AMS_DIR) \
+	             USE_OEM_PUSH=$(USE_OEM_PUSH) \
+	             OEM_PUSH_DIR=$(OEM_PUSH_DIR) \
 	             rom -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
 	@echo "<==== end building MIDP classes"
 

@@ -103,9 +103,9 @@ linuxCaptureInitialStack()
     }
 #else
     pthreadGetAttr = 
-            (pthread_getattr_np_t)dlsym(RTLD_NEXT, "pthread_getattr_np");
+            (pthread_getattr_np_t)dlsym(RTLD_DEFAULT, "pthread_getattr_np");
     pthreadAttrGetStack =
-            (pthread_attr_getstack_t)dlsym(RTLD_NEXT, 
+            (pthread_attr_getstack_t)dlsym(RTLD_DEFAULT, 
                                            "pthread_attr_getstack");
 #endif
     initial_thread_id = pthread_self();
