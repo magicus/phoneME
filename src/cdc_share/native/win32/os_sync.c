@@ -62,10 +62,22 @@ struct _ThreadCond {
 
 /* Debug stuff */
 #ifndef NDEBUG
+
+#if !defined(__GNUC__) && (!defined(_MSC_VER) || (_MSC_VER < 1300))
+
+#define PRINT_ERROR(func_,text_,code_)    \
+    fprintf(stderr, \
+        "%s:%s %s: error=%s (#%d)\n", \
+        __FILE__, __LINE__, #func_, text_, code_)
+
+#else
+
 #define PRINT_ERROR(func_,text_,code_)    \
     fprintf(stderr, \
         "%s: %s: error=%s (#%d)\n", \
         __FUNCTION__, #func_, text_, code_)
+
+#endif
     
 #define REPORT_ERROR(func_)   do {\
     DWORD errCode_ = GetLastError(); \
