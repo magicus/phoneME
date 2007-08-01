@@ -176,7 +176,7 @@ jsrop_jstring_from_utf16_string(KNIDECLARGS const javacall_utf16_string utf16_st
  *
  */
 #define RELEASE_UTF16_STRING_PARAMETER \
-            } FREE(latest_utf16_string_arg); \
+            } FREE(*latest_utf16_string_arg); \
         } \
     }
 
