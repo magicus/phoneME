@@ -47,7 +47,7 @@ ifeq ($(USE_VS2005), true)
     LD                 := $(EVC_ARCH_PATH)/link.exe
     AR                 := $(EVC_ARCH_PATH)/lib.exe
 
-    CFLAGS             += -D_WIN32_WCE=0x501 -DUNDER_CE=0x501
+    CFLAGS             += -D_WIN32_WCE=0x501 -DUNDER_CE=0x501 /GS-
 else
     ifeq ($(PCSL_CPU), arm)
 	EVC_LIB_PATH    = $(EVC_ARM_LIB)
