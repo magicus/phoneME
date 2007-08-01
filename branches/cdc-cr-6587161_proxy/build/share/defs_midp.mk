@@ -125,7 +125,7 @@ endif
 
 ifeq ($(CVM_PRELOAD_LIB), true)
 # Add MIDP classes to JCC input list so they can be romized.
-CVM_JCC_CL_INPUT	+= $(MIDP_CLASSES_ZIP) $(JSROP_EXTRA_JARS)
+CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_CLASSES_ZIP) $(JSROP_EXTRA_JARS)
 # Add MIDP CNI classes to CVM_CNI_CLASSES
 CVM_CNI_CLASSES += $(MIDP_CNI_CLASSES)
 endif
