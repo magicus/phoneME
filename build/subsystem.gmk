@@ -356,7 +356,7 @@ endif
 
 
 ifeq ($(USE_LCDUI), true)
-JSR_135_DEPS = $(PS)$(MIDP_CLASSESZIP)
+#JSR_135_DEPS = $(PS)$(MIDP_CLASSESZIP)
 endif
 
 ifeq ($(USE_JSR_75), true)

@@ -23,7 +23,7 @@
  */
 package com.sun.mmedia;
 
-import javax.microedition.lcdui.*;
+import com.sun.j2me.proxy.lcdui.*;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.VideoControl;
 

@@ -25,7 +25,7 @@ package com.sun.mmedia;
 
 import com.sun.mmedia.FormatConversionUtils;
 
-import javax.microedition.lcdui.Image;
+import com.sun.j2me.proxy.lcdui.Image;
 
 /**
  * The image access class for MIDP.
@@ -40,7 +40,7 @@ class MIDPImageAccessor implements ImageAccess {
     public int alphaLevelsNumber() {
         /** 
          * TBD: get display for current MIDlet
-         * javax.microedition.lcdui.Display d = ...; 
+         * com.sun.j2me.proxy.lcdui.Display d = ...; 
          * return d.numAlphaLevels();
          */
         return 2;
