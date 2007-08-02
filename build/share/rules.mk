@@ -526,7 +526,7 @@ endif
 ifeq ($(USE_JUMP), true)
 $(J2ME_CLASSLIB):: jumptargets
 endif
-$(J2ME_CLASSLIB):: $(JSROP_JARS)
+$(J2ME_CLASSLIB):: $(JSROP_JARS) $(JSROP_AGENT_JARS)
 $(J2ME_CLASSLIB):: headers $(CVM_ROMJAVA_LIST)
 $(J2ME_CLASSLIB):: $(CLASSLIB_DEPS)
 $(J2ME_CLASSLIB):: aotdeps
