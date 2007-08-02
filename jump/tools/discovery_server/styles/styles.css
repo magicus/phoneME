@@ -1,0 +1,174 @@
+/*
+ Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License version
+ 2 only, as published by the Free Software Foundation.
+
+ This program is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ General Public License version 2 for more details (a copy is
+ included at /legal/license.txt).
+
+ You should have received a copy of the GNU General Public License
+ version 2 along with this work; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ 02110-1301 USA
+
+ Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ Clara, CA 95054 or visit www.sun.com if you need additional
+ information or have any questions.
+*/
+
+body
+{
+    background-color: white;
+    margin: 0 100px 0 100px;
+    font-family:Arial,Helvetica,FreeSans,"Luxi-sans","Nimbus Sans L",sans-serif;
+}
+
+h1
+{
+    font-weight: bold;
+    font-size: 45px;
+    color: #669966;
+    display: inline;
+}
+
+h2
+{
+    font-size: 30px;
+    font-weight: bold;
+    font-style: italic;
+    color: #a7a691;
+    margin-left: 15;
+    display: inline;
+}
+
+hr
+{
+    width: 100%;
+    height: 6px;
+    background-color: #5c8098;
+    border: 0;
+    margin: 0;
+}
+
+a {text-decoration:none}
+a:visited, a:link {color:#006699}
+a:link:hover, a:visited:hover {text-decoration:underline}
+
+#hr6
+{
+    width: 100%;
+    height: 6px;
+    font-size: 0px;
+    background-color: #5c8098;
+}
+
+.margin_div
+{
+    margin: 0 20 0 20;
+}
+
+.table
+{
+    background-color: white;
+    border: 0;
+    padding: 0 0 0 0;
+    font-size: small;
+}
+
+.table_header
+{
+    background-color: #336699;
+    font-family: Arial;
+    font-weight: bold;
+    text-align: center;
+    color: white;
+}
+
+.size_column
+{
+    font-size: x-small;
+    font-family: Courier;
+    text-align: right;
+}
+
+.type_column
+{
+    text-align: center;
+}
+
+.time_column
+{
+    font-size: x-small;
+    text-align: center;
+}
+
+.info_column
+{
+    font-size: xx-small;
+}
+
+.odd_row, .odd_row_list 
+{
+    background-color: #f4f4f4;
+}
+
+.even_row, .even_row_list
+{
+    background-color: white;
+}
+
+.odd_row_list, .even_row_list
+{
+    font-size: small;
+}
+
+.list_text
+{
+    color: black;
+    font-size: x-small;
+    font-style: normal;
+    margin: 0 0 0 20px;
+    display: block;
+}
+
+.message, .error_message
+{
+    border: 1px black solid;
+    margin: 20px;
+}
+
+.message
+{
+    color: blue;
+}
+
+.error_message
+{
+    color: red;
+}
+
+.strong
+{
+    font-weight: bold;
+}
+
+.logo
+{
+    vertical-align: text-bottom;
+}
+
+.right
+{
+    float: right;
+}
+
+.left
+{
+    float: left;
+}
