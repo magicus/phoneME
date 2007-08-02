@@ -109,19 +109,19 @@ ifneq ($(INCLUDED_JSROP_NUMBERS),)
 export ABSTRACTIONS_DIR ?= $(COMPONENTS_DIR)/abstractions
 
 ifeq ($(PROJECT_ABSTRACTIONS_DIR),)
-JSROP_ABSTR_DIR = $(ABSTRACTIONS_DIR)
+JSROP_ABSTR_DIR = ABSTRACTIONS_DIR
 else
-JSROP_ABSTR_DIR = $(PROJECT_ABSTRACTIONS_DIR)
+JSROP_ABSTR_DIR = PROJECT_ABSTRACTIONS_DIR
 endif
-
-ABSTRACTIONS_MAKE_FILE = $(JSROP_ABSTR_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ABSTRACTIONS_MAKE_FILE = $($(JSROP_ABSTR_DIR))/build/$(SUBSYSTEM_MAKE_FILE)
 ifeq ($(wildcard $(ABSTRACTIONS_MAKE_FILE)),)
-$(error ABSTRACTIONS_DIR must point to a directory containing JSROP abstractions sources)
+$(error $(JSROP_ABSTR_DIR) must point to a directory containing JSROP abstractions sources)
 endif
 include $(ABSTRACTIONS_MAKE_FILE)
 
 JSROP_JARS=$(ABSTRACTIONS_JAR) $(JSROP_BUILD_JARS)
-
+# abstractions required javacall types
+CVM_INCLUDE_JAVACALL=true
 endif
 
 # Include JSR 75
@@ -158,13 +158,13 @@ endif
 ifeq ($(USE_JSR_135), true)
 export JSR_135_DIR ?= $(COMPONENTS_DIR)/jsr135
 ifeq ($(PROJECT_JSR_135_DIR),)
-JSROP_JSR135_DIR = $(JSR_135_DIR)
+JSROP_JSR135_DIR = JSR_135_DIR
 else
-JSROP_JSR135_DIR = $(PROJECT_JSR_135_DIR)
+JSROP_JSR135_DIR = PROJECT_JSR_135_DIR
 endif
-JSR_135_MAKE_FILE = $(JSROP_JSR135_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+JSR_135_MAKE_FILE = $($(JSROP_JSR135_DIR))/build/$(SUBSYSTEM_MAKE_FILE)
 ifeq ($(wildcard $(JSR_135_MAKE_FILE)),)
-$(error JSR_135_DIR must point to a directory containing JSR 135 sources)
+$(error $(JSROP_JSR135_DIR) must point to a directory containing JSR 135 sources)
 endif
 include $(JSR_135_MAKE_FILE)
 endif
@@ -182,12 +182,7 @@ endif
 # Include JSR 177
 ifeq ($(USE_JSR_177), true)
 export JSR_177_DIR ?= $(COMPONENTS_DIR)/jsr177
-ifeq ($(PROJECT_JSR_177_DIR),)
-JSROP_JSR177_DIR = $(JSR_177_DIR)
-else
-JSROP_JSR177_DIR = $(PROJECT_JSR_177_DIR)
-endif
-JSR_177_MAKE_FILE = $(JSROP_JSR177_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+JSR_177_MAKE_FILE = $(JSR_177_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 ifeq ($(wildcard $(JSR_177_MAKE_FILE)),)
 $(error JSR_177_DIR must point to a directory containing JSR 177 sources)
 endif
@@ -343,7 +338,7 @@ JSROP_OUTPUT_DIRS = $(foreach jsr_number,$(JSROP_NUMBERS),\
 CVM_INCLUDE_DIRS+= $(JSROP_INCLUDE_DIRS)
 
 ifneq ($(JAVACALL_LINKLIBS),)
-LINKLIBS_CVM    += $(JAVACALL_LINKLIBS) -L$(JSROP_LIB_DIR)
+LINKLIBS_CVM    += $(JAVACALL_LINKLIBS)
 endif
 
 ifeq ($(CVM_PRELOAD_LIB), true)
