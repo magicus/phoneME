@@ -91,6 +91,7 @@ static RECT rcVisibleDesktop;
 static HANDLE eventThread;
 static HINSTANCE instanceMain;
 static jboolean reverse_orientation;
+static int lastKeyPressed = 0;
 
 
 
@@ -561,6 +562,7 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     int cmd;
     DWORD err;
     static int ignoreCancelMode = 0;
+    int result = 0;
 
     switch (msg) {
     case WM_CREATE:
@@ -715,8 +717,40 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         return 0;
     }
     case WM_KEYDOWN: /* fall through */
+        switch (wp) {
+        case VK_RETURN:  
+        case VK_BACK: 
+        case VK_UP: 
+        case VK_DOWN: 
+        case VK_LEFT: 
+        case VK_RIGHT:
+            return process_key(hwnd, msg, wp, lp);
+        }
+        return 0;
     case WM_KEYUP:
-        return process_key(hwnd, msg, wp, lp);
+        switch (wp) {
+        case VK_RETURN:  
+        case VK_BACK: 
+        case VK_UP: 
+        case VK_DOWN: 
+        case VK_LEFT: 
+        case VK_RIGHT:
+            result = process_key(hwnd, msg, wp, lp);
+        default:
+            // May need special handling for soft keys?  Not sure yet...
+            if (0 != lastKeyPressed) { 
+                //should use cached pressed key code for input
+                result = process_key(hwnd, WM_KEYUP, lastKeyPressed, lp);
+            }
+            lastKeyPressed = 0;
+        }
+        return result;
+    case WM_CHAR:
+        if (wp >= 0x20 && wp <= 'z') {
+            lastKeyPressed = wp;
+            result = process_key(hwnd, WM_KEYDOWN, wp, lp);
+        }
+        return result;
     default:
         return DefWindowProc(hwnd, msg, wp, lp);
     }
