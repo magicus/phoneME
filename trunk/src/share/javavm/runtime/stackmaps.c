@@ -2397,6 +2397,8 @@ CVMstackmapInterpretOne(CVMStackmapContext* con,
 	    switch (CVMcpEntryType(con->cp, cpIdx)) {
 	    case CVM_CONSTANT_StringICell:
 	    case CVM_CONSTANT_StringObj:
+	    case CVM_CONSTANT_ClassTypeID:
+	    case CVM_CONSTANT_ClassBlock:
 		/* ... -> Ref,... */
 		CVMassert(topOfStack < con->maxStack);
 		stack[topOfStack++] = CVMctsRef;
