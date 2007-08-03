@@ -179,7 +179,7 @@ ifeq ($(JSR_120_ENABLE_JUMP), true)
 vpath % $(JSR_120_DIR)/src/jump_application/core/common/native
 endif
 
-SUBSYSTEM_JSR_120_EXTRA_INCLUDES = \
+SUBSYSTEM_JSR_120_EXTRA_INCLUDES += \
     $(JSR_120_DIR)/src/share/protocol/sms/native/share/inc \
     $(JSR_120_DIR)/src/share/protocol/cbs/native/share/inc \
     $(JSR_120_DIR)/src/share/core/common/native/share/inc
