@@ -28,7 +28,9 @@ package com.sun.midp.lcdui;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.game.GameCanvas;
-
+import java.util.Vector;
+import java.util.Enumeration;
+import java.lang.ref.WeakReference;
 
 /**
 * This is the look &amp; feel implementation for GameCanvas.
@@ -49,7 +51,12 @@ public class GameCanvasLFImpl {
 
     /** Cached reference to GraphicsAccess instance */
     private GraphicsAccess graphicsAccess;
-
+    
+    /**
+     * To keep track of graphics provided users with
+     */
+    Vector gVector = new Vector();
+    
     /**
      * Create new implementation instance for the given GameCanvas
      * @param c GameCanvas instance to create the implementation for
@@ -89,6 +96,28 @@ public class GameCanvasLFImpl {
             // OutOfMemoryError can be thrown
             graphicsAccess.resizeImage(
                 offscreenBuffer, w, h, true);
+
+            /* Getting all graphics updated to the new dismesion
+             * so that users can adjust to it.
+             * In some cases like 3D engine and screen rotation,
+             * midlets don't care about new size resulting in garbled display
+             */
+            synchronized(gVector) {
+                Enumeration enum = gVector.elements();
+                
+                Graphics g = null;
+                WeakReference wr = null;
+                while (enum.hasMoreElements()) {
+                    wr = (WeakReference)enum.nextElement();
+                    g = (Graphics)wr.get();
+                    if (g != null) {
+                        graphicsAccess.setDimensions(g, w, h);
+                    } else {
+                        gVector.removeElement(wr);
+                    }
+                }
+            }
+            
         }
     }
 
@@ -116,6 +145,21 @@ public class GameCanvasLFImpl {
                 graphicsAccess.getImageGraphics(offscreenBuffer, w, h);
 
             graphicsAccess.setGraphicsCreator(g, owner);
+            // Keep track of all graphics provided midlets with until now
+            synchronized(gVector) {
+                gVector.addElement(new WeakReference(g));
+
+                Enumeration enum = gVector.elements();
+
+                // clear the empty references
+                WeakReference wr = null;
+                while (enum.hasMoreElements()) {
+                    wr = (WeakReference)enum.nextElement();
+                    if (wr.get() == null) {
+                        gVector.removeElement(wr);
+                    }
+                }
+            }
             return g;
         }
         

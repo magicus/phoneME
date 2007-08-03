@@ -82,6 +82,7 @@ class GraphicsAccessImpl implements com.sun.midp.lcdui.GraphicsAccess {
         return Graphics.getImageGraphics(image, width, height);
     }
 
+
     /**
      * Get maximal width of the Graphics context
      * Whether the Graphics object was created by GameCanvas,
@@ -162,5 +163,15 @@ class GraphicsAccessImpl implements com.sun.midp.lcdui.GraphicsAccess {
      */
     public int getScreenHeight() {
         return Display.HEIGHT;
+    }
+
+    /**
+     * Set new screen dimensions for the graphics
+     * @param g Graphics object to set dimension for 
+     * @param width new width
+     * @param height new height
+     */
+    public void setDimensions(Graphics g, int width, int height) {
+        g.setDimensions(width, height);
     }
 }

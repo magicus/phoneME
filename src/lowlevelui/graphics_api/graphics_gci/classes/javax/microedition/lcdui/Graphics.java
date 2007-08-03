@@ -553,6 +553,9 @@ public class Graphics {
     void setDimensions(int w, int h) {
         maxWidth  = (short) (w & 0x7fff);
         maxHeight = (short) (h & 0x7fff);
+
+        transX = transY = 0;
+        setClip(0, 0, maxWidth, maxHeight);
     }
 
     /**
@@ -1919,7 +1922,7 @@ public class Graphics {
         Graphics g = new Graphics(img.getImageData().gciDrawingSurface);
         g.img = img;
         g.setDimensions(img.getWidth(), img.getHeight());
-        g.reset();
+        g.resetGC();
 
         // construct and return a new ImageGraphics
         // object that uses the Image img as the 
@@ -1955,7 +1958,7 @@ public class Graphics {
 	Graphics g = new Graphics(img.getImageData().gciDrawingSurface);
         g.img = img;
         g.setDimensions(w, h);
-        g.reset();
+        g.resetGC();
         return g;
     }
 
@@ -1977,7 +1980,7 @@ public class Graphics {
 
         g.img = null;
         g.setDimensions(width, height);
-        g.reset();
+        g.resetGC();
 
         return g;
     }
