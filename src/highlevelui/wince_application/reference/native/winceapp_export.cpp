@@ -122,7 +122,7 @@ DWORD lastUserInputTick = 0;
 static int dirty_x1, dirty_y1, dirty_x2, dirty_y2;
 
 static void process_skipped_refresh();
-static LRESULT process_key(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
+static LRESULT process_key(HWND hwnd, UINT action, int key);
 
 static gxj_pixel_type* startDirectPaint(int &dstWidth, int &dstHeight,
                                    int &dstYPitch);
@@ -505,6 +505,13 @@ void winceapp_init() {
     eventThread = CreateThread(NULL, 0, CreateWinCEWindow, 0, 0, NULL);
 }
 
+static jint mapAction(UINT msg, LPARAM lp) {
+    if (msg == WM_KEYUP)
+        return KEYMAP_STATE_RELEASED;
+    else
+        return (lp&0x40000000)?KEYMAP_STATE_REPEATED:KEYMAP_STATE_PRESSED;
+}
+
 static jint mapKey(WPARAM wParam, LPARAM lParam) {
     switch (wParam) {
     case VK_F9:  return KEYMAP_KEY_GAMEA; /* In PPC emulator only  */
@@ -526,7 +533,7 @@ static jint mapKey(WPARAM wParam, LPARAM lParam) {
 
     }
 
-    if (wParam >= ' ' && wParam <= 127) {
+    if (wParam >= 0x20 && wParam <= 0x7F) {
         /* Some ASCII keys sent by emulator or mini keyboard */
         return (jint)wParam;
     }
@@ -563,6 +570,7 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     DWORD err;
     static int ignoreCancelMode = 0;
     int result = 0;
+    int action = 0;
 
     switch (msg) {
     case WM_CREATE:
@@ -717,16 +725,6 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         return 0;
     }
     case WM_KEYDOWN: /* fall through */
-        switch (wp) {
-        case VK_RETURN:  
-        case VK_BACK: 
-        case VK_UP: 
-        case VK_DOWN: 
-        case VK_LEFT: 
-        case VK_RIGHT:
-            return process_key(hwnd, msg, wp, lp);
-        }
-        return 0;
     case WM_KEYUP:
         switch (wp) {
         case VK_RETURN:  
@@ -735,20 +733,20 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         case VK_DOWN: 
         case VK_LEFT: 
         case VK_RIGHT:
-            result = process_key(hwnd, msg, wp, lp);
+            return process_key(hwnd, mapAction(msg, lp), mapKey(wp, lp));
         default:
             // May need special handling for soft keys?  Not sure yet...
-            if (0 != lastKeyPressed) { 
+            if (0 != lastKeyPressed && WM_KEYUP == msg) { 
                 //should use cached pressed key code for input
-                result = process_key(hwnd, WM_KEYUP, lastKeyPressed, lp);
+                result = process_key(hwnd, KEYMAP_STATE_RELEASED, lastKeyPressed);
             }
             lastKeyPressed = 0;
         }
         return result;
     case WM_CHAR:
-        if (wp >= 0x20 && wp <= 'z') {
+        if (wp >= 0x20 && wp <= 0x7f) {
             lastKeyPressed = wp;
-            result = process_key(hwnd, WM_KEYDOWN, wp, lp);
+            result = process_key(hwnd, mapAction(msg, lp), lastKeyPressed);
         }
         return result;
     default:
@@ -757,24 +755,17 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     return DefWindowProc(hwnd, msg, wp, lp);
 }
 
-static LRESULT process_key(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
-    int key;
+static LRESULT process_key(HWND hwnd, UINT action, int key) {
     lastUserInputTick = GetTickCount();
 
-    switch (key = mapKey(wp, lp)) {
+    switch (key) {
     case KEYMAP_KEY_INVALID:
         break;
     default:
+        pMidpEventResult->ACTION = action;
         pMidpEventResult->type = MIDP_KEY_EVENT;
         pMidpEventResult->CHR = key;
 
-        if (msg == WM_KEYUP) {
-            pMidpEventResult->ACTION = KEYMAP_STATE_RELEASED;
-        } else if (lp & 0x40000000) {
-            pMidpEventResult->ACTION = KEYMAP_STATE_REPEATED;
-        } else {
-            pMidpEventResult->ACTION = KEYMAP_STATE_PRESSED;
-        }
         pSignalResult->waitingFor = UI_SIGNAL;
         pMidpEventResult->DISPLAY = gForegroundDisplayId;
         sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult));
