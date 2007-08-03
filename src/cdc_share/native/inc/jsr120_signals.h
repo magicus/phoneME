@@ -27,10 +27,6 @@
 #ifndef _JSR120_SIGNALS_H_
 #define _JSR120_SIGNALS_H_
 
-enum {
-    WMA_SMS_READ_SIGNAL = 0
-};
-
 /**
  * Makes the thread sleeping
  */

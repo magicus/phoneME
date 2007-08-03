@@ -35,17 +35,17 @@ static int _signal;
 static int is_mutex_inited = 0;
 
 void jsr120_init_mutex() {
-	is_mutex_inited = 1;
+    is_mutex_inited = 1;
     CVMmutexInit(&_mutex);
     CVMcondvarInit(&_condvar, &_mutex);
 }
 
 void jsr120_finalize_mutex() {
-	if (!is_mutex_inited) {
-	    is_mutex_inited = 0;
-		CVMmutexDestroy(&_mutex);
-		CVMcondvarDestroy(&_condvar);
-	}
+    if (!is_mutex_inited) {
+       is_mutex_inited = 0;
+       CVMmutexDestroy(&_mutex);
+       CVMcondvarDestroy(&_condvar);
+    }
 }
 
 void jsr120_wait_for_signal(int handle, int signal) {
