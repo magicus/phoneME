@@ -23,9 +23,10 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
 #include <stdio.h>
+#include <windows.h>
 #include <winbase.h>
+#include <stdlib.h>
 
 #include <pcsl_file.h>
 #include <pcsl_memory.h>
@@ -68,38 +69,38 @@ int pcsl_file_finalize() {
  * only when a file is created
  */
 int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle) {
+    HANDLE fd;
+    const wchar_t *pszOsFilename = pcsl_string_get_utf16_data(fileName);
+    DWORD mode1 = GENERIC_READ | GENERIC_WRITE; 
+    DWORD mode2 = OPEN_EXISTING;
+    int move2End = 0;
 
-    int fd;
-    char* mode;
-    const jbyte * pszOsFilename = pcsl_string_get_utf8_data(fileName);
-
-    if (pszOsFilename == NULL) {
-      return -1;
+    if (flags == PCSL_FILE_O_RDONLY) {
+        mode1 = GENERIC_READ;
+    } else if (flags == PCSL_FILE_O_WRONLY) {
+        mode1 = GENERIC_WRITE;
+        move2End = 1;
+    }
+    if (flags & PCSL_FILE_O_CREAT) {
+        mode2 = OPEN_ALWAYS;
+    }
+    if (flags & PCSL_FILE_O_TRUNC) {
+        mode2 |= TRUNCATE_EXISTING;
+    }
+    if (flags & PCSL_FILE_O_APPEND) {
+        move2End = 1;
     }
 
-    if (flags == O_RDONLY) {
-        mode = "rb";
-    } else if (flags == O_WRONLY) {
-        mode = "wb";
-    } else if ((flags == (RDWR_CREATE)) ||
-               (flags == (RDWR_CREATE_TRUNC)) || (flags == (RDWR_TRUNC))) {
-        mode = "w+b";
-    } else if (flags ==
-               (PCSL_FILE_O_RDWR|PCSL_FILE_O_CREAT|PCSL_FILE_O_APPEND)) {
-        mode = "a+b";
-    } else {
-        mode = "r+b";
-    }
-
-    fd = (int)fopen((char*)pszOsFilename, mode);
-
-    pcsl_string_release_utf8_data(pszOsFilename, fileName);
-
-    if (fd == 0) {
+    fd = CreateFileW(pszOsFilename, mode1, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, mode2, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, NULL );
+    pcsl_string_release_utf16_data(pszOsFilename, fileName);
+    if (fd == INVALID_HANDLE_VALUE) {
         *handle = NULL;
         return -1;
     } else {
         *handle  = (void *)fd;
+        if (move2End == 1) {
+            SetFilePointer(handle, 0, NULL, FILE_END);
+        }
         return 0;
     }
 }
@@ -110,7 +111,9 @@ int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle) {
  */
 int pcsl_file_close(void *handle)
 {
-    return fclose(handle);
+    if (CloseHandle(handle))
+        return 0;
+    return -1;
 }
 
 /**
@@ -119,7 +122,11 @@ int pcsl_file_close(void *handle)
  */
 int pcsl_file_read(void *handle, unsigned char *buf, long size)
 {
-    return fread(buf, 1, size, handle);
+    int n_read;
+    if (!ReadFile(handle, buf, size, &n_read, NULL)) {
+        return -1;
+    }
+    return n_read;
 }
 
 /**
@@ -131,7 +138,11 @@ int pcsl_file_read(void *handle, unsigned char *buf, long size)
  */
 int pcsl_file_write(void *handle, unsigned char* buffer, long length)
 {
-    return fwrite(buffer, 1, length, handle);
+    int n_write;
+    if (!WriteFile(handle, buffer, length, &n_write, NULL)) {
+        return -1;
+    }
+    return n_write;
 }
 
 /**
@@ -140,7 +151,7 @@ int pcsl_file_write(void *handle, unsigned char* buffer, long length)
 int pcsl_file_unlink(const pcsl_string * fileName)
 {
     int status;
-    const jchar * pszOsFilename = pcsl_string_get_utf16_data(fileName);
+    const wchar_t *pszOsFilename = pcsl_string_get_utf16_data(fileName);
 
     if (pszOsFilename == NULL) {
         return -1;
@@ -161,6 +172,11 @@ int pcsl_file_unlink(const pcsl_string * fileName)
  */
 int pcsl_file_truncate(void *handle, long size)
 {
+    if (SetFilePointer(handle, size, NULL, FILE_BEGIN) != INVALID_SET_FILE_POINTER) {
+        SetEndOfFile(handle);
+        return 0;
+    }
+
       return -1;
 }
 
@@ -170,7 +186,24 @@ int pcsl_file_truncate(void *handle, long size)
  */
 long pcsl_file_seek(void *handle, long offset, long position)
 {
-    return fseek(handle, offset, position);
+    DWORD method = FILE_BEGIN;
+
+    switch (position ) {
+        case SEEK_SET:
+            method = FILE_BEGIN;
+            break;
+        case SEEK_CUR:
+            method = FILE_CURRENT;
+            break;
+        case SEEK_END:
+            method = FILE_END;
+            break;
+    }
+
+    if ((offset = SetFilePointer(handle, offset, NULL, method)) != INVALID_SET_FILE_POINTER) {
+        return offset;
+    }
+    return -1;
 }
 
 /**
@@ -179,12 +212,11 @@ long pcsl_file_seek(void *handle, long offset, long position)
  */
 long pcsl_file_sizeofopenfile(void *handle)
 {
-    long size;
-
-    fseek(handle, 0, SEEK_END);
-    size = ftell(handle);
-    fseek(handle, 0, SEEK_SET);// reset file
-    return size;
+    BY_HANDLE_FILE_INFORMATION f_info;
+    if (GetFileInformationByHandle(handle, &f_info)) {
+        return f_info.nFileSizeLow;
+    }
+    return -1;
 }
 
 /**
@@ -219,8 +251,8 @@ int pcsl_file_exist(const pcsl_string * fileName)
       const jsize len = strlen(pszOsFilename);
       // in special case of directories we always return false
       if (pszOsFilename && len > 0 &&
-    pszOsFilename[len - 1] == '/') {
-  return 0;
+          pszOsFilename[len - 1] == '/') {
+          return 0;
       }
     }
 
@@ -238,7 +270,8 @@ int pcsl_file_exist(const pcsl_string * fileName)
 /* Force the data to be written into the FS storage */
 int pcsl_file_commitwrite(void *handle)
 {
-    return fflush(handle);
+    //return fflush(handle);
+    return 0;
 }
 
 
@@ -252,19 +285,19 @@ int pcsl_file_rename(const pcsl_string * oldName,
     const jchar * pszOldFilename = pcsl_string_get_utf16_data(oldName);
 
     if(pszOldFilename == NULL) {
-	    return -1;
+        return -1;
     } else {
         const jchar * pszNewFilename = pcsl_string_get_utf16_data(newName);
 
         if(pszNewFilename == NULL) {
             pcsl_string_release_utf16_data(pszOldFilename, oldName);
-	        return -1;
+            return -1;
         }
 
         if (MoveFile(pszOldFilename, pszNewFilename) == 0) {
-        	status = -1;
+            status = -1;
         } else {
-	        status = 0;
+            status = 0;
         }
         pcsl_string_release_utf16_data(pszNewFilename, newName);
     }
