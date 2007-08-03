@@ -540,6 +540,7 @@ public class Graphics {
     void setDimensions(int w, int h) {
         maxWidth  = (short) (w & 0x7fff);
         maxHeight = (short) (h & 0x7fff);
+        setClip(0, 0, maxWidth, maxHeight);
     }
 
     /**

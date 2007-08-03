@@ -3042,15 +3042,15 @@ public class Display {
          * Called by event delivery when size of screen was changed.
          */
         public void handleRotationEvent() {
-
-            wantRotation = reverseOrientation0();
-            isRotatedKnown = true;
-            Display.WIDTH = getScreenWidth0();
-            Display.HEIGHT = getScreenHeight0();
+            synchronized (LCDUILock) {
+                wantRotation = reverseOrientation0();
+                isRotatedKnown = true;
+                Display.WIDTH = getScreenWidth0();
+                Display.HEIGHT = getScreenHeight0();
+                
+                screenGraphics.setDimensions(Display.WIDTH, Display.HEIGHT);
+            }
             
-            screenGraphics.setDimensions(Display.WIDTH, Display.HEIGHT);
-            screenGraphics.reset();
-
             // #ifdef ENABLE_CHAMELEON
             SkinResources.adjustScreen();
 
