@@ -37,4 +37,14 @@ void jsr120_wait_for_signal(int handle, int signal);
  */
 void jsr120_throw_signal(int handle, int signal);
 
+/**
+ * Initializes signal system.
+ */
+jsr120_init_signal();
+
+/**
+ * Finalizes signal system.
+ */
+void jsr120_finalize_signal();
+
 #endif _JSR120_SIGNALS_H_
