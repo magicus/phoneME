@@ -334,6 +334,11 @@ public abstract class Configuration {
     }
 
 
+    public String getProtocolHandler( String protocol, String contentType )
+    {
+        return getHandler( protocol );
+    }
+    
     /**
      *  Sets the configuration attribute of the Configuration class
      *

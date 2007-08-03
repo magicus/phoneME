@@ -31,6 +31,7 @@ import javax.microedition.media.*;
 import javax.microedition.media.protocol.*;
 // #endif ]
 import java.util.Hashtable;
+import com.sun.mmedia.Configuration;
 
 /**
  * A DataSource base class
@@ -70,6 +71,33 @@ public abstract class BasicDS extends DataSource {
 	return null;
     }
  
+    static protected String getRemainder(String loc) {
+        String proto = "";
+        int idx = loc.indexOf(':');
+    
+        if( idx != -1) {
+            proto = loc.substring(idx+1);
+        }
+    
+        return proto;
+    }
+
+    protected String getContentTypeFromLocator()
+    {
+        String ret = null;
+        String fileName = getRemainder(locator);
+
+        if (fileName == null) {
+            throw new IOException("bad url");
+        }
+        int i = fileName.lastIndexOf((int)('.'));
+        if ( i != -1 ) {
+            String ext = fileName.substring(i+1).toLowerCase();
+            ret = Configuration.getConfiguration().ext2Mime(ext);
+        }
+        
+        return ret;
+    }
     /**
      * Parse the protocol part of the locator string.
      */

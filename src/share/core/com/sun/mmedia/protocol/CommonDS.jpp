@@ -93,17 +93,7 @@ public class CommonDS extends BasicDS implements SourceStream {
             throw (new IOException(this + ": connect() failed"));
         }
 
-        contentType = null;
-        String fileName = getRemainder(locator);
-
-        if (fileName == null) {
-            throw new IOException("bad url");
-        }
-        int i = fileName.lastIndexOf((int)('.'));
-        if ( i != -1 ) {
-            String ext = fileName.substring(i+1).toLowerCase();
-            contentType = Configuration.getConfiguration().ext2Mime(ext);
-        }
+        contentType = getContentTypeFromLocator();
 
         if (contentType == null) {
             contentType = "unknown";
@@ -390,17 +380,6 @@ public class CommonDS extends BasicDS implements SourceStream {
 
     public int getSeekType() {
         return RANDOM_ACCESSIBLE;
-    }
-
-    static private String getRemainder(String loc) {
-        String proto = "";
-        int idx = loc.indexOf(':');
-    
-        if( idx != -1) {
-            proto = loc.substring(idx+1);
-        }
-    
-        return proto;
     }
 
     public static String urlCvrt(String theml) {

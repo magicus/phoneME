@@ -114,7 +114,7 @@ public class DefaultConfiguration extends Configuration {
         // Protocol handlers.
         handlers.put("http", "com.sun.mmedia.protocol.CommonDS");
     // #ifdef USE_FILE_CONNECTION [
-        handlers.put("file", "com.sun.mmedia.protocol.CommonDS");
+        handlers.put("file", "com.sun.mmedia.protocol.DummyDS");
     // #endif
         handlers.put("rtsp", "com.sun.mmedia.protocol.CommonDS");
 
@@ -695,6 +695,17 @@ public class DefaultConfiguration extends Configuration {
         properties.put(key, value);
     }       
 
+    public String getProtocolHandler( String protocol, String contentType )
+    {
+        if( contentType.equals( MIME_IMAGE_GIF ) && 
+             protocol.equals( "http" ) )
+        {
+            return "com.sun.mmedia.protocol.CommonDS"; 
+        }
+        
+        return super.getProtocolHandler( protocol, contentType );
+    }
+    
     private Object createInstanceOf(String propertyName) {
         try {
             String propertyValue = getProperty(propertyName);
