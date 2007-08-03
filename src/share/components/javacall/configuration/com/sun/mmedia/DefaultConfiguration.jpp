@@ -698,7 +698,7 @@ public class DefaultConfiguration extends Configuration {
     public String getProtocolHandler( String protocol, String contentType )
     {
         if( contentType.equals( MIME_IMAGE_GIF ) && 
-             protocol.equals( "http" ) )
+             protocol.equals( "file" ) )
         {
             return "com.sun.mmedia.protocol.CommonDS"; 
         }
