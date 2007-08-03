@@ -38,6 +38,7 @@ PREFIX_true=1
 #Form list of objects
 VPATH+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR))))
 PORTING_SOURCE+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)/*.c))))
+PORTING_SOURCE+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR)/*.cpp))))
 NOTIFIER_SOURCE+=$(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $(notdir $(wildcard $($(jsr)_NOTIFIER_PATH)/$($(jsr)_JC_DIR)/*.c))))
 
 
