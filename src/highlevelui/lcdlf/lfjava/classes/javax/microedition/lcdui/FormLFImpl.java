@@ -519,13 +519,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         uShowContents(true);
 
         synchronized (Display.LCDUILock) {
-           scrollInitialized = false;
-           
-           if (pendingCurrentItem != null) {
-
-              lScrollToItem(pendingCurrentItem);
-              pendingCurrentItem = null;
-           }
+            scrollInitialized = false;
+            pendingCurrentItem = null;
         }
     }
     
@@ -964,6 +959,16 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             System.arraycopy(itemLFs, 0, itemsCopy, 0, numOfLFs);
             traverseIndexCopy = traverseIndex;
             itemsModified = false;
+
+            if (pendingCurrentItem != null) {
+                for (int i = 0; i < itemsCopyCount; i++) {
+                    if (itemsCopy[i].item == pendingCurrentItem) {
+                        traverseIndexCopy = i;
+                        keepFocusOnTheScreen = true;
+                        break;
+                    }
+                }
+            }
 
         } // synchronized
         
