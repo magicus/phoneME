@@ -960,9 +960,13 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
     }
 
     gxj_pixel_type *dst = startDirectPaint(dstWidth, dstHeight, dstYPitch);
-    int maxY = dstHeight - titleHeight;
     
 #if ENABLE_DIRECT_DRAW
+    // startDirectoryPaint() could release the surfaces
+    if (g_pDDSPrimary == NULL)
+        return;
+
+    int maxY = dstHeight - titleHeight;
     if (y2 > maxY) {
         y2 = maxY;
     }
@@ -995,6 +999,7 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
 
 #else /* !ENABLE_DIRECT_DRAW */
 
+    int maxY = dstHeight - titleHeight;
     if (dst != NULL) {
         srcWidth = x2 - x1;
         srcHeight = y2 - y1;
