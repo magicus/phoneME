@@ -103,10 +103,22 @@ ENTRY1 ( CVMCCMruntimeNewGlue )
 #endif
 	ands	v1, a4, #CONSTANT_CLASS_ACC_FINALIZABLE     /* finalizable? */
 	bne	GOSLOW         /* bail if yes. Otherwise v1 == 0 */
+	
+#ifndef CVM_MP_SAFE
 	/* lock using swp */
         swp	a1, a1, [LOCK]   /* try locking */
 	cmp	a1, #1         /* already locked. Bail. */
 	beq	GOSLOW
+#else
+LABEL(_newAcquireLockMPSafe)
+	ldrex	a4, [LOCK]
+	cmp	a4, #1     /* already locked? */
+	beq	GOSLOW     /* go slow if already locked */
+	strex	a4, a1, [LOCK] /* try acquire the lock */
+	cmp	a4, #0	       /* strex succeed? */
+	bne	_newAcquireLockMPSafe  /* No. Try again */
+	mcr	p15, 0, a4, c7, c10, 5 /* memory barrier. a4 has 0. */
+#endif
 
 	/* Allocate inline
 	 * a2 = &CVMglobals
@@ -173,8 +185,12 @@ LABEL(LOOPTEST)
 	bcc	INITLOOP
 LABEL(ENDINIT)
 	/* Unlock fast lock */
+#ifdef CVM_MP_SAFE
+	mcr	p15, 0, a1, c7, c10, 5       /* memory barrier. a1 has 0*/
+#endif
 	/* a1 is already 0 here. Store it into fastHeapLock */
 	str	a1, [a2, #OFFSET_CVMGlobalState_fastHeapLock]
+	
 	mov	a1, v1         /* Return object */
 	ldr	a2,  [sp,  #OFFSET_CVMCCExecEnv_ee]   /* a2 -- ee */
         ldr     JFP, [a2,  #OFFSET_CVMExecEnv_interpreterStack+OFFSET_CVMStack_currentFrame]
@@ -188,6 +204,9 @@ LABEL(ENDINIT)
 LABEL(GOUNLOCKANDSLOW)
 	/* Unlock by stuffing a zero in the lock */
 	mov	a1, #0
+#ifdef CVM_MP_SAFE
+	mcr	p15, 0, a1, c7, c10, 5       /* memory barrier. */
+#endif	
 	str	a1, [a2, #OFFSET_CVMGlobalState_fastHeapLock]
 LABEL(GOSLOW)
 	/* Start taking stuff out of the ccee */
@@ -293,11 +312,22 @@ ENTRY1 ( CVMCCMruntimeNewArrayGlue )
 	add	a3, a3, #15
 	bic	a3, a3, #3
 	/* a4 = instance size */
-	/* lock using swp */
+	/* lock using atomic operation */
 	mov     a1, #1	       /* locked	 */
+#ifndef CVM_MP_SAFE
 	swp	a1, a1, [a4]   /* try locking */
 	cmp	a1, #1         /* already locked. Bail. */
 	beq	ARR_GOSLOW
+#else
+LABEL(_arrAcquireLockMPSafe)
+	ldrex	v1, [a4]
+	cmp	v1, #1       /* already locked? */
+	beq	ARR_GOSLOW   /* already locked. Bail. */
+	strex	v1, a1, [a4] /* try lock */
+	cmp	v1, #0       /* strex succeed? */
+	bne	_arrAcquireLockMPSafe
+	mcr	p15, 0, v1, c7, c10, 5 /* memory barrier. v1 has 0 */
+#endif
 
 	/* Allocate inline */
 	/* a2 = &CVMglobals */
@@ -374,6 +404,9 @@ LABEL(ARR_LOOPTEST)
 	bcc	ARR_INITLOOP
 LABEL(ARR_ENDINIT)
 	/* Unlock fast lock */
+#ifdef CVM_MP_SAFE
+	mcr	p15, 0, a1, c7, c10, 5       /* memory barrier. a1 has 0 */
+#endif
 	/* a1 is already 0 here. Store it into fastHeapLock */
 	str	a1, [a2, #OFFSET_CVMGlobalState_fastHeapLock]
 	mov	a1, v1         /* Return object */
@@ -390,6 +423,9 @@ LABEL(ARR_ENDINIT)
 LABEL(ARR_GOUNLOCKANDSLOW)
 	/* Unlock by stuffing a zero in the lock */
 	mov	a1, #0
+#ifdef CVM_MP_SAFE
+	mcr	p15, 0, a1, c7, c10, 5       /* memory barrier. */
+#endif
 	str	a1, [a2, #OFFSET_CVMGlobalState_fastHeapLock]
 LABEL(ARR_GOSLOW)
 	/* At this point, a3 holds the instance length */
@@ -505,11 +541,22 @@ ENTRY1 ( CVMCCMruntimeANewArrayGlue )
 	mov	a1, #12
 	add	a3, a1, v3, LSL #2
 	/* a3 = instance size */
-	/* lock using swp */
+	/* lock using atomic operation */
 	mov     a1, #1	       /* locked	 */
+#ifndef CVM_MP_SAFE	
 	swp	a1, a1, [a4]   /* try locking */
 	cmp	a1, #1         /* already locked. Bail. */
 	beq	OBJARR_GOSLOW
+#else
+LABEL(_objarrAcquireLockMPSafe)
+	ldrex	v1, [a4]
+	cmp	v1, #1        /* already locked? */
+	beq	OBJARR_GOSLOW /* already locked. Bail. */
+	strex	v1, a1, [a4]  /* try lock */
+	cmp	v1, #0        /* strex succeed? */
+	bne	_objarrAcquireLockMPSafe
+	mcr	p15, 0, v1, c7, c10, 5 /* memory barrier */
+#endif
 
 	/* Allocate inline */
 	/* a2 = &CVMglobals */
@@ -587,6 +634,9 @@ LABEL(OBJARR_LOOPTEST)
 	bcc	OBJARR_INITLOOP
 LABEL(OBJARR_ENDINIT)
 	/* Unlock fast lock */
+#ifdef CVM_MP_SAFE
+	mcr	p15, 0, a1, c7, c10, 5       /* memory barrier. a1 has 0 */
+#endif
 	/* a1 is already 0 here. Store it into fastHeapLock */
 	str	a1, [a2, #OFFSET_CVMGlobalState_fastHeapLock]
 	mov	a1, v1         /* Return object */
@@ -603,6 +653,9 @@ LABEL(OBJARR_ENDINIT)
 LABEL(OBJARR_GOUNLOCKANDSLOW)
 	/* Unlock by stuffing a zero in the lock */
 	mov	a1, #0
+#ifdef CVM_MP_SAFE
+	mcr	p15, 0, a1, c7, c10, 5       /* memory barrier. */
+#endif
 	str	a1, [a2, #OFFSET_CVMGlobalState_fastHeapLock]
 LABEL(OBJARR_GOSLOW)
 	/* At this point, a3 holds the instance length */

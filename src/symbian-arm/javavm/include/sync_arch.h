@@ -51,14 +51,21 @@ CVMvolatileStoreImpl(CVMAddr new_value, volatile CVMAddr *addr)
     CVMAddr scratch;
 #ifndef __RVCT__
     asm volatile (
+#ifdef CVM_MP_SAFE
+	"mov %0, #0;"
+        "mcr p15, 0, %0, c7, c10, 5;"
+#endif
         "str %1, [%2];"
         "ldr %0, [%2]"
-        : "=r" (scratch)
+        : "=&r" (scratch)
         : "r" (new_value), "r" (addr)
         /* clobber? */);
 #else
     __asm
     {    
+#ifdef CVM_MP_SAFE
+#error CVM_MP_SAFE currently is not supported for RVCT.
+#endif
         str new_value, [addr];
         ldr scratch, [addr]
     }
@@ -77,14 +84,26 @@ CVMatomicSwapImpl(CVMAddr new_value, volatile CVMAddr *addr)
     CVMAddr scratch;
 #ifndef __RVCT__
     asm volatile (
+#ifndef CVM_MP_SAFE
         "swp %0, %2, [%3];"
         "ldr %1, [%3]"
+#else
+	"1:;"
+        "ldrex %0, [%3];"
+	"strex %1, %2, [%3];"
+	"cmp %1, #0;"
+	"bne 1b;"
+        "mcr p15, 0, %1, c7, c10, 5"
+#endif
         : "=&r" (old_value), "=&r" (scratch)
         : "r" (new_value), "r" (addr)
         /* clobber? */);
 #else
     __asm 
     {
+#ifdef CVM_MP_SAFE
+#error CVM_MP_SAFE currently is not supported for RVCT.
+#endif
         swp old_value, new_value, [addr];
         ldr scratch, [addr]
     }
