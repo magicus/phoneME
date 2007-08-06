@@ -117,9 +117,20 @@ LABEL(_objectHashCodeStart)
 
         /* Acquire the microlock: */
         mov     r3, #CVM_MICROLOCK_LOCKED   /* Swap CVM_MICROLOCK_LOCKED into */
+#ifndef CVM_MP_SAFE
         swp     r3, r3, [MICROLOCK]         /*    the lockWord. */
         cmp     r3, #CVM_MICROLOCK_UNLOCKED /* See if we succeeded. */
         bne     _objectHashCodeSlowAcquireMicrolock    /* Branch if failed. */
+#else
+LABEL(_objectHashCodeAcquireMicrolockMPSafe)
+	ldrex	r12, [MICROLOCK]
+	cmp	r12, #CVM_MICROLOCK_UNLOCKED /* already locked? */
+	bne	_objectHashCodeSlowAcquireMicrolock
+	strex	r12, r3, [MICROLOCK]         /* try lock */
+	cmp	r12, #0                      /* strex succeed? */
+	bne	_objectHashCodeAcquireMicrolockMPSafe
+	mcr	p15, 0, r12, c7, c10, 5 /* memory barrier. r12 has 0. */
+#endif
 
         /* The microlock has been acquired: */
 LABEL(_objectHashCodeHasAcquiredMicrolock)
@@ -145,6 +156,10 @@ LABEL(_objectHashCodeGetObitsFromLockRecord)
         ldr     OBITS, [OBITS, #OFFSET_CVMOwnedMonitor_u_fast_bits]
 
 LABEL(_objectHashCodeUnlockMicrolockAndTryFast)
+#ifdef CVM_MP_SAFE
+	mov	r3, #0
+	mcr	p15, 0, r3, c7, c10, 5       /* memory barrier. */
+#endif
         mov     r3, #CVM_MICROLOCK_UNLOCKED
         str     r3, [MICROLOCK]
 

@@ -372,6 +372,14 @@ CVMCPUmemspecRelinquishResource(CVMJITRMContext *con,
 #define ARM_B_OPCODE                (5 << 25)   /* branch. */
 #define ARM_BL_OPCODE               (ARM_B_OPCODE | (1 << 24)) /* b and link.*/
 
+#ifdef CVM_MP_SAFE
+#define ARM_LDREX_OPCODE (0x01900f9f)
+#define ARM_STREX_OPCODE (0x01800f90)
+#define ARM_MCR_OPCODE (0x0e000000)
+#define C7 7
+#define C10 10
+#endif
+
 /* condCodes */
 #define ARM_MAKE_CONDCODE_BITS(cond) ((CVMUint32)((CVMUint32)(cond) << 28))
 
@@ -2686,6 +2694,7 @@ extern void
 CVMCPUemitAtomicSwap(CVMJITCompilationContext* con,
 		     int destReg, int addressReg)
 {
+#ifndef CVM_MP_SAFE
     emitInstruction(con, ARM_MAKE_CONDCODE_BITS(CVMCPU_COND_AL) |
 		    (CVMUint32)CVMARM_SWP_OPCODE |
 		    addressReg << 16 | destReg << 12 | destReg);
@@ -2697,6 +2706,71 @@ CVMCPUemitAtomicSwap(CVMJITCompilationContext* con,
 			 regNames[addressReg]);
 	});
     CVMJITdumpCodegenComments(con);
+#else
+    int retryLogicalPC;
+    CVMRMResource *scratchRes1, *scratchRes2;
+    int scratchReg1, scratchReg2;
+
+    /*
+     * retry:
+     *   ldrex scratch1, [addressReg]
+     *   strex scratch2, destReg, [addressReg]
+     *   cmp   scratch2, #0
+     *   bne   retry
+     *   mov   destReg, scratch1
+     */
+ 
+    /* top of retry loop in case ldrex/strex operation is interrupted. */
+    CVMtraceJITCodegen(("\t\tretry:\n"));
+    retryLogicalPC = CVMJITcbufGetLogicalPC(con);
+
+    scratchRes1 = CVMRMgetResource(CVMRM_INT_REGS(con),
+                                   CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
+    scratchRes2 = CVMRMgetResource(CVMRM_INT_REGS(con),
+                                   CVMRM_ANY_SET, CVMRM_EMPTY_SET, 1);
+    scratchReg1 = CVMRMgetRegisterNumber(scratchRes1);
+    scratchReg2 = CVMRMgetRegisterNumber(scratchRes2);
+
+    /* emit ldrex instruction */
+    emitInstruction(con, ARM_MAKE_CONDCODE_BITS(CVMCPU_COND_AL) |
+                    ARM_LDREX_OPCODE | addressReg << 16 |
+                    scratchReg1 << 12);
+    CVMtraceJITCodegenExec({
+	printPC(con);
+	CVMconsolePrintf("	ldrex	r%s, [r%s]",
+			 regNames[scratchReg1],
+			 regNames[addressReg]);
+    });
+    CVMJITdumpCodegenComments(con);
+
+    /* emit strex instruction */
+    emitInstruction(con, ARM_MAKE_CONDCODE_BITS(CVMCPU_COND_AL) |
+                    ARM_STREX_OPCODE | addressReg << 16 |
+                    scratchReg2 << 12 | destReg);
+    CVMtraceJITCodegenExec({
+	printPC(con);
+	CVMconsolePrintf("	strex	r%s, r%s, [r%s]",
+			 regNames[scratchReg1], regNames[destReg],
+			 regNames[addressReg]);
+    });
+    CVMJITdumpCodegenComments(con);
+
+    /* Check if strex succeed. Retry if failed. */
+    CVMJITaddCodegenComment((con, "retry if strex failed"));
+    CVMCPUemitCompareConstant(con, CVMCPU_CMP_OPCODE, CVMCPU_COND_NE,
+                              scratchReg2, 0);
+    CVMCPUemitBranch(con, retryLogicalPC, CVMCPU_COND_NE);
+
+    /* Move the old value into destReg */
+    CVMJITaddCodegenComment((con, "move old value into destReg"));
+    CVMCPUemitMoveRegister(con, CVMCPU_MOV_OPCODE,
+                           destReg, scratchReg1, CVMJIT_NOSETCC);
+
+    CVMJITprintCodegenComment(("End of Atomic Swap"));
+
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), scratchRes1);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), scratchRes2);
+#endif
 }
 #endif
 #endif /* CVMJIT_SIMPLE_SYNC_METHODS */
@@ -3079,6 +3153,34 @@ CVMJITfixupAddress(CVMJITCompilationContext* con,
     instruction |= offsetBits;
     *instructionPtr = instruction;
 }
+
+#ifdef CVM_MP_SAFE
+void
+CVMCPUemitMemBar(CVMJITCompilationContext* con)
+{
+    CVMRMResource *rdRes;
+    int rdReg;
+
+#define CP_NUM     (0xf << 8)
+#define OP_2       (5 << 5)
+
+    rdRes = CVMRMgetResourceForConstant32(CVMRM_INT_REGS(con),
+			     CVMRM_ANY_SET, CVMRM_EMPTY_SET, 0);
+    rdReg = CVMRMgetRegisterNumber(rdRes);
+
+    CVMJITprintCodegenComment(("Emit a memory barrier"));
+    emitInstruction(con, ARM_MAKE_CONDCODE_BITS(CVMCPU_COND_AL) |
+                    ARM_MCR_OPCODE | C7 << 16 | rdReg << 12 |
+                    CP_NUM | OP_2 | (1 << 4) | C10);
+    CVMtraceJITCodegenExec({
+        printPC(con);
+        CVMconsolePrintf("	mcr	p15, 0, %s, c7, c10, 5", regNames[rdReg]);
+    });
+    CVMJITdumpCodegenComments(con);
+    CVMRMrelinquishResource(CVMRM_INT_REGS(con), rdRes);
+}
+#endif
+
 
 #ifdef IAI_CACHEDCONSTANT
 /*

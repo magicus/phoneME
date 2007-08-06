@@ -118,15 +118,26 @@ LABEL(CVMCCMinvokeNonstaticSyncMethodHelperLocal)
         /* Do fastTryLock(): */
 
         /* Acquire the microlock: */
-        mov     TEMP, #CVM_MICROLOCK_LOCKED  /* Swap CVM_MICROLOCK_LOCKED into */
+        mov     TEMP, #CVM_MICROLOCK_LOCKED  /* Swap CVM_MICROLOCK_LOCKED into */	
+#ifndef CVM_MP_SAFE
         swp     TEMP, TEMP, [MICROLOCK]      /*    the lockWord. */
 
 	/* Get obits. INVARIANT: All branches and fallthroughs to _lockObj */
 	/* have to set up OBITS first */
-
         ldr     OBITS, [OBJ, #OFFSET_CVMObjectHeader_various32] 
         cmp     TEMP, #CVM_MICROLOCK_UNLOCKED /* See if we succeeded. */
         bne     _fastLockAcquireMicrolock   /* Branch if failed. */
+#else
+LABEL(_syncInvokeMicrolockMPSafe)
+	ldrex	TEMP2, [MICROLOCK]
+	cmp	TEMP2, #CVM_MICROLOCK_UNLOCKED /* is the lock free? */
+	bne	_fastLockAcquireMicrolock      /* already locked */
+	strex	TEMP2, TEMP, [MICROLOCK]       /* try acquire the lock */
+	cmp	TEMP2, #0		       /* strex succeed? */
+	bne	_syncInvokeMicrolockMPSafe     /* No. Try again */
+	mcr	p15, 0, TEMP2, c7, c10, 5      /* memory barrier */
+	ldr	OBITS, [OBJ, #OFFSET_CVMObjectHeader_various32]
+#endif
 
 #ifdef CVM_GLOBAL_MICROLOCK_CONTENTION_STATS
 	ldr     TEMP, =fastMlockimplCount
@@ -163,6 +174,10 @@ LABEL(_lockObj)
         /* lockrec->object = obj: */
         str     OBJ, [LOCKREC, #OFFSET_CVMOwnedMonitor_object]
 
+#ifdef CVM_MP_SAFE
+	mov	r3, #0
+	mcr	p15, 0, r3, c7, c10, 5       /* memory barrier. */
+#endif
         /* Release the microlock: */
         mov     r3, #CVM_MICROLOCK_UNLOCKED
         str     r3, [MICROLOCK]         /* microlock->lockWord = UNLOCKED. */
@@ -1052,14 +1067,25 @@ ENTRY1( CVMCCMreturnFromSyncMethod )
         ldr     OBJ, [JFP, #OFFSET_CVMCompiledFrame_receiverObjX]
 
         /* Acquire the microlock: */
+#ifndef CVM_MP_SAFE
         swp     r3, r3, [MICROLOCK]         /*    the lockWord. */
 
 	/* Get LOCKREC. INVARIANT: All branches and fallthroughs to _unlockObj */
 	/* have to set up LOCKREC first */
-
         ldr     LOCKREC, [OBJ, #OFFSET_CVMObjectHeader_various32] /* Get obits.*/
         cmp     r3, #CVM_MICROLOCK_UNLOCKED /* See if we succeeded. */
         bne     _fastUnlockAcquireMicrolock /* Branch if failed. */
+#else
+LABEL(_syncReturnMicrolockMPSafe)
+	ldrex	TEMP2, [MICROLOCK]
+	cmp	TEMP2, #CVM_MICROLOCK_UNLOCKED /* is the lock free? */
+	bne	_fastUnlockAcquireMicrolock    /* already locked */
+	strex	TEMP2, TEMP, [MICROLOCK]       /* acquire the lock */
+	cmp	TEMP2, #0                      /* strex succeed? */
+	bne	_syncReturnMicrolockMPSafe     /* No. Try again */
+	mcr	p15, 0, TEMP2, c7, c10, 5      /* memory barrier */
+	ldr     LOCKREC, [OBJ, #OFFSET_CVMObjectHeader_various32] /* Get obits.*/
+#endif
 
 #ifdef CVM_GLOBAL_MICROLOCK_CONTENTION_STATS
 	ldr     TEMP, =fastMlockimplCount
@@ -1108,6 +1134,10 @@ LABEL(_unlockObj)
 	/* r3 = ee->objLocksOwned  (advanced load for below) */
         ldr     r3, [EE, #OFFSET_CVMExecEnv_objLocksOwned]
 
+#ifdef CVM_MP_SAFE
+	mov	TEMP, #0
+	mcr	p15, 0, TEMP, c7, c10, 5       /* memory barrier. */
+#endif
 	/* Release the microlock: */
         str     TEMP2, [MICROLOCK]
 
