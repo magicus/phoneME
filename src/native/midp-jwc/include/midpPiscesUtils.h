@@ -27,11 +27,11 @@
 #ifndef MIDP_PISCES_UTILS_H
 #define MIDP_PISCES_UTILS_H
                                   
-#       define PISCES_GET_DATA_POINTER(array) array
-#       include <imgapi_image.h>
-#       include <gxapi_graphics.h>
-#       include <gxj_putpixel.h>
-#       include <gx_image.h>
+#define PISCES_GET_DATA_POINTER(array) array
+#include <imgapi_image.h>
+#include <gxapi_graphics.h>
+#include <gxj_putpixel.h>
+#include <gx_image.h>
 
 
 #define getScreenBuffer(sbuf) \

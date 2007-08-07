@@ -38,9 +38,13 @@
 
 #include <PiscesSysutils.h>
 
-
+#ifdef PISCES_AA_LEVEL
+#define DEFAULT_SUBPIXEL_LG_POSITIONS_X PISCES_AA_LEVEL
+#define DEFAULT_SUBPIXEL_LG_POSITIONS_Y PISCES_AA_LEVEL
+#else
 #define DEFAULT_SUBPIXEL_LG_POSITIONS_X 1
 #define DEFAULT_SUBPIXEL_LG_POSITIONS_Y 1
+#endif
 
 #define PISCES_ACV (jlong)(65536.0 * 0.22385762508460333)
 
@@ -1066,10 +1070,10 @@ updateRendererSurface(Renderer* rdr) {
             surface->pixelStride;
 
     if (rdr->_imageType != surface->imageType) {
-        if ((rdr->_compositeRule == COMPOSITE_SRC) && 
-                (rdr->_imageType == TYPE_INT_ARGB || 
-                    rdr->_imageType == TYPE_INT_ARGB_PRE ||
-                    rdr->_imageType == TYPE_USHORT_5658
+        if ((rdr->_compositeRule != COMPOSITE_SRC_OVER) && 
+                (surface->imageType == TYPE_INT_ARGB || 
+                    surface->imageType == TYPE_INT_ARGB_PRE ||
+                    surface->imageType == TYPE_USHORT_5658
                     )) {
             // need to recalculate the alpha map
             // see the implementation of validateAlphaMap

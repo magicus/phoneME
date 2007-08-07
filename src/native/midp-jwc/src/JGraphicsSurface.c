@@ -140,7 +140,7 @@ surface_acquire(AbstractSurface* surface, jobject surfaceHandle) {
         surface->super.height = pVDC->height;
         surface->super.scanlineStride = pVDC->width;
         
-        if (pVDC != NULL && pVDC->alphaData != NULL) {
+        if (pVDC->alphaData != NULL) {
             surface->super.imageType = TYPE_USHORT_5658;
             surface->super.alphaData = pVDC->alphaData;
         } else {

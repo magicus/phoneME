@@ -27,10 +27,10 @@
 #ifndef MIDP_PISCES_UTILS_H
 #define MIDP_PISCES_UTILS_H
                                   
-#       define PISCES_GET_DATA_POINTER(array) &array->elements[0]
-#       include <midpGraphics.h>
-#       include <midpLCDUI.h>
-#       include <images.h>
+#define PISCES_GET_DATA_POINTER(array) &array->elements[0]
+#include <midpGraphics.h>
+#include <midpLCDUI.h>
+#include <images.h>
 
 extern VDC screenBuffer;
 
