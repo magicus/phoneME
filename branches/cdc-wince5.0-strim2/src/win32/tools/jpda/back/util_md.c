@@ -1,7 +1,7 @@
 /*
- * @(#)socket_md.h	1.9 06/10/10
+ * @(#)util_md.c	1.1 07/08/5
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -24,16 +24,17 @@
  * information or have any questions. 
  *
  */
-/* Use its data structures and constants; don't make direct calls */
+
+#include <windows.h>
 
 #ifdef WINCE
-#include <winsock.h>
-#define perror(x) ((void)0)
-#else
-#include <sys/types.h>
-#include <winsock2.h>
-#endif
+void _sleep(int secs)
+{
+    Sleep(secs);
+}
 
-#ifndef ECONNABORTED
-#define ECONNABORTED WSAECONNABORTED
+void
+abort() {
+    ExitProcess(-1);
+}
 #endif

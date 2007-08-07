@@ -64,7 +64,7 @@ CCDEPEND	= /FD
 ASM_FLAGS	= $(ASM_ARCH_FLAGS)
 CCFLAGS     	= /nologo /c /W2 $(CC_ARCH_FLAGS)
 ifeq ($(CVM_BUILD_SUBDIR),true)
-CCFLAGS		+= /Fd$(CVM_BUILD_TOP_ABS)/cvm.pdb
+CCFLAGS		+= /Fd$(call POSIX2HOST,$(CVM_BUILD_TOP_ABS))/cvm.pdb
 endif
 CCCFLAGS	=
 ifeq ($(CVM_OPTIMIZED), true)
