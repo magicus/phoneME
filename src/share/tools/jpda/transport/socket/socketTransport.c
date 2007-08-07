@@ -47,8 +47,8 @@ static jdwpTransportCallback *callback;
 static JavaVM *jvm;
 static int tlsIndex;
 static jboolean initialized;
-static struct jdwpTransportNativeInterface_ interface;
-static jdwpTransportEnv single_env = (jdwpTransportEnv)&interface;
+static struct jdwpTransportNativeInterface_ jdwpInterface;
+static jdwpTransportEnv single_env = (jdwpTransportEnv)&jdwpInterface;
 
 #define RETURN_ERROR(err, msg) \
 	if (1==1) { \
@@ -733,16 +733,16 @@ jdwpTransport_OnLoad(JavaVM *vm, jdwpTransportCallback* cbTablePtr,
     callback = cbTablePtr;
 
     /* initialize interface table */
-    interface.GetCapabilities = &socketTransport_getCapabilities;
-    interface.Attach = &socketTransport_attach;
-    interface.StartListening = &socketTransport_startListening;
-    interface.StopListening = &socketTransport_stopListening;
-    interface.Accept = &socketTransport_accept;
-    interface.IsOpen = &socketTransport_isOpen;
-    interface.Close = &socketTransport_close;
-    interface.ReadPacket = &socketTransport_readPacket;
-    interface.WritePacket = &socketTransport_writePacket;
-    interface.GetLastError = &socketTransport_getLastError;
+    jdwpInterface.GetCapabilities = &socketTransport_getCapabilities;
+    jdwpInterface.Attach = &socketTransport_attach;
+    jdwpInterface.StartListening = &socketTransport_startListening;
+    jdwpInterface.StopListening = &socketTransport_stopListening;
+    jdwpInterface.Accept = &socketTransport_accept;
+    jdwpInterface.IsOpen = &socketTransport_isOpen;
+    jdwpInterface.Close = &socketTransport_close;
+    jdwpInterface.ReadPacket = &socketTransport_readPacket;
+    jdwpInterface.WritePacket = &socketTransport_writePacket;
+    jdwpInterface.GetLastError = &socketTransport_getLastError;
     *result = &single_env;
 
     /* initialized TLS */
