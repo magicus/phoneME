@@ -347,6 +347,17 @@ CVMCPUInstruction
 CVMARMgetBranchInstruction(CVMCPUCondCode condCode, int offset, CVMBool link);
 
 /**************************************************************
+ * Memory barrier emitters
+ **************************************************************/
+#ifdef CVM_MP_SAFE
+#define CVMCPUemitMemBarAcquire(con) \
+    CVMCPUemitMemBar(con)
+
+#define CVMCPUemitMemBarRelease(con) \
+    CVMCPUemitMemBar(con)
+#endif
+
+/**************************************************************
  * CPU C Call convention abstraction - The following are prototypes of calling
  * convention support functions required by the RISC emitter porting layer.
  **************************************************************/
