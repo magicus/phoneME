@@ -255,9 +255,7 @@ public final class MIDPVideoRenderer extends VideoRenderer
                     tmpdw = dw;
                     tmpdh = dh;
                 }
-                if (mode == USE_DIRECT_VIDEO) {
-                    canvas.setFullScreenMode(true);
-                } else {
+                if (mode == USE_GUI_PRIMITIVE) {
                     canvas = mmItem.toFullScreen(this, this);
                     if (canvas == null) {
                         // No owner or no display - thus invisible
@@ -293,7 +291,6 @@ public final class MIDPVideoRenderer extends VideoRenderer
                     dh = tmpdh;
                 }
                 if (mode == USE_DIRECT_VIDEO) {
-                    canvas.setFullScreenMode(false);
                     if (pvis && cvis)
                         canvas.repaint();
                 } else {

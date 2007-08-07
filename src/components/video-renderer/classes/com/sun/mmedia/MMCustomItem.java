@@ -79,8 +79,6 @@ public abstract class MMCustomItem extends CustomItem {
         // Setting fullscreen canvas
         display.setCurrent(fullScreen);
 
-        fullScreen.setFullScreenMode(true);
-
         return fullScreen;
     }
 
