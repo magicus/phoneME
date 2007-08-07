@@ -43,7 +43,9 @@ include ../win32/wince50_defs.mk
 
 CVM_DEFINES +=  -DPOCKETPC
 CC_ARCH_FLAGS  = /GS-
-TARGET_CC      = CL.EXE
+TARGET_CC      = CL.EXE 
+LIBPATH += /LIBPATH:"$(VC_DIR)/ce/lib/armv4i"
+LIBPATH += /LIBPATH:"$(VC_DIR)/ce/atlmfc/lib/armv4i"
 
 #####
 ##### FIXME: Adding this here to force dependency in PCSL makefiles to build
@@ -51,3 +53,4 @@ TARGET_CC      = CL.EXE
 #####  5.0 & 6.0 builds).  Need to change to eventually unify how Makefiles
 #####  deal with Compiler variables in both CDC and CLDC based builds.
 USE_VS2005=true
+
