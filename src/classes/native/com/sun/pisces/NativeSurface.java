@@ -26,6 +26,8 @@
 
 package com.sun.pisces;
 
+import javax.microedition.lcdui.Graphics;
+
 public final class NativeSurface extends AbstractSurface {
     public NativeSurface(int width, int height) {
         this(TYPE_INT_ARGB, width, height);
@@ -41,9 +43,26 @@ public final class NativeSurface extends AbstractSurface {
                 throw new IllegalArgumentException("Data type not supported "
                         + " for " + NativeSurface.class.getName());
         }
-    
+        
         initialize(dataType, width, height);
+        
+        this.width = width;
+        this.height = height;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+    
+    public int getHeight() {
+        return height;
     }
 
     private native void initialize(int dataType, int width, int height);
+    public native void clean();
+    public native void draw(Graphics g, int x, int y, int w, int h,
+                             float alpha);
+    
+    protected int width;
+    protected int height;
 }
