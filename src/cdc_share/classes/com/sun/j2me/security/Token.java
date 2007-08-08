@@ -26,4 +26,15 @@
 package com.sun.j2me.security;
 
 public final class Token {
+    /**
+     * Check to see the suite has the ALLOW level for specific permission.
+     * This is used by internal APIs that only provide access to
+     * trusted system applications.
+     *
+     * @param permission permission to be checked
+     *
+     * @exception SecurityException if the permission is not
+     *            allowed by this token
+     */
+    public void checkIfPermissionAllowed(Permission permission) { }
 }
