@@ -705,7 +705,6 @@ KNIDECL(com_sun_midp_events_EventQueue_getNativeEventQueueHandle) {
     KNI_ReturnInt(0);
 }
 
-DUMMY(CNIcom_sun_midp_events_EventQueue_finalize)
 DUMMY(CNIcom_sun_midp_io_j2me_push_PushRegistryImpl_checkInByMidlet0)
 DUMMY(CNIcom_sun_midp_io_j2me_push_PushRegistryImpl_add0)
 DUMMY(CNIcom_sun_midp_io_j2me_push_PushRegistryImpl_getMIDlet0)
@@ -734,23 +733,6 @@ DUMMY(CNIcom_sun_cdc_i18n_j2me_Conv_byteToChar)
 DUMMY(CNIcom_sun_cdc_i18n_j2me_Conv_charToByte)
 DUMMY(CNIcom_sun_cdc_i18n_j2me_Conv_sizeOfByteInUnicode)
 DUMMY(CNIcom_sun_cdc_i18n_j2me_Conv_sizeOfUnicodeInByte)
-
-KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_events_EventQueue_sendShutdownEvent) {
-    (void) _arguments;
-    (void) _p_mb;
-#ifdef CVM_DEBUG
-    printf("EventQueue_sendShutdownEvent\n");
-#endif
-    /* CVMdumpAllThreads(); */
-#if ENABLE_DEBUG
-    CVMdumpStack(&_ee->interpreterStack, 0, 0, 0);
-#endif
-#ifdef DIRECTFB
-    directfbapp_close_window();
-#endif
-    KNI_ReturnVoid();
-}
 
 /* IMPL_NOTE removed
 DUMMY(lockStorage)

@@ -194,13 +194,6 @@ public class EventQueue implements Runnable {
     	post(event);
     }
 
-    /**
-     * Queue a shutdown event to the native event queue.
-     */
-    private void sendShutdownEvent() {
-	post(new Event(EventTypes.EVENT_QUEUE_SHUTDOWN));
-    }
-
 // #else
 
     /** Starts the event queue and event monitor threads. */
@@ -236,12 +229,6 @@ public class EventQueue implements Runnable {
      */
     public native void sendNativeEventToIsolate(NativeEvent event,
                                                 int isolateId);
-
-    /**
-     * Queue a shutdown event to the native event queue.
-     */
-    private native void sendShutdownEvent();
-
 // #endif
 
     /**
@@ -249,8 +236,18 @@ public class EventQueue implements Runnable {
      * the Isolate ends.
      */
 // #ifdef ENABLE_CDC
-    protected native void finalize();
+    /**
+     * Queue a shutdown event to the native event queue.
+     */
+    private void sendShutdownEvent() {
+	post(new Event(EventTypes.EVENT_QUEUE_SHUTDOWN));
+    }
 // #else
+    /**
+     * Queue a shutdown event to the native event queue.
+     */
+    private native void sendShutdownEvent();
+
     private native void finalize();
 // #endif
 
