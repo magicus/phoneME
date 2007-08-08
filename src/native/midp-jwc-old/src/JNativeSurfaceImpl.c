@@ -144,9 +144,9 @@ Java_com_sun_pisces_NativeSurface_draw() {
                         g = (rgb >> 5) & 0x3f;
                         b =  rgb &  0x1f;
                         
-                        sr = (srgb & 0x001f0000) >> 16;
-                        sg = (srgb & 0x00003f00) >> 8;
-                        sb =  srgb & 0x0000001f;
+                        sr = (srgb >> 19) & 0x1f;
+                        sg = (srgb >> 10 ) & 0x3f;
+                        sb = (srgb >> 3) & 0x1f;
                         
                         dr = (sr * sa + sam * r) / (255);
                         db = (sb * sa + sam * b) / (255);
@@ -177,9 +177,9 @@ Java_com_sun_pisces_NativeSurface_draw() {
                         g = (rgb >> 5) & 0x3f;
                         b =  rgb &  0x1f;
                         
-                        sr = (srgb & 0x001f0000) >> 16;
-                        sg = (srgb & 0x00003f00) >> 8;
-                        sb =  srgb & 0x0000001f;
+                        sr = (srgb >> 19) & 0x1f;
+                        sg = (srgb >> 10 ) & 0x3f;
+                        sb = (srgb >> 3) & 0x1f;
                         
                         dr = (sr * sa + sam * r) / (255);
                         db = (sb * sa + sam * b) / (255);
