@@ -29,8 +29,6 @@
 #####################################
 
 
-$(eval EVAL_SUPPORTED=true)
-
 # CVM include directories used to be specified with CVM_INCLUDES, and included
 # the -I option. Now they are specified with CVM_INCLUDE_DIRS and do not
 # include the -I option.
