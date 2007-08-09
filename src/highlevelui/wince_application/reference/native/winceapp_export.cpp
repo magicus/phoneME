@@ -70,6 +70,7 @@ extern "C" {
 #include <midp_mastermode_port.h>
 #include <anc_indicators.h>
 
+#define KEYMAP_MD_KEY_HOME (KEYMAP_KEY_MACHINE_DEP)
 
 /* global variables defined in midp_msgQueue_md.c */
 extern int inMidpEventLoop;
@@ -123,6 +124,7 @@ static int dirty_x1, dirty_y1, dirty_x2, dirty_y2;
 
 static void process_skipped_refresh();
 static LRESULT process_key(HWND hwnd, UINT action, int key);
+static LRESULT process_system_key(HWND hwnd, int key);
 
 static gxj_pixel_type* startDirectPaint(int &dstWidth, int &dstHeight,
                                    int &dstYPitch);
@@ -436,6 +438,14 @@ static BOOL InitInstance(HINSTANCE hInstance, int CmdShow) {
     winceapp_set_window_handle(_hwndMain);
     ShowWindow(_hwndMain, CmdShow);
     UpdateWindow(_hwndMain);
+
+#ifdef ENABLE_CDC
+    /* Temporary fix to enter exclusive input mode.
+     * A better solution should register for hot keys.
+     */
+    GXOpenInput();
+#endif
+
     return TRUE;
 }
 
@@ -530,6 +540,12 @@ static jint mapKey(WPARAM wParam, LPARAM lParam) {
 
     case VK_BACK:
         return KEYMAP_KEY_BACKSPACE;
+
+    case VK_TTALK:
+    case VK_THOME:
+        return KEYMAP_MD_KEY_HOME;
+    case VK_TEND:
+        return KEYMAP_KEY_END;
 
     }
 
@@ -696,6 +712,10 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         return DefWindowProc(hwnd, msg, wp, lp);
 
     case WM_DESTROY:
+#ifdef ENABLE_CDC
+        /* Temporary fix, leaving exclusive input mode */
+        GXCloseInput();
+#endif
         PostQuitMessage(0);
         exit(0);
         return 0;
@@ -734,6 +754,12 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         case VK_LEFT: 
         case VK_RIGHT:
             return process_key(hwnd, mapAction(msg, lp), mapKey(wp, lp));
+        case VK_THOME:
+        case VK_TTALK:
+        case VK_TEND:
+            if (WM_KEYDOWN == msg)
+                return process_system_key(hwnd, mapKey(wp, lp));
+            break;
         default:
             // May need special handling for soft keys?  Not sure yet...
             if (0 != lastKeyPressed && WM_KEYUP == msg) { 
@@ -774,6 +800,25 @@ static LRESULT process_key(HWND hwnd, UINT action, int key) {
     return 0;
 }
 
+static LRESULT process_system_key(HWND hwnd, int key) {
+    switch (key) {
+    case KEYMAP_MD_KEY_HOME:
+        pSignalResult->waitingFor = AMS_SIGNAL;
+        pMidpEventResult->type = SELECT_FOREGROUND_EVENT;
+        pMidpEventResult->intParam1 = 0;
+        sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult));
+        break;
+
+    case KEYMAP_KEY_END:
+        pSignalResult->waitingFor = AMS_SIGNAL;
+        pMidpEventResult->type = MIDLET_DESTROY_REQUEST_EVENT;
+        pMidpEventResult->DISPLAY = gForegroundDisplayId;
+        pMidpEventResult->intParam1 = gForegroundIsolateId;
+        sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult));
+        break;
+	}
+	return 0;
+}
 
 /**
  * Finalize the WINCE native resources.
