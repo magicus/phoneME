@@ -260,16 +260,15 @@ abstract class BasicInputMode implements InputMode, Runnable {
                 }
                 
                 // at first check if previous key has to be committed
-
             
                 // If we have a pending keycode and this new keycode is
                 // different, we will commit the previous key and continue
                 if (lastKey != -1 && lastKey != keyCode) {
                     commitPendingChar();
                 }
-            
-                clickCount++;
 
+                clickCount++;
+            
                 // If the pending key code has just one match or long key
                 // press happens commit the current key 
 
@@ -539,8 +538,7 @@ abstract class BasicInputMode implements InputMode, Runnable {
         boolean ret = false;
         if (keyCode != -1) {
             char[] options = getCharOptions(keyCode);
-            if (options != null)
-                ret = options.length <= 1;
+            ret = (options == null) || options.length <= 1;
         }
         return ret;
     }
