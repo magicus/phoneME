@@ -26,7 +26,6 @@
 
 
 #include <windows.h>
-#include <direct.h>
 #include <wchar.h>
 
 #include <pcsl_directory.h>
@@ -50,7 +49,7 @@ int pcsl_file_is_directory(const pcsl_string * path)
     const jchar * pszOsFilename = pcsl_string_get_utf16_data(path);
 
     if(NULL == pszOsFilename) {
-	return -1;
+        return -1;
     }
 
     attrs = GetFileAttributesW(pszOsFilename);
@@ -75,10 +74,10 @@ int pcsl_file_mkdir(const pcsl_string * dirName)
         return -1;
     }
 
-    res = _wmkdir(pszOsFilename);
+    res = CreateDirectoryW(pszOsFilename, NULL) ? 0 : -1;
     pcsl_string_release_utf16_data(pszOsFilename, dirName);
 
-    return (0 == res) ? 0 : -1;
+    return res;
 }
 
 /**
@@ -93,10 +92,10 @@ int pcsl_file_rmdir(const pcsl_string * dirName)
         return -1;
     }
 
-    res = _wrmdir(pszOsFilename);
+    res = RemoveDirectoryW(pszOsFilename) ? 0 : -1;
     pcsl_string_release_utf16_data(pszOsFilename, dirName);
 
-    return (0 == res) ? 0 : -1;
+    return res;
 }
 
 /**
@@ -104,26 +103,26 @@ int pcsl_file_rmdir(const pcsl_string * dirName)
  */
 jlong pcsl_file_getfreesize(const pcsl_string * path)
 {
-    struct _diskfree_t df;
-    struct _stat buf;
     int res;
     const jchar * pszOsFilename = pcsl_string_get_utf16_data(path);
+
+    ULARGE_INTEGER available;
+    ULARGE_INTEGER totalBytes;
+    ULARGE_INTEGER freeBytes;
 
     if (NULL == pszOsFilename) {
         return -1;
     }
 
-    res = _wstat(pszOsFilename, &buf);
+    res = GetDiskFreeSpaceExW(pszOsFilename, &available, &totalBytes, &freeBytes);
+    res = res ? 0 : -1;
+
     pcsl_string_release_utf16_data(pszOsFilename, path);
     if (0 != res) {
         return -1;
     }
 
-    if (0 != _getdiskfree(buf.st_dev + 1, &df)) {
-        return -1;
-    }
-
-    return (jlong)(df.avail_clusters) * df.sectors_per_cluster * df.bytes_per_sector;
+    return (jlong)available.QuadPart;
 }
 
 /**
@@ -131,26 +130,26 @@ jlong pcsl_file_getfreesize(const pcsl_string * path)
  */
 jlong pcsl_file_gettotalsize(const pcsl_string * path)
 {
-    struct _diskfree_t df;
-    struct _stat buf;
     int res;
     const jchar * pszOsFilename = pcsl_string_get_utf16_data(path);
+
+    ULARGE_INTEGER available;
+    ULARGE_INTEGER totalBytes;
+    ULARGE_INTEGER freeBytes;
 
     if (NULL == pszOsFilename) {
         return -1;
     }
 
-    res = _wstat(pszOsFilename, &buf);
+    res = GetDiskFreeSpaceExW(pszOsFilename, &available, &totalBytes, &freeBytes);
+    res = res ? 0 : -1;
+
     pcsl_string_release_utf16_data(pszOsFilename, path);
     if (0 != res) {
         return -1;
     }
 
-    if (0 != _getdiskfree(buf.st_dev + 1, &df)) {
-        return -1;
-    }
-
-    return (jlong)(df.total_clusters) * df.sectors_per_cluster * df.bytes_per_sector;
+    return (jlong)totalBytes.QuadPart;
 }
 
 /**
@@ -244,21 +243,35 @@ int pcsl_file_set_attribute(const pcsl_string * fileName, int type, int value)
  */
 int pcsl_file_get_time(const pcsl_string * fileName, int type, long* result)
 {
-    struct _stat buf;
-    int res;
-    const jchar * pszOsFilename = pcsl_string_get_utf16_data(fileName);
+    /*
+     * Expected time is count as seconds from (00:00:00), January 1, 1970 UTC
+     * FILETIME time is 100-nanosecond intervals since January 1, 1601 UTC 
+     */
+    static const __int64 FILETIME_1970_01_JAN_UTC = 116444736000000000LL;
 
-    if (NULL == pszOsFilename) {
-        return -1;
+    WIN32_FILE_ATTRIBUTE_DATA attrib;
+    int state = -1;
+    const jchar* pOsFN = pcsl_string_get_utf16_data(fileName);
+
+    __int64 fcurUTC;
+    if (pOsFN != NULL) {
+        if (GetFileAttributesExW(pOsFN, GetFileExInfoStandard, &attrib)) {
+            /* FS times is in UTC */
+            fcurUTC = attrib.ftLastWriteTime.dwHighDateTime;
+            fcurUTC = (fcurUTC << 32) | attrib.ftLastWriteTime.dwLowDateTime;
+        }
+
+        /* FILETIME members are zero if the FS does not support this time */
+        if (fcurUTC != 0) {
+            fcurUTC -= FILETIME_1970_01_JAN_UTC;
+            fcurUTC /= 10000000;
+            state = 0;
+            *result = (long)fcurUTC;
+        }
+
+        pcsl_string_release_utf16_data(pOsFN, fileName);
     }
 
-    res = _wstat(pszOsFilename, &buf);
-    pcsl_string_release_utf16_data(pszOsFilename, fileName);
-    if (-1 == res) {
-        return -1;
-    }
-
-    *result = buf.st_mtime;
-    return 0;
+    return state;
 }
 
