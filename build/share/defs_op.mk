@@ -56,6 +56,11 @@ INCLUDED_JSROP_NUMBERS = $(patsubst USE_JSR_%=true,%,\
 JSROP_BUILD_JARS = $(filter-out $(JSROP_LIB_DIR)/jsr205.jar,$(foreach jsr_number,$(INCLUDED_JSROP_NUMBERS),\
            $(JSROP_LIB_DIR)/jsr$(jsr_number).jar))
 
+# JSROP_AGENT_JARS - list (space sepd) of jars that should be romized with MIDP's class loader.
+# These jars contain "agent" classes which are used for access via reflection.
+# Must not have any public API. Invisible for midlets
+JSROP_AGENT_JARS =
+
 # Variable which is passed to MIDP and blocks JSRs building from MIDP; looks like:
 # USE_JSR_75=false USE_JSR_82=false USE_JSR_120=false ...
 MIDP_JSROP_USE_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),USE_JSR_$(jsr_number)=false)
