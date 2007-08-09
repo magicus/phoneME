@@ -29,16 +29,6 @@
 #include <pcsl_file.h>
 #include <pcsl_memory.h>
 
-/**
- * directory flag
- */
-#define S_ISDIR(mode)	( ((mode) & S_IFMT) == S_IFDIR )
-
-/**
- * file flag
- */
-#define S_ISREG(mode)	( ((mode) & S_IFMT) == S_IFREG )
-
 static const jchar FILESEP = '\\';
 static const jchar PATHSEP = ';';
 
