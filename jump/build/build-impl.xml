@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+<!-- 
+Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License version
+2 only, as published by the Free Software Foundation. 
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License version 2 for more details (a copy is
+included at /legal/license.txt). 
+
+You should have received a copy of the GNU General Public License
+version 2 along with this work; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301 USA 
+
+Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+Clara, CA 95054 or visit www.sun.com if you need additional
+information or have any questions. 
+-->
+<project name="Build implementation classes" basedir=".">
+
+    <target name="build-impl-jars" depends="build-api, build-impl-modules">
+        <!-- create 3 impl jars -->
+        <antcall target="make-jars">
+            <param name="is-api" value="false"/>
+        </antcall>
+
+        <uptodate property="jump.jar.uptodate" targetfile="${jump.jar}">
+            <srcfiles dir= "${d.lib.dir}">
+                <include name="shared*.jar"/>
+                <include name="client*.jar"/>
+            </srcfiles>
+        </uptodate>
+        <uptodate property="executive-jump.jar.uptodate" targetfile="${executive-jump.jar}">
+            <srcfiles dir= "${d.lib.dir}">
+                <include name="executive*.jar"/>
+            </srcfiles>
+        </uptodate>
+    </target>
+
+    <target name="build-jump.jar" depends="build-impl-jars" unless="jump.jar.uptodate">
+        <!-- shared api+impl -->
+        <unjar 
+            src="${d.lib.dir}/shared${api.jar.suffix}" 
+            dest="${d.gen.dir}/jump.jar.files"/>
+        <unjar 
+            src="${d.lib.dir}/shared${impl.jar.suffix}" 
+            dest="${d.gen.dir}/jump.jar.files"/>
+        <!-- client api+impl -->
+        <unjar 
+            src="${d.lib.dir}/client${api.jar.suffix}" 
+            dest="${d.gen.dir}/jump.jar.files"/>
+        <unjar 
+            src="${d.lib.dir}/client${impl.jar.suffix}" 
+            dest="${d.gen.dir}/jump.jar.files"/>
+
+        <jar destfile="${jump.jar}" update="true"
+            basedir="${d.gen.dir}/jump.jar.files" includes="**/*"/>
+        <delete dir="${d.gen.dir}/jump.jar.files"/>
+    </target>
+
+    <target name="build-executive-jump.jar" depends="build-impl-jars" unless="executive-jump.jar.uptodate">
+        <!-- executive api+impl -->
+        <unjar 
+            src="${d.lib.dir}/executive${api.jar.suffix}" 
+            dest="${d.gen.dir}/executive-jump.jar.files"/>
+        <unjar 
+            src="${d.lib.dir}/executive${impl.jar.suffix}" 
+            dest="${d.gen.dir}/executive-jump.jar.files"/>
+
+        <jar destfile="${executive-jump.jar}" update="true"
+            basedir="${d.gen.dir}/executive-jump.jar.files" includes="**/*"/>
+        <delete dir="${d.gen.dir}/executive-jump.jar.files"/>
+    </target>
+
+  <target name="build-impl" depends="build-jump.jar,build-executive-jump.jar"/>
+
+  <target name="build-impl-modules" if="modules">
+     <pathconvert property="modules.antfiles">
+        <path path="${modules}"/>
+           <mapper>
+              <chainedmapper>
+                 <flattenmapper/> <!-- remove dir from path -->
+                 <filtermapper>
+                    <tokenfilter delimoutput=","> <!-- output still seperated by comma -->
+                    <!-- separate list into individual modules -->
+                       <stringtokenizer delims=","/> <!-- separate by comma -->
+                          <trim/>
+                          <replaceregex pattern="(.*)" replace="build-impl-\1.xml"/> <!-- add ".xml" to each -->
+                    </tokenfilter>
+                 </filtermapper>
+               </chainedmapper>
+          </mapper>
+     </pathconvert>
+
+      <subant inheritAll="true" inheritrefs="true">
+         <filelist dir="." files="${modules.antfiles}"/>
+      </subant>
+  </target>
+
+  <target name="javadoc-impl" depends="build-impl">
+    <property name="packagenames" value="javax.*,com.sun.jump.*,com.sun.jumpimpl.*"/>
+    <property name="windowtitle" value="JUMP API Full Version"/>
+                                                                                           
+    <jump.javadoc>
+        <group title="JUMP Module Implementation Packages">
+           <package name="com.sun.jumpimpl.module*" />
+        </group>
+    </jump.javadoc>
+
+    <!-- copy the javadoc stylesheet -->
+    <copy file="${doc.dir}/javadoc/stylesheet-2005.css"
+         tofile="${d.apidoc.dir}/stylesheet.css"
+         overwrite="true"/>
+  </target>
+
+  <target name="pdf-impl" depends="build-impl">
+      <property name="d.pdf.dir" value="${dist.dir}/doc/pdf/"/>
+      <property name="lib.doclet.mif" value="/java/pubs/mifdoclet/latest/mifdoclet.jar" />
+                                                                                           
+      <jump.mifdoclet/>
+  </target>
+
+</project>

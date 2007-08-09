@@ -1,0 +1,143 @@
+<!-- 
+Copyright  2006 Sun Microsystems, Inc. All rights reserved.
+-->
+  <body>
+  This package consists of classes that provides the core abstractions for
+  a content store. A content store uses a <Code>JUMPStore</code> to persist the
+  content store data.
+
+  <p>
+  The following sample code shows, how a store can be implemented on a 
+  filesystem. Every node that does not contain <code>JUMPData</code> is
+  represented as a directory in the filesystem and every data node is 
+  represented in a single file say <b>data.properties</b>. Each line in the
+  data.properties file contains the following information.
+  <b>data-name,data-type,data-value</b>
+  <pre>
+
+  public class FileStoreImpl implements JUMPStore {
+
+     public void createDataNode(String uri, JUMPData jumpData) {
+
+        // get the full path of the file that holds the data for the
+        // uri passed.
+        File file = uriToDataFile(uri);
+        // the data name is the last component of the URI.
+        String dataName = getDataName(uri);
+        String marshalledData = createMarshalledData(dataName, jumpData);
+        OutputStream stream = createOutputStream(file);
+        stream.writeString(marshalled);
+      
+        // The impl might create an instance of JUMPNode containing the jumpData
+        // eagerly here, or delay until it is requested by getNode(String uri) 
+        // call below.
+     }
+
+     public void createNode(String uri) {
+        File file = uriToFile(uri);
+        file.mkdirs();
+     }                  
+
+     public JUMPNode getNode(String uri) {
+        // getNode(String) needs to return what the createDataNode() above store
+        // if the uri parameter represents a data node.
+   
+        if (!isDataFile(uri)) {
+
+            // This URI represents non-leaf node.
+            // .... then do something to create a JUMPNode representing a List,
+            // and return it.
+
+        }  else {    
+   
+            File file = urlToDataFile(uri);
+      
+            String name = getDataName(uri);
+            InputStream stream = createInputStream(file);
+            String marshalledData = stream.readString();
+      
+            JUMPData data = createUnmarshalledData(marshalledData);
+      
+            JUMPNode node = createJUMPNode(uri, name, data);
+      
+            return node;
+        }
+     }
+
+     public void deleteNode(String uri) {
+        File file = uriToFile(uri);
+        file.delete();
+     }
+
+     public void updateNode(String uri, JUMPData jumpData) {
+        // check if the node represented by the uri exists and is data.
+        if (!isDataFile(uri) || !exists(uri) ) {
+           throw new java.io.IOException("Update failed"); 
+        }
+ 
+        // delete the old node and create a node with the new data.
+        deleteNode(uri);
+        createDataNode(uri, jumpData);
+     }
+   
+     private String createMarshalledData(String dataname, JUMPData data) {
+        // Create a representation of JUMPData's content to be written out to the file.
+        // This method does not have to process anything in JUMPData data, but merely to
+        // come up with a String representation of the JUMPData content that works the
+        // opposite way of createUnmarshalledData.  The returned type, String, is also
+        // just for the implementation example, and can also be in any other format.
+     }
+
+     private JUMPData createUnmarshalledData(String marshalledData) {
+        // Creates a JUMPData out of the "marshalledData" representation.
+        // This method should just do the opposite of createMarshalledData(JUMPData).
+     }
+  } 
+  </pre>
+  The following sample code shows how a concrete content store can be implemented
+  by extending the <Code>JUMPContentStore</Code>. The object that the sample 
+  stores in the content store is <code>Application</code> which consists of
+  a title and a iconPath. <Code>AppRepository</Code> has methods to get
+  the <Code>Application</Code> objects.
+  
+  <pre>
+  public class Application {
+     
+     public String getTitle() {
+        return title;
+     }
+     
+     public String getIconPath() {
+        return iconPath;
+     }
+  }
+  
+  public class AppRepository extends JUMPContentStore {
+      private static final String ROOT_URI = "./Apps";
+      private Class storeClass = JUMPFileStore.class;
+      
+      
+      protected JUMPStore getStore() {
+         return JUMPExecutive.getInstance().getModule(this.storeClass);
+      }
+      
+      public Application getApplication(String name) {
+          Application app = new Application();
+          // get access to the store in a read-only mode
+          JUMPStoreHandle storeHandle = openStore(false);
+          
+          JUMPNode.Data appNode = (JUMPNode.Data)
+            storeHandle.getNode(ROOT_URI+"/"+name+"/title");
+          app.setTitle(appNode.getString());
+          appNode = (JUMPNode.Data)
+            storeHandle.getNode(ROOT_URI+"/"+name+"/iconPath");
+          app.setIconPath(appNode.getString());
+          
+          // indicate that we do not need the store any more
+          closeStore(storeHandle);
+          return app;
+      }
+  }
+  
+  </pre>
+  </body>
