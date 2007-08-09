@@ -184,7 +184,11 @@ ifeq ($(SUBSYSTEM_PISCES_MODULES), java_native)
 ifeq ($(PISCES_USE_JWC_OLD_IMPLEMENTATION), true)
     vpath % $(INTERNAL_PISCES_DIR)/src/native/midp-jwc-old/src
 else    
+ifeq ($(TARGET_PLATFORM), linux_qte)
+    vpath % $(INTERNAL_PISCES_DIR)/src/native/midp-jwc-platform/src 
+else
     vpath % $(INTERNAL_PISCES_DIR)/src/native/midp-jwc/src
+endif
 endif    
 
     INTERNAL_PISCES_INCLUDES += \
@@ -194,9 +198,14 @@ endif
 ifeq ($(PISCES_USE_JWC_OLD_IMPLEMENTATION), true)
     INTERNAL_PISCES_INCLUDES += \
             -I$(INTERNAL_PISCES_DIR)/src/native/midp-jwc-old/include
-else            
+else 
+ifeq ($(TARGET_PLATFORM), linux_qte)
+    INTERNAL_PISCES_INCLUDES += \
+            -I$(INTERNAL_PISCES_DIR)/src/native/midp-jwc-platform/include           
+else
     INTERNAL_PISCES_INCLUDES += \
             -I$(INTERNAL_PISCES_DIR)/src/native/midp-jwc/include
+endif
 endif
             
     INTERNAL_PISCES_SRC_FILES += \
