@@ -1,5 +1,4 @@
 #
-# @(#)MIDPFilterConfig.txt	1.6	06/10/11
 #
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -147,15 +146,6 @@ CLASS java/util/Enumeration
    METHODS
 	hasMoreElements:()Z
 	nextElement:()Ljava/lang/Object;
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
 
 CLASS java/util/Hashtable
    METHODS
@@ -1079,15 +1069,6 @@ CLASS java/lang/VirtualMachineError
 CLASS java/lang/Runnable
    METHODS
 	run:()V
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
 
 CLASS java/lang/Short
    FIELDS
@@ -1334,15 +1315,6 @@ CLASS java/io/DataInput
 	readFloat:()F
 	readDouble:()D
 	readUTF:()Ljava/lang/String;
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
 
 CLASS java/io/DataInputStream
    FIELDS
@@ -1428,15 +1400,6 @@ CLASS java/io/DataOutput
 	writeDouble:(D)V
 	writeChars:(Ljava/lang/String;)V
 	writeUTF:(Ljava/lang/String;)V
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
 
 CLASS java/io/EOFException
    METHODS
@@ -1606,15 +1569,6 @@ CLASS java/io/UTFDataFormatException
 CLASS javax/microedition/io/Connection
    METHODS
 	close:()V
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
 
 CLASS javax/microedition/io/ConnectionNotFoundException
    METHODS
@@ -1660,15 +1614,6 @@ CLASS javax/microedition/io/ContentConnection
 	getType:()Ljava/lang/String;
 	getEncoding:()Ljava/lang/String;
 	getLength:()J
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
 	openInputStream:()Ljava/io/InputStream;
 	openDataInputStream:()Ljava/io/DataInputStream;
 	close:()V
@@ -1677,15 +1622,6 @@ CLASS javax/microedition/io/ContentConnection
 
 CLASS javax/microedition/io/StreamConnection
    METHODS
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
 	openInputStream:()Ljava/io/InputStream;
 	openDataInputStream:()Ljava/io/DataInputStream;
 	close:()V
@@ -1696,30 +1632,12 @@ CLASS javax/microedition/io/InputConnection
    METHODS
 	openInputStream:()Ljava/io/InputStream;
 	openDataInputStream:()Ljava/io/DataInputStream;
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
 	close:()V
 
 CLASS javax/microedition/io/OutputConnection
    METHODS
 	openOutputStream:()Ljava/io/OutputStream;
 	openDataOutputStream:()Ljava/io/DataOutputStream;
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
 	close:()V
 
 CLASS javax/microedition/io/Datagram
@@ -1733,15 +1651,6 @@ CLASS javax/microedition/io/Datagram
 	setLength:(I)V
 	setData:([BII)V
 	reset:()V
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
 	readFully:([B)V
 	readFully:([BII)V
 	skipBytes:(I)I
@@ -1780,27 +1689,9 @@ CLASS javax/microedition/io/DatagramConnection
 	newDatagram:(ILjava/lang/String;)Ljavax/microedition/io/Datagram;
 	newDatagram:([BI)Ljavax/microedition/io/Datagram;
 	newDatagram:([BILjava/lang/String;)Ljavax/microedition/io/Datagram;
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
 	close:()V
 
 CLASS javax/microedition/io/StreamConnectionNotifier
    METHODS
 	acceptAndOpen:()Ljavax/microedition/io/StreamConnection;
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
 	close:()V

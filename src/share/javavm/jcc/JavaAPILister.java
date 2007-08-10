@@ -487,17 +487,20 @@ public class JavaAPILister extends LinkerUtil {
 	    }
 	}
 
-	// look at superclass
 	String otherName;
 	ClassInfo otherClass;
 	ClassConstant superConstant = thisClass.superClass;
-	if (superConstant != null){
-	    // recurse into superclass
-	    otherName = superConstant.name.string;
-	    if ((otherClass = ClassTable.lookupClass(otherName, apiloader))
-		!= null){
-		collectClassComponents(components, otherClass,
-		    classesAlreadySeen, methods, classIsFinal, false);
+
+	// look at superclass
+        if ((thisClass.access & Const.ACC_INTERFACE) == 0) {
+	    if (superConstant != null){
+	        // recurse into superclass
+	        otherName = superConstant.name.string;
+	        if ((otherClass = ClassTable.lookupClass(otherName, apiloader))
+		    != null){
+		    collectClassComponents(components, otherClass,
+		        classesAlreadySeen, methods, classIsFinal, false);
+	        }
 	    }
 	}
 
