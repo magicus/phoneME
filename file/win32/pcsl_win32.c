@@ -1,5 +1,5 @@
 /*
- * 	
+ * 
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -28,6 +28,20 @@
 
 #include <pcsl_file.h>
 #include <pcsl_memory.h>
+
+/* 
+ * This constant is defined in "WinBase.h" when using VS7 (2003) and VS8 (2005),
+ * but absent in Visual C++ 6 headers. 
+ * For successful build with VC6 we need to define it manually.
+ */
+
+#ifndef INVALID_SET_FILE_POINTER
+#define INVALID_SET_FILE_POINTER ((DWORD)-1)
+#endif
+
+#ifndef INVALID_FILE_ATTRIBUTES
+#define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
+#endif
 
 static const jchar FILESEP = '\\';
 static const jchar PATHSEP = ';';

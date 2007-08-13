@@ -31,11 +31,12 @@
 #include <pcsl_directory.h>
 #include <java_types.h>
 
-
 /* 
- * This constant is defined in "WinBase.h" when using MS Visual C++ 7, but absent
- * in Visual C++ 6 headers. For successful build with VC6 we need to define it manually.
+ * This constant is defined in "WinBase.h" when using VS7 (2003) and VS8 (2005),
+ * but absent in Visual C++ 6 headers. 
+ * For successful build with VC6 we need to define it manually.
  */
+
 #ifndef INVALID_FILE_ATTRIBUTES
 #define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
 #endif
@@ -247,13 +248,14 @@ int pcsl_file_get_time(const pcsl_string * fileName, int type, long* result)
      * Expected time is count as seconds from (00:00:00), January 1, 1970 UTC
      * FILETIME time is 100-nanosecond intervals since January 1, 1601 UTC 
      */
-    static const __int64 FILETIME_1970_01_JAN_UTC = 116444736000000000LL;
+    /* Visual C++ 6 suports only i64 suffix (not LL) */
+    static const LONGLONG FILETIME_1970_01_JAN_UTC = 116444736000000000i64;
 
     WIN32_FILE_ATTRIBUTE_DATA attrib;
     int state = -1;
     const jchar* pOsFN = pcsl_string_get_utf16_data(fileName);
 
-    __int64 fcurUTC;
+    LONGLONG fcurUTC;
     if (pOsFN != NULL) {
         if (GetFileAttributesExW(pOsFN, GetFileExInfoStandard, &attrib)) {
             /* FS times is in UTC */
