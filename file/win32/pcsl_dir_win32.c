@@ -46,10 +46,10 @@
  */
 int pcsl_file_is_directory(const pcsl_string * path)
 {
-    int attrs;
+    DWORD attrs;
     const jchar * pszOsFilename = pcsl_string_get_utf16_data(path);
 
-    if(NULL == pszOsFilename) {
+    if (NULL == pszOsFilename) {
         return -1;
     }
 
@@ -104,22 +104,21 @@ int pcsl_file_rmdir(const pcsl_string * dirName)
  */
 jlong pcsl_file_getfreesize(const pcsl_string * path)
 {
-    int res;
-    const jchar * pszOsFilename = pcsl_string_get_utf16_data(path);
+    BOOL res;
 
     ULARGE_INTEGER available;
     ULARGE_INTEGER totalBytes;
     ULARGE_INTEGER freeBytes;
 
+    const jchar * pszOsFilename = pcsl_string_get_utf16_data(path);
     if (NULL == pszOsFilename) {
         return -1;
     }
 
     res = GetDiskFreeSpaceExW(pszOsFilename, &available, &totalBytes, &freeBytes);
-    res = res ? 0 : -1;
-
     pcsl_string_release_utf16_data(pszOsFilename, path);
-    if (0 != res) {
+
+    if (!res) {
         return -1;
     }
 
@@ -131,7 +130,7 @@ jlong pcsl_file_getfreesize(const pcsl_string * path)
  */
 jlong pcsl_file_gettotalsize(const pcsl_string * path)
 {
-    int res;
+    BOOL res;
     const jchar * pszOsFilename = pcsl_string_get_utf16_data(path);
 
     ULARGE_INTEGER available;
@@ -143,10 +142,9 @@ jlong pcsl_file_gettotalsize(const pcsl_string * path)
     }
 
     res = GetDiskFreeSpaceExW(pszOsFilename, &available, &totalBytes, &freeBytes);
-    res = res ? 0 : -1;
-
     pcsl_string_release_utf16_data(pszOsFilename, path);
-    if (0 != res) {
+
+    if (!res) {
         return -1;
     }
 
@@ -158,7 +156,7 @@ jlong pcsl_file_gettotalsize(const pcsl_string * path)
  */
 int pcsl_file_get_attribute(const pcsl_string * fileName, int type, int* result)
 {
-    int attrs;
+    DWORD attrs;
     const jchar * pszOsFilename = pcsl_string_get_utf16_data(fileName);
 
     if (NULL == pszOsFilename) {
@@ -173,18 +171,18 @@ int pcsl_file_get_attribute(const pcsl_string * fileName, int type, int* result)
     }
 
     switch (type) {
-    case PCSL_FILE_ATTR_READ:
-    case PCSL_FILE_ATTR_EXECUTE:
-        *result = 1;
-        break;
-    case PCSL_FILE_ATTR_WRITE:
-        *result = (attrs & FILE_ATTRIBUTE_READONLY) ? 0 : 1;
-        break;
-    case PCSL_FILE_ATTR_HIDDEN:
-        *result = (attrs & FILE_ATTRIBUTE_HIDDEN) ? 1 : 0;
-        break;
-    default:
-        return -1;
+        case PCSL_FILE_ATTR_READ:
+        case PCSL_FILE_ATTR_EXECUTE:
+            *result = 1;
+            break;
+        case PCSL_FILE_ATTR_WRITE:
+            *result = (attrs & FILE_ATTRIBUTE_READONLY) ? 0 : 1;
+            break;
+        case PCSL_FILE_ATTR_HIDDEN:
+            *result = (attrs & FILE_ATTRIBUTE_HIDDEN) ? 1 : 0;
+            break;
+        default:
+            return -1;
     }        
     return 0;
 }
@@ -194,7 +192,7 @@ int pcsl_file_get_attribute(const pcsl_string * fileName, int type, int* result)
  */
 int pcsl_file_set_attribute(const pcsl_string * fileName, int type, int value)
 {
-    int attrs, newmode;
+    DWORD attrs, newmode;
     int result = -1;
     const jchar * pszOsFilename = pcsl_string_get_utf16_data(fileName);
 
@@ -253,10 +251,14 @@ int pcsl_file_get_time(const pcsl_string * fileName, int type, long* result)
 
     WIN32_FILE_ATTRIBUTE_DATA attrib;
     int state = -1;
-    const jchar* pOsFN = pcsl_string_get_utf16_data(fileName);
+    const jchar* pOsFN;
+    
+    if (PCSL_FILE_TIME_LAST_MODIFIED != type)
+        return -1;
 
-    LONGLONG fcurUTC;
+    pOsFN = pcsl_string_get_utf16_data(fileName);
     if (pOsFN != NULL) {
+        LONGLONG fcurUTC = 0;
         if (GetFileAttributesExW(pOsFN, GetFileExInfoStandard, &attrib)) {
             /* FS times is in UTC */
             fcurUTC = attrib.ftLastWriteTime.dwHighDateTime;
@@ -264,7 +266,7 @@ int pcsl_file_get_time(const pcsl_string * fileName, int type, long* result)
         }
 
         /* FILETIME members are zero if the FS does not support this time */
-        if (fcurUTC != 0) {
+        if (0 != fcurUTC) {
             fcurUTC -= FILETIME_1970_01_JAN_UTC;
             fcurUTC /= 10000000;
             state = 0;
@@ -276,4 +278,3 @@ int pcsl_file_get_time(const pcsl_string * fileName, int type, long* result)
 
     return state;
 }
-

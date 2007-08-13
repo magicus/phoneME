@@ -43,7 +43,7 @@
 #define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
 #endif
 
-static const jchar FILESEP = '\\';
+static const jchar FILESEP = '/';
 static const jchar PATHSEP = ';';
 
 typedef struct _PCSLFileIterator {
@@ -70,7 +70,7 @@ int pcsl_file_init() {
       return -1;
     }
 
-    return pcsl_string_is_active() == PCSL_TRUE ? 0 : -1;
+    return (pcsl_string_is_active() == PCSL_TRUE) ? 0 : -1;
 }
 
 /**
@@ -97,25 +97,24 @@ int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle) {
 
     *handle = NULL;
 
-    if (pszOsFilename == NULL) {
+    if (NULL == pszOsFilename) {
         return -1;
     }
 
     switch (flags & (PCSL_FILE_O_RDWR | PCSL_FILE_O_WRONLY | PCSL_FILE_O_RDONLY)) {
         case PCSL_FILE_O_RDONLY: dwDesiredAccess = GENERIC_READ;  break;
         case PCSL_FILE_O_WRONLY: dwDesiredAccess = GENERIC_WRITE; break;
-        case PCSL_FILE_O_RDWR  :
-        default: /* flag combination */
+        default: /* PCSL_FILE_O_RDWR  or other flag combination */
             dwDesiredAccess = GENERIC_READ | GENERIC_WRITE; break;
     }
 
-    if ((flags & PCSL_FILE_O_CREAT) == PCSL_FILE_O_CREAT) {
+    if (PCSL_FILE_O_CREAT == (flags & PCSL_FILE_O_CREAT)) {
         dwCreationDisposition = CREATE_ALWAYS;
     } else {
         dwCreationDisposition = OPEN_EXISTING;
     }
 
-    if ((flags & PCSL_FILE_O_TRUNC) == PCSL_FILE_O_TRUNC) {
+    if (PCSL_FILE_O_TRUNC == (flags & PCSL_FILE_O_TRUNC)) {
         dwCreationDisposition |= TRUNCATE_EXISTING;
     }
 
@@ -129,8 +128,8 @@ int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle) {
         return -1;
     }
 
-    if ((flags & PCSL_FILE_O_APPEND) == PCSL_FILE_O_APPEND) {
-        if (pcsl_file_seek(fileHandle, 0, PCSL_FILE_SEEK_END) == -1) {
+    if (PCSL_FILE_O_APPEND == (flags & PCSL_FILE_O_APPEND)) {
+        if (-1 == pcsl_file_seek(fileHandle, 0, PCSL_FILE_SEEK_END)) {
             CloseHandle(fileHandle);
             return -1;
         }
@@ -187,7 +186,7 @@ int pcsl_file_unlink(const pcsl_string * fileName)
 {
     int status = -1;
     const jchar* pszOsFilename = pcsl_string_get_utf16_data(fileName);
-    if (pszOsFilename != NULL) {
+    if (NULL != pszOsFilename) {
         status = DeleteFileW(pszOsFilename) ? 0 : -1;
         pcsl_string_release_utf16_data(pszOsFilename, fileName);
     }
@@ -200,7 +199,7 @@ int pcsl_file_unlink(const pcsl_string * fileName)
  */
 int pcsl_file_truncate(void *handle, long size)
 {
-    if (pcsl_file_seek(handle, size, PCSL_FILE_SEEK_SET) == -1)
+    if (-1 == pcsl_file_seek(handle, size, PCSL_FILE_SEEK_SET))
         return -1;
 
     return SetEndOfFile((HANDLE)handle) ? 0 : -1;
@@ -225,7 +224,7 @@ long pcsl_file_seek(void *handle, long offset, long position)
     }
 
     res = SetFilePointer((HANDLE)handle, offset, NULL, method);
-    return (res != INVALID_SET_FILE_POINTER) ? res : -1;
+    return (INVALID_SET_FILE_POINTER != res) ? res : -1;
 }
 
 /**
@@ -237,7 +236,7 @@ long pcsl_file_sizeofopenfile(void *handle)
     DWORD sizeHigh;
     DWORD sizeLo = GetFileSize((HANDLE)handle, &sizeHigh);
     /* NOTE Returned only 32 lowest bit */
-    return (sizeLo == INVALID_FILE_SIZE) ? -1 : sizeLo;
+    return (INVALID_FILE_SIZE != sizeLo) ? sizeLo : -1;
 }
 
 /**
@@ -250,7 +249,7 @@ long pcsl_file_sizeof(const pcsl_string * fileName)
     int result = -1;
     const jchar* pOsFN = pcsl_string_get_utf16_data(fileName);
 
-    if (pOsFN != NULL) {
+    if (NULL != pOsFN) {
         if (GetFileAttributesExW(pOsFN, GetFileExInfoStandard, &attrib)) {
             /* NOTE Returned only 32 lowest bit */
             result = attrib.nFileSizeLow;
@@ -268,11 +267,11 @@ int pcsl_file_exist(const pcsl_string * fileName)
 {
     DWORD attrib;
     const jchar* pszOsFilename = pcsl_string_get_utf16_data(fileName);
-    if (pszOsFilename != NULL) {
+    if (NULL != pszOsFilename) {
         attrib = GetFileAttributesW(pszOsFilename);
         pcsl_string_release_utf16_data(pszOsFilename, fileName);
 
-        if (attrib != INVALID_FILE_ATTRIBUTES) 
+        if (INVALID_FILE_ATTRIBUTES != attrib) 
             return (attrib & FILE_ATTRIBUTE_DIRECTORY) ? 0 : 1;
     }
     return -1;
@@ -294,7 +293,7 @@ int pcsl_file_rename(const pcsl_string * oldName,
     const jchar * pszOldFilename = pcsl_string_get_utf16_data(oldName);
     const jchar * pszNewFilename = pcsl_string_get_utf16_data(newName);
 
-    if ((pszOldFilename != NULL) && (pszNewFilename != NULL)) {
+    if ((NULL != pszOldFilename) && (NULL != pszNewFilename)) {
         status = MoveFileW(pszOldFilename, pszNewFilename) ? 0 : -1;
     }
 
@@ -325,8 +324,8 @@ void* pcsl_file_openfilelist(const pcsl_string * string)
     pIterator->iteratorHandle = INVALID_HANDLE_VALUE;
 
     /*
-    * find the root dir of the string
-    */
+     * Find the root dir of the string
+     */
     rootLength = pcsl_string_last_index_of(string, FILESEP);
     if (-1 == rootLength) {
         rootLength = 0;
@@ -350,25 +349,20 @@ void* pcsl_file_openfilelist(const pcsl_string * string)
  */
 int pcsl_file_closefilelist(void *handle)
 {
-    int status;
+    BOOL status = FALSE;
     PCSLFileIterator* pIterator = (PCSLFileIterator *)handle;
 
-    if (handle == NULL) {
+    if (NULL == handle) {
         return 0;
     }
 
-    if (pIterator->iteratorHandle != INVALID_HANDLE_VALUE) {
+    if (INVALID_HANDLE_VALUE != pIterator->iteratorHandle) {
         status = FindClose(pIterator->iteratorHandle);
     }
 
     pcsl_mem_free(pIterator);
 
-    if (status == 0) {
-        return -1;
-    } else {
-        return 0;
-    }
-
+    return status ? 0 : -1;
 }
 
 /**
@@ -414,11 +408,11 @@ int pcsl_file_getnextentry(void *handle, const pcsl_string * string,
 
     PCSLFileIterator* pIterator = (PCSLFileIterator *)handle;
 
-    if (pIterator == NULL) {
+    if (NULL == pIterator) {
         return -1;
     }
 
-    if (pIterator->iteratorHandle == INVALID_HANDLE_VALUE) {
+    if (INVALID_HANDLE_VALUE == pIterator->iteratorHandle) {
         return findFirstMatch(pIterator, string, result);
     }
 
@@ -442,21 +436,21 @@ static int findFirstMatch(PCSLFileIterator* pIterator,
 {
     WIN32_FIND_DATAW findData;
     HANDLE handle;
-    PCSL_DEFINE_ASCII_STRING_LITERAL_START(starSuffix)
-    {'*', '\0'}
+    PCSL_DEFINE_ASCII_STRING_LITERAL_START(starSuffix) 
+        {'*', '\0'}
     PCSL_DEFINE_ASCII_STRING_LITERAL_END(starSuffix);
     pcsl_string root = PCSL_STRING_NULL;
     pcsl_string foundName = PCSL_STRING_NULL;
     pcsl_string matchStar = PCSL_STRING_NULL;
     jsize rootLen = 0;
 
-    if (result == NULL) {
+    if (NULL == result) {
         return -1;
     }
 
     * result = PCSL_STRING_NULL;
 
-    if (pcsl_string_cat(match, &starSuffix, &matchStar) != PCSL_STRING_OK) {
+    if (PCSL_STRING_OK != pcsl_string_cat(match, &starSuffix, &matchStar)) {
         return -1;
     }
 
@@ -480,7 +474,7 @@ static int findFirstMatch(PCSLFileIterator* pIterator,
     pIterator->iteratorHandle = handle;
     rootLen = pIterator->savedRootLength;
 
-    if (pcsl_string_substring(match, 0, rootLen, &root) != PCSL_STRING_OK) {
+    if (PCSL_STRING_OK != pcsl_string_substring(match, 0, rootLen, &root)) {
         return -1;
     }
 
@@ -491,16 +485,12 @@ static int findFirstMatch(PCSLFileIterator* pIterator,
             return -1;
     }
 
-    if (pcsl_string_cat(&root, &foundName, result) != PCSL_STRING_OK) {
-        pcsl_string_free(&foundName);    
-        pcsl_string_free(&root);    
-        return -1;
+    {
+        int state = PCSL_STRING_OK == pcsl_string_cat(&root, &foundName, result);
+        pcsl_string_free(&foundName);
+        pcsl_string_free(&root);
+        return state ? 0 : -1;
     }
-
-    pcsl_string_free(&foundName);    
-    pcsl_string_free(&root);    
-
-    return 0;
 }
 
 static int findNextMatch(PCSLFileIterator* pIterator,
@@ -512,7 +502,7 @@ static int findNextMatch(PCSLFileIterator* pIterator,
     pcsl_string foundName = PCSL_STRING_NULL;
     jsize rootLen = 0;
 
-    if (result == NULL) {
+    if (NULL == result) {
         return -1;
     }
 
@@ -524,7 +514,7 @@ static int findNextMatch(PCSLFileIterator* pIterator,
 
     rootLen = pIterator->savedRootLength;
 
-    if (pcsl_string_substring(match, 0, rootLen, &root) != PCSL_STRING_OK) {
+    if (PCSL_STRING_OK != pcsl_string_substring(match, 0, rootLen, &root)) {
         return -1;
     }
 
@@ -535,14 +525,10 @@ static int findNextMatch(PCSLFileIterator* pIterator,
             return -1;
     }
 
-    if (pcsl_string_cat(&root, &foundName, result) != PCSL_STRING_OK) {
-        pcsl_string_free(&foundName);    
-        pcsl_string_free(&root);    
-        return -1;
+    {
+        int state = PCSL_STRING_OK == pcsl_string_cat(&root, &foundName, result);
+        pcsl_string_free(&foundName);
+        pcsl_string_free(&root);
+        return state ? 0 : -1;
     }
-
-    pcsl_string_free(&foundName);    
-    pcsl_string_free(&root);
-
-    return 0;
 }
