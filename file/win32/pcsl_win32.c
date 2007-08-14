@@ -46,6 +46,11 @@
 static const jchar FILESEP = '/';
 static const jchar PATHSEP = ';';
 
+typedef struct _PCSLFile {
+    int createFlags;
+    HANDLE fileHandle;
+} PCSLFile;
+
 typedef struct _PCSLFileIterator {
     int savedRootLength;
     HANDLE iteratorHandle;
@@ -104,18 +109,19 @@ int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle) {
     switch (flags & (PCSL_FILE_O_RDWR | PCSL_FILE_O_WRONLY | PCSL_FILE_O_RDONLY)) {
         case PCSL_FILE_O_RDONLY: dwDesiredAccess = GENERIC_READ;  break;
         case PCSL_FILE_O_WRONLY: dwDesiredAccess = GENERIC_WRITE; break;
-        default: /* PCSL_FILE_O_RDWR  or other flag combination */
+        default: /* PCSL_FILE_O_RDWR or other flag combination */
             dwDesiredAccess = GENERIC_READ | GENERIC_WRITE; break;
     }
 
-    if (PCSL_FILE_O_CREAT == (flags & PCSL_FILE_O_CREAT)) {
-        dwCreationDisposition = CREATE_ALWAYS;
-    } else {
-        dwCreationDisposition = OPEN_EXISTING;
-    }
-
-    if (PCSL_FILE_O_TRUNC == (flags & PCSL_FILE_O_TRUNC)) {
-        dwCreationDisposition |= TRUNCATE_EXISTING;
+    switch (flags & (PCSL_FILE_O_CREAT | PCSL_FILE_O_TRUNC)) {
+        case PCSL_FILE_O_CREAT | PCSL_FILE_O_TRUNC: 
+            dwCreationDisposition = CREATE_ALWAYS; break;
+        case PCSL_FILE_O_CREAT: 
+            dwCreationDisposition = OPEN_ALWAYS; break;
+        case PCSL_FILE_O_TRUNC: 
+            dwCreationDisposition = TRUNCATE_EXISTING; break;
+        default:
+            dwCreationDisposition = OPEN_EXISTING; break;
     }
 
     fileHandle = CreateFileW(pszOsFilename, dwDesiredAccess, 
@@ -128,15 +134,19 @@ int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle) {
         return -1;
     }
 
-    if (PCSL_FILE_O_APPEND == (flags & PCSL_FILE_O_APPEND)) {
-        if (-1 == pcsl_file_seek(fileHandle, 0, PCSL_FILE_SEEK_END)) {
+    {
+        PCSLFile* pFHandle;
+        pFHandle = pcsl_mem_malloc(sizeof(PCSLFile));
+        if (pFHandle == NULL) {
             CloseHandle(fileHandle);
             return -1;
         }
-    }
 
-    *handle  = fileHandle;
-    return 0;
+        pFHandle->createFlags = flags;
+        pFHandle->fileHandle = fileHandle;
+        *handle  = pFHandle;
+        return 0;
+    }
 }
 
 /**
@@ -144,8 +154,17 @@ int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle) {
  */
 int pcsl_file_close(void *handle) 
 {
-    pcsl_file_commitwrite(handle); /* commit pending writes */
-    return CloseHandle((HANDLE)handle) ? 0 : -1;
+    if (NULL == handle)
+        return -1;
+
+    {
+        PCSLFile* pFH = (PCSLFile*)handle;
+        pcsl_file_commitwrite(handle); /* commit pending writes */
+        if (!CloseHandle(pFH->fileHandle))
+            return -1;
+        pcsl_mem_free(handle);
+        return 0;
+    }
 }
 
 /**
@@ -154,27 +173,42 @@ int pcsl_file_close(void *handle)
  */
 int pcsl_file_read(void *handle, unsigned  char *buffer, long length)
 {
-    DWORD bytesRead;
     if (0 == length) {
         return 0;
     }
-
-    if (!ReadFile((HANDLE)handle, buffer, (DWORD)length, &bytesRead, NULL))
+    if (NULL == handle)
         return -1;
-    return bytesRead;
+
+    {
+        DWORD bytesRead;
+        PCSLFile* pFH = (PCSLFile*)handle;
+        if (!ReadFile(pFH->fileHandle, buffer, (DWORD)length, &bytesRead, NULL))
+            return -1;
+        return bytesRead;
+
+    }
 }
 
 /**
- * The write function writes up to size bytes from buffer to the file with descriptor 
- * identifier. 
- * The return value is the number of bytes actually written. This is normally the same 
- * as size, but might be less (for example, if the persistent storage being written to
- * fills up).
+ * The write function writes up to size bytes from buffer to the file 
+ * with descriptor  identifier. 
+ * The return value is the number of bytes actually written. 
+ * This is normally the same as size, but might be less (for example, 
+ * if the persistent storage being written to fills up).
  */
 int pcsl_file_write(void *handle, unsigned char* buffer, long length)
 {
     DWORD bytesWritten;
-    if (!WriteFile((HANDLE)handle, buffer, (DWORD)length, &bytesWritten, NULL))
+    PCSLFile* pFH = (PCSLFile*)handle;
+    if (NULL == handle)
+        return -1;
+
+    if (PCSL_FILE_O_APPEND == (pFH->createFlags && PCSL_FILE_O_APPEND)) {
+        if (!pcsl_file_seek(handle, 0, PCSL_FILE_SEEK_END))
+            return -1;
+    }
+
+    if (!WriteFile(pFH->fileHandle, buffer, (DWORD)length, &bytesWritten, NULL))
         return -1;
     return bytesWritten;
 }
@@ -202,7 +236,10 @@ int pcsl_file_truncate(void *handle, long size)
     if (-1 == pcsl_file_seek(handle, size, PCSL_FILE_SEEK_SET))
         return -1;
 
-    return SetEndOfFile((HANDLE)handle) ? 0 : -1;
+    {
+        PCSLFile* pFH = (PCSLFile*)handle;
+        return SetEndOfFile(pFH->fileHandle) ? 0 : -1;
+    }
 }
 
 /**
@@ -212,7 +249,9 @@ int pcsl_file_truncate(void *handle, long size)
 long pcsl_file_seek(void *handle, long offset, long position)
 {
     DWORD method;
-    DWORD res;
+
+    if (NULL == handle)
+        return -1;
 
     switch (position) {
         case PCSL_FILE_SEEK_CUR: method = FILE_CURRENT; break;
@@ -223,8 +262,11 @@ long pcsl_file_seek(void *handle, long offset, long position)
             break;
     }
 
-    res = SetFilePointer((HANDLE)handle, offset, NULL, method);
-    return (INVALID_SET_FILE_POINTER != res) ? res : -1;
+    {
+        PCSLFile* pFH = (PCSLFile*)handle;
+        DWORD res = SetFilePointer(pFH->fileHandle, offset, NULL, method);
+        return (INVALID_SET_FILE_POINTER != res) ? res : -1;
+    }
 }
 
 /**
@@ -234,9 +276,16 @@ long pcsl_file_seek(void *handle, long offset, long position)
 long pcsl_file_sizeofopenfile(void *handle)
 {
     DWORD sizeHigh;
-    DWORD sizeLo = GetFileSize((HANDLE)handle, &sizeHigh);
-    /* NOTE Returned only 32 lowest bit */
-    return (INVALID_FILE_SIZE != sizeLo) ? sizeLo : -1;
+    DWORD sizeLo;
+    if (NULL == handle)
+        return -1;
+
+    {
+        PCSLFile* pFH = (PCSLFile*)handle;
+        sizeLo = GetFileSize(pFH->fileHandle, &sizeHigh);
+        /* NOTE Returned only 32 lowest bit */
+        return (INVALID_FILE_SIZE != sizeLo) ? sizeLo : -1;
+    }
 }
 
 /**
@@ -280,7 +329,12 @@ int pcsl_file_exist(const pcsl_string * fileName)
 /* Force the data to be written into the FS storage */
 int pcsl_file_commitwrite(void *handle)
 {
-    return FlushFileBuffers((HANDLE)handle) ? 0 : -1;
+    if (NULL == handle)
+        return -1;
+    {
+        PCSLFile* pFH = (PCSLFile*)handle;
+        return FlushFileBuffers(pFH->fileHandle) ? 0 : -1;
+    }
 }
 
 /**
