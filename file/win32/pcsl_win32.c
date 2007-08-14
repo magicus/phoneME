@@ -44,7 +44,7 @@
 #endif
 
 /* 
- * Modern Win32 supports both \ and / as path separator 
+ * Modern Win32 supports both \ and / as file separator 
  * but / has some problems when used at command line.
  */
 static const jchar FILESEP = '/';
