@@ -432,6 +432,6 @@ void createLocalRefSpace(JNIEnv *env, jint capacity);
 
 void saveGlobalRef(JNIEnv *env, jobject obj, jobject *pobj);
 void tossGlobalRef(JNIEnv *env, jobject *pobj);
-
+void CVMformatTime(char *format, size_t format_size, time_t t);
 #endif
 

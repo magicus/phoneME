@@ -122,7 +122,8 @@ CVM_JDWP_SHAREOBJS += \
 	utf_md.o \
 	util.o \
 	linker_md.o \
-	exec_md.o
+	exec_md.o \
+	util_md.o
 
 ifneq ($(JPDA_NO_DLALLOC), true)
 CVM_JDWP_SHAREOBJS += dlAlloc.o

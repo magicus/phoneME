@@ -1,7 +1,7 @@
 /*
  * @(#)util_md.c	1.1 07/08/5
  *
- * Copyright  2007 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -26,6 +26,10 @@
  */
 
 #include <windows.h>
+#include <util_md.h>
+#ifndef WINCE
+#include <time.h>
+#endif
 
 #ifdef WINCE
 void _sleep(int secs)
@@ -38,3 +42,10 @@ abort() {
     ExitProcess(-1);
 }
 #endif
+
+void CVMformatTime(char *format, size_t format_size, time_t t) {
+    SYSTEMTIME st;
+    GetLocalTime(&st);
+    snprintf(format, format_size, "%d.%d.%d %d:%d%:%d.%%.3d", st.wDay,
+	     st.wMonth, st.wYear, st.wHour, st.wMinute, st.wSecond);
+}

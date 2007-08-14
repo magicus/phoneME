@@ -27,4 +27,3 @@
 #
 
 CVM_JDWP_LIBDIR        = $(CVM_BINDIR)
-CVM_JDWP_TARGETOBJS = util_md.o
