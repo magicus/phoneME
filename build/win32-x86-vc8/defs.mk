@@ -45,7 +45,7 @@ export LIB
 export INCLUDE
 export PATH
 
-LINK_CMD += ; mt.exe -manifest $@.manifest "-outputresource:$@;\#2"
+LINK_CMD_POST += ; mt.exe -manifest $@.manifest "-outputresource:$@;\#2"
 
 # get some vc specific defs
 include ../win32/vc_defs.mk
