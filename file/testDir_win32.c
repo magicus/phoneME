@@ -99,10 +99,22 @@ void testSizes() {
 
     res = pcsl_file_getfreesize(&dir1);
     assertTrue("Querying free size failed", res >= 0);
+    /* 
+     * VC6 and VS7 doesn' support lld prefix, only I64d 
+     * VS8 has _MSC_VER 1400
+     */
+#if _MSC_VER < 1400
+    printf("Free bytes on file system: %I64d\n", res);
+#else
     printf("Free bytes on file system: %lld\n", res);
+#endif
     res = pcsl_file_gettotalsize(&dir1);
     assertTrue("Querying total size failed", res >= 0);
+#if _MSC_VER < 1400
+    printf("Total bytes on file system: %I64d\n", res);
+#else
     printf("Total bytes on file system: %lld\n", res);
+#endif
 
     /*
      * IMPL_NOTE: to do further testing (counting exact number of bytes).
@@ -241,8 +253,7 @@ void testDir_win32_runTests() {
     /* Tests for additional API needed for JSR-75 */
     testDirectories();
 
-    // Temporarily disabled for POSIX
-    //testSizes();
+    testSizes();
 
     // Temporarily disabled for POSIX
     //testAttributes();

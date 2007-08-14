@@ -43,6 +43,10 @@
 #define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
 #endif
 
+/* 
+ * Modern Win32 supports both \ and / as path separator 
+ * but / has some problems when used at command line.
+ */
 static const jchar FILESEP = '/';
 static const jchar PATHSEP = ';';
 
@@ -135,8 +139,7 @@ int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle) {
     }
 
     {
-        PCSLFile* pFHandle;
-        pFHandle = pcsl_mem_malloc(sizeof(PCSLFile));
+        PCSLFile* pFHandle = pcsl_mem_malloc(sizeof(PCSLFile));
         if (pFHandle == NULL) {
             CloseHandle(fileHandle);
             return -1;
