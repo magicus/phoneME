@@ -30,7 +30,7 @@
 #include <pcsl_memory.h>
 
 /* 
- * This constant is defined in "WinBase.h" when using VS7 (2003) and VS8 (2005),
+ * This constants are defined in "WinBase.h" when using VS7 (2003) and VS8 (2005),
  * but absent in Visual C++ 6 headers. 
  * For successful build with VC6 we need to define it manually.
  */
@@ -44,11 +44,13 @@
 #endif
 
 /* 
- * Win32 API supports both '\' and '/' as file separator.
- * '/' has some problems when used at command line and cannot 
- * be easy distinguished from option separator.
+ * Win32 API supports both '\' and '/' as file (dir) separator. 
+ * It changes '/' to '\' as part of converting the name to an NT style name.
+ * Win32API '/' support verified at PPC2003SE, WM5, WinXP
+ *
+ * '/' has different problems when used at command line.
  */
-static const jchar FILESEP = '/';
+static const jchar FILESEP = '\\';
 static const jchar PATHSEP = ';';
 
 typedef struct _PCSLFile {

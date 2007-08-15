@@ -29,9 +29,7 @@
 #include <string.h>
 #include <limits.h>
 
-#ifndef UNDER_CE
 #include <errno.h>
-#endif
 
 #include <util/utf.h>
 #include <pcsl_string.h>
