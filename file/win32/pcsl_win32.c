@@ -191,7 +191,6 @@ int pcsl_file_read(void *handle, unsigned  char *buffer, long length)
         if (!ReadFile(pFH->fileHandle, buffer, (DWORD)length, &bytesRead, NULL))
             return -1;
         return bytesRead;
-
     }
 }
 
@@ -236,15 +235,37 @@ int pcsl_file_unlink(const pcsl_string * fileName)
 
 /**
  * The  truncate function is used to truncate the size of an open file in storage.
+ * Function keeps current file pointer position, except case,
+ * when current position is also cut
  */
 int pcsl_file_truncate(void *handle, long size)
 {
-    if (-1 == pcsl_file_seek(handle, size, PCSL_FILE_SEEK_SET))
+    if (NULL == handle)
         return -1;
 
     {
+        DWORD previousPos;
+        DWORD cutPos;
         PCSLFile* pFH = (PCSLFile*)handle;
-        return SetEndOfFile(pFH->fileHandle) ? 0 : -1;
+
+        previousPos = SetFilePointer(pFH->fileHandle, 0, NULL, FILE_CURRENT);
+        if (INVALID_SET_FILE_POINTER == previousPos)
+            return -1;
+
+        /* Win32 supports file expansion (new size > current file size) */
+        cutPos = SetFilePointer(pFH->fileHandle, size, NULL, FILE_BEGIN);
+        if (INVALID_SET_FILE_POINTER == cutPos)
+            return -1;
+
+        if (!SetEndOfFile(pFH->fileHandle))
+            return -1;
+
+        if (cutPos > previousPos) {
+            if (!SetFilePointer(pFH->fileHandle, previousPos, NULL, FILE_BEGIN))
+                return -1;
+        }
+
+        return 0;
     }
 }
 
@@ -262,14 +283,17 @@ long pcsl_file_seek(void *handle, long offset, long position)
     switch (position) {
         case PCSL_FILE_SEEK_CUR: method = FILE_CURRENT; break;
         case PCSL_FILE_SEEK_END: method = FILE_END;     break;
-        case PCSL_FILE_SEEK_SET:
-        default:
+        default: /* PCSL_FILE_SEEK_SET and others */
             method = FILE_BEGIN;
             break;
     }
 
     {
         PCSLFile* pFH = (PCSLFile*)handle;
+        /* 
+         * Combined checking INVALID_SET_FILE_POINTER & GetLastError is required
+         * only when lpDistanceToMoveHigh parameter != NULL
+         */
         DWORD res = SetFilePointer(pFH->fileHandle, offset, NULL, method);
         return (INVALID_SET_FILE_POINTER != res) ? res : -1;
     }
