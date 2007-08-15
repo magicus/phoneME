@@ -38,4 +38,18 @@ public final class Token {
     public SecurityToken getSecurityToken() {
         return securityToken;
     }
+
+    /**
+     * Check to see the suite has the ALLOW level for specific permission.
+     * This is used by internal APIs that only provide access to
+     * trusted system applications.
+     *
+     * @param permission permission to be checked
+     *
+     * @exception SecurityException if the permission is not
+     *            allowed by this token
+     */
+    public void checkIfPermissionAllowed(Permission permission) {
+        securityToken.checkIfPermissionAllowed(permission.getMIDPPermission());
+    }
 }

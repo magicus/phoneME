@@ -26,6 +26,7 @@ package com.sun.j2me.app;
 
 import com.sun.j2me.security.Permission;
 import com.sun.j2me.security.AccessController;
+import com.sun.midp.midlet.MIDletStateHandler;
 
 /**
  * Abstraction for application package
@@ -44,7 +45,8 @@ public class AppPackage {
     }
     
     public int getId() {
-        return 0;
+        return MIDletStateHandler.getMidletStateHandler().
+            getMIDletSuite().getID();
     }
     
     /**
