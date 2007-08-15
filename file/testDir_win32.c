@@ -100,7 +100,7 @@ void testSizes() {
     res = pcsl_file_getfreesize(&dir1);
     assertTrue("Querying free size failed", res >= 0);
     /* 
-     * VC6 and VS7 doesn' support lld prefix, only I64d 
+     * VC6 and VS7 don't support ll prefix, only I64
      * VS8 has _MSC_VER 1400
      */
 #if _MSC_VER < 1400
