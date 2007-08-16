@@ -216,6 +216,22 @@ _wrename(const wchar_t* oldPath, const wchar_t* newPath)
     return 0;
 }
 
+int 
+rename(const char *oldpath, const char *newpath) 
+{
+    wchar_t woldpath[MAX_PATH];
+    wchar_t wnewpath[MAX_PATH];
+
+	if (oldpath == NULL || newpath == NULL) {
+		return -1;
+	}
+
+    mbstowcs(woldpath, oldpath, MAX_PATH);
+    mbstowcs(wnewpath, newpath, MAX_PATH);
+    return _wrename(woldpath, wnewpath);
+}
+
+
 /*
 int mkdir(const char* path) {
 
@@ -274,6 +290,28 @@ JAVAI_API DWORD GetCurrentDirectory(DWORD nBufferLength, char *lpBuffer) {
     return strlen(lpBuffer);
 }
 
+char* _getdcwd(int drive, char *buf, int maxlen) {
+    /* Drive parameter is not applicable for mobile devices */
+    (void)drive;
+
+    if (GetCurrentDirectory(maxlen, buf) > 0) {
+        return buf;
+    }
+	return NULL;
+}
+
+wchar_t* _wgetdcwd(int drive, wchar_t *wbuf, int maxlen) {
+    char buf[MAX_PATH];
+    /* Drive parameter is not applicable for mobile devices */
+    (void)drive;
+
+    if (GetCurrentDirectory(MAX_PATH, buf) > 0) {
+        if (mbstowcs(wbuf, buf, maxlen) > 0) {
+            return wbuf;
+        }
+    }
+	return NULL;
+}
 
 _CRTIMP void * __cdecl calloc(size_t num, size_t size) {
     size_t len = num * size;
@@ -303,6 +341,20 @@ int _waccess(const wchar_t* path, int amode)
 	return -1;
     }
     return 0;
+}
+
+int 
+_access(const char *path, int amode) 
+{
+    wchar_t wpath[MAX_PATH];
+
+	if (path == NULL) {
+		return -1;
+	}
+
+    mbstowcs(wpath, path, MAX_PATH);
+    return _waccess(wpath, amode);
+
 }
 
 wchar_t *

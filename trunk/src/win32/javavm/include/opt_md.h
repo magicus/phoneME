@@ -1,5 +1,5 @@
 /*
- * @(#)wceUtil.h	1.9 06/10/10
+ * @(#)opt_md.h	1.0 07/07/05
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -24,41 +24,7 @@
  * information or have any questions. 
  *
  */
-/*
- * @(#)wceUtil.h	1.5 03/10/01
- */
-
-#ifndef WCE_JAVAI_H
-#define WCE_JAVAI_H
-
-#ifdef WINCE
-
-#include <string.h>
-#include <stddef.h>
-
-#if 0
-
-#ifdef __cplusplus
-#define __LANGPREFIX extern "C"
-#else
-#define __LANGPREFIX
-#endif /* __cplusplus */
-
-#ifdef INSIDE_JAVAI
-#define JAVAI_API __LANGPREFIX _declspec(dllexport)
-#else
-#define JAVAI_API __LANGPREFIX _declspec(dllimport)
-#endif /* INSIDE_JAVAI */
-
-#endif
-
-#define JAVAI_API _declspec(dllexport)
-
-JAVAI_API wchar_t *createWCHAR(const char *);
-JAVAI_API char  *createMCHAR(const wchar_t *);
-JAVAI_API char  *strerror(int err);
-JAVAI_API char  *getenv(const char* name);
-
-#endif /* WINCE */
-
-#endif /* WCE_JAVAI_H */
+    {"stdioPrefix", "prefix for stdio files",
+        CVM_STRING_OPTION,
+    {{0, (CVMAddr)"\\", 0}},
+        &CVMglobals.target.stdioPrefix}, 
