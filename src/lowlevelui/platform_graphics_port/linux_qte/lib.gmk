@@ -1,4 +1,4 @@
-#   
+#
 #
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -52,4 +52,5 @@ SUBSYSTEM_PLATFORMGRAPHICSPORT_NATIVE_FILES += \
     gxpportqt_graphics_util.cpp \
     gxpportqt_mutableimage.cpp \
     gxpportqt_immutableimage.cpp \
-    gxpportqt_text.cpp
+    gxpportqt_text.cpp \
+    pisces_pixmap_utils.cpp
