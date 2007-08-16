@@ -254,12 +254,11 @@ Java_java_io_WinNTFileSystem_getLength(JNIEnv *env, jobject this, jobject file)
     jlong rv = 0;
 
     WITH_UNICODE_PATH(env, file, ids.path, path) {
-#ifndef WINCE
-        struct _stati64 sb;
-        if (_wstati64(path, &sb) == 0) {
-            rv = sb.st_size;
+        WIN32_FILE_ATTRIBUTE_DATA fileAttributes;
+
+        if (GetFileAttributesExW(path, GetFileExInfoStandard, (LPVOID)&fileAttributes)) {
+            rv = ((jlong)fileAttributes.nFileSizeHigh << 32) + fileAttributes.nFileSizeLow;
         }
-#endif
     } END_UNICODE_PATH(env, path);
     return rv;
 }
@@ -631,8 +630,8 @@ Java_java_io_WinNTFileSystem_setReadOnly(JNIEnv *env, jobject this,
 /* -- Filesystem interface -- */
 
 #ifndef WINCE
-
 #include <direct.h>
+#endif
 
 JNIEXPORT jobject JNICALL
 Java_java_io_WinNTFileSystem_getDriveDirectory(JNIEnv *env, jobject this, 
@@ -645,5 +644,3 @@ Java_java_io_WinNTFileSystem_getDriveDirectory(JNIEnv *env, jobject this,
     if (iswalpha(*p) && (p[1] == L':')) p += 2;
     return (*env)->NewString(env, p, wcslen(p));
 }
-
-#endif
