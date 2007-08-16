@@ -26,17 +26,17 @@
 
 
 #include <windows.h>
-#include <direct.h>
 #include <wchar.h>
 
 #include <pcsl_directory.h>
 #include <java_types.h>
 
-
 /* 
- * This constant is defined in "WinBase.h" when using MS Visual C++ 7, but absent
- * in Visual C++ 6 headers. For successful build with VC6 we need to define it manually.
+ * This constant is defined in "WinBase.h" when using VS7 (2003) and VS8 (2005),
+ * but absent in Visual C++ 6 headers. 
+ * For successful build with VC6 we need to define it manually.
  */
+
 #ifndef INVALID_FILE_ATTRIBUTES
 #define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
 #endif
@@ -46,11 +46,11 @@
  */
 int pcsl_file_is_directory(const pcsl_string * path)
 {
-    int attrs;
+    DWORD attrs;
     const jchar * pszOsFilename = pcsl_string_get_utf16_data(path);
 
-    if(NULL == pszOsFilename) {
-	return -1;
+    if (NULL == pszOsFilename) {
+        return -1;
     }
 
     attrs = GetFileAttributesW(pszOsFilename);
@@ -75,10 +75,10 @@ int pcsl_file_mkdir(const pcsl_string * dirName)
         return -1;
     }
 
-    res = _wmkdir(pszOsFilename);
+    res = CreateDirectoryW(pszOsFilename, NULL) ? 0 : -1;
     pcsl_string_release_utf16_data(pszOsFilename, dirName);
 
-    return (0 == res) ? 0 : -1;
+    return res;
 }
 
 /**
@@ -93,10 +93,10 @@ int pcsl_file_rmdir(const pcsl_string * dirName)
         return -1;
     }
 
-    res = _wrmdir(pszOsFilename);
+    res = RemoveDirectoryW(pszOsFilename) ? 0 : -1;
     pcsl_string_release_utf16_data(pszOsFilename, dirName);
 
-    return (0 == res) ? 0 : -1;
+    return res;
 }
 
 /**
@@ -104,26 +104,25 @@ int pcsl_file_rmdir(const pcsl_string * dirName)
  */
 jlong pcsl_file_getfreesize(const pcsl_string * path)
 {
-    struct _diskfree_t df;
-    struct _stat buf;
-    int res;
-    const jchar * pszOsFilename = pcsl_string_get_utf16_data(path);
+    BOOL res;
 
+    ULARGE_INTEGER available;
+    ULARGE_INTEGER totalBytes;
+    ULARGE_INTEGER freeBytes;
+
+    const jchar * pszOsFilename = pcsl_string_get_utf16_data(path);
     if (NULL == pszOsFilename) {
         return -1;
     }
 
-    res = _wstat(pszOsFilename, &buf);
+    res = GetDiskFreeSpaceExW(pszOsFilename, &available, &totalBytes, &freeBytes);
     pcsl_string_release_utf16_data(pszOsFilename, path);
-    if (0 != res) {
+
+    if (!res) {
         return -1;
     }
 
-    if (0 != _getdiskfree(buf.st_dev + 1, &df)) {
-        return -1;
-    }
-
-    return (jlong)(df.avail_clusters) * df.sectors_per_cluster * df.bytes_per_sector;
+    return (jlong)available.QuadPart;
 }
 
 /**
@@ -131,26 +130,25 @@ jlong pcsl_file_getfreesize(const pcsl_string * path)
  */
 jlong pcsl_file_gettotalsize(const pcsl_string * path)
 {
-    struct _diskfree_t df;
-    struct _stat buf;
-    int res;
+    BOOL res;
     const jchar * pszOsFilename = pcsl_string_get_utf16_data(path);
+
+    ULARGE_INTEGER available;
+    ULARGE_INTEGER totalBytes;
+    ULARGE_INTEGER freeBytes;
 
     if (NULL == pszOsFilename) {
         return -1;
     }
 
-    res = _wstat(pszOsFilename, &buf);
+    res = GetDiskFreeSpaceExW(pszOsFilename, &available, &totalBytes, &freeBytes);
     pcsl_string_release_utf16_data(pszOsFilename, path);
-    if (0 != res) {
+
+    if (!res) {
         return -1;
     }
 
-    if (0 != _getdiskfree(buf.st_dev + 1, &df)) {
-        return -1;
-    }
-
-    return (jlong)(df.total_clusters) * df.sectors_per_cluster * df.bytes_per_sector;
+    return (jlong)totalBytes.QuadPart;
 }
 
 /**
@@ -158,7 +156,7 @@ jlong pcsl_file_gettotalsize(const pcsl_string * path)
  */
 int pcsl_file_get_attribute(const pcsl_string * fileName, int type, int* result)
 {
-    int attrs;
+    DWORD attrs;
     const jchar * pszOsFilename = pcsl_string_get_utf16_data(fileName);
 
     if (NULL == pszOsFilename) {
@@ -173,18 +171,18 @@ int pcsl_file_get_attribute(const pcsl_string * fileName, int type, int* result)
     }
 
     switch (type) {
-    case PCSL_FILE_ATTR_READ:
-    case PCSL_FILE_ATTR_EXECUTE:
-        *result = 1;
-        break;
-    case PCSL_FILE_ATTR_WRITE:
-        *result = (attrs & FILE_ATTRIBUTE_READONLY) ? 0 : 1;
-        break;
-    case PCSL_FILE_ATTR_HIDDEN:
-        *result = (attrs & FILE_ATTRIBUTE_HIDDEN) ? 1 : 0;
-        break;
-    default:
-        return -1;
+        case PCSL_FILE_ATTR_READ:
+        case PCSL_FILE_ATTR_EXECUTE:
+            *result = 1;
+            break;
+        case PCSL_FILE_ATTR_WRITE:
+            *result = (attrs & FILE_ATTRIBUTE_READONLY) ? 0 : 1;
+            break;
+        case PCSL_FILE_ATTR_HIDDEN:
+            *result = (attrs & FILE_ATTRIBUTE_HIDDEN) ? 1 : 0;
+            break;
+        default:
+            return -1;
     }        
     return 0;
 }
@@ -194,7 +192,7 @@ int pcsl_file_get_attribute(const pcsl_string * fileName, int type, int* result)
  */
 int pcsl_file_set_attribute(const pcsl_string * fileName, int type, int value)
 {
-    int attrs, newmode;
+    DWORD attrs, newmode;
     int result = -1;
     const jchar * pszOsFilename = pcsl_string_get_utf16_data(fileName);
 
@@ -244,21 +242,39 @@ int pcsl_file_set_attribute(const pcsl_string * fileName, int type, int value)
  */
 int pcsl_file_get_time(const pcsl_string * fileName, int type, long* result)
 {
-    struct _stat buf;
-    int res;
-    const jchar * pszOsFilename = pcsl_string_get_utf16_data(fileName);
+    /*
+     * Expected time is count as seconds from (00:00:00), January 1, 1970 UTC
+     * FILETIME time is 100-nanosecond intervals since January 1, 1601 UTC 
+     */
+    /* Visual C++ 6 suports only i64 suffix (not LL) */
+    static const LONGLONG FILETIME_1970_01_JAN_UTC = 116444736000000000i64;
 
-    if (NULL == pszOsFilename) {
+    WIN32_FILE_ATTRIBUTE_DATA attrib;
+    int state = -1;
+    const jchar* pOsFN;
+    
+    if (PCSL_FILE_TIME_LAST_MODIFIED != type)
         return -1;
+
+    pOsFN = pcsl_string_get_utf16_data(fileName);
+    if (pOsFN != NULL) {
+        LONGLONG fcurUTC = 0;
+        if (GetFileAttributesExW(pOsFN, GetFileExInfoStandard, &attrib)) {
+            /* FS times is in UTC */
+            fcurUTC = attrib.ftLastWriteTime.dwHighDateTime;
+            fcurUTC = (fcurUTC << 32) | attrib.ftLastWriteTime.dwLowDateTime;
+        }
+
+        /* FILETIME members are zero if the FS does not support this time */
+        if (0 != fcurUTC) {
+            fcurUTC -= FILETIME_1970_01_JAN_UTC;
+            fcurUTC /= 10000000;
+            state = 0;
+            *result = (long)fcurUTC;
+        }
+
+        pcsl_string_release_utf16_data(pOsFN, fileName);
     }
 
-    res = _wstat(pszOsFilename, &buf);
-    pcsl_string_release_utf16_data(pszOsFilename, fileName);
-    if (-1 == res) {
-        return -1;
-    }
-
-    *result = buf.st_mtime;
-    return 0;
+    return state;
 }
-

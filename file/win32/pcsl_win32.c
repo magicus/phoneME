@@ -1,5 +1,5 @@
 /*
- * 	
+ * 
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -26,33 +26,37 @@
 
 #include <windows.h>
 
-#include <stdio.h>
-#include <string.h>
-#include <fcntl.h>
-#include <io.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-#include <errno.h>
-
-#include <wchar.h>
-#include <string.h>
-
 #include <pcsl_file.h>
 #include <pcsl_memory.h>
 
-/**
- * directory flag
+/* 
+ * This constants are defined in "WinBase.h" when using VS7 (2003) and VS8 (2005),
+ * but absent in Visual C++ 6 headers. 
+ * For successful build with VC6 we need to define it manually.
  */
-#define S_ISDIR(mode)	( ((mode) & S_IFMT) == S_IFDIR )
 
-/**
- * file flag
+#ifndef INVALID_SET_FILE_POINTER
+#define INVALID_SET_FILE_POINTER ((DWORD)-1)
+#endif
+
+#ifndef INVALID_FILE_ATTRIBUTES
+#define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
+#endif
+
+/* 
+ * Win32 API supports both '\' and '/' as file (dir) separator. 
+ * It changes '/' to '\' as part of converting the name to an NT style name.
+ * Win32API '/' support verified at PPC2003SE, WM5, WinXP
+ *
+ * '/' has different problems when used at command line.
  */
-#define S_ISREG(mode)	( ((mode) & S_IFMT) == S_IFREG )
+static const jchar FILESEP = '\\';
+static const jchar PATHSEP = ';';
 
-static jchar FILESEP = '\\';
-static jchar PATHSEP = ';';
+typedef struct _PCSLFile {
+    int createFlags;
+    HANDLE fileHandle;
+} PCSLFile;
 
 typedef struct _PCSLFileIterator {
     int savedRootLength;
@@ -78,7 +82,7 @@ int pcsl_file_init() {
       return -1;
     }
 
-    return pcsl_string_is_active() == PCSL_TRUE ? 0 : -1;
+    return (pcsl_string_is_active() == PCSL_TRUE) ? 0 : -1;
 }
 
 /**
@@ -96,65 +100,77 @@ int pcsl_file_finalize() {
  * file is at the beginning of the file.
  */
 int pcsl_file_open(const pcsl_string * fileName, int flags, void **handle) {
+    HANDLE fileHandle;
 
-    int fd;
-    int oFlag = O_BINARY;
-    int creationMode = 0;
-    const jchar * pszOsFilename = pcsl_string_get_utf16_data(fileName);
+    DWORD dwDesiredAccess; 
+    DWORD dwCreationDisposition;
 
-    if(pszOsFilename == NULL) {
-	return -1;
-    }
+    const jchar* pszOsFilename = pcsl_string_get_utf16_data(fileName);
 
-    /* compute open control flag */
-    if ((flags & PCSL_FILE_O_WRONLY) == PCSL_FILE_O_WRONLY) {
-        oFlag |= O_WRONLY;
-    } 
+    *handle = NULL;
 
-    if ((flags & PCSL_FILE_O_RDWR) == PCSL_FILE_O_RDWR) {
-        oFlag |= O_RDWR;
-    } 
-
-    if ((flags & PCSL_FILE_O_CREAT) == PCSL_FILE_O_CREAT) {
-        oFlag |= O_CREAT;
-        creationMode = _S_IREAD | _S_IWRITE;
-    } 
-
-    if ((flags & PCSL_FILE_O_TRUNC) == PCSL_FILE_O_TRUNC) {
-        oFlag |= O_TRUNC;
-    } 
-
-    if ((flags & PCSL_FILE_O_APPEND) == PCSL_FILE_O_APPEND) {
-        oFlag |= O_APPEND;
-    }
-
-    /*
-     * Unlike Unix systems, Win32 will convert CR/LF pairs to LF when
-     * reading and in reverse when writing, unless the file is opened
-     * in binary mode.
-     */
-    fd = _wopen(pszOsFilename, oFlag | O_BINARY, creationMode);
-
-    pcsl_string_release_utf16_data(pszOsFilename, fileName);
-
-    if(fd < 0) {
-        *handle = NULL;
+    if (NULL == pszOsFilename) {
         return -1;
     }
 
-    *handle = (void *)fd;
-    return 0;
-	
-}
+    switch (flags & (PCSL_FILE_O_RDWR | PCSL_FILE_O_WRONLY | PCSL_FILE_O_RDONLY)) {
+        case PCSL_FILE_O_RDONLY: dwDesiredAccess = GENERIC_READ;  break;
+        case PCSL_FILE_O_WRONLY: dwDesiredAccess = GENERIC_WRITE; break;
+        default: /* PCSL_FILE_O_RDWR or other flag combination */
+            dwDesiredAccess = GENERIC_READ | GENERIC_WRITE; break;
+    }
 
+    switch (flags & (PCSL_FILE_O_CREAT | PCSL_FILE_O_TRUNC)) {
+        case PCSL_FILE_O_CREAT | PCSL_FILE_O_TRUNC: 
+            dwCreationDisposition = CREATE_ALWAYS; break;
+        case PCSL_FILE_O_CREAT: 
+            dwCreationDisposition = OPEN_ALWAYS; break;
+        case PCSL_FILE_O_TRUNC: 
+            dwCreationDisposition = TRUNCATE_EXISTING; break;
+        default:
+            dwCreationDisposition = OPEN_EXISTING; break;
+    }
+
+    fileHandle = CreateFileW(pszOsFilename, dwDesiredAccess, 
+        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, dwCreationDisposition, 
+        FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, NULL);
+
+    pcsl_string_release_utf16_data(pszOsFilename, fileName);
+
+    if (fileHandle == INVALID_HANDLE_VALUE) {
+        return -1;
+    }
+
+    {
+        PCSLFile* pFHandle = pcsl_mem_malloc(sizeof(PCSLFile));
+        if (pFHandle == NULL) {
+            CloseHandle(fileHandle);
+            return -1;
+        }
+
+        pFHandle->createFlags = flags;
+        pFHandle->fileHandle = fileHandle;
+        *handle  = pFHandle;
+        return 0;
+    }
+}
 
 /**
  * The close function  loses the file with descriptor identifier in FS. 
  */
 int pcsl_file_close(void *handle) 
 {
-    pcsl_file_commitwrite(handle); /* commit pending writes */
-    return _close((int)handle);
+    if (NULL == handle)
+        return -1;
+
+    {
+        PCSLFile* pFH = (PCSLFile*)handle;
+        pcsl_file_commitwrite(handle); /* commit pending writes */
+        if (!CloseHandle(pFH->fileHandle))
+            return -1;
+        pcsl_mem_free(handle);
+        return 0;
+    }
 }
 
 /**
@@ -163,25 +179,43 @@ int pcsl_file_close(void *handle)
  */
 int pcsl_file_read(void *handle, unsigned  char *buffer, long length)
 {
-
-    if(0 == length) {
-	return 0;
+    if (0 == length) {
+        return 0;
     }
+    if (NULL == handle)
+        return -1;
 
-    return _read((int)handle, buffer, (unsigned int)length);
-
+    {
+        DWORD bytesRead;
+        PCSLFile* pFH = (PCSLFile*)handle;
+        if (!ReadFile(pFH->fileHandle, buffer, (DWORD)length, &bytesRead, NULL))
+            return -1;
+        return bytesRead;
+    }
 }
 
 /**
- * The write function writes up to size bytes from buffer to the file with descriptor 
- * identifier. 
- * The return value is the number of bytes actually written. This is normally the same 
- * as size, but might be less (for example, if the persistent storage being written to
- * fills up).
+ * The write function writes up to size bytes from buffer to the file 
+ * with descriptor  identifier. 
+ * The return value is the number of bytes actually written. 
+ * This is normally the same as size, but might be less (for example, 
+ * if the persistent storage being written to fills up).
  */
 int pcsl_file_write(void *handle, unsigned char* buffer, long length)
 {
-    return _write((int)handle, buffer, length);
+    DWORD bytesWritten;
+    PCSLFile* pFH = (PCSLFile*)handle;
+    if (NULL == handle)
+        return -1;
+
+    if (PCSL_FILE_O_APPEND == (pFH->createFlags && PCSL_FILE_O_APPEND)) {
+        if (!pcsl_file_seek(handle, 0, PCSL_FILE_SEEK_END))
+            return -1;
+    }
+
+    if (!WriteFile(pFH->fileHandle, buffer, (DWORD)length, &bytesWritten, NULL))
+        return -1;
+    return bytesWritten;
 }
 
 /**
@@ -189,31 +223,55 @@ int pcsl_file_write(void *handle, unsigned char* buffer, long length)
  */
 int pcsl_file_unlink(const pcsl_string * fileName)
 {
-    int status;
-    const jchar * pszOsFilename = pcsl_string_get_utf16_data(fileName);
-
-    if (pszOsFilename == NULL) {
-    	return -1;
+    int status = -1;
+    const jchar* pszOsFilename = pcsl_string_get_utf16_data(fileName);
+    if (NULL != pszOsFilename) {
+        status = DeleteFileW(pszOsFilename) ? 0 : -1;
+        pcsl_string_release_utf16_data(pszOsFilename, fileName);
     }
-
-    if (_wunlink(pszOsFilename) < 0) {
-    	status = -1;
-    } else {
-    	status = 0;
-    }
-
-    pcsl_string_release_utf16_data(pszOsFilename, fileName);
 
     return status;
 }
 
-
 /**
- * The  truncate function is used to truncate the size of an open file in storage.
+ * The truncate function is used to truncate the size of an open file in storage.
+ * Function keeps current file pointer position, except case,
+ * when current position is also cut
  */
 int pcsl_file_truncate(void *handle, long size)
 {
-	return _chsize((int)handle, size);
+    if (NULL == handle)
+        return -1;
+
+    {
+        int state;
+        DWORD previousPos;
+        DWORD cutPos;
+        HANDLE fileHandle = ((PCSLFile*)handle)->fileHandle;
+
+        previousPos = SetFilePointer(fileHandle, 0, NULL, FILE_CURRENT);
+        if (INVALID_SET_FILE_POINTER == previousPos)
+            return -1;
+
+        /* Win32 supports file expansion (new size > current file size) */
+        cutPos = SetFilePointer(fileHandle, size, NULL, FILE_BEGIN);
+        if (INVALID_SET_FILE_POINTER == cutPos)
+            return -1;
+
+        state = 0;
+        if (!SetEndOfFile(fileHandle)) {
+            state = -1;
+        } else {
+            if (cutPos <= previousPos)
+                return 0;
+        }
+
+        previousPos = SetFilePointer(fileHandle, previousPos, NULL, FILE_BEGIN);
+        if (INVALID_SET_FILE_POINTER == previousPos)
+            state = -1;
+
+        return state;
+    }
 }
 
 /**
@@ -222,46 +280,68 @@ int pcsl_file_truncate(void *handle, long size)
  */
 long pcsl_file_seek(void *handle, long offset, long position)
 {
-	return _lseek((int)handle, offset, position);
+    DWORD method;
+
+    if (NULL == handle)
+        return -1;
+
+    switch (position) {
+        case PCSL_FILE_SEEK_CUR: method = FILE_CURRENT; break;
+        case PCSL_FILE_SEEK_END: method = FILE_END;     break;
+        default: /* PCSL_FILE_SEEK_SET and others */
+            method = FILE_BEGIN;
+            break;
+    }
+
+    {
+        PCSLFile* pFH = (PCSLFile*)handle;
+        /* 
+         * Combined checking INVALID_SET_FILE_POINTER & GetLastError is required
+         * only when lpDistanceToMoveHigh parameter != NULL
+         */
+        DWORD res = SetFilePointer(pFH->fileHandle, offset, NULL, method);
+        return (INVALID_SET_FILE_POINTER != res) ? res : -1;
+    }
 }
 
 /**
- * FS only need to support MIDLets to quiry the size of the file. 
+ * FS only need to support MIDLets to query the size of the file. 
  * Check the File size by file handle
  */
 long pcsl_file_sizeofopenfile(void *handle)
 {
-    struct _stat stat_buf;
-
-    if (_fstat((int)handle, &stat_buf) < 0) {
+    DWORD sizeHigh;
+    DWORD sizeLo;
+    if (NULL == handle)
         return -1;
-    }
 
- 
-     return stat_buf.st_size;
+    {
+        PCSLFile* pFH = (PCSLFile*)handle;
+        sizeLo = GetFileSize(pFH->fileHandle, &sizeHigh);
+        /* NOTE Returned only 32 lowest bit */
+        return (INVALID_FILE_SIZE != sizeLo) ? sizeLo : -1;
+    }
 }
 
 /**
- * FS only need to support MIDLets to quiry the size of the file. 
+ * FS only need to support MIDLets to query the size of the file. 
  * Check the File size by file name
  */
 long pcsl_file_sizeof(const pcsl_string * fileName)
 {
-    int handle, openStatus;
-    struct _stat stat_buf;
+    WIN32_FILE_ATTRIBUTE_DATA attrib;
+    int result = -1;
+    const jchar* pOsFN = pcsl_string_get_utf16_data(fileName);
 
-    openStatus = pcsl_file_open(fileName, O_RDONLY, (void **)(&handle));
-
-    if(openStatus < 0) {
-	return -1;
+    if (NULL != pOsFN) {
+        if (GetFileAttributesExW(pOsFN, GetFileExInfoStandard, &attrib)) {
+            /* NOTE Returned only 32 lowest bit */
+            result = attrib.nFileSizeLow;
+        }
+        pcsl_string_release_utf16_data(pOsFN, fileName);
     }
-	
-     if (_fstat(handle, &stat_buf) < 0) {
-         return -1;
-     }
 
-     close(handle);
-     return stat_buf.st_size;;
+    return result;
 }
 
 /**
@@ -269,64 +349,50 @@ long pcsl_file_sizeof(const pcsl_string * fileName)
  */
 int pcsl_file_exist(const pcsl_string * fileName)
 {
-    struct _stat stat_buf;
-    int status;
-    const jchar * pszOsFilename = pcsl_string_get_utf16_data(fileName);
+    DWORD attrib;
+    const jchar* pszOsFilename = pcsl_string_get_utf16_data(fileName);
+    if (NULL != pszOsFilename) {
+        attrib = GetFileAttributesW(pszOsFilename);
+        pcsl_string_release_utf16_data(pszOsFilename, fileName);
 
-    if(pszOsFilename == NULL) {
- 	return -1;
+        if (INVALID_FILE_ATTRIBUTES != attrib) 
+            return (attrib & FILE_ATTRIBUTE_DIRECTORY) ? 0 : 1;
     }
-
-    status = _wstat(pszOsFilename, &stat_buf);
-
-    pcsl_string_release_utf16_data(pszOsFilename, fileName);
-
-    if (status >= 0 && S_ISREG(stat_buf.st_mode)) {
-	/* stat completed without error and it is a file */
-	return 1;
-    }
-
-    /* either stat completed with error or it is not a file */
-    return 0;
+    return -1;
 }
 
 /* Force the data to be written into the FS storage */
 int pcsl_file_commitwrite(void *handle)
 {
-    // Win32 caches writes.
-    return _commit((int)handle);
+    if (NULL == handle)
+        return -1;
+    {
+        PCSLFile* pFH = (PCSLFile*)handle;
+        return FlushFileBuffers(pFH->fileHandle) ? 0 : -1;
+    }
 }
-
 
 /**
  * The rename function updates the filename.
  */
 int pcsl_file_rename(const pcsl_string * oldName, 
-		     const pcsl_string * newName)
+                     const pcsl_string * newName)
 {
-    int res;
-    int status;
+    int status = -1;
     const jchar * pszOldFilename = pcsl_string_get_utf16_data(oldName);
+    const jchar * pszNewFilename = pcsl_string_get_utf16_data(newName);
 
-    if(pszOldFilename == NULL) {
-	return -1;
-    } else {
-      const jchar * pszNewFilename = pcsl_string_get_utf16_data(newName);
-
-      if(pszNewFilename == NULL) {
-        pcsl_string_release_utf16_data(pszOldFilename, oldName);
-	return -1;
-      }
-
-      res = _wrename(pszOldFilename, pszNewFilename);
-      if(res < 0) {
-	status = -1;
-      } else {
-	status = 0;
-      }
-
-      return status;
+    if ((NULL != pszOldFilename) && (NULL != pszNewFilename)) {
+        status = MoveFileW(pszOldFilename, pszNewFilename) ? 0 : -1;
     }
+
+    if (pszNewFilename)
+        pcsl_string_release_utf16_data(pszNewFilename, newName);
+
+    if (pszOldFilename)
+        pcsl_string_release_utf16_data(pszOldFilename, oldName);
+
+    return status;
 }
 
 /**
@@ -339,22 +405,22 @@ void* pcsl_file_openfilelist(const pcsl_string * string)
 
     pIterator = (PCSLFileIterator*)pcsl_mem_malloc(sizeof (PCSLFileIterator));
     if (pIterator == NULL) {
-	/* Error in allocation */
-	return NULL;
+        /* Error in allocation */
+        return NULL;
     }
 
     memset(pIterator, 0, sizeof(PCSLFileIterator));
     pIterator->iteratorHandle = INVALID_HANDLE_VALUE;
 
     /*
-     * find the root dir of the string
+     * Find the root dir of the string
      */
     rootLength = pcsl_string_last_index_of(string, FILESEP);
     if (-1 == rootLength) {
-	rootLength = 0;
+        rootLength = 0;
     } else {
-	/* Include the file separator. */
-	rootLength++;
+        /* Include the file separator. */
+        rootLength++;
     }
 
     pIterator->savedRootLength = rootLength;
@@ -372,25 +438,20 @@ void* pcsl_file_openfilelist(const pcsl_string * string)
  */
 int pcsl_file_closefilelist(void *handle)
 {
-    int status;
+    BOOL status = FALSE;
     PCSLFileIterator* pIterator = (PCSLFileIterator *)handle;
 
-    if (handle == NULL) {
-	return 0;
+    if (NULL == handle) {
+        return 0;
     }
 
-    if (pIterator->iteratorHandle != INVALID_HANDLE_VALUE) {
-	status = FindClose(pIterator->iteratorHandle);
+    if (INVALID_HANDLE_VALUE != pIterator->iteratorHandle) {
+        status = FindClose(pIterator->iteratorHandle);
     }
 
     pcsl_mem_free(pIterator);
 
-    if (status == 0) {
-        return -1;
-    } else {
-        return 0;
-    }
-
+    return status ? 0 : -1;
 }
 
 /**
@@ -398,7 +459,7 @@ int pcsl_file_closefilelist(void *handle)
  */
 long pcsl_file_getfreespace()
 {
-	return 0;
+    return 0;
 }
 
 /**
@@ -409,31 +470,20 @@ long pcsl_file_getusedspace(const pcsl_string * systemDir)
     long used = 0;
     void* pIterator;
     pcsl_string current = PCSL_STRING_NULL;
-    struct _stat stat_buf;
 
     pIterator = pcsl_file_openfilelist(systemDir);
     for (; ; ) {
-	if (pcsl_file_getnextentry(pIterator, systemDir, &current) == -1) {
+        if (pcsl_file_getnextentry(pIterator, systemDir, &current) == -1) {
             break;
-	}
+        }
 
-	{
-          const jchar * pwszFilename = pcsl_string_get_utf16_data(&current);
+        {
+            long size = pcsl_file_sizeof(&current);
+            if (size >= 0)
+                used += size;
+        }
 
-	  if (NULL == pwszFilename) {
-            break;
-	  }
-
-	  /* Don't count the subdirectories "." and ".." */
-	  if (_wstat(pwszFilename, &stat_buf) != -1 &&
-	      !S_ISDIR(stat_buf.st_mode)) {
-            used += stat_buf.st_size;
-	  }
-
-          pcsl_string_release_utf16_data(pwszFilename, &current);
-	}
-
-	pcsl_string_free(&current);
+        pcsl_string_free(&current);
     }
 
     pcsl_file_closefilelist(pIterator);
@@ -447,12 +497,12 @@ int pcsl_file_getnextentry(void *handle, const pcsl_string * string,
 
     PCSLFileIterator* pIterator = (PCSLFileIterator *)handle;
 
-    if (pIterator == NULL) {
-	return -1;
+    if (NULL == pIterator) {
+        return -1;
     }
 
-    if (pIterator->iteratorHandle == INVALID_HANDLE_VALUE) {
-	return findFirstMatch(pIterator, string, result);
+    if (INVALID_HANDLE_VALUE == pIterator->iteratorHandle) {
+        return findFirstMatch(pIterator, string, result);
     }
 
     return findNextMatch(pIterator, string, result);
@@ -471,109 +521,103 @@ pcsl_file_getpathseparator() {
 
 static int findFirstMatch(PCSLFileIterator* pIterator,
                           const pcsl_string * match,
-                          pcsl_string * result) {
+                          pcsl_string * result) 
+{
     WIN32_FIND_DATAW findData;
     HANDLE handle;
-    PCSL_DEFINE_ASCII_STRING_LITERAL_START(starSuffix)
-      {'*', '\0'}
+    PCSL_DEFINE_ASCII_STRING_LITERAL_START(starSuffix) 
+        {'*', '\0'}
     PCSL_DEFINE_ASCII_STRING_LITERAL_END(starSuffix);
     pcsl_string root = PCSL_STRING_NULL;
     pcsl_string foundName = PCSL_STRING_NULL;
     pcsl_string matchStar = PCSL_STRING_NULL;
     jsize rootLen = 0;
 
-    if (result == NULL) {
-      return -1;
+    if (NULL == result) {
+        return -1;
     }
 
     * result = PCSL_STRING_NULL;
 
-    if (pcsl_string_cat(match, &starSuffix, &matchStar) != PCSL_STRING_OK) {
-      return -1;
+    if (PCSL_STRING_OK != pcsl_string_cat(match, &starSuffix, &matchStar)) {
+        return -1;
     }
 
     {
-      const jchar * pwszMatch = pcsl_string_get_utf16_data(&matchStar);
+        const jchar * pwszMatch = pcsl_string_get_utf16_data(&matchStar);
 
-      if (NULL == pwszMatch) {
+        if (NULL == pwszMatch) {
+            pcsl_string_free(&matchStar);
+            return -1;
+        }
+
+        handle = FindFirstFileW(pwszMatch, &findData);
+
         pcsl_string_free(&matchStar);
-	return -1;
-      }
-
-      handle = FindFirstFileW(pwszMatch, &findData);
-
-      pcsl_string_free(&matchStar);
     }
 
     if (INVALID_HANDLE_VALUE == handle) {
-	return -1;
+        return -1;
     }
 
     pIterator->iteratorHandle = handle;
     rootLen = pIterator->savedRootLength;
 
-    if (pcsl_string_substring(match, 0, rootLen, &root) != PCSL_STRING_OK) {
-      return -1;
+    if (PCSL_STRING_OK != pcsl_string_substring(match, 0, rootLen, &root)) {
+        return -1;
     }
 
     if (pcsl_string_convert_from_utf16(findData.cFileName,
-				       wcslen(findData.cFileName),
-				       &foundName) != PCSL_STRING_OK) {
-      pcsl_string_free(&root);    
-      return -1;
+        wcslen(findData.cFileName),
+        &foundName) != PCSL_STRING_OK) {
+            pcsl_string_free(&root);    
+            return -1;
     }
 
-    if (pcsl_string_cat(&root, &foundName, result) != PCSL_STRING_OK) {
-      pcsl_string_free(&foundName);    
-      pcsl_string_free(&root);    
-      return -1;
+    {
+        int state = PCSL_STRING_OK == pcsl_string_cat(&root, &foundName, result);
+        pcsl_string_free(&foundName);
+        pcsl_string_free(&root);
+        return state ? 0 : -1;
     }
-
-    pcsl_string_free(&foundName);    
-    pcsl_string_free(&root);    
-
-    return 0;
 }
 
 static int findNextMatch(PCSLFileIterator* pIterator,
                          const pcsl_string * match,
-                         pcsl_string * result) {
+                         pcsl_string * result) 
+{
     WIN32_FIND_DATAW findData;
     pcsl_string root = PCSL_STRING_NULL;
     pcsl_string foundName = PCSL_STRING_NULL;
     jsize rootLen = 0;
 
-    if (result == NULL) {
-      return -1;
+    if (NULL == result) {
+        return -1;
     }
 
     * result = PCSL_STRING_NULL;
 
     if (!FindNextFileW(pIterator->iteratorHandle, &findData)) {
-	return -1;
+        return -1;
     }
 
     rootLen = pIterator->savedRootLength;
 
-    if (pcsl_string_substring(match, 0, rootLen, &root) != PCSL_STRING_OK) {
-      return -1;
+    if (PCSL_STRING_OK != pcsl_string_substring(match, 0, rootLen, &root)) {
+        return -1;
     }
 
-    if (pcsl_string_convert_from_utf16(findData.cFileName,
-				       wcslen(findData.cFileName),
-				       &foundName) != PCSL_STRING_OK) {
-      pcsl_string_free(&root);    
-      return -1;
+    if (pcsl_string_convert_from_utf16(findData.cFileName, 
+        wcslen(findData.cFileName),
+        &foundName) != PCSL_STRING_OK) {
+            pcsl_string_free(&root);    
+            return -1;
     }
 
-    if (pcsl_string_cat(&root, &foundName, result) != PCSL_STRING_OK) {
-      pcsl_string_free(&foundName);    
-      pcsl_string_free(&root);    
-      return -1;
+    {
+        int state = PCSL_STRING_OK == pcsl_string_cat(&root, &foundName, result);
+        pcsl_string_free(&foundName);
+        pcsl_string_free(&root);
+        return state ? 0 : -1;
     }
-
-    pcsl_string_free(&foundName);    
-    pcsl_string_free(&root);
-
-    return 0;
 }
