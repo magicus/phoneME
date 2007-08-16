@@ -43,7 +43,6 @@
 
 #include <imgapi_image.h>
 #include <gxpport_immutableimage.h>
-#include <gxpport_mutableimage.h>
 
 #include <jvm.h>
 #include <sni.h>
@@ -71,44 +70,6 @@ gxpport_image_native_handle gxp_get_imagedata(jobject imgData) {
     } else {
 	return (gxpport_image_native_handle)IMGAPI_GET_IMAGEDATA_PTR(imgData)->nativeImageData;
     }
-}
-
-/**
- * Gets an ARGB integer array from this <tt>ImageData</tt>. The
- * array consists of values in the form of 0xAARRGGBB.
- *
- * @param imageData The ImageData to read the ARGB data from
- * @param rgbBuffer The target integer array for the ARGB data
- * @param offset Zero-based index of first ARGB pixel to be saved
- * @param scanlen Number of intervening pixels between pixels in
- *                the same column but in adjacent rows
- * @param x The x coordinate of the upper left corner of the
- *          selected region
- * @param y The y coordinate of the upper left corner of the
- *          selected region
- * @param width The width of the selected region
- * @param height The height of the selected region
- */
-extern void img_get_argb(const java_imagedata * srcImageDataPtr, 
-		       jint * rgbBuffer, 
-		       jint offset,
-		       jint scanlength,
-		       jint x, jint y, jint width, jint height,
-		       img_native_error_codes * errorPtr) {
-  gxpport_mutableimage_native_handle srcImageNativeData =
-    (gxpport_mutableimage_native_handle)srcImageDataPtr->nativeImageData;    
-
-  if (srcImageDataPtr->isMutable) {
-    gxpport_get_mutable_argb(srcImageNativeData,
-			    rgbBuffer, offset, scanlength,
-			    x, y, width, height, 
-			    errorPtr);
-  } else {
-    gxpport_get_immutable_argb(srcImageNativeData,
-			      rgbBuffer, offset, scanlength,
-			      x, y, width, height, 
-			      errorPtr);
-  }
 }
 
 /**

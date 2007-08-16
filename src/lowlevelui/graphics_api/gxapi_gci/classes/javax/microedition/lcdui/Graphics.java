@@ -34,6 +34,8 @@ import com.sun.me.gci.renderer.GCIShapeRenderer;
 import com.sun.me.gci.renderer.GCIImageRenderer;
 import com.sun.me.gci.renderer.GCITextRenderer;
 import com.sun.me.gci.surface.GCIDrawingSurface;
+import com.sun.me.gci.surface.GCISurfaceInfo;
+import com.sun.me.gci.surface.GCIJavaDrawingSurface;
 
 /**
  * Provides simple 2D geometric rendering capability.
@@ -1579,8 +1581,6 @@ public class Graphics {
                            int x_dest, int y_dest, 
                            int anchor) {
 
-        // TODO check if src is the same image as destination of this Graphics
-
         if ((transform < Sprite.TRANS_NONE) || 
             (transform > Sprite.TRANS_MIRROR_ROT90)) {
             throw new IllegalArgumentException();
@@ -1592,13 +1592,16 @@ public class Graphics {
             throw new IllegalArgumentException();
         }
 
-        // TODO check if the following needed - moved from native
-
         // will generate NullPointerException if src is null as expected
         int imgWidth = src.getWidth();
         int imgHeight = src.getHeight();
+
+        if (img == src) {
+	    throw new IllegalArgumentException();
+        }
+
         if ((height < 0) || (width < 0) || 
-            (point[0] < 0) || (point[1] < 0) ||
+            (x_src < 0) || (y_src < 0) ||
            ((x_src + width) > imgWidth) || 
            ((y_src + height) > imgHeight)) {
             throw new IllegalArgumentException();
@@ -1685,12 +1688,26 @@ public class Graphics {
             throw new IllegalStateException();
         }
          
+        x_src += transX;
+        y_src += transY;
+
         if((width < 0) || (height < 0) || (x_src < 0) || (y_src < 0) ||
            ((x_src + width) > maxWidth) || ((y_src + height) > maxHeight)) {
             throw new IllegalArgumentException();
         }
 
-        // TODO perform copyArea
+        int[] point = new int[]{x_dest + transX, y_dest + transY};
+        if (!normalizeAnchor(point, maxWidth, maxHeight, anchor)) {
+            throw new IllegalArgumentException();
+        }
+
+
+        gciDrawingSurface.renderingBegin();
+	gciDrawingSurface.copyPixels(x_src, y_src, width, height,
+				     point[0], point[1]);
+        gciDrawingSurface.renderingEnd(new int[]{point[0], point[1], 
+				                 width, height});
+        
     }
 
     /**
@@ -1813,7 +1830,58 @@ public class Graphics {
     public void drawRGB(int[] rgbData, int offset, int scanlength,
                         int x, int y, int width, int height,
                         boolean processAlpha) {
-        // TODO - draw Implementation
+	
+	/* According to the spec., this function can be
+	 * defined as operation P(a,b) = rgbData[ offset +
+	 * (a-x) + (b-y)* scanlength] where x <= a < x + width
+	 * AND y <= b < y + height.
+	 *
+	 * We do not need to check every index value and its
+	 * corresponding array access violation. We only need
+	 * to check for the min/max case. Detail explanation
+	 * can be found in the design doc.
+	 *
+	 * - To translate "<" to "<=", we minus one from height
+	 * and width (the ceiling operation), for all cases
+	 * except when height or width is zero.
+	 * - To avoid overflow (or underflow), we cast the
+	 * variables scanlen and height to long first 
+	 */
+	
+	int tmpexp  = (height == 0) ? 0 : (height - 1) * scanlength ;
+	
+	/* Find the max/min of the index for rgbData array */
+	int max = offset + ((width == 0) ? 0 : (width - 1)) 
+	    + ((scanlength < 0) ? 0 : tmpexp);
+	int min = offset + ((scanlength < 0) ? tmpexp : 0);
+	
+	if ((max >= rgbData.length) || (min < 0) || 
+	    (max < 0) || (min >= rgbData.length)) {
+	    throw new ArrayIndexOutOfBoundsException();
+	}
+	    
+	if ((0 == scanlength || 0 == width   || 0 == height)) {
+		
+	    /* Valid values, but nothing to render. */
+	    return;
+	}
+
+	GCIDrawingSurface gciImageDrawingSurface = 
+	    new GCIJavaDrawingSurface(GCISurfaceInfo.TYPE_JAVA_ARRAY_INT,
+				      width, height,
+				      (processAlpha ? 
+				       GCIDrawingSurface.FORMAT_ARGB_8888 :
+				       GCIDrawingSurface.FORMAT_XRGB_8888));
+	gciImageDrawingSurface.setPixels(0, 0, width, height,
+					 rgbData, offset, scanlength);
+	
+	if (gciImageDrawingSurface != null) {
+	    gciImageRenderer.drawImage(gciImageDrawingSurface,
+				       0, 0, width, height, 
+				       x + transX, y + transY);         
+	}
+
+	// TODO if processAlpha gciMask is left untouched
     }
 
     /**
@@ -1833,8 +1901,7 @@ public class Graphics {
      *
      */
     public int getDisplayColor(int color) {
-        // TODO add implementation
-        return color;
+	    return color;
     }
 
 
@@ -2147,7 +2214,6 @@ public class Graphics {
                          int transform,
                          int x_dest, int y_dest,
                          int anchor) {
-        // TODO anchor & transform
 
         ImageData imgData = image.getImageData();
 
@@ -2335,6 +2401,9 @@ public class Graphics {
      */
     class GCIGraphicsContext implements GCIRenderContext {
 
+        /** dash pattern to be used to draw DOTTED line */
+        private float[] dashPattern = new float[]{5, 5};
+       
         /**
          * Returns the drawing surface associated with the context. The 
          * return value is non-null.
@@ -2510,8 +2579,7 @@ public class Graphics {
          * @see #setDashPattern(float[], float)
          */
         public float[] getDashPattern() {
-            // TODO enable dashing
-            return null;
+            return style == SOLID ? null : dashPattern;
         }
     
         /**

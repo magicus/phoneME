@@ -56,15 +56,10 @@ endif
 vpath % \
     $(IMAGE_MODULE_DIR)/native
 
-# Additional include path for highlevel ui subsystem
-# (IMPL_NOTE remove this dependency)
-#
-#SUBSYSTEM_IMAGE_EXTRA_INCLUDES += \
-#    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/putpixel/include
-
 # Native files for putpixel module
 SUBSYSTEM_IMAGE_NATIVE_FILES += \
-    imgj_imagedatafactory_kni.c
+    imgj_imagedatafactory_kni.c \
+    imgj_imagedata_kni.c
 
 # I3test files
 ifeq ($(USE_I3_TEST), true)

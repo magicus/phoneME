@@ -224,65 +224,6 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
 }
 
 /**
- * Gets an ARGB integer array from this <tt>ImageData</tt>. The
- * array consists of values in the form of 0xAARRGGBB.
- *
- * @param imageData The ImageData to read the ARGB data from
- * @param rgbBuffer The target integer array for the ARGB data
- * @param offset Zero-based index of first ARGB pixel to be saved
- * @param scanlength Number of intervening pixels between pixels in
- *                the same column but in adjacent rows
- * @param x The x coordinate of the upper left corner of the
- *          selected region
- * @param y The y coordinate of the upper left corner of the
- *          selected region
- * @param width The width of the selected region
- * @param height The height of the selected region
- */
-void img_get_argb(const java_imagedata * srcImageDataPtr,
-                 jint * rgbBuffer,
-                 jint offset,
-                 jint scanlength,
-                 jint x, jint y, jint width, jint height,
-                 img_native_error_codes * errorPtr) {
-
-  int srcWidth, srcHeight;
-  PIXEL *srcPixelData;
-  ALPHA *srcAlphaData;
-
-  if (imggci_get_image_data(srcImageDataPtr, &srcWidth, &srcHeight, 
-                    &srcPixelData, &srcAlphaData) == KNI_TRUE) {
-
-    // rgbData[offset + (a - x) + (b - y) * scanlength] = P(a, b);
-    // P(a, b) = rgbData[offset + (a - x) + (b - y) * scanlength]
-    // x <= a < x + width
-    // y <= b < y + height
-
-    int a, b, pixel, alpha;
-
-    if (srcAlphaData != NULL) {
-      for (b = y; b < y + height; b++) {
-        for (a = x; a < x + width; a++) {
-          pixel = srcPixelData[b*srcWidth + a];
-          alpha = srcAlphaData[b*srcWidth + a];
-          rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
-            (alpha << 24) + RGB16TORGB24(pixel);
-        }
-      }
-    } else {
-      for (b = y; b < y + height; b++) {
-        for (a = x; a < x + width; a++) {
-          pixel = srcPixelData[b*srcWidth + a];
-          rgbBuffer[offset + (a - x) + (b - y) * scanlength] =
-            RGB16TORGB24(pixel) | 0xFF000000;
-        }
-      }
-    }
-  }
-
-  * errorPtr = IMG_NATIVE_IMAGE_NO_ERROR;
-}
-/**
  * Get pointer to internal buffer of Java byte array and
  * check that expected offset/length can be applied to the buffer
  *

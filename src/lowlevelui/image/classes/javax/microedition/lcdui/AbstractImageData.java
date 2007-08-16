@@ -54,4 +54,48 @@ interface AbstractImageData {
      * <code>false</code> otherwise
      */
     boolean isMutable();
+
+
+    /**
+     * Obtains ARGB pixel data from the specified region of this image and
+     * stores it in the provided array of integers.  Each pixel value is
+     * stored in <code>0xAARRGGBB</code> format, where the high-order
+     * byte contains the
+     * alpha channel and the remaining bytes contain color components for
+     * red, green and blue, respectively.  The alpha channel specifies the
+     * opacity of the pixel, where a value of <code>0x00</code>
+     * represents a pixel that
+     * is fully transparent and a value of <code>0xFF</code>
+     * represents a fully opaque
+     * pixel.
+     *
+     * Note that it is called by <code>Image.java</code> and 
+     * the following checks are bing done in <code>Image.java</code>.
+     * - throws ArrayIndexOutOfBoundsException if the requested operation would
+     * attempt to access an element in the <code>rgbData</code> array
+     * whose index is either
+     * negative or beyond its length (the contents of the array are unchanged)
+     *
+     * - throws IllegalArgumentException if the area being retrieved
+     *   exceeds the bounds of the source image
+     *
+     * - throws IllegalArgumentException if the absolute value of
+     *   <code>scanlength</code> is less than <code>width</code>
+     *
+     * - throws NullPointerException if <code>rgbData</code> 
+     *   is <code>null</code>
+     *
+     * @param rgbData an array of integers in which the ARGB pixel data is
+     * stored
+     * @param offset the index into the array where the first ARGB value
+     * is stored
+     * @param scanlength the relative offset in the array between
+     * corresponding pixels in consecutive rows of the region
+     * @param x the x-coordinate of the upper left corner of the region
+     * @param y the y-coordinate of the upper left corner of the region
+     * @param width the width of the region
+     * @param height the height of the region
+     */
+    void getRGB(int[] rgbData, int offset, int scanlength,
+		int x, int y, int width, int height);
 }
