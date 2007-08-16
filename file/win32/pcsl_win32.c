@@ -234,7 +234,7 @@ int pcsl_file_unlink(const pcsl_string * fileName)
 }
 
 /**
- * The  truncate function is used to truncate the size of an open file in storage.
+ * The truncate function is used to truncate the size of an open file in storage.
  * Function keeps current file pointer position, except case,
  * when current position is also cut
  */
@@ -244,28 +244,33 @@ int pcsl_file_truncate(void *handle, long size)
         return -1;
 
     {
+        int state;
         DWORD previousPos;
         DWORD cutPos;
-        PCSLFile* pFH = (PCSLFile*)handle;
+        HANDLE fileHandle = ((PCSLFile*)handle)->fileHandle;
 
-        previousPos = SetFilePointer(pFH->fileHandle, 0, NULL, FILE_CURRENT);
+        previousPos = SetFilePointer(fileHandle, 0, NULL, FILE_CURRENT);
         if (INVALID_SET_FILE_POINTER == previousPos)
             return -1;
 
         /* Win32 supports file expansion (new size > current file size) */
-        cutPos = SetFilePointer(pFH->fileHandle, size, NULL, FILE_BEGIN);
+        cutPos = SetFilePointer(fileHandle, size, NULL, FILE_BEGIN);
         if (INVALID_SET_FILE_POINTER == cutPos)
             return -1;
 
-        if (!SetEndOfFile(pFH->fileHandle))
-            return -1;
-
-        if (cutPos > previousPos) {
-            if (!SetFilePointer(pFH->fileHandle, previousPos, NULL, FILE_BEGIN))
-                return -1;
+        state = 0;
+        if (!SetEndOfFile(fileHandle)) {
+            state = -1;
+        } else {
+            if (cutPos <= previousPos)
+                return 0;
         }
 
-        return 0;
+        previousPos = SetFilePointer(fileHandle, previousPos, NULL, FILE_BEGIN);
+        if (INVALID_SET_FILE_POINTER == previousPos)
+            state = -1;
+
+        return state;
     }
 }
 
