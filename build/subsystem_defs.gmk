@@ -1,7 +1,5 @@
 #
-#   
-#
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -28,12 +26,12 @@ ifneq ($(TARGET_VM),cldc_vm)
 
 # CDC-specific build
 #
-include $(JSR_120_DIR)/build/cdc_defs.gmk
+include $(JSR_120_DIR)/build/cdc_share/cdc_defs.gmk
 
 else
 
 # CLDC-specific build
 #
-include $(JSR_120_DIR)/build/cldc_defs.gmk
+include $(JSR_120_DIR)/build/cldc_application/cldc_defs.gmk
 
 endif
