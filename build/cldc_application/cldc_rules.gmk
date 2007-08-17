@@ -1,7 +1,5 @@
 #
-#   
-#
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -30,11 +28,6 @@ include $(JSR_120_DIR)/build/config/common_rules.gmk
 $(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_120_JAVA_FILES)
 	$(appendjavafiles)
 
-# Append JSR 120 source bundle creation to target
-source_bundle:: jsr_120_source_bundle
-
 # Copy and filter JSR120 source in JSR_120_SOURCE_OUTPUT_DIR
-jsr_120_source_bundle: $(SOURCE_OUTPUT_DIR)
-	@echo " ... JSR 120 source bundle" $(LOG)
-	@$(call re_src_filter,$(JSR_120_DIR),$(JSR_120_SOURCE_OUTPUT_DIR),src)
-
+jsr_120_source_bundle:: $(SOURCE_OUTPUT_DIR)
+	$(AT)$(call source_bundle_filter,$(JSR_120_DIR),$(JSR_120_SOURCE_OUTPUT_DIR),src/cldc_application build/cldc_application)
