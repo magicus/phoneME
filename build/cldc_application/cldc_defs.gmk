@@ -1,7 +1,5 @@
 #
-#   
-#
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -31,7 +29,3 @@ JTWI_NATIVE_FILES                   += $(SUBSYSTEM_JSR_120_NATIVE_FILES)
 EXTRA_INCLUDES                      += $(SUBSYSTEM_JSR_120_EXTRA_INCLUDES)
 EXTRA_CFLAGS                        += $(JSR_120_EXTRA_CFLAGS)
 SUBSYSTEM_CONFIGURATION_INPUT_FILES += $(JSR_120_PROPERTY_FILES)
-
-# Create JSR 120 source in subdir 'jsr120/'
-JSR_120_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr120
-
