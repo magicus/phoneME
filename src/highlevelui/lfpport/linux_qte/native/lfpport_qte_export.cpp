@@ -86,9 +86,6 @@ void lfpport_refresh(int x1, int y1, int x2, int y2)
 jboolean lfpport_direct_flush(const java_graphics *g, 
 		  	      const java_imagedata *offscreen_buffer, int h) 
 {
-  (void)g;
-  (void)offscreen_buffer;
-  (void)h;
   return KNI_FALSE;
 }
 /**

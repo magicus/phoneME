@@ -37,16 +37,6 @@
 #include <imgapi_image.h>
 #include <gxpport_immutableimage.h>
 
-
-
-#include <stdlib.h>
-#include <sni.h>
-#include <midpError.h>
-
-#include <imgapi_image.h>
-#include <img_errorcodes.h>
-
-
 /**
  * Releases any native resources used by this immutable <tt>ImageData</tt>.
  * <p>
@@ -72,84 +62,11 @@ Java_javax_microedition_lcdui_ImageData_finalize() {
      */
     h = (gxpport_image_native_handle)imageDataPtr->nativeImageData;
     if (h != NULL) {
-        if (imageDataPtr->isMutable) {
-            gxpport_destroy_mutable(h);
-        } else {
-            gxpport_destroy_immutable(h);
-        }
-    }
-
-    KNI_EndHandles();
-    KNI_ReturnVoid();
-}
-
-
-/**
- * Gets an ARGB integer array from this <tt>ImmutableImage</tt>. The
- * array consists of values in the form of 0xAARRGGBB.
- * <p>
- * Java declaration:
- * <pre>
- *     getRGB([IIIIIII)V
- * </pre>
- *
- * @param rgbData The target integer array for the ARGB data
- * @param offset Zero-based index of first ARGB pixel to be saved
- * @param scanlen Number of intervening pixels between pixels in
- *                the same column but in adjacent rows
- * @param x The x coordinate of the upper left corner of the
- *          selected region
- * @param y The y coordinate of the upper left corner of the
- *          selected region
- * @param width The width of the selected region
- * @param height The height of the selected region
- */
-KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(javax_microedition_lcdui_ImageData_getRGB) {
-    int height = KNI_GetParameterAsInt(7);
-    int width = KNI_GetParameterAsInt(6);
-    int y = KNI_GetParameterAsInt(5);
-    int x = KNI_GetParameterAsInt(4);
-    int scanlength = KNI_GetParameterAsInt(3);
-    int offset = KNI_GetParameterAsInt(2);
-    int *rgbBuffer;
-    java_imagedata *srcImageDataPtr;
-    gxpport_mutableimage_native_handle srcImageNativeData;
-
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(rgbData);
-    KNI_DeclareHandle(thisObject);
-
-    KNI_GetParameterAsObject(1, rgbData);
-    KNI_GetThisPointer(thisObject);
-
-
-    img_native_error_codes error = IMG_NATIVE_IMAGE_NO_ERROR;
-
-    SNI_BEGIN_RAW_POINTERS;
-    
-    rgbBuffer = JavaIntArray(rgbData);
-
-    srcImageDataPtr = IMGAPI_GET_IMAGEDATA_PTR(thisObject);
-    srcImageNativeData =
-      (gxpport_mutableimage_native_handle)srcImageDataPtr->nativeImageData;    
-
-    if (srcImageDataPtr->isMutable) {
-        gxpport_get_mutable_argb(srcImageNativeData,
-                                 rgbBuffer, offset, scanlength,
-                                 x, y, width, height, 
-                                 &error);
-    } else {
-        gxpport_get_immutable_argb(srcImageNativeData,
-                                   rgbBuffer, offset, scanlength,
-                                   x, y, width, height, 
-                                   &error);
-    }
-
-    SNI_END_RAW_POINTERS;
-    
-    if (error != IMG_NATIVE_IMAGE_NO_ERROR) {
-      KNI_ThrowNew(midpOutOfMemoryError, NULL);
+	if (imageDataPtr->isMutable) {
+	    gxpport_destroy_mutable(h);
+	} else {
+	    gxpport_destroy_immutable(h);
+	}
     }
 
     KNI_EndHandles();

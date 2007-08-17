@@ -29,6 +29,9 @@
 
 #include <midpError.h>
 
+#include <img_errorcodes.h>
+#include <imgapi_image.h>
+
 
 /**
  * @file
@@ -40,6 +43,30 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * Gets an ARGB integer array from this image. The
+ * array consists of values in the form of 0xAARRGGBB.
+ *
+ * @param imageData The ImageData to read the ARGB data from
+ * @param rgbBuffer The target integer array for the ARGB data
+ * @param offset Zero-based index of first ARGB pixel to be saved
+ * @param scanlen Number of intervening pixels between pixels in
+ *                the same column but in adjacent rows
+ * @param x The x coordinate of the upper left corner of the
+ *          selected region
+ * @param y The y coordinate of the upper left corner of the
+ *          selected region
+ * @param width The width of the selected region
+ * @param height The height of the selected region
+ */
+extern void img_get_argb(const java_imagedata * srcImageDataPtr, 
+			 jint * rgbBuffer, 
+			 jint offset,
+			 jint scanlen,
+			 jint x, jint y, jint width, jint height,
+			 img_native_error_codes * errorPtr);
+
 
 /**
  * Decodes the given input data into a cache representation that can

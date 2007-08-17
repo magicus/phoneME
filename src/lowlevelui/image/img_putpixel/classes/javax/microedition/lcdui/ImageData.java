@@ -184,24 +184,6 @@ final class ImageData implements AbstractImageData {
     }
 
     /**
-     * Implements <code>AbstractImageData.getRGB() </code>.
-     * See javadoc comments there.
-     *
-     * @param rgbData an array of integers in which the ARGB pixel data is
-     * stored
-     * @param offset the index into the array where the first ARGB value
-     * is stored
-     * @param scanlength the relative offset in the array between
-     * corresponding pixels in consecutive rows of the region
-     * @param x the x-coordinate of the upper left corner of the region
-     * @param y the y-coordinate of the upper left corner of the region
-     * @param width the width of the region
-     * @param height the height of the region
-     */
-    public native void getRGB(int[] rgbData, int offset, int scanlength,
-			      int x, int y, int width, int height);
-
-    /**
      * Returns true if <code>ImageData</code> contains alpha data.
      * 
      * @return true if <code>ImageData</code> contains alpha data.

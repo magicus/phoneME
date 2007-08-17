@@ -178,9 +178,9 @@ final class ImageData implements AbstractImageData {
 						      width, height,
 			            GCIDrawingSurface.FORMAT_RGB_565 );
         if (alphaData != null) {
-	    gciMaskDrawingSurface = new GCIJavaDrawingSurface(alphaData, 0,
-							      8, width * 8,
-							      width, height,
+        gciMaskDrawingSurface = new GCIJavaDrawingSurface(alphaData, 0,
+							  8, width * 8,
+							  width, height,
 				    GCIDrawingSurface.FORMAT_GRAY_8);
 	}
     }
@@ -213,29 +213,6 @@ final class ImageData implements AbstractImageData {
      */
     public boolean isMutable() {
         return isMutable;
-    }
-
-    /**
-     * Implements <code>AbstractImageData.getRGB() </code>.
-     * See javadoc comments there.
-     *
-     * @param rgbData an array of integers in which the ARGB pixel data is
-     * stored
-     * @param offset the index into the array where the first ARGB value
-     * is stored
-     * @param scanlength the relative offset in the array between
-     * corresponding pixels in consecutive rows of the region
-     * @param x the x-coordinate of the upper left corner of the region
-     * @param y the y-coordinate of the upper left corner of the region
-     * @param w the width of the region
-     * @param h the height of the region
-     */
-    public void getRGB(int[] rgbData, int offset, int scanlength,
-		       int x, int y, int w, int h) {
-	
-        
-	gciDrawingSurface.getPixels(x, y, w, h,
-				    rgbData, offset, scanlength);
     }
 
     /**

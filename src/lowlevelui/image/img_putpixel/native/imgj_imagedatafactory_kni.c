@@ -237,12 +237,12 @@ MIDP_ERROR img_decode_data2cache(unsigned char* srcBuffer,
  * @param width The width of the selected region
  * @param height The height of the selected region
  */
-void imgj_get_argb(const java_imagedata * srcImageDataPtr,
-                   jint * rgbBuffer,
-                   jint offset,
-                   jint scanlength,
-                   jint x, jint y, jint width, jint height,
-                   img_native_error_codes * errorPtr) {
+void img_get_argb(const java_imagedata * srcImageDataPtr,
+                 jint * rgbBuffer,
+                 jint offset,
+                 jint scanlength,
+                 jint x, jint y, jint width, jint height,
+                 img_native_error_codes * errorPtr) {
 
   int srcWidth, srcHeight;
   PIXEL *srcPixelData;

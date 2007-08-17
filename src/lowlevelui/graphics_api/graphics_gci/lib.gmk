@@ -32,44 +32,12 @@
 # other def. (like VPATH)
 ############################################################
 
-# Local module directory
-IMAGE_MODULE_DIR = $(SUBSYSTEM_LOWUI_DIR)/image/img_putpixel
+# Local module dir
+GRAPHICS_API_MODULE_DIR = $(GRAPHICS_API_DIR)/graphics_gci
 
-# Javadoc source path
-MIDP_JAVADOC_SOURCEPATH += $(IMAGE_MODULE_DIR)/classes
 
-# Java files for the putpixel module
+# Java files for the library
 #
-SUBSYSTEM_IMAGE_JAVA_FILES += \
-    $(IMAGE_MODULE_DIR)/classes/javax/microedition/lcdui/ImageData.java
-
-ifeq ($(TARGET_VM), cdc_vm)
-SUBSYSTEM_IMAGE_JAVA_FILES += \
-     $(IMAGE_MODULE_DIR)/cdc_application/classes/javax/microedition/lcdui/ImageDataFactory.java
-else
-SUBSYSTEM_IMAGE_JAVA_FILES += \
-     $(IMAGE_MODULE_DIR)/classes/javax/microedition/lcdui/ImageDataFactory.java
-endif
-
-# vpath for putixel module
-#
-vpath % \
-    $(IMAGE_MODULE_DIR)/native
-
-# Additional include path for highlevel ui subsystem
-# (IMPL_NOTE remove this dependency)
-#
-#SUBSYSTEM_IMAGE_EXTRA_INCLUDES += \
-#    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/putpixel/include
-
-# Native files for putpixel module
-SUBSYSTEM_IMAGE_NATIVE_FILES += \
-    imgj_imagedatafactory_kni.c
-
-# I3test files
-ifeq ($(USE_I3_TEST), true)
-
-    SUBSYSTEM_IMAGE_I3TEST_JAVA_FILES =
-
-endif
-
+SUBSYSTEM_GRAPHICSAPI_JAVA_FILES += \
+    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Font.java \
+    $(GRAPHICS_API_MODULE_DIR)/classes/javax/microedition/lcdui/Graphics.java

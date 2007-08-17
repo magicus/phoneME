@@ -26,15 +26,6 @@
 
 package javax.microedition.lcdui;
 
-import javax.microedition.lcdui.game.Sprite;
-
-import com.sun.me.gci.renderer.GCIRenderContext;
-import com.sun.me.gci.renderer.GCIFont;
-import com.sun.me.gci.renderer.GCIShapeRenderer;
-import com.sun.me.gci.renderer.GCIImageRenderer;
-import com.sun.me.gci.renderer.GCITextRenderer;
-import com.sun.me.gci.surface.GCIDrawingSurface;
-
 /**
  * Provides simple 2D geometric rendering capability.
  *
@@ -534,12 +525,8 @@ public class Graphics {
 
     /**
      * Create a Graphics object
-     * @param gciDrawingSurface
      */
-    Graphics(GCIDrawingSurface gciDrawingSurface) {
-        this.gciDrawingSurface = gciDrawingSurface;
-        gciGraphicsContext = new GCIGraphicsContext();
-        createRenderers(this.gciDrawingSurface, gciGraphicsContext);
+    Graphics() {
     }
 
     /**
@@ -680,10 +667,6 @@ public class Graphics {
         rgbColor = (red << 16) | (green << 8) | blue;
         gray = grayVal(red, green, blue);
         pixel = getPixel(rgbColor, gray, false);
-
-        gciShapeRenderer.paintModified();
-        gciImageRenderer.paintModified();
-        gciTextRenderer.paintModified();
     }
 
     /**
@@ -709,10 +692,6 @@ public class Graphics {
             rgbColor = RGB & 0x00ffffff;
             gray = grayVal(red, green, blue);
             pixel = getPixel(rgbColor, gray, false);
-
-            gciShapeRenderer.paintModified();
-            gciImageRenderer.paintModified();
-            gciTextRenderer.paintModified();
         }
     }
 
@@ -736,10 +715,6 @@ public class Graphics {
             rgbColor = (value << 16) | (value << 8) | value;
             gray = value;
             pixel = getPixel(rgbColor, gray, true);
-       
-            gciShapeRenderer.paintModified();
-            gciImageRenderer.paintModified();
-            gciTextRenderer.paintModified();
         }
     }
 
@@ -767,10 +742,6 @@ public class Graphics {
         }
 
         this.style = style;
-
-        gciShapeRenderer.strokeModified();
-        gciImageRenderer.strokeModified();
-        gciTextRenderer.strokeModified();
     }
 
     /**
@@ -795,7 +766,6 @@ public class Graphics {
      */
     public synchronized void setFont(Font font) {
         currentFont = (font == null) ? Font.getDefaultFont() : font;
-        gciTextRenderer.fontModified();
     }
   
     /**
@@ -884,9 +854,6 @@ public class Graphics {
         if (width <= 0 || height <= 0) {
             clipX1 = clipY1 = clipX2 = clipY2 = 0;
             clipped = true;
-            gciImageRenderer.clipModified();
-            gciTextRenderer.clipModified();
-            gciShapeRenderer.clipModified();
             return;
         }
 
@@ -907,9 +874,6 @@ public class Graphics {
             // we have no intersection
             clipX1 = clipY1 = clipX2 = clipY2 = 0;
             clipped = true;
-            gciImageRenderer.clipModified();
-            gciTextRenderer.clipModified();
-            gciShapeRenderer.clipModified();
             return;
         }
 
@@ -941,9 +905,6 @@ public class Graphics {
             // we have no intersection
             clipX1 = clipY1 = clipX2 = clipY2 = 0;
             clipped = true;
-            gciImageRenderer.clipModified();
-            gciTextRenderer.clipModified();
-            gciShapeRenderer.clipModified();
             return;
         }
 
@@ -980,10 +941,6 @@ public class Graphics {
          * end sanity check 
          */
 
-        gciImageRenderer.clipModified();
-        gciTextRenderer.clipModified();
-        gciShapeRenderer.clipModified();
-
     }
 
     /**
@@ -1007,9 +964,6 @@ public class Graphics {
         if ((width <= 0) || (height <= 0)) {
             clipX1 = clipY1 = clipX2 = clipY2 = 0;
             clipped = true;
-            gciImageRenderer.clipModified();
-            gciTextRenderer.clipModified();
-            gciShapeRenderer.clipModified();
             return;
         }
 
@@ -1032,9 +986,6 @@ public class Graphics {
             || (translatedY1 >= maxHeight)) {
             clipX1 = clipY1 = clipX2 = clipY2 = 0;
             clipped = true;
-            gciImageRenderer.clipModified();
-            gciTextRenderer.clipModified();
-            gciShapeRenderer.clipModified();
             return;
         }
 
@@ -1097,9 +1048,6 @@ public class Graphics {
          * end sanity check 
          */
 
-        gciImageRenderer.clipModified();
-        gciTextRenderer.clipModified();
-        gciShapeRenderer.clipModified();
     }
 
     /**
@@ -1111,10 +1059,7 @@ public class Graphics {
      * @param x2 the x coordinate of the end of the line
      * @param y2 the y coordinate of the end of the line
      */
-    public void drawLine(int x1, int y1, int x2, int y2) {
-        gciShapeRenderer.drawLine(x1 + transX, y1 + transY, 
-                                  x2 + transX, y2 + transY);
-    }
+    public native void drawLine(int x1, int y1, int x2, int y2);
 
     /**
      * Fills the specified rectangle with the current color.
@@ -1126,9 +1071,7 @@ public class Graphics {
      * @param height the height of the rectangle to be filled
      * @see #drawRect(int, int, int, int)
      */
-    public void fillRect(int x, int y, int width, int height) {
-        gciShapeRenderer.fillRect(x + transX, y + transY, width, height);
-    }
+    public native void fillRect(int x, int y, int width, int height);
  
     /**
      * Draws the outline of the specified rectangle using the current
@@ -1143,9 +1086,7 @@ public class Graphics {
      * @param height the height of the rectangle to be drawn
      * @see #fillRect(int, int, int, int)
      */
-    public void drawRect(int x, int y, int width, int height) {
-        gciShapeRenderer.drawRect(x + transX, y + transY, width, height);
-    }
+    public native void drawRect(int x, int y, int width, int height);
 
     /**
      * Draws the outline of the specified rounded corner rectangle
@@ -1163,11 +1104,8 @@ public class Graphics {
      * @param arcHeight the vertical diameter of the arc at the four corners
      * @see #fillRoundRect(int, int, int, int, int, int)
      */
-    public void drawRoundRect(int x, int y, int width, int height,
-                              int arcWidth, int arcHeight) {
-        gciShapeRenderer.drawRoundRect(x + transX, y + transY, width, height,
-                                       arcWidth, arcHeight);
-    }
+    public native void drawRoundRect(int x, int y, int width, int height,
+                                     int arcWidth, int arcHeight);
  
     /**
      * Fills the specified rounded corner rectangle with the current color.
@@ -1182,11 +1120,8 @@ public class Graphics {
      * @param arcHeight the vertical diameter of the arc at the four corners
      * @see #drawRoundRect(int, int, int, int, int, int)
      */
-    public void fillRoundRect(int x, int y, int width, int height,
-                              int arcWidth, int arcHeight) {
-        gciShapeRenderer.fillRoundRect(x + transX, y + transY, width, height,
-                                       arcWidth, arcHeight);
-    }
+    public native void fillRoundRect(int x, int y, int width, int height,
+                                     int arcWidth, int arcHeight);
                           
     /**
      * Fills a circular or elliptical arc covering the specified rectangle.
@@ -1234,11 +1169,8 @@ public class Graphics {
      * relative to the start angle.
      * @see #drawArc(int, int, int, int, int, int)
      */
-    public void fillArc(int x, int y, int width, int height,
-                        int startAngle, int arcAngle) {
-        gciShapeRenderer.fillArc(x + transX, y + transY, width, height, 
-                                 startAngle, arcAngle);
-    }
+    public native void fillArc(int x, int y, int width, int height,
+                               int startAngle, int arcAngle);
 
     /**
      * Draws the outline of a circular or elliptical arc
@@ -1282,11 +1214,8 @@ public class Graphics {
      * the start angle
      * @see #fillArc(int, int, int, int, int, int)
      */
-    public void drawArc(int x, int y, int width, int height,
-                       int startAngle, int arcAngle)  {
-        gciShapeRenderer.drawArc(x + transX, y + transY, width, height, 
-                                 startAngle, arcAngle);
-    }
+    public native void drawArc(int x, int y, int width, int height,
+                               int startAngle, int arcAngle);
 
     /**
      * Draws the specified <code>String</code> using the current font and color.
@@ -1300,39 +1229,8 @@ public class Graphics {
      * @throws IllegalArgumentException if anchor is not a legal value
      * @see #drawChars(char[], int, int, int, int, int)
      */
-    public void drawString(java.lang.String str,
-                           int x, int y, int anchor) {
-        if (str == null) {
-            throw new NullPointerException();
-        }
- 
-        if (!checkAnchor(anchor, VCENTER)) {
-            throw new IllegalArgumentException();
-        }
-
-        x += transX;
-        y += transY;
-
-        if ((anchor & LEFT) == 0) {
-            int strWidth = currentFont.stringWidth(str);
-            if ((anchor & RIGHT) != 0){
-                x -= strWidth;
-            } else if ((anchor & HCENTER) != 0) {
-                x -= (strWidth / 2);
-            }
-        }
-
-        if ((anchor & BASELINE) == 0) {
-            if ((anchor & TOP) != 0) {
-                y += currentFont.getBaselinePosition();
-            } else if ((anchor & BOTTOM) != 0) {
-                y -= currentFont.getHeight() - 
-                     currentFont.getBaselinePosition();
-            }
-        }
-
-        gciTextRenderer.drawString(str, x, y);
-    }
+    public native void drawString(java.lang.String str,
+                                  int x, int y, int anchor);
 
     /**
      * Draws the specified <code>String</code> using the current font and color.
@@ -1362,18 +1260,8 @@ public class Graphics {
      * is not a legal value
      * @throws NullPointerException if <code>str</code> is <code>null</code>
      */
-    public void drawSubstring(String str, int offset, int len,
-                              int x, int y, int anchor) {
-        // will throw NullPointerException
-        int strLen = str.length();
-        if ((offset < 0) || (offset > strLen) || 
-            (len < 0) || (len > strLen) ||
-            ((offset + len) < 0) || ((offset + len) > strLen)) {
-            throw new StringIndexOutOfBoundsException();
-        }
-
-        drawString(str.substring(offset, offset + len), x, y, anchor);
-    }
+    public native void drawSubstring(String str, int offset, int len,
+                                     int x, int y, int anchor);
 
     /**
      * Draws the specified character using the current font and color.
@@ -1389,9 +1277,7 @@ public class Graphics {
      * @see #drawString(java.lang.String, int, int, int)
      * @see #drawChars(char[], int, int, int, int, int)
      */
-    public void drawChar(char character, int x, int y, int anchor) {
-        drawString(new String(new char[]{character}), x, y, anchor);
-    }
+    public native void drawChar(char character, int x, int y, int anchor);
 
     /**
      * Draws the specified characters using the current font and color.
@@ -1421,22 +1307,8 @@ public class Graphics {
      *
      * @see #drawString(java.lang.String, int, int, int)
      */
-    public void drawChars(char[] data, int offset, int length,
-                          int x, int y, int anchor) {
-       
-
-        // this will throw NullPointerException if data == null
-        int chLen = data.length;
-
-        if ((offset < 0) || (offset > chLen) || 
-            (length < 0) || (length > chLen) ||
-            ((offset + length) < 0) || ((offset + length) > chLen)) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-
-        drawString(new String(data, offset, length), x, y, anchor);
-
-    }
+    public native void drawChars(char[] data, int offset, int length,
+                                 int x, int y, int anchor);
  
     /**
      * Draws the specified image by using the anchor point.
@@ -1464,16 +1336,10 @@ public class Graphics {
      * @throws NullPointerException if <code>img</code> is <code>null</code>
      * @see Image
      */
-    public void drawImage(Image image, int x, int y, int anchor) {
-
-        int[] point = new int[]{x, y};
-        // will throw NullPointerException as expected if image is null
-        if (!normalizeAnchor(point, image.getWidth(), image.getHeight(), 
-                             anchor)) {
-            throw new IllegalArgumentException();
+    public void drawImage(Image img, int x, int y, int anchor) {
+        if (!render(img, x, y, anchor)) {
+            throw new IllegalArgumentException("");
         }
-
-        render(image, point[0] + transX, point[1]+ transY, anchor);
     }
 
     /**
@@ -1573,39 +1439,15 @@ public class Graphics {
      * the bounds of the source image
      */
     public void drawRegion(Image src, 
-                           int x_src, int y_src,
-                           int width, int height, 
-                           int transform,
-                           int x_dest, int y_dest, 
-                           int anchor) {
-
-        // TODO check if src is the same image as destination of this Graphics
-
-        if ((transform < Sprite.TRANS_NONE) || 
-            (transform > Sprite.TRANS_MIRROR_ROT90)) {
-            throw new IllegalArgumentException();
+                                  int x_src, int y_src,
+                                  int width, int height, 
+                                  int transform,
+                                  int x_dest, int y_dest, 
+                                  int anchor) {
+        if (!renderRegion(src, x_src, y_src, width, height,
+                          transform, x_dest, y_dest, anchor)) {
+            throw new IllegalArgumentException("");
         }
-     
-        int[] point = new int[]{x_dest, y_dest};
-
-        if (!normalizeAnchor(point, width, height, anchor)) {
-            throw new IllegalArgumentException();
-        }
-
-        // TODO check if the following needed - moved from native
-
-        // will generate NullPointerException if src is null as expected
-        int imgWidth = src.getWidth();
-        int imgHeight = src.getHeight();
-        if ((height < 0) || (width < 0) || 
-            (point[0] < 0) || (point[1] < 0) ||
-           ((x_src + width) > imgWidth) || 
-           ((y_src + height) > imgHeight)) {
-            throw new IllegalArgumentException();
-        }
-
-        renderRegion(src, x_src, y_src, width, height, transform, 
-                     point[0] + transX, point[1]+ transY, anchor); 
     }
 
     /**
@@ -1683,14 +1525,10 @@ public class Graphics {
 
         if (isScreenGraphics()) {
             throw new IllegalStateException();
+        } else {
+            doCopyArea(x_src, y_src, width, height, 
+                       x_dest, y_dest, anchor);
         }
-         
-        if((width < 0) || (height < 0) || (x_src < 0) || (y_src < 0) ||
-           ((x_src + width) > maxWidth) || ((y_src + height) > maxHeight)) {
-            throw new IllegalArgumentException();
-        }
-
-        // TODO perform copyArea
     }
 
     /**
@@ -1706,15 +1544,28 @@ public class Graphics {
      * @param y3 the y coordinate of the third vertex of the triangle
      *
      */
-    public void fillTriangle(int x1, int y1, 
-                             int x2, int y2,
-                             int x3, int y3) {
-        int[] xPoints = new int[]{x1 + transX, x2 + transX, x3 + transX};
-        int[] yPoints = new int[]{y1 + transY, y2 + transY, y3 + transY};
- 
-        gciShapeRenderer.fillPolygon(xPoints, yPoints, 3);
-    }
-    
+    public native void fillTriangle(int x1, int y1, 
+                                    int x2, int y2,
+                                    int x3, int y3);
+
+    /**
+     * Native implementation of CopyArea method.
+     *
+     * @param x_src  the x coordinate of upper left corner of source area
+     * @param y_src  the y coordinate of upper left corner of source area
+     * @param width  the width of the source area
+     * @param height the height of the source area
+     * @param x_dest the x coordinate of the destination anchor point
+     * @param y_dest the y coordinate of the destination anchor point
+     * @param anchor the anchor point for positioning the region within
+     *        the destination image
+     *
+     * @throws IllegalArgumentException if the region to be copied exceeds
+     * the bounds of the source image
+     */
+    private native void doCopyArea(int x_src, int y_src, 
+                                   int width, int height, 
+                                   int x_dest, int y_dest, int anchor);
 
     /**
      * Renders a series of device-independent RGB+transparency values in a
@@ -1810,11 +1661,9 @@ public class Graphics {
      * @throws NullPointerException if <code>rgbData</code> is <code>null</code>
      *
      */
-    public void drawRGB(int[] rgbData, int offset, int scanlength,
-                        int x, int y, int width, int height,
-                        boolean processAlpha) {
-        // TODO - draw Implementation
-    }
+    public native void drawRGB(int[] rgbData, int offset, int scanlength,
+                               int x, int y, int width, int height,
+                               boolean processAlpha);
 
     /**
      * Gets the color that will be displayed if the specified color
@@ -1832,10 +1681,7 @@ public class Graphics {
      * screen (in <code>0x00RRGGBB</code> format)
      *
      */
-    public int getDisplayColor(int color) {
-        // TODO add implementation
-        return color;
-    }
+    public native int getDisplayColor(int color);
 
 
     // private implementation //
@@ -1888,22 +1734,6 @@ public class Graphics {
      */
     private Image img;
 
-
-    /** GCITextRenderer associated with this Graphics instance */
-    private GCITextRenderer gciTextRenderer;
-
-    /** GCIShapeRenderer associated with this Graphics instance */
-    private GCIShapeRenderer gciShapeRenderer;
-
-    /** GCIImageRenderer associated with this Graphics instance */
-    private GCIImageRenderer gciImageRenderer;
-
-    /** GCIDrawingSurface associated with this Graphics instance */
-    private GCIDrawingSurface gciDrawingSurface;
-
-    /** GCIRenderContext associated with this Graphics instance */
-    private GCIRenderContext gciGraphicsContext;
-
     /**
      * Retrieve the Graphics context for the given Image
      *
@@ -1916,7 +1746,7 @@ public class Graphics {
             throw new NullPointerException();
         }
 
-        Graphics g = new Graphics(img.getImageData().gciDrawingSurface);
+        Graphics g = new Graphics();
         g.img = img;
         g.setDimensions(img.getWidth(), img.getHeight());
         g.resetGC();
@@ -1952,7 +1782,7 @@ public class Graphics {
         if (w > width) { w = width; }
         if (h > height) { h = height; }
 
-        Graphics g = new Graphics(img.getImageData().gciDrawingSurface);
+        Graphics g = new Graphics();
         g.img = img;
         g.setDimensions(w, h);
         g.resetGC();
@@ -1969,10 +1799,9 @@ public class Graphics {
      * @param height The height of the Graphics context.
      * @return Graphics 
      */
-    static Graphics getScreenGraphics(int displayId, int width, int height,
-                                      GCIDrawingSurface gciDrawingSurface) {
+    static Graphics getScreenGraphics(int displayId, int width, int height) {
 
-        Graphics g = new Graphics(gciDrawingSurface);
+        Graphics g = new Graphics();
         g.displayId = displayId;
 
         g.img = null;
@@ -2026,16 +1855,8 @@ public class Graphics {
     void resetGC() {
         currentFont = Font.getDefaultFont();
         style       = SOLID;
-
         rgbColor    = gray = 0;
         pixel       = getPixel(rgbColor, gray, true);
-
-        int attr = GCIRenderContext.ATTRIBUTE_PAINT |
-                   GCIRenderContext.ATTRIBUTE_FONT |
-                   GCIRenderContext.ATTRIBUTE_STROKE;
-        gciImageRenderer.attributesModified(attr);
-        gciTextRenderer.attributesModified(attr);
-        gciShapeRenderer.attributesModified(attr);
     }
 
 
@@ -2082,7 +1903,7 @@ public class Graphics {
     /**
      * Renders provided Image onto this Graphics object.
      *
-     * @param image the Image to be rendered
+     * @param img the Image to be rendered
      * @param x the x coordinate of the anchor point
      * @param y the y coordinate of the anchor point
      * @param anchor the anchor point for positioning the image
@@ -2090,34 +1911,13 @@ public class Graphics {
      *
      * @see Image
      */
-    boolean render(Image image, int x, int y, int anchor) {
-
-        // TODO anchor
-
-        ImageData imgData = image.getImageData();
-        if (imgData.gciMaskDrawingSurface == null) {
-            gciImageRenderer.drawImage(imgData.gciDrawingSurface,
-                                       0, 0, 
-                                       imgData.getWidth(), 
-                                       imgData.getHeight(),
-                                       x, y);
-         
-        } else {
-            gciImageRenderer.maskBlit(imgData.gciDrawingSurface,
-                                      imgData.gciMaskDrawingSurface,
-                                      0, 0, 
-                                      imgData.getWidth(), 
-                                      imgData.getHeight(), 0, 0,
-                                      x, y);
-        }
-        return true;
-    }
+    native boolean render(Image img, int x, int y, int anchor);
 
     /**
      * Renders the specified region of the provided Image object
      * onto this Graphics object.
      *
-     * @param image  the Image object to be rendered
+     * @param img  the Image object to be rendered
      * @param x_src the x coordinate of the upper left corner of the region
      * within the source image to copy
      * @param y_src the y coordinate of the upper left corner of the region
@@ -2141,30 +1941,12 @@ public class Graphics {
      *
      * @see Image
      */
-    boolean renderRegion(Image image,
-                         int x_src, int y_src,
-                         int width, int height,
-                         int transform,
-                         int x_dest, int y_dest,
-                         int anchor) {
-        // TODO anchor & transform
-
-        ImageData imgData = image.getImageData();
-
-        if (imgData.gciMaskDrawingSurface == null) {
-            gciImageRenderer.drawImage(imgData.gciDrawingSurface,
-                                       x_src, y_src, width, height, 
-                                       x_dest, y_dest);
-        } else {
-            gciImageRenderer.maskBlit(imgData.gciDrawingSurface,
-                                      imgData.gciMaskDrawingSurface,
-                                      x_src, y_src, width, height, 
-                                      x_src, y_src,
-                                      x_dest, y_dest);
-        }
-
-        return true;
-    }
+    native boolean renderRegion(Image img,
+                                int x_src, int y_src,
+                                int width, int height,
+                                int transform,
+                                int x_dest, int y_dest,
+                                int anchor);
 
     /**
      * Get a gray value given the RGB values
@@ -2187,10 +1969,7 @@ public class Graphics {
      * @param isGray
      * @return int
      */
-    private int getPixel(int rgb, int gray, boolean isGray) {
-        // TODO -add impl
-        return rgb;
-    }
+    private native int getPixel(int rgb, int gray, boolean isGray);
 
     /**
      * Returns the maximal width available for the clipping
@@ -2208,449 +1987,6 @@ public class Graphics {
      */
     short getMaxHeight() {
         return maxHeight;
-    }
-
-    /**
-     * Checks that the anchor is set correctly.
-     *
-     * @param anchor The anchor type. 
-     * The definition of the anchor point must be one of
-     * the horizontal constants (LEFT, HCENTER, RIGHT)  combined with one of
-     * the vertical constants (TOP, BASELINE, BOTTOM, VCENTER) 
-     * using the bit-wise OR operator.
-     * Zero may also be used as the value of an anchor point.
-     * Using zero for the anchor point value gives results 
-     * identical to using TOP | LEFT.
-     *
-     * @param illegal_vpos The component from list of constants 
-     * (LEFT, HCENTER, RIGHT, TOP, BASELINE, BOTTOM, VCENTER) 
-     * that is not allowed for this anchor. 
-     * Using zero for illegal_vpos shows all
-     * values from this list are allowed
-     * @return treu if anchor is valid, otherwise - false.
-     *
-     */
-    boolean checkAnchor(int anchor, int illegal_vpos) {
-
-        /* optimize for most frequent case */
-        if (anchor == (TOP|LEFT) || anchor == 0) {
-            return true;
-        }
-
-        boolean result  = 
-            (anchor > 0) && (anchor < (BASELINE << 1))
-             && ((anchor & illegal_vpos) == 0);
-
-        if (result) {
-            int n = anchor & (TOP | BOTTOM | BASELINE | VCENTER);
-            /* exactly one bit set */
-            result = (n != 0) && ((n & (n - 1)) == 0); 
-        }
-
-        if (result) {
-            int n = anchor & (LEFT | RIGHT | HCENTER);
-            /* exactly one bit set */
-            result = (n != 0) && ((n & (n - 1)) == 0);
-        }
-
-        return result;
-    }
-
-
-    /**
-     * Normalizes anchor coordinates to top-left coordinates.
-     *
-     * @return true if anchor is valid, otherwise - false.
-     */
-    boolean normalizeAnchor(int[] location, int width, int height, 
-                            int anchor) {
-        /* optimize for most frequent case*/
-        if (anchor == (TOP | LEFT) || anchor == 0) {
-            return true;
-        }
-
-        if ((anchor & 0x7F) != anchor) {
-            return false;
-        }
-
-        switch (anchor & (LEFT | RIGHT | HCENTER)) {
-        case LEFT:
-            break;
-            
-        case RIGHT:
-            location[0] -= width;
-            break;
-            
-        case HCENTER:
-            location[0] -= (width >> 1);
-            break;
-    
-        default:
-            return false;
-        }
-    
-        switch (anchor & (TOP | BOTTOM | VCENTER)) {
-        case TOP:
-            break;
-            
-        case BOTTOM:
-            location[1] -= height;
-            break;
-      
-        case VCENTER:
-            location[1] -= (height >> 1);
-            break;
-    
-        default:
-            return false;
-        }
-        
-        return true;
-    }
-
-    /**
-     * Creates GCI Renderers based on the passed in GCIDrawingSurface
-     * @param gciDrawingSurface GCIDrawingSurface for which the renderer
-     *        should be created
-     */
-    private void createRenderers(GCIDrawingSurface gciDrawingSurface,
-                                 GCIRenderContext gciGraphicsContext) {
-        gciTextRenderer = 
-            (GCITextRenderer) gciDrawingSurface.createTextRenderer();
-        gciTextRenderer.contextCreated(gciGraphicsContext);
-        gciShapeRenderer = 
-            (GCIShapeRenderer)gciDrawingSurface.createPBPShapeRenderer();
-        gciShapeRenderer.contextCreated(gciGraphicsContext);
-        gciImageRenderer = 
-            (GCIImageRenderer)gciDrawingSurface.createImageRenderer();
-        gciImageRenderer.contextCreated(gciGraphicsContext);
-    }
-
-
-    /**
-     * <code>GCIRenderContext</code> contains the attributes used for
-     * rendereing. The render context is passed to all rendering operations.
-     * 
-     * @version 1.9 10/24/06 18:22:24
-     */
-    class GCIGraphicsContext implements GCIRenderContext {
-
-        /**
-         * Returns the drawing surface associated with the context. The 
-         * return value is non-null.
-         */
-        public GCIDrawingSurface getDrawingSurface() {
-            return gciDrawingSurface;
-        }
-
-        /**
-         * Returns if anti-aliasing is turned on or off.
-         *
-         * @return <code>true</code> if anti-aliasing is ON and <code>false</code>
-         *         if anti-aliasing is off
-         */
-        public boolean isAntiAliasingOn() {
-            //TODO check
-            return false;
-        }
-
-        /** 
-         * Returns value for interpolation quality.
-         * @return an <code>int</code> containing the current interpolation
-         * quality.
-         *
-         * @see #INTERP_QUALITY_NEAREST
-         * @see #INTERP_QUALITY_BILINEAR
-         * @see #INTERP_QUALITY_BICUBIC
-         */
-        public int getInterpQuality() {
-            // TODO  check
-            return GCIRenderContext.INTERP_QUALITY_NEAREST;
-        }
-    
-        /**
-         * Returns the current clip region in the form <code>x</code>,
-         * <code>y</code>, <code>width</code>, <code>height</code>.
-         *
-         * @param clipBounds an array of 4 <code>int</code>s to be filled
-         * in with the clip information in the form of the
-         * <code>x</code>, <code>y</code>, <code>width</code>, and
-         * <code>height</code> values of the clip region, respectively.
-         * @return a reference to the <code>clipBounds</code> array.
-         *
-         * @throws IllegalArgumentException if <code>clipBounds</code> is
-         * <code>null</code> or has length not equal to 4.
-         */
-        public int[] getClip(int[] clipBounds) {
-            if (clipBounds.length != 4) {
-                throw new IllegalArgumentException();
-            }
-            clipBounds[0] = clipX1;
-            clipBounds[1] = clipY1;
-            clipBounds[2] = clipX2 - clipX1;
-            clipBounds[3] = clipY2 - clipY1;
-
-            return clipBounds;
-        }
-
-        /**
-         * Returns the current color as an ARGB value packed into an
-         * <code>int</code>.
-         *
-         * @return the current drawing color packed into an
-         * <code>int</code> as an <code>ARGB_8888</code> value.
-         */
-        public int getPaintColor() {
-            return (0xff000000 | rgbColor);
-        }
-    
-        /**
-         * Returns the current alternating color used for XOR drawing.
-         *
-         * @return an <code>int</code> containing a color in
-         * <code>ARGB_8888</code> format.
-         */
-        public int getXORColor() {
-            // TODO - correct
-            return (0xff000000);
-        }
-    
-        /**
-         * Returns the current composite rule, which will be one of
-         * <code>COMPOSITE_SRC</code> or <code>COMPOSITE_SRC_OVER</code>.
-         *
-         * @return an <code>int</code> containing the current compositing
-         * rule.
-         *
-         * @see #COMPOSITE_CLEAR
-         * @see #COMPOSITE_SRC_OVER
-         * @see #COMPOSITE_SRC
-         */
-        public int getCompositeRule(){
-            return GCIRenderContext.COMPOSITE_SRC_OVER;
-        }
-
-        /**
-         * Returns the current alpha value to be used for compositing, as
-         * a <code>float</code> between <code>0</code> and <code>1</code>.
-         *
-         * @return the alpha value as a <code>float</code>.
-         */
-        public float getCompositeAlpha() {
-            return 1;
-        }
-
-        /**
-         * Returns the current paint mode setting, one of
-         * <code>PAINT_MODE_COLOR</code> or <code>PAINT_MODE_XOR</code>.
-         * The initial value is <code>PAINT_MODE_COLOR</code>.
-         *
-         * @return an <code>int</code> equal to either
-         * <code>PAINT_MODE_*</code>.
-         *
-         * @see #PAINT_MODE_COLOR
-         * @see #PAINT_MODE_XOR
-         * @see #PAINT_MODE_LINEAR_GRADIENT
-         */
-        public int getPaintMode() {
-            return GCIRenderContext.PAINT_MODE_COLOR;
-        }
-    
-        /**
-         * Returns the current line width.  The initial value is
-         * <code>1.0F</code>.
-         *
-         * @return a <code>float</code> containing the current line width.
-         */
-        public float getLineWidth() {
-            return 1;
-        }
-        
-        /**
-         * Returns the current miter limit.  The initial value is
-         * <code>10.0f</code> (ten).
-         *
-         * @return a <code>float</code> containing the current miter
-         * limit.
-         */
-        public float getMiterLimit() {
-            return 10;
-        }
-
-        /**
-         * Returns the current join style.  The initial value is
-         * <code>JOIN_MITER</code>.
-         *
-         * @return an <code>int</code> containing the current line join
-         * style.
-         */
-        public int getJoinStyle() {
-            return GCIRenderContext.JOIN_MITER;
-        }
-    
-        /**
-         * Returns the current line cap style.  The initial value is
-         * <code>CAP_BUTT</code>.
-         *
-         * @return an <code>int</code> containing the current line cap
-         * style.
-         */
-        public int getCapStyle() {
-            return GCIRenderContext.CAP_BUTT;
-        }
-    
-        /**
-         * Returns the current line dash pattern as an array of
-         * <code>float</code>s, or <code>null</code> if dashing is not
-         * enabled.  The initial value is <code>null</code>.
-         *
-         * @return an array of <code>float</code>s containing the current
-         * dash pattern, or <code>null</code> if dashing is not enabled.
-         *
-         * @see #setDashPattern(float[], float)
-         */
-        public float[] getDashPattern() {
-            // TODO enable dashing
-            return null;
-        }
-    
-        /**
-         * Returns the current dash phase.  The initial value is
-         * <code>0.0f</code>.
-         *
-         * @return a <code>float</code> containing the current dash phase.
-         *
-         * @see #setDashPattern(float[], float)
-         */
-        public float getDashPhase() {
-            return 0;
-        }
-    
-        /**
-         * Returns the current affine transform in a caller-supplied array
-         * of <code>float</code>s.
-         *
-         * @param transform an array of 6 <code>float</code>s to be filled
-         * in.
-         * @return a reference to the <code>transform</code> parameter.
-         *
-         * @throws IllegalArgumentException if <code>transform</code> is
-         * <code>null</code> or &nbsp; <code>transform.length != 6</code>.
-         */
-        public float[] getTransformMatrix(float[] transform) {
-            if (transform == null || transform.length != 6)
-                throw new IllegalArgumentException(
-                 "Transform must be non-null and have a length equal to 6");
-            transform[0] = 0;
-            transform[1] = 0;
-            transform[2] = 0;
-            transform[3] = 0;
-            transform[4] = transX;
-            transform[5] = transY;
-            return transform;
-        }
-
-        /**
-         * Returns the <code>x0</code> coordinate of the current linear
-         * gradient, or <code>0</code> if no gradient is set.
-         *
-         * @return the gradient <code>x0</code> coordinate as a
-         * <code>float</code>, or <code>0</code>.
-         */
-        public float getLinearGradientX0() {
-            return 0;
-        }
-        
-        /**
-         * Returns the <code>y0</code> coordinate of the current linear
-         * gradient, or <code>0</code> if no gradient is set.
-         *
-         * @return the gradient <code>y0</code> coordinate as a
-         * <code>float</code>, or <code>0</code>.
-         */
-        public float getLinearGradientY0() {
-            return 0;
-        }
-
-        /**
-         * Returns the <code>argb0</code> color of the current linear
-         * gradient, or <code>0</code> if no gradient is set.
-         *
-         * @return the gradient <code>argb0</code> color as an
-         * <code>int</code>, or <code>0</code>.
-         */
-        public float getLinearGradientARGB0() {
-            return 0;
-        }
-
-
-        /**
-         * Returns the <code>x1</code> coordinate of the current linear
-         * gradient, or <code>0</code> if no gradient is set.
-         *
-         * @return the gradient <code>x1</code> coordinate as a
-         * <code>float</code>, or <code>0</code>.
-         */
-        public float getLinearGradientX1() {
-            return 0;
-        }
-        
-        /**
-         * Returns the <code>y1</code> coordinate of the current linear
-         * gradient, or <code>0</code> if no gradient is set.
-         *
-         * @return the gradient <code>y1</code> coordinate as a
-         * <code>float</code>, or <code>0</code>.
-         */
-        public float getLinearGradientY1() {
-            return 0;
-        }
-
-        /**
-         * Returns the <code>argb1</code> color of the current linear
-         * gradient, or <code>0</code> if no gradient is set.
-         *
-         * @return the gradient <code>argb1</code> color as an
-         * <code>int</code>, or <code>0</code>.
-         */
-        public float getLinearGradientARGB1() {
-            return 0;
-        }
-        
-        /**
-         * Returns <code>true</code> if there is a linear gradient current
-         * set, and it is cyclic, and <code>false</code> otherwise.
-         *
-         * @return <code>true</code> if a cyclic linear gradient is set.
-         */
-        public boolean getLinearGradientIsCyclic() {
-            return false;
-        }
-
-        /**
-         * Returns the current value of the flatness hint.  This value may
-         * or may not represent the actual level of curve fidelity that
-         * will be produced by the renderer.  The initial value is ???.
-         *
-         * @return a <code>float</code> indicating the current value of
-         * the flatness hint.
-         *
-         * @see #setFlatnessHint(float)
-         */
-        public float getFlatnessHint() {
-            // TODO what should be returned
-            return 0;
-        }
-    
-        /**
-         * Returns the font object. 
-         */
-        public GCIFont getGCIFont() {
-            Font f = (currentFont == null ? 
-                      Font.getDefaultFont() :
-                      currentFont); 
-            return f.gciFont;
-        }
     }
 
     /**
