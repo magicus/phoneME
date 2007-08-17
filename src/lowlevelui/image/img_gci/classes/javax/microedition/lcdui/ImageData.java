@@ -28,6 +28,8 @@ package javax.microedition.lcdui;
 
 import com.sun.me.gci.surface.GCIJavaDrawingSurface;
 import com.sun.me.gci.surface.GCIDrawingSurface;
+import com.sun.me.gci.surface.GCISurfaceInfo;
+import com.sun.me.gci.renderer.GCIImageRenderer;
 
 /**
  * AbstractImageData implementation based 
@@ -77,12 +79,6 @@ final class ImageData implements AbstractImageData {
      * pixelData.
      */
     GCIDrawingSurface gciDrawingSurface;
-
-    /**
-     * <code>GCIDrawingSurface</code> that is used to render
-     * transparent pixels.
-     */
-    GCIDrawingSurface gciMaskDrawingSurface;
 
     /**
      * Constructs empty <code>ImageData </code>.
@@ -173,16 +169,41 @@ final class ImageData implements AbstractImageData {
     }
 
     void createGCISurfaces() {
-	gciDrawingSurface = new GCIJavaDrawingSurface(pixelData, 0,
-						      16, width * 16,
-						      width, height,
-			            GCIDrawingSurface.FORMAT_RGB_565 );
-        if (alphaData != null) {
-	    gciMaskDrawingSurface = new GCIJavaDrawingSurface(alphaData, 0,
-							      8, width * 8,
-							      width, height,
-				    GCIDrawingSurface.FORMAT_GRAY_8);
-	}
+	gciDrawingSurface = 
+	    new GCIJavaDrawingSurface(GCISurfaceInfo.TYPE_JAVA_ARRAY_INT,
+				      width, height,
+				      (alphaData == null ?
+				      GCIJavaDrawingSurface.FORMAT_XRGB_8888 :
+				      GCIJavaDrawingSurface.FORMAT_ARGB_8888));
+       
+
+        Graphics g = new Graphics(gciDrawingSurface);
+        // g.img = img;
+        g.setDimensions(width, height);
+        g.resetGC();
+
+        GCIImageRenderer imgRenderer = g.getGCIImageRenderer();
+        
+	GCIDrawingSurface gciColorDrawingSurface = 
+	    new GCIJavaDrawingSurface(pixelData, 0,
+				      16, width * 16,
+				      width, height,
+				      GCIDrawingSurface.FORMAT_RGB_565 );
+        if (alphaData == null) {
+            imgRenderer.drawImage(gciColorDrawingSurface,
+				  0, 0, width, height, 0, 0);
+         
+        } else {
+	    GCIDrawingSurface gciMaskDrawingSurface = 
+		new GCIJavaDrawingSurface(alphaData, 0,
+					  8, width * 8,
+					  width, height,
+					  GCIDrawingSurface.FORMAT_GRAY_8);
+
+            imgRenderer.maskBlit(gciColorDrawingSurface,
+				 gciMaskDrawingSurface,
+				 0, 0, width, height, 0, 0, 0, 0);
+        }
     }
 
     /**

@@ -1880,8 +1880,6 @@ public class Graphics {
 				       0, 0, width, height, 
 				       x + transX, y + transY);         
 	}
-
-	// TODO if processAlpha gciMask is left untouched
     }
 
     /**
@@ -2159,24 +2157,16 @@ public class Graphics {
      */
     boolean render(Image image, int x, int y, int anchor) {
 
-        // TODO anchor
+        // TODO remove anchor param;
+        // it is being processed in the caller
 
         ImageData imgData = image.getImageData();
-        if (imgData.gciMaskDrawingSurface == null) {
-            gciImageRenderer.drawImage(imgData.gciDrawingSurface,
-                                       0, 0, 
-                                       imgData.getWidth(), 
-                                       imgData.getHeight(),
-                                       x, y);
+	gciImageRenderer.drawImage(imgData.gciDrawingSurface,
+				   0, 0, 
+				   imgData.getWidth(), 
+				   imgData.getHeight(),
+				   x, y);
          
-        } else {
-            gciImageRenderer.maskBlit(imgData.gciDrawingSurface,
-                                      imgData.gciMaskDrawingSurface,
-                                      0, 0, 
-                                      imgData.getWidth(), 
-                                      imgData.getHeight(), 0, 0,
-                                      x, y);
-        }
         return true;
     }
 
@@ -2215,20 +2205,12 @@ public class Graphics {
                          int x_dest, int y_dest,
                          int anchor) {
 
-        ImageData imgData = image.getImageData();
+        // TODO Remove anchor parameter
+        // anchor is processed in the caller
 
-        if (imgData.gciMaskDrawingSurface == null) {
-            gciImageRenderer.drawImage(imgData.gciDrawingSurface,
-                                       x_src, y_src, width, height, 
-                                       x_dest, y_dest);
-        } else {
-            gciImageRenderer.maskBlit(imgData.gciDrawingSurface,
-                                      imgData.gciMaskDrawingSurface,
-                                      x_src, y_src, width, height, 
-                                      x_src, y_src,
-                                      x_dest, y_dest);
-        }
-
+	gciImageRenderer.drawImage(image.getImageData().gciDrawingSurface,
+				   x_src, y_src, width, height, 
+				   x_dest, y_dest);
         return true;
     }
 
@@ -2390,6 +2372,14 @@ public class Graphics {
         gciImageRenderer = 
             (GCIImageRenderer)gciDrawingSurface.createImageRenderer();
         gciImageRenderer.contextCreated(gciGraphicsContext);
+    }
+
+
+    /**
+     * Returns GCIImageRenderer associated with this Graphics.
+     */
+    GCIImageRenderer getGCIImageRenderer() {
+	return gciImageRenderer;
     }
 
 

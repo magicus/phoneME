@@ -69,6 +69,7 @@ KNIDECL(javax_microedition_lcdui_ImageData_getRGB) {
     int scanlength = KNI_GetParameterAsInt(3);
     int offset = KNI_GetParameterAsInt(2);
     int *rgbBuffer;
+    img_native_error_codes error;
 
 
     KNI_StartHandles(2);
@@ -79,7 +80,7 @@ KNIDECL(javax_microedition_lcdui_ImageData_getRGB) {
     KNI_GetThisPointer(thisObject);
 
 
-    img_native_error_codes error = IMG_NATIVE_IMAGE_NO_ERROR;
+    error = IMG_NATIVE_IMAGE_NO_ERROR;
 
     SNI_BEGIN_RAW_POINTERS;
     
