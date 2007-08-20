@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 #
 # This program is free software; you can redistribute it and/or
@@ -46,7 +46,6 @@ MIDP_OBJECTS      = \
         $(MIDP_OUTPUT_DIR)/obj$(DEBUG_POSTFIX)/$(TARGET_CPU)/*.o \
         $(MIDP_OUTPUT_DIR)/obj$(DEBUG_POSTFIX)/$(TARGET_CPU)/resources.res
 
-LIBPATH           = /libpath:$(call POSIX2HOST,$(PCSL_OUTPUT_DIR)/$(PCSL_TARGET)/lib)
+LIBPATH           += /libpath:$(call POSIX2HOST,$(PCSL_OUTPUT_DIR)/$(PCSL_TARGET)/lib)
 MIDP_LIBS         = libpcsl_file.lib libpcsl_memory.lib libpcsl_print.lib \
-                    libpcsl_string.lib libpcsl_network.lib Ws2.lib gx.lib aygshell.lib ddraw.lib
-                             
+                    libpcsl_string.lib libpcsl_network.lib Ws2.lib gx.lib aygshell.lib

@@ -41,6 +41,7 @@ TARGET_CCC = $(TARGET_CC)
 WIN_LINKLIBS += wininet.lib
 
 WIN32_PLATFORM ?= win32
+JAVACALL_TARGET ?= $(WIN32_PLATFORM)_$(TARGET_CPU_FAMILY)
 
 #
 # Platform source directory

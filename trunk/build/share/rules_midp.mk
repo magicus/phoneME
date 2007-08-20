@@ -39,6 +39,7 @@ initbuild_profile::
 	             NETWORK_MODULE=$(NETWORK_MODULE) \
 	             PCSL_OUTPUT_DIR=$(PCSL_OUTPUT_DIR) \
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
+                 USE_DEBUG=$(CVM_DEBUG) \
 	             -C $(PCSL_DIR) $(PCSL_MAKE_OPTIONS)
 	@echo "<==== end pcsl build"
 
@@ -66,6 +67,7 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             VERIFY_BUILD_ENV= \
 	             CONFIGURATION_OVERRIDE=$(CONFIGURATION_OVERRIDE) \
 	             USE_QT_FB=$(USE_QT_FB) USE_DIRECTFB=$(USE_DIRECTFB) \
+	             USE_DIRECTDRAW=$(USE_DIRECTDRAW) \
 	             USE_SSL=$(USE_SSL) USE_CONFIGURATOR=$(USE_CONFIGURATOR) \
 	             USE_VERBOSE_MAKE=$(USE_VERBOSE_MAKE) \
 	             PCSL_PLATFORM=$(PCSL_PLATFORM) \
@@ -94,6 +96,7 @@ source_bundle:: $(CVM_BUILD_DEFS_MK)
 	             VERIFY_BUILD_ENV= \
 	             CONFIGURATION_OVERRIDE=$(CONFIGURATION_OVERRIDE) \
 	             USE_QT_FB=$(USE_QT_FB) USE_DIRECTFB=$(USE_DIRECTFB) \
+	             USE_DIRECTDRAW=$(USE_DIRECTDRAW) \
 	             USE_SSL=$(USE_SSL) USE_CONFIGURATOR=$(USE_CONFIGURATOR) \
 	             USE_VERBOSE_MAKE=$(USE_VERBOSE_MAKE) \
 	             PCSL_PLATFORM=$(PCSL_PLATFORM) \
@@ -130,6 +133,7 @@ $(RUNMIDLET): force_midp_build
 	             VERIFY_BUILD_ENV= \
 	             CONFIGURATION_OVERRIDE=$(CONFIGURATION_OVERRIDE) \
 	             USE_QT_FB=$(USE_QT_FB) USE_DIRECTFB=$(USE_DIRECTFB) \
+	             USE_DIRECTDRAW=$(USE_DIRECTDRAW) \
 	             USE_SSL=$(USE_SSL) USE_CONFIGURATOR=$(USE_CONFIGURATOR) \
 	             USE_VERBOSE_MAKE=$(USE_VERBOSE_MAKE) \
 	             PCSL_PLATFORM=$(PCSL_PLATFORM) \
