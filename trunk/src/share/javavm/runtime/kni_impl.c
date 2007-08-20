@@ -553,7 +553,7 @@ KNI_GetRawArrayRegion(jarray array, jsize offset,
 
 #else /* CVMGC_HAS_NONREF_BARRIERS */
 
-#error "CVM_KNI=true nto supported when there are non-ref GC barriers."
+#error "CVM_KNI=true not supported when there are non-ref GC barriers."
     /* TODO: The code below is broken if either srcBuffer is not aligned
        properly, or "n" is not a multiple of the array element type size.
     */
