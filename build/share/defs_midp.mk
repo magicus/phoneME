@@ -31,7 +31,7 @@ ifeq ($(USE_MIDP),true)
 # Include target specific makefiles first
 -include ../$(TARGET_CPU_FAMILY)/defs_midp.mk
 -include ../$(TARGET_OS)/defs_midp.mk
-
+-include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/defs_midp.mk
 
 ifeq ($(USE_GCI), true)
     MIDP_PLATFORM = linux_gci
@@ -88,6 +88,7 @@ VERIFY_BUILD_ENV	?=
 #CONFIGURATION_OVERRIDE	?= MEASURE_STARTUP=true 
 USE_QT_FB		?= false
 USE_DIRECTFB		?= false
+USE_DIRECTDRAW          ?= false
 # The MIDP makefiles should be fixed to not require CLDC_DIST_DIR for CDC build.
 USE_CONFIGURATOR	?= true
 
@@ -124,7 +125,7 @@ endif
 
 ifeq ($(CVM_PRELOAD_LIB), true)
 # Add MIDP classes to JCC input list so they can be romized.
-CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_CLASSES_ZIP)
+CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_CLASSES_ZIP) $(JSROP_AGENT_JARS)
 # Add MIDP CNI classes to CVM_CNI_CLASSES
 CVM_CNI_CLASSES += $(MIDP_CNI_CLASSES)
 endif

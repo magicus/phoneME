@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -21,32 +21,12 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions. 
 #
-# @(#)GNUmakefile	1.2 06/10/10
+
+# MIDP defs for WinCE 5.0 target
 #
-ASM_ARCH_FLAGS		= -CPU StrongARM1 -32
-CC_ARCH_FLAGS   	=
-CC_ARCH_FLAGS_FDLIB	= /Op
-# NOTE: we may not need /Od now that /Op is being used. Need to confirm.
-CC_ARCH_FLAGS_FDLIB	+= /Od
-CC_ARCH_FLAGS_LOOP 	=
-LINK_ARCH_LIBS		= 
-LINK_ARCH_FLAGS		= \
-	/subsystem:windowsce,5.01  \
-	/base:0x00100000 /entry:_DllMainCRTStartup
-LINKEXE_ARCH_LIBS	=
-LINKEXE_ARCH_FLAGS	= \
-	/subsystem:windowsce,5.01 /stack:0x010000
 
-# Description of the VC win32 platform.
-# The following are all for the benefit of win32/wince_defs.mk
-PLATFORM		= Windows Mobile 5.0 Pocket PC SDK
-PLATFORM_OS		= wce500
-PLATFORM_INCLUDE_DIRS	= Include/Armv4i
-PLATFORM_LIB_DIRS	= Lib/Armv4i 
+USE_DIRECTDRAW = true
 
-# assume the JIT is enabled for this device unless told otherwise
-CVM_JIT ?= true
-
-WIN32_PLATFORM = wince
-
-include ../share/top.mk
+ifeq ($(USE_DIRECTDRAW), true)
+WIN_LINKLIBS += ddraw.lib
+endif

@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -121,7 +121,7 @@ endef
 
 #Command for building shared libraries
 define makeSharedLibrary
-	$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $(1) $(JSROP_LINKLIBS) -L$(JSROP_LIB_DIR)
+	$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $(1) $(JSROP_LINKLIBS)
 endef
 
 # Command for reading API classes list from file
@@ -154,10 +154,10 @@ $(JSR_CDCRESTRICTED_CLASSLIST): $(JSROP_JARS)
 # there is no restrictions for midlets to accessing the JSROP 
 # class' public members.
 #
-$(JSR_MIDPPERMITTED_CLASSLIST): $(JSROP_JARS) $(JSROP_EXTRA_JARS)
+$(JSR_MIDPPERMITTED_CLASSLIST): $(JSROP_JARS)
 	@echo "Generating MIDP permitted JSR class list ...";
 	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister \
-	    -listapi:include=java/*,include=javax/*,include=javacard/*,include=org/xml/sax/*,include=org/w3c/dom/*,input=$(JSROP_JARS_LIST),cout=$(JSR_MIDPPERMITTED_CLASSLIST)
+	    -listapi:include=java/*,include=javax/*,include=javacard/*,include=org/xml/sax/*,include=org/w3c/dom/*,$(API_EXTENSIONS_LIST),input=$(JSROP_JARS_LIST),cout=$(JSR_MIDPPERMITTED_CLASSLIST)
 endif
 
 clean::

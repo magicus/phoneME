@@ -56,6 +56,11 @@ INCLUDED_JSROP_NUMBERS = $(patsubst USE_JSR_%=true,%,\
 JSROP_BUILD_JARS = $(filter-out $(JSROP_LIB_DIR)/jsr205.jar,$(foreach jsr_number,$(INCLUDED_JSROP_NUMBERS),\
            $(JSROP_LIB_DIR)/jsr$(jsr_number).jar))
 
+# JSROP_AGENT_JARS - list (space sepd) of jars that should be romized with MIDP's class loader.
+# These jars contain "agent" classes which are used for access via reflection.
+# Must not have any public API. Invisible for midlets
+JSROP_AGENT_JARS =
+
 # Variable which is passed to MIDP and blocks JSRs building from MIDP; looks like:
 # USE_JSR_75=false USE_JSR_82=false USE_JSR_120=false ...
 MIDP_JSROP_USE_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),USE_JSR_$(jsr_number)=false)
@@ -106,25 +111,28 @@ endif
 
 # If any JSR is built include JSROP abstractions building
 ifneq ($(INCLUDED_JSROP_NUMBERS),)
-# Check Jump building
-ifneq ($(USE_JUMP), true)
-$(error JSR optional packages require Jump to be supported. USE_JUMP must be true.)
-endif
-
 export ABSTRACTIONS_DIR ?= $(COMPONENTS_DIR)/abstractions
-ABSTRACTIONS_MAKE_FILE = $(ABSTRACTIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+
+ifeq ($(PROJECT_ABSTRACTIONS_DIR),)
+JSROP_ABSTR_DIR = ABSTRACTIONS_DIR
+else
+JSROP_ABSTR_DIR = PROJECT_ABSTRACTIONS_DIR
+endif
+ABSTRACTIONS_MAKE_FILE = $($(JSROP_ABSTR_DIR))/build/$(SUBSYSTEM_MAKE_FILE)
 ifeq ($(wildcard $(ABSTRACTIONS_MAKE_FILE)),)
-$(error ABSTRACTIONS_DIR must point to a directory containing JSROP abstractions sources)
+$(error $(JSROP_ABSTR_DIR) must point to a directory containing JSROP abstractions sources)
 endif
 include $(ABSTRACTIONS_MAKE_FILE)
 
 JSROP_JARS=$(ABSTRACTIONS_JAR) $(JSROP_BUILD_JARS)
+# abstractions required javacall types
+CVM_INCLUDE_JAVACALL=true
 endif
 
 # Include JSR 75
 ifeq ($(USE_JSR_75), true)
 export JSR_75_DIR ?= $(COMPONENTS_DIR)/jsr75
-JSR_75_MAKE_FILE = $(JSR_75_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+JSR_75_MAKE_FILE = $(JSR_75_DIR)/build/cdc_share/$(SUBSYSTEM_MAKE_FILE)
 ifeq ($(wildcard $(JSR_75_MAKE_FILE)),)
 $(error JSR_75_DIR must point to a directory containing JSR 75 sources)
 endif
@@ -154,9 +162,14 @@ endif
 # Include JSR 135
 ifeq ($(USE_JSR_135), true)
 export JSR_135_DIR ?= $(COMPONENTS_DIR)/jsr135
-JSR_135_MAKE_FILE = $(JSR_135_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(PROJECT_JSR_135_DIR),)
+JSROP_JSR135_DIR = JSR_135_DIR
+else
+JSROP_JSR135_DIR = PROJECT_JSR_135_DIR
+endif
+JSR_135_MAKE_FILE = $($(JSROP_JSR135_DIR))/build/$(SUBSYSTEM_MAKE_FILE)
 ifeq ($(wildcard $(JSR_135_MAKE_FILE)),)
-$(error JSR_135_DIR must point to a directory containing JSR 135 sources)
+$(error $(JSROP_JSR135_DIR) must point to a directory containing JSR 135 sources)
 endif
 include $(JSR_135_MAKE_FILE)
 endif
@@ -291,17 +304,29 @@ endif
 include $(JSR_280_DEFS_FILE)
 endif
 
+# Include API Extensions
+ifeq ($(USE_API_EXTENSIONS), true)
+API_EXTENSIONS_MAKE_FILE = $(API_EXTENSIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(API_EXTENSIONS_MAKE_FILE)),)
+$(error API_EXTENSIONS_DIR must point to a directory containing API Extensions sources)
+endif
+include $(API_EXTENSIONS_MAKE_FILE)
+JSROP_JARS += $(API_EXTENSIONS_JAR)
+endif
+
 ifeq ($(CVM_INCLUDE_JAVACALL), true)
-JAVACALL_TARGET=$(TARGET_OS)_$(TARGET_CPU_FAMILY)
+JAVACALL_TARGET?=$(TARGET_OS)_$(TARGET_CPU_FAMILY)
 JAVACALL_FLAGS = $(JSROP_OP_FLAGS)
 ifeq ($(USE_JAVACALL_EVENTS), true)
 JAVACALL_FLAGS += USE_COMMON=true
+ifeq ($(USE_JUMP), true)
 JUMP_ANT_OPTIONS += -Djavacall.events.used=true
 JUMP_SRCDIRS += \
 	$(JUMP_SRCDIR)/share/impl/eventqueue/native
 JUMP_OBJECTS += \
 	jump_eventqueue_impl.o
 JUMP_DEPENDENCIES += javacall_lib
+endif
 endif
 # Check javacall makefile and include it
 export JAVACALL_DIR ?= $(COMPONENTS_DIR)/javacall
@@ -328,7 +353,7 @@ JSROP_OUTPUT_DIRS = $(foreach jsr_number,$(JSROP_NUMBERS),\
 CVM_INCLUDE_DIRS+= $(JSROP_INCLUDE_DIRS)
 
 ifneq ($(JAVACALL_LINKLIBS),)
-LINKLIBS_CVM    += $(JAVACALL_LINKLIBS) -L$(JSROP_LIB_DIR)
+LINKLIBS_CVM    += $(JAVACALL_LINKLIBS)
 endif
 
 ifeq ($(CVM_PRELOAD_LIB), true)
