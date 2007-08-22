@@ -30,14 +30,6 @@
  * Implementation of Java native methods for the <tt>ImageData</tt> class.
  */
 
-#include <commonKNIMacros.h>
-
-#include <midpEventUtil.h>
-
-#include <imgapi_image.h>
-#include <gxpport_immutableimage.h>
-
-
 
 #include <stdlib.h>
 #include <sni.h>
@@ -45,43 +37,7 @@
 
 #include <imgapi_image.h>
 #include <img_errorcodes.h>
-
-
-/**
- * Releases any native resources used by this immutable <tt>ImageData</tt>.
- * <p>
- * Java declaration:
- * <pre>
- *     finalize()V
- * </pre>
- */
-KNIEXPORT KNI_RETURNTYPE_VOID
-Java_javax_microedition_lcdui_ImageData_finalize() {
-    java_imagedata * imageDataPtr = NULL;
-    gxpport_image_native_handle h;
-
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(thisObject);
-    KNI_GetThisPointer(thisObject);
-
-    imageDataPtr = IMGAPI_GET_IMAGEDATA_PTR(thisObject);
-
-    /*
-     * Image objects with NULL nativeImageData could exist when loading
-     * romized image but failed.
-     */
-    h = (gxpport_image_native_handle)imageDataPtr->nativeImageData;
-    if (h != NULL) {
-        if (imageDataPtr->isMutable) {
-            gxpport_destroy_mutable(h);
-        } else {
-            gxpport_destroy_immutable(h);
-        }
-    }
-
-    KNI_EndHandles();
-    KNI_ReturnVoid();
-}
+#include "imgj_rgb.h"
 
 
 /**
@@ -113,8 +69,8 @@ KNIDECL(javax_microedition_lcdui_ImageData_getRGB) {
     int scanlength = KNI_GetParameterAsInt(3);
     int offset = KNI_GetParameterAsInt(2);
     int *rgbBuffer;
-    java_imagedata *srcImageDataPtr;
-    gxpport_mutableimage_native_handle srcImageNativeData;
+    img_native_error_codes error;
+
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(rgbData);
@@ -124,27 +80,14 @@ KNIDECL(javax_microedition_lcdui_ImageData_getRGB) {
     KNI_GetThisPointer(thisObject);
 
 
-    img_native_error_codes error = IMG_NATIVE_IMAGE_NO_ERROR;
+    error = IMG_NATIVE_IMAGE_NO_ERROR;
 
     SNI_BEGIN_RAW_POINTERS;
     
     rgbBuffer = JavaIntArray(rgbData);
-
-    srcImageDataPtr = IMGAPI_GET_IMAGEDATA_PTR(thisObject);
-    srcImageNativeData =
-      (gxpport_mutableimage_native_handle)srcImageDataPtr->nativeImageData;    
-
-    if (srcImageDataPtr->isMutable) {
-        gxpport_get_mutable_argb(srcImageNativeData,
-                                 rgbBuffer, offset, scanlength,
-                                 x, y, width, height, 
-                                 &error);
-    } else {
-        gxpport_get_immutable_argb(srcImageNativeData,
-                                   rgbBuffer, offset, scanlength,
-                                   x, y, width, height, 
-                                   &error);
-    }
+    imgj_get_argb(IMGAPI_GET_IMAGEDATA_PTR(thisObject), rgbBuffer,
+		  offset, scanlength,
+		  x, y, width, height, &error);
 
     SNI_END_RAW_POINTERS;
     

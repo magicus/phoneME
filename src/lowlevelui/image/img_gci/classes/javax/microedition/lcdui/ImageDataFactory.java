@@ -32,6 +32,8 @@ import java.io.IOException;
 import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.midlet.MIDletStateHandler;
 
+import sun.misc.MIDPConfig;
+
 /**
  * ImageFactory implementation based on putpixel graphics library and stores
  * data on Java heap.
@@ -155,7 +157,7 @@ class ImageDataFactory implements AbstractImageDataFactory {
          */
         if (!loadCachedImage(data, name)) {
             createImageFromStream(data,
-                                  ImageData.class.getResourceAsStream(name));
+                                  MIDPConfig.getResourceAsStream(name));
         }
 
         data.createGCISurfaces();
@@ -307,6 +309,8 @@ class ImageDataFactory implements AbstractImageDataFactory {
         // Copy either the Java or romized data to its own array
         loadRegion(dataDest, dataSource, x, y, w, h, transform);
 
+        dataDest.createGCISurfaces();
+
         return dataDest;
     }
 
@@ -378,6 +382,8 @@ class ImageDataFactory implements AbstractImageDataFactory {
         ImageData data = new ImageData(width, height, false, false,
                                        processAlpha);
         loadRGB(data, rgb);
+
+        data.createGCISurfaces();
 
         return data;
     }
@@ -480,6 +486,8 @@ class ImageDataFactory implements AbstractImageDataFactory {
 
             try {
                 decode(data, buffer, 0, length);
+		data.createGCISurfaces();
+
             } catch (IllegalArgumentException e) {
                 throw new java.io.IOException();
             }
