@@ -90,7 +90,10 @@ static struct {
     { WSATYPE_NOT_FOUND,	"Class type not found" },
     { WSAEWOULDBLOCK,		"Resource temporarily unavailable" },
     { WSAHOST_NOT_FOUND,	"Host not found" },
+#ifndef WINCE
     { WSA_NOT_ENOUGH_MEMORY,	"Insufficient memory available" },
+    { WSA_OPERATION_ABORTED,	"Overlapped operation aborted" },
+#endif
     { WSANOTINITIALISED,	"Successful WSAStartup not yet performed" },
     { WSANO_DATA,		"Valid name, no data record of requested type" },
     { WSANO_RECOVERY,		"This is a nonrecoverable error" },
@@ -98,7 +101,6 @@ static struct {
     { WSATRY_AGAIN,		"Nonauthoritative host not found" },
     { WSAVERNOTSUPPORTED,	"Winsock.dll version out of range" },
     { WSAEDISCON,		"Graceful shutdown in progress" },
-    { WSA_OPERATION_ABORTED,	"Overlapped operation aborted" },
 };
 
 
@@ -400,7 +402,9 @@ dbgsysAccept(int fd, struct sockaddr *name, int *namelen) {
     {
 	int r = (*acceptfn)(fd, name, namelen);
 	if (r == SOCKET_ERROR) {
+#ifndef WINCE
 	    errno = WSAGetLastError();
+#endif
 	}
 	return r;
     }

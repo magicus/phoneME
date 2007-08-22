@@ -3058,12 +3058,11 @@ CVMobjectComputeHash(CVMExecEnv *ee, CVMObjectICell* indirectObj)
     } while (hashVal == CVM_OBJECT_NO_HASH);
 
     CVMD_gcUnsafeExec(ee, {
-	CVMObject *directObj;
+	CVMObject *directObj = CVMID_icellDirect(ee, indirectObj);
 
 	hashVal = CVMobjectSetHashBitsIfNeeded(ee, indirectObj, hashVal);
 	/* The hash bits need to be combined with the cb bits to make a
 	   complete 32-bit hashcode: */
-	directObj = CVMID_icellDirect(ee, indirectObj);
 	hashVal = HASH_WITH_CB_BITS(CVMobjectGetClass(directObj), hashVal);
     });
     return hashVal;

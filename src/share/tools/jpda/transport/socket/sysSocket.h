@@ -27,7 +27,6 @@
 #ifndef _JAVASOFT_WIN32_SOCKET_MD_H
 
 #include <jni.h>
-#include <sys/types.h>
 #include "sys.h"
 #include "socket_md.h"
 

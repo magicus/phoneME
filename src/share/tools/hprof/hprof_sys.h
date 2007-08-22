@@ -31,10 +31,11 @@
 /* Defined in platform-specific code */
 
 int hprof_send(int s, const char *msg, int len, int flags);
-int hprof_write(int filedes, const void *buf, size_t nbyte);
+int hprof_write(FILE *fp, const void *buf, size_t nbyte);
 jint hprof_get_milliticks(void);
 jlong hprof_get_timemillis(void);
 void hprof_get_prelude_path(char *path);
 int hprof_real_connect(char *hostname, unsigned short port);
+void hprof_close(int fd);
 
 #endif /* _HPROF_SYS_H */
