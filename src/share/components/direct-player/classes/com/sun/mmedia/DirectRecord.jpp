@@ -126,11 +126,11 @@ public final class DirectRecord implements RecordControl, DirectControls {
             throw new MediaException("setRecordLocation: invalid locator " + locator);
         } else if (0 == ret) {
         // #ifdef USE_FILE_CONNECTION [
-            if (!(locator.startsWith("file:") || locator.startsWith("http:"))) {
+            if (!(locator.startsWith("file:") || locator.startsWith("http:") || locator.startsWith("https:"))) {
                 throw new MediaException("Unsupported protocol");
             }
         // #else ][
-            if (!locator.startsWith("http:")) {
+            if (!(locator.startsWith("http:") || locator.startsWith("https:"))) {
                 throw new MediaException("Unsupported protocol");
             }
         // #endif
@@ -147,6 +147,19 @@ public final class DirectRecord implements RecordControl, DirectControls {
         	    httpCon.setRequestProperty("Content-Type", "audio/wav");
 
         	    stream = httpCon.openOutputStream();
+                    extStream = false;
+            } else if (locator.startsWith("https:")) {
+        	    try {
+        	        httpsCon = (HttpsConnection)Connector.open(locator);
+        	    } catch (IllegalArgumentException e) {
+        	        throw new MediaException(e.getMessage());
+        	    } catch (ConnectionNotFoundException e) {
+        	        throw new IOException(e.getMessage());
+        	    }
+        	    httpsCon.setRequestMethod(HttpConnection.POST);
+        	    httpsCon.setRequestProperty("Content-Type", "audio/wav");
+
+        	    stream = httpsCon.openOutputStream();
                     extStream = false;
             }
 
@@ -271,7 +284,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
             if (stream != null) {
                 int offset = 0;
                 int getSize = 1024 * 50;    // 50 Kbytes
-                if (httpCon != null) {
+                if (httpCon != null || httpsCon != null) {
                     getSize = 100;          // 100 bytes
                 }
                 dataBuffer = new byte[getSize];
@@ -311,13 +324,21 @@ public final class DirectRecord implements RecordControl, DirectControls {
         // Release native resources
         nClose(player.hNative);
 
-        if (locator != null && httpCon != null) {
-	        int rescode = httpCon.getResponseCode();
-	        if (rescode != HttpConnection.HTTP_OK) {
-	            cleanUp();
-		        throw new IOException("HTTP response code: " + rescode);
-	        }
-	    } 
+        if (locator != null) {
+            if (httpCon != null) {
+                int rescode = httpCon.getResponseCode();
+                if (rescode != HttpConnection.HTTP_OK) {
+                    cleanUp();
+                    throw new IOException("HTTP response code: " + rescode);
+                }
+            } else if (httpsCon != null) {
+                int rescode = httpsCon.getResponseCode();
+                if (rescode != HttpConnection.HTTP_OK) {
+                    cleanUp();
+                    throw new IOException("HTTP response code: " + rescode);
+                }
+            }
+        }
 
         cleanUp();
 
@@ -482,6 +503,13 @@ public final class DirectRecord implements RecordControl, DirectControls {
             }
         } catch(Exception e) {
         }
+
+        try {
+            if (httpsCon != null) {
+                httpsCon.close();
+            }
+        } catch(Exception e) {
+        }
             
         // #ifdef USE_FILE_CONNECTION [
         try {
@@ -493,6 +521,7 @@ public final class DirectRecord implements RecordControl, DirectControls {
         // #endif ]
         stream = null;
         httpCon = null;
+        httpsCon = null;
     // #ifdef USE_FILE_CONNECTION [    
         fileCon = null;
     // #endif ]
@@ -540,4 +569,5 @@ public final class DirectRecord implements RecordControl, DirectControls {
     private FileConnection fileCon;
 // #endif ]
     private HttpConnection httpCon;
+    private HttpsConnection httpsCon;
 }

@@ -44,6 +44,9 @@ public final class PermissionAccessor {
     
     public static final int PERMISSION_SNAPSHOT = 7;
     public static final int PERMISSION_RECORDING = 8;
+
+    public static final int PERMISSION_HTTPS_READ = 9;
+    public static final int PERMISSION_HTTPS_WRITE = 10;
     
     private static final String mapPermissions [] = {
         /* PERMISSION_SYSTEM                        */ null,
@@ -57,6 +60,9 @@ public final class PermissionAccessor {
                 
         /* PERMISSION_SNAPSHOT                      */ "snapshot",
         /* PERMISSION_RECORDING                     */ "record",
+
+        /* PERMISSION_HTTPS_READ                    */ null,
+        /* PERMISSION_HTTPS_WRITE                   */ null,
     };
     
     /**
@@ -98,7 +104,8 @@ public final class PermissionAccessor {
         "capture://",
         "device://",
         "file://",
-        "http://"
+        "http://",
+        "https://"
     };
     
     // inidicates that corresponding locator type needs no special permissions.
@@ -112,7 +119,8 @@ public final class PermissionAccessor {
         /* "capture://"      */ NEED_NO_PERMISSIONS,
         /* "device://"       */ NEED_NO_PERMISSIONS,
         /* "file://"         */ PERMISSION_FILE_READ,
-        /* "http://"         */ PERMISSION_HTTP_READ
+        /* "http://"         */ PERMISSION_HTTP_READ,
+        /* "https://"        */ PERMISSION_HTTPS_READ
     };
     
     /**

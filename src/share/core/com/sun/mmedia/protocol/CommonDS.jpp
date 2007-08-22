@@ -110,7 +110,8 @@ public class CommonDS extends BasicDS implements SourceStream {
         }
 
         try {
-            if (locator.toLowerCase().startsWith("http:")) {
+            String locStr = locator.toLowerCase();
+            if (locStr.startsWith("http:")) {
                 HttpConnection httpCon = 
                     (HttpConnection)Connector.open(locator);
                 int rescode = httpCon.getResponseCode();
@@ -128,6 +129,26 @@ public class CommonDS extends BasicDS implements SourceStream {
                             Configuration.getConfiguration().ext2Mime(ct);
                     }
                     httpCon.close();
+                    goodurl = true;
+                }
+            } else if (locStr.startsWith("https:")) {
+                HttpsConnection httpsCon = 
+                    (HttpsConnection)Connector.open(locator);
+                int rescode = httpsCon.getResponseCode();
+                // If the response code of HttpsConnection is in the range of 
+                // 4XX and 5XX, that means the connection failed.
+                if (rescode >= 400) {
+                    httpsCon.close();
+                    goodurl = false;
+                } else {
+                    inputStream = httpsCon.openInputStream();
+                    contentLength = httpsCon.getLength();
+                    String ct = httpsCon.getType().toLowerCase();
+                    if (contentType.equals("unknown")) {
+                        contentType = 
+                            Configuration.getConfiguration().ext2Mime(ct);
+                    }
+                    httpsCon.close();
                     goodurl = true;
                 }
             } else if (locator.startsWith("file:")) {
