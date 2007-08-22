@@ -78,12 +78,6 @@ else
 MakeDepsOpts  += ENABLE_JVMPI_PROFILE_VERIFY=false
 endif
 
-# Use ENABLE_SEGMENTED_ROM_TEXT_BLOCK by default
-ifndef ENABLE_SEGMENTED_ROM_TEXT_BLOCK  
-export ENABLE_SEGMENTED_ROM_TEXT_BLOCK     := true
-export ENABLE_SEGMENTED_ROM_TEXT_BLOCK__BY := jvm.make
-endif
-
 ifeq ($(IsTarget)+$(ENABLE_MONET), true+true)
 # do nothing
 else
