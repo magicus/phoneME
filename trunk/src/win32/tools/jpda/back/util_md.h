@@ -39,6 +39,8 @@ typedef unsigned long UNSIGNED_JINT;
 #define JDWP_ONLOAD_SYMBOLS   {"_JDWP_OnLoad@16", "JDWP_OnLoad"}
 
 #ifdef WINCE
+#define _IOLBF 1
+#define BUFSIZ 1
 #define getenv(x) NULL
 #define perror(x) ((void)0)
 #endif

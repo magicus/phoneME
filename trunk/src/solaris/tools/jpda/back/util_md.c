@@ -1,7 +1,7 @@
 /*
- * @(#)socket_md.h	1.9 06/10/10
+ * @(#)util_md.c	1.1 07/08/5
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright 1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -24,16 +24,12 @@
  * information or have any questions. 
  *
  */
-/* Use its data structures and constants; don't make direct calls */
 
-#ifdef WINCE
-#include <winsock.h>
-#define perror(x) ((void)0)
-#else
-#include <sys/types.h>
-#include <winsock2.h>
-#endif
+#include "javavm/include/porting/time.h"
 
-#ifndef ECONNABORTED
-#define ECONNABORTED WSAECONNABORTED
-#endif
+void
+CVMformatTime(char *format, size_t format_size, time_t t)
+{
+    (void)strftime(format, sizeof(format),  
+                "%d.%m.%Y %T.%%.3d %Z", localtime(&t));
+}

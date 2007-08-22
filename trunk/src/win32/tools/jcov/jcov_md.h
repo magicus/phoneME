@@ -25,9 +25,10 @@
  *
  */
 
-#ifndef _LINUX_JCOV_MD_H_
-#define _LINUX_JCOV_MD_H_
+#ifndef _WIN_JCOV_MD_H_
+#define _WIN_JCOV_MD_H_
 
+#include <search.h>
 int jcov_file_exists(const char *filename);
 
-#endif /*_LINUX_JCOV_MD_H_*/
+#endif /*_WIN_JCOV_MD_H_*/

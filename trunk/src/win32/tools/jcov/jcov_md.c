@@ -25,7 +25,9 @@
  *
  */
 
-#ifndef WINCE
+#ifdef WINCE
+#include <winbase.h>
+#else
 #include <sys/stat.h>
 #endif
 
@@ -47,3 +49,34 @@ int jcov_file_exists(const char *filename)
     return 1;
 #endif
 }
+
+#ifdef WINCE
+int rename(char *old_name, char *new_name) {
+    int retval = -1; /* failure */
+    DeleteFile((LPCTSTR)new_name);
+    if (MoveFile((LPCTSTR)new_name, (LPCTSTR)old_name)) {
+	retval = 0;  /* success */
+    }
+    return retval;
+
+    //    return rename(temp_file_name, filename) == -1);
+}
+
+void
+*bsearch(void *key, void *base, size_t num, size_t width,
+	 int ( __cdecl *compare ) ( const void *, const void *))
+{
+    int i;
+    for (i = 0; i < num; i++, (size_t)base += width) {
+	if (compare(key, base) == 0) {
+	    return base;
+	}
+    }
+    return NULL;
+}
+
+int
+remove(char *old_name) {
+    return !DeleteFile((LPCTSTR)old_name);
+}
+#endif
