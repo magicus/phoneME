@@ -66,7 +66,7 @@ MIDP_CNI_CLASSES += \
         javax.microedition.lcdui.Font \
         javax.microedition.lcdui.game.GameCanvas \
         javax.microedition.lcdui.Graphics \
-        javax.microedition.lcdui.Image \
+        javax.microedition.lcdui.ImageData \
         javax.microedition.lcdui.ImageDataFactory \
         javax.microedition.lcdui.KeyConverter
 
