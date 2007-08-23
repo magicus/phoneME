@@ -117,18 +117,25 @@ class BytecodeClosure : public StackObj {
       null, nonnull, 
       eq, ne, lt, ge, gt, le, /* The order of these 6 must match the order
                                * of the corresponding bytecode */
-      number_of_cond_ops
+#if ENABLE_CONDITIONAL_BRANCH_OPTIMIZATIONS
+      negative, positive,
+      number_of_ext_cond_ops,
+      number_of_cond_ops = negative
+#else
+      number_of_ext_cond_ops,
+      number_of_cond_ops = number_of_ext_cond_ops
+#endif
   };
 
   static const cond_op reverse_condition_table[number_of_cond_ops];
-  static const cond_op negate_condition_table[number_of_cond_ops];
+  static const cond_op negate_condition_table[number_of_ext_cond_ops];
 
   static cond_op reverse(cond_op op) {
-    GUARANTEE(int(op) >= int(null) && int(op) <= int(le), "Legal condition");
+    GUARANTEE(unsigned(op) < number_of_cond_ops, "Legal condition");
     return reverse_condition_table[op];
   }
   static cond_op negate(cond_op op)  {
-    GUARANTEE(int(op) >= int(null) && int(op) <= int(le), "Legal condition");
+    GUARANTEE(unsigned(op) < number_of_ext_cond_ops, "Legal condition");
     return negate_condition_table[op];
   }
 

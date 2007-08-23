@@ -121,7 +121,7 @@ bool CompilationQueueElement::compile(JVM_SINGLE_ARG_TRAPS) {
     // IMPL_NOTE: need to revisit for inlining
     if (!Compiler::is_inlining()) {
       if (!is_suspended()) {
-	  //entry to internal code optimizer
+          //entry to internal code optimizer
         Compiler::current()->prepare_for_scheduling_of_current_cc( Compiler::current()->
                              code_generator()->compiled_method());
       }
@@ -288,110 +288,105 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
         //create a Label bind to current  position
         bool need_jmp = true;
         if ( Compiler::current()->has_loops() ) {
-        BinaryAssembler::Label  cur_label;
-        gen->bind(cur_label);
+          BinaryAssembler::Label  cur_label;
+          gen->bind(cur_label);
     
-        //current position
-        int cur_pos = cur_label.position();   
-        //jmp destination position
-        int brc_pos = branch_label.position();    
+          //current position
+          int cur_pos = cur_label.position();   
+          //jmp destination position
+          int brc_pos = branch_label.position();    
     
-        //check whether there is backward jump
-        GUARANTEE(brc_pos < cur_pos, "Sanity");
-        { 
-          COMPILER_COMMENT(("Jump back in loop"));
-          bool found_jmp = false;
-          int next_pos = brc_pos;     
-          Assembler::Condition cond;
-          int offset;
+          // Must be a backward jump
+          GUARANTEE(brc_pos < cur_pos, "Sanity");
+          { 
+            COMPILER_COMMENT(("Jump back in loop"));
+            bool found_jmp = false;
+            int next_pos = brc_pos;     
+            Assembler::Condition cond;
+            int offset;
           
-          //op_pc save the status of whether contain pc Operation
-          bool link, op_pc;   
-          int count = 0;
+            //op_pc save the status of whether contain pc Operation
+            bool link, op_pc;   
+            int count = 0;
 
-          // search the jump instruction within max_search_length
-          // insturctions range          
-          while(next_pos < cur_pos && count < max_search_length) { 
-            // get the instruction in specified address
-            int instr = gen->instruction_at(next_pos);   
-            int next_instr = gen->instruction_at(next_pos + BytesPerWord);   
-            //chech whether the instruction is jump instruction. And retrive the cond, link status if so
-            // retrive the cond, link status if so
-            found_jmp = gen->is_jump_instr(instr, next_instr, cond, link, op_pc, offset);
+            // search the jump instruction within max_search_length
+            // insturctions range          
+            while(next_pos < cur_pos && count < max_search_length) { 
+              // get the instruction in specified address
+              int instr = gen->instruction_at(next_pos);   
+              int next_instr = gen->instruction_at(next_pos + BytesPerWord);   
+              //chech whether the instruction is jump instruction. And retrive the cond, link status if so
+              // retrive the cond, link status if so
+              found_jmp = gen->is_jump_instr(instr, next_instr, cond, link, op_pc, offset);
 
-            // if found pc operation in current instruction, then do
-            // nothing optimization
-            if(op_pc) {
-              break;
-            }
-            //found jump instruction
-            if (found_jmp) {
-              break;
-            } else {
-              next_pos += BytesPerWord;
-            }
-             count ++;
-          }
-
-          // if found conditional jump instruction, then...
-          if(found_jmp && cond < Assembler::al) {
-            COMPILER_COMMENT(("Begin -- Loop Optimization"));
-            // copy the instructions between the branch position and
-            // conditional jump position to current position
-            int ins_pos = brc_pos;
-            while(ins_pos < next_pos) {
-              int instr = gen->instruction_at(ins_pos);
-              gen->emit(instr);
-              ins_pos += BytesPerWord;
-            }
-          
-            // emit a reverse conditional jump instruction, jump to
-            // the next instruction following the found conditional
-            // jump instruction
-            BinaryAssembler::Label jmp_label;
-            jmp_label.bind_to(next_pos + BytesPerWord);
-            gen->back_branch(jmp_label, link, gen->get_reverse_cond( cond));
-
-            if(offset != -8) {
-              COMPILER_COMMENT(("Jump back"));
-              jmp_label.bind_to(offset + next_pos + 8);
-              gen->back_branch(jmp_label, false, Assembler::al);
-              need_jmp = false;
-            } else {
-              COMPILER_COMMENT(("Jump forward"));
-              
-              // modify the branch label to bind to the found
-              // conditional jump instruction
-              branch_label.bind_to(next_pos);
-              
-              int jmp_bci = -1;
-              Compiler * const compiler = Compiler::current();
-              CompilationQueueElement::Raw element =
-                compiler->get_first_compilation_queue_element();  
-              CompilationQueueElement::Raw pre_element = element;
-              while (!element.is_null()) {
-                BinaryAssembler::Label compile_entry_label_elem
-                    = element().entry_label();
-                if(compile_entry_label_elem.is_linked()) {
-                  if(compile_entry_label_elem.position() == next_pos) {
-                    if(pre_element != element) {
-                      CompilationQueueElement::Raw next   = element().next();
-                      pre_element().set_next(&next);
-                      compiler->insert_compilation_queue_element(&element);
-                    }
-                    need_jmp = false;
-                    break;
-                  }
-                }
-                pre_element = element;
-                element = compiler->get_next_compilation_queue_element(&element);
+              // if found pc operation in current instruction, then do
+              // nothing optimization
+              if( op_pc || found_jmp ) {
+                break;
               }
+              next_pos += BytesPerWord;
+              count ++;
+            }
+
+            // if found conditional jump instruction, then...
+            if(found_jmp && cond < Assembler::al) {
+              COMPILER_COMMENT(("Begin -- Loop Optimization"));
+              // copy the instructions between the branch position and
+              // conditional jump position to current position
+              int ins_pos = brc_pos;
+              while(ins_pos < next_pos) {
+                int instr = gen->instruction_at(ins_pos);
+                gen->emit(instr);
+                ins_pos += BytesPerWord;
+              }
+          
+              // emit a reverse conditional jump instruction, jump to
+              // the next instruction following the found conditional
+              // jump instruction
+              BinaryAssembler::Label jmp_label;
+              jmp_label.bind_to(next_pos + BytesPerWord);
+              gen->back_branch(jmp_label, link, gen->get_reverse_cond( cond));
+
+              if(offset != -8) {
+                COMPILER_COMMENT(("Jump back"));
+                jmp_label.bind_to(offset + next_pos + 8);
+                gen->back_branch(jmp_label, false, Assembler::al);
+                need_jmp = false;
+              } else {
+                COMPILER_COMMENT(("Jump forward"));
               
-              if(need_jmp)
-                COMPILER_COMMENT(("Can not find the Entry label"));
+                // modify the branch label to bind to the found
+                // conditional jump instruction
+                branch_label.bind_to(next_pos);
+              
+                int jmp_bci = -1;
+                Compiler * const compiler = Compiler::current();
+                CompilationQueueElement::Raw element =
+                  compiler->get_first_compilation_queue_element();  
+                CompilationQueueElement::Raw pre_element = element;
+                while (!element.is_null()) {
+                  BinaryAssembler::Label compile_entry_label_elem
+                      = element().entry_label();
+                  if(compile_entry_label_elem.is_linked()) {
+                    if(compile_entry_label_elem.position() == next_pos) {
+                      if(pre_element != element) {
+                        CompilationQueueElement::Raw next   = element().next();
+                        pre_element().set_next(&next);
+                        compiler->insert_compilation_queue_element(&element);
+                      }
+                      need_jmp = false;
+                      break;
+                    }
+                  }
+                  pre_element = element;
+                  element = compiler->get_next_compilation_queue_element(&element);
+                }
+              
+                if(need_jmp)
+                  COMPILER_COMMENT(("Can not find the Entry label"));
+              }
             }
           }
-        }
         } 
         if(need_jmp) {
 #endif //#if ENABLE_LOOP_OPTIMIZATION && ARM
@@ -413,9 +408,7 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
         // Terminate this compilation string and any loops.
         continue_compilation = false;
         Compiler::mark_as_outside_loop();
-#if ENABLE_CODE_PATCHING
         BytecodeCompileClosure::set_jump_from_bci(0);
-#endif
       }
     }
 
@@ -651,7 +644,7 @@ void TimerTickStub::compile(JVM_SINGLE_ARG_TRAPS) {
   if (instr_offset >= 0) {
     CodeGenerator* gen = Compiler::code_generator();
     gen->emit_checkpoint_info_record(instr_offset, 
-    	gen->code_size() - instr_offset);
+        gen->code_size() - instr_offset);
   }
 #endif
 
@@ -789,9 +782,9 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
   if (get_rte() == rte_array_index_out_of_bounds) {
        if(is_persistent()) {
-	 	Compiler::current()->code_generator()->
+                Compiler::current()->code_generator()->
                emit_pre_load_item(0);
-	 }
+         }
   }
 #endif
     gen->bind(stub);

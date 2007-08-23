@@ -97,7 +97,7 @@ class CodeGenerator: public BinaryAssembler {
 
   //do the null check if needed. 
   void maybe_null_check_by_npce(Value& value, bool need_tigger_instr, 
-  	     bool is_quick_return, BasicType type_of_data JVM_TRAPS) ;
+             bool is_quick_return, BasicType type_of_data JVM_TRAPS) ;
 
 private:
 
@@ -442,9 +442,10 @@ public:
 
 
   // Do conditional jump.
-  void conditional_jump(BytecodeClosure::cond_op condition,
-                        int destination,
-                        bool assume_backward_jumps_are_taken JVM_TRAPS);
+  void conditional_jump(const BytecodeClosure::cond_op condition,
+                        const int destination,
+                        const bool assume_backward_jumps_are_taken
+                        JVM_TRAPS);
 
   void conditional_jump_do(BytecodeClosure::cond_op condition, 
                            Label& destination);

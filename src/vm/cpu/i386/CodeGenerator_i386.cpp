@@ -2641,6 +2641,10 @@ CodeGenerator::convert_condition( const BytecodeClosure::cond_op condition) {
     case BytecodeClosure::le     : return less_equal;
     case BytecodeClosure::gt     : return greater;
     case BytecodeClosure::ge     : return greater_equal;
+#if ENABLE_CONDITIONAL_BRANCH_OPTIMIZATIONS
+    case BytecodeClosure::negative: return negative;
+    case BytecodeClosure::positive: return positive;
+#endif
   }
   SHOULD_NOT_REACH_HERE();
   return (CodeGenerator::Condition) -1;

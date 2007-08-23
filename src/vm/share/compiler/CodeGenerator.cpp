@@ -191,7 +191,7 @@ void CodeGenerator::osr_entry(bool force JVM_TRAPS) {
 
     //cse
     frame()->wipe_notation_for_osr_entry();
-	
+        
     COMPILER_COMMENT(("OSR entry"));
     Label osr_entry;
     bind(osr_entry);
@@ -596,7 +596,7 @@ void CodeGenerator::branch(int destination JVM_TRAPS) {
 
 void CodeGenerator::branch_if(BytecodeClosure::cond_op condition,
        int destination, Value& op1, Value& op2, const bool flags_set JVM_TRAPS)
-{
+{  
   if (op1.is_immediate()) {
     if (op2.is_immediate()) {
       if (compare(condition, op1.as_int(), op2.as_int())) {
@@ -612,16 +612,32 @@ void CodeGenerator::branch_if(BytecodeClosure::cond_op condition,
     if( OptimizeForwardBranches ) {
       const int next_bci = Compiler::closure()->next_bytecode_index();
       if( destination > next_bci && destination - next_bci < 15 ) {
-	    const bool opt = forward_branch_optimize(next_bci, condition,
+        const bool opt = forward_branch_optimize(next_bci, condition,
                                         destination, op1, op2 JVM_CHECK);
         if (opt) {
           return;
         }
       }
     }
-    if( !flags_set ) {
+#if ENABLE_CONDITIONAL_BRANCH_OPTIMIZATIONS
+    // Zero comparison may alter carry flag
+    // 'eq' and 'ne' are not sensitive to carry
+    // 'lt' and 'ge' must be tranlated to 's' and 'ns'
+    // 'gt' and 'le" cannot be translated
+    if( !flags_set || condition == BytecodeClosure::gt
+                   || condition == BytecodeClosure::le ) {
       cmp_values(op1, op2, condition);
+    } else {
+      switch( condition ) {
+        case BytecodeClosure::lt:
+          condition = BytecodeClosure::negative; break;
+        case BytecodeClosure::ge:
+          condition = BytecodeClosure::positive; break;
+      }
     }
+#else
+    cmp_values(op1, op2, condition);
+#endif
     conditional_jump(condition, destination, true JVM_NO_CHECK_AT_BOTTOM);
   }
 }
@@ -689,9 +705,9 @@ void CodeGenerator::branch_if_do(BytecodeClosure::cond_op condition,
   conditional_jump(condition, destination, true JVM_NO_CHECK_AT_BOTTOM);
 }
 
-void CodeGenerator::conditional_jump(BytecodeClosure::cond_op condition,
-                                     int destination,
-                                     bool assume_backward_jumps_are_taken
+void CodeGenerator::conditional_jump(const BytecodeClosure::cond_op condition,
+                                     const int destination,
+                                     const bool assume_backward_jumps_are_taken
                                      JVM_TRAPS) {
   if ((assume_backward_jumps_are_taken && destination <= bci()) ||
       Compiler::current()->is_branch_taken(bci())) {

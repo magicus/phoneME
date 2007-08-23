@@ -501,6 +501,8 @@
 // ENABLE_CODE_PATCHING                 0,0 Use code patching mechanism for
 //                                          timer tick checking optimizations.
 //
+// ENABLE_CONDITIONAL_BRANCH_OPTIMIZATIONS 1,1 Use flags set by arithmetic
+//                                          instructions
 //============================================================================
 // ENABLE_FLAGS_END }}
 //============================================================================

@@ -50,10 +50,10 @@ class BytecodeCompileClosure: public BytecodeClosure {
     _compiler = compiler;
   }
 #if ENABLE_CODE_PATCHING
-  static int jump_from_bci() {
+  static int jump_from_bci(void) {
     return _jump_from_bci;
   }
-  static void set_jump_from_bci(int bci) {
+  static void set_jump_from_bci(const int bci) {
     _jump_from_bci = bci;
   }
   void set_jump_from_current_bci(const int dest) {
@@ -63,6 +63,7 @@ class BytecodeCompileClosure: public BytecodeClosure {
     }
   }
 #else
+  static void set_jump_from_bci(const int /*bci*/) {}
   static void set_jump_from_current_bci(const int /*dest*/) {}
 #endif  
   void set_active_bci(const int bci) {

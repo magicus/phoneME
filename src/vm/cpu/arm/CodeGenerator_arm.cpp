@@ -4797,12 +4797,14 @@ CodeGenerator::convert_condition(BytecodeClosure::cond_op cond)  {
     /* case BytecodeClosure::ge     */ ge,
     /* case BytecodeClosure::gt     */ gt,
     /* case BytecodeClosure::le     */ le,
+#if ENABLE_CONDITIONAL_BRANCH_OPTIMIZATIONS
+    /* case BytecodeClosure::negative*/ mi,
+    /* case BytecodeClosure::positive*/ pl,
+#endif
   };
 
-  GUARANTEE(int(BytecodeClosure::null) <= int(cond) &&
-            int(cond) <= int(BytecodeClosure::le),
-            "sanity");
-  return (CodeGenerator::Condition)(table[cond]);
+  GUARANTEE(unsigned(cond) < sizeof table, "sanity");
+  return CodeGenerator::Condition(table[cond]);
 }
 
 #if ENABLE_LOOP_OPTIMIZATION && ARM

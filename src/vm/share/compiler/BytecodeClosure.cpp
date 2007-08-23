@@ -51,9 +51,9 @@ BytecodeClosure::reverse_condition_table[BytecodeClosure::number_of_cond_ops] =
 };
 
 const BytecodeClosure::cond_op 
-BytecodeClosure::negate_condition_table[BytecodeClosure::number_of_cond_ops] = 
+BytecodeClosure::negate_condition_table[BytecodeClosure::number_of_ext_cond_ops]=
 {
-  BytecodeClosure::nonnull, // null
+  BytecodeClosure::nonnull, // null,
   BytecodeClosure::null,    // nonnull, 
   BytecodeClosure::ne,      // eq,
   BytecodeClosure::eq,      // ne,
@@ -61,6 +61,10 @@ BytecodeClosure::negate_condition_table[BytecodeClosure::number_of_cond_ops] =
   BytecodeClosure::lt,      // ge
   BytecodeClosure::le,      // gt, 
   BytecodeClosure::gt,      // le,
+#if ENABLE_CONDITIONAL_BRANCH_OPTIMIZATIONS
+  BytecodeClosure::positive,// negative,
+  BytecodeClosure::negative,// positive,
+#endif
 };
 
 void BytecodeClosure::aload_0_fast_get_field_1(BasicType field_type JVM_TRAPS){
