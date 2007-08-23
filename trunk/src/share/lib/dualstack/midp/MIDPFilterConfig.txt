@@ -154,6 +154,15 @@ CLASS java/util/Enumeration
    METHODS
 	hasMoreElements:()Z
 	nextElement:()Ljava/lang/Object;
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 
 CLASS java/util/Hashtable
    METHODS
@@ -1077,6 +1086,15 @@ CLASS java/lang/VirtualMachineError
 CLASS java/lang/Runnable
    METHODS
 	run:()V
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 
 CLASS java/lang/Short
    FIELDS
@@ -1323,6 +1341,15 @@ CLASS java/io/DataInput
 	readFloat:()F
 	readDouble:()D
 	readUTF:()Ljava/lang/String;
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 
 CLASS java/io/DataInputStream
    FIELDS
@@ -1408,6 +1435,15 @@ CLASS java/io/DataOutput
 	writeDouble:(D)V
 	writeChars:(Ljava/lang/String;)V
 	writeUTF:(Ljava/lang/String;)V
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 
 CLASS java/io/EOFException
    METHODS
@@ -1577,6 +1613,15 @@ CLASS java/io/UTFDataFormatException
 CLASS javax/microedition/io/Connection
    METHODS
 	close:()V
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 
 CLASS javax/microedition/io/ConnectionNotFoundException
    METHODS
@@ -1622,6 +1667,15 @@ CLASS javax/microedition/io/ContentConnection
 	getType:()Ljava/lang/String;
 	getEncoding:()Ljava/lang/String;
 	getLength:()J
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 	openInputStream:()Ljava/io/InputStream;
 	openDataInputStream:()Ljava/io/DataInputStream;
 	close:()V
@@ -1630,6 +1684,15 @@ CLASS javax/microedition/io/ContentConnection
 
 CLASS javax/microedition/io/StreamConnection
    METHODS
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 	openInputStream:()Ljava/io/InputStream;
 	openDataInputStream:()Ljava/io/DataInputStream;
 	close:()V
@@ -1640,12 +1703,30 @@ CLASS javax/microedition/io/InputConnection
    METHODS
 	openInputStream:()Ljava/io/InputStream;
 	openDataInputStream:()Ljava/io/DataInputStream;
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 	close:()V
 
 CLASS javax/microedition/io/OutputConnection
    METHODS
 	openOutputStream:()Ljava/io/OutputStream;
 	openDataOutputStream:()Ljava/io/DataOutputStream;
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 	close:()V
 
 CLASS javax/microedition/io/Datagram
@@ -1659,6 +1740,15 @@ CLASS javax/microedition/io/Datagram
 	setLength:(I)V
 	setData:([BII)V
 	reset:()V
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 	readFully:([B)V
 	readFully:([BII)V
 	skipBytes:(I)I
@@ -1697,28 +1787,30 @@ CLASS javax/microedition/io/DatagramConnection
 	newDatagram:(ILjava/lang/String;)Ljavax/microedition/io/Datagram;
 	newDatagram:([BI)Ljavax/microedition/io/Datagram;
 	newDatagram:([BILjava/lang/String;)Ljavax/microedition/io/Datagram;
-	close:()V
-
-CLASS javax/microedition/io/StreamConnectionNotifier
-   METHODS
-	acceptAndOpen:()Ljavax/microedition/io/StreamConnection;
-	close:()V
-
-CLASS java/lang/IllegalStateException
-   METHODS
-	<init>:()V
-	<init>:(Ljava/lang/String;)V
-	getMessage:()Ljava/lang/String;
-	toString:()Ljava/lang/String;
-	printStackTrace:()V
 	getClass:()Ljava/lang/Class;
 	hashCode:()I
 	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
 	notify:()V
 	notifyAll:()V
 	wait:(J)V
 	wait:(JI)V
 	wait:()V
+	close:()V
+
+CLASS javax/microedition/io/StreamConnectionNotifier
+   METHODS
+	acceptAndOpen:()Ljavax/microedition/io/StreamConnection;
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
+	close:()V
 
 CLASS java/util/Timer
    METHODS
@@ -1756,6 +1848,22 @@ CLASS java/util/TimerTask
 	wait:(JI)V
 	wait:()V
 
+CLASS java/lang/IllegalStateException
+   METHODS
+	<init>:()V
+	<init>:(Ljava/lang/String;)V
+	getMessage:()Ljava/lang/String;
+	toString:()Ljava/lang/String;
+	printStackTrace:()V
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
+
 CLASS javax/microedition/pki/Certificate
    METHODS
 	getSubject:()Ljava/lang/String;
@@ -1766,6 +1874,15 @@ CLASS javax/microedition/pki/Certificate
 	getNotBefore:()J
 	getNotAfter:()J
 	getSerialNumber:()Ljava/lang/String;
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 
 CLASS javax/microedition/pki/CertificateException
    FIELDS
@@ -1804,6 +1921,15 @@ CLASS javax/microedition/io/CommConnection
    METHODS
 	getBaudRate:()I
 	setBaudRate:(I)I
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 	openInputStream:()Ljava/io/InputStream;
 	openDataInputStream:()Ljava/io/DataInputStream;
 	close:()V
@@ -1875,6 +2001,15 @@ CLASS javax/microedition/io/HttpConnection
 	getHeaderFieldDate:(Ljava/lang/String;J)J
 	getHeaderField:(I)Ljava/lang/String;
 	getHeaderFieldKey:(I)Ljava/lang/String;
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 	getType:()Ljava/lang/String;
 	getEncoding:()Ljava/lang/String;
 	getLength:()J
@@ -1885,51 +2020,18 @@ CLASS javax/microedition/io/HttpConnection
 	openDataOutputStream:()Ljava/io/DataOutputStream;
 
 CLASS javax/microedition/io/HttpsConnection
-   FIELDS
-	HEAD:Ljava/lang/String;
-	GET:Ljava/lang/String;
-	POST:Ljava/lang/String;
-	HTTP_OK:I
-	HTTP_CREATED:I
-	HTTP_ACCEPTED:I
-	HTTP_NOT_AUTHORITATIVE:I
-	HTTP_NO_CONTENT:I
-	HTTP_RESET:I
-	HTTP_PARTIAL:I
-	HTTP_MULT_CHOICE:I
-	HTTP_MOVED_PERM:I
-	HTTP_MOVED_TEMP:I
-	HTTP_SEE_OTHER:I
-	HTTP_NOT_MODIFIED:I
-	HTTP_USE_PROXY:I
-	HTTP_TEMP_REDIRECT:I
-	HTTP_BAD_REQUEST:I
-	HTTP_UNAUTHORIZED:I
-	HTTP_PAYMENT_REQUIRED:I
-	HTTP_FORBIDDEN:I
-	HTTP_NOT_FOUND:I
-	HTTP_BAD_METHOD:I
-	HTTP_NOT_ACCEPTABLE:I
-	HTTP_PROXY_AUTH:I
-	HTTP_CLIENT_TIMEOUT:I
-	HTTP_CONFLICT:I
-	HTTP_GONE:I
-	HTTP_LENGTH_REQUIRED:I
-	HTTP_PRECON_FAILED:I
-	HTTP_ENTITY_TOO_LARGE:I
-	HTTP_REQ_TOO_LONG:I
-	HTTP_UNSUPPORTED_TYPE:I
-	HTTP_UNSUPPORTED_RANGE:I
-	HTTP_EXPECT_FAILED:I
-	HTTP_INTERNAL_ERROR:I
-	HTTP_NOT_IMPLEMENTED:I
-	HTTP_BAD_GATEWAY:I
-	HTTP_UNAVAILABLE:I
-	HTTP_GATEWAY_TIMEOUT:I
-	HTTP_VERSION:I
    METHODS
 	getSecurityInfo:()Ljavax/microedition/io/SecurityInfo;
 	getPort:()I
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 	getURL:()Ljava/lang/String;
 	getProtocol:()Ljava/lang/String;
 	getHost:()Ljava/lang/String;
@@ -1959,15 +2061,34 @@ CLASS javax/microedition/io/HttpsConnection
 	openOutputStream:()Ljava/io/OutputStream;
 	openDataOutputStream:()Ljava/io/DataOutputStream;
 
+CLASS javax/microedition/io/SecurityInfo
+   METHODS
+	getServerCertificate:()Ljavax/microedition/pki/Certificate;
+	getProtocolVersion:()Ljava/lang/String;
+	getProtocolName:()Ljava/lang/String;
+	getCipherSuite:()Ljava/lang/String;
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
+
 CLASS javax/microedition/io/SecureConnection
-   FIELDS
-	DELAY:B
-	LINGER:B
-	KEEPALIVE:B
-	RCVBUF:B
-	SNDBUF:B
    METHODS
 	getSecurityInfo:()Ljavax/microedition/io/SecurityInfo;
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 	setSocketOption:(BI)V
 	getSocketOption:(B)I
 	getLocalAddress:()Ljava/lang/String;
@@ -1979,20 +2100,6 @@ CLASS javax/microedition/io/SecureConnection
 	close:()V
 	openOutputStream:()Ljava/io/OutputStream;
 	openDataOutputStream:()Ljava/io/DataOutputStream;
-
-CLASS javax/microedition/io/SecurityInfo
-   METHODS
-	getServerCertificate:()Ljavax/microedition/pki/Certificate;
-	getProtocolVersion:()Ljava/lang/String;
-	getProtocolName:()Ljava/lang/String;
-	getCipherSuite:()Ljava/lang/String;
-
-CLASS javax/microedition/io/ServerSocketConnection
-   METHODS
-	getLocalAddress:()Ljava/lang/String;
-	getLocalPort:()I
-	acceptAndOpen:()Ljavax/microedition/io/StreamConnection;
-	close:()V
 
 CLASS javax/microedition/io/SocketConnection
    FIELDS
@@ -2008,16 +2115,50 @@ CLASS javax/microedition/io/SocketConnection
 	getLocalPort:()I
 	getAddress:()Ljava/lang/String;
 	getPort:()I
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 	openInputStream:()Ljava/io/InputStream;
 	openDataInputStream:()Ljava/io/DataInputStream;
 	close:()V
 	openOutputStream:()Ljava/io/OutputStream;
 	openDataOutputStream:()Ljava/io/DataOutputStream;
 
+CLASS javax/microedition/io/ServerSocketConnection
+   METHODS
+	getLocalAddress:()Ljava/lang/String;
+	getLocalPort:()I
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
+	acceptAndOpen:()Ljavax/microedition/io/StreamConnection;
+	close:()V
+
 CLASS javax/microedition/io/UDPDatagramConnection
    METHODS
 	getLocalAddress:()Ljava/lang/String;
 	getLocalPort:()I
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
 	getMaximumLength:()I
 	getNominalLength:()I
 	send:(Ljavax/microedition/io/Datagram;)V
