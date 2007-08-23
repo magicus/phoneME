@@ -425,6 +425,14 @@ export ENABLE_INTERPRETER_GENERATOR
 export ENABLE_INTERPRETER_GENERATOR__BY
 endif
 
+# Use ENABLE_SEGMENTED_ROM_TEXT_BLOCK by default for Visual C++
+ifndef ENABLE_SEGMENTED_ROM_TEXT_BLOCK  
+ifeq ($(compiler), visCPP)
+export ENABLE_SEGMENTED_ROM_TEXT_BLOCK     := true
+export ENABLE_SEGMENTED_ROM_TEXT_BLOCK__BY := jvm.make
+endif
+endif
+
 ifeq ($(IsTarget)+$(ROMIZING)+$(ENABLE_SEGMENTED_ROM_TEXT_BLOCK), true+true+true)
   # by default separate ROMImage.cpp into smaller parts
   override SeparateROMImage := true
