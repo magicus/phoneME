@@ -26,12 +26,145 @@ package com.sun.mmedia;
 
 import javax.microedition.lcdui.CustomItem;
 import javax.microedition.lcdui.Graphics;
+import javax.microedition.lcdui.Canvas;
+import javax.microedition.lcdui.Displayable;
+import javax.microedition.lcdui.Display;
+
 
 public class MMVideoItem extends CustomItem
 {
+    private boolean _isFullScreen;
+    private MMVideoItemContent _content;
     
-    protected void paint(Graphics g, int w, int h) {
+    // Full screen canvas
+    private Canvas fullScreen = null;
+
+    // Display to set current displayable
+    private Display display = null;
+    
+    // Saved displayable replaced by canvas in fullscreen mode
+    private Displayable oldDisplayable = null;
+
+    public MMVideoItem( MMVideoItemContent c )
+    {
+        super("");
+        _content = c;
+        _isFullScreen = false;
     }
     
+    protected void paint(Graphics g, int w, int h) {
+        _content.paint( g );
+    }
+    
+    protected int getMinContentWidth() {
+        return 1;
+    }
+
+    protected int getMinContentHeight() {
+        return 1;
+    }
+    
+    protected int getPrefContentWidth(int h) {
+        return _content.getWidth();
+    }
+
+    protected int getPrefContentHeight(int w) {
+        return _content.getHeight();
+    }
+    
+    void forcePaint(int [] frame) {
+        if (frame != null)
+            this.frame = frame;
+        else
+            invalidate();
+        repaint();
+    }
+
+    void renderImage(byte [] imageData, int imageLength) {
+        synchronized (imageLock) {
+            image = Image.createImage(imageData, 0, imageLength);
+        }
+        repaint();
+    }
+
+    // Enter fullscreen mode,
+    // setting VideoControl callback to restore normal mode
+    // when user manually exits fullscreen mode from the canvas.
+    public Canvas toFullScreen() {
+        if (fullScreen == null) {
+            fullScreen = new FullScreenCanvas();
+        }
+
+        if (display == null) {
+            MMHelper mmh = MMHelper.getMMHelper();
+            if (mmh == null)
+                return null;
+
+            display = mmh.getItemDisplay(this);
+            if (display == null)
+                return null;
+        }
+
+        if (oldDisplayable == null)
+            oldDisplayable = display.getCurrent();
+
+        // Setting fullscreen canvas
+        display.setCurrent(fullScreen);
+
+        fullScreen.setFullScreenMode(true);
+        
+        _isFullScreen = true;
+
+        return fullScreen;
+    }
+
+    // Return to normal, non-fullscreen mode, restoring old displayable
+    public void toNormal() {        
+        if (oldDisplayable != null) {
+            display.setCurrent(oldDisplayable);
+            oldDisplayable = null;
+        }
+        
+        _isFullScreen = false;
+    }
+    
+    // Fullscreen canvas implementation
+    // Any key or pointer press returns to non-fullscreen mode.
+    class FullScreenCanvas extends Canvas {
+        FullScreenCanvas() {
+        }
+
+        protected void paint(Graphics g) {
+            g.fillRect(0, 0, getWidth(), getHeight());
+            _content.paintFullScreen( g );
+        }
+
+        // Any key returns to normal mode
+        protected void keyPressed(int keyCode) {
+            if ( _isFullScreen )
+            {
+                _content.setNonFullScreen();
+            }
+            super.keyPressed(keyCode);
+        }
+
+        // Any click returns to normal mode
+        protected void pointerPressed(int x, int y) {
+            if ( _isFullScreen )
+            {
+                _content.setNonFullScreen();
+            }
+            super.pointerPressed(x, y);
+        }
+
+        // Leave fullscreen mode when Canvas becomes invisible
+        protected void hideNotify() {
+            if ( _isFullScreen )
+            {
+                _content.setNonFullScreen();
+            }
+            super.hideNotify();
+        }
+    }
     
 }
