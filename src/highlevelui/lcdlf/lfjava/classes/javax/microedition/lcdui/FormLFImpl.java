@@ -173,11 +173,8 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
             itemLF = itemsCopy[index];
             
             
-            // Ensure the item is visible
-            if (index != traverseIndexCopy ?
-                !itemCompletelyVisible(itemLF) :
-                !itemPartiallyVisible(itemLF)) {
-                
+            // Ensure the item is visible at least partially
+            if (!itemPartiallyVisible(itemLF)) {
                 viewable[Y] = itemLF.bounds[Y];
                 if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
                     viewable[Y] = viewable[HEIGHT] - viewport[HEIGHT];
