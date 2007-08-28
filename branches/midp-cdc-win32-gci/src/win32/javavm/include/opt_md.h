@@ -1,5 +1,5 @@
 /*
- * @(#)socket_md.h	1.9 06/10/10
+ * @(#)opt_md.h	1.0 07/07/05
  *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
@@ -24,16 +24,7 @@
  * information or have any questions. 
  *
  */
-/* Use its data structures and constants; don't make direct calls */
-
-#ifdef WINCE
-#include <winsock.h>
-#define perror(x) ((void)0)
-#else
-#include <sys/types.h>
-#include <winsock2.h>
-#endif
-
-#ifndef ECONNABORTED
-#define ECONNABORTED WSAECONNABORTED
-#endif
+    {"stdioPrefix", "prefix for stdio files",
+        CVM_STRING_OPTION,
+    {{0, (CVMAddr)"\\", 0}},
+        &CVMglobals.target.stdioPrefix}, 

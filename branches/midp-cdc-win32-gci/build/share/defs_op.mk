@@ -27,7 +27,7 @@ SUBSYSTEM_DEFS_FILE      = subsystem_defs.gmk
 JSR_INIT_PACKAGE         = com.sun.cdc.config
 JSR_INIT_CLASS           = Initializer
 
-JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239 280
+JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239 256 280
 
 # Defintion for path separator used in JSRs
 PATHSEP        ?= $(PS)
@@ -55,6 +55,11 @@ INCLUDED_JSROP_NUMBERS = $(patsubst USE_JSR_%=true,%,\
 # Create a list of a JSR jar files we want to build.
 JSROP_BUILD_JARS = $(filter-out $(JSROP_LIB_DIR)/jsr205.jar,$(foreach jsr_number,$(INCLUDED_JSROP_NUMBERS),\
            $(JSROP_LIB_DIR)/jsr$(jsr_number).jar))
+
+# JSROP_AGENT_JARS - list (space sepd) of jars that should be romized with MIDP's class loader.
+# These jars contain "agent" classes which are used for access via reflection.
+# Must not have any public API. Invisible for midlets
+JSROP_AGENT_JARS =
 
 # Variable which is passed to MIDP and blocks JSRs building from MIDP; looks like:
 # USE_JSR_75=false USE_JSR_82=false USE_JSR_120=false ...
@@ -109,19 +114,19 @@ ifneq ($(INCLUDED_JSROP_NUMBERS),)
 export ABSTRACTIONS_DIR ?= $(COMPONENTS_DIR)/abstractions
 
 ifeq ($(PROJECT_ABSTRACTIONS_DIR),)
-JSROP_ABSTR_DIR = $(ABSTRACTIONS_DIR)
+JSROP_ABSTR_DIR = ABSTRACTIONS_DIR
 else
-JSROP_ABSTR_DIR = $(PROJECT_ABSTRACTIONS_DIR)
+JSROP_ABSTR_DIR = PROJECT_ABSTRACTIONS_DIR
 endif
-
-ABSTRACTIONS_MAKE_FILE = $(JSROP_ABSTR_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+ABSTRACTIONS_MAKE_FILE = $($(JSROP_ABSTR_DIR))/build/$(SUBSYSTEM_MAKE_FILE)
 ifeq ($(wildcard $(ABSTRACTIONS_MAKE_FILE)),)
-$(error ABSTRACTIONS_DIR must point to a directory containing JSROP abstractions sources)
+$(error $(JSROP_ABSTR_DIR) must point to a directory containing JSROP abstractions sources)
 endif
 include $(ABSTRACTIONS_MAKE_FILE)
 
 JSROP_JARS=$(ABSTRACTIONS_JAR) $(JSROP_BUILD_JARS)
-
+# abstractions required javacall types
+CVM_INCLUDE_JAVACALL=true
 endif
 
 # Include JSR 75
@@ -158,13 +163,13 @@ endif
 ifeq ($(USE_JSR_135), true)
 export JSR_135_DIR ?= $(COMPONENTS_DIR)/jsr135
 ifeq ($(PROJECT_JSR_135_DIR),)
-JSROP_JSR135_DIR = $(JSR_135_DIR)
+JSROP_JSR135_DIR = JSR_135_DIR
 else
-JSROP_JSR135_DIR = $(PROJECT_JSR_135_DIR)
+JSROP_JSR135_DIR = PROJECT_JSR_135_DIR
 endif
-JSR_135_MAKE_FILE = $(JSROP_JSR135_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+JSR_135_MAKE_FILE = $($(JSROP_JSR135_DIR))/build/$(SUBSYSTEM_MAKE_FILE)
 ifeq ($(wildcard $(JSR_135_MAKE_FILE)),)
-$(error JSR_135_DIR must point to a directory containing JSR 135 sources)
+$(error $(JSROP_JSR135_DIR) must point to a directory containing JSR 135 sources)
 endif
 include $(JSR_135_MAKE_FILE)
 endif
@@ -284,10 +289,20 @@ endif
 include $(JSR_239_MAKE_FILE)
 endif
 
+# Include JSR 256
+ifeq ($(USE_JSR_256), true)
+export JSR_256_DIR ?= $(COMPONENTS_DIR)/jsr256
+JSR_256_DEFS_FILE = $(JSR_256_DIR)/build/cdc_share/$(SUBSYSTEM_DEFS_FILE)
+ifeq ($(wildcard $(JSR_256_DEFS_FILE)),)
+$(error JSR_256_DIR must point to a directory containing JSR 256 sources)
+endif
+include $(JSR_256_DEFS_FILE)
+endif
+
 # Include JSR 280
 ifeq ($(USE_JSR_280), true)
 export JSR_280_DIR ?= $(COMPONENTS_DIR)/jsr280
-JSR_280_DEFS_FILE = $(JSR_280_DIR)/build/$(SUBSYSTEM_DEFS_FILE)
+JSR_280_DEFS_FILE = $(JSR_280_DIR)/build/cdc_share/$(SUBSYSTEM_DEFS_FILE)
 ifeq ($(wildcard $(JSR_280_DEFS_FILE)),)
 $(error JSR_280_DIR must point to a directory containing JSR 280 sources)
 endif

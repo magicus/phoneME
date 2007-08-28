@@ -65,4 +65,8 @@
 	BRCOND_REG(regno,al)
 #endif
 
+#ifdef CVM_MP_SAFE
+#define swp "Can't use swp when CVM_MP_SAFE=true"
+#endif
+
 #endif /* _INCLUDED_ASMMACROS_CPU_H */

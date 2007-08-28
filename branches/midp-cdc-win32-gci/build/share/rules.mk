@@ -29,8 +29,6 @@
 #####################################
 
 
-$(eval EVAL_SUPPORTED=true)
-
 # CVM include directories used to be specified with CVM_INCLUDES, and included
 # the -I option. Now they are specified with CVM_INCLUDE_DIRS and do not
 # include the -I option.
@@ -526,7 +524,7 @@ endif
 ifeq ($(USE_JUMP), true)
 $(J2ME_CLASSLIB):: jumptargets
 endif
-$(J2ME_CLASSLIB):: $(JSROP_JARS)
+$(J2ME_CLASSLIB):: $(JSROP_JARS) $(JSROP_AGENT_JARS)
 $(J2ME_CLASSLIB):: headers $(CVM_ROMJAVA_LIST)
 $(J2ME_CLASSLIB):: $(CLASSLIB_DEPS)
 $(J2ME_CLASSLIB):: aotdeps
@@ -874,7 +872,11 @@ $(CVM_TEST_CLASSESZIP): $(CVM_BUILD_TOP)/.testclasses
 
 $(CVM_DEMO_CLASSESJAR): $(CVM_BUILD_TOP)/.democlasses
 	@echo ... $@
-	$(AT)for dir in $(CVM_DEMOCLASSES_SRCDIRS); do files=`(cd $$dir; find . -name SCCS -prune -o -name .svn -prune -o -type f -print)`; (cd $$dir; tar -cf - $$files) | (cd $(CVM_DEMO_CLASSESDIR); tar -xf - ); done 
+	$(AT)for dir in $(CVM_DEMOCLASSES_SRCDIRS); do \
+	    files=`(cd $$dir; find . -name .svn -prune -o -type f -print)`; \
+	    (cd $$dir; tar -cf - $$files) | \
+		(cd $(CVM_DEMO_CLASSESDIR); tar -xf - ); \
+	done 
 	$(AT)(cd $(CVM_DEMO_CLASSESDIR); $(ZIP) -r -q - *) > $(CVM_CLASSES_TMP)
 	$(AT)mv -f $(CVM_CLASSES_TMP) $@
 

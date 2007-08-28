@@ -33,6 +33,8 @@ struct CVMTargetGlobalState {
      * Global variables for the target go here.
      */
     int dummy;
+    /* for wceIOWrite to use */
+    char *stdioPrefix;
 };
 
 #if _MSC_VER >= 1300

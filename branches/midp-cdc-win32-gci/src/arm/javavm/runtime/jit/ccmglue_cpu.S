@@ -755,9 +755,20 @@ ENTRY1 ( CVMCCMruntimeMonitorEnterGlue )
 
         /* Acquire the microlock: */
         mov     r3, #CVM_MICROLOCK_LOCKED   /* Swap CVM_MICROLOCK_LOCKED into */
+#ifndef CVM_MP_SAFE
         swp     r3, r3, [MICROLOCK]         /*    the lockWord. */
         cmp     r3, #CVM_MICROLOCK_UNLOCKED /* See if we succeeded. */
         bne     _monenterSlowAcquireMicrolock    /* Branch if failed. */
+#else
+LABEL(_monenterAcquireMicrolockMPSafe)
+	ldrex	r12, [MICROLOCK]
+	cmp	r12, #CVM_MICROLOCK_UNLOCKED  /* is the lock free? */
+	bne	_monenterSlowAcquireMicrolock /* No. Go slow */
+	strex	r12, r3, [MICROLOCK]          /* try acquire the lock */
+	cmp	r12, #0                       /* strex succeed? */
+	bne	_monenterAcquireMicrolockMPSafe /* if strex failed, try again */
+	mcr	p15, 0, r12, c7, c10, 5       /* memory barrier. r12 has 0. */
+#endif
 
         /* The microlock has been acquired: */
 LABEL(_monenterLockObj)
@@ -794,7 +805,11 @@ LABEL(_monenterLockObj)
         str     OBJ, [LOCKREC, #OFFSET_CVMOwnedMonitor_object]
 
         /* Now, r2 (i.e OBJ) is free. */
-
+	
+#ifdef CVM_MP_SAFE
+	mov	r3, #0
+	mcr	p15, 0, r3, c7, c10, 5       /* memory barrier. */
+#endif
         /* Release the microlock: */
         mov     r3, #CVM_MICROLOCK_UNLOCKED
         str     r3, [MICROLOCK]         /* microlock->lockWord = UNLOCKED. */
@@ -919,10 +934,20 @@ ENTRY1 ( CVMCCMruntimeMonitorExitGlue )
 LABEL(_monexitAcquireMicrolock)
 
         mov     r3, #CVM_MICROLOCK_LOCKED   /* Swap CVM_MICROLOCK_LOCKED into */
+#ifndef CVM_MP_SAFE	
         swp     r3, r3, [MICROLOCK]         /*    the lockWord. */
-
         cmp     r3, #CVM_MICROLOCK_UNLOCKED /* See if we succeeded. */
         bne     _monexitSlowAcquireMicrolock    /* Branch if failed. */
+#else
+LABEL(_monexitAcquireMicrolockMPSafe)
+	ldrex	r12, [MICROLOCK]
+	cmp	r12, #CVM_MICROLOCK_UNLOCKED /* is the lock free? */
+	bne	_monexitSlowAcquireMicrolock /* No. Go slow */
+	strex	r12, r3, [MICROLOCK]         /* acquire the lock */
+	cmp	r12, #0		             /* strex succeed? */
+	bne	_monexitAcquireMicrolockMPSafe /* if strex failed, try again */
+	mcr	p15, 0, r12, c7, c10, 5      /* memory barrier. r12 has 0 */
+#endif
 
         /* The microlock has been acquired: */
 LABEL(_monexitUnlockObj)
@@ -960,6 +985,10 @@ LABEL(_monexitUnlockObj)
 	str	r3, [LOCKREC, #OFFSET_CVMOwnedMonitor_count]
 #endif
 
+#ifdef CVM_MP_SAFE
+	mov	r3, #0
+	mcr	p15, 0, r3, c7, c10, 5       /* memory barrier. */
+#endif
         /* Release the microlock: */
         mov     r3, #CVM_MICROLOCK_UNLOCKED
         str     r3, [MICROLOCK]

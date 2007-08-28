@@ -27,7 +27,12 @@
 
 /* Windows process id's and threads */
 
+#ifdef WINCE
+#include <Winbase.h>
+#include <Kfuncs.h>
+#else
 #include <process.h>
+#endif
 #include <time.h>
 
 #define MUTEX_T         int
@@ -37,7 +42,11 @@
 #define GET_THREAD_ID() GetCurrentThreadId()
 #define THREAD_T        unsigned long
 #define PID_T           int
+#ifdef WINCE
+#define GETPID()        GetCurrentProcessId()
+#else
 #define GETPID()        getpid()
+#endif
 #define GETMILLSECS(millisecs) (millisecs=0)
 
 #define popen   _popen

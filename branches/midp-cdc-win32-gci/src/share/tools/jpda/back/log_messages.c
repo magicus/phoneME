@@ -64,9 +64,7 @@ get_time_stamp(char *tbuf, size_t ltbuf)
     GETMILLSECS(millisecs);
     if ( time(&t) == (time_t)(-1) )
         t = 0;
-    (void)strftime(format, sizeof(format),  
-                /* Break this string up for SCCS's sake */
-                "%" "d.%" "m.%" "Y %" "T.%%.3d %" "Z", localtime(&t));
+    (void)CVMformatTime(format, sizeof(format), t);
     (void)snprintf(tbuf, ltbuf, format, (int)(millisecs));
 }
 
@@ -207,7 +205,6 @@ void
 setup_logging(const char *filename, unsigned flags)
 {
 #ifdef JDWP_LOGGING
-    FILE *fp = NULL;
     
     /* Turn off logging */
     logging = 0;
