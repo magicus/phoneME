@@ -276,10 +276,11 @@ public class Protocol extends ConnectionBase implements DatagramConnection,UDPDa
 
 	// Set the return DatagramObject handle to have the address from the
 	//   received DatagramPacket
-	int recv_port = dh.dgram.getPort();
-	if(host != null) {
+    int recv_port = dh.dgram.getPort();
+    String recv_host = dh.dgram.getAddress().getHostName();
+    if(recv_host != null) {
             try {
-                dh.setAddress("datagram://"+host+":"+recv_port);
+                dh.setAddress("datagram://" + recv_host + ":" + recv_port);
             } catch(IOException x) {
                 throw new 
 		    RuntimeException("IOException in datagram::receive");

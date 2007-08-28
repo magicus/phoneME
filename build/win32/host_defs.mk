@@ -66,7 +66,7 @@ CCDEPEND	= /FD
 ASM_FLAGS	= $(ASM_ARCH_FLAGS)
 CCFLAGS     	= /nologo /c /W2 $(CC_ARCH_FLAGS)
 ifeq ($(CVM_BUILD_SUBDIR),true)
-CCFLAGS		+= /Fd$(CVM_BUILD_SUBDIR_NAME)/cvm.pdb
+CCFLAGS		+= /Fd$(call POSIX2HOST,$(CVM_BUILD_TOP_ABS))/cvm.pdb
 endif
 CCCFLAGS	=
 ifeq ($(CVM_OPTIMIZED), true)
@@ -88,10 +88,10 @@ endif
 
 ifeq ($(CVM_SYMBOLS), true)
 CCFLAGS += /Zi
+DEBUGINFO_LINKFLAG = /DEBUG
 endif
 
 ifeq ($(CVM_DEBUG), true)
-DEBUG_LINKFLAGS = /debug
 MT_DLL_FLAGS = /MDd
 MT_EXE_FLAGS = /MTd
 VC_DEBUG_POSTFIX = d
@@ -106,19 +106,21 @@ CCFLAGS += $(MT_FLAGS)
 ifeq ($(CVM_DLL),true)
 CVM_IMPL_LIB	= $(CVM_BUILD_SUBDIR_NAME)/bin/cvmi.lib
 
-ifeq ($CVM_PRELOAD_LIB,true)
+ifeq ($CVM_STATICLINK_LIBS,true)
 LINKFLAGS	= /implib:$(CVM_IMPL_LIB) /export:jio_snprintf $(SO_LINKFLAGS)
 else
 LINKFLAGS	= /implib:$(CVM_IMPL_LIB) $(SO_LINKFLAGS) /export:jio_snprintf \
             /export:CVMexpandStack /export:CVMtimeMillis \
-            /export:CVMIDprivate_allocateLocalRootUnsafe /export:CVMglobals \
-            /export:CVMsystemPanic /export:CVMcsRendezvous /export:CVMconsolePrintf
+            /export:CVMIDprivate_allocateLocalRootUnsafe /export:CVMglobals,DATA \
+            /export:CVMsystemPanic /export:CVMcsRendezvous /export:CVMconsolePrintf \
+            /export:CVMthrowOutOfMemoryError /export:CVMthrowNoSuchMethodError \
+            /export:CVMthrowIllegalArgumentException
 
 ifeq ($(CVM_DEBUG), true)
 LINKFLAGS	+= /export:CVMassertHook /export:CVMdumpStack
 endif
 
-endif            
+endif
 
 else
 LINKFLAGS	=
@@ -129,11 +131,11 @@ LINKLIBS_JCS    =
 SO_LINKLIBS	= $(LINKLIBS) $(LIBPATH)
 SO_LINKFLAGS	= \
 	/nologo /map /dll /incremental:yes \
-	$(DEBUG_LINKFLAGS) $(LINK_ARCH_FLAGS) \
+	$(DEBUGINFO_LINKFLAG) $(LINK_ARCH_FLAGS) \
 
 LINKEXE_LIBS = $(LINKEXE_ARCH_LIBS) $(LIBPATH)
 
-LINKEXE_FLAGS = /nologo $(DEBUG_LINKFLAGS) \
+LINKEXE_FLAGS = /nologo $(DEBUGINFO_LINKFLAG) \
 		/incremental:no $(LINKEXE_ARCH_FLAGS)
 
 LINKEXE_CMD	= $(AT)$(TARGET_LINK) $(LINKEXE_FLAGS) /out:$@ $^ \

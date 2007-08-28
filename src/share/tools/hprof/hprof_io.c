@@ -107,7 +107,7 @@ hprof_write_dev(void *buf, int len)
     if (hprof_socket_p) {
         res = hprof_send(hprof_fd, buf, len, 0);
     } else {
-        res = hprof_write(hprof_fd, buf, len);
+        res = hprof_write(hprof_fp, buf, len);
     }
     
     if (res < 0) {

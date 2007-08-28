@@ -39,6 +39,7 @@
 #include "javavm/include/jit/jitasmconstants_cpu.h"
 #include "javavm/include/jit/ccm_cpu.h"
 #include "portlibs/jit/risc/include/export/jit_risc.h"
+#include "javavm/include/flushcache_cpu.h"
 
 /*
  * Trap-based null checking is on for Win32/SARM
@@ -55,5 +56,7 @@
  */
 #define CVMJIT_HAVE_PLATFORM_SPECIFIC_ALLOC_FREE_CODECACHE
 #define CVMJIT_HAVE_STATIC_CODECACHE
+
+#define CVMJITflushCache CVMflushCache
 
 #endif /* _WIN32_JIT_sarm_H */

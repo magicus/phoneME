@@ -917,6 +917,33 @@ CVMCPUemitShiftAndAdd(CVMJITCompilationContext *con,
 extern const CVMCPUCondCode CVMCPUoppositeCondCode[];
 #endif
 
+/* ===== Memory barrier emitters ======================== */
+#ifdef CVM_MP_SAFE
+extern void
+CVMCPUemitMemBar(CVMJITCompilationContext *con);
+
+/*
+ * Guarantees that all load/store subsequent to
+ * CVMCPUemitMemBarAcquire() becomes visible after it
+ * completes.
+ */
+extern void
+CVMCPUemitMemBarAcquire(CVMJITCompilationContext *con);
+
+/*
+ * Guarantees that all load/store occurring previous to
+ * CVMCPUemitMemBarAcquire() complete before it completes.
+ */
+extern void
+CVMCPUemitMemBarRelease(CVMJITCompilationContext *con);
+
+#else
+#define CVMCPUemitMemBar(con)
+#define CVMCPUemitMemBarAcquire(con)
+#define CVMCPUemitMemBarRelease(con)
+#endif
+
+
 /**************************************************************
  * CPU C Call convention abstraction - The following are prototypes of calling
  * convention support functions required by the RISC emitter porting layer.

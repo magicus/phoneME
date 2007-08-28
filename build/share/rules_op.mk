@@ -1,5 +1,5 @@
 #
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -121,7 +121,7 @@ endef
 
 #Command for building shared libraries
 define makeSharedLibrary
-	$(TARGET_LD) $(SO_LINKFLAGS) $(LD_OUTPUT_OPTION)$@ $(1) $(JSROP_LINKLIBS) $(LD_LIBPATH_OPTION)$(JSROP_LIB_DIR)
+	$(TARGET_LD) $(SO_LINKFLAGS) -o $@ $(1) $(JSROP_LINKLIBS)
 endef
 
 # Command for reading API classes list from file
@@ -154,10 +154,10 @@ $(JSR_CDCRESTRICTED_CLASSLIST): $(JSROP_JARS)
 # there is no restrictions for midlets to accessing the JSROP 
 # class' public members.
 #
-$(JSR_MIDPPERMITTED_CLASSLIST): $(JSROP_JARS)
+$(JSR_MIDPPERMITTED_CLASSLIST): $(JSROP_JARS) $(JSROP_EXTRA_JARS)
 	@echo "Generating MIDP permitted JSR class list ...";
 	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister \
-	    -listapi:include=java/*,include=javax/*,include=javacard/*,include=org/xml/sax/*,include=org/w3c/dom/*,$(API_EXTENSIONS_LIST),input=$(JSROP_JARS_LIST)$(PS)$(MIDP_CLASSES_ZIP),cout=$(JSR_MIDPPERMITTED_CLASSLIST)
+	    -listapi:include=java/*,include=javax/*,include=javacard/*,include=org/xml/sax/*,include=org/w3c/dom/*,$(API_EXTENSIONS_LIST),input=$(JSROP_JARS_LIST),cout=$(JSR_MIDPPERMITTED_CLASSLIST)
 endif
 
 clean::
@@ -193,10 +193,20 @@ endif
 include $(JSR_205_RULES_FILE)
 endif
 
+# Include JSR 256
+ifeq ($(USE_JSR_256), true)
+export JSR_256_DIR ?= $(COMPONENTS_DIR)/jsr256
+JSR_256_MAKE_FILE = $(JSR_256_DIR)/build/cdc_share/$(SUBSYSTEM_RULES_FILE)
+ifeq ($(wildcard $(JSR_256_MAKE_FILE)),)
+$(error JSR_256_DIR must point to a directory containing JSR 256 sources)
+endif
+include $(JSR_256_MAKE_FILE)
+endif
+
 # Include JSR 280
 ifeq ($(USE_JSR_280), true)
 export JSR_280_DIR ?= $(COMPONENTS_DIR)/jsr280
-JSR_280_MAKE_FILE = $(JSR_280_DIR)/build/$(SUBSYSTEM_RULES_FILE)
+JSR_280_MAKE_FILE = $(JSR_280_DIR)/build/cdc_share/$(SUBSYSTEM_RULES_FILE)
 ifeq ($(wildcard $(JSR_280_MAKE_FILE)),)
 $(error JSR_280_DIR must point to a directory containing JSR 280 sources)
 endif

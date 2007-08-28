@@ -262,7 +262,7 @@ static void hprof_do_setup(char *str)
 		    output_filename);
 	    goto bad_option_no_msg;
 	}
-	hprof_fd = fileno(fp);
+	hprof_fp = fp;
     }
 
     /* By default we turn on alloc_sites and heap_dump */

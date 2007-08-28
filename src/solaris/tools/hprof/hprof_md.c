@@ -38,6 +38,11 @@
 #include "jlong.h"
 #include "hprof.h"
 
+void hprof_close(int fd)
+{
+    close(fd);
+}
+
 int hprof_send(int s, const char *msg, int len, int flags)
 {
     int res;
@@ -48,12 +53,10 @@ int hprof_send(int s, const char *msg, int len, int flags)
     return res;
 }
 
-int hprof_write(int filedes, const void *buf, size_t nbyte)
+int hprof_write(FILE *filedes, const void *buf, size_t nbyte)
 {
     int res;
-    do {
-        res = write(filedes, buf, nbyte);
-    } while ((res < 0) && (errno == EINTR));
+    res = fwrite(buf, 1, nbyte, filedes);
 
     return res;
 }
