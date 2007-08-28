@@ -113,7 +113,8 @@ public class JavaAPILister extends LinkerUtil {
 		rdr.readFile(fileName, classesProcessed);
 	    }
 	} catch ( IOException e ){
-	    System.out.println(Localizer.getString("javacodecompact.could_not_read_file", fileName));
+	    System.out.println(Localizer.getString(
+                "javacodecompact.could_not_read_file", fileName));
 	    e.printStackTrace();
 	    return false;
 	}
@@ -396,9 +397,18 @@ public class JavaAPILister extends LinkerUtil {
 	boolean classIsFinal;
 	int     permissionMask;
 	ClassMemberInfo cma[];
+
+        if (verbosity > 0){
+            String s = (methods) ? "methods" : "fields";
+            System.out.println("Collect " + s +
+                               " for " + thisClass.className);
+	}
 	// if this class has already been seen,
 	// don't go looking at it again.
 	if (classesAlreadySeen.contains(thisClass)){
+            if (verbosity > 0){
+                System.err.println(thisClass.className + "has already seen.");
+	    }
 	    return;
 	}
 	classesAlreadySeen.addElement(thisClass);
@@ -428,10 +438,11 @@ public class JavaAPILister extends LinkerUtil {
 		    continue;
 		if (!leafClass){
 		    // this is a superclass or interface.
-		    if (cm.isStaticMember()){
+		    /* Bug 6589171. 
+                    if (cm.isStaticMember()){
 			// subclasses don't inherit our statics
 			continue;
-		    }
+		    }*/
 		    if (cm.name.string.equals("<init>")){
 			// subclasses don't inherit our constructors
 			continue;
@@ -469,21 +480,27 @@ public class JavaAPILister extends LinkerUtil {
 		if (doPrint){
 		    // we want to include this one on the list.
 		    components.add(cm);
+                    if (verbosity > 0){
+                        System.out.println("\tFound member:  " + cm);
+	            }
 		}
 	    }
 	}
 
-	// look at superclass
 	String otherName;
 	ClassInfo otherClass;
 	ClassConstant superConstant = thisClass.superClass;
-	if (superConstant != null){
-	    // recurse into superclass
-	    otherName = superConstant.name.string;
-	    if ((otherClass = ClassTable.lookupClass(otherName, apiloader))
-		!= null){
-		collectClassComponents(components, otherClass,
-		    classesAlreadySeen, methods, classIsFinal, false);
+
+	// look at superclass
+        if ((thisClass.access & Const.ACC_INTERFACE) == 0) {
+	    if (superConstant != null){
+	        // recurse into superclass
+	        otherName = superConstant.name.string;
+	        if ((otherClass = ClassTable.lookupClass(otherName, apiloader))
+		    != null){
+		    collectClassComponents(components, otherClass,
+		        classesAlreadySeen, methods, classIsFinal, false);
+	        }
 	    }
 	}
 
