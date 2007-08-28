@@ -72,18 +72,16 @@ public class MMVideoItem extends CustomItem
         return _content.getHeight();
     }
     
-    void forcePaint(int [] frame) {
+    public void forcePaint(int [] frame) {
         if (frame != null)
-            this.frame = frame;
+            _content.setFrame( frame );
         else
             invalidate();
         repaint();
     }
 
-    void renderImage(byte [] imageData, int imageLength) {
-        synchronized (imageLock) {
-            image = Image.createImage(imageData, 0, imageLength);
-        }
+    public void renderImage(byte [] imageData, int imageLength) {
+        _content.setImage( imageData, imageLength );
         repaint();
     }
 
