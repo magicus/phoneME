@@ -169,14 +169,18 @@ else
 	override CDC_10 = false
 endif
 
+CVM_JVMDI               ?= false
 # For backwards compatibility of sorts, we migrate CVM_JVMDI to CVM_JVMTI
 CVM_JVMTI               ?= $(CVM_JVMDI)
+CVM_JVMTI_ROM           ?= $(CVM_JVMTI)
 
 # We need to check this here because the CVM_JVMTI option overrides many
 # others that follows through CVM_DEBUG:
 ifeq ($(CVM_JVMTI), true)
-        override CVM_DEBUG_CLASSINFO = true
-        override CVM_JAVAC_DEBUG = true
+	override CVM_DEBUG_CLASSINFO = true
+ifeq ($(CVM_JVMTI_ROM), true)
+	override CVM_JAVAC_DEBUG = true
+endif 
 	override CVM_AGENTLIB = true
 	override CVM_XRUN = true
         override CVM_THREAD_SUSPENSION = true
@@ -213,7 +217,6 @@ CVM_INSPECTOR		?= $(CVM_DEBUG)
 CVM_JAVAC_DEBUG		?= $(CVM_DEBUG)
 CVM_VERIFY_HEAP		?= false
 CVM_JIT                 ?= false
-CVM_JVMTI               ?= false
 CVM_JVMPI               ?= false
 CVM_JVMPI_TRACE_INSTRUCTION ?= $(CVM_JVMPI)
 CVM_THREAD_SUSPENSION   ?= false
@@ -751,6 +754,7 @@ CVM_FLAGS += \
 	CVM_XRUN \
 	CVM_AGENTLIB \
 	CVM_JVMTI \
+	CVM_JVMTI_ROM \
 	CVM_JVMPI \
 	CVM_JVMPI_TRACE_INSTRUCTION \
 	CVM_THREAD_SUSPENSION \
