@@ -212,12 +212,12 @@ public final class Font {
         style = inp_style;
         size  = inp_size;
 
-        // TODO mapping of face, style, size
-        gciFont = GCIFontEnvironment.getInstance().getFont("Courier", 
-                                                           inp_style,
-                                                           12,
-                                                           isUnderlined(),
-                                                           false);
+        gciFont = 
+	    GCIFontEnvironment.getInstance().getFont(getGCIFontFace(inp_face), 
+						     getGCIFontStyle(inp_style),
+						     getGCIFontSize(inp_size),
+						     isUnderlined(),
+						     false);
 
         baseline = gciFont.getMaxAscent();
         glyphHeight = baseline + gciFont.getMaxDescent();
@@ -543,5 +543,46 @@ public final class Font {
      */
     private static java.util.Hashtable table = new java.util.Hashtable(4);
 
+    /**
+     * Returns the mapping of lcdui Font face to
+     * GCIFont face.
+     *
+     * @param style lcdui Font face that has to be mapped
+     * @return the GCIFont face to which lcdui Font size has to be mapped
+     */
+    private static String getGCIFontFace(int face) {
+        return (face == FACE_MONOSPACE ? "Monospaced" : "SansSerif");
+    }
+    
+    /**
+     * Returns the mapping of STYLE_ITALIC, SIZE_BOLD, SIZE_PLAIN to 
+     * GCIFont STYLE_ITALIC, STYLE_ITALIC, STYLE_PLAIN.
+     *
+     * @param style lcdui Font style that has to be mapped
+     * @return the GCIFont style to which lcdui Font size has to be mapped
+     */
+    private static int getGCIFontStyle(int style) {
+	int gciStyle = GCIFont.STYLE_PLAIN;
+
+        if ((style & STYLE_ITALIC) != 0) {
+	    gciStyle = GCIFont.STYLE_ITALIC;
+	}
+	if ((style & STYLE_BOLD) != 0) {
+	    gciStyle |= GCIFont.STYLE_BOLD;
+	}
+
+        return gciStyle;
+    }
+
+    /**
+     * Returns the mapping of SIZE_SMALL, SIZE_MEDIUM, SIZE_LARGE to 
+     * GCIFont size.
+     *
+     * @param size lcdui Font size that has to be mapped
+     * @return the GCIFont size to which lcdui Font size has to be mapped
+     */
+    private static int getGCIFontSize(int size) {
+        return ((size == SIZE_MEDIUM) ? 12 : (size == SIZE_SMALL ? 10 : 16));
+    }
 }
 

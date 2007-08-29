@@ -71,7 +71,7 @@ class GCIEventListener implements
 
         int type = 0;
         int keyCode = event.getKeyCode();
-        int keyChar = event .getKeyChar();
+        int keyChar = event.getKeyChar();
 
         switch (event.getID()) {
             case GCIKeyEvent.KEY_PRESSED:
@@ -86,10 +86,17 @@ class GCIEventListener implements
                 return false;
         }
 
+        DisplayAccess displayAccess = 
+	    (DisplayAccess)event.getPeerEventTarget();
+
+        if (displayAccess == null) {
+	    return false;
+	}
+
         boolean foundKeyCode = false;
         for (int i = keyMappingTable.length - 1; i >= 0; i--) {
 	    if (keyCode == keyMappingTable[i][1]) {
-		keyCode = keyMappingTable[i][0];
+		keyChar = keyMappingTable[i][0];
                 foundKeyCode = true; 
 	    }
 
@@ -102,15 +109,8 @@ class GCIEventListener implements
 	    return false;
 	}
 
-        DisplayAccess displayAccess = 
-	    (DisplayAccess)event.getPeerEventTarget();
-
-        if (displayAccess == null) {
-	    return false;
-	}
-
         keyEvent.intParam1 = type;
-        keyEvent.intParam2 = keyCode;
+        keyEvent.intParam2 = keyChar;
         keyEvent.intParam4 = displayAccess.getDisplayId();
         eventQueue.post(keyEvent);
 

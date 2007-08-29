@@ -504,7 +504,7 @@ public class Graphics {
      * <P>Value <code>16</code> is assigned to <code>TOP</code>.</P>
      */
     public static final int TOP = 16;
-  
+
     /**
      * Constant for positioning the anchor point of text and images
      * below the text or image.
@@ -1308,7 +1308,9 @@ public class Graphics {
             throw new NullPointerException();
         }
  
-        if (!checkAnchor(anchor, VCENTER)) {
+        if (anchor == 0) {
+	    anchor = TOP | LEFT;
+	} else if (!checkAnchor(anchor, VCENTER)) {
             throw new IllegalArgumentException();
         }
 
@@ -1470,7 +1472,8 @@ public class Graphics {
 
         int[] point = new int[]{x, y};
         // will throw NullPointerException as expected if image is null
-        if (!normalizeAnchor(point, image.getWidth(), image.getHeight(), 
+        if (!checkAnchor(anchor, BASELINE) ||
+	    !normalizeAnchor(point, image.getWidth(), image.getHeight(), 
                              anchor)) {
             throw new IllegalArgumentException();
         }
@@ -1588,7 +1591,8 @@ public class Graphics {
      
         int[] point = new int[]{x_dest, y_dest};
 
-        if (!normalizeAnchor(point, width, height, anchor)) {
+        if (!checkAnchor(anchor, BASELINE) ||
+	    !normalizeAnchor(point, width, height, anchor)) {
             throw new IllegalArgumentException();
         }
 
@@ -1697,7 +1701,8 @@ public class Graphics {
         }
 
         int[] point = new int[]{x_dest + transX, y_dest + transY};
-        if (!normalizeAnchor(point, maxWidth, maxHeight, anchor)) {
+        if (!checkAnchor(anchor, BASELINE) ||
+	    !normalizeAnchor(point, maxWidth, maxHeight, anchor)) {
             throw new IllegalArgumentException();
         }
 
@@ -2275,7 +2280,7 @@ public class Graphics {
      * that is not allowed for this anchor. 
      * Using zero for illegal_vpos shows all
      * values from this list are allowed
-     * @return treu if anchor is valid, otherwise - false.
+     * @return true if anchor is valid, otherwise - false.
      *
      */
     boolean checkAnchor(int anchor, int illegal_vpos) {
@@ -2286,8 +2291,8 @@ public class Graphics {
         }
 
         boolean result  = 
-            (anchor > 0) && (anchor < (BASELINE << 1))
-             && ((anchor & illegal_vpos) == 0);
+	    (anchor > 0)  && (anchor < (BASELINE << 1)) &&
+	    ((anchor & illegal_vpos) == 0);
 
         if (result) {
             int n = anchor & (TOP | BOTTOM | BASELINE | VCENTER);
@@ -2300,7 +2305,7 @@ public class Graphics {
             /* exactly one bit set */
             result = (n != 0) && ((n & (n - 1)) == 0);
         }
-
+	
         return result;
     }
 
@@ -2315,10 +2320,6 @@ public class Graphics {
         /* optimize for most frequent case*/
         if (anchor == (TOP | LEFT) || anchor == 0) {
             return true;
-        }
-
-        if ((anchor & 0x7F) != anchor) {
-            return false;
         }
 
         switch (anchor & (LEFT | RIGHT | HCENTER)) {
