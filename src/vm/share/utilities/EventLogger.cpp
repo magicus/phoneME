@@ -27,52 +27,128 @@
 # include "incls/_precompiled.incl"
 # include "incls/_EventLogger.cpp.incl"
 
-#if ENABLE_PERFORMANCE_COUNTERS && USE_DEBUG_PRINTING
+#if USE_EVENT_LOGGER
 
-EventLogger::LogEntryBlock* EventLogger::_head;
-EventLogger::LogEntryBlock* EventLogger::_tail;
-jlong                       EventLogger::_last_hrticks;
+const char* const EventLogger::_event_names[] = {
+# define NAME_EVENT_LOGGER_TYPE(x) #x,
+  EVENT_LOGGER_TYPES_DO(NAME_EVENT_LOGGER_TYPE)
+# undef NAME_EVENT_LOGGER_TYPE
+};
 
-void EventLogger::initialize() {
-  if (UseEventLogger) {
-    _head = _tail = NULL;
-    _last_hrticks = Os::elapsed_counter();
-  }
+
+jlong EventLogger::Entry::_last;
+jlong EventLogger::Entry::_freq;
+bool  EventLogger::Entry::_use_usec;
+
+inline jlong EventLogger::Entry::now( void ) {
+  return Os::elapsed_counter();
 }
 
-void EventLogger::log(EventType type) {
-  if (!UseEventLogger) {
-    return;
-  }
-  if (_tail == NULL || _tail->_used_count >= BLOCK_SIZE) {
-    size_t size = sizeof(LogEntryBlock) + sizeof(LogEntry[BLOCK_SIZE-1]);
-    LogEntryBlock *blk = (LogEntryBlock*)OsMemory_allocate(size);
-    if (_head == NULL) {
-      _head = _tail = blk;
-    } else {
-      _tail->_next = blk;
-      _tail = blk;
+inline void EventLogger::Entry::initialize( void ) {
+  _last = now();
+
+  const jlong freq = Os::elapsed_frequency();
+  _freq = freq;
+  _use_usec = freq > 100 * 1000;
+}
+
+inline void EventLogger::Entry::set ( const EventType type, const jlong time ) {
+  const unsigned delta = unsigned(time - _last);
+  GUARANTEE( (delta >> delta_bits) == 0, "delta overflow" );
+  _packed_data = (type << delta_bits) | delta;
+  _last = time;
+}
+
+inline jlong
+EventLogger::Entry::dump( Stream* s, jlong time ) const {
+  time += delta();
+  jlong usec = time * 1000 * 1000 / _freq;
+  const jlong msec = usec / 1000;
+  s->print( "%6d", jint(msec) );
+  if( _use_usec ) {
+    usec %= 1000;
+    s->print(".");
+    if( usec < 100 ) {
+      s->print("0");
     }
-    blk->_used_count = 0;
-    blk->_next = NULL;
+    if( usec < 10 ) {
+      s->print("0");
+    }
+    s->print("%d", usec);
   }
 
-  GUARANTEE(_tail != NULL && _tail->_used_count < BLOCK_SIZE, "sanity");
-  LogEntry *entry = &_tail->_entries[_tail->_used_count++];
-  jlong now_hrticks = Os::elapsed_counter();
-  entry->_hrtick_delta = (int)(now_hrticks - _last_hrticks);
-  entry->_type = type;
-  _last_hrticks = now_hrticks;
+  s->print_cr(" %8d %s", jint(time), name() );
+  return time;
 }
 
-#define CASE_OF_EVENT_LOGGER_TYPE(x) \
-    case x: name = STR(x); break;
 
-void EventLogger::dump() {
+EventLogger::Block*  EventLogger::Block::_head;
+EventLogger::Block** EventLogger::Block::_tail;
+int                  EventLogger::Block::_used;
+
+inline void EventLogger::Block::initialize ( void ) {
+  _head = NULL;
+  _tail = &_head;
+  _used = size;
+}
+
+inline void EventLogger::Block::terminate ( void ) {
+  for( Block* block = _head; block; ) {
+    Block* next = block->_next;
+    OsMemory_free( block );
+    block = next;
+  }
+}
+
+inline void EventLogger::Block::allocate ( void ) {
+  Block* block = (Block*)OsMemory_allocate( sizeof( Block ) );
+  block->_next = NULL;
+  *_tail = block;
+  _used = 0;
+}
+
+inline void EventLogger::Block::overflow( void ) {
+  allocate();
+}
+
+inline int EventLogger::Block::used ( void ) const {
+  return _next ? size : _used;
+}
+
+inline void EventLogger::Block::log ( const EventType type ) {
+  if( _used == size ) {
+    overflow();
+  }
+  const jlong time = EventLogger::Entry::now();
+  (*_tail)->_entries[_used++].set( type, time );
+}
+
+inline jlong
+EventLogger::Block::dump( Stream* s, jlong time ) const {
+  const int count = used();
+  for( int i = 0; i < count; i++) {
+    time = _entries[i].dump( s, time );
+  }
+  return time;
+}
+
+
+void EventLogger::initialize( void ) {
+  EventLogger::Entry::initialize();
+  EventLogger::Block::initialize();
+}
+
+void EventLogger::log(const EventType type) {
+  if( UseEventLogger ) {
+    EventLogger::Block::log( type );
+  }
+}
+
+void EventLogger::dump( void ) {
   if (!UseEventLogger) {
     return;
   }
-  if (LogEventsToFile) {
+  if( LogEventsToFile ) {
     static const JvmPathChar filename[] = {
       'e','v','e','n','t','.','l','o','g',0
     };
@@ -83,63 +159,29 @@ void EventLogger::dump() {
   }
 }
   
-void EventLogger::dump(Stream *s) {
-  jlong freq = Os::elapsed_frequency();
-  bool use_usec = (freq > 100 * 1000);
-
-  if (use_usec) {
-    s->print("      msec");
-  } else {
-    s->print("  msec");
-  }
+void EventLogger::dump( Stream* s ) {
+  s->print_cr("*** Event log:");
+  s->print( Entry::use_usec() ? "      msec" : "  msec" );
   s->print_cr("   hrtick event");
   s->print_cr("=======================================");
 
-  jlong last_hrticks = 0;
-  for (LogEntryBlock *blk = _head; blk; blk = blk->_next) {
-    for (int i=0; i<blk->_used_count; i++) {
-      LogEntry *entry = &blk->_entries[i];
-      const char *name = "??";
-      switch (entry->_type) {
-        EVENT_LOGGER_TYPES_DO(CASE_OF_EVENT_LOGGER_TYPE);
-      default:
-        SHOULD_NOT_REACH_HERE();
-        break;
-      }
-      jlong time = last_hrticks + entry->_hrtick_delta;
-      jlong usec = time * 1000 * 1000 / freq;
-      jlong msec = usec / 1000;
-      usec = usec % 1000;
-      last_hrticks = time;
-
-      s->print("%6d", (jint)msec);
-      if (use_usec) {
-        s->print(".");
-        if (usec < 100) {
-          s->print("0");
-        }
-        if (usec < 10) {
-          s->print("0");
-        }
-        s->print("%d", usec);
-      }
-      s->print_cr(" %8d %s", (jint)time, name);
-    }
-    s->print_cr("=======================================");
+  jlong time = 0;
+  for( const Block* block = Block::_head; block; block = block->_next ) {
+    time = block->dump( s, time );
   }
+  s->print_cr("=======================================");
 }
 
-void EventLogger::dispose() {
-  if (!UseEventLogger) {
-    return;
-  }
-
-  LogEntryBlock *blk, *next;
-  for (blk = _head; blk; ) {
-    next = blk->_next;
-    OsMemory_free((void*)blk);
-    blk = next;
-  }
+void EventLogger::dispose( void ) {
+  EventLogger::Block::terminate();
+  EventLogger::Entry::terminate();
 }
 
-#endif // ENABLE_PERFORMANCE_COUNTERS
+#endif // USE_EVENT_LOGGER
+
+void JVM_LogEvent(int type) {
+  GUARANTEE( unsigned(type) <= EventLogger::SCREEN_UPDATE_END,
+             "Wrong event type" );
+  EventLogger::log( EventLogger::EventType( type ) );
+}
+

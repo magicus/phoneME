@@ -329,6 +329,9 @@
 //                                    counters. These counters may skew
 //                                    execution time.
 //
+// ENABLE_EVENT_LOGGER           0,0  Enable event logging. Used for debugging,
+//                                    performance and pause measurements.
+//
 // ENABLE_PRODUCT_PRINT_STACK    -,0  Include the debug function
 //                                    pss() in product build (useful
 //                                    for diagnosing deadlocks.
@@ -768,9 +771,9 @@
 
 #ifndef USE_ROM_LOGGING 
 #if ENABLE_ROM_GENERATOR && !defined(PRODUCT)
-#define USE_ROM_LOGGING 1
+#  define USE_ROM_LOGGING 1
 #else
-#define USE_ROM_LOGGING 0
+#  define USE_ROM_LOGGING 0
 #endif
 #endif
 
@@ -809,14 +812,14 @@
 // work with the way we use macros (e.g., #if ARM && LINUX). So
 // let's change it to something more pleasant.
 #ifdef ARM
-#undef ARM
-#define ARM 1
+#  undef ARM
+#  define ARM 1
 #endif
 
 #if defined(ARM) && !ENABLE_INTERPRETER_GENERATOR && !CROSS_GENERATOR
-#define ARM_EXECUTABLE 1
+#  define ARM_EXECUTABLE 1
 #else
-#define ARM_EXECUTABLE 0
+#  define ARM_EXECUTABLE 0
 #endif
 
 // USE_COMPILER_FPU_MAP               If true, the VirtualStackFrame class
@@ -827,23 +830,23 @@
 //                                    include extra information for literals.
 
 #if !defined(ARM) && !defined(HITACHI_SH)
-#define USE_COMPILER_FPU_MAP 1
+#  define USE_COMPILER_FPU_MAP 1
 #else
-#define USE_COMPILER_FPU_MAP 0
+#  define USE_COMPILER_FPU_MAP 0
 #endif
 
 #if ENABLE_COMPILER || ENABLE_ROM_GENERATOR || ENABLE_INTERPRETER_GENERATOR
-#define USE_COMPILER_STRUCTURES 1
+#  define USE_COMPILER_STRUCTURES 1
 #else
-#define USE_COMPILER_STRUCTURES 0
+#  define USE_COMPILER_STRUCTURES 0
 #endif
 
 #define USE_COMPILER_LITERALS_MAP (ARM | defined(HITACHI_SH))
 
 #if ENABLE_COMPILER && defined(ARM) && !ENABLE_EMBEDDED_CALLINFO
-#define USE_COMPILER_GLUE_CODE 1
+#  define USE_COMPILER_GLUE_CODE 1
 #else
-#define USE_COMPILER_GLUE_CODE 0
+#  define USE_COMPILER_GLUE_CODE 0
 #endif
 
 // USE_UNICODE_FOR_FILENAMES          Use 16-bit unicode chars for filenames
@@ -932,7 +935,7 @@
 #ifndef HOST_LITTLE_ENDIAN
 // This should have be set in makefiles, but need to set a default value 
 // for win32_i386_ide build.
-#define HOST_LITTLE_ENDIAN 1
+#  define HOST_LITTLE_ENDIAN 1
 #endif
 
 // USE_SET_HEAP_LIMIT                 Set this to 0 in Globals_<os>.hpp
@@ -941,7 +944,7 @@
 //                                    implement a user-administered
 //                                    space in the Java heap.
 #ifndef USE_SET_HEAP_LIMIT 
-#define USE_SET_HEAP_LIMIT 1
+#  define USE_SET_HEAP_LIMIT 1
 #endif
 
 // ISOLATES_PARAM                     A function parameter that needs to be
@@ -949,9 +952,9 @@
 //                                    ENABLE_ISOLATES is true.
 
 #if ENABLE_ISOLATES
-#define ISOLATES_PARAM(code) code,
+#  define ISOLATES_PARAM(code) code,
 #else
-#define ISOLATES_PARAM(code)
+#  define ISOLATES_PARAM(code)
 #endif
 
 // These are the 3 choices for loading Monet images. Note that we never
@@ -1021,21 +1024,21 @@
 
 #if ENABLE_INTERPRETER_GENERATOR || USE_SOURCE_IMAGE_GENERATOR 
 // The loopgen and source romgen always need the debug printing code.
-#define USE_DEBUG_PRINTING        1
-#define USE_COMPILER_COMMENTS     ENABLE_COMPILER
-#define USE_COMPILER_DISASSEMBLER ENABLE_COMPILER
-#define USE_OOP_VISITOR           1
+#  define USE_DEBUG_PRINTING        1
+#  define USE_COMPILER_COMMENTS     ENABLE_COMPILER
+#  define USE_COMPILER_DISASSEMBLER ENABLE_COMPILER
+#  define USE_OOP_VISITOR           1
 #else
-#define USE_DEBUG_PRINTING        (ENABLE_TTY_TRACE && !defined(PRODUCT))
-#define USE_COMPILER_COMMENTS     (ENABLE_COMPILER && ENABLE_TTY_TRACE)
-#define USE_COMPILER_DISASSEMBLER (ENABLE_COMPILER && ENABLE_TTY_TRACE)
-#define USE_OOP_VISITOR           USE_DEBUG_PRINTING
+#  define USE_DEBUG_PRINTING        (ENABLE_TTY_TRACE && !defined(PRODUCT))
+#  define USE_COMPILER_COMMENTS     (ENABLE_COMPILER && ENABLE_TTY_TRACE)
+#  define USE_COMPILER_DISASSEMBLER (ENABLE_COMPILER && ENABLE_TTY_TRACE)
+#  define USE_OOP_VISITOR           USE_DEBUG_PRINTING
 #endif
 
 #if defined(PRODUCT) || (!ENABLE_TTY_TRACE)
-#define USE_VERBOSE_ERROR_MSG 0
+#  define USE_VERBOSE_ERROR_MSG 0
 #else
-#define USE_VERBOSE_ERROR_MSG 1
+#  define USE_VERBOSE_ERROR_MSG 1
 #endif
 
 /*
@@ -1050,18 +1053,18 @@
 // Leaf method frame omission is implemented only on ARM compiler.
 //
 #if ARM && !(ENABLE_THUMB_COMPILER||ENABLE_THUMB_REGISTER_MAPPING)
-#define OMIT_LEAF_FRAME_DEFAULT true
+#  define OMIT_LEAF_FRAME_DEFAULT true
 #else
-#define OMIT_LEAF_FRAME_DEFAULT false
+#  define OMIT_LEAF_FRAME_DEFAULT false
 #endif
 
 // By default, do not generate compiler assertions in AOT (since AOT romgen
 // is built in DEBUG mode by default.)
 //
 #if defined(AZZERT) && !USE_SOURCE_IMAGE_GENERATOR
-#define COMPILER_ASSERTION_DEFAULT 1
+#  define COMPILER_ASSERTION_DEFAULT 1
 #else
-#define COMPILER_ASSERTION_DEFAULT 0
+#  define COMPILER_ASSERTION_DEFAULT 0
 #endif
 
 
@@ -1106,19 +1109,17 @@
 //                    which case a lot of code can be conditionally compiled
 //                    out.
 #if defined(ROMIZING) && (defined(PRODUCT) || !ENABLE_SYSTEM_ROM_OVERRIDE)
-#define ROMIZED_PRODUCT 1
+#  define ROMIZED_PRODUCT 1
 #else
-#define ROMIZED_PRODUCT 0
+#  define ROMIZED_PRODUCT 0
 #endif
 
-#if ENABLE_MEMORY_PROFILER
-#if !ENABLE_JAVA_DEBUGGER
-#error "ENABLE_JAVA_DEBUGGER must be true for ENABLE_MEMORY_PROFILER build"
-#endif
+#if ENABLE_MEMORY_PROFILER && !ENABLE_JAVA_DEBUGGER
+#  error "ENABLE_JAVA_DEBUGGER must be true for ENABLE_MEMORY_PROFILER build"
 #endif
 
 #if ENABLE_INLINED_ARRAYCOPY && !ENABLE_COMPILER_TYPE_INFO
-#error "ENABLE_COMPILER_TYPE_INFO must be set for ENABLE_INLINED_ARRAYCOPY"
+#  error "ENABLE_COMPILER_TYPE_INFO must be set for ENABLE_INLINED_ARRAYCOPY"
 #endif
 
 //
@@ -1132,9 +1133,9 @@
 //
 //
 #if ENABLE_ARM_VFP
-#ifndef ENABLE_ARM9_VFP_BUG_WORKAROUND
-#define ENABLE_ARM9_VFP_BUG_WORKAROUND 0
-#endif
+#  ifndef ENABLE_ARM9_VFP_BUG_WORKAROUND
+#    define ENABLE_ARM9_VFP_BUG_WORKAROUND 0
+#  endif
 #endif
 
 //
@@ -1143,3 +1144,19 @@
 //                                 overridden methods
 //
 #define USE_EMBEDDED_VTABLE_BITMAP (ENABLE_COMPILER && ENABLE_INLINE)
+
+//
+// USE_EVENT_LOGGER                Enable JVM event logging
+//
+#if ENABLE_EVENT_LOGGER || (ENABLE_PERFORMANCE_COUNTERS && USE_DEBUG_PRINTING)
+#  define USE_EVENT_LOGGER 1
+#else
+#  define USE_EVENT_LOGGER 0
+#endif
+
+//
+// USE_HIGH_RESOLUTION_TIMER       Implement access to OS timer
+//
+#define USE_HIGH_RESOLUTION_TIMER (ENABLE_PERFORMANCE_COUNTERS ||\
+  ENABLE_PROFILER || ENABLE_WTK_PROFILER || ENABLE_TTY_TRACE ||\
+  USE_EVENT_LOGGER)

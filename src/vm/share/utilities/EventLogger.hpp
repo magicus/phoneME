@@ -24,67 +24,93 @@
  * information or have any questions.
  */
 
-#if ENABLE_PERFORMANCE_COUNTERS && USE_DEBUG_PRINTING
-#define EVENT_LOGGER_RETURN
-#define EVENT_LOGGER_RETURN0
+#if USE_EVENT_LOGGER
+#  define EVENT_LOGGER_RETURN ;
 #else
-#define EVENT_LOGGER_RETURN   {}
-#define EVENT_LOGGER_RETURN0  {return 0;}
+#  define EVENT_LOGGER_RETURN {}
 #endif
 
 class EventLogger : public AllStatic {
 public:
 
 #define EVENT_LOGGER_TYPES_DO(template) \
-  template(CLASS_LOAD_START) \
-  template(CLASS_LOAD_END) \
-  template(COMPILER_GC_START) \
-  template(COMPILER_GC_END) \
-  template(COMPILE_START) \
-  template(COMPILE_END) \
-  template(GC_START) \
-  template(GC_END) \
-  template(VERIFY_START) \
-  template(VERIFY_END)
+  template(SCREEN_UPDATE_START )\
+  template(SCREEN_UPDATE_END   )\
+  template(CLASS_LOAD_START    )\
+  template(CLASS_LOAD_END      )\
+  template(COMPILER_GC_START   )\
+  template(COMPILER_GC_END     )\
+  template(COMPILE_START       )\
+  template(COMPILE_END         )\
+  template(GC_START            )\
+  template(GC_END              )\
+  template(VERIFY_START        )\
+  template(VERIFY_END          )\
 
 #define DECLARE_EVENT_LOGGER_TYPE(x) x,
-
   enum EventType {
     EVENT_LOGGER_TYPES_DO(DECLARE_EVENT_LOGGER_TYPE)
     _number_of_event_types
   };
-  enum {
-    GC_TYPE_YOUNG,
-    GC_TYPE_FULL,
-    GC_TYPE_COMPILER_AREA,
-    _last_event_arg_
+#undef DECLARE_EVENT_LOGGER_TYPE
+
+  static const char* const _event_names[];
+  static const char* name( const EventType type ) {
+    return _event_names[ type ];
+  }
+
+  static void initialize( void )             EVENT_LOGGER_RETURN
+  static void log( const EventType /*type*/) EVENT_LOGGER_RETURN
+  static void dump( void )                   EVENT_LOGGER_RETURN
+  static void dump( Stream* )                EVENT_LOGGER_RETURN
+  static void dispose( void )                EVENT_LOGGER_RETURN
+
+  struct Entry {
+    enum {
+      delta_bits = 24,
+      delta_mask = (1 << delta_bits) - 1
+    };
+
+    unsigned _packed_data;
+
+    // Number of hrticks from the last recorded event
+    int delta       ( void ) const { return _packed_data & delta_mask; }
+    EventType type  ( void ) const { return EventType(_packed_data >> delta_bits); }
+    const char* name( void ) const { return EventLogger::name( type() ); }    
+    void set ( const EventType type, const jlong time );
+    jlong dump( Stream* s, jlong time ) const;
+
+    static jlong now ( void );
+    static void initialize ( void );
+    static void terminate  ( void ) {}
+    static bool  use_usec  ( void ) { return _use_usec; }
+
+    static jlong _last;
+    static jlong _freq;
+    static bool  _use_usec;
   };
 
-  static void initialize()                         EVENT_LOGGER_RETURN;
-  static void log(EventType /*type*/)              EVENT_LOGGER_RETURN;
-  static void log(EventType /*type*/, int /*arg*/) EVENT_LOGGER_RETURN;
-  static void dump()                               EVENT_LOGGER_RETURN;
-  static void dump(Stream *)                       EVENT_LOGGER_RETURN;
-  static void dispose()                            EVENT_LOGGER_RETURN;
+  struct Block {
+    enum { size = 4096 };
 
-  enum {
-    BLOCK_SIZE = 1024
+    Block* _next;
+    Entry  _entries[size];
+
+    int used ( void ) const;
+
+    static Block*  _head;
+    static Block** _tail;
+    static int     _used;
+
+    static void initialize ( void );
+    static void terminate  ( void );
+
+    static void overflow   ( void );
+    static void allocate   ( void );
+    static void log ( const EventType type );
+
+    jlong dump( Stream* s, jlong time ) const;
   };
-  struct LogEntry {
-    int       _hrtick_delta;  // Number of hrticks from the last recorded event
-    EventType _type;
-  };
-
-  struct LogEntryBlock {
-    LogEntryBlock * _next;
-    int             _used_count;
-    LogEntry        _entries[1];
-  };
-
-private:
-  static jlong          _last_hrticks;
-  static LogEntryBlock *_head;
-  static LogEntryBlock *_tail;
-
-  static LogEntry *allocate() EVENT_LOGGER_RETURN0;
 };
+
+#undef EVENT_LOGGER_RETURN

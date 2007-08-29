@@ -58,8 +58,7 @@ class Os {
   // time and midnight, January 1, 1970 UTC.
   static jlong java_time_millis();
 
-#if (ENABLE_PERFORMANCE_COUNTERS || ENABLE_PROFILER || ENABLE_WTK_PROFILER \
-     || ENABLE_TTY_TRACE)
+#if USE_HIGH_RESOLUTION_TIMER
   // Returns the current value of a system-dependent high-resolution counter.
   // Ideally, this counter should be light-weight and should have higher
   // resolution than java_time_millis(). Also, it does not need to start

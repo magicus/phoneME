@@ -193,8 +193,7 @@ void Os::initialize() {
   OsMisc_set_process(main_process);
 }
 
-#if (ENABLE_PERFORMANCE_COUNTERS || ENABLE_PROFILER || ENABLE_WTK_PROFILER \
-     || ENABLE_TTY_TRACE)
+#if USE_HIGH_RESOLUTION_TIMER
 
 static bool  _has_performance_frequency = false;
 static jlong _performance_frequency     = 0;
@@ -221,4 +220,4 @@ jlong Os::elapsed_frequency() {
   return _performance_frequency;
 }
 
-#endif // PRODUCT
+#endif // USE_HIGH_RESOLUTION_TIMER

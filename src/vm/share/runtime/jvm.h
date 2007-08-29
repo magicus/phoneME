@@ -635,6 +635,18 @@ int JVM_GarbageCollect(int flags, int requested_free_bytes);
 #define JVM_COLLECT_YOUNG_SPACE_ONLY     (1 << 0)
 #define JVM_COLLECT_COMPILER_AREA        (1 << 1)
 
+/*
+ * Record an event in JVM EventLogger:
+ *
+ * JVM_EVENT_SCREEN_UPDATE_START
+ * JVM_EVENT_SCREEN_UPDATE_END
+ */
+void JVM_LogEvent(int type);
+
+#define JVM_EVENT_SCREEN_UPDATE_START 0
+#define JVM_EVENT_SCREEN_UPDATE_END   1
+
+
 #if ENABLE_ISOLATES
 
 /*
