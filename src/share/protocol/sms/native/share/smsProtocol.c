@@ -437,12 +437,12 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_receive0) {
                     }
         }); 
 #else
-        CVMD_gcSafeExec(_ee, {
         do {
-            jsr120_wait_for_signal(handle, WMA_SMS_READ_SIGNAL);
+            CVMD_gcSafeExec(_ee, {
+                jsr120_wait_for_signal(handle, WMA_SMS_READ_SIGNAL);
+            });
             psmsData = jsr120_sms_pool_peek_next_msg((jchar)port);
-        } while (psmsData == NULL);
-        }); 
+        } while (psmsData == NULL && isClosed == 0);
 #endif
 #endif
                 }
