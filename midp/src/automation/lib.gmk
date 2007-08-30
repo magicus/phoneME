@@ -1,0 +1,103 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# Automation API Library
+#
+######################################################################
+
+# Add to global SUBSYSTEMS list
+#
+SUBSYSTEMS += automation
+
+# Javadoc source path
+SUBSYSTEM_AUTOMATION_SOURCEPATH += $(SUBSYSTEM_DIR)/automation/reference/classes$(PATHSEP)$(SUBSYSTEM_DIR)/automation/classes
+
+SUBSYSTEM_AUTOMATION_PACKAGES = \
+	com.sun.midp.automation
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_AUTOMATION_SOURCEPATH)
+MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_AUTOMATION_PACKAGES)
+
+MIDP_JAVADOC_ALL += \
+    -group "Automation API" \
+	$(shell echo $(SUBSYSTEM_AUTOMATION_PACKAGES) | tr ' ' $(PATHSEP))
+
+
+# Subsystem's Java files
+SUBSYSTEM_AUTOMATION_JAVA_FILES = \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutomationInitializer.java
+    
+ifeq ($(USE_AUTOMATION), true) 
+SUBSYSTEM_AUTOMATION_JAVA_FILES += \
+	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoMIDlet.java \
+	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoMIDletDescriptor.java \
+	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoEvent.java \
+	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoEventData.java \
+	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoEventQueue.java \
+	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoEventQueueState.java \
+	$(SUBSYSTEM_DIR)/automation/classes/com/sun/midp/automation/AutoEventState.java \
+	\
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoEventDataFactory.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoSuiteStorage.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoSuiteDescriptor.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoSuiteStorageImpl.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoSuiteDescriptorImpl.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoMIDletImpl.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoMIDletInfo.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoMIDletInfoList.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoMIDletDescriptorImpl.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoMIDletStateController.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoMIDletLifeCycleState.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoMIDletForegroundState.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoForegroundStateController.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoExternalSuiteDescriptorImpl.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoInternalSuiteDescriptorImpl.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/installer/AutoGetInstallerTunnel.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/automation/AutoStateTracker.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/main/AutoDisplayController.java \
+	$(SUBSYSTEM_DIR)/automation/reference/classes/com/sun/midp/main/AutoDisplayControllerListener.java 
+
+# I3test files for the automation subsystem
+#
+# Note that the test case classes must be named to begin with 'Test'.
+# The following i3tests have hardcoded references to the sample midlets.
+# If you want to try it, change these references to the valid locations
+# and uncomment the following block.
+
+ifeq ($(USE_I3_TEST), true)
+SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES =
+#SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES = \
+#	$(SUBSYSTEM_DIR)/automation/reference/i3test/com/sun/midp/automation/TestAutoSuiteStorage.java \
+#	$(SUBSYSTEM_DIR)/automation/reference/i3test/com/sun/midp/automation/TestSwitchMidlets.java 
+endif
+
+endif
+
+$(MIDP_CLASSES_ZIP) :: $(SUBSYSTEM_AUTOMATION_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_AUTOMATION_I3TEST_JAVA_FILES)   
