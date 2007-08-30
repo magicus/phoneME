@@ -93,7 +93,7 @@ int ReceiveSMS(BYTE* const receiveBuffer, int max_receive_buffer)
     HANDLE messageAvailableEvent;
     DWORD bytesRead;
 
-    HRESULT ok = SmsOpen(    SMS_MSGTYPE_TEXT, SMS_MODE_RECEIVE, &smshHandle, &messageAvailableEvent);
+    HRESULT ok = SmsOpen(SMS_MSGTYPE_TEXT, SMS_MODE_RECEIVE, &smshHandle, &messageAvailableEvent);
     DWORD dw = GetLastError();
 
     if (ok == SMS_E_RECEIVEHANDLEALREADYOPEN) {
@@ -123,6 +123,9 @@ int ReceiveSMS(BYTE* const receiveBuffer, int max_receive_buffer)
             receiveBuffer, max_receive_buffer,
             (PBYTE)&tpsd, sizeof(tpsd),
             &bytesRead);
+
+        //fix. wince returns doubled array
+        for (DWORD i=0; i<bytesRead; i++) { receiveBuffer[i] = receiveBuffer[i*2]; }
     } else {
         printf("ReceiveSMS: WaitForSingleObject failed\n");
     }
