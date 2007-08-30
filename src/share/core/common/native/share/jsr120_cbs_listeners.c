@@ -43,8 +43,12 @@ typedef enum midp_SignalType {
 #include <app_package.h>
 
 #ifdef ENABLE_CDC
+#ifdef JSR_120_ENABLE_JUMPDRIVER
 #include <jsr120_jumpdriver.h>
 #include <JUMPEvents.h>
+#else
+  #include "jsr120_signals.h"
+#endif
 #endif
 
 #include <jsr120_list_element.h>
@@ -215,10 +219,14 @@ WMA_STATUS jsr120_cbs_unblock_thread(jint handle, jint waitingFor) {
     }
 #else
 /* IMPL NOTE implement this */
+#ifdef JSR_120_ENABLE_JUMPDRIVER
     JUMPEvent evt = (JUMPEvent) handle;
     if (jumpEventHappens(evt) >= 0) {
         return WMA_OK;
     }
+#else
+    jsr120_throw_signal(handle, waitingFor);
+#endif
 #endif
     return WMA_ERR;
 }
@@ -286,7 +294,11 @@ static WMA_STATUS jsr120_cbs_midlet_listener(CbsMessage* message, void* userData
     (void)message;
 
     /** unblock the receiver thread here */
+#ifdef JSR_120_ENABLE_JUMPDRIVER
     INVOKE_REMOTELY(status, jsr120_cbs_unblock_thread, ((int)userData, WMA_CBS_READ_SIGNAL));
+#else
+    status = jsr120_cbs_unblock_thread((int)userData, WMA_CBS_READ_SIGNAL);
+#endif
     return status;
 
 }

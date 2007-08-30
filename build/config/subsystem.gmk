@@ -122,11 +122,13 @@ endif
 endif
 endif
 
+ifeq ($(JSR_120_ENABLE_JUMPDRIVER), true)
 ifeq ($(ENABLE_JUMP), true)
 MODULE_JSR_120_COMMON_JAVA_FILES += \
     $(JSR_120_DIR)/src/jump_application/core/common/classes/com/sun/jump/driver/wma/Listener.java
 SUBSYSTEM_JSR_120_CNI_CLASSES += \
     com.sun.jump.driver.wma.Listener
+endif
 endif
 
 
@@ -177,7 +179,7 @@ ifeq ($(ENABLE_JUMP), true)
 vpath % $(JSR_120_DIR)/src/jump_application/core/common/native
 endif
 
-SUBSYSTEM_JSR_120_EXTRA_INCLUDES = \
+SUBSYSTEM_JSR_120_EXTRA_INCLUDES += \
     $(JSR_120_DIR)/src/share/protocol/sms/native/share/inc \
     $(JSR_120_DIR)/src/share/protocol/cbs/native/share/inc \
     $(JSR_120_DIR)/src/share/core/common/native/share/inc
@@ -199,6 +201,7 @@ SUBSYSTEM_JSR_120_CNI_CLASSES += \
     com.sun.midp.wma.WMACleanupMonitor
 endif
 
+ifeq ($(JSR_120_ENABLE_JUMPDRIVER), true)
 ifeq ($(ENABLE_JUMP), true)
 SUBSYSTEM_JSR_120_NATIVE_FILES += \
     jsr120_callback_proxy.c  \
@@ -206,6 +209,7 @@ SUBSYSTEM_JSR_120_NATIVE_FILES += \
     jsr120_driver_proxy.c  \
     jsr120_driver_srv.c  \
     wma_driver.c
+endif
 endif
 
 SUBSYSTEM_JSR_120_CNI_CLASSES += \

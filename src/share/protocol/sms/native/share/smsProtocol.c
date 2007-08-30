@@ -49,6 +49,9 @@
 #ifndef ENABLE_CDC
   #include <midpServices.h> //WMA_SMS_READ_SIGNAL, WMA_SMS_WRITE_SIGNAL, etc
   #include <midp_thread.h> //midp_thread_wait
+#else
+  #include "jsr120_signals.h"
+  #include "wmaInterface.h"
 #endif
 
 #ifdef ENABLE_MIDP
@@ -62,8 +65,10 @@
 
 #ifdef ENABLE_CDC
 #define JSR120_KNI_LAYER
+#ifdef JSR_120_ENABLE_JUMPDRIVER
 #include <jsr120_jumpdriver.h>
 #include <JUMPEvents.h>
+#endif
 #endif
 
 #include <app_package.h>
@@ -84,7 +89,7 @@ typedef struct {
 } jsr120_sms_message_state_data;
 
 /** Close flag. */
-static int isClosed = 0;
+static int isClosed = 0; //###
 
 /**
  * Opens an SMS connection.
@@ -126,7 +131,11 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_open0) {
 #ifndef ENABLE_CDC
             handle = (int)(pcsl_mem_malloc(1));
 #else
+#ifdef JSR_120_ENABLE_JUMPDRIVER
             handle = (int)jumpEventCreate();
+#else
+            handle = malloc(1);
+#endif
 #endif
             if (handle == 0) {
                KNI_ThrowNew(midpOutOfMemoryError,
@@ -195,7 +204,11 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_close0) {
         /* unblock any blocked threads */
         jsr120_sms_unblock_thread((jint)handle, WMA_SMS_READ_SIGNAL);
 #else
+#ifdef JSR_120_ENABLE_JUMPDRIVER
         jumpEventHappens((JUMPEvent)handle);
+#else
+        jsr120_throw_signal(handle, 0);
+#endif
 #endif
 
         if (deRegister) {
@@ -206,7 +219,11 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_close0) {
 #ifndef ENABLE_CDC
             pcsl_mem_free((void *)handle);
 #else
+#ifdef JSR_120_ENABLE_JUMPDRIVER
             jumpEventDestroy((JUMPEvent)handle);
+#else
+            free((void*)handle);
+#endif
 #endif
         }
 
@@ -413,11 +430,20 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_receive0) {
                     /* block and wait for a message. */
                     midp_thread_wait(WMA_SMS_READ_SIGNAL, handle, NULL);
 #else
+#ifdef JSR_120_ENABLE_JUMPDRIVER
         CVMD_gcSafeExec(_ee, {
                     if (jumpEventWait((JUMPEvent)handle) == 0) {
                         psmsData = jsr120_sms_pool_peek_next_msg((jchar)port);
                     }
         }); 
+#else
+        do {
+            CVMD_gcSafeExec(_ee, {
+                jsr120_wait_for_signal(handle, WMA_SMS_READ_SIGNAL);
+            });
+            psmsData = jsr120_sms_pool_peek_next_msg((jchar)port);
+        } while (psmsData == NULL && isClosed == 0);
+#endif
 #endif
                 }
 #ifndef ENABLE_CDC
@@ -566,6 +592,7 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_waitUntilMessageAvailable0) {
                      /* Block and wait for a message. */
                     midp_thread_wait(WMA_SMS_READ_SIGNAL, handle, NULL);
 #else
+#ifdef JSR_120_ENABLE_JUMPDRIVER
         CVMD_gcSafeExec(_ee, {
                     if (jumpEventWait((JUMPEvent)handle) != 0) {
                         messageLength = -1;
@@ -576,6 +603,15 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_waitUntilMessageAvailable0) {
                         }
                     }
         }); 
+#else
+        CVMD_gcSafeExec(_ee, {
+            jsr120_wait_for_signal(handle, WMA_SMS_READ_SIGNAL);
+            pSMSData = jsr120_sms_pool_peek_next_msg1((jchar)port, 1);
+            if (pSMSData != NULL) {
+                messageLength = pSMSData->msgLen;
+            }
+        }); 
+#endif
 #endif
 #ifndef ENABLE_CDC
                 } else {

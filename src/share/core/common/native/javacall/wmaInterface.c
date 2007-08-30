@@ -36,6 +36,8 @@
 #include <jsr205_mms_protocol.h>
 #endif
 
+#include "javacall_sms.h"
+
 #include <wmaInterface.h>
 #ifdef ENABLE_MIDP
   #include <push_server_resource_mgmt.h>
@@ -44,13 +46,34 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef ENABLE_CDC
+  #include "jsr120_signals.h"
+#endif
+
 /**
  * Defined in wmaUDPEmulator.c
  * No need in current implementation.
  */
 WMA_STATUS init_jsr120() {
+#ifdef ENABLE_CDC
+    jsr120_init_signal();
+#endif
     javacall_wma_init();
     return WMA_NET_SUCCESS;
+}
+
+void javanotify_incoming_sms(
+        javacall_sms_encoding   msgType,
+        char*                   sourceAddress,
+        unsigned char*          msgBuffer,
+        int                     msgBufferLen,
+        unsigned short          sourcePortNum,
+        unsigned short          destPortNum,
+        javacall_int64          timeStamp) {
+
+    SmsMessage* sms = jsr120_sms_new_msg(
+        msgType, sourceAddress, sourcePortNum, destPortNum, timeStamp, msgBufferLen, msgBuffer);
+    jsr120_sms_pool_add_msg(sms);
 }
 
 /**
@@ -58,6 +81,9 @@ WMA_STATUS init_jsr120() {
  * No need in current implementation.
  */
 void finalize_jsr120() {
+#ifdef ENABLE_CDC
+    jsr120_finalize_signal();
+#endif
     javacall_wma_close();
 }
 

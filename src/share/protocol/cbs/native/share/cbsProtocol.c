@@ -33,7 +33,7 @@
  *            - Receiving a CBS message.
  */
 
-#include <sys/types.h>
+//#include <sys/types.h>
 #include <string.h>
 #include <errno.h>
 #include <kni.h>
@@ -62,8 +62,10 @@
 
 #ifdef ENABLE_CDC
 #define JSR120_KNI_LAYER
+#ifdef JSR_120_ENABLE_JUMPDRIVER
 #include <jsr120_jumpdriver.h>
 #include <JUMPEvents.h>
+#endif
 #endif
 
 #ifdef ENABLE_MIDP
@@ -137,7 +139,9 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_open0) {
 #ifndef ENABLE_CDC
                 handle = (int)(pcsl_mem_malloc(1));
 #else
+#ifdef JSR_120_ENABLE_JUMPDRIVER
                 handle = (int)jumpEventCreate();
+#endif
 #endif
                 if (handle == 0) {
                     KNI_ThrowNew(midpOutOfMemoryError,
@@ -193,7 +197,9 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_close0) {
         /* Unblock any blocked threads. */
         jsr120_cbs_unblock_thread((int)handle, WMA_CBS_READ_SIGNAL);
 #else
+#ifdef JSR_120_ENABLE_JUMPDRIVER
         jumpEventHappens((JUMPEvent)handle);
+#endif
 #endif
 
         if (deRegister) {
@@ -204,7 +210,9 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_close0) {
 #ifndef ENABLE_CDC
             pcsl_mem_free((void *)handle);
 #else
+#ifdef JSR_120_ENABLE_JUMPDRIVER
             jumpEventDestroy((JUMPEvent)handle);
+#endif
 #endif
         }
 
@@ -278,11 +286,13 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_receive0) {
                     /* Wait for a message to arrive in the pool. */
                     wma_setBlockedCBSHandle(handle, WMA_CBS_READ_SIGNAL);
 #else
+#ifdef JSR_120_ENABLE_JUMPDRIVER
         CVMD_gcSafeExec(_ee, {
                     if (jumpEventWait((JUMPEvent)handle) == 0) {
                         pCbsData = jsr120_cbs_pool_peek_next_msg((jchar)msgID);
                     }
         }); 
+#endif
 #endif
                 }
 #ifndef ENABLE_CDC
@@ -441,6 +451,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_waitUntilMessageAvailable0) {
                      /* Block and wait for a message. */
                      wma_setBlockedCBSHandle(handle, WMA_CBS_READ_SIGNAL);
 #else
+#ifdef JSR_120_ENABLE_JUMPDRIVER
         CVMD_gcSafeExec(_ee, {
                     if (jumpEventWait((JUMPEvent)handle) != 0) {
                         messageLength = -1;
@@ -451,6 +462,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_waitUntilMessageAvailable0) {
                         }
                     }
         }); 
+#endif
 #endif
 
 #ifndef ENABLE_CDC

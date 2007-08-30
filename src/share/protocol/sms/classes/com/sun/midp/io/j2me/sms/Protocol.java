@@ -391,6 +391,8 @@ public class Protocol extends ProtocolBase {
                 if (index2 != -1) {
                     port = Integer.parseInt(url.substring(index2+1));
 	            host = url.substring(index1+3, index2);
+                } else {
+                    host = url.substring(index1+3);
                 }
             }
         }
@@ -427,8 +429,8 @@ public class Protocol extends ProtocolBase {
 	}
 
         if (dmsg.getAddress() == null) {
-            throw new IllegalArgumentException();
-	}
+            throw new IllegalArgumentException("no address");
+	} 
 
         /*
          * parse name into host and port

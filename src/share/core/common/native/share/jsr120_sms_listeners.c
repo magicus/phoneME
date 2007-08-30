@@ -38,8 +38,12 @@
 #endif
 
 #ifdef ENABLE_CDC
+#ifdef JSR_120_ENABLE_JUMPDRIVER
   #include <jsr120_jumpdriver.h>
   #include <JUMPEvents.h>
+#else
+  #include "jsr120_signals.h"
+#endif
 #endif
 
 #include <jsr120_list_element.h>
@@ -93,6 +97,7 @@ static void jsr120_sms_delete_all_msgs(AppIdType msid, ListElement *head);
  *                 <code>WMA_ERR</code> otherwise
  */
 static WMA_STATUS jsr120_invoke_sms_listeners(SmsMessage* sms, ListElement *listeners) {
+#ifndef ENABLE_CDC
     ListElement* callback;
     WMA_STATUS unblocked = WMA_ERR;
 
@@ -112,6 +117,9 @@ static WMA_STATUS jsr120_invoke_sms_listeners(SmsMessage* sms, ListElement *list
 	}
     }
     return unblocked;
+#else
+    jsr120_throw_signal(0, 0);
+#endif
 }
 
 
@@ -254,11 +262,14 @@ WMA_STATUS jsr120_sms_unblock_thread(jint handle, jint waitingFor) {
 	return WMA_OK;
     }
 #else
-    /* IMPL NOTE implement this*/
+#ifdef JSR_120_ENABLE_JUMPDRIVER
     JUMPEvent evt = (JUMPEvent) handle;
     if (jumpEventHappens(evt) >= 0) {
         return WMA_OK;
     }
+#else
+    jsr120_throw_signal(handle, waitingFor);
+#endif
 #endif
     return WMA_ERR;
 
@@ -330,8 +341,13 @@ static WMA_STATUS jsr120_sms_midlet_listener(jint port, SmsMessage* smsmessg,
     WMA_STATUS status;
     (void)port;
     (void)smsmessg;
+
     /** unblock the receiver thread here */
+#ifdef JSR_120_ENABLE_JUMPDRIVER
     INVOKE_REMOTELY(status, jsr120_sms_unblock_thread, ((jint)userData, WMA_SMS_READ_SIGNAL));
+#else
+    status = jsr120_sms_unblock_thread((jint)userData, WMA_SMS_READ_SIGNAL);
+#endif
     return status;
 }
 

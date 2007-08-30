@@ -39,6 +39,14 @@ JSR_120_LIB_NAME      = jsr120
 JSR_120_BUILD_DIR     = $(JSROP_BUILD_DIR)/$(JSR_120_LIB_NAME)
 JSR_120_GENERATED_DIR = $(JSR_120_BUILD_DIR)/generated
 
+vpath % $(JSR_120_DIR)/src/cdc_share/native
+
+SUBSYSTEM_JSR_120_NATIVE_FILES += \
+    jsr120_signals.c
+
+SUBSYSTEM_JSR_120_EXTRA_INCLUDES += \
+    $(JSR_120_DIR)/src/cdc_share/native/inc \
+
 include $(JSR_120_DIR)/build/config/common_defs.gmk
 
 CVM_DEFINES          += $(JSR_120_EXTRA_CFLAGS) -DENABLE_CDC=1 -DENABLE_JUMP=1
