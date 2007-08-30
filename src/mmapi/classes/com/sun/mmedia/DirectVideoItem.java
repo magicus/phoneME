@@ -29,12 +29,12 @@ import javax.microedition.lcdui.Graphics;
 
 public class DirectVideoItem extends CustomItem
 {
-    private DirectVideoItemContent _content;
+    private DirectVideoItemImpl _impl;
     
-    public DirectVideoItem( DirectVideoItemContent content )
+    public DirectVideoItem( DirectVideoItemImpl content )
     {
         super( null );
-        _content = content;
+        _impl = content;
     }
     
     public void forcePaint()
@@ -43,27 +43,27 @@ public class DirectVideoItem extends CustomItem
     }
     
     protected void sizeChanged(int w, int h) {
-        _content.sizeChanged( w, h );
+        _impl.sizeChanged( w, h );
         repaint();
     }
 
     // Now this function used to control visible state of direct video preview
     // Called from MIDPWindow class
     protected void showNotify() {
-        _content.showNotify();
+        _impl.showNotify();
         repaint();
     }
 
     // Now this function used to control visible state of direct video preview
     // Called from MIDPWindow class
     protected void hideNotify() {
-        _content.hideNotify();
+        _impl.hideNotify();
         repaint();
     }
     
     
     protected void paint(Graphics g, int w, int h) {
-        _content.paint( g, w, h );
+        _impl.paint( g, w, h );
     }
     
     protected int getMinContentWidth() {
@@ -75,11 +75,11 @@ public class DirectVideoItem extends CustomItem
     }
 
     protected int getPrefContentWidth(int height) {
-        return _content.getWidth();
+        return _impl.getWidth();
     }
 
     protected int getPrefContentHeight(int width) {
-        return _content.getHeight();
+        return _impl.getHeight();
     }
 
     

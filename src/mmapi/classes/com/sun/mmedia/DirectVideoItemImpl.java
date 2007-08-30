@@ -26,15 +26,12 @@ package com.sun.mmedia;
 
 import javax.microedition.lcdui.Graphics;
 
-public interface MMVideoItemContent {
-    public void paint( Graphics g );
-    public void paintFullScreen( Graphics g );
-    public void setNonFullScreen();
-    
+public interface DirectVideoItemImpl
+{
+    public void paint(Graphics g, int w, int h);
     public int getWidth();
     public int getHeight();
-    
-    public void setFrame( int [] frame );
-    public void setImage( byte [] imageData, int imageLength );
-    
+    public void sizeChanged(int w, int h);
+    public void showNotify();
+    public void hideNotify();
 }

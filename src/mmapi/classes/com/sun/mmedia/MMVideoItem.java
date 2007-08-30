@@ -34,7 +34,7 @@ import javax.microedition.lcdui.Display;
 public class MMVideoItem extends CustomItem
 {
     private boolean _isFullScreen;
-    private MMVideoItemContent _content;
+    private MMVideoItemImpl _impl;
     
     // Full screen canvas
     private Canvas fullScreen = null;
@@ -45,15 +45,15 @@ public class MMVideoItem extends CustomItem
     // Saved displayable replaced by canvas in fullscreen mode
     private Displayable oldDisplayable = null;
 
-    public MMVideoItem( MMVideoItemContent c )
+    public MMVideoItem( MMVideoItemImpl c )
     {
         super("");
-        _content = c;
+        _impl = c;
         _isFullScreen = false;
     }
     
     protected void paint(Graphics g, int w, int h) {
-        _content.paint( g );
+        _impl.paint( g );
     }
     
     protected int getMinContentWidth() {
@@ -65,23 +65,23 @@ public class MMVideoItem extends CustomItem
     }
     
     protected int getPrefContentWidth(int h) {
-        return _content.getWidth();
+        return _impl.getWidth();
     }
 
     protected int getPrefContentHeight(int w) {
-        return _content.getHeight();
+        return _impl.getHeight();
     }
     
     public void forcePaint(int [] frame) {
         if (frame != null)
-            _content.setFrame( frame );
+            _impl.setFrame( frame );
         else
             invalidate();
         repaint();
     }
 
     public void renderImage(byte [] imageData, int imageLength) {
-        _content.setImage( imageData, imageLength );
+        _impl.setImage( imageData, imageLength );
         repaint();
     }
 
@@ -134,14 +134,14 @@ public class MMVideoItem extends CustomItem
 
         protected void paint(Graphics g) {
             g.fillRect(0, 0, getWidth(), getHeight());
-            _content.paintFullScreen( g );
+            _impl.paintFullScreen( g );
         }
 
         // Any key returns to normal mode
         protected void keyPressed(int keyCode) {
             if ( _isFullScreen )
             {
-                _content.setNonFullScreen();
+                _impl.returnFromFullScreen();
             }
             super.keyPressed(keyCode);
         }
@@ -150,7 +150,7 @@ public class MMVideoItem extends CustomItem
         protected void pointerPressed(int x, int y) {
             if ( _isFullScreen )
             {
-                _content.setNonFullScreen();
+                _impl.returnFromFullScreen();
             }
             super.pointerPressed(x, y);
         }
@@ -159,7 +159,7 @@ public class MMVideoItem extends CustomItem
         protected void hideNotify() {
             if ( _isFullScreen )
             {
-                _content.setNonFullScreen();
+                _impl.returnFromFullScreen();
             }
             super.hideNotify();
         }
