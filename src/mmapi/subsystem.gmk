@@ -33,6 +33,10 @@
 SUBSYSTEM_MMAPI_JAVA_FILES = \
     $(SUBSYSTEM_DIR)/mmapi/classes/javax/microedition/lcdui/MMHelperImpl.java \
     $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MMHelper.java \
+    $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MMVideoItem.java \
+    $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MMVideoItemImpl.java \
+    $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/DirectVideoItem.java \
+    $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/DirectVideoItemImpl.java \
     $(SUBSYSTEM_DIR)/mmapi/classes/com/sun/mmedia/MIDPVideoPainter.java
 
 ifeq ($(TARGET_VM),cldc_vm)
