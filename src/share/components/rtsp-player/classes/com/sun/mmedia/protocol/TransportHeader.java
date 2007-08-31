@@ -178,6 +178,15 @@ public class TransportHeader {
         return lowerTransport;
     }
 
+    /**
+     *  Gets the server data port
+     *
+     * @return    The server data port
+     */
+    public int getClientDataPort()
+    {
+        return client_data_port;
+    }
 
     /**
      *  Gets the server data port

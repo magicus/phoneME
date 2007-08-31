@@ -141,6 +141,8 @@ public class Connection extends Thread implements Runnable {
         }
         // #endif ]
 
+		System.out.println( "Local address="+socket.getLocalAddress() );
+
         start();
     }
 
@@ -237,13 +239,15 @@ public class Connection extends Thread implements Runnable {
 		    baos.write(din.readByte());
                 }
                 
-                // System.out.println(baos);
+				System.out.println("--------- response ---------\n"+baos+"----------------------------\n");
+				
                 Message msg = new Message(baos.toByteArray());
                 rtspManager.rtspMessageIndication(msg);
 	    } catch (Exception e) {
-		// e.printStackTrace();
-		connectionIsAlive = false;
-            }
+            System.out.println("-- exception in run():'"+e+"', closing RTSP connection." );
+		    //e.printStackTrace();
+		    connectionIsAlive = false;
+        }
 
 	    // #endif ]
         }
