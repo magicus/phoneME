@@ -502,6 +502,9 @@ endif
 # Classes needed for dual stack support
 #
 ifeq ($(CVM_DUAL_STACK), true)
+    CVM_BUILDTIME_CLASSES += \
+	com.sun.cdc.config.MIDPPackageManager
+
     CLASSLIB_CLASSES += \
 	sun.misc.MemberFilter \
 	sun.misc.MemberFilterConfig \

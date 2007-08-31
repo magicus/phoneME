@@ -37,8 +37,20 @@ $(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/PackageManager.java: $(CONFIGURATO
 	$(AT)$(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
 	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml \
 	-xsl $(call POSIX2HOST,$(CONFIGURATOR_DIR)/xsl/cdc/propertiesInit.xsl)\
-	-params initializers '$(JSR_INITIALIZER_LIST)' \
+	-params className PackageManager initializers '$(JSR_INITIALIZER_LIST)' \
 	-out $(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/PackageManager.java)
+
+ifeq ($(CVM_DUAL_STACK), true)
+JSR_MIDP_INITIALIZER_LIST = $(subst .Initializer,.MIDPInitializer,$(JSR_INITIALIZER_LIST))
+# This rule is temporary. It should be removed when real PackageManager is implemented.
+$(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/MIDPPackageManager.java: $(CONFIGURATOR_JAR_FILE)
+	@echo ... generating MIDPPackageManager.java
+	$(AT)$(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
+	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml \
+	-xsl $(call POSIX2HOST,$(CONFIGURATOR_DIR)/xsl/cdc/propertiesInit.xsl) \
+	-params className MIDPPackageManager initializers '$(JSR_MIDP_INITIALIZER_LIST)' \
+	-out $(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/MIDPPackageManager.java)
+endif
 
 # CDC test classes are built by the 'all' target.
 build-unittests::
