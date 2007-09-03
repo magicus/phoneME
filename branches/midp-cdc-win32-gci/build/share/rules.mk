@@ -1137,9 +1137,6 @@ endif
 ifeq ($(MAKELEVEL), 0)
 
 ifeq ($(CVM_JIT),true)
-ifeq ($(CVM_JVMTI),true)
-$(error JVMTI is not supported in JIT builds. Use CVM_JIT=false.)
-endif
 ifeq ($(CVM_JVMPI),true)
 $(warning JVMPI is not fully supported in JIT builds. Programs may not behave properly.)
 endif

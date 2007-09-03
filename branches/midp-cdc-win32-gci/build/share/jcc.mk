@@ -162,7 +162,7 @@ ifeq ($(CVM_DEBUG_CLASSINFO), true)
 CVM_JCC_OPTIONS += -g
 endif
 # Allow breakpoints in ROMized code
-ifeq ($(CVM_JVMTI), true)
+ifeq ($(CVM_JVMTI_ROM), true)
 CVM_JCC_OPTIONS += -imageAttribute noPureCode
 endif
 

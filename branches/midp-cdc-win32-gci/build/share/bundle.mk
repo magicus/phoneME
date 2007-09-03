@@ -273,6 +273,7 @@ endif
 ifeq ($(findstring win32,$(BUNDLE_OS_PORTS)),win32)
 BUNDLE_INCLUDE_LIST +=				\
 	build/win32/ppc*_defs.mk \
+	build/win32/wm5*_defs.mk \
 	build/win32/*wince*.mk \
 	build/win32/vc*_defs.mk \
 	build/win32/host_defs.mk 
