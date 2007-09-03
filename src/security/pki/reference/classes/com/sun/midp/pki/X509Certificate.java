@@ -57,9 +57,8 @@ import com.sun.midp.crypto.*;
  * <P />
  */
 public class X509Certificate implements Certificate {
-
     /** Indicates a no error condition. */
-    public static final byte NO_ERROR                   = 0;
+    public static final byte NO_ERROR  = 0;
 
     /**
      * Indicates that no information is available on
@@ -107,6 +106,8 @@ public class X509Certificate implements Certificate {
     public static final byte TYPE_DNS_NAME = 2;
     /** URI alternative name type code. */
     public static final byte TYPE_URI = 6;
+    /** IP address alternative name type code. */
+    public static final byte TYPE_IP_ADDRESS = 7;
 
     /** Bit mask for digital signature key usage.  */
     public static final int DIGITAL_SIG_KEY_USAGE = 0x00000001;
@@ -301,16 +302,12 @@ public class X509Certificate implements Certificate {
     private byte sigAlg = NONE;
     /** Issuer signature on certificate. */
     private byte[] signature = null;
-    /**  Hash of TBSCertificate. */
+    /** Hash of TBSCertificate. */
     private byte[] TBSCertHash = null;
-    /**  True iff cert has unrecognized critical extension. */
+    /** True if cert has unrecognized critical extension. */
     private boolean badExt = false; 
-    /**  Alternate name. */
-
-    /** format of the subject alternative name, 2 means a DNS name */
-    private byte subAltNameType;
-    /** subject alternative name */
-    private Object subAltName;
+    /** Subject alternative names and types. */
+    Vector subjectAltNames = new Vector(3);
     /** does the cert include BasicConstaints. */
     private boolean hasBC = false; 
     /** CA value in BasicConstraints. */
@@ -656,33 +653,47 @@ public class X509Certificate implements Certificate {
                     break;
                     
                 case 0x11:   // subAltName = id-ce 17
-                    StringBuffer temp = new StringBuffer();
-                    int start = idx + 4;
-                    int length = extValLen - 4;
+                    int totalLength = extValLen - 4;
+                    int valueOffset = idx;
                     extId = "SAN";
 
                     /*
                      * First byte stores the type e.g. 1=rfc822Name(email), 
                      * 2=dNSName, 6=URI etc
-                     */ 
-                    subAltNameType = (byte) (enc[idx + 2] - 0x80);
+                     */
+                    while (totalLength > 0) {
+                        Object subAltName;
+                        StringBuffer temp = new StringBuffer();
+                        byte subAltNameType =
+                                (byte) (enc[valueOffset + 2] - 0x80);
+                        int valueLen = enc[valueOffset + 3];
+                        int start = valueOffset + 4;
 
-                    switch (subAltNameType) {
-                    case TYPE_EMAIL_ADDRESS:
-                    case TYPE_DNS_NAME:
-                    case TYPE_URI:
-                        for (int i = 0; i < length; i++) {
-                            temp.append((char)enc[start + i]);
+                        switch (subAltNameType) {
+                            case TYPE_EMAIL_ADDRESS:
+                            case TYPE_DNS_NAME:
+                            case TYPE_URI:
+                                for (int i = 0; i < valueLen; i++) {
+                                    temp.append((char)enc[start + i]);
+                                }
+
+                                subAltName = temp.toString();
+                                break;
+
+                            default:
+                                subAltName = new byte[valueLen];
+                                for (int i = 0; i < valueLen; i++) {
+                                    ((byte[])subAltName)[i] = enc[start + i];
+                                }
                         }
 
-                        subAltName = temp.toString();
-                        break;
+                        // +1 byte for the field length and 1 for field type
+                        valueOffset += valueLen + 2;
+                        totalLength -= (valueLen + 2);
 
-                    default:
-                        subAltName = new byte[length];
-                        for (int i = 0; i < length; i++) {
-                            ((byte[])subAltName)[i] = enc[start + i];
-                        }
+                        subjectAltNames.addElement(new SubjectAlternativeName(
+                                subAltNameType, subAltName
+                        ));
                     }
                     
                     break;
@@ -759,18 +770,20 @@ public class X509Certificate implements Certificate {
                 }
             }
             
-            // For debugging only
-	    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-			       "<Id: " + 
-                               Utils.hexEncode(enc, extIdIdx, extIdLen) +
-                               (crit ? ", critical, " : ", ") +
-                               Utils.hexEncode(enc, extValIdx, extValLen) +
-                               ">" + 
-                               ((extId == null) ? " (Unrecognized)" : ""));
-	    }
+                // For debugging only
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                           "<Id: " +
+                           Utils.hexEncode(enc, extIdIdx, extIdLen) +
+                           (crit ? ", critical, " : ", ") +
+                           Utils.hexEncode(enc, extValIdx, extValLen) +
+                           ">" +
+                           ((extId == null) ? " (Unrecognized)" : ""));
+            }
             
-            if ((extId == null) && crit) badExt = true;
+            if ((extId == null) && crit) {
+                badExt = true;
+            }
 
             idx = extValIdx + extValLen;
         }
@@ -835,10 +848,11 @@ public class X509Certificate implements Certificate {
             res.fp = new byte[hash.length];
             System.arraycopy(hash, 0, res.fp, 0, hash.length);
         
-	    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-			       "-------- Begin Certificate -------");
-	    }
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                               "-------- Begin Certificate -------");
+            }
+            
             /*
              * A Certificate is a sequence of a TBSCertificate, a signature
              * algorithm identifier and the signature
@@ -847,29 +861,33 @@ public class X509Certificate implements Certificate {
             // Now read the TBS certificate
             res.TBSStart = res.idx;
             size = res.getLen(SEQUENCE_TYPE);
-	    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-			       "-------- Begin TBSCertificate -------");
-	    }
+
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                               "-------- Begin TBSCertificate -------");
+            }
 
             int sigAlgIdx = res.idx + size;
             res.TBSLen = sigAlgIdx - res.TBSStart;
             // Now parse the version
             if ((res.enc[res.idx] & 0xf0) == 0xa0) {
                 res.idx++;
-		if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		    Logging.report(Logging.INFORMATION,
+
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION,
                                    LogChannels.LC_SECURITY,
-				   "Version info: " + 
-				   Utils.hexEncode(res.enc, (res.idx + 1), 
-						   res.enc[res.idx]));
-		}
+                                   "Version info: " +
+                                       Utils.hexEncode(res.enc, (res.idx + 1),
+                                   res.enc[res.idx]));
+                }
+
                 size = (res.enc[res.idx++] & 0xff);
                 if (res.idx + size > res.enc.length) { 
                     throw new IOException("Version info too long");
                 }
 
-                res.version = (byte)(res.enc[res.idx + (size - 1)]);
+                // version 3 is encoded as 0x02
+                res.version = (byte)(res.enc[res.idx + (size - 1)] + 1);
                 res.idx += size;
             } else {
                 res.version = 1;  // No explicit version value
@@ -882,21 +900,23 @@ public class X509Certificate implements Certificate {
             
             // Expect the signature AlgorithmIdentifier
             byte id = res.getAlg();
-	    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-			       "Algorithm Id: " + id);
-	    }
+
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                               "Algorithm Id: " + id);
+            }
+
             // Expect the issuer name
             start = res.idx;
             size = res.getLen(SEQUENCE_TYPE);
             int end = res.idx + size;
             try {
                 res.issuer = res.getName(end);
-		if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		    Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-				   "Issuer: " + res.issuer);
-		    
-		}
+                if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                    Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                                   "Issuer: " + res.issuer);
+
+                }
             } catch (Exception e) {
                 throw new IOException("Could not parse issuer name");
             }
@@ -921,19 +941,20 @@ public class X509Certificate implements Certificate {
             start = res.idx;
             size = res.getLen(SEQUENCE_TYPE);
             end = res.idx + size;
-	    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-			       "Subject: " +
-			       Utils.hexEncode(res.enc, start, size));
-	    }
+
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                    "Subject: " + Utils.hexEncode(res.enc, start, size));
+            }
+
             if (size != 0) {
                 try {
                     res.subject = res.getName(end);
-		    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-			Logging.report(Logging.INFORMATION,
+                    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                        Logging.report(Logging.INFORMATION,
                                        LogChannels.LC_SECURITY,
-				       "Subject: " + res.subject);
-		    }
+                               "Subject: " + res.subject);
+                    }
                 } catch (Exception e) {
                     throw new IOException("Could not parse subject name");
                 }
@@ -941,20 +962,20 @@ public class X509Certificate implements Certificate {
             // subjectAltName is present
             
             // Parse the subject public key information
-	    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-			       "SubjectPublicKeyInfo follows");
-	    }
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                           "SubjectPublicKeyInfo follows");
+            }
 
             publicKeyLen = res.getLen(SEQUENCE_TYPE);
             publicKeyPos = res.idx;
 
             // Match the algorithm Id
             id = res.getAlg();
-	    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-			       "Public Key Algorithm: " + id);
-	    }
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                           "Public Key Algorithm: " + id);
+            }
 
             if (id != RSA_ENCRYPTION) {
                 // skip the public key
@@ -981,11 +1002,11 @@ public class X509Certificate implements Certificate {
             modulusLen = size;
 
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-			       "Modulus:  " +
-			       Utils.hexEncode(res.enc, modulusPos,
-                                               modulusLen));
-	    }
+                Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                           "Modulus:  " +
+                           Utils.hexEncode(res.enc, modulusPos,
+                                                       modulusLen));
+            }
 
             res.idx += size;
 
@@ -1002,18 +1023,18 @@ public class X509Certificate implements Certificate {
             res.pubKey = new RSAPublicKey(res.enc, modulusPos, modulusLen,
                                           res.enc, exponentPos, exponentLen);
 
-	    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-			       "Exponent: " +
-			       Utils.hexEncode(res.enc, exponentPos,
-                                               exponentLen));
-	    }
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+            Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                       "Exponent: " +
+                       Utils.hexEncode(res.enc, exponentPos,
+                                                   exponentLen));
+            }
 
             res.idx += size;
             if (res.idx != sigAlgIdx) {
                 if (res.version < 3) { 
                     throw new IOException(
-                        "Unexpected extensions in old version cert");
+                        "Unexpected extensions in old version cert" + res.version);
                 } else {
                     res.parseExtensions(sigAlgIdx);
                 }
@@ -1022,11 +1043,10 @@ public class X509Certificate implements Certificate {
             // get the signatureAlgorithm
             res.sigAlg = res.getAlg();
 
-	    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-			       "Signature Algorithm: " + 
-			       res.getSigAlgName());
-	    }
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                           "Signature Algorithm: " + res.getSigAlgName());
+            }
 
             /*
              * If this is a supported signature algorithm, compute and save
@@ -1064,11 +1084,11 @@ public class X509Certificate implements Certificate {
             System.arraycopy(res.enc, res.idx, res.signature, 
                              (sigLen - (size - 1)), (size - 1));
 
-	    if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
-		Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
-			       sigLen + "-byte signature: " + 
-			       Utils.hexEncode(res.signature));
-	    }
+            if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
+                Logging.report(Logging.INFORMATION, LogChannels.LC_SECURITY,
+                               sigLen + "-byte signature: " +
+                               Utils.hexEncode(res.signature));
+            }
             return res;
         } catch (IndexOutOfBoundsException e) {
             throw new IOException("Bad length detected in cert DER");
@@ -1076,7 +1096,6 @@ public class X509Certificate implements Certificate {
             throw new IOException(e.toString());
         }
     }
-
 
     /**
      * Verify a chain of certificates.
@@ -1100,8 +1119,8 @@ public class X509Certificate implements Certificate {
             throws CertificateException {
         X509Certificate cert;
         X509Certificate prevCert;
-        PublicKey key;
-        Vector keys;
+        // PublicKey key;
+        // Vector keys;
         X509Certificate[] caCerts; // CA X509Certificates
         int maxPathLen = -1; // 0 means a chain of 1 so -1 means no chain
         int prevMaxPathLen;
@@ -1513,9 +1532,9 @@ public class X509Certificate implements Certificate {
      *
      * @return type of subject alternative name
      */
-    public int getSubjectAltNameType() {
-        return subAltNameType;
-    }
+//    public Vector getSubjectAltNameType() {
+//        return subjectAltNames;
+//    }
 
     /**
      * Gets the subject alternative name or null if it was not in the 
@@ -1523,8 +1542,8 @@ public class X509Certificate implements Certificate {
      *
      * @return type of subject alternative name or null
      */
-    public Object getSubjectAltName() {
-        return subAltName;
+    public Vector getSubjectAltNames() {
+        return subjectAltNames;
     }
 
     /**
@@ -1788,12 +1807,14 @@ public class X509Certificate implements Certificate {
         tmp.append("Signature Algorithm: ");
         tmp.append(getSigAlgName());
 
-        if (subAltName != null) {
+        for (int i = 0; i < subjectAltNames.size(); i++) {
+            SubjectAlternativeName subjAltName =
+                    (SubjectAlternativeName)subjectAltNames.elementAt(i);
             tmp.append("\n");
             tmp.append("SubjectAltName: ");
-            tmp.append(subAltName);
+            tmp.append((String)subjAltName.getSubjectAltName());
             tmp.append("(type ");
-            tmp.append(subAltNameType);
+            tmp.append(subjAltName.getSubjectAltNameType());
             tmp.append(")");
         }
 

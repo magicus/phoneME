@@ -28,6 +28,7 @@ package com.sun.midp.io.j2me.https;
 
 import java.util.Hashtable;
 import java.util.Enumeration;
+import java.util.Vector;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -431,10 +432,45 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
             serverCert = sslConnection.getServerCertificate();
 
             /*
-             * if the subject alternate name is a DNS name,
-             * then use that instead of the common name for a
-             * site name match
+             * if the subject alternate name is a DNS name or an IP address,
+             * then use that instead of the common name for a site name match
              */
+            int i;
+            Vector v = serverCert.getSubjectAltNames();
+            boolean altNamePresent = false;
+
+            for (i = 0; i < v.size(); i++) {
+                SubjectAlternativeName altName =
+                        (SubjectAlternativeName) v.elementAt(i);
+
+                // For IP address, it needs to be exact match
+                if (altName.getSubjectAltNameType() ==
+                        X509Certificate.TYPE_IP_ADDRESS) {
+                    String ipAddress = (String)altName.getSubjectAltName();
+                    altNamePresent = true;
+                    if (url.host.equalsIgnoreCase(ipAddress)) {
+                        break;
+                    }
+                } else if (altName.getSubjectAltNameType() ==
+                            X509Certificate.TYPE_DNS_NAME) {
+                    // compare DNS Name with host in url
+                    String dnsName =
+                        ((String)altName.getSubjectAltName()).toLowerCase();
+                    altNamePresent = true;
+                    if (checkSiteName(url.host, dnsName)) {
+                        break;
+                    }
+                }
+            }
+
+            if (altNamePresent) {
+                if (i == v.size()) {
+                    throw new CertificateException(
+                        "Subject alternative name did not match site name",
+                        serverCert, CertificateException.SITENAME_MISMATCH);
+                }
+
+/*
             if (serverCert.getSubjectAltNameType() ==
                 X509Certificate.TYPE_DNS_NAME) {
                 if (!checkSiteName(url.host,
@@ -443,6 +479,7 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
                         "Subject alternative name did not match site name",
                         serverCert, CertificateException.SITENAME_MISMATCH);
                 }
+*/
             } else {
                 String cname = getCommonName(serverCert.getSubject());
                 if (cname == null) {
