@@ -469,17 +469,6 @@ public class Protocol extends com.sun.midp.io.j2me.http.Protocol
                         "Subject alternative name did not match site name",
                         serverCert, CertificateException.SITENAME_MISMATCH);
                 }
-
-/*
-            if (serverCert.getSubjectAltNameType() ==
-                X509Certificate.TYPE_DNS_NAME) {
-                if (!checkSiteName(url.host,
-                        (String)serverCert.getSubjectAltName())) {
-                    throw new CertificateException(
-                        "Subject alternative name did not match site name",
-                        serverCert, CertificateException.SITENAME_MISMATCH);
-                }
-*/
             } else {
                 String cname = getCommonName(serverCert.getSubject());
                 if (cname == null) {
