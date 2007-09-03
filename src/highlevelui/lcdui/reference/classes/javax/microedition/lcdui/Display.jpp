@@ -3061,6 +3061,7 @@ public class Display {
                 currentCopy = Display.this.current;
             }
 
+            windowCopy.setVerticalScroll(0,100);
             windowCopy.resize();
             if (currentCopy != null) {
                 currentCopy.uCallInvalidate();
