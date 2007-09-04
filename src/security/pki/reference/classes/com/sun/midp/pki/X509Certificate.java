@@ -1528,15 +1528,6 @@ public class X509Certificate implements Certificate {
     }
 
     /**
-     * Gets the type of subject alternative name.
-     *
-     * @return type of subject alternative name
-     */
-//    public Vector getSubjectAltNameType() {
-//        return subjectAltNames;
-//    }
-
-    /**
      * Gets the subject alternative name or null if it was not in the 
      * certificate.
      *
