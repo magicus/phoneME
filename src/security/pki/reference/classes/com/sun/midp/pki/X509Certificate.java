@@ -813,7 +813,7 @@ public class X509Certificate implements Certificate {
          * force bad parameter errors now, so later we can consider any out of
          * bounds errors to be parsing errors
          */
-	int test = buf[off] + buf[len - 1] + buf[off + len - 1];
+        int test = buf[off] + buf[len - 1] + buf[off + len - 1];
 
         try {
             int start = 0;
@@ -1119,8 +1119,6 @@ public class X509Certificate implements Certificate {
             throws CertificateException {
         X509Certificate cert;
         X509Certificate prevCert;
-        // PublicKey key;
-        // Vector keys;
         X509Certificate[] caCerts; // CA X509Certificates
         int maxPathLen = -1; // 0 means a chain of 1 so -1 means no chain
         int prevMaxPathLen;
