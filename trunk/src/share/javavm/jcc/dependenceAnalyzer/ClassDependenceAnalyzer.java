@@ -177,11 +177,11 @@ public class ClassDependenceAnalyzer extends DependenceAnalyzer {
 	if ( classFileStream == null ){
 	    return null;
 	}
-	ClassFile cf = new ClassFile( className, classFileStream, false );
-	if ( ! cf.readClassFile() ){
+	ClassFile cfile = new ClassFile( className, classFileStream, false );
+	if ( ! cfile.readClassFile() ){
 	    return null;
 	}
-	return cf.clas;
+	return cfile.cinfo;
     }
 
     private void newDependence( DependenceNode here, DependenceNode there )

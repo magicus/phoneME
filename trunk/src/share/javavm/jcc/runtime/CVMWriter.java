@@ -1330,9 +1330,6 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	boolean doTypeTable = cp.needsTypeTable() ||
 	    ClassClass.isPartiallyResolved(cp);
 
-if (doTypeTable) {
-System.err.println("NEEDS TYPE TABLE");
-}
 	if ( doTypeTable && !classLoading ){
 	    // in future, do something more useful here.
 	    System.err.println(Localizer.getString("cwriter.no_class_loading"));
@@ -1542,6 +1539,31 @@ System.err.println("NEEDS TYPE TABLE");
 	    classOut.println("    0)");
 	}
 
+	// TODO :: BEGIN
+        // This is for adding class version number and signature later.
+        // This code needs to be further reviewed and tested before enabling
+        // it.
+        if (false) { // disabled for now.
+	    classOut.println("    /* major_version */ " + c.ci.majorVersion + ",");
+	    classOut.println("    /* minor_version */ " + c.ci.minorVersion + ",");
+	    classOut.print  ("    /* CB genSig     */ ");
+	    //if (c.ci.signatureAttr != null) {
+	    //  classOut.print("\""+c.ci.signatureAttr.signature+"\""); // FIXME
+	    //} else {
+	        classOut.print(0);
+	    //}
+	    classOut.println(",");
+	    classOut.println("    /* FB genSig *   */ " +
+			     0 + ",");
+	    classOut.println("    /* MB getSig *   */ " +
+			     0 +"), ");
+
+	    if (c.ci.innerClassAttr != null) {
+		writeInnerClasses(c);
+	    }
+        }
+        // TODO :: END
+
 	classOut.println("};");
     }
 
@@ -1619,19 +1641,25 @@ System.err.println("NEEDS TYPE TABLE");
 	switch ( value.tag ){
 	case Const.CONSTANT_INTEGER:
 	case Const.CONSTANT_FLOAT:
-	     /* 
-	      * add INTEGER macro like the one for LONG and DOUBLE
-	      * to have the possibility to change the representation
-	      * platform dependent
-	      */
-	     /* 
-	      * Add prefix to macro to get correct version.
-	      */
-	     out.print( prefix + "INTEGER(" );
-	     writeIntegerValue(((SingleValueConstant)value).value, out);
-	     out.print( ")" );
-	     break;
+	    /* 
+	     * add INTEGER macro like the one for LONG and DOUBLE
+	     * to have the possibility to change the representation
+	     * platform dependent
+	     */
+	    /* 
+	     * Add prefix to macro to get correct version.
+	     */
+            if (value.tag == Const.CONSTANT_INTEGER) {
+                if (verbose) out.print("/* int */ ");
+            } else {
+                if (verbose) out.print("/* flt */ ");
+            }
+	    out.print( prefix + "INTEGER(" );
+	    writeIntegerValue(((SingleValueConstant)value).value, out);
+	    out.print( ")" );
+	    break;
 	case Const.CONSTANT_UTF8:
+	    if (verbose) out.print("/* utf */ ");
 	    out.print("(CVMInt32)");
 	    out.write('"');
 	    out.print( Util.unicodeToUTF(((UnicodeConstant)value).string ));
@@ -1645,6 +1673,7 @@ System.err.println("NEEDS TYPE TABLE");
 	    /* CVM_BIGTYPEID: RS, 10/08/02:
 	     * Use ADDR() macro to print out address.
 	     */
+	    if (verbose) out.print("/* str */ ");
 	    out.print(prefix  + "ADDR(&CVMROMGlobals."+stringArrayName+"[");
 	    if ( ((StringConstant)value).unicodeIndex == -1 ) {
 		// Uninitialized, very bad
@@ -1661,6 +1690,7 @@ System.err.println("NEEDS TYPE TABLE");
 	    /*
 	     * Add prefix to macro to get correct version.
 	     */
+	    if (verbose) out.print("/* lng */ ");
 	    writeLongValue( "LONG",  dval.highVal, dval.lowVal, out );
 	    }
 	    break;
@@ -1669,14 +1699,16 @@ System.err.println("NEEDS TYPE TABLE");
 	    /*
 	     * Add prefix to macro to get correct version.
 	     */
+	    if (verbose) out.print("/* dbl */ ");
 	    writeLongValue( "DOUBLE",  dval.highVal, dval.lowVal, out );
 	    }
 	    break;
 	case Const.CONSTANT_CLASS:
-	    if ( value.isResolved() ){
+	    if (value.isResolved()) {
 		/* 
 		 * Use ADDR() macro to print out address.
 		 */
+		if (verbose) out.print("/* cls */ ");
 		out.print(prefix + "ADDR(&"+cbName( (CVMClass)(((ClassConstant)value).find().vmClass)) + ")");
 	    } else {
 		int classid = CVMDataType.lookupClassname(
@@ -1684,6 +1716,7 @@ System.err.println("NEEDS TYPE TABLE");
 		/*
 		 * Use TYPEID() macro to create typeid from type part.
 		 */
+		if (verbose) out.print("/* cID */ ");
 		out.print(prefix + "TYPEID(0, 0x"+ Integer.toHexString(classid) +")");
 	    }
 	    break;
@@ -1693,6 +1726,11 @@ System.err.println("NEEDS TYPE TABLE");
 		/*
 		 * Use ADDR() macro to print out address.
 		 */
+		if (value.tag == Const.CONSTANT_METHOD) {
+		    if (verbose) out.print("/* mb  */ ");
+		} else {
+		    if (verbose) out.print("/* imb */ ");
+		}
 		out.print(prefix + "ADDR(");
 		out.print(methodBlockAddress( ((MethodConstant)value).find()) + ")");
 	    } else {
@@ -1704,6 +1742,11 @@ System.err.println("NEEDS TYPE TABLE");
 		 * constant.
 		 * It is not a typeId.
 		 */
+		if (value.tag == Const.CONSTANT_METHOD) {
+		    if (verbose) out.print("/* mID */ ");
+		} else {
+		    if (verbose) out.print("/* iID */ ");
+		}
 		out.print(prefix + 
 		    "MEMBER_REF(0x"+Integer.toHexString(ref.clas.getIndex()) + 
 		    ", 0x"+Integer.toHexString(ref.sig.getIndex())+")");
@@ -1718,6 +1761,7 @@ System.err.println("NEEDS TYPE TABLE");
 		/*
 		 * Add prefix to macro to get correct version.
 		 */
+		if (verbose) out.print("/* fb  */ ");
 		out.print(prefix + "ADDR(" + fieldBlockAddress(ftarget) + ")");
 	    } else {
 		FMIrefConstant ref = (FMIrefConstant)value;
@@ -1728,6 +1772,7 @@ System.err.println("NEEDS TYPE TABLE");
 		 * constant.
 		 * It is not a typeId.
 		 */
+		if (verbose) out.print("/* fID */ ");
 		out.print(prefix + 
 		    "MEMBER_REF(0x"+Integer.toHexString(ref.clas.getIndex()) + 
 		    ", 0x"+Integer.toHexString(ref.sig.getIndex())+")");
@@ -1743,6 +1788,7 @@ System.err.println("NEEDS TYPE TABLE");
 	    /* 
 	     * Use TYPEID() macro to create typeid from parts.
 	     */
+	    if (verbose) out.print("/* n&t */ ");
 	    out.print("TYPEID(0x" + Integer.toHexString(nameid) + ", 0x" + Integer.toHexString(typeid) +")");
 	    break;
 	}

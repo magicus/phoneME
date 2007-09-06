@@ -61,7 +61,7 @@ public
 class ConstantPool implements Comparator {
 
     protected Hashtable	h;	// for "quick" lookup
-    protected Vector	t;	// for enumeration in order
+    protected Vector	enumedEntries;	// for enumeration in order
     protected int		n;
     protected ConstantObject constants[]= null;
     protected boolean	locked = false;
@@ -70,8 +70,8 @@ class ConstantPool implements Comparator {
 
     public ConstantPool(){
 	h = new Hashtable( 500, 0.7f );
-	t = new Vector();
-	t.addElement(null ); // 0th element is string of length 0.
+	enumedEntries = new Vector();
+	enumedEntries.addElement(null ); // 0th element is string of length 0.
 	n = 1;
     }
 
@@ -82,8 +82,8 @@ class ConstantPool implements Comparator {
     /**
      * compare
      *   
-     * @param  obj1 first object to compare.
-     * @param  obj2 second object to compare.
+     * @param  o1 first object to compare.
+     * @param  o2 second object to compare.
      * @return -1 if obj1 > obj2, 0 if obj1 == obj2, 1 if obj1 < obj2.
      */  
     public int compare(java.lang.Object o1, java.lang.Object o2) {
@@ -113,14 +113,14 @@ class ConstantPool implements Comparator {
 	// count.	
         Arrays.sort(arr, this);
 
-	t.removeAllElements();
-	t.addElement(null);
+	enumedEntries.removeAllElements();
+	enumedEntries.addElement(null);
 	for (int i = 0; i < arr.length; i++) {
 	    arr[i].index = nNew;
 	    nNew += arr[i].nSlots;
-	    t.addElement(arr[i]);
+	    enumedEntries.addElement(arr[i]);
 	    for (int j =arr[i].nSlots; j > 1; j-- )
-                t.addElement( null ); // place holder
+                enumedEntries.addElement( null ); // place holder
 	}
 	constants = null;
     }
@@ -160,9 +160,9 @@ class ConstantPool implements Comparator {
 	    r.containingPool = this;
 	    r.shared = true;
 	    h.put( r, r );
-	    t.addElement( r );
+	    enumedEntries.addElement( r );
 	    for ( int i =r.nSlots; i > 1; i-- )
-		t.addElement( null ); // place holder.
+		enumedEntries.addElement( null ); // place holder.
 	    constants = null; // mark any "constants" as obsolete!
 	} else { 
 	    r.ldcReferences += s.ldcReferences;
@@ -192,12 +192,12 @@ class ConstantPool implements Comparator {
 	return getConstants()[i];
     }
 
-    public ConstantObject[]
-    getConstants(){
-	if ( constants != null )
-	    return constants;
-	constants = new ConstantObject[ t.size() ];
-	t.copyInto( constants );
+    public ConstantObject[] getConstants(){
+	if (constants != null) {
+            return constants;
+        }
+	constants = new ConstantObject[enumedEntries.size()];
+	enumedEntries.copyInto(constants);
 	return constants;
     }
 
@@ -207,7 +207,7 @@ class ConstantPool implements Comparator {
 
     public Enumeration
     getEnumeration(){
-	return t.elements();
+	return enumedEntries.elements();
     }
 
     public void
@@ -217,21 +217,21 @@ class ConstantPool implements Comparator {
     unlock(){ locked = false; }
 
     private int
-    read( DataInput in ) throws IOException {
+    read(DataInput in) throws IOException {
 	int n = in.readUnsignedShort();
 	ConstantObject c[] = new ConstantObject[n];
-	for (int i = 1; i < n; i+=c[i].nSlots ){
+	for (int i = 1; i < n; i+=c[i].nSlots) {
 	    c[i] = ConstantObject.readObject(in);
 	}
 	//System.err.println("DEBUG CONSTANTPOOL DUMP" );
 	//for (int i = 1; i < n; i+=c[i].nSlots ){
-	//    System.err.println("\t#"+i+"\t"+c[i].toString() );
+	//    System.err.println("\enumedEntries#"+i+"\enumedEntries"+c[i].toString());
 	//}
-	for (int i = 1; i < n; i+=c[i].nSlots ){
-	    c[i].resolve( this );
+	for (int i = 1; i < n; i+=c[i].nSlots) {
+	    c[i].flatten(this);
 	}
-	for (int i = 1; i < n; i+=c[i].nSlots ){
-	    add( c[i] );
+	for (int i = 1; i < n; i+=c[i].nSlots) {
+	    add(c[i]);
 	}
 	constants = c;
 	return n;
@@ -241,7 +241,7 @@ class ConstantPool implements Comparator {
     clearAllReferences(){
 	ConstantObject c;
 	for( int i=1; i< n; i+=c.nSlots){
-	    c = (ConstantObject)t.elementAt(i);
+	    c = (ConstantObject)enumedEntries.elementAt(i);
 	    c.clearReference();
 	}
     }
@@ -260,7 +260,7 @@ class ConstantPool implements Comparator {
 	ConstantObject o;
 	// first, count and index.
 	for ( int i = 1; i < n; i += o.nSlots ){
-	    o = (ConstantObject)t.elementAt(i);
+	    o = (ConstantObject)enumedEntries.elementAt(i);
 	    if ( o.references == 0 ){
 		o.index = -1;
 		h.remove( o );
@@ -276,7 +276,7 @@ class ConstantPool implements Comparator {
 	Vector newConstants = new Vector( nNew );
 	newConstants.addElement( null );
 	for ( int i = 1; i < n; i += o.nSlots ){
-	    o = (ConstantObject)t.elementAt(i);
+	    o = (ConstantObject)enumedEntries.elementAt(i);
 	    if ( o.references != 0 ){
 		// we're keeping it.
 		newConstants.addElement(o);
@@ -284,7 +284,7 @@ class ConstantPool implements Comparator {
 		    newConstants.addElement( null ); // place holder.
 	    }
 	}
-	t = newConstants;
+	enumedEntries = newConstants;
 	n = nNew;
 	constants = null; // mark as obsolete
     }
@@ -356,7 +356,7 @@ class ConstantPool implements Comparator {
 	o.writeShort(n);
 	ConstantObject ob;
 	for (int i = 1; i < n; i+=ob.nSlots ){
-	    ob = (ConstantObject)t.elementAt(i);
+	    ob = (ConstantObject)enumedEntries.elementAt(i);
 	    if ( ob != null )
 		ob.write(o);
 	}
@@ -367,7 +367,7 @@ class ConstantPool implements Comparator {
     dump( PrintStream o ){
 	ConstantObject c;
 	for( int i=1; i< n; i+=c.nSlots){
-	    c = (ConstantObject)t.elementAt(i);
+	    c = (ConstantObject)enumedEntries.elementAt(i);
 	    o.println("\t["+c.index+"]\t"+c.references+"\t"+c.toString() );
 	}
     }

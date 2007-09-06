@@ -32,14 +32,16 @@ import java.io.DataOutput;
 import java.io.IOException;
 import consts.Const;
 import jcc.Str2ID;
+import util.Assert;
 import util.*;
 
-/*
- * Represents an CONSTANT_Fieldref, CONSTANT_Methodref or
+/**
+ * An abstract class to represent CP constants which define class members.
+ * This class will serve as a common super class for the classes which will
+ * contain the CP constants: CONSTANT_Fieldref, CONSTANT_Methodref, and
  * CONSTANT_InterfaceMethodref.
  */
-
-public 
+public abstract
 class FMIrefConstant extends ConstantObject
 {
     // These fields are filled in by Clas.resolveConstant().
@@ -53,37 +55,42 @@ class FMIrefConstant extends ConstantObject
     public int classIndex;
     public int sigIndex;
 
-    FMIrefConstant(){ nSlots = 1;
-		     }
+    FMIrefConstant(int tag) { super(tag); }
 
-    protected FMIrefConstant( int t, ClassConstant c, NameAndTypeConstant s ){
-	tag = t;
+    protected FMIrefConstant(int tag, ClassConstant c, NameAndTypeConstant s) {
+	super(tag);
 	clas = c;
 	sig = s;
-	resolved = true;
-	nSlots = 1;
+	isFlat = true;
     }
 	
-
-    public void read( DataInput in ) throws IOException {
+    /**
+     * Read in the constant pool data for this constant member object.
+     * This method should only be called by the read() factory methods of
+     * its concrete subclasses.
+     */
+    protected void readIndexes(DataInput in) throws IOException {
 	classIndex = in.readUnsignedShort();
 	sigIndex = in.readUnsignedShort();
     }
 
-    public void resolve( ConstantPool cp ){
-	if (resolved) return;
+    public void flatten(ConstantPool cp) {
+	if (isFlat) return;
+        Assert.disallowClassloading();
 	sig = (NameAndTypeConstant)cp.elementAt(sigIndex);
 	clas = (ClassConstant)cp.elementAt(classIndex);
-	resolved = true;
+	isFlat = true;
+        Assert.allowClassloading();
     }
 
-    public void write( DataOutput out) throws IOException {
-	out.writeByte( tag );
-	if ( resolved ){
-	    out.writeShort( clas.index );
-	    out.writeShort( sig.index );
+    public void write(DataOutput out) throws IOException {
+	out.writeByte(tag);
+	if (isFlat) {
+	    out.writeShort(clas.index);
+	    out.writeShort(sig.index);
 	} else {
-	    throw new DataFormatException(Localizer.getString("fmirefconstant.unresolved_fmirefconstant.dataformatexception"));
+	    throw new DataFormatException(Localizer.getString(
+                "fmirefconstant.unresolved_fmirefconstant.dataformatexception"));
 	    //out.writeShort( classIndex );
 	    //out.writeShort( sigIndex );
 	}
@@ -93,10 +100,12 @@ class FMIrefConstant extends ConstantObject
 	String t = (tag==Const.CONSTANT_FIELD)?/*NOI18N*/"FieldRef: ":
 		   (tag==Const.CONSTANT_METHOD)?/*NOI18N*/"MethodRef: ":
 		   /*NOI18N*/"InterfaceRef: ";
-	if (resolved)
-	    return t+clas.name.string+/*NOI18N*/" . "+sig.name.string+/*NOI18N*/" : "+sig.type.string;
+	if (isFlat)
+	    return t+clas.name.string+/*NOI18N*/" . "+
+                   sig.name.string+/*NOI18N*/" : "+sig.type.string;
 	else
-	    return t+/*NOI18N*/"[ "+classIndex+/*NOI18N*/" . "+sigIndex+/*NOI18N*/" ]";
+	    return t+/*NOI18N*/"[ "+classIndex+/*NOI18N*/" . "+
+                   sigIndex+/*NOI18N*/" ]";
     }
 
     public String prettyPrint(){
