@@ -77,6 +77,9 @@ public class TickerLayer extends CLayer {
         bounds[X] = 0;
         bounds[W] = ScreenSkin.WIDTH;
         bounds[H] = TickerSkin.HEIGHT;
+        if (textLoc > bounds[X] + bounds[W]) {
+            textLoc = bounds[X] + bounds[W];
+        }
         switch (TickerSkin.ALIGN) {
             case(Graphics.TOP):
                 bounds[Y] = 0;
@@ -140,6 +143,7 @@ public class TickerLayer extends CLayer {
                 g.setColor(TickerSkin.COLOR_FG_SHD);
                 g.drawString(text, x, y, Graphics.TOP | TickerSkin.DIRECTION);
             }
+
             g.setColor(TickerSkin.COLOR_FG);
             g.drawString(text, textLoc, TickerSkin.TEXT_ANCHOR_Y,
                     Graphics.TOP | TickerSkin.DIRECTION);
