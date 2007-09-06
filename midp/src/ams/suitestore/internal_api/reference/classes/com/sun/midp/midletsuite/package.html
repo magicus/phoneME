@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!--
+
+    
+ 
+  Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+
+-->
+</head>
+<body bgcolor="white">
+An internal API for installing, loading, and removing MIDlet suites.
+
+<p><h2>MIDlet Suite Storage</h2>
+<p>The MIDlet Suite Storage component is responsible for the following:
+</p>
+<ul>
+<li>Persistently stores MIDlet suites</li>
+<li>Manages all the MIDlet suites' information</li>
+<li>Provides a way to load a MIDlet</li>
+</ul>
+<p>Each MIDlet suite in persistent storage (each installed MIDlet suite) is
+ uniquely identified by a storage name constructed from the combination of the
+ values of the MIDlet-Name and MIDlet-Vendor attributes. The syntax and
+ content of storage names are implementation dependent. Only packages
+ installed or upgraded using this API appear in the list of known packages.
+</p>
+<p>Managing a MIDlet suite's information means storing any data that is
+ received or created during installation, and removing all the data when the
+ MIDlet suite is removed. This component uses the native persistent storage
+ services of the platform, and must be ported to different platforms.
+</p>
+<p><h3>Detailed Design</h3>
+</p>
+<p>The MIDlet suite storage component has a C interface and a secure Java
+ platform interface. The C interface is in the file suitestore_common.h. The
+ Java platform interface is MIDletSuiteStorage.
+</p>
+<p>The default implementation is in the file
+ suitestore_intern.c, which use midpStorage.c and rms.c. The figure below
+ shows the MIDlet suite storage component's dependencies.
+</p>
+<p><img src="doc-files/midletsuitestorage.gif" name="midletsuitestorage"
+ align="CENTER" border="0">
+</p>
+<p>The MIDlet Suite Storage component provides the following services to both
+ Java platform and native components:
+</p>
+<ul>
+<li>Provides a suite's unique identifier, given the name and vendor of the
+ suite</li>
+<li>Creates a unique identifier for a suite, given its name and vendor</li>
+<li>Provides the total amount of persistent storage used by a suite</li>
+<li>Provides the amount of storage available for a suite to be installed</li>
+<li>Adds a MIDlet suite to the MIDlet suite storage, or updates an existing
+ MIDlet suite. This service is designed to handle system-specific installation
+ actions</li>
+<li>Removes a MIDlet suite from the MIDlet suite storage. This service is
+ designed to handle system-specific uninstall actions</li>
+<li>Provides the installation information for a MIDlet suite such as the URL
+ of its JAD file</li>
+<li>Provides the application-specific properties of a MIDlet suite such as its
+ name, vendor, and version</li>
+<li>Provides the current permissions for a suite</li>
+<li>Updates the current permissions for a suite</li>
+<li>Provides the Push interrupt setting for a suite</li>
+<li>Updates the Push interrupt setting for a suite</li>
+<li>Provides a list of the unique identifiers of all the installed MIDlet
+ suites</li>
+<li>Provides a list of delete-notification URLs for OTA installers</li>
+<li>Adds a URL to the list of delete-notification URLs</li>
+<li>Removes a URL from the list of delete-notification URLs</li>
+</ul>
+<p>To avoid creating a class for only a few runtime environment services, the
+ <code>MIDletSuiteStorage</code> class provides the following functionality:
+</p>
+<ul>
+<li>Sets the next suite to run after the current suite ends</li>
+<li>Sets the last suite to run after there is no current suite to run</li>
+<li>Gets a MIDletSuite object for scheduling a suite to run</li>
+</ul>
+<p>See the com.sun.midp.main package for more information.
+</p>
+<p><h3>Unique Suite IDs</h3>
+</p>
+<p>MIDlet suites are identified globally by their name, vendor, and version.
+ Because there can only be one version of a suite on a device at time, the
+ name and vendor can be used to identify a MIDlet suite. However, it saves a
+ lot of code if a MIDlet suite can be uniquely identified with only one value, a value that can be used in ASCII files. The MIDlet suite storage component
+ gives each MIDlet suite a device-unique ASCII string of a arbitrary length
+ that cannot be used for another suite, even after the suite is deleted.
+</p>
+<p>An implementation of the MIDlet suite storage component MAY internally use
+ the unique identifier as part of a file name, none of the other AMS
+ components use the identifier to access MIDlet suite storage files directly.
+<p><h3>File Storage</h3>
+</p>
+<p>The MIDlet Suite Storage component assumes the file system is one large
+ repository. It also assumes that file names can be of arbitrary length and
+ can be made up of any printable ASCII characters. Using these assumptions,
+ the component builds file names by appending the following three strings,
+ without directory separators:
+</p>
+<ul>
+<li>Application database root &shy; Enables the files in the MIDlet suite storage
+ area to be distinguished from other files in the system. This string can be
+ missing (zero characters long) if the feature is not needed. It can also be a
+ directory name that ends with a directory separator.</li>
+<li>Unique suite root &shy; Identifies the MIDlet suite. This string is found by
+ using a function that takes the unique ID of a suite.</li>
+<li>File extension &shy; Identifies the file's contents</li>
+</ul>
+</p>
+</body>
+</html>
