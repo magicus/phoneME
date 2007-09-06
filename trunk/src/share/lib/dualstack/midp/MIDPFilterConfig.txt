@@ -1812,6 +1812,22 @@ CLASS javax/microedition/io/StreamConnectionNotifier
 	wait:()V
 	close:()V
 
+CLASS java/lang/IllegalStateException
+   METHODS
+	<init>:()V
+	<init>:(Ljava/lang/String;)V
+	getMessage:()Ljava/lang/String;
+	toString:()Ljava/lang/String;
+	printStackTrace:()V
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
+
 CLASS java/util/Timer
    METHODS
 	<init>:()V
@@ -1842,22 +1858,6 @@ CLASS java/util/TimerTask
 	hashCode:()I
 	equals:(Ljava/lang/Object;)Z
 	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
-
-CLASS java/lang/IllegalStateException
-   METHODS
-	<init>:()V
-	<init>:(Ljava/lang/String;)V
-	getMessage:()Ljava/lang/String;
-	toString:()Ljava/lang/String;
-	printStackTrace:()V
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
 	notify:()V
 	notifyAll:()V
 	wait:(J)V
@@ -2020,6 +2020,48 @@ CLASS javax/microedition/io/HttpConnection
 	openDataOutputStream:()Ljava/io/DataOutputStream;
 
 CLASS javax/microedition/io/HttpsConnection
+   FIELDS
+	HEAD:Ljava/lang/String;
+	GET:Ljava/lang/String;
+	POST:Ljava/lang/String;
+	HTTP_OK:I
+	HTTP_CREATED:I
+	HTTP_ACCEPTED:I
+	HTTP_NOT_AUTHORITATIVE:I
+	HTTP_NO_CONTENT:I
+	HTTP_RESET:I
+	HTTP_PARTIAL:I
+	HTTP_MULT_CHOICE:I
+	HTTP_MOVED_PERM:I
+	HTTP_MOVED_TEMP:I
+	HTTP_SEE_OTHER:I
+	HTTP_NOT_MODIFIED:I
+	HTTP_USE_PROXY:I
+	HTTP_TEMP_REDIRECT:I
+	HTTP_BAD_REQUEST:I
+	HTTP_UNAUTHORIZED:I
+	HTTP_PAYMENT_REQUIRED:I
+	HTTP_FORBIDDEN:I
+	HTTP_NOT_FOUND:I
+	HTTP_BAD_METHOD:I
+	HTTP_NOT_ACCEPTABLE:I
+	HTTP_PROXY_AUTH:I
+	HTTP_CLIENT_TIMEOUT:I
+	HTTP_CONFLICT:I
+	HTTP_GONE:I
+	HTTP_LENGTH_REQUIRED:I
+	HTTP_PRECON_FAILED:I
+	HTTP_ENTITY_TOO_LARGE:I
+	HTTP_REQ_TOO_LONG:I
+	HTTP_UNSUPPORTED_TYPE:I
+	HTTP_UNSUPPORTED_RANGE:I
+	HTTP_EXPECT_FAILED:I
+	HTTP_INTERNAL_ERROR:I
+	HTTP_NOT_IMPLEMENTED:I
+	HTTP_BAD_GATEWAY:I
+	HTTP_UNAVAILABLE:I
+	HTTP_GATEWAY_TIMEOUT:I
+	HTTP_VERSION:I
    METHODS
 	getSecurityInfo:()Ljavax/microedition/io/SecurityInfo;
 	getPort:()I
@@ -2061,23 +2103,13 @@ CLASS javax/microedition/io/HttpsConnection
 	openOutputStream:()Ljava/io/OutputStream;
 	openDataOutputStream:()Ljava/io/DataOutputStream;
 
-CLASS javax/microedition/io/SecurityInfo
-   METHODS
-	getServerCertificate:()Ljavax/microedition/pki/Certificate;
-	getProtocolVersion:()Ljava/lang/String;
-	getProtocolName:()Ljava/lang/String;
-	getCipherSuite:()Ljava/lang/String;
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
-
 CLASS javax/microedition/io/SecureConnection
+   FIELDS
+	DELAY:B
+	LINGER:B
+	KEEPALIVE:B
+	RCVBUF:B
+	SNDBUF:B
    METHODS
 	getSecurityInfo:()Ljavax/microedition/io/SecurityInfo;
 	getClass:()Ljava/lang/Class;
@@ -2100,6 +2132,38 @@ CLASS javax/microedition/io/SecureConnection
 	close:()V
 	openOutputStream:()Ljava/io/OutputStream;
 	openDataOutputStream:()Ljava/io/DataOutputStream;
+
+CLASS javax/microedition/io/SecurityInfo
+   METHODS
+	getServerCertificate:()Ljavax/microedition/pki/Certificate;
+	getProtocolVersion:()Ljava/lang/String;
+	getProtocolName:()Ljava/lang/String;
+	getCipherSuite:()Ljava/lang/String;
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
+
+CLASS javax/microedition/io/ServerSocketConnection
+   METHODS
+	getLocalAddress:()Ljava/lang/String;
+	getLocalPort:()I
+	getClass:()Ljava/lang/Class;
+	hashCode:()I
+	equals:(Ljava/lang/Object;)Z
+	toString:()Ljava/lang/String;
+	notify:()V
+	notifyAll:()V
+	wait:(J)V
+	wait:(JI)V
+	wait:()V
+	acceptAndOpen:()Ljavax/microedition/io/StreamConnection;
+	close:()V
 
 CLASS javax/microedition/io/SocketConnection
    FIELDS
@@ -2129,22 +2193,6 @@ CLASS javax/microedition/io/SocketConnection
 	close:()V
 	openOutputStream:()Ljava/io/OutputStream;
 	openDataOutputStream:()Ljava/io/DataOutputStream;
-
-CLASS javax/microedition/io/ServerSocketConnection
-   METHODS
-	getLocalAddress:()Ljava/lang/String;
-	getLocalPort:()I
-	getClass:()Ljava/lang/Class;
-	hashCode:()I
-	equals:(Ljava/lang/Object;)Z
-	toString:()Ljava/lang/String;
-	notify:()V
-	notifyAll:()V
-	wait:(J)V
-	wait:(JI)V
-	wait:()V
-	acceptAndOpen:()Ljavax/microedition/io/StreamConnection;
-	close:()V
 
 CLASS javax/microedition/io/UDPDatagramConnection
    METHODS
