@@ -42,15 +42,20 @@ class DoubleValueConstant extends ConstantObject
     public int highVal;
     public int lowVal;
 
-    private DoubleValueConstant( int t, int h, int l ){
-	tag = t;
+    private DoubleValueConstant(int tag, int h, int l) {
+	super(tag);
 	highVal = h;
 	lowVal = l;
 	nSlots = 2;
     }
 
-    public static ConstantObject read( int t, DataInput i ) throws IOException{
-	return new DoubleValueConstant( t, i.readInt(), i.readInt() );
+    /**
+     * Factory method to construct a DoubleValueConstant instance from the
+     * constant pool data stream.  This method is only called from the
+     * ConstantObject.readObject() factory.
+     */
+    static ConstantObject read(int tag, DataInput i) throws IOException {
+	return new DoubleValueConstant(tag, i.readInt(), i.readInt());
     }
 
     public void write( DataOutput o ) throws IOException{

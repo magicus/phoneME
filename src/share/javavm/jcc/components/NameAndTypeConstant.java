@@ -30,6 +30,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import consts.Const;
+import util.Assert;
 import util.DataFormatException;
 // This class represents a CONSTANT_NameAndType
 
@@ -46,48 +47,54 @@ class NameAndTypeConstant extends ConstantObject {
     // The unique ID for this name and type (from Std2ID)
     public int ID = 0;
 
-    private NameAndTypeConstant( int t, int ni, int ti ){
-	tag = t;
+    private NameAndTypeConstant(int ni, int ti) {
+	super(Const.CONSTANT_NAMEANDTYPE);
 	nameIndex = ni;
 	typeIndex = ti;
-	nSlots = 1;
     }
 
-    public NameAndTypeConstant( UnicodeConstant name, UnicodeConstant type ){
-	tag = Const.CONSTANT_NAMEANDTYPE;
+    public NameAndTypeConstant(UnicodeConstant name, UnicodeConstant type) {
+	super(Const.CONSTANT_NAMEANDTYPE);
 	this.name = name;
 	this.type = type;
-	nSlots = 1;
-	resolved = true;
+	isFlat = true;
     }
 
-    public static ConstantObject read( int t, DataInput i ) throws IOException{
-	return new NameAndTypeConstant( t, i.readUnsignedShort(), i.readUnsignedShort() );
+    /**
+     * Factory method to construct a NameAndTypeConstant instance from the
+     * constant pool data stream.  This method is only called from the
+     * ConstantObject.readObject() factory.
+     */
+    static ConstantObject read(DataInput i) throws IOException {
+	return new NameAndTypeConstant(i.readUnsignedShort(),
+                                       i.readUnsignedShort());
     }
 
-    public void resolve( ConstantPool cp ){
-	if ( resolved ) return;
-	name = (UnicodeConstant)cp.elementAt(nameIndex);
+    public void flatten(ConstantPool cp) {
+	if (isFlat) return;
+        Assert.disallowClassloading();
+        name = (UnicodeConstant)cp.elementAt(nameIndex);
 	type = (UnicodeConstant)cp.elementAt(typeIndex);
-	resolved = true;
+	isFlat = true;
+        Assert.allowClassloading();
     }
 
-    public void write( DataOutput o ) throws IOException{
-	o.writeByte( tag );
-	if ( resolved ){
-	    o.writeShort( name.index );
-	    o.writeShort( type.index );
+    public void write(DataOutput o) throws IOException {
+	o.writeByte(tag);
+	if (isFlat) {
+	    o.writeShort(name.index);
+	    o.writeShort(type.index);
 	} else {
 	    throw new DataFormatException("unresolved NameAndTypeConstant");
-	    //o.writeShort( nameIndex );
-	    //o.writeShort( typeIndex );
+	    //o.writeShort(nameIndex);
+	    //o.writeShort(typeIndex);
 	}
     }
 
-    public String toString(){
-	if ( resolved ){
+    public String toString() {
+	if (isFlat) {
 	    return "NameAndType: "+name.string+" : "+type.string;
-	}else{
+	} else {
 	    return "NameAndType[ "+nameIndex+" : "+typeIndex+" ]";
 	}
     }

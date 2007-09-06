@@ -476,19 +476,21 @@ class CodeHacker {
     }
 
     public boolean
-    quickenCode( ClassInfo c ){
+    quickenCode(ClassInfo c) {
 	ConstantObject constants[] = c.getConstantPool().getConstants();
-	MethodInfo     method[]= c.methods;
-	int n = method.length;
+	MethodInfo     methods[]= c.methods;
+	int numberOfMethods = methods.length;
 	int i = 0;
 	boolean result = true;
 	try {
-	    for ( i = 0; i < n; i++ ){
-		if ( ! quickenCode( method[i], constants ) )
+	    for (i = 0; i < numberOfMethods; i++) {
+		if (!quickenCode(methods[i], constants)) {
 		    result = false;
+                }
 	    }
-	} catch( DataFormatException e ){
-	    System.err.println("Quickening "+method[i].qualifiedName()+" got exception:");
+	} catch (DataFormatException e) {
+	    System.err.println("Quickening "+methods[i].qualifiedName()+
+                               " got exception:");
 	    e.printStackTrace();
 	    return false;
 	}

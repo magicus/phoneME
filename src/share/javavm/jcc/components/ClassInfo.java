@@ -40,7 +40,7 @@ import java.util.Hashtable;
 import java.util.Set;
 import java.util.Vector;
 
-/*
+/**
  * ClassInfo is the root of all information about the class
  * which comes out of the .class file, including its methods,
  * fields, interfaces, superclass, and any other attributes we
@@ -54,6 +54,9 @@ import java.util.Vector;
 public
 class ClassInfo
 {
+    public int                  majorVersion;
+    public int                  minorVersion;
+	
     public String		className;
     public int			access;
     public ClassConstant	thisClass;
@@ -91,6 +94,9 @@ class ClassInfo
     // Innerclass attribute accessed.
     public InnerClassAttribute	innerClassAttr;
 
+    // Class generics signature info:
+    public SignatureAttribute   signatureAttr;
+
     public ClassLoader		loader;
 
     public vm.ClassClass	vmClass; // used by in-core output writers
@@ -113,6 +119,7 @@ class ClassInfo
     private final char		SIGC_PACKAGE = util.ClassFileConst.SIGC_PACKAGE;
 
     public ClassInfo( boolean v ) {
+        Assert.assertClassloadingIsAllowed();
 	verbose = v;
 	flags = INCLUDE_ALL; // by default, we want all members.
 	// what else should be here?
@@ -132,12 +139,12 @@ class ClassInfo
     
     // Is this class a subclass of java.lang.ref.Reference?
     public boolean isReference() {
-	ClassInfo c = this;
-	while ( c != null ){
-	    if ( c.className.equals("java/lang/ref/Reference")) {
+	ClassInfo cinfo = this;
+	while (cinfo != null) {
+	    if (cinfo.className.equals("java/lang/ref/Reference")) {
 		return true;
 	    }
-	    c = c.superClassInfo;
+	    cinfo = cinfo.superClassInfo;
 	}
 	return false;
     }
@@ -149,8 +156,8 @@ class ClassInfo
 
     // Is this class the java.lang.Object class?
     public boolean isJavaLangObject() {
-	ClassInfo c = this;
-	if ((c != null) && c.className.equals("java/lang/Object")) {
+	ClassInfo cinfo = this;
+	if ((cinfo != null) && cinfo.className.equals("java/lang/Object")) {
 	    return true;
 	}
 	return false;
@@ -162,35 +169,43 @@ class ClassInfo
     }
 
 
-    // Read in the constants from a classfile
-    private void readConstantPool( DataInput in ) throws IOException {
+    /**
+     * Reads in the constant pool from a classfile, and fills in the cp
+     * (i.e. constantpool) field of this classinfo instance.  The filled in
+     * constants are not yet in a resolved state.
+     */
+    private void readConstantPool(DataInput in) throws IOException {
 	int num = in.readUnsignedShort();
 
 	if(verbose){
-	    log.println(Localizer.getString("classinfo.reading_entries_in_constant_pool", Integer.toString(num)));
+	    log.println(Localizer.getString(
+                "classinfo.reading_entries_in_constant_pool",
+                Integer.toString(num)));
 	}
 	ConstantObject[] constants = new ConstantObject[num];
 	for (int i = 1; i < num; i+=constants[i].nSlots) {
-	    constants[i] = ConstantObject.readObject( in );
+	    constants[i] = ConstantObject.readObject(in);
 	    constants[i].index = i;
 	    constants[i].containingClass = this;
 	}
 	cp = new ConstantPool(constants);
     }
 
-
-    /*
-     * Contrary to expectations, to 'resolve' a constant means
-     * simply to turn index-based references to other entities such as
-     * class constants or UTF8s, into pointers.
+    /**
+     * Flatten all CP entries so that they need not indirect through the
+     * constant pool to get to the symbollic info.  For example, a class
+     * constant is defined by a CP index which point to a UTF8 string.  A
+     * flattened class constant will refer to the UTF8 string directly instead
+     * of needing to index into the constant pool to get to it.
      */
-    private void resolveConstants( ) {
-	if (verbose){
-	    log.println(Localizer.getString("classinfo.>>>resolving_constants"));
+    private void flattenConstants() {
+	if (verbose) {
+            log.println(Localizer.getString(
+                            "classinfo.>>>resolving_constants"));
 	}
 	ConstantObject constants[] = cp.getConstants();
 	for (int i = 1; i < constants.length; i+=constants[i].nSlots) {
-	    constants[i].resolve( cp );
+	    constants[i].flatten(cp);
 	}
     }
 
@@ -200,10 +215,10 @@ class ClassInfo
      * Put those String names in the undefClasses set.
      */
     public void
-    findUndefinedClasses(Set undefClasses){
+    findUndefinedClasses(Set undefClasses) {
 	ConstantObject constants[] = cp.getConstants();
 	for (int i = 1; i < constants.length; i+=constants[i].nSlots) {
-	    if (constants[i].tag == Const.CONSTANT_CLASS){
+	    if (constants[i].tag == Const.CONSTANT_CLASS) {
 		ClassConstant c = (ClassConstant) constants[i];
 		if (c.find() == null){
 		    String stringname = c.name.string;
@@ -383,6 +398,24 @@ class ClassInfo
 		/* this need not be done if reflection isn't supported */
 		innerClassAttr = (InnerClassAttribute)InnerClassAttribute.readAttribute(in, bytes, name, constants);
 		clssAttr.addElement(innerClassAttr);
+            /* TODO :: BEGIN experimental code for future signature support.
+            } else if (name.string.equals("Signature")) {
+		// Added to support the Signature Attribute defined in the
+		// 1.5 VM spec.
+		// this need not be done if reflection isn't supported.
+		int idx = in.readUnsignedShort();
+
+		UnicodeConstant signature = (UnicodeConstant)constants[idx];
+		//StringConstant sigStr = StringConstant.utfToString(signature);
+		//sigStr = (StringConstant)cp.add(sigStr);
+		//sigStr.resolve(cp);
+		//constants = cp.getConstants();
+
+                signatureAttr =
+		    //new SignatureAttribute(name, bytes, sigStr);
+		    new SignatureAttribute(name, bytes, signature);
+		clssAttr.addElement(signatureAttr);
+            * TODO :: END */
 	    } else {
 		byte[] b = new byte[bytes];
 		in.readFully(b);
@@ -397,23 +430,25 @@ class ClassInfo
 	}
     }
 
-    // Read in the entire class
-    // assume file is open, magic numbers are o.k.
+    // Read in the entire classfile.
+    // Assumes that the file is open, and the magic numbers are o.k.
     //
     public void
     read(DataInput in, boolean readCode)
     throws IOException {
 
-	readConstantPool( in );
-	resolveConstants( );
+	readConstantPool(in);
+        flattenConstants();
 
+        Assert.disallowClassloading();
 	ConstantObject constants[] = cp.getConstants();
 
 	access = in.readUnsignedShort();
 	thisClass = (ClassConstant) constants[in.readUnsignedShort()];
 	int sup = in.readUnsignedShort();
-	if ( sup != 0 )
+	if (sup != 0) {
 	    superClass = (ClassConstant) constants[sup];
+        }
 	className = thisClass.name.string;
 	pkgNameLength = className.lastIndexOf(SIGC_PACKAGE);
 
@@ -423,6 +458,13 @@ class ClassInfo
 	readMethods( in, readCode );
 	readAttributes( in );
 	/* DONT DO THIS HERE enterClass(); */
+        Assert.allowClassloading();
+    }
+
+    // Sets the classfile version numner:
+    public void setVersionInfo(int majorVersion, int minorVersion) {
+	this.majorVersion = majorVersion;
+	this.minorVersion = minorVersion;
     }
 
     // Compute the fieldtable for a class.  This requires laying
@@ -842,6 +884,9 @@ class ClassInfo
 	    sourceFileAttr.validate();
 	if (innerClassAttr != null)
 	    innerClassAttr.validate();
+	if (signatureAttr != null) {
+	    signatureAttr.validate();
+	}
 	if (sharedPool == null){
 	    // not sharing. Use our own pool.
 	    constantPool = cp.getConstants();
@@ -946,20 +991,24 @@ class ClassInfo
 	Enumeration allclasses = ClassTable.elements();
 	boolean ok = true;
 	while( allclasses.hasMoreElements() ){
-	    ClassInfo c = (ClassInfo)allclasses.nextElement();
-	    if ( c.superClass==null ){
+	    ClassInfo cinfo = (ClassInfo)allclasses.nextElement();
+	    if ( cinfo.superClass==null ){
 		// only java.lang.Object can be parentless
-		if ( ! c.className.equals( /*NOI18N*/"java/lang/Object" ) ){
-		    log.println(Localizer.getString("classinfo.class_is_parent-less", c.className));
+		if ( ! cinfo.className.equals( /*NOI18N*/"java/lang/Object" ) ){
+		    log.println(Localizer.getString(
+                        "classinfo.class_is_parent-less", cinfo.className));
 		    ok = false;
 		}
 	    } else {
-		ClassInfo s = c.loader.lookupClass(c.superClass.name.string);
-		if ( s == null ){
-		    log.println(Localizer.getString("classinfo.class_is_missing_parent", c.className, c.superClass.name.string ));
+		ClassInfo superClassInfo =
+                    cinfo.loader.lookupClass(cinfo.superClass.name.string);
+		if ( superClassInfo == null ){
+		    log.println(Localizer.getString(
+                        "classinfo.class_is_missing_parent", cinfo.className,
+                        cinfo.superClass.name.string ));
 		    ok = false;
 		} else {
-		    c.superClassInfo = s;
+		    cinfo.superClassInfo = superClassInfo;
 		}
 	    }
 	}
