@@ -211,7 +211,9 @@ void JVM_LogEvent(int type) {
 #endif
   };
   GUARANTEE( unsigned(type) < max_event_types, "Wrong event type" );
-  EventLogger::log( EventLogger::EventType( type ) );
+  if( unsigned(type) < max_event_types ) {
+    EventLogger::log( EventLogger::EventType( type ) );
+  }
 }
 
 int JVM_RegisterEventType(const char* name) {

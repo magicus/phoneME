@@ -34,6 +34,8 @@ class EventLogger : public AllStatic {
 public:
 
 #define EVENT_LOGGER_TYPES_DO(template) \
+  template(SCREEN_UPDATE_START )\
+  template(SCREEN_UPDATE_END   )\
   template(CLASS_LOAD_START    )\
   template(CLASS_LOAD_END      )\
   template(COMPILER_GC_START   )\
@@ -44,8 +46,6 @@ public:
   template(GC_END              )\
   template(VERIFY_START        )\
   template(VERIFY_END          )\
-  template(SCREEN_UPDATE_START )\
-  template(SCREEN_UPDATE_END   )\
 
 #define DECLARE_EVENT_LOGGER_TYPE(x) x,
   enum EventType {
