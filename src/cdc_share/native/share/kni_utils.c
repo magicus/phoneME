@@ -33,24 +33,30 @@
  * Create javacall_utf16_string from the specified Java platform String object.
  * The caller is responsible for freeing the created javacall_utf16_string when done.
  *
- * @param java_str pointer to the Java platform String instance
- * @param utf16_str address of variable to receive the javacall_utf16_string instance
+ * @param java_str pointer to the Java platform String instance. 
+ * @param utf16_str address of variable to receive the javacall_utf16_string instance.
+ *                  NULL if java_str is null
  * @return status of the operation
  */
 javacall_result jsrop_jstring_to_utf16_string(jstring java_str,
                              javacall_utf16_string * utf16_str) {
     javacall_result res = JAVACALL_FAIL;
-    jsize string_length = KNI_GetStringLength(java_str);
-    javacall_utf16_string str_buffer = MALLOC((string_length + 1) *
-                                                sizeof(javacall_utf16));
-    if (str_buffer != NULL) {
-        KNI_GetStringRegion(java_str, 0, string_length, (jchar *)str_buffer);
-        *(str_buffer + string_length) = 0;
-        *utf16_str = str_buffer;
+    if (!KNI_IsNullHandle(java_str)) {
+        jsize string_length = KNI_GetStringLength(java_str);
+        javacall_utf16_string str_buffer = MALLOC((string_length + 1) *
+                                                    sizeof(javacall_utf16));
+        if (str_buffer != NULL) {
+            KNI_GetStringRegion(java_str, 0, string_length, (jchar *)str_buffer);
+            *(str_buffer + string_length) = 0;
+            *utf16_str = str_buffer;
+            res = JAVACALL_OK;
+        }
+        else {
+            res = JAVACALL_OUT_OF_MEMORY;
+        }
+    } else {
+        *utf16_str = NULL;
         res = JAVACALL_OK;
-    }
-    else {
-        res = JAVACALL_OUT_OF_MEMORY;
     }
     return res;
 }
