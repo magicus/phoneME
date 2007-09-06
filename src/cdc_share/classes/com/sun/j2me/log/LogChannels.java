@@ -93,9 +93,12 @@ public class LogChannels {
    public final static int LC_STORAGE = 11000;
 
    /** Push registry module channel */
-   public final static int LC_PUSH = 10500;
+   public final static int LC_PUSH = 11500;
 
    /** MMAPI module channel */
-   public final static int LC_MMAPI = 11000;
-    
+   public final static int LC_MMAPI = 12000;
+
+   /** I18N module channel */
+   public final static int LC_JSR238 = 12500;
+   
 }
