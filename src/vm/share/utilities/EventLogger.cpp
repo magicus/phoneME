@@ -29,12 +29,32 @@
 
 #if USE_EVENT_LOGGER
 
-const char* const EventLogger::_event_names[] = {
+const char* 
+#if ENABLE_EXTENDED_EVENT_LOGGER
+  EventLogger::_event_names[EventLogger::Entry::max_event_types+1] =
+#else
+  const EventLogger::_event_names[] =
+#endif
+{
 # define NAME_EVENT_LOGGER_TYPE(x) #x,
   EVENT_LOGGER_TYPES_DO(NAME_EVENT_LOGGER_TYPE)
 # undef NAME_EVENT_LOGGER_TYPE
 };
 
+#if ENABLE_EXTENDED_EVENT_LOGGER
+inline int EventLogger::add_event_type( const char name[] ) {
+  const char** p = _event_names;
+  const char* event_name;
+  for( ; (event_name = *p) != NULL && jvm_strcmp(event_name, name) != 0; p++ );
+  if( event_name == NULL ) {
+    if( p == _event_names + Entry::max_event_types ) {
+      return -1;
+    }
+    *p = name;
+  }
+  return p - _event_names;
+}
+#endif
 
 jlong EventLogger::Entry::_last;
 jlong EventLogger::Entry::_freq;
@@ -134,6 +154,9 @@ EventLogger::Block::dump( Stream* s, jlong time ) const {
 
 
 void EventLogger::initialize( void ) {
+#if ENABLE_EXTENDED_EVENT_LOGGER
+  _event_names[_number_of_event_types] = NULL;
+#endif
   EventLogger::Entry::initialize();
   EventLogger::Block::initialize();
 }
@@ -160,7 +183,7 @@ void EventLogger::dump( void ) {
 }
   
 void EventLogger::dump( Stream* s ) {
-  s->print_cr("*** Event log:");
+  s->print_cr("*** Event log, hrfreq = %ld", EventLogger::Entry::_freq );
   s->print( Entry::use_usec() ? "      msec" : "  msec" );
   s->print_cr("   hrtick event");
   s->print_cr("=======================================");
@@ -180,8 +203,21 @@ void EventLogger::dispose( void ) {
 #endif // USE_EVENT_LOGGER
 
 void JVM_LogEvent(int type) {
-  GUARANTEE( unsigned(type) <= EventLogger::SCREEN_UPDATE_END,
-             "Wrong event type" );
+  enum {
+#if ENABLE_EXTENDED_EVENT_LOGGER
+    max_event_types = EventLogger::Entry::max_event_types
+#else
+    max_event_types = EventLogger::_number_of_event_types
+#endif
+  };
+  GUARANTEE( unsigned(type) < max_event_types, "Wrong event type" );
   EventLogger::log( EventLogger::EventType( type ) );
 }
 
+int JVM_RegisterEventType(const char* name) {
+#if USE_EVENT_LOGGER && ENABLE_EXTENDED_EVENT_LOGGER
+  return UseEventLogger ? EventLogger::add_event_type( name ) : 0;
+#else
+  return 0;
+#endif
+}

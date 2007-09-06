@@ -635,11 +635,23 @@ int JVM_GarbageCollect(int flags, int requested_free_bytes);
 #define JVM_COLLECT_YOUNG_SPACE_ONLY     (1 << 0)
 #define JVM_COLLECT_COMPILER_AREA        (1 << 1)
 
+
+/*
+ * Register new event type
+ *
+ * Returns unique event type ID for JVM_LogEvent.
+ * Repeated registration of the same type name returns previous ID.
+ * If extended event logger is disabled, returns 0
+ * If max number of event types exceeded, returns -1
+ */
+int JVM_RegisterEventType(const char* name);
+
 /*
  * Record an event in JVM EventLogger:
  *
  * JVM_EVENT_SCREEN_UPDATE_START
  * JVM_EVENT_SCREEN_UPDATE_END
+ * or registered event type if extended event logger is enabled.
  */
 void JVM_LogEvent(int type);
 

@@ -332,6 +332,9 @@
 // ENABLE_EVENT_LOGGER           0,0  Enable event logging. Used for debugging,
 //                                    performance and pause measurements.
 //
+// ENABLE_EXTENDED_EVENT_LOGGER  0,0  Enable event type extension. Used for debugging,
+//                                    performance and pause measurements.
+//
 // ENABLE_PRODUCT_PRINT_STACK    -,0  Include the debug function
 //                                    pss() in product build (useful
 //                                    for diagnosing deadlocks.
@@ -1148,7 +1151,8 @@
 //
 // USE_EVENT_LOGGER                Enable JVM event logging
 //
-#if ENABLE_EVENT_LOGGER || (ENABLE_PERFORMANCE_COUNTERS && USE_DEBUG_PRINTING)
+#if ENABLE_EVENT_LOGGER || ENABLE_EXTENDED_EVENT_LOGGER ||\
+    (ENABLE_PERFORMANCE_COUNTERS && USE_DEBUG_PRINTING)
 #  define USE_EVENT_LOGGER 1
 #else
 #  define USE_EVENT_LOGGER 0

@@ -34,8 +34,6 @@ class EventLogger : public AllStatic {
 public:
 
 #define EVENT_LOGGER_TYPES_DO(template) \
-  template(SCREEN_UPDATE_START )\
-  template(SCREEN_UPDATE_END   )\
   template(CLASS_LOAD_START    )\
   template(CLASS_LOAD_END      )\
   template(COMPILER_GC_START   )\
@@ -46,6 +44,8 @@ public:
   template(GC_END              )\
   template(VERIFY_START        )\
   template(VERIFY_END          )\
+  template(SCREEN_UPDATE_START )\
+  template(SCREEN_UPDATE_END   )\
 
 #define DECLARE_EVENT_LOGGER_TYPE(x) x,
   enum EventType {
@@ -54,7 +54,13 @@ public:
   };
 #undef DECLARE_EVENT_LOGGER_TYPE
 
+#if ENABLE_EXTENDED_EVENT_LOGGER
+  static const char* _event_names[];
+  static int add_event_type( const char name[] );
+#else
   static const char* const _event_names[];
+#endif
+
   static const char* name( const EventType type ) {
     return _event_names[ type ];
   }
@@ -68,6 +74,10 @@ public:
   struct Entry {
     enum {
       delta_bits = 24,
+#if ENABLE_EXTENDED_EVENT_LOGGER
+      event_type_bits = 32 - delta_bits,
+      max_event_types = 1 << event_type_bits,
+#endif
       delta_mask = (1 << delta_bits) - 1
     };
 
