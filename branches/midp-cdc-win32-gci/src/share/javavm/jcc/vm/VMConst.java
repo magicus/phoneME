@@ -27,7 +27,7 @@
 
 package vm;
 
-/*
+/**
  * Constants used by the Java linker which are not exported in any
  * direct way from the Java runtime or compiler.
  * These are constants of the VM implementation.

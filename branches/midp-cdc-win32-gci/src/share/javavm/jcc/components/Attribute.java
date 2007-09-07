@@ -49,7 +49,7 @@ class Attribute extends ClassComponent
     Attribute( UnicodeConstant n, int l ){
 	name = n;
 	length = l;
-	resolved = true;
+	isFlat = true;
     }
 
     abstract protected int
@@ -126,21 +126,21 @@ class Attribute extends ClassComponent
 	throws IOException
     {
 	int nattr =  i.readUnsignedShort();
-	if (verbose){
+	if (verbose) {
 	    System.out.println(Localizer.getString(
 		"attribute.reading_attributes", Integer.toString(nattr)));
 	}
 	if (nattr == 0) return null;
 	Attribute a[] = new Attribute[nattr];
 	ConstantObject constants[] = cp.getConstants();
-	for (int j = 0; j < nattr; j++){
-	    UnicodeConstant name = (UnicodeConstant)constants[
-					i.readUnsignedShort()];
+	for (int j = 0; j < nattr; j++) {
+	    UnicodeConstant name =
+                (UnicodeConstant)constants[i.readUnsignedShort()];
 	    String typename = name.string.intern();
 	    AttributeFactory afact = (AttributeFactory)typetable.get(typename);
-	    if ( afact == null )
+	    if (afact == null) {
 		afact = UninterpretedAttributeFactory.instance;
-
+            }
 	    a[j] = afact.finishReadAttribute(i, name, cp);
 	}
 	return a;

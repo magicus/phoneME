@@ -53,9 +53,12 @@ abstract class ConstantObject extends ClassComponent implements Cloneable
     public int tag;
 
     // The number of slots this thing "uses" -- usually 1, sometimes 2
-    public int nSlots;
+    public int nSlots = 1;
 
-
+    public ConstantObject(int tag) {
+        this.tag = tag;
+    }
+    
     public void incldcReference() {
         ldcReferences++;
     }
@@ -121,7 +124,7 @@ abstract class ConstantObject extends ClassComponent implements Cloneable
 	    if (this.index <= 0 || this.index >= upperBound ){
 		throw new ValidationException("Constant index out of range", this);
 	    }
-	    if (this != containingPool.t.elementAt(this.index)){
+	    if (this != containingPool.enumedEntries.elementAt(this.index)){
 		throw new ValidationException("Constant index incorrect", this);
 	    }
 	} else {
@@ -154,30 +157,34 @@ abstract class ConstantObject extends ClassComponent implements Cloneable
 	return this.toString();
     }
 
-    static public ConstantObject readObject( DataInput i ) throws IOException{
+    /**
+     * Factory method for creating ConstantObjects from the classfile
+     * constant pool entries data stream.
+     */
+    static public ConstantObject readObject(DataInput in) throws IOException {
 	// read the tag and dispatch accordingly
-	int tag = i.readUnsignedByte();
-	switch( tag ){
+	int tag = in.readUnsignedByte();
+	switch(tag) {
 	case Const.CONSTANT_UTF8:
-	    return UnicodeConstant.read( tag, i );
+	    return UnicodeConstant.read(in);
 	case Const.CONSTANT_INTEGER:
 	case Const.CONSTANT_FLOAT:
-	    return SingleValueConstant.read( tag, i );
+	    return SingleValueConstant.read(tag, in);
 	case Const.CONSTANT_DOUBLE:
 	case Const.CONSTANT_LONG:
-	    return DoubleValueConstant.read( tag, i );
+	    return DoubleValueConstant.read(tag, in);
 	case Const.CONSTANT_STRING:
-	    return StringConstant.read( tag, i );
+	    return StringConstant.read(in);
 	case Const.CONSTANT_NAMEANDTYPE:
-	    return NameAndTypeConstant.read( tag, i );
+	    return NameAndTypeConstant.read(in);
 	case Const.CONSTANT_CLASS:
-	    return ClassConstant.read( tag, i );
+	    return ClassConstant.read(in);
 	case Const.CONSTANT_FIELD:
-	    return FieldConstant.read( tag, i );
+	    return FieldConstant.read(in);
 	case Const.CONSTANT_METHOD:
-	    return MethodConstant.read( tag, i );
+	    return MethodConstant.read(in);
 	case Const.CONSTANT_INTERFACEMETHOD:
-	    return InterfaceConstant.read( tag, i );
+	    return InterfaceMethodConstant.read(in);
 	default:
 	    throw new DataFormatException("Format error (constant tag "+tag+" )");
 	}

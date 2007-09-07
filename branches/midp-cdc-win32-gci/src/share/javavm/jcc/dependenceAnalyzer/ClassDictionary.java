@@ -83,12 +83,12 @@ class ClassDictionary {
     ClassInfo findClassInfo( String cname ){
 	InputStream fin = finder.findClassFile( cname );
 	if ( fin == null ) return null;
-	ClassFile f = new ClassFile( cname, fin, false );
-	if ( ! f.readClassFile()){
-	    f.dump(System.err);
+	ClassFile cfile = new ClassFile( cname, fin, false );
+	if ( ! cfile.readClassFile()){
+	    cfile.dump(System.err);
 	    return null;
 	}
-	return f.clas;
+	return cfile.cinfo;
     }
 
     /*

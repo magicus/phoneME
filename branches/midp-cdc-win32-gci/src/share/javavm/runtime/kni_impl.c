@@ -442,7 +442,7 @@ KNIEXPORT void
 KNI_NewStringPriv(CVMExecEnv* ee,
 		  const jchar* chars, jsize size, jstring stringHandle)
 {
-    if (chars != NULL && size > 0) {
+    if (chars != NULL && size >= 0) {
         CVMD_gcSafeExec(ee, {
 	    CVMnewString(ee, stringHandle, chars, size);
         });
