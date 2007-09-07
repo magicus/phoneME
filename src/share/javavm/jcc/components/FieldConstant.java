@@ -31,8 +31,9 @@ import java.io.DataOutput;
 import java.io.IOException;
 import consts.Const;
 
-// Represents a CONSTANT_Field
-
+/**
+ * Represents a CONSTANT_Fieldref stored in a constant pool.
+ */
 public
 class FieldConstant extends FMIrefConstant
 {
@@ -41,16 +42,20 @@ class FieldConstant extends FMIrefConstant
     boolean	didLookup;
     FieldInfo	theField;
 
-    FieldConstant( int t ){ tag = t; }
+    private FieldConstant() { super(Const.CONSTANT_FIELD); }
 
-    public FieldConstant( ClassConstant c, NameAndTypeConstant s ){
-        super( Const.CONSTANT_FIELD, c, s );
+    public FieldConstant(ClassConstant c, NameAndTypeConstant s) {
+        super(Const.CONSTANT_FIELD, c, s);
     }
 
-    public static ConstantObject
-    read( int t, DataInput in ) throws IOException {
-	FieldConstant f = new FieldConstant( t );
-	f.read( in );
+    /**
+     * Factory method to construct a FieldConstant instance from the
+     * constant pool data stream.  This method is only called from the
+     * ConstantObject.readObject() factory.
+     */
+    static ConstantObject read(DataInput in) throws IOException {
+	FieldConstant f = new FieldConstant();
+	f.readIndexes(in);
 	return f;
     }
 

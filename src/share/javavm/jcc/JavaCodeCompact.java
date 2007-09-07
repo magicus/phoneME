@@ -29,6 +29,7 @@ import consts.*;
 import components.*;
 import vm.*;
 import runtime.*;
+import util.Assert;
 import util.*;
 import jcc.*;
 
@@ -48,16 +49,19 @@ import components.ClassLoader;
 public class JavaCodeCompact extends LinkerUtil {
     int	         verbosity = 0;
     //ConstantPool classNameConstants = new ConstantPool();
-    Set		 undefinedClassNames;
     ClassFileFinder  searchPath;
     String	 firstFileName;
     static String   outName;
 
+    /** If true, JCC should include class debug info in generated class data.
+     *  This includes line number tables, local var info, etc. */
     boolean	classDebug = false;
     boolean	outSet   = false;
     String	archName = "CVM";
     boolean	archSet  = false;
-    boolean 	doShared = false;
+    /** If true, JCC will attempt to share the same constant pool for all the
+     *  classes that it romizes. */
+    boolean 	useSharedCP = false;
     boolean	validate = false;
     boolean	unresolvedOk = false;
     Vector	romAttributes = new Vector();
@@ -75,10 +79,10 @@ public class JavaCodeCompact extends LinkerUtil {
     static String      APIListerArgs = null;
 
     private void
-    fileFound( String fname ){
+    fileFound(String fname) {
 	// currently, the only thing we do with file names
 	// is make them into potential output file names.
-	if ( firstFileName == null ) firstFileName = fname;
+	if (firstFileName == null) firstFileName = fname;
     }
 
     private void
@@ -92,20 +96,21 @@ public class JavaCodeCompact extends LinkerUtil {
     }
 
     private boolean
-    readFile( String fileName, Vector classesProcessed ){
+    readFile(String fileName, Vector classesRead) {
 
 	if (rdr == null){
 	    rdr = new ClassReader(verbosity);
 	}
 	try {
 	    if (fileName.endsWith(".zip") || fileName.endsWith(".jar")){ 
-		rdr.readZip(fileName, classesProcessed);
+		rdr.readZip(fileName, classesRead);
 	    } else { 
-		rdr.readFile(fileName, classesProcessed);
+		rdr.readFile(fileName, classesRead);
 	    }
 	    fileFound(fileName);
-	} catch ( IOException e ){
-	    System.out.println(Localizer.getString("javacodecompact.could_not_read_file", fileName));
+	} catch (IOException e) {
+	    System.out.println(Localizer.getString(
+                "javacodecompact.could_not_read_file", fileName));
 	    e.printStackTrace();
 	    return false;
 	}
@@ -118,17 +123,19 @@ public class JavaCodeCompact extends LinkerUtil {
         return outName;
     }
 
-    /*
+    /**
      * Iterate through the classes looking for unresolved
      * class references.
      */
-    public void
+    protected Set
     findUnresolvedClassNames(Enumeration e){
+        Set undefinedClassNames = new HashSet();
 	ClassInfo cinfo;
 	while (e.hasMoreElements()){
 	    cinfo = (ClassInfo)e.nextElement();
 	    cinfo.findUndefinedClasses(undefinedClassNames);
 	}
+        return undefinedClassNames;
     }
 
     /*
@@ -136,7 +143,7 @@ public class JavaCodeCompact extends LinkerUtil {
      * Make a list of them, as java Strings.
      */
     public String[]
-    unresolvedClassNames(){
+    unresolvedClassNames(Set undefinedClassNames){
 	int nUndefined;
 	nUndefined = undefinedClassNames.size();
 	if (nUndefined == 0)
@@ -148,27 +155,46 @@ public class JavaCodeCompact extends LinkerUtil {
 
     Vector  classesProcessed = new Vector();
     int     nclasses = 0;
+    /** If true, JCC is not allowed to do lossy quickening. */
     boolean qlossless   = false;
+    /** If true, JCC needs to generate JIT friendly output. */
     boolean jitOn       = false;
+    /** If true, JCC is not allowed to apply optimizations that can compact
+     *  the code.  Example of such compaction includes removing nop bytecodes,
+     *  and useless gotos. */
     boolean noCodeCompaction = false;
 
+    /**
+     * Processes all the JCC command line arguments into internal flags.  Also
+     * checks for the validity of the arguments.
+     *
+     * NOTE: processOptions() also loads and processes all the classfiles of
+     * the initial set to be romized.  Later on, process() will pull in all
+     * other classes needed for the full transitive closure of class
+     * references from the constant pools of the classes.  processOptions()
+     * does not resolve any of the constant pool entries (not even those in
+     * the initial set of classes).  The only CP entries that can be resolved
+     * here are the UTF8 and value constants that do not require binding to
+     * and other classes.
+     *
+     * @return  false if an error was encountered.
+     */
     private boolean
-    processOptions( String clist[] ) throws Exception {
+    processOptions(String clist[]) throws Exception {
 	boolean success = true;
-	Vector classesThisRead = new Vector();
 
 	for( int i = 0; i < clist.length; i++ ){
 	    if ( clist[i].equals(/*NOI18N*/"-jit") ){
-		jitOn = true;
+		jitOn = true; // Generate JIT friendly output.
 		continue;
 	    } else if ( clist[i].equals(/*NOI18N*/"-qlossless") ){
-		qlossless   = true;
+		qlossless = true; // Disallow lossy quickening.
 		continue;
 	    } else if ( clist[i].equals(/*NOI18N*/"-noCodeCompaction") ){
-		noCodeCompaction   = true;
+		noCodeCompaction = true; // Disallow code compaction.
 		continue;
 	    } else if ( clist[i].equals(/*NOI18N*/"-g") ){
-		classDebug = true;
+		classDebug = true; // Include class debug info.
 		ClassInfo.classDebug = true;
 		continue;
 	    } else if ( clist[i].equals(/*NOI18N*/"-imageAttribute") ){
@@ -189,13 +215,20 @@ public class JavaCodeCompact extends LinkerUtil {
 		String archArg = clist[ ++i ];
 		archName = archArg.toUpperCase();
 		if ( archSet ){
-		    System.err.println(Localizer.getString("javacodecompact.too_many_-arch_targetarchname_specifiers"));
+		    System.err.println(Localizer.getString(
+                        "javacodecompact.too_many_-arch_targetarchname_specifiers"));
 		    success = false;
 		}
 		archSet = true;
 		continue;
-	    } else if (clist[i].equals("-sharedCP")){ 
-		doShared = true;
+            } else if (clist[i].equals("-target")){ 
+                if (!VMConfig.setJDKVersion(clist[++i])) {
+		    System.err.println(Localizer.getString(
+                        "javacodecompact.invalid_target_version", clist[i]));
+		    return false;
+                }
+            } else if (clist[i].equals("-sharedCP")){ 
+		useSharedCP = true;
 	    } else if ( clist[i].equals("-headersDir") ){
 		String type = clist[++i];
 		String dir = clist[++i];
@@ -226,7 +259,8 @@ public class JavaCodeCompact extends LinkerUtil {
 		try {
 		    maxSegmentSize = Integer.parseInt(arg);
 		} catch (NumberFormatException ex) {
-		    System.err.println(Localizer.getString("javacodecompact.invalid_max_segment_size"));
+		    System.err.println(Localizer.getString(
+                        "javacodecompact.invalid_max_segment_size"));
 		    success = false;
 		}
 	    } else if ( clist[i].equals("-validate") ){
@@ -269,15 +303,17 @@ public class JavaCodeCompact extends LinkerUtil {
             } else if (clist[i].startsWith("-listapi:")) {
                 APIListerArgs = clist[i];
 	    } else {
-	        /* Read in classes that need to be ROMized. */ 
-		classesThisRead.clear();
-		if (!readFile( clist[i], classesThisRead )){
+                Vector classesRead = new Vector();
+
+                /* Read in classes that need to be ROMized. */ 
+		classesRead.clear();
+		if (!readFile(clist[i], classesRead)) {
 		    success = false;
 		    // but keep going to process rest of options anyway.
 		}
-		classesProcessed.addAll(classesThisRead);
-		ClassTable.init(verbosity);
-		if (!ClassTable.enterClasses(classesThisRead.elements())) {
+		classesProcessed.addAll(classesRead);
+		ClassTable.initIfNeeded(verbosity);
+		if (!ClassTable.enterClasses(classesRead.elements())) {
 		    success = false;
 		}
 	    }
@@ -320,13 +356,27 @@ public class JavaCodeCompact extends LinkerUtil {
 	}
     }
 
+    /**
+     * Do closure on CP entry class constant references until no unresolved
+     * constants remain.
+     * NOTE: doClosure() only loads ClassInfos for each class that is
+     * referenced from unresolved CP entries.  After doClosure() is done
+     * (assuming full transitive closure is desired), then all the CP
+     * entries for class constants will reference a ClassInfo object.
+     * NOTE: resolving CP entry class constants to ClassInfo does not
+     * include quickening of bytecodes and other types of VM specific
+     * processing associated with resolution yet.  That part is done
+     * later.
+     */
     private boolean doClosure() {
 	// do closure on references until none remain.
-	while ( true ){
-	    undefinedClassNames = new HashSet();
-	    findUnresolvedClassNames(classesProcessed.elements());
-	    String unresolved[] = unresolvedClassNames();
-	    if (unresolved == null)
+	while (true) {
+            Assert.disallowClassloading();
+            Set undefinedClassNames =
+                findUnresolvedClassNames(classesProcessed.elements());
+	    String unresolved[] = unresolvedClassNames(undefinedClassNames);
+            Assert.allowClassloading();
+            if (unresolved == null)
 		break; // none left!
 	    int nfound = 0;
 	    Vector processedThisTime = new Vector();
@@ -354,10 +404,28 @@ public class JavaCodeCompact extends LinkerUtil {
 	return true;
     }
 
+    /**
+     * Performs the work for JCC.  This is the root processing method in JCC
+     * which in turn will call all other processing methods.
+     * NOTE: process() is responsible for resolving all the constant pool
+     * entries of the loaded classes if possible.  If full transitive closure
+     * is required, then this is the place where the work will be done.
+     * 
+     * @return false if an error was discovered.
+     */
     private boolean process(boolean doWrite) throws Exception {
 
-	// do closure on references until none remain.
-	if (!doClosure()) {
+ 	/* Do closure on references until none remain.
+         * NOTE: doClosure() only loads ClassInfos for each class that is
+         * referenced from unresolved CP entries.  After doClosure() is done
+         * (assuming full transitive closure is desired), then all the CP
+         * entries for class constants will reference a ClassInfo object.
+         * NOTE: resolving CP entry class constants to ClassInfo does not
+         * include quickening of bytecodes and other types of VM specific
+         * processing associated with resolution yet.  That part is done
+         * later.
+         */
+        if (!doClosure()) {
 	    return false;
 	}
 
@@ -407,7 +475,10 @@ public class JavaCodeCompact extends LinkerUtil {
 	    firstTimeOnly = false;
 	}
 
-	if (!prepareClasses(c) || !good) {
+        // prepareClasses() is responsible for quickening bytecodes,
+        // optimizing the bytecode, constantpools, etc.  This is where
+        // CP resolution as the VM knows it is done.
+        if (!prepareClasses(c) || !good) {
 	    return false;
 	}
 
@@ -432,8 +503,17 @@ public class JavaCodeCompact extends LinkerUtil {
 	try {
 	    try {
                 JavaCodeCompact jcc = new JavaCodeCompact();
-		// malformed command-line argument or file read error?
-		if (jcc.processOptions( clist )){
+		// Parse the command line arguments and check for malformed
+                // arguments or a file read error?
+                // Note that processOptions also loads all the initial
+                // classes to be romized specified at the JCC command line.
+                // These classes will be loaded, but their constant pool
+                // entries wil not be resolved yet.
+		if (jcc.processOptions(clist)) {
+                    // If we got here, then the arguments were parsed
+                    // successfully.  Now, we are ready to do some
+                    // additional work.  This includes resolving the
+                    // constant pool entries, quickening bytecodes, etc.
 		    success = jcc.process(true);
 		}
 
@@ -566,8 +646,9 @@ public class JavaCodeCompact extends LinkerUtil {
 	 * to something more useful.
 	 */
 	if (!noCodeCompaction && !qlossless) {
-	for ( int i = 0; i < n; i++) 
-	    classes[i].getInlining();
+            for (int i = 0; i < n; i++) {
+                classes[i].getInlining();
+            }
 	}
 	return classes;
     }
@@ -600,7 +681,7 @@ public class JavaCodeCompact extends LinkerUtil {
 	// sharing calculation below. And because they don't have
 	// any code...
 
-	if (doShared) {
+	if (useSharedCP) {
 	    // create a shared constant pool
 	    sharedConstant = new ConstantPool();
 	    for (int i = 0; i < classTable.length; i++) 
@@ -639,14 +720,14 @@ public class JavaCodeCompact extends LinkerUtil {
 
 	for (int i = 0; i < totalclasses; i++) {
             classes[i].ci.relocateAndPackCode(noCodeCompaction);
-	    if (doShared) {
+	    if (useSharedCP) {
 		classes[i].ci.setConstantPool(sharedConstant);
 	    }
 	}
 
 	if ( ! good ) return false;
 	if ( validate ){
-	    if (doShared){
+	    if (useSharedCP){
 		sharedConstant.validate();
 	    }
 	    validateClasses(classes, sharedConstant);
@@ -815,8 +896,11 @@ public class JavaCodeCompact extends LinkerUtil {
     // This function updates the reference count and puts all constants
     // associated with a ClassInfo to the shared constant pool.
     private void mergeConstantsIntoSharedPool(ClassInfo cinfo, 
-					      ConstantPool cp) {
+					      ConstantPool sharedCP) {
+	// Get the CP that is to be added to the shared CP:
 	ConstantObject[] constants = cinfo.getConstantPool().getConstants();
+
+	// For each CP entry that is referenced, add it to the shared CP:
         for (int j = 0; j < constants.length; j++) {
 	    ConstantObject thisConst = constants[j];
             if (thisConst == null)
@@ -824,15 +908,17 @@ public class JavaCodeCompact extends LinkerUtil {
 
             int count = thisConst.references;
 	    if (count > 0) {
-		constants[j] = cp.add(thisConst);
+		// Add into sharedCP, and replace the original in the cinfo:
+		constants[j] = sharedCP.add(thisConst);
 	    }
         }
 
-        // update interfaces array
+	// For each constant in the interface array, add it to the shared CP
+	// and update the interface array with the new constant values:
         if (cinfo.interfaces != null) {
             for (int k = 0 ; k < cinfo.interfaces.length; k++) {
                cinfo.interfaces[k] = (ClassConstant)
-                               cp.add(cinfo.interfaces[k]);
+                   sharedCP.add(cinfo.interfaces[k]);
             }
         }
 
@@ -844,15 +930,15 @@ public class JavaCodeCompact extends LinkerUtil {
             // NOTE: Investigate the possibility of removing this scan
             // of the exception tables.  Since references to exception
             // classes from the exception tables are already counted in
-            // the individual class' constantpool, adding the constants
-            // from the class' constantpool should be adequate.  We
+            // the individual class' constant pool, adding the constants
+            // from the class' constant pool should be adequate.  We
             // might not need to scan these exception tables anymore.
             if ( mi.exceptionTable != null) {
                 for (int j = 0; j < mi.exceptionTable.length; j++) {
                     ClassConstant cc = mi.exceptionTable[j].catchType;
                     if (cc != null) {
                         mi.exceptionTable[j].catchType = 
-			    (ClassConstant)cp.add(cc);
+			    (ClassConstant)sharedCP.add(cc);
                     }
                 }
             }
@@ -860,13 +946,19 @@ public class JavaCodeCompact extends LinkerUtil {
                 for (int j = 0; j < mi.exceptionsThrown.length; j++) {
                     ClassConstant cc = mi.exceptionsThrown[j];
 		    mi.exceptionsThrown[j] = 
-			(ClassConstant) cp.add(cc);
+			(ClassConstant) sharedCP.add(cc);
                 }
 	    }
         }
 	if (cinfo.innerClassAttr != null) {
-	    cinfo.innerClassAttr.mergeConstantsIntoSharedPool(cp);
+	    cinfo.innerClassAttr.mergeConstantsIntoSharedPool(sharedCP);
 	}
+
+	/* TODO :: BEGIN experimental code for future signature support.
+	if (cinfo.signatureAttr != null) {
+	    cinfo.signatureAttr.mergeConstantsIntoSharedPool(sharedCP);
+	}
+	// TODO :: END */
     }
 
     /*

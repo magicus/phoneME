@@ -81,7 +81,10 @@ class ClassTable
 
     private static boolean primitivesDone = false;
 
-    public static void init(int verbosity) {
+    /**
+     * Initializes the class table if it hasn't already been initialized.
+     */
+    public static void initIfNeeded(int verbosity) {
 	if (!primitivesDone) {
 	    vm.PrimitiveClassInfo.init(verbosity > 1);
 	    primitivesDone = true;

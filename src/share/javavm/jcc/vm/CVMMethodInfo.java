@@ -372,7 +372,7 @@ CVMMethodInfo extends VMMethodInfo implements Const, CVMConst {
 	    
 	boolean redoInlining = false;
 	int stackSize, stackBase;
-	OpcodeInfoType opPtr;
+	CVMOpcodeInfoType opPtr;
 
 	stackSize = 0;
 	stackBase = 0;			// Prevent javac warning
@@ -463,7 +463,7 @@ CVMMethodInfo extends VMMethodInfo implements Const, CVMConst {
 		    }
 		}
 
-		if ((opPtr.flags & OpcodeInfoType.NULL_CHECK) != 0
+		if ((opPtr.flags & CVMOpcodeInfoType.NULL_CHECK) != 0
 		    && (stackBase == 0)) {
 		    /* We don't need to generate code to check for null, since
 		     * the instruction already does it.
@@ -493,7 +493,7 @@ CVMMethodInfo extends VMMethodInfo implements Const, CVMConst {
 		    // break;			// not reached
 		}
 		if ((result & NO_INLINE_FLAG) == 0) { 
-		    if ((opPtr.flags & OpcodeInfoType.CONSTANT_POOL) != 0) 
+		    if ((opPtr.flags & CVMOpcodeInfoType.CONSTANT_POOL) != 0) 
 			result |= SAME_CLASS_FLAG;
 		    if (redoInlining) 
 			result |= REDO_INLINING_FLAG;
@@ -714,8 +714,8 @@ CVMMethodInfo extends VMMethodInfo implements Const, CVMConst {
 				    : opc_pop, 
 				 opcode);
 	}
-	if (   ((OpcodeInfo[opcode].flags &
-		 (OpcodeInfoType.NULL_CHECK | OpcodeInfoType.CAN_ERROR)) == 0)
+	if (((OpcodeInfo[opcode].flags &
+             (CVMOpcodeInfoType.NULL_CHECK | CVMOpcodeInfoType.CAN_ERROR)) == 0)
 	    && (OpcodeInfo[opcode].outStack == 1)) {
 	    /* The result creates one thing on the stack, and it can't error */
 	    return MAKE_INLINING(opcode,
@@ -746,15 +746,15 @@ CVMMethodInfo extends VMMethodInfo implements Const, CVMConst {
 	return (op1 << 0) + (op2 << 8) + (op3 << 16);
     }
 
-    private static int REGSIZE(OpcodeInfoType ptr) {
+    private static int REGSIZE(CVMOpcodeInfoType ptr) {
 	return (ptr.inStack);
     }
 
-    private static int REGNUM(OpcodeInfoType ptr) {
+    private static int REGNUM(CVMOpcodeInfoType ptr) {
 	return (ptr.outStack);
     }
 
-    static OpcodeInfoType[] OpcodeInfo = new OpcodeInfoType[256];
+    static CVMOpcodeInfoType[] OpcodeInfo = new CVMOpcodeInfoType[256];
     static {
 	/*  { opc_pop  <number of words to pop from stack> } 
 	 *  { opc_iadd <words popped from stack> <words pushed to stack> }
@@ -765,343 +765,343 @@ CVMMethodInfo extends VMMethodInfo implements Const, CVMConst {
 	 *  other values are special opcodes that must be handled specially
 	 */
 
-	OpcodeInfo[opc_nop]		= new OpcodeInfoType(opc_pop, 0);
-	OpcodeInfo[opc_aconst_null]	= new OpcodeInfoType(opc_iadd, 0, 1);
-	OpcodeInfo[opc_iconst_m1]	= new OpcodeInfoType(opc_iadd, 0, 1);
-	OpcodeInfo[opc_iconst_0]	= new OpcodeInfoType(opc_iadd, 0, 1);
-	OpcodeInfo[opc_iconst_1]	= new OpcodeInfoType(opc_iadd, 0, 1);
-	OpcodeInfo[opc_iconst_2]	= new OpcodeInfoType(opc_iadd, 0, 1);
-	OpcodeInfo[opc_iconst_3]	= new OpcodeInfoType(opc_iadd, 0, 1);
-	OpcodeInfo[opc_iconst_4]	= new OpcodeInfoType(opc_iadd, 0, 1);
-	OpcodeInfo[opc_iconst_5]	= new OpcodeInfoType(opc_iadd, 0, 1);
-	OpcodeInfo[opc_lconst_0]	= new OpcodeInfoType(opc_iadd, 0, 2);
-	OpcodeInfo[opc_lconst_1]	= new OpcodeInfoType(opc_iadd, 0, 2);
-	OpcodeInfo[opc_fconst_0]	= new OpcodeInfoType(opc_iadd, 0, 1);
-	OpcodeInfo[opc_fconst_1]	= new OpcodeInfoType(opc_iadd, 0, 1);
-	OpcodeInfo[opc_fconst_2]	= new OpcodeInfoType(opc_iadd, 0, 1);
-	OpcodeInfo[opc_dconst_0]	= new OpcodeInfoType(opc_iadd, 0, 2);
-	OpcodeInfo[opc_dconst_1]	= new OpcodeInfoType(opc_iadd, 0, 2);
-	OpcodeInfo[opc_bipush]	= new OpcodeInfoType(opc_iadd, 0, 1);
-	OpcodeInfo[opc_sipush]	= new OpcodeInfoType(opc_iadd, 0, 1);
-	OpcodeInfo[opc_ldc]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_ldc_w]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_ldc2_w]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_iload]	= new OpcodeInfoType(opc_iload, 1);
-	OpcodeInfo[opc_lload]	= new OpcodeInfoType(opc_iload, 2);
-	OpcodeInfo[opc_fload]	= new OpcodeInfoType(opc_iload, 1);
-	OpcodeInfo[opc_dload]	= new OpcodeInfoType(opc_iload, 2);
-	OpcodeInfo[opc_aload]	= new OpcodeInfoType(opc_iload, 1);
-	OpcodeInfo[opc_iload_0]	= new OpcodeInfoType(opc_iload_0, 1, 0);
-	OpcodeInfo[opc_iload_1]	= new OpcodeInfoType(opc_iload_0, 1, 1);
-	OpcodeInfo[opc_iload_2]	= new OpcodeInfoType(opc_iload_0, 1, 2);
-	OpcodeInfo[opc_iload_3]	= new OpcodeInfoType(opc_iload_0, 1, 3);
-	OpcodeInfo[opc_lload_0]	= new OpcodeInfoType(opc_iload_0, 2, 0);
-	OpcodeInfo[opc_lload_1]	= new OpcodeInfoType(opc_iload_0, 2, 1);
-	OpcodeInfo[opc_lload_2]	= new OpcodeInfoType(opc_iload_0, 2, 2);
-	OpcodeInfo[opc_lload_3]	= new OpcodeInfoType(opc_iload_0, 2, 3);
-	OpcodeInfo[opc_fload_0]	= new OpcodeInfoType(opc_iload_0, 1, 0);
-	OpcodeInfo[opc_fload_1]	= new OpcodeInfoType(opc_iload_0, 1, 1);
-	OpcodeInfo[opc_fload_2]	= new OpcodeInfoType(opc_iload_0, 1, 2);
-	OpcodeInfo[opc_fload_3]	= new OpcodeInfoType(opc_iload_0, 1, 3);
-	OpcodeInfo[opc_dload_0]	= new OpcodeInfoType(opc_iload_0, 2, 0);
-	OpcodeInfo[opc_dload_1]	= new OpcodeInfoType(opc_iload_0, 2, 1);
-	OpcodeInfo[opc_dload_2]	= new OpcodeInfoType(opc_iload_0, 2, 2);
-	OpcodeInfo[opc_dload_3]	= new OpcodeInfoType(opc_iload_0, 2, 3);
-	OpcodeInfo[opc_aload_0]	= new OpcodeInfoType(opc_iload_0, 1, 0);
-	OpcodeInfo[opc_aload_1]	= new OpcodeInfoType(opc_iload_0, 1, 1);
-	OpcodeInfo[opc_aload_2]	= new OpcodeInfoType(opc_iload_0, 1, 2);
-	OpcodeInfo[opc_aload_3]	= new OpcodeInfoType(opc_iload_0, 1, 3);
+	OpcodeInfo[opc_nop]		= new CVMOpcodeInfoType(opc_pop, 0);
+	OpcodeInfo[opc_aconst_null]	= new CVMOpcodeInfoType(opc_iadd, 0, 1);
+	OpcodeInfo[opc_iconst_m1]	= new CVMOpcodeInfoType(opc_iadd, 0, 1);
+	OpcodeInfo[opc_iconst_0]	= new CVMOpcodeInfoType(opc_iadd, 0, 1);
+	OpcodeInfo[opc_iconst_1]	= new CVMOpcodeInfoType(opc_iadd, 0, 1);
+	OpcodeInfo[opc_iconst_2]	= new CVMOpcodeInfoType(opc_iadd, 0, 1);
+	OpcodeInfo[opc_iconst_3]	= new CVMOpcodeInfoType(opc_iadd, 0, 1);
+	OpcodeInfo[opc_iconst_4]	= new CVMOpcodeInfoType(opc_iadd, 0, 1);
+	OpcodeInfo[opc_iconst_5]	= new CVMOpcodeInfoType(opc_iadd, 0, 1);
+	OpcodeInfo[opc_lconst_0]	= new CVMOpcodeInfoType(opc_iadd, 0, 2);
+	OpcodeInfo[opc_lconst_1]	= new CVMOpcodeInfoType(opc_iadd, 0, 2);
+	OpcodeInfo[opc_fconst_0]	= new CVMOpcodeInfoType(opc_iadd, 0, 1);
+	OpcodeInfo[opc_fconst_1]	= new CVMOpcodeInfoType(opc_iadd, 0, 1);
+	OpcodeInfo[opc_fconst_2]	= new CVMOpcodeInfoType(opc_iadd, 0, 1);
+	OpcodeInfo[opc_dconst_0]	= new CVMOpcodeInfoType(opc_iadd, 0, 2);
+	OpcodeInfo[opc_dconst_1]	= new CVMOpcodeInfoType(opc_iadd, 0, 2);
+	OpcodeInfo[opc_bipush]	= new CVMOpcodeInfoType(opc_iadd, 0, 1);
+	OpcodeInfo[opc_sipush]	= new CVMOpcodeInfoType(opc_iadd, 0, 1);
+	OpcodeInfo[opc_ldc]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_ldc_w]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_ldc2_w]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_iload]	= new CVMOpcodeInfoType(opc_iload, 1);
+	OpcodeInfo[opc_lload]	= new CVMOpcodeInfoType(opc_iload, 2);
+	OpcodeInfo[opc_fload]	= new CVMOpcodeInfoType(opc_iload, 1);
+	OpcodeInfo[opc_dload]	= new CVMOpcodeInfoType(opc_iload, 2);
+	OpcodeInfo[opc_aload]	= new CVMOpcodeInfoType(opc_iload, 1);
+	OpcodeInfo[opc_iload_0]	= new CVMOpcodeInfoType(opc_iload_0, 1, 0);
+	OpcodeInfo[opc_iload_1]	= new CVMOpcodeInfoType(opc_iload_0, 1, 1);
+	OpcodeInfo[opc_iload_2]	= new CVMOpcodeInfoType(opc_iload_0, 1, 2);
+	OpcodeInfo[opc_iload_3]	= new CVMOpcodeInfoType(opc_iload_0, 1, 3);
+	OpcodeInfo[opc_lload_0]	= new CVMOpcodeInfoType(opc_iload_0, 2, 0);
+	OpcodeInfo[opc_lload_1]	= new CVMOpcodeInfoType(opc_iload_0, 2, 1);
+	OpcodeInfo[opc_lload_2]	= new CVMOpcodeInfoType(opc_iload_0, 2, 2);
+	OpcodeInfo[opc_lload_3]	= new CVMOpcodeInfoType(opc_iload_0, 2, 3);
+	OpcodeInfo[opc_fload_0]	= new CVMOpcodeInfoType(opc_iload_0, 1, 0);
+	OpcodeInfo[opc_fload_1]	= new CVMOpcodeInfoType(opc_iload_0, 1, 1);
+	OpcodeInfo[opc_fload_2]	= new CVMOpcodeInfoType(opc_iload_0, 1, 2);
+	OpcodeInfo[opc_fload_3]	= new CVMOpcodeInfoType(opc_iload_0, 1, 3);
+	OpcodeInfo[opc_dload_0]	= new CVMOpcodeInfoType(opc_iload_0, 2, 0);
+	OpcodeInfo[opc_dload_1]	= new CVMOpcodeInfoType(opc_iload_0, 2, 1);
+	OpcodeInfo[opc_dload_2]	= new CVMOpcodeInfoType(opc_iload_0, 2, 2);
+	OpcodeInfo[opc_dload_3]	= new CVMOpcodeInfoType(opc_iload_0, 2, 3);
+	OpcodeInfo[opc_aload_0]	= new CVMOpcodeInfoType(opc_iload_0, 1, 0);
+	OpcodeInfo[opc_aload_1]	= new CVMOpcodeInfoType(opc_iload_0, 1, 1);
+	OpcodeInfo[opc_aload_2]	= new CVMOpcodeInfoType(opc_iload_0, 1, 2);
+	OpcodeInfo[opc_aload_3]	= new CVMOpcodeInfoType(opc_iload_0, 1, 3);
 	OpcodeInfo[opc_iaload]	=
-	    new OpcodeInfoType(opc_iadd, 2, 1, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 2, 1, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_laload]	=
-	    new OpcodeInfoType(opc_iadd, 2, 2, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 2, 2, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_faload]	=
-	    new OpcodeInfoType(opc_iadd, 2, 1, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 2, 1, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_daload]	=
-	    new OpcodeInfoType(opc_iadd, 2, 2, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 2, 2, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_aaload]	=
-	    new OpcodeInfoType(opc_iadd, 2, 1, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 2, 1, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_baload]	=
-	    new OpcodeInfoType(opc_iadd, 2, 1, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 2, 1, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_caload]	=
-	    new OpcodeInfoType(opc_iadd, 2, 1, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 2, 1, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_saload]	=
-	    new OpcodeInfoType(opc_iadd, 2, 1, OpcodeInfoType.NULL_CHECK);
-	OpcodeInfo[opc_istore]		= new OpcodeInfoType(255);
-	OpcodeInfo[opc_lstore]		= new OpcodeInfoType(255);
-	OpcodeInfo[opc_fstore]		= new OpcodeInfoType(255);
-	OpcodeInfo[opc_dstore]		= new OpcodeInfoType(255);
-	OpcodeInfo[opc_astore]		= new OpcodeInfoType(255);
-	OpcodeInfo[opc_istore_0]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_istore_1]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_istore_2]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_istore_3]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_lstore_0]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_lstore_1]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_lstore_2]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_lstore_3]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_fstore_0]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_fstore_1]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_fstore_2]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_fstore_3]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_dstore_0]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_dstore_1]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_dstore_2]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_dstore_3]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_astore_0]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_astore_1]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_astore_2]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_astore_3]	= new OpcodeInfoType(255);
+	    new CVMOpcodeInfoType(opc_iadd, 2, 1, CVMOpcodeInfoType.NULL_CHECK);
+	OpcodeInfo[opc_istore]		= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_lstore]		= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_fstore]		= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_dstore]		= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_astore]		= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_istore_0]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_istore_1]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_istore_2]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_istore_3]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_lstore_0]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_lstore_1]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_lstore_2]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_lstore_3]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_fstore_0]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_fstore_1]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_fstore_2]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_fstore_3]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_dstore_0]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_dstore_1]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_dstore_2]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_dstore_3]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_astore_0]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_astore_1]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_astore_2]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_astore_3]	= new CVMOpcodeInfoType(255);
 	OpcodeInfo[opc_iastore]	=
-	    new OpcodeInfoType(opc_iadd, 3, 0, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 3, 0, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_lastore]	=
-	    new OpcodeInfoType(opc_iadd, 4, 0, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 4, 0, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_fastore]	=
-	    new OpcodeInfoType(opc_iadd, 3, 0, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 3, 0, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_dastore]	=
-	    new OpcodeInfoType(opc_iadd, 4, 0, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 4, 0, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_aastore]	=
-	    new OpcodeInfoType(opc_iadd, 3, 0, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 3, 0, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_bastore]	=
-	    new OpcodeInfoType(opc_iadd, 3, 0, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 3, 0, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_castore]	=
-	    new OpcodeInfoType(opc_iadd, 3, 0, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 3, 0, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_sastore]	=
-	    new OpcodeInfoType(opc_iadd, 3, 0, OpcodeInfoType.NULL_CHECK);
-	OpcodeInfo[opc_pop]	= new OpcodeInfoType(opc_pop, 1);
-	OpcodeInfo[opc_pop2]	= new OpcodeInfoType(opc_pop, 2);
-	OpcodeInfo[opc_dup]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_dup_x1]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_dup_x2]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_dup2]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_dup2_x1]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_dup2_x2]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_swap]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_iadd]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_ladd]	= new OpcodeInfoType(opc_iadd, 4, 2);
-	OpcodeInfo[opc_fadd]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_dadd]	= new OpcodeInfoType(opc_iadd, 4, 2);
-	OpcodeInfo[opc_isub]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_lsub]	= new OpcodeInfoType(opc_iadd, 4, 2);
-	OpcodeInfo[opc_fsub]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_dsub]	= new OpcodeInfoType(opc_iadd, 4, 2);
-	OpcodeInfo[opc_imul]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_lmul]	= new OpcodeInfoType(opc_iadd, 4, 2);
-	OpcodeInfo[opc_fmul]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_dmul]	= new OpcodeInfoType(opc_iadd, 4, 2);
+	    new CVMOpcodeInfoType(opc_iadd, 3, 0, CVMOpcodeInfoType.NULL_CHECK);
+	OpcodeInfo[opc_pop]	= new CVMOpcodeInfoType(opc_pop, 1);
+	OpcodeInfo[opc_pop2]	= new CVMOpcodeInfoType(opc_pop, 2);
+	OpcodeInfo[opc_dup]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_dup_x1]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_dup_x2]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_dup2]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_dup2_x1]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_dup2_x2]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_swap]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_iadd]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_ladd]	= new CVMOpcodeInfoType(opc_iadd, 4, 2);
+	OpcodeInfo[opc_fadd]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_dadd]	= new CVMOpcodeInfoType(opc_iadd, 4, 2);
+	OpcodeInfo[opc_isub]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_lsub]	= new CVMOpcodeInfoType(opc_iadd, 4, 2);
+	OpcodeInfo[opc_fsub]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_dsub]	= new CVMOpcodeInfoType(opc_iadd, 4, 2);
+	OpcodeInfo[opc_imul]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_lmul]	= new CVMOpcodeInfoType(opc_iadd, 4, 2);
+	OpcodeInfo[opc_fmul]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_dmul]	= new CVMOpcodeInfoType(opc_iadd, 4, 2);
 	OpcodeInfo[opc_idiv]	=
-	    new OpcodeInfoType(opc_iadd, 2, 1, OpcodeInfoType.CAN_ERROR);
+	    new CVMOpcodeInfoType(opc_iadd, 2, 1, CVMOpcodeInfoType.CAN_ERROR);
 	OpcodeInfo[opc_ldiv]	=
-	    new OpcodeInfoType(opc_iadd, 4, 2, OpcodeInfoType.CAN_ERROR);
-	OpcodeInfo[opc_fdiv]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_ddiv]	= new OpcodeInfoType(opc_iadd, 4, 2);
+	    new CVMOpcodeInfoType(opc_iadd, 4, 2, CVMOpcodeInfoType.CAN_ERROR);
+	OpcodeInfo[opc_fdiv]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_ddiv]	= new CVMOpcodeInfoType(opc_iadd, 4, 2);
 	OpcodeInfo[opc_irem]	=
-	    new OpcodeInfoType(opc_iadd, 2, 1, OpcodeInfoType.CAN_ERROR);
+	    new CVMOpcodeInfoType(opc_iadd, 2, 1, CVMOpcodeInfoType.CAN_ERROR);
 	OpcodeInfo[opc_lrem]	=
-	    new OpcodeInfoType(opc_iadd, 4, 2, OpcodeInfoType.CAN_ERROR);
-	OpcodeInfo[opc_frem]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_drem]	= new OpcodeInfoType(opc_iadd, 4, 2);
-	OpcodeInfo[opc_ineg]	= new OpcodeInfoType(opc_iadd, 1, 1);
-	OpcodeInfo[opc_lneg]	= new OpcodeInfoType(opc_iadd, 2, 2);
-	OpcodeInfo[opc_fneg]	= new OpcodeInfoType(opc_iadd, 1, 1);
-	OpcodeInfo[opc_dneg]	= new OpcodeInfoType(opc_iadd, 2, 2);
-	OpcodeInfo[opc_ishl]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_lshl]	= new OpcodeInfoType(opc_iadd, 3, 2);
-	OpcodeInfo[opc_ishr]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_lshr]	= new OpcodeInfoType(opc_iadd, 3, 2);
-	OpcodeInfo[opc_iushr]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_lushr]	= new OpcodeInfoType(opc_iadd, 3, 2);
-	OpcodeInfo[opc_iand]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_land]	= new OpcodeInfoType(opc_iadd, 4, 2);
-	OpcodeInfo[opc_ior]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_lor]	= new OpcodeInfoType(opc_iadd, 4, 2);
-	OpcodeInfo[opc_ixor]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_lxor]	= new OpcodeInfoType(opc_iadd, 4, 2);
-	OpcodeInfo[opc_iinc]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_i2l]	= new OpcodeInfoType(opc_iadd, 1, 2);
-	OpcodeInfo[opc_i2f]	= new OpcodeInfoType(opc_iadd, 1, 1);
-	OpcodeInfo[opc_i2d]	= new OpcodeInfoType(opc_iadd, 1, 2);
-	OpcodeInfo[opc_l2i]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_l2f]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_l2d]	= new OpcodeInfoType(opc_iadd, 2, 2);
-	OpcodeInfo[opc_f2i]	= new OpcodeInfoType(opc_iadd, 1, 1);
-	OpcodeInfo[opc_f2l]	= new OpcodeInfoType(opc_iadd, 1, 2);
-	OpcodeInfo[opc_f2d]	= new OpcodeInfoType(opc_iadd, 1, 2);
-	OpcodeInfo[opc_d2i]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_d2l]	= new OpcodeInfoType(opc_iadd, 2, 2);
-	OpcodeInfo[opc_d2f]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_i2b]	= new OpcodeInfoType(opc_iadd, 1, 1);
-	OpcodeInfo[opc_i2c]	= new OpcodeInfoType(opc_iadd, 1, 1);
-	OpcodeInfo[opc_i2s]	= new OpcodeInfoType(opc_iadd, 1, 1);
-	OpcodeInfo[opc_lcmp]	= new OpcodeInfoType(opc_iadd, 4, 1);
-	OpcodeInfo[opc_fcmpl]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_fcmpg]	= new OpcodeInfoType(opc_iadd, 2, 1);
-	OpcodeInfo[opc_dcmpl]	= new OpcodeInfoType(opc_iadd, 4, 1);
-	OpcodeInfo[opc_dcmpg]	= new OpcodeInfoType(opc_iadd, 4, 1);
-	OpcodeInfo[opc_ifeq]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_ifne]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_iflt]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_ifge]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_ifgt]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_ifle]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_if_icmpeq]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_if_icmpne]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_if_icmplt]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_if_icmpge]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_if_icmpgt]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_if_icmple]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_if_acmpeq]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_if_acmpne]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_goto]		= new OpcodeInfoType(255);
-	OpcodeInfo[opc_jsr]		= new OpcodeInfoType(255);
-	OpcodeInfo[opc_ret]		= new OpcodeInfoType(255);
-	OpcodeInfo[opc_tableswitch]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_lookupswitch]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_ireturn]		= new OpcodeInfoType(opc_return, 1);
-	OpcodeInfo[opc_lreturn]		= new OpcodeInfoType(opc_return, 2);
-	OpcodeInfo[opc_freturn]		= new OpcodeInfoType(opc_return, 1);
-	OpcodeInfo[opc_dreturn]		= new OpcodeInfoType(opc_return, 2);
-	OpcodeInfo[opc_areturn]		= new OpcodeInfoType(opc_return, 1);
-	OpcodeInfo[opc_return]		= new OpcodeInfoType(opc_return, 0);
-	OpcodeInfo[opc_getstatic]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_putstatic]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_getfield]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_putfield]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_invokevirtual]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_invokespecial]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_invokestatic]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_invokeinterface]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_xxxunusedxxx]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_new]		= new OpcodeInfoType(255);
+	    new CVMOpcodeInfoType(opc_iadd, 4, 2, CVMOpcodeInfoType.CAN_ERROR);
+	OpcodeInfo[opc_frem]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_drem]	= new CVMOpcodeInfoType(opc_iadd, 4, 2);
+	OpcodeInfo[opc_ineg]	= new CVMOpcodeInfoType(opc_iadd, 1, 1);
+	OpcodeInfo[opc_lneg]	= new CVMOpcodeInfoType(opc_iadd, 2, 2);
+	OpcodeInfo[opc_fneg]	= new CVMOpcodeInfoType(opc_iadd, 1, 1);
+	OpcodeInfo[opc_dneg]	= new CVMOpcodeInfoType(opc_iadd, 2, 2);
+	OpcodeInfo[opc_ishl]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_lshl]	= new CVMOpcodeInfoType(opc_iadd, 3, 2);
+	OpcodeInfo[opc_ishr]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_lshr]	= new CVMOpcodeInfoType(opc_iadd, 3, 2);
+	OpcodeInfo[opc_iushr]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_lushr]	= new CVMOpcodeInfoType(opc_iadd, 3, 2);
+	OpcodeInfo[opc_iand]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_land]	= new CVMOpcodeInfoType(opc_iadd, 4, 2);
+	OpcodeInfo[opc_ior]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_lor]	= new CVMOpcodeInfoType(opc_iadd, 4, 2);
+	OpcodeInfo[opc_ixor]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_lxor]	= new CVMOpcodeInfoType(opc_iadd, 4, 2);
+	OpcodeInfo[opc_iinc]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_i2l]	= new CVMOpcodeInfoType(opc_iadd, 1, 2);
+	OpcodeInfo[opc_i2f]	= new CVMOpcodeInfoType(opc_iadd, 1, 1);
+	OpcodeInfo[opc_i2d]	= new CVMOpcodeInfoType(opc_iadd, 1, 2);
+	OpcodeInfo[opc_l2i]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_l2f]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_l2d]	= new CVMOpcodeInfoType(opc_iadd, 2, 2);
+	OpcodeInfo[opc_f2i]	= new CVMOpcodeInfoType(opc_iadd, 1, 1);
+	OpcodeInfo[opc_f2l]	= new CVMOpcodeInfoType(opc_iadd, 1, 2);
+	OpcodeInfo[opc_f2d]	= new CVMOpcodeInfoType(opc_iadd, 1, 2);
+	OpcodeInfo[opc_d2i]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_d2l]	= new CVMOpcodeInfoType(opc_iadd, 2, 2);
+	OpcodeInfo[opc_d2f]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_i2b]	= new CVMOpcodeInfoType(opc_iadd, 1, 1);
+	OpcodeInfo[opc_i2c]	= new CVMOpcodeInfoType(opc_iadd, 1, 1);
+	OpcodeInfo[opc_i2s]	= new CVMOpcodeInfoType(opc_iadd, 1, 1);
+	OpcodeInfo[opc_lcmp]	= new CVMOpcodeInfoType(opc_iadd, 4, 1);
+	OpcodeInfo[opc_fcmpl]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_fcmpg]	= new CVMOpcodeInfoType(opc_iadd, 2, 1);
+	OpcodeInfo[opc_dcmpl]	= new CVMOpcodeInfoType(opc_iadd, 4, 1);
+	OpcodeInfo[opc_dcmpg]	= new CVMOpcodeInfoType(opc_iadd, 4, 1);
+	OpcodeInfo[opc_ifeq]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_ifne]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_iflt]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_ifge]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_ifgt]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_ifle]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_if_icmpeq]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_if_icmpne]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_if_icmplt]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_if_icmpge]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_if_icmpgt]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_if_icmple]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_if_acmpeq]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_if_acmpne]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_goto]		= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_jsr]		= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_ret]		= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_tableswitch]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_lookupswitch]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_ireturn]		= new CVMOpcodeInfoType(opc_return, 1);
+	OpcodeInfo[opc_lreturn]		= new CVMOpcodeInfoType(opc_return, 2);
+	OpcodeInfo[opc_freturn]		= new CVMOpcodeInfoType(opc_return, 1);
+	OpcodeInfo[opc_dreturn]		= new CVMOpcodeInfoType(opc_return, 2);
+	OpcodeInfo[opc_areturn]		= new CVMOpcodeInfoType(opc_return, 1);
+	OpcodeInfo[opc_return]		= new CVMOpcodeInfoType(opc_return, 0);
+	OpcodeInfo[opc_getstatic]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_putstatic]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_getfield]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_putfield]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_invokevirtual]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_invokespecial]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_invokestatic]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_invokeinterface]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_xxxunusedxxx]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_new]		= new CVMOpcodeInfoType(255);
 	OpcodeInfo[opc_newarray] 	=
-	    new OpcodeInfoType(opc_iadd, 1, 1, OpcodeInfoType.CAN_ERROR);
-	OpcodeInfo[opc_anewarray]	= new OpcodeInfoType(255);
+	    new CVMOpcodeInfoType(opc_iadd, 1, 1, CVMOpcodeInfoType.CAN_ERROR);
+	OpcodeInfo[opc_anewarray]	= new CVMOpcodeInfoType(255);
 	OpcodeInfo[opc_arraylength] =
-	    new OpcodeInfoType(opc_iadd, 1, 1, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 1, 1, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_athrow] =
-	    new OpcodeInfoType(opc_iadd, 1, 0,
-			       OpcodeInfoType.NULL_CHECK
-			       | OpcodeInfoType.CAN_ERROR);
-	OpcodeInfo[opc_checkcast]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_instanceof]	= new OpcodeInfoType(255);
+	    new CVMOpcodeInfoType(opc_iadd, 1, 0,
+			       CVMOpcodeInfoType.NULL_CHECK
+			       | CVMOpcodeInfoType.CAN_ERROR);
+	OpcodeInfo[opc_checkcast]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_instanceof]	= new CVMOpcodeInfoType(255);
 	OpcodeInfo[opc_monitorenter] =
-	    new OpcodeInfoType(opc_iadd, 1, 0,
-			       OpcodeInfoType.NULL_CHECK
-			       | OpcodeInfoType.CAN_ERROR);
+	    new CVMOpcodeInfoType(opc_iadd, 1, 0,
+			       CVMOpcodeInfoType.NULL_CHECK
+			       | CVMOpcodeInfoType.CAN_ERROR);
 	OpcodeInfo[opc_monitorexit] =
-	    new OpcodeInfoType(opc_iadd, 1, 0,
-			       OpcodeInfoType.NULL_CHECK
-			       | OpcodeInfoType.CAN_ERROR);
-	OpcodeInfo[opc_wide]		= new OpcodeInfoType(255);
-	OpcodeInfo[opc_multianewarray]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_ifnull]		= new OpcodeInfoType(255);
-	OpcodeInfo[opc_ifnonnull]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_goto_w]		= new OpcodeInfoType(255);
-	OpcodeInfo[opc_jsr_w]		= new OpcodeInfoType(255);
-	OpcodeInfo[opc_breakpoint]	= new OpcodeInfoType(255);
+	    new CVMOpcodeInfoType(opc_iadd, 1, 0,
+			       CVMOpcodeInfoType.NULL_CHECK
+			       | CVMOpcodeInfoType.CAN_ERROR);
+	OpcodeInfo[opc_wide]		= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_multianewarray]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_ifnull]		= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_ifnonnull]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_goto_w]		= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_jsr_w]		= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_breakpoint]	= new CVMOpcodeInfoType(255);
 	OpcodeInfo[opc_aldc_quick]	=
-	    new OpcodeInfoType(opc_iadd, 0, 1, OpcodeInfoType.CONSTANT_POOL);
+	    new CVMOpcodeInfoType(opc_iadd, 0, 1, CVMOpcodeInfoType.CONSTANT_POOL);
 	OpcodeInfo[opc_aldc_w_quick]	=
-	    new OpcodeInfoType(opc_iadd, 0, 1, OpcodeInfoType.CONSTANT_POOL);
+	    new CVMOpcodeInfoType(opc_iadd, 0, 1, CVMOpcodeInfoType.CONSTANT_POOL);
 	OpcodeInfo[opc_aldc_ind_quick]	=
-	    new OpcodeInfoType(opc_iadd, 0, 1, OpcodeInfoType.CONSTANT_POOL);
+	    new CVMOpcodeInfoType(opc_iadd, 0, 1, CVMOpcodeInfoType.CONSTANT_POOL);
 	OpcodeInfo[opc_aldc_ind_w_quick] =
-	    new OpcodeInfoType(opc_iadd, 0, 1, OpcodeInfoType.CONSTANT_POOL);
+	    new CVMOpcodeInfoType(opc_iadd, 0, 1, CVMOpcodeInfoType.CONSTANT_POOL);
 	OpcodeInfo[opc_ldc_quick]	= 
-	    new OpcodeInfoType(opc_iadd, 0, 1, OpcodeInfoType.CONSTANT_POOL);
+	    new CVMOpcodeInfoType(opc_iadd, 0, 1, CVMOpcodeInfoType.CONSTANT_POOL);
 	OpcodeInfo[opc_ldc_w_quick]	=
-	    new OpcodeInfoType(opc_iadd, 0, 1, OpcodeInfoType.CONSTANT_POOL);
+	    new CVMOpcodeInfoType(opc_iadd, 0, 1, CVMOpcodeInfoType.CONSTANT_POOL);
 	OpcodeInfo[opc_ldc2_w_quick]	=
-	    new OpcodeInfoType(opc_iadd, 0, 2, OpcodeInfoType.CONSTANT_POOL);
+	    new CVMOpcodeInfoType(opc_iadd, 0, 2, CVMOpcodeInfoType.CONSTANT_POOL);
 	OpcodeInfo[opc_getfield_quick]	= 
-	    new OpcodeInfoType(opc_iadd, 1, 1, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 1, 1, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_putfield_quick]  =
-	    new OpcodeInfoType(opc_iadd, 2, 0, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 2, 0, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_getfield2_quick]	=
-	    new OpcodeInfoType(opc_iadd, 1, 2, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 1, 2, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_putfield2_quick]	= 
-	    new OpcodeInfoType(opc_iadd, 3, 0, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 3, 0, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_getstatic_quick]	= 
-	    new OpcodeInfoType(opc_iadd, 0, 1, OpcodeInfoType.CONSTANT_POOL);
+	    new CVMOpcodeInfoType(opc_iadd, 0, 1, CVMOpcodeInfoType.CONSTANT_POOL);
 	OpcodeInfo[opc_putstatic_quick]	=
-	    new OpcodeInfoType(opc_iadd, 1, 0, OpcodeInfoType.CONSTANT_POOL);
+	    new CVMOpcodeInfoType(opc_iadd, 1, 0, CVMOpcodeInfoType.CONSTANT_POOL);
 	OpcodeInfo[opc_agetstatic_quick] =
-	    new OpcodeInfoType(opc_iadd, 0, 1, OpcodeInfoType.CONSTANT_POOL);
+	    new CVMOpcodeInfoType(opc_iadd, 0, 1, CVMOpcodeInfoType.CONSTANT_POOL);
 	OpcodeInfo[opc_aputstatic_quick] =
-	    new OpcodeInfoType(opc_iadd, 1, 0, OpcodeInfoType.CONSTANT_POOL);
+	    new CVMOpcodeInfoType(opc_iadd, 1, 0, CVMOpcodeInfoType.CONSTANT_POOL);
 	OpcodeInfo[opc_getstatic2_quick] =
-	    new OpcodeInfoType(opc_iadd, 0, 2, OpcodeInfoType.CONSTANT_POOL);
+	    new CVMOpcodeInfoType(opc_iadd, 0, 2, CVMOpcodeInfoType.CONSTANT_POOL);
 	OpcodeInfo[opc_putstatic2_quick]=
-	    new OpcodeInfoType(opc_iadd, 2, 0, OpcodeInfoType.CONSTANT_POOL);
-	OpcodeInfo[opc_invokevirtual_quick]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_ainvokevirtual_quick]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_dinvokevirtual_quick]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_vinvokevirtual_quick]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_invokenonvirtual_quick]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_invokesuper_quick]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_invokestatic_quick]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_invokeinterface_quick]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_invokevirtualobject_quick] = new OpcodeInfoType(255);
+	    new CVMOpcodeInfoType(opc_iadd, 2, 0, CVMOpcodeInfoType.CONSTANT_POOL);
+	OpcodeInfo[opc_invokevirtual_quick]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_ainvokevirtual_quick]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_dinvokevirtual_quick]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_vinvokevirtual_quick]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_invokenonvirtual_quick]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_invokesuper_quick]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_invokestatic_quick]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_invokeinterface_quick]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_invokevirtualobject_quick] = new CVMOpcodeInfoType(255);
 	OpcodeInfo[opc_invokeignored_quick] =
-	    new OpcodeInfoType(opc_invokeignored_quick);
+	    new CVMOpcodeInfoType(opc_invokeignored_quick);
 	OpcodeInfo[opc_new_quick]= 
-	    new OpcodeInfoType(opc_iadd, 0, 1,
-			       OpcodeInfoType.CAN_ERROR
-			       | OpcodeInfoType.CONSTANT_POOL);
+	    new CVMOpcodeInfoType(opc_iadd, 0, 1,
+			       CVMOpcodeInfoType.CAN_ERROR
+			       | CVMOpcodeInfoType.CONSTANT_POOL);
 	OpcodeInfo[opc_anewarray_quick]	= 
-	    new OpcodeInfoType(opc_iadd, 1, 1,
-			       OpcodeInfoType.CAN_ERROR
-			       | OpcodeInfoType.CONSTANT_POOL);
-	OpcodeInfo[opc_multianewarray_quick]	= new OpcodeInfoType(255);
+	    new CVMOpcodeInfoType(opc_iadd, 1, 1,
+			       CVMOpcodeInfoType.CAN_ERROR
+			       | CVMOpcodeInfoType.CONSTANT_POOL);
+	OpcodeInfo[opc_multianewarray_quick]	= new CVMOpcodeInfoType(255);
 	OpcodeInfo[opc_checkcast_quick]	= 
-	    new OpcodeInfoType(opc_iadd, 1, 1,
-			       OpcodeInfoType.CAN_ERROR
-			       | OpcodeInfoType.CONSTANT_POOL);
+	    new CVMOpcodeInfoType(opc_iadd, 1, 1,
+			       CVMOpcodeInfoType.CAN_ERROR
+			       | CVMOpcodeInfoType.CONSTANT_POOL);
 	OpcodeInfo[opc_instanceof_quick] = 
-	    new OpcodeInfoType(opc_iadd, 1, 1, OpcodeInfoType.CONSTANT_POOL);
+	    new CVMOpcodeInfoType(opc_iadd, 1, 1, CVMOpcodeInfoType.CONSTANT_POOL);
 	OpcodeInfo[opc_invokevirtual_quick_w] = 
-	    new OpcodeInfoType(255);
+	    new CVMOpcodeInfoType(255);
 	OpcodeInfo[opc_getfield_quick_w] =
-	    new OpcodeInfoType(opc_getfield_quick_w);
+	    new CVMOpcodeInfoType(opc_getfield_quick_w);
 	OpcodeInfo[opc_putfield_quick_w] =
-	    new OpcodeInfoType(opc_getfield_quick_w);
+	    new CVMOpcodeInfoType(opc_getfield_quick_w);
 	OpcodeInfo[opc_nonnull_quick] =
-	    new OpcodeInfoType(opc_nonnull_quick);
+	    new CVMOpcodeInfoType(opc_nonnull_quick);
 	OpcodeInfo[opc_agetfield_quick] =
-	    new OpcodeInfoType(opc_iadd, 1, 1, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 1, 1, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_aputfield_quick] =
-	    new OpcodeInfoType(opc_iadd, 2, 0, OpcodeInfoType.NULL_CHECK);
+	    new CVMOpcodeInfoType(opc_iadd, 2, 0, CVMOpcodeInfoType.NULL_CHECK);
 	OpcodeInfo[opc_invokestatic_checkinit_quick]	= 
- 	    new OpcodeInfoType(255);
+ 	    new CVMOpcodeInfoType(255);
 	OpcodeInfo[opc_getstatic_checkinit_quick]	= 
- 	    new OpcodeInfoType(255);
+ 	    new CVMOpcodeInfoType(255);
 	OpcodeInfo[opc_putstatic_checkinit_quick]	=
- 	    new OpcodeInfoType(255);
+ 	    new CVMOpcodeInfoType(255);
 	OpcodeInfo[opc_agetstatic_checkinit_quick]	=
- 	    new OpcodeInfoType(255);
+ 	    new CVMOpcodeInfoType(255);
 	OpcodeInfo[opc_aputstatic_checkinit_quick]	=
- 	    new OpcodeInfoType(255);
+ 	    new CVMOpcodeInfoType(255);
 	OpcodeInfo[opc_getstatic2_checkinit_quick]	=
- 	    new OpcodeInfoType(255);
+ 	    new CVMOpcodeInfoType(255);
 	OpcodeInfo[opc_putstatic2_checkinit_quick]	=
-	    new OpcodeInfoType(255);
-	OpcodeInfo[opc_new_checkinit_quick]	= new OpcodeInfoType(255);
-	OpcodeInfo[opc_exittransition]		= new OpcodeInfoType(255);
+	    new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_new_checkinit_quick]	= new CVMOpcodeInfoType(255);
+	OpcodeInfo[opc_exittransition]		= new CVMOpcodeInfoType(255);
     };
 
-    static OpcodeInfoType[] OpcodeInfoSpecial = {
-	/* getfield_quick    */ new OpcodeInfoType(opc_iadd, 1, 1,
-				    OpcodeInfoType.NULL_CHECK
-				    | OpcodeInfoType.CONSTANT_POOL),
-	/* putfield_quick    */ new OpcodeInfoType(opc_iadd, 2, 0,
-				    OpcodeInfoType.NULL_CHECK
-				    | OpcodeInfoType.CONSTANT_POOL),
-	/* getfield2_quick   */ new OpcodeInfoType(opc_iadd, 1, 2,
-				    OpcodeInfoType.NULL_CHECK
-				    | OpcodeInfoType.CONSTANT_POOL),
-	/* putfield2_quick   */ new OpcodeInfoType(opc_iadd, 3, 0,
-				    OpcodeInfoType.NULL_CHECK
-				    | OpcodeInfoType.CONSTANT_POOL)
+    static CVMOpcodeInfoType[] OpcodeInfoSpecial = {
+	/* getfield_quick    */ new CVMOpcodeInfoType(opc_iadd, 1, 1,
+				    CVMOpcodeInfoType.NULL_CHECK
+				    | CVMOpcodeInfoType.CONSTANT_POOL),
+	/* putfield_quick    */ new CVMOpcodeInfoType(opc_iadd, 2, 0,
+				    CVMOpcodeInfoType.NULL_CHECK
+				    | CVMOpcodeInfoType.CONSTANT_POOL),
+	/* getfield2_quick   */ new CVMOpcodeInfoType(opc_iadd, 1, 2,
+				    CVMOpcodeInfoType.NULL_CHECK
+				    | CVMOpcodeInfoType.CONSTANT_POOL),
+	/* putfield2_quick   */ new CVMOpcodeInfoType(opc_iadd, 3, 0,
+				    CVMOpcodeInfoType.NULL_CHECK
+				    | CVMOpcodeInfoType.CONSTANT_POOL)
     };
 
 
@@ -1349,34 +1349,33 @@ CVMMethodInfo extends VMMethodInfo implements Const, CVMConst {
 /**
  * Class used for inlining info.  See inlining code in MethodInfo
  */
-class OpcodeInfoType { 
+class CVMOpcodeInfoType { 
     int opcode;				// really the opcode type
     int inStack;
     int outStack;
 
     static final int CAN_ERROR = 0x01;	/* can give error in addition to
-					   NULL_CHECK */
+                                           NULL_CHECK */
     static final int NULL_CHECK = 0x02;	/* checks that first arg isn't null */
     static final int CONSTANT_POOL = 0x04; /* uses the constant pool */
     int flags;
 
-    OpcodeInfoType(int opcode, int inStack, int outStack, int flags) {
-	this.opcode = opcode;
-	this.inStack = inStack;
-	this.outStack = outStack;
-	this.flags = flags;
+    CVMOpcodeInfoType(int opcode, int inStack, int outStack, int flags) {
+        this.opcode = opcode;
+        this.inStack = inStack;
+        this.outStack = outStack;
+        this.flags = flags;
     }
 
-    OpcodeInfoType(int opcode, int inStack, int outStack) {
-	this(opcode, inStack, outStack, 0);
+    CVMOpcodeInfoType(int opcode, int inStack, int outStack) {
+        this(opcode, inStack, outStack, 0);
     }
 
-    OpcodeInfoType(int opcode, int inStack) {
-	this(opcode, inStack, 0, 0);
+    CVMOpcodeInfoType(int opcode, int inStack) {
+        this(opcode, inStack, 0, 0);
     }
 
-    OpcodeInfoType(int opcode) {
-	this(opcode, 0, 0, 0);
+    CVMOpcodeInfoType(int opcode) {
+        this(opcode, 0, 0, 0);
     }
 };
-

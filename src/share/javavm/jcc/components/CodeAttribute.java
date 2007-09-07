@@ -138,24 +138,25 @@ class CodeAttribute extends Attribute
 	nlocals = in.readUnsignedShort();
 
 	int codesize = in.readInt();
-	byte code[] = new byte[ codesize ];
+	byte code[] = new byte[codesize];
 	in.readFully(code);
 
 	int tableSize = in.readUnsignedShort();
 	exceptionTable = new ExceptionEntry[tableSize];
 	ConstantObject constants[] = cp.getConstants();
 	for (int j = 0; j < tableSize; j++) {
-	    int sPC = in.readUnsignedShort();
-	    int e = in.readUnsignedShort();
-	    int h = in.readUnsignedShort();
+	    int startPC = in.readUnsignedShort();
+	    int endPC = in.readUnsignedShort();
+	    int handlerPC = in.readUnsignedShort();
 	    int catchTypeIndex = in.readUnsignedShort();
-	    ClassConstant ctype;
+	    ClassConstant catchType;
 	    if (catchTypeIndex == 0){
-		ctype = null;
-	    }else{
-		ctype = (ClassConstant)constants[catchTypeIndex];
+		catchType = null;
+	    } else {
+		catchType = (ClassConstant)constants[catchTypeIndex];
 	    }
-	    exceptionTable[j] = new ExceptionEntry(sPC, e, h, ctype);
+	    exceptionTable[j] =
+                new ExceptionEntry(startPC, endPC, handlerPC, catchType);
 	}
 
 	Attribute a[] = Attribute.readAttributes(in, cp,

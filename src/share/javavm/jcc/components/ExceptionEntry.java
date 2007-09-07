@@ -51,11 +51,12 @@ class ExceptionEntry
 
     public static final int size = 8; // bytes in class files
 
-    ExceptionEntry( int s, int e, int h, ClassConstant c ){
-	startPC = s;
-	endPC = e;
-	handlerPC= h;
-	catchType = c;
+    ExceptionEntry(int startPC, int endPC, int handlerPC,
+                   ClassConstant catchType) {
+	this.startPC = startPC;
+	this.endPC = endPC;
+	this.handlerPC = handlerPC;
+	this.catchType = catchType;
     }
 
     public void write( DataOutput o ) throws IOException {

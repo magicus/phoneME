@@ -37,16 +37,28 @@ import java.io.IOException;
 public
 abstract class ClassComponent
 {
-    // whether or not "resolved" has been called, 
-    // which sometimes determines interpretation
-    public boolean resolved = false;
-
+    /**
+     * Indicates if flatten() has been called yet i.e. all internal symbollic
+     * links has been flattened.  To be flattened means that the symbollic
+     * links do not need to indirect through the constant pool to get to a
+     * terminal CP entry.  UTF8 and constant values are terminal CP entries
+     * for this purpose.
+     */
+    public boolean isFlat = false;
 
     abstract public void write( DataOutput o ) throws IOException;
 
-
-    public void resolve( ConstantPool table ){
-	// by default, just note that we're resolved.
-	resolved = true;
+    /**
+     * Flattend all internal symbollic links.  Flattening here means that the
+     * symbollic links are resolved to the extent that they no longer need to
+     * indirect through the constant pool to get to a terminal constant.
+     * UTF8 and constant values are terminal constants.  For example, a class
+     * constant is defined by a CP index which point to a UTF8 string.  A
+     * flattened class constant will refer to the UTF8 string directly instead
+     * of needing to index into the constant pool to get to it.
+     */
+    public void flatten(ConstantPool table) {
+        // by default, just note that we're flattened.
+	isFlat = true;
     }
 }

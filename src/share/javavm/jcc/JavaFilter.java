@@ -640,10 +640,10 @@ class JavaFilter extends DepgenUtil{
 	}
     }
 
-}
 
-class NeverAccept extends util.ClassnameFilter{
-    public boolean accept( java.io.File dir, String className ){
-	return false;
+    class NeverAccept extends util.ClassnameFilter{
+        public boolean accept( java.io.File dir, String className ){
+            return false;
+        }
     }
 }

@@ -32,25 +32,29 @@ import java.io.DataOutput;
 import java.io.IOException;
 import consts.Const;
 
-// This class represents a CONSTANT_Methodref
-
+/**
+ * Represents a CONSTANT_Methodref stored in a constant pool.
+ */
 public
 class MethodConstant extends FMIrefConstant {
     boolean	didLookup;
     MethodInfo	theMethod;
 
-    MethodConstant( int t ){
-	tag = t;
-    }
+    private MethodConstant() { this(Const.CONSTANT_METHOD); }
+    MethodConstant(int tag) { super(tag); }
 
     public MethodConstant( ClassConstant c, NameAndTypeConstant sig ){
 	super( Const.CONSTANT_METHOD, c, sig );
     }
 
-    public static ConstantObject
-    read( int t, DataInput in ) throws IOException {
-	FMIrefConstant mc = new MethodConstant( t );
-	mc.read( in );
+    /**
+     * Factory method to construct a MethodConstant instance from the
+     * constant pool data stream.  This method is only called from the
+     * ConstantObject.readObject() factory.
+     */
+    static ConstantObject read(DataInput in) throws IOException {
+	MethodConstant mc = new MethodConstant();
+	mc.readIndexes(in);
 	return mc;
     }
 
