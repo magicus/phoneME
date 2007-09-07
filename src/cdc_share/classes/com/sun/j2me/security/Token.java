@@ -25,7 +25,20 @@
  */
 package com.sun.j2me.security;
 
+import com.sun.j2me.proxy.security.SecurityToken;
+
 public final class Token {
+
+    private SecurityToken securityToken;
+
+    public Token(SecurityToken securityToken) {
+        this.securityToken = securityToken;
+    }
+
+    public SecurityToken getSecurityToken() {
+        return securityToken;
+    }
+
     /**
      * Check to see the suite has the ALLOW level for specific permission.
      * This is used by internal APIs that only provide access to
