@@ -32,6 +32,7 @@
  */
 package sun.misc;
 
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.security.PermissionCollection;
 import java.security.Permissions;
@@ -510,5 +511,17 @@ class MIDPConfig{
                 /* ignore silently */
             }
         }
+    }
+    
+    public static String getMIDPSystemProperty(String key){
+    	String result = null;
+    		try {
+				Class ppC = Class.forName("com.sun.cdc.config.PropertyProxy",true, midpImplCL);
+				Method getProperty =ppC.getMethod("getProperty", new Class[]{String.class});
+				result = (String)getProperty.invoke(null, new Object[]{key});
+			} catch (Exception e) {
+				/* ignore silently */				
+			}
+    	return result;
     }
 }
