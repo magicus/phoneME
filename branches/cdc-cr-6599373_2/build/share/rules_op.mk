@@ -168,7 +168,7 @@ $(JSR_MIDPPERMITTED_CLASSLIST): $(JSROP_JARS) $(JSROP_EXTRA_JARS)
 
 $(JSROP_INIT_AGENT_JAR): $(JSROP_JARS)
 	java_files=`(find $(CVM_DERIVEDROOT)/jsrop_classes -name $(JSR_MIDP_INIT_CLASS).java -type f -print)`; \
-	$(call compileJSROP,JSR MIDPInitializer,$(CVM_BUILD_TOP)/jsrop_initclasses,$$java_files)
+	$(call compileJSROP,JSR MIDPInitializer,$(CVM_BUILD_TOP)/jsrop_initclasses,$$java_files $(CVM_TOP)/src/share/classes/com/sun/cdc/config/PropertyProxy.java)
 	$(call makeJSROPJar,$@,$(CVM_BUILD_TOP)/jsrop_initclasses)
 
 endif
