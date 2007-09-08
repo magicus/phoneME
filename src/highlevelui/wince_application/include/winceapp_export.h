@@ -124,8 +124,8 @@ extern LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp,
  * @param h The height to be flushed
  * @return KNI_TRUE if direct_flush was successful, KNI_FALSE - otherwise
  */
-extern jboolean winceapp_direct_flush(const java_graphics *g, 
-		    	              const java_imagedata *offscreen_buffer, 
+extern jboolean winceapp_direct_flush(const java_graphics *g,
+                                      const java_imagedata *offscreen_buffer,
                                       int h);
 
 extern BOOL sendMidpKeyEvent(MidpEvent* event, int size);
