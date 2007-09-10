@@ -24,6 +24,7 @@
  * information or have any questions.
  */
 package com.sun.j2me.security;
+import com.sun.j2me.proxy.security.SecurityInitializer;
 
 public final class SecurityTokenInitializer {
     
@@ -35,7 +36,7 @@ public final class SecurityTokenInitializer {
      */
     final public static Token requestToken(
             TrustedClass trusted) {
-        return null;
+        return new Token(SecurityInitializer.requestToken(null));
     }
 
 }
