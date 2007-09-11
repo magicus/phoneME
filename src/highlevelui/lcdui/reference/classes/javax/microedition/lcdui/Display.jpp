@@ -3064,6 +3064,9 @@ public class Display {
             windowCopy.setVerticalScroll(0,100);
             windowCopy.resize();
             if (currentCopy != null) {
+            // IMPL_NOTE: uCallSizeChanged was added to prevent form content reculculation before size changing of
+            // Displayable (Form)
+                currentCopy.uCallSizeChanged(Display.WIDTH, Display.HEIGHT);
                 currentCopy.uCallInvalidate();
             }
 
