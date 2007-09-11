@@ -656,7 +656,7 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_DESTROY:
 #ifdef ENABLE_CDC
         /* Temporary fix, leaving exclusive input mode */
-        //GXCloseInput();
+        GXCloseInput();
 #endif
         PostQuitMessage(0);
         exit(0);
