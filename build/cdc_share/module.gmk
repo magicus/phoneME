@@ -196,7 +196,7 @@ $(ABSTRACTIONS_AGENT_JAR): $(CVM_BUILDTIME_CLASSESZIP) $(ABSTRACTIONS_GENERATED_
         -d $(ABSTRACTIONS_GENERATED_DIR)/agent_classes \
         -bootclasspath $(CVM_BUILDTIME_CLASSESZIP) \
 		-classpath $(MIDP_CLASSES_ZIP)\
-        `cat $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes` \
+        `cat $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes`; \
     fi
 	$(AT)$(CVM_JAR) cf $@ -C $(ABSTRACTIONS_GENERATED_DIR)/agent_classes .
 
