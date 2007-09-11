@@ -115,6 +115,11 @@ CVM_CNI_CLASSES += com.sun.j2me.crypto.ARC4 \
     
 endif
 
+ABSTRACTIONS_WRAPPER_CLASSES += \
+    -package com.sun.j2me.proxy.security \
+        com.sun.midp.security.SecurityInitializer \
+        com.sun.midp.security.ImplicitlyTrustedClass \
+
 #####################################################
 ABSTRACTIONS_NATIVE_OBJS     = $(patsubst %.c,$(CVM_OBJDIR)/%.o,$(ABSTRACTIONS_NATIVES))
 ABSTRACTIONS_LIB_NAME        = abstractions
