@@ -167,6 +167,7 @@ $(ABSTRACTIONS_NATIVE_LIBRARY) :: $(ABSTRACTIONS_NATIVE_OBJS)
 	@echo "Linking $@"
 	$(SO_LINK_CMD) $(JAVACALL_LINKLIBS) -L$(JSROP_LIB_DIR)
 
+ifeq ($(USE_MIDP),true)
 ABSTRACTIONS_WRAPPER_CLASSES = \
     -package com.sun.j2me.proxy.lcdui \
         javax.microedition.lcdui.Alert \
@@ -266,6 +267,12 @@ $(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes $(ABSTRACTIONS_GENERATED_DIR)/.agen
         >$(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes
 	$(AT)find $(ABSTRACTIONS_GENERATED_DIR)/agent_java -type f -name '*.java' \
         >$(ABSTRACTIONS_GENERATED_DIR)/.agent_classes
+
+else
+$(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes:
+	@echo >$@
+
+endif
 
 # Copy and filter abstractions source in ABSTRACTIONS_SOURCE_OUTPUT_DIR
 abstractions_source_bundle:: $(ABSTRACTIONS_DIR)
