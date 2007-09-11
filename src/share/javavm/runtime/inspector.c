@@ -262,6 +262,7 @@ CVMgcDumpReferencesObjectCallback(CVMObject *obj, CVMClassBlock *cb,
     CVMExecEnv *ee = CVMgetEE();
     CVMObject *targetObj = (CVMObject *) data;
     CVMGCOptions gcOpts = {
+	/* isUpdatingObjectPointers */ CVM_FALSE,
         /* discoverWeakReferences   */ CVM_FALSE,
         /* isProfilingPass          */ CVM_TRUE
     };
@@ -287,6 +288,7 @@ static void CVMgcDumpReferences(CVMObject *obj)
 {
     CVMExecEnv *ee = CVMgetEE();
     CVMGCOptions gcOpts = {
+	/* isUpdatingObjectPointers */ CVM_FALSE,
         /* discoverWeakReferences   */ CVM_FALSE,
         /* isProfilingPass          */ CVM_TRUE
     };
@@ -309,6 +311,7 @@ static void CVMgcDumpGCRoots(CVMObject *obj)
 {
     CVMExecEnv *ee = CVMgetEE();
     CVMGCOptions gcOpts = {
+	/* isUpdatingObjectPointers */ CVM_FALSE,
         /* discoverWeakReferences   */ CVM_FALSE,
         /* isProfilingPass          */ CVM_TRUE
     };
