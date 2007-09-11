@@ -117,6 +117,7 @@ endif
 
 ABSTRACTIONS_WRAPPER_CLASSES += \
     -package com.sun.j2me.proxy.security \
+        com.sun.midp.security.SecurityToken \
         com.sun.midp.security.SecurityInitializer \
         com.sun.midp.security.ImplicitlyTrustedClass \
 
