@@ -143,6 +143,26 @@ Java_sun_misc_VMInspector_addrToObject(JNIEnv *env, jclass cls, jlong objAddr)
     return retVal;
 }
 
+JNIEXPORT jlong JNICALL 
+Java_sun_misc_VMInspector_objectToAddr(JNIEnv *env, jclass cls,
+				       jobject obj)
+{
+    CVMExecEnv *ee = CVMjniEnv2ExecEnv(env);
+    CVMObject *directObj;
+
+    if (!CVMgcIsDisabled()) {
+        CVMthrowIllegalStateException(ee, NULL);
+        return 0;
+    }
+
+    CVMD_gcUnsafeExec(ee, {
+	directObj = CVMID_icellDirect(ee, obj);
+    });
+
+    return CVMvoidPtr2Long(directObj);
+}
+
+
 
 /* NOTE: CVMdumpObject() already enforces that GC is disabled.  Hence we don't
    have to worry about the object pointer moving. */

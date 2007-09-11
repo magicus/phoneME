@@ -49,6 +49,9 @@ public class VMInspector
     public static native Object addrToObject(long objAddr)
         throws IllegalStateException,IllegalArgumentException;
 
+    public static native long objectToAddr(Object obj)
+        throws IllegalStateException;
+
     // Object inspection utilities:
     public static native void dumpObject(long objAddr);
     public static native void dumpClassBlock(long cbAddr);
