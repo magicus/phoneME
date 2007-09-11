@@ -167,63 +167,6 @@ $(ABSTRACTIONS_NATIVE_LIBRARY) :: $(ABSTRACTIONS_NATIVE_OBJS)
 	@echo "Linking $@"
 	$(SO_LINK_CMD) $(JAVACALL_LINKLIBS) -L$(JSROP_LIB_DIR)
 
-ifeq ($(USE_MIDP),true)
-ABSTRACTIONS_WRAPPER_CLASSES = \
-    -package com.sun.j2me.proxy.lcdui \
-        javax.microedition.lcdui.Alert \
-        javax.microedition.lcdui.AlertType \
-        -i javax.microedition.lcdui.Command \
-        -i javax.microedition.lcdui.CommandListener \
-        javax.microedition.lcdui.Displayable \
-        javax.microedition.lcdui.Font \
-        javax.microedition.lcdui.Gauge \
-        javax.microedition.lcdui.Item \
-        javax.microedition.lcdui.ItemCommandListener \
-        javax.microedition.lcdui.ItemStateListener \
-        javax.microedition.lcdui.StringItem \
-        -i javax.microedition.lcdui.CustomItem \
-        javax.microedition.lcdui.Ticker \
-        javax.microedition.lcdui.Screen \
-        javax.microedition.lcdui.Image \
-        javax.microedition.lcdui.Display \
-        javax.microedition.lcdui.Graphics \
-        -i javax.microedition.lcdui.Canvas \
-        com.sun.midp.lcdui.DisplayAccess \
-        -i com.sun.midp.lcdui.DisplayEventHandler \
-        com.sun.midp.lcdui.DisplayEventHandlerFactory \
-        com.sun.midp.lcdui.DisplayEventProducer \
-        com.sun.midp.lcdui.ForegroundController \
-        com.sun.midp.lcdui.RepaintEventProducer \
-        com.sun.midp.lcdui.DisplayContainer \
-        com.sun.midp.lcdui.DisplayEventConsumer \
-        com.sun.midp.lcdui.ForegroundEventConsumer \
-    -package com.sun.j2me.proxy.events \
-        com.sun.midp.events.EventListener \
-        com.sun.midp.events.Event \
-        com.sun.midp.events.EventQueue \
-        com.sun.midp.events.NativeEvent \
-    -package com.sun.j2me.proxy.security \
-        com.sun.midp.security.SecurityInitializer \
-        com.sun.midp.security.ImplicitlyTrustedClass \
-    -package com.sun.j2me.proxy.mmedia \
-        -i com.sun.mmedia.MMHelper \
-        com.sun.mmedia.MIDPVideoPainter \
-    -package com.sun.j2me.proxy.rms \
-        com.sun.midp.rms.RecordStoreImpl \
-        javax.microedition.rms.InvalidRecordIDException \
-        javax.microedition.rms.RecordStoreException \
-        javax.microedition.rms.RecordStoreFullException \
-        javax.microedition.rms.RecordStoreNotFoundException \
-        javax.microedition.rms.RecordStoreNotOpenException \
-        -e com.sun.midp.rms.AbstractRecordStoreFile \
-        -e com.sun.midp.rms.AbstractRecordStoreImpl \
-    -package com.sun.j2me.proxy.security \
-        com.sun.midp.security.SecurityToken \
-    -package com.sun.j2me.proxy.midlet \
-        -e com.sun.midp.midlet.MIDletPeer \
-        -i javax.microedition.midlet.MIDlet \
-        javax.microedition.midlet.MIDletStateChangeException \
-
 MKSTUBS_TOOL_DIR = $(ABSTRACTIONS_GENERATED_DIR)/mkstubs
 MKSTUBS_TOOL = $(MKSTUBS_TOOL_DIR)/mkstubs.jar
 MKSTUBS_TOOL_SRC = $(ABSTRACTIONS_DIR)/src/cdc_share/classes/com/sun/utils/mkstubs/MkStubs.java
@@ -243,11 +186,13 @@ JSROP_AGENT_JARS += $(ABSTRACTIONS_AGENT_JAR)
 $(ABSTRACTIONS_AGENT_JAR): $(CVM_BUILDTIME_CLASSESZIP) $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes
 	@echo "Compiling JSROP abstractions' agent classes..."
 	$(AT)mkdir -p $(ABSTRACTIONS_GENERATED_DIR)/agent_classes
-	$(AT)$(JAVAC_CMD) \
+	$(AT)if test "`cat $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes`" != ""; then \
+    $(JAVAC_CMD) \
         -d $(ABSTRACTIONS_GENERATED_DIR)/agent_classes \
         -bootclasspath $(CVM_BUILDTIME_CLASSESZIP) \
 		-classpath $(MIDP_CLASSES_ZIP)\
-        `cat $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes`
+        `cat $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes` \
+    fi
 	$(AT)$(CVM_JAR) cf $@ -C $(ABSTRACTIONS_GENERATED_DIR)/agent_classes .
 
 $(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes: \
@@ -267,12 +212,6 @@ $(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes $(ABSTRACTIONS_GENERATED_DIR)/.agen
         >$(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes
 	$(AT)find $(ABSTRACTIONS_GENERATED_DIR)/agent_java -type f -name '*.java' \
         >$(ABSTRACTIONS_GENERATED_DIR)/.agent_classes
-
-else
-$(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes:
-	@echo >$@
-
-endif
 
 # Copy and filter abstractions source in ABSTRACTIONS_SOURCE_OUTPUT_DIR
 abstractions_source_bundle:: $(ABSTRACTIONS_DIR)
