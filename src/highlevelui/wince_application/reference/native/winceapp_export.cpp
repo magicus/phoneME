@@ -50,8 +50,8 @@
  * The functions exported by gx.h use C++ linkage, hence this file
  * must be C++.
  */
-//#define GXDLL_EXPORTS
-//#include <gx.h>
+#define GXDLL_EXPORTS
+#include <gx.h>
 
 extern "C" {
 
@@ -86,7 +86,6 @@ static WNDPROC oldTextFieldProc;
 static WNDPROC oldTextBoxProc;
 static int editBoxShown = 0;
 static int editCHX, editCHY, editCHW, editCHH; /* in CHAM coordinates */
-static int inited = 0;
 static int titleHeight = JWC_WINCE_TITLE_HEIGHT;
 static RECT rcVisibleDesktop;
 static HANDLE eventThread;
@@ -94,40 +93,38 @@ static HINSTANCE instanceMain;
 static jboolean reverse_orientation;
 static int lastKeyPressed = 0;
 
+/* IMPL_NOTE: the drawing code requires 16-bit per pixel mode */
+HBITMAP g_hBitmap = NULL; // Needed for GDI draw, if DD/GAPI draw fails
+
 #if ENABLE_DIRECT_DRAW
 LPDIRECTDRAW        g_pDD = NULL;
-LPDIRECTDRAWSURFACE g_pDDSPrimary = NULL; // Primary surface of the screen
 LPDIRECTDRAWSURFACE g_pDDSMemory = NULL; // Normal paint memory surface
 LPDIRECTDRAWSURFACE g_pDDSDirect = NULL; // Extra memory surface for winceapp_direct_flush()
 LPDIRECTDRAWCLIPPER g_pDDClipper = NULL; 
 #endif
-HBITMAP g_hBitmap = NULL; // Needed for GDI draw, if DD/GAPI draw fails
 
-static int dispWidth = 0;
-static int dispHeight = 0;
-static int dispYPitch = 0;
+struct ScreenAccess {
+    int                 width;
+    int                 height;
+#if ENABLE_DIRECT_DRAW
+    LPDIRECTDRAWSURFACE surface; // Primary surface of the screen
+#else
+    int                 yPitch;
+    gxj_pixel_type*     pixels;
+#endif
+};
 
 /* IMPL_NOTE: need a better way for quitting.  */
 extern int _quit_now; /* defined in Scheduler.cpp */
 extern int midpPaintAllowed;
 
-int hint_is_painting = 0;
-int hint_is_canvas_painting = 0;
-
 extern int wince_init_fonts(); /* DirectDraw only.  */
 
-int has_skipped_refresh = 0;
-int must_refresh = 0;
-DWORD lastPaintedTick = 0;
 DWORD lastUserInputTick = 0;
-
-static int dirty_x1, dirty_y1, dirty_x2, dirty_y2;
 
 static void process_skipped_refresh();
 static LRESULT process_key(HWND hwnd, UINT action, int key);
 static LRESULT process_system_key(HWND hwnd, int key);
-
-static void endDirectPaint();
 static void updateEditorForRotation();
 
 /**
@@ -159,9 +156,8 @@ myTextProc(HWND hwnd, WNDPROC oldproc, UINT msg, WPARAM wp, LPARAM lp,
         /* Don't send the key to MIDP unless we are at the first character  */
         WORD w = (WORD)SendMessage(hwnd, EM_GETSEL, 0, 0L);
         int caret = LOWORD(w);
-        if (caret != 0) {
+        if (caret != 0)
             c = KEYMAP_KEY_INVALID;
-        }
     } else if (c == KEYMAP_KEY_RIGHT) {
         /* Don't send the key to MIDP unless we are at the last character  */
         WORD w = (WORD)SendMessage(hwnd, EM_GETSEL, 0, 0L);
@@ -244,28 +240,27 @@ static void init_DirectDraw() {
      * Note: if DirectDraw fails to initialize, we will use GDI to
      *  draw to do the screenBuffer->LCD copying.
      */
-    HRESULT hRet = DirectDrawCreate(NULL, &g_pDD, NULL);
-    if (hRet != DD_OK)
+    if (DD_OK != DirectDrawCreate(NULL, &g_pDD, NULL))
         return;
 
-    hRet = g_pDD->SetCooperativeLevel(hwndMain, DDSCL_NORMAL);
-    if (hRet != DD_OK) {
+    if (DD_OK != g_pDD->SetCooperativeLevel(hwndMain, DDSCL_NORMAL)) {
         g_pDD->Release();
         g_pDD = NULL;
         return;
     }
     wince_init_fonts();
+    if (DD_OK != g_pDD->CreateClipper(0, &g_pDDClipper, NULL))
+        return;
+    if (DD_OK != g_pDDClipper->SetHWnd(0, hwndMain)) {
+        g_pDDClipper->Release();
+        g_pDDClipper = NULL;
+    }
 }
 
 
 static void release_DirectDraw() {
     if (NULL == g_pDD)
         return;
-    if (NULL != g_pDDSPrimary) {
-        g_pDDSPrimary->SetClipper(NULL);
-        g_pDDSPrimary->Release();
-        g_pDDSPrimary = NULL;
-    }
     if (NULL != g_pDDSMemory) {
         g_pDDSMemory->Release();
         g_pDDSMemory = NULL;
@@ -280,18 +275,15 @@ static void release_DirectDraw() {
     }
     g_pDD->Release();
     g_pDD = NULL;
-    if (NULL != g_hBitmap) {
-        DeleteObject(g_hBitmap);
-        g_hBitmap = NULL;
-    }
 }
 
 /**
  * Create primary surface
  */
-static void create_primary_surface(LPDIRECTDRAWSURFACE* pDDSurface) {
+static BOOL access_screen(ScreenAccess* scr) {
     ASSERT(g_pDD);
-    ASSERT(pDDSurface);
+    ASSERT(scr);
+    LPDIRECTDRAWSURFACE pDDS;
 
     // Create the primary surface with 0 back buffer
     DDSURFACEDESC ddsd;
@@ -299,48 +291,30 @@ static void create_primary_surface(LPDIRECTDRAWSURFACE* pDDSurface) {
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS;
     ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
-    if (DD_OK != g_pDD->CreateSurface(&ddsd, pDDSurface, NULL))    
-        *pDDSurface = NULL;
-    else
-        if (DD_OK == g_pDDSPrimary->GetSurfaceDesc(&ddsd)) {
-            dispWidth = ddsd.dwWidth;
-            dispHeight = ddsd.dwHeight;
-            dispYPitch = ddsd.lPitch;
-        } else {
-            g_pDDSPrimary->Release();
-            g_pDDSPrimary = NULL;
+    if (DD_OK != g_pDD->CreateSurface(&ddsd, &pDDS, NULL))
+        return FALSE;
+    else {
+        if (NULL != g_pDDClipper && DD_OK != pDDS->SetClipper(g_pDDClipper)) {
+            pDDS->Release();
+            return FALSE;
         }
+        if (DD_OK == pDDS->GetSurfaceDesc(&ddsd)) {
+            scr->width = ddsd.dwWidth;
+            scr->height = ddsd.dwHeight;
+            scr->surface = pDDS;
+        } else {
+            pDDS->Release();
+            return FALSE;
+        }
+    }
+    return TRUE;
 }
 
-/**
- * Attach clipper to the surface
- */
-static void attach_clipper(LPDIRECTDRAWSURFACE pDDSurface, 
-    LPDIRECTDRAWCLIPPER* ppDDClipper) {
-    
-    ASSERT(g_pDD);
-    ASSERT(pDDSurface);
-    ASSERT(ppDDClipper);
-
-    LPDIRECTDRAWCLIPPER pDDClipper = NULL;
-    HRESULT hRet;
-
-    do {
-        hRet = g_pDD->CreateClipper(0, &pDDClipper, NULL);
-        if (hRet != DD_OK)
-            break;
-        hRet = pDDClipper->SetHWnd(0, hwndMain);
-        if (hRet != DD_OK)
-            break;
-        hRet = pDDSurface->SetClipper(pDDClipper);
-    } while(0);
-
-    if (hRet != DD_OK && NULL != pDDClipper) {
-        pDDClipper->Release();
-        pDDClipper = NULL;
-    }
-
-    *ppDDClipper = pDDClipper;
+static void release_screen(ScreenAccess* scr) {
+    ASSERT(scr);
+    scr->surface->SetClipper(NULL);
+    scr->surface->Release();
+    scr->surface = NULL;
 }
 
 /**
@@ -429,7 +403,7 @@ static BOOL InitInstance(HINSTANCE hInstance, int CmdShow) {
     /* Temporary fix to enter exclusive input mode.
      * A better solution should register for hot keys.
      */
-    //GXOpenInput();
+    GXOpenInput();
 #endif
 
     return TRUE;
@@ -479,10 +453,6 @@ DWORD WINAPI CreateWinCEWindow(LPVOID lpParam) {
 #else
     if (GXOpenDisplay(hwndMain, 0) == 0)
         REPORT_ERROR(LC_HIGHUI, "GXOpenDisplay() failed");
-    GXDisplayProperties dp = GXGetDisplayProperties();
-    dispWidth = dp.cxWidth;
-    dispHeight = dp.cyHeight;
-    dstYPitch = dp.cbyPitch;
 #endif
 
     // createEditors();
@@ -541,11 +511,11 @@ static void disablePaint() {
 static void enablePaint() {
     if (inMidpEventLoop) {
         midpPaintAllowed = 1;
-        has_skipped_refresh = 1;
+        /*has_skipped_refresh = 1;
         dirty_x1 = 0;
         dirty_y1 = 0;
         dirty_x2 = CHAM_WIDTH;
-        dirty_y2 = CHAM_HEIGHT;
+        dirty_y2 = CHAM_HEIGHT;*/
         process_skipped_refresh();
     }
 }
@@ -573,9 +543,9 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
          * LPARAM.
          */
         if (HIWORD(lp) == VK_TBACK && (LOWORD(lp) & MOD_KEYUP)) {
-            if (editBoxShown) {
+            if (editBoxShown)
                 SendMessage(hwndTextActive, WM_CHAR, VK_BACK, 0);
-            } else {
+            else {
 #if ENABLE_MULTIPLE_ISOLATES
                 if (gForegroundIsolateId == midpGetAmsIsolateId()) {
                     SHNavigateBack();
@@ -648,9 +618,8 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_ACTIVATE:
         if (LOWORD(wp)) { /* active */
             enablePaint();
-            if (editBoxShown) {
+            if (editBoxShown)
                 SetFocus(hwndTextActive);
-            }
         } else { /* inactive */
 #if ENABLE_MULTIPLE_ISOLATES
             pMidpEventResult->type = SELECT_FOREGROUND_EVENT;
@@ -677,9 +646,8 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         hdc = BeginPaint(hwnd, &ps);
         EndPaint(hwnd, &ps);
         enablePaint();
-        if (editBoxShown) {
+        if (editBoxShown)
             SetFocus(hwndTextActive);
-        }
         return 0;
 
     case WM_CLOSE:
@@ -770,7 +738,6 @@ static LRESULT process_key(HWND hwnd, UINT action, int key) {
         pMidpEventResult->DISPLAY = gForegroundDisplayId;
         sendMidpKeyEvent(pMidpEventResult, sizeof(*pMidpEventResult));
     }
-
     return 0;
 }
 
@@ -803,6 +770,10 @@ void winceapp_finalize() {
 #else
     GXCloseDisplay();
 #endif
+    if (NULL != g_hBitmap) {
+        DeleteObject(g_hBitmap);
+        g_hBitmap = NULL;
+    }
 
 #ifdef ENABLE_JSR_184
     engine_uninitialize();
@@ -845,7 +816,8 @@ int isScreenRotated() {
 }
 #endif
 
-static BOOL startDirectPaint(gxj_pixel_type** dst) {
+static BOOL startDirectPaint(ScreenAccess* scr) {
+    ASSERT(scr);
 #if ENABLE_DIRECT_DRAW
     if (isScreenRotated() || !isScreenFullyVisible() || editBoxShown)
         /* DDraw is not very reliable on a rotated screen. Use GDI instead. */
@@ -860,20 +832,19 @@ static BOOL startDirectPaint(gxj_pixel_type** dst) {
             return FALSE;
     }
 
-    if (g_pDDSPrimary == NULL) {
-        create_primary_surface(&g_pDDSPrimary);
-        if (g_pDDSPrimary == NULL)
-            return FALSE;
-        attach_clipper(g_pDDSPrimary, &g_pDDClipper);
-    }
+    if (!access_screen(scr))
+        return FALSE;
 
     if (g_pDDSMemory == NULL) {
         g_pDDSMemory = create_memory_surface(gxj_system_screen_buffer.pixelData,
             CHAM_WIDTH, CHAM_HEIGHT);
-        if (g_pDDSMemory == NULL)
+        if (g_pDDSMemory == NULL) {
+            release_screen(scr);
             return FALSE;
+        }
     }
 
+/*
     if (DDERR_SURFACELOST == g_pDDSPrimary->IsLost())
         if (DD_OK != g_pDDSPrimary->Restore()) {
             // Release the DD resources.
@@ -895,20 +866,33 @@ static BOOL startDirectPaint(gxj_pixel_type** dst) {
             }
             return FALSE;
         }
+*/
 #else
     if (editBoxShown)
         return FALSE;
-    if (dst)
-        *dst = (gxj_pixel_type*)GXBeginDraw();
+    static int dispWidth = 0;
+    static int dispHeight = 0;
+    static int dispYPitch = 0;
+    if (dispWidth == 0) {
+        GXDisplayProperties dp = GXGetDisplayProperties();
+        dispWidth = dp.cxWidth;
+        dispHeight = dp.cyHeight;
+        dispYPitch = dp.cbyPitch;
+    }
+    scr->width = dispWidth;
+    scr->height = dispHeight;
+    scr->yPitch = dispYPitch;
+    scr->pixels = (gxj_pixel_type*)GXBeginDraw();
 #endif
     return TRUE;
 }
 
-static void endDirectPaint() {
+static void endDirectPaint(ScreenAccess* scr) {
 #if ENABLE_DIRECT_DRAW
-    g_pDDSPrimary->Unlock(NULL);
+    release_screen(scr);
 #else
     GXEndDraw();
+    scr->pixels = NULL;
 #endif
 }
 
@@ -931,10 +915,8 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
     if (y2 > CHAM_HEIGHT)
         y2 = CHAM_HEIGHT;
 
-    gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
-    gxj_pixel_type *dst = NULL;
-    
     int srcWidth, srcHeight;
+    ScreenAccess scr;
 
     /* Make sure the copied lines are 4-byte aligned for faster memcpy */
     if ((x1 & 0x01) == 1)
@@ -942,7 +924,9 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
     if ((x2 & 0x01) == 1)
         x2 += 1;
 
-    if (!startDirectPaint(&dst)) {
+    gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
+
+    if (!startDirectPaint(&scr)) {
         // GDI output here
         HDC hDC = GetDC(winceapp_get_window_handle());
         if (g_hBitmap == NULL) {
@@ -958,17 +942,17 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
     }
     
 #if ENABLE_DIRECT_DRAW
-    int maxY = dispHeight - titleHeight;
+    int maxY = scr.height - titleHeight;
     if (y2 > maxY)
         y2 = maxY;
-    if (x2 > dispWidth)
-        x2 = dispWidth;
+    if (x2 > scr.width)
+        x2 = scr.width;
 
     srcWidth = x2 - x1;
     srcHeight = y2 - y1;
 
     if (srcWidth <= 0 || srcHeight <= 0)  {
-        endDirectPaint();
+        endDirectPaint(&scr);
         // it is possible srcHeight < 0 when SIP shown and java refresh 
         // the lower part screen(system menu up/dn,etc.)
         return;
@@ -985,118 +969,95 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
     dstRect.bottom = y2 + rcVisibleDesktop.top;
     dstRect.right = x2;
 
-    g_pDDSPrimary->Blt(&dstRect, g_pDDSMemory, &srcRect, 0, NULL); 
+    scr.surface->Blt(&dstRect, g_pDDSMemory, &srcRect, 0, NULL); 
 
 #else /* !ENABLE_DIRECT_DRAW */
+    
+    gxj_pixel_type *dst = scr.pixels;
+
     if (dst != NULL) {
-	    int maxY = dstHeight - titleHeight;
+	    int maxY = scr.height - titleHeight;
         srcWidth = x2 - x1;
         srcHeight = y2 - y1;
         
         if (y2 > maxY)
             y2 = maxY;
-        if (x2 > dstWidth)
-            x2 = dstWidth;
+        if (x2 > scr.width)
+            x2 = scr.width;
 
-        dst = (gxj_pixel_type*)( ((int)dst) + titleHeight * dstYPitch);
+        dst = (gxj_pixel_type*)( ((int)dst) + titleHeight * scr.yPitch);
 
         src += y1 * CHAM_WIDTH + x1;
-        dst = (gxj_pixel_type*)( ((int)dst) + dstYPitch * y1 );
+        dst = (gxj_pixel_type*)( ((int)dst) + scr.yPitch * y1 );
         dst += x1;
 
-        if (x1 == 0 && srcWidth == CHAM_WIDTH && dstWidth == srcWidth &&
-            dstYPitch == dstWidth * 2) {
+        if (x1 == 0 && srcWidth == CHAM_WIDTH && scr.width == srcWidth &&
+            scr.yPitch == scr.width * 2) {
 	    /* assuming srcHeight==full height ? */ 
             memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type) * srcHeight);
         } else {
             for (; y1 < y2; y1++) {
                 memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type));
                 src += CHAM_WIDTH;
-                dst = (gxj_pixel_type*)( ((int)dst) + dstYPitch );
+                dst = (gxj_pixel_type*)( ((int)dst) + scr.yPitch );
             }
         }
     } 
 #endif /* ENABLE_DIRECT_DRAW */
-    endDirectPaint();
+    endDirectPaint(&scr);
 }
 
 jboolean winceapp_direct_flush(const java_graphics *g,
 			       const java_imagedata *srcImageDataPtr, 
 			       int height) {
-
-    int width, dstWidth, dstHeight, dstYPitch;
-    jboolean success = KNI_FALSE;
-    gxj_pixel_type* src = NULL;
-    gxj_pixel_type* dst = NULL;
-
     if (srcImageDataPtr == NULL || srcImageDataPtr->pixelData == NULL)
         return KNI_FALSE;
 
     if (!midpPaintAllowed)
         return KNI_FALSE;
 
-    width = srcImageDataPtr->width;
-    src = (gxj_pixel_type *)&(srcImageDataPtr->pixelData->elements[0]);
-    
-    if (!startDirectPaint(&dst)) {
-        // Use slow GDI procedure to draw
-        HDC hDC = GetDC(winceapp_get_window_handle());
-        HDC hDCMem = CreateCompatibleDC(hDC);
-        HBITMAP hBitmap = CreateCompatibleBitmap(hDC, width, height);
-        SetBitmapBits(hBitmap, width * height * sizeof(gxj_pixel_type), src);
-        SelectObject(hDCMem, hBitmap);
-        BitBlt(hDC, 0, 0, width, height, hDCMem, 0, 0, SRCCOPY);
-        DeleteDC(hDCMem);
-        DeleteDC(hDC);
-        DeleteObject(hBitmap);
-        return KNI_TRUE;
-        //return KNI_FALSE;
-    }
+    ScreenAccess scr;
+    gxj_pixel_type* src = (gxj_pixel_type *)&(srcImageDataPtr->pixelData->elements[0]);
+    int width = srcImageDataPtr->width;
 
-#if ENABLE_DIRECT_DRAW /* ENABLE_DIRECT_DRAW */    
-    static gxj_pixel_type * lastSrc = NULL; // last flush src
-    static DWORD lastTime = 0; // last flush time
-    static int lastHeight = 0; // unflushed accumulated height
-    static LPDIRECTDRAWSURFACE pDDS = NULL; // vram surface for direct flush
-    DWORD nowTime;
-
-    // rotated screen doesn't support directDraw
-    if (isScreenRotated())
+#if ENABLE_DIRECT_DRAW /* ENABLE_DIRECT_DRAW */
+    // direct_flush must be fast. So Deny to flush, if DD is not initialized
+    if (g_pDD == NULL)
         return KNI_FALSE;
 
-    nowTime = GetTickCount();
-    if (lastSrc == src) {
-        if (nowTime - lastTime > 40) { //25 frames/s
-            if (lastHeight > height)
-                height = lastHeight;
-        } else {
-            if (lastHeight < height)
-                lastHeight = height;
-            return KNI_TRUE;
-        }
-    } else {
-        if (g_pDDSDirect) {
-            g_pDDSDirect->Release();
-            g_pDDSDirect = NULL;
-        }
+    /*
+    static DWORD lastTime = 0; // last flush time
+    DWORD nowTime = GetTickCount();
+    if (nowTime - lastTime <= 40) //25 frames/s
+        return KNI_TRUE;
+    lastTime = nowTime;
+    */
+
+    static gxj_pixel_type * lastSrc = NULL; // last flush src
+    
+    if (lastSrc != src && g_pDDSDirect != NULL) {
+        g_pDDSDirect->Release();
+        g_pDDSDirect = NULL;
+    }
+
+    if (g_pDDSDirect == NULL) {
+        g_pDDSDirect = create_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT);
+        if (g_pDDSDirect == NULL)
+            return KNI_FALSE;
         lastSrc = src;
     }
-    lastHeight = 0;
-    lastTime = nowTime;
 
-    if (g_pDDSDirect == NULL)
-        g_pDDSDirect = create_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT);
-
-    if (g_pDDSDirect == NULL)
+    if (!access_screen(&scr))
         return KNI_FALSE;
 
     if (height > CHAM_HEIGHT)
         height = CHAM_HEIGHT;
 
-    if (dstWidth == CHAM_WIDTH &&
-        height <= dstHeight &&
-        width == CHAM_WIDTH &&
-        dstYPitch == (int)(dstWidth * sizeof(gxj_pixel_type))) {
+    jboolean result = KNI_FALSE;
+
+    if (scr.width == CHAM_WIDTH &&
+        height <= scr.height &&
+        width == CHAM_WIDTH) {
 
         RECT srcRect;
         srcRect.top = 0;
@@ -1110,28 +1071,27 @@ jboolean winceapp_direct_flush(const java_graphics *g,
         dstRect.bottom = height + rcVisibleDesktop.top;
         dstRect.right = width;
 
-        if (DD_OK == g_pDDSPrimary->Blt(&dstRect, g_pDDSDirect, &srcRect, 0, NULL))
-            success = KNI_TRUE;
+        if (DD_OK == scr.surface->Blt(&dstRect, g_pDDSDirect, &srcRect, 0, NULL))
+            result = KNI_TRUE;
     }
+    release_screen(&scr);
+    return result;
 
 #else  /* !ENABLE_DIRECT_DRAW */
-    if (dst != NULL) {
-        if (dstWidth == CHAM_WIDTH && height <= dstHeight &&
-            dstYPitch == (int)(dstWidth * sizeof(gxj_pixel_type))) {
-            int bytes = dstYPitch * height;
-            dst = (gxj_pixel_type*)( ((int)dst) + titleHeight * dstYPitch);
-            memcpy(dst, src, bytes);
-            success = KNI_TRUE;
-        } else {
-            /* Take the slow path of drawing first into 
-             * gxj_system_screen_buffer
-             * and then copied to LCD using winceapp_refresh();
-             */
-        }
-    }        
+    return KNI_FALSE; // No DirectDraw
+    /*
+    startDirectPaint(&scr);
+    gxj_pixel_type* dst = scr.pixels;
+    if (dst != NULL && scr.width == CHAM_WIDTH && height <= scr.height &&
+        scr.yPitch == (int)(scr.width * sizeof(gxj_pixel_type))) {
+        int bytes = scr.yPitch * height;
+        dst = (gxj_pixel_type*)( ((int)dst) + titleHeight * scr.yPitch);
+        memcpy(dst, src, bytes);
+        result = KNI_TRUE;
+    }
+    endDirectPaint(&scr);
+    */
 #endif /* ENABLE_DIRECT_DRAW */    
-    endDirectPaint();    
-    return success;
 }
 
 char * strdup(const char *s) {
@@ -1186,12 +1146,11 @@ HDC getScreenBufferHDC(gxj_pixel_type *buffer, int width, int height) {
             return NULL;
     }
 
-    if (buffer == cachedBuffer && cachedHDC != NULL && !pDDS->IsLost()) {
+    if (buffer == cachedBuffer && cachedHDC != NULL && !pDDS->IsLost())
         /* Note: after screen rotation has happened, the pDDS surface may
          * be lost, even if it's using a client-defined pixel buffer!
          */
         return cachedHDC;
-    }
 
     if (pDDS != NULL) {
         pDDS->ReleaseDC(cachedHDC);
