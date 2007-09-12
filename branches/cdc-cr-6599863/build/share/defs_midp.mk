@@ -1,7 +1,5 @@
 #
-# @(#)defs_midp.mk	1.8 06/10/25
-# 
-# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -106,9 +104,13 @@ MIDP_CLASSESZIP_DEPS	=
 
 ifneq ($(CVM_PRELOAD_LIB), true)
 MIDP_CLASSES_ZIP	?= $(CVM_LIBDIR_ABS)/midpclasses.zip
+MIDP_PUB_CLASSES_ZIP    ?= $(CVM_LIBDIR_ABS)/midpclassespub.zip
+MIDP_PRIV_CLASSES_ZIP   ?= $(CVM_LIBDIR_ABS)/midpclassespriv.zip
 MIDP_SHARED_LIB		?= $(CVM_LIBDIR_ABS)/libmidp$(LIB_POSTFIX)
 else
 MIDP_CLASSES_ZIP	?= $(MIDP_OUTPUT_DIR)/classes.zip
+MIDP_PUB_CLASSES_ZIP    ?= $(MIDP_OUTPUT_DIR)/classespub.zip
+MIDP_PRIV_CLASSES_ZIP   ?= $(MIDP_OUTPUT_DIR)/classespriv.zip
 endif
 
 RUNMIDLET		?= $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/runMidlet
@@ -125,10 +127,10 @@ endif
 
 ifeq ($(CVM_PRELOAD_LIB), true)
 # Add MIDP classes to JCC input list so they can be romized.
-CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_CLASSES_ZIP) $(JSROP_AGENT_JARS)
+CVM_JCC_INPUT           += $(MIDP_PRIV_CLASSES_ZIP)
+CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_PUB_CLASSES_ZIP) $(JSROP_AGENT_JARS)
 # Add MIDP CNI classes to CVM_CNI_CLASSES
 CVM_CNI_CLASSES += $(MIDP_CNI_CLASSES)
 endif
 
 endif
-
