@@ -52,6 +52,11 @@ INT_PROPERTIES_JAVA_FILES = \
 MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_CONFIG_DIR)/properties/reference/classes
 MIDP_JAVADOC_PACKAGES += com.sun.midp.configurator
 
+ifeq ($(TARGET_VM), cdc_vm)
+        MIDP_BOOTCLASSPATH_CLASSES_LIST += \
+                com.sun.midp.main.Configuration
+endif
+
 # Publish the variables to global Makefile
 #
 SUBSYSTEM_PROPERTIES_JAVA_FILES = \

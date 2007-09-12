@@ -472,6 +472,35 @@ define compilefiles
 	fi $(LOG)
 endef
 
+# Rules to split $(MIDP_CLASSES_ZIP) into $(MIDP_PUB_CLASSES_ZIP) and 
+# $(MIDP_PRIV_CLASSES_ZIP) for proper romization so that midp classes 
+# packed in $(MIDP_PRIV_CLASSES_ZIP) be available at bootclasspath.
+#
+ifeq ($(TARGET_VM), cldc_vm)
+split_midpclasses_zip :=
+else
+bootclasspath_zip_entries = \
+        $(addsuffix /, $(subst .,/,$(MIDP_BOOTCLASSPATH_PACKAGES_LIST))) \
+        $(addsuffix /\*, $(subst .,/,$(MIDP_BOOTCLASSPATH_PACKAGES_LIST))) \
+        $(addsuffix .class, $(subst .,/,$(MIDP_BOOTCLASSPATH_CLASSES_LIST))) \
+        $(addsuffix \$$*.class, $(subst .,/,$(MIDP_BOOTCLASSPATH_CLASSES_LIST)))
+
+build_midp_pub_classes_zip = \
+	$(if $(1), zip -qd $(MIDP_PUB_CLASSES_ZIP) $(1), true)
+
+build_midp_priv_classes_zip = \
+	$(if $(1), zip -qr $(MIDP_PRIV_CLASSES_ZIP) $(subst \*,*,$(1)), \
+               zip -q $(MIDP_PRIV_CLASSES_ZIP) com)
+
+define split_midpclasses_zip_impl
+	$(AT)cp $@ $(MIDP_PUB_CLASSES_ZIP)
+	$(AT)(cd $(MIDP_OUTPUT_DIR)/classes && \
+                $(build_midp_pub_classes_zip) && \
+                $(build_midp_priv_classes_zip))
+endef
+split_midpclasses_zip = $(call split_midpclasses_zip_impl, $(bootclasspath_zip_entries))
+endif
+
 # Macro to clean up file list
 #
 define remove_filelist

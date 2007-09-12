@@ -120,6 +120,22 @@ $(MIDP_CLASSES_ZIP):: $(I3_TEST_REPOSITORY)
 
 endif
 
+ifeq ($(USE_JUNIT_TEST), true)
+$(MIDP_JUNIT_CLASSES_ZIP): $(MIDP_CLASSES_ZIP) $(JTWI_JUNIT_JAVA_FILES)
+ifneq ($(strip $(JTWI_JUNIT_JAVA_FILES)),)
+	@# TBD: better integration with the rest of the system, e.g. no check below + regenerate classes.zip when one of tests get rebuild
+	@if [ '!' -d $(JAVAC_OUT_DIR) ]; then \
+		mkdir -p $(JAVAC_OUT_DIR); \
+	fi
+	@$(JAVAC_CMD) -g$(JAVAC_DEBUG) -d $(JAVAC_OUT_DIR) \
+		-source 1.4 -target 1.4 \
+		-bootclasspath $(BOOTCLASSPATH) \
+		-classpath $(CLASSBINDIR)$(PATHSEP)$(JUNIT_JAR) $(JTWI_JUNIT_JAVA_FILES)
+	@rm -f $@
+	@$(JAR_CMD) -cf $@ -C $(JAVAC_OUT_DIR) .
+endif
+endif
+
 # ================================================================
 # Post-Java-Dependency-Search for classes.zip
 # Creates classes.zip
@@ -135,6 +151,7 @@ $(MIDP_CLASSES_ZIP)::$(GENERATED_JAVA_FILES) \
 	$(compilefiles)
 	$(remove_filelist)
 	$(remove_genfilelist)
+	$(split_midpclasses_zip)
 
 try_build_classes:: $(MIDP_CLASSES_ZIP)
 
