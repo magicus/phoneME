@@ -66,25 +66,10 @@ void WIN32ioInit()
 	for (i = 0; i < NUM_FDTABLE_ENTRIES; i++) {
 		fdTable[i] = INVALID_HANDLE_VALUE; 
 	}
-    {
-	HANDLE h;
-	h = _fileno(stdin);
-	if (h != INVALID_HANDLE_VALUE) {
-	    fdTable[0] = h; 
-	} 
-	h = _fileno(stdout);
-	if (h != INVALID_HANDLE_VALUE) {
-	    fdTable[1] = h; 
-	} 
-	h = _fileno(stderr);
-	if (h != INVALID_HANDLE_VALUE) {
-	    fdTable[2] = h; 
-	} 
-    }
 
-    if (fdTable[0] == INVALID_HANDLE_VALUE) { /* initialize stdio redirection */ 
-       initializeStandardIO(); 
-    }
+    /* initialize stdio redirection */ 
+    initializeStandardIO(); 
+
 #endif
 }
 
@@ -582,50 +567,41 @@ CVMInt32
 CVMioWrite(CVMInt32 fd, const void *buf, CVMUint32 nBytes)
 {
     DWORD bytes;
-    HANDLE h = INVALID_HANDLE_VALUE;
-
+    HANDLE h = WIN_GET_HANDLE((HANDLE)fd);
     int b;
-    {
+
 #ifndef WINCE
-	switch (fd) {
-	case 0: fd = (CVMInt32)GetStdHandle(STD_INPUT_HANDLE); break;
-	case 1: fd = (CVMInt32)GetStdHandle(STD_OUTPUT_HANDLE); break;
-	case 2: fd = (CVMInt32)GetStdHandle(STD_ERROR_HANDLE); break;
-	}
-#else
-#ifdef CVM_DEBUG
-	if (fd >= 1 && fd <= 2) {
-	    NKDbgPrintfW(TEXT("%.*hs"), nBytes, buf);
-	    switch (fd) {
-	    case 1:
-		h = _fileno(stdout);
-		break;
-	    case 2:
-		h = _fileno(stderr);
-		break;
-	    }
-	}
-#endif
-#endif
+    switch (fd) {
+    case 0: fd = (CVMInt32)GetStdHandle(STD_INPUT_HANDLE); break;
+    case 1: fd = (CVMInt32)GetStdHandle(STD_OUTPUT_HANDLE); break;
+    case 2: fd = (CVMInt32)GetStdHandle(STD_ERROR_HANDLE); break;
     }
-    h = WIN_GET_HANDLE((HANDLE)fd);
-#ifdef WINCE
-    switch(fd) {
-       case 1:
-       case 2:
-          if (h == INVALID_HANDLE_VALUE) { 
-             /* Silently ignore errors */
-             (void)writeStandardIO(fd, buf, nBytes);
-             bytes = nBytes;
-             b = 1;
-             break;
-          }
-       default: 
-          b = WriteFile(h, buf, nBytes, &bytes, NULL);
-    }
-#else
     b = WriteFile(h, buf, nBytes, &bytes, NULL);
+#else /* WINCE */
+    if (fd >= 1 && fd <= 2) {
+	FILE *fp = NULL;
+#ifdef CVM_DEBUG
+	NKDbgPrintfW(TEXT("%.*hs"), nBytes, buf);
 #endif
+	switch (fd) {
+	case 1:
+	    fp = stdout;
+	    break;
+	case 2:
+	    fp = stderr;
+	    break;
+	}
+	fwrite(buf, sizeof (char), nBytes, fp);
+
+	/* Silently ignore errors */
+	writeStandardIO(fd, buf, nBytes);
+	bytes = nBytes;
+	b = 1;
+    } else {
+	b = WriteFile(h, buf, nBytes, &bytes, NULL);
+    }
+
+#endif /* WINCE */
     if (b) {
         return (bytes);
     } else {

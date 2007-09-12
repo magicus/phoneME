@@ -1773,7 +1773,10 @@ CVMprocessSubOptions(const CVMSubOptionData* knownSubOptions,
 	    /* Don't worry about strdup failures. We will quickly fail
 	     * on some other allocation later on if stdrup can't succeed.
 	     */
-	    if (valueString != NULL) {
+	    if (valueString == NULL) {
+		*(const char**)knownSubOptions[i].valuePtr = 
+		    knownSubOptions[i].data.strData.defaultValue;
+	    } else {
 		*(char**)knownSubOptions[i].valuePtr = strdup(valueString);
 	    }
 	    break;
