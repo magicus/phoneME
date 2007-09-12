@@ -232,10 +232,24 @@ Java_java_io_WinNTFileSystem_getLastModifiedTime(JNIEnv *env, jobject this,
             NULL,
             /* Open existing or fail */
             OPEN_EXISTING,
-            /* Backup semantics for directories */
-            FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS,
+            /* Attributes ignored */
+            0,
             /* No template file */
             NULL);
+
+        if (h == INVALID_HANDLE_VALUE) {
+DWORD err = GetLastError();
+            /* This works better with older versions of WinCE */
+            h = CreateFileW(
+                path,
+                GENERIC_READ,
+                FILE_SHARE_READ | FILE_SHARE_WRITE,
+                NULL,
+                OPEN_EXISTING,
+                0,
+                NULL);
+        }
+
         if (h != INVALID_HANDLE_VALUE) {
             GetFileTime(h, NULL, NULL, &t);
             CloseHandle(h);
@@ -243,7 +257,7 @@ Java_java_io_WinNTFileSystem_getLastModifiedTime(JNIEnv *env, jobject this,
             modTime.HighPart = (LONG) t.dwHighDateTime;
             rv = modTime.QuadPart / 10000;
             rv -= 11644473600000;
-        } 
+        }
     } END_UNICODE_PATH(env, path);
     return rv;
 }

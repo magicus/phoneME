@@ -247,7 +247,6 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
     WCHAR path[1024];    /* Working copy of path */
     WCHAR *src, *dst, *dend, c;
 
-//printf("wcanonicalize: orig_path = %s\n", orig_path);
     /* Reject paths that contain wildcards */
     if (wwild(orig_path)) {
         errno = EINVAL;
@@ -260,7 +259,6 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
     if(!_wfullpath(path, orig_path, sizeof(path)/2)) {
         return -1;
     }
-//printf("wcanonicalize: path = %s\n", path);
 
     if (wdots(path)) /* Check for phohibited combinations of dots */
         return -1;
@@ -269,7 +267,6 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
     dst = result;        /* Place results here */
     dend = dst + size;        /* Don't go to or past here */
 
-//printf("wcanonicalize: src = %s\n", src);
     /* Copy prefix, assuming path is absolute */
     c = src[0];
     if (((c <= L'z' && c >= L'a') || (c <= L'Z' && c >= L'A'))
@@ -281,18 +278,15 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
         }
 
         src += 2;
-// *** FIXME - temporary workaround for canonicalize problem FIXME
-    } else if (0) {
-/////    } else if ((src[0] == L'\\') && (src[1] == L'\\')) {
+    } else if ((src[0] == L'\\') && (src[1] == L'\\')) {
         /* UNC pathname */
         WCHAR *p;
         p = wnextsep(src + 2);    /* Skip past host name */
         if (!*p) {
             /* A UNC pathname must begin with "\\\\host\\share",
                so reject this path as invalid if there is no share name */
-// *** FIXME - temporary workaround for canonicalize problem FIXME
-//            errno = EINVAL;
-//            return -1;
+            errno = EINVAL;
+            return -1;
         }
         p = wnextsep(p + 1);    /* Skip past share name */
         if (!(dst = wcp(dst, dend, L'\0', src, p)))
@@ -304,9 +298,8 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
 #endif
     {
         /* Invalid path */
-// *** FIXME - temporary workaround for canonicalize problem FIXME
-//        errno = EINVAL;
-//        return -1;
+        errno = EINVAL;
+        return -1;
     }
     /* At this point we have copied either a drive specifier ("z:") or a UNC
        prefix ("\\\\host\\share") to the result buffer, and src points to the
@@ -327,31 +320,31 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
             if (!(dst = wcp(dst, dend, L'\\', fd.cFileName, 
                            fd.cFileName + wcslen(fd.cFileName))))
                 return -1;
-        src = p;
-        continue;
-    } else {
-        /* If the lookup of a particular prefix fails because the file does
-           not exist, because it is of the wrong type, or because access is
-           denied, then we copy the remainder of the input path as-is.
-           Other I/O errors cause an error return. */
-        DWORD errval = GetLastError();
-        if ((errval == ERROR_FILE_NOT_FOUND)
-            || (errval == ERROR_DIRECTORY)
-            || (errval == ERROR_PATH_NOT_FOUND)
-            || (errval == ERROR_BAD_NETPATH)
-            || (errval == ERROR_BAD_NET_NAME)
-            || (errval == ERROR_ACCESS_DENIED)
-            || (errval == ERROR_NETWORK_ACCESS_DENIED)) {
-            if (!(dst = wcp(dst, dend, L'\0', src, src + wcslen(src))))
-                return -1;
-            break;
+            src = p;
+            continue;
         } else {
+            /* If the lookup of a particular prefix fails because the file does
+               not exist, because it is of the wrong type, or because access is
+               denied, then we copy the remainder of the input path as-is.
+               Other I/O errors cause an error return. */
+            DWORD errval = GetLastError();
+            if ((errval == ERROR_FILE_NOT_FOUND)
+                || (errval == ERROR_DIRECTORY)
+                || (errval == ERROR_PATH_NOT_FOUND)
+                || (errval == ERROR_BAD_NETPATH)
+                || (errval == ERROR_BAD_NET_NAME)
+                || (errval == ERROR_ACCESS_DENIED)
+                || (errval == ERROR_NETWORK_ACCESS_DENIED)) {
+                if (!(dst = wcp(dst, dend, L'\0', src, src + wcslen(src))))
+                    return -1;
+                break;
+            } else {
 #ifdef DEBUG_PATH
-            jio_fprintf(stderr, "canonicalize: errval %d\n", errval);
+                jio_fprintf(stderr, "canonicalize: errval %d\n", errval);
 #endif DEBUG_PATH
-            return -1;
+                return -1;
+            }
         }
-    }
     }
 
     if (dst >= dend) {

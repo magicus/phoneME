@@ -44,9 +44,11 @@
 #include "javavm/include/wceUtil.h"
 #include "javavm/include/globals.h"
 
-int initialized = 0;
-static HANDLE standardin, standardout, standarderr;
-char *memoryBuffer=NULL;
+static int initialized = 0;
+static HANDLE standardin  = INVALID_HANDLE_VALUE;
+static HANDLE standardout = INVALID_HANDLE_VALUE;
+static HANDLE standarderr = INVALID_HANDLE_VALUE;
+static char *memoryBuffer=NULL;
 
 static int
 initializeFileHandlers() {
@@ -57,28 +59,52 @@ initializeFileHandlers() {
         return 0;
     }
 
+    if (CVMglobals.target.stdinPath != NULL) {
+        wchar_t *w = createWCHAR(CVMglobals.target.stdinPath);
+        if (w != NULL) {
+            FILE *fp = _wfreopen(w, L"rb", stdin);
+            free(w);
+            CVMglobals.target.stdinPath = NULL;
+        }
+    }
+    if (CVMglobals.target.stdoutPath != NULL) {
+        wchar_t *w = createWCHAR(CVMglobals.target.stdoutPath);
+        if (w != NULL) {
+            FILE *fp = _wfreopen(w, L"wb", stdout);
+            free(w);
+            CVMglobals.target.stdoutPath = NULL;
+        }
+    }
+    if (CVMglobals.target.stderrPath != NULL) {
+        wchar_t *w = createWCHAR(CVMglobals.target.stderrPath);
+        if (w != NULL) {
+            FILE *fp = _wfreopen(w, L"wb", stderr);
+            free(w);
+            CVMglobals.target.stderrPath = NULL;
+        }
+    }
+
     consolePrefix = CVMglobals.target.stdioPrefix;
     if (strlen(consolePrefix) > 0) {
         prefixStr = createTCHAR(consolePrefix);
-    }
-    else {
-        prefixStr = _tcsdup(_T("\\"));
+    } else {
+        return 1;
     }
     inStr = (TCHAR*)malloc(sizeof(TCHAR)*(strlen("\\IN.txt") + _tcslen(prefixStr)+1));
     _stprintf(inStr, _T("%s\\IN.txt"), prefixStr);
     standardin = CreateFile(inStr, GENERIC_READ, 
                            FILE_SHARE_READ | FILE_SHARE_WRITE,
-                           0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+                           0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
     outStr = (TCHAR*)malloc(sizeof(TCHAR)*(strlen("\\OUT.txt") + _tcslen(prefixStr)+1));
     _stprintf(outStr, _T("%s\\OUT.txt"), prefixStr);
     standardout = CreateFile(outStr, GENERIC_WRITE, 
                              FILE_SHARE_READ | FILE_SHARE_WRITE,
-                             0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+                             0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
     errStr = (TCHAR*)malloc(sizeof(TCHAR)*(strlen("\\ERR.txt") + _tcslen(prefixStr)+1));
     _stprintf(errStr, _T("%s\\ERR.txt"), prefixStr);
     standarderr = CreateFile(errStr, GENERIC_WRITE, 
                             FILE_SHARE_READ | FILE_SHARE_WRITE,
-                            0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+                            0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
     if (inStr != NULL) free(inStr);
     if (outStr != NULL) free(outStr);
     if (errStr != NULL) free(errStr);
@@ -86,7 +112,7 @@ initializeFileHandlers() {
     return 1;
 }
 
-int 
+void 
 writeStandardIO(CVMInt32 fd, const void *buf, CVMUint32 nBytes) {
 
    DWORD bytes;
@@ -129,12 +155,6 @@ writeStandardIO(CVMInt32 fd, const void *buf, CVMUint32 nBytes) {
    } else {
       NKDbgPrintfW(TEXT("Wrong file handler at writeStandardIO: %d"), fd);
    } 
-   return nBytes;
-   if (b) {
-      return bytes;
-   } else {
-      return -1;
-   }
 }
 
 int 
