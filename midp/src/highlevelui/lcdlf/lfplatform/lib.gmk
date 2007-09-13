@@ -1,0 +1,96 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+######################################################################
+#
+# LCDLF Platform Look and Feel Library
+#
+######################################################################
+
+# Name of the library
+LCDLF_P_NAME = lcdlf/lfplatform
+LCDLF_P_DIR = $(SUBSYSTEM_DIR)/highlevelui/$(LCDLF_P_NAME)
+
+# Add to library set for this build
+LIB_SET += $(LCDLF_P_NAME)
+
+# Export include files
+SUBSYSTEM_LCDLF_EXTRA_INCLUDES += -I$(LCDLF_P_DIR)/include
+
+# Native files for the library
+#
+SUBSYSTEM_LCDLF_NATIVE_FILES += \
+    lfp_export.c \
+    lfp_alert.c \
+    lfp_canvas.c \
+    lfp_choicegroup.c \
+    lfp_command.c \
+    lfp_command_common.c \
+    lfp_customitem.c \
+    lfp_datefield.c \
+    lfp_displayable.c \
+    lfp_form.c \
+    lfp_gauge.c \
+    lfp_imageitem.c \
+    lfp_item.c \
+    lfp_registry.c \
+    lfp_stringitem.c \
+    lfp_textfield.c
+
+# Source code path for the library
+#
+vpath % $(LCDLF_P_DIR)/native
+
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(LCDLF_P_DIR)/classes
+
+# Java files for the library
+#
+SUBSYSTEM_LCDLF_JAVA_FILES += \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/AlertLFImpl.java \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/CanvasLFImpl.java \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/ChoiceGroupLFImpl.java \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/CustomItemLFImpl.java \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/DateFieldLFImpl.java \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/DisplayableLFImpl.java \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/FormLFImpl.java \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/GaugeLFImpl.java \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/ImageItemLFImpl.java \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/ItemLFImpl.java \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/LFFactoryImpl.java \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/SpacerLFImpl.java \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/StringItemLFImpl.java \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/TickerLFImpl.java \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/TextFieldLFImpl.java \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/Theme.java \
+    $(LCDLF_P_DIR)/classes/javax/microedition/lcdui/NativeMenu.java
+	
+# I3test files for the library
+#
+ifeq ($(USE_I3_TEST), true)
+SUBSYSTEM_LCDLF_I3TEST_JAVA_FILES += \
+    $(LCDLF_P_DIR)/i3test/javax/microedition/lcdui/TestStringItemSizing.java \
+    $(LCDLF_P_DIR)/i3test/javax/microedition/lcdui/TestStringItemNoLabelSizing.java
+endif

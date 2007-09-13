@@ -1,0 +1,48 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!--
+
+    
+ 
+  Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+
+-->
+</head>
+<body bgcolor="white">
+ Classes that allow trust to be given to MIDlet suites and internal classes.
+<p>
+ All MIDP applications are "untrusted" unless otherwise setup to have some
+ explicit trust, this is done by giving each MIDlet suite it's own
+ resources and not allowing access to or "see" other suites resources.</p>
+<p>
+ However, while restricting access to resources MIDP must also:</p>
+<ol>
+<li>Enable an internal class to perform a larger set of actions than the
+    suite using it</li>
+
+<li>Enable a "trusted" suite to perform a larger set of actions than
+    "untrusted" suites</li>
+</ol><p>
+ The first feature depends on the <code>MIDletSuiteLoader</code> class and
+ <code>SecurityToken</code> class. <code>MIDletSuiteLoader</code>, being the
+ first class
+ running in the VM is implicitly trusted to create and issue 
+ <code>SecurityToken</code> objects to the internal classes that need them.
+ Restricted internal methods take a <code>SecurityToken</code> as an extra
+ argument, which they check before performing their task. A "untrusted" MIDlet
+ cannot get a <code>SecurityToken</code> object on its own so it will be
+ restricted.</p>
+<blockquote><p align="center"><img src="doc-files/security_1.gif" border=0></p>
+</blockquote>
+<p>
+ The second feature is depends on the <code>Scheduler</code> class,
+ <code>MIDletSuite</code> interface, and <code>Installer</code> class. The
+ <code>Scheduler</code> is anchor of trust, from which a restricted public
+ method can get the interface to scheduled suite and check to see if the suite
+ is permitted perform the action. The <code>Installer</code> class determines
+ if a suite is "trusted".</p>
+<blockquote><p align="center"><img src="doc-files/security_2.gif" border=0></p>
+</blockquote>
+</body>
+</html>
