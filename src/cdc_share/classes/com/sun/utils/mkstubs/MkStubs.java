@@ -1295,7 +1295,7 @@ wr.pld(0,"System.out.println(\"" + stubClsName + ".__getInstance() - instance fo
             wr.pl(2, "return new "+ stubClsName +"(" + stubClsName + ".class, null, internal);");
             wr.pl(1, "}");
             wr.pl(1, "// Internal constructor");
-            wr.pl(1, "/* package protected */ " + stubClsName + "(Class cls, String fieldName, Object obj) {");
+            wr.pl(1, "public " + stubClsName + "(Class cls, String fieldName, Object obj) {");
             if (isDerivedClass) {
                 wr.pl(2, "super(cls, fieldName, obj);");
             }
