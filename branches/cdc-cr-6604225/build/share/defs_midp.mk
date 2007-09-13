@@ -66,6 +66,11 @@ PCSL_PLATFORM		?= $(PCSL_TARGET)_gcc
 NETWORK_MODULE		?= bsd/generic
 PCSL_MAKE_OPTIONS 	?=
 
+ifeq ($(findstring javacall,$(PCSL_PLATFORM)),javacall)
+PCSL_DEPENDENCIES       += $(JAVACALL_LIBRARY)
+PCSL_MAKE_OPTIONS       += JAVACALL_OUTPUT_DIR=$(JAVACALL_BUILD_DIR)
+endif
+
 #
 # MIDP defs
 #
