@@ -50,7 +50,6 @@
 
 #include "javavm/include/porting/memory.h"
 
-
 #if !CVM_USE_MMAP_APIS
 
 #define CVMmemInit()
@@ -1123,6 +1122,8 @@ CVMgcimplInitHeap(CVMGCGlobalState* gc,
     /* Reserve the needed space: */
     heapRegion = CVMmemMap(totalSize, &actualSize);
     if (heapRegion == NULL) {
+	CVMconsolePrintf("Cannot start VM "
+			 "(unable to reserve GC heap memory from OS)\n");
 	goto failed;
     }
 
@@ -1185,29 +1186,59 @@ CVMgcimplInitHeap(CVMGCGlobalState* gc,
     /* Commit the youngGen region: */
     mem = CVMmemCommit(gc->youngGenStart,
 		       gc->youngGenCurrentSize * 2, &actualSize);
-    CVMassert(mem == (void *)gc->youngGenStart);
-    CVMassert(actualSize == gc->youngGenCurrentSize * 2);
+    if (mem != (void *)gc->youngGenStart) {
+	CVMassert(mem == NULL);
+	CVMassert(actualSize != gc->youngGenCurrentSize * 2);
+	CVMconsolePrintf("Cannot start VM "
+	    "(unable to commit GC heap memory YG: %d)\n",
+	    gc->youngGenCurrentSize * 2);
+        goto failed_after_reservedMem;
+    }
 
     /* Commit the oldGen region: */
     mem = CVMmemCommit(gc->oldGenStart, gc->oldGenCurrentSize, &actualSize);
-    CVMassert(mem == (void *)gc->oldGenStart);
-    CVMassert(actualSize == gc->oldGenCurrentSize);
+    if (mem != (void *)gc->oldGenStart) {
+	CVMassert(mem == NULL);
+	CVMassert(actualSize != gc->oldGenCurrentSize);
+	CVMconsolePrintf("Cannot start VM "
+	    "(unable to commit GC heap memory OG: %d)\n",
+	    gc->oldGenCurrentSize);
+        goto failed_after_commitYG;
+    }
 
     /* Commit the cardTable region: */
     mem = CVMmemCommit(gc->cardTable, packedCardTableSize, &actualSize);
-    CVMassert(mem == (void *)gc->cardTable);
-    CVMassert(actualSize == packedCardTableSize);
+    if (mem != (void *)gc->cardTable) {
+	CVMassert(mem == NULL);
+	CVMassert(actualSize != packedCardTableSize);
+	CVMconsolePrintf("Cannot start VM "
+	    "(unable to commit GC heap memory CT: %d)\n",
+	    packedCardTableSize);
+        goto failed_after_commitOG;
+    }
 
     /* Commit the objectHeaderTable region: */
     mem = CVMmemCommit(gc->objectHeaderTable,
 		       packedObjectHeaderTableSize, &actualSize);
-    CVMassert(mem == (void *)gc->objectHeaderTable);
-    CVMassert(actualSize == packedObjectHeaderTableSize);
+    if (mem != (void *)gc->objectHeaderTable) {
+	CVMassert(mem == NULL);
+	CVMassert(actualSize != packedObjectHeaderTableSize);
+	CVMconsolePrintf("Cannot start VM "
+	    "(unable to commit GC heap memory OT: %d)\n",
+	    packedObjectHeaderTableSize);
+        goto failed_after_commitCT;
+    }
 
     /* Commit the summaryTable region: */
     mem = CVMmemCommit(gc->summaryTable, packedSummaryTableSize, &actualSize);
-    CVMassert(mem == (void *)gc->summaryTable);
-    CVMassert(actualSize == packedSummaryTableSize);
+    if (mem != (void *)gc->summaryTable) {
+	CVMassert(mem == NULL);
+	CVMassert(actualSize != packedSummaryTableSize);
+	CVMconsolePrintf("Cannot start VM "
+	    "(unable to commit GC heap memory ST: %d)\n",
+	    packedSummaryTableSize);
+        goto failed_after_commitOT;
+    }
 #endif /* CVM_USE_MMAP_APIS */
 
     /*======================================================================
@@ -1217,7 +1248,7 @@ CVMgcimplInitHeap(CVMGCGlobalState* gc,
     /* Allocate and initialize the youngGen collector: */
     youngGen = CVMgenSemispaceAlloc(gc->youngGenStart, totYoungGenSize);
     if (youngGen == NULL) {
-        goto failed_after_summaryTable;
+        goto failed_after_commitST;
     }
 
     youngGen->generationNo = 0;
@@ -1284,7 +1315,7 @@ CVMgcimplInitHeap(CVMGCGlobalState* gc,
     CVMdebugPrintf(("GC[generational]: Auxiliary data structures\n"));
     CVMdebugPrintf(("\theapBaseMemoryArea=[0x%x,0x%x)\n",
 		    gc->heapBaseMemoryArea,
-		    gc->heapBaseMemoryArea + (totBytes + NUM_BYTES_PER_CARD) / 4));
+		    gc->heapBaseMemoryArea + (totBytes / 4)));
     CVMdebugPrintf(("\tcardTable=[0x%x,0x%x)\n",
 		    gc->cardTable, gc->cardTable + gc->cardTableSize));
     CVMdebugPrintf(("\tobjectHeaderTable=[0x%x,0x%x)\n",
@@ -1296,7 +1327,33 @@ CVMgcimplInitHeap(CVMGCGlobalState* gc,
 
 failed_after_youngGen:
     CVMgenSemispaceFree((CVMGenSemispaceGeneration*)youngGen);
-failed_after_summaryTable:
+
+failed_after_commitST:
+#if CVM_USE_MMAP_APIS
+    mem = CVMmemDecommit(gc->summaryTable, packedSummaryTableSize, &actualSize);
+    CVMassert(mem == (void *)gc->summaryTable);
+    CVMassert(actualSize == packedSummaryTableSize);
+failed_after_commitOT:
+    mem = CVMmemDecommit(gc->objectHeaderTable,
+			 packedObjectHeaderTableSize, &actualSize);
+    CVMassert(mem == (void *)gc->objectHeaderTable);
+    CVMassert(actualSize == packedObjectHeaderTableSize);
+failed_after_commitCT:
+    mem = CVMmemDecommit(gc->cardTable, packedCardTableSize, &actualSize);
+    CVMassert(mem == (void *)gc->cardTable);
+    CVMassert(actualSize == packedCardTableSize);
+failed_after_commitOG:
+    mem = CVMmemDecommit(gc->oldGenStart, gc->oldGenCurrentSize, &actualSize);
+    CVMassert(mem == (void *)gc->oldGenStart);
+    CVMassert(actualSize == gc->oldGenCurrentSize);
+failed_after_commitYG:
+    mem = CVMmemDecommit(gc->youngGenStart,
+		         gc->youngGenCurrentSize * 2, &actualSize);
+    CVMassert(mem == (void *)gc->youngGenStart);
+    CVMassert(actualSize == gc->youngGenCurrentSize * 2);
+failed_after_reservedMem:
+#endif /* CVM_USE_MMAP_APIS */
+
     mem = CVMmemUnmap(heapRegion, totalSize, &actualSize);
     CVMassert(mem == heapRegion);
     CVMassert(actualSize == totalSize);
@@ -1513,7 +1570,7 @@ CVMgcimplSetSizeAndWatermarks(CVMGCGlobalState *gc, CVMUint32 newSize,
 
     /* Compute the new high watermark: */
     if (newSize >= gc->oldGenMaxSize) {
-	/* Cannot grow abive maximum: */
+	/* Cannot grow above maximum: */
 	newSize = gc->oldGenMaxSize;
 	/* Skip high threshold checks if we're already at max capacity: */
 	newHigh = gc->oldGenMaxSize;
