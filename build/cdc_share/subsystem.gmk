@@ -53,9 +53,7 @@ endif
 
 # Source files for the ( satsa ) module
 #
-
 ifneq ($(USE_SECOP),true)
-ifneq ($(USE_MIDP),true)
 MODULE_SATSA_CRYPTO_JAVA_FILES += \
     $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/BadPaddingException.java \
     $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/Cipher.java \
@@ -63,12 +61,7 @@ MODULE_SATSA_CRYPTO_JAVA_FILES += \
     $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/NoSuchPaddingException.java \
     $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/ShortBufferException.java \
     $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/SecretKeySpec.java \
-    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/IvParameterSpec.java
-endif    
-endif
-
-ifneq ($(USE_SECOP),true)
-MODULE_SATSA_CRYPTO_JAVA_FILES += \
+    $(JSR_177_DIR)/src/share/satsa/classes/javax/crypto/spec/IvParameterSpec.java \
     $(JSR_177_DIR)/src/share/crypto/classes/com/sun/satsa/crypto/RSAPublicKey.java
 endif
 
@@ -181,7 +174,7 @@ JSROP_EXTRA_JARS     += $(JSR_177_EXTRA_JAR)
 
 CVM_INCLUDE_JAVACALL  = true
 
-$(JSR_177_JAR): $(SUBSYSTEM_JSR_177_JAVA_FILES) $(TOOLS)
+$(JSR_177_JAR):  $(SUBSYSTEM_JSR_177_JAVA_FILES) $(TOOLS)
 	$(call compileJSRClasses,177)
 
 $(JSR_177_EXTRA_JAR): $(JSR_177_JAR)
