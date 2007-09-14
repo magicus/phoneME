@@ -5,22 +5,22 @@
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation.
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt).
+ * included at /legal/license.txt). 
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
+ * 02110-1301 USA 
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions.
+ * information or have any questions. 
  */
 #ifndef __JAVACALL_EVENTS_H_
 #define __JAVACALL_EVENTS_H_
@@ -39,7 +39,6 @@ extern "C" {
 
 
 /** @defgroup MandatoryEvents Events API
- * @ingroup JTWI
  *
  * Events APIs define the functionality for:
  * 
@@ -51,66 +50,67 @@ extern "C" {
 
 /**
  * Waits for an incoming event message and copies it to user supplied
- * data buffer
- * @param timeTowaitInMillisec max number of seconds to wait
- *              if this value is 0, the function should poll and return
+ * data buffer.
+ *
+ * @param timeToWaitInMillisec maximum number of milliseconds to wait.
+ *              If this value is 0, the function should poll and return
  *              immediately.
- *              if this value is -1, the function should block forever.
- * @param binaryBuffer user-supplied buffer to copy event to
+ *              If this value is -1, the function should block forever.
+ * @param binaryBuffer user-supplied buffer to copy event to.
  * @param binaryBufferMaxLen maximum buffer size that an event can be
  *              copied to.
  *              If an event exceeds the binaryBufferMaxLen, then the first
  *              binaryBufferMaxLen bytes of the events will be copied
- *              to user-supplied binaryBuffer, and JAVACALL_OUT_OF_MEMORY will
- *              be returned
+ *              to user-supplied binaryBuffer, and <tt>JAVACALL_OUT_OF_MEMORY</tt>
+ *              will be returned.
  * @param outEventLen user-supplied pointer to variable that will hold actual
- *              event size received
+ *              size of the event received.
  *              Platform is responsible to set this value on success to the
  *              size of the event received, or 0 on failure.
  *              If outEventLen is NULL, the event size is not returned.
  * @return <tt>JAVACALL_OK</tt> if an event successfully received,
- *         <tt>JAVACALL_FAIL</tt> or if failed or no messages are avaialable
- *         <tt>JAVACALL_OUT_OF_MEMORY</tt> If an event's size exceeds the
- *         binaryBufferMaxLen
+ *         <tt>JAVACALL_FAIL</tt> if failed or no messages are available,
+ *         <tt>JAVACALL_OUT_OF_MEMORY</tt> if an event's size exceeds the
+ *         binaryBufferMaxLen.
  */
 javacall_result javacall_event_receive(
-                            long                    timeTowaitInMillisec,
+                            long                    timeToWaitInMillisec,
                             /*OUT*/ unsigned char*  binaryBuffer,
-                            /*IN*/  int             binaryBufferMaxLen,
+                            int                     binaryBufferMaxLen,
                             /*OUT*/ int*            outEventLen);
 
 /**
- * copies a user supplied event message to a queue of messages
+ * Copies a user-supplied event message to a queue of messages.
  *
- * @param binaryBuffer a pointer to binary event buffer to send
+ * @param binaryBuffer a pointer to binary event buffer to send.
  *        The platform should make a private copy of this buffer as
  *        access to it is not allowed after the function call.
- * @param binaryBufferLen size of binary event buffer to send
- * @return <tt>JAVACALL_OK</tt> if an event successfully sent,
- *         <tt>JAVACALL_FAIL</tt> or negative value if failed
+ * @param binaryBufferLen size of binary event buffer to send.
+ * @return <tt>JAVACALL_OK</tt> if sent successfully,
+ *         <tt>JAVACALL_FAIL</tt> otherwise.
  */
 javacall_result javacall_event_send(unsigned char* binaryBuffer,
                                     int binaryBufferLen);
 
+/**
+ * The function is called during Java VM startup, allowing the
+ * platform to perform specific initializations. It is called in the same
+ * process as javacall_event_receive() and javacall_events_finalize().
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ */
+javacall_result javacall_events_init(void);
 
 /**
- * The function javacall_events_init is called during Java VM startup, allowing the
- * platform to perform specific initializations.
+ * The function is called during Java VM shutdown, allowing the platform to
+ * perform specific events-related shutdown operations. It is called in the same
+ * process as javacall_events_init() and javacall_event_receive().
  *
- * @retval JAVACALL_OK      success
- * @retval JAVACALL_FAIL    fail
+ * @return <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
  */
-javacall_bool javacall_events_init(void);
-
-/**
- * The function javacall_lcd_finalize is called during Java VM shutdown,
- * allowing the platform to perform specific events-related shutdown
- * operations.
- *
- * @retval JAVACALL_OK      success
- * @retval JAVACALL_FAIL    fail
- */
-javacall_bool javacall_events_finalize(void);
+javacall_result javacall_events_finalize(void);
 
 /**
  * The platform calls this function in slave mode to inform VM of new events.

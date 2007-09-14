@@ -1,33 +1,33 @@
 /*
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation.
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt).
+ * included at /legal/license.txt). 
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
+ * 02110-1301 USA 
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions.
+ * information or have any questions. 
  */
 
 /**
  * @file
  *
  * Simple implementation of wma UDP Emulator.
- * The messages supposed to be received from WMATool.jar:
+ * The messages supposed to be received from JSR205Tool.jar:
  * bash-3.1$ java -jar midp/bin/i386/WMATool.jar -send mms://1234:1234 -message "blah" -multipart -verbose
  * bash-3.1$ java -jar midp/bin/i386/WMATool.jar -send sms://1234:1234 -message "blah"
  * To receive message start:
@@ -73,43 +73,30 @@ int getIntProp(const char* propName, int defaultValue) {
     return value ? atoi(value) : defaultValue;
 }
 
-const char* getStrProp(const char* propName, const char* defaultValue) {
-    char* value = getenv(propName);
-    return value ? value : defaultValue;
-}
-
 static void decodeSmsBuffer(char *buffer, 
     int* encodingType, int* destPortNum, javacall_int64* timeStamp, 
     char** recipientPhone, char** senderPhone, 
-    int* msgLength, char** msg, int* sourcePortNum) {
+    int* msgLength, char** msg) {
 
     char* ptr = buffer;
 
     *encodingType   = *((int*)ptr);  ptr += sizeof(int);
     *destPortNum    = *((int*)ptr);  ptr += sizeof(int);
     *timeStamp      = *((javacall_int64*)ptr); ptr += sizeof(javacall_int64);
-
     *recipientPhone = ptr;           while(*(ptr++) != 0);
     *senderPhone    = ptr;           while(*(ptr++) != 0);
     *msgLength      = *((int*)ptr);  ptr += sizeof(int);
     *msg            = ptr;           ptr += *msgLength;
 
-    *sourcePortNum    = *((int*)ptr);  //ptr += sizeof(int);
-
-    //printf("SMS received: recipientPhone=%s senderPhone=%s destPortNum=%i sourcePortNum=%i msg=%s\n", 
-    //    *recipientPhone, *senderPhone, *destPortNum, *sourcePortNum, *msg);
-
     *ptr = 0;
 }
 
-//#define SMS_BUFF_LENGTH (1024*40)
 #define SMS_BUFF_LENGTH 1024
 char encode_sms_buffer[SMS_BUFF_LENGTH];
 
 char* encodeSmsBuffer(
     int encodingType, int destPortNum, javacall_int64 timeStamp, 
     const char* recipientPhone, const char* senderPhone, int msgLength, const char* msg,
-    int sourcePortNum,
     int* out_encode_sms_buffer_length) {
 
     char* ptr = encode_sms_buffer;
@@ -121,9 +108,6 @@ char* encodeSmsBuffer(
         return encode_sms_buffer;
     }
 
-    //printf("SMS sending: recipientPhone=%s senderPhone=%s destPortNum=%i sourcePortNum=%i, msg=%s\n", 
-    //    recipientPhone, senderPhone, destPortNum, sourcePortNum, msg);
-
     *((int*)ptr) = encodingType;         ptr += sizeof(int);
     *((int*)ptr) = destPortNum;          ptr += sizeof(int);
     *((javacall_int64*)ptr) = timeStamp; ptr += sizeof(javacall_int64);
@@ -131,7 +115,6 @@ char* encodeSmsBuffer(
     lngth = strlen(senderPhone) + 1;     memcpy(ptr, senderPhone,    lngth); ptr += lngth;
     *((int*)ptr) = msgLength;            ptr += sizeof(int);
     memcpy(ptr, msg, msgLength);         ptr += msgLength;
-    *((int*)ptr) = sourcePortNum;        ptr += sizeof(int);
 
     *out_encode_sms_buffer_length = ptr - encode_sms_buffer;
     return encode_sms_buffer;
@@ -151,10 +134,10 @@ javacall_result process_UDPEmulator_sms_incoming(javacall_handle handle) {
 
     javacall_sms_encoding   encodingType;
     int                     encodingType_int;
+    char*                   sourceAddress;
     char*                   msg;
     int                     msgLen;
     int                     destPortNum;
-    int                     sourcePortNum;
     javacall_int64          timeStamp;
     char*                   recipientPhone;
     char*                   senderPhone;
@@ -164,18 +147,17 @@ javacall_result process_UDPEmulator_sms_incoming(javacall_handle handle) {
     ok = javacall_datagram_recvfrom_start(
         handle, pAddress, &port, buffer, length, &pBytesRead, &pContext);
 
-    decodeSmsBuffer(buffer, &encodingType_int, &destPortNum, &timeStamp, 
-        &recipientPhone, &senderPhone, &msgLen, &msg, &sourcePortNum);
+    sourceAddress = (char*)pAddress;  // currently, sourceAddress = 0x0100007f = 127.0.0.1
+    decodeSmsBuffer(buffer, &encodingType_int, &destPortNum, &timeStamp, &recipientPhone, &senderPhone, &msgLen, &msg);
 
     if (javacall_is_sms_port_registered((unsigned short)destPortNum) != JAVACALL_OK) {
         javacall_print("SMS on unregistered port received!");
         return JAVACALL_FAIL;
     }
-    //printf("## javacall: SMS received. %i/%i\n", destPortNum, sourcePortNum);
 
+    //encodingType = JAVACALL_SMS_MSG_TYPE_ASCII; //## to do: convert encodingType_int->encodingType
     encodingType = encodingType_int;
-    javanotify_incoming_sms(encodingType, senderPhone, msg, msgLen, 
-        (unsigned short)sourcePortNum, (unsigned short)destPortNum, timeStamp);
+    javanotify_incoming_sms(encodingType, sourceAddress, msg, msgLen, (unsigned short)port, (unsigned short)destPortNum, timeStamp);
 
     return JAVACALL_OK;
 }
@@ -198,11 +180,11 @@ javacall_result process_UDPEmulator_cbs_incoming(javacall_handle handle) {
     ok = javacall_datagram_recvfrom_start(
         handle, pAddress, &port, buffer, length, &pBytesRead, &pContext);
 
-    if (pBytesRead >= 12) {
+    if (pBytesRead > 12) {
         msgType = *(int*)buffer;
         msgID   = (unsigned short)*(int*)(buffer+4);
         msgBufferLen  = *(int*)(buffer+8);
-        msgBuffer = (pBytesRead > 12) ? buffer+12 : NULL;
+        msgBuffer = buffer+12;
     } else {
         javacall_print("bad cbs package received");
     }
@@ -233,11 +215,11 @@ javacall_result init_wma_emulator() {
     int mmsInPortNumber;
 #endif
 
-    smsInPortNumber = getIntProp("JSR_120_SMS_PORT", DEFAULT_SMS_IN_PORT);
+    smsInPortNumber = getIntProp("JSR_205_SMS_PORT", DEFAULT_SMS_IN_PORT);
     ok1 = javacall_datagram_open(smsInPortNumber, &smsDatagramSocketHandle);
     if (ok1 == JAVACALL_OK) { ok = JAVACALL_FAIL; }
 
-    cbsInPortNumber = getIntProp("JSR_120_CBS_PORT", DEFAULT_CBS_IN_PORT);
+    cbsInPortNumber = getIntProp("JSR_205_CBS_PORT", DEFAULT_CBS_IN_PORT);
     ok1 = javacall_datagram_open(cbsInPortNumber, &cbsDatagramSocketHandle);
     if (ok1 == JAVACALL_OK) { ok = JAVACALL_FAIL; }
 
@@ -268,22 +250,22 @@ javacall_result finalize_wma_emulator() {
 
 /**
  * Checks if the handle is of wma_emulator sockets.
- *   returns JAVACALL_FALSE for mismatch
- *   returns JAVACALL_TRUE for proper sockets and processes the emulation
+ *   returns JAVACALL_FAIL for mismatch
+ *   returns JAVACALL_OK for proper sockets and processes the emulation
  */
 javacall_result try_process_wma_emulator(javacall_handle handle) {
     if (handle == smsDatagramSocketHandle) {
         process_UDPEmulator_sms_incoming(handle);
-        return JAVACALL_TRUE;
+        return JAVACALL_OK;
     }
     if (handle == cbsDatagramSocketHandle) {
         process_UDPEmulator_cbs_incoming(handle);
-        return JAVACALL_TRUE;
+        return JAVACALL_OK;
     }
 #if (ENABLE_JSR_205)
     if (handle == mmsDatagramSocketHandle) {
         process_UDPEmulator_mms_incoming(handle);
-        return JAVACALL_TRUE;
+        return JAVACALL_OK;
     }
 #endif
     return JAVACALL_FALSE;

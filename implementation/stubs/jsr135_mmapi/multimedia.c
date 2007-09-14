@@ -1,26 +1,26 @@
 /*
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation.
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt).
+ * included at /legal/license.txt). 
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
+ * 02110-1301 USA 
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions.
+ * information or have any questions. 
  */ 
 
 
@@ -29,23 +29,6 @@ extern "C" {
 #endif
 
 #include "javacall_multimedia.h" 
-
-/**
- * Get multimedia capabilities of the device.
- * This function should return pointer to static array of javacall_media_caps value
- * The last item of javacall_media_caps array should hold NULL mimeType value
- * Java layer will use this NULL value as a end of item mark
- */
-const javacall_media_caps* javacall_media_get_caps(void) {
-	return NULL;
-}
-
-/**
- * Query whether audio mixing is supported or not
- */
-javacall_bool javacall_media_supports_mixing() {
-    return JAVACALL_FALSE;
-}
 
 /**
  * Call this function when VM starts
@@ -71,6 +54,27 @@ javacall_result javacall_media_finalize(void) {
 }
 
 /**
+ * Get multimedia capabilities of the device.
+ * This function should return pointer to static array of javacall_media_caps value
+ * The last item of javacall_media_caps array should hold NULL mimeType value
+ * Java layer will use this NULL value as a end of item mark
+ */
+const javacall_media_caps* javacall_media_get_caps() {
+    return NULL;
+}
+
+/**
+ * Query whether audio mixing is supported;
+ *
+ * @retval JAVACALL_TRUE    audio mixing is supported
+ * @retval JAVACALL_FALSE   audio mixing is NOT supported
+ * 
+ */
+javacall_bool javacall_media_supports_mixing() {
+    return JAVACALL_FALSE;
+}
+
+/**
  * Java MMAPI call this function to create native media handler.
  * This function is called at the first time to initialize native library.
  * You can do your own initializatio job from this function.
@@ -86,7 +90,8 @@ javacall_result javacall_media_finalize(void) {
  * 
  * @return              Handle of native library. if fail return NULL.
  */
-javacall_handle javacall_media_create(javacall_int64 playerId, 
+javacall_handle javacall_media_create(int isolateId,
+                                      int playerId, 
                                       const javacall_utf16* mime, 
                                       long mimeLength,
                                       const javacall_utf16* uri, 
@@ -276,6 +281,16 @@ long javacall_media_set_time(javacall_handle handle, long ms) {
  */
 long javacall_media_get_duration(javacall_handle handle) {
     return -1;
+}
+
+/**
+ * Return true if player requires PCM Audio resources
+ * 
+ * @retval JAVACALL_TRUE      Player supports PCM Audio playback
+ * @retval JAVACALL_FALSE     Player does not support PCM Audio playback
+ */
+javacall_bool javacall_media_pcmaudio_device_required() {
+    return JAVACALL_FALSE;
 }
 
 /**
@@ -497,7 +512,7 @@ javacall_result javacall_media_get_metadata_key_counts(javacall_handle handle, /
  */
 javacall_result javacall_media_get_metadata_key(javacall_handle handle, 
                                                 long index, long bufLength, 
-                                                /*OUT*/ char* keyBuf) {
+                                                /*OUT*/ javacall_utf16* keyBuf) {
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
@@ -516,8 +531,9 @@ javacall_result javacall_media_get_metadata_key(javacall_handle handle,
  * @retval JAVACALL_FAIL            Fail
  */
 javacall_result javacall_media_get_metadata(javacall_handle handle, 
-                                            const char* key, long bufLength, 
-                                            /*OUT*/ char* dataBuf) {
+                                            const javacall_utf16* key, 
+                                            long bufLength, 
+                                            /*OUT*/ javacall_utf16* dataBuf) {
     return JAVACALL_NOT_IMPLEMENTED;
 }
 

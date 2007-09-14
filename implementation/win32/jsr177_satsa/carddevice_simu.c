@@ -30,7 +30,6 @@
 
 #include <string.h>
 #include <stdlib.h> /* strtol() */
-#include <errno.h>
 
 #include <javacall_memory.h>
 #include <javacall_logging.h>
@@ -46,6 +45,9 @@
 
 /** Minimum port number */
 #define MAX_PORT_NUMBER 65536L
+
+/** Maximum length of a command */
+#define MAX_COMMAND_LENGTH 128
 
 static void *javacall_carddevice_strdup(const char *str) {
     int len;
@@ -96,10 +98,24 @@ static int slot_count = 0;
 static int current_slot;
 
 /** Configuration property name */
-static char hostsandports[] = "com.sun.midp.io.j2me.apdu.hostsandports";
+#define PROP_NUMBER 2
+static char hostsandports[] = "com.sun.io.j2me.apdu.hostsandports";
+static char satselectapdu[] = "com.sun.io.j2me.apdu.satselectapdu";
+static char *properties[PROP_NUMBER] = { hostsandports,
+                                         satselectapdu };
 
 /** Configuration property name */
-static char *saved_hostsandports = NULL;
+static char *saved_properties[PROP_NUMBER];
+
+/**
+ * APDU command for selecting SIM application
+ */
+static struct {
+    /** Command name. */
+    char *command;
+    /** Length of the command. */
+    int len;
+} satselectcmd;
 
 /**
  * Is the driver already initialized.
@@ -108,6 +124,11 @@ static javacall_bool DriverInitialized = JAVACALL_FALSE;
 
 #define CARDDEVICE_MUTEX_NAME       "CardDevice_MuteX"
 #define CARDDEVICE_MUTEX_TIMEOUT    300
+
+/* Is 0 slot SAT slot */
+#define NOT_INITIALIZED -1
+static int IsSatSlot = NOT_INITIALIZED;
+
 /**
  * Mutex for device locking.
  */
@@ -213,8 +234,9 @@ javacall_result javacall_carddevice_init() {
 
 /** 
  * Finalizes the driver.
- * @return JAVACALL_OK if all done successfuly, 
-           JAVACALL_FAIL otherwise
+ * @return JAVACALL_OK if all done successfuly,
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_finalize() {
     int i;
@@ -231,107 +253,171 @@ javacall_result javacall_carddevice_finalize() {
         }
     }
 
+    for (i = 0; i < PROP_NUMBER; i++) {
+        javacall_free(saved_properties[i]);
+    } 
+
+    javacall_free(satselectcmd.command);
+
+    IsSatSlot = NOT_INITIALIZED;
     DriverInitialized = JAVACALL_FALSE;
     return JAVACALL_OK;
 }
 
-
+/** 
+ * Sets property value. If the property is used during the initialization
+ * process then this method must be called before <code>javacall_carddevice_init()</code>
+ * @return JAVACALL_OK if all done successfuly, 
+ *         JAVACALL_NOT_IMPLEMENTED when this property is not supported
+ *         JAVACALL_OUT_OF_MEMORY if there is no enough memory
+ *         JAVACALL_FAIL otherwise
+ */
 javacall_result javacall_carddevice_set_property(const char *prop_name, 
-                                      const char *prop_value) {
+                                                 const char *prop_value) {
     char *p, *s;
-    int slot;
+    int cnt;
+    int prop;
 
     if (prop_name == NULL) {
         return JAVACALL_OK;
     }
-    if (strcmp((const char*)prop_name, hostsandports)) {
+
+    for (prop = 0; prop < PROP_NUMBER; prop++) {        
+        if (!strcmp((const char*)prop_name, properties[prop])) {
+            break;
+        }
+    }
+
+    if (prop == PROP_NUMBER) {
         javacall_carddevice_set_error("javacall_carddevice_set_property: invalid property name: %s", 
             prop_name);
         return JAVACALL_NOT_IMPLEMENTED;
     }
+
     if (DriverInitialized) {
-        if (prop_value == NULL && saved_hostsandports == NULL) {
+        if (prop_value == NULL && saved_properties[prop] == NULL) {
             return JAVACALL_OK;
         }
-        if (prop_value != NULL && saved_hostsandports != NULL &&
-                    !strcmp(prop_value, saved_hostsandports)) {
+        if (prop_value != NULL && saved_properties[prop] != NULL &&
+                    !strcmp((char*)prop_value, saved_properties[prop])) {
             return JAVACALL_OK;
         }
         javacall_carddevice_set_error("javacall_carddevice_set_property: driver already initialized");
         return JAVACALL_FAIL;
     }
     if (prop_value == NULL) {
-        if (saved_hostsandports != NULL) {
-            javacall_free(saved_hostsandports);
+        if (saved_properties[prop] != NULL) {
+            javacall_free(saved_properties[prop]);
         }
-        saved_hostsandports = NULL;
+        saved_properties[prop] = NULL;
         return JAVACALL_OK;
     }
-    /* prop_value = "jcemulhost:9025,jcemulhost:9026" */
-    for (p = (char*)prop_value, slot = 0; p != NULL && *p != '\0'; p = s) {
-        char host[MAX_HOST_LENGTH];
-        char *p_end;
-        int len;
-        long port; /* long - because we use strtol() */
-        
-        if (*p == ',') {
-            p++;
+
+    if (properties[prop] == hostsandports) {
+        /* prop_value = "jcemulhost:9025,jcemulhost:9026" */
+        for (p = (char*)prop_value, cnt = 0; p != NULL && *p != '\0'; p = s) {
+            char host[MAX_HOST_LENGTH];
+            char *p_end;
+            int len;
+            long port; /* long - because we use strtol() */
+            
+            if (*p == ',') {
+                p++;
+            }
+            if ((s = strchr(p, ',')) == NULL) {
+                s = p + strlen(p);
+            }
+            if (s == p) {
+                javacall_carddevice_set_error("javacall_carddevice_set_property: empty host name");
+                goto err;
+            }
+            if ((p_end = strchr(p, ':')) == NULL || p_end > s) {
+                goto invalid_port;
+            }
+            len = (int)(p_end - p); /* length of hostname */
+            if (len >= (int)sizeof host) {
+                javacall_carddevice_set_error("javacall_carddevice_set_property: very long host name");
+                goto err;
+            }
+            memcpy(host, p, len);
+            host[len] = '\0';
+            
+            p = p_end + 1;
+            if ((int)(s - p) < 1) {
+                goto invalid_port;
+            }
+            if ((port = strtol(p, &p_end, 10)) <= MIN_PORT_NUMBER ||
+                port > MAX_PORT_NUMBER || p_end != s) {
+            invalid_port:
+                javacall_carddevice_set_error("javacall_carddevice_set_property: invalid port number");
+            err:
+                return JAVACALL_FAIL;
+            }
+            slots[cnt].host_name = strdup(host);
+            if (slots[cnt].host_name == NULL) {
+                javacall_carddevice_set_error("javacall_carddevice_set_property: No memory");
+                return JAVACALL_OUT_OF_MEMORY;
+            }
+            slots[cnt].port = (int)port;
+            cnt++;
         }
-        if ((s = strchr(p, ',')) == NULL) {
-            s = p + strlen(p);
+        slot_count = cnt;
+    }
+    else {
+        char command[MAX_COMMAND_LENGTH];
+        for (p = (char*)prop_value, cnt = 0; ; cnt++, p++) {                    
+            command[cnt] = 0;
+            while (p != NULL && *p != '\0' && *p != '.') {
+                if ((*p >= '0') && (*p <= '9')) {
+                    command[cnt] = command[cnt]*16 + *p - '0';
+                } 
+                else            
+                    if ((*p >= 'A') && (*p <= 'F')) {
+                        command[cnt] = command[cnt]*16 + *p - 'A' + 10;
+                    }
+                    else
+                        if ((*p >= 'a') && (*p <= 'f')) {
+                            command[cnt] = command[cnt]*16 + *p - 'a' + 10;
+                        }
+                        else {
+                            javacall_carddevice_set_error("javacall_carddevice_set_property: value of satselectapdu is incorrect");
+                            return JAVACALL_FAIL;
+                        }
+                p++;
+            }
+
+            if (p == NULL || *p == '\0')
+                break;
         }
-        if (s == p) {
-            javacall_carddevice_set_error("javacall_carddevice_set_property: empty host name");
-            goto err;
-        }
-        if ((p_end = strchr(p, ':')) == NULL || p_end > s) {
-            goto invalid_port;
-        }
-        len = (int)(p_end - p); /* length of hostname */
-        if (len >= (int)sizeof host) {
-            javacall_carddevice_set_error("javacall_carddevice_set_property: very long host name");
-            goto err;
-        }
-        memcpy(host, p, len);
-        host[len] = '\0';
-        
-        p = p_end + 1;
-        if ((int)(s - p) < 1) {
-            goto invalid_port;
-        }
-        if ((port = strtol(p, &p_end, 10)) <= MIN_PORT_NUMBER ||
-            port > MAX_PORT_NUMBER || p_end != s) {
-        invalid_port:
-            javacall_carddevice_set_error("javacall_carddevice_set_property: invalid port number");
-        err:
-            return JAVACALL_FAIL;
-        }
-        slots[slot].host_name = javacall_carddevice_strdup(host);
-        if (slots[slot].host_name == NULL) {
+
+        satselectcmd.command = malloc(++cnt);
+        if (satselectcmd.command == NULL) {
             javacall_carddevice_set_error("javacall_carddevice_set_property: No memory");
             return JAVACALL_OUT_OF_MEMORY;
         }
-        slots[slot].port = (int)port;
-        slot++;
+        memcpy(satselectcmd.command, command, cnt);
+        satselectcmd.len = cnt;
     }
-    if (saved_hostsandports != NULL) {
-        javacall_free(saved_hostsandports);
+
+    if (saved_properties[prop] != NULL) {
+        javacall_free(saved_properties[prop]);
     }
-    saved_hostsandports = javacall_carddevice_strdup(prop_value);
-    if (saved_hostsandports == NULL) {
+    saved_properties[prop] = strdup((char*)prop_value);
+    if (saved_properties[prop] == NULL) {
         javacall_carddevice_set_error("javacall_carddevice_set_property: No memory for property");
         return JAVACALL_OUT_OF_MEMORY;
     }
-    slot_count = slot;
+
     return JAVACALL_OK;
 }
 
 /** 
  * Selects specified slot (if possible).
- * @return JAVACALL_OK if all done successfuly, 
-           JAVACALL_FAIL otherwise
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_select_slot(int slot_index) {
+javacall_result javacall_carddevice_select_slot(javacall_int32 slot_index) {
     if (!DriverInitialized) {
         javacall_carddevice_set_error("Driver is not initialized");
         return JAVACALL_FAIL;
@@ -348,37 +434,16 @@ javacall_result javacall_carddevice_select_slot(int slot_index) {
 /** 
  * Returns number of slots which available for selection.
  * @param slot_cnt Buffer for number of slots.
- * @return JAVACALL_OK if all done successfuly, 
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_get_slot_count(int *slot_cnt) {
+javacall_result javacall_carddevice_get_slot_count(javacall_int32 *slot_cnt) {
     if (!DriverInitialized) {
         javacall_carddevice_set_error("Driver is not initialized");
         return JAVACALL_FAIL;
     }
     *slot_cnt = slot_count;
-    return JAVACALL_OK;
-}
-
-/** 
- * Checks if this slot is SAT slot.
- * @param slot Slot number.
- * @param result <code>JAVACALL_TRUE</code> if the slot is dedicated for SAT,
- *               <code>JAVACALL_FALSE</code> otherwise
- * @return JAVACALL_OK if all done successfuly, 
- *         JAVACALL_FAIL otherwise
- */
-javacall_result javacall_carddevice_is_sat(int slot, javacall_bool *result) {
-    if (!DriverInitialized) {
-        javacall_carddevice_set_error("Driver is not initialized");
-        return JAVACALL_FAIL;
-    }
-    if (slot == 0) {
-        /* IMPL_NOTE: to disable SAT support JAVACALL_FALSE must be returned */
-        *result = JAVACALL_TRUE;
-    } else {
-        *result = JAVACALL_FALSE;
-    }
     return JAVACALL_OK;
 }
 
@@ -390,8 +455,7 @@ javacall_result javacall_carddevice_is_sat(int slot, javacall_bool *result) {
  *                 After call: length of received ATR.
  * @return JAVACALL_OK if all done successfuly, JAVACALL_FAIL otherwise
  */
-static javacall_result 
-javacall_carddevice_reset(char *atr, int *atr_size) {
+static javacall_result javacall_carddevice_reset(char *atr, javacall_int32 *atr_size) {
     int bytes;
     if (!DriverInitialized) {
         javacall_carddevice_set_error("Driver is not initialized");
@@ -411,40 +475,20 @@ javacall_carddevice_reset(char *atr, int *atr_size) {
     *atr_size = bytes;
     slots[current_slot].events = 0;
 
+    IsSatSlot = NOT_INITIALIZED;
+
     return JAVACALL_OK;
 
 }
 
 /** 
- * Sends 'POWER DOWN' command to device.
- * @return JAVACALL_OK if all done successfuly, JAVACALL_FAIL otherwise
- */
-javacall_result javacall_carddevice_power_down() {
-    
-    if (!DriverInitialized) {
-        javacall_carddevice_set_error("Driver is not initialized");
-        return JAVACALL_FAIL;
-    }
-
-    if (current_slot == -1) {
-        javacall_carddevice_set_error("Slot not selected");
-        return JAVACALL_FAIL;
-    }
-    javacall_carddevice_clear_error();
-    slots[current_slot].events = 0;
-    if (cmdPowerDown(current_slot) < 0) {
-        javacall_carddevice_set_error("Power Down failed");
-        return JAVACALL_FAIL;
-    }
-
-    return JAVACALL_OK;
-}
-
-/** 
- * Performs platform lock of the device. 
+ * Performs platform lock of the device. This is intended to make
+ * sure that no other native application
+ * uses the same device during a transaction.
  * @return JAVACALL_OK if all done successfuly, 
            JAVACALL_WOULD_BLOCK if the device is locked by the other
- *         JAVACALL_FAIL if error occured
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_lock() {
     int result;
@@ -457,8 +501,9 @@ javacall_result javacall_carddevice_lock() {
 
 /** 
  * Unlocks the device.
- * @return JAVACALL_OK if all done successfuly, 
- * JAVACALL_FAIL otherwise
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_unlock() {
 
@@ -474,7 +519,9 @@ javacall_result javacall_carddevice_unlock() {
  * Enum JAVACALL_CARD_MOVEMENT should be used to specify type of movement.
  * Clears the slot event state.
  * @param mask Movements retrived.
- * @return JAVACALL_OK if all done successfuly, JAVACALL_FAIL otherwise.
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
  */
 javacall_result javacall_carddevice_card_movement_events(JAVACALL_CARD_MOVEMENT *events) {
     
@@ -496,9 +543,8 @@ javacall_result javacall_carddevice_card_movement_events(JAVACALL_CARD_MOVEMENT 
  *                 After call: size of received response.
  * @return JAVACALL_OK if all done successfuly, JAVACALL_FAIL otherwise
  */
-static javacall_result 
-javacall_carddevice_xfer_data(char *tx_buffer, int tx_size,
-    char *rx_buffer, int *rx_size) {
+static javacall_result javacall_carddevice_xfer_data(char *tx_buffer, javacall_int32 tx_size,
+                                                     char *rx_buffer, javacall_int32 *rx_size) {
     int ret_value;
 
     if (!DriverInitialized) {
@@ -548,12 +594,12 @@ javacall_carddevice_xfer_data(char *tx_buffer, int tx_size,
  * @param atr_size size of provided buffer
  * @return Length of ATR or -1 in case of error
  */
-static int cmdReset(int slot, char *atr, int atr_size) {
+static int cmdReset(int slot, char *atr, javacall_int32 atr_size) {
     struct sockaddr_in cli_addr;
     int s;
     char data[7];
     char msg[MAX_MESSAGE_LEN];
-    int atr_len;
+    javacall_int32 atr_len;
     int len;
 
     if (slots[slot].s != -1) {
@@ -664,7 +710,8 @@ static int cmdPowerDown(int slot) {
  * @param rx_size size of <tt>rx_buffer</tt>
  * @return Number of received bytes or -1 in case of error
  */
-static int cmdXfer(int slot, char *tx_buffer, int tx_size, char *rx_buffer, int rx_size) {
+static int cmdXfer(int slot, char *tx_buffer, javacall_int32 tx_size,
+                   char *rx_buffer, javacall_int32 rx_size) {
     int received;
     
     if (tx_size < 4) {
@@ -933,13 +980,13 @@ static int transmissionError(int slot) {
  * @param resp_len size of <tt>response</tt>
  * @return Number of received bytes (always 2) or -1 in case of error
  */
-static int isoIn(int slot, char *command, int length, char *response, 
-                                                         int resp_len) {
+static int isoIn(int slot, char *command, javacall_int32 length, char *response, 
+                 javacall_int32 resp_len) {
     char status;
     int received;
     char data[MAX_MESSAGE_LEN];
 
-    if (length + 4 > (int)sizeof data) {
+    if (length + 4 > (javacall_int32)sizeof data) {
         javacall_carddevice_set_error("isoIn: APDU command too long (%d)", length);
         return -1;
     }
@@ -994,8 +1041,8 @@ static int isoIn(int slot, char *command, int length, char *response,
  * @param resp_len size of <tt>response</tt>
  * @return Number of received bytes or -1 in case of error
  */
-static int isoOut(int slot, char *command, int length, char *response, 
-                                                          int resp_len) {
+static int isoOut(int slot, char *command, javacall_int32 length, char *response, 
+                  javacall_int32 resp_len) {
     char status;
     char data[MAX_MESSAGE_LEN];
     int received;
@@ -1059,15 +1106,28 @@ static DWORD WINAPI xferThreadProc(LPVOID lpParam) {
     return 0; // Terminate the thread
 }
 
-javacall_result javacall_carddevice_reset_start(char *rx_buffer, 
-                                                int *rx_length,
+/** 
+ * Sends 'RESET' command to device and gets ATR into specified buffer.
+ * @param atr Buffer to store ATR.
+ * @param atr_size Before call: size of provided buffer
+ *                 After call: size of received ATR.
+ * @param context the context saved during asynchronous operation.
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_WOULD_BLOCK caller must call 
+ *         the javacall_carddevice_reset_finish function to complete 
+ *         the operation
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
+ */
+javacall_result javacall_carddevice_reset_start(char *atr,
+                                                javacall_int32 *atr_size, 
                                                 void **context) {
     struct RESET_PARAMS *par;
     DWORD dwJavaThreadId;   // unused
     HANDLE hJavaThread;     // unused
-    int rxlen = *rx_length;
+    int rxlen = *atr_size;
     
-    (void)rx_buffer;
+    (void)atr;
     par = javacall_malloc(sizeof *par);
     if (par == NULL) {
         return JAVACALL_FAIL;
@@ -1090,10 +1150,25 @@ javacall_result javacall_carddevice_reset_start(char *rx_buffer,
     return JAVACALL_WOULD_BLOCK;
 }
 
-javacall_result javacall_carddevice_reset_finish(char *rx_buffer, int *rx_length,
-                                      void *context) {
+/** 
+ * Finished 'RESET' command on device and gets ATR into specified buffer.
+ * Must be called after CARD_READER_DATA_SIGNAL with SIGNAL_RESET parameter is
+ * received.
+ * @param atr Buffer to store ATR.
+ * @param atr_size Before call: size of provided buffer
+ *                 After call: size of received ATR.
+ * @param context the context saved during asynchronous operation.
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_WOULD_BLOCK caller must call 
+ *         this function again to complete the operation
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
+ */
+javacall_result javacall_carddevice_reset_finish(char *atr,
+                                                 javacall_int32 *atr_size, 
+                                                 void *context) {
     struct RESET_PARAMS *par = (struct RESET_PARAMS*) context;
-    int rxlen = *rx_length;
+    int rxlen = *atr_size;
     javacall_result status = par->status; 
     
     if (status == JAVACALL_WOULD_BLOCK) {
@@ -1107,22 +1182,36 @@ javacall_result javacall_carddevice_reset_finish(char *rx_buffer, int *rx_length
         javacall_free(par);
         return JAVACALL_FAIL;
     }
-    memcpy(rx_buffer, par->atr, par->atr_size);
-    *rx_length = par->atr_size;
+    memcpy(atr, par->atr, par->atr_size);
+    *atr_size = par->atr_size;
     javacall_free(par->atr);
     javacall_free(par);
     return JAVACALL_OK;
 }
 
-
-javacall_result javacall_carddevice_xfer_data_start(char *tx_buffer, 
-                                         int tx_length,
-                                         char *rx_buffer, int *rx_length,
-                                         void **context) {
+/** 
+ * Transfers APDU data to the device and receives response from the device.
+ * @param tx_buffer Buffer with APDU to be sent.
+ * @param tx_size Size of APDU.
+ * @param rx_buffer Buffer to store the response.
+ * @param rx_size Before call: size of <tt>rx_buffer</tt>
+ *                 After call: size of received response.
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_WOULD_BLOCK caller must call 
+ *         the javacall_carddevice_xfer_data_finish function to complete 
+ *         the operation
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
+ */
+javacall_result javacall_carddevice_xfer_data_start(char *tx_buffer,
+                                                    javacall_int32 tx_size,
+                                                    char *rx_buffer,
+                                                    javacall_int32 *rx_size,
+                                                    void **context) {
     struct XFER_PARAMS *par;
     DWORD dwJavaThreadId;   // unused
     HANDLE hJavaThread;     // unused
-    int rxlen = *rx_length;
+    int rxlen = *rx_size;
     (void)rx_buffer;
     
     par = javacall_malloc(sizeof *par);
@@ -1135,14 +1224,14 @@ javacall_result javacall_carddevice_xfer_data_start(char *tx_buffer,
         return JAVACALL_FAIL;
     }
     par->rx_length = rxlen;
-    par->tx_buffer = javacall_malloc(tx_length);
+    par->tx_buffer = javacall_malloc(tx_size);
     if (par->tx_buffer == NULL) {
         javacall_free(par->rx_buffer);
         javacall_free(par);
         return JAVACALL_FAIL;
     }
-    par->tx_length = tx_length;
-    memcpy(par->tx_buffer, tx_buffer, tx_length);
+    par->tx_length = tx_size;
+    memcpy(par->tx_buffer, tx_buffer, tx_size);
     par->status = JAVACALL_WOULD_BLOCK;
     *context = (void*)par;
     hJavaThread = CreateThread(
@@ -1155,17 +1244,30 @@ javacall_result javacall_carddevice_xfer_data_start(char *tx_buffer,
     return JAVACALL_WOULD_BLOCK;
 }
 
-javacall_result javacall_carddevice_xfer_data_finish(char *tx_buffer, 
-                                                     int tx_length,
-                                                     char *rx_buffer, 
-                                                     int *rx_length,
+/** 
+ * Transfers APDU data to the device and receives response from the device.
+ * @param tx_buffer Buffer with APDU to be sent.
+ * @param tx_size Size of APDU.
+ * @param rx_buffer Buffer to store the response.
+ * @param rx_size Before call: size of <tt>rx_buffer</tt>
+ *                 After call: size of received response.
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_WOULD_BLOCK caller must call 
+ *         this function again to complete the operation
+ *         JAVACALL_FAIL otherwise
+ */
+javacall_result javacall_carddevice_xfer_data_finish(char *tx_buffer,
+                                                     javacall_int32 tx_size,
+                                                     char *rx_buffer,
+                                                     javacall_int32 *rx_size,
                                                      void *context) {
     struct XFER_PARAMS *par = (struct XFER_PARAMS*) context;
-    int rxlen = *rx_length;
+    int rxlen = *rx_size;
     javacall_result status = par->status;
     
     (void)tx_buffer;
-    (void)tx_length;
+    (void)tx_size;
     if (status == JAVACALL_WOULD_BLOCK) {
         return JAVACALL_WOULD_BLOCK;
     }
@@ -1178,33 +1280,136 @@ javacall_result javacall_carddevice_xfer_data_finish(char *tx_buffer,
         return JAVACALL_FAIL;
     }
     memcpy(rx_buffer, par->rx_buffer, par->rx_length);
-    *rx_length = par->rx_length;
+    *rx_size = par->rx_length;
     javacall_free(par->rx_buffer);
     javacall_free(par->tx_buffer);
     javacall_free(par);
     return JAVACALL_OK;
 }
 
+/** 
+ * Checks if this slot is SAT slot.
+ * @param slot Slot number.
+ * @param result <code>JAVACALL_TRUE</code> if the slot is dedicated for SAT,
+ *               <code>JAVACALL_FALSE</code> otherwise
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_WOULD_BLOCK caller must call 
+ *         the javacall_carddevice_is_sat_finish function to complete 
+ *         the operation
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_FAIL otherwise
+ */
+javacall_result javacall_carddevice_is_sat_start(javacall_int32 slot,
+                                                 javacall_bool *result,
+                                                 void **context) {
+    javacall_int32 rx_length;    
+    unsigned char rx_buffer[2];
+    javacall_result status;
+
+    if (!DriverInitialized) {
+        javacall_carddevice_set_error("Driver is not initialized");
+        return JAVACALL_FAIL;
+    }
+
+    if (slot == 0) { 
+        if (IsSatSlot != NOT_INITIALIZED) {
+            *result = IsSatSlot;
+		    return JAVACALL_OK;
+        }        
+    }
+    else {
+        *result = JAVACALL_FALSE;
+		return JAVACALL_OK;
+    }
+
+	rx_length = sizeof rx_buffer;
+    status = javacall_carddevice_xfer_data_start(satselectcmd.command, satselectcmd.len, (char *)rx_buffer,
+                                                 &rx_length, context);
+	if (status != JAVACALL_OK) {
+        *result = JAVACALL_FALSE;
+		return status;
+	}
+	
+    if (rx_buffer[0] == 0x90  &&  rx_buffer[1] == 0x00)        
+        *result = JAVACALL_TRUE;        
+    else
+        *result = JAVACALL_FALSE;
+
+    IsSatSlot = *result;
+    
+    return JAVACALL_OK;
+}
+
+/** 
+ * Checks if this slot is SAT slot.
+ * @param slot Slot number.
+ * @param result <code>JAVACALL_TRUE</code> if the slot is dedicated for SAT,
+ *               <code>JAVACALL_FALSE</code> otherwise
+ * @return JAVACALL_OK if all done successfuly
+ *         JAVACALL_NOT_IMPLEMENTED when the stub was called
+ *         JAVACALL_WOULD_BLOCK caller must call 
+ *         this function again to complete the operation
+ *         JAVACALL_FAIL otherwise
+ */
+javacall_result javacall_carddevice_is_sat_finish(javacall_int32 slot,
+                                                 javacall_bool *result,
+                                                 void *context) {
+    javacall_int32 rx_length;
+    unsigned char rx_buffer[2];
+    javacall_result status;
+
+    if (!DriverInitialized) {
+        javacall_carddevice_set_error("Driver is not initialized");
+        return JAVACALL_FAIL;
+    }
+
+	rx_length = sizeof rx_buffer;
+    status = javacall_carddevice_xfer_data_finish(satselectcmd.command, satselectcmd.len, (char *)rx_buffer,
+                                                 &rx_length, context);
+	if (status != JAVACALL_OK) {
+        *result = JAVACALL_FALSE;
+		return status;
+	}
+	
+    if (rx_buffer[0] == 0x90  &&  rx_buffer[1] == 0x00)
+        *result = JAVACALL_TRUE;        
+    else
+        *result = JAVACALL_FALSE;
+
+    IsSatSlot = *result;
+
+    return JAVACALL_OK;
+}
+
+/** 
+ * Clears error state.
+ */
 void javacall_carddevice_clear_error() { // empty
 }
 
+/** 
+ * Sets error state and stores message (like printf).
+ * @param fmt printf-like format string
+ */
 void javacall_carddevice_set_error(const char *fmt, ...) {
 	va_list ap;
     int len = 0;
     
 	va_start(ap, fmt);
     len += sprintf(print_buffer + len, "CARDDEVICE ERROR: ");
-    len += javacall_carddevice_vsnprintf(print_buffer + len, PRINT_BUFFER_SIZE - len, fmt, ap);
+    len += _vsnprintf(print_buffer + len, PRINT_BUFFER_SIZE - len, fmt, ap);
     len += sprintf(print_buffer + len, "\n");
 	javacall_print(print_buffer);
 	va_end(ap);
 
 }
 
-int javacall_carddevice_vsnprintf(char *buffer, int len, const char *fmt, va_list ap) {
-    return _vsnprintf(buffer, len, fmt, ap);
-}
-
-javacall_bool javacall_carddevice_get_error(char *buf, int buf_size) {
+/** 
+ * Retrieves error message into the provided buffer and clears state.
+ * @param buf Buffer to store message
+ * @param buf_size Size of the buffer in bytes
+ * @return JAVACALL_TRUE if error messages were returned, JAVACALL_FALSE otherwise
+ */
+javacall_bool javacall_carddevice_get_error(char *buf, javacall_int32 buf_size) {
     return JAVACALL_FALSE;
 }
