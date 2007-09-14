@@ -285,10 +285,6 @@ javacall_result javacall_file_rename(const javacall_utf16*     unicodeOldFilenam
 
 /** @} */
 
-//unsigned short* char_to_unicode(char* str);
-
-//char*           unicode_to_char(unsigned short* str);
-
     
 #ifdef __cplusplus
 }
