@@ -36,7 +36,7 @@ public class Transform6 extends Transform4 {
     public Transform6() {
         this(1 << 16, 0, 0, 1 << 16, 0, 0);
     }
-
+    
     public Transform6(int m00, int m01,
                       int m10, int m11,
                       int m02, int m12) {
@@ -50,6 +50,22 @@ public class Transform6 extends Transform4 {
 
     public Transform6(Transform6 t) {
         this(t.m00, t.m01, t.m10, t.m11, t.m02, t.m12);
+    }
+    
+    public int get_m02() {
+        return m02;
+    }
+
+    public int get_m12() {
+        return m12;
+    }
+
+   public void set_m02(int m02) {
+        this.m02 = m02;
+    }
+
+    public void set_m12(int m12) {
+        this.m12 = m12;
     }
 
     public void postMultiply(Transform6 t) {

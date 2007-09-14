@@ -42,7 +42,8 @@ public class Flattener extends PathSink {
 
     // Always subdivide segments where the endpoints are
     // separated by more than this amount
-    public static final long MAX_CHORD_LENGTH_SQ = 16L*16L*65536L*65536L;
+    //public static final long MAX_CHORD_LENGTH_SQ = 16L*16L*65536L*65536L;
+    public static final long MAX_CHORD_LENGTH_SQ = 2147483647;
     public static final long MIN_CHORD_LENGTH_SQ = 65536L*65536L/(2L*2L);
 
     public static final int LG_FLATNESS = 0; // half pixel, 2^(-1)

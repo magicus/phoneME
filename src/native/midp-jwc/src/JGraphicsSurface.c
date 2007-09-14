@@ -25,6 +25,7 @@
 
 #include <JAbstractSurface.h>
 
+#include <kni.h>
 #include <KNIUtil.h>
 #include <midpPiscesUtils.h>
 
@@ -39,14 +40,17 @@
 static jfieldID fieldIds[SURFACE_LAST + 1];
 static jboolean fieldIdsInitialized = KNI_FALSE;
 
-static jboolean initializeSurfaceFieldIds(jobject objectHandle);
+static jboolean initializeSurfaceFieldIds(CVMExecEnv* _ee, jobject objectHandle);
 
-static void surface_acquire(AbstractSurface* surface, jobject surfaceHandle);
+static void surface_acquire(CVMExecEnv* _ee, AbstractSurface* surface, jobject surfaceHandle);
 static void surface_release(AbstractSurface* surface, jobject surfaceHandle);
 static void surface_cleanup(AbstractSurface* surface);
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_GraphicsSurface_initialize() {
+//KNIDECL(com_sun_pisces_GraphicsSurface_initialize) {
+Java_com_sun_pisces_GraphicsSurface_initialize(CVMExecEnv* _ee, CVMStackVal32* _arguments, 
+        CVMMethodBlock** _p_mb) {
+
     KNI_StartHandles(1);
     KNI_DeclareHandle(objectHandle);
 
@@ -54,8 +58,8 @@ Java_com_sun_pisces_GraphicsSurface_initialize() {
 
     KNI_GetThisPointer(objectHandle);
 
-    if (surface_initialize(objectHandle)
-            && initializeSurfaceFieldIds(objectHandle)) {
+    if (surface_initialize(_ee, objectHandle)
+            && initializeSurfaceFieldIds(_ee, objectHandle)) {
         surface = my_malloc(AbstractSurface, 1);
         
         if (surface != NULL) {
@@ -83,7 +87,7 @@ Java_com_sun_pisces_GraphicsSurface_initialize() {
 }
 
 static jboolean
-initializeSurfaceFieldIds(jobject objectHandle) {
+initializeSurfaceFieldIds(CVMExecEnv* _ee, jobject objectHandle) {
     static const FieldDesc surfaceFieldDesc[] = {
                 { "nativePtr", "J" },
                 { "g", "Ljavax/microedition/lcdui/Graphics;" },
@@ -103,7 +107,7 @@ initializeSurfaceFieldIds(jobject objectHandle) {
 
     KNI_GetObjectClass(objectHandle, classHandle);
 
-    if (initializeFieldIds(fieldIds, classHandle, surfaceFieldDesc)) {
+    if (initializeFieldIds(_ee, fieldIds, classHandle, surfaceFieldDesc)) {
         retVal = KNI_TRUE;
         fieldIdsInitialized = KNI_TRUE;
     }
@@ -113,7 +117,7 @@ initializeSurfaceFieldIds(jobject objectHandle) {
 }
 
 static void
-surface_acquire(AbstractSurface* surface, jobject surfaceHandle) {
+surface_acquire(CVMExecEnv* _ee, AbstractSurface* surface, jobject surfaceHandle) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(graphicsHandle);
 

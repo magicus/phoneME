@@ -35,6 +35,7 @@
 
 /* for sqrt, sin, cos */
 #include <jvm.h>
+#include <kni.h>
 
 jboolean readAndClearMemErrorFlag();
 jboolean readMemErrorFlag();
@@ -47,9 +48,9 @@ void     setMemErrorFlag();
 
 #define PISCESclear_mem(buffer,count) memset(buffer,0,count)
 
-#define PISCESsqrt(x) jvm_sqrt((x))
-#define PISCESsin(x) jvm_sin((x))
-#define PISCEScos(x) jvm_cos((x))
+#define PISCESsqrt(x) sqrt((x))
+#define PISCESsin(x) sin((x))
+#define PISCEScos(x) cos((x))
 
 #ifdef _MSC_VER
 typedef unsigned __int64    ulong64;
@@ -58,7 +59,7 @@ typedef unsigned long long  ulong64;
 #endif
 
 /* a definition for assert(). Does nothing! */
-#define assert(z)
+// #define assert(z)
 
 #define ASSERT_ALLOC(memptr) \
     if (NULL == (memptr)) {  \

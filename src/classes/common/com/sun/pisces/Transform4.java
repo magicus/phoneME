@@ -45,6 +45,41 @@ public class Transform4 {
 //         this.det = (double)m00*m11 - (double)m01*m10;
     }
 
+    public int get_m00() {
+        return m00;
+    }
+
+    public int get_m01() {
+        return m01;
+    }
+
+    public int get_m10() {
+        return m10;
+    }
+
+    public int get_m11() {
+        return m11;
+    }
+
+
+    public void set_m00(int m00) {
+        this.m00 = m00;
+    }
+
+    public void set_m01(int m01) {
+        this.m01 = m01;
+    }
+
+    public void set_m10(int m10) {
+        this.m10 = m10;
+    }
+
+    public void set_m11(int m11) {
+        this.m11 = m11;
+    }
+
+
+
 //     public Transform4 createInverse() {
 //         double dm00 = m00/65536.0;
 //         double dm01 = m01/65536.0;

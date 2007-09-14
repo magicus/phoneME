@@ -23,7 +23,7 @@
  * information or have any questions.
  */
 
-
+#include <kni.h>
 #include <KNIUtil.h>
 
 #include <JPiscesRenderer.h>
@@ -35,16 +35,16 @@
 static jfieldID fieldIds[FINALIZER_LAST + 1];
 static jboolean fieldIdsInitialized = KNI_FALSE;
 
-static jboolean initializeFinalizerFieldIds(jobject objectHandle);
+static jboolean initializeFinalizerFieldIds(CVMExecEnv* _ee, jobject objectHandle);
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_NativeFinalizer_initialize() {
+KNIDECL(com_sun_pisces_NativeFinalizer_initialize) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(objectHandle);
 
     KNI_GetThisPointer(objectHandle);
 
-    if (!initializeFinalizerFieldIds(objectHandle)) {
+    if (!initializeFinalizerFieldIds(_ee, objectHandle)) {
         KNI_ThrowNew("java/lang/IllegalStateException", "");
     }
 
@@ -55,7 +55,12 @@ Java_com_sun_pisces_NativeFinalizer_initialize() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_NativeFinalizer_0004SurfaceNativeFinalizer_finalize() {
+//KNIDECL(com_sun_pisces_SurfaceNativeFinalizer_finalize) {
+Java_com_sun_pisces_SurfaceNativeFinalizer_finalize(CVMExecEnv* _ee,
+          CVMStackVal32* _arguments, 
+        CVMMethodBlock** _p_mb) {
+
+
     KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);
     KNI_DeclareHandle(guardedHandle);
@@ -71,39 +76,11 @@ Java_com_sun_pisces_NativeFinalizer_0004SurfaceNativeFinalizer_finalize() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_NativeFinalizer_0004RendererNativeFinalizer_finalize() {
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(objectHandle);
-    KNI_DeclareHandle(guardedHandle);
+//KNIDECL(com_sun_pisces_RendererNativeFinalizer_finalize) {
+Java_com_sun_pisces_RendererNativeFinalizer_finalize(CVMExecEnv* _ee,
+          CVMStackVal32* _arguments, 
+        CVMMethodBlock** _p_mb) {
 
-    KNI_GetThisPointer(objectHandle);
-    KNI_GetObjectField(objectHandle, fieldIds[FINALIZER_GUARDED_OBJ],
-                       guardedHandle);
-
-    renderer_finalize(guardedHandle);
-
-    KNI_EndHandles();
-    KNI_ReturnVoid();
-}
-
-KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_NativeFinalizer_00024SurfaceNativeFinalizer_finalize() {
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(objectHandle);
-    KNI_DeclareHandle(guardedHandle);
-
-    KNI_GetThisPointer(objectHandle);
-    KNI_GetObjectField(objectHandle, fieldIds[FINALIZER_GUARDED_OBJ],
-                       guardedHandle);
-
-    surface_finalize(guardedHandle);
-
-    KNI_EndHandles();
-    KNI_ReturnVoid();
-}
-
-KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_NativeFinalizer_00024RendererNativeFinalizer_finalize() {
     KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);
     KNI_DeclareHandle(guardedHandle);
@@ -119,7 +96,7 @@ Java_com_sun_pisces_NativeFinalizer_00024RendererNativeFinalizer_finalize() {
 }
 
 static jboolean
-initializeFinalizerFieldIds(jobject objectHandle) {
+initializeFinalizerFieldIds(CVMExecEnv* _ee, jobject objectHandle) {
     static const FieldDesc finalizerFieldDesc[] = {
                 { "guardedObject", "Lcom/sun/pisces/NativeFinalization;"
                 },
@@ -139,7 +116,7 @@ initializeFinalizerFieldIds(jobject objectHandle) {
 
     KNI_GetObjectClass(objectHandle, classHandle);
 
-    if (initializeFieldIds(fieldIds, classHandle, finalizerFieldDesc)) {
+    if (initializeFieldIds(_ee, fieldIds, classHandle, finalizerFieldDesc)) {
         retVal = KNI_TRUE;
         fieldIdsInitialized = KNI_TRUE;
     }

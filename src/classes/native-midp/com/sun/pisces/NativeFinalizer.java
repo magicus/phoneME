@@ -28,24 +28,8 @@ package com.sun.pisces;
 
 class NativeFinalizer {
     private NativeFinalization guardedObject;
-    
-    private static final class RendererNativeFinalizer extends NativeFinalizer {
-        public RendererNativeFinalizer(PiscesRenderer renderer) {
-            super(renderer);
-        }
-        
-        private native void finalize();
-    };
 
-    private static final class SurfaceNativeFinalizer extends NativeFinalizer {
-        public SurfaceNativeFinalizer(AbstractSurface surface) {
-            super(surface);
-        }
-        
-        private native void finalize();
-    };
-    
-    private NativeFinalizer(NativeFinalization forObject) {
+    NativeFinalizer(NativeFinalization forObject) {
         guardedObject = forObject;
         initialize();
     }
@@ -60,3 +44,19 @@ class NativeFinalizer {
     
     private native final void initialize();
 }
+
+final class RendererNativeFinalizer extends NativeFinalizer {
+    public RendererNativeFinalizer(PiscesRenderer renderer) {
+        super(renderer);
+    }
+
+    protected native void finalize();
+};
+
+final class SurfaceNativeFinalizer extends NativeFinalizer {
+    public SurfaceNativeFinalizer(AbstractSurface surface) {
+        super(surface);
+    }
+
+    protected native void finalize();
+};

@@ -31,23 +31,23 @@
 
 typedef struct _AbstractSurface {
     Surface super;
-    void (*acquire)(struct _AbstractSurface* surface, jobject surfaceHandle);
+    void (*acquire)(CVMExecEnv* _ee, struct _AbstractSurface* surface, jobject surfaceHandle);
     void (*release)(struct _AbstractSurface* surface, jobject surfaceHandle);
     void (*cleanup)();
 }
 AbstractSurface;
 
-#define ACQUIRE_SURFACE(surface, surfaceHandle)                              \
+#define ACQUIRE_SURFACE(ee, surface, surfaceHandle)                              \
         SNI_BEGIN_RAW_POINTERS;                                              \
-        ((AbstractSurface*)(surface))->acquire((AbstractSurface*)(surface),  \
+        ((AbstractSurface*)(surface))->acquire((ee), (AbstractSurface*)(surface),  \
                                                (surfaceHandle));
 
 // no need to call release from RELEASE_SURFACE on MIDP
 #define RELEASE_SURFACE(surface, surfaceHandle)                              \
         SNI_END_RAW_POINTERS;
 
-AbstractSurface* surface_get(jobject surfaceHandle);
-jboolean surface_initialize(jobject surfaceHandle);
-void surface_finalize(jobject objectHandle);
+AbstractSurface* surface_get(CVMExecEnv* _ee, jobject surfaceHandle);
+jboolean surface_initialize(CVMExecEnv* _ee, jobject surfaceHandle);
+jboolean surface_finalize(jobject objectHandle);
 
 #endif

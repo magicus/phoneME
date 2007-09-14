@@ -46,18 +46,18 @@ static jfieldID graphicsFieldIds[GRAPHICS_LAST + 1];
 static jfieldID fieldIds[SURFACE_LAST + 1];
 static jboolean fieldIdsInitialized = KNI_FALSE;
 
-static jboolean initializeSurfaceFieldIds(jobject objectHandle);
+static jboolean initializeSurfaceFieldIds(CVMExecEnv* _ee, jobject objectHandle);
 static jboolean initializeGDFieldIds();
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_NativeSurface_clean() {
+KNIDECL(com_sun_pisces_NativeSurface_clean) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(objectHandle);
 
     AbstractSurface* surface;
     
     KNI_GetThisPointer(objectHandle);
-    initializeSurfaceFieldIds(objectHandle);
+    initializeSurfaceFieldIds(_ee, objectHandle);
 
     surface = (AbstractSurface *) (long) KNI_GetLongField(objectHandle, fieldIds[
                                                             SURFACE_NATIVE_PTR])
@@ -75,7 +75,7 @@ Java_com_sun_pisces_NativeSurface_clean() {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-Java_com_sun_pisces_NativeSurface_draw() {
+KNIDECL(com_sun_pisces_NativeSurface_draw) {
     AbstractSurface* surface;  
     int w, h, offset, xx, yy, x, y;
     int soffset;
@@ -105,8 +105,8 @@ Java_com_sun_pisces_NativeSurface_draw() {
     KNI_GetParameterAsObject(1, destinationHandle);
     KNI_GetThisPointer(objectHandle);
     
-    initializeSurfaceFieldIds(objectHandle);
-    initializeGDFieldIds();
+    initializeSurfaceFieldIds(_ee, objectHandle);
+    initializeGDFieldIds(_ee);
     
     gr = GXAPI_GET_GRAPHICS_PTR(destinationHandle);
     
@@ -198,7 +198,7 @@ Java_com_sun_pisces_NativeSurface_draw() {
 }
 
 static jboolean
-initializeGDFieldIds() {
+initializeGDFieldIds(CVMExecEnv* _ee) {
     static const FieldDesc graphicsFieldDesc[GRAPHICS_LAST + 2] = {
                                                        { "transX", "I" },
                                                        { "transY", "I" },
@@ -215,7 +215,7 @@ initializeGDFieldIds() {
     KNI_DeclareHandle(graphicsHndl);
     KNI_FindClass("javax/microedition/lcdui/Graphics", graphicsHndl);
     if (!KNI_IsNullHandle(graphicsHndl) && 
-        initializeFieldIds(graphicsFieldIds, graphicsHndl, graphicsFieldDesc)) {
+        initializeFieldIds(_ee, graphicsFieldIds, graphicsHndl, graphicsFieldDesc)) {
         retVal = KNI_TRUE;
         fieldIdsInitialized1 = KNI_TRUE;
     }
@@ -224,7 +224,7 @@ initializeGDFieldIds() {
 }
 
 static jboolean
-initializeSurfaceFieldIds(jobject objectHandle) {
+initializeSurfaceFieldIds(CVMExecEnv* _ee, jobject objectHandle) {
     static const FieldDesc surfaceFieldDesc[] = {
                 { "nativePtr", "J" },
                 { NULL, NULL }
@@ -243,7 +243,7 @@ initializeSurfaceFieldIds(jobject objectHandle) {
 
     KNI_GetObjectClass(objectHandle, classHandle);
 
-    if (initializeFieldIds(fieldIds, classHandle, surfaceFieldDesc)) {
+    if (initializeFieldIds(_ee, fieldIds, classHandle, surfaceFieldDesc)) {
         retVal = KNI_TRUE;
         fieldIdsInitialized = KNI_TRUE;
     }

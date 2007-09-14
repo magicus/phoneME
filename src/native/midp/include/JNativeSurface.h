@@ -29,6 +29,6 @@
 
 #include <PiscesSurface.h>
 
-Surface* surface_get(jobject objectHandle);
+Surface* surface_get(CVMExecEnv* _ee, jobject objectHandle);
 
 #endif
