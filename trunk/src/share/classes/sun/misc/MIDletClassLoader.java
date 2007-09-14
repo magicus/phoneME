@@ -108,17 +108,6 @@ public class MIDletClassLoader extends URLClassLoader {
     private Class
     loadFromUrl(String classname) throws ClassNotFoundException
     {
-	// first ensure we like componentName.
-	// it should not have a systemPkg entry as a prefix!
-	// this is probably paranoid. There are probably other
-	// mechanisms to avoid this.
-	String forbidden[] = systemPkgs;
-	int fLength = forbidden.length;
-	for (int i=0; i< fLength; i++){
-	    if (classname.startsWith(forbidden[i])){
-		return null; // go look elsewhere.
-	    }
-	}
 	Class newClass;
 	try {
 	    newClass = super.findClass(classname); // call URLClassLoader
@@ -129,6 +118,26 @@ public class MIDletClassLoader extends URLClassLoader {
 	}
 	if (newClass == null )
 	    return null;
+
+        /*
+         * Found the requested class. Make sure it's not from
+         * restricted system packages.
+         */
+	String forbidden[] = systemPkgs;
+	int fLength = forbidden.length;
+        if (!classname.startsWith("com.sun.midp.examples")) {
+	    for (int i=0; i< fLength; i++){
+	        if (classname.startsWith(forbidden[i])){
+		    throw new SecurityException("Prohibited package name: " +
+		        classname.substring(0, classname.lastIndexOf('.')));
+	        }
+	    }
+	}
+
+        /*
+         * Check member access to make sure the class doesn't
+         * access any hidden CDC APIs.
+         */
 	try {
 	    // memberChecker will throw an Error if it doesn't like
 	    // the class.
@@ -151,6 +160,14 @@ public class MIDletClassLoader extends URLClassLoader {
     loadClass(String classname, boolean resolve) throws ClassNotFoundException
     {
 	Class resultClass;
+	int i = classname.lastIndexOf('.');
+	if (i != -1) {
+	    SecurityManager sm = System.getSecurityManager();
+	    if (sm != null) {
+		sm.checkPackageAccess(classname.substring(0, i));
+	    }
+	}
+
 	classname = classname.intern();
 	if (badMidletClassnames.contains(classname)){
 	    // the system thinks it successfully loaded this class.
@@ -161,10 +178,15 @@ public class MIDletClassLoader extends URLClassLoader {
 	}
 	resultClass = findLoadedClass(classname);
 	if (resultClass == null){
-	    resultClass = loadFromUrl(classname);
-	    if (resultClass == null){
+            try {
 		resultClass = implementationClassLoader.loadClass(
                     classname, false, enableFilter);
+	    } catch (ClassNotFoundException e) {
+                resultClass = null;
+	    }
+
+	    if (resultClass == null) {
+                resultClass = loadFromUrl(classname);
 	    }
 	}
         /*
