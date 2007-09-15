@@ -39,6 +39,15 @@
 
 #if ENABLE_DIRECT_DRAW
 #include <ddraw.h>
+
+/*
+ * This define turns on FPS limitation for GameCanvas:
+ *   winceapp_direct_flush() performs actual flush to screen not more
+ *   than onece in FLUSH_REFRESH_TIME ms. If the flush has been skipped,
+ *   it is delayed by FLUSH_REFRESH_TIMEOUT ms unless another flush call
+ *   executed.
+ */
+#define FLUSH_LIMIT_REFRESH
 #endif
 
 #ifdef ENABLE_JSR_184
@@ -95,24 +104,34 @@ static int lastKeyPressed = 0;
 
 /* IMPL_NOTE: the drawing code requires 16-bit per pixel mode */
 HBITMAP g_hBitmap = NULL; // Needed for GDI draw, if DD/GAPI draw fails
-
-#if ENABLE_DIRECT_DRAW
-LPDIRECTDRAW        g_pDD = NULL;
-LPDIRECTDRAWSURFACE g_pDDSMemory = NULL; // Normal paint memory surface
-LPDIRECTDRAWSURFACE g_pDDSDirect = NULL; // Extra memory surface for winceapp_direct_flush()
-LPDIRECTDRAWCLIPPER g_pDDClipper = NULL; 
-#endif
+HDC g_hMemDC = NULL; // Needed for GDI draw, if DD/GAPI draw fails
 
 struct ScreenAccess {
     int                 width;
     int                 height;
 #if ENABLE_DIRECT_DRAW
-    LPDIRECTDRAWSURFACE surface; // Primary surface of the screen
+    LPDIRECTDRAW        pDD;
+    LPDIRECTDRAWSURFACE pDDSPrimary;
+    LPDIRECTDRAWSURFACE pDDSMemory; // Normal paint memory surface
+    LPDIRECTDRAWSURFACE pDDSDirect; // Buffer surface for winceapp_direct_flush()
+    //LPDIRECTDRAWCLIPPER pDDClipper; 
 #else
     int                 yPitch;
     gxj_pixel_type*     pixels;
 #endif
 };
+
+static ScreenAccess g_screen;
+
+#ifdef FLUSH_LIMIT_REFRESH
+#define                 FLUSH_REFRESH_TIME 40
+#define                 FLUSH_REFRESH_TIMEOUT 80
+static HANDLE           flushThread;
+static CRITICAL_SECTION flushCS;
+static DWORD            lastFlushTime = 0;
+static int              flushHeight = 0;
+static DWORD Flusher(LPVOID); // Scheduler thread
+#endif
 
 /* IMPL_NOTE: need a better way for quitting.  */
 extern int _quit_now; /* defined in Scheduler.cpp */
@@ -235,93 +254,130 @@ static void updateVisibleDesktop() {
 }
 
 #if ENABLE_DIRECT_DRAW
+static void release_DirectDraw();
+
 static void init_DirectDraw() {
-    /**
-     * Note: if DirectDraw fails to initialize, we will use GDI to
-     *  draw to do the screenBuffer->LCD copying.
-     */
-    if (DD_OK != DirectDrawCreate(NULL, &g_pDD, NULL))
+    /* Note: if DirectDraw fails to initialize, we will use GDI */
+    if (DD_OK != DirectDrawCreate(NULL, &g_screen.pDD, NULL))
         return;
 
-    if (DD_OK != g_pDD->SetCooperativeLevel(hwndMain, DDSCL_NORMAL)) {
-        g_pDD->Release();
-        g_pDD = NULL;
+    if (DD_OK != g_screen.pDD->SetCooperativeLevel(hwndMain, DDSCL_NORMAL)/* ||
+        DD_OK != g_screen.pDD->CreateClipper(0, &g_screen.pDDClipper, NULL)*/) {
+        g_screen.pDD->Release();
+        g_screen.pDD = NULL;
         return;
     }
-    wince_init_fonts();
-    if (DD_OK != g_pDD->CreateClipper(0, &g_pDDClipper, NULL))
-        return;
-    if (DD_OK != g_pDDClipper->SetHWnd(0, hwndMain)) {
-        g_pDDClipper->Release();
-        g_pDDClipper = NULL;
-    }
-}
-
-
-static void release_DirectDraw() {
-    if (NULL == g_pDD)
-        return;
-    if (NULL != g_pDDSMemory) {
-        g_pDDSMemory->Release();
-        g_pDDSMemory = NULL;
-    }
-    if (NULL != g_pDDSDirect) {
-        g_pDDSDirect->Release();
-        g_pDDSDirect = NULL;
-    }
-    if (NULL != g_pDDClipper) {
-        g_pDDClipper->Release();
-        g_pDDClipper = NULL;
-    }
-    g_pDD->Release();
-    g_pDD = NULL;
-}
-
-/**
- * Create primary surface
- */
-static BOOL access_screen(ScreenAccess* scr) {
-    ASSERT(g_pDD);
-    ASSERT(scr);
-    LPDIRECTDRAWSURFACE pDDS;
 
     // Create the primary surface with 0 back buffer
     DDSURFACEDESC ddsd;
     ZeroMemory(&ddsd, sizeof(DDSURFACEDESC));
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
-    if (DD_OK != g_pDD->CreateSurface(&ddsd, &pDDS, NULL))
-        return FALSE;
-    else {
-        if (NULL != g_pDDClipper && DD_OK != pDDS->SetClipper(g_pDDClipper)) {
-            pDDS->Release();
-            return FALSE;
-        }
-        if (DD_OK == pDDS->GetSurfaceDesc(&ddsd)) {
-            scr->width = ddsd.dwWidth;
-            scr->height = ddsd.dwHeight;
-            scr->surface = pDDS;
-        } else {
-            pDDS->Release();
-            return FALSE;
-        }
+    ddsd.ddsCaps.dwCaps = /*DDSCAPS_WRITEONLY | */DDSCAPS_PRIMARYSURFACE;
+    if (/*DD_OK != g_screen.pDDClipper->SetHWnd(0, hwndMain) ||*/
+        DD_OK != g_screen.pDD->CreateSurface(&ddsd, &g_screen.pDDSPrimary, NULL)) {
+        //g_screen.pDDClipper->Release();
+        //g_screen.pDDClipper = NULL;
+        g_screen.pDD->Release();
+        g_screen.pDD = NULL;
+        return;
     }
-    return TRUE;
+
+    if (/*DD_OK != g_screen.pDDSPrimary->SetClipper(g_screen.pDDClipper) ||*/
+        DD_OK != g_screen.pDDSPrimary->GetSurfaceDesc(&ddsd)) {
+        release_DirectDraw();
+        return;
+    }
+    g_screen.width = ddsd.dwWidth;
+    g_screen.height = ddsd.dwHeight;
+
+#ifdef FLUSH_LIMIT_REFRESH
+    flushThread = CreateThread(NULL, 0, Flusher, 0, CREATE_SUSPENDED, NULL);
+    InitializeCriticalSection(&flushCS);
+#endif
+    wince_init_fonts();
 }
 
-static void release_screen(ScreenAccess* scr) {
-    ASSERT(scr);
-    scr->surface->SetClipper(NULL);
-    scr->surface->Release();
-    scr->surface = NULL;
+
+static void release_DirectDraw() {
+    if (NULL == g_screen.pDD)
+        return;
+    if (NULL != g_screen.pDDSDirect) {
+        g_screen.pDDSDirect->Release();
+        g_screen.pDDSDirect = NULL;
+    }
+    if (NULL != g_screen.pDDSMemory) {
+        g_screen.pDDSMemory->Release();
+        g_screen.pDDSMemory = NULL;
+    }
+    if (NULL != g_screen.pDDSPrimary) {
+        //g_screen.pDDSPrimary->SetClipper(NULL);
+        g_screen.pDDSPrimary->Release();
+        g_screen.pDDSPrimary = NULL;
+    }
+    /*if (NULL != g_screen.pDDClipper) {
+        g_screen.pDDClipper->Release();
+        g_screen.pDDClipper = NULL;
+    }*/
+#ifdef FLUSH_LIMIT_REFRESH
+    if (NULL != flushThread) {
+        CloseHandle(flushThread);
+        DeleteCriticalSection(&flushCS);
+    }
+#endif
+    g_screen.pDD->Release();
+    g_screen.pDD = NULL;
 }
 
+/*
+ * Flushing for direct_flush();
+ */
+static void do_flush(int height) {
+    RECT srcRect, dstRect;
+    srcRect.top = 0;
+    srcRect.left = 0;
+    srcRect.bottom = height;
+    srcRect.right = CHAM_WIDTH;
+
+    dstRect.top = rcVisibleDesktop.top;
+    dstRect.left = 0;
+    dstRect.bottom = height + rcVisibleDesktop.top;
+    dstRect.right = CHAM_WIDTH;
+
+    if (NULL != g_screen.pDDSDirect)
+        g_screen.pDDSPrimary->Blt(&dstRect, g_screen.pDDSDirect, &srcRect, 0, NULL);
+
+#ifdef FLUSH_LIMIT_REFRESH
+    lastFlushTime = GetTickCount();
+#endif
+}
+
+#ifdef FLUSH_LIMIT_REFRESH
+/*
+ * FPS limiting thread for direct_flush();
+ */
+static DWORD Flusher(LPVOID) {
+    while (1) {
+        DWORD saveTime;
+        do {
+            saveTime = GetTickCount();
+            DWORD sleepTime = FLUSH_REFRESH_TIMEOUT + lastFlushTime - saveTime;
+            if (sleepTime > 0)
+                Sleep(sleepTime);
+        } while (lastFlushTime > saveTime);
+        EnterCriticalSection(&flushCS);
+        do_flush(flushHeight);
+        LeaveCriticalSection(&flushCS);
+        SuspendThread(flushThread); // direct_flush will wake up the thread
+    }
+    return 0;
+}
+#endif
 /**
  * Create memory based DD surface
  */
 static LPDIRECTDRAWSURFACE create_memory_surface(void* pVmem, int width, int height) {
-    ASSERT(g_pDD);
+    ASSERT(g_screen.pDD);
     ASSERT(pVmem);
 
     DDSURFACEDESC ddsd;
@@ -347,7 +403,7 @@ static LPDIRECTDRAWSURFACE create_memory_surface(void* pVmem, int width, int hei
     ddsd.ddpfPixelFormat.dwGBitMask     = 0x3f << 5;
     ddsd.ddpfPixelFormat.dwBBitMask     = 0x1f;
 
-    if (DD_OK != g_pDD->CreateSurface(&ddsd, &pDDS, NULL))
+    if (DD_OK != g_screen.pDD->CreateSurface(&ddsd, &pDDS, NULL))
         return NULL;
     else
         return pDDS;
@@ -511,16 +567,10 @@ static void disablePaint() {
 static void enablePaint() {
     if (inMidpEventLoop) {
         midpPaintAllowed = 1;
-        /*has_skipped_refresh = 1;
-        dirty_x1 = 0;
-        dirty_y1 = 0;
-        dirty_x2 = CHAM_WIDTH;
-        dirty_y2 = CHAM_HEIGHT;*/
         process_skipped_refresh();
     }
 }
 
-static DWORD mainThreadID;
 /**
  * Handles window messages sent to the main window.
  */
@@ -770,6 +820,10 @@ void winceapp_finalize() {
 #else
     GXCloseDisplay();
 #endif
+    if (NULL != g_hMemDC) {
+        DeleteDC(g_hMemDC);
+        g_hMemDC = NULL;
+    }
     if (NULL != g_hBitmap) {
         DeleteObject(g_hBitmap);
         g_hBitmap = NULL;
@@ -816,83 +870,49 @@ int isScreenRotated() {
 }
 #endif
 
-static BOOL startDirectPaint(ScreenAccess* scr) {
-    ASSERT(scr);
+static BOOL startDirectPaint() {
 #if ENABLE_DIRECT_DRAW
-    if (isScreenRotated() || !isScreenFullyVisible() || editBoxShown)
+    if (g_screen.pDD == NULL || isScreenRotated() || !isScreenFullyVisible() || editBoxShown)
         /* DDraw is not very reliable on a rotated screen. Use GDI instead. */
         return FALSE;
 
-    if (g_pDD == NULL) {
-        init_DirectDraw();
-        if (g_pDD == NULL)
-            /* DirectDraw failed to initialize. 
-            * Let's use GDI to Blit to the LCD. 
-            */
-            return FALSE;
-    }
-
-    if (!access_screen(scr))
-        return FALSE;
-
-    if (g_pDDSMemory == NULL) {
-        g_pDDSMemory = create_memory_surface(gxj_system_screen_buffer.pixelData,
+    if (g_screen.pDDSMemory == NULL) {
+        g_screen.pDDSMemory = create_memory_surface(gxj_system_screen_buffer.pixelData,
             CHAM_WIDTH, CHAM_HEIGHT);
-        if (g_pDDSMemory == NULL) {
-            release_screen(scr);
+        if (g_screen.pDDSMemory == NULL)
             return FALSE;
-        }
     }
 
-/*
-    if (DDERR_SURFACELOST == g_pDDSPrimary->IsLost())
-        if (DD_OK != g_pDDSPrimary->Restore()) {
-            // Release the DD resources.
-            // Maybe we'd get lucky and can allocate it next time.
-            g_pDDSPrimary->SetClipper(NULL);
-            if (g_pDDClipper) {
-	            g_pDDClipper->Release();
-	            g_pDDClipper = NULL;
-            }
-            g_pDDSPrimary->Release();
-            g_pDDSPrimary = NULL;
-            if (g_pDDSMemory) {
-	            g_pDDSMemory->Release();
-	            g_pDDSMemory = NULL;
-            }
-            if (g_pDDSDirect) {
-	            g_pDDSDirect->Release();
-	            g_pDDSDirect = NULL;
-            }
+    if (DD_OK != g_screen.pDDSPrimary->IsLost()) {
+        if (DD_OK != g_screen.pDDSPrimary->Restore())
             return FALSE;
-        }
-*/
+        DDSURFACEDESC ddsd;
+        ddsd.dwSize = sizeof(ddsd);
+        g_screen.pDDSPrimary->GetSurfaceDesc(&ddsd);
+        g_screen.width = ddsd.dwWidth;
+        g_screen.height = ddsd.dwHeight;
+    }
 #else
     if (editBoxShown)
         return FALSE;
-    static int dispWidth = 0;
-    static int dispHeight = 0;
-    static int dispYPitch = 0;
-    if (dispWidth == 0) {
+    if (g_screen.width == 0) {
         GXDisplayProperties dp = GXGetDisplayProperties();
-        dispWidth = dp.cxWidth;
-        dispHeight = dp.cyHeight;
-        dispYPitch = dp.cbyPitch;
+        g_screen.width = dp.cxWidth;
+        g_screen.height = dp.cyHeight;
+        g_screen.yPitch = dp.cbyPitch;
     }
-    scr->width = dispWidth;
-    scr->height = dispHeight;
-    scr->yPitch = dispYPitch;
-    scr->pixels = (gxj_pixel_type*)GXBeginDraw();
+    g_screen.pixels = (gxj_pixel_type*)GXBeginDraw();
+    if (NULL == g_screen.pixels)
+        return FALSE;
 #endif
     return TRUE;
 }
 
-static void endDirectPaint(ScreenAccess* scr) {
+static void endDirectPaint() {
 #if ENABLE_DIRECT_DRAW
-    release_screen(scr);
 #else
     GXEndDraw();
-    scr->pixels = NULL;
+    g_screen.pixels = NULL;
 #endif
 }
 
@@ -906,7 +926,7 @@ static void endDirectPaint(ScreenAccess* scr) {
  * @param y2 bottom-right y coordinate of the area to refresh
  */
 void winceapp_refresh(int x1, int y1, int x2, int y2) {
-    if (!midpPaintAllowed)
+    if (NULL == hwndMain || !midpPaintAllowed)
         return;
 
     if (x2 > CHAM_WIDTH)
@@ -914,9 +934,6 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
     
     if (y2 > CHAM_HEIGHT)
         y2 = CHAM_HEIGHT;
-
-    int srcWidth, srcHeight;
-    ScreenAccess scr;
 
     /* Make sure the copied lines are 4-byte aligned for faster memcpy */
     if ((x1 & 0x01) == 1)
@@ -926,37 +943,32 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
 
     gxj_pixel_type *src = gxj_system_screen_buffer.pixelData;
 
-    if (!startDirectPaint(&scr)) {
+    if (!startDirectPaint()) {
         // GDI output here
-        HDC hDC = GetDC(winceapp_get_window_handle());
+        HDC hDC_ = GetDC(hwndMain);
         if (g_hBitmap == NULL) {
-            g_hBitmap = CreateCompatibleBitmap(hDC, CHAM_WIDTH, CHAM_HEIGHT);
-            SetBitmapBits(g_hBitmap, CHAM_WIDTH * CHAM_HEIGHT * sizeof(gxj_pixel_type*), src);
-        }        
-        HDC hDCMem = CreateCompatibleDC(hDC);
-        SelectObject(hDCMem, g_hBitmap);
-        BitBlt(hDC, x1, y1, x2 - x1, y2 - y1, hDCMem, x1, y1, SRCCOPY);
-        DeleteDC(hDCMem);
-        DeleteDC(hDC);
+            g_hBitmap = CreateCompatibleBitmap(hDC_, CHAM_WIDTH, CHAM_HEIGHT);
+            g_hMemDC = CreateCompatibleDC(hDC_);
+            ASSERT(SelectObject(g_hMemDC, g_hBitmap));
+        }
+        int bytes = CHAM_WIDTH * CHAM_HEIGHT * sizeof(gxj_pixel_type);
+        ASSERT(bytes == SetBitmapBits(g_hBitmap, bytes, src));
+        ASSERT(BitBlt(hDC_, x1, y1, x2 - x1, y2 - y1, g_hMemDC, x1, y1, SRCCOPY));
+        ReleaseDC(hwndMain, hDC_);
         return;
     }
-    
-#if ENABLE_DIRECT_DRAW
-    int maxY = scr.height - titleHeight;
+
+	int maxY = g_screen.height - titleHeight;        
     if (y2 > maxY)
         y2 = maxY;
-    if (x2 > scr.width)
-        x2 = scr.width;
-
-    srcWidth = x2 - x1;
-    srcHeight = y2 - y1;
-
-    if (srcWidth <= 0 || srcHeight <= 0)  {
-        endDirectPaint(&scr);
+    if (x2 > g_screen.width)
+        x2 = g_screen.width;
+    
+#if ENABLE_DIRECT_DRAW
+    if (x2 <= x1 || y2 <= y1) 
         // it is possible srcHeight < 0 when SIP shown and java refresh 
         // the lower part screen(system menu up/dn,etc.)
         return;
-    }
 
     RECT srcRect, dstRect;
     srcRect.top = y1;
@@ -969,128 +981,88 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
     dstRect.bottom = y2 + rcVisibleDesktop.top;
     dstRect.right = x2;
 
-    scr.surface->Blt(&dstRect, g_pDDSMemory, &srcRect, 0, NULL); 
+    g_screen.pDDSPrimary->Blt(&dstRect, g_screen.pDDSMemory, &srcRect, 0, NULL); 
 
 #else /* !ENABLE_DIRECT_DRAW */
-    
-    gxj_pixel_type *dst = scr.pixels;
+    int srcWidth = x2 - x1;
+    int srcHeight = y2 - y1;
 
-    if (dst != NULL) {
-	    int maxY = scr.height - titleHeight;
-        srcWidth = x2 - x1;
-        srcHeight = y2 - y1;
-        
-        if (y2 > maxY)
-            y2 = maxY;
-        if (x2 > scr.width)
-            x2 = scr.width;
+    gxj_pixel_type *dst = (gxj_pixel_type*)(((int)g_screen.pixels) +
+        (titleHeight + y1) * g_screen.yPitch) + x1;
 
-        dst = (gxj_pixel_type*)( ((int)dst) + titleHeight * scr.yPitch);
+    src += y1 * CHAM_WIDTH + x1;
 
-        src += y1 * CHAM_WIDTH + x1;
-        dst = (gxj_pixel_type*)( ((int)dst) + scr.yPitch * y1 );
-        dst += x1;
-
-        if (x1 == 0 && srcWidth == CHAM_WIDTH && scr.width == srcWidth &&
-            scr.yPitch == scr.width * 2) {
-	    /* assuming srcHeight==full height ? */ 
-            memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type) * srcHeight);
-        } else {
-            for (; y1 < y2; y1++) {
-                memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type));
-                src += CHAM_WIDTH;
-                dst = (gxj_pixel_type*)( ((int)dst) + scr.yPitch );
-            }
+    if (x1 == 0 && srcWidth == CHAM_WIDTH && g_screen.width == srcWidth &&
+        g_screen.yPitch == g_screen.width * 2) {
+	/* assuming srcHeight==full height ? */ 
+        memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type) * srcHeight);
+    } else
+        for (; y1 < y2; y1++) {
+            memcpy(dst, src, srcWidth * sizeof(gxj_pixel_type));
+            src += CHAM_WIDTH;
+            dst += (gxj_pixel_type*)( ((int)dst) + g_screen.yPitch );
         }
-    } 
 #endif /* ENABLE_DIRECT_DRAW */
-    endDirectPaint(&scr);
+    endDirectPaint();
 }
+
 
 jboolean winceapp_direct_flush(const java_graphics *g,
 			       const java_imagedata *srcImageDataPtr, 
 			       int height) {
-    if (srcImageDataPtr == NULL || srcImageDataPtr->pixelData == NULL)
+    if (srcImageDataPtr == NULL || srcImageDataPtr->pixelData == NULL || !midpPaintAllowed)
         return KNI_FALSE;
 
-    if (!midpPaintAllowed)
-        return KNI_FALSE;
-
-    ScreenAccess scr;
     gxj_pixel_type* src = (gxj_pixel_type *)&(srcImageDataPtr->pixelData->elements[0]);
     int width = srcImageDataPtr->width;
 
 #if ENABLE_DIRECT_DRAW /* ENABLE_DIRECT_DRAW */
     // direct_flush must be fast. So Deny to flush, if DD is not initialized
-    if (g_pDD == NULL)
+    if (g_screen.pDD == NULL)
         return KNI_FALSE;
 
-    /*
-    static DWORD lastTime = 0; // last flush time
-    DWORD nowTime = GetTickCount();
-    if (nowTime - lastTime <= 40) //25 frames/s
-        return KNI_TRUE;
-    lastTime = nowTime;
-    */
+#ifdef FLUSH_LIMIT_REFRESH
+    EnterCriticalSection(&flushCS);
+#endif
 
-    static gxj_pixel_type * lastSrc = NULL; // last flush src
-    
-    if (lastSrc != src && g_pDDSDirect != NULL) {
-        g_pDDSDirect->Release();
-        g_pDDSDirect = NULL;
+    static gxj_pixel_type * lastSrc = NULL; // last flush src    
+
+    if (lastSrc != src && g_screen.pDDSDirect != NULL) {
+        g_screen.pDDSDirect->Release();
+        g_screen.pDDSDirect = NULL;
+#ifdef FLUSH_LIMIT_REFRESH
+        lastFlushTime = 0;
+#endif
     }
 
-    if (g_pDDSDirect == NULL) {
-        g_pDDSDirect = create_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT);
-        if (g_pDDSDirect == NULL)
+    if (g_screen.pDDSDirect == NULL) {
+        g_screen.pDDSDirect = create_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT);
+        if (g_screen.pDDSDirect == NULL) {
+#ifdef FLUSH_LIMIT_REFRESH
+            LeaveCriticalSection(&flushCS);
+#endif
             return KNI_FALSE;
+        }
         lastSrc = src;
     }
-
-    if (!access_screen(&scr))
-        return KNI_FALSE;
 
     if (height > CHAM_HEIGHT)
         height = CHAM_HEIGHT;
 
-    jboolean result = KNI_FALSE;
-
-    if (scr.width == CHAM_WIDTH &&
-        height <= scr.height &&
-        width == CHAM_WIDTH) {
-
-        RECT srcRect;
-        srcRect.top = 0;
-        srcRect.left = 0;
-        srcRect.bottom = height;
-        srcRect.right = width;
-
-        RECT dstRect;
-        dstRect.top = rcVisibleDesktop.top;
-        dstRect.left = 0;
-        dstRect.bottom = height + rcVisibleDesktop.top;
-        dstRect.right = width;
-
-        if (DD_OK == scr.surface->Blt(&dstRect, g_pDDSDirect, &srcRect, 0, NULL))
-            result = KNI_TRUE;
-    }
-    release_screen(&scr);
-    return result;
-
+#ifdef FLUSH_LIMIT_REFRESH
+    DWORD diff = GetTickCount() - lastFlushTime; 
+    if (diff >= 0 && diff < FLUSH_REFRESH_TIME) {
+        flushHeight = height;
+        ResumeThread(flushThread);
+    } else
+        do_flush(height);
+    LeaveCriticalSection(&flushCS);
+#else
+    do_flush(height);
+#endif
+    return KNI_TRUE;
 #else  /* !ENABLE_DIRECT_DRAW */
     return KNI_FALSE; // No DirectDraw
-    /*
-    startDirectPaint(&scr);
-    gxj_pixel_type* dst = scr.pixels;
-    if (dst != NULL && scr.width == CHAM_WIDTH && height <= scr.height &&
-        scr.yPitch == (int)(scr.width * sizeof(gxj_pixel_type))) {
-        int bytes = scr.yPitch * height;
-        dst = (gxj_pixel_type*)( ((int)dst) + titleHeight * scr.yPitch);
-        memcpy(dst, src, bytes);
-        result = KNI_TRUE;
-    }
-    endDirectPaint(&scr);
-    */
 #endif /* ENABLE_DIRECT_DRAW */    
 }
 
@@ -1137,14 +1109,11 @@ HDC getScreenBufferHDC(gxj_pixel_type *buffer, int width, int height) {
     static HDC cachedHDC = NULL;
     static gxj_pixel_type *cachedBuffer = NULL;
 
-    if (g_pDD == NULL) {
-        init_DirectDraw();
-        if (g_pDD == NULL)
-            /* DirectDraw failed to initialize. 
-             * Let's use GDI to Blit to the LCD. 
-             */
-            return NULL;
-    }
+    if (g_screen.pDD == NULL)
+        /* DirectDraw failed to initialize. 
+         * Let's use GDI to Blit to the LCD. 
+         */
+        return NULL;
 
     if (buffer == cachedBuffer && cachedHDC != NULL && !pDDS->IsLost())
         /* Note: after screen rotation has happened, the pDDS surface may
