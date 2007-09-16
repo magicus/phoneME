@@ -366,8 +366,11 @@ class TextBoxLFImpl extends TextFieldLFImpl implements TextFieldLF {
         // to reserve space for cursor in the empty textfield
         g.translate(TextFieldSkin.PAD_H + 1, TextFieldSkin.PAD_V);
 
+        // Input session should be retrieved from the current Display
+        TextInputSession is = getInputSession();
+
         paint(g, tf.buffer,
-              inputSession.getPendingChar(),
+              is.getPendingChar(),
               tf.constraints, 
               ScreenSkin.FONT_INPUT_TEXT, 
               (editable ? TextFieldSkin.COLOR_FG : TextFieldSkin.COLOR_FG_UE), 
