@@ -572,9 +572,9 @@ CVMioWrite(CVMInt32 fd, const void *buf, CVMUint32 nBytes)
 
 #ifndef WINCE
     switch (fd) {
-    case 0: fd = (CVMInt32)GetStdHandle(STD_INPUT_HANDLE); break;
-    case 1: fd = (CVMInt32)GetStdHandle(STD_OUTPUT_HANDLE); break;
-    case 2: fd = (CVMInt32)GetStdHandle(STD_ERROR_HANDLE); break;
+    case 0: h = GetStdHandle(STD_INPUT_HANDLE); break;
+    case 1: h = GetStdHandle(STD_OUTPUT_HANDLE); break;
+    case 2: h = GetStdHandle(STD_ERROR_HANDLE); break;
     }
     b = WriteFile(h, buf, nBytes, &bytes, NULL);
 #else /* WINCE */
