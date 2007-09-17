@@ -27,7 +27,8 @@ SUBSYSTEM_DEFS_FILE      = subsystem_defs.gmk
 JSR_INIT_PACKAGE         = com.sun.cdc.config
 JSR_INIT_CLASS           = Initializer
 
-JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239 256 280
+JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 226 229 234 238 239 256 280
+#JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239 256 280
 
 # Defintion for path separator used in JSRs
 PATHSEP        ?= $(PS)
@@ -242,6 +243,16 @@ ifeq ($(wildcard $(JSR_211_MAKE_FILE)),)
 $(error JSR_211_DIR must point to a directory containing JSR 211 sources)
 endif
 include $(JSR_211_MAKE_FILE)
+endif
+
+# Include JSR 226
+ifeq ($(USE_JSR_226), true)
+export JSR_226_DIR ?= $(COMPONENTS_DIR)/jsr226
+JSR_226_MAKE_FILE = $(JSR_226_DIR)/perseus2/platform.releases/leto/resources/build/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(wildcard $(JSR_226_MAKE_FILE)),)
+$(error JSR_226_DIR must point to a directory containing JSR 226 sources)
+endif
+include $(JSR_226_MAKE_FILE)
 endif
 
 # Include JSR 229
