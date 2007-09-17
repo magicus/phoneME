@@ -344,7 +344,7 @@ CVMclassAddToLoadedClasses(CVMExecEnv* ee, CVMClassBlock* cb,
  * array class type that wasn't reference by romized code and we make 
  * a reference to it at runtime.
  */
-CVMClassBlock*
+static CVMClassBlock*
 CVMclassCreateArrayClass(CVMExecEnv* ee, CVMClassTypeID arrayTypeId,
 			 CVMClassLoaderICell* loader, CVMObjectICell* pd)
 {
@@ -617,6 +617,128 @@ CVMclassCreateArrayClass(CVMExecEnv* ee, CVMClassTypeID arrayTypeId,
 	arrayClass = NULL;
     }
 	
+    return arrayCb;
+}
+
+/*
+ * CVMclassCreateMultiArrayClass - creates the specified array class by
+ * iteratively (i.e. non-recursively) creating all the layers of the array
+ * class from the inner most to the outer most.  Needed for any array class
+ * type that wasn't reference by romized code and we make a reference to it
+ * at runtime.
+ */
+CVMClassBlock*
+CVMclassCreateMultiArrayClass(CVMExecEnv* ee, CVMClassTypeID arrayTypeId,
+			      CVMClassLoaderICell* loader, CVMObjectICell* pd)
+{
+    int outerDepth = 0;
+    CVMClassBlock *arrayCb = NULL;
+    CVMClassTypeID currentTypeID = arrayTypeId;
+    CVMClassTypeID elemTypeID;
+    CVMBool currentTypeIDWasAcquired = CVM_FALSE;
+    int i;
+
+    CVMassert(CVMtypeidIsArray(arrayTypeId));
+
+    /* Count the array layers that haven't been loaded yet.  We start from the
+       outer most until we get to an array element that has been loaded or an
+       array element that is not an array type.  We can assume that at least
+       one layer isn't loaded yet (regardless of whether it is or not).
+
+       CVMclassCreateArrayClass() will do the real work of loading the array
+       class later, and will be called once for each layer that we counted.
+       In the case that we only counted one layer, we'll call
+       CVMclassCreateArrayClass() only once, and it will take care of loading
+       the array (if it hasn't already been loaded) where its element is
+       guaranteed to either have already been loaded, or is a non-array type.
+
+       The guarantee comes from our pre-counting the number of layers that need
+       to be loaded, and doing the loading from the innermost layer to the
+       outermost.
+    */
+    while (CVM_TRUE) {
+	elemTypeID = CVMtypeidIncrementArrayDepth(ee, currentTypeID , -1);
+
+	outerDepth++;
+
+	/* If the element is also an array, then keep probing.  Otherwise,
+	    we need to load it using the normal path: */
+	if (CVMtypeidIsArray(elemTypeID)) {
+
+	    CVMClassBlock *elemCb = NULL;
+
+	    /* The element of the current type is also an array.  Look it up: */
+	    if (loader == NULL ||
+		CVMtypeidIsPrimitive(CVMtypeidGetArrayBasetype(elemTypeID))) {
+    		elemCb = CVMpreloaderLookupFromType(ee, elemTypeID, NULL);
+	    }
+	    if (elemCb == NULL) {
+		CVM_LOADERCACHE_LOCK(ee);
+		elemCb = CVMloaderCacheLookup(ee, elemTypeID, loader);
+		CVM_LOADERCACHE_UNLOCK(ee);
+	    }
+
+	    /* If we've found the element cb, then we're done because we can
+	       start building the array layers from there: */
+	    if (elemCb != NULL) {
+		break;
+	    }
+	} else {
+	    /* If we get here, then we've peeled the layers down to a single
+	       dimensional array (we have reached the non-array element here).
+	       We can start building the array layers from here: */
+	    break;
+	}
+
+	/* If we get here, then the element isn't loaded yet and is not a
+	   single dimension array.  Let's see if the element's element has
+	   been loaded yet.  Set prepare to repeat this loop for element
+	   layer. */
+
+	/* If the previous currentTypeID is one that we acquired using
+	   CVMtypeidIncrementArrayDepth() above, then we need to dispose
+	   of it before losing track of it: */
+	if (currentTypeIDWasAcquired) {
+	    CVMtypeidDisposeClassID(ee, currentTypeID);
+	}
+
+	/* Prepare to inspect the next inner level of array type: */
+	currentTypeID = elemTypeID;
+	currentTypeIDWasAcquired = CVM_TRUE;
+    }
+
+    /* We have to dispose of the last elemTypeID that we acquired above using
+       CVMtypeidIncrementArrayDepth(): */
+    CVMtypeidDisposeClassID(ee, elemTypeID);
+
+    for (i = 0; i < outerDepth; i++) {
+	CVMClassTypeID newTypeID;
+	
+	arrayCb = CVMclassCreateArrayClass(ee, currentTypeID, loader, pd);
+	/* If we fail to load the element, then something wrong must have
+	   happened (e.g. an OutOfMemoryError): */
+	if (arrayCb == NULL) {
+	    break;
+	}
+	/* If we've just loaded the requested array type, then we're done.
+	   Skip the typeid work below: */
+	if (currentTypeID == arrayTypeId) {
+	    CVMassert(i == outerDepth - 1);
+	    break;
+	}
+
+	/* Prepare to load the next outer level of array type: */
+	newTypeID = CVMtypeidIncrementArrayDepth(ee, currentTypeID, 1);
+	if (currentTypeIDWasAcquired) {
+	    CVMtypeidDisposeClassID(ee, currentTypeID);
+	}
+	currentTypeID = newTypeID;
+	currentTypeIDWasAcquired = CVM_TRUE;
+    }
+    if (currentTypeIDWasAcquired) {
+	CVMtypeidDisposeClassID(ee, currentTypeID);
+    }
+
     return arrayCb;
 }
 

@@ -187,6 +187,7 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
     PUTPROP(props, "microedition.platform", "j2me");
     PUTPROP(props, "microedition.encoding", "ISO-8859-1");
     PUTPROP(props, "microedition.profiles", "");
+    PUTPROP(props, "microedition.locale", "en_US");
 
     /* Generic Connection Framework (GCF) CommConnection property */
     PUTPROP(props, "microedition.commports", sprops.commports);

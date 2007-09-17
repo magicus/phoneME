@@ -197,6 +197,7 @@ CVM_CLASSBLOCK_DECL(java_lang_Cloneable);
 CVM_CLASSBLOCK_DECL(java_lang_System);
 CVM_CLASSBLOCK_DECL(java_io_File);
 CVM_CLASSBLOCK_DECL(java_io_Serializable);
+CVM_CLASSBLOCK_DECL(java_net_URLConnection);
 CVM_CLASSBLOCK_DECL(java_lang_reflect_Field);
 CVM_CLASSBLOCK_DECL(java_lang_reflect_Method);
 CVM_CLASSBLOCK_DECL(java_lang_reflect_Constructor);

@@ -1,6 +1,4 @@
 /*
- * @(#)opt_md.h	1.0 07/07/05
- *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
@@ -24,19 +22,19 @@
  * information or have any questions. 
  *
  */
-    {"stdioPrefix", "prefix for stdio files",
-        CVM_STRING_OPTION,
-    {{0, (CVMAddr)"<native file path>", (CVMAddr)""}},
-        &CVMglobals.target.stdioPrefix}, 
-    {"stdin", "path for stdin",
-        CVM_STRING_OPTION,
-    {{0, (CVMAddr)NULL, 0}},
-        &CVMglobals.target.stdinPath},
-    {"stdout", "path for stdout",
-        CVM_STRING_OPTION,
-    {{0, (CVMAddr)NULL, 0}},
-        &CVMglobals.target.stdoutPath},
-    {"stderr", "path for stderr",
-        CVM_STRING_OPTION,
-    {{0, (CVMAddr)NULL, 0}},
-        &CVMglobals.target.stderrPath},
+
+#ifndef _WIN32_MEMORY_MD_H
+#define _WIN32_MEMORY_MD_H
+
+/* If an arch specific file is needed in the future, add the #include here:
+#include "javavm/include/memory_arch.h"
+*/
+
+/* Note: We only define CVM_USE_MMAP_APIS if the arch specific file did not
+   define it first.  For generic win32, we define it to 1 by default to
+   enable the use of MMAP APIs. */
+#ifndef CVM_USE_MMAP_APIS
+#define CVM_USE_MMAP_APIS  1 /* 1 to enable, 0 to disable */
+#endif
+
+#endif /* WIN32_MEMORY_MD_H */

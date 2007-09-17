@@ -1475,3 +1475,40 @@ CNIsun_misc_CVM_getBuildOptionString(CVMExecEnv* ee, CVMStackVal32 *arguments,
 
     return CNI_SINGLE;
 }
+
+/*
+ * Sets java.net.URLConnection.defaultUseCaches to the boolean
+ * argument passed in.
+ */
+CNIResultCode
+CNIsun_misc_CVM_setURLConnectionDefaultUseCaches(CVMExecEnv* ee,
+						 CVMStackVal32 *arguments,
+						 CVMMethodBlock **p_mb)
+{
+    CVMClassBlock* cb = CVMsystemClass(java_net_URLConnection);
+    CVMFieldTypeID fieldTypeID = CVMtypeidLookupFieldIDFromNameAndSig(
+        ee, "defaultUseCaches", "Z");
+    CVMFieldBlock* fb = CVMclassGetStaticFieldBlock(cb, fieldTypeID);
+    CVMassert(fb != NULL);
+    CVMfbStaticField(ee, fb).i = arguments[0].j.i;
+    return CNI_VOID;
+}
+
+/*
+ * Clears the ucp field of the URLClassLoader passed in, which allows
+ * the JarFiles opened by the URLClassLoader to be gc'd and closed,
+ * even if the URLClassLoader is kept live.
+ */
+#include "generated/offsets/java_net_URLClassLoader.h"
+extern const CVMClassBlock java_net_URLConnection_Classblock;
+CNIResultCode
+CNIsun_misc_CVM_clearURLClassLoaderUcpField(CVMExecEnv* ee,
+					    CVMStackVal32 *arguments,
+					    CVMMethodBlock **p_mb)
+{
+    CVMObjectICell* classLoaderICell = &arguments[0].j.r;
+    CVMD_fieldWriteRef(CVMID_icellDirect(ee, classLoaderICell),
+			 CVMoffsetOfjava_net_URLClassLoader_ucp,
+			 NULL);
+    return CNI_VOID;
+}

@@ -427,25 +427,25 @@ typedef struct {
 	struct {
 	    int       minValue;
 	    CVMAddr   maxValue;
-	    int       defaultValue;
+	    CVMAddr   defaultValue;
 	} intData;
 	/* String value options */
 	struct {
 	    int   ignored1;
 	    const char* helpSyntax;
-	    int   ignored2;
+	    const char* defaultValue;
 	} strData;
 	/* Multi String valued options */
 	struct {
 	    int numPossibleValues;
 	    const char** possibleValues;
-	    int defaultValue;
+	    CVMAddr defaultValue;
 	} multiStrData;
         /* Enum value options */
         struct {
             int numPossibleValues;
             const CVMSubOptionEnumData* possibleValues;
-            int defaultValue;
+            CVMAddr defaultValue;
         } enumData;
     } data;
     const void* valuePtr; /* where parsed value should be stored */

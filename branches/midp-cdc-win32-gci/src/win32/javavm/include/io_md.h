@@ -74,10 +74,8 @@ extern int	readStandardIO(CVMInt32 fd, void *buf,
  * buf       the buffer from which to fetch the data.
  * nbytes    the number of bytes to write.
  *
- * This function returns -1 on error, and the number of bytes written
- * upon success. 
  */
-extern int	writeStandardIO(CVMInt32 fd, const void *buf, 
+extern void	writeStandardIO(CVMInt32 fd, const void *buf, 
                 CVMUint32 nBytes);
 
 
