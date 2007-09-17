@@ -124,13 +124,10 @@ public class CommonDS extends BasicDS implements SourceStream {
                     inputStream = httpCon.openInputStream();
                     contentLength = httpCon.getLength();
                     String ct = httpCon.getType();
-                    if( ct != null )
-                    {
-                        ct = ct.toLowerCase();
-                    }
                     if ( contentType.equals("unknown") && ct != null ) {
                         contentType = 
-                            Configuration.getConfiguration().ext2Mime(ct);
+                            Configuration.getConfiguration().ext2Mime( 
+                                ct.toLowerCase() );
                     }
                     httpCon.close();
                     goodurl = true;
@@ -148,13 +145,10 @@ public class CommonDS extends BasicDS implements SourceStream {
                     inputStream = httpsCon.openInputStream();
                     contentLength = httpsCon.getLength();
                     String ct = httpsCon.getType();
-                    if( ct != null )
-                    {
-                        ct = ct.toLowerCase();
-                    }
                     if ( contentType.equals("unknown") && ct != null ) {
                         contentType = 
-                            Configuration.getConfiguration().ext2Mime(ct);
+                            Configuration.getConfiguration().ext2Mime(
+                                ct.toLowerCase() );
                     }
                     httpsCon.close();
                     goodurl = true;
