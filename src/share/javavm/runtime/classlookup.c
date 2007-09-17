@@ -278,7 +278,7 @@ CVMclassLookupFromClassLoader(CVMExecEnv* ee,
 	CVMdisableRemoteExceptions(ee);
 	CVMassert(!CVMlocalExceptionOccurred(ee));
 	if (CVMtypeidIsArray(typeID)) {
-	    cb = CVMclassCreateArrayClass(ee, typeID, loader, pd);
+	    cb = CVMclassCreateMultiArrayClass(ee, typeID, loader, pd);
 	} else {
 	    /*
 	     * The API supports passing in a valid typeID and a NULL class

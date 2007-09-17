@@ -1,6 +1,4 @@
 /*
- * @(#)defs_md.h	1.20 06/10/10
- *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
@@ -82,7 +80,7 @@
 #define CVM_HDR_ENDIANNESS_H	"javavm/include/endianness_md.h"
 #define CVM_HDR_SYSTEM_H	"javavm/include/defs_md.h" /* no-op */
 #define CVM_HDR_TIMEZONE_H	"javavm/include/defs_md.h" /* no-op */
-#define CVM_HDR_MEMORY_H	"javavm/include/defs_md.h" /* no-op */
+#define CVM_HDR_MEMORY_H	"javavm/include/memory_md.h"
 
 #define CVM_HDR_JIT_JIT_H	"javavm/include/jit/jit_arch.h"
 

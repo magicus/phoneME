@@ -870,4 +870,17 @@ public final class CVM {
     // NOTE: The dummy argument is just a convenient way to reserve space on
     // stack for the return value of this CNI method.
     private static native String getBuildOptionString(Object dummy);
+
+    /*
+     * Sets java.net.URLConnection.defaultUseCaches to the boolean
+     * argument passed in.
+     */
+    public static native void setURLConnectionDefaultUseCaches(boolean b);
+
+    /*
+     * Clears the ucp field of the URLClassLoader passed in, which allows
+     * the JarFiles opened by the URLClassLoader to be gc'd and closed,
+     * even if the URLClassLoader is kept live.
+     */
+    public static native void clearURLClassLoaderUcpField(java.net.URLClassLoader cl);
 }
