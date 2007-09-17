@@ -43,7 +43,7 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.events.NativeEventMonitor \
         com.sun.midp.jarutil.JarReader \
         com.sun.midp.installer.OtaNotifier \
-	com.sun.midp.io.NetworkConnectionBase \
+        com.sun.midp.io.NetworkConnectionBase \
         com.sun.midp.io.j2me.push.PushRegistryImpl \
         com.sun.midp.io.j2me.storage.File \
         com.sun.midp.io.j2me.storage.RandomAccessStream \
@@ -69,6 +69,20 @@ MIDP_CNI_CLASSES += \
         javax.microedition.lcdui.ImageData \
         javax.microedition.lcdui.ImageDataFactory \
         javax.microedition.lcdui.KeyConverter
+
+ifeq ($(USE_PISCES), true)
+MIDP_CNI_CLASSES += \
+        com.sun.pisces.Configuration \
+        com.sun.pisces.GraphicsSurfaceDestination \
+        com.sun.pisces.NativeFinalizer \
+        "com.sun.pisces.NativeFinalizer$$SurfaceNativeFinalizer" \
+        "com.sun.pisces.NativeFinalizer$$RendererNativeFinalizer" \
+        com.sun.pisces.PiscesFinalizer \
+        com.sun.pisces.Transform6 \
+        com.sun.pisces.PiscesRenderer \
+        com.sun.pisces.NativeSurface \
+        com.sun.pisces.AbstractSurface
+endif
 
 ifeq ($(CVM_INCLUDE_JUMP), true)
 MIDP_CNI_CLASSES += \
