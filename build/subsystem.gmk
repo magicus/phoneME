@@ -36,6 +36,11 @@ include $(ABSTRACTIONS_DIR)/build/jump_application/module.gmk
 endif
 
 include $(ABSTRACTIONS_DIR)/build/cdc_share/module.gmk
+
+ifneq ($(USE_CDC_EMULATION), true)
+include $(ABSTRACTIONS_DIR)/build/cdc_realmode/module.gmk
+endif
+
 endif
 
 printconfig::
