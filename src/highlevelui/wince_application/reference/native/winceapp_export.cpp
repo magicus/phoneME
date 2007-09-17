@@ -47,7 +47,7 @@
  *   it is delayed by FLUSH_REFRESH_TIMEOUT ms unless another flush call
  *   executed.
  */
-#define FLUSH_LIMIT_REFRESH
+//#define FLUSH_LIMIT_REFRESH
 #endif
 
 #ifdef ENABLE_JSR_184
@@ -373,6 +373,7 @@ static DWORD Flusher(LPVOID) {
     return 0;
 }
 #endif
+
 /**
  * Create memory based DD surface
  */
@@ -394,6 +395,38 @@ static LPDIRECTDRAWSURFACE create_memory_surface(void* pVmem, int width, int hei
     ddsd.dwHeight       = height;
     ddsd.lPitch         = (LONG)sizeof(gxj_pixel_type) * width;
     ddsd.lpSurface      = pVmem;
+
+    // Set up the pixel format for 16-bit RGB (5-6-5).
+    ddsd.ddpfPixelFormat.dwSize         = sizeof(DDPIXELFORMAT);
+    ddsd.ddpfPixelFormat.dwFlags        = DDPF_RGB;
+    ddsd.ddpfPixelFormat.dwRGBBitCount  = 16;
+    ddsd.ddpfPixelFormat.dwRBitMask     = 0x1f << 11;
+    ddsd.ddpfPixelFormat.dwGBitMask     = 0x3f << 5;
+    ddsd.ddpfPixelFormat.dwBBitMask     = 0x1f;
+
+    if (DD_OK != g_screen.pDD->CreateSurface(&ddsd, &pDDS, NULL))
+        return NULL;
+    else
+        return pDDS;
+}
+
+/**
+ * Create memory based DD surface
+ */
+static LPDIRECTDRAWSURFACE create_plain_surface(int width, int height) {
+    ASSERT(g_screen.pDD);
+
+    DDSURFACEDESC ddsd;
+    LPDIRECTDRAWSURFACE pDDS = NULL;
+
+    ZeroMemory(&ddsd, sizeof(DDSURFACEDESC));
+    ZeroMemory(&ddsd.ddpfPixelFormat, sizeof(DDPIXELFORMAT));
+
+    ddsd.dwSize         = sizeof(ddsd);
+    ddsd.dwFlags        = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT/* | DDSD_CAPS*/;
+    //ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;
+    ddsd.dwWidth        = width;
+    ddsd.dwHeight       = height;
 
     // Set up the pixel format for 16-bit RGB (5-6-5).
     ddsd.ddpfPixelFormat.dwSize         = sizeof(DDPIXELFORMAT);
@@ -945,16 +978,15 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
 
     if (!startDirectPaint()) {
         // GDI output here
-        HDC hDC_ = GetDC(hwndMain);
+        HDC hDC = GetDC(hwndMain);
         if (g_hBitmap == NULL) {
-            g_hBitmap = CreateCompatibleBitmap(hDC_, CHAM_WIDTH, CHAM_HEIGHT);
-            g_hMemDC = CreateCompatibleDC(hDC_);
-            ASSERT(SelectObject(g_hMemDC, g_hBitmap));
+            g_hBitmap = CreateCompatibleBitmap(hDC, CHAM_WIDTH, CHAM_HEIGHT);
+            g_hMemDC = CreateCompatibleDC(hDC);
+            SelectObject(g_hMemDC, g_hBitmap);
         }
-        int bytes = CHAM_WIDTH * CHAM_HEIGHT * sizeof(gxj_pixel_type);
-        ASSERT(bytes == SetBitmapBits(g_hBitmap, bytes, src));
-        ASSERT(BitBlt(hDC_, x1, y1, x2 - x1, y2 - y1, g_hMemDC, x1, y1, SRCCOPY));
-        ReleaseDC(hwndMain, hDC_);
+        SetBitmapBits(g_hBitmap, CHAM_WIDTH * CHAM_HEIGHT * sizeof(gxj_pixel_type), src);
+        BitBlt(hDC, x1, y1, x2 - x1, y2 - y1, g_hMemDC, x1, y1, SRCCOPY);
+        ReleaseDC(hwndMain, hDC);
         return;
     }
 
@@ -1036,7 +1068,8 @@ jboolean winceapp_direct_flush(const java_graphics *g,
     }
 
     if (g_screen.pDDSDirect == NULL) {
-        g_screen.pDDSDirect = create_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT);
+        //g_screen.pDDSDirect = create_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT);
+        g_screen.pDDSDirect = create_plain_surface(CHAM_WIDTH, CHAM_HEIGHT);
         if (g_screen.pDDSDirect == NULL) {
 #ifdef FLUSH_LIMIT_REFRESH
             LeaveCriticalSection(&flushCS);
@@ -1048,6 +1081,12 @@ jboolean winceapp_direct_flush(const java_graphics *g,
 
     if (height > CHAM_HEIGHT)
         height = CHAM_HEIGHT;
+
+    DDSURFACEDESC ddsd;
+    if (DD_OK == g_screen.pDDSDirect->Lock(NULL, &ddsd, DDLOCK_DISCARD | DDLOCK_WRITEONLY, NULL)) {
+        memcpy(ddsd.lpSurface, src, CHAM_WIDTH * height * sizeof(gxj_pixel_type));
+        g_screen.pDDSDirect->Unlock(NULL);
+    }
 
 #ifdef FLUSH_LIMIT_REFRESH
     DWORD diff = GetTickCount() - lastFlushTime; 
