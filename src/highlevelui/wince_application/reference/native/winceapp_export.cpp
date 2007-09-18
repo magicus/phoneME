@@ -47,7 +47,14 @@
  *   it is delayed by FLUSH_REFRESH_TIMEOUT ms unless another flush call
  *   executed.
  */
-//#define FLUSH_LIMIT_REFRESH
+#define FLUSH_LIMIT_REFRESH
+
+/*
+ * Enables extra surface to buffer flush.
+ * Fixes artifacts, potentially enabled by FLUSH_LIMIT_REFRESH, but lowers fps,
+ * making this optimization less useful (there's <10% gain in all cases).
+ */
+//#define USE_FLUSH_BUFFER
 #endif
 
 #ifdef ENABLE_JSR_184
@@ -410,9 +417,7 @@ static LPDIRECTDRAWSURFACE create_memory_surface(void* pVmem, int width, int hei
         return pDDS;
 }
 
-/**
- * Create memory based DD surface
- */
+#ifdef USE_FLUSH_BUFFER
 static LPDIRECTDRAWSURFACE create_plain_surface(int width, int height) {
     ASSERT(g_screen.pDD);
 
@@ -440,6 +445,7 @@ static LPDIRECTDRAWSURFACE create_plain_surface(int width, int height) {
     else
         return pDDS;
 }
+#endif
 #endif /* ENABLE_DIRECT_DRAW */
 
 /**
@@ -1068,8 +1074,11 @@ jboolean winceapp_direct_flush(const java_graphics *g,
     }
 
     if (g_screen.pDDSDirect == NULL) {
-        //g_screen.pDDSDirect = create_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT);
+#ifdef USE_FLUSH_BUFFER
+        g_screen.pDDSDirect = create_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT);
+#else
         g_screen.pDDSDirect = create_plain_surface(CHAM_WIDTH, CHAM_HEIGHT);
+#endif
         if (g_screen.pDDSDirect == NULL) {
 #ifdef FLUSH_LIMIT_REFRESH
             LeaveCriticalSection(&flushCS);
@@ -1082,6 +1091,7 @@ jboolean winceapp_direct_flush(const java_graphics *g,
     if (height > CHAM_HEIGHT)
         height = CHAM_HEIGHT;
 
+#ifdef USE_FLUSH_BUFFER
     DDSURFACEDESC ddsd;
     ZeroMemory(&ddsd, sizeof(DDSURFACEDESC));
     ddsd.dwSize = sizeof(ddsd);
@@ -1089,6 +1099,7 @@ jboolean winceapp_direct_flush(const java_graphics *g,
         memcpy(ddsd.lpSurface, src, CHAM_WIDTH * height * sizeof(gxj_pixel_type));
         g_screen.pDDSDirect->Unlock(NULL);
     }
+#endif
 
 #ifdef FLUSH_LIMIT_REFRESH
     DWORD diff = GetTickCount() - lastFlushTime; 
