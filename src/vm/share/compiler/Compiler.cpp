@@ -533,7 +533,7 @@ ReturnOop Compiler::compile(Method* method, int active_bci JVM_TRAPS) {
 
   EnforceCompilerJavaStackDirection enfore_java_stack_direction;
 
-  EventLogger::log(EventLogger::COMPILE_START);
+  EventLogger::start(EventLogger::COMPILE);
 
   // We need a bigger compiled code factor if any of these are set.
   // The following values are justs guesses.  They may need to be fixed.
@@ -548,7 +548,7 @@ ReturnOop Compiler::compile(Method* method, int active_bci JVM_TRAPS) {
   CompiledMethod::Raw result =
     try_to_compile( method, active_bci, compiled_code_factor JVM_MUST_SUCCEED);
 
-  EventLogger::log(EventLogger::COMPILE_END);
+  EventLogger::end(EventLogger::COMPILE);
   return result();
 }
 
@@ -732,8 +732,8 @@ void Compiler::record_instr_offset_of_null_point_stubs(int start_offset) {
       offset = queue().entry_label().position();
       if (code_generator()->is_branch_instr(offset)){
         queue = queue().next();
- 	 //not a npce optimized stub. use old cmp, b approach
- 	 //we won't do extend basic block schedule on them so continue.
+         //not a npce optimized stub. use old cmp, b approach
+         //we won't do extend basic block schedule on them so continue.
         continue;
       }
 
@@ -785,7 +785,7 @@ void Compiler::update_null_check_stubs() {
             new_offset_of_second_ins = 
               _internal_code_optimizer.scheduled_offset_of_npe_ins_with_stub(index + 1);
             if (new_offset_of_second_ins == 0) {
-		//new_offset is zero means the offset of ins is unchanged after scheduling.		
+                //new_offset is zero means the offset of ins is unchanged after scheduling.             
               new_offset_of_second_ins = 
                 _internal_code_optimizer.offset_of_npe_ins_with_stub(index + 1);
             }
@@ -796,16 +796,16 @@ void Compiler::update_null_check_stubs() {
             }
             index++;
           }
-		  
+                  
           if (new_offset == 0) {  
             break;
           }
-		  
-	   //patch back	  
+                  
+           //patch back   
           label = queue().entry_label();
           label.link_to(new_offset << 2);
           queue().set_entry_label(label);
-		  
+                  
           VERBOSE_SCHEDULING_AS_YOU_GO(("\tUpdate NPCE stub label old position is %d ", old_offset << 2));
           VERBOSE_SCHEDULING_AS_YOU_GO(("new position is %d", new_offset << 2));
           break;
@@ -1153,7 +1153,7 @@ inline void Compiler::restore_and_compile( JVM_SINGLE_ARG_TRAPS ) {
 
 // Resume a compilation that has been suspended.
 ReturnOop Compiler::resume_compilation(Method *method JVM_TRAPS) {
-  EventLogger::log(EventLogger::COMPILE_START);
+  EventLogger::start(EventLogger::COMPILE);
 
   OopDesc* result;
 
@@ -1176,7 +1176,7 @@ ReturnOop Compiler::resume_compilation(Method *method JVM_TRAPS) {
     terminate( result );
   }
  
-  EventLogger::log(EventLogger::COMPILE_END);
+  EventLogger::end(EventLogger::COMPILE);
 
   return result;
 }

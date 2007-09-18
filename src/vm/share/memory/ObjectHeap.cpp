@@ -2970,7 +2970,7 @@ void ObjectHeap::collect(size_t min_free_after_collection JVM_TRAPS) {
 inline void ObjectHeap::internal_collect_prologue(size_t min_free_after_collection) {
   EnforceRuntimeJavaStackDirection enfore_java_stack_direction;
 
-  EventLogger::log(EventLogger::GC_START);
+  EventLogger::start(EventLogger::GC);
 
   _collection_area_end = _inline_allocation_top;
   CACHE_QUICK_VAR(heap_start);
@@ -3171,7 +3171,7 @@ inline void ObjectHeap::internal_collect_epilogue(bool is_full_collect,
     TTY_TRACE_CR(( "\n*** ObjectHeap::internal_collect end ***" ));
   }
 
-  EventLogger::log(EventLogger::GC_END);
+  EventLogger::end(EventLogger::GC);
 }
 
 bool ObjectHeap::internal_collect(size_t min_free_after_collection JVM_TRAPS) {
@@ -3902,7 +3902,7 @@ void ObjectHeap::compact_and_move_compiler_area(const int compiler_area_shift) {
 #endif
 
   PERFORMANCE_COUNTER_INCREMENT(num_of_compiler_gc, 1);
-  EventLogger::log(EventLogger::COMPILER_GC_START);
+  EventLogger::start(EventLogger::COMPILER_GC);
 
   if (_saved_compiler_area_top != NULL) {
     GUARANTEE_R(_saved_compiler_area_top == _compiler_area_top, 
@@ -3971,7 +3971,7 @@ void ObjectHeap::compact_and_move_compiler_area(const int compiler_area_shift) {
     OsMisc_flush_icache((address)_compiler_area_start,
                         DISTANCE(_compiler_area_start, _compiler_area_top));
   }
-  EventLogger::log(EventLogger::COMPILER_GC_END);
+  EventLogger::end(EventLogger::COMPILER_GC);
 
   DIRTY_HEAP(_inline_allocation_top,
              DISTANCE(_inline_allocation_top, _compiler_area_start));

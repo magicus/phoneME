@@ -42,13 +42,40 @@ const char*
 };
 
 #if ENABLE_EXTENDED_EVENT_LOGGER
+inline bool EventLogger::validate_event_type( const char c ) {
+  return ('A' <= c && c <= 'Z') ||
+         ('a' <= c && c <= 'b') ||
+         ('0' <= c && c <= '9') || c == '_';
+}
+
+inline bool EventLogger::validate_event_type( const char name[] ) {
+  if( *name ) {
+    const char* p = name;
+    for( ; validate_event_type( *p ); p++ ) {
+      if( (p - name) > JVM_MAX_EVENT_NAME_LENGTH ) {
+        return false; 
+      }
+    }
+    if( *p == 0 ) {
+      return true; 
+    } 
+  }
+  return false;
+}
+
 inline int EventLogger::add_event_type( const char name[] ) {
+  enum { invalid_type = -1 };
+
+  if( !UseEventLogger || !validate_event_type( name ) ) {
+    return invalid_type;
+  }
+
   const char** p = _event_names;
   const char* event_name;
   for( ; (event_name = *p) != NULL && jvm_strcmp(event_name, name) != 0; p++ );
   if( event_name == NULL ) {
     if( p == _event_names + Entry::max_event_types ) {
-      return -1;
+      return invalid_type;
     }
     *p = name;
   }
@@ -72,7 +99,7 @@ inline void EventLogger::Entry::initialize( void ) {
   _use_usec = freq > 100 * 1000;
 }
 
-inline void EventLogger::Entry::set ( const EventType type, const jlong time ) {
+inline void EventLogger::Entry::set ( const unsigned type, const jlong time ) {
   const unsigned delta = unsigned(time - _last);
   GUARANTEE( (delta >> delta_bits) == 0, "delta overflow" );
   _packed_data = (type << delta_bits) | delta;
@@ -96,8 +123,7 @@ EventLogger::Entry::dump( Stream* s, jlong time ) const {
     }
     s->print("%d", usec);
   }
-
-  s->print_cr(" %8d %s", jint(time), name() );
+  s->print_cr(" %8d %s %s", jint(time), kind(), name() );
   return time;
 }
 
@@ -135,7 +161,7 @@ inline int EventLogger::Block::used ( void ) const {
   return _next ? size : _used;
 }
 
-inline void EventLogger::Block::log ( const EventType type ) {
+inline void EventLogger::Block::log ( const unsigned type ) {
   if( _used == size ) {
     overflow();
   }
@@ -161,7 +187,7 @@ void EventLogger::initialize( void ) {
   EventLogger::Block::initialize();
 }
 
-void EventLogger::log(const EventType type) {
+void EventLogger::log(const unsigned type) {
   if( UseEventLogger ) {
     EventLogger::Block::log( type );
   }
@@ -200,9 +226,7 @@ void EventLogger::dispose( void ) {
   EventLogger::Entry::terminate();
 }
 
-#endif // USE_EVENT_LOGGER
-
-void JVM_LogEvent(int type) {
+static jboolean JVM_LogEvent(int type, EventLogger::EventKind kind) {
   enum {
 #if ENABLE_EXTENDED_EVENT_LOGGER
     max_event_types = EventLogger::Entry::max_event_types
@@ -210,16 +234,35 @@ void JVM_LogEvent(int type) {
     max_event_types = EventLogger::_number_of_event_types
 #endif
   };
-  GUARANTEE( unsigned(type) < max_event_types, "Wrong event type" );
-  if( unsigned(type) < max_event_types ) {
-    EventLogger::log( EventLogger::EventType( type ) );
+  if( unsigned(type) >= max_event_types ) {
+    return KNI_FALSE;
   }
+  EventLogger::log( EventLogger::EventType( type ), kind );
+  return KNI_TRUE;
+}
+#endif // USE_EVENT_LOGGER
+
+jboolean JVM_LogEventStart(int type) {
+#if USE_EVENT_LOGGER
+  return JVM_LogEvent( type, EventLogger::START );
+#else
+  return KNI_FALSE;
+#endif
+}
+
+jboolean JVM_LogEventEnd(int type) {
+#if USE_EVENT_LOGGER
+  return JVM_LogEvent( type, EventLogger::END );
+#else
+  return KNI_FALSE;
+#endif
 }
 
 int JVM_RegisterEventType(const char* name) {
 #if USE_EVENT_LOGGER && ENABLE_EXTENDED_EVENT_LOGGER
-  return UseEventLogger ? EventLogger::add_event_type( name ) : 0;
+  return EventLogger::add_event_type( name );
 #else
-  return 0;
+  (void)name;
+  return -1;
 #endif
 }
