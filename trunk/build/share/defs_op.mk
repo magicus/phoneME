@@ -245,6 +245,12 @@ endif
 include $(JSR_211_MAKE_FILE)
 endif
 
+# setup PISCES_DIR if needed
+# PISCES is build using MIDP buildsystem
+ifeq ($(USE_PISCES), true)
+export PISCES_DIR ?= $(COMPONENTS_DIR)/pisces
+endif
+
 # Include JSR 226
 ifeq ($(USE_JSR_226), true)
 export JSR_226_DIR ?= $(COMPONENTS_DIR)/jsr226
