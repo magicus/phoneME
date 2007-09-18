@@ -43,16 +43,16 @@
 /*
  * This define turns on FPS limitation for GameCanvas:
  *   winceapp_direct_flush() performs actual flush to screen not more
- *   than onece in FLUSH_REFRESH_TIME ms. If the flush has been skipped,
+ *   than once in FLUSH_REFRESH_TIME ms. If the flush has been skipped,
  *   it is delayed by FLUSH_REFRESH_TIMEOUT ms unless another flush call
  *   executed.
  * IMPL_NOTE: This is potentially dangerous, as flush buffer may become
- *   invalid (freed) when delayed flush is performed.
+ *   invalid (freed) when delayed flush is performed. See USE_FLUSH_BUFFER.
  */
 #define FLUSH_LIMIT_REFRESH
 
 /*
- * Enables extra surface to buffer flush.
+ * Enables DirectDraw surface for flush to use own memory.
  * Fixes artifacts, potentially enabled by FLUSH_LIMIT_REFRESH, but lowers fps,
  * making this optimization less useful.
  * Potential danger, caused by FLUSH_LIMIT_REFRESH is also neutralized.
@@ -1104,7 +1104,18 @@ jboolean winceapp_direct_flush(const java_graphics *g,
     ZeroMemory(&ddsd, sizeof(DDSURFACEDESC));
     ddsd.dwSize = sizeof(ddsd);
     if (DD_OK == g_screen.pDDSDirect->Lock(NULL, &ddsd, DDLOCK_DISCARD | DDLOCK_WRITEONLY, NULL)) {
-        memcpy(ddsd.lpSurface, src, CHAM_WIDTH * height * sizeof(gxj_pixel_type));
+        if (ddsd.lPitch == CHAM_WIDTH * sizeof(gxj_pixel_type))
+            CopyMemory(ddsd.lpSurface, src, CHAM_WIDTH * height * sizeof(gxj_pixel_type));
+        else {
+            BYTE* s = (BYTE*)src;
+            BYTE* d = (BYTE*)ddsd.lpSurface;
+            int bytes = CHAM_WIDTH * sizeof(gxj_pixel_type);
+            for (int i = height; i > 0; i--) {
+                CopyMemory(ddsd.lpSurface, src, bytes);
+                s += bytes;
+                d += ddsd.lPitch;
+            }
+        }
         g_screen.pDDSDirect->Unlock(NULL);
     }
 #endif
