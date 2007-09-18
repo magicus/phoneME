@@ -46,13 +46,16 @@
  *   than onece in FLUSH_REFRESH_TIME ms. If the flush has been skipped,
  *   it is delayed by FLUSH_REFRESH_TIMEOUT ms unless another flush call
  *   executed.
+ * IMPL_NOTE: This is potentially dangerous, as flush buffer may become
+ *   invalid (freed) when delayed flush is performed.
  */
 #define FLUSH_LIMIT_REFRESH
 
 /*
  * Enables extra surface to buffer flush.
  * Fixes artifacts, potentially enabled by FLUSH_LIMIT_REFRESH, but lowers fps,
- * making this optimization less useful (there's <10% gain in all cases).
+ * making this optimization less useful.
+ * Potential danger, caused by FLUSH_LIMIT_REFRESH is also neutralized.
  */
 //#define USE_FLUSH_BUFFER
 #endif
@@ -1077,6 +1080,11 @@ jboolean winceapp_direct_flush(const java_graphics *g,
 #ifdef USE_FLUSH_BUFFER
         g_screen.pDDSDirect = create_plain_surface(CHAM_WIDTH, CHAM_HEIGHT);
 #else
+        /*
+         * IMPL_NOTE: This is potentially dangerous, because src may become freed
+         * when delayed flush happens. USE_FLUSH_BUFFER saves from the danger,
+         * but affects performance.
+         */
         g_screen.pDDSDirect = create_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT);
 #endif
         if (g_screen.pDDSDirect == NULL) {
