@@ -423,8 +423,7 @@ static LPDIRECTDRAWSURFACE create_plain_surface(int width, int height) {
     ZeroMemory(&ddsd.ddpfPixelFormat, sizeof(DDPIXELFORMAT));
 
     ddsd.dwSize         = sizeof(ddsd);
-    ddsd.dwFlags        = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT/* | DDSD_CAPS*/;
-    //ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;
+    ddsd.dwFlags        = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
     ddsd.dwWidth        = width;
     ddsd.dwHeight       = height;
 
@@ -919,6 +918,7 @@ static BOOL startDirectPaint() {
     if (DD_OK != g_screen.pDDSPrimary->IsLost()) {
         if (DD_OK != g_screen.pDDSPrimary->Restore())
             return FALSE;
+
         DDSURFACEDESC ddsd;
         ddsd.dwSize = sizeof(ddsd);
         g_screen.pDDSPrimary->GetSurfaceDesc(&ddsd);
@@ -1083,6 +1083,8 @@ jboolean winceapp_direct_flush(const java_graphics *g,
         height = CHAM_HEIGHT;
 
     DDSURFACEDESC ddsd;
+    ZeroMemory(&ddsd, sizeof(DDSURFACEDESC));
+    ddsd.dwSize = sizeof(ddsd);
     if (DD_OK == g_screen.pDDSDirect->Lock(NULL, &ddsd, DDLOCK_DISCARD | DDLOCK_WRITEONLY, NULL)) {
         memcpy(ddsd.lpSurface, src, CHAM_WIDTH * height * sizeof(gxj_pixel_type));
         g_screen.pDDSDirect->Unlock(NULL);
