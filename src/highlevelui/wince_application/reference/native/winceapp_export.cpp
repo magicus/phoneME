@@ -1075,9 +1075,9 @@ jboolean winceapp_direct_flush(const java_graphics *g,
 
     if (g_screen.pDDSDirect == NULL) {
 #ifdef USE_FLUSH_BUFFER
-        g_screen.pDDSDirect = create_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT);
-#else
         g_screen.pDDSDirect = create_plain_surface(CHAM_WIDTH, CHAM_HEIGHT);
+#else
+        g_screen.pDDSDirect = create_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT);
 #endif
         if (g_screen.pDDSDirect == NULL) {
 #ifdef FLUSH_LIMIT_REFRESH
