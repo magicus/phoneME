@@ -59,7 +59,9 @@ public class RecordStore {
 	    try {
             ClassLoader classLoader = sun.misc.MIDPConfig.getMIDPImplementationClassLoader();
             if (classLoader == null) {
-                throw new RuntimeException("Cannot get ClassLoader");
+                // IMPL_NOTE: Temporary workaround
+                // throw new RuntimeException("Cannot get ClassLoader");
+                classLoader = RecordStore.class.getClassLoader();
             }
             
             /* Classes */

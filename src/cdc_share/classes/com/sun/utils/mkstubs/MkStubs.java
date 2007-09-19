@@ -664,7 +664,7 @@ public class MkStubs {
                 wr.pl(");");
             }
             wr.pl(3, "} catch (IllegalAccessException iae) {");
-            wr.pl(4, "iae.printStackTrace();");
+            wr.pld(4, "iae.printStackTrace();");
             wr.pl(4, "throw new RuntimeException(iae.toString());");
             wr.pl(3, "} catch (InvocationTargetException ite) {");
             wr.pl(4, "Throwable th = ite.getTargetException();");
@@ -852,7 +852,7 @@ wr.pld(5,"System.out.println(\"Trying to call __invoke" + i + " " + mems[i].toSt
                 }
                 wr.pl("});");
                 wr.pl(4, "} catch (NoSuchMethodException nsme) {");
-                wr.pl(5, "nsme.printStackTrace();");
+                wr.pld(5, "nsme.printStackTrace();");
                 wr.pl(5, "throw new RuntimeException(nsme.toString());");
                 wr.pl(4, "}");
                 wr.pl(3, "}");
@@ -866,7 +866,7 @@ wr.pld(5,"System.out.println(\"Trying to call __invoke" + i + " " + mems[i].toSt
             wr.pl(4, "try {");
             wr.pl(5, "callbackMethod = getExternalClass().getMethod(\"__callback\", new Class[] {int.class, java.lang.Object.class, java.lang.Object[].class});");
             wr.pl(4, "} catch (NoSuchMethodException nsme) {");
-            wr.pl(5, "nsme.printStackTrace();");
+            wr.pld(5, "nsme.printStackTrace();");
             wr.pl(5, "throw new RuntimeException(nsme.toString());");
             wr.pl(4, "}");
             wr.pl(3, "}");
@@ -882,7 +882,7 @@ wr.pld(5,"System.out.println(\"Trying to call __invoke" + i + " " + mems[i].toSt
             (clazz.isInterface() ? translateInterfaceImplNamePkg(fullClsName) : translateClassNamePkg(fullClsName)) + 
             "\", true, classLoader);");
         wr.pl(4, "} catch (ClassNotFoundException cnfe) {");
-        wr.pl(5, "cnfe.printStackTrace();");
+        wr.pld(5, "cnfe.printStackTrace();");
         wr.pl(5, "throw new RuntimeException(cnfe);");
         wr.pl(4, "}");
         wr.pl(3, "}");
@@ -1202,7 +1202,8 @@ wr.pld(4,"System.out.println(\"Init 1\");");
                 //wr.pl(3, "__cloader = Thread.currentThread().getContextClassLoader();");
                 wr.pl(3, "__cloader = sun.misc.MIDPConfig.getMIDPImplementationClassLoader();");
                 wr.pl(3, "if (__cloader == null) {");
-                wr.pl(4, "throw new RuntimeException(\"Cannot get ClassLoader\");");
+                //wr.pl(4, "throw new RuntimeException(\"Cannot get ClassLoader\");");
+                wr.pl(4, "__cloader = " + pkgName + "." + stubClsName + ".class.getClassLoader();");
                 wr.pl(3, "}");
                 wr.pl(3, "__init_classes();");
                 if (isInherit) {
@@ -1270,7 +1271,7 @@ wr.pld(4,"System.out.println(\"Init 1\");");
                             wr.pl("});");
                         }
                         wr.pl(3, "} catch (NoSuchMethodException e) {");
-                        wr.pl(4, "e.printStackTrace();");
+                        wr.pld(4, "e.printStackTrace();");
                         wr.pl(4, "throw new RuntimeException(e);");
                         wr.pl(3, "}");
                     }
@@ -1307,10 +1308,10 @@ wr.pld(0,"System.out.println(\"" + stubClsName + "." + stubClsName + "() - inter
             wr.pl(3, "try {");
             wr.pl(4, "__setInternal(cls.getDeclaredField(fieldName).get(obj));");
             wr.pl(3, "} catch (NoSuchFieldException nsfe) {");
-            wr.pl(4, "nsfe.printStackTrace();");
+            wr.pld(4, "nsfe.printStackTrace();");
             wr.pl(4, "throw new RuntimeException(nsfe);");
             wr.pl(3, "} catch (IllegalAccessException iae) {");
-            wr.pl(4, "iae.printStackTrace();");
+            wr.pld(4, "iae.printStackTrace();");
             wr.pl(4, "throw new RuntimeException(iae);");
             wr.pl(3, "}");
             wr.pl(2, "}");
@@ -1462,7 +1463,7 @@ wr.pld(4,"System.out.println(\"" + stubClsName + ".__getProxyClass()\");");
             wr.pl(3, "if (th instanceof RuntimeException) {");
             wr.pl(4, "throw (RuntimeException)th;");
             wr.pl(3, "}");
-            wr.pl(3, "th.printStackTrace();");
+            wr.pld(3, "th.printStackTrace();");
             wr.pl(3, "throw new RuntimeException(\"Unreported exception: \" + th.toString());");
             wr.pl(2, "}");
             wr.pl(2, "Class homeIface;");
@@ -1489,7 +1490,7 @@ wr.pld(4,"System.out.println(\"" + stubClsName + ".__getProxyClass()\");");
             wr.pl(3, "if (th instanceof RuntimeException) {");
             wr.pl(4, "throw (RuntimeException)th;");
             wr.pl(3, "}");
-            wr.pl(3, "th.printStackTrace();");
+            wr.pld(3, "th.printStackTrace();");
             wr.pl(3, "throw new RuntimeException(\"Unreported exception: \" + th.toString());");
             wr.pl(2, "}");
             wr.pl(1, "}");
@@ -1536,10 +1537,10 @@ wr.pld(4,"System.out.println(\"" + stubClsName + ".__" + getFieldMethod + "Value
                     wr.pl(2, "try {");
                     wr.pl(3, "return __clazz.getField(fieldName)." + getFieldMethod + "(null);");
                     wr.pl(2, "} catch (IllegalAccessException iae) {");
-                    wr.pl(3, "iae.printStackTrace();");
+                    wr.pld(3, "iae.printStackTrace();");
                     wr.pl(3, "throw new RuntimeException(iae);");
                     wr.pl(2, "} catch (NoSuchFieldException nsfe) {");
-                    wr.pl(3, "nsfe.printStackTrace();");
+                    wr.pld(3, "nsfe.printStackTrace();");
                     wr.pl(3, "throw new RuntimeException(nsfe);");
                     wr.pl(2, "}");
                     wr.pl(1, "}");
@@ -1831,7 +1832,7 @@ wr.pld(4,"System.out.println(\"return from " + className + "." + (isCtor?"constr
                 }
             }
             wr.pl(2, "} catch (IllegalAccessException iae) {");
-            wr.pl(3, "iae.printStackTrace();");
+            wr.pld(3, "iae.printStackTrace();");
             wr.pl(3, "throw new RuntimeException(iae);");
             wr.pl(2, "} catch (InvocationTargetException ite) {");
             wr.pl(3, "Throwable target = ite.getTargetException();");
@@ -1853,7 +1854,7 @@ wr.pld(4,"System.out.println(\"return from " + className + "." + (isCtor?"constr
             wr.pl(3, "throw new RuntimeException(\"Unreported exception:\" + target.toString());");
             if (isCtor && !isInherit) {
                 wr.pl(2, "} catch (InstantiationException ie) {");
-                wr.pl(3, "ie.printStackTrace();");
+                wr.pld(3, "ie.printStackTrace();");
                 wr.pl(3, "throw new RuntimeException(ie);");
             }
             wr.pl(2, "}");
