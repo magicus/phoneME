@@ -57,6 +57,8 @@ class StringItemLFImpl extends ItemLFImpl implements StringItemLF {
         // as appearance set in StringItem if a command is added
         // this StringItem
         this.appearanceMode = Item.PLAIN;
+
+        drawsTraversalIndicator = false;
     }
 
 
@@ -132,6 +134,8 @@ class StringItemLFImpl extends ItemLFImpl implements StringItemLF {
     public void lAddCommand(Command cmd, int i) {
         super.lAddCommand(cmd, i);
 
+        drawsTraversalIndicator = true;
+
         // restore the value of the original appearanceMode
         if ((strItem.numCommands >= 1) && (appearanceMode == Item.PLAIN)) {
             appearanceMode = strItem.appearanceMode == Item.BUTTON ?
@@ -155,6 +159,7 @@ class StringItemLFImpl extends ItemLFImpl implements StringItemLF {
         // default to PLAIN appearance if there are no commands left
         if (strItem.numCommands < 1) {
             appearanceMode = Item.PLAIN;
+            drawsTraversalIndicator = false;
             lRequestInvalidate(true, true);
         }
 
