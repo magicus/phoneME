@@ -140,27 +140,27 @@ extern "C" {
  */
 typedef enum {
     /** MPEG4 video      */
-    JAVACALL_VIDEO_MPEG4 = 1,   
+    JAVACALL_VIDEO_MPEG4 = 1,
     /** 3GPP video       */
-    JAVACALL_VIDEO_3GPP = 2,        
+    JAVACALL_VIDEO_3GPP = 2,
     /** MIDI audio       */
-    JAVACALL_AUDIO_MIDI = 3,        
+    JAVACALL_AUDIO_MIDI = 3,
     /** WAV audio        */
-    JAVACALL_AUDIO_WAV = 4,         
+    JAVACALL_AUDIO_WAV = 4,
     /** MP3 audio        */
-    JAVACALL_AUDIO_MP3 = 5,         
+    JAVACALL_AUDIO_MP3 = 5,
     /** AMR audio        */
-    JAVACALL_AUDIO_AMR = 6,         
+    JAVACALL_AUDIO_AMR = 6,
     /** MPEG4 audio      */
-    JAVACALL_AUDIO_MPEG4 = 7,       
+    JAVACALL_AUDIO_MPEG4 = 7,
     /** JTS tone         */
-    JAVACALL_AUDIO_TONE = 8,        
+    JAVACALL_AUDIO_TONE = 8,
     /** QCELP audio      */
-    JAVACALL_AUDIO_QCELP = 9,       
+    JAVACALL_AUDIO_QCELP = 9,
     /** AAC audio        */
     JAVACALL_AUDIO_AAC = 10,
     /** Audio capture    */
-    JAVACALL_CAPTURE_AUDIO = 11,    
+    JAVACALL_CAPTURE_AUDIO = 11,
     /** Video capture    */
     JAVACALL_CAPTURE_VIDEO = 12,
     /** Interactive MIDI */
@@ -273,6 +273,23 @@ const javacall_media_caps* javacall_media_get_caps(void);
  */
 javacall_bool javacall_media_supports_mixing();
 
+/**
+ * Query multimedia property. 
+ * It must support most of properties descibed at JSR specification.
+ * If there is no property with such name, the result is succeful and 
+ *  propValue will contain NULL value.
+ *
+ * @param propName     property name
+ * @param propValue    pointer to store property value
+ * 
+ * @retval JAVACALL_OK               success
+ *         JAVACALL_INVALID_ARGUMENT if either of two arguments is NULL
+ *         JAVACALL_OUT_MEMORY
+ *         JAVACALL_FAIL
+ */
+javacall_result
+    javacall_media_get_property(const char* propName, const char** propValue);
+
 /** @} */ 
 
 /**********************************************************************************/
@@ -305,9 +322,9 @@ javacall_bool javacall_media_supports_mixing();
  */
 javacall_handle javacall_media_create(int isolateId,
                                       int playerId, 
-                                      const javacall_utf16* mime, 
+                                      javacall_const_utf16_string mime, 
                                       long mimeLength,
-                                      const javacall_utf16* uri, 
+                                      javacall_const_utf16_string uri, 
                                       long uriLength,
                                       long contentLength);
 
@@ -486,7 +503,7 @@ long javacall_media_get_duration(javacall_handle handle);
  * @retval JAVACALL_TRUE      Player supports PCM Audio playback
  * @retval JAVACALL_FALSE     Player does not support PCM Audio playback
  */
-javacall_bool javacall_media_pcmaudio_device_required();
+javacall_bool javacall_media_pcmaudio_device_required(void);
 
 /**
  * Request to acquire PCM audio device resources used to play mixed 
@@ -495,7 +512,7 @@ javacall_bool javacall_media_pcmaudio_device_required();
  * @retval JAVACALL_OK      Java VM will proceed as if there is no problem
  * @retval JAVACALL_FAIL    Java VM will raise the media exception
  */
-javacall_result javacall_media_acquire_pcmaudio_device();
+javacall_result javacall_media_acquire_pcmaudio_device(void);
 
 /**
  * Release device PCM audio resource. 
@@ -503,7 +520,7 @@ javacall_result javacall_media_acquire_pcmaudio_device();
  * @retval JAVACALL_OK      Java VM will proceed as if there is no problem
  * @retval JAVACALL_FAIL    Nothing happened now. Same as JAVACALL_OK.
  */
-javacall_result javacall_media_release_pcmaudio_device();
+javacall_result javacall_media_release_pcmaudio_device(void);
 
 /**
  * Get mixed PCM audio data from library
@@ -724,7 +741,7 @@ javacall_result javacall_media_set_video_visible(javacall_handle handle,
  * @retval JAVACALL_FAIL        Fail. Invalid encodingFormat or some errors.
  */
 javacall_result javacall_media_start_video_snapshot(javacall_handle handle, 
-                                                    const javacall_utf16* imageType,
+                                                    javacall_const_utf16_string imageType,
                                                     long length);
 
 /**
@@ -1346,7 +1363,7 @@ javacall_result javacall_media_set_recordsize_limit(javacall_handle handle,
  */
 javacall_result 
     javacall_media_recording_handled_by_native(javacall_handle handle, 
-                                               const javacall_utf16* locator,
+                                               javacall_const_utf16_string locator,
                                                long locatorLength);
 
 /**
