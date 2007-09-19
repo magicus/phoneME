@@ -219,7 +219,7 @@ endif
                 PiscesSysutils.c \
                 JAbstractSurface.c \
                 JNativeFinalizer.c \
-		            JPiscesFinalizer.c \
+                JPiscesFinalizer.c \
                 JPiscesRenderer.c \
                 JTransform.c \
                 KNIUtil.c \
@@ -262,7 +262,7 @@ source_bundle:: pisces_source_bundle
 PISCES_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/pisces
 
 # Copy and filter Pisces source in PISCES_SOURCE_OUTPUT_DIR
-pisces_source_bundle: PISCES_DIR SOURCE_OUTPUT_DIR
+pisces_source_bundle: $(PISCES_DIR) $(SOURCE_OUTPUT_DIR)
 	@echo " ... Pisces source bundle" $(LOG)
-	@$(call re_src_filter,$(PISCES_DIR),$(PISCES_SOURCE_OUTPUT_DIR),src)
-	@$(call re_src_filter,$(PISCES_DIR),$(PISCES_SOURCE_OUTPUT_DIR),build)
+	@$(call source_bundle_filter,$(PISCES_DIR),$(PISCES_SOURCE_OUTPUT_DIR),src)
+	@$(call source_bundle_filter,$(PISCES_DIR),$(PISCES_SOURCE_OUTPUT_DIR),build)
