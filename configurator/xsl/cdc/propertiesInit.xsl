@@ -88,8 +88,14 @@ public class </xsl:text>
 
 <xsl:text>    };
 
-    public static String[] listComponents() {
-        return components;
+    public static void init() {
+        for (int i = 0; i &lt; components.length; i++) {
+            try {
+                Class.forName(components[i]);
+            } catch (ClassNotFoundException e) {
+                /* ignore silently */
+            }
+        }
     }
 }
 </xsl:text>
