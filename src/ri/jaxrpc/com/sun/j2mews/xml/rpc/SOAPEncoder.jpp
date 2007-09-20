@@ -396,7 +396,7 @@ public class SOAPEncoder {
             } else if (chars[i] == '&') {
                 buffer.append("&amp;");
             } else if (chars[i] == '\'') {
-                buffer.append("@apos;");
+                buffer.append("&apos;");
             } else if (chars[i] == '\"') {
                 buffer.append("&quot;");
             } else {
