@@ -65,6 +65,8 @@ import com.sun.midp.midletsuite.*;
 
 import com.sun.midp.security.*;
 
+import com.sun.cdc.config.MIDPPackageManager;
+
 /**
  * Application Container for the MIDlet app model.
  * <p>
@@ -137,6 +139,9 @@ public class MIDletContainer extends JUMPAppContainer implements
 
         // Init security tokens for core subsystems
         SecurityInitializer.initSystem();
+
+        // Init optional JSRs
+        MIDPPackageManager.init();
 
         suiteStorage =
             MIDletSuiteStorage.getMIDletSuiteStorage(internalSecurityToken);
