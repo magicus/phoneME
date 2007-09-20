@@ -1126,7 +1126,7 @@ wr.pld(5,"System.out.println(\"Trying to call __invoke" + i + " " + mems[i].toSt
                     } else
                     if (typeName.equals("long")) {
                         getFieldMethod = "getLong";
-                        wr.p("" + fields[i].getLong(null));
+                        wr.p("" + fields[i].getLong(null) + "L");
                         getFieldMethod = null;
                     } else
                     if (typeName.equals("short")) {
