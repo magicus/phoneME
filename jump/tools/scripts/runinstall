@@ -1,0 +1,154 @@
+#!/bin/sh
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+#  
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+#  
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+#  
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+#  
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+#  
+#  This is a script to help download, install, uninstall, and list applications
+#  within a JUMP system
+#
+#  Usage:
+#    runinstall <options> -command <command>
+#  
+#   <command> can be:
+#        list, install, install_all, uninstall, or uninstall_all
+#   <options> can be:
+#       -verbose - prints debugging information
+#
+# Example commands:
+#
+#     Command: runinstall -command list
+#     Action : List the applications within the system
+#
+#     Command: runinstall -command install
+#     Action : Download and install an application into the system.
+#     Note   : The user will be prompted for input to specify the application
+#              to be installed
+#
+#     Command: runinstall -command install_all
+#     Action : Download and install all applications available in a provisioning
+#              server
+#     Note   : There is no user interaction in this case.
+#
+#     Command: runinstall -command uninstall
+#     Action : Uninstall an application into the system.
+#     Note   : The user will be prompted for input to specify the application
+#              to be uninstalled.
+#
+#     Command: runinstall -command uninstall_all
+#     Action : Uninstall all applications currently installed
+#     Note   : There is no user interaction in this case.
+#
+#
+########################### VARIABLE EXPLANATION ################################
+#
+# Name:  PHONEME_DIR
+# Desc:  Location of the root of the phoneme workspace.  This should only be used for
+#        linux-86-suse or linux-arm-zaurus builds which are run from within a
+#        development workspace.
+# Dflt:  /home/$WHOAMI/phoneme
+#
+# Name:  PHONEME_DIST
+# Desc:  Location of the phoneme build
+# Dflt:  On linux-x86-suse, default is $PHONEME_DIR/build/linux-x86-suse/$CDC_SUBDIR
+#        On linux-arm-zaurus, default is /home/cdcams.
+#
+# Name:  CDC_SUBDIR
+# Desc:  Subdirectory name of phoneme build, only necessary for non-jmp_install builds
+#        whcih are run from within a development workspace.
+# Dflt:  jump
+#
+# Name:  JUMP_CONTENT_STORE_DIR
+# Desc:  Root of content store
+# Dflt:  data (default value is determined in modules-config.properties)
+#
+# Name:  PROVISIONING_SERVER_URL
+# Desc:  URL to a provisioning server
+# Dflt:  None
+#
+
+PHONEME_PLATFORM=`uname -a | cut -d ' ' -f 12`
+if [ "$PHONEME_PLATFORM" = "unknown" ] ; then
+  PHONEME_PLATFORM=`uname -a | cut -d ' ' -f 11`
+fi
+
+if [ "$PHONEME_PLATFORM" != "i686" ] ; then
+    echo "This script is not supported for this $PHONEME_PLATFORM."
+    exit 0
+fi
+
+# Use the following provisioning url for discovery
+if [ -z "$PROVISIONING_SERVER_URL" ] ; then
+   echo "Error: The environment variable PROVISIONING_SERVER_URL needs to be set to a provisioning server URL."
+   exit 0
+fi
+
+# PHONEME_DIR is primarily used when running from a build within your workspace.
+# It sets PHONEME_DIST, which is the important variable for determining the location
+# of the build.  PHONEME_DIR is strategically used to determine PHONEME_DIST.
+# Note: CDC_SUBDIR is not used when PHONEME_DIST is specified
+if [ -z "$PHONEME_DIR" ] ; then
+    export PHONEME_DIR=/home/$WHOAMI/phoneme
+fi
+
+# Subdirectory name used in Phoneme build
+# Note: CDC_SUBDIR is not used when PHONEME_DIST is specified
+if [ -z "$CDC_SUBDIR" ] ; then
+    export CDC_SUBDIR=jump
+fi
+
+### Try to determine a default build platform.
+### This is just a simple way to determine it.
+### This should be adjusted to fit more platforms.
+if [ -z "$DEFAULT_LINUX_PLATFORM" ] ; then
+  tmp=`uname -a | awk '{ print $3 }' | grep generic`
+  if [ "$tmp" != "" ] ; then
+    DEFAULT_LINUX_PLATFORM=linux-x86-generic
+  else
+    DEFAULT_LINUX_PLATFORM=linux-x86-suse  
+  fi
+fi
+
+if [ -z "$PHONEME_DIST" ] ; then
+    if [ "$PHONEME_PLATFORM" = "i686" ] ; then
+
+        export PHONEME_DIST=$PHONEME_DIR/build/$DEFAULT_LINUX_PLATFORM/$CDC_SUBDIR
+    fi
+fi
+
+CVM=$PHONEME_DIST/bin/cvm
+JUMP_LIBDIR=$PHONEME_DIST/lib
+INSTALLER_TOOL_CLASS=com.sun.jumpimpl.module.installer.JUMPInstallerTool
+
+# Set the root of content store if specified
+if [ "$JUMP_CONTENT_STORE_DIR" != "" ] ; then
+  PROPERTIES="-Dcontentstore.root=$JUMP_CONTENT_STORE_DIR"
+fi
+
+ARGUMENTS="-ProvisioningServerURL $PROVISIONING_SERVER_URL"
+
+cd $PHONEME_DIST
+
+COMMAND="$CVM $PROPERTIES -cp $JUMP_LIBDIR/executive-jump.jar:$JUMP_LIBDIR/jump.jar $INSTALLER_TOOL_CLASS $ARGUMENTS $* "
+echo $COMMAND
+$COMMAND
