@@ -1,6 +1,4 @@
 /*
- * @(#)InterfaceConstant.java	1.11 06/10/10
- *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
@@ -31,25 +29,29 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Vector;
+import consts.Const;
 
-/*
+/**
  * Represents CONSTANT_InterfaceMethodref
  * There is very, very little difference between one of these
  * and a plain Method reference.
  */
 
 public
-class InterfaceConstant extends MethodConstant
+class InterfaceMethodConstant extends MethodConstant
 {
-    InterfaceConstant( int t ){
-	//tag = t;
-	super( t );
+    private InterfaceMethodConstant() {
+        super(Const.CONSTANT_INTERFACEMETHOD);
     }
 
-    public static ConstantObject
-    read( int t, DataInput in ) throws IOException {
-	FMIrefConstant mc = new InterfaceConstant( t );
-	mc.read( in );
+    /**
+     * Factory method to construct an InterfaceMethodConstant instance from
+     * the constant pool data stream.  This method is only called from the
+     * ConstantObject.readObject() factory.
+     */
+    static ConstantObject read(DataInput in) throws IOException {
+        InterfaceMethodConstant mc = new InterfaceMethodConstant();
+	mc.readIndexes(in);
 	return mc;
     }
 }

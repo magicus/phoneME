@@ -41,7 +41,9 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Set;
 
-/*
+import vm.VMConfig;
+
+/**
  * Reading of class files.
  * Which is different from reading a class from a multi-class file.
  * But not much.
@@ -62,7 +64,7 @@ class ClassFile
     public boolean 	didRead = false;
     public Exception 	failureMode; // only for didRead == false.
     public boolean	verbose = false;
-    public ClassInfo	clas;
+    public ClassInfo	cinfo;
     PrintStream   	log = System.out;
     InputStream		istream;
 
@@ -70,17 +72,14 @@ class ClassFile
     int			minorID,
 			majorID;
 
-    public ClassFile(String name, boolean v ) {
-	fileName = name;
-	verbose	 = v;
-	clas     = new ClassInfo( v );
-	istream  = null;
+    public ClassFile(String name, boolean v) {
+	this(name, null, v);
     }
 
-    public ClassFile(String name, InputStream i, boolean v ) {
+    public ClassFile(String name, InputStream i, boolean v) {
 	fileName = name;
 	verbose	 = v;
-	clas     = new ClassInfo( v );
+	cinfo    = new ClassInfo(v);
 	istream  = i;
     }
 
@@ -103,27 +102,28 @@ class ClassFile
 
 	    minorID = in.readShort();
 	    majorID = in.readShort();
-            if (majorID < Const.JAVA_MIN_SUPPORTED_VERSION 
-                || majorID > Const.JAVA_MAX_SUPPORTED_VERSION) {
+            if (majorID < VMConfig.getMinSupportedClassfileVersion()
+                || majorID > VMConfig.getMaxSupportedClassfileVersion()) {
                 failureMode = new IOException(Localizer.getString(
                     "classfile.bad_major_version_number.ioexception"));
                 break done; // bad major version -- bail immediately. 
             }
 
-            if (majorID == Const.JAVA_MAX_SUPPORTED_VERSION
-                && minorID > Const.JAVA_MAX_SUPPORTED_MINOR_VERSION) {
+            if (majorID == VMConfig.getMaxSupportedClassfileVersion()
+                && minorID > VMConfig.getMaxSupportedClassfileMinorVersion()) {
                 failureMode = new IOException(Localizer.getString(
                     "classfile.bad_minor_version_number.ioexception"));
                 break done; // bad minor version -- bail immediately.
             }
-	    if(verbose){
+	    if (verbose) {
 		log.println(Localizer.getString("classfile._file", fileName)+
 			    Localizer.getString("classfile._magic/major/minor",
 		                                Integer.toHexString( magic ),
 		                                Integer.toHexString( majorID ),
 		                                Integer.toHexString( minorID )));
 	    }
-	    clas.read(in, true);
+	    cinfo.setVersionInfo(majorID, minorID);
+	    cinfo.read(in, true);
 	    didRead = true;
 	} catch ( Exception e ){
 	    failureMode = e;
@@ -152,7 +152,7 @@ class ClassFile
 		failureMode.printStackTrace( o );
 	    return;
 	}
-	clas.dump( o );
+	cinfo.dump( o );
     }
 
     /*
@@ -161,15 +161,15 @@ class ClassFile
      */
     public static void main( String clist[] ){
 	for( int i = 0; i < clist.length; i++ ){
-	    ClassFile f = new ClassFile( clist[i], true );
-	    if (f.readClassFile() != true ){
+	    ClassFile cfile = new ClassFile( clist[i], true );
+	    if (cfile.readClassFile() != true ){
 		System.out.println(Localizer.getString(
 				        "classfile.read_of",
 				        clist[i]));
-		f.dump( System.out );
+		cfile.dump( System.out );
 		continue;
 	    }
-	    f.dump( System.out );
+	    cfile.dump( System.out );
 	}
     }
 

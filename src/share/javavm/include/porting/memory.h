@@ -63,17 +63,18 @@ void  CVMmemalignFree(void* memalignAllocedSpace);
 CVMBool CVMmemInit();
 
 /* Purpose: Returns the machine minimum page size that can be mapped,
-            unmapped, committed, or decommitted. */
+            unmapped, committed, or decommitted.  The size is in units of
+	    bytes. */
 size_t CVMmemPageSize();
 
 /* Purpose: Reserves a memory address range of the requested size for later use.
    Returns: The starting address of the reserved memory range if successful.
             The actual size of the reserved memory range will be set in
-            *mappedSize.  
+	    *mappedSize in units of bytes.
             Else if failed to map, NULL is returned and *mappedSize is set
 	    to 0.
    Note: memory sizes must be in increments of the page size as returned
-         by CVMmemPageSize().
+         by CVMmemPageSize() in units of bytes.
 */
 void *CVMmemMap(size_t requestedSize, size_t *mappedSize);
 
@@ -81,13 +82,14 @@ void *CVMmemMap(size_t requestedSize, size_t *mappedSize);
             CVMmemMap().  The memory range may be a subset of the range
 	    returned by CVMmemMap().  The range to relinquish is specified by
 	    addr as the starting address of the range, and requestedSize as the
-	    size of the range.
+	    size of the range in units of bytes.
    Returns: The starting address of the unmmapped range is returned.
-            The actual size of the unmapped range is set in *unmappedSize.
+            The actual size of the unmapped range is set in *unmappedSize
+	    in units of bytes.
 	    Else, if failed to unmap, NULL is returned and *unmappedSize is
 	    set to 0.
    Note: memory sizes must be in increments of the page size as returned
-         by CVMmemPageSize().
+         by CVMmemPageSize() in units of bytes.
 */
 void *CVMmemUnmap(void *addr, size_t requestedSize, size_t *unmappedSize);
 
@@ -95,13 +97,14 @@ void *CVMmemUnmap(void *addr, size_t requestedSize, size_t *unmappedSize);
             CVMmemMap().  The memory range may be a subset of the range
 	    returned by CVMmemMap().  The range to commit is specified by
             addr as the starting address of the range, and requestedSize as the
-	    size of the range.
+	    size of the range in units of bytes.
    Returns: The starting address of the committed range is returned.
-            The actual size of the committed range is set in *committedSize.
+            The actual size of the committed range is set in *committedSize
+	    in units of bytes.
 	    Else, if failed to commit, NULL is returned and *committedSize is
 	    set to 0.
    Note: memory sizes must be in increments of the page size as returned
-         by CVMmemPageSize().
+         by CVMmemPageSize() in units of bytes.
 	 Committed memory must be uncommitted using CVMmemDecommit() before it
 	 is unmmapped with CVMmemUnmap().  If this order is not adhered to,
 	 then the state of the committed memory will be undefined.
@@ -113,13 +116,14 @@ void *CVMmemCommit(void *addr, size_t requestedSize, size_t *committedSize);
             CVMmemCommit().  The memory range may be a subset of the range
 	    returned by CVMmemCommit().  The range to decommit is specified by
             addr as the starting address of the range, and requestedSize as the
-	    size of the range.
+	    size of the range in units of bytes.
    Returns: The starting address of the decommitted range is returned.
-            The actual size of the decommitted range is set in *decommittedSize.
+            The actual size of the decommitted range is set in *decommittedSize
+	    in units of bytes.
 	    Else, if failed to decommit, NULL is returned and *decommittedSize
 	    is set to 0.
    Note: memory sizes must be in increments of the page size as returned
-         by CVMmemPageSize().
+         by CVMmemPageSize() in units of bytes.
 	 Committed memory must be uncommitted using CVMmemDecommit() before it
 	 is unmmapped with CVMmemUnmap().  If this order is not adhered to,
 	 then the state of the committed memory will be undefined.

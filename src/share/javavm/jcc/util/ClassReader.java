@@ -43,7 +43,7 @@ import java.util.zip.*;
 import consts.Const;
 
 
-/*
+/**
  * ClassReader reads classes from a variety of sources
  * and, in all cases, creates ClassInfo structures for them.
  * It can read single class files, mclass files, entire zip
@@ -95,7 +95,7 @@ public class ClassReader {
      * to the argument Vector.
      */
     public int
-    readZip (String fileName, Vector done) throws IOException
+    readZip(String fileName, Vector classesRead) throws IOException
     {
         ZipFile  zf;
         Enumeration zipEntries;
@@ -110,10 +110,8 @@ public class ClassReader {
                 (name.endsWith(".class") || name.endsWith(".mclass"))) {
                 try {
                     i += readStream(name,
-                                    new DataInputStream(
-                                        new BufferedInputStream(
-                                            zf.getInputStream( ent ))),
-                                    done);
+                            new BufferedInputStream(zf.getInputStream( ent )),
+                            classesRead);
                 } catch (IOException e) {
                     System.out.println(
                         Localizer.getString("classreader.failed_on", name));
@@ -136,28 +134,33 @@ public class ClassReader {
      * from single opened file.
      */
     public int
-    readStream( String inputName, InputStream infile, Vector done ) throws IOException {
-	int magicNumber = getMagic( infile );
+    readStream(String inputName, InputStream infile, Vector classesRead)
+        throws IOException {
+
+        int magicNumber = getMagic(infile);
 
 	int ndone = 0;
-	if ( magicNumber == Const.JAVA_MAGIC ){
-	    /*
-	     * We have a solo class.
-	     */
-	    ClassFile f = new ClassFile(inputName, infile, verbosity>=2);
-	    if ( verbosity != 0 )
+	if (magicNumber == Const.JAVA_MAGIC) {
+	    // We have a solo class.
+
+            // Create a container to hold the class info:
+	    ClassFile cfile = new ClassFile(inputName, infile, verbosity>=2);
+	    if (verbosity != 0) {
 		System.out.println(
 		    Localizer.getString("classreader.reading_classfile", 
 		                        inputName));
-	    if (f.readClassFile() ){
-		//f.clas.externalize();
-		done.addElement(f.clas);
+            }
+
+            // Load the classfile into into the class container:
+            if (cfile.readClassFile()) {
+		//cfile.cinfo.externalize();
+		classesRead.addElement(cfile.cinfo);
 		ndone+=1;
 	    } else {
 		throw new DataFormatException(
 		    Localizer.getString("classreader.read_of_class_file", 
 		                         inputName) + ": "+
-		    f.failureMode );
+		    cfile.failureMode);
 	    }
 	} else {
 	    throw new DataFormatException(

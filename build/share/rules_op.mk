@@ -34,22 +34,15 @@ endif
 
 # generateJSRInitializer(xmlFiles,generatedDir,initializerPackage,outputFile,nativeLibs)
 define generateJSRInitializer
-	$(AT)($(call runJarFile, $(CONFIGURATOR_JAR_FILE),          \
-	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml                 \
-	-xsl $(CONFIGURATOR_DIR)/xsl/share/merge.xsl                \
-	-params filesList '$(1)'                                    \
-	-out $(2)/properties_merged.xml                             \
-	-xml $(2)/properties_merged.xml                             \
-	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/propertiesJava.xsl         \
-	-params packageName $(3) nativeLibs $(JSR_NATIVE_LIBS)      \
-	-out $(4));                                                 \
-	if [ "$(CVM_DUAL_STACK)" = "true" ]; then                   \
-	    $(call runJarFile, $(CONFIGURATOR_JAR_FILE),            \
-	    -xml $(2)/properties_merged.xml                         \
-	    -xsl $(CONFIGURATOR_DIR)/xsl/cdc/propertiesJavaMIDP.xsl \
-	    -params packageName $(3)                                \
-	    -out $(CVM_DERIVEDROOT)/jsrop_classes/$(subst $(2)/classes,,$(4:$(JSR_INIT_CLASS).java=$(JSR_MIDP_INIT_CLASS).java))); \
-	fi)
+	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE)              \
+	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml            \
+	-xsl $(CONFIGURATOR_DIR)/xsl/share/merge.xsl           \
+	-params filesList '$(1)'                               \
+	-out $(2)/properties_merged.xml                        \
+	-xml $(2)/properties_merged.xml                        \
+	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/propertiesJava.xsl    \
+	-params packageName $(3) nativeLibs $(JSR_NATIVE_LIBS) \
+	-out $(4)
 endef
 
 # Generate constant classes
@@ -165,12 +158,6 @@ $(JSR_MIDPPERMITTED_CLASSLIST): $(JSROP_JARS) $(JSROP_EXTRA_JARS)
 	@echo "Generating MIDP permitted JSR class list ...";
 	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister \
 	    -listapi:include=java/*,include=javax/*,include=javacard/*,include=org/xml/sax/*,include=org/w3c/dom/*,$(API_EXTENSIONS_LIST),input=$(JSROP_JARS_LIST),cout=$(JSR_MIDPPERMITTED_CLASSLIST)
-
-$(JSROP_INIT_AGENT_JAR): $(JSROP_JARS)
-	java_files=`(find $(CVM_DERIVEDROOT)/jsrop_classes -name $(JSR_MIDP_INIT_CLASS).java -type f -print)`; \
-	$(call compileJSROP,JSR MIDPInitializer,$(CVM_BUILD_TOP)/jsrop_initclasses,$$java_files)
-	$(call makeJSROPJar,$@,$(CVM_BUILD_TOP)/jsrop_initclasses)
-
 endif
 
 clean::

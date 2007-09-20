@@ -31,6 +31,7 @@ import java.io.DataInput;
 import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Vector;
+import util.Assert;
 import util.DataFormatException;
 import consts.Const;
 
@@ -105,28 +106,32 @@ class FieldInfo extends ClassMemberInfo {
                 } 
             }
         }
-	fi.resolve( cp );
+	fi.flatten(cp);
 	return fi;
     }
 
-    public void resolve( ConstantPool cp ){
-	if ( resolved ) return;
-	super.resolve( cp );
+    /**
+     * Note: resolution here does not involve classloading.
+     */
+    public void flatten(ConstantPool cp) {
+	if (isFlat) return;
+        Assert.disallowClassloading();
+	super.flatten(cp);
 	/*
 	 * Parse attributes.
 	 * If we find a value attribute, pick it out
 	 * for special handling.
 	 */
-	if ( fieldAttributes != null ) {
-	    for ( int i = 0; i < fieldAttributes.length; i++ ){
+	if (fieldAttributes != null) {
+	    for (int i = 0; i < fieldAttributes.length; i++) {
 		Attribute a = fieldAttributes[i];
-		if (a.name.string.equals("ConstantValue") ) {
+		if (a.name.string.equals("ConstantValue")) {
 		    valueAttribute = (ConstantValueAttribute)a;
 		    value = valueAttribute.data;
 		}
 	    }
 	}
-	switch( type.string.charAt(0) ){
+	switch(type.string.charAt(0)) {
 	case 'D':
 	case 'J':
 	    nSlots = 2; access |= Const.ACC_DOUBLEWORD; break;
@@ -136,7 +141,8 @@ class FieldInfo extends ClassMemberInfo {
 	default:
 	    nSlots = 1; break;
 	}
-	resolved = true;
+	isFlat = true;
+        Assert.allowClassloading();
     }
 
     public void captureValueAttribute(){
@@ -159,22 +165,22 @@ class FieldInfo extends ClassMemberInfo {
     }
 
     public void
-    write( DataOutput o ) throws IOException {
-	o.writeShort( access );
-	if ( resolved ){
-	    o.writeShort( name.index );
-	    o.writeShort( type.index );
-	    Attribute.writeAttributes( fieldAttributes, o, false );
+    write(DataOutput o) throws IOException {
+	o.writeShort(access);
+	if (isFlat) {
+	    o.writeShort(name.index);
+	    o.writeShort(type.index);
+	    Attribute.writeAttributes(fieldAttributes, o, false);
 	} else {
-	    o.writeShort( nameIndex );
-	    o.writeShort( typeIndex );
-	    o.writeShort( 0 ); // no attribute!
+	    o.writeShort(nameIndex);
+	    o.writeShort(typeIndex);
+	    o.writeShort(0); // no attribute!
 	}
     }
 
-    public String toString(){
+    public String toString() {
 	String r = "Field: "+super.toString();
-	if ( value != null ){
+	if (value != null) {
 	    r += " Value: "+value.toString();
 	}
 	return r;

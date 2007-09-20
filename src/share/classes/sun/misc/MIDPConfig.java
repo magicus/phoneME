@@ -41,7 +41,6 @@ import java.io.InputStream;
 import java.io.BufferedReader;
 import java.util.Vector;
 import java.net.MalformedURLException;
-import com.sun.cdc.config.MIDPPackageManager;
 
 public final
 class MIDPConfig{
@@ -210,7 +209,6 @@ class MIDPConfig{
 	midpImplCL = new MIDPImplementationClassLoader(
 				midpBase, permittedClasses, perms,
 				null);
-        initJSRProperties();
 	return midpImplCL;
 
     }
@@ -267,7 +265,6 @@ class MIDPConfig{
 	midpImplCL = new MIDPImplementationClassLoader(
 				urls, permittedClasses, perms,
 				null);
-        initJSRProperties();
 	return midpImplCL;
     }
 
@@ -499,16 +496,5 @@ class MIDPConfig{
             i++; /* the next caller */
 	}
         return is;
-    }
-
-    private static void initJSRProperties() {
-        String[] mainClasses = MIDPPackageManager.listComponents();
-        for (int i = 0; i < mainClasses.length; i++) {
-            try {
-                Class.forName(mainClasses[i], true, midpImplCL);
-            } catch (ClassNotFoundException e) {
-                /* ignore silently */
-            }
-        }
     }
 }

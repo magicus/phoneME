@@ -245,12 +245,11 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
 
     // Read in method attributes from classfile
     void
-    readAttributes( DataInput in, ConstantPool cp, boolean readCode)
+    readAttributes(DataInput in, ConstantPool cp, boolean readCode)
 	throws IOException
     {
-
 	methodAttributes = Attribute.readAttributes(in, cp,
-						    methodAttributeTypes, false);
+                                            methodAttributeTypes, false);
 
 	// NOTE: The above reads in the code as well. We might want to
 	// optimize this.
@@ -258,10 +257,10 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
 	//
 	// parse special attributes
 	//
-	if ( methodAttributes != null ){
-	    for ( int i = 0; i < methodAttributes.length; i ++ ){
+	if (methodAttributes != null) {
+	    for (int i = 0; i < methodAttributes.length; i++) {
 		Attribute a = methodAttributes[i];
-		if (a.name.string.equals("Code") ) {
+		if (a.name.string.equals("Code")) {
 		    CodeAttribute ca = (CodeAttribute)a;
 		    this.locals = ca.locals;
 		    this.stack  = ca.stack;
@@ -274,7 +273,6 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
 		}
 	    }
 	}
-
     }
 
     public static MethodInfo
@@ -288,7 +286,7 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
 
 	ConstantPool cp = p.getConstantPool();
 
-	m.resolve(cp);
+	m.flatten(cp);
 
 	m.argsSize = Util.argsSize(m.type.string);
 	if ((m.access & ACC_STATIC) == 0) {
@@ -300,7 +298,7 @@ class MethodInfo extends ClassMemberInfo implements Const, Cloneable
 	ConstantObject[] constants = cp.getConstants();
 
         // Check to make sure this method isn't marked for exclusion
-        if ( excludeList != null && excludeList.size() > 0 ) {
+        if (excludeList != null && excludeList.size() > 0) {
             // See if this method is to be discarded. The vector holds
             // the signature of methods to be excluded parsed into
             // class, method & type portions.

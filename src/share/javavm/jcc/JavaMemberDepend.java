@@ -788,20 +788,19 @@ class JavaMemberDepend extends DepgenUtil{
 	}
     }
 
-}
-
-class NeverAccept extends util.ClassnameFilter{
-    public boolean accept( java.io.File dir, String className ){
-	return false;
+    class NeverAccept extends util.ClassnameFilter{
+        public boolean accept( java.io.File dir, String className ){
+            return false;
+        }
     }
-}
 
-class PathPair {
-    String src;
-    String dest;
+    class PathPair {
+        String src;
+        String dest;
 
-    PathPair( String s, String d ){
-	src = s;
-	dest = d;
+        PathPair( String s, String d ){
+            src = s;
+            dest = d;
+        }
     }
 }

@@ -1445,6 +1445,9 @@ CVM_OFFSETS_CLASSES += \
 	java.lang.StringBuffer \
 	java.lang.AssertionStatusDirectives
 
+CVM_OFFSETS_CLASSES += \
+	java.net.URLClassLoader
+
 ifeq ($(CVM_CLASSLOADING), true)
 CVM_OFFSETS_CLASSES += \
 	java.lang.ClassLoader 

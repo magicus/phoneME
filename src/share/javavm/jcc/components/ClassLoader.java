@@ -58,13 +58,15 @@ class ClassLoader
 
     public ClassInfo
     lookupClass(String key) {
-	ClassInfo ci = null;
+        Assert.disallowClassloading();
+        ClassInfo ci = null;
 	if (parent != null) {
 	    ci = parent.lookupClass(key);
 	}
 	if (ci == null) {
 	    ci = (ClassInfo)classes.get(key);
 	}
+        Assert.allowClassloading();
         return ci;
     }
 

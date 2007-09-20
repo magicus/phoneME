@@ -29,6 +29,7 @@ package components;
 import jcc.Util;
 import consts.Const;
 import jcc.Str2ID;
+import util.Assert;
 
 public abstract
 class ClassMemberInfo extends ClassComponent {
@@ -66,12 +67,15 @@ class ClassMemberInfo extends ClassComponent {
 	return ( (access & Const.ACC_FINAL) != 0 );
     }
 
-    public void
-    resolve( ConstantPool cp ){
-	if ( resolved ) return;
-	name     = (UnicodeConstant)cp.elementAt(nameIndex);
+    public void flatten(ConstantPool cp) {
+	if (isFlat) return;
+        Assert.disallowClassloading();
+        // Get direct references to the name and type strings so that we don't
+        // need to go through the constant pool anymore.
+        name     = (UnicodeConstant)cp.elementAt(nameIndex);
 	type     = (UnicodeConstant)cp.elementAt(typeIndex);
-	resolved = true;
+	isFlat = true;
+        Assert.allowClassloading();
     }
 
     public int
@@ -102,18 +106,21 @@ class ClassMemberInfo extends ClassComponent {
 	type.validate();
     }
 
-    public String toString(){
-	if ( resolved ){
-	    return Util.accessToString(access)+" "+parent.className+"."+name.string+" : "+type.string;
+    public String toString() {
+	if (isFlat) {
+	    return Util.accessToString(access)+" "+
+                   parent.className+"."+name.string+" : "+type.string;
 	} else {
-	    return Util.accessToString(access)+" [ "+nameIndex+" : "+typeIndex+" ]";
+	    return Util.accessToString(access)+
+                   " [ "+nameIndex+" : "+typeIndex+" ]";
 	}
     }
-    public String qualifiedName(){
-	if ( resolved ){
+    public String qualifiedName() {
+	if (isFlat) {
 	    return name.string+":"+type.string;
-	}else{
-	    return Util.accessToString(access)+" "+parent.className+" [ "+nameIndex+" : "+typeIndex+" ]";
+	} else {
+	    return Util.accessToString(access)+" "+
+                   parent.className+" [ "+nameIndex+" : "+typeIndex+" ]";
 	}
     }
 }

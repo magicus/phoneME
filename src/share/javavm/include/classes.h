@@ -1763,13 +1763,15 @@ CVMdefineClass(CVMExecEnv* ee, const char *name, CVMClassLoaderICell* loader,
 	       const CVMUint8* buf, CVMUint32 bufLen, CVMObjectICell* pd);
 
 /*
- * CVMclassCreateArrayClass - creates a fake array class. Needed for any
- * array class type that wasn't reference by romized code and we make 
- * a reference to it at runtime.
+ * CVMclassCreateMultiArrayClass - creates the specified array class by
+ * iteratively (i.e. non-recursively) creating all the layers of the array
+ * class from the inner most to the outer most.  Needed for any array class
+ * type that wasn't reference by romized code and we make a reference to it
+ * at runtime.
  */
 extern CVMClassBlock*
-CVMclassCreateArrayClass(CVMExecEnv* ee, CVMClassTypeID arrayTypeId,
-			 CVMClassLoaderICell* loader, CVMObjectICell* pd);
+CVMclassCreateMultiArrayClass(CVMExecEnv* ee, CVMClassTypeID arrayTypeId,
+			      CVMClassLoaderICell* loader, CVMObjectICell* pd);
 
 /*
  * A 'class callback' called on each class that is iterated over.

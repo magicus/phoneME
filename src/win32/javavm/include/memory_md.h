@@ -1,6 +1,4 @@
 /*
- * @(#)JDKVM.java	1.13 06/10/10
- *
  * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
@@ -25,39 +23,18 @@
  *
  */
 
-package vm;
-import components.*;
-import consts.Const;
-import DataFormatException;
+#ifndef _WIN32_MEMORY_MD_H
+#define _WIN32_MEMORY_MD_H
 
-/*
- * This code knows information about the JDK1.x virtual machine
- * that is not really platform-specific. Extend this class to
- * make a core-image writer for your platform.
- */
+/* If an arch specific file is needed in the future, add the #include here:
+#include "javavm/include/memory_arch.h"
+*/
 
-public class JDKVM {
+/* Note: We only define CVM_USE_MMAP_APIS if the arch specific file did not
+   define it first.  For generic win32, we define it to 1 by default to
+   enable the use of MMAP APIs. */
+#ifndef CVM_USE_MMAP_APIS
+#define CVM_USE_MMAP_APIS  1 /* 1 to enable, 0 to disable */
+#endif
 
-    public static boolean staticMember( ClassMemberInfo f ){
-	return ( (f.access & Const.ACC_STATIC) != 0 );
-    }
-
-    public static boolean privateMember( ClassMemberInfo f ){
-	return ( (f.access & Const.ACC_PRIVATE) != 0 );
-    }
-
-    public static boolean isClassType( FieldInfo f ){
-	char t = f.type.string.charAt(0);
-	return ( ( t == Const.SIGC_ARRAY ) || ( t == Const.SIGC_CLASS ));
-    }
-
-    public static boolean needsExtraStorage( FieldInfo f ){
-        return true;
-    }
-
-    public static boolean isDataPure( FieldInfo f[] ){
-	return true;
-    }
-
-
-}
+#endif /* WIN32_MEMORY_MD_H */

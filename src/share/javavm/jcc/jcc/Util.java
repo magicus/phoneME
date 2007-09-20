@@ -35,7 +35,11 @@ import consts.Const;
 public
 class Util
 {
-    // How many bytes of storage for a particular signature?
+    /**
+     * How many words of storage for a particular signature?
+     * @returns the number of words of memory needed to hold the method
+     *          arguments.
+     */
     static public int argsSize(String sig) {
 	int argsSize = 0;
 
