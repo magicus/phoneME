@@ -102,15 +102,13 @@ $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
 	@echo -n "...compiling: "
 	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
 
-JSMS_DIR=$(JAVACALL_DIR)/implementation/wince/jsr120_wma/dll
+ifeq ($(USE_JSR_120),true)
 
 LINK=link.exe
 LINK_FLAGS=/nologo /dll /subsystem:windowsce,5.01 /NODEFAULTLIB:"oldnames.lib"
 LINK_LIBS=aygshell.lib cemapi.lib coredll.lib ole32.lib oleaut32.lib uuid.lib
 LIBPATH_WIN += `$(call fixcygpath, "$(VC_DIR)/ce/lib/armv4i")`
 LIBPATH += /LIBPATH:"$(LIBPATH_WIN)"
-
-ifeq ($(USE_JSR_120),true)
 
 JSMS_SRC_PATH=$(JSR_120_JC_IMPL_PATH)/$(JSR_120_JC_DIR)/dll
 JSMS_SOURCES=$(JSMS_SRC_PATH)/jsms.cpp
@@ -130,7 +128,9 @@ $(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll: $(JSMS_SOURCES)
             /def:$(JSMS_DEF) \
             /OUT:`$(call fixcygpath, $(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll)` \
             $(LINK_LIBS) /entry:DllMain
+
 else
+
 $(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll:
 
 endif
