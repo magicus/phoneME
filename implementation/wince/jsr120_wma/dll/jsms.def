@@ -1,0 +1,9 @@
+; jsms.def : Declares the module parameters for the DLL.
+
+LIBRARY      "jsms"
+
+EXPORTS
+
+DllGetClassObject PRIVATE
+DllCanUnloadNow PRIVATE
+

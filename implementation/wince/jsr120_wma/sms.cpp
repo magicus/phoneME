@@ -28,10 +28,11 @@ extern "C" {
 #endif
     
 #include "javacall_sms.h" 
-#include "javacall_events.h"
+//#include "javacall_events.h"
 #include "javacall_platform_defs.h"
 
 #include <windows.h>
+  //#include "cemapi.h" //CreateFileMapping, CreateMutex, CreateEvent
 #include <sms.h>
 
 int SendSMS(LPCTSTR lpszRecipient, 
@@ -72,60 +73,71 @@ int SendSMS(LPCTSTR lpszRecipient,
     tpsd.psReplaceOption = PSRO_NONE;
     tpsd.dwHeaderDataSize = 0;
 
+    SYSTEMTIME sysTime = {0};
+    GetSystemTime(&sysTime);
+
     // Send the message, indicating success or failure
     HRESULT ok = SmsSendMessage(smshHandle, ((bUseDefaultSMSC) ? (SMS_ADDRESS*)NULL : &smsaSource), 
-                                 &smsaDestination, (SYSTEMTIME*)NULL, 
+                                 &smsaDestination, &sysTime, 
                                  msgBuffer, msgBufferLen, 
                                  (PBYTE) &tpsd, sizeof(TEXT_PROVIDER_SPECIFIC_DATA), 
                                  SMSDE_OPTIMAL, 
                                  SMS_OPTION_DELIVERY_NONE, &smsmidMessageID);
 
+    //0x82000101 = SMS_E_INVALIDDATA
+
     // clean up
-    VERIFY(SUCCEEDED(SmsClose(smshHandle)));
+    VERIFY(SUCCEEDED(SmsClose(smshHandle))); 
 
     return SUCCEEDED(ok);
 }
 
-int ReceiveSMS(BYTE* const receiveBuffer, int max_receive_buffer)
+//deprecated interface usage. 
+//needs workaround: 
+//  to handle the message SmsOpen func should start first time before 
+//  standard mail client tries to do the same - in this case it will 
+//  fall down and leave us to input all SMS messages :)
+int ReceiveSMS(BYTE* const receiveBuffer, int max_receive_buffer, 
+               SMS_ADDRESS* smsaSourceAddress, SYSTEMTIME* stReceiveTime)
 {
     SMS_HANDLE smshHandle;
     TEXT_PROVIDER_SPECIFIC_DATA tpsd;
     HANDLE messageAvailableEvent;
-    DWORD bytesRead;
+    DWORD bytesRead = 0;
 
     HRESULT ok = SmsOpen(SMS_MSGTYPE_TEXT, SMS_MODE_RECEIVE, &smshHandle, &messageAvailableEvent);
     DWORD dw = GetLastError();
 
     if (ok == SMS_E_RECEIVEHANDLEALREADYOPEN) {
-        MessageBox((HWND)NULL, L"Only one handle per provider may be open for read access by any application at one time.", L"SMS_E_RECEIVEHANDLEALREADYOPEN", MB_OK | MB_ICONERROR);
+        MessageBox((HWND)NULL, 
+            L"Only one handle per provider may be open for read access by any application at one time.", 
+            L"SMS_E_RECEIVEHANDLEALREADYOPEN", MB_OK | MB_ICONERROR);
         return 0;
     }
 
     if(FAILED(ok)) {
-        MessageBox((HWND)NULL, L"FAIL", L"FAIL", MB_OK | MB_ICONERROR);
+        //MessageBox((HWND)NULL, L"FAIL", L"FAIL", MB_OK | MB_ICONERROR);
         return 0;
     } else {
         //MessageBox((HWND)NULL, L"SmsOpen:OK", L"SmsOpen:OK", MB_OK | MB_ICONERROR);
     }
 
-    DWORD waitOk = WaitForSingleObject(messageAvailableEvent, 60*1000);    
+    DWORD waitOk = WaitForSingleObject(messageAvailableEvent, INFINITE);    
 
     if (waitOk == WAIT_OBJECT_0) {
 
         SMS_ADDRESS psmsaSMSCAddress;
-        SMS_ADDRESS psmsaSourceAddress;
-        SYSTEMTIME  pstReceiveTime;
         static unsigned char buffer[1024];
 
         HRESULT readOk = SmsReadMessage (
             smshHandle,
-            &psmsaSMSCAddress, &psmsaSourceAddress, &pstReceiveTime,
+            &psmsaSMSCAddress, smsaSourceAddress, stReceiveTime,
             receiveBuffer, max_receive_buffer,
             (PBYTE)&tpsd, sizeof(tpsd),
             &bytesRead);
 
         //fix. wince returns doubled array
-        for (DWORD i=0; i<bytesRead; i++) { receiveBuffer[i] = receiveBuffer[i*2]; }
+        //for (DWORD i=0; i<bytesRead; i++) { receiveBuffer[i] = receiveBuffer[i*2]; }
     } else {
         printf("ReceiveSMS: WaitForSingleObject failed\n");
     }
@@ -146,6 +158,11 @@ javacall_result javacall_sms_is_service_available(void) {
     return JAVACALL_FAIL;
 }
 
+void int_to_hexascii2(int value, char str[2]) {
+    int tmp;
+    tmp =  value      & 0xF; str[1] = tmp>9 ? 'A'+tmp-10 : '0' + tmp;
+    tmp = (value >> 4)& 0xF; str[0] = tmp>9 ? 'A'+tmp-10 : '0' + tmp;
+}
 
 void int_to_hexascii(int value, char str[4]) {
     int tmp;
@@ -164,12 +181,19 @@ int hexascii_to_int(char* str, int count) {
     return result;
 }
 
-// 14=5+4+4+1 - "//WMA" + DESTINATION_PORT + SOURCE_PORT + WMA_DELIMITER
-// 20=5+4+4+2+2+2+1 - "//WMA" + DESTINATION_PORT + SOURCE_PORT + REFERENCE_NUMBER +
-//                    + TOTAL_SEGMENTS + SEGMENT_NUMBER + WMA_DELIMITER
-#define SMS_MAX_PAYLOAD 140
-#define SMS_MAX_DATA_PAYLOAD (SMS_MAX_PAYLOAD - 14)
-#define SMS_MAX_MULTISEGMDATA_PAYLOAD (SMS_MAX_PAYLOAD - 20)
+// "//WMA" + DESTINATION_PORT + SOURCE_PORT + WMA_DELIMITER 
+// + msgType + datagramLength + oddityByte
+#define SINGLE_SEGM_HEADER_SIZE (5+4+4+1+1+1+1)
+
+// "//WMA" + DESTINATION_PORT + SOURCE_PORT + REFERENCE_NUMBER +
+// + TOTAL_SEGMENTS + SEGMENT_NUMBER + WMA_DELIMITER
+// + msgType + datagramLength + oddityByte
+#define MULTIPLE_SEGM_HEADER_SIZE (5+4+4+2+2+2+1+1+1+1)
+
+#define MAX_SEGM_NUMBER 3
+#define SMS_MAX_PAYLOAD SMS_DATAGRAM_SIZE
+#define SMS_MAX_DATA_PAYLOAD (SMS_MAX_PAYLOAD - SINGLE_SEGM_HEADER_SIZE)
+#define SMS_MAX_MULTISEGMDATA_PAYLOAD (SMS_MAX_PAYLOAD - MULTIPLE_SEGM_HEADER_SIZE)
 
 static int calc_segments_num(int msgBufferLen) {
     if (msgBufferLen < SMS_MAX_DATA_PAYLOAD) {
@@ -178,6 +202,8 @@ static int calc_segments_num(int msgBufferLen) {
         return (msgBufferLen - 1) / SMS_MAX_MULTISEGMDATA_PAYLOAD + 1;
     }
 }
+
+#define SMS_SEND_ODDITY_BIT 0x80
 
 /**
  * Returns 0 on error
@@ -189,17 +215,30 @@ static int cdma_sms_encode(javacall_sms_encoding   msgType,
                         unsigned short          destPort,
                         char databuf[SMS_MAX_PAYLOAD], int* databuflength) {
 
-    if (msgBufferLen < SMS_MAX_PAYLOAD) {
-        memcpy(databuf, "//WMA", 5);
-        int_to_hexascii(destPort, databuf+5);
-        int_to_hexascii(sourcePort, databuf+5+4);
-        databuf[5+4+4] = 0x20; //<space> character, 0x20. Marks the end of text header.
-        memcpy(databuf+5+4+4+1, msgBuffer, msgBufferLen);
-        *databuflength = 5+4+4+1 + msgBufferLen;
-        return 1;
-    } else {
+    int header_size;
+
+    if (msgBufferLen >= SMS_MAX_DATA_PAYLOAD) {
         return 0;
     }
+
+    memcpy(databuf, "//WMA", 5);
+    int_to_hexascii(destPort, databuf+5);
+    int_to_hexascii(sourcePort, databuf+5+4);
+    databuf[5+4+4] = 0x20; //<space> character, 0x20. Marks the end of text header.
+
+    databuf[5+4+4+1] = msgType; //the msgType parameter is not specified in documentation.
+    databuf[5+4+4+1+1] = 0;     //the datagramSize parameter is not specified in documentation.
+    header_size = 5+4+4+1+1+1;
+
+    if ((header_size + msgBufferLen) & 0x01) { //hack. SmsSendMessage fails if bytes number is odd :(
+        databuf[5+4+4+1] |= SMS_SEND_ODDITY_BIT;
+        header_size++;
+    }
+
+    memcpy(databuf+header_size, msgBuffer, msgBufferLen);
+    *databuflength = header_size + msgBufferLen;
+    databuf[5+4+4+1+1] = *databuflength;
+    return 1;
 }
 
 static int static_reference_number = 0;
@@ -217,21 +256,36 @@ static int cdma_sms_mulstisegm_encode(javacall_sms_encoding   msgType,
                         char databuf[SMS_MAX_PAYLOAD],
                         int* databuflength) {
 
-    printf("multi segments SMS is not implemented");
-    return 0; //## TODO
-    /*
+    int header_size;
+    int data_length;
+
     memcpy(databuf, "//WMA", 5);
+
     int_to_hexascii(destPort, databuf+5);
     int_to_hexascii(sourcePort, databuf+5+4);
 
-    int_to_hexascii(reference_number, databuf+5+4+4, 2);
-    int_to_hexascii(total_segments, databuf+5+4+4+2, 2);
-    int_to_hexascii(segment_number, databuf+5+4+4+2+2, 2);
+    int_to_hexascii2(reference_number, databuf+5+4+4);
+    int_to_hexascii2(total_segments, databuf+5+4+4+2);
+    int_to_hexascii2(segment_number, databuf+5+4+4+2+2);
+
     databuf[5+4+4+2+2+2] = 0x20; //<space> character, 0x20. Marks the end of text header.
-    memcpy(databuf+5+4+4+2+2+2+1, msgBuffer, length);
-    
+
+    databuf[5+4+4+2+2+2+1] = msgType; //the msgType parameter is not specified in documentation.
+    databuf[5+4+4+2+2+2+1+1] = 0;     //the datagramSize parameter is not specified in documentation.
+    header_size = 5+4+4+2+2+2+1+1+1;
+
+    data_length = msgBufferLen - segment_number*SMS_MAX_MULTISEGMDATA_PAYLOAD;
+    data_length = (data_length > SMS_MAX_MULTISEGMDATA_PAYLOAD) ? SMS_MAX_MULTISEGMDATA_PAYLOAD : data_length;
+
+    if ((header_size + data_length) & 0x01) { //hack. SmsSendMessage fails if bytes number is odd :(
+        databuf[5+4+4+2+2+2+1] |= SMS_SEND_ODDITY_BIT;
+        header_size++;
+    }
+
+    memcpy(databuf+header_size, msgBuffer + segment_number*SMS_MAX_MULTISEGMDATA_PAYLOAD, data_length);
+    *databuflength = header_size + data_length;
+    databuf[5+4+4+2+2+2+1+1] = *databuflength;
     return 1;
-    */
 }
 
 static int cdma_sms_decode(
@@ -243,26 +297,44 @@ static int cdma_sms_decode(
         unsigned short*         destPort,
         int* reference_number, int* total_segments, int* segment_number) {
 
+    int header_size;
+    char msgType1;
+    unsigned char datagramSize;
+
     if (strncmp("//WMA", databuf, 5) != 0) {
         //error
         return 0;
     }
 
-    *msgType = JAVACALL_SMS_MSG_TYPE_ASCII; //##
-
     *destPort   = hexascii_to_int(databuf+5,   4);
     *sourcePort = hexascii_to_int(databuf+5+4, 4);
-    if (databuf[5+4+4] = 0x20) { //<space> character, 0x20. Marks the end of text header.
+    if (databuf[5+4+4] == 0x20) { //<space> character, 0x20. Marks the end of text header.
         *total_segments = 1; //short header, hence there is only one segment
-        *msgBuffer = (char*)databuf + 5+4+4+1;
-        *msgBufferLen = databuflength - (5+4+4+1);
+        msgType1 = databuf[5+4+4+1];
+        datagramSize = databuf[5+4+4+1+1];
+        header_size = 5+4+4+1+1+1;
+        if (msgType1 & SMS_SEND_ODDITY_BIT) {
+            msgType1 &= ~SMS_SEND_ODDITY_BIT;
+            header_size++;
+        }
+        *msgType = (javacall_sms_encoding)msgType1;
+        *msgBuffer = (char*)databuf + header_size;
+        *msgBufferLen = databuflength - (header_size);
     } else {
         *reference_number = hexascii_to_int(databuf+5+4+4, 2);
         *total_segments   = hexascii_to_int(databuf+5+4+4+2, 2);
         *segment_number   = hexascii_to_int(databuf+5+4+4+2+2, 2);
         if (databuf[5+4+4+2+2+2] = 0x20) { //<space> character, 0x20. Marks the end of text header.
-            *msgBuffer = (char*)databuf + 5+4+4+2+2+2+1;
-            *msgBufferLen = databuflength - (5+4+4+2+2+2+1);
+            msgType1 = databuf[5+4+4+2+2+2+1];
+            datagramSize = databuf[5+4+4+2+2+2+1+1];
+            header_size = 5+4+4+2+2+2+1+1+1;
+            if (msgType1 & SMS_SEND_ODDITY_BIT) {
+                msgType1 &= ~SMS_SEND_ODDITY_BIT;
+                header_size++;
+            }
+            msgType1 &= ~SMS_SEND_ODDITY_BIT;
+            *msgBuffer = (char*)databuf + header_size;
+            *msgBufferLen = databuflength - header_size;
         } else {
             //error
             return 0;
@@ -272,7 +344,52 @@ static int cdma_sms_decode(
     return 1;
 }
 
-void fillPhone(const unsigned char* javaDestAddress, wchar_t* lpcPhone) {
+static int fullMsg_reference_number = -1;
+static int fullMsg_segm_count = -1;
+static int fullMsg_buffer_len = 0;
+static unsigned char fullMsg_buffer[MAX_SEGM_NUMBER*SMS_MAX_MULTISEGMDATA_PAYLOAD];
+
+static void fullMsg_sms_segement_init() {
+    fullMsg_reference_number = -1;
+    fullMsg_segm_count = -1;
+    fullMsg_buffer_len = 0;
+}
+
+static int fullMsg_add_sms_segment(
+    unsigned short sourcePort, unsigned short destPort,
+    int reference_number, int total_segments, int segment_number,
+    javacall_sms_encoding msgType, 
+    unsigned char* msgBuffer, int msgBufferLen) {
+
+    if (fullMsg_reference_number == -1) { //first segment received
+        fullMsg_reference_number = reference_number;
+        fullMsg_segm_count = total_segments;
+        fullMsg_buffer_len = 0;
+    } else {
+        if (fullMsg_reference_number != reference_number) {
+            //error.
+            return 0;
+        }
+    }
+    fullMsg_segm_count--;
+    fullMsg_buffer_len += msgBufferLen;
+    memcpy(fullMsg_buffer + segment_number*SMS_MAX_MULTISEGMDATA_PAYLOAD, msgBuffer, msgBufferLen);
+    return 1;
+}
+
+static int fullMsg_try_get_full_message(unsigned char** fullMsgBuffer, int* fullMsgBufferLen) {
+    if (fullMsg_segm_count == 0) {
+        *fullMsgBuffer = fullMsg_buffer;
+        *fullMsgBufferLen = fullMsg_buffer_len;
+
+        fullMsg_sms_segement_init();
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+static void fillPhone(const unsigned char* javaDestAddress, wchar_t* lpcPhone) {
 
     do {
         if (*javaDestAddress != '+' && *javaDestAddress != ' ') {
@@ -280,6 +397,7 @@ void fillPhone(const unsigned char* javaDestAddress, wchar_t* lpcPhone) {
         }
     } while (*javaDestAddress++ != 0);
 }
+
 /**
  * send an SMS message
  *
@@ -347,6 +465,7 @@ int javacall_sms_send(  javacall_sms_encoding   msgType,
                     return 0;
                 }
                 send_ok = SendSMS(lpcPhone, (const unsigned char*)smsData, smsDataLength);
+
                 if (!send_ok) {
                     return 0;
                 }
@@ -426,24 +545,17 @@ int javacall_sms_get_number_of_segments(
         int                     msgBufferLen, 
         javacall_bool           hasPort) {
 
-    printf("javacall_sms_get_number_of_segments\n");
+    //## msgType ?
+    int result = calc_segments_num(msgBufferLen);
 
-    //##
-    if (msgBufferLen > 128)
-        return 0; // message is too large
-
-    return 1;
+    return result;
 }
 
 #define MAX_RECEIVE_BUFFER 1024
 
-DWORD WINAPI receiveSMSThreadProc( LPVOID lpParam ) {
-    while (1) {
+static void decode_and_notify(char* receiveBuffer, int buferLength,
+                       wchar_t* senderPhone, javacall_int64 timeStamp) {
 
-        char receiveBuffer[MAX_RECEIVE_BUFFER];
-        int numRead = ReceiveSMS((BYTE* const)receiveBuffer, MAX_RECEIVE_BUFFER);
-
-        if (numRead > 0) {
             javacall_sms_encoding  msgType;
             unsigned char*         msgBuffer;
             int                    msgBufferLen;
@@ -452,31 +564,215 @@ DWORD WINAPI receiveSMSThreadProc( LPVOID lpParam ) {
             int reference_number, total_segments, segment_number;
 
             int decode_ok = cdma_sms_decode(
-                receiveBuffer, numRead,
+                receiveBuffer, buferLength,
                 &msgType, 
                 (char**)&msgBuffer, &msgBufferLen,
                 &sourcePort, &destPort,
                 &reference_number, &total_segments, &segment_number);
 
             if (decode_ok) {
-                char msgAddr[4] = {1,2,3,4};   //##
-                javacall_int64 timeStamp = 0;  //##
 
-                javanotify_incoming_sms(
-                    msgType,
-                    msgAddr, 
-                    msgBuffer, msgBufferLen,
-                    sourcePort, destPort,
-                    timeStamp);
+                char msgAddr[64] = {'s','m','s',':','/','/'};
+                if (isdigit(senderPhone[0])) {
+                    if (sourcePort == 0) {
+                        sprintf(msgAddr, "sms://%S", senderPhone);
+                    } else {
+                        sprintf(msgAddr, "sms://%S:%i", senderPhone, sourcePort);
+                    }
+                }
+
+                if (total_segments > 1) {
+                    fullMsg_add_sms_segment(
+                        sourcePort, destPort,
+                        reference_number, total_segments, segment_number,
+                        msgType, 
+                        msgBuffer, msgBufferLen);
+                    unsigned char* fullMsgBufferPtr;
+                    int fullMsgBufferLen;
+                    if (fullMsg_try_get_full_message(&fullMsgBufferPtr, &fullMsgBufferLen)) {
+                        javanotify_incoming_sms(
+                            msgType,
+                            msgAddr, 
+                            fullMsgBufferPtr, fullMsgBufferLen,
+                            sourcePort, destPort,
+                            timeStamp);
+                    }
+                } else {
+                    javanotify_incoming_sms(
+                        msgType,
+                        msgAddr, 
+                        msgBuffer, msgBufferLen,
+                        sourcePort, destPort,
+                        timeStamp);
+                }
             }
+}
+
+static javacall_int64 getTimeStampFromSystemTime(SYSTEMTIME* stReceiveTime) {
+
+    javacall_int64 timeStamp = 
+        ((javacall_int64)stReceiveTime->wYear         << 48) +
+        ((javacall_int64)stReceiveTime->wMonth        << 40) +
+        ((javacall_int64)stReceiveTime->wDay          << 32) +
+        ((javacall_int64)stReceiveTime->wHour         << 24) +
+        ((javacall_int64)stReceiveTime->wMinute       << 16) +
+        ((javacall_int64)stReceiveTime->wSecond       << 8)  +
+        ((javacall_int64)stReceiveTime->wMilliseconds);
+
+    return timeStamp;
+}
+
+#ifdef USE_DEPRECATED_SMS_RECEIVE_API
+
+DWORD WINAPI receiveSMSThreadProc_deprecated(LPVOID lpParam) {
+    while (1) {
+
+        char receiveBuffer[MAX_RECEIVE_BUFFER];
+        SMS_ADDRESS smsaSourceAddress;
+        SYSTEMTIME stReceiveTime;
+
+        int numRead = ReceiveSMS(
+            (BYTE* const)receiveBuffer, MAX_RECEIVE_BUFFER, 
+            &smsaSourceAddress, &stReceiveTime);
+
+        if (numRead > 0) {
+
+            //spec requires send time, but this value is not accessible
+            javacall_int64 timeStamp = getTimeStampFromSystemTime(&stReceiveTime);
+
+            decode_and_notify(receiveBuffer, numRead,
+                              smsaSourceAddress.ptsAddress, timeStamp);
+
         }
     }
 }
 
-void createReceiveSMSThread() {
+#else
+
+#define MAX_SENDER_PHONE_LENGTH 30
+static wchar_t _senderPhoneBuffer[MAX_SENDER_PHONE_LENGTH];
+
+/**
+ * Returns the last digits sequence from the senderPhoneEmail string
+ */
+static wchar_t* getSenderPhone(wchar_t* senderPhoneEmail) {
+    //PR_SENDER_EMAIL_ADDRESS: senderPhone = Device9 <+79217625673>
+    //PR_SENDER_NAME :         senderPhone = Device9
+
+    wchar_t* ptr1 = senderPhoneEmail;
+    wchar_t* ptr2 = _senderPhoneBuffer;
+
+    char flag = 1;
+
+    while (*ptr1 != 0) {
+        if (isdigit(*ptr1)) { 
+            if (flag == 1) {
+                ptr2 = _senderPhoneBuffer;
+            }
+            *ptr2++ = *ptr1; 
+            flag = 0;
+        } else {
+            flag = 1;
+        }
+        if (ptr2 == _senderPhoneBuffer + MAX_SENDER_PHONE_LENGTH - 1) {
+            break;
+        }
+        ptr1++;
+    }
+    *ptr2 = 0;
+
+    return _senderPhoneBuffer;
+}
+
+#define lpFileMappingName L"jsms_temp_file"
+#define lpFileMutex L"jsms_mutex"
+#define lpFileEvent L"jsms_event"
+
+#define SENDERPHONE_MAX_LENGTH  52
+#define DATAGRAM_MAX_LENGTH     160
+
+#define FILE_OFFSET_MSG_SIZE    0
+#define FILE_OFFSET_SENDERPHONE 4
+#define FILE_OFFSET_SENDTIME    56
+#define FILE_OFFSET_DATAGRAM    64
+
+#define SMS_MAPFILE_SIZE        224
+
+DWORD WINAPI receiveSMSThreadProc(LPVOID lpParam) {
+
+    HANDLE pMutex = CreateMutex((LPSECURITY_ATTRIBUTES)NULL, FALSE, lpFileMutex);
+
+    HANDLE hFileMap = CreateFileMapping(
+        INVALID_HANDLE_VALUE, 
+        (LPSECURITY_ATTRIBUTES)NULL,
+        PAGE_READWRITE,
+        0, SMS_MAPFILE_SIZE,
+        lpFileMappingName); 
+
+    char* pFileMemory;
+    if (hFileMap) {
+        pFileMemory = (CHAR*)MapViewOfFile(
+            hFileMap,
+            FILE_MAP_READ,
+            0,0,0);
+        if (pFileMemory == NULL) {
+            printf("Error mapping sms file\n");
+            return 0;
+        }
+    } else {
+        printf("Error mapping sms file\n");
+        return 0;
+    }
+
+    HANDLE evnt = CreateEvent((LPSECURITY_ATTRIBUTES)NULL, FALSE, FALSE, lpFileEvent);
+    
+    //infinite cycle of waiting for SMS
+    do {
+        DWORD waitEventOk = WaitForSingleObject(evnt, INFINITE); 
+        if (waitEventOk == WAIT_OBJECT_0) {
+            ResetEvent(evnt);
+
+            DWORD waitMutexOk = WaitForSingleObject(pMutex, INFINITE); 
+            if (waitEventOk == WAIT_OBJECT_0) {
+
+                //reading the buffer.
+                //Note! Do it fast! Otherwise next SMS could be lost because: 
+                // - jsms.dll is blocked be the same pMutex for pFileMemory access!
+                // - jsms.dll could not wait long because it is running in Windows system process!
+
+                int bufferSize = *((int*)(pFileMemory + FILE_OFFSET_MSG_SIZE));
+                wchar_t* senderPhoneEmail = (wchar_t*)(pFileMemory + FILE_OFFSET_SENDERPHONE);
+                char* receiveBuffer = pFileMemory + FILE_OFFSET_DATAGRAM;
+
+                FILETIME sendTime_f;
+                sendTime_f.dwHighDateTime = *((DWORD*)(pFileMemory + FILE_OFFSET_SENDTIME));
+                sendTime_f.dwLowDateTime  = *((DWORD*)(pFileMemory + FILE_OFFSET_SENDTIME+4));
+
+                SYSTEMTIME sendTime_sys;
+                FileTimeToSystemTime(&sendTime_f, &sendTime_sys);
+                javacall_int64 timeStamp = getTimeStampFromSystemTime(&sendTime_sys);
+
+                //PR_SENDER_EMAIL_ADDRESS: senderPhone = Device9 <+79217625673>
+                //PR_SENDER_NAME :         senderPhone = Device9
+                wchar_t* senderPhone = getSenderPhone(senderPhoneEmail);
+
+                decode_and_notify(receiveBuffer, bufferSize,
+                                  senderPhone, timeStamp);
+            }
+            ReleaseMutex(pMutex);
+        }
+    } while (1);
+
+    UnmapViewOfFile(pFileMemory);
+    CloseHandle(evnt);
+}
+
+#endif
+
+static void createReceiveSMSThread() {
     DWORD dwJavaThreadId;
     HANDLE hThread = CreateThread(
-                      (LPSECURITY_ATTRIBUTES)NULL,              // default security attributes
+                      (LPSECURITY_ATTRIBUTES)NULL,   // default security attributes
                       0,                 // use default stack size
                       receiveSMSThreadProc,        // thread function
                       0,                 // argument to thread function
