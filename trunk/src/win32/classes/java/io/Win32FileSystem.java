@@ -307,7 +307,7 @@ class Win32FileSystem extends FileSystem {
 	if (pl == 3)
 	    return path;			/* Absolute local */
 	if (pl == 0)
-	    return getUserPath() + slashify(path); /* Completely relative */
+	    return resolve(getUserPath(), path); /* Completely relative */
 	if (pl == 1) {				/* Drive-relative */
 	    if (!hasDrives) {
 		return path;

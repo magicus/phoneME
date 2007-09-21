@@ -59,6 +59,10 @@ JAVAI_API char  *createMCHAR(const wchar_t *);
 JAVAI_API char  *strerror(int err);
 JAVAI_API char  *getenv(const char* name);
 
+/* Remove "." and ".." from the path */
+BOOL
+WINCEpathRemoveDots(wchar_t *dst0, const wchar_t *src, size_t maxLength);
+
 #endif /* WINCE */
 
 #endif /* WCE_JAVAI_H */
