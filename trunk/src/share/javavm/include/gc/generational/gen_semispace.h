@@ -1,7 +1,5 @@
 /*
- * @(#)gen_semispace.h	1.14 06/10/10
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -78,3 +76,8 @@ CVMgenSemispaceAlloc(CVMUint32* space, CVMUint32 totalNumBytes);
  */
 void
 CVMgenSemispaceFree(CVMGenSemispaceGeneration* thisGen);
+
+#if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
+/* Dumps info about the configuration of the semispace generation. */
+void CVMgenSemispaceDumpSysInfo(CVMGenSemispaceGeneration* thisGen);
+#endif

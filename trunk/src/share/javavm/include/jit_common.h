@@ -1,7 +1,5 @@
 /*
- * @(#)jit_common.h	1.85 06/10/10
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -567,6 +565,11 @@ typedef struct {
 extern CVMBool
 CVMjitReinitialize(CVMExecEnv* ee, const char *options);
 #endif
+
+#if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
+/* Dumps info about the configuration of the JIT. */
+extern void CVMjitDumpSysInfo();
+#endif /* CVM_DEBUG || CVM_INSPECTOR */
 
 #if defined(CVM_AOT) && !defined(CVM_MTASK)
 /* If there is no existing AOT code, compile a list of methods. The
