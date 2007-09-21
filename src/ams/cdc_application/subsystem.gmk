@@ -62,15 +62,6 @@ CDC_AMS_DIR = $(SUBSYSTEM_AMS_DIR)/cdc_application
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(CDC_AMS_DIR)/classes
 
-# This rule is temporary. It should be removed when real PackageManager is implemented.
-$(GENERATED_DIR)/classes/com/sun/cdc/config/MIDPPackageManager.java: $(CONFIGURATOR_JAR_FILE)
-	@echo "... generating MIDPPackageManager.java"
-	$(AT)$(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
-	-xml $(INT_COMMON_XML_DIR)/empty.xml \
-	-xsl `$(call fixcygpath,$(CONFIGURATOR_DIR)/xsl/cdc/propertiesInit.xsl)` \
-	-params className MIDPPackageManager initializers '$(JSR_MIDP_INITIALIZER_LIST)' \
-	-out $@)
-
 # Java files for the sub-system
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(CDC_AMS_DIR)/classes/com/sun/midp/content/CHManager.java \
