@@ -199,6 +199,10 @@ public abstract class BasicPlayer implements Player
     /**
      *  Description of the Field
      */
+    protected final static String dtocName = "DualToneControl";
+    /**
+     *  Description of the Field
+     */
     protected final static String vocName = "VolumeControl";
 
     /**
@@ -218,6 +222,7 @@ public abstract class BasicPlayer implements Player
         vicName,
         rtspName,
         tocName,
+        dtocName,
         vocName,
         };
 

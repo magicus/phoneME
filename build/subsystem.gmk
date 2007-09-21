@@ -146,6 +146,7 @@ SUBSYSTEM_JSR_135_JAVA_FILES += \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/Controllable.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/MediaException.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/ToneControl.java \
+    $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/DualToneControl.java \
     $(JSR_135_DIR)/src/share/core/javax/microedition/media/control/VolumeControl.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/AudioRenderer.java \
     $(JSR_135_DIR)/src/share/core/com/sun/mmedia/TonePlayer.java \
