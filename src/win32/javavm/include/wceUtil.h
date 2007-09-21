@@ -33,6 +33,7 @@
 
 #ifdef WINCE
 
+#include <windows.h>
 #include <string.h>
 #include <stddef.h>
 
