@@ -589,10 +589,14 @@ static jint mapKey(WPARAM wParam, LPARAM lParam) {
 
     case VK_SPACE:
     case VK_RETURN:  return KEYMAP_KEY_SELECT;
-    case VK_BACK:    return KEYMAP_KEY_BACKSPACE;
+    case VK_BACK:
+    case VK_TBACK:   return KEYMAP_KEY_BACKSPACE;
     case VK_TTALK:
     case VK_THOME:   return KEYMAP_MD_KEY_HOME;
     case VK_TEND:    return KEYMAP_KEY_END;
+
+    case VK_TSOFT1:  return KEYMAP_KEY_SOFT1;
+    case VK_TSOFT2:  return KEYMAP_KEY_SOFT2;
     }
     if (wParam >= 0x20 && wParam <= 0x7F)
         /* Some ASCII keys sent by emulator or mini keyboard */
@@ -782,10 +786,13 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         switch (wp) {
         case VK_RETURN:  
         case VK_BACK: 
+        case VK_TBACK: 
         case VK_UP: 
         case VK_DOWN: 
         case VK_LEFT: 
         case VK_RIGHT:
+        case VK_TSOFT1:
+        case VK_TSOFT2:
             return process_key(hwnd, mapAction(msg, lp), mapKey(wp, lp));
         case VK_THOME:
         case VK_TTALK:
