@@ -29,6 +29,7 @@ package com.sun.ukit.jaxp;
 import java.io.Reader;
 import java.io.InputStream;
 import java.io.IOException;
+import java.io.EOFException;
 
 /**
  * UTF-16 encoded stream reader.
@@ -39,13 +40,17 @@ public class ReaderUTF16
 	private InputStream is;
 	private char        bo;
 
+	private byte[]      buff;
+	private int         bidx = 0;
+	private int         bcnt = 0;
+
 	/**
 	 * Constructor.
 	 *
-     * Byte order argument can be: 'l' for little-endian or 'b' for big-endian.
+	 * Byte order argument can be: 'l' for little-endian or 'b' for big-endian.
 	 *
-     * @param is A byte input stream.
-     * @param bo A byte order in the input stream. 
+	 * @param is A byte input stream.
+	 * @param bo A byte order in the input stream. 
 	 */
 	public ReaderUTF16(InputStream is, char bo)
 	{
@@ -61,6 +66,7 @@ public class ReaderUTF16
 		}
 		this.bo = bo;
 		this.is = is;
+		buff    = new byte[128];
 	}
 
 	/**
@@ -69,25 +75,33 @@ public class ReaderUTF16
 	 * @param cbuf Destination buffer.
 	 * @param off Offset at which to start storing characters.
 	 * @param len Maximum number of characters to read.
-     * @exception IOException If any IO errors occur.
+	 * @exception IOException If any IO errors occur.
 	 */
 	public int read(char[] cbuf, int off, int len)
 		throws IOException
 	{
 		int  num = 0;
-		int  val;
+
 		if (bo == 'b') {
 			while (num < len) {
-				if ((val = is.read()) < 0)
+				if (bidx >= bcnt) {
+					if ((bcnt = is.read(buff, 0, buff.length)) < 0)
 					return (num != 0)? num: -1;
-				cbuf[off++] = (char)((val << 8) | (is.read() & 0xff));
+					bidx = 0;
+				}
+
+				cbuf[off++] = (char)((buff[bidx++] << 8) | (getch() & 0xff));
 				num++;
 			}
 		} else {
 			while (num < len) {
-				if ((val = is.read()) < 0)
+				if (bidx >= bcnt) {
+					if ((bcnt = is.read(buff, 0, buff.length)) < 0)
 					return (num != 0)? num: -1;
-				cbuf[off++] = (char)((is.read() << 8) | (val & 0xff));
+					bidx = 0;
+				}
+
+				cbuf[off++] = (char)((buff[bidx++] & 0xff) | (getch() << 8));
 				num++;
 			}
 		}
@@ -99,7 +113,7 @@ public class ReaderUTF16
 	 *
 	 * @return The character read, as an integer in the range 0 to 65535 
 	 *	(0x0000-0xffff), or -1 if the end of the stream has been reached.
-     * @exception IOException If any IO errors occur.
+	 * @exception IOException If any IO errors occur.
 	 */
 	public int read()
 		throws IOException
@@ -118,11 +132,27 @@ public class ReaderUTF16
 	/**
 	 * Closes the stream.
 	 *
-     * @exception IOException If any IO errors occur.
+	 * @exception IOException If any IO errors occur.
 	 */
 	public void close()
 		throws IOException
 	{
 		is.close();
+	}
+
+	/**
+	 * Reads next character from the stream buffer.
+	 *
+	 * @exception IOException If any IO errors occur.
+	 */
+	private char getch()
+		throws IOException
+	{
+		if (bidx >= bcnt) {
+			if ((bcnt = is.read(buff, 0, buff.length)) <= 0)
+				throw new EOFException();
+			bidx = 0;
+		}
+		return (char)buff[bidx++];
 	}
 }
