@@ -49,6 +49,24 @@ extern "C" {
 typedef unsigned short javacall_utf16;
 
 /**
+ * @typedef javacall_uint8
+ * @brief 8 bit unsigned interger type
+ */
+typedef unsigned char javacall_uint8;
+
+/**
+ * @typedef javacall_uint16
+ * @brief 16 bit unsigned interger type
+ */
+typedef unsigned short javacall_uint16;
+
+/**
+ * @typedef javacall_uint32
+ * @brief 32 bit unsigned interger type
+ */
+typedef unsigned long javacall_uint32;
+
+/**
  * @typedef javacall_int32
  * @brief 32 bit interger type
  */
@@ -64,7 +82,7 @@ typedef long long javacall_int64;
  * @def JAVACALL_MAX_EVENT_SIZE
  * Maximal length of event data
  */
-#define JAVACALL_MAX_EVENT_SIZE        256
+#define JAVACALL_MAX_EVENT_SIZE        512
 
 /**
  * @def JAVACALL_MAX_FILE_NAME_LENGTH
