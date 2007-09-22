@@ -97,6 +97,7 @@ inline void EventLogger::Entry::initialize( void ) {
   const jlong freq = Os::elapsed_frequency();
   _freq = freq;
   _use_usec = freq > 100 * 1000;
+  GUARANTEE( freq != 0, "Sanity" );
 }
 
 inline void EventLogger::Entry::set ( const unsigned type, const jlong time ) {

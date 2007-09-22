@@ -292,12 +292,12 @@ inline bool JVM::initialize( void ) {
   if (Verbose) {
     JVM::print_parameters();
   }
-  EventLogger::initialize();
 
   _is_started = false;
   _exit_code = 0;
   _startup_phase_count = 0;
   Os::initialize();
+  EventLogger::initialize();
 
 #if ENABLE_PERFORMANCE_COUNTERS
   JVM::calibrate_cpu();
