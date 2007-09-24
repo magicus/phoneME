@@ -24,8 +24,8 @@
 package com.sun.mmedia.rtsp.protocol;
 
 public class RangeHeader {
-    public final long NOW = -1;
-    private long startPos;
+    public final float NOW = -1;
+    private float startPos;
     public RangeHeader(String str) {
         int start = str.indexOf('=') + 1;
         int end = str.indexOf('-');
@@ -38,11 +38,11 @@ public class RangeHeader {
         }
         else
         {
-            startPos = Long.parseLong(startPosStr);
+            startPos = Float.parseFloat(startPosStr);
         }
     }
 
-    public long getStartPos() {
+    public float getStartPos() {
         return startPos;
     }
 }

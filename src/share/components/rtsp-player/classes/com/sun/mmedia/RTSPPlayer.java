@@ -27,6 +27,7 @@ import javax.microedition.media.*;
 import javax.microedition.media.control.*;
 import com.sun.mmedia.BasicPlayer;
 import com.sun.mmedia.rtsp.*;
+import com.sun.mmedia.RTPPlayer;
 
 /**
  *  Description of the Class
@@ -52,10 +53,10 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
     private boolean setup_ok; // default is FALSE
     private boolean data_received; // default is FALSE
 
-    private final boolean RTSP_DEBUG = false;
+    private final boolean RTSP_DEBUG = true;
 
     public RTSPPlayer() {
-	rtspControl = new RtspCtrl(this);
+    rtspControl = new RtspCtrl(this);
     }
 
     /**
@@ -65,62 +66,60 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      * @exception MediaException Thrown if the <code>Player</code> cannot
      *                           be realized.
      */
-    protected final void doRealize() throws MediaException {		
-	if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doRealize");
+    protected final void doRealize() throws MediaException {
+        if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doRealize");
 
-	rtspControl.setStatus( "Negotiating");
+        rtspControl.setStatus( "Negotiating");
 
-	String locator = source.getLocator();
+        String locator = source.getLocator();
 
-	rtspManager = new RtspManager(locator);
+        rtspManager = new RtspManager(locator);
 
-	setup_ok = rtspManager.createConnection();
+        setup_ok = rtspManager.createConnection();
 
-	if (setup_ok) {
-	    // setup the RTSP session
-	    setup_ok = rtspManager.rtspSetup();
+        if (setup_ok) {
+            // setup the RTSP session
+            setup_ok = rtspManager.rtspSetup();
 
-	    if (setup_ok) {
-		numberOfTracks = rtspManager.getNumberOfTracks();
+            if (setup_ok) {
+                numberOfTracks = rtspManager.getNumberOfTracks();
 
-		int server_ports[] = rtspManager.getServerPorts();
-		int client_ports[] = rtspManager.getClientPorts();
+                int server_ports[] = rtspManager.getServerPorts();
+                int client_ports[] = rtspManager.getClientPorts();
 
-		players = new Player[numberOfTracks];
+                players = new Player[numberOfTracks];
 
-		// start the RTSP server until the internal RTP players
-		// can be realized.
-		rtspManager.setStartPos( 0);
-		boolean started = rtspManager.rtspStart();
+                // start the RTSP server until the internal RTP players
+                // can be realized.
+                rtspManager.setStartPos( 0);
 
-		if( !started) {
-		    throw new MediaException("cannot start RTSP server");
-		}
 
-		for (int i = 0; i < numberOfTracks; i++) {
-		    // setup the RTP players
-		    String url = "rtp://" + rtspManager.getServerAddress() + ":" +
-			client_ports[i];
+                RTPPlayer rr;
 
-		    try {
-			players[i] = Manager.createPlayer(url);
-		    } catch (Exception e) {
-			throw new MediaException( e.getMessage());
-		    }
+                for (int i = 0; i < numberOfTracks; i++) {
+                    // setup the RTP players
+                    String url = "rtp://" 
+                                 + rtspManager.getServerAddress() 
+                                 + ":" + client_ports[i];
 
-		    players[i].realize();
-		}     
+                    try {
+                        players[i] = Manager.createPlayer(url);
+                        rr = (RTPPlayer)players[i];
+                        rr.remotePort = server_ports[i];
+                    } catch (Exception e) {
+                        throw new MediaException( e.getMessage());
+                    }
 
-		// stop the RTSP server
-		rtspManager.rtspStop();           
-	    } else {				
-		rtspControl.setStatus( rtspManager.getProcessError());
+                    players[i].realize();
+                }
+            } else {
+                rtspControl.setStatus( rtspManager.getProcessError());
             }
-	} else {
+        } else {
             rtspControl.setStatus( "Server not found [" + rtspManager.getServerAddress() + "]");
-        }		
+        }
 
-	if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doRealize done");
+        if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doRealize done");
     }
 
     /**
@@ -136,7 +135,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      * @exception  MediaException  Description of the Exception
      */
     protected final void doPrefetch() throws MediaException {
-	// rtspControl.setStatus( "Buffering...");
+    // rtspControl.setStatus( "Buffering...");
     }
 
 
@@ -150,7 +149,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      * @return    Duration in micro-seconds
      */
     public final long doGetDuration() {
-	return rtspManager.getDuration();
+    return rtspManager.getDuration();
     }
 
 
@@ -160,31 +159,33 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      * @return    true, if the RTSP Player was started successfully, false otherwise.
      */
     protected final boolean doStart() {
-	rtspControl.setStatus( "Sun RTSP Streaming");
+        System.out.println("RTSP player: doStart()");
+        rtspControl.setStatus( "Sun RTSP Streaming");
 
-	if (setup_ok && !started) {
-	    // start the RTSP session
-	    rtspManager.setStartPos( mediaTime * 1000);
-	    started = rtspManager.rtspStart();
-			
-	    if( !started) {
-		rtspControl.setStatus( rtspManager.getProcessError());
-	    } else {
-		// start the RTP players
-		for (int i = 0; i < numberOfTracks; i++) {
-		    try {
-			players[i].start();
-		    } catch (Exception e) {
-			e.printStackTrace();
-		    }
-		}
+        if (setup_ok && !started) {
+            // start the RTSP session
+            rtspManager.setStartPos( mediaTime * 1000);
+            started = rtspManager.rtspStart();
+            
+            if( !started) {
+                rtspControl.setStatus( rtspManager.getProcessError());
+            } else {
+                // start the RTP players
+                for (int i = 0; i < numberOfTracks; i++) {
+                    try {
+                        players[i].start();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
 
-		startTime += (System.currentTimeMillis() - stopTime);
-		stopTime = 0;
-	    }
-	}
+                startTime += (System.currentTimeMillis() - stopTime);
+                stopTime = 0;
+            }
+        }
 
-	return started;
+        System.out.println("RTSP player: doStart() done");
+        return started;
     }
 
 
@@ -192,22 +193,24 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      *  Stopping the RTSP Player.
      */
     protected final void doStop() {
-	// stop the RTSP session
-	rtspManager.rtspStop();
+        if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doStop");
+        // stop the RTSP session
+        rtspManager.rtspStop();
 
-	started = false;
+        started = false;
 
-	stopTime = System.currentTimeMillis();
+        stopTime = System.currentTimeMillis();
 
-	// stop the RTP players
-	for (int i = 0; i < numberOfTracks; i++) {
-	    try {
-		players[i].stop();
-	    } catch (Exception e) {
-		e.printStackTrace();
-	    }
-	}
+        // stop the RTP players
+        for (int i = 0; i < numberOfTracks; i++) {
+            try {
+                players[i].stop();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
+        if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doStop done");
     }
 
 
@@ -215,24 +218,24 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      * Deallocates the RTSP Player.
      */
     protected final void doDeallocate() {
-	if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doDeallocate");
+    if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doDeallocate");
 
-	// teardown of the RTSP session
-	rtspManager.rtspTeardown();
-		
-	try {
-	    // stopping and deallocating all internal RTP players
-	    for (int i = 0; i < numberOfTracks; i++) {
-		players[i].stop();
-		players[i].deallocate();
-	    }
-	} catch (MediaException e) {
-	    if (RTSP_DEBUG) System.err.println("Error closing RTP players");
-	}
+    // teardown of the RTSP session
+    rtspManager.rtspTeardown();
+        
+    try {
+        // stopping and deallocating all internal RTP players
+        for (int i = 0; i < numberOfTracks; i++) {
+        players[i].stop();
+        players[i].deallocate();
+        }
+    } catch (MediaException e) {
+        if (RTSP_DEBUG) System.err.println("Error closing RTP players");
+    }
 
-	rtspManager.closeConnection();
+    rtspManager.closeConnection();
 
-	if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doDeallocate done");
+    if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doDeallocate done");
     }
 
 
@@ -240,14 +243,14 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      *  Closes the RTSP Player.
      */
     protected final void doClose() {
-	if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doClose");
+    if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doClose");
 
-	// closing all internal RTP players
-	for (int i = 0; i < numberOfTracks; i++) {
-	    players[i].close();
-	}
+    // closing all internal RTP players
+    for (int i = 0; i < numberOfTracks; i++) {
+        players[i].close();
+    }
 
-	if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doClose done");
+    if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doClose done");
     }
 
 
@@ -259,16 +262,16 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      * @return the new media time in microseconds.
      */
     protected final long doSetMediaTime(long now) throws MediaException {
-	if (started) {	    
-	    doStop();
-	}
+    if (started) {	    
+        doStop();
+    }
 
-	mediaTime = (now / 1000);
-	startTime = System.currentTimeMillis() - mediaTime;
-	
-	doStart();
+    mediaTime = (now / 1000);
+    startTime = System.currentTimeMillis() - mediaTime;
+    
+    doStart();
 
-	return now;
+    return now;
     }
 
 
@@ -278,17 +281,17 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      * @return    the media time in microseconds.
      */
     protected final long doGetMediaTime() {
-	if (started) {
-	    mediaTime = System.currentTimeMillis() - startTime;
+    if (started) {
+        mediaTime = System.currentTimeMillis() - startTime;
 
-	    if( (mediaTime * 1000) >= rtspManager.getDuration()) {
-		started = false;
-		sendEvent( PlayerListener.END_OF_MEDIA, 
-			   new Long( mediaTime * 1000));	    
-	    }
-	}
+        if( (mediaTime * 1000) >= rtspManager.getDuration()) {
+        started = false;
+        sendEvent( PlayerListener.END_OF_MEDIA, 
+               new Long( mediaTime * 1000));	    
+        }
+    }
 
-	return mediaTime * 1000;
+    return mediaTime * 1000;
     }
 
     /**
@@ -299,7 +302,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      */
 
     public RtspCtrl getRtspControl() {
-	return rtspControl;
+    return rtspControl;
     }
 
     /**

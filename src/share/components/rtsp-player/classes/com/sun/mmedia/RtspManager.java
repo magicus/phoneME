@@ -39,9 +39,9 @@ import com.sun.mmedia.rtsp.sdp.*;
  */
 public class RtspManager {
     // timer (in ms):
-    private final int TIMER_1 = 5000;
+    private final int TIMER_1 = 30000;
     // used for describe msg
-    private final int TIMER_2 = 3000;
+    private final int TIMER_2 = 30000;
     // used for all other messages
 
     private String mediaTypes[];
@@ -165,6 +165,7 @@ public class RtspManager {
      *            successfully, otherwise false.
      */
     public boolean createConnection() {
+        System.out.println("createConnection:(" + rtspUrl.getHost() + "," + rtspUrl.getPort() + ")");
         try {
             connection = new Connection(this,
 					rtspUrl.getHost(), 
@@ -175,7 +176,6 @@ public class RtspManager {
 
         return true;
     }
-
 
     /**
      * Closes the TCP/IP connection to the RTSP server.
@@ -298,6 +298,24 @@ public class RtspManager {
             }
 
             server_ports[i] = serverPort;
+
+            int clientPort = getClientDataPort();
+
+            if (clientPort == -1)
+            {
+                processError = "Invalid client data port";
+                return false;
+            }
+
+            if (client_ports[i] != clientPort)
+            {
+                System.out.println("RTSPManager: overriding clent port: "
+                                    + client_ports[i] + " --> "
+                                    + clientPort);
+
+            }
+
+            client_ports[i] = clientPort;
         }
 
         return true;
@@ -369,6 +387,31 @@ public class RtspManager {
         return port;
     }
 
+    /**
+     * Gets the server data port.
+     *
+     * @return    The server data port.
+     */
+    private int getClientDataPort()
+    {
+        int port = -1;
+
+        try
+        {
+            ResponseMessage responseMsg = (ResponseMessage)message.getParameter();
+
+            TransportHeader transport_hdr =
+                (TransportHeader)responseMsg.getResponse()
+                .getHeader(Header.TRANSPORT).parameter;
+
+            port = transport_hdr.getClientDataPort();
+        }
+        catch (Exception e)
+        {
+        }
+
+        return port;
+    }
 
     /**
      *  Sends an RTSP START message.
@@ -699,8 +742,13 @@ public class RtspManager {
             createConnection();
         }
 
-        if (connection.sendData(message.getBytes())) {
-            // System.out.println(message);
+        if (connection.sendData(message.getBytes()))
+        {
+            System.out.println("==== SENT: =======================\n" + message + "==================================");
+        }
+        else
+        {
+            System.out.println("Failed to send:" + message);
         }
     }
 
@@ -714,20 +762,23 @@ public class RtspManager {
     private synchronized boolean waitForResponse(int time) {
         boolean timeout = false;
 
-        try {
+        try
+        {
             synchronized (responseSync) {
                 if (!responseReceived) {
                     responseSync.wait(time);
                 }
 
-                if (responseReceived) {
+                if (responseReceived)
+                {
                     sequenceNumber++;
                 } else {
                     timeout = true;
                 }
             }
         } catch (InterruptedException e) {
-	    timeout = true;
+	        timeout = true;
+            System.out.println("    waitForResponse: interrupted");
         }
 
         return timeout;
@@ -757,7 +808,6 @@ public class RtspManager {
      */
     private void processRtspResponse(int connectionId, Message message) {
         this.message = message;
-
         responseReceived = true;
 
         synchronized (responseSync) {

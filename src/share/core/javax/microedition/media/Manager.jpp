@@ -40,6 +40,10 @@ import com.sun.mmedia.Configuration;
 import com.sun.mmedia.protocol.*;
 import com.sun.mmedia.DefaultConfiguration;
 
+// #ifdef RTP_PLAYER [
+import com.sun.mmedia.RTPPlayer;
+// #endif ]
+
 // #ifndef ABB [
 import javax.microedition.media.protocol.*;
 // #endif ]
@@ -891,6 +895,10 @@ public final class Manager {
         if( null != theProtocol && theProtocol.equals( "rtsp" ) )
         {
 			p = new RTSPPlayer();
+        }
+        else if( null != theProtocol && theProtocol.equals( "rtp" ) )
+        {
+			p = new RTPPlayer();
         }
         else
         {
