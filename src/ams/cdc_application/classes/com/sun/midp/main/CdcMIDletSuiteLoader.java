@@ -37,6 +37,7 @@ import com.sun.midp.lcdui.*;
 import com.sun.midp.midlet.*;
 import com.sun.midp.midletsuite.*;
 import com.sun.midp.security.*;
+import com.sun.cdc.config.MIDPPackageManager;
 
 /**
  * The first class loaded in VM by midp_run_midlet_with_args to initialize
@@ -88,6 +89,9 @@ public class CdcMIDletSuiteLoader extends AbstractMIDletSuiteLoader
                 throw new
                     IllegalArgumentException("MIDlet class name absent.");
             }
+
+            // Init optional JSRs
+            MIDPPackageManager.init();
 
             loader.midletClassName = args[1];
 
