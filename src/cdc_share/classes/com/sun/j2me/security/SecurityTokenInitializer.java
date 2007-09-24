@@ -36,7 +36,9 @@ public final class SecurityTokenInitializer {
      */
     final public static Token requestToken(
             TrustedClass trusted) {
-        return new Token(SecurityInitializer.requestToken(null));
+        // IMPL_NOTE: Temporary workaround
+        // return new Token(SecurityInitializer.requestToken(null));
+        return null;
     }
 
 }
