@@ -133,4 +133,10 @@ CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_PUB_CLASSES_ZIP) $(JSROP_AGENT_JARS)
 CVM_CNI_CLASSES += $(MIDP_CNI_CLASSES)
 endif
 
+# MIDP package checker 
+MIDP_PKG_CHECKER = MIDPPkgChecker.java
+
+CLASSLIB_CLASSES += \
+	sun.misc.MIDPPkgChecker
+
 endif

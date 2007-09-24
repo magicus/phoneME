@@ -1,7 +1,5 @@
 /*
- * @(#)jit_common.c	1.159 06/10/25
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -1726,13 +1724,22 @@ CVMjitReinitialize(CVMExecEnv* ee, const char* subOptionsString)
     }    
 
 #ifdef CVM_DEBUG
-    CVMconsolePrintf("JIT Configuration:\n");
-    CVMprintSubOptionValues(knownJitSubOptions);
+    CVMjitDumpSysInfo();
 #endif
 
     return CVM_TRUE;
 }
 #endif
+
+#if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
+/* Dumps info about the configuration of the JIT. */
+void CVMjitDumpSysInfo()
+{
+    CVMconsolePrintf("JIT Configuration:\n");
+    CVMprintSubOptionValues(knownJitSubOptions);
+}
+#endif /* CVM_DEBUG || CVM_INSPECTOR */
+
 
 #if defined(CVM_AOT) && !defined(CVM_MTASK)
 /*

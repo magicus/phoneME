@@ -1,7 +1,5 @@
 /*
- * @(#)globals.h	1.170 06/10/30
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -656,6 +654,10 @@ CVMoptParseXoptOptions(const char* optAttributesStr);
 
 extern CVMBool
 CVMoptParseXssOption(const char* optAttributesStr);
+
+#if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
+extern void CVMdumpGlobalsSubOptionValues();
+#endif /* CVM_DEBUG || CVM_INSPECTOR */
 
 extern CVMGlobalState CVMglobals;
 extern CVMBool

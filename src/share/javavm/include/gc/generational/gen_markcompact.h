@@ -1,7 +1,5 @@
 /*
- * @(#)gen_markcompact.h	1.21 06/10/10
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -87,3 +85,8 @@ CVMgenMarkCompactRebuildBarrierTable(CVMGenMarkCompactGeneration* thisGen,
 				     CVMGCOptions* gcOpts,
 				     CVMUint32* startRange,
 				     CVMUint32* endRange);
+
+#if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
+/* Dumps info about the configuration of the markcompact generation. */
+void CVMgenMarkCompactDumpSysInfo(CVMGenMarkCompactGeneration* thisGen);
+#endif

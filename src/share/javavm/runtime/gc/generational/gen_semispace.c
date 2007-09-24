@@ -1,7 +1,5 @@
 /*
- * @(#)gen_semispace.c	1.74 06/10/19
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -437,17 +435,43 @@ CVMgenSemispaceAlloc(CVMUint32* space, CVMUint32 totalNumBytes)
     thisGen->gen.getExtraSpace = CVMgenSemispaceGetExtraSpace;
     thisGen->gen.freeMemory = CVMgenSemispaceFreeMemory;
     thisGen->gen.totalMemory = CVMgenSemispaceTotalMemory;
-    
-    CVMdebugPrintf(("GC[SS]: Initialized semi-space gen for generational GC\n"));
-    CVMdebugPrintf(("\tSize of *each* semispace in bytes=%d\n"
-		  "\tLimits of generation = [0x%x,0x%x)\n" 
-		  "\tFirst semispace      = [0x%x,0x%x)\n" 
-		  "\tSecond semispace     = [0x%x,0x%x)\n",
-		  numBytes, fromSpace->allocBase, toSpace->allocTop,
-		  fromSpace->allocBase, fromSpace->allocTop,
-		  toSpace->allocBase, toSpace->allocTop));
+
+#if defined(CVM_DEBUG)
+    CVMgenSemispaceDumpSysInfo(thisGen);
+#endif /* CVM_DEBUG */
     return (CVMGeneration*)thisGen;
 }
+
+#if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
+/* Dumps info about the configuration of the semispace generation. */
+void CVMgenSemispaceDumpSysInfo(CVMGenSemispaceGeneration* thisGen)
+{
+    CVMUint32 numBytes;
+    CVMGenSpace* fromSpace = thisGen->fromSpace;
+    CVMGenSpace* toSpace = thisGen->toSpace;
+
+    CVMGenSpace* firstSpace;
+    CVMGenSpace* secondSpace;
+
+    firstSpace = (fromSpace->allocBase < toSpace->allocBase) ?
+	         fromSpace : toSpace;
+    secondSpace = (fromSpace->allocBase > toSpace->allocBase) ?
+	          fromSpace : toSpace;
+    numBytes = (firstSpace->allocTop - firstSpace->allocBase) *
+               sizeof(CVMUint32);
+
+    CVMconsolePrintf("GC[SS]: Initialized semi-space gen for generational GC\n");
+    CVMconsolePrintf("\tSize of *each* semispace in bytes=%d\n"
+		     "\tLimits of generation = [0x%x,0x%x)\n" 
+		     "\tFirst semispace      = [0x%x,0x%x)\n" 
+		     "\tSecond semispace     = [0x%x,0x%x)\n"
+		     "\tCurrent semispace    = %s semispace\n",
+		     numBytes, firstSpace->allocBase, secondSpace->allocTop,
+		     firstSpace->allocBase, firstSpace->allocTop,
+		     secondSpace->allocBase, secondSpace->allocTop,
+		     ((fromSpace == firstSpace) ?"First":"Second"));
+}
+#endif /* CVM_DEBUG || CVM_INSPECTOR */
 
 /*
  * Free all the memory associated with the current semispaces generation

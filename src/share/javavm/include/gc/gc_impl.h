@@ -1,7 +1,5 @@
 /*
- * @(#)gc_impl.h	1.24 06/10/10
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -149,6 +147,11 @@ extern CVMBool
 CVMgcimplIterateHeap(CVMExecEnv* ee, CVMObjectCallbackFunc cback, void* data);
 
 #endif /* defined(CVM_INSPECTOR) || defined(CVM_JVMPI) */
+
+#if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
+/* Dumps info about the configuration of the GC. */
+void CVMgcimplDumpSysInfo();
+#endif
 
 /* Sample read and write barriers. Put these in the gc_config.h file
    for a given GC implementation to get verbose output on when the

@@ -1,7 +1,5 @@
 /*
- * @(#)gen_markcompact.c	1.54 06/10/10
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -663,13 +661,29 @@ CVMgenMarkCompactAlloc(CVMUint32* space, CVMUint32 totalNumBytes)
     thisGen->gen.freeMemory = CVMgenMarkcompactFreeMemory;
     thisGen->gen.totalMemory = CVMgenMarkcompactTotalMemory;
 
-    CVMdebugPrintf(("GC[MC]: Initialized mark-compact gen "
-		  "for generational GC\n"));
-    CVMdebugPrintf(("\tSize of the space in bytes=%d\n"
-		  "\tLimits of generation = [0x%x,0x%x)\n",
-		  numBytes, thisGen->gen.allocBase, thisGen->gen.allocTop));
+#if defined(CVM_DEBUG)
+    CVMgenMarkCompactDumpSysInfo(thisGen);
+#endif /* CVM_DEBUG */
+
     return (CVMGeneration*)thisGen;
 }
+
+#if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
+/* Dumps info about the configuration of the markcompact generation. */
+void CVMgenMarkCompactDumpSysInfo(CVMGenMarkCompactGeneration* thisGen)
+{
+    CVMUint32 numBytes;
+
+    numBytes = (thisGen->gen.heapTop - thisGen->gen.heapBase) *
+	       sizeof(CVMUint32);
+
+    CVMconsolePrintf("GC[MC]: Initialized mark-compact gen "
+		     "for generational GC\n");
+    CVMconsolePrintf("\tSize of the space in bytes=%d\n"
+		     "\tLimits of generation = [0x%x,0x%x)\n",
+		     numBytes, thisGen->gen.allocBase, thisGen->gen.allocTop);
+}
+#endif /* CVM_DEBUG || CVM_INSPECTOR */
 
 /*
  * Free all the memory associated with the current mark-compact generation

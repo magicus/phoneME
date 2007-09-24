@@ -1,7 +1,5 @@
 /*
- * @(#)interpreter.h	1.255 06/10/30
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -273,6 +271,11 @@ struct CVMExecEnv {
 
 #ifdef CVM_TRACE
     CVMUint32 traceDepth;
+#endif
+
+#ifdef CVM_INSPECTOR
+    CVMInt32 priority;
+    CVMUint32 tickCount;
 #endif
 };
 
@@ -558,23 +561,29 @@ extern void CVMremoveThread(CVMExecEnv *ee, CVMBool userThread);
 
 #define CVMcurrentThreadICell(ee) ((ee)->threadICell)
 
+#ifdef CVM_INSPECTOR
+#define CVMeeIncTickCount(ee)   ((ee)->tickCount++)
+#else
+#define CVMeeIncTickCount(ee)   ((void)0) /* Null expression. */
+#endif
+
 /* NOTE: CVMeeMarkHasRun(ee) is used to mark the specified thread has run
     since the last JVMPI suspension of that thread.  This is needed to
     support the JVMPI ThreadHasRun() query: */
 #ifdef CVM_JVMPI
 
 /* Purpose: Mark the specified thread as having run. */
-#define CVMeeMarkHasRun(ee)     ((ee)->hasRun = CVM_TRUE)
+#define CVMeeMarkHasRun(ee)  (CVMeeIncTickCount(ee), ((ee)->hasRun = CVM_TRUE))
 
 /* Purpose: Reset the hasRun flag of the specified thread.  This is done
             immediately after the thread is suspended. */
-#define CVMeeResetHasRun(ee)    ((ee)->hasRun = CVM_FALSE)
+#define CVMeeResetHasRun(ee) ((ee)->hasRun = CVM_FALSE)
 
 /* Purpose: Checks to see if the specified thread has run. */
-#define CVMeeHasRun(ee)         ((ee)->hasRun)
+#define CVMeeHasRun(ee)      ((ee)->hasRun)
 
 #else
-#define CVMeeMarkHasRun(ee)     ((void)0) /* Null expression. */
+#define CVMeeMarkHasRun(ee)  (CVMeeIncTickCount(ee))
 #endif /* CVM_JVMPI */
 
 /**********************************************************************

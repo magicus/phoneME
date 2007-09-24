@@ -1,7 +1,5 @@
 /*
- * @(#)jvm.c	1.288 06/10/30
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -1853,6 +1851,9 @@ static void start_func(void *arg)
 
     CVMcondvarNotify(&info->parentCond);
     CVMthreadSetPriority(&ee->threadInfo, info->priority);
+#ifdef CVM_INSPECTOR
+    ee->priority = info->priority;
+#endif
 
     CVMmutexUnlock(&info->parentLock);
 
@@ -2283,6 +2284,9 @@ JVM_SetThreadPriority(JNIEnv *env, jobject thread, jint prio)
 
     if (targetEE != NULL) {
 	CVMthreadSetPriority(&targetEE->threadInfo, prio);
+#ifdef CVM_INSPECTOR
+	targetEE->priority = prio;
+#endif
     }
 
     CVMsysMutexUnlock(ee, &CVMglobals.threadLock);

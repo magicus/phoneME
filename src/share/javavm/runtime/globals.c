@@ -1,7 +1,5 @@
 /*
- * @(#)globals.c	1.200 06/10/25
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -718,6 +716,13 @@ CVMoptParseXssOption(const char* xssStr)
     }
 }
 
+#if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
+void CVMdumpGlobalsSubOptionValues()
+{
+    CVMprintSubOptionValues(knownOptSubOptions);
+}
+#endif /* CVM_DEBUG || CVM_INSPECTOR */
+
 CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
 {
     CVMExecEnv *ee = &gs->mainEE;
@@ -842,10 +847,10 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
 	return CVM_FALSE;
     }
 
-#ifdef CVM_DEBUG
+#if defined(CVM_DEBUG)
     CVMconsolePrintf("CVM Configuration:\n");
-    CVMprintSubOptionValues(knownOptSubOptions);
-#endif
+    CVMdumpGlobalsSubOptionValues();
+#endif /* CVM_DEBUG */
 
     /* In the future, this should be map to a -Xopt sub-option */
     if (options->nativeStackSizeStr != NULL) {
