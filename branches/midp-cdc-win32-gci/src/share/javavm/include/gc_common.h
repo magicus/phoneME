@@ -1,7 +1,5 @@
 /*
- * @(#)gc_common.h	1.78 06/10/10
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -658,5 +656,10 @@ extern CVMUint32 CVMgcGetArenaID(CVMObject *obj);
 
 #endif
 
+
+#if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
+/* Dumps info about the configuration of the GC. */
+#define CVMgcDumpSysInfo() CVMgcimplDumpSysInfo()
+#endif
 
 #endif /* _INCLUDED_GC_COMMON_H */

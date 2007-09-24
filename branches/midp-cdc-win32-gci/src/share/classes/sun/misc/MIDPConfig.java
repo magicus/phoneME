@@ -64,9 +64,7 @@ class MIDPConfig{
      */
     static String
     systemPackages[] = {
-	"java.lang.",
-	"java.io.",
-	"java.util.",
+	"java.",
 	"javax.microedition."
     };
 

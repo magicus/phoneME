@@ -104,6 +104,24 @@ public class MIDletClassLoader extends URLClassLoader {
 	return super.getPermissions(cs);
     }
 
+    /* Check if class belongs to restricted system packages. */
+    private boolean
+    packageCheck(String pkg) {
+	String forbidden[] = systemPkgs;
+	int fLength = forbidden.length;
+
+        /* First check the default list specified by MIDPConfig */
+	for (int i=0; i< fLength; i++){
+	    if (pkg.startsWith(forbidden[i])){
+		return true;
+	    }
+	}
+
+        /* Then Check with MIDPPkgChecker. The MIDPPkgChecker knows
+         * the restricted MIDP and JSR packages specified in their
+         * rom.conf files. */
+        return MIDPPkgChecker.checkPackage(pkg);
+    }
 
     private Class
     loadFromUrl(String classname) throws ClassNotFoundException
@@ -123,14 +141,11 @@ public class MIDletClassLoader extends URLClassLoader {
          * Found the requested class. Make sure it's not from
          * restricted system packages.
          */
-	String forbidden[] = systemPkgs;
-	int fLength = forbidden.length;
-        if (!classname.startsWith("com.sun.midp.examples")) {
-	    for (int i=0; i< fLength; i++){
-	        if (classname.startsWith(forbidden[i])){
-		    throw new SecurityException("Prohibited package name: " +
-		        classname.substring(0, classname.lastIndexOf('.')));
-	        }
+        int idx = classname.lastIndexOf('.');
+        if (idx != -1) {
+            String pkg = classname.substring(0, idx);
+            if (packageCheck(pkg)) {
+                throw new SecurityException("Prohibited package name: " + pkg);
 	    }
 	}
 

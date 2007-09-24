@@ -1,7 +1,5 @@
 /*
- * @(#)VMInspector.java	1.4 06/10/10
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -59,6 +57,8 @@ public class VMInspector
     public static native void dumpClassReferences(String classname);
     public static native void dumpClassBlocks(String classname);
 
+    // System info utilities:
+    public static native void dumpSysInfo();
     public static native void dumpHeapSimple();
     public static native void dumpHeapVerbose();
     public static native void dumpHeapStats();
@@ -83,5 +83,6 @@ public class VMInspector
 
     // Thread utilities:
     public static native void listAllThreads();
+    public static native void dumpAllThreads();
     public static native void dumpStack(long eeAddr);
 }
