@@ -102,7 +102,8 @@ public final class DirectTone extends DirectPlayer {
         }
         
         try {
-            this.setSequence(seqs);
+            ToneControl tControl = new DirectToneControl(this, false);
+            tControl.setSequence(seqs);
         } catch (Exception e) {
             throw new MediaException("unable to realize: " + e.getMessage());
         }
