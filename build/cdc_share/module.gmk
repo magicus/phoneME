@@ -67,7 +67,15 @@ ABSTRACTIONS_CLASSES += \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreNotOpenException.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreFullException.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreNotFoundException.java \
-    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreInvocationHandler.java
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/rms/RecordStoreInvocationHandler.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/PIMPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/Permission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/FileConnectionPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/SatsaPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/LocationPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/SensorPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/BluetoothPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/OBEXPermission.java
 
 ifeq ($(USE_JSR_177), true)
 # names of native source files (like 'file.c')
@@ -119,6 +127,10 @@ ABSTRACTIONS_WRAPPER_CLASSES += \
         com.sun.midp.security.SecurityToken \
         com.sun.midp.security.SecurityInitializer \
         com.sun.midp.security.ImplicitlyTrustedClass \
+        com.sun.midp.security.Permissions \
+        com.sun.midp.security.PermissionGroup \
+        com.sun.j2me.security.AccessController \
+        -e com.sun.j2me.security.AccessControlContext \
 
 #####################################################
 ABSTRACTIONS_NATIVE_OBJS     = $(patsubst %.c,$(CVM_OBJDIR)/%.o,$(ABSTRACTIONS_NATIVES))
