@@ -112,7 +112,7 @@ public interface DualToneControl extends javax.microedition.media.control.ToneCo
     /** 
      * The DUALTONE attribute tag.
      * <p>
-     * Value -10 is assigned to <code>DUALTONE</code>.
+     * Value -50 is assigned to <code>DUALTONE</code>.
      */
     byte DUALTONE = -50;
 }
