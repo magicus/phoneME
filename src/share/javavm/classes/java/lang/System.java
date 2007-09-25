@@ -963,14 +963,7 @@ public final class System {
 
         // dynamic properties initialization (should be moved to more
         // appropriate place when we have dynamic package loading implemented)
-        String[] mainClasses = PackageManager.listComponents();
-        for (int i = 0; i < mainClasses.length; i++) {
-            try {
-                Class.forName(mainClasses[i]);
-            } catch (ClassNotFoundException e) {
-                // ignore silently
-            }
-        }
+        PackageManager.init();
 
 	sun.misc.Version.init();
 	FileInputStream fdIn = new FileInputStream(FileDescriptor.in);
