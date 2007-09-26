@@ -38,6 +38,7 @@ import com.sun.mmedia.rtsp.sdp.*;
  * @created    September 11, 2002
  */
 public class RtspManager {
+    private final boolean RTSP_DEBUG;
     // timer (in ms):
     private final int TIMER_1 = 30000;
     // used for describe msg
@@ -81,11 +82,12 @@ public class RtspManager {
      * @param  url                 The RTSP URL, for example "rtsp://rio:1554/br.mov".
      * @exception  MediaException  Description of the Exception
      */
-    public RtspManager(String url) throws MediaException {
+    public RtspManager(String url,boolean rtsp_debug) throws MediaException {
+        RTSP_DEBUG = rtsp_debug;
         try {
             rtspUrl = new RtspUrl(url);
         } catch (IOException e) {
-	    throw new MediaException("Invalid URL: " + url);
+            throw new MediaException("Invalid URL: " + url);
         }
 
         listeners = new Vector();
@@ -165,11 +167,14 @@ public class RtspManager {
      *            successfully, otherwise false.
      */
     public boolean createConnection() {
-        System.out.println("createConnection:(" + rtspUrl.getHost() + "," + rtspUrl.getPort() + ")");
+
+        if(RTSP_DEBUG) System.out.println("createConnection:(" 
+            + rtspUrl.getHost() + "," + rtspUrl.getPort() + ")");
+
         try {
             connection = new Connection(this,
-					rtspUrl.getHost(), 
-					rtspUrl.getPort());
+                    rtspUrl.getHost(), 
+                    rtspUrl.getPort(),RTSP_DEBUG);
         } catch (IOException e) {
             return false;
         }
@@ -309,13 +314,12 @@ public class RtspManager {
 
             if (client_ports[i] != clientPort)
             {
-                System.out.println("RTSPManager: overriding clent port: "
+                if (RTSP_DEBUG) System.out.println("RTSPManager: overriding clent port: "
                                     + client_ports[i] + " --> "
                                     + clientPort);
 
+                client_ports[i] = clientPort;
             }
-
-            client_ports[i] = clientPort;
         }
 
         return true;
@@ -498,8 +502,8 @@ public class RtspManager {
             boolean timeout = waitForResponse(TIMER_2);
 
             if (timeout) {
-		processError = "Server is not responding";
-		return;
+                processError = "Server is not responding";
+                return;
             }
         }
     }
@@ -645,8 +649,8 @@ public class RtspManager {
 
             SdpParser sdp = msg.getResponse().sdp;
 
-            MediaDescription md = (MediaDescription) sdp.getMediaDescriptions().
-		elementAt(index);
+            MediaDescription md 
+                = (MediaDescription) sdp.getMediaDescriptions().elementAt(index);
 
             type = md.name;
         } catch (Exception e) {
@@ -744,11 +748,13 @@ public class RtspManager {
 
         if (connection.sendData(message.getBytes()))
         {
-            System.out.println("==== SENT: =======================\n" + message + "==================================");
+            if(RTSP_DEBUG) System.out.println("==== SENT: =======================\n" 
+                                              + message 
+                                              + "==================================");
         }
         else
         {
-            System.out.println("Failed to send:" + message);
+            if (RTSP_DEBUG) System.out.println("Failed to send:" + message);
         }
     }
 
@@ -777,8 +783,8 @@ public class RtspManager {
                 }
             }
         } catch (InterruptedException e) {
-	        timeout = true;
-            System.out.println("    waitForResponse: interrupted");
+            timeout = true;
+            if (RTSP_DEBUG) System.out.println("    waitForResponse: interrupted");
         }
 
         return timeout;
@@ -899,7 +905,7 @@ public class RtspManager {
      * @param  connectionId  Description of the Parameter
      */
     public void rtspConnectionTerminated(int connectionId) {
-        // System.out.println( "RtspPlayer::rtspConnectionTerminated");
+        if(RTSP_DEBUG) System.out.println( "RtspPlayer::rtspConnectionTerminated");
     }
 
 

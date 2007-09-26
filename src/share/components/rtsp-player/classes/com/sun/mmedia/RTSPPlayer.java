@@ -52,7 +52,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
     private boolean setup_ok; // default is FALSE
     private boolean data_received; // default is FALSE
 
-    private final boolean RTSP_DEBUG = true;
+    private final boolean RTSP_DEBUG = false;
 
     public RTSPPlayer() {
         rtspControl = new RtspCtrl(this);
@@ -66,13 +66,13 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      *                           be realized.
      */
     protected final void doRealize() throws MediaException {
-        if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doRealize");
+        if (RTSP_DEBUG) System.out.println("[RTSPPlayer] doRealize");
 
         rtspControl.setStatus( "Negotiating");
 
         String locator = source.getLocator();
 
-        rtspManager = new RtspManager(locator);
+        rtspManager = new RtspManager(locator,RTSP_DEBUG);
 
         setup_ok = rtspManager.createConnection();
 
@@ -113,7 +113,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
             rtspControl.setStatus( "Server not found [" + rtspManager.getServerAddress() + "]");
         }
 
-        if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doRealize done");
+        if (RTSP_DEBUG) System.out.println("[RTSPPlayer] doRealize done");
     }
 
     /**
@@ -153,7 +153,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      * @return    true, if the RTSP Player was started successfully, false otherwise.
      */
     protected final boolean doStart() {
-        System.out.println("RTSP player: doStart()");
+        if (RTSP_DEBUG) System.out.println("RTSP player: doStart()");
         rtspControl.setStatus( "Sun RTSP Streaming");
 
         if (setup_ok && !started) {
@@ -183,7 +183,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
             }
         }
 
-        System.out.println("RTSP player: doStart() done");
+        if (RTSP_DEBUG) System.out.println("RTSP player: doStart() done");
         return started;
     }
 
@@ -192,7 +192,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      *  Stopping the RTSP Player.
      */
     protected final void doStop() {
-        if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doStop");
+        if (RTSP_DEBUG) System.out.println("[RTSPPlayer] doStop");
         // stop the RTSP session
         rtspManager.rtspStop();
 
@@ -209,7 +209,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
             }
         }
 
-        if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doStop done");
+        if (RTSP_DEBUG) System.out.println("[RTSPPlayer] doStop done");
     }
 
 
@@ -217,7 +217,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      * Deallocates the RTSP Player.
      */
     protected final void doDeallocate() {
-        if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doDeallocate");
+        if (RTSP_DEBUG) System.out.println("[RTSPPlayer] doDeallocate");
 
         // teardown of the RTSP session
         rtspManager.rtspTeardown();
@@ -229,12 +229,12 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
                 players[i].deallocate();
             }
         } catch (MediaException e) {
-            if (RTSP_DEBUG) System.err.println("Error closing RTP players");
+            if (RTSP_DEBUG) System.out.println("Error closing RTP players");
         }
 
         rtspManager.closeConnection();
 
-        if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doDeallocate done");
+        if (RTSP_DEBUG) System.out.println("[RTSPPlayer] doDeallocate done");
     }
 
 
@@ -242,14 +242,14 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      *  Closes the RTSP Player.
      */
     protected final void doClose() {
-        if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doClose");
+        if (RTSP_DEBUG) System.out.println("[RTSPPlayer] doClose");
 
         // closing all internal RTP players
         for (int i = 0; i < numberOfTracks; i++) {
             players[i].close();
         }
 
-        if (RTSP_DEBUG) System.err.println("[RTSPPlayer] doClose done");
+        if (RTSP_DEBUG) System.out.println("[RTSPPlayer] doClose done");
     }
 
 
@@ -335,7 +335,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
                     control = players[i].getControl(type);
 
                     if( control != null) {
-                        if (RTSP_DEBUG) System.err.println( "[RTSPPlayer] got video control");
+                        if (RTSP_DEBUG) System.out.println( "[RTSPPlayer] got video control");
                         break;
                     }
                 }
