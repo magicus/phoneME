@@ -25,7 +25,7 @@
 package com.sun.j2me.security;
 
 /**
- * Intermediate class for PIM permissions accuring
+ * Intermediate class for permissions.
  */
 public class Permission {
     
@@ -33,7 +33,7 @@ public class Permission {
     
     private String resource;
     
-    /** Creates a new instance of PIMPermissions */
+    /** Creates a new instance of Permission */
     public Permission(String name, String resource) {
         this.name = name;
         this.resource = resource;

@@ -24,8 +24,10 @@
 
 package com.sun.j2me.security;
 
+import com.sun.j2me.proxy.security.Permissions;
+
 /**
- * OBEXPermission access permissions.
+ * OBEX access permissions.
  */
 public class OBEXPermission extends Permission {
 
@@ -34,17 +36,19 @@ public class OBEXPermission extends Permission {
     static String STR_TCP_OBEX_CLIENT = "javax.microedition.io.Connector.obex.client.tcp";
     static String STR_TCP_OBEX_SERVER = "javax.microedition.io.Connector.obex.server.tcp";
 
-    static public OBEXPermission OBEX_CLIENT =
-        new OBEXPermission(STR_OBEX_CLIENT, null);
-    static public OBEXPermission OBEX_SERVER =
-        new OBEXPermission(STR_OBEX_SERVER, null);
-    static public OBEXPermission TCP_OBEX_CLIENT =
-        new OBEXPermission(STR_TCP_OBEX_CLIENT, null);
-    static public OBEXPermission TCP_OBEX_SERVER =
-        new OBEXPermission(STR_TCP_OBEX_SERVER, null);
+    static public OBEXPermission OBEX_CLIENT = new OBEXPermission(
+        Permissions.getName(Permissions.OBEX_CLIENT), null);
 
-    public OBEXPermission(String name, String resource)
-    {
+    static public OBEXPermission OBEX_SERVER = new OBEXPermission(
+        Permissions.getName(Permissions.OBEX_SERVER), null);
+
+    static public OBEXPermission TCP_OBEX_CLIENT = new OBEXPermission(
+        Permissions.getName(Permissions.TCP_OBEX_CLIENT), null);
+
+    static public OBEXPermission TCP_OBEX_SERVER = new OBEXPermission(
+        Permissions.getName(Permissions.TCP_OBEX_SERVER), null);
+
+    public OBEXPermission(String name, String resource) {
         super(name, resource);
     }
 }

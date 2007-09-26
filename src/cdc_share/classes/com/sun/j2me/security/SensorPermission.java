@@ -26,22 +26,21 @@
 
 package com.sun.j2me.security;
 
+import com.sun.j2me.proxy.security.Permissions;
+
+/**
+ * Sensor access permissions.
+ */
 public class SensorPermission extends Permission {
 
-    static String ACCESS_READ      = "read";
-
-    static String SENSOR             = "javax.microedition.io.Connector.sensor";
-    static String PRIVATE_SENSOR     = "javax.microedition.sensor.PrivateSensor";
-    static String PROTECTED_SENSOR   = "javax.microedition.sensor.ProtectedSensor";
+    static public SensorPermission SENSOR_READ = new SensorPermission(
+        Permissions.getName(Permissions.SENSOR), null);
     
-    static public SensorPermission SENSOR_READ = 
-            new SensorPermission(SENSOR, ACCESS_READ);
+    static public SensorPermission PRIVATE_READ = new SensorPermission(
+        Permissions.getName(Permissions.PRIVATE_SENSOR), null);
     
-    static public SensorPermission PRIVATE_READ = 
-            new SensorPermission(PRIVATE_SENSOR, ACCESS_READ);
-    
-    static public SensorPermission PROTECTED_READ = 
-            new SensorPermission(PROTECTED_SENSOR, ACCESS_READ);
+    static public SensorPermission PROTECTED_READ = new SensorPermission(
+        Permissions.getName(Permissions.PROTECTED_SENSOR), null);
 
     public SensorPermission(String name, String resource) {
         super(name, resource);

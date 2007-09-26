@@ -24,27 +24,26 @@
 
 package com.sun.j2me.security;
 
+import com.sun.j2me.proxy.security.Permissions;
+
 /**
- * BluetoothPermission access permissions.
+ * Bluetooth access permissions.
  */
 public class BluetoothPermission extends Permission {
 
-    static String STR_BLUETOOTH_CLIENT = "javax.microedition.io.Connector.bluetooth.client";
-    static String STR_BLUETOOTH_SERVER = "javax.microedition.io.Connector.bluetooth.server";
-    static String STR_OBEX_CLIENT = "javax.microedition.io.Connector.obex.client";
-    static String STR_OBEX_SERVER = "javax.microedition.io.Connector.obex.server";
+    static public BluetoothPermission BLUETOOTH_CLIENT = new BluetoothPermission(
+        Permissions.getName(Permissions.BLUETOOTH_CLIENT), null);
 
-    static public BluetoothPermission BLUETOOTH_CLIENT =
-        new BluetoothPermission(STR_BLUETOOTH_CLIENT, null);
-    static public BluetoothPermission BLUETOOTH_SERVER =
-        new BluetoothPermission(STR_BLUETOOTH_SERVER, null);
-    static public BluetoothPermission OBEX_CLIENT =
-        new BluetoothPermission(STR_OBEX_CLIENT, null);
-    static public BluetoothPermission OBEX_SERVER =
-        new BluetoothPermission(STR_OBEX_SERVER, null);
+    static public BluetoothPermission BLUETOOTH_SERVER = new BluetoothPermission(
+        Permissions.getName(Permissions.BLUETOOTH_SERVER), null);
 
-    public BluetoothPermission(String name, String resource)
-    {
+    static public BluetoothPermission OBEX_CLIENT = new BluetoothPermission(
+        Permissions.getName(Permissions.OBEX_CLIENT), null);
+
+    static public BluetoothPermission OBEX_SERVER = new BluetoothPermission(
+        Permissions.getName(Permissions.OBEX_SERVER), null);
+
+    public BluetoothPermission(String name, String resource) {
         super(name, resource);
     }
 }

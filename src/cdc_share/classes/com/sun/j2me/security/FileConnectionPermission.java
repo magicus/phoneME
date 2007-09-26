@@ -24,19 +24,18 @@
 
 package com.sun.j2me.security;
 
+import com.sun.j2me.proxy.security.Permissions;
+
 /**
  * FileConnection access permissions.
  */
 public class FileConnectionPermission extends Permission {
-    static String ACCESS_READ  = "read";
-    static String ACCESS_WRITE = "write";
 
-    static String FILE_CONNECTION = "javax.microedition.io.file.FileConnection#";
+    static public FileConnectionPermission READ = new FileConnectionPermission(
+        Permissions.getName(Permissions.FILE_CONNECTION_READ), null);
 
-    static public FileConnectionPermission READ =
-        new FileConnectionPermission(FILE_CONNECTION + ACCESS_READ, null);
-    static public FileConnectionPermission WRITE =
-        new FileConnectionPermission(FILE_CONNECTION + ACCESS_WRITE, null);
+    static public FileConnectionPermission WRITE = new FileConnectionPermission(
+        Permissions.getName(Permissions.FILE_CONNECTION_WRITE), null);
 
     public FileConnectionPermission(String name, String resource) {
         super(name, resource);

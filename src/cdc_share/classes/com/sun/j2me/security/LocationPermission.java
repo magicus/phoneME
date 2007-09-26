@@ -26,39 +26,38 @@
 
 package com.sun.j2me.security;
 
+import com.sun.j2me.proxy.security.Permissions;
+
+/**
+ * Location and landmark store access permissions.
+ */
 public class LocationPermission extends Permission {
 
-    static String ACCESS_READ      = "read";
-    static String ACCESS_WRITE     = "write";
-    static String ACCESS_CATEGORY  = "category";
-    static String ACCESS_MANAGE    = "manage";
-    static String ACCESS_ANY       = "any";
-    static String ACCESS_PROXIMITY = "proximity";
+    static public LocationPermission LOCATION = new LocationPermission(
+        Permissions.getName(Permissions.LOCATION), null);
 
-    static String LANDMARK_STORE   = "javax.microedition.location.LandmarkStore";
-    static String LOCATION_NAME    = "javax.microedition.location";
-    static String ORIENTATION_NAME = "javax.microedition.location.Orientation";
-    
-    static public LocationPermission LANDMARK_STORE_READ = 
-            new LocationPermission(LANDMARK_STORE, ACCESS_READ);
+    static public LocationPermission ORIENTATION = new LocationPermission(
+        Permissions.getName(Permissions.ORIENTATION), null);
+
+    static public LocationPermission LOCATION_PROXIMITY =
+        new LocationPermission(Permissions.getName(
+            Permissions.LOCATION_PROXIMITY), null);
+
+    static public LocationPermission LANDMARK_STORE_READ =
+        new LocationPermission(Permissions.getName(Permissions.LANDMARK_READ),
+        null);
 
     static public LocationPermission LANDMARK_STORE_WRITE = 
-            new LocationPermission(LANDMARK_STORE, ACCESS_WRITE);
+        new LocationPermission(Permissions.getName(Permissions.LANDMARK_WRITE),
+        null);
 
     static public LocationPermission LANDMARK_STORE_CATEGORY = 
-            new LocationPermission(LANDMARK_STORE, ACCESS_CATEGORY);
+        new LocationPermission(Permissions.getName(
+            Permissions.LANDMARK_CATEGORY), null);
 
     static public LocationPermission LANDMARK_STORE_MANAGE = 
-            new LocationPermission(LANDMARK_STORE, ACCESS_MANAGE);
-
-    static public LocationPermission LOCATION = 
-            new LocationPermission(LOCATION_NAME, ACCESS_ANY);
-
-    static public LocationPermission LOCATION_PROXIMITY = 
-            new LocationPermission(LOCATION_NAME, ACCESS_PROXIMITY);
-
-    static public LocationPermission ORIENTATION = 
-            new LocationPermission(ORIENTATION_NAME, ACCESS_ANY);
+        new LocationPermission(Permissions.getName(Permissions.LANDMARK_MANAGE),
+        null);
 
     public LocationPermission(String name, String resource) {
         super(name, resource);
