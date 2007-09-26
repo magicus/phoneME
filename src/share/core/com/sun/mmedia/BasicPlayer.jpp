@@ -27,6 +27,7 @@ package com.sun.mmedia;
 import java.io.*;
 import java.util.Vector;
 import javax.microedition.media.*;
+import javax.microedition.media.control.*;
 import com.sun.mmedia.control.*;
 import java.util.Enumeration;
 import java.util.Hashtable;
