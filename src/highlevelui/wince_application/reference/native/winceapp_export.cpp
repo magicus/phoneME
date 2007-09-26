@@ -47,17 +47,10 @@
  *   it is delayed by FLUSH_REFRESH_TIMEOUT ms unless another flush call
  *   executed.
  * IMPL_NOTE: This is potentially dangerous, as flush buffer may become
- *   invalid (freed) when delayed flush is performed. See USE_FLUSH_BUFFER.
+ *   invalid (freed) when delayed flush is performed.
  */
 #define FLUSH_LIMIT_REFRESH
 
-/*
- * Enables DirectDraw surface for flush to use own memory.
- * Fixes artifacts, potentially enabled by FLUSH_LIMIT_REFRESH, but lowers fps,
- * making this optimization less useful.
- * Potential danger, caused by FLUSH_LIMIT_REFRESH is also neutralized.
- */
-//#define USE_FLUSH_BUFFER
 #endif
 
 #ifdef ENABLE_JSR_184
@@ -283,7 +276,7 @@ static void init_DirectDraw() {
     ZeroMemory(&ddsd, sizeof(DDSURFACEDESC));
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS;
-    ddsd.ddsCaps.dwCaps = /*DDSCAPS_WRITEONLY | */DDSCAPS_PRIMARYSURFACE;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
     if (/*DD_OK != g_screen.pDDClipper->SetHWnd(0, hwndMain) ||*/
         DD_OK != g_screen.pDD->CreateSurface(&ddsd, &g_screen.pDDSPrimary, NULL)) {
         //g_screen.pDDClipper->Release();
@@ -419,36 +412,6 @@ static LPDIRECTDRAWSURFACE create_memory_surface(void* pVmem, int width, int hei
     else
         return pDDS;
 }
-
-#ifdef USE_FLUSH_BUFFER
-static LPDIRECTDRAWSURFACE create_plain_surface(int width, int height) {
-    ASSERT(g_screen.pDD);
-
-    DDSURFACEDESC ddsd;
-    LPDIRECTDRAWSURFACE pDDS = NULL;
-
-    ZeroMemory(&ddsd, sizeof(DDSURFACEDESC));
-    ZeroMemory(&ddsd.ddpfPixelFormat, sizeof(DDPIXELFORMAT));
-
-    ddsd.dwSize         = sizeof(ddsd);
-    ddsd.dwFlags        = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
-    ddsd.dwWidth        = width;
-    ddsd.dwHeight       = height;
-
-    // Set up the pixel format for 16-bit RGB (5-6-5).
-    ddsd.ddpfPixelFormat.dwSize         = sizeof(DDPIXELFORMAT);
-    ddsd.ddpfPixelFormat.dwFlags        = DDPF_RGB;
-    ddsd.ddpfPixelFormat.dwRGBBitCount  = 16;
-    ddsd.ddpfPixelFormat.dwRBitMask     = 0x1f << 11;
-    ddsd.ddpfPixelFormat.dwGBitMask     = 0x3f << 5;
-    ddsd.ddpfPixelFormat.dwBBitMask     = 0x1f;
-
-    if (DD_OK != g_screen.pDD->CreateSurface(&ddsd, &pDDS, NULL))
-        return NULL;
-    else
-        return pDDS;
-}
-#endif
 #endif /* ENABLE_DIRECT_DRAW */
 
 /**
@@ -1084,16 +1047,12 @@ jboolean winceapp_direct_flush(const java_graphics *g,
     }
 
     if (g_screen.pDDSDirect == NULL) {
-#ifdef USE_FLUSH_BUFFER
-        g_screen.pDDSDirect = create_plain_surface(CHAM_WIDTH, CHAM_HEIGHT);
-#else
         /*
-         * IMPL_NOTE: This is potentially dangerous, because src may become freed
-         * when delayed flush happens. USE_FLUSH_BUFFER saves from the danger,
-         * but affects performance.
+         * IMPL_NOTE: This is potentially dangerous, when using FLUSH_LIMIT_REFRESH,
+         * because src may become freed when delayed flush happens.
          */
         g_screen.pDDSDirect = create_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT);
-#endif
+
         if (g_screen.pDDSDirect == NULL) {
 #ifdef FLUSH_LIMIT_REFRESH
             LeaveCriticalSection(&flushCS);
@@ -1105,27 +1064,6 @@ jboolean winceapp_direct_flush(const java_graphics *g,
 
     if (height > CHAM_HEIGHT)
         height = CHAM_HEIGHT;
-
-#ifdef USE_FLUSH_BUFFER
-    DDSURFACEDESC ddsd;
-    ZeroMemory(&ddsd, sizeof(DDSURFACEDESC));
-    ddsd.dwSize = sizeof(ddsd);
-    if (DD_OK == g_screen.pDDSDirect->Lock(NULL, &ddsd, DDLOCK_DISCARD | DDLOCK_WRITEONLY, NULL)) {
-        if (ddsd.lPitch == CHAM_WIDTH * sizeof(gxj_pixel_type))
-            CopyMemory(ddsd.lpSurface, src, CHAM_WIDTH * height * sizeof(gxj_pixel_type));
-        else {
-            BYTE* s = (BYTE*)src;
-            BYTE* d = (BYTE*)ddsd.lpSurface;
-            int bytes = CHAM_WIDTH * sizeof(gxj_pixel_type);
-            for (int i = height; i > 0; i--) {
-                CopyMemory(ddsd.lpSurface, src, bytes);
-                s += bytes;
-                d += ddsd.lPitch;
-            }
-        }
-        g_screen.pDDSDirect->Unlock(NULL);
-    }
-#endif
 
 #ifdef FLUSH_LIMIT_REFRESH
     DWORD diff = GetTickCount() - lastFlushTime; 
