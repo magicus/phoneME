@@ -35,10 +35,13 @@ import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 import com.sun.mmedia.BasicPlayer;
 import com.sun.mmedia.TonePlayer;
-import com.sun.mmedia.RTSPPlayer;
 import com.sun.mmedia.Configuration;
 import com.sun.mmedia.protocol.*;
 import com.sun.mmedia.DefaultConfiguration;
+
+// #ifdef USE_RTSP [
+import com.sun.mmedia.RTSPPlayer;
+// #endif ]
 
 // #ifdef RTP_PLAYER [
 import com.sun.mmedia.RTPPlayer;
@@ -894,11 +897,15 @@ public final class Manager {
         
         if( null != theProtocol && theProtocol.equals( "rtsp" ) )
         {
+            // #ifdef USE_RTSP [
 			p = new RTSPPlayer();
+            // #endif ]
         }
         else if( null != theProtocol && theProtocol.equals( "rtp" ) )
         {
+            // #ifdef RTP_PLAYER [
 			p = new RTPPlayer();
+            // #endif ]
         }
         else
         {

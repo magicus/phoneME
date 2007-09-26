@@ -39,6 +39,9 @@ import java.net.*;
  * @created    September 11, 2002
  */
 public class Connection extends Thread implements Runnable {
+
+    private final boolean RTSP_DEBUG;
+    
     private final int MAX_RTSP_MESSAGE_SIZE = 1024;
 
     // #ifdef MIDP [
@@ -117,31 +120,38 @@ public class Connection extends Thread implements Runnable {
      *                          to the RTSP server cannot be established.
      */
     public Connection(RtspManager rtspManager,
-                      String host, int port) throws IOException {
+                      String host, int port,
+                      boolean rtsp_debug) throws IOException {
         this.rtspManager = rtspManager;
-	this.host = host;
-	this.port = port;
+        this.host = host;
+        this.port = port;
+        
+        RTSP_DEBUG = rtsp_debug;
 
         connectionIsAlive = true;
 
         // #ifdef MIDP [
+        
         rxBuffer = new byte[MAX_RTSP_MESSAGE_SIZE];
 
         peer = nRTSPConnectorOpen(host, port);
 
         if( peer == -1) {
             throw new IOException("ConnectException");
-	}
-        // #else
-        try {
-	    socket = new Socket(host, port);
-        } catch (IOException e) {
-	    // System.out.println("can't connect to " + host + ":" + port);
-	    throw new IOException("ConnectException");
         }
+        
+        // #else
+        
+        try {
+            socket = new Socket(host, port);
+        } catch (IOException e) {
+            // System.out.println("can't connect to " + host + ":" + port);
+            throw new IOException("ConnectException");
+        }
+        
         // #endif ]
 
-		System.out.println( "Local address="+socket.getLocalAddress() );
+        if(RTSP_DEBUG) System.out.println( "Local address="+socket.getLocalAddress() );
 
         start();
     }
@@ -158,24 +168,28 @@ public class Connection extends Thread implements Runnable {
         boolean success = false;
 
         // #ifdef MIDP [
-	nRTSPSendMessage(peer, message);
+        
+	    nRTSPSendMessage(peer, message);
 
-	// todo: need to check for return value
-	// and report potential error.
+        // todo: need to check for return value
+        // and report potential error.
 
-	success = true;
+        success = true;
+        
         // #else
-	try {
-	    OutputStream out = socket.getOutputStream();
+        
+        try {
+            OutputStream out = socket.getOutputStream();
             out.write(message);
             out.flush();
             success = true;
-	} catch (IOException e) {
-	    System.out.println("Error sending RTSP.");
-	}
-	// #endif ]
+        } catch (IOException e) {
+            System.out.println("Error sending RTSP.");
+        }
+        
+        // #endif ]
 
-       return success;
+        return success;
     }
 
 
@@ -184,44 +198,48 @@ public class Connection extends Thread implements Runnable {
      */
     public void run() {
         while (connectionIsAlive) {
-	    // #ifdef MIDP [
-	    int size = nRTSPReceiveMessage(peer, rxBuffer);
+        
+            // #ifdef MIDP [
+            
+            int size = nRTSPReceiveMessage(peer, rxBuffer);
 
-	    try {
-		if (size > 0) {
-		    ByteArrayInputStream bais = new ByteArrayInputStream(rxBuffer);
-		    DataInputStream din = new DataInputStream(bais);
-		    
-		    byte ch = din.readByte();
-		    
-		    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		    
-		    // read message header:
-		    baos.write(ch);
-		    
-		    while (!eomReached(baos.toByteArray())) {
-			baos.write(din.readByte());
-		    }
-		    
-		    // read message body:
-		    int length = getContentLength(new String(baos.toByteArray()));
-		    
-		    for (int i = 0; i < length; i++) {
-			baos.write(din.readByte());
-		    }
-		    
-		    // System.out.println(baos);
-		    
-		    Message msg = new Message(baos.toByteArray());
-		    
-		    rtspManager.rtspMessageIndication(msg);
-		}
-	    } catch (Exception e) {
-		connectionIsAlive = false;
-	    }
-	    // #else
-	    try {
-		InputStream in = socket.getInputStream();
+            try {
+                if (size > 0) {
+                    ByteArrayInputStream bais = new ByteArrayInputStream(rxBuffer);
+                    DataInputStream din = new DataInputStream(bais);
+                
+                    byte ch = din.readByte();
+                
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                
+                    // read message header:
+                    baos.write(ch);
+                
+                    while (!eomReached(baos.toByteArray())) {
+                        baos.write(din.readByte());
+                    }
+                
+                    // read message body:
+                    int length = getContentLength(new String(baos.toByteArray()));
+                
+                    for (int i = 0; i < length; i++) {
+                        baos.write(din.readByte());
+                    }
+                
+                    // if(RTSP_DEBUG) System.out.println(baos);
+                
+                    Message msg = new Message(baos.toByteArray());
+                
+                    rtspManager.rtspMessageIndication(msg);
+                }
+            } catch (Exception e) {
+                connectionIsAlive = false;
+            }
+            
+            // #else
+            
+            try {
+                InputStream in = socket.getInputStream();
                 DataInputStream din = new DataInputStream(in);
                 byte ch = din.readByte();
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -229,27 +247,31 @@ public class Connection extends Thread implements Runnable {
                 // read message header:
                 baos.write(ch);
                 while (!eomReached(baos.toByteArray())) {
-		    baos.write(din.readByte());
+                    baos.write(din.readByte());
                 }
 
                 // read message body:
                 int length = getContentLength(new String(baos.toByteArray()));
 
                 for (int i = 0; i < length; i++) {
-		    baos.write(din.readByte());
+                    baos.write(din.readByte());
                 }
-                
-				System.out.println("--------- response ---------\n"+baos+"----------------------------\n");
-				
+                    
+                if(RTSP_DEBUG) System.out.println("--------- response ---------\n"
+                                                  + baos
+                                                  + "----------------------------\n");
+                    
                 Message msg = new Message(baos.toByteArray());
                 rtspManager.rtspMessageIndication(msg);
-	    } catch (Exception e) {
-            System.out.println("-- exception in run():'"+e+"', closing RTSP connection." );
-		    //e.printStackTrace();
-		    connectionIsAlive = false;
-        }
+            } catch (Exception e) {
+                if(RTSP_DEBUG) System.out.println("-- exception in run():'"
+                                                  + e 
+                                                  + "', closing RTSP connection." );
+                //if(RTSP_DEBUG) e.printStackTrace();
+                connectionIsAlive = false;
+            }
 
-	    // #endif ]
+            // #endif ]
         }
     }
 
@@ -333,16 +355,20 @@ public class Connection extends Thread implements Runnable {
     public void close() {
         connectionIsAlive = false;
 
-	// #ifndef MIDP [
+        // #ifndef MIDP [
+        
         try {
-	    if (socket != null) {
-		socket.close();
-		socket = null;
-	    }
-	} catch (IOException e) {
-	    // e.printStackTrace();
+            if (socket != null) {
+                socket.close();
+                socket = null;
+            }
+        } catch (IOException e) {
+            // if(RTSP_DEBUG) System.out.println("Exception in RTSP Connection.close.");
+            // if(RTSP_DEBUG) e.printStackTrace();
         }
-	// #endif ]
+        
+        // #endif ]
+        
     }
 
 
@@ -356,5 +382,3 @@ public class Connection extends Thread implements Runnable {
         return connectionIsAlive;
     }
 }
-
-
