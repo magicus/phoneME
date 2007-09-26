@@ -49,6 +49,7 @@ ABSTRACTIONS_CLASSES += \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/TrustedClass.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/Token.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/SecurityTokenInitializer.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/PermissionChecker.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/MessageDigest.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/NoSuchAlgorithmException.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/DigestException.java \

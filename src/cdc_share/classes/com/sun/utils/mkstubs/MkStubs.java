@@ -1834,55 +1834,51 @@ wr.pld(4,"System.out.println(\"return from " + className + "." + (isCtor?"constr
                 if (emptyList.containsKey(retType)) {
                     wr.pl(3, "return (" + translateClassNamePkg(retType) + getBrackets(retType) + ")result;");
                 } else {
-                    if (((Method)mem).getReturnType().isInterface()) {
-                        int k = findTranslatedClass(classes, retType);
-                        if (k == -1) {
-                            wr.pl(3, "return (" + retType + ")result;");
-                        } else {
-                            String rType = translateInterfaceImplNamePkg(retType);
-                            wr.pl(3, "return (" + rType + ")" + rType + ".__getInstance(result);");
+                    if (isTranslatedClass(retType)) {
+                        String rType = translateClassNamePkg(retType);
+                        String arrayBrackets = getBrackets(retType);
+                        Class retClass = ((Method)mem).getReturnType();
+                        while (retClass.isArray()) {
+                            retClass = retClass.getComponentType();
                         }
-                    } else {
-                        if (isTranslatedClass(retType)) {
-                            String rType = translateClassNamePkg(retType);
-                            String arrayBrackets = getBrackets(retType);
+                        String implClass = (retClass.isInterface() ? translateInterfaceImplNamePkg(retType) : rType);
+                        if (arrayBrackets.length() > 0) {
+                            int dimensions = arrayBrackets.length() / 2; // must be "[][][]..."
                             wr.pl(3, "if (result == null) {");
                             wr.pl(4, "return (" + rType + arrayBrackets + ")null;");
                             wr.pl(3, "}");
-                            if (arrayBrackets.length() > 0) {
-                                int dimensions = arrayBrackets.length() / 2; // must be "[][][]..."
-                                wr.pl(3, rType + arrayBrackets + " retArray = new " + 
-                                            rType + "[((Object[])result).length]" + arrayBrackets.substring(2) + ";");
-                                String indices = "";
-                                for (int i = 0; i < dimensions; i++) {
-                                    String varName = "i" + i;
-                                    wr.pl(3+i*3, "for (int " + varName + " = 0; " + varName + " < ((Object" + arrayBrackets + ")result)" + indices + ".length; " + varName + "++) {");
-                                    indices += "[i" + i + "]";
-                                    wr.pl(4+i*3, "if (((Object" + arrayBrackets + ")result)" + indices + " == null) {");
-                                    wr.pl(5+i*3, "retArray" + indices + " = null;");
-                                    wr.pl(4+i*3, "} else {");
-                                    if (i == dimensions - 1) {
-                                        wr.pl(5+i*3, "retArray" + indices + " = (" + rType + ")" + rType + ".__getInstance(((Object" + arrayBrackets + ")result)" + indices + ");");
-                                    } else {
-                                        wr.pl(5+i*3, "retArray" + indices + " = new " + 
-                                                rType + "[((Object" + arrayBrackets + ")result)" + indices + ".length]" + arrayBrackets.substring((i + 2) * 2) + ";");
-                                    }
-                                }
-                                for (int i = dimensions - 1; i >= 0; --i) {
-                                    wr.pl(4+i*3, "} // not null");
-                                    wr.pl(3+i*3, "} // for");
-                                }
-                                wr.pl(3, "return (" + rType + arrayBrackets + ")retArray;");
-                            } else {
-                                wr.pl(3, "return (" + rType + ")" + rType + ".__getInstance(result);");
-                            }
-                        } else {
-                            if (!retType.equals("void")) {
-                                if (((Method)mem).getReturnType().isPrimitive()) {
-                                    wr.pl(3, "return result." + retType + "Value();");
+                            wr.pl(3, rType + arrayBrackets + " retArray = new " + 
+                                        rType + "[((Object[])result).length]" + arrayBrackets.substring(2) + ";");
+                            String indices = "";
+                            for (int i = 0; i < dimensions; i++) {
+                                String varName = "i" + i;
+                                wr.pl(3+i*2, "for (int " + varName + " = 0; " + varName + " < ((Object" + arrayBrackets + ")result)" + indices + ".length; " + varName + "++) {");
+                                indices += "[i" + i + "]";
+                                wr.pl(4+i*2, "if (((Object" + arrayBrackets + ")result)" + indices + " == null) {");
+                                wr.pl(5+i*2, "retArray" + indices + " = null;");
+                                wr.pl(4+i*2, "} else {");
+                                if (i == dimensions - 1) {
+                                    wr.pl(5+i*2, "retArray" + indices + " = (" + rType + ")" + 
+                                        implClass + ".__getInstance(((Object" + arrayBrackets + ")result)" + indices + ");");
                                 } else {
-                                    wr.pl(3, "return result;");
+                                    wr.pl(5+i*2, "retArray" + indices + " = new " + 
+                                            rType + "[((Object" + arrayBrackets + ")result)" + indices + ".length]" + arrayBrackets.substring((i + 2) * 2) + ";");
                                 }
+                            }
+                            for (int i = dimensions - 1; i >= 0; --i) {
+                                wr.pl(4+i*2, "}");
+                                wr.pl(3+i*2, "} // for i" + i);
+                            }
+                            wr.pl(3, "return (" + rType + arrayBrackets + ")retArray;");
+                        } else {
+                            wr.pl(3, "return (" + rType + ")" + implClass + ".__getInstance(result);");
+                        }
+                    } else {
+                        if (!retType.equals("void")) {
+                            if (((Method)mem).getReturnType().isPrimitive()) {
+                                wr.pl(3, "return result." + retType + "Value();");
+                            } else {
+                                wr.pl(3, "return result;");
                             }
                         }
                     }
