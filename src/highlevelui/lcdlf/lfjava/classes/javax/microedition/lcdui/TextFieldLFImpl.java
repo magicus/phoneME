@@ -73,8 +73,12 @@ class TextFieldLFImpl extends ItemLFImpl implements
     protected String initialInputMode;
     
     /** The input mode cause the traverse out for the text component */
-    protected InputMode interruptedIM; 
-    
+    protected InputMode interruptedIM;
+
+    /**
+     * Cached input session instance requested from associated Display */
+    protected TextInputSession cachedInputSession;
+
     /** 
      * This SubMenuCommand holds the set of InputModes available on the
      * InputMode pull-out menu
@@ -362,16 +366,22 @@ class TextFieldLFImpl extends ItemLFImpl implements
 
 
     /**
-     * Get input session instance from the current display
+     * Get input session instance from the associated display
      * @return TextInputSession instance common for
-     *   all clients of the current Display
+     *   all clients of the associated Display
+     *
+     * IMPL_NOTE: Text field is supposed to be associated with only
+     *   one Display, that's why cached input session can be used.
      */
      TextInputSession getInputSession() {
-        Display d = getCurrentDisplay();
-        if (d != null) {
-          return d.getInputSession();
+        if (cachedInputSession == null) {
+            Display d = getCurrentDisplay();
+            if (d != null) {
+              cachedInputSession =
+                  d.getInputSession();
+            }
         }
-        return null;
+        return cachedInputSession;
      }
 
     // CommandListener interface
@@ -1102,15 +1112,15 @@ class TextFieldLFImpl extends ItemLFImpl implements
 
         TextInputSession is = getInputSession();
         inputModes = is.getAvailableModes();
-
+        
         InputMode im = is.getCurrentInputMode();
 
-
+        
         inputMenu = new SubMenuCommand(im.getCommandName(), Command.OK, 100);
         inputMenu.setListener(this);
-       
+
         addInputCommands();
-       
+
         inputModeIndicator.setDisplayMode(im.getName());
     }
     
