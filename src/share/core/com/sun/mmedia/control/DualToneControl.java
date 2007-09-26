@@ -23,7 +23,7 @@
  * information or have any questions.
  */
 
-package javax.microedition.media.control;
+package com.sun.mmedia.control;
 import javax.microedition.media.MediaException;
 
 /**

@@ -37,7 +37,7 @@ import java.util.*;
 import com.sun.mmedia.DefaultConfiguration;
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
- 
+import com.sun.mmedia.control.DualToneControl; 
 /**
  * Java Tone Sequence Player
  * it implements ToneControl
@@ -123,10 +123,11 @@ public final class DirectTone extends DirectPlayer {
         }
 
         if (getState() >= REALIZED) {
-            if (type.equals("javax.microedition.media.control.ToneControl")) {
+            if (type.equals("javax.microedition.media.control.ToneControl") ||
+                type.equals("ToneControl")) {
                 return new DirectToneControl(this, false);
             }
-            if (type.equals("javax.microedition.media.control.DualToneControl")) {
+            if (type.equals("com.sun.mmedia.control.DualToneControl")) {
                 return new DirectToneControl(this, true);
             }
         }
