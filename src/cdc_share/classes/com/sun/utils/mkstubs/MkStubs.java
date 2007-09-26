@@ -40,29 +40,34 @@ public class MkStubs {
     private static String agentDir = ".";
 
     
-    private static String translateClassNamePkg(String name) {
+    private static String translateClassNamePkg(String typeName) {
+        String name = translateArray(typeName);
         String pkgName = (String)pkgNames.get(name);
         return (pkgName == null ? "" : pkgName + ".") + translateClassName(name);
     }
-    private static String translateInterfaceImplNamePkg(String name) {
+    private static String translateInterfaceImplNamePkg(String typeName) {
+        String name = translateArray(typeName);
         String pkgName = (String)pkgNames.get(name);
         return (pkgName == null ? "" : pkgName + ".") + translateInterfaceImplName(name);
     }
-    private static String translateClassName(String name) {
+    private static String translateClassName(String typeName) {
+        String name = translateArray(typeName);
         int ind;
         if ((ind = (name.lastIndexOf('.'))) != -1) {
             name = name.substring(ind + 1);
         }
         return name + "";
     }
-    private static String translateInterfaceImplName(String name) {
+    private static String translateInterfaceImplName(String typeName) {
+        String name = translateArray(typeName);
         int ind;
         if ((ind = (name.lastIndexOf('.'))) != -1) {
             name = name.substring(ind + 1);
         }
         return name + "__Impl";
     }
-    private static String translateAgentClass(String name) {
+    private static String translateAgentClass(String typeName) {
+        String name = translateArray(typeName);
         int ind;
         if ((ind = (name.lastIndexOf('.'))) != -1) {
             name = name.substring(ind + 1);
@@ -73,16 +78,38 @@ public class MkStubs {
         return findTranslatedClass(classes, name) != -1;
     }
 
-    private static int findTranslatedClass(String[] classList, String name) {
+    private static int findTranslatedClass(String[] classList, String typeName) {
         if (classList == null) {
             return -1;
         }
+        String name = translateArray(decodeType(typeName));
         for (int i = 0; i < classList.length; i++) {
             if (classList[i] != null && name.equals(classList[i])) {
                 return i;
             }
         }
         return -1;
+    }
+    private static String translateArray(String name) {
+        int len = name.length();
+        while (len > 0 && (name.charAt(len - 1) == '[' || name.charAt(len - 1) == ']')) {
+            len--;
+        }
+        if (len < name.length()) {
+            return name.substring(0, len);
+        }
+        return name;
+    }
+    
+    private static String getBrackets(String name) {
+        int len = name.length();
+        while (len > 0 && (name.charAt(len - 1) == '[' || name.charAt(len - 1) == ']')) {
+            len--;
+        }
+        if (len < name.length()) {
+            return name.substring(len);
+        }
+        return "";
     }
 
     public static void main(String[] args)  {
@@ -1098,7 +1125,7 @@ wr.pld(5,"System.out.println(\"Trying to call __invoke" + i + " " + mems[i].toSt
                     int k = findTranslatedClass(classes, typeName);
                     if (k != -1) {
                         typeList.put(typeName, "");
-                        typeName = translateClassNamePkg(typeName);
+                        typeName = translateClassNamePkg(typeName) + getBrackets(typeName);
                         wr.pl(1, mod + " " + typeName + " " + fieldName + 
                             " = new " + typeName + "(__getMyClass(), \"" + fieldName + "\", null);");
                     } else {
@@ -1380,7 +1407,7 @@ wr.pld(4,"System.out.println(\"Trying to call __callback" + i + " " + mems[i].to
                 if (!retType.equals("void")) {
                     String rType = retType;
                     if (isTranslatedClass(retType)) {
-                        rType = translateClassNamePkg(retType);
+                        rType = translateClassNamePkg(retType) + getBrackets(retType);
                     }
                     wr.p(5, rType + " result = ");
                 } else {
@@ -1680,7 +1707,7 @@ wr.pld(4,"System.out.println(\"" + stubClsName + ".__" + getFieldMethod + "Value
         
         if (!isCtor) {
             retType = decodeType(((Method)mem).getReturnType().getName());
-            wr.p((isTranslatedClass(retType) ? translateClassNamePkg(retType) : retType) + " ");
+            wr.p((isTranslatedClass(retType) ? translateClassNamePkg(retType) + getBrackets(retType) : retType) + " ");
         }
         if (isCtor) {
             wr.p(className);
@@ -1700,7 +1727,7 @@ wr.pld(4,"System.out.println(\"" + stubClsName + ".__" + getFieldMethod + "Value
             }
             String typeName = decodeType(pars[j].getName());
             if (isTranslatedClass(typeName)) {
-                typeName = translateClassNamePkg(typeName);
+                typeName = translateClassNamePkg(typeName) + getBrackets(typeName);
             }
             wr.p(typeName + " ");
             wr.p("arg" + (int)(j + 1));
@@ -1805,27 +1832,53 @@ wr.pld(4,"System.out.println(\"return from " + className + "." + (isCtor?"constr
             
 wr.pld(4,"System.out.println(\"return from " + className + "." + (isCtor?"constructor"+(int)(num + 1):mem.getName())+ "\");");
                 if (emptyList.containsKey(retType)) {
-                    wr.pl(3, "return (" + translateClassNamePkg(retType) + ")result;");
+                    wr.pl(3, "return (" + translateClassNamePkg(retType) + getBrackets(retType) + ")result;");
                 } else {
-                    if (((Method)mem).getReturnType().isInterface()) {
-                        int k = findTranslatedClass(classes, retType);
-                        if (k == -1) {
-                            wr.pl(3, "return (" + retType + ")result;");
+                    if (isTranslatedClass(retType)) {
+                        String rType = translateClassNamePkg(retType);
+                        String arrayBrackets = getBrackets(retType);
+                        Class retClass = ((Method)mem).getReturnType();
+                        while (retClass.isArray()) {
+                            retClass = retClass.getComponentType();
+                        }
+                        String implClass = (retClass.isInterface() ? translateInterfaceImplNamePkg(retType) : rType);
+                        if (arrayBrackets.length() > 0) {
+                            int dimensions = arrayBrackets.length() / 2; // must be "[][][]..."
+                            wr.pl(3, "if (result == null) {");
+                            wr.pl(4, "return (" + rType + arrayBrackets + ")null;");
+                            wr.pl(3, "}");
+                            wr.pl(3, rType + arrayBrackets + " retArray = new " + 
+                                        rType + "[((Object[])result).length]" + arrayBrackets.substring(2) + ";");
+                            String indices = "";
+                            for (int i = 0; i < dimensions; i++) {
+                                String varName = "i" + i;
+                                wr.pl(3+i*2, "for (int " + varName + " = 0; " + varName + " < ((Object" + arrayBrackets + ")result)" + indices + ".length; " + varName + "++) {");
+                                indices += "[i" + i + "]";
+                                wr.pl(4+i*2, "if (((Object" + arrayBrackets + ")result)" + indices + " == null) {");
+                                wr.pl(5+i*2, "retArray" + indices + " = null;");
+                                wr.pl(4+i*2, "} else {");
+                                if (i == dimensions - 1) {
+                                    wr.pl(5+i*2, "retArray" + indices + " = (" + rType + ")" + 
+                                        implClass + ".__getInstance(((Object" + arrayBrackets + ")result)" + indices + ");");
+                                } else {
+                                    wr.pl(5+i*2, "retArray" + indices + " = new " + 
+                                            rType + "[((Object" + arrayBrackets + ")result)" + indices + ".length]" + arrayBrackets.substring((i + 2) * 2) + ";");
+                                }
+                            }
+                            for (int i = dimensions - 1; i >= 0; --i) {
+                                wr.pl(4+i*2, "}");
+                                wr.pl(3+i*2, "} // for i" + i);
+                            }
+                            wr.pl(3, "return (" + rType + arrayBrackets + ")retArray;");
                         } else {
-                            String rType = translateInterfaceImplNamePkg(retType);
-                            wr.pl(3, "return (" + rType + ")" + rType + ".__getInstance(result);");
+                            wr.pl(3, "return (" + rType + ")" + implClass + ".__getInstance(result);");
                         }
                     } else {
-                        if (isTranslatedClass(retType)) {
-                            String rType = translateClassNamePkg(retType);
-                            wr.pl(3, "return (" + rType + ")" + rType + ".__getInstance(result);");
-                        } else {
-                            if (!retType.equals("void")) {
-                                if (((Method)mem).getReturnType().isPrimitive()) {
-                                    wr.pl(3, "return result." + retType + "Value();");
-                                } else {
-                                    wr.pl(3, "return result;");
-                                }
+                        if (!retType.equals("void")) {
+                            if (((Method)mem).getReturnType().isPrimitive()) {
+                                wr.pl(3, "return result." + retType + "Value();");
+                            } else {
+                                wr.pl(3, "return result;");
                             }
                         }
                     }

@@ -26,24 +26,32 @@
 
 package com.sun.j2me.security;
 
-public class SensorPermission extends Permission {
+import com.sun.j2me.proxy.security.Permissions;
 
-    static String ACCESS_READ      = "read";
+/**
+ * PIM access permissions.
+ */
+public class PIMPermission extends Permission {
+    
+    static public PIMPermission CONTACT_READ  = new PIMPermission(
+        Permissions.getName(Permissions.PIM_CONTACT_READ), null);
 
-    static String SENSOR             = "javax.microedition.io.Connector.sensor";
-    static String PRIVATE_SENSOR     = "javax.microedition.sensor.PrivateSensor";
-    static String PROTECTED_SENSOR   = "javax.microedition.sensor.ProtectedSensor";
-    
-    static public SensorPermission SENSOR_READ = 
-            new SensorPermission(SENSOR, ACCESS_READ);
-    
-    static public SensorPermission PRIVATE_READ = 
-            new SensorPermission(PRIVATE_SENSOR, ACCESS_READ);
-    
-    static public SensorPermission PROTECTED_READ = 
-            new SensorPermission(PROTECTED_SENSOR, ACCESS_READ);
+    static public PIMPermission CONTACT_WRITE = new PIMPermission(
+        Permissions.getName(Permissions.PIM_CONTACT_WRITE), null);
 
-    public SensorPermission(String name, String resource) {
+    static public PIMPermission EVENT_READ = new PIMPermission(
+        Permissions.getName(Permissions.PIM_EVENT_READ), null);
+
+    static public PIMPermission EVENT_WRITE = new PIMPermission(
+        Permissions.getName(Permissions.PIM_EVENT_WRITE), null);
+
+    static public PIMPermission TODO_READ = new PIMPermission(
+        Permissions.getName(Permissions.PIM_TODO_READ), null);
+
+    static public PIMPermission TODO_WRITE = new PIMPermission(
+        Permissions.getName(Permissions.PIM_TODO_WRITE), null);
+    
+    public PIMPermission(String name, String resource) {
         super(name, resource);
     }
 }

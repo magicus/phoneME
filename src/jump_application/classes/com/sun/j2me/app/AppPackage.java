@@ -25,6 +25,7 @@
 package com.sun.j2me.app;
 
 import com.sun.j2me.security.Permission;
+import com.sun.j2me.security.PermissionChecker;
 
 /**
  * Abstraction for application package
@@ -70,6 +71,7 @@ public class AppPackage {
      *  thread while asking user
      */
     public void checkForPermission(Permission p) throws InterruptedException {
+        PermissionChecker.checkPermission(p.getName(), p.getResource());
     }    
     
     /**

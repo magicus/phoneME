@@ -1,5 +1,7 @@
 /*
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ *
+ *
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -19,32 +21,28 @@
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions.
+ * information or have any questions. 
  */
 
 package com.sun.j2me.security;
 
+import com.sun.j2me.proxy.security.Permissions;
+
 /**
- * OBEXPermission access permissions.
+ * Sensor access permissions.
  */
-public class OBEXPermission extends Permission {
+public class SensorPermission extends Permission {
 
-    static String STR_OBEX_CLIENT = "javax.microedition.io.Connector.obex.client";
-    static String STR_OBEX_SERVER = "javax.microedition.io.Connector.obex.server";
-    static String STR_TCP_OBEX_CLIENT = "javax.microedition.io.Connector.obex.client.tcp";
-    static String STR_TCP_OBEX_SERVER = "javax.microedition.io.Connector.obex.server.tcp";
+    static public SensorPermission SENSOR_READ = new SensorPermission(
+        Permissions.getName(Permissions.SENSOR), null);
+    
+    static public SensorPermission PRIVATE_READ = new SensorPermission(
+        Permissions.getName(Permissions.PRIVATE_SENSOR), null);
+    
+    static public SensorPermission PROTECTED_READ = new SensorPermission(
+        Permissions.getName(Permissions.PROTECTED_SENSOR), null);
 
-    static public OBEXPermission OBEX_CLIENT =
-        new OBEXPermission(STR_OBEX_CLIENT, null);
-    static public OBEXPermission OBEX_SERVER =
-        new OBEXPermission(STR_OBEX_SERVER, null);
-    static public OBEXPermission TCP_OBEX_CLIENT =
-        new OBEXPermission(STR_TCP_OBEX_CLIENT, null);
-    static public OBEXPermission TCP_OBEX_SERVER =
-        new OBEXPermission(STR_TCP_OBEX_SERVER, null);
-
-    public OBEXPermission(String name, String resource)
-    {
+    public SensorPermission(String name, String resource) {
         super(name, resource);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -24,27 +24,20 @@
 
 package com.sun.j2me.security;
 
+import com.sun.j2me.proxy.security.Permissions;
+
 /**
- * BluetoothPermission access permissions.
+ * FileConnection access permissions.
  */
-public class BluetoothPermission extends Permission {
+public class FileConnectionPermission extends Permission {
 
-    static String STR_BLUETOOTH_CLIENT = "javax.microedition.io.Connector.bluetooth.client";
-    static String STR_BLUETOOTH_SERVER = "javax.microedition.io.Connector.bluetooth.server";
-    static String STR_OBEX_CLIENT = "javax.microedition.io.Connector.obex.client";
-    static String STR_OBEX_SERVER = "javax.microedition.io.Connector.obex.server";
+    static public FileConnectionPermission READ = new FileConnectionPermission(
+        Permissions.getName(Permissions.FILE_CONNECTION_READ), null);
 
-    static public BluetoothPermission BLUETOOTH_CLIENT =
-        new BluetoothPermission(STR_BLUETOOTH_CLIENT, null);
-    static public BluetoothPermission BLUETOOTH_SERVER =
-        new BluetoothPermission(STR_BLUETOOTH_SERVER, null);
-    static public BluetoothPermission OBEX_CLIENT =
-        new BluetoothPermission(STR_OBEX_CLIENT, null);
-    static public BluetoothPermission OBEX_SERVER =
-        new BluetoothPermission(STR_OBEX_SERVER, null);
+    static public FileConnectionPermission WRITE = new FileConnectionPermission(
+        Permissions.getName(Permissions.FILE_CONNECTION_WRITE), null);
 
-    public BluetoothPermission(String name, String resource)
-    {
+    public FileConnectionPermission(String name, String resource) {
         super(name, resource);
     }
 }
