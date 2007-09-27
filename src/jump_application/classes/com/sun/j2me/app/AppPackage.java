@@ -71,7 +71,7 @@ public class AppPackage {
      *  thread while asking user
      */
     public void checkForPermission(Permission p) throws InterruptedException {
-        PermissionChecker.checkPermission(p.getName(), p.getResource());
+        PermissionChecker.checkForPermission(p.getName(), p.getResource());
     }    
     
     /**
