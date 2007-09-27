@@ -28,6 +28,7 @@ import java.io.*;
 import java.util.Vector;
 import javax.microedition.media.*;
 import javax.microedition.media.control.*;
+import com.sun.mmedia.control.*;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import com.sun.mmedia.protocol.*;
@@ -199,6 +200,10 @@ public abstract class BasicPlayer implements Player
     /**
      *  Description of the Field
      */
+    protected final static String dtocName = "com.sun.mmedia.control.DualToneControl";
+    /**
+     *  Description of the Field
+     */
     protected final static String vocName = "VolumeControl";
 
     /**
@@ -218,6 +223,7 @@ public abstract class BasicPlayer implements Player
         vicName,
         rtspName,
         tocName,
+        dtocName,
         vocName,
         };
 
