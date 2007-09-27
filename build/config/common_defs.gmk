@@ -93,11 +93,17 @@ MODULE_JSR_120_COMMON_JAVA_FILES = \
     
 vpath % $(JSR_120_DIR)/src/share/test/native
 
-ifneq ($(USE_NATIVE_AMS), true)
-ifneq ($(NO_PUSH), true)
 MODULE_JSR_120_COMMON_JAVA_FILES += \
-    $(JSR_120_DIR)/src/share/core/common/classes/com/sun/midp/wma/ProtocolPushImpl.java
-endif
+    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ProtocolPushImpl.java \
+    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ReservationDescriptorImpl.java \
+    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ConnectionReservationImpl.java \
+    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/PushConnectionsPool.java
+
+ifeq ($(TMP_PUSH_BUILD_FIX), true)
+MODULE_JSR_120_COMMON_JAVA_FILES += \
+    $(MIDP_DIR)/src/push/cdc_application/share/classes/com/sun/midp/push/reservation/ProtocolFactory.java \
+    $(MIDP_DIR)/src/push/cdc_application/share/classes/com/sun/midp/push/reservation/ReservationDescriptor.java \
+    $(MIDP_DIR)/src/push/cdc_application/share/classes/com/sun/midp/push/reservation/ConnectionReservation.java 
 endif
 
 ifeq ($(ENABLE_MIDP),true)
