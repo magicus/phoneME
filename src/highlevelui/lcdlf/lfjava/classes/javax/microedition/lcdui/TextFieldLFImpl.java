@@ -73,20 +73,18 @@ class TextFieldLFImpl extends ItemLFImpl implements
     protected String initialInputMode;
     
     /** The input mode cause the traverse out for the text component */
-    protected InputMode interruptedIM; 
-    
+    protected InputMode interruptedIM;
+
+    /**
+     * Cached input session instance requested from associated Display */
+    protected TextInputSession cachedInputSession;
+
     /** 
      * This SubMenuCommand holds the set of InputModes available on the
      * InputMode pull-out menu
      */
     protected SubMenuCommand inputMenu;
-
-    /** The TextInputMediator which handles translating key presses */
-    protected static TextInputSession inputSession;
-
-    /** The PopupLayer that represents open state of this ChoiceGroup POPUP. */
-    protected static PTILayer pt_popup;
-    
+   
     /**
      * The set of InputModes available to process this text component
      */
@@ -162,16 +160,16 @@ class TextFieldLFImpl extends ItemLFImpl implements
         InputModeResources.load();
         
         this.tf = tf;
-        
+
+        // IMPL_NOTE: Input text session and popup layer for predictive
+        //   text input can't be initialized here since they belong to
+        //   Display instance that can be unavailable until Displayable
+        //   is set as the current one.
+
         cursor = new TextCursor(tf.buffer.length());
         cursor.visible = false;
         xScrollOffset = 0;
-        
-        if (inputSession == null) {
-            inputSession = new BasicTextInputSession();
-            pt_popup = new PTILayer(inputSession);
-        }
-        
+
         lSetConstraints();
         
         if (textScrollTimer == null) {
@@ -366,6 +364,26 @@ class TextFieldLFImpl extends ItemLFImpl implements
          uCallTraverseOut();
      }
 
+
+    /**
+     * Get input session instance from the associated display
+     * @return TextInputSession instance common for
+     *   all clients of the associated Display
+     *
+     * IMPL_NOTE: Text field is supposed to be associated with only
+     *   one Display, that's why cached input session can be used.
+     */
+     TextInputSession getInputSession() {
+        if (cachedInputSession == null) {
+            Display d = getCurrentDisplay();
+            if (d != null) {
+              cachedInputSession =
+                  d.getInputSession();
+            }
+        }
+        return cachedInputSession;
+     }
+
     // CommandListener interface
     
     /**
@@ -381,7 +399,8 @@ class TextFieldLFImpl extends ItemLFImpl implements
         if (inputCommands != null && label != null) {
             for (int i = 0; i < inputCommands.length; i++) {
                 if (label.equals(inputCommands[i].getLabel())) {
-                    inputSession.setCurrentInputMode(inputModes[i]);
+                    TextInputSession is = getInputSession();
+                    is.setCurrentInputMode(inputModes[i]);
                     break;
                 }
             }
@@ -495,9 +514,10 @@ class TextFieldLFImpl extends ItemLFImpl implements
             clr = (editable ? TextFieldSkin.COLOR_FG :
                    TextFieldSkin.COLOR_FG_UE);
         }
-        
+
+        TextInputSession is = getInputSession();
         xScrollOffset = paint(g, tf.buffer,
-            hasFocus ? inputSession.getPendingChar() : 0, 
+            hasFocus ? is.getPendingChar() : 0,
             tf.constraints,
             ScreenSkin.FONT_INPUT_TEXT, clr, 
             width - (2 * TextFieldSkin.PAD_H), 
@@ -632,7 +652,8 @@ class TextFieldLFImpl extends ItemLFImpl implements
             Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
                 "[TF.getDisplayString] getMatchList:");
         }
-        pt_matches = hasFocus ? inputSession.getMatchList() : new String[0];
+        TextInputSession is = getInputSession();
+        pt_matches = hasFocus ? is.getMatchList() : new String[0];
 
         return out.toString();
     }
@@ -1089,16 +1110,17 @@ class TextFieldLFImpl extends ItemLFImpl implements
     public void notifyModeChanged() {
         removeInputCommands();
 
-        inputModes = inputSession.getAvailableModes();
+        TextInputSession is = getInputSession();
+        inputModes = is.getAvailableModes();
+        
+        InputMode im = is.getCurrentInputMode();
 
-        InputMode im = inputSession.getCurrentInputMode();       
-
-
+        
         inputMenu = new SubMenuCommand(im.getCommandName(), Command.OK, 100);
         inputMenu.setListener(this);
-       
+
         addInputCommands();
-       
+
         inputModeIndicator.setDisplayMode(im.getName());
     }
     
@@ -1212,7 +1234,8 @@ class TextFieldLFImpl extends ItemLFImpl implements
                     "TF.processKey keyCode = " + keyCode +
                         " longPress = " + theSameKey);
             }
-            if ((key = inputSession.processKey(keyCode, theSameKey)) ==
+            TextInputSession is = getInputSession();
+            if ((key = is.processKey(keyCode, theSameKey)) ==
                 InputMode.KEYCODE_NONE) {
                 // This means the key wasn't handled by the InputMode
                 if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -1521,7 +1544,8 @@ class TextFieldLFImpl extends ItemLFImpl implements
 
             if (firstTimeInTraverse) {
                 if (editable) {
-                    InputMode im = inputSession.getCurrentInputMode(); 
+                    TextInputSession is = getInputSession();
+                    InputMode im = is.getCurrentInputMode();
                     if (im != null && im.hasDisplayable()) {
                         enableTF();
                     } else {
@@ -1534,7 +1558,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
                         }
                     }
                     if (interruptedIM != null) {
-                        inputSession.setCurrentInputMode(interruptedIM);
+                        is.setCurrentInputMode(interruptedIM);
                         interruptedIM = null;
                     }
                     showIMPopup = true;
@@ -1644,7 +1668,8 @@ class TextFieldLFImpl extends ItemLFImpl implements
         firstTimeInTraverse = true;
         
         if (editable) {
-            InputMode im = inputSession.getCurrentInputMode(); 
+            TextInputSession is = getInputSession();
+            InputMode im = is.getCurrentInputMode();
             if (im != null && im.hasDisplayable()) { 
                 disableTF();
                 ((ScreenLFImpl)tf.owner.getLF()).resetToTop = false;
@@ -1742,8 +1767,9 @@ class TextFieldLFImpl extends ItemLFImpl implements
      * uneditable text across this TextField
      */
     private void resetUneditable() {
+        TextInputSession is = getInputSession();
         String text = getDisplayString(
-            tf.buffer, hasFocus ? inputSession.getPendingChar() : 0,
+            tf.buffer, hasFocus ? is.getPendingChar() : 0,
             tf.constraints, cursor, true);
         
         textWidth = ScreenSkin.FONT_INPUT_TEXT.stringWidth(text);
@@ -1805,7 +1831,8 @@ class TextFieldLFImpl extends ItemLFImpl implements
         enableTF();
 
         // ASSERT (editable && hasFocus)
-        inputSession.beginSession(this);
+        TextInputSession is = getInputSession();
+        is.beginSession(this);
     }
     
     /**
@@ -1822,7 +1849,8 @@ class TextFieldLFImpl extends ItemLFImpl implements
     private void disableInput() {
         disableTF();
         removeInputCommands();       
-        inputSession.endSession();
+        TextInputSession is = getInputSession();
+        is.endSession();
         // reset input mode name
         inputModeIndicator.setDisplayMode(null);
     }
@@ -1889,7 +1917,6 @@ class TextFieldLFImpl extends ItemLFImpl implements
                 Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
                     "[showPTPopup]    pt_matches.length =" + pt_matches.length);
             }
-            pt_popup.setList(pt_matches);
             showPTILayer();
         } else { // hide layer
             if (Logging.REPORT_LEVEL <= Logging.INFORMATION) {
@@ -1911,6 +1938,9 @@ class TextFieldLFImpl extends ItemLFImpl implements
                 Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
                     "[showPTPopup] showing");
             }
+
+            PTILayer pt_popup = d.getPTIPopup();
+            pt_popup.setList(pt_matches);
             d.showPopup(pt_popup);
             pt_popupOpen = true;
             lRequestInvalidate(true, true);
@@ -1927,6 +1957,7 @@ class TextFieldLFImpl extends ItemLFImpl implements
                 Logging.report(Logging.INFORMATION, LogChannels.LC_HIGHUI,
                     "[showPTPopup] hiding");
             }
+            PTILayer pt_popup = d.getPTIPopup();
             d.hidePopup(pt_popup);
             pt_popupOpen = false;
             lRequestInvalidate(true, true);
@@ -1949,8 +1980,9 @@ class TextFieldLFImpl extends ItemLFImpl implements
     protected boolean acceptPTI() {
         boolean ret = false;
         if (hasPTI()) {
+            TextInputSession is = getInputSession();
             ret = InputMode.KEYCODE_NONE !=
-                inputSession.processKey(Constants.KEYCODE_SELECT, false);
+                is.processKey(Constants.KEYCODE_SELECT, false);
         }
         return ret;
     }
