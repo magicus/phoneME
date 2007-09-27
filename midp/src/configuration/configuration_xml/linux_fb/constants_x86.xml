@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
+<!--
+        Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+        DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+        
+        This program is free software; you can redistribute it and/or
+        modify it under the terms of the GNU General Public License version
+        2 only, as published by the Free Software Foundation.
+        
+        This program is distributed in the hope that it will be useful, but
+        WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+        General Public License version 2 for more details (a copy is
+        included at /legal/license.txt).
+        
+        You should have received a copy of the GNU General Public License
+        version 2 along with this work; if not, write to the Free Software
+        Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+        02110-1301 USA
+        
+        Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+        Clara, CA 95054 or visit www.sun.com if you need additional
+        information or have any questions.
+-->
+<configuration>
+<constants>
+<constant_class Package="com.sun.midp.configurator" Name="Constants" Scope="public">
+  <constant Type="boolean"
+            Name="POINTER_SUPPORTED"
+            Value="true" 
+            Comment="Whether both the platform and MIDP implementation provide support for a pointer (press and release). Set to true when pointer is supported; set to false when pointer is not supported."/>
+  <constant Type="boolean"
+            Name="MOTION_SUPPORTED"
+            Value="true" 
+            Comment="If your platform supports pointer motion and you want MIDP implementation provides support for pointer motions, set it to true; otherwise, set it to false so that MIDP runtime can provide this information to MIDlet."/>
+  <constant Type="boolean"
+            Name="REPEAT_SUPPORTED"
+            Value="false" 
+            Comment="If your platform support key repeat and you want MIDP implementation provides support for key repeat, set this to true, otherwise set it to false."/>
+  <constant Type="int"
+             Name="REPEAT_TIMEOUT"
+             Value="400"
+             Comment="If your platform support key repeat and you want MIDP implementation needs to support key repeat, set this to value of timeout before repeat key event generation."/>
+  <constant Type="int"
+             Name="REPEAT_PERIOD"
+             Value="80"
+             Comment="If your platform support key repeat and you want MIDP implementation needs to support key repeat, set this to value of period between next repeat key event generation."/>
+ </constant_class>
+</constants>
+</configuration>
