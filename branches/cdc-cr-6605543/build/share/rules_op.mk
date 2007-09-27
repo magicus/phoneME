@@ -161,7 +161,7 @@ $(JSR_CDCRESTRICTED_CLASSLIST): $(JSROP_JARS)
 # there is no restrictions for midlets to accessing the JSROP 
 # class' public members.
 #
-API_EXTENSIONS_CLASSLIST = $(subst($(space),$(comma),$(API_EXTENSIONS_LIST))
+API_EXTENSIONS_CLASSLIST = $(subst $(space),$(comma),$(API_EXTENSIONS_LIST))
 $(JSR_MIDPPERMITTED_CLASSLIST): $(JSROP_JARS) $(JSROP_EXTRA_JARS)
 	@echo "Generating MIDP permitted JSR class list ...";
 	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister \
