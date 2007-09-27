@@ -251,8 +251,9 @@ static void unregisterSMSEntry(int port, int handle) {
     jsr120_unregister_sms_push_port((jchar)port);
 
     /* Release the handle associated with this connection. */
-    pcsl_mem_free((void *)handle);
-
+    if (handle) {
+        pcsl_mem_free((void *)handle);
+    }
 }
 
 static int registerCBSEntry(int msgID, AppIdType msid) {
@@ -383,5 +384,203 @@ char *getMMSAppID(char *entry) {
 }
 #endif
 
+#ifdef ENABLE_CDC
+
+typedef struct filter_struct {
+    int port;
+    int handle;
+    char* filter;
+    struct filter_struct* next;
+} filter_struct;
+
+static filter_struct* filter_list;
+
+static void register_filter(int port, int handle, char* filter) {
+
+    filter_struct* ptr = (filter_struct*)pcsl_mem_malloc(sizeof(filter_struct));
+    ptr->port = port;
+    ptr->handle = handle;
+    ptr->filter = filter;
+    ptr->next = filter_list;
+    filter_list = ptr;
+}
+
+static int unregister_filter(int port) {
+
+    filter_struct* ptr = filter_list;
+    if (ptr == NULL) {
+        return 0; //error
+    }
+    if (ptr->port == port) {
+        filter_list = filter_list->next;
+        return 0;
+    }
+
+    do {
+        if (ptr->next == NULL) {
+            return 0; //error
+        }
+        if (ptr->next->port == port) {
+            filter_struct* delptr = ptr->next;
+            ptr->next = ptr->next->next;
+            pcsl_mem_free(delptr->filter);
+            pcsl_mem_free(delptr);
+            return ptr->handle;
+        }
+    } while (1);
+}
+
+static char* find_filter(int port) {
+
+    filter_struct* ptr = filter_list;
+    if (ptr != NULL) {
+        do {
+            if (ptr->port == port) { 
+                return ptr->filter;
+            }
+            ptr = ptr->next;
+        } while (ptr != NULL);
+    }    
+    return NULL;
+}
+
+static int checkfilter_recursive(char *p1, char *p2) {
+    if (*p1 == 0) return (*p2 == 0);
+    if (*p1 == '*') {
+        while (*++p1 == '*');
+        do {
+            if (checkfilter_recursive(p1, p2)) return 1;
+        } while (*(p2++));
+        return 0;
+    }
+    if (*p2 == 0) return 0;
+    if (*p1 == *p2 || *p1 == '?') return checkfilter_recursive(++p1, ++p2);
+    return 0;
+} 
+
+int check_push_filter(int port, char* senderPhone) {
+
+    char* filter = find_filter(port);
+    if (filter == NULL) {
+        return 1;
+    } else {
+        return checkfilter_recursive(filter, senderPhone);
+    }
+}
+
+#include <kni.h>
+#include <sni.h>
+
+//    private static native void addPushPort(int port, String pushFilter) throws IOException, IllegalArgumentException;
+//    private static native int  removePushPort(int port) throws IllegalStateException;
+//    private native        int  waitPushEvent() throws java.io.InterruptedIOException;
+//    private static native int  hasAvailableData(int port);
+
+#ifdef ENABLE_MIDP
+  #include "midpError.h"
+#else
+  static const char* const midpOutOfMemoryError = "java/lang/OutOfMemoryError";
+  static const char* const midpIOException = "java/io/IOException"; 
+  static const char* const midpRuntimeException = "java/lang/RuntimeException";
+  static const char* const midpIllegalArgumentException = "java/lang/IllegalArgumentException";
+  static const char* const midpIllegalStateException = "java/lang/IllegalStateException";
+#endif
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_push_reservation_PushConnectionsPool_addPushPort) {
+
+    jint port;
+
+    jint msAddress_len;
+    jchar* msAddress_data = NULL;
+    unsigned char *pAddress = NULL;
+
+    AppIdType msid = 0;
+    int handle;
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(address);
+    port = KNI_GetParameterAsInt(1);
+    KNI_GetParameterAsObject(2, address);
+
+    handle = registerSMSEntry(port, msid);
+
+    if (handle != 0) {
+        if (KNI_IsNullHandle(address)) {
+            KNI_ThrowNew(midpIllegalArgumentException, "wrong push filer");
+        } else {
+            msAddress_len = KNI_GetStringLength(address);
+            msAddress_data = (jchar *)pcsl_mem_malloc(msAddress_len * sizeof(jchar));
+            if (msAddress_data == NULL) {
+                KNI_ThrowNew(midpOutOfMemoryError, "");
+            } else {
+                KNI_GetStringRegion(address, 0, msAddress_len, msAddress_data);
+                pAddress = (unsigned char*)pcsl_mem_malloc(msAddress_len + 1);
+                if (pAddress != NULL) {
+                    int i;
+                    for (i = 0; i < msAddress_len; i++) {
+                        pAddress[i] = (unsigned char)msAddress_data[i];
+                    }	
+                    pAddress[msAddress_len] = 0;
+                }
+                pcsl_mem_free(msAddress_data);
+	    }
+	}
+
+	if (pAddress) {
+            register_filter(port, handle, pAddress);
+	}
+    } else {
+        KNI_ThrowNew(midpIOException, "access denied");
+    }
+
+    KNI_EndHandles();
+    KNI_ReturnVoid();
+
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_push_reservation_PushConnectionsPool_removePushPort) {
+
+    int port = KNI_GetParameterAsInt(1);
+    int handle = 0;
+    handle = unregister_filter(port);
+    unregisterSMSEntry(port, handle);
+
+    KNI_ReturnInt(1);
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_push_reservation_PushConnectionsPool_waitPushEvent) {
+    int handle = 0;
+    int port = 0;
+    int WMA_SMS_READ_SIGNAL = 0;
+    SmsMessage *psmsData = NULL;
+
+        do {
+            CVMD_gcSafeExec(_ee, {
+                jsr120_wait_for_signal(handle, WMA_SMS_READ_SIGNAL);
+            });
+            psmsData = jsr120_sms_pool_peek_next_msg((jchar)port);
+        } while (psmsData == NULL);
+    KNI_ReturnInt(1);
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_push_reservation_PushConnectionsPool_hasAvailableData) {
+    int port = KNI_GetParameterAsInt(1);
+    SmsMessage *psmsData = NULL;
+    int result = 0;
+
+    psmsData = jsr120_sms_pool_peek_next_msg((jchar)port);
+    if (psmsData != NULL) {
+        result = port;
+    }
+
+    KNI_ReturnInt(result);
+}
 
 #endif
+
+#endif
+

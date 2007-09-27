@@ -87,8 +87,12 @@ void finalize_jsr120() {
     javacall_wma_close();
 }
 
+#ifdef ENABLE_MIDP
 // see below
 static int checkfilter(char *filter, char *ip);
+#else
+int check_push_filter(int port, char* senderPhone);
+#endif
 
 /**
  * Defined in wmaSocket.c
@@ -108,7 +112,9 @@ jboolean jsr120_check_signal(midpSignalType signalType, int fd) {
             jsr120_sms_pool_add_msg(sms);
         }
 #else
-	jsr120_sms_pool_add_msg(sms);
+        if (check_push_filter(sms->destPortNum, sms->msgAddr)) {
+            jsr120_sms_pool_add_msg(sms);
+        }
 #endif
         return KNI_TRUE;
     }
