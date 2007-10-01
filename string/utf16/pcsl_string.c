@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
-#include <errno.h>
+
 #include <util/utf.h>
 #include <pcsl_string.h>
 #include <pcsl_memory.h>
