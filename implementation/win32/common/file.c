@@ -2,22 +2,22 @@
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -26,7 +26,7 @@
 /**
  * @file
  *
- * Javacall interfaces for file
+ * Implemenation for file javacall functions
  */
 
 #include "javacall_dir.h"
@@ -39,11 +39,64 @@
 
 #include <windows.h>
 
+
+/**
+ * Creates null terminated version of string in externally allocated buffer
+ *
+ * @param name non null terminated string
+ * @param length of desired string, or -1 if already null terminated
+ * @param suggest_buffer allocated space
+ * @param suggest_length length of extern buffer
+ */
+javacall_const_utf16_string javacall_string_convert_buffer_extern(javacall_const_utf16_string name, int length,
+                                           javacall_utf16* suggest_buffer, int suggest_length)
+{
+    if (length == -1)
+        return name;
+    if (length >= suggest_length)
+        return NULL;
+    memcpy(suggest_buffer, name, sizeof(javacall_utf16)*length);
+    suggest_buffer[length] = 0;
+    return suggest_buffer;
+}
+
+
+/**
+ * Returns null terminated string
+ *
+ * @param name non null terminated string
+ * @param length length of desired string, or -1 if already null terminated
+ * @return a buffer with null terminated string
+ */
+javacall_const_utf16_string javacall_string_convert_buffer_alloc(javacall_const_utf16_string name, int length)
+{
+    javacall_utf16* nt_name;
+    if (length == -1)
+        return name;
+    nt_name = (javacall_utf16*) malloc(sizeof(javacall_utf16)*(length+1));
+    memcpy(nt_name, name, sizeof(javacall_utf16)*length);
+    nt_name[length] = 0;
+    return nt_name;
+}
+
+/**
+ * Releases the allocated memory block
+ *
+ * @param orString original string
+ * @suggest_buffer buffer, holding the null terminated string
+ */
+void javacall_string_release_alloc(javacall_const_utf16_string name, javacall_const_utf16_string nt_name)
+{
+    if (name != nt_name)
+        free((void*)nt_name);
+}
+
 /**
  * Initializes the File System
  * @return <tt>JAVACALL_OK</tt> on success, <tt>JAVACALL_FAIL</tt> or negative value on error
  */
-javacall_result javacall_file_init(void) {
+javacall_result javacall_file_init(void)
+{
     return JAVACALL_OK;
 }
 
@@ -51,7 +104,8 @@ javacall_result javacall_file_init(void) {
  * Cleans up resources used by file system
  * @return <tt>JAVACALL_OK</tt> on success, <tt>JAVACALL_FAIL</tt> or negative value on error
  */
-javacall_result javacall_file_finalize(void) {
+javacall_result javacall_file_finalize(void)
+{
     return JAVACALL_OK;
 }
 
@@ -62,57 +116,66 @@ javacall_result javacall_file_finalize(void) {
  * @param flags open control flags.
  *        Applications must specify exactly one of the first three
  *        values (file access modes) below in the value of "flags":
- *        JAVACALL_FILE_O_RDONLY, 
- *        JAVACALL_FILE_O_WRONLY, 
+ *        JAVACALL_FILE_O_RDONLY,
+ *        JAVACALL_FILE_O_WRONLY,
  *        JAVACALL_FILE_O_RDWR
  *
  *        and any combination (bitwise-inclusive-OR) of the following:
- *        JAVACALL_FILE_O_CREAT, 
- *        JAVACALL_FILE_O_TRUNC, 
+ *        JAVACALL_FILE_O_CREAT,
+ *        JAVACALL_FILE_O_TRUNC,
  *        JAVACALL_FILE_O_APPEND,
  *
  * @param handle pointer to store the file identifier.
- *        On successful completion, file identifier is returned in this 
+ *        On successful completion, file identifier is returned in this
  *        argument. This identifier is platform specific and is opaque
- *        to the caller.  
- * @return <tt>JAVACALL_OK</tt> on success, 
+ *        to the caller.
+ * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt> otherwise.
- * 
+ *
  */
 javacall_result javacall_file_open(javacall_const_utf16_string fileName,
-								   int fileNameLen,
-                                   int flags,
-                                   javacall_handle* /* OUT */ handle)
+                                  int fileNameLen,
+                                  int flags,
+                                  javacall_handle* /* OUT */ handle)
 {
     DWORD dwDesiredAccess = GENERIC_READ;
     DWORD dwCreationDisposition = OPEN_EXISTING;
     HANDLE fh = INVALID_HANDLE_VALUE;
 
-    if ((flags & JAVACALL_FILE_O_WRONLY) == JAVACALL_FILE_O_WRONLY) {
-        dwDesiredAccess = GENERIC_WRITE;
-    }
-    if ((flags & JAVACALL_FILE_O_RDWR) == JAVACALL_FILE_O_RDWR) {
-        dwDesiredAccess = GENERIC_WRITE | GENERIC_READ;
-    }
-    /* The flags order processing is important.                      
+    /* create a new unicode NULL terminated file name variable */
+    javacall_const_utf16_string sFileName = javacall_string_convert_buffer_alloc(fileName, fileNameLen);
+
+    /* The flags order processing is important.
      * consider JAVACALL_FILE_O_RDWR|JAVACALL_FILE_O_APPEND|JAVACALL_FILE_O_CREAT
      * or JAVACALL_FILE_O_RDWR|JAVACALL_FILE_O_TRUNC|JAVACALL_FILE_O_CREAT
      */
-    if ((flags & JAVACALL_FILE_O_TRUNC) == JAVACALL_FILE_O_TRUNC) {
-        dwCreationDisposition = TRUNCATE_EXISTING;
-    }
-    if ((flags & JAVACALL_FILE_O_APPEND) == JAVACALL_FILE_O_APPEND) {
-        dwCreationDisposition = OPEN_EXISTING;
-    }
-    if ((flags & JAVACALL_FILE_O_CREAT) == JAVACALL_FILE_O_CREAT) {
-        dwCreationDisposition = OPEN_ALWAYS;
-        if ((flags & JAVACALL_FILE_O_TRUNC) == JAVACALL_FILE_O_TRUNC) {
-            dwCreationDisposition = CREATE_ALWAYS;
-        }
+    switch (flags & (JAVACALL_FILE_O_RDWR | JAVACALL_FILE_O_WRONLY)) {
+        case JAVACALL_FILE_O_WRONLY:
+            dwDesiredAccess = GENERIC_WRITE;
+            break;
+        case JAVACALL_FILE_O_RDWR:
+            dwDesiredAccess = GENERIC_WRITE | GENERIC_READ;
+            break;
+        default:
+            break;
     }
 
-    /* create a new unicode NULL terminated file name variable */
-    fh = CreateFileW(fileName,
+    switch (flags & (JAVACALL_FILE_O_CREAT | JAVACALL_FILE_O_TRUNC)) {
+        case JAVACALL_FILE_O_CREAT | JAVACALL_FILE_O_TRUNC:
+            dwCreationDisposition = CREATE_ALWAYS;
+            break;
+        case JAVACALL_FILE_O_CREAT:
+            dwCreationDisposition = OPEN_ALWAYS;
+            break;
+        case JAVACALL_FILE_O_TRUNC:
+            dwCreationDisposition = TRUNCATE_EXISTING;
+            break;
+        default:
+            dwCreationDisposition = OPEN_EXISTING;
+            break;
+    }
+
+    fh = CreateFileW(sFileName,
                     dwDesiredAccess,
                     FILE_SHARE_READ|FILE_SHARE_WRITE,
                     NULL,
@@ -121,18 +184,16 @@ javacall_result javacall_file_open(javacall_const_utf16_string fileName,
                     NULL);
     /* The original value is 0 but not FILE_SHARE_READ|FILE_SHARE_WRITE; */
 
-#if ENABLE_JAVACALL_IMPL_FILE_LOGS
-	javacall_tprintf(TEXT("javacall_file_open >> %s %x\n"), 
-	    nullTerminatedFileName, fh);
-#endif
+    javacall_string_release_alloc(fileName, sFileName);
+
+    *handle = fh;
+
     if (fh != INVALID_HANDLE_VALUE) {
         if ((flags & JAVACALL_FILE_O_APPEND) == JAVACALL_FILE_O_APPEND) {
             SetFilePointer(fh, 0, NULL, FILE_END);
         }
-        *handle = fh;
         return JAVACALL_OK;
     }
-
     return JAVACALL_FAIL;
 }
 
@@ -142,15 +203,11 @@ javacall_result javacall_file_open(javacall_const_utf16_string fileName,
  * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
-javacall_result javacall_file_close(javacall_handle handle) {
+javacall_result javacall_file_close(javacall_handle handle)
+{
     BOOL res;
-
-#if ENABLE_JAVACALL_IMPL_FILE_LOGS
-	javacall_tprintf(TEXT("javacall_file_close >> %x\n"), handle), 
-#endif    
-
     res = CloseHandle((HANDLE) handle);
-	return (res) ? JAVACALL_OK : JAVACALL_FAIL;
+    return (res) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 
@@ -162,18 +219,18 @@ javacall_result javacall_file_close(javacall_handle handle) {
  *              read may be less, if an end-of-file is encountered
  * @return the number of bytes actually read
  */
-long javacall_file_read(javacall_handle handle, unsigned char *buf, long size) {
+long javacall_file_read(javacall_handle handle, unsigned char *buf, long size)
+{
     BOOL res;
     DWORD read_bytes = 0;
 
     res = ReadFile((HANDLE)handle, (LPVOID)buf, size, &read_bytes, NULL);
-    if (res == TRUE) {
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
+    if (res == TRUE) {
         javacall_printf("javacall_file_read >> handle=%x size=%d, read=%d\n", handle, size, read_bytes);
-#endif
-        return read_bytes;
     }
-    return -1;
+#endif
+    return (res) ? read_bytes :  -1;
 }
 
 /**
@@ -185,26 +242,32 @@ long javacall_file_read(javacall_handle handle, unsigned char *buf, long size) {
  *         as size, but might be less (for example, if the persistent storage being
  *         written to fills up).
  */
-long javacall_file_write(javacall_handle handle, const unsigned char *buf, long size) {
+long javacall_file_write(javacall_handle handle, const unsigned char *buf, long size)
+{
     BOOL res;
     DWORD written_bytes = 0;
 
     res = WriteFile((HANDLE)handle, (LPCVOID)buf, size, &written_bytes, NULL);
-	return (res) ? written_bytes : -1;
+    return (res) ? written_bytes : -1;
 }
 
 /**
  * Deletes a file from persistent storage.
  *
  * @param fileName name of file to be deleted
- * @return <tt>JAVACALL_OK</tt> on success, 
+ * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt> otherwise.
  */
-javacall_result javacall_file_delete(javacall_const_utf16_string fileName, 
-									 int fileNameLen)
+javacall_result javacall_file_delete(javacall_const_utf16_string fileName,
+                                    int fileNameLen)
 {
     BOOL res;
-    res = DeleteFileW(fileName);
+    /* create a new unicode NULL terminated file name variable */
+    javacall_const_utf16_string sFileName = javacall_string_convert_buffer_alloc(fileName, fileNameLen);
+
+    res = DeleteFileW(sFileName);
+
+    javacall_string_release_alloc(fileName, sFileName);
     return (res) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
@@ -220,18 +283,18 @@ javacall_result javacall_file_delete(javacall_const_utf16_string fileName,
  *         <tt>JAVACALL_FAIL</tt> otherwise.
  */
 javacall_result javacall_file_truncate(javacall_handle handle,
-                                       javacall_int64 size)
+                                      javacall_int64 size)
 {
-	int state;
+    int state;
     DWORD dwCutPointerPosition;
-	DWORD dwPreviousPointerPosition;
-	dwPreviousPointerPosition = SetFilePointer((HANDLE)handle,
-												0,
-												NULL,
-												FILE_CURRENT);
+    DWORD dwPreviousPointerPosition;
+    dwPreviousPointerPosition = SetFilePointer((HANDLE)handle,
+                                                0,
+                                                NULL,
+                                                FILE_CURRENT);
 
-	if (dwPreviousPointerPosition == INVALID_SET_FILE_POINTER)
-		return JAVACALL_FAIL;
+    if (dwPreviousPointerPosition == INVALID_SET_FILE_POINTER)
+        return JAVACALL_FAIL;
 
     dwCutPointerPosition = SetFilePointer((HANDLE)handle,
                                           (LONG)size,
@@ -241,30 +304,30 @@ javacall_result javacall_file_truncate(javacall_handle handle,
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
     javacall_printf( "javacall_file_truncate << handle=%x size=%d newPos=%d",
         handle, size, dwNewPointerPosition);
-#endif 
-    
+#endif
+
     if (dwCutPointerPosition == INVALID_SET_FILE_POINTER) {
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
-	javacall_printf( "javacall_file_truncate fail 1 >>");
+    javacall_printf( "javacall_file_truncate fail 1 >>");
 #endif
-            return JAVACALL_FAIL;
-    }
-            
-	state = 1;
+           return JAVACALL_FAIL;
+   }
+
+    state = 1;
     if (!SetEndOfFile((HANDLE)handle)) {
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
-	javacall_printf( "javacall_file_truncate fail 2 (%d) >>\n", GetLastError());
-#endif    
+    javacall_printf( "javacall_file_truncate fail 2 (%d) >>\n", GetLastError());
+#endif
         state = 0;
-	} else {
-		if (dwCutPointerPosition <= dwPreviousPointerPosition)
-			return JAVACALL_OK;
-	}
-	dwPreviousPointerPosition = SetFilePointer((HANDLE)handle, dwPreviousPointerPosition, NULL, FILE_BEGIN);
-	if (dwPreviousPointerPosition == INVALID_SET_FILE_POINTER)
-		state = 0;
-    
-	return (state) ? JAVACALL_OK : JAVACALL_FAIL;
+    } else {
+        if (dwCutPointerPosition <= dwPreviousPointerPosition)
+            return JAVACALL_OK;
+    }
+    dwPreviousPointerPosition = SetFilePointer((HANDLE)handle, dwPreviousPointerPosition, NULL, FILE_BEGIN);
+    if (dwPreviousPointerPosition == INVALID_SET_FILE_POINTER)
+        state = 0;
+
+    return (state) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 /**
@@ -279,30 +342,33 @@ javacall_result javacall_file_truncate(javacall_handle handle,
  * @return on success the actual resulting offset from beginning of file
  *         is returned, otherwise -1 is returned
  */
-javacall_int64 javacall_file_seek(javacall_handle handle, javacall_int64 offset, javacall_file_seek_flags flag) {
+javacall_int64 javacall_file_seek(javacall_handle handle, javacall_int64 offset, javacall_file_seek_flags flag)
+{
     DWORD dwMoveMethod;
     DWORD dwNewPointerPosition;
     LONG lOffset = (LONG)offset;
-    LONG hOffset = (LONG)(offset >> 32);
 
-    ASSERT(hOffset == 0);
-
-    if (flag == JAVACALL_FILE_SEEK_CUR) {
+    switch (flag) {
+    case JAVACALL_FILE_SEEK_CUR:
         dwMoveMethod = FILE_CURRENT;
-    } else if (flag == JAVACALL_FILE_SEEK_SET) {
+        break;
+    case JAVACALL_FILE_SEEK_SET:
         dwMoveMethod = FILE_BEGIN;
-    } else {
+        break;
+    default:
         dwMoveMethod = FILE_END;
-	}
+        break;
+    }
+
     dwNewPointerPosition = SetFilePointer((HANDLE)handle, lOffset, NULL, dwMoveMethod);
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
-			javacall_printf( "javacall_file_seek >> handle=%x offset=%d, move=%d, flag=%d, newp=%d\n", handle, offset, dwMoveMethod, flag, dwNewPointerPosition);
+           javacall_printf( "javacall_file_seek >> handle=%x offset=%d, move=%d, flag=%d, newp=%d\n", handle, offset, dwMoveMethod, flag, dwNewPointerPosition);
 #endif
     if (dwNewPointerPosition == INVALID_SET_FILE_POINTER)
         if (GetLastError() != NO_ERROR)
             return -1;
-            
-    return dwNewPointerPosition;
+
+   return dwNewPointerPosition;
 }
 
 
@@ -312,27 +378,31 @@ javacall_int64 javacall_file_seek(javacall_handle handle, javacall_int64 offset,
  *               This is the identifier returned by pcsl_file_open()
  * @return size of file in bytes if successful, -1 otherwise
  */
-javacall_int64 javacall_file_sizeofopenfile(javacall_handle handle) {
-    DWORD dwSize;
-
-    dwSize = GetFileSize((HANDLE)handle, NULL);
-	return (dwSize != INVALID_FILE_SIZE) ? dwSize : -1;
+javacall_int64 javacall_file_sizeofopenfile(javacall_handle handle)
+{
+   DWORD dwSize;
+   dwSize = GetFileSize((HANDLE)handle, NULL);
+   return (dwSize != INVALID_FILE_SIZE) ? dwSize : -1;
 }
 
 /**
  * Returns the file size.
  *
  * @param fileName name of the file.
- * @return size of file in bytes if successful, -1 otherwise 
+ * @return size of file in bytes if successful, -1 otherwise
  */
 javacall_int64 javacall_file_sizeof(javacall_const_utf16_string fileName,
-									int fileNameLen)
+                                   int fileNameLen)
 {
     WIN32_FILE_ATTRIBUTE_DATA fileAttributes;
-
-    if ( GetFileAttributesExW(fileName, GetFileExInfoStandard, (LPVOID)&fileAttributes) ) {
+    BOOL res;
+    /* create a new unicode NULL terminated file name variable */
+    javacall_const_utf16_string sFileName = javacall_string_convert_buffer_alloc(fileName, fileNameLen);
+    res = GetFileAttributesExW(sFileName, GetFileExInfoStandard, (LPVOID)&fileAttributes);
+    javacall_string_release_alloc(fileName, sFileName);
+    if (res) {
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
-	javacall_printf( "javacall_file_sizeof >> size=%d\n", fileAttributes.nFileSizeLow);
+    javacall_printf( "javacall_file_sizeof >> size=%d\n", fileAttributes.nFileSizeLow);
 #endif
         return fileAttributes.nFileSizeLow;
     }
@@ -340,7 +410,6 @@ javacall_int64 javacall_file_sizeof(javacall_const_utf16_string fileName,
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
     javacall_printf( "javacall_file_sizeof >> fail\n");
 #endif
-
     return -1;
 }
 
@@ -348,16 +417,20 @@ javacall_int64 javacall_file_sizeof(javacall_const_utf16_string fileName,
  * Checks if the file exists in file system storage.
  *
  * @param fileName name of the file.
- * @return <tt>JAVACALL_OK </tt> if it exists and is a regular file, 
+ * @return <tt>JAVACALL_OK </tt> if it exists and is a regular file,
  *         <tt>JAVACALL_FAIL</tt> otherwise.
  */
 javacall_result javacall_file_exist(javacall_const_utf16_string fileName,
-									int fileNameLen)
+                                   int fileNameLen)
 {
     WIN32_FIND_DATAW  fd;
     HANDLE sh;
-
-    if ( (sh = FindFirstFileW(fileName, &fd)) != INVALID_HANDLE_VALUE ) {
+    BOOL res;
+    /* create a new unicode NULL terminated file name variable */
+    javacall_const_utf16_string sFileName = javacall_string_convert_buffer_alloc(fileName, fileNameLen);
+    res = ((sh = FindFirstFileW(sFileName, &fd)) != INVALID_HANDLE_VALUE);
+    javacall_string_release_alloc(fileName, sFileName);
+    if (res) {
         if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
         {
             FindClose(sh);
@@ -366,7 +439,6 @@ javacall_result javacall_file_exist(javacall_const_utf16_string fileName,
         FindClose(sh);
         return JAVACALL_OK;
     }
-
     return JAVACALL_FAIL;
 }
 
@@ -376,11 +448,9 @@ javacall_result javacall_file_exist(javacall_const_utf16_string fileName,
  *               This is the identifier returned by javacall_file_open()
  * @return JAVACALL_OK  on success, <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
-javacall_result javacall_file_flush(javacall_handle handle) {
-
-    if (FlushFileBuffers((HANDLE)handle))
-        return JAVACALL_OK;
-    return JAVACALL_FAIL;
+javacall_result javacall_file_flush(javacall_handle handle)
+{
+    return (FlushFileBuffers((HANDLE)handle)) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 /**
@@ -392,13 +462,16 @@ javacall_result javacall_file_flush(javacall_handle handle) {
  *         <tt>JAVACALL_FAIL</tt> otherwise.
  */
 javacall_result javacall_file_rename(javacall_const_utf16_string oldFileName,
-									 int oldNameLen,
-                                     javacall_const_utf16_string newFileName,
-									 int newNameLen)
+                                    int oldNameLen,
+                                    javacall_const_utf16_string newFileName,
+                                    int newNameLen)
 {
-    if (MoveFileW(oldFileName, newFileName)) {
-        return JAVACALL_OK;
-    }
-
-    return JAVACALL_FAIL;
+    BOOL res;
+    /* create new unicode NULL terminated file name variables */
+    javacall_const_utf16_string sOldFileName = javacall_string_convert_buffer_alloc(oldFileName, oldNameLen);
+    javacall_const_utf16_string sNewFileName = javacall_string_convert_buffer_alloc(newFileName, newNameLen);
+    res = MoveFileW(sOldFileName, sNewFileName);
+    javacall_string_release_alloc(oldFileName, sOldFileName);
+    javacall_string_release_alloc(newFileName, sNewFileName);
+    return (res) ? JAVACALL_OK : JAVACALL_FAIL;
 }

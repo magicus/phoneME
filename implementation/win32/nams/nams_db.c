@@ -35,9 +35,6 @@
 #include "javacall_memory.h"
 #include "javacall_nams.h"
 
-extern char* unicode_to_char(unsigned short* str);
-extern unsigned short* char_to_unicode(char* str);
-
 static char NAMS_DB_FILE[]=".\\nams.db";
 static char NAMS_DB_HOME[]=".\\";
 

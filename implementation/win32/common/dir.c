@@ -26,23 +26,39 @@
 /**
  * @file
  *
- * Javacall interfaces for file
+ * Implemenation for dir javacall functions
  */
 
 #include "javacall_dir.h"
 #include "javacall_file.h"
 #include "javacall_logging.h"
 #include "javacall_memory.h"
+#include "javacall_events.h"
 
 #include <wchar.h>
 #include <windows.h>
-
 
 typedef struct JAVACALL_FIND_DATA {
         WIN32_FIND_DATAW find_data;
         BOOL first_time;
         HANDLE handle; /*win32 searching handle*/
 } JAVACALL_FIND_DATA;
+
+
+#define DEFAULT_MAX_JAVA_SPACE (8*1024*1024) 
+
+/**
+ * Returns file separator character used by the underlying file system
+ * The file separator, typically, is a single character that separates
+ * directories in a path name, for example <dir1>/<dir2>/file.c
+ * (usually this function will return '\\';)
+ * @return 16-bit Unicode encoded file separator
+ */
+javacall_utf16 javacall_get_file_separator(void) 
+{
+    return (javacall_utf16)L'\\';
+}
+
 
 /**
  * Returns handle to a file list. This handle can be used in
@@ -62,26 +78,31 @@ javacall_handle javacall_dir_open(javacall_const_utf16_string path, int pathLen)
     javacall_handle handle;
     JAVACALL_FIND_DATA* pFindData;
     WIN32_FIND_DATAW javacall_dir_data;
+    wchar_t wOsPath[JAVACALL_MAX_FILE_NAME_LENGTH];
     int nErrNo;
-    wchar_t* dirPath;
 
-	if (pathLen == -1) {
-		pathLen = wcslen(path);
-	}
+    if (pathLen == -1) {
+        pathLen = wcslen(path);
+    }
+    if( pathLen > JAVACALL_MAX_FILE_NAME_LENGTH ) {
+        return NULL;
+    }
 
-    if (path[pathLen - 2] != '/' || path[pathLen - 1] != '*') {
-        int dirPathLen = pathLen + 2 + (path[pathLen - 1] == '/' ? 0 : 1);
-        dirPath = LocalAlloc(LPTR, dirPathLen * sizeof(wchar_t));
-        wcscpy(dirPath, path);
-        dirPath[dirPathLen - 3] = '/';
-        dirPath[dirPathLen - 2] = '*';
-        dirPath[dirPathLen - 1] = 0;
+    memset(wOsPath, 0, JAVACALL_MAX_FILE_NAME_LENGTH * sizeof(wchar_t));
+    memcpy(wOsPath, path, pathLen * sizeof(wchar_t));
+
+
+    if (wOsPath[pathLen - 2] != '/' || wOsPath[pathLen - 2] != '\\' || wOsPath[pathLen - 1] != '*') {
+        if (wOsPath[pathLen - 1] == L'/' || wOsPath[pathLen - 1] == L'\\') {
+           wOsPath[pathLen++] = '*';
+        } else {
+            wOsPath[pathLen++] = javacall_get_file_separator();
+            wOsPath[pathLen++] = '*';
+        }
     }
-    else {
-        dirPath = (wchar_t *)path;
-    }
+    wOsPath[pathLen] = 0;
     
-    handle = FindFirstFileW(dirPath, &javacall_dir_data);
+    handle = FindFirstFileW(wOsPath, &javacall_dir_data);
     nErrNo = GetLastError();
 
     if (handle == INVALID_HANDLE_VALUE && nErrNo != ERROR_NO_MORE_FILES)
@@ -99,11 +120,9 @@ javacall_handle javacall_dir_open(javacall_const_utf16_string path, int pathLen)
     else {
         pFindData->handle = handle;
     }
-    if (dirPath != path) {
-        LocalFree(dirPath);
-    }
     return (javacall_handle)pFindData;
 }
+
 
 /**
  * Closes the specified file list. The handle will no longer be
@@ -151,8 +170,8 @@ javacall_utf16* javacall_dir_get_next(javacall_handle handle,
 
     if((pFindData == NULL) || (pFindData->handle == INVALID_HANDLE_VALUE) ){
         if (outFileNameLength != NULL ) { 
-			*outFileNameLength = 0; 
-		}
+            *outFileNameLength = 0; 
+        }
         return NULL;
     }
     if (pFindData->handle == 0)
@@ -161,16 +180,16 @@ javacall_utf16* javacall_dir_get_next(javacall_handle handle,
     if (!pFindData->first_time) {
         if (FindNextFileW(pFindData->handle, &(pFindData->find_data)) == 0) {
             if (outFileNameLength != NULL) { 
-				*outFileNameLength = 0; 
-			}
+                *outFileNameLength = 0; 
+            }
             return NULL;
         }
     }
     pFindData->first_time = FALSE;
 
     if (outFileNameLength != NULL) { 
-		*outFileNameLength = wcslen((wchar_t *)(pFindData->find_data.cFileName)); 
-	}
+        *outFileNameLength = wcslen((wchar_t *)(pFindData->find_data.cFileName)); 
+    }
     return  (pFindData->find_data.cFileName);
 }
 
@@ -178,7 +197,8 @@ javacall_utf16* javacall_dir_get_next(javacall_handle handle,
  * Checks the size of free space in storage.
  * @return size of free space
  */
-javacall_int64 javacall_dir_get_free_space_for_java(void){
+javacall_int64 javacall_dir_get_free_space_for_java(void)
+{
     wchar_t rootPath[JAVACALL_MAX_FILE_NAME_LENGTH+1]; /* max file name */
     int rootPathLen = JAVACALL_MAX_FILE_NAME_LENGTH+1;
     ULARGE_INTEGER freeBytesForMe, totalBytes, totalFreeBytes;
@@ -188,11 +208,15 @@ javacall_int64 javacall_dir_get_free_space_for_java(void){
     rootPath[rootPathLen] = 0;
     if (GetDiskFreeSpaceExW(rootPath, &freeBytesForMe, &totalBytes, &totalFreeBytes)) {
        javacall_int64 ret = (javacall_int64)freeBytesForMe.QuadPart;
+       if (ret > DEFAULT_MAX_JAVA_SPACE) {
+            return DEFAULT_MAX_JAVA_SPACE;
+       }
        return  ret;
     } else { 
        return 0;
     }
 }
+
 
 /**
  * Returns the root path of java's home directory.
@@ -204,9 +228,12 @@ javacall_int64 javacall_dir_get_free_space_for_java(void){
  * @return <tt>JAVACALL_OK</tt> if operation completed successfully
  *         <tt>JAVACALL_FAIL</tt> if an error occured
  */
-javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath, int* /* IN | OUT */ rootPathLen) {
+#ifdef UNDER_CE
+javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath, int* /* IN | OUT */ rootPathLen)
+{
     int i;
     static BOOL bCreated = FALSE;
+    
     DWORD res = GetModuleFileNameW(NULL, rootPath, *rootPathLen);
     if (0 == res)
         return JAVACALL_FAIL;
@@ -228,3 +255,106 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath, i
     }
     return JAVACALL_OK;
 }
+#else /* !UNDER_CE */
+javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath, int* /* IN | OUT */ rootPathLen)
+{
+    wchar_t dirBuffer[JAVACALL_MAX_ROOT_PATH_LENGTH + 1];
+    wchar_t currDir[JAVACALL_MAX_ROOT_PATH_LENGTH + 1];
+    wchar_t* midpHome;
+
+    if (rootPath == NULL || rootPathLen == NULL) {
+        return JAVACALL_FAIL;
+    }
+
+    /*
+     * If MIDP_HOME is set, just use it. Does not check if MIDP_HOME is
+     * pointing to a directory contain "appdb".
+     */
+    midpHome = _wgetenv(L"MIDP_HOME");
+    if (midpHome != NULL) {
+        int len = (int) wcslen(midpHome);
+        if (len >= *rootPathLen) {
+            * rootPathLen = 0;
+            return JAVACALL_FAIL;
+        }
+
+        wcscpy(rootPath, midpHome);
+        * rootPathLen = len;
+        return JAVACALL_OK;
+    }
+
+    /*
+     * Look for "appdb" until it is found in the following places:
+     * - current directory;
+     * - the parent directory of the midp executable;
+     * - the grandparent directory of the midp executable.
+     */
+    if ( _wgetcwd( currDir, sizeof(currDir)/sizeof(wchar_t) ) == NULL) {
+        * rootPathLen = 0;
+        return JAVACALL_FAIL;
+    } else {
+        wchar_t* lastsep;
+        struct _stat statbuf;
+        DWORD dwAttrs;
+        int i, j = 1;
+        wchar_t chSep = javacall_get_file_separator();
+        wchar_t filesep[2] = {chSep, (wchar_t)0};
+
+        dirBuffer[sizeof(dirBuffer)/sizeof(wchar_t) - 1] = (wchar_t)0;
+        wcsncpy(dirBuffer, currDir, sizeof(dirBuffer)/sizeof(wchar_t) - 1);
+
+        while (j < 2) {
+            /* Look for the last slash in the pathname. */
+            lastsep = wcsrchr(dirBuffer, *filesep);
+            if (lastsep != NULL) {
+                *(lastsep + 1) = L'\0';
+            } else {
+                /* no file separator */
+                wcscpy(dirBuffer, L".");
+                wcscat(dirBuffer, filesep);
+            }
+
+            wcscat(dirBuffer, L"appdb");
+            i = 0;
+
+            /* try to search for "appdb" 3 times only (see above) */
+            while (i < 3) {
+                memset(&statbuf, 0, sizeof(statbuf));
+
+                /* found it and it is a directory */
+                dwAttrs = GetFileAttributesW(dirBuffer);
+                if (dwAttrs & FILE_ATTRIBUTE_DIRECTORY) 
+                    break;
+
+                /* strip off "appdb" to add 1 more level of ".." */
+                *(wcsrchr(dirBuffer, *filesep)) = L'\0';
+                wcscat(dirBuffer, filesep);
+                wcscat(dirBuffer, L"..");
+                wcscat(dirBuffer, filesep);
+                wcscat(dirBuffer, L"appdb");
+
+                i++;
+            } /* end while (i < 3) */
+
+            if (i < 3) {
+                break;
+            }
+
+            j++;
+        } /* end while (j < 2) */
+
+        if (j == 2) {
+            * rootPathLen = 0;
+            return JAVACALL_FAIL;
+        }
+
+        /* strip off "appdb" from the path */
+        *(wcsrchr(dirBuffer, *filesep)) = L'\0';
+
+        wcscpy(rootPath, dirBuffer);
+        * rootPathLen = wcslen(rootPath);
+
+        return JAVACALL_OK;
+    }
+}
+#endif /* UNDER_CE */
