@@ -48,15 +48,16 @@
  * @param suggest_buffer allocated space
  * @param suggest_length length of extern buffer
  */
-javacall_const_utf16_string javacall_string_convert_buffer_extern(javacall_const_utf16_string name, int length,
-                                           javacall_utf16* suggest_buffer, int suggest_length)
+static javacall_const_utf16_string 
+    get_string_extern(javacall_const_utf16_string name, int length,
+                      javacall_utf16* suggest_buffer, int suggest_length)
 {
     if (length == -1)
         return name;
     if (length >= suggest_length)
         return NULL;
     memcpy(suggest_buffer, name, sizeof(javacall_utf16)*length);
-    suggest_buffer[length] = 0;
+    suggest_buffer[length] = '\0';
     return suggest_buffer;
 }
 
@@ -68,14 +69,15 @@ javacall_const_utf16_string javacall_string_convert_buffer_extern(javacall_const
  * @param length length of desired string, or -1 if already null terminated
  * @return a buffer with null terminated string
  */
-javacall_const_utf16_string javacall_string_convert_buffer_alloc(javacall_const_utf16_string name, int length)
+static javacall_const_utf16_string 
+    get_string_alloc(javacall_const_utf16_string name, int length)
 {
     javacall_utf16* nt_name;
     if (length == -1)
         return name;
     nt_name = (javacall_utf16*) malloc(sizeof(javacall_utf16)*(length+1));
     memcpy(nt_name, name, sizeof(javacall_utf16)*length);
-    nt_name[length] = 0;
+    nt_name[length] = '\0';
     return nt_name;
 }
 
@@ -85,7 +87,9 @@ javacall_const_utf16_string javacall_string_convert_buffer_alloc(javacall_const_
  * @param orString original string
  * @suggest_buffer buffer, holding the null terminated string
  */
-void javacall_string_release_alloc(javacall_const_utf16_string name, javacall_const_utf16_string nt_name)
+static void 
+    release_string_alloc(javacall_const_utf16_string name, 
+                         javacall_const_utf16_string nt_name)
 {
     if (name != nt_name)
         free((void*)nt_name);
@@ -143,7 +147,7 @@ javacall_result javacall_file_open(javacall_const_utf16_string fileName,
     HANDLE fh = INVALID_HANDLE_VALUE;
 
     /* create a new unicode NULL terminated file name variable */
-    javacall_const_utf16_string sFileName = javacall_string_convert_buffer_alloc(fileName, fileNameLen);
+    javacall_const_utf16_string sFileName = get_string_alloc(fileName, fileNameLen);
 
     /* The flags order processing is important.
      * consider JAVACALL_FILE_O_RDWR|JAVACALL_FILE_O_APPEND|JAVACALL_FILE_O_CREAT
@@ -182,12 +186,10 @@ javacall_result javacall_file_open(javacall_const_utf16_string fileName,
                     dwCreationDisposition,
                     FILE_ATTRIBUTE_NORMAL,
                     NULL);
-    /* The original value is 0 but not FILE_SHARE_READ|FILE_SHARE_WRITE; */
 
-    javacall_string_release_alloc(fileName, sFileName);
+    release_string_alloc(fileName, sFileName);
 
     *handle = fh;
-
     if (fh != INVALID_HANDLE_VALUE) {
         if ((flags & JAVACALL_FILE_O_APPEND) == JAVACALL_FILE_O_APPEND) {
             SetFilePointer(fh, 0, NULL, FILE_END);
@@ -263,11 +265,11 @@ javacall_result javacall_file_delete(javacall_const_utf16_string fileName,
 {
     BOOL res;
     /* create a new unicode NULL terminated file name variable */
-    javacall_const_utf16_string sFileName = javacall_string_convert_buffer_alloc(fileName, fileNameLen);
+    javacall_const_utf16_string sFileName = get_string_alloc(fileName, fileNameLen);
 
     res = DeleteFileW(sFileName);
 
-    javacall_string_release_alloc(fileName, sFileName);
+    release_string_alloc(fileName, sFileName);
     return (res) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
@@ -362,7 +364,8 @@ javacall_int64 javacall_file_seek(javacall_handle handle, javacall_int64 offset,
 
     dwNewPointerPosition = SetFilePointer((HANDLE)handle, lOffset, NULL, dwMoveMethod);
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
-           javacall_printf( "javacall_file_seek >> handle=%x offset=%d, move=%d, flag=%d, newp=%d\n", handle, offset, dwMoveMethod, flag, dwNewPointerPosition);
+    javacall_printf( "javacall_file_seek >> handle=%x offset=%d, move=%d, flag=%d, newp=%d\n", 
+           handle, offset, dwMoveMethod, flag, dwNewPointerPosition);
 #endif
     if (dwNewPointerPosition == INVALID_SET_FILE_POINTER)
         if (GetLastError() != NO_ERROR)
@@ -397,9 +400,9 @@ javacall_int64 javacall_file_sizeof(javacall_const_utf16_string fileName,
     WIN32_FILE_ATTRIBUTE_DATA fileAttributes;
     BOOL res;
     /* create a new unicode NULL terminated file name variable */
-    javacall_const_utf16_string sFileName = javacall_string_convert_buffer_alloc(fileName, fileNameLen);
+    javacall_const_utf16_string sFileName = get_string_alloc(fileName, fileNameLen);
     res = GetFileAttributesExW(sFileName, GetFileExInfoStandard, (LPVOID)&fileAttributes);
-    javacall_string_release_alloc(fileName, sFileName);
+    release_string_alloc(fileName, sFileName);
     if (res) {
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
     javacall_printf( "javacall_file_sizeof >> size=%d\n", fileAttributes.nFileSizeLow);
@@ -427,9 +430,9 @@ javacall_result javacall_file_exist(javacall_const_utf16_string fileName,
     HANDLE sh;
     BOOL res;
     /* create a new unicode NULL terminated file name variable */
-    javacall_const_utf16_string sFileName = javacall_string_convert_buffer_alloc(fileName, fileNameLen);
+    javacall_const_utf16_string sFileName = get_string_alloc(fileName, fileNameLen);
     res = ((sh = FindFirstFileW(sFileName, &fd)) != INVALID_HANDLE_VALUE);
-    javacall_string_release_alloc(fileName, sFileName);
+    release_string_alloc(fileName, sFileName);
     if (res) {
         if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
         {
@@ -468,10 +471,10 @@ javacall_result javacall_file_rename(javacall_const_utf16_string oldFileName,
 {
     BOOL res;
     /* create new unicode NULL terminated file name variables */
-    javacall_const_utf16_string sOldFileName = javacall_string_convert_buffer_alloc(oldFileName, oldNameLen);
-    javacall_const_utf16_string sNewFileName = javacall_string_convert_buffer_alloc(newFileName, newNameLen);
+    javacall_const_utf16_string sOldFileName = get_string_alloc(oldFileName, oldNameLen);
+    javacall_const_utf16_string sNewFileName = get_string_alloc(newFileName, newNameLen);
     res = MoveFileW(sOldFileName, sNewFileName);
-    javacall_string_release_alloc(oldFileName, sOldFileName);
-    javacall_string_release_alloc(newFileName, sNewFileName);
+    release_string_alloc(oldFileName, sOldFileName);
+    release_string_alloc(newFileName, sNewFileName);
     return (res) ? JAVACALL_OK : JAVACALL_FAIL;
 }
