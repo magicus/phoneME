@@ -229,7 +229,8 @@ javacall_int64 javacall_dir_get_free_space_for_java(void)
  *         <tt>JAVACALL_FAIL</tt> if an error occured
  */
 #ifdef UNDER_CE
-javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath, int* /* IN | OUT */ rootPathLen)
+javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath, 
+                                           int* /* IN | OUT */ rootPathLen)
 {
     int i;
     static BOOL bCreated = FALSE;
@@ -249,14 +250,16 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath, i
     wcscat(rootPath, L"\\Java"); /* java-home dir is at jvm_exe_path/Java. */
     *rootPathLen = wcslen(rootPath);
 
-    if (!bCreated) { /* at first time, we create jvm-exe-path/Java dir whether it is existed. */
+    if (!bCreated) { 
+        /* at first time, we create jvm-exe-path/Java dir whether it is existed. */
         CreateDirectoryW(rootPath, NULL);
         bCreated = TRUE;
     }
     return JAVACALL_OK;
 }
 #else /* !UNDER_CE */
-javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath, int* /* IN | OUT */ rootPathLen)
+javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath, 
+                                           int* /* IN | OUT */ rootPathLen)
 {
     wchar_t dirBuffer[JAVACALL_MAX_ROOT_PATH_LENGTH + 1];
     wchar_t currDir[JAVACALL_MAX_ROOT_PATH_LENGTH + 1];
