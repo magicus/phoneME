@@ -44,7 +44,7 @@ MIDP_DEPS       += $(CLDC_DIST_DIR)/lib/cldc_vmtest$(g)$(r)$(LIB_SUFFIX)
 endif
 endif
 
-PCSL_TARGET_DIR  = $(PCSL_OUTPUT_DIR)/$(TARGET_OS)_$(TARGET_CPU)
+PCSL_TARGET_DIR ?= $(PCSL_OUTPUT_DIR)/$(TARGET_OS)_$(TARGET_CPU)
 LD_FLAGS	+= -libpath:$(PCSL_TARGET_DIR)/lib
 EXTRA_INCLUDES	+= -I$(PCSL_TARGET_DIR)/inc
 LIBS		+= libpcsl_file.lib libpcsl_memory.lib libpcsl_print.lib \
