@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -31,13 +31,13 @@ import com.sun.midp.security.Permissions;
  */
 public class SIPPermission extends Permission {
 
-    static public SIPPermission SIP_CONNECTION =
-        new SIPPermission("javax.microedition.io.Connector.sip");
+    static public SIPPermission SIP_CONNECTION = new SIPPermission(
+        Permissions.getName(Permissions.SIP), null);
 
-    static public SIPPermission SIPS_CONNECTION =
-        new SIPPermission("javax.microedition.io.Connector.sips");
+    static public SIPPermission SIPS_CONNECTION = new SIPPermission(
+        Permissions.getName(Permissions.SIPS), null);
     
-    public SIPPermission(String permission) {
-        super(permission, null);
+    public SIPPermission(String permission, String resource) {
+        super(permission, resource);
     }
 }
