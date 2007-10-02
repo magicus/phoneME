@@ -27,6 +27,7 @@ ifeq ($(USE_MIDP),true)
 # print our configuration
 printconfig::
 	@echo "MIDP_DIR           = $(MIDP_DIR)"
+	@echo "PROJECT_MIDP_DIR   = $(PROJECT_MIDP_DIR)"
 	@echo "PCSL_DIR           = $(PCSL_DIR)"
 
 # Build PCSL before MIDP.
@@ -85,6 +86,7 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             OEM_PUSH_DIR=$(OEM_PUSH_DIR) \
 	             JSR_MIDP_INITIALIZER_LIST="$(subst .Initializer,.MIDPInitializer,$(JSR_INITIALIZER_LIST))" \
 	             COMPONENTS_DIR=$(COMPONENTS_DIR) \
+	             PROJECT_MIDP_DIR=$(PROJECT_MIDP_DIR) \
 	             rom -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
 	@echo "<==== end building MIDP classes"
 
@@ -132,6 +134,7 @@ source_bundle:: $(CVM_BUILD_DEFS_MK)
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
 		     SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR) \
 		     COMPONENTS_DIR=$(COMPONENTS_DIR) \
+	             PROJECT_MIDP_DIR=$(PROJECT_MIDP_DIR) \
 	             source_bundle -C $(PCSL_DIR) $(PCSL_MAKE_OPTIONS)
 
 #
@@ -164,6 +167,7 @@ $(RUNMIDLET): force_midp_build
 	             MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
 		     VM_BOOTCLASSPATH=$(VM_BOOTCLASSPATH) \
 	             COMPONENTS_DIR=$(COMPONENTS_DIR) \
+	             PROJECT_MIDP_DIR=$(PROJECT_MIDP_DIR) \
 	             $(MIDP_JSROP_USE_FLAGS) \
 	             -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
 ifneq ($(USE_JUMP), true)

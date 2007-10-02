@@ -77,6 +77,16 @@ ifeq ($(wildcard $(MIDP_DEFS_CDC_MK)),)
 $(error MIDP_DIR must point to the MIDP directory: $(MIDP_DIR))
 endif
 
+# Locate the midp-com component
+ifeq ($(USE_MIDP_COM),true)
+PROJECT_MIDP_DIR ?= $(COMPONENTS_DIR)/midp-com
+ifeq ($(wildcard $(PROJECT_MIDP_DIR)/build/common/project.gmk),)
+$(error PROJECT_MIDP_DIR must point to a directory containing the midp-com sources: $(PROJECT_MIDP_DIR))
+endif
+else
+PROJECT_MIDP_DIR ?= $(MIDP_DIR)
+endif
+
 MIDP_MAKEFILE_DIR 	?= build/$(MIDP_PLATFORM)
 MIDP_OUTPUT_DIR		?= $(CVM_MIDP_BUILDDIR)/midp_$(MIDP_PLATFORM)
 export MIDP_OUTPUT_DIR
