@@ -761,7 +761,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         // HTTP 1.1 requests must contain content length for proxies
         if ((getRequestProperty("Content-Length") == null) ||
             (getRequestProperty("Content-Length").equals("0"))) {
-            setRequestProperty("Content-Length",
+            reqProperties.put("Content-Length",
                                "" + (out == null ? 0 : out.size()));
         }
 
@@ -804,7 +804,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         // HTTP 1.1 requests must contain content length for proxies
         if ((getRequestProperty("Content-Length") == null) ||
             (getRequestProperty("Content-Length").equals("0"))) {
-            setRequestProperty("Content-Length",
+            reqProperties.put("Content-Length",
                                "" + (out == null ? 0 : out.size()));
         }
 
@@ -828,7 +828,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         
         // HTTP 1/1 requests require the Host header to distinguish virtual host locations.
-        setRequestProperty ("Host" ,  host + ":" + port );
+        reqProperties.put ("Host" ,  host + ":" + port );
 
         Enumeration reqKeys = reqProperties.keys();
         while (reqKeys.hasMoreElements()) {
