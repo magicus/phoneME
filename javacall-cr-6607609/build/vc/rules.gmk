@@ -139,7 +139,7 @@ $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(UTILITY_OBJECTS)) \
 	$(SPECIFIC_OBJECTS)
-	make $(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll
+	$(MAKE) $(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll
 	@echo "...Generating Library: $@"
 	@$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
 
