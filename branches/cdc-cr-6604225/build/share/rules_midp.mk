@@ -89,7 +89,7 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 #
 # Build the source bundle
 #
-source_bundle:: $(CVM_BUILD_DEFS_MK) $(PCSL_DEPENDENCIES)
+source_bundle:: $(CVM_BUILD_DEFS_MK) 
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
 	             TARGET_CPU=$(TARGET_CPU) USE_DEBUG=$(USE_DEBUG) \
