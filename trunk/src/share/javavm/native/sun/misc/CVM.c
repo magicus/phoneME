@@ -31,6 +31,9 @@
  */
 
 #include "javavm/include/interpreter.h"
+#ifdef CVM_DUAL_STACK
+#include "javavm/include/dualstack_impl.h"
+#endif
 #include "javavm/include/directmem.h"
 #include "javavm/include/indirectmem.h"
 #include "javavm/include/utils.h"
@@ -614,38 +617,6 @@ CNIsun_misc_CVM_throwLocalException(CVMExecEnv* ee,
     return CNI_EXCEPTION;
 }
 
-#ifdef CVM_DUAL_STACK
-/* 
- * Check if the classloader is one of the MIDP dual-stack classloaders.
- */
-CVMBool
-CVMclassloaderIsCLDCClassLoader(CVMExecEnv *ee,
-                                CVMClassLoaderICell* loaderICell)
-{
-    if (loaderICell != NULL) {
-        CVMClassBlock* loaderCB = CVMobjectGetClass(
-                                  CVMID_icellDirect(ee, loaderICell));
-        CVMClassTypeID loaderID = CVMcbClassName(loaderCB);
-        const char *midletLoaderName = "sun/misc/MIDletClassLoader";
-        const char *midpImplLoaderName = "sun/misc/MIDPImplementationClassLoader";
-        CVMClassTypeID MIDletClassLoaderID =
-            CVMtypeidLookupClassID(ee, midletLoaderName, 
-                                   strlen(midletLoaderName));
-        CVMClassTypeID MIDPImplClassLoaderID = 
-	    CVMtypeidLookupClassID(ee,midpImplLoaderName,
-				   strlen(midpImplLoaderName));
-
-        if (loaderID == MIDletClassLoaderID ||
-            loaderID == MIDPImplClassLoaderID){
-            return CVM_TRUE;
-        } else {
-            return CVM_FALSE;
-        }
-    }
-    return CVM_FALSE;
-}
-#endif
-
 CNIResultCode
 CNIsun_misc_CVM_callerCLIsMIDCLs(CVMExecEnv* ee,
                                    CVMStackVal32 *arguments,
@@ -664,7 +635,8 @@ CNIsun_misc_CVM_callerCLIsMIDCLs(CVMExecEnv* ee,
     cb = CVMgetCallerClass(ee, 1);
     loaderICell = (cb == NULL) ? NULL : CVMcbClassLoader(cb);
     
-    arguments[0].j.i = CVMclassloaderIsCLDCClassLoader(ee, loaderICell);
+    arguments[0].j.i = CVMclassloaderIsMIDPClassLoader(
+        ee, loaderICell, CVM_TRUE);
 #endif
     return CNI_SINGLE;
 }
