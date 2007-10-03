@@ -487,7 +487,7 @@ int check_push_filter(int port, char* senderPhone) {
 #endif
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_push_reservation_PushConnectionsPool_addPushPort) {
+KNIDECL(com_sun_midp_wma_PushConnectionsPool_addPushPort) {
 
     jint port;
 
@@ -540,7 +540,7 @@ KNIDECL(com_sun_midp_push_reservation_PushConnectionsPool_addPushPort) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_push_reservation_PushConnectionsPool_removePushPort) {
+KNIDECL(com_sun_midp_wma_PushConnectionsPool_removePushPort) {
 
     int port = KNI_GetParameterAsInt(1);
     int handle = 0;
@@ -551,7 +551,7 @@ KNIDECL(com_sun_midp_push_reservation_PushConnectionsPool_removePushPort) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_push_reservation_PushConnectionsPool_waitPushEvent) {
+KNIDECL(com_sun_midp_wma_PushConnectionsPool_waitPushEvent) {
     int handle = 0;
     int port = 0;
     int WMA_SMS_READ_SIGNAL = 0;
@@ -567,7 +567,7 @@ KNIDECL(com_sun_midp_push_reservation_PushConnectionsPool_waitPushEvent) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_push_reservation_PushConnectionsPool_hasAvailableData) {
+KNIDECL(com_sun_midp_wma_PushConnectionsPool_hasAvailableData) {
     int port = KNI_GetParameterAsInt(1);
     SmsMessage *psmsData = NULL;
     int result = 0;
