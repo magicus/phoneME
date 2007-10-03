@@ -29,6 +29,9 @@
 
 #include "javavm/include/interpreter.h"
 #include "javavm/include/directmem.h"
+#ifdef CVM_DUAL_STACK
+#include "javavm/include/dualstack_impl.h"
+#endif
 #include "javavm/include/indirectmem.h"
 #include "javavm/include/common_exceptions.h"
 #include "javavm/include/preloader.h"
@@ -731,6 +734,21 @@ CVMclassPrepareMethods(CVMExecEnv* ee, CVMClassBlock* cb)
 	    if (smb == NULL) {
 		continue;
 	    }
+
+#ifdef CVM_DUAL_STACK
+            {
+	        /*
+                 * Check against dual-stack filter to see if
+                 * the super MB exists. If the super MB doesn't
+                 * exist, then it's not an override and just
+                 * continue.
+                 */
+	        if (!CVMdualStackFindSuperMB(
+                            ee, cb, superCb, smb)) {
+		    continue;
+	        }
+	    }
+#endif
 
             /* Private methods never go in the method table. */
             CVMassert(!CVMmbIs(smb, PRIVATE));
