@@ -29,7 +29,6 @@ CLASSLIB_CLASSES += java.io.Win32FileSystem
 CLASSLIB_CLASSES += java.net.WinCEDatagramSocketImpl
 
 CVM_TARGETOBJS_SPACE += \
-	WinCEDatagramSocketImpl_md.o \
         Win32FileSystem_md.o \
         WinNTFileSystem_md.o \
         canonicalize_md.o \

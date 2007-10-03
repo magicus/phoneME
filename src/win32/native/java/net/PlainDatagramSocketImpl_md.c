@@ -519,7 +519,7 @@ Java_java_net_PlainDatagramSocketImpl_connect0(JNIEnv *env, jobject this,
 			"Protocol family not supported");
 	return;
     }
-
+    memset(&rmtaddr, 0, sizeof(rmtaddr));
     rmtaddr.sin_port = htons((short)port);
     rmtaddr.sin_addr.s_addr = htonl(addr);
     rmtaddr.sin_family = AF_INET;
@@ -556,6 +556,7 @@ Java_java_net_PlainDatagramSocketImpl_disconnect0(JNIEnv *env, jobject this) {
     fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
 
     memset(&addr, 0, sizeof(addr));
+    addr.sa_family = AF_INET;
     connect(fd, &addr, sizeof(addr));
 
     /* 
