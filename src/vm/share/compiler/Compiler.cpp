@@ -822,8 +822,9 @@ void Compiler::update_null_check_stubs() {
 void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
   // Tell OS to interrupt compilation after a platform-specific amount
   // of time. This avoid long compilation pauses when compiling big methods.
-  Os::start_compiler_timer();
-
+  if( !Compiler::is_inlining() ) { 
+    Os::start_compiler_timer();
+  }
 
   // Prevent spending run time on compilation
   // for a specified number of subsequent ticks:
@@ -865,7 +866,6 @@ void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
     if( CURRENT_HAS_PENDING_EXCEPTION ) {
       goto Failure;
     }
-
     if (!GenerateROMImage && !is_compilation_queue_empty() && 
         !is_inlining()) {
       if (ExcessiveSuspendCompilation || Os::check_compiler_timer() ) {
@@ -1175,7 +1175,6 @@ ReturnOop Compiler::resume_compilation(Method *method JVM_TRAPS) {
   if( _failure != out_of_time ) {
     terminate( result );
   }
- 
   EventLogger::end(EventLogger::COMPILE);
 
   return result;
