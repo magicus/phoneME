@@ -310,8 +310,12 @@ class DatagramSocket {
 		if (implClass == null) {
 		    String prefix = null;
 		    try {
-			prefix = (String) AccessController.doPrivileged(
-			    new sun.security.action.GetPropertyAction("impl.prefix", "Plain"));
+                        prefix = (String) AccessController.doPrivileged(
+				 new sun.security.action.GetPropertyAction("impl.prefix.dgram", null));
+			if (prefix == null) {
+			    prefix = (String) AccessController.doPrivileged(
+				new sun.security.action.GetPropertyAction("impl.prefix", "Plain"));
+			}
 			implClass = Class.forName("java.net."+prefix+"DatagramSocketImpl");
 		    } catch (Exception e) {
 			System.err.println("Can't find class: java.net." + 
