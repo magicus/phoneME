@@ -141,11 +141,11 @@ endif
 # Use bash on win32, since the Cygwin sh doesn't work for us.
 #
 ifeq ($(HOST_DEVICE), cygwin)
-SHELL	= bash
+SHELL	= bash -e
 endif
 
 ifeq ($(HOST_DEVICE), Interix)
-SHELL	= ksh
+SHELL	= ksh -e
 endif
 
 #
