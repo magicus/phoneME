@@ -40,4 +40,6 @@ J2ME_BUILD_VERSION	= $(CVM_BUILD_VERSION)
 J2ME_BUILD_ID		= $(CVM_BUILD_ID)
 
 # override with commercial versioning if present
--include ../share/id_cdc-com.mk
+ifeq ($(USE_CDC_COM),true)
+include $(CDC_COM_DIR)/build/share/id_cdc-com.mk
+endif

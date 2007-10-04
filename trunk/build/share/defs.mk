@@ -366,6 +366,15 @@ CVM_LIBDIR_ABS    := $(CVM_BUILD_TOP_ABS)/lib
 
 PROFILE_DIR       ?= $(CVM_TOP)
 
+
+# Locate the cdc-com component
+ifeq ($(USE_CDC_COM),true)
+CDC_COM_DIR ?= $(COMPONENTS_DIR)/cdc-com
+ifeq ($(wildcard $(CDC_COM_DIR)/build/share/id_cdc-com.mk),)
+$(error CDC_COM_DIR must point to a directory containing the cdc-com sources: $(CDC_COM_DIR))
+endif
+endif
+
 # Optional Package names
 ifneq ($(strip $(OPT_PKGS)),)
   ifeq ($(OPT_PKGS), all)
@@ -2155,14 +2164,6 @@ endif
 
 # include tools component makefile
 include $(TOOLS_DIR)/tools.gmk
-
-# Locate the cdc-com component
-ifeq ($(USE_CDC_COM),true)
-CDC_COM_DIR ?= $(COMPONENTS_DIR)/cdc-com
-ifeq ($(wildcard $(CDC_COM_DIR)/build/share/id_cdc-com.mk),)
-$(error CDC_COM_DIR must point to a directory containing the cdc-com sources: $(CDC_COM_DIR))
-endif
-endif
 
 #
 # Include target makfiles last.
