@@ -42,7 +42,7 @@ WIN_LINKLIBS += corelibc.lib
 include ../win32/wince50_defs.mk
 
 CVM_DEFINES +=  -DPOCKETPC
-CC_ARCH_FLAGS  = /GS-
+CC_ARCH_FLAGS  += /GS-
 TARGET_CC      = CL.EXE 
 LIBPATH += /LIBPATH:"$(VC_DIR)/ce/lib/armv4i"
 LIBPATH += /LIBPATH:"$(VC_DIR)/ce/atlmfc/lib/armv4i"
