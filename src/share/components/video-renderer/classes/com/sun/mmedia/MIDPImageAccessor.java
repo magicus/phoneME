@@ -25,7 +25,7 @@ package com.sun.mmedia;
 
 import com.sun.mmedia.FormatConversionUtils;
 
-import javax.microedition.lcdui.Image;
+import com.sun.j2me.proxy.lcdui.Image;
 
 /**
  * The image access class for MIDP.
