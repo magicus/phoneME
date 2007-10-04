@@ -2073,6 +2073,7 @@ CCFLAGS_FDLIB 	= $(CCFLAGS_SPEED) $(CC_ARCH_FLAGS_FDLIB)
 
 ifeq ($(CVM_SYMBOLS), true)
 CCFLAGS		+= -g
+ASM_FLAGS	+= -g
 endif
 
 ifeq ($(CVM_GPROF), true)
