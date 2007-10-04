@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!--
+
+    
+ 
+  Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+
+-->
+</head>
+<body bgcolor="white">
+This is root package of the MIDP runtime environment. Classes that initialize the environment, track MIDlet state and load MIDlet suites.
+
+<p><h2>Runtime Environment Components</h2>
+</p>
+The Runtime Environment components load and run a MIDlet suite. The native interface to run a suite is contained in the file midp.h. For the Java platform, two methods were added to the MIDletSuiteStorage class. The figure below shows the dependencies of part of the AMS that load a MIDlet suite.
+</p>
+<p><img src="doc-files/runtime.gif" name="runtime_main" align="CENTER" border="0">
+</p>
+<p><h3>Detailed Design</h3>
+</p>
+<p>The top level (main) files and objects of the Runtime Environment component used to launch a MIDlet are listed in the table below.
+</p>
+<table border=2>
+<tr>
+  <th>File or Object</th>
+  <th>Description</th>
+</tr>
+<tr>
+  <td>midpAMS.h</td>
+  <td>Provides the public C interface to start the VM and run a suite.</td>
+</tr>
+<tr>
+  <td>MIDletSuiteStorage</td>
+  <td>Provides a method to create MIDletSuite objects for installed suites.</td>
+</tr>
+<tr>
+  <td>midpInit.c</td>
+  <td>Initializes the system dependent resources, including the C heap, persistent storage, and UI system.</td>
+</tr>
+<tr>
+  <td>midp_run.c</td>
+  <td>Implements the functionality to run a MIDlet suite. Initializes the VM including the class path, fills in the CommandState with information needed by the MIDletSuiteLoader and starts the VM with the MIDletSuiteLoader as the first class. It repeats this process as long as the CommandState contains the name of the next suite to run.</td>
+</tr>
+<tr>
+  <td>CommandState</td>
+  <td>Passes state to, and receives state from, each VM run by midp_run.c</td>
+</tr>
+<tr>
+  <td>MIDletSuite</td>
+  <td>Provides the methods the rest of the system requires of a MIDlet suite, such as permission checking and getting application properties. MIDletSuite is an interface.</td>
+</tr>
+<tr>
+  <td>InternalMIDletSuiteImpl</td>
+  <td>Implements the MIDletSuite interface for internally ROMized MIDlets.</td>
+</tr>
+<tr>
+  <td>MIDletStateHandler</td>
+  <td>Handles processing of the runtime states of the MIDlets running in an isolated runtime environment. See the com.sun.midp.midlet package for more information.</td>
+</tr>
+<tr>
+  <td>MIDletSuiteLoader</td>
+  <td>Sets up the system before a suite is run. This is the first class loaded by the VM. It takes the following steps to load and run a suite:
+  <ul>
+    <li>Distributes security tokens to internal classes that need them</li>
+    <li>Initilizes packages that have background processing requirements.</li>
+    <li>Gets the CommandState</li>
+    <li>Creates a MIDletSuite object for the suite named as the next suite to run in the CommandState and then clears the name in the CommandState</li>
+    <li>Loads any arguments in the CommandState into the MIDlet suite's application properties as arg-0, arg-1, and arg-2, then clear the arguments in the CommandState</li>
+    <li>Starts the suite and put the status in the CommandState. This is a blocking action that does not return until all of the MIDlets of the suite are destroyed.</li>
+    <li>Gets the name of the next suite and the last suite to run from MIDletSuiteStorage and puts them in the CommandState</li>
+    <li>Moves the name of the last suite in the CommandState to the name of the next suite to run in the CommandState if there is no next suite to run</li>
+    <li>Shuts down the event queue</li>
+    <li>Saves the CommandState</li>
+    <li>Exits the VM with a special status that is different than the one for a VM abort, so midpRun.cpp knows the VM did not abort</li>
+  </ul>
+  </td>
+</tr>
+</table>
+<p>The figure below shows the sequence of events that occur in the runtime environment when a MIDlet is launched from the Java Application Manager.
+</p>
+<p><img src="doc-files/launch_midlet.png" name="launch_midlet" align="CENTER" border="0">
+</p>
+<p>The figure below shows the sequence of events that occur in the runtime environment when a MIDlet is destroyed.
+</p>
+<p><img src="doc-files/destroy_midlet.png" name="destroy_midlet" align="CENTER" border="0">
+</p>
+</body>
+</html>
