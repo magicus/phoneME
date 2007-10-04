@@ -1,0 +1,133 @@
+<?xml version="1.0"?>
+<!-- 
+Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License version
+2 only, as published by the Free Software Foundation. 
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License version 2 for more details (a copy is
+included at /legal/license.txt). 
+
+You should have received a copy of the GNU General Public License
+version 2 along with this work; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+02110-1301 USA 
+
+Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+Clara, CA 95054 or visit www.sun.com if you need additional
+information or have any questions. 
+-->
+
+<project name="jump tool definitions" basedir=".">
+
+  <target name="set-tools">
+
+     <presetdef name="jump.javac">
+         <javac.base destdir="${d.classes.dir}"
+              source="1.4"
+              target="1.4"
+              deprecation="true"
+              debug="${debug}">
+         </javac.base>
+     </presetdef>                                                                                           
+     <presetdef name="jump.javadoc">
+       <javadoc.base destdir="${d.apidoc.dir}"
+                author="false"
+                version="true"
+                access="private"
+                use="true" 
+                packagenames="${packagenames}"
+                overview="${doc.dir}/javadoc/overview/overview.html"
+                windowtitle="${windowtitle}">
+              <sourcepath>
+                  <pathelement location="${s.share.api.dir}/classes"/>
+                  <dirset dir="${s.share.impl.dir}">
+                     <include name="**/classes"/>
+                  </dirset>
+              </sourcepath>
+   
+          <group title="JUMP Infrastructure Packages">
+             <package name="com.sun.jump.command*"/>
+             <package name="com.sun.jump.message*"/>
+             <package name="com.sun.jump.common*"/>
+             <package name="com.sun.jump.os*"/>
+          </group>
+          <group title="JUMP Executive Packages">
+             <package name="com.sun.jump.executive*" />
+          </group>
+          <group title="JUMP Module Packages">
+             <package name="com.sun.jump.module*" /> 
+          </group>
+          <group title="JUMP Process VM Isolate Packages">
+             <package name="com.sun.jump.isolate.jvmprocess*" />
+          </group>
+          <group title="JUMP Implementation Packages">
+             <package name="com.sun.jumpimpl.*" />
+          </group>
+        </javadoc.base>
+     </presetdef>
+   
+     <presetdef name="jump.mifdoclet">
+       <java  
+         classname="com.sun.tools.javadoc.Main"
+         classpath="${d.classes.dir}:${lib.doclet.mif}:${java.home}/../lib/tools.jar"
+         fork="true"
+         maxmemory="180m">
+            <arg line="-doclet com.sun.tools.doclets.formats.mif.MIFDoclet" />
+            <arg line="-d ${d.pdf.dir}" />
+            <arg line="-batch fmbatch" />
+            <arg line="-print pdf" />
+            <arg line="-split package" />
+            <arg line="-membersummary compact" />
+            <arg line="-private" />
+            <arg line="-encoding ISO-8859-1" />
+            <arg line="-noserializedform" />
+            <arg line="-booktitle 'Java Mobile Platform (JUMP)'" />
+            <arg line="-booksubtitle 'for Java Microedition'" />
+            <arg line="-bookversion 'Version 1.0'" />
+            <arg line="-bookauthor 'Client Systems Group (CSG)'" />
+            <arg line="-bookpublisher 'Sun  Microsystems, Inc.'" />
+            <arg line="-bookcopyright 'Copyright \xa9 2006 Sun Microsystems, Inc.'" />
+            <arg line="-overview ${doc.dir}/javadoc/overview/overview.html" />
+            <arg line="-sourcepath ${s.share.api.dir}/classes:${s.share.dir}/impl/common/classes:${s.share.dir}/impl/executive/classes:${s.share.dir}/impl/process/classes:${s.share.dir}/impl/message/classes:${s.share.dir}/impl/isolate/classes:${s.share.dir}/impl/contentstore/classes:${s.share.impl.dir}/common/classes:${s.share.impl.dir}/download/classes:${s.share.impl.dir}/isolate/classes:${src.dir}/share/impl/os/classes:${s.share.impl.dir}/message/classes:${s.share.impl.dir}/pushregistry/classes" />
+            <arg line="-group 'JUMP Infrastructure Packages' 'com.sun.jump.command* com.sun.jump.message* com.sun.jump.common* com.sun.jump.os*'" />
+            <arg line="-group 'JUMP Executive Packages' 'com.sun.jump.executive*'" />
+            <arg line="-group 'JUMP Module Packages' 'com.sun.jump.module*'" />
+            <arg line="-group 'JUMP Process VM Isolate Packages' 'com.sun.jump.isolate.jvmprocess*'" />
+   
+            <arg line="com.sun.jump.command" />
+            <arg line="com.sun.jump.common" />
+            <arg line="com.sun.jump.executive" />
+            <arg line="com.sun.jump.isolate.jvmprocess" />
+            <arg line="com.sun.jump.message" />
+            <arg line="com.sun.jump.module" />
+            <arg line="com.sun.jump.module.contentstore" />
+            <arg line="com.sun.jump.module.download" />
+            <arg line="com.sun.jump.module.installer" />
+            <arg line="com.sun.jump.module.lifecycle" />
+            <arg line="com.sun.jump.module.preferences" />
+            <arg line="com.sun.jump.module.pushregistry" />
+            <arg line="com.sun.jump.module.serviceregistry" />
+            <arg line="com.sun.jump.module.windowing" />
+            <arg line="com.sun.jump.os" />
+            <arg line="com.sun.jumpimpl.executive" />
+            <arg line="com.sun.jumpimpl.isolate.jvmprocess" />
+            <arg line="com.sun.jumpimpl.process" />
+            <arg line="com.sun.jumpimpl.module.contentstore" />
+            <arg line="com.sun.jumpimpl.module.download" />
+            <arg line="com.sun.jumpimpl.module.pushregistry" />
+            <arg line="com.sun.jumpimpl.module.pushregistry.MIDP" />
+            <arg line="com.sun.jumpimpl.module.pushregistry.ota" />
+            <arg line="com.sun.jumpimpl.module.pushregistry.persistence" />
+
+        </java>
+     </presetdef>
+ 
+   </target>
+
+</project>
