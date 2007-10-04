@@ -138,7 +138,17 @@ endif
 # manipulation logic
 #####################################################################
 
-include $(SUBSYSTEM_DIR)/push/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(TARGET_VM), cldc_vm)
+  include $(SUBSYSTEM_DIR)/push/$(SUBSYSTEM_MAKE_FILE)
+else
+  ifeq ($(TARGET_VM), cdc_vm)
+    ifeq ($(USE_OEM_PUSH), true)
+      include $(OEM_PUSH_DIR)/$(SUBSYSTEM_MAKE_FILE)
+    else
+      include $(SUBSYSTEM_DIR)/push/$(SUBSYSTEM_MAKE_FILE)
+    endif
+  endif
+endif
 
 #####################################################################
 # Events Subsystem

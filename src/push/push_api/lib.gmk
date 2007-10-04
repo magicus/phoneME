@@ -50,6 +50,8 @@ else
 LIB_PUSH_API_IMPL = javapush
 endif
 
+USE_PUSH_CDC_STUBBED ?= true
+
 
 MIDP_JAVADOC_ALL += \
     -group "Push Registry" \
@@ -88,7 +90,7 @@ else
             $(error "Unknown target VM")
         endif
 
-        ifeq ($(CVM_INCLUDE_JUMP), true)
+        ifeq ($(USE_JUMP), true)
             # NOTE: there is no native files for JUMP configuration
             SUBSYSTEM_PUSH_API_NATIVE_FILES =
 
@@ -99,10 +101,12 @@ else
             # NOTE: there is no native files for CDC only configuration
             SUBSYSTEM_PUSH_API_NATIVE_FILES =
 
-            # CDC only version of push is stubbed
-            SUBSYSTEM_PUSH_API_JAVA_FILES += \
-                $(SUBSYSTEM_PUSH_DIR)/push_api/cdc_application/classes/javax/microedition/io/PushRegistry.java \
-                $(SUBSYSTEM_PUSH_DIR)/push_api/cdc_application/classes/com/sun/midp/io/j2me/push/PushRegistryInternal.java
+            ifeq ($(USE_PUSH_CDC_STUBBED), true)            
+                # CDC only version of push is stubbed
+                SUBSYSTEM_PUSH_API_JAVA_FILES += \
+                    $(SUBSYSTEM_PUSH_DIR)/push_api/cdc_application/classes/javax/microedition/io/PushRegistry.java \
+                    $(SUBSYSTEM_PUSH_DIR)/push_api/cdc_application/classes/com/sun/midp/io/j2me/push/PushRegistryInternal.java
+            endif 
         endif
     endif
 endif
