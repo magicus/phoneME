@@ -48,8 +48,9 @@
  *   executed.
  * IMPL_NOTE: This is potentially dangerous, as flush buffer may become
  *   invalid (freed) when delayed flush is performed.
+ * This define comes from wince-specific configuration properties.
  */
-#define FLUSH_LIMIT_REFRESH
+//#define FLUSH_LIMIT_FPS 25
 
 #endif
 
@@ -126,9 +127,9 @@ struct ScreenAccess {
 
 static ScreenAccess g_screen;
 
-#ifdef FLUSH_LIMIT_REFRESH
-#define                 FLUSH_REFRESH_TIME 40
-#define                 FLUSH_REFRESH_TIMEOUT 80
+#if FLUSH_LIMIT_FPS > 0
+#define   FLUSH_REFRESH_TIME      (1000 / FLUSH_LIMIT_FPS)
+#define   FLUSH_REFRESH_TIMEOUT   (FLUSH_REFRESH_TIME * 2)
 static HANDLE           flushThread;
 static CRITICAL_SECTION flushCS;
 static DWORD            lastFlushTime = 0;
@@ -294,7 +295,7 @@ static void init_DirectDraw() {
     g_screen.width = ddsd.dwWidth;
     g_screen.height = ddsd.dwHeight;
 
-#ifdef FLUSH_LIMIT_REFRESH
+#if FLUSH_LIMIT_FPS > 0
     flushThread = CreateThread(NULL, 0, Flusher, 0, CREATE_SUSPENDED, NULL);
     InitializeCriticalSection(&flushCS);
 #endif
@@ -322,7 +323,7 @@ static void release_DirectDraw() {
         g_screen.pDDClipper->Release();
         g_screen.pDDClipper = NULL;
     }*/
-#ifdef FLUSH_LIMIT_REFRESH
+#if FLUSH_LIMIT_FPS > 0
     if (NULL != flushThread) {
         CloseHandle(flushThread);
         DeleteCriticalSection(&flushCS);
@@ -350,12 +351,19 @@ static void do_flush(int height) {
     if (NULL != g_screen.pDDSDirect)
         g_screen.pDDSPrimary->Blt(&dstRect, g_screen.pDDSDirect, &srcRect, 0, NULL);
 
-#ifdef FLUSH_LIMIT_REFRESH
+    static int s_count = 0;
+    static FILE* s_f = NULL;
+    if (s_f == NULL)
+        s_f = fopen("w", "\\flush.txt");
+    fprintf(s_f, "Flush count=%d\n", s_count++);
+    fflush(s_f);
+
+#if FLUSH_LIMIT_FPS > 0
     lastFlushTime = GetTickCount();
 #endif
 }
 
-#ifdef FLUSH_LIMIT_REFRESH
+#if FLUSH_LIMIT_FPS > 0
 /*
  * FPS limiting thread for direct_flush();
  */
@@ -712,6 +720,7 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         return DefWindowProc(hwnd, msg, wp, lp);
 
     case WM_DESTROY:
+        winceapp_finalize();
 #ifdef ENABLE_CDC
         /* Temporary fix, leaving exclusive input mode */
         GXCloseInput();
@@ -1032,7 +1041,7 @@ jboolean winceapp_direct_flush(const java_graphics *g,
     if (g_screen.pDD == NULL)
         return KNI_FALSE;
 
-#ifdef FLUSH_LIMIT_REFRESH
+#if FLUSH_LIMIT_FPS > 0
     EnterCriticalSection(&flushCS);
 #endif
 
@@ -1041,20 +1050,20 @@ jboolean winceapp_direct_flush(const java_graphics *g,
     if (lastSrc != src && g_screen.pDDSDirect != NULL) {
         g_screen.pDDSDirect->Release();
         g_screen.pDDSDirect = NULL;
-#ifdef FLUSH_LIMIT_REFRESH
+#if FLUSH_LIMIT_FPS > 0
         lastFlushTime = 0;
 #endif
     }
 
     if (g_screen.pDDSDirect == NULL) {
         /*
-         * IMPL_NOTE: This is potentially dangerous, when using FLUSH_LIMIT_REFRESH,
+         * IMPL_NOTE: This is potentially dangerous, when using FLUSH_LIMIT_FPS > 0,
          * because src may become freed when delayed flush happens.
          */
         g_screen.pDDSDirect = create_memory_surface(src, CHAM_WIDTH, CHAM_HEIGHT);
 
         if (g_screen.pDDSDirect == NULL) {
-#ifdef FLUSH_LIMIT_REFRESH
+#if FLUSH_LIMIT_FPS > 0
             LeaveCriticalSection(&flushCS);
 #endif
             return KNI_FALSE;
@@ -1065,7 +1074,7 @@ jboolean winceapp_direct_flush(const java_graphics *g,
     if (height > CHAM_HEIGHT)
         height = CHAM_HEIGHT;
 
-#ifdef FLUSH_LIMIT_REFRESH
+#if FLUSH_LIMIT_FPS > 0
     DWORD diff = GetTickCount() - lastFlushTime; 
     if (diff >= 0 && diff < FLUSH_REFRESH_TIME) {
         flushHeight = height;
