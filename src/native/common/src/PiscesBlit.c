@@ -2567,7 +2567,7 @@ static void
 blendLine(void *data, jbyte *alphaBuffer, jint imageType, jint offset, jint stride,
           jint length, jint alpha, jint red, jint green, jint blue) {
     jint *intData;
-    jshort *shortData;
+    unsigned short *shortData;
     jbyte *byteData, *alphaData;
     jint i;
 
