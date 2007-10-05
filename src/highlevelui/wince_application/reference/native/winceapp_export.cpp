@@ -351,13 +351,6 @@ static void do_flush(int height) {
     if (NULL != g_screen.pDDSDirect)
         g_screen.pDDSPrimary->Blt(&dstRect, g_screen.pDDSDirect, &srcRect, 0, NULL);
 
-    static int s_count = 0;
-    static FILE* s_f = NULL;
-    if (s_f == NULL)
-        s_f = fopen("w", "\\flush.txt");
-    fprintf(s_f, "Flush count=%d\n", s_count++);
-    fflush(s_f);
-
 #if FLUSH_LIMIT_FPS > 0
     lastFlushTime = GetTickCount();
 #endif
