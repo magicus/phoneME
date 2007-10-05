@@ -1419,8 +1419,12 @@ endif
 
 ifeq ($(CVM_INSPECTOR), true)
 CVM_TEST_CLASSES += \
-	cvmsh \
+	cvmsh
+
+ifneq ($(J2ME_CLASSLIB), cdc)
+CVM_TEST_CLASSES += \
 	cvmclient
+endif
 
 CVM_BUILDTIME_CLASSES += \
 	sun.misc.VMInspector
