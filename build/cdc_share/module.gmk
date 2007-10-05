@@ -198,10 +198,10 @@ $(MKSTUBS_TOOL): $(MKSTUBS_TOOL_SRC)
 	$(AT)echo "Main-Class: com.sun.utils.mkstubs.MkStubs" >$(MKSTUBS_TOOL_DIR)/manifest.txt
 	$(AT)$(CVM_JAR) cfm $@ $(MKSTUBS_TOOL_DIR)/manifest.txt -C $(MKSTUBS_TOOL_DIR)/mkstubs_classes .
     
-ABSTRACTIONS_AGENT_JAR = $(ABSTRACTIONS_GENERATED_DIR)/agent.jar
+ABSTRACTIONS_AGENT_JAR = $(JSROP_LIB_DIR)/abstractions_agent.jar
 JSROP_AGENT_JARS += $(ABSTRACTIONS_AGENT_JAR)
 
-$(ABSTRACTIONS_AGENT_JAR): $(CVM_BUILDTIME_CLASSESZIP) $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes
+$(ABSTRACTIONS_AGENT_JAR): $(CVM_BUILDTIME_CLASSESZIP) $(MIDP_CLASSES_ZIP) $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes
 	@echo "Compiling JSROP abstractions' agent classes..."
 	$(AT)mkdir -p $(ABSTRACTIONS_GENERATED_DIR)/agent_classes
 	$(AT)if test "`cat $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes`" != ""; then \
