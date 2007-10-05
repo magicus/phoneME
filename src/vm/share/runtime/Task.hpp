@@ -361,7 +361,7 @@ public:
   void suspend();
   void resume();
   bool is_suspended();
-  bool is_restricted_package(char *name, int len);  
+  bool is_restricted_package(const char* name, int len);  
   bool is_hidden_class(Symbol* class_name);  
 
   static bool is_valid_task_id(int task_id);

@@ -161,7 +161,7 @@ class ClassFileParser: public StackObj {
 
   // Interface parsing
   ReturnOop parse_interface_indices(ClassParserState *stack,
-                                    ConstantPool* cp, bool *resolved JVM_TRAPS);
+                                    ConstantPool* cp, bool& resolved JVM_TRAPS);
   ReturnOop parse_interfaces(ConstantPool* cp, TypeArray* interface_indices
                              JVM_TRAPS);
   static int count_interfaces(OopDesc* local_interface_indices, OopDesc* bitmap);
@@ -178,9 +178,9 @@ class ClassFileParser: public StackObj {
 
   // Method parsing
   ReturnOop parse_method(ClassParserState *state, ConstantPool* cp, 
-                         AccessFlags& class_access_flags JVM_TRAPS);
+                         const AccessFlags class_access_flags JVM_TRAPS);
   ReturnOop parse_methods(ClassParserState *state, ConstantPool* cp, 
-                          AccessFlags& class_access_flags, 
+                          const AccessFlags class_access_flags, 
                           bool& has_native_methods JVM_TRAPS);
 
   ReturnOop parse_exception_table(int code_length, ConstantPool* cp JVM_TRAPS);

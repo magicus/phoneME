@@ -377,7 +377,7 @@ public:
 
   static bool is_valid_text_object(const OopDesc* /*obj*/) PRODUCT_RETURN0;
 
-  static bool is_restricted_package(char *name, int len);
+  static bool is_restricted_package(const char* name, int len);
   static ReturnOop string_from_table(String *string, juint hash_value);
   static ReturnOop symbol_for(utf8 s, juint hash_value, int len);
 

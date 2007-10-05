@@ -922,7 +922,7 @@ void Task::add_binary_image_handle(void* image_handle JVM_TRAPS) {
 #endif //IMAGE_MAPPING && !ENABLE_LIB_IMAGES
 #endif // USE_BINARY_IMAGE_LOADER
 #if ENABLE_ISOLATES
-bool Task::is_restricted_package(char *name, int pkg_len) {
+bool Task::is_restricted_package(const char *name, int pkg_len) {
   ObjArray::Raw restricted_packages_names = restricted_packages();
   if (restricted_packages_names.is_null()) return false;
   for (int i = 0; i < restricted_packages_names().length(); i++) {

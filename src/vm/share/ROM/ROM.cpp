@@ -507,7 +507,7 @@ void ROM::initialize_alternate_constant_pool(JVM_SINGLE_ARG_TRAPS) {
 
 #endif //!PRODUCT || ENABLE_JVMPI_PROFILE
 
-bool ROM::is_restricted_package(char *name, int pkg_length) {
+bool ROM::is_restricted_package(const char *name, int pkg_length) {
 
   char *rp = (char*)&_rom_restricted_packages[0];
   char *rp2;
