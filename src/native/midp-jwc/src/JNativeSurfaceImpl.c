@@ -132,8 +132,8 @@ KNIDECL(com_sun_pisces_NativeSurface_draw) {
             for(yy = 0 ; yy < surface->super.height; yy++) {
                 for(xx = 0; xx < surface->super.width; xx++) {
                     soffset = yy * surface->super.width + xx;
-                    sa = (int) ((*((int *) surface->super.data + soffset) & 
-                                            0xff000000) >> 24) * opacity + 0.5;
+                    sa = (int) (((*((int *) surface->super.data + soffset) & 
+                                            0xff000000) >> 24) * opacity + 0.5);
                     sam = 255 - sa;
                     if (sa != 0) {
                       offset = (yy + y) * sbuf->width + xx + x;
@@ -164,8 +164,8 @@ KNIDECL(com_sun_pisces_NativeSurface_draw) {
             for(yy = 0 ; yy < surface->super.height; yy++) {
                 for(xx = 0; xx < surface->super.width; xx++) {
                     soffset = yy * surface->super.width + xx;
-                    sa = (int) ((*((int *) surface->super.data + soffset) & 
-                                            0xff000000) >> 24) * opacity + 0.5;
+                    sa = (int) (((*((int *) surface->super.data + soffset) & 
+                                            0xff000000) >> 24) * opacity + 0.5);
                     sam = 255 - sa;
                     if (sa != 0)
                       {

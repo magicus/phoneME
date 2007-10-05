@@ -242,6 +242,7 @@ surface_finalize(jobject objectHandle) {
             return KNI_FALSE;
         }
     }
+    return KNI_TRUE;
 }
 
 static jboolean
