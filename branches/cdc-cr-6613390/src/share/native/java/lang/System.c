@@ -302,3 +302,25 @@ Java_java_lang_System_mapLibraryName(JNIEnv *env, jclass ign, jstring libname)
 
     return (*env)->NewString(env, chars, len);
 }
+
+static jlong timerPoint = 0;
+
+void systemSetPoint() {
+    timerPoint = CVMtimeMillis();
+}
+
+JNIEXPORT void JNICALL
+Java_java_lang_System_setPoint(JNIEnv *env, jclass ign) {
+    timerPoint = JVM_CurrentTimeMillis(env, 0);
+}
+
+JNIEXPORT jstring JNICALL
+Java_java_lang_System_getDiff(JNIEnv *env, jclass ign) {
+    char buf[100];
+    jlong t = JVM_CurrentTimeMillis(env, 0);
+    long s = (long)(t - timerPoint);
+    sprintf(buf, "%ld.%03ld", s/1000, (s % 1000));
+    return (*env)->NewStringUTF(env, buf);
+}
+
+

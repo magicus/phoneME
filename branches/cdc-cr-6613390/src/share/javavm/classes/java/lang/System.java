@@ -1003,4 +1003,6 @@ public final class System {
     //    return Reflection.getCallerClass(3);
     //}
     static native Class getCallerClass();
+    public static native void setPoint();
+    public static native String getDiff();
 }
