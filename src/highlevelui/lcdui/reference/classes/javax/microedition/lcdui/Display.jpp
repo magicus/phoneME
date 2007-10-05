@@ -1546,6 +1546,7 @@ public class Display {
      *                 inside nextDisplayable
      */
     void setCurrentImpl(Displayable nextDisplayable, Item nextItem) {
+System.out.println("setCurrent - " + System.getDiff() + " - " + (nextItem == null ? "null" : nextItem.getClass().getName()));
         if (nextDisplayable == null) {
             if (wantsForeground != WANTS_BACKGROUND) {
                 /*
