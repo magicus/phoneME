@@ -1304,6 +1304,32 @@ class Class implements java.io.Serializable {
      */
     public InputStream getResourceAsStream(String name) {
         name = resolveName(name);
+        ClassLoader lastFailedLoader = null;
+        InputStream is = null;
+
+        for (int i = 0; ; i++) {
+            Class c = sun.misc.CVM.getCallerClass(i);
+//System.out.println("**getResourceAsStream - Class in stack: " + (c==null?"null":c.getName()));
+            if (c == null) {
+                break;
+            }
+
+            ClassLoader cl = c.getClassLoader();
+//System.out.println("**getResourceAsStream - try ClassLoader: " + (cl==null?"null":cl.getClass().getName()));
+            if (cl == null) {
+                continue;
+            }
+            if (cl != lastFailedLoader) {
+                is = cl.getResourceAsStream(name);
+
+                if (is != null) {
+                    return is;
+                }
+
+                lastFailedLoader = cl;
+            }
+        }
+
         ClassLoader cl = getClassLoader0();
         if (cl==null) {
             // A system class.
