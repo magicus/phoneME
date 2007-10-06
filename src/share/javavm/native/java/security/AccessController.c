@@ -62,7 +62,7 @@ CNIjava_security_AccessController_computeContext(CVMExecEnv* ee,
     /* CNI policy: offer a gc-safe checkpoint */
     CVMD_gcSafeCheckPoint(ee, {}, {});
 
-    CVMframeIterate(frame, &iter);
+    CVMframeIterateInit(&iter, frame);
 
     while (CVMframeIterateNext(&iter)) {
 	mb = CVMframeIterateGetMb(&iter);
@@ -171,7 +171,7 @@ CNIjava_security_AccessController_fillInContext(CVMExecEnv* ee,
     /* CNI policy: offer a gc-safe checkpoint */
     CVMD_gcSafeCheckPoint(ee, {}, {});
 
-    CVMframeIterate(frame, &iter);
+    CVMframeIterateInit(&iter, frame);
 
     while (CVMframeIterateNext(&iter)) {
 	CVMObjectICell *pd;

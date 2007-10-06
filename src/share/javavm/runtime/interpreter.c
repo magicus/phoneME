@@ -1150,7 +1150,7 @@ CVMgcUnsafeHandleException(CVMExecEnv* ee, CVMFrame* frame,
      * exception back in the ee return to the caller.
      */
 
-    CVMframeIterateSpecial(stack, frame, initialframe, &iter);
+    CVMframeIterateInitSpecial(&iter, stack, frame, initialframe);
 
     keepGoing = CVMframeIteratePopSpecial(&iter, CVM_FALSE);
 
@@ -1577,34 +1577,36 @@ CVMTransitionFrame* CVMpushTransitionFrame(CVMExecEnv* ee, CVMMethodBlock* mb)
 
 
 /*
- * "frame" is the start frame.  Iteration proceeds to and includes
- * "endFrame", so specifying endFrame == frame will scan only the
- * current frame (but including inlined frames).  Currently,
+ * Initializes the frame iterator.
+ *
+ * "firstFrame" is the first frame.  Iteration proceeds to and includes
+ * "lastFrame", so specifying lastFrame == firstFrame will scan only the
+ * first frame (but including its JIT inlined frames).  Currently,
  * "stack" is only used to support "popFrame" below.
- * Note: the specified frame will be set up as the first frame to be examined
- *       when CVMframeIterateSkipSpecial() (or its derivatives e.g.
- *       CVMframeIterateNext()) is called.  After CVMframeIterateSpecial(),
- *       there is no current frame.  We're expected to call
- *       CVMframeIterateSkipSpecial() immediately after to get to the first
- *       frame.
+ *
+ * Note: The specified firstFrame will be set up as the first frame to be
+ *       examined when CVMframeIterateNext() is called.  The initial
+ *       current frame is set to NULL to indicate that we haven't iterated
+ *       through any frames yet.
  */
 void
-CVMframeIterateSpecial(CVMStack *stack, CVMFrame* frame, CVMFrame *end,
-    CVMFrameIterator *iter)
+CVMframeIterateInitSpecial(CVMFrameIterator *iter, CVMStack *stack,
+			   CVMFrame* firstFrame, CVMFrame *lastFrame)
 {
     iter->stack = stack;
-    iter->endFrame = end;
+    iter->endFrame = lastFrame;
     iter->frame = NULL;
-    iter->next = frame;
+    iter->next = firstFrame;
 #ifdef CVM_JIT
     iter->jitFrame = CVM_FALSE;
 #endif
 }
 
+/* Initializes the frame iterator with the first frame to iterate from. */
 void
-CVMframeIterate(CVMFrame* frame, CVMFrameIterator *iter)
+CVMframeIterateInit(CVMFrameIterator *iter, CVMFrame* firstFrame)
 {
-    CVMframeIterateSpecial(NULL, frame, NULL, iter);
+    CVMframeIterateInitSpecial(iter, NULL, firstFrame, NULL);
 }
 
 CVMFrameFlags
@@ -1673,9 +1675,9 @@ CVMframeIterateSetFlags(CVMFrameIterator *iter, CVMFrameFlags flags)
  * every frame.  To skip special reflection frames, set skipSpecial
  * true.  "popFrame" is used by exception handling to pop frames
  * as it iterates.
- * Note: transition frames will always be skipped.  Al other frames will not
- *       be skipped except for reflection frames depending on the value of
- *       the skipSpecial.
+ * Note: transition frames and JNI local frames (i.e. mb == 0) will always be
+ *       skipped.  All other frames will not be skipped except for reflection
+ *       frames depending on the value of the skipSpecial.
  */
 CVMBool
 CVMframeIterateSkipSpecial(CVMFrameIterator *iter,
@@ -1877,7 +1879,7 @@ CVMMethodBlock *
 CVMgetCallerMb(CVMFrame* frame, int skip)
 {
     CVMFrameIterator iter;
-    CVMframeIterate(frame, &iter);
+    CVMframeIterateInit(&iter, frame);
     if (CVMframeIterateSkip(&iter, skip)) {
 	return CVMframeIterateGetMb(&iter);
     } else {
@@ -1902,7 +1904,7 @@ CVMFrame*
 CVMgetCallerFrameSpecial(CVMFrame* frame, int n, CVMBool skipSpecial)
 {
     CVMFrameIterator iter;
-    CVMframeIterate(frame, &iter);
+    CVMframeIterateInit(&iter, frame);
     if (CVMframeIterateSkipSpecial(&iter, n, skipSpecial, CVM_FALSE)) {
 	return CVMframeIterateGetFrame(&iter);
     }

@@ -772,7 +772,7 @@ CNIsun_misc_CVM_setContextArtificial(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				     CVMMethodBlock **p_mb)
 {
     CVMFrameIterator iter;
-    CVMframeIterate(CVMeeGetCurrentFrame(ee), &iter);
+    CVMframeIterateInit(&iter, CVMeeGetCurrentFrame(ee));
     CVMframeIterateSkipSpecial(&iter, 0, CVM_FALSE, CVM_FALSE);
     CVMframeIterateSetFlags(&iter, (CVMFrameFlags)
 	(CVMframeIterateGetFlags(&iter) | CVM_FRAMEFLAG_ARTIFICIAL));
