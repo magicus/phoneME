@@ -522,10 +522,17 @@ CVM_TESTCLASSES_SRCDIRS += \
 
 CVM_TEST_CLASSES  += \
 	CurrencyTest \
-	Assert \
 	package1.Class1 \
 	package2.Class2 \
 	package1.package3.Class3
+
+# Don't build Assert if CVM_PRELOAD_TEST=true. It results in the JNI Assert.h
+# header file being created, which causes a conflict with the system assert.h
+# on platforms with a file system that is not case sensitive, like Mac OS X.
+ifneq ($(CVM_PRELOAD_TEST),true)
+CVM_TEST_CLASSES  += \
+	Assert
+endif
 
 #
 # Demo stuff
