@@ -703,7 +703,7 @@ class_to_ID(context_type *context, CVMClassBlock *cb, jboolean loadable)
 	     * so we're forced to load it in case it matches us.
 	     */
 	    if (bucket->class == 0) {
-		assert(bucket->loadable == JNI_TRUE);
+		CVMassert(bucket->loadable == JNI_TRUE);
 		bucket->class = load_class_global(context, name);
 	    }
 
@@ -793,7 +793,7 @@ ID_to_class(context_type *context, int ID)
     hash_table_type *class_hash = &(context->class_hash);
     hash_bucket_type *bucket = GET_BUCKET(class_hash, ID);
     if (bucket->class == 0) {
-	assert(bucket->loadable == JNI_TRUE);
+	CVMassert(bucket->loadable == JNI_TRUE);
 	bucket->class = load_class_global(context, bucket->name);
     }
     return bucket->class;
