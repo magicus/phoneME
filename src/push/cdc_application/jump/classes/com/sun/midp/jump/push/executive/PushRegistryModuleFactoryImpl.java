@@ -44,7 +44,7 @@ import com.sun.midp.push.controller.InstallerInterfaceImpl;
 import com.sun.midp.jump.push.executive.persistence.JUMPStoreImpl;
 import com.sun.midp.jump.push.executive.persistence.StoreOperationManager;
 import com.sun.midp.jump.push.share.Configuration;
-import com.sun.midp.push.gcf.ReservationDescriptorFactory;
+import com.sun.midp.push.reservation.impl.ReservationDescriptorFactory;
 import java.io.IOException;
 import java.rmi.AccessException;
 import java.rmi.AlreadyBoundException;
