@@ -28,9 +28,7 @@ package com.sun.midp.io.j2me.sms;
 
 import com.sun.midp.io.j2me.ProtocolBase;
 
-//import com.sun.midp.io.HttpUrl;
-//import com.sun.midp.security.Permissions;
-import com.sun.j2me.security.Permission;
+import com.sun.j2me.security.WMAPermission;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -454,7 +452,7 @@ public class Protocol extends ProtocolBase {
 	}
 
         try {
-             appPackage.checkForPermission(new Permission("SMS_SEND", url.host));
+             appPackage.checkForPermission(WMAPermission.SMS_SEND);
         } catch (InterruptedException ie) {
             throw new InterruptedIOException("Interrupted while trying " +
                              "to ask the user permission");
@@ -882,7 +880,7 @@ public class Protocol extends ProtocolBase {
 	 */
 	if (!openPermission) {
 	    try {
-                appPackage.checkForPermission(new Permission("SMS_SERVER", "sms:open"));
+                appPackage.checkForPermission(WMAPermission.SMS_SERVER);
 		openPermission = true;
 	    } catch (InterruptedException ie) {
 		throw new InterruptedIOException("Interrupted while trying " +
@@ -931,7 +929,7 @@ public class Protocol extends ProtocolBase {
 	/* Check if we have permission to recieve. */
 	if (!readPermission) {
 	    try {
-		appPackage.checkForPermission(new Permission("SMS_RECEIVE", "sms:receive"));		
+                appPackage.checkForPermission(WMAPermission.SMS_RECEIVE);
 		readPermission = true;
 	    } catch (InterruptedException ie) {
 		throw new InterruptedIOException("Interrupted while trying " +
