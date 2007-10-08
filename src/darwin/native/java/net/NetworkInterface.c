@@ -493,15 +493,15 @@ static netif *enumIPv4Interfaces(JNIEnv *env, netif *ifs) {
 
     sock = JVM_Socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
-		/*
-		 * If EPROTONOSUPPORT is returned it means we don't have
-		 * IPv4 support so don't throw an exception.
-		 */
-		if (errno != EPROTONOSUPPORT) {
-			NET_ThrowByNameWithLastError(env , JNU_JAVANETPKG "SocketException",
-								 "Socket creation failed");
-		}
-		return ifs;
+	/*
+	 * If EPROTONOSUPPORT is returned it means we don't have
+	 * IPv4 support so don't throw an exception.
+	 */
+	if (errno != EPROTONOSUPPORT) {
+	    NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
+					 "Socket creation failed");
+	}
+	return ifs;
     }
 
     /* need to do a dummy SIOCGIFCONF to determine the buffer size.
@@ -515,7 +515,16 @@ static netif *enumIPv4Interfaces(JNIEnv *env, netif *ifs) {
         close(sock);
         return ifs;
     }
+
+    /* FIXME: SIOCGIFCONF does not seem to be working on darwin. It returns
+       with ifc_len == 0. We force bufsize to a bigger size below just as
+       a hack so the subsequent SIOCGIFCONF will return something. However,
+       even this isn't working so great. It doesn't return any AF_INET
+       interfaces, and what we do with data seems to result mostly
+       in garbage for the caller of NetworkInterface.getNetworkInterfaces.
+    */
     bufsize = ifc.ifc_len;
+    bufsize = 3 * sizeof(struct ifreq);
 
 
     buf = (char *)malloc(bufsize);
@@ -539,46 +548,30 @@ static netif *enumIPv4Interfaces(JNIEnv *env, netif *ifs) {
      */
     ifreqP = ifc.ifc_req;
     for (i=0; i<ifc.ifc_len/sizeof (struct ifreq); i++, ifreqP++) {
-		int index;
-		struct ifreq if2;
+	int index;
+	struct ifreq if2;
 		
-		/*
-		 * Ignore non-AF_INET addresses 
-		 */
-		if(((struct sockaddr *)&(ifreqP->ifr_addr))->sa_family != AF_INET)
-			continue;
-		
-		memset((char *)&if2, 0, sizeof(if2));
-		strcpy(if2.ifr_name, ifreqP->ifr_name);
-
-		/*
-		 * Try to get the interface index
-		 * (Not supported on Solaris 2.6 or 7)
-		 */
-/*	
-        if (ioctl(sock, SIOCGIFINDEX, (char *)&if2) >= 0) {
-            index = if2.ifr_index;
-        } else {
-*/
-		index = -1;
-//	}
-
-		/*
-		 * Add to the list 
-		 */
-		ifs = addif(env, ifs, ifreqP->ifr_name, index, AF_INET,
-				(struct sockaddr *)&(ifreqP->ifr_addr),
-				sizeof(struct sockaddr_in));
-
-		/*
-		 * If an exception occurred then free the list
-		 */
-		if ((*env)->ExceptionOccurred(env)) {
-			close(sock);
-			free(buf);
-			freeif(ifs);
-			return NULL;
-		}
+	memset((char *)&if2, 0, sizeof(if2));
+	strcpy(if2.ifr_name, ifreqP->ifr_name);
+	
+	index = -1;
+	
+	/*
+	 * Add to the list 
+	 */
+	ifs = addif(env, ifs, ifreqP->ifr_name, index, AF_INET,
+		    (struct sockaddr *)&(ifreqP->ifr_addr),
+		    sizeof(struct sockaddr_in));
+	
+	/*
+	 * If an exception occurred then free the list
+	 */
+	if ((*env)->ExceptionOccurred(env)) {
+	    close(sock);
+	    free(buf);
+	    freeif(ifs);
+	    return NULL;
+	}
     }
 
     /*
@@ -605,15 +598,15 @@ static netif *enumIPv6Interfaces(JNIEnv *env, netif *ifs) {
 	
     sock = JVM_Socket(AF_INET6, SOCK_DGRAM, 0);
     if (sock < 0) {
-		/*
-		 * If EPROTONOSUPPORT is returned it means we don't have
-		 * IPv4 support so don't throw an exception.
-		 */
-		if (errno != EPROTONOSUPPORT) {
-			NET_ThrowByNameWithLastError(env , JNU_JAVANETPKG "SocketException",
-										 "Socket creation failed");
-		}
-		return ifs;
+	/*
+	 * If EPROTONOSUPPORT is returned it means we don't have
+	 * IPv4 support so don't throw an exception.
+	 */
+	if (errno != EPROTONOSUPPORT) {
+	    NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException",
+					 "Socket creation failed");
+	}
+	return ifs;
     }
 	
     /* need to do a dummy SIOCGIFCONF to determine the buffer size.
@@ -623,7 +616,7 @@ static netif *enumIPv6Interfaces(JNIEnv *env, netif *ifs) {
     ifc.ifc_len = 0;
     if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
         NET_ThrowByNameWithLastError(env , JNU_JAVANETPKG "SocketException",
-									 "ioctl SIOCGIFCONF failed");
+				     "ioctl SIOCGIFCONF failed");
         close(sock);
         return ifs;
     }
@@ -640,7 +633,7 @@ static netif *enumIPv6Interfaces(JNIEnv *env, netif *ifs) {
     ifc.ifc_buf = buf;
     if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
         NET_ThrowByNameWithLastError(env , JNU_JAVANETPKG "SocketException",
-									 "ioctl SIOCGIFCONF failed");
+				     "ioctl SIOCGIFCONF failed");
         (void) close(sock);
         (void) free(buf);
         return ifs;
@@ -651,46 +644,46 @@ static netif *enumIPv6Interfaces(JNIEnv *env, netif *ifs) {
      */
     ifreqP = ifc.ifc_req;
     for (i=0; i<ifc.ifc_len/sizeof (struct ifreq); i++, ifreqP++) {
-		int index;
-		struct ifreq if2;
-		
-		/*
-		 * Ignore non-AF_INET6 addresses 
-		 */
-		if(((struct sockaddr *)&(ifreqP->ifr_addr))->sa_family != AF_INET6)
-			continue;
-		
-		memset((char *)&if2, 0, sizeof(if2));
-		strcpy(if2.ifr_name, ifreqP->ifr_name);
-		
-		/*
-		 * Try to get the interface index
-		 * (Not supported on Solaris 2.6 or 7)
-		 */
-		/*	
-			if (ioctl(sock, SIOCGIFINDEX, (char *)&if2) >= 0) {
-				index = if2.ifr_index;
-			} else {
-				*/
-		index = -1;
-		//	}
-		
-		/*
-		 * Add to the list 
-		 */
-		ifs = addif(env, ifs, ifreqP->ifr_name, index, AF_INET6,
-					(struct sockaddr *)&(ifreqP->ifr_addr),
-					sizeof(struct sockaddr_in6));
-		
-		/*
-		 * If an exception occurred then free the list
-		 */
-		if ((*env)->ExceptionOccurred(env)) {
-			close(sock);
-			free(buf);
-			freeif(ifs);
-			return NULL;
-		}
+	int index;
+	struct ifreq if2;
+	
+	/*
+	 * Ignore non-AF_INET6 addresses 
+	 */
+	if(((struct sockaddr *)&(ifreqP->ifr_addr))->sa_family != AF_INET6)
+	    continue;
+	
+	memset((char *)&if2, 0, sizeof(if2));
+	strcpy(if2.ifr_name, ifreqP->ifr_name);
+	
+	/*
+	 * Try to get the interface index
+	 * (Not supported on Solaris 2.6 or 7)
+	 */
+	/*	
+	  if (ioctl(sock, SIOCGIFINDEX, (char *)&if2) >= 0) {
+	  index = if2.ifr_index;
+	  } else {
+	*/
+	index = -1;
+	/*	} */
+	
+	/*
+	 * Add to the list 
+	 */
+	ifs = addif(env, ifs, ifreqP->ifr_name, index, AF_INET6,
+		    (struct sockaddr *)&(ifreqP->ifr_addr),
+		    sizeof(struct sockaddr_in6));
+	
+	/*
+	 * If an exception occurred then free the list
+	 */
+	if ((*env)->ExceptionOccurred(env)) {
+	    close(sock);
+	    free(buf);
+	    freeif(ifs);
+	    return NULL;
+	}
     }
 	
     /*
@@ -820,7 +813,7 @@ static netif *enumIPv6Interfaces(JNIEnv *env, netif *ifs) {
         while (fscanf(f, "%4s%4s%4s%4s%4s%4s%4s%4s %02x %02x %02x %02x %20s\n",
                       addr6p[0], addr6p[1], addr6p[2], addr6p[3],
                       addr6p[4], addr6p[5], addr6p[6], addr6p[7],
-                  &if_idx, &plen, &scope, &dad_status, devname) != EOF) {
+		      &if_idx, &plen, &scope, &dad_status, devname) != EOF) {
             /* commenting this to eliminate compile time warning.
               struct netif *ifs_ptr = NULL;
               struct netif *last_ptr = NULL;
