@@ -25,13 +25,11 @@
  */
 
 package com.sun.midp.wma;
-//port com.sun.midp.io.j2me.push.ProtocolFactory;
+
 import com.sun.midp.push.reservation.*;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import javax.microedition.io.ConnectionNotFoundException;
-//import com.sun.midp.security.Permissions;
-//import com.sun.midp.midlet.MIDletSuite;
 
 import com.sun.j2me.security.AccessControlContext;
 
@@ -40,10 +38,26 @@ import com.sun.j2me.security.AccessControlContext;
  */
 public class ProtocolPushImpl implements ProtocolFactory {
 
+    static void checkValidFilter(String filter) {
+	if (filter == null) {
+	    throw new IllegalArgumentException("invalid filter");
+        }
+        if (filter.length() == 0) {
+            throw new IllegalArgumentException("invalid filter");
+        }
+	for (int i=0; i<filter.length(); i++) {
+            char ch = filter.charAt(i);
+            if (!Character.isDigit(ch) && ch != '*' && ch != '?') {
+                throw new IllegalArgumentException("invalid filter");
+            }
+        }
+    }
+
     public ReservationDescriptor createDescriptor(
             String protocol, String targetAndParams, 
             String filter, AccessControlContext context) {
 
+        checkValidFilter(filter);
         return new ReservationDescriptorImpl(protocol, targetAndParams, 
 					 filter, context);
     }
