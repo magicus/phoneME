@@ -593,17 +593,23 @@ public class Display {
  * ************* Static initializer, constructor
  */
     static {
-        WIDTH               = getScreenWidth0();
-        HEIGHT              = getScreenHeight0();
-
-        graphicsAccessor = new GraphicsAccessImpl();
-        GameMap.registerGraphicsAccess(graphicsAccessor);
 
         // #ifdef ENABLE_GCI
         java.security.AccessController.doPrivileged(
                  new sun.security.action.LoadLibraryAction("gci"));
+
+        GCIDisplay gciDisplay =
+                GCIGraphicsEnvironment.getInstance().getDefaultDisplay();
+        WIDTH               = gciDisplay.getWidth();
+        HEIGHT              = gciDisplay.getHeight();
+        // #else
+        WIDTH               = getScreenWidth0();
+        HEIGHT              = getScreenHeight0();
         // #endif ENABLE_GCI
-    
+
+        graphicsAccessor = new GraphicsAccessImpl();
+        GameMap.registerGraphicsAccess(graphicsAccessor);
+
         // #ifdef ENABLE_CHAMELEON
         SkinResources.initGraphicsAccess(graphicsAccessor);
         SkinResources.setScreenSize(WIDTH, HEIGHT);
@@ -2117,10 +2123,14 @@ public class Display {
         }
         lastFullScnMode = wantFullScnMode;
 
+        // #ifndef ENABLE_GCI
         setFullScreen0(displayId, wantFullScnMode);
 
         Display.WIDTH = getScreenWidth0();
         Display.HEIGHT = getScreenHeight0();
+        // #else
+        // TBD: not implemented for GCI yet
+        // #endif ENABLE_GCI
 
         screenGraphics.setDimensions(Display.WIDTH, Display.HEIGHT);
         screenGraphics.reset();
@@ -3081,10 +3091,14 @@ public class Display {
          */
         public void handleRotationEvent() {
             synchronized (LCDUILock) {
+                // #ifndef ENABLE_GCI
                 wantRotation = reverseOrientation0();
                 isRotatedKnown = true;
                 Display.WIDTH = getScreenWidth0();
                 Display.HEIGHT = getScreenHeight0();
+                // #else
+                // TBD: not implemented for GCI yet
+                // #endif ENABLE_GCI
                 
                 screenGraphics.setDimensions(Display.WIDTH, Display.HEIGHT);
             }
