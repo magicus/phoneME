@@ -25,6 +25,7 @@
  */
 
 #include "kni.h"
+#include "sni.h"
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(KNITest_returnThis) {
@@ -233,3 +234,23 @@ KNIDECL(KNITest_newString) {
     KNI_EndHandlesAndReturnObject(newStr);
 }
 
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(KNITest_newStringArray) {
+    jint len = KNI_GetParameterAsInt(1);
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(newStrArray);
+    SNI_NewArray(SNI_STRING_ARRAY, len, newStrArray);
+    KNI_EndHandlesAndReturnObject(newStrArray);
+}
+
+
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(KNITest_newObjectArray) {
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(newArr);
+    KNI_DeclareHandle(clazz);
+    KNI_GetParameterAsObject(1, clazz);
+    jint len = KNI_GetParameterAsInt(2);
+    SNI_NewObjectArray(clazz, len, newArr);
+    KNI_EndHandlesAndReturnObject(newArr);
+}
