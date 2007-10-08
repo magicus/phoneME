@@ -46,11 +46,15 @@ public class ReservationDescriptorImpl implements ReservationDescriptor {
 
     protected String _filter;
     protected String _protocol;
+    protected String _targetAndParams;
     protected int _port;
 
     public ReservationDescriptorImpl(
             String protocol, String targetAndParams, 
             String filter, AccessControlContext context) {
+
+        _protocol = protocol;
+        _targetAndParams = targetAndParams;
 
         if (!protocol.startsWith("sms")) {
 	    throw new IllegalArgumentException("Protocol not supported: " + protocol);
@@ -119,7 +123,7 @@ public class ReservationDescriptorImpl implements ReservationDescriptor {
      * @return connection name
      */
     public String getConnectionName() {
-        return _protocol; 
+        return _protocol + ":" + _targetAndParams; 
     }
 
     /**
