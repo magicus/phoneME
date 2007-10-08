@@ -31,8 +31,8 @@ import com.sun.midp.push.reservation.*;
 
 public class PushConnectionsPool implements Runnable {
 
-    static java.util.List ReservationsList;
-    static PushConnectionsPool This;
+    static java.util.List ReservationsList = new java.util.LinkedList();
+    static PushConnectionsPool This = new PushConnectionsPool();
 
     static Thread listenerThread = null;
 
@@ -47,7 +47,19 @@ public class PushConnectionsPool implements Runnable {
 
     public static void addReservation(ConnectionReservationImpl reservation) 
             throws java.io.IOException, IllegalArgumentException {
+
 	synchronized (ReservationsList) {
+
+            //check duplicates
+            java.util.ListIterator iter = ReservationsList.listIterator();
+            while (iter.hasNext()) {
+                ConnectionReservationImpl reservation1 = (ConnectionReservationImpl)iter.next();
+                if (reservation1.getPort()  == reservation.getPort() &&
+                    reservation1.getFilter().equals(reservation.getFilter())) {
+                    throw new java.io.IOException("connection already registered");
+                }
+            }
+
 	    addPushPort(reservation.getPort(), reservation.getFilter());
 	    ReservationsList.add(reservation);
 	    startListenerThreadIfNeed();
