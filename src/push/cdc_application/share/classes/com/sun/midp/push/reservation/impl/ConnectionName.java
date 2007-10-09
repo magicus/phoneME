@@ -57,11 +57,11 @@ final class ConnectionName {
      *
      * @return parsing results (cannot be <code>null</code>)
      */
-    public static ConnectionName parse(final String connectionName) {
+    public static ConnectionName parse(final String connectionName) 
+            throws javax.microedition.io.ConnectionNotFoundException {
         final int protocolPos = connectionName.indexOf(PROTOCOL_SEP);
         if (protocolPos == -1) {
-            throw new IllegalArgumentException("no protocol in "
-                    + connectionName);
+            throw new javax.microedition.io.ConnectionNotFoundException(connectionName);
         }
 
         final String protocol = connectionName
