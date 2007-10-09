@@ -310,7 +310,7 @@ TARGET_OS		:= $(word 1,$(CWD_PARTS))
 TARGET_CPU_FAMILY	:= $(word 2,$(CWD_PARTS))
 TARGET_DEVICE		:= $(word 3,$(CWD_PARTS))
 
-ABSPATH = $(shell cd $(1); echo `pwd`)
+ABSPATH = $(shell mkdir -p $(1); cd $(1); echo `pwd`)
 
 # COMPONENTS_DIR is the directory that all the components are located in,
 # such as midp, pcsl, and jump. It is used for providing default locations
