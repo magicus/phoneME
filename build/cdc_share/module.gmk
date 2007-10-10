@@ -77,7 +77,8 @@ ABSTRACTIONS_CLASSES += \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/SensorPermission.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/BluetoothPermission.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/OBEXPermission.java \
-    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/WMAPermission.java
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/WMAPermission.java \
+    $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/security/SIPPermission.java
 
 ifeq ($(USE_JSR_177), true)
 # names of native source files (like 'file.c')
