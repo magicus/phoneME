@@ -27,6 +27,10 @@ include $(JSR_120_DIR)/build/config/common_rules.gmk
 $(JSR_120_INITIALIZER): $(CONFIGURATOR_JAR_FILE)
 	$(AT)$(call generateJSRInitializer,$(JSR_120_PROPERTY_FILES),$(JSR_120_GENERATED_DIR),$(JSR_120_INIT_PACKAGE),$@,$(JSR_120_LIB_NAME))
 
+ifeq ($(USE_MIDP),true)
+JSR_120_DEPS=$(PS)$(MIDP_OUTPUT_DIR)/classes
+endif
+
 $(JSR_120_JAR): $(JPP_CLASS_FILES) $(SUBSYSTEM_JSR_120_JAVA_FILES)
 	$(call compileJSROP,jsr120,$(JSR_120_BUILD_DIR)/classes,$(SUBSYSTEM_JSR_120_JAVA_FILES),$(JSR_120_DEPS))
 	$(call makeJSROPJar,$(JSR_120_JAR),$(JSR_120_BUILD_DIR)/classes)
