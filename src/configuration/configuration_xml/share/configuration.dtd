@@ -183,18 +183,7 @@
 <!ELEMENT permissions (group)*>
 <!ELEMENT group (permission)*>
 <!ATTLIST group
-        ID                  CDATA           #REQUIRED
-        Name                CDATA           #REQUIRED
-        Question            CDATA           #REQUIRED
-        DisableChoice       CDATA           #REQUIRED
-        RuntimeTitle        CDATA           #REQUIRED
-        RuntimeQuestion     CDATA           #REQUIRED
-        RuntimeOneshot      CDATA           #REQUIRED
-        IdentifiedMaximum   (NEVER | ALLOW | BLANKET | SESSION | ONESHOT)    #REQUIRED
-        IdentifiedDefault   (NEVER | ALLOW | BLANKET | SESSION | ONESHOT)    #REQUIRED
-        UnidentifiedMaximum (NEVER | ALLOW | BLANKET | SESSION | ONESHOT)    #REQUIRED
-        UnidentifiedDefault (NEVER | ALLOW | BLANKET | SESSION | ONESHOT)    #REQUIRED
-        Comment             CDATA           #IMPLIED
+        ID          CDATA                   #REQUIRED
 >
 <!ELEMENT permission EMPTY>
 <!ATTLIST permission
