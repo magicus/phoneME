@@ -29,8 +29,10 @@ import com.sun.midp.jump.push.executive.remote.MIDPContainerInterface;
 import com.sun.midp.jump.push.share.Configuration;
 import com.sun.midp.jump.push.share.JUMPReservationDescriptor;
 import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.push.gcf.PermissionCallback;
-import com.sun.midp.push.gcf.ReservationDescriptor;
+import com.sun.midp.push.reservation.ReservationDescriptor;
+
+import com.sun.j2me.security.AccessControlContext;
+import com.sun.j2me.security.AccessControlContextAdapter;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -103,18 +105,19 @@ final class ConnectionRegistry {
             final String connection,
             final String midlet,
             final String filter) throws ClassNotFoundException, IOException {
-        final PermissionCallback permissionCallback = new PermissionCallback() {
-            public void checkForPermission(
+
+        final AccessControlContext context = new AccessControlContextAdapter() {
+            public void checkPermissionImpl(
                     final String permissionName,
-                    final String resource, final String extraValue)
-                        throws SecurityException {
+                    final String resource,
+                    final String extraValue) throws SecurityException {
                 // TBD: implement
             }
         };
 
         final ReservationDescriptor descriptor = Configuration
                 .getReservationDescriptorFactory()
-                .getDescriptor(connection, filter, permissionCallback);
+                .getDescriptor(connection, filter, context);
         JUMPReservationDescriptor jd = null;
         try {
             jd = (JUMPReservationDescriptor) descriptor;

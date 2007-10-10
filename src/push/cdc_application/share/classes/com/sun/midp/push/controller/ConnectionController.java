@@ -121,11 +121,7 @@ final class ConnectionController {
         final ReservationHandler previous =
                 reservations.queryByConnectionName(connectionName);
         if (previous != null) {
-            if (previous.getSuiteId() != midletSuiteID) {
-                // Already registered for another suite, fail quickly
-                throw new IOException("registered for another suite");
-            }
-            removeRegistration(previous);
+            throw new IOException("registered for another suite");
         }
 
         final ReservationHandler reservationHandler = new ReservationHandler(

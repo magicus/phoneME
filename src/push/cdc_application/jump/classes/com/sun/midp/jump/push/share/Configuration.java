@@ -25,10 +25,12 @@
 package com.sun.midp.jump.push.share;
 
 import com.sun.midp.jump.push.executive.remote.MIDPContainerInterface;
-import com.sun.midp.push.gcf.PermissionCallback;
-import com.sun.midp.push.gcf.ReservationDescriptor;
-import com.sun.midp.push.gcf.ReservationDescriptorFactory;
+import com.sun.midp.push.reservation.ReservationDescriptor;
+import com.sun.midp.push.reservation.impl.ReservationDescriptorFactory;
 import javax.microedition.io.ConnectionNotFoundException;
+
+import com.sun.j2me.security.AccessControlContext;
+
 
 /**
  * Configuration of Push system.
@@ -54,7 +56,7 @@ public final class Configuration {
         return new ReservationDescriptorFactory() {
             public ReservationDescriptor getDescriptor(
                     final String connectionName, final String filter,
-                    final PermissionCallback permissionCallback)
+                    final AccessControlContext context)
                         throws  IllegalArgumentException,
                                 ConnectionNotFoundException {
                 throw new ConnectionNotFoundException("no supported protocols");

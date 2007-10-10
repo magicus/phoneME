@@ -24,7 +24,7 @@
 
 package com.sun.midp.jump.push.share;
 
-import com.sun.midp.push.gcf.ReservationDescriptor;
+import com.sun.midp.push.reservation.ReservationDescriptor;
 import java.io.Serializable;
 
 /**

@@ -60,7 +60,7 @@ public final class ClassLoadingProtocolRegistry implements ProtocolRegistry {
             return null;
         }
         try {
-            final Class cls = classLoader.loadClass(name);
+            final Class cls = Class.forName(name, true, classLoader);
             final Object instance = cls.newInstance();
             return (ProtocolFactory) instance;
         } catch (ClassNotFoundException cnfe) {
