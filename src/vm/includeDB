@@ -1813,6 +1813,7 @@ ClassFileParser.cpp              OsMisc.hpp
 ClassFileParser.cpp              OopDesc.inline.hpp
 ClassFileParser.cpp              Compiler.hpp
 ClassFileParser.hpp              LineVarTable.hpp
+ClassFileParser.hpp              EventLogger.hpp
 #if ENABLE_ISOLATES
 ClassFileParser.cpp              TaskMirror.hpp
 #endif

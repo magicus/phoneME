@@ -130,30 +130,23 @@ void ClassFileParser::set_buffer_position(int pos) {
   }
 
 // Does the current buffer contain a valid UTF8 string of the given length
-bool ClassFileParser::is_valid_utf8_in_buffer(jint utf8_length) {
-  jubyte *p = _bufptr;
-  jubyte *e = p + utf8_length;
+inline bool ClassFileParser::is_valid_utf8_in_buffer(jint utf8_length) {
+  const jbyte* p = (jbyte*)_bufptr;
+  const jbyte* const e = p + utf8_length;
 
-  if (e > _bufend) {
+  if (e > (jbyte*)_bufend) {
     return false;
   }
 
-
-  jint mask = 0x80;
-  while (p < e) {
-    jint b = (jint)(*p++);
-    if ((b == 0) || (b & mask) != 0) {
-      goto slow;
+  while( p < e ) {
+    if (*p++ <= 0) {
+      // This UTF8 string contains an escape sequence (which is very rare),
+      // so let's do it the more proper way.
+      ByteStream bs(_buffer, get_buffer_position(), utf8_length);
+      return bs.is_valid();
     }
   }
-
   return true;
-
-slow:
-  // This UTF8 string contains an escape sequence (which is very rare),
-  // so let's do it the more proper way.
-  ByteStream bs(_buffer, get_buffer_position(), utf8_length);
-  return bs.is_valid();
 }
 
 // Constant pool parsing:
@@ -1474,7 +1467,7 @@ ClassFileParser::parse_classfile_attributes(ConstantPool* cp,
   }
 }
 
-static inline bool is_circular(InstanceClass* this_class) {
+inline bool ClassFileParser::is_circular(InstanceClass* this_class) {
   InstanceClass::Raw c = this_class;
   for( ;; ) {
     c = c().super();
@@ -1487,7 +1480,8 @@ static inline bool is_circular(InstanceClass* this_class) {
   }
 }
 
-static inline void check_local_interfaces(InstanceClass* this_class JVM_TRAPS) {
+inline void
+ClassFileParser::check_local_interfaces(InstanceClass* this_class JVM_TRAPS) {
   UsingFastOops fast_oops;
   TypeArray::Fast local_interfaces = this_class->local_interfaces();
   InstanceClass::Fast interf;
@@ -1500,7 +1494,7 @@ static inline void check_local_interfaces(InstanceClass* this_class JVM_TRAPS) {
               interf().is_interface(), invalid_class_file)
     interf().check_access_by(this_class, ErrorOnFailure JVM_CHECK);
 
-    for (int j = i - 1; j >= 0; j--) {
+    for (int j = i; --j >= 0;) {
       int other_class_id = local_interfaces().ushort_at(j);
       cpf_check(other_class_id != class_id, circular_interfaces);
     }
@@ -1513,10 +1507,12 @@ void ClassFileParser::check_for_circular_class_parsing(ClassParserState *stack
   // Check whether this is represented twice on the static class file
   // parse list.
   // IMPL_NOTE: is this still needed?? (don't delete unless you're 100% sure)
-  for (ClassFileParser* check = previous(); check != NULL;
-       check = check->previous()) {
-    if (name()->equals(check->name())) {
-      classfile_parse_error(recursive_class_structure JVM_THROW);
+  {
+    for (ClassFileParser* check = previous(); check != NULL;
+         check = check->previous()) {
+      if (name()->equals(check->name())) {
+        classfile_parse_error(recursive_class_structure JVM_THROW);
+      }
     }
   }
 
@@ -1670,20 +1666,17 @@ inline bool ClassFileParser::parse_class_0(ClassParserState *stack JVM_TRAPS) {
   return super_class_resolved && interfaces_resolved;
 }
 
-#if ENABLE_MONET
+#if 0 && ENABLE_MONET
 ReturnOop ClassFileParser::parse_class(ClassParserState *stack JVM_TRAPS) {
-  int class_id = Universe::number_of_java_classes();
-  JavaClass::Raw klass = parse_class_internal(stack JVM_NO_CHECK);
+  const int class_id = Universe::number_of_java_classes();
+  OopDesc* klass = parse_class_internal(stack JVM_NO_CHECK);
   // If converting, remove this class from the class_list if there was
   // an exception.  Otherwise when we iterate through the list of
   // system classes we will get a NULL InstanceClass
   if (CURRENT_HAS_PENDING_EXCEPTION) {
-    if (GenerateROMImage) {
-      if (Universe::number_of_java_classes() == class_id + 1) {
-        Universe::unregister_last_java_class();
-      }
+    if (GenerateROMImage && Universe::number_of_java_classes() == class_id + 1){
+      Universe::unregister_last_java_class();
     }
-    return NULL;
   }
   return klass;
 }

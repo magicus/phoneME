@@ -38,6 +38,7 @@ public:
   template(COMPILER_GC   )\
   template(COMPILE       )\
   template(GC            )\
+  template(LOAD_CLASS    )\
 
 #define DECLARE_EVENT_LOGGER_TYPE(x) x,
   enum EventType {
