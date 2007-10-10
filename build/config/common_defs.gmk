@@ -93,11 +93,12 @@ MODULE_JSR_120_COMMON_JAVA_FILES = \
     
 vpath % $(JSR_120_DIR)/src/share/test/native
 
-ifneq ($(USE_NATIVE_AMS), true)
-ifneq ($(NO_PUSH), true)
+ifeq ($(USE_MIDP),true)
 MODULE_JSR_120_COMMON_JAVA_FILES += \
-    $(JSR_120_DIR)/src/share/core/common/classes/com/sun/midp/wma/ProtocolPushImpl.java
-endif
+    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ProtocolPushImpl.java \
+    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ReservationDescriptorImpl.java \
+    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ConnectionReservationImpl.java \
+    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/PushConnectionsPool.java
 endif
 
 ifeq ($(ENABLE_MIDP),true)
@@ -213,6 +214,8 @@ endif
 SUBSYSTEM_JSR_120_CNI_CLASSES += \
     com.sun.midp.io.j2me.cbs.Protocol \
     com.sun.midp.io.j2me.sms.Protocol
+
+SUBSYSTEM_JSR_120_CNI_CLASSES += com.sun.midp.wma.PushConnectionsPool  
 
 # Specify romizer configuration file for the jsr
 # and path where the file is located

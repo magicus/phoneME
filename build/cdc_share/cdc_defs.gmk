@@ -28,10 +28,6 @@
 PATHSEP              ?= $(PS)
 ONESPACE             ?= $(space)
 
-# IMPL_NOTE: temporary
-NO_PUSH               = true
-CVM_DEFINES          += -DNO_PUSH=1
-
 # being used in common_defs.gmk
 JSR_120_ENABLE_JUMP   = true
 
