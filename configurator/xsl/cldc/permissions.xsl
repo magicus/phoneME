@@ -64,8 +64,6 @@
 
 package com.sun.midp.security;
 
-import java.util.Hashtable;
-import java.util.Enumeration;
 import com.sun.midp.i18n.ResourceConstants;
 
 public final class ExtendedPermissions {
@@ -83,48 +81,6 @@ public final class ExtendedPermissions {
         </xsl:for-each>
     </xsl:for-each>
 
-    <xsl:for-each select="/configuration/permissions/group">
-        <xsl:if test="string-length(@Comment)">
-<xsl:text>
-    /** </xsl:text>
-<xsl:value-of select="@Comment"/>
-<xsl:text> */
-</xsl:text>
-        </xsl:if>
-<xsl:text>    static final PermissionGroup </xsl:text>
-<xsl:value-of select="@ID"/>
-<xsl:text> =
-        new PermissionGroup(</xsl:text>
-        <xsl:call-template name="processParam">
-            <xsl:with-param name="param" select="@Name"/>
-        </xsl:call-template>
-        <xsl:call-template name="processParam">
-            <xsl:with-param name="param" select="@Question"/>
-        </xsl:call-template>
-        <xsl:call-template name="processParam">
-            <xsl:with-param name="param" select="@DisableChoice"/>
-        </xsl:call-template>
-        <xsl:call-template name="processParam">
-            <xsl:with-param name="param" select="@RuntimeTitle"/>
-        </xsl:call-template>
-        <xsl:call-template name="processParam">
-            <xsl:with-param name="param" select="@RuntimeQuestion"/>
-        </xsl:call-template>
-        <xsl:call-template name="processParam">
-            <xsl:with-param name="param" select="@RuntimeOneshot"/>
-        </xsl:call-template>
-<xsl:text>
-            Permissions.</xsl:text>
-<xsl:value-of select="@IdentifiedMaximum"/>
-<xsl:text>, Permissions.</xsl:text>
-<xsl:value-of select="@IdentifiedDefault"/>
-<xsl:text>, Permissions.</xsl:text>
-<xsl:value-of select="@UnidentifiedMaximum"/>
-<xsl:text>, Permissions.</xsl:text>
-<xsl:value-of select="@UnidentifiedDefault"/>
-<xsl:text>);
-</xsl:text>
-    </xsl:for-each>
 <xsl:text>
     /** Permission specifications. */
     static final PermissionSpec[] permissionSpecs = {
@@ -248,7 +204,7 @@ public final class ExtendedPermissions {
 <xsl:text>        new PermissionSpec("</xsl:text>
 <xsl:value-of select="@Name"/>
 <xsl:text>",
-            </xsl:text>
+            Permissions.</xsl:text>
 <xsl:value-of select="../@ID"/>
 <xsl:text>),
 </xsl:text>
@@ -257,24 +213,6 @@ public final class ExtendedPermissions {
 <xsl:text>    };
 }
 </xsl:text>
-</xsl:template>
-
-<!-- generate actual parameters -->
-<xsl:template name="processParam">
-<!-- template parameter: raw value of parameter for PermissionGroup constructor -->
-<xsl:param name="param"/>
-    <xsl:choose>
-        <!-- when the parameter is not empty, add it as a resource constant -->
-        <xsl:when test="string-length($param)">
-<xsl:text>
-            ResourceConstants.</xsl:text>
-            <xsl:value-of select="$param"/>
-<xsl:text>,</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-<xsl:text> 0,</xsl:text>
-        </xsl:otherwise>
-    </xsl:choose>
 </xsl:template>
 
 </xsl:stylesheet>
