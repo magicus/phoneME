@@ -131,6 +131,9 @@ CVM_STRUCT_TYPEDEF(CVMTransitionConstantPool);
 CVM_UNION_TYPEDEF (CVMConstantPoolEntry);
 CVM_STRUCT_TYPEDEF(CVMStackMapEntry);
 CVM_STRUCT_TYPEDEF(CVMStackMaps);
+#ifdef CVM_DUAL_STACK
+CVM_STRUCT_TYPEDEF(CVMClassRestrictions);
+#endif
 
 /*
  * Classes which the VM uses directly

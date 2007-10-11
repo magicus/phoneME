@@ -4113,7 +4113,7 @@ CVMjvmpiPostStartupClassLoadHookEvents(CVMExecEnv *ee,
 
     if (CVMjvmpiEventClassLoadHookIsEnabled()) {
         CVMUint8 *buffer = (CVMUint8 *)classfile;
-        CVMUint32 bufferSize = classfileSize;
+        CVMInt32 bufferSize = classfileSize;
 
         CVMjvmpiPostClassLoadHookEvent(&buffer, &bufferSize,
                                        (void *(*)(unsigned int))&malloc);

@@ -46,7 +46,7 @@ SNI_NewArrayImpl(CVMExecEnv* ee,
                           CVMsystemClass(java_lang_String));
             type = CVM_T_CLASS;
         } else {
-            CVMassert(SNI_BOOLEAN_ARRAY <= type <= SNI_LONG_ARRAY);
+            CVMassert(SNI_BOOLEAN_ARRAY <= type && type <= SNI_LONG_ARRAY);
             arrayCb = (CVMClassBlock*)CVMbasicTypeArrayClassblocks[type];
         }
         CVMID_allocNewArray(ee, type, arrayCb,

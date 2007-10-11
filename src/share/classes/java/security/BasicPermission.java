@@ -261,7 +261,7 @@ implements java.io.Serializable
      */
 
     public PermissionCollection newPermissionCollection() {
-	return new BasicPermissionCollection();
+	return new BasicPermissionCollection(this.getClass());
     }
 
     /**
@@ -333,9 +333,10 @@ implements java.io.Serializable
      *
      */
 
-    public BasicPermissionCollection() {
+    public BasicPermissionCollection(Class clazz) {
 	perms = new HashMap(11);
 	all_allowed = false;
+	permClass = clazz;
     }
 
     /**
@@ -364,11 +365,13 @@ implements java.io.Serializable
 
 	BasicPermission bp = (BasicPermission) permission;
 
-	if (perms.size() == 0) {
+	// make sure we only add new BasicPermissions of the same class
+	// Also check null for compatibility with deserialized form from
+	// previous versions.
+	if (permClass == null) {
 	    // adding first permission
 	    permClass = bp.getClass();
 	} else {
-	    // make sure we only add new BasicPermissions of the same class
 	    if (bp.getClass() != permClass)
 		throw new IllegalArgumentException("invalid permission: " +
 						permission);

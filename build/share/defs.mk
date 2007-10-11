@@ -141,11 +141,11 @@ endif
 # Use bash on win32, since the Cygwin sh doesn't work for us.
 #
 ifeq ($(HOST_DEVICE), cygwin)
-SHELL	= bash
+SHELL	= bash -e
 endif
 
 ifeq ($(HOST_DEVICE), Interix)
-SHELL	= ksh
+SHELL	= ksh -e
 endif
 
 #
@@ -365,6 +365,15 @@ CVM_BUILD_TOP_ABS := $(call ABSPATH,$(CVM_BUILD_TOP))
 CVM_LIBDIR_ABS    := $(CVM_BUILD_TOP_ABS)/lib
 
 PROFILE_DIR       ?= $(CVM_TOP)
+
+
+# Locate the cdc-com component
+ifeq ($(USE_CDC_COM),true)
+CDC_COM_DIR ?= $(COMPONENTS_DIR)/cdc-com
+ifeq ($(wildcard $(CDC_COM_DIR)/build/share/id_cdc-com.mk),)
+$(error CDC_COM_DIR must point to a directory containing the cdc-com sources: $(CDC_COM_DIR))
+endif
+endif
 
 # Optional Package names
 ifneq ($(strip $(OPT_PKGS)),)
@@ -1410,8 +1419,12 @@ endif
 
 ifeq ($(CVM_INSPECTOR), true)
 CVM_TEST_CLASSES += \
-	cvmsh \
+	cvmsh
+
+ifneq ($(J2ME_CLASSLIB), cdc)
+CVM_TEST_CLASSES += \
 	cvmclient
+endif
 
 CVM_BUILDTIME_CLASSES += \
 	sun.misc.VMInspector
@@ -2073,6 +2086,7 @@ CCFLAGS_FDLIB 	= $(CCFLAGS_SPEED) $(CC_ARCH_FLAGS_FDLIB)
 
 ifeq ($(CVM_SYMBOLS), true)
 CCFLAGS		+= -g
+ASM_FLAGS	+= -g
 endif
 
 ifeq ($(CVM_GPROF), true)
@@ -2154,14 +2168,6 @@ endif
 
 # include tools component makefile
 include $(TOOLS_DIR)/tools.gmk
-
-# Locate the cdc-com component
-ifeq ($(USE_CDC_COM),true)
-CDC_COM_DIR ?= $(COMPONENTS_DIR)/cdc-com
-ifeq ($(wildcard $(CDC_COM_DIR)/build/share/id_cdc-com.mk),)
-$(error CDC_COM_DIR must point to a directory containing the cdc-com sources: $(CDC_COM_DIR))
-endif
-endif
 
 #
 # Include target makfiles last.

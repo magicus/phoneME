@@ -28,6 +28,9 @@
 #include "javavm/include/defs.h"
 #include "javavm/include/objects.h"
 #include "javavm/include/classes.h"
+#ifdef CVM_DUAL_STACK
+#include "javavm/include/dualstack_impl.h"
+#endif
 #include "javavm/include/limits.h"
 #include "javavm/include/common_exceptions.h"
 #include "javavm/include/typeid.h"
@@ -885,10 +888,7 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
     CVMUint8 *buffer = (CVMUint8 *) externalClass;
     CVMInt32 bufferLength = classSize;
 #ifdef CVM_DUAL_STACK
-    extern CVMBool
-    CVMclassloaderIsCLDCClassLoader(CVMExecEnv *ee,
-                                    CVMClassLoaderICell* loader);
-    CVMBool isCLDCClass;
+    CVMBool isMidletClass;
 #endif
 
 #ifdef CVM_JVMPI
@@ -926,7 +926,8 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 
 #ifdef CVM_DUAL_STACK
     CVMD_gcUnsafeExec(ee, {
-        isCLDCClass = CVMclassloaderIsCLDCClassLoader(ee, loader);
+        isMidletClass = CVMclassloaderIsMIDPClassLoader(
+	    ee, loader, CVM_FALSE);
     });
 #endif
 
@@ -942,7 +943,7 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 					buf, sizeof(buf),
 					measure_only,
 #ifdef CVM_DUAL_STACK
-                                        isCLDCClass,
+                                        isMidletClass,
 #endif
 					check_relaxed);
 	if (res == -1) { /* nomem */
@@ -1104,7 +1105,7 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 
 	if (accessFlags & JVM_ACC_INTERFACE) {
 #ifdef CVM_DUAL_STACK
-            if (!isCLDCClass) {
+            if (!isMidletClass) {
 #endif
                 /* This is a workaround for a javac bug. Interfaces are not
                  * always marked as ABSTRACT.
@@ -1445,7 +1446,7 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 		    (JVM_RECOGNIZED_CLASS_MODIFIERS | 
 		     JVM_ACC_PRIVATE | JVM_ACC_PROTECTED | JVM_ACC_STATIC);
 #ifdef CVM_DUAL_STACK
-                if (!isCLDCClass) {
+                if (!isMidletClass) {
 #endif
                     /* This is a workaround for a javac bug. Interfaces are
                      * not always marked as ABSTRACT.

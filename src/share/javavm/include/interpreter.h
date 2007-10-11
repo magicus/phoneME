@@ -878,6 +878,82 @@ CVMClassBlock* CVMgetCallerClass(CVMExecEnv* ee, int skip);
 CVMFrame*
 CVMgetCallerFrameSpecial(CVMFrame* frame, int n, CVMBool skipSpecial);
 
+/*
+   The Stack Frame Iterator
+   ========================
+   CVMFrameIterator is used to iterate through the frames on the thread
+   interpreter stack.  The iterator also iterates through JIT inline methods
+   as if they have physical frames on the stack.
+
+   How to use?
+   ===========
+   1. Allocate memory for the iterator.  Normally, this is done by declaring
+      an automatic / local variable of type CVMFrameIterator e.g.
+
+         CVMFrameIterator iter;
+
+   2. Initialize the iterator.  This is done by calling one of the initializer
+      functions: CVMframeIterateInit() or CVMframeIterateInitSpecial() e.g.
+
+         CVMframeIterateInit(&iter, firstFrameToIterateFrom);
+
+      The initializers take a firstFrame arg that points to the first stack
+      frame that we want to start iterating from.  Iteration will take us
+      from that "frame" to its previous "frame", and so on.
+
+   3. Setup a loop to do the iteration by calling one of IterateNext functions:
+      CVMframeIterateNext() or CVMframeIterateNextSpecial() e.g.
+
+         while(CVMframeIterateNext(&iter)) {
+             ... Do stuff with the iterator frame.
+         }
+
+      The IterateNext functions will return a boolean to indicate if the
+      iterator has found a "logical frame" to inspect.  I use the term
+      "logical frame" because the iterator is aware of JIT inlined methods,
+      and is able to iterate through those as well as if they have physical
+      frames allocated for them.  In reality, JIT inlined methods all share
+      the frame of their outer most caller.  Hence, the iterator may dwell
+      on one physical frame for more than one iteration while it iterates
+      through the "logical frames" for each of the methods that are inlined
+      in that physical frame as well as the outermost caller method that
+      owns the physical frame.
+
+      When there are no more frames to iterate, the IterateNext functions
+      will return FALSE and cause the loop to terminate.
+
+   4. Alternative to IterateNext functions: CVMframeIterateSkip() or
+      CVMframeIterateSkipSpecial() can be used to skip a certain number of
+      logical frames from the current logical frame.
+
+      IterateNext is essentially a special case of IterateSkip where the
+      number of frames to skip is 0 i.e. iterate through all frames without
+      skipping any.
+
+   5. Inside the loop, you can use any of the iterator functions to
+      query about the current logical frame and its method.
+
+      Note that there is no physical representation of the logical frame.
+      Hence, you cannot ask the iterator to return a CVMFrame * for the
+      logical frame.  CVMframeIteratorGetFrame() returns the current
+      physical frame, not the current logical frame.
+
+   Special vs Regular IterateNext/IterateSkip
+   ==========================================
+   Note that for CVMframeIterateNext() and CVMframeIterateSkip(), there are
+   corresponding CVMframeIterateNextSpecial() and CVMframeIterateSkipSpecial()
+   functions.
+
+   For the most part, the "Special" versions of these functions are provided
+   to allow skipping of "special" frames in the iteration.  These functions
+   will take a skip arg that if set to TRUE will cause skipping to be done.
+
+   The "special" frames in this case would include reflection frames.
+   Transition frames and JNI local frames (those with mb == 0) will
+   automatically be skipped regardless of whether the skip arg is set to
+   TRUE or not.
+ */
+
 struct CVMFrameIterator {
     CVMStack *stack;
     CVMFrame *endFrame;
@@ -890,32 +966,34 @@ struct CVMFrameIterator {
 };
 
 /*
- * "frame" is the start frame.  Iteration proceeds to and includes
- * "endFrame", so specifying endFrame == frame will scan only the
- * current frame (but including inlined frames).  Currently,
+ * Initializes the frame iterator.
+ *
+ * "firstFrame" is the first frame.  Iteration proceeds to and includes
+ * "lastFrame", so specifying lastFrame == firstFrame will scan only the
+ * first frame (but including its JIT inlined frames).  Currently,
  * "stack" is only used to support "popFrame" below.
- * Note: the specified frame will be set up as the first frame to be examined
- *       when CVMframeIterateSkipSpecial() (or its derivatives e.g.
- *       CVMframeIterateNext()) is called.  After CVMframeIterateSpecial(),
- *       there is no current frame.  We're expected to call
- *       CVMframeIterateSkipSpecial() immediately after to get to the first
- *       frame.
+ *
+ * Note: The specified firstFrame will be set up as the first frame to be
+ *       examined when CVMframeIterateNext() is called.  The initial
+ *       current frame is set to NULL to indicate that we haven't iterated
+ *       through any frames yet.
  */
 void
-CVMframeIterateSpecial(CVMStack *stack, CVMFrame* frame,
-    CVMFrame *endFrame, CVMFrameIterator *iter);
+CVMframeIterateInitSpecial(CVMFrameIterator *iter, CVMStack *stack,
+			   CVMFrame* firstFrame, CVMFrame *lastFrame);
 
+/* Initializes the frame iterator with the first frame to iterate from. */
 void
-CVMframeIterate(CVMFrame* frame, CVMFrameIterator *iter);
+CVMframeIterateInit(CVMFrameIterator *iter, CVMFrame* firstFrame);
 
 /*
  * "skip" is how many extra frames to skip.  Use skip==0 to see
  * every frame.  To skip special reflection frames, set skipSpecial
  * true.  "popFrame" is used by exception handling to pop frames
  * as it iterates.
- * Note: transition frames will always be skipped.  Al other frames will not
- *       be skipped except for reflection frames depending on the value of
- *       the skipSpecial.
+ * Note: transition frames and JNI local frames (i.e. mb == 0) will always be
+ *       skipped.  All other frames will not be skipped except for reflection
+ *       frames depending on the value of the skipSpecial.
  */
 CVMBool
 CVMframeIterateSkipSpecial(CVMFrameIterator *iter,

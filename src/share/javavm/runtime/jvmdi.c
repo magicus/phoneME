@@ -410,7 +410,7 @@ reportException(CVMExecEnv* ee, CVMUint8 *pc,
 
     /* walk up the stack to see if this exception is caught anywhere. */
 
-    CVMframeIterate(frame, &iter);
+    CVMframeIterateInit(&iter, frame);
 
     while (CVMframeIterateNextSpecial(&iter, CVM_FALSE)) {
 	/* %comment: k004 */
