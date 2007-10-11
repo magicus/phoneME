@@ -129,6 +129,17 @@ public class KNITest {
         if (newString() != null) {
             error("newString()");
         }
+	
+	String[] strs = (String[]) newStringArray(10);
+	if (strs.length != 10) {
+            error("newStringArray()");
+	}
+
+	KNITest[] arr = (KNITest[]) newObjectArray(KNITest.class, 10);
+	if (arr.length != 10) {
+            error("newObjectArray()");
+	}
+
 	System.out.println("Done!");
     }
 
@@ -162,4 +173,7 @@ public class KNITest {
 						int len);
     public native static String newStringUTF();
     public native static String newString();
+
+    public native static Object newStringArray(int len);
+    public native static Object newObjectArray(Class clazz, int len);
 }

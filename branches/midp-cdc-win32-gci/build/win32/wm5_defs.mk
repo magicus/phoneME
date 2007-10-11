@@ -34,23 +34,34 @@ VC_DIR           = $(VS8_DIR)/VC
 VC_PATH          = $(VS8_PATH)/VC
 
 PLATFORM_TOOLS_PATH	= $(VC_PATH)/ce/bin/x86_arm
-COMMON_TOOLS_PATH	= $(VS8_PATH)/Common7/Tools/Bin:$(VS8_PATH)/Common7/IDE
+COMMON_TOOLS_PATH0	= $(VS8_PATH)/Common7/Tools/Bin:$(VS8_PATH)/Common7/IDE
+COMMON_TOOLS_PATH	= $(VC_PATH)/bin:$(COMMON_TOOLS_PATH0)
 
 LINKEXE_LIBS += /nodefaultlib:libc.lib corelibc.lib
 WIN_LINKLIBS += corelibc.lib
 
 include ../win32/wince50_defs.mk
 
+INCLUDE0 := $(INCLUDE)
+INCLUDE := $(INCLUDE);$(VC_DIR)/ce/include
+INCLUDE := $(INCLUDE);$(VC_DIR)/ce/atlmfc/include
+
+LIB0 := $(LIB)
+LIB := $(LIB);$(VC_DIR)/ce/lib/armv4i
+LIB := $(LIB);$(VC_DIR)/ce/atlmfc/lib/armv4i
+
 CVM_DEFINES +=  -DPOCKETPC
-CC_ARCH_FLAGS  = /GS-
+CC_ARCH_FLAGS  += /GS-
 TARGET_CC      = CL.EXE 
-LIBPATH += /LIBPATH:"$(VC_DIR)/ce/lib/armv4i"
-LIBPATH += /LIBPATH:"$(VC_DIR)/ce/atlmfc/lib/armv4i"
 
 #####
 ##### FIXME: Adding this here to force dependency in PCSL makefiles to build
 #####  with Microsoft Visual Studio 2005 (which is needed for Windows Mobile
 #####  5.0 & 6.0 builds).  Need to change to eventually unify how Makefiles
 #####  deal with Compiler variables in both CDC and CLDC based builds.
-USE_VS2005=true
+export USE_VS2005=true
+export VS2005_CE_ARM_LIB := '$(LIB0)'
+export VS2005_CE_ARM_INCLUDE := $(INCLUDE0)
+export VS2005_CE_ARM_PATH := "$(PLATFORM_TOOLS_PATH)"
+export VS2005_COMMON_PATH := '$(VS8_PATH)/VC/bin'
 

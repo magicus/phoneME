@@ -44,7 +44,6 @@ public class
 MemberFilter
 {
     private int	partialData;
-    private int	fullData;
     private String badClass;
     private String badMember;
     private String badSig;
@@ -54,13 +53,13 @@ MemberFilter
     protected void finalize(){
 	finalize0();
 	partialData = 0;
-	fullData = 0;
     }
 
     public MemberFilter(){}
 
     /*
-     * Find ROMized filter data. If exists, set 'fullData' field
+     * Find ROMized filter data. If exists, set 
+     * CVMglobals.dualStackMemberFilter
      * and return true. Otherwise, return false.
      */
     public native boolean findROMFilterData();

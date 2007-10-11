@@ -645,14 +645,9 @@ public class JavaAPILister extends LinkerUtil {
 	    }
         }
 
-        /* write ClassRestrictions data struct */
+        /* write CVMClassRestrictions data struct */
         out.println("\n/* The dual stack member filter. */");
-        out.println("struct ClassRestrictionElement cre[] = ");
-        if (nClasses == 0) {
-        out.println("{0};");
-        }
-        else {
-        out.println("{");
+        out.println("struct CVMClassRestrictionElement cre[] = {");
         for (i = 0; i < nClasses; i++) {
             thisClass = (ClassInfo)sortedClasses.get(i);
             cvmClass = (CVMClass)sortedCVMClasses.get(i);
@@ -677,10 +672,9 @@ public class JavaAPILister extends LinkerUtil {
 	    }
 	}
         out.println("};");
-        }
 
-        /* write ClassRestrictions data struct */
-        out.print("const struct ClassRestrictions CVMdualStackMemberFilter = {");
+        /* write CVMClassRestrictions data struct */
+        out.print("const struct CVMClassRestrictions CVMdualStackMemberFilter = {");
         out.print(nClasses + ", ");
         out.println("cre};");
 

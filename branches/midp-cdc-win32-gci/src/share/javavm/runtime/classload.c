@@ -33,6 +33,9 @@
 
 #include "javavm/include/interpreter.h"
 #include "javavm/include/classes.h"
+#ifdef CVM_DUAL_STACK
+#include "javavm/include/dualstack_impl.h"
+#endif
 #include "javavm/include/utils.h"
 #include "javavm/include/common_exceptions.h"
 #include "javavm/include/globals.h"
@@ -1563,5 +1566,42 @@ CVMclassClassPathDestroy(CVMExecEnv* ee)
 {
     classPathDestroy(ee, &CVMglobals.appClassPath);
 }
+
+#ifdef CVM_DUAL_STACK
+/* 
+ * Check if the classloader is one of the MIDP dual-stack classloaders.
+ */
+CVMBool
+CVMclassloaderIsMIDPClassLoader(CVMExecEnv *ee,
+                                CVMClassLoaderICell* loaderICell,
+                                CVMBool checkImplClassLoader)
+{
+    if (loaderICell != NULL) {
+        CVMClassBlock* loaderCB = CVMobjectGetClass(
+                                  CVMID_icellDirect(ee, loaderICell));
+        CVMClassTypeID loaderID = CVMcbClassName(loaderCB);
+        const char *midletLoaderName = 
+            "sun/misc/MIDletClassLoader";
+        CVMClassTypeID MIDletClassLoaderID =
+            CVMtypeidLookupClassID(ee, midletLoaderName, 
+                                   strlen(midletLoaderName));
+
+        if (loaderID == MIDletClassLoaderID){
+            return CVM_TRUE;
+        } else if (checkImplClassLoader) {
+            const char *midpImplLoaderName = 
+                 "sun/misc/MIDPImplementationClassLoader";
+            CVMClassTypeID MIDPImplClassLoaderID = 
+	         CVMtypeidLookupClassID(ee,midpImplLoaderName,
+				   strlen(midpImplLoaderName));
+            if (loaderID == MIDPImplClassLoaderID) {
+	        return CVM_TRUE;
+	    }
+            return CVM_FALSE;
+        }
+    }
+    return CVM_FALSE;
+}
+#endif
 
 #endif /* CVM_CLASSLOADING */

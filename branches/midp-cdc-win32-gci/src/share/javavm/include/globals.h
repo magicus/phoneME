@@ -456,6 +456,10 @@ struct CVMGlobalState {
     CVMPackage* packages[CVM_PKGINFO_HASHSIZE];
     CVMUint16   numPackages;
 
+#ifdef CVM_DUAL_STACK
+    const CVMClassRestrictions* dualStackMemberFilter;
+#endif
+
 #ifdef CVM_JVMTI
     CVMBool jvmtiDebuggingEnabled;
     /* are one or more fields being watched?

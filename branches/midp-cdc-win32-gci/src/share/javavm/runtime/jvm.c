@@ -1229,7 +1229,7 @@ CVMgcUnsafeFillInStackTrace(CVMExecEnv *ee, CVMThrowableICell* throwableICell)
     CVMD_gcSafeExec(ee, {
         noMoreFrameSkips = CVM_FALSE;
 	backtraceSize = 0;
-        CVMframeIterate(startFrame, &iter);
+        CVMframeIterateInit(&iter, startFrame);
 	while (CVMframeIterateNext(&iter)) {
 	    mb = CVMframeIterateGetMb(&iter);
 	    /* ignore all frames that are just part of the <init> of
@@ -1323,7 +1323,7 @@ CVMgcUnsafeFillInStackTrace(CVMExecEnv *ee, CVMThrowableICell* throwableICell)
      * Fill in the pcArray, isCompiledArray, and the backtrace array.
      */
     count = 0;
-    CVMframeIterate(startFrame, &iter);
+    CVMframeIterateInit(&iter, startFrame);
     while (CVMframeIterateNext(&iter)) {
 	CVMMethodBlock* mb = CVMframeIterateGetMb(&iter);
 	CVMJavaInt lineno;
@@ -2365,7 +2365,7 @@ JVM_CountStackFrames(JNIEnv *env, jobject thread)
 	if (targetEE != NULL) {
 	    CVMFrame *frame = CVMeeGetCurrentFrame(targetEE);
 	    CVMFrameIterator iter;
-	    CVMframeIterate(frame, &iter);
+	    CVMframeIterateInit(&iter, frame);
 	    while (CVMframeIterateNext(&iter)) {
 		++count;
 	    }
@@ -2558,7 +2558,7 @@ current_loaded_class(JNIEnv *env)
     CVMClassLoaderICell *loader;
     CVMFrameIterator iter;
 
-    CVMframeIterate(frame, &iter);
+    CVMframeIterateInit(&iter, frame);
     while (CVMframeIterateNext(&iter)) {
 	/* If a method in a class in a trusted loader is in a doPrivileged,
 	   return NULL: */
@@ -2610,7 +2610,7 @@ JVM_GetClassContext(JNIEnv *env)
     /* count the classes on the execution stack */
     frame = CVMeeGetCurrentFrame(ee);
 
-    CVMframeIterate(frame, &iter);
+    CVMframeIterateInit(&iter, frame);
 
     /* skip current frame (SecurityManager.getClassContext) */
     CVMframeIterateNext(&iter);
@@ -2639,7 +2639,7 @@ JVM_GetClassContext(JNIEnv *env)
 	CVMArrayOfRefICell* classArray = (CVMArrayOfRefICell*)result;
 	frame = CVMeeGetCurrentFrame(ee);
 
-	CVMframeIterate(frame, &iter);
+	CVMframeIterateInit(&iter, frame);
 
 	/* skip current frame (SecurityManager.getClassContext) */
 	CVMframeIterateNext(&iter);
@@ -2693,7 +2693,7 @@ JVM_ClassDepth(JNIEnv *env, jstring name)
 	return -1;
     }
 
-    CVMframeIterate(frame, &iter);
+    CVMframeIterateInit(&iter, frame);
     while (CVMframeIterateNext(&iter)) {
 	mb = CVMframeIterateGetMb(&iter);
 	if (!CVMmbIs(mb, NATIVE)) {
@@ -2719,7 +2719,7 @@ JVM_ClassLoaderDepth(JNIEnv *env)
     CVMFrameIterator iter;
     jint depth = 0;
 
-    CVMframeIterate(frame, &iter);
+    CVMframeIterateInit(&iter, frame);
     while (CVMframeIterateNext(&iter)) {
 	/* if a method in a class in a trusted loader is in a doPrivileged,
 	   return -1 */

@@ -24,10 +24,9 @@
 
 import java.io.*;
 import java.util.Vector;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.SocketException;
 import java.net.InetAddress;
 
@@ -43,7 +42,8 @@ public class cvmsh
 {
     final static int DEFAULT_PORT = 4321;
     protected int port = 0;
-    protected ServerSocket serverSocket = null;
+    protected Class serverSocketClass = null;
+    protected Object serverSocket = null;
     protected CVMSHServer server = null;
 
     protected boolean isVerbose = false;
@@ -105,6 +105,14 @@ public class cvmsh
 	"  run <class> [args ...]          - runs the specified app synchronously",
 	"  bg <class> [args ...]           - runs the specified app in a new thread",
     };
+
+    public cvmsh() {
+	try {
+	    serverSocketClass =  Class.forName("java.net.ServerSocket");
+	} catch (ClassNotFoundException e) {
+	}
+    }
+
 
     void doHelp() {
 	printHelp(helpMsg);
@@ -750,6 +758,11 @@ public class cvmsh
      */
     public synchronized void startServer() {
 
+	if (serverSocketClass == null) {
+	    System.err.println("Server mode not supported: need Foundation Profile or higher");
+	    return;
+	}
+
 	if (isServerMode) {
 	    if (isVerbose) {
 	        System.err.println("Server already started on port "+ port);
@@ -767,16 +780,32 @@ public class cvmsh
 	}
 
 	try {
-	    serverSocket = new ServerSocket(port); 
-	} catch (IOException e) {
+
+	    // Use reflection to do this:
+	    //    serverSocket = new ServerSocket(port); 
+
+	    // Get the contructor:
+	    Class[] argsTypes = new Class[1];
+	    argsTypes[0] = Integer.TYPE;
+	    Constructor ct = serverSocketClass.getConstructor(argsTypes);
+
+	    Object[] argsList = new Object[1];
+	    argsList[0] = new Integer(port);
+	    serverSocket = ct.newInstance(argsList);
+
+	    // Create the server and run it in its own thread:
+	    server = new CVMSHServer(this, serverSocketClass, serverSocket, port);
+	    Thread serverThread = new Thread(server);
+	    serverThread.start();
+
+	} catch (InvocationTargetException e) {
 	    System.err.println("ERROR: Cannot start server on port "+ port);
 	    return;
+	} catch (Exception e) {
+	    System.err.println("ERROR: Unexpected exception while " +
+			       "creating server: " + e);
+	    return;
 	}
-
-	// Create the server and run it in its own thread:
-	server = new CVMSHServer(this, serverSocket, port);
-	Thread serverThread = new Thread(server);
-	serverThread.start();
     }
 
     /**
@@ -799,10 +828,22 @@ public class cvmsh
     public synchronized void serverStopped() {
 	if (isServerMode) {
 	    try {
-		serverSocket.close();
-	    } catch (IOException ioe) {
+		// Use reflection to call:
+		//    serverSocket.close();
+		Class[] argsTypes = new Class[0];
+		Method closeMtd;
+		closeMtd = serverSocketClass.getMethod("close", argsTypes);
+
+		Object[] voidArgs = new Object[0];
+		closeMtd.invoke(serverSocket, voidArgs);
+
+	    } catch (InvocationTargetException ioe) {
 		System.err.println("ERROR: IO error while closing "+
 				   "server socket");
+	    } catch (Exception e) {
+		System.err.println("ERROR: Unexpected exception while " +
+				   "closing server socket: " + e);
+		return;
 	    }
 	    serverSocket = null;
 	    server = null;
@@ -869,17 +910,44 @@ class CVMSHServer implements Runnable, CVMSHRunnable {
     boolean stopRequested = false;
     boolean isStopped = false;
     cvmsh shell;
-    ServerSocket serverSocket;
     int port;
 
-    protected Socket client;
+    Object[] voidArgs;
+    Class serverSocketClass = null;
+    Method acceptMtd;
+    Object serverSocket;
+
+    Class socketClass;
+    Method closeMtd;
+    Method getOutputStreamMtd;
+    Method getInputStreamMtd;
+
+    protected Object client;
     protected OutputStream outStream;
     protected InputStream  inStream;
 
-    CVMSHServer(cvmsh shell, ServerSocket socket, int port) {
+    CVMSHServer(cvmsh shell, Class socketClass, Object socket, int port)
+	throws Exception {
 	this.shell = shell;
+	this.serverSocketClass = socketClass;
 	this.serverSocket = socket;
 	this.port = port;
+
+	// Prepare data for reflection calls later to
+	// ServerSocket.accept(), Socket.close(),
+	// Socket.getOutputStream() and Socket.getInputStream() below:
+	Class[] voidArgsTypes = new Class[0];
+	voidArgs = new Object[0];
+
+	acceptMtd = serverSocketClass.getMethod("accept", voidArgsTypes);
+
+	socketClass = Class.forName("java.net.Socket");
+	closeMtd = socketClass.getMethod("close", voidArgsTypes);
+	getOutputStreamMtd =
+	    socketClass.getMethod("getOutputStream", voidArgsTypes);
+	getInputStreamMtd =
+	    socketClass.getMethod("getInputStream", voidArgsTypes);
+
     }
 
     // Shuts down the server.  This should only be called by the server thread.
@@ -901,9 +969,15 @@ class CVMSHServer implements Runnable, CVMSHRunnable {
 	}
 	if (client != null) {
 	    try {
-		client.close();
-	    } catch(IOException e) {
-		System.err.println("ERROR closing socket: " + e);
+		// Use reflection to call this:
+		//    client.close():
+		closeMtd.invoke(client, voidArgs);
+	    } catch(InvocationTargetException e) {
+		System.err.println("ERROR closing socket: " +
+				   e.getTargetException());
+	    } catch (Exception e) {
+		System.err.println("ERROR: Unexpected exception while " +
+				   "closing socket: " + e);
 	    }
 	    client = null;
 	}
@@ -917,25 +991,41 @@ class CVMSHServer implements Runnable, CVMSHRunnable {
 
     public void run(){
 
+	// Now run the service loop:
 	while(!shell.quitRequested() && !stopRequested) {
 	    // Wait for a client to connect to us:
 	    try{
-		client = serverSocket.accept();
-	    } catch (IOException e) {
+		// Use reflection to call this:
+		//    client = serverSocket.accept();
+		client = acceptMtd.invoke(serverSocket, voidArgs);
+
+	    } catch (InvocationTargetException e) {
 		System.err.println("ERROR: Failed to accept on port: " + port);
 		shutDown();   // Clean up and stop the server.
+		return;
+	    } catch (Exception e) {
+		System.err.println("ERROR: Unexpected exception while " +
+				   "accepting server connection: " + e);
 		return;
 	    }
 
 	    // Get the input and output streams of the client socket:
 	    try {
-		outStream = client.getOutputStream();
-		inStream = client.getInputStream();
+		// Use reflection to call these:
+		//    outStream = client.getOutputStream();
+		//    inStream = client.getInputStream();
+		outStream = (OutputStream)
+		    getOutputStreamMtd.invoke(client, voidArgs);
+		inStream = (InputStream)
+		    getInputStreamMtd.invoke(client, voidArgs);
 
-	    } catch (IOException ioe) {
+	    } catch (InvocationTargetException e) {
 		System.err.println("ERROR: Failed to get client IO streams");
-		ioe.printStackTrace();
 		shutDown();   // Clean up and stop the server.
+		return;
+	    } catch (Exception e) {
+		System.err.println("ERROR: Unexpected exception while " +
+				   "getting client IO streams: " + e);
 		return;
 	    }
 
