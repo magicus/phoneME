@@ -206,7 +206,7 @@ Java_java_io_Win32FileSystem_getLength(JNIEnv *env, jobject this,
 	    DWORD hi;
 	    DWORD lo = GetFileSize(h, &hi);
 		if ((lo != 0xffffffff) || (GetLastError() == NO_ERROR)) {
-		    rv = lo + (hi << 32);
+		    rv = lo + ((jlong)hi << 32);
 		}
 		CloseHandle(h);
 	}
