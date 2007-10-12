@@ -47,10 +47,7 @@ static void surface_release(AbstractSurface* surface, jobject surfaceHandle);
 static void surface_cleanup(AbstractSurface* surface);
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-//KNIDECL(com_sun_pisces_GraphicsSurface_initialize) {
-Java_com_sun_pisces_GraphicsSurface_initialize(CVMExecEnv* _ee, CVMStackVal32* _arguments, 
-        CVMMethodBlock** _p_mb) {
-
+KNIDECL(com_sun_pisces_GraphicsSurface_initialize) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(objectHandle);
 

@@ -55,11 +55,7 @@ KNIDECL(com_sun_pisces_NativeFinalizer_initialize) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-//KNIDECL(com_sun_pisces_SurfaceNativeFinalizer_finalize) {
-Java_com_sun_pisces_SurfaceNativeFinalizer_finalize(CVMExecEnv* _ee,
-          CVMStackVal32* _arguments, 
-        CVMMethodBlock** _p_mb) {
-
+KNIDECL(com_sun_pisces_SurfaceNativeFinalizer_finalize) {
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);
@@ -76,10 +72,7 @@ Java_com_sun_pisces_SurfaceNativeFinalizer_finalize(CVMExecEnv* _ee,
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-//KNIDECL(com_sun_pisces_RendererNativeFinalizer_finalize) {
-Java_com_sun_pisces_RendererNativeFinalizer_finalize(CVMExecEnv* _ee,
-          CVMStackVal32* _arguments, 
-        CVMMethodBlock** _p_mb) {
+KNIDECL(com_sun_pisces_RendererNativeFinalizer_finalize) {
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);

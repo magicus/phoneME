@@ -27,7 +27,7 @@
 package com.sun.pisces;
 
 class NativeFinalizer {
-    private NativeFinalization guardedObject;
+    protected NativeFinalization guardedObject;
 
     NativeFinalizer(NativeFinalization forObject) {
         guardedObject = forObject;
@@ -41,7 +41,7 @@ class NativeFinalizer {
     public static NativeFinalizer createInstance(AbstractSurface surface) {
         return new SurfaceNativeFinalizer(surface);
     }
-    
+
     private native final void initialize();
 }
 
