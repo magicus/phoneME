@@ -97,7 +97,8 @@ static void
 
 /**
  * Initializes the File System
- * @return <tt>JAVACALL_OK</tt> on success, <tt>JAVACALL_FAIL</tt> or negative value on error
+ * @return <tt>JAVACALL_OK</tt> on success, 
+ *         <tt>JAVACALL_FAIL</tt> or negative value on error
  */
 javacall_result javacall_file_init(void)
 {
@@ -106,7 +107,8 @@ javacall_result javacall_file_init(void)
 
 /**
  * Cleans up resources used by file system
- * @return <tt>JAVACALL_OK</tt> on success, <tt>JAVACALL_FAIL</tt> or negative value on error
+ * @return <tt>JAVACALL_OK</tt> on success, 
+ *         <tt>JAVACALL_FAIL</tt> or negative value on error
  */
 javacall_result javacall_file_finalize(void)
 {
@@ -229,7 +231,8 @@ long javacall_file_read(javacall_handle handle, unsigned char *buf, long size)
     res = ReadFile((HANDLE)handle, (LPVOID)buf, size, &read_bytes, NULL);
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
     if (res == TRUE) {
-        javacall_printf("javacall_file_read >> handle=%x size=%d, read=%d\n", handle, size, read_bytes);
+        javacall_printf("javacall_file_read >> handle=%x size=%d, read=%d\n", 
+                handle, size, read_bytes);
     }
 #endif
     return (res) ? read_bytes :  -1;
@@ -288,17 +291,17 @@ javacall_result javacall_file_truncate(javacall_handle handle,
                                       javacall_int64 size)
 {
     int state;
-    DWORD dwCutPointerPosition;
-    DWORD dwPreviousPointerPosition;
-    dwPreviousPointerPosition = SetFilePointer((HANDLE)handle,
+    DWORD dwCutPosition;
+    DWORD dwPreviousPosition;
+    dwPreviousPosition = SetFilePointer((HANDLE)handle,
                                                 0,
                                                 NULL,
                                                 FILE_CURRENT);
 
-    if (dwPreviousPointerPosition == INVALID_SET_FILE_POINTER)
+    if (dwPreviousPosition == INVALID_SET_FILE_POINTER)
         return JAVACALL_FAIL;
 
-    dwCutPointerPosition = SetFilePointer((HANDLE)handle,
+    dwCutPosition = SetFilePointer((HANDLE)handle,
                                           (LONG)size,
                                           NULL,
                                           FILE_BEGIN);
@@ -308,7 +311,7 @@ javacall_result javacall_file_truncate(javacall_handle handle,
         handle, size, dwNewPointerPosition);
 #endif
 
-    if (dwCutPointerPosition == INVALID_SET_FILE_POINTER) {
+    if (dwCutPosition == INVALID_SET_FILE_POINTER) {
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
     javacall_printf( "javacall_file_truncate fail 1 >>");
 #endif
@@ -322,11 +325,11 @@ javacall_result javacall_file_truncate(javacall_handle handle,
 #endif
         state = 0;
     } else {
-        if (dwCutPointerPosition <= dwPreviousPointerPosition)
+        if (dwCutPosition <= dwPreviousPosition)
             return JAVACALL_OK;
     }
-    dwPreviousPointerPosition = SetFilePointer((HANDLE)handle, dwPreviousPointerPosition, NULL, FILE_BEGIN);
-    if (dwPreviousPointerPosition == INVALID_SET_FILE_POINTER)
+    dwPreviousPosition = SetFilePointer((HANDLE)handle, dwPreviousPosition, NULL, FILE_BEGIN);
+    if (dwPreviousPosition == INVALID_SET_FILE_POINTER)
         state = 0;
 
     return (state) ? JAVACALL_OK : JAVACALL_FAIL;
@@ -344,7 +347,8 @@ javacall_result javacall_file_truncate(javacall_handle handle,
  * @return on success the actual resulting offset from beginning of file
  *         is returned, otherwise -1 is returned
  */
-javacall_int64 javacall_file_seek(javacall_handle handle, javacall_int64 offset, javacall_file_seek_flags flag)
+javacall_int64 javacall_file_seek(javacall_handle handle, javacall_int64 offset, 
+                                  javacall_file_seek_flags flag)
 {
     DWORD dwMoveMethod;
     DWORD dwNewPointerPosition;
