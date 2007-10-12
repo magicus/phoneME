@@ -92,7 +92,8 @@ javacall_handle javacall_dir_open(javacall_const_utf16_string path, int pathLen)
     memcpy(wOsPath, path, pathLen * sizeof(wchar_t));
 
 
-    if (wOsPath[pathLen - 2] != '/' || wOsPath[pathLen - 2] != '\\' || wOsPath[pathLen - 1] != '*') {
+    if (wOsPath[pathLen - 2] != '/' || wOsPath[pathLen - 2] != '\\' 
+        || wOsPath[pathLen - 1] != '*') {
         if (wOsPath[pathLen - 1] == L'/' || wOsPath[pathLen - 1] == L'\\') {
            wOsPath[pathLen++] = '*';
         } else {
