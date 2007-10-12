@@ -1683,8 +1683,9 @@ CVMgcimplResize(CVMExecEnv *ee, CVMUint32 numBytes, CVMBool grow)
     if (newSize > gc->oldGenMaxSize) {
 	newSize = gc->oldGenMaxSize;
     }
-
-    newSize = CVMgcimplSetSizeAndWatermarks(gc, newSize, currentUsage);
+    if (newSize < gc->oldGenMinSize) {
+	newSize = gc->oldGenMinSize;
+    }
 
     /* Resize the new memory: */
     if (grow) {
@@ -1709,14 +1710,14 @@ CVMgcimplResize(CVMExecEnv *ee, CVMUint32 numBytes, CVMBool grow)
 		   OutOfMemoryError being thrown. */
 		success = CVM_FALSE;
 
-		/* Reset the size and watermarks before failing: */
-		CVMgcimplSetSizeAndWatermarks(gc, oldSize, currentUsage);
-
 		goto failed;
 	    }
 
 	    CVMassert(mem == commitStart);
 	    CVMassert(actualSize == commitSize);
+
+            /* set new size and watermarks */
+            CVMgcimplSetSizeAndWatermarks(gc, newSize, currentUsage);
 
 	    /* Initialize the corresponding card table region: */
 	    cardAreaStart = (void *)CARD_TABLE_SLOT_ADDRESS_FOR(commitStart);
@@ -1742,6 +1743,8 @@ CVMgcimplResize(CVMExecEnv *ee, CVMUint32 numBytes, CVMBool grow)
 	    mem = CVMmemDecommit(decommitStart, decommitSize, &actualSize);
 	    CVMassert(mem == decommitStart);
 	    CVMassert(actualSize == decommitSize);
+            /* set new size and watermarks */
+            CVMgcimplSetSizeAndWatermarks(gc, newSize, currentUsage);
 	}
     }
 
