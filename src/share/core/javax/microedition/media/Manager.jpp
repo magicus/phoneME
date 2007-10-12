@@ -38,13 +38,10 @@ import com.sun.mmedia.TonePlayer;
 import com.sun.mmedia.Configuration;
 import com.sun.mmedia.protocol.*;
 import com.sun.mmedia.DefaultConfiguration;
+import com.sun.mmedia.DirectPlayer;
 
 // #ifdef USE_RTSP [
 import com.sun.mmedia.RTSPPlayer;
-// #endif ]
-
-// #ifdef RTP_PLAYER [
-import com.sun.mmedia.RTPPlayer;
 // #endif ]
 
 // #ifndef ABB [
@@ -904,7 +901,7 @@ public final class Manager {
         else if( null != theProtocol && theProtocol.equals( "rtp" ) )
         {
             // #ifdef RTP_PLAYER [
-			p = new RTPPlayer();
+			p = new DirectPlayer();
             // #endif ]
         }
         else

@@ -462,6 +462,12 @@ public class RtspManager {
             }
         }
 
+        KeepAlive ka = new KeepAlive();
+
+        Thread keepAliveThread = new Thread(ka);
+
+        keepAliveThread.start();
+
         return true;
     }
 
@@ -962,6 +968,36 @@ public class RtspManager {
         }
 
         return port;
+    }
+
+    class KeepAlive implements Runnable {
+        public void run() {
+            String msg;
+            boolean timeout;
+
+            if (RTSP_DEBUG) System.out.println("[KeepAlive] starting...");
+
+            while (connection.connectionIsAlive()) {
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                }
+
+                msg = "GET_PARAMETER rtsp://" + rtspUrl.getHost() + "/" + rtspUrl.getFile() +
+                    " RTSP/1.0\r\n" + "CSeq: " + sequenceNumber + "\r\n" +
+                    "\r\n";
+
+                if (!connection.connectionIsAlive()) break;
+
+                sendMessage(msg);
+                timeout = waitForResponse(TIMER_2);
+
+                if (RTSP_DEBUG && timeout) {
+                    System.out.println("[KeepAlive] *** timeout.");
+                }
+            }
+            if (RTSP_DEBUG) System.out.println("[KeepAlive] ...exiting.");
+        }
     }
 }
 
