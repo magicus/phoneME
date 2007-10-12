@@ -1,11 +1,13 @@
-package com.sun.midp.push.gcf.impl;
+package com.sun.midp.push.reservation.impl;
 
 import java.io.IOException;
 
-import com.sun.midp.push.gcf.ConnectionReservation;
-import com.sun.midp.push.gcf.DataAvailableListener;
-import com.sun.midp.push.gcf.PermissionCallback;
-import com.sun.midp.push.gcf.ReservationDescriptor;
+import com.sun.j2me.security.AccessControlContext;
+
+import com.sun.midp.push.reservation.ProtocolFactory;
+import com.sun.midp.push.reservation.ConnectionReservation;
+import com.sun.midp.push.reservation.DataAvailableListener;
+import com.sun.midp.push.reservation.ReservationDescriptor;
 
 /** Common test utils. */
 final class Common {
@@ -42,7 +44,7 @@ final class Common {
             public ReservationDescriptor createDescriptor(
                     final String protocol, final String targetAndParams,
                     final String filter,
-                    final PermissionCallback permissionCallback)
+                    final AccessControlContext context)
                         throws IllegalArgumentException, SecurityException {
                 return STUB_RESERVATION_DESCR;
             }
