@@ -172,3 +172,5 @@ SO_LINK_CMD	= $(AT)\
 # since we are not using gcc
 CVM_DISABLE_COMPILER_CHECK = true
 
+WIN32_QUERY_REG = $(shell REG.EXE QUERY $(1) /v $(2) 2> /dev/null | \
+	awk -F'\t' '/$(2)/ { print $$3 }')
