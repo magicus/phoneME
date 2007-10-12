@@ -1223,19 +1223,11 @@ void Method::set_impossible_to_compile() {
 
 void Method::iterate(int begin, int end, BytecodeClosure* blk JVM_TRAPS) {
   int bci = begin;
-  while (bci < end) {
-    const Bytecodes::Code code = bytecode_at(bci);
-
+  for(; bci < end; bci = next_bci(bci) ) {
     // Note: we may potentially iterate a bytecode whose end is past <end>,
     // but this would be caught by the illegal_code() check below. That
     // should make the bytecode verifier happy.
-    iterate_bytecode(bci, blk, code JVM_CHECK);
-
-    int len = Bytecodes::length_for(code);
-    if (len == 0) {
-      len = Bytecodes::wide_length_for(this, bci, code);
-    }
-    bci += len;
+    iterate_bytecode(bci, blk, bytecode_at(bci) JVM_CHECK);
   }
 
   if (bci > end) {
@@ -1245,32 +1237,27 @@ void Method::iterate(int begin, int end, BytecodeClosure* blk JVM_TRAPS) {
 
 #if ENABLE_CPU_VARIANT && ENABLE_ARM11_JAZELLE_DLOAD_BUG_WORKAROUND
 void Method::fix_long_operations() {  
-  int bci = 0;
   //-1 below is small performance optimizations 
   //we couldn't call get_ubyte(bci+1) for the last bytecode
   //but also we don't have to do it.
-  int method_size = code_size() - 1;
-  while (bci < method_size) {
-    Bytecodes::Code code = bytecode_at(bci);
-    jubyte idx = get_ubyte(bci+1);
-    if (idx == 0xff) {
-      if (code == Bytecodes::_lload) {
-        bytecode_at_put_raw(bci, Bytecodes::_lload_safe);
-      } else if (code == Bytecodes::_lstore) {
-        bytecode_at_put_raw(bci, Bytecodes::_lstore_safe);
+  const int method_size = code_size() - 1;
+  for( int bci = 0; bci < method_size; bci = next_bci( bci ) ) {
+    const jubyte idx = get_ubyte(bci+1);
+    if( idx != 0xff) continue;
+    Bytecodes::Code new_code;
+    switch( bytecode_at(bci) ) {
+      default: continue;
+      #define REPLACE_BYTECODE(code)\
+        case Bytecodes::_##code: new_code = Bytecodes::_##code##_safe; break
+      REPLACE_BYTECODE(lload );
+      REPLACE_BYTECODE(lstore);
 #if ENABLE_FLOAT
-      } else if (code == Bytecodes::_dload) {
-        bytecode_at_put_raw(bci, Bytecodes::_dload_safe);
-      } else if (code == Bytecodes::_dstore) {
-        bytecode_at_put_raw(bci, Bytecodes::_dstore_safe);
+      REPLACE_BYTECODE(dload );
+      REPLACE_BYTECODE(dstore);
 #endif
-      }
+      #undef REPLACE_BYTECODE
     }
-    int len = Bytecodes::length_for(code);
-    if (len == 0) {
-      len = Bytecodes::wide_length_for(this, bci, code);
-    }
-    bci += len;
+    bytecode_at_put_raw(bci, new_code);
   }
 }
 #endif 
@@ -1595,42 +1582,42 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
     case Bytecodes::_lxor: {
       #define BINARY_OP_TYPE(a, b, c, d) c, d
       static const jubyte binary_op_types[] = {
-	BINARY_OP_TYPE(0x60, iadd,  T_INT,     BytecodeClosure::bin_add),
-	BINARY_OP_TYPE(0x61, ladd,  T_LONG,    BytecodeClosure::bin_add),
-	BINARY_OP_TYPE(0x62, fadd,  T_FLOAT,   BytecodeClosure::bin_add),
-	BINARY_OP_TYPE(0x63, dadd,  T_DOUBLE,  BytecodeClosure::bin_add),
-	BINARY_OP_TYPE(0x64, isub,  T_INT,     BytecodeClosure::bin_sub),
-	BINARY_OP_TYPE(0x65, lsub,  T_LONG,    BytecodeClosure::bin_sub),
-	BINARY_OP_TYPE(0x66, fsub,  T_FLOAT,   BytecodeClosure::bin_sub),
-	BINARY_OP_TYPE(0x67, dsub,  T_DOUBLE,  BytecodeClosure::bin_sub),
-	BINARY_OP_TYPE(0x68, imul,  T_INT,     BytecodeClosure::bin_mul),
-	BINARY_OP_TYPE(0x69, lmul,  T_LONG,    BytecodeClosure::bin_mul),
-	BINARY_OP_TYPE(0x6a, fmul,  T_FLOAT,   BytecodeClosure::bin_mul),
-	BINARY_OP_TYPE(0x6b, dmul,  T_DOUBLE,  BytecodeClosure::bin_mul),
-	BINARY_OP_TYPE(0x6c, idiv,  T_INT,     BytecodeClosure::bin_div),
-	BINARY_OP_TYPE(0x6d, ldiv,  T_LONG,    BytecodeClosure::bin_div),
-	BINARY_OP_TYPE(0x6e, fdiv,  T_FLOAT,   BytecodeClosure::bin_div),
-	BINARY_OP_TYPE(0x6f, ddiv,  T_DOUBLE,  BytecodeClosure::bin_div),
-	BINARY_OP_TYPE(0x70, irem,  T_INT,     BytecodeClosure::bin_rem),
-	BINARY_OP_TYPE(0x71, lrem,  T_LONG,    BytecodeClosure::bin_rem),
-	BINARY_OP_TYPE(0x72, frem,  T_FLOAT,   BytecodeClosure::bin_rem),
-	BINARY_OP_TYPE(0x73, drem,  T_DOUBLE,  BytecodeClosure::bin_rem),
-	BINARY_OP_TYPE(0x74, ineg,  T_ILLEGAL, 0),
-	BINARY_OP_TYPE(0x75, lneg,  T_ILLEGAL, 0),
-	BINARY_OP_TYPE(0x76, fneg,  T_ILLEGAL, 0),
-	BINARY_OP_TYPE(0x77, dneg,  T_ILLEGAL, 0),
-	BINARY_OP_TYPE(0x78, ishl,  T_INT,     BytecodeClosure::bin_shl),
-	BINARY_OP_TYPE(0x79, lshl,  T_LONG,    BytecodeClosure::bin_shl),
-	BINARY_OP_TYPE(0x7a, ishr,  T_INT,     BytecodeClosure::bin_shr),
-	BINARY_OP_TYPE(0x7b, lshr,  T_LONG,    BytecodeClosure::bin_shr),
-	BINARY_OP_TYPE(0x7c, iushr, T_INT,     BytecodeClosure::bin_ushr),
-	BINARY_OP_TYPE(0x7d, lushr, T_LONG,    BytecodeClosure::bin_ushr),
-	BINARY_OP_TYPE(0x7e, iand,  T_INT,     BytecodeClosure::bin_and),
-	BINARY_OP_TYPE(0x7f, land,  T_LONG,    BytecodeClosure::bin_and),
-	BINARY_OP_TYPE(0x80, ior,   T_INT,     BytecodeClosure::bin_or),
-	BINARY_OP_TYPE(0x81, lor,   T_LONG,    BytecodeClosure::bin_or),
-	BINARY_OP_TYPE(0x82, ixor,  T_INT,     BytecodeClosure::bin_xor),
-	BINARY_OP_TYPE(0x83, lxor,  T_LONG,    BytecodeClosure::bin_xor)
+        BINARY_OP_TYPE(0x60, iadd,  T_INT,     BytecodeClosure::bin_add),
+        BINARY_OP_TYPE(0x61, ladd,  T_LONG,    BytecodeClosure::bin_add),
+        BINARY_OP_TYPE(0x62, fadd,  T_FLOAT,   BytecodeClosure::bin_add),
+        BINARY_OP_TYPE(0x63, dadd,  T_DOUBLE,  BytecodeClosure::bin_add),
+        BINARY_OP_TYPE(0x64, isub,  T_INT,     BytecodeClosure::bin_sub),
+        BINARY_OP_TYPE(0x65, lsub,  T_LONG,    BytecodeClosure::bin_sub),
+        BINARY_OP_TYPE(0x66, fsub,  T_FLOAT,   BytecodeClosure::bin_sub),
+        BINARY_OP_TYPE(0x67, dsub,  T_DOUBLE,  BytecodeClosure::bin_sub),
+        BINARY_OP_TYPE(0x68, imul,  T_INT,     BytecodeClosure::bin_mul),
+        BINARY_OP_TYPE(0x69, lmul,  T_LONG,    BytecodeClosure::bin_mul),
+        BINARY_OP_TYPE(0x6a, fmul,  T_FLOAT,   BytecodeClosure::bin_mul),
+        BINARY_OP_TYPE(0x6b, dmul,  T_DOUBLE,  BytecodeClosure::bin_mul),
+        BINARY_OP_TYPE(0x6c, idiv,  T_INT,     BytecodeClosure::bin_div),
+        BINARY_OP_TYPE(0x6d, ldiv,  T_LONG,    BytecodeClosure::bin_div),
+        BINARY_OP_TYPE(0x6e, fdiv,  T_FLOAT,   BytecodeClosure::bin_div),
+        BINARY_OP_TYPE(0x6f, ddiv,  T_DOUBLE,  BytecodeClosure::bin_div),
+        BINARY_OP_TYPE(0x70, irem,  T_INT,     BytecodeClosure::bin_rem),
+        BINARY_OP_TYPE(0x71, lrem,  T_LONG,    BytecodeClosure::bin_rem),
+        BINARY_OP_TYPE(0x72, frem,  T_FLOAT,   BytecodeClosure::bin_rem),
+        BINARY_OP_TYPE(0x73, drem,  T_DOUBLE,  BytecodeClosure::bin_rem),
+        BINARY_OP_TYPE(0x74, ineg,  T_ILLEGAL, 0),
+        BINARY_OP_TYPE(0x75, lneg,  T_ILLEGAL, 0),
+        BINARY_OP_TYPE(0x76, fneg,  T_ILLEGAL, 0),
+        BINARY_OP_TYPE(0x77, dneg,  T_ILLEGAL, 0),
+        BINARY_OP_TYPE(0x78, ishl,  T_INT,     BytecodeClosure::bin_shl),
+        BINARY_OP_TYPE(0x79, lshl,  T_LONG,    BytecodeClosure::bin_shl),
+        BINARY_OP_TYPE(0x7a, ishr,  T_INT,     BytecodeClosure::bin_shr),
+        BINARY_OP_TYPE(0x7b, lshr,  T_LONG,    BytecodeClosure::bin_shr),
+        BINARY_OP_TYPE(0x7c, iushr, T_INT,     BytecodeClosure::bin_ushr),
+        BINARY_OP_TYPE(0x7d, lushr, T_LONG,    BytecodeClosure::bin_ushr),
+        BINARY_OP_TYPE(0x7e, iand,  T_INT,     BytecodeClosure::bin_and),
+        BINARY_OP_TYPE(0x7f, land,  T_LONG,    BytecodeClosure::bin_and),
+        BINARY_OP_TYPE(0x80, ior,   T_INT,     BytecodeClosure::bin_or),
+        BINARY_OP_TYPE(0x81, lor,   T_LONG,    BytecodeClosure::bin_or),
+        BINARY_OP_TYPE(0x82, ixor,  T_INT,     BytecodeClosure::bin_xor),
+        BINARY_OP_TYPE(0x83, lxor,  T_LONG,    BytecodeClosure::bin_xor)
       };
       #undef BINARY_OP_TYPE
 
@@ -1668,21 +1655,21 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
     case Bytecodes::_i2s: {
       #define CONVERT_OP_TYPE(a, b, c, d) c, d
       static const jubyte convert_op_types[] = {
-	CONVERT_OP_TYPE(0x85, i2l, T_INT,    T_LONG),
-	CONVERT_OP_TYPE(0x86, i2f, T_INT,    T_FLOAT),
-	CONVERT_OP_TYPE(0x87, i2d, T_INT,    T_DOUBLE),
-	CONVERT_OP_TYPE(0x88, l2i, T_LONG,   T_INT),
-	CONVERT_OP_TYPE(0x89, l2f, T_LONG,   T_FLOAT),
-	CONVERT_OP_TYPE(0x8a, l2d, T_LONG,   T_DOUBLE),
-	CONVERT_OP_TYPE(0x8b, f2i, T_FLOAT,  T_INT),
-	CONVERT_OP_TYPE(0x8c, f2l, T_FLOAT,  T_LONG),
-	CONVERT_OP_TYPE(0x8d, f2d, T_FLOAT,  T_DOUBLE),
-	CONVERT_OP_TYPE(0x8e, d2i, T_DOUBLE, T_INT),
-	CONVERT_OP_TYPE(0x8f, d2l, T_DOUBLE, T_LONG),
-	CONVERT_OP_TYPE(0x90, d2f, T_DOUBLE, T_FLOAT),
-	CONVERT_OP_TYPE(0x91, i2b, T_INT,    T_BYTE),
-	CONVERT_OP_TYPE(0x92, i2c, T_INT,    T_CHAR),
-	CONVERT_OP_TYPE(0x93, i2s, T_INT,    T_SHORT),
+        CONVERT_OP_TYPE(0x85, i2l, T_INT,    T_LONG),
+        CONVERT_OP_TYPE(0x86, i2f, T_INT,    T_FLOAT),
+        CONVERT_OP_TYPE(0x87, i2d, T_INT,    T_DOUBLE),
+        CONVERT_OP_TYPE(0x88, l2i, T_LONG,   T_INT),
+        CONVERT_OP_TYPE(0x89, l2f, T_LONG,   T_FLOAT),
+        CONVERT_OP_TYPE(0x8a, l2d, T_LONG,   T_DOUBLE),
+        CONVERT_OP_TYPE(0x8b, f2i, T_FLOAT,  T_INT),
+        CONVERT_OP_TYPE(0x8c, f2l, T_FLOAT,  T_LONG),
+        CONVERT_OP_TYPE(0x8d, f2d, T_FLOAT,  T_DOUBLE),
+        CONVERT_OP_TYPE(0x8e, d2i, T_DOUBLE, T_INT),
+        CONVERT_OP_TYPE(0x8f, d2l, T_DOUBLE, T_LONG),
+        CONVERT_OP_TYPE(0x90, d2f, T_DOUBLE, T_FLOAT),
+        CONVERT_OP_TYPE(0x91, i2b, T_INT,    T_BYTE),
+        CONVERT_OP_TYPE(0x92, i2c, T_INT,    T_CHAR),
+        CONVERT_OP_TYPE(0x93, i2s, T_INT,    T_SHORT),
       };
       #undef CONVERT_OP_TYPE
 
@@ -2068,7 +2055,7 @@ void Method::iterate_bytecode(int bci, BytecodeClosure* blk,
   case Bytecodes::_wide:
     {
       static const BasicType local_op_types[]  = {
-	T_INT,  T_LONG,  T_FLOAT,  T_DOUBLE, T_OBJECT
+        T_INT,  T_LONG,  T_FLOAT,  T_DOUBLE, T_OBJECT
       };
 
       code = bytecode_at(bci + 1);

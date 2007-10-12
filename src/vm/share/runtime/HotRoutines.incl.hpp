@@ -182,29 +182,24 @@ void RawLocation::read_value(Value& v, int index) {
 
 #if USE_HOT_ROUTINES
 // return the CRC for a given array of data
-juint Inflater::crc32(unsigned char *data, juint length) {
+juint Inflater::crc32(const unsigned char *data, const juint length) {
   juint crc = 0xFFFFFFFF;
-  unsigned char *end = data + length;
+  const unsigned char* end = data + length;
 
 #if ENABLE_FAST_CRC32
-  juint *table = (juint*)&_fast_crc32_table[0];
+  const juint *table = _fast_crc32_table;
 
   switch (length & 3) {
-  case 3:
-    crc = table[ ( crc ^ *data ) & 0xFF ] ^ (crc >> 8); data++;
-    // fall
-  case 2:
-    crc = table[ ( crc ^ *data ) & 0xFF ] ^ (crc >> 8); data++;
-    // fall
-  case 1:
-    crc = table[ ( crc ^ *data ) & 0xFF ] ^ (crc >> 8); data++;
-  }
-
-  for ( ; data < end;) {
-    crc = table[ ( crc ^ *data ) & 0xFF ] ^ (crc >> 8); data++;
-    crc = table[ ( crc ^ *data ) & 0xFF ] ^ (crc >> 8); data++;
-    crc = table[ ( crc ^ *data ) & 0xFF ] ^ (crc >> 8); data++;
-    crc = table[ ( crc ^ *data ) & 0xFF ] ^ (crc >> 8); data++;
+    do {
+      crc = table[ ( crc ^ *data++ ) & 0xFF ] ^ (crc >> 8);
+    case 3:
+      crc = table[ ( crc ^ *data++ ) & 0xFF ] ^ (crc >> 8);
+    case 2:
+      crc = table[ ( crc ^ *data++ ) & 0xFF ] ^ (crc >> 8);
+    case 1:
+      crc = table[ ( crc ^ *data++ ) & 0xFF ] ^ (crc >> 8);
+    default:;
+    } while( data < end );
   }
 
   GUARANTEE(data == end, "loop must be unrolled correctly");

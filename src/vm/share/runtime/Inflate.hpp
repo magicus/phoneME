@@ -193,7 +193,7 @@ private:
   const static juint _fast_crc32_table[];
 #endif
 
-  static juint crc32(unsigned char *data, juint length);
+  static juint crc32(const unsigned char *data, const juint length);
 
 public:
   ReturnOop in_buffer() {

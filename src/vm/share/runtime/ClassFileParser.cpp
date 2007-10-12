@@ -713,16 +713,15 @@ inline bool ClassFileParser::are_valid_method_access_flags(
       //  //   JVMS §2.10.3
       //  return false;
       //}
-      if ((flags & JVM_ACC_STRICT) != 0) {
-        if (state->major_version() == 45 && state->minor_version() == 3) {
-          // The class is built with JDK 1.1 and this combination
-          // is deemed OK. See CR 6363911
-        } else {
+      if( flags & JVM_ACC_STRICT ) {
+        // The class is built with JDK 1.1 and this combination
+        // is deemed OK. See CR 6363911
+        if (state->major_version() != 45 || state->minor_version() != 3) {
           return false;
         }
       }
-      if ((flags & (JVM_ACC_FINAL | JVM_ACC_NATIVE | JVM_ACC_SYNCHRONIZED |
-                    JVM_ACC_PRIVATE | JVM_ACC_STATIC)) != 0) {
+      if( flags & (JVM_ACC_FINAL | JVM_ACC_NATIVE | JVM_ACC_SYNCHRONIZED |
+                   JVM_ACC_PRIVATE | JVM_ACC_STATIC) ) {
         return false;
       }
     }
@@ -1326,14 +1325,14 @@ inline void ClassFileParser::check_for_duplicate_methods(ConstantPool *cp,
     // symbol!
     for (int i = 0; i < len - 1; i++) {
       Method::Raw method_a = methods.obj_at(i);
-      jint name_a = method_a().name_index();
+      const jint name_a = method_a().name_index();
 
       for (int j = i + 1; j < len; j++) {
         Method::Raw method_b = methods.obj_at(j);
-        jint name_b = method_b().name_index();
+        const jint name_b = method_b().name_index();
         if (cp_base[name_a] == cp_base[name_b]) {
-          jint signature_a = method_a().signature_index();
-          jint signature_b = method_b().signature_index();
+          const jint signature_a = method_a().signature_index();
+          const jint signature_b = method_b().signature_index();
           if (cp_base[signature_a] == cp_base[signature_b]) {
             goto error;
           }
@@ -1468,8 +1467,7 @@ ClassFileParser::parse_classfile_attributes(ConstantPool* cp,
 }
 
 inline bool ClassFileParser::is_circular(InstanceClass* this_class) {
-  InstanceClass::Raw c = this_class;
-  for( ;; ) {
+  for( InstanceClass::Raw c = this_class;; ) {
     c = c().super();
     if( c().is_null() ) {
       return false;
@@ -1666,66 +1664,50 @@ inline bool ClassFileParser::parse_class_0(ClassParserState *stack JVM_TRAPS) {
   return super_class_resolved && interfaces_resolved;
 }
 
-#if 0 && ENABLE_MONET
-ReturnOop ClassFileParser::parse_class(ClassParserState *stack JVM_TRAPS) {
-  const int class_id = Universe::number_of_java_classes();
-  OopDesc* klass = parse_class_internal(stack JVM_NO_CHECK);
-  // If converting, remove this class from the class_list if there was
-  // an exception.  Otherwise when we iterate through the list of
-  // system classes we will get a NULL InstanceClass
-  if (CURRENT_HAS_PENDING_EXCEPTION) {
-    if (GenerateROMImage && Universe::number_of_java_classes() == class_id + 1){
-      Universe::unregister_last_java_class();
-    }
-  }
-  return klass;
-}
-#endif
-
 inline void ClassFileParser::clone_invoke_special_virtual_conflicts(
                                   InstanceClass* this_klass, 
                                   ConstantPool* old_cp, ConstantPool* new_cp, 
-                                  TypeArray* relocation_map, int map_size) {
-  TypeArray::Raw old_tags = old_cp->tags();
-  int cp_length = old_cp->length();
-  TypeArray::Raw new_tags = new_cp->tags();
-  TypeArray::array_copy(&old_tags, 0, &new_tags, 0, cp_length);
-  void* old_cp_base_address = old_cp->base_address();
-  void* new_cp_base_address = new_cp->base_address();
-  jvm_memcpy(new_cp_base_address, old_cp_base_address, cp_length*sizeof(int));
-  int i = 0;
-  for (; i < map_size; i+=2) {
-    int old_offset = relocation_map->ushort_at(i);
-    int new_offset = relocation_map->ushort_at(i+1);
-    new_cp->tag_at_put(new_offset, old_cp->tag_value_at(old_offset));
-    new_cp->value32_at_put(new_offset, old_cp->value32_at(old_offset));
+                                  TypeArray* relocation_map, int map_size)
+{
+  {
+    TypeArray::Raw old_tags = old_cp->tags();
+    const int cp_length = old_cp->length();
+    TypeArray::Raw new_tags = new_cp->tags();
+    TypeArray::array_copy(&old_tags, 0, &new_tags, 0, cp_length);
+    const void* old_cp_base_address = old_cp->base_address();
+    void* new_cp_base_address = new_cp->base_address();
+    jvm_memcpy(new_cp_base_address, old_cp_base_address, cp_length*sizeof(int));
   }
-  ObjArray::Raw methods = this_klass->methods();
-  //updating invoke_special indexes in methods
-  Method::Raw method;
-  for (i = 0; i < methods().length(); i++) {
-    method = methods().obj_at(i);
-    if (method.is_null()) continue;
-    method().set_constants(new_cp);
-    int bci = 0;
-    int code_length = method().code_size();
-    while (bci < code_length) {
-      Bytecodes::Code code = method().bytecode_at(bci);
-      if (code == Bytecodes::_invokespecial) {
-        int cp_index = method().get_java_ushort(bci+1);
-        int j = 0;
-        for (; j < map_size; j+=2) {
-          int old_cp_index = relocation_map->ushort_at(j);
-          if (old_cp_index == cp_index) {
-            method().put_java_ushort(bci+1, relocation_map->ushort_at(j+1));            
+  {    
+    for( int i = 0; i < map_size; i+=2 ) {
+      const int old_offset = relocation_map->ushort_at(i);
+      const int new_offset = relocation_map->ushort_at(i+1);
+      new_cp->tag_at_put(new_offset, old_cp->tag_value_at(old_offset));
+      new_cp->value32_at_put(new_offset, old_cp->value32_at(old_offset));
+    }
+  }
+  {
+    ObjArray::Raw methods = this_klass->methods();
+    const int methods_length = methods().length();
+    //updating invoke_special indexes in methods
+    for (int i = 0; i < methods_length; i++) {
+      Method::Raw method = methods().obj_at(i);
+      if (method.is_null()) continue;
+      method().set_constants(new_cp);
+      const int code_length = method().code_size();
+      for( int bci = 0; bci < code_length; ) {
+        const Bytecodes::Code code = method().bytecode_at(bci);
+        if (code == Bytecodes::_invokespecial) {
+          const int cp_index = method().get_java_ushort(bci+1);
+          for (int j = 0; j < map_size; j+=2) {
+            const int old_cp_index = relocation_map->ushort_at(j);
+            if (old_cp_index == cp_index) {
+              method().put_java_ushort(bci+1, relocation_map->ushort_at(j+1));
+            }
           }
         }
+        bci = method().next_bci( bci );
       }
-      int len = Bytecodes::length_for(code);
-      if (len == 0) {
-        len = Bytecodes::wide_length_for(&method, bci, code);
-      }
-      bci += len;
     }
   }
 }
@@ -1734,34 +1716,27 @@ inline void ClassFileParser::fill_in_invoke_indexes(InstanceClass* this_klass,
                                              TypeArray* invoke_sp_ids, 
                                              TypeArray* invoke_vi_ids) {
   ObjArray::Raw methods = this_klass->methods();
-  for (int i = 0; i < methods().length(); i++) {
+  const int methods_length = methods().length();
+  for (int i = 0; i < methods_length; i++) {
     Method::Raw method = methods().obj_at(i);  
-    const int code_length = method().code_size();
-    for( int bci = 0; bci < code_length; ) {
+    const int code_length = method().code_size() - 2;
+    for( int bci = 0; bci < code_length; bci = method().next_bci( bci ) ) {
+      TypeArray* invoke_ids;
       const Bytecodes::Code code = method().bytecode_at(bci);
       switch( code ) {
-        case Bytecodes::_invokespecial: {
-          const int index = method().get_java_ushort(bci+1);
-          const int idx1 = index / BitsPerWord;
-          const int idx2 = index % BitsPerWord;
-          const int map = invoke_sp_ids->int_at(idx1) | (1 << idx2);
-          invoke_sp_ids->int_at_put(idx1, map);
+        case Bytecodes::_invokespecial:
+          invoke_ids = invoke_sp_ids;
           break;
-        }
-        case Bytecodes::_invokevirtual: {
-          const int index = method().get_java_ushort(bci+1);
-          const int idx1 = index / BitsPerWord;
-          const int idx2 = index % BitsPerWord;
-          const int map = invoke_vi_ids->int_at(idx1) | (1 << idx2);
-          invoke_vi_ids->int_at_put(idx1, map);
+        case Bytecodes::_invokevirtual:
+          invoke_ids = invoke_vi_ids;
           break;
-        }
+        default: continue;
       }
-      int len = Bytecodes::length_for(code);
-      if (len == 0) {
-        len = Bytecodes::wide_length_for(&method, bci, code);
-      }
-      bci += len;
+      const int index = method().get_java_ushort(bci+1);
+      const int idx1 = index / BitsPerWord;
+      const int idx2 = index % BitsPerWord;
+      const int map = invoke_ids->int_at(idx1) | (1 << idx2);
+      invoke_ids->int_at_put(idx1, map);
     }
   }  
 }
@@ -1770,10 +1745,12 @@ inline void ClassFileParser::resolve_invoke_special_virtual_conflicts(
                                      InstanceClass* this_klass JVM_TRAPS) {
   UsingFastOops fast;
   ConstantPool::Fast cp = this_klass->constants();
-  int cp_length = cp().length();
-  int bitmap_length = cp_length / BitsPerWord + 1;
-  TypeArray::Fast invoke_virtual_indexes = Universe::new_int_array(bitmap_length JVM_CHECK);
-  TypeArray::Fast invoke_special_indexes = Universe::new_int_array(bitmap_length JVM_CHECK);  
+  const int cp_length = cp().length();
+  const int bitmap_length = cp_length / BitsPerWord + 1;
+  TypeArray::Fast invoke_virtual_indexes =
+    Universe::new_int_array(bitmap_length JVM_CHECK);
+  TypeArray::Fast invoke_special_indexes =
+    Universe::new_int_array(bitmap_length JVM_CHECK);  
   
   fill_in_invoke_indexes(this_klass, &invoke_special_indexes, &invoke_virtual_indexes);
 
@@ -1781,7 +1758,7 @@ inline void ClassFileParser::resolve_invoke_special_virtual_conflicts(
   int i;
   for (i = 0; i < bitmap_length; i++) {
     for( int collision = invoke_special_indexes().int_at(i) & 
-                       invoke_virtual_indexes().int_at(i);
+                         invoke_virtual_indexes().int_at(i);
          collision; collision >>= 1 ) {
       if (collision & 1) {
         count++;
@@ -1796,25 +1773,24 @@ inline void ClassFileParser::resolve_invoke_special_virtual_conflicts(
 
   count = 0;
   for (i = 0; i < bitmap_length; i++) {
-    int collision = invoke_special_indexes().int_at(i) & 
-                       invoke_virtual_indexes().int_at(i);
-    if (collision) {      
-      int offset = 0;
-      while (collision) {        
-        if (collision & 1) {
-          relocation_map().ushort_at_put(2*count, i*BitsPerWord + offset);
-          relocation_map().ushort_at_put(2*count + 1, cp_length + count);          
-          count++;
-        }
-        offset++;
-        collision >>= 1;
+    int offset = 0;
+    for( int collision = invoke_special_indexes().int_at(i) &
+                         invoke_virtual_indexes().int_at(i);
+         collision; collision >>= 1 ) {
+      if( collision & 1 ) {
+        relocation_map().ushort_at_put(2*count, i*BitsPerWord + offset);
+        relocation_map().ushort_at_put(2*count + 1, cp_length + count);          
+        count++;
       }
+      offset++;
     }
   }
 
-  ConstantPool::Fast new_cp = Universe::new_constant_pool(count + cp_length JVM_CHECK);
-  clone_invoke_special_virtual_conflicts(this_klass, &cp, &new_cp, &relocation_map, 2*count);
-  ClassInfo::Fast klass_info = this_klass->class_info();
+  ConstantPool::Fast new_cp =
+    Universe::new_constant_pool(count + cp_length JVM_CHECK);
+  clone_invoke_special_virtual_conflicts(this_klass, &cp, &new_cp,
+                                         &relocation_map, 2*count);
+  ClassInfo::Raw klass_info = this_klass->class_info();
   klass_info().set_constants(&new_cp);
 }
 
