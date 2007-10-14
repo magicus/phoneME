@@ -43,6 +43,7 @@
 #include "javavm/include/io_md.h"
 #include "javavm/include/wceUtil.h"
 #include "javavm/include/globals.h"
+#include "javavm/include/winntUtil.h"
 
 static int initialized = 0;
 static HANDLE standardin  = INVALID_HANDLE_VALUE;
