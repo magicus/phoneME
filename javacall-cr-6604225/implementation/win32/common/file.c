@@ -385,7 +385,7 @@ javacall_int64 javacall_file_seek(javacall_handle handle, javacall_int64 offset,
 /**
  * Get file size
  * @param handle identifier of file
- *               This is the identifier returned by pcsl_file_open()
+ *               This is the identifier returned by javacall_file_open()
  * @return size of file in bytes if successful, -1 otherwise
  */
 javacall_int64 javacall_file_sizeofopenfile(javacall_handle handle)
