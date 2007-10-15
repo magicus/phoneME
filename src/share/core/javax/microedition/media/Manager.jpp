@@ -962,8 +962,11 @@ public final class Manager {
     private static DataSource createDataSource(String locator)
          throws IOException, MediaException {
 
-        String className = config.getHandler(BasicDS.getProtocol(locator));
-
+        String protocol = BasicDS.getProtocol(locator);
+        if (protocol == null) {
+            throw new MediaException(DS_ERR + locator);
+        }
+        String className = config.getHandler(protocol);
         if (className == null) {
             throw new MediaException(DS_ERR + locator);
         }
