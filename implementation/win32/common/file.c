@@ -43,8 +43,9 @@
 /**
  * Creates null terminated version of string in externally allocated buffer
  *
- * @param name non null terminated string
- * @param length of desired string, or -1 if already null terminated
+ * @param name initial string
+ * @param length of desired string or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @param suggest_buffer allocated space
  * @param suggest_length length of extern buffer
  */
@@ -52,7 +53,7 @@ static javacall_const_utf16_string
     get_string_extern(javacall_const_utf16_string name, int length,
                       javacall_utf16* suggest_buffer, int suggest_length)
 {
-    if (length == -1)
+    if (length == JAVACALL_UNKNOWN_LENGTH)
         return name;
     if (length >= suggest_length)
         return NULL;
@@ -63,17 +64,18 @@ static javacall_const_utf16_string
 
 
 /**
- * Returns null terminated string
+ * Returns null terminated version of string
  *
- * @param name non null terminated string
- * @param length length of desired string, or -1 if already null terminated
+ * @param name initial string
+ * @param length of desired string or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @return a buffer with null terminated string
  */
 static javacall_const_utf16_string 
     get_string_alloc(javacall_const_utf16_string name, int length)
 {
     javacall_utf16* nt_name;
-    if (length == -1)
+    if (length == JAVACALL_UNKNOWN_LENGTH)
         return name;
     nt_name = (javacall_utf16*) malloc(sizeof(javacall_utf16)*(length+1));
     memcpy(nt_name, name, sizeof(javacall_utf16)*length);
@@ -119,6 +121,8 @@ javacall_result javacall_file_finalize(void)
  * Opens a file.
  *
  * @param fileName path name of the file to be opened.
+ * @param fileNameLen length of the file name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @param flags open control flags.
  *        Applications must specify exactly one of the first three
  *        values (file access modes) below in the value of "flags":
@@ -144,17 +148,13 @@ javacall_result javacall_file_open(javacall_const_utf16_string fileName,
                                   int flags,
                                   javacall_handle* /* OUT */ handle)
 {
-    DWORD dwDesiredAccess = GENERIC_READ;
+    DWORD dwDesiredAccess;
     DWORD dwCreationDisposition = OPEN_EXISTING;
     HANDLE fh = INVALID_HANDLE_VALUE;
 
     /* create a new unicode NULL terminated file name variable */
     javacall_const_utf16_string sFileName = get_string_alloc(fileName, fileNameLen);
 
-    /* The flags order processing is important.
-     * consider JAVACALL_FILE_O_RDWR|JAVACALL_FILE_O_APPEND|JAVACALL_FILE_O_CREAT
-     * or JAVACALL_FILE_O_RDWR|JAVACALL_FILE_O_TRUNC|JAVACALL_FILE_O_CREAT
-     */
     switch (flags & (JAVACALL_FILE_O_RDWR | JAVACALL_FILE_O_WRONLY)) {
         case JAVACALL_FILE_O_WRONLY:
             dwDesiredAccess = GENERIC_WRITE;
@@ -163,6 +163,7 @@ javacall_result javacall_file_open(javacall_const_utf16_string fileName,
             dwDesiredAccess = GENERIC_WRITE | GENERIC_READ;
             break;
         default:
+            dwDesiredAccess = GENERIC_READ;
             break;
     }
 
@@ -260,6 +261,8 @@ long javacall_file_write(javacall_handle handle, const unsigned char *buf, long 
  * Deletes a file from persistent storage.
  *
  * @param fileName name of file to be deleted
+ * @param fileNameLen length of the file name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @return <tt>JAVACALL_OK</tt> on success,
  *         <tt>JAVACALL_FAIL</tt> otherwise.
  */
@@ -396,6 +399,8 @@ javacall_int64 javacall_file_sizeofopenfile(javacall_handle handle)
  * Returns the file size.
  *
  * @param fileName name of the file.
+ * @param fileNameLen length of the file name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @return size of file in bytes if successful, -1 otherwise
  */
 javacall_int64 javacall_file_sizeof(javacall_const_utf16_string fileName,
@@ -424,6 +429,8 @@ javacall_int64 javacall_file_sizeof(javacall_const_utf16_string fileName,
  * Checks if the file exists in file system storage.
  *
  * @param fileName name of the file.
+ * @param fileNameLen length of the file name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @return <tt>JAVACALL_OK </tt> if it exists and is a regular file,
  *         <tt>JAVACALL_FAIL</tt> otherwise.
  */
@@ -461,12 +468,15 @@ javacall_result javacall_file_flush(javacall_handle handle)
 }
 
 /**
- * Renames the file.
- *
- * @param oldFileName current name of file.
- * @param newFileName new name of file.
- * @return <tt>JAVACALL_OK</tt> on success,
- *         <tt>JAVACALL_FAIL</tt> otherwise.
+ * Renames the filename.
+ * @param unicodeOldFilename current name of file
+ * @param oldNameLen current name length or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
+ * @param unicodeNewFilename new name of file
+ * @param newNameLen length of new name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
+ * @return <tt>JAVACALL_OK</tt>  on success, 
+ *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
 javacall_result javacall_file_rename(javacall_const_utf16_string oldFileName,
                                     int oldNameLen,

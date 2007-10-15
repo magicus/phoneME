@@ -46,6 +46,7 @@ typedef struct JAVACALL_FIND_DATA {
 
 
 #define DEFAULT_MAX_JAVA_SPACE (8*1024*1024) 
+#define EMPTY_DIRECTORY_HANDLE NULL
 
 /**
  * Returns file separator character used by the underlying file system
@@ -67,7 +68,8 @@ javacall_utf16 javacall_get_file_separator(void)
  * 
  * @param path the name of a directory, but it can be a
  *             partial file name
- * @param pathLen length of directory name
+ * @param pathLen length of directory name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @return pointer to an opaque filelist structure, that can be used in
  *         javacall_dir_get_next() and javacall_dir_close().
  *         NULL returned on error, for example if root directory of the
@@ -78,10 +80,10 @@ javacall_handle javacall_dir_open(javacall_const_utf16_string path, int pathLen)
     javacall_handle handle;
     JAVACALL_FIND_DATA* pFindData;
     WIN32_FIND_DATAW javacall_dir_data;
-    wchar_t wOsPath[JAVACALL_MAX_FILE_NAME_LENGTH];
+    wchar_t wOsPath[JAVACALL_MAX_FILE_NAME_LENGTH+1];
     int nErrNo;
 
-    if (pathLen == -1) {
+    if (pathLen == JAVACALL_UNKNOWN_LENGTH) {
         pathLen = wcslen(path);
     }
     if( pathLen > JAVACALL_MAX_FILE_NAME_LENGTH ) {
@@ -101,7 +103,7 @@ javacall_handle javacall_dir_open(javacall_const_utf16_string path, int pathLen)
             wOsPath[pathLen++] = '*';
         }
     }
-    wOsPath[pathLen] = 0;
+    wOsPath[pathLen] = '\0';
     
     handle = FindFirstFileW(wOsPath, &javacall_dir_data);
     nErrNo = GetLastError();
@@ -116,7 +118,7 @@ javacall_handle javacall_dir_open(javacall_const_utf16_string path, int pathLen)
     pFindData->find_data = javacall_dir_data;
     pFindData->first_time = TRUE;
     if ((handle == INVALID_HANDLE_VALUE) && (nErrNo == ERROR_NO_MORE_FILES)) {
-        pFindData->handle = 0; /* Empty folder */
+        pFindData->handle = EMPTY_DIRECTORY_HANDLE;
     }
     else {
         pFindData->handle = handle;
@@ -136,7 +138,7 @@ void javacall_dir_close(javacall_handle handle)
 {
     JAVACALL_FIND_DATA* pFindData = (JAVACALL_FIND_DATA*)handle;
 
-    if ((pFindData != NULL) && (pFindData->handle == 0))
+    if ((pFindData != NULL) && (pFindData->handle == EMPTY_DIRECTORY_HANDLE))
     {
         free(pFindData);
         return;
@@ -175,7 +177,7 @@ javacall_utf16* javacall_dir_get_next(javacall_handle handle,
         }
         return NULL;
     }
-    if (pFindData->handle == 0)
+    if (pFindData->handle == EMPTY_DIRECTORY_HANDLE)
         return NULL;
 
     if (!pFindData->first_time) {
