@@ -122,14 +122,19 @@ class ClassInfo: public Oop {
   void set_access_flags(AccessFlags access_flags) {
     int_field_put(access_flags_offset(), access_flags.as_int());
   }
-  void set_is_verified() {
+  void set_is_verified( void ) {
     AccessFlags flags = access_flags();
     flags.set_is_verified();
     set_access_flags(flags);
   }
-  void set_has_vanilla_constructor() {
+  void set_has_vanilla_constructor( void ) {
     AccessFlags flags = access_flags();
     flags.set_has_vanilla_constructor();
+    set_access_flags(flags);
+  }
+  void set_is_fake_class( void ) {
+    AccessFlags flags = access_flags();
+    flags.set_is_fake_class();
     set_access_flags(flags);
   }
 

@@ -1300,8 +1300,8 @@ ReturnOop Universe::new_type_array(TypeArrayClass* klass, jint length JVM_TRAPS)
   return allocate_array(klass, length, klass->scale() JVM_NO_CHECK_AT_BOTTOM);
 }
 
-ReturnOop Universe::new_method(int code_length, AccessFlags &access_flags
-                               JVM_TRAPS)
+ReturnOop Universe::new_method(const int code_length,
+                               const AccessFlags access_flags JVM_TRAPS)
 {
   Method::Raw m = allocate_method(code_length JVM_NO_CHECK);
   if (m.not_null()) {

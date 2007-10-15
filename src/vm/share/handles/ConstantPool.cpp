@@ -1231,9 +1231,7 @@ void ConstantPool::check_quickened_field_access(int index,
       // optimization for this class. This allows to detect this failure at
       // run-time.
       if (GenerateROMImage) {
-        AccessFlags access_flags = klass().access_flags();
-        access_flags.set_is_non_optimizable();
-        klass().set_access_flags(access_flags);
+        klass().set_is_non_optimizable();
       }
     }
 
@@ -1246,9 +1244,7 @@ void ConstantPool::check_quickened_field_access(int index,
     // optimization for this class. This allows to detect this failure at
     // run-time.
     if (GenerateROMImage) {
-      AccessFlags access_flags = klass().access_flags();
-      access_flags.set_is_non_optimizable();
-      klass().set_access_flags(access_flags);
+      klass().set_is_non_optimizable();
     }
 
     Throw::illegal_access(ErrorOnFailure JVM_THROW);

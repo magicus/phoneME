@@ -503,20 +503,25 @@ public:
   int itable_index() const;
 
 #if ENABLE_ROM_GENERATOR
-  void set_has_compressed_header() {
+  void set_has_compressed_header( void ) {
     AccessFlags af = access_flags();
     af.set_has_compressed_header();
     set_access_flags(af);
   }
-  void set_has_no_stackmaps() {
+  void set_has_no_stackmaps( void ) {
     AccessFlags af = access_flags();
     af.set_has_no_stackmaps();
     set_access_flags(af);
   }
-  void set_has_no_exception_table() {
+  void set_has_no_exception_table( void ) {
     AccessFlags af = access_flags();
     af.set_has_no_exception_table();
     set_access_flags(af);
+  }
+  void set_is_final( void ) {
+    AccessFlags flags = access_flags();
+    flags.set_is_final();
+    set_access_flags(flags);
   }
 
   ReturnOop create_other_endianness(JVM_SINGLE_ARG_TRAPS);

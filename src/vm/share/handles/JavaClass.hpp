@@ -269,6 +269,12 @@ public:
     ClassInfo::Raw info = class_info();
     info().set_access_flags(access_flags);
   }
+  void set_is_non_optimizable( void ) {
+    AccessFlags flags = access_flags();
+    flags.set_is_non_optimizable();
+    set_access_flags(flags);
+  }
+
   jushort class_id() const {
     return raw_class_info()->_class_id;
   }

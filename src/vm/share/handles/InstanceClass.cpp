@@ -251,9 +251,7 @@ void InstanceClass::verify(JVM_SINGLE_ARG_TRAPS) {
     
           // We disable ROM optimizations to be able to report the failure 
           // properly at run-time.
-          AccessFlags flags = access_flags();
-          flags.set_is_non_optimizable();
-          set_access_flags(flags);
+          set_is_non_optimizable();
           return;
         }
       }
@@ -775,8 +773,8 @@ void InstanceClass::update_vtable(int super_vtable_length) {
 // from JavaVTable before we actually have an InstanceClass.
 bool InstanceClass::needs_new_vtable_entry(Method* method, InstanceClass*super,
                                            Symbol* classname,
-                                           AccessFlags access_flags, 
-                                           ClassInfo*    info, //don't need if update_entries == false
+                                           const AccessFlags access_flags, 
+                                           ClassInfo* info, //don't need if update_entries == false
                                            bool update_entries)
 {
   bool allocate_new = true;

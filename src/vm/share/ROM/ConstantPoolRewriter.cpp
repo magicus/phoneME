@@ -635,7 +635,7 @@ ConstantPoolRewriter::create_method_replacement(Method *method JVM_TRAPS) {
 ReturnOop ConstantPoolRewriter::copy_method(Method *old_method, int new_size
                                             JVM_TRAPS) {
   UsingFastOops level1;
-  AccessFlags access_flags = old_method->access_flags();
+  const AccessFlags access_flags = old_method->access_flags();
   Method::Fast new_method = Universe::new_method(new_size, access_flags JVM_CHECK_0);
   TypeArray::Fast exception_table = old_method->exception_table();
   ConstantPool::Fast orig_cp = old_method->constants();

@@ -31,10 +31,10 @@
 
 // this function computes the vtable size.
 void JavaVTable::compute_vtable_size(int& vtable_length,
-                              InstanceClass* super,
-                              ObjArray*      methods, 
-                              AccessFlags    class_flags, 
-                              Symbol*        classname) {
+                              InstanceClass*    super,
+                              ObjArray*         methods, 
+                              const AccessFlags class_flags, 
+                              Symbol*           classname) {
   // set up default result values
   vtable_length = 0;
 

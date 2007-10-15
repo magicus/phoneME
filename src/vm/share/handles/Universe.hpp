@@ -68,8 +68,8 @@ class Universe: public AllStatic {
   // ^CompiledMethod
   static ReturnOop new_compiled_method(int code_size JVM_TRAPS);
 #endif
-  static ReturnOop new_method(int code_length, AccessFlags &access_flags
-                              JVM_TRAPS);
+  static ReturnOop new_method(const int code_length,
+                              const AccessFlags access_flags JVM_TRAPS);
   static ReturnOop new_constant_pool(int length JVM_TRAPS);
   static ReturnOop new_instance(InstanceClass* klass JVM_TRAPS);
   static ReturnOop new_instance_class(int vtable_size,

@@ -149,7 +149,7 @@ class InstanceClass: public JavaClass {
   void update_vtable(int super_vtable_length);
   static bool needs_new_vtable_entry(Method* method, InstanceClass* super,
                                      Symbol* classname,
-                                     AccessFlags access_flags, 
+                                     const AccessFlags access_flags, 
                                      ClassInfo* cl_info, //don't need if update_entries == false
                                      bool update_entries);
 

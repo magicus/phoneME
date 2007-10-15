@@ -279,10 +279,10 @@ JavaFrame::find_compiled_method( const address frame_pc ) {
   CompiledMethodDesc* method_desc = (CompiledMethodDesc*)cm().obj();
   jint code_size = method_desc->code_size();
   if ( code_size < offset && offset > 0 ) {
-  	//this is a unlinked method which is still be used
-    	method_desc = ObjectHeap::method_contains_instruction_of(frame_pc);
-	CompiledMethod::Raw ncm = method_desc;
-	return method_desc;
+        //this is a unlinked method which is still be used
+        method_desc = ObjectHeap::method_contains_instruction_of(frame_pc);
+        CompiledMethod::Raw ncm = method_desc;
+        return method_desc;
   }
 #endif  
   return (CompiledMethodDesc*)cm.obj();
@@ -322,7 +322,7 @@ void JavaFrame::fill_in_compiled_frame() {
 
   // Fill in stack bottom pointer
   Method::Raw m = raw_compiled_method()->method();
-  AccessFlags flags = m().access_flags();
+  const AccessFlags flags = m().access_flags();
   if (!flags.is_synchronized() && !flags.has_monitor_bytecodes() ) {
     set_empty_stack_bottom_pointer();
   }
@@ -865,7 +865,7 @@ JavaFrame::find_exception_frame(Thread* thread,
   }
 
   if (frame.is_java_frame() &&
-	(frame.as_JavaFrame().bci_with_flags() & overflow_frame_flag) != 0) {
+        (frame.as_JavaFrame().bci_with_flags() & overflow_frame_flag) != 0) {
     // There is a 'fake' frame constructed in
     // interpreter_grow_stack.
     // We need to the frame because we don't want to find

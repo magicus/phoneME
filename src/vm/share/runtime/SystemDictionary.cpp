@@ -412,14 +412,14 @@ ReturnOop SystemDictionary::create_fake_class(LoaderContext *loader_ctx JVM_TRAP
                                                         JVM_CHECK_0);
   // set the embedded oopmap to indicate there are no static or non-static
   // oops
-  int offset = ic().first_nonstatic_map_offset();
-  ic().oop_map_at_put(offset, OopMapSentinel);   // a blank non-static oopmap
-  ic().oop_map_at_put(offset+1, OopMapSentinel); // a blank static oopmap
+  {
+    const int offset = ic().first_nonstatic_map_offset();
+    ic().oop_map_at_put(offset, OopMapSentinel);   // a blank non-static oopmap
+    ic().oop_map_at_put(offset+1, OopMapSentinel); // a blank static oopmap
+  }
 
   ClassInfo::Fast klass_info = ic().class_info();
-  AccessFlags flags = klass_info().access_flags();
-  flags.set_is_fake_class();
-  klass_info().set_access_flags(flags);
+  klass_info().set_is_fake_class();
   klass_info().set_name(loader_ctx->class_name());
   // ROMizer uses a fake class to represent a missing class.
   // We need to fully initialize this object, so that an application with 
