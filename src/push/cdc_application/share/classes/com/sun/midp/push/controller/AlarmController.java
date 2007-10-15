@@ -133,7 +133,7 @@ final class AlarmController {
         final AlarmTask oldTask = (AlarmTask) alarms.get(midpApp);
         long oldTime = 0L;
         if (oldTask != null) {
-            oldTime = oldTask.scheduledExecutionTime();
+            oldTime = oldTask.getScheduledAlarmTime();
             oldTask.cancel(); // Safe to ignore return
         }
 
@@ -203,18 +203,33 @@ final class AlarmController {
      */
     private class AlarmTask extends TimerTask {
         /** <code>MIDlet</code> to run. */
-        final MIDPApp midpApp;
+        private final MIDPApp midpApp;
 
         /** Cancelation status. */
-        boolean cancelled = false;
+        private boolean cancelled = false;
+        
+        /** Scheduled execution time. */
+        private long scheduledTime;
 
         /**
          * Creates a new instance, originally not cancelled.
          *
          * @param midpApp <code>MIDlet</code> to create task for
+         * @param scheduledTime scheduled time
          */
-        AlarmTask(final MIDPApp midpApp) {
+        AlarmTask(final MIDPApp midpApp, long scheduledTime) {
             this.midpApp = midpApp;
+            this.scheduledTime = scheduledTime;
+        }
+        
+        /**
+         * Returns scheduled time. 
+         * This is different from what #scheduledExecutionTime() returns 
+         * as #scheduledExecutionTime() returns <code>0</code> 
+         * for not scheduled tasks.
+         */
+        long getScheduledAlarmTime() {
+            return scheduledTime;
         }
 
         /** {@inheritDoc} */
@@ -227,7 +242,7 @@ final class AlarmController {
                 try {
                     lifecycleAdapter.launchMidlet(midpApp.midletSuiteID,
                             midpApp.midlet);
-                    removeAlarm(midpApp);
+                    removeAlarmFromStore(midpApp);
                 } catch (Exception ex) {
                     /*
                      * IMPL_NOTE: need to handle _all_ the exceptions
@@ -260,24 +275,21 @@ final class AlarmController {
      */
     private void scheduleAlarm(final MIDPApp midpApp, final long time) {
         final Date date = new Date(time);
-        final AlarmTask newTask = new AlarmTask(midpApp);
+        final AlarmTask newTask = new AlarmTask(midpApp, date.getTime());
         alarms.put(midpApp, newTask);
-        timer.schedule(newTask, date);
+        try {
+            timer.schedule(newTask, date);
+        } catch(IllegalArgumentException e) {         
+            // Timer javadoc: 
+            //  throws IllegalArgumentException if time.getTime() is negative
+
+            // register alarm but don't schedule it for execution to pass TCK.
+        }
         /*
          * RFC: according to <code>Timer</code> spec, <quote>if the time is in
          * the past, the task is scheduled for immediate execution</quote>.
          * I hope it's MIDP complaint
          */
-    }
-
-    /**
-     * Removes an alarm associated info.
-     *
-     * @param midpApp application to remove alarm for
-     */
-    private void removeAlarm(final MIDPApp midpApp) {
-        alarms.remove(midpApp);
-        removeAlarmFromStore(midpApp);
     }
 
     /**

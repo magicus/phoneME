@@ -75,13 +75,14 @@ MIDP_CNI_CLASSES += \
         com.sun.pisces.Configuration \
         com.sun.pisces.GraphicsSurfaceDestination \
         com.sun.pisces.NativeFinalizer \
-        "com.sun.pisces.NativeFinalizer$$SurfaceNativeFinalizer" \
-        "com.sun.pisces.NativeFinalizer$$RendererNativeFinalizer" \
+        com.sun.pisces.RendererNativeFinalizer \
+        com.sun.pisces.SurfaceNativeFinalizer \
         com.sun.pisces.PiscesFinalizer \
         com.sun.pisces.Transform6 \
         com.sun.pisces.PiscesRenderer \
         com.sun.pisces.NativeSurface \
-        com.sun.pisces.AbstractSurface
+        com.sun.pisces.AbstractSurface \
+        com.sun.pisces.GraphicsSurface
 endif
 
 ifeq ($(CVM_INCLUDE_JUMP), true)

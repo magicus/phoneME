@@ -22,8 +22,9 @@
  * information or have any questions.
  */
 
-package com.sun.midp.push.gcf.impl;
+package com.sun.midp.push.reservation.impl;
 
+import com.sun.midp.push.reservation.ProtocolFactory;
 import junit.framework.TestCase;
 
 public final class MapProtocolRegistryTest extends TestCase {

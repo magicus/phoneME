@@ -22,23 +22,24 @@
  * information or have any questions.
  */
 
-package com.sun.midp.push.gcf.impl;
+package com.sun.midp.push.reservation.impl;
 
 import javax.microedition.io.ConnectionNotFoundException;
 
-import com.sun.midp.push.gcf.PermissionCallback;
-import com.sun.midp.push.gcf.ReservationDescriptor;
+import com.sun.j2me.security.AccessControlContext;
+import com.sun.j2me.security.AccessControlContextAdapter;
+
+import com.sun.midp.push.reservation.ProtocolFactory;
+import com.sun.midp.push.reservation.ReservationDescriptor;
 
 import junit.framework.TestCase;
 
 public final class RDFactoryTest extends TestCase {
-    private static final PermissionCallback NOOP_PERMISSION_CALLBACK =
-        new PermissionCallback () {
+    private static final AccessControlContext NOOP_ACCESS_CONTROL_CONTEXT =
+        new AccessControlContextAdapter () {
             /** {@inheritDoc} */
-            public void checkForPermission(
-                    final String permissionName, final String resource,
-                    final String extraValue) throws SecurityException {
-            }
+            public void checkPermissionImpl(
+                String name, String resource, String extraValue) {}
     };
 
     private void _testInvalidConnectionName(final String connectionName) {
@@ -49,7 +50,7 @@ public final class RDFactoryTest extends TestCase {
             }
         });
         try {
-            factory.getDescriptor(connectionName, "", NOOP_PERMISSION_CALLBACK);
+            factory.getDescriptor(connectionName, "", NOOP_ACCESS_CONTROL_CONTEXT);
             fail("IAE should be thrown");
         } catch (IllegalArgumentException iae) {
             ;
@@ -66,7 +67,7 @@ public final class RDFactoryTest extends TestCase {
         });
         try {
             final ReservationDescriptor rd = factory
-                .getDescriptor(connectionName, "", NOOP_PERMISSION_CALLBACK);
+                .getDescriptor(connectionName, "", NOOP_ACCESS_CONTROL_CONTEXT);
             assertNotNull(rd);
         } catch (ConnectionNotFoundException e) {
             fail("Unexpected CNFE");
@@ -172,7 +173,7 @@ public final class RDFactoryTest extends TestCase {
         try {
             final ReservationDescriptor rd = factory.getDescriptor(
                     PROTOCOL + ":oops", "",
-                    NOOP_PERMISSION_CALLBACK);
+                    NOOP_ACCESS_CONTROL_CONTEXT);
             assertNotNull(rd);
         } catch (ConnectionNotFoundException cnfe) {
             fail("Unexpected CNFE");
@@ -192,14 +193,14 @@ public final class RDFactoryTest extends TestCase {
                             final String protocol,
                             final String targetAndParams,
                             final String filter,
-                            final PermissionCallback permissionCallback)
+                            final AccessControlContext context)
                                 throws IllegalArgumentException,
                                     SecurityException {
                         hasBeenInvoked[0] = true;
                         assertEquals(PROTOCOL.toLowerCase(), protocol);
                         assertEquals(TARGET_AND_PARAMS, targetAndParams);
                         assertEquals(FILTER, filter);
-                        assertNotNull(permissionCallback);
+                        assertNotNull(context);
                         return Common.STUB_RESERVATION_DESCR;
                     }
                 };
@@ -208,7 +209,7 @@ public final class RDFactoryTest extends TestCase {
         try {
             final ReservationDescriptor rd = factory.getDescriptor(
                     PROTOCOL + ":" + TARGET_AND_PARAMS,
-                    FILTER, NOOP_PERMISSION_CALLBACK);
+                    FILTER, NOOP_ACCESS_CONTROL_CONTEXT);
             assertNotNull(rd);
         } catch (ConnectionNotFoundException cnfe) {
             fail("Unexpected CNFR");
@@ -226,7 +227,7 @@ public final class RDFactoryTest extends TestCase {
                             final String protocol,
                             final String targetAndParams,
                             final String filter,
-                            final PermissionCallback permissionCallback)
+                            final AccessControlContext context)
                                 throws IllegalArgumentException,
                                     SecurityException {
                         throw new IllegalArgumentException("unittesting");
@@ -235,7 +236,7 @@ public final class RDFactoryTest extends TestCase {
             }
         });
         try {
-            factory.getDescriptor(PROTOCOL + ":", "", NOOP_PERMISSION_CALLBACK);
+            factory.getDescriptor(PROTOCOL + ":", "", NOOP_ACCESS_CONTROL_CONTEXT);
             fail("IAE should be thrown");
         } catch (IllegalArgumentException iae) {
             ;
@@ -252,10 +253,10 @@ public final class RDFactoryTest extends TestCase {
                             final String protocol,
                             final String targetAndParams,
                             final String filter,
-                            final PermissionCallback permissionCallback)
+                            final AccessControlContext context)
                                 throws IllegalArgumentException,
                                     SecurityException {
-                        permissionCallback.checkForPermission("", "", "");
+                        context.checkPermission("", "", "");
                         throw new RuntimeException("shouldn't get here");
                     }
                 };
@@ -263,8 +264,8 @@ public final class RDFactoryTest extends TestCase {
         });
         try {
             factory.getDescriptor("foo:", "",
-                    new PermissionCallback () {
-                        public void checkForPermission(
+                    new AccessControlContextAdapter () {
+                        public void checkPermissionImpl(
                                 final String permissionName,
                                 final String resource, final String extraValue)
                                     throws SecurityException {
@@ -287,7 +288,7 @@ public final class RDFactoryTest extends TestCase {
             }
         });
         try {
-            factory.getDescriptor("foo:", "", NOOP_PERMISSION_CALLBACK);
+            factory.getDescriptor("foo:", "", NOOP_ACCESS_CONTROL_CONTEXT);
             fail("CNFE should be thrown");
         } catch (ConnectionNotFoundException cnfe) {
             ;

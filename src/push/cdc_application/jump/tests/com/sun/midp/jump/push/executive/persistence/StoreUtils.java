@@ -24,6 +24,9 @@
 
 package com.sun.midp.jump.push.executive.persistence;
 
+import com.sun.midp.push.persistence.Store;
+import com.sun.midp.push.persistence.AbstractStoreUtils;
+
 import com.sun.jump.module.contentstore.InMemoryContentStore;
 import com.sun.jump.module.contentstore.JUMPStoreHandle;
 import java.io.IOException;
