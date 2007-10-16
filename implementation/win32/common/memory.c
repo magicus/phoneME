@@ -90,7 +90,7 @@ void* javacall_malloc(unsigned int size) {
  *
  * @param ptr	Pointer to previously allocated memory
  * @param size Number of byte to allocate
- * @return a pointer to the reallocated memory or null if memory could not be realocated
+ * @return a pointer to the reallocated memory or null if memory could not be reallocated
  */
 void* javacall_realloc(void* ptr, unsigned int size) {
     return realloc(ptr, size);
