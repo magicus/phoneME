@@ -24,7 +24,7 @@
 
 package com.sun.j2me.security;
 
-package com.sun.j2me.security;
+import com.sun.midp.security.Permissions;
 
 /**
  * Connector access permissions.
