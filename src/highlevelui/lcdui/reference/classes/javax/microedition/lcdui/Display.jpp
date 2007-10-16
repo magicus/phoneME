@@ -1789,7 +1789,6 @@ public class Display {
                 }
                 da.displayableLF.uSetRotatedStatus(wantRotation);
             if (hasForegroundCopy) {
-                newCurrent.uCallShow();
                 // #ifdef ENABLE_CHAMELEON
                 // We need to establish the new title and ticker so that
                 // the new displayable can lay itself out properly in its
@@ -1799,6 +1798,7 @@ public class Display {
                     newCurrent.lGetDisplayable(),
                     newCurrent.lGetDisplayable().getHeight());
                 // #endif ENABLE_CHAMELEON
+                newCurrent.uCallShow();
             } else {
                 newCurrent.uCallFreeze();
             }
