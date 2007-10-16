@@ -95,6 +95,7 @@ void* javacall_malloc(unsigned int size);
  * pool. If memory could not be reallocated function returns null,
  * in this case old pointer is not released.
  * 
+ * @param    ptr  Pointer to previously allocated memory
  * @param    size Number of byte to allocate
  * @return	  a pointer to the reallocated memory or null if memory could not be realocated
  */

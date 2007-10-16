@@ -66,11 +66,12 @@ void* /*OPTIONAL*/ javacall_malloc(unsigned int size){
 }
 
 /**
- * Rellocates memory of the given size from the private JAVACALL memory
+ * Reallocates memory of the given size from the private JAVACALL memory
  * pool.
  *
  * @param size Number of byte to allocate
- * @return a pointer to the newly allocated memory
+ * @param ptr	Pointer to previously allocated memory
+ * @return a pointer to the reallocated memory or null if memory could not be realocated
  */
 void* /*OPTIONAL*/  javacall_realloc(void* ptr, unsigned int size) {
     return 0;
