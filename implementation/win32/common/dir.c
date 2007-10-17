@@ -244,12 +244,12 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
 
     for (i= wcslen(rootPath) -1 ; i>=0; i--) {
         if (rootPath[i] != '\\') {
-            rootPath[i] = 0;
+            rootPath[i] = L'\0';
         } else {
             break;
         }
     }
-    rootPath[i] = 0; /* null-terminated */
+    rootPath[i] = L'\0'; /* null-terminated */
     wcscat(rootPath, L"\\Java"); /* java-home dir is at jvm_exe_path/Java. */
     *rootPathLen = wcslen(rootPath);
 

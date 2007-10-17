@@ -29,10 +29,6 @@
  * win32 implemenation for public keystore handling functions
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
@@ -502,7 +498,4 @@ javacall_result javacall_security_permission_dialog_display(javacall_utf16* mess
     return JAVACALL_NOT_IMPLEMENTED;
 }
 
-#ifdef __cplusplus
-}
-#endif
 
