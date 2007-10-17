@@ -654,45 +654,46 @@ public final class Manager {
                 throw new MediaException("Failed to create Player: " + e.getMessage());
             }
         } else {
-            // not in the list of predefined locators, 
+            // not in the list of predefined locators,
             // find handler by extension
-        String theProtocol = null;
+            String theProtocol = null;
             int idx = locStr.indexOf(':');
 
-        if (idx != -1) {
-                theProtocol = locStr.substring(0, idx);
-        } else {
-                throw new MediaException("Malformed locator");
-        }
+            if (idx != -1) {
+                    theProtocol = locStr.substring(0, idx);
+            } else {
+                    throw new MediaException("Malformed locator");
+            }
 
             String[] supported = getSupportedProtocols(config.ext2Mime(locStr));
-        boolean found = false;
-        for (int i = 0; i < supported.length; i++) {
-            if (theProtocol.equals(supported[i])) {
-                found = true;
-                break;
+            boolean found = false;
+            for (int i = 0; i < supported.length; i++) {
+                if (theProtocol.equals(supported[i])) {
+                    found = true;
+                    break;
+                }
             }
+
+            if (!found) {
+                    throw new MediaException("Player cannot be created for " + locator);
+            }
+            
+
+            DataSource ds = createDataSource(locator);
+            Player pp = null;
+
+            try {
+                pp = createPlayer(ds);
+            } catch (MediaException ex) {
+                ds.disconnect();
+                throw ex;
+            } catch (IOException ex) {
+                ds.disconnect();
+                throw ex;
+            }
+
+            return pp;
         }
-
-        if (!found) {
-                throw new MediaException("Player cannot be created for " + locator);
-        }
-
-        DataSource ds = createDataSource(locator);
-        Player pp = null;
-
-        try {
-            pp = createPlayer(ds);
-        } catch (MediaException ex) {
-            ds.disconnect();
-            throw ex;
-        } catch (IOException ex) {
-            ds.disconnect();
-            throw ex;
-        }
-
-        return pp;
-    }
     }
 
 
@@ -881,24 +882,42 @@ public final class Manager {
         source.connect();
 
         String locStr = source.getLocator();
-        String theProtocol = null;
-        if (locStr != null) {
-            locStr = locStr.toLowerCase();
-            int idx = locStr.indexOf(':');
-            if (idx != -1) {
-                theProtocol = locStr.substring(0, idx);
-            }
-        }
+        String theProtocol = BasicDS.getProtocol( locStr );
+        String contentType = Configuration.getConfiguration().ext2Mime( locStr );
+
+        if ( theProtocol == null )
+            throw new MediaException("Can't determine protocol for locator " + locStr);
+        if (contentType == null)
+            throw new MediaException(PL_ERR_SH + "Unknown or unsupported media type for locator " + locStr);
         
+        BasicPlayer p = createPlayer( contentType, theProtocol );
+        p.setSource(source);
+        
+        return p;
+    }
+
+    /**
+     * Create a <code>Player</code>
+     *
+     * @param  contentType                   shouldn't be null
+     * @param  protocol                      shouldn't be null
+     * the media content.
+     * @return                               A new <code>Player</code>.
+     * @exception  IOException     Description of the Exception
+     */
+    
+    private static BasicPlayer createPlayer( String contentType, String protocol )
+        throws IOException, MediaException 
+    {
         BasicPlayer p = null;
-        
-        if( null != theProtocol && theProtocol.equals( "rtsp" ) )
+
+        if( protocol.equals( "rtsp" ) )
         {
             // #ifdef USE_RTSP [
 			p = new RTSPPlayer();
             // #endif ]
         }
-        else if( null != theProtocol && theProtocol.equals( "rtp" ) )
+        else if( protocol.equals( "rtp" ) )
         {
             // #ifdef RTP_PLAYER [
 			p = new DirectPlayer();
@@ -906,16 +925,9 @@ public final class Manager {
         }
         else
         {
-			String contentType = source.getContentType();
-        
-			if (contentType == null)
-				throw new MediaException(PL_ERR_SH + "Unknown or unsupported media type");
-
 			p = getPlayerFromType(contentType);
 		}
-        
-        p.setSource(source);
-        
+
         return p;
     }
 
@@ -944,8 +956,11 @@ public final class Manager {
     private static DataSource createDataSource(String locator)
          throws IOException, MediaException {
 
-        String className = config.getHandler(BasicDS.getProtocol(locator));
-
+        String protocol = BasicDS.getProtocol(locator);
+        if (protocol == null) {
+            throw new MediaException(DS_ERR + locator);
+        }
+        String className = config.getHandler(protocol);
         if (className == null) {
             throw new MediaException(DS_ERR + locator);
         }

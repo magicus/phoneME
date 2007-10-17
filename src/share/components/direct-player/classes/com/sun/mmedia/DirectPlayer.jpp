@@ -93,7 +93,6 @@ public class DirectPlayer extends BasicPlayer
     DirectVolume vc;
 
     private long remained;      // remained content length
-    private boolean needBuffering;
 
     // #ifndef ABB [
     private Timer stopTimer;    // To support StopTimeControl
@@ -256,13 +255,6 @@ public class DirectPlayer extends BasicPlayer
             remained = contentLength;
         }
         
-        // there is a source? or is from native file?
-        if (null == source) {
-            needBuffering = false;
-        } else {
-            needBuffering = true;
-        }
-
         // Get current isolate ID to support MVM
         // in case of SVM it will return AMS isolate ID
         int isolateId = AppIsolate.getIsolateId();
@@ -281,10 +273,14 @@ public class DirectPlayer extends BasicPlayer
 			state_subscriber.PlayerRealized( this );
 
         // Do buffering
-        if (true == needBuffering && true == nIsNeedBuffering(hNative)) {
+        if ( true == nIsNeedBuffering(hNative)) {
             if (-1 == readAndBuffering(remained, 1)) {
                 throw new MediaException("Unable to realize - buffering fail");
             }
+        }
+        else { 
+            if (source != null)
+                source.disconnect();
         }
 
         // #ifdef ENABLE_MULTIPLE_ISOLATES [
@@ -526,7 +522,7 @@ public class DirectPlayer extends BasicPlayer
         // #endif ]
 
         if (hNative != 0) {
-            if (true == needBuffering && true == nIsNeedBuffering(hNative)) {
+            if ( true == nIsNeedBuffering(hNative) ) {
                 nFlushBuffer(hNative);
             }
             nTerm(hNative);

@@ -273,8 +273,8 @@ public abstract class Configuration {
      * Convert from the name of a file to its corresponding Mime
      * type based on the extension.
      *
-     * @param  name  Description of the Parameter
-     * @return       Description of the Return Value
+     * @param  name  file's pathname
+     * @return       Mime type for this name or null, if couldn't be determined
      */
     public String ext2Mime(String name) {
         int idx = name.lastIndexOf('.');
