@@ -150,7 +150,7 @@ $(CVM_HPROF_BUILDDIRS):
 
 $(CVM_HPROF_LIBDIR)/$(CVM_HPROF_LIB): $(CVM_HPROF_OBJECTS)
 	@echo "Linking $@"
-	$(SO_LINK_CMD) $(LINKLIBS)
+	$(SO_LINK_CMD)
 	@echo "Done Linking $@"
 
 $(CVM_LIBDIR)/jvm.hprof.txt:

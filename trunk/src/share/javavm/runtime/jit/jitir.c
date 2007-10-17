@@ -3233,7 +3233,19 @@ always_inline_short_methods:
     }
 
     cb = CVMmbClassBlock(targetMb);
-    cp = CVMcbConstantPool(cb);
+#ifdef CVM_JVMTI
+    if (CVMjvmtiMbIsObsolete(targetMb)) {
+	cp = CVMjvmtiMbConstantPool(targetMb);
+	if (cp == NULL) {
+	    cp = CVMcbConstantPool(cb);
+	}	
+    } else {
+#else
+    {
+#endif
+
+	cp = CVMcbConstantPool(cb);
+    }
 
     /* Reject exception methods. They are mostly a waste of time */
     if (CVMisSubclassOf(con->ee, cb, CVMsystemClass(java_lang_Throwable))) {
@@ -3884,6 +3896,7 @@ doInvokeVirtualOrInterface(CVMJITCompilationContext* con,
     CVMMethodBlock* newCandidateMb = candidateMb;
     CVMJITIRNode* mbNode;
     CVMJITIRNode* methodSpecNode;
+
     CVMBool inlinable = CVM_FALSE;
     Inlinability  canInline = InlineNotInlinable; /* init to please compiler */
 #ifdef CVMJIT_INTRINSICS
@@ -8345,7 +8358,17 @@ pushMethodContext(CVMJITCompilationContext* con,
     mc->mb   = mb;
     mc->jmd  = CVMmbJmd(mb);
     mc->cb   = CVMmbClassBlock(mb);
-    mc->cp   = CVMcbConstantPool(mc->cb);
+#ifdef CVM_JVMTI
+    if (CVMjvmtiMbIsObsolete(mb)) {
+	mc->cp = CVMjvmtiMbConstantPool(mb);
+	if (mc->cp == NULL) {
+	    mc->cp = CVMcbConstantPool(mc->cb);
+	}	
+    } else
+#endif
+    {
+	mc->cp   = CVMcbConstantPool(mc->cb);
+    }
     mc->code = CVMjmdCode(mc->jmd);
     mc->codeEnd = mc->code + CVMjmdCodeLength(mc->jmd);
     mc->retBlock = NULL;

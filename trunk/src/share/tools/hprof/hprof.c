@@ -36,7 +36,7 @@ JavaVM *jvm;
 
 int hprof_is_on;            /* whether hprof is enabled */
 int hprof_fd = -1;	    /* Non-zero file or socket descriptor. */
-FILE *hprof_fp = NULL;	    /* FILE handle. */
+FILE *hprof_fp = NULL;            /* FILE handle. */
 int hprof_socket_p = FALSE; /* True if hprof_fd is a socket. */
 
 #define HPROF_DEFAULT_TRACE_DEPTH 4

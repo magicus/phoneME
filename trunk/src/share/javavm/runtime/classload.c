@@ -380,7 +380,8 @@ CVMclassLoadBootClass(CVMExecEnv* ee, const char* classname)
 	/* create the CVMClassBlock */
 	classRoot =
 	    CVMclassCreateInternalClass(ee, info.classData, info.fileSize32,
-					NULL, classname, info.dirname);
+					NULL, classname, info.dirname,
+					CVM_FALSE);
 	free(info.classData);
 	if (classRoot == NULL) {
 	    goto done;
@@ -712,7 +713,8 @@ defineClassLocal(CVMExecEnv* ee, const char* clname,
     pdCell = info->pathComponent->protectionDomain;
     
     resultCell = CVMdefineClass(ee, clname, appLoader,
-				info->classData, info->fileSize32, pdCell);
+				info->classData, info->fileSize32, pdCell,
+				CVM_FALSE);
 
     return resultCell;
 }
@@ -896,22 +898,19 @@ CVMclassFindContainer(JNIEnv *env, jobject this, jstring name) {
  * Initialize a class path data structure based on the value of
  * CVMglobals classpath pathString. 
  */
-static CVMBool
-classPathInit(JNIEnv* env, CVMClassPath* path, char* additionalPathString,
-	      CVMBool doNotFailWhenPathNotFound, CVMBool initJavaSide);
 
 CVMBool
 CVMclassBootClassPathInit(JNIEnv *env)
 {
-    return classPathInit(env, &CVMglobals.bootClassPath, NULL,
-			 CVM_FALSE, CVM_FALSE);
+    return CVMclassPathInit(env, &CVMglobals.bootClassPath, NULL,
+			    CVM_FALSE, CVM_FALSE);
 }
 
 CVMBool
 CVMclassClassPathInit(JNIEnv *env)
 {
-    return classPathInit(env, &CVMglobals.appClassPath, NULL,
-			 CVM_TRUE, CVM_TRUE);
+    return CVMclassPathInit(env, &CVMglobals.appClassPath, NULL,
+			    CVM_TRUE, CVM_TRUE);
 }
 
 #ifdef CVM_MTASK
@@ -928,19 +927,19 @@ CVMclassClassPathAppend(JNIEnv *env, char* classPath, char* bootClassPath)
 
     jobject props; /* System properties */
     
-    if (!classPathInit(env, &CVMglobals.appClassPath, 
-		       classPath, CVM_TRUE, CVM_TRUE)) {
+    if (!CVMclassPathInit(env, &CVMglobals.appClassPath, 
+			  classPath, CVM_TRUE, CVM_TRUE)) {
 	return CVM_FALSE;
     }
 
-    if (!classPathInit(env, &CVMglobals.bootClassPath, 
-		       bootClassPath, CVM_TRUE, CVM_FALSE)) {
+    if (!CVMclassPathInit(env, &CVMglobals.bootClassPath, 
+			  bootClassPath, CVM_TRUE, CVM_FALSE)) {
 	return CVM_FALSE;
     }
 
     updateAppCLID = 
 	(*env)->GetStaticMethodID(env, 
-			    CVMcbJavaInstance(CVMsystemClass(sun_misc_Launcher)), 
+				  CVMcbJavaInstance(CVMsystemClass(sun_misc_Launcher)), 
 			    "updateLauncher",
 			    "()V");
 
@@ -1247,10 +1246,11 @@ getNumPathComponents(char* pathStr)
 
 /* Initialize class path. If additionalPathString is supplied, add this to
    what we already know about this classpath */
-static CVMBool
-classPathInit(JNIEnv* env, CVMClassPath* classPath, 
-	      char* additionalPathString,
-	      CVMBool doNotFailWhenPathNotFound, CVMBool initJavaSide)
+/* Note: was static, now used by JVMTI code */
+CVMBool
+CVMclassPathInit(JNIEnv* env, CVMClassPath* classPath, 
+		 char* additionalPathString,
+		 CVMBool doNotFailWhenPathNotFound, CVMBool initJavaSide)
 {
     int idx; /* classpath component index */
     char* pathStr;

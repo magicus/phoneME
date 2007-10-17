@@ -250,7 +250,7 @@ typedef void (*CVMRefCallbackFunc)(CVMObject** refAddr, void* data);
  */
 typedef CVMBool (*CVMRefLivenessQueryFunc)(CVMObject** refAddr, void* data);
 
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 /*
  * A per-object callback function, to be called during heap dumps
  */

@@ -390,6 +390,15 @@ CVMensureCapacity(CVMExecEnv* ee, CVMStack* stack, int capacity);
     should be ignored.
 */
 
+#ifdef CVM_JVMTI
+#define clearLockInfo(x)				\
+    if (CVMframeIsJava(x)) {				\
+	CVMgetJavaFrame((x))->jvmtiLockInfo = NULL;	\
+    }
+#else
+#define clearLockInfo(x)
+#endif
+
 #define CVMpushFrame(ee_, s_, cur_frame_, tos_, capacity_,		\
                      frameOffset_, frameType_, mb_, commit_,		\
 		     failAction_, expandAction_)			\
@@ -405,6 +414,7 @@ CVMensureCapacity(CVMExecEnv* ee, CVMStack* stack, int capacity);
         (cur_frame_)->type = frameType_;				\
         (cur_frame_)->mb  = mb_;					\
         (cur_frame_)->flags = 0;					\
+	clearLockInfo(cur_frame_);					\
 	if (commit_) {							\
 	    (s_)->currentFrame    = (cur_frame_);			\
 	}								\
@@ -422,6 +432,7 @@ CVMensureCapacity(CVMExecEnv* ee, CVMStack* stack, int capacity);
             (cur_frame_)->type = frameType_;				\
 	    (cur_frame_)->mb  = mb_;					\
 	    (cur_frame_)->flags = 0;					\
+	    clearLockInfo(cur_frame_);					\
             expandAction_;     /* do this after setting cur_frame_ */	\
 	    if (commit_) {						\
 		(s_)->currentFrame    = (cur_frame_);			\
@@ -512,14 +523,15 @@ CVMframeEnsureReplacementWillFit(CVMExecEnv *ee, CVMStack *stack,
  *  frame is not on the same chunk, update again.
  */
 
-/* NOTE: In JVMPI, it is possible to suspend a thread at any arbitrary point.
+/* NOTE: In JVMPI or JVMTI, it is possible to suspend a thread at any arbitrary
+    point.
     After this suspension, the profiler agent may request call traces.  Hence,
     the stack data must always appear to be consistent.  The
     CVMframePresetCurrentFrame() macro below is needed to ensure that the stack
     frame is popped first before its chunk is "popped".  Otherwise, it may
     appear that the currentFrame is not located in any of the stack chunks.
 */
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
 
 #define CVMframePresetCurrentFrame(frame_, value_) { (frame_) = (value_); }
 #define CVMframeSetCurrentStackChunk(s_, chunk_) {      \
@@ -528,13 +540,13 @@ CVMframeEnsureReplacementWillFit(CVMExecEnv *ee, CVMStack *stack,
     *currentStackChunkPtr_ = chunk_;                    \
 }
 
-#else /* !CVM_JVMPI */
+#else /* !(CVM_JVMPI || CVM_JVMTI)*/
 
 #define CVMframePresetCurrentFrame(frame_, value_)
 #define CVMframeSetCurrentStackChunk(s_, chunk_) { \
     (s_)->currentStackChunk = chunk_;              \
 }
-#endif /* CVM_JVMPI */
+#endif /* CVM_JVMPI || CVM_JVMTI */
 
 #define CVMpopFrameSpecial(s_, cur_frame_, specialAction_)		    \
 {									    \

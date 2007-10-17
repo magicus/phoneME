@@ -186,6 +186,14 @@ endif
         override CVM_THREAD_SUSPENSION = true
 endif
 
+
+ifeq ($(CVM_JVMTI_ROM), true)
+ifneq ($(CVM_JVMTI), true)
+$(error CVM_JVMTI must be set to 'true' if CVM_JVMTI_ROM is 'true')
+endif
+	override CVM_JAVAC_DEBUG=true
+endif
+
 ifeq ($(CVM_CLASSLIB_JCOV), true)
         override CVM_JVMPI = true
         override CVM_JVMPI_TRACE_INSTRUCTION = true
@@ -209,6 +217,7 @@ endif
 ifeq ($(CVM_VERIFY_HEAP),true)
 override CVM_DEBUG_ASSERTS = true
 endif
+
 CVM_DEBUG_ASSERTS	?= $(CVM_DEBUG)
 CVM_DEBUG_CLASSINFO	?= $(CVM_DEBUG)
 CVM_DEBUG_DUMPSTACK	?= $(CVM_DEBUG)
@@ -217,6 +226,7 @@ CVM_INSPECTOR		?= $(CVM_DEBUG)
 CVM_JAVAC_DEBUG		?= $(CVM_DEBUG)
 CVM_VERIFY_HEAP		?= false
 CVM_JIT                 ?= false
+CVM_JVMTI_ROM		?= false
 CVM_JVMPI               ?= false
 CVM_JVMPI_TRACE_INSTRUCTION ?= $(CVM_JVMPI)
 CVM_THREAD_SUSPENSION   ?= false
@@ -918,6 +928,7 @@ CVM_VERIFY_HEAP_CLEANUP_ACTION 		= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_XRUN_CLEANUP_ACTION			= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_AGENTLIB_CLEANUP_ACTION		= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_JVMTI_CLEANUP_ACTION		= $(CVM_DEFAULT_CLEANUP_ACTION)
+CVM_JVMTI_ROM_CLEANUP_ACTION		= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_JVMPI_CLEANUP_ACTION                = \
         $(CVM_DEFAULT_CLEANUP_ACTION)     \
         $(CVM_DEBUG_CLASSINFO_CLEANUP_ACTION)
@@ -1415,6 +1426,14 @@ CVM_CNI_CLASSES += sun.io.ByteToCharISO8859_1 \
 
 ifeq ($(CVM_JVMPI), true)
 CVM_CNI_CLASSES += sun.misc.CVMJVMPI
+CVM_BUILDTIME_CLASSES += \
+	sun.misc.CVMJVMPI
+endif
+
+ifeq ($(CVM_JVMTI), true)
+CVM_CNI_CLASSES += sun.misc.CVMJVMTI
+CVM_BUILDTIME_CLASSES += \
+	sun.misc.CVMJVMTI
 endif
 
 ifeq ($(CVM_INSPECTOR), true)
@@ -1810,6 +1829,8 @@ CVM_SHAREOBJS_SPACE += \
 	jvmtiEnv.o \
 	jvmtiExport.o \
 	jvmti_jni.o \
+	jvmtiDumper.o \
+	CVMJVMTI.o  \
 	bag.o
 endif
 

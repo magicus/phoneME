@@ -415,8 +415,8 @@ Java_java_lang_Class_notifyClassLoaded(JNIEnv *env, jclass cls)
     }
 #endif /* CVM_JVMPI */
 #ifdef CVM_JVMTI
-    if (CVMjvmtiEventsEnabled()) {
-	CVMjvmtiNotifyDebuggerOfClassLoad(ee, CVMcbJavaInstance(cb));
+    if (CVMjvmtiInitialized()) {
+	CVMjvmtiPostClassLoadEvent(ee, CVMcbJavaInstance(cb));
     }
 #endif /* CVM_JVMTI */
 }

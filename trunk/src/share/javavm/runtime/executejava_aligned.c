@@ -554,7 +554,7 @@ CVMdumpStats()
 	DECACHE_PC();						   	\
 	DECACHE_TOS();						   	\
 	CVMD_gcSafeExec(ee, {					   	\
-	    CVMjvmtiNotifyDebuggerOfSingleStep(ee, pc);			\
+	    CVMjvmtiPostSingleStepEvent(ee, pc);			\
 	});								\
 	/* Refetch opcode. See above. */				\
 	FETCH_NEXT_OPCODE(0);      					\
@@ -566,7 +566,7 @@ CVMdumpStats()
 	DECACHE_PC();							\
 	DECACHE_TOS();							\
 	CVMD_gcSafeExec(ee, {						\
-	    CVMjvmtiNotifyDebuggerOfFieldAccess(ee, location, fb);	\
+		CVMjvmtiPostFieldAccessEvent(ee, location, fb);		\
 	});								\
     }
 
@@ -588,8 +588,7 @@ CVMdumpStats()
 	   val.i = STACK_INT(-1);					      \
        }								      \
        CVMD_gcSafeExec(ee, {						      \
-	   CVMjvmtiNotifyDebuggerOfFieldModification(			      \
-	       ee, location, fb, val);					      \
+	       CVMjvmtiPostFieldModificationEvent(ee, location, fb, val); \
        });								      \
    }
 
@@ -3000,7 +2999,7 @@ dispatch_opcode:
 		    DECACHE_PC();
 		    DECACHE_TOS();
 		    CVMD_gcSafeExec(ee, {
-			CVMjvmtiNotifyDebuggerOfFramePush(ee);
+			CVMjvmtiPostFramePushEvent(ee);
 		    });
 		}
 #endif
@@ -3355,7 +3354,7 @@ dispatch_opcode:
 #ifdef CVM_JVMTI
 	    if (CVMjvmtiEventsEnabled()) {
 		CVMD_gcSafeExec(ee, {
-		    CVMjvmtiNotifyDebuggerOfException(ee, pc,
+		    CVMjvmtiPostExceptionEvent(ee, pc,
 			(CVMlocalExceptionOccurred(ee) ?
 			     CVMlocalExceptionICell(ee) :
 			     CVMremoteExceptionICell(ee)));
@@ -3396,8 +3395,8 @@ dispatch_opcode:
                 DECACHE_PC();
                 DECACHE_TOS();
 		CVMD_gcSafeExec(ee, {
-		    CVMjvmtiNotifyDebuggerOfExceptionCatch(ee, pc,
-							   &STACK_ICELL(-1));
+		    CVMjvmtiPostExceptionCatchEvent(ee, pc,
+						    &STACK_ICELL(-1));
 		});
 	    }
 #endif

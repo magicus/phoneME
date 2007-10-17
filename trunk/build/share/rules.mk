@@ -1137,6 +1137,9 @@ endif
 ifeq ($(MAKELEVEL), 0)
 
 ifeq ($(CVM_JIT),true)
+ifeq ($(CVM_JVMTI),true)
+$(warning JVMTI debugging is not supported in JIT'd code.  Compiler is turned off if connected to a debugger)
+endif
 ifeq ($(CVM_JVMPI),true)
 $(warning JVMPI is not fully supported in JIT builds. Programs may not behave properly.)
 endif

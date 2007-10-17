@@ -131,10 +131,10 @@ CVMthreadCreate(CVMThreadID *tid, CVMSize stackSize, CVMInt32 priority,
 			(void *)arglist, CREATE_SUSPENDED, &tid->id);
     if (thrid == 0) {
 #ifdef CVM_DEBUG
-{
-    DWORD err = GetLastError();
-    CVMconsolePrintf("CreateThread failed with error %d\n", err);
-}
+	{
+	    DWORD err = GetLastError();
+	    CVMconsolePrintf("CreateThread failed with error %d\n", err);
+	}
 #endif
 	free(arglist);
 	return CVM_FALSE;
