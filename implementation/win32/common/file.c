@@ -296,21 +296,21 @@ javacall_result javacall_file_truncate(javacall_handle handle,
                                       javacall_int64 size)
 {
     int state;
-    DWORD dwCutPosition;
-    DWORD dwPreviousPosition;
+    javacall_int64 cutPosition;
+    javacall_int64 previousPosition;
 
-    dwPreviousPosition = javacall_file_seek(handle, 0, JAVACALL_FILE_SEEK_CUR);
-    if (dwPreviousPosition == -1)
+    previousPosition = javacall_file_seek(handle, 0, JAVACALL_FILE_SEEK_CUR);
+    if (previousPosition == -1)
         return JAVACALL_FAIL;
 
-    dwCutPosition = javacall_file_seek(handle, size, JAVACALL_FILE_SEEK_SET);
+    cutPosition = javacall_file_seek(handle, size, JAVACALL_FILE_SEEK_SET);
 
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
     javacall_printf( "javacall_file_truncate << handle=%x size=%d newPos=%d",
-        handle, size, dwCutPosition);
+        handle, size, cutPosition);
 #endif
 
-    if (dwCutPosition == -1) {
+    if (cutPosition == -1) {
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
     javacall_printf( "javacall_file_truncate fail 1 >>");
 #endif
@@ -324,11 +324,11 @@ javacall_result javacall_file_truncate(javacall_handle handle,
 #endif
         state = 0;
     } else {
-        if (dwCutPosition <= dwPreviousPosition)
+        if (cutPosition <= previousPosition)
             return JAVACALL_OK;
     }
-    dwPreviousPosition = javacall_file_seek(handle, dwPreviousPosition,JAVACALL_FILE_SEEK_SET);
-    if (dwPreviousPosition == -1)
+    previousPosition = javacall_file_seek(handle, previousPosition,JAVACALL_FILE_SEEK_SET);
+    if (previousPosition == -1)
         state = 0;
 
     return (state) ? JAVACALL_OK : JAVACALL_FAIL;
