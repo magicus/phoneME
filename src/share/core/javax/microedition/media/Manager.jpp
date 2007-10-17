@@ -24,8 +24,6 @@
  */
 package javax.microedition.media;
 
-import com.sun.mmedia.protocol.BasicDS;
-
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -908,7 +906,6 @@ public final class Manager {
      * @param  protocol                      shouldn't be null
      * the media content.
      * @return                               A new <code>Player</code>.
-     * @exception  MediaException            Thrown if a either parameter is null
      * @exception  IOException     Description of the Exception
      */
     

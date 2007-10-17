@@ -278,6 +278,10 @@ public class DirectPlayer extends BasicPlayer
                 throw new MediaException("Unable to realize - buffering fail");
             }
         }
+        else { 
+            if (source != null)
+                source.disconnect();
+        }
 
         // #ifdef ENABLE_MULTIPLE_ISOLATES [
         // Add to media tunnel as event consumer
