@@ -78,8 +78,10 @@ static javacall_const_utf16_string
     if (length == JAVACALL_UNKNOWN_LENGTH)
         return name;
     nt_name = (javacall_utf16*) malloc(sizeof(javacall_utf16)*(length+1));
-    memcpy(nt_name, name, sizeof(javacall_utf16)*length);
-    nt_name[length] = '\0';
+    if (nt_name != NULL) {
+        memcpy(nt_name, name, sizeof(javacall_utf16)*length);
+        nt_name[length] = '\0';
+    }
     return nt_name;
 }
 
@@ -149,7 +151,7 @@ javacall_result javacall_file_open(javacall_const_utf16_string fileName,
                                   javacall_handle* /* OUT */ handle)
 {
     DWORD dwDesiredAccess;
-    DWORD dwCreationDisposition = OPEN_EXISTING;
+    DWORD dwCreationDisposition;
     HANDLE fh = INVALID_HANDLE_VALUE;
 
     /* create a new unicode NULL terminated file name variable */
@@ -296,25 +298,19 @@ javacall_result javacall_file_truncate(javacall_handle handle,
     int state;
     DWORD dwCutPosition;
     DWORD dwPreviousPosition;
-    dwPreviousPosition = SetFilePointer((HANDLE)handle,
-                                                0,
-                                                NULL,
-                                                FILE_CURRENT);
 
-    if (dwPreviousPosition == INVALID_SET_FILE_POINTER)
+    dwPreviousPosition = javacall_file_seek(handle, 0, JAVACALL_FILE_SEEK_CUR);
+    if (dwPreviousPosition == -1)
         return JAVACALL_FAIL;
 
-    dwCutPosition = SetFilePointer((HANDLE)handle,
-                                          (LONG)size,
-                                          NULL,
-                                          FILE_BEGIN);
+    dwCutPosition = javacall_file_seek(handle, size, JAVACALL_FILE_SEEK_SET);
 
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
     javacall_printf( "javacall_file_truncate << handle=%x size=%d newPos=%d",
-        handle, size, dwNewPointerPosition);
+        handle, size, dwCutPosition);
 #endif
 
-    if (dwCutPosition == INVALID_SET_FILE_POINTER) {
+    if (dwCutPosition == -1) {
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
     javacall_printf( "javacall_file_truncate fail 1 >>");
 #endif
@@ -331,8 +327,8 @@ javacall_result javacall_file_truncate(javacall_handle handle,
         if (dwCutPosition <= dwPreviousPosition)
             return JAVACALL_OK;
     }
-    dwPreviousPosition = SetFilePointer((HANDLE)handle, dwPreviousPosition, NULL, FILE_BEGIN);
-    if (dwPreviousPosition == INVALID_SET_FILE_POINTER)
+    dwPreviousPosition = javacall_file_seek(handle, dwPreviousPosition,JAVACALL_FILE_SEEK_SET);
+    if (dwPreviousPosition == -1)
         state = 0;
 
     return (state) ? JAVACALL_OK : JAVACALL_FAIL;
@@ -354,9 +350,8 @@ javacall_int64 javacall_file_seek(javacall_handle handle, javacall_int64 offset,
                                   javacall_file_seek_flags flag)
 {
     DWORD dwMoveMethod;
-    DWORD dwNewPointerPosition;
-    LONG lOffset = (LONG)offset;
-
+    LARGE_INTEGER newPointerPosition;
+    newPointerPosition.QuadPart = offset;
     switch (flag) {
     case JAVACALL_FILE_SEEK_CUR:
         dwMoveMethod = FILE_CURRENT;
@@ -369,16 +364,16 @@ javacall_int64 javacall_file_seek(javacall_handle handle, javacall_int64 offset,
         break;
     }
 
-    dwNewPointerPosition = SetFilePointer((HANDLE)handle, lOffset, NULL, dwMoveMethod);
+    newPointerPosition.LowPart = SetFilePointer((HANDLE)handle, newPointerPosition.LowPart, &newPointerPosition.HighPart, dwMoveMethod);
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
     javacall_printf( "javacall_file_seek >> handle=%x offset=%d, move=%d, flag=%d, newp=%d\n", 
-           handle, offset, dwMoveMethod, flag, dwNewPointerPosition);
+           handle, offset, dwMoveMethod, flag, newPointerPosition.QuadPart);
 #endif
-    if (dwNewPointerPosition == INVALID_SET_FILE_POINTER)
+    if (newPointerPosition.LowPart == INVALID_SET_FILE_POINTER)
         if (GetLastError() != NO_ERROR)
             return -1;
 
-   return dwNewPointerPosition;
+   return newPointerPosition.QuadPart;
 }
 
 
@@ -390,9 +385,10 @@ javacall_int64 javacall_file_seek(javacall_handle handle, javacall_int64 offset,
  */
 javacall_int64 javacall_file_sizeofopenfile(javacall_handle handle)
 {
-   DWORD dwSize;
-   dwSize = GetFileSize((HANDLE)handle, NULL);
-   return (dwSize != INVALID_FILE_SIZE) ? dwSize : -1;
+   LARGE_INTEGER size;
+   size.HighPart = 0;
+   size.LowPart = GetFileSize((HANDLE)handle, size.HighPart);
+   return (size.LowPart != INVALID_FILE_SIZE || GetLastError() == NO_ERROR) ? size.QuadPart : -1;
 }
 
 /**
@@ -408,6 +404,7 @@ javacall_int64 javacall_file_sizeof(javacall_const_utf16_string fileName,
 {
     WIN32_FILE_ATTRIBUTE_DATA fileAttributes;
     BOOL res;
+    LARGE_INTEGER size;
     /* create a new unicode NULL terminated file name variable */
     javacall_const_utf16_string sFileName = get_string_alloc(fileName, fileNameLen);
     res = GetFileAttributesExW(sFileName, GetFileExInfoStandard, (LPVOID)&fileAttributes);
@@ -416,7 +413,9 @@ javacall_int64 javacall_file_sizeof(javacall_const_utf16_string fileName,
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
     javacall_printf( "javacall_file_sizeof >> size=%d\n", fileAttributes.nFileSizeLow);
 #endif
-        return fileAttributes.nFileSizeLow;
+        size.LowPart = fileAttributes.nFileSizeLow;
+        size.HighPart = fileAttributes.nFileSizeHigh;
+        return size.QuadPart;
     }
 
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
@@ -438,21 +437,15 @@ javacall_result javacall_file_exist(javacall_const_utf16_string fileName,
                                    int fileNameLen)
 {
     WIN32_FIND_DATAW  fd;
+    DWORD attrib;
     HANDLE sh;
     BOOL res;
     /* create a new unicode NULL terminated file name variable */
     javacall_const_utf16_string sFileName = get_string_alloc(fileName, fileNameLen);
-    res = ((sh = FindFirstFileW(sFileName, &fd)) != INVALID_HANDLE_VALUE);
+    attrib = GetFileAttributesW(sFileName);
     release_string_alloc(fileName, sFileName);
-    if (res) {
-        if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
-        {
-            FindClose(sh);
-            return JAVACALL_FAIL;
-        }
-        FindClose(sh);
+    if ((INVALID_FILE_ATTRIBUTES != attrib) && ((attrib & FILE_ATTRIBUTE_DIRECTORY) == 0))
         return JAVACALL_OK;
-    }
     return JAVACALL_FAIL;
 }
 
