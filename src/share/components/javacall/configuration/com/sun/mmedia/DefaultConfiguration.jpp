@@ -27,6 +27,7 @@ package com.sun.mmedia;
 import javax.microedition.media.Manager;
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
+import java.util.Vector;
 
 /**
  *  The default configuration module for an MMAPI.
@@ -167,7 +168,10 @@ public class DefaultConfiguration extends Configuration {
 
 	protected native boolean nIsAmrSupported();
 	protected native boolean nIsJtsSupported();
-	
+
+    protected native int    nListCapsOpen(String protocol);
+    protected native String nListCapsNext(int hdlr);
+    protected native void   nListCapsClose(int hdlr);
     /**
      *  Gets the supportedContentTypes attribute of the DefaultConfiguration object
      *
@@ -175,6 +179,23 @@ public class DefaultConfiguration extends Configuration {
      * @return           The supportedContentTypes value
      */
     public String[] getSupportedContentTypes(String protocol) {
+        String arr[];
+        int hdlr = nListCapsOpen(protocol);
+        if (hdlr != 0) {
+            Vector v = new Vector();
+            String s;
+            while ((s = nListCapsNext(hdlr)) != null) {
+                v.addElement(s);
+            }
+            nListCapsClose(hdlr);
+            arr = new String[v.size()];
+            v.copyInto(arr);
+        } else {
+            arr = new String[0];
+        }
+        return arr;
+
+    /*
         if (protocol == null) {
 			if( nIsAmrSupported() )
 			{
@@ -335,6 +356,7 @@ public class DefaultConfiguration extends Configuration {
         }
 
         return new String[0];
+*/
     }
 
     /**
