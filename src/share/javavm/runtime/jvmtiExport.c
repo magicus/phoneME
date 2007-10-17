@@ -224,7 +224,9 @@ jboolean CVMjvmtiThreadEventEnabled(CVMExecEnv *ee, jint eventType) {
      (((jlong)1) << CVMjvmtiEvent2EventBit(eventType)))
 
 jboolean CVMjvmtiEnvEventEnabled(jint eventType) {
-    return (((jlong)GLOBALLY_ENABLED(CVMglobals.jvmtiStatics.jvmtiEnv, eventType)) != 0);
+    return (CVMglobals.jvmtiStatics.jvmtiEnv != NULL &&
+	    ((jlong)GLOBALLY_ENABLED(CVMglobals.jvmtiStatics.jvmtiEnv,
+				     eventType)) != 0);
 }
 
 /*
