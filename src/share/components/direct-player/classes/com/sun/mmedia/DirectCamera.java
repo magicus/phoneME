@@ -40,8 +40,8 @@ public class DirectCamera extends DirectVideo
      * Camera snapshot
      */
     public byte[] getSnapshot(String imageType) throws MediaException {
-        checkState();
         checkPermission();
+        checkState();
 
         if (null == imageType) {
             imageType = System.getProperty("video.snapshot.encodings");

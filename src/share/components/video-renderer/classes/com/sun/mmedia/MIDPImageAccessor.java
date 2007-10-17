@@ -127,7 +127,7 @@ class MIDPImageAccessor implements ImageAccess {
         if (stream == null)
             return null;
         
-	Image image = null;
+        Image image = null;
         try {
             image = Image.createImage(stream);
         } catch (java.io.IOException ioe) {
@@ -140,6 +140,6 @@ class MIDPImageAccessor implements ImageAccess {
      * ImageAccess I/F method
      */
     public Object imageCreateFromByteArray(byte[] data, int offset, int length) {
-	return Image.createImage(data, offset, length);
+        return Image.createImage(data, offset, length);
     }
 }

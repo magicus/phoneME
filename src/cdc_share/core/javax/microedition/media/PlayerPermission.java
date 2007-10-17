@@ -1,25 +1,26 @@
 /*
- *  Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
- *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- *  
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU General Public License version
- *  2 only, as published by the Free Software Foundation. 
- *  
- *  This program is distributed in the hope that it will be useful, but
- *  WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *  General Public License version 2 for more details (a copy is
- *  included at /legal/license.txt). 
- *  
- *  You should have received a copy of the GNU General Public License
- *  version 2 along with this work; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- *  02110-1301 USA 
- *  
- *  Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
- *  Clara, CA 95054 or visit www.sun.com if you need additional
- *  information or have any questions. 
+ * 
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
  */
 
 package javax.microedition.media;
@@ -110,16 +111,16 @@ public final class PlayerPermission extends Permission {
     private void init(int mask)
     {
 
-	if ((mask & ALL) != mask)
-		throw new IllegalArgumentException("invalid actions mask");
+        if ((mask & ALL) != mask)
+            throw new IllegalArgumentException("invalid actions mask");
 
-	if (mask == NONE)
-		throw new IllegalArgumentException("invalid actions mask");
+        if (mask == NONE)
+            throw new IllegalArgumentException("invalid actions mask");
 
         if (getName().length() == 0) { // Throws NPE if name is null
             throw new IllegalArgumentException("invalid name");
         }
-	this.mask = mask;
+        this.mask = mask;
     }
 
     /**
@@ -137,8 +138,8 @@ public final class PlayerPermission extends Permission {
      */
     public PlayerPermission(String name, String actions)
     {
-	super(name);
-	init(getMask(actions));
+        super(name);
+        init(getMask(actions));
     }
 
     /**
@@ -166,10 +167,10 @@ public final class PlayerPermission extends Permission {
      * false if not.
      */
     public boolean implies(Permission p) {
-	if (!(p instanceof PlayerPermission))
-	    return false;
+        if (!(p instanceof PlayerPermission))
+            return false;
 
-	PlayerPermission that = (PlayerPermission) p;
+        PlayerPermission that = (PlayerPermission) p;
 
         // Check of this PlayerPermission's name implies the other's name
         boolean match = false;
@@ -181,10 +182,10 @@ public final class PlayerPermission extends Permission {
             // No wildcard, must match exactly
             match = name.equals(that.getName());
         }
-	// we get the effective mask. i.e., the "and" of this and that.
-	// They must be equal to that.mask for implies to return true.
+        // we get the effective mask. i.e., the "and" of this and that.
+        // They must be equal to that.mask for implies to return true.
 
-	return match && ((this.mask & that.mask) == that.mask);
+        return match && ((this.mask & that.mask) == that.mask);
     }
 
 
@@ -197,18 +198,18 @@ public final class PlayerPermission extends Permission {
      * actions as this PlayerPermission object.
      */
     public boolean equals(Object obj) {
-	if (obj == this)
-	    return true;
+        if (obj == this)
+            return true;
 
-	if (! (obj instanceof PlayerPermission))
-	    return false;
+        if (! (obj instanceof PlayerPermission))
+            return false;
 
-	PlayerPermission that = (PlayerPermission) obj;
+        PlayerPermission that = (PlayerPermission) obj;
         
         if (getName() != that.getName())
             return false;
 
-	return (this.mask == that.mask);
+        return (this.mask == that.mask);
     }
 
     /**
@@ -219,7 +220,7 @@ public final class PlayerPermission extends Permission {
      */
 
     public int hashCode() {
-	return this.getName().hashCode();
+        return this.getName().hashCode();
     }
 
 
@@ -231,79 +232,79 @@ public final class PlayerPermission extends Permission {
      */
     private static int getMask(String actions) {
 
-	int mask = NONE;
+        int mask = NONE;
 
-	char[] a = actions.toCharArray();
+        char[] a = actions.toCharArray();
 
-	int i = a.length - 1;
-	if (i < 0)
-	    return mask;
+        int i = a.length - 1;
+        if (i < 0)
+            return mask;
 
-	while (i != -1) {
-	    char c;
+        while (i != -1) {
+            char c;
 
-	    // skip whitespace
-	    while ((i!=-1) && ((c = a[i]) == ' ' ||
-			       c == '\r' ||
-			       c == '\n' ||
-			       c == '\f' ||
-			       c == '\t'))
-		i--;
+            // skip whitespace
+            while ((i!=-1) && ((c = a[i]) == ' ' ||
+                               c == '\r' ||
+                               c == '\n' ||
+                               c == '\f' ||
+                               c == '\t'))
+                i--;
 
-	    // check for the known strings
-	    int matchlen;
+            // check for the known strings
+            int matchlen;
 
-	    if (i >= 5 && (a[i-5] == 'r' || a[i-5] == 'R') &&
-			  (a[i-4] == 'e' || a[i-4] == 'E') &&
-			  (a[i-3] == 'c' || a[i-3] == 'C') &&
-			  (a[i-2] == 'o' || a[i-2] == 'O') &&
+            if (i >= 5 && (a[i-5] == 'r' || a[i-5] == 'R') &&
+                          (a[i-4] == 'e' || a[i-4] == 'E') &&
+                          (a[i-3] == 'c' || a[i-3] == 'C') &&
+                          (a[i-2] == 'o' || a[i-2] == 'O') &&
                           (a[i-1] == 'r' || a[i-1] == 'R') &&
                           (a[i] == 'd' || a[i] == 'D'))
-	    {
-		matchlen = 6;
-		mask |= RECORD;
+            {
+                matchlen = 6;
+                mask |= RECORD;
 
-	    } else if (i >= 7 && (a[i-7] == 's' || a[i-7] == 'S') &&
-				 (a[i-6] == 'n' || a[i-6] == 'N') &&
-				 (a[i-5] == 'a' || a[i-5] == 'A') &&
-				 (a[i-4] == 'p' || a[i-4] == 'P') &&
+            } else if (i >= 7 && (a[i-7] == 's' || a[i-7] == 'S') &&
+                                 (a[i-6] == 'n' || a[i-6] == 'N') &&
+                                 (a[i-5] == 'a' || a[i-5] == 'A') &&
+                                 (a[i-4] == 'p' || a[i-4] == 'P') &&
                                  (a[i-3] == 's' || a[i-3] == 'S') &&
-                    		 (a[i-2] == 'h' || a[i-2] == 'H') &&
-                    		 (a[i-1] == 'o' || a[i-1] == 'O') &&
-				 (a[i] == 't' || a[i] == 'T'))
-	    {
-		matchlen = 8;
-		mask |= SNAPSHOT;
+                                     (a[i-2] == 'h' || a[i-2] == 'H') &&
+                                     (a[i-1] == 'o' || a[i-1] == 'O') &&
+                                 (a[i] == 't' || a[i] == 'T'))
+            {
+                matchlen = 8;
+                mask |= SNAPSHOT;
 
-	    } else {
-		// parse error
-		throw new IllegalArgumentException(
-			"invalid permission: " + actions);
-	    }
+            } else {
+                // parse error
+                throw new IllegalArgumentException(
+                        "invalid permission: " + actions);
+            }
 
-	    // make sure we didn't just match the tail of a word
-	    // like "ackbarfaccept".  Also, skip to the comma.
-	    boolean seencomma = false;
-	    while (i >= matchlen && !seencomma) {
-		switch(a[i-matchlen]) {
-		case ',':
-		    seencomma = true;
-		    /*FALLTHROUGH*/
-		case ' ': case '\r': case '\n':
-		case '\f': case '\t':
-		    break;
-		default:
-		    throw new IllegalArgumentException(
-			    "invalid permission: " + actions);
-		}
-		i--;
-	    }
+            // make sure we didn't just match the tail of a word
+            // like "ackbarfaccept".  Also, skip to the comma.
+            boolean seencomma = false;
+            while (i >= matchlen && !seencomma) {
+                switch(a[i-matchlen]) {
+                case ',':
+                    seencomma = true;
+                    /*FALLTHROUGH*/
+                case ' ': case '\r': case '\n':
+                case '\f': case '\t':
+                    break;
+                default:
+                    throw new IllegalArgumentException(
+                            "invalid permission: " + actions);
+                }
+                i--;
+            }
 
-	    // point i at the location of the comma minus one (or -1).
-	    i -= matchlen;
-	}
+            // point i at the location of the comma minus one (or -1).
+            i -= matchlen;
+        }
 
-	return mask;
+        return mask;
     }
 
 
@@ -335,10 +336,10 @@ public final class PlayerPermission extends Permission {
      */
     public String getActions()
     {
-	if (actions == null)
-	    actions = getActions(this.mask);
+        if (actions == null)
+            actions = getActions(this.mask);
 
-	return actions;
+        return actions;
     }
 
     /**
@@ -348,7 +349,7 @@ public final class PlayerPermission extends Permission {
      */
 
     private int getMask() {
-	return mask;
+        return mask;
     }
 
     /**
@@ -360,11 +361,11 @@ public final class PlayerPermission extends Permission {
     private synchronized void writeObject(java.io.ObjectOutputStream s)
         throws IOException
     {
-	// Write out the actions. The superclass takes care of the name
-	// call getActions to make sure actions field is initialized
-	if (actions == null)
-	    getActions();
-	s.defaultWriteObject();
+        // Write out the actions. The superclass takes care of the name
+        // call getActions to make sure actions field is initialized
+        if (actions == null)
+            getActions();
+        s.defaultWriteObject();
     }
 
     /**
@@ -374,8 +375,8 @@ public final class PlayerPermission extends Permission {
     private synchronized void readObject(java.io.ObjectInputStream s)
          throws IOException, ClassNotFoundException
     {
-	// Read in the action, then initialize the rest
-	s.defaultReadObject();
-	init(getMask(actions));
+        // Read in the action, then initialize the rest
+        s.defaultReadObject();
+        init(getMask(actions));
     }
 }
