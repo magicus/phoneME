@@ -784,7 +784,7 @@ dbgsysTlsGet(int index) {
 }
 
 #define FT2INT64(ft) \
-        ((long)(ft).dwHighDateTime << 32 | (long)(ft).dwLowDateTime)
+        ((CVMInt64)(ft).dwHighDateTime << 32 | (CVMInt64)(ft).dwLowDateTime)
 
 long
 dbgsysCurrentTimeMillis() {

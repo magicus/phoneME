@@ -1807,7 +1807,7 @@ CVMgcimplDoGC(CVMExecEnv* ee, CVMUint32 numBytes)
 
     gcOpts.isUpdatingObjectPointers = CVM_TRUE;
     gcOpts.discoverWeakReferences = CVM_FALSE;
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
     gcOpts.isProfilingPass = CVM_FALSE;
 #endif
 
@@ -2071,7 +2071,7 @@ CVMgcimplTimeOfLastMajorGC()
     return CVMglobals.gc.lastMajorGCTime;
 }
 
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 
 typedef struct CallbackInfo CallbackInfo;
 struct CallbackInfo
@@ -2126,7 +2126,7 @@ CVMgcimplIterateHeap(CVMExecEnv* ee,
     return CVM_TRUE;
 }
 
-#endif /* defined(CVM_INSPECTOR) || defined(CVM_JVMPI) */
+#endif /* defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)*/
 
 #if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
 /* Dumps info about the configuration of the overall GC. */

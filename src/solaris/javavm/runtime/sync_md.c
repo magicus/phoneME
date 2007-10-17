@@ -36,6 +36,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef CVM_JVMTI
+#include "javavm/include/globals.h"
+#include "javavm/include/jvmtiExport.h"
+#endif
 #ifdef CVM_JVMPI
 #include "javavm/include/globals.h"
 #endif
@@ -358,10 +362,15 @@ static void sigfunc1(int sig)
     }
 }
 
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
 void sigquitHandler(int sig)
 {
+#ifdef CVM_JVMPI
     CVMjvmpiSetDataDumpRequested();
+#endif
+#ifdef CVM_JVMTI
+    CVMjvmtiSetDataDumpRequested();
+#endif
 }
 #endif
 
@@ -508,7 +517,7 @@ solarisSyncInit(void)
     sigemptyset(&CVMtargetGlobals->sigusr2Mask);
     sigaddset(&CVMtargetGlobals->sigusr2Mask, SIGUSR2);
 
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
     sa.sa_handler = sigquitHandler;
     sa.sa_flags = SA_RESTART;
     sigemptyset(&sa.sa_mask);

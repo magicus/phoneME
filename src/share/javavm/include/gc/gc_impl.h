@@ -139,7 +139,7 @@ CVMgcimplDestroyHeap(CVMGCGlobalState* globalState);
 extern CVMInt64
 CVMgcimplTimeOfLastMajorGC();
 
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 /*
  * Heap iterator support from the GC implementation
  */

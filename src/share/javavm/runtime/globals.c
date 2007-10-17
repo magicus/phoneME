@@ -54,6 +54,7 @@
 
 #ifdef CVM_JVMTI
 #include "javavm/include/jvmti_jni.h"
+#include "javavm/include/porting/time.h"
 #endif
 #ifdef CVM_JVMPI
 #include "javavm/include/jvmpi_impl.h"
@@ -125,8 +126,13 @@ void** const CVMJITcodeCacheDecompileStart =
  */
 #define CVM_MIN_WEAK_GLOBALROOTS_STACKCHUNK_SIZE \
     CVM_MIN_GLOBALROOTS_STACKCHUNK_SIZE
+#ifdef CVM_JVMTI
+#define CVM_MAX_WEAK_GLOBALROOTS_STACK_SIZE      \
+    CVM_MAX_GLOBALROOTS_STACK_SIZE * 4
+#else
 #define CVM_MAX_WEAK_GLOBALROOTS_STACK_SIZE      \
     CVM_MAX_GLOBALROOTS_STACK_SIZE
+#endif
 #define CVM_INITIAL_WEAK_GLOBALROOTS_STACK_SIZE   \
     CVM_INITIAL_GLOBALROOTS_STACK_SIZE
 
@@ -200,7 +206,7 @@ static const CVMGlobalSysMutexEntry globalSysMutexes[] = {
        with those accesses it would need to have a higher rank (less
        importance) than this one. */
 #ifdef CVM_JVMTI
-    CVM_SYSMUTEX_ENTRY(debuggerLock, "debugger lock"),
+    CVM_SYSMUTEX_ENTRY(jvmtiLock, "jvmti lock"),
 #endif
     /*
      * All of these are "leaf" mutexes except during gc and during
@@ -211,11 +217,14 @@ static const CVMGlobalSysMutexEntry globalSysMutexes[] = {
     CVM_SYSMUTEX_ENTRY(typeidLock, "typeid lock"),
     CVM_SYSMUTEX_ENTRY(syncLock, "fast sync lock"),
     CVM_SYSMUTEX_ENTRY(internLock, "intern table lock"),
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
     CVM_SYSMUTEX_ENTRY(gcLockerLock, "gc locker lock"),
 #endif
 #ifdef CVM_JVMPI
     CVM_SYSMUTEX_ENTRY(jvmpiSyncLock, "jvmpi sync lock"),
+#endif
+#ifdef CVM_JVMTI
+    CVM_SYSMUTEX_ENTRY(jvmtiLockInfoLock, "jvmti lock info lock"),
 #endif
 #ifdef CVM_TIMESTAMPING
     CVM_SYSMUTEX_ENTRY(timestampListLock, "timestamp list lock"),
@@ -755,7 +764,10 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     gs->objMonitorList = NULL;
     gs->rawMonitorList = NULL;
 #endif
-
+#ifdef CVM_JVMTI
+    /* Initialize high res clocks */
+    CVMtimeClockInit();
+#endif
     /*
      * Random number generator
      */
@@ -816,11 +828,11 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     /* NOTE: this should come BEFORE the first call to CVMinitExecEnv.
        This mutates the global JNI vector which later gets pointed to
        by the various execution environments. */
+    /*
+     * With JVMTI, we do the instrumentation when an agent connects
+     */
 #ifdef CVM_JVMTI
-    gs->jvmtiDebuggingEnabled = options->debugging;
-    if (gs->jvmtiDebuggingEnabled) {
-	CVMjvmtiInstrumentJNINativeInterface();
-    }
+    gs->jvmtiDebuggingFlag = options->debugging;
 #endif    
 
 #ifdef CVM_LVM /* %begin lvm */
@@ -1217,6 +1229,10 @@ void CVMdestroyVMGlobalState(CVMExecEnv *ee, CVMGlobalState *gs)
 #endif
     CVMcondvarDestroy(&gs->threadCountCV);
 
+    CVMdetachExecEnv(ee);
+    CVMdestroyExecEnv(ee);
+    CVMremoveThread(ee, ee->userThread);
+
     /*
      * destroy all of the global sys mutexes.
      */
@@ -1250,10 +1266,6 @@ void CVMdestroyVMGlobalState(CVMExecEnv *ee, CVMGlobalState *gs)
 	CVMglobals.suspendCheckerInitialized = CVM_FALSE;
     }
 #endif
-
-    CVMdetachExecEnv(ee);
-    CVMdestroyExecEnv(ee);
-    CVMremoveThread(ee, ee->userThread);
 
     /*
      * Destroy class related data structures

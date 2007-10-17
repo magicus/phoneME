@@ -54,8 +54,8 @@ typedef enum {
     CVM_CCM_STATS_MICROLOCK,
 #endif /* CVM_CCM_COLLECT_STATS */
 #endif /* CVM_JIT */
-#ifdef CVM_JVMPI
-    CVM_JVMPI_MICROLOCK,
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
+    CVM_TOOLS_MICROLOCK,
 #endif
 #if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
     CVM_GC_LOCKER_MICROLOCK,
@@ -321,8 +321,8 @@ CVMsysMonitorWait(CVMExecEnv *ee, CVMSysMonitor* m, CVMInt64 millis);
 
 /*===========================================================================*/
 
-#ifdef CVM_JVMPI
-/* CVM lock type necessary for JVMPI: */
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
+/* CVM lock type necessary for JVMPI/JVMTI: */
 enum {
     CVM_LOCKTYPE_UNKNOWN    = 0, /* Reserved to indicate an illegal type. */
     CVM_LOCKTYPE_OBJ_MONITOR,
@@ -332,7 +332,7 @@ enum {
 
 struct CVMProfiledMonitor {
     CVMSysMonitor _super;
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
     CVMUint8 type;
     CVMUint32 contentionCount;
     CVMProfiledMonitor *next;
@@ -340,7 +340,7 @@ struct CVMProfiledMonitor {
 #endif
 };
 
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
 /* Purpose: Constructor. */
 extern CVMBool
 CVMprofiledMonitorInit(CVMProfiledMonitor *self, CVMExecEnv *owner,
@@ -357,7 +357,7 @@ CVMprofiledMonitorInit(CVMProfiledMonitor *self, CVMExecEnv *owner,
 #define CVMprofiledMonitorDestroy(self) \
     CVMsysMonitorDestroy(&(self)->_super)
 
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
 
 /* Purpose: Gets the type of the CVMProfiledMonitor. */
 /* inline CVMUint8 CVMprofiledMonitorGetType(CVMProfiledMonitor *self); */
@@ -375,11 +375,11 @@ CVMprofiledMonitorInit(CVMProfiledMonitor *self, CVMExecEnv *owner,
 /* Purpose: Enters the monitor. */
 /* inline void CVMprofiledMonitorEnter(CVMProfiledMonitor *self,
             CVMExecEnv *currentEE); */
-#define CVMprofiledMonitorEnter(self, currentEE) \
-    CVMprofiledMonitorEnterSafe((self), (currentEE))
+#define CVMprofiledMonitorEnter(self, currentEE, isRaw)	\
+    CVMprofiledMonitorEnterSafe((self), (currentEE), (isRaw))
 
 /* Purpose: Exits the monitor. */
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
 extern void
 CVMprofiledMonitorExit(CVMProfiledMonitor *self, CVMExecEnv *currentEE);
 #else /* !CVM_JVMPI */
@@ -411,7 +411,7 @@ CVMprofiledMonitorExit(CVMProfiledMonitor *self, CVMExecEnv *currentEE);
             CVM_WAIT_OK if the thread was woken up by a timeout, and
             CVM_WAIT_INTERRUPTED is the thread was woken up by a notify. */
 /* NOTE:    Thread must be in a GC safe state before calling this. */
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
 extern CVMWaitStatus
 CVMprofiledMonitorWait(CVMProfiledMonitor *self, CVMExecEnv *currentEE,
                        CVMInt64 millis);
@@ -455,9 +455,10 @@ CVMprofiledMonitorWait(CVMProfiledMonitor *self, CVMExecEnv *currentEE,
     CVMsysMonitorTryEnter((currentEE), (&(self)->_super))
 
 /* Purpose: Enters monitor while thread is in a GC unsafe state. */
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
 extern void
-CVMprofiledMonitorEnterUnsafe(CVMProfiledMonitor *self, CVMExecEnv *currentEE);
+CVMprofiledMonitorEnterUnsafe(CVMProfiledMonitor *self,
+			      CVMExecEnv *currentEE, CVMBool doPost);
 #ifdef CVM_THREAD_BOOST
 extern void
 CVMprofiledMonitorPreContendedEnterUnsafe(CVMProfiledMonitor *self,
@@ -469,7 +470,7 @@ CVMprofiledMonitorContendedEnterUnsafe(CVMProfiledMonitor *self,
 #else /* !CVM_JVMPI */
 /* inline void CVMprofiledMonitorEnterUnsafe(CVMProfiledMonitor *self,
             CVMExecEnv *currentEE); */
-#define CVMprofiledMonitorEnterUnsafe(self, currentEE) \
+#define CVMprofiledMonitorEnterUnsafe(self, currentEE, doPost)		\
     CVMsysMonitorEnterUnsafe((currentEE), (&(self)->_super))
 #ifdef CVM_THREAD_BOOST
 #define CVMprofiledMonitorPreContendedEnterUnsafe(self, currentEE)
@@ -479,13 +480,13 @@ CVMprofiledMonitorContendedEnterUnsafe(CVMProfiledMonitor *self,
 #endif /* CVM_JVMPI */
 
 /* Purpose: Enters monitor while thread is in a GC safe state. */
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
 extern void
-CVMprofiledMonitorEnterSafe(CVMProfiledMonitor *self, CVMExecEnv *currentEE);
+CVMprofiledMonitorEnterSafe(CVMProfiledMonitor *self, CVMExecEnv *currentEE, CVMBool doPost);
 #else /* !CVM_JVMPI */
 /* inline void CVMprofiledMonitorEnterSafe(CVMProfiledMonitor *self,
             CVMExecEnv *currentEE); */
-#define CVMprofiledMonitorEnterSafe(self, currentEE) \
+#define CVMprofiledMonitorEnterSafe(self, currentEE, doPost)		\
     CVMsysMonitorEnterSafe((currentEE), (&(self)->_super))
 #endif /* CVM_JVMPI */
 

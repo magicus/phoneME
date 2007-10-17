@@ -95,4 +95,7 @@ Java_java_lang_Thread_setThreadExiting(JNIEnv *env, jclass cls)
 {
     CVMExecEnv *ee = CVMjniEnv2ExecEnv(env);
     ee->threadExiting = CVM_TRUE;
+#ifdef CVM_JVMTI
+    ee->threadState = CVM_THREAD_TERMINATED;
+#endif
 }
