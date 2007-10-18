@@ -200,16 +200,6 @@ public final class Permissions {
     /** javax.microedition.io.Connector.ProtectedSensor permission ID. */
     public static final int PROTECTED_SENSOR = 54;
 
-    /*
-     * IMPL_NOTE: if this value is changed, the appropriate change should be
-     * made in suitestore_installer.c under ENABLE_CONTROL_ARGS_FROM_JAD
-     * section. NUMBER_OF_PERMISSIONS was not moved to *.xml because it is
-     * never used in native in normal case (i.e. when
-     * ENABLE_CONTROL_ARGS_FROM_JAD=false).
-     */
-    /** Number of permissions. */
-    public static int NUMBER_OF_PERMISSIONS = 55;
-
     /** Never allow the permission. */
     public static final byte NEVER = 0;
     /** Allow an permission with out asking the user. */
@@ -376,7 +366,11 @@ public final class Permissions {
 
     /** Permission specifications. */
     static final PermissionSpec[] permissionSpecs =
-        ExtendedPermissions.permissionSpecs;
+        PermissionsTable.permissionSpecs;
+
+    /** Number of permissions. */
+    public static final int NUMBER_OF_PERMISSIONS =
+        PermissionsTable.NUMBER_OF_PERMISSIONS;
 
     /**
      * Get the name of a permission.
