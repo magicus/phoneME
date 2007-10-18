@@ -3715,7 +3715,7 @@ mtaskJvmtiInit(JNIEnv* env)
 {
 #ifdef CVM_JVMTI
     CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
-    if (CVMjvmtiEventsEnabled()) {
+    if (CVMjvmtiInitialized()) {
 	CVMjvmtiPostVmInitEvent(ee);    
 
 	/*
