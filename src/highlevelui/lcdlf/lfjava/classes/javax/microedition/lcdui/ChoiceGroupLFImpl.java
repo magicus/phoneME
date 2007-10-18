@@ -491,6 +491,35 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
     }
 
     /**
+     *  If hilighted element of item is not completely visible should make it visible
+     * @param viewport
+     * @param visRect the in/out rectangle for the internal traversal location
+     * @return
+     */
+    boolean lScrollToItem(int[] viewport, int[] visRect) {
+        int contentY = contentBounds[Y];
+
+        if (cg.numOfEls > 0) {
+            int newY = contentY + ChoiceGroupSkin.PAD_H;
+
+            if (traversedIn) {
+                for (int i = 0; i < hilightedIndex; i++) {
+                    newY += elHeights[i];
+                }
+             
+                if (newY + elHeights[hilightedIndex] > visRect[Y] + visRect[HEIGHT] || newY < visRect[Y]) {
+                    visRect[Y] = bounds[Y] + newY;
+                    visRect[HEIGHT] = elHeights[hilightedIndex];
+                    return true;
+                }
+
+            }
+
+        }
+        return false;
+    }
+
+    /**
      * Traverse out of this ChoiceGroup
      */
     void lCallTraverseOut() {
@@ -730,7 +759,7 @@ class ChoiceGroupLFImpl extends ItemLFImpl implements ChoiceGroupLF {
             cg.cgElements[selectedIndex].setSelected(true);
         }
     }
-
+    
     /**
      * Paints the content area of this ChoiceGroup. 
      * Graphics is translated to contents origin.

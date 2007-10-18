@@ -744,6 +744,16 @@ abstract class ItemLFImpl implements ItemLF {
         hasFocus = true;
         return false;
     }
+
+    /**
+     *  If hilighted element of item is not completely visible should make it visible
+     * @param viewport
+     * @param visRect the in/out rectangle for the internal traversal location
+     * @return
+     */
+    boolean lScrollToItem(int[] viewport, int[] visRect) {
+        return false;
+    }
         
     /**
      * Called by the system to indicate traversal has left this Item
@@ -1114,7 +1124,7 @@ abstract class ItemLFImpl implements ItemLF {
                            LogChannels.LC_HIGHUI_ITEM_PAINT,
                            "  [I] draw border? hasFocus="+hasFocus);
         }
-        
+
         if (drawsTraversalIndicator && hasFocus && (contentBounds[HEIGHT] > 0)) {
             g.clipRect(bounds[X] + trX,
                        bounds[Y] + trY,

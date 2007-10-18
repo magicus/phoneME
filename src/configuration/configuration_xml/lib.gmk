@@ -89,7 +89,6 @@ INT_XML_FILES := $(addprefix $(INT_XML_DIR)/, $(INT_XML_FILES_BASE_NAMES))
 # Input files common for all platfroms
 INT_XML_FILES += \
 	$(INT_COMMON_XML_DIR)/constants.xml \
-	$(INT_COMMON_XML_DIR)/properties.xml \
 	$(INT_COMMON_XML_DIR)/i18n_constants.xml \
 	$(INT_COMMON_XML_DIR)/l10n/en-US.xml \
 	$(INT_COMMON_XML_DIR)/chameleon/skin_constants.xml \
@@ -120,6 +119,13 @@ ifeq ($(USE_FIXED), true)
 INT_XML_FILES += $(INT_XML_DIR)/constants_fixed.xml
 else
 INT_XML_FILES += $(INT_XML_DIR)/constants_open.xml
+endif
+
+# Over rides from PROJECT_MIDP_DIR
+ifeq ($(USE_MIDP_COM), true)
+INT_XML_FILES += $(PROJECT_MIDP_DIR)/src/configuration/configuration_xml/share/properties.xml
+else
+INT_XML_FILES += $(INT_COMMON_XML_DIR)/properties.xml 
 endif
 
 SUBSYSTEM_CONFIGURATION_SKIN_XML_FILE = $(INT_XML_DIR)/skin.xml

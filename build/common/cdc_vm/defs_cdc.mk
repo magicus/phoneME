@@ -43,7 +43,7 @@ MIDP_CNI_CLASSES += \
         com.sun.midp.events.NativeEventMonitor \
         com.sun.midp.jarutil.JarReader \
         com.sun.midp.installer.OtaNotifier \
-	com.sun.midp.io.NetworkConnectionBase \
+        com.sun.midp.io.NetworkConnectionBase \
         com.sun.midp.io.j2me.push.PushRegistryImpl \
         com.sun.midp.io.j2me.storage.File \
         com.sun.midp.io.j2me.storage.RandomAccessStream \
@@ -70,11 +70,32 @@ MIDP_CNI_CLASSES += \
         javax.microedition.lcdui.ImageDataFactory \
         javax.microedition.lcdui.KeyConverter
 
+ifeq ($(USE_PISCES), true)
+MIDP_CNI_CLASSES += \
+        com.sun.pisces.Configuration \
+        com.sun.pisces.GraphicsSurfaceDestination \
+        com.sun.pisces.NativeFinalizer \
+        com.sun.pisces.RendererNativeFinalizer \
+        com.sun.pisces.SurfaceNativeFinalizer \
+        com.sun.pisces.PiscesFinalizer \
+        com.sun.pisces.Transform6 \
+        com.sun.pisces.PiscesRenderer \
+        com.sun.pisces.NativeSurface \
+        com.sun.pisces.AbstractSurface \
+        com.sun.pisces.GraphicsSurface
+endif
+
 ifeq ($(CVM_INCLUDE_JUMP), true)
 MIDP_CNI_CLASSES += \
         com.sun.midp.jump.JumpInit \
         com.sun.midp.jump.isolate.MIDletContainer
 endif
+
+# The MIDP rom.config file
+ROMGEN_INCLUDE_PATHS += $(MIDP_DIR)/build/common/config \
+	$(MIDP_DIR)/build/common/cdc_vm
+ROMGEN_CFG_FILES += rom.config \
+	cdc_rom.cfg
 
 # Patterns to be included in the binary bundle.
 MIDP_BINARY_BUNDLE_PATTERNS += \

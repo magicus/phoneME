@@ -171,17 +171,7 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
         // item is found
         if (index > -1) {
             itemLF = itemsCopy[index];
-            
-            
-            // Ensure the item is visible at least partially
-            if (!itemPartiallyVisible(itemLF)) {
-                viewable[Y] = itemLF.bounds[Y];
-                if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
-                    viewable[Y] = viewable[HEIGHT] - viewport[HEIGHT];
-                    uHideShowItems(itemsCopy);
-                }
-            }
-            
+
             if (index != traverseIndexCopy) {
                 
                 // We record the present traverseItem because if it
@@ -206,12 +196,32 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 
                 if (traverseIndexCopy > -1) {
                     itemTraverse = uCallItemTraverse(itemsCopy[traverseIndexCopy], CustomItem.NONE);
+
                 }
                 
                 synchronized (Display.LCDUILock) {
                     traverseIndex = traverseIndexCopy;
-                }
+                }                        
                 updateCommandSet();
+            }
+
+            // Ensure the item is visible at least partially
+            if (!itemPartiallyVisible(itemLF)) {
+                viewable[Y] = itemLF.bounds[Y];
+                if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
+                    viewable[Y] = viewable[HEIGHT] - viewport[HEIGHT];
+                    uHideShowItems(itemsCopy);
+                }
+            }
+
+            // If complex item need extra scrolling we should make it
+            if (!itemCompletelyVisible(itemLF)) {
+                if (itemsCopy[traverseIndexCopy].lScrollToItem(viewport, visRect)) {
+                    if (alignForBounds(visRect)) {
+                        uHideShowItems(itemsCopy);
+                        setupScroll();
+                    }
+                }
             }
             uRequestPaint();
         } // index > -1
@@ -1984,12 +1994,46 @@ class FormLFImpl extends ScreenLFImpl implements FormLF {
                 return true;
             default:
                 // for safety/completeness, don't scroll.
-                Logging.report(Logging.WARNING, 
+                Logging.report(Logging.WARNING,
                     LogChannels.LC_HIGHUI_FORM_LAYOUT,
                     "FormLFImpl: bounds, dir=" + dir);
                 break;
         }
         return false;
+    }
+
+    /**
+     * Determine if internal scrolling is needed for a given bounding box,
+     * and perform such scrolling if necessary.
+
+     * @param bounds
+     * @return
+     */
+    boolean alignForBounds(int bounds[]) {
+
+        boolean res = false;
+
+        if (bounds == null || bounds[0] == -1) {
+            return false;
+        }
+
+        if (bounds[Y] < viewable[Y]) {
+            viewable[Y] = bounds[Y];
+            res = true;
+        } else if (viewable[Y] + viewport[HEIGHT] < bounds[Y] + bounds[HEIGHT]) {
+            viewable[Y] = bounds[Y] - viewport[HEIGHT] + bounds[HEIGHT];
+            res = true;
+        }
+
+        if (viewable[Y] + viewport[HEIGHT] > viewable[HEIGHT]) {
+            viewable[Y] = viewable[HEIGHT] - viewport[HEIGHT];
+        }
+
+        if (viewable[Y] < 0) {
+            viewable[Y] = 0;
+        }
+
+        return res;
     }
 
     /**

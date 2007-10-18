@@ -168,6 +168,8 @@ gx_draw_chars(jint pixel, const jshort *clip,
     int nCharsToSkip = 0;
     int widthRemaining;
     int yCharSource;
+    int charsWidth;
+    int charsHeight;
     int fontWidth;
     int fontHeight;
     int fontAscent;
@@ -192,25 +194,25 @@ gx_draw_chars(jint pixel, const jshort *clip,
     }
 
     gx_get_fontinfo(face, style, size, &fontAscent, &fontDescent, &fontLeading);
-    fontWidth = gx_get_charswidth(face, style, size, charArray, n);
-    fontHeight = fontAscent + fontDescent + fontLeading;
+    charsWidth = gx_get_charswidth(face, style, size, charArray, n);
+    charsHeight = fontAscent + fontDescent + fontLeading;
 
     xDest = x;
     if (anchor & RIGHT) {
-        xDest -= fontWidth * n;
+        xDest -= charsWidth;
     }
 
     if (anchor & HCENTER) {
-        xDest -= ((fontWidth * n) / 2);
+        xDest -= charsWidth / 2;
     }
 
     yDest = y;  
     if (anchor & BOTTOM) {
-        yDest -= fontHeight;
+        yDest -= charsHeight;
     }
 
     if (anchor & BASELINE) {
-        yDest -= fontHeight - fontDescent;
+        yDest -= charsHeight - fontDescent;
     }
 
     result = gxjport_draw_chars(pixel, clip, dest, dotted, face, style, size,
