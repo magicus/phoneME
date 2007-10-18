@@ -29,6 +29,11 @@
 #include <util_md.h>
 #ifndef WINCE
 #include <time.h>
+#else
+#include <winbase.h>
+#include "javavm/include/porting/time.h"
+#include <string.h>
+#include <stddef.h>
 #endif
 
 #ifdef WINCE
@@ -41,6 +46,41 @@ void
 abort() {
     ExitProcess(-1);
 }
+
+#define FT2INT64(ft) \
+        ((CVMInt64)(ft).dwHighDateTime << 32 | (CVMInt64)(ft).dwLowDateTime)
+
+long
+time(void)
+{
+    CVMInt64 fileTime_1_1_70 = 0;
+    SYSTEMTIME st0;
+    FILETIME   ft0;
+    static CVMInt64 originTick = 0;
+    CVMInt64 ttt;
+
+    if (originTick == 0) {
+        /* Initialize fileTime_1_1_70 -- the Win32 file time of midnight
+         * 1/1/70.
+         */
+
+        memset(&st0, 0, sizeof(st0));
+        st0.wYear  = 1970;
+        st0.wMonth = 1;
+        st0.wDay   = 1;
+        SystemTimeToFileTime(&st0, &ft0);
+        fileTime_1_1_70 = FT2INT64(ft0);
+
+        GetSystemTime(&st0);
+        SystemTimeToFileTime(&st0, &ft0);
+        originTick = (FT2INT64(ft0) - fileTime_1_1_70) / 10000;
+        originTick -= GetTickCount(); 
+    }
+
+    ttt = GetTickCount() + originTick;
+    return ttt/1000;
+}
+
 #endif
 
 void CVMformatTime(char *format, size_t format_size, time_t t) {

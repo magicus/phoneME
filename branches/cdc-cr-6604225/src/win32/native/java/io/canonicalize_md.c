@@ -49,6 +49,7 @@
 	#include <errno.h>
 #else
 	#include "javavm/include/porting/ansi/errno.h"
+	#include "javavm/include/wceUtil.h"
 #endif
 
 #include <limits.h>
@@ -253,12 +254,18 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
         return -1;
     }
 
+#ifdef WINCE
+    if (!WINCEpathRemoveDots(path, orig_path, sizeof path / sizeof path[0])) {
+	return -1;
+    }
+#else
     /* Collapse instances of "foo\.." and ensure absoluteness.  Note that
        contrary to the documentation, the _fullpath procedure does not require
        the drive to be available.  */
     if(!_wfullpath(path, orig_path, sizeof(path)/2)) {
         return -1;
     }
+#endif
 
     if (wdots(path)) /* Check for phohibited combinations of dots */
         return -1;
@@ -334,6 +341,7 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
                 || (errval == ERROR_BAD_NETPATH)
                 || (errval == ERROR_BAD_NET_NAME)
                 || (errval == ERROR_ACCESS_DENIED)
+                || (errval == ERROR_NO_MORE_FILES)
                 || (errval == ERROR_NETWORK_ACCESS_DENIED)) {
                 if (!(dst = wcp(dst, dend, L'\0', src, src + wcslen(src))))
                     return -1;

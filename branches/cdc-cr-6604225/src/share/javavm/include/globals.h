@@ -1,7 +1,5 @@
 /*
- * @(#)globals.h	1.170 06/10/30
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -257,7 +255,8 @@ struct CVMGlobalState {
 #endif
     
 #ifdef CVM_JVMTI
-    CVMSysMutex debuggerLock;
+    CVMSysMutex jvmtiLock;
+    CVMSysMutex jvmtiLockInfoLock;
 #endif
 
     /*
@@ -275,7 +274,7 @@ struct CVMGlobalState {
     CVMGCLocker inspectorGCLocker;
     CVMCondVar gcLockerCV;  /* Used in conjuction with the gcLockerLock. */
 #endif
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
     CVMSysMutex gcLockerLock;
 #endif
 
@@ -458,20 +457,25 @@ struct CVMGlobalState {
     CVMPackage* packages[CVM_PKGINFO_HASHSIZE];
     CVMUint16   numPackages;
 
+#ifdef CVM_DUAL_STACK
+    const CVMClassRestrictions* dualStackMemberFilter;
+#endif
+
 #ifdef CVM_JVMTI
-    CVMBool jvmtiDebuggingEnabled;
+    CVMBool jvmtiEnabled;
+    CVMBool jvmtiDebuggingFlag;
     /* are one or more fields being watched?
      * these flags are accessed by the interpreter to determine if
      * jvmti should be notified.
      */
     CVMBool jvmtiWatchingFieldAccess; /* set ONLY by jvmt */
     CVMBool jvmtiWatchingFieldModification; /* set ONLY by jvmti */
+    CVMJvmtiRecord jvmtiRecord;
 #endif
 
 #ifdef CVM_JVMPI
     /* JVMPI flags: */
     CVMJvmpiRecord jvmpiRecord;
-
     CVMProfiledMonitor *objMonitorList;
     CVMProfiledMonitor *rawMonitorList;
     CVMSysMutex jvmpiSyncLock;  /* Protect insertion into the Monitor Lists. */
@@ -656,6 +660,10 @@ CVMoptParseXoptOptions(const char* optAttributesStr);
 
 extern CVMBool
 CVMoptParseXssOption(const char* optAttributesStr);
+
+#if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
+extern void CVMdumpGlobalsSubOptionValues();
+#endif /* CVM_DEBUG || CVM_INSPECTOR */
 
 extern CVMGlobalState CVMglobals;
 extern CVMBool

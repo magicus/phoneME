@@ -133,7 +133,7 @@ CVMprivateClassInit(CVMExecEnv* ee, CVMClassBlock* cb, CVMMethodBlock **p_mb)
 	/*
 	 * Link the class hierarchy.
 	 */
-	if (!CVMclassLink(ee, cb)) {
+	if (!CVMclassLink(ee, cb, CVM_FALSE)) {
 	    return -1;
 	}
 #endif

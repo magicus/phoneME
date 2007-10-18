@@ -499,6 +499,13 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
     CVMJITdebugInitCompilation(ee, mb);
 #endif
 
+#ifdef CVM_JVMTI
+    if (CVMjvmtiDebuggingFlag()) {
+	retVal = CVMJIT_CANNOT_COMPILE;
+	CVMJITsetErrorMessage(&con, "Debugger connected");
+	goto done;
+    }
+#endif
     /* Check if mb is not compilable */
     if (isBadMethod(ee, mb)) {
 	retVal = CVMJIT_CANNOT_COMPILE;
@@ -729,6 +736,12 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 #ifdef CVM_JVMPI
 	    if (CVMjvmpiEventCompiledMethodLoadIsEnabled()) {
 		CVMjvmpiPostCompiledMethodLoadEvent(ee, mb);
+	    }
+#endif
+	    /* IAI-07: Notify JVMTI of compilation. */
+#ifdef CVM_JVMTI
+	    if (CVMjvmtiShouldPostCompiledMethodLoad()) {
+		CVMjvmtiPostCompiledMethodLoadEvent(ee, mb);
 	    }
 #endif
 	    CVMtraceJITStatus(("JS: COMPILED: size=%d startPC=0x%x %C.%M\n",
@@ -1054,6 +1067,12 @@ CVMJITdecompileMethod(CVMExecEnv* ee, CVMMethodBlock* mb)
 #ifdef CVM_JVMPI
     if (ee != NULL && CVMjvmpiEventCompiledMethodUnloadIsEnabled()) {
         CVMjvmpiPostCompiledMethodUnloadEvent(ee, mb);
+    }
+#endif
+    /* IAI-07: Notify JVMTI of decompilation. */
+#ifdef CVM_JVMTI
+    if (ee != NULL && CVMjvmtiShouldPostCompiledMethodUnload()) {
+        CVMjvmtiPostCompiledMethodUnloadEvent(ee, mb);
     }
 #endif
 }

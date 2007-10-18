@@ -35,6 +35,7 @@
 #include "javavm/include/signature.h"
 #include "javavm/include/globals.h"
 #include "javavm/include/bag.h"
+#include "javavm/include/porting/time.h"
 #include "javavm/include/common_exceptions.h"
 #include "javavm/include/named_sys_monitor.h"
 #include "generated/javavm/include/opcodes.h"
@@ -90,20 +91,24 @@ jvmtiCapabilities init_always_capabilities() {
   jvmtiCapabilities jc;
   
   memset(&jc, 0, sizeof(jc));
-  jc.can_get_bytecodes = 1;
+  /*  jc.can_get_bytecodes = 1; */
   jc.can_signal_thread = 1;
   jc.can_get_source_file_name = 1;
   jc.can_get_line_numbers = 1;
   /*  jc.can_get_synthetic_attribute = 1; */
-  jc.can_get_monitor_info = 1;
-  jc.can_get_constant_pool = 1;
+  /*  jc.can_get_monitor_info = 1; */
+  /*  jc.can_get_constant_pool = 1; */
   jc.can_generate_monitor_events = 1;
-  /*
   jc.can_generate_garbage_collection_events = 1;
   jc.can_generate_compiled_method_load_events = 1;
   jc.can_generate_native_method_bind_events = 1;
   jc.can_generate_vm_object_alloc_events = 1;
   jc.can_redefine_classes = 1;
+  if (CVMtimeIsThreadCpuTimeSupported()) {
+      jc.can_get_thread_cpu_time = 1;
+      jc.can_get_current_thread_cpu_time = 1;
+  }
+  /*
   jc.can_retransform_classes = 1;
   jc.can_set_native_method_prefix = 1;
   */
@@ -114,25 +119,36 @@ jvmtiCapabilities init_onload_capabilities() {
   jvmtiCapabilities jc;
   
   memset(&jc, 0, sizeof(jc));
+#ifdef CVM_JIT
+  /* can't keep track of locks so can't pop frames */
+  jc.can_pop_frame = 0;
+  jc.can_force_early_return = 0;
+#else
   jc.can_pop_frame = 1;
-  /*  jc.can_force_early_return = 1; */
+  jc.can_force_early_return = 1;
+#endif
   /*  jc.can_get_source_debug_extension = 1; */
-  jc.can_access_local_variables = 1;
   jc.can_maintain_original_method_order = 1;
   /*  jc.can_redefine_any_class = 1; */
   /*  jc.can_retransform_any_class = 1; */
   jc.can_generate_all_class_hook_events = 1;
-  jc.can_generate_single_step_events = 1;
   jc.can_generate_exception_events = 1;
-  jc.can_generate_frame_pop_events = 1;
-  jc.can_generate_method_entry_events = 1;
-  jc.can_generate_method_exit_events = 1;
   jc.can_get_owned_monitor_info = 1;
-  jc.can_get_owned_monitor_stack_depth_info = 1;
+  /*  jc.can_get_owned_monitor_stack_depth_info = 1; */
   jc.can_get_current_contended_monitor = 1;
-  /* jc.can_get_monitor_info = 1; */
-  /*  jc.can_tag_objects = 1; */
-  /*  jc.can_generate_object_free_events = 1; */
+  jc.can_tag_objects = 1;
+  /*  jc.can_get_monitor_info = 1; */
+  jc.can_generate_object_free_events = 1;
+  if (CVMglobals.jvmtiDebuggingFlag) {
+      /* Debugging session, turn on some capabilities */
+      jc.can_generate_single_step_events = 1;
+      jc.can_generate_method_entry_events = 1;
+      jc.can_generate_method_exit_events = 1;
+      jc.can_generate_frame_pop_events = 1;
+      jc.can_access_local_variables = 1;
+      jc.can_pop_frame = 1;
+      jc.can_force_early_return = 1;
+  }
   return jc;
 }
 
@@ -150,13 +166,16 @@ jvmtiCapabilities init_onload_solo_capabilities() {
   jvmtiCapabilities jc;
   
   memset(&jc, 0, sizeof(jc));
-  jc.can_generate_field_modification_events = 1;
-  jc.can_generate_field_access_events = 1;
-  jc.can_generate_breakpoint_events = 1;
+  if (CVMglobals.jvmtiDebuggingFlag) {
+      /* Debugging session, turn on some capabilities */
+      jc.can_generate_field_modification_events = 1;
+      jc.can_generate_field_access_events = 1;
+      jc.can_generate_breakpoint_events = 1;
+  }
   return jc;
 }
 
-void initialize_capabilities() {
+void CVMjvmtiInitializeCapabilities() {
   always_capabilities = init_always_capabilities();
   onload_capabilities = init_onload_capabilities();
   always_solo_capabilities = init_always_solo_capabilities();
@@ -229,7 +248,7 @@ jboolean has_some(const jvmtiCapabilities *a) {
 }
 
 
-void copy_capabilities(const jvmtiCapabilities *from, jvmtiCapabilities *to) {
+void CVMjvmtiCopyCapabilities(const jvmtiCapabilities *from, jvmtiCapabilities *to) {
   int i;
   char *ap = (char *)from;
   char *resultp = (char *)to;
@@ -240,7 +259,7 @@ void copy_capabilities(const jvmtiCapabilities *from, jvmtiCapabilities *to) {
 }
 
 
-void get_potential_capabilities(const jvmtiCapabilities *current, 
+void CVMjvmtiGetPotentialCapabilities(const jvmtiCapabilities *current, 
                                 const jvmtiCapabilities *prohibited, 
                                 jvmtiCapabilities *result) {
   /* exclude prohibited capabilities, must be before adding current */
@@ -286,8 +305,8 @@ void update() {
     JvmtiExport::set_all_dependencies_are_recorded(true);
   }
   */
-  set_can_get_source_debug_extension(avail.can_get_source_debug_extension);
-  set_can_examine_or_deopt_anywhere(
+  CVMjvmtiSetCanGetSourceDebugExtension(avail.can_get_source_debug_extension);
+  CVMjvmtiSetCanExamineOrDeoptAnywhere(
     avail.can_generate_breakpoint_events ||
     interp_events || 
     avail.can_redefine_classes ||
@@ -297,47 +316,47 @@ void update() {
     avail.can_get_current_contended_monitor ||
     avail.can_get_monitor_info ||
     avail.can_get_owned_monitor_stack_depth_info);
-  set_can_maintain_original_method_order(avail.can_maintain_original_method_order);
-  set_can_post_interpreter_events(interp_events);
-  set_can_hotswap_or_post_breakpoint(
+  CVMjvmtiSetCanMaintainOriginalMethodOrder(avail.can_maintain_original_method_order);
+  CVMjvmtiSetCanPostInterpreterEvents(interp_events);
+  CVMjvmtiSetCanHotswapOrPostBreakpoint(
     avail.can_generate_breakpoint_events ||
     avail.can_redefine_classes ||
     avail.can_retransform_classes);
-  set_can_modify_any_class(
+  CVMjvmtiSetCanModifyAnyClass(
     avail.can_generate_breakpoint_events ||
     avail.can_retransform_classes || /* NOTE: remove when there is support for redefine with class sharing */
     avail.can_retransform_any_class   ||
     avail.can_redefine_classes ||  /* NOTE: remove when there is support for redefine with class sharing */
     avail.can_redefine_any_class ||
     avail.can_generate_all_class_hook_events);
-  set_can_walk_any_space(
+  CVMjvmtiSetCanWalkAnySpace(
                          avail.can_tag_objects);  /* NOTE: remove when IterateOverReachableObjects supports class sharing */
-  set_can_access_local_variables(
+  CVMjvmtiSetCanAccessLocalVariables(
     avail.can_access_local_variables  ||
     avail.can_redefine_classes ||
     avail.can_retransform_classes);
-  set_can_post_exceptions(
+  CVMjvmtiSetCanPostExceptions(
     avail.can_generate_exception_events ||
     avail.can_generate_frame_pop_events ||
     avail.can_generate_method_exit_events);
-  set_can_post_breakpoint(avail.can_generate_breakpoint_events);
-  set_can_post_field_access(avail.can_generate_field_access_events);
-  set_can_post_field_modification(avail.can_generate_field_modification_events);
-  set_can_post_method_entry(avail.can_generate_method_entry_events);
-  set_can_post_method_exit(avail.can_generate_method_exit_events ||
+  CVMjvmtiSetCanPostBreakpoint(avail.can_generate_breakpoint_events);
+  CVMjvmtiSetCanPostFieldAccess(avail.can_generate_field_access_events);
+  CVMjvmtiSetCanPostFieldModification(avail.can_generate_field_modification_events);
+  CVMjvmtiSetCanPostMethodEntry(avail.can_generate_method_entry_events);
+  CVMjvmtiSetCanPostMethodExit(avail.can_generate_method_exit_events ||
                                         avail.can_generate_frame_pop_events);
-  set_can_pop_frame(avail.can_pop_frame);
-  set_can_force_early_return(avail.can_force_early_return);
-  set_should_clean_up_heap_objects(avail.can_generate_breakpoint_events);
+  CVMjvmtiSetCanPopFrame(avail.can_pop_frame);
+  CVMjvmtiSetCanForceEarlyReturn(avail.can_force_early_return);
+  CVMjvmtiSetShouldCleanUpHeapObjects(avail.can_generate_breakpoint_events);
 }
 
-jvmtiError add_capabilities(const jvmtiCapabilities *current,
+jvmtiError CVMjvmtiAddCapabilities(const jvmtiCapabilities *current,
                             const jvmtiCapabilities *prohibited, 
                             const jvmtiCapabilities *desired, 
                             jvmtiCapabilities *result) {
   /* check that the capabilities being added are potential capabilities */
   jvmtiCapabilities temp;
-  get_potential_capabilities(current, prohibited, &temp);
+  CVMjvmtiGetPotentialCapabilities(current, prohibited, &temp);
   if (has_some(exclude(desired, &temp, &temp))) {
     return JVMTI_ERROR_NOT_AVAILABLE;
   }
@@ -368,7 +387,7 @@ jvmtiError add_capabilities(const jvmtiCapabilities *current,
 }
 
 
-void relinquish_capabilities(const jvmtiCapabilities *current,
+void CVMjvmtiRelinquishCapabilities(const jvmtiCapabilities *current,
                              const jvmtiCapabilities *unwanted, 
                              jvmtiCapabilities *result) {
   jvmtiCapabilities to_trash;

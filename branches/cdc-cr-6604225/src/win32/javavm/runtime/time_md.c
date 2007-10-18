@@ -26,6 +26,7 @@
  */
 
 #include "javavm/include/porting/time.h"
+#include "javavm/include/interpreter.h"
 
 #ifdef WINCE
 #include <winbase.h>
@@ -35,6 +36,99 @@
 
 #define FT2INT64(ft) \
         ((CVMInt64)(ft).dwHighDateTime << 32 | (CVMInt64)(ft).dwLowDateTime)
+
+#ifdef CVM_JVMTI
+
+#define NANOS_PER_SEC         1000000000L
+#define NANOS_PER_MILLISEC    1000000
+
+static int    hasPerformanceCount = 0;
+static int    hasSuperClock = 0;
+static CVMInt64 initialPerformanceCount;
+static CVMInt64 performanceFrequency;
+static CVMInt64 multiplier;
+ 
+void CVMtimeClockInit(void) {
+    LARGE_INTEGER count;
+    if (QueryPerformanceFrequency(&count)) {
+ 	hasPerformanceCount = 1;
+ 	performanceFrequency = count.QuadPart;
+ 	if (performanceFrequency > NANOS_PER_SEC) {
+ 	    /* super high speed clock > 1GHz */
+ 	    hasSuperClock = 1;
+ 	    multiplier = performanceFrequency / NANOS_PER_SEC;
+ 	} else {
+ 	    multiplier = NANOS_PER_SEC / performanceFrequency;
+ 	}
+ 	QueryPerformanceCounter(&count);
+ 	initialPerformanceCount = count.QuadPart;
+    }
+}
+
+CVMBool
+CVMtimeIsThreadCpuTimeSupported(void) {
+    /* see CVMthreadCputime */
+    FILETIME CreationTime;
+    FILETIME ExitTime;
+    FILETIME KernelTime;
+    FILETIME UserTime;
+
+    if (GetThreadTimes(GetCurrentThread(), &CreationTime,
+		       &ExitTime, &KernelTime, &UserTime) == 0) {
+	return CVM_FALSE;
+    } else {
+	return CVM_TRUE;
+    }
+}
+
+CVMInt64
+CVMtimeThreadCpuTime(CVMThreadID *thread) {
+    /* This code is copy from clasic VM -> hpi::sysThreadCPUTime
+     * If this function changes, os::is_thread_cpu_time_supported() should too
+     */
+    FILETIME CreationTime;
+    FILETIME ExitTime;
+    FILETIME KernelTime;
+    FILETIME UserTime;
+
+    if ( GetThreadTimes(thread->handle,	&CreationTime,
+			&ExitTime, &KernelTime, &UserTime) == 0)
+	return -1;
+    else
+	return (FT2INT64(UserTime) + FT2INT64(KernelTime)) * 100;
+}
+
+void CVMtimeThreadCpuClockInit(CVMThreadID *threadID) {
+    (void)threadID;
+}
+
+CVMInt64
+CVMtimeCurrentThreadCpuTime(CVMThreadID *threadID) {
+    return CVMtimeThreadCpuTime(threadID);
+}
+
+CVMInt64
+CVMtimeNanosecs(void)
+{
+    if (!hasPerformanceCount) { 
+ 	return CVMtimeMillis() * NANOS_PER_MILLISEC; /* the best we can do. */
+    } else {
+ 	LARGE_INTEGER current_count;  
+ 	CVMInt64 current;
+ 	CVMInt64 mult;
+ 	CVMInt64 time;
+ 	QueryPerformanceCounter(&current_count);
+ 	current = current_count.QuadPart;
+ 	mult = multiplier;
+ 	if (!hasSuperClock) {
+ 	    time = current * multiplier;
+ 	} else {
+ 	    time = current / multiplier;
+ 	}
+ 	return time;
+    }
+}
+#endif
 
 CVMInt64
 CVMtimeMillis(void)

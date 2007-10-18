@@ -463,7 +463,7 @@ void save_jcov_data(char *filename) {
         jcov_info(buf);
     }
 
-    if ((temp_file = fopen(temp_file_name, "wb+")) == NULL ) {
+    if ((temp_file = fopen(temp_file_name, "w+")) == NULL ) {
         sprintf(buf, "cannot create file : %s\n", temp_file_name);
         jcov_error_stop(buf);
     }

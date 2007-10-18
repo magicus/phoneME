@@ -65,6 +65,7 @@ CVMthreadResume(CVMThreadID *t)
 
 #include <sys/resource.h>
 
+
 CVMBool
 CVMthreadAttach(CVMThreadID *self, CVMBool orphan)
 {
@@ -96,6 +97,9 @@ CVMthreadAttach(CVMThreadID *self, CVMBool orphan)
 	}
 	self->stackTop = (char *)stack.ss_sp - stackSize;
     }
+#ifdef CVM_JVMTI
+    self->lwp_id = _lwp_self();
+#endif
     setFPMode();
     return POSIXthreadAttach(self, orphan);
 }

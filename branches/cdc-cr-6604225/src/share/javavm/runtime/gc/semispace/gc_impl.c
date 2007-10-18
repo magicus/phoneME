@@ -274,7 +274,7 @@ CVMssInOldSemispace(CVMObject* ref)
     return ((ptr >= allocBase) && (ptr < allocTop));
 }
 
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
 /* Purpose: Checks to see if the specified object pointer is in the range of
             the new semispace (i.e. the copy space). */
 static CVMBool
@@ -557,7 +557,7 @@ CVMssRefIsLive(CVMObject** refPtr, void* data)
     }
 }
 
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
 /* Purpose: Scan over freed objects. */
 static void
 CVMssScanFreedObjects(CVMExecEnv *ee)
@@ -582,10 +582,17 @@ CVMssScanFreedObjects(CVMExecEnv *ee)
         objSize = CVMobjectSizeGivenClass(obj, objCb);
 
         if (collected) {
+#ifdef CVM_JVMPI
             if (CVMjvmpiEventObjectFreeIsEnabled()) {
                 CVMjvmpiPostObjectFreeEvent(obj);  /* Notify the profiler. */
             }
             liveObjectCount--;
+#endif
+#ifdef CVM_JVMTI
+            if (CVMjvmtiShouldPostObjectFree()) {
+                CVMjvmtiPostObjectFreeEvent(obj);  /* Notify the profiler. */
+            }
+#endif
             CVMtraceGcCollect(("GC: Freed object=0x%x, size=%d, class=%C\n",
                                obj, objSize, objCb));
         }
@@ -607,7 +614,7 @@ CVMgcimplDoGC(CVMExecEnv* ee, CVMUint32 numBytes)
     CVMGCOptions gcOpts = {
         /* isUpdatingObjectPointers */ CVM_TRUE,
         /*discoverWeakReferences*/ CVM_FALSE,
-#if defined(CVM_DEBUG) || defined(CVM_JVMPI)
+#if defined(CVM_DEBUG) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
         /*isProfilingPass*/ CVM_FALSE
 #endif
     };
@@ -834,7 +841,7 @@ CVMgcimplTimeOfLastMajorGC()
     return lastMajorGCTime;
 }
 
-#if defined(CVM_DEBUG) || defined(CVM_JVMPI)
+#if defined(CVM_DEBUG) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 
 /*
  * Heap iteration. Call (*callback)() on each object in the heap.

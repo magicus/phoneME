@@ -59,10 +59,18 @@
 #include "javavm/export/jni.h"
 
 #include "javavm/include/jvmtiExport.h"
+#include "javavm/include/jvmtiDumper.h"
 #include "javavm/include/jvmtiCapabilities.h"
 
-static jboolean _have_pending_compiled_method_unload_events;        
-static jvmtiPhase _phase;
+#ifdef CVM_JIT
+#include "javavm/include/jit/jitcodebuffer.h"
+#endif
+
+jvmtiPhase jvmtiCurrentPhase;
+jlong clks_per_sec;
+CVMBool debuggerConnected = CVM_FALSE;
+
+CVMUint32 jvmtiUniqueId = 0x10000;
 
 /* %comment: k001 */
 
@@ -72,16 +80,15 @@ static jvmtiPhase _phase;
    as is. There should be a header file with this extern shared by both .c files */
 /* extern const short opcode_length[256]; */
 
-#undef DEBUGGER_LOCK
-#undef DEBUGGER_UNLOCK
-#undef DEBUGGER_IS_LOCKED
-#define DEBUGGER_LOCK(ee)      CVM_DEBUGGER_LOCK(ee)
-#define DEBUGGER_UNLOCK(ee)    CVM_DEBUGGER_UNLOCK(ee)
-#define DEBUGGER_IS_LOCKED(ee) CVM_DEBUGGER_IS_LOCKED(ee)
 
 /* Convenience macros */
-#define CVM_THREAD_LOCK(ee)   CVMsysMutexLock(ee, &CVMglobals.threadLock)
+#define CVM_THREAD_LOCK(ee)	  CVMsysMutexLock(ee, &CVMglobals.threadLock)
 #define CVM_THREAD_UNLOCK(ee) CVMsysMutexUnlock(ee, &CVMglobals.threadLock)
+
+/* Purpose: Checks to see if it is safe to access object pointers directly. */
+#define CVMjvmtiIsSafeToAccessDirectObject(ee_)       \
+    (CVMD_isgcUnsafe(ee_) || CVMgcIsGCThread(ee_) ||  \
+     CVMsysMutexIAmOwner(ee_, &CVMglobals.heapLock))
 
 /* NOTE: "Frame pop sentinels" removed in CVM version of JVMTI
    because we don't have two return PC slots and mangling the only
@@ -89,6 +96,8 @@ static jvmtiPhase _phase;
    CVMjvmtiNotifyDebuggerOfFramePop and jvmti_NotifyFramePop below. */
 
 /* #define FRAME_POP_SENTINEL ((unsigned char *)1) */
+
+#define GLOBAL_ENV CVMglobals.jvmtiStatics.jvmtiEnv
 
 #define INITIAL_BAG_SIZE 4
 
@@ -98,36 +107,127 @@ static jvmtiPhase _phase;
 #define JVMTI_EVENT_GLOBAL_MASK 0xf0000000
 #define JVMTI_EVENT_THREAD_MASK 0x7fffffff
 
-static void enableAllEvents(jint eventType, jboolean enabled) {
-  if (enabled) {
-    CVMglobals.jvmtiStatics.eventEnable[eventType] |=  
-      JVMTI_EVENT_GLOBAL_MASK;
-  } else {
-    CVMglobals.jvmtiStatics.eventEnable[eventType] &=  
-      ~JVMTI_EVENT_GLOBAL_MASK;
-  }
+static JvmtiMethodNode *nodeByMB[HASH_SLOT_COUNT];
+
+CVMUint32
+CVMjvmtiUniqueID()
+{
+    return jvmtiUniqueId++;
 }
 
-void CVMjvmtiEnableThreadEvents(CVMExecEnv* ee, ThreadNode *node, 
-                               jvmtiEvent eventType, jboolean enabled) {
 
-  CVMassert(DEBUGGER_IS_LOCKED(ee));
-
-  /*
-   * If state is changing, update the global eventEnable word
-   * for this thread and the per-thread boolean flag.
-   */
-  if (node->eventEnabled[eventType] != enabled) {
-    node->eventEnabled[eventType] = enabled;
-  }
+static jint methodHash(CVMUint32 mid) {
+    return ((mid) % HASH_SLOT_COUNT);
 }
 
-static jboolean threadEnabled(jint eventType, ThreadNode *node) {
-  return (node == NULL) ? JNI_FALSE : node->eventEnabled[eventType];
+static JvmtiMethodNode *getNode(CVMMethodBlock *mb)
+{
+    JvmtiMethodNode *node;
+    jint slot;
+
+    slot = methodHash((CVMUint32)mb);
+    node = nodeByMB[slot];
+    while (node != NULL) {
+	if (node->mb == mb) {
+		break;
+	    }
+	node = node->next;
+    }
+    return node;
 }
 
-#define GLOBALLY_ENABLED(jvmti_env, eventType) \
-  ((jvmti_env)->_env_event_enable._event_enabled._enabled_bits & (1 << (eventType - TOTAL_MIN_EVENT_TYPE_VAL)))
+/* FIXME: This function is called from the interpreter loop for each method
+   invocation even when JVMTI is not being used.  This is very heavy overhead
+   and need to be fixed.  One option is to use some sort of bit marker on the
+   mb itself to indicate that it is obsolete so as to not have to do this
+   look up.  In the least, the bit can indicate if a look is necessary. */
+CVMBool
+CVMjvmtiMbIsObsoleteX(CVMMethodBlock *mb)
+{
+    JvmtiMethodNode *node;
+    node = getNode(mb);
+    if (node == NULL) {
+	return CVM_FALSE;
+    }
+    return node->isObsolete;
+}
+
+CVMConstantPool *
+CVMjvmtiMbConstantPool(CVMMethodBlock *mb) {
+    JvmtiMethodNode *node;
+    jint slot;
+    slot = methodHash((CVMUint32)mb);
+    node = getNode(mb);
+    if (node == NULL) {
+	return NULL;
+    }
+    CVMassert(node->isObsolete);
+    return node->cp;
+}
+
+void
+CVMjvmtiMarkAsObsolete(CVMMethodBlock *oldmb, CVMConstantPool *cp)
+{
+    JvmtiMethodNode *node;
+    CVMExecEnv *ee = CVMgetEE();
+    jint slot;
+
+    JVMTI_LOCK(ee);
+    node = getNode(oldmb);
+    if (node == NULL) {
+	slot = methodHash((CVMUint32)oldmb);
+	if (CVMjvmtiAllocate(sizeof(JvmtiMethodNode),
+			     (unsigned char **)&node) != JVMTI_ERROR_NONE) {
+	    JVMTI_UNLOCK(ee);
+	    return;
+	}
+	node->next = nodeByMB[slot];
+	nodeByMB[slot] = node;
+    }
+    node->cp = cp;
+    node->mb = oldmb;
+    node->isObsolete = CVM_TRUE;
+    JVMTI_UNLOCK(ee);
+}
+
+/* Purpose: Gets the ClassBlock from the specified java.lang.Class instance. */
+CVMClassBlock *
+CVMjvmtiClassInstance2ClassBlock(CVMExecEnv *ee, CVMObject *obj)
+{
+    CVMJavaInt cbAddr;
+    CVMClassBlock *cb;
+
+    /* The following condition will have to be true to guarantee that the
+       CVMObject *obj that is passed in remains valid for the duration of this
+       function, and that we can access the
+       CVMoffsetOfjava_lang_Class_classBlockPointer directly below: */
+    CVMassert(CVMjvmtiIsSafeToAccessDirectObject(ee));
+
+    CVMD_fieldReadInt(obj,
+        CVMoffsetOfjava_lang_Class_classBlockPointer, cbAddr);
+    cb = (CVMClassBlock*) cbAddr;
+    CVMassert(cb != NULL);
+
+    return cb;
+}
+
+
+jboolean CVMjvmtiThreadEventEnabled(CVMExecEnv *ee, jint eventType) {
+    return (ee == NULL) ?
+	JNI_FALSE :
+	(CVMjvmtiEventEnabled(ee).enabledBits &
+	 (((jlong)1) << CVMjvmtiEvent2EventBit(eventType))) != 0;
+}
+
+#define GLOBALLY_ENABLED(jvmti_env, eventType)		    \
+    ((jvmti_env)->envEventEnable.eventEnabled.enabledBits & \
+     (((jlong)1) << CVMjvmtiEvent2EventBit(eventType)))
+
+jboolean CVMjvmtiEnvEventEnabled(jint eventType) {
+    return (CVMglobals.jvmtiStatics.jvmtiEnv != NULL &&
+	    ((jlong)GLOBALLY_ENABLED(CVMglobals.jvmtiStatics.jvmtiEnv,
+				     eventType)) != 0);
+}
 
 /*
  * This macro is used in notify_debugger_* to determine whether a JVMTI 
@@ -138,10 +238,14 @@ static jboolean threadEnabled(jint eventType, ThreadNode *node) {
  * Also the first eventEnable[eventType] is redundant, but it serves as
  * a quick filter of events that are completely unreported.
  */
-#define MUST_NOTIFY(ee, eventType, threadNodeExpr)       \
-  (CVMglobals.jvmtiStatics._jvmti_env != NULL &&                           \
-   (GLOBALLY_ENABLED(CVMglobals.jvmtiStatics._jvmti_env, eventType) ||     \
-     threadEnabled(eventType, threadNodeExpr)))
+#define MUST_NOTIFY(ee, eventType)					\
+    (CVMglobals.jvmtiStatics.jvmtiEnv != NULL &&			\
+     GLOBALLY_ENABLED(CVMglobals.jvmtiStatics.jvmtiEnv, eventType))
+
+#define MUST_NOTIFY_THREAD(ee, eventType)				\
+    (CVMglobals.jvmtiStatics.jvmtiEnv != NULL &&			\
+     (GLOBALLY_ENABLED(CVMglobals.jvmtiStatics.jvmtiEnv, eventType) && \
+      CVMjvmtiThreadEventEnabled(ee, eventType)))
 
 /* forward defs */
 #ifdef JDK12
@@ -155,320 +259,356 @@ handleExit(void);
  * Must be called before anything that accesses event structures.
  */
 jvmtiError
-initializeJVMTI() 
+CVMinitializeJVMTI() 
 {
-  CVMExecEnv *ee = CVMgetEE();
-  CVMBool haveFailure = CVM_FALSE;
+    CVMExecEnv *ee = CVMgetEE();
+    CVMBool haveFailure = CVM_FALSE;
 
-  /* %comment: k003 */
-  if (CVMglobals.jvmtiStatics.jvmtiInitialized) {
-    return JVMTI_ERROR_NONE;
-  }
+    /* %comment: k003 */
+    if (CVMjvmtiInitialized()) {
+	return JVMTI_ERROR_NONE;
+    }
 
 #ifdef JDK12
-  CVMatExit(handleExit);
+    CVMatExit(handleExit);
 #endif
 
-  CVMglobals.jvmtiStatics.breakpoints = 
-    CVMbagCreateBag(sizeof(struct bkpt), INITIAL_BAG_SIZE);
-  CVMglobals.jvmtiStatics.framePops = CVMbagCreateBag(
-                                                      sizeof(struct fpop), INITIAL_BAG_SIZE);
-  CVMglobals.jvmtiStatics.watchedFieldModifications = 
-    CVMbagCreateBag(sizeof(struct fieldWatch), INITIAL_BAG_SIZE);
-  CVMglobals.jvmtiStatics.watchedFieldAccesses = 
-    CVMbagCreateBag(sizeof(struct fieldWatch), INITIAL_BAG_SIZE);
-  if (CVMglobals.jvmtiStatics.breakpoints == NULL || 
-      CVMglobals.jvmtiStatics.framePops == NULL || 
-      CVMglobals.jvmtiStatics.watchedFieldModifications == NULL || 
-      CVMglobals.jvmtiStatics.watchedFieldAccesses == NULL) {
-    return JVMTI_ERROR_OUT_OF_MEMORY;
-  }
-  /*
-   * Setup the events to be enabled/disabled on startup. All events
-   * are enabled except single step, exception catch, method entry/exit.
-   */
-  enableAllEvents(JVMTI_EVENT_THREAD_START, JNI_TRUE);
-  enableAllEvents(JVMTI_EVENT_THREAD_END, JNI_TRUE);
-  enableAllEvents(JVMTI_EVENT_CLASS_LOAD, JNI_TRUE);
-  enableAllEvents(JVMTI_EVENT_CLASS_PREPARE, JNI_TRUE);
-  /*    enableAllEvents(JVMTI_EVENT_CLASS_UNLOAD, JNI_TRUE); */
-  enableAllEvents(JVMTI_EVENT_FIELD_ACCESS, JNI_TRUE);
-  enableAllEvents(JVMTI_EVENT_FIELD_MODIFICATION, JNI_TRUE);
-  enableAllEvents(JVMTI_EVENT_BREAKPOINT, JNI_TRUE);
-  enableAllEvents(JVMTI_EVENT_FRAME_POP, JNI_TRUE);
-  enableAllEvents(JVMTI_EVENT_EXCEPTION, JNI_TRUE);
-  /*    enableAllEvents(JVMTI_EVENT_USER_DEFINED, JNI_TRUE); */
+    CVMglobals.jvmtiStatics.breakpoints = 
+	CVMbagCreateBag(sizeof(struct bkpt), INITIAL_BAG_SIZE);
+    CVMglobals.jvmtiStatics.framePops = CVMbagCreateBag(
+							sizeof(struct fpop), INITIAL_BAG_SIZE);
+    CVMglobals.jvmtiStatics.watchedFieldModifications = 
+	CVMbagCreateBag(sizeof(struct fieldWatch), INITIAL_BAG_SIZE);
+    CVMglobals.jvmtiStatics.watchedFieldAccesses = 
+	CVMbagCreateBag(sizeof(struct fieldWatch), INITIAL_BAG_SIZE);
+    if (CVMglobals.jvmtiStatics.breakpoints == NULL || 
+	CVMglobals.jvmtiStatics.framePops == NULL || 
+	CVMglobals.jvmtiStatics.watchedFieldModifications == NULL || 
+	CVMglobals.jvmtiStatics.watchedFieldAccesses == NULL) {
+	return JVMTI_ERROR_OUT_OF_MEMORY;
+    }
 
-  /* NOTE: We must not trigger a GC while holding the thread lock.
-     We are safe here because insertThread() can allocate global roots
-     which can cause expansion of the global root stack, but not cause
-     a GC. */
-  CVM_THREAD_LOCK(ee);
+    /* NOTE: We must not trigger a GC while holding the thread lock.
+       We are safe here because insertThread() can allocate global roots
+       which can cause expansion of the global root stack, but not cause
+       a GC. */
+    CVM_THREAD_LOCK(ee);
 
-  /* Log all thread that were created prior to JVMTI's initialization: */
-  /* NOTE: We are only logging the pre-existing threads into the JVMTI
-     threads list.  We don't send currently send JVMTI_EVENT_THREAD_START
-     for these threads that started before JVMTI was initialized. */
-  CVM_WALK_ALL_THREADS(ee, currentEE, {
-      jthread thread = CVMcurrentThreadICell(currentEE);
-      if (!haveFailure && !CVMID_icellIsNull(thread)) {
-        ThreadNode *node = CVMjvmtiFindThread(ee, thread);
-        if (node == NULL) {
-          node = CVMjvmtiInsertThread(ee, thread);
-          if (node == NULL) {
-            haveFailure = CVM_TRUE;
-          }
-        }
-      }
-    });
+    /* Log all thread that were created prior to JVMTI's initialization: */
+    /* NOTE: We are only logging the pre-existing threads into the JVMTI
+       threads list.  We don't send currently send JVMTI_EVENT_THREAD_START
+       for these threads that started before JVMTI was initialized. */
+    CVM_WALK_ALL_THREADS(ee, currentEE, {
+	    jthread thread = CVMcurrentThreadICell(currentEE);
+	    if (!haveFailure && !CVMID_icellIsNull(thread)) {
+		ThreadNode *node = CVMjvmtiFindThread(ee, thread);
+		if (node == NULL) {
+		    node = CVMjvmtiInsertThread(ee, thread);
+		    if (node == NULL) {
+			haveFailure = CVM_TRUE;
+		    }
+		}
+	    }
+	});
 
-  CVM_THREAD_UNLOCK(ee);
+    CVM_THREAD_UNLOCK(ee);
 
-  /* Abort if we detected a failure while trying to log threads: */
-  if (haveFailure) {
-    return JVMTI_ERROR_OUT_OF_MEMORY;
-  }
-  initialize_capabilities();
-  CVMglobals.jvmtiStatics.jvmtiInitialized = CVM_TRUE;
-
-  return JVMTI_ERROR_NONE;
+    /* Abort if we detected a failure while trying to log threads: */
+    if (haveFailure) {
+	return JVMTI_ERROR_OUT_OF_MEMORY;
+    }
+    CVMjvmtiInitializeCapabilities();
+    /*    clks_per_sec = CVMgetClockTicks(); */
+    return JVMTI_ERROR_NONE;
 }
+/*
+CVMInt64 CVMjvmtiGetClockTicks() {
+    return clks_per_sec;
+}
+*/
 
 /*
  * These functions maintain the linked list of currently running threads. 
  */
 ThreadNode *CVMjvmtiFindThread(CVMExecEnv* ee, CVMObjectICell* thread) {
-  ThreadNode *node;
-  CVMBool thrEq;
+    ThreadNode *node;
+    CVMBool thrEq;
 
-  DEBUGGER_LOCK(ee);
+    JVMTI_LOCK(ee);
 
-  /* cast away volatility */
-  node = (ThreadNode *)CVMglobals.jvmtiStatics.threadList;  
-  while (node != NULL) {
-    CVMID_icellSameObject(ee, node->thread, thread, thrEq);
-    if (thrEq) {
-      break;
+    /* cast away volatility */
+    node = (ThreadNode *)CVMglobals.jvmtiStatics.threadList;  
+    while (node != NULL) {
+	CVMID_icellSameObject(ee, node->thread, thread, thrEq);
+	if (thrEq) {
+	    break;
+	}
+	node = node->next;
     }
-    node = node->next;
-  }
-  DEBUGGER_UNLOCK(ee);
+    JVMTI_UNLOCK(ee);
 
-  return node;
+    return node;
 }
 
 ThreadNode *CVMjvmtiInsertThread(CVMExecEnv* ee, CVMObjectICell* thread) {
-  ThreadNode *node;
+    ThreadNode *node;
 
-  /* NOTE: you could move the locking and unlocking inside the if
-     clause in such a way as to avoid the problem with seizing both
-     the debugger and global root lock at the same time, but it
-     wouldn't solve the problem of removeThread, which is harder,
-     nor the (potential) problem of the several routines which
-     perform indirect memory accesses while holding the debugger
-     lock; if there was ever a lock associated
-     with those accesses there would be a problem. */
-  DEBUGGER_LOCK(ee);
+    /* NOTE: you could move the locking and unlocking inside the if
+       clause in such a way as to avoid the problem with seizing both
+       the debugger and global root lock at the same time, but it
+       wouldn't solve the problem of removeThread, which is harder,
+       nor the (potential) problem of the several routines which
+       perform indirect memory accesses while holding the debugger
+       lock; if there was ever a lock associated
+       with those accesses there would be a problem. */
+    JVMTI_LOCK(ee);
 
-  node = (ThreadNode *)malloc(sizeof(*node));
-  if (node != NULL) {
-    memset(node, 0, sizeof(*node));
-    node->thread = CVMID_getGlobalRoot(ee);
-    if (node->thread == NULL) {
-      goto fail0;
-    }
-    node->lastDetectedException = CVMID_getGlobalRoot(ee);
-    if (node->lastDetectedException == NULL) {
-      goto fail1;
-    }
+    node = (ThreadNode *)malloc(sizeof(*node));
+    if (node != NULL) {
+	memset(node, 0, sizeof(*node));
+	node->thread = CVMID_getGlobalRoot(ee);
+	if (node->thread == NULL) {
+	    goto fail0;
+	}
+	node->lastDetectedException = CVMID_getGlobalRoot(ee);
+	if (node->lastDetectedException == NULL) {
+	    goto fail1;
+	}
 
-    CVMID_icellAssign(ee, node->thread, thread);
+	CVMID_icellAssign(ee, node->thread, thread);
 
-    /* cast away volatility */
-    node->next = (ThreadNode *)CVMglobals.jvmtiStatics.threadList; 
-    CVMglobals.jvmtiStatics.threadList = node;
-  } 
+	/* cast away volatility */
+	node->next = (ThreadNode *)CVMglobals.jvmtiStatics.threadList; 
+	CVMglobals.jvmtiStatics.threadList = node;
+    } 
 
  unlock:
-  DEBUGGER_UNLOCK(ee);
+    JVMTI_UNLOCK(ee);
 
-  return node;
+    return node;
 
  fail1:
-  CVMID_freeGlobalRoot(ee, node->thread);
+    CVMID_freeGlobalRoot(ee, node->thread);
  fail0:
-  free(node);
-  node = NULL;
-  goto unlock;
+    free(node);
+    node = NULL;
+    goto unlock;
 }
 
 jboolean 
 CVMjvmtiRemoveThread(CVMObjectICell* thread) {
-  ThreadNode *previous = NULL;
-  ThreadNode *node; 
-  CVMExecEnv* ee = CVMgetEE();
-  CVMBool thrEq;
-  jboolean rc = JNI_FALSE;
+    ThreadNode *previous = NULL;
+    ThreadNode *node; 
+    CVMExecEnv* ee = CVMgetEE();
+    CVMBool thrEq;
+    jboolean rc = JNI_FALSE;
 
-  DEBUGGER_LOCK(ee);
+    JVMTI_LOCK(ee);
 
-  /* cast away volatility */
-  node = (ThreadNode *)CVMglobals.jvmtiStatics.threadList;  
-  while (node != NULL) {
-    CVMID_icellSameObject(ee, node->thread, thread, thrEq);
-    if (thrEq) {
-      int i;
-      if (previous == NULL) {
-        CVMglobals.jvmtiStatics.threadList = node->next;
-      } else {
-        previous->next = node->next;
-      }
-      for (i = 0; i <= JVMTI_MAX_EVENT_TYPE_VAL; i++) {
-        CVMjvmtiEnableThreadEvents(ee, node, i, JNI_FALSE);
-      }
-      CVMID_freeGlobalRoot(ee, node->thread);
-      CVMID_freeGlobalRoot(ee, node->lastDetectedException);
+    /* cast away volatility */
+    node = (ThreadNode *)CVMglobals.jvmtiStatics.threadList;  
+    while (node != NULL) {
+	CVMID_icellSameObject(ee, node->thread, thread, thrEq);
+	if (thrEq) {
+	    if (previous == NULL) {
+		CVMglobals.jvmtiStatics.threadList = node->next;
+	    } else {
+		previous->next = node->next;
+	    }
+	    CVMID_freeGlobalRoot(ee, node->thread);
+	    CVMID_freeGlobalRoot(ee, node->lastDetectedException);
 
-      free((void *)node);
-      rc = JNI_TRUE;
-      break;
+	    free((void *)node);
+	    rc = JNI_TRUE;
+	    break;
+	}
+	previous = node;
+	node = node->next;
     }
-    previous = node;
-    node = node->next;
-  }
-  DEBUGGER_UNLOCK(ee);
+    JVMTI_UNLOCK(ee);
 
-  return rc;
+    return rc;
 }
 
+static void
+checkAndSendStartEvent(CVMExecEnv *ee) {
+    ThreadNode *node =
+	CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
+    if (node == NULL || node->startEventSent == CVM_FALSE) {
+	/* Send thread start event */
+	CVMjvmtiPostThreadStartEvent(ee, CVMcurrentThreadICell(ee));
+    }
+}
+
+static void
+unlock_monitors(CVMExecEnv* threadEE) {
+    CVMOwnedMonitor *mon, *monNext;
+    CVMFrame *currentFrame;
+    CVMjvmtiLockInfo *li;
+    CVMObjectICell objIcell;
+    CVMObjectICell *objp = &objIcell;
+    CVMExecEnv *ee =CVMgetEE();
+
+    mon = threadEE->objLocksOwned;
+    currentFrame = CVMeeGetCurrentFrame(threadEE);
+    CVMassert(CVMframeIsJava(currentFrame));
+    li = CVMgetJavaFrame(currentFrame)->jvmtiLockInfo;
+    while (li != NULL) {
+	mon = li->lock;
+	monNext = mon->next;
+	CVMassert(mon->state != CVM_OWNEDMON_FREE);
+	if (mon->object != NULL) {
+	    CVMD_gcUnsafeExec(ee, {
+		    if(!CVMobjectTryUnlock(threadEE, mon->object)) {
+			CVMID_icellSetDirect(ee, objp, mon->object);
+			CVMobjectUnlock(threadEE, objp);
+		    }
+		});
+	}
+	/* unlocking lock removes lockinfo record */
+	li = CVMgetJavaFrame(currentFrame)->jvmtiLockInfo;
+    }
+}
 
 void
 reportException(CVMExecEnv* ee, CVMUint8 *pc,
                 CVMObjectICell* object, CVMFrame* frame) {
-  JNIEnv *env = CVMexecEnv2JniEnv(ee);
-  CVMMethodBlock* exceptionMb = frame->mb;
-  CVMClassBlock* exceptionCb;
-  CVMJavaLong catchLocation = 0L;
-  CVMMethodBlock *catchMb = NULL;
-  JvmtiEnv *jvmti_env;
-  jvmtiEventException callback;
-  CVMFrameIterator iter;
+    JNIEnv *env = CVMexecEnv2JniEnv(ee);
+    CVMMethodBlock* exceptionMb = frame->mb;
+    CVMClassBlock* exceptionCb;
+    CVMJavaLong catchLocation = 0L;
+    CVMMethodBlock *catchMb = NULL;
+    JvmtiEnv *jvmti_env;
+    jvmtiEventException callback;
+    CVMFrameIterator iter;
 
-  if (exceptionMb == NULL) {
-    return;
-  }
+    if (exceptionMb == NULL) {
+	return;
+    }
 
-  /* NOTE: MUST BE A JAVA METHOD */
-  CVMassert(!CVMmbIs(exceptionMb, NATIVE));
+    /* NOTE: MUST BE A JAVA METHOD */
+    CVMassert(!CVMmbIs(exceptionMb, NATIVE));
 
-  CVMID_objectGetClass(ee, object, exceptionCb);
-  jvmti_env = CVMglobals.jvmtiStatics._jvmti_env;
-  callback = jvmti_env->_event_callbacks.Exception;
-  if (callback != NULL) {
-    /* walk up the stack to see if this exception is caught anywhere. */
+    CVMID_objectGetClass(ee, object, exceptionCb);
+    jvmti_env = GLOBAL_ENV;
+    callback = jvmti_env->eventCallbacks.Exception;
+    if (callback != NULL) {
+	/* walk up the stack to see if this exception is caught anywhere. */
 
-    CVMframeIterate(frame, &iter);
-
-    while (CVMframeIterateNextSpecial(&iter, CVM_TRUE)) {
-	  /* %comment: k004 */
-	  /* skip transition frames, which can't catch exceptions */
-	  if (CVMframeIterateCanHaveJavaCatchClause(&iter)) {
-	    catchMb = CVMframeIterateGetMb(&iter);
-	    /* %comment: k005 */
-	    if (catchMb != NULL) {
-		  CVMUint8* pc = CVMframeIterateGetJavaPc(&iter);
-		  CVMUint8* cpc =
+	CVMframeIterateInit(&iter, frame);
+	while (CVMframeIterateNextReflection(&iter, CVM_TRUE)) {
+	    /* %comment: k004 */
+	    /* skip transition frames, which can't catch exceptions */
+	    if (CVMframeIterateCanHaveJavaCatchClause(&iter)) {
+		catchMb = CVMframeIterateGetMb(&iter);
+		/* %comment: k005 */
+		if (catchMb != NULL) {
+		    CVMUint8* pc = CVMframeIterateGetJavaPc(&iter);
+		    CVMUint8* cpc =
 			CVMgcSafeFindPCForException(ee, &iter,
-										exceptionCb,
-										pc);
-		  if (cpc != NULL) {
+						    exceptionCb,
+						    pc);
+		    if (cpc != NULL) {
 			/* NOTE: MUST BE A JAVA METHOD */
 			CVMassert(!CVMmbIs(catchMb, NATIVE));
 			catchLocation = CVMint2Long(cpc - CVMmbJavaCode(catchMb));
 			break;
-		  } else {
+		    } else {
 			catchMb = NULL;
-		  }
+		    }
+		}
 	    }
-	  }
+	}
+	(*callback)(&jvmti_env->jvmtiExternal, env,
+		    (*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)), 
+		    exceptionMb,
+		    CVMint2Long(pc - CVMmbJavaCode(exceptionMb)),
+		    (*env)->NewLocalRef(env, object),
+		    catchMb,
+		    catchLocation);
     }
-    (*callback)(&jvmti_env->_jvmti_external, env,
-                (*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)), 
-                exceptionMb, CVMint2Long(pc - CVMmbJavaCode(exceptionMb)),
-                (*env)->NewLocalRef(env, object), catchMb, catchLocation);
-  }
 
 }
 
+/* FIXME: This function is being called if JVMTI is being enabled globally even
+   if this event is not enabled.  This is vey heavy overhead and should be
+   fixed. */
 /* %comment: k006 */
 void
-CVMjvmtiNotifyDebuggerOfException(CVMExecEnv* ee, CVMUint8 *pc,
-								  CVMObjectICell* object)
+CVMjvmtiPostExceptionEvent(CVMExecEnv* ee, CVMUint8 *pc,
+			   CVMObjectICell* object)
 {
-  JNIEnv *env = CVMexecEnv2JniEnv(ee);
-  ThreadNode *threadNode;
-  CVMBool exceptionsEqual = CVM_FALSE;
+    JNIEnv *env = CVMexecEnv2JniEnv(ee);
+    ThreadNode *threadNode;
+    CVMBool exceptionsEqual = CVM_FALSE;
 
-  /* This check is probably unnecessary */
-  if (CVMcurrentThreadICell(ee) == NULL) {
-    return;
-  }
-  
-  threadNode = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
-  if (threadNode == NULL) {
-    /* ignore any exceptions before thread start */
-    return;
-  }
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+    /* This check is probably unnecessary */
+    if (CVMcurrentThreadICell(ee) == NULL) {
+	return;
+    }
+    if (!MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_EXCEPTION)) {
+	return;
+    }
+    checkAndSendStartEvent(ee);
+    threadNode = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
+#if 0
+    if (threadNode == NULL) {
+	/* ignore any exceptions before thread start */
+	return;
+    }
+#endif
+    CVMID_icellSameObject(ee, threadNode->lastDetectedException,
+			  object,
+			  exceptionsEqual);
 
-  CVMID_icellSameObject(ee, threadNode->lastDetectedException,
-                        object,
-                        exceptionsEqual);
-
-  if (!exceptionsEqual) {
+    if (!exceptionsEqual) {
 
 	CVMFrame* frame = CVMeeGetCurrentFrame(ee);
+	jobject pendingException;
 
-    if ((*env)->PushLocalFrame(env, 5+LOCAL_FRAME_SLOP) < 0) {
-      return;
-    }
+	if ((*env)->PushLocalFrame(env, 5+LOCAL_FRAME_SLOP) < 0) {
+	    return;
+	}
         
-    if (MUST_NOTIFY(ee, JVMTI_EVENT_EXCEPTION, threadNode)) {
-      jobject pendingException = (*env)->ExceptionOccurred(env);
+	pendingException = (*env)->ExceptionOccurred(env);
 
-      /*
-       * Save the pending exception so it does not get
-       * overwritten if CVMgcSafeFindPCForException() throws an
-       * exception. Also, in classloading builds,
-       * CVMgcSafeFindPCForException may cause loading of the
-       * exception class, which code expects no exception to
-       * have occurred upon entry.
-       */
+	/*
+	 * Save the pending exception so it does not get
+	 * overwritten if CVMgcSafeFindPCForException() throws an
+	 * exception. Also, in classloading builds,
+	 * CVMgcSafeFindPCForException may cause loading of the
+	 * exception class, which code expects no exception to
+	 * have occurred upon entry.
+	 */
 
-      (*env)->ExceptionClear(env);
+	(*env)->ExceptionClear(env);
 
-	  reportException(ee, pc, pendingException, frame);
+	reportException(ee, pc, pendingException, frame);
 
-      /*
-       * Restore the exception state
-       */
-      if (pendingException != NULL) {
-        (*env)->Throw(env, pendingException);
-      } else {
-        (*env)->ExceptionClear(env);
-      }
+	/*
+	 * Restore the exception state
+	 */
+	if (pendingException != NULL) {
+	    (*env)->Throw(env, pendingException);
+	} else {
+	    (*env)->ExceptionClear(env);
+	}
+
+	/*
+	 * This needs to be a global ref; otherwise, the detected
+	 * exception could be cleared and collected in a native method
+	 * causing later comparisons to be invalid.
+	 */
+	CVMID_icellAssign(ee, threadNode->lastDetectedException, object);
+
+	(*env)->PopLocalFrame(env, 0);
     }
-
-    /*
-     * This needs to be a global ref; otherwise, the detected
-     * exception could be cleared and collected in a native method
-     * causing later comparisons to be invalid.
-     */
-    CVMID_icellAssign(ee, threadNode->lastDetectedException, object);
-
-    (*env)->PopLocalFrame(env, 0);
-  }
 }
 
+/* FIXME: This function is being called from the interpreter loop if JVMTI is
+   enabed globally even if this event is not needed.  This has to heavy
+   overhead and needs to be fixed. */
 /*
  * This function is called by the interpreter whenever:
  * 1) The interpreter catches an exception, or
@@ -485,30 +625,38 @@ CVMjvmtiNotifyDebuggerOfException(CVMExecEnv* ee, CVMUint8 *pc,
  * detected exception value saved for this thread.
  */
 void
-CVMjvmtiNotifyDebuggerOfExceptionCatch(CVMExecEnv* ee, CVMUint8 *pc, CVMObjectICell* object)
+CVMjvmtiPostExceptionCatchEvent(CVMExecEnv* ee, CVMUint8 *pc,
+				CVMObjectICell* object)
 {
-  ThreadNode *threadNode;
-  JvmtiEnv *jvmti_env;
-  jvmtiEventExceptionCatch callback;
-    
-  /* This check is probably unnecessary */
-  if (CVMcurrentThreadICell(ee) == NULL) {
-    return;
-  }
-
-  threadNode = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
-  if (threadNode == NULL) {
-    /* ignore any exceptions before thread start */
-    return;
-  }
-
-  if (MUST_NOTIFY(ee, JVMTI_EVENT_EXCEPTION_CATCH, threadNode)) {
+    ThreadNode *threadNode;
+    JvmtiEnv *jvmti_env;
+    jvmtiEventExceptionCatch callback;
     JNIEnv* env = CVMexecEnv2JniEnv(ee);
-    CVMFrame* frame = CVMeeGetCurrentFrame(ee);
-    CVMMethodBlock* mb = frame->mb;
+    CVMFrame* frame;
+    CVMMethodBlock* mb;
+    
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+    /* This check is probably unnecessary */
+    if (CVMcurrentThreadICell(ee) == NULL) {
+	return;
+    }
+
+    if (!MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_EXCEPTION_CATCH)) {
+	return;
+    }
+    checkAndSendStartEvent(ee);
+    threadNode = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
+#if 0
+    if (threadNode == NULL) {
+	/* ignore any exceptions before thread start */
+	return;
+    }
+#endif
+    frame = CVMeeGetCurrentFrame(ee);
+    mb = frame->mb;
 
     if (mb == NULL) {
-      return;
+	return;
     }
 
     /* NOTE: MUST BE A JAVA METHOD */
@@ -520,472 +668,545 @@ CVMjvmtiNotifyDebuggerOfExceptionCatch(CVMExecEnv* ee, CVMUint8 *pc, CVMObjectIC
      * earlier.
      */
     if ((object != NULL) || 
-        !CVMID_icellIsNull(threadNode->lastDetectedException)) {
+	!CVMID_icellIsNull(threadNode->lastDetectedException)) {
             
-      if ((*env)->PushLocalFrame(env, 3+LOCAL_FRAME_SLOP) < 0) {
-        return;
-      }
+	if ((*env)->PushLocalFrame(env, 3+LOCAL_FRAME_SLOP) < 0) {
+	    return;
+	}
 
-      jvmti_env = CVMglobals.jvmtiStatics._jvmti_env;
-      callback = jvmti_env->_event_callbacks.ExceptionCatch;
-      if (callback != NULL) {
-        (*callback)(&jvmti_env->_jvmti_external, env,
-                    (*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)), 
-                    mb, CVMint2Long(pc - CVMmbJavaCode(mb)),
-                    (*env)->NewLocalRef(env, object));
-      }
+	jvmti_env = GLOBAL_ENV;
+	callback = jvmti_env->eventCallbacks.ExceptionCatch;
+	if (callback != NULL) {
+	    (*callback)(&jvmti_env->jvmtiExternal, env,
+			(*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)), 
+			mb,
+			CVMint2Long(pc - CVMmbJavaCode(mb)),
+			(*env)->NewLocalRef(env, object));
+	}
 
-      (*env)->PopLocalFrame(env, 0);
+	(*env)->PopLocalFrame(env, 0);
     }
-  }
-  CVMID_icellSetNull(threadNode->lastDetectedException);
+    CVMID_icellSetNull(threadNode->lastDetectedException);
 }
 
 void
-CVMjvmtiNotifyDebuggerOfSingleStep(CVMExecEnv* ee, CVMUint8 *pc)
+CVMjvmtiPostSingleStepEvent(CVMExecEnv* ee, CVMUint8 *pc)
 {
-  /*
-   * The interpreter notifies us only for threads that have stepping enabled,
-   * so we don't do any checks of the global or per-thread event
-   * enable flags here.
-   */
+    /*
+     * The interpreter notifies us only for threads that have stepping enabled,
+     * so we don't do any checks of the global or per-thread event
+     * enable flags here.
+     */
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
 
-  if (CVMglobals.jvmtiStatics.jvmtiInitialized) {
-    CVMFrame* frame = CVMeeGetCurrentFrame(ee);
-    CVMMethodBlock* mb = frame->mb;
-    JNIEnv* env = CVMexecEnv2JniEnv(ee);
-    JvmtiEnv *jvmti_env;
-    jvmtiEventSingleStep callback;
+    if (CVMjvmtiInitialized()) {
+	CVMFrame* frame = CVMeeGetCurrentFrame(ee);
+	CVMMethodBlock* mb = frame->mb;
+	JNIEnv* env = CVMexecEnv2JniEnv(ee);
+	JvmtiEnv *jvmti_env;
+	jvmtiEventSingleStep callback;
 
-    if (CVMframeIsTransition(frame) || mb == NULL) {
-      return;
+	if (CVMframeIsTransition(frame) || mb == NULL) {
+	    return;
+	}
+
+	/* NOTE: MUST BE A JAVA METHOD */
+	CVMassert(!CVMmbIs(mb, NATIVE));
+	CVMtraceJVMTI(("JVMTI: Post Step: ee 0x%x\n", (int)ee));
+	if ((*env)->PushLocalFrame(env, 2+LOCAL_FRAME_SLOP) < 0) {
+	    return;
+	}
+	jvmti_env = GLOBAL_ENV;
+	callback = jvmti_env->eventCallbacks.SingleStep;
+	if (callback != NULL) {
+	    (*callback)(&jvmti_env->jvmtiExternal, env,
+			(*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)), 
+			mb,
+			CVMint2Long(pc - CVMmbJavaCode(mb)));
+	}
+
+	(*env)->PopLocalFrame(env, 0);
     }
-
-    /* NOTE: MUST BE A JAVA METHOD */
-    CVMassert(!CVMmbIs(mb, NATIVE));
-
-    if ((*env)->PushLocalFrame(env, 2+LOCAL_FRAME_SLOP) < 0) {
-      return;
+    if (CVMjvmtiNeedFramePop(ee)) {
+	unlock_monitors(ee);
     }
-    jvmti_env = CVMglobals.jvmtiStatics._jvmti_env;
-    callback = jvmti_env->_event_callbacks.SingleStep;
-    if (callback != NULL) {
-      (*callback)(&jvmti_env->_jvmti_external, env,
-                  (*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)), 
-                  mb, CVMint2Long(pc - CVMmbJavaCode(mb)));
-    }
-
-    (*env)->PopLocalFrame(env, 0);
-  }
 }
 
 void
 notify_debugger_of_breakpoint(CVMExecEnv* ee, CVMUint8 *pc)
 {
-  if (/*MUST_NOTIFY(ee, JVMTI_EVENT_BREAKPOINT,
-        CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee)))*/ 1) {
-    CVMFrame* frame = CVMeeGetCurrentFrame(ee);
-    CVMMethodBlock* mb = frame->mb;
+
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+    if (MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_BREAKPOINT)) {
+	CVMFrame* frame = CVMeeGetCurrentFrame(ee);
+	CVMMethodBlock* mb = frame->mb;
+	JNIEnv *env = CVMexecEnv2JniEnv(ee);
+	JvmtiEnv *jvmti_env;
+	jvmtiEventBreakpoint callback;
+
+	if (mb == NULL) {
+	    return;
+	}
+	/* NOTE: MUST BE A JAVA METHOD */
+	CVMassert(!CVMmbIs(mb, NATIVE));
+	if ((*env)->PushLocalFrame(env, 2+LOCAL_FRAME_SLOP) < 0) {
+	    return;
+	}
+	jvmti_env = GLOBAL_ENV;
+	callback = jvmti_env->eventCallbacks.Breakpoint;
+	if (callback != NULL) {
+	    CVMtraceJVMTI(("JVMTI: Post breakpoint: ee 0x%x\n",
+			   (int)ee));
+	    checkAndSendStartEvent(ee);
+	    (*callback)(&jvmti_env->jvmtiExternal, env,
+			(*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)), 
+			mb,
+			CVMint2Long(pc - CVMmbJavaCode(mb)));
+	}
+  
+	(*env)->PopLocalFrame(env, 0);
+    }
+    if (CVMjvmtiNeedFramePop(ee)) {
+	unlock_monitors(ee);
+    }
+}
+
+void
+CVMjvmtiPostThreadStartEvent(CVMExecEnv* ee, CVMObjectICell* thread)
+{
     JNIEnv *env = CVMexecEnv2JniEnv(ee);
     JvmtiEnv *jvmti_env;
-    jvmtiEventBreakpoint callback;
+    jvmtiEventThreadStart callback;
 
-    if (mb == NULL) {
-      return;
-    }
-    /* NOTE: MUST BE A JAVA METHOD */
-    CVMassert(!CVMmbIs(mb, NATIVE));
-    if ((*env)->PushLocalFrame(env, 2+LOCAL_FRAME_SLOP) < 0) {
-      return;
-    }
-    jvmti_env = CVMglobals.jvmtiStatics._jvmti_env;
-    callback = jvmti_env->_event_callbacks.Breakpoint;
-    if (callback != NULL) {
-      (*callback)(&jvmti_env->_jvmti_external, env,
-                  (*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)), 
-                  mb, CVMint2Long(pc - CVMmbJavaCode(mb)));
-    }
-  
-    (*env)->PopLocalFrame(env, 0);
-  }
-}
-
-void
-CVMjvmtiNotifyDebuggerOfThreadStart(CVMExecEnv* ee, CVMObjectICell* thread)
-{
-  JNIEnv *env = CVMexecEnv2JniEnv(ee);
-  JvmtiEnv *jvmti_env;
-  jvmtiEventThreadStart callback;
-
-  /*
-   * Look for existing thread info for this thread. If there is 
-   * a ThreadNode already, it just means that it's a debugger thread
-   * started by jvmti_RunDebugThread; if not, we create the ThreadNode
-   * here. 
-   */
-  ThreadNode *node = CVMjvmtiFindThread(ee, thread);
-  if (node == NULL) {
-    node = CVMjvmtiInsertThread(ee, thread);
+    /*
+     * Look for existing thread info for this thread. If there is 
+     * a ThreadNode already, it just means that it's a debugger thread
+     * started by jvmti_RunDebugThread; if not, we create the ThreadNode
+     * here. 
+     */
+    ThreadNode *node = CVMjvmtiFindThread(ee, thread);
     if (node == NULL) {
-      (*env)->FatalError(env, "internal allocation error in JVMTI");
+	node = CVMjvmtiInsertThread(ee, thread);
+	if (node == NULL) {
+	    (*env)->FatalError(env, "internal allocation error in JVMTI");
+	}
     }
-  }
 
-  if (CVMglobals.jvmtiStatics.jvmtiInitialized) {
-      if ((*env)->PushLocalFrame(env, 1+LOCAL_FRAME_SLOP) < 0) {
-        return;
-      }
-      jvmti_env = CVMglobals.jvmtiStatics._jvmti_env;
-      callback = jvmti_env->_event_callbacks.ThreadStart;
-      if (callback != NULL) {
-        (*callback)(&jvmti_env->_jvmti_external, env,
-                    (*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)));
-      }
+    if (CVMjvmtiShouldPostThreadLife() &&
+	CVMjvmtiGetPhase() == JVMTI_PHASE_LIVE) {
+	jvmti_env = GLOBAL_ENV;
+	CVMJVMTI_CHECK_PHASEV2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
+	if (CVMjvmtiInitialized()) {
+	    if ((*env)->PushLocalFrame(env, 1+LOCAL_FRAME_SLOP) < 0) {
+		return;
+	    }
+	    callback = jvmti_env->eventCallbacks.ThreadStart;
+	    if (callback != NULL) {
+		CVMtraceJVMTI(("JVMTI: Post thread start: ee 0x%x\n",
+			       (int)ee));
+		(*callback)(&jvmti_env->jvmtiExternal, env,
+			(*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)));
+		node->startEventSent = CVM_TRUE;
+	    }
 
-      (*env)->PopLocalFrame(env, 0);
+	    (*env)->PopLocalFrame(env, 0);
+	}
+	CVMjvmtiRecomputeThreadEnabled(ee, &jvmti_env->envEventEnable);
     }
 }
 
 void
-CVMjvmtiNotifyDebuggerOfThreadEnd(CVMExecEnv* ee, CVMObjectICell* thread)
+CVMjvmtiPostThreadEndEvent(CVMExecEnv* ee, CVMObjectICell* thread)
 {
-  JNIEnv *env = CVMexecEnv2JniEnv(ee);
-  if (MUST_NOTIFY(ee, JVMTI_EVENT_THREAD_END, CVMjvmtiFindThread(ee, thread))) {
-    JvmtiEnv *jvmti_env;
-    jvmtiEventThreadEnd callback;
+    JNIEnv *env = CVMexecEnv2JniEnv(ee);
+    CVMJVMTI_CHECK_PHASEV2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
+    if (MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_THREAD_END)) {
+	JvmtiEnv *jvmti_env;
+	jvmtiEventThreadEnd callback;
 
-    if ((*env)->PushLocalFrame(env, 1+LOCAL_FRAME_SLOP) < 0) {
-      goto forgetThread;
+	if ((*env)->PushLocalFrame(env, 1+LOCAL_FRAME_SLOP) < 0) {
+	    goto forgetThread;
+	}
+	jvmti_env = GLOBAL_ENV;
+	callback = jvmti_env->eventCallbacks.ThreadEnd;
+	if (callback != NULL) {
+	    CVMtraceJVMTI(("JVMTI: Post thread end: ee 0x%x\n", (int)ee));
+	    (*callback)(&jvmti_env->jvmtiExternal, env,
+			(*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)));
+	}
+	(*env)->PopLocalFrame(env, 0);
     }
-    jvmti_env = CVMglobals.jvmtiStatics._jvmti_env;
-    callback = jvmti_env->_event_callbacks.ThreadEnd;
-    if (callback != NULL) {
-      (*callback)(&jvmti_env->_jvmti_external, env,
-                  (*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)));
-    }
-    (*env)->PopLocalFrame(env, 0);
-  }
 
  forgetThread:
-  if (CVMjvmtiRemoveThread(thread) == JNI_FALSE) {
-    (*env)->FatalError(env, "internal error in JVMTI (ending unstarted thread)");
-  }
-
+    CVMjvmtiRemoveThread(thread);
 }
 
 void
-CVMjvmtiNotifyDebuggerOfFieldAccess(CVMExecEnv* ee, CVMObjectICell* obj,
-                                    CVMFieldBlock* fb)
+CVMjvmtiPostFieldAccessEvent(CVMExecEnv* ee, CVMObjectICell* obj,
+			     CVMFieldBlock* fb)
 {
-  struct fieldWatch *fwfb;
+    struct fieldWatch *fwfb;
 
-  DEBUGGER_LOCK(ee);
-  fwfb = CVMbagFind(CVMglobals.jvmtiStatics.watchedFieldAccesses, fb);
-  DEBUGGER_UNLOCK(ee);          
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+    JVMTI_LOCK(ee);
+    fwfb = CVMbagFind(CVMglobals.jvmtiStatics.watchedFieldAccesses, fb);
+    JVMTI_UNLOCK(ee);          
 
-  if (fwfb != NULL &&
-      MUST_NOTIFY(ee, JVMTI_EVENT_FIELD_ACCESS, 
-                  CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee)))) {
-    CVMFrame* frame = CVMeeGetCurrentFrame(ee);
-    CVMMethodBlock* mb;
-    jlocation location;
-    JNIEnv* env = CVMexecEnv2JniEnv(ee);
-    JvmtiEnv *jvmti_env;
-    jvmtiEventFieldAccess callback;
+    if (fwfb != NULL &&
+	MUST_NOTIFY(ee, JVMTI_EVENT_FIELD_ACCESS)) {
+	CVMFrame* frame = CVMeeGetCurrentFrame(ee);
+	CVMMethodBlock* mb;
+	jlocation location;
+	JNIEnv* env = CVMexecEnv2JniEnv(ee);
+	JvmtiEnv *jvmti_env;
+	jvmtiEventFieldAccess callback;
 
-    /* We may have come through native code - remove any
-     * empty frames.
-     */
+	/* We may have come through native code - remove any
+	 * empty frames.
+	 */
 
-    /* %comment: k007 */
+	/* %comment: k007 */
 
-    frame = CVMgetCallerFrame(frame, 0);
-    if (frame == NULL || (mb = frame->mb) == NULL) {
-      return;
+	frame = CVMgetCallerFrame(frame, 0);
+	if (frame == NULL || (mb = frame->mb) == NULL) {
+	    return;
+	}
+	if (CVMframeIsInterpreter(frame)) {
+	    CVMInterpreterFrame* interpFrame = CVMgetInterpreterFrame(frame);
+	    location = CVMint2Long(CVMframePc(interpFrame) - CVMmbJavaCode(mb));
+	} else {
+	    location = CVMint2Long(-1);
+	}
+
+	if ((*env)->PushLocalFrame(env, 4+LOCAL_FRAME_SLOP) < 0) {
+	    return;
+	}
+	jvmti_env = GLOBAL_ENV;
+	callback = jvmti_env->eventCallbacks.FieldAccess;
+	if (callback != NULL) {
+	    (*callback)(&jvmti_env->jvmtiExternal, env,
+			(*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)), 
+			mb, location,
+			(*env)->NewLocalRef(env,
+					    CVMcbJavaInstance(CVMfbClassBlock(fb))),
+			(obj == NULL ? NULL :
+			 (*env)->NewLocalRef(env, obj)), fb);
+	}
+	(*env)->PopLocalFrame(env, 0);
     }
-    if (CVMframeIsInterpreter(frame)) {
-      CVMInterpreterFrame* interpFrame = CVMgetInterpreterFrame(frame);
-      location = CVMint2Long(CVMframePc(interpFrame) - CVMmbJavaCode(mb));
-    } else {
-      location = CVMint2Long(-1);
+    if (CVMjvmtiNeedFramePop(ee)) {
+	unlock_monitors(ee);
     }
-
-    if ((*env)->PushLocalFrame(env, 4+LOCAL_FRAME_SLOP) < 0) {
-      return;
-    }
-    jvmti_env = CVMglobals.jvmtiStatics._jvmti_env;
-    callback = jvmti_env->_event_callbacks.FieldAccess;
-    if (callback != NULL) {
-      (*callback)(&jvmti_env->_jvmti_external, env,
-                  (*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)), 
-                  mb, location,
-                  (*env)->NewLocalRef(env,
-                                      CVMcbJavaInstance(CVMfbClassBlock(fb))),
-                  (obj == NULL ? NULL :
-                   (*env)->NewLocalRef(env, obj)), fb);
-    }
-    (*env)->PopLocalFrame(env, 0);
-  }
 }
 
 void
-CVMjvmtiNotifyDebuggerOfFieldModification(CVMExecEnv* ee, CVMObjectICell* obj,
-                                          CVMFieldBlock* fb, jvalue jval)
+CVMjvmtiPostFieldModificationEvent(CVMExecEnv* ee, CVMObjectICell* obj,
+				   CVMFieldBlock* fb, jvalue jval)
 {
-  struct fieldWatch *fwfb;
+    struct fieldWatch *fwfb;
 
-  DEBUGGER_LOCK(ee);
-  fwfb = CVMbagFind(CVMglobals.jvmtiStatics.watchedFieldModifications, fb);
-  DEBUGGER_UNLOCK(ee);          
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+    JVMTI_LOCK(ee);
+    fwfb = CVMbagFind(CVMglobals.jvmtiStatics.watchedFieldModifications, fb);
+    JVMTI_UNLOCK(ee);          
 
-  if (fwfb != NULL &&
-      MUST_NOTIFY(ee, JVMTI_EVENT_FIELD_MODIFICATION, 
-                  CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee)))) {
-    CVMFrame* frame = CVMeeGetCurrentFrame(ee);
-    CVMMethodBlock* mb;
-    jlocation location;
-    JNIEnv* env = CVMexecEnv2JniEnv(ee);
-    CVMFieldTypeID tid = CVMfbNameAndTypeID(fb);
-    char sig_type;
-    JvmtiEnv *jvmti_env;
-    jvmtiEventFieldModification callback;
+    if (fwfb != NULL &&
+	MUST_NOTIFY(ee, JVMTI_EVENT_FIELD_MODIFICATION)) {
+	CVMFrame* frame = CVMeeGetCurrentFrame(ee);
+	CVMMethodBlock* mb;
+	jlocation location;
+	JNIEnv* env = CVMexecEnv2JniEnv(ee);
+	CVMFieldTypeID tid = CVMfbNameAndTypeID(fb);
+	char sig_type;
+	JvmtiEnv *jvmti_env;
+	jvmtiEventFieldModification callback;
 
-    if (CVMtypeidIsPrimitive(tid)) {
-      sig_type = CVMterseTypePrimitiveSignatures[CVMtypeidGetType(tid)];
-    } else if (CVMtypeidIsArray(tid)) {
-      sig_type = CVM_SIGNATURE_ARRAY;
-    } else {
-      sig_type = CVM_SIGNATURE_CLASS;
+	if (CVMtypeidIsPrimitive(tid)) {
+	    sig_type = CVMterseTypePrimitiveSignatures[CVMtypeidGetType(tid)];
+	} else if (CVMtypeidIsArray(tid)) {
+	    sig_type = CVM_SIGNATURE_ARRAY;
+	} else {
+	    sig_type = CVM_SIGNATURE_CLASS;
+	}
+
+	/* We may have come through native code - remove any
+	 * empty frames.
+	 */
+
+	/* %comment: k007 */
+
+	frame = CVMgetCallerFrame(frame, 0);
+	if (frame == NULL || (mb = frame->mb) == NULL) {
+	    return;
+	}
+	if (CVMframeIsInterpreter(frame)) {
+	    CVMInterpreterFrame* interpFrame = CVMgetInterpreterFrame(frame);
+	    location = CVMint2Long(CVMframePc(interpFrame) - CVMmbJavaCode(mb));
+	} else {
+	    location = CVMint2Long(-1);
+	}
+
+	if ((*env)->PushLocalFrame(env, 5+LOCAL_FRAME_SLOP) < 0) {
+	    return;
+	}
+	if ((sig_type == CVM_SIGNATURE_CLASS) ||
+	    (sig_type == CVM_SIGNATURE_ARRAY)) {
+	    jval.l = (*env)->NewLocalRef(env, jval.l);
+	}
+
+	jvmti_env = GLOBAL_ENV;
+	callback = jvmti_env->eventCallbacks.FieldModification;
+	if (callback != NULL) {
+	    (*callback)(&jvmti_env->jvmtiExternal, env,
+			(*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)), 
+			mb, location,
+			(*env)->NewLocalRef(env, CVMcbJavaInstance(CVMfbClassBlock(fb))),
+			(obj == NULL? NULL : 
+			 (*env)->NewLocalRef(env, obj)),
+			fb, sig_type, jval);
+	}
+	(*env)->PopLocalFrame(env, 0);
     }
-
-    /* We may have come through native code - remove any
-     * empty frames.
-     */
-
-    /* %comment: k007 */
-
-    frame = CVMgetCallerFrame(frame, 0);
-    if (frame == NULL || (mb = frame->mb) == NULL) {
-      return;
+    if (CVMjvmtiNeedFramePop(ee)) {
+	unlock_monitors(ee);
     }
-    if (CVMframeIsInterpreter(frame)) {
-      CVMInterpreterFrame* interpFrame = CVMgetInterpreterFrame(frame);
-      location = CVMint2Long(CVMframePc(interpFrame) - CVMmbJavaCode(mb));
-    } else {
-      location = CVMint2Long(-1);
-    }
-
-    if ((*env)->PushLocalFrame(env, 5+LOCAL_FRAME_SLOP) < 0) {
-      return;
-    }
-    if ((sig_type == CVM_SIGNATURE_CLASS) ||
-        (sig_type == CVM_SIGNATURE_ARRAY)) {
-      jval.l = (*env)->NewLocalRef(env, jval.l);
-    }
-
-    jvmti_env = CVMglobals.jvmtiStatics._jvmti_env;
-    callback = jvmti_env->_event_callbacks.FieldModification;
-    if (callback != NULL) {
-      (*callback)(&jvmti_env->_jvmti_external, env,
-                  (*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)), 
-                  mb, location,
-                  (*env)->NewLocalRef(env, CVMcbJavaInstance(CVMfbClassBlock(fb))),
-                  (obj == NULL? NULL : 
-                   (*env)->NewLocalRef(env, obj)),
-                  fb, sig_type, jval);
-    }
-    (*env)->PopLocalFrame(env, 0);
-  }
 }
 
 void
-CVMjvmtiNotifyDebuggerOfClassLoad(CVMExecEnv* ee, CVMObjectICell* clazz)
+CVMjvmtiPostClassLoadEvent(CVMExecEnv* ee, CVMObjectICell* clazz)
 {
-  if (MUST_NOTIFY(ee, JVMTI_EVENT_CLASS_LOAD,
-                  CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee)))) {
+    CVMJVMTI_CHECK_PHASEV2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
+    if (MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_CLASS_LOAD)) {
+	JNIEnv *env = CVMexecEnv2JniEnv(ee);
+	JvmtiEnv *jvmti_env;
+	jvmtiEventClassLoad callback;
+
+	if ((*env)->PushLocalFrame(env, 2+LOCAL_FRAME_SLOP) < 0) {
+	    return;
+	}
+	jvmti_env = GLOBAL_ENV;
+	callback = jvmti_env->eventCallbacks.ClassLoad;
+	if (callback != NULL) {
+	    (*callback)(&jvmti_env->jvmtiExternal, env,
+			(*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)), 
+			(*env)->NewLocalRef(env, clazz));
+	}
+	(*env)->PopLocalFrame(env, 0);
+    }
+}
+
+
+void
+CVMjvmtiPostClassPrepareEvent(CVMExecEnv* ee, CVMObjectICell* clazz)
+{
+    CVMJVMTI_CHECK_PHASEV2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
+    if (MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_CLASS_PREPARE)) {
+	JNIEnv *env = CVMexecEnv2JniEnv(ee);
+	JvmtiEnv *jvmti_env;
+	jvmtiEventClassPrepare callback;
+
+	if ((*env)->PushLocalFrame(env, 2+LOCAL_FRAME_SLOP) < 0) {
+	    return;
+	}
+	jvmti_env = GLOBAL_ENV;
+	callback = jvmti_env->eventCallbacks.ClassPrepare;
+	if (callback != NULL) {
+	    (*callback)(&jvmti_env->jvmtiExternal, env,
+			(*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)), 
+			(*env)->NewLocalRef(env, clazz));
+	}
+	(*env)->PopLocalFrame(env, 0);
+    }
+}
+
+void
+reportFrameEvent(CVMExecEnv* ee, jint kind, CVMFrame *targetFrame,
+		 CVMBool is_exception, jvalue value)
+{
     JNIEnv *env = CVMexecEnv2JniEnv(ee);
+    CVMObjectICell* thread = CVMcurrentThreadICell(ee);
+    CVMMethodBlock* mb = targetFrame->mb;
     JvmtiEnv *jvmti_env;
-    jvmtiEventClassLoad callback;
+
+    if (mb == NULL) {
+	return;
+    }
+
+    jvmti_env = GLOBAL_ENV;
+    switch(kind) {
+    case JVMTI_EVENT_FRAME_POP:
+	{
+	    jvmtiEventFramePop callback;
+	    callback = jvmti_env->eventCallbacks.FramePop;
+	    if (callback != NULL) {
+		(*callback)(&jvmti_env->jvmtiExternal, env,
+			    (*env)->NewLocalRef(env, thread),
+			    mb, is_exception);
+	    }
+	}
+	break;
+    case JVMTI_EVENT_METHOD_ENTRY:
+	{
+	    jvmtiEventMethodEntry callback;
+	    callback = jvmti_env->eventCallbacks.MethodEntry;
+	    if (callback != NULL) {
+		(*callback)(&jvmti_env->jvmtiExternal, env,
+			    (*env)->NewLocalRef(env, thread),
+			    mb);
+	    }
+	}
+	break;
+    case JVMTI_EVENT_METHOD_EXIT:
+	{
+	    /* NOTE: need to pass return value */
+	    jvmtiEventMethodExit callback;
+	    callback = jvmti_env->eventCallbacks.MethodExit;
+	    if (callback != NULL) {
+		(*callback)(&jvmti_env->jvmtiExternal, env,
+			    (*env)->NewLocalRef(env, thread),
+			    mb, is_exception, value);
+	    }
+	}
+	break;
+    }
+
+}
+
+void
+CVMjvmtiPostFramePopEvent(CVMExecEnv* ee, CVMBool isRef,
+			  CVMBool is_exception, jlong val)
+{
+    CVMFrame* frame = CVMeeGetCurrentFrame(ee);
+    CVMFrame* framePrev;
+    jvalue value;
+    JNIEnv *env = CVMexecEnv2JniEnv(ee);
+
+    /* %comment: k008 */
+
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+    if (frame == NULL) {
+	return;
+    }
+
+    if (!MUST_NOTIFY(ee, JVMTI_EVENT_FRAME_POP) &&
+	!MUST_NOTIFY(ee, JVMTI_EVENT_METHOD_EXIT)) {
+	return;
+    }
+
+    checkAndSendStartEvent(ee);
+    framePrev = CVMframePrev(frame);
+
+    if (framePrev == NULL) {
+	return;
+    }
+
+    /* NOTE: This is needed by the code below, but wasn't
+       present in the 1.2 sources */
+    if (!CVMframeIsInterpreter(framePrev)) {
+	return;
+    }
 
     if ((*env)->PushLocalFrame(env, 2+LOCAL_FRAME_SLOP) < 0) {
-      return;
+	return;
     }
-    jvmti_env = CVMglobals.jvmtiStatics._jvmti_env;
-    callback = jvmti_env->_event_callbacks.ClassLoad;
-    if (callback != NULL) {
-      (*callback)(&jvmti_env->_jvmti_external, env,
-                  (*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)), 
-                  (*env)->NewLocalRef(env, clazz));
+
+    if (isRef) {
+	/* return value was stashed in ee->miscICell */
+	value.l = (*env)->NewLocalRef(env, ee->miscICell);
+    } else {
+	value.j = val;
+    }
+    /* NOTE: the JDK has two slots for the return PC; one is the
+       "lastpc" and one is the "returnpc". The JDK's version of the
+       JVMTI inserts a "frame pop sentinel" as the returnpc in
+       jvmti_NotifyFramePop. The munging of the return PC is
+       unnecessary and is merely an optimization to avoid performing a
+       hash table lookup each time this function is called by the
+       interpreter loop. Unfortunately, in CVM this optimization is
+       also incorrect. We only have one return PC slot, and if an
+       exception is thrown the fillInStackTrace code will not know
+       that it may have to undo these sentinels, or how to do so.
+
+       We could get around this by setting a bit in CVMFrame; since
+       pointers on a 32-bit architecture are 4-byte aligned, we could
+       use the bit just above the "special handling bit". However, for
+       now, we're going to do the slow hashtable lookup each time. */
+    if (MUST_NOTIFY(ee, JVMTI_EVENT_FRAME_POP)) {
+	struct fpop *fp = NULL;
+	CVMBool gotFramePop = CVM_FALSE;
+
+	JVMTI_LOCK(ee);
+	/* It seems that this gets called before JVMTI is initialized */
+	if (CVMglobals.jvmtiStatics.framePops != NULL) {
+	    fp = CVMbagFind(CVMglobals.jvmtiStatics.framePops, frame);
+	}
+
+	if (fp != NULL) {
+	    /* Found a frame pop */
+	    /* fp now points to randomness */
+	    CVMbagDelete(CVMglobals.jvmtiStatics.framePops, fp); 
+	    gotFramePop = CVM_TRUE;
+	}
+	JVMTI_UNLOCK(ee);
+
+	if (gotFramePop) {
+	    if (!CVMexceptionOccurred(ee) &&
+		MUST_NOTIFY(ee, JVMTI_EVENT_FRAME_POP)) {
+		reportFrameEvent(ee, JVMTI_EVENT_FRAME_POP, frame,
+				 is_exception, value);
+	    }
+	}
+    }
+    if (!CVMexceptionOccurred(ee) && 
+	MUST_NOTIFY(ee, JVMTI_EVENT_METHOD_EXIT)) {
+	reportFrameEvent(ee, JVMTI_EVENT_METHOD_EXIT, frame, is_exception, value);
     }
     (*env)->PopLocalFrame(env, 0);
-  }
 }
 
+
+/* FIXME: This is being called unconditionally from the interpreter loop even
+   when JVMTI is not in use.  This is very heavy overhead and need to be fixed.
+   JVMTI should provide some bit flags that can be checked to avoid calling
+   this function in unnecessary conditons. */
 void
-CVMjvmtiNotifyDebuggerOfClassPrepare(CVMExecEnv* ee, CVMObjectICell* clazz)
+CVMjvmtiPostFramePushEvent(CVMExecEnv* ee)
 {
-  if (MUST_NOTIFY(ee, JVMTI_EVENT_CLASS_PREPARE,
-                  CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee)))) {
+    CVMFrame* frame = CVMeeGetCurrentFrame(ee);
     JNIEnv *env = CVMexecEnv2JniEnv(ee);
-    JvmtiEnv *jvmti_env;
-    jvmtiEventClassPrepare callback;
-
+    jvalue val;
+    val.j = 0L;
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
     if ((*env)->PushLocalFrame(env, 2+LOCAL_FRAME_SLOP) < 0) {
-      return;
+	return;
     }
-    jvmti_env = CVMglobals.jvmtiStatics._jvmti_env;
-    callback = jvmti_env->_event_callbacks.ClassPrepare;
-    if (callback != NULL) {
-      (*callback)(&jvmti_env->_jvmti_external, env,
-                  (*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)), 
-                  (*env)->NewLocalRef(env, clazz));
+    if (MUST_NOTIFY(ee, JVMTI_EVENT_METHOD_ENTRY)) {
+	checkAndSendStartEvent(ee);
+	reportFrameEvent(ee, JVMTI_EVENT_METHOD_ENTRY, frame, CVM_FALSE, val);
     }
-
     (*env)->PopLocalFrame(env, 0);
-  }
 }
 
+/*
+ * This function is called near the end of the VM initialization process.
+ * It triggers the sending of an event to the JVMTI client. At this point
+ * The JVMTI client is free to use all of JNI and JVMTI.
+ */
 void
-reportFrameEvent(CVMExecEnv* ee, jint kind, CVMBool is_exception, jvalue value) 
-{
-  JNIEnv *env = CVMexecEnv2JniEnv(ee);
-  CVMObjectICell* thread = CVMcurrentThreadICell(ee);
-  CVMFrame* frame = CVMeeGetCurrentFrame(ee);
-  CVMMethodBlock* mb = frame->mb;
-  JvmtiEnv *jvmti_env;
+CVMjvmtiPostVmStartEvent(CVMExecEnv* ee)
+{    
+    JvmtiEnv *jvmti_env;
+    jvmtiEventVMStart callback;
+    JNIEnv *env = CVMexecEnv2JniEnv(ee);
 
-  if (mb == NULL) {
-    return;
-  }
-
-  if ((*env)->PushLocalFrame(env, 2+LOCAL_FRAME_SLOP) < 0) {
-    return;
-  }
-
-  jvmti_env = CVMglobals.jvmtiStatics._jvmti_env;
-  switch(kind) {
-  case JVMTI_EVENT_FRAME_POP:
-    {
-      jvmtiEventFramePop callback;
-      callback = jvmti_env->_event_callbacks.FramePop;
-      if (callback != NULL) {
-        (*callback)(&jvmti_env->_jvmti_external, env,
-                    (*env)->NewLocalRef(env, thread),
-                    mb, is_exception);
-      }
+    CVMJVMTI_CHECK_PHASEV2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
+    jvmti_env = GLOBAL_ENV;
+    if (jvmti_env != NULL) {
+	callback = jvmti_env->eventCallbacks.VMStart;
+	if (callback != NULL) {
+	    (*callback)(&jvmti_env->jvmtiExternal, env);
+	}
     }
-    break;
-  case JVMTI_EVENT_METHOD_ENTRY:
-    {
-      jvmtiEventMethodEntry callback;
-      callback = jvmti_env->_event_callbacks.MethodEntry;
-      if (callback != NULL) {
-        (*callback)(&jvmti_env->_jvmti_external, env,
-                    (*env)->NewLocalRef(env, thread),
-                    mb);
-      }
-    }
-    break;
-  case JVMTI_EVENT_METHOD_EXIT:
-    {
-      /* NOTE: need to pass return value */
-      jvmtiEventMethodExit callback;
-      callback = jvmti_env->_event_callbacks.MethodExit;
-      if (callback != NULL) {
-        (*callback)(&jvmti_env->_jvmti_external, env,
-                    (*env)->NewLocalRef(env, thread),
-                    mb, is_exception, value);
-      }
-    }
-      break;
-  }
-
-  (*env)->PopLocalFrame(env, 0);
-}
-
-void
-CVMjvmtiNotifyDebuggerOfFramePop(CVMExecEnv* ee, CVMBool is_exception, jlong val)
-{
-  CVMFrame* frame = CVMeeGetCurrentFrame(ee);
-  CVMFrame* framePrev;
-  jvalue value;
-
-  /* %comment: k008 */
-
-  if (frame == NULL) {
-    return;
-  }
-
-  framePrev = CVMframePrev(frame);
-
-  if (framePrev == NULL) {
-    return;
-  }
-
-  /* NOTE: This is needed by the code below, but wasn't
-     present in the 1.2 sources */
-  if (!CVMframeIsInterpreter(framePrev)) {
-    return;
-  }
-
-  value.j = val;
-  /* NOTE: the JDK has two slots for the return PC; one is the
-     "lastpc" and one is the "returnpc". The JDK's version of the
-     JVMTI inserts a "frame pop sentinel" as the returnpc in
-     jvmti_NotifyFramePop. The munging of the return PC is
-     unnecessary and is merely an optimization to avoid performing a
-     hash table lookup each time this function is called by the
-     interpreter loop. Unfortunately, in CVM this optimization is
-     also incorrect. We only have one return PC slot, and if an
-     exception is thrown the fillInStackTrace code will not know
-     that it may have to undo these sentinels, or how to do so.
-
-     We could get around this by setting a bit in CVMFrame; since
-     pointers on a 32-bit architecture are 4-byte aligned, we could
-     use the bit just above the "special handling bit". However, for
-     now, we're going to do the slow hashtable lookup each time. */
-  {
-    struct fpop *fp = NULL;
-    CVMBool gotFramePop = CVM_FALSE;
-
-    DEBUGGER_LOCK(ee);
-    /* It seems that this gets called before JVMTI is initialized */
-    if (CVMglobals.jvmtiStatics.framePops != NULL) {
-      fp = CVMbagFind(CVMglobals.jvmtiStatics.framePops, frame);
-    }
-
-    if (fp != NULL) {
-      /* Found a frame pop */
-      /* fp now points to randomness */
-      CVMbagDelete(CVMglobals.jvmtiStatics.framePops, fp); 
-      gotFramePop = CVM_TRUE;
-    }
-    DEBUGGER_UNLOCK(ee);
-
-    if (gotFramePop) {
-      if (!CVMexceptionOccurred(ee) &&
-          MUST_NOTIFY(ee, JVMTI_EVENT_FRAME_POP,
-                      CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee)))) {
-        reportFrameEvent(ee, JVMTI_EVENT_FRAME_POP, is_exception, value);
-      }
-    }
-  }
-  if (!CVMexceptionOccurred(ee) && 
-      MUST_NOTIFY(ee, JVMTI_EVENT_METHOD_EXIT,
-                  CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee)))) {
-    reportFrameEvent(ee, JVMTI_EVENT_METHOD_EXIT, is_exception, value);
-  }
-}
-
-void
-CVMjvmtiNotifyDebuggerOfFramePush(CVMExecEnv* ee)
-{
-  jvalue val;
-  val.j = 0L;
-  if (MUST_NOTIFY(ee, JVMTI_EVENT_METHOD_ENTRY,
-                  CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee)))) {
-    reportFrameEvent(ee, JVMTI_EVENT_METHOD_ENTRY, CVM_FALSE, val);
-  }
 }
 
 /*
@@ -994,44 +1215,46 @@ CVMjvmtiNotifyDebuggerOfFramePush(CVMExecEnv* ee)
  * The JVMTI client is free to use all of JNI and JVMTI.
  */
 void
-CVMjvmtiNotifyDebuggerOfVmInit(CVMExecEnv* ee)
+CVMjvmtiPostVmInitEvent(CVMExecEnv* ee)
 {    
     JvmtiEnv *jvmti_env;
     jvmtiEventVMInit callback;
     JNIEnv *env = CVMexecEnv2JniEnv(ee);
 
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
     if ((*env)->PushLocalFrame(env, 1+LOCAL_FRAME_SLOP) < 0) {
-      return;
+	return;
     }
-    jvmti_env = CVMglobals.jvmtiStatics._jvmti_env;
+    jvmti_env = GLOBAL_ENV;
     if (jvmti_env != NULL) {
-      callback = jvmti_env->_event_callbacks.VMInit;
-      if (callback != NULL) {
-        (*callback)(&jvmti_env->_jvmti_external, env,
-                    (*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)));
-      }
+	callback = jvmti_env->eventCallbacks.VMInit;
+	if (callback != NULL) {
+	    (*callback)(&jvmti_env->jvmtiExternal, env,
+			(*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)));
+	}
     }
     (*env)->PopLocalFrame(env, 0);
 }
 
 void
-CVMjvmtiNotifyDebuggerOfVmExit(CVMExecEnv* ee)
+CVMjvmtiPostVmExitEvent(CVMExecEnv* ee)
 {    
-  if (CVMglobals.jvmtiStatics.jvmtiInitialized) {
-    JNIEnv *env = CVMexecEnv2JniEnv(ee);
-    JvmtiEnv *jvmti_env;
-    jvmtiEventVMDeath callback;
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+    if (CVMjvmtiInitialized()) {
+	JNIEnv *env = CVMexecEnv2JniEnv(ee);
+	JvmtiEnv *jvmti_env;
+	jvmtiEventVMDeath callback;
 
-    if ((*env)->PushLocalFrame(env, 0+LOCAL_FRAME_SLOP) < 0) {
-      return;
+	if ((*env)->PushLocalFrame(env, 0+LOCAL_FRAME_SLOP) < 0) {
+	    return;
+	}
+	jvmti_env = GLOBAL_ENV;
+	callback = jvmti_env->eventCallbacks.VMDeath;
+	if (callback != NULL) {
+	    (*callback)(&jvmti_env->jvmtiExternal, env);
+	}
+	(*env)->PopLocalFrame(env, 0);
     }
-    jvmti_env = CVMglobals.jvmtiStatics._jvmti_env;
-    callback = jvmti_env->_event_callbacks.VMDeath;
-    if (callback != NULL) {
-      (*callback)(&jvmti_env->_jvmti_external, env);
-    }
-    (*env)->PopLocalFrame(env, 0);
-  }
 }
 
 #ifdef JDK12
@@ -1039,7 +1262,7 @@ CVMjvmtiNotifyDebuggerOfVmExit(CVMExecEnv* ee)
 void
 handleExit(void)
 {
-  CVMjvmtiNotifyDebuggerOfVmExit(CVMgetEE());
+    CVMjvmtiPostVmExitEvent(CVMgetEE());
 }
 
 #endif
@@ -1052,24 +1275,24 @@ handleExit(void)
 CVMUint8
 CVMjvmtiGetBreakpointOpcode(CVMExecEnv* ee, CVMUint8 *pc, CVMBool notify)
 {
-  struct bkpt *bp;
-  int rv;
+    struct bkpt *bp;
+    int rv;
 
-  DEBUGGER_LOCK(ee);
-  bp = CVMbagFind(CVMglobals.jvmtiStatics.breakpoints, pc);
-  if (bp == NULL) {
-    rv = *pc;  
-  } else {
-    rv = bp->opcode;
-  }
-  DEBUGGER_UNLOCK(ee);
+    JVMTI_LOCK(ee);
+    bp = CVMbagFind(CVMglobals.jvmtiStatics.breakpoints, pc);
+    if (bp == NULL) {
+	rv = *pc;  
+    } else {
+	rv = bp->opcode;
+    }
+    JVMTI_UNLOCK(ee);
     
-  CVMassert(rv != opc_breakpoint);
+    CVMassert(rv != opc_breakpoint);
 
-  if (notify && bp != NULL) {
-    notify_debugger_of_breakpoint(ee, pc);
-  }
-  return rv;
+    if (notify && bp != NULL) {
+	notify_debugger_of_breakpoint(ee, pc);
+    }
+    return rv;
 }
 
 /* The opcode at the breakpoint has changed. For example, it
@@ -1078,360 +1301,1081 @@ CVMjvmtiGetBreakpointOpcode(CVMExecEnv* ee, CVMUint8 *pc, CVMBool notify)
 CVMBool
 CVMjvmtiSetBreakpointOpcode(CVMExecEnv* ee, CVMUint8 *pc, CVMUint8 opcode)
 {
-  struct bkpt *bp;
+    struct bkpt *bp;
 
-  CVMassert(DEBUGGER_IS_LOCKED(ee));
-  bp = CVMbagFind(CVMglobals.jvmtiStatics.breakpoints, pc);
-  CVMassert(bp != NULL);
-  bp->opcode = opcode;
-  return CVM_TRUE;
+    CVMassert(JVMTI_IS_LOCKED(ee));
+    bp = CVMbagFind(CVMglobals.jvmtiStatics.breakpoints, pc);
+    CVMassert(bp != NULL);
+    bp->opcode = opcode;
+    return CVM_TRUE;
+}
+
+/*  Profiling support */
+
+/* Purpose: Posts a JVMTI_CLASS_LOAD_HOOK event. */
+/* NOTE: Called while GC safe. */
+void CVMjvmtiPostClassLoadHookEvent(jclass klass, CVMClassLoaderICell *loader,
+				    const char *class_name,
+				    jobject protection_domain,
+				    CVMInt32 bufferLength, CVMUint8 *buffer,
+				    CVMInt32 *new_bufferLength,
+				    CVMUint8 **new_buffer)
+{
+    CVMExecEnv *ee = CVMgetEE();
+    jvmtiEventClassFileLoadHook callback;
+    JNIEnv *env = CVMexecEnv2JniEnv(ee);
+    JvmtiEnv *jvmti_env;
+
+    if (CVMjvmtiGetPhase() != JVMTI_PHASE_PRIMORDIAL &&
+	CVMjvmtiGetPhase() != JVMTI_PHASE_ONLOAD &&
+	CVMjvmtiGetPhase() != JVMTI_PHASE_LIVE) {
+	return;
+    }
+    CVMassert(!CVMgcIsGCThread(ee));
+    CVMassert(CVMD_isgcSafe(ee));
+    CVMassert(!ee->hasPostedExitEvents);
+
+
+    if ((*env)->PushLocalFrame(env, 1+LOCAL_FRAME_SLOP) < 0) {
+	return;
+    }
+    /* Fill event info and notify the profiler: */
+    jvmti_env = GLOBAL_ENV;
+    if (jvmti_env != NULL) {
+	callback = jvmti_env->eventCallbacks.ClassFileLoadHook;
+	if (callback != NULL) {
+	    (*callback)(&jvmti_env->jvmtiExternal, env,
+			klass, loader,
+			class_name, protection_domain,
+			bufferLength, buffer,
+			new_bufferLength, new_buffer);
+	}
+    }
+    (*env)->PopLocalFrame(env, 0);
+
+}
+
+/* Purpose: Posts a JVMTI_EVENT_COMPILED_METHOD_LOAD event. */
+/* IAI-07: Notify JVMTI of compilations and decompilations. */
+void CVMjvmtiPostCompiledMethodLoadEvent(CVMExecEnv *ee, CVMMethodBlock *mb)
+{
+#ifndef CVM_JIT
+    CVMassert(CVM_FALSE);
+#else
+    jvmtiEventCompiledMethodLoad callback;
+    CVMCompiledMethodDescriptor *cmd = CVMmbCmd(mb);
+    JvmtiEnv *jvmti_env = GLOBAL_ENV;
+
+#ifdef CVM_DEBUG_CLASSINFO
+    int i;
+    CVMCompiledPcMap * maps = CVMcmdCompiledPcMaps(cmd);
+    int map_entries;
+    jvmtiAddrLocationMap *addrMap = NULL;
+    jvmtiError err;
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+
+    /* cmd: javapc<->compiled pc */
+    map_entries = CVMcmdNumPcMaps(cmd);
+    if (map_entries <= 0) {
+        goto fillfields;
+    }
+
+    if (jvmti_env == NULL) {
+	goto failed;
+    }
+    err = CVMjvmtiAllocate(map_entries * sizeof(jvmtiAddrLocationMap),
+			   (unsigned char **)&addrMap);
+    if (err != JVMTI_ERROR_NONE) {
+        goto failed;
+    }
+
+    for (i = 0; i < map_entries; i++) {
+        addrMap[i].start_address = CVMcmdCodeBufAddr(cmd) + maps[i].compiledPc;
+	addrMap[i].location = maps[i].javaPc;
+    }
+
+#else
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+#endif /* CVM_DEBUG_CLASSINFO */
+
+ fillfields:
+    if (jvmti_env != NULL) {
+	callback = jvmti_env->eventCallbacks.CompiledMethodLoad;
+	if (callback != NULL) {
+	    (*callback)(&jvmti_env->jvmtiExternal, mb,
+			CVMcmdCodeBufSize(cmd), CVMcmdCodeBufAddr(cmd),
+			map_entries, addrMap, NULL);
+	}
+    }
+
+ doCleanUpAndExit:
+    if (addrMap != NULL) {
+	CVMjvmtiDeallocate((unsigned char *)addrMap);
+    }
+    return;
+
+ failed:
+    goto doCleanUpAndExit;
+#endif /* CVM_JIT */
+}
+
+/* Purpose: Posts a JVMTI_EVENT_COMPILED_METHOD_UNLOAD event. */
+/* IAI-07: Notify JVMTI of compilations and decompilations. */
+void CVMjvmtiPostCompiledMethodUnloadEvent(CVMExecEnv *ee, CVMMethodBlock* mb)
+{
+#ifndef CVM_JIT
+    CVMassert(CVM_FALSE);
+#else
+    jvmtiEventCompiledMethodUnload callback;
+    JvmtiEnv *jvmti_env = GLOBAL_ENV;
+    CVMCompiledMethodDescriptor *cmd = CVMmbCmd(mb);
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+
+    if (jvmti_env != NULL) {
+	callback = jvmti_env->eventCallbacks.CompiledMethodUnload;
+	if (callback != NULL) {
+	    (*callback)(&jvmti_env->jvmtiExternal, mb,
+			CVMcmdCodeBufAddr(cmd));
+	}
+    }
+#endif /* CVM_JIT */
+}
+
+/* Purpose: Posts the JVMTI_EVENT_DATA_DUMP_REQUEST event. */
+/* NOTE: Called while GC safe. */
+void CVMjvmtiPostDataDumpRequest(void)
+{
+    jvmtiEventDataDumpRequest callback;
+    JvmtiEnv *jvmti_env = GLOBAL_ENV;
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+
+    CVMjvmtiResetDataDumpRequested();
+    if (CVMjvmtiShouldPostDataDump()) {
+	if (jvmti_env != NULL) {
+	    callback = jvmti_env->eventCallbacks.DataDumpRequest;
+	    if (callback != NULL) {
+		(*callback)(&jvmti_env->jvmtiExternal);
+	    }
+	}
+    }
+}
+
+/*
+ * Purpose: Posts the JVMTI_EVENT_GARBAGE_COLLECTION_START event just before
+ * GC starts.
+ * NOTE: Called while GC safe before GC thread requests all threads to be
+ * safe.
+ */
+void CVMjvmtiPostGCStartEvent(void)
+{
+    jvmtiEventGarbageCollectionStart callback;
+    JvmtiEnv *jvmti_env = GLOBAL_ENV;
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+
+    CVMassert(!CVMgcIsGCThread(CVMgetEE()));
+    CVMassert(CVMD_isgcSafe(CVMgetEE()));
+    if (jvmti_env != NULL) {
+	callback = jvmti_env->eventCallbacks.GarbageCollectionStart;
+	if (callback != NULL) {
+	    (*callback)(&jvmti_env->jvmtiExternal);
+	}
+    }
+}
+
+/*
+ * Purpose: Posts the JVMTI_EVENT_GARBAGE_COLLECTION_FINISH event just after
+ * GC finishes.
+ * NOTE: Called while GC safe before GC thread allows all threads to become
+ * unsafe again.
+ */
+void CVMjvmtiPostGCFinishEvent(void)
+{
+    jvmtiEventGarbageCollectionFinish callback;
+    JvmtiEnv *jvmti_env = GLOBAL_ENV;
+
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+    CVMassert(CVMgcIsGCThread(CVMgetEE()));
+    CVMassert(CVMD_isgcSafe(CVMgetEE()));
+    if (jvmti_env != NULL) {
+	callback = jvmti_env->eventCallbacks.GarbageCollectionFinish;
+	if (callback != NULL) {
+	    (*callback)(&jvmti_env->jvmtiExternal);
+	}
+    }
+}
+
+#ifdef CVM_CLASSLIB_JCOV
+/*
+ * Purpose: Posts a JVMTI_EVENT_CLASS_LOAD_HOOK for a preloaded class.
+ * NOTE: This function is used to simulate loading of classes that were
+ *       preloaded.  If exceptions are encountered while doing this, the
+ *       exceptions will be cleared and discarded.
+ */
+static void
+CVMjvmtiPostStartupClassLoadHookEvents(CVMExecEnv *ee,
+                                       CVMClassBlock *cb, void *data)
+{
+    char *classname;
+    CVMClassPath *path = (CVMClassPath *)data;
+    CVMUint8 *classfile;
+    CVMUint32 classfileSize;
+
+    CVMassert(!CVMexceptionOccurred(ee));
+
+    classname = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(cb));
+    if (classname == NULL) {
+        return;
+    }
+
+    classfile = CVMclassLoadSystemClassFileFromPath(ee, classname,
+                                                    path, &classfileSize);
+    if (CVMexceptionOccurred(ee)) {
+        CVMclearLocalException(ee);
+        free(classname);
+        return;
+    }
+
+    if (CVMjvmtiShouldPostClassFileLoadHook()) {
+        CVMUint8 *buffer = (CVMUint8 *)classfile;
+        CVMUint32 bufferSize = classfileSize;
+	CVMUint8 *new_buffer = NULL;
+	CVMInt32 new_bufferLength = 0;
+
+        CVMjvmtiPostClassLoadHookEvent(NULL, classname, bufferSize, buffer,
+                                       &new_bufferLength, &new_buffer);
+
+        /* If the new_buffer != NULL, then the profiler agent must have
+           replaced it with an instrumented version.  We should clean this up
+           properly even though we can't use it.
+        */
+        if (new_buffer != NULL) {
+	    JvmtiEnv *jvmti_env = GLOBAL_ENV;
+            CVMjvmtiDeallocate(buffer);
+        }
+    }
+
+    /* Clean-up resources and return: */
+    CVMclassReleaseSystemClassFile(ee, classfile);
+    free(classname);
+}
+#endif
+
+/* Purpose: Posts a JVMTI_EVENT_CLASS_LOAD for a missed class. */
+static void
+CVMjvmtiPostStartupClassEvents(CVMExecEnv *ee, CVMClassBlock *cb, void *data)
+{
+    /* If an exception occurred during event notification, then abort: */
+    if (CVMexceptionOccurred(ee)) {
+        return;
+    }
+
+    /* Ignore primitive types: */
+    if (CVMcbIs(cb, PRIMITIVE) ) {
+        return;
+    }
+
+#ifdef CVM_CLASSLIB_JCOV
+    if (CVMjvmtiShouldPostClassFileLoadHook()) {
+        CVMjvmtiPostStartupClassLoadHookEvents(ee, cb,
+                                               &CVMglobals.bootClassPath);
+        /* If an exception occurred during event notification, then abort.
+           We cannot go on with more event notifications: */
+        if (CVMexceptionOccurred(ee)) {
+            return;
+        }
+    }
+#endif
+    if (CVMjvmtiShouldPostClassLoad()) {
+        CVMjvmtiPostClassLoadEvent(ee, CVMcbJavaInstance(cb));
+    }
+}
+
+/* Purpose: Posts a JVMTI_EVENT_VM_OBJECT_ALLOC event. */
+/* NOTE: Called while GC safe. */
+static void CVMjvmtiPostVMObjectAllocEvent(CVMExecEnv *ee,
+					   CVMObject *obj)
+                                          
+{
+    const CVMClassBlock *cb;
+    CVMUint32 size;
+    jvmtiEventVMObjectAlloc callback;
+    JvmtiEnv *jvmti_env = GLOBAL_ENV;
+    JNIEnv *env = CVMexecEnv2JniEnv(ee);
+    jobject thisObj;
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+
+    CVMassert(CVMD_isgcSafe(ee));
+
+    if (obj == NULL) {
+        return;
+    }
+    cb = CVMobjectGetClass(obj);
+    size = CVMobjectSizeGivenClass(obj, cb);
+
+    if (jvmti_env != NULL) {
+	if ((*env)->PushLocalFrame(env, 3) < 0) {
+	    return;
+	}
+	CVMID_localrootBegin(ee); {
+	    CVMID_localrootDeclare(CVMObjectICell, tempObj);
+	    CVMD_gcUnsafeExec(ee, {
+		    CVMID_icellSetDirect(ee, tempObj, obj);
+		});
+	    thisObj = (*env)->NewLocalRef(env, tempObj);
+	} CVMID_localrootEnd();
+	callback = jvmti_env->eventCallbacks.VMObjectAlloc;
+	if (callback != NULL) {
+	    (*callback)(&jvmti_env->jvmtiExternal, env,
+			(*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)),
+			thisObj,
+			(*env)->NewLocalRef(env, CVMcbJavaInstance(cb)),
+			size);
+	}
+	(*env)->PopLocalFrame(env, 0);
+    }
+}
+
+/* Purpose: Posts a JVMTI_EVENT_VM_OBJECT_ALLOC for a missed object. */
+static CVMBool
+CVMjvmtiPostStartupObjectEvents(CVMObject *obj, CVMClassBlock *cb,
+                                CVMUint32 size, void *data)
+{
+    if (CVMobjectGetClass(obj) != CVMsystemClass(java_lang_Class)) {
+        if (CVMjvmtiShouldPostVmObjectAlloc()) {
+            CVMExecEnv *ee = (CVMExecEnv *)data;
+            CVMjvmtiPostVMObjectAllocEvent(ee, obj);
+            /* If an exception occurred during event notification, then abort.
+               We cannot go on with more event notifications: */
+            if (CVMexceptionOccurred(ee)) {
+                return CVM_FALSE; /* Abort scan. */
+            }
+        }
+    }
+    return CVM_TRUE; /* OK to continue scan. */
+}
+
+/*
+ * Purpose: Posts startup events required by JVMTI.  This includes defining
+ * events which transpired prior to the completion of VM
+ * initialization.
+ * NOTE: Called while GC safe.
+ */
+void CVMjvmtiPostStartUpEvents(CVMExecEnv *ee)
+{
+    CVMObjectICell *threadICell = CVMcurrentThreadICell(ee);
+
+    /* NOTE: It is not trivial to reconstruct the order in which all the
+       defining events prior to this point has occurred.  Also, these events
+       don't exist for preloaded objects.  The following is a gross
+       approximation which will hopefully lessen the need missed events.
+       This is a temporary measure until a need for a more comprehensive
+       solution is found, or until a way to compute the order is found. */
+
+    CVMassert(CVMD_isgcSafe(ee));
+
+    /* 1. Post the current Thread Start Event first because all events will
+       make reference to this thread: */
+    if (CVMjvmtiShouldPostThreadLife()) {
+	CVMjvmtiPostThreadStartEvent(ee, threadICell);
+	if (CVMexceptionOccurred(ee)) {
+	    return;
+	}
+    }
+
+    /* 2. Post Class Load Events: */
+    if (CVMjvmtiShouldPostClassLoad()
+#ifdef CVM_CLASSLIB_JCOV
+        || CVMjvmtiShouldPostClassFileLoadHook()
+#endif
+        ) {
+        /* Posts a JVMTI_EVENT_CLASS_LOAD event for each ROMized class: */
+        CVMclassIterateAllClasses(ee, CVMjvmtiPostStartupClassEvents, 0);
+        if (CVMexceptionOccurred(ee)) {
+            return;
+        }
+    }
+
+    /* 3. Post Object Allocation Events: */
+    if (CVMjvmtiShouldPostVmObjectAlloc()) {
+#ifdef CVM_JIT
+	CVMsysMutexLock(ee, &CVMglobals.jitLock);
+#endif
+        CVMsysMutexLock(ee, &CVMglobals.heapLock);
+	CVMpreloaderIteratePreloadedObjects(ee,
+					    CVMjvmtiPostStartupObjectEvents, (void *)ee);
+	if (!CVMexceptionOccurred(ee)) {
+	    CVMgcimplIterateHeap(ee, CVMjvmtiPostStartupObjectEvents,
+				 (void *)ee);
+	}
+        CVMsysMutexUnlock(ee, &CVMglobals.heapLock);
+#ifdef CVM_JIT
+	CVMsysMutexUnlock(ee, &CVMglobals.jitLock);
+#endif
+        if (CVMexceptionOccurred(ee)) {
+            return;
+        }
+    }
+
+    /* 4. Post other Thread Start Events: */
+    if (CVMjvmtiShouldPostThreadLife()) {
+	/* try to avoid holding a lock across an event */
+	int count = 0;
+	int i;
+	CVMObjectICell **threads;
+#ifdef CVM_JIT
+	CVMsysMutexLock(ee, &CVMglobals.jitLock);
+#endif
+        CVMsysMutexLock(ee, &CVMglobals.heapLock);
+        CVMsysMutexLock(ee, &CVMglobals.threadLock);
+        CVM_WALK_ALL_THREADS(ee, threadEE, {
+		if (ee != threadEE && !CVMexceptionOccurred(ee)) {
+		    count++;
+		}
+	    });
+	if (CVMjvmtiAllocate(count * sizeof(jthread),
+			     (unsigned char **)&threads) != JVMTI_ERROR_NONE) {
+	    CVMsysMutexUnlock(ee, &CVMglobals.threadLock);
+	    CVMsysMutexUnlock(ee, &CVMglobals.heapLock);
+#ifdef CVM_JIT
+	    CVMsysMutexUnlock(ee, &CVMglobals.jitLock);
+#endif
+	    return;
+	}
+	i = 0;
+        CVM_WALK_ALL_THREADS(ee, threadEE, {
+		if (ee != threadEE && !CVMexceptionOccurred(ee)) {
+		    threads[i++] = CVMcurrentThreadICell(threadEE);
+		}
+	    });
+        CVMsysMutexUnlock(ee, &CVMglobals.threadLock);
+        CVMsysMutexUnlock(ee, &CVMglobals.heapLock);
+#ifdef CVM_JIT
+	CVMsysMutexUnlock(ee, &CVMglobals.jitLock);
+#endif
+	for (i = 0; i < count; i++) {
+	    CVMjvmtiPostThreadStartEvent(ee, threads[i]);
+	}
+        if (CVMexceptionOccurred(ee)) {
+            return;
+        }
+    }
+}
+
+void
+CVMjvmtiPostNativeMethodBind(CVMExecEnv* ee, CVMMethodBlock *mb,
+			     CVMUint8 *nativeCode, CVMUint8 **new_nativeCode)
+{    
+    JvmtiEnv *jvmti_env;
+    jvmtiEventNativeMethodBind callback;
+    JNIEnv *env = CVMexecEnv2JniEnv(ee);
+
+    if (CVMjvmtiGetPhase() != JVMTI_PHASE_PRIMORDIAL &&
+	CVMjvmtiGetPhase() != JVMTI_PHASE_ONLOAD &&
+	CVMjvmtiGetPhase() != JVMTI_PHASE_LIVE) {
+	return;
+    }
+    jvmti_env = GLOBAL_ENV;
+    if (jvmti_env != NULL) {
+	callback = jvmti_env->eventCallbacks.NativeMethodBind;
+	if (callback != NULL) {
+	    if ((*env)->PushLocalFrame(env, 1) < 0) {
+		return;
+	    }
+	    (*callback)(&jvmti_env->jvmtiExternal, env,
+			(*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)),
+			mb, nativeCode,
+			(void **)new_nativeCode);
+	    (*env)->PopLocalFrame(env, 0);
+	}
+    }
+}
+
+/* Purpose: Posts a JVMTI_EVENT_MONITOR_CONTENDED_ENTER */
+/* NOTE: Called while GC safe. */
+void CVMjvmtiPostMonitorContendedEnterEvent(CVMExecEnv *ee,
+                                            CVMProfiledMonitor *pm)
+{
+    JvmtiEnv *jvmti_env;
+    jvmtiEventMonitorContendedEnter callback;
+    JNIEnv *env = CVMexecEnv2JniEnv(ee);
+    jobject monitor_object;
+
+    CVMassert(!CVMgcIsGCThread(ee));
+    CVMassert(CVMD_isgcSafe(ee));
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+
+    if (!MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_MONITOR_CONTENDED_ENTER)) {
+	return;
+    }
+    jvmti_env = GLOBAL_ENV;
+    if (jvmti_env != NULL) {
+	callback = jvmti_env->eventCallbacks.MonitorContendedEnter;
+	if (callback != NULL) {
+	    CVMObjMonitor *mon = CVMcastProfiledMonitor2ObjMonitor(pm);
+	    if ((*env)->PushLocalFrame(env, 2) < 0) {
+		return;
+	    }
+	    CVMID_localrootBegin(ee); {
+		CVMID_localrootDeclare(CVMObjectICell, tempObj);
+		CVMD_gcUnsafeExec(ee, {
+			CVMID_icellSetDirect(ee, tempObj, mon->obj);
+		    });
+		monitor_object = (*env)->NewLocalRef(env, tempObj);
+	    } CVMID_localrootEnd();
+
+	    (*callback)(&jvmti_env->jvmtiExternal, env,
+			(*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)),
+			monitor_object);
+	    (*env)->PopLocalFrame(env, 0);
+	}
+    }
+}
+
+/* Purpose: Posts a  JVMTI_EVENT_MONITOR_CONTENDED_ENTERED event. */
+/* NOTE: Called while GC safe. */
+void CVMjvmtiPostMonitorContendedEnteredEvent(CVMExecEnv *ee,
+                                              CVMProfiledMonitor *pm)
+{
+    JvmtiEnv *jvmti_env;
+    jvmtiEventMonitorContendedEntered callback;
+    JNIEnv *env = CVMexecEnv2JniEnv(ee);
+    jobject monitor_object;
+
+    CVMassert(!CVMgcIsGCThread(ee));
+    CVMassert(CVMD_isgcSafe(ee));
+
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+    if (!MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_MONITOR_CONTENDED_ENTERED)) {
+	return;
+    }
+    jvmti_env = GLOBAL_ENV;
+    if (jvmti_env != NULL) {
+	callback = jvmti_env->eventCallbacks.MonitorContendedEntered;
+	if (callback != NULL) {
+	    CVMObjMonitor *mon = CVMcastProfiledMonitor2ObjMonitor(pm);
+	    if ((*env)->PushLocalFrame(env, 2) < 0) {
+		return;
+	    }
+	    CVMID_localrootBegin(ee); {
+		CVMID_localrootDeclare(CVMObjectICell, tempObj);
+		CVMD_gcUnsafeExec(ee, {
+			CVMID_icellSetDirect(ee, tempObj, mon->obj);
+		    });
+		monitor_object = (*env)->NewLocalRef(env, tempObj);
+	    } CVMID_localrootEnd();
+	    (*callback)(&jvmti_env->jvmtiExternal, env,
+			(*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)),
+			monitor_object);
+	    (*env)->PopLocalFrame(env, 0);
+	}
+    }
+}
+
+/* Purpose: Posts a JVMTI_EVENT_MONITOR_WAIT_EVENT */
+/* NOTE: Called while GC safe. */
+void CVMjvmtiPostMonitorWaitEvent(CVMExecEnv *ee,
+				  jobject obj, jlong millis)
+{
+    JvmtiEnv *jvmti_env;
+    jvmtiEventMonitorWait callback;
+    JNIEnv *env = CVMexecEnv2JniEnv(ee);
+
+    CVMassert(!CVMgcIsGCThread(ee));
+    CVMassert(CVMD_isgcSafe(ee));
+
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+    if (!MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_MONITOR_WAIT)) {
+	return;
+    }
+    jvmti_env = GLOBAL_ENV;
+    if (jvmti_env != NULL) {
+	callback = jvmti_env->eventCallbacks.MonitorWait;
+	if (callback != NULL) {
+	    if ((*env)->PushLocalFrame(env, 2) < 0) {
+		return;
+	    }
+	    (*callback)(&jvmti_env->jvmtiExternal, env,
+			(*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)),
+			(*env)->NewLocalRef(env, obj), millis);
+	    (*env)->PopLocalFrame(env, 0);
+	}
+    }
+}
+
+/* Purpose: Posts a JVMTI_EVENT_MONITOR_WAITED_EVENT */
+/* NOTE: Called while GC safe. */
+void CVMjvmtiPostMonitorWaitedEvent(CVMExecEnv *ee,
+				  jobject obj, CVMBool timedout)
+{
+    JvmtiEnv *jvmti_env;
+    jvmtiEventMonitorWaited callback;
+    JNIEnv *env = CVMexecEnv2JniEnv(ee);
+
+    CVMassert(!CVMgcIsGCThread(ee));
+    CVMassert(CVMD_isgcSafe(ee));
+
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+    if (!MUST_NOTIFY_THREAD(ee, JVMTI_EVENT_MONITOR_WAITED)) {
+	return;
+    }
+    jvmti_env = GLOBAL_ENV;
+    if (jvmti_env != NULL) {
+	callback = jvmti_env->eventCallbacks.MonitorWaited;
+	if (callback != NULL) {
+	    if ((*env)->PushLocalFrame(env, 2) < 0) {
+		return;
+	    }
+	    (*callback)(&jvmti_env->jvmtiExternal, env,
+			(*env)->NewLocalRef(env, CVMcurrentThreadICell(ee)),
+			(*env)->NewLocalRef(env, obj), timedout);
+	    (*env)->PopLocalFrame(env, 0);
+	}
+    }
+}
+
+void CVMjvmtiPostObjectFreeEvent(CVMObject *obj)
+{
+    JvmtiEnv *jvmti_env;
+    jvmtiEventObjectFree callback;
+    CVMExecEnv *ee = CVMgetEE();
+    int hash;
+    jlong tag;
+
+    CVMassert(CVMD_isgcSafe(ee));
+    CVMassert(CVMgcIsGCThread(ee));
+
+    CVMJVMTI_CHECK_PHASEV(JVMTI_PHASE_LIVE);
+    jvmti_env = GLOBAL_ENV;
+    if (jvmti_env != NULL) {
+	callback = jvmti_env->eventCallbacks.ObjectFree;
+	if (callback != NULL) {
+	    /*	    if ((*env)->PushLocalFrame(env, 2) < 0) {
+		return;
+	    }
+	    CVMID_localrootBegin(ee); {
+		CVMID_localrootDeclare(CVMObjectICell, tempObj);
+		CVMD_gcUnsafeExec(ee, {
+			CVMID_icellSetDirect(ee, tempObj, obj);
+		    });
+		object = (*env)->NewLocalRef(env, tempObj);
+	    } CVMID_localrootEnd();
+	    */
+	    hash = CVMobjectGetHashNoSet(ee, obj);
+	    if (hash == CVM_OBJECT_NO_HASH) {
+		return;
+	    }
+	    CVMjvmtiTagGetTagGC(obj, &tag);
+	    if (tag == 0) {
+		return;
+	    }
+	    (*callback)(&jvmti_env->jvmtiExternal, tag);
+	    /*	    (*env)->PopLocalFrame(env, 0); */
+	}
+    }
 }
 
 _jvmtiExports jvmtiExports;
 
-void set_can_get_source_debug_extension(jboolean on) {
-  jvmtiExports._can_get_source_debug_extension = (on != 0);
+void CVMjvmtiSetCanGetSourceDebugExtension(jboolean on) {
+    jvmtiExports.canGetSourceDebugExtension = (on != 0);
 }
-void set_can_examine_or_deopt_anywhere(jboolean on) {
-   jvmtiExports._can_examine_or_deopt_anywhere = (on != 0);
+void CVMjvmtiSetCanExamineOrDeoptAnywhere(jboolean on) {
+    jvmtiExports.canExamineOrDeoptAnywhere = (on != 0);
 }
-void set_can_maintain_original_method_order(jboolean on) {
-   jvmtiExports._can_maintain_original_method_order = (on != 0);
+void CVMjvmtiSetCanMaintainOriginalMethodOrder(jboolean on) {
+    jvmtiExports.canMaintainOriginalMethodOrder = (on != 0);
 }
-void set_can_post_interpreter_events(jboolean on) {
-   jvmtiExports._can_post_interpreter_events = (on != 0);
+void CVMjvmtiSetCanPostInterpreterEvents(jboolean on) {
+    jvmtiExports.canPostInterpreterEvents = (on != 0);
 }
-void set_can_hotswap_or_post_breakpoint(jboolean on) {
-   jvmtiExports._can_hotswap_or_post_breakpoint = (on != 0);
+void CVMjvmtiSetCanHotswapOrPostBreakpoint(jboolean on) {
+    jvmtiExports.canHotswapOrPostBreakpoint = (on != 0);
 }
-void set_can_modify_any_class(jboolean on) {
-   jvmtiExports._can_modify_any_class = (on != 0);
+void CVMjvmtiSetCanModifyAnyClass(jboolean on) {
+    jvmtiExports.canModifyAnyClass = (on != 0);
 }
-void set_can_walk_any_space(jboolean on) {
-   jvmtiExports._can_walk_any_space = (on != 0);
+void CVMjvmtiSetCanWalkAnySpace(jboolean on) {
+    jvmtiExports.canWalkAnySpace = (on != 0);
 }
-void set_can_access_local_variables(jboolean on) {
-   jvmtiExports._can_access_local_variables = (on != 0);
+void CVMjvmtiSetCanAccessLocalVariables(jboolean on) {
+    jvmtiExports.canAccessLocalVariables = (on != 0);
 }
-void set_can_post_exceptions(jboolean on) {
-   jvmtiExports._can_post_exceptions = (on != 0);
+void CVMjvmtiSetCanPostExceptions(jboolean on) {
+    jvmtiExports.canPostExceptions = (on != 0);
 }
-void set_can_post_breakpoint(jboolean on) {
-   jvmtiExports._can_post_breakpoint = (on != 0);
+void CVMjvmtiSetCanPostBreakpoint(jboolean on) {
+    jvmtiExports.canPostBreakpoint = (on != 0);
 }
-void set_can_post_field_access(jboolean on) {
-   jvmtiExports._can_post_field_access = (on != 0);
+void CVMjvmtiSetCanPostFieldAccess(jboolean on) {
+    jvmtiExports.canPostFieldAccess = (on != 0);
 }
-void set_can_post_field_modification(jboolean on) {
-   jvmtiExports._can_post_field_modification = (on != 0);
+void CVMjvmtiSetCanPostFieldModification(jboolean on) {
+    jvmtiExports.canPostFieldModification = (on != 0);
 }
-void set_can_post_method_entry(jboolean on) {
-   jvmtiExports._can_post_method_entry = (on != 0);
+void CVMjvmtiSetCanPostMethodEntry(jboolean on) {
+    jvmtiExports.canPostMethodEntry = (on != 0);
 }
-void set_can_post_method_exit(jboolean on) {
-   jvmtiExports._can_post_method_exit = (on != 0);
+void CVMjvmtiSetCanPostMethodExit(jboolean on) {
+    jvmtiExports.canPostMethodExit = (on != 0);
 }
-void set_can_pop_frame(jboolean on) {
-   jvmtiExports._can_pop_frame = (on != 0);
+void CVMjvmtiSetCanPopFrame(jboolean on) {
+    jvmtiExports.canPopFrame = (on != 0);
 }
-void set_can_force_early_return(jboolean on) {
-   jvmtiExports._can_force_early_return = (on != 0);
+void CVMjvmtiSetCanForceEarlyReturn(jboolean on) {
+    jvmtiExports.canForceEarlyReturn = (on != 0);
 }
 
 
-void set_should_post_single_step(jboolean on) {
-   jvmtiExports._should_post_single_step = on;
+void CVMjvmtiSetShouldPostSingleStep(jboolean on) {
+    jvmtiExports.shouldPostSingleStep = on;
 }
-void set_should_post_field_access(jboolean on) {
-   jvmtiExports._should_post_field_access = on;
+void CVMjvmtiSetShouldPostFieldAccess(jboolean on) {
+    jvmtiExports.shouldPostFieldAccess = on;
 }
-void set_should_post_field_modification(jboolean on) {
-   jvmtiExports._should_post_field_modification = on;
+void CVMjvmtiSetShouldPostFieldModification(jboolean on) {
+    jvmtiExports.shouldPostFieldModification = on;
 }
-void set_should_post_class_load(jboolean on) {
-   jvmtiExports._should_post_class_load = on;
+void CVMjvmtiSetShouldPostClassLoad(jboolean on) {
+    jvmtiExports.shouldPostClassLoad = on;
 }
-void set_should_post_class_prepare(jboolean on) {
-   jvmtiExports._should_post_class_prepare = on;
+void CVMjvmtiSetShouldPostClassPrepare(jboolean on) {
+    jvmtiExports.shouldPostClassPrepare = on;
 }
-void set_should_post_class_unload(jboolean on) {
-   jvmtiExports._should_post_class_unload = on;
-}
-void set_should_post_class_file_load_hook(jboolean on) {
-   jvmtiExports._should_post_class_file_load_hook = on;
+void CVMjvmtiSetShouldPostClassFileLoadHook(jboolean on) {
+    jvmtiExports.shouldPostClassFileLoadHook = on;
 }   
-void set_should_post_native_method_bind(jboolean on) {
-   jvmtiExports._should_post_native_method_bind = on;
+void CVMjvmtiSetShouldPostNativeMethodBind(jboolean on) {
+    jvmtiExports.shouldPostNativeMethodBind = on;
 }
-void set_should_post_compiled_method_load(jboolean on) {
-   jvmtiExports._should_post_compiled_method_load = on;
+void CVMjvmtiSetShouldPostCompiledMethodLoad(jboolean on) {
+    jvmtiExports.shouldPostCompiledMethodLoad = on;
 }
-void set_should_post_compiled_method_unload(jboolean on) {
-   jvmtiExports._should_post_compiled_method_unload = on;
+void CVMjvmtiSetShouldPostCompiledMethodUnload(jboolean on) {
+    jvmtiExports.shouldPostCompiledMethodUnload = on;
 }
-void set_should_post_dynamic_code_generated(jboolean on) {
-  jvmtiExports._should_post_dynamic_code_generated = on;
+void CVMjvmtiSetShouldPostDynamicCodeGenerated(jboolean on) {
+    jvmtiExports.shouldPostDynamicCodeGenerated = on;
 }   
-void set_should_post_monitor_contended_enter(jboolean on) {
-   jvmtiExports._should_post_monitor_contended_enter = on;
+void CVMjvmtiSetShouldPostMonitorContendedEnter(jboolean on) {
+    jvmtiExports.shouldPostMonitorContendedEnter = on;
 }
-void set_should_post_monitor_contended_entered(jboolean on) {
-   jvmtiExports._should_post_monitor_contended_entered = on;
+void CVMjvmtiSetShouldPostMonitorContendedEntered(jboolean on) {
+    jvmtiExports.shouldPostMonitorContendedEntered = on;
 }
-void set_should_post_monitor_wait(jboolean on) {
-   jvmtiExports._should_post_monitor_wait = on;
+void CVMjvmtiSetShouldPostMonitorWait(jboolean on) {
+    jvmtiExports.shouldPostMonitorWait = on;
 }
-void set_should_post_monitor_waited(jboolean on) {
-   jvmtiExports._should_post_monitor_waited = on;
+void CVMjvmtiSetShouldPostMonitorWaited(jboolean on) {
+    jvmtiExports.shouldPostMonitorWaited = on;
 }
-void set_should_post_garbage_collection_start(jboolean on) {
-   jvmtiExports._should_post_garbage_collection_start = on;
+void CVMjvmtiSetShouldPostGarbageCollectionStart(jboolean on) {
+    jvmtiExports.shouldPostGarbageCollectionStart = on;
 }
-void set_should_post_garbage_collection_finish(jboolean on) {
-   jvmtiExports._should_post_garbage_collection_finish = on;
+void CVMjvmtiSetShouldPostGarbageCollectionFinish(jboolean on) {
+    jvmtiExports.shouldPostGarbageCollectionFinish = on;
 }
-void set_should_post_data_dump(jboolean on) {
-   jvmtiExports._should_post_data_dump = on;
+void CVMjvmtiSetShouldPostDataDump(jboolean on) {
+    jvmtiExports.shouldPostDataDump = on;
 }   
-void set_should_post_object_free(jboolean on) {
-   jvmtiExports._should_post_object_free = on;
+void CVMjvmtiSetShouldPostObjectFree(jboolean on) {
+    jvmtiExports.shouldPostObjectFree = on;
 }
-void set_should_post_vm_object_alloc(jboolean on) {
-   jvmtiExports._should_post_vm_object_alloc = on;
+void CVMjvmtiSetShouldPostVmObjectAlloc(jboolean on) {
+    jvmtiExports.shouldPostVmObjectAlloc = on;
 }    
 
-void set_should_post_thread_life(jboolean on) {
-   jvmtiExports._should_post_thread_life = on;
+void CVMjvmtiSetShouldPostThreadLife(jboolean on) {
+    jvmtiExports.shouldPostThreadLife = on;
 }
-void set_should_clean_up_heap_objects(jboolean on) {
-   jvmtiExports._should_clean_up_heap_objects = on;
-}
-
-/*
- * CompiledMethodUnload events are reported from the VM thread so they
- * are collected in lists (of jmethodID/addresses) and the events are posted later
- * from threads posting CompieldMethodLoad or DynamicCodeGenerated events.
-
- * tests if there are CompiledMethodUnload events pending
- */
-jboolean have_pending_compiled_method_unload_events() { 
-  return _have_pending_compiled_method_unload_events; 
+void CVMjvmtiSetShouldCleanUpHeapObjects(jboolean on) {
+    jvmtiExports.shouldCleanUpHeapObjects = on;
 }
 
-void set_has_redefined_a_class() {
-  jvmtiExports._has_redefined_a_class = CVM_TRUE;
+jlong
+CVMjvmtiGetThreadEventEnabled(CVMExecEnv *ee) {
+    return CVMjvmtiEventEnabled(ee).enabledBits;
 }
 
-jboolean has_redefined_a_class() {
-  return jvmtiExports._has_redefined_a_class;
+void
+CVMjvmtiSetShouldPostAnyThreadEvent(CVMExecEnv *ee, jlong enabled) {
+    CVMjvmtiEventEnabled(ee).enabledBits = enabled;
 }
-
-jboolean all_dependencies_are_recorded() {
-  return jvmtiExports._all_dependencies_are_recorded;
-}
-
-void set_all_dependencies_are_recorded(jboolean on) {
-  jvmtiExports._all_dependencies_are_recorded = (on != 0);
-}
-
-jboolean can_get_source_debug_extension() {
-   return jvmtiExports._can_get_source_debug_extension;
-}
-
-/* BP, expression stack, hotswap, interp_only, local_var, monitor info */
-jboolean can_examine_or_deopt_anywhere() {
-   return jvmtiExports._can_examine_or_deopt_anywhere;
-}
-
-/* JVMTI spec requires this, does this matter for JVMTI? */
-jboolean can_maintain_original_method_order() {
-   return jvmtiExports._can_maintain_original_method_order;
-}
-
-/* any of single-step, method-entry/exit, frame-pop, and field-access/modification */
-jboolean can_post_interpreter_events() {
-   return jvmtiExports._can_post_interpreter_events;
-}
-
-jboolean can_hotswap_or_post_breakpoint() {
-   return jvmtiExports._can_hotswap_or_post_breakpoint;
-}
-
-jboolean can_modify_any_class() {
-   return jvmtiExports._can_modify_any_class;
-}
-
-jboolean can_walk_any_space() {
-   return jvmtiExports._can_walk_any_space;
-}
-
-/* can retrieve frames, set/get local variables or hotswap */
-jboolean can_access_local_variables() {
-   return jvmtiExports._can_access_local_variables;
-}
-
-/* throw or catch */
-jboolean can_post_exceptions() {
-   return jvmtiExports._can_post_exceptions;
-}
-
-jboolean can_post_breakpoint() {
-   return jvmtiExports._can_post_breakpoint;
-}
-jboolean can_post_field_access() {
-   return jvmtiExports._can_post_field_access;
-}
-jboolean can_post_field_modification() {
-   return jvmtiExports._can_post_field_modification;
-}
-jboolean can_post_method_entry() {
-   return jvmtiExports._can_post_method_entry;
-}
-jboolean can_post_method_exit() {
-   return jvmtiExports._can_post_method_exit;
-}
-jboolean can_pop_frame() {
-   return jvmtiExports._can_pop_frame;
-}
-jboolean can_force_early_return() {
-   return jvmtiExports._can_force_early_return;
-}
-
 
 /*
  * the below maybe don't have to be (but are for now) fixed conditions here 
  * any events can be enabled
  */
-jboolean should_post_thread_life() {
-   return jvmtiExports._should_post_thread_life;
+jboolean CVMjvmtiShouldPostThreadLife() {
+    return jvmtiExports.shouldPostThreadLife;
 }
-
 
 /* ------ DYNAMIC conditions here ------------ */
 
-jboolean should_post_single_step() {
-   return jvmtiExports._should_post_single_step;
+jboolean CVMjvmtiShouldPostSingleStep() {
+    return jvmtiExports.shouldPostSingleStep;
 }
-jboolean should_post_field_access() {
-   return jvmtiExports._should_post_field_access;
+jboolean CVMjvmtiShouldPostFieldAccess() {
+    return jvmtiExports.shouldPostFieldAccess;
 }
-jboolean should_post_field_modification() {
-   return jvmtiExports._should_post_field_modification;
+jboolean CVMjvmtiShouldPostFieldModification() {
+    return jvmtiExports.shouldPostFieldModification;
 }
-jboolean should_post_class_load() {
-   return jvmtiExports._should_post_class_load;
+jboolean CVMjvmtiShouldPostClassLoad() {
+    return jvmtiExports.shouldPostClassLoad;
 }
-jboolean should_post_class_prepare() {
-   return jvmtiExports._should_post_class_prepare;
+jboolean CVMjvmtiShouldPostClassPrepare() {
+    return jvmtiExports.shouldPostClassPrepare;
 }
-jboolean should_post_class_unload() {
-   return jvmtiExports._should_post_class_unload;
+jboolean CVMjvmtiShouldPostClassFileLoadHook() {
+    return jvmtiExports.shouldPostClassFileLoadHook;
 }
-jboolean should_post_class_file_load_hook() {
-   return jvmtiExports._should_post_class_file_load_hook;
+jboolean CVMjvmtiShouldPostNativeMethodBind() {
+    return jvmtiExports.shouldPostNativeMethodBind;
 }
-jboolean should_post_native_method_bind() {
-   return jvmtiExports._should_post_native_method_bind;
+jboolean CVMjvmtiShouldPostCompiledMethodLoad() {
+    return jvmtiExports.shouldPostCompiledMethodLoad;
 }
-jboolean should_post_compiled_method_load() {
-   return jvmtiExports._should_post_compiled_method_load;
+jboolean CVMjvmtiShouldPostCompiledMethodUnload() {
+    return jvmtiExports.shouldPostCompiledMethodUnload;
 }
-jboolean should_post_compiled_method_unload() {
-   return jvmtiExports._should_post_compiled_method_unload;
+jboolean CVMjvmtiShouldPostDynamicCodeGenerated() {
+    return jvmtiExports.shouldPostDynamicCodeGenerated;
 }
-jboolean should_post_dynamic_code_generated() {
-   return jvmtiExports._should_post_dynamic_code_generated;
+jboolean CVMjvmtiShouldPostMonitorContendedEnter() {
+    return jvmtiExports.shouldPostMonitorContendedEnter;
 }
-jboolean should_post_monitor_contended_enter() {
-   return jvmtiExports._should_post_monitor_contended_enter;
+jboolean CVMjvmtiShouldPostMonitorContendedEntered() {
+    return jvmtiExports.shouldPostMonitorContendedEntered;
 }
-jboolean should_post_monitor_contended_entered() {
-   return jvmtiExports._should_post_monitor_contended_entered;
+jboolean CVMjvmtiShouldPostMonitorWait() {
+    return jvmtiExports.shouldPostMonitorWait;
 }
-jboolean should_post_monitor_wait() {
-   return jvmtiExports._should_post_monitor_wait;
+jboolean CVMjvmtiShouldPostMonitorWaited() {
+    return jvmtiExports.shouldPostMonitorWaited;
 }
-jboolean should_post_monitor_waited() {
-   return jvmtiExports._should_post_monitor_waited;
+jboolean CVMjvmtiShouldPostDataDump() {
+    return jvmtiExports.shouldPostDataDump;
 }
-jboolean should_post_data_dump() {
-   return jvmtiExports._should_post_data_dump;
+jboolean CVMjvmtiShouldPostGarbageCollectionStart() {
+    return jvmtiExports.shouldPostGarbageCollectionStart;
 }
-jboolean should_post_garbage_collection_start() {
-   return jvmtiExports._should_post_garbage_collection_start;
+jboolean CVMjvmtiShouldPostGarbageCollectionFinish() {
+    return jvmtiExports.shouldPostGarbageCollectionFinish;
 }
-jboolean should_post_garbage_collection_finish() {
-   return jvmtiExports._should_post_garbage_collection_finish;
+jboolean CVMjvmtiShouldPostObjectFree() {
+    return jvmtiExports.shouldPostObjectFree;
 }
-jboolean should_post_object_free() {
-   return jvmtiExports._should_post_object_free;
-}
-jboolean should_post_vm_object_alloc() {
-   return jvmtiExports._should_post_vm_object_alloc;
+jboolean CVMjvmtiShouldPostVmObjectAlloc() {
+    return jvmtiExports.shouldPostVmObjectAlloc;
 }
 
-/* we are holding objects on the heap - need to talk to GC - e.g. breakpoint info */
-jboolean should_clean_up_heap_objects() {
-   return jvmtiExports._should_clean_up_heap_objects;
-}
-
-/* field access management */
-CVMAddr  get_field_access_count_addr();
-
-/* field modification management */
-CVMAddr  get_field_modification_count_addr();
-
-/* single stepping management methods */
-void at_single_stepping_point(jthread *thread, CVMMethodBlock method, CVMAddr location);
-void expose_single_stepping(jthread *thread);
-jboolean hide_single_stepping(jthread *thread);
-
-/* Methods that notify the debugger that something interesting has happened in the VM. */
-
-/*
- * post a DynamicCodeGenerated event while holding locks in the VM. Any event
- * posted using this function is recorded by the enclosing event collector
- * -- JvmtiDynamicCodeEventCollector.
- */
-
-/* Collects vm internal objects for later event posting. */
-/*
-void vm_object_alloc_event_collector(oop object) {
-  if (should_post_vm_object_alloc()) {
-    record_vm_internal_object_allocation(object);
-  }      
-}
-*/
 /* attach support */
-jint load_agent_library(AttachOperation* op, char* out);
+jint loadAgentLibrary(AttachOperation* op, char* out);
 
 /* ----------------- */
 
-jboolean is_jvmti_version(jint version) {
-   return (version & JVMTI_VERSION_MASK) == JVMTI_VERSION_VALUE;
+jboolean isJvmtiVersion(jint version) {
+    return (version & JVMTIVERSIONMASK) == JVMTIVERSIONVALUE;
 }
-jint get_jvmti_interface(JavaVM *jvm, void **penv, jint version);
+jint getJvmtiInterface(JavaVM *jvm, void **penv, jint version);
 
 
 void
-enter_primordial_phase() {
+CVMjvmtiEnterPrimordialPhase() {
   
-  _phase = JVMTI_PHASE_PRIMORDIAL;
+    jvmtiCurrentPhase = JVMTI_PHASE_PRIMORDIAL;
 }
 
 void
-enter_start_phase() {
-  _phase = JVMTI_PHASE_START;
+CVMjvmtiEnterStartPhase() {
+    jvmtiCurrentPhase = JVMTI_PHASE_START;
 }
 
 void
-enter_onload_phase() {
-  _phase = JVMTI_PHASE_ONLOAD;
+CVMjvmtiEnterOnloadPhase() {
+    jvmtiCurrentPhase = JVMTI_PHASE_ONLOAD;
 }
 
 void
-enter_live_phase() {
-  _phase = JVMTI_PHASE_LIVE;
+CVMjvmtiEnterLivePhase() {
+    jvmtiCurrentPhase = JVMTI_PHASE_LIVE;
+}
+
+void
+CVMjvmtiEnterDeadPhase() {
+    jvmtiCurrentPhase = JVMTI_PHASE_DEAD;
+}
+
+jvmtiPhase
+CVMjvmtiGetPhase() {
+    return jvmtiCurrentPhase;
+}
+
+jvmtiError
+CVMjvmtiAllocate(jlong size, unsigned char **mem) {
+    JvmtiEnv *jvmtiEnv = GLOBAL_ENV;
+    CVMassert((jvmtiEnv != NULL));
+    CVMassert((jvmtiEnv->jvmtiExternal != NULL));
+    jvmtiEnv->jvmtiExternal->Allocate(&jvmtiEnv->jvmtiExternal, size, mem);
+    if (size > 0) {
+	CVMassert(*mem != NULL);
+    }
+    return JVMTI_ERROR_NONE;
+}
+
+jvmtiError
+CVMjvmtiDeallocate(unsigned char *mem) {
+    JvmtiEnv *jvmtiEnv = GLOBAL_ENV;
+    CVMassert((jvmtiEnv != NULL));
+    CVMassert((jvmtiEnv->jvmtiExternal != NULL));
+    jvmtiEnv->jvmtiExternal->Deallocate(&jvmtiEnv->jvmtiExternal, mem);
+    return JVMTI_ERROR_NONE;
+}
+
+CVMBool
+CVMjvmtiClassBeingRedefined(CVMExecEnv *ee, CVMClassBlock *cb) {
+
+    ThreadNode *node;
+    if (CVMjvmtiInitialized()) {
+	node = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
+	return node == NULL ? CVM_FALSE : (node->redefineCb == cb);
+    }
+    return CVM_FALSE;
+}
+
+CVMBool
+CVMjvmtiDebuggingFlag() {
+    return CVMglobals.jvmtiDebuggingFlag;
+}
+
+static JvmtiLockInfo *
+jvmtiGetLockInfoX(JvmtiEnv *jvmtiEnv, CVMExecEnv *ee) {
+    int i;
+    JvmtiLockInfo *li;
+
+    if (ee->jvmtiEE.jvmtiLockInfoFreelist == NULL) {
+	for (i = 0; i < 25; i++) {
+	    /* allocate some lock info elements */
+	    if (CVMjvmtiAllocate(sizeof(JvmtiLockInfo),
+				 (unsigned char **)&li) != JVMTI_ERROR_NONE) {
+		return NULL;
+	    }
+	    li->next = ee->jvmtiEE.jvmtiLockInfoFreelist;
+	    ee->jvmtiEE.jvmtiLockInfoFreelist = li;
+	}
+    }
+    li = ee->jvmtiEE.jvmtiLockInfoFreelist;
+    CVMassert(li != NULL);
+    ee->jvmtiEE.jvmtiLockInfoFreelist = li->next;
+    li->next = NULL;
+    return li;
+}
+
+static JvmtiLockInfo *
+jvmtiGetLockInfo(CVMExecEnv *ee) {
+    JvmtiLockInfo *li;
+    JvmtiEnv *jvmti_env = GLOBAL_ENV;
+    if (!CVMD_isgcSafe(ee)) {
+	CVMD_gcSafeExec(ee, {
+		li = jvmtiGetLockInfoX(jvmti_env, ee);
+	    });
+    } else {
+	li = jvmtiGetLockInfoX(jvmti_env, ee);
+    }
+    return li;
+}
+
+static void
+jvmtiFreeLockInfoX(JvmtiEnv *jvmtiEnv, CVMExecEnv *ee, JvmtiLockInfo *li) {
+
+    li->next = ee->jvmtiEE.jvmtiLockInfoFreelist;
+    li->lock = NULL;
+    ee->jvmtiEE.jvmtiLockInfoFreelist = li;
+}
+
+static void
+jvmtiFreeLockInfo(CVMExecEnv *ee, JvmtiLockInfo *li) {
+    JvmtiEnv *jvmti_env = GLOBAL_ENV;
+    if (!CVMD_isgcSafe(ee)) {
+	CVMD_gcSafeExec(ee, {
+		jvmtiFreeLockInfoX(jvmti_env, ee, li);
+	    });
+    } else {
+	jvmtiFreeLockInfoX(jvmti_env, ee, li);
+    }
+}
+
+/*
+ * Keep track of locks per frame so that we can unlock them if a PopFrame
+ * is requested
+ */
+
+void
+CVMjvmtiAddLock(CVMExecEnv *ee, CVMOwnedMonitor *o) {
+    if (CVMframeIsJava(CVMeeGetCurrentFrame(ee))) {
+	CVMJavaFrame *jframe = CVMgetJavaFrame(CVMeeGetCurrentFrame(ee));
+	JvmtiLockInfo *li;
+	li = jvmtiGetLockInfo(ee);
+	if (li != NULL) {
+	    li->next = jframe->jvmtiLockInfo;
+	    jframe->jvmtiLockInfo = li;
+	    li->lock = o;
+	}
+    }
+}
+
+void
+CVMjvmtiAddMon(CVMExecEnv *ee, CVMObjMonitor *mon) {
+    if (CVMframeIsJava(CVMeeGetCurrentFrame(ee))) {
+	CVMJavaFrame *jframe = CVMgetJavaFrame(CVMeeGetCurrentFrame(ee));
+	JvmtiLockInfo *li = jvmtiGetLockInfo(ee);
+	if (li != NULL) {
+            CVMOwnedMonitor *o = ee->objLocksOwned;
+            if (o->u.heavy.mon != mon) {
+                do {
+                    o = o->next;
+                } while ((o != NULL) && (o->u.heavy.mon != mon));
+                CVMassert (o != NULL);
+            }
+	    li->next = jframe->jvmtiLockInfo;
+	    jframe->jvmtiLockInfo = li;
+	    li->lock = o;
+	}
+    }
+}
+
+void
+CVMjvmtiRemoveLock(CVMExecEnv *ee, CVMOwnedMonitor *o) {
+    if (CVMframeIsJava(CVMeeGetCurrentFrame(ee))) {
+	CVMJavaFrame *jframe = CVMgetJavaFrame(CVMeeGetCurrentFrame(ee));
+	JvmtiLockInfo *li = jframe->jvmtiLockInfo;
+	if (li != NULL) {
+	    CVMassert(o == li->lock);
+	    jframe->jvmtiLockInfo = li->next;
+	    jvmtiFreeLockInfo(ee, li);
+	}
+    }
+}
+
+void
+CVMjvmtiRemoveMon(CVMExecEnv *ee, CVMObjMonitor *mon) {
+    if (CVMframeIsJava(CVMeeGetCurrentFrame(ee))) {
+	CVMJavaFrame *jframe = CVMgetJavaFrame(CVMeeGetCurrentFrame(ee));
+	JvmtiLockInfo *li = jframe->jvmtiLockInfo;
+	if (li != NULL) {
+	    CVMOwnedMonitor *o = ee->objLocksOwned;
+
+	    if (o->u.heavy.mon != mon) {
+		do {
+		    o = o->next;
+		} while ((o != NULL) && (o->u.heavy.mon != mon));
+		CVMassert (o != NULL);
+	    }
+	    CVMassert(o == li->lock);
+	    jframe->jvmtiLockInfo = li->next;
+	    jvmtiFreeLockInfo(ee, li);
+	}
+    }
 }
 
 #endif /* CVM_JVMTI */

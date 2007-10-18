@@ -54,8 +54,7 @@ int hprof_send(int s, const char *msg, int len, int flags)
 int hprof_write(FILE *filedes, const void *buf, size_t nbyte)
 {
     int res;
-    res = fwrite((char *) buf, 1, nbyte, filedes);
-
+    res = fwrite((char *)buf, 1, nbyte, filedes);
     return res;
 }
 

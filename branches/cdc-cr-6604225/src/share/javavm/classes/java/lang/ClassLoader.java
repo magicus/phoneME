@@ -196,6 +196,15 @@ public abstract class ClassLoader {
         classes.addElement(c);
     }
 
+    // Invoked by the VM to remove a loaded class.  Used by JVMTI code
+    private void removeClass(Class c) {
+	if (CVM.checkDebugFlags(CVM.DEBUGFLAG_TRACE_CLASSLOADING) != 0) {
+	    System.err.println("CL: removeClass() called for <" + 
+			       c + "," + this + ">");
+	}
+	classes.removeElement(c);
+    }
+
     // The packages defined in this class loader.  Each package name is mapped
     // to its corresponding Package object.
     private HashMap packages = new HashMap();
@@ -773,6 +782,13 @@ public abstract class ClassLoader {
 	return system.loadClass(name);
     }
 
+    /**
+     * Used only by profiling code to load classes via reflections
+     */
+    private Class findBootstrapClass(String name)
+	throws ClassNotFoundException {
+	return loadBootstrapClass(name);
+    }
 
     /**
      * Returns a bootstrap Class, or throws a ClassNotFoundException

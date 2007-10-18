@@ -90,6 +90,7 @@ CVM_TARGETOBJS_SPACE += \
 	sync_md.o \
 	system_md.o \
 	threads_md.o \
+	time_md.o \
 	globals_md.o \
 	java_props_md.o \
 	memory_md.o \

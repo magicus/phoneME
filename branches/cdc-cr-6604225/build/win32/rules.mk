@@ -38,6 +38,8 @@ printconfig::
 	@echo "PLATFORM_SDK_DIR    = $(call CHKWINPATH,$(PLATFORM_SDK_DIR))"
 	@echo "PLATFORM_TOOLS_PATH = `ls -d \"$(PLATFORM_TOOLS_PATH)\" 2>&1`"
 	@echo "COMMON_TOOLS_PATH   = `ls -d \"$(COMMON_TOOLS_PATH)\" 2>&1`"
+	@echo "INCLUDE             = $$INCLUDE"
+	@echo "LIB                 = $$LIB"
 
 #
 # Check for compiler compatiblity

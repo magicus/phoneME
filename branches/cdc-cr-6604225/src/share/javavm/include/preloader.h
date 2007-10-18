@@ -137,7 +137,7 @@ CVMpreloaderIterateAllClasses(CVMExecEnv* ee,
 CVMBool CVMpreloaderIsPreloadedObject(CVMObject *obj);
 #endif
 
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 /* Purpose: Iterate over all preloaded objects and calls Call callback() on
             each preloaded object. */
 /* Returns: CVM_FALSE if exiting due to an abortion (i.e. the callback
@@ -197,6 +197,7 @@ CVM_CLASSBLOCK_DECL(java_lang_Cloneable);
 CVM_CLASSBLOCK_DECL(java_lang_System);
 CVM_CLASSBLOCK_DECL(java_io_File);
 CVM_CLASSBLOCK_DECL(java_io_Serializable);
+CVM_CLASSBLOCK_DECL(java_net_URLConnection);
 CVM_CLASSBLOCK_DECL(java_lang_reflect_Field);
 CVM_CLASSBLOCK_DECL(java_lang_reflect_Method);
 CVM_CLASSBLOCK_DECL(java_lang_reflect_Constructor);

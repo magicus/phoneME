@@ -24,13 +24,13 @@
 # @(#)defs.mk	1.2 06/10/10
 #
 
-# Description of the VC 2003 win32 platform.
+# Description of the VC 2005 win32 platform.
 # The following are all for the benefit of win32/defs.mk
 VS8_DIR			?= C:/Program Files/Microsoft Visual Studio 8
 VS8_PATH		= $(call WIN2POSIX,$(VS8_DIR))
 VC_DIR			= $(VS8_DIR)/VC
 VC_PATH			= $(VS8_PATH)/VC
-PLATFORM_SDK_DIR	= C:/Program Files/Microsoft Platform SDK
+PLATFORM_SDK_DIR	= C:/Program Files/Microsoft Visual Studio 8/VC/PlatformSDK
 PLATFORM_SDK_PATH	= $(call WIN2POSIX,$(PLATFORM_SDK_DIR))
 PLATFORM_TOOLS_PATH	= $(VC_PATH)/bin
 COMMON_TOOLS_PATH	= $(PLATFORM_SDK_PATH)/Bin
@@ -46,6 +46,7 @@ export INCLUDE
 export PATH
 
 LINK_CMD += ; mt.exe -manifest $@.manifest "-outputresource:$@;\#2"
+SO_LINK_CMD += ; mt.exe -manifest $@.manifest "-outputresource:$@;\#2"
 
 # get some vc specific defs
 include ../win32/vc_defs.mk

@@ -1,7 +1,5 @@
 /*
- * @(#)interpreter.h	1.255 06/10/30
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -52,10 +50,22 @@
 #endif
 
 #define CVMJAVAPKG "java/lang/"
-
+/*
+ * Conveniently, these bits correspond to JVMTI_THREAD_STATE_XXX bits
+ */
 typedef enum {
-    CVM_THREAD_RUNNING = 0x0,
-    CVM_THREAD_SUSPENDED = 0x100
+    CVM_THREAD_RUNNING               = 0x0,
+    CVM_THREAD_TERMINATED            = 0x2,
+    CVM_THREAD_WAITING_INDEFINITE    = 0x10,
+    CVM_THREAD_WAITING_TIMEOUT       = 0x20,
+    CVM_THREAD_SLEEPING              = 0x40,
+    CVM_THREAD_WAITING               = 0x80,
+    CVM_THREAD_OBJECT_WAIT           = 0x100,
+    CVM_THREAD_BLOCKED_MONITOR_ENTER = 0x400,
+    CVM_THREAD_SUSPENDED             = 0x100000,
+    CVM_THREAD_INTERRUPTED           = 0x200000,
+    CVM_THREAD_IN_NATIVE             = 0x400000,
+    CVM_THREAD_STACK_MUTATOR_LOCK    = 0x800000
 } CVMThreadState;
 
 /*
@@ -216,16 +226,14 @@ struct CVMExecEnv {
 
     CVMBool hasPostedExitEvents;
 #ifdef CVM_JVMTI
-    CVMBool debugEventsEnabled;
-    CVMBool jvmtiSingleStepping;
-    JvmtiEventEnabled _jvmtiThreadEventEnabled;
-    /* NOTE: first pass at JVMTI support has only one global environment */
-    /*   JvmtiEnv *_jvmti_env; */
+    volatile CVMJVMTIExecEnv jvmtiEE;
 #endif
 #ifdef CVM_JVMPI
+    void *jvmpiProfilerData;    /* JVMPI Profiler thread-local data. */
+#endif
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
     CVMProfiledMonitor *blockingLockEntryMonitor;
     CVMProfiledMonitor *blockingWaitMonitor;
-    void *jvmpiProfilerData;    /* JVMPI Profiler thread-local data. */
     CVMBool hasRun;     /* Has this thread run since its last suspension? */
 #endif
 
@@ -273,6 +281,11 @@ struct CVMExecEnv {
 
 #ifdef CVM_TRACE
     CVMUint32 traceDepth;
+#endif
+
+#ifdef CVM_INSPECTOR
+    CVMInt32 priority;
+    CVMUint32 tickCount;
 #endif
 };
 
@@ -558,24 +571,36 @@ extern void CVMremoveThread(CVMExecEnv *ee, CVMBool userThread);
 
 #define CVMcurrentThreadICell(ee) ((ee)->threadICell)
 
+#ifdef CVM_INSPECTOR
+#define CVMeeIncTickCount(ee)   ((ee)->tickCount++)
+#else
+#define CVMeeIncTickCount(ee)   ((void)0) /* Null expression. */
+#endif
+
 /* NOTE: CVMeeMarkHasRun(ee) is used to mark the specified thread has run
     since the last JVMPI suspension of that thread.  This is needed to
     support the JVMPI ThreadHasRun() query: */
 #ifdef CVM_JVMPI
 
 /* Purpose: Mark the specified thread as having run. */
-#define CVMeeMarkHasRun(ee)     ((ee)->hasRun = CVM_TRUE)
+#define CVMeeMarkHasRun(ee)  (CVMeeIncTickCount(ee), ((ee)->hasRun = CVM_TRUE))
 
 /* Purpose: Reset the hasRun flag of the specified thread.  This is done
             immediately after the thread is suspended. */
-#define CVMeeResetHasRun(ee)    ((ee)->hasRun = CVM_FALSE)
+#define CVMeeResetHasRun(ee) ((ee)->hasRun = CVM_FALSE)
 
 /* Purpose: Checks to see if the specified thread has run. */
-#define CVMeeHasRun(ee)         ((ee)->hasRun)
+#define CVMeeHasRun(ee)      ((ee)->hasRun)
 
 #else
-#define CVMeeMarkHasRun(ee)     ((void)0) /* Null expression. */
+#define CVMeeMarkHasRun(ee)  (CVMeeIncTickCount(ee))
 #endif /* CVM_JVMPI */
+
+#ifdef CVM_JVMTI
+/* Checks to see if the specified thread is suspended or not. */
+#define CVMeeThreadIsSuspended(ee) \
+    (((ee)->threadState & CVM_THREAD_SUSPENDED) != 0)
+#endif /* CVM_JVMTI */
 
 /**********************************************************************
  * Interpreter Frames:
@@ -613,7 +638,9 @@ struct CVMInterpreterFrame {
 /* CVMJavaFrame - used for real java methods */
 struct CVMJavaFrame {
     CVMInterpreterFrame	frameX;
-
+#ifdef CVM_JVMTI
+    CVMjvmtiLockInfo *jvmtiLockInfo;
+#endif
     CVMObjectICell    receiverObjX; /* the object we are dispatching on or
 				     * the Class object for static calls */
     CVMStackVal32     opstackX[1];  /* the operand stack */
@@ -831,6 +858,15 @@ typedef struct {
 } CVMInterpreterStackData;
 
 /*
+ * Get the stackmap entry for a frame. If (*missingStackMapOK), a NULL entry
+ * is normal.
+ */
+extern CVMStackMapEntry*
+CVMgetStackmapEntry(CVMExecEnv *frameEE, CVMFrame *frame,
+		    CVMJavaMethodDescriptor *jmd, CVMStackMaps *stackmaps,
+		    CVMBool *missingStackmapOK);
+
+/*
  * Find the innermost exception handler for a PC, for stackmap purposes only.
  */
 CVMUint8*
@@ -864,10 +900,93 @@ CVMClassBlock* CVMgetCallerClass(CVMExecEnv* ee, int skip);
 
 /*
  * Like CVMgetCallerFrame() above, but only skips special frames
- * if the "skipSpecial" flag is set.
+ * if the "skipReflection" flag is set.
  */
 CVMFrame*
-CVMgetCallerFrameSpecial(CVMFrame* frame, int n, CVMBool skipSpecial);
+CVMgetCallerFrameSpecial(CVMFrame* frame, int n, CVMBool skipReflection);
+
+/*
+   The Stack Frame Iterator
+   ========================
+   CVMFrameIterator is used to iterate through the frames on the thread
+   interpreter stack.  The iterator also iterates through JIT inline methods
+   as if they have physical frames on the stack.
+
+   How to use?
+   ===========
+   1. Allocate memory for the iterator.  Normally, this is done by declaring
+      an automatic / local variable of type CVMFrameIterator e.g.
+
+         CVMFrameIterator iter;
+
+   2. Initialize the iterator.  This is done by calling one of the initializer
+      functions: CVMframeIterateInit() or CVMframeIterateInitSpecial() e.g.
+
+         CVMframeIterateInit(&iter, firstFrameToIterateFrom);
+
+      The initializers take a firstFrame arg that points to the first stack
+      frame that we want to start iterating from.  Iteration will take us
+      from that "frame" to its previous "frame", and so on.
+
+      Use CVMframeIterateInit() if you just want to iterate over the whole
+      stack for inspection of the "frame"s on it.
+
+      Use CVMframeIterateInitSpecial() if you only want to iterate over a
+      range of physical frames and/or would like the iterator to pop frames
+      as it does each iteration.
+
+   3. Setup a loop to do the iteration by calling one of IterateNext functions:
+      CVMframeIterateNext() or CVMframeIterateNextReflection() e.g.
+
+         while(CVMframeIterateNext(&iter)) {
+             ... Do stuff with the iterator frame.
+         }
+
+      The IterateNext functions will return a boolean to indicate if the
+      iterator has found a "logical frame" to inspect.  I use the term
+      "logical frame" because the iterator is aware of JIT inlined methods,
+      and is able to iterate through those as well as if they have physical
+      frames allocated for them.  In reality, JIT inlined methods all share
+      the frame of their outer most caller.  Hence, the iterator may dwell
+      on one physical frame for more than one iteration while it iterates
+      through the "logical frames" for each of the methods that are inlined
+      in that physical frame as well as the outermost caller method that
+      owns the physical frame.
+
+      When there are no more frames to iterate, the IterateNext functions
+      will return FALSE and cause the loop to terminate.
+
+   4. Alternative to IterateNext functions: CVMframeIterateSkip() or
+      CVMframeIterateSkipReflection() can be used to skip a certain number
+      of logical frames from the current logical frame.
+
+      IterateNext is essentially a special case of IterateSkip where the
+      number of frames to skip is 0 i.e. iterate through all frames without
+      skipping any.
+
+   5. Inside the loop, you can use any of the iterator functions to
+      query about the current logical frame and its method.
+
+      Note that there is no physical representation of the logical frame.
+      Hence, you cannot ask the iterator to return a CVMFrame * for the
+      logical frame.  CVMframeIteratorGetFrame() returns the current
+      physical frame, not the current logical frame.
+
+   Special vs Regular IterateNext/IterateSkip
+   ==========================================
+   Note that for CVMframeIterateNext() and CVMframeIterateSkip(), there are
+   corresponding CVMframeIterateNextReflection() and
+   CVMframeIterateSkipReflection() functions.
+
+   For the most part, the "Special" versions of these functions are provided
+   to allow skipping of "special" frames in the iteration.  These functions
+   will take a skip arg that if set to TRUE will cause skipping to be done.
+
+   The "special" frames in this case would include reflection frames.
+   Transition frames and JNI local frames (those with mb == 0) will
+   automatically be skipped regardless of whether the skip arg is set to
+   TRUE or not.
+ */
 
 struct CVMFrameIterator {
     CVMStack *stack;
@@ -881,53 +1000,55 @@ struct CVMFrameIterator {
 };
 
 /*
- * "frame" is the start frame.  Iteration proceeds to and includes
- * "endFrame", so specifying endFrame == frame will scan only the
- * current frame (but including inlined frames).  Currently,
+ * Initializes the frame iterator.
+ *
+ * "firstFrame" is the first frame.  Iteration proceeds to and includes
+ * "lastFrame", so specifying lastFrame == firstFrame will scan only the
+ * first frame (but including its JIT inlined frames).  Currently,
  * "stack" is only used to support "popFrame" below.
- * Note: the specified frame will be set up as the first frame to be examined
- *       when CVMframeIterateSkipSpecial() (or its derivatives e.g.
- *       CVMframeIterateNext()) is called.  After CVMframeIterateSpecial(),
- *       there is no current frame.  We're expected to call
- *       CVMframeIterateSkipSpecial() immediately after to get to the first
- *       frame.
+ *
+ * Note: The specified firstFrame will be set up as the first frame to be
+ *       examined when CVMframeIterateNext() is called.  The initial
+ *       current frame is set to NULL to indicate that we haven't iterated
+ *       through any frames yet.
  */
 void
-CVMframeIterateSpecial(CVMStack *stack, CVMFrame* frame,
-    CVMFrame *endFrame, CVMFrameIterator *iter);
+CVMframeIterateInitSpecial(CVMFrameIterator *iter, CVMStack *stack,
+			   CVMFrame* firstFrame, CVMFrame *lastFrame);
 
+/* Initializes the frame iterator with the first frame to iterate from. */
 void
-CVMframeIterate(CVMFrame* frame, CVMFrameIterator *iter);
+CVMframeIterateInit(CVMFrameIterator *iter, CVMFrame* firstFrame);
 
 /*
  * "skip" is how many extra frames to skip.  Use skip==0 to see
- * every frame.  To skip special reflection frames, set skipSpecial
+ * every frame.  To skip reflection frames, set skipReflection
  * true.  "popFrame" is used by exception handling to pop frames
  * as it iterates.
- * Note: transition frames will always be skipped.  Al other frames will not
- *       be skipped except for reflection frames depending on the value of
- *       the skipSpecial.
+ * Note: transition frames and JNI local frames (i.e. mb == 0) will always be
+ *       skipped.  All other frames will not be skipped except for reflection
+ *       frames depending on the value of the skipReflection.
  */
 CVMBool
-CVMframeIterateSkipSpecial(CVMFrameIterator *iter,
-    int skip, CVMBool skipSpecial, CVMBool popFrame);
+CVMframeIterateSkipReflection(CVMFrameIterator *iter,
+    int skip, CVMBool skipReflection, CVMBool popFrame);
 
 #define CVMframeIterateSkip(iter, skip) \
-    CVMframeIterateSkipSpecial((iter), (skip), CVM_TRUE, CVM_FALSE)
+    CVMframeIterateSkipReflection((iter), (skip), CVM_TRUE, CVM_FALSE)
 
 CVMUint32
 CVMframeIterateCount(CVMFrameIterator *iter);
 
-#define CVMframeIterateNextSpecial(iter, skipSpecial) \
-    CVMframeIterateSkipSpecial((iter), 0, (skipSpecial), CVM_FALSE)
+#define CVMframeIterateNextReflection(iter, skipReflection) \
+    CVMframeIterateSkipReflection((iter), 0, (skipReflection), CVM_FALSE)
 
 #define CVMframeIterateNext(iter) \
-    CVMframeIterateNextSpecial((iter), CVM_TRUE)
+    CVMframeIterateNextReflection((iter), CVM_TRUE)
 
-#define CVMframeIteratePopSpecial(iter, skipSpecial) \
-   CVMframeIterateSkipSpecial((iter), 0, (skipSpecial), CVM_TRUE)
+#define CVMframeIteratePopSpecial(iter, skipReflection) \
+   CVMframeIterateSkipReflection((iter), 0, (skipReflection), CVM_TRUE)
 
-#define CVMframeIteratePop(iter, skipSpecial) \
+#define CVMframeIteratePop(iter) \
    CVMframeIteratePopSpecial((iter), CVM_TRUE)
 
 CVMBool
@@ -1374,7 +1495,10 @@ CVMsyncReturnHelper(CVMExecEnv *ee, CVMFrame *frame, CVMObjectICell *objICell,
  * Returns the return opcode (fixed up if it was an opc_breakpoint).
  */
 CVMUint32
-CVMregisterReturnEvent(CVMExecEnv *ee, CVMUint8* pc,
+CVMregisterReturnEvent(CVMExecEnv *ee, CVMUint8* pc, CVMUint32 ret_opcode,
+		       CVMObjectICell* resultCell);
+CVMUint32
+CVMregisterReturnEventPC(CVMExecEnv *ee, CVMUint8* pc,
 		       CVMObjectICell* resultCell);
 
 /*

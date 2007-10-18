@@ -316,6 +316,7 @@ struct CVMClassBlock {
 #endif
 
 /* Only the classloader and the above macros should use these macros. */
+/* JVMTI RedefineClass API uses these as well */
 #define CVMcbMethods(cb)            ((cb)->methodsX)
 #define CVMcbFields(cb)             ((cb)->fieldsX)
 
@@ -1650,7 +1651,9 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 			    CVMUint32 classSize, 
 			    CVMClassLoaderICell* loader, 
 			    const char* classname,
-			    const char* dirNameOrZipFileName);
+			    const char* dirNameOrZipFileName,
+			    CVMBool isRedefine);
+
 #endif
 
 /*
@@ -1735,7 +1738,7 @@ CVMclassVerificationSpecToEncoding(char* verifySpec);
  */
 #ifdef CVM_CLASSLOADING
 extern CVMBool
-CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb);
+CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine);
 #endif
 
 /*
@@ -1760,16 +1763,19 @@ CVMclassInitNoCRecursion(CVMExecEnv* ee, CVMClassBlock* cb,
  */
 extern CVMClassICell*
 CVMdefineClass(CVMExecEnv* ee, const char *name, CVMClassLoaderICell* loader,
-	       const CVMUint8* buf, CVMUint32 bufLen, CVMObjectICell* pd);
+	       const CVMUint8* buf, CVMUint32 bufLen, CVMObjectICell* pd,
+	       CVMBool isRedefine);
 
 /*
- * CVMclassCreateArrayClass - creates a fake array class. Needed for any
- * array class type that wasn't reference by romized code and we make 
- * a reference to it at runtime.
+ * CVMclassCreateMultiArrayClass - creates the specified array class by
+ * iteratively (i.e. non-recursively) creating all the layers of the array
+ * class from the inner most to the outer most.  Needed for any array class
+ * type that wasn't reference by romized code and we make a reference to it
+ * at runtime.
  */
 extern CVMClassBlock*
-CVMclassCreateArrayClass(CVMExecEnv* ee, CVMClassTypeID arrayTypeId,
-			 CVMClassLoaderICell* loader, CVMObjectICell* pd);
+CVMclassCreateMultiArrayClass(CVMExecEnv* ee, CVMClassTypeID arrayTypeId,
+			      CVMClassLoaderICell* loader, CVMObjectICell* pd);
 
 /*
  * A 'class callback' called on each class that is iterated over.
@@ -1987,6 +1993,10 @@ typedef struct {
     char*                pathString;
     CVMBool              initialized;
 } CVMClassPath;
+
+extern CVMBool
+CVMclassPathInit(JNIEnv* env, CVMClassPath* path, char* additionalPathString,
+	      CVMBool doNotFailWhenPathNotFound, CVMBool initJavaSide);
 
 /*
  * Obtain the system class loader (initialize the cache if not yet done)

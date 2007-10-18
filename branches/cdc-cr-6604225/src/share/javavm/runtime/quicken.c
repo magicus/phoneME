@@ -178,7 +178,7 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 	 * has been quickened, then we don't care about cpIndex.
 	 */
 #ifdef CVM_JVMTI
-	CVM_DEBUGGER_LOCK(ee);
+	CVM_JVMTI_LOCK(ee);
 #else
 	CVM_CODE_LOCK(ee);
 #endif
@@ -200,7 +200,7 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
     /* release the CVM_CODE_LOCK if necessary */
     if (clobbersCpIndex) {
 #ifdef CVM_JVMTI
-	CVM_DEBUGGER_UNLOCK(ee);
+	CVM_JVMTI_UNLOCK(ee);
 #else
 	CVM_CODE_UNLOCK(ee);
 #endif
@@ -556,7 +556,7 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 	 * Don't let *pc change to an opc_breakpoint while we are trying
 	 * to determine its current status.
 	 */
-	CVM_DEBUGGER_LOCK(ee);
+	CVM_JVMTI_LOCK(ee);
 
 	/*
 	 * If we have to modify the instruction operands, then the
@@ -590,7 +590,7 @@ CVMquickenOpcodeHelper(CVMExecEnv* ee, CVMUint8* quickening, CVMUint8* pc,
 	    CVM_CODE_UNLOCK(ee);
 	}
 
-	CVM_DEBUGGER_UNLOCK(ee);
+	CVM_JVMTI_UNLOCK(ee);
 	return CVM_QUICKEN_ALREADY_QUICKENED;
 #else /* CVM_JVMTI */
 	if (changesOperands) {

@@ -608,7 +608,8 @@ CVMjniDefineClass(JNIEnv *env, const char *name, jobject loaderRef,
 
     /* define the class */
     classRoot =
-	CVMdefineClass(ee, name, loaderRef, (CVMUint8*)buf, bufLen, NULL);
+	CVMdefineClass(ee, name, loaderRef, (CVMUint8*)buf, bufLen, NULL,
+		       CVM_FALSE);
     if (classRoot == NULL) {
 	return NULL;
     }
@@ -1203,7 +1204,8 @@ CVMjniAllocObject(JNIEnv *env, jclass clazz)
 
     if (CVMcbIs(cb,INTERFACE) || CVMcbIs(cb,ABSTRACT)) {
 	CVMthrowInstantiationException(ee, "%C", cb);
-    } else if (!CVMcbCheckRuntimeFlag(cb, LINKED) && !CVMclassLink(ee,cb)) {
+    } else if (!CVMcbCheckRuntimeFlag(cb, LINKED) &&
+	       !CVMclassLink(ee,cb, CVM_FALSE)) {
 	/* exception already thrown */
     } else {
 	CVMD_gcUnsafeExec(ee, {
@@ -1867,7 +1869,7 @@ CVMjniNewObjectArray(JNIEnv* env, jsize length,
     CVMClassBlock*  elementClassCb = CVMjniGcSafeRef2Class(ee, elementClass);
     
     if (!CVMcbCheckRuntimeFlag(elementClassCb, LINKED) &&
-	!CVMclassLink(ee,elementClassCb)) {
+	!CVMclassLink(ee,elementClassCb, CVM_FALSE)) {
 	return NULL; /* exception already thrown */
     }
 
@@ -3419,6 +3421,7 @@ static struct JNINativeInterface CVMmainJNIfuncs = {
     CVMjniGetDirectBufferCapacity
 };
 
+
 JNIEXPORT jint JNICALL
 JNI_GetDefaultJavaVMInitArgs(void *args_)
 {
@@ -3712,8 +3715,8 @@ mtaskJvmtiInit(JNIEnv* env)
 {
 #ifdef CVM_JVMTI
     CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
-    if (CVMjvmtiEventsEnabled()) {
-	CVMjvmtiNotifyDebuggerOfVmInit(ee);    
+    if (CVMjvmtiInitialized()) {
+	CVMjvmtiPostVmInitEvent(ee);    
 
 	/*
 	 * The debugger event hook might have thrown an exception
@@ -3723,10 +3726,12 @@ mtaskJvmtiInit(JNIEnv* env)
 	    fprintf(stderr, "Error during JVMTI_EVENT_VM_INIT handling");
 	    exit(1);
 	} else {
-	    ee->debugEventsEnabled = CVM_TRUE;
+	    CVMjvmtiDebugEventsEnabled(ee) = CVM_TRUE;
 	}
 	
-	CVMjvmtiNotifyDebuggerOfThreadStart(ee, CVMcurrentThreadICell(ee));
+	if (CVMjvmtiShouldPostThreadLife()) {
+	    CVMjvmtiPostThreadStartEvent(ee, CVMcurrentThreadICell(ee));
+	}
 	/*
 	 * The debugger event hook might have thrown an exception
 	 */
@@ -4333,6 +4338,10 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
     CVMhwInit();
 #endif
 
+#ifdef CVM_JVMTI
+      CVMjvmtiEnterOnloadPhase();
+      CVMtimeThreadCpuClockInit(&ee->threadInfo);
+#endif
     /* Run agents */
     /* Agents run before VM is fully initialized */
 #ifdef CVM_AGENTLIB
@@ -4351,9 +4360,6 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 	    errorNo = JNI_ENOMEM;
 	    goto done;
       }
-#ifdef CVM_JVMTI
-      enter_onload_phase();
-#endif
       for (argCtr = 0; argCtr < initArgs->nOptions; argCtr++) {
 	    const char *str = initArgs->options[argCtr].optionString;
 	    if ((str != NULL)) {
@@ -4377,7 +4383,7 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
         }
       }
 #ifdef CVM_JVMTI
-      enter_primordial_phase();
+      CVMjvmtiEnterPrimordialPhase();
 #endif
 #else
 	errorStr = "-agentlib, -agentpath not supported - dynamic linking not built into VM";
@@ -4465,6 +4471,31 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
     }
 #endif /* CVM_XRUN */
 
+#ifdef CVM_JVMTI
+    CVMjvmtiEnterPrimordialPhase();
+    if (CVMjvmtiInitialized()) {
+	/* This thread was not fully initialized */
+	jthread thread = CVMcurrentThreadICell(ee);
+	if (CVMjvmtiFindThread(ee, thread) == NULL) {
+	    CVMjvmtiInsertThread(ee, thread);
+	}
+    }
+    CVMjvmtiEnterStartPhase();
+    CVMjvmtiPostVmStartEvent(ee);    
+    CVMjvmtiEnterLivePhase();
+    CVMjvmtiPostVmInitEvent(ee);    
+    /*
+     * The debugger event hook might have thrown an exception
+     */
+    if ((*env)->ExceptionCheck(env)) {
+	(*env)->ExceptionDescribe(env);
+	errorStr = "error during JVMTI_EVENT_VM_INIT handling";
+	errorNo = JNI_ERR;
+	goto done;
+    }
+    CVMjvmtiPostStartUpEvents(ee);
+#endif
+
 #ifdef CVM_JVMPI
     CVMjvmpiPostStartUpEvents(ee);
     if ((*env)->ExceptionCheck(env)) {
@@ -4488,40 +4519,20 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 
 #endif /* CVM_JVMPI */
 
-#ifdef CVM_JVMTI
-    if (CVMglobals.jvmtiStatics.jvmtiInitialized) {
-      /* This thread was not fully initialized */
-      jthread thread = CVMcurrentThreadICell(ee);
-      if (CVMjvmtiFindThread(ee, thread) == NULL) {
-        CVMjvmtiInsertThread(ee, thread);
-      }
-    }
-    enter_start_phase();
-    CVMjvmtiNotifyDebuggerOfVmInit(ee);    
-	/*
-	 * The debugger event hook might have thrown an exception
-	 */
-	if ((*env)->ExceptionCheck(env)) {
-      (*env)->ExceptionDescribe(env);
-      errorStr = "error during JVMTI_EVENT_VM_INIT handling";
-      errorNo = JNI_ERR;
-      goto done;
-    }
-#endif
 
     /* In the future JVMPI will need to get a VM init event here as
        well */
 
 #ifdef CVM_JVMTI
-    ee->debugEventsEnabled = CVM_TRUE;
+    CVMjvmtiDebugEventsEnabled(ee) = CVM_TRUE;
 
-    if (CVMjvmtiEventsEnabled()) {
-	CVMjvmtiNotifyDebuggerOfThreadStart(ee, CVMcurrentThreadICell(ee));
+    if (CVMjvmtiShouldPostThreadLife()) {
+	CVMjvmtiPostThreadStartEvent(ee, CVMcurrentThreadICell(ee));
 	/*
 	 * The debugger event hook might have thrown an exception
 	 */
 	if ((*env)->ExceptionCheck(env)) {
-	    ee->debugEventsEnabled = CVM_FALSE;
+	    CVMjvmtiDebugEventsEnabled(ee) = CVM_FALSE;
 	    (*env)->ExceptionDescribe(env);
 	    errorStr = "error during JVMTI_EVENT_THREAD_START handling";
 	    errorNo = JNI_ERR;
@@ -4667,12 +4678,14 @@ CVMjniDestroyJavaVM(JavaVM *vm)
 	CVMclearLocalException(ee);
     }
 
+    CVMprepareToExit();
+
     CVMpostThreadExitEvents(ee);
 #ifdef CVM_JVMTI
-    if (CVMjvmtiEventsEnabled()) {
-	CVMjvmtiNotifyDebuggerOfVmExit(ee);    
+    if (CVMjvmtiInitialized()) {
+	CVMjvmtiPostVmExitEvent(ee);    
     }
-    ee->debugEventsEnabled = CVM_FALSE;
+    CVMjvmtiDebugEventsEnabled(ee) = CVM_FALSE;
 #endif
 
     if (CVMglobals.fullShutdown) {
@@ -4722,7 +4735,6 @@ CVMjniDestroyJavaVM(JavaVM *vm)
 
     }
 
-    CVMprepareToExit();
 
 #ifdef CVM_INSTRUCTION_COUNTING
     /*
@@ -4926,7 +4938,7 @@ attachCurrentThread(JavaVM *vm, void **penv, void *_args, CVMBool isDaemon)
 	}
 
 #ifdef CVM_JVMTI
-	ee->debugEventsEnabled = CVM_TRUE;
+	CVMjvmtiDebugEventsEnabled(ee) = CVM_TRUE;
 #endif
 	CVMpostThreadStartEvents(ee);
 
@@ -4961,7 +4973,7 @@ CVMjniDetachCurrentThread(JavaVM *vm)
 
 	CVMpostThreadExitEvents(ee);
 #ifdef CVM_JVMTI
-	ee->debugEventsEnabled = CVM_FALSE;
+	CVMjvmtiDebugEventsEnabled(ee) = CVM_FALSE;
 #endif
 
 	CVMjniCallNonvirtualVoidMethod(

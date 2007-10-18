@@ -63,20 +63,27 @@ CVMgoNative0(CVMObject *exceptionObject, CVMExecEnv *ee,
 static DWORD
 check_pc(struct _EXCEPTION_POINTERS *ep, DWORD code, DWORD *addr, DWORD *pc)
 {
-    if (code == EXCEPTION_ACCESS_VIOLATION &&
-       CVMJITcodeCacheInCompiledMethod((CVMUint8*)ep->ContextRecord->Pc))
-    {
-	/* Coming from compiled code. */
-	/* Branch and link to throw null pointer exception glue */
-	ep->ContextRecord->Lr = ep->ContextRecord->Pc + 4;
-	ep->ContextRecord->Pc =
-           (ULONG)CVMCCMruntimeThrowNullPointerExceptionGlue;
-	return EXCEPTION_CONTINUE_EXECUTION;
-    } else {
-	*pc = ep->ContextRecord->Pc;
-	*addr = (DWORD)ep->ExceptionRecord->ExceptionAddress;
-	return EXCEPTION_EXECUTE_HANDLER;
+    CVMUint8 *fault_pc = (CVMUint8 *)ep->ContextRecord->Pc;
+    if (code == EXCEPTION_ACCESS_VIOLATION) {
+	if (CVMJITcodeCacheInCompiledMethod(fault_pc)) {
+	    /* Coming from compiled code. */
+	    /* Branch and link to throw null pointer exception glue */
+	    ep->ContextRecord->Lr = ep->ContextRecord->Pc + 4;
+	    ep->ContextRecord->Pc =
+	       (ULONG)CVMCCMruntimeThrowNullPointerExceptionGlue;
+	    return EXCEPTION_CONTINUE_EXECUTION;
+	} else if (CVMJITcodeCacheInCCM(fault_pc)) {
+	    /* Coming from CCM code. */
+	    /* Branch to throw null pointer exception glue */
+	    ep->ContextRecord->Pc =
+	       (ULONG)CVMCCMruntimeThrowNullPointerExceptionGlue;
+	    return EXCEPTION_CONTINUE_EXECUTION;
+	}
     }
+
+    *pc = ep->ContextRecord->Pc;
+    *addr = (DWORD)ep->ExceptionRecord->ExceptionAddress;
+    return EXCEPTION_EXECUTE_HANDLER;
 }
 
 CVMMethodBlock *

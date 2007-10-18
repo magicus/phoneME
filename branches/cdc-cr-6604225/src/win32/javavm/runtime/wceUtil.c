@@ -357,14 +357,70 @@ _access(const char *path, int amode)
 
 }
 
-wchar_t *
-_wfullpath(wchar_t *absPath, const wchar_t *relPath, size_t maxLength)
+/* Remove "." and ".." from the path */
+BOOL
+WINCEpathRemoveDots(wchar_t *dst0, const wchar_t *src, size_t maxLength)
 {
-    if (wcslen(relPath) >= maxLength) {
-	return NULL;
+    int comps;
+    wchar_t *dst = dst0;
+
+    /* Must be absolute */
+    if (src[0] != L'\\') {
+	SetLastError(ERROR_BAD_PATHNAME);
+	return CVM_FALSE;
     }
-    wcscpy(absPath, relPath);
-    return absPath;
+    if (maxLength < 2) {
+	goto fail;
+    }
+    *dst++ = *src++;
+    --maxLength;
+    comps = 0;
+    *dst = L'\0';
+
+    {
+	wchar_t *p;
+	do {
+	    size_t l;
+	    p = wcschr(src, L'\\');
+	    if (p != NULL) {
+		l = p - src;
+	    } else {
+		l = wcslen(src);
+	    }
+	    if (comps < 0) {
+		goto copy;
+	    }
+	    if (l == 1 && src[0] == L'.') {
+		/* / or ./ */
+		/* do nothing */
+	    } else if (l == 2 && wcsncmp(src, L"..", 2) == 0) {
+		/* ../ */
+		if (comps > 0) {
+		    --comps;
+		    dst[-1] = L'\0';
+		    dst = wcsrchr(dst0, L'\\') + 1;
+		    dst[0] = L'\0';
+		}
+	    } else {
+copy:
+		if (l + 1 >= maxLength) {
+		    goto fail;
+		}
+		wcsncpy(dst, src, l + 1);
+		if (dst == dst0 + 1 && dst[0] == L'\\') {
+		    /* UNC */
+		} else {
+		    ++comps;
+		}
+		dst += l + 1;
+	    }
+	    src += l + 1;
+	} while (p != NULL);
+    }
+    return CVM_TRUE;
+fail:
+    SetLastError(ERROR_BAD_PATHNAME);
+    return CVM_FALSE;
 }
 
 #if _WIN32_WCE < 300

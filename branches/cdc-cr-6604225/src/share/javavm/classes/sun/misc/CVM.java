@@ -554,6 +554,7 @@ public final class CVM {
     public static final int DEBUGFLAG_TRACE_CLASSUNLOAD = 0x00800000;
     public static final int DEBUGFLAG_TRACE_CLASSLINK   = 0x01000000;
     public static final int DEBUGFLAG_TRACE_LVM         = 0x02000000;
+    public static final int DEBUGFLAG_TRACE_JVMTI       = 0x04000000;
 
     /*
      * Methods for checking, setting, and clearing the state of debug
@@ -870,4 +871,46 @@ public final class CVM {
     // NOTE: The dummy argument is just a convenient way to reserve space on
     // stack for the return value of this CNI method.
     private static native String getBuildOptionString(Object dummy);
+
+    /*
+     * Returns the current value of the most precise available system
+     * timer, in nanoseconds.
+     *
+     * From J2SE System.nanoTime();
+     *
+     * <p>This method can only be used to measure elapsed time and is
+     * not related to any other notion of system or wall-clock time.
+     * The value returned represents nanoseconds since some fixed but
+     * arbitrary time (perhaps in the future, so values may be
+     * negative).  This method provides nanosecond precision, but not
+     * necessarily nanosecond accuracy. No guarantees are made about
+     * how frequently values change. Differences in successive calls
+     * that span greater than approximately 292 years (2<sup>63</sup>
+     * nanoseconds) will not accurately compute elapsed time due to
+     * numerical overflow.
+     *
+     * <p> For example, to measure how long some code takes to execute:
+     * <pre>
+     *   long startTime = System.nanoTime();
+     *   // ... the code being measured ...
+     *   long estimatedTime = System.nanoTime() - startTime;
+     * </pre>
+     * 
+     * @return The current value of the system timer, in nanoseconds.
+     * @since 1.5
+     */
+    public static native long nanoTime();
+
+    /*
+     * Sets java.net.URLConnection.defaultUseCaches to the boolean
+     * argument passed in.
+     */
+    public static native void setURLConnectionDefaultUseCaches(boolean b);
+
+    /*
+     * Clears the ucp field of the URLClassLoader passed in, which allows
+     * the JarFiles opened by the URLClassLoader to be gc'd and closed,
+     * even if the URLClassLoader is kept live.
+     */
+    public static native void clearURLClassLoaderUcpField(java.net.URLClassLoader cl);
 }

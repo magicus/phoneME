@@ -92,8 +92,10 @@ SNI_NewArrayImpl(CVMExecEnv* ee, jint type, jint size, jarray arrayHandle);
  *
  *     fooArray = new Foo[10];
  */
-KNIEXPORT void SNI_NewObjectArray(jclass elementType, jint size,
-                                  jarray arrayHandle);
+KNIEXPORT void
+SNI_NewObjectArrayImpl(CVMExecEnv* ee,
+                       jclass elementType, jint size,
+                       jarray arrayHandle);
 
 #define SNI_NewObjectArray(elementType, size, arrayHandle) \
     SNI_NewObjectArrayImpl(_ee, elementType, size, arrayHandle)

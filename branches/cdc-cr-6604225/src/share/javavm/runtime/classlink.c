@@ -29,6 +29,9 @@
 
 #include "javavm/include/interpreter.h"
 #include "javavm/include/directmem.h"
+#ifdef CVM_DUAL_STACK
+#include "javavm/include/dualstack_impl.h"
+#endif
 #include "javavm/include/indirectmem.h"
 #include "javavm/include/common_exceptions.h"
 #include "javavm/include/preloader.h"
@@ -52,10 +55,10 @@
 #endif
 
 static CVMBool
-CVMclassPrepare(CVMExecEnv* ee, CVMClassBlock* cb);
+CVMclassPrepare(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine);
 
 static CVMBool
-CVMclassPrepareFields(CVMExecEnv* ee, CVMClassBlock* cb);
+CVMclassPrepareFields(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine);
 
 static CVMBool
 CVMclassPrepareMethods(CVMExecEnv* ee, CVMClassBlock* cb);
@@ -74,7 +77,7 @@ CVMinitializeStaticField(CVMExecEnv* ee, CVMFieldBlock* fb,
  * 2nd Edition (2.17.3).
  */
 CVMBool
-CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb)
+CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine)
 {
     CVMBool success = CVM_TRUE;
 
@@ -123,7 +126,7 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb)
 	    }
 	    if (!CVMcbCheckRuntimeFlag(superCb, LINKED)) {
 		/* %comment c */
-		if (!CVMclassLink(ee, superCb)) {
+		if (!CVMclassLink(ee, superCb, isRedefine)) {
 		    return CVM_FALSE; /* exception already thrown */
 		}
 	    }
@@ -168,7 +171,7 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb)
 	for (i = 0; i < CVMcbImplementsCount(cb); i++) {
 	    if (!CVMcbCheckRuntimeFlag(CVMcbInterfacecb(cb, i), LINKED)) {
 		/* %comment c */
-		if (!CVMclassLink(ee, CVMcbInterfacecb(cb, i))) {
+		if (!CVMclassLink(ee, CVMcbInterfacecb(cb, i), isRedefine)) {
 		    success = CVM_FALSE; /* exception already thrown */
 		    goto unlock;
 		}
@@ -206,7 +209,7 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb)
     }
 
     /* Prepare the classes methods, fields, and interfaces. */
-    if (!CVMclassPrepare(ee, cb)) {
+    if (!CVMclassPrepare(ee, cb, isRedefine)) {
 	success = CVM_FALSE;
 	goto unlock;
     }
@@ -214,8 +217,8 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb)
     CVMcbSetRuntimeFlag(cb, ee, LINKED);
 
 #ifdef CVM_JVMTI
-    if (CVMjvmtiEventsEnabled()) {
-	CVMjvmtiNotifyDebuggerOfClassPrepare(ee, CVMcbJavaInstance(cb));
+    if (CVMjvmtiInitialized()) {
+	CVMjvmtiPostClassPrepareEvent(ee, CVMcbJavaInstance(cb));
     }
 #endif
 
@@ -235,10 +238,10 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb)
 
 
 static CVMBool
-CVMclassPrepare(CVMExecEnv* ee, CVMClassBlock* cb) {
+CVMclassPrepare(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine) {
     CVMtraceClassLoading(("CL: Preparing class %C.\n", cb));
 
-    if (!CVMclassPrepareFields(ee, cb)) {
+    if (!CVMclassPrepareFields(ee, cb, isRedefine)) {
 	goto failed;
     }
     /* bug #4940678. make sure FIELDS_PREPARED flag isn't clobbered */
@@ -264,7 +267,7 @@ CVMclassPrepare(CVMExecEnv* ee, CVMClassBlock* cb) {
 
 
 static CVMBool
-CVMclassPrepareFields(CVMExecEnv* ee, CVMClassBlock* cb)
+CVMclassPrepareFields(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine)
 {
     CVMUint16      i;
     CVMClassBlock* superCb = CVMcbSuperclass(cb);
@@ -442,7 +445,7 @@ CVMclassPrepareFields(CVMExecEnv* ee, CVMClassBlock* cb)
 	     * If the field is a static with a ConstantValue attribute, then 
 	     * initialize it.
 	     */
-	    if (constantValueIdx != 0) {
+	    if (constantValueIdx != 0 && !isRedefine) {
 		CVMinitializeStaticField(ee, fb, cp, constantValueIdx);
 	    }
 	} else { /* Field is not static */	    
@@ -731,6 +734,21 @@ CVMclassPrepareMethods(CVMExecEnv* ee, CVMClassBlock* cb)
 	    if (smb == NULL) {
 		continue;
 	    }
+
+#ifdef CVM_DUAL_STACK
+            {
+	        /*
+                 * Check against dual-stack filter to see if
+                 * the super MB exists. If the super MB doesn't
+                 * exist, then it's not an override and just
+                 * continue.
+                 */
+	        if (!CVMdualStackFindSuperMB(
+                            ee, cb, superCb, smb)) {
+		    continue;
+	        }
+	    }
+#endif
 
             /* Private methods never go in the method table. */
             CVMassert(!CVMmbIs(smb, PRIVATE));

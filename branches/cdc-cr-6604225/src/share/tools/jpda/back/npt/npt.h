@@ -37,7 +37,7 @@
 
 #include "jni.h"
 
-#include "npt/linux/npt_md.h"
+#include "npt_md.h"
 #include "utf.h"
 
 #define NPT_ERROR(s) { (void)fprintf(stderr, "NPT ERROR: %s\n", s); exit(1); }
