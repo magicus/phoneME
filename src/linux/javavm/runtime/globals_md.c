@@ -43,7 +43,6 @@
 #include <malloc.h>
 #include <sched.h>
 #include <javavm/include/utils.h>
-
 #ifdef CVM_JIT
 #include "javavm/include/porting/jit/jit.h"
 #include "javavm/include/globals.h"

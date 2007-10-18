@@ -34,8 +34,10 @@
 #include "jni.h"
 #include "jvm.h"
 #include "javavm/include/classes.h"
+#include "javavm/include/directmem.h"
 #include "javavm/include/interpreter.h"
 #include "javavm/include/dualstack_impl.h"
+#include "javavm/include/globals.h"
 
 JNIEXPORT jboolean JNICALL
 Java_sun_misc_MemberFilter_findROMFilterData(JNIEnv* env,
@@ -52,12 +54,7 @@ Java_sun_misc_MemberFilter_findROMFilterData(JNIEnv* env,
      * file.
      */
     if (CVMdualStackMemberFilter.nElements != 0) {
-        jclass thisClass;
-        jfieldID fullDataField;
-        thisClass = (*env)->GetObjectClass(env, thisObject);
-        fullDataField = (*env)->GetFieldID(env, thisClass, "fullData", "I");
-        (*env)->SetIntField(env, thisObject, fullDataField,
-                            (jint)&CVMdualStackMemberFilter);
+        CVMglobals.dualStackMemberFilter = &CVMdualStackMemberFilter;
         return JNI_TRUE;
     }
 #endif
@@ -163,17 +160,15 @@ Java_sun_misc_MemberFilter_doneAddingRestrictions(
      * dispose of linked list form.
      */
     struct linkedClassRestriction* lcrp, *listroot;
-    struct ClassRestrictions* crp;
-    struct ClassRestrictionElement *creep;
+    struct CVMClassRestrictions* crp;
+    struct CVMClassRestrictionElement *creep;
     jclass thisClass;
     jfieldID partialDataField;
-    jfieldID fullDataField;
     int    nentries;
     int    i;
 
     thisClass = (*env)->GetObjectClass(env, thisObject);
     partialDataField = (*env)->GetFieldID(env, thisClass, "partialData", "I");
-    fullDataField = (*env)->GetFieldID(env, thisClass, "fullData", "I");
 
     listroot = (struct linkedClassRestriction*)
 		    ((*env)->GetIntField(env, thisObject, partialDataField));
@@ -181,15 +176,14 @@ Java_sun_misc_MemberFilter_doneAddingRestrictions(
     for (nentries=0, lcrp=listroot; lcrp!=NULL; lcrp = lcrp->next)
 	nentries += 1;
     /* allocate */
-    crp = (struct ClassRestrictions*)calloc(1,
-                sizeof(struct ClassRestrictions));
-    creep = (struct ClassRestrictionElement*)calloc(1,
-                nentries*sizeof(struct ClassRestrictionElement ));
+    crp = (struct CVMClassRestrictions*)calloc(1,
+                sizeof(struct CVMClassRestrictions));
+    creep = (struct CVMClassRestrictionElement*)calloc(1,
+                nentries*sizeof(struct CVMClassRestrictionElement ));
     /* copy */
     crp->nElements = nentries;
     crp->restriction = creep;
     for (i=0, lcrp=listroot; i<nentries; i++, lcrp = lcrp->next){
-      /*struct ClassRestrictionElement *creep = &(crp->restriction[i]);*/
         creep->thisClass = lcrp->thisClass;
 	creep->nMethods = lcrp->nMethods;
 	creep->nFields = lcrp->nFields;
@@ -199,8 +193,9 @@ Java_sun_misc_MemberFilter_doneAddingRestrictions(
     }
     /* set partialData field to null */
     (*env)->SetIntField(env, thisObject, partialDataField, 0);
-    /* set fullData field */
-    (*env)->SetIntField(env, thisObject, fullDataField, (jint)crp);
+
+    CVMglobals.dualStackMemberFilter = crp;
+
     /* delete linked list elements */
     lcrp = listroot;
     while (lcrp != NULL){
@@ -214,10 +209,11 @@ Java_sun_misc_MemberFilter_doneAddingRestrictions(
  * This is the array-element representation
  */
 
-static ClassRestrictionElement*
-lookupClass(ClassRestrictions* crp, CVMClassTypeID cid){
+static CVMClassRestrictionElement*
+lookupClass(const CVMClassRestrictions* crp, CVMClassTypeID cid)
+{
     int i, n;
-    ClassRestrictionElement* ep;
+    CVMClassRestrictionElement* ep;
     n = crp->nElements;
     ep = &(crp->restriction[0]);
     /* DEBUG{
@@ -300,10 +296,9 @@ Java_sun_misc_MemberFilter_checkMemberAccessValidity0(
     jobject thisObject,
     jclass  newclass)
 {
-    ClassRestrictions* crp;
-    ClassRestrictionElement* creep;
+    const CVMClassRestrictions* crp;
+    CVMClassRestrictionElement* creep;
     jclass thisClass;
-    jfieldID fullData;
 
     CVMClassBlock* cbp;
     jclass classClass;
@@ -324,8 +319,7 @@ Java_sun_misc_MemberFilter_checkMemberAccessValidity0(
 				 classBlockPointer));
     /* get pointer to our list of restrictions */
     thisClass = (*env)->GetObjectClass(env, thisObject);
-    fullData = (*env)->GetFieldID(env, thisClass, "fullData", "I");
-    crp = (ClassRestrictions*)((*env)->GetIntField(env, thisObject, fullData));
+    crp = CVMglobals.dualStackMemberFilter;
 
     /* we are now on the inside. Look at the class's constant pool.
      * return CVM_FALSE if we see anything we don't like.
@@ -349,7 +343,8 @@ Java_sun_misc_MemberFilter_checkMemberAccessValidity0(
 	    switch(CVMcpEntryType(cp,i)){
 	    case CVM_CONSTANT_Fieldref:
 		fID = CVMcpGetFieldTypeID(cp, typeIndex);
-		if (!lookupMember(fID, creep->fields, creep->nFields)){
+		if (!lookupMember(
+                        fID, creep->fields, creep->nFields)){
 		    /* not on the permitted list */
 		    saveName(env, thisObject, thisClass, classID, fID,
 			     CVM_FALSE);
@@ -358,7 +353,8 @@ Java_sun_misc_MemberFilter_checkMemberAccessValidity0(
 		break;
 	    default:
 		mID = CVMcpGetMethodTypeID(cp, typeIndex);
-		if (!lookupMember(mID, creep->methods, creep->nMethods)){
+		if (!lookupMember(
+                        mID, creep->methods, creep->nMethods)){
 		    /* not on the permitted list */
 		    saveName(env, thisObject, thisClass, classID, mID,
 			     CVM_TRUE);
@@ -387,17 +383,11 @@ Java_sun_misc_MemberFilter_finalize0(
     jobject thisObject)
 {
     struct linkedClassRestriction* lcrp, *listroot;
-    struct ClassRestrictions* crp;
-    struct ClassRestrictionElement* crel;
     jclass thisClass;
     jfieldID partialDataField;
-    jfieldID fullDataField;
-    int    nentries;
-    int    i;
 
     thisClass = (*env)->GetObjectClass(env, thisObject);
     partialDataField = (*env)->GetFieldID(env, thisClass, "partialData", "I");
-    fullDataField = (*env)->GetFieldID(env, thisClass, "fullData", "I");
 
     listroot = (struct linkedClassRestriction*)((*env)->GetIntField(env, thisObject, partialDataField));
     if (listroot != NULL){
@@ -414,23 +404,39 @@ Java_sun_misc_MemberFilter_finalize0(
 	    free(lcrp);
 	    lcrp = listroot;
 	}
-    }else{
-	/* Delete the array form */
-	crp = (ClassRestrictions*)((*env)->GetIntField(env, thisObject,
-				    fullDataField));
-	if (crp == NULL){
-	    return; /* no non-NULL data pointers */
-	}
-	nentries = crp->nElements;
-	crel = &(crp->restriction[0]);
-	for (i=0; i<nentries; i++){
-	    free(crel->methods);
-	    free(crel->fields);
-	    crel++;
-	}
-	free(crp);
     }
-    /* set both fields to 0 */
+    /* set 'partialData' field to 0 */
     (*env)->SetIntField(env, thisObject, partialDataField, 0);
-    (*env)->SetIntField(env, thisObject, fullDataField, 0);
+}
+
+/* Check if the super MB exists */
+CVMBool
+CVMdualStackFindSuperMB(CVMExecEnv* ee,
+                        CVMClassBlock* currentCB,
+                        CVMClassBlock* superCB,
+                        CVMMethodBlock* superMB)
+{
+    CVMBool needCheckFilter;
+
+    /* TODO: We should use in the CB to indicate
+     *       if a class have a filter applied,
+     *       instead of checking for classloader.
+     */
+    CVMD_gcUnsafeExec(ee, {
+        needCheckFilter = CVMclassloaderIsMIDPClassLoader(
+            ee, CVMcbClassLoader(currentCB), CVM_FALSE);
+    });
+    if (needCheckFilter) {
+        CVMClassRestrictionElement* cre;
+        const CVMClassRestrictions* crp;
+
+        crp = CVMglobals.dualStackMemberFilter;
+        cre = lookupClass(crp, CVMcbClassName(superCB));
+        if (cre != NULL) {
+            /* Check if the method exists. */
+	    return lookupMember(CVMmbNameAndTypeID(superMB),
+                                cre->fields, cre->nFields);
+        }
+    }
+    return CVM_TRUE;
 }

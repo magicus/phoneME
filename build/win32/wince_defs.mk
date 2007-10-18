@@ -67,9 +67,11 @@ PLATFORM_TOOLS_PATH ?= $(VC_PATH)/EVC/$(PLATFORM_OS)/bin
 COMMON_TOOLS_PATH   ?= $(VC_PATH)/Common/EVC/Bin
 
 PLATFORM_SDK_DIR ?= $(SDK_DIR)/$(PLATFORM_OS)/$(PLATFORM)
-INCLUDE	:= $(foreach dir,$(PLATFORM_INCLUDE_DIRS),$(PLATFORM_SDK_DIR)/$(dir);)
+INCLUDE	:= $(foreach dir,$(PLATFORM_INCLUDE_DIRS),$(PLATFORM_SDK_DIR)/$(dir);)EOL
+INCLUDE	:= $(subst ;EOL,,$(INCLUDE))
 INCLUDE	:= $(subst ;$(space),;,$(INCLUDE))
-LIB	:= $(foreach dir,$(PLATFORM_LIB_DIRS),$(PLATFORM_SDK_DIR)/$(dir);)
+LIB	:= $(foreach dir,$(PLATFORM_LIB_DIRS),$(PLATFORM_SDK_DIR)/$(dir);)EOL
+LIB	:= $(subst ;EOL,,$(LIB))
 LIB	:= $(subst ;$(space),;,$(LIB))
 PATH	:= $(PLATFORM_TOOLS_PATH):$(COMMON_TOOLS_PATH):$(PATH)
 

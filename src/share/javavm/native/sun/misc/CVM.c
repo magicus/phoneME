@@ -31,6 +31,9 @@
  */
 
 #include "javavm/include/interpreter.h"
+#ifdef CVM_DUAL_STACK
+#include "javavm/include/dualstack_impl.h"
+#endif
 #include "javavm/include/directmem.h"
 #include "javavm/include/indirectmem.h"
 #include "javavm/include/utils.h"
@@ -57,6 +60,7 @@
 #ifdef CVM_XRUN
 #include "javavm/include/xrun.h"
 #endif
+#include "javavm/include/porting/time.h"
 #ifdef CVM_JVMTI
 #include "javavm/include/jvmti_jni.h"
 #endif
@@ -614,38 +618,6 @@ CNIsun_misc_CVM_throwLocalException(CVMExecEnv* ee,
     return CNI_EXCEPTION;
 }
 
-#ifdef CVM_DUAL_STACK
-/* 
- * Check if the classloader is one of the MIDP dual-stack classloaders.
- */
-CVMBool
-CVMclassloaderIsCLDCClassLoader(CVMExecEnv *ee,
-                                CVMClassLoaderICell* loaderICell)
-{
-    if (loaderICell != NULL) {
-        CVMClassBlock* loaderCB = CVMobjectGetClass(
-                                  CVMID_icellDirect(ee, loaderICell));
-        CVMClassTypeID loaderID = CVMcbClassName(loaderCB);
-        const char *midletLoaderName = "sun/misc/MIDletClassLoader";
-        const char *midpImplLoaderName = "sun/misc/MIDPImplementationClassLoader";
-        CVMClassTypeID MIDletClassLoaderID =
-            CVMtypeidLookupClassID(ee, midletLoaderName, 
-                                   strlen(midletLoaderName));
-        CVMClassTypeID MIDPImplClassLoaderID = 
-	    CVMtypeidLookupClassID(ee,midpImplLoaderName,
-				   strlen(midpImplLoaderName));
-
-        if (loaderID == MIDletClassLoaderID ||
-            loaderID == MIDPImplClassLoaderID){
-            return CVM_TRUE;
-        } else {
-            return CVM_FALSE;
-        }
-    }
-    return CVM_FALSE;
-}
-#endif
-
 CNIResultCode
 CNIsun_misc_CVM_callerCLIsMIDCLs(CVMExecEnv* ee,
                                    CVMStackVal32 *arguments,
@@ -664,7 +636,8 @@ CNIsun_misc_CVM_callerCLIsMIDCLs(CVMExecEnv* ee,
     cb = CVMgetCallerClass(ee, 1);
     loaderICell = (cb == NULL) ? NULL : CVMcbClassLoader(cb);
     
-    arguments[0].j.i = CVMclassloaderIsCLDCClassLoader(ee, loaderICell);
+    arguments[0].j.i = CVMclassloaderIsMIDPClassLoader(
+        ee, loaderICell, CVM_TRUE);
 #endif
     return CNI_SINGLE;
 }
@@ -780,7 +753,7 @@ CNIsun_misc_CVM_setDebugEvents(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb)
 {
 #ifdef CVM_JVMTI
-    ee->debugEventsEnabled = arguments[0].j.i;
+    CVMjvmtiDebugEventsEnabled(ee) = arguments[0].j.i;
 #endif
     return CNI_VOID;
 }
@@ -800,8 +773,8 @@ CNIsun_misc_CVM_setContextArtificial(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				     CVMMethodBlock **p_mb)
 {
     CVMFrameIterator iter;
-    CVMframeIterate(CVMeeGetCurrentFrame(ee), &iter);
-    CVMframeIterateSkipSpecial(&iter, 0, CVM_FALSE, CVM_FALSE);
+    CVMframeIterateInit(&iter, CVMeeGetCurrentFrame(ee));
+    CVMframeIterateSkipReflection(&iter, 0, CVM_FALSE, CVM_FALSE);
     CVMframeIterateSetFlags(&iter, (CVMFrameFlags)
 	(CVMframeIterateGetFlags(&iter) | CVM_FRAMEFLAG_ARTIFICIAL));
     return CNI_VOID;
@@ -1290,11 +1263,11 @@ CNIsun_misc_CVM_xdebugSet(CVMExecEnv* ee, CVMStackVal32 *arguments,
     arguments[0].j.i = CVM_FALSE;
 #ifdef CVM_JVMTI
     /*
-     * NOTE: JVMTI doesn't use -Xdebug so this is actually set in
-     * jvmtiEnv.c CVMcreateJvmti()
+     * NOTE: JVMTI uses -Xdebug to signal that this is a debugging
+     * session vs. profiling.  This flag causes several jvmti 
+     * capabilities to be turned off.  See jvmtiCapabilities.c
      */
-    CVMglobals.jvmtiDebuggingEnabled = CVM_TRUE;
-    CVMjvmtiInstrumentJNINativeInterface();
+    CVMglobals.jvmtiDebuggingFlag = CVM_TRUE;
     arguments[0].j.i = CVM_TRUE;
 #endif
 
@@ -1351,6 +1324,19 @@ CNIsun_misc_CVM_00024Preloader_registerClassLoader0(CVMExecEnv* ee,
 	&arguments[1].j.r /* cl */
     );
     return CNI_VOID;
+}
+
+CNIResultCode
+CNIsun_misc_CVM_nanoTime(CVMExecEnv* ee, CVMStackVal32 *arguments, CVMMethodBlock **p_mb)
+{
+    jlong time;
+#ifdef CVM_JVMTI
+    time = CVMtimeNanosecs();
+#else
+    time = (jlong)(((CVMInt64)CVMtimeMillis()) * 1000000);
+#endif
+    CVMlong2Jvm((CVMAddr*)&arguments[0].j, time);
+    return CNI_DOUBLE;
 }
 
 #if 1
@@ -1474,4 +1460,41 @@ CNIsun_misc_CVM_getBuildOptionString(CVMExecEnv* ee, CVMStackVal32 *arguments,
     }
 
     return CNI_SINGLE;
+}
+
+/*
+ * Sets java.net.URLConnection.defaultUseCaches to the boolean
+ * argument passed in.
+ */
+CNIResultCode
+CNIsun_misc_CVM_setURLConnectionDefaultUseCaches(CVMExecEnv* ee,
+						 CVMStackVal32 *arguments,
+						 CVMMethodBlock **p_mb)
+{
+    CVMClassBlock* cb = CVMsystemClass(java_net_URLConnection);
+    CVMFieldTypeID fieldTypeID = CVMtypeidLookupFieldIDFromNameAndSig(
+        ee, "defaultUseCaches", "Z");
+    CVMFieldBlock* fb = CVMclassGetStaticFieldBlock(cb, fieldTypeID);
+    CVMassert(fb != NULL);
+    CVMfbStaticField(ee, fb).i = arguments[0].j.i;
+    return CNI_VOID;
+}
+
+/*
+ * Clears the ucp field of the URLClassLoader passed in, which allows
+ * the JarFiles opened by the URLClassLoader to be gc'd and closed,
+ * even if the URLClassLoader is kept live.
+ */
+#include "generated/offsets/java_net_URLClassLoader.h"
+extern const CVMClassBlock java_net_URLConnection_Classblock;
+CNIResultCode
+CNIsun_misc_CVM_clearURLClassLoaderUcpField(CVMExecEnv* ee,
+					    CVMStackVal32 *arguments,
+					    CVMMethodBlock **p_mb)
+{
+    CVMObjectICell* classLoaderICell = &arguments[0].j.r;
+    CVMD_fieldWriteRef(CVMID_icellDirect(ee, classLoaderICell),
+			 CVMoffsetOfjava_net_URLClassLoader_ucp,
+			 NULL);
+    return CNI_VOID;
 }

@@ -313,7 +313,18 @@ CVMstackmapInitializeContext(CVMExecEnv* ee, CVMStackmapContext* con,
     con->ee        = ee;
     con->mb        = mb;
     con->cb        = CVMmbClassBlock(mb);
-    con->cp        = CVMcbConstantPool(con->cb);
+#ifdef CVM_JVMTI
+    if (CVMjvmtiMbIsObsolete(mb)) {
+	con->cp        = CVMjvmtiMbConstantPool(mb);
+	if (con->cp == NULL) {
+	    con->cp = CVMcbConstantPool(con->cb);
+	}	
+    } else
+#endif
+    {
+	/* Matching else from above */
+	con->cp        = CVMcbConstantPool(con->cb);
+    }
     con->jmd       = jmd;
     con->code      = CVMjmdCode(jmd);
     con->codeLen   = CVMjmdCodeLength(jmd);

@@ -1,7 +1,5 @@
 /*
- * @(#)gen_markcompact.c	1.54 06/10/10
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -49,6 +47,9 @@
 
 #include "javavm/include/porting/system.h"
 #include "javavm/include/porting/ansi/setjmp.h"
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmtiExport.h"
+#endif
 
 #ifdef CVM_JVMPI
 #include "javavm/include/jvmpi_impl.h"
@@ -319,7 +320,7 @@ scanObjectsInRange(CVMExecEnv* ee, CVMGCOptions* gcOpts,
     CVMassert(curr == top); /* This had better be exact */
 }
 
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 
 void CVMgcReplaceWithPlaceHolderObject(CVMObject *currObj, CVMUint32 objSize)
 {
@@ -388,11 +389,18 @@ scanObjectsInYoungGenRange(CVMGenMarkCompactGeneration* thisGen,
 	} else {
 #ifdef CVM_JVMPI
 	    {
-	        extern CVMUint32 liveObjectCount;
-                if (CVMjvmpiEventObjectFreeIsEnabled()) {
+		extern CVMUint32 liveObjectCount;
+		if (CVMjvmpiEventObjectFreeIsEnabled()) {
                     CVMjvmpiPostObjectFreeEvent(currObj);
                 }
-                liveObjectCount--;
+		liveObjectCount--;
+	    }
+#endif
+#ifdef CVM_JVMTI
+	    {
+                if (CVMjvmtiShouldPostObjectFree()) {
+                    CVMjvmtiPostObjectFreeEvent(currObj);
+                }
 	    }
 #endif
 #ifdef CVM_INSPECTOR
@@ -412,7 +420,7 @@ scanObjectsInYoungGenRange(CVMGenMarkCompactGeneration* thisGen,
 
 #else
 #define scanObjectsInYoungGenRange scanObjectsInRangeSkipUnmarked
-#endif /* CVM_INSPECTOR || CVM_JVMPI */
+#endif /* CVM_INSPECTOR || CVM_JVMPI || CVM_JVMTI */
 
 
 /*
@@ -663,13 +671,29 @@ CVMgenMarkCompactAlloc(CVMUint32* space, CVMUint32 totalNumBytes)
     thisGen->gen.freeMemory = CVMgenMarkcompactFreeMemory;
     thisGen->gen.totalMemory = CVMgenMarkcompactTotalMemory;
 
-    CVMdebugPrintf(("GC[MC]: Initialized mark-compact gen "
-		  "for generational GC\n"));
-    CVMdebugPrintf(("\tSize of the space in bytes=%d\n"
-		  "\tLimits of generation = [0x%x,0x%x)\n",
-		  numBytes, thisGen->gen.allocBase, thisGen->gen.allocTop));
+#if defined(CVM_DEBUG)
+    CVMgenMarkCompactDumpSysInfo(thisGen);
+#endif /* CVM_DEBUG */
+
     return (CVMGeneration*)thisGen;
 }
+
+#if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
+/* Dumps info about the configuration of the markcompact generation. */
+void CVMgenMarkCompactDumpSysInfo(CVMGenMarkCompactGeneration* thisGen)
+{
+    CVMUint32 numBytes;
+
+    numBytes = (thisGen->gen.heapTop - thisGen->gen.heapBase) *
+	       sizeof(CVMUint32);
+
+    CVMconsolePrintf("GC[MC]: Initialized mark-compact gen "
+		     "for generational GC\n");
+    CVMconsolePrintf("\tSize of the space in bytes=%d\n"
+		     "\tLimits of generation = [0x%x,0x%x)\n",
+		     numBytes, thisGen->gen.allocBase, thisGen->gen.allocTop);
+}
+#endif /* CVM_DEBUG || CVM_INSPECTOR */
 
 /*
  * Free all the memory associated with the current mark-compact generation
@@ -858,11 +882,18 @@ sweep(CVMGenMarkCompactGeneration* thisGen, CVMUint32* base, CVMUint32* top)
         } else {
 #ifdef CVM_JVMPI
 	    {
-	        extern CVMUint32 liveObjectCount;
+		extern CVMUint32 liveObjectCount;
                 if (CVMjvmpiEventObjectFreeIsEnabled()) {
                     CVMjvmpiPostObjectFreeEvent(currObj);
                 }
-                liveObjectCount--;
+		liveObjectCount--;
+	    }
+#endif
+#ifdef CVM_JVMTI
+	    {
+                if (CVMjvmtiShouldPostObjectFree()) {
+                    CVMjvmtiPostObjectFreeEvent(currObj);
+                }
 	    }
 #endif
 #ifdef CVM_INSPECTOR

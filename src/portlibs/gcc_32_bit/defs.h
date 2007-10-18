@@ -87,4 +87,7 @@ typedef unsigned int	CVMAddr;
 
 typedef unsigned int    CVMSize;
 
+#define CONST64(x) (x ## LL)
+#define UCONST64(x) (x ## ULL)
+
 #endif /* _GCC_32_BIT_DEFS_H */

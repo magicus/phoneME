@@ -45,6 +45,7 @@ static int MAX_INPUT_EVENTS = 2000;
 /* sometimes, HANDLE which is the return value of CreateFile become minus */
 #define NUM_FDTABLE_ENTRIES 255
 static HANDLE fdTable[NUM_FDTABLE_ENTRIES];
+static CRITICAL_SECTION fdTableLock;
 #if 0
 #define STD_FDS_BIAS 3
 #else
@@ -63,6 +64,9 @@ void WIN32ioInit()
 {
 #ifdef WINCE
 	int i;
+
+	InitializeCriticalSection(&fdTableLock);
+
 	for (i = 0; i < NUM_FDTABLE_ENTRIES; i++) {
 		fdTable[i] = INVALID_HANDLE_VALUE; 
 	}
@@ -295,6 +299,8 @@ CVMioOpen(const char *name, CVMInt32 openMode,
 	int fdIndex = -1;
 	int i;
 
+	EnterCriticalSection(&fdTableLock);
+
         /* for (i = 0; i < NUM_FDTABLE_ENTRIES; i++) {  */
 	for (i = 3; i < NUM_FDTABLE_ENTRIES; i++) { 
 		if (fdTable[i] == INVALID_HANDLE_VALUE) {
@@ -303,18 +309,22 @@ CVMioOpen(const char *name, CVMInt32 openMode,
 		}
 	} 
 
-	if (fdIndex == -1)
+	if (fdIndex == -1) {
+		LeaveCriticalSection(&fdTableLock);
 		return -1;
+	}
 
 	wc = createWCHAR(name);
 	fdTable[fdIndex] = CreateFile(wc, mode, 
 							FILE_SHARE_READ | FILE_SHARE_WRITE,
 							0, cFlag, FILE_ATTRIBUTE_NORMAL, 0);
 	if (fdTable[fdIndex] == INVALID_HANDLE_VALUE) {
+		LeaveCriticalSection(&fdTableLock);
 		free(wc);
 		return -1;
 	}
 	fd = (HANDLE)(fdIndex + STD_FDS_BIAS);
+	LeaveCriticalSection(&fdTableLock);
     free(wc);
 }
 #else
@@ -572,9 +582,9 @@ CVMioWrite(CVMInt32 fd, const void *buf, CVMUint32 nBytes)
 
 #ifndef WINCE
     switch (fd) {
-    case 0: fd = (CVMInt32)GetStdHandle(STD_INPUT_HANDLE); break;
-    case 1: fd = (CVMInt32)GetStdHandle(STD_OUTPUT_HANDLE); break;
-    case 2: fd = (CVMInt32)GetStdHandle(STD_ERROR_HANDLE); break;
+    case 0: h = GetStdHandle(STD_INPUT_HANDLE); break;
+    case 1: h = GetStdHandle(STD_OUTPUT_HANDLE); break;
+    case 2: h = GetStdHandle(STD_ERROR_HANDLE); break;
     }
     b = WriteFile(h, buf, nBytes, &bytes, NULL);
 #else /* WINCE */

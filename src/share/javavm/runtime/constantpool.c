@@ -420,7 +420,7 @@ CVMprivate_cpResolveEntryFromClass(CVMExecEnv* ee,
 	}
 
 	if (!CVMcbCheckRuntimeFlag(resolvedCb, LINKED)) {
-	    if (!CVMclassLink(ee, resolvedCb)) {
+	    if (!CVMclassLink(ee, resolvedCb, CVM_FALSE)) {
 		return CVM_FALSE;
 	    }
 	}

@@ -30,6 +30,9 @@
 #include "javavm/include/localroots.h"
 #include "javavm/include/common_exceptions.h"
 #include "javavm/include/clib.h"
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmtiExport.h"
+#endif
 
 /* NOTES: About CVM object monitors and their life-cycles
    ======================================================
@@ -324,7 +327,7 @@ CVMmonEnter(CVMExecEnv *ee, CVMObjMonitor *mon)
 	    */
 	    CVMunboost(ee, mon);
 	    CVMassert(!mon->boost);
-	    CVMprofiledMonitorEnterUnsafe(&mon->mon, ee);
+	    CVMprofiledMonitorEnterUnsafe(&mon->mon, ee, CVM_TRUE);
 	} else {
 	    /* This is the case where we discovered a contended enter and
 	       inflated the monitor.  We therefore need to boost the thread
@@ -335,11 +338,11 @@ CVMmonEnter(CVMExecEnv *ee, CVMObjMonitor *mon)
 	    CVMprofiledMonitorContendedEnterUnsafe(&mon->mon, ee);
 	}
     } else {
-	CVMprofiledMonitorEnterUnsafe(&mon->mon, ee);
+	CVMprofiledMonitorEnterUnsafe(&mon->mon, ee, CVM_TRUE);
     }
     CVMassert(!mon->boost);
 #else
-    CVMprofiledMonitorEnterUnsafe(&mon->mon, ee);
+    CVMprofiledMonitorEnterUnsafe(&mon->mon, ee, CVM_TRUE);
 #endif
 
     ee->objLockCurrent = NULL;
@@ -515,6 +518,11 @@ CVMfastTryLock(CVMExecEnv* ee, CVMObject* obj)
 	ee->objLocksFreeOwned = o->next;
 
 	o->next = ee->objLocksOwned;
+#if defined(CVM_JVMTI) && !defined(CVM_JIT)
+	if (CVMjvmtiInitialized()) {
+	    CVMjvmtiAddLock(ee, o);
+	}
+#endif
 	ee->objLocksOwned = o;
 
 	return CVM_TRUE;
@@ -556,6 +564,11 @@ fast_reentry_failed:
 	    CVMassert(ee->objLocksFreeOwned == o);
             CVMmonitorAttachObjMonitor2OwnedMonitor(ee, mon);
 	}
+#if defined(CVM_JVMTI) && !defined(CVM_JIT)
+	if (CVMjvmtiInitialized()) {
+	    CVMjvmtiAddMon(ee, mon);
+	}
+#endif
 	return CVM_TRUE;
     }
     return CVM_FALSE;
@@ -653,6 +666,11 @@ CVMfastReentryTryLock(CVMExecEnv *ee, CVMObject *obj)
 #error Unknown value for CVM_FASTLOCK_TYPE
 #endif
     }
+#if defined(CVM_JVMTI) && !defined(CVM_JIT)
+    if (CVMjvmtiInitialized()) {
+	CVMjvmtiAddLock(ee, o);
+    }
+#endif
     return CVM_TRUE;
 
 #if CVM_FASTLOCK_TYPE == CVM_FASTLOCK_ATOMICOPS
@@ -1243,6 +1261,11 @@ CVMfastLock(CVMExecEnv* ee, CVMObjectICell* indirectObj)
             CVMassert(mon->state == CVM_OBJMON_OWNED);
         }
     }
+#if defined(CVM_JVMTI) && !defined(CVM_JIT)
+    if (CVMjvmtiInitialized()) {
+	CVMjvmtiAddMon(ee, mon);
+    }
+#endif
     return CVM_TRUE;
 }
 
@@ -1268,6 +1291,11 @@ CVMprivateUnlock(CVMExecEnv *ee, CVMObjMonitor *mon)
 
     if (count > 0 && CVMprofiledMonitorGetOwner(&mon->mon) == ee) {
 	CVMassert(mon->state == CVM_OBJMON_OWNED);
+#if defined(CVM_JVMTI) && !defined(CVM_JIT)
+	if (CVMjvmtiInitialized()) {
+	    CVMjvmtiRemoveMon(ee, mon);
+	}
+#endif
 	if (count == 1) {
             CVMOwnedMonitor **prev = &ee->objLocksOwned;
             CVMOwnedMonitor *o = ee->objLocksOwned;
@@ -1526,6 +1554,11 @@ CVMfastTryUnlock(CVMExecEnv* ee, CVMObject* obj)
                    then the CompareAndSwap will fail which means that another
                    thread must be trying to inflate this monitor: */
                 if (oldCount == expectedOldCount) {
+#if defined(CVM_JVMTI) && !defined(CVM_JIT)
+		    if (CVMjvmtiInitialized()) {
+			CVMjvmtiRemoveLock(ee, o);
+		    }
+#endif
                     return CVM_TRUE;
                 }
                 goto fast_failed;
@@ -1561,6 +1594,11 @@ CVMfastTryUnlock(CVMExecEnv* ee, CVMObject* obj)
 		    result = CVM_TRUE;
 		} else {
 		    CVMobjectMicroUnlock(ee, obj);
+#if defined(CVM_JVMTI) && !defined(CVM_JIT)
+		    if (CVMjvmtiInitialized()) {
+			CVMjvmtiRemoveLock(ee, o);
+		    }
+#endif
 		    return CVM_TRUE;
 		}
 	    } else {
@@ -1629,6 +1667,11 @@ CVMfastTryUnlock(CVMExecEnv* ee, CVMObject* obj)
 	    o->state = CVM_OWNEDMON_FREE;
 	    o->u.fast.bits = 0;
 	    o->object = NULL;
+#endif
+#if defined(CVM_JVMTI) && !defined(CVM_JIT)
+	    if (CVMjvmtiInitialized()) {
+		CVMjvmtiRemoveLock(ee, o);
+	    }
 #endif
             /* Add the released CVMOwnedMonitor record back on to the free list: */
 	    o->next = ee->objLocksFreeOwned;
@@ -1908,7 +1951,11 @@ CVMdetTryLock(CVMExecEnv* ee, CVMObject* obj)
         if (CVMprofiledMonitorGetCount(&mon->mon) == 1) {
             CVMmonitorAttachObjMonitor2OwnedMonitor(ee, mon);
 	}
-
+#if defined(CVM_JVMTI) && !defined(CVM_JIT)
+	if (CVMjvmtiInitialized()) {
+	    CVMjvmtiAddMon(ee, mon);
+	}
+#endif
 	return CVM_TRUE;
     }
     return CVM_FALSE;
@@ -1982,7 +2029,11 @@ CVMdetLock(CVMExecEnv* ee, CVMObjectICell* indirectObj)
     } else {
 	CVMassert(mon->state == CVM_OBJMON_OWNED);
     }
-
+#if defined(CVM_JVMTI) && !defined(CVM_JIT)
+    if (CVMjvmtiInitialized()) {
+	CVMjvmtiAddMon(ee, mon);
+    }
+#endif
     return CVM_TRUE;
 }
 

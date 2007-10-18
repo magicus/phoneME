@@ -1,7 +1,5 @@
 /*
- * @(#)inspector.c	1.5 06/10/10
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -30,8 +28,10 @@
 
 #include "javavm/include/objects.h"
 #include "javavm/include/classes.h"
+#include "javavm/include/gc_common.h"
 #include "javavm/include/inspector.h"
 #include "javavm/include/indirectmem.h"
+#include "javavm/include/jit_common.h"
 
 #include "native/common/jni_util.h"
 
@@ -1871,6 +1871,17 @@ void CVMdumpObjectGCRoots(CVMObject *obj)
             CVMgcDumpObjectGCRoots(obj);
         });
     }
+}
+
+/* Purpose: Dumps misc system informaion. */
+void CVMdumpSysInfo()
+{
+    CVMconsolePrintf("CVM Configuration:\n");
+    CVMdumpGlobalsSubOptionValues();
+    CVMgcDumpSysInfo();
+#ifdef CVM_JIT
+    CVMjitDumpSysInfo();
+#endif
 }
 
 #endif /* CVM_INSPECTOR */

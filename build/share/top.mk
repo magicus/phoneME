@@ -98,8 +98,11 @@
 #
 # CVM_JVMTI default: false
 #     Build a VM that supports the new JVMTI debugger/profiler interface.
-#     This option is not supported with CVM_JIT=true. When set true, there
-#     will be a significant degradation of performance.
+#     When set true, there can be a significant degradation of performance.
+#
+# CVM_JVMTI_ROM default: false
+#     Build a VM that supports debugging romized system classes. CVM_JVMTI
+#     must be true.
 #
 # CVM_JVMPI default: false
 #     Build a VM that supports the Java profiler. This option is not
@@ -310,7 +313,7 @@ TARGET_OS		:= $(word 1,$(CWD_PARTS))
 TARGET_CPU_FAMILY	:= $(word 2,$(CWD_PARTS))
 TARGET_DEVICE		:= $(word 3,$(CWD_PARTS))
 
-ABSPATH = $(shell cd $(1); echo `pwd`)
+ABSPATH = $(shell mkdir -p $(1); cd $(1); echo `pwd`)
 
 # COMPONENTS_DIR is the directory that all the components are located in,
 # such as midp, pcsl, and jump. It is used for providing default locations
@@ -444,6 +447,10 @@ ifeq ($(CVM_TOOLS_BUILD),true)
 -include ../share/jcov.mk
 -include  ../$(TARGET_OS)/hprof.mk
 -include  ../share/hprof.mk
+-include  ../$(TARGET_OS)/jvmti_crw.mk
+-include  ../share/jvmti_crw.mk
+-include  ../$(TARGET_OS)/jvmti_hprof.mk
+-include  ../share/jvmti_hprof.mk
 -include  ../$(TARGET_OS)/jdwp.mk
 -include  ../share/jdwp.mk
 -include  ../$(TARGET_OS)/cvmc.mk

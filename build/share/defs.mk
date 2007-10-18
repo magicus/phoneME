@@ -141,11 +141,11 @@ endif
 # Use bash on win32, since the Cygwin sh doesn't work for us.
 #
 ifeq ($(HOST_DEVICE), cygwin)
-SHELL	= bash
+SHELL	= bash -e
 endif
 
 ifeq ($(HOST_DEVICE), Interix)
-SHELL	= ksh
+SHELL	= ksh -e
 endif
 
 #
@@ -186,6 +186,14 @@ endif
         override CVM_THREAD_SUSPENSION = true
 endif
 
+
+ifeq ($(CVM_JVMTI_ROM), true)
+ifneq ($(CVM_JVMTI), true)
+$(error CVM_JVMTI must be set to 'true' if CVM_JVMTI_ROM is 'true')
+endif
+	override CVM_JAVAC_DEBUG=true
+endif
+
 ifeq ($(CVM_CLASSLIB_JCOV), true)
         override CVM_JVMPI = true
         override CVM_JVMPI_TRACE_INSTRUCTION = true
@@ -209,6 +217,7 @@ endif
 ifeq ($(CVM_VERIFY_HEAP),true)
 override CVM_DEBUG_ASSERTS = true
 endif
+
 CVM_DEBUG_ASSERTS	?= $(CVM_DEBUG)
 CVM_DEBUG_CLASSINFO	?= $(CVM_DEBUG)
 CVM_DEBUG_DUMPSTACK	?= $(CVM_DEBUG)
@@ -217,6 +226,7 @@ CVM_INSPECTOR		?= $(CVM_DEBUG)
 CVM_JAVAC_DEBUG		?= $(CVM_DEBUG)
 CVM_VERIFY_HEAP		?= false
 CVM_JIT                 ?= false
+CVM_JVMTI_ROM		?= false
 CVM_JVMPI               ?= false
 CVM_JVMPI_TRACE_INSTRUCTION ?= $(CVM_JVMPI)
 CVM_THREAD_SUSPENSION   ?= false
@@ -365,6 +375,15 @@ CVM_BUILD_TOP_ABS := $(call ABSPATH,$(CVM_BUILD_TOP))
 CVM_LIBDIR_ABS    := $(CVM_BUILD_TOP_ABS)/lib
 
 PROFILE_DIR       ?= $(CVM_TOP)
+
+
+# Locate the cdc-com component
+ifeq ($(USE_CDC_COM),true)
+CDC_COM_DIR ?= $(COMPONENTS_DIR)/cdc-com
+ifeq ($(wildcard $(CDC_COM_DIR)/build/share/id_cdc-com.mk),)
+$(error CDC_COM_DIR must point to a directory containing the cdc-com sources: $(CDC_COM_DIR))
+endif
+endif
 
 # Optional Package names
 ifneq ($(strip $(OPT_PKGS)),)
@@ -902,11 +921,14 @@ CVM_OPTIMIZED_CLEANUP_ACTION 		= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_SYMBOLS_CLEANUP_ACTION 		= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_DEBUG_STACKTRACES_CLEANUP_ACTION 	= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_DEBUG_DUMPSTACK_CLEANUP_ACTION 	= $(CVM_DEFAULT_CLEANUP_ACTION)
-CVM_INSPECTOR_CLEANUP_ACTION	 	= $(CVM_DEBUG_CLASSINFO_CLEANUP_ACTION)
+CVM_INSPECTOR_CLEANUP_ACTION	 	= \
+	$(CVM_JAVAC_DEBUG_CLEANUP_ACTION) \
+	$(CVM_DEBUG_CLASSINFO_CLEANUP_ACTION)
 CVM_VERIFY_HEAP_CLEANUP_ACTION 		= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_XRUN_CLEANUP_ACTION			= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_AGENTLIB_CLEANUP_ACTION		= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_JVMTI_CLEANUP_ACTION		= $(CVM_DEFAULT_CLEANUP_ACTION)
+CVM_JVMTI_ROM_CLEANUP_ACTION		= $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_JVMPI_CLEANUP_ACTION                = \
         $(CVM_DEFAULT_CLEANUP_ACTION)     \
         $(CVM_DEBUG_CLASSINFO_CLEANUP_ACTION)
@@ -1404,11 +1426,24 @@ CVM_CNI_CLASSES += sun.io.ByteToCharISO8859_1 \
 
 ifeq ($(CVM_JVMPI), true)
 CVM_CNI_CLASSES += sun.misc.CVMJVMPI
+CVM_BUILDTIME_CLASSES += \
+	sun.misc.CVMJVMPI
+endif
+
+ifeq ($(CVM_JVMTI), true)
+CVM_CNI_CLASSES += sun.misc.CVMJVMTI
+CVM_BUILDTIME_CLASSES += \
+	sun.misc.CVMJVMTI
 endif
 
 ifeq ($(CVM_INSPECTOR), true)
 CVM_TEST_CLASSES += \
 	cvmsh
+
+ifneq ($(J2ME_CLASSLIB), cdc)
+CVM_TEST_CLASSES += \
+	cvmclient
+endif
 
 CVM_BUILDTIME_CLASSES += \
 	sun.misc.VMInspector
@@ -1444,6 +1479,9 @@ CVM_OFFSETS_CLASSES += \
 	sun.io.CharToByteISO8859_1 \
 	java.lang.StringBuffer \
 	java.lang.AssertionStatusDirectives
+
+CVM_OFFSETS_CLASSES += \
+	java.net.URLClassLoader
 
 ifeq ($(CVM_CLASSLOADING), true)
 CVM_OFFSETS_CLASSES += \
@@ -1791,6 +1829,8 @@ CVM_SHAREOBJS_SPACE += \
 	jvmtiEnv.o \
 	jvmtiExport.o \
 	jvmti_jni.o \
+	jvmtiDumper.o \
+	CVMJVMTI.o  \
 	bag.o
 endif
 
@@ -2067,6 +2107,7 @@ CCFLAGS_FDLIB 	= $(CCFLAGS_SPEED) $(CC_ARCH_FLAGS_FDLIB)
 
 ifeq ($(CVM_SYMBOLS), true)
 CCFLAGS		+= -g
+ASM_FLAGS	+= -g
 endif
 
 ifeq ($(CVM_GPROF), true)
@@ -2148,14 +2189,6 @@ endif
 
 # include tools component makefile
 include $(TOOLS_DIR)/tools.gmk
-
-# Locate the cdc-com component
-ifeq ($(USE_CDC_COM),true)
-CDC_COM_DIR ?= $(COMPONENTS_DIR)/cdc-com
-ifeq ($(wildcard $(CDC_COM_DIR)/build/share/id_cdc-com.mk),)
-$(error CDC_COM_DIR must point to a directory containing the cdc-com sources: $(CDC_COM_DIR))
-endif
-endif
 
 #
 # Include target makfiles last.

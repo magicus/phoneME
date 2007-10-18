@@ -1,7 +1,5 @@
 /*
- * @(#)jvm.c	1.288 06/10/30
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -131,7 +129,7 @@ JVM_ResolveClass(JNIEnv *env, jclass cls)
 #ifdef CVM_CLASSLOADING
     CVMClassBlock* cb =
 	CVMgcSafeClassRef2ClassBlock(CVMjniEnv2ExecEnv(env), cls);
-    CVMclassLink(CVMjniEnv2ExecEnv(env), cb);
+    CVMclassLink(CVMjniEnv2ExecEnv(env), cb, CVM_FALSE);
 #else
     return; /* the class must be romized and is therefore linked */
 #endif
@@ -157,7 +155,8 @@ JVM_DefineClass(JNIEnv *env, const char *name, jobject loaderRef,
 		const jbyte *buf, jsize bufLen, jobject pd)
 {
     CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
-    return CVMdefineClass(ee, name, loaderRef, (CVMUint8*)buf, bufLen, pd);
+    return CVMdefineClass(ee, name, loaderRef, (CVMUint8*)buf, bufLen, pd,
+			  CVM_FALSE);
 }
 
 /*
@@ -1231,7 +1230,7 @@ CVMgcUnsafeFillInStackTrace(CVMExecEnv *ee, CVMThrowableICell* throwableICell)
     CVMD_gcSafeExec(ee, {
         noMoreFrameSkips = CVM_FALSE;
 	backtraceSize = 0;
-        CVMframeIterate(startFrame, &iter);
+        CVMframeIterateInit(&iter, startFrame);
 	while (CVMframeIterateNext(&iter)) {
 	    mb = CVMframeIterateGetMb(&iter);
 	    /* ignore all frames that are just part of the <init> of
@@ -1325,7 +1324,7 @@ CVMgcUnsafeFillInStackTrace(CVMExecEnv *ee, CVMThrowableICell* throwableICell)
      * Fill in the pcArray, isCompiledArray, and the backtrace array.
      */
     count = 0;
-    CVMframeIterate(startFrame, &iter);
+    CVMframeIterateInit(&iter, startFrame);
     while (CVMframeIterateNext(&iter)) {
 	CVMMethodBlock* mb = CVMframeIterateGetMb(&iter);
 	CVMJavaInt lineno;
@@ -1621,6 +1620,14 @@ JVM_MonitorWait(JNIEnv *env, jobject obj, jlong millis)
         CVMjvmpiPostMonitorWaitEvent(ee, obj, millis);
     }
 #endif
+#ifdef CVM_JVMTI
+    ee->threadState = CVM_THREAD_WAITING;
+    ee->threadState |= (millis == 0 ? CVM_THREAD_WAITING_INDEFINITE :
+		       CVM_THREAD_WAITING_TIMEOUT);
+    if (CVMjvmtiShouldPostMonitorWait()) {
+        CVMjvmtiPostMonitorWaitEvent(ee, obj, millis);
+    }
+#endif
 
     /* NOTE: CVMgcSafeObjectWait() may throw certain exceptions: */
     CVMgcSafeObjectWait(ee, obj, millis);
@@ -1630,12 +1637,21 @@ JVM_MonitorWait(JNIEnv *env, jobject obj, jlong millis)
         CVMjvmpiPostMonitorWaitedEvent(ee, obj);
     }
 #endif
+#ifdef CVM_JVMTI
+    if (CVMjvmtiShouldPostMonitorWaited()) {
+        CVMjvmtiPostMonitorWaitedEvent(ee, obj, CVM_FALSE);
+    }
+#endif
 }
 
 JNIEXPORT void JNICALL
 JVM_MonitorNotify(JNIEnv *env, jobject obj)
 {
     CVMExecEnv *ee = CVMjniEnv2ExecEnv(env);
+#ifdef CVM_JVMTI
+    ee->threadState &= ~(CVM_THREAD_WAITING | CVM_THREAD_WAITING_INDEFINITE |
+			 CVM_THREAD_WAITING_TIMEOUT);
+#endif
     /* NOTE: CVMgcSafeObjectNotify() may throw certain exceptions: */
     CVMgcSafeObjectNotify(ee, obj);
 }
@@ -1644,6 +1660,18 @@ JNIEXPORT void JNICALL
 JVM_MonitorNotifyAll(JNIEnv *env, jobject obj)
 {
     CVMExecEnv *ee = CVMjniEnv2ExecEnv(env);
+#ifdef CVM_JVMTI
+    CVMsysMutexLock(ee, &CVMglobals.threadLock);
+    CVM_WALK_ALL_THREADS(ee, currentEE, {
+	    CVMassert(CVMcurrentThreadICell(currentEE) != NULL);
+	    if (!CVMID_icellIsNull(CVMcurrentThreadICell(currentEE))) {
+		currentEE->threadState &=  ~(CVM_THREAD_WAITING |
+					     CVM_THREAD_WAITING_INDEFINITE |
+					     CVM_THREAD_WAITING_TIMEOUT);
+	    }
+	});
+    CVMsysMutexUnlock(ee, &CVMglobals.threadLock);
+#endif
     /* NOTE: CVMgcSafeObjectNotifyAll() may throw certain exceptions: */
     CVMgcSafeObjectNotifyAll(ee, obj);
 }
@@ -1853,6 +1881,9 @@ static void start_func(void *arg)
 
     CVMcondvarNotify(&info->parentCond);
     CVMthreadSetPriority(&ee->threadInfo, info->priority);
+#ifdef CVM_INSPECTOR
+    ee->priority = info->priority;
+#endif
 
     CVMmutexUnlock(&info->parentLock);
 
@@ -1881,8 +1912,6 @@ static void start_func(void *arg)
 
     CVMassert(!(*env)->ExceptionCheck(env));
 
-    /* startup() already called this, but OK to call again. */
-    CVMpostThreadExitEvents(ee);
     CVMdetachExecEnv(ee);
     CVMremoveThread(ee, ee->userThread);
  failed:
@@ -1916,11 +1945,11 @@ JVM_RunNativeThread(JNIEnv *env, jobject thisObj)
     ee->nativeRunInfo = NULL;
 
 #ifdef CVM_JVMTI
-    ee->debugEventsEnabled = CVM_TRUE;
+    CVMjvmtiDebugEventsEnabled(ee) = CVM_TRUE;
 #endif
     (*nativeFunc)(arg);
 #ifdef CVM_JVMTI
-    ee->debugEventsEnabled = CVM_FALSE;
+    CVMjvmtiDebugEventsEnabled(ee) = CVM_FALSE;
 #endif
 }
 
@@ -2074,7 +2103,9 @@ JVM_StartThread(JNIEnv *env, jobject thisObj, jint priority)
     }
 
     CVMmutexUnlock(&info->parentLock);
-
+#ifdef CVM_JVMTI
+    CVMtimeThreadCpuClockInit(&targetEE->threadInfo);
+#endif
     /* In case we want to see where threads are created
        CVMdumpStack(&ee->interpreterStack, 0, 0, 0); */
 
@@ -2283,6 +2314,9 @@ JVM_SetThreadPriority(JNIEnv *env, jobject thread, jint prio)
 
     if (targetEE != NULL) {
 	CVMthreadSetPriority(&targetEE->threadInfo, prio);
+#ifdef CVM_INSPECTOR
+	targetEE->priority = prio;
+#endif
     }
 
     CVMsysMutexUnlock(ee, &CVMglobals.threadLock);
@@ -2314,7 +2348,15 @@ JVM_Sleep(JNIEnv *env, jclass threadClass, jlong millis)
 	    CVMSysMonitor mon;
 	    if (CVMsysMonitorInit(&mon, NULL, 0)) {
 		CVMsysMonitorEnter(ee, &mon);
+#ifdef CVM_JVMTI
+		ee->threadState = CVM_THREAD_SLEEPING | CVM_THREAD_WAITING |
+		    CVM_THREAD_WAITING_TIMEOUT;
+#endif
 		st = CVMsysMonitorWait(ee, &mon, millis);
+#ifdef CVM_JVMTI
+		ee->threadState &= ~(CVM_THREAD_SLEEPING | CVM_THREAD_WAITING |
+				     CVM_THREAD_WAITING_TIMEOUT);
+#endif
 		CVMsysMonitorExit(ee, &mon);
 		CVMsysMonitorDestroy(&mon);
 		if (st == CVM_WAIT_INTERRUPTED) {
@@ -2361,7 +2403,7 @@ JVM_CountStackFrames(JNIEnv *env, jobject thread)
 	if (targetEE != NULL) {
 	    CVMFrame *frame = CVMeeGetCurrentFrame(targetEE);
 	    CVMFrameIterator iter;
-	    CVMframeIterate(frame, &iter);
+	    CVMframeIterateInit(&iter, frame);
 	    while (CVMframeIterateNext(&iter)) {
 		++count;
 	    }
@@ -2393,6 +2435,9 @@ JVM_Interrupt(JNIEnv *env, jobject thread)
     /* %comment: rt035 */
     if (targetEE != NULL) {
 	if (!targetEE->interruptsMasked) {
+#ifdef CVM_JVMTI
+	    targetEE->threadState = CVM_THREAD_INTERRUPTED;
+#endif
 	    CVMthreadInterruptWait(CVMexecEnv2threadID(targetEE));
 	} else {
 	    targetEE->maskedInterrupt = CVM_TRUE;
@@ -2425,6 +2470,9 @@ JVM_IsInterrupted(JNIEnv *env, jobject thread, jboolean clearInterrupted)
 	 */
 	result = !ee->interruptsMasked &&
 	    CVMthreadIsInterrupted(CVMexecEnv2threadID(ee), clearInterrupted);
+#ifdef CVM_JVMTI
+	ee->threadState &= ~CVM_THREAD_INTERRUPTED;
+#endif
     } else {
 	/* a thread can only clear its own interrupt */
 	CVMassert(!clearInterrupted);
@@ -2438,10 +2486,12 @@ JVM_IsInterrupted(JNIEnv *env, jobject thread, jboolean clearInterrupted)
 		CVMthreadIsInterrupted(CVMexecEnv2threadID(targetEE),
 		    clearInterrupted)
 		: targetEE->maskedInterrupt;
+#ifdef CVM_JVMTI
+	    targetEE->threadState &= ~CVM_THREAD_INTERRUPTED;
+#endif
 	}
 	CVMsysMutexUnlock(ee, &CVMglobals.threadLock);
     }
-
     return result;
 }
 
@@ -2554,7 +2604,7 @@ current_loaded_class(JNIEnv *env)
     CVMClassLoaderICell *loader;
     CVMFrameIterator iter;
 
-    CVMframeIterate(frame, &iter);
+    CVMframeIterateInit(&iter, frame);
     while (CVMframeIterateNext(&iter)) {
 	/* If a method in a class in a trusted loader is in a doPrivileged,
 	   return NULL: */
@@ -2606,7 +2656,7 @@ JVM_GetClassContext(JNIEnv *env)
     /* count the classes on the execution stack */
     frame = CVMeeGetCurrentFrame(ee);
 
-    CVMframeIterate(frame, &iter);
+    CVMframeIterateInit(&iter, frame);
 
     /* skip current frame (SecurityManager.getClassContext) */
     CVMframeIterateNext(&iter);
@@ -2635,7 +2685,7 @@ JVM_GetClassContext(JNIEnv *env)
 	CVMArrayOfRefICell* classArray = (CVMArrayOfRefICell*)result;
 	frame = CVMeeGetCurrentFrame(ee);
 
-	CVMframeIterate(frame, &iter);
+	CVMframeIterateInit(&iter, frame);
 
 	/* skip current frame (SecurityManager.getClassContext) */
 	CVMframeIterateNext(&iter);
@@ -2689,7 +2739,7 @@ JVM_ClassDepth(JNIEnv *env, jstring name)
 	return -1;
     }
 
-    CVMframeIterate(frame, &iter);
+    CVMframeIterateInit(&iter, frame);
     while (CVMframeIterateNext(&iter)) {
 	mb = CVMframeIterateGetMb(&iter);
 	if (!CVMmbIs(mb, NATIVE)) {
@@ -2715,7 +2765,7 @@ JVM_ClassLoaderDepth(JNIEnv *env)
     CVMFrameIterator iter;
     jint depth = 0;
 
-    CVMframeIterate(frame, &iter);
+    CVMframeIterateInit(&iter, frame);
     while (CVMframeIterateNext(&iter)) {
 	/* if a method in a class in a trusted loader is in a doPrivileged,
 	   return -1 */

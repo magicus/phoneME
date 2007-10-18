@@ -205,7 +205,6 @@ void
 setup_logging(const char *filename, unsigned flags)
 {
 #ifdef JDWP_LOGGING
-    
     /* Turn off logging */
     logging = 0;
     gdata->log_flags = 0;

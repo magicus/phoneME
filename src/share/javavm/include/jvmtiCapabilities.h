@@ -25,15 +25,20 @@
  *
  */
 
-void initialize_capabilities();
-void get_potential_capabilities(const jvmtiCapabilities *current, 
+#ifndef _INCLUDED_JVMTICAPABILITIES_H
+#define _INCLUDED_JVMTICAPABILITIES_H
+
+void CVMjvmtiInitializeCapabilities();
+void CVMjvmtiGetPotentialCapabilities(const jvmtiCapabilities *current, 
                                 const jvmtiCapabilities *prohibited, 
                                 jvmtiCapabilities *result);
-jvmtiError add_capabilities(const jvmtiCapabilities *current,
+jvmtiError CVMjvmtiAddCapabilities(const jvmtiCapabilities *current,
                             const jvmtiCapabilities *prohibited, 
                             const jvmtiCapabilities *desired, 
                             jvmtiCapabilities *result);
-void relinquish_capabilities(const jvmtiCapabilities *current,
+void CVMjvmtiRelinquishCapabilities(const jvmtiCapabilities *current,
                              const jvmtiCapabilities *unwanted, 
                              jvmtiCapabilities *result);
-void copy_capabilities(const jvmtiCapabilities *from, jvmtiCapabilities *to);
+void CVMjvmtiCopyCapabilities(const jvmtiCapabilities *from, jvmtiCapabilities *to);
+
+#endif /* _INCLUDED_JVMTICAPABILITIES_H */

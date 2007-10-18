@@ -84,7 +84,38 @@ if (CVMthreadSelf() != NULL) {
 }
 #endif
 #if 1
-    EnterCriticalSection(&m->crit);
+ {
+     CVMThreadID *self = CVMthreadSelf();
+     if (self != NULL) {
+
+	 self->is_mutex_blocked = CVM_TRUE;
+	 EnterCriticalSection(&m->crit);
+	 self->is_mutex_blocked = CVM_FALSE;
+
+	 while (self->suspended_in_mutex_blocked) {
+	     assert(self->suspended);
+	     assert(!self->suspended_in_wait);
+	     /*
+	      * This thread has been given ownership of the mutex
+	      * while it's supposed to be suspended.  Release the mutex
+	      * and 'suspend' the thread.  We can acquire the mutex again
+	      * later.  We don't grab the self->lock since we're
+	      * only concerned with suspends that happen while this
+	      * thread is actually in the EnterCrit. call.  That call is
+	      * flagged by is_mutex_blocked.  Any attempt to suspend this
+	      * thread after that flag is set will result in 
+	      * suspended_in_mutex_blocked being set and a SetEvent
+	      * happening.
+	      */
+	     LeaveCriticalSection(&m->crit);
+	     WaitForSingleObject(self->suspend_cv, INFINITE);
+	     EnterCriticalSection(&m->crit);
+	 }
+
+     } else {
+	 EnterCriticalSection(&m->crit);
+     }
+ }
 #else
     WaitForSingleObject(m->h, INFINITE);
 #endif
@@ -94,7 +125,6 @@ if (CVMthreadSelf() != NULL) {
 }
 #endif
 }
-
 void
 CVMmutexUnlock(CVMMutex * m)
 {
@@ -346,7 +376,16 @@ win32SyncSuspend(CVMThreadID *t)
 		t->suspended_in_wait = 1;
 	    } else {
 		SuspendThread(t->handle);
+		if (t->is_mutex_blocked) {
+		    /*
+		     * Waiting on some mutex, don't suspend as we could
+		     * hit deadlock.  Special handling for this as well.
+		     */
+		    t->suspended_in_mutex_blocked = 1;
+		    ResumeThread(t->handle);
+		}
 	    }
+
 	}
 	CVMmutexUnlock(&t->lock);
     }
@@ -355,17 +394,20 @@ win32SyncSuspend(CVMThreadID *t)
 void
 win32SyncResume(CVMThreadID *t)
 {
-	CVMmutexLock(&t->lock);
-	if (t->suspended) {
-		t->suspended = 0;
-		if (t->suspended_in_wait) {
-			t->suspended_in_wait = 0;
-			SetEvent(t->suspend_cv);
-		} else {
-			ResumeThread(t->handle);
-		}
+    CVMmutexLock(&t->lock);
+    if (t->suspended) {
+	t->suspended = 0;
+	if (t->suspended_in_wait) {
+	    t->suspended_in_wait = 0;
+	    SetEvent(t->suspend_cv);
+	} else if (t->suspended_in_mutex_blocked) {
+	    t->suspended_in_mutex_blocked = 0;
+	    SetEvent(t->suspend_cv);
+	} else {
+	    ResumeThread(t->handle);
 	}
-	CVMmutexUnlock(&t->lock);
+    }
+    CVMmutexUnlock(&t->lock);
 }
 
 #ifdef CVM_ADV_THREAD_BOOST

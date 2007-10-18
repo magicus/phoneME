@@ -37,6 +37,9 @@
 #include <synch.h>
 #include <setjmp.h>
 #include "javavm/include/porting/sync.h"
+#ifdef CVM_JVMTI
+#include <sys/lwp.h>
+#endif
 
 struct CVMThreadID {
     union {
@@ -62,6 +65,9 @@ struct CVMThreadID {
     SOLARISBoostLock *thread_lock;
     SOLARISBoostLock *next_thread_lock;
 #endif
+#endif
+#ifdef CVM_JVMTI
+    lwpid_t lwp_id;
 #endif
 };
 

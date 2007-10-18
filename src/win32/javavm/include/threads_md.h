@@ -48,6 +48,8 @@ struct CVMThreadID {
 
     CVMBool suspended;
     CVMBool suspended_in_wait;
+    CVMBool suspended_in_mutex_blocked;
+    volatile CVMBool is_mutex_blocked;
 
     HANDLE interrupt_event;	    /* Event signaled on thread interrupt */
 

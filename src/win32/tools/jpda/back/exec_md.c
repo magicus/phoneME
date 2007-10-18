@@ -28,6 +28,7 @@
 #include <windows.h>
 #include <string.h>
 #include "sys.h"
+#include "javavm/include/winntUtil.h"
 #ifdef _WIN32_WINNT
 #include "javavm/include/winntUtil.h"
 #endif

@@ -96,12 +96,6 @@ CVMdynlinkOpen(const void *absolutePathName)
   WCHAR *wc;
   char *pathName = (char *)absolutePathName;
 
-/* wince doesn't like the path to a dll so provide the library name */
-#ifdef WINCE
-  pathName = strrchr(pathName, '\\');
-  pathName++;  /* Skip the backslash in the name */
-#endif
-
   wc = createWCHAR(pathName);
   hh = LoadLibrary(wc);
 #else

@@ -27,6 +27,7 @@ ifeq ($(USE_MIDP),true)
 # print our configuration
 printconfig::
 	@echo "MIDP_DIR           = $(MIDP_DIR)"
+	@echo "PROJECT_MIDP_DIR   = $(PROJECT_MIDP_DIR)"
 	@echo "PCSL_DIR           = $(PCSL_DIR)"
 
 # Build PCSL before MIDP.
@@ -83,8 +84,23 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             OEM_AMS_DIR=$(OEM_AMS_DIR) \
 	             USE_OEM_PUSH=$(USE_OEM_PUSH) \
 	             OEM_PUSH_DIR=$(OEM_PUSH_DIR) \
+	             JSR_MIDP_INITIALIZER_LIST="$(subst .Initializer,.MIDPInitializer,$(JSR_INITIALIZER_LIST))" \
+	             COMPONENTS_DIR=$(COMPONENTS_DIR) \
+	             PROJECT_MIDP_DIR=$(PROJECT_MIDP_DIR) \
 	             rom -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
 	@echo "<==== end building MIDP classes"
+
+#
+# Generate MIDP_PKG_CHECKER using the RomConfProcessor tool
+#
+$(CVM_DERIVEDROOT)/classes/sun/misc/$(MIDP_PKG_CHECKER):
+	@echo "... $@"
+	$(AT)$(JAVAC_CMD) -d $(CVM_MISC_TOOLS_CLASSPATH) \
+		$(CVM_MISC_TOOLS_SRCDIR)/RomConfProcessor/RomConfProcessor.java
+	$(AT)$(CVM_JAVA) -classpath $(CVM_MISC_TOOLS_CLASSPATH) \
+		RomConfProcessor -dirs $(ROMGEN_INCLUDE_PATHS) \
+		-romfiles $(ROMGEN_CFG_FILES)
+	$(AT)mv $(MIDP_PKG_CHECKER) $(CVM_DERIVEDROOT)/classes/sun/misc/
 
 #
 # Build the source bundle
@@ -109,6 +125,7 @@ source_bundle:: $(CVM_BUILD_DEFS_MK)
                      MIDP_PRIV_CLASSES_ZIP=$(MIDP_PRIV_CLASSES_ZIP) \
                      MIDP_PUB_CLASSES_ZIP=$(MIDP_PUB_CLASSES_ZIP) \
 	             MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
+	             COMPONENTS_DIR=$(COMPONENTS_DIR) \
 	             source_bundle -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR) 
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     PCSL_PLATFORM=$(PCSL_PLATFORM) \
@@ -116,6 +133,8 @@ source_bundle:: $(CVM_BUILD_DEFS_MK)
 	             PCSL_OUTPUT_DIR=$(PCSL_OUTPUT_DIR) \
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
 		     SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR) \
+		     COMPONENTS_DIR=$(COMPONENTS_DIR) \
+	             PROJECT_MIDP_DIR=$(PROJECT_MIDP_DIR) \
 	             source_bundle -C $(PCSL_DIR) $(PCSL_MAKE_OPTIONS)
 
 #
@@ -147,6 +166,8 @@ $(RUNMIDLET): force_midp_build
                      MIDP_PUB_CLASSES_ZIP=$(MIDP_PUB_CLASSES_ZIP) \
 	             MIDP_SHARED_LIB=$(MIDP_SHARED_LIB) \
 		     VM_BOOTCLASSPATH=$(VM_BOOTCLASSPATH) \
+	             COMPONENTS_DIR=$(COMPONENTS_DIR) \
+	             PROJECT_MIDP_DIR=$(PROJECT_MIDP_DIR) \
 	             $(MIDP_JSROP_USE_FLAGS) \
 	             -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
 ifneq ($(USE_JUMP), true)

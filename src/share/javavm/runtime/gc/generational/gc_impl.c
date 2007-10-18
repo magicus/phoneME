@@ -1,7 +1,5 @@
 /*
- * @(#)gc_impl.c	1.114 06/10/20
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -1304,24 +1302,10 @@ CVMgcimplInitHeap(CVMGCGlobalState* gc,
     CVMgcimplPostJVMPIArenaNewEvent();
 #endif
 
-    CVMdebugPrintf(("GC[generational]: Sizes\n"
-		    "\tyoungGen = min %d start %d max %d\n"
-		    "\toldGen   = min %d start %d max %d\n"
-		    "\toverall  = min %d start %d max %d\n",
-		    gc->youngGenMinSize, gc->youngGenStartSize, gc->youngGenMaxSize,
-		    gc->oldGenMinSize, gc->oldGenStartSize, gc->oldGenMaxSize,
-		    gc->heapMinSize, gc->heapStartSize, gc->heapMaxSize));
+#if defined(CVM_DEBUG)
+    CVMgenDumpSysInfo(gc);
+#endif /* CVM_DEBUG || CVM_INSPECTOR */
 
-    CVMdebugPrintf(("GC[generational]: Auxiliary data structures\n"));
-    CVMdebugPrintf(("\theapBaseMemoryArea=[0x%x,0x%x)\n",
-		    gc->heapBaseMemoryArea,
-		    gc->heapBaseMemoryArea + (totBytes / 4)));
-    CVMdebugPrintf(("\tcardTable=[0x%x,0x%x)\n",
-		    gc->cardTable, gc->cardTable + gc->cardTableSize));
-    CVMdebugPrintf(("\tobjectHeaderTable=[0x%x,0x%x)\n",
-		    gc->objectHeaderTable, gc->objectHeaderTable + gc->cardTableSize));
-    CVMdebugPrintf(("\tsummaryTable=[0x%x,0x%x)\n",
-		    gc->summaryTable, gc->summaryTable + gc->cardTableSize));
     CVMtraceMisc(("GC: Initialized heap for generational GC\n"));
     return CVM_TRUE;
 
@@ -1361,6 +1345,34 @@ failed:
     /* The caller will signal heap initialization failure */
     return CVM_FALSE;
 }
+
+#if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
+/* Dumps info about the configuration of the generational GC (in addition to
+   the semispace and markcompact dumps). */
+void CVMgenDumpSysInfo(CVMGCGlobalState* gc)
+{
+    CVMconsolePrintf("GC[generational]: Sizes\n"
+		     "\tyoungGen = min %d start %d max %d\n"
+		     "\toldGen   = min %d start %d max %d\n"
+		     "\toverall  = min %d start %d max %d\n",
+		     gc->youngGenMinSize, gc->youngGenStartSize,
+		     gc->youngGenMaxSize,
+		     gc->oldGenMinSize, gc->oldGenStartSize, gc->oldGenMaxSize,
+		     gc->heapMinSize, gc->heapStartSize, gc->heapMaxSize);
+
+    CVMconsolePrintf("GC[generational]: Auxiliary data structures\n");
+    CVMconsolePrintf("\theapBaseMemoryArea=[0x%x,0x%x)\n",
+		     gc->heapBaseMemoryArea, gc->cardTable);
+    CVMconsolePrintf("\tcardTable=[0x%x,0x%x)\n",
+		     gc->cardTable, gc->cardTable + gc->cardTableSize);
+    CVMconsolePrintf("\tobjectHeaderTable=[0x%x,0x%x)\n",
+		     gc->objectHeaderTable,
+		     gc->objectHeaderTable + gc->cardTableSize);
+    CVMconsolePrintf("\tsummaryTable=[0x%x,0x%x)\n",
+		     gc->summaryTable, gc->summaryTable + gc->cardTableSize);
+}
+#endif /* CVM_DEBUG || CVM_INSPECTOR */
+
 
 #ifdef CVM_JVMPI
 /* Purpose: Posts the JVMPI_EVENT_ARENA_NEW events for the GC specific
@@ -1671,8 +1683,9 @@ CVMgcimplResize(CVMExecEnv *ee, CVMUint32 numBytes, CVMBool grow)
     if (newSize > gc->oldGenMaxSize) {
 	newSize = gc->oldGenMaxSize;
     }
-
-    newSize = CVMgcimplSetSizeAndWatermarks(gc, newSize, currentUsage);
+    if (newSize < gc->oldGenMinSize) {
+	newSize = gc->oldGenMinSize;
+    }
 
     /* Resize the new memory: */
     if (grow) {
@@ -1697,14 +1710,14 @@ CVMgcimplResize(CVMExecEnv *ee, CVMUint32 numBytes, CVMBool grow)
 		   OutOfMemoryError being thrown. */
 		success = CVM_FALSE;
 
-		/* Reset the size and watermarks before failing: */
-		CVMgcimplSetSizeAndWatermarks(gc, oldSize, currentUsage);
-
 		goto failed;
 	    }
 
 	    CVMassert(mem == commitStart);
 	    CVMassert(actualSize == commitSize);
+
+            /* set new size and watermarks */
+            CVMgcimplSetSizeAndWatermarks(gc, newSize, currentUsage);
 
 	    /* Initialize the corresponding card table region: */
 	    cardAreaStart = (void *)CARD_TABLE_SLOT_ADDRESS_FOR(commitStart);
@@ -1730,6 +1743,8 @@ CVMgcimplResize(CVMExecEnv *ee, CVMUint32 numBytes, CVMBool grow)
 	    mem = CVMmemDecommit(decommitStart, decommitSize, &actualSize);
 	    CVMassert(mem == decommitStart);
 	    CVMassert(actualSize == decommitSize);
+            /* set new size and watermarks */
+            CVMgcimplSetSizeAndWatermarks(gc, newSize, currentUsage);
 	}
     }
 
@@ -1792,7 +1807,7 @@ CVMgcimplDoGC(CVMExecEnv* ee, CVMUint32 numBytes)
 
     gcOpts.isUpdatingObjectPointers = CVM_TRUE;
     gcOpts.discoverWeakReferences = CVM_FALSE;
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
     gcOpts.isProfilingPass = CVM_FALSE;
 #endif
 
@@ -2056,7 +2071,7 @@ CVMgcimplTimeOfLastMajorGC()
     return CVMglobals.gc.lastMajorGCTime;
 }
 
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 
 typedef struct CallbackInfo CallbackInfo;
 struct CallbackInfo
@@ -2111,7 +2126,19 @@ CVMgcimplIterateHeap(CVMExecEnv* ee,
     return CVM_TRUE;
 }
 
-#endif /* defined(CVM_INSPECTOR) || defined(CVM_JVMPI) */
+#endif /* defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)*/
+
+#if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
+/* Dumps info about the configuration of the overall GC. */
+void CVMgcimplDumpSysInfo()
+{
+    CVMGeneration *youngGen = CVMglobals.gc.CVMgenGenerations[0];
+    CVMGeneration *oldGen = CVMglobals.gc.CVMgenGenerations[1];
+    CVMgenSemispaceDumpSysInfo((CVMGenSemispaceGeneration*)youngGen);
+    CVMgenMarkCompactDumpSysInfo((CVMGenMarkCompactGeneration*)oldGen);
+    CVMgenDumpSysInfo(&CVMglobals.gc);
+}
+#endif  /* CVM_DEBUG || CVM_INSPECTOR */
 
 #undef roundUpToPage
 #undef roundDownToPage

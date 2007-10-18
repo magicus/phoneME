@@ -28,6 +28,9 @@
 #include "javavm/include/defs.h"
 #include "javavm/include/objects.h"
 #include "javavm/include/classes.h"
+#ifdef CVM_DUAL_STACK
+#include "javavm/include/dualstack_impl.h"
+#endif
 #include "javavm/include/limits.h"
 #include "javavm/include/common_exceptions.h"
 #include "javavm/include/typeid.h"
@@ -48,6 +51,9 @@
 #endif
 #ifdef CVM_JVMPI
 #include "javavm/include/jvmpi_impl.h"
+#endif
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmtiExport.h"
 #endif
 #ifdef CVM_JIT
 #include "javavm/include/jit/jitmemory.h"
@@ -85,7 +91,8 @@
 
 CVMClassICell*
 CVMdefineClass(CVMExecEnv* ee, const char *name, CVMClassLoaderICell* loader,
-		const CVMUint8* buf, CVMUint32 bufLen, CVMObjectICell* pd)
+	       const CVMUint8* buf, CVMUint32 bufLen, CVMObjectICell* pd,
+	       CVMBool isRedefine)
 
 {
 #ifndef CVM_CLASSLOADING
@@ -113,7 +120,8 @@ CVMdefineClass(CVMExecEnv* ee, const char *name, CVMClassLoaderICell* loader,
     }
 
     classGlobalRoot = 
-	CVMclassCreateInternalClass(ee, buf, bufLen, loader, name, NULL);
+	CVMclassCreateInternalClass(ee, buf, bufLen, loader, name, NULL,
+				    isRedefine);
     if (classGlobalRoot == NULL) {
 	CVMjniDeleteLocalRef(CVMexecEnv2JniEnv(ee), resultCell);
 	if (pdCell != NULL) {
@@ -344,7 +352,7 @@ CVMclassAddToLoadedClasses(CVMExecEnv* ee, CVMClassBlock* cb,
  * array class type that wasn't reference by romized code and we make 
  * a reference to it at runtime.
  */
-CVMClassBlock*
+static CVMClassBlock*
 CVMclassCreateArrayClass(CVMExecEnv* ee, CVMClassTypeID arrayTypeId,
 			 CVMClassLoaderICell* loader, CVMObjectICell* pd)
 {
@@ -621,6 +629,128 @@ CVMclassCreateArrayClass(CVMExecEnv* ee, CVMClassTypeID arrayTypeId,
 }
 
 /*
+ * CVMclassCreateMultiArrayClass - creates the specified array class by
+ * iteratively (i.e. non-recursively) creating all the layers of the array
+ * class from the inner most to the outer most.  Needed for any array class
+ * type that wasn't reference by romized code and we make a reference to it
+ * at runtime.
+ */
+CVMClassBlock*
+CVMclassCreateMultiArrayClass(CVMExecEnv* ee, CVMClassTypeID arrayTypeId,
+			      CVMClassLoaderICell* loader, CVMObjectICell* pd)
+{
+    int outerDepth = 0;
+    CVMClassBlock *arrayCb = NULL;
+    CVMClassTypeID currentTypeID = arrayTypeId;
+    CVMClassTypeID elemTypeID;
+    CVMBool currentTypeIDWasAcquired = CVM_FALSE;
+    int i;
+
+    CVMassert(CVMtypeidIsArray(arrayTypeId));
+
+    /* Count the array layers that haven't been loaded yet.  We start from the
+       outer most until we get to an array element that has been loaded or an
+       array element that is not an array type.  We can assume that at least
+       one layer isn't loaded yet (regardless of whether it is or not).
+
+       CVMclassCreateArrayClass() will do the real work of loading the array
+       class later, and will be called once for each layer that we counted.
+       In the case that we only counted one layer, we'll call
+       CVMclassCreateArrayClass() only once, and it will take care of loading
+       the array (if it hasn't already been loaded) where its element is
+       guaranteed to either have already been loaded, or is a non-array type.
+
+       The guarantee comes from our pre-counting the number of layers that need
+       to be loaded, and doing the loading from the innermost layer to the
+       outermost.
+    */
+    while (CVM_TRUE) {
+	elemTypeID = CVMtypeidIncrementArrayDepth(ee, currentTypeID , -1);
+
+	outerDepth++;
+
+	/* If the element is also an array, then keep probing.  Otherwise,
+	    we need to load it using the normal path: */
+	if (CVMtypeidIsArray(elemTypeID)) {
+
+	    CVMClassBlock *elemCb = NULL;
+
+	    /* The element of the current type is also an array.  Look it up: */
+	    if (loader == NULL ||
+		CVMtypeidIsPrimitive(CVMtypeidGetArrayBasetype(elemTypeID))) {
+    		elemCb = CVMpreloaderLookupFromType(ee, elemTypeID, NULL);
+	    }
+	    if (elemCb == NULL) {
+		CVM_LOADERCACHE_LOCK(ee);
+		elemCb = CVMloaderCacheLookup(ee, elemTypeID, loader);
+		CVM_LOADERCACHE_UNLOCK(ee);
+	    }
+
+	    /* If we've found the element cb, then we're done because we can
+	       start building the array layers from there: */
+	    if (elemCb != NULL) {
+		break;
+	    }
+	} else {
+	    /* If we get here, then we've peeled the layers down to a single
+	       dimensional array (we have reached the non-array element here).
+	       We can start building the array layers from here: */
+	    break;
+	}
+
+	/* If we get here, then the element isn't loaded yet and is not a
+	   single dimension array.  Let's see if the element's element has
+	   been loaded yet.  Set prepare to repeat this loop for element
+	   layer. */
+
+	/* If the previous currentTypeID is one that we acquired using
+	   CVMtypeidIncrementArrayDepth() above, then we need to dispose
+	   of it before losing track of it: */
+	if (currentTypeIDWasAcquired) {
+	    CVMtypeidDisposeClassID(ee, currentTypeID);
+	}
+
+	/* Prepare to inspect the next inner level of array type: */
+	currentTypeID = elemTypeID;
+	currentTypeIDWasAcquired = CVM_TRUE;
+    }
+
+    /* We have to dispose of the last elemTypeID that we acquired above using
+       CVMtypeidIncrementArrayDepth(): */
+    CVMtypeidDisposeClassID(ee, elemTypeID);
+
+    for (i = 0; i < outerDepth; i++) {
+	CVMClassTypeID newTypeID;
+	
+	arrayCb = CVMclassCreateArrayClass(ee, currentTypeID, loader, pd);
+	/* If we fail to load the element, then something wrong must have
+	   happened (e.g. an OutOfMemoryError): */
+	if (arrayCb == NULL) {
+	    break;
+	}
+	/* If we've just loaded the requested array type, then we're done.
+	   Skip the typeid work below: */
+	if (currentTypeID == arrayTypeId) {
+	    CVMassert(i == outerDepth - 1);
+	    break;
+	}
+
+	/* Prepare to load the next outer level of array type: */
+	newTypeID = CVMtypeidIncrementArrayDepth(ee, currentTypeID, 1);
+	if (currentTypeIDWasAcquired) {
+	    CVMtypeidDisposeClassID(ee, currentTypeID);
+	}
+	currentTypeID = newTypeID;
+	currentTypeIDWasAcquired = CVM_TRUE;
+    }
+    if (currentTypeIDWasAcquired) {
+	CVMtypeidDisposeClassID(ee, currentTypeID);
+    }
+
+    return arrayCb;
+}
+
+/*
  * CVMclassCreateInternalClass - Creates a CVMClassBlock out of the
  * array of bytes passed to it.
  */
@@ -738,7 +868,7 @@ static void
 CVMlimitHandler(CVMExecEnv* ee, CICcontext* context, char* comment);
 
 static CVMClassBlock*
-CVMallocClassSpace(CVMExecEnv* ee, CICcontext* context);
+CVMallocClassSpace(CVMExecEnv* ee, CICcontext* context, CVMBool isRedefine);
 
 /* Purpose: Creates an CVMClassBlock out of the array of bytes passed to it. */
 /* Parameters: externalClass - the buffer.
@@ -751,7 +881,8 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 			    CVMUint32 classSize, 
 			    CVMClassLoaderICell* loader, 
 			    const char* classname,
-			    const char* dirNameOrZipFileName)
+			    const char* dirNameOrZipFileName,
+			    CVMBool isRedefine)
 {
     CVMClassBlock*   cb;
     CVMConstantPool* cp;
@@ -762,15 +893,34 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
     CICcontext *context = &context_block;
     CVMUint8 *buffer = (CVMUint8 *) externalClass;
     CVMInt32 bufferLength = classSize;
-#ifdef CVM_DUAL_STACK
-    extern CVMBool
-    CVMclassloaderIsCLDCClassLoader(CVMExecEnv *ee,
-                                    CVMClassLoaderICell* loader);
-    CVMBool isCLDCClass;
+#ifdef CVM_JVMTI
+    CVMUint8 *newBuffer = NULL;
+    CVMInt32 newBufferLength = 0;
+    volatile CVMBool jvmtiBufferWasReplaced = CVM_FALSE;
 #endif
-
+#ifdef CVM_DUAL_STACK
+    CVMBool isMidletClass;
+#endif
 #ifdef CVM_JVMPI
     volatile CVMBool bufferWasReplaced = CVM_FALSE;
+#endif
+#ifdef CVM_JVMTI
+    if (CVMjvmtiShouldPostClassFileLoadHook()) {
+	/* At this point in time we don't have a classblock or
+	 * a protection domain so we pass NULL
+	 */
+	CVMjvmtiPostClassLoadHookEvent(NULL, loader, classname,
+				       NULL, bufferLength, buffer,
+				       &newBufferLength, &newBuffer);
+	if (newBuffer != NULL) {
+	    /* class was replaced with new one */
+            jvmtiBufferWasReplaced = CVM_TRUE;
+	    buffer = newBuffer;
+	    bufferLength = newBufferLength;
+	}
+    }
+#endif
+#ifdef CVM_JVMPI
 
     if (CVMjvmpiEventClassLoadHookIsEnabled()) {
         CVMjvmpiPostClassLoadHookEvent(&buffer, &bufferLength,
@@ -804,7 +954,8 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 
 #ifdef CVM_DUAL_STACK
     CVMD_gcUnsafeExec(ee, {
-        isCLDCClass = CVMclassloaderIsCLDCClassLoader(ee, loader);
+        isMidletClass = CVMclassloaderIsMIDPClassLoader(
+	    ee, loader, CVM_FALSE);
     });
 #endif
 
@@ -820,7 +971,7 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 					buf, sizeof(buf),
 					measure_only,
 #ifdef CVM_DUAL_STACK
-                                        isCLDCClass,
+                                        isMidletClass,
 #endif
 					check_relaxed);
 	if (res == -1) { /* nomem */
@@ -920,7 +1071,7 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
         goto doCleanup;
     }
 
-    cb = CVMallocClassSpace(ee, context);
+    cb = CVMallocClassSpace(ee, context, isRedefine);
 
     /* not in ROM, no <clinit> */
     CVMassert(!CVMcbIsInROM(cb));
@@ -933,7 +1084,6 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
     if (context->oldClassRoot == NULL) {
 	CVMexceptionHandler(ee, context);
     }
-
     /*
      * This assignment is just temporary until CVMclassAddToLoadedClasses()
      * creates a new ClassLoader global root for the class loader.
@@ -946,9 +1096,11 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 	CVMcbCheckedExceptions(cb) = (CVMUint16*)
 	    (context->mainSpace + context->offset.main.excs);
     }
-    CVMcbStatics(cb) = (CVMJavaVal32*) 
-	(context->mainSpace + context->offset.staticFields);
-    CVMcbNumStaticRefs(cb) = context->size.staticRefFields;
+    if (!isRedefine) {
+	CVMcbStatics(cb) = (CVMJavaVal32*) 
+	    (context->mainSpace + context->offset.staticFields);
+	CVMcbNumStaticRefs(cb) = context->size.staticRefFields;
+    }
 
     /* Set up the context */
     context->ptr = buffer;
@@ -982,7 +1134,7 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 
 	if (accessFlags & JVM_ACC_INTERFACE) {
 #ifdef CVM_DUAL_STACK
-            if (!isCLDCClass) {
+            if (!isMidletClass) {
 #endif
                 /* This is a workaround for a javac bug. Interfaces are not
                  * always marked as ABSTRACT.
@@ -1323,7 +1475,7 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 		    (JVM_RECOGNIZED_CLASS_MODIFIERS | 
 		     JVM_ACC_PRIVATE | JVM_ACC_PROTECTED | JVM_ACC_STATIC);
 #ifdef CVM_DUAL_STACK
-                if (!isCLDCClass) {
+                if (!isMidletClass) {
 #endif
                     /* This is a workaround for a javac bug. Interfaces are
                      * not always marked as ABSTRACT.
@@ -1356,24 +1508,33 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 	}
     }
 
+#ifdef CVM_JVMTI
     /*
-     * Add the class to our class database and let the class loader know 
-     * about the class.
+     * In JVMTI case, we check to see if we are redefining a class.
+     * If so, we don't add it to the class lists.  Caller of
+     * this function will do the housekeeping instead.
      */
-    if (!CVMclassAddToLoadedClasses(ee, cb, context->oldClassRoot)) {
-	CVMID_freeGlobalRoot(ee, context->oldClassRoot);
-	context->oldClassRoot = NULL;
+    if (!isRedefine)
+#endif
+    {
 	/*
-	 * If the new Class global root was never setup then we are
-	 * responsible for freeing the class.
+	 * Add the class to our class database and let the class loader know 
+	 * about the class.
 	 */
-	if (CVMcbJavaInstance(cb) == NULL) {
-	    CVMexceptionHandler(ee, context);
-	} else {
-            goto doCleanup; /* exception already thrown */
+	if (!CVMclassAddToLoadedClasses(ee, cb, context->oldClassRoot)) {
+	    CVMID_freeGlobalRoot(ee, context->oldClassRoot);
+	    context->oldClassRoot = NULL;
+	    /*
+	     * If the new Class global root was never setup then we are
+	     * responsible for freeing the class.
+	     */
+	    if (CVMcbJavaInstance(cb) == NULL) {
+		CVMexceptionHandler(ee, context);
+	    } else {
+		goto doCleanup; /* exception already thrown */
+	    }
 	}
     }
-
     /* 
      * The class is loaded and verified to be structually correct.
      * From this point on the responsibility of freeing malloc'ed
@@ -1391,6 +1552,11 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
         free(buffer);
     }
 #endif
+#ifdef CVM_JVMTI
+    if (jvmtiBufferWasReplaced) {
+	CVMjvmtiDeallocate(newBuffer);
+    }
+#endif
     return context->oldClassRoot;
 
     /* This is where the above code jumps to clean-up before exiting: */
@@ -1398,6 +1564,11 @@ doCleanup:
 #ifdef CVM_JVMPI
     if (bufferWasReplaced) {
         free(buffer);
+    }
+#endif
+#ifdef CVM_JVMTI
+    if (jvmtiBufferWasReplaced) {
+	CVMjvmtiDeallocate(newBuffer);
     }
 #endif
     return NULL;
@@ -1497,7 +1668,7 @@ CVMlimitHandler(CVMExecEnv* ee, CICcontext *context, char* comment)
 }
 
 static CVMClassBlock*
-CVMallocClassSpace(CVMExecEnv* ee, CICcontext *context)
+CVMallocClassSpace(CVMExecEnv* ee, CICcontext *context, CVMBool isRedefine)
 {
     unsigned int offset = 0;
     int numberOfJmd;
@@ -1600,14 +1771,15 @@ CVMallocClassSpace(CVMExecEnv* ee, CICcontext *context)
     offset += sizeof(CVMClassBlock*) * ((255 + context->size.fields) / 256) +
 	      sizeof(CVMFieldBlock) * context->size.fields;
     
-    /* CVMClassBlock.statics */
-    context->offset.staticFields = offset;
-    /*
-     * Just use the same type as multiplier here that is used
-     * for 'statics' in the union 'staticsX' in CVMClassBlock.
-     */
-    offset += sizeof(CVMJavaVal32) * context->size.staticFields;
-
+    if (!isRedefine) {
+	/* CVMClassBlock.statics */
+	context->offset.staticFields = offset;
+	/*
+	 * Just use the same type as multiplier here that is used
+	 * for 'statics' in the union 'staticsX' in CVMClassBlock.
+	 */
+	offset += sizeof(CVMJavaVal32) * context->size.staticFields;
+    }
     /* CVMClassBlock.checkedExceptions */
     context->offset.main.excs = offset;
     offset += (sizeof(CVMUint16) * 

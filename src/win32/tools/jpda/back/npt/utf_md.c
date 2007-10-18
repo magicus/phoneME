@@ -52,7 +52,7 @@ utfInitialize(char *options)
     localeID = MAKELCID(langID, SORT_DEFAULT);
     if (GetLocaleInfo(localeID, LOCALE_IDEFAULTANSICODEPAGE, 
                       strCodePage, sizeof(strCodePage)/sizeof(TCHAR)) > 0 ) {
-        ui->platformCodePage = atoi(strCodePage);
+        ui->platformCodePage = atoi((const char*)strCodePage);
     } else {
         ui->platformCodePage = GetACP();
     }

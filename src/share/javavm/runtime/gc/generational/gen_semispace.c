@@ -1,7 +1,5 @@
 /*
- * @(#)gen_semispace.c	1.74 06/10/19
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -47,6 +45,9 @@
 #include "javavm/include/gc/generational/gen_semispace.h"
 #include "javavm/include/gc/generational/gen_markcompact.h"
 
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmtiExport.h"
+#endif
 #ifdef CVM_JVMPI
 #include "javavm/include/jvmpi_impl.h"
 #endif
@@ -437,17 +438,43 @@ CVMgenSemispaceAlloc(CVMUint32* space, CVMUint32 totalNumBytes)
     thisGen->gen.getExtraSpace = CVMgenSemispaceGetExtraSpace;
     thisGen->gen.freeMemory = CVMgenSemispaceFreeMemory;
     thisGen->gen.totalMemory = CVMgenSemispaceTotalMemory;
-    
-    CVMdebugPrintf(("GC[SS]: Initialized semi-space gen for generational GC\n"));
-    CVMdebugPrintf(("\tSize of *each* semispace in bytes=%d\n"
-		  "\tLimits of generation = [0x%x,0x%x)\n" 
-		  "\tFirst semispace      = [0x%x,0x%x)\n" 
-		  "\tSecond semispace     = [0x%x,0x%x)\n",
-		  numBytes, fromSpace->allocBase, toSpace->allocTop,
-		  fromSpace->allocBase, fromSpace->allocTop,
-		  toSpace->allocBase, toSpace->allocTop));
+
+#if defined(CVM_DEBUG)
+    CVMgenSemispaceDumpSysInfo(thisGen);
+#endif /* CVM_DEBUG */
     return (CVMGeneration*)thisGen;
 }
+
+#if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
+/* Dumps info about the configuration of the semispace generation. */
+void CVMgenSemispaceDumpSysInfo(CVMGenSemispaceGeneration* thisGen)
+{
+    CVMUint32 numBytes;
+    CVMGenSpace* fromSpace = thisGen->fromSpace;
+    CVMGenSpace* toSpace = thisGen->toSpace;
+
+    CVMGenSpace* firstSpace;
+    CVMGenSpace* secondSpace;
+
+    firstSpace = (fromSpace->allocBase < toSpace->allocBase) ?
+	         fromSpace : toSpace;
+    secondSpace = (fromSpace->allocBase > toSpace->allocBase) ?
+	          fromSpace : toSpace;
+    numBytes = (firstSpace->allocTop - firstSpace->allocBase) *
+               sizeof(CVMUint32);
+
+    CVMconsolePrintf("GC[SS]: Initialized semi-space gen for generational GC\n");
+    CVMconsolePrintf("\tSize of *each* semispace in bytes=%d\n"
+		     "\tLimits of generation = [0x%x,0x%x)\n" 
+		     "\tFirst semispace      = [0x%x,0x%x)\n" 
+		     "\tSecond semispace     = [0x%x,0x%x)\n"
+		     "\tCurrent semispace    = %s semispace\n",
+		     numBytes, firstSpace->allocBase, secondSpace->allocTop,
+		     firstSpace->allocBase, firstSpace->allocTop,
+		     secondSpace->allocBase, secondSpace->allocTop,
+		     ((fromSpace == firstSpace) ?"First":"Second"));
+}
+#endif /* CVM_DEBUG || CVM_INSPECTOR */
 
 /*
  * Free all the memory associated with the current semispaces generation
@@ -1373,7 +1400,7 @@ CVMgenSemispaceClassRefIsLive(CVMObject** refPtr, void* data)
 }
 #endif
 
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 /* Purpose: Scan over freed objects. */
 static void
 CVMgenSemispaceScanFreedObjects(CVMGeneration *thisGen, CVMExecEnv *ee)
@@ -1381,8 +1408,8 @@ CVMgenSemispaceScanFreedObjects(CVMGeneration *thisGen, CVMExecEnv *ee)
     CVMUint32 *base = thisGen->allocBase;
     CVMUint32 *top = thisGen->allocPtr;
 
-#ifndef CVM_JVMPI
-    /* If this not a JVMPI build, we don't need to scan freed objects
+#if !defined(CVM_JVMPI) && !defined(CVM_JVMTI)
+    /* If this not a JVM[PT]I build, we don't need to scan freed objects
        if we're not tracking any captured heap state: */
     if (!CVMglobals.inspector.hasCapturedState) {
         return;
@@ -1412,11 +1439,18 @@ CVMgenSemispaceScanFreedObjects(CVMGeneration *thisGen, CVMExecEnv *ee)
         /* Notify the profiler of an object which is about to be GC'ed: */
         if (collected) {
 #ifdef CVM_JVMPI
-            extern CVMUint32 liveObjectCount;
-            if (CVMjvmpiEventObjectFreeIsEnabled()) {
-                CVMjvmpiPostObjectFreeEvent(obj);
+	    {
+		extern CVMUint32 liveObjectCount;
+		if (CVMjvmpiEventObjectFreeIsEnabled()) {
+		    CVMjvmpiPostObjectFreeEvent(obj);
+		}
+		liveObjectCount--;
+	    }
+#endif
+#ifdef CVM_JVMTI
+            if (CVMjvmtiShouldPostObjectFree()) {
+                CVMjvmtiPostObjectFreeEvent(obj);
             }
-            liveObjectCount--;
 #endif
 #ifdef CVM_INSPECTOR
             if (CVMglobals.inspector.hasCapturedState) {
@@ -1433,7 +1467,7 @@ CVMgenSemispaceScanFreedObjects(CVMGeneration *thisGen, CVMExecEnv *ee)
 
 #else
 #define CVMgenSemispaceScanFreedObjects(thisGen, ee)
-#endif /* CVM_INSPECTOR || CVM_JVMPI */
+#endif /* CVM_INSPECTOR || CVM_JVMPI || CVM_JVMTI */
 
 static void
 CVMgenSemispaceProcessSpecialWithLivenessInfo(CVMExecEnv* ee,
