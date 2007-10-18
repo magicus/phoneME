@@ -66,20 +66,26 @@ package com.sun.midp.security;
 
 import com.sun.midp.i18n.ResourceConstants;
 
-public final class ExtendedPermissions {
-</xsl:text>
+public final class PermissionsTable {</xsl:text>
+<xsl:variable name="perm_ids">
     <xsl:for-each select="/configuration/permissions/group">
         <xsl:for-each select="permission">
-<xsl:text>    /** </xsl:text>
+<xsl:text>
+    /** </xsl:text>
 <xsl:value-of select="@Name"/>
 <xsl:text> permission ID. */
     public static final int </xsl:text>
 <xsl:value-of select="@ID"/>
-<xsl:text> =
-        Permissions.NUMBER_OF_PERMISSIONS++;
-</xsl:text>
+<xsl:text> = </xsl:text>
+<xsl:text>;</xsl:text>
         </xsl:for-each>
     </xsl:for-each>
+</xsl:variable>
+
+<xsl:call-template name="generateIDs">
+    <xsl:with-param name="text" select="$perm_ids"/>
+    <xsl:with-param name="nextID" select="55"/>
+</xsl:call-template>
 
 <xsl:text>
     /** Permission specifications. */
@@ -213,6 +219,39 @@ public final class ExtendedPermissions {
 <xsl:text>    };
 }
 </xsl:text>
+</xsl:template>
+
+<xsl:template name="generateIDs">
+    <xsl:param name="text"/>
+    <xsl:param name="nextID"/>
+<xsl:choose>
+    <!-- when there is more than one element in the list -->
+    <xsl:when test="contains($text,';')">
+        <xsl:value-of select="substring-before($text,';')"/>
+        <xsl:value-of select="$nextID"/>
+<xsl:text>;</xsl:text>
+        <xsl:call-template name="generateIDs">
+            <xsl:with-param name="text" select="substring-after($text,';')"/>
+            <xsl:with-param name="nextID" select="$nextID + 1"/>
+        </xsl:call-template>
+    </xsl:when>
+    <xsl:otherwise>
+<xsl:text>
+
+    /*
+     * IMPL_NOTE: if this value is changed, the appropriate change should be
+     * made in suitestore_installer.c under ENABLE_CONTROL_ARGS_FROM_JAD
+     * section. NUMBER_OF_PERMISSIONS was not moved to *.xml because it is
+     * never used in native in normal case (i.e. when
+     * ENABLE_CONTROL_ARGS_FROM_JAD=false).
+     */
+    /** Number of permissions. */
+    public static final int NUMBER_OF_PERMISSIONS = </xsl:text>
+        <xsl:value-of select="$nextID"/>
+<xsl:text>;
+</xsl:text>
+    </xsl:otherwise>
+</xsl:choose>
 </xsl:template>
 
 </xsl:stylesheet>
