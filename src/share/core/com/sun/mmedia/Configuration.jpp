@@ -198,7 +198,20 @@ public abstract class Configuration {
      * @param  protocol  Description of the Parameter
      * @return           The supportedContentTypes value
      */
-    public abstract String[] getSupportedContentTypes(String protocol);
+    public String[] getSupportedContentTypes(String protocol) {
+        if (protocol == null) {
+            return new String[]{MIME_IMAGE_GIF};
+        }
+        if (protocol.equals("http") || protocol.equals("https")) {
+            return new String[]{MIME_IMAGE_GIF};
+        }
+    // #ifdef USE_FILE_CONNECTION [
+        if (protocol.equals("file")) {
+            return new String[]{MIME_IMAGE_GIF};
+        }
+    // #endif ]
+        return new String[0];
+    }
 
 
     /**
@@ -207,7 +220,18 @@ public abstract class Configuration {
      * @param  content_types  Description of the Parameter
      * @return                The supportedProtocols value
      */
-    public abstract String[] getSupportedProtocols(String content_types);
+    public String[] getSupportedProtocols(String content_types) {
+        if (content_types!= null && content_types.equals(MIME_IMAGE_GIF)) {
+            return new String[]{
+                "http",
+                "https",
+            // #ifdef USE_FILE_CONNECTION [
+                "file",
+            // #endif ]
+                };
+        }
+        return new String[0];
+    }
 
 // #ifdef ENABLE_JSR_234 [
     public abstract String[] getSupportedMediaProcessorInputTypes();

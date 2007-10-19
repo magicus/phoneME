@@ -74,11 +74,17 @@ typedef struct {
     unsigned char protocol[MAX_PROTOCOLNAME_LEN];
     int p;
 } ListCapsType;
+typedef struct {
+    javacall_const_utf8_string *protocols;
+    int protocolCount;
+    int p;
+} ListProtocolsType;
+
 
 KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_mmedia_DefaultConfiguration_nListCapsOpen) {
+KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
     ListCapsType *hdlr = NULL;
-    javacall_utf16_string protocolUTF16;
+    javacall_utf16_string protocolUTF16=NULL;
     javacall_int32 protocolNameLen;
     
     KNI_StartHandles(1);
@@ -96,11 +102,16 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListCapsOpen) {
                         FREE(hdlr);
                         hdlr = NULL;
                 }
-                if (JAVACALL_OK != 
-                    javautil_unicode_utf16_to_utf8(protocolUTF16, javautil_unicode_utf16_ulength(protocolUTF16),
-                    hdlr->protocol, MAX_PROTOCOLNAME_LEN, &protocolNameLen)) {
+                protocolNameLen = 0;
+                javautil_unicode_utf16_ulength(protocolUTF16, &protocolNameLen);
+                if (protocolNameLen != 0 && JAVACALL_OK != 
+                    javautil_unicode_utf16_to_utf8(protocolUTF16, protocolNameLen+1,
+                            hdlr->protocol, MAX_PROTOCOLNAME_LEN, &protocolNameLen)) {
                         FREE(hdlr);
                         hdlr = NULL;
+                }
+                if (protocolUTF16!=NULL) {
+                    FREE(protocolUTF16);
                 }
             } else {
                 hdlr->protocol[0] = 0;
@@ -116,7 +127,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListCapsOpen) {
 };
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
-KNIDECL(com_sun_mmedia_DefaultConfiguration_nListCapsNext) {
+KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesNext) {
     int i   = 0;
     ListCapsType *hdlr = NULL;
     javacall_utf16 mimeUTF16[MAX_MIMETYPENAME_LEN];
@@ -133,7 +144,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListCapsNext) {
                 break;
             } else {
                 for (i=0; i<hdlr->pCaps[hdlr->p].protocolCount; i++) {
-                    if(javautil_string_equals(hdlr->pCaps[hdlr->p].protocols[i], hdlr->protocol)) {
+                    if(javautil_string_equals((unsigned char *)hdlr->pCaps[hdlr->p].protocols[i], (unsigned char *)hdlr->protocol)) {
                         break;
                     }
                 }
@@ -158,13 +169,107 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListCapsNext) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_mmedia_DefaultConfiguration_nListCapsClose) {
+KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesClose) {
     ListCapsType *hdlr = NULL;
-    hdlr = (ListCapsType *)KNI_GetParameterAsInt(1);
+    if ((hdlr = (ListCapsType *)KNI_GetParameterAsInt(1))!= NULL) {
+        FREE(hdlr);
+    }
+}
+
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
+    ListProtocolsType *hdlr = NULL;
+    javacall_utf16_string mimeUTF16=NULL;
+
+    javacall_int32 mimeNameLen;
+    javacall_media_caps* pCaps;
+
+    unsigned char mime[MAX_MIMETYPENAME_LEN];
+
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(stringObj);
+    KNI_GetParameterAsObject(1, stringObj);
+
+    hdlr = MALLOC(sizeof(ListProtocolsType));
     if (hdlr != NULL) {
-        if (hdlr->protocol != NULL) {
-            FREE(hdlr->protocol);
-            }    
+        pCaps = (javacall_media_caps*)javacall_media_get_caps();
+        hdlr->p = 0;
+        hdlr->protocolCount = 0;
+        hdlr->protocols = NULL;
+        if (pCaps != NULL) {
+            if (!KNI_IsNullHandle(stringObj)) {
+                if (JAVACALL_OK != 
+                    jsrop_jstring_to_utf16_string(stringObj, &mimeUTF16)) {
+                        FREE(hdlr);
+                        hdlr = NULL;
+                }
+                mimeNameLen = 0;
+                javautil_unicode_utf16_ulength(mimeUTF16,&mimeNameLen);
+                if (mimeNameLen!= 0 && JAVACALL_OK != 
+                    javautil_unicode_utf16_to_utf8(mimeUTF16, mimeNameLen+1,
+                    mime, MAX_MIMETYPENAME_LEN, &mimeNameLen)) {
+                        FREE(hdlr);
+                        hdlr = NULL;
+                }
+                if (mimeUTF16 != NULL) {
+                    FREE(mimeUTF16);
+                }
+                /* go to the caps for requested mime */
+                while(pCaps->mimeType != NULL) {
+                    if (javautil_string_equals(mime, (unsigned char *)pCaps->mimeType)) {
+                        hdlr->protocols = pCaps->protocols;
+                        hdlr->protocolCount = pCaps->protocolCount;
+                        break;
+                    }
+                    pCaps++;
+                }
+            } else {
+                /* go to the last caps for all supported protocols */
+                while(pCaps->mimeType != NULL) pCaps++;
+                hdlr->protocols = pCaps->protocols;
+                hdlr->protocolCount = pCaps->protocolCount;
+            }
+        } else {
+            FREE(hdlr);
+            hdlr = NULL;
+        }
+    }
+
+    KNI_EndHandles();
+    KNI_ReturnInt( (jint)hdlr ); 
+};
+
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsNext) {
+    int i   = 0;
+    ListProtocolsType *hdlr = NULL;
+    javacall_utf16 protocolUTF16[MAX_PROTOCOLNAME_LEN];
+    int protocolLen;
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(stringObj);
+    hdlr = (ListProtocolsType *)KNI_GetParameterAsInt(1);
+    KNI_ReleaseHandle(stringObj);
+
+    if (hdlr != NULL && hdlr->p < hdlr->protocolCount &&
+        hdlr->protocols != NULL && hdlr->protocols[hdlr->p] != NULL) {
+        protocolLen = 0;
+        while(hdlr->protocols[hdlr->p][protocolLen]!=0) protocolLen++;
+        if (JAVACALL_OK == javautil_unicode_utf8_to_utf16(hdlr->protocols[hdlr->p], protocolLen, protocolUTF16, MAX_PROTOCOLNAME_LEN, &protocolLen) ) {
+            protocolUTF16[protocolLen] = 0;
+            jsrop_jstring_from_utf16_string(KNIPASSARGS protocolUTF16, stringObj);
+        }
+        hdlr->p++;
+    }
+
+    KNI_EndHandlesAndReturnObject(stringObj);
+}
+
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsClose) {
+    ListProtocolsType *hdlr = NULL;
+    if ((hdlr = (ListProtocolsType *)KNI_GetParameterAsInt(1)) != NULL) {
         FREE(hdlr);
     }
 }
