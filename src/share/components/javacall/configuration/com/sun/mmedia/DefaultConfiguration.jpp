@@ -179,11 +179,12 @@ public class DefaultConfiguration extends Configuration {
      * @return           The supportedContentTypes value
      */
     public String[] getSupportedContentTypes(String protocol) {
+        // #ifndef USE_FILE_CONNECTION [
         if (protocol != null && protocol.equals("file")) {
-            if (!fileProtocolAllowed()) {
-                return new String[0];
-            }
+            return new String[0];
         }
+        // #endif ]
+
         String arr[] = super.getSupportedContentTypes(protocol);
         int hdlr = nListContentTypesOpen(protocol);
         if (hdlr != 0) {
@@ -260,11 +261,10 @@ public class DefaultConfiguration extends Configuration {
                     found = s.equals((String)v.get(i));
                 }
                 if (!found) {
-                    if (s.equals("file")) {
-                        if (fileProtocolAllowed()) {
-                            v.addElement(s);
-                        }
-                    } else {
+                    // #ifndef USE_FILE_CONNECTION [
+                    if (!s.equals("file"))
+                    // #endif ]
+                    {
                         v.addElement(s);
                     }
                 }
@@ -283,19 +283,6 @@ public class DefaultConfiguration extends Configuration {
             v.copyInto(arr);
         }
         return arr;
-    }
-
-    private static int allowFileProtocol = -1;
-    private boolean fileProtocolAllowed() {
-        if (allowFileProtocol == -1) {
-            allowFileProtocol = 0;
-            if ((MIDPConfig.getMIDletClassLoader() != null) ||
-                (System.getProperty("microedition.io.file.FileConnection.version") != null)) {
-                allowFileProtocol = 1;
-            }
-        }
-
-        return ((allowFileProtocol==1) ? true : false);
     }
 
     // #ifdef ENABLE_INDIRECT_VIDEO [

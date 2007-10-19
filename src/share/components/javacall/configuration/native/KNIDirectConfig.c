@@ -27,46 +27,6 @@
 #include <jsrop_kni.h>
 #include <javautil_string.h>
 
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_DefaultConfiguration_nIsAmrSupported) {
-    int res = 0;
-    int i   = 0;
-
-    const javacall_media_caps* caps = javacall_media_get_caps();
-
-    while( NULL != caps[ i ].mimeType )
-    {
-        if( 0 == strcmp( caps[ i ].mimeType, JAVACALL_AUDIO_AMR_MIME ) )
-        {
-            res = 1;
-            break;
-        }
-        i++;
-    }
-
-    KNI_ReturnBoolean( res ); 
-}
-
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_DefaultConfiguration_nIsJtsSupported) {
-    int res = 0;
-    int i   = 0;
-
-    const javacall_media_caps* caps = javacall_media_get_caps();
-
-    while( NULL != caps[ i ].mimeType )
-    {
-        if( 0 == strcmp( caps[ i ].mimeType, JAVACALL_AUDIO_TONE_MIME ) )
-        {
-            res = 1;
-            break;
-        }
-        i++;
-    }
-
-    KNI_ReturnBoolean( res ); 
-}
-
 #define MAX_PROTOCOLNAME_LEN 10
 #define MAX_MIMETYPENAME_LEN 100
 typedef struct {
