@@ -186,7 +186,21 @@ public class DefaultConfiguration extends Configuration {
         // #endif ]
 
         String arr[] = super.getSupportedContentTypes(protocol);
-        int hdlr = nListContentTypesOpen(protocol);
+
+        String ll_protocol = protocol;
+        if (protocol != null) {
+            for (int i=0; i<Configuration.INTERNAL_PROTOCOLS.length; i++) {
+                if (protocol.equals(Configuration.INTERNAL_PROTOCOLS[i])) {
+                    ll_protocol = "internal";
+                    break;
+                }
+            }
+            if(protocol.equals("rtsp")) {
+                ll_protocol = "rtp";
+            }
+        }
+
+        int hdlr = nListContentTypesOpen(ll_protocol);
         if (hdlr != 0) {
             String s;
             int i;
@@ -195,7 +209,7 @@ public class DefaultConfiguration extends Configuration {
             for (i=0; i<arr.length; i++) v.addElement(arr[i]);
 
             while ((s = nListContentTypesNext(hdlr)) != null) {
-                for (i=0, found=false; i<v.size() & !found; i++) {
+                for (i=0, found=false; i<v.size() && !found; i++) {
                     found = s.equals((String)v.get(i));
                 }
                 if (!found) {
@@ -248,42 +262,44 @@ public class DefaultConfiguration extends Configuration {
         }
 
         String arr[] = super.getSupportedProtocols(content_type);
+
         int hdlr = nListProtocolsOpen(content_type);
         if (hdlr != 0) {
             String s;
-            int i,j;
-            boolean found;
+
             Vector v = new Vector(arr.length);
-            for (i=0; i<arr.length; i++) v.addElement(arr[i]);
+            for (int i=0; i<arr.length; i++) v.addElement(arr[i]);
 
             while ((s = nListProtocolsNext(hdlr)) != null) {
-                for (i=0, found=false; i<v.size() & !found; i++) {
-                    found = s.equals((String)v.get(i));
-                }
-                if (!found) {
-                    // #ifndef USE_FILE_CONNECTION [
-                    if (!s.equals("file"))
-                    // #endif ]
-                    {
-                        v.addElement(s);
+                if (s.equals("internal")) {
+                    for (int i=0; i<Configuration.INTERNAL_PROTOCOLS.length; i++) {
+                        addIfNotExist(v, Configuration.INTERNAL_PROTOCOLS[i]);
                     }
+                } else if (s.equals("rtp")) {
+                    addIfNotExist(v, s);    
+                    addIfNotExist(v, "rtsp");    
+                } else {
+                    addIfNotExist(v, s);    
                 }
             }
             nListProtocolsClose(hdlr);
-            for (i=0; i<arr.length; i++) {
-                for (j=0; j<v.size(); j++) {
-                    s = (String)v.get(j);
-                    if (s != null && s.equals(arr[i])) {
-                        break;
-                    }
-                }
 
-            }
             arr = new String[v.size()];
             v.copyInto(arr);
         }
         return arr;
     }
+
+    private void addIfNotExist(Vector v, String s) {
+        boolean found = false;
+        for (int i=0; i<v.size() && !found; i++) {
+            found = s.equals((String)v.get(i));
+        }
+        if (!found) {
+            v.addElement(s);
+        }
+    }
+
 
     // #ifdef ENABLE_INDIRECT_VIDEO [
     public ImageAccess getImageAccessor() {
