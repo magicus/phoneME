@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!--
+
+    
+ 
+  Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+
+-->
+</head>
+<body bgcolor="white">
+ Internal interfaces to file storage for MIDlet suite code, RMS data, and
+ public keys. See storage.h for information on the native interface.
+<p>
+ To aid in porting and to simplify code, this package presents a flat
+ file system, since not all devices support directory hierarchies and
+ recursing through directories is complex.</p>
+<p>
+ The installation and RMS code needs to be group the files of a suite together,
+ however this can be done without directories by just not using file
+ separators when building a full filename. Second, a method is provided to get
+ a list of full filenames that begin with given string, instead of a list a
+ partial filenames in a directory.</p>
+<p>
+ The Java code on some platforms may need to access files outside of the
+ storage directory, but this code does not build or parse filenames,
+ the filenames come from either the command line or a configuration file and
+ used as-is. Since the code to access files for a suite builds filenames
+ and the storage root for a suite contains the storage root directory,
+ filenames for this package are direct system file names, so any file on the
+ system can be accessed without the knowledge of file separators.</p>
+<p>
+ To aid in porting to file systems that are not case sensitive, like Win32,
+ the method that converts filenames from Unicode to ASCII, prefixes uppercase
+ characters with a "#".</p>
+@since MIDP 1.0
+</body>
+</html>
