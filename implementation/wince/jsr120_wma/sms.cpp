@@ -332,7 +332,7 @@ static int cdma_sms_decode(
                 msgType1 &= ~SMS_SEND_ODDITY_BIT;
                 header_size++;
             }
-            msgType1 &= ~SMS_SEND_ODDITY_BIT;
+            *msgType = (javacall_sms_encoding)msgType1;
             *msgBuffer = (char*)databuf + header_size;
             *msgBufferLen = databuflength - header_size;
         } else {
