@@ -41,7 +41,7 @@ ifdef PCSL_PLATFORM
 include makefiles/top.gmk
 endif
 
-all : verify $(OUTPUT_INC_DIR) generate_config $(TYPES_DIR) $(PRINT_DIR) $(MEMORY_DIR) \
+all:    verify $(OUTPUT_INC_DIR) generate_config $(TYPES_DIR) $(PRINT_DIR) $(MEMORY_DIR) \
 $(FILE_DIR) $(NETWORK_DIR) $(STRING_DIR)
 	@echo "building all modules..."
 	cd ${TYPES_DIR}; $(MAKE) $@

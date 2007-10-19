@@ -37,25 +37,22 @@ echo \$${JAVACALL_OUTPUT_DIR}/inc and \$${JAVACALL_OUTPUT_DIR}/lib         ; \
 echo directories.                                                          ; \
 echo ===================================================================== )
 
-verify_javacall_output_dir : 
-	@if [ -z "$(JAVACALL_OUTPUT_DIR)" ]; then \
-		echo "ERROR: JAVACALL_OUTPUT_DIR must be set"; \
-		exit -1; \
-	fi
-	@if [ ! -d "$(JAVACALL_OUTPUT_DIR)" ]; then \
-		$(INVALID_JAVACALL_OUTPUT_DIR); \
-		exit -1; \
-	fi
-	@if [ ! -d "$(JAVACALL_OUTPUT_DIR)/inc" ]; then \
-		$(INVALID_JAVACALL_OUTPUT_DIR); \
-		exit -1; \
-	fi
-	@if [ ! -d "$(JAVACALL_OUTPUT_DIR)/lib" ]; then \
-		$(INVALID_JAVACALL_OUTPUT_DIR); \
-		exit -1; \
-	fi
-
-verify : verify_javacall_output_dir
+ifeq ($(JAVACALL_OUTPUT_DIR),)
+  $(shell $(INVALID_JAVACALL_OUTPUT_DIR) 1>&2)
+  $(error JAVACALL_OUTPUT_DIR is not set)
+endif
+ifneq ($(shell if test -d $(JAVACALL_OUTPUT_DIR); then echo valid; fi),valid)
+  $(shell $(INVALID_JAVACALL_OUTPUT_DIR) 1>&2)
+  $(error $${JAVACALL_OUTPUT_DIR} does not point to a directory)
+endif
+ifneq ($(shell if test -d $(JAVACALL_OUTPUT_DIR)/inc; then echo valid; fi),valid)
+  $(shell $(INVALID_JAVACALL_OUTPUT_DIR) 1>&2)
+  $(error $${JAVACALL_OUTPUT_DIR}/inc is not a directory)
+endif
+ifneq ($(shell if test -d $(JAVACALL_OUTPUT_DIR)/lib; then echo valid; fi),valid)
+  $(shell $(INVALID_JAVACALL_OUTPUT_DIR) 1>&2)
+  $(error $${JAVACALL_OUTPUT_DIR}/lib is not a directory)
+endif
 
 JAVACALL_INCLUDE_DIR=$(JAVACALL_OUTPUT_DIR)/inc
 
