@@ -28,6 +28,17 @@
 # Can be overridden on the make command line or exported from shell
 SDK_DIR         ?= C:/Program Files/Windows CE Tools
 
+ifndef VS8_DIR
+VS8_REG_KEY	:= 'HKLM\Software\Microsoft\VisualStudio\8.0\Setup\VS'
+VS8_REG_VALUE	:= ProductDir
+VS8_REG_DIR	:= $(call WIN32_QUERY_REG,$(VS8_REG_KEY),$(VS8_REG_VALUE))
+ifdef VS8_REG_DIR
+VS8_DIR		:= $(subst \,/,$(VS8_REG_DIR))<EOL>
+VS8_DIR		:= $(subst /<EOL>,<EOL>,$(VS8_DIR))
+VS8_DIR		:= $(subst <EOL>,,$(VS8_DIR))
+endif
+endif
+
 VS8_DIR         ?= C:/Program Files/Microsoft Visual Studio 8
 VS8_PATH         = $(call WIN2POSIX,$(VS8_DIR))
 VC_DIR           = $(VS8_DIR)/VC

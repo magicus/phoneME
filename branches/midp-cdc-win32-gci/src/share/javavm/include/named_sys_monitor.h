@@ -94,7 +94,7 @@ void CVMnamedSysMonitorDestroy(CVMNamedSysMonitor *self);
 /* inline void CVMnamedSysMonitorEnter(CVMNamedSysMonitor *self,
             CVMExecEnv *current_ee); */
 #define CVMnamedSysMonitorEnter(self, current_ee) \
-    CVMprofiledMonitorEnter((&(self)->_super), (current_ee))
+    CVMprofiledMonitorEnter((&(self)->_super), (current_ee), CVM_FALSE)
 
 /* Purpose: Exits the monitor. */
 /* inline void CVMnamedSysMonitorExit(CVMNamedSysMonitor *self,
@@ -149,7 +149,7 @@ void CVMnamedSysMonitorDestroy(CVMNamedSysMonitor *self);
 /* inline void CVMnamedSysMonitorEnterUnsafe(CVMNamedSysMonitor *self,
             CVMExecEnv *current_ee); */
 #define CVMnamedSysMonitorEnterUnsafe(self, current_ee) {           \
-    CVMprofiledMonitorEnterUnsafe((&(self)->_super), (current_ee)); \
+	CVMprofiledMonitorEnterUnsafe((&(self)->_super), (current_ee), CVM_FALSE); \
 }
 
 /* Purpose: Enters monitor while thread is in a GC safe state. */

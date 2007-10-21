@@ -139,7 +139,7 @@ typedef struct CVMGeneration {
                             CVMGCOptions* gcOpts);
 #endif
 
-#if defined(CVM_DEBUG) || defined(CVM_JVMPI)
+#if defined(CVM_DEBUG) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
     /* Iterate over objects in generation. Return CVM_FALSE
        if scan not completed. Return CVM_TRUE on success. */
     CVMBool       (*iterateGen)(struct CVMGeneration* gen, 

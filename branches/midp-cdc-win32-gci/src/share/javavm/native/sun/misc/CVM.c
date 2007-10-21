@@ -60,6 +60,7 @@
 #ifdef CVM_XRUN
 #include "javavm/include/xrun.h"
 #endif
+#include "javavm/include/porting/time.h"
 #ifdef CVM_JVMTI
 #include "javavm/include/jvmti_jni.h"
 #endif
@@ -752,7 +753,7 @@ CNIsun_misc_CVM_setDebugEvents(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb)
 {
 #ifdef CVM_JVMTI
-    ee->debugEventsEnabled = arguments[0].j.i;
+    CVMjvmtiDebugEventsEnabled(ee) = arguments[0].j.i;
 #endif
     return CNI_VOID;
 }
@@ -773,7 +774,7 @@ CNIsun_misc_CVM_setContextArtificial(CVMExecEnv* ee, CVMStackVal32 *arguments,
 {
     CVMFrameIterator iter;
     CVMframeIterateInit(&iter, CVMeeGetCurrentFrame(ee));
-    CVMframeIterateSkipSpecial(&iter, 0, CVM_FALSE, CVM_FALSE);
+    CVMframeIterateSkipReflection(&iter, 0, CVM_FALSE, CVM_FALSE);
     CVMframeIterateSetFlags(&iter, (CVMFrameFlags)
 	(CVMframeIterateGetFlags(&iter) | CVM_FRAMEFLAG_ARTIFICIAL));
     return CNI_VOID;
@@ -1262,11 +1263,11 @@ CNIsun_misc_CVM_xdebugSet(CVMExecEnv* ee, CVMStackVal32 *arguments,
     arguments[0].j.i = CVM_FALSE;
 #ifdef CVM_JVMTI
     /*
-     * NOTE: JVMTI doesn't use -Xdebug so this is actually set in
-     * jvmtiEnv.c CVMcreateJvmti()
+     * NOTE: JVMTI uses -Xdebug to signal that this is a debugging
+     * session vs. profiling.  This flag causes several jvmti 
+     * capabilities to be turned off.  See jvmtiCapabilities.c
      */
-    CVMglobals.jvmtiDebuggingEnabled = CVM_TRUE;
-    CVMjvmtiInstrumentJNINativeInterface();
+    CVMglobals.jvmtiDebuggingFlag = CVM_TRUE;
     arguments[0].j.i = CVM_TRUE;
 #endif
 
@@ -1323,6 +1324,19 @@ CNIsun_misc_CVM_00024Preloader_registerClassLoader0(CVMExecEnv* ee,
 	&arguments[1].j.r /* cl */
     );
     return CNI_VOID;
+}
+
+CNIResultCode
+CNIsun_misc_CVM_nanoTime(CVMExecEnv* ee, CVMStackVal32 *arguments, CVMMethodBlock **p_mb)
+{
+    jlong time;
+#ifdef CVM_JVMTI
+    time = CVMtimeNanosecs();
+#else
+    time = (jlong)(((CVMInt64)CVMtimeMillis()) * 1000000);
+#endif
+    CVMlong2Jvm((CVMAddr*)&arguments[0].j, time);
+    return CNI_DOUBLE;
 }
 
 #if 1

@@ -454,7 +454,7 @@ CVMsysMicroUnlockAll(CVMExecEnv *ee)
 
 /*===========================================================================*/
 
-#ifdef CVM_JVMPI
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
 /* Purpose: Constructor. */
 CVMBool CVMprofiledMonitorInit(CVMProfiledMonitor *self, CVMExecEnv *owner,
                             CVMUint32 count, CVMUint8 lockType)
@@ -467,8 +467,37 @@ CVMBool CVMprofiledMonitorInit(CVMProfiledMonitor *self, CVMExecEnv *owner,
     return CVM_FALSE;
 }
 
+/* gcc 3.2 complains about ifdefs inside a macro */
+
+static void postContendedEnter(CVMProfiledMonitor *self, CVMExecEnv *ee) {
+#ifdef CVM_JVMPI
+    if (CVMjvmpiEventMonitorContendedEnterIsEnabled()) {
+	CVMjvmpiPostMonitorContendedEnterEvent(ee, self);
+    }
+#endif
+#ifdef CVM_JVMTI
+    ee->threadState = CVM_THREAD_BLOCKED_MONITOR_ENTER;
+    if (CVMjvmtiShouldPostMonitorContendedEnter()) {
+	CVMjvmtiPostMonitorContendedEnterEvent(ee, self);
+    }
+#endif
+}
+static void postContendedEntered(CVMProfiledMonitor *self, CVMExecEnv *ee) {
+#ifdef CVM_JVMPI
+    if (CVMjvmpiEventMonitorContendedEnteredIsEnabled()) {
+	CVMjvmpiPostMonitorContendedEnteredEvent(ee, self);
+    }
+#endif
+#ifdef CVM_JVMTI
+    if (CVMjvmtiShouldPostMonitorContendedEntered()) {
+	CVMjvmtiPostMonitorContendedEnteredEvent(ee, self);
+    }
+#endif
+}
+
 /* Purpose: Enters the specified monitor. */
-void CVMprofiledMonitorEnterSafe(CVMProfiledMonitor *self, CVMExecEnv *ee)
+void CVMprofiledMonitorEnterSafe(CVMProfiledMonitor *self, CVMExecEnv *ee,
+				 CVMBool doPost)
 {
     CVMReentrantMutex *rm = &self->_super.rmutex;
     CVMassert(CVMD_isgcSafe(ee));
@@ -476,25 +505,24 @@ void CVMprofiledMonitorEnterSafe(CVMProfiledMonitor *self, CVMExecEnv *ee)
     CVMreentrantMutexDoLock(rm, ee, {
         /* Locking action: */
         CVMBool hasContention = CVM_FALSE;
-        CVMsysMicroLock(ee, CVM_JVMPI_MICROLOCK);
+        CVMsysMicroLock(ee, CVM_TOOLS_MICROLOCK);
         if (!CVMmutexTryLock(&rm->mutex)) {
             self->contentionCount++;
             hasContention = CVM_TRUE;
         }
-        CVMsysMicroUnlock(ee, CVM_JVMPI_MICROLOCK);
+        CVMsysMicroUnlock(ee, CVM_TOOLS_MICROLOCK);
 
         if (hasContention) {
             ee->blockingLockEntryMonitor = self;
-            if (CVMjvmpiEventMonitorContendedEnterIsEnabled()) {
-                CVMjvmpiPostMonitorContendedEnterEvent(ee, self);
-            }
-
+	    if (doPost) {
+		postContendedEnter(self, ee);
+	    }
             CVMmutexLock(&rm->mutex);
 
             ee->blockingLockEntryMonitor = NULL;
-            if (CVMjvmpiEventMonitorContendedEnteredIsEnabled()) {
-                CVMjvmpiPostMonitorContendedEnteredEvent(ee, self);
-            }
+	    if (doPost) {
+		postContendedEntered(self, ee);
+	    }
         }
     });
 }
@@ -505,17 +533,16 @@ void
 CVMprofiledMonitorPreContendedEnterUnsafe(CVMProfiledMonitor *self,
     CVMExecEnv *ee)
 {
-    CVMsysMicroLock(ee, CVM_JVMPI_MICROLOCK);
+    CVMsysMicroLock(ee, CVM_TOOLS_MICROLOCK);
     self->contentionCount++;
-    CVMsysMicroUnlock(ee, CVM_JVMPI_MICROLOCK);
+    CVMsysMicroUnlock(ee, CVM_TOOLS_MICROLOCK);
 
     CVMD_gcSafeExec((ee), {
 	ee->blockingLockEntryMonitor = self;
-	if (CVMjvmpiEventMonitorContendedEnterIsEnabled()) {
-	    CVMjvmpiPostMonitorContendedEnterEvent(ee, self);
-	}
+	postContendedEnter(self, ee);
     });
 }
+
 
 /* This operation is done after thread boosting */
 void
@@ -532,9 +559,7 @@ CVMprofiledMonitorContendedEnterUnsafe(CVMProfiledMonitor *self,
 	    CVMmutexLock(&(rm)->mutex);
 
 	    ee->blockingLockEntryMonitor = NULL;
-	    if (CVMjvmpiEventMonitorContendedEnteredIsEnabled()) {
-		CVMjvmpiPostMonitorContendedEnteredEvent(ee, self);
-	    }
+	    postContendedEntered(self, ee);
 	});
     });
 }
@@ -542,7 +567,8 @@ CVMprofiledMonitorContendedEnterUnsafe(CVMProfiledMonitor *self,
 
 /* Purpose: Enters the specified monitor.  Assumes that the current thread is
             in a GC safe state. */
-void CVMprofiledMonitorEnterUnsafe(CVMProfiledMonitor *self, CVMExecEnv *ee)
+void CVMprofiledMonitorEnterUnsafe(CVMProfiledMonitor *self, CVMExecEnv *ee,
+				   CVMBool doPost)
 {
     CVMReentrantMutex *rm = &self->_super.rmutex;
     CVMassert(CVMD_isgcUnsafe(ee));
@@ -550,29 +576,42 @@ void CVMprofiledMonitorEnterUnsafe(CVMProfiledMonitor *self, CVMExecEnv *ee)
     CVMreentrantMutexDoLock(rm, ee, {
         /* Locking action: */
         CVMBool hasContention = CVM_FALSE;
-        CVMsysMicroLock(ee, CVM_JVMPI_MICROLOCK);
+        CVMsysMicroLock(ee, CVM_TOOLS_MICROLOCK);
         if (!CVMmutexTryLock(&rm->mutex)) {
             self->contentionCount++;
             hasContention = CVM_TRUE;
         }
-        CVMsysMicroUnlock(ee, CVM_JVMPI_MICROLOCK);
+        CVMsysMicroUnlock(ee, CVM_TOOLS_MICROLOCK);
 
         if (hasContention) {
             CVMD_gcSafeExec((ee), {
                 ee->blockingLockEntryMonitor = self;
-                if (CVMjvmpiEventMonitorContendedEnterIsEnabled()) {
-                    CVMjvmpiPostMonitorContendedEnterEvent(ee, self);
-                }
-
+		if (doPost) {
+		    postContendedEnter(self, ee);
+		}
                 CVMmutexLock(&(rm)->mutex);
 
                 ee->blockingLockEntryMonitor = NULL;
-                if (CVMjvmpiEventMonitorContendedEnteredIsEnabled()) {
-                    CVMjvmpiPostMonitorContendedEnteredEvent(ee, self);
-                }
+		if (doPost) {
+		    postContendedEntered(self, ee);
+		}
             });
         }
     });
+}
+
+static void profileMonitorExit(CVMProfiledMonitor *self,
+                                 CVMExecEnv *ee, CVMBool hasContention) {
+#ifdef CVM_JVMTI
+        (void)hasContention;
+	ee->threadState &= ~CVM_THREAD_BLOCKED_MONITOR_ENTER;
+#endif
+#ifdef CVM_JVMPI
+        if (hasContention &&
+            CVMjvmpiEventMonitorContendedExitIsEnabled()) {
+            CVMjvmpiPostMonitorContendedExitEvent(ee, self);
+        }
+#endif
 }
 
 /* Purpose: Exits the specified monitor. */
@@ -584,17 +623,13 @@ void CVMprofiledMonitorExit(CVMProfiledMonitor *self, CVMExecEnv *ee)
         /* Unlock action: */
         CVMBool hasContention = CVM_FALSE;
         CVMmutexUnlock(&rm->mutex);
-        CVMsysMicroLock(ee, CVM_JVMPI_MICROLOCK);
+        CVMsysMicroLock(ee, CVM_TOOLS_MICROLOCK);
         if (self->contentionCount > 0) {
             self->contentionCount--;
             hasContention = CVM_TRUE;
         }
-        CVMsysMicroUnlock(ee, CVM_JVMPI_MICROLOCK);
-
-        if (hasContention &&
-            CVMjvmpiEventMonitorContendedExitIsEnabled()) {
-            CVMjvmpiPostMonitorContendedExitEvent(ee, self);
-        }
+        CVMsysMicroUnlock(ee, CVM_TOOLS_MICROLOCK);
+	profileMonitorExit(self, ee, hasContention);
     });
 }
 
@@ -623,4 +658,4 @@ CVMprofiledMonitorWait(CVMProfiledMonitor *self, CVMExecEnv *ee,
     return result;
 }
 
-#endif /* CVM_JVMPI */
+#endif /* CVM_JVMPI || CVM_JVMTI */
