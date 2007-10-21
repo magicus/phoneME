@@ -341,6 +341,7 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
                 || (errval == ERROR_BAD_NETPATH)
                 || (errval == ERROR_BAD_NET_NAME)
                 || (errval == ERROR_ACCESS_DENIED)
+                || (errval == ERROR_NO_MORE_FILES)
                 || (errval == ERROR_NETWORK_ACCESS_DENIED)) {
                 if (!(dst = wcp(dst, dend, L'\0', src, src + wcslen(src))))
                     return -1;

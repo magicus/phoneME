@@ -1,7 +1,5 @@
 /*
- * @(#)jvmtiEnv.h	1.5 06/10/27
- *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.  
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -26,89 +24,135 @@
  */
 
 
-#ifndef _JAVA_JVMTIENV_H_
-#define _JAVA_JVMTIENV_H_
+#ifndef _INCLUDED_JVMTIENV_H
+#define _INCLUDED_JVMTIENV_H
+
+
+
+/* The following are some data structures for debugger type functionality: */
+
+struct bkpt {
+    CVMUint8* pc;      /* key - must be first */
+    CVMUint8 opcode;   /* opcode to restore */
+    jobject classRef;  /* Prevents enclosing class from being gc'ed */
+};
+
+struct fpop {
+    CVMFrame* frame;       /* key - must be first */
+    /* CVMUint8* returnpc; */ /* Was used for PC mangling in JDK version.
+				 Now just indicates set membership. */
+};
+
+struct fieldWatch {
+    CVMFieldBlock* fb;  /* field to watch; key - must be first */
+    jclass classRef;    /* Prevents enclosing class from being gc'ed */
+};
+
+/* END of debugger data structures. */
+
 
 enum {
     JVMTI_INTERNAL_CAPABILITY_COUNT = 39
 };
 
-typedef enum {
-  EXT_EVENT_CLASS_UNLOAD = JVMTI_MIN_EVENT_TYPE_VAL-1,
-  EXT_MIN_EVENT_TYPE_VAL = EXT_EVENT_CLASS_UNLOAD,
-  EXT_MAX_EVENT_TYPE_VAL = EXT_EVENT_CLASS_UNLOAD,
-  TOTAL_MIN_EVENT_TYPE_VAL = EXT_MIN_EVENT_TYPE_VAL,
-  TOTAL_MAX_EVENT_TYPE_VAL = JVMTI_MAX_EVENT_TYPE_VAL
-} jvmtiExtEvent;
+/* Tag stuff */
 
-/*
- * The complete range of events is EXT_MIN_EVENT_TYPE_VAL to 
- * JVMTI_MAX_EVENT_TYPE_VAL (inclusive and contiguous).
- */
+#define HASH_SLOT_COUNT 1531    /* Check size of RefNode.refSlot if you change this */
+#define ALL_REFS -1
 
-typedef struct {
-  jvmtiExtensionEvent ClassUnload;
-} jvmtiExtEventCallbacks;
+typedef struct JvmtiMethodNode {
+    CVMUint32 mid;              /* method ID */
+    CVMMethodBlock *mb;
+    CVMBool isObsolete;
+    CVMConstantPool *cp;
+    struct JvmtiMethodNode *next;    /* next node* in bucket chain */
+} JvmtiMethodNode;
 
-typedef struct {
-  jlong tag;                  /* opaque tag */
-  jobject      ref;           /* could be strong or weak */
-  struct TagNode *next;       /* next RefNode* in bucket chain */
-} JvmtiTagMap;
+typedef struct JvmtiTagNode {
+    jlong tag;                  /* opaque tag */
+    jobject      ref;           /* could be strong or weak */
+    struct JvmtiTagNode *next;       /* next RefNode* in bucket chain */
+} JvmtiTagNode;
 
 enum {
-  JVMTI_MAGIC = 0x71EE,
-  BAD_MAGIC   = 0xDEAD
+    JVMTI_MAGIC = 0x71EE,
+    BAD_MAGIC   = 0xDEAD
 };
 
 typedef struct {
-  jlong _enabled_bits;
+    jlong enabledBits;
 } JvmtiEventEnabled;
 
-typedef struct {
+typedef struct visit_stack {
+    CVMObject **stackBase;
+    CVMObject **stackPtr;
+    jvmtiEnv *jvmtiEnv;
+    int stackSize;
+} JvmtiVisitStack;
 
-  /* user set global event enablement indexed by jvmtiEvent   */
-  JvmtiEventEnabled _event_user_enabled;
+#define VISIT_STACK_INIT 4096
+#define VISIT_STACK_INCR 1024
 
-  /*
-   * this flag indicates the presence (true) or absence (false) of event callbacks
-   *   it is indexed by jvmtiEvent  
-   */
-  JvmtiEventEnabled _event_callback_enabled;
+typedef struct JvmtidumpContext {
+    jint heapFilter;
+    jclass klass;
+    const jvmtiHeapCallbacks *callbacks;
+    const void *userData;
+    CVMExecEnv *ee;
+    JNIEnv *env;
+    CVMFrame  *frame;
+    jint frameCount;
+    CVMObjectICell *icell;
+} JvmtiDumpContext;
 
-  /*
-   * indexed by jvmtiEvent true if enabled globally or on any thread.
-   * True only if there is a callback for it.
-   */
-  JvmtiEventEnabled _event_enabled;
+typedef struct _JvmtiEnvEventEnable{
+
+    /* user set global event enablement indexed by jvmtiEvent   */
+    JvmtiEventEnabled eventUserEnabled;
+
+    /*
+     * this flag indicates the presence (true) or absence (false) of event callbacks
+     *   it is indexed by jvmtiEvent  
+     */
+    JvmtiEventEnabled eventCallbackEnabled;
+
+    /*
+     * indexed by jvmtiEvent true if enabled globally or on any thread.
+     * True only if there is a callback for it.
+     */
+    JvmtiEventEnabled eventEnabled;
 
 } JvmtiEnvEventEnable;
 
+
 typedef struct _JvmtiEnv {
 
-  jvmtiEnv _jvmti_external;
-  const void *_env_local_storage;     /* per env agent allocated data. */
-  jvmtiEventCallbacks _event_callbacks;
-  jvmtiExtEventCallbacks _ext_event_callbacks;
-  JvmtiTagMap* _tag_map;
-  jboolean _is_valid;
-  jboolean _thread_events_enabled;
+    jvmtiEnv jvmtiExternal;
+    const void *envLocalStorage;     /* per env agent allocated data. */
+    jvmtiEventCallbacks eventCallbacks;
+    jboolean isValid;
+    jboolean threadEventsEnabled;
 
-  jint _magic;
-  jint _index;
+    jint magic;
+    jint index;
 
-  JvmtiEnvEventEnable _env_event_enable;
+    JvmtiEnvEventEnable envEventEnable;
 
-  jvmtiCapabilities _current_capabilities;
-  jvmtiCapabilities _prohibited_capabilities;
+    jvmtiCapabilities currentCapabilities;
+    jvmtiCapabilities prohibitedCapabilities;
 
-  jboolean  _class_file_load_hook_ever_enabled;
+    jboolean  classFileLoadHookEverEnabled;
 
-  char** _native_method_prefixes;
-  int    _native_method_prefix_count;
-        
+    char** nativeMethodPrefixes;
+    int    nativeMethodPrefixCount;
 }JvmtiEnv;
 
 jint CVMdestroyJvmti(JvmtiEnv *env);
+jvmtiError CVMjvmtiVisitStackPush(CVMObject *obj);
+CVMBool CVMjvmtiVisitStackEmpty();
+void CVMjvmtiCleanupMarked();
+void CVMjvmtiRecomputeEnabled(JvmtiEnvEventEnable *);
+jlong CVMjvmtiRecomputeThreadEnabled(CVMExecEnv *ee, JvmtiEnvEventEnable *);
+CVMClassBlock* CVMjvmtiObject2Class(CVMExecEnv *ee, jclass clazz);
 
-#endif /* !_JAVA_JVMTIENV_H_ */
+#endif /* _INCLUDED_JVMTIENV_H */

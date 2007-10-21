@@ -54,7 +54,7 @@ utfError(char *file, int line, char *message)
  *    Returns length or -1 if output overflows.
  */
 int JNICALL
-utf8ToUtf16(struct UtfInst *ui, jbyte *utf8, int len, unsigned short *output, int outputMaxLen)
+utf8ToUtf16(struct UtfInst *ui, jbyte *utf8, int len, jchar *output, int outputMaxLen)
 {
     int outputLen;
     int i;
@@ -92,7 +92,7 @@ utf8ToUtf16(struct UtfInst *ui, jbyte *utf8, int len, unsigned short *output, in
  *    Returns length or -1 if output overflows.
  */
 int JNICALL
-utf16ToUtf8m(struct UtfInst *ui, unsigned short *utf16, int len, jbyte *output, int outputMaxLen)
+utf16ToUtf8m(struct UtfInst *ui, jchar *utf16, int len, jbyte *output, int outputMaxLen)
 {
     int i;
     int outputLen;
@@ -126,7 +126,7 @@ utf16ToUtf8m(struct UtfInst *ui, unsigned short *utf16, int len, jbyte *output, 
 }
 
 int JNICALL
-utf16ToUtf8s(struct UtfInst *ui, unsigned short *utf16, int len, jbyte *output, int outputMaxLen)
+utf16ToUtf8s(struct UtfInst *ui, jchar *utf16, int len, jbyte *output, int outputMaxLen)
 {
     return -1; /* FIXUP */
 }

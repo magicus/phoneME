@@ -255,7 +255,8 @@ struct CVMGlobalState {
 #endif
     
 #ifdef CVM_JVMTI
-    CVMSysMutex debuggerLock;
+    CVMSysMutex jvmtiLock;
+    CVMSysMutex jvmtiLockInfoLock;
 #endif
 
     /*
@@ -273,7 +274,7 @@ struct CVMGlobalState {
     CVMGCLocker inspectorGCLocker;
     CVMCondVar gcLockerCV;  /* Used in conjuction with the gcLockerLock. */
 #endif
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
     CVMSysMutex gcLockerLock;
 #endif
 
@@ -461,19 +462,20 @@ struct CVMGlobalState {
 #endif
 
 #ifdef CVM_JVMTI
-    CVMBool jvmtiDebuggingEnabled;
+    CVMBool jvmtiEnabled;
+    CVMBool jvmtiDebuggingFlag;
     /* are one or more fields being watched?
      * these flags are accessed by the interpreter to determine if
      * jvmti should be notified.
      */
     CVMBool jvmtiWatchingFieldAccess; /* set ONLY by jvmt */
     CVMBool jvmtiWatchingFieldModification; /* set ONLY by jvmti */
+    CVMJvmtiRecord jvmtiRecord;
 #endif
 
 #ifdef CVM_JVMPI
     /* JVMPI flags: */
     CVMJvmpiRecord jvmpiRecord;
-
     CVMProfiledMonitor *objMonitorList;
     CVMProfiledMonitor *rawMonitorList;
     CVMSysMutex jvmpiSyncLock;  /* Protect insertion into the Monitor Lists. */

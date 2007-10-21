@@ -45,6 +45,9 @@
 #include "javavm/include/gc/generational/gen_semispace.h"
 #include "javavm/include/gc/generational/gen_markcompact.h"
 
+#ifdef CVM_JVMTI
+#include "javavm/include/jvmtiExport.h"
+#endif
 #ifdef CVM_JVMPI
 #include "javavm/include/jvmpi_impl.h"
 #endif
@@ -1397,7 +1400,7 @@ CVMgenSemispaceClassRefIsLive(CVMObject** refPtr, void* data)
 }
 #endif
 
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 /* Purpose: Scan over freed objects. */
 static void
 CVMgenSemispaceScanFreedObjects(CVMGeneration *thisGen, CVMExecEnv *ee)
@@ -1405,8 +1408,8 @@ CVMgenSemispaceScanFreedObjects(CVMGeneration *thisGen, CVMExecEnv *ee)
     CVMUint32 *base = thisGen->allocBase;
     CVMUint32 *top = thisGen->allocPtr;
 
-#ifndef CVM_JVMPI
-    /* If this not a JVMPI build, we don't need to scan freed objects
+#if !defined(CVM_JVMPI) && !defined(CVM_JVMTI)
+    /* If this not a JVM[PT]I build, we don't need to scan freed objects
        if we're not tracking any captured heap state: */
     if (!CVMglobals.inspector.hasCapturedState) {
         return;
@@ -1436,11 +1439,18 @@ CVMgenSemispaceScanFreedObjects(CVMGeneration *thisGen, CVMExecEnv *ee)
         /* Notify the profiler of an object which is about to be GC'ed: */
         if (collected) {
 #ifdef CVM_JVMPI
-            extern CVMUint32 liveObjectCount;
-            if (CVMjvmpiEventObjectFreeIsEnabled()) {
-                CVMjvmpiPostObjectFreeEvent(obj);
+	    {
+		extern CVMUint32 liveObjectCount;
+		if (CVMjvmpiEventObjectFreeIsEnabled()) {
+		    CVMjvmpiPostObjectFreeEvent(obj);
+		}
+		liveObjectCount--;
+	    }
+#endif
+#ifdef CVM_JVMTI
+            if (CVMjvmtiShouldPostObjectFree()) {
+                CVMjvmtiPostObjectFreeEvent(obj);
             }
-            liveObjectCount--;
 #endif
 #ifdef CVM_INSPECTOR
             if (CVMglobals.inspector.hasCapturedState) {
@@ -1457,7 +1467,7 @@ CVMgenSemispaceScanFreedObjects(CVMGeneration *thisGen, CVMExecEnv *ee)
 
 #else
 #define CVMgenSemispaceScanFreedObjects(thisGen, ee)
-#endif /* CVM_INSPECTOR || CVM_JVMPI */
+#endif /* CVM_INSPECTOR || CVM_JVMPI || CVM_JVMTI */
 
 static void
 CVMgenSemispaceProcessSpecialWithLivenessInfo(CVMExecEnv* ee,

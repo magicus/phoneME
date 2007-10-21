@@ -272,7 +272,6 @@ CVMXrunHandleArgument(CVMXrunTable* Xrun_table, JNIEnv* env, char* arg)
         /* %comment: rt018 */
         (*onLoadFunc)(vm, optionsPtr, NULL);
     }
-
     result = CVM_TRUE;
 
     done:

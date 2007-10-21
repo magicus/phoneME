@@ -25,6 +25,7 @@
  *
  */
 #include <windows.h>
+#include <winbase.h>
 #include <stdio.h>
 #ifndef WINCE
 #include <tchar.h>
@@ -200,15 +201,56 @@ CVMgetJavaProperties(java_props_t *sprops)
 	if (sprops->os_name == NULL || sprops->os_version == NULL) {
 	    goto out_of_memory;
 	}
-#undef CPU_STRING
-#define CPU_STRING(x) #x
-#if _M_IA64
-        sprops->os_arch = strdup("ia64");
-#elif _X86_
-        sprops->os_arch = strdup("x86");
-#else
-	sprops->os_arch = CPU_STRING(TARGET_CPU_FAMILY);
-#endif        
+
+
+#ifdef WINCE
+
+	/* Set WINCE processor properties using SYSTEM_INFO */
+	{
+	  SYSTEM_INFO si;
+	  GetSystemInfo (&si);
+	  switch (si.wProcessorArchitecture) {
+	  case PROCESSOR_ARCHITECTURE_INTEL:
+	    sprops->os_arch = strdup("x86");
+	    break;
+	  case PROCESSOR_ARCHITECTURE_MIPS:
+	    sprops->os_arch = strdup("mips");
+	    break;
+	  case PROCESSOR_ARCHITECTURE_SHX:
+	    sprops->os_arch = strdup("shx");
+	    break;
+	  case PROCESSOR_ARCHITECTURE_ARM:
+	    sprops->os_arch = strdup("arm");
+	    break;
+	  case PROCESSOR_ARCHITECTURE_UNKNOWN:
+	  default:
+	    sprops->os_arch = strdup("unknown");   
+	  }
+	}
+
+#else  /* not WINCE */
+
+	/* Set Windows XP/2000 processor properties using SYSTEM_INFO */
+	{
+	  SYSTEM_INFO si;
+	  GetSystemInfo (&si);
+	  switch (si.wProcessorArchitecture) {
+	  case PROCESSOR_ARCHITECTURE_AMD64:
+	    sprops->os_arch = strdup("amd64");
+	    break;
+	  case PROCESSOR_ARCHITECTURE_IA64:
+	    sprops->os_arch = strdup("ia64");
+	    break;
+	  case PROCESSOR_ARCHITECTURE_INTEL:
+	    sprops->os_arch = strdup("x86");
+	    break;
+	  case PROCESSOR_ARCHITECTURE_UNKNOWN:
+	  default:
+	    sprops->os_arch = strdup("unknown");   
+	  }
+	}
+
+#endif /* WINCE */
     }
 
     /* Determing the language, country, and encoding from the host,

@@ -1683,8 +1683,9 @@ CVMgcimplResize(CVMExecEnv *ee, CVMUint32 numBytes, CVMBool grow)
     if (newSize > gc->oldGenMaxSize) {
 	newSize = gc->oldGenMaxSize;
     }
-
-    newSize = CVMgcimplSetSizeAndWatermarks(gc, newSize, currentUsage);
+    if (newSize < gc->oldGenMinSize) {
+	newSize = gc->oldGenMinSize;
+    }
 
     /* Resize the new memory: */
     if (grow) {
@@ -1709,14 +1710,14 @@ CVMgcimplResize(CVMExecEnv *ee, CVMUint32 numBytes, CVMBool grow)
 		   OutOfMemoryError being thrown. */
 		success = CVM_FALSE;
 
-		/* Reset the size and watermarks before failing: */
-		CVMgcimplSetSizeAndWatermarks(gc, oldSize, currentUsage);
-
 		goto failed;
 	    }
 
 	    CVMassert(mem == commitStart);
 	    CVMassert(actualSize == commitSize);
+
+            /* set new size and watermarks */
+            CVMgcimplSetSizeAndWatermarks(gc, newSize, currentUsage);
 
 	    /* Initialize the corresponding card table region: */
 	    cardAreaStart = (void *)CARD_TABLE_SLOT_ADDRESS_FOR(commitStart);
@@ -1742,6 +1743,8 @@ CVMgcimplResize(CVMExecEnv *ee, CVMUint32 numBytes, CVMBool grow)
 	    mem = CVMmemDecommit(decommitStart, decommitSize, &actualSize);
 	    CVMassert(mem == decommitStart);
 	    CVMassert(actualSize == decommitSize);
+            /* set new size and watermarks */
+            CVMgcimplSetSizeAndWatermarks(gc, newSize, currentUsage);
 	}
     }
 
@@ -1804,7 +1807,7 @@ CVMgcimplDoGC(CVMExecEnv* ee, CVMUint32 numBytes)
 
     gcOpts.isUpdatingObjectPointers = CVM_TRUE;
     gcOpts.discoverWeakReferences = CVM_FALSE;
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
     gcOpts.isProfilingPass = CVM_FALSE;
 #endif
 
@@ -2068,7 +2071,7 @@ CVMgcimplTimeOfLastMajorGC()
     return CVMglobals.gc.lastMajorGCTime;
 }
 
-#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI)
+#if defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)
 
 typedef struct CallbackInfo CallbackInfo;
 struct CallbackInfo
@@ -2123,7 +2126,7 @@ CVMgcimplIterateHeap(CVMExecEnv* ee,
     return CVM_TRUE;
 }
 
-#endif /* defined(CVM_INSPECTOR) || defined(CVM_JVMPI) */
+#endif /* defined(CVM_INSPECTOR) || defined(CVM_JVMPI) || defined(CVM_JVMTI)*/
 
 #if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
 /* Dumps info about the configuration of the overall GC. */

@@ -452,6 +452,14 @@ typedef enum CVMConstantPoolEntryTypeEnum CVMConstantPoolEntryTypeEnum;
 	      CVMcpTypeIs(cp, idx, InterfaceMethodref));	\
     (cp)->entriesX[idx].resolved.mb = mb_;			\
     CVMcpSetResolvedEntryType(cp, idx, MethodBlock);
+#ifdef CVM_JVMTI
+/* This is used by JVMTI to insert a resolved, redefined method reference
+ * into this constantpool entry.  Any references via this constantpool
+ * entry will now return the new redefined method.
+ */
+#define CVMcpResetMb(cp, idx, mb_)				\
+    (cp)->entriesX[idx].resolved.mb = mb_;
+#endif
 #define CVMcpSetStringObj(cp, idx, stringObj_)		\
     CVMassert(CVM_FALSE); /* should never be needed */	\
     (cp)->entriesX[idx].resolved.strObj = stringObj_;	\

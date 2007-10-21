@@ -139,7 +139,7 @@ $(CVM_JCOV_BUILDDIRS):
 
 $(CVM_JCOV_LIBDIR)/$(CVM_JCOV_LIB): $(CVM_JCOV_OBJECTS)
 	@echo "Linking $@"
-	$(SO_LINK_CMD) $(LINKLIBS)
+	$(SO_LINK_CMD)
 	@echo "Done Linking $@"
 
 # The following are used to build the .o files needed for $(CVM_JCOV_OBJECTS):

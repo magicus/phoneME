@@ -36,6 +36,8 @@
 #include <errno.h>
 #ifdef WINCE
 #include <stdlib.h>
+#include "javavm/include/wceUtil.h"
+#include "javavm/include/winntUtil.h"
 #endif
 
 #include "sys.h"
@@ -55,7 +57,11 @@ dbgsysGetLastErrorString(char *buf, int len)
 
     if ((errval = GetLastError()) != 0) {
 	/* DOS error */
+#ifdef UNICODE
         TCHAR *tbuf = createTCHAR(buf);
+#else
+	char *tbuf = buf;
+#endif
 	int n = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
 			      NULL, errval,
 			      0, tbuf, len, NULL);

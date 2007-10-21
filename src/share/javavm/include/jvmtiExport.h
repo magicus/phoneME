@@ -25,8 +25,10 @@
  *
  */
 
-#ifndef _JAVA_JVMTIEXPORT_H_
-#define _JAVA_JVMTIEXPORT_H_
+#ifndef _INCLUDED_JVMTIEXPORT_H
+#define _INCLUDED_JVMTIEXPORT_H
+
+#ifdef CVM_JVMTI
 
 #include "javavm/include/porting/ansi/stdio.h"
 #include "javavm/include/porting/ansi/stdlib.h"
@@ -38,200 +40,285 @@
 
 /* This class contains the JVMTI interface for the rest of CVM. */
 
+/* bits for standard events */
+/* TODO: This bit encoding assumes the availability of 64bit integers.  If 64bit
+   ints are implemented as structs in the porting layer, then this implementation
+   will need to be revised. */
+
+#define CVMjvmtiEvent2EventBit(x)   ((x) - JVMTI_MIN_EVENT_TYPE_VAL)
+#define CVMjvmtiEventBit(x)   CVMjvmtiEvent2EventBit(JVMTI_EVENT_##x)
+
+#define SINGLE_STEP_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(SINGLE_STEP))
+#define	 FRAME_POP_BIT	\
+    (((jlong)1) << CVMjvmtiEventBit(FRAME_POP))
+#define	  BREAKPOINT_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(BREAKPOINT))
+#define	  FIELD_ACCESS_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(FIELD_ACCESS))
+#define	  FIELD_MODIFICATION_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(FIELD_MODIFICATION))
+#define	  METHOD_ENTRY_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(METHOD_ENTRY))
+#define	  METHOD_EXIT_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(METHOD_EXIT))
+#define	  CLASS_FILE_LOAD_HOOK_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(CLASS_FILE_LOAD_HOOK))
+#define	  NATIVE_METHOD_BIND_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(NATIVE_METHOD_BIND))
+#define	  VM_START_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(VM_START))
+#define	  VM_INIT_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(VM_INIT))
+#define	  VM_DEATH_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(VM_DEATH))
+#define	  CLASS_LOAD_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(CLASS_LOAD))
+#define	  CLASS_PREPARE_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(CLASS_PREPARE))
+#define	  THREAD_START_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(THREAD_START))
+#define	  THREAD_END_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(THREAD_END))
+#define	  EXCEPTION_THROW_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(EXCEPTION))
+#define	  EXCEPTION_CATCH_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(EXCEPTION_CATCH))
+#define	  MONITOR_CONTENDED_ENTER_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(MONITOR_CONTENDED_ENTER))
+#define	  MONITOR_CONTENDED_ENTERED_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(MONITOR_CONTENDED_ENTERED))
+#define	  MONITOR_WAIT_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(MONITOR_WAIT))
+#define	  MONITOR_WAITED_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(MONITOR_WAITED))
+#define	  DYNAMIC_CODE_GENERATED_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(DYNAMIC_CODE_GENERATED))
+#define	  DATA_DUMP_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(DATA_DUMP_REQUEST))
+#define	  COMPILED_METHOD_LOAD_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(COMPILED_METHOD_LOAD))
+#define	  COMPILED_METHOD_UNLOAD_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(COMPILED_METHOD_UNLOAD))
+#define	  GARBAGE_COLLECTION_START_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(GARBAGE_COLLECTION_START))
+#define	  GARBAGE_COLLECTION_FINISH_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(GARBAGE_COLLECTION_FINISH))
+#define	  OBJECT_FREE_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(OBJECT_FREE))
+#define	  VM_OBJECT_ALLOC_BIT \
+    (((jlong)1) << CVMjvmtiEventBit(VM_OBJECT_ALLOC))
+
+/* Bit masks for groups of JVMTI events: */
+
+#define	 MONITOR_BITS \
+    (MONITOR_CONTENDED_ENTER_BIT | MONITOR_CONTENDED_ENTERED_BIT | \
+        MONITOR_WAIT_BIT | MONITOR_WAITED_BIT)
+#define	 EXCEPTION_BITS \
+    (EXCEPTION_THROW_BIT | EXCEPTION_CATCH_BIT)
+#define	 INTERP_EVENT_BITS \
+    (SINGLE_STEP_BIT | METHOD_ENTRY_BIT | METHOD_EXIT_BIT | \
+        FRAME_POP_BIT | FIELD_ACCESS_BIT | FIELD_MODIFICATION_BIT)
+#define	 THREAD_FILTERED_EVENT_BITS \
+    (INTERP_EVENT_BITS | EXCEPTION_BITS | MONITOR_BITS | \
+        BREAKPOINT_BIT | CLASS_LOAD_BIT | CLASS_PREPARE_BIT | THREAD_END_BIT)
+#define NEED_THREAD_LIFE_EVENTS \
+    (THREAD_FILTERED_EVENT_BITS | THREAD_START_BIT)
+#define	 EARLY_EVENT_BITS \
+    (CLASS_FILE_LOAD_HOOK_BIT | VM_START_BIT | VM_INIT_BIT | VM_DEATH_BIT | \
+        NATIVE_METHOD_BIND_BIT | THREAD_START_BIT | THREAD_END_BIT | \
+        DYNAMIC_CODE_GENERATED_BIT;)
+
+
 typedef struct {
-   int         _field_access_count;
-   int         _field_modification_count;
+    int             fieldAccessCount;
+    int             fieldModificationCount;
 
-   jboolean        _can_get_source_debug_extension;
-   jboolean        _can_examine_or_deopt_anywhere;
-   jboolean        _can_maintain_original_method_order;
-   jboolean        _can_post_interpreter_events;
-   jboolean        _can_hotswap_or_post_breakpoint;
-   jboolean        _can_modify_any_class;
-   jboolean	       _can_walk_any_space;
-   jboolean        _can_access_local_variables;
-   jboolean        _can_post_exceptions;
-   jboolean        _can_post_breakpoint;
-   jboolean        _can_post_field_access;
-   jboolean        _can_post_field_modification;
-   jboolean        _can_post_method_entry;
-   jboolean        _can_post_method_exit;
-   jboolean        _can_pop_frame;
-   jboolean        _can_force_early_return;
+    jboolean        canGetSourceDebugExtension;
+    jboolean        canExamineOrDeoptAnywhere;
+    jboolean        canMaintainOriginalMethodOrder;
+    jboolean        canPostInterpreterEvents;
+    jboolean        canHotswapOrPostBreakpoint;
+    jboolean        canModifyAnyClass;
+    jboolean	    canWalkAnySpace;
+    jboolean        canAccessLocalVariables;
+    jboolean        canPostExceptions;
+    jboolean        canPostBreakpoint;
+    jboolean        canPostFieldAccess;
+    jboolean        canPostFieldModification;
+    jboolean        canPostMethodEntry;
+    jboolean        canPostMethodExit;
+    jboolean        canPopFrame;
+    jboolean        canForceEarlyReturn;
 
-   jboolean        _should_post_single_step;
-   jboolean        _should_post_field_access;
-   jboolean        _should_post_field_modification;
-   jboolean        _should_post_class_load;
-   jboolean        _should_post_class_prepare;
-   jboolean        _should_post_class_unload;
-   jboolean        _should_post_class_file_load_hook;
-   jboolean        _should_post_native_method_bind;
-   jboolean        _should_post_compiled_method_load;
-   jboolean        _should_post_compiled_method_unload;
-   jboolean        _should_post_dynamic_code_generated;
-   jboolean        _should_post_monitor_contended_enter;
-   jboolean        _should_post_monitor_contended_entered;
-   jboolean        _should_post_monitor_wait;
-   jboolean        _should_post_monitor_waited;
-   jboolean        _should_post_data_dump;
-   jboolean        _should_post_garbage_collection_start;
-   jboolean        _should_post_garbage_collection_finish;
-   jboolean        _should_post_thread_life;
-   jboolean	       _should_post_object_free;
-   jboolean        _should_clean_up_heap_objects;
-   jboolean        _should_post_vm_object_alloc;    
-   jboolean        _has_redefined_a_class;
-   jboolean        _all_dependencies_are_recorded;
-
+    jboolean        shouldPostSingleStep;
+    jboolean        shouldPostFieldAccess;
+    jboolean        shouldPostFieldModification;
+    jboolean        shouldPostClassLoad;
+    jboolean        shouldPostClassPrepare;
+    jboolean        shouldPostClassUnload;
+    jboolean        shouldPostClassFileLoadHook;
+    jboolean        shouldPostNativeMethodBind;
+    jboolean        shouldPostCompiledMethodLoad;
+    jboolean        shouldPostCompiledMethodUnload;
+    jboolean        shouldPostDynamicCodeGenerated;
+    jboolean        shouldPostMonitorContendedEnter;
+    jboolean        shouldPostMonitorContendedEntered;
+    jboolean        shouldPostMonitorWait;
+    jboolean        shouldPostMonitorWaited;
+    jboolean        shouldPostDataDump;
+    jboolean        shouldPostGarbageCollectionStart;
+    jboolean        shouldPostGarbageCollectionFinish;
+    jboolean        shouldPostThreadLife;
+    jboolean	    shouldPostObjectFree;
+    jboolean        shouldCleanUpHeapObjects;
+    jboolean        shouldPostVmObjectAlloc;    
+    jboolean        hasRedefinedAClass;
+    jboolean        allDependenciesAreRecorded;
 } _jvmtiExports;
 
 
-void set_can_get_source_debug_extension(jboolean on);
-void set_can_examine_or_deopt_anywhere(jboolean on);
-void set_can_maintain_original_method_order(jboolean on);
-void set_can_post_interpreter_events(jboolean on);
-void set_can_hotswap_or_post_breakpoint(jboolean on);
-void set_can_modify_any_class(jboolean on);
-void set_can_walk_any_space(jboolean on);
-void set_can_access_local_variables(jboolean on);
-void set_can_post_exceptions(jboolean on);
-void set_can_post_breakpoint(jboolean on);
-void set_can_post_field_access(jboolean on);
-void set_can_post_field_modification(jboolean on);
-void set_can_post_method_entry(jboolean on);
-void set_can_post_method_exit(jboolean on);
-void set_can_pop_frame(jboolean on);
-void set_can_force_early_return(jboolean on);
+void CVMjvmtiSetCanGetSourceDebugExtension(jboolean on);
+void CVMjvmtiSetCanExamineOrDeoptAnywhere(jboolean on);
+void CVMjvmtiSetCanMaintainOriginalMethodOrder(jboolean on);
+void CVMjvmtiSetCanPostInterpreterEvents(jboolean on);
+void CVMjvmtiSetCanHotswapOrPostBreakpoint(jboolean on);
+void CVMjvmtiSetCanModifyAnyClass(jboolean on);
+void CVMjvmtiSetCanWalkAnySpace(jboolean on);
+void CVMjvmtiSetCanAccessLocalVariables(jboolean on);
+void CVMjvmtiSetCanPostExceptions(jboolean on);
+void CVMjvmtiSetCanPostBreakpoint(jboolean on);
+void CVMjvmtiSetCanPostFieldAccess(jboolean on);
+void CVMjvmtiSetCanPostFieldModification(jboolean on);
+void CVMjvmtiSetCanPostMethodEntry(jboolean on);
+void CVMjvmtiSetCanPostMethodExit(jboolean on);
+void CVMjvmtiSetCanPopFrame(jboolean on);
+void CVMjvmtiSetCanForceEarlyReturn(jboolean on);
 
-void set_should_post_single_step(jboolean on);
-void set_should_post_field_access(jboolean on);
-void set_should_post_field_modification(jboolean on);
-void set_should_post_class_load(jboolean on);
-void set_should_post_class_prepare(jboolean on);
-void set_should_post_class_unload(jboolean on);
-void set_should_post_class_file_load_hook(jboolean on);
-void set_should_post_native_method_bind(jboolean on);
-void set_should_post_compiled_method_load(jboolean on);
-void set_should_post_compiled_method_unload(jboolean on);
-void set_should_post_dynamic_code_generated(jboolean on);
-void set_should_post_monitor_contended_enter(jboolean on);
-void set_should_post_monitor_contended_entered(jboolean on);
-void set_should_post_monitor_wait(jboolean on);
-void set_should_post_monitor_waited(jboolean on);
-void set_should_post_garbage_collection_start(jboolean on);
-void set_should_post_garbage_collection_finish(jboolean on);
-void set_should_post_data_dump(jboolean on);
-void set_should_post_object_free(jboolean on);
-void set_should_post_vm_object_alloc(jboolean on);
+void CVMjvmtiSetShouldPostSingleStep(jboolean on);
+void CVMjvmtiSetShouldPostFieldAccess(jboolean on);
+void CVMjvmtiSetShouldPostFieldModification(jboolean on);
+void CVMjvmtiSetShouldPostClassLoad(jboolean on);
+void CVMjvmtiSetShouldPostClassPrepare(jboolean on);
+void CVMjvmtiSetShouldPostClassUnload(jboolean on);
+void CVMjvmtiSetShouldPostClassFileLoadHook(jboolean on);
+void CVMjvmtiSetShouldPostNativeMethodBind(jboolean on);
+void CVMjvmtiSetShouldPostCompiledMethodLoad(jboolean on);
+void CVMjvmtiSetShouldPostCompiledMethodUnload(jboolean on);
+void CVMjvmtiSetShouldPostDynamicCodeGenerated(jboolean on);
+void CVMjvmtiSetShouldPostMonitorContendedEnter(jboolean on);
+void CVMjvmtiSetShouldPostMonitorContendedEntered(jboolean on);
+void CVMjvmtiSetShouldPostMonitorWait(jboolean on);
+void CVMjvmtiSetShouldPostMonitorWaited(jboolean on);
+void CVMjvmtiSetShouldPostGarbageCollectionStart(jboolean on);
+void CVMjvmtiSetShouldPostGarbageCollectionFinish(jboolean on);
+void CVMjvmtiSetShouldPostDataDump(jboolean on);
+void CVMjvmtiSetShouldPostObjectFree(jboolean on);
+void CVMjvmtiSetShouldPostVmObjectAlloc(jboolean on);
 
-void set_should_post_thread_life(jboolean on);
-void set_should_clean_up_heap_objects(jboolean on);
+void CVMjvmtiSetShouldPostThreadLife(jboolean on);
+void CVMjvmtiSetShouldCleanUpHeapObjects(jboolean on);
+jlong CVMjvmtiGetThreadEventEnabled(CVMExecEnv *ee);
+void CVMjvmtiSetShouldPostAnyThreadEvent(CVMExecEnv *ee, jlong enabled);
+
 
 enum {
-  JVMTI_VERSION_MASK   = 0x70000000,
-  JVMTI_VERSION_VALUE  = 0x30000000,
-  JVMDI_VERSION_VALUE  = 0x20000000
+  JVMTIVERSIONMASK   = 0x70000000,
+  JVMTIVERSIONVALUE  = 0x30000000,
+  JVMDIVERSIONVALUE  = 0x20000000
 };
 
 
-void set_has_redefined_a_class();
+/* let JVMTI know that the VM isn't up yet (and JVMOnLoad code isn't running) */
+void CVMjvmtiEnterPrimordialPhase();
 
-jboolean has_redefined_a_class();
-
-jboolean all_dependencies_are_recorded();
-
-void set_all_dependencies_are_recorded(jboolean on);
-
-
-/* let JVMTI know that the JVM_OnLoad code is running */
-void enter_onload_phase();
-
-/* let JVMTI know that the VM isn't up yet (and JVM_OnLoad code isn't running) */
-void enter_primordial_phase();
+/* let JVMTI know that the JVMOnLoad code is running */
+void CVMjvmtiEnterOnloadPhase();
 
 /* let JVMTI know that the VM isn't up yet but JNI is live */
-void enter_start_phase();
+void CVMjvmtiEnterStartPhase();
 
 /* let JVMTI know that the VM is fully up and running now */
-void enter_live_phase();
+void CVMjvmtiEnterLivePhase();
+
+/* let JVMTI know that the VM is dead, dead, dead.. */
+void CVMjvmtiEnterDeadPhase();
+
+jvmtiPhase CVMjvmtiGetPhase();
 
 /* ------ can_* conditions (below) are set at OnLoad and never changed ----------*/
 
-jboolean can_get_source_debug_extension();
+jboolean canGetSourceDebugExtension();
 
-/* BP, expression stack, hotswap, interp_only, local_var, monitor info */
-jboolean can_examine_or_deopt_anywhere();
+/* BP, expression stack, hotswap, interpOnly, localVar, monitor info */
+jboolean canExamineOrDeoptAnywhere();
 
 /* JVMDI spec requires this, does this matter for JVMTI? */
-jboolean can_maintain_original_method_order();
+jboolean canMaintainOriginalMethodOrder();
 
 /* any of single-step, method-entry/exit, frame-pop, and field-access/modification */
-jboolean can_post_interpreter_events();
+jboolean jvmtiCanPostInterpreterEvents();
 
-jboolean can_hotswap_or_post_breakpoint();
+jboolean jvmtiCanHotswapOrPostBreakpoint();
 
-jboolean can_modify_any_class();
+jboolean jvmtiCanModifyAnyClass();
 
-jboolean can_walk_any_space();
+jboolean jvmtiCanWalkAnySpace();
 
 /* can retrieve frames, set/get local variables or hotswap */
-jboolean can_access_local_variables();
+jboolean jvmtiCanAccessLocalVariables();
 
 /* throw or catch */
-jboolean can_post_exceptions();
+jboolean jvmtiCanPostExceptions();
 
-jboolean can_post_breakpoint();
-jboolean can_post_field_access();
-jboolean can_post_field_modification();
-jboolean can_post_method_entry();
-jboolean can_post_method_exit();
-jboolean can_pop_frame();
-jboolean can_force_early_return();
+jboolean jvmtiCanPostBreakpoint();
+jboolean jvmtiCanPostFieldAccess();
+jboolean jvmtiCanPostFieldModification();
+jboolean jvmtiCanPostMethodEntry();
+jboolean jvmtiCanPostMethodExit();
+jboolean jvmtiCanPopFrame();
+jboolean jvmtiCanForceEarlyReturn();
 
 
 /* the below maybe don't have to be (but are for now) fixed conditions here ----*/
 /* any events can be enabled */
-jboolean should_post_thread_life();
+jboolean CVMjvmtiShouldPostThreadLife();
 
 
 /* ------ DYNAMIC conditions here ------------ */
 
-jboolean should_post_single_step();
-jboolean should_post_field_access();
-jboolean should_post_field_modification();
-jboolean should_post_class_load();
-jboolean should_post_class_prepare();
-jboolean should_post_class_unload();
-jboolean should_post_class_file_load_hook();
-jboolean should_post_native_method_bind();
-jboolean should_post_compiled_method_load();
-jboolean should_post_compiled_method_unload();
-jboolean should_post_dynamic_code_generated();
-jboolean should_post_monitor_contended_enter();
-jboolean should_post_monitor_contended_entered();
-jboolean should_post_monitor_wait();
-jboolean should_post_monitor_waited();
-jboolean should_post_data_dump();
-jboolean should_post_garbage_collection_start();
-jboolean should_post_garbage_collection_finish();
-jboolean should_post_object_free();
-jboolean should_post_vm_object_alloc();
-
-/* we are holding objects on the heap - need to talk to GC - e.g. breakpoint info */
-jboolean should_clean_up_heap_objects();
+jboolean CVMjvmtiShouldPostSingleStep();
+jboolean CVMjvmtiShouldPostFieldAccess();
+jboolean CVMjvmtiShouldPostFieldModification();
+jboolean CVMjvmtiShouldPostClassLoad();
+jboolean CVMjvmtiShouldPostClassPrepare();
+jboolean CVMjvmtiShouldPostClassUnload();
+jboolean CVMjvmtiShouldPostClassFileLoadHook();
+jboolean CVMjvmtiShouldPostNativeMethodBind();
+jboolean CVMjvmtiShouldPostCompiledMethodLoad();
+jboolean CVMjvmtiShouldPostCompiledMethodUnload();
+jboolean CVMjvmtiShouldPostDynamicCodeGenerated();
+jboolean CVMjvmtiShouldPostMonitorContendedEnter();
+jboolean CVMjvmtiShouldPostMonitorContendedEntered();
+jboolean CVMjvmtiShouldPostMonitorWait();
+jboolean CVMjvmtiShouldPostMonitorWaited();
+jboolean CVMjvmtiShouldPostDataDump();
+jboolean CVMjvmtiShouldPostGarbageCollectionStart();
+jboolean CVMjvmtiShouldPostGarbageCollectionFinish();
+jboolean CVMjvmtiShouldPostObjectFree();
+jboolean CVMjvmtiShouldPostVmObjectAlloc();
 
 /* ----------------- */
 
-jboolean is_jvmti_version(jint version);
-jboolean is_jvmdi_version(jint version);
-jint get_jvmti_interface(JavaVM *jvm, void **penv, jint version);
+jboolean isJvmtiVersion(jint version);
+jboolean isJvmdiVersion(jint version);
+jint getJvmtiInterface(JavaVM *jvm, void **penv, jint version);
   
 /* SetNativeMethodPrefix support */
-char** get_all_native_method_prefixes(int* count_ptr);
+char** getAllNativeMethodPrefixes(int* countPtr);
 
 /* call after CMS has completed referencing processing */
-void cms_ref_processing_epilogue();
+void cmsRefProcessingEpilogue();
 
 typedef struct AttachOperation_ {
   char *args;
@@ -239,87 +326,197 @@ typedef struct AttachOperation_ {
 
 /*
  * Definitions for the debugger events and operations.
- * Only for use when CVM_JVMTI is defined.
+ * Only for use when CVMJVMTI is defined.
  */
-
 
 
 /* This #define is necessary to prevent the declaration of 2 jvmti static
    variables (in jvmti.h) which is not needed in the VM: */
-#ifndef NO_JVMTI_MACROS
-#define NO_JVMTI_MACROS
+#ifndef NOJVMTIMACROS
+#define NOJVMTIMACROS
 #endif
 
-#define CVM_DEBUGGER_LOCK(ee)   \
-	CVMsysMutexLock(ee, &CVMglobals.debuggerLock)
-#define CVM_DEBUGGER_UNLOCK(ee) \
-	CVMsysMutexUnlock(ee, &CVMglobals.debuggerLock)
-#define CVM_DEBUGGER_IS_LOCKED(ee)					\
-         CVMreentrantMutexIAmOwner(ee,					\
-	   CVMsysMutexGetReentrantMutex(&CVMglobals.debuggerLock))
+#undef JVMTI_LOCK
+#undef JVMTI_UNLOCK
+#undef JVMTI_IS_LOCKED
+#define JVMTI_LOCK(ee)      CVM_JVMTI_LOCK(ee)
+#define JVMTI_UNLOCK(ee)    CVM_JVMTI_UNLOCK(ee)
+#define JVMTI_IS_LOCKED(ee) CVM_JVMTI_IS_LOCKED(ee)
 
-/*
- * JVMTI globally defined static variables.
- * jvmtiInitialized tells whether JVMTI initialization is done once
- *                  before anything that accesses event structures.
- */
+#define CVM_JVMTI_LOCK(ee)   \
+	CVMsysMutexLock(ee, &CVMglobals.jvmtiLock)
+#define CVM_JVMTI_UNLOCK(ee) \
+	CVMsysMutexUnlock(ee, &CVMglobals.jvmtiLock)
+#define CVM_JVMTI_IS_LOCKED(ee)					\
+         CVMreentrantMutexIAmOwner(ee,					\
+	   CVMsysMutexGetReentrantMutex(&CVMglobals.jvmtiLock))
+
+
 typedef struct ThreadNode_ {
     CVMObjectICell* thread;        /* Global root; always allocated */
     jobject lastDetectedException; /* JNI Global Ref; allocated in
-                                      CVMjvmtiNotifyDebuggerOfException */
-    jboolean eventEnabled[JVMTI_MAX_EVENT_TYPE_VAL+1];
+                                      CVMjvmtiPostExceptionEvent */
     jvmtiStartFunction startFunction;  /* for debug threads only */
-    void *startFunctionArg;             /* for debug threads only */
-    JvmtiEnv *_env;
+    const void *startFunctionArg;      /* for debug threads only */
+    JvmtiEnv *env;
     void *jvmtiPrivateData;    /* JVMTI thread-local data. */
+    CVMClassBlock *redefineCb;  /* current class being redefined */
+    CVMBool startEventSent;
     struct ThreadNode_ *next;
 } ThreadNode;
 
 typedef struct CVMjvmtiStatics {
   /* event hooks, etc */
-  CVMBool jvmtiInitialized;
   JavaVM* vm;
   jvmtiEventCallbacks *eventHook;
-  /*  JVMTI_AllocHook allocHook; */
-  /*  JVMTI_DeallocHook deallocHook; */
+  /*  JVMTIAllocHook allocHook; */
+  /*  JVMTIDeallocHook deallocHook; */
   struct CVMBag* breakpoints;
   struct CVMBag* framePops;
   struct CVMBag* watchedFieldModifications;
   struct CVMBag* watchedFieldAccesses;
   volatile ThreadNode *threadList;
-  JvmtiEnv *_jvmti_env;
-  CVMUint32 eventEnable[JVMTI_MAX_EVENT_TYPE_VAL+1];
+  JvmtiEnv *jvmtiEnv;
 } JVMTI_Static;
+
+typedef struct CVMJvmtiRecord {
+    CVMBool dataDumpRequested;
+}CVMJvmtiRecord;
+
+typedef enum {
+  JVMTICLASSLOADKINDNORMAL   = 0,
+  JVMTICLASSLOADKINDREDEFINE,
+  JVMDICLASSLOADKINDRETRANSFORM
+}jvmtiLoadKind;
+
+typedef struct jvmtiLockInfo {
+    struct jvmtiLockInfo *next;
+    CVMOwnedMonitor *lock;
+} JvmtiLockInfo;
+
+typedef JvmtiLockInfo CVMjvmtiLockInfo;
+
+typedef struct JvmtiExecEnv {
+    CVMBool debugEventsEnabled;
+    CVMBool jvmtiSingleStepping;
+    CVMBool jvmtiNeedFramePop;
+    CVMBool jvmtiNeedEarlyReturn;
+    CVMBool jvmtiDataDumpRequested;
+    JvmtiEventEnabled jvmtiUserEventEnabled;
+    JvmtiEventEnabled jvmtiEventEnabled;
+    jvalue jvmtiEarlyReturnValue;
+    CVMUint32 jvmtiEarlyRetOpcode;
+    jvmtiLoadKind jvmtiClassLoadKind;
+    JvmtiLockInfo *jvmtiLockInfoFreelist;
+
+    /* NOTE: first pass at JVMTI support has only one global environment */
+    /*   JvmtiEnv *JvmtiEnv; */
+    void *jvmtiProfilerData;    /* JVMTI Profiler thread-local data. */
+} CVMJVMTIExecEnv;
+
+#define CVMjvmtiSingleStepping(ee_)		  \
+    ((ee_)->jvmtiEE.jvmtiSingleStepping)
+
+#define CVMjvmtiDebugEventsEnabled(ee_)		  \
+    ((ee_)->jvmtiEE.debugEventsEnabled)
+
+#define CVMjvmtiUserEventEnabled(ee_)		  \
+    ((ee_)->jvmtiEE.jvmtiUserEventEnabled)
+
+#define CVMjvmtiEventEnabled(ee_)		  \
+    ((ee_)->jvmtiEE.jvmtiEventEnabled)
+
+#define CVMjvmtiReturnOpcode(ee_)		  \
+    ((ee_)->jvmtiEE.jvmtiEarlyRetOpcode)
+
+#define CVMjvmtiReturnValue(ee_)		  \
+    ((ee_)->jvmtiEE.jvmtiEarlyReturnValue)
+
+#define CVMjvmtiNeedFramePop(ee_)		  \
+    ((ee_)->jvmtiEE.jvmtiNeedFramePop)
+
+#define CVMjvmtiClearFramePop(ee_)		  \
+    ((ee_)->jvmtiEE.jvmtiNeedFramePop = CVM_FALSE)
+
+#define CVMjvmtiNeedEarlyReturn(ee_)		  \
+    ((ee_)->jvmtiEE.jvmtiNeedEarlyReturn)
+
+#define CVMjvmtiClearEarlyReturn(ee_)		  \
+    ((ee_)->jvmtiEE.jvmtiNeedEarlyReturn = CVM_FALSE)
+
+/* Purpose: Indicate that we have started a GC cycle (independent of whether
+            actual GC'ing has been blocked or not). */
+void CVMjvmtiSetGCWasStarted(void);
+#define CVMjvmtiSetGCWasStarted() \
+    (CVMjvmtiRec()->gcWasStarted = CVM_TRUE)
+
+/* Purpose: Indicate that we have ended a GC cycle which was started. */
+void CVMjvmtiResetGCWasStarted(void);
+#define CVMjvmtiResetGCWasStarted() \
+    (CVMjvmtiRec()->gcWasStarted = CVM_FALSE)
+
+/* Purpose: Check if we have started a GC cycle. */
+CVMBool CVMjvmtiGCWasStarted(void);
+#define CVMjvmtiGCWasStarted() \
+    (CVMjvmtiRec()->gcWasStarted)
+
+/* Purpose: Gets the global CVMJvmtiRecord. */
+#define CVMjvmtiRec()   (&CVMglobals.jvmtiRecord)
+
+#define CVMJVMTI_CHECK_PHASE(x) {	     \
+	if (CVMjvmtiGetPhase() != (x)) {     \
+	    return JVMTI_ERROR_WRONG_PHASE;  \
+	}				     \
+    }
+
+#define CVMJVMTI_CHECK_PHASE2(x, y) {	     \
+	if (CVMjvmtiGetPhase() != (x) &&     \
+	    CVMjvmtiGetPhase() != (y)) {     \
+	    return JVMTI_ERROR_WRONG_PHASE;  \
+	}				     \
+    }
+#define CVMJVMTI_CHECK_PHASEV(x) {	     \
+	if (CVMjvmtiGetPhase() != (x)) {     \
+	    return;			     \
+	}				     \
+    }
+
+#define CVMJVMTI_CHECK_PHASEV2(x, y) {	     \
+	if (CVMjvmtiGetPhase() != (x) &&     \
+	    CVMjvmtiGetPhase() != (y)) {     \
+	    return;  \
+	}				     \
+    }
 
 /*
  * This section for use by the interpreter.
  *
  * NOTE: All of these routines are implicitly gc-safe. When the
  * interpreter calls them, the call site must be wrapped in an
- * CVMD_gcSafeExec() block.
+ * CVMDGcSafeExec() block.
  */
 
-extern void CVMjvmtiNotifyDebuggerOfException(CVMExecEnv* ee,
-					      CVMUint8* pc,
-						  CVMObjectICell* object);
-extern void CVMjvmtiNotifyDebuggerOfExceptionCatch(CVMExecEnv* ee,
-						   CVMUint8* pc,
-						   CVMObjectICell* object);
-extern void CVMjvmtiNotifyDebuggerOfSingleStep(CVMExecEnv* ee,
-					       CVMUint8* pc);
+void CVMjvmtiPostExceptionEvent(CVMExecEnv* ee,
+				       CVMUint8* pc,
+				       CVMObjectICell* object);
+void CVMjvmtiPostExceptionCatchEvent(CVMExecEnv* ee,
+					    CVMUint8* pc,
+					    CVMObjectICell* object);
+void CVMjvmtiPostSingleStepEvent(CVMExecEnv* ee,
+					CVMUint8* pc);
 /** OBJ is expected to be NULL for static fields */
-extern void CVMjvmtiNotifyDebuggerOfFieldAccess(CVMExecEnv* ee,
-						CVMObjectICell* obj,
-						CVMFieldBlock* fb);
+void CVMjvmtiPostFieldAccessEvent(CVMExecEnv* ee,
+					 CVMObjectICell* obj,
+					 CVMFieldBlock* fb);
 /** OBJ is expected to be NULL for static fields */
-extern void CVMjvmtiNotifyDebuggerOfFieldModification(CVMExecEnv* ee,
-						      CVMObjectICell* obj,
-						      CVMFieldBlock* fb,
-						      jvalue jval);
-extern void CVMjvmtiNotifyDebuggerOfThreadStart(CVMExecEnv* ee,
-						CVMObjectICell* thread);
-extern void CVMjvmtiNotifyDebuggerOfThreadEnd(CVMExecEnv* ee,
-					      CVMObjectICell* thread);
+void CVMjvmtiPostFieldModificationEvent(CVMExecEnv* ee,
+					       CVMObjectICell* obj,
+					       CVMFieldBlock* fb,
+					       jvalue jval);
+void CVMjvmtiPostThreadStartEvent(CVMExecEnv* ee,
+					 CVMObjectICell* thread);
+void CVMjvmtiPostThreadEndEvent(CVMExecEnv* ee,
+				       CVMObjectICell* thread);
 /* The next two are a bit of a misnomer. If requested, the JVMTI
    reports three types of events to the caller: method entry (for all
    methods), method exit (for all methods), and frame pop (for a
@@ -328,43 +525,106 @@ extern void CVMjvmtiNotifyDebuggerOfThreadEnd(CVMExecEnv* ee,
    to the debugging agent. The "frame pop" method below may cause a
    method exit event, frame pop event, both, or neither to be sent to
    the debugging agent. Also note that
-   CVMjvmtiNotifyDebuggerOfFramePop (originally
-   notify_debugger_of_frame_pop) checks for a thrown exception
+   CVMjvmtiPostFramePopEvent (originally
+   notifyDebuggerOfFramePop) checks for a thrown exception
    internally in order to allow the calling code to be sloppy about
    ensuring that events aren't sent if an exception occurred. */
-extern void CVMjvmtiNotifyDebuggerOfFramePush(CVMExecEnv* ee);
-extern void CVMjvmtiNotifyDebuggerOfFramePop(CVMExecEnv* ee, CVMBool is_exception, jlong);
-extern void CVMjvmtiNotifyDebuggerOfClassLoad(CVMExecEnv* ee,
-					      CVMObjectICell* clazz);
-extern void CVMjvmtiNotifyDebuggerOfClassPrepare(CVMExecEnv* ee,
+void CVMjvmtiPostFramePushEvent(CVMExecEnv* ee);
+void CVMjvmtiPostFramePopEvent(CVMExecEnv* ee, CVMBool isRef,
+				      CVMBool isException, jlong);
+void CVMjvmtiPostClassLoadEvent(CVMExecEnv* ee,
+				  CVMObjectICell* clazz);
+void CVMjvmtiPostClassPrepareEvent(CVMExecEnv* ee,
 						 CVMObjectICell* clazz);
-extern void CVMjvmtiNotifyDebuggerOfClassUnload(CVMExecEnv* ee,
+void CVMjvmtiPostClassUnloadEvent(CVMExecEnv* ee,
 						CVMObjectICell* clazz);
-extern void CVMjvmtiNotifyDebuggerOfVmInit(CVMExecEnv* ee);
-extern void CVMjvmtiNotifyDebuggerOfVmExit(CVMExecEnv* ee);
+void CVMjvmtiPostVmStartEvent(CVMExecEnv* ee);
+void CVMjvmtiPostVmInitEvent(CVMExecEnv* ee);
+void CVMjvmtiPostVmExitEvent(CVMExecEnv* ee);
 
-extern CVMUint8 CVMjvmtiGetBreakpointOpcode(CVMExecEnv* ee, CVMUint8* pc,
+CVMUint8 CVMjvmtiGetBreakpointOpcode(CVMExecEnv* ee, CVMUint8* pc,
 					    CVMBool notify);
-extern CVMBool CVMjvmtiSetBreakpointOpcode(CVMExecEnv* ee, CVMUint8* pc,
+CVMBool CVMjvmtiSetBreakpointOpcode(CVMExecEnv* ee, CVMUint8* pc,
 					   CVMUint8 opcode);
-extern void CVMjvmtiStaticsInit(struct CVMjvmtiStatics * statics);
-extern void CVMjvmtiStaticsDestroy(struct CVMjvmtiStatics * statics);
+void CVMjvmtiStaticsInit(struct CVMjvmtiStatics * statics);
+void CVMjvmtiStaticsDestroy(struct CVMjvmtiStatics * statics);
 
-#define CVMjvmtiEventsEnabled()	\
-    (CVMglobals.jvmtiStatics.jvmtiInitialized == CVM_TRUE)
+void CVMjvmtiPostClassLoadHookEvent(jclass klass,
+					   CVMClassLoaderICell *loader,
+					   const char *className,
+					   jobject protectionDomain,
+					   CVMInt32 bufferLength,
+					   CVMUint8 *buffer,
+					   CVMInt32 *newBufferLength,
+					   CVMUint8 **newBuffer);
+void CVMjvmtiPostCompiledMethodLoadEvent(CVMExecEnv *ee,
+						CVMMethodBlock *mb);
+void CVMjvmtiPostCompiledMethodUnloadEvent(CVMExecEnv *ee,
+						  CVMMethodBlock* mb);
+void CVMjvmtiPostDataDumpRequest(void);
+void CVMjvmtiPostGCStartEvent(void);
+void CVMjvmtiPostGCFinishEvent(void);
+void CVMjvmtiPostStartUpEvents(CVMExecEnv *ee);
+void CVMjvmtiPostNativeMethodBind(CVMExecEnv *ee, CVMMethodBlock *mb,
+					 CVMUint8 *nativeCode,
+					 CVMUint8 **newNativeCode);
+void CVMjvmtiPostMonitorContendedEnterEvent(CVMExecEnv *ee,
+					    CVMProfiledMonitor *pm);
+void CVMjvmtiPostMonitorContendedEnteredEvent(CVMExecEnv *ee,
+                                              CVMProfiledMonitor *pm);
+void CVMjvmtiPostMonitorWaitEvent(CVMExecEnv *ee,
+				  jobject obj, jlong millis);
+void CVMjvmtiPostMonitorWaitedEvent(CVMExecEnv *ee,
+				    jobject obj, CVMBool timedout);
 
-#define CVMjvmtiThreadEventsEnabled(ee)	\
-  ((ee)->debugEventsEnabled && CVMglobals.jvmtiStatics._jvmti_env != NULL && \
-   CVMglobals.jvmtiStatics._jvmti_env->_thread_events_enabled)
+void CVMjvmtiPostObjectFreeEvent(CVMObject *obj);
 
-extern void CVMjvmtiEnableThreadEvents(CVMExecEnv*, ThreadNode *, jvmtiEvent, jboolean);
+#define CVMjvmtiSetDataDumpRequested() \
+    (CVMjvmtiRec()->dataDumpRequested = CVM_TRUE)
+
+/* Purpose: Check if a data dump was requested. */
+CVMBool CVMjvmtiDataDumpWasRequested(void);
+#define CVMjvmtiDataDumpWasRequested() \
+    (CVMjvmtiRec()->dataDumpRequested)
+
+/* Purpose: Clear the pending data dump event request. */
+void CVMjvmtiResetDataDumpRequested(void);
+#define CVMjvmtiResetDataDumpRequested() \
+    (CVMjvmtiRec()->dataDumpRequested = CVM_FALSE)
+
+#define CVMjvmtiInitialized()	\
+    (CVMglobals.jvmtiEnabled == CVM_TRUE)
+
+#define CVMjvmtiMbIsObsolete(mb)  \
+    (CVMjvmtiInitialized() && CVMjvmtiMbIsObsoleteX(mb))
 /*
  * This function is used by CVMjniGetEnv.
  */
-extern jvmtiInterface_1* CVMjvmtiGetInterface1(JavaVM* interfaces_vm);
+jvmtiInterface_1* CVMjvmtiGetInterface1(JavaVM* interfacesVm);
 
+jint        CVMcreateJvmti(JavaVM *interfacesVm, void **penv);
+jvmtiError  CVMinitializeJVMTI();
 ThreadNode *CVMjvmtiFindThread(CVMExecEnv* ee, CVMObjectICell* thread);
 ThreadNode *CVMjvmtiInsertThread(CVMExecEnv* ee, CVMObjectICell* thread);
-jboolean CVMjvmtiRemoveThread(CVMObjectICell *thread);
+jboolean    CVMjvmtiRemoveThread(CVMObjectICell *thread);
 
-#endif   /* _JAVA_JVMTIEXPORT_H_ */
+jvmtiError  CVMjvmtiAllocate(jlong size, unsigned char **mem);
+jvmtiError  CVMjvmtiDeallocate(unsigned char *mem);
+CVMBool     CVMjvmtiClassBeingRedefined(CVMExecEnv *ee, CVMClassBlock *cb);
+CVMBool     CVMjvmtiDebuggingFlag();
+CVMClassBlock *
+            CVMjvmtiClassInstance2ClassBlock(CVMExecEnv *ee, CVMObject *obj);
+void        CVMjvmtiRehash(void);
+CVMUint32   CVMjvmtiUniqueID();
+void        CVMjvmtiMarkAsObsolete(CVMMethodBlock *oldmb, CVMConstantPool *cp);
+CVMBool     CVMjvmtiMbIsObsoleteX(CVMMethodBlock *mb);
+CVMConstantPool * CVMjvmtiMbConstantPool(CVMMethodBlock *mb);
+void        CVMjvmtiAddLock(CVMExecEnv *ee, CVMOwnedMonitor *o);
+void        CVMjvmtiAddMon(CVMExecEnv *ee, CVMObjMonitor *mon);
+void        CVMjvmtiRemoveLock(CVMExecEnv *ee, CVMOwnedMonitor *o);
+void        CVMjvmtiRemoveMon(CVMExecEnv *ee, CVMObjMonitor *mon);
+jboolean    CVMjvmtiThreadEventEnabled(CVMExecEnv *ee, jint eventType);
+jboolean    CVMjvmtiEnvEventEnabled(jint eventType);
+
+#endif   /* CVM_JVMTI */
+#endif   /* INCLUDED_JVMTI_EXPORT_H */
