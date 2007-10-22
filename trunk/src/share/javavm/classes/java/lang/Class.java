@@ -1303,8 +1303,14 @@ class Class implements java.io.Serializable {
      * @since JDK1.1
      */
     public InputStream getResourceAsStream(String name) {
+        ClassLoader cl;
         name = resolveName(name);
-        ClassLoader cl = getClassLoader0();
+
+        if (CVM.callerCLIsMIDCLs()) {
+            cl = ClassLoader.getCallerClassLoader();
+	} else {
+            cl = getClassLoader0();
+	}
         if (cl==null) {
             // A system class.
             return ClassLoader.getSystemResourceAsStream(name);
