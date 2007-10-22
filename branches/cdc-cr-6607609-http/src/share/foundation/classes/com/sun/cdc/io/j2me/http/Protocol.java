@@ -818,7 +818,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         } else {
             reqLine = method + " "  
                 + "http://" + host + ":" + port 
-                + getFile()
+                + (getFile() == null ? "" : getFile())
                 + (getRef() == null ? "" : "#" + getRef())
                 + (getQuery() == null ? "" : "?" + getQuery())
                 + " " + http_version + "\r\n";
