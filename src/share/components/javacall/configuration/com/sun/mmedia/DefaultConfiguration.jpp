@@ -186,40 +186,44 @@ public class DefaultConfiguration extends Configuration {
         // #endif ]
 
         String arr[] = super.getSupportedContentTypes(protocol);
+        Vector v = new Vector(arr.length);
+        for (int i=0; i<arr.length; i++) v.addElement(arr[i]);
 
-        String ll_protocol = protocol;
+        String ll_protocol[] = new String[]{protocol, null};
         if (protocol != null) {
             for (int i=0; i<Configuration.INTERNAL_PROTOCOLS.length; i++) {
                 if (protocol.equals(Configuration.INTERNAL_PROTOCOLS[i])) {
-                    ll_protocol = "internal";
+                    ll_protocol[0] = "file";
+                    ll_protocol[1] = "memory";
                     break;
                 }
             }
             if(protocol.equals("rtsp")) {
-                ll_protocol = "rtp";
+                ll_protocol[0] = "rtp";
             }
         }
 
-        int hdlr = nListContentTypesOpen(ll_protocol);
-        if (hdlr != 0) {
-            String s;
-            int i;
-            boolean found;
-            Vector v = new Vector(arr.length);
-            for (i=0; i<arr.length; i++) v.addElement(arr[i]);
+        for (int k=0; k<ll_protocol.length; k++) {
+            int hdlr = nListContentTypesOpen(ll_protocol[k]);
+            if (hdlr != 0) {
+                String s;
+                boolean found=false;
 
-            while ((s = nListContentTypesNext(hdlr)) != null) {
-                for (i=0, found=false; i<v.size() && !found; i++) {
-                    found = s.equals((String)v.get(i));
+                while ((s = nListContentTypesNext(hdlr)) != null) {
+                    for (int i=0; i<v.size() && !found; i++) {
+                        found = s.equals((String)v.get(i));
+                    }
+                    if (!found) {
+                        v.addElement(s);
+                    }
                 }
-                if (!found) {
-                    v.addElement(s);
-                }
+                nListContentTypesClose(hdlr);
             }
-            nListContentTypesClose(hdlr);
-            arr = new String[v.size()];
-            v.copyInto(arr);
         }
+
+        arr = new String[v.size()];
+        v.copyInto(arr);
+
         /* Add java only implementations */
         return arr;
     }
@@ -271,12 +275,11 @@ public class DefaultConfiguration extends Configuration {
             for (int i=0; i<arr.length; i++) v.addElement(arr[i]);
 
             while ((s = nListProtocolsNext(hdlr)) != null) {
-                if (s.equals("internal")) {
+                if (s.equals("file") || s.equals("memory")) {
                     for (int i=0; i<Configuration.INTERNAL_PROTOCOLS.length; i++) {
                         addIfNotExist(v, Configuration.INTERNAL_PROTOCOLS[i]);
                     }
                 } else if (s.equals("rtp")) {
-                    addIfNotExist(v, s);    
                     addIfNotExist(v, "rtsp");    
                 } else {
                     addIfNotExist(v, s);    
