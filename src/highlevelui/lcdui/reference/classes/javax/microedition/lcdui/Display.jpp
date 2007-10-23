@@ -1876,7 +1876,6 @@ public class Display {
      * @return <code>true</code>, if sound was played.
      */
     boolean playAlertSound(AlertType t) {
-
         
         if (!paintSuspended && hasForeground) {
             int note = 9 + 3 * t.getType();
@@ -1899,13 +1898,12 @@ public class Display {
             Class toneControlClass = null;
             Method playToneMethod = null;
 	    try {
-            	ClassLoader classLoader = sun.misc.MIDPConfig.getMIDPImplementationClassLoader();
-                managerClass = Class.forName("javax.microedition.media.Manager", true, classLoader);
+                managerClass = Class.forName("javax.microedition.media.Manager");
                 playToneMethod = managerClass.getMethod("playTone", new Class[] { int.class, int.class, int.class });
-                toneControlClass = Class.forName("javax.microedition.media.control.ToneControl", true, classLoader);
+                toneControlClass = Class.forName("javax.microedition.media.control.ToneControl");
                 Field f = toneControlClass.getField("C4");
                 note += f.getInt(null);
-                playToneMethod.invoke(managerClass, new Object[] { new Integer(note), new Integer(duration), new Integer(volume) });       
+                playToneMethod.invoke(null, new Object[] { new Integer(note), new Integer(duration), new Integer(volume) });       
                 return true;
             } catch (InvocationTargetException ite){
             } catch (ClassNotFoundException cnfe) {
