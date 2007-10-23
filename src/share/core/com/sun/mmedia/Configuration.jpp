@@ -141,6 +141,12 @@ public abstract class Configuration {
     public final static String AUDIO_CAPTURE_LOCATOR = "capture://audio";
     public final static String VIDEO_CAPTURE_LOCATOR = "capture://video";
 
+    public final static String[] INTERNAL_PROTOCOLS = new String[] {    "http",
+                                                                        "https",
+                                                                        // #ifdef USE_FILE_CONNECTION [
+                                                                        "file",
+                                                                        // #endif ]
+                                                                   };
     /**
      * A hash table of the protocol and content handlers.
      */
@@ -198,7 +204,17 @@ public abstract class Configuration {
      * @param  protocol  Description of the Parameter
      * @return           The supportedContentTypes value
      */
-    public abstract String[] getSupportedContentTypes(String protocol);
+    public String[] getSupportedContentTypes(String protocol) {
+        if (protocol == null) {
+            return new String[]{MIME_IMAGE_GIF};
+        }
+        for (int i=0; i<INTERNAL_PROTOCOLS.length; i++) {
+            if (protocol.equals(INTERNAL_PROTOCOLS[i])) {
+                return new String[]{MIME_IMAGE_GIF};
+            }
+        }
+        return new String[0];
+    }
 
 
     /**
@@ -207,7 +223,12 @@ public abstract class Configuration {
      * @param  content_types  Description of the Parameter
      * @return                The supportedProtocols value
      */
-    public abstract String[] getSupportedProtocols(String content_types);
+    public String[] getSupportedProtocols(String content_types) {
+        if (content_types!= null && content_types.equals(MIME_IMAGE_GIF)) {
+            return INTERNAL_PROTOCOLS;
+        }
+        return new String[0];
+    }
 
 // #ifdef ENABLE_JSR_234 [
     public abstract String[] getSupportedMediaProcessorInputTypes();
