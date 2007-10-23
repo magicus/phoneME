@@ -142,6 +142,7 @@ CVMAgentHandleArgument(CVMAgentTable* Agent_table, JNIEnv* env,
     char* libraryNamePtr;
     char* separatorPtr;
     char* optionsPtr;
+    char nullStr[1] = {0};
     void * nativeLibrary = NULL;
     Agent_OnLoad_t onLoadFunc;
     Agent_OnUnload_t onUnloadFunc;
@@ -164,6 +165,9 @@ CVMAgentHandleArgument(CVMAgentTable* Agent_table, JNIEnv* env,
     optionsPtr = strchr(libraryNamePtr, '=');
     if (optionsPtr != NULL) {
 	*optionsPtr++ = '\0';
+    } else {
+	/* no options, point at NULL char */
+	optionsPtr = nullStr;
     }
     if (arg->is_absolute) {
 	nativeLibrary = CVMdynlinkOpen((const void*)libraryNamePtr);
