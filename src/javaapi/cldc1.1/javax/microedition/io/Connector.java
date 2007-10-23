@@ -303,10 +303,25 @@ public class Connector {
 
             /* Use the platform and protocol names to look up */
             /* a class to implement the connection */
-            Class clazz =
-                Class.forName(classRoot +
-                              "." + platform +
-                              "." + protocol + ".Protocol");
+            Class clazz;
+            try{
+                clazz =
+                        Class.forName(classRoot +
+                        "." + platform +
+                        "." + protocol + ".Protocol");
+            } catch(ClassNotFoundException cnfe){
+                //This is a workaround to solve the ClassNotFoundException in protocols
+                //which are not yet implemented for the nework monitor. only if this
+                //is a network monitor impl(kvem) replace it with the default(midp)
+                if("com.sun.kvem.io".equals(classRoot) ){
+                    clazz =
+                            Class.forName("com.sun.midp.io" +
+                            "." + platform +
+                            "." + protocol + ".Protocol");
+                } else{
+                    throw cnfe;
+                }
+            }
 
             /* Construct a new instance of the protocol */
             ConnectionBaseInterface uc =
