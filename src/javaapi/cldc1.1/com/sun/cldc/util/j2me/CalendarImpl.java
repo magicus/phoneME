@@ -628,13 +628,13 @@ public class CalendarImpl extends Calendar {
             if (this.fields[AM_PM] != AM && this.fields[AM_PM] != PM) {
                 value = this.fields[HOUR_OF_DAY];
                 this.fields[AM_PM] = (value < 12) ? AM : PM;
+                this.isSet[AM_PM] = false;
             }
-            this.isSet[AM_PM] = false;
         }
 
-        if (isSet[HOUR]) {
+        if (isSet[HOUR]||this.isSet[AM_PM]) {
             value = this.fields[HOUR];
-            if (value > 12) {
+            if (value > 12) { // Only if hour was manually set
                 this.fields[HOUR_OF_DAY] = (value % 12) + 12;
                 this.fields[HOUR] = value % 12;
                 this.fields[AM_PM] = PM;
@@ -646,6 +646,7 @@ public class CalendarImpl extends Calendar {
                 }
             }
             this.isSet[HOUR] = false;
+            this.isSet[AM_PM] = false;
         }
     }
 
