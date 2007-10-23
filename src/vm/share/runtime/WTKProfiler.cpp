@@ -688,6 +688,7 @@ int WTKProfiler::dump_and_clear_profile_data(int id) {
       'g','r','a','p','h','.','p','r','f',0
     };
     const JvmPathChar* filename;
+    char* prof_filename; // name of profile information file as received from the WTK
 
 #if !ENABLE_ISOLATES
     if (!SaveSerialProfiles) {
@@ -700,10 +701,26 @@ int WTKProfiler::dump_and_clear_profile_data(int id) {
        * If the VM is re-started in the same process, we write the profile
        * information to a new file.
        */
-      const int n = _dumpedProfiles % 100;
-      filenamen[5] = (JvmPathChar)((n / 10) + '0');
-      filenamen[6] = (JvmPathChar)((n % 10) + '0');
-      filename = filenamen;
+      prof_filename = JVMSPI_GetSystemProperty("wtk_prof_filename");
+      if (prof_filename != NULL) {
+          static unsigned short unicode_name[250];
+          unsigned  i;
+
+          for (i = 0; i < strlen(prof_filename); i++) {
+              unicode_name[i] = (unsigned short) prof_filename[i];
+
+          }
+          unicode_name[i] = 0;
+          unicode_name[i++] = 0;
+
+          filename = unicode_name;
+
+      } else {          
+          const int n = _dumpedProfiles % 100;
+          filenamen[5] = (JvmPathChar)((n / 10) + '0');
+          filenamen[6] = (JvmPathChar)((n % 10) + '0');
+          filename = filenamen;
+      }
     }
 
     bool empty = true;
