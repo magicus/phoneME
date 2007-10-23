@@ -1995,6 +1995,7 @@ DIST_DIRS    = $(DIST_BIN_DIR) \
 DIST_FILES   = $(DIST_BIN_DIR)/NativesTableGen.jar \
 	       $(DIST_BIN_DIR)/kdp.jar \
 	       $(DIST_BIN_DIR)/buildtool.jar \
+	       $(DIST_BIN_DIR)/memprof_client.jar \
 	       $(PREVERIFY) \
                $(DIST_LIB_DIR)/cldc_classes.zip \
                $(DIST_LIB_DIR)/cldcx_classes.zip \
@@ -2196,6 +2197,11 @@ $(DIST_BIN_DIR)/NativesTableGen.jar: $(BUILDTOOLS_DIR)/jcc.jar
 	$(A)echo installed $@
 
 $(DIST_BIN_DIR)/buildtool.jar: $(BUILDTOOL_JAR)
+	$(A)rm -f $@
+	$(A)cp $< $@
+	$(A)echo installed $@
+
+$(DIST_BIN_DIR)/memprof_client.jar: $(BUILDTOOLS_DIR)/memprof_client.jar
 	$(A)rm -f $@
 	$(A)cp $< $@
 	$(A)echo installed $@

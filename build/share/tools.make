@@ -29,7 +29,7 @@ JAVAC                = $(JDK_DIR)/bin/javac
 JAVAC_DEBUG          = :none
 JAR                  = $(JDK_DIR)/bin/jar
 
-all: jcc.jar buildtool.jar 
+all: jcc.jar buildtool.jar memprof_client.jar
 
 #----------------------------------------------------------------------
 # jcc.jar -- creates native function table for the VM
@@ -153,8 +153,52 @@ buildtool.jar: $(BUILDTOOL_SRC)
 	@$(JAR) cfm $@ $(BUILDTOOL_MF) -C buildtool .
 	@echo created $@
 
+
+#----------------------------------------------------------------------
+# memprof_client.jar -- creates Memory Profiler client for the VM
+#----------------------------------------------------------------------
+
+MEMPROF_DIR = $(WorkSpace)/src/tools/memprof_client
+MEMPROF_MF  = $(MEMPROF_DIR)/MANIFEST.MF
+MEMPROF_SRC = \
+    $(MEMPROF_DIR)/src/data/ClassStatistics.java \
+    $(MEMPROF_DIR)/src/data/GlobalData.java \
+    $(MEMPROF_DIR)/src/data/JavaClass.java \
+    $(MEMPROF_DIR)/src/data/JavaObject.java \
+    $(MEMPROF_DIR)/src/data/MPDataProvider.java \
+    $(MEMPROF_DIR)/src/data/MPDataProviderFactory.java \
+    $(MEMPROF_DIR)/src/jdwp/BackEndTest.java \
+    $(MEMPROF_DIR)/src/jdwp/BoundException.java \
+    $(MEMPROF_DIR)/src/jdwp/ByteBuffer.java \
+    $(MEMPROF_DIR)/src/jdwp/Command.java \
+    $(MEMPROF_DIR)/src/jdwp/DebugeeException.java \
+    $(MEMPROF_DIR)/src/jdwp/jdwp.java \
+    $(MEMPROF_DIR)/src/jdwp/Packet.java \
+    $(MEMPROF_DIR)/src/jdwp/Reply.java \
+    $(MEMPROF_DIR)/src/jdwp/SocketTransport.java \
+    $(MEMPROF_DIR)/src/jdwp/SocketTransportImpl.java \
+    $(MEMPROF_DIR)/src/jdwp/Tools.java \
+    $(MEMPROF_DIR)/src/jdwp/Transport.java \
+    $(MEMPROF_DIR)/src/jdwp/VMConnection.java \
+    $(MEMPROF_DIR)/src/jdwp/VMConnectionFactory.java \
+    $(MEMPROF_DIR)/src/jdwp/VMReply.java \
+    $(MEMPROF_DIR)/src/view/Client.java \
+    $(MEMPROF_DIR)/src/view/StatisticsDialog.java \
+    $(MEMPROF_DIR)/src/view/ViewMemoryPanel.java \
+    $(MEMPROF_DIR)/src/view/ViewObjectsPanel.java \
+    $(MEMPROF_DIR)/src/view/ViewRootPathDialog.java
+
+memprof_client.jar: $(MEMPROF_SRC)
+	@if test ! -d memprof_client; then \
+		mkdir memprof_client; \
+	fi
+	@$(JAVAC) -classpath memprof_client -d memprof_client $?
+	@rm -f $@
+	@$(JAR) cfm $@ $(MEMPROF_MF) -C memprof_client .
+	@echo created $@
+
 clean:
-	-rm -rf makedeps jcc buildtool *.jar
+	-rm -rf makedeps jcc buildtool memprof_client *.jar
 
 #----------------------------------------------------------------------
 #
