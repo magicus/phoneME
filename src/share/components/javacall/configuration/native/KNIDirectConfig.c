@@ -31,7 +31,7 @@
 #define MAX_MIMETYPENAME_LEN 100
 typedef struct {
     const javacall_media_caps* pCaps;
-    unsigned char protocol[MAX_PROTOCOLNAME_LEN];
+    unsigned char *protocol;
     int p;
 } ListCapsType;
 typedef struct {
@@ -55,6 +55,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
     if (hdlr != NULL) {
         hdlr->pCaps = javacall_media_get_caps();
         hdlr->p = 0;
+        hdlr->protocol = NULL;
         if (hdlr->pCaps != NULL) {
             if (!KNI_IsNullHandle(stringObj)) {
                 if (JAVACALL_OK != 
@@ -64,17 +65,24 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
                 }
                 protocolNameLen = 0;
                 javautil_unicode_utf16_ulength(protocolUTF16, &protocolNameLen);
-                if (protocolNameLen != 0 && JAVACALL_OK != 
-                    javautil_unicode_utf16_to_utf8(protocolUTF16, protocolNameLen+1,
-                            hdlr->protocol, MAX_PROTOCOLNAME_LEN, &protocolNameLen)) {
-                        FREE(hdlr);
-                        hdlr = NULL;
+                hdlr->protocol = MALLOC(MAX_PROTOCOLNAME_LEN);
+                if (hdlr->protocol != NULL) {
+                    if (protocolNameLen != 0 && JAVACALL_OK != 
+                        javautil_unicode_utf16_to_utf8(protocolUTF16, protocolNameLen+1,
+                                hdlr->protocol, MAX_PROTOCOLNAME_LEN, &protocolNameLen)) {
+                            FREE(hdlr);
+                            FREE(hdlr->protocol);
+                            hdlr = NULL;
+                    }
+                } else {
+                    FREE(hdlr);
+                    hdlr = NULL;
                 }
                 if (protocolUTF16!=NULL) {
                     FREE(protocolUTF16);
                 }
             } else {
-                hdlr->protocol[0] = 0;
+                hdlr->protocol = NULL;
             }
         } else {
             FREE(hdlr);
@@ -100,7 +108,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesNext) {
 
     if (hdlr != NULL && hdlr->p >=0) {
         while(hdlr->pCaps[hdlr->p].mimeType != NULL) {
-            if (hdlr->protocol[0] == 0) {
+            if (hdlr->protocol == NULL) {
                 break;
             } else {
                 for (i=0; i<hdlr->pCaps[hdlr->p].protocolCount; i++) {
@@ -133,6 +141,8 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesClose) {
     ListCapsType *hdlr = NULL;
     if ((hdlr = (ListCapsType *)KNI_GetParameterAsInt(1))!= NULL) {
         FREE(hdlr);
+        if(hdlr->protocol != NULL) 
+            FREE(hdlr->protocol);
     }
 }
 

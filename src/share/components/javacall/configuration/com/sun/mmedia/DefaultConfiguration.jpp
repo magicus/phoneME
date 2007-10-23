@@ -189,17 +189,16 @@ public class DefaultConfiguration extends Configuration {
         Vector v = new Vector(arr.length);
         for (int i=0; i<arr.length; i++) v.addElement(arr[i]);
 
-        String ll_protocol[] = new String[]{protocol, null};
+        String ll_protocol[] = new String[] {protocol};
         if (protocol != null) {
             for (int i=0; i<Configuration.INTERNAL_PROTOCOLS.length; i++) {
                 if (protocol.equals(Configuration.INTERNAL_PROTOCOLS[i])) {
-                    ll_protocol[0] = "file";
-                    ll_protocol[1] = "memory";
+                    ll_protocol = new String[] {"file", "memory"};
                     break;
                 }
             }
             if(protocol.equals("rtsp")) {
-                ll_protocol[0] = "rtp";
+                ll_protocol = new String[] {"rtp"};
             }
         }
 
