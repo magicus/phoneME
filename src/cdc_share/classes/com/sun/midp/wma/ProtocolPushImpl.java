@@ -33,6 +33,9 @@ import javax.microedition.io.ConnectionNotFoundException;
 
 import com.sun.j2me.security.AccessControlContext;
 
+import com.sun.j2me.app.AppPackage;
+import com.sun.j2me.security.WMAPermission;
+
 /**
  * Implementation of push behaviour.
  */
@@ -57,9 +60,16 @@ public class ProtocolPushImpl implements ProtocolFactory {
             String protocol, String targetAndParams, 
             String filter, AccessControlContext context) {
 
+        try {
+            AppPackage appPackage = AppPackage.getInstance();
+            appPackage.checkForPermission(WMAPermission.SMS_SERVER);
+        } catch (InterruptedException ex) {
+            //
+            return null;
+        }
+
         checkValidFilter(filter);
         return new ReservationDescriptorImpl(protocol, targetAndParams, 
 					 filter, context);
     }
-    //        throws IllegalArgumentException, SecurityException;
 }
