@@ -273,7 +273,12 @@ endif
 GENERATE_PERMISSIONS_TABLE = \
 	-xml $(INT_MERGED_XML_FILE) \
 	-xsl $(INT_XSL_DIR)/cldc/permissions.xsl \
-	-out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/security/PermissionsTable.java)`
+	-params output java \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/security/PermissionsTable.java)` \
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(INT_XSL_DIR)/cldc/permissions.xsl \
+	-params output native \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/perm_number.h)`
 
 # transformation for genrating the i18n tables (both Java and C files).
 GENERATE_L10N_STRINGS = \

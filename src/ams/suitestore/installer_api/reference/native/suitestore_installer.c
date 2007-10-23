@@ -482,12 +482,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
          * property is found in the suite's jad file.
          */
         {
-            /*
-             * IMPL_NOTE: must be the same as Permissions.NUMBER_OF_PERMISSIONS.
-             * It was not moved to *.xml because it is never used in normal case
-             * (i.e. when ENABLE_CONTROL_ARGS_FROM_JAD=false).
-             */
-            #define NUMBER_OF_PERMISSIONS 52
+            #include "perm_number.h"
 
             MIDP_JAD_CONTROL_ARGS pJadArgs[MAX_JAD_CONTROL_ARGS];
             MIDPError found;
