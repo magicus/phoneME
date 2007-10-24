@@ -25,12 +25,14 @@
  *
  */
 
+#include "javavm/include/globals.h"
 #include "javavm/include/porting/io.h"
 #include "javavm/include/porting/int.h"
 #include "javavm/include/porting/sync.h"
 #include "javavm/include/porting/threads.h"
 #include "javavm/include/porting/doubleword.h"
 #include "javavm/include/wceUtil.h"
+#include "javavm/include/io_sockets.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -72,7 +74,7 @@ void WIN32ioInit()
 	}
 
     /* initialize stdio redirection */ 
-    initializeStandardIO(); 
+    initializeStandardIO();
 
 #endif
 }
@@ -579,6 +581,14 @@ CVMioWrite(CVMInt32 fd, const void *buf, CVMUint32 nBytes)
     DWORD bytes;
     HANDLE h = WIN_GET_HANDLE((HANDLE)fd);
     int b;
+    
+    /* check if redirection sockets are used */
+    if (CVMglobals.target.stdoutPort >= 0 || CVMglobals.target.stderrPort >= 0) {
+        /* check if output should be redirected */ 
+        if ((fd >= 1) && (fd <= 2)) {
+            SIOWrite(fd, (char *)buf, nBytes);
+        }
+    }
 
 #ifndef WINCE
     switch (fd) {
@@ -589,26 +599,26 @@ CVMioWrite(CVMInt32 fd, const void *buf, CVMUint32 nBytes)
     b = WriteFile(h, buf, nBytes, &bytes, NULL);
 #else /* WINCE */
     if (fd >= 1 && fd <= 2) {
-	FILE *fp = NULL;
+		FILE *fp = NULL;
 #ifdef CVM_DEBUG
-	NKDbgPrintfW(TEXT("%.*hs"), nBytes, buf);
+		NKDbgPrintfW(TEXT("%.*hs"), nBytes, buf);
 #endif
-	switch (fd) {
-	case 1:
-	    fp = stdout;
-	    break;
-	case 2:
-	    fp = stderr;
-	    break;
-	}
-	fwrite(buf, sizeof (char), nBytes, fp);
-
-	/* Silently ignore errors */
-	writeStandardIO(fd, buf, nBytes);
-	bytes = nBytes;
-	b = 1;
+		switch (fd) {
+		case 1:
+		    fp = stdout;
+		    break;
+		case 2:
+		    fp = stderr;
+		    break;
+		}
+		fwrite(buf, sizeof (char), nBytes, fp);
+	
+		/* Silently ignore errors */
+		writeStandardIO(fd, buf, nBytes);
+		bytes = nBytes;
+		b = 1;
     } else {
-	b = WriteFile(h, buf, nBytes, &bytes, NULL);
+		b = WriteFile(h, buf, nBytes, &bytes, NULL);
     }
 
 #endif /* WINCE */
