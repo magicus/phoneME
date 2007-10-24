@@ -387,7 +387,7 @@ javacall_int64 javacall_file_sizeofopenfile(javacall_handle handle)
 {
    LARGE_INTEGER size;
    size.HighPart = 0;
-   size.LowPart = GetFileSize((HANDLE)handle, size.HighPart);
+   size.LowPart = GetFileSize((HANDLE)handle, &size.HighPart);
    return (size.LowPart != INVALID_FILE_SIZE || GetLastError() == NO_ERROR) ? size.QuadPart : -1;
 }
 
@@ -436,10 +436,7 @@ javacall_int64 javacall_file_sizeof(javacall_const_utf16_string fileName,
 javacall_result javacall_file_exist(javacall_const_utf16_string fileName,
                                    int fileNameLen)
 {
-    WIN32_FIND_DATAW  fd;
     DWORD attrib;
-    HANDLE sh;
-    BOOL res;
     /* create a new unicode NULL terminated file name variable */
     javacall_const_utf16_string sFileName = get_string_alloc(fileName, fileNameLen);
     attrib = GetFileAttributesW(sFileName);
