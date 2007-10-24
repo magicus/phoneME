@@ -33,11 +33,16 @@ struct CVMTargetGlobalState {
      * Global variables for the target go here.
      */
     int dummy;
+#ifdef WINCE    
     /* for wceIOWrite to use */
     char *stdioPrefix;
     char *stdinPath;
     char *stdoutPath;
     char *stderrPath;
+#endif
+    /* for socket io redirection */
+    int stdoutPort;
+    int stderrPort;
 };
 
 #if _MSC_VER >= 1300

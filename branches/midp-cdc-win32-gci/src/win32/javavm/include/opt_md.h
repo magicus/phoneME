@@ -24,6 +24,8 @@
  * information or have any questions. 
  *
  */
+#ifdef WINCE
+    /** params for stdio file redirection */
     {"stdioPrefix", "prefix for stdio files",
         CVM_STRING_OPTION,
     {{0, (CVMAddr)"<native file path>", (CVMAddr)""}},
@@ -40,3 +42,13 @@
         CVM_STRING_OPTION,
     {{0, (CVMAddr)"<native file path>", 0}},
         &CVMglobals.target.stderrPath},
+#endif
+    /** params for stdio socket redirection */
+    {"stdoutPort", "Port to redirect stdout to",
+        CVM_INTEGER_OPTION, 
+    {{0, (CVMAddr)65536, (CVMAddr)-1}},
+        &CVMglobals.target.stdoutPort},
+    {"stderrPort", "Port to redirect stderr to",
+        CVM_INTEGER_OPTION, 
+    {{0, (CVMAddr)65536, (CVMAddr)-1}},
+        &CVMglobals.target.stderrPort},

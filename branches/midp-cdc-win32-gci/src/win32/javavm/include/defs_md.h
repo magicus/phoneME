@@ -41,8 +41,9 @@
 #pragma include_alias(<winnt.h>, <javavm/include/win32/winnt.h>)
 #endif
 
-#ifdef WINCE
 #define CVM_HAS_PLATFORM_SPECIFIC_SUBOPTIONS
+
+#ifdef WINCE
 #define CVM_HDR_ANSI_ERRNO_H	"javavm/include/ansi/errno.h"
 #ifndef _ASM
 #pragma include_alias(<errno.h>, <javavm/include/ansi/errno.h>)
