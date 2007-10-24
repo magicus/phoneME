@@ -67,7 +67,7 @@ void OsMisc_flush_icache(address start, int size) {
   FlushInstructionCache(thread_process, start, size);
 }
 
-#if !defined(PRODUCT) || USE_DEBUG_PRINTING
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 const char *OsMisc_jlong_format_specifier() {
   return "%I64d";

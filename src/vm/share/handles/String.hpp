@@ -80,7 +80,9 @@ class String : public Instance {
   ReturnOop to_cstring(JVM_SINGLE_ARG_TRAPS);
 
   void print_string_on(Stream* st, int max_len=-1);
-  void print_value_on(Stream* /*st*/) PRODUCT_RETURN;
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+  void print_value_on(Stream* /*st*/);
+#endif
 
   jchar char_at(int index);
 

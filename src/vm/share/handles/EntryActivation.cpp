@@ -29,7 +29,7 @@
 
 HANDLE_CHECK(EntryActivation, is_entry_activation())
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 void EntryActivation::print_value_on(Stream* st) {
 #if USE_DEBUG_PRINTING

@@ -139,7 +139,7 @@ void Symbol::print_symbol_on(Stream* st, bool dottified) {
     }
   }
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   if ((is_valid_method_signature(NULL) || is_valid_field_type())
       && length() > 1) {
     TypeSymbol::Raw type_symbol = this->obj();
@@ -254,6 +254,9 @@ void Symbol::iterate(OopVisitor* visitor) {
   visitor->do_ushort(&field, length_offset(), true);
 }
 
+#endif
+
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 void Symbol::print_value_on(Stream* st) {
   st->print("#");
   print_symbol_on(st);

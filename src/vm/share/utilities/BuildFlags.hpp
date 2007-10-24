@@ -1038,7 +1038,7 @@
 #  define USE_OOP_VISITOR           USE_DEBUG_PRINTING
 #endif
 
-#if defined(PRODUCT) || (!ENABLE_TTY_TRACE)
+#if defined(PRODUCT) && (!ENABLE_TTY_TRACE)
 #  define USE_VERBOSE_ERROR_MSG 0
 #else
 #  define USE_VERBOSE_ERROR_MSG 1

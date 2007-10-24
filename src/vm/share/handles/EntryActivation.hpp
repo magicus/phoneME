@@ -177,9 +177,9 @@ class EntryActivation: public Oop {
     }
   }
 
-#ifndef PRODUCT
-  void print_value_on(Stream* s) PRODUCT_RETURN;
-  void print_list_on(Stream* s, int indent, int index) PRODUCT_RETURN;
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+  void print_value_on(Stream* s);
+  void print_list_on(Stream* s, int indent, int index);
   void iterate(OopVisitor* visitor);
   static void iterate_oopmaps(oopmaps_doer do_map, void* param);
 #endif

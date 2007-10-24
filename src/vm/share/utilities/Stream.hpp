@@ -108,7 +108,7 @@ public:
   void put(char ch);
 #endif
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   void inc() { _indentation++; };
   void dec() { _indentation--; };
   void dec_cr() { dec(); cr(); }
@@ -210,7 +210,7 @@ private:
 
 #endif // !defined(PRODUCT) || ENABLE_ROM_GENERATOR
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 /**
  * Redirection and duplication of output into 2 streams.
@@ -232,7 +232,8 @@ public:
   Stream* stream1() { return _stream1; }
   Stream* stream2() { return _stream2; }
 };
-#endif // !PRODUCT
+
+#endif // !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 #if ENABLE_PERFORMANCE_COUNTERS || USE_DEBUG_PRINTING || ENABLE_JVMPI_PROFILE
 /**

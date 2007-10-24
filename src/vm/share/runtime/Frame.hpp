@@ -81,7 +81,11 @@ class Frame {
   }
 
   // Constructing a frame from a guessed fp
-  void init(Thread* /*thread*/, address /*guessed_fp*/) PRODUCT_RETURN;
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+  void init(Thread* /*thread*/, address /*guessed_fp*/);
+#else 
+  void init(Thread* /*thread*/, address /*guessed_fp*/) {}
+#endif
   Frame(Thread* thread, address guessed_fp) {
     // NB. init() is used here to fix CR 6297942.
     init(thread, guessed_fp);
@@ -107,7 +111,9 @@ class Frame {
   // Tells whether this is a Java frame.
   bool is_java_frame( void ) const { return !is_entry_frame(); }
 
-  bool is_valid_guessed_frame() PRODUCT_RETURN0;
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+  bool is_valid_guessed_frame();
+#endif
 
   // Accessor for the stack and frame pointers
   address sp( void ) const { return _sp; }
@@ -117,14 +123,15 @@ class Frame {
 
   void set_pc(address pc) { *(address*)(_pc_addr) = pc; }
 
-  void print_on(Stream*, int /*index*/, const char* /*title*/) PRODUCT_RETURN;
-  void print_raw_frame_on(Stream*) PRODUCT_RETURN;
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+  void print_on(Stream*, int /*index*/, const char* /*title*/);
+  void print_raw_frame_on(Stream*);
   static bool is_plausible_fp(address /*start*/, address /*top*/,
                               address /*bottom*/, address& /*fp*/,
-                              address& /*sp*/, address& /*pc_addr*/)
-                              PRODUCT_RETURN0;
+                              address& /*sp*/, address& /*pc_addr*/);
   static bool is_within_stack_range(address /*p*/, address /*stack_top*/, 
-                                    address /*stack_bottom*/) PRODUCT_RETURN0;
+                                    address /*stack_bottom*/);
+#endif
 #ifndef PRODUCT
   // Quick debug short-hands
   void p() {
@@ -133,7 +140,9 @@ class Frame {
   void pr() {
     print_raw_frame_on(tty);
   }
+#endif
  private:
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   void get_min_max(int& min, int& max, int value);
 #endif
 
@@ -157,7 +166,7 @@ class Frame {
 
   Frame* _previous;
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   bool   _is_valid_guessed_frame;
 #endif
 
@@ -244,7 +253,9 @@ public:
   }
 
   // Printing
-  void      print_on(Stream*, jint /*tag*/) PRODUCT_RETURN;
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+  void      print_on(Stream*, jint /*tag*/);
+#endif
   void      verify() PRODUCT_RETURN;
 
   jint tag() {
@@ -436,9 +447,11 @@ class JavaFrame : public Frame {
   void relocate_internal_pointers(int delta, bool do_locks);
   static void relocate_starting_frame_pointers(Thread *, int) {}
 
-  void print_on(Stream*, int /*index*/) PRODUCT_RETURN;
+#if !defined(PRODUCT)|| ENABLE_TTY_TRACE
+  void print_on(Stream*, int /*index*/);
+  void print_stack_address(Stream *, address /*addr*/);
+#endif
   void verify() PRODUCT_RETURN;
-  void print_stack_address(Stream *, address /*addr*/) PRODUCT_RETURN;
 
 #if 0
   JavaFrame& operator=(JavaFrame& other) {
@@ -467,7 +480,9 @@ class JavaFrame : public Frame {
   ReturnOop generate_compiled_method_stack_map(int& map_length);
   ReturnOop generate_tagged_method_stack_map(int& map_length);
 
-  void print_raw_frame_on(Stream*) PRODUCT_RETURN;
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+  void print_raw_frame_on(Stream*);
+#endif
 
  private:
   // Sets the stack bottom pointer
@@ -604,10 +619,11 @@ class EntryFrame : public Frame {
   void gc_epilogue(void) {
   }
 
-  void print_on(Stream*, int /*index*/) PRODUCT_RETURN;
-  void print_raw_frame_on(Stream*) PRODUCT_RETURN;
-  void get_min_max_offsets(int& /*min_offset*/, int& /*max_offset*/)
-       PRODUCT_RETURN;
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+  void print_on(Stream*, int /*index*/);
+  void print_raw_frame_on(Stream*);
+  void get_min_max_offsets(int& /*min_offset*/, int& /*max_offset*/);
+#endif
     
   // I'm being lazy and doing these as lvalues rather than having
   // separate accessor and setter macros

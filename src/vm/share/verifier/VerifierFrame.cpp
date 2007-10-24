@@ -290,7 +290,7 @@ void VerifierFrame::replace_stack_type_with_real_type(StackMapKind from,
   }
 }
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 void VerifierFrame::verifier_error(ErrorMsgTag err JVM_TRAPS) {
   if (Thread::current_has_pending_exception() && 
     (TraceExceptions || GenerateROMImage)) {

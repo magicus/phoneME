@@ -39,7 +39,7 @@ const JvmPathChar *OsMisc_get_classpath() {
   return NULL;
 }
 
-#if !defined(PRODUCT) || USE_DEBUG_PRINTING
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 const char *OsMisc_jlong_format_specifier() {
   return "%lld";

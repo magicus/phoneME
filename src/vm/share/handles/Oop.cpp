@@ -984,6 +984,15 @@ bool BasicOop::is_java_class() const {
           obj()->is_obj_array_class());
 }
 
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+
+bool BasicOop::is_execution_stack() const {
+  GUARANTEE(not_null(), "Cannot ask for type of NULL");
+  return obj()->is_execution_stack();
+}
+
+#endif
+
 #ifndef PRODUCT
 bool BasicOop::is_bool_array() const {
   GUARANTEE(not_null(), "Cannot ask for type of NULL");
@@ -1023,11 +1032,6 @@ bool BasicOop::is_java_oop() const {
   GUARANTEE(not_null(), "Cannot ask for type of NULL");
   return obj()->is_instance() || obj()->is_type_array()
       || obj()->is_obj_array();
-}
-
-bool BasicOop::is_execution_stack() const {
-  GUARANTEE(not_null(), "Cannot ask for type of NULL");
-  return obj()->is_execution_stack();
 }
 
 bool BasicOop::is_entry_activation() const {

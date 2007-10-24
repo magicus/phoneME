@@ -65,7 +65,7 @@ void Stream::put(char ch) {
 
 #endif
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 void Stream::vprint(const char *format, va_list argptr) {
   DECLARE_STATIC_BUFFER(char, buffer, BUFLEN);
   if (jvm_vsnprintf(buffer, BUFLEN, format, argptr) < 0) {
