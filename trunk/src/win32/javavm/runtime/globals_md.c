@@ -25,6 +25,7 @@
  *
  */
 #include "javavm/include/defs.h"
+#include "javavm/include/globals.h"
 #include "javavm/include/porting/globals.h"
 #include "javavm/include/porting/sync.h"
 #include "javavm/include/porting/net.h"
@@ -32,6 +33,7 @@
 #include "javavm/include/porting/ansi/assert.h"
 #include "javavm/include/threads_md.h"
 #include "generated/javavm/include/build_defs.h"
+#include "javavm/include/io_sockets.h"
 
 #include <windows.h>
 #include <tchar.h>
@@ -39,7 +41,6 @@
 
 #ifdef CVM_JIT
 #include "javavm/include/porting/jit/jit.h"
-#include "javavm/include/globals.h"
 #endif
 
 #define MAXPATHLEN MAX_PATH
@@ -95,12 +96,13 @@ CVMBool CVMinitVMTargetGlobalState()
 #endif
     }
 #endif
-
+    SIOInit(CVMglobals.target.stdoutPort, CVMglobals.target.stderrPort);
     return CVM_TRUE;
 }
 
 void CVMdestroyVMTargetGlobalState()
 {
+    SIOStop();
     /*
      * ... and destroy it.
      */

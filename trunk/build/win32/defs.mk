@@ -81,6 +81,7 @@ CVM_INCLUDE_DIRS  += \
 # Platform specific objects
 #
 CVM_TARGETOBJS_SPACE += \
+	io_sockets.o \
 	io_md.o \
 	net_md.o \
 	time_md.o \
