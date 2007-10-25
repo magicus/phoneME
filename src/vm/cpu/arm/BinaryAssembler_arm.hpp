@@ -295,8 +295,8 @@ public:
 public:
   class LiteralPoolElementDesc: public MixedOopDesc {
   public:
-    LiteralPoolElementDesc *_next;
     OopDesc *_literal_oop;
+    LiteralPoolElementDesc *_next;
     jint     _bci;
     jint     _label;
     jint     _literal_int;
@@ -318,16 +318,16 @@ protected:
     static size_t allocation_size() {
       return align_allocation_size(sizeof(LiteralPoolElementDesc));
     }
-    static size_t pointer_count() { return 2; }
+    static size_t pointer_count() { return 1; }
 
   public:
     // To avoid endless lists of friends the static offset computation
     // routines are all public.
-    static jint next_offset() {
-      return FIELD_OFFSET(LiteralPoolElementDesc, _next);
-    }
     static jint literal_oop_offset() {
       return FIELD_OFFSET(LiteralPoolElementDesc, _literal_oop);
+    }
+    static jint next_offset() {
+      return FIELD_OFFSET(LiteralPoolElementDesc, _next);
     }
     static jint bci_offset() {
       return FIELD_OFFSET(LiteralPoolElementDesc, _bci);
@@ -375,17 +375,23 @@ protected:
     }
 
     ReturnOop next() const  {
-      return obj_field(next_offset());
+      return (ReturnOop)int_field(next_offset());
     }
-    void set_next(Oop* oop) {
-      obj_field_put(next_offset(), oop);
+    void set_next(const OopDesc* p) {
+      int_field_put(next_offset(), int(p));
+    }
+    void set_next(const Oop* oop) {
+      set_next( oop->obj() );
     }
 
     ReturnOop literal_oop() const {
       return obj_field(literal_oop_offset());
     }
+    void set_literal_oop(OopDesc* p) {
+      obj_field_put(literal_oop_offset(), p);
+    }
     void set_literal_oop(const Oop *oop) {
-      obj_field_put(literal_oop_offset(), oop);
+      set_literal_oop( oop->obj() );
     }
     
     bool is_bound() const {

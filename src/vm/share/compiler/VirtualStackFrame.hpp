@@ -497,10 +497,10 @@ class VirtualStackFrame: public MixedOop {
 
 #if USE_COMPILER_FPU_MAP
   ReturnOop fpu_register_map() const { 
-    return obj_field(fpu_register_map_offset());      
+    return (ReturnOop)int_field(fpu_register_map_offset());      
   }
   void set_fpu_register_map(TypeArray* value) {
-    obj_field_put(fpu_register_map_offset(), (Oop*)value);
+    int_field_put(fpu_register_map_offset(), (int)((Oop*)value)->obj());
   }
 #endif  // USE_COMPILER_FPU_MAP
   jint stack_pointer() const { 

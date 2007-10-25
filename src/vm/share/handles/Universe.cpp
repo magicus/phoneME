@@ -1916,29 +1916,29 @@ ReturnOop Universe::allocate_array(FarClass* klass, int length,
 ReturnOop Universe::generic_allocate_array(Allocator* allocate, 
                                           FarClass* klass, 
                                           int length,
-                                          int scale JVM_TRAPS) {
-  // Check if length is negative
-  if (length >= 0) {
-    if (length <= 0x08000000) {
-      GUARANTEE(!klass->is_null(), 
-                "Cannot allocate array with element type NULL");
-      size_t size = ArrayDesc::allocation_size(length, scale);
-      ArrayDesc* result = (ArrayDesc*) (*allocate)(size JVM_NO_CHECK);
-      if (result) {
-        result->initialize(klass->prototypical_near(), length);
-      }
-      return result;
-    } else {
-      // Maximum allocation: 128MB for bytes ... 1024MB for longs
-      //
-      // Make sure the (length * scale) operation won't overflow 32-bit values.
-      // In reality we're never going to allocate such big arrays
-      // anyway because our heap is small.
-      Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW_0);
+                                          int scale JVM_TRAPS)
+{
+  if( unsigned(length) <= 0x08000000) {
+    GUARANTEE(!klass->is_null(), 
+              "Cannot allocate array with element type NULL");
+    const size_t size = ArrayDesc::allocation_size(length, scale);
+    ArrayDesc* result = (ArrayDesc*) (*allocate)(size JVM_NO_CHECK);
+    if (result) {
+      result->initialize(klass->prototypical_near(), length);
     }
-  } else {
+    return result;
+  }
+
+  if (length < 0) {
     Throw::throw_exception(Symbols::java_lang_NegativeArraySizeException()
                            JVM_THROW_0);
+  } else {
+    // Maximum allocation: 128MB for bytes ... 1024MB for longs
+    //
+    // Make sure the (length * scale) operation won't overflow 32-bit values.
+    // In reality we're never going to allocate such big arrays
+    // anyway because our heap is small.
+    Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW_0);
   }
 }
 

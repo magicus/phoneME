@@ -171,13 +171,12 @@ public:
   }
 
   jint bci()               { return int_field(bci_offset()); }
-  void set_bci(jint value) { int_field_put(bci_offset(), value);
-  }
+  void set_bci(jint value) { int_field_put(bci_offset(), value); }
 
   // ^VirtualStackFrame
-  ReturnOop frame()  { return obj_field(frame_offset()); }
+  ReturnOop frame()  { return (ReturnOop) int_field(frame_offset()); }
   void set_frame(VirtualStackFrame* value) {
-      obj_field_put(frame_offset(), value);
+    int_field_put(frame_offset(), (int) value->obj() );
   }
 
   Assembler::Register register_0(){
@@ -219,10 +218,10 @@ public:
     int_field_put(code_size_before_offset(), value);
   }
 
-  ReturnOop next(void) const { return obj_field(next_offset()); }
+  ReturnOop next(void) const { return (ReturnOop)int_field(next_offset()); }
 
   void set_next(CompilationQueueElement* value) {
-    obj_field_put(next_offset(), value);
+    int_field_put(next_offset(), (int)value->obj());
   }
 };
 

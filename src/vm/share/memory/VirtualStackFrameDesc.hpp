@@ -36,19 +36,12 @@ class VirtualStackFrameDesc: public MixedOopDesc {
               align_allocation_size(sizeof(VirtualStackFrameDesc)), "sanity");
     return align_allocation_size(sizeof(VirtualStackFrameDesc));
   }
-  static int pointer_count() {
-#if USE_COMPILER_FPU_MAP
-    return 1;
-#else
-    return 0;
-#endif
-  }
+  static int pointer_count( void ) { return 0; }
 
  private:
 #if USE_COMPILER_FPU_MAP
   TypeArrayDesc * _fpu_register_map;
 #endif
-
   /* All oops must go before here.  If you change the number of oops, be
    * sure to change pointer_count()
    */

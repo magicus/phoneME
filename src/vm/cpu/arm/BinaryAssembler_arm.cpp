@@ -625,7 +625,7 @@ void BinaryAssembler::CodeInterleaver::start_alternate(JVM_SINGLE_ARG_TRAPS) {
    
   _current = 0;
   _length = instructions;
-  _buffer = Universe::new_int_array(instructions JVM_CHECK);
+  _buffer = Universe::new_int_array_in_compiler_area(instructions JVM_CHECK);
 
   jvm_memcpy(_buffer().base_address(), _assembler->addr_at(old_size), 
                   new_size - old_size);

@@ -169,7 +169,6 @@ private:
   static void collect(size_t min_free_after_collection JVM_TRAPS);
 
 #if ENABLE_COMPILER
-  static OopDesc* (*code_allocator) (size_t size JVM_TRAPS);
   static OopDesc* (*temp_allocator) (size_t size JVM_TRAPS);
 
   static OopDesc* compiler_area_allocate_code (size_t size JVM_TRAPS);
@@ -232,7 +231,7 @@ public:
     fast_memclear(_inline_allocation_top,
                   DISTANCE(_inline_allocation_top, _inline_allocation_end));
 #endif
-  	}
+        }
 
   // Collection
   static void full_collect(JVM_SINGLE_ARG_TRAPS);
@@ -488,7 +487,7 @@ public:
     return DISTANCE(_compiler_area_start, _compiler_area_top);
   }
   static OopDesc* allocate_code( const size_t size JVM_TRAPS ) {
-    return (*code_allocator) (size JVM_NO_CHECK);
+    return compiler_area_allocate_code(size JVM_NO_CHECK);
   }
   static OopDesc* allocate_temp( const size_t size JVM_TRAPS ) {
     return (*temp_allocator) (size JVM_NO_CHECK);
@@ -791,6 +790,7 @@ private:
   inline static OopDesc* rom_oop_from_offset(size_t offset);
   inline static OopDesc* decode_near(OopDesc* obj, OopDesc **heap_start, 
                                      size_t near_mask);
+  inline static FarClassDesc* decode_far_class(const OopDesc* obj);
   inline static FarClassDesc* decode_far_class_with_real_near(OopDesc* obj);
   inline static FarClassDesc* decode_far_class_with_encoded_near(OopDesc* obj,
                                              const QuickVars& qv = _quick_vars);

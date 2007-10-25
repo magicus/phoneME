@@ -60,11 +60,9 @@ class Entry: public MixedOop {
   }
 
   // ^VirtualStackFrame
-  ReturnOop frame() {
-    return obj_field(frame_offset());
-  }
+  ReturnOop frame(void) { return (ReturnOop) int_field(frame_offset()); }
   void set_frame(VirtualStackFrame* value) {
-    obj_field_put(frame_offset(), value);
+    int_field_put(frame_offset(), (int) value->obj() );
   }
 
   BinaryAssembler::Label label() {

@@ -58,10 +58,8 @@ bool      ObjectHeap::_is_finalizing;
 #if ENABLE_COMPILER
 OopDesc** ObjectHeap::_saved_compiler_area_top;
 
-OopDesc* (*ObjectHeap::code_allocator) (size_t size JVM_TRAPS)
-  = &ObjectHeap::allocate;
 OopDesc* (*ObjectHeap::temp_allocator) (size_t size JVM_TRAPS)
-  = &ObjectHeap::allocate;
+  = &ObjectHeap::compiler_area_allocate_temp;
 #endif
 
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
@@ -1174,7 +1172,6 @@ bool ObjectHeap::create() {
   }
 
   GUARANTEE(!YoungGenerationAtEndOfHeap, "sanity");
-  code_allocator = &compiler_area_allocate_code;
   temp_allocator = &compiler_area_allocate_temp;
 #endif
 
@@ -1774,7 +1771,7 @@ void ObjectHeap::roots_do_to( void do_oop(OopDesc**), const bool young_only,
       end = (CompiledMethodDesc*)_compiler_area_top;
     }
     while (cm < end) {
-      const FarClassDesc* far_class = decode_far_class_with_real_near(cm);
+      const FarClassDesc* far_class = decode_far_class(cm);
       const size_t size = cm->object_size_for(far_class);
       cm->oops_do_for(far_class, do_oop);
       cm = DERIVED(CompiledMethodDesc*, cm, size);
@@ -1796,7 +1793,7 @@ void ObjectHeap::roots_do_to( void do_oop(OopDesc**), const bool young_only,
     if( p ) {
       OopDesc* const end = (OopDesc*)_compiler_area_top;
       do {
-        const FarClassDesc* far_class = decode_far_class_with_real_near(p);
+        const FarClassDesc* far_class = decode_far_class(p);
         const size_t size = p->object_size_for(far_class);
         p->oops_do_for(far_class, do_oop);
         p = DERIVED(OopDesc*, p, size);
@@ -3418,6 +3415,15 @@ inline OopDesc* ObjectHeap::decode_near(OopDesc* obj, OopDesc **heap_start,
   }
 #endif
   return n;
+}
+
+inline FarClassDesc* ObjectHeap::decode_far_class(const OopDesc* obj) {
+  GUARANTEE(contains(obj), "must be in heap");
+  OopDesc* n = obj->klass();
+  GUARANTEE(contains(n) || ROM::system_contains(n), "must be valid near");
+  OopDesc* f = n->klass();
+  GUARANTEE(contains(f) || ROM::system_contains(f), "must be in valid near");
+  return (FarClassDesc*) f;
 }
 
 inline FarClassDesc* ObjectHeap::decode_far_class_with_real_near(OopDesc* obj)

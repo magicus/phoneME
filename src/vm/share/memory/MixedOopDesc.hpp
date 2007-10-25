@@ -52,8 +52,6 @@ public:
   template(BufferedFile,            buffered_file)             \
   template(ClassParserState,        class_parser_state)        \
   template(CompilationQueueElement, compilation_queue_element) \
-  template(CompilerState,           compiler_state)            \
-  template(CompilerContext,         compiler_context)          \
   template(Entry,                   entry)                     \
   template(FileDecoder,             file_decoder)              \
   template(Inflater,                inflater)                  \
