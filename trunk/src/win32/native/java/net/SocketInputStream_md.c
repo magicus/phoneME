@@ -158,7 +158,7 @@ Java_java_net_SocketInputStream_socketRead0(JNIEnv *env, jobject this,
     } 
 
     if (timeout) {
-	if (timeout <= 5000 ) {
+	if (timeout <= 5000 || !isRcvTimeoutSupported) {
 	    int ret = NET_Timeout (fd, timeout);
 	    
 	    if (ret <= 0) {
