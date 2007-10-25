@@ -71,16 +71,16 @@ public abstract class BasicDS extends DataSource {
     }
  
     /**
-     * Returns the protocol part of the locator string, or null, if couldn't be parsed.
+     * Parse the protocol part of the locator string.
      */
     static public String getProtocol(String loc) {
-	    String proto = null;
-        int idx = loc.indexOf(':');
+	String proto = "";
+	int idx = loc.indexOf(':');
 
-        if( idx != -1) {
-            proto = loc.substring(0,idx);
-        }
+	if( idx != -1) {
+	    proto = loc.substring(0,idx);
+	}
 
-        return proto;
+	return proto;
     }
 }
