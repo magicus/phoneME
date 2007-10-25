@@ -740,7 +740,11 @@ public final class Manager {
         ds.setContentType(type);
         
         try {
-            return createPlayer(ds);
+            ds.connect();
+            // Use fake protocol "stream" because null isn't allowed
+            BasicPlayer p = createPlayer(type, "stream:");
+            p.setSource(ds);
+            return p;
         } catch (IOException ex) {
             throw new MediaException(PL_ERR + ex.getMessage());
         }
