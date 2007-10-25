@@ -245,6 +245,8 @@ public abstract class ProtocolBase implements MessageConnection,
 	}
     }
 
+    protected boolean needStopReceiver = false;
+
     /**
      * Registers a <code>MessageListener</code> object.
      * <p>
@@ -279,7 +281,7 @@ public abstract class ProtocolBase implements MessageConnection,
     public void setMessageListener(MessageListener listener)
                                                      throws IOException {
 
-        boolean needStopReceiver = false;
+        needStopReceiver = false;
         /*
          * Make sure the connection is still open.
 	 */
@@ -313,8 +315,6 @@ public abstract class ProtocolBase implements MessageConnection,
 
         /* Kill listener when need */
         if (needStopReceiver) {
-            String save_appID = getAppID();
-            setAppID(null);
             /* Close thread without deregistering */
             close00(connHandle, 0);
             try {
@@ -323,7 +323,6 @@ public abstract class ProtocolBase implements MessageConnection,
             }  /* Ignore interrupted exception */
             m_listenerThread = null;
 
-            setAppID(save_appID);
             /* Unblock the low level */
             unblock00(appPackage.UNUSED_APP_ID);
         }
@@ -392,7 +391,7 @@ public abstract class ProtocolBase implements MessageConnection,
 			try {
 		            messageLength =
                                 waitUntilMessageAvailable00(connHandle);
-                            if (getAppID() == null) {
+                            if (needStopReceiver) {
                                 break;
                             }
 				/*
@@ -427,10 +426,7 @@ public abstract class ProtocolBase implements MessageConnection,
                             break;
 			}
 
-                    /*
-                     * m_iport = 0 on close
-                     */
-		    } while (getAppID() != null);
+		    } while (!needStopReceiver);
 		}
             };
 
