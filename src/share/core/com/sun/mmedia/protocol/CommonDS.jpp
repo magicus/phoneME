@@ -438,9 +438,10 @@ public class CommonDS extends BasicDS implements SourceStream {
             String file = getRemainder(theml);
             boolean changed = false;
             
-            if (file == null) 
+            if (file == null) {
                     return (theml);
-            try {
+                }
+                try {
                 idx = 0;
                 while ((idx = file.indexOf("%", idx)) >= 0) {
                     if (file.length() > idx + 2) {
@@ -457,9 +458,9 @@ public class CommonDS extends BasicDS implements SourceStream {
                     idx++;
                 }
                 if (changed)
-                    ret = proto + ":" + file;
+                        ret = proto + ":" + file;
             } catch (Exception e) {
-                ret = theml;
+            ret = theml;
             }
         }
         return ret;
