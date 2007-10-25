@@ -180,6 +180,14 @@ typedef const unsigned char* javacall_const_utf8_string;
 typedef unsigned short javacall_pixel;
 
 /**
+ * @define JAVACALL_UNKNOWN_LENGTH
+ * @brief Corresponds to unknown length
+ * @note  Be careful with bit-depth context with signed-unsigned conversion: <br>
+ * May happen that (\c unsigned \c int)JAVACALL_UNKNOWN_LENGTH != (\c long \c long)JAVACALL_UNKNOWN_LENGTH 
+ */
+#define JAVACALL_UNKNOWN_LENGTH (-1)
+
+/**
  * @}
  */
 #ifdef __cplusplus
