@@ -122,8 +122,9 @@ INT_XML_FILES += $(INT_XML_DIR)/constants_open.xml
 endif
 
 # Over rides from PROJECT_MIDP_DIR
-ifeq ($(USE_MIDP_COM), true)
-INT_XML_FILES += $(PROJECT_MIDP_DIR)/src/configuration/configuration_xml/share/properties.xml
+ifneq ($(PROJECT_MIDP_DIR), $(MIDP_DIR))
+INT_XML_FILES += $(PROJECT_MIDP_DIR)/src/configuration/configuration_xml/share/properties.xml \
+                 $(PROJECT_MIDP_DIR)/src/configuration/configuration_xml/share/i18n_constants.xml
 else
 INT_XML_FILES += $(INT_COMMON_XML_DIR)/properties.xml 
 endif
