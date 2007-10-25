@@ -42,6 +42,9 @@ import javax.microedition.media.control.ToneControl;
 
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
+// #else
+import java.lang.*;
+import java.lang.reflect.*;
 // #endif ENABLE_CDC
 
 import com.sun.midp.lcdui.*;
@@ -453,10 +456,10 @@ public class Display {
     int[] region;
 
     /** The TextInputMediator which handles translating key presses */
-    protected TextInputSession inputSession;
+    TextInputSession inputSession;
 
     /** The PopupLayer that represents open state of this ChoiceGroup POPUP. */
-    protected PTILayer pt_popup;
+    PTILayer pt_popup;
 
     // #endif ENABLE_CHAMELEON
 
@@ -1789,7 +1792,6 @@ public class Display {
                 }
                 da.displayableLF.uSetRotatedStatus(wantRotation);
             if (hasForegroundCopy) {
-                newCurrent.uCallShow();
                 // #ifdef ENABLE_CHAMELEON
                 // We need to establish the new title and ticker so that
                 // the new displayable can lay itself out properly in its
@@ -1799,6 +1801,7 @@ public class Display {
                     newCurrent.lGetDisplayable(),
                     newCurrent.lGetDisplayable().getHeight());
                 // #endif ENABLE_CHAMELEON
+                newCurrent.uCallShow();
             } else {
                 newCurrent.uCallFreeze();
             }
@@ -1873,14 +1876,17 @@ public class Display {
      * @return <code>true</code>, if sound was played.
      */
     boolean playAlertSound(AlertType t) {
-
+        
         if (!paintSuspended && hasForeground) {
+            int note = 9 + 3 * t.getType();
+            int duration = 1000;
+            int volume = 80;
 // #ifndef ENABLE_CDC
             // SYNC NOTE: playing tones in parallel is okay, no locking
             // necessary
             try
             {
-                Manager.playTone(ToneControl.C4 + 9 + 3 * t.getType(), 1000, 80);
+                Manager.playTone(ToneControl.C4 + note, duration, volume);
             }
             catch( MediaException me )
             {
@@ -1888,9 +1894,25 @@ public class Display {
             }
             return true;
 // #else
-            // SYNC NOTE: playAlertSound is a native method, no locking
-            // necessary
-            return playAlertSound0(displayId, t.getType());
+            Class managerClass = null;
+            Class toneControlClass = null;
+            Method playToneMethod = null;
+	    try {
+                managerClass = Class.forName("javax.microedition.media.Manager");
+                playToneMethod = managerClass.getMethod("playTone", new Class[] { int.class, int.class, int.class });
+                toneControlClass = Class.forName("javax.microedition.media.control.ToneControl");
+                Field f = toneControlClass.getField("C4");
+                note += f.getInt(null);
+                playToneMethod.invoke(null, new Object[] { new Integer(note), new Integer(duration), new Integer(volume) });       
+                return true;
+            } catch (InvocationTargetException ite){
+            } catch (ClassNotFoundException cnfe) {
+            } catch (NoSuchFieldException nsf) {
+            } catch (NoSuchMethodException nsme) {
+            } catch (IllegalArgumentException iare) {
+            } catch (IllegalAccessException iace) {
+	    } 
+
 // #endif ENABLE_CDC
         }
 

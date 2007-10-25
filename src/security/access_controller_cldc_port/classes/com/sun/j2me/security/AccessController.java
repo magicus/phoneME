@@ -70,6 +70,18 @@ public final class AccessController {
         context = accessControlContext;
     }
 
+    /**
+     * Returns the access control context for the running application.
+     *
+     * @exception SecurityException if context has not been set yet
+     */
+    public static AccessControlContext getAccessControlContext() {
+        if (context == null) {
+            throw new SecurityException("Context not set");
+        }
+        return context;
+    }
+
     /** 
      * Determines whether the access request indicated by the
      * specified permission should be allowed or denied, based on
