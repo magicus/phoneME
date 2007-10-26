@@ -727,11 +727,12 @@ public final class System {
 	    security.checkPermission(new PropertyPermission(key,
 		SecurityConstants.PROPERTY_WRITE_ACTION));
 
-        if (sun.misc.CVM.callerCLIsMIDCLs()) {
-            return (String) midpProps.setProperty(key, value);
-        } else {
-            return (String) props.setProperty(key, value);
-        }
+        /* Need to set the property in 'midpProps' to allow 
+         * midlets to see properties set by the -D command line
+         * arugments.
+         */
+        midpProps.setProperty(key, value);
+        return (String) props.setProperty(key, value);
     }
 
     /**
