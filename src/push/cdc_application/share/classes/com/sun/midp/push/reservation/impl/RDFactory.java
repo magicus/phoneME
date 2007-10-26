@@ -52,6 +52,11 @@ public final class RDFactory implements ReservationDescriptorFactory {
             final String connectionName,
             final String filter, final AccessControlContext context)
                 throws IllegalArgumentException, ConnectionNotFoundException {
+        if(connectionName == null || connectionName.length() == 0) {
+            throw new IllegalArgumentException(
+                "Invalid connectionName=" + connectionName);
+        }
+
         final ConnectionName cn = ConnectionName.parse(connectionName);
         final ProtocolFactory pf = protocolRegistry.get(cn.protocol);
         if (pf == null) {
