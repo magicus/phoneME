@@ -152,7 +152,6 @@ public class Protocol extends ConnectionBase implements DatagramConnection,UDPDa
             throw new IllegalArgumentException("Protocol must start with \"//\" "+name);
         }
         name = name.substring(2);
-        host = getAddress(name);
 
        /*
         * If 'name' == null then we are a server endpoint at port 'port'
@@ -170,6 +169,7 @@ public class Protocol extends ConnectionBase implements DatagramConnection,UDPDa
             endpoint = new DatagramSocket();
         }
         else {
+	    host = getAddress(name);
             port = getPort(name);
             if(port <= 0) {
                 throw new IllegalArgumentException("Bad port number \"//\" "+name);

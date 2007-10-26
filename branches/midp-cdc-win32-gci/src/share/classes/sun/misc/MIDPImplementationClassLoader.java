@@ -59,7 +59,7 @@ public class MIDPImplementationClassLoader extends URLClassLoader{
 	PermissionCollection pc,
 	ClassLoader parent)
     {
-	super(base);
+	super(base, parent);
 	myBase = base;
 	perms = pc;
 	this.parent = parent;

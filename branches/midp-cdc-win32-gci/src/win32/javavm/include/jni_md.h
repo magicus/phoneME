@@ -36,7 +36,7 @@
 #define JNIIMPORT __declspec(dllimport)
 #define JNICALL
 
-#define JNI_LIB_PREFIX "lib"
+#define JNI_LIB_PREFIX ""
 #define JNI_LIB_SUFFIX ".dll"
 
 #if _MSC_VER >= 1300

@@ -35,7 +35,7 @@ endif
 #
 
 # prefix and postfix for shared libraries
-LIB_PREFIX		= lib
+LIB_PREFIX	=
 LIB_POSTFIX		= $(DEBUG_POSTFIX).dll
 LIB_LINK_POSTFIX	= $(DEBUG_POSTFIX).lib
 
