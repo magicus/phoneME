@@ -4083,6 +4083,25 @@ void ObjectHeap::iterate(ObjectHeapVisitor* visitor) {
 }
 #endif
 
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+
+bool ObjectHeap::contains_live(OopDesc** target) {
+  if (_heap_start <= target && target < _inline_allocation_top) {
+    return true;
+  }
+  if (_compiler_area_start <= target && target < _compiler_area_top) {
+    return true;
+  }
+#if USE_LARGE_OBJECT_AREA
+  if( LargeObject::contains( (LargeObject*) target ) ) {
+    return true;
+  }
+#endif
+  return false;
+}
+
+#endif
+
 #ifndef PRODUCT
 
 void ObjectHeap::verify_layout() {
@@ -4109,22 +4128,6 @@ void ObjectHeap::verify_layout() {
   GUARANTEE_R(DISTANCE(_heap_top, _heap_limit)
               == (int)(MimimumMarkingStackSize * sizeof(OopDesc*)),
               "Inconsistent minimum marking stack size");
-}
-
-
-bool ObjectHeap::contains_live(OopDesc** target) {
-  if (_heap_start <= target && target < _inline_allocation_top) {
-    return true;
-  }
-  if (_compiler_area_start <= target && target < _compiler_area_top) {
-    return true;
-  }
-#if USE_LARGE_OBJECT_AREA
-  if( LargeObject::contains( (LargeObject*) target ) ) {
-    return true;
-  }
-#endif
-  return false;
 }
 
 OopDesc* ObjectHeap::slow_object_start(OopDesc** target) {

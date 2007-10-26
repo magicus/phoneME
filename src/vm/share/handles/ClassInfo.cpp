@@ -46,10 +46,10 @@ jint ClassInfo::itable_size(int nof_interfaces, int nof_methods) {
        + nof_methods    * sizeof(jobject);
 }
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 void ClassInfo::print_name_on(Stream* st) {
-#if USE_DEBUG_PRINTING
+#if ENABLE_TTY_TRACE
   if (!check_valid_for_print(st)) {
     return;
   }
@@ -69,7 +69,7 @@ void ClassInfo::print_name_on(Stream* st) {
 }
 
 void ClassInfo::print_value_on(Stream* st) {
-#if USE_DEBUG_PRINTING
+#if ENABLE_TTY_TRACE
   st->print("ClassInfo ");
 
   ReturnOop raw_name = obj_field(name_offset());
@@ -80,6 +80,10 @@ void ClassInfo::print_value_on(Stream* st) {
   print_name_on(st);
 #endif
 }
+
+#endif
+
+#if !defined(PRODUCT)
 
 void ClassInfo::iterate(OopVisitor* visitor) {
 #if USE_OOP_VISITOR

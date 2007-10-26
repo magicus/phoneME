@@ -467,12 +467,18 @@ void JavaClass::iterate(OopVisitor* visitor) {
 #endif
 }
 
+#endif
+
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+
 void JavaClass::print_name_on(Stream* st) {
-#if USE_DEBUG_PRINTING
   ClassInfo::Raw info = class_info();
   info().print_name_on(st);
-#endif
 }
+
+#endif
+
+#if !defined(PRODUCT)
 
 void JavaClass::iterate_oopmaps(oopmaps_doer do_map, void* param) {
 #if USE_OOP_VISITOR

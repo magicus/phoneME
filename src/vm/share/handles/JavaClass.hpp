@@ -232,7 +232,9 @@ public:
   new_initialized_instance(InstanceClass* sender_class, Thread *t JVM_TRAPS);
 
   void iterate(OopVisitor* /*visitor*/) PRODUCT_RETURN;
-  void print_name_on(Stream*) PRODUCT_RETURN;
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE  
+  void print_name_on(Stream*);
+#endif
   static void iterate_oopmaps(oopmaps_doer /*do_map*/, void* /*param*/) 
                               PRODUCT_RETURN;
 

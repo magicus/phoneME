@@ -573,7 +573,11 @@ public:
   static int code_item_summary();
 
   // Testing
-  static bool contains_live(OopDesc** /*target*/) PRODUCT_RETURN0;
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+  static bool contains_live(OopDesc** /*target*/);
+#else
+  static bool contains_live(OopDesc** /*target*/) { return false; }
+#endif
   static bool contains_live(const OopDesc* target) {
     return contains_live((OopDesc**) target);
   }

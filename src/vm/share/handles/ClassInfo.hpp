@@ -318,9 +318,13 @@ class ClassInfo: public Oop {
   }
   void iterate_tables(OopROMVisitor* visitor);
 #endif
-#ifndef PRODUCT
+
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   void print_name_on(Stream* st);
   void print_value_on(Stream* st);
+#endif
+
+#if !defined(PRODUCT)
   void iterate(OopVisitor* visitor);
 
   static void iterate_oopmaps(oopmaps_doer do_map, void* param);
