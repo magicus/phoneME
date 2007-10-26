@@ -49,7 +49,16 @@
  *
  */
 
+#ifdef WINCE
+#include <winsock.h>
+#else
 #include <winsock2.h>
+#endif
+
+#ifndef WINSOCK_VERSION
+#define WINSOCK_VERSION MAKEWORD(1,1)
+#endif
+
 #ifdef SIO_DEBUG
 #include <stdio.h>
 #endif
