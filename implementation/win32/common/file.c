@@ -39,7 +39,21 @@
 
 #include <windows.h>
 
+/*
+ * This constants are defined in "WinBase.h" when using VS7 (2003) and VS8 (2005),
+ * but absent in Visual C++ 6 headers.
+ * For successful build with VC6 we need to define it manually.
+ */
 
+#ifndef INVALID_SET_FILE_POINTER
+#define INVALID_SET_FILE_POINTER ((DWORD)-1)
+#endif
+
+#ifndef INVALID_FILE_ATTRIBUTES
+#define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
+#endif
+
+ 
 /**
  * Creates null terminated version of string in externally allocated buffer
  *
