@@ -372,7 +372,8 @@ static void sio_add_client(SIO_SERVER * server, SOCKET client) {
         sio_debug("Expanding clients array");
         old_clients = server->clients.list;
         server->clients.length += SIO_CLIENTS_DELTA;
-        server->clients.list = malloc(server->clients.length * sizeof(SOCKET));
+        server->clients.list =
+	    (SOCKET *) malloc(server->clients.length * sizeof(SOCKET));
         for (i = 0; i < server->clients.count; i++) {
             server->clients.list[i] = old_clients[i];
         }
