@@ -148,7 +148,8 @@ INT_INVOKE_L10N_GENERATOR = \
 
 # All Configurator's input files
 SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
-	$(INT_XML_FILES)
+	$(INT_XML_FILES) \
+	$(PERMISSION_EXTENSIONS_LIST)
     
 # All Configurator's input files with path fixed for Win32 build
 INT_INPUT_FILES_FIXED = \
@@ -268,6 +269,17 @@ else
 GENERATE_PROPERTIES_H =
 endif
 
+# transformation for generating additional permissions
+GENERATE_PERMISSIONS_TABLE = \
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(INT_XSL_DIR)/cldc/permissions.xsl \
+	-params output java \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/security/PermissionsTable.java)` \
+	-xml $(INT_MERGED_XML_FILE) \
+	-xsl $(INT_XSL_DIR)/cldc/permissions.xsl \
+	-params output native \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/perm_number.h)`
+
 # transformation for genrating the i18n tables (both Java and C files).
 GENERATE_L10N_STRINGS = \
 	-xml $(INT_MERGED_XML_FILE) \
@@ -280,7 +292,8 @@ define generate_configuration
 		$(GENERATE_CONSTANTS_C) \
 		$(GENERATE_CONSTANTS_JAVA) \
 		$(GENERATE_PROPERTIES_CONFIGS) \
-		$(GENERATE_PROPERTIES_H)
+		$(GENERATE_PROPERTIES_H) \
+		$(GENERATE_PERMISSIONS_TABLE)
 	@echo " ... generating localized strings"
 	@$(INT_INVOKE_L10N_GENERATOR) \
 		$(GENERATE_L10N_STRINGS)

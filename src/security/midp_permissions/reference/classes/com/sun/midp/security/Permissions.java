@@ -200,16 +200,6 @@ public final class Permissions {
     /** javax.microedition.io.Connector.ProtectedSensor permission ID. */
     public static final int PROTECTED_SENSOR = 54;
 
-    /*
-     * IMPL_NOTE: if this value is changed, the appropriate change should be
-     * made in suitestore_installer.c under ENABLE_CONTROL_ARGS_FROM_JAD
-     * section. NUMBER_OF_PERMISSIONS was not moved to *.xml because it is
-     * never used in native in normal case (i.e. when
-     * ENABLE_CONTROL_ARGS_FROM_JAD=false).
-     */
-    /** Number of permissions. */
-    public static final int NUMBER_OF_PERMISSIONS = 55;
-
     /** Never allow the permission. */
     public static final byte NEVER = 0;
     /** Allow an permission with out asking the user. */
@@ -375,122 +365,12 @@ public final class Permissions {
         BLANKET, ONESHOT, ONESHOT, ONESHOT);
 
     /** Permission specifications. */
-    static final PermissionSpec[] permissionSpecs = {
-        new PermissionSpec(MIDP_PERMISSION_NAME, NEVER_GROUP),
-        new PermissionSpec(AMS_PERMISSION_NAME, NEVER_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.http",
-            NET_ACCESS_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.socket",
-            NET_ACCESS_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.https",
-            NET_ACCESS_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.ssl",
-            NET_ACCESS_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.serversocket",
-            NET_ACCESS_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.datagram",
-            NET_ACCESS_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.datagramreceiver",
-            NET_ACCESS_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.comm",
-            LOCAL_CONN_GROUP),
-        new PermissionSpec("javax.microedition.io.PushRegistry",
-            AUTO_INVOCATION_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.sms",
-            READ_MESSAGE_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.cbs",
-            READ_MESSAGE_GROUP),
-        new PermissionSpec("javax.wireless.messaging.sms.send",
-            SEND_MESSAGE_GROUP),
-        new PermissionSpec("javax.wireless.messaging.sms.receive",
-            READ_MESSAGE_GROUP),
-        new PermissionSpec("javax.wireless.messaging.cbs.receive",
-            READ_MESSAGE_GROUP),
-        new PermissionSpec("javax.microedition.media.control.RecordControl",
-            MULTIMEDIA_GROUP),
-        new PermissionSpec(
-            "javax.microedition.media.control.VideoControl.getSnapshot",
-            MULTIMEDIA_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.mms",
-            READ_MESSAGE_GROUP),
-        new PermissionSpec("javax.wireless.messaging.mms.send",
-            SEND_MESSAGE_GROUP),
-        new PermissionSpec("javax.wireless.messaging.mms.receive",
-            READ_MESSAGE_GROUP),
-        new PermissionSpec("javax.microedition.apdu.aid",
-            SMART_CARD_GROUP),
-        new PermissionSpec("javax.microedition.jcrmi",
-            SMART_CARD_GROUP),
-        new PermissionSpec(
-            "javax.microedition.securityservice.CMSMessageSignatureService",
-            AUTHENTICATION_GROUP),
-        new PermissionSpec("javax.microedition.apdu.sat",
-            SMART_CARD_GROUP),
-        new PermissionSpec("javax.microedition.content.ContentHandler",
-            AUTO_INVOCATION_GROUP),
-        new PermissionSpec("javax.microedition.pim.ContactList.read",
-            READ_USER_DATA_GROUP),
-        new PermissionSpec("javax.microedition.pim.ContactList.write",
-            WRITE_USER_DATA_GROUP),
-        new PermissionSpec("javax.microedition.pim.EventList.read",
-            READ_USER_DATA_GROUP),
-        new PermissionSpec("javax.microedition.pim.EventList.write",
-            WRITE_USER_DATA_GROUP),
-        new PermissionSpec("javax.microedition.pim.ToDoList.read",
-            READ_USER_DATA_GROUP),
-        new PermissionSpec("javax.microedition.pim.ToDoList.write",
-            WRITE_USER_DATA_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.file.read",
-            READ_USER_DATA_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.file.write",
-            WRITE_USER_DATA_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.obex.client",
-            LOCAL_CONN_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.obex.server",
-            LOCAL_CONN_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.obex.client.tcp",
-            LOCAL_CONN_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.obex.server.tcp",
-            LOCAL_CONN_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.bluetooth.client",
-            LOCAL_CONN_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.bluetooth.server",
-            LOCAL_CONN_GROUP),
-        new PermissionSpec("javax.microedition.location.Location",
-            LOCATION_GROUP),
-        new PermissionSpec("javax.microedition.location.Orientation",
-            LOCATION_GROUP),
-        new PermissionSpec("javax.microedition.location.ProximityListener",
-            LOCATION_GROUP),
-        new PermissionSpec("javax.microedition.location.LandmarkStore.read",
-            LANDMARK_GROUP),
-        new PermissionSpec("javax.microedition.location.LandmarkStore.write",
-            LANDMARK_GROUP),
-        new PermissionSpec(
-            "javax.microedition.location.LandmarkStore.category",
-            LANDMARK_GROUP),
-        new PermissionSpec(
-            "javax.microedition.location.LandmarkStore.management",
-            LANDMARK_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.sip",
-            CALL_CONTROL_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.sips",
-            CALL_CONTROL_GROUP),
-        new PermissionSpec("javax.microedition.payment.process",
-            ID_ALLOWED_GROUP),
-        new PermissionSpec(
-            "javax.microedition.amms.control.camera.enableShutterFeedback",
-            MULTIMEDIA_GROUP),
-        new PermissionSpec(
-            "javax.microedition.amms.control.tuner.setPreset",
-            WRITE_USER_DATA_GROUP),
-        new PermissionSpec("javax.microedition.io.Connector.sensor",
-            SENSOR_GROUP),
-        new PermissionSpec("javax.microedition.sensor.PrivateSensor",
-            SENSOR_GROUP),
-        new PermissionSpec("javax.microedition.sensor.ProtectedSensor",
-            SENSOR_GROUP)
-    };
+    static final PermissionSpec[] permissionSpecs =
+        PermissionsTable.permissionSpecs;
+
+    /** Number of permissions. */
+    public static final int NUMBER_OF_PERMISSIONS =
+        PermissionsTable.NUMBER_OF_PERMISSIONS;
 
     /**
      * Get the name of a permission.
