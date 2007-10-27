@@ -403,7 +403,7 @@ class Bytecodes: public AllStatic {
     // 3. call a runtime function on a target where call instruction saves
     //    return address in a fixed register.
     // 4. use uncommon trap
-#if ENABLE_THUMB_COMPILER || HITACHI_SH
+#if ENABLE_THUMB_COMPILER || defined (HITACHI_SH)
     SoftLong        = Exceptions,
 #else
     SoftLong        = 0,

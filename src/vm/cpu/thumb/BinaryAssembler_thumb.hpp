@@ -208,167 +208,9 @@ protected:
   void ensure_compiled_method_space(int delta = 0);
 
   // branch support
-
-  // Labels are used to refer to (abstract) machine code locations.
-  // They encode a location >= 0 and a state (free, bound, linked).
-  // If code-relative locations are used (e.g. offsets from the
-  // start of the code, Labels are relocation-transparent, i.e.,
-  // the code can be moved around even during code generation (GC).
-  class Label {
-   public:
-    int _encoding;
-   private:
-    void check(int position) { 
-      GUARANTEE(position >= 0, "illegal position"); 
-      (void)position;
-    }
-    friend class CodeGenerator;
-    friend class CompilationQueueElement;
-    friend class Compiler;
-    friend class Entry;
-    friend class BinaryAssembler;
-
-   public:
-    // manipulation
-    void unuse() { 
-      _encoding = 0; 
-    }
-    void link_to(int position) { 
-      check(position); 
-      _encoding = - position - 1; 
-    }
-    void bind_to(int position) { 
-      check(position); 
-      _encoding =   position + 1; }
-
-    // accessors
-    int  position () const { 
-      return abs(_encoding) - 1; 
-    } // -1 if free label
-    bool is_unused() const { return _encoding == 0; }
-    bool is_linked() const { return _encoding <  0; }
-    bool is_bound () const { return _encoding >  0; }
-
-    // creation/destruction
-    Label()                { unuse(); }
-    ~Label()               { /* do nothing for now */ }
-
-#ifndef PRODUCT
-    void print_value_on(Stream*);
-    void p();
-#endif
-  };
-
+  typedef BinaryLabel Label;
   class NearLabel : public Label {};
   
-public:
-  class LiteralPoolElementDesc: public MixedOopDesc {
-  public:
-    LiteralPoolElementDesc *_next;
-    OopDesc *_literal_oop;
-    jint     _bci;
-    jint     _label;
-    jint     _literal_int;
-
-    bool is_bound() const {
-      return _bci != 0x7fffffff;
-    }
-
-    bool matches(OopDesc* oop, int imm32) const {
-      return oop == _literal_oop && imm32 == _literal_int;
-    }
-  };
-
-  class LiteralPoolElement: public MixedOop {
-  public:
-    HANDLE_DEFINITION(LiteralPoolElement, MixedOop);
-
-    static size_t allocation_size() {
-      return align_allocation_size(sizeof(LiteralPoolElementDesc));
-    }
-    static size_t pointer_count() { return 2; }
-
-  public:
-    // To avoid endless lists of friends the static offset computation
-    // routines are all public.
-    static jint next_offset() {
-      return FIELD_OFFSET(LiteralPoolElementDesc, _next);
-    }
-    static jint literal_oop_offset() {
-      return FIELD_OFFSET(LiteralPoolElementDesc, _literal_oop);
-    }
-    static jint bci_offset() {
-      return FIELD_OFFSET(LiteralPoolElementDesc, _bci);
-    }
-    static jint label_offset() {
-      return FIELD_OFFSET(LiteralPoolElementDesc, _label);
-    }
-    static jint literal_int_offset() {
-      return FIELD_OFFSET(LiteralPoolElementDesc, _literal_int);
-    }
-
-  private:
-    enum { 
-      // BCI indicating this literal is still unbound.
-      not_yet_defined_bci = 0x7fffffff
-    };
-
-  public:
-    // Note that the bci() field is used as a convenience.  
-    // If the label is unbound, then bci() == 0x7fffffff
-    // If the label is bound, then bci()  is the same as the label's position.
-
-    int bci() const {
-      return int_field(bci_offset());
-    }
-    void set_bci(int i) {
-      int_field_put(bci_offset(), i);
-    }
-
-    int literal_int() const {
-      return int_field(literal_int_offset());
-    }
-    void set_literal_int(int i) {
-      int_field_put(literal_int_offset(), i);
-    }
-
-    Label label() const {
-      Label L; 
-      L._encoding = int_field(label_offset()); 
-      return L;
-    }
-
-    int label_pos() const {
-      return label().position();
-    }
-
-    void set_label(Label& value) {
-      int_field_put(label_offset(), value._encoding); 
-    }
-
-    ReturnOop next() const  {
-      return obj_field(next_offset());
-    }
-    void set_next(const Oop* oop) {
-      obj_field_put(next_offset(), oop);
-    }
-
-    ReturnOop literal_oop() const {
-      return obj_field(literal_oop_offset());
-    }
-    void set_literal_oop(const Oop *oop) {
-      obj_field_put(literal_oop_offset(), oop);
-    }
-    
-    bool is_bound() const {
-      return ((LiteralPoolElementDesc*)obj())->is_bound();
-    }
-
-  public:
-    static ReturnOop allocate(const Oop* oop, int imm32 JVM_TRAPS);
-    void iterate(OopVisitor* /*visitor*/) PRODUCT_RETURN;
-  };
-
 public:
   void branch_helper(Label& L, bool link, bool near, Condition cond);
   void branch_helper(CompilationQueueElement* cqe,
@@ -512,7 +354,7 @@ public:
     }
     
     if (_first_unbound_branch_literal.not_null()) {
-      int branch_pos = _first_unbound_branch_literal().label_pos();
+      const int branch_pos = _first_unbound_branch_literal().label_position();
       return ((_code_offset - branch_pos) >= 200);
     }
     return false;

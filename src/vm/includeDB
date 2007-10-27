@@ -1285,7 +1285,7 @@ SourceAssembler_<iarch>.cpp      ObjectHeap_<iarch>.hpp
 SourceAssembler_<iarch>.cpp      GPTableGenerator_<iarch>.hpp
 #endif
 
-BinaryAssembler_<carch>.hpp      MixedOop.hpp
+BinaryAssembler_<carch>.hpp      LiteralPoolElement.hpp
 BinaryAssembler_<carch>.hpp      Assembler_<carch>.hpp
 BinaryAssembler_<carch>.hpp      CompiledMethod.hpp
 BinaryAssembler_<carch>.hpp      Relocation.hpp
@@ -1304,6 +1304,15 @@ BinaryAssembler_<carch>.cpp      Compiler.hpp
 Instructions_<carch>.hpp         Allocation.hpp
 Instructions_<carch>.hpp         Compiler.hpp
 Instructions_<carch>.cpp         Instructions_<carch>.hpp
+
+BinaryLabel.cpp                  Compiler.hpp
+
+LiteralPoolElementDesc.hpp       GlobalDefinitions.hpp
+LiteralPoolElementDesc.hpp       MixedOopDesc.hpp
+LiteralPoolElement.hpp           LiteralPoolElementDesc.hpp
+LiteralPoolElement.hpp           MixedOop.hpp
+LiteralPoolElement.hpp           BinaryLabel.hpp
+LiteralPoolElement.cpp           Compiler.hpp
 
 // Natives
 BuildFlags.hpp                   BuildFlags_<os_family>.hpp

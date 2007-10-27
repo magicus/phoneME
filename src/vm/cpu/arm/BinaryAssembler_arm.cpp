@@ -66,35 +66,6 @@ void BinaryAssembler::save_state(CompilerState *compiler_state) {
   _relocation.save_state(compiler_state);
 }
 
-ReturnOop
-BinaryAssembler::LiteralPoolElement::allocate(const Oop* oop, 
-                                              int imm32 JVM_TRAPS) {
-  if (ObjectHeap::free_memory_for_compiler_without_gc() > allocation_size()) {
-    // We can allocate only if we have enough space -- there are
-    // many RawLocation operations in VirtualStackFrame that would
-    // fail if a GC happens.
-    AllocationDisabler allocation_not_allowed_in_this_block;
-    LiteralPoolElement::Raw result = Universe::new_mixed_oop_in_compiler_area(
-                                MixedOopDesc::Type_LiteralPoolElement,
-                                allocation_size(), pointer_count()
-                                JVM_MUST_SUCCEED);
-
-    result().set_literal_int(imm32);
-    result().set_literal_oop(oop);
-    result().set_bci(not_yet_defined_bci);
-
-    return result;
-  } else {
-    // IMPL_NOTE: We ought to set a flag that just says to recompile this
-    // Or get the code to work even when a GC happens
-    CodeGenerator* cg = Compiler::current()->code_generator();
-    while (!cg->has_overflown_compiled_method()) {
-      cg->nop(); cg->nop();
-    }
-    return NULL;
-  }
-}
-
 // Usage of Labels
 //
 // free  : label has not been used yet
@@ -667,31 +638,6 @@ void BinaryAssembler::comment(const char* fmt, ...) {
     _relocation.emit_comment(_code_offset, buffer);
   }
 }
-
-void BinaryAssembler::LiteralPoolElement::print_value_on(Stream*s) {
-#if USE_COMPILER_COMMENTS
-  s->print("<LiteralPoolElement: ");
-  if (is_bound()) { 
-    s->print("bci=%d, ", bci());
-  } else { 
-    s->print("unbound, ", bci());
-  }
-  UsingFastOops fast_oops;
-  Oop::Fast oop = literal_oop();
-  int imm32     = literal_int();
-  if (oop.is_null()) { 
-    s->print("imm32=%d >", imm32);
-  } else { 
-    s->print("immoop=[");
-    oop.print_value_on(s);
-    if (imm32 != 0) { 
-      s->print(" + %d", imm32);
-    }
-    s->print("] >");
-  }
-#endif
-}
-
 #endif // !defined(PRODUCT) || USE_COMPILER_COMMENTS
 
 #if ENABLE_NPCE

@@ -62,6 +62,7 @@
 #define BinaryAssembler  JVMBinaryAssembler
 #define BinaryFileStream  JVMBinaryFileStream
 #define BinaryFileStreamState  JVMBinaryFileStreamState
+#define BinaryLabel  JVMBinaryLabel
 #define BinaryObjectWriter  JVMBinaryObjectWriter
 #define BinaryROMWriter  JVMBinaryROMWriter
 #define Bitset  JVMBitset
@@ -237,6 +238,9 @@
 #define LinkedBasicOop  JVMLinkedBasicOop
 #define LiteralAccessor  JVMLiteralAccessor
 #define LiteralElementStream  JVMLiteralElementStream
+#define LiteralPoolElement	JVMLiteralPoolElement
+#define LiteralPoolElementDesc	JVMLiteralPoolElementDesc
+#define LiteralPoolElement	JVMLiteralPoolElement
 #define LiteralStream  JVMLiteralStream
 #define LiveRange  JVMLiveRange
 #define LoaderContext  JVMLoaderContext

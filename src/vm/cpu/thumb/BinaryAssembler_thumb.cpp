@@ -81,41 +81,6 @@ void BinaryAssembler::save_state(CompilerState *compiler_state) {
   _relocation.save_state(compiler_state);
 }
 
-ReturnOop
-BinaryAssembler::LiteralPoolElement::allocate(const Oop* oop, 
-                                              int imm32 JVM_TRAPS) {
-
-  if (ObjectHeap::free_memory_for_compiler_without_gc() > allocation_size()) {
-    // We can allocate only if we have enough space -- there are
-    // many RawLocation operations in VirtualStackFrame that would
-    // fail if a GC happens.
-    AllocationDisabler::suspend();
-    LiteralPoolElement::Raw result = 
-        Universe::new_mixed_oop_in_compiler_area(
-                                MixedOopDesc::Type_LiteralPoolElement,
-                                allocation_size(), pointer_count()
-                                JVM_MUST_SUCCEED);
-
-    AllocationDisabler::resume();
-    GUARANTEE(!CURRENT_HAS_PENDING_EXCEPTION, "must not fail");
-
-    result().set_literal_int(imm32);
-    result().set_literal_oop(oop);
-    result().set_bci(not_yet_defined_bci);
-
-    return result;
-
-  } else {
-    // IMPL_NOTE: consider whether it should be fixed. 
-    CodeGenerator* cg = Compiler::current()->code_generator();
-    while (!cg->has_overflown_compiled_method()) {
-      cg->nop(); cg->nop();
-      cg->nop(); cg->nop();
-    }
-    return NULL;
-  }
-}
-
 // Usage of Labels
 //
 // free  : label has not been used yet
@@ -768,50 +733,6 @@ void BinaryAssembler::comment(const char* fmt, ...) {
   } else if (GenerateCompilerComments) {
     _relocation.emit_comment(_code_offset, buffer);
   }
-}
-
-// This method is called by MixedOop::iterate() after iterating the
-// header part of MixedOop
-void BinaryAssembler::LiteralPoolElement::iterate(OopVisitor* visitor) {
-  if (literal_oop() != NULL) {
-    NamedField id("oop", true);
-    visitor->do_oop(&id, literal_oop_offset(), true);
-  }
-  if (is_bound()) { 
-    NamedField id("bound bci", true);
-    visitor->do_int(&id, bci_offset(), true);
-  }
-  if (literal_oop() == NULL) { 
-    NamedField id("imm32", true);
-    visitor->do_int(&id, literal_int_offset(), true);
-  }
-  {
-    NamedField id("label", true);
-    visitor->do_int(&id, label_offset(), true);
-  }
-
-  // IMPL_NOTE: use OopPrinter API
-  Label lab = label();
-  lab.print_value_on(tty);
-}
-
-void BinaryAssembler::Label::print_value_on(Stream *s) {
-  BinaryAssembler *ba = Compiler::code_generator();
-  s->print("encoding = %d (0x%x)", _encoding, _encoding);
-  if (is_unused()) {
-    s->print_cr(" unused");
-  } else {
-    int pos = position();
-    if (is_linked()) {
-      s->print_cr(" linked, pos=%d, addr=0x%x",  pos, ba->addr_at(pos));
-    } else {
-      GUARANTEE(is_bound(), "sanity");
-      s->print_cr(" bound, pos=%d, addr=0x%x",  pos, ba->addr_at(pos));
-    }
-  }
-}
-void BinaryAssembler::Label::p() {
-  print_value_on(tty);
 }
 #endif // PRODUCT
 

@@ -40,7 +40,7 @@ public:
     inline type* name ( void ) const { return (type*) &_##name; } \
     inline void set_##name ( type* val ) { _##name = (type##Desc*) val->obj(); }
 
-#if defined(ARM) || defined(HITACHI_SH) || ENABLE_THUMB_COMPILER
+#if USE_LITERAL_POOL
   FIELD( Oop, first_literal             )
   FIELD( Oop, first_unbound_literal     )
   FIELD( Oop, last_literal              )
@@ -78,7 +78,7 @@ public:
   FIELD( int, task_id                   )
 #endif
 
-#if defined(ARM) || defined(HITACHI_SH) || ENABLE_THUMB_COMPILER
+#if USE_LITERAL_POOL
   FIELD( int, unbound_literal_count                     )
   FIELD( int, code_offset_to_force_literals             )
   FIELD( int, code_offset_to_desperately_force_literals )

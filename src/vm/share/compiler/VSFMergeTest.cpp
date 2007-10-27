@@ -771,7 +771,7 @@ void VSFMergeTester::verify_merge() {
 
 void VSFMergeTester::cleanup() {
 #if USE_COMPILER_LITERALS_MAP
-  BinaryAssembler::LiteralPoolElement last_literal = _state->last_literal();
+  LiteralPoolElement last_literal = _state->last_literal();
   // Discard all literals appended by the VSFMergeTester.
   if (last_literal.not_null()) {
     Oop null_oop;

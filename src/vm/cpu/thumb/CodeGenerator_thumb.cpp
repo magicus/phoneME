@@ -101,7 +101,7 @@ void CodeGenerator::load_task_mirror(Oop*klass, Value& statics_holder,
     Label class_is_initialized, need_init;
     // Can we make the flush conditional for  get/put static ? 
     //  see if register usage cross compiled bytecode.
-    frame()->flush();
+    frame()->flush(JVM_SINGLE_ARG_CHECK);
     // check for no task mirror at all.
     tst(statics_holder.lo_register(), statics_holder.lo_register());
     b(need_init, eq);
@@ -144,7 +144,7 @@ void CodeGenerator::check_cib(Oop *klass JVM_TRAPS){
   Label class_is_initialized, need_init;
   // IMPL_NOTE: Cannot make the flush conditionally.
   //  see how this can be made conditional!
-  frame()->flush();
+  frame()->flush(JVM_SINGLE_ARG_CHECK);
 
   // add to the klass oop to get the address of the appropriate
   // task mirror table entry

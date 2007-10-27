@@ -825,6 +825,9 @@
 #  define ARM_EXECUTABLE 0
 #endif
 
+//
+// USE_LITERAL_POOL                   Compiled code needs a literal pool
+//
 // USE_COMPILER_FPU_MAP               If true, the VirtualStackFrame class
 //                                    include extra information for FPU
 //                                    registers.
@@ -832,19 +835,17 @@
 // USE_COMPILER_LITERALS_MAP          If true, the VirtualStackFrame class
 //                                    include extra information for literals.
 
-#if !defined(ARM) && !defined(HITACHI_SH)
-#  define USE_COMPILER_FPU_MAP 1
-#else
-#  define USE_COMPILER_FPU_MAP 0
-#endif
+#define USE_LITERAL_POOL \
+  ( ENABLE_COMPILER && ( defined(ARM) || defined(HITACHI_SH) ) )
+
+#define USE_COMPILER_FPU_MAP     !USE_LITERAL_POOL
+#define USE_COMPILER_LITERALS_MAP USE_LITERAL_POOL
 
 #if ENABLE_COMPILER || ENABLE_ROM_GENERATOR || ENABLE_INTERPRETER_GENERATOR
 #  define USE_COMPILER_STRUCTURES 1
 #else
 #  define USE_COMPILER_STRUCTURES 0
 #endif
-
-#define USE_COMPILER_LITERALS_MAP (ARM | defined(HITACHI_SH))
 
 #if ENABLE_COMPILER && defined(ARM) && !ENABLE_EMBEDDED_CALLINFO
 #  define USE_COMPILER_GLUE_CODE 1
@@ -1164,3 +1165,4 @@
 #define USE_HIGH_RESOLUTION_TIMER (ENABLE_PERFORMANCE_COUNTERS ||\
   ENABLE_PROFILER || ENABLE_WTK_PROFILER || ENABLE_TTY_TRACE ||\
   USE_EVENT_LOGGER)
+
