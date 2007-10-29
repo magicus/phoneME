@@ -46,7 +46,7 @@ endif
 endif
 endif
 
-PCSL_TARGET_DIR  = $(PCSL_OUTPUT_DIR)/$(TARGET_OS)_$(TARGET_CPU)
+PCSL_TARGET_DIR ?= $(PCSL_OUTPUT_DIR)/$(TARGET_OS)_$(TARGET_CPU)
 LD_FLAGS	      += -libpath:$(EVC_LIB_PATH) \
                    -libpath:`$(call fixcygpath, $(PCSL_TARGET_DIR)/lib)` \
                    -libpath:`$(call fixcygpath, $(CDC_DIST_DIR)/bin)`
