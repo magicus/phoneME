@@ -31,7 +31,7 @@ printconfig::
 	@echo "PCSL_DIR           = $(PCSL_DIR)"
 
 # Build PCSL before MIDP.
-initbuild_profile::
+initbuild_profile:: $(PCSL_DEPENDENCIES)
 	@echo "====> start pcsl build"
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     PCSL_PLATFORM=$(PCSL_PLATFORM) \
@@ -71,7 +71,7 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             USE_DIRECTDRAW=$(USE_DIRECTDRAW) \
 	             USE_SSL=$(USE_SSL) USE_CONFIGURATOR=$(USE_CONFIGURATOR) \
 	             USE_VERBOSE_MAKE=$(USE_VERBOSE_MAKE) \
-	             PCSL_PLATFORM=$(PCSL_PLATFORM) \
+	             PCSL_TARGET_DIR=$(PCSL_OUTPUT_DIR)/$(PCSL_TARGET) \
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
 	             MIDP_CLASSES_ZIP=$(MIDP_CLASSES_ZIP) \
                      MIDP_PRIV_CLASSES_ZIP=$(MIDP_PRIV_CLASSES_ZIP) \
@@ -85,6 +85,7 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             USE_OEM_PUSH=$(USE_OEM_PUSH) \
 	             OEM_PUSH_DIR=$(OEM_PUSH_DIR) \
 	             JSR_MIDP_INITIALIZER_LIST="$(subst .Initializer,.MIDPInitializer,$(JSR_INITIALIZER_LIST))" \
+	             PERMISSION_EXTENSIONS_LIST="$(PERMISSION_EXTENSIONS_LIST)" \
 	             COMPONENTS_DIR=$(COMPONENTS_DIR) \
 	             PROJECT_MIDP_DIR=$(PROJECT_MIDP_DIR) \
 	             rom -C $(MIDP_DIR)/$(MIDP_MAKEFILE_DIR)
@@ -105,7 +106,7 @@ $(CVM_DERIVEDROOT)/classes/sun/misc/$(MIDP_PKG_CHECKER):
 #
 # Build the source bundle
 #
-source_bundle:: $(CVM_BUILD_DEFS_MK)
+source_bundle:: $(CVM_BUILD_DEFS_MK) 
 	$(AT)$(MAKE) $(MAKE_NO_PRINT_DIRECTORY) \
 		     JDK_DIR=$(JDK_DIR) TARGET_VM=$(TARGET_VM) \
 	             TARGET_CPU=$(TARGET_CPU) USE_DEBUG=$(USE_DEBUG) \
@@ -159,7 +160,7 @@ $(RUNMIDLET): force_midp_build
 	             USE_DIRECTDRAW=$(USE_DIRECTDRAW) \
 	             USE_SSL=$(USE_SSL) USE_CONFIGURATOR=$(USE_CONFIGURATOR) \
 	             USE_VERBOSE_MAKE=$(USE_VERBOSE_MAKE) \
-	             PCSL_PLATFORM=$(PCSL_PLATFORM) \
+	             PCSL_TARGET_DIR=$(PCSL_OUTPUT_DIR)/$(PCSL_TARGET) \
 	             GNU_TOOLS_BINDIR=$(GNU_TOOLS_BINDIR) \
 	             MIDP_CLASSES_ZIP=$(MIDP_CLASSES_ZIP) \
                      MIDP_PRIV_CLASSES_ZIP=$(MIDP_PRIV_CLASSES_ZIP) \
