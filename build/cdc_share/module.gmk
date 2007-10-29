@@ -27,8 +27,8 @@
 # start dirs for java source trees
 ABSTRACTIONS_CDC_JAVASRCDIRS = \
         $(ABSTRACTIONS_DIR)/src/cdc_share/classes
-        
-# dirs containing hative header files (.h)
+
+# dirs containing native header files (.h)
 ABSTRACTIONS_INCLUDE_DIRS += \
     $(ABSTRACTIONS_DIR)/src/share/include \
     $(ABSTRACTIONS_DIR)/src/cdc_share/native/include
@@ -36,7 +36,7 @@ ABSTRACTIONS_INCLUDE_DIRS += \
 # dirs containing native source files
 ABSTRACTIONS_SRCDIRS += \
 	$(ABSTRACTIONS_DIR)/src/cdc_share/native/share \
-  	$(ABSTRACTIONS_DIR)/src/cdc_share/native/$(TARGET_OS)
+	$(ABSTRACTIONS_DIR)/src/cdc_share/native/$(TARGET_OS)
 
 ABSTRACTIONS_NATIVES += \
 	os_sync.c \
@@ -121,10 +121,10 @@ ABSTRACTIONS_CLASSES += \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/crypto/Key.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/dialog/Dialog.java \
     $(ABSTRACTIONS_CDC_JAVASRCDIRS)/com/sun/j2me/dialog/MessageDialog.java
-    
+
 CVM_CNI_CLASSES += com.sun.j2me.crypto.ARC4 \
                    com.sun.j2me.crypto.RSA
-    
+
 endif
 
 ABSTRACTIONS_WRAPPER_CLASSES += \
@@ -201,30 +201,37 @@ $(MKSTUBS_TOOL): $(MKSTUBS_TOOL_SRC)
         $(MKSTUBS_TOOL_SRC)
 	$(AT)echo "Main-Class: com.sun.utils.mkstubs.MkStubs" >$(MKSTUBS_TOOL_DIR)/manifest.txt
 	$(AT)$(CVM_JAR) cfm $@ $(MKSTUBS_TOOL_DIR)/manifest.txt -C $(MKSTUBS_TOOL_DIR)/mkstubs_classes .
-    
+
 ABSTRACTIONS_AGENT_JAR = $(JSROP_LIB_DIR)/abstractions_agent.jar
 JSROP_AGENT_JARS += $(ABSTRACTIONS_AGENT_JAR)
 
-$(ABSTRACTIONS_AGENT_JAR): $(CVM_BUILDTIME_CLASSESZIP) $(MIDP_CLASSES_ZIP) $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes
+ABSTRACTIONS_BOOTCLASSPATH_DEPS = $(CVM_BUILDTIME_CLASSESZIP)
+ifneq ($(CVM_PRELOAD_LIB),true)
+ABSTRACTIONS_BOOTCLASSPATH_DEPS += $(LIB_CLASSESJAR)
+endif
+ABSTRACTIONS_BOOTCLASSPATH = $(subst $(space),$(PS),$(ABSTRACTIONS_BOOTCLASSPATH_DEPS))
+
+$(ABSTRACTIONS_AGENT_JAR): $(ABSTRACTIONS_BOOTCLASSPATH_DEPS) $(MIDP_CLASSES_ZIP) \
+			   $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes
 	@echo "Compiling JSROP abstractions' agent classes..."
 	$(AT)mkdir -p $(ABSTRACTIONS_GENERATED_DIR)/agent_classes
 	$(AT)if test "`cat $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes`" != ""; then \
     $(JAVAC_CMD) \
         -d $(ABSTRACTIONS_GENERATED_DIR)/agent_classes \
-        -bootclasspath $(CVM_BUILDTIME_CLASSESZIP) \
-		-classpath $(MIDP_CLASSES_ZIP)\
+        -bootclasspath $(ABSTRACTIONS_BOOTCLASSPATH) \
+	-classpath $(MIDP_CLASSES_ZIP)\
         `cat $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes`; \
     fi
 	$(AT)$(CVM_JAR) cf $@ -C $(ABSTRACTIONS_GENERATED_DIR)/agent_classes .
 
 $(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes $(ABSTRACTIONS_GENERATED_DIR)/.agent_classes: \
-                             $(CVM_BUILDTIME_CLASSESZIP) $(MIDP_CLASSES_ZIP) $(MKSTUBS_TOOL)
+                             $(ABSTRACTIONS_BOOTCLASSPATH_DEPS) $(MIDP_CLASSES_ZIP) $(MKSTUBS_TOOL)
 	@echo "Generating JSROP abstractions' proxy&agent classes..."
 	$(AT)rm -rf $(ABSTRACTIONS_GENERATED_DIR)/proxy_java
 	$(AT)mkdir -p $(ABSTRACTIONS_GENERATED_DIR)/proxy_java
 	$(AT)rm -rf $(ABSTRACTIONS_GENERATED_DIR)/agent_java
 	$(AT)mkdir -p $(ABSTRACTIONS_GENERATED_DIR)/agent_java
-	$(AT)$(JAVA_CMD) -Xbootclasspath/a:$(CVM_BUILDTIME_CLASSESZIP) \
+	$(AT)$(JAVA_CMD) -Xbootclasspath/a:$(ABSTRACTIONS_BOOTCLASSPATH) \
         -jar $(MKSTUBS_TOOL) \
         -jarpath $(MIDP_CLASSES_ZIP) \
         -d $(ABSTRACTIONS_GENERATED_DIR)/proxy_java \
@@ -238,3 +245,6 @@ $(ABSTRACTIONS_GENERATED_DIR)/.proxy_classes $(ABSTRACTIONS_GENERATED_DIR)/.agen
 # Copy and filter abstractions source in ABSTRACTIONS_SOURCE_OUTPUT_DIR
 abstractions_source_bundle:: $(ABSTRACTIONS_DIR)
 	$(AT)$(call source_bundle_filter,$(ABSTRACTIONS_DIR),$(ABSTRACTIONS_SOURCE_OUTPUT_DIR),src/cdc_share build/cdc_share )
+
+clean::
+	rm -rf $(ABSTRACTIONS_BUILD_DIR)
