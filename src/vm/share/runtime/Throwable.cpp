@@ -67,12 +67,24 @@ void Throwable::print_stack_trace() {
         tty->print(" - ");
         InstanceClass::Raw ic = m().holder();
         Symbol::Raw class_name = ic().name();
+
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+        // Non-public classes in a romized image may be renamed to
+        // .unknown. to save space. In non-product mode, to aid
+        // debugging, we retrieve the original name using
+        // ROM::get_original_method_name().
+        if (class_name().equals(Symbols::unknown())) {
+          ClassInfo::Raw class_info = ic().class_info();
+          class_name = ROM::get_original_class_name(&class_info);
+        }
+#endif
+
         class_name().print_symbol_on(tty, true);
         tty->print(".");
 
         Symbol::Raw name = m().name();
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
         // Non-public methods in a romized image may be renamed to
         // .unknown. to save space. In non-product mode, to aid
         // debugging, we retrieve the original name using

@@ -2723,7 +2723,7 @@ void Method::print_name_to(char *buffer, int max_length) {
 #endif
 
 #if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR || \
-        ENABLE_PERFORMANCE_COUNTERS ||ENABLE_JVMPI_PROFILE
+        ENABLE_PERFORMANCE_COUNTERS ||ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
 ReturnOop Method::get_original_name(bool& renamed) const {
   Symbol::Raw n = name();
 

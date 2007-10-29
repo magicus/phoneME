@@ -671,7 +671,7 @@ bool Universe::bootstrap_with_rom(const JvmPathChar* classpath) {
   Task::init_first_task(JVM_SINGLE_ARG_CHECK_0);
 #endif
 
-#if !defined(PRODUCT) || ENABLE_JVMPI_PROFILE
+#if !defined(PRODUCT) || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
   {
     const int task = ObjectHeap::start_system_allocation();
     ROM::init_debug_symbols(JVM_SINGLE_ARG_NO_CHECK);

@@ -738,7 +738,7 @@ public:
                         JVM_TRAPS);
 
 #if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR || \
-       ENABLE_PERFORMANCE_COUNTERS || ENABLE_JVMPI_PROFILE
+       ENABLE_PERFORMANCE_COUNTERS || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
   ReturnOop get_original_name(bool& renamed) const ;
   // Print the name of the method in <class>.<name>() format. The
   // method signature is printed only if necessary (to distinguish between

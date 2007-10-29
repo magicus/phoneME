@@ -339,7 +339,7 @@ public:
                PRODUCT_RETURN0;
 #endif
 
-#if ENABLE_JVMPI_PROFILE
+#if ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
   static ReturnOop get_original_class_name(ClassInfo* /*clsinfo*/);
   static ReturnOop get_original_method_name(const Method* /*method*/);
   static ReturnOop get_original_fields(InstanceClass* /*ic*/);
@@ -597,7 +597,7 @@ private:
   static void relocate_pointer_to_heap(OopDesc** p);
   static void decompress_strings();
 
-#if ENABLE_JVMPI_PROFILE
+#if ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
   static void initialize_original_class_name_list(JVM_SINGLE_ARG_TRAPS);
 
   static void initialize_original_method_info_list(JVM_SINGLE_ARG_TRAPS);
@@ -666,7 +666,7 @@ public:
  *===================================================================*/
 
 #if !defined(PRODUCT) || USE_PRODUCT_BINARY_IMAGE_GENERATOR \
-       || ENABLE_JVMPI_PROFILE
+       || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
   /*
    * [Original Class Names]
    *

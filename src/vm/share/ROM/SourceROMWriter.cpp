@@ -1225,12 +1225,9 @@ void SourceROMWriter::write_original_class_info_table(JVM_SINGLE_ARG_TRAPS) {
   int i;
   int class_count = number_of_romized_java_classes();
 
-#if ENABLE_JVMPI_PROFILE
-  // Enalbe the original info output in Romized files.
-  main_stream()->print_cr("#if ENABLE_ROM_DEBUG_SYMBOLS || ENABLE_JVMPI_PROFILE");
-#else
-  main_stream()->print_cr("#if ENABLE_ROM_DEBUG_SYMBOLS");
-#endif
+  // Enable the original info output in Romized files.
+  main_stream()->print_cr(
+   "#if ENABLE_ROM_DEBUG_SYMBOLS || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE");
 
   write_original_info_strings(JVM_SINGLE_ARG_CHECK);
 

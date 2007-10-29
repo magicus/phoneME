@@ -152,7 +152,7 @@ extern const unsigned int     _rom_compiled_methods[];
 extern const unsigned int     _rom_compiled_methods_count;
 #endif // ENABLE_APPENDED_CALLINFO
 
-#if  !defined(PRODUCT) || ENABLE_JVMPI_PROFILE
+#if  !defined(PRODUCT) || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
 extern const int               _rom_system_symbols_src[];
 extern const OriginalClassInfo _rom_original_class_info[];
 extern const int               _rom_original_class_info_count;

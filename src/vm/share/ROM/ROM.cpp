@@ -211,7 +211,7 @@ OopDesc* ROM::_romized_heap_marker;
 #endif
 OopDesc** _romized_heap_top;
 
-#if !defined(PRODUCT) || ENABLE_JVMPI_PROFILE
+#if !defined(PRODUCT) || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
 OopDesc* ROM::_original_class_name_list;
 OopDesc* ROM::_original_method_info_list;
 OopDesc* ROM::_original_fields_list;
@@ -356,10 +356,10 @@ void ROM::check_consistency() {
 }
 #endif
 
-#if !defined(PRODUCT) || ENABLE_JVMPI_PROFILE
+#if !defined(PRODUCT) || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
 // Init the symbols for debug or JVMPI interface.
 void ROM::init_debug_symbols(JVM_SINGLE_ARG_TRAPS) {
-#if ENABLE_ROM_DEBUG_SYMBOLS || ENABLE_JVMPI_PROFILE
+#if ENABLE_ROM_DEBUG_SYMBOLS || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
   // Initialize mapping from renamed ".unknown." methods/field
   // to their original names (non-product build only)
     if (LoadROMDebugSymbols
@@ -382,7 +382,7 @@ void ROM::init_debug_symbols(JVM_SINGLE_ARG_TRAPS) {
 
 
 #if (!defined(PRODUCT) && ENABLE_ROM_DEBUG_SYMBOLS) \
-       || ENABLE_JVMPI_PROFILE
+       || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
 
 void ROM::initialize_original_class_name_list(JVM_SINGLE_ARG_TRAPS) {
   int count = _rom_original_class_info_count;
@@ -505,7 +505,7 @@ void ROM::initialize_alternate_constant_pool(JVM_SINGLE_ARG_TRAPS) {
   }
 }
 
-#endif //!PRODUCT || ENABLE_JVMPI_PROFILE
+#endif //!PRODUCT || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
 
 bool ROM::is_restricted_package(const char *name, int pkg_length) {
 
@@ -653,7 +653,7 @@ void ROM::oops_do(void do_oop(OopDesc**), bool do_all_data_objects,
 #ifdef PRODUCT
   (void)do_method_variable_parts;
 
-#if ENABLE_JVMPI_PROFILE
+#if ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
   if (UseROM || GenerateROMImage) {
     do_oop((OopDesc**)&_original_class_name_list);
     do_oop((OopDesc**)&_original_method_info_list);
@@ -786,7 +786,7 @@ ReturnOop ROM::compiled_method_from_address(const address addr) {
 }
 #endif // ENABLE_COMPILER && ENABLE_APPENDED_CALLINFO
 
-#if !defined(PRODUCT) || ENABLE_JVMPI_PROFILE
+#if !defined(PRODUCT) || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
 ReturnOop ROM::get_original_class_name(ClassInfo *clsinfo) {
   if (!GenerateROMImage && _original_class_name_list == NULL) {
     return Symbols::unknown()->obj();
@@ -944,7 +944,7 @@ void ROM::dispose() {
   ROMBundle::set_current( NULL );
 #endif
 
-#if !defined( PRODUCT) || ENABLE_JVMPI_PROFILE
+#if !defined( PRODUCT) || ENABLE_JVMPI_PROFILE || ENABLE_TTY_TRACE
   _original_class_name_list = NULL;
   _original_method_info_list = NULL;
   _original_fields_list = NULL;
