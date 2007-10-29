@@ -38,8 +38,6 @@ static inline void wtk_free(void* ptr) {
   GlobalObj::free_bytes(ptr);
 }
 
-#define MAX_PROFILER_FILE_LEN 1024
-
 // you can increase it to speed up profiler a bit
 #define TABLE_SIZE        239
 
@@ -691,7 +689,7 @@ int WTKProfiler::dump_and_clear_profile_data(int id) {
     };
     const JvmPathChar* filename;
     char* prof_filename; // name of profile information file as received from the WTK
-    JvmPathChar unicode_name[MAX_PROFILER_FILE_LEN+1];
+    JvmPathChar *unicode_name;
 
 #if !ENABLE_ISOLATES
     if (!SaveSerialProfiles) {
@@ -706,23 +704,22 @@ int WTKProfiler::dump_and_clear_profile_data(int id) {
        */
       prof_filename = JVMSPI_GetSystemProperty("profiler.filename");
       if (prof_filename != NULL) {
-          static unsigned short unicode_name[250];
           unsigned  i;
-          int len = strlen(prof_filename);
+          unsigned int len = strlen(prof_filename);
+          size_t size = (len+1) * sizeof(JvmPathChar);
 
-          if (len > MAX_PROFILER_FILE_LEN) {
-              len = MAX_PROFILER_FILE_LEN;
+          unicode_name = (JvmPathChar*)OsMemory_allocate(size);
+          if (unicode_name == NULL) {
+              return -1;
           }
-          
+
           for (i = 0; i < len; i++) {
               unicode_name[i] = (JvmPathChar) prof_filename[i];
-
           }
           unicode_name[i] = 0;
-
           filename = unicode_name;
-
-      } else {          
+              
+      } else { // Use default filename
           const int n = _dumpedProfiles % 100;
           filenamen[5] = (JvmPathChar)((n / 10) + '0');
           filenamen[6] = (JvmPathChar)((n % 10) + '0');
@@ -739,7 +736,10 @@ int WTKProfiler::dump_and_clear_profile_data(int id) {
     }
 
     if (empty) {
-      return -1;
+        if(unicode_name != NULL ) {
+            OsMemory_free((void *)unicode_name);
+        }
+        return -1;
     }
 
     Stream* out = NULL;
@@ -766,6 +766,10 @@ int WTKProfiler::dump_and_clear_profile_data(int id) {
     if (do_suspend_resume) {
       resume();
     }
+
+	if(unicode_name != NULL ) {
+		OsMemory_free((void *)unicode_name);
+	}
 
     return _dumpedProfiles++;
   } else {
