@@ -185,82 +185,113 @@ public final class DirectTone extends DirectPlayer {
 
         private boolean checkSequence( byte[] seq )
         {
-            int t;
-            int pos = 0;
+            int note;
+            int blk = -1;
+            
+            if( seq.length < 4 )
+                return false;
 
             boolean blk_defined[] = new boolean[128];
-            boolean res_defined = false;
-            boolean tmp_defined = false;
-            int  blk         = -1;
+            for (int i = 0; i < 128; i++)
+                blk_defined[i] = false;
+
+            if (seq[0] != ToneControl.VERSION || seq[1] != 1)
+                return false;
             
-            if( seq.length < 2 ) return false;
-
-            for (int i = 0; i < 128; i++) blk_defined[i] = false;
-
-                while (pos < seq.length)
-                {
-                    switch (t = seq[pos++])
-                    {
-                        case ToneControl.VERSION:
-                            if (1 != seq[pos]) return false;
-                            pos++;
-                            break;
-                        case ToneControl.TEMPO:
-                            if (tmp_defined) return false;
-                            if (seq[pos] < 5 || seq[pos] > 127) return false;
-                            tmp_defined = true;
-                            pos++;
-                            break;
-                        case ToneControl.RESOLUTION:
-                            if (res_defined) return false;
-                            if (seq[pos] < 1 || seq[pos] > 127) return false;
-                            res_defined = true;
-                            pos++;
-                            break;
-                        case ToneControl.BLOCK_START:
-                            if (seq[pos] < 0 || seq[pos] > 127) return false;
-                            blk = seq[pos++];
-                            break;
-                        case ToneControl.BLOCK_END:
-                            if (-1 == blk) return false;
-                            if (seq[pos++] != blk) return true;
-                            blk_defined[blk] = true;
-                            blk = -1;
-                            break;
-                        case ToneControl.PLAY_BLOCK:
-                            if (seq[pos] < 0 || seq[pos] > 127) return false;
-                            if (!blk_defined[seq[pos]]) return false;
-                            pos++;
-                            break;
-                        case ToneControl.SET_VOLUME:
-                            if (seq[pos] < 0 || seq[pos] > 100) return false;
-                            pos++;
-                            break;
-                        case ToneControl.REPEAT:
-                            if (seq[pos] < 2 || seq[pos] > 127) return false;
-                            pos++;
-                            break;
-                        case ToneControl.SILENCE:
-                            if (seq[pos] < 1 || seq[pos] > 127) return false;
-                            pos++;
-                            break;
-                        case DualToneControl.DUALTONE:
-                            if (!dualTone) return false;
-                            if (seq[pos] < 0 || seq[pos] > 127) return false;
-                            pos++;
-                            if (seq[pos] < 0 || seq[pos] > 127) return false;
-                            pos++;
-                            if (seq[pos] < 0 || seq[pos] > 127) return false;
-                            pos++;
-                            break;
-                        default: // note
-                            if (t < 0 || t > 127) return false;
-                            if (seq[pos] < 1 || seq[pos] > 127) return false;
-                            pos++;
-                    }
+            int pos = 2;
+            
+            // 0 - version, 1 - tempo, 2 - resolution, 3 - blocks_started,
+            // 4 - block content, 5 - non-block sequences
+            int stage = 0;
+            
+            while (pos < seq.length) {
+                switch (note = seq[pos++]) {
+                    case ToneControl.TEMPO:
+                        if (stage != 0)
+                            return false; // only after version
+                        if (seq[pos] < 5 || seq[pos] > 127)
+                            return false;
+                        pos++;
+                        stage = 1;
+                        break;
+                    case ToneControl.RESOLUTION:
+                        if (stage > 1)
+                            return false; // only after version and tempo
+                        if (seq[pos] < 1 || seq[pos] > 127)
+                            return false;
+                        pos++;
+                        stage = 2;
+                        break;
+                    case ToneControl.BLOCK_START:
+                        if (stage > 2)
+                            return false;
+                        blk = seq[pos++];
+                        if (blk < 0 || blk > 127)
+                            return false;
+                        stage = 3;
+                        break;
+                    case ToneControl.BLOCK_END:
+                        if (stage != 4)
+                            return false; // block is empty
+                        if (-1 == blk)
+                            return false;
+                        if (seq[pos++] != blk)
+                            return false;
+                        blk_defined[blk] = true;
+                        blk = -1;
+                        stage = 3;
+                        break;
+                    case ToneControl.PLAY_BLOCK:
+                        if (seq[pos] < 0 || seq[pos] > 127)
+                            return false;
+                        if (!blk_defined[seq[pos]])
+                            return false;
+                        pos++;
+                        stage = (blk == -1) ? 5 : 4;
+                        break;
+                    case ToneControl.SET_VOLUME:
+                        if (seq[pos] < 0 || seq[pos] > 100)
+                            return false;
+                        pos++;
+                        stage = (blk == -1) ? 5 : 4;
+                        break;
+                    case ToneControl.REPEAT:
+                        if (seq[pos] < 2 || seq[pos] > 127)
+                            return false;
+                        pos++;
+                        stage = (blk == -1) ? 5 : 4;
+                        break;
+                    case ToneControl.SILENCE:
+                        if (seq[pos] < 1 || seq[pos] > 127)
+                            return false;
+                        pos++;
+                        stage = (blk == -1) ? 5 : 4;
+                        break;
+                    case DualToneControl.DUALTONE:
+                        if (!dualTone)
+                            return false;
+                        if (seq[pos] < 0 || seq[pos] > 127)
+                            return false;
+                        pos++;
+                        if (seq[pos] < 0 || seq[pos] > 127)
+                            return false;
+                        pos++;
+                        if (seq[pos] < 0 || seq[pos] > 127)
+                            return false;
+                        pos++;
+                        stage = (blk == -1) ? 5 : 4;
+                        break;
+                    default: // note
+                        if (note < 0 || note > 127)
+                            return false;
+                        if (seq[pos] < 1 || seq[pos] > 127)
+                            return false;
+                        pos++;
+                        stage = (blk == -1) ? 5 : 4;
                 }
+            }
 
-            return true;
+            return stage == 5; // at least 1 sequence event present
         }
 
         /**
