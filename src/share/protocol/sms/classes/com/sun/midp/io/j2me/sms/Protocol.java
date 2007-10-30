@@ -452,7 +452,8 @@ public class Protocol extends ProtocolBase {
 	}
 
         try {
-             appPackage.checkForPermission(WMAPermission.SMS_SEND);
+             appPackage.checkForPermission(
+                 WMAPermission.sms_send_permission(url.host, numSeg));
         } catch (InterruptedException ie) {
             throw new InterruptedIOException("Interrupted while trying " +
                              "to ask the user permission");
