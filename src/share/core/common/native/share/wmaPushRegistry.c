@@ -556,14 +556,23 @@ KNIDECL(com_sun_midp_wma_PushConnectionsPool_waitPushEvent) {
     int port = 0;
     int WMA_SMS_READ_SIGNAL = 0;
     SmsMessage *psmsData = NULL;
+    filter_struct* ptr;
 
-        do {
-            CVMD_gcSafeExec(_ee, {
-                jsr120_wait_for_signal(handle, WMA_SMS_READ_SIGNAL);
-            });
-            psmsData = jsr120_sms_pool_peek_next_msg((jchar)port);
-        } while (psmsData == NULL);
-    KNI_ReturnInt(1);
+    do {
+        CVMD_gcSafeExec(_ee, {
+           jsr120_wait_for_signal(handle, WMA_SMS_READ_SIGNAL);
+        });
+
+        for (ptr=filter_list; ptr; ptr=ptr->next) {
+            psmsData = jsr120_sms_pool_peek_next_msg((jchar)ptr->port);
+            if (psmsData) {
+                port = ptr->port;
+                break;
+            }
+        }
+    } while (psmsData == NULL);
+
+    KNI_ReturnInt(port);
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
