@@ -60,16 +60,7 @@ public class ProtocolPushImpl implements ProtocolFactory {
             String protocol, String targetAndParams, 
             String filter, AccessControlContext context) {
 
-        try {
-            //IMPL NOTE: 1. connection name should be passed to checker
-            //IMPL NOTE: 2. context should be used instead of default checker from abstraction
-            AppPackage appPackage = AppPackage.getInstance();
-            appPackage.checkForPermission(WMAPermission.SMS_SERVER);
-        } catch (InterruptedException ex) {
-            //
-            return null;
-        }
-
+        context.checkPermission(WMAPermission.SMS_SERVER.getName(), "sms:open");
         checkValidFilter(filter);
         return new ReservationDescriptorImpl(protocol, targetAndParams, 
 					 filter, context);
