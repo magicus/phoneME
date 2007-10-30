@@ -36,6 +36,10 @@ ifndef PROJECT_PCSL_DIR
 PROJECT_PCSL_DIR=$(PCSL_DIR)
 endif
 
+# PCSL configuration files may add targets like verify
+# So, to preserve all: as default target, it also defined here
+all:
+
 # include top.gmk for various directory and module definitions
 ifdef PCSL_PLATFORM
 include makefiles/top.gmk
