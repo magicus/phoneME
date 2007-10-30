@@ -32,13 +32,15 @@ import com.sun.j2me.proxy.security.Permissions;
 public class WMAPermission extends Permission {
 
     static public WMAPermission SMS_SERVER = new WMAPermission(
-        Permissions.getName(Permissions.SMS_SERVER), null);
+        Permissions.getName(Permissions.SMS_SERVER), "sms:open");
 
-    static public WMAPermission SMS_SEND = new WMAPermission(
-        Permissions.getName(Permissions.SMS_SEND), null);
+    static public WMAPermission sms_send_permission(String host, int numSeg) {
+        return new WMAPermission(
+            Permissions.getName(Permissions.SMS_SEND), host);
+    }
 
     static public WMAPermission SMS_RECEIVE = new WMAPermission(
-        Permissions.getName(Permissions.SMS_RECEIVE), null);
+        Permissions.getName(Permissions.SMS_RECEIVE), "sms:receive");
 
     public WMAPermission(String name, String resource) {
         super(name, resource);
