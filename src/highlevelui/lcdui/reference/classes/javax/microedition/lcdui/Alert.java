@@ -385,7 +385,8 @@ public class Alert extends Screen {
 
         synchronized (Display.LCDUILock) {
             this.time = time;
-            alertLF.lSetTimeout(time);
+            // IMPL NOTE: timer is triggered from AlertLFImpl.lCallShow()
+            //            when alert is nearly shown.
         }
     }
 
