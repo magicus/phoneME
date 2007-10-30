@@ -29,31 +29,17 @@
 
 #if USE_LITERAL_POOL
 ReturnOop LiteralPoolElement::allocate(const Oop* oop, int imm32 JVM_TRAPS) {
-  if( ObjectHeap::free_memory_for_compiler_without_gc() > allocation_size() ) {
-    // We can allocate only if we have enough space -- there are
-    // many RawLocation operations in VirtualStackFrame that would
-    // fail if a GC happens.
-    AllocationDisabler allocation_not_allowed_in_this_block;
-    LiteralPoolElement::Raw result = Universe::new_mixed_oop_in_compiler_area(
-                                MixedOopDesc::Type_LiteralPoolElement,
-                                LiteralPoolElementDesc::allocation_size(),
-                                LiteralPoolElementDesc::pointer_count()
-                                JVM_MUST_SUCCEED);
-
+  LiteralPoolElement::Raw result = Universe::new_mixed_oop_in_compiler_area(
+                              MixedOopDesc::Type_LiteralPoolElement,
+                              LiteralPoolElementDesc::allocation_size(),
+                              LiteralPoolElementDesc::pointer_count()
+                              JVM_NO_CHECK);
+  if( result.not_null() ) {
     result().set_literal_int(imm32);
     result().set_literal_oop(oop);
     result().set_bci(not_yet_defined_bci);
-
-    return result;
-  } else {
-    // IMPL_NOTE: We ought to set a flag that just says to recompile this
-    // Or get the code to work even when a GC happens
-    CodeGenerator* cg = Compiler::current()->code_generator();
-    while (!cg->has_overflown_compiled_method()) {
-      cg->nop(); cg->nop();
-    }
-    return NULL;
   }
+  return result;
 }
 
 #if !defined(PRODUCT) || USE_COMPILER_COMMENTS

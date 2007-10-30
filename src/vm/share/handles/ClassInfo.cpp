@@ -46,7 +46,7 @@ jint ClassInfo::itable_size(int nof_interfaces, int nof_methods) {
        + nof_methods    * sizeof(jobject);
 }
 
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE
 
 void ClassInfo::print_name_on(Stream* st) {
 #if ENABLE_TTY_TRACE
