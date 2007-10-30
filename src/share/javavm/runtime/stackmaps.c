@@ -59,8 +59,16 @@
 static int CVMstackmapVerboseDebug = 0;
 #endif
 
-#define WRITE_INT16( pc, val ) { (pc)[0] = (val) >> 8; (pc)[1] = val & 0xff; }
-#define WRITE_INT32( pc, val ) { (pc)[0] = (val) >> 24; (pc)[1] = (val >>16)&0xff; (pc)[2] = (val >>8)&0xff; (pc)[3] = val & 0xff; }
+#define WRITE_INT16( pc, val ) { \
+	(pc)[0] = (val) >> 8;    \
+	(pc)[1] = val & 0xff;    \
+    }
+#define WRITE_INT32( pc, val ) {   \
+	(pc)[0] = (val) >> 24;     \
+	(pc)[1] = (val >>16)&0xff; \
+	(pc)[2] = (val >>8)&0xff;  \
+	(pc)[3] = val & 0xff;      \
+    }
 
 #define CVMalign4( n ) (( (n)+3)&~3)
 /*
