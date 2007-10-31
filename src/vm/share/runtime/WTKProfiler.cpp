@@ -688,8 +688,8 @@ int WTKProfiler::dump_and_clear_profile_data(int id) {
       'g','r','a','p','h','.','p','r','f',0
     };
     const JvmPathChar* filename;
-    char* prof_filename; // name of profile information file as received from the WTK
-    JvmPathChar *unicode_name;
+    char* prof_filename; // name of profile information file received from a property
+    JvmPathChar *unicode_name = NULL;
 
 #if !ENABLE_ISOLATES
     if (!SaveSerialProfiles) {
@@ -760,17 +760,17 @@ int WTKProfiler::dump_and_clear_profile_data(int id) {
     }
     out = &s;
 #endif
+
+    if(unicode_name != NULL ) {
+		OsMemory_free((void *)unicode_name);
+	}
+
     print(out, id);
     
     dispose(id);
     if (do_suspend_resume) {
       resume();
     }
-
-	if(unicode_name != NULL ) {
-		OsMemory_free((void *)unicode_name);
-	}
-
     return _dumpedProfiles++;
   } else {
     return -1;
