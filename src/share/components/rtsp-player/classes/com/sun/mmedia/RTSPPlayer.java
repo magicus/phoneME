@@ -25,7 +25,8 @@ package com.sun.mmedia;
 
 import javax.microedition.media.*;
 import javax.microedition.media.control.*;
-import com.sun.mmedia.BasicPlayer;
+import com.sun.mmedia.DirectPlayer;
+import com.sun.mmedia.protocol.CommonDS;
 import com.sun.mmedia.rtsp.*;
 
 /**
@@ -36,7 +37,7 @@ import com.sun.mmedia.rtsp.*;
 public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
     private boolean started; // default is FALSE
     private RtspManager rtspManager; // default is NULL
-    private Player players[]; // default is NULL
+    private DirectPlayer players[]; // default is NULL
     private int numberOfTracks; // default is 0
 
     // media time in milli-seconds
@@ -86,11 +87,13 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
                 int server_ports[] = rtspManager.getServerPorts();
                 int client_ports[] = rtspManager.getClientPorts();
 
-                players = new Player[numberOfTracks];
+                players = new DirectPlayer[numberOfTracks];
 
                 // start the RTSP server until the internal RTP players
                 // can be realized.
                 rtspManager.setStartPos( 0);
+
+                CommonDS ds;
 
                 for (int i = 0; i < numberOfTracks; i++) {
                     // setup the RTP players
@@ -99,7 +102,11 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
                                  + ":" + client_ports[i];
 
                     try {
-                        players[i] = Manager.createPlayer(url);
+                        players[i] = new DirectPlayer(); //Manager.createPlayer(url);
+                        ds = new CommonDS();
+                        ds.setLocator(url);
+                        ds.setContentType("content.rtp");
+                        players[i].setSource(ds);
                     } catch (Exception e) {
                         throw new MediaException( e.getMessage());
                     }
