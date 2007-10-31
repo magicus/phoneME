@@ -141,7 +141,7 @@ KNIDECL(com_sun_pisces_PiscesRenderer_nativeFinalize) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_pisces_PiscesRenderer_beginRendering__IIIII) {
+KNIDECL(com_sun_pisces_PiscesRenderer_beginRenderingIIIII) {
     KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);
     KNI_DeclareHandle(surfaceHandle);
@@ -175,7 +175,7 @@ KNIDECL(com_sun_pisces_PiscesRenderer_beginRendering__IIIII) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_pisces_PiscesRenderer_beginRendering__I) {
+KNIDECL(com_sun_pisces_PiscesRenderer_beginRenderingI) {
     KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);
     KNI_DeclareHandle(surfaceHandle);
@@ -334,7 +334,7 @@ KNIDECL(com_sun_pisces_PiscesRenderer_getTransformImpl) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_pisces_PiscesRenderer_setStroke__IIII_3II) {
+KNIDECL(com_sun_pisces_PiscesRenderer_setStrokeImpl) {
     KNI_StartHandles(2);
     KNI_DeclareHandle(objectHandle);
     KNI_DeclareHandle(arrayHandle);
@@ -383,7 +383,7 @@ KNIDECL(com_sun_pisces_PiscesRenderer_setStroke__IIII_3II) {
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_pisces_PiscesRenderer_setStroke__) {
+KNIDECL(com_sun_pisces_PiscesRenderer_setStrokeImplNoParam) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(objectHandle);
 
