@@ -34,7 +34,7 @@
 ###############################################################################
 # Make definitions:
 
-CVM_JDWP_DT_LIB = libdt_$(CVM_JDWP_TRANSPORT)$(LIB_POSTFIX)
+CVM_JDWP_DT_LIB = $(LIB_PREFIX)dt_$(CVM_JDWP_TRANSPORT)$(LIB_POSTFIX)
 
 #
 # Search path for include files:

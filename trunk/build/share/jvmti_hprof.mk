@@ -31,6 +31,10 @@
 ###############################################################################
 # Make definitions:
 
+CVM_JVMTI_HPROF_LIB           = $(LIB_PREFIX)jvmtihprof$(LIB_POSTFIX)
+
+CVM_JVMTI_HPROF_LIBDIR        = $(CVM_LIBDIR)
+
 CVM_JVMTI_HPROF_BUILD_TOP     = $(CVM_BUILD_TOP)/jvmti/hprof
 CVM_JVMTI_HPROF_OBJDIR        = $(CVM_JVMTI_HPROF_BUILD_TOP)/obj
 CVM_JVMTI_HPROF_FLAGSDIR      = $(CVM_JVMTI_HPROF_BUILD_TOP)/flags
