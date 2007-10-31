@@ -56,8 +56,8 @@ public class AppPackage {
      * @return 1 if allowed; 0 if denied; -1 if status is unknown
      */
     public int checkPermission(Permission p) {
-        /* Stub: always allowed */
-        return 1;
+        /* Stub: always unknown */
+        return -1;
     }    
     
     /**
