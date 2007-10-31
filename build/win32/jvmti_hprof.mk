@@ -28,11 +28,5 @@
 #  Platform specific makefile for building the Hprof tool
 #
 
-ifeq ($(CVM_DEBUG), true)
-    CVM_JVMTI_HPROF_LIB   = libjvmtihprof_g.dll
-else
-    CVM_JVMTI_HPROF_LIB   = libjvmtihprof.dll
-endif
-
 CVM_JVMTI_HPROF_LIBDIR        = $(CVM_BINDIR)
 

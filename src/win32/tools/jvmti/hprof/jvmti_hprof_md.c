@@ -35,6 +35,7 @@
  */
 
 
+#include "javavm/include/jni_md.h"
 #include "jni.h"
 #include "jvmti_hprof.h"
 
@@ -501,11 +502,14 @@ md_build_library_name(char *holder, int holderlen, char *pname, char *fname)
     }
 
     if (pnamelen == 0) {
-        sprintf(holder, "lib%s%s.dll", fname, suffix);
+        sprintf(holder, "%s%s%s", JNI_LIB_PREFIX, fname, suffix,
+		JNI_LIB_SUFFIX);
     } else if (c == ':' || c == '\\') {
-        sprintf(holder, "%slib%s%s.dll", pname, fname, suffix);
+        sprintf(holder, "%s%s%s%s%s", pname, JNI_LIB_PREFIX, fname, suffix,
+		JNI_LIB_SUFFIX);
     } else {
-        sprintf(holder, "%s\\lib%s%s.dll", pname, fname, suffix);
+        sprintf(holder, "%s\\%s%s%s%s", pname, JNI_LIB_PREFIX, fname, suffix,
+		JNI_LIB_SUFFIX);
     }
 }
 

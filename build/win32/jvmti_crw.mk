@@ -28,21 +28,11 @@
 #  Platform specific makefile for building the Hprof tool
 #
 
-ifeq ($(CVM_DEBUG), true)
-    CVM_CRW_LIB   = libjava_crw_demo_g.dll
-else
-    CVM_CRW_LIB   = libjava_crw_demo.dll
-endif
-
 CVM_CRW_LIBDIR        = $(CVM_BINDIR)
-CVM_CRW_JARDIR        = $(CVM_LIBDIR)
-
-CVM_CRW_JAR = java_crw_demo.jar
 
 #
 # Platform specific build flags:
 #
-CVM_CRW_FLAGS += \
 
 CVM_CRW_SHAREOBJS += \
 	java_crw_demo_md.o
