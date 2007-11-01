@@ -39,6 +39,7 @@ struct CVMTargetGlobalState {
     char *stdinPath;
     char *stdoutPath;
     char *stderrPath;
+    CVMBool useLargeMemoryArea;
 #endif
     /* for socket io redirection */
     int stdoutPort;
