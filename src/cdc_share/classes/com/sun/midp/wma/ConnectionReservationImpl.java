@@ -43,6 +43,8 @@ public class ConnectionReservationImpl implements ConnectionReservation {
 
     int _port;
     String _filter;
+    DataAvailableListener _dataAvailableListener;
+    boolean _canceled = false;
 
     public ConnectionReservationImpl(
             int port,
@@ -53,10 +55,12 @@ public class ConnectionReservationImpl implements ConnectionReservation {
 
 	_port = port;
 	_filter = filter;
+        _dataAvailableListener = dataAvailableListener;
 	PushConnectionsPool.addReservation(this);
     }
 
     public void notifyDataAvailable() {
+        _dataAvailableListener.dataAvailable();
     }
 
     public int getPort() {
@@ -75,7 +79,11 @@ public class ConnectionReservationImpl implements ConnectionReservation {
      * @throws IllegalStateException if invoked after reservation cancellation
      */
     public boolean hasAvailableData() { //throws IllegalStateException;
-        return true;
+
+        if (_canceled) {
+            throw new IllegalStateException("reservation canceled");
+        }
+        return (0 != PushConnectionsPool.hasAvailableData(_port));
     }
 
     /**
@@ -100,5 +108,6 @@ public class ConnectionReservationImpl implements ConnectionReservation {
      */
     public void cancel() {
 	PushConnectionsPool.removeReservation(this);
+        _canceled = true;
     } 
 }

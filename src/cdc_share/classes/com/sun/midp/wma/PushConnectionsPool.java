@@ -77,37 +77,31 @@ public class PushConnectionsPool implements Runnable {
 	}
     }
 
-    private static native void addPushPort(int port, String pushFilter) throws java.io.IOException, IllegalArgumentException;
+    private static native void addPushPort(int port, String pushFilter) 
+                               throws java.io.IOException, IllegalArgumentException;
     private static native int  removePushPort(int port) throws IllegalStateException;
-    private static native int  hasAvailableData(int port);
+    public  static native int  hasAvailableData(int port);
     private        native int  waitPushEvent() throws java.io.InterruptedIOException;
 
-    void notifyPushConnection(int port) {
+    private void notifyPushConnections(int port) {
 	synchronized(ReservationsList) {
 	    java.util.ListIterator iter = ReservationsList.listIterator();
 	    while (iter.hasNext()) {
 		ConnectionReservationImpl reservation = (ConnectionReservationImpl)iter.next();
 		if (reservation.getPort() == port) {
-		    reservation.notifyDataAvailable();
-		}
-	    }
-	}
+                    if (0 != hasAvailableData(port)) {
+                        reservation.notifyDataAvailable();
+                    }
+                }
+            }
+        }
     }
 
     public void run() {
         while(true) {
             try {
 	        int smsPort = waitPushEvent();
-
-	        java.util.ListIterator iter = ReservationsList.listIterator();
-	        while (iter.hasNext()) {
-		    ConnectionReservationImpl reservation = (ConnectionReservationImpl)iter.next();
-                    if (0 != hasAvailableData(reservation.getPort())) {
-                        reservation.notifyDataAvailable();
-		    }
-                }
-
-                notifyPushConnection(smsPort);
+                notifyPushConnections(smsPort);
 	    } catch (java.io.InterruptedIOException iioe) {
                 return;
 	    }
