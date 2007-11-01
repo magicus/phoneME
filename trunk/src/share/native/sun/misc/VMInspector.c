@@ -43,6 +43,8 @@
 #include "generated/jni/sun_misc_VMInspector.h"
 
 /*
+    public static native void exit(int status);
+
     public static native boolean enableGC();
     public static native boolean disableGC();
     public static native boolean gcIsDisabled();
@@ -86,6 +88,12 @@
     public static native void dumpAllThreads();
     public static native void dumpStack(long eeAddr);
 */
+
+JNIEXPORT void JNICALL 
+Java_sun_misc_VMInspector_exit(JNIEnv *env, jclass cls, jint status)
+{
+    CVMexit(status);
+}
 
 JNIEXPORT jboolean JNICALL 
 Java_sun_misc_VMInspector_enableGC(JNIEnv *env, jclass cls)

@@ -27,6 +27,8 @@ package sun.misc;
 
 public class VMInspector
 {
+    public static native void exit(int status);
+
     public static native boolean enableGC();
     public static native boolean disableGC();
     public static native boolean gcIsDisabled();

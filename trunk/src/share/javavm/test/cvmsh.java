@@ -51,10 +51,15 @@ public class cvmsh
     protected boolean hasQuitRequest = false;
     protected boolean shellIsRunning = false;
 
+    // JVMPI data dump service:
+    protected boolean jvmpiSupported;
+    protected Class cvmJvmpiClass;
+
     static final String[] helpMsg = {
 	"Commands:",
 	"  help                            - prints this list",
-	"  quit                            - exits this shell",
+	"  quit                            - exits this shell nicely",
+	"  quit!                           - exits this shell by calling OS exit()",
 	"  detach                          - detaches the client (if applicable) but",
 	"                                    leaves the VM and server running",
 	"",
@@ -106,21 +111,44 @@ public class cvmsh
 	"  bg <class> [args ...]           - runs the specified app in a new thread",
     };
 
+    static final String[] jvmpiHelpMsg = {
+	"",
+	"  JVMPI utilities:",
+	"  ================",
+	"  jvmpiDumpData                   - requests a JVMPI data dump",
+    };
+
     public cvmsh() {
 	try {
 	    serverSocketClass =  Class.forName("java.net.ServerSocket");
 	} catch (ClassNotFoundException e) {
+	}
+
+	// Get the CVMJVMPI class if present:
+	try {
+	    cvmJvmpiClass = Class.forName("sun.misc.CVMJVMPI");
+	    jvmpiSupported = true;
+	} catch (ClassNotFoundException e) {
+	    cvmJvmpiClass = null;
+	    jvmpiSupported = false;
 	}
     }
 
 
     void doHelp() {
 	printHelp(helpMsg);
+	printJVMPIHelp();
     }
 
     void printHelp(String[] msg) {
 	for (int i = 0; i < msg.length; i++) {
 	    System.out.println(msg[i]);
+	}
+    }
+
+    protected void printJVMPIHelp() {
+	if (jvmpiSupported) {
+	    printHelp(jvmpiHelpMsg);
 	}
     }
 
@@ -342,6 +370,29 @@ public class cvmsh
 	}
     }
 
+    // JVMPI utilties:
+    protected void jvmpiDumpData() {
+	if (!jvmpiSupported) {
+	    return;
+	}
+
+	try {
+	    // Use reflection to call:
+	    //    sun.misc.CVMJVMPI.postDataDumpRequestEvent();
+	    Method dataDumpMtd;
+	    Class[] argsTypes = new Class[0];
+	    dataDumpMtd =
+		cvmJvmpiClass.getMethod("postDataDumpRequestEvent", argsTypes);
+	    
+	    Object[] voidArgs = new Object[0];
+	    dataDumpMtd.invoke(null, voidArgs);
+
+	} catch (Exception e) {
+	    System.err.println("ERROR: Unexpected exception while " +
+			       "requesting JVMPI data dump: " + e);
+	}
+    }
+
     class CmdStream {
 	// NOTE: The tokenizing code assumes that the delimiter is a single
 	// character as is the case now.  If this assumption changes, then
@@ -518,6 +569,9 @@ public class cvmsh
 	    }
 	    return true;
 
+	} else if (token.equals("quit!")) {
+	    VMInspector.exit(0);
+
 	} else if (token.equals("detach")) {
 	    return true;
 
@@ -635,6 +689,11 @@ public class cvmsh
 	    processCmd(cmd, server);
 	    long endTime = System.currentTimeMillis();
 	    System.out.println("Time elapsed: " + (endTime - startTime) + " ms");
+
+	// JVMPI utilities:
+	} else if (jvmpiSupported && token.equals("jvmpiDumpData")) {
+	    jvmpiDumpData();
+
 	} else {
  	    System.err.print("Unknown command: \"" + token);
 	    if (!cmd.isEmpty()) {
