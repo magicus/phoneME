@@ -499,13 +499,13 @@ ConstantPool::resolve_invoke_static_at(InstanceClass *sender_class,
     method = lookup_method_at(sender_class, index, &method_name,
                               &method_signature, &receiver_class 
                               JVM_OZCHECK(method));
-    if (!method().is_static()) {
-      Throw::incompatible_class_change_error(method_changed JVM_THROW_0);
-    }
     resolved_static_method_at_put(index, &method);
   }
 
-  GUARANTEE(method().is_static(), "sanity");
+  if (!method().is_static()) {
+    Throw::incompatible_class_change_error(method_changed JVM_THROW_0);
+  }
+
   receiver_class = method().holder();
 
   if (!sender_class->is_preloaded() && receiver_class().is_hidden()) {
