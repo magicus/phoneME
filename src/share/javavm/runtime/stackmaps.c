@@ -59,6 +59,165 @@
 static int CVMstackmapVerboseDebug = 0;
 #endif
 
+/*
+  The Layout of the Stackmap Buffer
+  =================================
+  The stackmaps for a method is made up of a list of entries: one for each
+  GC point in the method.  Each entry has a bytecode PC as a unique key.
+
+  Most stack frames tend to be relatively small.  Hence, the typical stackmap
+  entry would fit within 32-bits: a 16-bit PC, and a 15-bit map.  The remaining
+  bit is used to indicate whether the map actually has more than 15 locals
+  and/or stack words thereby requiring more than 15 bits in the map i.e. does
+  it have an extended or super extended entry that holds the real information.
+  
+  How to find the real entry?
+  ==========================
+  The stackmap entry can be found by using the PC as the unique key.
+  Given the PC, CVMstackmapGetEntryForPC() will acquire a basic stack map
+  entry.  A basic stackmap entry is one that fits within 32-bits.
+
+  If bit 0 of entry->state[0] is set, then entry->state[0] actually contains
+  an offset to a larger (more than 32bits) stackmap entry either in the
+  extended region or the super extended region of stackmaps buffer.
+
+  The offset value is computed as entry->state[0] >> 1, and is in units of
+  CVMUint16 i.e. each offset represents a 16 bit increment.
+
+  If the offset is less than CVM_STACKMAP_RESERVED_OFFSET, then the actual
+  stackmap entry will reside in the extended region.  It's address can be
+  computed using the offset to index into the extended region which resides
+  at the end of the basic region.
+
+  If the offset is equal to CVM_STACKMAP_RESERVED_OFFSET, then the actual
+  stackmap entry will reside in the super extended region.  The start of the
+  extended region will contain a pointer to the CVMStackMapSuperExtendedMaps
+  struct (abbreviated as seMaps).  The seMaps will contain a sorted list
+  of pointers to every stackmap entry in the super extended region.  To
+  find the address of the actual stackmap entry that reside in the super
+  extended region, we do a binary search on the entries in the seMaps
+  keying off the PC.
+
+  The memory layout
+  =================
+
+  Stackmaps buffer:
+                         |----------------------------|
+      CVMStackMaps       | header info                |
+                         |----------------------------|
+      basic region       | entry[0]                   |
+                         | entry[1]                   |
+                         | entry[2]                   |
+                         | ...                        |
+                         | entry[N]                   |
+                         |----------------------------|
+      extended region    | &seMaps                    |     
+                         | extendedEntries[0]         |
+                         | extendedEntries[1]         |
+                         | ...                        |
+                         | extendedEntries[nE]        |
+                         |----------------------------|
+      seMaps             | numOfSuperExtendedEntries  |
+                         | &superExtendedEntries[0]   |
+                         | &superExtendedEntries[0]   |
+                         | ...                        |
+                         | &superExtendedEntries[nSE] |
+                         |----------------------------|
+      super extended     | superExtendedEntries[0]    |
+      region             | superExtendedEntries[1]    |
+                         | ...                        |
+                         | superExtendedEntries[nSE]  |
+                         |----------------------------|
+
+  where
+      N is the total number of GC points.  For each GC point
+          there is one basic entry.
+      nE is the total number of entries in the extended region
+          which can be reached using an offset stored in the
+	  basic entry.
+      nSE is the total number of entries in the super extended
+          region.  Entries in this region must be looked up via
+	  the seMaps table.
+
+  Note: A given GC point can have only one of the following:
+        1. a basic entry
+        2. a basic entry + an extended entry
+        3. a basic entry + a super extended entry
+
+	It cannot have both an extended entry and a super extended entry.
+	Hence, nE + nSE <= N.
+
+  Note: the sizes of the entries in the extended region and super extended
+        region are of variable size.  They aren't guaranteed to be uniform.
+
+  Stackmap Context pointers
+  =========================
+  stackMapAreaBegin points pass the end of the basic region to the start of
+  the extended region.
+
+  stackMapAreaEnd points to the end of the entire stackmaps buffer.  If a
+  super extended region is present, it will point just pass the end of the
+  super extended region.  Otherwise, it will point pass the end of the
+  extended region or the basic region depending on whether the extended
+  region is present or not.
+
+  stackMapAreaPtr is used to determine the next location in the stackmaps
+  buffer to emit data into.  If the extended region is present, initially,
+  it is pointed just pass the seMaps pointer in preparation for emitting
+  the first entry in the extended region.  If the extended region is not
+  present, it will set equal to stackMapAreaBegin and will never be
+  incremented.
+
+  Optional Regions
+  ================
+  The extended region, seMaps, and super extended region are all optional.
+  They are included only when needed.  In most cases, these regions will
+  not be present in the stackmaps.
+
+  What does this mean to the GC?
+  =============================
+  The GC is not aware of the internal layout of the stackmap entries.  The
+  GC calls CVMstackmapGetEntryForPC(), and the appropriate stackmap entry
+  will be returned to it.  The returned entry may be a basic entry, an
+  extended entry, or a super extended entry.  They all look the same to the
+  GC.  The GC expects the entry to be of variable size.  The boundary of
+  the map is not attained from the entry but rather computed from the runtime
+  topOfStack pointer of the stack frame.
+
+ */
+
+/* CVM_STACKMAP_ENTRY_MIN_NUMBER_OF_CHUNKS is the number of CVMUint16 chunks
+   that is available to store map bits in a basic stackmap entry.  In the
+   current implementation, this is always 1 and is determined by the
+   definition of the CVMStackMapEntry struct in classes.h.
+*/
+#define CVM_STACKMAP_ENTRY_MIN_NUMBER_OF_CHUNKS    1
+
+/* CVM_STACKMAP_ENTRY_NUMBER_OF_BASIC_BITS is the number of map bits available
+   in a basic stackmap entry.  For a CVM_STACKMAP_ENTRY_MIN_NUMBER_OF_CHUNKS
+   value of 1, the number of bits will be 15 (i.e. 16 - 1 bit reserved to
+   indicate the presence/absence of an extended entry.
+*/
+#define CVM_STACKMAP_ENTRY_NUMBER_OF_BASIC_BITS \
+    ((CVM_STACKMAP_ENTRY_MIN_NUMBER_OF_CHUNKS * sizeof(CVMUint16) * 8) - 1)
+
+/* CVM_STACKMAP_RESERVED_OFFSET is the reserved offset to indicate that
+   the stackmap entry is located in the super extended region of the
+   stackmaps buffer.  See comment above for more details. */
+#define CVM_STACKMAP_RESERVED_OFFSET   (0x7fff)
+
+/* CVMStackMapSuperExtendedMaps is used to store a table of pointers to
+   CVMStackMapEntry structs that reside in the super extended region of
+   the stackmaps buffer.  See comment above on the layout of the stackmaps
+   buffer for more details. */
+typedef struct CVMStackMapSuperExtendedMaps CVMStackMapSuperExtendedMaps;
+struct CVMStackMapSuperExtendedMaps
+{
+    CVMUint32 numberOfEntries;
+    CVMStackMapEntry *entries[1];
+};
+
+
 #define WRITE_INT16( pc, val ) { \
 	(pc)[0] = (val) >> 8;    \
 	(pc)[1] = val & 0xff;    \
@@ -217,6 +376,11 @@ typedef struct {
     CVMUint16*         stackMapAreaPtr; /* The allocation pointer */
     CVMUint32          stackMapLongFormatNumBytes; /* # of long format bytes */
      
+    /* Tracking info for the super extended region: */
+    CVMUint32          numberOfSuperExtendedEntries;
+    CVMStackMapSuperExtendedMaps *seMaps;
+    CVMUint32          currentNumberOfSEEntries;
+
     /*
      * Ref-uninit conflict uses of local variables
      */
@@ -2980,6 +3144,24 @@ CVMstackmapCountAllocBytes(CVMStackmapContext* con, CVMUint16 relPC,
 	/* An additional bit for the 'long' flag */
 	CVMUint32  nStateChunks = (nStateBits + 1 + 15) / 16;
 	CVMUint32  additionalSize = (nStateChunks + 1) * sizeof(CVMUint16);
+
+	/* If the resultant offset cannot be encoded in the state field
+	   of CVMStackMapEntry, then we have a super extended entry.
+	   
+	   The current nBytes gives us an indication of the offset for this
+	   entry.  However, the offset is in units of CVMUint16 instead of
+	   bytes.  Hence, we need to multiply CVM_STACKMAP_RESERVED_OFFSET
+	   by sizeof(CVMUint16) in order for the comparison to be valid.
+
+	   We need to check nBytes before (not after) we add the size of the
+	   current entry because the offset of the current entry is determined
+	   by the cummulative sizes of all the previous entries (i.e. previous
+	   nBytes).
+	*/
+	if (*nBytes >= (CVM_STACKMAP_RESERVED_OFFSET * sizeof(CVMUint16))) {
+	    con->numberOfSuperExtendedEntries++;
+	}
+
 	/* The additional chunk is for the PC for this point */
 	*nBytes += additionalSize;
     }
@@ -3018,16 +3200,47 @@ CVMstackmapAllocateMaps(CVMStackmapContext* con)
     initialSize = sizeof(CVMStackMaps) +
 	(con->nGCPoints - 1) * sizeof(CVMStackMapEntry);
     nBytes = initialSize;
-    if (con->stateSize > 15) {
+
+    /* The CVMStackMaps and CVMStackMapEntry should have already been packed
+       to word-aligned boundaries.  Hence, nBytes should automatically be
+       word aligned.  Assert this because we rely on it to ensure that the
+       CVMStackMapSuperExtendedMaps pointer at the start of the extended area
+       will be located on a word-aligned boundary: */
+    CVMassert(nBytes == CVMalignWordUp(nBytes));
+
+    con->numberOfSuperExtendedEntries = 0;
+    if (con->stateSize > CVM_STACKMAP_ENTRY_NUMBER_OF_BASIC_BITS) {
+	CVMUint32 extendedSize = 0;
+
+	/* Reserve space for the pointer to the super extended maps at the
+	   start of the extended area: */
+	extendedSize += sizeof(CVMStackMapSuperExtendedMaps *);
+
 	/* potentially long version. Run through and count extra memory */
 	for (i = 0; i < con->nBasicBlocks; i++) {
 	    CVMBasicBlock* bb = con->basicBlocks + i;
 	    if (bb->topOfStack != -1) {
 		CVMstackmapDoForeachGCPointInBB(con, bb,
 						CVMstackmapCountAllocBytes,
-						&nBytes);
-		
+						&extendedSize);
 	    }
+	}
+
+	/* Add the memory budget for the extended and super extended (if
+	   present) entries: */
+	nBytes += extendedSize;
+	
+	/* Add the memory budget for the CVMStackMapSuperExtendedMaps struct if
+	   needed: */
+	if (con->numberOfSuperExtendedEntries > 0) {
+	    nBytes += sizeof(CVMStackMapSuperExtendedMaps) +
+		      (con->numberOfSuperExtendedEntries - 1) *
+		          sizeof(CVMStackMapEntry *);
+
+	    /* Also add some padding for possible alignment bytes needed to
+	       ensure that the CVMStackMapSuperExtendedMaps struct is word
+	       aligned: */
+	    nBytes += sizeof(CVMAddr);
 	}
     }
     /*
@@ -3049,9 +3262,33 @@ CVMstackmapAllocateMaps(CVMStackmapContext* con)
     /*
      * Make the variable size part be just past the constant size section.
      */
-    con->stackMapAreaPtr = (CVMUint16*)
+    con->stackMapAreaBegin = (CVMUint16*)
 	&con->stackMaps->smEntries[con->nGCPoints];
-    con->stackMapAreaBegin = con->stackMapAreaPtr;
+
+    /* Ensure that the extended area starts on a word-aligned boundary as
+       expected.  This is because the CVMStackMapSuperExtendedMaps pointer
+       which is stored at the start of this area needs to be on a word-aligned
+       boundary: */
+    CVMassert(con->stackMapAreaBegin ==
+	      (CVMUint16*)CVMalignWordUp(con->stackMapAreaBegin));
+
+    if (con->stateSize > CVM_STACKMAP_ENTRY_NUMBER_OF_BASIC_BITS) {
+	/* Reserve space for the pointer to the super extended maps: */
+	con->stackMapAreaPtr =
+	    (CVMUint16 *)((CVMUint8 *)con->stackMapAreaBegin +
+			  sizeof(CVMStackMapSuperExtendedMaps *));
+	
+	/* Initialize the seMaps pointer to be NULL first.  This will get set
+	   to a non-NULL address later if an seMaps struct is actually needed:
+	*/
+	con->seMaps = NULL;
+	CVMassert(*(CVMStackMapSuperExtendedMaps **)con->stackMapAreaBegin ==
+		  NULL);
+	con->currentNumberOfSEEntries = 0;
+    } else {
+	con->stackMapAreaPtr = con->stackMapAreaBegin;
+    }
+
     /*
      * And this is the end, for assertions
      */
@@ -3166,30 +3403,68 @@ CVMstackmapEmitMapForPC(CVMStackmapContext* con, CVMUint16 relPC,
      * Number of bits needed for the state at this point.
      */
     CVMUint32  nStateBits = topOfStack + con->nVars;
-    if (nStateBits > 15) {
+    if (nStateBits > CVM_STACKMAP_ENTRY_NUMBER_OF_BASIC_BITS) {
 	CVMUint32 nChunks;
 	CVMStackMapEntry* longArea;
-	CVMUint16 longOffset;
+	CVMUint32 longOffset;
+
 	/*
 	 * Get some from the extra storage area
 	 */
 	longArea = (CVMStackMapEntry*)con->stackMapAreaPtr;
+
+	/* If the longOffset looks like it is larger than will fit within
+	   entry->state[0], then the real entry need to reside in the super
+	   extended region instead of the extended region: */
+	longOffset = (con->stackMapAreaPtr - con->stackMapAreaBegin);
+	if (longOffset >= CVM_STACKMAP_RESERVED_OFFSET) {
+	    CVMStackMapSuperExtendedMaps *seMaps;
+	    seMaps = *(CVMStackMapSuperExtendedMaps **)con->stackMapAreaBegin;
+
+	    /* Initialize the superExtendedMaps table if needed: */
+	    if (seMaps == NULL) {
+
+		/* Make sure that we're aligned on a word boundary for the
+		   pointers in the super extended maps: */
+		longArea = (CVMStackMapEntry*)CVMalignWordUp(longArea);
+
+		con->seMaps = (CVMStackMapSuperExtendedMaps *)longArea;
+		con->seMaps->numberOfEntries = con->numberOfSuperExtendedEntries;
+		CVMassert(con->currentNumberOfSEEntries == 0);
+
+		/* Point the extended stackmap entry buffer after the seMaps: */
+		longArea = (CVMStackMapEntry*)
+		    ((CVMUint8 *)longArea +
+		     sizeof(CVMStackMapSuperExtendedMaps) +
+		     (con->numberOfSuperExtendedEntries - 1) *
+		         sizeof(CVMStackMapEntry*));
+		con->stackMapAreaPtr = (CVMUint16 *)longArea;
+
+		/* Make sure that the CVMStackMapSuperExtendedMaps pointer is
+		   located on a word-aligned boundary: */
+		CVMassert(con->stackMapAreaBegin ==
+			  (CVMUint16 *)CVMalignWordUp(con->stackMapAreaBegin));
+
+		/* Initialize the seMaps pointer in the extended region: */
+		*(CVMStackMapSuperExtendedMaps **)con->stackMapAreaBegin =
+		    con->seMaps;
+	    }
+
+	    con->seMaps->entries[con->currentNumberOfSEEntries++] = longArea;
+	    longOffset = CVM_STACKMAP_RESERVED_OFFSET;
+	}
+
 	nChunks = CVMstackmapStateToBitmap(con, longArea, relPC,
 					   varState, stackState, topOfStack);
-	CVMassert(nChunks > 1);
-	longOffset = 
-	    (CVMUint16)(con->stackMapAreaPtr - con->stackMapAreaBegin);
-	if (longOffset >= 32768) {
-	    /* Limit issue. Throw an error */
-	    throwError(con, CVM_MAP_EXCEEDED_LIMITS);
-	}
+
+	CVMassert(nChunks > CVM_STACKMAP_ENTRY_MIN_NUMBER_OF_CHUNKS);
 	
 	/*
 	 * Build the indirect entry here.
 	 * Flag the lowest bit, and insert the offset
 	 */
 	thisEntry->pc = relPC;
-	thisEntry->state[0] = (longOffset << 1) + 1;
+	thisEntry->state[0] = (CVMUint16)((longOffset << 1) + 1);
 	con->stackMapAreaPtr += nChunks + 1;
 	CVMassert(con->stackMapAreaPtr <= con->stackMapAreaEnd);
     } else {
@@ -3197,7 +3472,7 @@ CVMstackmapEmitMapForPC(CVMStackmapContext* con, CVMUint16 relPC,
 	CVMUint32 nChunks;
 	nChunks = CVMstackmapStateToBitmap(con, thisEntry, relPC,
 					   varState, stackState, topOfStack);
-	CVMassert(nChunks == 1);
+	CVMassert(nChunks <= CVM_STACKMAP_ENTRY_MIN_NUMBER_OF_CHUNKS);
     }
     /* Emitted another one */
     con->stackMaps->noGcPoints++;
@@ -3208,6 +3483,111 @@ CVMstackmapEmitMapForPC(CVMStackmapContext* con, CVMUint16 relPC,
     }
 #endif
 }
+
+#ifdef CVM_DEBUG_ASSERTS
+static void
+CVMstackmapsVerifyStackmaps(CVMStackmapContext* con)
+{
+    CVMUint32 i;
+    CVMUint32 numberOfBasicEntries = 0;
+    CVMUint32 numberOfExtendedEntries = 0;
+    CVMUint32 numberOfSuperExtendedEntries = 0;
+
+    /* The numberOfBasicEntries counted here is a count of the basic entries
+       which do not have an extended or super extended entry.  This is different
+       than the use of the term of "basic entry" in other parts of this file
+       where it refers to entries which reside in the basic region: */
+
+    for (i = 0; i < con->stackMaps->noGcPoints; i++) {
+	CVMStackMapEntry *entry = &con->stackMaps->smEntries[i];
+	if ((entry->state[0] & 1) == 0) {
+	    numberOfBasicEntries++;
+	} else {
+	    CVMUint16 offset = entry->state[0] >> 1;
+	    if (offset == CVM_STACKMAP_RESERVED_OFFSET) {
+		numberOfSuperExtendedEntries++;
+	    } else {
+		numberOfExtendedEntries++;
+	    }
+	}
+    }
+
+#ifdef CVM_DEBUG
+    if (CVMstackmapVerboseDebug) {
+	CVMconsolePrintf("Stackmap region verification\n");
+	CVMconsolePrintf("  total expected GC points: %d\n", con->nGCPoints);
+	CVMconsolePrintf("  total actual GC points: %d\n",
+			 con->stackMaps->noGcPoints);
+	CVMconsolePrintf("  From basic region:\n");
+	CVMconsolePrintf("     numberOfBasicEntries: %d\n",
+			 numberOfBasicEntries);
+	CVMconsolePrintf("     numberOfExtendedEntries: %d\n",
+			 numberOfExtendedEntries);
+	CVMconsolePrintf("     numberOfSuperExtendedEntries: %d\n",
+			 numberOfSuperExtendedEntries);
+	CVMconsolePrintf("     total entries: %d\n",
+			 numberOfBasicEntries + numberOfExtendedEntries +
+			 numberOfSuperExtendedEntries);
+	CVMconsolePrintf("     numberOfSuperExtendedEntries created: %d\n",
+			 con->currentNumberOfSEEntries);
+    }
+#endif
+
+    /* The number of each type of entries must add up to the number of GC
+       points: */
+    CVMassert(con->stackMaps->noGcPoints ==
+	      numberOfBasicEntries + numberOfExtendedEntries +
+	      numberOfSuperExtendedEntries);
+
+
+    /* The number of super extended entries found must equal the number that we
+       created earlier: */
+    CVMassert(numberOfSuperExtendedEntries == con->currentNumberOfSEEntries);
+
+    if (numberOfSuperExtendedEntries > 0) {
+	CVMStackMapSuperExtendedMaps **seMapsPtr;
+	CVMStackMapSuperExtendedMaps *seMaps;
+	CVMUint16 lastPC;
+    
+	seMapsPtr = (CVMStackMapSuperExtendedMaps **)
+	    &con->stackMaps->smEntries[con->stackMaps->noGcPoints];
+
+	/* The pointer must be located on a word-aligned boundary: */
+	CVMassert(seMapsPtr ==
+		  (CVMStackMapSuperExtendedMaps **)CVMalignWordUp(seMapsPtr));
+
+	seMaps = *seMapsPtr;
+
+	/* The number of entries in the seMaps must match the number expected
+	   as infered from the basic entries: */
+	CVMassert(seMaps->numberOfEntries == numberOfSuperExtendedEntries);
+
+#ifdef CVM_DEBUG
+	if (CVMstackmapVerboseDebug) {
+	    for (i = 0; i < seMaps->numberOfEntries; i++) {
+		if (seMaps->entries[i] == NULL) {
+		    CVMconsolePrintf("seMaps->entries[%d] is NULL\n", i);
+		}
+	    }
+	}
+#endif
+	/* Ensure that every entry in the seMaps is not NULL.  Also ensure that
+	   the entries are sorted in increasing order: 
+
+	   Note: it is OK to initialize lastPC to 0 because we should never
+	   ever have an entry in the seMaps for PC 0.  This is because we will
+	   at least be able to store that entry in the extended region if not
+	   the basic region.
+	*/
+	lastPC = 0;
+	for (i = 0; i < seMaps->numberOfEntries; i++) {
+	    CVMassert(seMaps->entries[i] != NULL);
+	    CVMassert(seMaps->entries[i]->pc > lastPC);
+	    lastPC = seMaps->entries[i]->pc;
+	}
+    }
+}
+#endif /* CVM_DEBUG_ASSERTS */
 
 /*
  * We are done with the flow analysis. Now allocate and emit the
@@ -3239,6 +3619,7 @@ CVMstackmapDoStackmaps(CVMStackmapContext* con)
 					    CVMstackmapEmitMapForPC, 0);
 	}
     }
+
     /*
      * We'd better have counted at most con->nGCPoints. We might have
      * emitted less, since there may be unreachable code (very
@@ -3252,11 +3633,65 @@ CVMstackmapDoStackmaps(CVMStackmapContext* con)
      * emitted stackmap entries.
      */
     if (con->stackMaps->noGcPoints < con->nGCPoints) {
+
+	CVMassert(&con->stackMaps->smEntries[con->nGCPoints] ==
+		  (CVMStackMapEntry *)con->stackMapAreaBegin);
+
 	/* Move from previous start to right after the stackmaps */
 	memmove(&con->stackMaps->smEntries[con->stackMaps->noGcPoints],
 		    &con->stackMaps->smEntries[con->nGCPoints],
 		    con->stackMapLongFormatNumBytes);
+
+	/* Since the data in the extended and super extended (if present)
+	   regions have been moved above, we will need to adjust the pointer
+	   to the seMaps and the pointers in the seMaps accordingly (that is
+	   is the seMaps is present.
+
+	   The following code computes the adjustment (i.e. the displacement)
+	   that needs to be made to the pointers, and does all the necessary
+	   adjustments:
+	*/
+	if (con->numberOfSuperExtendedEntries > 0) {
+	    CVMStackMapEntry *entries = con->stackMaps->smEntries;
+	    CVMStackMapSuperExtendedMaps **seMapsPtr;
+	    CVMStackMapSuperExtendedMaps *seMaps;
+	    CVMUint32 displacement;
+	    
+	    /* Compute the number of bytes of displacement that the data has
+	       been moved in memory: */
+	    displacement = (CVMUint8 *)&entries[con->nGCPoints] -
+		           (CVMUint8 *)&entries[con->stackMaps->noGcPoints];
+
+	    /* Get the address of the seMaps which should be located at the end
+	       of the basic region now that we've moved it down: */
+	    seMapsPtr = (CVMStackMapSuperExtendedMaps **)
+		        &entries[con->stackMaps->noGcPoints];
+	    CVMassert(seMapsPtr ==
+	        (CVMStackMapSuperExtendedMaps **)CVMalignWordUp(seMapsPtr));
+
+	    /* Fetch the address of the seMaps: */
+	    seMaps = *seMapsPtr;
+
+	    /* Adjust the address by the displacement: */
+	    seMaps = (CVMStackMapSuperExtendedMaps *)
+		((CVMUint8 *)seMaps - displacement);
+	    *seMapsPtr = seMaps;
+
+	    /* Next adjust all the entry pointers in seMaps: */
+	    for (i = 0; i < seMaps->numberOfEntries; i++) {
+		CVMStackMapEntry *entry = seMaps->entries[i];
+		entry = (CVMStackMapEntry *)
+		    ((CVMUint8 *)entry - displacement);
+		seMaps->entries[i] = entry;
+	    }
+	}
     }
+
+#ifdef CVM_DEBUG_ASSERTS
+    /* Do the verification at the very end after everything is done including
+       the part above where the seMaps pointers need to be readjusted: */
+    CVMstackmapsVerifyStackmaps(con);
+#endif
 }
 
 /* Adds the newly created stackmaps to the global list. */
@@ -3550,18 +3985,80 @@ CVMstackmapAnalyze( CVMStackmapContext *con )
     return (con->numRefVarsToInitialize + con->nRefValConflicts + con->nRefPCConflicts > 0 );
 }
 
+/* Gets the actual stackmap entry in the super extended region. */
+static CVMStackMapEntry*
+CVMstackmapGetSuperExtendedEntry(CVMStackMapEntry *basicEntry,
+				 CVMStackMapSuperExtendedMaps *seMaps)
+{
+    CVMStackMapEntry **entries = seMaps->entries;
+    int lowest = 0;
+    int highbound = seMaps->numberOfEntries;
+    int i;
+    CVMUint16 candidatePC;
+    CVMUint16 pc = basicEntry->pc;
+
+    /* Do a binary search of the list of stack entries to look for a
+       matching PC: */
+    while (lowest < highbound) {
+	CVMStackMapEntry *entry;
+	i = lowest + (highbound-lowest)/2;
+	entry = entries[i];
+	candidatePC = entry->pc;
+	if (candidatePC == pc){
+	    /* We've found a matching PC.  Now, get the stackmap entry info: */
+	    return entry;
+	}
+	if (candidatePC < pc) {
+	    lowest = i+1;
+	}else{
+	    highbound = i;
+	}
+    }
+    /* We should always be able to find a super extended entry if we get to
+       this function.  This is because we only came here when a basic stackmap
+       entry was found for the PC in the first place.  Hence, there should be
+       no exceptions where a stackmap entry cannot be found. */
+    CVMassert(CVM_FALSE);
+
+    return NULL;
+}
+
+/* Gets the actual stackmap entry in the extended region. */
 static CVMStackMapEntry*
 CVMstackmapGetRealEntry(CVMStackMapEntry* entry,
 			CVMStackMapEntry* entryEnd)
 {
+    CVMassert(entryEnd == (CVMStackMapEntry *)CVMalignWordUp(entryEnd));
+
+    /* If the low bit of the entry is set, then we have a large stackmap entry
+       encoding.  The current entry actually represents an offset into the
+       extra stackmap data area, and that location is where the real stackmap
+       entry info resides: */
     if ((entry->state[0] & 1) != 0) {
-	CVMUint16 offset = (entry->state[0] & ~1) >> 1;
+	CVMUint16 offset = entry->state[0] >> 1;
+	/* If the offset is CVM_STACKMAP_RESERVED_OFFSET, then the actual entry
+	   resides in the super extended region instead of here in the extended
+	   region.  So, call CVMstackmapGetSuperExtendedEntry() to fetch it:
+	*/
+	if (offset == CVM_STACKMAP_RESERVED_OFFSET) {
+	    CVMStackMapSuperExtendedMaps *seMaps;
+
+	    seMaps = *(CVMStackMapSuperExtendedMaps **)entryEnd;
+	    CVMassert(seMaps != NULL);
+	    CVMassert(seMaps ==
+		      (CVMStackMapSuperExtendedMaps *)CVMalignWordUp(seMaps));
+	    return CVMstackmapGetSuperExtendedEntry(entry, seMaps);
+	} else {
 #ifdef CVM_DEBUG_ASSERTS
-	CVMStackMapEntry * realEntry =  (CVMStackMapEntry*)((CVMUint16*)entryEnd + offset);
-	CVMassert( realEntry->pc == entry->pc );
+	    CVMStackMapEntry *realEntry;
+	    realEntry = (CVMStackMapEntry*)((CVMUint16*)entryEnd + offset);
+	    CVMassert( realEntry->pc == entry->pc );
 #endif
+	}
+	/* Return the entry in the extended region: */
 	return (CVMStackMapEntry*)((CVMUint16*)entryEnd + offset);
     } else {
+	/* Return the basic entry: */
 	return entry;
     }
 }
@@ -3581,12 +4078,15 @@ CVMstackmapGetEntryForPC(CVMStackMaps* smaps, CVMUint16 pc)
     CVMStackMapEntry* entry;
     CVMUint16 candidatePC;
 
+    /* Do a binary search of the list of stack entries to look for a
+       matching PC: */
     while ( lowest < highbound ){
 	i = lowest + (highbound-lowest)/2;
 	entry = entries+i;
 	candidatePC = entry->pc;
 	if (candidatePC == pc){
-	    CVMStackMapEntry* entryEnd = entries + smaps->noGcPoints;
+	    /* We've found a matching PC.  Now, get the stackmap entry info: */
+	    CVMStackMapEntry *entryEnd = entries + smaps->noGcPoints;
 	    return CVMstackmapGetRealEntry(entry, entryEnd);
 	}
 	if ( candidatePC < pc ){
