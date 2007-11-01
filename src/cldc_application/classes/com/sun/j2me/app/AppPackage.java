@@ -56,8 +56,15 @@ public class AppPackage {
      * @return 1 if allowed; 0 if denied; -1 if status is unknown
      */
     public int checkPermission(Permission p) {
-        /* Stub: always allowed */
-        return 1;
+        /*
+         * IMPL_NOTE: The corresponding method in MIDletSuite used to check
+         * for permissions silently, i.e. without throwing SecurityException
+         * or asking user if he allows to proceed.
+         * This functionality should be added to AccessController; until then,
+         * it is acceptable to return "unknown", so that security-sensitive
+         * code will call checkForPermission() anyway.
+         */
+        return -1;
     }    
     
     /**
