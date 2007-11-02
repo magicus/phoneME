@@ -125,6 +125,26 @@ Java_com_sun_pisces_PiscesRenderer_beginRendering__IIIII(JNIEnv* env,
     }
 }
 
+//temporary copy of Java_com_sun_pisces_PiscesRenderer_beginRendering__IIIII
+JNIEXPORT void JNICALL
+Java_com_sun_pisces_PiscesRenderer_beginRenderingIIIII(JNIEnv* env,
+        jobject objectHandle, jint minX, jint minY, jint width, jint height,
+        jint windingRule) {
+    Renderer* rdr;
+    rdr = (Renderer*)JLongToPointer(
+              (*env)->GetLongField(env, objectHandle, 
+                                   fieldIds[RENDERER_NATIVE_PTR]));
+
+    renderer_beginRendering5(rdr, minX, minY, width, height, windingRule);
+
+    if (JNI_TRUE == readAndClearMemErrorFlag()) {
+        JNI_ThrowNew(env, "java/lang/OutOfMemoryError",
+                     "Allocation of internal renderer buffer failed.");
+    }
+}
+
+
+
 JNIEXPORT void JNICALL
 Java_com_sun_pisces_PiscesRenderer_beginRendering__I(JNIEnv* env,
         jobject objectHandle, jint windingRule) {
@@ -140,6 +160,25 @@ Java_com_sun_pisces_PiscesRenderer_beginRendering__I(JNIEnv* env,
                      "Allocation of internal renderer buffer failed.");
     }
 }
+
+//temporary copy of Java_com_sun_pisces_PiscesRenderer_beginRendering__I
+JNIEXPORT void JNICALL
+Java_com_sun_pisces_PiscesRenderer_beginRenderingI(JNIEnv* env,
+        jobject objectHandle, jint windingRule) {
+    Renderer* rdr;
+    rdr = (Renderer*)JLongToPointer(
+              (*env)->GetLongField(env, objectHandle, 
+                                   fieldIds[RENDERER_NATIVE_PTR]));
+
+    renderer_beginRendering1(rdr, windingRule);
+
+    if (JNI_TRUE == readAndClearMemErrorFlag()) {
+        JNI_ThrowNew(env, "java/lang/OutOfMemoryError",
+                     "Allocation of internal renderer buffer failed.");
+    }
+}
+
+
 
 JNIEXPORT void JNICALL
 Java_com_sun_pisces_PiscesRenderer_endRendering(JNIEnv* env,
@@ -269,6 +308,44 @@ Java_com_sun_pisces_PiscesRenderer_setStroke__IIII_3II(JNIEnv* env,
     }
 }
 
+//temporary copy of Java_com_sun_pisces_PiscesRenderer_setStroke__IIII_3II
+JNIEXPORT void JNICALL
+Java_com_sun_pisces_PiscesRenderer_setStrokeImpl(JNIEnv* env,
+        jobject objectHandle, jint lineWidth, jint capStyle,
+        jint joinStyle, jint miterLimit, jintArray arrayHandle, 
+        jint dashPhase) {
+    jint* dashArray = NULL;
+    jint dashArray_length = 0;
+
+    Renderer* rdr;
+    rdr = (Renderer*)JLongToPointer(
+              (*env)->GetLongField(env, objectHandle, 
+                                   fieldIds[RENDERER_NATIVE_PTR]));
+
+    if (arrayHandle != NULL) {
+        jsize length = (*env)->GetArrayLength(env, arrayHandle);
+        dashArray = (jint*)PISCESmalloc(length * sizeof(jint));
+
+        //NOTE : dashArray is freed at finalization time by renderer_dispose()
+
+        if (NULL == dashArray) {
+            JNI_ThrowNew(env, "java/lang/OutOfMemoryError",
+                       "Allocation of renderer memory for stroke data failed.");
+        } else {
+            (*env)->GetIntArrayRegion(env, arrayHandle, 0, length, dashArray);
+            dashArray_length = length;
+        }
+    }
+
+    renderer_setStroke6(rdr, lineWidth, capStyle, joinStyle, miterLimit,
+                        dashArray, dashArray_length, dashPhase);
+
+    if (JNI_TRUE == readAndClearMemErrorFlag()) {
+        JNI_ThrowNew(env, "java/lang/OutOfMemoryError",
+                     "Allocation of internal renderer buffer failed.");
+    }
+}
+
 JNIEXPORT void JNICALL
 Java_com_sun_pisces_PiscesRenderer_setStroke__(JNIEnv* env,
         jobject objectHandle) {
@@ -284,6 +361,24 @@ Java_com_sun_pisces_PiscesRenderer_setStroke__(JNIEnv* env,
                      "Allocation of internal renderer buffer failed.");
     }
 }
+
+//temporary copy of Java_com_sun_pisces_PiscesRenderer_setStroke__
+JNIEXPORT void JNICALL
+Java_com_sun_pisces_PiscesRenderer_setStrokeImplNoParam(JNIEnv* env,
+        jobject objectHandle) {
+    Renderer* rdr;
+    rdr = (Renderer*)JLongToPointer(
+              (*env)->GetLongField(env, objectHandle, 
+                                   fieldIds[RENDERER_NATIVE_PTR]));
+
+    renderer_setStroke0(rdr);
+
+    if (JNI_TRUE == readAndClearMemErrorFlag()) {
+        JNI_ThrowNew(env, "java/lang/OutOfMemoryError",
+                     "Allocation of internal renderer buffer failed.");
+    }
+}
+
 
 JNIEXPORT void JNICALL
 Java_com_sun_pisces_PiscesRenderer_setFill(JNIEnv* env, jobject objectHandle) {
