@@ -33,10 +33,9 @@
 PCSL_OS=javacall
 PCSL_CPU=arm
 
+MEMORY_MODULE=malloc
 FILE_MODULE=javacall
 NETWORK_MODULE=javacall
-MEMORY_PORT_MODULE=javacall
-MEMORY_MODULE=heap
 PRINT_MODULE=javacall
 
 include $(PCSL_DIR)/makefiles/share/win32.gmk
