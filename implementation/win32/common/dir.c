@@ -41,7 +41,7 @@
 typedef struct JAVACALL_FIND_DATA {
         WIN32_FIND_DATAW find_data;
         BOOL first_time;
-        HANDLE handle; /*win32 searching handle*/
+        HANDLE hFind; /*win32 searching handle*/
 } JAVACALL_FIND_DATA;
 
 
@@ -77,11 +77,9 @@ javacall_utf16 javacall_get_file_separator(void)
  */
 javacall_handle javacall_dir_open(javacall_const_utf16_string path, int pathLen)
 {
-    javacall_handle handle;
+    HANDLE              hFind;
     JAVACALL_FIND_DATA* pFindData;
-    WIN32_FIND_DATAW javacall_dir_data;
     wchar_t wOsPath[JAVACALL_MAX_FILE_NAME_LENGTH+1];
-    int nErrNo;
 
     if (pathLen == JAVACALL_UNKNOWN_LENGTH) {
         pathLen = wcslen(path);
@@ -90,43 +88,39 @@ javacall_handle javacall_dir_open(javacall_const_utf16_string path, int pathLen)
         return NULL;
     }
 
-    memset(wOsPath, 0, JAVACALL_MAX_FILE_NAME_LENGTH * sizeof(wchar_t));
     memcpy(wOsPath, path, pathLen * sizeof(wchar_t));
-
 
     if (wOsPath[pathLen - 2] != '/' || wOsPath[pathLen - 2] != '\\' 
         || wOsPath[pathLen - 1] != '*') {
-        if (wOsPath[pathLen - 1] == L'/' || wOsPath[pathLen - 1] == L'\\') {
-           wOsPath[pathLen++] = '*';
-        } else {
-            wOsPath[pathLen++] = javacall_get_file_separator();
-            wOsPath[pathLen++] = '*';
-        }
+            if (wOsPath[pathLen - 1] == L'/' || wOsPath[pathLen - 1] == L'\\') {
+                wOsPath[pathLen++] = '*';
+            } else {
+                wOsPath[pathLen++] = javacall_get_file_separator();
+                wOsPath[pathLen++] = '*';
+            }
     }
     wOsPath[pathLen] = '\0';
     
-    handle = FindFirstFileW(wOsPath, &javacall_dir_data);
-    nErrNo = GetLastError();
-
-    if (handle == INVALID_HANDLE_VALUE && nErrNo != ERROR_NO_MORE_FILES)
-    {
+    pFindData = malloc(sizeof(JAVACALL_FIND_DATA));
+    if (pFindData == NULL)
         return NULL;
+
+    hFind = FindFirstFileW(wOsPath, &(pFindData->find_data));
+    if (hFind == INVALID_HANDLE_VALUE) {
+        DWORD nErrNo = GetLastError();
+        if (nErrNo == ERROR_NO_MORE_FILES) {
+            hFind = EMPTY_DIRECTORY_HANDLE;
+        } else {
+            free(pFindData);
+            return NULL;
+        }
     }
 
-    pFindData = LocalAlloc(LPTR, sizeof(JAVACALL_FIND_DATA));
-    memset(pFindData,0,sizeof(JAVACALL_FIND_DATA));
-    pFindData->find_data = javacall_dir_data;
     pFindData->first_time = TRUE;
-    if ((handle == INVALID_HANDLE_VALUE) && (nErrNo == ERROR_NO_MORE_FILES)) {
-        pFindData->handle = EMPTY_DIRECTORY_HANDLE;
-    }
-    else {
-        pFindData->handle = handle;
-    }
-    return (javacall_handle)pFindData;
+    pFindData->hFind = hFind;
+    return pFindData;
 }
-
-
+    
 /**
  * Closes the specified file list. The handle will no longer be
  * associated with the file list.
@@ -138,16 +132,11 @@ void javacall_dir_close(javacall_handle handle)
 {
     JAVACALL_FIND_DATA* pFindData = (JAVACALL_FIND_DATA*)handle;
 
-    if ((pFindData != NULL) && (pFindData->handle == EMPTY_DIRECTORY_HANDLE))
-    {
+    if (pFindData != NULL) {
+        if (pFindData->hFind != EMPTY_DIRECTORY_HANDLE) {
+            FindClose(pFindData->hFind);
+        }
         free(pFindData);
-        return;
-    }
-
-    if ((pFindData != NULL) &&
-        (pFindData->handle != INVALID_HANDLE_VALUE)) {
-        FindClose(pFindData->handle);
-        LocalFree(pFindData);
     }
 }
 
@@ -171,29 +160,26 @@ javacall_utf16* javacall_dir_get_next(javacall_handle handle,
 {
     JAVACALL_FIND_DATA* pFindData = (JAVACALL_FIND_DATA*)handle;
 
-    if((pFindData == NULL) || (pFindData->handle == INVALID_HANDLE_VALUE) ){
-        if (outFileNameLength != NULL ) { 
-            *outFileNameLength = 0; 
-        }
+    if (outFileNameLength != NULL ) { 
+        /* Default value */
+        *outFileNameLength = 0; 
+    }
+
+    if ((pFindData == NULL) || (pFindData->hFind == EMPTY_DIRECTORY_HANDLE)) {
         return NULL;
     }
-    if (pFindData->handle == EMPTY_DIRECTORY_HANDLE)
-        return NULL;
 
     if (!pFindData->first_time) {
-        if (FindNextFileW(pFindData->handle, &(pFindData->find_data)) == 0) {
-            if (outFileNameLength != NULL) { 
-                *outFileNameLength = 0; 
-            }
+        if (FindNextFileW(pFindData->hFind, &(pFindData->find_data)) == 0) {
             return NULL;
         }
     }
     pFindData->first_time = FALSE;
 
     if (outFileNameLength != NULL) { 
-        *outFileNameLength = wcslen((wchar_t *)(pFindData->find_data.cFileName)); 
+        *outFileNameLength = wcslen(pFindData->find_data.cFileName); 
     }
-    return  (pFindData->find_data.cFileName);
+    return (pFindData->find_data.cFileName);
 }
 
 /**
@@ -210,13 +196,13 @@ javacall_int64 javacall_dir_get_free_space_for_java(void)
     javacall_dir_get_root_path(rootPath, &rootPathLen);
     rootPath[rootPathLen] = 0;
     if (GetDiskFreeSpaceExW(rootPath, &freeBytesForMe, &totalBytes, &totalFreeBytes)) {
-       javacall_int64 ret = (javacall_int64)freeBytesForMe.QuadPart;
-       if (ret > DEFAULT_MAX_JAVA_SPACE) {
+        javacall_int64 ret = (javacall_int64)freeBytesForMe.QuadPart;
+        if (ret > DEFAULT_MAX_JAVA_SPACE) {
             return DEFAULT_MAX_JAVA_SPACE;
-       }
-       return  ret;
+        }
+        return  ret;
     } else { 
-       return 0;
+        return 0;
     }
 }
 

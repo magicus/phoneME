@@ -231,7 +231,6 @@ javacall_result javacall_file_close(javacall_handle handle)
     return (res) ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
-
 /**
  * Reads a specified number of bytes from a file,
  * @param handle handle of file
@@ -364,8 +363,8 @@ javacall_int64 javacall_file_seek(javacall_handle handle, javacall_int64 offset,
                                   javacall_file_seek_flags flag)
 {
     DWORD dwMoveMethod;
-    LARGE_INTEGER newPointerPosition;
-    newPointerPosition.QuadPart = offset;
+    LARGE_INTEGER newPosition;
+    newPosition.QuadPart = offset;
     switch (flag) {
     case JAVACALL_FILE_SEEK_CUR:
         dwMoveMethod = FILE_CURRENT;
@@ -378,16 +377,19 @@ javacall_int64 javacall_file_seek(javacall_handle handle, javacall_int64 offset,
         break;
     }
 
-    newPointerPosition.LowPart = SetFilePointer((HANDLE)handle, newPointerPosition.LowPart, &newPointerPosition.HighPart, dwMoveMethod);
+    newPosition.LowPart = SetFilePointer((HANDLE)handle, newPosition.LowPart, 
+        &newPosition.HighPart, dwMoveMethod);
+
 #if ENABLE_JAVACALL_IMPL_FILE_LOGS
     javacall_printf( "javacall_file_seek >> handle=%x offset=%d, move=%d, flag=%d, newp=%d\n", 
-           handle, offset, dwMoveMethod, flag, newPointerPosition.QuadPart);
+           handle, offset, dwMoveMethod, flag, newPosition.QuadPart);
 #endif
-    if (newPointerPosition.LowPart == INVALID_SET_FILE_POINTER)
+    if (newPosition.LowPart == INVALID_SET_FILE_POINTER) {
         if (GetLastError() != NO_ERROR)
             return -1;
+    }
 
-   return newPointerPosition.QuadPart;
+   return newPosition.QuadPart;
 }
 
 
@@ -399,10 +401,12 @@ javacall_int64 javacall_file_seek(javacall_handle handle, javacall_int64 offset,
  */
 javacall_int64 javacall_file_sizeofopenfile(javacall_handle handle)
 {
-   LARGE_INTEGER size;
-   size.HighPart = 0;
-   size.LowPart = GetFileSize((HANDLE)handle, &size.HighPart);
-   return (size.LowPart != INVALID_FILE_SIZE || GetLastError() == NO_ERROR) ? size.QuadPart : -1;
+    LARGE_INTEGER size;
+    BOOL isOk;
+    size.HighPart = 0;
+    size.LowPart = GetFileSize((HANDLE)handle, &size.HighPart);
+    isOk = (size.LowPart != INVALID_FILE_SIZE) || (GetLastError() == NO_ERROR);
+    return isOk ? size.QuadPart : -1;
 }
 
 /**
