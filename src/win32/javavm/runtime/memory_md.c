@@ -151,10 +151,11 @@ void *CVMmemMap(size_t requestedSize, size_t *mappedSize)
 	*/
 
 	protectAttr = PAGE_READONLY;
+#ifdef WINCE
 	if (CVMglobals.target.useLargeMemoryArea) {
 	    protectAttr = PAGE_NOACCESS;
 	}
-
+#endif
 	/* Returns NULL on failure */
 	mappedAddr = VirtualAlloc(0, requestedSize, MEM_RESERVE, protectAttr);
     }
