@@ -419,7 +419,7 @@ int loadImageFromCache(SuiteIdType suiteId, const pcsl_string * resName,
         /* Open file */
         handle = storage_open(&errmsg, &path, OPEN_READ);
         pcsl_string_free(&path);
-        if (errmsg != NULL || handle < 0) {
+        if (errmsg != NULL) {
             REPORT_WARN1(LC_LOWUI,"Warning: could not load cached image; %s\n",
                          errmsg);
 
@@ -453,7 +453,7 @@ int loadImageFromCache(SuiteIdType suiteId, const pcsl_string * resName,
 
     } while (0);
 
-    if (handle >= 0) {
+    if (handle != -1) {
         storageClose(&errmsg, handle);
     }
 
