@@ -121,7 +121,10 @@ public class cvmclient
 		//System.out.println("INPUT: length " + input.length() +
 		//		   " value \"" + input + "\"");
 
-		if (input.startsWith("quit")) {
+		if (input.equals("quit!")) {
+		    // Make sure we are exiting the VM.
+		    input = "quit!";
+		} else if (input.startsWith("quit")) {
 		    // Make sure we are exiting the VM.
 		    input = "quit";
 		} else if (input.startsWith("detach")) {
@@ -137,6 +140,7 @@ public class cvmclient
 		// available.  The only exception is "detach" where we're
 		// voluntarily detaching from the server and shutting down.
 		if (input.equals("quit") ||
+		    input.equals("quit!") ||
 		    input.equals("detach") ||
 		    input.equals("stopServer")) {
 		    done = true;

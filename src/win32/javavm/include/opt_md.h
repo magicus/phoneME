@@ -42,6 +42,20 @@
         CVM_STRING_OPTION,
     {{0, (CVMAddr)"<native file path>", 0}},
         &CVMglobals.target.stderrPath},
+
+    /** params for allowing virtual allocs from the WinCE Large Memory Area: */
+    {
+	"useLargeMemoryArea",                 /* Opt Name */
+	"VirtualAlloc in Large Memory Area",  /* Opt Desc */
+	CVM_BOOLEAN_OPTION,                   /* Opt Type */ 
+	{{                                    /* Opt Range & Default */
+	    CVM_FALSE,                        /*   Min value     */
+	    (CVMAddr)CVM_TRUE,                /*   Max value     */
+	    (CVMAddr)CVM_FALSE                /*   Default value */
+        }},
+	&CVMglobals.target.useLargeMemoryArea /* Opt Variable */
+    },
+
 #endif
     /** params for stdio socket redirection */
     {"stdoutPort", "Port to redirect stdout to",

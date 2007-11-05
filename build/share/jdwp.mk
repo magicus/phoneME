@@ -39,13 +39,14 @@ CVM_JDWP_CLASSES       = $(CVM_JDWP_BUILD_TOP)/classes
 
 CVM_JDWP_SHAREROOT     = $(CVM_TOP)/src/share/tools/jpda
 CVM_JDWP_TARGETROOT    = $(CVM_TOP)/src/$(TARGET_OS)/tools/jpda
+CVM_JDWP_TARGETSHAREROOT = $(CVM_TOP)/src/$(TARGET_OS)
 
 CVM_JDWP_BUILDDIRS += \
         $(CVM_JDWP_OBJDIR) \
         $(CVM_JDWP_FLAGSDIR) \
         $(CVM_JDWP_CLASSES)
 
-CVM_JDWP_LIB = libjdwp$(LIB_POSTFIX)
+CVM_JDWP_LIB = $(LIB_PREFIX)jdwp$(LIB_POSTFIX)
 
 CVM_JDWP_TRANSPORT = socket
 
@@ -56,7 +57,6 @@ CVM_JDWP_INCLUDE_DIRS  += \
         $(CVM_SHAREROOT)/javavm/export \
 	$(CVM_JDWP_TARGETROOT)/back \
 	$(CVM_JDWP_SHAREROOT)/back \
-	$(CVM_JDWP_SHAREROOT)/back/export \
 	$(CVM_JDWP_SHAREROOT)/back/npt \
 	$(CVM_JDWP_TARGETROOT)/back/npt \
 	$(CVM_JDWP_SHAREROOT)/transport/export \
@@ -143,6 +143,8 @@ CVM_JDWP_SRCDIRS  = \
 	$(CVM_JDWP_TARGETROOT)/back \
 	$(CVM_JDWP_TARGETROOT)/transport \
 	$(CVM_JDWP_TARGETROOT)/transport/$(CVM_JDWP_TRANSPORT) \
+	$(CVM_JDWP_TARGETSHAREROOT)/javavm/runtime \
+	$(CVM_TOP)/src/portlibs/dlfcn
 
 vpath %.c      $(CVM_JDWP_SRCDIRS)
 vpath %.S      $(CVM_JDWP_SRCDIRS)

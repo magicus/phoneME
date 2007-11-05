@@ -396,6 +396,60 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             return ch;
         }
 
+        /*
+         * Reads up to <code>len</code> bytes of data from the input stream into
+         * an array of bytes.  An attempt is made to read as many as
+         * <code>len</code> bytes, but a smaller number may be read, possibly
+         * zero. The number of bytes actually read is returned as an integer.
+         *
+         * This method allows direct consumer-supplier connection 
+         * to avoid default byte-by-byte reading behaviour.
+         */
+        public int read(byte[] b, int off, int len) throws IOException {
+            /* Need to check parameters here, because len may be changed
+             * and streamInput.read() will not notice invalid argument.
+             */
+            if (b == null) {
+                throw new NullPointerException();
+            } else if ((off < 0) || (off > b.length) || (len < 0) ||
+                   ((off + len) > b.length) || ((off + len) < 0)) {
+                throw new IndexOutOfBoundsException();
+            } else if (len == 0) {
+                return 0;
+            }
+
+            // Be consistent about returning EOF once encountered.
+            if (eof)
+                return -1;
+
+            if ((chunked) && (bytesleft <= 0)) {
+                readCRLF();     // Skip trailing \r\n
+
+                bytesleft = readChunkSize();
+                if (bytesleft == 0) {
+                    eof = true;
+                    return -1;
+                }
+            }
+
+            /* Don't read more than was specified as available .
+             * len will remain > 0, because 
+             *  if bytesleft is 0, than eof was also true.
+             */
+            if (len > bytesleft) {
+                len = bytesleft;
+            }
+
+            int bytesRead = streamInput.read(b, off, len);
+            if (bytesRead < 0) {
+                eof = true;
+            } else {
+                bytesleft -= bytesRead;
+                eof = (!chunked) && (bytesleft <= 0);
+            }
+            return bytesRead;
+        }
+
         /* Read the chunk size from the input.
          * It is a hex length followed by optional headers (ignored).
          * and terminated with <cr><lf>.
@@ -468,17 +522,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
          * "len". CR 6216611 
          */
         public void write(byte b[], int off, int len) throws IOException {
-            if (b == null) {
-                throw new NullPointerException();
-            } else if ((off < 0) || (off > b.length) || (len < 0) ||
-                       ((off + len) > b.length) || ((off + len) < 0)) {
-                throw new IndexOutOfBoundsException();
-            } else if (len == 0) {
-                return;
-            }
-            for (int i = 0 ; i < len ; i++) {
-                write(b[off + i]);
-            }
+            output.write(b, off, len);
             // Update Content-Length. Note: we should't set
             // content-length to the size of the current bytes that we are
             // writing. The length should be number of all valid bytes in the 

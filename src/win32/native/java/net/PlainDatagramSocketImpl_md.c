@@ -1873,6 +1873,15 @@ Java_java_net_PlainDatagramSocketImpl_join(JNIEnv *env, jobject this,
 	}
     }
 
+#ifdef WINCE
+    /* Fix for 6589699, interface addr get overwritten inside winsock */
+    if (NET_SetSockOpt(fd, IPPROTO_IP, IP_MULTICAST_IF,
+		       (char *)&mname.imr_interface.s_addr, sizeof(in)) < 0) {
+	JNU_ThrowByName(env,
+	    JNU_JAVANETPKG "SocketException","error setting options");
+	return;
+    }
+#endif
     return;
 }
 
