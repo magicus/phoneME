@@ -74,11 +74,14 @@ CVMdynlinkbuildLibName(char *holder, int holderlen, const char *pname,
     }
 
     if (pnamelen == 0) {
-        sprintf(holder, "lib%s%s.dll", fname, suffix);
+        sprintf(holder, "%s%s%s%s", JNI_LIB_PREFIX, fname, suffix,
+		JNI_LIB_SUFFIX);
     } else if (c == ':' || c == '\\') {
-        sprintf(holder, "lib%s%s%s.dll", pname, fname, suffix);
+        sprintf(holder, "%s%s%s%s%s", pname, JNI_LIB_PREFIX, fname, suffix,
+		JNI_LIB_SUFFIX);
     } else {
-        sprintf(holder, "%s\\lib%s%s.dll", pname, fname, suffix);
+        sprintf(holder, "%s\\%s%s%s%s", pname, JNI_LIB_PREFIX, fname, suffix,
+		JNI_LIB_SUFFIX);
     }
 }
 
@@ -152,35 +155,5 @@ CVMdynlinkClose(void *dsoHandle)
     FreeLibrary((HANDLE)dsoHandle);
 }
 
-/* Basically copied from the JDK */
-CVMBool
-CVMdynlinkBuildLibName(void *holder, int holderlen,
-           void *pname, void *fname)
-{
-    const int pnamelen = pname ? strlen(pname) : 0;
-    char *suffix;
-
-    suffix = "";
-
-    /* Truncate on buffer overflow and return an error. */
-    if (pnamelen + strlen(fname) + 10 > (size_t) holderlen) {
-        *((char *) holder) = '\0';
-        return CVM_FALSE;
-    }
-
-    if (pnamelen == 0) {
-#ifndef WINCE
-  sprintf((char *) holder, "%s%s%s%s",
-      JNI_LIB_PREFIX, (char *) fname, (char *) suffix, JNI_LIB_SUFFIX);
-#else
-  sprintf((char *) holder, "/%s%s%s%s",
-      JNI_LIB_PREFIX, (char *) fname, (char *) suffix, JNI_LIB_SUFFIX);
-#endif
-    } else {
-        sprintf((char *) holder, "%s/%s%s%s%s",
-        (char *) pname, JNI_LIB_PREFIX, (char *) fname, (char *) suffix, JNI_LIB_SUFFIX);
-    }
-    return CVM_TRUE;
-}
 
 #endif /* #defined CVM_DYNAMIC_LINKING */

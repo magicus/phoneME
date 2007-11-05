@@ -369,9 +369,11 @@ md_build_library_name(char *holder, int holderlen, char *pname, char *fname)
  
     /* Construct path to library */
     if (pnamelen == 0) {
-        (void)snprintf(holder, holderlen, "lib%s%s.so", fname, suffix);
+        (void)snprintf(holder, holderlen, "%s%s%s%s", JNI_LIB_PREFIX, fname,
+		       suffix, JNI_LIB_SUFFIX);
     } else {
-        (void)snprintf(holder, holderlen, "%s/lib%s%s.so", pname, fname, suffix);
+        (void)snprintf(holder, holderlen, "%s/%s%s%s%s", pname, JNI_LIB_PREFIX,
+		       fname, suffix, JNI_LIB_SUFFIX);
     }
 }
 

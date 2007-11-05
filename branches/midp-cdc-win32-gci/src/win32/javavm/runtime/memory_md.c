@@ -42,6 +42,7 @@
 
 #include "javavm/include/porting/memory.h"
 #include "javavm/include/assert.h"
+#include "javavm/include/globals.h"
 #include "javavm/include/utils.h"
 
 #define WIN32_VIRTUAL_ALLOC_ALIGNMENT (64 * 1024)
@@ -122,6 +123,8 @@ void *CVMmemMap(size_t requestedSize, size_t *mappedSize)
 
     CVMassert(requestedSize == roundUpToGrain(requestedSize));
     if (requestedSize != 0) {
+	DWORD protectAttr;
+
 	/* For WinCE 5.0 and earlier, calling VirtualAlloc() with PAGE_READONLY
 	   will ensure that the virtual address range is reserved from within
 	   the 32M process space.  This range is protected from reads and
@@ -147,8 +150,14 @@ void *CVMmemMap(size_t requestedSize, size_t *mappedSize)
 	   http://msdn2.microsoft.com/en-us/library/aa908768.aspx 
 	*/
 
+	protectAttr = PAGE_READONLY;
+#ifdef WINCE
+	if (CVMglobals.target.useLargeMemoryArea) {
+	    protectAttr = PAGE_NOACCESS;
+	}
+#endif
 	/* Returns NULL on failure */
-	mappedAddr = VirtualAlloc(0, requestedSize, MEM_RESERVE, PAGE_READONLY);
+	mappedAddr = VirtualAlloc(0, requestedSize, MEM_RESERVE, protectAttr);
     }
     *mappedSize = (mappedAddr != NULL) ? requestedSize : 0;
 

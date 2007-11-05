@@ -27,6 +27,7 @@
 
 #ifdef CVM_DYNAMIC_LINKING
 
+#include "javavm/include/jni_md.h"
 #include "javavm/include/porting/linker.h"
 #include "javavm/include/porting/ansi/stdio.h"
 #include "javavm/include/porting/ansi/string.h"
@@ -58,9 +59,11 @@ CVMdynlinkbuildLibName(char *holder, int holderlen, const char *pname,
     }
 
     if (pnamelen == 0) {
-        sprintf(holder, "lib%s%s.so", fname, suffix);
+        sprintf(holder, "%s%s%s%s", JNI_LIB_PREFIX, fname, suffix,
+		JNI_LIB_SUFFIX);
     } else {
-        sprintf(holder, "%s/lib%s%s.so", pname, fname, suffix);
+        sprintf(holder, "%s/%s%s%s%s", pname, JNI_LIB_PREFIX, fname, suffix,
+		JNI_LIB_SUFFIX);
     }
 }
 

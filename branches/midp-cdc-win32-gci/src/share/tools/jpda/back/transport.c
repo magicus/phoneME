@@ -120,7 +120,7 @@ loadTransportLibrary(char *libdir, char *name)
     dbgsysBuildLibName(libname, sizeof(libname), plibdir, name);
     
     /* dlopen (unix) / LoadLibrary (windows) the transport library */
-    handle = dbgsysLoadLibrary(libname, buf, sizeof(buf));
+    handle = dbgsysLoadLibrary(libname);
     return handle;
 }
 

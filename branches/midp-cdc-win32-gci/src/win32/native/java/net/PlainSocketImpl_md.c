@@ -778,7 +778,13 @@ Java_java_net_PlainSocketImpl_socketSetOption(JNIEnv *env, jobject this,
 	    return;
     }
 
-    if (NET_SetSockOpt(fd, level, optname, (void *)&optval, optlen) < 0) {	
+    if (NET_SetSockOpt(fd, level, optname, (void *)&optval, optlen) < 0) {
+#ifdef WINCE
+	if (cmd == java_net_SocketOptions_SO_RCVBUF) {
+	    /* bug 6589661, SO_RCVBUF not supported for SOCK_STREAM */
+	    return;
+	}
+#endif
 	NET_ThrowCurrent(env, "setsockopt");
     }
   	    
