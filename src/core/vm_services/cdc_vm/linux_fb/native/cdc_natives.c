@@ -216,32 +216,44 @@ midpFinalizeUI(void) {
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_main_CDCInit_initMidpNativeStates) {
     jchar jbuff[1024];
-    char cbuff[1024];
-    int max = sizeof(cbuff) - 1;
+    char conf_buff[1024], store_buff[1024];
+    int max = sizeof(conf_buff) - 1;
     int len, i;
 
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(home);
-    KNI_GetParameterAsObject(1, home);
+    KNI_StartHandles(2);    
+    KNI_DeclareHandle(config);
+    KNI_DeclareHandle(storage);
+    
+    KNI_GetParameterAsObject(1, config);
+    KNI_GetParameterAsObject(2, storage);
 
     initCDCEvents();
 
-    len = KNI_GetStringLength(home);
+    len = KNI_GetStringLength(config);
     if (len > max) {
         len = max;
     }
-
     if (len >= 0) {
-        /* home != null */
-        KNI_GetStringRegion(home, 0, len, jbuff);
-
+        /* config != null */
+        KNI_GetStringRegion(config, 0, len, jbuff);
         for (i = 0; i<len; i++) {
-            cbuff[i] = (char)jbuff[i];
+            conf_buff[i] = (char)jbuff[i];
         }
-
-        cbuff[len] = 0;
-
-        midpSetHomeDir(cbuff);
+        conf_buff[len] = 0;
+        midpSetConfigDir(conf_buff);
+    }
+    len = KNI_GetStringLength(storage);
+    if (len > max) {
+        len = max;
+    }
+    if (len >= 0) {
+        /* sotarage != null */
+        KNI_GetStringRegion(storage, 0, len, jbuff);
+        for (i = 0; i<len; i++) {
+            store_buff[i] = (char)jbuff[i];
+        }
+        store_buff[len] = 0;
+        midpSetHomeDir(store_buff);
     }
 
     if (midpInitialize() != 0) {
