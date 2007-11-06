@@ -658,13 +658,12 @@ get_string_list(char** ppszError, const pcsl_string* pFilename,
     *paList = NULL;
     *pStringNum = 0;
 
-    do {
-        handle = storage_open(ppszError, pFilename, OPEN_READ);
-        if (*ppszError != NULL) {
-            status = IO_ERROR;
-            break;
-        }
+    handle = storage_open(ppszError, pFilename, OPEN_READ);
+    if (*ppszError != NULL) {
+        return IO_ERROR;
+    }
 
+    do {
         storageRead(ppszError, handle, (char*)&numberOfStrings,
             sizeof (numberOfStrings));
         if (*ppszError != NULL) {

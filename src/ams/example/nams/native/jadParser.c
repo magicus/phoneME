@@ -674,7 +674,7 @@ long readJadFile(const pcsl_string * filename, char** result_buf) {
     }
 
     fd = storage_open(&err, filename, OPEN_READ);
-    if((fd <= 0) || (err != NULL)) {
+    if(err != NULL) {
         REPORT_INFO1(LC_AMS, "readJadFile():Can't open jad file '%s'",err);
         storageFreeError(err);
         return NO_JAD_FILE;
