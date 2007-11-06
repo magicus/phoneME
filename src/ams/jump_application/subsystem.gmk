@@ -128,6 +128,6 @@ SUBSYSTEM_AMS_NATIVE_FILES += \
   midpInit.c \
   JumpInit.c
 
-ifneq ($(CVM_PRELOAD_LIB), true)
+ifneq ($(CVM_STATICLINK_LIBS), true)
   SUBSYSTEM_AMS_LAZY_MAKEFILES += $(JUMP_AMS_DIR)/libmidp.gmk
 endif
