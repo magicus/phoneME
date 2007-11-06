@@ -373,7 +373,7 @@ int loadImageFromCache(SuiteIdType suiteId, const pcsl_string * resName,
                        unsigned char **bufPtr) {
 
     int                len = -1;
-    int                handle = -1;
+    int                handle;
     char*              errmsg = NULL;
     int                bytesRead;
     pcsl_string        path;
@@ -396,37 +396,37 @@ int loadImageFromCache(SuiteIdType suiteId, const pcsl_string * resName,
         return len;
     }
 
+    /*
+     * IMPL_NOTE: here is assumed that the image cache is located in
+     * the same storage as the midlet suite. This may not be true.
+     */
+
+    /* Build path */
+    StorageIdType storageId;
+    errorCode = midp_suite_get_suite_storage(suiteId, &storageId);
+    if (errorCode != ALL_OK) {
+        return len;
+    }
+
+    errorCode = midp_suite_get_cached_resource_filename(suiteId,
+        storageId, &resNameFix, &path);
+    pcsl_string_free(&resNameFix);
+    if (errorCode != ALL_OK) {
+        return len;
+    }
+
+    /* Open file */
+    handle = storage_open(&errmsg, &path, OPEN_READ);
+    pcsl_string_free(&path);
+    if (errmsg != NULL) {
+        REPORT_WARN1(LC_LOWUI,"Warning: could not load cached image; %s\n",
+                     errmsg);
+
+        storageFreeError(errmsg);
+        return len;
+    }
+
     do {
-        /*
-         * IMPL_NOTE: here is assumed that the image cache is located in
-         * the same storage as the midlet suite. This may not be true.
-         */
-
-        /* Build path */
-        StorageIdType storageId;
-        errorCode = midp_suite_get_suite_storage(suiteId, &storageId);
-        if (errorCode != ALL_OK) {
-            break;
-        }
-
-        errorCode = midp_suite_get_cached_resource_filename(suiteId,
-            storageId, &resNameFix, &path);
-        pcsl_string_free(&resNameFix);
-        if (errorCode != ALL_OK) {
-            break;
-        }
-
-        /* Open file */
-        handle = storage_open(&errmsg, &path, OPEN_READ);
-        pcsl_string_free(&path);
-        if (errmsg != NULL) {
-            REPORT_WARN1(LC_LOWUI,"Warning: could not load cached image; %s\n",
-                         errmsg);
-
-            storageFreeError(errmsg);
-            break;
-        }
-
         /* Get size of file and allocate buffer */
         len = storageSizeOf(&errmsg, handle);
         *bufPtr = midpMalloc(len);
@@ -453,9 +453,7 @@ int loadImageFromCache(SuiteIdType suiteId, const pcsl_string * resName,
 
     } while (0);
 
-    if (handle != -1) {
-        storageClose(&errmsg, handle);
-    }
+    storageClose(&errmsg, handle);
 
     return len;
 }
