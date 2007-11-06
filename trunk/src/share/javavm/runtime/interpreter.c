@@ -4643,7 +4643,9 @@ CVMpostThreadStartEvents(CVMExecEnv *ee)
        implementing RunDebugThread/CreateSystemThread to ensure the
        events get generated. */
 
-    CVMjvmtiPostThreadStartEvent(ee, CVMcurrentThreadICell(ee));
+    if (CVMjvmtiInitialized()) {
+	CVMjvmtiPostThreadStartEvent(ee, CVMcurrentThreadICell(ee));
+    }
 #endif
 
 #if defined(CVM_DEBUG) && defined(CVM_LVM) /* %begin lvm */
