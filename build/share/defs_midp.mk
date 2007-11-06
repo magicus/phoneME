@@ -122,16 +122,19 @@ ifneq ($(CVM_PRELOAD_LIB), true)
 MIDP_CLASSES_ZIP	?= $(CVM_LIBDIR_ABS)/midpclasses.zip
 MIDP_PUB_CLASSES_ZIP    ?= $(CVM_LIBDIR_ABS)/midpclassespub.zip
 MIDP_PRIV_CLASSES_ZIP   ?= $(CVM_LIBDIR_ABS)/midpclassespriv.zip
-MIDP_SHARED_LIB		?= $(CVM_LIBDIR_ABS)/libmidp$(LIB_POSTFIX)
 else
 MIDP_CLASSES_ZIP	?= $(MIDP_OUTPUT_DIR)/classes.zip
 MIDP_PUB_CLASSES_ZIP    ?= $(MIDP_OUTPUT_DIR)/classespub.zip
 MIDP_PRIV_CLASSES_ZIP   ?= $(MIDP_OUTPUT_DIR)/classespriv.zip
 endif
+ifneq ($(CVM_STATICLINK_LIBS), true)
+MIDP_SHARED_LIB		?= $(CVM_LIBDIR_ABS)/libmidp$(LIB_POSTFIX)
+endif
+
 
 RUNMIDLET		?= $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/runMidlet
 MIDP_OBJECTS		?= $(MIDP_OUTPUT_DIR)/obj$(DEBUG_POSTFIX)/$(TARGET_CPU)/*.o
-ifeq ($(CVM_PRELOAD_LIB), true)
+ifeq ($(CVM_STATICLINK_LIBS), true)
 CVM_OBJECTS		+= $(MIDP_OBJECTS)
 MIDP_LIBS 		?= \
         -L$(PCSL_OUTPUT_DIR)/$(PCSL_TARGET)/lib -lpcsl_file \
