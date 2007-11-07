@@ -1,7 +1,6 @@
 /*
- * @(#)InflaterInputStream.java	1.38 06/10/10
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -32,6 +31,9 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.io.EOFException;
 
+import java.util.Markable;
+import java.util.MarkableReader;
+
 /**
  * This class implements a stream filter for uncompressing data in the
  * "deflate" compression format. It is also used as the basis for other
@@ -39,12 +41,12 @@ import java.io.EOFException;
  * NOTE: <B>java.util.zip.GZIPInputStream</B> is found in J2ME CDC profiles 
  * such as J2ME Foundation Profile.
  *
- * @see		Inflater
- * @version 	1.28, 02/02/00
- * @author 	David Connelly
+ * @see        Inflater
+ * @version     1.28, 02/02/00
+ * @author     David Connelly
  */
 public
-class InflaterInputStream extends FilterInputStream {
+class InflaterInputStream extends FilterInputStream implements Markable {
     /**
      * Decompressor for this stream.
      */
@@ -64,12 +66,14 @@ class InflaterInputStream extends FilterInputStream {
     // this flag is set to true after EOF has reached
     private boolean reachEOF = false;
     
+    private MarkableReader reader;
+    
     /**
      * Check to make sure that this stream has not been closed
      */
     private void ensureOpen() throws IOException {
-	if (closed) {
-	    throw new IOException("Stream closed");
+        if (closed) {
+            throw new IOException("Stream closed");
         }
     }
 
@@ -83,14 +87,15 @@ class InflaterInputStream extends FilterInputStream {
      * @exception IllegalArgumentException if size is <= 0
      */
     public InflaterInputStream(InputStream in, Inflater inf, int size) {
-	super(in);
+        super(in);
         if (in == null || inf == null) {
             throw new NullPointerException();
         } else if (size <= 0) {
             throw new IllegalArgumentException("buffer size <= 0");
         }
-	this.inf = inf;
-	buf = new byte[size];
+        this.inf = inf;
+        reader = new MarkableReader(this);
+        buf = new byte[size];
     }
 
     /**
@@ -100,7 +105,7 @@ class InflaterInputStream extends FilterInputStream {
      * @param inf the decompressor ("inflater")
      */
     public InflaterInputStream(InputStream in, Inflater inf) {
-	this(in, inf, 512);
+        this(in, inf, 512);
     }
 
     boolean usesDefaultInflater = false;
@@ -110,7 +115,7 @@ class InflaterInputStream extends FilterInputStream {
      * @param in the input stream
      */
     public InflaterInputStream(InputStream in) {
-	this(in, new Inflater());
+        this(in, new Inflater());
         usesDefaultInflater = true;
     }
 
@@ -123,8 +128,8 @@ class InflaterInputStream extends FilterInputStream {
      * @exception IOException if an I/O error has occurred
      */
     public int read() throws IOException {
-	ensureOpen();
-	return read(singleByteBuf, 0, 1) == -1 ? -1 : singleByteBuf[0] & 0xff;
+        ensureOpen();
+        return read(singleByteBuf, 0, 1) == -1 ? -1 : singleByteBuf[0] & 0xff;
     }
 
     /**
@@ -138,39 +143,44 @@ class InflaterInputStream extends FilterInputStream {
      * @exception ZipException if a ZIP format error has occurred
      * @exception IOException if an I/O error has occurred
      */
-    public int read(byte[] b, int off, int len) throws IOException {
-	ensureOpen();
+     
+    public int read(byte[] b, int off, int len)  throws IOException {
+        return reader.read(b, off, len);
+    }
+    
+    public int readNative(byte[] b, int off, int len) throws IOException {
+        ensureOpen();
         if ((off | len | (off + len) | (b.length - (off + len))) < 0) {
-	    throw new IndexOutOfBoundsException();
-	} else if (len == 0) {
-	    return 0;
-	}
-	try {
-	    int bytesRead = 0;
-	    while (len > 0) {
-		int n = inf.inflate(b, off, len);
-		if (n == 0) {
-		    if (inf.finished() || inf.needsDictionary()) {
-			reachEOF = true;
-			if (bytesRead > 0) {
-			    return bytesRead;
-			} else {
-			    return -1;
-			}
-		    }
-		    if (inf.needsInput()) {
-			fill();
-		    }
-		}
-		bytesRead += n;
-		off += n;
-		len -= n;
-	    }
-	    return bytesRead;
-	} catch (DataFormatException e) {
-	    String s = e.getMessage();
-	    throw new ZipException(s != null ? s : "Invalid ZLIB data format");
-	}
+            throw new IndexOutOfBoundsException();
+        } else if (len == 0) {
+            return 0;
+        }
+        try {
+            int bytesRead = 0;
+            while (len > 0) {
+                int n = inf.inflate(b, off, len);
+                if (n == 0) {
+                    if (inf.finished() || inf.needsDictionary()) {
+                        reachEOF = true;
+                        if (bytesRead > 0) {
+                            return bytesRead;
+                        } else {
+                            return -1;
+                        }
+                    }
+                    if (inf.needsInput()) {
+                        fill();
+                    }
+                }
+                bytesRead += n;
+                off += n;
+                len -= n;
+            }
+            return bytesRead;
+        } catch (DataFormatException e) {
+            String s = e.getMessage();
+            throw new ZipException(s != null ? s : "Invalid ZLIB data format");
+        }
     }
 
     /**
@@ -205,22 +215,22 @@ class InflaterInputStream extends FilterInputStream {
         if (n < 0) {
             throw new IllegalArgumentException("negative skip length");
         }
-	ensureOpen();
-	int max = (int)Math.min(n, Integer.MAX_VALUE);
-	int total = 0;
-	while (total < max) {
-	    int len = max - total;
-	    if (len > b.length) {
-		len = b.length;
-	    }
-	    len = read(b, 0, len);
-	    if (len == -1) {
+        ensureOpen();
+        int max = (int)Math.min(n, Integer.MAX_VALUE);
+        int total = 0;
+        while (total < max) {
+            int len = max - total;
+            if (len > b.length) {
+                len = b.length;
+            }
+            len = read(b, 0, len);
+            if (len == -1) {
                 reachEOF = true;
-		break;
-	    }
-	    total += len;
-	}
-	return total;
+                break;
+            }
+            total += len;
+        }
+        return total;
     }
 
     /**
@@ -231,7 +241,7 @@ class InflaterInputStream extends FilterInputStream {
         if (!closed) {
             if (usesDefaultInflater)
                 inf.end();
-	    in.close();
+            in.close();
             closed = true;
         }
     }
@@ -241,11 +251,105 @@ class InflaterInputStream extends FilterInputStream {
      * @exception IOException if an I/O error has occurred
      */
     protected void fill() throws IOException {
-	ensureOpen();
-	len = in.read(buf, 0, buf.length);
-	if (len == -1) {
-	    throw new EOFException("Unexpected end of ZLIB input stream");
-	}
-	inf.setInput(buf, 0, len);
+        ensureOpen();
+        len = in.read(buf, 0, buf.length);
+        if (len == -1) {
+            throw new EOFException("Unexpected end of ZLIB input stream");
+        }
+        inf.setInput(buf, 0, len);
     }
+    
+    /**
+     * Marks the current position in this input stream. A subsequent call to
+     * the <code>reset</code> method repositions this stream at the last marked
+     * position so that subsequent reads re-read the same bytes.
+     *
+     * <p> The <code>readlimit</code> arguments tells this input stream to
+     * allow that many bytes to be read before the mark position gets
+     * invalidated.
+     *
+     * <p> The general contract of <code>mark</code> is that, if the method
+     * <code>markSupported</code> returns <code>true</code>, the stream somehow
+     * remembers all the bytes read after the call to <code>mark</code> and
+     * stands ready to supply those same bytes again if and whenever the method
+     * <code>reset</code> is called.  However, the stream is not required to
+     * remember any data at all if more than <code>readlimit</code> bytes are
+     * read from the stream before <code>reset</code> is called.
+     *
+     * <p> The <code>mark</code> method of <code>InputStream</code> does
+     * nothing.
+     *
+     * @param   readlimit   the maximum limit of bytes that can be read before
+     *                      the mark position becomes invalid.
+     * @see     java.io.InputStream#reset()
+     */
+    public synchronized void mark(int readlimit) {
+        reader.mark(readlimit);
+    }
+
+    /**
+     * Repositions this stream to the position at the time the
+     * <code>mark</code> method was last called on this input stream.
+     *
+     * <p> The general contract of <code>reset</code> is:
+     *
+     * <p><ul>
+     *
+     * <li> If the method <code>markSupported</code> returns
+     * <code>true</code>, then:
+     *
+     *     <ul><li> If the method <code>mark</code> has not been called since
+     *     the stream was created, or the number of bytes read from the stream
+     *     since <code>mark</code> was last called is larger than the argument
+     *     to <code>mark</code> at that last call, then an
+     *     <code>IOException</code> might be thrown.
+     *
+     *     <li> If such an <code>IOException</code> is not thrown, then the
+     *     stream is reset to a state such that all the bytes read since the
+     *     most recent call to <code>mark</code> (or since the start of the
+     *     file, if <code>mark</code> has not been called) will be resupplied
+     *     to subsequent callers of the <code>read</code> method, followed by
+     *     any bytes that otherwise would have been the next input data as of
+     *     the time of the call to <code>reset</code>. </ul>
+     *
+     * <li> If the method <code>markSupported</code> returns
+     * <code>false</code>, then:
+     *
+     *     <ul><li> The call to <code>reset</code> may throw an
+     *     <code>IOException</code>.
+     *
+     *     <li> If an <code>IOException</code> is not thrown, then the stream
+     *     is reset to a fixed state that depends on the particular type of the
+     *     input stream and how it was created. The bytes that will be supplied
+     *     to subsequent callers of the <code>read</code> method depend on the
+     *     particular type of the input stream. </ul></ul>
+     *
+     * <p> The method <code>reset</code> for class <code>InputStream</code>
+     * does nothing and always throws an <code>IOException</code>.
+     *
+     * @exception  IOException  if this stream has not been marked or if the
+     *               mark has been invalidated.
+     * @see     java.io.InputStream#mark(int)
+     * @see     java.io.IOException
+     */
+    public synchronized void reset() throws IOException {
+        reader.reset();
+    }
+
+    /**
+     * Tests if this input stream supports the <code>mark</code> and
+     * <code>reset</code> methods. Whether or not <code>mark</code> and
+     * <code>reset</code> are supported is an invariant property of a
+     * particular input stream instance. The <code>markSupported</code> method
+     * of <code>InputStream</code> returns <code>false</code>.
+     *
+     * @return  <code>true</code> if this stream instance supports the mark
+     *          and reset methods; <code>false</code> otherwise.
+     * @see     java.io.InputStream#mark(int)
+     * @see     java.io.InputStream#reset()
+     */
+    public boolean markSupported() {
+       return reader.markSupported();
+    }
+
 }

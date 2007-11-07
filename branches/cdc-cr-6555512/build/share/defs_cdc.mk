@@ -295,6 +295,8 @@ CVM_BUILDTIME_CLASSES += \
    java.util.ListResourceBundle \
    java.util.Locale \
    java.util.Map \
+   java.util.Markable \
+   java.util.MarkableReader \
    java.util.MissingResourceException \
    java.util.NoSuchElementException \
    java.util.Properties \
