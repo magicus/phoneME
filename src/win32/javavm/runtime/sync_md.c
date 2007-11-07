@@ -88,28 +88,31 @@ if (CVMthreadSelf() != NULL) {
      CVMThreadID *self = CVMthreadSelf();
      if (self != NULL) {
 
-	 self->is_mutex_blocked = CVM_TRUE;
-	 EnterCriticalSection(&m->crit);
-	 self->is_mutex_blocked = CVM_FALSE;
-
-	 while (self->suspended_in_mutex_blocked) {
-	     assert(self->suspended);
-	     assert(!self->suspended_in_wait);
-	     /*
-	      * This thread has been given ownership of the mutex
-	      * while it's supposed to be suspended.  Release the mutex
-	      * and 'suspend' the thread.  We can acquire the mutex again
-	      * later.  We don't grab the self->lock since we're
-	      * only concerned with suspends that happen while this
-	      * thread is actually in the EnterCrit. call.  That call is
-	      * flagged by is_mutex_blocked.  Any attempt to suspend this
-	      * thread after that flag is set will result in 
-	      * suspended_in_mutex_blocked being set and a SetEvent
-	      * happening.
-	      */
-	     LeaveCriticalSection(&m->crit);
-	     WaitForSingleObject(self->suspend_cv, INFINITE);
+	 while (CVM_TRUE) {
+	     self->is_mutex_blocked = CVM_TRUE;
 	     EnterCriticalSection(&m->crit);
+	     self->is_mutex_blocked = CVM_FALSE;
+
+	     if (self->suspended_in_mutex_blocked) {
+		 assert(self->suspended);
+		 assert(!self->suspended_in_wait);
+		 /*
+		  * This thread has been given ownership of the mutex
+		  * while it's supposed to be suspended.  Release the mutex
+		  * and 'suspend' the thread.  We can acquire the mutex again
+		  * later.  We don't grab the self->lock since we're
+		  * only concerned with suspends that happen while this
+		  * thread is actually in the EnterCrit. call.  That call is
+		  * flagged by is_mutex_blocked.  Any attempt to suspend this
+		  * thread after that flag is set will result in 
+		  * suspended_in_mutex_blocked being set and a SetEvent
+		  * happening.
+		  */
+		 LeaveCriticalSection(&m->crit);
+		 WaitForSingleObject(self->suspend_cv, INFINITE);
+	     } else {
+		 break;
+	     }
 	 }
 
      } else {
