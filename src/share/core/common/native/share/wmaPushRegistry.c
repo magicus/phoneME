@@ -503,6 +503,7 @@ KNIDECL(com_sun_midp_wma_PushConnectionsPool_addPushPort) {
     port = KNI_GetParameterAsInt(1);
     KNI_GetParameterAsObject(2, address);
 
+    jsr120_sms_pool_init();
     handle = registerSMSEntry(port, msid);
 
     if (handle != 0) {

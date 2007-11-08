@@ -112,6 +112,8 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_open0) {
 
     port = KNI_GetParameterAsInt(3);
 
+    jsr120_sms_pool_init();
+
     /* When port is 0 then return else continue */
     if (port) {
         /* Create handles for all Java objects. */
