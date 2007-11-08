@@ -31,8 +31,8 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.io.EOFException;
 
-import java.util.Markable;
-import java.util.MarkableReader;
+import sun.util.Markable;
+import sun.util.MarkableReader;
 
 /**
  * This class implements a stream filter for uncompressing data in the
@@ -46,7 +46,7 @@ import java.util.MarkableReader;
  * @author     David Connelly
  */
 public
-class InflaterInputStream extends FilterInputStream implements Markable {
+class InflaterInputStream extends FilterInputStream {
     /**
      * Decompressor for this stream.
      */
@@ -94,7 +94,7 @@ class InflaterInputStream extends FilterInputStream implements Markable {
             throw new IllegalArgumentException("buffer size <= 0");
         }
         this.inf = inf;
-        reader = new MarkableReader(this);
+        reader = new MarkableReader(new NativeReader());
         buf = new byte[size];
     }
 
@@ -147,42 +147,44 @@ class InflaterInputStream extends FilterInputStream implements Markable {
     public int read(byte[] b, int off, int len)  throws IOException {
         return reader.read(b, off, len);
     }
-    
-    public int readNative(byte[] b, int off, int len) throws IOException {
-        ensureOpen();
-        if ((off | len | (off + len) | (b.length - (off + len))) < 0) {
-            throw new IndexOutOfBoundsException();
-        } else if (len == 0) {
-            return 0;
-        }
-        try {
-            int bytesRead = 0;
-            while (len > 0) {
-                int n = inf.inflate(b, off, len);
-                if (n == 0) {
-                    if (inf.finished() || inf.needsDictionary()) {
-                        reachEOF = true;
-                        if (bytesRead > 0) {
-                            return bytesRead;
-                        } else {
-                            return -1;
+
+    private class NativeReader implements Markable {
+
+        public int readNative(byte[] b, int off, int len) throws IOException {
+            ensureOpen();
+            if ((off | len | (off + len) | (b.length - (off + len))) < 0) {
+                throw new IndexOutOfBoundsException();
+            } else if (len == 0) {
+                return 0;
+            }
+            try {
+                int bytesRead = 0;
+                while (len > 0) {
+                    int n = inf.inflate(b, off, len);
+                    if (n == 0) {
+                        if (inf.finished() || inf.needsDictionary()) {
+                            reachEOF = true;
+                            if (bytesRead > 0) {
+                                return bytesRead;
+                            } else {
+                                return -1;
+                            }
+                        }
+                        if (inf.needsInput()) {
+                            fill();
                         }
                     }
-                    if (inf.needsInput()) {
-                        fill();
-                    }
+                    bytesRead += n;
+                    off += n;
+                    len -= n;
                 }
-                bytesRead += n;
-                off += n;
-                len -= n;
+                return bytesRead;
+            } catch (DataFormatException e) {
+                String s = e.getMessage();
+                throw new ZipException(s != null ? s : "Invalid ZLIB data format");
             }
-            return bytesRead;
-        } catch (DataFormatException e) {
-            String s = e.getMessage();
-            throw new ZipException(s != null ? s : "Invalid ZLIB data format");
         }
     }
-
     /**
      * Returns 0 after EOF has reached, otherwise always return 1.
      * <p>
