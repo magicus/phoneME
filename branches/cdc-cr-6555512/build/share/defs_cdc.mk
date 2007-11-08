@@ -295,8 +295,6 @@ CVM_BUILDTIME_CLASSES += \
    java.util.ListResourceBundle \
    java.util.Locale \
    java.util.Map \
-   java.util.Markable \
-   java.util.MarkableReader \
    java.util.MissingResourceException \
    java.util.NoSuchElementException \
    java.util.Properties \
@@ -374,6 +372,8 @@ CVM_BUILDTIME_CLASSES += \
    sun.util.calendar.ZoneInfo \
    sun.util.calendar.ZoneInfoFile \
    sun.util.BuddhistCalendar \
+   sun.util.Markable \
+   sun.util.MarkableReader \
    \
    com.sun.cdc.config.PropertyProvider \
    com.sun.cdc.config.PropertyProviderAdapter \
