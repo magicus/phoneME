@@ -32,6 +32,7 @@
 #ifndef _JAVAUTIL_STRING_H_
 #define _JAVAUTIL_STRING_H_
 
+#include <string.h>
 #include "javacall_defs.h"
 
 #define COLON    0x3A    /* Colon ':' - Unicode character 0x3A */
@@ -128,5 +129,70 @@ javacall_result javautil_string_parse_int(char* str, int* number);
 int javautil_strnicmp(const char* string1, const char* string2, size_t nchars);
 int javautil_stricmp(const char* string1, const char* string2);
 int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* string2, size_t nchars);
+
+/**
+ * Returns a new string that is a concantenation of two input strings.
+ * Memory allocated within this function by javacall_malloc() and should be freed
+ * by javacall_free()
+ *
+ * @param prefix the beginning/prefix string
+ * @param suffix the ending/suffix string
+ * @return <code>Concantinated string</code> on success,
+ *         <code>NULL</code> or any other negative value otherwise.
+ */
+char* javautil_string_concatenate(const char* prefix, const char* suffix);
+
+/**
+ * Convert a string to lower-case
+ * 
+ * @param s input string
+ * @return pointer to statically allocated string holding the "s" string converted
+ *		   to lower case.
+ */
+char* javautil_str_tolwc(char * s);
+
+/**
+ * Convert a string to upper-case
+ * 
+ * @param s input string
+ * @return pointer to statically allocated string holding the "s" string converted
+ *		   to upper case.
+ */
+char* javautil_str_toupc(char * s);
+
+/**
+ * Skip leading blanks
+ * 
+ * @param s input string
+ * @return a pointer to the first non blank character inside "s"
+ */
+char* javautil_str_skip_leading_blanks(char * s);
+
+/**
+ * Skip trailing blanks
+ * 
+ * @param s input string
+ * @return a pointer to a STATICALLY ALLOCATED string containg the same string as "s"
+ *			but without the trailing spaces.
+ */
+char* javautil_str_skip_trailing_blanks(char * s);
+
+/**
+ * Skip blanks in the beginning and at the end of the string
+ * 
+ * @param s input string
+ * @return a pointer to a STATICALLY ALLOCATED string containg the same string as "s"
+ *			but without the leading and trailing spaces.
+ */
+char* javautil_str_strip(char * s) ;
+
+/**
+ * Duplicates a string
+ * 
+ * @param s input string
+ * @return a newly allocated string with the same content as s
+ */
+char* javautil_str_duplicate(char *s);
+
 
 #endif

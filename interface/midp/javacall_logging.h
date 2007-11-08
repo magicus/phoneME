@@ -60,6 +60,16 @@ typedef enum {
     javacall_channel_trace_out
 } midp_log_channels;
 
+//@NOT Thread Safe
+void javautil_debug_print(int severity, char *channelID, char *message, ...);
+
+void javautil_printf(char *message, ...);
+
+#define JAVACALL_LOG_INFORMATION 0
+#define JAVACALL_LOG_WARNING 1
+#define JAVACALL_LOG_ERROR 2
+#define JAVACALL_LOG_CRITICAL 3
+#define JAVACALL_LOG_DISABLED 4
 
 /** @} */
 
