@@ -119,6 +119,7 @@ static WMA_STATUS jsr120_invoke_sms_listeners(SmsMessage* sms, ListElement *list
     return unblocked;
 #else
     jsr120_throw_signal(0, 0);
+    return WMA_OK;
 #endif
 }
 
