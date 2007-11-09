@@ -207,6 +207,11 @@ static CVMMutex   _mutex;
 static int is_mutex_inited = 0;
 
 void jsr120_sms_pool_init() {
+    /**
+     * Impl note.
+     * Theoretically, mutex could be created twice. 
+     * But it is not a big problem if one mutex will be lost.
+     */
     if (!is_mutex_inited) {
         is_mutex_inited = 1;
         CVMmutexInit(&_mutex);
