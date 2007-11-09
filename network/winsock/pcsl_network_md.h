@@ -33,6 +33,30 @@
  */
 #include <winsock2.h>
 
+#ifdef UNDER_CE 
+WINSOCK_API_LINKAGE
+int
+WSAAPI
+WSAAsyncSelect(
+    IN SOCKET s,
+    IN HWND hWnd,
+    IN u_int wMsg,
+    IN long lEvent
+    );
+
+WINSOCK_API_LINKAGE
+HANDLE
+WSAAPI
+WSAAsyncGetHostByName(
+    IN HWND hWnd,
+    IN u_int wMsg,
+    IN const char FAR * name,
+    OUT char FAR * buf,
+    IN int buflen
+    );
+
+#endif
+
 /**
  * @file
  * @ingroup network
