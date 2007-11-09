@@ -144,6 +144,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesClose) {
         if(hdlr->protocol != NULL) 
             FREE(hdlr->protocol);
     }
+    KNI_ReturnVoid();
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
@@ -242,4 +243,5 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsClose) {
     if ((hdlr = (ListProtocolsType *)KNI_GetParameterAsInt(1)) != NULL) {
         FREE(hdlr);
     }
+    KNI_ReturnVoid();
 }
