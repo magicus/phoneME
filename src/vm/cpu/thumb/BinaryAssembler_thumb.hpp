@@ -401,7 +401,7 @@ private:
 
 friend class RelocationWriter;
 friend class CodeInterleaver;
-
+  friend class Compiler;
 };
 
 #endif // ENABLE_THUMB_COMPILER && ENABLE_COMPILER

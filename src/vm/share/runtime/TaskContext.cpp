@@ -56,15 +56,13 @@ void TaskContextSave::dispose() {
   }
 }
 
-bool TaskContextSave::status() {
-  return (_status == VALID ? true : false);
-}
-
 void TaskContext::init(int task_id) {
   if (TraceTaskContext) {
     tty->print_cr("TC: %d", task_id);
   }
-  GUARANTEE(!ObjectHeap::is_gc_active(), "Can't switch tasks during GC");
+
+  GUARANTEE(!ObjectHeap::is_gc_active() ||
+    task_id == _global_context._current_task_id, "Can't switch tasks during GC");
   _status = VALID;
   set_current_task(task_id);
 }
@@ -87,43 +85,36 @@ TaskGCContext::TaskGCContext(const OopDesc* const object) {
   }
 }
 
-void TaskGCContext::init(int task_id) {
-  // Used during GC so that accesses to class_list references correct list
-  if (TraceTaskContext) {
-    tty->print_cr("TGC: %d", task_id);
-  }
+void TaskGCContext::set(const int task_id) {
   Task::Raw task = Universe::task_from_id(task_id);
-  if (task.not_null()) {
-    _status = VALID;
-    _class_list_base = (address)task().class_list();
-    _class_list_base += ObjArray::base_offset();
-    if (TraceTaskContext) {
-      tty->print_cr("TGC-set: 0x%x", (int)_class_list_base);
-    }
-    _global_context._number_of_java_classes = task().class_count();
+  if( task.not_null() ) {
     _global_context._current_task_id = task_id;
-    _mirror_list_base = (address)task().mirror_list();
-    _mirror_list_base += ObjArray::base_offset();
+    _global_context._number_of_java_classes = task().class_count();
+    _class_list_base =((address)task().class_list() ) + ObjArray::base_offset();
+    _mirror_list_base=((address)task().mirror_list()) + ObjArray::base_offset();
+    _status = VALID;
+
+    if (TraceTaskContext) {
+      tty->print_cr("TGC-set: %d 0x%x", task_id, (int)_class_list_base);
+    }
   }
 }
 
-void TaskGCContext::dispose() {
+
+void TaskGCContext::init(const int task_id) {
+  // Used during GC so that accesses to class_list references correct list
+  if (TraceTaskContext) {
+    tty->print_cr("TGC-init: %d", task_id);
+  }
+  set( task_id );
+}
+
+void TaskGCContext::dispose( void ) {
   if (TraceTaskContext) {
     tty->print_cr("TGC: dis");
   }
-  if (_prev_task_id != 0) {
-    Task::Raw task = Universe::task_from_id(_prev_task_id);
-    if (task.not_null()) {
-      _class_list_base = (address)task().class_list();
-      _class_list_base += ObjArray::base_offset();
-      if (TraceTaskContext) {
-        tty->print_cr("TGC: dis 0x%x", (int)_class_list_base);
-      }
-      _global_context._number_of_java_classes = task().class_count();
-      _global_context._current_task_id = _prev_task_id;
-      _mirror_list_base = (address)task().mirror_list();
-      _mirror_list_base += ObjArray::base_offset();
-    }
+  if( _prev_task_id != 0 ) {
+    set( _prev_task_id );
   }
 }
 #if ENABLE_OOP_TAG

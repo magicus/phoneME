@@ -180,6 +180,7 @@ Compiler::~Compiler() {
       parent_compiler->saved_num_stack_lock_words();
   } else {
     set_root(NULL);
+    set_code_generator( NULL ); // in globals for GC
   }
   set_current(parent_compiler);
 }
@@ -381,6 +382,21 @@ void Compiler::oops_do( void do_oop(OopDesc**) ) {
   if (is_active()) {
     current()->context()->oops_do( do_oop );
   }
+#if USE_LITERAL_POOL
+  {
+    const CodeGenerator* gen = code_generator();
+    if( gen || _suspended_compiler_state.valid() ) {
+      LiteralPoolElementDesc* p = (LiteralPoolElementDesc*)
+        _suspended_compiler_state.first_literal()->obj();
+      if( gen ) {
+        p = (LiteralPoolElementDesc*)(gen->_first_literal().obj());
+      }
+      for( ; p != NULL; p = p->_next ) {
+        do_oop( &p->_literal_oop );
+      }
+    }
+  }
+#endif
 }
 
 void Compiler::terminate ( OopDesc* result ) {
@@ -439,6 +455,8 @@ ReturnOop Compiler::allocate_and_compile(const int compiled_code_factor
     tty->print_cr( ") beg ***" );
   }
 #endif
+
+  set_code_generator( NULL ); // reserve_compiler_area() may cause a GC
 
   const jint size = align_allocation_size(1024 + (method()->code_size() *
                                             compiled_code_factor));

@@ -37,15 +37,14 @@ protected:
   void dispose();
 public:
   int _number_of_java_classes;
-  TaskContextSave()  {init();}
-  ~TaskContextSave() {dispose();}
+  TaskContextSave( void ) { init();    }
+ ~TaskContextSave( void ) { dispose(); }
 
-  bool status();
+  enum { INVALID, VALID };
 
-  enum {
-    INVALID = 0,
-    VALID = 1
-  };
+  bool status( void ) const {
+    return _status == VALID;
+  }
 
   friend class TaskGCContext;
   friend class TaskContext;
@@ -55,6 +54,7 @@ public:
 class TaskGCContext : public TaskContextSave {
   void init(int task_id);
   void dispose();
+  void set(const int task_id);
 public:
   TaskGCContext(int task_id) { init(task_id); };
 #if ENABLE_ISOLATES

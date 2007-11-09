@@ -444,11 +444,8 @@ public:
 private:
   friend class RelocationWriter;
   friend class CodeInterleaver;
-#if ENABLE_INTERNAL_CODE_OPTIMIZER
   friend class Compiler;
-#endif
 
-private:
   FastOopInStackObj         __must_appear_before_fast_objects__;
   CompiledMethod*           _compiled_method;
   jint                      _code_offset;

@@ -1789,15 +1789,10 @@ void ObjectHeap::roots_do_to( void do_oop(OopDesc**), const bool young_only,
     }
   }
   {
-    OopDesc* p = Compiler::current_compiled_method()->obj();
+    CompiledMethodDesc* p =
+      (CompiledMethodDesc*) Compiler::current_compiled_method()->obj();
     if( p ) {
-      OopDesc* const end = (OopDesc*)_compiler_area_top;
-      do {
-        const FarClassDesc* far_class = decode_far_class(p);
-        const size_t size = p->object_size_for(far_class);
-        p->oops_do_for(far_class, do_oop);
-        p = DERIVED(OopDesc*, p, size);
-      } while (p < end);
+      p->oops_do( do_oop );
     }
   }
 #endif
@@ -4311,6 +4306,8 @@ void ObjectHeap::verify_other_oop(OopDesc** p) {
 class VerifyObjects : public ObjectHeapVisitor {
   virtual void do_obj(Oop* obj) {
     // Verify oops
+    GUARANTEE( !(_compiler_area_top <= (OopDesc**)obj && ObjectHeap::compiler_area_end() > (OopDesc**) obj),
+      "Temp compiler object" );
     obj->obj()->near_do(ObjectHeap::verify_near_oop);
     obj->obj()->oops_do(ObjectHeap::verify_other_oop);
   }
