@@ -89,7 +89,7 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
             String nameOrIP = "";
 
             /* Port number */
-            int port;
+            final int port;
 
             /* Look for the : */
             int colon = name.indexOf(':');
@@ -124,12 +124,25 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
             }
 
             checkMIDPPermission(nameOrIP, port);
-            /* Open the socket */
-            socket = new Socket(nameOrIP, port);
+            /* Open the socket. Use a doPrivileged block
+             * to avoid excessive prompting.
+             */
+            final String hostName = nameOrIP;
+            socket = (Socket)java.security.AccessController.doPrivileged(
+                 new java.security.PrivilegedExceptionAction() {
+                     public Object run() throws
+                         java.security.PrivilegedActionException,
+                         IOException {
+                             return new Socket(hostName, port);
+                         } 
+                     });
             opens++;
             return this;
         } catch(NumberFormatException x) {
             throw new IllegalArgumentException("Invalid port number in "+name);
+        } catch(java.security.PrivilegedActionException pae) {
+            IOException ioe = (IOException)pae.getException();
+            throw ioe;
         }
     }
 
