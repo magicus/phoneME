@@ -500,10 +500,12 @@ long javacall_media_get_duration(javacall_handle handle);
 /**
  * Return true if player requires PCM Audio resources
  * 
+ * @param handle    Handle to the library
+ * 
  * @retval JAVACALL_TRUE      Player supports PCM Audio playback
  * @retval JAVACALL_FALSE     Player does not support PCM Audio playback
  */
-javacall_bool javacall_media_pcmaudio_device_required(void);
+javacall_bool javacall_media_pcmaudio_device_required(javacall_handle handle);
 
 /**
  * Request to acquire PCM audio device resources used to play mixed 

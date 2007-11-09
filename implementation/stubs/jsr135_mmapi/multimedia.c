@@ -289,7 +289,7 @@ long javacall_media_get_duration(javacall_handle handle) {
  * @retval JAVACALL_TRUE      Player supports PCM Audio playback
  * @retval JAVACALL_FALSE     Player does not support PCM Audio playback
  */
-javacall_bool javacall_media_pcmaudio_device_required() {
+javacall_bool javacall_media_pcmaudio_device_required(javacall_handle handle) {
     return JAVACALL_FALSE;
 }
 
