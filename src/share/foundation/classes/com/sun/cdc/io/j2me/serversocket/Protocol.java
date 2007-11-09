@@ -89,16 +89,29 @@ public class Protocol extends ConnectionBase
         }
 
         try {
-            int port;
+            final int port;
             InetAddress hostAddress = InetAddress.getLocalHost();
 
             /* Get the port number */
             port = Integer.parseInt(name);
             checkMIDPPermission(port);
-            /* Open the socket: inbound server */
-            ssocket = new ServerSocket(port);
+            /* Open the socket: inbound server. Use a doPrivileged
+             * block to avoid excessive prompting.
+             */
+            ssocket =
+                (ServerSocket)java.security.AccessController.doPrivileged(
+                 new java.security.PrivilegedExceptionAction() {
+                     public Object run()
+                         throws java.security.PrivilegedActionException,
+                                IOException {
+                         return new ServerSocket(port);
+                     }
+                 });
         } catch(NumberFormatException x) {
             throw new IllegalArgumentException("Invalid port number in "+name);
+        } catch(java.security.PrivilegedActionException pae) {
+            IOException ioe = (IOException)pae.getException();
+            throw ioe;
         }
     }
 
