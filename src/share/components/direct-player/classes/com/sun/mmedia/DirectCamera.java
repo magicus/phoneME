@@ -48,10 +48,12 @@ public class DirectCamera extends DirectVideo
             if (null == imageType) {
                 throw new MediaException("Requested format is not supported");
             }
+            int spacePos = imageType.indexOf(' ');
+            if (spacePos > 0) {
+                imageType = imageType.substring(0, spacePos);
+            }
         }
-
-        // Need revisit - Check encoding param validity (Not from Sprint PCS QVM based test case)
-
+        
         byte[] data = null;
         if (hNative != 0) {
             data = nSnapShot(hNative, imageType.toLowerCase());
