@@ -150,6 +150,9 @@ CVM_JCC_INPUT           += $(MIDP_PRIV_CLASSES_ZIP)
 CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_PUB_CLASSES_ZIP) $(JSROP_AGENT_JARS)
 # Add MIDP CNI classes to CVM_CNI_CLASSES
 CVM_CNI_CLASSES += $(MIDP_CNI_CLASSES)
+else
+# Not romized, so add MIDP_PRIV_CLASSES_ZIP to the bootclasspath
+CVM_JARFILES += $(patsubst $(CVM_LIBDIR_ABS)/%,$(comma) "%",$(MIDP_PRIV_CLASSES_ZIP))
 endif
 
 # MIDP package checker 
@@ -157,5 +160,19 @@ MIDP_PKG_CHECKER = MIDPPkgChecker.java
 
 CLASSLIB_CLASSES += \
 	sun.misc.MIDPPkgChecker
+
+# Setup the property containing where midp implementation is located.
+# This will be a list all the jar and zip files loaded by the
+# MIDPImplemantionClassLoader. We strip out everything but the base name,
+# and java code will prepend java.home/lib/ to it. Note, if we are romizing,
+# then there are no jar or zip files to load from.
+CVM_BUILD_DEF_VARS += CVM_PROP_MIDP_IMPL
+ifeq ($(CVM_PRELOAD_LIB), true)
+CVM_PROP_MIDP_IMPL = ""
+else
+CVM_PROP_MIDP_IMPL += \
+	"$(patsubst $(CVM_LIBDIR_ABS)/%,%,$(MIDP_PUB_CLASSES_ZIP)) \
+	$(patsubst $(JSROP_LIB_DIR)/%,%,$(JSROP_AGENT_JARS))"
+endif
 
 endif

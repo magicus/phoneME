@@ -403,6 +403,11 @@ JSROP_AGENT_JARS += $(JSROP_INIT_AGENT_JAR)
 endif
 endif
 
+ifneq ($(CVM_PRELOAD_LIB),true)
+# Not romized, so add JSROP_JARS to the bootclasspath
+CVM_JARFILES += $(patsubst $(JSROP_LIB_DIR)/%,$(comma) "%",$(JSROP_JARS))
+endif
+
 # Include JDBC, which can be downloaded using the following URL:
 #    http://java.sun.com/products/jdbc/download.html#cdcfp
 ifeq ($(USE_JDBC), true)
