@@ -1232,11 +1232,9 @@ wr.pld(4,"System.out.println(\"class " + stubClsName + " - Init\");");
                 wr.pl(4, "return;");
                 wr.pl(3, "}");
 wr.pld(4,"System.out.println(\"Init 1\");");
-                //wr.pl(3, "__cloader = Thread.currentThread().getContextClassLoader();");
                 wr.pl(3, "__cloader = sun.misc.MIDPConfig.getMIDPImplementationClassLoader();");
                 wr.pl(3, "if (__cloader == null) {");
-                //wr.pl(4, "throw new RuntimeException(\"Cannot get ClassLoader\");");
-                wr.pl(4, "__cloader = " + pkgName + "." + stubClsName + ".class.getClassLoader();");
+                wr.pl(4, "throw new RuntimeException(\"Cannot get ClassLoader\");");
                 wr.pl(3, "}");
                 wr.pl(3, "__init_classes();");
                 if (isInherit) {
