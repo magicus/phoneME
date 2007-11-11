@@ -35,11 +35,12 @@
 #include <dlfcn.h>
 #include <unistd.h>
 #include <string.h>
-#include <gnu/libc-version.h>
 #include "javavm/include/interpreter.h"
 #include "javavm/include/assert.h"
 
 #ifdef CVM_JVMTI
+#include <gnu/libc-version.h>
+
 static int (*_clock_gettime)(clockid_t, struct timespec *);
 static int (*_clock_getres)(clockid_t, struct timespec *);
 static int (*_pthread_getcpuclockid)(pthread_t, clockid_t *);

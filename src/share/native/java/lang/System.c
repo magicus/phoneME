@@ -188,6 +188,9 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
     PUTPROP(props, "microedition.encoding", "ISO-8859-1");
     PUTPROP(props, "microedition.profiles", "");
     PUTPROP(props, "microedition.locale", "en_US");
+#ifdef CVM_PROP_MIDP_IMPL
+    PUTPROP(props, "com.sun.midp.implementation", CVM_PROP_MIDP_IMPL);
+#endif
 
     /* Generic Connection Framework (GCF) CommConnection property */
     PUTPROP(props, "microedition.commports", sprops.commports);

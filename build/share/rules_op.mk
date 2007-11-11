@@ -26,7 +26,7 @@ SUBSYSTEM_RULES_FILE     = subsystem_rules.gmk
 
 .PHONY: javacall_lib
 
-ifneq ($(CVM_PRELOAD_LIB), true)
+ifneq ($(CVM_STATICLINK_LIBS), true)
 JSR_NATIVE_LIBS = "$(5)"
 else
 JSR_NATIVE_LIBS = ""

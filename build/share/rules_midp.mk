@@ -141,7 +141,7 @@ source_bundle:: $(CVM_BUILD_DEFS_MK)
 #
 # Now build MIDP natives. MIDP natives are linked into CVM binary.
 #
-ifeq ($(CVM_PRELOAD_LIB), true)
+ifeq ($(CVM_STATICLINK_LIBS), true)
 $(MIDP_OBJECTS): $(RUNMIDLET)
 else
 $(CVM_BINDIR)/$(CVM):: $(RUNMIDLET)

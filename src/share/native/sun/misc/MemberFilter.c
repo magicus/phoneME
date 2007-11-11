@@ -435,7 +435,7 @@ CVMdualStackFindSuperMB(CVMExecEnv* ee,
         if (cre != NULL) {
             /* Check if the method exists. */
 	    return lookupMember(CVMmbNameAndTypeID(superMB),
-                                cre->fields, cre->nFields);
+                                cre->methods, cre->nMethods);
         }
     }
     return CVM_TRUE;

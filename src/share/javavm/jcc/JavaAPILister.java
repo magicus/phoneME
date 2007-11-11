@@ -647,36 +647,40 @@ public class JavaAPILister extends LinkerUtil {
 
         /* write CVMClassRestrictions data struct */
         out.println("\n/* The dual stack member filter. */");
-        out.println("struct CVMClassRestrictionElement cre[] = {");
-        for (i = 0; i < nClasses; i++) {
-            thisClass = (ClassInfo)sortedClasses.get(i);
-            cvmClass = (CVMClass)sortedCVMClasses.get(i);
-            cName = cvmClass.getNativeName();
-            /* class typeid */
-            out.print("{0x" + Integer.toHexString(cvmClass.classid()) + ", ");
-            /* number of methods */
-            out.print(thisClass.methodtable.length + ", ");
-            /* number of fields */
-            out.print(thisClass.fieldtable.length + ", ");
-            /* method table */
-            if (thisClass.methodtable.length == 0) {
-                out.print("NULL /* " + cName + "_m */, ");
-	    } else {
-                out.print(cName + "_m, ");
+	if (nClasses != 0) {
+	    out.println("struct CVMClassRestrictionElement cre[] = {");
+	    for (i = 0; i < nClasses; i++) {
+		thisClass = (ClassInfo)sortedClasses.get(i);
+		cvmClass = (CVMClass)sortedCVMClasses.get(i);
+		cName = cvmClass.getNativeName();
+		/* class typeid */
+		out.print("{0x" + Integer.toHexString(cvmClass.classid()) + ", ");
+		/* number of methods */
+		out.print(thisClass.methodtable.length + ", ");
+		/* number of fields */
+		out.print(thisClass.fieldtable.length + ", ");
+		/* method table */
+		if (thisClass.methodtable.length == 0) {
+		    out.print("NULL /* " + cName + "_m */, ");
+		} else {
+		    out.print(cName + "_m, ");
+		}
+		/* field table */
+		if (thisClass.fieldtable.length == 0) {
+		    out.println("NULL /* " + cName + "_f */},");
+		} else {
+		    out.println(cName + "_f},");
+		}
 	    }
-            /* field table */
-            if (thisClass.fieldtable.length == 0) {
-                out.println("NULL /* " + cName + "_f */},");
-	    } else {
-                out.println(cName + "_f},");
-	    }
+	    out.println("};");
+	    
+	    /* write CVMClassRestrictions data struct */
+	    out.print("const struct CVMClassRestrictions CVMdualStackMemberFilter = {");
+	    out.print(nClasses + ", ");
+	    out.println("cre};");
+	} else {
+	    out.print("const struct CVMClassRestrictions CVMdualStackMemberFilter = {0, NULL};");
 	}
-        out.println("};");
-
-        /* write CVMClassRestrictions data struct */
-        out.print("const struct CVMClassRestrictions CVMdualStackMemberFilter = {");
-        out.print(nClasses + ", ");
-        out.println("cre};");
 
         out.flush();
     }
