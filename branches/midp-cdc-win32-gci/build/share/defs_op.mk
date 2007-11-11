@@ -376,12 +376,16 @@ endif
 ifeq ($(CVM_PRELOAD_LIB), true)
 CVM_JCC_INPUT   += $(JSROP_JARS)
 CVM_CNI_CLASSES += $(JSROP_CNI_CLASSES)
-CVM_OBJECTS     += $(JSROP_NATIVE_OBJS)
 JSROP_EXTRA_SEARCHPATH = $(CVM_JCC_INPUT)
 else
-CLASSLIB_DEPS   += $(JSROP_NATIVE_LIBS)
 JSROP_EXTRA_SEARCHPATH = $(CVM_BUILDTIME_CLASSESZIP) $(LIB_CLASSESJAR) \
                          $(JCE_JARFILE_BUILD)
+endif
+
+ifeq ($(CVM_STATICLINK_LIBS), true)
+CVM_OBJECTS     += $(JSROP_NATIVE_OBJS)
+else
+CLASSLIB_DEPS   += $(JSROP_NATIVE_LIBS)
 endif
 
 ifeq ($(CVM_DUAL_STACK), true)
@@ -402,6 +406,11 @@ JSROP_INIT_AGENT_JAR = $(CVM_LIBDIR)/jsrop_init_agent.jar
 ifneq ($(JSR_INITIALIZER_LIST),)
 JSROP_AGENT_JARS += $(JSROP_INIT_AGENT_JAR)
 endif
+endif
+
+ifneq ($(CVM_PRELOAD_LIB),true)
+# Not romized, so add JSROP_JARS to the bootclasspath
+CVM_JARFILES += $(patsubst $(JSROP_LIB_DIR)/%,$(comma) "%",$(JSROP_JARS))
 endif
 
 # Include JDBC, which can be downloaded using the following URL:

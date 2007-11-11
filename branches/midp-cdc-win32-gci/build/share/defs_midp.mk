@@ -122,16 +122,19 @@ ifneq ($(CVM_PRELOAD_LIB), true)
 MIDP_CLASSES_ZIP	?= $(CVM_LIBDIR_ABS)/midpclasses.zip
 MIDP_PUB_CLASSES_ZIP    ?= $(CVM_LIBDIR_ABS)/midpclassespub.zip
 MIDP_PRIV_CLASSES_ZIP   ?= $(CVM_LIBDIR_ABS)/midpclassespriv.zip
-MIDP_SHARED_LIB		?= $(CVM_LIBDIR_ABS)/libmidp$(LIB_POSTFIX)
 else
 MIDP_CLASSES_ZIP	?= $(MIDP_OUTPUT_DIR)/classes.zip
 MIDP_PUB_CLASSES_ZIP    ?= $(MIDP_OUTPUT_DIR)/classespub.zip
 MIDP_PRIV_CLASSES_ZIP   ?= $(MIDP_OUTPUT_DIR)/classespriv.zip
 endif
+ifneq ($(CVM_STATICLINK_LIBS), true)
+MIDP_SHARED_LIB		?= $(CVM_LIBDIR_ABS)/libmidp$(LIB_POSTFIX)
+endif
+
 
 RUNMIDLET		?= $(MIDP_OUTPUT_DIR)/bin/$(TARGET_CPU)/runMidlet
 MIDP_OBJECTS		?= $(MIDP_OUTPUT_DIR)/obj$(DEBUG_POSTFIX)/$(TARGET_CPU)/*.o
-ifeq ($(CVM_PRELOAD_LIB), true)
+ifeq ($(CVM_STATICLINK_LIBS), true)
 CVM_OBJECTS		+= $(MIDP_OBJECTS)
 MIDP_LIBS 		?= \
         -L$(PCSL_OUTPUT_DIR)/$(PCSL_TARGET)/lib -lpcsl_file \
@@ -147,6 +150,9 @@ CVM_JCC_INPUT           += $(MIDP_PRIV_CLASSES_ZIP)
 CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_PUB_CLASSES_ZIP) $(JSROP_AGENT_JARS)
 # Add MIDP CNI classes to CVM_CNI_CLASSES
 CVM_CNI_CLASSES += $(MIDP_CNI_CLASSES)
+else
+# Not romized, so add MIDP_PRIV_CLASSES_ZIP to the bootclasspath
+CVM_JARFILES += $(patsubst $(CVM_LIBDIR_ABS)/%,$(comma) "%",$(MIDP_PRIV_CLASSES_ZIP))
 endif
 
 # MIDP package checker 
@@ -154,5 +160,19 @@ MIDP_PKG_CHECKER = MIDPPkgChecker.java
 
 CLASSLIB_CLASSES += \
 	sun.misc.MIDPPkgChecker
+
+# Setup the property containing where midp implementation is located.
+# This will be a list all the jar and zip files loaded by the
+# MIDPImplemantionClassLoader. We strip out everything but the base name,
+# and java code will prepend java.home/lib/ to it. Note, if we are romizing,
+# then there are no jar or zip files to load from.
+CVM_BUILD_DEF_VARS += CVM_PROP_MIDP_IMPL
+ifeq ($(CVM_PRELOAD_LIB), true)
+CVM_PROP_MIDP_IMPL = ""
+else
+CVM_PROP_MIDP_IMPL += \
+	"$(patsubst $(CVM_LIBDIR_ABS)/%,%,$(MIDP_PUB_CLASSES_ZIP)) \
+	$(patsubst $(JSROP_LIB_DIR)/%,%,$(JSROP_AGENT_JARS))"
+endif
 
 endif
