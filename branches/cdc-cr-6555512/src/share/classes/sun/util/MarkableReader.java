@@ -32,7 +32,7 @@ import java.io.IOException;
 
 /**
  * This class implements mark/reset functionality for InputStreams.
- * Ñlass expects Markable interface implementation from the stream.
+ * Class expects Markable interface implementation from the stream.
  */
 
 public class MarkableReader {
