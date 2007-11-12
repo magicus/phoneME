@@ -29,8 +29,8 @@ package sun.util;
 import java.io.IOException;
 
 /**
- * InputStream implementations may implement this interface to use
- * MarkableReader class that implements buffered mark/reset functionality.
+ * InputStream implementations may implement this interface also to aggregate
+ * the MarkableReader class that implements buffered mark/reset functionality.
  */
 public interface Markable {
 
