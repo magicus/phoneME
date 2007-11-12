@@ -2252,12 +2252,6 @@ void Universe::create_first_task(const JvmPathChar* classpath JVM_TRAPS) {
   Task::current()->set_sys_classpath(Universe::empty_obj_array()->obj());
 }
 
-/*
- * Update global pointers such as _class_list to refer to the given task_id
- */
-void Universe::set_current_task(int task_id) {
-  TaskContext::set_current_task(task_id);
-}
 #if ENABLE_ISOLATES
 ReturnOop Universe::copy_strings_to_byte_arrays(OopDesc* strings JVM_TRAPS) {
   UsingFastOops fastoops;

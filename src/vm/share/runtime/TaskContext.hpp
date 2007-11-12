@@ -24,43 +24,41 @@
  * information or have any questions.
  */
 
+#if ENABLE_ISOLATES
 class TaskContextSave {
 protected:
+  static TaskContextSave _global_context;
+  int _number_of_java_classes;
   int _prev_task_id;
   int _current_task_id;
-  bool _status;
+  bool _valid;
+
 #ifdef AZZERT
   int level;
   static int _count;
 #endif
-  void init();
-  void dispose();
+
+  void init   ( void );
+  void dispose( void );
 public:
-  int _number_of_java_classes;
   TaskContextSave( void ) { init();    }
  ~TaskContextSave( void ) { dispose(); }
 
-  enum { INVALID, VALID };
-
-  bool status( void ) const {
-    return _status == VALID;
-  }
+  bool valid( void ) const { return _valid; }
 
   friend class TaskGCContext;
   friend class TaskContext;
 };
 
-
 class TaskGCContext : public TaskContextSave {
-  void init(int task_id);
-  void dispose();
-  void set(const int task_id);
+  void init( const int task_id );
+  void init( const OopDesc* object );
+  void dispose( void );
+  void set ( const int task_id );
 public:
-  TaskGCContext(int task_id) { init(task_id); };
-#if ENABLE_ISOLATES
-  TaskGCContext(const OopDesc* const object);
-#endif
-  ~TaskGCContext() {dispose();}
+  TaskGCContext( const int task_id ) { init( task_id ); }
+  TaskGCContext( const OopDesc* object ) { init( object ); }
+ ~TaskGCContext( void ) { dispose(); }
 };
 
 #if ENABLE_OOP_TAG
@@ -76,39 +74,62 @@ public:
 class TaskContext : public TaskContextSave {
   void init(int task_id);
 public:
-
   TaskContext(int task_id) {init(task_id);}
-
   TaskContext() {}
 
-  static void set_current_task_id(int task_id);
+  static void set_current_task_id( const int task_id ) {
+    _global_context._current_task_id = task_id;
+  }
+  static int current_task_id( void ) {
+    return _global_context._current_task_id;
+  }
 
-  static int current_task_id();
-
-  static int number_of_java_classes();
-
+  static int number_of_java_classes( void ) {
+    return _global_context._number_of_java_classes;
+  }
   static void set_number_of_java_classes(int number);
-
   static void set_current_task(int task_id);
 
-  static void update_list_bases(int task_id);
-
   static void set_class_list(ObjArray *cl);
-
   static void set_mirror_list(ObjArray *ml);
 
-  friend class Universe;
 };
 
 class TaskAllocationContext : public TaskContext {
-#if ENABLE_ISOLATES
 public:
   TaskAllocationContext(int task_id) : TaskContext(task_id) {
     ObjectHeap::on_task_switch(task_id);
   }
 
-  ~TaskAllocationContext() {
+ ~TaskAllocationContext( void ) {
     ObjectHeap::on_task_switch(_prev_task_id);
   }
-#endif
 };
+
+#else // ENABLE_ISOLATES
+
+class TaskGCContext {
+public:
+  static bool valid ( void ) { return true; }
+  TaskGCContext( const int      /*task_id*/ ) {}
+  TaskGCContext( const OopDesc* /*object*/  ) {}
+ ~TaskGCContext( void ) {}
+};
+
+class TaskContext {
+  static int _number_of_java_classes;
+public:
+  static int current_task_id( void ) {
+    return 1;
+  }
+  static void set_number_of_java_classes(int number) {
+    _number_of_java_classes = number;
+  }
+  static void set_current_task_id( const int /*task_id*/ ) {}
+  static void set_current_task   ( const int /*task_id*/ ) {}
+  static int number_of_java_classes( void ) {
+    return _number_of_java_classes;
+  }
+};
+
+#endif // ENABLE_ISOLATES

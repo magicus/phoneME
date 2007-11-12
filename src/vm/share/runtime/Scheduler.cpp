@@ -1869,7 +1869,7 @@ void Scheduler::threads_do_list(do_thread_proc do_thread,
     // current running thread.  Otherwise we will be using
     // the wrong class list for the thread.o
     {
-      TaskGCContext tmp(thread().task_id());
+      const TaskGCContext tmp(thread().task_id());
       do_thread(&thread, do_oop);
     }
   }
@@ -1925,7 +1925,7 @@ void Scheduler::gc_prologue(void do_oop(OopDesc**)) {
     // current running thread.  Otherwise we will be using
     // the wrong class list for the thread
     {
-      TaskGCContext tmp(thread().task_id());
+      const TaskGCContext tmp(thread().task_id());
       thread().gc_prologue(do_oop);
     }
   }

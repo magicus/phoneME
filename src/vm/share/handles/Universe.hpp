@@ -153,7 +153,13 @@ private:
   static inline ReturnOop new_task_list(JVM_SINGLE_ARG_TRAPS);
 public:
 #endif //ENABLE_ISOLATES
-  static void set_current_task(int task_id);
+
+  static void set_current_task(const int task_id) {
+#if !ENABLE_ISOLATES
+    GUARANTEE( task_id == 1, "Unexpected task_id" );
+#endif
+    TaskContext::set_current_task(task_id);
+  }
 
 #if ENABLE_DYNAMIC_NATIVE_METHODS
   static int dynamic_lib_count;

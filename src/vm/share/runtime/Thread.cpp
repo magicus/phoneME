@@ -431,7 +431,7 @@ void Thread::stack_oops_do(void do_oop(OopDesc**)) {
 
   // See Scheduler.cpp threads_do_list() for the
   // reason why we do this.
-  TaskGCContext tmp(this->task_id());
+  const TaskGCContext tmp(this->task_id());
 
   // Java frames
   if (last_java_frame_exists()) {

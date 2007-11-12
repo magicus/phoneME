@@ -2623,11 +2623,7 @@ void Method::iterate(OopVisitor* visitor) {
 void Method::print_name_on(Stream* st, bool long_output) const {
 #if ENABLE_TTY_TRACE
   bool renamed;
-  bool status = true;
-#if ENABLE_ISOLATES
-  TaskGCContext tmp(obj());
-  status = tmp.status();
-#endif
+  const TaskGCContext tmp(obj());
   Signature::Raw sig = signature();
   Symbol::Raw n = get_original_name(renamed);
 
@@ -2637,14 +2633,13 @@ void Method::print_name_on(Stream* st, bool long_output) const {
     st->print(" ");
   }
 
-  if (status && holder_id() != 0xffff) {
+  if (tmp.valid() && holder_id() != 0xffff) {
     InstanceClass::Raw h = holder();
     h().print_name_on(st);
   } else {
     st->print("<No Holder Name>, ID= 0x%x", holder_id());
   }
   st->print(".");
-
   n().print_symbol_on(st);
 
 #if ENABLE_ISOLATES
@@ -2663,9 +2658,7 @@ void Method::print_name_on(Stream* st, bool long_output) const {
 void Method::print_name_to(char *buffer, int max_length) {
 #if USE_DEBUG_PRINTING
   bool dummy;
-#if ENABLE_ISOLATES
-  TaskGCContext tmp(obj());
-#endif
+  const TaskGCContext tmp( obj() );
 
   // (1) Copy the class name
   int i, avail;

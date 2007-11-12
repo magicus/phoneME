@@ -526,47 +526,49 @@ int TypeSymbol::print_type_at(Stream* st, int index) {
     if( task_id == MAX_TASKS ) {
       task_id = TaskContext::current_task_id();
     }
-    TaskGCContext tmp(task_id);
+    const TaskGCContext tmp(task_id);
 #endif
     JavaClass::Raw klass = Universe::class_from_id(class_id);
     if (klass.is_instance_class()) {
       InstanceClass::Raw ic = klass().obj();
       Symbol::Raw name = ic().original_name();
-      st->print("L");
+      st->put('L');
       name().print_symbol_on(st);
-      st->print(";");
+      st->put(';');
     } else {
       for (;;) {
         if (klass.is_obj_array_class()) {
-          st->print("[", byte0);
+          st->put('[');
           ObjArrayClass::Raw oac = klass.obj();
           klass = oac().element_class();
         } else if (klass.is_type_array_class()) {
-          st->print("[", byte0);
+          st->put('[');
           TypeArrayClass::Raw tac = klass.obj();
+          char c;
           switch (tac().type()) {
-          case T_BOOLEAN:   st->print("Z"); break;
-          case T_CHAR:      st->print("C"); break;
-          case T_FLOAT:     st->print("F"); break;
-          case T_DOUBLE:    st->print("D"); break;
-          case T_BYTE:      st->print("B"); break;
-          case T_SHORT:     st->print("S"); break;
-          case T_INT:       st->print("I"); break;
-          case T_LONG:      st->print("J"); break;
-          default: SHOULD_NOT_REACH_HERE();
+          case T_BOOLEAN:   c = 'Z'; break;
+          case T_CHAR:      c = 'C'; break;
+          case T_FLOAT:     c = 'F'; break;
+          case T_DOUBLE:    c = 'D'; break;
+          case T_BYTE:      c = 'B'; break;
+          case T_SHORT:     c = 'S'; break;
+          case T_INT:       c = 'I'; break;
+          case T_LONG:      c = 'J'; break;
+          default: SHOULD_NOT_REACH_HERE(); c = 0;
           }
+          st->put(c);
           break;
         } else {
           GUARANTEE(klass.is_instance_class(), "sanity");
           InstanceClass::Raw ic = klass().obj();
           Symbol::Raw name = ic().original_name();
-          st->print("L");
+          st->put('L');
           if (name.not_null()) {
             name().print_symbol_on(st);
           } else {
             tty->print_cr("not defined yet!");
           }
-          st->print(";");
+          st->put(';');
           break;
         }
       }
@@ -588,11 +590,11 @@ void TypeSymbol::print_decoded_on(Stream* st) {
       param_pos = 4;
     }
 
-    st->print("(");
+    st->put('(');
     while (param_pos < len) {
       param_pos += print_type_at(st, param_pos);
     }
-    st->print(")");
+    st->put(')');
     print_type_at(st, 2);
   }
 }
