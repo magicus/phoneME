@@ -1,4 +1,4 @@
-/*
+*
  * 
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved. 
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER 
@@ -147,6 +147,26 @@ initializeSurfaceFieldIds(JNIEnv *env, jobject objectHandle) {
 }
 
 
+#define FORMAT_INT_RGB_SHIFT    (22)
+#define FORMAT_RED_BITS_SHIFT   (4)
+#define FORMAT_GREEN_BITS_SHIFT (8)
+#define FORMAT_BLUE_BITS_SHIFT  (12)
+#define FORMAT_ALPHA_BITS_SHIFT (16)
+
+#define FORMAT_XRGB_8888 (\
+        (1 << FORMAT_INT_RGB_SHIFT) | \
+        (8 << FORMAT_ALPHA_BITS_SHIFT) | \
+        (8 << FORMAT_RED_BITS_SHIFT) | \
+        (8 << FORMAT_GREEN_BITS_SHIFT) | \
+        (8 << FORMAT_BLUE_BITS_SHIFT))
+
+#define FORMAT_ARGB_8888 (\
+        (8 << FORMAT_ALPHA_BITS_SHIFT) |\
+        (8 << FORMAT_RED_BITS_SHIFT) |\
+        (8 << FORMAT_GREEN_BITS_SHIFT) |\
+        (8 << FORMAT_BLUE_BITS_SHIFT))
+
+
 
 static void
 surface_acquire(AbstractSurface* surface, JNIEnv* env, jobject surfaceHandle) {
@@ -156,8 +176,13 @@ surface_acquire(AbstractSurface* surface, JNIEnv* env, jobject surfaceHandle) {
 	jfieldID fid_gciDrawingSurface;
 	jobject jobj_gciDrawingSurface;
 	jclass jcls_GCIDrawingSurface;
+
 	jmethodID jmid_isNativeSurface;
 	jboolean isNativeSurface;
+
+	jmethodID jmid_getFormat;
+	jint format;
+
 	jmethodID jmid_getSurfaceInfo;
 	jobject jobj_surfaceInfo;
 	jclass jcls_GCISurfaceInfo;
@@ -203,6 +228,16 @@ surface_acquire(AbstractSurface* surface, JNIEnv* env, jobject surfaceHandle) {
 
 	isNativeSurface = (*env)->CallBooleanMethod (env, jobj_gciDrawingSurface, jmid_isNativeSurface);
 	printf ("isNativeSurface = 0x%x\n", (int)isNativeSurface);
+
+    // ***********
+
+	jmid_getFormat = (*env)->GetMethodID (env, jcls_GCIDrawingSurface, "getFormat", "()I");
+	printf ("jmid_getFormat = 0x%x\n", (int)jmid_getFormat);
+	format = (*env)->CallIntMethod(env, jobj_gciDrawingSurface, jmid_getFormat);
+	printf ("format = 0x%x\n", (int)format);
+
+    // ***********
+
 
 	jmid_getSurfaceInfo = (*env)->GetMethodID (env, jcls_GCIDrawingSurface, "getSurfaceInfo", "()Lcom/sun/me/gci/surface/GCISurfaceInfo;");
 	printf ("jmid_getSurfaceInfo = 0x%x\n", (int)jmid_getSurfaceInfo);
@@ -254,19 +289,32 @@ surface_acquire(AbstractSurface* surface, JNIEnv* env, jobject surfaceHandle) {
     if (!(0 == graphicsHandle)) {
     	printf ("fill surface\n");
     	fflush(stdout);
-		surface->super.data = (void*)basePointer;
 
-		surface->super.width = width;
-		surface->super.height = height;
-		surface->super.pixelStride = xBitStride >> 3 >> 2;
-		surface->super.scanlineStride = yBitStride >> 3 >> 2;
+    	if (format == FORMAT_XRGB_8888 || format == FORMAT_ARGB_8888) {
+			surface->super.data = (void*)basePointer;
 
-//		surface->super.imageType = TYPE_USHORT_565_RGB;
-		surface->super.imageType = TYPE_INT_RGB;
-		surface->super.alphaData = NULL;
+			surface->super.width = width;
+			surface->super.height = height;
+			surface->super.pixelStride = xBitStride >> 3 >> 2;
+			surface->super.scanlineStride = yBitStride >> 3 >> 2;
 
-		printf ("done, ok\n");
-		fflush(stdout);
+//			surface->super.imageType = TYPE_USHORT_565_RGB;
+			if (format == FORMAT_XRGB_8888) {
+				surface->super.imageType = TYPE_INT_RGB;
+			}
+			else if (format == FORMAT_ARGB_8888) {
+			    surface->super.imageType = TYPE_INT_ARGB;
+			}
+
+			surface->super.alphaData = NULL;
+
+			printf ("done, ok\n");
+			fflush(stdout);
+		}
+		else {
+			// unsupported format
+			setMemErrorFlag();
+		}
     } else {
         /*
          * This is not a correct error type to be reported here. For correct
