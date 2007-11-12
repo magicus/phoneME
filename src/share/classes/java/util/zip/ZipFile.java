@@ -493,6 +493,7 @@ class ZipFile implements ZipConstants {
 	    }
 	    return len;
 	}
+	}
 
 	public int read() throws IOException {
 	    byte[] b = new byte[1];
