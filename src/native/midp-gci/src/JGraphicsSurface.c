@@ -90,10 +90,12 @@ Java_com_sun_pisces_GraphicsSurface_initialize(
 		fflush(stdout);
 
 		if (surface != NULL) {
-			surface->super.offset = 0;
-			surface->super.pixelStride = 1;
-			surface->super.imageType = TYPE_USHORT_565_RGB;
-			surface->super.alphaData = NULL;
+			surface->super.data = 0;					// pisces should not use it yet
+			surface->super.offset = 0;					// pisces should not use it yet
+			surface->super.pixelStride = 0;				// pisces should not use it yet
+			surface->super.scanlineStride = 0;			// pisces should not use it yet
+			surface->super.imageType = TYPE_INT_RGB;	// pisces should not use it yet
+			surface->super.alphaData = NULL;			// pisces should not use it yet
 
 			surface->acquire = surface_acquire;
 			surface->release = surface_release;
@@ -250,17 +252,21 @@ surface_acquire(AbstractSurface* surface, JNIEnv* env, jobject surfaceHandle) {
     fflush(stdout);
 
     if (!(0 == graphicsHandle)) {
+    	printf ("fill surface\n");
+    	fflush(stdout);
 		surface->super.data = (void*)basePointer;
 
 		surface->super.width = width;
 		surface->super.height = height;
-		surface->super.scanlineStride = yBitStride >> 3;
+		surface->super.pixelStride = xBitStride >> 3 >> 2;
+		surface->super.scanlineStride = yBitStride >> 3 >> 2;
 
 //		surface->super.imageType = TYPE_USHORT_565_RGB;
 		surface->super.imageType = TYPE_INT_RGB;
 		surface->super.alphaData = NULL;
 
 		printf ("done, ok\n");
+		fflush(stdout);
     } else {
         /*
          * This is not a correct error type to be reported here. For correct
@@ -268,7 +274,8 @@ surface_acquire(AbstractSurface* surface, JNIEnv* env, jobject surfaceHandle) {
          */
         setMemErrorFlag();
     }
-
+    printf ("<<<surface_acquire\n");
+    fflush(stdout);
 }
 
 static void
