@@ -149,10 +149,11 @@ public class CommandLineInstaller extends MIDlet implements InstallListener,
         try {
             if (jarOnly) {
                 lastInstalledMIDletId = installer.installJar(url, null,
-                    storageId, false, false, this);
+                    storageId, false, false, false, this);
             } else {
-                lastInstalledMIDletId =
-                    installer.installJad(url, storageId, false, false, this);
+                lastInstalledMIDletId = installer.installJad(url, storageId,
+                                                             false, false,
+                                                             false, this);
             }
 
             System.out.println("The suite was succesfully installed, ID: " +

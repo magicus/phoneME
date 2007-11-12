@@ -423,6 +423,12 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         String label;
         String url;
 
+        /* true if update should be forced without user confirmation */
+        boolean forceUpdate = false;
+
+        /* true if user confirmation should be presented */
+        boolean noConfirmation = false; 
+
         installer = new HttpInstaller();
         display = Display.getDisplay(this);
 
@@ -435,7 +441,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         url = chmanager.getInstallURL(this);
         if (url != null) {
             label = Resource.getString(ResourceConstants.APPLICATION);
-            installSuite(label, url);
+            installSuite(label, url, false, false);
             return;
         }
 
@@ -466,6 +472,16 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
 
             updateSuite(suiteId);
             return;
+        } else if("FI".equals(arg0)) {
+            /* force installation without user confirmation */
+            noConfirmation = true;
+            /* force installation without user confirmation and force update */
+            forceUpdate = false;
+        } else if("FU".equals(arg0)) {
+            /* force installation without user confirmation */
+            noConfirmation = true;
+            /* force installation without user confirmation and force update */
+            forceUpdate = true;
         }
 
         url = getAppProperty("arg-1");
@@ -480,7 +496,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             label = Resource.getString(ResourceConstants.APPLICATION);
         }
 
-        installSuite(label, url);
+        installSuite(label, url, forceUpdate, noConfirmation);
     }
 
     /**
@@ -636,7 +652,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             // Save the current midlet even if its id is
             // MIDletSuite.UNUSED_SUITE_ID. Otherwise in SVM mode
             // the last installed midlet will be always highlighted
-            // because its it is recorded in this RMS record.
+            // because its id is recorded in this RMS record.
             bas.reset();
 
             dos.writeInt(curMidlet);
@@ -687,7 +703,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                                installInfo.getDownloadUrl(),
                                name + Resource.getString
                                (ResourceConstants.AMS_GRA_INTLR_SUCC_UPDATED),
-                               true);
+                               true, false);
         } catch (MIDletSuiteLockedException e) {
             if (Logging.REPORT_LEVEL <= Logging.WARNING) {
                 Logging.report(Logging.WARNING, LogChannels.LC_AMS,
@@ -715,8 +731,11 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
      *
      * @param label label of the URL link
      * @param url HTTP/S URL of the suite to update
+     * @param forceUpdate no user confirmation for update 
+     * @param noConfirmation no user confirmation
      */
-    private void installSuite(String label, String url) {
+    private void installSuite(String label, String url,
+                              boolean forceUpdate, boolean noConfirmation) {
         cancelledMessage =
             Resource.getString(ResourceConstants.AMS_GRA_INTLR_INST_CAN);
         finishingMessage =
@@ -726,7 +745,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                            label, url,
                            label + Resource.getString
                            (ResourceConstants.AMS_GRA_INTLR_SUCC_INSTALLED),
-                           false);
+                           forceUpdate, noConfirmation);
     }
 
     /**
@@ -737,15 +756,16 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
      * @param url URL of a JAD
      * @param successMessage message to display to user upon success
      * @param updateFlag if true the current suite is being updated
+     * @param noConfirmation no user confirmation
      */
     private void installSuiteCommon(String action, String name, String url,
-            String successMessage, boolean updateFlag) {
+            String successMessage, boolean updateFlag, boolean noConfirmation) {
         try {
             createProgressForm(action, name, url, 0,
                         Resource.getString(
                             ResourceConstants.AMS_GRA_INTLR_CONN_GAUGE_LABEL));
             backgroundInstaller = new BackgroundInstaller(this, url, name,
-                                      successMessage, updateFlag);
+                                      successMessage, updateFlag, noConfirmation);
             new Thread(backgroundInstaller).start();
         } catch (Exception ex) {
             StringBuffer sb = new StringBuffer();
@@ -1526,6 +1546,8 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         private String successMessage;
         /** Flag to update the current suite. */
         private boolean update;
+        /** Flag for user confiramtion. */
+        private boolean noConfirmation;
         /** State of the install. */
         InstallState installState;
         /** Signals that the user wants the install to continue. */
@@ -1544,15 +1566,18 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
          * @param theSuccessMessage message to display to user upon success
          * @param updateFlag if true the current suite should be
          *                      overwritten without asking the user.
+         * @param noConfirmation if true the current suite should be
+         *                      installed without asking the user.
          */
         private BackgroundInstaller(GraphicalInstaller theParent,
                 String theJadUrl, String theName, String theSuccessMessage,
-                boolean updateFlag) {
+                boolean updateFlag, boolean noConfirmationFlag) {
             parent = theParent;
             url = theJadUrl;
             name = theName;
             successMessage = theSuccessMessage;
             update = updateFlag;
+            noConfirmation = noConfirmationFlag;
         }
 
         /**
@@ -1580,11 +1605,11 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                         if (jarOnly) {
                             lastInstalledMIDletId =
                                 parent.installer.installJar(url, name,
-                                    storageId, false, false, this);
+                                    storageId, update, noConfirmation, false, this);
                         } else {
                             lastInstalledMIDletId =
                                 parent.installer.installJad(url, storageId,
-                                                            false, false, this);
+                                    update, noConfirmation, false, this);
                         }
 
                         // Let the manager know what suite was installed
@@ -1609,7 +1634,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                             if (Installer.JAR_MT_1.equals(mediaType) ||
                                     Installer.JAR_MT_2.equals(mediaType)) {
                                 // re-run as a JAR only install
-                                if (confirmJarOnlyDownload()) {
+                                if (noConfirmation || confirmJarOnlyDownload()) {
                                     jarOnly = true;
                                     installState = null;
                                     tryAgain = true;
@@ -1698,6 +1723,22 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
             installState = state;
 
             InvalidJadException e = installState.getLastException();
+
+            int reason = e.getReason();
+            if (noConfirmation) {
+                if (update) {
+                    /* no confirmation is needed */
+                    return true;
+                } else {
+                    /* confirmation is needed only for update */
+                    if((reason != InvalidJadException.OLD_VERSION) &&
+                       (reason != InvalidJadException.ALREADY_INSTALLED) &&
+                       (reason != InvalidJadException.NEW_VERSION)) {
+                        /* no confirmation is needed since it's not an update */
+                        return true;
+                    }
+                }
+            }
 
             switch (e.getReason()) {
             case InvalidJadException.UNAUTHORIZED:

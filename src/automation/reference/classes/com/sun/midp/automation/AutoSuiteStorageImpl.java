@@ -114,7 +114,7 @@ final class AutoSuiteStorageImpl extends AutoSuiteStorage {
 
         installer = AutoGetInstallerTunnel.getInstaller(location);
         suiteID = installer.installJad(location, Constants.INTERNAL_STORAGE_ID,
-            true, true, null);
+            true, false, true, null);
         suite = AutoSuiteDescriptorImpl.getInstanceBySuiteID(suiteID,
                 storage);
 

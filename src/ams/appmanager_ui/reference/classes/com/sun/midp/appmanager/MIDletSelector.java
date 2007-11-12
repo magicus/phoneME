@@ -149,12 +149,21 @@ final class MIDletSelector implements CommandListener {
             }
 
             manager.launchSuite(suiteInfo, minfo[selectedMidlet].classname);
-            display.setCurrent(parentDisplayable);
+            if (parentDisplayable != null) {
+                display.setCurrent(parentDisplayable);
+            } else {
+                selectedMidlet = -1;
+                display.setCurrent(mlist);
+            }
             return;
         }
 
         if (c == backCmd) {
-            display.setCurrent(parentDisplayable);
+            if (parentDisplayable != null) {
+                display.setCurrent(parentDisplayable);
+            } else {
+                manager.shutDown();
+            }
             return;
         }
     }

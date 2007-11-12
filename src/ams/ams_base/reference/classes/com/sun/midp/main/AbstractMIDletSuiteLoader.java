@@ -30,6 +30,7 @@ import com.sun.midp.events.EventQueue;
 import com.sun.midp.lcdui.*;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.log.*;
+import com.sun.midp.installer.InternalMIDletSuiteImpl;
 
 /**
  * The class presents abstract MIDlet suite loader with routines to prepare
@@ -195,6 +196,12 @@ abstract class AbstractMIDletSuiteLoader
      * @throws Exception can be thrown during execution
      */
     protected void startSuite() throws Exception {
+        if (suiteId == -1 && midletClassName.equals("internal")) {
+            // no class name, need to look for it in the JAD file
+            midletClassName = 
+                ((InternalMIDletSuiteImpl)midletSuite).getMIDletClassName();
+        }
+
         midletStateHandler.startSuite(
             this, midletSuite, externalAppId, midletClassName);
     }

@@ -168,6 +168,16 @@ public class DiscoveryApp extends MIDlet implements CommandListener {
         byte[] data;
         RecordStore settings = null;
 
+        /**
+         * ams.url = "" or null when running OTA from command line /
+         *           OTA provisioning
+         * ams.url = <some url> when running OTA from KToolbar */
+        String amsUrl = System.getProperty("ams.url");
+        if (amsUrl != null && !amsUrl.equals("")) {
+            defaultInstallListUrl = amsUrl.trim();
+            return;
+        }
+
         try {
             settings = RecordStore.openRecordStore(
                        GraphicalInstaller.SETTINGS_STORE, false);
