@@ -598,7 +598,10 @@ public class DirectPlayer extends BasicPlayer
         
         if (type.equals(prefix + vocName)) { // VolumeControl
 
-            if(mimeType.equals(Configuration.AUDIO_CAPTURE_LOCATOR))
+            if(mimeType.startsWith(Configuration.AUDIO_CAPTURE_LOCATOR))
+                return null;
+                
+            if(mimeType.startsWith(Configuration.VIDEO_CAPTURE_LOCATOR))
                 return null;
 
             if (vc == null) {
