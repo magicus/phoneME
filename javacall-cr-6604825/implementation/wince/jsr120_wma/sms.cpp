@@ -35,6 +35,57 @@ extern "C" {
   //#include "cemapi.h" //CreateFileMapping, CreateMutex, CreateEvent
 #include <sms.h>
 
+#ifndef SMS_STATIC_LINK
+
+typedef HRESULT sms_open_type (
+    const LPCTSTR ptsMessageProtocol,
+    const DWORD dwMessageModes,
+    SMS_HANDLE* const psmshHandle,
+    HANDLE* const phMessageAvailableEvent);
+
+typedef HRESULT sms_send_type (
+    const SMS_HANDLE smshHandle,
+    const SMS_ADDRESS * const psmsaSMSCAddress,
+    const SMS_ADDRESS * const psmsaDestinationAddress,
+    const SYSTEMTIME * const pstValidityPeriod,
+    const BYTE * const pbData,
+    const DWORD dwDataSize,
+    const BYTE * const pbProviderSpecificData,
+    const DWORD dwProviderSpecificDataSize,
+    const SMS_DATA_ENCODING smsdeDataEncoding,
+    const DWORD dwOptions,
+    SMS_MESSAGE_ID * psmsmidMessageID);
+
+typedef HRESULT sms_read_type (
+    const SMS_HANDLE smshHandle,
+    SMS_ADDRESS* const psmsaSMSCAddress,
+    SMS_ADDRESS* const psmsaSourceAddress,
+    SYSTEMTIME* const pstReceiveTime,  // (UTC time)
+    BYTE* const pbBuffer,
+    DWORD dwBufferSize,
+    BYTE* const pbProviderSpecificBuffer,
+    DWORD dwProviderSpecificDataBuffer,
+    DWORD* pdwBytesRead);
+
+typedef HRESULT sms_close_type (
+    const SMS_HANDLE smshHandle);
+
+static sms_open_type*  sms_open_func  = (sms_open_type*) NULL;
+static sms_send_type*  sms_send_func  = (sms_send_type*) NULL;
+static sms_read_type*  sms_read_func  = (sms_read_type*) NULL;
+static sms_close_type* sms_close_func = (sms_close_type*)NULL;
+
+#define SmsOpen        (*sms_open_func)
+#define SmsSendMessage (*sms_send_func)
+#define SmsReadMessage (*sms_read_func)
+#define SmsClose       (*sms_close_func)
+
+#endif //SMS_STATIC_LINK.  #else: WIN_LINKLIBS += sms.lib
+
+static int init_done = 0;
+static int init_ok = 0;
+javacall_result javacall_wma_init(void);
+
 int SendSMS(LPCTSTR lpszRecipient, 
              const unsigned char*    msgBuffer, 
              int                     msgBufferLen)
@@ -48,10 +99,14 @@ int SendSMS(LPCTSTR lpszRecipient,
     BOOL bUseDefaultSMSC = 1;
     LPCTSTR lpszSMSC = L"";
 
+    if (init_ok == 0) {
+        return 0;
+    }
+
     // try to open an SMS Handle
     if(FAILED(SmsOpen(SMS_MSGTYPE_TEXT, SMS_MODE_SEND, &smshHandle, (HANDLE*)NULL)))
     {
-        //MessageBox(NULL, L"FAIL", L"FAIL", MB_OK | MB_ICONERROR);
+        //MessageBox(0, L"FAIL", L"FAIL SmsOpen", MB_OK | MB_ICONERROR);
         return 0;
     }
 
@@ -104,6 +159,10 @@ int ReceiveSMS(BYTE* const receiveBuffer, int max_receive_buffer,
     TEXT_PROVIDER_SPECIFIC_DATA tpsd;
     HANDLE messageAvailableEvent;
     DWORD bytesRead = 0;
+
+    if (init_ok == 0) {
+        return 0;
+    }
 
     HRESULT ok = SmsOpen(SMS_MSGTYPE_TEXT, SMS_MODE_RECEIVE, &smshHandle, &messageAvailableEvent);
     DWORD dw = GetLastError();
@@ -435,6 +494,11 @@ int javacall_sms_send(  javacall_sms_encoding   msgType,
     sms_handle++;
     int send_ok = 0;
 
+    if (!init_done) {
+        javacall_wma_init();
+        init_done = 1;
+    }
+
     if (destPort == 0) {
         send_ok = SendSMS(lpcPhone, msgBuffer, msgBufferLen);
     } else {
@@ -475,9 +539,6 @@ int javacall_sms_send(  javacall_sms_encoding   msgType,
 
     return send_ok == 1 ? sms_handle : 0;
 }
-
-static int init_done = 0;
-javacall_result javacall_wma_init(void);
 
 /**
  * The platform must have the ability to identify the port number of incoming 
@@ -743,7 +804,7 @@ DWORD WINAPI receiveSMSThreadProc(LPVOID lpParam) {
                 int bufferSize = *((int*)(pFileMemory + FILE_OFFSET_MSG_SIZE));
                 wchar_t* senderPhoneEmail = (wchar_t*)(pFileMemory + FILE_OFFSET_SENDERPHONE);
                 char* receiveBuffer = pFileMemory + FILE_OFFSET_DATAGRAM;
-
+ 
                 FILETIME sendTime_f;
                 sendTime_f.dwHighDateTime = *((DWORD*)(pFileMemory + FILE_OFFSET_SENDTIME));
                 sendTime_f.dwLowDateTime  = *((DWORD*)(pFileMemory + FILE_OFFSET_SENDTIME+4));
@@ -781,6 +842,28 @@ static void createReceiveSMSThread() {
 }
 
 javacall_result javacall_wma_init(void) {
+
+#ifndef SMS_STATIC_LINK
+    HMODULE sms_library = LoadLibrary(L"sms.dll");
+    if (sms_library == NULL) {
+        printf("error loading sms.dll");
+        return JAVACALL_FAIL;
+    }
+
+    sms_open_func = (sms_open_type*) GetProcAddress(sms_library, L"SmsOpen");
+    sms_send_func = (sms_send_type*) GetProcAddress(sms_library, L"SmsSendMessage");
+    sms_read_func = (sms_read_type*) GetProcAddress(sms_library, L"SmsReadMessage");
+    sms_close_func= (sms_close_type*)GetProcAddress(sms_library, L"SmsClose");
+    if ((sms_open_func == NULL) ||
+        (sms_send_func == NULL) ||
+        (sms_read_func == NULL) ||
+        (sms_close_func == NULL)) {
+        printf("error loading sms.dll functions");
+        return JAVACALL_FAIL;
+    }
+#endif
+    init_ok = 1;
+
     createReceiveSMSThread();
     return JAVACALL_OK;
 }
