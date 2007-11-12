@@ -105,8 +105,11 @@ public final class PiscesGCISurface extends AbstractSurface {
         switch (surface.getFormat()) {
             case GCIDrawingSurface.FORMAT_RGB_888:
             case GCIDrawingSurface.FORMAT_XRGB_8888:
-            case GCIDrawingSurface.FORMAT_ARGB_8888:
                 imageType = RendererBase.TYPE_INT_RGB;
+                bitsToPixelsShift = 5;  // 2 ^ 5 = 32
+                break;
+	    case GCIDrawingSurface.FORMAT_ARGB_8888:	
+	        imageType = RendererBase.TYPE_INT_ARGB;
                 bitsToPixelsShift = 5;  // 2 ^ 5 = 32
                 break;
             case GCIDrawingSurface.FORMAT_RGB_565:
