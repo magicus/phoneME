@@ -372,8 +372,8 @@ CVM_BUILDTIME_CLASSES += \
    sun.util.calendar.ZoneInfo \
    sun.util.calendar.ZoneInfoFile \
    sun.util.BuddhistCalendar \
-   sun.util.Markable \
-   sun.util.MarkableReader \
+   sun.io.Markable \
+   sun.io.MarkableReader \
    \
    com.sun.cdc.config.PropertyProvider \
    com.sun.cdc.config.PropertyProviderAdapter \
