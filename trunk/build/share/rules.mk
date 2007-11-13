@@ -529,6 +529,9 @@ $(J2ME_CLASSLIB):: headers $(CVM_ROMJAVA_LIST)
 $(J2ME_CLASSLIB):: $(CLASSLIB_DEPS)
 $(J2ME_CLASSLIB):: aotdeps
 $(J2ME_CLASSLIB):: $(CVM_BINDIR)/$(CVM)
+ifneq ($(CVM_RESOURCES_DEPS),)
+$(J2ME_CLASSLIB):: $(CVM_RESOURCES_JAR)
+endif
 ifeq ($(JAVASE),)
 ifeq ($(CDC_10),true)
 $(J2ME_CLASSLIB):: $(CVM_TZDATAFILE)
@@ -845,6 +848,7 @@ clean::
 	rm -rf $(CVM_DERIVEDROOT)
 	rm -rf $(CVM_PROPS_BUILD) $(CVM_POLICY_BUILD)
 	rm -rf $(CVM_JCS_BUILDDIR)
+	rm -rf $(CVM_RESOURCES_DIR)
 else
 clean::
 	$(MAKE) CVM_REBUILD=true clean
@@ -880,6 +884,14 @@ $(CVM_DEMO_CLASSESJAR): $(CVM_BUILD_TOP)/.democlasses
 	$(AT)(cd $(CVM_DEMO_CLASSESDIR); $(ZIP) -r -q - *) > $(CVM_CLASSES_TMP)
 	$(AT)mv -f $(CVM_CLASSES_TMP) $@
 
+endif
+
+
+# Create resources jar file
+ifneq ($(CVM_RESOURCES_DEPS),)
+$(CVM_RESOURCES_JAR): $(CVM_RESOURCES_DEPS)
+	@echo ... $@
+	$(AT)(cd $(CVM_RESOURCES_DIR); $(CVM_JAR) cf $(call POSIX2HOST, $@) *)
 endif
 
 #
