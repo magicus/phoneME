@@ -25,7 +25,7 @@ package com.sun.mmedia;
 
 import javax.microedition.media.*;
 import javax.microedition.media.control.*;
-import com.sun.mmedia.DirectPlayer;
+import com.sun.mmedia.RTPPlayer;
 import com.sun.mmedia.protocol.CommonDS;
 import com.sun.mmedia.rtsp.*;
 
@@ -102,7 +102,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
                                  + ":" + client_ports[i];
 
                     try {
-                        players[i] = new DirectPlayer(); //Manager.createPlayer(url);
+                        players[i] = new RTPPlayer( this ); //Manager.createPlayer(url);
                         ds = new CommonDS();
                         ds.setLocator(url);
                         ds.setContentType("content.rtp");
