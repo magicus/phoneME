@@ -889,6 +889,7 @@ endif
 
 # Create resources jar file
 ifneq ($(CVM_RESOURCES_DEPS),)
+CVM_JARFILES += , "$(CVM_RESOURCES_JAR_FILENAME)"
 $(CVM_RESOURCES_JAR): $(CVM_RESOURCES_DEPS)
 	@echo ... $@
 	$(AT)(cd $(CVM_RESOURCES_DIR); $(CVM_JAR) cf $(call POSIX2HOST, $@) *)
