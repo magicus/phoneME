@@ -44,11 +44,6 @@ JSR_177_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
 
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/phoneMEAdvanced/wince_arm javacall/configuration/phoneMEAdvanced
 
-ifeq ($(USE_JSR_135), true)
-JSR_135_JC_PLATFORM = wince
-include $(JSR_135_JC_IMPL_PATH)/$(JSR_135_JC_DIR)/javacall_impl.gmk
-endif
-
 ifeq ($(USE_JSR_120),true)
 SOURCE_OUTPUT_LIST += $(JSR_120_JC_IMPL_PATH)/$(JSR_120_JC_DIR) javacall/implementation/wince
 CFLAGS += -DENABLE_JSR_120=1
