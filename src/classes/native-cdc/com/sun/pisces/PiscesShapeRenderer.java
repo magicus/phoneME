@@ -298,10 +298,18 @@ public class PiscesShapeRenderer implements GCIShapeRenderer {
         int[] fpDash = null;
         
         if ( floatDash != null ) {
-            fpDash = new int[floatDash.length];
-            for ( int i = 0 ; i < fpDash.length ; i++ ){
+	    if (floatDash.length == 1)
+	        fpDash = new int[2]; 
+	    else
+                fpDash = new int[floatDash.length];
+            for ( int i = 0 ; i < floatDash.length ; i++ ){
                 fpDash[i] = (int)(floatDash[i]*FIXED_1_0);
             }
+	    
+	    if (floatDash.length == 1) {
+		fpDash[1] = fpDash[0];
+	    }
+	    
             dashPhase = (int)(this.context.getDashPhase()*FIXED_1_0);
         }
         piscesRenderer.setStroke((int)(this.context.getLineWidth()*FIXED_1_0),
