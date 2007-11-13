@@ -60,7 +60,7 @@ endif
 # library to avoid skipping of unreferenced functions. 
 # Since libcldc_vm.a also depends on PCSL library, this block must be after
 # the VM block above.
-PCSL_TARGET_DIR  = $(PCSL_OUTPUT_DIR)/$(TARGET_OS)_$(TARGET_CPU)
+PCSL_TARGET_DIR ?= $(PCSL_OUTPUT_DIR)/$(TARGET_OS)_$(TARGET_CPU)
 EXTRA_INCLUDES	+= -I$(PCSL_TARGET_DIR)/inc
 LIBS		+= -L$(PCSL_TARGET_DIR)/lib \
 		   -lpcsl_file -lpcsl_memory -lpcsl_network -lpcsl_print \

@@ -84,6 +84,7 @@ public class TestTextFieldInput extends TestCase {
      * Checks the input states
      */
     void verifyInputStates() {
+/*
         TextFieldLFImpl lf = (TextFieldLFImpl)tf.textFieldLF;
         if (lf.hasFocus) {
             if (lf.editable) {
@@ -132,7 +133,7 @@ public class TestTextFieldInput extends TestCase {
             // input mode selection command doesn't exist in menu
             assertTrue("InputSubMenu", !isCommandInMenu(lf.inputMenu));
         }
-           
+  */         
     }
     
     /**

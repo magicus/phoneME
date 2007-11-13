@@ -126,7 +126,7 @@ EXTRA_CFLAGS	+= -W -Wall
 EXTRA_CFLAGS	+= -DGCC
 
 ifeq ($(TARGET_VM), cdc_vm)
-ifneq ($(CVM_PRELOAD_LIB), true)
+ifneq ($(CVM_STATICLINK_LIBS), true)
 LD_FLAGS += -shared
 endif
 endif

@@ -456,10 +456,10 @@ public class Display {
     int[] region;
 
     /** The TextInputMediator which handles translating key presses */
-    protected TextInputSession inputSession;
+    TextInputSession inputSession;
 
     /** The PopupLayer that represents open state of this ChoiceGroup POPUP. */
-    protected PTILayer pt_popup;
+    PTILayer pt_popup;
 
     // #endif ENABLE_CHAMELEON
 

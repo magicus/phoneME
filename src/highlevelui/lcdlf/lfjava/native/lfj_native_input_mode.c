@@ -71,7 +71,8 @@ KNIDECL(com_sun_midp_chameleon_input_NativeInputMode_initialize) {
         constraint_map* flags = nim_get_constraint_map(NIM_IDENTITY(thisObject));
         int j,i;
         /* store the array object address into the handle */
-        *((jobject_array**)flags2D) = (getNativeInputModePtr(thisObject)->isMap);
+        *((jobject_array**)flags2D) =(jobject_array*) 
+	  (getNativeInputModePtr(thisObject)->isMap);
         for(j=0; j<NIM_CONSTRAINT_MAP_NROWS; j++) {
             KNI_GetObjectArrayElement(flags2D,j,flags1D);
             for (i = 0; i < NIM_CONSTRAINT_MAP_NCOLS; i++) {
@@ -314,6 +315,7 @@ KNIDECL(com_sun_midp_chameleon_input_NativeInputMode_endInput0) {
     KNI_GetThisPointer(thisObject);
     nim_end_input(NIM_IDENTITY(thisObject));
     KNI_EndHandles();
+    KNI_ReturnVoid();
 }
 
 /* an example how to return an array of strings

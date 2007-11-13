@@ -289,6 +289,10 @@ public class HttpInstaller extends Installer {
                 } catch (IllegalArgumentException e) {
                     throw new InvalidJadException(invalidURLCode, url);
                 } catch (ConnectionNotFoundException e) {
+                    if (url.startsWith("http:") || url.startsWith("https:")) {
+                        throw new InvalidJadException(serverNotFoundCode, url);
+                    }
+
                     // protocol not found
                     throw new InvalidJadException(invalidURLCode, url);
                 }

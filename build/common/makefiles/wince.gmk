@@ -36,7 +36,7 @@ PATHSEP        = \;
 EXE            = .exe
 BAT            = .bat
 
-EXTRA_CFLAGS   =
+EXTRA_CFLAGS += -DNO_GETENV
 
 # Use CYGWIN by default, but allow an MKS-hosted build to override
 # Using environment variables.

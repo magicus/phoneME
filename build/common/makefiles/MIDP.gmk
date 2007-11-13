@@ -218,7 +218,7 @@ $(LIBDIR)/internal.config $(LIBDIR)/system.config: $(LIBDIR) $(SUBSYSTEM_CONFIGU
 endif
 
 ifeq ($(TARGET_VM), cdc_vm)
-   ifneq ($(CVM_PRELOAD_LIB), true)
+   ifneq ($(CVM_STATICLINK_LIBS), true)
       MIDP_DEPS += $(MIDP_SHARED_LIB)
    endif
 endif

@@ -32,39 +32,31 @@
 # other def. (like VPATH)
 ############################################################
 
-ifeq ($(CVM_PRELOAD_LIB), true)
 #
-# This is a ROMized build. MIDP natives are linked into CVM executable. No
-# need to create a separate libmidp.so.
+# Create a libmidp.so if we are not statically linking with cvm
 #
-$(BINDIR)/runMidlet: \
-  $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
-	@rm -f $@
-	@echo " ... creating script  " $@ $(LOG)
-	$(A)echo ${CDC_DIST_DIR}/bin/cvm \
-	-Dsun.midp.home.path=${MIDP_OUTPUT_DIR} \
-	-Dcom.sun.midp.mainClass.name=com.sun.midp.main.CdcMIDletSuiteLoader \
-	sun.misc.MIDPLauncher \
-	'$$*' > $@
-	$(A)chmod a+x $@
-else
-#
-# Create a libmidp.so for non-ROMized build.
-#
-$(MIDP_SHARED_LIB): \
-    $(MIDP_DEPS) $(OBJ_FILES)
+ifneq ($(CVM_STATICLINK_LIBS), true)
+$(MIDP_SHARED_LIB): $(MIDP_DEPS) $(OBJ_FILES)
 	@echo " ... linking $@ " $(LOG)
 	@$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
 	  $(OBJ_FILES) $(LIBS))` $(LOG)
+endif
 
+#
+# Create runMidlet script
+#
+ifneq ($(CVM_STATICLINK_LIBS), true)
+MIDP_LIBRARY_NAME_PROP = "-Dsun.midp.library.name=midp$(p)"
 $(BINDIR)/runMidlet: $(MIDP_SHARED_LIB)
+else
+$(BINDIR)/runMidlet: $(MIDP_DEPS) $(OBJ_FILES) $(AMS_RUNMIDLET_OBJ_FILES)
+endif
 	@rm -f $@
 	@echo " ... creating script $@ " $(LOG)
 	$(A)echo ${CDC_DIST_DIR}/bin/cvm \
-	-Dsun.midp.library.name=midp$(p) \
+	$(MIDP_LIBRARY_NAME_PROP) \
 	-Dsun.midp.home.path=${MIDP_OUTPUT_DIR} \
 	-Dcom.sun.midp.mainClass.name=com.sun.midp.main.CdcMIDletSuiteLoader \
 	sun.misc.MIDPLauncher \
 	'$$*' > $@
 	$(A)chmod a+x $@
-endif

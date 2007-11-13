@@ -23,7 +23,7 @@
         Clara, CA 95054 or visit www.sun.com if you need additional
         information or have any questions.
 -->
-<!ELEMENT configuration (properties | constants | localized_strings | skin | rawimage)*>
+<!ELEMENT configuration (properties | constants | localized_strings | skin | rawimage | permissions)*>
 <!ELEMENT properties (property)+>
 <!ELEMENT property EMPTY>
 <!-- If callout is specified, it must be a defined native function -->
@@ -175,4 +175,18 @@
         Format    (Putpixel | ARGB)         #REQUIRED
         Colors    (565 | 888)               #REQUIRED
         Endian    (Little | Big)            #REQUIRED
+>
+
+<!--
+    Extended permissions description
+-->
+<!ELEMENT permissions (group)*>
+<!ELEMENT group (permission)*>
+<!ATTLIST group
+        ID          CDATA                   #REQUIRED
+>
+<!ELEMENT permission EMPTY>
+<!ATTLIST permission
+        ID          CDATA                   #REQUIRED
+        Name        CDATA                   #REQUIRED
 >
