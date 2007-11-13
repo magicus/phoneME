@@ -57,9 +57,6 @@ bool      ObjectHeap::_is_finalizing;
 
 #if ENABLE_COMPILER
 OopDesc** ObjectHeap::_saved_compiler_area_top;
-
-OopDesc* (*ObjectHeap::temp_allocator) (size_t size JVM_TRAPS)
-  = &ObjectHeap::compiler_area_allocate_temp;
 #endif
 
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
@@ -1172,7 +1169,6 @@ bool ObjectHeap::create() {
   }
 
   GUARANTEE(!YoungGenerationAtEndOfHeap, "sanity");
-  temp_allocator = &compiler_area_allocate_temp;
 #endif
 
 #ifndef PRODUCT

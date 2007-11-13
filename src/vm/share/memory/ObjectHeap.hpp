@@ -169,8 +169,6 @@ private:
   static void collect(size_t min_free_after_collection JVM_TRAPS);
 
 #if ENABLE_COMPILER
-  static OopDesc* (*temp_allocator) (size_t size JVM_TRAPS);
-
   static OopDesc* compiler_area_allocate_code (size_t size JVM_TRAPS);
   static OopDesc* compiler_area_allocate_temp (size_t size JVM_TRAPS);
 #endif
@@ -490,7 +488,7 @@ public:
     return compiler_area_allocate_code(size JVM_NO_CHECK);
   }
   static OopDesc* allocate_temp( const size_t size JVM_TRAPS ) {
-    return (*temp_allocator) (size JVM_NO_CHECK);
+    return compiler_area_allocate_temp(size JVM_NO_CHECK);
   }
 #endif
 
