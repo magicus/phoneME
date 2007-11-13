@@ -25,7 +25,7 @@
  */
 
 
-package sun.util;
+package sun.io;
 
 import java.io.InputStream;
 import java.io.IOException;
