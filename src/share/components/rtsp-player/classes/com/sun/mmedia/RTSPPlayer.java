@@ -102,7 +102,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
                                  + ":" + client_ports[i];
 
                     try {
-                        players[i] = new RTPPlayer( this ); //Manager.createPlayer(url);
+                        players[i] = new RTPPlayer( this );
                         ds = new CommonDS();
                         ds.setLocator(url);
                         ds.setContentType("content.rtp");
