@@ -88,13 +88,13 @@ typedef __int64 javacall_int64;
  * @def JAVACALL_MAX_FILE_NAME_LENGTH
  * Maximal length of filename supported 
  */
-#define JAVACALL_MAX_FILE_NAME_LENGTH         260  //MAX_PATH
+#define JAVACALL_MAX_FILE_NAME_LENGTH         260
 
 /**
  * @def JAVACALL_MAX_ILLEGAL_FILE_NAME_CHARS
  * Maximal number of illegal chars
  */
-#define JAVACALL_MAX_ILLEGAL_FILE_NAME_CHARS  260 //MAX_PATH
+#define JAVACALL_MAX_ILLEGAL_FILE_NAME_CHARS  260
 
 /**
  * @def JAVACALL_MAX_ROOTS_LIST_LENGTH
