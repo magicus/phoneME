@@ -1,7 +1,6 @@
 /*
- * @(#)ZipFile.java	1.60 06/10/10
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.  
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER  
  *   
  * This program is free software; you can redistribute it and/or  
@@ -36,6 +35,9 @@ import java.util.Enumeration;
 import java.util.NoSuchElementException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+
+import sun.io.Markable;
+import sun.io.MarkableReader;
 
 /**
  * This class is used to read entries from a zip file.
@@ -449,8 +451,10 @@ class ZipFile implements ZipConstants {
 	private int rem;	// number of remaining bytes within entry
         private int size;       // uncompressed size of this entry
         private ZipFile handle; // this would prevent the zip file from being GCed
-       
+        private MarkableReader reader; // adds support of mark/reset functionality
+
 	ZipFileInputStream(long jzentry, ZipFile zf) {
+        reader = new MarkableReader(new NativeReader());
 	    pos = 0;
 	    rem = getCSize(jzentry);
             size = getSize(jzentry);
@@ -459,30 +463,37 @@ class ZipFile implements ZipConstants {
 	}
 
 	public int read(byte b[], int off, int len) throws IOException {
-	    if (rem == 0) {
-		return -1;
-	    }
-	    if (len <= 0) {
-		return 0;
-	    }
-	    if (len > rem) {
-		len = rem;
-	    }
+        return reader.read(b, off, len);
+    }
+
+    private class NativeReader implements Markable {
+
+        public int readNative(byte b[], int off, int len) throws IOException {
+            if (rem == 0) {
+                return -1;
+            }
+            if (len <= 0) {
+                return 0;
+            }
+            if (len > rem) {
+                len = rem;
+            }
             synchronized (ZipFile.this) {
                 if (ZipFile.this.jzfile == 0)
                     throw new ZipException("ZipFile closed.");
                 len = ZipFile.read(ZipFile.this.jzfile, jzentry, pos, b,
                                    off, len);
             }
-	    if (len > 0) {
-		pos += len;
-		rem -= len;
-	    }
-	    if (rem == 0) {
-		close();
-	    }
-	    return len;
-	}
+            if (len > 0) {
+                pos += len;
+                rem -= len;
+            }
+            if (rem == 0) {
+                close();
+            }
+            return len;
+        }
+    }
 
 	public int read() throws IOException {
 	    byte[] b = new byte[1];
@@ -516,6 +527,18 @@ class ZipFile implements ZipConstants {
                }
            }
        }
+
+    public synchronized void mark(int readlimit) {
+        reader.mark(readlimit);
+    }
+
+    public synchronized void reset() throws IOException {
+        reader.reset();
+    }
+
+    public boolean markSupported() {
+       return reader.markSupported();
+    }
 
     }
 
