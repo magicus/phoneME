@@ -36,8 +36,8 @@ import java.util.NoSuchElementException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-import sun.util.Markable;
-import sun.util.MarkableReader;
+import sun.io.Markable;
+import sun.io.MarkableReader;
 
 /**
  * This class is used to read entries from a zip file.
@@ -468,32 +468,32 @@ class ZipFile implements ZipConstants {
 
     private class NativeReader implements Markable {
 
-    	public int readNative(byte b[], int off, int len) throws IOException {
-	    if (rem == 0) {
-		return -1;
-	    }
-	    if (len <= 0) {
-		return 0;
-	    }
-	    if (len > rem) {
-		len = rem;
-	    }
+        public int readNative(byte b[], int off, int len) throws IOException {
+            if (rem == 0) {
+                return -1;
+            }
+            if (len <= 0) {
+                return 0;
+            }
+            if (len > rem) {
+                len = rem;
+            }
             synchronized (ZipFile.this) {
                 if (ZipFile.this.jzfile == 0)
                     throw new ZipException("ZipFile closed.");
                 len = ZipFile.read(ZipFile.this.jzfile, jzentry, pos, b,
                                    off, len);
             }
-	    if (len > 0) {
-		pos += len;
-		rem -= len;
-	    }
-	    if (rem == 0) {
-		close();
-	    }
-	    return len;
-	}
-	}
+            if (len > 0) {
+                pos += len;
+                rem -= len;
+            }
+            if (rem == 0) {
+                close();
+            }
+            return len;
+        }
+    }
 
 	public int read() throws IOException {
 	    byte[] b = new byte[1];

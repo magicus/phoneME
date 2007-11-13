@@ -31,8 +31,8 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.io.EOFException;
 
-import sun.util.Markable;
-import sun.util.MarkableReader;
+import sun.io.Markable;
+import sun.io.MarkableReader;
 
 /**
  * This class implements a stream filter for uncompressing data in the
