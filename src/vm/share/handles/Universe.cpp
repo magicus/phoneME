@@ -1978,13 +1978,15 @@ ReturnOop Universe::allocate_constant_pool(int length JVM_TRAPS) {
 }
 
 ReturnOop Universe::allocate_task(JVM_SINGLE_ARG_TRAPS) {
-    Task::Raw task = new_mixed_oop(MixedOopDesc::Type_Task,
+  Task::Raw task = new_mixed_oop(MixedOopDesc::Type_Task,
                        TaskDesc::allocation_size(),
                        TaskDesc::pointer_count()
                        JVM_NO_CHECK_AT_BOTTOM);
 
 #if USE_BINARY_IMAGE_LOADER && ENABLE_LIB_IMAGES    
+  if( task.not_null() ) {
     task().set_classes_in_images(ROM::number_of_system_classes());
+  }
 #endif
 
   return task;
