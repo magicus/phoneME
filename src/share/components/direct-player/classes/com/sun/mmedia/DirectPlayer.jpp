@@ -89,7 +89,6 @@ public class DirectPlayer extends BasicPlayer
     // Package variables
     int hNative;      // handle of native API library 
     int mediaType;
-    long restartPosition = Player.TIME_UNKNOWN;
     DirectVolume vc;
 
     private long remained;      // remained content length
@@ -388,20 +387,11 @@ public class DirectPlayer extends BasicPlayer
                 "DirectPlayer.doStart");
         }
         
-        if (true == isStreaming) {
-            if (isFirstStart) {
-                ret = nStart(hNative);
-                isFirstStart = false;
-            } else {
-                ret = nResume(hNative);    
-        }
-        } else {
-            if (restartPosition != Player.TIME_UNKNOWN) {
-                if (debug) System.out.println("[direct] Start from stoped position: " + restartPosition);
-                nSetMediaTime(hNative, restartPosition);
-                restartPosition = Player.TIME_UNKNOWN;
-            }
+        if (isFirstStart) {
             ret = nStart(hNative);
+            isFirstStart = false;
+        } else {
+            ret = nResume(hNative);    
         }
 
         return ret;
@@ -450,20 +440,13 @@ public class DirectPlayer extends BasicPlayer
      * @exception  MediaException  Description of the Exception
      */
     protected void doStop() throws MediaException {
-        if (true == isStreaming) {
-            if (false == nPause(hNative)) {
-                throw new MediaException("Player cannot be stopped");
-            }
-        } else {
-            restartPosition = nGetMediaTime(hNative);
-            if (false == nStop(hNative)) {
-                throw new MediaException("Player cannot be stopped");
-            }
+        if (false == nPause(hNative)) {
+            throw new MediaException("Player cannot be stopped");
         }
 
         if (debug) {
             Logging.report(Logging.INFORMATION, LogChannels.LC_MMAPI,
-                "DirectPlayer.doStop restartPosition=" + restartPosition);
+                "DirectPlayer.doStop");
         }
     }
     
