@@ -171,7 +171,8 @@ void Os::dispose() {
   return;
 }
 
-#if (ENABLE_PERFORMANCE_COUNTERS || ENABLE_PROFILER || ENABLE_WTK_PROFILER)
+#if USE_HIGH_RESOLUTION_TIMER
+
 static bool  _has_performance_frequency = false;
 static jlong _performance_frequency     = 0;
 
