@@ -65,39 +65,36 @@ void CompiledMethod::shrink(jint code_size, jint relocation_size) {
 }
 
 bool CompiledMethod::expand_compiled_code_space(int delta, int relocation_size) {
-  if (ObjectHeap::expand_current_compiled_method(delta)) {
-    if (Verbose) {
-      TTY_TRACE_CR(("Expanding compiled method from %d to %d bytes", 
-                    size(), size() + delta));
-    }
-    void* src = field_base(end_offset() - relocation_size);
-    void* dst = DERIVED(void*, src, delta);
-    GUARANTEE(src < dst, "should be copying up");
-    jvm_memmove(dst, src, relocation_size); // possibly overlapping regions
-    // It's probably OK only to clear dst[-1], but let's just make sure.
-    jvm_memset(src, 0, delta);
-    ((CompiledMethodDesc*) obj())->set_size(size() + delta);
-    
-    
-
-    if (VerifyGC > 2) {
-      ObjectHeap::verify();
-    }
-    return true;
-  } else {
+  if( !ObjectHeap::expand_current_compiled_method(delta)) {
     return false;
   }
+
+  if (Verbose) {
+    TTY_TRACE_CR(("Expanding compiled method from %d to %d bytes", 
+                  size(), size() + delta));
+  }
+  void* src = field_base(end_offset() - relocation_size);
+  void* dst = DERIVED(void*, src, delta);
+  GUARANTEE(src < dst, "should be copying up");
+  jvm_memmove(dst, src, relocation_size); // possibly overlapping regions
+  // It's probably OK only to clear dst[-1], but let's just make sure.
+  jvm_memset(src, 0, delta);
+  ((CompiledMethodDesc*) obj())->set_size(size() + delta);  
+
+  if (VerifyGC > 2) {
+    ObjectHeap::verify();
+  }
+  return true;
 }
 
 #if ENABLE_APPENDED_CALLINFO
 inline bool CompiledMethod::expand_callinfo_table(const int delta) {
   GUARANTEE(align_allocation_size(delta) == (size_t)delta, "must be aligned");
-  if (ObjectHeap::expand_current_compiled_method(delta)) {
-    ((CompiledMethodDesc*) obj())->set_size(size() + delta);
-    return true;
-  } else {
+  if( !ObjectHeap::expand_current_compiled_method(delta) ) {
     return false;
   }
+  ((CompiledMethodDesc*) obj())->set_size(size() + delta);
+  return true;
 }
 
 inline void CompiledMethod::shrink_callinfo_table(const int delta) {

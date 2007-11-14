@@ -966,7 +966,9 @@ OopDesc* ObjectHeap::allocate(size_t size JVM_TRAPS) {
 //     [Old CompiledMethod #...]
 //     <--------------------_saved_compiler_area_top
 //     [New CompiledMethod, under construction]
-//     [Int Array]
+//     <--------------------_compiler_area_temp_bottom
+//     ... empty space ...
+//     <--------------------_compiler_area_temp_top
 //     [temp object#...]
 //     [temp object#2]
 //     [temp object#1]
@@ -976,97 +978,68 @@ OopDesc* ObjectHeap::allocate(size_t size JVM_TRAPS) {
 // Note that in case [2], the temp objects are allocated from the top of
 // the compiler area downwards. This makes it possible to collect the
 // old CompiledMethods if the New CompiledMethod needs more space to
-// compile. The Int Array fills the space between the New CompiledMethod
-// and the temp objects.
-OopDesc* ObjectHeap::compiler_area_allocate_code(size_t size JVM_TRAPS) {
-  GUARANTEE(_compiler_area_temp_object_bottom == NULL, 
+// compile. Empty space shrinks when new CompiledMethod expands or
+// temp objects are allocated.
+OopDesc* ObjectHeap::compiler_area_allocate_code(const int size JVM_TRAPS) {
+  GUARANTEE(_compiler_area_temp_bottom == NULL, 
             "no temp objects can be alive when allocating new compiled code");
-  const size_t needed = size + ArrayDesc::allocation_size(0, sizeof(int));
-  OopDesc** const end = compiler_area_end();
-  const size_t free_bytes = DISTANCE(_compiler_area_top, end);
-  if (free_bytes < needed) {
+  const int free_bytes = DISTANCE(_compiler_area_top, compiler_area_end());
+  if (free_bytes < size) {
     const size_t slack = _heap_size / 32 + 4 * 1024;
-    if (compiler_area_soft_collect(needed + slack) < needed) {
+    if (compiler_area_soft_collect(size + slack) < size) {
       Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW_0);
     }
   }
 
-  GUARANTEE( DISTANCE(_compiler_area_top, end) >= (int)needed, "sanity" );
+  PERFORMANCE_COUNTER_INCREMENT(num_of_c_alloc_objs, 1);
 
-  // [1] Allocate and clear the new CompiledMethod.
-  OopDesc* result = (OopDesc*)_compiler_area_top;
-  jvm_memset((void*)result, 0, size);
+  // [1] Allocate new CompiledMethod.
+  OopDesc* const result = (OopDesc*)_compiler_area_top;
+  OopDesc** const end = compiler_area_end();
+  GUARANTEE( DISTANCE(result, end) >= (int)size, "sanity" );
 
-  // [2] Create the filler array (used by compiler_area_allocate_temp_object)
-  ArrayDesc* filler = DERIVED(ArrayDesc*, _compiler_area_top, size);
-  size_t filler_element_bytes = DISTANCE(filler, end) - ArrayDesc::header_size();
-  size_t filler_element_count = filler_element_bytes / sizeof(int);
-  GUARANTEE(filler_element_count*sizeof(int) == filler_element_bytes,"sanity");
-  filler->initialize(Universe::int_array_class()->prototypical_near(),
-                     filler_element_count);
-
-  _compiler_area_temp_object_bottom = (OopDesc**)filler;
+  // [2] Set compiler temporary data boundaries
+  _compiler_area_temp_bottom = DERIVED(OopDesc**, result, size);
+  _compiler_area_temp_top = end;
   _compiler_area_top = end;
 
-  PERFORMANCE_COUNTER_INCREMENT(num_of_c_alloc_objs, 1);
-  PERFORMANCE_COUNTER_INCREMENT(total_bytes_collected, size); // IMPL_NOTE:
-        // consider whether it should be fixed 
-
-  return result;
+  // [3] Clear the new CompiledMethod.
+  return (OopDesc*) jvm_memset(result, 0, size);
 }
 
-OopDesc* ObjectHeap::compiler_area_allocate_temp(size_t size JVM_TRAPS){
-  GUARANTEE(_compiler_area_temp_object_bottom != NULL, 
-            "temp objects must be allocated after new compiled code has "
-            "been allocated");
-
-  ArrayDesc* filler = (ArrayDesc*)_compiler_area_temp_object_bottom;
-  size_t free_bytes = filler->_length * sizeof(int);
-  if (free_bytes < size) {
-    // IMPL_NOTE: in the future we should consider collecting the compiled
-    // methods, or even shifting the compiler_area downwards, while
-    // pinning all temp objects.
+OopDesc* ObjectHeap::compiler_area_allocate_temp(const int size JVM_TRAPS){
+  if( free_memory_for_compiler_without_gc() < size ) {
+    // IMPL_NOTE: in the future we should consider
+    // (1) evicting and compacting compiled methods
+    // (2) shifting the compiler_area downwards while pinning all temp objects
+    // or continue allocating temp object below compiler_area_start
     Throw::out_of_memory_error(JVM_SINGLE_ARG_THROW_0);
   }
 
-  // Shrink the size of the filler array.
-  size_t filler_header_bytes = ArrayDesc::header_size();
-  size_t filler_element_bytes = free_bytes - size;
-  size_t filler_element_count = filler_element_bytes / sizeof(int);
-  size_t filler_bytes = filler_header_bytes + filler_element_bytes;
-  GUARANTEE(filler_element_count*sizeof(int) == filler_element_bytes,"sanity");
-  filler->_length = filler_element_count;
-
-  // The new object lives immediately after the shruken filler array.
-  OopDesc* result = DERIVED(OopDesc*, filler, filler_bytes);
+  OopDesc** p = DERIVED(OopDesc**, _compiler_area_temp_top, -size);
+  _compiler_area_temp_top = p;
+  GUARANTEE( _compiler_area_temp_bottom <= _compiler_area_temp_top, "sanity" );
 
   PERFORMANCE_COUNTER_INCREMENT(num_of_c_alloc_objs, 1);
-  PERFORMANCE_COUNTER_INCREMENT(total_bytes_collected, size); // IMPL_NOTE:
-                               // consider whether it should be fixed  
 
-  return (OopDesc*)jvm_memset((void*)result, 0, size);
+  return (OopDesc*)jvm_memset((void*)p, 0, size);
 }
 
-bool ObjectHeap::expand_current_compiled_method(int delta) {
-  // This function actually just shrinks the filler object immediately above
+bool ObjectHeap::expand_current_compiled_method(const int delta) {
+  // This function actually just shrinks the space above
   // the current compiled method. It's up to CompiledMethod::expand()
   // to modify the compiled method's contents.
-  GUARANTEE(_compiler_area_temp_object_bottom != NULL, 
-            "must be called only during compilation");
   GUARANTEE(align_allocation_size(delta) == (size_t)delta, "must be aligned");
 
-  ArrayDesc* filler = (ArrayDesc*)_compiler_area_temp_object_bottom;
-  int free_bytes = (int)(filler->_length * sizeof(int));
-  if (free_bytes >= delta) {
-    filler = DERIVED(ArrayDesc*, filler, delta);
-    size_t filler_element_count = (free_bytes - delta) / sizeof(int);
-    filler->initialize(Universe::int_array_class()->prototypical_near(),
-                       filler_element_count);
-    _compiler_area_temp_object_bottom = (OopDesc**)filler;
-    return true;
-  } else {
+  if( free_memory_for_compiler_without_gc() < delta ) {
     return false;
   }
+
+  _compiler_area_temp_bottom =
+    DERIVED(OopDesc**, _compiler_area_temp_bottom, delta);
+
+  PERFORMANCE_COUNTER_INCREMENT(num_of_c_alloc_objs, 1);
+  return true;
 }
 
 #endif
@@ -1098,8 +1071,9 @@ void ObjectHeap::dispose() {
   // IMPL_NOTE: not all of these are necessary ....
 
 #if ENABLE_COMPILER
-  _saved_compiler_area_top          = NULL;
-  _compiler_area_temp_object_bottom = NULL;
+  _saved_compiler_area_top   = NULL;
+  _compiler_area_temp_top    = NULL;
+  _compiler_area_temp_bottom = NULL;
 #endif
 
   LargeObjectDummy::uninitialize();
@@ -3568,7 +3542,7 @@ void ObjectHeap::increase_compiler_usage(size_t min_free_after_collection) {
 }
 
 // Returns number of free bytes in the compiler area
-size_t ObjectHeap::compiler_area_soft_collect(size_t min_free_after_collection){
+int ObjectHeap::compiler_area_soft_collect(size_t min_free_after_collection){
   accumulate_current_task_memory_usage();
 
   // (0) check if collection is indeed necessary
@@ -3592,7 +3566,7 @@ size_t ObjectHeap::compiler_area_soft_collect(size_t min_free_after_collection){
   clear_inline_allocation_area();
 
   enable_allocation_trap( allocation_end );
-  return free_bytes;
+  return int(free_bytes);
 }
 
 inline int
@@ -4057,18 +4031,14 @@ void ObjectHeap::iterate(ObjectHeapVisitor* visitor) {
   iterate( visitor, _heap_start, _inline_allocation_top );
 #if ENABLE_COMPILER
   {
-    UsingFastOops fast_oops;
-    Oop::Fast obj;
     const int upb = CompiledMethodCache::upb;
     for( int i = 0; i <= upb; i++ ) {
-      obj.set_obj( CompiledMethodCache::Map[i] );
-      visitor->do_obj(&obj);
+      visitor->do_obj( (Oop*)&CompiledMethodCache::Map[i]);
     }
   }
 
-  OopDesc** p = (OopDesc**) Compiler::current_compiled_method()->obj();
-  if( p ) {
-    iterate( visitor, p, _compiler_area_top );
+  if( Compiler::current_compiled_method()->not_null() ) {
+    visitor->do_obj( Compiler::current_compiled_method() );
   }
 #endif
 }
@@ -4112,6 +4082,12 @@ void ObjectHeap::verify_layout() {
   GUARANTEE_R(_large_object_area_bottom <= _heap_top,                 "sanity");
   GUARANTEE_R(_heap_top                 <= _heap_limit,               "sanity");
   GUARANTEE_R(_heap_limit               <= _heap_end,                 "sanity");
+
+  if( _compiler_area_temp_bottom ) {
+    GUARANTEE_R(_compiler_area_start       <= _compiler_area_temp_bottom, "sanity");
+    GUARANTEE_R(_compiler_area_temp_bottom <= _compiler_area_temp_top,    "sanity");
+    GUARANTEE_R(_compiler_area_temp_top    <= _compiler_area_top,         "sanity");
+  }
 
   // Bit-vector chunk
   GUARANTEE_R(_bitvector_start       <  (address)_slices_start, "sanity");

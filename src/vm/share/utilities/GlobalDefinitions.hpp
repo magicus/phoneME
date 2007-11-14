@@ -238,9 +238,9 @@
 #define LinkedBasicOop  JVMLinkedBasicOop
 #define LiteralAccessor  JVMLiteralAccessor
 #define LiteralElementStream  JVMLiteralElementStream
-#define LiteralPoolElement	JVMLiteralPoolElement
-#define LiteralPoolElementDesc	JVMLiteralPoolElementDesc
-#define LiteralPoolElement	JVMLiteralPoolElement
+#define LiteralPoolElement      JVMLiteralPoolElement
+#define LiteralPoolElementDesc  JVMLiteralPoolElementDesc
+#define LiteralPoolElement      JVMLiteralPoolElement
 #define LiteralStream  JVMLiteralStream
 #define LiveRange  JVMLiveRange
 #define LoaderContext  JVMLoaderContext
@@ -1761,7 +1761,8 @@ enum {
   template(x, OopDesc**, compiler_area_start)       \
   template(x, OopDesc**, compiler_area_top)         \
   template(x, OopDesc**, large_object_area_bottom)  \
-  template(x, OopDesc**, compiler_area_temp_object_bottom) \
+  template(x, OopDesc**, compiler_area_temp_top)    \
+  template(x, OopDesc**, compiler_area_temp_bottom) \
                                                            \
   /* frequently used values by Compiler*/                  \
   template(x, Method*,            compiler_method)         \
@@ -1826,7 +1827,8 @@ struct JVMFastGlobals {
 #define _compiler_area_start          jvm_fast_globals.compiler_area_start
 #define _compiler_area_top            jvm_fast_globals.compiler_area_top
 #define _large_object_area_bottom     jvm_fast_globals.large_object_area_bottom
-#define _compiler_area_temp_object_bottom jvm_fast_globals.compiler_area_temp_object_bottom
+#define _compiler_area_temp_top       jvm_fast_globals.compiler_area_temp_top
+#define _compiler_area_temp_bottom    jvm_fast_globals.compiler_area_temp_bottom
 
 #define _compiler_method              jvm_fast_globals.compiler_method
 #define _compiler_code_generator      jvm_fast_globals.compiler_code_generator

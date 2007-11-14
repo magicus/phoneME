@@ -1094,7 +1094,7 @@ inline bool Compiler::reserve_compiler_area(size_t compiled_method_size) {
     // would be marked as impossible to compile.
     temp_data_size = max_temp_data;
   }
-  const size_t needed = compiled_method_size + temp_data_size;
+  const int needed = compiled_method_size + temp_data_size;
 
   // IMPL_NOTE: make sure that we don't thrash with compiler_area_collect if
   // we're interpreting a large method but we can't collect enough space

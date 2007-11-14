@@ -169,8 +169,8 @@ private:
   static void collect(size_t min_free_after_collection JVM_TRAPS);
 
 #if ENABLE_COMPILER
-  static OopDesc* compiler_area_allocate_code (size_t size JVM_TRAPS);
-  static OopDesc* compiler_area_allocate_temp (size_t size JVM_TRAPS);
+  static OopDesc* compiler_area_allocate_code (const int size JVM_TRAPS);
+  static OopDesc* compiler_area_allocate_temp (const int size JVM_TRAPS);
 #endif
 
 public:
@@ -275,7 +275,7 @@ public:
   {}
 #endif
 
-  static size_t compiler_area_soft_collect(size_t min_free_after_collection);
+  static int compiler_area_soft_collect(size_t min_free_after_collection);
 
   // Global reference support (bitwise mask)
   enum ReferenceType {
@@ -443,7 +443,8 @@ public:
     }
     _compiler_area_top = compiler_area_top;
   #ifndef PRODUCT
-    _compiler_area_temp_object_bottom = NULL;
+    _compiler_area_temp_top = NULL;
+    _compiler_area_temp_bottom = NULL;
     _saved_compiler_area_top = NULL;
   #endif
     if (VerifyGC >= 2) {
@@ -451,13 +452,11 @@ public:
     }
   }
 
-  static size_t free_memory_for_compiler_without_gc( void ) {
-    GUARANTEE(_compiler_area_temp_object_bottom != NULL, 
+  static int free_memory_for_compiler_without_gc( void ) {
+    GUARANTEE(_compiler_area_temp_bottom != NULL, 
               "temp objects must be allocated after new compiled code has "
               "been allocated");
-
-    const ArrayDesc* filler = (ArrayDesc*)_compiler_area_temp_object_bottom;
-    return filler->_length * sizeof(int);
+    return DISTANCE( _compiler_area_temp_bottom, _compiler_area_temp_top);
   }
 #endif
 
@@ -484,10 +483,10 @@ public:
   static int compiler_area_used (void) {
     return DISTANCE(_compiler_area_start, _compiler_area_top);
   }
-  static OopDesc* allocate_code( const size_t size JVM_TRAPS ) {
+  static OopDesc* allocate_code( const int size JVM_TRAPS ) {
     return compiler_area_allocate_code(size JVM_NO_CHECK);
   }
-  static OopDesc* allocate_temp( const size_t size JVM_TRAPS ) {
+  static OopDesc* allocate_temp( const int size JVM_TRAPS ) {
     return compiler_area_allocate_temp(size JVM_NO_CHECK);
   }
 #endif
