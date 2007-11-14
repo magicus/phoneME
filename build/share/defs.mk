@@ -464,10 +464,16 @@ CVM_PROP_JAVA_VM_VENDOR		= "Sun Microsystems Inc."
 CVM_PROP_JAVA_VM_SPEC_NAME	= "Java Virtual Machine Specification"
 CVM_PROP_JAVA_VM_SPEC_VERSION	= "1.0"
 CVM_PROP_JAVA_VM_SPEC_VENDOR	= "Sun Microsystems Inc."
+
 #   used in src/$(CVM_TARGET)/javavm/runtime/java_props_md.c
 CVM_CLASSLIB_JAR_NAME	       ?= "$(J2ME_CLASSLIB)$(OPT_PKGS_NAME).jar"
+
 #   used in src/share/javavm/runtime/utils.c
-CVM_JARFILES			= CVM_CLASSLIB_JAR_NAME
+ifneq ($(CVM_PRELOAD_LIB),true)
+CVM_JARFILES	+= CVM_CLASSLIB_JAR_NAME
+else
+CVM_JARFILES	= NULL
+endif
 
 ifneq ($(OPT_PKGS_ID_FILES),)
 -include $(OPT_PKGS_ID_FILES)
