@@ -962,10 +962,6 @@ public final class System {
         midpProps = new Properties();
         initCldcMidpProperties(midpProps);
 
-        // dynamic properties initialization (should be moved to more
-        // appropriate place when we have dynamic package loading implemented)
-        PackageManager.init();
-
 	sun.misc.Version.init();
 	FileInputStream fdIn = new FileInputStream(FileDescriptor.in);
 	FileOutputStream fdOut = new FileOutputStream(FileDescriptor.out);
@@ -973,6 +969,11 @@ public final class System {
 	setIn0(new BufferedInputStream(fdIn));
 	setOut0(new PrintStream(new BufferedOutputStream(fdOut, 128), true));
 	setErr0(new PrintStream(new BufferedOutputStream(fdErr, 128), true));
+
+
+        // dynamic properties initialization (should be moved to more
+        // appropriate place when we have dynamic package loading implemented)
+        PackageManager.init();
 
 	// Load the zip library now in order to keep java.util.zip.ZipFile
 	// from trying to use itself to load this library later.
