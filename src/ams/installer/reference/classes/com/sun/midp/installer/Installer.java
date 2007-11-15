@@ -255,8 +255,6 @@ public abstract class Installer {
      * @param force if <code>true</code> the MIDlet suite components to be
      *              installed will overwrite any existing components without
      *              any version comparison
-     * @param noConfirmation if <code>true</code> the MIDlet site components to be
-     *              installed without any user confirmation
      * @param removeRMS if <code>true</code> and existing RMS data will be
      *              removed when overwriting an existing suite
      * @param installListener object to receive status updates and install
@@ -278,13 +276,12 @@ public abstract class Installer {
      * descriptor file is not specified
      */
     public int installJad(String location, int storageId, boolean force,
-        boolean noConfirmation, boolean removeRMS, InstallListener installListener)
+        boolean removeRMS, InstallListener installListener)
             throws IOException, InvalidJadException,
                    MIDletSuiteLockedException, SecurityException {
 
         info.jadUrl = location;
         state.force = force;
-        state.noConfirmation = noConfirmation;
         state.removeRMS = removeRMS;
         state.nextStep = 1;
         state.listener = installListener;
@@ -324,8 +321,6 @@ public abstract class Installer {
      * @param force if <code>true</code> the MIDlet suite components to be
      *              installed will overwrite any existing components without
      *              any version comparison
-     * @param noConfirmation if <code>true</code> the MIDlet site components to be
-     *              installed without any user confirmation
      * @param removeRMS if <code>true</code> and existing RMS data will be
      *              removed when overwriting an existing suite
      * @param installListener object to receive status updates and install
@@ -344,8 +339,7 @@ public abstract class Installer {
      * JAR specified
      */
     public int installJar(String location, String name, int storageId,
-                          boolean force, boolean noConfirmation,
-                          boolean removeRMS, InstallListener installListener)
+            boolean force, boolean removeRMS, InstallListener installListener)
                 throws IOException, InvalidJadException,
                     MIDletSuiteLockedException {
 
@@ -358,7 +352,6 @@ public abstract class Installer {
         info.jarUrl = location;
         info.suiteName = name;
         state.force = force;
-        state.noConfirmation = noConfirmation;
         state.removeRMS = removeRMS;
         state.file = new File();
         state.nextStep = 5;
@@ -704,20 +697,17 @@ public abstract class Installer {
             state.ignoreCancel = true;
         }
 
-        /* if no user confirmation is required, do not show confirmation alert */
-        if (!state.noConfirmation) {
-            if (state.listener != null &&
-                !state.listener.confirmJarDownload(state)) {
-                state.stopInstallation = true;
-                postInstallMsgBackToProvider(
-                    OtaNotifier.USER_CANCELLED_MSG);
-                throw new IOException("stopped");
-            }
+        if (state.listener != null &&
+            !state.listener.confirmJarDownload(state)) {
+            state.stopInstallation = true;
+            postInstallMsgBackToProvider(
+                OtaNotifier.USER_CANCELLED_MSG);
+            throw new IOException("stopped");
+        }
 
-            synchronized (state) {
-                /* Allow cancel requests again */
-                state.ignoreCancel = false;
-            }
+        synchronized (state) {
+            /* Allow cancel requests again */
+            state.ignoreCancel = false;
         }
         state.nextStep++;
     }
@@ -2613,11 +2603,6 @@ class InstallStateImpl implements InstallState, MIDletSuite {
      * any version comparison.
      */
     protected boolean force;
-
-    /**
-     * Option to force an installation without user confirmation
-     */
-    protected boolean noConfirmation;
 
     /**
      * Option to force the RMS data of the suite to be overwritten to

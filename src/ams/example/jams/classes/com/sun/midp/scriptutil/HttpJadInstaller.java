@@ -129,7 +129,7 @@ public class HttpJadInstaller extends MIDlet implements Runnable {
         try {
             // force an overwrite and remove the RMS data
             suiteId = installer.installJad(url, Constants.INTERNAL_STORAGE_ID,
-                                           true, false, true, null);
+                                           true, true, null);
             midletInfo = getFirstMIDletOfSuite(suiteId);
 
             System.out.println("*Installed suite " + midletInfo.name);

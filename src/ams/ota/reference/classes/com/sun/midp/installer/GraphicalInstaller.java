@@ -1605,11 +1605,11 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                         if (jarOnly) {
                             lastInstalledMIDletId =
                                 parent.installer.installJar(url, name,
-                                    storageId, update, noConfirmation, false, this);
+                                    storageId, update, false, this);
                         } else {
                             lastInstalledMIDletId =
                                 parent.installer.installJad(url, storageId,
-                                    update, noConfirmation, false, this);
+                                    update, false, this);
                         }
 
                         // Let the manager know what suite was installed
@@ -1780,7 +1780,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
          *         install
          */
         public boolean confirmJarDownload(InstallState state) {
-            if (update) {
+            if (update || noConfirmation) {
                 // this an update, no need to confirm.
                 return true;
             }

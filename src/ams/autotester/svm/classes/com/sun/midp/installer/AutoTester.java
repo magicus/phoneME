@@ -283,8 +283,7 @@ public class AutoTester extends AutoTesterBase implements AutoTesterInterface {
             try {
                 // force an overwrite and remove the RMS data
                 suiteId = inp_installer.installJad(inp_url,
-                    Constants.INTERNAL_STORAGE_ID, true, false,
-                    true, installListener);
+                    Constants.INTERNAL_STORAGE_ID, true, true, installListener);
 
                 midletInfo = getFirstMIDletOfSuite(suiteId,
                         midletSuiteStorage);
