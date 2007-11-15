@@ -2002,10 +2002,10 @@ wr.pld(4,"System.out.println(\"return from callback - " + ifaceName + "." + mlis
             }
         }
         wr.pl(3, "if (m.getName().equals(\"hashCode\") && (args == null || args.length == 0)) {");
-        wr.pl(4, "return new Integer(hc);");
+        wr.pl(4, "return new Integer(myInstance.hashCode());");
         wr.pl(3, "} else");
         wr.pl(3, "if (m.getName().equals(\"equals\") && args.length == 1 && args[0].getName().equals(\"java.lang.Object\")) {");
-        wr.pl(4, "boolean result = (a[0] == null ? false : (myInstance == a[0]));");
+        wr.pl(4, "boolean result = (a[0] == null ? false : a[0].equals(myInstance));");
         wr.pl(4, "return new Boolean(result);");
         wr.pl(3, "} else {");
         wr.pl(4, "StringBuffer s = new StringBuffer();");
