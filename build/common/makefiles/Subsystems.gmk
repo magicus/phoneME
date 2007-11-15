@@ -97,11 +97,7 @@ include $(SUBSYSTEM_DIR)/i18n/$(SUBSYSTEM_MAKE_FILE)
 # Description: Look and Feel
 #####################################################################
 
-ifeq ($(USE_OEM_AMS), true)
-    include $(PROJECT_MIDP_DIR)/src/highlevelui/$(SUBSYSTEM_MAKE_FILE)
-else
-    include $(SUBSYSTEM_DIR)/highlevelui/$(SUBSYSTEM_MAKE_FILE)
-endif
+include $(SUBSYSTEM_DIR)/highlevelui/$(SUBSYSTEM_MAKE_FILE)
 
 
 #####################################################################
