@@ -39,8 +39,12 @@ public class RTPPlayer extends com.sun.mmedia.DirectPlayer
     public void sendEvent( String evt, Object evtData )
     {
         if (null != parentPlayer)
+        {
             parentPlayer.sendEvent(evt, evtData);
+        }
         else
-            super.sendEvent( evt, evtData );
+        {
+            super.sendEvent(evt, evtData);
+        }
     }
 }
