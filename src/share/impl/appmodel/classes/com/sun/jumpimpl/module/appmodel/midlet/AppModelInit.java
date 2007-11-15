@@ -27,14 +27,14 @@ package com.sun.jumpimpl.module.appmodel.midlet;
 import com.sun.jump.module.JUMPModuleFactory;
 import sun.misc.MIDPConfig;
 import java.util.Map;
+import java.io.File;
 
 
 public class AppModelInit extends JUMPModuleFactory {
     public void load(Map config) {
-        String midpJar = (String)config.get("jump.midp.classes.zip");
-        String[] jars = {midpJar};
+        //String midpJar = (String)config.get("jump.midp.classes.zip");
 
-        MIDPConfig.newMIDPImplementationClassLoader(jars);
+        MIDPConfig.newMIDPImplementationClassLoader(null);
    }
 
    public void unload() {}

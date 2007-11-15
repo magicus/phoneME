@@ -101,10 +101,10 @@ public class InstallerFactoryImpl extends JUMPInstallerModuleFactory {
 		      *	normally uses, unless jump.midp.classes.zip is set.
 		      **/
  
-                     String midpFile = (String) configMap.get("jump.midp.classes.zip");
+                     //String midpFile = (String) configMap.get("jump.midp.classes.zip");
 
                      midpImplementationClassLoader =
-   	                MIDPConfig.newMIDPImplementationClassLoader(new String[]{midpFile});
+   	                MIDPConfig.newMIDPImplementationClassLoader(null);
    	          }   
                   
    	          midletInstaller = (JUMPInstallerModule) 

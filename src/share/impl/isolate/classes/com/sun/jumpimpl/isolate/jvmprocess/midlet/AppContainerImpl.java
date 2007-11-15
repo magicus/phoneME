@@ -73,12 +73,11 @@ public class AppContainerImpl extends JUMPAppContainer {
 	       MIDPConfig.getMIDPImplementationClassLoader();
 
 	    if (midpImplementationClassLoader == null) {
-	       String midpJar = (String)
-                   context.getConfigProperty("jump.midp.classes.zip");
+	       //String midpJar = (String)
+               //    context.getConfigProperty("jump.midp.classes.zip");
 
                midpImplementationClassLoader =
-                   MIDPConfig.newMIDPImplementationClassLoader(
-                       new String[] { midpJar });
+                   MIDPConfig.newMIDPImplementationClassLoader(null);
             }
              
             Class clazz =
