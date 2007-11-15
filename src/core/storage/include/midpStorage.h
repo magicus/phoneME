@@ -119,12 +119,14 @@ typedef jint StorageIdType;
 /**
  * Initializes the storage subsystem.
  *
- * @param midp_home pathname in the file-system where MIDP is installed
+ * @param midp_config pathname in the file-system where MIDP is installed
+ * @param midp_home file system path to where MIDP should store its
+ * data like suites and such
  *
  * @return 0 for success, or non-zero if the MIDP implementation is
  * out of memory
  */
-int storageInitialize(char *midp_home);
+int storageInitialize(char *midp_config, char * midp_home);
 
 /**
  * Takes any actions necessary to safely terminate the storage

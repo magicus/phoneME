@@ -128,12 +128,14 @@ static char errorBuffer[MAX_ERROR_LEN + 1] = {0};
 /*
  * Prefixing the system directory for storage, APP_DIR, with midp_home.
  *
- * @param midp_home file system path to where MIDP is installed
+ * @param config_home file system path to where MIDP is installed
+ * @param midp_home file system path to where MIDP should store its
+ * data like suites and such
  *
  * @return 0 for success, non-zero for out of memory
  */
 int
-storageInitialize(char *midp_home) {
+storageInitialize(char *config_home, char *midp_home) {
     jchar fsep = storageGetFileSeparator();
 
     if (storageInitDone) {
@@ -169,7 +171,7 @@ storageInitialize(char *midp_home) {
         return -1;
     }
 
-    if (0 != initializeConfigRoot(midp_home)) {
+    if (0 != initializeConfigRoot(config_home)) {
         storageFinalize();
         return -1;
     }
@@ -882,4 +884,5 @@ storage_write_utf16_string(char** ppszError, int handle, const pcsl_string* str)
     }
   }
 }
+
 
