@@ -364,7 +364,7 @@ void BufferedFileStream::restore(BufferedFileStreamState *state) {
 
 #endif /* USE_BINARY_IMAGE_GENERATOR */
 
-#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_DYNAMIC_NATIVE_METHODS || USE_DEBUG_PRINTING
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_DYNAMIC_NATIVE_METHODS || USE_DEBUG_PRINTING || ENABLE_MEMORY_PROFILER
 void FixedArrayOutputStream::print_raw(const char *s) {
   int length = jvm_strlen(s);
   if (length + _current_size + 1 >= _limit) {
