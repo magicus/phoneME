@@ -35,6 +35,7 @@ package sun.misc;
 import java.net.URL;
 import java.security.PermissionCollection;
 import java.security.Permissions;
+import java.io.IOException;
 import java.io.File;
 import java.io.FileReader;
 import java.io.InputStream;
@@ -50,11 +51,6 @@ class MIDPConfig{
     /*private static MIDletClassLoader midletCL;*/
     /* The MemberFilter */
     private static MemberFilter memberFilter;
-
-    /* The default location of midp library zip */
-    private static String defaultMidpJarPath =  
-	    System.getProperty("java.home") + File.separator +
-	    "lib" + File.separator + "midpclasses.zip";
 
     public static String MIDPVersion = "2.0";
     public static String CLDCVersion = "1.1";
@@ -77,6 +73,27 @@ class MIDPConfig{
 	// filled by reading a file.
 	// see getPermittedClasses() below
 
+    private static File[] getDefaultPath() throws IOException {
+        String libdir = System.getProperty("java.home") + 
+            File.separator + "lib" + File.separator;
+        String jars[] = split(System.getProperty(
+            "com.sun.midp.implementation"));
+        int num = jars.length;
+        File files[] = new File[num];
+
+        for (int i = 0; i<num; i++) {
+            String jar = libdir + jars[i];
+            File f = new File(jar);
+
+            if (!f.exists()) {
+                throw new IOException("Can't find " + jar);
+            }
+            files[i] = f;
+        }
+
+        return files;
+    }
+
 
     /*
      * Set up a MemberFilter using the classes and members
@@ -92,7 +109,8 @@ class MIDPConfig{
 		"lib" + File.separator + "MIDPFilterConfig.txt";
 	    MemberFilterConfig mfc = new MemberFilterConfig(filename);
 	    MemberFilter mf;
-	    // DEBUG System.out.println("Starting MemberFilter file parsing");
+	    // DEBUG System.out.println(
+            //   "Starting MemberFilter file parsing");
 	    // DEBUG mfc.setVerbose(true);
 	    mf = mfc.parseFile();
 	    // DEBUG System.out.println("Done MemberFilter file parsing");
@@ -143,74 +161,6 @@ class MIDPConfig{
 	return permittedSystemClasses;
     }
 
-    /*
-     * Set up the MIDPImplementationClassLoader.
-     * All MIDlets will share the same MIDPImplementationClassLoader,
-     * and thus the same class instances. This is required if we want
-     * to be able to coordinate their resource use.
-     * (Assuming that the implementation don't have any static fields
-     * that would make this sharing a bad idea!)
-     *
-     * We trust these classes, so grant them all permissions.
-     */
-    /* NOTE: this should be removed once the MIDP code is fixed to
-     * use the newMIDPImplementationClassLoader(URL[]) API.
-     */
-    public static MIDPImplementationClassLoader
-    newMIDPImplementationClassLoader(String midpJarNames[]){
-        /* The MIDPImplementationClassLoader already exist. Throw an
-         * exception.
-         */
-        if (midpImplCL != null) {
-            throw new InternalError(
-                "The MIDPImplementationClassLoader is already created");
-        }
-
-	String permittedClasses[];
-	PermissionCollection perms = new Permissions();
-	Vector urls = new Vector();
-        for (int i=0; i<midpJarNames.length; i++){
-           try {
-              File file = new File(midpJarNames[i]);
-	      if (file.exists()) {
-	         urls.add(file.toURL());
-              }
-	   }catch(NullPointerException e){
-	   }catch(java.io.IOException e){
-	      e.printStackTrace();
-	   }
-	}
-
-	URL[] midpBase = (URL[]) urls.toArray(new URL[0]);
- 
-	if (midpBase == null || midpBase.length == 0) {
-           /* Either the parameter was bad or didn't get passed in.  Use default.  */
-           midpBase = new URL[1];
-	   try {
-	      midpBase[0] = new URL("file://".concat(defaultMidpJarPath));
-           }catch(java.io.IOException e){
-	      // DEBUG System.err.println("initMidpImplementation URL Creation:");
-	      e.printStackTrace();
-	      // END DEBUG
-	      return null;
-           }
-        } 
-
-	perms.add(new java.security.AllPermission());
-	//DEBUG System.out.println("Constructing MIDPImplementationClassLoader with permissions "+perms);
-	permittedClasses = getPermittedClasses();
-	if (permittedClasses == null){
-	    // there was some problem in reading the file
-	    return null;
-	}
-         
-	midpImplCL = new MIDPImplementationClassLoader(
-				midpBase, permittedClasses, perms,
-				null);
-	return midpImplCL;
-
-    }
-
     public static MIDPImplementationClassLoader
     getMIDPImplementationClassLoader() {
 	    return midpImplCL;
@@ -229,6 +179,15 @@ class MIDPConfig{
 	String permittedClasses[];
         PermissionCollection perms = new Permissions();
 
+        if (files == null || files.length == 0) {
+            try {
+                files = getDefaultPath();
+            } catch (IOException e) {
+                System.err.println(e.getMessage());
+                e.printStackTrace();
+                return null;
+            }
+        }
         URL urls[] = new URL[files.length];
         for (int i = 0; i < files.length; i++) {
             try {
@@ -239,22 +198,11 @@ class MIDPConfig{
 		break;
             }
         }
-	if (urls == null || urls.length == 0) {
-           /* Either the parameter was bad or didn't get passed in.  Use default.  */
-           urls = new URL[1];
-	   try {
-	      urls[0] = new URL("file://".concat(defaultMidpJarPath));
-           }catch(java.io.IOException e){
-	      // DEBUG System.err.println("initMidpImplementation URL Creation:");
-	      e.printStackTrace();
-	      // END DEBUG
-	      return null;
-           }
-        } 
 
 	perms.add(new java.security.AllPermission());
 	//DEBUG System.out.println(
-        //  "Constructing MIDPImplementationClassLoader with permissions "+perms);
+        //  "Constructing MIDPImplementationClassLoader with permissions "
+        //  +perms);
 	permittedClasses = getPermittedClasses();
 	if (permittedClasses == null){
 	    // there was some problem in reading the file
@@ -263,6 +211,7 @@ class MIDPConfig{
 	midpImplCL = new MIDPImplementationClassLoader(
 				urls, permittedClasses, perms,
 				null);
+
 	return midpImplCL;
     }
 
@@ -308,7 +257,7 @@ class MIDPConfig{
     static String[]
     split(String path){
 	int nComponents = 1;
-	char separator = System.getProperty("path.separator", ":").charAt(0);
+        char separator = ' ';
 	String components[];
 	int length = path.length();
 	int start;
@@ -376,7 +325,8 @@ class MIDPConfig{
 	    e.printStackTrace();
 	    return null;
 	}
-	//DEBUG  System.out.println("Constructing MIDletClassLoader with permissions "+perms);
+	//DEBUG  System.out.println(
+        //    "Constructing MIDletClassLoader with permissions "+perms);
 	MIDletClassLoader midletCL = new MIDletClassLoader(
                                            midJarURL, systemPackages,
 					   perms, mf, implClassLdr,
