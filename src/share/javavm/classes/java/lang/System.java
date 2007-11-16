@@ -956,7 +956,7 @@ public final class System {
     /**
      * Initialize the system class.  Called after thread initialization.
      */
-    private static void initializeSystemClass() {
+    private static void initializeSystemClass() throws ClassNotFoundException {
 	props = new Properties();
 	initProperties(props);
         midpProps = new Properties();
