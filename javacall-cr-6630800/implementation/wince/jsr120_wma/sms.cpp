@@ -241,13 +241,13 @@ int hexascii_to_int(char* str, int count) {
 }
 
 // "//WMA" + DESTINATION_PORT + SOURCE_PORT + WMA_DELIMITER 
-// + msgType + datagramLength + oddityByte
-#define SINGLE_SEGM_HEADER_SIZE (5+4+4+1+1+1+1)
+// + msgType + datagramLength + oddityByte + zeroByte
+#define SINGLE_SEGM_HEADER_SIZE (5+4+4+1+1+1+1+1)
 
 // "//WMA" + DESTINATION_PORT + SOURCE_PORT + REFERENCE_NUMBER +
 // + TOTAL_SEGMENTS + SEGMENT_NUMBER + WMA_DELIMITER
-// + msgType + datagramLength + oddityByte
-#define MULTIPLE_SEGM_HEADER_SIZE (5+4+4+2+2+2+1+1+1+1)
+// + msgType + datagramLength + oddityByte + zeroByte
+#define MULTIPLE_SEGM_HEADER_SIZE (5+4+4+2+2+2+1+1+1+1+1)
 
 #define MAX_SEGM_NUMBER 3
 #define SMS_MAX_PAYLOAD SMS_DATAGRAM_SIZE
@@ -263,6 +263,48 @@ static int calc_segments_num(int msgBufferLen) {
 }
 
 #define SMS_SEND_ODDITY_BIT 0x80
+
+/*
+ * Removes zero bytes from the data buffer.
+ * 
+ * The first zero byte position is placed to fixPos byte,
+ * the next zero byte position is placed to previous zero byte,
+ * to the last zero byte 255 constant is placed.
+ *
+ * The original byte array can be easily restored.
+ *
+ * The function is workaround of the problem: SMS message tail 
+ * could be lost if two subsequent bytes are zero. The overhead of
+ * this workaround is one excess byte in message header and one less
+ * byte in useful payload. The algorithm is based on the fact that
+ * single SMS message could not exceed 255 bytes length.
+ */
+void fix_zero(unsigned char* databuf, int databuflength, int fixPos) {
+    databuf[fixPos] = 255;
+    int i;
+    for (i=1; i<databuflength; i++) {
+        if (databuf[i] == 0) {
+            databuf[i] = 255;
+            databuf[fixPos] = i;
+            fixPos = i;
+        }
+    }
+}
+
+/*
+ * Pair function for fix_zero. Restores original byte array.
+ */
+void fix_zero_back(unsigned char* databuf, int databuflength, int fixPos) {
+    if (fixPos >= databuflength) { return; }
+    fixPos = databuf[fixPos];
+    while (fixPos != 255) {
+        if (fixPos >= databuflength) { return; }
+        if (fixPos == 0) { return; }
+        int fixPos1 = databuf[fixPos];
+        databuf[fixPos] = 0;
+        fixPos = fixPos1;
+    }
+}
 
 /**
  * Returns 0 on error
@@ -287,7 +329,8 @@ static int cdma_sms_encode(javacall_sms_encoding   msgType,
 
     databuf[5+4+4+1] = msgType; //the msgType parameter is not specified in documentation.
     databuf[5+4+4+1+1] = 0;     //the datagramSize parameter is not specified in documentation.
-    header_size = 5+4+4+1+1+1;
+    databuf[5+4+4+1+1+1] = 1;   //zero ptr byte
+    header_size = 5+4+4+1+1+1+1;
 
     if ((header_size + msgBufferLen) & 0x01) { //hack. SmsSendMessage fails if bytes number is odd :(
         databuf[5+4+4+1] |= SMS_SEND_ODDITY_BIT;
@@ -297,6 +340,8 @@ static int cdma_sms_encode(javacall_sms_encoding   msgType,
     memcpy(databuf+header_size, msgBuffer, msgBufferLen);
     *databuflength = header_size + msgBufferLen;
     databuf[5+4+4+1+1] = *databuflength;
+    fix_zero((unsigned char*)databuf, *databuflength, 5+4+4+1+1+1);
+
     return 1;
 }
 
@@ -331,7 +376,8 @@ static int cdma_sms_mulstisegm_encode(javacall_sms_encoding   msgType,
 
     databuf[5+4+4+2+2+2+1] = msgType; //the msgType parameter is not specified in documentation.
     databuf[5+4+4+2+2+2+1+1] = 0;     //the datagramSize parameter is not specified in documentation.
-    header_size = 5+4+4+2+2+2+1+1+1;
+    databuf[5+4+4+2+2+2+1+1+1] = 1;   //zero ptr byte
+    header_size = 5+4+4+2+2+2+1+1+1+1;
 
     data_length = msgBufferLen - segment_number*SMS_MAX_MULTISEGMDATA_PAYLOAD;
     data_length = (data_length > SMS_MAX_MULTISEGMDATA_PAYLOAD) ? SMS_MAX_MULTISEGMDATA_PAYLOAD : data_length;
@@ -344,6 +390,7 @@ static int cdma_sms_mulstisegm_encode(javacall_sms_encoding   msgType,
     memcpy(databuf+header_size, msgBuffer + segment_number*SMS_MAX_MULTISEGMDATA_PAYLOAD, data_length);
     *databuflength = header_size + data_length;
     databuf[5+4+4+2+2+2+1+1] = *databuflength;
+    fix_zero((unsigned char*)databuf, *databuflength, 5+4+4+2+2+2+1+1+1);
     return 1;
 }
 
@@ -357,7 +404,7 @@ static int cdma_sms_decode(
         int* reference_number, int* total_segments, int* segment_number) {
 
     int header_size;
-    char msgType1;
+    unsigned char msgType1;
     unsigned char datagramSize;
 
     if (strncmp("//WMA", databuf, 5) != 0) {
@@ -369,9 +416,10 @@ static int cdma_sms_decode(
     *sourcePort = hexascii_to_int(databuf+5+4, 4);
     if (databuf[5+4+4] == 0x20) { //<space> character, 0x20. Marks the end of text header.
         *total_segments = 1; //short header, hence there is only one segment
-        msgType1 = databuf[5+4+4+1];
         datagramSize = databuf[5+4+4+1+1];
-        header_size = 5+4+4+1+1+1;
+        fix_zero_back((unsigned char*)databuf, datagramSize, 5+4+4+1+1+1);
+        msgType1 = (unsigned char)databuf[5+4+4+1];
+        header_size = 5+4+4+1+1+1+1;
         if (msgType1 & SMS_SEND_ODDITY_BIT) {
             msgType1 &= ~SMS_SEND_ODDITY_BIT;
             header_size++;
@@ -386,7 +434,8 @@ static int cdma_sms_decode(
         if (databuf[5+4+4+2+2+2] = 0x20) { //<space> character, 0x20. Marks the end of text header.
             msgType1 = databuf[5+4+4+2+2+2+1];
             datagramSize = databuf[5+4+4+2+2+2+1+1];
-            header_size = 5+4+4+2+2+2+1+1+1;
+            fix_zero_back((unsigned char*)databuf, datagramSize, 5+4+4+2+2+2+1+1+1);
+            header_size = 5+4+4+2+2+2+1+1+1+1;
             if (msgType1 & SMS_SEND_ODDITY_BIT) {
                 msgType1 &= ~SMS_SEND_ODDITY_BIT;
                 header_size++;
@@ -820,6 +869,7 @@ DWORD WINAPI receiveSMSThreadProc(LPVOID lpParam) {
                 decode_and_notify(receiveBuffer, bufferSize,
                                   senderPhone, timeStamp);
             }
+            //memset(pFileMemory, 0, SMS_MAPFILE_SIZE);
             ReleaseMutex(pMutex);
         }
     } while (1);
