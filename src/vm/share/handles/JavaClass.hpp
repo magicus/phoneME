@@ -232,7 +232,8 @@ public:
   new_initialized_instance(InstanceClass* sender_class, Thread *t JVM_TRAPS);
 
   void iterate(OopVisitor* /*visitor*/) PRODUCT_RETURN;
-#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE  
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE ||\
+                         ENABLE_PERFORMANCE_COUNTERS
   void print_name_on(Stream*);
 #endif
   static void iterate_oopmaps(oopmaps_doer /*do_map*/, void* /*param*/) 

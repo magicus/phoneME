@@ -46,8 +46,8 @@ jint ClassInfo::itable_size(int nof_interfaces, int nof_methods) {
        + nof_methods    * sizeof(jobject);
 }
 
-#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE
-
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE ||\
+                         ENABLE_PERFORMANCE_COUNTERS
 void ClassInfo::print_name_on(Stream* st) {
 #if ENABLE_TTY_TRACE
   if (!check_valid_for_print(st)) {
@@ -67,7 +67,9 @@ void ClassInfo::print_name_on(Stream* st) {
   }
 #endif
 }
+#endif
 
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE
 void ClassInfo::print_value_on(Stream* st) {
 #if ENABLE_TTY_TRACE
   st->print("ClassInfo ");
@@ -80,7 +82,6 @@ void ClassInfo::print_value_on(Stream* st) {
   print_name_on(st);
 #endif
 }
-
 #endif
 
 #if !defined(PRODUCT)

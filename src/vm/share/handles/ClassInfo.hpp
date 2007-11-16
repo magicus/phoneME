@@ -319,8 +319,12 @@ class ClassInfo: public Oop {
   void iterate_tables(OopROMVisitor* visitor);
 #endif
 
-#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE ||\
+                         ENABLE_PERFORMANCE_COUNTERS
   void print_name_on(Stream* st);
+#endif
+
+#if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE
   void print_value_on(Stream* st);
 #endif
 

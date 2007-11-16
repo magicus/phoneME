@@ -104,7 +104,9 @@ public:
       print("%g", d);
     }
   }
+#endif
 
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || ENABLE_PERFORMANCE_COUNTERS
   void put(char ch);
 #endif
 

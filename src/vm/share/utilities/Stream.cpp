@@ -55,14 +55,12 @@ void Stream::print_cr(const char* format, ...) {
   cr();
 }
 
-#if !defined(PRODUCT) || ENABLE_TTY_TRACE
-
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE || ENABLE_PERFORMANCE_COUNTERS
 void Stream::put(char ch) {
   GUARANTEE(ch != 0, "please fix call site");
   char buf[] = { ch, '\0' };
   print_raw(buf);
 }
-
 #endif
 
 #if !defined(PRODUCT) || ENABLE_TTY_TRACE

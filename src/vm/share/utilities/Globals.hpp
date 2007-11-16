@@ -436,6 +436,21 @@ private:
           "Use execution time profiler")
 #endif
 
+#ifndef USE_EVENT_LOGGER
+#error USE_EVENT_LOGGER must be defined
+#endif
+
+#if USE_EVENT_LOGGER
+#define EVENT_LOGGER_RUNTIME_FLAGS(develop, product)\
+  product(bool, UseEventLogger, false,                                     \
+          "Enable EventLogger, and print event log at VM exit")            \
+  product(bool, LogEventsToFile, false,                                    \
+          "If true, write the event log into event.log. Otherwise dump to "\
+          "tty")
+#else
+#define EVENT_LOGGER_RUNTIME_FLAGS(develop, product)
+#endif
+
 /*
  * The following flags are 'product' flags if ENABLE_PERFORMANCE_COUNTERS
  * if false; 'develop' flags otherwise. These flags are useful in discovering
@@ -487,12 +502,6 @@ private:
           "Print performance counters related to romization")              \
   op(bool, PrintThreadPerformanceCounters, false,                          \
           "Print performance counters related to threads and events")      \
-  op(int, UseEventLogger, 0,                                               \
-          "Enable EventLogger, and print event log at VM exit. 0 for no "  \
-          "logging, 1 for critical events and 2 for all events")           \
-  op(bool, LogEventsToFile, false,                                         \
-          "If true, write the event log into event.log. Otherwise dump to "\
-          "tty")                                                           \
   op(bool, RetryCompilation, true,                                         \
           "Retry compilation if CompiledCodeFactor is too small")          \
   op(bool, TestCompiler, false,                                            \
@@ -939,6 +948,7 @@ private:
       GENERIC_RUNTIME_FLAGS(develop, product)              \
       USE_ROM_RUNTIME_FLAGS(develop, product, always)      \
       PROFILER_RUNTIME_FLAGS(develop, product)             \
+      EVENT_LOGGER_RUNTIME_FLAGS(develop, product)         \
       ROM_GENERATOR_FLAGS(develop, product)                \
       PERFORMANCE_COUNTERS_RUNTIME_FLAGS(develop, product) \
       PLATFORM_RUNTIME_FLAGS(develop, product)             \
