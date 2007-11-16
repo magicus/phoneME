@@ -28,6 +28,7 @@ import javax.microedition.media.control.*;
 import com.sun.mmedia.RTPPlayer;
 import com.sun.mmedia.protocol.CommonDS;
 import com.sun.mmedia.rtsp.*;
+import java.util.*;
 
 /**
  *  Description of the Class
@@ -47,7 +48,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
     private long startTime; // default is 0
 
     // stop time in milli-seconds
-    private long stopTime; // default is 0
+    private long stoppedTime; // default is 0
 
     private RtspCtrl rtspControl; // default is NULL
     private boolean setup_ok; // default is FALSE
@@ -185,8 +186,8 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
             if( !started) {
                 rtspControl.setStatus( rtspManager.getProcessError());
             } else {
-                startTime += (System.currentTimeMillis() - stopTime);
-                stopTime = 0;
+                startTime += (System.currentTimeMillis() - stoppedTime);
+                stoppedTime = 0;
             }
         }
 
@@ -205,7 +206,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
 
         started = false;
 
-        stopTime = System.currentTimeMillis();
+        stoppedTime = System.currentTimeMillis();
 
         // stop the RTP players
         for (int i = 0; i < numberOfTracks; i++) {
@@ -289,11 +290,6 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
     protected final long doGetMediaTime() {
         if (started) {
             mediaTime = System.currentTimeMillis() - startTime;
-
-            if( (mediaTime * 1000) >= rtspManager.getDuration()) {
-                started = false;
-                sendEvent(PlayerListener.END_OF_MEDIA, new Long(mediaTime*1000));	    
-            }
         }
 
         return mediaTime * 1000;
@@ -319,36 +315,109 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
     protected final Control doGetControl(String type) {
         Control control =  null;
 
-        if (/*(getState() != UNREALIZED) && */
-            type.startsWith(BasicPlayer.pkgName)) {
-            
-            type = type.substring(BasicPlayer.pkgName.length());
-            
-            if (type.equals(BasicPlayer.vocName)) {
-                // Volume Control
-                for (int i = 0; i < numberOfTracks; i++) {
-                    control = players[i].getControl( type);
+        if (type.startsWith(BasicPlayer.pkgName))
+        {
+            String type_name = type.substring(BasicPlayer.pkgName.length());
 
-                    if( control != null) {
-                        break;
-                    }
+            if (type_name.equals(BasicPlayer.vocName) || 
+                type_name.equals(BasicPlayer.vicName))
+            {
+                // retrieve Volume and Video Controls from child [RTP] players
+                for (int i = 0; i < numberOfTracks; i++)
+                {
+                    control = players[i].getControl(type_name);
+
+                    if (control != null) break;
                 }
-            } else if (type.equals(BasicPlayer.rtspName)) {
+            }
+            else if (type_name.equals(BasicPlayer.rtspName))
+            {
                 // RTSP Control
                 control = rtspControl;
-            } else if(type.equals(BasicPlayer.vicName)) {
-                // Video Control
-                for (int i = 0; i < numberOfTracks; i++) {
-                    control = players[i].getControl(type);
-
-                    if( control != null) {
-                        if (RTSP_DEBUG) System.out.println( "[RTSPPlayer] got video control");
-                        break;
-                    }
-                }
+            }
+            else if (type_name.equals(BasicPlayer.stcName))
+            {
+                control = this;
             }
         }
         return control;
+    }
+
+    // StopTimeControl implementation.
+
+    private Timer stopTimer;
+
+    protected void doSetStopTime(long time)
+    {
+        if (time == StopTimeControl.RESET && stopTimer != null)
+        {
+            stopTimer.cancel();
+            stopTimer = null;
+        }
+        else if (state == STARTED)
+        {
+            long currentTime = doGetMediaTime();
+            long duration = doGetDuration();
+            if (currentTime != TIME_UNKNOWN && time >= currentTime)
+            {
+                if (stopTimer != null) stopTimer.cancel();
+                stopTimer = new Timer();
+                long scheduleTime = time / 1000 - currentTime / 1000;
+                if (scheduleTime <= 0) scheduleTime = 1;
+                stopTimer.schedule(new StopTimeCtrlTask(), scheduleTime);
+            }
+        }
+    }
+
+    protected void doPostStart()
+    {
+        if (stopTime != StopTimeControl.RESET)
+        {
+            if (stopTimer != null) stopTimer.cancel();
+            long currentTime = doGetMediaTime();
+            long scheduleTime = stopTime / 1000 - currentTime / 1000;
+            if (scheduleTime <= 0) scheduleTime = 1;
+            stopTimer = new Timer();
+            stopTimer.schedule(new StopTimeCtrlTask(), scheduleTime);
+        }
+    }
+
+    protected void doPreStop()
+    {
+        if (stopTimer != null)
+        {
+            stopTimer.cancel();
+            stopTimer = null;
+        }
+    }
+
+    class StopTimeCtrlTask extends TimerTask
+    {
+        public void run()
+        {
+            synchronized (RTSPPlayer.this)
+            {
+                long mt = doGetMediaTime();
+                long dur = doGetDuration();
+
+                while (mt < stopTime && mt < dur)
+                {
+                    try
+                    {
+                        java.lang.Thread.sleep(10);
+                    }
+                    catch (InterruptedException e)
+                    {
+                        // just skip it
+                    }
+
+                    mt = doGetMediaTime();
+                }
+                doPreStop();
+                doStop();
+            }
+            satev();
+        }
     }
 }
 

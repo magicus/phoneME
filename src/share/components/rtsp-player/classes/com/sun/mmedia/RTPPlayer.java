@@ -27,6 +27,8 @@ package com.sun.mmedia;
 import com.sun.mmedia.RTSPPlayer;
 import com.sun.mmedia.DirectPlayer;
 
+import javax.microedition.media.PlayerListener;
+
 public class RTPPlayer extends com.sun.mmedia.DirectPlayer
 {
     private RTSPPlayer parentPlayer;
@@ -39,8 +41,25 @@ public class RTPPlayer extends com.sun.mmedia.DirectPlayer
     public void sendEvent( String evt, Object evtData )
     {
         if (null != parentPlayer)
-            parentPlayer.sendEvent(evt, evtData);
+        {
+            // IMPL_NOTE:
+            //
+            // - EOM arrives here from javacall;
+            //
+            // - VOLUME_CHANGED arrives here from 'our' DirectVolume
+            //   because parent RTSPPlayer delegates volume controlling
+            //   to child RTPPlayer.
+            //
+
+            if (PlayerListener.END_OF_MEDIA == evt ||
+                PlayerListener.VOLUME_CHANGED == evt)
+            {
+                parentPlayer.sendEvent(evt, evtData);
+            }
+        }
         else
-            super.sendEvent( evt, evtData );
+        {
+            super.sendEvent(evt, evtData);
+        }
     }
 }
