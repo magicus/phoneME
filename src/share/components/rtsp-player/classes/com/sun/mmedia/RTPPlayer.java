@@ -50,6 +50,11 @@ public class RTPPlayer extends com.sun.mmedia.DirectPlayer
             //   because parent RTSPPlayer delegates volume controlling
             //   to child RTPPlayer.
             //
+            // These events must be delivered to PlayerListeners of
+            // parent RTSPPlayer, so we redirect them. Other events,
+            // such as STOPPED or STARTED, must not be rediceted from
+            // here, this would be a duplicate because RTSPPlayer
+            // generates them by itself.
 
             if (PlayerListener.END_OF_MEDIA == evt ||
                 PlayerListener.VOLUME_CHANGED == evt)
