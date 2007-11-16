@@ -88,13 +88,9 @@ public class </xsl:text>
 
 <xsl:text>    };
 
-    public static void init() {
+    public static void init() throws ClassNotFoundException {
         for (int i = 0; i &lt; components.length; i++) {
-            try {
-                Class.forName(components[i]);
-            } catch (ClassNotFoundException e) {
-                /* ignore silently */
-            }
+            Class.forName(components[i]);
         }
     }
 }
