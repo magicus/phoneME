@@ -529,6 +529,9 @@ $(J2ME_CLASSLIB):: headers $(CVM_ROMJAVA_LIST)
 $(J2ME_CLASSLIB):: $(CLASSLIB_DEPS)
 $(J2ME_CLASSLIB):: aotdeps
 $(J2ME_CLASSLIB):: $(CVM_BINDIR)/$(CVM)
+ifneq ($(CVM_RESOURCES_DEPS),)
+$(J2ME_CLASSLIB):: $(CVM_RESOURCES_JAR)
+endif
 ifeq ($(JAVASE),)
 ifeq ($(CDC_10),true)
 $(J2ME_CLASSLIB):: $(CVM_TZDATAFILE)
@@ -832,7 +835,6 @@ clean::
 	rm -rf $(CVM_BUILD_TOP)/.*classes
 	rm -rf $(CVM_BUILD_TOP)/.*.list
 	rm -rf $(CVM_BUILD_TOP)/.system_properties.c
-	rm -rf .DefaultLocaleList.java
 	rm -rf $(CVM_BUILD_FLAGS_FILE)
 	rm -rf $(BUILDFLAGS_JAVA)
 	rm -rf $(CVM_BUILDTIME_CLASSESDIR) \
@@ -845,6 +847,7 @@ clean::
 	rm -rf $(CVM_DERIVEDROOT)
 	rm -rf $(CVM_PROPS_BUILD) $(CVM_POLICY_BUILD)
 	rm -rf $(CVM_JCS_BUILDDIR)
+	rm -rf $(CVM_RESOURCES_DIR)
 else
 clean::
 	$(MAKE) CVM_REBUILD=true clean
@@ -880,6 +883,15 @@ $(CVM_DEMO_CLASSESJAR): $(CVM_BUILD_TOP)/.democlasses
 	$(AT)(cd $(CVM_DEMO_CLASSESDIR); $(ZIP) -r -q - *) > $(CVM_CLASSES_TMP)
 	$(AT)mv -f $(CVM_CLASSES_TMP) $@
 
+endif
+
+
+# Create resources jar file
+ifneq ($(CVM_RESOURCES_DEPS),)
+CVM_JARFILES += , "$(CVM_RESOURCES_JAR_FILENAME)"
+$(CVM_RESOURCES_JAR): $(CVM_RESOURCES_DEPS)
+	@echo ... $@
+	$(AT)(cd $(CVM_RESOURCES_DIR); $(CVM_JAR) cf $(call POSIX2HOST, $@) *)
 endif
 
 #
@@ -1142,7 +1154,7 @@ ifeq ($(MAKELEVEL), 0)
 
 ifeq ($(CVM_JIT),true)
 ifeq ($(CVM_JVMTI),true)
-$(warning JVMTI debugging is not supported in JIT'd code.  Compiler is turned off if connected to a debugger)
+$(warning JVMTI debugging is not supported in JITed code.  Compiler is turned off if connected to a debugger)
 endif
 ifeq ($(CVM_JVMPI),true)
 $(warning JVMPI is not fully supported in JIT builds. Programs may not behave properly.)
@@ -1168,28 +1180,29 @@ LOCALE_ELEMENTS_PREFIX = sun.text.resources.LocaleElements_
 endif
 LOCALE_ELEMENTS_LIST = $(patsubst $(LOCALE_ELEMENTS_PREFIX)%,%,$(filter $(LOCALE_ELEMENTS_PREFIX)%,$(CVM_BUILDTIME_CLASSES)))
 
+DEFAULTLOCALELIST_JAVA_TMP = $(CVM_DERIVEDROOT)/.DefaultLocaleList.java
 $(DEFAULTLOCALELIST_JAVA):
 	@echo ... generating sun.misc.DefaultLocaleList.java
-	$(AT) echo "/* This file is used by LocaleData.java */" > .DefaultLocaleList.java
-	$(AT) echo "/* AUTO-GENERATED - DO NOT EDIT */" >> .DefaultLocaleList.java
-	$(AT) echo "" >> .DefaultLocaleList.java
-	$(AT) echo "package sun.misc; " >> .DefaultLocaleList.java
-	$(AT) echo "" >> .DefaultLocaleList.java
-	$(AT) echo "public class DefaultLocaleList { " >> .DefaultLocaleList.java
-	$(AT) echo "   public final static String list[] = { " >> .DefaultLocaleList.java
+	$(AT) echo "/* This file is used by LocaleData.java */" > $(DEFAULTLOCALELIST_JAVA_TMP)
+	$(AT) echo "/* AUTO-GENERATED - DO NOT EDIT */" >> $(DEFAULTLOCALELIST_JAVA_TMP)
+	$(AT) echo "" >> $(DEFAULTLOCALELIST_JAVA_TMP)
+	$(AT) echo "package sun.misc; " >> $(DEFAULTLOCALELIST_JAVA_TMP)
+	$(AT) echo "" >> $(DEFAULTLOCALELIST_JAVA_TMP)
+	$(AT) echo "public class DefaultLocaleList { " >> $(DEFAULTLOCALELIST_JAVA_TMP)
+	$(AT) echo "   public final static String list[] = { " >> $(DEFAULTLOCALELIST_JAVA_TMP)
 	$(AT) if [ "$(LOCALE_ELEMENTS_LIST)" != "" ] ; then \
 		for s in "$(LOCALE_ELEMENTS_LIST)" ; do \
 			printf "\t\"%s\", " $$s; \
 		done ; \
-	 fi >> .DefaultLocaleList.java
-	$(AT) printf "\t};" >> .DefaultLocaleList.java
-	$(AT) echo "}" >> .DefaultLocaleList.java
-	$(AT) echo "" >> .DefaultLocaleList.java
-	$(AT) if ! cmp -s .DefaultLocaleList.java $(DEFAULTLOCALELIST_JAVA); then \
+	 fi >> $(DEFAULTLOCALELIST_JAVA_TMP)
+	$(AT) printf "\t};" >> $(DEFAULTLOCALELIST_JAVA_TMP)
+	$(AT) echo "}" >> $(DEFAULTLOCALELIST_JAVA_TMP)
+	$(AT) echo "" >> $(DEFAULTLOCALELIST_JAVA_TMP)
+	$(AT) if ! cmp -s $(DEFAULTLOCALELIST_JAVA_TMP) $(DEFAULTLOCALELIST_JAVA); then \
 		echo ... $(DEFAULTLOCALELIST_JAVA); \
-		cp -f .DefaultLocaleList.java $(DEFAULTLOCALELIST_JAVA); \
+		cp -f $(DEFAULTLOCALELIST_JAVA_TMP) $(DEFAULTLOCALELIST_JAVA); \
 	fi
-	$(AT) rm .DefaultLocaleList.java
+	$(AT) rm $(DEFAULTLOCALELIST_JAVA_TMP)
 
 #####################################
 # BuildFlags.java
@@ -1204,23 +1217,24 @@ ifneq ($(CDC_10),true)
 # The value of this field corresponds to CVM_DEBUG_ASSERTS.
 #
 
+BUIDLFLAGS_JAVA_TMP = $(CVM_DERIVEDROOT)/.BuildFlags.java
 BUILDFLAGS_JAVA = $(CVM_DERIVEDROOT)/classes/sun/misc/BuildFlags.java
 $(BUILDFLAGS_JAVA): 
 	@echo ... generating BuildFlags.java
-	$(AT) echo "/* This file contains information determined at a build time*/" > .BuildFlags.java
-	$(AT) echo "/* AUTO-GENERATED - DO NOT EDIT */" >> .BuildFlags.java
-	$(AT) echo "" >> .BuildFlags.java
-	$(AT) echo "package sun.misc; " >> .BuildFlags.java
-	$(AT) echo "" >> .BuildFlags.java
-	$(AT) echo "public class BuildFlags { " >> .BuildFlags.java
-	$(AT) echo "   public final static boolean qAssertsEnabled = $(CVM_DEBUG_ASSERTS); " >> .BuildFlags.java
-	$(AT) echo "}" >> .BuildFlags.java
-	$(AT) echo "" >> .BuildFlags.java
-	$(AT) if ! cmp -s .BuildFlags.java $(BUILDFLAGS_JAVA); then \
+	$(AT) echo "/* This file contains information determined at a build time*/" > $(BUIDLFLAGS_JAVA_TMP)
+	$(AT) echo "/* AUTO-GENERATED - DO NOT EDIT */" >> $(BUIDLFLAGS_JAVA_TMP)
+	$(AT) echo "" >> $(BUIDLFLAGS_JAVA_TMP)
+	$(AT) echo "package sun.misc; " >> $(BUIDLFLAGS_JAVA_TMP)
+	$(AT) echo "" >> $(BUIDLFLAGS_JAVA_TMP)
+	$(AT) echo "public class BuildFlags { " >> $(BUIDLFLAGS_JAVA_TMP)
+	$(AT) echo "   public final static boolean qAssertsEnabled = $(CVM_DEBUG_ASSERTS); " >> $(BUIDLFLAGS_JAVA_TMP)
+	$(AT) echo "}" >> $(BUIDLFLAGS_JAVA_TMP)
+	$(AT) echo "" >> $(BUIDLFLAGS_JAVA_TMP)
+	$(AT) if ! cmp -s $(BUIDLFLAGS_JAVA_TMP) $(BUILDFLAGS_JAVA); then \
 		echo ... $(BUILDFLAGS_JAVA); \
-		cp -f .BuildFlags.java $(BUILDFLAGS_JAVA); \
+		cp -f $(BUIDLFLAGS_JAVA_TMP) $(BUILDFLAGS_JAVA); \
 	fi
-	$(AT) rm .BuildFlags.java
+	$(AT) rm $(BUIDLFLAGS_JAVA_TMP)
 
 endif
 
