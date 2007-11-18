@@ -2015,9 +2015,6 @@ wr.pld(4,"System.out.println(\"return from callback - " + ifaceName + "." + mlis
                 wr.pl(3, "} else");
             }
         }
-        wr.pl(3, "if (m.getName().equals(\"toString\") && (args == null || args.length == 0)) {");
-        wr.pl(4, "return \"Proxy:\" + myInstance.toString();");
-        wr.pl(3, "} else");
         wr.pl(3, "if (m.getName().equals(\"hashCode\") && (args == null || args.length == 0)) {");
         wr.pl(4, "return new Integer(myInstance.hashCode());");
         wr.pl(3, "} else");
