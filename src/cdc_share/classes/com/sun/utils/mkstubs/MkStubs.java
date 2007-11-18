@@ -36,6 +36,7 @@ public class MkStubs {
     private static Hashtable pkgNames = new Hashtable();
     private static Hashtable typeList = new Hashtable();
     private static Hashtable emptyList = new Hashtable();
+    private static Hashtable allStackList = new Hashtable();
     private static String tmpDir = ".";
     private static String agentDir = ".";
 
@@ -127,6 +128,7 @@ public class MkStubs {
         boolean inherit = false;
         Hashtable inheritList = new Hashtable();
         boolean empty = false;
+        boolean allStack = false;
 
         for (int i = 0; i < args.length; i++) {
             Class clazz;
@@ -156,6 +158,10 @@ public class MkStubs {
             }
             if (args[i].equals("-e")) {
                 empty = true;
+                continue;
+            }
+            if (args[i].equals("-allstack")) {
+                allStack = true;
                 continue;
             }
             if (args[i].equals("-trace")) {
@@ -213,6 +219,10 @@ public class MkStubs {
             if (empty) {
                 emptyList.put(args[i], "");
                 empty = false;
+            }
+            if (allStack) {
+                allStackList.put(args[i], "");
+                allStack = false;
             }
         }
 
@@ -1234,7 +1244,11 @@ wr.pld(4,"System.out.println(\"class " + stubClsName + " - Init\");");
 wr.pld(4,"System.out.println(\"Init 1\");");
                 wr.pl(3, "__cloader = sun.misc.MIDPConfig.getMIDPImplementationClassLoader();");
                 wr.pl(3, "if (__cloader == null) {");
-                wr.pl(4, "throw new RuntimeException(\"Cannot get ClassLoader\");");
+                if (allStackList.containsKey(fullClsName)) {
+                    wr.pl(4, "__cloader = " + translateClassNamePkg(fullClsName) + ".class.getClassLoader();");
+                } else {
+                    wr.pl(4, "throw new RuntimeException(\"Cannot get ClassLoader\");");
+                }
                 wr.pl(3, "}");
                 wr.pl(3, "__init_classes();");
                 if (isInherit) {
@@ -2001,6 +2015,9 @@ wr.pld(4,"System.out.println(\"return from callback - " + ifaceName + "." + mlis
                 wr.pl(3, "} else");
             }
         }
+        wr.pl(3, "if (m.getName().equals(\"toString\") && (args == null || args.length == 0)) {");
+        wr.pl(4, "return \"Proxy:\" + myInstance.toString();");
+        wr.pl(3, "} else");
         wr.pl(3, "if (m.getName().equals(\"hashCode\") && (args == null || args.length == 0)) {");
         wr.pl(4, "return new Integer(myInstance.hashCode());");
         wr.pl(3, "} else");
