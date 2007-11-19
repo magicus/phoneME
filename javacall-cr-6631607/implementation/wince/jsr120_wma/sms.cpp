@@ -549,7 +549,19 @@ int javacall_sms_send(  javacall_sms_encoding   msgType,
     }
 
     if (destPort == 0) {
-        send_ok = SendSMS(lpcPhone, msgBuffer, msgBufferLen);
+        if (msgType == JAVACALL_SMS_MSG_TYPE_UNICODE_UCS2) {
+            //TextEncoder.toByteArray packs TextObject to Big-Endian (network order) USC-2 format,
+            //but WinMobile (SmsSendMessage function) at least for arm/i386 uses Little-Endian encoding
+            unsigned char revert_msgBuffer[SMS_MAX_PAYLOAD];
+            int i;
+            for (i=0; i<msgBufferLen; i+=2) {
+                revert_msgBuffer[i] = msgBuffer[i+1];
+                revert_msgBuffer[i+1] = msgBuffer[i];
+            }
+            send_ok = SendSMS(lpcPhone, revert_msgBuffer, msgBufferLen);
+        } else {
+            send_ok = SendSMS(lpcPhone, msgBuffer, msgBufferLen);
+        }
     } else {
         int total_segments = calc_segments_num(msgBufferLen);
 
