@@ -1,0 +1,78 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<!--
+
+  	
+
+  Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+
+-->
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.61 [en]C-MOT45  (WinNT; I) [Netscape]">
+   <title>Game API</title>
+   <!-- Changed  28-Mar-2005 -->
+</head>
+<body>
+The Game API package provides a series of classes that enable the
+development of rich gaming content for wireless devices.
+<p>Wireless devices have minimal processing power, so much of the API is
+intended to improve performance by minimizing the amount of work done in
+Java; this approach also has the added benefit of reducing application
+size.&nbsp; The API's are structured to provide considerable freedom when
+implementing them, thereby permitting the extensive use of native code,
+hardware acceleration and device-specific image data formats as needed.
+<p>The API uses the standard low-level graphics classes from MIDP (Graphics,
+Image, etc.) so that the high-level Game API classes can be used in conjunction
+with graphics primitives.&nbsp; For example, it would be possible to render
+a complex background using the Game API and then render something on top
+of it using graphics primitives such as drawLine, etc.
+<p>Methods that modify the state of Layer, LayerManager, Sprite, and TiledLayer
+objects generally do not have any immediately visible side effects. Instead,
+this state is merely stored within the object and is used during subsequent
+calls to the paint() method. This approach is suitable for gaming applications
+where there is a game cycle within which objects' states are updated, and
+where the entire screen is redrawn at the end of every game cycle.
+<h2>
+API Overview</h2>
+The API is comprised of five classes:
+<h3>
+GameCanvas</h3>
+This class is a subclass of LCDUI's Canvas and provides the basic 'screen'
+functionality for a game.&nbsp; In addition to the methods inherited from
+Canvas, this class also provides game-centric features such the ability
+to query the current state of the game keys and synchronous graphics flushing;
+these features simplify game development and improve performance.
+<h3>
+Layer</h3>
+The Layer class represents a visual element in a game such as a Sprite
+or a TiledLayer.&nbsp; This abstract class forms the basis for the Layer
+framework and provides basic attributes such as location, size, and visibility.
+<h3>
+LayerManager</h3>
+For games that employ several Layers, the LayerManager simplifies game
+development by automating the rendering process.&nbsp; It allows the developer
+set a view window that represents the user's view of the game.&nbsp; The
+LayerManager automatically renders the game's Layers to implement the desired
+view.
+<h3>
+Sprite</h3>
+A Sprite is basic animated Layer that can display one of several graphical
+frames.&nbsp; The frames are all of equal size and are provided by a single
+Image object.&nbsp; In addition to animating the frames sequentially, a
+custom sequence can also be set to animation the frames in an arbitrary
+manner.&nbsp; The Sprite class also provides various transformations (flip
+and rotation) and collision detection methods that simplify the implementation
+of a game's logic.
+<h3>
+TiledLayer</h3>
+This class enables a developer to create large areas of graphical content
+without the resource usage that a large Image object would require.&nbsp;
+It is a comprised of a grid of cells, and each cell can display one of
+several tiles that are provided by a single Image object.&nbsp; Cells can
+also be filled with animated tiles whose corresponding pixel data can be
+changed very rapidly; this feature is very useful for animating large groups
+of cells such as areas of water.
+<br>&nbsp;
+</body>
+</html>
