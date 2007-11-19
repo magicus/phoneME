@@ -31,9 +31,6 @@
     packages is implemented.
 -->
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-<!-- Stylesheet parameter: class name -->
-<xsl:param name="className"></xsl:param>
-
 <!-- stylesheet parameter: space separated list of JSR initialization classes -->
 <xsl:param name="initializers"></xsl:param>
 <xsl:output method="text"/>
@@ -73,9 +70,7 @@
 
 package com.sun.cdc.config;
 
-public class </xsl:text>
-    <xsl:value-of select="$className"/>
-<xsl:text> {
+public class PackageManager {
     static final String[] components = {
 </xsl:text>
 
