@@ -973,10 +973,7 @@ public final class System {
 
         // dynamic properties initialization (should be moved to more
         // appropriate place when we have dynamic package loading implemented)
-        String[] mainClasses = PackageManager.listComponents();
-        for (int i = 0; i < mainClasses.length; i++) {
-            Class.forName(mainClasses[i]);
-        }
+        PackageManager.init();
 
 	// Load the zip library now in order to keep java.util.zip.ZipFile
 	// from trying to use itself to load this library later.
