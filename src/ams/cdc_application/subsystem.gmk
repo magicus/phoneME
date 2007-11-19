@@ -72,8 +72,7 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/CdcMIDletSuiteLoader.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletAppImageGenerator.java \
     $(CDC_AMS_DIR)/classes/com/sun/midp/main/MIDletSuiteVerifier.java \
-    $(CDC_AMS_DIR)/classes/com/sun/midp/main/NativeForegroundState.java \
-    $(GENERATED_DIR)/classes/com/sun/cdc/config/MIDPPackageManager.java
+    $(CDC_AMS_DIR)/classes/com/sun/midp/main/NativeForegroundState.java
 
 MIDP_BOOTCLASSPATH_CLASSES_LIST += \
     com.sun.midp.main.CDCInit
