@@ -60,6 +60,20 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
         rtspControl = new RtspCtrl(this);
     }
 
+    public String getContentType()
+    {
+        chkClosed(true);
+
+        // IMPL_NOTE:
+        // The following is a temporary solution. This will work fine
+        // as long as our RTSP/RTP implementation supports only one
+        // payload type, namely audio/mp3. When other content types
+        // are enabled, either this method should return "application/sdp",
+        // or we should get actual content type from javacall after player
+        // is realized and first packets are receievd.
+        return "audio/mp3";
+    }
+
     /**
      * Realizes the RTSP Player.
      *
