@@ -52,7 +52,7 @@ public class RTPPlayer extends com.sun.mmedia.DirectPlayer
             //
             // These events must be delivered to PlayerListeners of
             // parent RTSPPlayer, so we redirect them. Other events,
-            // such as STOPPED or STARTED, must not be rediceted from
+            // such as STOPPED or STARTED, must not be forwarded from
             // here, this would be a duplicate because RTSPPlayer
             // generates them by itself.
 
