@@ -41,6 +41,8 @@ CVM_JCOV_BUILDDIRS += \
         $(CVM_JCOV_OBJDIR) \
         $(CVM_JCOV_FLAGSDIR)
 
+CVM_JCOV_LIB = $(LIB_PREFIX)jcov$(LIB_POSTFIX)
+
 #
 # Search path for include files:
 #
@@ -63,7 +65,8 @@ CVM_JCOV_SHAREOBJS += \
         jcov_htables.o \
         jcov_java.o \
         jcov_setup.o \
-        jcov_util.o
+        jcov_util.o \
+	jcov_md.o
 
 CVM_JCOV_OBJECTS0 = $(CVM_JCOV_SHAREOBJS) $(CVM_JCOV_TARGETOBJS)
 CVM_JCOV_OBJECTS  = $(patsubst %.o,$(CVM_JCOV_OBJDIR)/%.o,$(CVM_JCOV_OBJECTS0))
