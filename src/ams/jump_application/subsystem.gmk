@@ -100,8 +100,7 @@ SUBSYSTEM_AMS_JAVA_FILES += \
     $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/isolate/MIDletContainer.java \
     $(JUMP_AMS_DIR)/classes/com/sun/midp/midlet/MIDletPeer.java \
     $(JUMP_AMS_DIR)/classes/com/sun/midp/midlet/MIDletStateHandler.java \
-    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/midletsuite/MIDletSuiteStorageAccessor.java \
-    $(GENERATED_DIR)/classes/com/sun/cdc/config/MIDPPackageManager.java
+    $(JUMP_AMS_DIR)/classes/com/sun/midp/jump/midletsuite/MIDletSuiteStorageAccessor.java 
 
 
 # vpath for sub-system
