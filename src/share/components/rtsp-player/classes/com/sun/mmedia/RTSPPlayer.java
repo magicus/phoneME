@@ -41,14 +41,17 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
     private DirectPlayer players[]; // default is NULL
     private int numberOfTracks; // default is 0
 
-    // media time in milli-seconds
-    private long mediaTime; // default is 0
+    // media time -- time from beginning of media. When player
+    //               is stopped/paused, mt is also stopped/paused.
+    // IMPL_NOTE: 1) current implementation uses system timer
+    //            to measure media time. This is not very good.
+    //            2) mediaTime is updated when doGetMediaTime()
+    //               or doSetMediaTime() is called.
+    //
+    private long mediaTime;   // microseconds, default is 0
 
-    // start time in milli-seconds
-    private long startTime; // default is 0
-
-    // stop time in milli-seconds
-    private long stoppedTime; // default is 0
+    // hypotetic moment in system time when mediaTime was 0.
+    private long startedTime; // microseconds, default is 0
 
     private RtspCtrl rtspControl; // default is NULL
     private boolean setup_ok; // default is FALSE
@@ -203,20 +206,14 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
                 }
             }
 
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-            }
-
             // start the RTSP session
-            rtspManager.setStartPos( mediaTime * 1000);
+            rtspManager.setStartPos( mediaTime );
             started = rtspManager.rtspStart();
             
             if( !started) {
                 rtspControl.setStatus( rtspManager.getProcessError());
             } else {
-                startTime += (System.currentTimeMillis() - stoppedTime);
-                stoppedTime = 0;
+                startedTime = System.currentTimeMillis() * 1000 - mediaTime;
             }
         }
 
@@ -234,8 +231,6 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
         rtspManager.rtspStop();
 
         started = false;
-
-        stoppedTime = System.currentTimeMillis();
 
         // stop the RTP players
         for (int i = 0; i < numberOfTracks; i++) {
@@ -298,14 +293,13 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      * @return the new media time in microseconds.
      */
     protected final long doSetMediaTime(long now) throws MediaException {
-        if (started) {	    
-            doStop();
-        }
+        boolean must_restart = started;
 
-        mediaTime = (now / 1000);
-        startTime = System.currentTimeMillis() - mediaTime;
+        if(started) doStop();
+
+        mediaTime = now;
     
-        doStart();
+        if(must_restart) doStart();
 
         return now;
     }
@@ -318,10 +312,10 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
      */
     protected final long doGetMediaTime() {
         if (started) {
-            mediaTime = System.currentTimeMillis() - startTime;
+            mediaTime = System.currentTimeMillis() * 1000 - startedTime;
         }
 
-        return mediaTime * 1000;
+        return mediaTime;
     }
 
     /**
@@ -391,7 +385,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
             {
                 if (stopTimer != null) stopTimer.cancel();
                 stopTimer = new Timer();
-                long scheduleTime = time / 1000 - currentTime / 1000;
+                long scheduleTime = ( time - currentTime ) / 1000;
                 if (scheduleTime <= 0) scheduleTime = 1;
                 stopTimer.schedule(new StopTimeCtrlTask(), scheduleTime);
             }
@@ -404,7 +398,7 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
         {
             if (stopTimer != null) stopTimer.cancel();
             long currentTime = doGetMediaTime();
-            long scheduleTime = stopTime / 1000 - currentTime / 1000;
+            long scheduleTime = ( stopTime - currentTime ) / 1000;
             if (scheduleTime <= 0) scheduleTime = 1;
             stopTimer = new Timer();
             stopTimer.schedule(new StopTimeCtrlTask(), scheduleTime);
