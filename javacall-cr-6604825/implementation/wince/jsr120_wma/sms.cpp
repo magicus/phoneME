@@ -82,7 +82,6 @@ static sms_close_type* sms_close_func = (sms_close_type*)NULL;
 
 #endif //SMS_STATIC_LINK.  #else: WIN_LINKLIBS += sms.lib
 
-static int init_done = 0;
 static int init_ok = 0;
 javacall_result javacall_wma_init(void);
 
@@ -494,10 +493,7 @@ int javacall_sms_send(  javacall_sms_encoding   msgType,
     sms_handle++;
     int send_ok = 0;
 
-    if (!init_done) {
-        javacall_wma_init();
-        init_done = 1;
-    }
+    javacall_wma_init();
 
     if (destPort == 0) {
         send_ok = SendSMS(lpcPhone, msgBuffer, msgBufferLen);
@@ -553,11 +549,8 @@ int javacall_sms_send(  javacall_sms_encoding   msgType,
  */
 javacall_result javacall_sms_add_listening_port(unsigned short portNum){
 
-    //##
-    if (!init_done) {
-        javacall_wma_init();
-        init_done = 1;
-    }
+    javacall_wma_init();
+
     return JAVACALL_OK;
 }
 
@@ -841,7 +834,26 @@ static void createReceiveSMSThread() {
                       &dwJavaThreadId);   // returns the thread identifier
 }
 
+#define lpWMAInitMutex L"wma_init_mutex"
+static int init_done = 0;
+
 javacall_result javacall_wma_init(void) {
+
+    HANDLE pMutex = CreateMutex((LPSECURITY_ATTRIBUTES)NULL, FALSE, lpWMAInitMutex);
+    if (pMutex == NULL) {
+        init_done = 1;
+        init_ok = 0;
+        return JAVACALL_FAIL;
+    }
+
+    DWORD waitMutexOk = WaitForSingleObject(pMutex, INFINITE); 
+
+    if (init_done) {
+        ReleaseMutex(pMutex);
+        return init_ok ? JAVACALL_OK : JAVACALL_FAIL;
+    }
+    init_done = 1;
+    init_ok = 1;
 
 #ifndef SMS_STATIC_LINK
     HMODULE sms_library = LoadLibrary(L"sms.dll");
@@ -859,12 +871,15 @@ javacall_result javacall_wma_init(void) {
         (sms_read_func == NULL) ||
         (sms_close_func == NULL)) {
         printf("error loading sms.dll functions");
+        init_ok = 0;
+        ReleaseMutex(pMutex);
         return JAVACALL_FAIL;
     }
 #endif
-    init_ok = 1;
 
     createReceiveSMSThread();
+
+    ReleaseMutex(pMutex);
     return JAVACALL_OK;
 }
 
