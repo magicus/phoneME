@@ -74,6 +74,21 @@ public class RTSPPlayer extends com.sun.mmedia.BasicPlayer {
         return "audio/mp3";
     }
 
+    public void sendEvent(String evt, Object evtData)
+    {
+        // IMPL_NOTE:
+        // In current version media time is measured in 
+        // Java using system timer. Consequently, EOM
+        // event arriving from javacall doesn't have correct
+        // media time set, so we patch event data with correct 
+        // value here
+
+        if (PlayerListener.END_OF_MEDIA == evt)
+            super.sendEvent(evt, new Long(doGetMediaTime()));
+        else
+            super.sendEvent(evt, evtData);
+    }
+
     /**
      * Realizes the RTSP Player.
      *
