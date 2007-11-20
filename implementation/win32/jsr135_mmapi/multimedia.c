@@ -1,26 +1,26 @@
 /*
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation.
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt).
+ * included at /legal/license.txt). 
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
+ * 02110-1301 USA 
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions.
+ * information or have any questions. 
  */
 
 /**
@@ -85,12 +85,16 @@
  *
  * <mime string>, <protocol count>, <protocol strings>
  */
-
-// IMPL_NOTE: the only usage for this data now is
-// to determine if we have support for JTS and AMR.
-// actual supported protocols/types are defined in Java.
-
 static const javacall_media_caps _media_caps[] = {
+    {JAVACALL_AUDIO_TONE_MIME,      2, {"device", "http"}},
+    {JAVACALL_AUDIO_MIDI_MIME,      1, {"http"}},
+    {JAVACALL_AUDIO_MIDI_MIME_2,    1, {"http"}},
+    {JAVACALL_AUDIO_WAV_MIME,       1, {"http"}},
+    {JAVACALL_AUDIO_MP3_MIME,       1, {"http"}},
+    {JAVACALL_AUDIO_MP3_MIME_2,     1, {"http"}},
+    {JAVACALL_AUDIO_QCELP_MIME,     2, {"capture", "http"}},
+    {JAVACALL_AUDIO_QCELP_MIME_2,   2, {"capture", "http"}},
+
     /* End of caps => mimeType should be NULL and list all of 
        protocols from here ! */ 
     {NULL, 3, {"device", "capture", "http"}} 
@@ -183,10 +187,6 @@ static javacall_media_type javautil_media_mime_to_type(const javacall_utf16* mim
 
             if (0 == strcmp(JAVACALL_AUDIO_MIDI_MIME, cMime)) {
                 ret = JAVACALL_AUDIO_MIDI;
-            } else if (0 == strcmp(JAVACALL_AUDIO_MIDI_MIME_2, cMime)) {
-                ret = JAVACALL_AUDIO_MIDI;
-            } else if (0 == strcmp(JAVACALL_AUDIO_SP_MIDI_MIME, cMime)) {
-                ret = JAVACALL_AUDIO_MIDI;
             } else if (0 == strcmp(JAVACALL_AUDIO_WAV_MIME, cMime)) {
                 ret = JAVACALL_AUDIO_WAV;
             } else if (0 == strcmp(JAVACALL_AUDIO_MP3_MIME, cMime)) {
@@ -241,14 +241,6 @@ static void jmmpSendEvent(int type, int param1, int param2)
 const javacall_media_caps* javacall_media_get_caps() 
 {
     return _media_caps;
-}
-
-/**
- * Query whether audio mixing is supported or not
- */
-javacall_bool javacall_media_supports_mixing()
-{
-    return JAVACALL_FALSE;
 }
 
 /**
