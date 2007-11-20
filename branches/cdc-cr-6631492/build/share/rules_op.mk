@@ -34,7 +34,7 @@ endif
 
 # generateJSRInitializer(xmlFiles,generatedDir,initializerPackage,outputFile,nativeLibs)
 define generateJSRInitializer
-	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE)              \
+	$(AT)$(call runJarFile, $(CONFIGURATOR_JAR_FILE),      \
 	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml            \
 	-xsl $(CONFIGURATOR_DIR)/xsl/share/merge.xsl           \
 	-params filesList '$(1)'                               \
@@ -42,7 +42,7 @@ define generateJSRInitializer
 	-xml $(2)/properties_merged.xml                        \
 	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/propertiesJava.xsl    \
 	-params packageName $(3) nativeLibs $(JSR_NATIVE_LIBS) \
-	-out $(4)
+	-out $(4))
 endef
 
 # Generate constant classes
