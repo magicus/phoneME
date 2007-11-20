@@ -207,7 +207,8 @@ typedef struct {
     javacall_const_utf8_string mimeType;
     /** Supported protocol count */
     int         protocolCount;  
-    /** Supported protocol strings for this Mime type. Can't exceed JAVACALL_MEDIA_MAX_PROTOCOL_COUNT. */
+    /** Supported protocol strings for this Mime type. 
+     * Can't exceed JAVACALL_MEDIA_MAX_PROTOCOL_COUNT. */
     javacall_const_utf8_string protocols[JAVACALL_MEDIA_MAX_PROTOCOL_COUNT];
 } javacall_media_caps;
 
@@ -288,6 +289,7 @@ javacall_bool javacall_media_supports_mixing();
  */
 javacall_result
     javacall_media_get_property(const char* propName, const char** propValue);
+
 /** @} */ 
 
 /**********************************************************************************/

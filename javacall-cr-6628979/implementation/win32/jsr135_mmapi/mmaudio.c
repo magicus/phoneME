@@ -1,26 +1,26 @@
 /*
  * 
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation.
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt).
+ * included at /legal/license.txt). 
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
+ * 02110-1301 USA 
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions.
+ * information or have any questions. 
  */
  
 #include "multimedia.h"
@@ -288,8 +288,6 @@ static javacall_result audio_start(javacall_handle handle){
     if (pHandle->hWnd && 0 == MCIWndPlay(pHandle->hWnd)) {
         JAVA_DEBUG_PRINT("[jc_media] - javacall_media_start OK\n");
         pHandle->duration = MCIWndGetLength(pHandle->hWnd);
-        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DURATION_UPDATED, 
-            pHandle->playerId, (void*)pHandle->duration);
         pHandle->timerId = 
             (UINT)timeSetEvent(TIMER_CALLBACK_DURATION, 100, 
             audio_timer_callback,(DWORD)pHandle, TIME_PERIODIC);

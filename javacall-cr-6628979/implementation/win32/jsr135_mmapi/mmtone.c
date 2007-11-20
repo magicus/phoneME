@@ -1,42 +1,31 @@
 /*
  * @file mmtone.c 
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation.
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt).
+ * included at /legal/license.txt). 
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
+ * 02110-1301 USA 
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions.
+ * information or have any questions. 
  */
  
 #include "multimedia.h"
 #include <windows.h>
-
-#define JTS_SILENCE         -1
-#define JTS_VERSION         -2
-#define JTS_TEMPO           -3
-#define JTS_RESOLUTION      -4
-#define JTS_BLOCK_START     -5
-#define JTS_BLOCK_END       -6
-#define JTS_PLAY_BLOCK      -7
-#define JTS_SET_VOLUME      -8
-#define JTS_REPEAT          -9
-#define JTS_C4              60
 
 /**
  * Tone player handle
@@ -45,10 +34,9 @@ typedef struct {
     javacall_int64  playerId;
     int     offset;             /* stopped offset */
     int     currentTime;        /* current playing time */
-    char*    pToneBuffer;        /* Pointer to tone data buffer */
+    int*    pToneBuffer;        /* Pointer to tone data buffer */
     /* Current tone data size that stored to tone buffer in bytes */
     int     toneDataSize;       
-    int     totalDuration;
     javacall_bool isForeground; /* Is in foreground? */
     javacall_bool isPlaying;    /* Is playing? */
     javacall_bool stopPlaying;  /* Stop JTS playing thread? */
@@ -56,77 +44,6 @@ typedef struct {
 } tone_handle;
 
 /**********************************************************************************/
-
-static BOOL tone_check_sequence( const char* seq, long len )
-{
-    int t;
-    int pos = 0;
-
-    char blk_defined[ 128 ];
-    BOOL res_defined = FALSE;
-    BOOL tmp_defined = FALSE;
-    int  blk         = -1;
-
-    memset( blk_defined, 0, 128 );
-
-    if( len < 2 ) return FALSE;
-
-    while( pos < len )
-    {
-        switch( t = seq[ pos++ ] )
-        {
-        case JTS_VERSION:
-            if( 1 != seq[ pos ] ) return FALSE;
-            pos++;
-            break;
-        case JTS_TEMPO:
-            if( tmp_defined ) return FALSE;
-            if( seq[ pos ] < 5 || seq[ pos ] > 127 ) return FALSE;
-            tmp_defined = TRUE;
-            pos++;
-            break;
-        case JTS_RESOLUTION:
-            if( res_defined ) return FALSE;
-            if( seq[ pos ] < 1 || seq[ pos ] > 127 ) return FALSE;
-            res_defined = TRUE;
-            pos++;
-            break;
-        case JTS_BLOCK_START:
-            if( seq[ pos ] < 0 || seq[ pos ] > 127 ) return FALSE;
-            blk = seq[ pos++ ];
-            break;
-        case JTS_BLOCK_END:
-            if( -1 == blk ) return FALSE;
-            if( seq[ pos++ ] != blk ) return FALSE;
-            blk_defined[ blk ] = 1;
-            blk = -1;
-            break;
-        case JTS_PLAY_BLOCK:
-            if( seq[ pos ] < 0 || seq[ pos ] > 127 ) return FALSE;
-            if( !blk_defined[ seq[ pos ] ] ) return FALSE;
-            pos++;
-            break;
-        case JTS_SET_VOLUME:
-            if( seq[ pos ] < 0 || seq[ pos ] > 100 ) return FALSE;
-            pos++;
-            break;
-        case JTS_REPEAT:
-            if( seq[ pos ] < 2 || seq[ pos ] > 127 ) return FALSE;
-            pos++;
-            break;
-        case JTS_SILENCE:
-            if( seq[ pos ] < 1 || seq[ pos ] > 127 ) return FALSE;
-            pos++;
-            break;
-        default:
-            if( t < 0 || t > 127 ) return FALSE;
-            if( seq[ pos ] < 1 || seq[ pos ] > 127 ) return FALSE;
-            pos++;
-        }
-    }
-
-    return TRUE;
-}
 
 /**
  * Play tone by using MIDI short message
@@ -153,12 +70,17 @@ static DWORD WINAPI tone_jts_player(void* pArg)
     static long volume = 100;   /* to reserve last volume */
 
     int i;
+    int length;
     long note;
     tone_handle* pHandle = (tone_handle*)pArg;
     long duration, totalDuration = pHandle->currentTime;
-    char* pTone = pHandle->pToneBuffer;
+    /* Tone data is integer array */
+    int* pTone = pHandle->pToneBuffer;
 
-    for(i = pHandle->offset; i < pHandle->toneDataSize; i += 2) {
+    /* Bytes to integer size */
+    length = pHandle->toneDataSize / sizeof(int);
+    
+    for(i = pHandle->offset; i < length; i += 2) {
         /* JTS playing stopped by external force */
         if (JAVACALL_TRUE == pHandle->stopPlaying) {
             /* Store stopped offset to start from stopped position later */
@@ -193,9 +115,6 @@ static DWORD WINAPI tone_jts_player(void* pArg)
 
     /* JTS loop ended not by stop => Post EOM event */
     if (JAVACALL_FALSE == pHandle->stopPlaying) {
-        pHandle->totalDuration = totalDuration;
-        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_DURATION_UPDATED, 
-            pHandle->playerId, (void*)totalDuration);
         javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA, 
             pHandle->playerId, (void*)totalDuration);
         pHandle->offset = 0;
@@ -231,7 +150,6 @@ static javacall_handle tone_create(javacall_int64 playerId,
     pHandle->isForeground = JAVACALL_TRUE;
     pHandle->stopPlaying = JAVACALL_FALSE;
     pHandle->hmo = NULL;
-    pHandle->totalDuration = -1;
 
     return pHandle;
 }
@@ -250,7 +168,6 @@ static javacall_result tone_close(javacall_handle handle)
     pHandle->toneDataSize = 0;
     pHandle->offset = 0;
     pHandle->currentTime = 0;
-    pHandle->totalDuration = -1;
     javacall_close_midi_out(&pHandle->hmo);
     
     FREE(pHandle);
@@ -295,8 +212,6 @@ static long tone_do_buffering(javacall_handle handle,
         return 0;
     }
 
-    if( !tone_check_sequence( (const char*)buffer, length ) ) return -1;
-
     if (NULL != pHandle->pToneBuffer) {
         FREE(pHandle->pToneBuffer);
     }
@@ -326,7 +241,6 @@ static javacall_result tone_clear_buffer(javacall_handle handle)
         pHandle->toneDataSize = 0;
         pHandle->offset = 0;
         pHandle->currentTime = 0;
-        pHandle->totalDuration = -1;
     }
 
     return JAVACALL_OK;
@@ -358,20 +272,9 @@ static javacall_result tone_start(javacall_handle handle)
             pHandle->isPlaying = JAVACALL_TRUE;
             return JAVACALL_OK;
         }
-        else
-        {
-            printf("tone_start: failed\n");
-            return JAVACALL_FAIL;
-        }
-    }
-    else
-    {
-        printf("tone_start: no data\n");
-        javanotify_on_media_notification(JAVACALL_EVENT_MEDIA_END_OF_MEDIA, 
-            pHandle->playerId, (void*)0 );
     }
     
-    return JAVACALL_OK;
+    return JAVACALL_FAIL;
 }
 
 /**
@@ -430,9 +333,10 @@ static long tone_get_time(javacall_handle handle)
 static long tone_set_time(javacall_handle handle, long ms)
 {
     tone_handle* pHandle = (tone_handle*)handle;
-    char* pTone = pHandle->pToneBuffer;
+    int* pTone = pHandle->pToneBuffer;
     int i;
     int note;
+    int length;
     int totalDuration = 0;
     javacall_bool needRestart = JAVACALL_FALSE;
 
@@ -447,9 +351,10 @@ static long tone_set_time(javacall_handle handle, long ms)
         needRestart = JAVACALL_TRUE;
     }
     
+    length = pHandle->toneDataSize / sizeof(int); /* convert to int size */
     pHandle->offset = 0;    /* init to zero */
 
-    for(i = 0; i < pHandle->toneDataSize; i += 2) {
+    for(i = 0; i < length; i += 2) {
         note = pTone[i];
         switch(note) {
         case JAVACALL_SET_VOLUME:
@@ -482,8 +387,8 @@ static long tone_set_time(javacall_handle handle, long ms)
  */
 static long tone_get_duration(javacall_handle handle)
 {
-    tone_handle* pHandle = (tone_handle*)handle;
-    return pHandle->totalDuration;
+    /* This function handled from Java side. NEVER called! */
+    return -1;
 }
 
 

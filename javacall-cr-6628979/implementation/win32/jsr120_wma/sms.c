@@ -1,26 +1,26 @@
 /*
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation.
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt).
+ * included at /legal/license.txt). 
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
+ * 02110-1301 USA 
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions.
+ * information or have any questions. 
  */
 
 /**
@@ -37,33 +37,30 @@
 extern char* encodeSmsBuffer(
     int encodingType, int destPortNum, javacall_int64 timeStamp, 
     const char* recipientPhone, const char* senderPhone, int msgLength, const char* msg,
-    int sourcePortNum,
     int* out_encode_sms_buffer_length);
 extern char* getIPBytes_nonblock(char *hostname);
 
 extern char* getProp(const char* propName, char* defaultValue);
 extern int getIntProp(const char* propName, int defaultValue);
-extern const char* getStrProp(const char* propName, const char* defaultValue);
 
 /**
  * send an SMS message
  *
  * Actually 
- *   - sends a datagramm to 11101 port, it can be received by WMATool.jar (used in TCK tests)
+ *   - sends a datagramm to 11101 port, it can be received by JSR205Tool.jar (used in TCK tests)
  *   - writes a message to the console (it is enough for native tests)
  * The address to send datagram is one of the following:
- *   - 127.0.0.1 if JSR_120_DATAGRAM_HOST environment variable is not send
- *   - JSR_120_DATAGRAM_HOST environment variable value (if set).
+ *   - 127.0.0.1 if JSR_205_DATAGRAM_HOST environment variable is not send
+ *   - JSR_205_DATAGRAM_HOST environment variable value (if set).
  *
  * Refer to javacall_sms.h header for complete description.
  */
-javacall_result javacall_sms_send(  javacall_sms_encoding    msgType, 
+int javacall_sms_send(  javacall_sms_encoding    msgType, 
                         const unsigned char*    destAddress, 
                         const unsigned char*    msgBuffer, 
                         int                     msgBufferLen, 
                         unsigned short          sourcePort, 
-                        unsigned short          destPort,
-                        int                     handle ) {
+                        unsigned short          destPort) {
 
     javacall_handle datagramHandle;
     javacall_result ok;
@@ -73,19 +70,19 @@ javacall_result javacall_sms_send(  javacall_sms_encoding    msgType,
 
     javacall_int64 timeStamp = 0;
     const char* recipientPhone = destAddress;
-    const char* senderPhone = getStrProp("JSR_120_PHONE_NUMBER", "+1234567");
+    char* senderPhone = "+1234567";
     int encodedSMSLength;
     char* encodedSMS;
 
-    char* IP_text = getProp("JSR_120_DATAGRAM_HOST", "127.0.0.1");
-    //WMATool listens on 11101 port, but sends to 11100 port
-    int smsRemotePortNumber = getIntProp("JSR_120_SMS_OUT_PORT", 11101);
+    char* IP_text = getProp("JSR_205_DATAGRAM_HOST", "127.0.0.1");
+    //JSR205Tool listens on 11101 port, but sends to 11100 port
+    int smsRemotePortNumber = getIntProp("JSR_205_SMS_OUT_PORT", 11101);
 
     javacall_network_init_start();
     pAddress = getIPBytes_nonblock(IP_text);
 
     encodedSMS = encodeSmsBuffer(msgType, destPort, timeStamp, recipientPhone, senderPhone, 
-        msgBufferLen, msgBuffer, sourcePort, &encodedSMSLength);
+        msgBufferLen, msgBuffer, &encodedSMSLength);
 
     ok = javacall_datagram_open(0, &datagramHandle);
     if (ok == JAVACALL_OK) {
@@ -98,9 +95,9 @@ javacall_result javacall_sms_send(  javacall_sms_encoding    msgType,
 
     javacall_print("## javacall: SMS sending...\n");
 
-    javanotify_sms_send_completed(JAVACALL_OK, handle);
+    javanotify_sms_send_completed(JAVACALL_SMS_SENDING_RESULT_SUCCESS, 13);
 
-    return JAVACALL_OK;
+    return 1;
 }
 
 javacall_result javacall_sms_is_service_available(void){
@@ -124,7 +121,6 @@ javacall_result javacall_sms_add_listening_port(unsigned short portNum){
         }
     }
 
-    //printf("javacall_sms_add_listening_port %i", portNum);
     if (free == -1) {
         javacall_print("ports amount exceeded");
         return JAVACALL_FAIL;
