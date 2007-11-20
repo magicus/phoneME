@@ -855,6 +855,8 @@ javacall_result javacall_wma_init(void) {
     init_done = 1;
     init_ok = 1;
 
+    createReceiveSMSThread();
+
 #ifndef SMS_STATIC_LINK
     HMODULE sms_library = LoadLibrary(L"sms.dll");
     if (sms_library == NULL) {
@@ -877,8 +879,6 @@ javacall_result javacall_wma_init(void) {
         return JAVACALL_FAIL;
     }
 #endif
-
-    createReceiveSMSThread();
 
     ReleaseMutex(pMutex);
     CloseHandle(pMutex);
