@@ -626,9 +626,9 @@
 #define USE_BINARY_IMAGE_LOADER       ENABLE_MONET
 
 #if defined(PRODUCT) && ENABLE_MONET
-#define USE_PRODUCT_BINARY_IMAGE_GENERATOR 1
+#  define USE_PRODUCT_BINARY_IMAGE_GENERATOR 1
 #else
-#define USE_PRODUCT_BINARY_IMAGE_GENERATOR 0
+#  define USE_PRODUCT_BINARY_IMAGE_GENERATOR 0
 #endif
 
 #if USE_BINARY_IMAGE_GENERATOR || USE_BINARY_IMAGE_LOADER
@@ -640,9 +640,9 @@
 #if !defined(PRODUCT) || ENABLE_VERIFY_ONLY || \
      ENABLE_ROM_GENERATOR || ENABLE_PERFORMANCE_COUNTERS || \
      USE_PRODUCT_BINARY_IMAGE_GENERATOR
-#define USE_JAR_ENTRY_ENUMERATOR 1
+#  define USE_JAR_ENTRY_ENUMERATOR 1
 #else
-#define USE_JAR_ENTRY_ENUMERATOR 0
+#  define USE_JAR_ENTRY_ENUMERATOR 0
 #endif
 
 // GenerateSystemROMImage is hard-wired: with MONET enabled, we always
@@ -672,9 +672,9 @@
 // AOT compilation is supported only for ARM
 #if ENABLE_COMPILER && defined(ARM) && \
      (USE_SOURCE_IMAGE_GENERATOR || ENABLE_MONET_COMPILATION)
-#define USE_AOT_COMPILATION 1
+#  define USE_AOT_COMPILATION 1
 #else
-#define USE_AOT_COMPILATION 0
+#  define USE_AOT_COMPILATION 0
 #endif
 
 #if !ENABLE_APPENDED_CALLINFO && !ENABLE_EMBEDDED_CALLINFO
@@ -744,10 +744,8 @@
 #define ENABLE_INTERNAL_CODE_OPTIMIZER 0
 #endif
 
-#if ENABLE_INTERPRETER_GENERATOR
-#ifdef PRODUCT
-#error "ENABLE_INTERPRETER_GENERATOR" cannot be defined for PRODUCT build
-#endif
+#if ENABLE_INTERPRETER_GENERATOR && defined(PRODUCT)
+#  error "ENABLE_INTERPRETER_GENERATOR" cannot be defined for PRODUCT build
 #endif
 
 #if ENABLE_ROM_JAVA_DEBUGGER
@@ -773,11 +771,11 @@
 #endif
 
 #ifndef USE_ROM_LOGGING 
-#if ENABLE_ROM_GENERATOR && !defined(PRODUCT)
-#  define USE_ROM_LOGGING 1
-#else
-#  define USE_ROM_LOGGING 0
-#endif
+#  if ENABLE_ROM_GENERATOR && !defined(PRODUCT)
+#    define USE_ROM_LOGGING 1
+#  else
+#    define USE_ROM_LOGGING 0
+#  endif
 #endif
 
 #ifndef USE_GENERIC_BIT_SETTING_FUNCS
@@ -835,8 +833,12 @@
 // USE_COMPILER_LITERALS_MAP          If true, the VirtualStackFrame class
 //                                    include extra information for literals.
 
-#define USE_LITERAL_POOL \
-  ( ENABLE_COMPILER && ( defined(ARM) || defined(HITACHI_SH) ) )
+#if ENABLE_COMPILER && ( defined(ARM) || defined(HITACHI_SH) )
+#  define USE_LITERAL_POOL 1
+#else
+#  define USE_LITERAL_POOL 0
+#endif
+  
 
 #define USE_COMPILER_FPU_MAP     !USE_LITERAL_POOL
 #define USE_COMPILER_LITERALS_MAP USE_LITERAL_POOL
@@ -1039,7 +1041,7 @@
 #  define USE_OOP_VISITOR           USE_DEBUG_PRINTING
 #endif
 
-#if defined(PRODUCT) && (!ENABLE_TTY_TRACE)
+#if defined(PRODUCT) || (!ENABLE_TTY_TRACE)
 #  define USE_VERBOSE_ERROR_MSG 0
 #else
 #  define USE_VERBOSE_ERROR_MSG 1
