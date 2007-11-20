@@ -858,6 +858,7 @@ javacall_result javacall_wma_init(void) {
 #ifndef SMS_STATIC_LINK
     HMODULE sms_library = LoadLibrary(L"sms.dll");
     if (sms_library == NULL) {
+        init_ok = 0;
         printf("error loading sms.dll");
         return JAVACALL_FAIL;
     }
@@ -880,6 +881,7 @@ javacall_result javacall_wma_init(void) {
     createReceiveSMSThread();
 
     ReleaseMutex(pMutex);
+    CloseHandle(pMutex);
     return JAVACALL_OK;
 }
 
