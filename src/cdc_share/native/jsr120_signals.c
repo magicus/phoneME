@@ -55,7 +55,8 @@ void jsr120_wait_for_signal(int handle, int signal) {
     CVMmutexLock(&_mutex);
     do {
         CVMcondvarWait(&_condvar, &_mutex, 0);
-    } while ( ((_handle != 0) && (handle != handle)) || ((_signal != 0) && (signal != _signal)) ) ;
+    } while ( ((_handle != 0) && (handle != _handle)) || 
+              ((_signal != 0) && (signal != _signal)) ) ;
     CVMmutexUnlock(&_mutex);
 }
 

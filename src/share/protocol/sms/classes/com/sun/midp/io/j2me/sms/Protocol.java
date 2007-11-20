@@ -227,6 +227,7 @@ public class Protocol extends ProtocolBase {
     public Message newMessage(String type) {
 	String address = null;
 
+System.out.println("sms.Protocol.newMessage, type = " + type);
 	/*
          * Provide the default address from the original open.
          */
@@ -486,6 +487,9 @@ public class Protocol extends ProtocolBase {
         if (dmsg instanceof TextObject)	 {
             byte[] gsm7bytes;
             msgBuffer = ((TextObject)dmsg).getBytes();
+            if (url.port == 0) {
+                messageType = GSM_UCS2;
+            } else
 	    if (msgBuffer != null) {
                 /*
                  * Attempt to encode the UCS2 bytes as GSM 7-bit.

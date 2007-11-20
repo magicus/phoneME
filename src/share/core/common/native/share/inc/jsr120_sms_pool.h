@@ -245,6 +245,18 @@ SmsMessage* jsr120_sms_pool_peek_next_msg1(jchar smsPort, jint isNew);
  */
 WMA_STATUS jsr120_sms_pool_delete_next_msg();
 
+/**
+ * Initialize SMS message pool.
+ *
+ */
+void jsr120_sms_pool_init();
+
+/**
+ * Finalize SMS message pool.
+ *
+ */
+void jsr120_sms_pool_finalize();
+
 #ifdef __cplusplus
 }
 #endif

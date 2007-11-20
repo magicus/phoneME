@@ -197,21 +197,69 @@ void jsr120_sms_delete_msg(SmsMessage* sms) {
  * Helper methods to operate the pool of messages.
  */
 
+#ifdef ENABLE_CDC
+
+#include <kni.h>
+#include <sni.h>
+
+static CVMMutex   _mutex;
+
+static int is_mutex_inited = 0;
+
+void jsr120_sms_pool_init() {
+    /**
+     * Impl note.
+     * Theoretically, mutex could be created twice. 
+     * But it is not a big problem if one mutex will be lost.
+     */
+    if (!is_mutex_inited) {
+        is_mutex_inited = 1;
+        CVMmutexInit(&_mutex);
+    }
+}
+
+void jsr120_sms_pool_finalize() {
+    if (!is_mutex_inited) {
+       is_mutex_inited = 0;
+       CVMmutexDestroy(&_mutex);
+    }
+}
+
+#define MUTEX_LOCK   CVMmutexLock(&_mutex);
+#define MUTEX_UNLOCK CVMmutexUnlock(&_mutex);
+
+#else
+
+#define MUTEX_LOCK
+#define MUTEX_UNLOCK
+
+void jsr120_sms_pool_init() {
+}
+
+void jsr120_sms_pool_finalize() {
+}
+
+#endif
+
 /**
  * Increase the number of messages in the pool by one.
  */
 static void jsr120_sms_pool_increase_count() {
+    MUTEX_LOCK
     SMSPool_count++;
+    MUTEX_UNLOCK
 }
 
 /**
  * Decrease the number of messages in the pool by one.
  */
 static void jsr120_sms_pool_decrease_count()     {
+    MUTEX_LOCK
     SMSPool_count--;
     if (SMSPool_count < 0) {
         SMSPool_count = 0;
     }
+    MUTEX_UNLOCK
 }
 
 /**
@@ -230,9 +278,11 @@ static jint jsr120_sms_pool_get_count() {
  * the oldest messages until the pool has room for only one more message.
  */
 static void jsr120_sms_pool_check_pool_quota() {
+    MUTEX_LOCK
     while (jsr120_sms_pool_get_count() >= MAX_SMS_MESSSAGES_IN_POOL) {
         jsr120_sms_pool_delete_next_msg();
     }
+    MUTEX_UNLOCK
 }
 
 /**
@@ -247,16 +297,19 @@ static void jsr120_sms_pool_check_pool_quota() {
  *
  */
 WMA_STATUS jsr120_sms_pool_add_msg(SmsMessage* smsMessage) {
+
     ListElement* newItem;
 
     if (smsMessage == NULL) { return WMA_ERR;}
 
+    MUTEX_LOCK
     jsr120_sms_pool_check_pool_quota();
 
     newItem = jsr120_list_new_by_number(NULL, smsMessage->destPortNum,
         UNUSED_APP_ID, (void*)smsMessage, 0);
     jsr120_list_add_last(&SMSPool_smsMessages, newItem);
     jsr120_sms_pool_increase_count();
+    MUTEX_UNLOCK
     jsr120_sms_message_arrival_notifier(smsMessage);
     return WMA_OK;
 }
@@ -274,7 +327,10 @@ WMA_STATUS jsr120_sms_pool_add_msg(SmsMessage* smsMessage) {
  */
 WMA_STATUS jsr120_sms_pool_get_next_msg(jchar smsPort, SmsMessage* out) {
 
-    SmsMessage* sms = jsr120_sms_pool_retrieve_next_msg(smsPort);
+    SmsMessage* sms;
+    MUTEX_LOCK
+    sms = jsr120_sms_pool_retrieve_next_msg(smsPort);
+    MUTEX_UNLOCK
     if (sms) {
         if (out) {
             jsr120_sms_copy_msg(sms, out);
@@ -299,6 +355,7 @@ SmsMessage* jsr120_sms_pool_retrieve_next_msg(jchar smsPort) {
     SmsMessage* result = NULL;
     ListElement* e;
 
+    MUTEX_LOCK
     e = jsr120_list_remove_first_by_number(&SMSPool_smsMessages,smsPort);
     if (e) {
         jsr120_sms_pool_decrease_count();
@@ -306,6 +363,7 @@ SmsMessage* jsr120_sms_pool_retrieve_next_msg(jchar smsPort) {
         /* Remove the list elements from the pool without deleting the user-data */
         jsr120_list_destroy(e);
     }
+    MUTEX_UNLOCK
     /* result MUST to be deleted by caller using SmsMessage_delete() */
     return result;
 }
@@ -355,7 +413,11 @@ SmsMessage* jsr120_sms_pool_peek_next_msg(jchar smsPort) {
  * @return The message or <code>NULL</code> if no message could be found.
  */
 SmsMessage* jsr120_sms_pool_peek_next_msg1(jchar smsPort, jint isNew) {
-    ListElement* e = jsr120_list_get_by_number1(SMSPool_smsMessages, smsPort, isNew);
+
+    ListElement* e;
+    MUTEX_LOCK
+    e = jsr120_list_get_by_number1(SMSPool_smsMessages, smsPort, isNew);
+    MUTEX_UNLOCK
     if (e) {
         return (SmsMessage *) e->userData;
     }
@@ -373,6 +435,7 @@ WMA_STATUS jsr120_sms_pool_delete_next_msg() {
     WMA_STATUS found = WMA_ERR;
     ListElement* e;
 
+    MUTEX_LOCK
     e = jsr120_list_remove_first(&SMSPool_smsMessages);
     if (e) {
         SmsMessage* sms = e->userData;
@@ -381,6 +444,7 @@ WMA_STATUS jsr120_sms_pool_delete_next_msg() {
         jsr120_list_destroy(e);
         found = WMA_OK;
     }
+    MUTEX_UNLOCK
     return found;
 }
 
