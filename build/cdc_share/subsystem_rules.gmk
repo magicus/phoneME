@@ -28,13 +28,21 @@
 #
 ######################################################################
 
-# Append JSR 172 source bundle creation to target
-source_bundle:: jsr_172_source_bundle
+include $(JSR_172_DIR)/build/subsystem_rules.gmk
+
+$(JSR_172_JAR): $(JSR_280_JAR) $(JPP_CLASS_FILES) jsr172_constants $(SUBSYSTEM_JSR_172_JAVA_FILES)
+	$(call compileJSROP,jsr172,$(JSR_172_BUILD_DIR)/classes,$(SUBSYSTEM_JSR_172_JAVA_FILES),$(JSR_172_DEPS))
+	$(call makeJSROPJar,$(JSR_172_JAR),$(JSR_172_BUILD_DIR)/classes)
+
+$(JSR_172_EXTRA_JAR): $(JSR_172_JAR)
+	$(call makeJSRExtraJar,172)
+
+$(JSR_172_INITIALIZER): $(CONFIGURATOR_JAR_FILE)
+	$(AT)$(call generateJSRInitializer,$(JSR_172_PROPERTY_FILE),$(JSR_172_GENERATED_DIR),$(JSR_172_INIT_PACKAGE),$@,)
+
+jsr172_constants: $(JSR172_CONSTANT_FILE)
+	$(call generateConstantClasses, $(JSR_172_CONSTANT_FILE), $(SUBSYSTEM_JSR_172_CONSTANT_CLASSES), $(JSR_172_GENERATED_DIR))
 
 # Copy and filter JSR 172 source in JSR_172_SOURCE_OUTPUT_DIR
 jsr_172_source_bundle:: $(JSR_172_DIR)
-	@echo " ... JSR 172 source bundle" $(LOG)
-	$(AT)$(call source_bundle_filter,$(JSR_172_DIR),$(JSR_172_SOURCE_OUTPUT_DIR), src)
-	$(AT)mkdir -p $(JSR_172_SOURCE_OUTPUT_DIR)/build
-	$(AT)cp -f $(JSR_172_DIR)/build/subsystem_rules.gmk $(JSR_172_SOURCE_OUTPUT_DIR)/build/subsystem_rules.gmk
-	$(AT)cp -f $(JSR_172_DIR)/build/subsystem_defs.gmk $(JSR_172_SOURCE_OUTPUT_DIR)/build/subsystem_defs.gmk
+	$(AT)$(call source_bundle_filter,$(JSR_172_DIR),$(JSR_172_SOURCE_OUTPUT_DIR), build/cdc_share)	
