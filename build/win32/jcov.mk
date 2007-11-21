@@ -28,20 +28,4 @@
 
 CVM_JCOV_LIBDIR        = $(CVM_BINDIR)
 
-ifeq ($(CVM_DEBUG), true)
-    CVM_JCOV_LIB    = libjcov_g.dll
-else
-    CVM_JCOV_LIB    = libjcov.dll
-endif
-
-#
-# Platform specific objects:
-#
-CVM_JCOV_TARGETOBJS += \
-        jcov_md.o
-
-#
-# Platform specific build flags:
-#
-CVM_JCOV_FLAGS += \
 
