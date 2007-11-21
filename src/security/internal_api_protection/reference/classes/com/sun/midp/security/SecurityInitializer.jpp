@@ -200,7 +200,7 @@ public final class SecurityInitializer {
         // #endif ENABLE_JSR_179
 
         // #ifdef ENABLE_JSR_180
-        "com.sun.midp.io.j2me.sip.ProtocolBase$SecurityTrusted",
+        "com.sun.io.j2me.sip.ProtocolBase$SecurityTrusted",
         // #endif ENABLE_JSR_180
 
         // #ifdef ENABLE_JSR_75
