@@ -221,17 +221,13 @@ endif
 # Description: Abstractions for optional packages
 #####################################################################
 
-JSROP_NUMBERS = 75 177 179 211 238
+# List of JSR numbers which use Abstractions subsystem.
+JSROP_NUMBERS = 75 172 177 179 211 238
 
-# List of JSR numbers which use Abstractions subsystem that are enabled.
-# This will give you a list something like:
-#   75 120 184 ...
-PREFIX_true=1
-INCLUDED_JSROP_NUMBERS = $(foreach jsr_number,$(JSROP_NUMBERS),\
-          $(if $($(USE_JSR_$(jsr_number))), jsr_number))
-USE_ABSTRACTIONS=$(if $(INCLUDED_JSROP_NUMBERS),true)
+USE_ABSTRACTIONS=$(if $(findstring true, $(foreach jsr_number, \
+      $(JSROP_NUMBERS), $(USE_JSR_$(jsr_number)))),true,false)
 
-ifneq ($(USE_ABSTRACTIONS),true)
+ifeq ($(USE_ABSTRACTIONS),true)
 include $(ABSTRACTIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
@@ -298,7 +294,7 @@ endif
 #####################################################################
 ifeq ($(USE_JSR_172), true)
 JPP_DEFS += -DENABLE_JSR_172
-include $(JSR_172_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_172_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
@@ -343,7 +339,7 @@ endif
 #####################################################################
 ifeq ($(USE_JSR_179), true)
 JPP_DEFS += -DENABLE_JSR_179
-include $(JSR_179_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_179_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
@@ -351,7 +347,7 @@ endif
 # Description: JSR 180
 #####################################################################
 ifeq ($(USE_JSR_180), true)
-include $(JSR_180_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_180_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
@@ -427,7 +423,7 @@ endif
 #####################################################################
 ifeq ($(USE_JSR_238), true)
 JPP_DEFS += -DENABLE_JSR_238
-include $(JSR_238_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_238_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################

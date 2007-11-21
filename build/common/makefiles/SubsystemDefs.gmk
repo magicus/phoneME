@@ -300,6 +300,12 @@ LIBS			+= $(SUBSYSTEM_MMAPI_LIBS)
 # JSR 135/234/ABB Multimedia
 #
 
+ifeq ($(USE_ABSTRACTIONS), true)
+# Abstractions
+#
+JTWI_NATIVE_FILES	+= $(ABSTRACTIONS_NATIVES)
+endif
+
 ifeq ($(USE_JSR_177), true)
 # JSR 177 SATSA
 #
