@@ -30,7 +30,6 @@ ABSTRACTIONS_CDC_JAVASRCDIRS = \
 
 # dirs containing native header files (.h)
 ABSTRACTIONS_INCLUDE_DIRS += \
-    $(ABSTRACTIONS_DIR)/src/share/include \
     $(ABSTRACTIONS_DIR)/src/cdc_share/native/include
 
 # dirs containing native source files

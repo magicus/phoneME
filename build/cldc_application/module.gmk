@@ -32,7 +32,8 @@ vpath % $(JSROP_ABSTRACTS_DIR)/src/cldc_application/native/share
 vpath % $(JSROP_ABSTRACTS_DIR)/src/cldc_application/native/$(TARGET_PLATFORM)
 
 # names of native source files (like 'file.c')
-JSROP_ABSTRACTS_NATIVES = 
+ABSTRACTIONS_NATIVES += \
+	kni_utils.c
 
 # extra libraries needed (like '-lpthread' or '-lm')
 JSROP_ABSTRACTS_LINKLIBS = 
@@ -60,9 +61,11 @@ ABSTRACTIONS_CLASSES = \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/FileConnectionPermission.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/SatsaPermission.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/SIPPermission.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/LocationPermission.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseInterface.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/ConnectionBaseAdapter.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/PrivilegedConnector.java \
+    $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/io/Base64.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/i18n/Resource.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/i18n/ResourceConstants.java \
     $(JSROP_ABSTRACTS_JAVASRCDIRS)/com/sun/j2me/security/TrustedClass.java \

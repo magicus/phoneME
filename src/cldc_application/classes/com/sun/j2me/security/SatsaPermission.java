@@ -31,21 +31,17 @@ import com.sun.midp.security.Permissions;
  */
 public class SatsaPermission extends Permission {
 
-    static public SatsaPermission APDU_CHANNEL0_SAT_OPEN =
-        new SatsaPermission("javax.microedition.apdu.sat", "apdu:satopen");
+    static public SatsaPermission APDU_CHANNEL0_SAT_OPEN = new SatsaPermission(
+        Permissions.getName(Permissions.APDU_CHANNEL0), "apdu:satopen");
 
-    static public SatsaPermission APDU_CONNECTION_OPEN =
-        new SatsaPermission("javax.microedition.apdu.aid", "apdu:open");
+    static public SatsaPermission APDU_CONNECTION_OPEN = new SatsaPermission(
+        Permissions.getName(Permissions.APDU_CONNECTION), "apdu:open");
 
-    static public SatsaPermission JCRMI_CONNECTION =
-        new SatsaPermission("javax.microedition.jcrmi");
+    static public SatsaPermission JCRMI_CONNECTION = new SatsaPermission(
+        Permissions.getName(Permissions.JCRMI_CONNECTION), null);
 
-    static public SatsaPermission SIGN_SERVICE =
-        new SatsaPermission("javax.microedition.securityservice.CMSMessageSignatureService");
-
-    public SatsaPermission(String permission) {
-        super(permission, null);
-    }
+    static public SatsaPermission SIGN_SERVICE = new SatsaPermission(
+        Permissions.getName(Permissions.SIGN_SERVICE), null);
 
     public SatsaPermission(String name, String resource) {
         super(name, resource);
