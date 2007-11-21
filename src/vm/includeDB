@@ -846,6 +846,9 @@ CompilerTest.cpp                 Arguments.hpp
 CompilerTest.cpp                 VSFMergeTest.hpp
 CompilerTest.cpp                 FilePath.hpp
 
+CompilerObject.hpp               ObjectHeap.hpp
+CompilerObject.cpp               CompilerObject.hpp
+
 CompilationQueueElementDesc.hpp  MixedOopDesc.hpp
 
 CompilationQueue.hpp             CompilationQueueElementDesc.hpp
