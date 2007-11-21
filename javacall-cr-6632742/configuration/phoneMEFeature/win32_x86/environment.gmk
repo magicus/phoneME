@@ -41,6 +41,9 @@ MIDP_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
 
 USE_COMMON=true
 COMMON_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/win32
+# Implementation of javacall events is different for cdc and cldc
+PORTING_SOURCE+=events.c
+VPATH+=$(JAVACALL_DIR)/implementation/win32_x86_cldc/common
 
 JSR_120_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
 
@@ -77,6 +80,7 @@ SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $
 SOURCE_OUTPUT_LIST += $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h javacall/implementation/win32
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/phoneMEFeature/win32_x86 javacall/configuration/phoneMEFeature
 SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) javacall/implementation/win32))
+SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/win32_x86_cldc/common javacall/implementation/win32_x86_cldc
 
 # Enable multiple runMidlet instances running on the same machine
 # Setting this to TRUE disables remote control of running runMidlet instance
