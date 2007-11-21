@@ -40,7 +40,7 @@ $(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/PackageManager.java: \
 	$(AT)$(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
 	-xml $(CVM_MISC_TOOLS_SRCDIR)/xml/empty.xml \
 	-xsl $(call POSIX2HOST,$(CONFIGURATOR_DIR)/xsl/cdc/propertiesInit.xsl)\
-	-params className PackageManager initializers '$(JSR_INITIALIZER_LIST)' \
+	-params initializers '$(JSR_INITIALIZER_LIST)' \
 	-out $(CVM_DERIVEDROOT)/classes/com/sun/cdc/config/PackageManager.java)
 
 # CDC test classes are built by the 'all' target.
