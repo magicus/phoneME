@@ -222,7 +222,7 @@ endif
 #####################################################################
 
 # List of JSR numbers which use Abstractions subsystem.
-JSROP_NUMBERS = 75 172 177 179 211 238
+JSROP_NUMBERS = 75 172 177 179 180 211 238
 
 USE_ABSTRACTIONS=$(if $(findstring true, $(foreach jsr_number, \
       $(JSROP_NUMBERS), $(USE_JSR_$(jsr_number)))),true,false)
