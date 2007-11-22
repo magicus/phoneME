@@ -89,7 +89,20 @@ void javacall_memory_heap_deallocate(void* heap);
  * @return	  a pointer to the newly allocated memory
  */
 void* javacall_malloc(unsigned int size);
+
+/** 
+ * Reallocates memory of the given size from the private JAVACALL memory
+ * pool. If memory could not be reallocated function returns null,
+ * in this case old pointer is not released.
+ * 
+ * @param    ptr  Pointer to previously allocated memory
+ * @param    size Number of byte to allocate
+ * @return	  a pointer to the reallocated memory or null if memory could not be reallocated
+ */
+void* javacall_realloc(void* ptr, unsigned int size);
     
+
+
 /**
  * Frees memory at the given pointer in the private JAVACALL memory pool.
  * 

@@ -131,7 +131,8 @@ javacall_result javacall_file_finalize(void);
 /**
  * The open a file
  * @param unicodeFileName path name in UNICODE of file to be opened
- * @param fileNameLen length of file name (number of characters)
+ * @param fileNameLen length of the file name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @param flags open control flags
  *        Applications must specify exactly one of the first three
  *        values (file access modes) below in the value of "flags"
@@ -195,7 +196,8 @@ long javacall_file_write(javacall_handle handle,
 /**
  * Deletes a file from the persistent storage.
  * @param unicodeFileName name of file to be deleted
- * @param fileNameLen length of file name (number of characters)
+ * @param fileNameLen length of the file name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @return <tt>JAVACALL_OK</tt> on success, 
  *         <tt>JAVACALL_FAIL</tt> or negative value on error
  */
@@ -241,7 +243,8 @@ javacall_int64 javacall_file_sizeofopenfile(javacall_handle handle);
 /**
  * Get file size
  * @param fileName name of file in unicode format
- * @param fileNameLen length of file name (number of characters)
+ * @param fileNameLen length of the file name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @return size of file in bytes if successful, -1 otherwise 
  */
 javacall_int64 javacall_file_sizeof(const javacall_utf16* fileName, 
@@ -250,7 +253,8 @@ javacall_int64 javacall_file_sizeof(const javacall_utf16* fileName,
 /**
  * Check if the file exists in file system storage.
  * @param fileName name of file in unicode format
- * @param fileNameLen length of file name (number of characters)
+ * @param fileNameLen length of the file name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @return <tt>JAVACALL_OK </tt> if it exists and is a regular file, 
  *         <tt>JAVACALL_FAIL</tt> otherwise
  */
@@ -270,9 +274,11 @@ javacall_result javacall_file_flush(javacall_handle handle);
 /**
  * Renames the filename.
  * @param unicodeOldFilename current name of file
- * @param oldNameLen current name length (number of characters)
+ * @param oldNameLen current name length or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @param unicodeNewFilename new name of file
- * @param newNameLen length of new name (number of characters)
+ * @param newNameLen length of new name or
+ *        JAVACALL_UNKNOWN_LENGTH, which may be used for null terminated string 
  * @return <tt>JAVACALL_OK</tt>  on success, 
  *         <tt>JAVACALL_FAIL</tt> or negative value otherwise
  */
@@ -284,10 +290,6 @@ javacall_result javacall_file_rename(const javacall_utf16*     unicodeOldFilenam
 
 
 /** @} */
-
-//unsigned short* char_to_unicode(char* str);
-
-//char*           unicode_to_char(unsigned short* str);
 
     
 #ifdef __cplusplus

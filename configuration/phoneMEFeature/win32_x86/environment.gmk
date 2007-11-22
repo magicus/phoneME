@@ -32,12 +32,15 @@
 #JSR_XX_JC_IMPL_PATH varibale sets path to implementation 
 #
 #For 'midp' USE_MIDP and MIDP_JC_IMPL_PATH variables are used
-#For 'nams' USE_NATIVE_AMS and NATIVE_AMS_JC_IMPL_PATH variables are used
+#For 'nams' USE_NATIVE_AMS_JC and NATIVE_AMS_JC_IMPL_PATH variables are used
 
-JSR_LIST = MIDP JSR_120 JSR_135 JSR_177 JSR_211
+JSR_LIST = COMMON MIDP JSR_120 JSR_135 JSR_177 JSR_211
 
 USE_MIDP=true
 MIDP_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
+
+USE_COMMON=true
+COMMON_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/win32
 
 JSR_120_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
 
@@ -47,12 +50,12 @@ JSR_177_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
 
 JSR_211_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
 
-ifeq ($(USE_NATIVE_AMS),)
-USE_NATIVE_AMS=false
+ifeq ($(USE_NATIVE_AMS_JC),)
+USE_NATIVE_AMS_JC=false
 endif
 
 # Switch native AMS function on/off
-ifeq ($(USE_NATIVE_AMS), true)
+ifeq ($(USE_NATIVE_AMS_JC), true)
 
 JSR_LIST += NATIVE_AMS
 NATIVE_AMS_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/win32
@@ -74,6 +77,7 @@ SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $
 SOURCE_OUTPUT_LIST += $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h javacall/implementation/win32
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/phoneMEFeature/win32_x86 javacall/configuration/phoneMEFeature
 SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) javacall/implementation/win32))
+SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/win32_x86_cldc/common javacall/implementation/win32_x86_cldc
 
 # Enable multiple runMidlet instances running on the same machine
 # Setting this to TRUE disables remote control of running runMidlet instance
@@ -89,6 +93,7 @@ UTILITIES =                 \
 
 #Compile options that are not common for all configurations can be specified in
 #SPECIFIC_DEFINITIONS variable
+SPECIFIC_DEFINITIONS+=-I$(COMMON_JC_IMPL_PATH)/$(COMMON_JC_DIR)/
 SPECIFIC_DEFINITIONS+=-I$(MIDP_JC_IMPL_PATH)/$(MIDP_JC_DIR)/
 SPECIFIC_DEFINITIONS+=-DWIN32
 
@@ -121,12 +126,16 @@ endif # ifeq ($(ENABLE_HIDDEN_DEP_FEATURES),true)
 
 #Porting objects that are added to PORTING_OBJECTS by default rules can be excluded
 #from the javacall library by setting FILTER_OBJECTS variable
+
+# Implementation of javacall events is different for cdc and cldc
+VPATH+=$(JAVACALL_DIR)/implementation/win32_x86_cldc/common
+
 ifdef SUBSYSTEM_EVENTS_MODULES
    ifeq ($(SUBSYSTEM_EVENTS_MODULES), slave_mode)
-      FILTER_OBJECTS=events.obj
+      PORTING_SOURCE+=events_slave_mode.c
    else
-      FILTER_OBJECTS=events_slave_mode.obj
+      PORTING_SOURCE+=events.c
    endif
 else
-   FILTER_OBJECTS=events_slave_mode.obj
+   PORTING_SOURCE+=events.c
 endif
