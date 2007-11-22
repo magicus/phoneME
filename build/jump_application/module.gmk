@@ -37,7 +37,7 @@ ABSTRACTIONS_NATIVES = \
 	jump_events_impl.c
 
 # dirs containing hative header files (.h)
-ABSTRACTIONS_INCLUDE_DIRS = \
+ABSTRACTIONS_INCLUDE_DIRS += \
     $(ABSTRACTIONS_DIR)/src/jump_application/native/$(TARGET_OS)
 
 # start dirs for java source trees
