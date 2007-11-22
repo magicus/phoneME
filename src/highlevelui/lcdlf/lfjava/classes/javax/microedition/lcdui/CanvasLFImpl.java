@@ -171,6 +171,12 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
             if (oldState == SHOWN) {
                 try {
                     canvas.hideNotify();
+                    if (mmHelper != null) {
+                        for (Enumeration e = embeddedVideos.elements(); 
+                                                  e.hasMoreElements();) {
+                            mmHelper.hideVideo(e.nextElement());
+                        }
+                    }
                 } catch (Throwable t) {
                     Display.handleThrowable(t);
                 }
