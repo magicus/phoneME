@@ -129,11 +129,18 @@ JNIEXPORT void JNICALL
 Java_com_sun_pisces_PiscesRenderer_beginRendering__I(JNIEnv* env,
         jobject objectHandle, jint windingRule) {
     Renderer* rdr;
+	Surface* surface;
+	jobject surfaceHandle;
+
     rdr = (Renderer*)JLongToPointer(
               (*env)->GetLongField(env, objectHandle, 
                                    fieldIds[RENDERER_NATIVE_PTR]));
 
+    SURFACE_FROM_RENDERER(surface, env, surfaceHandle, objectHandle);
+    ACQUIRE_SURFACE(surface, env, surfaceHandle);
+    INVALIDATE_RENDERER_SURFACE(rdr);
     renderer_beginRendering1(rdr, windingRule);
+    RELEASE_SURFACE(surface, env, surfaceHandle);
 
     if (JNI_TRUE == readAndClearMemErrorFlag()) {
         JNI_ThrowNew(env, "java/lang/OutOfMemoryError",
