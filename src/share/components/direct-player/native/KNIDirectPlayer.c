@@ -25,6 +25,7 @@
 
 #include <string.h>
 #include "KNICommon.h"
+#include "sni.h"
 
 #include "jsrop_exceptions.h"
 #include "jsr135_sync.h"
@@ -101,9 +102,11 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nTerm) {
 LockAudioMutex();            
  
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        if (JAVACALL_FAIL == javacall_media_close(pKniInfo->pNativeHandle)) {
-            returnValue = 0;
-        }
+        CVMD_gcSafeExec(_ee, {
+            if (JAVACALL_FAIL == javacall_media_close(pKniInfo->pNativeHandle)) {
+                returnValue = 0;
+            }
+        });
     }
 UnlockAudioMutex();            
 
@@ -127,10 +130,12 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nAcquireDevice) {
     MMP_DEBUG_STR("+nAcquireDevice\n");
 
 LockAudioMutex();
-    if (pKniInfo && JAVACALL_OK == javacall_media_acquire_device(pKniInfo->pNativeHandle)) {
-        pKniInfo->isAcquire = JAVACALL_TRUE;
-        returnValue = KNI_TRUE;
-    }
+    CVMD_gcSafeExec(_ee, {
+        if (pKniInfo && JAVACALL_OK == javacall_media_acquire_device(pKniInfo->pNativeHandle)) {
+            pKniInfo->isAcquire = JAVACALL_TRUE;
+            returnValue = KNI_TRUE;
+        }
+    });
 UnlockAudioMutex();
     KNI_ReturnBoolean(returnValue);
 }
@@ -146,7 +151,9 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nReleaseDevice) {
 
 LockAudioMutex();            
     if (pKniInfo) {
-        javacall_media_release_device(pKniInfo->pNativeHandle);
+        CVMD_gcSafeExec(_ee, {
+            javacall_media_release_device(pKniInfo->pNativeHandle);
+        });
         pKniInfo->isAcquire = JAVACALL_FALSE;
     }
 UnlockAudioMutex();            
@@ -174,8 +181,10 @@ LockAudioMutex();
         if (tmpArray != NULL) {
             MMP_DEBUG_STR2("+nBuffering length=%d offset=%d\n", length, pKniInfo->offset);
             KNI_GetRawArrayRegion(bufferHandle, 0, length, (jbyte*)tmpArray);
-            ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, 
-                (const char*)tmpArray, (int)length, pKniInfo->offset);
+            CVMD_gcSafeExec(_ee, {
+                ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, 
+                    (const char*)tmpArray, (int)length, pKniInfo->offset);
+            });
             MMP_FREE(tmpArray);
             if (ret > 0) {
                 pKniInfo->offset += ret;
@@ -187,7 +196,9 @@ LockAudioMutex();
         }
     } else if (pKniInfo && pKniInfo->pNativeHandle) {
         /* Indicate end of buffering by using NULL buffer */
-        returnValue = javacall_media_do_buffering(pKniInfo->pNativeHandle, NULL, -1, -1);
+        CVMD_gcSafeExec(_ee, {
+            returnValue = javacall_media_do_buffering(pKniInfo->pNativeHandle, NULL, -1, -1);
+        });
     }
 UnlockAudioMutex();            
 
@@ -206,12 +217,14 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nFlushBuffer) {
 LockAudioMutex();            
     /* If it is not temp buffer just return true */
     if (pKniInfo && JAVACALL_TRUE == jmmpCheckCondition(pKniInfo, CHECK_ISTEMP)) {
-        if (JAVACALL_OK == javacall_media_clear_buffer(pKniInfo->pNativeHandle)) {
-            pKniInfo->offset = 0;   /* reset offset value */
-            returnValue = KNI_TRUE;
-        } else {
-            REPORT_ERROR(LC_MMAPI, "javacall_media_clear_buffer return fail");
-        }
+        CVMD_gcSafeExec(_ee, {
+            if (JAVACALL_OK == javacall_media_clear_buffer(pKniInfo->pNativeHandle)) {
+                pKniInfo->offset = 0;   /* reset offset value */
+                returnValue = KNI_TRUE;
+            } else {
+                REPORT_ERROR(LC_MMAPI, "javacall_media_clear_buffer return fail");
+            }
+        });
     } else {
         REPORT_ERROR(LC_MMAPI, "nFlushBuffer fail cause we are not using temp buffer");
     }
@@ -231,10 +244,12 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStart) {
     MMP_DEBUG_STR("+nStart\n");
     
 LockAudioMutex();            
-    if (pKniInfo && pKniInfo->pNativeHandle && JAVACALL_OK == javacall_media_start(pKniInfo->pNativeHandle)) {
-        g_currentPlayer = pKniInfo->uniqueId;    /* set the current player */
-        returnValue = KNI_TRUE;
-    }
+    CVMD_gcSafeExec(_ee, {
+        if (pKniInfo && pKniInfo->pNativeHandle && JAVACALL_OK == javacall_media_start(pKniInfo->pNativeHandle)) {
+            g_currentPlayer = pKniInfo->uniqueId;    /* set the current player */
+            returnValue = KNI_TRUE;
+        }
+    });
 UnlockAudioMutex();            
 
     KNI_ReturnBoolean(returnValue);
@@ -252,9 +267,11 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStop) {
 
 LockAudioMutex();            
     if (pKniInfo && JAVACALL_TRUE == jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
-        if (JAVACALL_OK == javacall_media_stop(pKniInfo->pNativeHandle)) {
-            returnValue = KNI_TRUE;
-        }
+        CVMD_gcSafeExec(_ee, {
+            if (JAVACALL_OK == javacall_media_stop(pKniInfo->pNativeHandle)) {
+                returnValue = KNI_TRUE;
+            }
+        });
     } else {
         REPORT_ERROR(LC_MMAPI, "nStop fail cause we are not in playing\n");
     }
@@ -272,7 +289,9 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetMediaTime) {
     jint returnValue = -1;
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        returnValue = javacall_media_get_time(pKniInfo->pNativeHandle);
+        CVMD_gcSafeExec(_ee, {
+            returnValue = javacall_media_get_time(pKniInfo->pNativeHandle);
+        });
     }
 UnlockAudioMutex();            
 
@@ -294,7 +313,9 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetMediaTime) {
 
 LockAudioMutex();            
     if (pKniInfo) {
-        returnValue = javacall_media_set_time(pKniInfo->pNativeHandle, (int)ms);
+        CVMD_gcSafeExec(_ee, {
+            returnValue = javacall_media_set_time(pKniInfo->pNativeHandle, (int)ms);
+        });
     } else {
         REPORT_ERROR(LC_MMAPI, "nSetMediaTime fail\n");
     }
@@ -313,7 +334,9 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetDuration) {
 
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        returnValue = javacall_media_get_duration(pKniInfo->pNativeHandle);
+        CVMD_gcSafeExec(_ee, {
+            returnValue = javacall_media_get_duration(pKniInfo->pNativeHandle);
+        });
     }
 UnlockAudioMutex();            
 
@@ -334,9 +357,11 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nPause) {
 
 LockAudioMutex();            
     if (pKniInfo && JAVACALL_TRUE == jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
-        if (JAVACALL_OK == javacall_media_pause(pKniInfo->pNativeHandle)) {
-            returnValue = KNI_TRUE;
-        }
+        CVMD_gcSafeExec(_ee, {
+            if (JAVACALL_OK == javacall_media_pause(pKniInfo->pNativeHandle)) {
+                returnValue = KNI_TRUE;
+            }
+        });
     } else {
         REPORT_ERROR(LC_MMAPI, "nPause fail cause is not in playing\n");    
     }
@@ -357,9 +382,11 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nResume) {
 
 LockAudioMutex();            
     if (pKniInfo && JAVACALL_TRUE == jmmpCheckCondition(pKniInfo, CHECK_ISPLAYING)) {
-        if (JAVACALL_OK == javacall_media_resume(pKniInfo->pNativeHandle)) {
-            returnValue = KNI_TRUE;
-        }    
+        CVMD_gcSafeExec(_ee, {
+            if (JAVACALL_OK == javacall_media_resume(pKniInfo->pNativeHandle)) {
+                returnValue = KNI_TRUE;
+            }
+        });
     } else {
         REPORT_ERROR(LC_MMAPI, "nResume fail cause is not in playing\n");    
     }
@@ -377,10 +404,12 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nIsNeedBuffering) {
 
 LockAudioMutex();            
     /* Is buffering handled by device side? */
-    if (pKniInfo && pKniInfo->pNativeHandle &&
-		JAVACALL_OK == javacall_media_protocol_handled_by_device(pKniInfo->pNativeHandle)) {
-        returnValue = KNI_FALSE;
-    }
+    CVMD_gcSafeExec(_ee, {
+        if (pKniInfo && pKniInfo->pNativeHandle &&
+            JAVACALL_OK == javacall_media_protocol_handled_by_device(pKniInfo->pNativeHandle)) {
+            returnValue = KNI_FALSE;
+        }
+    });
 UnlockAudioMutex();            
 
     KNI_ReturnBoolean(returnValue);
@@ -403,10 +432,12 @@ LockAudioMutex();
     if (pKniInfo && pKniInfo->pNativeHandle) {
         if (1 != pKniInfo->isForeground) {
             pKniInfo->isForeground = 1;
-            if (JAVACALL_SUCCEEDED(javacall_media_to_foreground(
-                pKniInfo->pNativeHandle, options))) {
-                returnValue = KNI_TRUE;
-            }
+            CVMD_gcSafeExec(_ee, {
+                if (JAVACALL_SUCCEEDED(javacall_media_to_foreground(
+                    pKniInfo->pNativeHandle, options))) {
+                    returnValue = KNI_TRUE;
+                }
+            });
         } else {
             returnValue = KNI_TRUE;
         }
@@ -431,10 +462,12 @@ LockAudioMutex();
     if (pKniInfo && pKniInfo->pNativeHandle) {
         if (0 != pKniInfo->isForeground) {
             pKniInfo->isForeground = 0;
-            if (JAVACALL_SUCCEEDED(javacall_media_to_background(
-                pKniInfo->pNativeHandle, options))) {
-                returnValue = KNI_TRUE;
-            }
+            CVMD_gcSafeExec(_ee, {
+                if (JAVACALL_SUCCEEDED(javacall_media_to_background(
+                    pKniInfo->pNativeHandle, options))) {
+                    returnValue = KNI_TRUE;
+                }
+            });
         } else {
             returnValue = KNI_TRUE;
         }
@@ -483,20 +516,22 @@ KNIDECL(com_sun_mmedia_DirectPlayer_finalize) {
                        record_instance);
 LockAudioMutex();            
         if (KNI_FALSE == KNI_IsNullHandle(record_instance)) {
-            MMP_DEBUG_STR1("stop recording by finalizer recordState=%d\n", pKniInfo->recordState);
-            switch(pKniInfo->recordState) {
-            case RECORD_START:
-                javacall_media_stop_recording(pKniInfo->pNativeHandle);
-                /* NOTE - Intentionally omit break */
-            case RECORD_STOP:
-                javacall_media_reset_recording(pKniInfo->pNativeHandle);
-                /* NOTE - Intentionally omit break */
-            case RECORD_RESET:
-            case RECORD_COMMIT:
-            case RECORD_INIT:
-                javacall_media_close_recording(pKniInfo->pNativeHandle);
-                break;
-            }
+            CVMD_gcSafeExec(_ee, {
+                MMP_DEBUG_STR1("stop recording by finalizer recordState=%d\n", pKniInfo->recordState);
+                switch(pKniInfo->recordState) {
+                case RECORD_START:
+                    javacall_media_stop_recording(pKniInfo->pNativeHandle);
+                    /* NOTE - Intentionally omit break */
+                case RECORD_STOP:
+                    javacall_media_reset_recording(pKniInfo->pNativeHandle);
+                    /* NOTE - Intentionally omit break */
+                case RECORD_RESET:
+                case RECORD_COMMIT:
+                case RECORD_INIT:
+                    javacall_media_close_recording(pKniInfo->pNativeHandle);
+                    break;
+                }
+            });
             pKniInfo->recordState = RECORD_CLOSE;
             //KNI_SetBooleanField(record_instance, KNI_GetFieldID(clazz, "recording", "Z"), KNI_FALSE);
         }
@@ -504,15 +539,19 @@ UnlockAudioMutex();
 #endif
         /* Stop playing, delete cache, release device and terminate library */ 
 LockAudioMutex();            
-        if (STARTED == state) {
-            MMP_DEBUG_STR("stopped by finalizer\n");
-            javacall_media_stop(pKniInfo->pNativeHandle);
-            javacall_media_clear_buffer(pKniInfo->pNativeHandle);
-        }
-        javacall_media_release_device(pKniInfo->pNativeHandle);
-        javacall_media_close(pKniInfo->pNativeHandle);
+        CVMD_gcSafeExec(_ee, {
+            if (STARTED == state) {
+                MMP_DEBUG_STR("stopped by finalizer\n");
+                javacall_media_stop(pKniInfo->pNativeHandle);
+                javacall_media_clear_buffer(pKniInfo->pNativeHandle);
+            }
+            javacall_media_release_device(pKniInfo->pNativeHandle);
+            javacall_media_close(pKniInfo->pNativeHandle);
+        });
 UnlockAudioMutex();            
-        javacall_media_destroy(pKniInfo->pNativeHandle);
+        CVMD_gcSafeExec(_ee, {
+            javacall_media_destroy(pKniInfo->pNativeHandle);
+        });
 
         KNI_SetIntField(instance, KNI_GetFieldID(clazz, "hNative", "I"), 0);
     }
@@ -524,4 +563,90 @@ UnlockAudioMutex();
     KNI_EndHandles();
     KNI_ReturnVoid();
 }
+
+#ifdef ENABLE_CDC
+static char print_buf_[100000];
+static int print_buf_i_ = 0;
+static int print_inited_ = 0;
+static CVMMutex print_mutex_;
+static CVMCondVar print_condvar_;
+
+KNIEXPORT KNI_RETURNTYPE_OBJECT
+KNIDECL(com_sun_mmedia_DirectPlayer_nGetDebugLines) {
+
+    if (!print_inited_) {
+        CVMmutexInit(&print_mutex_);
+        CVMcondvarInit(&print_condvar_, &print_mutex_);
+        print_inited_ = 1;
+    }
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(returnValueHandle);
+    CVMmutexLock(&print_mutex_);
+    if (print_buf_i_ == 0) {
+        CVMD_gcSafeExec(_ee, {
+            CVMcondvarWait(&print_condvar_, &print_mutex_, 0);
+        });
+    }
+    if (print_buf_i_ > 0) {
+        SNI_NewArray(SNI_BYTE_ARRAY, (long)print_buf_i_, returnValueHandle);
+    
+        if (KNI_IsNullHandle(returnValueHandle)) {
+            KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+        } else {
+            KNI_SetRawArrayRegion(returnValueHandle, 0, (long)print_buf_i_, (jbyte*)print_buf_);
+        }
+        print_buf_i_ = 0;
+    }
+    CVMmutexUnlock(&print_mutex_);
+    KNI_EndHandlesAndReturnObject(returnValueHandle);
+}
+
+
+static int write_to_log(const void *buf, CVMUint32 nBytes) {
+    static char full_buf_msg_[] = "<<<\n**** Static buffer is FULL\n";
+
+    if (!print_inited_) {
+        CVMmutexInit(&print_mutex_);
+        CVMcondvarInit(&print_condvar_, &print_mutex_);
+        print_inited_ = 1;
+    }
+    CVMmutexLock(&print_mutex_);
+    if (print_buf_i_ + nBytes < sizeof print_buf_ - 1) {
+        memcpy(print_buf_ + print_buf_i_, buf, nBytes);
+        print_buf_i_ += nBytes;
+        print_buf_[print_buf_i_++] = 0;
+    } else {
+        char *p = print_buf_ + sizeof print_buf_ - sizeof full_buf_msg_ - 1 - 1;
+        memcpy(p, full_buf_msg_, sizeof full_buf_msg_);
+        print_buf_i_ = (p - print_buf_) + sizeof full_buf_msg_;
+    }
+    CVMcondvarNotifyAll(&print_condvar_);
+    CVMmutexUnlock(&print_mutex_);
+}
+
+int perror(const char *p) {
+    return write_to_log(p, strlen(p));
+}
+int fprintf(FILE *fp, const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    if (fp == stdout || fp == stderr) {
+        char buf[2048];
+        vsprintf(buf, fmt, args);
+        va_end(args);
+        return write_to_log(buf, strlen(buf));
+    } else {
+        fprintf(stderr, "Bad descriptor\n");
+    }
+    return 0;
+}
+int printf(const char *fmt, ...) {
+    va_list args;
+    char buf[2048];
+    va_start(args, fmt);
+    vsprintf(buf, fmt, args);
+    va_end(args);
+    return write_to_log(buf, strlen(buf));
+}
+#endif
 
