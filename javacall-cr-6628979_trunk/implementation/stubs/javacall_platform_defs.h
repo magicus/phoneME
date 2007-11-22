@@ -66,6 +66,31 @@ typedef __int64 javacall_int64;  // This type shall be redefined for non MSC com
  */
 #define JAVACALL_MAX_ILLEGAL_FILE_NAME_CHARS  256
 
+/**
+ * @def JAVACALL_MAX_ROOTS_LIST_LENGTH
+ * Maximal length of a list of file system roots
+ */
+#define JAVACALL_MAX_ROOTS_LIST_LENGTH  1024
+
+/**
+ * @def JAVACALL_MAX_ROOT_PATH_LENGTH
+ * Maximal length of a file system root path
+ */
+#define JAVACALL_MAX_ROOT_PATH_LENGTH   256
+
+/**
+ * @def JAVACALL_MAX_LOCALIZED_ROOTS_LIST_LENGTH
+ * Maximal length of a list of localized names of file system roots
+ */
+#define JAVACALL_MAX_LOCALIZED_ROOTS_LIST_LENGTH  1024
+
+/**
+ * @def JAVACALL_MAX_LOCALIZED_DIR_NAME_LENGTH
+ * Maximal length of a localized name of a special directory
+ */
+#define JAVACALL_MAX_LOCALIZED_DIR_NAME_LENGTH    512
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -5,22 +5,22 @@
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation.
+ * 2 only, as published by the Free Software Foundation. 
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt).
+ * included at /legal/license.txt). 
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA
+ * 02110-1301 USA 
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions.
+ * information or have any questions. 
  */ 
 #ifndef __JAVACALL_PLATFORM_DEFINE_H_
 #define __JAVACALL_PLATFORM_DEFINE_H_
@@ -49,29 +49,40 @@ extern "C" {
 typedef unsigned short javacall_utf16;
 
 /**
+ * @typedef javacall_uint8
+ * @brief 8 bit unsigned interger type
+ */
+typedef unsigned char javacall_uint8;
+
+/**
+ * @typedef javacall_uint16
+ * @brief 16 bit unsigned interger type
+ */
+typedef unsigned short javacall_uint16;
+
+/**
+ * @typedef javacall_uint32
+ * @brief 32 bit unsigned interger type
+ */
+typedef unsigned long javacall_uint32;
+
+/**
  * @typedef javacall_int32
  * @brief 32 bit interger type
  */
-typedef __int32 javacall_int32;
+typedef signed long javacall_int32;
 
 /**
  * @typedef javacall_int64
  * @brief 64 bit interger type
  */
-typedef __int64 javacall_int64;
+typedef long long javacall_int64;
 
 /**
- * @typedef javacall_filename_string
- * @brief general file name string type, this type is null terminated string
+ * @def JAVACALL_MAX_EVENT_SIZE
+ * Maximal length of event data
  */
-typedef javacall_utf16* javacall_filename_string;
-
-/**
- * @typedef javacall_const_filename_string
- * @brief general constant file name string type, this type is constant null
- * terminated string
- */
-typedef const javacall_utf16* javacall_const_filename_string;
+#define JAVACALL_MAX_EVENT_SIZE        512
 
 /**
  * @def JAVACALL_MAX_FILE_NAME_LENGTH
@@ -89,7 +100,7 @@ typedef const javacall_utf16* javacall_const_filename_string;
  * @def JAVACALL_MAX_ROOTS_LIST_LENGTH
  * Maximal length of a list of file system roots
  */
-#define JAVACALL_MAX_ROOTS_LIST_LENGTH  1024
+#define JAVACALL_MAX_ROOTS_LIST_LENGTH  8192
 
 /**
  * @def JAVACALL_MAX_ROOT_PATH_LENGTH
@@ -101,7 +112,7 @@ typedef const javacall_utf16* javacall_const_filename_string;
  * @def JAVACALL_MAX_LOCALIZED_ROOTS_LIST_LENGTH
  * Maximal length of a list of localized names of file system roots
  */
-#define JAVACALL_MAX_LOCALIZED_ROOTS_LIST_LENGTH  1024
+#define JAVACALL_MAX_LOCALIZED_ROOTS_LIST_LENGTH  8192
 
 /**
  * @def JAVACALL_MAX_LOCALIZED_DIR_NAME_LENGTH
