@@ -30,6 +30,11 @@
 extern "C" { 
 #endif /* __cplusplus */
 
+#ifdef CVMdebugPrintf
+#undef CVMdebugPrintf
+#endif
+#define CVMdebugPrintf(x_) CVMconsolePrintf x_
+
 #define REPORT_INFO(ch, msg) \
     CVMdebugPrintf(("REPORT: <channel:%d> ", ch)); \
     CVMdebugPrintf((msg)); \
