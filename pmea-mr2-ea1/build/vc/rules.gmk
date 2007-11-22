@@ -103,6 +103,7 @@ $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
 
 ifeq ($(USE_JSR_120),true)
 
+ifeq ($(USE_CDC_EMULATION),)
 LINK=link.exe
 LINK_FLAGS=/nologo /dll /subsystem:windowsce,5.01 /NODEFAULTLIB:"oldnames.lib"
 LINK_LIBS=aygshell.lib cemapi.lib coredll.lib ole32.lib oleaut32.lib uuid.lib
@@ -127,6 +128,9 @@ $(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll: $(JSMS_SOURCES)
             /def:$(JSMS_DEF) \
             /OUT:`$(call fixcygpath, $(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll)` \
             $(LINK_LIBS) /entry:DllMain
+else
+$(JAVACALL_OUTPUT_LIB_DIR)/jsms.dll:
+endif
 
 else
 
