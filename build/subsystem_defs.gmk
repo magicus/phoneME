@@ -32,6 +32,12 @@
 #
 SUBSYSTEMS += jsr_172
 
+ifneq ($(TARGET_VM), cldc_vm)
+include $(JSR_172_DIR)/build/cdc_share/subsystem_defs.gmk
+else
+include $(JSR_172_DIR)/build/cldc_application/subsystem.gmk
+endif
+
 # Javadoc source path
 SUBSYSTEM_JSR172_SOURCEPATH += $(JSR_172_DIR)/src/ri/jaxp$(PATHSEP)$(JSR_172_DIR)/src/ri/jaxrpc$(PATHSEP)$(JSR_172_DIR)/src/ri/sg
 
