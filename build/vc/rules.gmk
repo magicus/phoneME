@@ -1,3 +1,4 @@
+#   
 #
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -84,8 +85,7 @@ else
 ARFLAGS=-nologo -MACHINE:X86
 endif
 
-LOCAL_CFLAGS_$(BUILD) += $(PLATFORM_FLAGS)
-OUTPUT_OPTION=-Fo`$(call fixcygpath, $@)` \
+LOCAL_CFLAGS_$(BUILD) += $(PLATFORM_FLAGS)OUTPUT_OPTION=-Fo`$(call fixcygpath, $@)` \
               -Fp$(JAVACALL_OUTPUT_OBJ_DIR)/javacall \
               -Fd$(JAVACALL_OUTPUT_OBJ_DIR)/javacall
 
@@ -99,7 +99,7 @@ $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.cpp
 
 $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
 	@echo -n "...compiling: "
-	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`
+	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
 
 $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(PORTING_OBJECTS)) \

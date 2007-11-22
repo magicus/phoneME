@@ -41,9 +41,6 @@ MIDP_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
 
 USE_COMMON=true
 COMMON_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/win32
-# Implementation of javacall events is different for cdc and cldc
-PORTING_SOURCE+=events.c
-VPATH+=$(JAVACALL_DIR)/implementation/win32_x86_cldc/common
 
 JSR_120_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
 
@@ -129,12 +126,16 @@ endif # ifeq ($(ENABLE_HIDDEN_DEP_FEATURES),true)
 
 #Porting objects that are added to PORTING_OBJECTS by default rules can be excluded
 #from the javacall library by setting FILTER_OBJECTS variable
+
+# Implementation of javacall events is different for cdc and cldc
+VPATH+=$(JAVACALL_DIR)/implementation/win32_x86_cldc/common
+
 ifdef SUBSYSTEM_EVENTS_MODULES
    ifeq ($(SUBSYSTEM_EVENTS_MODULES), slave_mode)
-      FILTER_OBJECTS=events.obj
+      PORTING_SOURCE+=events_slave_mode.c
    else
-      FILTER_OBJECTS=events_slave_mode.obj
+      PORTING_SOURCE+=events.c
    endif
 else
-   FILTER_OBJECTS=events_slave_mode.obj
+   PORTING_SOURCE+=events.c
 endif
