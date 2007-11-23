@@ -63,6 +63,8 @@ ams_resources:: ota_resources
 INT_INPUT_OTA_IMAGES_DIR = \
     $(OTA_DIR)/classes/com/sun/midp/installer/resources
 
+ifeq ($(USE_FILE_SYSTEM), true)
+
 ifeq ($(USE_RAW_AMS_IMAGES), false)
 ota_resources: $(STORAGEDIR)
 	-@(cp -f $(INT_INPUT_OTA_IMAGES_DIR)/*.png \
@@ -72,4 +74,10 @@ ota_resources: $(STORAGEDIR) $(IMAGE2RAW_JAR_FILE) \
 	       $(SUBSYSTEM_CONFIGURATION_MERGED_FILE)
 	@echo " ... converting OTA images to raw format" $(LOG)
 	@$(call convert_images_to_raw,$(INT_INPUT_OTA_IMAGES_DIR))
+endif
+
+else
+
+ota_resources: 
+
 endif

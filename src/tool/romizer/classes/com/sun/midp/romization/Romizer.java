@@ -40,6 +40,12 @@ import java.util.*;
  * Main tool class
  */
 public class Romizer {
+    /**
+     * A number of times that the hash table in C will be larger
+     * then the number of romized resources.
+     */
+    private static final int hashSizeCoefficient = 4;
+
     /** Print usage info and exit */
     private static boolean printHelp = false;
 
@@ -110,7 +116,7 @@ public class Romizer {
     }
 
     /**
-     * Prints usage information
+     * Prints usage information.
      */
     private static void showUsage() {
         /**
@@ -127,8 +133,9 @@ public class Romizer {
     }
 
     /**
+     * Makes a resource name from the given file name.
      *
-     * @param filePath
+     * @param filePath name of file containing the resource that will be romized
      */
     private static String getResourceNameFromPath(String filePath) {
         int start = filePath.lastIndexOf(File.separatorChar);
@@ -148,6 +155,9 @@ public class Romizer {
 
     /**
      * Romizing routine.
+     *
+     * @throws IOException if the input file can't be read
+     * @throws FileNotFoundException if the input file was not found   
      */
     private void doRomization() throws IOException, FileNotFoundException {
         // output generated C file with images
@@ -158,7 +168,7 @@ public class Romizer {
         writeCopyright();
 
         // output C representation of a binary array
-        hashTableSizeInC = inputFileNames.size() * 2; //10;
+        hashTableSizeInC = inputFileNames.size() * hashSizeCoefficient;
         
         for (int i = 0; i < inputFileNames.size(); i++) {
             String fileName = (String)inputFileNames.elementAt(i);
@@ -173,6 +183,10 @@ public class Romizer {
             String resourceName = getResourceNameFromPath(fileName);
             Integer hashValue = new Integer(
                 (resourceName.hashCode() & 0x7fffffff) % hashTableSizeInC);
+
+            // System.out.println(">>> hash(" + resourceName + ") = " +
+            //                    hashValue);
+
             List l = (List)resourceHashTable.get(hashValue);
 
             if (l == null) {
@@ -194,7 +208,11 @@ public class Romizer {
     }
 
     /**
+     * Reads the contents of the given file and writes it
+     * to the given output stream.
      *
+     * @param filename name of the file to read
+     * @param out output stream where to write the file's contents 
      */
     private void readFileToStream(String fileName, OutputStream out)
             throws IOException, FileNotFoundException {
@@ -208,7 +226,11 @@ public class Romizer {
     /************* IMPL_NOTE: to be moved into a shared package *************/
 
     /**
+     * Generates a C code defining a byte array having the given name
+     * and containing the given data.
      *
+     * @param data data that will be placed into the array
+     * @param arrayName name of the array in the output C file
      */
     void writeByteArrayAsCArray(byte[] data, String arrayName) {
         pl("/** Romized " + arrayName + " */");
@@ -222,11 +244,16 @@ public class Romizer {
     }
 
     /**
+     * Generates a C code defining a method providing an access
+     * to the romized resources by their names:
      *
+     * int ams_get_resource(const unsigned char* pName,
+     *                      const unsigned char **ppBufPtr);
      */
-    void writeGetResourceMethod() {
+    private void writeGetResourceMethod() {
         pl("");
         pl("#include <string.h>");
+        pl("#include <kni.h>");
         pl("");
 
         pl("typedef struct _RESOURCES_LIST {");
@@ -271,15 +298,22 @@ public class Romizer {
         pl("static const RESOURCES_LIST* resourceHashTable[" +
            hashTableSizeInC + "] = {");
 
-        resNum = resourceHashTable.size();
-        keys = resourceHashTable.keys();
-
         for (i = 0; i < hashTableSizeInC; i++) {
             List l = (List)resourceHashTable.get(new Integer(i));
             if (l != null) {
-                l = (List)resourceHashTable.get(keys.nextElement());
-                pl("    &resource" + resNum + "_" + l.size() + ",");
-                resNum--;
+                // find the number of key with value i from the end
+                // this code runs on desktop so it's not optimized
+                resNum = resourceHashTable.size();
+                keys = resourceHashTable.keys();
+                while (keys.hasMoreElements()) {
+                    if (((Integer)keys.nextElement()).intValue() == i) {
+                        break;
+                    }
+                    resNum--;
+                }
+
+                pl("    &resource" + resNum + "_" + l.size() + ", " +
+                   "/* " + l.get(l.size() - 1) + " */");
             } else {
                 pl("    NULL,");
             }
@@ -298,7 +332,8 @@ public class Romizer {
         pl(" * @return a hash value");
         pl(" */");
         pl("static int getHash(const char* str) {");
-        pl("    int i, len, res = 0;");
+        pl("    int i, len;");
+        pl("    jint res = 0;");
         pl("");
         pl("    if (str == NULL) {");
         pl("        return 0;");
@@ -311,8 +346,10 @@ public class Romizer {
         pl("      res = 31 * res + chr;");
         pl("    }");
         pl("");
-        pl("    return res;");
+        pl("    return (int)((res & 0x7fffffff) % " + hashTableSizeInC + ");");
         pl("};");
+
+        pl("#include <stdio.h>");
 
         pl("");
         pl("/**");
@@ -324,14 +361,17 @@ public class Romizer {
         pl(" * @return -1 if failed, otherwise the " +
            "size of the resource");
         pl(" */");
-        pl("int ams_get_resource(const unsigned char* name, " +
-           "const unsigned char **bufPtr) {");
-        pl("    int hash = getHash(name);");
+        pl("int ams_get_resource(const unsigned char* pName, " +
+           "const unsigned char **ppBufPtr) {");
+        pl("    int hash = getHash(pName);");
         pl("    const RESOURCES_LIST* pResource = resourceHashTable[hash];");
+
+        // pl("    printf(\"hash(%s) = %d\\n\", pName, hash);");
+        
         pl("");
         pl("    while (pResource) {");
-        pl("        if (!strcmp(pResource->pResourceName, name)) {");
-        pl("            *bufPtr = pResource->pData;");
+        pl("        if (!strcmp(pResource->pResourceName, pName)) {");
+        pl("            *ppBufPtr = pResource->pData;");
         pl("            return pResource->dataSize;");
         pl("        }");
         pl("        pResource = pResource->pNext;");
