@@ -39,12 +39,15 @@ import java.util.*;
 /**
  * Main tool class
  */
-public class Romizer {
+public class Romizer extends RomUtil {
     /**
      * A number of times that the hash table in C will be larger
      * then the number of romized resources.
      */
     private static final int hashSizeCoefficient = 4;
+
+    /** Format of images: big- or little-endian. */
+    private static boolean isBigEndian = false;
 
     /** Print usage info and exit */
     private static boolean printHelp = false;
@@ -63,9 +66,6 @@ public class Romizer {
 
     /** Size of the resource hash table in C file. */
     private static int hashTableSizeInC;
-
-    /** Character output file writer */
-    PrintWriter writer = null;
 
     /**
      * Main method
@@ -108,9 +108,19 @@ public class Romizer {
                          !((i+1 == args.length) || args[i+1].startsWith("-")));
             } else if (arg.equals("-outc")) {
                 outputFileName = args[++i];
+            } else if (arg.equals("-endian")) {
+                String endian = args[++i];
+                if ("little".equals(endian)) {
+                    isBigEndian = false;
+                } else if ("big".equals(endian)) {
+                    isBigEndian = true;
+                } else {
+                    throw new IllegalArgumentException("invalid endian: \"" +
+                        endian + "\"");
+                }
             } else {
-                throw new IllegalArgumentException("invalid option \""
-                        + args[i] + "\"");
+                throw new IllegalArgumentException("invalid option \"" +
+                        args[i] + "\"");
             }
         }
     }
@@ -121,14 +131,16 @@ public class Romizer {
     private static void showUsage() {
         /**
          * Following options are recognized:
-         * -in:         input file name.
+         * -in:         Input file name.
          * -outc:       Output C file. If empty, output will be to stdout.
+         * -endian:     Format of images. Little-endian by default.
          * -help:       Print usage information.
          */
         System.err.println("Usage: java -jar "
             + "com.sun.midp.romization.Romizer "
             + "-in <inputFile> "
             + "-outc <outputCFile> "
+            + "[-endian <big|little>] "
             + "[-help]");
     }
 
@@ -176,9 +188,8 @@ public class Romizer {
 
             readFileToStream(fileName, out);
 
-            // IMPL_NOTE: CHANGE IT !!!
             BinaryOutputStream outputStream = new BinaryOutputStream(out,
-                false);
+                isBigEndian);
 
             String resourceName = getResourceNameFromPath(fileName);
             Integer hashValue = new Integer(
@@ -211,36 +222,16 @@ public class Romizer {
      * Reads the contents of the given file and writes it
      * to the given output stream.
      *
-     * @param filename name of the file to read
+     * @param fileName name of the file to read
      * @param out output stream where to write the file's contents 
      */
     private void readFileToStream(String fileName, OutputStream out)
-            throws IOException, FileNotFoundException {
+            throws IOException {
         FileInputStream in = new FileInputStream(fileName);
         byte[] data = new byte[in.available()];
         in.read(data);
         out.write(data);
         in.close();
-    }
-
-    /************* IMPL_NOTE: to be moved into a shared package *************/
-
-    /**
-     * Generates a C code defining a byte array having the given name
-     * and containing the given data.
-     *
-     * @param data data that will be placed into the array
-     * @param arrayName name of the array in the output C file
-     */
-    void writeByteArrayAsCArray(byte[] data, String arrayName) {
-        pl("/** Romized " + arrayName + " */");
-        pl("static const unsigned char " + arrayName + "[] = {");
-        if (data != null && data.length > 0) {
-            new RomizedByteArray(data).printDataArray(writer, "        ", 11);
-        } else {
-            pl("    0");
-        }
-        pl("};");
     }
 
     /**
@@ -349,7 +340,7 @@ public class Romizer {
         pl("    return (int)((res & 0x7fffffff) % " + hashTableSizeInC + ");");
         pl("};");
 
-        pl("#include <stdio.h>");
+        // pl("#include <stdio.h>");
 
         pl("");
         pl("/**");
@@ -379,171 +370,5 @@ public class Romizer {
         pl("");
         pl("    return -1;");
         pl("}");
-    }
-
-    /**
-     * Short-hand for printint a line into the output file
-     *
-     * @param s line to print
-     */
-    void pl(String s) {
-        writer.println(s);
-    }
-
-    /**
-     *  Writes copyright banner.
-     */
-    private void writeCopyright() {
-        pl("/**");
-        pl(" * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.");
-        pl(" * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER");
-        pl(" * ");
-        pl(" * This program is free software; you can redistribute it and/or");
-        pl(" * modify it under the terms of the GNU General Public License version");
-        pl(" * 2 only, as published by the Free Software Foundation.");
-        pl(" * ");
-        pl(" * This program is distributed in the hope that it will be useful, but");
-        pl(" * WITHOUT ANY WARRANTY; without even the implied warranty of");
-        pl(" * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU");
-        pl(" * General Public License version 2 for more details (a copy is");
-        pl(" * included at /legal/license.txt).");
-        pl(" * ");
-        pl(" * You should have received a copy of the GNU General Public License");
-        pl(" * version 2 along with this work; if not, write to the Free Software");
-        pl(" * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA");
-        pl(" * 02110-1301 USA");
-        pl(" * ");
-        pl(" * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa");
-        pl(" * Clara, CA 95054 or visit www.sun.com if you need additional");
-        pl(" * information or have any questions.");
-        pl(" * ");
-        pl(" * NOTE: DO NOT EDIT. THIS FILE IS GENERATED. If you want to ");
-        pl(" * edit it, you need to modify the corresponding XML files.");
-        pl(" */");
-    }
-}
-
-
-/************* IMPL_NOTE: to be moved into a shared package *************/
-
-/**
- * Represents romized byte array
- */
-class RomizedByteArray {
-    /** romized binary data */
-    byte[] data;
-
-    /**
-     * Constructor
-     *
-     * @param dataBytes romized image data
-     */
-    RomizedByteArray(byte dataBytes[]) {
-        data = dataBytes;
-    }
-
-    /**
-     * Prints romized image data as C array
-     *
-     * @param writer where to print
-     * @param indent indent string for each row
-     * @param maxColumns max number of columns
-     */
-    void printDataArray(PrintWriter writer, String indent, int maxColumns) {
-        int len = data.length;
-
-        writer.print(indent);
-        for (int i = 0; i < len; i++) {
-            writer.print(toHex(data[i]));
-            if (i != len - 1) {
-                writer.print(", ");
-
-                if ((i > 0) && ((i+1) % maxColumns == 0)) {
-                    writer.println("");
-                    writer.print(indent);
-                }
-            }
-        }
-    }
-
-    /**
-     * Converts byte to a hex string
-     *
-     * @param b byte value to convert
-     * @return hex representation of byte
-     */
-    private static String toHex(byte b) {
-        Integer I = new Integer((((int)b) << 24) >>> 24);
-        int i = I.intValue();
-
-        if (i < (byte)16) {
-            return "0x0" + Integer.toString(i, 16);
-        } else {
-            return "0x" + Integer.toString(i, 16);
-        }
-    }
-}
-
-/**
- * Binary output stream capable of writing data
- * in big/little endian format.
- */
-final class BinaryOutputStream {
-    /** Underlying stream for writing bytes into */
-    private DataOutputStream outputStream = null;
-
-    /** true for big endian format, false for little */
-    private boolean isBigEndian = false;
-
-    /**
-     * Constructor
-     *
-     * @param out underlying output stream for writing bytes into
-     * @param bigEndian true for big endian format, false for little
-     */
-    BinaryOutputStream(OutputStream out, boolean bigEndian) {
-        outputStream = new DataOutputStream(out);
-        isBigEndian = bigEndian;
-    }
-
-    /**
-     * Writes byte value into stream
-     *
-     * @param value byte value to write
-     */
-    public void writeByte(int value)
-        throws java.io.IOException {
-
-        outputStream.writeByte(value);
-    }
-
-    /**
-     * Writes integer value into stream
-     *
-     * @param value integer value to write
-     */
-    public void writeInt(int value)
-        throws java.io.IOException {
-
-        if (isBigEndian) {
-            outputStream.writeByte((value >> 24) & 0xFF);
-            outputStream.writeByte((value >> 16) & 0xFF);
-            outputStream.writeByte((value >> 8) & 0xFF);
-            outputStream.writeByte(value & 0xFF);
-        } else {
-            outputStream.writeByte(value & 0xFF);
-            outputStream.writeByte((value >> 8) & 0xFF);
-            outputStream.writeByte((value >> 16) & 0xFF);
-            outputStream.writeByte((value >> 24) & 0xFF);
-        }
-    }
-
-    /**
-     * Closes stream
-     */
-    public void close()
-        throws java.io.IOException {
-
-        outputStream.close();
     }
 }

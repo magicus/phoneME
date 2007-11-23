@@ -45,6 +45,7 @@ import java.awt.image.*;
 import java.awt.*;
 import com.sun.midp.imageutil.*;
 import java.lang.reflect.*;
+import com.sun.midp.romization.*;
 import com.sun.midp.chameleon.skins.resources.*;
 
 /**
@@ -269,7 +270,7 @@ abstract class SkinPropertyBase {
      *
      * @param out where to print entries
      */
-    abstract void outputValue(BinaryOutputStream out) 
+    abstract void outputValue(BinaryOutputStreamExt out)
         throws java.io.IOException;
 
     /**
@@ -559,7 +560,7 @@ class IntSkinProperty extends SkinPropertyBase {
      *
      * @param out where to print entries
      */
-    void outputValue(BinaryOutputStream out) 
+    void outputValue(BinaryOutputStreamExt out)
         throws java.io.IOException {
 
         out.writeInt(value);
@@ -662,7 +663,7 @@ class IntSeqSkinProperty extends SkinPropertyBase {
      *
      * @param out where to print entries
      */
-    void outputValue(BinaryOutputStream out) 
+    void outputValue(BinaryOutputStreamExt out)
         throws java.io.IOException {
 
         // out sequence length
@@ -728,7 +729,7 @@ class StringSkinProperty extends SkinPropertyBase {
      *
      * @param out where to print entries
      */
-    void outputValue(BinaryOutputStream out) 
+    void outputValue(BinaryOutputStreamExt out)
         throws java.io.IOException {
 
         out.writeString(value);
@@ -795,7 +796,7 @@ class FontSkinProperty extends SkinPropertyBase {
      *
      * @param out where to print entries
      */
-    void outputValue(BinaryOutputStream out) 
+    void outputValue(BinaryOutputStreamExt out)
         throws java.io.IOException {
 
         out.writeInt(value);
@@ -891,7 +892,7 @@ class ImageSkinProperty extends SkinPropertyBase {
      *
      * @param out where to print entries
      */
-    void outputValue(BinaryOutputStream out) 
+    void outputValue(BinaryOutputStreamExt out)
         throws java.io.IOException {
 
         out.writeString(value);
@@ -1031,7 +1032,7 @@ class CompositeImageSkinProperty extends SkinPropertyBase {
      *
      * @param out where to print entries
      */
-    void outputValue(BinaryOutputStream out) 
+    void outputValue(BinaryOutputStreamExt out)
         throws java.io.IOException {
 
         // output pieces file names
@@ -1058,64 +1059,6 @@ final class RomizedImage extends RomizedByteArray {
         super(data);
         this.imageIndex = index;
     }
-}
-
-/**
- * Represents romized byte array
- */
-class RomizedByteArray {
-    /** romized binary data */
-    byte[] data;
-
-    /**
-     * Constructor
-     *
-     * @param dataBytes romized image data
-     */
-    RomizedByteArray(byte dataBytes[]) {
-        data = dataBytes;
-    }
-
-    /**
-     * Prints romized image data as C array
-     *
-     * @param writer where to print
-     * @param indent indent string for each row
-     * @param maxColumns max number of columns
-     */
-    void printDataArray(PrintWriter writer, String indent, int maxColumns) {
-        int len = data.length;
-
-        writer.print(indent);
-        for (int i = 0; i < len; i++) {
-            writer.print(toHex(data[i]));
-            if (i != len - 1) {
-                writer.print(", ");
-            
-                if ((i > 0) && ((i+1) % maxColumns == 0)) {
-                    writer.println("");
-                    writer.print(indent);
-                }
-            }
-        }
-    }
-
-    /**
-     * Converts byte to a hex string
-     *
-     * @param b byte value to convert
-     * @return hex representation of byte
-     */
-    private static String toHex(byte b) {
-        Integer I = new Integer((((int)b) << 24) >>> 24);
-        int i = I.intValue();
-
-        if (i < (byte)16) {
-            return "0x0" + Integer.toString(i, 16);
-        } else {
-            return "0x" + Integer.toString(i, 16);
-        }
-    }     
 }
 
 /**
@@ -1206,54 +1149,15 @@ final class RomizedImageFactory {
  * Binary output stream capable of writing data 
  * in big/little endian format.
  */
-final class BinaryOutputStream {
-    /** Underlying stream for writing bytes into */ 
-    private DataOutputStream outputStream = null;
-
-    /** true for big endian format, false for little */
-    private boolean isBigEndian = false;
-
+final class BinaryOutputStreamExt extends BinaryOutputStream {
     /**
      * Constructor
      *
      * @param out underlying output stream for writing bytes into
      * @param isBigEndian true for big endian format, false for little
      */
-    BinaryOutputStream(OutputStream out, boolean isBigEndian) {
-        this.outputStream = new DataOutputStream(out);
-        this.isBigEndian = isBigEndian;
-    }
-
-    /**
-     * Writes byte value into stream
-     *
-     * @param value byte value to write
-     */
-    public void writeByte(int value) 
-        throws java.io.IOException {
-
-        outputStream.writeByte(value);
-    }
-
-    /**
-     * Writes integer value into stream
-     *
-     * @param value integer value to write
-     */
-    public void writeInt(int value) 
-        throws java.io.IOException {
-
-        if (isBigEndian) {
-            outputStream.writeByte((value >> 24) & 0xFF);
-            outputStream.writeByte((value >> 16) & 0xFF);
-            outputStream.writeByte((value >> 8) & 0xFF);
-            outputStream.writeByte(value & 0xFF);
-        } else { 
-            outputStream.writeByte(value & 0xFF);
-            outputStream.writeByte((value >> 8) & 0xFF);
-            outputStream.writeByte((value >> 16) & 0xFF);
-            outputStream.writeByte((value >> 24) & 0xFF);
-        }
+    BinaryOutputStreamExt(OutputStream out, boolean isBigEndian) {
+        super(out, isBigEndian);
     }
 
     /**
@@ -1310,21 +1214,12 @@ final class BinaryOutputStream {
             outputStream.writeByte(0);
         }
     }
-
-    /**
-     * Closes stream
-     */
-    public void close() 
-        throws java.io.IOException {
-
-        outputStream.close();
-    }
 }
 
 /**
  * Perform the romization
  */
-class SkinRomizer {
+class SkinRomizer extends RomUtil {
     /** current romization job */
     RomizationJob romizationJob;
     
@@ -1358,11 +1253,8 @@ class SkinRomizer {
     /** Romized image factory */
     RomizedImageFactory romizedImageFactory;
 
-    /** Character output file writer */
-    PrintWriter writer = null;
-
     /** Binary output file stream */
-    BinaryOutputStream outputStream = null;
+    BinaryOutputStreamExt outputStream = null;
     
     /** raw image file format */
     int rawFormat = ImageToRawConverter.FORMAT_INVALID;
@@ -1484,7 +1376,7 @@ class SkinRomizer {
         } else {
             outForSkinDescr = new ByteArrayOutputStream(8192);
         }
-        outputStream = new BinaryOutputStream(outForSkinDescr,
+        outputStream = new BinaryOutputStreamExt(outForSkinDescr,
                 endianFormat == ImageToRawConverter.INT_FORMAT_BIG_ENDIAN);
 
         writeBinHeader();
@@ -1768,38 +1660,6 @@ class SkinRomizer {
     }
 
     /**
-     *  Writes copyright banner.
-     */
-    private void writeCopyright() {
-        pl("/**");
-        pl(" * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.");
-        pl(" * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER");
-        pl(" * ");
-        pl(" * This program is free software; you can redistribute it and/or");
-        pl(" * modify it under the terms of the GNU General Public License version");
-        pl(" * 2 only, as published by the Free Software Foundation.");
-        pl(" * ");
-        pl(" * This program is distributed in the hope that it will be useful, but");
-        pl(" * WITHOUT ANY WARRANTY; without even the implied warranty of");
-        pl(" * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU");
-        pl(" * General Public License version 2 for more details (a copy is");
-        pl(" * included at /legal/license.txt).");
-        pl(" * ");
-        pl(" * You should have received a copy of the GNU General Public License");
-        pl(" * version 2 along with this work; if not, write to the Free Software");
-        pl(" * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA");
-        pl(" * 02110-1301 USA");
-        pl(" * ");
-        pl(" * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa");
-        pl(" * Clara, CA 95054 or visit www.sun.com if you need additional");
-        pl(" * information or have any questions.");
-        pl(" * ");
-        pl(" * NOTE: DO NOT EDIT. THIS FILE IS GENERATED. If you want to ");
-        pl(" * edit it, you need to modify the corresponding XML files.");
-        pl(" */");
-    }
-        
-    /**
      * Writes RomizedSkin class file header
      */
     private void writeBinHeader() 
@@ -1951,7 +1811,7 @@ class SkinRomizer {
                     pl("    " + "const int align_" + ri.imageIndex + ";");
 
                     String dataArrayName = "romized_image" + ri.imageIndex;
-                    int dataArrayLength = ri.data.length;
+                    int dataArrayLength = ri.size();
                     pl("    " + "const unsigned char " + dataArrayName + 
                             "[" + dataArrayLength + "];");
                 }
@@ -2119,14 +1979,5 @@ class SkinRomizer {
             }
         }
 
-    }
-
-    /**
-     * Short-hand for printint a line into the output file
-     *
-     * @param s line to print
-     */
-    void pl(String s) {
-        writer.println(s);
     }
 }
