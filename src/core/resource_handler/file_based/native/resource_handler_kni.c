@@ -63,6 +63,11 @@
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_midp_util_ResourceHandler_loadRomizedResource0) {
+#if ENABLE_FILE_SYSTEM
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(hReturnArray);
+    KNI_EndHandlesAndReturnObject(hReturnArray);
+#else
     int resourceSize;
     const unsigned char *pResourceName, *pBufPtr;
 
@@ -99,4 +104,5 @@ KNIDECL(com_sun_midp_util_ResourceHandler_loadRomizedResource0) {
     RELEASE_PCSL_STRING_PARAMETER
 
     KNI_EndHandlesAndReturnObject(hReturnArray);
+#endif
 }
