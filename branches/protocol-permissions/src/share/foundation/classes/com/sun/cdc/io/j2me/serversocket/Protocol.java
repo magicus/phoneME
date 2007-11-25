@@ -46,10 +46,17 @@ public class Protocol extends ConnectionBase
     ServerSocket ssocket;
 
     /*
-     * throws SecurityException if MIDP permission check fails 
-     * nothing to do for CDC
-    */
-    protected void checkMIDPPermission(int port) {
+     * Check for listen permission on the given port. A SecurityException
+     * will be thrown if the permission is not available. The MIDP
+     * protocol handler should override this method to implement the
+     * proper MIDP security check.
+     */
+    protected void checkPermission(int port) {
+        // Check for SecurityManager.checkListen()
+        java.lang.SecurityManager sm = System.getSecurityManager();
+        if (sm != null){
+	    sm.checkListen(port);
+	}
         return;
     }    
     
@@ -84,8 +91,9 @@ public class Protocol extends ConnectionBase
  
         /* socket://: case.  System assigned incoming port */
         if (name.length() == 0) {
-           open();
-           return;
+            checkPermission(0);
+            open();
+            return;
         }
 
         try {
@@ -94,7 +102,7 @@ public class Protocol extends ConnectionBase
 
             /* Get the port number */
             port = Integer.parseInt(name);
-            checkMIDPPermission(port);
+            checkPermission(port);
             /* Open the socket: inbound server. Use a doPrivileged
              * block to avoid excessive prompting.
              */
