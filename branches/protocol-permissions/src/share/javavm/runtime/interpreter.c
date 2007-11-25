@@ -3105,9 +3105,24 @@ CVMclassLoaderFindNative(CVMExecEnv* ee, CVMClassLoaderICell* loader,
 			 char* nativeMethodName)
 {
     CVMUint8* nativeCode = NULL;
+    CVMBool findBuiltin = CVM_FALSE;
     CVMassert(!CVMlocalExceptionOccurred(ee));
 
     if (loader == NULL) {
+        findBuiltin = CVM_TRUE;
+    }
+#ifdef CVM_DUAL_STACK
+    else {
+        CVMClassBlock* loaderCB = CVMobjectGetClass(
+                                  CVMID_icellDirect(ee, loader));
+        CVMClassTypeID loaderID = CVMcbClassName(loaderCB);
+        if (loaderID == CVMglobals.midpImplClassLoaderTid) {
+            findBuiltin = CVM_TRUE;
+        }
+    }
+#endif
+
+    if (findBuiltin) {
 	/* This is a NULL class loader so the entry must be built in */
 	nativeCode = (CVMUint8*)CVMfindBuiltinEntry(nativeMethodName);
 	if (nativeCode != NULL) {

@@ -43,6 +43,8 @@ CVM_HPROF_BUILDDIRS += \
         $(CVM_HPROF_OBJDIR) \
         $(CVM_HPROF_FLAGSDIR)
 
+CVM_HPROF_LIB = $(LIB_PREFIX)hprof$(LIB_POSTFIX)
+
 #
 # Search path for include files:
 #
@@ -72,7 +74,8 @@ CVM_HPROF_SHAREOBJS += \
         hprof_setup.o \
         hprof_site.o \
         hprof_thread.o \
-        hprof_trace.o
+        hprof_trace.o \
+	hprof_md.o
 
 CVM_HPROF_OBJECTS0 = $(CVM_HPROF_SHAREOBJS) $(CVM_HPROF_TARGETOBJS)
 CVM_HPROF_OBJECTS  = $(patsubst %.o,$(CVM_HPROF_OBJDIR)/%.o,$(CVM_HPROF_OBJECTS0))
@@ -153,11 +156,14 @@ $(CVM_HPROF_LIBDIR)/$(CVM_HPROF_LIB): $(CVM_HPROF_OBJECTS)
 	$(SO_LINK_CMD)
 	@echo "Done Linking $@"
 
+ifeq ($(CVM_JVMPI), true)
+ifeq ($(CVM_JVMTI), false)
 $(CVM_LIBDIR)/jvm.hprof.txt:
 	@echo "Copying $@"
 	@if [ ! -d $@ ]; then cp $(CVM_HPROF_SHAREROOT)/jvm.hprof.txt $@; fi
 	@echo "Done Copying $@"
-
+endif
+endif
 # The following are used to build the .o files needed for $(CVM_HPROF_OBJECTS):
 
 #####################################
