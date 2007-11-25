@@ -242,6 +242,23 @@ public class MIDletClassLoader extends URLClassLoader {
         if (name.endsWith(".class")){
             return null; // not allowed!
         }
+        
+        int i;
+        // Replace /./ with /
+        while ((i = name.indexOf("/./")) >= 0) {
+            name = name.substring(0, i) + name.substring(i + 2);
+        }
+        // Replace /segment/../ with /
+        i = 0;
+        int limit;
+        while ((i = name.indexOf("/../", i)) > 0) {
+            if ((limit = name.lastIndexOf('/', i - 1)) >= 0) {
+                name = name.substring(0, limit) + name.substring(i + 3);
+                i = 0;
+            } else {
+                i = i + 3;
+            }
+        }
 
         // The JAR reader cannot find the resource if the name starts with 
         // a slash.  So we remove the leading slash if one exists.

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  *
  * This program is free software; you can redistribute it and/or
@@ -24,15 +24,16 @@
  *
  */
 
-#ifndef _JAVASOFT_SYS_MD_H_
-#define _JAVASOFT_SYS_MD_H_
+package sun.io;
 
-/* Force javavm/runtime/linker_md.c to be used */
+import java.io.IOException;
 
-#define dbgsysBuildLibName CVMdynlinkbuildLibName
-#define dbgsysLoadLibrary CVMdynlinkOpen
-#define dbgsysUnloadLibrary CVMdynlinkClose
-#define dbgsysFindLibraryEntry CVMdynlinkSym
+/**
+ * InputStream implementations may implement this interface also to aggregate
+ * the MarkableReader class that implements buffered mark/reset functionality.
+ */
+public interface Markable {
 
+    int readNative(byte[] b, int off, int len) throws IOException;
 
-#endif /* !_JAVASOFT_SYS_MD_H_ */
+}

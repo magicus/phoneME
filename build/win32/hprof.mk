@@ -28,18 +28,6 @@
 
 CVM_HPROF_LIBDIR        = $(CVM_BINDIR)
 
-ifeq ($(CVM_DEBUG), true)
-    CVM_HPROF_LIB   = libhprof_g.dll
-else
-    CVM_HPROF_LIB   = libhprof.dll
-endif
-
-#
-# Platform specific objects:
-#
-CVM_HPROF_TARGETOBJS += \
-        hprof_md.o
-
 #
 # Platform specific build flags:
 #
