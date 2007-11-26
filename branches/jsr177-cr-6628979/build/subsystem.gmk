@@ -42,6 +42,9 @@ endif
 #
 SUBSYSTEMS += satsa
 
+# Abstractions component is used
+USE_ABSTRACTIONS=true
+
 # Add my verify and display commands
 verify: jsr177_verify
 display: jsr177_display
