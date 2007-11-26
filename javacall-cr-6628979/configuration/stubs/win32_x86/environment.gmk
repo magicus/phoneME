@@ -41,12 +41,16 @@ MIDP_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/stubs
 USE_COMMON=true
 COMMON_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/stubs
 
+USE_JSR_120=true
 JSR_120_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/stubs
 
+USE_JSR_135=true
 JSR_135_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/stubs
 
+USE_JSR_177=true
 JSR_177_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/stubs
 
+USE_JSR_211=true
 JSR_211_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/stubs
 
 #For each project location for basic definitions shall be specified
