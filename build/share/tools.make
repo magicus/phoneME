@@ -29,7 +29,12 @@ JAVAC                = $(JDK_DIR)/bin/javac
 JAVAC_DEBUG          = :none
 JAR                  = $(JDK_DIR)/bin/jar
 
-all: jcc.jar buildtool.jar memprof_client.jar
+all:: jcc.jar buildtool.jar
+
+ifeq ($(ENABLE_MEMORY_PROFILER_CLIENT), true)
+all:: memprof_client.jar
+endif
+
 
 #----------------------------------------------------------------------
 # jcc.jar -- creates native function table for the VM

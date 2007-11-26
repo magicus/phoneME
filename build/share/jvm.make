@@ -1995,7 +1995,6 @@ DIST_DIRS    = $(DIST_BIN_DIR) \
 DIST_FILES   = $(DIST_BIN_DIR)/NativesTableGen.jar \
 	       $(DIST_BIN_DIR)/kdp.jar \
 	       $(DIST_BIN_DIR)/buildtool.jar \
-	       $(DIST_BIN_DIR)/memprof_client.jar \
 	       $(PREVERIFY) \
                $(DIST_LIB_DIR)/cldc_classes.zip \
                $(DIST_LIB_DIR)/cldcx_classes.zip \
@@ -2055,6 +2054,9 @@ MakeDepsOpts += ENABLE_RMFS=true
 endif
 endif
 
+ifeq ($(ENABLE_MEMORY_PROFILER_CLIENT), true)
+DIST_FILES  += $(DIST_BIN_DIR)/memprof_client.jar
+endif
 
 ifeq ($(IsProject), true)
 OUTPUT_FILES = cldc_vm.$(ide_workspace_ext) cldc_vm.$(ide_project_ext)
