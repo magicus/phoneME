@@ -32,6 +32,9 @@
 #
 SUBSYSTEMS += jsr_172
 
+# Abstractions component is used
+USE_ABSTRACTIONS=true
+
 ifneq ($(TARGET_VM), cldc_vm)
 include $(JSR_172_DIR)/build/cdc_share/subsystem_defs.gmk
 else
