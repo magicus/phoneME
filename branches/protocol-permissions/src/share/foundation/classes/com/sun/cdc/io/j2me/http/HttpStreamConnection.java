@@ -66,7 +66,6 @@ class HttpStreamConnection implements StreamConnection
 
     public HttpStreamConnection(String host, int port) throws IOException {
 
-	System.out.println("in HttpStreamConnection for host: " + host + ", port " + port);
 	if (port < 0) {
 	    throw new IllegalArgumentException("bad port number: " + port);
 	}
@@ -81,7 +80,6 @@ class HttpStreamConnection implements StreamConnection
 	    hostName = host;
 	}
         final int portNum = port;
-	System.out.println("creating socket to " + hostName + ", " + portNum);
         try {
             socket = (Socket)java.security.AccessController.doPrivileged(
                      new java.security.PrivilegedExceptionAction() {
@@ -92,9 +90,7 @@ class HttpStreamConnection implements StreamConnection
                          } 
                      });
         } catch(java.security.PrivilegedActionException pae) {
-	    System.out.println("socket creation failed, got error");
             IOException ioe = (IOException)pae.getException();
-	    System.out.println("throwing " + ioe.getMessage());
             throw ioe;
         }
         copen = true;
