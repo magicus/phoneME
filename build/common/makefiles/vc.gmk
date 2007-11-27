@@ -83,7 +83,7 @@ LD_FLAGS	+= -nodefaultlib:msvcrt.lib msvcrtd.lib
 else
 
 # flags inherited from the VM
-EXTRA_CFLAGS 	+= -Ox -GB -Os -Gy -GF -MD
+EXTRA_CFLAGS 	+= -Ox -Ot -Gy -GF -MD
 LD_FLAGS 	+= -merge:CODESEGMENT=.text -merge:DATASEGMENT=.data \
 		   -opt:REF -opt:ICF,8
 # Force use of non-debug libraries
