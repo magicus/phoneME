@@ -1334,7 +1334,7 @@ ReturnOop Universe::new_entry_activation(Method* method, jint length JVM_TRAPS)
 ReturnOop Universe::new_instance(InstanceClass* klass JVM_TRAPS) {
   InstanceSize instance_size = klass->instance_size();
   OopDesc* result = ObjectHeap::allocate(instance_size.fixed_value() 
-                                         JVM_ZCHECK(result));
+                                         JVM_ZCHECK_0(result));
   result->initialize(klass->prototypical_near());
   if (klass->has_finalizer()) {
     UsingFastOops fast_oops;
@@ -1380,7 +1380,7 @@ ReturnOop Universe::new_instance_class(int vtable_length,
       InstanceClassDesc::allocation_size(static_field_size, oop_map_size,
                                          vtable_length);
   InstanceClassDesc* raw = (InstanceClassDesc*)
-        ObjectHeap::allocate(object_size JVM_ZCHECK(raw));
+        ObjectHeap::allocate(object_size JVM_ZCHECK_0(raw));
   raw->initialize(instance_class_class()->prototypical_near(), object_size,
       instance_size, NULL);
   InstanceClass::Fast result = ReturnOop(raw);
@@ -2080,7 +2080,7 @@ ReturnOop Universe::new_obj_array_class(JavaClass* element_class JVM_TRAPS) {
   jint object_size = JavaClassDesc::allocation_size(0, 0);
 
   ObjArrayClassDesc* raw =
-      (ObjArrayClassDesc*) ObjectHeap::allocate(object_size JVM_ZCHECK(raw));
+      (ObjArrayClassDesc*) ObjectHeap::allocate(object_size JVM_ZCHECK_0(raw));
   raw->initialize(obj_array_class_class()->prototypical_near(),
                   object_size,
                   InstanceSize::size_obj_array,

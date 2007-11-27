@@ -50,7 +50,6 @@ const CompilerObject* CompilerObject::find( const void* ref ) {
   }
   return p;
 }
-
 #endif
 
 #endif

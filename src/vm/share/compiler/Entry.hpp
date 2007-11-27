@@ -26,59 +26,76 @@
 
 #if ENABLE_COMPILER
 
-class Entry: public MixedOop {
- public:
-  // To avoid endless lists of friends the static offset computation
-  // routines are all public.
-  static jint bci_offset() {
-    return FIELD_OFFSET(EntryDesc, _bci);
-  }
-  static jint frame_offset() {
-    return FIELD_OFFSET(EntryDesc, _frame);
-  }
-  static jint label_offset() {
-    return FIELD_OFFSET(EntryDesc, _label);
-  }
-  static jint code_size_offset() {
-    return FIELD_OFFSET(EntryDesc, _code_size);
+class Entry: public CompilerObject {
+  VirtualStackFrameDesc* _frame;
+  int                    _bci;
+  int                    _label;
+  int                    _code_size;
+
+public:
+  static Entry* allocate(jint bci, VirtualStackFrame* frame, 
+                   BinaryAssembler::Label& label, jint code_size JVM_TRAPS)
+  { // Clone the virtual stack frame by default.
+    UsingFastOops fast_oops;
+    VirtualStackFrame::Fast frame_clone = frame->clone(JVM_SINGLE_ARG_CHECK_0);
+
+    Entry* entry = COMPILER_OBJECT_ALLOCATE(Entry);
+    if( entry ) {
+      entry->set_bci( bci );
+      entry->set_frame(&frame_clone);
+      entry->set_label(label);
+      entry->set_code_size(code_size);
+    }
+    return entry;
   }
 
- public:
-  HANDLE_DEFINITION(Entry, MixedOop);
+  // Field accessors
+  jint bci(void) const { return _bci; }
+  void set_bci( jint value ) { _bci = value; }
 
-  // ^Entry
-  static ReturnOop allocate(jint bci, VirtualStackFrame* frame, 
-                            BinaryAssembler::Label& label, jint code_size
-                            JVM_TRAPS);
-
-  // Field accessors.
-  jint bci() {
-    return int_field(bci_offset());
-  }
-  void set_bci(jint value) {
-    int_field_put(bci_offset(), value);
-  }
-
-  // ^VirtualStackFrame
-  ReturnOop frame(void) { return (ReturnOop) int_field(frame_offset()); }
+  ReturnOop frame( void ) const { return (ReturnOop) _frame; }
   void set_frame(VirtualStackFrame* value) {
-    int_field_put(frame_offset(), (int) value->obj() );
+    _frame = (VirtualStackFrameDesc*) value->obj();
   }
 
-  BinaryAssembler::Label label() {
+  BinaryAssembler::Label label( void ) const {
     BinaryAssembler::Label L;
-    L._encoding = int_field(label_offset()); 
+    L._encoding = _label;
     return L;
   }
-  void set_label(BinaryAssembler::Label& value) {
-    int_field_put(label_offset(), value._encoding);
+  void set_label(const BinaryAssembler::Label value) {
+    _label = value._encoding;
   }
 
-  jint code_size() {
-    return int_field(code_size_offset());
+  jint code_size( void ) const { return _code_size; }
+  void set_code_size(jint value) { _code_size = value; }
+};
+
+class EntryArray: CompilerPointerArray {
+public:
+  typedef Entry* element_type;
+  typedef EntryArray array_type;
+
+  const element_type* base( void ) const {
+    return (const element_type*) CompilerPointerArray::base();
   }
-  void set_code_size(jint value) {
-    int_field_put(code_size_offset(), value);
+  element_type* base( void ) {
+    return (element_type*) CompilerPointerArray::base();
+  }
+
+  const element_type& at ( const int i ) const {   
+    return (const element_type&) CompilerPointerArray::at( i );
+  }
+  element_type& at ( const int i ) {   
+    return (element_type&) CompilerPointerArray::at( i );
+  }
+  void at_put ( const int i, const element_type val ) {   
+    GUARANTEE( val->is( Entry_type ), "Wrong type" );
+    CompilerPointerArray::at_put( i, val );
+  }
+
+  static array_type* allocate( const int n JVM_TRAPS ) {
+    return (array_type*) CompilerPointerArray::allocate( n JVM_NO_CHECK );
   }
 };
 

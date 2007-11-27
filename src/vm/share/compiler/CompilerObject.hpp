@@ -27,34 +27,37 @@
 #if ENABLE_COMPILER
 
 #define COMPILER_OBJECTS_DO(template)\
-  template( Entry )
-
-#define COMPILER_OBJECT_TYPE(name) name##_type
+  template( PointerArray )  \
+  template( Entry )         \
 
 #define USE_COMPILER_OBJECT_HEADER 1
 
 class CompilerObject {
 public:
   enum Type {
-    #define DEFINE_COMPILER_OBJECT_TYPE(name) COMPILER_OBJECT_TYPE(name),
+    #define DEFINE_COMPILER_OBJECT_TYPE(name) name##_type,
     COMPILER_OBJECTS_DO( DEFINE_COMPILER_OBJECT_TYPE )
     #undef DEFINE_COMPILER_OBJECT_TYPE
-    number_of_compiler_object_types
+    number_of_compiler_object_types,
   };
 private:
 #if USE_COMPILER_OBJECT_HEADER
   enum {
-    size_bits = 16,
+    size_bits = 24,
     type_bits = 32 - size_bits,
 
     size_shift = 0,
     type_shift = size_bits,
 
-    size_mask  = (1 << size_bits) - 1
+    size_mask  = (1 << size_bits) - 1,
+
+    align_bits = 2,
+    align_mask = (1 << align_bits) - 1,
   };
 
   unsigned header;
 
+protected:
   static int size( const unsigned header ) {
     return header & size_mask;
   }
@@ -64,6 +67,11 @@ private:
   int  size( void ) const { return size( header ); }
   Type type( void ) const { return type( header ); }
 
+  static int align_size( const int size ) {
+    return (size + align_mask) & ~align_mask;
+  }
+
+private:
   static unsigned make_header( const Type type, const int size ) {
     GUARANTEE( unsigned(type) < number_of_compiler_object_types, "sanity" );
     GUARANTEE( (size & ~size_mask) == 0, "Compiler object is too large" );
@@ -93,7 +101,8 @@ private:
   const CompilerObject* next( void ) const { return next( this ); }
 #endif
 public:
-  static CompilerObject* allocate( const Type type, const int size JVM_TRAPS ) {
+  static CompilerObject* allocate( const Type type, int size JVM_TRAPS ) {
+    size = align_size( size );
     CompilerObject* p = (CompilerObject*)
       ObjectHeap::allocate_temp(size JVM_NO_CHECK);
     (void)type;
@@ -103,6 +112,58 @@ public:
     }
 #endif
     return p;
+  }
+
+#if USE_COMPILER_OBJECT_HEADER
+  bool is ( const Type t ) const { return this == NULL || type() == t; }
+#else
+  bool is ( const Type   ) const { return true; }
+#endif
+};
+
+#define COMPILER_OBJECT_ALLOCATE(type)\
+  (type*) CompilerObject::allocate( \
+  CompilerObject::type##_type, sizeof(type) JVM_NO_CHECK)
+
+
+class CompilerPointerArray: public CompilerObject {
+  typedef void* element_type;
+  typedef CompilerPointerArray array_type;
+  element_type _data[ 1 ];
+
+  static int header_size( void ) { return FIELD_OFFSET(array_type, _data); }
+
+#if USE_COMPILER_OBJECT_HEADER
+  unsigned array_size( void ) const {
+    return (size() - header_size()) / sizeof(element_type);
+  }
+  void check_bounds( const unsigned i ) const {
+    GUARANTEE( i < array_size(), "Array index is out of bounds" );
+  }
+#else
+  static void check_bounds( const int ) {}
+#endif
+
+public:
+  const element_type* base( void ) const { return _data; }
+        element_type* base( void )       { return _data; }
+
+  const element_type& at ( const int i ) const {   
+    check_bounds( i );
+    return _data[ i ];
+  }
+  element_type& at ( const int i ) {   
+    check_bounds( i );
+    return _data[ i ];
+  }
+  void at_put ( const int i, const element_type val ) {   
+    at( i ) = val;
+  }
+
+  static array_type* allocate( const int n JVM_TRAPS ) {
+    const int size = header_size() + n * sizeof(element_type);
+    return (array_type*) CompilerObject::allocate(
+      PointerArray_type, size JVM_NO_CHECK);
   }
 };
 

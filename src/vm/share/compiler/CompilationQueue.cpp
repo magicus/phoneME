@@ -241,8 +241,8 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
       // additional merging code
 
       // Get the entry from the compiler.
-      Entry::Fast entry = Compiler::current()->entry_for(Compiler::bci());
-      VirtualStackFrame::Fast entry_frame = entry().frame();
+      Entry* entry = Compiler::current()->entry_for(Compiler::bci());
+      VirtualStackFrame::Fast entry_frame = entry->frame();
 
       // If we're not already in a loop and the entry we've found is on
       // the current (fall-through) compilation string we assume we've
@@ -254,9 +254,9 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
       // (frame->flush_count() != entry_frame.flush_count()).
 
       if (OptimizeLoops && !forward_branch_target()
-          && !Compiler::is_in_loop() && entry().bci() == bci()
+          && !Compiler::is_in_loop() && entry->bci() == bci()
           && frame->flush_count() == entry_frame().flush_count()
-          && gen->code_size() - entry().code_size() <= LoopPeelingSizeLimit) {
+          && gen->code_size() - entry->code_size() <= LoopPeelingSizeLimit) {
 #if ENABLE_CODE_PATCHING
         const int end_bci = BytecodeCompileClosure::jump_from_bci(); 
         if (!Compiler::can_patch(Compiler::bci(), end_bci)) {
@@ -272,7 +272,7 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
           frame->conform_to(&entry_frame);
         }
         Compiler::clear_conforming_frame();
-        BinaryAssembler::Label branch_label = entry().label();
+        BinaryAssembler::Label branch_label = entry->label();
 
         BinaryAssembler::Label compile_entry_label = entry_label();
         if (gen->code_size()== code_size_before() && !entry_has_been_bound()) {
@@ -430,10 +430,10 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
 
         {
           // Register the entry in the compiler.
-          Entry::Raw entry = Entry::allocate(bci(), frame, entry_label,
+          Entry* entry = Entry::allocate(bci(), frame, entry_label,
                                              gen->code_size()
-                                             JVM_OZCHECK(entry));
-          Compiler::current()->set_entry_for(Compiler::bci(), &entry);
+                                             JVM_ZCHECK_0(entry));
+          Compiler::current()->set_entry_for(Compiler::bci(), entry);
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
           EntryStub::Raw stub = EntryStub::allocate( bci(), entry_label JVM_NO_CHECK);
           if (stub.not_null()) {
@@ -839,9 +839,9 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
     frame->push(exception);
 
     bool direct_jump = false;
-    Entry::Raw entry = Compiler::root()->entry_for(handler_bci);
-    if (entry.not_null()) {
-      VirtualStackFrame::Raw entry_frame = entry().frame();
+    Entry* entry = Compiler::root()->entry_for(handler_bci);
+    if( entry ) {
+      VirtualStackFrame::Raw entry_frame = entry->frame();
       if (entry_frame().is_conformant_to(frame)) {
         direct_jump = true;
       }
@@ -850,7 +850,7 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
       // The exception handler has already been compiled and has the same
       // VSF as here, so we can just branch to it. No need to create
       // CompilationContinuation.
-      BinaryAssembler::Label branch_label = entry().label();
+      BinaryAssembler::Label branch_label = entry->label();
       COMPILER_COMMENT(("Conformant frames -> direct branch.")); 
       gen->jmp(branch_label);
     } else {

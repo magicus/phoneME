@@ -58,7 +58,7 @@ ReturnOop ConstantPool::checked_symbol_at(int index JVM_TRAPS) {
 }
 
 jint ConstantPool::name_and_type_at(int index JVM_TRAPS) const {
-  int offset = offset_from_checked_index(index JVM_ZCHECK(offset));
+  int offset = offset_from_checked_index(index JVM_ZCHECK_0(offset));
   cp_check_0(ConstantTag::is_name_and_type(tag_value_at(index)));
   int result = int_field(offset);
   GUARANTEE(result != 0, "sanity for JVM_ZCHECK");
@@ -66,13 +66,13 @@ jint ConstantPool::name_and_type_at(int index JVM_TRAPS) const {
 }
 
 ReturnOop ConstantPool::unresolved_klass_at(int index JVM_TRAPS) const {
-  int offset = offset_from_checked_index(index JVM_ZCHECK(offset));
+  int offset = offset_from_checked_index(index JVM_ZCHECK_0(offset));
   cp_check_0(ConstantTag::is_unresolved_klass(tag_value_at(index)));
   return obj_field(offset);
 }
 
 ReturnOop ConstantPool::resolved_klass_at(int index JVM_TRAPS) const {
-  int offset = offset_from_checked_index(index JVM_ZCHECK(offset));
+  int offset = offset_from_checked_index(index JVM_ZCHECK_0(offset));
   cp_check_0(ConstantTag::is_resolved_klass(tag_value_at(index)));
   return Universe::class_from_id(int_field(offset));
 }
@@ -204,7 +204,7 @@ ReturnOop ConstantPool::resolve_type_symbol_at_offset(int offset JVM_TRAPS) {
 // A class name may be either a plain Symbol e.g., "java/lang/String"
 // or a TypeSymbol, e.g., "[[Ljava/lang/String;"
 ReturnOop ConstantPool::checked_class_name_at(int index JVM_TRAPS) {
-  int offset = offset_from_checked_index(index JVM_ZCHECK(offset));
+  int offset = offset_from_checked_index(index JVM_ZCHECK_0(offset));
   cp_check_0(ConstantTag::is_symbol(tag_value_at(index)));
   Oop::Raw result(obj_field(offset));
   if (result().is_symbol()) {
@@ -294,7 +294,7 @@ ReturnOop ConstantPool::name_of_klass_at(int index JVM_TRAPS) {
 }
 
 ReturnOop ConstantPool::klass_ref_at(int index JVM_TRAPS) {
-  jint class_index = klass_ref_index_at(index JVM_ZCHECK(class_index));
+  jint class_index = klass_ref_index_at(index JVM_ZCHECK_0(class_index));
   return klass_at(class_index JVM_NO_CHECK_AT_BOTTOM);
 }
 
@@ -690,7 +690,7 @@ void ConstantPool::resolve_invoke_interface_at(InstanceClass *sender_class,
 }
 
 int ConstantPool::klass_ref_index_at(int index JVM_TRAPS) {
-  int offset = offset_from_checked_index(index JVM_ZCHECK(offset));
+  int offset = offset_from_checked_index(index JVM_ZCHECK_0(offset));
   jint ref_index = int_field(offset);
   jint class_index = extract_low_jushort_from_jint(ref_index);
   cp_check_0(check_klass_at(class_index));
@@ -699,7 +699,7 @@ int ConstantPool::klass_ref_index_at(int index JVM_TRAPS) {
 }
 
 int ConstantPool::name_ref_index_at(int index JVM_TRAPS) {
-  jint ref_index = name_and_type_at(index JVM_ZCHECK(ref_index));
+  jint ref_index = name_and_type_at(index JVM_ZCHECK_0(ref_index));
   jint name_index = extract_low_jushort_from_jint(ref_index);
   cp_check_0(is_within_bounds(name_index) &&
              ConstantTag::is_utf8(tag_value_at(name_index)));
@@ -708,7 +708,7 @@ int ConstantPool::name_ref_index_at(int index JVM_TRAPS) {
 }
 
 int ConstantPool::signature_ref_index_at(int index JVM_TRAPS)  {
-  jint ref_index = name_and_type_at(index JVM_ZCHECK(ref_index));
+  jint ref_index = name_and_type_at(index JVM_ZCHECK_0(ref_index));
   jint signature_index = extract_high_jushort_from_jint(ref_index);
   cp_check_0(is_within_bounds(signature_index) &&
              ConstantTag::is_utf8(tag_value_at(signature_index)));

@@ -26,30 +26,3 @@
 
 # include "incls/_precompiled.incl"
 # include "incls/_Entry.cpp.incl"
-
-#if ENABLE_COMPILER
-
-ReturnOop Entry::allocate(jint bci, VirtualStackFrame* frame, 
-                          BinaryAssembler::Label& label, jint code_size 
-                          JVM_TRAPS) {
-  UsingFastOops fast_oops;
-  // Clone the virtual stack frame by default.
-  VirtualStackFrame::Fast frame_clone = frame->clone(JVM_SINGLE_ARG_CHECK_0);
-
-  // Allocate the new entry.
-  Entry::Fast entry = Universe::new_mixed_oop_in_compiler_area(
-                                              MixedOopDesc::Type_Entry,
-                                              EntryDesc::allocation_size(),
-                                              EntryDesc::pointer_count()
-                                              JVM_OZCHECK(entry));
-  // Fill out instance fields.
-  entry().set_bci(bci);
-  entry().set_frame(&frame_clone);
-  entry().set_label(label);
-  entry().set_code_size(code_size);
-
-  // Return the entry.
-  return entry;
-}
-
-#endif

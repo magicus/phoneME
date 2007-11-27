@@ -103,7 +103,6 @@ public:
   FIELD( Method,                  method                  ) \
   FIELD( CompilationQueueElement, compilation_queue       ) \
   FIELD( CompilationQueueElement, current_element         ) \
-  ARRAY( ObjArray,                entry_table             ) \
   ARRAY( TypeArray,               entry_counts_table      ) \
   ARRAY( TypeArray,               bci_flags_table         ) 
 
@@ -144,12 +143,12 @@ public:
 };
 
 #define GENERIC_COMPILER_CONTEXT_FIELDS_DO(template) \
-        template( Compiler*, parent                        )   \
-        template( bool,      in_loop                       )   \
-        template( bool,      has_loops                     )   \
-        template( int,       saved_bci                     )   \
-        template( int,       saved_num_stack_lock_words    )   \
-        template( int,       local_base                    )
+    template( Compiler*, parent                     ) \
+    template( bool,      in_loop                    ) \
+    template( bool,      has_loops                  ) \
+    template( int,       saved_bci                  ) \
+    template( int,       saved_num_stack_lock_words ) \
+    template( int,       local_base                 )
 
 #if ENABLE_INLINE
 #define INLINER_COMPILER_CONTEXT_FIELDS_DO(template)  \
@@ -181,6 +180,12 @@ public:
   COMPILER_CONTEXT_FIELDS_DO(FIELD)
 
   #undef FIELD
+
+  typedef EntryArray EntryTableType;
+  EntryTableType* _entry_table;
+  EntryTableType* entry_table( void ) const { return _entry_table; }
+  void set_entry_table( EntryTableType* value ) { _entry_table = value; }
+  void clear_entry_table( void ) { _entry_table = NULL; }
 
   bool valid ( void ) const { return method()->not_null(); }
 
@@ -285,6 +290,18 @@ class Compiler: public StackObj {
   COMPILER_CONTEXT_HANDLES
 
   #undef FIELD
+
+  typedef CompilerContext::EntryTableType EntryTableType;
+  EntryTableType* entry_table( void ) const {
+    return _context.entry_table();
+  }
+  void clear_entry_table ( void )        { _context.clear_entry_table();    }
+  void set_entry_table   ( EntryTableType* val ) {
+    _context.set_entry_table( val );
+  }
+  static EntryTableType* current_entry_table( void ) {
+    return current()->entry_table();
+  }
 
   // Constructor and deconstructor.
   Compiler( Method* method, const int active_bci );
@@ -446,13 +463,13 @@ class Compiler: public StackObj {
   }
 
   // Entry accessor.
-  ReturnOop entry_for(const jint bci) {
-    return entry_table()->obj_at(bci);
+  Entry* entry_for(const jint bci) const {
+    return entry_table()->at( bci );
   }
   void set_entry_for(const jint bci, Entry* entry) {
-    entry_table()->obj_at_put(bci, entry);
+    entry_table()->at_put( bci, entry );
   }
-  bool has_entry_for(const jint bci) {
+  bool has_entry_for(const jint bci) const {
     return entry_for(bci) != NULL;
   }
 

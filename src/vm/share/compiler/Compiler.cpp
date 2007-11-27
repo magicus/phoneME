@@ -592,8 +592,8 @@ inline void Compiler::setup_for_compile( const Method::Attributes& attributes
   Compiler::set_has_loops( attributes.has_loops );
 
   { // Allocate object array for the entry table
-    OopDesc* p = Universe::new_obj_array_in_compiler_area(
-      method()->code_size() JVM_CHECK);
+    EntryTableType* p =
+      EntryArray::allocate( method()->code_size() JVM_NO_CHECK_AT_BOTTOM );
     set_entry_table( p );
   }
 }

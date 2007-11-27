@@ -1115,7 +1115,7 @@ error_wide:
 #if ENABLE_ROM_GENERATOR
 ReturnOop Method::create_other_endianness(JVM_SINGLE_ARG_TRAPS) {
   int object_size = this->object_size();
-  OopDesc* raw_result = ObjectHeap::allocate(object_size JVM_ZCHECK(raw_result));
+  OopDesc* raw_result = ObjectHeap::allocate(object_size JVM_ZCHECK_0(raw_result));
   jvm_memcpy(raw_result, this->obj(), object_size);
   Method::Raw result = raw_result;
 

@@ -234,7 +234,7 @@ class OopDispatcher : public StackObj {
     do_generic(obj, "Compiled Method");
   }
 #endif
-#if ENABLE_COMPILER
+#if 0 && ENABLE_COMPILER
   virtual void do_entry(Entry* obj) {
     do_generic(obj, "Entry");
   }
@@ -710,7 +710,7 @@ class VisitDispatcher : public OopDispatcher {
     obj->iterate(_visitor);
   }
 #endif
-#if ENABLE_COMPILER
+#if 0 && ENABLE_COMPILER
   virtual void do_entry(Entry* obj) {
     obj->iterate(_visitor);
   }

@@ -834,7 +834,7 @@ OopDesc* ObjectHeap::clone(OopDesc* source JVM_TRAPS) {
   size_t size = source->object_size();
   UsingFastOops allocation_below;
   Oop::Fast source_handle = source;
-  OopDesc* result = allocate_raw(size JVM_ZCHECK(result));
+  OopDesc* result = allocate_raw(size JVM_ZCHECK_0(result));
   // Don't care about write_barrier - the result object is always in youngen
   jvm_memcpy(result, source_handle.obj(), size);
   return result;

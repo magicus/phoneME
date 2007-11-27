@@ -872,17 +872,8 @@ CompilationQueue_<carch>.cpp     Entry.hpp
 CompilationQueue_<carch>.cpp     Location.hpp
 CompilationQueue_<carch>.cpp     Synchronizer.hpp
 
-EntryDesc.hpp                    MixedOopDesc.hpp
-
-Entry.hpp                        MixedOop.hpp
-Entry.hpp                        EntryDesc.hpp
+Entry.hpp                        CompilerObject.hpp
 Entry.hpp                        VirtualStackFrame.hpp
-
-Entry.hpp                        BinaryAssembler_<carch>.hpp
-Entry.cpp                        Entry.hpp
-Entry.cpp                        Universe.hpp
-Entry.cpp                        SystemDictionary.hpp
-Entry.cpp                        InstanceClass.hpp
 
 BytecodeCompileClosure.hpp       BytecodeClosure.hpp
 BytecodeCompileClosure.hpp       CodeGenerator.hpp

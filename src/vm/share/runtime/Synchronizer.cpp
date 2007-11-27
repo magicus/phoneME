@@ -73,7 +73,7 @@ jint Synchronizer::hash_code(JavaOop* obj JVM_TRAPS) {
 
   if (obj->klass() == _interned_string_near_addr) {
     JavaOop::Raw new_obj = get_lock_object_ref(obj, Thread::current(), false
-                                               JVM_ZCHECK(new_obj));
+                                               JVM_ZCHECK_0(new_obj));
     GUARANTEE(!obj->is_null(), "lock object is null!");
     *obj = new_obj;
   }

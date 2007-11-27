@@ -77,7 +77,7 @@ ReturnOop JavaClass::new_initialized_instance(InstanceClass* sender_class,
   InstanceClass::Fast instance_class = this;
   bool status = instance_class().check_access_by(sender_class,
                                                  ExceptionOnFailure 
-                                                 JVM_ZCHECK(status));
+                                                 JVM_ZCHECK_0(status));
 
   Method::Fast init = 
       instance_class().find_local_method(Symbols::object_initializer_name(),
@@ -241,10 +241,10 @@ ReturnOop JavaClass::get_or_allocate_java_mirror(JVM_SINGLE_ARG_TRAPS) {
       // let's init this class for this task
       if (is_instance_class()) {
         tm = setup_task_mirror(ic().static_field_size(), 
-                               ic().vtable_length(), true JVM_ZCHECK(tm));
+                               ic().vtable_length(), true JVM_ZCHECK_0(tm));
         ic().initialize_static_fields(&tm);
       } else {
-        tm = setup_task_mirror(0, 0, false JVM_ZCHECK(tm));
+        tm = setup_task_mirror(0, 0, false JVM_ZCHECK_0(tm));
       }
       GUARANTEE(!tm.is_null(), "Task mirror cannot be null");
     }

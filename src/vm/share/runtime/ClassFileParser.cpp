@@ -2028,7 +2028,7 @@ ReturnOop ClassFileParser::parse_class_internal(ClassParserState *stack JVM_TRAP
   } else {
     cpf_check_0(!is_circular(&this_class), circular_superclasses);
     bool status = super_class().check_access_by(&this_class, ErrorOnFailure 
-                                                JVM_ZCHECK(status));
+                                                JVM_ZCHECK_0(status));
     if (super_class().has_vanilla_constructor()) {
       Method::Raw constructor = 
           this_class().find_local_method(Symbols::object_initializer_name(),
