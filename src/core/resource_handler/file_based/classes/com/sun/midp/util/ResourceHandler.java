@@ -31,7 +31,6 @@ import com.sun.midp.io.j2me.storage.RandomAccessStream;
 import com.sun.midp.security.SecurityToken;
 import com.sun.midp.security.Permissions;
 import com.sun.midp.configurator.Constants;
-import com.sun.j2me.security.AccessController;
 
 /**
  * The ResourceHandler class is a system level utility class.
@@ -111,62 +110,25 @@ public class ResourceHandler {
      */
     private static byte[] getResourceImpl(SecurityToken token,
             String resourceFilename) {
-        if (token != null) {
-            token.checkIfPermissionAllowed(Permissions.MIDP);
-        } else {
-            AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
-        }
+        token.checkIfPermissionAllowed(Permissions.MIDP);
 
-        // converting the file name into the resource name
-        int start = resourceFilename.lastIndexOf('/');
-        if (start < 0) {
-            start = resourceFilename.lastIndexOf('\\');
-        }
-        if (start < 0) {
-            start = 0;
-        } else {
-            start++;
-        }
+        byte[] resourceBuffer = null;
+        RandomAccessStream stream = new RandomAccessStream(token);
 
-        String resourceName = resourceFilename.substring(start,
-                resourceFilename.length());
-        resourceName = resourceName.replace('.', '_');
-        //
-
-        byte[] resourceBuffer = loadRomizedResource0(resourceName);
-
-        if (resourceBuffer == null) {
-            RandomAccessStream stream;
-            if (token != null) {
-                stream = new RandomAccessStream(token);
-            } else {
-                stream = new RandomAccessStream();
-            }
-
+        try {
+            stream.connect(resourceFilename, Connector.READ);
+            resourceBuffer = new byte[stream.getSizeOf()];
+            stream.readBytes(resourceBuffer, 0, resourceBuffer.length);
+        } catch (java.io.IOException e) {
+            resourceBuffer = null;
+        } finally {
             try {
-                stream.connect(resourceFilename, Connector.READ);
-                resourceBuffer = new byte[stream.getSizeOf()];
-                stream.readBytes(resourceBuffer, 0, resourceBuffer.length);
-            } catch (java.io.IOException e) {
-                resourceBuffer = null;
-            } finally {
-                try {
-                    stream.disconnect();
-                } catch (java.io.IOException ignored) {
-                }
+                stream.disconnect();
+            } catch (java.io.IOException ignored) {
             }
         }
 
         return resourceBuffer;
     }
-
-    /**
-     * Retrieves a romized resource with the given name.
-     *
-     * @param resourceName name of the resource to load
-     *
-     * @return requested resource as an array of bytes or NULL if not found
-     */
-    private static native byte[] loadRomizedResource0(String resourceName);
 }
 

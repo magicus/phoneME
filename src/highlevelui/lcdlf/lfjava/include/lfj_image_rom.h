@@ -49,20 +49,6 @@
  */
 int lfj_load_image_from_rom(int imageId, unsigned char **bufPtr);
 
-/**
- * Loads a ROMized skin description from ROM, if present.
- *
- * @return NULL if failed, otherwise a pointer to the skin description data
- */
-const unsigned char* lfj_get_skin_description();
-
-/**
- * Retrieves the size of the skin description data.
- *
- * @return -1 if failed, otherwise a size of the skin description data
- */
-int lfj_get_skin_description_size();
-
 #endif /* _LFJ_PORT_IMAGE_ROM_H_ */
 
 

@@ -49,8 +49,3 @@ MIDP_JAVADOC_ALL += \
 
 SUBSYSTEM_RESHANDLER_JAVA_FILES += \
     $(RES_HANDLER_DIR)/file_based/classes/com/sun/midp/util/ResourceHandler.java
-
-vpath % $(RES_HANDLER_DIR)/file_based/native
-
-SUBSYSTEM_RESHANDLER_NATIVE_FILES += \
-    resource_handler_kni.c

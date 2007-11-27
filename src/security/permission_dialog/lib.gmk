@@ -77,8 +77,6 @@ SUBSYSTEM_SECURITY_EXTRA_INCLUDES += \
     -I$(PERMISSION_DIALOG_DIR)/native_dialog/native/share/inc
 
 else
-
-ifeq ($(USE_FILE_SYSTEM), true)
 # Copy images to /lib at the end of MIDP build
 MIDP_RESOURCES += ref_permission_dialog_resources
 
@@ -86,6 +84,4 @@ ref_permission_dialog_resources: $(LIBDIR)
 	@mkdir -p $(LIBDIR)
 	@cp -f $(PERMISSION_DIALOG_DIR)/reference/resource/*.png $(LIBDIR) \
 	  $(LOG)
-endif
-	  
 endif

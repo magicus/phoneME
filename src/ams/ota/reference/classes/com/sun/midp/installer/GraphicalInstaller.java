@@ -60,8 +60,6 @@ import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.io.j2me.storage.File;
 
-import com.sun.midp.util.ResourceHandler;
-
 /**
  * The Graphical MIDlet suite installer.
  * <p>
@@ -154,6 +152,26 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
                     Command.CANCEL, 1);
 
     /**
+     * Read image data from storage file to byte array.
+     *
+     * @param imageFileName name of the file with icon data
+     * @return byte array with icon data, or null if file not found
+     */
+    private static byte[] getImageFileBytes(String imageFileName) {
+        byte[] imageBytes;
+        RandomAccessStream stream;
+        stream = new RandomAccessStream();
+        try {
+            stream.connect(imageFileName, Connector.READ);
+            imageBytes = new byte[stream.getSizeOf()];
+            stream.readBytes(imageBytes, 0, imageBytes.length);
+            stream.disconnect();
+            return imageBytes;
+        } catch (java.io.IOException noIcon) {}
+        return null;
+    }
+
+    /**
      * Gets an image from the internal storage.
      * <p>
      * Method requires com.sun.midp.ams permission.
@@ -164,13 +182,20 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
      * @return Image loaded from storage, or null if not found
      */
     public static Image getImageFromInternalStorage(String imageName) {
-        byte[] imageBytes =
-                ResourceHandler.getSystemImageResource(null, imageName);
+        String imageFileName;
+        byte[] imageBytes;
 
+        AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
+
+        imageFileName = File.getStorageRoot(Constants.INTERNAL_STORAGE_ID) +
+            imageName;
+        imageBytes = getImageFileBytes(imageFileName + ".raw");
+        if (imageBytes == null) {
+            imageBytes = getImageFileBytes(imageFileName + ".png");
+        }
         if (imageBytes != null) {
             return Image.createImage(imageBytes, 0, imageBytes.length);
         }
-
         return null;
     }
 
