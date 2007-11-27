@@ -49,6 +49,10 @@ $(MIDP_CLASSES_ZIP):: $(SKINROMIZATION_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGE
 	$(romize_skin)
 	$(copy_lcdlf_resources)
 
+# rules for building Romizer
+$(MIDP_CLASSES_ZIP):: $(ROMIZER_JAR_FILE)
+
+
 # The rule for merging configurations unconditionally.
 # We need a separate rule to expand (merge_configurations)
 # before expanding (generate_configuration).
