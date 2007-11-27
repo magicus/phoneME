@@ -78,9 +78,9 @@ endif
 # -MDd    debug on
 #
 ifeq ($(USE_DEBUG), true)
-CFLAGS += -Zi -Od /DPCSL_DEBUG=1
+CFLAGS += -Zi 
 else
-CFLAGS += /Os
+CFLAGS += /Ot
 endif
 
 CFLAGS += /X /I"${EVC_INCLUDE_PATH}"
