@@ -51,7 +51,7 @@ public class Protocol extends ConnectionBase implements DatagramConnection,UDPDa
     /**
      * Port
      */
-    private int port = -1;
+    private int port = 0;
 
     private boolean open;
 
