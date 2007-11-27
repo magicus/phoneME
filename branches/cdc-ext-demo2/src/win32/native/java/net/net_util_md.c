@@ -75,6 +75,14 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
 	case DLL_PROCESS_DETACH:
 	    WSACleanup();
 	    break;
+    case DLL_THREAD_ATTACH:
+        CoInitializeEx(NULL, COINIT_MULTITHREADED);
+        break;
+
+    case DLL_THREAD_DETACH:
+        CoUninitialize();
+        break;
+
 
 	default:
 	    break;

@@ -33,7 +33,7 @@ LINK_ARCH_LIBS		=
 LINK_ARCH_FLAGS		= \
 	/subsystem:windowsce,5.01  \
 	/base:0x00100000 /entry:_DllMainCRTStartup
-LINKEXE_ARCH_LIBS	=
+LINKEXE_ARCH_LIBS    = Ole32.lib 
 LINKEXE_ARCH_FLAGS	= \
 	/subsystem:windowsce,5.01 /stack:0x010000
 
