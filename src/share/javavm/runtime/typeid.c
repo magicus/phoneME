@@ -247,6 +247,19 @@ CVMtypeidInit( CVMExecEnv *ee )
     CVMglobals.cloneTid = 
 	CVMtypeidLookupMethodIDFromNameAndSig(ee, "clone", "()V");
 
+#ifdef CVM_DUAL_STACK
+    {
+        const char *midpImplLoaderName = 
+                 "sun/misc/MIDPImplementationClassLoader";
+        const char *midletLoaderName = 
+            "sun/misc/MIDletClassLoader";
+        CVMglobals.midpImplClassLoaderTid = CVMtypeidLookupClassID(
+            ee, midpImplLoaderName, strlen(midpImplLoaderName));
+        CVMglobals.midletClassLoaderTid = CVMtypeidLookupClassID(
+            ee, midletLoaderName, strlen(midletLoaderName));
+    }
+#endif
+
 #ifdef CVM_DEBUG_STACKTRACES
     CVMglobals.printlnTid =
 	CVMtypeidLookupMethodIDFromNameAndSig(ee, "println", 
