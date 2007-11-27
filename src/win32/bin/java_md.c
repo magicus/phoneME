@@ -377,6 +377,7 @@ int main(int argc, char *argv[])
     {
   char **parsed_argv = parse_argv(&argc, argv);
   int retCode;
+  CoInitializeEx(NULL, COINIT_MULTITHREADED);
 #ifdef CVM_DEBUG
   {
       DWORD pc, addr;
