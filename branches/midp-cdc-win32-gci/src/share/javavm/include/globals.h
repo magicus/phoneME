@@ -459,6 +459,10 @@ struct CVMGlobalState {
 
 #ifdef CVM_DUAL_STACK
     const CVMClassRestrictions* dualStackMemberFilter;
+    /* sun.misc.MIDPImplementationClassLoader class type id */
+    CVMClassTypeID midpImplClassLoaderTid;
+    /* sun.misc.MIDletClassLoader class type id */
+    CVMClassTypeID midletClassLoaderTid;
 #endif
 
 #ifdef CVM_JVMTI
