@@ -25,6 +25,7 @@
  */
 
 #include "splash.h"
+#include "aygshell.h"
 
 // Forward declarations of functions included in this code module:
 ATOM            MyRegisterClass(HINSTANCE, LPTSTR);
@@ -32,13 +33,21 @@ BOOL            InitInstance(HINSTANCE, int);
 BOOL            myInit();
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 
-const int splashWidth = 126, splashHeight=52;
+const int splashWidth = 240, splashHeight=320;
+int splashX = 0, splashY = 0;
 HBITMAP g_hB;
 HWND g_hWnd;
+HDC g_dcBitmap = NULL;
 
 DWORD WINAPI MessageLoop( LPVOID lpParam )
 {
+
     MSG msg;
+    // Perform application initialization:
+    if (!myInit())
+    {
+        return;
+    }
     // Main message loop:
     while (GetMessage(&msg, NULL, 0, 0))
     {
@@ -53,12 +62,6 @@ DWORD WINAPI MessageLoop( LPVOID lpParam )
 
 void showSplash()
 {
-
-    // Perform application initialization:
-    if (!myInit())
-    {
-        return;
-    }
     CreateThread(NULL, 0, MessageLoop, NULL, 0, NULL);
 }
 
@@ -100,15 +103,16 @@ BOOL myInit()
     GetClientRect(hDesktop, &rect);
     width = rect.right-rect.left;
     height = rect.bottom-rect.top;
+    splashX = width/2 - splashWidth/2;
+    splashY = height/2 - splashHeight/2;
 
-    hWnd = CreateWindow(_T("JavaSplash"), _T("Java"), WS_POPUP | WS_VISIBLE,
-        width/2 - splashWidth/2, height/2 - splashHeight/2, splashWidth, splashHeight,
+    hWnd = CreateWindow(_T("JavaSplash"), _T("Java"), WS_VISIBLE,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
         NULL, NULL, hInst, NULL);
     g_hWnd = hWnd;
     g_hB = LoadBitmap(hInst, (LPCTSTR)IDB_BITMAP1);
-    SetWindowPos(hWnd, HWND_TOPMOST, 0,0,0,0,
-        SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
-
+    SHFullScreen(hWnd, SHFS_HIDETASKBAR | SHFS_HIDESTARTICON | SHFS_HIDESIPBUTTON);
+    ShowWindow(hWnd, SW_SHOW);
     UpdateWindow(hWnd);
 
     return TRUE;
@@ -116,17 +120,26 @@ BOOL myInit()
 
 void OnPaint(HWND hWnd, HDC hdc)
 {
-    HDC hdc1 = CreateCompatibleDC(hdc);
-    SelectObject(hdc1, (HGDIOBJ)g_hB);
-    BitBlt(hdc, 0, 0, splashWidth, splashHeight, hdc1, 0, 0, SRCCOPY);
-
+	RECT rect, rect1;
+	int width, height;
+	SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, FALSE);
+	width = rect.right-rect.left;
+	height = rect.bottom-rect.top;
+	InvalidateRect(hWnd, &rect, FALSE);
+    if (!g_dcBitmap)
+	{
+		g_dcBitmap = CreateCompatibleDC(hdc);
+	    SelectObject(g_dcBitmap, (HGDIOBJ)g_hB);
+	}
+    BitBlt(hdc, splashX, splashY, splashWidth, splashHeight, g_dcBitmap,
+        0, 0, SRCCOPY);
+	SHFullScreen(hWnd, SHFS_HIDETASKBAR | SHFS_HIDESTARTICON | SHFS_HIDESIPBUTTON);
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
     HDC hdc;
-
     switch (message)
     {
         case WM_CLOSE:
@@ -148,5 +161,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 void hideSplash()
 {
+	 DeleteDC(g_dcBitmap);
+	 g_dcBitmap = NULL;
      DestroyWindow(g_hWnd);
 }
