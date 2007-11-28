@@ -34,6 +34,8 @@
 #include <tchar.h>
 #include <stdlib.h>
 
+#include "splash.h"
+
 extern char **__argv;
 extern int  __argc;
 
@@ -362,9 +364,12 @@ static void free_parsed_argv(int argc, char **argv) {
 
 int main(int argc, char *argv[])
 {
-    HMODULE h = loadCVM();
+    HMODULE h;
+    JNI_CreateJavaVM_func *JNI_CreateJavaVMFunc;
+    showSplash();
+    h = loadCVM();
 
-    JNI_CreateJavaVM_func *JNI_CreateJavaVMFunc =
+    JNI_CreateJavaVMFunc =
        (JNI_CreateJavaVM_func *)GetProcAddress(h, TEXT("JNI_CreateJavaVM"));
 
     if (JNI_CreateJavaVMFunc==NULL) {
@@ -439,16 +444,19 @@ int WINAPI
 _tWinMain(HINSTANCE inst, HINSTANCE previnst, TCHAR *cmdline, int cmdshow) {
     int i = 0;
     char *sz;
-    HMODULE h = loadCVM();
-#ifdef UNDER_CE
-    JNI_CreateJavaVM_func *JNI_CreateJavaVMFunc =
-  (JNI_CreateJavaVM_func *)GetProcAddress(h, TEXT("JNI_CreateJavaVM"));
-#else
-    JNI_CreateJavaVM_func *JNI_CreateJavaVMFunc =
-  (JNI_CreateJavaVM_func *)GetProcAddress(h, "_JNI_CreateJavaVM");
-#endif
+    HMODULE h;
+    JNI_CreateJavaVM_func *JNI_CreateJavaVMFunc;
     TCHAR path[256];
     TCHAR *p0, *p1;
+    showSplash();
+    h = loadCVM();
+#ifdef UNDER_CE
+    JNI_CreateJavaVMFunc =
+  (JNI_CreateJavaVM_func *)GetProcAddress(h, TEXT("JNI_CreateJavaVM"));
+#else
+    JNI_CreateJavaVMFunc =
+  (JNI_CreateJavaVM_func *)GetProcAddress(h, "_JNI_CreateJavaVM");
+#endif
 
     printf("WinMain\n");
 

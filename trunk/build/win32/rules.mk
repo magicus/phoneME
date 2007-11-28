@@ -98,6 +98,6 @@ $(J2ME_CLASSLIB) :: $(CVM_EXE)
 # Override MT_FLAGS for object file dependencies of cvm.exe
 $(CVM_EXE) : MT_FLAGS = $(MT_EXE_FLAGS)
 
-$(CVM_EXE) : $(CVM_OBJDIR)/ansi_java_md.o $(CVM_OBJDIR)/java_md.o
+$(CVM_EXE) : $(CVM_OBJDIR)/ansi_java_md.o $(CVM_OBJDIR)/java_md.o $(CVM_OBJDIR)/splash.o
 	@echo "Linking $@"
 	$(AT)$(LINKEXE_CMD)
