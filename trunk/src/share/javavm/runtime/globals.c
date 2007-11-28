@@ -976,7 +976,9 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     /*
      * TypeId system, which also registers well-known types.
      */
-    CVMtypeidInit(ee);
+    if (!CVMtypeidInit(ee)) {
+        goto out_of_memory;
+    }
 
     /*
      * Intern table, which just has a global variable to set.
