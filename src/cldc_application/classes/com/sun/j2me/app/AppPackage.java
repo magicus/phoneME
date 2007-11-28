@@ -48,7 +48,11 @@ public class AppPackage {
         return MIDletStateHandler.getMidletStateHandler().
             getMIDletSuite().getID();
     }
-    
+
+
+    /** Unused ID */
+    public static final int UNUSED_APP_ID = -1;
+   
     /**
      * Returns permission status for the specified permission
      *
