@@ -1580,21 +1580,11 @@ CVMclassloaderIsMIDPClassLoader(CVMExecEnv *ee,
         CVMClassBlock* loaderCB = CVMobjectGetClass(
                                   CVMID_icellDirect(ee, loaderICell));
         CVMClassTypeID loaderID = CVMcbClassName(loaderCB);
-        const char *midletLoaderName = 
-            "sun/misc/MIDletClassLoader";
-        CVMClassTypeID MIDletClassLoaderID =
-            CVMtypeidLookupClassID(ee, midletLoaderName, 
-                                   strlen(midletLoaderName));
 
-        if (loaderID == MIDletClassLoaderID){
+        if (loaderID == CVMglobals.midletClassLoaderTid){
             return CVM_TRUE;
         } else if (checkImplClassLoader) {
-            const char *midpImplLoaderName = 
-                 "sun/misc/MIDPImplementationClassLoader";
-            CVMClassTypeID MIDPImplClassLoaderID = 
-	         CVMtypeidLookupClassID(ee,midpImplLoaderName,
-				   strlen(midpImplLoaderName));
-            if (loaderID == MIDPImplClassLoaderID) {
+            if (loaderID == CVMglobals.midpImplClassLoaderTid) {
 	        return CVM_TRUE;
 	    }
             return CVM_FALSE;

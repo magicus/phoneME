@@ -26,18 +26,6 @@
 #  Platform specific makefile for building the Hprof tool
 #
 
-ifeq ($(CVM_DEBUG), true)
-    CVM_HPROF_LIB   = libhprof_g.o
-else
-    CVM_HPROF_LIB   = libhprof.o
-endif
-
-#
-# Platform specific objects:
-#
-CVM_HPROF_TARGETOBJS += \
-        hprof_md.o
-
 #
 # Platform specific build flags:
 #

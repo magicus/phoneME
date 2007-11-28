@@ -84,7 +84,6 @@ $(MIDP_CLASSES_ZIP): $(MIDP_CLASSESZIP_DEPS) force_midp_build
 	             OEM_AMS_DIR=$(OEM_AMS_DIR) \
 	             USE_OEM_PUSH=$(USE_OEM_PUSH) \
 	             OEM_PUSH_DIR=$(OEM_PUSH_DIR) \
-	             JSR_MIDP_INITIALIZER_LIST="$(subst .Initializer,.MIDPInitializer,$(JSR_INITIALIZER_LIST))" \
 	             PERMISSION_EXTENSIONS_LIST="$(PERMISSION_EXTENSIONS_LIST)" \
 	             COMPONENTS_DIR=$(COMPONENTS_DIR) \
 	             PROJECT_MIDP_DIR=$(PROJECT_MIDP_DIR) \

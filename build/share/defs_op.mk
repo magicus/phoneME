@@ -26,7 +26,6 @@ SUBSYSTEM_MAKE_FILE      = subsystem.gmk
 SUBSYSTEM_DEFS_FILE      = subsystem_defs.gmk
 JSR_INIT_PACKAGE         = com.sun.cdc.config
 JSR_INIT_CLASS           = Initializer
-JSR_MIDP_INIT_CLASS      = MIDPInitializer
 
 JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 226 229 234 238 239 256 280
 #JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 229 234 238 239 256 280
@@ -395,12 +394,6 @@ JSR_MIDPPERMITTED_CLASSLIST = $(CVM_BUILD_TOP)/.jsrmidppermittedclasses
 # CVM_MIDPCLASSLIST_FILES are the files that contain MIDP permitted
 # classes.
 CVM_MIDPCLASSLIST_FILES += $(JSR_MIDPPERMITTED_CLASSLIST)
-# JSROP_INIT_AGENT_JAR consists of JSR initializers that must be
-# executed in MIDP context.
-JSROP_INIT_AGENT_JAR = $(CVM_LIBDIR)/jsrop_init_agent.jar
-ifneq ($(JSR_INITIALIZER_LIST),)
-JSROP_AGENT_JARS += $(JSROP_INIT_AGENT_JAR)
-endif
 endif
 
 ifneq ($(CVM_PRELOAD_LIB),true)
