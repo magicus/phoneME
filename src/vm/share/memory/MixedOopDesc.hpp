@@ -52,7 +52,6 @@ public:
   template(BufferedFile,            buffered_file)             \
   template(ClassParserState,        class_parser_state)        \
   template(CompilationQueueElement, compilation_queue_element) \
-  template(Entry,                   entry)                     \
   template(FileDecoder,             file_decoder)              \
   template(Inflater,                inflater)                  \
   template(JarFileParser,           jar_file_parser)           \

@@ -2200,7 +2200,6 @@ JavaNear.cpp                     JavaClass.hpp
 
 Universe.hpp                     BufferedFile.hpp
 Universe.hpp                     CompilationQueueElementDesc.hpp
-Universe.hpp                     EntryDesc.hpp
 Universe.hpp                     MixedOopDesc.hpp
 Universe.hpp                     ObjArray.hpp
 Universe.hpp                     Oop.hpp
@@ -2722,7 +2721,6 @@ OopDesc.inline.hpp               ObjNearDesc.hpp
 OopDesc.inline.hpp               TypeArrayClass.hpp
 OopDesc.inline.hpp               StackmapListDesc.hpp
 OopDesc.inline.hpp               ThreadDesc.hpp
-OopDesc.inline.hpp               EntryDesc.hpp
 OopDesc.inline.hpp               VirtualStackFrameDesc.hpp
 OopDesc.inline.hpp               CompilationQueueElementDesc.hpp
 OopDesc.inline.hpp               MixedOopDesc.hpp
