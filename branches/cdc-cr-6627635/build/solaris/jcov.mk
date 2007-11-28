@@ -26,18 +26,6 @@
 #  Platform specific makefile for building the Jcov tool
 #
 
-ifeq ($(CVM_DEBUG), true)
-    CVM_JCOV_LIB    = libjcov_g.so
-else
-    CVM_JCOV_LIB    = libjcov.so
-endif
-
-#
-# Platform specific objects:
-#
-CVM_JCOV_TARGETOBJS += \
-        jcov_md.o
-
 #
 # Platform specific build flags:
 #
