@@ -39,7 +39,7 @@ package com.sun.pisces;
  * <code>LineSink</code> interface.
  *
  */
-public abstract class LineSink {
+public class LineSink {
 
     /**
      * Moves the current drawing position to the point <code>(x0,
@@ -48,7 +48,7 @@ public abstract class LineSink {
      * @param x0 the X coordinate in S15.16 format
      * @param y0 the Y coordinate in S15.16 format
      */
-    public abstract void moveTo(int x0, int y0);
+    public void moveTo(int x0, int y0) {}
 
     /**
      * Provides a hint that the current segment should be joined to
@@ -65,7 +65,7 @@ public abstract class LineSink {
      * <p> Other <code>LineSink</code> classes should simply pass this
      * hint to their output sink as needed.
      */
-    public abstract void lineJoin();
+    public  void lineJoin() {}
 
     /**
      * Draws a line from the current drawing position to the point
@@ -75,20 +75,20 @@ public abstract class LineSink {
      * @param x1 the X coordinate in S15.16 format
      * @param y1 the Y coordinate in S15.16 format
      */
-    public abstract void lineTo(int x1, int y1);
+    public  void lineTo(int x1, int y1) {}
 
     /**
      * Closes the current path by drawing a line from the current
      * drawing position to the point specified by the moset recent
      * <code>moveTo</code> command.
      */
-    public abstract void close();
+    public void close() {}
 
     /**
      * Ends the current path.  It may be necessary to end a path in
      * order to allow end caps to be drawn.
      */
-    public abstract void end();
+    public void end() {}
 
 }
 
