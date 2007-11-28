@@ -46,6 +46,7 @@
 #include <qsizepolicy.h>
 
 #include <midp_constants_data.h>
+#include <midp_properties.h>
 #include <keymap_input.h>
 #include <midpServices.h>
 #include <midpMalloc.h>
@@ -104,11 +105,20 @@ void PlatformMScreen::init() {
     // Always ...
     setHScrollBarMode(QScrollView::AlwaysOff);
 
-    DISPLAY_WIDTH       = NORMALWIDTH;
-    DISPLAY_HEIGHT      = NORMALHEIGHT;
+	DISPLAY_WIDTH = getInternalPropertyInt("NORMALWIDTH");
+	if (0 == reserved) {
+		REPORT_ERROR(LC_AMS, "NORMALWIDTH property not set");
+		return;
+	}
 
-    SCREEN_WIDTH        = NORMALWIDTH - VERT_SCROLLBAR_WIDTH;
-    SCREEN_HEIGHT       = NORMALHEIGHT;
+	DISPLAY_HEIGHT = getInternalPropertyInt("NORMALHEIGHT");	    
+	if (0 == DISPLAY_HEIGHT) {
+		REPORT_ERROR(LC_AMS, "NORMALWIDTH property not set");
+		return;
+	}
+
+    SCREEN_WIDTH        = DISPLAY_WIDTH - VERT_SCROLLBAR_WIDTH;
+    SCREEN_HEIGHT       = DISPLAY_HEIGHT;
 
     DISPLAY_FULLWIDTH   = FULLWIDTH;
     DISPLAY_FULLHEIGHT  = FULLHEIGHT;

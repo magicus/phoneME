@@ -43,6 +43,15 @@ extern "C" {
  */
 int runMidlet(int argc, char** commandlineArgs);
 
+/**
+ * Reads MAX_ISOLATES property, calculates and returns size of the 
+ * required heap.  If the MAX_ISOLATES has not been found, default
+ * heap size is returned
+ *
+ * @return <tt>heap size</tt> 
+ */
+int getHeapRequirement();
+
 #ifdef __cplusplus
 }
 #endif

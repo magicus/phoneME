@@ -1,0 +1,20 @@
+#
+#
+#
+# Copyright 2006 Sun Microsystems, Inc. All rights reserved.
+# SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+#
+######################################################################
+#
+# Makefile for building and packaging.
+#
+######################################################################
+
+ifeq ($(JAVACALL_PLATFORM),)
+$(error JAVACALL_PLATFORM is not set)
+endif
+
+copy_configuration_file:
+	cp -u $(JAVACALL_OUTPUT_DIR)/jwc_properties.ini $(BINDIR)
+	
+-include $(JAVACALL_PLATFORM)_post.gmk

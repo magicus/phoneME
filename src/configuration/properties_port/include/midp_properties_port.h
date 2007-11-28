@@ -32,13 +32,75 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * Gets the value of the specified property key in the application
+ * property set.
+ *
+ * @param key The key to search for
+ *
+ * @return The value associated with <tt>key<tt> if found, otherwise
+ *         <tt>NULL<tt>
+ */
 const char* getSystemProperty(const char*);
-const char* getInternalProp(const char*);
-const char* getInternalPropDefault(const char*, const char*);
-void  setSystemProperty (const char*, const char*);
-void  setInternalProp (const char*, const char*);
+
+/**
+ * Gets the value of the specified property key in the internal
+ * property set. If the key is not found in the internal property
+ * set, the application property set is then searched.
+ *
+ * @param key The key to search for
+ *
+ * @return The value associated with <tt>key<tt> if found, otherwise
+ *         <tt>NULL<tt>
+ */
+const char* getInternalProperty(const char*);
+
+/**
+ * Gets the integer value of the specified property key in the internal
+ * property set. If the key is not found in the internal property
+ * set, the application and afterwards the dynamic property sets
+ * are searched.  
+ *
+ * @param key The key to search for
+ *
+ * @return The value associated with <tt>key</tt> if found, otherwise
+ *         <tt>0</tt>
+ */
+int getInternalPropertyInt(const char* key);
+
+/**
+ * Sets a property key to the specified value in the application
+ * property set.
+ *
+ * @param key The key to set
+ * @param value The value to set <tt>key<tt> to
+ */
+void  setSystemProperty(const char*, const char*);
+
+/**
+ * Sets a property key to the specified value in the internal
+ * property set.
+ *
+ * @param key The key to set
+ * @param value The value to set <tt>key<tt> to
+ */
+void  setInternalProperty (const char*, const char*);
+
+/**
+ * Finalize the configuration subsystem by releasing all the
+ * allocating memory buffers. This method should only be called by
+ * midpFinalize or internally by initializeConfig.
+ */
 void  finalizeConfig();
-int   initializeConfig();
+
+/**
+ * Initializes the configuration sub-system.
+ *
+ * @return <tt>0<tt> for success, otherwise a non-zero value
+ */
+
+int initializeConfig();
 #ifdef __cplusplus
 }
 #endif

@@ -66,7 +66,7 @@ platformRequest(char* pszUrl) {
         return 1;
     }
 
-    execargs[0] = (char *)getInternalProp(PLATFORM_REQUEST_KEY);
+    execargs[0] = (char *)getInternalProperty(PLATFORM_REQUEST_KEY);
     if (execargs[0] == NULL) {
         REPORT_INFO(LC_CORE, "PlatformRequest is not configured.");
 	return 0;

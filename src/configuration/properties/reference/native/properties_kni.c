@@ -112,7 +112,7 @@ KNIDECL(com_sun_midp_main_Configuration_getProperty0) {
         midpFree(uStr);
 
         /* Look up the property value */
-        value = getInternalProp(key);
+        value = getInternalProperty(key);
         midpFree((void *)key);
 
         if (value != NULL) {
