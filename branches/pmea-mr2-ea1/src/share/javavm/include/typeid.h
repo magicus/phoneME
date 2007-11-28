@@ -172,7 +172,7 @@ extern CVMClassTypeID	CVMtypeidGetArrayBasetypeX( CVMClassTypeID );
  * Initialize the type Id system
  * Register some well-known typeID's 
  */
-extern void
+extern CVMBool
 CVMtypeidInit(CVMExecEnv *ee);
 
 /*
