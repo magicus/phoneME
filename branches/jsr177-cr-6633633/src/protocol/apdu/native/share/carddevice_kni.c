@@ -65,7 +65,7 @@ Java_com_sun_cardreader_PlatformCardDevice_init0() {
     jbyte *err_msg;
     const jbyte *prop_value;
     
-    prop_value = getInternalProp(hostsandports);
+    prop_value = getInternalProperty(hostsandports);
     if (prop_value != NULL) {
         status = jsr177_set_property(hostsandports, prop_value);
         if (status == JSR177_STATUSCODE_NOT_IMPLEMENTED) {

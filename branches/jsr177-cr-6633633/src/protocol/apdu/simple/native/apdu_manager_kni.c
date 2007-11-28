@@ -71,7 +71,7 @@ Java_com_sun_midp_io_j2me_apdu_APDUManager_init0() {
     char *err_msg;
     const char *prop_value;
 
-    prop_value = getInternalProp(hostsandports);
+    prop_value = getInternalProperty(hostsandports);
     if (prop_value != NULL) {
         status = jsr177_set_property((jbyte*)hostsandports, (jbyte*)prop_value);
         if (status == JSR177_STATUSCODE_NOT_IMPLEMENTED) {
