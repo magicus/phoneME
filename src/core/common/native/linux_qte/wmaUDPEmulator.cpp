@@ -586,7 +586,7 @@ static void load_var_char_env_prop(char **ptrVar, char *nameEnv, char *nameProp)
     if(charName != NULL) {
         *ptrVar = charName;
     } else {
-        charName = (char*)getInternalProp(nameProp);
+        charName = (char*)getInternalProperty(nameProp);
         if (charName != NULL) {
             *ptrVar = charName;
         }
