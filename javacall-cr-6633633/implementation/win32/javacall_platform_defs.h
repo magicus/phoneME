@@ -25,6 +25,9 @@
 #ifndef __JAVACALL_PLATFORM_DEFINE_H_
 #define __JAVACALL_PLATFORM_DEFINE_H_
 
+
+#include <stddef.h>	//for size_t
+
 /**
  * @file javacall_platform_defs.h
  * @ingroup Common
