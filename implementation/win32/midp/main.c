@@ -38,6 +38,7 @@
 #include "javacall_lifecycle.h"
 #include "javacall_logging.h"
 #include "javacall_events.h"
+#include "javacall_properties.h"
 #include "javautil_jad_parser.h"
 #include "javacall_lcd.h"
 #include "lcd.h"
@@ -365,6 +366,7 @@ int main(int argc, char *main_argv[]) {
     */
 
     javacall_events_init();
+	javacall_initialize_configurations();
 
 #if !ENABLE_MULTIPLE_INSTANCES
     if (isSecondaryInstance())
