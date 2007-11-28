@@ -33,8 +33,8 @@ $(WMATOOL_JAR_FILE): $(JSR_120_TOOLS_CLASS_DIR) $(MODULE_TOOL_WMATOOL_JAVA_FILES
 		-classpath "$(JSR_120_TOOLS_CLASSPATH)" \
 		$(MODULE_TOOL_WMATOOL_JAVA_FILES)) $(LOG)
 	@(mkdir -p $(WMATOOL_CLASS_OUTPUT_DIRS)) $(LOG)
-	@(cp $(JSR_120_CLASSBINDIR)/com/sun/midp/io/j2me/sms/TextEncoder.class \
-		$(JSR_120_TOOLS_CLASS_DIR)/com/sun/midp/io/j2me/sms) $(LOG)
+	#@(cp $(JSR_120_CLASSBINDIR)/com/sun/midp/io/j2me/sms/TextEncoder.class \
+	#	$(JSR_120_TOOLS_CLASS_DIR)/com/sun/midp/io/j2me/sms) $(LOG)
 	@echo " ... $@ " $(LOG)
 	@(mkdir -p $(JSR_120_BINDIR)) $(LOG)
 	@echo +++ cd $(JSR_120_TOOLS_CLASS_DIR)\; $(JAR_CMD) cfm WMATool.jar \

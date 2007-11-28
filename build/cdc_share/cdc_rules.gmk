@@ -22,7 +22,7 @@
 # information or have any questions. 
 #
 
-include $(JSR_120_DIR)/build/config/common_rules.gmk
+include $(JSR_120_DIR)/build/share/common_rules.gmk
 
 $(JSR_120_INITIALIZER): $(CONFIGURATOR_JAR_FILE)
 	$(AT)$(call generateJSRInitializer,$(JSR_120_PROPERTY_FILES),$(JSR_120_GENERATED_DIR),$(JSR_120_INIT_PACKAGE),$@,$(JSR_120_LIB_NAME))

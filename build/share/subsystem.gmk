@@ -1,5 +1,7 @@
 #
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+#   
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -51,8 +53,8 @@ JSR_120_PACKAGES = \
     com.sun.midp.wma         \
     javax.wireless.messaging 
 
-JSR_120_EXTRA_CFLAGS += -DENABLE_JSR_120=1
-JPP_DEFS             += -DENABLE_JSR_120
+EXTRA_CFLAGS += -DENABLE_JSR_120=1
+JPP_DEFS     += -DENABLE_JSR_120
 
 JAVADOC_ALL_SOURCEPATH += $(JSR_120_SOURCEPATH)
 JAVADOC_ALL_PACKAGES +=  $(JSR_120_PACKAGES)
@@ -93,12 +95,11 @@ MODULE_JSR_120_COMMON_JAVA_FILES = \
     
 vpath % $(JSR_120_DIR)/src/share/test/native
 
-ifeq ($(USE_MIDP),true)
+ifneq ($(USE_NATIVE_AMS), true)
+ifneq ($(NO_PUSH), true)
 MODULE_JSR_120_COMMON_JAVA_FILES += \
-    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ProtocolPushImpl.java \
-    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ReservationDescriptorImpl.java \
-    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ConnectionReservationImpl.java \
-    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/PushConnectionsPool.java
+    $(JSR_120_DIR)/src/share/core/common/classes/com/sun/midp/wma/ProtocolPushImpl.java
+endif
 endif
 
 ifeq ($(ENABLE_MIDP),true)
@@ -114,7 +115,7 @@ else
 # If message are not to be deleted, then include a stubbed implementation of
 # WMACleanupMonitor
 #
-ifneq ($(JSR_120_ENABLE_JUMP), true)
+ifneq ($(ENABLE_JUMP), true)
 MODULE_JSR_120_COMMON_JAVA_FILES += \
     $(AMS_JSR_INTERFACE_DIR)/classes/com/sun/midp/wma/WMACleanupMonitor.java
 endif
@@ -122,7 +123,7 @@ endif
 endif
 
 ifeq ($(JSR_120_ENABLE_JUMPDRIVER), true)
-ifeq ($(JSR_120_ENABLE_JUMP), true)
+ifeq ($(ENABLE_JUMP), true)
 MODULE_JSR_120_COMMON_JAVA_FILES += \
     $(JSR_120_DIR)/src/jump_application/core/common/classes/com/sun/jump/driver/wma/Listener.java
 SUBSYSTEM_JSR_120_CNI_CLASSES += \
@@ -174,7 +175,7 @@ vpath % $(JSR_120_DIR)/src/share/protocol/sms/native/share
 vpath % $(JSR_120_DIR)/src/share/protocol/cbs/native/share
 vpath % $(JSR_120_DIR)/src/share/core/common/native/share
 
-ifeq ($(JSR_120_ENABLE_JUMP), true)
+ifeq ($(ENABLE_JUMP), true)
 vpath % $(JSR_120_DIR)/src/jump_application/core/common/native
 endif
 
@@ -201,7 +202,7 @@ SUBSYSTEM_JSR_120_CNI_CLASSES += \
 endif
 
 ifeq ($(JSR_120_ENABLE_JUMPDRIVER), true)
-ifeq ($(JSR_120_ENABLE_JUMP), true)
+ifeq ($(ENABLE_JUMP), true)
 SUBSYSTEM_JSR_120_NATIVE_FILES += \
     jsr120_callback_proxy.c  \
     jsr120_callback_srv.c  \
@@ -215,18 +216,16 @@ SUBSYSTEM_JSR_120_CNI_CLASSES += \
     com.sun.midp.io.j2me.cbs.Protocol \
     com.sun.midp.io.j2me.sms.Protocol
 
-SUBSYSTEM_JSR_120_CNI_CLASSES += com.sun.midp.wma.PushConnectionsPool  
-
 # Specify romizer configuration file for the jsr
 # and path where the file is located
 #
-ROMGEN_INCLUDE_PATHS += $(JSR_120_DIR)/src/share/config/common
+ROMGEN_INCLUDE_PATHS += $(JSR_120_DIR)/build/share/common
 ROMGEN_CFG_FILES     += jsr120_rom.cfg
 
 # Platform
 #
-#include $(JSR_120_DIR)/src/share/config/$(PLATFORM).gmk
-include $(JSR_120_DIR)/build/config/javacall.gmk
+#include $(JSR_120_DIR)/src/share/share/$(PLATFORM).gmk
+include $(JSR_120_DIR)/build/share/javacall.gmk
 
 # Determines what option we have made and set it
 # to some variable that global makefile recognize
@@ -241,7 +240,7 @@ SUBSYSTEM_JSR_120_JAVA_FILES   += \
 #
 ifeq ($(USE_I3_TEST), true)
 
-JSR_120_EXTRA_CFLAGS += -DENABLE_WMA_LOOPBACK=1
+EXTRA_CFLAGS += -DENABLE_WMA_LOOPBACK=1
 
 MODULE_SMS_I3TEST_JAVA_FILES += \
     $(JSR_120_DIR)/src/share/protocol/sms/i3test/com/sun/midp/io/j2me/sms/TestSMSOpenClose.java
@@ -255,9 +254,15 @@ SUBSYSTEM_JSR_120_I3TEST_JAVA_FILES += \
 
 endif
 
+
+#################################################################
+# Add java files to classes.zip
+#$(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_120_JAVA_FILES)
+#	$(appendjavafiles)
+
 # Internal paths for jsr 120 module
 #
-INTERNAL_JSR_120_CONFIG_DIR= $(JSR_120_DIR)/src/share/config
+INTERNAL_JSR_120_CONFIG_DIR= $(JSR_120_DIR)/build/share
 
 ifneq ($(USE_JSR_205), true)
 # Include JSR 120 common properties in Configuration
@@ -266,8 +271,12 @@ ifneq ($(USE_JSR_205), true)
 #
 JSR_120_PROPERTY_FILES += \
     $(INTERNAL_JSR_120_CONFIG_DIR)/common/properties_jsr120.xml
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += $(JSR_120_PROPERTY_FILES)
 endif
 
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_120_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_120_NATIVE_FILES)
+EXTRA_INCLUDES		+= $(SUBSYSTEM_JSR_120_EXTRA_INCLUDES)
 #################################################################
 
 JSR_120_TOOLS_CLASS_DIR = $(JSR_120_BUILD_DIR)/tools_classes
@@ -288,12 +297,54 @@ WMATOOL_CLASS_DIRS += \
 	com/sun/midp/io/j2me/cbs \
 	com/sun/wma com/sun/tck
 
-#################################################################
+all_tools :: $(WMATOOL_JAR_FILE)
+
+$(WMATOOL_JAR_FILE): $(JSR_120_TOOLS_CLASS_DIR) $(MODULE_TOOL_WMATOOL_JAVA_FILES) $(WMATOOL_MANIFEST_FILE)
+	@echo " ... building WMATool " $(LOG)
+	@echo +++ $(JAVAC_CMD) -g:none -d $(JSR_120_TOOLS_CLASS_DIR) \
+		-classpath "$(JSR_120_TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_WMATOOL_JAVA_FILES) $(LOG_ONLY)
+	@($(JAVAC_CMD) -g:none -d $(JSR_120_TOOLS_CLASS_DIR) \
+		-classpath "$(JSR_120_TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_WMATOOL_JAVA_FILES)) $(LOG)
+	@(mkdir -p $(WMATOOL_CLASS_OUTPUT_DIRS)) $(LOG)
+	@(cp $(JSR_120_CLASSBINDIR)/com/sun/midp/io/j2me/sms/TextEncoder.class \
+		$(JSR_120_TOOLS_CLASS_DIR)/com/sun/midp/io/j2me/sms) $(LOG)
+	@echo " ... $@ " $(LOG)
+	@(mkdir -p $(JSR_120_BINDIR)) $(LOG)
+	@echo +++ cd $(JSR_120_TOOLS_CLASS_DIR)\; $(JAR_CMD) cfm WMATool.jar \
+		WMATool.manifest \
+		$(WMATOOL_CLASS_DIRS) $(LOG_ONLY)
+	@(cd $(JSR_120_TOOLS_CLASS_DIR); $(JAR_CMD) cfm WMATool.jar \
+		WMATool.manifest $(WMATOOL_CLASS_DIRS)) $(LOG)
+	@(cp -f $(JSR_120_TOOLS_CLASS_DIR)/WMATool.jar $(WMATOOL_JAR_FILE)) $(LOG)
+
+$(WMATOOL_MANIFEST_FILE): $(JSR_120_TOOLS_CLASS_DIR)
+	@echo " ... $@ " $(LOG)
+	@(echo "Main-Class: $(WMATOOL_MAIN_CLASS)" > $@) $(LOG)
+
+$(JSR_120_TOOLS_CLASS_DIR) $(JSR_120_CLASSBINDIR) $(JSR_120_BINDIR):
+	@echo " ... creating $@ " $(LOG)
+	@(mkdir -p $@) $(LOG)
+
+clean_tools::
+	-@(rm -fr $(WMATOOL_JAR_FILE)) $(LOG)
+
+# Append JSR120 source bundle creation to target
+#source_bundle:: jsr_120_source_bundle
+
+# Create JSR120 source in subdir 'jsr120/'
+#JSR_120_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr120
+
+# Copy and filter JSR120 source in JSR_120_SOURCE_OUTPUT_DIR
+#jsr_120_source_bundle: SOURCE_OUTPUT_DIR
+#	@echo " ... JSR 120 source bundle" $(LOG)
+#	@$(call re_src_filter,$(JSR_120_DIR),$(JSR_120_SOURCE_OUTPUT_DIR),src)
+
 DOXYGEN_INPUT_LIST += \
 	$(JSR_120_DIR)/src/share/protocol/cbs/native/share/inc/jsr120_cbs_protocol.h \
 	$(JSR_120_DIR)/src/share/core/common/native/share/inc/jsr120_cbs_pool.h \
 	$(JSR_120_DIR)/src/share/protocol/sms/native/share/inc/jsr120_sms_protocol.h \
 	$(JSR_120_DIR)/src/share/core/common/native/share/inc/jsr120_sms_pool.h
+ 
 
-# Create JSR 120 source in subdir 'jsr120/'
-JSR_120_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr120

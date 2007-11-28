@@ -22,7 +22,7 @@
 # information or have any questions. 
 #
 
-include $(JSR_120_DIR)/build/config/common_rules.gmk
+include $(JSR_120_DIR)/build/share/common_rules.gmk
 
 # Add java files to classes.zip
 $(MIDP_OUTPUT_DIR)/classes.zip:: $(SUBSYSTEM_JSR_120_JAVA_FILES)
