@@ -57,17 +57,19 @@ KNIDECL(com_sun_pisces_NativeSurface_clean) {
     AbstractSurface* surface;
     
     KNI_GetThisPointer(objectHandle);
-    initializeSurfaceFieldIds(_ee, objectHandle);
 
-    surface = (AbstractSurface *) (long) KNI_GetLongField(objectHandle, fieldIds[
-                                                            SURFACE_NATIVE_PTR])
-                                                            ;
-    if (surface != NULL) {
-        if (surface->super.data != NULL) {
-            memset(surface->super.data, 0, surface->super.width *
-                                           surface->super.height *
-                                           sizeof(jint));
+    if (initializeSurfaceFieldIds(_ee, objectHandle)) {
+        surface = (AbstractSurface *) (long) KNI_GetLongField(objectHandle, 
+                                                    fieldIds[SURFACE_NATIVE_PTR]);
+        if (surface != NULL) {
+            if (surface->super.data != NULL) {
+                memset(surface->super.data, 0, surface->super.width *
+                                               surface->super.height *
+                                               sizeof(jint));
+            }
         }
+    } else {
+        KNI_ThrowNew("java/lang/IllegalStateException", "");
     }
 
     KNI_EndHandles();
@@ -105,105 +107,109 @@ KNIDECL(com_sun_pisces_NativeSurface_draw) {
     KNI_GetParameterAsObject(1, destinationHandle);
     KNI_GetThisPointer(objectHandle);
     
-    initializeSurfaceFieldIds(_ee, objectHandle);
-    initializeGDFieldIds(_ee);
-    
-    gr = GXAPI_GET_GRAPHICS_PTR(destinationHandle);
-    
-    if (gr != NULL) {
-            sbuf = gxj_get_image_screen_buffer_impl(
-                        (gr != NULL && gr->img != NULL)?gr->img->imageData:NULL, 
-                        &screen_buffer, destinationHandle);
-             sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
-    }    
-    
+    if (initializeSurfaceFieldIds(_ee, objectHandle) &&
+            initializeGDFieldIds(_ee, destinationHandle)) {
 
-    x += KNI_GetIntField(destinationHandle, 
-                            graphicsFieldIds[GRAPHICS_TRANSX]);
-    y += KNI_GetIntField(destinationHandle, 
-                          graphicsFieldIds[GRAPHICS_TRANSY]);
-    
-    surface = (AbstractSurface *) (long) KNI_GetLongField(objectHandle, fieldIds[
-                                                           SURFACE_NATIVE_PTR]);
-    
+        gr = GXAPI_GET_GRAPHICS_PTR(destinationHandle);
 
-    if (surface != NULL && surface->super.data != NULL && opacity != 0) {
-        if (sbuf->alphaData != NULL) {
-            for(yy = 0 ; yy < surface->super.height; yy++) {
-                for(xx = 0; xx < surface->super.width; xx++) {
-                    soffset = yy * surface->super.width + xx;
-                    sa = (int) (((*((int *) surface->super.data + soffset) & 
-                                            0xff000000) >> 24) * opacity + 0.5);
-                    sam = 255 - sa;
-                    if (sa != 0) {
-                      offset = (yy + y) * sbuf->width + xx + x;
-                        
-                        srgb = *((int *) surface->super.data + soffset);
-    
-                        rgb = *((unsigned short *) sbuf->pixelData + offset);
-                        
-                        r =  rgb >> 11;
-                        g = (rgb >> 5) & 0x3f;
-                        b =  rgb &  0x1f;
+        if (gr != NULL) {
+                sbuf = gxj_get_image_screen_buffer_impl(
+                            (gr != NULL && gr->img != NULL)?gr->img->imageData:NULL, 
+                            &screen_buffer, destinationHandle);
+                 sbuf = (gxj_screen_buffer *)getScreenBuffer(sbuf);
+        }    
 
-                        sr = (srgb >> 19) & 0x1f;
-                        sg = (srgb >> 10 ) & 0x3f;
-                        sb = (srgb >> 3) & 0x1f;
-                        
-                        dr = (sr * sa + sam * r) / (255);
-                        db = (sb * sa + sam * b) / (255);
-                        dg = (sg * sa + sam * g) / (255);
-                         
-                        *((unsigned short *) sbuf->pixelData + offset) = 
-                         ((dr & 0x1f) << 11) + ((dg & 0x3f) << 5) + (db & 0x1f);
-                        *((unsigned char *) sbuf->alphaData + offset) = sa;
-                    }                        
+
+        x += KNI_GetIntField(destinationHandle, 
+                                graphicsFieldIds[GRAPHICS_TRANSX]);
+        y += KNI_GetIntField(destinationHandle, 
+                              graphicsFieldIds[GRAPHICS_TRANSY]);
+
+        surface = (AbstractSurface *) (long) KNI_GetLongField(objectHandle, fieldIds[
+                                                               SURFACE_NATIVE_PTR]);
+
+
+        if (surface != NULL && surface->super.data != NULL && opacity != 0) {
+            if (sbuf->alphaData != NULL) {
+                for(yy = 0 ; yy < surface->super.height; yy++) {
+                    for(xx = 0; xx < surface->super.width; xx++) {
+                        soffset = yy * surface->super.width + xx;
+                        sa = (int) (((*((int *) surface->super.data + soffset) & 
+                                                0xff000000) >> 24) * opacity + 0.5);
+                        sam = 255 - sa;
+                        if (sa != 0) {
+                          offset = (yy + y) * sbuf->width + xx + x;
+
+                            srgb = *((int *) surface->super.data + soffset);
+
+                            rgb = *((unsigned short *) sbuf->pixelData + offset);
+
+                            r =  rgb >> 11;
+                            g = (rgb >> 5) & 0x3f;
+                            b =  rgb &  0x1f;
+
+                            sr = (srgb >> 19) & 0x1f;
+                            sg = (srgb >> 10 ) & 0x3f;
+                            sb = (srgb >> 3) & 0x1f;
+
+                            dr = (sr * sa + sam * r) / (255);
+                            db = (sb * sa + sam * b) / (255);
+                            dg = (sg * sa + sam * g) / (255);
+
+                            *((unsigned short *) sbuf->pixelData + offset) = 
+                             ((dr & 0x1f) << 11) + ((dg & 0x3f) << 5) + (db & 0x1f);
+                            *((unsigned char *) sbuf->alphaData + offset) = sa;
+                        }                        
+                    }
                 }
-            }
-        } else {
-            for(yy = 0 ; yy < surface->super.height; yy++) {
-                for(xx = 0; xx < surface->super.width; xx++) {
-                    soffset = yy * surface->super.width + xx;
-                    sa = (int) (((*((int *) surface->super.data + soffset) & 
-                                            0xff000000) >> 24) * opacity + 0.5);
-                    sam = 255 - sa;
-                    if (sa != 0)
-                      {
-                        offset = (yy + y) * sbuf->width + xx + x;
+            } else {
+                for(yy = 0 ; yy < surface->super.height; yy++) {
+                    for(xx = 0; xx < surface->super.width; xx++) {
+                        soffset = yy * surface->super.width + xx;
+                        sa = (int) (((*((int *) surface->super.data + soffset) & 
+                                                0xff000000) >> 24) * opacity + 0.5);
+                        sam = 255 - sa;
+                        if (sa != 0)
+                          {
+                            offset = (yy + y) * sbuf->width + xx + x;
 
-                        srgb = *((int *) surface->super.data + soffset);
-    
-                        rgb = *((unsigned short *) sbuf->pixelData + offset);
-                        
-                        r =  rgb >> 11;
-                        g = (rgb >> 5) & 0x3f;
-                        b =  rgb &  0x1f;
+                            srgb = *((int *) surface->super.data + soffset);
 
-                        sr = (srgb >> 19) & 0x1f;
-                        sg = (srgb >> 10 ) & 0x3f;
-                        sb = (srgb >> 3) & 0x1f;
-                        
-                        dr = (sr * sa + sam * r) / (255);
-                        db = (sb * sa + sam * b) / (255);
-                        dg = (sg * sa + sam * g) / (255);
-                         
-                        *((unsigned short *) sbuf->pixelData + offset) =                                                               ((dr & 0x1f) << 11) + ((dg & 0x3f) << 5) + (db & 0x1f);
-                    }                        
+                            rgb = *((unsigned short *) sbuf->pixelData + offset);
+
+                            r =  rgb >> 11;
+                            g = (rgb >> 5) & 0x3f;
+                            b =  rgb &  0x1f;
+
+                            sr = (srgb >> 19) & 0x1f;
+                            sg = (srgb >> 10 ) & 0x3f;
+                            sb = (srgb >> 3) & 0x1f;
+
+                            dr = (sr * sa + sam * r) / (255);
+                            db = (sb * sa + sam * b) / (255);
+                            dg = (sg * sa + sam * g) / (255);
+
+                            *((unsigned short *) sbuf->pixelData + offset) =                                                               ((dr & 0x1f) << 11) + ((dg & 0x3f) << 5) + (db & 0x1f);
+                        }                        
+                    }
                 }
-            }
-        } 
+            } 
+        }
+    } else {
+        KNI_ThrowNew("java/lang/IllegalStateException", "");
     }
+
     KNI_EndHandles();
     KNI_ReturnVoid();    
 }
 
 static jboolean
-initializeGDFieldIds(CVMExecEnv* _ee) {
-    static const FieldDesc graphicsFieldDesc[GRAPHICS_LAST + 2] = {
-                                                       { "transX", "I" },
-                                                       { "transY", "I" },
-                                                       { NULL, NULL}
-                                                      };            
+initializeGDFieldIds(CVMExecEnv* _ee, jobject objectHandle) {
+    static const FieldDesc graphicsFieldDesc[] = {
+                                                   { "transX", "I" },
+                                                   { "transY", "I" },
+                                                   { NULL, NULL}
+                                                  };
     jboolean retVal;
 
     if (fieldIdsInitialized1) {
@@ -213,11 +219,13 @@ initializeGDFieldIds(CVMExecEnv* _ee) {
     retVal = KNI_FALSE;
     KNI_StartHandles(1);
     KNI_DeclareHandle(graphicsHndl);
-    KNI_FindClass("javax/microedition/lcdui/Graphics", graphicsHndl);
-    if (!KNI_IsNullHandle(graphicsHndl) && 
-        initializeFieldIds(_ee, graphicsFieldIds, graphicsHndl, graphicsFieldDesc)) {
+    KNI_GetObjectClass(objectHandle, graphicsHndl);
+
+    if (!KNI_IsNullHandle(graphicsHndl)) {
+      if (initializeFieldIds(_ee, graphicsFieldIds, graphicsHndl, graphicsFieldDesc)) {
         retVal = KNI_TRUE;
         fieldIdsInitialized1 = KNI_TRUE;
+      }
     }
     KNI_EndHandles();
     return retVal;
