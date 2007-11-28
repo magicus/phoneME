@@ -384,7 +384,7 @@ char *getMMSAppID(char *entry) {
 }
 #endif
 
-#ifdef ENABLE_CDC
+#if (ENABLE_CDC == 1)
 
 typedef struct filter_struct {
     int port;

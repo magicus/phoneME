@@ -43,24 +43,25 @@
 
 #ifdef ENABLE_MIDP
 #include <midpServices.h>
-#include <commonKNIMacros.h>
-#include <ROMStructs.h>
+//#include <commonKNIMacros.h>
+//#include <ROMStructs.h>
 #include <midpError.h>
 #include <midp_properties_port.h>
 #include <midp_logging.h>
 #include <midpResourceLimit.h>
 #endif
 
-#ifdef ENABLE_CDC
+
+//#if (ENABLE_CDC == 1)
 #ifdef ENABLE_PCSL
 #include <pcsl_memory.h>
 #else
   #define pcsl_mem_malloc malloc
   #define pcsl_mem_free free
 #endif
-#endif
+//#endif
 
-#ifdef ENABLE_CDC
+#if (ENABLE_CDC == 1)
 #define JSR120_KNI_LAYER
 #ifdef JSR_120_ENABLE_JUMPDRIVER
 #include <jsr120_jumpdriver.h>
@@ -86,7 +87,7 @@
 /*
  * Protocol methods
  */
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
 static void wma_setBlockedCBSHandle(int msgID, int eventType);
 #endif
 
@@ -136,7 +137,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_open0) {
             if (jsr120_cbs_is_midlet_msgID_registered((jchar)msgID) == WMA_ERR) {
 
                 /* Fetch a unique handle that identifies this CBS communication session. */
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
                 handle = (int)(pcsl_mem_malloc(1));
 #else
 #ifdef JSR_120_ENABLE_JUMPDRIVER
@@ -193,7 +194,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_close0) {
 
     if (msgID > 0 && handle != 0) {
 
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
         /* Unblock any blocked threads. */
         jsr120_cbs_unblock_thread((int)handle, WMA_CBS_READ_SIGNAL);
 #else
@@ -207,7 +208,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_close0) {
             jsr120_cbs_unregister_midlet_msgID((jchar)msgID);
 
             /* Release the handle associated with this connection. */
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
             pcsl_mem_free((void *)handle);
 #else
 #ifdef JSR_120_ENABLE_JUMPDRIVER
@@ -233,7 +234,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_close0) {
  */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_receive0) {
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
     MidpReentryData* info = (MidpReentryData*)SNI_GetReentryData(NULL);
 #endif
 
@@ -270,7 +271,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_receive0) {
 
         do {
             /* If this is the first time, peek into the pool for a message. */
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
             if (info == NULL) {
 #endif
                 pCbsData = jsr120_cbs_pool_peek_next_msg((jchar)msgID);
@@ -282,7 +283,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_receive0) {
                  */
                 if (pCbsData == NULL) {
 
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
                     /* Wait for a message to arrive in the pool. */
                     wma_setBlockedCBSHandle(handle, WMA_CBS_READ_SIGNAL);
 #else
@@ -295,7 +296,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_receive0) {
 #endif
 #endif
                 }
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
             } else {
 
                 /* Re-entry */
@@ -414,7 +415,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_receive0) {
  */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_waitUntilMessageAvailable0) {
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
     MidpReentryData *info = (MidpReentryData*)SNI_GetReentryData(NULL);
 #endif
 
@@ -446,7 +447,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_waitUntilMessageAvailable0) {
                  messageLength = pCbsData->msgLen;
             } else {
 
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
                 if (!info) {
                      /* Block and wait for a message. */
                      wma_setBlockedCBSHandle(handle, WMA_CBS_READ_SIGNAL);
@@ -465,7 +466,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_waitUntilMessageAvailable0) {
 #endif
 #endif
 
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
                 } else {
                      /* May have been awakened due to interrupt. */
                      messageLength = -1;
@@ -477,7 +478,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_waitUntilMessageAvailable0) {
     KNI_ReturnInt(messageLength);
 }
 
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
 /**
  * Marks an open connection as being blocked on a CBS operation. The
  * blocked status of the connection is stored in the current Java

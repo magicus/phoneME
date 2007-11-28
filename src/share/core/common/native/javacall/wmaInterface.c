@@ -46,7 +46,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef ENABLE_CDC
+#if (ENABLE_CDC == 1)
   #include "jsr120_signals.h"
 #endif
 
@@ -55,13 +55,16 @@
  * No need in current implementation.
  */
 WMA_STATUS init_jsr120() {
-#ifdef ENABLE_CDC
+#if (ENABLE_CDC == 1)
     jsr120_init_signal();
 #endif
+#if (ENABLE_CDC == 1)
     javacall_wma_init();
+#endif
     return WMA_NET_SUCCESS;
 }
 
+#if (ENABLE_CDC == 1)
 void javanotify_incoming_sms(
         javacall_sms_encoding   msgType,
         char*                   sourceAddress,
@@ -76,15 +79,23 @@ void javanotify_incoming_sms(
     jsr120_sms_pool_add_msg(sms);
 }
 
+void javanotify_sms_send_completed(
+                        javacall_sms_sending_result result, 
+                        int                         handle) {
+}
+#endif
+
 /**
  * Defined in wmaUDPEmulator.c
  * No need in current implementation.
  */
 void finalize_jsr120() {
-#ifdef ENABLE_CDC
+#if (ENABLE_CDC == 1)
     jsr120_finalize_signal();
 #endif
+#if (ENABLE_CDC == 1)
     javacall_wma_close();
+#endif
 }
 
 #ifdef ENABLE_MIDP

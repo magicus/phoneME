@@ -27,9 +27,9 @@
 #include <string.h>
 #include <kni.h>
 #include <sni.h>
-#ifndef ENABLE_CDC
-  #include <commonKNIMacros.h>
-  #include <ROMStructs.h>
+#if (ENABLE_CDC != 1)
+//#include <commonKNIMacros.h>
+//#include <ROMStructs.h>
   // #include <midp_thread.h>
   #include <midpServices.h>
   #include <push_server_export.h>
@@ -42,7 +42,7 @@ typedef enum midp_SignalType {
 
 #include <app_package.h>
 
-#ifdef ENABLE_CDC
+#if (ENABLE_CDC == 1)
 #ifdef JSR_120_ENABLE_JUMPDRIVER
 #include <jsr120_jumpdriver.h>
 #include <JUMPEvents.h>
@@ -80,7 +80,7 @@ static WMA_STATUS jsr120_cbs_push_listener(CbsMessage *message,
     void* userData);
 static WMA_STATUS jsr120_cbs_invoke_listeners(CbsMessage* message,
     ListElement *listeners);
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
 static JVMSPI_ThreadID jsr120_cbs_get_blocked_thread_from_handle(long handle,
     jint waitingFor);
 #endif
@@ -210,7 +210,7 @@ WMA_STATUS jsr120_cbs_unregister_push_msgID(jchar msgID) {
  * See jsr120_cbs_listeners.h for documentation
  */
 WMA_STATUS jsr120_cbs_unblock_thread(jint handle, jint waitingFor) {
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
     JVMSPI_ThreadID id =
         jsr120_cbs_get_blocked_thread_from_handle((long)handle, waitingFor);
     if (id != 0) {
@@ -231,7 +231,7 @@ WMA_STATUS jsr120_cbs_unblock_thread(jint handle, jint waitingFor) {
     return WMA_ERR;
 }
 
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
 /**
  * Find a first thread that can be unblocked for a given handle and signal type.
  *

@@ -46,7 +46,7 @@
   #define pcsl_mem_free free
 #endif
 
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
   #include <midpServices.h> //WMA_SMS_READ_SIGNAL, WMA_SMS_WRITE_SIGNAL, etc
   #include <midp_thread.h> //midp_thread_wait
 #else
@@ -63,7 +63,7 @@
   static const char* const midpIllegalArgumentException = "java/lang/IllegalArgumentException";
 #endif
 
-#ifdef ENABLE_CDC
+#if (ENABLE_CDC == 1)
 #define JSR120_KNI_LAYER
 #ifdef JSR_120_ENABLE_JUMPDRIVER
 #include <jsr120_jumpdriver.h>
@@ -130,15 +130,7 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_open0) {
              * Get unique handle, to identify this
              * SMS "session"..
              */
-#ifndef ENABLE_CDC
             handle = (int)(pcsl_mem_malloc(1));
-#else
-#ifdef JSR_120_ENABLE_JUMPDRIVER
-            handle = (int)jumpEventCreate();
-#else
-            handle = (int)malloc(1);
-#endif
-#endif
             if (handle == 0) {
                KNI_ThrowNew(midpOutOfMemoryError,
                             "Unable to start SMS.");
@@ -202,15 +194,11 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_close0) {
 
     if (port > 0 && handle != 0) {
 
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
         /* unblock any blocked threads */
         jsr120_sms_unblock_thread((jint)handle, WMA_SMS_READ_SIGNAL);
 #else
-#ifdef JSR_120_ENABLE_JUMPDRIVER
-        jumpEventHappens((JUMPEvent)handle);
-#else
         jsr120_throw_signal(handle, 0);
-#endif
 #endif
 
         if (deRegister) {
@@ -218,21 +206,15 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_close0) {
             jsr120_unregister_sms_midlet_port((jchar)port);
 
             /* Release the handle associated with this connection. */
-#ifndef ENABLE_CDC
             pcsl_mem_free((void *)handle);
-#else
-#ifdef JSR_120_ENABLE_JUMPDRIVER
-            jumpEventDestroy((JUMPEvent)handle);
-#else
-            free((void*)handle);
-#endif
-#endif
         }
 
     }
 
     KNI_ReturnInt(status);
 }
+
+#define ENABLE_REENTRY (ENABLE_CDC != 1)
 
 /**
  * Sends an SMS message.
@@ -259,13 +241,11 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_send0) {
     int i;
     unsigned char *pAddress = NULL;
     unsigned char *pMessageBuffer = NULL;
-#ifndef ENABLE_CDC
-    MidpReentryData *info;
-#endif
     jboolean stillWaiting = KNI_FALSE;
     jboolean trySend = KNI_FALSE;
     void *pdContext = NULL;
-#ifndef ENABLE_CDC
+#if ENABLE_REENTRY
+    MidpReentryData *info;
     jsr120_sms_message_state_data *messageStateData = NULL;
 #endif
     jint bytesSent;
@@ -283,7 +263,7 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_send0) {
         KNI_GetParameterAsObject(6, messageBuffer);
 
         do {
-#ifndef ENABLE_CDC
+#if ENABLE_REENTRY
             info = (MidpReentryData*)SNI_GetReentryData(NULL);
             if (info == NULL) {	  /* First invocation. */
 #endif
@@ -326,7 +306,7 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_send0) {
                         }
                     }
                 }
-#ifndef ENABLE_CDC
+#if ENABLE_REENTRY
             } else { /* Reinvocation after unblocking the thread. */
                 messageStateData = info->pResult;
                 pMessageBuffer = messageStateData->pMessageBuffer;
@@ -351,7 +331,7 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_send0) {
                 if (status == WMA_ERR) {
                     KNI_ThrowNew(midpIOException, "Sending SMS");
                     break;
-#ifndef ENABLE_CDC
+#if ENABLE_REENTRY
                 } else if (status == WMA_NET_WOULDBLOCK) {
                     if (messageStateData == NULL) {
                         messageStateData =
@@ -401,7 +381,7 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_send0) {
  */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_io_j2me_sms_Protocol_receive0) {
-#ifndef ENABLE_CDC
+#if ENABLE_REENTRY
     MidpReentryData *info = (MidpReentryData*)SNI_GetReentryData(NULL);
 #endif
     int port, handle;
@@ -423,21 +403,14 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_receive0) {
         KNI_GetParameterAsObject(4, messageObject);
 
         do {
-#ifndef ENABLE_CDC
+#if ENABLE_REENTRY
             if (!info) {
 #endif
                 psmsData = jsr120_sms_pool_peek_next_msg((jchar)port);
                 if (psmsData == NULL) {
-#ifndef ENABLE_CDC
+#if ENABLE_REENTRY
                     /* block and wait for a message. */
                     midp_thread_wait(WMA_SMS_READ_SIGNAL, handle, NULL);
-#else
-#ifdef JSR_120_ENABLE_JUMPDRIVER
-        CVMD_gcSafeExec(_ee, {
-                    if (jumpEventWait((JUMPEvent)handle) == 0) {
-                        psmsData = jsr120_sms_pool_peek_next_msg((jchar)port);
-                    }
-        }); 
 #else
         do {
             CVMD_gcSafeExec(_ee, {
@@ -446,9 +419,8 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_receive0) {
             psmsData = jsr120_sms_pool_peek_next_msg((jchar)port);
         } while (psmsData == NULL && isClosed == 0);
 #endif
-#endif
                 }
-#ifndef ENABLE_CDC
+#if ENABLE_REENTRY
             } else {
                 /* reentry. */
                 psmsData = jsr120_sms_pool_peek_next_msg((jchar)port);
@@ -559,7 +531,7 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_receive0) {
  */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_midp_io_j2me_sms_Protocol_waitUntilMessageAvailable0) {
-#ifndef ENABLE_CDC
+#if ENABLE_REENTRY
     MidpReentryData *info = (MidpReentryData*)SNI_GetReentryData(NULL);
 #endif
     int port;
@@ -588,23 +560,11 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_waitUntilMessageAvailable0) {
             if (pSMSData != NULL) {
                 messageLength = pSMSData->msgLen;
             } else {
-#ifndef ENABLE_CDC
+#if ENABLE_REENTRY
                 if (!info) {
 
                      /* Block and wait for a message. */
                     midp_thread_wait(WMA_SMS_READ_SIGNAL, handle, NULL);
-#else
-#ifdef JSR_120_ENABLE_JUMPDRIVER
-        CVMD_gcSafeExec(_ee, {
-                    if (jumpEventWait((JUMPEvent)handle) != 0) {
-                        messageLength = -1;
-                    } else {
-                        pSMSData = jsr120_sms_pool_peek_next_msg1((jchar)port, 1);
-                        if (pSMSData != NULL) {
-                            messageLength = pSMSData->msgLen;
-                        }
-                    }
-        }); 
 #else
         CVMD_gcSafeExec(_ee, {
             jsr120_wait_for_signal(handle, WMA_SMS_READ_SIGNAL);
@@ -614,8 +574,7 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_waitUntilMessageAvailable0) {
             }
         }); 
 #endif
-#endif
-#ifndef ENABLE_CDC
+#if ENABLE_REENTRY
                 } else {
                      /* May have been awakened due to interrupt. */
                      messageLength = -1;

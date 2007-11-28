@@ -192,19 +192,5 @@ WMA_STATUS jsr120_number_of_sms_segments(unsigned char msgBuffer[], jint msgLen,
     return (*numSegments) ? WMA_OK : WMA_ERR ;
 }
 
-/**
- * A callback function to be called by platform to notify that an SMS 
- * has completed sending operation.
- * The platfrom will invoke the call back in platform context for
- * each sms sending completion. 
- *
- * @param result indication of send completed status result: Either
- *         <tt>JAVACALL_SMS_CALLBACK_SEND_SUCCESSFULLY</tt> on success,
- *         <tt>JAVACALL_SMS_CALLBACK_SEND_FAILED</tt> on failure
- * @param handle Handle value returned from javacall_sms_send
- */
-void javanotify_sms_send_completed(
-                        javacall_sms_sending_result result, 
-                        int                         handle) {
-}
+
 

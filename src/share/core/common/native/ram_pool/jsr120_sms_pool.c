@@ -197,7 +197,7 @@ void jsr120_sms_delete_msg(SmsMessage* sms) {
  * Helper methods to operate the pool of messages.
  */
 
-#ifdef ENABLE_CDC
+#if (ENABLE_CDC == 1)
 
 #include <kni.h>
 #include <sni.h>

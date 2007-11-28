@@ -28,8 +28,8 @@
 #include <kni.h>
 #include <sni.h>
 #ifdef ENABLE_MIDP
-  #include <commonKNIMacros.h>
-  #include <ROMStructs.h>
+//#include <commonKNIMacros.h>
+//#include <ROMStructs.h>
   //#include <midp_thread.h>
   #include <midpServices.h>
   #include <push_server_export.h>
@@ -37,7 +37,7 @@
   #include "wmaInterface.h"
 #endif
 
-#ifdef ENABLE_CDC
+#if (ENABLE_CDC == 1)
 #ifdef JSR_120_ENABLE_JUMPDRIVER
   #include <jsr120_jumpdriver.h>
   #include <JUMPEvents.h>
@@ -72,7 +72,7 @@ static WMA_STATUS jsr120_sms_midlet_listener(jint port, SmsMessage* wma_smsstruc
 static WMA_STATUS jsr120_sms_push_listener(jint port, SmsMessage* wma_smsstruct,
                                               void* userData);
 static WMA_STATUS jsr120_invoke_sms_listeners(SmsMessage* sms, ListElement *listeners);
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
 static JVMSPI_ThreadID
 jsr120_get_blocked_thread_from_handle(long handle, jint waitingFor);
 static JVMSPI_ThreadID jsr120_get_blocked_thread_from_signal(jint waitingFor);
@@ -97,7 +97,7 @@ static void jsr120_sms_delete_all_msgs(AppIdType msid, ListElement *head);
  *                 <code>WMA_ERR</code> otherwise
  */
 static WMA_STATUS jsr120_invoke_sms_listeners(SmsMessage* sms, ListElement *listeners) {
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
     ListElement* callback;
     WMA_STATUS unblocked = WMA_ERR;
 
@@ -151,7 +151,7 @@ void jsr120_sms_message_arrival_notifier(SmsMessage* smsMessage) {
  * See jsr120_sms_listeners.h for documentation
  */
 void jsr120_sms_message_sent_notifier() {
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
     /*
      * An SMS message has been sent. So unblock thread
      * blocked on WMA_SMS_WRITE_SIGNAL.
@@ -166,7 +166,7 @@ void jsr120_sms_message_sent_notifier() {
 #endif
 }
 
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
 /**
  * Find the first thread that can be unblocked for a given
  * signal type
@@ -256,7 +256,7 @@ WMA_STATUS jsr120_unregister_sms_push_port(jchar port) {
  * See jsr120_sms_listeners.h for documentation
  */
 WMA_STATUS jsr120_sms_unblock_thread(jint handle, jint waitingFor) {
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
     JVMSPI_ThreadID id = jsr120_get_blocked_thread_from_handle((long)handle, waitingFor);
     if (id != 0) {
 	midp_thread_unblock(id);
@@ -276,7 +276,7 @@ WMA_STATUS jsr120_sms_unblock_thread(jint handle, jint waitingFor) {
 
 }
 
-#ifndef ENABLE_CDC
+#if (ENABLE_CDC != 1)
 /**
  * Find a first thread that can be unblocked for  a given handle
  * and signal type
