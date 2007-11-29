@@ -1,0 +1,42 @@
+#
+# Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+# List of visible classes for JSR172 JAX-RPC subset API
+
+# This class list is used after JSR's jarfile creation for verifying all API
+# classes are implemented. If some classes are missed they are searched
+# in configuration/profile target jarfiles.
+
+javax.xml.rpc.JAXRPCException
+javax.xml.rpc.NamespaceConstants
+javax.xml.rpc.Stub
+javax.xml.namespace.QName
+javax.microedition.xml.rpc.Operation
+javax.microedition.xml.rpc.Element
+javax.microedition.xml.rpc.Type
+javax.microedition.xml.rpc.FaultDetailHandler
+javax.microedition.xml.rpc.ComplexType
+javax.microedition.xml.rpc.FaultDetailException
+java.rmi.ServerException
+java.rmi.MarshalException
+java.rmi.RemoteException
