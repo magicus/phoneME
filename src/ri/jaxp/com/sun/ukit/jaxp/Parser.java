@@ -1,27 +1,27 @@
 /*
  *  
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 
@@ -322,13 +322,13 @@ public final class Parser
 		return mIsNSAware;
 	}
 
-    /**
-     * Indicates whether or not this parser is configured to validate
-     * XML documents.
-     *
-     * @return true if this parser is configured to validate XML
-     *          documents; false otherwise.
-     */
+	/**
+	 * Indicates whether or not this parser is configured to validate
+	 * XML documents.
+	 *
+	 * @return true if this parser is configured to validate XML
+	 *          documents; false otherwise.
+	 */
 	public boolean isValidating()
 	{
 		return false;
@@ -355,19 +355,19 @@ public final class Parser
 		parse(new InputSource(src), handler);
 	}
 
-    /**
-     * Parse the content given {@link org.xml.sax.InputSource}
-     * as XML using the specified
-     * {@link org.xml.sax.helpers.DefaultHandler}.
-     *
-     * @param is The InputSource containing the content to be parsed.
-     * @param handler The SAX DefaultHandler to use.
+	/**
+	 * Parse the content given {@link org.xml.sax.InputSource}
+	 * as XML using the specified
+	 * {@link org.xml.sax.helpers.DefaultHandler}.
+	 *
+	 * @param is The InputSource containing the content to be parsed.
+	 * @param handler The SAX DefaultHandler to use.
 	 * @exception IOException If any IO errors occur.
-     * @exception IllegalArgumentException If the InputSource or handler is null.
-     * @exception SAXException If the underlying parser throws a
-     * SAXException while parsing.
+	 * @exception IllegalArgumentException If the InputSource or handler is null.
+	 * @exception SAXException If the underlying parser throws a
+	 * SAXException while parsing.
 	 * @see org.xml.sax.helpers.DefaultHandler
-     */
+	 */
 	public void parse(InputSource is, DefaultHandler handler)
 		throws SAXException, IOException
 	{
@@ -381,16 +381,16 @@ public final class Parser
 		parse(handler);
 	}
 
-    /**
-     * Parse the XML document content using the specified
-     * {@link org.xml.sax.helpers.DefaultHandler}.
-     *
-     * @param handler The SAX DefaultHandler to use.
+	/**
+	 * Parse the XML document content using the specified
+	 * {@link org.xml.sax.helpers.DefaultHandler}.
+	 *
+	 * @param handler The SAX DefaultHandler to use.
 	 * @exception IOException If any IO errors occur.
-     * @exception SAXException If the underlying parser throws a
-     * SAXException while parsing.
+	 * @exception SAXException If the underlying parser throws a
+	 * SAXException while parsing.
 	 * @see org.xml.sax.helpers.DefaultHandler
-     */
+	 */
 	private void parse(DefaultHandler handler)
 		throws SAXException, IOException
 	{
@@ -1442,10 +1442,18 @@ public final class Parser
 
 				case EOS:
 					panic(FAULT);
+
+				case ' ':		// characters not supported by bappend()
+				case '\"':
+				case '\'':
+				case '\n':
+				case '\t':
+				case '%':
+					bappend(ch);
 					break;
 
 				default:
-					bappend(ch);
+					bappend();
 					break;
 				}
 				break;
@@ -1819,10 +1827,17 @@ public final class Parser
 				break;
 
 			case 3:		// read data before the first ']'
-				if (ch != ']')
-					bappend(ch);
-				else
+				switch (ch) {
+				case ']':
 					st	= 4;
+					break;
+
+				case EOS:
+					panic(FAULT);
+
+				default:
+					bappend(ch);
+				}
 				break;
 
 			case 4:		// read the second ']' or continue to read the data
@@ -2656,8 +2671,14 @@ public final class Parser
 							back();
 						ch = '\n';
 					}
-				default:
+				case ' ':
+				case '\n':
+				case '\t':
 					bappend(ch, flag);
+					break;
+
+				default:
+					bappend();
 					break;
 				}
 				break;
@@ -2682,6 +2703,45 @@ public final class Parser
 			//		Textual data has been read
 			mHand.characters(mBuff, 0, (mBuffIdx + 1));
 			mBuffIdx = -1;
+		}
+	}
+
+	/**
+	 * Appends a characters to parser's buffer starting with the last 
+	 * read character and until one of special characters.
+	 */
+	private void bappend()
+		throws SAXException, IOException
+	{
+		char ch;
+
+		back();
+		while (true) {
+			ch = (mChIdx < mChLen)? mChars[mChIdx++]: next();
+			switch (ch) {
+			case ' ':
+			case '\"':
+			case '\'':
+			case '\n':
+			case '\r':
+			case '\t':
+			case '<':
+			case '%':
+			case '&':
+			case EOS:
+				back();
+				return;
+
+			default:
+				mBuffIdx++;
+				if (mBuffIdx < mBuff.length) {
+					mBuff[mBuffIdx] = ch;
+				} else {
+					mBuffIdx--;
+					bappend(ch);
+				}
+				break;
+			}
 		}
 	}
 
