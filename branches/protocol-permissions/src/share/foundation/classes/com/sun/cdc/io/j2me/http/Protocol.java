@@ -144,19 +144,11 @@ public class Protocol extends ConnectionBase implements HttpConnection {
      * This should be overriden by the MIDP protocol handler
      * to check the proper MIDP permission.
      */
-    protected void checkPermission(String url) {
+    protected void checkPermission(String host, int port, String file) {
         // Check for SecurityManager.checkConnect()
         java.lang.SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
-            URL u;
-            try {
-                u = new URL(url);
-            } catch (MalformedURLException mfue) {
-                // Should happen because we've rebuilt the URL from
-                // its components
-                throw new IllegalArgumentException("bad URL: " + url);
-            }
-            sm.checkConnect(u.getHost(), u.getPort());
+            sm.checkConnect(host, port);
         }               
         return;
     }
@@ -226,7 +218,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 	}
 
 	// Check permission. The permission method wants the URL
-        checkPermission("http://" + host + ":" + port);
+	checkPermission(host, port, file);
 
         // Try to open connection to test for ConnectionNotFoundException
         try {
