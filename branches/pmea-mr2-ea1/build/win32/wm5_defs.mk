@@ -48,7 +48,7 @@ PLATFORM_TOOLS_PATH	= $(VC_PATH)/ce/bin/x86_arm
 COMMON_TOOLS_PATH0	= $(VS8_PATH)/Common7/Tools/Bin:$(VS8_PATH)/Common7/IDE
 COMMON_TOOLS_PATH	= $(VC_PATH)/bin:$(COMMON_TOOLS_PATH0)
 
-LINKEXE_LIBS += /nodefaultlib:libc.lib corelibc.lib
+LINKEXE_LIBS += /nodefaultlib:libc.lib corelibc.lib aygshell.lib
 WIN_LINKLIBS += corelibc.lib
 
 include ../win32/wince50_defs.mk
