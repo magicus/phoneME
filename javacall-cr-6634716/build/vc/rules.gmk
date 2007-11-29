@@ -102,7 +102,7 @@ $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
 	@echo -n "...compiling: "
 	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
 
-ifeq ($(USE_JSR_120),true)
+ifeq ($(USE_JSR_120)$(WIN32_PLATFORM),truewince) 
 
 ifeq ($(USE_CDC_EMULATION),)
 LINK=link.exe
