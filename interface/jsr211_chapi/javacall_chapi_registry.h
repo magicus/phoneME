@@ -42,12 +42,6 @@
 #ifndef _JAVACALL_REGISTRY_H_
 #define _JAVACALL_REGISTRY_H_
 
-/* TEEEEEEEEEEEEEEEEEEEEEEEMMMMMMMMMMMMMMMPPPPPPPPPPPPPPPPPPPPPPPPPPP!!!!! */
-#ifdef SUITE_ID_STRING
-#undef SUITE_ID_STRING
-#endif
-#define SUITE_ID_STRING 1
-
 #include <javacall_defs.h>
 
 #ifdef __cplusplus
