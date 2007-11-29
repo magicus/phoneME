@@ -6,22 +6,22 @@
 # 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License version
-# 2 only, as published by the Free Software Foundation. 
+# 2 only, as published by the Free Software Foundation.
 # 
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License version 2 for more details (a copy is
-# included at /legal/license.txt). 
+# included at /legal/license.txt).
 # 
 # You should have received a copy of the GNU General Public License
 # version 2 along with this work; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-# 02110-1301 USA 
+# 02110-1301 USA
 # 
 # Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
 # Clara, CA 95054 or visit www.sun.com if you need additional
-# information or have any questions. 
+# information or have any questions.
 ######################################################################
 #
 # Module's Component Configuration file
@@ -32,15 +32,6 @@
 #
 SUBSYSTEMS += jsr_172
 
-# Abstractions component is used
-USE_ABSTRACTIONS=true
-
-ifneq ($(TARGET_VM), cldc_vm)
-include $(JSR_172_DIR)/build/cdc_share/subsystem_defs.gmk
-else
-include $(JSR_172_DIR)/build/cldc_application/subsystem.gmk
-endif
-
 # Javadoc source path
 SUBSYSTEM_JSR172_SOURCEPATH += $(JSR_172_DIR)/src/ri/jaxp$(PATHSEP)$(JSR_172_DIR)/src/ri/jaxrpc$(PATHSEP)$(JSR_172_DIR)/src/ri/sg
 
@@ -48,13 +39,20 @@ ifneq ($(USE_JSR_177), true)
 SUBSYSTEM_JSR172_SOURCEPATH += $(PATHSEP)$(JSR_172_DIR)/src/ri/rmi
 endif
 
-SUBSYSTEM_JSR172_PACKAGES += \
+SUBSYSTEM_JSR172_PACKAGES = \
    com.sun.j2mews.sg \
    com.sun.j2mews.xml.rpc \
    javax.microedition.xml.rpc \
    javax.xml.namespace \
    javax.xml.parsers \
    javax.xml.rpc
+
+ifneq ($(USE_JSR_280), true)
+SUBSYSTEM_JSR172_PACKAGES += \
+   com.sun.ukit.jaxp \
+   org.xml.sax \
+   org.xml.sax.helpers
+endif
 
 MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_JSR172_SOURCEPATH)
 MIDP_JAVADOC_PACKAGES +=  $(SUBSYSTEM_JSR172_PACKAGES)
@@ -70,23 +68,27 @@ INTERNAL_JSR_172_CONFIG_DIR = $(JSR_172_DIR)/src/config
 
 # Jpp files that need preprocessing
 #
-$(JSR_172_GENERATED_DIR)/classes/%.java: $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/%.jpp
+$(GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPDecoder.java: $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/com/sun/j2mews/xml/rpc/SOAPDecoder.jpp
 	@$(call runjpp,$^,$@)
 
-JSR_172_PROPERTY_FILE = $(INTERNAL_JSR_172_CONFIG_DIR)/properties_jsr172.xml
-JSR_172_CONSTANT_FILE = $(INTERNAL_JSR_172_CONFIG_DIR)/constants_jsr172.xml
+$(GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPEncoder.java: $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/com/sun/j2mews/xml/rpc/SOAPEncoder.jpp
+	@$(call runjpp,$^,$@)
 
 # Include JSR_172 system properties in Configuration
 SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
-	$(JSR_172_PROPERTY_FILE) \
-	$(JSR_172_CONSTANT_FILE) \
+	$(INTERNAL_JSR_172_CONFIG_DIR)/properties_jsr172.xml \
+	$(INTERNAL_JSR_172_CONFIG_DIR)/constants_jsr172.xml
 
 # ri_jaxp 
 #
-INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES +=
 
 ifneq ($(USE_JSR_280), true)
-INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES += \
+INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES = \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Input.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/ReaderUTF16.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/ReaderUTF8.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Pair.java \
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Attrs.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/helpers/DefaultHandler.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/InputSource.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/org/xml/sax/SAXNotSupportedException.java \
@@ -99,18 +101,13 @@ INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES += \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/javax/xml/parsers/ParserConfigurationException.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/javax/xml/parsers/SAXParser.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/javax/xml/parsers/FactoryConfigurationError.java \
-        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Input.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/ParserFactory.java \
-        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/ReaderUTF16.java \
-        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/ReaderUTF8.java \
-        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Pair.java \
-        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Parser.java \
-        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Attrs.java
+        $(INTERNAL_JSR_172_RI_DIR)/jaxp/com/sun/ukit/jaxp/Parser.java
 endif
 
 # ri_jaxrpc
 #
-INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES += \
+INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES := \
         $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/xml/rpc/JAXRPCException.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/xml/rpc/NamespaceConstants.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/xml/rpc/Stub.java \
@@ -122,19 +119,29 @@ INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES += \
         $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/microedition/xml/rpc/FaultDetailHandler.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/javax/microedition/xml/rpc/FaultDetailException.java \
         $(INTERNAL_JSR_172_RI_DIR)/jaxrpc/com/sun/j2mews/xml/rpc/OperationImpl.java \
-        $(JSR_172_GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPDecoder.java \
-        $(JSR_172_GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPEncoder.java \
+        $(GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPDecoder.java \
+        $(GENERATED_DIR)/classes/com/sun/j2mews/xml/rpc/SOAPEncoder.java
 
 # rmi (for ri_jaxrpc)
-INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES += \
+INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES := \
         $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/ServerException.java \
-        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/MarshalException.java
+        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/MarshalException.java \
+        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/Remote.java \
+        $(INTERNAL_JSR_172_RI_DIR)/rmi/java/rmi/RemoteException.java
 
 # All of them together to provide to main makefile
-SUBSYSTEM_JSR_172_JAVA_FILES += \
+SUBSYSTEM_JSR_172_JAVA_FILES = \
     $(INTERNAL_JSR_172_JAVA_FILES_JAXP_RI_FILES) \
     $(INTERNAL_JSR_172_JAVA_FILES_JAXRPC_RI_FILES) \
     $(INTERNAL_JSR_172_JAVA_FILES_RMI_RI_FILES)
 
+# Append JSR 172 source bundle creation to target
+source_bundle:: jsr_172_source_bundle
+
 # Create JSR 172 source in subdir 'jsr172/'
 JSR_172_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/jsr172
+
+# Copy and filter JSR 172 source in WMA_SOURCE_OUTPUT_DIR
+jsr_172_source_bundle: JSR_172_DIR SOURCE_OUTPUT_DIR
+	@echo " ... JSR 172 source bundle" $(LOG)
+	@$(call re_src_filter,$(JSR_172_DIR),$(JSR_172_SOURCE_OUTPUT_DIR),src)
