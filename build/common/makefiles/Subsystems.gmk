@@ -279,7 +279,7 @@ endif
 #####################################################################
 ifeq ($(USE_JSR_172), true)
 JPP_DEFS += -DENABLE_JSR_172
-include $(JSR_172_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_172_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
@@ -315,7 +315,7 @@ endif
 #####################################################################
 ifeq ($(USE_JSR_177), true)
 JPP_DEFS += -DENABLE_JSR_177
-include $(JSR_177_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_177_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
@@ -324,7 +324,7 @@ endif
 #####################################################################
 ifeq ($(USE_JSR_179), true)
 JPP_DEFS += -DENABLE_JSR_179
-include $(JSR_179_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_179_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
@@ -332,7 +332,7 @@ endif
 # Description: JSR 180
 #####################################################################
 ifeq ($(USE_JSR_180), true)
-include $(JSR_180_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_180_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
@@ -357,7 +357,7 @@ endif
 #####################################################################
 ifeq ($(USE_JSR_211), true)
 JPP_DEFS += -DENABLE_JSR211
--include $(JSR_211_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+-include $(JSR_211_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
@@ -408,7 +408,7 @@ endif
 #####################################################################
 ifeq ($(USE_JSR_238), true)
 JPP_DEFS += -DENABLE_JSR_238
-include $(JSR_238_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_238_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
@@ -418,6 +418,15 @@ endif
 ifeq ($(USE_JSR_239), true)
 JPP_DEFS += -DENABLE_JSR_239
 include $(JSR_239_DIR)/src/cldc-oi/config/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
+# (Extra) Abstractions Subsystem
+# Description: Abstractions for optional packages
+#####################################################################
+
+ifeq ($(USE_ABSTRACTIONS),true)
+include $(ABSTRACTIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
