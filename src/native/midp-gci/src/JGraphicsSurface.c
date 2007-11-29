@@ -70,6 +70,10 @@ static void surface_cleanup(AbstractSurface* surface);
 // Public functions
 // =============================================================================
 
+/**
+ * private native void initialize();
+ * @param instance  this (instance of class com.sun.pisces.GraphicsSurface)
+ */
 JNIEXPORT void JNICALL
 Java_com_sun_pisces_GraphicsSurface_initialize(
 	JNIEnv *env,
@@ -82,34 +86,34 @@ Java_com_sun_pisces_GraphicsSurface_initialize(
     fflush(stdout);
     
 
-	if (surface_initialize(env, instance) && initializeSurfaceFieldIds(env, instance)) {
-		surface = my_malloc(AbstractSurface, 1);
+    if (surface_initialize(env, instance) && initializeSurfaceFieldIds(env, instance)) {
+        surface = my_malloc(AbstractSurface, 1);
 
 
-		printf("@ initialize: surface=%x\n", surface);
-		fflush(stdout);
+        printf("@ initialize: surface=%x\n", surface);
+        fflush(stdout);
 
-		if (surface != NULL) {
-			surface->super.data = 0;					// pisces should not use it yet
-			surface->super.offset = 0;					// pisces should not use it yet
-			surface->super.pixelStride = 0;				// pisces should not use it yet
-			surface->super.scanlineStride = 0;			// pisces should not use it yet
-			surface->super.imageType = TYPE_INT_RGB;	// pisces should not use it yet
-			surface->super.alphaData = NULL;			// pisces should not use it yet
+        if (surface != NULL) {
+            surface->super.data = 0;					// pisces should not use it yet
+            surface->super.offset = 0;					// pisces should not use it yet
+            surface->super.pixelStride = 0;				// pisces should not use it yet
+            surface->super.scanlineStride = 0;			// pisces should not use it yet
+            surface->super.imageType = TYPE_INT_RGB;	// pisces should not use it yet
+            surface->super.alphaData = NULL;			// pisces should not use it yet
 
-			surface->acquire = surface_acquire;
-			surface->release = surface_release;
-			surface->cleanup = surface_cleanup;
+            surface->acquire = surface_acquire;
+            surface->release = surface_release;
+            surface->cleanup = surface_cleanup;
 
-			(*env)->SetLongField(env, instance, fieldIds[SURFACE_NATIVE_PTR], (jlong)surface);
-		} else {
-		    jclass jcls_oome = (*env)->FindClass (env, "java/lang/OutOfMemoryError");
-			(*env)->ThrowNew(env, jcls_oome, "Allocation of internal renderer buffer failed.");
-		}
-	} else {
-		jclass jcls_ise = (*env)->FindClass (env, "java/lang/IllegalStateException");
-		(*env)->ThrowNew(env, jcls_ise, "");
-	}
+            (*env)->SetLongField(env, instance, fieldIds[SURFACE_NATIVE_PTR], (jlong)surface);
+        } else {
+            jclass jcls_oome = (*env)->FindClass (env, "java/lang/OutOfMemoryError");
+            (*env)->ThrowNew(env, jcls_oome, "Allocation of internal renderer buffer failed.");
+        }
+    } else {
+        jclass jcls_ise = (*env)->FindClass (env, "java/lang/IllegalStateException");
+        (*env)->ThrowNew(env, jcls_ise, "");
+    }
 }
 
 
@@ -121,9 +125,9 @@ Java_com_sun_pisces_GraphicsSurface_initialize(
 static jboolean
 initializeSurfaceFieldIds(JNIEnv *env, jobject objectHandle) {
     static const FieldDesc surfaceFieldDesc[] = {
-                { "nativePtr", "J" },
+                { "nativePtr", "J" },           // in class com.sun.pisces.AbstractSurface
 //                { "g", "Ljavax/microedition/lcdui/Graphics;" },
-                { "g", "Ljava/lang/Object;" },
+                { "g", "Ljava/lang/Object;" },  // in class com.sun.pisces.GraphicsSurface
                 { NULL, NULL }
             };
 
@@ -168,6 +172,10 @@ initializeSurfaceFieldIds(JNIEnv *env, jobject objectHandle) {
 
 
 
+/**
+ * Must(?) populate 'surface' with proper data, describing the GCI surface passed in 'surfaceHandle'
+ * @param surfaceHandle
+ */
 static void
 surface_acquire(AbstractSurface* surface, JNIEnv* env, jobject surfaceHandle) {
     jobject graphicsHandle;
@@ -223,22 +231,6 @@ surface_acquire(AbstractSurface* surface, JNIEnv* env, jobject surfaceHandle) {
 	jcls_GCIDrawingSurface = (*env)->FindClass (env, "com/sun/me/gci/surface/GCIDrawingSurface");
 	printf("jcls_GCIDrawingSurface = 0x%x\n", (int)jcls_GCIDrawingSurface);
 
-	jmid_isNativeSurface = (*env)->GetMethodID (env, jcls_GCIDrawingSurface, "isNativeSurface", "()Z");
-	printf ("jmid_isNativeSurface = 0x%x\n", (int)jmid_isNativeSurface);
-
-	isNativeSurface = (*env)->CallBooleanMethod (env, jobj_gciDrawingSurface, jmid_isNativeSurface);
-	printf ("isNativeSurface = 0x%x\n", (int)isNativeSurface);
-
-    // ***********
-
-	jmid_getFormat = (*env)->GetMethodID (env, jcls_GCIDrawingSurface, "getFormat", "()I");
-	printf ("jmid_getFormat = 0x%x\n", (int)jmid_getFormat);
-	format = (*env)->CallIntMethod(env, jobj_gciDrawingSurface, jmid_getFormat);
-	printf ("format = 0x%x\n", (int)format);
-
-    // ***********
-
-
 	jmid_getSurfaceInfo = (*env)->GetMethodID (env, jcls_GCIDrawingSurface, "getSurfaceInfo", "()Lcom/sun/me/gci/surface/GCISurfaceInfo;");
 	printf ("jmid_getSurfaceInfo = 0x%x\n", (int)jmid_getSurfaceInfo);
 
@@ -248,12 +240,51 @@ surface_acquire(AbstractSurface* surface, JNIEnv* env, jobject surfaceHandle) {
 	jcls_GCISurfaceInfo = (*env)->FindClass (env, "com/sun/me/gci/surface/GCISurfaceInfo");
 	printf("jcls_GCISurfaceInfo = 0x%x\n", (int)jcls_GCISurfaceInfo);
 
+	jmid_isNativeSurface = (*env)->GetMethodID (env, jcls_GCIDrawingSurface, "isNativeSurface", "()Z");
+	printf ("jmid_isNativeSurface = 0x%x\n", (int)jmid_isNativeSurface);
 
-	jmid_getBasePointer = (*env)->GetMethodID (env, jcls_GCISurfaceInfo, "getBasePointer", "()J");
-	printf ("jmid_getBasePointer = 0x%x\n", (int)jmid_getBasePointer);
+	isNativeSurface = (*env)->CallBooleanMethod (env, jobj_gciDrawingSurface, jmid_isNativeSurface);
+	printf ("isNativeSurface = 0x%x\n", (int)isNativeSurface);
 
-	basePointer = (*env)->CallLongMethod (env, jobj_surfaceInfo, jmid_getBasePointer);
-	printf ("basePointer = 0x%x\n", (int)basePointer);
+	// ***********
+	jmid_getFormat = (*env)->GetMethodID (env, jcls_GCIDrawingSurface, "getFormat", "()I");
+	printf ("jmid_getFormat = 0x%x\n", (int)jmid_getFormat);
+	format = (*env)->CallIntMethod(env, jobj_gciDrawingSurface, jmid_getFormat);
+	printf ("format = 0x%x\n", (int)format);
+	// ***********
+
+	// -------------------------------------------------------------------------------------------------
+    if (isNativeSurface) {
+
+		jmid_getBasePointer = (*env)->GetMethodID (env, jcls_GCISurfaceInfo, "getBasePointer", "()J");
+		printf ("jmid_getBasePointer = 0x%x\n", (int)jmid_getBasePointer);
+
+		basePointer = (*env)->CallLongMethod (env, jobj_surfaceInfo, jmid_getBasePointer);
+		printf ("basePointer = 0x%x\n", (int)basePointer);
+	}
+	else {
+		jmethodID jmid_getPixelArrayType;
+		jint pixelArrayType;
+		jmethodID jmid_getPixelArray;
+		jintArray pixelArray;
+
+
+		jmid_getPixelArrayType = (*env)->GetMethodID (env, jcls_GCISurfaceInfo, "getPixelArrayType", "()I");
+		printf ("jmid_getPixelArrayType = 0x%x\n", (int)jmid_getPixelArrayType);
+
+		pixelArrayType = (*env)->CallIntMethod(env, jobj_surfaceInfo, jmid_getPixelArrayType);
+		printf ("pixelArrayType = 0x%x\n", (int)pixelArrayType);
+
+		jmid_getPixelArray = (*env)->GetMethodID (env, jcls_GCISurfaceInfo, "getPixelArray", "()Ljava/lang/Object;");
+		printf ("jmid_getPixelArray = 0x%x\n", (int)jmid_getPixelArray);
+
+		pixelArray = (jintArray) ((*env)->CallObjectMethod(env, jobj_surfaceInfo, jmid_getPixelArray));
+		printf ("pixelArray = 0x%x\n", (int)pixelArray);
+
+		basePointer = (*env)->GetIntArrayElements  (env, pixelArray, 0);
+		printf ("basePointer = 0x%x\n", (int)basePointer);
+//		(*env)->ReleaseIntArrayElements  (env, pixelArray, (jint*)basePointer, 0);
+	}
 
 
 	jmid_getXBitStride = (*env)->GetMethodID (env, jcls_GCISurfaceInfo, "getXBitStride", "()I");
@@ -326,13 +357,118 @@ surface_acquire(AbstractSurface* surface, JNIEnv* env, jobject surfaceHandle) {
     fflush(stdout);
 }
 
+
 static void
 surface_release(AbstractSurface* surface, JNIEnv* env, jobject surfaceHandle) {
-    // do nothing
-    // IMPL NOTE : to fix warning : unused parameter
-    (void)surface;
-    (void)surfaceHandle;
+	jobject graphicsHandle;
+    jclass graphicsClassHandle;
+
+	jfieldID fid_gciDrawingSurface;
+	jobject jobj_gciDrawingSurface;
+	jclass jcls_GCIDrawingSurface;
+
+	jmethodID jmid_isNativeSurface;
+	jboolean isNativeSurface;
+
+	jmethodID jmid_getFormat;
+	jint format;
+
+	jmethodID jmid_getSurfaceInfo;
+	jobject jobj_surfaceInfo;
+	jclass jcls_GCISurfaceInfo;
+	jmethodID jmid_getBasePointer;
+	jmethodID jmid_getXBitStride;
+	jmethodID jmid_getYBitStride;
+	jlong basePointer;
+	jint xBitStride;
+	jint yBitStride;
+    jmethodID jmid_getWidth;
+    jmethodID jmid_getHeight;
+    jint width;
+    jint height;
+
+
+    graphicsHandle = (*env)->GetObjectField(env, surfaceHandle, fieldIds[SURFACE_GRAPHICS]);
+    printf("@ surface_release: graphicsHandle=%x\n", graphicsHandle);
+
+    graphicsClassHandle = (*env)->GetObjectClass(env, graphicsHandle);
+    printf("@ surface_release: graphicsClassHandle=%x\n", graphicsClassHandle);
+
+    {
+//        jmethodID mid_Graphics_toString = (*env)->GetMethodID(env, graphicsClassHandle, "toString", "()Ljava/lang/String;");
+//        jstring str = (jstring) (*env)->CallObjectMethod(env, graphicsClassHandle, mid_Graphics_toString, NULL);
+//        const char* graphicsClassName = (*env)->GetStringUTFChars(env, str, NULL);
+//        printf("@ surface_acquire: graphicsClassName=%s\n", graphicsClassName);
+	}
+
+	fid_gciDrawingSurface = (*env)->GetFieldID(env, graphicsClassHandle, "gciDrawingSurface", "Lcom/sun/me/gci/surface/GCIDrawingSurface;");
+	printf("@ surface_release: fid_gciDrawingSurface=%x\n", fid_gciDrawingSurface);
+	fprintf(stderr, "@ surface_acquire: fid_gciDrawingSurface=%x\n", fid_gciDrawingSurface);
+	fflush(stderr);
+
+
+	jobj_gciDrawingSurface = (jobject) (*env)->GetObjectField (env, graphicsHandle, fid_gciDrawingSurface);
+	printf("@ surface_release: jobj_gciDrawingSurface = 0x%x\n", (int)jobj_gciDrawingSurface);
+
+	jcls_GCIDrawingSurface = (*env)->FindClass (env, "com/sun/me/gci/surface/GCIDrawingSurface");
+	printf("@ surface_release: jcls_GCIDrawingSurface = 0x%x\n", (int)jcls_GCIDrawingSurface);
+
+	jmid_getSurfaceInfo = (*env)->GetMethodID (env, jcls_GCIDrawingSurface, "getSurfaceInfo", "()Lcom/sun/me/gci/surface/GCISurfaceInfo;");
+	printf ("@ surface_release: jmid_getSurfaceInfo = 0x%x\n", (int)jmid_getSurfaceInfo);
+
+	jobj_surfaceInfo = (*env)->CallObjectMethod (env, jobj_gciDrawingSurface, jmid_getSurfaceInfo);
+	printf ("@ surface_release: jobj_surfaceInfo = 0x%x\n", (int)jobj_surfaceInfo);
+
+	jcls_GCISurfaceInfo = (*env)->FindClass (env, "com/sun/me/gci/surface/GCISurfaceInfo");
+	printf("@ surface_release: jcls_GCISurfaceInfo = 0x%x\n", (int)jcls_GCISurfaceInfo);
+
+	jmid_isNativeSurface = (*env)->GetMethodID (env, jcls_GCIDrawingSurface, "isNativeSurface", "()Z");
+	printf ("@ surface_release: jmid_isNativeSurface = 0x%x\n", (int)jmid_isNativeSurface);
+
+	isNativeSurface = (*env)->CallBooleanMethod (env, jobj_gciDrawingSurface, jmid_isNativeSurface);
+	printf ("@ surface_release: isNativeSurface = 0x%x\n", (int)isNativeSurface);
+
+	// ***********
+	jmid_getFormat = (*env)->GetMethodID (env, jcls_GCIDrawingSurface, "getFormat", "()I");
+	printf ("jmid_getFormat = 0x%x\n", (int)jmid_getFormat);
+	format = (*env)->CallIntMethod(env, jobj_gciDrawingSurface, jmid_getFormat);
+	printf ("format = 0x%x\n", (int)format);
+	// ***********
+
+	// -------------------------------------------------------------------------------------------------
+
+	if (isNativeSurface) {
+
+		jmid_getBasePointer = (*env)->GetMethodID (env, jcls_GCISurfaceInfo, "getBasePointer", "()J");
+		printf ("jmid_getBasePointer = 0x%x\n", (int)jmid_getBasePointer);
+
+		basePointer = (*env)->CallLongMethod (env, jobj_surfaceInfo, jmid_getBasePointer);
+		printf ("basePointer = 0x%x\n", (int)basePointer);
+	}
+	else {
+		jmethodID jmid_getPixelArrayType;
+		jint pixelArrayType;
+		jmethodID jmid_getPixelArray;
+		jintArray pixelArray;
+
+
+		jmid_getPixelArrayType = (*env)->GetMethodID (env, jcls_GCISurfaceInfo, "getPixelArrayType", "()I");
+		printf ("jmid_getPixelArrayType = 0x%x\n", (int)jmid_getPixelArrayType);
+
+		pixelArrayType = (*env)->CallIntMethod(env, jobj_surfaceInfo, jmid_getPixelArrayType);
+		printf ("pixelArrayType = 0x%x\n", (int)pixelArrayType);
+
+		jmid_getPixelArray = (*env)->GetMethodID (env, jcls_GCISurfaceInfo, "getPixelArray", "()Ljava/lang/Object;");
+		printf ("jmid_getPixelArray = 0x%x\n", (int)jmid_getPixelArray);
+
+		pixelArray = (jintArray) ((*env)->CallObjectMethod(env, jobj_surfaceInfo, jmid_getPixelArray));
+		printf ("pixelArray = 0x%x\n", (int)pixelArray);
+		
+		//basePointer = (*env)->GetIntArrayElements  (env, pixelArray, 0);
+		(*env)->ReleaseIntArrayElements  (env, pixelArray, (jint*)surface->super.data, 0);
+	}
 }
+
 
 static void
 surface_cleanup(AbstractSurface* surface) {

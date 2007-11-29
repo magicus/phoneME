@@ -23,9 +23,10 @@
  * information or have any questions.
  */
 
-//#include <JAbstractSurface.h>
+// struct _AbstractSurface
+#include <JAbstractSurface.h>
 
-//#include <kni.h>
+#include <kni.h>
 #include <jni.h>
 
 
@@ -34,8 +35,19 @@
 
 
 
-static jboolean fieldIdsInitialized = JNI_FALSE;
+// Data
+// =============================================================================
 
+#define SURFACE_NATIVE_PTR 0
+#define SURFACE_GRAPHICS 1
+#define SURFACE_LAST SURFACE_GRAPHICS
+
+static jfieldID fieldIds[SURFACE_LAST + 1];
+static jboolean fieldIdsInitialized = KNI_FALSE;
+
+
+// Forward declarations
+// =============================================================================
 
 
 static jboolean initializeSurfaceFieldIds(JNIEnv *env, jobject objectHandle);
@@ -48,9 +60,24 @@ Java_com_sun_pisces_NativeSurface_clean(
     JNIEnv *env,
     jobject instance) {
 
-	printf ("Java_com_sun_pisces_NativeSurface_clean\n");
-    fflush(stdout);
 
+    AbstractSurface* surface;
+
+	printf ("Java_com_sun_pisces_NativeSurface_clean\n");
+	fflush(stdout);
+
+    initializeSurfaceFieldIds(env, instance);
+
+    surface = (AbstractSurface *) (long) KNI_GetLongField(instance, fieldIds[
+                                                            SURFACE_NATIVE_PTR])
+                                                            ;
+    if (surface != NULL) {
+        if (surface->super.data != NULL) {
+            memset(surface->super.data, 0, surface->super.width *
+                                           surface->super.height *
+                                           sizeof(jint));
+        }
+    }
 }
 
 
@@ -77,10 +104,19 @@ Java_com_sun_pisces_NativeSurface_draw(
 
 // ==============================================================================================
 
+// Helper functions
+// =============================================================================
+
+
+/**
+ * @param objectHandle (class)
+ */
 static jboolean
 initializeSurfaceFieldIds(JNIEnv *env, jobject objectHandle) {
     static const FieldDesc surfaceFieldDesc[] = {
-                { "nativePtr", "J" },
+                { "nativePtr", "J" },           // in class com.sun.pisces.AbstractSurface
+//                { "g", "Ljavax/microedition/lcdui/Graphics;" },
+                { "g", "Ljava/lang/Object;" },  // in class com.sun.pisces.GraphicsSurface
                 { NULL, NULL }
             };
 
@@ -88,18 +124,17 @@ initializeSurfaceFieldIds(JNIEnv *env, jobject objectHandle) {
     jclass classHandle;
 
     if (fieldIdsInitialized) {
-        return JNI_TRUE;
+    	return JNI_TRUE;
     }
+
     retVal = JNI_FALSE;
 
-
-
     classHandle = (*env)->GetObjectClass(env, objectHandle);
-//    if (initializeFieldIds(fieldIds, classHandle, surfaceFieldDesc)) {
-//        retVal = KNI_TRUE;
-//        fieldIdsInitialized = KNI_TRUE;
-//    }
 
+    if (initializeFieldIds(fieldIds, env, classHandle, surfaceFieldDesc)) {
+        retVal = JNI_TRUE;
+        fieldIdsInitialized = JNI_TRUE;
+    }
 
     return retVal;
 }
