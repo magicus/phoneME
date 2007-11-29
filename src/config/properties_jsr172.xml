@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration SYSTEM "configuration.dtd">
 <!--
+    
   
   Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -23,7 +24,6 @@
   Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
   Clara, CA 95054 or visit www.sun.com if you need additional
   information or have any questions.
-
 -->
 <!-- System-independent JSR 172 properties required by the specification -->
 <configuration>
