@@ -223,7 +223,7 @@ endif
 
 ifeq ($(USE_JSR_75), true)
 JPP_DEFS += -DENABLE_JSR_75
-include $(JSR_75_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_75_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
