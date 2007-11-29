@@ -43,9 +43,9 @@ javacall_result javacall_initialize_configurations(void) {
 void javacall_finalize_configurations(void) {
     int file_name_len = sizeof(property_file_name)/sizeof(unsigned short);
     if(property_was_updated != 0) {
-#ifdef USE_FILE_SYSTEM
+#ifdef USE_PROPERTIES_FROM_FS
 		configdb_dump_ini(handle, property_file_name, file_name_len);
-#endif //USE_FILE_SYSTEM
+#endif //USE_PROPERTIES_FROM_FS
     }
     configdb_free(handle);
     handle = NULL; 

@@ -75,7 +75,7 @@ static void configdb_add_entry(
     }
 
     /* Add (key,val) to string_db */
-    string_db_set(d, longkey, val);
+    string_db_set(d, javautil_str_tolwc(longkey), val);
     return ;
 }
 
@@ -402,11 +402,11 @@ void configdb_unset(javacall_handle config_handle, char * key) {
  */
 
 //TODO@gd212247:  debug
-//#define USE_FILE_SYSTEM
+//#define USE_PROPERTIES_FROM_FS
 
 
 
-#ifndef USE_FILE_SYSTEM
+#ifndef USE_PROPERTIES_FROM_FS
 #include "javacall_static_properties.h"
 
 javacall_handle configdb_load_no_fs () {
@@ -429,7 +429,7 @@ javacall_handle configdb_load_no_fs () {
 	}
     return(javacall_handle)db;
 }
-#endif	//USE_FILE_SYSTEM
+#endif	//USE_PROPERTIES_FROM_FS
 
 javacall_handle configdb_load_from_fs(unsigned short* unicodeFileName, int fileNameLen) {
 	string_db  *   d ;
@@ -498,11 +498,12 @@ javacall_handle configdb_load_from_fs(unsigned short* unicodeFileName, int fileN
 }
 
 javacall_handle configdb_load(unsigned short* unicodeFileName, int fileNameLen) {
-#ifndef USE_FILE_SYSTEM
-	return configdb_load_no_fs();	
-#else
+
+#ifdef USE_PROPERTIES_FROM_FS
 	return configdb_load_from_fs(unicodeFileName, fileNameLen);
-#endif	//USE_FILE_SYSTEM
+#else
+	return configdb_load_no_fs();
+#endif	//USE_PROPERTIES_FROM_FS
 }
 
 
