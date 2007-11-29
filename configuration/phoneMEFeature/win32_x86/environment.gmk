@@ -77,6 +77,7 @@ SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $
 SOURCE_OUTPUT_LIST += $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h javacall/implementation/win32
 SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/phoneMEFeature/win32_x86 javacall/configuration/phoneMEFeature
 SOURCE_OUTPUT_LIST += $(foreach jsr,$(JSR_LIST), $(if $(PREFIX_$(USE_$(jsr))), $($(jsr)_JC_IMPL_PATH)/$($(jsr)_JC_DIR) javacall/implementation/win32))
+SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/implementation/win32_x86_cldc/common javacall/implementation/win32_x86_cldc
 
 # Enable multiple runMidlet instances running on the same machine
 # Setting this to TRUE disables remote control of running runMidlet instance
@@ -104,6 +105,10 @@ ifeq ($(USE_JSR_120),true)
 SPECIFIC_DEFINITIONS+= -DENABLE_JSR_120=1 
 endif
 
+ifeq ($(USE_JSR_211),true)
+SPECIFIC_DEFINITIONS+=-I$(JSR_211_JC_IMPL_PATH)/$(JSR_211_JC_DIR)/inc/
+endif
+
 ifeq ($(USE_MULTIPLE_INSTANCES),true)
 SPECIFIC_DEFINITIONS+=-DENABLE_MULTIPLE_INSTANCES=1
 endif
@@ -125,12 +130,16 @@ endif # ifeq ($(ENABLE_HIDDEN_DEP_FEATURES),true)
 
 #Porting objects that are added to PORTING_OBJECTS by default rules can be excluded
 #from the javacall library by setting FILTER_OBJECTS variable
+
+# Implementation of javacall events is different for cdc and cldc
+VPATH+=$(JAVACALL_DIR)/implementation/win32_x86_cldc/common
+
 ifdef SUBSYSTEM_EVENTS_MODULES
    ifeq ($(SUBSYSTEM_EVENTS_MODULES), slave_mode)
-      FILTER_OBJECTS=events.obj
+      PORTING_SOURCE+=events_slave_mode.c
    else
-      FILTER_OBJECTS=events_slave_mode.obj
+      PORTING_SOURCE+=events.c
    endif
 else
-   FILTER_OBJECTS=events_slave_mode.obj
+   PORTING_SOURCE+=events.c
 endif
