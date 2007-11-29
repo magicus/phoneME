@@ -949,7 +949,12 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
         return 0;
 #endif
     case WM_EVENT_FROM_NATIVE_THREAD:
-        StoreMIDPEventFromWindowQueue((MidpEvent*)wParam, (int)lParam);
+		{
+            MidpEvent *pEvent = (MidpEvent*)wParam;
+			if (pEvent != NULL) {
+				StoreMIDPEventInVmThread(*pEvent, (int)lParam);
+				free(pEvent);
+		}
 		return 0;
 
     default:

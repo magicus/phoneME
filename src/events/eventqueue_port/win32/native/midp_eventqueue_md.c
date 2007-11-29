@@ -118,20 +118,3 @@ StoreMIDPEvent(MidpEvent event, int isolateId) {
 			free(ptrEvent);
 	}
 }
-
-/**
- * Places an event which posted into windows queue into event queue.
- * This function is called when the main window receive a midp event
- * for placing into event queue.
- *
- * @param pEvent The pointer to midp event. This event must be free in this function.
- *
- * @param isolateId ID of an Isolate or 0 for SMV mode
- */
-void
-StoreMIDPEventFromWindowQueue(MidpEvent *pEvent, int isolateId) {
-    MidpEvent event;
-	memcpy(&event, pEvent, sizeof(MidpEvent));
-	free(pEvent);
-    StoreMIDPEventInVmThread(event, isolateId);
-}

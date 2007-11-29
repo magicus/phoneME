@@ -61,3 +61,26 @@ void
 midp_unlockEventQueue(void) {
     REPORT_WARN(LC_EVENTS, "midp_unlockEventQueue: Stubbed out."); 
 }
+
+/**
+ * Store an event to post to the Java platform event queue. Usage:
+ * <pre>
+ *   MidpEvent event;
+ *
+ *   MIDP_EVENT_INITIALIZE(event);
+ *
+ *   event.type = COOL_NEW_EVENT;  // this constant is in midpEvents.h
+ *   event.intParam1 = x;
+ *   event.intParam2 = y;
+ *
+ *   StoreMIDPEvent(event, 0);
+ * </pre>
+ *
+ * @param event The event to enqueue.
+ * @param isolateId ID of an Isolate or 0 for SMV mode
+ */
+void StoreMIDPEvent(MidpEvent event, int isolateId){
+    (void)event;
+	(void)isolateId;
+	REPORT_WARN(LC_EVENTS, "StoreMIDPEvent: Stubbed out."); 
+}

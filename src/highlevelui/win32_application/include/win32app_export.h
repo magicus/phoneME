@@ -141,18 +141,6 @@ extern jboolean win32app_direct_flush(const java_graphics *g,
 		    	              const java_imagedata *offscreen_buffer, 
                                       int h);
 
-/**
- * Places an event which posted into windows queue into event queue.
- * This function is called when the main window receive a midp event
- * for placing into event queue.
- *
- * @param pEvent The pointer to midp event. This event must be free in this function.
- *
- * @param isolateId ID of an Isolate or 0 for SMV mode
- */
-void
-StoreMIDPEventFromWindowQueue(MidpEvent *pEvent, int isolateId);
-
 #ifdef __cplusplus
 }
 #endif
