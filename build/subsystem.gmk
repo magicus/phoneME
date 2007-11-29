@@ -28,6 +28,10 @@ ifeq ($(ABSTRACTIONS_DIR),)
 $(error ABSTRACTIONS_DIR is not set.)
 endif
 
+# dirs containing native header files (.h)
+ABSTRACTIONS_INCLUDE_DIRS += \
+    $(ABSTRACTIONS_DIR)/src/share/include
+
 ifeq ($(TARGET_VM), cldc_vm)
 include $(ABSTRACTIONS_DIR)/build/cldc_application/module.gmk
 else 

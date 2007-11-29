@@ -32,7 +32,7 @@ import com.sun.j2me.proxy.security.Permissions;
 public class SatsaPermission extends Permission {
     
     static public SatsaPermission APDU_CONNECTION_OPEN = new SatsaPermission(
-        Permissions.getName(Permissions.APDU_CONNECTION), null);
+        Permissions.getName(Permissions.APDU_CONNECTION), "apdu:open");
 
     static public SatsaPermission JCRMI_CONNECTION = new SatsaPermission(
         Permissions.getName(Permissions.JCRMI_CONNECTION), null);
@@ -41,7 +41,7 @@ public class SatsaPermission extends Permission {
         Permissions.getName(Permissions.SIGN_SERVICE), null);
 
     static public SatsaPermission APDU_CHANNEL0_SAT_OPEN = new SatsaPermission(
-        Permissions.getName(Permissions.APDU_CHANNEL0), null);
+        Permissions.getName(Permissions.APDU_CHANNEL0), "apdu:satopen");
     
     public SatsaPermission(String permission, String resource) {
         super(permission, resource);
