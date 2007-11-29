@@ -948,6 +948,9 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
         appManagerRequestWaiting = 1;
         return 0;
 #endif
+    case WM_EVENT_FROM_NATIVE_THREAD:
+        StoreMIDPEventFromWindowQueue((MidpEvent*)wParam, (int)lParam);
+		return 0;
 
     default:
         break;

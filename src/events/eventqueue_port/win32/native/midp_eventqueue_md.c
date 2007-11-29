@@ -26,8 +26,11 @@
 
 #include <kni.h>
 #include <midpport_eventqueue.h>
+#include <win32app_export.h>
 
 #include <windows.h>
+#include <malloc.h>
+#include <memory.h>
 
 #include <midpMalloc.h>
 
@@ -103,5 +106,32 @@ midp_unlockEventQueue(void) {
  */
 void
 StoreMIDPEvent(MidpEvent event, int isolateId) {
-    /* IMPL_NOTE: SHOULD post the event in a (WM_USER + 4) WM_MIDP_EVENT message */
+    MidpEvent *ptrEvent = (MidpEvent)malloc(sizeof(MidpEvent));
+	if (ptrEvent == NULL) {
+		return;
+	}
+	memcpy(ptrEvent, &event, sizeof(MidpEvent));
+	if (!postMessage(win32app_get_window_handle(),
+		WM_EVENT_FROM_NATIVE_THREAD,
+		(WPARAM)ptrEvent,
+		(LPARAM)isolateId)) {
+			free(ptrEvent);
+	}
+}
+
+/**
+ * Places an event which posted into windows queue into event queue.
+ * This function is called when the main window receive a midp event
+ * for placing into event queue.
+ *
+ * @param pEvent The pointer to midp event. This event must be free in this function.
+ *
+ * @param isolateId ID of an Isolate or 0 for SMV mode
+ */
+void
+StoreMIDPEventFromWindowQueue(MidpEvent *pEvent, int isolateId) {
+    MidpEvent event;
+	memcpy(&event, pEvent, sizeof(MidpEvent));
+	free(pEvent);
+    StoreMIDPEventInVmThread(event, isolateId);
 }

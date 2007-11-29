@@ -67,10 +67,11 @@ extern int appManagerRequestWaiting;
  * @name Main Window Event Types
  * @{
  */
-#define WM_DEBUGGER      (WM_USER)
-#define WM_HOST_RESOLVED (WM_USER + 1)
-#define WM_NETWORK       (WM_USER + 2)
-#define WM_TEST          (WM_USER + 3)
+#define WM_DEBUGGER                 (WM_USER)
+#define WM_HOST_RESOLVED            (WM_USER + 1)
+#define WM_NETWORK                  (WM_USER + 2)
+#define WM_TEST                     (WM_USER + 3)
+#define WM_EVENT_FROM_NATIVE_THREAD (WM_USER + 4)
 /** @} */
 
 /** The event loop timer handle */
@@ -139,6 +140,18 @@ extern HWND win32app_get_window_handle();
 extern jboolean win32app_direct_flush(const java_graphics *g, 
 		    	              const java_imagedata *offscreen_buffer, 
                                       int h);
+
+/**
+ * Places an event which posted into windows queue into event queue.
+ * This function is called when the main window receive a midp event
+ * for placing into event queue.
+ *
+ * @param pEvent The pointer to midp event. This event must be free in this function.
+ *
+ * @param isolateId ID of an Isolate or 0 for SMV mode
+ */
+void
+StoreMIDPEventFromWindowQueue(MidpEvent *pEvent, int isolateId);
 
 #ifdef __cplusplus
 }
