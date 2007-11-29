@@ -194,10 +194,11 @@ static void initResourceLimit() {
 static _IsolateResourceUsage *findIsolateResourceUsageStruct(int isolateId) {
     int i;
 	int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
-	
+
 	if (0 == max_isolates) {
 		REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-		return -1;
+		//Attempt to recover
+		max_isolates = 1;
 	}
 
 
