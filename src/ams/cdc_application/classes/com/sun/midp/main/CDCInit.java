@@ -40,7 +40,7 @@ public class CDCInit {
      * @param nativeLib name of the native shared library, only applies to
      * non-rommized build
      */
-    public static void init(String midpHome, String nativeLib) {
+    public static void init(String midpHome, String storageHome, String nativeLib) {
         if (initialized) {
             return;
         }
@@ -63,7 +63,7 @@ public class CDCInit {
              */
         }
 
-        initMidpNativeStates(midpHome);
+        initMidpNativeStates(midpHome, storageHome);
     }
 
     /** Performs CDC API initialization. */
@@ -81,12 +81,21 @@ public class CDCInit {
     }
 
     public static void init(String midpHome) {
-        init(midpHome, System.getProperty("sun.midp.library.name", "midp"));
+        String storagePath = System.getProperty("sun.midp.storage.path", null);
+        if (storagePath == null) {
+            storagePath = midpHome;
+        } 
+        
+        init(midpHome, storagePath);
+    }
+    
+    public static void init(String midpHome, String storageHome) {
+        init(midpHome, storageHome, System.getProperty("sun.midp.library.name", "midp"));
     }
 
     /**
      * Performs native subsystem initialization.
      * @param home path to the MIDP working directory.
      */
-    static native void initMidpNativeStates(String home);
+    static native void initMidpNativeStates(String config, String storage);
 }

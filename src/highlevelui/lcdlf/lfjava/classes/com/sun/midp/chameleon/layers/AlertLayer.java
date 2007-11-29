@@ -32,6 +32,7 @@ import com.sun.midp.chameleon.ChamDisplayTunnel;
 import com.sun.midp.chameleon.CLayer;
 
 import com.sun.midp.chameleon.skins.*;
+import com.sun.midp.chameleon.skins.resources.ScrollIndResourcesConstants;
 
 /**
  * AlertLayer 
@@ -94,7 +95,7 @@ public class AlertLayer extends BodyLayer {
      * Align alert depend on skin
      */
     public void setAnchor() {
-        
+
         bounds[W] = AlertSkin.WIDTH;
         bounds[H] = AlertSkin.HEIGHT;
         
@@ -137,6 +138,7 @@ public class AlertLayer extends BodyLayer {
             }
             break;
         }
+
     }
 
     /** The Alert instance which content is currently visible */
@@ -154,7 +156,7 @@ public class AlertLayer extends BodyLayer {
         }
         if (scrollInd != null) {
             scrollInd.update(layers);
-            if (scrollInd.isVisible()) {
+            if (scrollInd.isVisible() && ScrollIndSkin.MODE == ScrollIndResourcesConstants.MODE_BAR ) {
                 bounds[W] -= scrollInd.bounds[W];
             }
         }

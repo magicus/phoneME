@@ -61,6 +61,7 @@ USE_JSR_238             = false
 USE_JSR_239             = false
 USE_JSR_280             = false
 USE_JSR_256             = false
+USE_ABSTRACTIONS        = false
 
 # MIDP
 USE_MULTIPLE_ISOLATES   = false
@@ -76,6 +77,7 @@ USE_RAW_AMS_IMAGES      = true
 USE_NATIVE_PTI          = false
 USE_GCI                 = false
 USE_DIRECTDRAW          = false
+USE_FILE_SYSTEM         = true
 
 # DEBUG
 USE_DEBUG               = false

@@ -200,11 +200,11 @@ public final class SecurityInitializer {
         // #endif ENABLE_JSR_179
 
         // #ifdef ENABLE_JSR_180
-        "com.sun.midp.io.j2me.sip.ProtocolBase$SecurityTrusted",
+        "com.sun.io.j2me.sip.ProtocolBase$SecurityTrusted",
         // #endif ENABLE_JSR_180
 
         // #ifdef ENABLE_JSR_75
-        "com.sun.kvem.midp.pim.PIMDatabase$SecurityTrusted",
+        "com.sun.j2me.pim.PIMDatabase$SecurityTrusted",
         "javax.microedition.io.file.FileSystemEventHandlerBase$SecurityTrusted",
         // #endif ENABLE_JSR_75
 
@@ -230,8 +230,7 @@ public final class SecurityInitializer {
         // #endif ENABLE_JSR_226
 
         // #ifdef ENABLE_JSR211
-        "javax.microedition.content.Registry$SecurityTrusted",
-        "com.sun.midp.content.RegistryImpl$SecurityTrusted",
+        "com.sun.j2me.content.CHManagerImpl$SecurityTrusted",
         // #endif ENABLE_JSR211
 
         // Pass the security token to the i3 test framework.

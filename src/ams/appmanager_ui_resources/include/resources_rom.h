@@ -24,47 +24,25 @@
  * information or have any questions.
  */
  
-#ifndef _LFJ_IMAGE_ROM_H_
-#define _LFJ_IMAGE_ROM_H_
+#ifndef _RESOURCES_ROM_H_
+#define _RESOURCES_ROM_H_
 
-
-/**
- * @defgroup highui_lfj Java Look and Feel Specific External Interface
- * @ingroup highui_lcdlf
- */
 
 /**
  * @file
- * @ingroup highui_lfj
+ * @ingroup ams
  *
- * @brief  This file contains functions for loading ROMized skin images
+ * @brief This file contains functions for loading ROMized resources
  */
 
 /**
- * Loads a ROMized skin image from ROM, if present.
+ * Loads a ROMized resource from ROM, if present.
  *
- * @param imageId    The image ID
- * @param **bufPtr   Pointer where a buffer will be allocated and data stored
- * @return           -1 if failed, else length of buffer
- */
-int lfj_load_image_from_rom(int imageId, unsigned char **bufPtr);
-
-/**
- * Loads a ROMized skin description from ROM, if present.
+ * @param name name of the resource to load
+ * @param **bufPtr where to save pointer to the romized resource
  *
- * @return NULL if failed, otherwise a pointer to the skin description data
+ * @return -1 if failed, otherwise the size of the resource
  */
-const unsigned char* lfj_get_skin_description();
-
-/**
- * Retrieves the size of the skin description data.
- *
- * @return -1 if failed, otherwise a size of the skin description data
- */
-int lfj_get_skin_description_size();
-
-#endif /* _LFJ_PORT_IMAGE_ROM_H_ */
-
-
- 
-
+int ams_get_resource(const unsigned char* name, const unsigned char **bufPtr);
+								      
+#endif /* _RESOURCES_ROM_H_ */

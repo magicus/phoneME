@@ -161,12 +161,25 @@ int midpInitialize();
 /**
  * Sets the home directory for MIDP if needed.
  * So the suites and other MIDP persistent
- * state can be found. Only had an effect when called before any
- * other method except midpInitialize is called.
- *
+ * state can be found. Only had an effect when called before 
+ * any other method except midpInitialize is called.
+ * If not called directory specified by midpSetConfigDir will 
+ * be used.
  * @param dir home directory of MIDP
  */
 void midpSetHomeDir(const char* dir);
+
+/**
+ * Sets the config directory for MIDP if needed.
+ * In this directory static data as images and 
+ * configuration files are located. If not called
+ * directory specified by midpSetHomeDir will be used.
+ * Only had an effect when called before any
+ * other method except midpInitialize is called.
+ *
+ * @param dir config directory of MIDP
+ */
+void midpSetConfigDir(const char* dir);
 
 /**
  * Runs the given MIDlet from the specified MIDlet suite with the

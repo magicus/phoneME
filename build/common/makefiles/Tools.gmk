@@ -81,6 +81,12 @@ IMAGE2RAW_MAIN_CLASS    = com.sun.midp.imageutil.ImageToRawTool
 IMAGE2RAW_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/ImageToRawTool.manifest
 IMAGE2RAW_JAR_FILE = $(BINDIR)/ImageToRawTool.jar
 
+# Romizer jar and manifest file names
+#
+ROMIZER_MAIN_CLASS    = com.sun.midp.romization.Romizer
+ROMIZER_MANIFEST_FILE = $(TOOLS_CLASS_DIR)/Romizer.manifest
+ROMIZER_JAR_FILE = $(BINDIR)/Romizer.jar
+
 # Macro to pre-process Jpp file into Java file
 # runjpp(<input_jpp_file>, <output_java_file>)
 define runjpp
@@ -91,7 +97,7 @@ endef
 #
 all_tools:: keystore $(KEYTOOL_JAR_FILE) $(JADTOOL_JAR_FILE) \
             $(CONFIGURATOR_JAR_FILE) $(SKINROMIZATION_JAR_FILE) \
-	    $(IMAGE2RAW_JAR_FILE) $(L10N_GENERATOR_JAR_FILE)
+	    $(IMAGE2RAW_JAR_FILE) $(L10N_GENERATOR_JAR_FILE) $(ROMIZER_JAR_FILE)
 
 $(KEYTOOL_JAR_FILE): $(MODULE_TOOL_KEYTOOL_JAVA_FILES) $(KEYTOOL_MANIFEST_FILE)
 	@echo " ... building MEKeyTool " $(LOG)
@@ -255,6 +261,32 @@ define convert_images_to_raw
     		-format $(GENERATED_DIR)/merged.xml \
         	-out $(STORAGEDIR)) $(LOG)
 endef									    
+
+
+# Romizer tool (jar rules)
+#
+$(ROMIZER_JAR_FILE): $(MODULE_TOOL_ROMIZER_JAVA_FILES) $(ROMIZER_MANIFEST_FILE)
+	@echo " ... building Romizer " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@mkdir -p $(BINDIR) $(LOG)
+	@echo +++ $(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_ROMIZER_JAVA_FILES) $(LOG_ONLY)
+	@($(JAVAC_CMD) -g -d $(TOOLS_CLASS_DIR) \
+		-classpath "$(TOOLS_CLASSPATH)" \
+		$(MODULE_TOOL_ROMIZER_JAVA_FILES)) $(LOG)
+	@echo " ... $@ " $(LOG)
+	@echo +++ cd $(TOOLS_CLASS_DIR)\; $(JAR_CMD) \
+		cfm $(ROMIZER_JAR_FILE) $(ROMIZER_MANIFEST_FILE) \
+		com/sun/midp/romization $(LOG_ONLY)
+	@(cd $(TOOLS_CLASS_DIR); $(JAR_CMD) cfm $(ROMIZER_JAR_FILE) \
+		$(ROMIZER_MANIFEST_FILE) com/sun/midp/romization) $(LOG)
+
+$(ROMIZER_MANIFEST_FILE):
+	@echo " ... $@ " $(LOG)
+	@$(verify_tools_class_directory) $(LOG)
+	@(echo "Main-Class: com.sun.midp.romization.Romizer" > $@) $(LOG)
+
     
 # Java Pre-processor
 #
