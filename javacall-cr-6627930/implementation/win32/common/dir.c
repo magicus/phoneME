@@ -286,8 +286,7 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
         return JAVACALL_FAIL;
     } else {
         wchar_t* lastsep;
-        struct _stat statbuf;
-        DWORD dwAttrs;
+        WIN32_FILE_ATTRIBUTE_DATA lpFileInformation;
         int i, j = 1;
         wchar_t chSep = javacall_get_file_separator();
         wchar_t filesep[2] = {chSep, (wchar_t)0};
@@ -311,11 +310,9 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
 
             /* try to search for "appdb" 3 times only (see above) */
             while (i < 3) {
-                memset(&statbuf, 0, sizeof(statbuf));
-
                 /* found it and it is a directory */
-                dwAttrs = GetFileAttributesW(dirBuffer);
-                if (dwAttrs & FILE_ATTRIBUTE_DIRECTORY) 
+                if ((GetFileAttributesExW(dirBuffer, GetFileExInfoStandard, &lpFileInformation) != 0) &&
+                    (lpFileInformation.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
                     break;
 
                 /* strip off "appdb" to add 1 more level of ".." */
