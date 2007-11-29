@@ -642,6 +642,47 @@ CNIsun_misc_CVM_callerCLIsMIDCLs(CVMExecEnv* ee,
     return CNI_SINGLE;
 }
 
+CNIResultCode
+CNIsun_misc_CVM_isMIDPContext(CVMExecEnv* ee,
+                              CVMStackVal32 *arguments,
+                              CVMMethodBlock **p_mb)
+{
+#ifndef CVM_DUAL_STACK
+   arguments[0].j.i = CVM_FALSE;
+#else
+    CVMBool result = CVM_FALSE;
+    int i;
+
+    /* 
+     * Check each caller on the stack to if it is was loaded by a MIDP class
+     * class loader. Note we start one frame up here because
+     * there is no frame pushed for the CNI method.
+     */
+    for (i = 1; ; i++) {
+        CVMClassBlock* cb;
+        CVMClassLoaderICell* loaderICell;
+ 
+        cb = CVMgetCallerClass(ee, i);
+        if (NULL == cb) {
+            break;
+        }
+
+        loaderICell = CVMcbClassLoader(cb);
+        if (NULL == loaderICell) {
+            continue;
+        }
+
+        result = CVMclassloaderIsMIDPClassLoader(ee, loaderICell, CVM_TRUE);
+        if (result) {
+            break;
+        }
+    }
+
+    arguments[0].j.i = result;
+#endif
+    return CNI_SINGLE;
+}
+
 /* %begin lvm */
 CNIResultCode
 CNIsun_misc_CVM_inMainLVM(CVMExecEnv* ee,

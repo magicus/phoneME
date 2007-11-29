@@ -702,6 +702,11 @@ public final class CVM {
      */
     public static native boolean callerCLIsMIDCLs();
 
+    /*
+     * Returns true if method is being called in a MIDP context.
+     */
+    public static native boolean isMIDPContext();
+
     // %begin lvm
     /*
      * Used to suppress initialization of Reference handler 
