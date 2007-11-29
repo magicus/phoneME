@@ -34,8 +34,7 @@ import java.rmi.ServerException;
 import java.io.*;
 import javax.microedition.io.*;
 
-// midp private base64 encoder
-import com.sun.midp.io.Base64;
+import com.sun.j2me.io.Base64;
 
 /**
  * The <code>OperationImpl</code> class is an implementation
