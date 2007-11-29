@@ -32,26 +32,33 @@ $(error JAVACALL_DIR is not set.)
 endif
 
 include $(JAVACALL_DIR)/build/common.gmk
-
-TEMP=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
+TEMP1=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
+TEMP=$(patsubst %.cpp,%.obj,$(TEMP1))
 ifneq ($(FILTER_OBJECTS)x,x)
 PORTING_OBJECTS+=$(filter-out $(FILTER_OBJECTS),$(TEMP))
 else # ifneq ($(FILTER_OBJECTS)x,x)
 PORTING_OBJECTS+=$(TEMP)
 endif # ifneq ($(FILTER_OBJECTS)x,x)
 
+NOTIFIER_OBJECTS=$(patsubst %.c,%.obj,$(NOTIFIER_SOURCE))
+
 ifneq ($(UTILITIES)x, x)
 UTILITY_OBJECTS=$(addsuffix .obj,$(UTILITIES))
 endif
 
-local_vc: $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib
+ifneq ($(NOTIFIER_OBJECTS)x,x)
+NOTIFIERS_LIB=$(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib
+EXTRA_LDFLAGS+=$(NOTIFIERS_LIB)
+endif
+
+local_vc: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib
 
 CC=cl.exe
 CXX=cl.exe
 RC=rc.exe
 
-LOCAL_CFLAGS_debug = -MDd -Gm -GX -Zi -Od -D_DEBUG -D_MBCS -D_LIB -YX -FD -GZ -W3
-LOCAL_CFLAGS_nodebug = -MD -GX -O2 -D_MBCS -D_LIB /YX -FD -W3  
+LOCAL_CFLAGS_debug = -MDd -Gm -EHsc -Zi -Od -D_DEBUG -D_MBCS -D_LIB -FD -GZ -W3
+LOCAL_CFLAGS_nodebug = -MD -EHsc -O2 -D_MBCS -D_LIB -W3
 
 ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
     define fixcygpath
@@ -59,7 +66,7 @@ ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
     endef
 else
     define fixcygpath
-    echo $(1) | xargs -n1 cygpath -m
+    cygpath -m $(1)
     endef
 endif
 
@@ -72,8 +79,13 @@ ADDITIONAL_RC_INCLUDE_DIRS += $(RESOURCE_IMAGES_DIR)
 RCFLAGS += $(foreach dir,$(ADDITIONAL_RC_INCLUDE_DIRS),/i`$(call fixcygpath, $(dir))`) 
 
 AR=lib.exe 
+ifeq ($(TARGET_CPU),arm)
+ARFLAGS=-nologo -MACHINE:ARM
+else
 ARFLAGS=-nologo -MACHINE:X86
+endif
 
+LOCAL_CFLAGS_$(BUILD) += $(PLATFORM_FLAGS)
 OUTPUT_OPTION=-Fo`$(call fixcygpath, $@)` \
               -Fp$(JAVACALL_OUTPUT_OBJ_DIR)/javacall \
               -Fd$(JAVACALL_OUTPUT_OBJ_DIR)/javacall
@@ -96,3 +108,8 @@ $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
 	$(SPECIFIC_OBJECTS)
 	@echo "...Generating Library: $@"
 	@$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^ $(ADDITIONAL_LIBS))`
+
+$(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib: \
+    $(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
+	@echo "...Generating Library: $@"
+	@$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^)`
