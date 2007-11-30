@@ -337,6 +337,8 @@ CVM_BUILD_SUBDIR  ?= false
 CVM_USE_MEM_MGR		?= false
 CVM_MP_SAFE		?= false
 
+CVM_CREATE_RTJAR	?= false
+
 # AOT is only supported for Romized build.
 ifeq ($(CVM_AOT), true)
 override CVM_PRELOAD_LIB = true
@@ -413,6 +415,11 @@ endif
 # This is for identifying binary products, like Personal Profile for Zaurus
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/id_$(J2ME_CLASSLIB).mk
 
+ifeq ($(CVM_CREATE_RTJAR),true)
+CVM_RT_JAR_NAME		= "rt.jar"
+CVM_RT_JAR		= $(CVM_LIBDIR_ABS)/rt.jar
+endif
+
 #
 # The version values referenced here are setup in the profile id.mk files.
 #
@@ -470,7 +477,12 @@ CVM_CLASSLIB_JAR_NAME	       ?= "$(J2ME_CLASSLIB)$(OPT_PKGS_NAME).jar"
 
 #   used in src/share/javavm/runtime/utils.c
 ifneq ($(CVM_PRELOAD_LIB),true)
+ifneq ($(CVM_CREATE_RTJAR), true)
 CVM_JARFILES	+= CVM_CLASSLIB_JAR_NAME
+else
+CVM_JARFILES	+= $(CVM_RT_JAR_NAME)
+CVM_RTJARS_LIST += $(CVM_CLASSLIB_JAR_NAME)
+endif
 else
 CVM_JARFILES	= NULL
 endif
@@ -828,7 +840,8 @@ CVM_FLAGS += \
 	CVM_MP_SAFE \
 	CVM_USE_NATIVE_TOOLS \
 	CVM_MTASK \
-	CVM_AOT
+	CVM_AOT \
+	CVM_CREATE_RTJAR
 
 # %begin lvm
 CVM_FLAGS += \
@@ -1001,8 +1014,9 @@ CVM_USE_NATIVE_TOOLS_CLEANUP_ACTION    = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_USE_CVM_MEMALIGN_CLEANUP_ACTION    = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_USE_MEM_MGR_CLEANUP_ACTION         = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_MP_SAFE_CLEANUP_ACTION	       = $(CVM_DEFAULT_CLEANUP_ACTION)
-CVM_MTASK_CLEANUP_ACTION                = $(CVM_DEFAULT_CLEANUP_ACTION)
-CVM_AOT_CLEANUP_ACTION                = $(CVM_DEFAULT_CLEANUP_ACTION)
+CVM_MTASK_CLEANUP_ACTION               = $(CVM_DEFAULT_CLEANUP_ACTION)
+CVM_AOT_CLEANUP_ACTION                 = $(CVM_DEFAULT_CLEANUP_ACTION)
+CVM_CREATE_RTJAR_CLEANUP_ACTION	       = rm -rf $(CVM_RT_JAR)
 
 #
 # Wipe out objects and classes when J2ME_CLASSLIB changes.

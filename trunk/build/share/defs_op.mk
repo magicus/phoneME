@@ -398,7 +398,11 @@ endif
 
 ifneq ($(CVM_PRELOAD_LIB),true)
 # Not romized, so add JSROP_JARS to the bootclasspath
+ifneq ($(CVM_CREATE_RTJAR), true)
 CVM_JARFILES += $(patsubst $(JSROP_LIB_DIR)/%,$(comma) "%",$(JSROP_JARS))
+else
+CVM_RTJARS_LIST += $(patsubst $(JSROP_LIB_DIR)/%, "%",$(JSROP_JARS))
+endif
 endif
 
 # Include JDBC, which can be downloaded using the following URL:

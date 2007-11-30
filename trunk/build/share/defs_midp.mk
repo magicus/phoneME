@@ -152,7 +152,11 @@ CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_PUB_CLASSES_ZIP) $(JSROP_AGENT_JARS)
 CVM_CNI_CLASSES += $(MIDP_CNI_CLASSES)
 else
 # Not romized, so add MIDP_PRIV_CLASSES_ZIP to the bootclasspath
+ifneq ($(CVM_CREATE_RTJAR), true)
 CVM_JARFILES += $(patsubst $(CVM_LIBDIR_ABS)/%,$(comma) "%",$(MIDP_PRIV_CLASSES_ZIP))
+else
+CVM_RTJARS_LIST += $(patsubst $(CVM_LIBDIR_ABS)/%, "%",$(MIDP_PRIV_CLASSES_ZIP))
+endif
 endif
 
 # MIDP package checker 
