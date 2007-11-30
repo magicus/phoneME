@@ -625,15 +625,31 @@ public final class System {
         /*
          * MIDP Property Support
          * 
-         * If method is being call in a MIDP context, then only 
-         * search CLDC/MIDP properties, else, the 
-         * full set of CDC system properties are searched.
+         * Allow MIDP properties to override base properties in a MIDP
+         * context.
+         * 
+         * However, MIDlets can never see publicly specified CDC
+         * and Foundation Profile properties. (Same concept as API hiding)
+         * (they can see non-spec CDC properties).
          */
         if (sun.misc.CVM.isMIDPContext()) {
-            return midpProps.getProperty(key);
-        } else {
-            return props.getProperty(key);
+            String prop = midpProps.getProperty(key);
+            if (prop != null) {
+                return prop;
+            }
+
+            /*
+             * CVM.callerCLIsMIDCLs is not used here because it checks
+             * for both MIDP implementation classes and MIDlets.
+             */
+            if (sun.misc.CVM.getCallerClass(0).
+                    getClassLoader().getClass().getName().
+                         equals("sun.misc.MIDletClassLoader")) {
+                return null;
+            }
         }
+
+        return props.getProperty(key);
     }
 
     /**
