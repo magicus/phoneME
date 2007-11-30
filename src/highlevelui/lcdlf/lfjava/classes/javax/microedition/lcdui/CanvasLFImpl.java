@@ -151,6 +151,7 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
                 } catch (Throwable t) {
                     Display.handleThrowable(t);
                 }
+                needRepaintBackground = true;
             }
         }
     }
@@ -180,7 +181,8 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
                 } catch (Throwable t) {
                     Display.handleThrowable(t);
                 }
-            }
+                needRepaintBackground = true;
+           }
         }
     }
 
@@ -219,6 +221,15 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
 
         synchronized (Display.calloutLock) {
             try {
+                // Paint black background under the canvas
+                boolean isShown = canvas.isShown();
+                if (needRepaintBackground && isShown) {
+                    int savedColor = g.getColor();
+                    g.setColor(0, 0, 0);
+                    g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+                    g.setColor(savedColor);
+                }
+                needRepaintBackground = !isShown;
                 canvas.paint(g);
                 // If there are any video players in this canvas,
                 // let the helper class invoke video rendering
@@ -405,6 +416,11 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
      */
     Canvas canvas;
 
+    /**
+     * Is a repaint of black background needed?
+     */
+    private boolean needRepaintBackground = true;
+    
     /**
      * A vector of embedded video players.
      */
