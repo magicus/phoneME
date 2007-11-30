@@ -131,9 +131,7 @@ SO_LINKFLAGS	= \
 	/nologo /map /dll /incremental:yes \
 	$(DEBUGINFO_LINKFLAG) $(LINK_ARCH_FLAGS) \
 
-RESOURCES = $(call POSIX2HOST,$(CVM_TOP)/src/win32/bin/splash.res)
-
-LINKEXE_LIBS = $(LINKEXE_ARCH_LIBS) $(LIBPATH) $(RESOURCES)
+LINKEXE_LIBS = $(LINKEXE_ARCH_LIBS) $(LIBPATH)
 
 LINKEXE_FLAGS = /nologo $(DEBUGINFO_LINKFLAG) \
 		/incremental:no $(LINKEXE_ARCH_FLAGS)
@@ -176,5 +174,3 @@ CVM_DISABLE_COMPILER_CHECK = true
 
 WIN32_QUERY_REG = $(shell REG.EXE QUERY $(1) /v $(2) 2> /dev/null | \
 	awk -F'\t' '/$(2)/ { print $$3 }')
-
-CVM_TARGETOBJS_SPACE	+= splash.o
