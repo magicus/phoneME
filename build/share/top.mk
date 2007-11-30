@@ -456,3 +456,7 @@ ifeq ($(CVM_TOOLS_BUILD),true)
 -include  ../$(TARGET_OS)/cvmc.mk
 -include  ../share/cvmc.mk
 endif
+
+ifeq ($(CVM_CREATE_RTJAR), true)
+-include ../share/rules_rt.mk
+endif

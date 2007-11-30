@@ -1,4 +1,4 @@
-#
+# 
 # Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -21,38 +21,21 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions. 
 #
-# @(#)GNUmakefile	1.2 06/10/10
-#
-ASM_ARCH_FLAGS		= -CPU StrongARM1 -32 -ignore 0274
-CC_ARCH_FLAGS   	=
-CC_ARCH_FLAGS_FDLIB	= /Op
-# NOTE: we may not need /Od now that /Op is being used. Need to confirm.
-CC_ARCH_FLAGS_FDLIB	+= /Od
-CC_ARCH_FLAGS_LOOP 	=
-LINK_ARCH_LIBS		= 
-LINK_ARCH_FLAGS		= \
-	/subsystem:windowsce,5.01  \
-	/base:0x00100000 /entry:_DllMainCRTStartup
-LINKEXE_ARCH_LIBS	=
-LINKEXE_ARCH_FLAGS	= \
-	/subsystem:windowsce,5.01 /stack:0x010000
 
-# Description of the VC win32 platform.
-# The following are all for the benefit of win32/wince_defs.mk
-PLATFORM		= Windows Mobile 5.0 Pocket PC SDK
-PLATFORM_OS		= wce500
-PLATFORM_INCLUDE_DIRS	= Include/Armv4i
-PLATFORM_LIB_DIRS	= Lib/Armv4i 
+ifeq ($(CVM_CREATE_RTJAR), true)
+all :: $(CVM_RT_JAR)
 
-# assume the JIT is enabled for this device unless told otherwise
-CVM_JIT ?= true
-
-# package boot classes into rt.jar for non-ROMized build
-ifneq ($(CVM_PRELOAD_LIB),true)
-CVM_CREATE_RTJAR 	?= true
+################################################
+# Rule for creating rt.jar
+################################################
+$(CVM_RT_JAR)::
+	@echo "Packaging $@ ..."; \
+	mkdir -p $(CVM_BUILD_TOP)/.rtclasses; \
+	cd $(CVM_BUILD_TOP)/.rtclasses; \
+	for j in $(CVM_RTJARS_LIST); do \
+		$(CVM_JAR) xf $(CVM_LIBDIR_ABS)/$$j;	\
+		rm $(CVM_LIBDIR_ABS)/$$j; \
+	done; \
+	$(CVM_JAR) cf $@ *
+	$(AT)rm -rf $(CVM_BUILD_TOP)/.rtclasses
 endif
-
-WIN32_PLATFORM = wince
-PCSL_TARGET = javacall_arm
-
-include ../share/top.mk
