@@ -96,13 +96,18 @@ MODULE_JSR_120_COMMON_JAVA_FILES = \
     
 vpath % $(JSR_120_DIR)/src/share/test/native
 
-ifneq ($(TARGET_VM),cldc_vm)
+ifneq ($(USE_NATIVE_PUSH), true)
 ifeq ($(USE_MIDP),true)
+ifeq ($(TARGET_VM), cldc_vm)
+MODULE_JSR_120_COMMON_JAVA_FILES += \
+    $(JSR_120_DIR)/src/share/core/common/classes/com/sun/midp/wma/ProtocolPushImpl.java
+else
 MODULE_JSR_120_COMMON_JAVA_FILES += \
     $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ProtocolPushImpl.java \
     $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ReservationDescriptorImpl.java \
     $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ConnectionReservationImpl.java \
     $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/PushConnectionsPool.java
+endif
 endif
 endif
 
