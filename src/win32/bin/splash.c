@@ -46,7 +46,7 @@ DWORD WINAPI MessageLoop( LPVOID lpParam )
     // Perform application initialization:
     if (!myInit())
     {
-        return;
+        return 0;
     }
     // Main message loop:
     while (GetMessage(&msg, NULL, 0, 0))
@@ -161,7 +161,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 void hideSplash()
 {
-	 DeleteDC(g_dcBitmap);
-	 g_dcBitmap = NULL;
-     DestroyWindow(g_hWnd);
+    if (g_dcBitmap != NULL)
+        DeleteDC(g_dcBitmap);
+    g_dcBitmap = NULL;
+    if (g_hWnd != NULL)
+        DestroyWindow(g_hWnd);
 }
