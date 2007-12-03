@@ -22,8 +22,7 @@
 # information or have any questions. 
 #
 
-##!!!
-#JSROP_BUILD_DIR=`pwd`/out
+JSR_120_EXTRA_CFLAGS  += -DENABLE_MIDP=1
 
 JSR_120_LIB_NAME      = jsr120
 JSR_120_BUILD_DIR     = $(JSROP_BUILD_DIR)/$(JSR_120_LIB_NAME)
