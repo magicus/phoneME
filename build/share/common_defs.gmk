@@ -37,6 +37,8 @@
 #
 SUBSYSTEM_JSR_120 = jsr120
 
+USE_ABSTRACTIONS = true
+
 # Project speficic definitions
 ifndef PROJECT_JSR_120_DIR
 PROJECT_JSR_120_DIR=$(JSR_120_DIR)
