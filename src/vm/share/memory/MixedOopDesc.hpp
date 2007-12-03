@@ -51,7 +51,6 @@ public:
 #define MIXED_OOP_TYPES_DO(template) \
   template(BufferedFile,            buffered_file)             \
   template(ClassParserState,        class_parser_state)        \
-  template(CompilationQueueElement, compilation_queue_element) \
   template(FileDecoder,             file_decoder)              \
   template(Inflater,                inflater)                  \
   template(JarFileParser,           jar_file_parser)           \

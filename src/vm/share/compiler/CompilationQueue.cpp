@@ -33,52 +33,51 @@
 # include "incls/_CompilationQueue.cpp.incl"
 
 #if ENABLE_COMPILER
-CompilationQueueElementDesc* CompilationQueueElement::_pool;
+CompilationQueueElement* CompilationQueueElement::_pool;
 #if ENABLE_CSE
 #define ABORT_CSE_TRACKING VirtualStackFrame::abort_tracking_of_current_snippet();\
       RegisterAllocator::wipe_all_notations();
 #else
 #define ABORT_CSE_TRACKING
 #endif
-ReturnOop CompilationQueueElement::allocate(CompilationQueueElementType type,
-                                            jint bci
-                                            JVM_TRAPS) {
+CompilationQueueElement* CompilationQueueElement::allocate(
+  const CompilationQueueElementType type, const jint bci JVM_TRAPS )
+{
   VirtualStackFrame* frame = Compiler::frame();
 
-  CompilationQueueElement::Raw element = _pool;
-  if( element.not_null() ) {
-    // Reuse CompilationQueueElement
-    _pool = (CompilationQueueElementDesc*) element().next();
-    VirtualStackFrame::Raw dst = element().frame();
-    frame->copy_to(&dst);
+  CompilationQueueElement* element = _pool;
+  if( element ) {    
+    _pool = element->next();  // Reuse CompilationQueueElement
+    {
+      VirtualStackFrame::Raw dst = element->frame();
+      frame->copy_to(&dst);
+    }
 
     // These fields will be zero in a newly allocated object, but not 
     // necessarily in a reused object.
-    element().set_info(0);
-    element().clear_entry_label();
-    element().clear_return_label();
-    element().set_is_suspended(false);
+    element->set_info(0);
+    element->clear_entry_label();
+    element->clear_return_label();
+    element->set_is_suspended(false);
   } else {
     // Allocate the new CompilationQueueElement.
-    UsingFastOops fast_oops;
+    VirtualStackFrame::Raw clone =
+      frame->clone(JVM_SINGLE_ARG_OZCHECK(clone));
+    element = COMPILER_OBJECT_ALLOCATE(CompilationQueueElement);
+    if( !element ) {
+      return element;
+    }
 
-    VirtualStackFrame::Fast clone = frame->clone(JVM_SINGLE_ARG_CHECK_0);
-    // frame must be created first to avoid possible GC on element allocation
-    element = Universe::new_mixed_oop_in_compiler_area(
-                 MixedOopDesc::Type_CompilationQueueElement,
-                 CompilationQueueElementDesc::allocation_size(), 
-                 CompilationQueueElementDesc::pointer_count()
-                 JVM_OZCHECK(element));
-    element().set_frame(&clone);
+    element->set_frame(&clone);
   }
 
   // Fill out instance fields.
-  element().set_type(type);
-  element().set_bci(bci);
+  element->set_type(type);
+  element->set_bci(bci);
 
   // Clear the registers.
-  element().set_register_0(Assembler::no_reg);
-  element().set_register_1(Assembler::no_reg);
+  element->set_register_0(Assembler::no_reg);
+  element->set_register_1(Assembler::no_reg);
 
   return element;
 }
@@ -89,7 +88,6 @@ bool CompilationQueueElement::compile(JVM_SINGLE_ARG_TRAPS) {
     Compiler::current()->set_bci(bci());
   }
   VirtualStackFrame::Raw continuation_frame = frame();
-
   Compiler::set_frame(continuation_frame());
 
   Compiler::code_generator()->ensure_compiled_method_space();
@@ -126,7 +124,7 @@ bool CompilationQueueElement::compile(JVM_SINGLE_ARG_TRAPS) {
                              code_generator()->compiled_method());
       }
     }
-    finished =  
+   finished =  
      CompilationContinuation::cast(this)->compile(JVM_SINGLE_ARG_CHECK_(true));
     // IMPL_NOTE: need to revisit for inlining
     if (!Compiler::is_inlining()) {
@@ -159,35 +157,31 @@ void CompilationQueueElement::insert() {
   Compiler::current()->insert_compilation_queue_element(this);
 }
 
-void CheckCastStub::insert(int bci, int class_id,
-                           BinaryAssembler::Label& entry_label,
-                           BinaryAssembler::Label& return_label JVM_TRAPS) {
-  CheckCastStub::Raw stub =
-      CompilationQueueElement::allocate(check_cast_stub, bci JVM_NO_CHECK);
-  if (stub.not_null()) {
-    stub().set_register_0(Assembler::no_reg);
-    stub().set_class_id(class_id);
-    stub().set_entry_label(entry_label);
-    stub().set_return_label(return_label);
-    Compiler::current()->insert_compilation_queue_element(&stub);
-  }
+void CheckCastStub::insert( const int bci, const int class_id,
+                       const BinaryAssembler::Label entry_label,
+                       const BinaryAssembler::Label return_label JVM_TRAPS) {
+  CheckCastStub* stub = (CheckCastStub*)
+    CompilationQueueElement::allocate(check_cast_stub, bci JVM_ZCHECK(stub));
+  stub->set_register_0(Assembler::no_reg);
+  stub->set_class_id(class_id);
+  stub->set_entry_label(entry_label);
+  stub->set_return_label(return_label);
+  Compiler::current()->insert_compilation_queue_element(stub);
 }
 
-ReturnOop CompilationContinuation::insert(jint bci,
-                                          BinaryAssembler::Label& entry_label
-                                          JVM_TRAPS) {
-  CompilationContinuation::Raw stub =
-      CompilationQueueElement::allocate(compilation_continuation, bci
-                                        JVM_NO_CHECK);
-  if (stub.not_null()) {
-    stub().set_entry_label(entry_label);
-    if (Compiler::bci() < bci) {
-      // Mark the continuation as a forward branch target to disable 
-      // loop peeling for it.
-      stub().set_forward_branch_target();
-    }
-    Compiler::current()->insert_compilation_queue_element(&stub);
+CompilationContinuation* CompilationContinuation::insert( const jint bci,
+                           const BinaryAssembler::Label entry_label JVM_TRAPS) {
+  CompilationContinuation* stub = (CompilationContinuation*)
+    CompilationQueueElement::allocate( compilation_continuation, bci
+                                       JVM_ZCHECK_0(stub));
+  stub->set_entry_label(entry_label);
+  if( Compiler::bci() < bci ) {
+    // Mark the continuation as a forward branch target to disable 
+    // loop peeling for it.
+    stub->set_forward_branch_target();
   }
+
+  Compiler::current()->insert_compilation_queue_element(stub);
 
   // We return the stub, since the caller may want to add some flags
   return stub;
@@ -229,7 +223,9 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
   // Compilation loop.
   bool continue_compilation = true;
   while (continue_compilation) {
-    if (Compiler::current()->has_entry_for(Compiler::bci())) {      
+    // Get the entry from the compiler.
+    Entry* entry = Compiler::current()->entry_for(Compiler::bci());
+    if( entry ) {      
       UsingFastOops fast_oops;
 
       //flush all the cached regiser
@@ -239,9 +235,6 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
       // We enter here if we already have generated code for this closure;
       // We will not compile this closure again, but we may need to emit
       // additional merging code
-
-      // Get the entry from the compiler.
-      Entry* entry = Compiler::current()->entry_for(Compiler::bci());
       VirtualStackFrame::Fast entry_frame = entry->frame();
 
       // If we're not already in a loop and the entry we've found is on
@@ -360,28 +353,25 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
                 branch_label.bind_to(next_pos);
               
                 int jmp_bci = -1;
-                Compiler * const compiler = Compiler::current();
-                CompilationQueueElement::Raw element =
+                Compiler* const compiler = Compiler::current();
+                CompilationQueueElement* element =
                   compiler->get_first_compilation_queue_element();  
-                CompilationQueueElement::Raw pre_element = element;
-                while (!element.is_null()) {
-                  BinaryAssembler::Label compile_entry_label_elem
-                      = element().entry_label();
+                CompilationQueueElement* pre_element = element;
+                for( ;element; element = element->next() ) {
+                  BinaryAssembler::Label compile_entry_label_elem =
+                    element->entry_label();
                   if(compile_entry_label_elem.is_linked()) {
                     if(compile_entry_label_elem.position() == next_pos) {
                       if(pre_element != element) {
-                        CompilationQueueElement::Raw next   = element().next();
-                        pre_element().set_next(&next);
-                        compiler->insert_compilation_queue_element(&element);
+                        pre_element->set_next(element->next());
+                        compiler->insert_compilation_queue_element(element);
                       }
                       need_jmp = false;
                       break;
                     }
                   }
-                  pre_element = element;
-                  element = compiler->get_next_compilation_queue_element(&element);
+                  pre_element = element;                  
                 }
-              
                 if(need_jmp)
                   COMPILER_COMMENT(("Can not find the Entry label"));
               }
@@ -404,7 +394,6 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
 #if ENABLE_LOOP_OPTIMIZATION && ARM
         }
 #endif
-
         // Terminate this compilation string and any loops.
         continue_compilation = false;
         Compiler::mark_as_outside_loop();
@@ -427,21 +416,20 @@ bool CompilationContinuation::compile_bytecodes(JVM_SINGLE_ARG_TRAPS) {
         } else {
           gen->bind(entry_label);
         }
-
         {
           // Register the entry in the compiler.
           Entry* entry = Entry::allocate(bci(), frame, entry_label,
                                              gen->code_size()
                                              JVM_ZCHECK_0(entry));
           Compiler::current()->set_entry_for(Compiler::bci(), entry);
-#if ENABLE_INTERNAL_CODE_OPTIMIZER
-          EntryStub::Raw stub = EntryStub::allocate( bci(), entry_label JVM_NO_CHECK);
-          if (stub.not_null()) {
-            stub().insert();
-          }
-#endif
-
         }
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
+        {
+          EntryStub* stub =
+            EntryStub::allocate( bci(), entry_label JVM_ZCHECK_0(stub));
+          stub->insert();
+        }
+#endif
 
         VERBOSE_CSE(("clear notation for bci with multiple entry "));
         ABORT_CSE_TRACKING;
@@ -485,13 +473,13 @@ bool CompilationContinuation::compile(JVM_SINGLE_ARG_TRAPS) {
     ABORT_CSE_TRACKING;
     CompilationContinuation::begin_compile(JVM_SINGLE_ARG_CHECK_0);
   }
-  bool finished = compile_bytecodes(JVM_SINGLE_ARG_CHECK_0);
+
+  const bool finished = compile_bytecodes(JVM_SINGLE_ARG_CHECK_0);
   if (finished) {
     end_compile();
   } else {
     set_is_suspended(true);
   }
-
   return finished;
 }
 
@@ -505,8 +493,11 @@ void OSRStub::compile(JVM_SINGLE_ARG_TRAPS) {
 
   COMPILER_COMMENT(("OSR bci = %d: Restore register mapping and continue in "
                    "compiled code", bci()));
+
   emit_osr_entry_and_callinfo(gen JVM_CHECK);
+
   VirtualStackFrame::Fast new_frame = frame().clone(JVM_SINGLE_ARG_CHECK);
+
   new_frame().mark_as_flushed();
   new_frame().set_real_stack_pointer(frame().virtual_stack_pointer());
 
@@ -601,16 +592,16 @@ void StackOverflowStub::compile(JVM_SINGLE_ARG_TRAPS) {
   gen->overflow(register_0(), register_1());  // ain't never returning here...
 }
 
-ReturnOop QuickCatchStub::allocate(jint bci,
-                                   const Value &value, jint handler_bci,
-                                   BinaryAssembler::Label& entry_label
+QuickCatchStub* QuickCatchStub::allocate( const jint bci,
+                                   const Value& value, const jint handler_bci,
+                                   const BinaryAssembler::Label entry_label
                                    JVM_TRAPS) {
-  QuickCatchStub::Raw stub =
-      CompilationQueueElement::allocate(quick_catch_stub, bci JVM_CHECK_0);
-  VirtualStackFrame::Raw my_frame = stub().frame();
+  QuickCatchStub* stub = (QuickCatchStub*)
+    CompilationQueueElement::allocate(quick_catch_stub, bci JVM_ZCHECK_0(stub));
+  VirtualStackFrame::Raw my_frame = stub->frame();
   my_frame().push(value);
-  stub().set_info(handler_bci);
-  stub().set_entry_label(entry_label);
+  stub->set_info(handler_bci);
+  stub->set_entry_label(entry_label);
   return stub;
 }
 
@@ -694,37 +685,36 @@ void TypeCheckStub::compile(JVM_SINGLE_ARG_TRAPS) {
   generic_compile((address) array_store_type_check JVM_NO_CHECK_AT_BOTTOM);
 }
 
-ReturnOop ThrowExceptionStub::allocate(RuntimeException rte, jint bci
-                                       JVM_TRAPS) {
-  ThrowExceptionStub::Raw stub =
-      CompilationQueueElement::allocate(throw_exception_stub, 
-                                        bci JVM_NO_CHECK);
-  if (stub.not_null()) {
-    stub().set_rte(rte);
+ThrowExceptionStub* ThrowExceptionStub::allocate(const RuntimeException rte,
+                                                 const jint bci JVM_TRAPS) {
+  ThrowExceptionStub* stub = (ThrowExceptionStub*)
+    CompilationQueueElement::allocate(throw_exception_stub, bci JVM_NO_CHECK);
+  if( stub ) {
+    stub->set_rte( rte );
   }
   return stub;
 }
 
-ReturnOop
-ThrowExceptionStub::allocate_or_share(RuntimeException rte JVM_TRAPS) {
-  jint bci = Compiler::bci();
+ThrowExceptionStub*
+ThrowExceptionStub::allocate_or_share(const RuntimeException rte JVM_TRAPS) {
+  const jint bci = Compiler::bci();
   bool set_rte_handler = false;
-  if (ShareExceptionStubs && 
+  if( ShareExceptionStubs && 
       Compiler::current()->method_aborted_for_exception_at(bci)) {
-    ReturnOop stub = Compiler::rte_handler(rte);
-    if (stub != NULL) { 
+    ThrowExceptionStub* stub = Compiler::rte_handler(rte);
+    if( stub ) { 
       return stub;
     } else { 
       set_rte_handler = true;
     }
   }
 
-  ThrowExceptionStub::Raw stub = allocate(rte, bci JVM_NO_CHECK);
-  if (stub.not_null()) {
-    stub().insert();
-    if (set_rte_handler) { 
-      stub().set_is_persistent();
-      Compiler::set_rte_handler(rte, stub().obj());
+  ThrowExceptionStub* stub = allocate(rte, bci JVM_NO_CHECK );
+  if( stub ) {
+    stub->insert();
+    if( set_rte_handler ) { 
+      stub->set_is_persistent();
+      Compiler::set_rte_handler( rte, stub );
     }
   }
   return stub;
@@ -919,6 +909,7 @@ ReturnOop ThrowExceptionStub::exception_class(int rte) {
 }
 
 #ifndef PRODUCT
+#if 0
 void CompilationQueueElement::iterate(OopVisitor* visitor) {
 #if USE_OOP_VISITOR
   iterate_oopmaps(BasicOop::iterate_one_oopmap_entry, (void*)visitor);
@@ -941,7 +932,11 @@ void CompilationQueueElement::iterate_oopmaps(oopmaps_doer do_map, void *param) 
   OOPMAP_ENTRY_4(do_map, param, T_BOOLEAN, entry_has_been_bound);
 #endif
 }
+#endif
+
 #endif // PRODUCT
+
+
 #ifdef ABORT_CSE_TRACKING
 #undef ABORT_CSE_TRACKING
 #endif

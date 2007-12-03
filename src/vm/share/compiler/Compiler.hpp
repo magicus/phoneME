@@ -101,8 +101,6 @@ public:
 
 #define COMPILER_INSTANCE_HANDLES  \
   FIELD( Method,                  method                  ) \
-  FIELD( CompilationQueueElement, compilation_queue       ) \
-  FIELD( CompilationQueueElement, current_element         ) \
   ARRAY( TypeArray,               entry_counts_table      ) \
   ARRAY( TypeArray,               bci_flags_table         ) 
 
@@ -174,7 +172,7 @@ class CompilerContext: public CompilerContextPointers {
 public:
   #define FIELD( type, name ) \
     type _##name;             \
-    type name         ( void )     { return _##name; } \
+    type name         ( void ) const { return _##name; } \
     void set_##name   ( type val ) { _##name = val;  }
 
   COMPILER_CONTEXT_FIELDS_DO(FIELD)
@@ -186,6 +184,28 @@ public:
   EntryTableType* entry_table( void ) const { return _entry_table; }
   void set_entry_table( EntryTableType* value ) { _entry_table = value; }
   void clear_entry_table( void ) { _entry_table = NULL; }
+
+  CompilationQueueElement* _compilation_queue;
+  CompilationQueueElement* compilation_queue ( void ) const {
+    return _compilation_queue;
+  }
+  void clear_compilation_queue ( void ) {
+    _compilation_queue = NULL;
+  }
+  void set_compilation_queue ( CompilationQueueElement* val ) {
+    _compilation_queue = val;
+  }
+
+  CompilationQueueElement* _current_element;
+  CompilationQueueElement* current_element ( void ) const {
+    return _current_element;
+  }
+  void clear_current_element ( void ) {
+    _current_element = NULL;
+  }
+  void set_current_element ( CompilationQueueElement* val ) {
+    _current_element = val;
+  }
 
   bool valid ( void ) const { return method()->not_null(); }
 
@@ -213,10 +233,7 @@ public:
     void set_##name   ( const type* val ) { set_##name( val->obj() );   }
 
   COMPILER_STATIC_HANDLES
-
   #undef FIELD
-
-  OopDesc* _rte_handlers[ThrowExceptionStub::number_of_runtime_exceptions];
 
   static int pointer_count( void ) {
     return sizeof(CompilerStaticPointers) / sizeof(OopDesc*);
@@ -225,23 +242,24 @@ public:
   bool valid ( void ) const { return _current_compiled_method != NULL; }
 
   void oops_do( void do_oop(OopDesc**) );
-  void cleanup( void );
 };
 
 #define COMPILER_STATIC_FIELDS_DO(template)  \
-        template( Compiler*, root                    ) \
-        template( Compiler*, current                 ) \
-        template( bool,      omit_stack_frame        )
+  template( Compiler*, root             ) \
+  template( Compiler*, current          ) \
+  template( bool,      omit_stack_frame )
 
 class CompilerStatic: public CompilerStaticPointers {
 public:
-  #define DECLARE_FIELD( type, name ) \
-          type _##name;
+  ThrowExceptionStub* _rte_handlers[ThrowExceptionStub::number_of_runtime_exceptions];
+
+  #define DECLARE_FIELD( type, name ) type _##name;
   COMPILER_STATIC_FIELDS_DO(DECLARE_FIELD)
 
 #if USE_DEBUG_PRINTING
   void print_on(Stream *st);
 #endif
+  void cleanup( void );
 };
 
 class Compiler: public StackObj {
@@ -272,16 +290,16 @@ class Compiler: public StackObj {
   #undef FIELD
 
   #define DEFINE_ACCESSOR( type, name ) \
-    type name                  ( void )      { return _context.name();   } \
-    void set_##name            ( type name ) { _context.set_##name(name);} \
-    static type current_##name ( void )      { return current()->name(); }
+    type name                  ( void ) const { return _context.name();   } \
+    void set_##name            ( type name )  { _context.set_##name(name);} \
+    static type current_##name ( void )       { return current()->name(); }
   COMPILER_CONTEXT_FIELDS_DO(DEFINE_ACCESSOR)
 
   #undef DEFINE_ACCESSOR
 
   #define ARRAY( type, name ) FIELD( type, name )
   #define FIELD( type, name ) \
-    type* name       ( void )            { return _context.name();     } \
+    type* name       ( void ) const      { return _context.name();     } \
     void clear_##name( void )            { _context.clear_##name();    } \
     void set_##name  ( OopDesc* val )    { _context.set_##name( val ); } \
     void set_##name  ( const type* val ) { _context.set_##name( val ); } \
@@ -301,6 +319,26 @@ class Compiler: public StackObj {
   }
   static EntryTableType* current_entry_table( void ) {
     return current()->entry_table();
+  }
+
+  CompilationQueueElement* compilation_queue ( void ) const {
+    return _context.compilation_queue();
+  }
+  void clear_compilation_queue ( void ) {
+    _context.clear_compilation_queue();
+  }
+  void set_compilation_queue ( CompilationQueueElement* val ) {
+    _context.set_compilation_queue( val );
+  }
+
+  CompilationQueueElement* current_element ( void ) const {
+    return _context.current_element();
+  }
+  void clear_current_element ( void ) {
+    _context.clear_current_element();
+  }
+  void set_current_element ( CompilationQueueElement* val ) {
+    _context.set_current_element( val );
   }
 
   // Constructor and deconstructor.
@@ -352,17 +390,17 @@ class Compiler: public StackObj {
   }
 
   // Accessors for the compilation queue.
-  ReturnOop current_compilation_queue_element( void ) {
-    ReturnOop p = (CompilationQueueElementDesc*)current_element()->obj();
+  CompilationQueueElement* current_compilation_queue_element( void ) {
+    CompilationQueueElement* p = current_element();
     if( !p ) {
-      p = compilation_queue()->obj();
-      set_compilation_queue( ((CompilationQueueElementDesc*)p)->_next );
+      p = compilation_queue();
+      set_compilation_queue( p->next() );
       set_current_element( p );
     }
     return p;
   }
 
-  CompilerContext* context() {
+  CompilerContext* context( void ) {
     return &_context;
   }
 
@@ -370,35 +408,28 @@ class Compiler: public StackObj {
   //get the exception stub whose's entry label is still unset.
   //the function will find the stub and let the store_to_add_xx() to fill the 
   //address in LDR instr  in it.
-  CompilationQueueElementDesc* get_unlinked_exception_stub(jint bci){
-    CompilationQueueElement::Raw next_element = compilation_queue()->obj();
-    while( ! next_element().is_null()){
-      //This function will iterator the new created stub and
-      //Try to found the unlinked null exception stub.
-      if( next_element().bci() == bci && 
-          next_element().type() == 
-          CompilationQueueElement::throw_exception_stub &&
-          ((ThrowExceptionStub) next_element()).get_rte() ==
-          ThrowExceptionStub::rte_null_pointer
-          ){
-              return (CompilationQueueElementDesc *) next_element().obj();
-      }
-      next_element = next_element().next();
-    };
-
-    return NULL;
+  NullCheckStub* get_unlinked_exception_stub(const jint bci) const {
+    CompilationQueueElement* next_element;
+    //Try to found the unlinked null exception stub.
+    for( next_element = compilation_queue();
+      next_element &&
+      !(next_element->bci() == bci && 
+        next_element->type() == CompilationQueueElement::throw_exception_stub &&
+        ((ThrowExceptionStub*) next_element)->get_rte() == ThrowExceptionStub::rte_null_pointer);
+      next_element = next_element->next() ) {}
+    return (NullCheckStub*) next_element;
   }
 
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
   //Null pointer exception accessor
-  void record_null_point_exception_inst( int offset ) {
+  void record_null_point_exception_inst( const int offset ) {
     int index = null_point_record_counter();
     null_point_exception_ins_table()->int_at_put( index++, offset); 
     set_null_point_record_counter(index);     
   }
 
   //return the null point related instr indexed by index parameter
-  int null_point_exception_abort_point( int index) {
+  int null_point_exception_abort_point( const int index) const {
     return null_point_exception_ins_table()->int_at( index);
   }
 
@@ -415,14 +446,18 @@ class Compiler: public StackObj {
 
 #if ENABLE_LOOP_OPTIMIZATION && ARM
   //get the first compilation queue item.
-  ReturnOop get_first_compilation_queue_element() {
-    return compilation_queue()->obj();
+  CompilationQueueElement* get_first_compilation_queue_element( void ) const {
+    return compilation_queue();
   }
   
   //get the next element in the current compilation queue. 
-  ReturnOop get_next_compilation_queue_element(CompilationQueueElement *
-                                               current_elem) {
-    return current_elem->next();
+  static CompilationQueueElement*
+  get_next_compilation_queue_element(CompilationQueueElement* p) {
+    return p->next();
+  }
+  static const CompilationQueueElement*
+  get_next_compilation_queue_element(const CompilationQueueElement* p) {
+    return p->next();
   }
 #endif //#if ENABLE_LOOP_OPTIMIZATION && ARM
 
@@ -431,8 +466,8 @@ class Compiler: public StackObj {
     set_compilation_queue( value );
   }
 
-  bool is_compilation_queue_empty( void ) {
-    return compilation_queue()->is_null() && current_element()->is_null();
+  bool is_compilation_queue_empty( void ) const {
+    return compilation_queue() == NULL && current_element() == NULL;
   }
 
   // Entry counts accessor.
@@ -486,10 +521,10 @@ class Compiler: public StackObj {
 
   // Support for sharing of exception thrower stubs.
   typedef ThrowExceptionStub::RuntimeException RuntimeException;
-  static ReturnOop rte_handler(const RuntimeException rte) {
+  static ThrowExceptionStub* rte_handler(const RuntimeException rte) {
     return _state._rte_handlers[rte];
   }
-  static void set_rte_handler(const RuntimeException rte, OopDesc* value) {
+  static void set_rte_handler(const RuntimeException rte, ThrowExceptionStub* value) {
     _state._rte_handlers[rte] = value;
   }
 #if ENABLE_INLINE
@@ -506,26 +541,26 @@ class Compiler: public StackObj {
   }
 
  private:
-  ReturnOop parent_frame() {
+  ReturnOop parent_frame( void ) const {
     GUARANTEE(is_inlining(), "Can only be called during inlining");
-    Compiler* parent_compiler = parent();
+    const Compiler* parent_compiler = parent();
     GUARANTEE(parent_compiler != NULL, "Cannot be null when inlining");
     GUARANTEE(parent_compiler != this, "Sanity");
-    CompilationQueueElement::Raw parent_element = 
+    const CompilationQueueElement* parent_element = 
       parent_compiler->current_element();
-    GUARANTEE(parent_element.not_null(), "Cannot be null when inlining");
-    return parent_element().frame();
+    GUARANTEE(parent_element, "Cannot be null when inlining");
+    return parent_element->frame();
   }
 
-  void set_parent_frame(VirtualStackFrame* frame) {
+  void set_parent_frame( VirtualStackFrame* frame ) {
     GUARANTEE(is_inlining(), "Can only be called during inlining");
-    Compiler* parent_compiler = parent();
+    const Compiler* parent_compiler = parent();
     GUARANTEE(parent_compiler != NULL, "Cannot be null when inlining");
     GUARANTEE(parent_compiler != this, "Sanity");
-    CompilationQueueElement::Raw parent_element = 
+    CompilationQueueElement* parent_element = 
       parent_compiler->current_element();
-    GUARANTEE(parent_element.not_null(), "Cannot be null when inlining");
-    parent_element().set_frame(frame);
+    GUARANTEE(parent_element, "Cannot be null when inlining");
+    parent_element->set_frame( frame );
   }
 
   void clear_parent_frame() {
@@ -612,9 +647,9 @@ class Compiler: public StackObj {
   CompilerContext        _context;
 
 #if ENABLE_INTERNAL_CODE_OPTIMIZER && ARM &&ENABLE_CODE_OPTIMIZER
-  CompilationQueueElement::Fast _next_element;
-  CompilationQueueElement::Fast _cur_element;
-  BinaryAssembler::LiteralPoolElement::Fast  _next_bound_literal;
+  CompilationQueueElement* _next_element;
+  CompilationQueueElement* _cur_element;
+  LiteralPoolElement::Fast _next_bound_literal;
 
   InternalCodeOptimizer* optimizer() {
     return &_internal_code_optimizer;
@@ -662,15 +697,15 @@ class Compiler: public StackObj {
       //only entered for the first call of Compiler::next_scheduable_branch()
       //in a loop.
               
-      CompilationQueueElement::Raw stub = this->rte_handler(
+      CompilationQueueElement* stub = this->rte_handler(
         ThrowExceptionStub::rte_array_index_out_of_bounds);
 
       // There's no array boundary checking code in current emitted code.       
-      if (stub().is_null()) {
+      if( stub == NULL ) {
         return BinaryAssembler::stop_searching;
       }
 
-      (*label) = stub().entry_label();
+      (*label) = stub->entry_label();
 
       // Stub is emitted. is_unused should be replace by assertion.
       if ( label->is_unused() || label->is_bound()) {
@@ -687,13 +722,12 @@ class Compiler: public StackObj {
 
   //get the offset of bound index check stub
   int index_check_stub_offset() {
-   CompilationQueueElement::Raw stub = 
+    CompilationQueueElement* stub = 
       this->rte_handler(ThrowExceptionStub::rte_array_index_out_of_bounds);
-   if (stub().is_null() || !stub().entry_label().is_bound()) {
-     return -1;
-   }
-   return stub().entry_label().position();
-
+    if (!stub || !stub->entry_label().is_bound()) {
+      return -1;
+    }
+    return stub->entry_label().position();
   }
 
   //for the ldr ins accessing  the same literal, we find out the first one, if the chain 
@@ -706,10 +740,9 @@ class Compiler: public StackObj {
   void get_first_literal_ldrs(int* begin_offset_of_block) {
     AllocationDisabler allocation_not_allowed_in_this_function;
       
-    BinaryAssembler::LiteralPoolElement::Raw literal;
     BinaryAssembler::Label label;
     int offset;
-    literal = this->code_generator()->_first_unbound_literal.obj();
+    LiteralPoolElement::Raw literal = code_generator()->_first_unbound_literal().obj();
     
     for (; !literal.is_null(); literal = literal().next()) { 
       label._encoding = literal().label()._encoding;
@@ -730,12 +763,11 @@ class Compiler: public StackObj {
   void patch_unbound_literal_elements(int begin_offset_of_block) {
     AllocationDisabler allocation_not_allowed_in_this_function;
       
-    BinaryAssembler::LiteralPoolElement::Raw literal;
     BinaryAssembler::Label tmp;
     int index = 0; 
     int new_offset;
-    
-    literal = this->code_generator()->_first_unbound_literal.obj();
+
+    LiteralPoolElement::Raw literal = code_generator()->_first_unbound_literal.obj();
     
     for (; !literal.is_null(); literal = literal().next()) { 
       tmp._encoding = literal().label()._encoding;
@@ -754,12 +786,12 @@ class Compiler: public StackObj {
   //update the entry label of a unbind index check stub.
   //the entry label point to the tail of a chain of branch.
   void update_shared_index_check_stub(int position) {
-    CompilationQueueElement::Raw stub = rte_handler(
-              ThrowExceptionStub::rte_array_index_out_of_bounds);
-    if (!stub().is_null() && !stub().entry_label().is_bound() ) {
+    CompilationQueueElement* stub =
+      rte_handler(ThrowExceptionStub::rte_array_index_out_of_bounds);
+    if (stub && !stub->entry_label().is_bound() ) {
       BinaryAssembler::Label label;
       label.link_to(position);
-      stub().set_entry_label(label);
+      stub->set_entry_label(label);
     }
   }
 

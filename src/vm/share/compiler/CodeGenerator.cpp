@@ -196,9 +196,9 @@ void CodeGenerator::osr_entry(bool force JVM_TRAPS) {
     Label osr_entry;
     bind(osr_entry);
 
-    OSRStub::Raw stub = OSRStub::allocate(bci(), osr_entry JVM_NO_CHECK);
-    if (stub.not_null()) {
-      stub().insert();
+    OSRStub* stub = OSRStub::allocate( bci(), osr_entry JVM_NO_CHECK );
+    if( stub ) {
+      stub->insert();
     }
   }
 }

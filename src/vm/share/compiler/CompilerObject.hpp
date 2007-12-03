@@ -26,9 +26,10 @@
 
 #if ENABLE_COMPILER
 
-#define COMPILER_OBJECTS_DO(template)\
-  template( PointerArray )  \
-  template( Entry )         \
+#define COMPILER_OBJECTS_DO(template) \
+  template( PointerArray            ) \
+  template( Entry                   ) \
+  template( CompilationQueueElement ) \
 
 #define USE_COMPILER_OBJECT_HEADER 1
 
@@ -119,6 +120,10 @@ public:
 #else
   bool is ( const Type   ) const { return true; }
 #endif
+  
+  void check_type( const Type t ) const {
+    GUARANTEE( is( t ), "Wrong type" );
+  }
 };
 
 #define COMPILER_OBJECT_ALLOCATE(type)\
@@ -134,11 +139,12 @@ class CompilerPointerArray: public CompilerObject {
   static int header_size( void ) { return FIELD_OFFSET(array_type, _data); }
 
 #if USE_COMPILER_OBJECT_HEADER
-  unsigned array_size( void ) const {
+  unsigned length( void ) const {
     return (size() - header_size()) / sizeof(element_type);
   }
   void check_bounds( const unsigned i ) const {
-    GUARANTEE( i < array_size(), "Array index is out of bounds" );
+    GUARANTEE( this != NULL, "NULL array" );
+    GUARANTEE( i < length(), "Array index is out of bounds" );
   }
 #else
   static void check_bounds( const int ) {}

@@ -653,7 +653,6 @@ void CodeGenerator::move(Assembler::Register dst, Assembler::Register src,
 }
 
 void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
-  UsingFastOops fast_oops;
   FieldAddress length_address(array, Array::length_offset(), T_INT);
 
   maybe_null_check(array JVM_CHECK);
@@ -665,17 +664,16 @@ void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
   }
 
   // insert stub to handle uncommon case where the index is out of bounds
-  IndexCheckStub::Fast check_stub =
-      IndexCheckStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
-  jcc(below_equal, &check_stub);
+  IndexCheckStub* check_stub =
+    IndexCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(check_stub));
+  jcc(below_equal, check_stub);
 }
 
 void CodeGenerator::null_check( const Value& object JVM_TRAPS) {
-  UsingFastOops fast_oops;
-  testl(object.lo_register(), object.lo_register());
-  NullCheckStub::Fast check_stub = 
-      NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
-  jcc(zero, &check_stub);
+  testl( object.lo_register(), object.lo_register() );
+  NullCheckStub* check_stub = 
+    NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(check_stub));
+  jcc(zero, check_stub);
 }
 
 void CodeGenerator::return_error(Value& value JVM_TRAPS) {
@@ -822,7 +820,6 @@ void CodeGenerator::unlock_activation(JVM_SINGLE_ARG_TRAPS) {
 }
 
 void CodeGenerator::check_monitors(JVM_SINGLE_ARG_TRAPS) {
-  UsingFastOops fast_oops;
 #if ENABLE_FLOAT
   // Since this code may call a stub that then returns here, we must make sure
   // that the x86 fpu stack is empty
@@ -840,15 +837,15 @@ void CodeGenerator::check_monitors(JVM_SINGLE_ARG_TRAPS) {
   movl(last_stack_lock, Address(ebp, JavaFrame::stack_bottom_pointer_offset()));
 
   NearLabel loop, entry;
-  UnlockExceptionStub::Fast unlock_exception_stub = 
-      UnlockExceptionStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
+  UnlockExceptionStub* unlock_exception_stub = 
+    UnlockExceptionStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(unlock_exception_stub));
 
   Label unlock_exception_done;
   jmp(entry);
 
   bind(loop);
   cmpl(Address(last_stack_lock, StackLock::size()), 0);
-  jcc(not_equal, &unlock_exception_stub);
+  jcc(not_equal, unlock_exception_stub);
   bind(unlock_exception_done);
   addl(last_stack_lock, (4 + StackLock::size()));
 
@@ -1125,11 +1122,10 @@ void CodeGenerator::instance_of(Value& result, Value& object, Value& klass,
 
   bind(done_checking);
 
-  InstanceOfStub::Raw stub =
-      InstanceOfStub::allocate(bci(), class_id, slow_case, done_checking,
-                               result.lo_register() JVM_CHECK);
-  stub().insert();
-
+  InstanceOfStub* stub =
+    InstanceOfStub::allocate( bci(), class_id, slow_case, done_checking,
+                               result.lo_register() JVM_ZCHECK(stub) );
+  stub->insert();
   frame()->pop(object);
 }
 
@@ -1201,9 +1197,9 @@ void CodeGenerator::type_check(Value& array, Value& index, Value& object JVM_TRA
   // Cache hit.
   bind(done_checking);
 
-  TypeCheckStub::Raw stub =
-      TypeCheckStub::allocate(bci(), slow_case, done_checking JVM_CHECK);
-  stub().insert();
+  TypeCheckStub* stub =
+    TypeCheckStub::allocate( bci(), slow_case, done_checking JVM_ZCHECK(stub) );
+  stub->insert();
   frame()->pop(object);
   frame()->pop(index);
   frame()->pop(array);
@@ -2175,16 +2171,15 @@ void CodeGenerator::runtime_long_op(Value& result, Value& op1, Value& op2,
   if (check_zero) {
     GUARANTEE(op2.stack_type() == T_LONG, "Sanity");
     if (op2.in_register() || (op2.is_immediate() && op2.as_long() == 0)) {
-      UsingFastOops fast_oops;
-      ZeroDivisorCheckStub::Fast zero =
-          ZeroDivisorCheckStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
+      ZeroDivisorCheckStub* zero =
+        ZeroDivisorCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(zero));
       if (op2.is_immediate()) {
-        jmp(&zero);
+        jmp(zero);
       } else {
         Register temp = RegisterAllocator::allocate();
         movl(temp, op2.lo_register());
         orl(temp,  op2.hi_register());
-        jcc(equal, &zero);
+        jcc(equal, zero);
         RegisterAllocator::dereference(temp);
       }
     }
@@ -2404,7 +2399,6 @@ void CodeGenerator::invoke_virtual(Method* method, int vtable_index,
 void CodeGenerator::invoke_interface(JavaClass* klass, int itable_index,
                                      int parameters_size,
                                      BasicType return_type JVM_TRAPS) {
-  UsingFastOops fast_oops;
   // Flush the virtual stack frame and an unmap everything.
   frame()->flush(JVM_SINGLE_ARG_CHECK);
   verify_fpu();
@@ -2433,12 +2427,12 @@ void CodeGenerator::invoke_interface(JavaClass* klass, int itable_index,
 
   // Lookup interface method table by linear search
   NearLabel lookup, found;
-  IncompatibleClassChangeStub::Fast error =
-      IncompatibleClassChangeStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
+  IncompatibleClassChangeStub* error =
+    IncompatibleClassChangeStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(error));
 
   bind(lookup);
   subl(eax, 1);
-  jcc(less, &error);
+  jcc(less, error);
   cmpl(Address(edi), ebx);
   jcc(equal, found);
   addl(edi, 8);
@@ -2597,7 +2591,7 @@ void CodeGenerator::check_bytecode_counter() {
   }
 }
 
-void CodeGenerator::check_stack_overflow(Method *m JVM_TRAPS) {
+void CodeGenerator::check_stack_overflow(Method* m JVM_TRAPS) {
   Label stack_overflow, done;
 
   comment("Stack overflow check");
@@ -2608,9 +2602,9 @@ void CodeGenerator::check_stack_overflow(Method *m JVM_TRAPS) {
   jcc(above_equal, stack_overflow);
 bind(done);
 
-  StackOverflowStub::Raw stub =
-      StackOverflowStub::allocate(stack_overflow, done, edx, ebx JVM_CHECK);
-  stub().insert();
+  StackOverflowStub* stub =
+    StackOverflowStub::allocate(stack_overflow, done, edx, ebx JVM_ZCHECK(stub));
+  stub->insert();
 }
 
 void CodeGenerator::check_timer_tick(JVM_SINGLE_ARG_TRAPS) {
@@ -2625,9 +2619,10 @@ void CodeGenerator::check_timer_tick(JVM_SINGLE_ARG_TRAPS) {
 #endif
   bind(done);
   
-  TimerTickStub::Raw stub = TimerTickStub::allocate(Compiler::current()->bci(),
-                                                    timer_tick, done JVM_CHECK);
-  stub().insert();
+  TimerTickStub* stub =
+    TimerTickStub::allocate(Compiler::current()->bci(),
+      timer_tick, done JVM_ZCHECK(stub));
+  stub->insert();
 }
 
 CodeGenerator::Condition

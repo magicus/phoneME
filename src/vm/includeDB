@@ -849,9 +849,7 @@ CompilerTest.cpp                 FilePath.hpp
 CompilerObject.hpp               ObjectHeap.hpp
 CompilerObject.cpp               CompilerObject.hpp
 
-CompilationQueueElementDesc.hpp  MixedOopDesc.hpp
-
-CompilationQueue.hpp             CompilationQueueElementDesc.hpp
+CompilationQueue.hpp             CompilerObject.hpp
 CompilationQueue.hpp             VirtualStackFrame.hpp
 CompilationQueue.hpp             BinaryAssembler_<carch>.hpp
 CompilationQueue.hpp             BytecodeCompileClosure.hpp
@@ -2199,7 +2197,6 @@ JavaNear.cpp                     TypeArray.hpp
 JavaNear.cpp                     JavaClass.hpp
 
 Universe.hpp                     BufferedFile.hpp
-Universe.hpp                     CompilationQueueElementDesc.hpp
 Universe.hpp                     MixedOopDesc.hpp
 Universe.hpp                     ObjArray.hpp
 Universe.hpp                     Oop.hpp
@@ -2722,7 +2719,6 @@ OopDesc.inline.hpp               TypeArrayClass.hpp
 OopDesc.inline.hpp               StackmapListDesc.hpp
 OopDesc.inline.hpp               ThreadDesc.hpp
 OopDesc.inline.hpp               VirtualStackFrameDesc.hpp
-OopDesc.inline.hpp               CompilationQueueElementDesc.hpp
 OopDesc.inline.hpp               MixedOopDesc.hpp
 OopDesc.inline.hpp               VMEventDesc.hpp
 OopDesc.inline.hpp               VMEventModifierDesc.hpp

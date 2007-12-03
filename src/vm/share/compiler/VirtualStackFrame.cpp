@@ -419,7 +419,6 @@ void VirtualStackFrame::copy_to(VirtualStackFrame* dst) const {
   //  jvm_memset(map_dst, 0xab, left_over_bytes);
   //}
 #endif
-
 #if USE_COMPILER_FPU_MAP
   {
     TypeArray::Raw my_fpu_map = fpu_register_map();
@@ -436,7 +435,7 @@ void VirtualStackFrame::copy_to(VirtualStackFrame* dst) const {
   dst->set_bound_mask(bound_mask());
 }
 
-ReturnOop VirtualStackFrame::clone(JVM_SINGLE_ARG_TRAPS) {
+ReturnOop VirtualStackFrame::clone(JVM_SINGLE_ARG_TRAPS) { 
   VirtualStackFrame::Raw result =
     VirtualStackFrame::allocate(location_map_size() JVM_CHECK_0);
   copy_to(&result);

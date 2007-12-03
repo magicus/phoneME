@@ -111,7 +111,6 @@
 #define CodeSummary  JVMCodeSummary
 #define CompilationContinuation  JVMCompilationContinuation
 #define CompilationQueueElement  JVMCompilationQueueElement
-#define CompilationQueueElementDesc  JVMCompilationQueueElementDesc
 #define CompiledMethod  JVMCompiledMethod
 #define CompiledMethodCache  JVMCompiledMethodCache
 #define CompiledMethodDesc  JVMCompiledMethodDesc
@@ -145,7 +144,6 @@
 #define Entry  JVMEntry
 #define EntryActivation  JVMEntryActivation
 #define EntryActivationDesc  JVMEntryActivationDesc
-#define EntryDesc  JVMEntryDesc
 #define EntryFrame  JVMEntryFrame
 #define EntryStub  JVMEntryStub
 #define ErrorMessage  JVMErrorMessage

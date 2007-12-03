@@ -549,13 +549,11 @@ void CodeGenerator::store_to_address_and_record_offset_of_exception_instr(Value&
   }
 
   jint old_code_size = 0;
-  NullCheckStub::Raw unlinked_npe_stub;
-
-  CompilationQueueElementDesc* tmp =
+  NullCheckStub* unlinked_npe_stub =
     Compiler::current()->get_unlinked_exception_stub(bci());
-  if (tmp != NULL) {
-      unlinked_npe_stub = tmp;
-      need_npe_check = true;
+
+  if (unlinked_npe_stub) {
+    need_npe_check = true;
   }
 
   switch(type) {
@@ -578,7 +576,7 @@ void CodeGenerator::store_to_address_and_record_offset_of_exception_instr(Value&
           address.write_barrier_prolog();
           str(reg, address.lo_address_2());
           if (need_npe_check) {
-            record_npe_point(&unlinked_npe_stub, -1) ;
+            record_npe_point(unlinked_npe_stub, -1) ;
             //NPCE record of object has been handler in special case.
             //No need to handle it in general case.
             need_npe_check = false;
@@ -608,7 +606,7 @@ void CodeGenerator::store_to_address_and_record_offset_of_exception_instr(Value&
     case T_LONG    :
         str(reg, address.lo_address_2());
         if (need_npe_check) {
-          record_npe_point(&unlinked_npe_stub, -1);
+          record_npe_point(unlinked_npe_stub, -1);
           old_code_size = code_size();
         }
         if (value.is_immediate()) {
@@ -621,7 +619,7 @@ void CodeGenerator::store_to_address_and_record_offset_of_exception_instr(Value&
         }
         str(reg, address.hi_address_2());
         if ( need_npe_check ) {
-          unlinked_npe_stub().set_is_two_instr((code_size()-old_code_size)>>2);
+          unlinked_npe_stub->set_is_two_instr((code_size()-old_code_size)>>2);
           //record the LDR instr into the table used for extend basic block scheduling
           record_npe_point(NULL, -1) ;
         }
@@ -632,7 +630,7 @@ void CodeGenerator::store_to_address_and_record_offset_of_exception_instr(Value&
         break;
   }
   if (need_npe_check && (type !=T_DOUBLE && type != T_LONG )) {
-          record_npe_point(&unlinked_npe_stub,-1) ;
+          record_npe_point(unlinked_npe_stub,-1) ;
   }
   if (value.is_immediate()) {
     RegisterAllocator::dereference(reg);
@@ -889,10 +887,8 @@ void CodeGenerator::preload_parameter (Method* method) {
 
 void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
   write_literals_if_desperate();
-  UsingFastOops fast_oops;
-  bool null_check = need_null_check(array);
 
-  NullCheckStub::Fast null_check_stub;
+  const bool null_check = need_null_check(array);
 
 #if ENABLE_REMEMBER_ARRAY_LENGTH
   //skip the array length load operation if the length is cached
@@ -900,29 +896,30 @@ void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
   Register length;
   bool first_time = !(array.is_not_first_time_access());
   if (null_check) {
-    null_check_stub = NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
+    NullCheckStub* null_check_stub =
+      NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(null_check_stub));
 #if ENABLE_NPCE
     //this will be invoked for each byte code which
     //may throw null point exception
-    record_npe_point(&null_check_stub);
+    record_npe_point(null_check_stub);
     frame()->set_value_must_be_nonnull(array);
 #else
     cmp(array.lo_register(), zero);
     frame()->set_value_must_be_nonnull(array);
-    b(&null_check_stub, eq);
+    b(null_check_stub, eq);
 #endif
   }
 
   length = frame()->cached_array_length(array.lo_register(),
                                     first_time, Assembler::al);
 
-#else
-  // !ENABLE_REMEMBER_ARRAY_LENGTH
+#else // !ENABLE_REMEMBER_ARRAY_LENGTH
   TempRegister length; //temp register used here
   if (null_check) {
 #if ENABLE_NPCE
-    null_check_stub = NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
-    record_npe_point(&null_check_stub);
+    NullCheckStub* null_check_stub =
+      NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(null_check_stub));
+    record_npe_point(null_check_stub);
     frame()->set_value_must_be_nonnull(array);
     ldr_imm_index(length, array.lo_register(), Array::length_offset());
 #else
@@ -934,8 +931,9 @@ void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
     if (offset > 0) {
       ldr(pc, imm_index(gp, offset), eq);
     } else {
-      null_check_stub = NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
-      b(&null_check_stub, eq);
+      NullCheckStub* null_check_stub =
+        NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(null_check_stub));
+      b(null_check_stub, eq);
     }
 #endif
   } else {
@@ -944,9 +942,7 @@ void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
 #endif
 
   //remember array length checking
-  bool skip_length_check =
-    frame()->try_to_set_must_be_index_checked(length , index);
-  if(skip_length_check) {
+  if( frame()->try_to_set_must_be_index_checked(length , index) ) {
     return;
   }
 
@@ -962,9 +958,9 @@ void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
   if (offset > 0) {
     ldr(pc, imm_index(gp, offset), ls);
   } else {
-    IndexCheckStub::Raw index_check_stub =
-      IndexCheckStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
-    b(&index_check_stub, ls);
+    IndexCheckStub* index_check_stub =
+      IndexCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(index_check_stub));
+    b(index_check_stub, ls);
   }
 }
 
@@ -1009,11 +1005,9 @@ void CodeGenerator::null_check(const Value& object JVM_TRAPS) {
   if (offset > 0) {
     ldr(pc, imm_index(gp, offset), eq);
   } else {
-    NullCheckStub::Raw check_stub =
-        NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_NO_CHECK);
-    if (check_stub.not_null()) {
-      b(&check_stub, eq);
-    }
+    NullCheckStub* check_stub =
+      NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(check_stub));
+    b(check_stub, eq);
   }
 }
 
@@ -1051,39 +1045,36 @@ void CodeGenerator::maybe_null_check_2(Assembler::Condition cond JVM_TRAPS) {
     if (offset > 0) {
       ldr(pc, imm_index(gp, offset), eq);
     } else {
-      NullCheckStub::Raw error =
-          NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_NO_CHECK);
-      if (error.not_null()) {
-        b(&error, eq);
-      }
+      NullCheckStub* error =
+        NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(error));
+      b(error, eq);
     }
   }
 }
 
 #if ENABLE_NPCE
-void CodeGenerator::null_check_by_npce(Value& object, bool need_tigger_instr, bool is_quick_return, BasicType type_of_data JVM_TRAPS)
+void CodeGenerator::null_check_by_npce(Value& object, bool need_tigger_instr,
+                      bool is_quick_return, BasicType type_of_data JVM_TRAPS)
 {
-  NullCheckStub::Raw check_stub =
-      NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_NO_CHECK);
-  if (check_stub.not_null()) {
-    if (!check_stub().is_persistent() &&
-          (type_of_data == T_LONG || type_of_data == T_DOUBLE)) {
-      //the offset of second LDR will be updated in
-      //store_to_address()
-      check_stub().set_is_two_instr();
-    }
+  NullCheckStub* check_stub =
+    NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(check_stub));
+  if(!check_stub->is_persistent() &&
+        (type_of_data == T_LONG || type_of_data == T_DOUBLE)) {
+    //the offset of second LDR will be updated in
+    //store_to_address()
+    check_stub->set_is_two_instr();
+  }
 
-    if (is_quick_return) {
-      return;
-    }
-        
-    record_npe_point(&check_stub);
-        
-    if (need_tigger_instr) {
-      TempRegister dummy;
-      COMPILER_COMMENT((" generate a faked ldr instruction =>\n"));
-      ldr_imm_index(dummy, object.lo_register(), 0);
-    }
+  if (is_quick_return) {
+    return;
+  }
+      
+  record_npe_point(check_stub);
+      
+  if (need_tigger_instr) {
+    TempRegister dummy;
+    COMPILER_COMMENT((" generate a faked ldr instruction =>\n"));
+    ldr_imm_index(dummy, object.lo_register(), 0);
   }
 }
 
@@ -1091,29 +1082,24 @@ void CodeGenerator::maybe_null_check_2_by_npce(Value& object,
                                              BasicType type
                                               JVM_TRAPS) {
   bool need_npe = false;
-   if (object.must_be_null()) {
+  if (object.must_be_null()) {
     need_npe = true;
   } else if (need_null_check(object)) {
     need_npe = true;
     frame()->set_value_must_be_nonnull(object);
-  } else {
-    need_npe = false;
   }
   
   if ( need_npe ) {
-    NullCheckStub::Raw error =
-        NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_NO_CHECK);
-    if (error.not_null()) {
-      if (type == T_LONG || type == T_DOUBLE) {
-
-         error().set_is_two_instr(1);
-         
-        record_npe_point(&error, -2);
-        record_npe_point(NULL, -1);
-      } else {
-        record_npe_point(&error,-1);
-      } 
-    }
+    NullCheckStub* error =
+        NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(error));
+    if (type == T_LONG || type == T_DOUBLE) {
+       error->set_is_two_instr(1);
+       
+      record_npe_point(error, -2);
+      record_npe_point(NULL,  -1);
+    } else {
+      record_npe_point(error, -1);
+    } 
   }
 }
 #endif //ENABLE_NPCE
@@ -1225,11 +1211,11 @@ void CodeGenerator::method_prolog(Method *method JVM_TRAPS) {
     if (USE_OVERFLOW_STUB) {
       Label stack_overflow, done;
       b(stack_overflow, hi);
-    bind(done); // Not actually used on ARM port
+      bind(done); // Not actually used on ARM port
 
-      StackOverflowStub::Raw stub =
-        StackOverflowStub::allocate(stack_overflow, done, r1, r0 JVM_CHECK);
-      stub().insert();
+      StackOverflowStub* stub =
+        StackOverflowStub::allocate(stack_overflow, done, r1, r0 JVM_ZCHECK(stub));
+      stub->insert();
       // If we go to the stub, we can't be guaranteed it has preserved literals
       frame()->clear_literals();
     } else {
@@ -1718,9 +1704,9 @@ void CodeGenerator::idiv_rem(Value& result, Value& op1, Value& op2,
     RegisterAllocator::reference(result_register);
     result.set_register(result_register);
   } else if (divisor == 0) {
-    ZeroDivisorCheckStub::Raw zero =
-      ZeroDivisorCheckStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
-    b(&zero);
+    ZeroDivisorCheckStub* zero =
+      ZeroDivisorCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(zero));
+    b(zero);
     Compiler::current()->closure()->terminate_compilation();
   } else if (divisor == 1) {
     if (isRemainder) {
@@ -2782,14 +2768,14 @@ void CodeGenerator::runtime_long_op(Value& result, Value& op1, Value& op2,
   write_literals_if_desperate();
   if (check_zero) {
     if (op2.in_register() || (op2.is_immediate() && op2.as_long() == 0)) {
-      ZeroDivisorCheckStub::Raw zero =
-          ZeroDivisorCheckStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
+      ZeroDivisorCheckStub* zero =
+        ZeroDivisorCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(zero));
       if (op2.is_immediate()) {
-        jmp(&zero);
+        jmp(zero);
       } else {
         TempRegister tmp;
         orr(tmp, op2.lo_register(), reg(op2.hi_register()), set_CC);
-        b(&zero, eq);
+        b(zero, eq);
       }
     }
   }
@@ -3119,12 +3105,10 @@ void CodeGenerator::check_timer_tick(JVM_SINGLE_ARG_TRAPS) {
   write_literals_if_desperate();
 bind(done);
 
-  TimerTickStub::Raw stub =
-    TimerTickStub::allocate(Compiler::bci(), timer_tick, done JVM_NO_CHECK);
-  if (stub.not_null()) {
-    stub().insert();
-    frame()->clear_literals();
-  }
+  TimerTickStub* stub =
+    TimerTickStub::allocate(Compiler::bci(), timer_tick, done JVM_ZCHECK(stub));
+  stub->insert();
+  frame()->clear_literals();
 }
 
 void CodeGenerator::check_cast(Value& object, Value& klass, int class_id
@@ -3201,17 +3185,15 @@ void CodeGenerator::instance_of(Value& result, Value& object,
     b(slow_case, ne);
   }
 
-  bind(done_checking);
-  InstanceOfStub::Raw stub =
-      InstanceOfStub::allocate(bci(), class_id, slow_case, done_checking,
-                               result.lo_register() JVM_NO_CHECK);
-  if (stub.not_null()) {
-    stub().insert();
-    frame()->pop(object);
+bind(done_checking);
+  InstanceOfStub* stub =
+    InstanceOfStub::allocate(bci(), class_id, slow_case, done_checking,
+                               result.lo_register() JVM_ZCHECK(stub));
+  stub->insert();
+  frame()->pop(object);
 
-    // If we go to the stub, we can't be guaranteed it has preserved literals
-    frame()->clear_literals();
-  }
+  // If we go to the stub, we can't be guaranteed it has preserved literals
+  frame()->clear_literals();
 }
 
 void CodeGenerator::check_cast_stub(CompilationQueueElement* cqe JVM_TRAPS) {
@@ -3339,16 +3321,15 @@ void CodeGenerator::new_object(Value& result, JavaClass* klass JVM_TRAPS) {
   RegisterAllocator::dereference(new_top);
   RegisterAllocator::dereference(old_end);
 
-  NewObjectStub::Raw stub =
-      NewObjectStub::allocate(Compiler::bci(), obj, jnear,
-                              slow_case, done JVM_NO_CHECK);
-  if (stub.not_null()) {
-    stub().insert();
-    // If we go to the stub, we can't be guaranteed it has preserved literals
-    frame()->clear_literals();
-  }
+  NewObjectStub* stub =
+    NewObjectStub::allocate(Compiler::bci(), obj, jnear,
+                              slow_case, done JVM_ZCHECK(stub));
+  stub->insert();
 
-#else // ENABLE_INLINE_COMPILER_STUBS
+  // If we go to the stub, we can't be guaranteed it has preserved literals
+  frame()->clear_literals();
+
+#else // !ENABLE_INLINE_COMPILER_STUBS
 
   GUARANTEE(klass->instance_size().is_fixed(), "Sanity");
   // Do flushing, and remember to unmap.
@@ -3457,16 +3438,15 @@ void CodeGenerator::new_basic_array(Value& result, BasicType type,
   RegisterAllocator::dereference(new_top);
   RegisterAllocator::dereference(old_end);
 
-  NewTypeArrayStub::Raw stub =
-      NewTypeArrayStub::allocate(Compiler::bci(), obj, jnear, len,
-                                 slow_case, done JVM_NO_CHECK);
-  if (stub.not_null()) {
-    stub().insert();
-    // If we go to the stub, we can't be guaranteed it has preserved literals
-    frame()->clear_literals();
-  }
+  NewTypeArrayStub* stub =
+    NewTypeArrayStub::allocate(Compiler::bci(), obj, jnear, len,
+                                 slow_case, done JVM_ZCHECK(stub));
+  stub->insert();
+  
+  // If we go to the stub, we can't be guaranteed it has preserved literals
+  frame()->clear_literals();
 
-#else // ENABLE_INLINE_COMPILER_STUBS
+#else // !ENABLE_INLINE_COMPILER_STUBS
 
   UsingFastOops fast_oops;
   // Do flushing, and remember to unmap.
@@ -3772,10 +3752,6 @@ void CodeGenerator::check_monitors(JVM_SINGLE_ARG_TRAPS) {
 
   write_literals_if_desperate();
 
-  // Add the stub for the unlock exception.
-  UnlockExceptionStub::Raw unlock_exception =
-      UnlockExceptionStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
-
   CompilerLiteralAccessor cla;
   COMPILER_COMMENT(("Point at the object of the topmost stack lock"));
   ldr_imm_index(lock, fp, JavaFrame::stack_bottom_pointer_offset());
@@ -3791,7 +3767,9 @@ void CodeGenerator::check_monitors(JVM_SINGLE_ARG_TRAPS) {
 
 bind(unlocking_loop);
   cmp(object, zero);
-  b(&unlock_exception, ne);
+  UnlockExceptionStub* unlock_exception =
+    UnlockExceptionStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(unlock_exception));
+  b(unlock_exception, ne);
 
 bind(unlocking_loop_entry);
   cmp(lock, reg(end));
@@ -4332,12 +4310,6 @@ void CodeGenerator::invoke_virtual(Method* method, int vtable_index,
 void CodeGenerator::invoke_interface(JavaClass* klass, int itable_index,
                                      int parameters_size,
                                      BasicType return_type JVM_TRAPS) {
-
-  UsingFastOops fast_oops;
-
-  IncompatibleClassChangeStub::Fast icc_stub =
-        IncompatibleClassChangeStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
-
   // Make sure that tmp0 isn't taken by receiver, below
   frame()->spill_register(tmp0);
   Value tmp(T_OBJECT);
@@ -4394,7 +4366,11 @@ void CodeGenerator::invoke_interface(JavaClass* klass, int itable_index,
 bind(lookup);
   sub(tmp4, tmp4, one, set_CC);
   ldr(tos_val, imm_index(tmp2, 2 *BytesPerWord, pre_indexed), ge);
-  b(&icc_stub, lt);
+
+  IncompatibleClassChangeStub* icc_stub =
+    IncompatibleClassChangeStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(icc_stub));
+  b(icc_stub, lt);
+
   cmp(tos_val, reg(tmp3));
   b(lookup, ne);
 
@@ -4669,14 +4645,13 @@ bool CodeGenerator::quick_catch_exception(const Value &exception_obj,
   cmp_imm(tmp1, class_id, &cla);
   b(quick_case, eq);
 
-  QuickCatchStub::Raw stub =
-      QuickCatchStub::allocate(bci(), exception_obj, handler_bci,
-                               quick_case JVM_CHECK_0);
-  stub().insert();
+  QuickCatchStub* stub =
+    QuickCatchStub::allocate(bci(), exception_obj, handler_bci,
+                               quick_case JVM_ZCHECK_0(stub));
+  stub->insert();
 
   // If we go to the stub, we can't be guaranteed it has preserved literals
   frame()->clear_literals();
-
   return true; // successful!
 }
 
@@ -4761,20 +4736,17 @@ CodeGenerator::type_check(Value& array, Value& index, Value& object JVM_TRAPS)
   }
 
   // Cache hit.
-  bind(done_checking);
+bind(done_checking);
 
-  TypeCheckStub::Raw stub =
-      TypeCheckStub::allocate(bci(), slow_case, done_checking
-                              JVM_NO_CHECK);
-  if (stub.not_null()) {
-    stub().insert();
-    frame()->pop(object);
-    frame()->pop(index);
-    frame()->pop(array);
+  TypeCheckStub* stub =
+    TypeCheckStub::allocate(bci(), slow_case, done_checking JVM_ZCHECK(stub));
+  stub->insert();
+  frame()->pop(object);
+  frame()->pop(index);
+  frame()->pop(array);
 
-    // If we go to the stub, we can't be guaranteed it has preserved literals
-    frame()->clear_literals();
-  }
+  // If we go to the stub, we can't be guaranteed it has preserved literals
+  frame()->clear_literals();
 }
 
 CodeGenerator::Condition

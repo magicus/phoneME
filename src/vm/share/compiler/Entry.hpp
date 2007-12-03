@@ -50,8 +50,8 @@ public:
   }
 
   // Field accessors
-  jint bci(void) const { return _bci; }
-  void set_bci( jint value ) { _bci = value; }
+  jint bci( void ) const { return _bci; }
+  void set_bci( const jint value ) { _bci = value; }
 
   ReturnOop frame( void ) const { return (ReturnOop) _frame; }
   void set_frame(VirtualStackFrame* value) {
@@ -68,7 +68,7 @@ public:
   }
 
   jint code_size( void ) const { return _code_size; }
-  void set_code_size(jint value) { _code_size = value; }
+  void set_code_size(const jint value) { _code_size = value; }
 };
 
 class EntryArray: CompilerPointerArray {
@@ -90,7 +90,6 @@ public:
     return (element_type&) CompilerPointerArray::at( i );
   }
   void at_put ( const int i, const element_type val ) {   
-    GUARANTEE( val->is( Entry_type ), "Wrong type" );
     CompilerPointerArray::at_put( i, val );
   }
 

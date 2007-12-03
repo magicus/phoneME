@@ -71,7 +71,7 @@ inline void CompilerStaticPointers::oops_do( void do_oop(OopDesc**) ) {
   }
 }
 
-inline void CompilerStaticPointers::cleanup( void ) {
+inline void CompilerStatic::cleanup( void ) {
   if( valid() ) {
     jvm_memset( this, 0, sizeof *this );
   }
@@ -646,22 +646,17 @@ inline void Compiler::begin_compile( JVM_SINGLE_ARG_TRAPS ) {
     // Add the initial compilation continuation (bci = 0) to the
     // compilation queue.
     BinaryAssembler::Label unused;
-    CompilationContinuation::Raw stub =
-      CompilationContinuation::insert(0, unused JVM_CHECK);
+    CompilationContinuation* stub =
+      CompilationContinuation::insert(0, unused JVM_ZCHECK( stub ) );
 
     // A simple method that has no loops and no invocation will return
     // quickly. Let's save space by no generating the OSR entry.
     // In comp mode with OmitLeafMethodFrames off OSR entry is always generated
-    bool need_osr_entry = has_loops() || !method()->is_leaf() ||
-                          !(MixedMode || OmitLeafMethodFrames);
-
-    if (GenerateROMImage) {
-      // No need for OSR entry at first compilation continuation if we're
-      // doing AOT compilation.
-      need_osr_entry = false;
-    }
-    if (need_osr_entry) {
-      stub().set_need_osr_entry();
+    // No need for OSR entry at first compilation continuation if we're
+    // doing AOT compilation.
+    if( !GenerateROMImage && ( has_loops() || !method()->is_leaf() ||
+         !(MixedMode || OmitLeafMethodFrames) ) ) {
+      stub->set_need_osr_entry();
     }
   }
   check_free_space(JVM_SINGLE_ARG_CHECK);
@@ -716,40 +711,31 @@ void Compiler::begin_pinned_entry_search() {
 
 BinaryAssembler::Label Compiler::get_next_pinned_entry() {
   BinaryAssembler::Label label;
-  while (!_next_element().is_null() && 
-       (_next_element().type() !=CompilationQueueElement::osr_stub &&
-       _next_element().type() !=CompilationQueueElement::entry_stub 
-        ) ) {
-    _next_element = _next_element().next();
+  for (;_next_element; _next_element = _next_element->next() ) {
+    const CompilationQueueElement::CompilationQueueElementType type =
+      _next_element->type();
+    if( type == CompilationQueueElement::osr_stub ||
+        type == CompilationQueueElement::entry_stub ) {
+      label =_next_element->entry_label(); 
+      _next_element = _next_element->next();
+      break;
+    }    
   }
-  if (_next_element().is_null() ) { 
-    return label;
-  }
-  label =_next_element().entry_label(); 
-  _next_element = _next_element().next();
   return label;
 }
   
 #if ENABLE_NPCE
-#define is_shared_npe_stub(queue)      (queue().type() == CompilationQueueElement::throw_exception_stub &&\
-                             ( (ThrowExceptionStub) queue()).get_rte() ==\
+#define is_shared_npe_stub(queue)      (queue->type() == CompilationQueueElement::throw_exception_stub &&\
+                             ( (ThrowExceptionStub*) queue)->get_rte() ==\
                             ThrowExceptionStub::rte_null_pointer &&\
-                            !((ThrowExceptionStub) queue()).is_persistent())
+                            !((ThrowExceptionStub*) queue)->is_persistent())
 
 void Compiler::record_instr_offset_of_null_point_stubs(int start_offset) {
-  UsingFastOops fast_oops;
-  
-  CompilationQueueElement::Fast queue;
-  queue = compilation_queue();
-  int offset;
-  
-  while (!queue().is_null() ) {
+  for( CompilationQueueElement* queue = compilation_queue(); queue; queue = queue->next() ) {
     if (is_shared_npe_stub(queue)) {
-
       //entry_label record the offset the stub should patch
-      offset = queue().entry_label().position();
+      const int offset = queue->entry_label().position();
       if (code_generator()->is_branch_instr(offset)){
-        queue = queue().next();
          //not a npce optimized stub. use old cmp, b approach
          //we won't do extend basic block schedule on them so continue.
         continue;
@@ -758,47 +744,38 @@ void Compiler::record_instr_offset_of_null_point_stubs(int start_offset) {
       //only ins of current cc will be taken into account
       if (offset >= start_offset) {
         _internal_code_optimizer.record_npe_ins_with_stub( offset>>2 ,0);
-        if (( (NullCheckStub)queue()).is_two_words()) {
-          jint offset_of_second_ins = ((NullCheckStub) queue()).offset_of_second_instr_in_words();
+        if( ((NullCheckStub*)queue)->is_two_words() ) {
+          jint offset_of_second_ins = ((NullCheckStub*)queue)->offset_of_second_instr_in_words();
           _internal_code_optimizer.record_npe_ins_with_stub(((offset>>2) + offset_of_second_ins), 0);
         }
       }
       VERBOSE_SCHEDULING_AS_YOU_GO(("\t\t[%d: is a NPE instruction]", 
-      queue().entry_label().position()));
+        queue->entry_label().position()));
     }
     VERBOSE_SCHEDULING_AS_YOU_GO(("\t\t[%d: is a NOT a NPE instruction]", 
-        queue().entry_label().position()));
-    //next queue item   
-    queue = queue().next();
+        queue->entry_label().position()));
   }
 }
 
 void Compiler::update_null_check_stubs() {
-  UsingFastOops fast_oops;
-  
-  CompilationQueueElement::Fast queue;
-  int index;
-  int old_offset;
-  short new_offset;
-  BinaryAssembler::Label label;
   VERBOSE_SCHEDULING_AS_YOU_GO(("\tenter update_null_check_stubs "));
   VERBOSE_SCHEDULING_AS_YOU_GO(("\tNPE record count is %d", 
       _internal_code_optimizer.record_count_of_npe_ins_with_stub()));
-  for (index = 0; index < 
-     _internal_code_optimizer.record_count_of_npe_ins_with_stub(); index++) {
-    new_offset = _internal_code_optimizer.scheduled_offset_of_npe_ins_with_stub(index);
-
-    old_offset = _internal_code_optimizer.offset_of_npe_ins_with_stub( index);
-    queue = compilation_queue();
-    while (!queue().is_null()) {
+  for( int index = 0; index < 
+       _internal_code_optimizer.record_count_of_npe_ins_with_stub(); index++) {
+    short new_offset =
+     _internal_code_optimizer.scheduled_offset_of_npe_ins_with_stub(index);
+    int old_offset = _internal_code_optimizer.offset_of_npe_ins_with_stub(index);
+    for( CompilationQueueElement* queue = compilation_queue(); queue;
+         queue = queue->next() ) {
       VERBOSE_SCHEDULING_AS_YOU_GO(("\tCurrent CC label is %d",
-          queue().entry_label().position()));
+          queue->entry_label().position()));
       if (is_shared_npe_stub(queue)) { 
           //for double and long
           //for those ins, we must record the offset of ins who emitted first after scheduling.
           //somtimes, the second ins will be schedule ahead the first.
-        if (queue().entry_label().position() == old_offset << 2) {  
-          if (((NullCheckStub)queue()).is_two_words()) {
+        if (queue->entry_label().position() == old_offset << 2) {  
+          if (((NullCheckStub*)queue)->is_two_words()) {
             int new_offset_of_second_ins = 0;
             new_offset_of_second_ins = 
               _internal_code_optimizer.scheduled_offset_of_npe_ins_with_stub(index + 1);
@@ -819,17 +796,18 @@ void Compiler::update_null_check_stubs() {
             break;
           }
                   
-           //patch back   
-          label = queue().entry_label();
-          label.link_to(new_offset << 2);
-          queue().set_entry_label(label);
+          //patch back   
+          {
+            BinaryAssembler::Label label = queue->entry_label();
+            label.link_to(new_offset << 2);
+            queue->set_entry_label(label);
+          }
                   
           VERBOSE_SCHEDULING_AS_YOU_GO(("\tUpdate NPCE stub label old position is %d ", old_offset << 2));
           VERBOSE_SCHEDULING_AS_YOU_GO(("new position is %d", new_offset << 2));
           break;
         }
       }
-      queue = queue().next();
     }
   }
 }
@@ -850,15 +828,13 @@ void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
   _failure = out_of_memory;
 
   UsingFastOops fast_oops;
-  CompilationQueueElement::Fast element;
   CompiledMethod::Fast result;
 
   // Compile until the continuation queue is empty
   while (!is_compilation_queue_empty()) {
     // Get and compile the first element from the compile queue.
-    element = current_compilation_queue_element();
-
-    const bool finished_one_element = element().compile(JVM_SINGLE_ARG_NO_CHECK);
+    CompilationQueueElement* element = current_compilation_queue_element();
+    const bool finished_one_element = element->compile(JVM_SINGLE_ARG_NO_CHECK);
     if( _failure == out_of_stack ) {
       if( Verbose ) {
         TTY_TRACE_CR(("Compilation of method %s failed due to out of stack "
@@ -874,7 +850,7 @@ void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
     if (finished_one_element) {
       RegisterAllocator::guarantee_all_free();
       clear_current_element();
-      element().free();
+      element->free();
     } else {
       // We will resume compilation of the current element in the next
       // call to Compiler::resume()
@@ -1026,8 +1002,8 @@ void Compiler::internal_compile_inlined( Method::Attributes& attributes
     // Add the initial compilation continuation (bci = 0) to the
     // compilation queue.
     BinaryAssembler::Label unused;
-    CompilationContinuation::Raw stub =
-      CompilationContinuation::insert(0, unused JVM_CHECK);
+    CompilationContinuation* stub =
+      CompilationContinuation::insert(0, unused JVM_ZCHECK(stub));
     
     // Invalidate VSF of the parent compilation element
     // The proper VSF will be set during compilation of this child

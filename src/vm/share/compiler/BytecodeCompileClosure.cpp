@@ -817,10 +817,10 @@ void BytecodeCompileClosure::return_op(BasicType kind JVM_TRAPS) {
     }
 
     BinaryAssembler::Label return_label = compiler->inline_return_label();
-    if (!compiler->compilation_queue()->is_null()) {
-      code_generator()->jmp(return_label);    
+    if( compiler->compilation_queue() != NULL ) {
+      code_generator()->jmp( return_label );    
     } 
-    compiler->set_inline_return_label(return_label);
+    compiler->set_inline_return_label( return_label );
     return;    
   }
 #endif // ENABLE_INLINE
@@ -1959,7 +1959,6 @@ void BytecodeCompileClosure::fast_invoke_virtual(int index JVM_TRAPS) {
 
 void BytecodeCompileClosure::fast_invoke_special(int index JVM_TRAPS) {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(fast_invoke_special);
-
   if (is_active_bci()) {
     osr_entry(JVM_SINGLE_ARG_CHECK);
   }
@@ -2026,14 +2025,12 @@ void BytecodeCompileClosure::invoke_virtual(int index JVM_TRAPS) {
 
 void BytecodeCompileClosure::fast_invoke_virtual_final(int index JVM_TRAPS) {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(fast_invoke_virtual_final);
-
   direct_invoke(index, true JVM_NO_CHECK_AT_BOTTOM);
 }
 
 void BytecodeCompileClosure::invoke_native(BasicType return_kind, 
                                            address entry JVM_TRAPS) {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(invoke_native);
-
   __ invoke_native(return_kind, entry JVM_NO_CHECK_AT_BOTTOM);
 }
 
@@ -2042,9 +2039,9 @@ jubyte BytecodeCompileClosure::get_invoker_tag(int index,
                                                JVM_TRAPS) {
   jubyte tag = cp()->tag_value_at(index);
 
-  if (ConstantTag::is_method(tag)) {
-    bool status = try_resolve_invoker(index, bytecode JVM_MUST_SUCCEED);
-    if (status || bytecode != Bytecodes::_invokestatic) {
+  if( ConstantTag::is_method(tag) ) {
+    const bool status = try_resolve_invoker(index, bytecode JVM_MUST_SUCCEED);
+    if( status || bytecode != Bytecodes::_invokestatic ) {
       tag = cp()->tag_value_at(index);
     }
   }
@@ -2153,11 +2150,11 @@ BytecodeCompileClosure::check_exception_handler_start(JVM_SINGLE_ARG_TRAPS) {
 
       {
         // Compiler at this location, and make it an OSR entry
-        CompilationContinuation::Raw stub =
-            CompilationContinuation::insert(handler_bci, unused JVM_NO_CHECK);
-        if (stub.not_null()) {
-          stub().set_need_osr_entry();
-          stub().set_is_exception_handler();
+        CompilationContinuation* stub =
+          CompilationContinuation::insert( handler_bci, unused JVM_NO_CHECK );
+        if( stub ) {
+          stub->set_need_osr_entry();
+          stub->set_is_exception_handler();
         }
       }
       Compiler::set_frame(old_frame());
@@ -2180,10 +2177,10 @@ void BytecodeCompileClosure::bytecode_epilog(JVM_SINGLE_ARG_TRAPS) {
 }
 
 void BytecodeCompileClosure::throw_null_pointer_exception(JVM_SINGLE_ARG_TRAPS) {
-  NullCheckStub::Raw error = 
-      NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_NO_CHECK);
-  if (error.not_null()) {
-    __ jmp(&error);
+  NullCheckStub* error =
+    NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_NO_CHECK);
+  if( error ) {
+    __ jmp( error );
     terminate_compilation();
   }
 }
@@ -2249,8 +2246,8 @@ bool BytecodeCompileClosure::compile(JVM_SINGLE_ARG_TRAPS) {
     // Compile current bytecode
     // Must use Compiler::bci() because bci could change
     method()->iterate_bytecode(Compiler::bci(), this, code JVM_CHECK_(false));
-
     code_eliminate_epilogue(code);
+
     // Update current bytecode index
     Compiler::set_bci(next_bytecode_index());
   }

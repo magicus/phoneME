@@ -75,7 +75,7 @@ void MixedOop::iterate(OopVisitor* visitor) {
   case MixedOopDesc::Type_Thread:
     ((Thread*)this)->iterate(visitor);
     break;
-#if ENABLE_COMPILER 
+#if 0 && ENABLE_COMPILER 
   case MixedOopDesc::Type_CompilationQueueElement:
     ((CompilationQueueElement*)this)->iterate(visitor);
     break;    

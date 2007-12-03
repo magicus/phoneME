@@ -434,18 +434,19 @@ void CodeGenerator::move(Assembler::Register dst, Assembler::Register src,
 }
 
 void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
-  UsingFastOops fast_oops;
   write_literals_if_desperate();
-  NullCheckStub::Fast null_check_stub;
 
-  bool null_check = need_null_check(array);
+  const bool null_check = need_null_check(array);
 
   TempRegister length;
   if (null_check) {
-    null_check_stub = NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
     cmp_imm(array.lo_register(), zero);
     frame()->set_value_must_be_nonnull(array);
-    b(&null_check_stub, eq);
+
+    NullCheckStub* null_check_stub =
+      NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(null_check_stub));
+    b(null_check_stub, eq);
+
     ldr(length, array.lo_register(), Array::length_offset());
   } else {
     ldr(length, array.lo_register(), Array::length_offset());
@@ -458,9 +459,9 @@ void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
   } else {
     cmp(length, reg(index.lo_register()));
   }
-  IndexCheckStub::Fast index_check_stub = 
-    IndexCheckStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
-  b(&index_check_stub, ls);
+  IndexCheckStub* index_check_stub = 
+    IndexCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(index_check_stub));
+  b(index_check_stub, ls);
 }
 
 // Note: We cannot bailout in null_check, as null_check is used in
@@ -468,14 +469,13 @@ void CodeGenerator::array_check(Value& array, Value& index JVM_TRAPS) {
 // This means that we do not have enough data to reconstruct the virtual
 // stack frame for the  uncommon trap
 void CodeGenerator::null_check(const Value& object JVM_TRAPS) {
-  UsingFastOops fast_oops;
-  NullCheckStub::Fast check_stub = 
-      NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
+  NullCheckStub* check_stub = 
+    NullCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(check_stub));
   if (object.must_be_null()) {
-    b(&check_stub);
+    b(check_stub);
   } else {
     cmp_imm(object.lo_register(), zero);
-    b(&check_stub, eq);
+    b(check_stub, eq);
   }
 }
 
@@ -547,9 +547,9 @@ void CodeGenerator::method_entry(Method* method JVM_TRAPS) {
 
   bind(done);
 
-    StackOverflowStub::Raw stub =
-        StackOverflowStub::allocate(stack_overflow, done, r1, r0 JVM_CHECK);
-    stub().insert();
+    StackOverflowStub* stub =
+      StackOverflowStub::allocate(stack_overflow, done, r1, r0 JVM_ZCHECK(stub));
+    stub->insert();
 
     // If we go to the stub, we can't be guaranteed it has preserved literals
     frame()->clear_literals();
@@ -952,10 +952,9 @@ void CodeGenerator::idiv_rem(Value& result, Value& op1, Value& op2,
 
   if (!op2.in_register()) {
     if (divisor == 0) {
-      UsingFastOops fast_oops;
-      ZeroDivisorCheckStub::Fast zero_error =
-          ZeroDivisorCheckStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
-      b(&zero_error);
+      ZeroDivisorCheckStub* zero_error =
+          ZeroDivisorCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(zero_error));
+      b(zero_error);
     } else if (divisor == 1) {
       if (isRemainder) {
         result.set_int(0);
@@ -1547,16 +1546,15 @@ void CodeGenerator::runtime_long_op(Value& result, Value& op1, Value& op2,
   write_literals_if_desperate();
   if (check_zero) {
     if (op2.in_register() || (op2.is_immediate() && op2.as_long() == 0)) {
-      UsingFastOops fast_oops;
-      ZeroDivisorCheckStub::Fast zero_error =
-        ZeroDivisorCheckStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
+      ZeroDivisorCheckStub* zero_error =
+        ZeroDivisorCheckStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(zero_error));
       if (op2.is_immediate()) {
-        jmp(&zero_error);
+        jmp(zero_error);
       } else {
         TempRegister tmp;
         mov(tmp, op2.lo_register());
         orr(tmp, reg(op2.hi_register()));
-        b(&zero_error, eq);
+        b(zero_error, eq);
       }
     }
   }
@@ -1654,9 +1652,9 @@ void CodeGenerator::check_stack_overflow(Method *m JVM_TRAPS) {
   b(stack_overflow, JavaStackDirection < 0 ? ls : hs);
 bind(done);
 
-  StackOverflowStub::Raw stub =
-      StackOverflowStub::allocate(stack_overflow, done, r1, r0 JVM_CHECK);
-  stub().insert();
+  StackOverflowStub* stub =
+    StackOverflowStub::allocate(stack_overflow, done, r1, r0 JVM_ZCHECK(stub));
+  stub->insert();
 
   // If we go to the stub, we can't be guaranteed it has preserved literals
   frame()->clear_literals();
@@ -1672,10 +1670,9 @@ void CodeGenerator::check_timer_tick(JVM_SINGLE_ARG_TRAPS) {
   b(timer_tick, gt);
 bind(done);
 
-  TimerTickStub::Raw stub =
-      TimerTickStub::allocate(Compiler::current()->bci(),
-                              timer_tick, done JVM_CHECK);
-  stub().insert();
+  TimerTickStub* stub =
+    TimerTickStub::allocate(Compiler::current()->bci(), timer_tick, done JVM_ZCHECK(stub));
+  stub->insert();
 
   // If we go to the stub, we can't be guaranteed it has preserved literals
   frame()->clear_literals();
@@ -1793,10 +1790,12 @@ void CodeGenerator::instance_of(Value& result, Value& object, Value& klass,
   }
 
   bind(done_checking);
-  InstanceOfStub::Raw stub =
+  {
+    InstanceOfStub* stub =
       InstanceOfStub::allocate(bci(), class_id, slow_case, done_checking,
-                               result.lo_register() JVM_CHECK);
-  stub().insert();
+                               result.lo_register() JVM_ZCHECK(stub));
+    stub->insert();
+  }
   frame()->pop(object);
 
   // If we go to the stub, we can't be guaranteed it has preserved literals
@@ -2209,10 +2208,6 @@ void CodeGenerator::unlock_activation(JVM_SINGLE_ARG_TRAPS) {
 }
 
 void CodeGenerator::check_monitors(JVM_SINGLE_ARG_TRAPS) {
-  UsingFastOops fast_oops;
-  UnlockExceptionStub::Fast unlock_exception =
-      UnlockExceptionStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
-
   // Make sure there are no locked monitors on the stack.
   // Add the stub for the unlock exception.
   Label unlocking_loop, unlocking_loop_entry;
@@ -2238,7 +2233,11 @@ void CodeGenerator::check_monitors(JVM_SINGLE_ARG_TRAPS) {
 
 bind(unlocking_loop);
   cmp_imm(object, zero);
-  b(&unlock_exception, ne);
+  {
+    UnlockExceptionStub* unlock_exception =
+      UnlockExceptionStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(unlock_exception));
+    b(unlock_exception, ne);
+  }
 
 bind(unlocking_loop_entry);
   cmp(lock, reg(end));
@@ -2586,11 +2585,6 @@ void CodeGenerator::invoke_virtual(Method* method, int vtable_index,
 void CodeGenerator::invoke_interface(JavaClass* klass, int itable_index,
                                      int parameters_size,
                                      BasicType return_type JVM_TRAPS) {
-  UsingFastOops fast_oops;
-  IncompatibleClassChangeStub::Fast icc_error =
-      IncompatibleClassChangeStub::allocate_or_share(JVM_SINGLE_ARG_CHECK);
-
-
   // Make sure that tmp0 isn't taken by receiver, below
   frame()->spill_register(tmp0);
   Value tmp(T_OBJECT);
@@ -2641,7 +2635,11 @@ void CodeGenerator::invoke_interface(JavaClass* klass, int itable_index,
   Label lookup;
 bind(lookup);
   sub_imm(tmp5, one); 
-  b(&icc_error, lt);
+  {
+    IncompatibleClassChangeStub* icc_error =
+      IncompatibleClassChangeStub::allocate_or_share(JVM_SINGLE_ARG_ZCHECK(icc_error));
+    b(icc_error, lt);
+  }
 
   add_imm(tmp1, 2 * BytesPerWord);
   ldr(tos_val, tmp1, 0);
@@ -2971,9 +2969,9 @@ void CodeGenerator::type_check(Value& array, Value& index, Value& object JVM_TRA
   // Cache hit.
   bind(done_checking);
   
-  TypeCheckStub::Raw stub =
-      TypeCheckStub::allocate(bci(), slow_case, done_checking JVM_CHECK);
-  stub().insert();
+  TypeCheckStub* stub =
+      TypeCheckStub::allocate(bci(), slow_case, done_checking JVM_ZCHECK(stub));
+  stub->insert();
   frame()->pop(object);
   frame()->pop(index);
   frame()->pop(array);
