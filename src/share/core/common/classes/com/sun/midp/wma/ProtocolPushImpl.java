@@ -69,7 +69,20 @@ public class ProtocolPushImpl extends ProtocolPush {
      */
     public void checkRegistration(String connection, String midlet,
                                   String filter) {
-        checkIIPFilter(filter);
+
+	if (filter == null) {
+            throw new IllegalArgumentException("Empty filter is invalid");
+	}
+        int length = filter.length();
+	if (length == 0) {
+            throw new IllegalArgumentException("Empty filter is invalid");
+	}
+        for (int i = 0; i < length; i++) {
+            char c = filter.charAt(i);
+            if (c != '?' && c != '*' && !('0' <= c && c <= '9')) {
+                throw new IllegalArgumentException("Filter \"" + filter + "\" is invalid");
+	    }
+        }
     }
 
     /**
