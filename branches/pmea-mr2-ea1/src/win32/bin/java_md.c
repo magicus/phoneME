@@ -34,7 +34,14 @@
 #include <tchar.h>
 #include <stdlib.h>
 
+#ifdef ENABLE_SPLASH_SCREEN
 #include "splash.h"
+#define SHOW_SPLASH() showSplash()
+#define HIDE_SPLASH() hideSplash()
+#else
+#define SHOW_SPLASH()
+#define HIDE_SPLASH()
+#endif
 
 extern char **__argv;
 extern int  __argc;
@@ -366,7 +373,7 @@ int main(int argc, char *argv[])
 {
     HMODULE h;
     JNI_CreateJavaVM_func *JNI_CreateJavaVMFunc;
-    showSplash();
+    SHOW_SPLASH();
     h = loadCVM();
 
     JNI_CreateJavaVMFunc =
@@ -389,17 +396,20 @@ int main(int argc, char *argv[])
     retCode =
         ansiJavaMain0(argc, parsed_argv, JNI_CreateJavaVMFunc);
     free_parsed_argv(argc, parsed_argv);
+    HIDE_SPLASH();
     return retCode;
       } __except (pc = getpc(_exception_info(), &addr),
       EXCEPTION_EXECUTE_HANDLER) {
     NKDbgPrintfW(TEXT("exception %x in main thread at pc %x addr %x\n"),
            _exception_code(), pc, addr);
+    HIDE_SPLASH();
     return _exception_code();
       }
   }
 #else
   retCode = ansiJavaMain0(argc, parsed_argv, JNI_CreateJavaVMFunc);
   free_parsed_argv(argc, parsed_argv);
+  HIDE_SPLASH();
   return retCode;
 #endif
     }
@@ -448,7 +458,6 @@ _tWinMain(HINSTANCE inst, HINSTANCE previnst, TCHAR *cmdline, int cmdshow) {
     JNI_CreateJavaVM_func *JNI_CreateJavaVMFunc;
     TCHAR path[256];
     TCHAR *p0, *p1;
-    showSplash();
     h = loadCVM();
 #ifdef UNDER_CE
     JNI_CreateJavaVMFunc =
