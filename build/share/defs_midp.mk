@@ -121,7 +121,11 @@ MIDP_CLASSESZIP_DEPS	=
 ifneq ($(CVM_PRELOAD_LIB), true)
 MIDP_CLASSES_ZIP	?= $(CVM_LIBDIR_ABS)/midpclasses.zip
 MIDP_PUB_CLASSES_ZIP    ?= $(CVM_LIBDIR_ABS)/midpclassespub.zip
+ifneq ($(CVM_CREATE_RTJAR),true)
 MIDP_PRIV_CLASSES_ZIP   ?= $(CVM_LIBDIR_ABS)/midpclassespriv.zip
+else
+MIDP_PRIV_CLASSES_ZIP   ?= $(CVM_RTJARS_DIR)/midpclassespriv.zip
+endif
 else
 MIDP_CLASSES_ZIP	?= $(MIDP_OUTPUT_DIR)/classes.zip
 MIDP_PUB_CLASSES_ZIP    ?= $(MIDP_OUTPUT_DIR)/classespub.zip
@@ -155,7 +159,7 @@ else
 ifneq ($(CVM_CREATE_RTJAR), true)
 CVM_JARFILES += $(patsubst $(CVM_LIBDIR_ABS)/%,$(comma) "%",$(MIDP_PRIV_CLASSES_ZIP))
 else
-CVM_RTJARS_LIST += $(patsubst $(CVM_LIBDIR_ABS)/%, "%",$(MIDP_PRIV_CLASSES_ZIP))
+CVM_RTJARS_LIST += $(MIDP_PRIV_CLASSES_ZIP)
 endif
 endif
 
