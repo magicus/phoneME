@@ -275,7 +275,10 @@ public class ContentHandlerImpl implements ContentHandler {
         if (strings != null && strings.length > 0) {
             String[] copy = new String[strings.length];
             for (int i = 0; i < strings.length; i++) {
-                if (strings[i] == null || strings[i].length() == 0) {
+                if (strings[i] == null) {
+                    throw new NullPointerException("argument is null");
+		}
+		if(strings[i].length() == 0) {
                     throw new IllegalArgumentException("string length is 0");
                 }
                 copy[i] = new String(strings[i]);

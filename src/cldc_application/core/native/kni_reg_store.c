@@ -571,7 +571,7 @@ Java_com_sun_j2me_content_RegistryStore_forSuite0(void) {
     pcsl_string_free(&suiteID);
 }
 #else
-    jsr211_find_for_suite((jsr211_field) KNI_GetParameterAsInt(1), &result);
+    jsr211_find_for_suite((jsr211_field) KNI_GetParameterAsInt(1), result);
     result2string(result, strObj);
 #endif
     KNI_EndHandlesAndReturnObject(strObj);

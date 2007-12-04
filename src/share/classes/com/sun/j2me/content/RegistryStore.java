@@ -292,36 +292,43 @@ class RegistryStore {
      */
     private static ContentHandlerImpl deserializeCH(String str) {
         ContentHandlerImpl ch = null;
-
         while (str != null && str.length() > 0) {
             String id;
             String class_name;
-            int beg = 0, end;
+	    String storageId;
+            int beg = 0, end, regMethod;
 
             end = str.indexOf('\n', beg);
             if (end == -1) {
                 break; // no 1-st delimiter
             }
             id = str.substring(beg, end);
+
             if (id.length() == 0) {
                 break; // ID is significant field
             }
-            beg = end+1;
 
+            beg = end + 1;
             end = str.indexOf('\n', beg);
-            if (end == -1 || str.length() != end + 4) {
-                break; // no 2-nd delimiter or wrong length of the string
+            if (end == -1) {
+                break; // no 2-nd delimiter 
             }
-            class_name = str.substring(beg, end++);
+            storageId = str.substring(beg, end);
+
+	    beg = end + 1;
+            end = str.indexOf('\n', beg);
+            if (end == -1 || str.length() != end + 2) {
+                break; // no 3-d delimiter or wrong length of the string
+            }
+            class_name = str.substring(beg, end);
+
+	    regMethod =  (int)str.charAt(end + 1);
 
             ch = new ContentHandlerImpl();
             ch.ID = id;
+	    ch.storageId = Integer.parseInt(storageId);
             ch.classname = class_name;
-            ch.storageId = str.charAt(end++);
-            ch.storageId <<= 16;
-            ch.storageId |= str.charAt(end++);
-            ch.registrationMethod = str.charAt(end);
-
+            ch.registrationMethod = regMethod;
             break;
         }
         return ch;
