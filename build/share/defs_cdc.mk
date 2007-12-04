@@ -24,6 +24,8 @@
 # @(#)defs_cdc.mk	1.66 06/10/10
 #
 
+# JSR-75 optional package (if present in the build) can set this to false
+# in order to use its own "file:" protocol handler
 USE_CDC_FILE_PROTOCOL ?= true
 
 CVM_BUILDTIME_CLASSES += \
