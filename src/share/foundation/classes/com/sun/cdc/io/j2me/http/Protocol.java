@@ -780,7 +780,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
             conn = new com.sun.cdc.io.j2me.socket.Protocol();
             // Open socket connection
-            if (http_proxy == null) {
+            if ((http_proxy == null) 
+                    || ("127.0.0.1".equals(host))
+                    || ("localhost".equals(host))) {
                 conn.openPrim("//" + host + ":" + port , Connector.READ_WRITE,false);
             } else{
                 conn.openPrim("//" + http_proxy, Connector.READ_WRITE,false);
@@ -811,7 +813,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         String reqLine ;
 
-        if (http_proxy == null) {
+        if ((http_proxy == null)
+                || ("127.0.0.1".equals(host))
+                || ("localhost".equals(host))) {
             reqLine = method + " " + getFile()
                 + (getRef() == null ? "" : "#" + getRef())
                 + (getQuery() == null ? "" : "?" + getQuery())
@@ -854,7 +858,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         String reqLine ;
         
-        if (http_proxy == null) {
+        if ((http_proxy == null)
+                || ("127.0.0.1".equals(host))
+                || ("localhost".equals(host))) {
             reqLine = method + " " + getFile()
                 + (getRef() == null ? "" : "#" + getRef())
                 + (getQuery() == null ? "" : "?" + getQuery())
