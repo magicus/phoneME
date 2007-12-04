@@ -115,16 +115,13 @@ public class InternalConnectorImpl implements InternalConnector {
              */
             protocol = protocol.replace('-', '_');
             
-            String className = (String)java.security.AccessController.doPrivileged( 
-                new GetPropertyAction("j2me." + protocol + ".Protocol"));
             /*
              * Use the platform and protocol names to look up
              * a class to implement the connection
              */
-            if (className == null) {
-                className = getClassRoot() + "." + "j2me"+ "." + protocol +
+            String className = getClassRoot() + "." + "j2me"+ "." + protocol +
                ".Protocol";
-            }
+
             Class clazz = Class.forName(className, true, getProtocolClassLoader());
             
             /* Construct a new instance of the protocol */
