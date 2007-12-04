@@ -390,7 +390,7 @@ endif
 # Description: JSR 135
 #####################################################################
 ifeq ($(USE_JSR_135), true)
-include $(JSR_135_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_135_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
