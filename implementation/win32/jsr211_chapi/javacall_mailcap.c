@@ -725,13 +725,15 @@ static short** substringarray(const short* str_begin, const short* str_end, int*
 
 static int get_integer(const short* str_begin, const short* str_end){
 	int result = 0;
+	int minus = 0;
 	const short* buf = str_begin;
 	if (!buf) return 0;
-	while (*buf && buf < str_end) {
+	if (*buf=='-') {minus=1;++buf;}
+	while (*buf && buf <= str_end) {
 		if(*buf>='0' && *buf<='9')  result = result * 10 + (*buf - '0');
 		++buf;
 	}
-	return result;
+	return minus ? (-result) : result;
 }
 
 
