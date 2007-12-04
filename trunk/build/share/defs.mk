@@ -418,6 +418,7 @@ endif
 ifeq ($(CVM_CREATE_RTJAR),true)
 CVM_RT_JAR_NAME		= "rt.jar"
 CVM_RT_JAR		= $(CVM_LIBDIR_ABS)/rt.jar
+CVM_RTJARS_DIR		= $(CVM_BUILD_TOP_ABS)/rtjars
 endif
 
 #
@@ -481,7 +482,7 @@ ifneq ($(CVM_CREATE_RTJAR), true)
 CVM_JARFILES	+= CVM_CLASSLIB_JAR_NAME
 else
 CVM_JARFILES	+= $(CVM_RT_JAR_NAME)
-CVM_RTJARS_LIST += $(CVM_CLASSLIB_JAR_NAME)
+CVM_RTJARS_LIST += $(LIB_CLASSESJAR)
 endif
 else
 CVM_JARFILES	= NULL
@@ -522,7 +523,11 @@ CVM_BUILD_DEF_VARS += \
 # be put into. Add in the optional package name.
 #
 LIB_CLASSESDIR	= $(CVM_BUILD_TOP)/$(J2ME_CLASSLIB)$(OPT_PKGS_NAME)_classes
+ifneq ($(CVM_CREATE_RTJAR),true)
 LIB_CLASSESJAR ?= $(CVM_LIBDIR_ABS)/$(J2ME_CLASSLIB)$(OPT_PKGS_NAME).jar
+else
+LIB_CLASSESJAR = $(CVM_RTJARS_DIR)/$(J2ME_CLASSLIB)$(OPT_PKGS_NAME).jar
+endif
 
 CVM_RESOURCES_DIR ?= $(CVM_BUILD_TOP)/resources
 CVM_RESOURCES_JAR_FILENAME ?= resources.jar
@@ -1326,6 +1331,11 @@ CVM_BUILDDIRS  += \
 ifneq ($(CVM_PRELOAD_LIB), true)
 CVM_BUILDDIRS  += \
 	$(LIB_CLASSESDIR)
+endif
+
+ifeq ($(CVM_CREATE_RTJAR),true)
+CVM_BUILDDIRS  += \
+	$(CVM_RTJARS_DIR)
 endif
 
 ifeq ($(CVM_JIT), true)
