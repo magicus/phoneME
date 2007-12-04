@@ -205,6 +205,10 @@ ifeq ($(CVM_JVMPI), true)
         override CVM_THREAD_SUSPENSION = true
 endif
 
+ifeq ($(CVM_PRELOAD_LIB), true)
+	override CVM_CREATE_RTJAR = false
+endif
+
 # Set default options.
 # NOTE: These options are officially supported and are documented in
 #       docs/guide/build.html:
