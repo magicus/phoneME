@@ -97,6 +97,12 @@ public class Connector {
      */
     public final static int READ_WRITE = (READ|WRITE);
 
+    /* Caches the MIDP connector. */
+    private static InternalConnector midpConnector;
+
+    /* Caches the Foundation connector. */
+    private static InternalConnector foundationConnector;
+
     /**
      * Prevent instantiation of this class.
      */
@@ -178,16 +184,13 @@ public class Connector {
              * running multiple apps of different types.
              */
             if (sun.misc.CVM.isMIDPContext()) {
-                Class connectorClass =
-                    Class.forName("sun.misc.MIDPInternalConnectorImpl");
-
-                ic = (InternalConnector)connectorClass.newInstance();
+                ic = getMidpConnector();
             } 
         } catch (Throwable t) {
             // Fall back to the Foundation profile Connector.
         } finally {
             if (ic == null) {
-                ic = new InternalConnectorImpl();
+                ic = getFoundationConnector();
             }
         } 
 
@@ -313,5 +316,23 @@ public class Connector {
         return openDataOutputStream(name);
     }
 
+    private static InternalConnector getMidpConnector() throws Exception {
+        if (midpConnector == null) {
+            Class connectorClass =
+                Class.forName("sun.misc.MIDPInternalConnectorImpl");
+
+            midpConnector = (InternalConnector)connectorClass.newInstance();
+        }
+
+        return midpConnector;
+    }
+
+    private static InternalConnector getFoundationConnector() {
+        if (foundationConnector == null) {
+            foundationConnector = new InternalConnectorImpl();
+        }
+
+        return foundationConnector;
+    }
 }
 
