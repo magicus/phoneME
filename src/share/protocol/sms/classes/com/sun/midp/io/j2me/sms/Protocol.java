@@ -621,37 +621,44 @@ System.out.println("sms.Protocol.newMessage, type = " + type);
 
 	m_iport = 0;
 
-        /*
-	 * last connection closing
-         */
-	close0(save_iport, connHandle, 1);
+        synchronized (closeLock) {
+            if (open) {
+                /*
+                 * Reset open flag early to prevent receive0 executed by
+                 * concurrent thread to operate on partially closed
+                 * connection
+                 */
+                open = false;
 
-        setMessageListener(null);
+                close0(save_iport, connHandle, 1);
 
-        /*
-         * Reset handle and other params to default
-         * values. Multiple calls to close() are allowed
-         * by the spec and the resetting would prevent any
-         * strange behaviour.
-         */
-        connHandle = 0;
-	open = false;
-	host = null;
-	m_mode = 0;
+                setMessageListener(null);
 
-        /*
-         * Remove this connection from the list of open
-         * connections.
-         */
-        int len = openconnections.size();
-        for (int i = 0; i < len; i++) {
-            if (openconnections.elementAt(i) == this) {
-                openconnections.removeElementAt(i);
-                break;
+                /*
+                 * Reset handle and other params to default
+                 * values. Multiple calls to close() are allowed
+                 * by the spec and the resetting would prevent any
+                 * strange behaviour.
+                 */
+                connHandle = 0;
+                host = null;
+                m_mode = 0;
+
+                /*
+                 * Remove this connection from the list of open
+                 * connections.
+                 */
+                int len = openconnections.size();
+                for (int i = 0; i < len; i++) {
+                    if (openconnections.elementAt(i) == this) {
+                        openconnections.removeElementAt(i);
+                        break;
+                    }
+                }
+
+                open_count--;
             }
         }
-
-	open_count--;
     }
 
     /*
@@ -1011,12 +1018,12 @@ System.out.println("sms.Protocol.newMessage, type = " + type);
      * @return number of bytes sent
      * @exception IOException  if an I/O error occurs
      */
-    static private native int send0(int handle,
-                                    int type,
-                                    String host,
-				    int destPort,
-				    int sourcePort,
-				    byte[] message) throws IOException;
+    private native int send0(int handle,
+                             int type,
+                             String host,
+                             int destPort,
+                             int sourcePort,
+                             byte[] message) throws IOException;
 
     /**
      * Receives SMS message
@@ -1028,8 +1035,8 @@ System.out.println("sms.Protocol.newMessage, type = " + type);
      * @return number of bytes received
      * @exception IOException  if an I/O error occurs
      */
-    static private native int receive0(int port, int msid, int handle,
-			       SMSPacket smsPacket) throws IOException;
+    private native int receive0(int port, int msid, int handle,
+                                SMSPacket smsPacket) throws IOException;
 
     /**
      * Waits until message available
