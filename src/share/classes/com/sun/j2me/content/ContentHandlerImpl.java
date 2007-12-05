@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -786,9 +786,9 @@ public class ContentHandlerImpl implements ContentHandler {
             InvocationStore.getRequest(storageId, classname, wait);
         if (invoc != null) {
             // Keep track of number of requests delivered to the application
-            AppProxy.requestForeground(invoc.invokingStorageId,
+            AppProxy.requestForeground(invoc.invokingSuiteId,
                                        invoc.invokingClassname,
-                                       invoc.storageId,
+                                       invoc.suiteId,
                                        invoc.classname);
             invoc.invocation = invocation;
         }

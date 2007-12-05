@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ import javax.microedition.content.ContentHandlerException;
 import javax.microedition.content.Invocation;
 import javax.microedition.content.Registry;
 import javax.microedition.io.Connection;
-import javax.microedition.io.HttpConnection;
+import javax.microedition.io.ConnectionNotFoundException;
 
 
 /**
@@ -92,13 +92,13 @@ public final class InvocationImpl {
     String username;
 
     /** The password in case it is needed for authentication. */
-    char[] password;
+    String password;
 
     /** Transaction Identifier. */
     int tid;
 
     /** The MIDlet suite that should handle this Invocation. */
-    int storageId;
+    int suiteId;
 
     /** The classname of the MIDlet to deliver to. */
     String classname;
@@ -120,7 +120,7 @@ public final class InvocationImpl {
     String invokingID;
 
     /** The MIDlet suite of the invoking application. */
-    int invokingStorageId;
+    int invokingSuiteId;
 
     /** The classname in the invoking MIDlet suite for the response. */
     String invokingClassname;
@@ -423,7 +423,7 @@ public final class InvocationImpl {
         // Fill information about the target content handler.
         setStatus(Invocation.INIT);
         setID(handler.ID);
-        storageId = handler.storageId;
+        suiteId = handler.storageId;
         classname = handler.classname;
 
         // Queue this Invocation
@@ -440,7 +440,7 @@ public final class InvocationImpl {
             } else {
                 try {
                     AppProxy appl = AppProxy.getCurrent().
-                        forApp(storageId, classname);
+                        forApp(suiteId, classname);
                     shouldExit = appl.launch(handler.getAppName());
                     // Set the status of this Invocation to WAITING
                     status = Invocation.WAITING;
@@ -474,7 +474,7 @@ public final class InvocationImpl {
      * If none, find the most recently queued Invocation that is
      * a response.
      */
-    public static void invokeNext() {
+    static void invokeNext() {
         InvocationImpl invoc = null;
         int tid;
 
@@ -484,11 +484,11 @@ public final class InvocationImpl {
             if (invoc.status == Invocation.INIT) {
                 AppProxy.getCurrent().logInfo("invokeNext has request: " +
                                               invoc);
-                if (invoc.storageId != AppProxy.INVALID_STORAGE_ID &&
+                if (invoc.suiteId != AppProxy.INVALID_STORAGE_ID &&
                         invoc.classname != null) {
                     try {
                         AppProxy appl = AppProxy.getCurrent().
-                            forApp(invoc.storageId, invoc.classname);
+                            forApp(invoc.suiteId, invoc.classname);
                         appl.launch("Application");
                         return;
                     } catch (ClassNotFoundException cnfe) {
@@ -516,11 +516,11 @@ public final class InvocationImpl {
             } else if (invoc.status == Invocation.ERROR) {
                 AppProxy.getCurrent().logInfo("invokeNext has response: " +
                                               invoc);
-                if (invoc.storageId != AppProxy.INVALID_STORAGE_ID &&
+                if (invoc.suiteId != AppProxy.INVALID_STORAGE_ID &&
                         invoc.classname != null) {
                     try {
                         AppProxy appl = AppProxy.getCurrent().
-                            forApp(invoc.storageId, invoc.classname);
+                            forApp(invoc.suiteId, invoc.classname);
                         appl.launch("Application");
                         return;
                     } catch (ClassNotFoundException cnfe) {
@@ -574,14 +574,14 @@ public final class InvocationImpl {
             // Launch the target application if necessary.
             try {
                 AppProxy appl = AppProxy.getCurrent().
-                    forApp(storageId, classname);
+                    forApp(suiteId, classname);
                 return appl.launch(invokingAppName);
             } catch (ClassNotFoundException cnfe) {
                 AppProxy.getCurrent().logInfo(
                         "Unable to launch invoking application "
                         + invokingAppName + "; classname = "
                         + classname + " from suite = "
-                        + storageId);
+                        + suiteId);
             }
         }
         return false;
@@ -632,7 +632,7 @@ public final class InvocationImpl {
      */
     public void setCredentials(String username, char[] password) {
         this.username = username;
-        this.password = password;
+        this.password = (password == null) ? null : new String(password);
 
     }
 

@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 package com.sun.j2me.content;
 
 import javax.microedition.content.ContentHandlerException;
+
+import com.sun.j2me.security.Token;
 
 /**
  * Standalone Registry Storage manager.
@@ -87,6 +89,9 @@ class RegistryStore {
     /** common error */
     static final private int LAUNCH_ERROR             = -4;
 
+    /** This class has a different security domain than the MIDlet suite */
+    private static Token classSecurityToken;
+    
     /**
      * Registers given content handler.
      * @param contentHandler content handler being registered.
@@ -352,6 +357,19 @@ class RegistryStore {
         return arr;
     }
 
+    /**
+     * Sets the security token used for priveleged operations.
+     * The token may only be set once.
+     * @param token a Security token
+     */
+    static void setSecurityToken(Token token) {
+		if (classSecurityToken != null) {
+            throw new SecurityException();
+        }
+        classSecurityToken = token;
+    }
+    
+    
     /** Singleton instance. Worker for the class static methods. */
     private static RegistryStore store = new RegistryStore();
 
@@ -445,7 +463,7 @@ class RegistryStore {
     /**
      * Cleanup native resources.
      */
-    protected native void finalize();
+    private native void finalize();
 
     /**
      * Registers given content handler.

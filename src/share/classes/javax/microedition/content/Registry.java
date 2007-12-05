@@ -6,22 +6,22 @@
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package javax.microedition.content;
@@ -31,6 +31,9 @@ import java.io.IOException;
 import com.sun.j2me.content.ContentHandlerImpl;
 import com.sun.j2me.content.InvocationImpl;
 import com.sun.j2me.content.RegistryImpl;
+import com.sun.jsr211.security.SecurityInitializer;
+import com.sun.j2me.security.Token;
+import com.sun.j2me.security.TrustedClass;
 
 /**
  * The <tt>Registry</tt> provides method to invoke,
@@ -279,21 +282,18 @@ import com.sun.j2me.content.RegistryImpl;
 public class Registry {
 
     /**
-     * RegistryImpl instances accessor.
-     *
-     * <p>It is used to synchronize access to the
-     * RegistryImpl instances hashtable and its state fields.
-     *
-     * <p>Affected by methods
-     * <ul>
-     *  <li> @link getRegistry()
-     *  <li> @link getServer()
-     *  <li> @link register()
-     *  <li> @link unregister()
-     * </ul>
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
      */
-    private static final RegistryImpl.RegistryFactory factory =
-                        new RegistryImpl.RegistryFactory(new Registry());
+    static private class SecurityTrusted
+    	implements TrustedClass { };
+    
+    /** This class has a different security domain than the MIDlet suite */
+    private static Token classSecurityToken =
+        SecurityInitializer.requestToken(new SecurityTrusted());
+
+    /** The mutex used to avoid corruption between threads. */
+    private static final Object mutex = new Object();
 
     /** The reference to the RegistryImpl with the real implementation. */
     private RegistryImpl impl;
@@ -321,21 +321,37 @@ public class Registry {
      *       <code>null</code>
      */
     public static Registry getRegistry(String classname) {
-        // this method is 'internally' synchronized
-        synchronized (factory) {
-            RegistryImpl impl = factory.getRegistryImpl(classname);
-            Registry registry = impl.getRegistry();
-            if (registry == null) {
-                registry = new Registry(impl);
-            }
-            return registry;
+        // Find the RegistryImpl instance and get/create the Registry
+        try {
+            return findRegistryImpl(classname).getRegistry();
+	} catch (ContentHandlerException che) {
+	    throw new IllegalArgumentException(che.getMessage());
 	}
     }
 
     /**
-     * Constructor to create blank (invalid) Registry.
+     * Gets the RegistryImpl for the classname.
+     * Create the Registry instance if it has not already been created.
+     *
+     * @param classname the classname
+     * @return RegistryImpl
+     *
+     * @exception ContentHandlerException is thrown with a reason of
+     *  <code>NO_REGISTERED_HANDLER</code> if the classname
+     *  is not a registered application or content handler
      */
-    private Registry() {
+    private static RegistryImpl findRegistryImpl(String classname) 
+        throws ContentHandlerException
+    {
+        synchronized (mutex) {
+            RegistryImpl impl = 
+                RegistryImpl.getRegistryImpl(classname, classSecurityToken);
+            // Make sure there is a Registry; 
+            if (impl.getRegistry() == null) {
+                impl.setRegistry(new Registry(impl));
+            }
+            return impl;
+        }
     }
 
     /**
@@ -347,8 +363,9 @@ public class Registry {
      *  the <code>classname</code> is not registered either
      *  as a MIDlet or a content handler
      */
-    private Registry(RegistryImpl impl) {
-        impl.setRegistry(this);
+    private Registry(RegistryImpl impl)
+	throws ContentHandlerException
+    {
         this.impl = impl;
     }
 
@@ -374,29 +391,26 @@ public class Registry {
      *  application package
      */
     public static ContentHandlerServer getServer(String classname)
-                throws ContentHandlerException {
-        // this method is 'internally' synchronized
-        synchronized (factory) {
-            try {
-                RegistryImpl registryImpl = factory.getRegistryImpl(classname);
-                ContentHandler server = registryImpl.getServer();
+	throws ContentHandlerException
+    {
+	RegistryImpl registryImpl = findRegistryImpl(classname);
+	// Insure only one thread promotes to ContentHandlerServer
+	ContentHandlerImpl server = null;
+	synchronized (mutex) {
+	    server = registryImpl.getServer();
+	    if (server == null) {
+		throw new ContentHandlerException("No registered handler",
+			ContentHandlerException.NO_REGISTERED_HANDLER);
+	    }
 
-                if (server != null) {
-                    if (!(server instanceof ContentHandlerServerImpl)) {
-                        server = new ContentHandlerServerImpl((ContentHandlerImpl)server);
-                        registryImpl.setServer((ContentHandlerServerImpl)server);
-                    }
-                    return (ContentHandlerServer)server; 
-                }
-            } catch (IllegalArgumentException iae) {
-                // pass down to throw ContentHandlerException
-            }
-        }
-
-        throw new ContentHandlerException("no registered handler",
-                ContentHandlerException.NO_REGISTERED_HANDLER);
+	    if (!(server instanceof ContentHandlerServer)) {
+		// Not already a ContentHandlerServer; replace
+		server = new ContentHandlerServerImpl(server);
+		registryImpl.setServer(server);
+	    }
+	}
+	return (ContentHandlerServer)server; 
     }
-
 
     /**
      * Registers the application class using content
@@ -497,14 +511,11 @@ public class Registry {
 	throws SecurityException, IllegalArgumentException,
 	       ClassNotFoundException, ContentHandlerException
     {
-        // make this method 'internally' synchronized
-        synchronized (factory) {
 	// First register the new/replacement handler
 	impl.register(classname, types, suffixes,
 		      actions, actionnames, ID, accessAllowed);
 	// Return the value from {#link #getServer(classname)}.
 	return getServer(classname);
-    }
     }
 
     /**
@@ -522,10 +533,7 @@ public class Registry {
      *   <code>null</code>
      */
     public boolean unregister(String classname) {
-        // make this method 'internally' synchronized
-        synchronized (factory) {
         return impl.unregister(classname);
-    }
     }
 
     /**
@@ -1051,6 +1059,6 @@ public class Registry {
      * @return the ID; MUST NOT be <code>null</code>
      */
     public String getID() {
-        return impl == null? null : impl.getID();
+        return impl==null? null : impl.getID();
     }
 }
