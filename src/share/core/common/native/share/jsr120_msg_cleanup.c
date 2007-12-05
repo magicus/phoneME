@@ -57,30 +57,20 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_wma_WMACleanupMonitor_deleteMessages0) { 
 
     /** The MIDP String version of the Midlet suite ID. */
-    int intMsid = UNUSED_APP_ID;
-
-    /* The midlet suite name for this connection. */
-
+    int msid = UNUSED_APP_ID;
 
     /* Pick up the Midlet Suite ID string. */
-    intMsid = KNI_GetParameterAsInt(1);
+    msid = KNI_GetParameterAsInt(1);
 
-    do {
-        /* Get the Midlet suite name. */
-        if (intMsid != UNUSED_APP_ID) {
-
-            /*
-             * Invoke a native function that will delete all messages
-             * registered against msid.
-             */
-            jsr120_sms_delete_midlet_suite_msg(intMsid);
-            jsr120_cbs_delete_midlet_suite_msg(intMsid);
+    /*
+     * Invoke a native function that will delete all messages
+     * registered against msid.
+     */
+    jsr120_sms_delete_midlet_suite_msg(msid);
+    jsr120_cbs_delete_midlet_suite_msg(msid);
 #if ENABLE_JSR_205
-            jsr205_mms_delete_midlet_suite_msg(intMsid);
+    jsr205_mms_delete_midlet_suite_msg(msid);
 #endif
-        }
-
-    } while (0);
 
     KNI_ReturnVoid();
 }
