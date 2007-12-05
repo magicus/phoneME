@@ -3113,9 +3113,14 @@ CVMclassLoaderFindNative(CVMExecEnv* ee, CVMClassLoaderICell* loader,
     }
 #ifdef CVM_DUAL_STACK
     else {
-        CVMClassBlock* loaderCB = CVMobjectGetClass(
-                                  CVMID_icellDirect(ee, loader));
-        CVMClassTypeID loaderID = CVMcbClassName(loaderCB);
+        CVMClassBlock* loaderCB;
+        CVMClassTypeID loaderID;
+
+	CVMD_gcUnsafeExec(ee, {
+	    loaderCB = 
+	        CVMobjectGetClass(CVMID_icellDirect(ee, loader));
+	});
+        loaderID = CVMcbClassName(loaderCB);
         if (loaderID == CVMglobals.midpImplClassLoaderTid) {
             findBuiltin = CVM_TRUE;
         }

@@ -82,31 +82,6 @@ import com.sun.cdc.io.*;
  */
 
 public class Connector {
-
-    /*
-     * Implementation notes: The open parameter is used for
-     * dynamically constructing a class name in the form:
-     * <p>
-     * <code>com.sun.cdc.io.{platform}.{protocol}.Protocol</code>
-     * <p>
-     * The platform name is derived from the system by looking for the system property "j2me.platform".
-     * If this property key is not found or the associated class is not present then one of two default
-     * directories are used. These are called "j2me" and "j2se". If the property "j2me.configuration"
-     * is non-null then "j2me" is used (it is the assumed default).
-     * <p>
-     * The protocol name is derived from the parameter string
-     * describing the target of the connection. This takes the from:
-     * <p>
-     * <code> {protocol}:[{target}][ {params}] </code>
-     * <p>
-     * The protocol name is used for dynamically finding the
-     * appropriate protocol implementation class.  This information
-     * is stripped from the target name that is given as a parameter
-     * to the open() method. In order to avoid problems with illegal
-     * class file names, all the '-' characters in the protocol name
-     * are automatically converted into '_' characters.
-     */
-
     /**
      * Access mode READ.
      */
@@ -122,57 +97,11 @@ public class Connector {
      */
     public final static int READ_WRITE = (READ|WRITE);
 
-    /**
-     * DEFAULT PLATFORM
-     */
-    private final static String DEFAULT_PLATFORM = "gcf";
+    /* Caches the MIDP connector. */
+    private static InternalConnector midpConnector;
 
-    /**
-     * The platform name.
-     */
-    private static String platform;
-
-    /**
-     * True if we are running on a J2ME system
-     */
-    private static boolean j2me = true;
-
-    /**
-     * The root of the classes.
-     */
-    private static String classRoot;
-
-    private static InternalConnector ic = null;
-
-    /**
-     * Class initializer.
-     */
-    static {
-        String profileTemp = null;
-        try {
-            /* Find out if we are running on a MIDP system */
-            profileTemp = System.getProperty("microedition.profiles") ;
-            if (profileTemp != null) {
-                if (profileTemp.indexOf("MIDP") != -1) {
-                    ic = (InternalConnector)(Class.forName("sun.misc.MIDPInternalConnectorImpl")).newInstance();
-                }
-            } 
-        } catch (InstantiationException x) {
-            //throw new IOException(x.toString());
-        } catch (IllegalAccessException x) {
-            //throw new IOException(x.toString());
-        } catch (ClassCastException x) {
-            //throw new IOException(x.toString());
-        } catch (ClassNotFoundException x) {
-            //throw new IOException(x.toString());
-        } catch (java.security.AccessControlException e) {
-            //Running on a CDC stack, nothing to do here..
-        }  finally {
-            if (ic == null) {
-                ic = new InternalConnectorImpl();
-            }
-        } 
-    }
+    /* Caches the Foundation connector. */
+    private static InternalConnector foundationConnector;
 
     /**
      * Prevent instantiation of this class.
@@ -237,7 +166,8 @@ public class Connector {
      *   protocol handler is prohibited.
      */
     public static Connection open(String name, int mode, boolean timeouts)
-        throws IOException {
+            throws IOException {
+        InternalConnector ic = null;
 
         if (mode != READ && mode != WRITE && mode != READ_WRITE) {
           throw new IllegalArgumentException("illegal access mode: "+mode);
@@ -248,8 +178,22 @@ public class Connector {
             throw new IllegalArgumentException("Null URL");
         }
 
-        /* Look for : as in "http:", "file:", or whatever */
-        int colon = name.indexOf(':');
+        try {
+            /*
+             * This search is on every open so this class can used in VM's
+             * running multiple apps of different types.
+             */
+            if (sun.misc.CVM.isMIDPContext()) {
+                ic = getMidpConnector();
+            } 
+        } catch (Throwable t) {
+            // Fall back to the Foundation profile Connector.
+        } finally {
+            if (ic == null) {
+                ic = getFoundationConnector();
+            }
+        } 
+
         return ic.open(name, mode, timeouts);
     }
 
@@ -372,5 +316,23 @@ public class Connector {
         return openDataOutputStream(name);
     }
 
+    private static InternalConnector getMidpConnector() throws Exception {
+        if (midpConnector == null) {
+            Class connectorClass =
+                Class.forName("sun.misc.MIDPInternalConnectorImpl");
+
+            midpConnector = (InternalConnector)connectorClass.newInstance();
+        }
+
+        return midpConnector;
+    }
+
+    private static InternalConnector getFoundationConnector() {
+        if (foundationConnector == null) {
+            foundationConnector = new InternalConnectorImpl();
+        }
+
+        return foundationConnector;
+    }
 }
 

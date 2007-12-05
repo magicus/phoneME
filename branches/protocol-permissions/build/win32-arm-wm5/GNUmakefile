@@ -47,6 +47,11 @@ PLATFORM_LIB_DIRS	= Lib/Armv4i
 # assume the JIT is enabled for this device unless told otherwise
 CVM_JIT ?= true
 
+# package boot classes into rt.jar for non-ROMized build
+ifneq ($(CVM_PRELOAD_LIB),true)
+CVM_CREATE_RTJAR 	?= true
+endif
+
 WIN32_PLATFORM = wince
 PCSL_TARGET = javacall_arm
 

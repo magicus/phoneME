@@ -121,7 +121,11 @@ MIDP_CLASSESZIP_DEPS	=
 ifneq ($(CVM_PRELOAD_LIB), true)
 MIDP_CLASSES_ZIP	?= $(CVM_LIBDIR_ABS)/midpclasses.zip
 MIDP_PUB_CLASSES_ZIP    ?= $(CVM_LIBDIR_ABS)/midpclassespub.zip
+ifneq ($(CVM_CREATE_RTJAR),true)
 MIDP_PRIV_CLASSES_ZIP   ?= $(CVM_LIBDIR_ABS)/midpclassespriv.zip
+else
+MIDP_PRIV_CLASSES_ZIP   ?= $(CVM_RTJARS_DIR)/midpclassespriv.zip
+endif
 else
 MIDP_CLASSES_ZIP	?= $(MIDP_OUTPUT_DIR)/classes.zip
 MIDP_PUB_CLASSES_ZIP    ?= $(MIDP_OUTPUT_DIR)/classespub.zip
@@ -152,7 +156,11 @@ CVM_JCC_CL_INPUT	+= -cl:midp $(MIDP_PUB_CLASSES_ZIP) $(JSROP_AGENT_JARS)
 CVM_CNI_CLASSES += $(MIDP_CNI_CLASSES)
 else
 # Not romized, so add MIDP_PRIV_CLASSES_ZIP to the bootclasspath
+ifneq ($(CVM_CREATE_RTJAR), true)
 CVM_JARFILES += $(patsubst $(CVM_LIBDIR_ABS)/%,$(comma) "%",$(MIDP_PRIV_CLASSES_ZIP))
+else
+CVM_RTJARS_LIST += $(MIDP_PRIV_CLASSES_ZIP)
+endif
 endif
 
 # MIDP package checker 
