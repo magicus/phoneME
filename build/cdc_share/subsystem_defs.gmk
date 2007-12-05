@@ -31,7 +31,7 @@
 JSR_172_LIB_NAME        = jsr172
 JSR_172_BUILD_DIR       = $(JSROP_BUILD_DIR)/$(JSR_172_LIB_NAME)
 JSR_172_GENERATED_DIR   = $(JSR_172_BUILD_DIR)/generated
-JSR_172_JAR             = $(JSROP_LIB_DIR)/$(JSR_172_LIB_NAME).jar
+JSR_172_JAR             = $(JSROP_JAR_DIR)/$(JSR_172_LIB_NAME).jar
 JSR_172_INIT_PACKAGE    = $(JSR_INIT_PACKAGE).jsr172
 JSR_172_INITIALIZER     = $(JSR_172_GENERATED_DIR)/classes/$(subst .,/,$(JSR_172_INIT_PACKAGE))/$(JSR_INIT_CLASS).java
 
@@ -39,7 +39,7 @@ JSR_172_JAXP_CLASSLIST  = $(JSR_172_DIR)/build/cdc_share/jaxp_api.txt
 JSR_172_RPC_CLASSLIST   = $(JSR_172_DIR)/build/cdc_share/jax_rpc_api.txt
 JSR_172_API_CLASSES     = $(call readClassList, $(JSR_172_JAXP_CLASSLIST))
 JSR_172_API_CLASSES    += $(call readClassList, $(JSR_172_RPC_CLASSLIST))
-JSR_172_EXTRA_JAR       = $(JSROP_LIB_DIR)/$(JSR_172_LIB_NAME)_extras.jar
+JSR_172_EXTRA_JAR       = $(JSROP_JAR_DIR)/$(JSR_172_LIB_NAME)_extras.jar
 
 JPP_DEFS             += -DENABLE_JSR_172
 
