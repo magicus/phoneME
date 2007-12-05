@@ -43,7 +43,7 @@ Java_com_sun_midp_chameleon_layers_SoftButtonLayer_setNativeSoftButtonLabel0() {
 			midpFree(buffer);
 		}
 	} else { //the label is a null or emprty string 
-		jcapp_set_softbutton_label_on_native_layer("", 0, sfbIndex );
+		jcapp_set_softbutton_label_on_native_layer((jchar*)"\x0\x0", 0, sfbIndex );
 	} 
 	KNI_EndHandles();
 	KNI_ReturnVoid();
