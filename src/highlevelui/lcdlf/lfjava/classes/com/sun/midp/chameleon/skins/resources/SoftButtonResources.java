@@ -44,12 +44,23 @@ public class SoftButtonResources {
     }
         
     public static void load(boolean reload) {
+        
         if (init && !reload) {
             return;
         }
+
+        boolean isNativeLayer = false;
+        String configValue = com.sun.midp.main.Configuration.getProperty("com.sun.midp.chameleon.layers.SoftButtonLayer.usenative");
         
-        SoftButtonSkin.HEIGHT = SkinResources.getInt(
+        if (configValue != null) {
+            if (configValue.equalsIgnoreCase("true")) {
+                isNativeLayer = true;
+            }
+        }
+
+        SoftButtonSkin.HEIGHT = (isNativeLayer)?0:SkinResources.getInt(
                 SkinPropertiesIDs.SOFTBTN_HEIGHT);
+
         SoftButtonSkin.NUM_BUTTONS = SkinResources.getInt(
                 SkinPropertiesIDs.SOFTBTN_NUM_BUTTONS);
         

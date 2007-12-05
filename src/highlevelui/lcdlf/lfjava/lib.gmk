@@ -55,6 +55,7 @@ SUBSYSTEM_LCDLF_NATIVE_FILES += \
     lfj_export.c \
     lfj_cskin.c \
     lfj_native_input_mode.c \
+    lfj_SoftButtonLayer_kni.c \
     lfj_image_rom.c	
 
 

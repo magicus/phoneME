@@ -159,3 +159,14 @@ int jcapp_get_screen_width() {
 int jcapp_get_screen_height() {
     return javacall_lcd_get_screen_height();
 }
+
+/**
+ * Paints the Soft Buttons when using a native layer
+ * acts as intermidiate layer between kni and javacall 
+ */
+
+ void setSoftButtonsLabelsOnNativeLayer(unsigned short *uStr1, int len1,int sftbuttonIndex) {
+	javacall_lcd_set_native_softbutton_label(uStr1, len1, sftbuttonIndex);
+}
+
+
