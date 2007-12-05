@@ -177,9 +177,8 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/InputModeLayer.java \
     $(LCDLF_J_DIR)/classes/com/sun/midp/chameleon/layers/PTILayer.java
 
-# romized skin files 
-SUBSYSTEM_LCDLF_ROMIZED_SKIN_BIN_FILE = $(GENERATED_DIR)/lib/skin.bin 
-
+# generated skin files 
+SUBSYSTEM_LCDLF_GENERATED_SKIN_BIN_FILE = $(GENERATED_DIR)/lib/skin.bin 
 
 # Command for invoking skin romization tool
 INT_ROMIZE_SKIN = \
@@ -192,12 +191,16 @@ ifdef CHAMELEON_QA_IMAGE_ROMIZATION_OVERRIDE
 		-qaimagerom $(CHAMELEON_QA_IMAGE_ROMIZATION_OVERRIDE)
 endif
 
+ifeq ($(USE_FILE_SYSTEM), false)
+	INT_ROMIZE_SKIN += -romizeall
+endif
+
 define romize_skin
 	@echo " ... romizing skin"
 	@$(INT_ROMIZE_SKIN) \
 		-xml $(SUBSYSTEM_CONFIGURATION_MERGED_FILE) \
 		-imagedir `$(call fixcygpath, $(SUBSYSTEM_LCDLF_SKIN_RESOURCES_DIR))` \
-		-outbin `$(call fixcygpath, $(SUBSYSTEM_LCDLF_ROMIZED_SKIN_BIN_FILE))` \
+		-outbin `$(call fixcygpath, $(SUBSYSTEM_LCDLF_GENERATED_SKIN_BIN_FILE))` \
 		-outc `$(call fixcygpath, $(GENERATED_DIR)/lfj_image_rom.c)`
 endef
     
@@ -239,13 +242,21 @@ else
 endif
 
 # Copy images to /lib
+ifeq ($(USE_FILE_SYSTEM), true)
 define copy_lcdlf_resources
 	@mkdir -p $(LIBDIR)
 	@cp -f $(SUBSYSTEM_LCDLF_RESOURCES_DIR)/*.png $(LIBDIR) $(LOG)
 	@cp -f $(SUBSYSTEM_LCDLF_SKIN_RESOURCES_DIR)/*.png $(LIBDIR) $(LOG)
 	@rm -f $(CHAM_ROMIZED_IMAGE_FILES) $(LOG)
-	@cp -f $(SUBSYSTEM_LCDLF_ROMIZED_SKIN_BIN_FILE) $(LIBDIR) $(LOG)
+	@cp -f $(SUBSYSTEM_LCDLF_GENERATED_SKIN_BIN_FILE) $(LIBDIR) $(LOG)
 endef
+
+else	
+
+define copy_lcdlf_resources
+endef
+
+endif
 
 
 $(OBJ_DIR)/lfj_image_rom.o: $(GENERATED_DIR)/lfj_image_rom.c

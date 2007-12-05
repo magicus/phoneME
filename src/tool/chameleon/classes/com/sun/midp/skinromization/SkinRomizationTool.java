@@ -45,6 +45,7 @@ import java.awt.image.*;
 import java.awt.*;
 import com.sun.midp.imageutil.*;
 import java.lang.reflect.*;
+import com.sun.midp.romization.*;
 import com.sun.midp.chameleon.skins.resources.*;
 
 /**
@@ -65,6 +66,12 @@ class RomizationJob {
 
     /** For QA purposes: overrides images romization settings from XML */
     public String imageRomOverride = "";
+
+    /**
+     * Forces images romization overriding the settings from XML
+     * and romization of skin.bin.
+     */
+    public boolean romizeAll = false;
 }
 
 
@@ -120,7 +127,10 @@ public class SkinRomizationTool {
 
         for (int i = 0; i < args.length; ++i) {
             String arg = args[i];
-            if (arg.equals("-xml")) {
+            if (arg.equals("-help")) {
+                printHelp = true;
+                break;
+            } else if (arg.equals("-xml")) {
                 romizationJob.skinXMLFileName = args[++i];
             } else if (arg.equals("-outbin")) {
                 romizationJob.outBinFileName = args[++i];
@@ -128,12 +138,14 @@ public class SkinRomizationTool {
                 romizationJob.skinImagesDirName = args[++i];
             } else if (arg.equals("-outc")) {
                 romizationJob.outCFileName = args[++i];
-            // this option is for QA purposes only and therefore 
+            } else if (arg.equals("-romizeall")) {
+                romizationJob.romizeAll = true;
+            } else if (arg.equals("-debug")) {
+                debug = true;
+            // this option is for QA purposes only and therefore
             // hidden, undocumented and unsupported
             } else if (arg.equals("-qaimagerom")) {
                 romizationJob.imageRomOverride = args[++i];
-            } else if (arg.equals("-debug")) {
-                debug = true;
             } else {
                 throw new IllegalArgumentException("invalid option \"" 
                         + args[i] + "\"");
@@ -176,8 +188,11 @@ public class SkinRomizationTool {
         /**
          * Following options are recognized:
          * -xml:        XML file describing skin.
-         * -out:        Output file. If empty, output will be to stdout.
-         * -help:       Print usage information
+         * -outbin:     Output binary file. Has no effect
+         *              if -romizeall option is given.
+         * -outc:       Output C file. If empty, output will be to stdout.
+         * -romizeall:  Forces romization of all Chameleon resources.
+         * -help:       Print usage information.
          * -debug:      Be verbose: print some debug info while running. 
          *
          */
@@ -187,6 +202,7 @@ public class SkinRomizationTool {
             + "-imagedir <skinImagesDirName> "
             + "-outbin <localOutputBinFile> "
             + "-outc <localOutputCFile> "
+            + "[-romizeall] "
             + "[-debug] "
             + "[-help]");
     }
@@ -252,10 +268,9 @@ abstract class SkinPropertyBase {
     /**
      * Prints values array entries for this property's value
      *
-     * @param writer where to print entries
-     * @param indent indentation string for each entry
+     * @param out where to print entries
      */
-    abstract void outputValue(BinaryOutputStream out) 
+    abstract void outputValue(BinaryOutputStreamExt out)
         throws java.io.IOException;
 
     /**
@@ -543,10 +558,9 @@ class IntSkinProperty extends SkinPropertyBase {
     /**
      * Prints values array entries for this property's value
      *
-     * @param writer where to print entries
-     * @param indent indentation string for each entry
+     * @param out where to print entries
      */
-    void outputValue(BinaryOutputStream out) 
+    void outputValue(BinaryOutputStreamExt out)
         throws java.io.IOException {
 
         out.writeInt(value);
@@ -647,10 +661,9 @@ class IntSeqSkinProperty extends SkinPropertyBase {
     /**
      * Prints values array entries for this property's value
      *
-     * @param writer where to print entries
-     * @param indent indentation string for each entry
+     * @param out where to print entries
      */
-    void outputValue(BinaryOutputStream out) 
+    void outputValue(BinaryOutputStreamExt out)
         throws java.io.IOException {
 
         // out sequence length
@@ -714,10 +727,9 @@ class StringSkinProperty extends SkinPropertyBase {
     /**
      * Prints values array entries for this property's value
      *
-     * @param writer where to print entries
-     * @param indent indentation string for each entry
+     * @param out where to print entries
      */
-    void outputValue(BinaryOutputStream out) 
+    void outputValue(BinaryOutputStreamExt out)
         throws java.io.IOException {
 
         out.writeString(value);
@@ -782,10 +794,9 @@ class FontSkinProperty extends SkinPropertyBase {
     /**
      * Prints values array entries for this property's value
      *
-     * @param writer where to print entries
-     * @param indent indentation string for each entry
+     * @param out where to print entries
      */
-    void outputValue(BinaryOutputStream out) 
+    void outputValue(BinaryOutputStreamExt out)
         throws java.io.IOException {
 
         out.writeInt(value);
@@ -879,10 +890,9 @@ class ImageSkinProperty extends SkinPropertyBase {
     /**
      * Prints values array entries for this property's value
      *
-     * @param writer where to print entries
-     * @param indent indentation string for each entry
+     * @param out where to print entries
      */
-    void outputValue(BinaryOutputStream out) 
+    void outputValue(BinaryOutputStreamExt out)
         throws java.io.IOException {
 
         out.writeString(value);
@@ -1020,10 +1030,9 @@ class CompositeImageSkinProperty extends SkinPropertyBase {
     /**
      * Prints values array entries for this property's value
      *
-     * @param writer where to print entries
-     * @param indent indentation string for each entry
+     * @param out where to print entries
      */
-    void outputValue(BinaryOutputStream out) 
+    void outputValue(BinaryOutputStreamExt out)
         throws java.io.IOException {
 
         // output pieces file names
@@ -1036,64 +1045,20 @@ class CompositeImageSkinProperty extends SkinPropertyBase {
 /**
  * Represents romized image
  */
-final class RomizedImage {
-    /** romized image data */
-    byte[] imageData;
-
+final class RomizedImage extends RomizedByteArray {
     /** romized image index */
     int imageIndex;
-    
+
     /**
      * Constructor
      *
-     * @param imageData romized image data
-     * @param imageIndex romized image index
+     * @param data romized image data
+     * @param index romized image index
      */
-    RomizedImage(byte imageData[], int imageIndex) {
-        this.imageData = imageData;
-        this.imageIndex = imageIndex;
+    RomizedImage(byte data[], int index) {
+        super(data);
+        this.imageIndex = index;
     }
-
-    /**
-     * Prints romized image data as C array
-     *
-     * @param writer where to print
-     * @param indent indent string for each row
-     * @param maxColumns max number of columns
-     */
-    void printDataArray(PrintWriter writer, String indent, int maxColumns) {
-        int len = imageData.length;
-
-        writer.print(indent);
-        for (int i = 0; i < len; i++) {
-            writer.print(toHex(imageData[i]));
-            if (i != len - 1) {
-                writer.print(", ");
-            
-                if ((i > 0) && ((i+1) % maxColumns == 0)) {
-                    writer.println("");
-                    writer.print(indent);
-                }
-            }
-        }
-    }
-
-    /**
-     * Converts byte to a hex string
-     *
-     * @param b byte value to convert
-     * @return hex representation of byte
-     */
-    private static String toHex(byte b) {
-        Integer I = new Integer((((int)b) << 24) >>> 24);
-        int i = I.intValue();
-
-        if (i < (byte)16) {
-            return "0x0" + Integer.toString(i, 16);
-        } else {
-            return "0x" + Integer.toString(i, 16);
-        }
-    }     
 }
 
 /**
@@ -1123,7 +1088,7 @@ final class RomizedImageFactory {
      * @param imageIndex romized image index
      * @return created RomizedImage
      */
-    RomizedImage createFromBufferedImage(BufferedImage image, 
+    RomizedImage createFromBufferedImage(BufferedImage image,
             int imageIndex) {
 
         int width = image.getWidth(null);
@@ -1184,54 +1149,15 @@ final class RomizedImageFactory {
  * Binary output stream capable of writing data 
  * in big/little endian format.
  */
-final class BinaryOutputStream {
-    /** Underlying stream for writing bytes into */ 
-    private DataOutputStream outputStream = null;
-
-    /** true for big endian format, false for little */
-    private boolean isBigEndian = false;
-
+final class BinaryOutputStreamExt extends BinaryOutputStream {
     /**
      * Constructor
      *
      * @param out underlying output stream for writing bytes into
      * @param isBigEndian true for big endian format, false for little
      */
-    BinaryOutputStream(OutputStream out, boolean isBigEndian) {
-        this.outputStream = new DataOutputStream(out);
-        this.isBigEndian = isBigEndian;
-    }
-
-    /**
-     * Writes byte value into stream
-     *
-     * @param value byte value to write
-     */
-    public void writeByte(int value) 
-        throws java.io.IOException {
-
-        outputStream.writeByte(value);
-    }
-
-    /**
-     * Writes integer value into stream
-     *
-     * @param value integer value to write
-     */
-    public void writeInt(int value) 
-        throws java.io.IOException {
-
-        if (isBigEndian) {
-            outputStream.writeByte((value >> 24) & 0xFF);
-            outputStream.writeByte((value >> 16) & 0xFF);
-            outputStream.writeByte((value >> 8) & 0xFF);
-            outputStream.writeByte(value & 0xFF);
-        } else { 
-            outputStream.writeByte(value & 0xFF);
-            outputStream.writeByte((value >> 8) & 0xFF);
-            outputStream.writeByte((value >> 16) & 0xFF);
-            outputStream.writeByte((value >> 24) & 0xFF);
-        }
+    BinaryOutputStreamExt(OutputStream out, boolean isBigEndian) {
+        super(out, isBigEndian);
     }
 
     /**
@@ -1288,21 +1214,12 @@ final class BinaryOutputStream {
             outputStream.writeByte(0);
         }
     }
-
-    /**
-     * Closes stream
-     */
-    public void close() 
-        throws java.io.IOException {
-
-        outputStream.close();
-    }
 }
 
 /**
  * Perform the romization
  */
-class SkinRomizer {
+class SkinRomizer extends RomUtil {
     /** current romization job */
     RomizationJob romizationJob;
     
@@ -1336,11 +1253,8 @@ class SkinRomizer {
     /** Romized image factory */
     RomizedImageFactory romizedImageFactory;
 
-    /** Character output file writer */
-    PrintWriter writer = null;
-
     /** Binary output file stream */
-    BinaryOutputStream outputStream = null;
+    BinaryOutputStreamExt outputStream = null;
     
     /** raw image file format */
     int rawFormat = ImageToRawConverter.FORMAT_INVALID;
@@ -1418,7 +1332,7 @@ class SkinRomizer {
         DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
         domDoc = domBuilder.parse(new File(romizationJob.skinXMLFileName));
 
-        // traverse DOM tree constructed fro input XML and 
+        // traverse DOM tree constructed from input XML and
         // collect all skin properties described there
         collectSkinProperties(domDoc.getDocumentElement());
 
@@ -1451,24 +1365,40 @@ class SkinRomizer {
 
         romizeImages();
 
-        // output generated file
-        makeDirectoryTree(romizationJob.outBinFileName);
+        // output generated skin description file
+        OutputStream outForSkinDescr;
 
-        OutputStream out = new BufferedOutputStream(new FileOutputStream(
-                romizationJob.outBinFileName), 8192);
-        outputStream = new BinaryOutputStream(out,
+        if (!romizationJob.romizeAll) {
+            makeDirectoryTree(romizationJob.outBinFileName);
+
+            outForSkinDescr = new BufferedOutputStream(new FileOutputStream(
+                    romizationJob.outBinFileName), 8192);
+        } else {
+            outForSkinDescr = new ByteArrayOutputStream(8192);
+        }
+        outputStream = new BinaryOutputStreamExt(outForSkinDescr,
                 endianFormat == ImageToRawConverter.INT_FORMAT_BIG_ENDIAN);
 
         writeBinHeader();
         writeRomizedProperties();
-        outputStream.close();
-
-        out = new FileOutputStream(romizationJob.outCFileName);
-        writer = new PrintWriter(new OutputStreamWriter(out));
+        
+        // output generated C file with images
+        OutputStream outForCFile =
+                new FileOutputStream(romizationJob.outCFileName);
+        writer = new PrintWriter(new OutputStreamWriter(outForCFile));
 
         writeCHeader();
         writeRomizedImagesData();
         writeGetMethod();
+
+        if (romizationJob.romizeAll) {
+            writeSkinDescription(
+                    ((ByteArrayOutputStream)outForSkinDescr).toByteArray());
+        } else {
+            writeSkinDescription(null);
+        }
+
+        outputStream.close();
         writer.close();
     }
 
@@ -1593,7 +1523,8 @@ class SkinRomizer {
                 fontProps.add(p);
             } else if (p instanceof ImageSkinProperty) {
                 ImageSkinProperty ip = (ImageSkinProperty)p;
-                if (romizationJob.imageRomOverride.equals("all")) {
+                if (romizationJob.imageRomOverride.equals("all") ||
+                        romizationJob.romizeAll) {
                     ip.isRomized = true;
                 } else if (romizationJob.imageRomOverride.equals("none")) {
                     ip.isRomized = false;
@@ -1602,7 +1533,8 @@ class SkinRomizer {
                 imageProps.add(p);
             } else if (p instanceof CompositeImageSkinProperty) {
                 CompositeImageSkinProperty ip = (CompositeImageSkinProperty)p;
-                if (romizationJob.imageRomOverride.equals("all")) {
+                if (romizationJob.imageRomOverride.equals("all") ||
+                        romizationJob.romizeAll) {
                     ip.isRomized = true;
                 } else if (romizationJob.imageRomOverride.equals("none")) {
                     ip.isRomized = false;
@@ -1721,44 +1653,12 @@ class SkinRomizer {
                 new File(imageFileName));
 
         // and romize it
-        RomizedImage ri = romizedImageFactory.createFromBufferedImage(image, 
+        RomizedImage ri = romizedImageFactory.createFromBufferedImage(image,
                 imageIndex);
 
         romizedImages.set(imageIndex, ri);
     }
 
-    /**
-     *  Writes copyrigth banner
-     */
-    private void writeCopyright() {
-        pl("/**");
-        pl(" * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.");
-        pl(" * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER");
-        pl(" * ");
-        pl(" * This program is free software; you can redistribute it and/or");
-        pl(" * modify it under the terms of the GNU General Public License version");
-        pl(" * 2 only, as published by the Free Software Foundation.");
-        pl(" * ");
-        pl(" * This program is distributed in the hope that it will be useful, but");
-        pl(" * WITHOUT ANY WARRANTY; without even the implied warranty of");
-        pl(" * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU");
-        pl(" * General Public License version 2 for more details (a copy is");
-        pl(" * included at /legal/license.txt).");
-        pl(" * ");
-        pl(" * You should have received a copy of the GNU General Public License");
-        pl(" * version 2 along with this work; if not, write to the Free Software");
-        pl(" * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA");
-        pl(" * 02110-1301 USA");
-        pl(" * ");
-        pl(" * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa");
-        pl(" * Clara, CA 95054 or visit www.sun.com if you need additional");
-        pl(" * information or have any questions.");
-        pl(" * ");
-        pl(" * NOTE: DO NOT EDIT. THIS FILE IS GENERATED. If you want to ");
-        pl(" * edit it, you need to modify the corresponding XML files.");
-        pl(" */");
-    }
-        
     /**
      * Writes RomizedSkin class file header
      */
@@ -1911,7 +1811,7 @@ class SkinRomizer {
                     pl("    " + "const int align_" + ri.imageIndex + ";");
 
                     String dataArrayName = "romized_image" + ri.imageIndex;
-                    int dataArrayLength = ri.imageData.length;
+                    int dataArrayLength = ri.size();
                     pl("    " + "const unsigned char " + dataArrayName + 
                             "[" + dataArrayLength + "];");
                 }
@@ -1978,7 +1878,7 @@ class SkinRomizer {
         }
         pl("};");
     }
-    
+
     /**
      * Writes get method for obtaining romized image data
      */
@@ -2007,7 +1907,51 @@ class SkinRomizer {
         pl("}");
     }
 
-    
+    /**
+     *
+     * @param data data to convert into the C array, can be null
+     */
+    void writeSkinDescription(byte[] data) {
+        pl("");
+        pl("static const unsigned char skin_description[] = {");
+        if (data != null) {
+            new RomizedByteArray(data).printDataArray(writer, "        ", 11);
+        } else {
+            pl("    0");
+        }
+        pl("};");
+
+        pl("");
+        pl("/**");
+        pl(" * Loads a ROMized skin description from ROM, if present.");
+        pl(" *");
+        pl(" * @return NULL if failed, otherwise a pointer to the skin " +
+                "description data");
+        pl(" */");
+        pl("const unsigned char* lfj_get_skin_description() {");
+        if (data != null) {
+            pl("    return skin_description;");
+        } else {
+            pl("    return NULL;");
+        }
+        pl("}");
+
+        pl("");
+        pl("/**");
+        pl(" * Retrieves the size of the skin description data.");
+        pl(" *");
+        pl(" * @return -1 if failed, otherwise a size of the skin " +
+                "description data");
+        pl(" */");
+        pl("int lfj_get_skin_description_size() {");
+        if (data != null) {
+            pl("    return " + data.length + ";");
+        } else {
+            pl("    return -1;");
+        }
+        pl("}");
+    }
+
     /**
      * Creates a directory structure.
      *
@@ -2035,14 +1979,5 @@ class SkinRomizer {
             }
         }
 
-    }
-
-    /**
-     * Short-hand for printint a line into the output file
-     *
-     * @param s line to print
-     */
-    void pl(String s) {
-        writer.println(s);
     }
 }
