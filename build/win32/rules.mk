@@ -98,6 +98,16 @@ $(J2ME_CLASSLIB) :: $(CVM_EXE)
 # Override MT_FLAGS for object file dependencies of cvm.exe
 $(CVM_EXE) : MT_FLAGS = $(MT_EXE_FLAGS)
 
+ifeq ($(USE_SPLASH_SCREEN),true)
+ifeq ($(WIN32_PLATFORM),wince)
+CVM_DEFINES += -DENABLE_SPLASH_SCREEN
+RESOURCES = $(call POSIX2HOST,$(CVM_TOP)/src/win32/bin/splash.res)
+LINKEXE_LIBS += aygshell.lib $(RESOURCES)
+
+$(CVM_EXE) : $(CVM_OBJDIR)/splash.o
+endif
+endif
+
 $(CVM_EXE) : $(CVM_OBJDIR)/ansi_java_md.o $(CVM_OBJDIR)/java_md.o
 	@echo "Linking $@"
 	$(AT)$(LINKEXE_CMD)
