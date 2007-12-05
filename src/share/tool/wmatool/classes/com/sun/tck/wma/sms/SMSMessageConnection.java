@@ -309,6 +309,9 @@ public class SMSMessageConnection extends PropLoader
         smsPacket.setMessageLength(buffer.length);
         smsPacket.setMessage(buffer);
 
+        debug("SMS PACKET: clientHost = " + InetAddress.getByName(clientHost));
+        debug("SMS PACKET: portOut = " + portOut);
+
         debug("SMS PACKET: encoding type = " + encodingType);
         debug("SMS PACKET: port = " + port);
         debug("SMS PACKET: timestamp = " + sendtime);
