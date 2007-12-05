@@ -244,6 +244,26 @@ int javacall_lcd_get_screen_width();
   */
 int javacall_lcd_get_screen_height();
 
+
+/** 
+ * Paints the native softbutton label. 
+ *
+ * If the system supports native soft buttons, and the configuration is set to use
+ * native soft buttons
+ * ( com.sun.midp.chameleon.layers.SoftButtonLayer.usenative = true )
+ * Request the system to paint the specified label on the specified soft button
+ *
+ * @param label Unicode string to set as label.
+ * @param len length of the label (len=0 to clear the soft button label)
+ * @param index index of the button to set (0..n-1)
+ * @retval JAVACALL_OK   success
+ * @retval JAVACALL_FAIL failure
+ */
+
+javacall_result javacall_lcd_set_native_softbutton_label (const javacall_utf16* label, 
+                                                          int len, 
+                                                          int index);
+
 /**
  * The platform should invoke this function in platform context
  * to rotate the screen.
