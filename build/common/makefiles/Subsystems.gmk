@@ -53,7 +53,13 @@ LIB_MAKE_FILE             = lib.gmk
 # Description: Config the whole system
 #####################################################################
 
-include $(SUBSYSTEM_DIR)/configuration/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(TARGET_VM), cldc_vm)
+  include $(SUBSYSTEM_DIR)/configuration/$(SUBSYSTEM_MAKE_FILE)
+else
+  ifeq ($(TARGET_VM), cdc_vm)
+    include $(SUBSYSTEM_DIR)/configuration/cdc_application/$(SUBSYSTEM_MAKE_FILE)
+  endif
+endif
 
 #####################################################################
 # AMS Subsystem

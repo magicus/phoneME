@@ -33,7 +33,15 @@ import java.io.DataOutputStream;
 
 import java.io.IOException;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import com.sun.j2me.security.AccessController;
+
 public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
+
+    private static final String HTTP_PERMISSION_NAME =
+	"javax.microedition.io.Connector.http";
     
     /**
      * This class overrides the openXXputStream() methods to restrict the number of opened 
@@ -96,10 +104,37 @@ public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
         return new DataOutputStream(openOutputStream());
     }
 
-    /*
-     * throws SecurityException if MIDP permission check fails 
-    */
-    protected void checkMIDPPermission(String url) {
-        //The actual MIDP permission check happens here
+   /**
+     * Check to see if the application has permission to use
+     * the given resource.
+     *
+     * @param url the URL to which to connect
+     *
+     * @exception SecurityException if the MIDP permission
+     *            check fails.
+     */
+    protected void checkPermission(String host, int port, String file) 
+        throws SecurityException {
+        AccessController.checkPermission(HTTP_PERMISSION_NAME,
+                                         host + ":" +
+                                         port + file);
+        return;
     }
+
+    /*
+     * For MIDP version of the protocol handler, only a single
+     * check on open is required.
+     */
+    protected void outputStreamPermissionCheck() {
+        return;
+    }
+
+    /*
+     * For MIDP version of the protocol handler, only a single
+     * check on open is required.
+     */
+    protected void inputStreamPermissionCheck() {
+        return;
+    }
+
 }

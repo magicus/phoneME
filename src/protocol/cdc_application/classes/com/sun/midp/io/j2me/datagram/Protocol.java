@@ -26,14 +26,87 @@
 
 package com.sun.midp.io.j2me.datagram;
 
+import com.sun.j2me.security.AccessController;
+
 public class Protocol extends com.sun.cdc.io.j2me.datagram.Protocol {
 
-    /*
-     * throws SecurityException if MIDP permission check fails 
-    */
-    protected void checkMIDPPermission(String host, int port) {
-        //The actual MIDP permission checks happens here
+    private static final String SERVER_PERMISSION_NAME =
+        "javax.microedition.io.Connector.datagramreceiver";
+
+    private static final String CLIENT_PERMISSION_NAME =
+        "javax.microedition.io.Connector.datagram";
+
+    /**
+     * Check to see if the application has permission to use
+     * the given resource.
+     *
+     * @param host the name of the host to contact. Can be
+     *        <code>null</code>, which indicates a server
+     *        endpoint on the given port.
+     * @param port the port number to use. Must be greater
+     *        than 0 if the host is specified.
+     *
+     * @exception SecurityException if the MIDP permission
+     *            check fails
+     */
+    protected void checkPermission(String host, int port) 
+        throws SecurityException {
+
+        // If hostname is specified, we must have a valid port.
+        if (host != null && port < 0) {
+            throw new IllegalArgumentException("Missing port number");
+        }
+
+        // Check the MIDP permission
+        if (host == null) {
+            // A server endpoint. Use the port if valid; otherwise
+            // it is assigned by the server.
+            String endPoint = "UDP:";
+            if (port > 0) {
+                endPoint.concat(String.valueOf(port));
+            }
+            AccessController.checkPermission(SERVER_PERMISSION_NAME,
+                                             endPoint);
+        } else {
+            AccessController.checkPermission(CLIENT_PERMISSION_NAME,
+                                             "UDP:" + host + ":" +
+                                             String.valueOf(port));
+        }
+
+        return;
     }
 
+    /**
+     * A convenience method for creating a connection
+     * where the port is allocated by the system.
+     *
+     * @param host the name of the host to contact. Can be
+     *        <code>null</code>, which indicates a server
+     *        endpoint on the given port.
+     *
+     * @exception SecurityException if the MIDP permission
+     *            check fails
+     */
+    protected void checkPermission(String host)
+        throws SecurityException {
+        checkPermission(host, 0);
+	return;
+    }
+
+    /*
+     * For MIDP version of the protocol handler, only a single
+     * check on open is required.
+     */
+    protected void outputStreamPermissionCheck() {
+        return;
+    }
+
+    /*
+     * For MIDP version of the protocol handler, only a single
+     * check on open is required.
+     */
+    protected void inputStreamPermissionCheck() {
+        return;
+    }
 
 }

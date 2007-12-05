@@ -24,22 +24,29 @@
  * information or have any questions.
  */
 
+package com.sun.midp.io.j2me.ssl;
 
-package com.sun.midp.io.j2me.socket;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 
-import java.io.*;
-import java.net.*;
-import javax.microedition.io.*;
+import java.io.IOException;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import com.sun.j2me.security.AccessController;
 
-public class Protocol extends com.sun.cdc.io.j2me.socket.Protocol {
+public class Protocol extends com.sun.cdc.io.j2me.ssl.Protocol {
 
-    public static final String CLIENT_PERMISSION_NAME =
-	"javax.microedition.io.Connector.socket";
-
-    private static final String SERVER_PERMISSION_NAME =
-        "javax.microedition.io.Connector.serversocket";
+    private static final String SSL_PERMISSION_NAME =
+	"javax.microedition.io.Connector.ssl";
+    
+    /**
+     * This class overrides the openXXputStream() methods to restrict the number of opened 
+     * input or output streams to 1 since the MIDP GCF Spec allows only 1 opened input/output stream.
+     */
     
     /** Number of input streams that were opened. */
     protected int iStreams = 0;
@@ -49,6 +56,14 @@ public class Protocol extends com.sun.cdc.io.j2me.socket.Protocol {
      * write-only mode.
      */
     protected int maxIStreams = 1;
+    /** Number of output streams were opened. */
+    protected int oStreams = 0;
+    /**
+     * Maximum number of output streams. Set this
+     * to zero to prevent openOutputStream from giving out a stream in
+     * read-only mode.
+     */
+    protected int maxOStreams = 1;
 
     /*
      * Open the input stream if it has not already been opened.
@@ -65,50 +80,47 @@ public class Protocol extends com.sun.cdc.io.j2me.socket.Protocol {
         return i;
     }
     
+    
     public DataInputStream openDataInputStream() throws IOException {
         return new DataInputStream(openInputStream());
     }
 
-    /* This class overrides the setSocketOption() to allow 0 as a valid value for sendBufferSize
-     * and receiveBufferSize. The underlying CDC networking layer considers 0 as illegal 
-     * value and throws IAE which causes the TCK test to fail.
+    /*
+     * Open the output stream if it has not already been opened.
+     * @exception IOException is thrown if it has already been
+     * opened.
      */
-    public void setSocketOption(byte option,  int value) throws IllegalArgumentException, IOException {
-        if (option == SocketConnection.SNDBUF || option == SocketConnection.RCVBUF ) {
-            if (value == 0) {
-                value = 1;
-                super.setSocketOption(option, value);
-            }
-        }            
-        super.setSocketOption(option, value);
+    public OutputStream openOutputStream() throws IOException {
+        if (maxOStreams == 0) {
+            throw new IOException("no more output streams available");
+        }
+        OutputStream o = super.openDataOutputStream();
+        maxOStreams--;
+        oStreams++;
+        return o;
+    }
+    
+    public DataOutputStream openDataOutputStream() throws IOException {
+        return new DataOutputStream(openOutputStream());
     }
 
    /**
      * Check to see if the application has permission to use
      * the given resource.
      *
-     * @param host the name of the host to contact. If the
-     *             empty string, this is a request for a
-     *             serversocket.
-     *
-     * @param port the port number to use.
+     * @param host the host to contact
+     * @param port the port to use
+     * @param file the filename portion of the URL, possibly
+     *        the empty string
      *
      * @exception SecurityException if the MIDP permission
      *            check fails.
      */
-    protected void checkPermission(String host, int port)
-        throws SecurityException{
-
-        if (port < 0) {
-            throw new IllegalArgumentException("bad port: " + port);
-        }
-	if ("".equals(host)) {
-	    AccessController.checkPermission(SERVER_PERMISSION_NAME,
-					     "TCP Server" + port);
-	} else {
-	    AccessController.checkPermission(CLIENT_PERMISSION_NAME,
-                                         "TCP" + ":" + host + ":" + port);
-	}
+    protected void checkPermission(String host, int port, String file)
+        throws SecurityException {
+        AccessController.checkPermission(SSL_PERMISSION_NAME,
+                                         host + ":" +
+                                         port +  file);
         return;
     }
 
@@ -129,3 +141,4 @@ public class Protocol extends com.sun.cdc.io.j2me.socket.Protocol {
     }
 
 }
+ 
