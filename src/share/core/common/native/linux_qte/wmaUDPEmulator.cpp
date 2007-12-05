@@ -891,6 +891,9 @@ WMA_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr,
     /** The return status. */
     WMA_STATUS status;
 
+    if (appID == NULL) appID = "";
+    if (replyToAppID == NULL) replyToAppID = "";
+
     /*
      * Create storage for the following:
      * - Application ID and its terminator (1 byte)
@@ -901,12 +904,8 @@ WMA_STATUS jsr205_mms_write(jint sendingToSelf, char *toAddr, char* fromAddr,
      */
     totalLength = strlen(fromAddr) + 1 +
                   strlen(appID) + 1 +
-                  /* strlen(replyToAppID) */ + 1 +
+                  strlen(replyToAppID) + 1 +
                   sizeof(int) + msgLen;
-    if (replyToAppID != NULL) {
-        /* Include only the text. The terminator has been accounted for. */
-        totalLength += strlen(replyToAppID);
-    }
     buffer = (char*)pcsl_mem_malloc(totalLength);
     if (buffer == NULL) {
         return WMA_NET_IOERROR;
