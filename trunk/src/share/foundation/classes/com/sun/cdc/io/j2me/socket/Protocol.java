@@ -59,12 +59,46 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
     }
 
     /*
-     * throws SecurityException if MIDP permission check fails 
-     * nothing to do for CDC
-    */
-    protected void checkMIDPPermission(String host, int port) {
+     * Check permission to connect to the indicated host.
+     * This should be overriden by the MIDP protocol handler
+     * to check the proper MIDP permission.
+     */
+    protected void checkPermission(String host, int port) {
+        // Check for SecurityManager.checkConnect()
+        java.lang.SecurityManager sm = System.getSecurityManager();
+        if (sm != null){
+            if (host != null) {
+                sm.checkConnect(host, port);
+            } else {
+                sm.checkConnect("localhost", port);
+            }
+        }               
         return;
-    }    
+    }
+
+    /*
+     * Check permission when opening an OutputStream. MIDP
+     * versions of the protocol handler should override this
+     * with an empty method. Throw a SecurityException if
+     * the connection is not allowed. Currently the socket
+     * protocol handler does not make a permission check at
+     * this point so this method is empty.
+     */
+    protected void outputStreamPermissionCheck() {
+        return;
+    }
+
+    /*
+     * Check permission when opening an InputStream. MIDP
+     * versions of the protocol handler should override this
+     * with an empty method. A SecurityException will be
+     * raised if the connection is not allowed. Currently the
+     * socket protocol handler does not make a permission
+     * check at this point so this method is empty.
+     */
+    protected void inputStreamPermissionCheck() {
+        return;
+    }
 
     /**
      * Open the connection
@@ -76,8 +110,8 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
      * The name string for this protocol should be:
      * "<name or IP number>:<port number>
      */
-    public Connection openPrim(String name, int mode, boolean timeouts) throws IOException {
-
+    public Connection openPrim(String name, int mode, boolean timeouts)
+        throws IOException {
         if(name.charAt(0) != '/' || name.charAt(1) != '/') {
             throw new IllegalArgumentException("Protocol must start with \"//\" "+name);
         }
@@ -89,7 +123,7 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
             String nameOrIP = "";
 
             /* Port number */
-            int port;
+            final int port;
 
             /* Look for the : */
             int colon = name.indexOf(':');
@@ -123,13 +157,30 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
                 port = Integer.parseInt(name.substring(colon+1));
             }
 
-            checkMIDPPermission(nameOrIP, port);
-            /* Open the socket */
-            socket = new Socket(nameOrIP, port);
+            /* If the proper security check has not been made, make
+             * it now.
+             */
+	    checkPermission(nameOrIP, port);
+
+            /* Open the socket. Use a doPrivileged block
+             * to avoid excessive prompting.
+             */
+            final String hostName = nameOrIP;
+            socket = (Socket)java.security.AccessController.doPrivileged(
+                 new java.security.PrivilegedExceptionAction() {
+                     public Object run() throws
+                         java.security.PrivilegedActionException,
+                         IOException {
+                             return new Socket(hostName, port);
+                         } 
+                     });
             opens++;
             return this;
         } catch(NumberFormatException x) {
             throw new IllegalArgumentException("Invalid port number in "+name);
+        } catch(java.security.PrivilegedActionException pae) {
+            IOException ioe = (IOException)pae.getException();
+            throw ioe;
         }
     }
 
@@ -179,6 +230,7 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
      *                          input stream.
      */
     public InputStream openInputStream() throws IOException {
+        inputStreamPermissionCheck();
         InputStream is = new UniversalFilterInputStream(this, socket.getInputStream());
         opens++;
         return is;
@@ -192,7 +244,9 @@ public class Protocol extends ConnectionBase implements StreamConnection, Socket
      *                          output stream.
      */
     public OutputStream openOutputStream() throws IOException {
-        OutputStream os = new UniversalFilterOutputStream(this, socket.getOutputStream());
+        outputStreamPermissionCheck();
+        OutputStream os = new UniversalFilterOutputStream(this,
+                                 socket.getOutputStream());
         opens++;
         return os;
     }

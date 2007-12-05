@@ -51,7 +51,7 @@ public class Protocol extends ConnectionBase implements DatagramConnection,UDPDa
     /**
      * Port
      */
-    private int port;
+    private int port = 0;
 
     private boolean open;
 
@@ -128,10 +128,37 @@ public class Protocol extends ConnectionBase implements DatagramConnection,UDPDa
     }
 
     /*
-     * throws SecurityException if MIDP permission check fails 
-     * nothing to do for CDC
+     * We will throw a SecurityException if permission
+     * checks fail. For CDC the DatagramSocket obect
+     * creation will do this itself so we can use that
+     * checking. This method should be overriden by MIDP
+     * protocol handlers to properly check MIDP permissions.
     */
-    protected void checkMIDPPermission(String host, int port) {
+    protected void checkPermission(String host, int port) {
+        return;
+    }
+
+    /*
+     * Check permission when opening an OutputStream. MIDP
+     * versions of the protocol handler should override this
+     * with an empty method. Throw a SecurityException if
+     * the connection is not allowed. Currently the datagram
+     * protocol handler does not make a permission check at
+     * this point so this method is empty.
+     */
+    protected void outputStreamPermissionCheck() {
+        return;
+    }
+
+    /*
+     * Check permission when opening an InputStream. MIDP
+     * versions of the protocol handler should override this
+     * with an empty method. A SecurityException will be
+     * raised if the connection is not allowed. Currently the
+     * datagram protocol handler does not make a permission
+     * check at this point so this method is empty.
+     */
+    protected void inputStreamPermissionCheck() {
         return;
     }
 
@@ -160,31 +187,28 @@ public class Protocol extends ConnectionBase implements DatagramConnection,UDPDa
         *              and the default address for datagrams to be send is 'host':'port'
         */
         
-        /* name does not have port number, just a colon, hence it should at 
-         * system assigned port.
+        /* If name does not have port number, just a colon, it should at 
+         * system assigned port. Otherwise use the port and host specified.
          */
 
-        if (name.substring(name.indexOf(':') + 1).length() == 0) {
-            /* Open a random port for a datagram client */
-            endpoint = new DatagramSocket();
-        }
-        else {
+        if (name.substring(name.indexOf(':') + 1).length() != 0) {
 	    host = getAddress(name);
             port = getPort(name);
             if(port <= 0) {
                 throw new IllegalArgumentException("Bad port number \"//\" "+name);
             }
-            checkMIDPPermission(host, port);
+	}
 
-            if(host == null) {
-                /* Open a server datagram socket (no host given) */
-                endpoint = new DatagramSocket(port);
-            } else { 
-                /* Open a random port for a datagram client */
-                endpoint = new DatagramSocket();
-            }
+	checkPermission(host, port);
+
+	if(host == null) {
+	    /* Open a server datagram socket (no host given) */
+	    endpoint = new DatagramSocket(port);
+	} else { 
+	    /* Open a random port for a datagram client */
+	    endpoint = new DatagramSocket();
+	}
             
-        }
         open = true;
 
         try {
