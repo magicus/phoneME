@@ -63,7 +63,8 @@ SUBSYSTEM_LCDLF_JAVA_FILES += \
     $(LCDLF_DIR)/classes/javax/microedition/lcdui/CanvasLF.java \
     $(LCDLF_DIR)/classes/javax/microedition/lcdui/SpacerLF.java \
     $(LCDLF_DIR)/classes/javax/microedition/lcdui/TickerLF.java \
-    $(LCDLF_DIR)/classes/javax/microedition/lcdui/LFFactory.java
+    $(LCDLF_DIR)/classes/javax/microedition/lcdui/LFFactory.java \
+    $(LCDLF_DIR)/classes/javax/microedition/lcdui/LFTimer.java
 
 
 # IMPL NOTE: Use library configuration file to select switch library

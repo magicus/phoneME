@@ -130,10 +130,6 @@
             Value="true" 
             Comment="Whether the platform and MIDP implementation supports double-buffering: set to true when double-buffering is supported; set to false when double-buffering is not supported."/>
   <constant Type="int"
-            Name="FLUSH_LIMIT_FPS"
-            Value="25"
-            Comment="Limitation for GameCanvas.flush() proceeding frequency, ignoring too frequent calls as performance optimization; set to -1 to disable this optimization."/>
-  <constant Type="int"
             Name="ALPHA_LEVELS"
             Value="256" 
             Comment="Number of alpha channel levels the platform supports"/>
