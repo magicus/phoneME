@@ -441,7 +441,7 @@ KNIDECL(com_sun_midp_io_j2me_cbs_Protocol_waitUntilMessageAvailable0) {
     /* Pointer to CBS message data. */
     CbsMessage* pCbsData = NULL;
 
-    KNI_StartHandles(1);
+    KNI_StartHandles(2);
 
     KNI_DeclareHandle(this);
     KNI_DeclareHandle(thisClass);
