@@ -215,9 +215,14 @@ WMA_STATUS jsr120_is_sms_midlet_port_registered(jchar port) {
 WMA_STATUS jsr120_register_sms_midlet_port(jchar port,
                                               AppIdType msid,
                                               jint handle) {
-    return jsr120_register_sms_port(port, msid, jsr120_sms_midlet_listener,
+    WMA_STATUS result;
+    if (jsr120_is_sms_push_port_registered(port) == WMA_OK) {
+        jsr120_unregister_sms_push_port(port);
+    }
+    result = jsr120_register_sms_port(port, msid, jsr120_sms_midlet_listener,
                                     (void *)handle,
                                     &sms_midlet_listeners);
+    return result;
 }
 
 /*
