@@ -279,6 +279,7 @@ void WMASocket::readableSlot(int socket) {
                     sms->timeStamp = getLongLong(p, &index);
                     /* The next field is the recipient's phone number */
                     recipientPhone = getString(p, &index);
+                    pcsl_mem_free(recipientPhone);
                     /* The next field is the sender's phone number */
                     sms->msgAddr = getString(p, &index);
 
