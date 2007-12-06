@@ -26,8 +26,7 @@
 
 //{{NO_DEPENDENCIES}}
 //
-#define IDB_BITMAP1                     138
-#define IDC_STATIC                      -1
+#define IDB_SPLASH                      138
 
 // Next default values for new objects
 // 
