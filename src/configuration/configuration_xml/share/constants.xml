@@ -250,6 +250,12 @@
             Comment="Number of times an install or delete notification
                     has to be retried by the notification manager.
                     Check the specification for the minimal allowed value."/>
+  <constant Type="int"
+            Name="FLUSH_REFRESH_TIMEOUT"
+            Value="25"
+            Comment="Limitation for GameCanvas.flush() proceeding frequency,
+                     ignoring too frequent calls as performance optimization;
+                     set to 0 to disable this optimization."/>
 </constant_class>
 </constants>
 </configuration>

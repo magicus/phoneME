@@ -858,8 +858,8 @@ class DisplayableLFImpl implements DisplayableLF {
     /** Timer to schedule delayed invalidate task */
     private LFTimer invalidateTimer = new LFTimer(Display.LCDUILock) {
         protected void perform() {
-            lRequestInvalidateImpl();
             lastTimeInvalidate = System.currentTimeMillis();
+            lRequestInvalidateImpl();
         }
     };
 
@@ -879,7 +879,7 @@ class DisplayableLFImpl implements DisplayableLF {
      */
     void lRequestInvalidate() {
         long timePassed = System.currentTimeMillis() - lastTimeInvalidate;
-        if (timePassed > INVALIDATE_REQUESTS_PERIOD) {
+        if (timePassed >= INVALIDATE_REQUESTS_PERIOD) {
             invalidateTimer.cancel();
             lRequestInvalidateImpl();
             lastTimeInvalidate += timePassed;
