@@ -53,8 +53,20 @@
 	 * properly flush if the start address is not 32-byte alinged.
  	 */
 	bic a1, a1, #DCACHELINESIZE - 1
-
 	mov a3, #0		/* flush both caches */
-	swi 0x009f0002		/* arm_syscall(2) */
+
+#ifdef __ARM_EABI__
+	/* Linux Kernels built to support EABI expect the trap number
+	 * to be in r7.  The immediate value of the swi instruction
+	 * is ignored.
+	 */
+	stmfd sp!, {r7} 	
+        ldr r7, =0x000f0002
+	swi 0x009f0002
+	ldmfd sp!, {r7}
+#else
+	swi 0x009f0002
+#endif
+
 	mov pc, lr
 SET_SIZE(CVMflushCache)
