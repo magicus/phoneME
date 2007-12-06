@@ -33,6 +33,8 @@ import com.sun.midp.chameleon.skins.ScreenSkin;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Font;
 
+import com.sun.midp.main.Configuration;
+
 public class SoftButtonResources {
     private static boolean init;
     
@@ -50,7 +52,7 @@ public class SoftButtonResources {
         }
 
         boolean isNativeLayer = false;
-        String configValue = com.sun.midp.main.Configuration.getProperty("com.sun.midp.chameleon.layers.SoftButtonLayer.usenative");
+        String configValue = Configuration.getProperty("com.sun.midp.chameleon.layers.SoftButtonLayer.usenative");
         
         if (configValue != null) {
             if (configValue.equalsIgnoreCase("true")) {

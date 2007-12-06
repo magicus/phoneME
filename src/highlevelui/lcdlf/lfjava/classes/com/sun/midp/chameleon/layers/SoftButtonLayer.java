@@ -40,6 +40,8 @@ import com.sun.midp.chameleon.skins.resources.MenuResources;
 // key press, release, soft button codes, etc.
 import com.sun.midp.lcdui.EventConstants;
 
+import com.sun.midp.main.Configuration;
+
 /**
  * Soft button layer.
  */
@@ -173,7 +175,7 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         super(SoftButtonSkin.IMAGE_BG, SoftButtonSkin.COLOR_BG);
 	super.setSupportsInput(true);
         
-        String configValue = com.sun.midp.main.Configuration.getProperty("com.sun.midp.chameleon.layers.SoftButtonLayer.usenative");
+        String configValue = Configuration.getProperty("com.sun.midp.chameleon.layers.SoftButtonLayer.usenative");
         if (configValue != null) {
                 if (configValue.equalsIgnoreCase("true")) {
                           // using native layer
