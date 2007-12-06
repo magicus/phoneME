@@ -2068,9 +2068,13 @@ pop_stack(context_type *context, int inumber, stack_info_type *new_stack_info)
                          * and does not respect inheritance.
                          */
                          if (access_bits != -1) {
-                             top_type = context->currentclass_info;
-                             *stack_extra_info = top_type;
-                             break;
+                             if (cp_index_to_class_fullinfo(
+                                     context, operand, JVM_CONSTANT_Fieldref) ==
+                                     context->currentclass_info) {
+                                 top_type = context->currentclass_info;
+                                 *stack_extra_info = top_type;
+                                 break;
+                             }
                          }
                     } 
 		    CCerror(context, "Expecting to find object/array on stack");
