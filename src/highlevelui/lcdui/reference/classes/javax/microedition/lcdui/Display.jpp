@@ -40,6 +40,7 @@ import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.ToneControl;
 
+import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 // #else
 import java.lang.*;
@@ -50,6 +51,7 @@ import com.sun.midp.lcdui.*;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.util.ResourceHandler;
 
 // #ifdef ENABLE_CHAMELEON
 import com.sun.midp.chameleon.MIDPWindow;
@@ -70,6 +72,7 @@ import com.sun.midp.util.LiveTracer;
 // #endif ENABLE_I3_TEST
 
 // #ifdef ENABLE_GCI
+import java.security.*;
 
 import com.sun.me.gci.windowsystem.GCIGraphicsEnvironment;
 import com.sun.me.gci.windowsystem.GCIDisplay;
