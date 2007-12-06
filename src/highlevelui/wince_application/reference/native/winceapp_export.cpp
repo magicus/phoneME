@@ -85,6 +85,8 @@ extern "C" {
 
 #define KEYMAP_MD_KEY_HOME (KEYMAP_KEY_MACHINE_DEP)
 
+#undef FLUSH_LIMIT_FPS
+#define FLUSH_LIMIT_FPS -1
 /* global variables defined in midp_msgQueue_md.c */
 extern int inMidpEventLoop;
 extern int lastWmSettingChangeTick;
@@ -274,7 +276,7 @@ static void initPutpixelSurface() {
     updateDimensions();
     /* Use the dimension to initialize Putpixel surface */
     int screenSize = sizeof(gxj_pixel_type) *
-        winceapp_get_screen_width() * winceapp_get_screen_height();
+        winceapp_get_screen_width() * winceapp_get_screen_height() * 2;
     gxj_system_screen_buffer.alphaData = 0;
     gxj_system_screen_buffer.pixelData = 
         (gxj_pixel_type *)midpMalloc(screenSize);
@@ -289,6 +291,7 @@ static void releasePutpixelSurface() {
 static void releaseDirectDraw();
 
 static void initDirectDraw() {
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
     /* Note: if DirectDraw fails to initialize, we will use GDI */
     if (DD_OK != DirectDrawCreate(NULL, &g_screen.pDD, NULL))
         return;
