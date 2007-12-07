@@ -43,8 +43,8 @@ public final class SecurityInitializer {
     final static private String[] trustedClasses = new String[] {
         "com.sun.satsa.pki.PKIManager$SecurityTrusted",
         "com.sun.satsa.acl.ACSlot$SecurityTrusted",
-        "com.sun.io.j2me.jcrmi.Protocol$SecurityTrusted",
-        "com.sun.io.j2me.apdu.Protocol$SecurityTrusted"
+        "com.sun.cdc.io.j2me.jcrmi.Protocol$SecurityTrusted",
+        "com.sun.cdc.io.j2me.apdu.Protocol$SecurityTrusted"
     };
 
     /**

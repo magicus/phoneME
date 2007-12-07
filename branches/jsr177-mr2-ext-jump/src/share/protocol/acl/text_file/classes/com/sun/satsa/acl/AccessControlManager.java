@@ -27,7 +27,7 @@
 package com.sun.satsa.acl;
 
 import java.security.MessageDigest;
-import com.sun.io.j2me.apdu.APDUManager;
+import com.sun.cdc.io.j2me.apdu.APDUManager;
 
 /**
  * This class represents access control information manager.

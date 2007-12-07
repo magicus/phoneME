@@ -1,6 +1,4 @@
 /*
- *   
- *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -60,7 +58,7 @@ static ThreadCond cardReaderCond;
  * @exception IOException in case of I/O problems.
  */
 KNIEXPORT KNI_RETURNTYPE_INT 
-KNIDECL (com_sun_io_j2me_apdu_APDUManager_init0) {
+KNIDECL (com_sun_cdc_io_j2me_apdu_APDUManager_init0) {
     javacall_int32 retcode = -1;
     javacall_result status;
     char *err_msg;
@@ -144,7 +142,7 @@ end:
  * @exception IOException in case of error
  */
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN 
-KNIDECL(com_sun_io_j2me_apdu_APDUManager_isSAT) {
+KNIDECL(com_sun_cdc_io_j2me_apdu_APDUManager_isSAT) {
     javacall_bool result;
     char *err_msg;
     char *buffer;
@@ -231,7 +229,7 @@ end:
  * @exception IOException if any i/o troubles occured
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT 
-KNIDECL(com_sun_io_j2me_apdu_APDUManager_reset0) {
+KNIDECL(com_sun_cdc_io_j2me_apdu_APDUManager_reset0) {
     void *context = NULL;
     javacall_result status_code;
     javacall_int32 atr_length;
@@ -372,7 +370,7 @@ end:
  * @exception IOException if any I/O troubles occured
  */
 KNIEXPORT KNI_RETURNTYPE_INT 
-KNIDECL (com_sun_io_j2me_apdu_APDUManager_exchangeAPDU0) {
+KNIDECL (com_sun_cdc_io_j2me_apdu_APDUManager_exchangeAPDU0) {
     jint retcode = -1;
     void *context = NULL;
     javacall_result status_code;
@@ -410,7 +408,7 @@ KNIDECL (com_sun_io_j2me_apdu_APDUManager_exchangeAPDU0) {
         
         KNI_GetObjectClass(connection_handle, handle);
         KNI_GetObjectField(connection_handle, 
-            KNI_GetFieldID(handle, "cardSlot", "Lcom/sun/io/j2me/apdu/Slot;"),
+            KNI_GetFieldID(handle, "cardSlot", "Lcom/sun/cdc/io/j2me/apdu/Slot;"),
             slot_handle);
         
         if (slot_handle == NULL) {
