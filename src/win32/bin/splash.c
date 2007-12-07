@@ -125,7 +125,6 @@ void OnPaint(HWND hWnd, HDC hdc)
 	SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, FALSE);
 	width = rect.right-rect.left;
 	height = rect.bottom-rect.top;
-	InvalidateRect(hWnd, &rect, FALSE);
     if (!g_dcBitmap)
 	{
 		g_dcBitmap = CreateCompatibleDC(hdc);
@@ -133,7 +132,6 @@ void OnPaint(HWND hWnd, HDC hdc)
 	}
     BitBlt(hdc, splashX, splashY, splashWidth, splashHeight, g_dcBitmap,
         0, 0, SRCCOPY);
-	SHFullScreen(hWnd, SHFS_HIDETASKBAR | SHFS_HIDESTARTICON | SHFS_HIDESIPBUTTON);
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -144,6 +142,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
         case WM_CLOSE:
             break;
+        case WM_SETFOCUS:
+        	SHFullScreen(hWnd, SHFS_HIDETASKBAR | SHFS_HIDESTARTICON | SHFS_HIDESIPBUTTON);
+        	break;
         case WM_PAINT:
             hdc = BeginPaint(hWnd, &ps);
             OnPaint(hWnd, hdc);
