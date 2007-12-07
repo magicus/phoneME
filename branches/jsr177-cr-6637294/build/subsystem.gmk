@@ -247,7 +247,7 @@ endif
 # END OF Define APDU sources
 
 MODULE_SATSA_APDU_JAVA_FILES += \
-    $(JSR_177_DIR)/src/cldc_application/protocol/apdu/classes/com/sun/midp/io/j2me/apdu/Protocol.java
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/midp/io/j2me/apdu/Protocol.java
 
 # Add device driver
 ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
