@@ -349,8 +349,9 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_send0) {
                 if (status == WMA_ERR) {
                     KNI_ThrowNew(midpIOException, "Sending SMS");
                     break;
+                } 
 #if ENABLE_REENTRY
-                } else if (status == WMA_NET_WOULDBLOCK) {
+                else if (status == WMA_NET_WOULDBLOCK) {
                     if (messageStateData == NULL) {
                         messageStateData =
                             (jsr120_sms_message_state_data *)pcsl_mem_malloc(
@@ -367,11 +368,11 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_send0) {
 
                     stillWaiting = KNI_TRUE;
                     break;
-#endif
                 } else {
                     /* waiting for sms_send_completed event */
                     midp_thread_wait(WMA_SMS_WRITE_SIGNAL, handle, NULL);
                 }
+#endif
             }
         } while (0);
 
