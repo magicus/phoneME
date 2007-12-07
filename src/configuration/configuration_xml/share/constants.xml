@@ -252,7 +252,7 @@
                     Check the specification for the minimal allowed value."/>
   <constant Type="int"
             Name="FLUSH_REFRESH_TIMEOUT"
-            Value="25"
+            Value="40"
             Comment="Limitation for GameCanvas.flush() proceeding frequency,
                      ignoring too frequent calls as performance optimization;
                      set to 0 to disable this optimization."/>

@@ -2643,7 +2643,6 @@ public class Display {
             private int width;
             private int height;
 
-
             public FlushTimer(Object monitor) {
                 super(monitor);
             }
@@ -2658,7 +2657,6 @@ public class Display {
                 this.d = null;
                 this.offscreenBuffer = null;
             }
-
 
             void schedule(long time, Displayable d, Image offscreenBuffer,
                           int x, int y, int width, int height) {
