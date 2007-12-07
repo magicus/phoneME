@@ -48,6 +48,7 @@ HOST_TOOLS_DIR       = $(WorkSpace)/build/share/bin/$(host_os)_$(host_arch)
 NATIVES_TABLE        = $(GEN_DIR)/NativesTable.cpp
 BUILDTOOLS_DIR       = $(BuildSpace)/$(BUILD_DIR_NAME)/tools
 BUILDTOOL_JAR        = $(BUILDTOOLS_DIR)/buildtool.jar
+VC_MANIFEST_EMBED_EXE = mt.exe -manifest $@.manifest "-outputresource:$@"
 
 #----------------------------------------------------------------------
 #
@@ -822,9 +823,15 @@ CPP_DBG_FLAGS_product   = /MD
 endif
 CPP_DBG_FLAGS          += $(CPP_DBG_FLAGS_$(BUILD))
 
-CPP_OPT_FLAGS_debug     =
-CPP_OPT_FLAGS_release   = /Ox /GB /Os /Gy /GF
-CPP_OPT_FLAGS_product   = /Ox /GB /Os /Gy /GF
+ifeq ($(USE_VS2005), true)
+    CPP_OPT_FLAGS_debug     =
+    CPP_OPT_FLAGS_release   = /Ox /Os /Gy /GF
+    CPP_OPT_FLAGS_product   = /Ox /Os /Gy /GF
+else
+    CPP_OPT_FLAGS_debug     =
+    CPP_OPT_FLAGS_release   = /Ox /GB /Os /Gy /GF
+    CPP_OPT_FLAGS_product   = /Ox /GB /Os /Gy /GF
+endif
 CPP_OPT_FLAGS          += $(CPP_OPT_FLAGS_$(BUILD))
 
 CPP_DEF_FLAGS_debug     = -D_DEBUG -DAZZERT
@@ -884,7 +891,7 @@ MAKE_EXPORT_EXTRA_LIBS += $(PCSL_LIBS)
 endif
 
 
-LIB_FLAGS_debug         = /DEBUGTYPE:CV
+LIB_FLAGS_debug         = 
 LIB_FLAGS_release       =
 LIB_FLAGS_product       =
 LIB_FLAGS               = /nologo $(LIB_FLAGS_$(BUILD))
@@ -963,6 +970,11 @@ $(LOOP_GENERATOR): $(BUILD_PCH) $(Obj_Files) \
 		   InterpreterSkeleton.obj OopMapsSkeleton.obj
 	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ $(Obj_Files) \
 		   InterpreterSkeleton.obj OopMapsSkeleton.obj
+		   
+ifeq ($(USE_VISTA), true)
+	$(A)$(VC_MANIFEST_EMBED_EXE)
+endif		   
+		   
 	$(A)echo generated `pwd`/$@
 endif
 endif
@@ -1005,6 +1017,11 @@ $(ROM_GENERATOR): $(BUILD_PCH) $(Obj_Files) InterpreterSkeleton.obj \
 	$(A)$(MAKE) OopMaps.obj
 	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ \
 		$(Obj_Files) Interpreter_$(arch).obj OopMaps.obj
+		   
+ifeq ($(USE_VISTA), true)
+		$(A)$(VC_MANIFEST_EMBED_EXE)
+endif		   
+  		   
 	$(A)echo generated `pwd`/$@
 
 endif
@@ -1110,6 +1127,11 @@ $(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVM_LIB) $(JVMTEST_LIB) \
 	    $(EXE_OBJS)
 	$(A)$(LINK) $(LINK_FLAGS) /out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVM_LIB) \
 		$(JVMTEST_LIB) $(PCSL_LIBS)
+
+ifeq ($(USE_VISTA), true)
+		$(A)$(VC_MANIFEST_EMBED_EXE)
+endif		   
+
 	$(A)echo generated `pwd`/$@
 
 ANI_OBJS  = ani.obj os_port.obj poolthread.obj
