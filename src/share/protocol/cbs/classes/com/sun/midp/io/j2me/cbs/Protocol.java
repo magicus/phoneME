@@ -731,7 +731,7 @@ public class Protocol extends ProtocolBase {
     /**
      * Native finalizer
      */
-    private native void finalize();
+    protected native void finalize();
 
 }
 
