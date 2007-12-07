@@ -26,8 +26,8 @@
 
 package com.sun.satsa.util;
 
-import com.sun.io.j2me.apdu.APDUManager;
-import com.sun.io.j2me.apdu.Handle;
+import com.sun.cdc.io.j2me.apdu.APDUManager;
+import com.sun.cdc.io.j2me.apdu.Handle;
 
 import java.io.IOException;
 
