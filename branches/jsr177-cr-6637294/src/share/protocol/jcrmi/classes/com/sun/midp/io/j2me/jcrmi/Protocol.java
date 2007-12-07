@@ -1,6 +1,4 @@
 /*
- *   
- *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -26,26 +24,5 @@
 
 package com.sun.midp.io.j2me.jcrmi;
 
-import com.sun.j2me.io.ConnectionBaseInterface;
-import javax.microedition.io.Connection;
-import java.io.IOException;
-
-public class Protocol implements ConnectionBaseInterface {
-    ConnectionBaseInterface protocol = null;
-
-    public Protocol() {
-        try {
-            protocol = (ConnectionBaseInterface)
-            Class.forName("com.sun.io.j2me.jcrmi.Protocol").newInstance();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException(e.getMessage());
-        }
-    }
-
-    public Connection openPrim(String name, int mode, boolean timeouts)
-	                           throws IOException {
-
-        return protocol.openPrim(name, mode, timeouts);
-    }
+public class Protocol extends com.sun.cdc.io.j2me.jcrmi.Protocol {
 }
