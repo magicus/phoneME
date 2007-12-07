@@ -1,6 +1,4 @@
 #
-#   
-#
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -66,7 +64,7 @@ MODULE_SATSA_CRYPTO_JAVA_FILES += \
 endif
 
 MODULE_SATSA_JCRMI_JAVA_FILES += \
-    $(JSR_177_DIR)/src/cdc_share/protocol/jcrmi/classes/com/sun/io/j2me/jcrmi/RemoteStubCreation.java
+    $(JSR_177_DIR)/src/cdc_share/protocol/jcrmi/classes/com/sun/cdc/io/j2me/jcrmi/RemoteStubCreation.java
 
 MODULE_SATSA_CRYPTO_JAVA_FILES += \
     $(JSR_177_DIR)/src/cdc_share/satsa/classes/com/sun/j2me/crypto/MD2.java \
@@ -112,9 +110,6 @@ endif
 #
 JSR_177_BUILD_DIR       = $(JSROP_BUILD_DIR)/jsr177
 JSR_177_GENERATED_DIR   = $(JSR_177_BUILD_DIR)/generated
-
-# Include properties fod CDC VM
-JSR_177_PROPERTY_FILES += $(JSR_177_DIR)/src/cdc_share/config/properties_jsr177_cdc.xml        
 
 # Generating initializer
 #

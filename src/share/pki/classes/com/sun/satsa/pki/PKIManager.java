@@ -31,7 +31,7 @@ import com.sun.j2me.dialog.Dialog;
 import com.sun.j2me.dialog.MessageDialog;
 import com.sun.j2me.io.FileAccess;
 import com.sun.j2me.security.SatsaPermission;
-import com.sun.io.j2me.apdu.APDUManager;
+import com.sun.cdc.io.j2me.apdu.APDUManager;
 import com.sun.j2me.i18n.Resource;
 import com.sun.j2me.i18n.ResourceConstants;
 import com.sun.j2me.main.Configuration;
