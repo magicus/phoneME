@@ -2685,12 +2685,12 @@ public class Display {
         public void flush(Displayable d, Image offscreen_buffer,
                           int x, int y, int width, int height) {
             long timePassed = System.currentTimeMillis() - lastFlushTime;
-            if (timePassed >= Constants.FLUSH_REFRESH_TIMEOUT) {
+            if (timePassed >= Constants.MINIMUM_FLUSH_INTERVAL) {
                 flushTimer.cancel();
                 doFlush(d, offscreen_buffer, x, y, width, height);
                 lastFlushTime += timePassed;
             } else {
-                flushTimer.schedule(Constants.FLUSH_REFRESH_TIMEOUT - timePassed,
+                flushTimer.schedule(Constants.DELAYED_FLUSH_PERIOD - timePassed,
                                     d, offscreen_buffer, x, y, width, height);
             }
         }
