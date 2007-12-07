@@ -251,7 +251,6 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_send0) {
     MidpReentryData *info;
     jsr120_sms_message_state_data *messageStateData = NULL;
 #endif
-    jint bytesSent;
     jboolean isOpen;
 
     KNI_StartHandles(4);
@@ -319,6 +318,14 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_send0) {
                 }
 #if ENABLE_REENTRY
             } else { /* Reinvocation after unblocking the thread. */
+
+                if (info->pResult == NULL) {
+                    /* waiting for mms_send_completed event */
+                    if (info->status == WMA_ERR) {
+                        KNI_ThrowNew(midpInterruptedIOException, "Sending SMS");
+                    }
+                    break;
+                }
                 messageStateData = info->pResult;
                 pMessageBuffer = messageStateData->pMessageBuffer;
                 pAddress = messageStateData->pAddress;
@@ -328,7 +335,7 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_send0) {
             }
 #endif
 
-            if (trySend) {
+            if (trySend == KNI_TRUE) {
                 /* send message. */
                 status = jsr120_send_sms((jchar)messageType,
                                          pAddress,
@@ -336,7 +343,7 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_send0) {
                                          (jchar)messageLength,
                                          (jchar)sourcePort,
                                          (jchar)destPort,
-                                         &bytesSent,
+                                         handle,
                                          &pdContext);
 
                 if (status == WMA_ERR) {
@@ -362,11 +369,8 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_send0) {
                     break;
 #endif
                 } else {
-                    /*
-                     * Message successfully sent.
-                     * Call send completion function.
-                     */
-                    jsr120_notify_sms_send_completed(&bytesSent);
+                    /* waiting for sms_send_completed event */
+                    midp_thread_wait(WMA_SMS_WRITE_SIGNAL, handle, NULL);
                 }
             }
         } while (0);
@@ -449,15 +453,6 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_receive0) {
 
             if (psmsData != NULL) {
                 if (NULL != (psmsData = jsr120_sms_pool_retrieve_next_msg(port))) {
-                    /*
-                     * A message has been retreived successfully. Notify
-                     * the platform.
-                     */
-                    jsr120_notify_incoming_sms(psmsData->encodingType, psmsData->msgAddr,
-                                               (unsigned char *)psmsData->msgBuffer,
-                                               (jint)psmsData->msgLen,
-                                               psmsData->sourcePortNum, psmsData->destPortNum,
-                                               psmsData->timeStamp);
 
                     KNI_GetObjectClass(messageObject, messageClazz);
                     if(KNI_IsNullHandle(messageClazz)) {

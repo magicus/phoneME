@@ -28,7 +28,7 @@
 
 #include <jsr120_list_element.h>
 #include <jsr120_sms_pool.h>
-#include <jsr120_sms_listeners.h>
+
 #ifndef ENABLE_PCSL
   #define pcsl_mem_malloc malloc
   #define pcsl_mem_free free
@@ -310,7 +310,7 @@ WMA_STATUS jsr120_sms_pool_add_msg(SmsMessage* smsMessage) {
     jsr120_list_add_last(&SMSPool_smsMessages, newItem);
     jsr120_sms_pool_increase_count();
     MUTEX_UNLOCK
-    jsr120_sms_message_arrival_notifier(smsMessage);
+
     return WMA_OK;
 }
 

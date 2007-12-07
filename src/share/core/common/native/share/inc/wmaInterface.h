@@ -74,7 +74,8 @@ void finalize_jsr120();
  *
  * @return KNI_TRUE if given fd is owned by WMA, KNI_FALSE otherwise
  */
-jboolean jsr120_check_signal(midpSignalType signalType, int fd);
+jboolean jsr120_check_signal(midpSignalType signalType, int descriptor, int status);
+
 
 #ifdef __cplusplus
 }

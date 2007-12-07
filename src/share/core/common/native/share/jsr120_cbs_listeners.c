@@ -55,6 +55,7 @@ typedef enum midp_SignalType {
 #include <jsr120_cbs_pool.h>
 #include <jsr120_cbs_listeners.h>
 #include <jsr120_cbs_protocol.h>
+#include <push_server_resource_mgmt.h>
 
 /*
  * Listeners registered by a currently running midlet
@@ -140,7 +141,7 @@ static WMA_STATUS jsr120_cbs_invoke_listeners(CbsMessage* message,
 /*
  * See jsr120_cbs_listeners.h for documentation
  */
-void jsr120_cbs_message_arrival_notifier(CbsMessage* message) {
+void jsr120_cbs_message_arrival_notifier(CbsMessage* cbsMessage) {
 
     WMA_STATUS unblocked = WMA_ERR;
 
@@ -148,15 +149,32 @@ void jsr120_cbs_message_arrival_notifier(CbsMessage* message) {
      * First invoke listeners for current midlet
      */
     if(cbs_midlet_listeners != NULL) {
-        unblocked = jsr120_cbs_invoke_listeners(message, cbs_midlet_listeners);
+        unblocked = jsr120_cbs_invoke_listeners(cbsMessage, cbs_midlet_listeners);
     }
 
     /*
      * If a listener hasn't been invoked, try the push Listeners
      */
     if (unblocked == WMA_ERR && cbs_push_listeners != NULL) {
-        unblocked = jsr120_cbs_invoke_listeners(message, cbs_push_listeners);
+        pushsetcachedflag("cbs://:", cbsMessage->msgID);
+        unblocked = jsr120_cbs_invoke_listeners(cbsMessage, cbs_push_listeners);
     }
+}
+
+/*
+ * See jsr120_cbs_listeners.h for documentation
+ */
+WMA_STATUS jsr120_cbs_is_message_expected(jchar msgID) {
+
+    if (WMA_OK == jsr120_cbs_is_midlet_listener_registered(msgID)) {
+        return WMA_OK;
+    }
+
+    if (WMA_OK == jsr120_cbs_is_push_listener_registered(msgID)) {
+        return WMA_OK;
+    }
+
+    return WMA_ERR;
 }
 
 /*

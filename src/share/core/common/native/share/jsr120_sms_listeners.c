@@ -51,6 +51,8 @@
 #include <jsr120_sms_listeners.h>
 #include <jsr120_sms_protocol.h>
 #include <app_package.h>
+#include <push_server_resource_mgmt.h> //pushgetfiltermms
+#include <wmaPushRegistry.h> // jsr120_check_filter
 
 /*
  * Listeners registered by a currently running midlet
@@ -75,7 +77,6 @@ static WMA_STATUS jsr120_invoke_sms_listeners(SmsMessage* sms, ListElement *list
 #if (ENABLE_CDC != 1)
 static JVMSPI_ThreadID
 jsr120_get_blocked_thread_from_handle(long handle, jint waitingFor);
-static JVMSPI_ThreadID jsr120_get_blocked_thread_from_signal(jint waitingFor);
 #endif
 static WMA_STATUS jsr120_register_sms_listener(jchar smsPort,
                                                AppIdType msid,
@@ -138,7 +139,7 @@ void jsr120_sms_message_arrival_notifier(SmsMessage* smsMessage) {
     /*
      * First invoke listeners for current midlet
      */
-    if(sms_midlet_listeners != NULL) {
+    if (sms_midlet_listeners != NULL) {
         unblocked = jsr120_invoke_sms_listeners(smsMessage, sms_midlet_listeners);
     }
 
@@ -146,6 +147,7 @@ void jsr120_sms_message_arrival_notifier(SmsMessage* smsMessage) {
      * If a listener hasn't been invoked, try the push Listeners
      */
     if (unblocked == WMA_ERR && sms_push_listeners != NULL) {
+        pushsetcachedflag("sms://:", smsMessage->destPortNum);
         unblocked = jsr120_invoke_sms_listeners(smsMessage, sms_push_listeners);
     }
 
@@ -154,34 +156,27 @@ void jsr120_sms_message_arrival_notifier(SmsMessage* smsMessage) {
 /*
  * See jsr120_sms_listeners.h for documentation
  */
-void jsr120_sms_message_sent_notifier() {
-#if (ENABLE_CDC != 1)
-    /*
-     * An SMS message has been sent. So unblock thread
-     * blocked on WMA_SMS_WRITE_SIGNAL.
-     */
-    JVMSPI_ThreadID id = jsr120_get_blocked_thread_from_signal(WMA_SMS_WRITE_SIGNAL);
+WMA_STATUS jsr120_sms_is_message_expected(jchar port, char* addr) {
 
-    if (id != 0) {
-	midp_thread_unblock(id);
+    if (WMA_OK == jsr120_is_sms_midlet_listener_registered(port)) {
+        return WMA_OK;
     }
-#else
-    /* IMPL NOTE implement this */
-#endif
+
+    if (WMA_OK == jsr120_is_sms_push_listener_registered(port)) {
+        char* filter = pushgetfilter("sms://:", port);
+        if (filter == NULL || jsr120_check_filter(filter, addr)) {
+            return WMA_OK;
+        }
+    }
+
+    return WMA_ERR;
 }
 
-#if (ENABLE_CDC != 1)
-/**
- * Find the first thread that can be unblocked for a given
- * signal type
- *
- * @param signalType Enumerated signal type
- *
- * @return JVMSPI_ThreadID Java thread id than can be unblocked
- *         0 if no matching thread can be found
- *
+/*
+ * See jsr120_sms_listeners.h for documentation
  */
-static JVMSPI_ThreadID jsr120_get_blocked_thread_from_signal(jint waitingFor) {
+void jsr120_sms_message_sent_notifier(int handle, WMA_STATUS result) {
+#if (ENABLE_CDC != 1)
     JVMSPI_BlockedThreadInfo *blocked_threads;
     jint n;
     jint i;
@@ -192,19 +187,21 @@ static JVMSPI_ThreadID jsr120_get_blocked_thread_from_signal(jint waitingFor) {
 	MidpReentryData *p =
             (MidpReentryData*)(blocked_threads[i].reentry_data);
 	if (p != NULL) {
-
-            if (waitingFor == (int)p->waitingFor) {
-		return blocked_threads[i].thread_id;
+            if (p->waitingFor == WMA_SMS_WRITE_SIGNAL) {
+              if (handle == 0 || handle == p->descriptor) {
+                p->status = result;
+                midp_thread_unblock(blocked_threads[i].thread_id);
+		return;
+              }
             }
 
 	}
 
     }
-
-    return 0;
-
-}
+#else
+    /* IMPL NOTE implement this */
 #endif
+}
 
 /*
  * See jsr120_sms_listeners.h for documentation

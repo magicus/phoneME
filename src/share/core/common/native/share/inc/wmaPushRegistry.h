@@ -108,6 +108,15 @@ jboolean isMMSProtocol(char *entry);
 char *getMMSAppID(char *entry);
 #endif
 
+/**
+ * check the SMS header against the push filter.
+ * @param filter The filter string to be used
+ * @param cmsidn The caller's MSIDN number to be tested by the filter
+ * @return <code>1</code> if the comparison is successful; <code>0</code>,
+ *     otherwise.
+ */
+int jsr120_check_filter(char *filter, char *cmsidn);
+
 #ifdef __cplusplus
 }
 #endif

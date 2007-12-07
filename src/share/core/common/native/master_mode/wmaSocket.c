@@ -40,6 +40,7 @@
 #include <jsr120_sms_pool.h>
 #include <jsr120_sms_listeners.h>
 #include <jsr120_cbs_structs.h>
+#include <jsr120_cbs_listeners.h>
 #include <jsr120_cbs_pool.h>
 #if ENABLE_JSR_205
 #include <jsr205_mms_structs.h>
@@ -171,7 +172,7 @@ void destroyMMSHeader(MmsHeader* header) {
 /**
  *
  */
-jboolean jsr120_check_signal(midpSignalType signalType, int fd) {
+jboolean jsr120_check_signal(midpSignalType signalType, int fd, int status) {
     jboolean ret = KNI_FALSE;
     
     switch (signalType) {
@@ -187,6 +188,7 @@ jboolean jsr120_check_signal(midpSignalType signalType, int fd) {
         break;
     }
 
+    (void) status;
     return ret;
 }
 
@@ -200,7 +202,7 @@ jboolean checkWriteSignal(int socket) {
         switch (protocol) {
 
         case WMA_SMS_PROTOCOL:
-            jsr120_sms_message_sent_notifier();
+            jsr120_sms_message_sent_notifier(0, WMA_OK);
             ret = KNI_TRUE;
             break;
 
@@ -210,7 +212,7 @@ jboolean checkWriteSignal(int socket) {
 
         case WMA_MMS_PROTOCOL:
 #if ENABLE_JSR_205
-            jsr205_mms_message_sent_notifier();
+            jsr205_mms_message_sent_notifier(0, WMA_OK);
             ret = KNI_TRUE;
 #endif
             break;
@@ -298,15 +300,10 @@ jboolean checkReadSignal(int socket) {
                      * number is checked against the filter.
                      */
                     if (filter == NULL || checkfilter(filter, sms->msgAddr)) {
-
-                        /* 
-                         * Notify Push that a message has arrived and 
-                         * is being cached.
-                         */
-                        pushsetcachedflag("sms://:", sms->destPortNum);
-
                         /* add message to pool */
                         jsr120_sms_pool_add_msg(sms);
+                        /* Notify all listeners of the new message. */
+                        jsr120_sms_message_arrival_notifier(sms);
                     }
 
                     if (filter != NULL) {
@@ -335,14 +332,10 @@ jboolean checkReadSignal(int socket) {
                         cbs->msgBuffer = (unsigned char*)msg;
                     }
 
-                    /* 
-                     * Notify Push that a message has arrived and 
-                     * is being cached.
-                     */
-                    pushsetcachedflag("cbs://:", cbs->msgID);
-
                     /* Add message to pool. */
                     jsr120_cbs_pool_add_msg(cbs);
+		    /* Notify all listeners of the new message. */
+		    jsr120_cbs_message_arrival_notifier(cbs);
                 }
                 break;
 
@@ -370,7 +363,6 @@ jboolean checkReadSignal(int socket) {
 
                     /* Notify the platform that a message has arrived. */
                     mmsHeader = createMmsHeader(mms);
-                    MMSNotification(mmsHeader);
                     destroyMMSHeader(mmsHeader);
 
                     /*
@@ -385,16 +377,9 @@ jboolean checkReadSignal(int socket) {
                      */
                     if (filter == NULL || checkfilter(filter, mms->replyToAppID)) {
 
-                        /* 
-                         * Notify Push that a message has arrived and 
-                         * is being cached.
-                         */
-                        pushsetcachedflagmms("mms://:", mms->appID);
-
-                        /* When a fetch is confirmed, add message to pool. */
-                        if (jsr205_fetch_mms() == WMA_OK) {
-                            jsr205_mms_pool_add_msg(mms);
-                        }
+                        jsr205_mms_pool_add_msg(mms);
+                        /* Notify all listeners of the new message. */
+                        jsr205_mms_message_arrival_notifier(mms);
                     }
 
                     pcsl_mem_free(filter);

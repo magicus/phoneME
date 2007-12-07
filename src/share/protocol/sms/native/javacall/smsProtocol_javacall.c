@@ -23,6 +23,7 @@
  */
 
 #include <jsr120_sms_protocol.h>
+#include <jsr120_sms_listeners.h>
 #include <javacall_sms.h>
 //#include <javacall_logging.h>
 //#include <pcsl_memory.h>
@@ -65,22 +66,23 @@ WMA_STATUS jsr120_send_sms(jchar msgType,
                               jchar msgLen,
                               jchar sourcePort,
                               jchar destPort,
-                              /* OUT */jint *bytesSent,
+                              int handle,
                               /* OUT */void **pContext)
 {
-    int rtn = javacall_sms_send( 
-            msgType,
-            (unsigned char*)address,
+    javacall_result rtn = javacall_sms_send( 
+            (javacall_sms_encoding)msgType, //?
+            address,
             msgBuffer,
-            msgLen,
-            sourcePort,
-            destPort);
+            (int)msgLen,
+            (unsigned short)sourcePort,
+            (unsigned short)destPort,
+            handle); 
 
-    *bytesSent = msgLen;
     (void)pContext;
 
-    return (rtn > 0) ? WMA_OK : WMA_ERR ;
+    return (rtn == JAVACALL_OK) ? WMA_OK : WMA_ERR ;
 }
+
 
 /**
  * Removes a registered message port number. After removing this port number, no message
@@ -121,6 +123,7 @@ WMA_STATUS jsr120_add_sms_listening_port(jchar smsPort) {
     return (rtn == JAVACALL_OK) ? WMA_OK : WMA_ERR ;
 }
 
+
 /**
  * After calling  setSMSListeningPort(), a WMA Application will continue to listen for
  * incoming messages whose destination port number matches the registered port number.
@@ -142,27 +145,35 @@ void jsr120_notify_incoming_sms(jchar msgType, char *sourceAddress,
                                 unsigned char *msgBuffer, jint msgLen,
                                 jchar sourcePortNum, jchar destPortNum,
                                 jlong timeStamp) {
-    (void)msgType;
-    (void)sourceAddress;
-    (void)msgBuffer;
-    (void)msgLen;
-    (void)sourcePortNum;
-    (void)destPortNum;
-    (void)timeStamp;
+
+    if (WMA_OK == jsr120_sms_is_message_expected(destPortNum, sourceAddress)) {
+
+        SmsMessage* sms = jsr120_sms_new_msg(
+            msgType, sourceAddress, sourcePortNum, destPortNum, timeStamp, msgLen, msgBuffer);
+
+        jsr120_sms_pool_add_msg(sms);
+
+        /* Notify all listeners of the new message. */
+        jsr120_sms_message_arrival_notifier(sms);
+    } 
 }
 
 /**
  * The native software platform on the target device calls this API to notify that a message has
- * been sent. When wma_sendSMSMessage()is called, the native software platform on the target
+ * been sent. When jsr120_send_sms()is called, the native software platform on the target
  * device is expected to deliver the message to the network. It then calls this callback function.
  *
- * @param bytesSent Number of bytes sent.
- *                  >= 0 on success
- *                  -1 on error
+ * @param handle Handle value returned from javacall_sms_send 
+ * @param result indication of send completed status result: Either
+ *         <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt> on failure
  */
-void jsr120_notify_sms_send_completed(jint *bytesSent) {
-    (void)bytesSent;
+void jsr120_notify_sms_send_completed(int handle, WMA_STATUS result) {
+
+    /* wake up listeners */
+    jsr120_sms_message_sent_notifier(handle, result);
 }
+
 
 /**
  * Returns the number of segments that would be needed in the underlying

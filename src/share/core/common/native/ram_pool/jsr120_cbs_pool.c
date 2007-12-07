@@ -28,7 +28,7 @@
 
 #include <jsr120_list_element.h>
 #include <jsr120_cbs_pool.h>
-#include <jsr120_cbs_listeners.h>
+
 #ifndef ENABLE_PCSL
   #define pcsl_mem_malloc malloc
   #define pcsl_mem_free free
@@ -277,9 +277,6 @@ WMA_STATUS jsr120_cbs_pool_add_msg(CbsMessage* cbsMessage) {
         UNUSED_APP_ID, (void*)cbsMessage, 0);
     jsr120_list_add_last(&CBSPool_messages, newItem);
     jsr120_cbs_pool_increase_count();
-
-    /* Notify all listeners of the new message. */
-    jsr120_cbs_message_arrival_notifier(cbsMessage);
 
     return WMA_OK;
 }

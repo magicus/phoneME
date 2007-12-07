@@ -32,6 +32,7 @@
 #include <string.h>
 
 #include <jsr120_sms_protocol.h>
+#include <jsr120_sms_listeners.h>
 #include <pcsl_memory.h>
 
 #define SOCKET_ERROR (-1)
@@ -77,10 +78,11 @@ WMA_STATUS jsr120_send_sms(jchar msgType,
                               jchar msgLen,
                               jchar sourcePort,
                               jchar destPort,
-                              /* OUT */jint *bytesSent,
+                              int handle, 
                               /* OUT */void **pContext)
 {
     WMA_STATUS status = WMA_ERR; 
+    jint bytesSent;
 
     /* Calls platform code to send SMS. */
     status =  jsr120_sms_write(msgType, address,
@@ -88,7 +90,7 @@ WMA_STATUS jsr120_send_sms(jchar msgType,
 	                       msgLen,
 			       sourcePort,
                                destPort,
-			       bytesSent,
+			       &bytesSent,
                                pContext);
 
 
@@ -96,6 +98,7 @@ WMA_STATUS jsr120_send_sms(jchar msgType,
         status = WMA_OK;
     }
 
+    jsr120_sms_message_sent_notifier(handle, status);
     return status;
 
 }
@@ -176,8 +179,9 @@ void jsr120_notify_incoming_sms(jchar msgType, char *sourceAddress,
  *		    >= 0 on success
  *		    -1 on error
  */
-void jsr120_notify_sms_send_completed(jint *bytesSent) {
-    (void)bytesSent;
+void jsr120_notify_sms_send_completed(int handle, WMA_STATUS result) {
+
+    jsr120_sms_message_sent_notifier(handle, result);
 }
 
 /**:

@@ -22,8 +22,8 @@
  * information or have any questions.
  */
 
-
 #include <jsr120_cbs_protocol.h>
+#include <jsr120_cbs_listeners.h>
 #include <javacall_cbs.h>
 
 /**
@@ -64,6 +64,7 @@ WMA_STATUS jsr120_remove_cbs_listening_msgID(jchar msgID) {
     return (rtn == JAVACALL_OK) ? WMA_OK : WMA_ERR;
 }
 
+
 /**
  * Incoming CBS Message.
  * <p>
@@ -80,7 +81,14 @@ WMA_STATUS jsr120_remove_cbs_listening_msgID(jchar msgID) {
  */
 void jsr120_notify_incoming_cbs(jchar msgType, jchar msgID,
                                 unsigned char *msgBuffer, jint msgLen) {
-    (void)msgType, (void)msgID, (void)msgBuffer, (void)msgLen;
-}
 
+    if (WMA_OK == jsr120_cbs_is_message_expected(msgID)) {
+
+        CbsMessage* cbs = jsr120_cbs_new_msg(msgType, msgID, (jchar)msgLen, msgBuffer);
+        jsr120_cbs_pool_add_msg(cbs);
+
+        /* Notify all listeners of the new message. */
+        jsr120_cbs_message_arrival_notifier(cbs);
+    }
+}
 
