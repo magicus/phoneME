@@ -610,6 +610,23 @@ public class Display {
         HEIGHT              = getScreenHeight0();
         // #endif ENABLE_GCI
 
+        if (WIDTH <= 0 || HEIGHT <= 0) {
+            if (Logging.REPORT_LEVEL <= Logging.ERROR) {
+                Logging.report(Logging.ERROR, LogChannels.LC_HIGHUI,
+                        "Native display has a zero size.");
+            }
+        }
+
+        if (WIDTH < 0) {
+            // Negative numbers will create uncaught math exceptions
+            WIDTH = 0;
+        }
+
+        if (HEIGHT < 0) {
+            // Negative numbers will create uncaught math exceptions
+            HEIGHT = 0;
+        }
+
         graphicsAccessor = new GraphicsAccessImpl();
         GameMap.registerGraphicsAccess(graphicsAccessor);
 
