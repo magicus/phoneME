@@ -44,6 +44,9 @@ import com.sun.mmedia.control.DualToneControl;
  */
 public final class DirectTone extends DirectPlayer {
 
+    private DirectToneControl toneCtl     = null;
+    private DirectToneControl dualToneCtl = null;
+
     /**
      * It does not need data source
      */
@@ -125,10 +128,12 @@ public final class DirectTone extends DirectPlayer {
         if (getState() >= REALIZED) {
             if (type.equals("javax.microedition.media.control.ToneControl") ||
                 type.equals("ToneControl")) {
-                return new DirectToneControl(this, false);
+                if( null == toneCtl ) toneCtl = new DirectToneControl(this, false);
+                return toneCtl;
             }
             if (type.equals("com.sun.mmedia.control.DualToneControl")) {
-                return new DirectToneControl(this, true);
+                if (null == dualToneCtl) dualToneCtl = new DirectToneControl(this, true);
+                return dualToneCtl;
             }
         }
 
