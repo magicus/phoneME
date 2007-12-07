@@ -35,7 +35,23 @@ public class FileConnectionPermission extends Permission {
     static public FileConnectionPermission WRITE = new FileConnectionPermission(
         "javax.microedition.io.Connector.file.write", null);
 
+    /** Creates a new instance of FileConnectionPermission. */
     public FileConnectionPermission(String name, String resource) {
         super(name, resource);
+    }
+
+    /** Checks for the corresponding CDC permission. */
+    public void checkCDCPermission() {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            if (READ.name.equals(name)) {
+                sm.checkRead(resource);
+            } else if (WRITE.name.equals(name)) {
+                sm.checkWrite(resource);
+            } else {
+                throw new SecurityException("Unknown FileConnection " +
+                    "permission: " + name + " for resource " + resource);
+            }
+        }
     }
 }
