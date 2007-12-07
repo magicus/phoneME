@@ -120,7 +120,7 @@ Compiler::Compiler( Method* method, const int active_bci ) {
       Compiler::num_stack_lock_words());
 
     // Set local base for the new compiler
-    GUARANTEE(frame()->not_null(), "Frame must be created by the caller");
+    GUARANTEE(frame() != NULL, "Frame must be created by the caller");
     set_local_base(frame()->virtual_stack_pointer() - 
                    method->size_of_parameters() + 1);
   } else 
@@ -143,7 +143,6 @@ Compiler::Compiler( Method* method, const int active_bci ) {
   RegisterAllocator::wipe_all_notations();
 #endif
   jvm_fast_globals.compiler_method         = method;
-  jvm_fast_globals.compiler_frame          = _state.frame();
   jvm_fast_globals.compiler_closure        = &_closure;
 }
 
@@ -614,7 +613,7 @@ inline void Compiler::begin_compile( JVM_SINGLE_ARG_TRAPS ) {
     !mthd->uses_monitors() );
 
   {// Instantiate a virtual stack frame for this method.    
-    OopDesc* p = VirtualStackFrame::create(method() JVM_CHECK);
+    VirtualStackFrame* p = VirtualStackFrame::create(method() JVM_ZCHECK(p) );
     set_frame( p );
   }
   // A different allocation table may be used depending on frame omission.
@@ -860,13 +859,11 @@ void Compiler::process_compilation_queue( JVM_SINGLE_ARG_TRAPS ) {
     if( CURRENT_HAS_PENDING_EXCEPTION ) {
       goto Failure;
     }
-    if (!GenerateROMImage && !is_compilation_queue_empty() && 
-        !is_inlining()) {
-      if (ExcessiveSuspendCompilation || Os::check_compiler_timer() ) {
-        _failure = out_of_time;
-        suspend();
-        return;
-      }
+    if( !GenerateROMImage &&!is_compilation_queue_empty()
+                          && is_time_to_suspend() ) {
+      _failure = out_of_time;
+      suspend();
+      return;
     }
   }
 
@@ -1020,10 +1017,7 @@ void Compiler::internal_compile_inlined( Method::Attributes& attributes
   }
 
   // Set the return frame as the current frame for the parent
-  {
-    VirtualStackFrame::Raw return_frame = parent_frame();
-    Compiler::set_frame(&return_frame);
-  }
+  Compiler::set_frame( parent_frame() );
 }
 #endif  
 

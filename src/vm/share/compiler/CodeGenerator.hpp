@@ -450,9 +450,8 @@ public:
   void conditional_jump_do(BytecodeClosure::cond_op condition, 
                            Label& destination);
 
-  static VirtualStackFrame* frame ( void ) {
-    return jvm_fast_globals.compiler_frame;
-  }
+  static inline VirtualStackFrame* frame ( void );
+
   static jint bci ( void ) {
     return jvm_fast_globals.compiler_bci;
   }

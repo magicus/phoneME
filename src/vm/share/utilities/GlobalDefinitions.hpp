@@ -497,7 +497,6 @@ class CharacterStream;
 class ClassClassDesc;
 class ClassInfo;
 class CompilationQueueElement;
-class CompilationQueueElementDesc;
 class CompiledMethod;
 class CompiledMethodDesc;
 class Compiler;
@@ -507,7 +506,6 @@ class ConstantPool;
 class ConstantPoolDesc;
 class ConstantPoolRewriter;
 class Entry;
-class EntryDesc;
 class EntryActivation;
 class FarClass;
 class FarClassDesc;
@@ -1786,7 +1784,6 @@ enum {
   /* frequently used values by Compiler*/                  \
   template(x, Method*,            compiler_method)         \
   template(x, CodeGenerator*,     compiler_code_generator) \
-  template(x, VirtualStackFrame*, compiler_frame)          \
   template(x, int,                compiler_bci)            \
                                                            \
   template(x, BytecodeCompileClosure*,  compiler_closure)  \
@@ -1851,7 +1848,6 @@ struct JVMFastGlobals {
 
 #define _compiler_method              jvm_fast_globals.compiler_method
 #define _compiler_code_generator      jvm_fast_globals.compiler_code_generator
-#define _compiler_frame               jvm_fast_globals.compiler_frame
 #define _compiler_bci                 jvm_fast_globals.compiler_bci
 
 #define _compiler_closure             jvm_fast_globals.compiler_closure

@@ -219,9 +219,6 @@ public:
 
 #define COMPILER_STATIC_HANDLES  \
   FIELD( CompiledMethod,          current_compiled_method ) \
-  FIELD( VirtualStackFrame,       frame                   ) \
-  FIELD( VirtualStackFrame,       conforming_frame        ) \
-  FIELD( VirtualStackFrame,       cached_preserved_frame  )
 
 class CompilerStaticPointers {
 public:
@@ -244,17 +241,20 @@ public:
   void oops_do( void do_oop(OopDesc**) );
 };
 
-#define COMPILER_STATIC_FIELDS_DO(template)  \
-  template( Compiler*, root             ) \
-  template( Compiler*, current          ) \
-  template( bool,      omit_stack_frame )
+#define COMPILER_STATIC_FIELDS_DO(template)\
+  template( VirtualStackFrame*, frame                   )\
+  template( VirtualStackFrame*, conforming_frame        )\
+  template( VirtualStackFrame*, cached_preserved_frame  )\
+  template( Compiler*, root                             )\
+  template( Compiler*, current                          )\
+  template( bool,      omit_stack_frame                 )
 
 class CompilerStatic: public CompilerStaticPointers {
-public:
-  ThrowExceptionStub* _rte_handlers[ThrowExceptionStub::number_of_runtime_exceptions];
-
+ public:
   #define DECLARE_FIELD( type, name ) type _##name;
   COMPILER_STATIC_FIELDS_DO(DECLARE_FIELD)
+
+  ThrowExceptionStub* _rte_handlers[ThrowExceptionStub::number_of_runtime_exceptions];
 
 #if USE_DEBUG_PRINTING
   void print_on(Stream *st);
@@ -383,10 +383,10 @@ class Compiler: public StackObj {
     return jvm_fast_globals.compiler_closure;
   }
 
-  static ReturnOop get_cached_preserved_frame( void ) {
-    const ReturnOop result = cached_preserved_frame()->obj();
-    clear_cached_preserved_frame();
-    return result;
+  static VirtualStackFrame* get_cached_preserved_frame( void ) {
+    VirtualStackFrame* p = cached_preserved_frame();
+    set_cached_preserved_frame( NULL );
+    return p;
   }
 
   // Accessors for the compilation queue.
@@ -504,9 +504,6 @@ class Compiler: public StackObj {
   void set_entry_for(const jint bci, Entry* entry) {
     entry_table()->at_put( bci, entry );
   }
-  bool has_entry_for(const jint bci) const {
-    return entry_for(bci) != NULL;
-  }
 
   bool method_aborted_for_exception_at(const int bci) {
     const AccessFlags flags = method()->access_flags();
@@ -541,7 +538,7 @@ class Compiler: public StackObj {
   }
 
  private:
-  ReturnOop parent_frame( void ) const {
+  VirtualStackFrame* parent_frame( void ) const {
     GUARANTEE(is_inlining(), "Can only be called during inlining");
     const Compiler* parent_compiler = parent();
     GUARANTEE(parent_compiler != NULL, "Cannot be null when inlining");
@@ -563,9 +560,8 @@ class Compiler: public StackObj {
     parent_element->set_frame( frame );
   }
 
-  void clear_parent_frame() {
-    VirtualStackFrame::Raw null_frame;
-    set_parent_frame(&null_frame);
+  void clear_parent_frame( void ) {
+    set_parent_frame( NULL );
   }
  public:
 #endif
@@ -616,13 +612,16 @@ class Compiler: public StackObj {
   static void process_interpretation_log();
   static void set_hint(int hint);
 
+  static bool is_time_to_suspend( void ) {
+    return 0 && !is_inlining() &&
+           (ExcessiveSuspendCompilation || Os::check_compiler_timer());
+  }
   static CompilerState* suspended_compiler_state( void ) {
     return &_suspended_compiler_state;
   }
   static CompilerContext* suspended_compiler_context( void ) {
     return &_suspended_compiler_context;
   }
-
   static bool is_suspended ( void ) {
     return suspended_compiler_state()->valid();
   }
@@ -725,8 +724,8 @@ class Compiler: public StackObj {
     CompilationQueueElement* stub = 
       this->rte_handler(ThrowExceptionStub::rte_array_index_out_of_bounds);
     if (!stub || !stub->entry_label().is_bound()) {
-      return -1;
-    }
+     return -1;
+   }
     return stub->entry_label().position();
   }
 
@@ -766,7 +765,7 @@ class Compiler: public StackObj {
     BinaryAssembler::Label tmp;
     int index = 0; 
     int new_offset;
-
+    
     LiteralPoolElement::Raw literal = code_generator()->_first_unbound_literal.obj();
     
     for (; !literal.is_null(); literal = literal().next()) { 
@@ -785,7 +784,7 @@ class Compiler: public StackObj {
 
   //update the entry label of a unbind index check stub.
   //the entry label point to the tail of a chain of branch.
-  void update_shared_index_check_stub(int position) {
+  void update_shared_index_check_stub(const int position) const {
     CompilationQueueElement* stub =
       rte_handler(ThrowExceptionStub::rte_array_index_out_of_bounds);
     if (stub && !stub->entry_label().is_bound() ) {
@@ -894,6 +893,14 @@ private:
   static bool _is_undoing_patching;
 #endif
 };
+
+inline VirtualStackFrame* CodeGenerator::frame ( void ) {
+  return Compiler::current()->frame();
+}
+
+inline VirtualStackFrame* GenericAddress::frame ( void ) {
+  return Compiler::current()->frame();
+}
 
 #if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
 

@@ -36,9 +36,8 @@ class GenericAddress: public StackObj {
   virtual void write_barrier_epilog() { /* by default there's no write barrier */ }
 
  protected:
-  static inline VirtualStackFrame* frame ( void ) {
-    return jvm_fast_globals.compiler_frame;
-  }
+  static inline VirtualStackFrame* frame ( void );
+
   static inline CodeGenerator* code_generator ( void ) {
     return jvm_fast_globals.compiler_code_generator;
   }

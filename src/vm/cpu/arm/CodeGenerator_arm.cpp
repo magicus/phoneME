@@ -5038,9 +5038,8 @@ void CodeGenerator::assign_register(Value& result, Value& op) {
 bool CodeGenerator::arraycopy(JVM_SINGLE_ARG_TRAPS) {
   write_literals_if_desperate();
 
-  UsingFastOops fast_oops;
-  VirtualStackFrame::Fast bailout_frame;
   Label bailout, done;
+  VirtualStackFrame* bailout_frame;
 
   enum {
     SRC_TYPE_CHECK,
@@ -5221,7 +5220,7 @@ bool CodeGenerator::arraycopy(JVM_SINGLE_ARG_TRAPS) {
       }
     }
 
-    bailout_frame = frame()->clone(JVM_SINGLE_ARG_CHECK_0);
+    bailout_frame = frame()->clone(JVM_SINGLE_ARG_ZCHECK_0(bailout_frame) );
 
     // Do null checks
     {
@@ -5430,7 +5429,7 @@ bool CodeGenerator::arraycopy(JVM_SINGLE_ARG_TRAPS) {
     GUARANTEE(method.not_null(), "System.arraycopy() not found");
 
     comment("Bailout: invoke System.arraycopy()");
-    VirtualStackFrameContext compile_in_bailout_frame(&bailout_frame);
+    VirtualStackFrameContext compile_in_bailout_frame( bailout_frame );
     invoke(&method, false/*no null checks*/ JVM_CHECK_0);
   }
 
@@ -5454,7 +5453,6 @@ bool CodeGenerator::unchecked_arraycopy(BasicType array_element_type
   Label bailout, done;
   const int element_size = byte_size_for(array_element_type);
   const int log_element_size = exact_log2(element_size);
-  VirtualStackFrame::Fast bailout_frame;
 
   bool need_src_ne_dst_check = true;  
 
@@ -5476,6 +5474,7 @@ bool CodeGenerator::unchecked_arraycopy(BasicType array_element_type
   const int inline_length_limit = limits[log_element_size];
   bool is_above_length_limit = false;
   bool need_length_limit_check = false;
+  VirtualStackFrame* bailout_frame;
 
   {
     Value src_data(T_OBJECT);
@@ -5519,8 +5518,7 @@ bool CodeGenerator::unchecked_arraycopy(BasicType array_element_type
                   "Destination array type inconsistency");
       }
 #endif
-
-      bailout_frame = frame()->clone(JVM_SINGLE_ARG_CHECK_0);
+      bailout_frame = frame()->clone(JVM_SINGLE_ARG_ZCHECK_0(bailout_frame));
 
       GUARANTEE(src.in_register() && dst.in_register(),
                 "Non-null object values must be in register");
@@ -5849,7 +5847,7 @@ bool CodeGenerator::unchecked_arraycopy(BasicType array_element_type
     bind(bailout);
 
     comment("Bailout: invoke unchecked_XXX_arraycopy()");
-    VirtualStackFrameContext compile_in_bailout_frame(&bailout_frame);
+    VirtualStackFrameContext compile_in_bailout_frame( bailout_frame );
     invoke(&method, false/*no null checks*/ JVM_CHECK_0);
   }
 

@@ -806,13 +806,13 @@ void BytecodeCompileClosure::return_op(BasicType kind JVM_TRAPS) {
         frame()->push(temp);
       }
 
-      VirtualStackFrame::Raw return_frame = compiler->parent_frame();
-      if (return_frame.is_null()) {
+      VirtualStackFrame* return_frame = compiler->parent_frame();
+      if( !return_frame ) {
         frame()->conformance_entry(true);
         return_frame = frame()->clone(JVM_SINGLE_ARG_CHECK);
-        compiler->set_parent_frame(&return_frame);
+        compiler->set_parent_frame( return_frame );
       } else {
-        frame()->conform_to(&return_frame);
+        frame()->conform_to( return_frame );
       }
     }
 
@@ -2136,19 +2136,20 @@ BytecodeCompileClosure::check_exception_handler_start(JVM_SINGLE_ARG_TRAPS) {
   TypeArray::Fast exception_table = method()->exception_table();
   GUARANTEE((exception_table().length() % 4) == 0, "Sanity check");
   for (int i = exception_table().length() - 4; i >= 0; i-=4) {
-    int start_bci = exception_table().ushort_at(i);
-    if (bci() == start_bci &&
-            !Compiler::current()->exception_has_osr_entry(start_bci)) {
+    const int start_bci = exception_table().ushort_at(i);
+    if( bci() == start_bci &&
+            !Compiler::current()->exception_has_osr_entry(start_bci) ) {
       Compiler::current()->set_exception_has_osr_entry(start_bci);
-      UsingFastOops fast_oops_inside;
-      BinaryAssembler::Label unused;
-      int handler_bci = exception_table().ushort_at(i + 2);
-      VirtualStackFrame::Fast old_frame = frame();
-      VirtualStackFrame::Fast exception_frame = 
-        frame()->clone_for_exception(handler_bci JVM_CHECK);
-      Compiler::set_frame(exception_frame());
+      const int handler_bci = exception_table().ushort_at(i + 2);
 
+      VirtualStackFrame* exception_frame = 
+        frame()->clone_for_exception(handler_bci JVM_ZCHECK(exception_frame));
+
+      VirtualStackFrame* old_frame = frame();
+      Compiler::set_frame( exception_frame );
       {
+        BinaryAssembler::Label unused;
+
         // Compiler at this location, and make it an OSR entry
         CompilationContinuation* stub =
           CompilationContinuation::insert( handler_bci, unused JVM_NO_CHECK );
@@ -2157,7 +2158,7 @@ BytecodeCompileClosure::check_exception_handler_start(JVM_SINGLE_ARG_TRAPS) {
           stub->set_is_exception_handler();
         }
       }
-      Compiler::set_frame(old_frame());
+      Compiler::set_frame( old_frame );
     }
   }
 }

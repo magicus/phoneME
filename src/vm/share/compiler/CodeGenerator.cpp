@@ -48,7 +48,7 @@ void CodeGenerator::store_to_location(Value& value, jint index) {
 }
 
 void CodeGenerator::flush_frame(JVM_SINGLE_ARG_TRAPS) {
-  frame()->flush(JVM_SINGLE_ARG_CHECK);
+  frame()->flush(JVM_SINGLE_ARG_NO_CHECK);
 }
 
 #ifndef ARM

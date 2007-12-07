@@ -196,9 +196,9 @@ class BytecodeClosure : public StackObj {
   virtual void monitor_exit(JVM_SINGLE_ARG_TRAPS)        {JVM_IGNORE_TRAPS;}
 
   // Accessor to locate method and bci
-  Method*       method	(void) const { return &((Method&)_method);    }
-  ConstantPool* cp	(void) const { return &((ConstantPool&)_cp);  }
-  int           bci	(void) const { return _bci;		      }
+  Method*       method  (void) const { return &((Method&)_method);    }
+  ConstantPool* cp      (void) const { return &((ConstantPool&)_cp);  }
+  int           bci     (void) const { return _bci;                   }
 
   // Extra methods for handling fast bytecodes that are hard to revert.
   virtual void fast_invoke_virtual(int /*index*/ JVM_TRAPS) {JVM_IGNORE_TRAPS;}

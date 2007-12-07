@@ -30,6 +30,7 @@
   template( PointerArray            ) \
   template( Entry                   ) \
   template( CompilationQueueElement ) \
+  template( VirtualStackFrame       )
 
 #define USE_COMPILER_OBJECT_HEADER 1
 

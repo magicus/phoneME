@@ -46,7 +46,7 @@ Assembler::Register RegisterAllocator::_next_float_spill;
 
 bool RegisterAllocator::is_mapping_something(Assembler::Register reg) {
   return Compiler::current()->frame()->is_mapping_something(reg) ||
-    (Compiler::current()->conforming_frame()->not_null() &&
+    (Compiler::current()->conforming_frame() != NULL &&
      Compiler::current()->conforming_frame()->is_mapping_something(reg));
 }
 
@@ -116,7 +116,7 @@ Assembler::Register RegisterAllocator::allocate_float_register() {
         continue;
       }
 #if ENABLE_INLINE
-      if (Compiler::current()->conforming_frame()->not_null() &&
+      if (Compiler::current()->conforming_frame() &&
           Compiler::current()->conforming_frame()->is_mapping_something(next)) {
         continue;
       }
@@ -196,10 +196,13 @@ Assembler::Register RegisterAllocator::allocate_double_register() {
         continue;
       }
 #if ENABLE_INLINE
-      if (Compiler::current()->conforming_frame()->not_null() &&
-          (Compiler::current()->conforming_frame()->is_mapping_something(Register(next+0)) ||
-            Compiler::current()->conforming_frame()->is_mapping_something(Register(next+1)))) {
-        continue;
+      {
+        const VirtualStackFrame* frame = Compiler::current()->conforming_frame();
+        if( frame &&
+            (frame->is_mapping_something(Register(next+0)) ||
+             frame->is_mapping_something(Register(next+1)))) {
+          continue;
+        }
       }
 #endif
       spill(Register(next+0));

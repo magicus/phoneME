@@ -27,24 +27,24 @@
 #if ENABLE_COMPILER
 
 class Entry: public CompilerObject {
-  VirtualStackFrameDesc* _frame;
-  int                    _bci;
-  int                    _label;
-  int                    _code_size;
+  VirtualStackFrame* _frame;
+  int                _bci;
+  int                _label;
+  int                _code_size;
 
 public:
   static Entry* allocate(jint bci, VirtualStackFrame* frame, 
-                   BinaryAssembler::Label& label, jint code_size JVM_TRAPS)
+                 const BinaryAssembler::Label label, jint code_size JVM_TRAPS)
   { // Clone the virtual stack frame by default.
-    UsingFastOops fast_oops;
-    VirtualStackFrame::Fast frame_clone = frame->clone(JVM_SINGLE_ARG_CHECK_0);
+    VirtualStackFrame* frame_clone =
+      frame->clone(JVM_SINGLE_ARG_ZCHECK_0(frame_clone));
 
     Entry* entry = COMPILER_OBJECT_ALLOCATE(Entry);
     if( entry ) {
       entry->set_bci( bci );
-      entry->set_frame(&frame_clone);
-      entry->set_label(label);
-      entry->set_code_size(code_size);
+      entry->set_frame( frame_clone );
+      entry->set_label( label );
+      entry->set_code_size( code_size );
     }
     return entry;
   }
@@ -53,10 +53,8 @@ public:
   jint bci( void ) const { return _bci; }
   void set_bci( const jint value ) { _bci = value; }
 
-  ReturnOop frame( void ) const { return (ReturnOop) _frame; }
-  void set_frame(VirtualStackFrame* value) {
-    _frame = (VirtualStackFrameDesc*) value->obj();
-  }
+  VirtualStackFrame* frame( void ) const { return _frame; }
+  void set_frame(VirtualStackFrame* value) { _frame = value; }
 
   BinaryAssembler::Label label( void ) const {
     BinaryAssembler::Label L;

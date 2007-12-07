@@ -54,7 +54,7 @@ class CompilationQueueElement: public CompilerObject {
 
  protected:
   CompilationQueueElement*     _next;   // Link to next element in queue
-  VirtualStackFrameDesc*       _frame;  // The virtual stack frame  
+  VirtualStackFrame*           _frame;  // The virtual stack frame  
   CompilationQueueElementType  _type;   // Type of this queue element  
   int                          _bci;    // The bytecode index
   // Labels.
@@ -146,15 +146,11 @@ public:
     _type = value;
   }
 
+  VirtualStackFrame* frame ( void ) const { return _frame; }
+  void set_frame( VirtualStackFrame* value ) { _frame = value; }
+
   jint bci( void ) const   { return _bci; }
   void set_bci( const jint value ) { _bci = value; }
-
-  ReturnOop frame( void ) const {
-    return _frame;
-  }
-  void set_frame( VirtualStackFrame* value ) {
-    _frame = (VirtualStackFrameDesc*) value->obj();
-  }
 
   Assembler::Register register_0( void ) const {
     return _register_0;

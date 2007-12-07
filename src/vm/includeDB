@@ -749,10 +749,7 @@ FPURegisterMap_<carch>.cpp       RegisterAllocator.hpp
 FPURegisterMap_<carch>.cpp       Compiler.hpp
 FPURegisterMap_<carch>.cpp       CodeGenerator.hpp
 
-VirtualStackFrameDesc.hpp        MixedOopDesc.hpp
-
-VirtualStackFrame.hpp            MixedOop.hpp
-VirtualStackFrame.hpp            VirtualStackFrameDesc.hpp
+VirtualStackFrame.hpp            CompilerObject.hpp
 VirtualStackFrame.hpp            Method.hpp
 VirtualStackFrame.hpp            Value.hpp
 VirtualStackFrame.cpp            VirtualStackFrame.hpp
@@ -761,7 +758,6 @@ VirtualStackFrame.cpp            Signature.hpp
 VirtualStackFrame.cpp            Symbols.hpp
 VirtualStackFrame.cpp            ObjectHeap_<iarch>.hpp
 VirtualStackFrame.cpp            SystemDictionary.hpp
-//VirtualStackFrame.cpp            SourceAssembler_<carch>.hpp
 VirtualStackFrame.cpp            Compiler.hpp
 VirtualStackFrame.cpp            FPURegisterMap_<carch>.hpp
 VirtualStackFrame.cpp            InstanceClass.hpp
@@ -2202,7 +2198,6 @@ Universe.hpp                     ObjArray.hpp
 Universe.hpp                     Oop.hpp
 Universe.hpp                     OopDesc.hpp
 Universe.hpp                     Thread.hpp
-Universe.hpp                     VirtualStackFrameDesc.hpp
 Universe.hpp                     TaskContext.hpp
 Universe.cpp                     Bytecodes.hpp
 Universe.cpp                     BytecodeClosure.hpp
@@ -2718,7 +2713,6 @@ OopDesc.inline.hpp               ObjNearDesc.hpp
 OopDesc.inline.hpp               TypeArrayClass.hpp
 OopDesc.inline.hpp               StackmapListDesc.hpp
 OopDesc.inline.hpp               ThreadDesc.hpp
-OopDesc.inline.hpp               VirtualStackFrameDesc.hpp
 OopDesc.inline.hpp               MixedOopDesc.hpp
 OopDesc.inline.hpp               VMEventDesc.hpp
 OopDesc.inline.hpp               VMEventModifierDesc.hpp
