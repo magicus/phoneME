@@ -31,7 +31,7 @@ import java.util.Vector;
 import com.sun.satsa.util.*;
 
 import com.sun.satsa.util.pkcs15.*;
-import com.sun.io.j2me.apdu.*;
+import com.sun.cdc.io.j2me.apdu.*;
 
 import javax.microedition.io.ConnectionNotFoundException;
 /**
