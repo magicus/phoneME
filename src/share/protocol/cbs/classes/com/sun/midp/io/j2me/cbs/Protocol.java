@@ -237,21 +237,21 @@ public class Protocol extends ProtocolBase {
      */
 
     /**
-     * Constructs a new message object of a text or binary type. When the
-     * <code>TEXT_MESSAGE</code> constant is passed in, the created
-     * object implements the <code>TextMessage</code> interface.
-     * When the <code>BINARY_MESSAGE</code> constant is passed in, the
-     * created object implements the <code>BinaryMessage</code>
-     * interface.
+     * Constructs a new message object of a binary or text type.
+     * If the <code>TEXT_MESSAGE</code> constant is passed in, the
+     * <code>TextMessage</code> interface is implemented by the created object.
+     * If the <code>BINARY_MESSAGE</code> constant is passed in, the
+     * <code>BinaryMessage</code> interface is implemented by the created
+     * object. 
      * <p>
      * If this method is called in a sending mode, a new <code>Message</code>
      * object is requested from the connection. For example:
      * <p>
      * <code>Message msg = conn.newMessage(TEXT_MESSAGE);</code>
      * <p>
-     * The newly created <code>Message</code> does not have the destination
-     * address set. It must be set by the application before the message is
-     * sent.
+     * The <code>Message</code> object that was created doesn't have the
+     * destination address set. It's the application's responsibility to set it
+     * before the message is sent.
      * <p>
      * If this method is called in receiving mode, the
      * <code>Message</code> object does have
@@ -285,12 +285,11 @@ public class Protocol extends ProtocolBase {
     /**
      * Constructs a new message object of a text or binary type and specifies
      * a destination address.
-     * When the
-     * <code>TEXT_MESSAGE</code> constant is passed in, the created
-     * object implements the <code>TextMessage</code> interface.
-     * When the <code>BINARY_MESSAGE</code> constant is passed in, the
-     * created object implements the <code>BinaryMessage</code>
-     * interface.
+     * If the <code>TEXT_MESSAGE</code> constant is passed in, the
+     * <code>TextMessage</code> interface is implemented by the created object.
+     * If the <code>BINARY_MESSAGE</code> constant is passed in, the
+     * <code>BinaryMessage</code> interface is implemented by the created
+     * object.
      * <p>
      * The destination address <code>addr</code> has the following format:
      * </p>
@@ -337,17 +336,17 @@ public class Protocol extends ProtocolBase {
      * constructs a <code>Message</code> object, and returns it.
      * <p>
      * If there are no <code>Message</code>s waiting on the connection,
-     * this method will block until a message
-     * is received, or the <code>MessageConnection</code> is closed.
+     * this method will block until the <code>MessageConnection</code>
+     * is closed, or a message is received.
      *
      * @return a <code>Message</code> object
      * @exception java.io.IOException if an error occurs while receiving
      *         a message.
      * @exception java.io.InterruptedIOException if this
-     *         <code>MessageConnection</code> object is closed during this
-     *         receive call.
-     * @exception java.lang.SecurityException if the application does not have
-     *         permission to receive messages using the given port number.
+     *         <code>MessageConnection</code> object is closed during the
+     *         call of this method.
+     * @exception java.lang.SecurityException if the application doesn't have
+     *         permission to receive messages on the given port.
      */
     public synchronized Message receive() throws IOException {
 
@@ -438,13 +437,13 @@ public class Protocol extends ProtocolBase {
      * <p>Note: The message is not actually sent. The number of protocol
      * segments is simply computed.
      * </p>
-     * <p>This method will compute the number of segments needed when this
-     * message is split into the protocol segments using the appropriate
-     * features of the underlying protocol. This method does not take into
-     * account possible limitations of the implementation that may limit the
-     * number of segments that can be sent using this feature. These limitations
-     * are protocol specific and are documented with the adapter definition for
-     * that protocol.
+     * <p>This method calculates the number of segments required
+     * when this message is split into the protocol segments
+     * utilizing the underlying protocol's features.
+     * Possible implementation's limitations that may limit the number of
+     * segments that can be sent using it are not taken into account. These
+     * limitations are protocol specific. They are documented
+     * with that protocol's adapter definition.
      * </p>
      * @param message The message to be used for the computation.
      *

@@ -46,11 +46,11 @@ public class TextObject extends MessageObject implements TextMessage {
         super(MessageConnection.TEXT_MESSAGE, addr);
     }
 
-    /** 
-     * Returns the message payload data as a <code>String</code>.
+    /**
+     * Returns a <code>String</code> representing the message payload data.
      *
-     * @return the payload of this message, or <code>null</code> 
-     * if the payload for the message is not set.
+     * @return <code>null</code> if the payload isn't set, or
+     *         this message's payload
      * @see #setPayloadText
      */
     public String getPayloadText() {
@@ -61,9 +61,8 @@ public class TextObject extends MessageObject implements TextMessage {
     }
 
     /**
-     * Sets the payload data of this message. The payload data 
-     * may be <code>null</code>.
-     * @param data payload data as a <code>String</code>
+     * Sets this message's payload data. It may be <code>null</code>.
+     * @param data a <code>String</code> representing the payload data
      * @see #getPayloadText
      */
     public void setPayloadText(String data) {
