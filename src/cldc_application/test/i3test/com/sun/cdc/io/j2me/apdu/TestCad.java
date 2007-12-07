@@ -1,6 +1,4 @@
 /*
- *   
- *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -24,7 +22,7 @@
  * information or have any questions.
  */
 
-package com.sun.io.j2me.apdu;
+package com.sun.cdc.io.j2me.apdu;
 
 import javax.microedition.apdu.*;
 import java.io.IOException;
@@ -33,7 +31,7 @@ import com.sun.midp.security.*;
 import com.sun.cardreader.*;
 
 /**
- * This test case tests basic com.sun.io.j2me.apdu.Cad class 
+ * This test case tests basic com.sun.cdc.io.j2me.apdu.Cad class 
  * functionality.
  */
 public class TestCad extends TestCase {

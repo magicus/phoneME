@@ -1,6 +1,4 @@
 /*
- *   
- *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -24,7 +22,7 @@
  * information or have any questions.
  */
 
-package com.sun.io.j2me.jcrmi;
+package com.sun.cdc.io.j2me.jcrmi;
 
 import com.sun.j2me.app.AppPackage;
 import com.sun.j2me.security.SatsaPermission;
@@ -40,8 +38,8 @@ import javax.microedition.jcrmi.JavaCardRMIConnection;
 import javax.microedition.jcrmi.RemoteStub;
 
 import com.sun.j2me.io.ConnectionBaseInterface;
-import com.sun.io.j2me.apdu.APDUManager;
-import com.sun.io.j2me.apdu.Handle;
+import com.sun.cdc.io.j2me.apdu.APDUManager;
+import com.sun.cdc.io.j2me.apdu.Handle;
 import com.sun.satsa.acl.ACLPermissions;
 import com.sun.satsa.acl.AccessControlManager;
 import com.sun.satsa.acl.JCRMIPermissions;

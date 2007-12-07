@@ -1,6 +1,4 @@
 /*
- *   
- *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -24,7 +22,7 @@
  * information or have any questions.
  */
 
-package com.sun.io.j2me.apdu;
+package com.sun.cdc.io.j2me.apdu;
 
 /**
  * This class represents a slot for APDU connection.
