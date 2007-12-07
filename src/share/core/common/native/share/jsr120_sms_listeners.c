@@ -51,7 +51,7 @@
 #include <jsr120_sms_listeners.h>
 #include <jsr120_sms_protocol.h>
 #include <app_package.h>
-#include <push_server_resource_mgmt.h> //pushgetfiltermms
+//#include <push_server_resource_mgmt.h> //pushgetfiltermms
 #include <wmaPushRegistry.h> // jsr120_check_filter
 
 /*

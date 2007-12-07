@@ -55,7 +55,7 @@ typedef enum midp_SignalType {
 #include <jsr120_cbs_pool.h>
 #include <jsr120_cbs_listeners.h>
 #include <jsr120_cbs_protocol.h>
-#include <push_server_resource_mgmt.h>
+//#include <push_server_resource_mgmt.h>
 
 /*
  * Listeners registered by a currently running midlet
