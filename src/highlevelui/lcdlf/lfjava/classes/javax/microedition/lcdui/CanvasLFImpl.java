@@ -42,6 +42,9 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
     CanvasLFImpl(Canvas canvas) {
         super(canvas);
         this.canvas = canvas;
+        if (currentDisplay != null) {
+            isDisplayRotated = currentDisplay.wantRotation;
+        }
     }
 
     // ************************************************************
@@ -151,6 +154,7 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
                 } catch (Throwable t) {
                     Display.handleThrowable(t);
                 }
+                needRepaintBackground = true;
             }
         }
     }
@@ -171,10 +175,17 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
             if (oldState == SHOWN) {
                 try {
                     canvas.hideNotify();
+                    if (mmHelper != null) {
+                        for (Enumeration e = embeddedVideos.elements();
+                                                  e.hasMoreElements();) {
+                            mmHelper.hideVideo(e.nextElement());
+                        }
+                    }
                 } catch (Throwable t) {
                     Display.handleThrowable(t);
                 }
-            }
+                needRepaintBackground = true;
+           }
         }
     }
 
@@ -212,7 +223,27 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
         g.resetGC();
 
         synchronized (Display.calloutLock) {
+            // We need repaint background if an orientation has changed
+            if (currentDisplay != null) {
+                boolean isRotated = currentDisplay.wantRotation;
+                if (isDisplayRotated != isRotated) {
+                    isDisplayRotated = isRotated;
+                    needRepaintBackground = true;
+                }
+            }
             try {
+                // Paint black background under the canvas
+                boolean isShown = canvas.isShown();
+                if (needRepaintBackground && isShown) {
+                    // We should repaint whole canvas: remove the clipping
+                    g.setClip(0, 0, canvas.getWidth(), canvas.getHeight());
+                    // Draw a black rectangle
+                    int savedColor = g.getColor();
+                    g.setColor(0, 0, 0);
+                    g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+                    g.setColor(savedColor);
+                }
+                needRepaintBackground = !isShown;
                 canvas.paint(g);
                 // If there are any video players in this canvas,
                 // let the helper class invoke video rendering
@@ -399,6 +430,16 @@ class CanvasLFImpl extends DisplayableLFImpl implements CanvasLF {
      */
     Canvas canvas;
 
+    /**
+     * Is a repaint of black background needed?
+     */
+    private boolean needRepaintBackground = true;
+    
+    /**
+     * Is the display rotated?
+     */
+    private boolean isDisplayRotated = false;
+    
     /**
      * A vector of embedded video players.
      */

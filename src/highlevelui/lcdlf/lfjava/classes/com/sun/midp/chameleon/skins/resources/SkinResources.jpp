@@ -108,7 +108,7 @@ public class SkinResources {
      * tunnel instance created in the public javax.microedition.lcdui
      * package and needed for romized images loading. 
      *
-     * @param tunnel used to get images from the public LCDUI package
+     * @param access used to get images from the public LCDUI package
      */
     public static void initGraphicsAccess(GraphicsAccess access) {
         if (graphicsAccess == null) {
@@ -119,6 +119,8 @@ public class SkinResources {
     /**
      * This method is called by the Display class to initialize
      * Display access tunnel class.
+     *
+     * @param access 
      */
     public static void initDisplayAccess(DisplayAccess access) {
         displayAccess = access;
@@ -170,7 +172,7 @@ public class SkinResources {
             resources = new LoadedSkinResources();
 
             skinData = new LoadedSkinData();
-            String fileName = 
+            String fileName =
                 File.getConfigRoot(Constants.INTERNAL_STORAGE_ID) + 
                 SkinResourcesConstants.SKIN_BINARY_FILE_NAME;
 
@@ -178,7 +180,7 @@ public class SkinResources {
 
             resources.fonts = new Font[skinData.fontValues.length];
             resources.images = new Image[skinData.imageValues.length];
-            
+
             // For MVM, share resources cache and loaded properties
             // between Isolates. For SVM, those methods do nothing.
             shareResourcePool(resources);

@@ -34,13 +34,7 @@
 #
 ######################################################################
 
-# Adds to global SUBSYSTEMS list
-#
-CONFIG_SUBSYSTEM = configuration
-SUBSYSTEMS += $(CONFIG_SUBSYSTEM)
-
-SUBSYSTEM_CONFIG_DIR = $(SUBSYSTEM_DIR)/$(CONFIG_SUBSYSTEM)
-PROJECT_SUBSYSTEM_CONFIG_DIR = $(PROJECT_SUBSYSTEM_DIR)/$(CONFIG_SUBSYSTEM)
+include $(SUBSYSTEM_DIR)/configuration/configuration_common.gmk
 
 #####################################################################
 # Configurator Subsystem

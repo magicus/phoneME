@@ -241,9 +241,9 @@ public class MIDPWindow extends CWindow {
         if (displayable instanceof Alert) {
             buttonLayer.toggleAlert(false);
             tickerLayer.toggleAlert(false);
-            
-            alertLayer.setAlert(false, null, 0);
+
             paintWash(false);
+            alertLayer.setAlert(false, null, 0);
             removeLayer(alertLayer);
         } else {
             bodyLayer.setVisible(false);
@@ -458,7 +458,8 @@ public class MIDPWindow extends CWindow {
      * @param onOff A flag indicating if the wash should be on or off
      */
     public void paintWash(boolean onOff) {
-	if (alertLayer.visible) {
+
+    if (alertLayer.visible) {
             addLayer(washLayer);
             if (onOff) {
                 addLayer(alertWashLayer);

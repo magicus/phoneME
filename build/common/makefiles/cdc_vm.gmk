@@ -181,16 +181,6 @@ $(MIDP_EXCLUDED_CLASS_ZIP) : $(MIDP_EXCLUDED_JAVA_FILES)
 		$(MIDP_EXCLUDED_JAVA_FILES)
 	$(AT)cd $(MIDP_EXCLUDED_CLASS_DIR); zip -r -q $@ *
 
-# Generate MIDPPackageManager to perform JSR initialization on MIDP start-up.
-# This rule is temporary. It should be removed when real PackageManager is implemented.
-$(GENERATED_DIR)/classes/com/sun/cdc/config/MIDPPackageManager.java: $(CONFIGURATOR_JAR_FILE)
-	@echo "... generating MIDPPackageManager.java"
-	$(AT)$(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
-	-xml $(INT_COMMON_XML_DIR)/empty.xml \
-	-xsl `$(call fixcygpath,$(CONFIGURATOR_DIR)/xsl/cdc/propertiesInit.xsl)` \
-	-params className MIDPPackageManager initializers '$(JSR_MIDP_INITIALIZER_LIST)' \
-	-out $@)
-
 # The CDC build cannot compile the following files yet. 
 cdc_dummies:
 	$(AT)mkdir -p $(GENERATED_DIR)

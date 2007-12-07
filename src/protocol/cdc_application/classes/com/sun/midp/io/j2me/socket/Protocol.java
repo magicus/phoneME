@@ -31,8 +31,15 @@ import java.io.*;
 import java.net.*;
 import javax.microedition.io.*;
 
+import com.sun.j2me.security.AccessController;
+
 public class Protocol extends com.sun.cdc.io.j2me.socket.Protocol {
-    
+
+    public static final String CLIENT_PERMISSION_NAME =
+	"javax.microedition.io.Connector.socket";
+
+    private static final String SERVER_PERMISSION_NAME =
+        "javax.microedition.io.Connector.serversocket";
     
     /** Number of input streams that were opened. */
     protected int iStreams = 0;
@@ -76,11 +83,49 @@ public class Protocol extends com.sun.cdc.io.j2me.socket.Protocol {
         super.setSocketOption(option, value);
     }
 
-    /*
-     * throws SecurityException if MIDP permission check fails 
+   /**
+     * Check to see if the application has permission to use
+     * the given resource.
+     *
+     * @param host the name of the host to contact. If the
+     *             empty string, this is a request for a
+     *             serversocket.
+     *
+     * @param port the port number to use.
+     *
+     * @exception SecurityException if the MIDP permission
+     *            check fails.
      */
-    protected void checkMIDPPermission(String host, int port) {
-        //The actual MIDP permission check happens here
+    protected void checkPermission(String host, int port)
+        throws SecurityException{
+
+        if (port < 0) {
+            throw new IllegalArgumentException("bad port: " + port);
+        }
+	if ("".equals(host)) {
+	    AccessController.checkPermission(SERVER_PERMISSION_NAME,
+					     "TCP Server" + port);
+	} else {
+	    AccessController.checkPermission(CLIENT_PERMISSION_NAME,
+                                         "TCP" + ":" + host + ":" + port);
+	}
+        return;
+    }
+
+    /*
+     * For MIDP version of the protocol handler, only a single
+     * check on open is required.
+     */
+    protected void outputStreamPermissionCheck() {
+        return;
+    }
+
+    /*
+     * For MIDP version of the protocol handler, only a single
+     * check on open is required.
+     */
+    protected void inputStreamPermissionCheck() {
+        return;
     }
 
 }

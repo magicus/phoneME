@@ -49,6 +49,10 @@ $(MIDP_CLASSES_ZIP):: $(SKINROMIZATION_JAR_FILE) $(SUBSYSTEM_CONFIGURATION_MERGE
 	$(romize_skin)
 	$(copy_lcdlf_resources)
 
+# rules for building Romizer
+$(MIDP_CLASSES_ZIP):: $(ROMIZER_JAR_FILE)
+
+
 # The rule for merging configurations unconditionally.
 # We need a separate rule to expand (merge_configurations)
 # before expanding (generate_configuration).
@@ -390,6 +394,18 @@ JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_211_I3TEST_JAVA_FILES)
 JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_211_NATIVE_FILES)
 EXTRA_INCLUDES          += $(SUBSYSTEM_JSR_211_EXTRA_INCLUDES)
 endif
+
+ifeq ($(USE_JSR_238), true)
+# JSR 238 MIA
+#
+$(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_JSR_238_JAVA_FILES)
+	$(appendjavafiles)
+
+JTWI_I3TEST_JAVA_FILES	+= $(SUBSYSTEM_JSR_238_I3TEST_JAVA_FILES)
+JTWI_NATIVE_FILES	+= $(SUBSYSTEM_JSR_238_NATIVE_FILES)
+EXTRA_INCLUDES          += $(SUBSYSTEM_JSR_238_EXTRA_INCLUDES)
+endif
+
 
 ifeq ($(USE_JSR_135), true)
 # JSR 135 MMAPI
