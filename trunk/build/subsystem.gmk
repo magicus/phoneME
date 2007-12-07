@@ -1,6 +1,4 @@
 #
-#   
-#
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -97,8 +95,8 @@ SUBSYSTEM_SATSA_SOURCEPATH += \
 endif
 
 SUBSYSTEM_SATSA_PACKAGES = \
-  com.sun.io.j2me.apdu \
-  com.sun.io.j2me.jcrmi \
+  com.sun.cdc.io.j2me.apdu \
+  com.sun.cdc.io.j2me.jcrmi \
   com.sun.satsa.acl \
   com.sun.satsa.util \
   com.sun.satsa.util.pkcs15 \
@@ -198,25 +196,25 @@ MODULE_SATSA_ACL_JAVA_FILES += \
 # JSR_177_APDU_MANAGER=simple
 ifeq ($(JSR_177_APDU_MANAGER),simple)
 MODULE_SATSA_APDU_JAVA_FILES = \
-    $(JSR_177_DIR)/src/share/protocol/apdu/simple/classes/com/sun/io/j2me/apdu/Protocol.java \
-    $(JSR_177_DIR)/src/share/protocol/apdu/simple/classes/com/sun/io/j2me/apdu/APDUManager.java \
-    $(JSR_177_DIR)/src/share/protocol/apdu/simple/classes/com/sun/io/j2me/apdu/Handle.java \
-    $(JSR_177_DIR)/src/share/protocol/apdu/simple/classes/com/sun/io/j2me/apdu/Slot.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/simple/classes/com/sun/cdc/io/j2me/apdu/Protocol.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/simple/classes/com/sun/cdc/io/j2me/apdu/APDUManager.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/simple/classes/com/sun/cdc/io/j2me/apdu/Handle.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/simple/classes/com/sun/cdc/io/j2me/apdu/Slot.java \
     $(JSR_177_DIR)/src/share/protocol/apdu/simple/classes/com/sun/cardreader/CardDeviceException.java
 MODULE_SATSA_APDU_NATIVE_FILES += \
 	apdu_manager_kni.c 
 SUBSYSTEM_SATSA_CNI_CLASSES += \
-    com.sun.io.j2me.apdu.APDUManager
+    com.sun.cdc.io.j2me.apdu.APDUManager
 else
 
 # JSR_177_APDU_MANAGER=carddevice
 ifeq ($(JSR_177_APDU_MANAGER),carddevice)
 MODULE_SATSA_APDU_JAVA_FILES = \
-    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/io/j2me/apdu/Protocol.java \
-    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/io/j2me/apdu/APDUManager.java \
-    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/io/j2me/apdu/Cad.java \
-    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/io/j2me/apdu/Handle.java \
-    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/io/j2me/apdu/TLP224Message.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cdc/io/j2me/apdu/Protocol.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cdc/io/j2me/apdu/APDUManager.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cdc/io/j2me/apdu/Cad.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cdc/io/j2me/apdu/Handle.java \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cdc/io/j2me/apdu/TLP224Message.java \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/CardDevice.java \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/CardSlot.java \
     $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/cardreader/SlotFactory.java \
@@ -242,11 +240,14 @@ else
 JSR_177_ERRORS += \
     (echo "ERROR: JSR_177_APDU_MANAGER is not properly set ($(JSR_177_APDU_MANAGER))") $(LOG);
 
-# end of JSR_177_APDU_MANAGER simple
-endif
 # end of JSR_177_APDU_MANAGER carddevice
 endif
+# end of JSR_177_APDU_MANAGER simple
+endif
 # END OF Define APDU sources
+
+MODULE_SATSA_APDU_JAVA_FILES += \
+    $(JSR_177_DIR)/src/share/protocol/apdu/classes/com/sun/midp/io/j2me/apdu/Protocol.java
 
 # Add device driver
 ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
@@ -260,8 +261,9 @@ ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
 endif
 
 MODULE_SATSA_JCRMI_JAVA_FILES = \
-    $(JSR_177_DIR)/src/share/protocol/jcrmi/classes/com/sun/io/j2me/jcrmi/Protocol.java \
-    $(JSR_177_DIR)/src/share/protocol/jcrmi/classes/com/sun/io/j2me/jcrmi/Reference.java
+    $(JSR_177_DIR)/src/share/protocol/jcrmi/classes/com/sun/cdc/io/j2me/jcrmi/Protocol.java \
+    $(JSR_177_DIR)/src/share/protocol/jcrmi/classes/com/sun/midp/io/j2me/jcrmi/Protocol.java \
+    $(JSR_177_DIR)/src/share/protocol/jcrmi/classes/com/sun/cdc/io/j2me/jcrmi/Reference.java
 
 MODULE_SATSA_PKI_JAVA_FILES = \
     $(JSR_177_DIR)/src/share/pki/classes/com/sun/satsa/pki/Certificate.java \

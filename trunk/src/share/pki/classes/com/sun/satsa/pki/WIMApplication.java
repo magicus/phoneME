@@ -28,8 +28,8 @@ package com.sun.satsa.pki;
 
 import com.sun.j2me.dialog.Dialog;
 import com.sun.j2me.dialog.MessageDialog;
-import com.sun.io.j2me.apdu.APDUManager;
-import com.sun.io.j2me.apdu.Handle;
+import com.sun.cdc.io.j2me.apdu.APDUManager;
+import com.sun.cdc.io.j2me.apdu.Handle;
 import com.sun.satsa.acl.ACLPermissions;
 import com.sun.satsa.acl.PINAttributes;
 import com.sun.satsa.acl.PINEntryDialog;
