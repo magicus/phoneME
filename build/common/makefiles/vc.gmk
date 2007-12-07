@@ -48,7 +48,7 @@ CC_OUTPUT	= -Fo
 LD		= link
 LD_OUTPUT	= -out:
 LINKER_OUTPUT	= $(LD_OUTPUT)
-LIBS		+= user32.lib gdi32.lib kernel32.lib winmm.lib wsock32.lib vfw32.lib
+LIBS		+= user32.lib shell32.lib gdi32.lib kernel32.lib winmm.lib wsock32.lib vfw32.lib
 
 
 LD_FLAGS 	+= -nologo -subsystem:console -machine:i386 -MAP \
@@ -83,7 +83,11 @@ LD_FLAGS	+= -nodefaultlib:msvcrt.lib msvcrtd.lib
 else
 
 # flags inherited from the VM
+ifeq ($(USE_VS2005), true)
+EXTRA_CFLAGS 	+= -Ox -Os -Gy -GF -MD
+else
 EXTRA_CFLAGS 	+= -Ox -GB -Os -Gy -GF -MD
+endif
 LD_FLAGS 	+= -merge:CODESEGMENT=.text -merge:DATASEGMENT=.data \
 		   -opt:REF -opt:ICF,8
 # Force use of non-debug libraries

@@ -43,3 +43,9 @@ $(BINDIR)/runMidlet$(g)$(p)$(EXE): \
 	@echo " ... linking $@ " $(LOG)
 	$(A)$(LD) $(LD_FLAGS) $(LINKER_OUTPUT)`$(call fixcygpath,$@ \
 	     $(LD_START_GROUP) $(AMS_RUNMIDLET_OBJ_FILES) $(OBJLIB) $(LIBS))` $(LD_END_GROUP) $(LOG)
+	     
+ifeq ($(USE_VISTA), true)
+		$(A)mt.exe -manifest `$(call fixcygpath,$@.manifest)` "-outputresource:`$(call fixcygpath,$@)`"
+endif		   
+		   
+	     

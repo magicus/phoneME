@@ -37,7 +37,11 @@ OBJLIB = $(OBJ_DIR)/$(OBJLIBNAME)
 OBJLIB_SCRIPT = $(OBJLIB)-list
 
 $(OBJLIB): $(OBJ_FILES)
+ifeq ($(USE_VS2005), true)
+	$(AR) /out:$(OBJLIB) $(OBJ_FILES)
+else
 	$(shell echo $(MRI_CREATE)$(OBJLIBNAME) > $(OBJLIB_SCRIPT))
 	$(foreach path, $(OBJ_FILES), $(shell echo $(MRI_ADD)`$(call fixcygpath,$(path))` >> $(OBJLIB_SCRIPT)))
 	$(shell echo $(MRI_SAVE) >> $(OBJLIB_SCRIPT))
 	$(shell cd $(OBJ_DIR); $(AR) $(MRI_OPT)$(OBJLIB_SCRIPT); $(RANLIB) $(OBJLIBNAME))
+endif
