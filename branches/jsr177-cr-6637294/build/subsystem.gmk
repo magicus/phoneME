@@ -240,11 +240,14 @@ else
 JSR_177_ERRORS += \
     (echo "ERROR: JSR_177_APDU_MANAGER is not properly set ($(JSR_177_APDU_MANAGER))") $(LOG);
 
-# end of JSR_177_APDU_MANAGER simple
-endif
 # end of JSR_177_APDU_MANAGER carddevice
 endif
+# end of JSR_177_APDU_MANAGER simple
+endif
 # END OF Define APDU sources
+
+MODULE_SATSA_APDU_JAVA_FILES += \
+    $(JSR_177_DIR)/src/cldc_application/protocol/apdu/classes/com/sun/midp/io/j2me/apdu/Protocol.java
 
 # Add device driver
 ifeq ($(JSR_177_APDU_CARDDEVICE),platformcarddevice)
@@ -259,6 +262,7 @@ endif
 
 MODULE_SATSA_JCRMI_JAVA_FILES = \
     $(JSR_177_DIR)/src/share/protocol/jcrmi/classes/com/sun/cdc/io/j2me/jcrmi/Protocol.java \
+    $(JSR_177_DIR)/src/share/protocol/jcrmi/classes/com/sun/midp/io/j2me/jcrmi/Protocol.java \
     $(JSR_177_DIR)/src/share/protocol/jcrmi/classes/com/sun/cdc/io/j2me/jcrmi/Reference.java
 
 MODULE_SATSA_PKI_JAVA_FILES = \
