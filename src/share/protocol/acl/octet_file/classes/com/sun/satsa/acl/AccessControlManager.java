@@ -26,7 +26,7 @@
 
 package com.sun.satsa.acl;
 
-import com.sun.io.j2me.apdu.APDUManager;
+import com.sun.cdc.io.j2me.apdu.APDUManager;
 import java.security.MessageDigest;
 
 /**
