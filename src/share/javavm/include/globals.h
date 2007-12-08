@@ -566,7 +566,7 @@ struct CVMGlobalState {
      * object handle and the function pointer of calling Agent_OnUnLoad at VM
      * exit.
      */
-    CVMAgentTable agentonUnloadTable;
+    CVMAgentTable agentTable;
 #endif
     /*
      * exit_procs contains exitHandle() function pointer to exit 

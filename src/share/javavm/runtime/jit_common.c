@@ -977,10 +977,8 @@ new_mb:
 #ifdef CVM_JVMTI
 		    /* No events during this delicate phase of creating
 		     * a frame */
-		    jlong thread_bits;
-		    thread_bits = CVMjvmtiGetThreadEventEnabled(ee);
-		    CVMjvmtiSetShouldPostAnyThreadEvent(ee,
-				thread_bits & ~THREAD_FILTERED_EVENT_BITS);
+		    CVMBool jvmtiEvents = CVMjvmtiDebugEventsEnabled(ee);
+		    CVMjvmtiDebugEventsEnabled(ee) = CVM_FALSE;
 #endif
                     /* The method is sync, so lock the object. */
                     /* %comment l002 */
@@ -992,8 +990,7 @@ new_mb:
 			    CVMassert(frameSanity(frame, topOfStack));
  			    ee->invokeMb = NULL;
 #ifdef CVM_JVMTI
-			    CVMjvmtiSetShouldPostAnyThreadEvent(ee,
-							     thread_bits);
+			    CVMjvmtiDebugEventsEnabled(ee) = jvmtiEvents;
 #endif
                            return CVM_COMPILED_EXCEPTION;
 			}
@@ -1002,7 +999,7 @@ new_mb:
 			&CVMframeReceiverObj(frame, Compiled),
 			receiverObjICell);
 #ifdef CVM_JVMTI
-		    CVMjvmtiSetShouldPostAnyThreadEvent(ee, thread_bits);
+		    CVMjvmtiDebugEventsEnabled(ee) = jvmtiEvents;
 #endif
 		}
 

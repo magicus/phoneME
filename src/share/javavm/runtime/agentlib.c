@@ -96,15 +96,16 @@ void CVMAgentAppendToTable(CVMAgentTable *table,
  * Delete all nativeLibrary object refs. 
  * Free Agent_table in CVMglobals.
  */
-void CVMAgentProcessTable(CVMAgentTable *Agent_table, JNIEnv *env, JavaVM *vm)
+void CVMAgentProcessTableUnload(CVMAgentTable *agentTable,
+				JNIEnv *env, JavaVM *vm)
 {
-    CVMAgentItem *itemPtr = Agent_table->table;
+    CVMAgentItem *itemPtr = agentTable->table;
     CVMInt32 i = 0;
 
-    if (Agent_table->elemCnt == 0) {
+    if (agentTable->elemCnt == 0) {
 	return;
     }
-    while (i < Agent_table->elemCnt) {
+    while (i < agentTable->elemCnt) {
 	Agent_OnUnload_t Agent_OnUnload = itemPtr[i].onUnloadFunc;
 	void*libHandle = itemPtr[i++].libHandle;
 	/* call Agent_OnUnload function if any */
@@ -116,7 +117,7 @@ void CVMAgentProcessTable(CVMAgentTable *Agent_table, JNIEnv *env, JavaVM *vm)
 	CVMassert(libHandle != NULL);
 	CVMdynlinkClose(libHandle);
     }
-    free(Agent_table->table);
+    free(agentTable->table);
 }
 
 /* This takes in the entire -agentlib string and takes care of 
@@ -135,7 +136,7 @@ void CVMAgentProcessTable(CVMAgentTable *Agent_table, JNIEnv *env, JavaVM *vm)
 
 
 CVMBool
-CVMAgentHandleArgument(CVMAgentTable* Agent_table, JNIEnv* env,
+CVMAgentHandleArgument(CVMAgentTable* agentTable, JNIEnv* env,
                        CVMAgentlibArg_t* arg)
 {
     char buffer[CVM_PATH_MAXLEN];
@@ -203,13 +204,8 @@ CVMAgentHandleArgument(CVMAgentTable* Agent_table, JNIEnv* env,
      */
     onUnloadFunc = (Agent_OnUnload_t)CVMdynlinkSym(nativeLibrary,
 						   "Agent_OnUnload");
-    if (onUnloadFunc != NULL) {
-	CVMAgentAppendToTable(Agent_table, nativeLibrary, onUnloadFunc);
-    } else {
-	CVMconsolePrintf("Could not find Agent_OnUnload of helper library "
-			 "for argument %s\n", arg->str);
-    }
-
+    CVMAgentAppendToTable(agentTable, nativeLibrary, onUnloadFunc);
+    
     /* Call Agent_OnLoad after the lookup and store away
      * of Agent_OnUnload so we won't call Agent_OnUnload 
      * at VM shutdown if Agent_OnLoad was never called.

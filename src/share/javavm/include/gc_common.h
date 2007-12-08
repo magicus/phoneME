@@ -657,6 +657,10 @@ extern CVMUint32 CVMgcGetArenaID(CVMObject *obj);
 #endif
 
 
+#define CVMgcIsInSafeAllState() \
+    (CVM_CSTATE(CVM_GC_SAFE)->reached)
+
+
 #if defined(CVM_DEBUG) || defined(CVM_INSPECTOR)
 /* Dumps info about the configuration of the GC. */
 #define CVMgcDumpSysInfo() CVMgcimplDumpSysInfo()

@@ -80,18 +80,63 @@ CVMmutexLock(CVMMutex * m)
 {
 #ifdef CVM_DEBUG
 if (CVMthreadSelf() != NULL) {
-    CVMthreadSelf()->where = 5;
+    //    CVMthreadSelf()->where = 5;
 }
 #endif
 #if 1
  {
+#if defined(CVM_HAVE_DEPRECATED) || defined(CVM_THREAD_SUSPENSION)
      CVMThreadID *self = CVMthreadSelf();
      if (self != NULL) {
 
+	 self->is_mutex_blocked = CVM_TRUE;
+	 if (self->suspended && !self->suspended_in_wait &&
+	     !self->suspended_in_mutex_blocked) {
+	     int count;
+	     /*
+	      * If we get there then the win32syncsuspend code didn't
+	      * see the is_mutex_blocked flag and issued a SuspendThread call.
+	      * It could have happened well before we entered this code.
+	      * Since 'suspended' is set and 'is_mutex_blocked' is now set
+	      * we can Resume this thread. If another attempt comes in from
+	      * some other thread to suspend this thread it will set the
+	      * suspended_in_mutex_blocked flag.  If a ResumeThread comes
+	      * in from some other thread, no problem because suspend count
+	      * in thread will not go below zero.
+	      */
+	     while ((count = ResumeThread(self->handle)) > 1 &&
+		    count != 0xffffffff) 
+		 ;
+	     /* It's possible that some other thread called win32syncResume on
+	      * this thread.
+	      * That's ok, since is_mutex_blocked is set no other thread
+	      * will call SuspendThread on our behalf.  We can now 
+	      * safely grab the self->lock
+	      */
+	     EnterCriticalSection(&self->lock.crit);
+	     self->suspended_in_mutex_blocked = 1;
+	     /* If some other thread Resumed this thread then we clear
+	      * some flags and continue
+	      */
+	     if (!self->suspended) {
+		 self->suspended_in_mutex_blocked = 0;
+	     }
+		 
+	     /*
+	      * once we release the self->lock, if this thread is still
+	      * suspended then a win32syncResume will result in a setEvent call
+	      */
+	     LeaveCriticalSection(&self->lock.crit);
+	 }
+
 	 while (CVM_TRUE) {
-	     self->is_mutex_blocked = CVM_TRUE;
+	     /*
+	      * If 'suspended' is set and other flags not set then that is
+	      * a race we don't know about!  
+	      */
+	     assert(!(self->suspended && !self->suspended_in_mutex_blocked &&
+	       !self->suspended_in_wait));
 	     EnterCriticalSection(&m->crit);
-	     self->is_mutex_blocked = CVM_FALSE;
 
 	     if (self->suspended_in_mutex_blocked) {
 		 assert(self->suspended);
@@ -110,14 +155,21 @@ if (CVMthreadSelf() != NULL) {
 		  */
 		 LeaveCriticalSection(&m->crit);
 		 WaitForSingleObject(self->suspend_cv, INFINITE);
+		 assert(!(self->suspended &&
+			  !self->suspended_in_mutex_blocked &&
+			  !self->suspended_in_wait));
 	     } else {
 		 break;
 	     }
 	 }
+	 self->is_mutex_blocked = CVM_FALSE;
 
-     } else {
-	 EnterCriticalSection(&m->crit);
-     }
+     } else
+#endif	 /* defined(CVM_HAVE_DEPRECATED) || defined(CVM_THREAD_SUSPENSION) */
+	 {
+	     EnterCriticalSection(&m->crit);
+	 }
+
  }
 #else
     WaitForSingleObject(m->h, INFINITE);
@@ -136,6 +188,18 @@ CVMmutexUnlock(CVMMutex * m)
 #else
     SetEvent(m->h);
 #endif
+    {
+	CVMThreadID *self = CVMthreadSelf();
+	if (self != NULL) {
+	    if (self->suspended == 1) {
+		int count = ResumeThread(self->handle);
+		if (count >= 1) {
+		    self->suspended = 1;
+		}
+	    }
+	}
+    }
+		
 }
 
 /* emulate a semaphore post */
@@ -364,6 +428,7 @@ win32SyncInterruptWait(CVMThreadID *thread)
 void
 win32SyncSuspend(CVMThreadID *t)
 {
+#if defined(CVM_HAVE_DEPRECATED) || defined(CVM_THREAD_SUSPENSION)
     if (t == CVMthreadSelf()) {
 	t->suspended = 1;
 	SuspendThread(GetCurrentThread());
@@ -392,11 +457,13 @@ win32SyncSuspend(CVMThreadID *t)
 	}
 	CVMmutexUnlock(&t->lock);
     }
+#endif	 /* defined(CVM_HAVE_DEPRECATED) || defined(CVM_THREAD_SUSPENSION) */
 }
 
 void
 win32SyncResume(CVMThreadID *t)
 {
+#if defined(CVM_HAVE_DEPRECATED) || defined(CVM_THREAD_SUSPENSION)
     CVMmutexLock(&t->lock);
     if (t->suspended) {
 	t->suspended = 0;
@@ -411,6 +478,7 @@ win32SyncResume(CVMThreadID *t)
 	}
     }
     CVMmutexUnlock(&t->lock);
+#endif	 /* defined(CVM_HAVE_DEPRECATED) || defined(CVM_THREAD_SUSPENSION) */
 }
 
 #ifdef CVM_ADV_THREAD_BOOST

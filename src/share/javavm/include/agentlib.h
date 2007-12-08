@@ -68,13 +68,15 @@ typedef struct CVMAgentTable {
 } CVMAgentTable;
 
 extern CVMBool
-CVMAgentInitTable(CVMAgentTable *onUnloadTable, CVMInt32 numAgentArguments);
+CVMAgentInitTable(CVMAgentTable *table, CVMInt32 numAgentArguments);
 extern void
-CVMAgentAppendToTable(CVMAgentTable *onUnloadTable, void *libHandle,
-		     Agent_OnUnload_t fptr);
+CVMAgentAppendToTable(CVMAgentTable *table, void *libHandle,
+		      Agent_OnUnload_t fptr);
 extern void
-CVMAgentProcessTable(CVMAgentTable *onUnloadTable, JNIEnv *env, JavaVM *vm);
+CVMAgentProcessTableUnload(CVMAgentTable *agentTable,
+			   JNIEnv *env, JavaVM *vm);
 extern CVMBool
-CVMAgentHandleArgument(CVMAgentTable *onUnloadTable, JNIEnv* env, CVMAgentlibArg_t* arg);
+CVMAgentHandleArgument(CVMAgentTable *agentTable, JNIEnv* env,
+		       CVMAgentlibArg_t* arg);
 
 #endif /* _INCLUDED_AGENTLIB_H */

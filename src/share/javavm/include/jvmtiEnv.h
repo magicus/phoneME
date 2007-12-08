@@ -153,6 +153,6 @@ CVMBool CVMjvmtiVisitStackEmpty();
 void CVMjvmtiCleanupMarked();
 void CVMjvmtiRecomputeEnabled(JvmtiEnvEventEnable *);
 jlong CVMjvmtiRecomputeThreadEnabled(CVMExecEnv *ee, JvmtiEnvEventEnable *);
-CVMClassBlock* CVMjvmtiObject2Class(CVMExecEnv *ee, jclass clazz);
+CVMClassBlock* CVMjvmtiClassObject2CB(CVMExecEnv *ee, jclass clazz);
 
 #endif /* _INCLUDED_JVMTIENV_H */

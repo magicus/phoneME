@@ -906,10 +906,25 @@ CVMclassCreateInternalClass(CVMExecEnv* ee,
 #endif
 #ifdef CVM_JVMTI
     if (CVMjvmtiShouldPostClassFileLoadHook()) {
-	/* At this point in time we don't have a classblock or
+	jclass klass = NULL;
+	CVMClassLoaderICell* loaderToUse = loader;
+	/* At this point in time we may not have a classblock or
 	 * a protection domain so we pass NULL
 	 */
-	CVMjvmtiPostClassLoadHookEvent(NULL, loader, classname,
+	if (isRedefine) {
+	    CVMClassBlock*   oldCb = NULL;
+	    /* ClassLoadHook event tests require klass to be the
+	     * class that is being redefined.  Also the loader 
+	     * should be the loader for the class being redefined
+	     */
+	    oldCb = CVMjvmtiGetCurrentRedefinedClass(ee);
+	    CVMassert(oldCb != NULL);
+	    klass = CVMcbJavaInstance(oldCb);
+	    if (loader == NULL) {
+		loaderToUse = CVMcbClassLoader(oldCb);
+	    }
+	}
+	CVMjvmtiPostClassLoadHookEvent(klass, loaderToUse, classname,
 				       NULL, bufferLength, buffer,
 				       &newBufferLength, &newBuffer);
 	if (newBuffer != NULL) {
