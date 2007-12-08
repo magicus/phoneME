@@ -146,12 +146,20 @@
 	}							      \
     }
 
+#define METHOD_ID_OK(mb)				\
+    {							\
+	if (mb == NULL) {				\
+	    return JVMTI_ERROR_INVALID_METHODID;	\
+	}						\
+    }
+
 #define THREAD_OK(ee)					\
     {							\
 	if (ee == NULL) {				\
 	    return JVMTI_ERROR_INVALID_THREAD;		\
 	}						\
     }
+
 #define ALLOC(env, size, where) \
     {									\
 	jvmtiError allocErr =						\
@@ -177,20 +185,13 @@
 #define GET_JVMTI_ENV(jvmtienv)			\
     (JvmtiEnv*)((int)jvmtienv - JVMTI_EXT_OFF)
 
-#define CHECK_JVMTI_ENV	 {						\
+#define CHECK_JVMTI_ENV	 						\
 	JvmtiEnv* jvmtiExtEnv =						\
 	    (JvmtiEnv*)((int)jvmtienv - JVMTI_EXT_OFF);			\
 	if (!jvmtiExtEnv->isValid) {					\
 	    return JVMTI_ERROR_INVALID_ENVIRONMENT;			\
 	}								\
-    }
 
-#define GET_CHECK_JVMTI_ENV	 					\
-	JvmtiEnv* jvmtiExtEnv =						\
-	    (JvmtiEnv*)((int)jvmtienv - JVMTI_EXT_OFF);			\
-	if (!jvmtiExtEnv->isValid) {					\
-	    return JVMTI_ERROR_INVALID_ENVIRONMENT;			\
-	}
 
 #define CVM_THREAD_LOCK(ee)   CVMsysMutexLock(ee, &CVMglobals.threadLock)
 #define CVM_THREAD_UNLOCK(ee) CVMsysMutexUnlock(ee, &CVMglobals.threadLock)
@@ -214,7 +215,7 @@
    ====================
    Before inspecting the stack of a thread, we must ensure that the stack won't
    be changing while we're in the midst of inspecting it.  Otherwise, the data
-   we collect may contain some inconsistencies.  There are 3 ways to guarantee
+   we collect may contain some inconsistencies.  There are 4 ways to guarantee
    that stack frames won't be mutating:
 
    1. The thread is in a GC Safe state
@@ -235,8 +236,6 @@
       JIT compiled code cannot be running in this thread at the same time.
       Hence, we know that stack mutation has stopped.
 
-   There is a 4th way:
-
    4. All threads are in a GC safe state
       ==================================
       This state is basically an overkill approach to achieve condition 1
@@ -252,6 +251,14 @@
    on it.  However, for all useful purposes here, we need not be concerned with
    those kinds of stack mutations.  Hence, we use the term stackMutationStopped
    just for brevity.
+
+   Why CVMgcIsInSafeAllState()??
+      You may roll all threads to safe points in the context of thread A
+      and then test for safety using the ee of thread B which may hit
+      an assertion since A called for safety and B is doing a test.  Or
+      you may roll all threads to safety in thread A and then try it again
+      in some deeper routine in JVMTI which will assert.  So we check this
+      flag.
 
    Using the CVMjvmti...ICellDirect() macros
    =========================================
@@ -298,11 +305,13 @@
 
 /* Checks if mutation is stopped on the stack of the specified thread. */
 #define stackMutationStopped(ee) \
-    (CVMD_isgcSafe(ee) || CVMeeThreadIsSuspended(ee) || (ee == CVMgetEE()))
+    (CVMgcIsInSafeAllState() || CVMD_isgcSafe(ee) ||	\
+     CVMeeThreadIsSuspended(ee) || (ee == CVMgetEE()))
 
 /* Stops mutation on the specified thread if necessary. */
 #define STOP_STACK_MUTATION_ACTION(ee, targetEE, lockAction)		\
     {									\
+	/* ts and bits used for assertion testing */			\
 	CVMThreadState ts = targetEE->threadState;			\
 	CVMThreadState bits = CVM_THREAD_SUSPENDED |			\
 	    CVM_THREAD_STACK_MUTATOR_LOCK;				\
@@ -324,7 +333,6 @@
 									\
 	    lockAction;							\
 	    CVMD_gcBecomeSafeAll(ee);					\
-									\
 	    /* Since the target thread is not the self thread, then	\
 	       there's a chance that it could have died before we can   \
 	       get the stack trace.  While the jthread keeps the object \
@@ -643,17 +651,15 @@ static const jlong	GLOBAL_EVENT_BITS = ~THREAD_FILTERED_EVENT_BITS;
 
    Note: in order for the VM to reached a safe all state, the current thread,
    being the requester, must have first acquire certain necessary sys mutexes.
-   There locks also prevents GC from running.  Hence, it is safe for us to do
+   These locks also prevents GC from running.  Hence, it is safe for us to do
    direct object accesses without becoming GC unsafe.  In fact, the current
    thread is forbidden from becoming GC unsafe while we are in a safe all
    state.
 */
-#define CVMjvmtiIsAtSafeAll(/* CVMExecEnv * */ ee) \
-    (CVM_CSTATE(CVM_GC_SAFE)->requester == ee)
 
 /* Purpose: Checks to see if it is safe to access object pointers directly. */
 #define CVMjvmtiIsSafeToAccessDirectObject(ee_) \
-    (CVMD_isgcUnsafe(ee_) || CVMjvmtiIsAtSafeAll(ee_) || \
+    (CVMD_isgcUnsafe(ee_) || CVMgcIsGCThread(ee_) || \
      CVMsysMutexIAmOwner((ee_), &CVMglobals.heapLock))
 
 /* Purpose: Gets the direct object pointer for the specified ICell. */
@@ -676,6 +682,39 @@ static const jlong	GLOBAL_EVENT_BITS = ~THREAD_FILTERED_EVENT_BITS;
 #define CVMjvmtiAssignICellDirect(ee_, dstICellPtr_, srcICellPtr_) \
     CVMjvmtiSetICellDirect((ee_), (dstICellPtr_),		   \
 	CVMjvmtiGetICellDirect((ee_), (srcICellPtr_)))
+
+/* mlam :: REVIEW DONE */
+/* Purpose: Gets the cb pointer from the class object. */
+CVMClassBlock *
+CVMjvmtiGetObjectCB(CVMExecEnv *ee, jobject obj)
+{
+    CVMClassBlock *cb = NULL;
+    if (obj != NULL) {
+	/* If we requested safety then don't do the gcUnsafeExec as
+	 * we'll hit an assertion.  We requested the safeall so we
+	 * can access objects directly.
+	 */
+	if (CVMgcIsGCThread(ee)) {
+	    CVMObject* directObj = CVMjvmtiGetICellDirect(ee, obj);
+	    cb = CVMobjectGetClass(directObj);
+	} else {
+	    CVMD_gcUnsafeExec(ee, {
+		CVMObject* directObj = CVMID_icellDirect(ee, obj);
+		cb = CVMobjectGetClass(directObj);
+	    });
+	}
+    }
+    return cb;
+}
+
+#define THREAD_ID_OK(thread)						\
+    {									\
+	CVMClassBlock *__cb__ = CVMjvmtiGetObjectCB(ee, thread);	\
+	if (__cb__ != CVMsystemClass(java_lang_Thread) &&		\
+	    !CVMisSubclassOf(ee, __cb__, CVMsystemClass(java_lang_Thread))) { \
+	    return JVMTI_ERROR_INVALID_THREAD;				\
+	}								\
+    }
 
 /* mlam :: REVIEW DONE */
 /* Small utility function to read the eetop field from the Thread object.
@@ -755,7 +794,8 @@ jthreadToExecEnv(CVMExecEnv *ee, jthread thread, CVMExecEnv **targetEE)
     if (CVMID_icellIsNull(thread)) {
 	return JVMTI_ERROR_INVALID_THREAD;
     }
-
+    /* Make sure that object passed in is in fact a Thread */
+    THREAD_ID_OK(thread);
     *targetEE = getThreadEETopField(ee, thread);
     if (*targetEE == NULL) {
 	return JVMTI_ERROR_THREAD_NOT_ALIVE;
@@ -793,27 +833,24 @@ clearBkpt(CVMExecEnv *ee, struct bkpt *bp)
     return CVM_TRUE;
 }
 
-/* mlam :: REVIEW DONE */
-/* Purpose: Gets the cb pointer from the class object. */
-CVMClassBlock *
-CVMjvmtiObject2Class(CVMExecEnv *ee, jclass clazz)
+
+CVMClassBlock *CVMjvmtiClassObject2CB(CVMExecEnv *ee, jclass clazz)
 {
     CVMClassBlock *cb = NULL;
 
-    if (clazz != NULL) {
-	CVMD_gcUnsafeExec(ee, {
+    CVMD_gcUnsafeExec(ee, {
+	if (clazz != NULL) {
 	    CVMClassBlock *ccb;
 	    CVMObject* directObj = CVMID_icellDirect(ee, clazz);
 	    ccb = CVMobjectGetClass(directObj);
 	    if (ccb == CVMsystemClass(java_lang_Class)) {
 		cb = CVMgcUnsafeClassRef2ClassBlock(ee, clazz);
 	    }
-	});
-    }
+	}
+    });
 
     return cb;
 }
-
 
 /*
  * Capability functions
@@ -834,9 +871,10 @@ static jvmtiError JNICALL
 jvmti_GetPotentialCapabilities(jvmtiEnv* jvmtienv,
 			       jvmtiCapabilities* capabilitiesPtr)
 {
-    GET_CHECK_JVMTI_ENV;
+    CHECK_JVMTI_ENV;
 
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_ONLOAD);
+    NOT_NULL(capabilitiesPtr);
     CVMjvmtiGetPotentialCapabilities(getCapabilities(jvmtiExtEnv),
 			       getProhibitedCapabilities(jvmtiExtEnv),
 			       capabilitiesPtr);
@@ -848,7 +886,7 @@ static jvmtiError JNICALL
 jvmti_AddCapabilities(jvmtiEnv* jvmtienv,
 		      const jvmtiCapabilities* capabilitiesPtr)
 {
-    GET_CHECK_JVMTI_ENV;
+    CHECK_JVMTI_ENV;
 
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_ONLOAD);
 
@@ -863,7 +901,7 @@ static jvmtiError JNICALL
 jvmti_RelinquishCapabilities(jvmtiEnv* jvmtienv,
 			     const jvmtiCapabilities* capabilitiesPtr)
 {
-    GET_CHECK_JVMTI_ENV;
+    CHECK_JVMTI_ENV;
 
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_ONLOAD);
     CVMjvmtiRelinquishCapabilities(getCapabilities(jvmtiExtEnv), capabilitiesPtr,
@@ -876,8 +914,9 @@ static jvmtiError JNICALL
 jvmti_GetCapabilities(jvmtiEnv* jvmtienv,
 		      jvmtiCapabilities* capabilitiesPtr)
 {
-    GET_CHECK_JVMTI_ENV;
+    CHECK_JVMTI_ENV;
 
+    NOT_NULL(capabilitiesPtr);
     CVMjvmtiCopyCapabilities(getCapabilities(jvmtiExtEnv), capabilitiesPtr);
     return JVMTI_ERROR_NONE;
 }
@@ -894,8 +933,8 @@ jvmti_Allocate(jvmtiEnv* jvmtienv,
 {
     unsigned char *mem;
     CVMJavaInt intSize;
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
 
     NOT_NULL(memPtr);
 
@@ -962,6 +1001,7 @@ jvmti_GetThreadState(jvmtiEnv* jvmtienv,
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
+
     /* NOTE:  Added this lock. This used to be a SYSTHREAD call,
        which I believe is unsafe unless you have the thread queue
        lock, because the thread might exit after you get a handle to
@@ -1064,11 +1104,11 @@ jvmti_GetCurrentThread(jvmtiEnv* jvmtienv,
 {
     CVMExecEnv* ee = CVMgetEE();
     JNIEnv *env;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
     JVMTI_ENABLED();
 
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL(threadPtr);
     THREAD_OK(ee);
@@ -1101,13 +1141,14 @@ jvmti_GetAllThreads(jvmtiEnv* jvmtienv,
     CVMJavaLong sz;
     jint threadsCount;
     jthread *threads = NULL;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL(threadsCountPtr);
+    NOT_NULL(threadsPtr);
     THREAD_OK(ee);
 
     /* NOTE: We must not trigger a GC while holding the thread lock.
@@ -1173,6 +1214,7 @@ jvmti_SuspendThread(jvmtiEnv* jvmtienv,
     CVMExecEnv* ee = CVMgetEE();
     JNIEnv* env;
     CVMExecEnv* targetEE;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
@@ -1182,8 +1224,8 @@ jvmti_SuspendThread(jvmtiEnv* jvmtienv,
        the EE. */
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
+
     err = jthreadToExecEnv(ee, thread, &targetEE);
     if (err != JVMTI_ERROR_NONE) {
 	CVMtraceJVMTI(("JVMTI: suspend thread error: 0x%x\n", (int)thread));
@@ -1262,10 +1304,10 @@ jvmti_SuspendThreadList(jvmtiEnv* jvmtienv,
     CVMExecEnv* ee = CVMgetEE();
     CVMExecEnv* targetEE;
     int i;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL2(requestList, results);
 
@@ -1302,20 +1344,21 @@ jvmti_ResumeThread(jvmtiEnv* jvmtienv,
     CVMExecEnv* ee = CVMgetEE();
     CVMExecEnv* targetEE;
     JNIEnv* env;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL(thread);
-	
+
     env = CVMexecEnv2JniEnv(ee);
 
     CVM_THREAD_LOCK(ee);
 
     err = jthreadToExecEnv(ee, thread, &targetEE);
     if (err != JVMTI_ERROR_NONE) {
+	CVM_THREAD_UNLOCK(ee);
 	return err;
     }
     CVMtraceJVMTI(("JVMTI: resume thread: 0x%x\n", (int)targetEE));
@@ -1343,10 +1386,10 @@ jvmti_ResumeThreadList(jvmtiEnv* jvmtienv,
     CVMExecEnv* ee = CVMgetEE();
     CVMExecEnv* targetEE;
     int i;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL2(requestList, results);
 
@@ -1381,6 +1424,12 @@ jvmti_StopThread(jvmtiEnv* jvmtienv,
     jvmtiError err;
     CHECK_JVMTI_ENV;
 
+    /*    CHECK_CAP(can_signal_thread); */
+    /* See comment below, until we study this in detail we
+     * return JVMTI_ERROR_MUST_POSSESS_CAPABILITY 
+     */
+    return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
+
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
@@ -1408,11 +1457,12 @@ jvmti_InterruptThread(jvmtiEnv* jvmtienv,
     CVMExecEnv *targetEE;
     JNIEnv *env;	  
     jvmtiError err;
+    CHECK_JVMTI_ENV;
+    CHECK_CAP(can_signal_thread);
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     THREAD_OK(ee);
 
@@ -1508,11 +1558,11 @@ jvmti_GetThreadInfo(jvmtiEnv* jvmtienv,
     jobject loaderObj;
     CVMExecEnv* ee = CVMgetEE();
     JNIEnv *env;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL(infoPtr);
     THREAD_OK(ee);
@@ -1523,6 +1573,8 @@ jvmti_GetThreadInfo(jvmtiEnv* jvmtienv,
     if (thread == NULL) {
 	thread = CVMcurrentThreadICell(ee);
     }
+
+    THREAD_ID_OK(thread);
 
     /* Fetch and cache needed field IDs: */
     if (nameID == 0) {
@@ -1602,14 +1654,15 @@ jvmti_GetOwnedMonitorInfo(jvmtiEnv* jvmtienv,
     int i = 0;
     JNIEnv *env;
     jvmtiError err;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL(ownedMonitorCountPtr);
     NOT_NULL(ownedMonitorsPtr);
+
 
     env = CVMexecEnv2JniEnv(ee);
     *ownedMonitorCountPtr = 0;
@@ -1620,17 +1673,31 @@ jvmti_GetOwnedMonitorInfo(jvmtiEnv* jvmtienv,
     }
 
     /* Count the monitors that are owned by this thread: */
+    /* We need to acquire the syncLock here to prevent the inflated
+     * monitor from being deflated or scavenged while we're in the
+     * middle of inspecting it. */
+    CVMsysMutexLock(ee, &CVMglobals.syncLock);
     mon = threadEE->objLocksOwned;
     while (mon != NULL) {
 #ifdef CVM_DEBUG
 	CVMassert(mon->state != CVM_OWNEDMON_FREE);
 #endif
 	if (mon->object != NULL) {
-	    count++;
+	    /* If the monitor is inflated, the current thread could be waiting
+	     * on it.  We should not count those as being owned by the thread.
+	     */
+	    if (mon->type == CVM_OWNEDMON_HEAVY) {
+		/* check heavy monitor */
+		if (&mon->u.heavy.mon->mon != threadEE->blockingWaitMonitor) {
+		    count++;
+		}
+	    } else {
+		count++;
+	    }
 	}
 	mon = mon->next;
     }
-
+    CVMsysMutexUnlock(ee, &CVMglobals.syncLock);
     /* If there are no monitors owned by this thread, then we're done: */
     if (count == 0) {
 	*ownedMonitorsPtr =  NULL;
@@ -1648,17 +1715,23 @@ jvmti_GetOwnedMonitorInfo(jvmtiEnv* jvmtienv,
     lockedObjICell = CVMmiscICell(ee);
     CVMassert(CVMID_icellIsNull(lockedObjICell)); /* Make sure not in use. */
 
+    CVMsysMutexLock(ee, &CVMglobals.syncLock);
     mon = threadEE->objLocksOwned;
     while (mon != NULL) {
 	if (mon->object != NULL) {
-	    CVMD_gcUnsafeExec(ee, {
-		CVMID_icellSetDirect(ee, lockedObjICell, mon->object);
-	    });
-	    tmpPtr[i++] = (*env)->NewLocalRef(env, lockedObjICell);
+	    if (mon->type != CVM_OWNEDMON_HEAVY ||
+		(&mon->u.heavy.mon->mon != threadEE->blockingWaitMonitor)) {
+		CVMD_gcUnsafeExec(ee, {
+		    CVMID_icellSetDirect(ee, lockedObjICell, mon->object);
+		});
+		tmpPtr[i++] = (*env)->NewLocalRef(env, lockedObjICell);
+	    }
 	}
 	mon = mon->next;
     }
+    CVMsysMutexUnlock(ee, &CVMglobals.syncLock);
     CVMID_icellSetNull(lockedObjICell);
+    *ownedMonitorCountPtr = count;
 
  cleanUpAndReturn:
     CVM_THREAD_UNLOCK(ee);
@@ -1667,12 +1740,14 @@ jvmti_GetOwnedMonitorInfo(jvmtiEnv* jvmtienv,
 
 
 static jvmtiError JNICALL
-jvmti_GetOwnedMonitorStackDepthInfo(jvmtiEnv* env,
+jvmti_GetOwnedMonitorStackDepthInfo(jvmtiEnv* jvmtienv,
 				    jthread thread,
 				    jint* monitorInfoCountPtr,
 				    jvmtiMonitorStackDepthInfo** monitorInfoPtr) {
-    *monitorInfoCountPtr = 0;
-    return JVMTI_ERROR_NONE;
+    CHECK_JVMTI_ENV;
+    CHECK_CAP(can_get_owned_monitor_stack_depth_info);
+    /*NOTE: we do not support this api at this time */
+    return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
 }
 
 
@@ -1684,9 +1759,10 @@ jvmti_GetCurrentContendedMonitor(jvmtiEnv* jvmtienv,
     CVMObjMonitor *mon;
     JNIEnv *env;
     jvmtiError err;
+    CVMObjectICell *monObj;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL(monitorPtr);
 
@@ -1695,27 +1771,33 @@ jvmti_GetCurrentContendedMonitor(jvmtiEnv* jvmtienv,
     CVM_THREAD_LOCK(ee);
     err = jthreadToExecEnv(ee, thread, &threadEE);
     if (err != JVMTI_ERROR_NONE) {
+	CVM_THREAD_UNLOCK(ee);
 	return err;
     }
     CVM_THREAD_UNLOCK(ee);
 
     *monitorPtr = NULL;
+    /* If the monitor is inflated, the current thread could be waiting
+     * on it.  We should not count those as being owned by the thread.
+     */
+    CVMsysMutexLock(ee, &CVMglobals.syncLock);
     mon = threadEE->objLockCurrent;
     if (mon != NULL) {
+	monObj = CVMjniCreateLocalRef(ee);
 	/* there could be a monitor here somewhere */
 	if (threadEE->blockingLockEntryMonitor != NULL ||
 	    threadEE->blockingWaitMonitor != NULL) {
-	    CVMID_localrootBegin(ee) {
-		CVMID_localrootDeclare(CVMObjectICell, objICell);
-		if (mon->obj != NULL) {
-		    CVMD_gcUnsafeExec(ee, {
-			    CVMID_icellSetDirect(ee, objICell, mon->obj);
-			});
-		*monitorPtr = (*env)->NewLocalRef(env, objICell);
-		}
-	    }  CVMID_localrootEnd();
+	    if (mon->obj != NULL) {
+		CVMD_gcUnsafeExec(ee, {
+		    CVMID_icellSetDirect(ee, monObj, mon->obj);
+		});
+		*monitorPtr = monObj;
+	    } else {
+		CVMjniDeleteLocalRef(env, monObj);
+	    }
 	}
     }
+    CVMsysMutexUnlock(ee, &CVMglobals.syncLock);
     return JVMTI_ERROR_NONE;
 }
 
@@ -1757,7 +1839,7 @@ jvmti_RunAgentThread(jvmtiEnv* jvmtienv,
     CVMExecEnv* ee = CVMgetEE();
     CVMExecEnv* targetEE;
 
-    GET_CHECK_JVMTI_ENV;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
@@ -1852,6 +1934,7 @@ jvmti_GetThreadLocalStorage(jvmtiEnv* jvmtienv,
     CHECK_JVMTI_ENV;
 
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
+
     CVMassert (ee != NULL);
     CVMassert(CVMD_isgcSafe(ee));
 
@@ -1893,8 +1976,8 @@ jvmti_GetTopThreadGroups(jvmtiEnv* jvmtienv,
     CVMExecEnv* ee = CVMgetEE();
     JNIEnv *env;	  
     CVMJavaLong sz;
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL2(groupCountPtr, groupsPtr);
     THREAD_OK(ee);
@@ -1946,12 +2029,13 @@ jvmti_GetThreadGroupInfo(jvmtiEnv* jvmtienv,
     jobject parentObj;
     CVMExecEnv* ee = CVMgetEE();
     JNIEnv *env;	  
+    CHECK_JVMTI_ENV;
   
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL(infoPtr);
     THREAD_OK(ee);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(group, JVMTI_ERROR_INVALID_THREAD_GROUP);
 
     env = CVMexecEnv2JniEnv(ee);
     if (tgNameID == 0) {
@@ -2050,9 +2134,9 @@ jvmti_GetThreadGroupChildren(jvmtiEnv* jvmtienv,
     jobject groups;
     CVMExecEnv* ee = CVMgetEE();
     JNIEnv *env;	  
+    CHECK_JVMTI_ENV;
 	
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL2(threadCountPtr, threadsPtr);
     NOT_NULL2(groupCountPtr, groupsPtr);
@@ -2139,12 +2223,12 @@ jvmti_GetFrameCount(jvmtiEnv* jvmtienv,
     CVMExecEnv *ee = CVMgetEE();
     CVMExecEnv *targetEE;
     jvmtiError err;
+    CHECK_JVMTI_ENV;
 
     /* Agent code (i.e. our caller) should always be in a GC safe state. */
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL(countPtr);
 
@@ -2186,6 +2270,9 @@ getFrame(CVMExecEnv *targetEE, jint depth, CVMFrameIterator *iter)
     if (targetEE == NULL) {
 	/* Thread hasn't any state yet. */
 	return JVMTI_ERROR_INVALID_THREAD;
+    }
+    if (depth < 0) {
+	return JVMTI_ERROR_ILLEGAL_ARGUMENT;
     }
 
     CVMassert(iter != NULL);
@@ -2269,14 +2356,16 @@ jvmti_GetFrameLocation(jvmtiEnv* jvmtienv,
     CVMExecEnv* ee = CVMgetEE();
     CVMExecEnv *targetEE;
     jvmtiError err = JVMTI_ERROR_NONE;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL2(methodPtr, locationPtr);
-
+    if (depth < 0) {
+	return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+    }
     err = jthreadToExecEnv(ee, thread, &targetEE);
     if (err != JVMTI_ERROR_NONE) {
 	return err;
@@ -2395,14 +2484,16 @@ jvmti_GetStackTrace(jvmtiEnv* jvmtienv,
     CVMExecEnv *targetEE;
     jvmtiError err = JVMTI_ERROR_NONE;
     JNIEnv *env;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL2(frameBuffer, countPtr);
-
+    if (maxFrameCount < 0) {
+	return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+    }
     env = CVMexecEnv2JniEnv(ee);
 
     err = jthreadToExecEnv(ee, thread, &targetEE);
@@ -2442,8 +2533,8 @@ jvmti_GetThreadListStackTraces(jvmtiEnv* jvmtienv,
     jvmtiFrameInfo *fi;
     jvmtiError err = JVMTI_ERROR_NONE;
     CVMExecEnv **targetEEs = NULL;
+    CHECK_JVMTI_ENV;
 
-    GET_CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
@@ -2565,7 +2656,7 @@ jvmti_GetAllStackTraces(jvmtiEnv* jvmtienv,
     JNIEnv *env;
     jthread *threadlist;
     jvmtiError err = JVMTI_ERROR_NONE;
-    GET_CHECK_JVMTI_ENV;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
@@ -2626,9 +2717,9 @@ jvmti_PopFrame(jvmtiEnv* jvmtienv,
     CVMExecEnv *threadEE;
     CVMFrame *currentFrame, *prevPrev;
     jvmtiError err;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     CHECK_CAP(can_pop_frame);
 
@@ -2651,7 +2742,7 @@ jvmti_PopFrame(jvmtiEnv* jvmtienv,
     }
     if (CVMjvmtiNeedFramePop(threadEE)) {
 	CVM_THREAD_UNLOCK(ee);
-	return JVMTI_ERROR_INTERNAL;
+	return JVMTI_ERROR_NONE;
     }
     /*
      * From J2SE jvmtiEnvBase.cpp
@@ -2672,6 +2763,7 @@ jvmti_PopFrame(jvmtiEnv* jvmtienv,
     if ((CVMframeIsJava(currentFrame) &&
 	 CVMframeIsJava(CVMframePrev(currentFrame)))) {
 	CVMjvmtiNeedFramePop(threadEE) = CVM_TRUE;
+	CVMjvmtiSetProcessingCheck(threadEE);
 	CVM_THREAD_UNLOCK(ee);
 	CVMtraceJVMTI(("JVMTI: Popframe: 0x%x\n", (int)threadEE));
 	return JVMTI_ERROR_NONE;
@@ -2680,6 +2772,7 @@ jvmti_PopFrame(jvmtiEnv* jvmtienv,
 	prevPrev = CVMframePrev(CVMframePrev(currentFrame));
 	if (CVMframeIsJava(prevPrev)) {
 	    CVMjvmtiNeedFramePop(threadEE) = CVM_TRUE;
+	    CVMjvmtiSetProcessingCheck(threadEE);
 	    CVM_THREAD_UNLOCK(ee);
 	    CVMtraceJVMTI(("JVMTI: Popframe: 0x%x\n", (int)threadEE));
 	    return JVMTI_ERROR_NONE;
@@ -2703,9 +2796,9 @@ forceEarlyReturn(jvmtiEnv* jvmtienv, jthread thread, jvalue val,
     CVMFrame *currentFrame;
     CVMFrameIterator iter;
     jvmtiError err;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     CHECK_CAP(can_force_early_return);
 
@@ -2845,6 +2938,7 @@ forceEarlyReturn(jvmtiEnv* jvmtienv, jthread thread, jvalue val,
 	    }
 	}
 	CVMjvmtiNeedEarlyReturn(threadEE) = CVM_TRUE;
+	CVMjvmtiSetProcessingCheck(threadEE);
 	CVMjvmtiReturnValue(threadEE) = val;
 	CVMjvmtiReturnOpcode(threadEE) = opcode;
     } else {
@@ -3023,17 +3117,17 @@ CVMjvmtiSetHashCallback(CVMObject *obj, CVMClassBlock *cb, CVMUint32 size,
 
     CVMID_icellSetDirect(ee, icell, obj);
     CVMD_gcSafeExec(ee, {
-	    JVM_IHashCode(env, icell);
-	    /* create tagnode as well */
+	JVM_IHashCode(env, icell);
+	/* create tagnode as well */
+	node = CVMjvmtiTagGetNode(obj);
+	if (node == NULL) {
+	    CVMjvmtiPostCallbackUpdateTag(obj, node, 1);
 	    node = CVMjvmtiTagGetNode(obj);
-	    if (node == NULL) {
-		CVMjvmtiPostCallbackUpdateTag(obj, node, 1);
-		node = CVMjvmtiTagGetNode(obj);
-		if (node != NULL) {
-		    node->tag = 0L;
-		}
+	    if (node != NULL) {
+		node->tag = 0L;
 	    }
-	});
+	}
+    });
     return CVM_TRUE;
 }
 
@@ -3062,9 +3156,9 @@ jvmti_FollowReferences(jvmtiEnv* jvmtienv,
 	dumpContext.icell = localIcell;
 	dumpContext.env = env;
 	CVMD_gcUnsafeExec(ee, {
-		CVMgcimplIterateHeap(ee, CVMjvmtiSetHashCallback,
-				     (void *)&dumpContext);
-	    });
+	    CVMgcimplIterateHeap(ee, CVMjvmtiSetHashCallback,
+				 (void *)&dumpContext);
+	});
     } CVMID_localrootEnd();
 
     /* Lock out the GC: */
@@ -3176,9 +3270,9 @@ jvmti_IterateThroughHeap(jvmtiEnv* jvmtienv,
 	dumpContext.icell = localIcell;
 	dumpContext.env = env;
 	CVMD_gcUnsafeExec(ee, {
-		CVMgcimplIterateHeap(ee, CVMjvmtiSetHashCallback,
-				     (void *)&dumpContext);
-	    });
+	    CVMgcimplIterateHeap(ee, CVMjvmtiSetHashCallback,
+				 (void *)&dumpContext);
+	});
     } CVMID_localrootEnd();
 
     /* Lock out the GC: */
@@ -3256,8 +3350,8 @@ jvmti_GetObjectsWithTags(jvmtiEnv* jvmtienv,
     CVMExecEnv *ee = CVMgetEE();
     JNIEnv *env = CVMexecEnv2JniEnv(ee);
 
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL(countPtr);
     NOT_NULL(tags);
@@ -3399,11 +3493,11 @@ jvmti_GetLocalObject(jvmtiEnv *jvmtienv,
     CVMExecEnv *ee = CVMgetEE();
     CVMExecEnv *targetEE;
     jobject result;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL(valuePtr);
     CHECK_CAP(can_access_local_variables);
@@ -3471,11 +3565,11 @@ jvmti_GetLocalInt(jvmtiEnv *jvmtienv,
     jvmtiError err;
     CVMExecEnv *ee = CVMgetEE();
     CVMExecEnv *targetEE;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL(valuePtr);
     CHECK_CAP(can_access_local_variables);
@@ -3525,11 +3619,11 @@ jvmti_GetLocalLong(jvmtiEnv *jvmtienv,
     jvmtiError err;
     CVMExecEnv *ee = CVMgetEE();
     CVMExecEnv *targetEE;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL(valuePtr);
     CHECK_CAP(can_access_local_variables);
@@ -3579,11 +3673,11 @@ jvmti_GetLocalFloat(jvmtiEnv *jvmtienv,
     jvmtiError err;
     CVMExecEnv *ee = CVMgetEE();
     CVMExecEnv *targetEE;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL(valuePtr);
     CHECK_CAP(can_access_local_variables);
@@ -3633,11 +3727,11 @@ jvmti_GetLocalDouble(jvmtiEnv *jvmtienv,
     jvmtiError err;
     CVMExecEnv *ee = CVMgetEE();
     CVMExecEnv *targetEE;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL(valuePtr);
     CHECK_CAP(can_access_local_variables);
@@ -3686,11 +3780,11 @@ jvmti_SetLocalObject(jvmtiEnv *jvmtienv,
     CVMExecEnv *ee = CVMgetEE();
     jvmtiError err;
     CVMExecEnv *targetEE;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     CHECK_CAP(can_access_local_variables);
 
@@ -3748,11 +3842,11 @@ jvmti_SetLocalInt(jvmtiEnv *jvmtienv,
     CVMExecEnv *ee = CVMgetEE();
     jvmtiError err;
     CVMExecEnv *targetEE;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     CHECK_CAP(can_access_local_variables);
 
@@ -3800,11 +3894,11 @@ jvmti_SetLocalLong(jvmtiEnv *jvmtienv,
     jvmtiError err;
     CVMExecEnv* ee = CVMgetEE();
     CVMExecEnv *targetEE;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     CHECK_CAP(can_access_local_variables);
 
@@ -3852,11 +3946,11 @@ jvmti_SetLocalFloat(jvmtiEnv *jvmtienv,
     jvmtiError err;
     CVMExecEnv *ee = CVMgetEE();
     CVMExecEnv *targetEE;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     CHECK_CAP(can_access_local_variables);
 
@@ -3904,11 +3998,11 @@ jvmti_SetLocalDouble(jvmtiEnv *jvmtienv,
     jvmtiError err;
     CVMExecEnv *ee = CVMgetEE();
     CVMExecEnv *targetEE;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     CHECK_CAP(can_access_local_variables);
 
@@ -3957,18 +4051,19 @@ jvmti_SetBreakpoint(jvmtiEnv* jvmtienv,
     jvmtiError err;
     CVMExecEnv* ee = CVMgetEE();
     CVMJavaLong sz;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     THREAD_OK(ee);
+    METHOD_ID_OK(mb);
 
     /* TODO: This may not be the right error to return for this case.
        However, OPAQUE_METHOD doesn't appear to be one of the options
        for an error.  Need to consider the options.
      */
     if (CVMmbIs(mb, NATIVE)) {
-	return JVMTI_ERROR_INVALID_METHODID;
+	return JVMTI_ERROR_INVALID_LOCATION;
     }
 
     /* TODO: This may not be the right error to return for this case.
@@ -4042,12 +4137,13 @@ jvmti_ClearBreakpoint(jvmtiEnv* jvmtienv,
     jvmtiError err;
     CVMExecEnv* ee = CVMgetEE();
     CVMJavaLong sz;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     THREAD_OK(ee);
 
+    METHOD_ID_OK(mb);
     /* TODO: This may not be the right error to return for this case.
        However, OPAQUE_METHOD doesn't appear to be one of the options
        for an error.  Need to consider the options.
@@ -4183,6 +4279,8 @@ jvmti_SetFieldAccessWatch(jvmtiEnv* jvmtienv,
 			  jfieldID field) {
     CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(klass, JVMTI_ERROR_INVALID_CLASS);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(field, JVMTI_ERROR_INVALID_FIELDID);
     return setFieldWatch(klass, field, 
 			 CVMglobals.jvmtiStatics.watchedFieldAccesses, 
 			 &CVMglobals.jvmtiWatchingFieldAccess);
@@ -4195,6 +4293,8 @@ jvmti_ClearFieldAccessWatch(jvmtiEnv* jvmtienv,
 			    jfieldID field) {
     CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(klass, JVMTI_ERROR_INVALID_CLASS);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(field, JVMTI_ERROR_INVALID_FIELDID);
     return clearFieldWatch(klass, field, 
 			   CVMglobals.jvmtiStatics.watchedFieldAccesses, 
 			   &CVMglobals.jvmtiWatchingFieldAccess);
@@ -4207,6 +4307,8 @@ jvmti_SetFieldModificationWatch(jvmtiEnv* jvmtienv,
 				jfieldID field) {
     CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(klass, JVMTI_ERROR_INVALID_CLASS);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(field, JVMTI_ERROR_INVALID_FIELDID);
     return setFieldWatch(klass, field, 
 			 CVMglobals.jvmtiStatics.watchedFieldModifications, 
 			 &CVMglobals.jvmtiWatchingFieldModification);
@@ -4219,6 +4321,8 @@ jvmti_ClearFieldModificationWatch(jvmtiEnv* jvmtienv,
 				  jfieldID field) {
     CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(klass, JVMTI_ERROR_INVALID_CLASS);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(field, JVMTI_ERROR_INVALID_FIELDID);
     return clearFieldWatch(klass, field, 
 			   CVMglobals.jvmtiStatics.watchedFieldModifications, 
 			   &CVMglobals.jvmtiWatchingFieldModification);
@@ -4285,9 +4389,9 @@ jvmti_GetLoadedClasses(jvmtiEnv* jvmtienv,
     CVMExecEnv* ee = CVMgetEE();
     CVMJavaLong sz;
     jvmtiError rc;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     THREAD_OK(ee);
     NOT_NULL2(classCountPtr, classesPtr);
@@ -4338,9 +4442,9 @@ jvmti_GetClassLoaderClasses(jvmtiEnv* jvmtienv,
     JNIEnv *env;	  
     CVMLoaderCacheIterator iter;
     int c, n;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     THREAD_OK(ee);
     NOT_NULL2(classCountPtr, classesPtr);
@@ -4406,18 +4510,21 @@ jvmti_GetClassSignature(jvmtiEnv* jvmtienv,
     int len;
     CVMJavaLong longLen;
     CVMClassBlock* cb;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
 
-    cb = CVMjvmtiObject2Class(ee, klass);
+    cb = CVMjvmtiClassObject2CB(ee, klass);
     VALID_CLASS(cb);
 
     if (genericPtr != NULL) {
 	*genericPtr = NULL;
+    }
+    if (signaturePtr == NULL) {
+	return JVMTI_ERROR_NONE;
     }
     if (!CVMcbIs(cb, PRIMITIVE)) {
 	name = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(cb));
@@ -4461,33 +4568,38 @@ jvmti_GetClassStatus(jvmtiEnv* jvmtienv,
     jint state = 0;
     CVMClassBlock* cb;
     CVMExecEnv *ee = CVMgetEE();
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL(statusPtr);
 
-    cb = CVMjvmtiObject2Class(ee, klass);
+    cb = CVMjvmtiClassObject2CB(ee, klass);
     VALID_CLASS(cb);
 
-    if (CVMcbCheckRuntimeFlag(cb, VERIFIED)) {
-	state |= JVMTI_CLASS_STATUS_VERIFIED;
-    }
+    if (CVMcbIs(cb, PRIMITIVE)) {
+	state = JVMTI_CLASS_STATUS_PRIMITIVE;
+    } else if (CVMisArrayClass(cb)) {
+	state = JVMTI_CLASS_STATUS_ARRAY;
+    } else {
+	if (CVMcbCheckRuntimeFlag(cb, VERIFIED)) {
+	    state |= JVMTI_CLASS_STATUS_VERIFIED;
+	}
 
-    if (CVMcbCheckRuntimeFlag(cb, LINKED)) {
-	state |= JVMTI_CLASS_STATUS_PREPARED;
-    }
+	if (CVMcbCheckRuntimeFlag(cb, LINKED)) {
+	    state |= JVMTI_CLASS_STATUS_PREPARED;
+	}
 
-    if (CVMcbInitializationDoneFlag(ee, cb)) {
-	state |= JVMTI_CLASS_STATUS_INITIALIZED;
-    }
+	if (CVMcbInitializationDoneFlag(ee, cb)) {
+	    state |= JVMTI_CLASS_STATUS_INITIALIZED;
+	}
 
-    if (CVMcbCheckErrorFlag(ee, cb)) {
-	state |= JVMTI_CLASS_STATUS_ERROR;
+	if (CVMcbCheckErrorFlag(ee, cb)) {
+	    state |= JVMTI_CLASS_STATUS_ERROR;
+	}
     }
-
     *statusPtr = state;
     return JVMTI_ERROR_NONE;
 }
@@ -4505,14 +4617,14 @@ jvmti_GetSourceFileName(jvmtiEnv* jvmtienv,
     char *srcName;
     CVMClassBlock* cb;
     CVMJavaLong sz;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
 
-    cb = CVMjvmtiObject2Class(ee, klass);
+    cb = CVMjvmtiClassObject2CB(ee, klass);
     VALID_CLASS(cb);
     srcName = CVMcbSourceFileName(cb);
     if (srcName == NULL) {
@@ -4537,16 +4649,17 @@ jvmti_GetClassModifiers(jvmtiEnv* jvmtienv,
     CVMExecEnv *ee = CVMgetEE();
     CVMClassBlock *cb;
     CVMBool isArray = CVM_FALSE;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL(modifiersPtr);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(klass, JVMTI_ERROR_INVALID_CLASS);
     THREAD_OK(ee);
 
-    cb = CVMjvmtiObject2Class(ee, klass);
+    cb = CVMjvmtiClassObject2CB(ee, klass);
 
     if (CVMisArrayClass(cb)) {
 	isArray = CVM_TRUE;
@@ -4579,19 +4692,20 @@ jvmti_GetClassMethods(jvmtiEnv* jvmtienv,
     jint state;
     CVMClassBlock* cb; 
     CVMJavaLong sz;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL2(methodCountPtr, methodsPtr);
 
-    cb = CVMjvmtiObject2Class(ee, klass);
+    cb = CVMjvmtiClassObject2CB(ee, klass);
     VALID_CLASS(cb);
 
     jvmti_GetClassStatus(jvmtienv, klass, &state);
-    if (!(state & JVMTI_CLASS_STATUS_PREPARED)) {
+    if (!CVMcbIs(cb, PRIMITIVE) && !CVMisArrayClass(cb) &&
+	!(state & JVMTI_CLASS_STATUS_PREPARED)) {
 	return JVMTI_ERROR_CLASS_NOT_PREPARED;
     }
 
@@ -4603,9 +4717,6 @@ jvmti_GetClassMethods(jvmtiEnv* jvmtienv,
     mids = *methodsPtr;
     for (i = 0; i < methodsCount; ++i) {
 	mids[i] = CVMcbMethodSlot(cb, i);
-	/*	mids[i] = CVMjvmtiGetIDByMB(CVMcbMethodSlot(cb, i));
-		CVMtraceJVMTI(("JVMTI: getmids: 0x%x,  %d\n", (int)CVMcbMethodSlot(cb,i), (int)CVMjvmtiGetIDByMB(CVMcbMethodSlot(cb, i))));
-	*/
     }
     return JVMTI_ERROR_NONE;
 }
@@ -4630,19 +4741,21 @@ jvmti_GetClassFields(jvmtiEnv* jvmtienv,
     jint state;
     CVMClassBlock* cb;
     CVMJavaLong sz;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL2(fieldCountPtr, fieldsPtr);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(klass, JVMTI_ERROR_INVALID_CLASS);
 
-    cb = CVMjvmtiObject2Class(ee, klass);
+    cb = CVMjvmtiClassObject2CB(ee, klass);
     VALID_CLASS(cb);
 	
     jvmti_GetClassStatus(jvmtienv, klass, &state);
-    if (!(state & JVMTI_CLASS_STATUS_PREPARED)) {
+    if (!CVMcbIs(cb, PRIMITIVE) && !CVMisArrayClass(cb) &&
+	!(state & JVMTI_CLASS_STATUS_PREPARED)) {
 	return JVMTI_ERROR_CLASS_NOT_PREPARED;
     }
 
@@ -4678,18 +4791,19 @@ jvmti_GetImplementedInterfaces(jvmtiEnv* jvmtienv,
     CVMExecEnv* ee = CVMgetEE();
     JNIEnv *env;	  
     CVMJavaLong sz;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL2(interfaceCountPtr, interfacesPtr);
     THREAD_OK(ee);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(klass, JVMTI_ERROR_INVALID_CLASS);
 
     env = CVMexecEnv2JniEnv(ee);
 
-    cb = CVMjvmtiObject2Class(ee, klass);
+    cb = CVMjvmtiClassObject2CB(ee, klass);
     VALID_CLASS(cb);
 
     jvmti_GetClassStatus(jvmtienv, klass, &state);
@@ -4745,11 +4859,12 @@ jvmti_IsInterface(jvmtiEnv* jvmtienv,
 		  jboolean* isInterfacePtr) {
     CVMExecEnv* ee = CVMgetEE();
     JNIEnv *env = CVMexecEnv2JniEnv(ee);
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     THREAD_OK(ee);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(klass, JVMTI_ERROR_INVALID_CLASS);
 
     NOT_NULL(isInterfacePtr);
     *isInterfacePtr = JVM_IsInterface(env, klass);
@@ -4767,11 +4882,12 @@ jvmti_IsArrayClass(jvmtiEnv* jvmtienv,
 		   jboolean* isArrayClassPtr) {
     CVMExecEnv* ee = CVMgetEE();
     JNIEnv *env;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     THREAD_OK(ee);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(klass, JVMTI_ERROR_INVALID_CLASS);
 
     env = CVMexecEnv2JniEnv(ee);
 
@@ -4788,15 +4904,16 @@ jvmti_IsModifiableClass(jvmtiEnv* jvmtienv,
 {
     CVMExecEnv *ee = CVMgetEE();
     CVMClassBlock* cb;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL(isModifiableClassPtr);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(klass, JVMTI_ERROR_INVALID_CLASS);
 
-    cb = CVMjvmtiObject2Class(ee, klass);
+    cb = CVMjvmtiClassObject2CB(ee, klass);
     VALID_CLASS(cb);
     *isModifiableClassPtr = !CVMcbIsInROM(cb);
     return JVMTI_ERROR_NONE;
@@ -4813,11 +4930,13 @@ jvmti_GetClassLoader(jvmtiEnv* jvmtienv,
 		     jobject* classloaderPtr) {
     CVMExecEnv* ee = CVMgetEE();
     JNIEnv *env;	  
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL(classloaderPtr);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(klass, JVMTI_ERROR_INVALID_CLASS);
+
     THREAD_OK(ee);
 
     env = CVMexecEnv2JniEnv(ee);
@@ -5044,14 +5163,16 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
     cpFixupData cpFixup;
     jint threadCount;
     jthread *threads;
+    CHECK_JVMTI_ENV;
 
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
+    NOT_NULL(classDefinitions);
 
-    if (getCapabilities((JvmtiEnv*)((int)jvmtienv - CVMoffsetof(JvmtiEnv, jvmtiExternal)))->can_redefine_classes != 1) {
+    if (getCapabilities((JvmtiEnv*)((int)jvmtienv -
+	CVMoffsetof(JvmtiEnv, jvmtiExternal)))->can_redefine_classes != 1) {
 	return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
     }
 
@@ -5069,15 +5190,29 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	CVMjniPopLocalFrame(env, NULL);
 	return err;
     }
+    node = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
+    CVMassert(node != NULL);
     for (i = 0; i < classCount; i++) {
 	klass = classDefinitions[i].klass;
-	oldcb = CVMjvmtiObject2Class(ee, klass);
-	VALID_CLASS(oldcb);
+	if (klass == NULL) {
+	    err = JVMTI_ERROR_INVALID_CLASS;
+	    goto cleanup;
+	}
+	oldcb = CVMjvmtiClassObject2CB(ee, klass);
+	if (oldcb == NULL) {
+	    err = JVMTI_ERROR_INVALID_CLASS;
+	    goto cleanup;
+	}
+	if (classDefinitions[i].class_bytes == NULL) {
+	    err = JVMTI_ERROR_NULL_POINTER;
+	    goto cleanup;
+	}
 	/* remove this test if profiling all classes */
 	if (CVMcbIsInROM(oldcb)) {
-	    CVMjniPopLocalFrame(env, NULL);
-	    return JVMTI_ERROR_UNMODIFIABLE_CLASS;
+	    err = JVMTI_ERROR_UNMODIFIABLE_CLASS;
+	    goto cleanup;
 	}
+	node->oldCb = oldcb;
         className = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(oldcb));
 	loader = CVMcbClassLoader(oldcb);
 	/*
@@ -5093,7 +5228,7 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 			   NULL,
 			   CVM_TRUE);
 	if (newKlass == NULL) {
-	    /* Note: Not sure at this point how to get appropriate error */
+	    /* TODO: Not sure at this point how to get appropriate error */
 	    err = JVMTI_ERROR_INVALID_CLASS;
 	    goto cleanup;
 	}
@@ -5102,9 +5237,9 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
     }
     for (i = 0; i < classCount; i++) {
 	klass = classDefinitions[i].klass;
-	oldcb = CVMjvmtiObject2Class(ee, klass);
+	oldcb = CVMjvmtiClassObject2CB(ee, klass);
 	newKlass = classes[i];
-	newcb = CVMjvmtiObject2Class(ee, newKlass);
+	newcb = CVMjvmtiClassObject2CB(ee, newKlass);
 	className = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(oldcb));
 	if (strncmp(className, "java/lang", 9) == 0) {
 	    continue;
@@ -5129,10 +5264,8 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	CVMbagEnumerateOver(CVMglobals.jvmtiStatics.breakpoints,
 			    redefineClearBreakpoints, (void *)klass);
 	JVMTI_UNLOCK(ee);
-	node = CVMjvmtiFindThread(ee, CVMcurrentThreadICell(ee));
-	CVMassert(node != NULL);
-	node->redefineCb = newcb;
 	/* load superclasses in a non-recursive way */
+	node->redefineCb = newcb;
 	(*env)->CallVoidMethod(env, newKlass,
 			   CVMglobals.java_lang_Class_loadSuperClasses);
 	node->redefineCb = NULL;
@@ -5163,10 +5296,10 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 	    goto cleanup;
 	}
 	CVMD_gcUnsafeExec(ee, {
-		CVMcbJavaInstance(newcb) = newClassRoot;
-		CVMID_icellAssignDirect(ee, newClassRoot, newKlass);
-		CVMassert(CVMID_icellDirect(ee, newClassRoot)==CVMID_icellDirect(ee,newKlass));
-	    });
+	    CVMcbJavaInstance(newcb) = newClassRoot;
+	    CVMID_icellAssignDirect(ee, newClassRoot, newKlass);
+	    CVMassert(CVMID_icellDirect(ee, newClassRoot)==CVMID_icellDirect(ee,newKlass));
+	});
 	CVMtraceJVMTI(("JVMTI: Redefine: newroot 0x%x, 0x%x\n", (int)newClassRoot, (int)newClassRoot->ref_DONT_ACCESS_DIRECTLY)); 
 	threadBits = CVMjvmtiGetThreadEventEnabled(ee);
 	CVMjvmtiSetShouldPostAnyThreadEvent(ee,
@@ -5183,9 +5316,9 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
     }
     for (i = 0; i < classCount; i++) {
 	klass = classDefinitions[i].klass;
-	oldcb = CVMjvmtiObject2Class(ee, klass);
+	oldcb = CVMjvmtiClassObject2CB(ee, klass);
 	newKlass = classes[i];
-	newcb = CVMjvmtiObject2Class(ee, newKlass);
+	newcb = CVMjvmtiClassObject2CB(ee, newKlass);
 	className = CVMtypeidClassNameToAllocatedCString(CVMcbClassName(oldcb));
 	if (strncmp(className, "java/lang", 9) == 0) {
 	    continue;
@@ -5305,6 +5438,10 @@ jvmti_RedefineClasses(jvmtiEnv* jvmtienv,
 #endif
     }
  cleanup:
+    if (node != NULL) {
+	node->oldCb = NULL;
+	node->redefineCb = NULL;
+    }
     resumeAllThreads(jvmtienv, ee, threads, threadCount);
     CVMjniPopLocalFrame(env, NULL);
     jvmti_Deallocate(jvmtienv, (unsigned char *)classes);
@@ -5323,17 +5460,17 @@ jvmti_GetObjectSize(jvmtiEnv* jvmtienv,
 		    jlong* sizePtr) {
 
     CVMExecEnv* ee = CVMgetEE();
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     VALID_OBJECT(object);
     NOT_NULL(sizePtr);
 
     CVMD_gcUnsafeExec(ee, {
-	    CVMObject *directObj = CVMID_icellDirect(ee, object);
-	    *sizePtr = (jlong)CVMobjectSize(directObj);
-	});
+	CVMObject *directObj = CVMID_icellDirect(ee, object);
+	*sizePtr = (jlong)CVMobjectSize(directObj);
+    });
     return JVMTI_ERROR_NONE;
 }
 
@@ -5347,8 +5484,8 @@ static jvmtiError JNICALL
 jvmti_GetObjectHashCode(jvmtiEnv* jvmtienv,
 			jobject object,
 			jint* hashCodePtr) {
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     VALID_OBJECT(object);
     NOT_NULL(hashCodePtr);
@@ -5388,11 +5525,13 @@ jvmti_GetFieldName(jvmtiEnv* jvmtienv,
     CVMFieldBlock* fb = (CVMFieldBlock*) field;
     CVMJavaLong sz;
 
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
-    NOT_NULL2(namePtr, signaturePtr);
 
+    if (klass == NULL  || CVMID_icellIsNull(klass)) {
+	return JVMTI_ERROR_INVALID_CLASS;
+    }
     if (fb == NULL) {
 	return JVMTI_ERROR_INVALID_FIELDID;
     }
@@ -5400,17 +5539,20 @@ jvmti_GetFieldName(jvmtiEnv* jvmtienv,
     if (genericPtr != NULL) {
 	*genericPtr = NULL;
     }
-    name = CVMtypeidFieldNameToAllocatedCString(CVMfbNameAndTypeID(fb));
-    sz = CVMint2Long(strlen(name)+1);
-    ALLOC(jvmtienv, sz, namePtr);
-    strcpy(*namePtr, name);
-    free(name);
-
-    sig = CVMtypeidFieldTypeToAllocatedCString(CVMfbNameAndTypeID(fb));
-    sz = CVMint2Long(strlen(sig)+1);
-    ALLOC(jvmtienv, sz, signaturePtr);
-    strcpy(*signaturePtr, sig);
-    free(sig);
+    if (namePtr != NULL) {
+	name = CVMtypeidFieldNameToAllocatedCString(CVMfbNameAndTypeID(fb));
+	sz = CVMint2Long(strlen(name)+1);
+	ALLOC(jvmtienv, sz, namePtr);
+	strcpy(*namePtr, name);
+	free(name);
+    }
+    if (signaturePtr != NULL) {
+	sig = CVMtypeidFieldTypeToAllocatedCString(CVMfbNameAndTypeID(fb));
+	sz = CVMint2Long(strlen(sig)+1);
+	ALLOC(jvmtienv, sz, signaturePtr);
+	strcpy(*signaturePtr, sig);
+	free(sig);
+    }
 
     return JVMTI_ERROR_NONE;
 }
@@ -5430,9 +5572,9 @@ jvmti_GetFieldDeclaringClass(jvmtiEnv* jvmtienv,
     jobject dklass;
     CVMExecEnv* ee = CVMgetEE();
     JNIEnv *env;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
 
     if (klass == NULL || CVMID_icellIsNull(klass)) {
@@ -5460,10 +5602,12 @@ jvmti_GetFieldModifiers(jvmtiEnv* jvmtienv,
 			jfieldID field,
 			jint* modifiersPtr) {
     CVMFieldBlock* fb = (CVMFieldBlock*) field;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(klass, JVMTI_ERROR_INVALID_CLASS);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(field, JVMTI_ERROR_INVALID_FIELDID);
     NOT_NULL(modifiersPtr);
 
     /* %comment: k017 */
@@ -5515,29 +5659,30 @@ jvmti_GetMethodName(jvmtiEnv* jvmtienv,
     char *sig;
     CVMMethodBlock* mb = (CVMMethodBlock*) method;
     CVMJavaLong sz;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
-    NOT_NULL2(namePtr, signaturePtr);
 
-    if (mb == NULL) {
-	return JVMTI_ERROR_INVALID_METHODID;
+    METHOD_ID_OK(mb);
+
+    if (namePtr != NULL) {
+	name = CVMtypeidMethodNameToAllocatedCString(CVMmbNameAndTypeID(mb));
+	sz = CVMint2Long(strlen(name)+1);
+	ALLOC(jvmtienv, sz, namePtr);
+	strcpy(*namePtr, name);
+	free(name);
     }
-
-    name = CVMtypeidMethodNameToAllocatedCString(CVMmbNameAndTypeID(mb));
-    sz = CVMint2Long(strlen(name)+1);
-    ALLOC(jvmtienv, sz, namePtr);
-    strcpy(*namePtr, name);
-    free(name);
-
-    sig = CVMtypeidMethodTypeToAllocatedCString(CVMmbNameAndTypeID(mb));
-    sz = CVMint2Long(strlen(sig)+1);
-    ALLOC(jvmtienv, sz, signaturePtr);
-    strcpy(*signaturePtr, sig);
-    free(sig);
-
-    *genericPtr = NULL;
+    if (signaturePtr != NULL) {
+	sig = CVMtypeidMethodTypeToAllocatedCString(CVMmbNameAndTypeID(mb));
+	sz = CVMint2Long(strlen(sig)+1);
+	ALLOC(jvmtienv, sz, signaturePtr);
+	strcpy(*signaturePtr, sig);
+	free(sig);
+    }
+    if (genericPtr != NULL) {
+	*genericPtr = NULL;
+    }
 
     return JVMTI_ERROR_NONE;
 }
@@ -5590,17 +5735,20 @@ jvmti_GetMethodDeclaringClass(jvmtiEnv* jvmtienv,
 			      jmethodID method,
 			      jclass* declaringClassPtr) {
     CVMMethodBlock* mb = (CVMMethodBlock*) method;
-    CVMClassBlock *cb = CVMmbClassBlock(mb);
-    CVMMethodTypeID tid = CVMmbNameAndTypeID(mb);
+    CVMClassBlock *cb;
+    CVMMethodTypeID tid;
     CVMExecEnv* ee = CVMgetEE();
     JNIEnv *env;	  
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL(declaringClassPtr);
     THREAD_OK(ee);
 
+    METHOD_ID_OK(mb);
+    tid = CVMmbNameAndTypeID(mb);
+    cb = CVMmbClassBlock(mb);
     env = CVMexecEnv2JniEnv(ee);
 
     if (!CVMmbIs(mb, STATIC)) {
@@ -5653,11 +5801,12 @@ jvmti_GetMethodModifiers(jvmtiEnv* jvmtienv,
 			 jint* modifiersPtr) {
     CVMMethodBlock* mb = (CVMMethodBlock*) method;
     jint modifiers;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL(modifiersPtr);
+    METHOD_ID_OK(mb);
 
     /* %comment: k018 */
     modifiers = 0;
@@ -5694,15 +5843,13 @@ jvmti_GetMaxLocals(jvmtiEnv* jvmtienv,
 		   jmethodID method,
 		   jint* maxPtr) {
     CVMMethodBlock* mb = (CVMMethodBlock*) method;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL(maxPtr);
 
-    if (mb == NULL) {
-	return JVMTI_ERROR_INVALID_METHODID;
-    }
+    METHOD_ID_OK(mb);
     if (CVMmbIs(mb, NATIVE)) {
 	return JVMTI_ERROR_NATIVE_METHOD;
     }
@@ -5732,12 +5879,13 @@ jvmti_GetArgumentsSize(jvmtiEnv* jvmtienv,
 		       jmethodID method,
 		       jint* sizePtr) {
     CVMMethodBlock* mb = (CVMMethodBlock*) method;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL(sizePtr);
 
+    METHOD_ID_OK(mb);
     if (CVMmbIs(mb, NATIVE)) {
 	return JVMTI_ERROR_NATIVE_METHOD;
     }
@@ -5763,12 +5911,13 @@ jvmti_GetLineNumberTable(jvmtiEnv* jvmtienv,
     CVMUint16 length;
     jvmtiLineNumberEntry *tbl;
     CVMJavaLong sz;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL2(entryCountPtr, tablePtr);
 
+    METHOD_ID_OK(mb);
     /* NOTE:  Added this check, which is necessary, at least in
        our VM, because this seems to get called for native methods as
        well. Should we return ABSENT_INFORMATION or INVALID_METHODID
@@ -5822,12 +5971,16 @@ jvmti_GetMethodLocation(jvmtiEnv* jvmtienv,
 			jlocation* startLocationPtr,
 			jlocation* endLocationPtr) {
     CVMMethodBlock* mb = (CVMMethodBlock*) method;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL2(startLocationPtr, endLocationPtr);
 
+    METHOD_ID_OK(mb);
+    if (CVMmbIs(mb, NATIVE)) {
+	return JVMTI_ERROR_NATIVE_METHOD;
+    }
     if (!CVMmbIsJava(mb)) {
 	*startLocationPtr = CVMint2Long(-1);
 	*endLocationPtr = CVMint2Long(-1);
@@ -5868,18 +6021,19 @@ jvmti_GetLocalVariableTable(jvmtiEnv* jvmtienv,
     CVMMethodBlock* mb = (CVMMethodBlock*) method;
     CVMLocalVariableEntry* vmtbl;
     CVMUint16 length;
-    CVMClassBlock* cb = CVMmbClassBlock(mb);
+    CVMClassBlock* cb;
     CVMConstantPool* constantpool;
     jvmtiLocalVariableEntry *tbl;
     CVMJavaLong sz;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL2(entryCountPtr, tablePtr);
 
-    if (!CVMmbIsJava(mb)) {
-	return JVMTI_ERROR_ABSENT_INFORMATION;
+    METHOD_ID_OK(mb);
+    if (CVMmbIs(mb, NATIVE)) {
+	return JVMTI_ERROR_NATIVE_METHOD;
     }
 
     /* The jmd for <clinit> gets freed after it executes. Can't take
@@ -5888,6 +6042,7 @@ jvmti_GetLocalVariableTable(jvmtiEnv* jvmtienv,
 	return JVMTI_ERROR_ABSENT_INFORMATION;
     }
 
+    cb = CVMmbClassBlock(mb);
     vmtbl = CVMmbLocalVariableTable(mb);
     length = CVMmbLocalVariableTableLength(mb);
     if (CVMjvmtiMbIsObsolete(mb)) {
@@ -5934,14 +6089,19 @@ jvmti_GetLocalVariableTable(jvmtiEnv* jvmtienv,
     return JVMTI_ERROR_NONE;
 }
 
-/* NOTE: (k) This is not implemented in CVM */
+/* TODO: (k) This is not implemented in CVM */
 
 static jvmtiError JNICALL
-jvmti_GetBytecodes(jvmtiEnv* env,
+jvmti_GetBytecodes(jvmtiEnv* jvmtienv,
 		   jmethodID method,
 		   jint* bytecodeCountPtr,
 		   unsigned char** bytecodesPtr) {
-    return JVMTI_ERROR_ACCESS_DENIED;
+
+
+    CHECK_JVMTI_ENV;
+    CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
+    CHECK_CAP(can_get_bytecodes);
+    return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
 }
 
 
@@ -5954,12 +6114,13 @@ jvmti_IsMethodNative(jvmtiEnv* jvmtienv,
 		     jmethodID method,
 		     jboolean* isNativePtr) {
     CVMMethodBlock* mb = (CVMMethodBlock*) method;
+    CHECK_JVMTI_ENV;
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL(isNativePtr);
 
+    METHOD_ID_OK(mb);
     *isNativePtr = CVMmbIs(mb, NATIVE);
     return JVMTI_ERROR_NONE;
 }
@@ -5978,7 +6139,7 @@ jvmti_IsMethodObsolete(jvmtiEnv* env,
 		       jmethodID method,
 		       jboolean* isObsoletePtr) {
     CVMMethodBlock *mb = (CVMMethodBlock*)method;
-    NOT_NULL(mb);
+    METHOD_ID_OK(mb);
     *isObsoletePtr = CVMjvmtiMbIsObsolete(mb);
     return JVMTI_ERROR_NONE;
 }
@@ -6021,7 +6182,12 @@ jvmti_CreateRawMonitor(jvmtiEnv* jvmtienv,
     JVMTI_ENABLED();
     ASSERT_NOT_NULL2_ELSE_EXIT_WITH_ERROR(name, monitorPtr, JVMTI_ERROR_NULL_POINTER);
 
-    *monitorPtr = (jrawMonitorID) CVMnamedSysMonitorInit(name);
+    if (name == NULL || *name == '\0') {
+	/* want some name to tell if monitor is destroyed or not */
+	*monitorPtr = (jrawMonitorID) CVMnamedSysMonitorInit("JVMTI");	
+    } else {
+	*monitorPtr = (jrawMonitorID) CVMnamedSysMonitorInit(name);
+    }
     ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(*monitorPtr, JVMTI_ERROR_OUT_OF_MEMORY);
     return JVMTI_ERROR_NONE;
 }
@@ -6033,11 +6199,16 @@ jvmti_CreateRawMonitor(jvmtiEnv* jvmtienv,
 static jvmtiError JNICALL
 jvmti_DestroyRawMonitor(jvmtiEnv* jvmtienv,
 			jrawMonitorID monitor) {
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_ONLOAD);
-    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(monitor, JVMTI_ERROR_NULL_POINTER);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(monitor, JVMTI_ERROR_INVALID_MONITOR);
 
+    if (CVMnamedSysMonitorGetName((CVMNamedSysMonitor *) monitor)[0] == '\0') {
+	/* probably already destroyed */
+	return JVMTI_ERROR_INVALID_MONITOR;
+    }
+    CVMnamedSysMonitorGetName((CVMNamedSysMonitor *) monitor)[0] = 0;
     CVMnamedSysMonitorDestroy((CVMNamedSysMonitor *) monitor);
     return JVMTI_ERROR_NONE;
 }
@@ -6052,22 +6223,16 @@ jvmti_RawMonitorEnter(jvmtiEnv* jvmtienv,
 
     CVMExecEnv *ee = CVMgetEE();
 
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     THREAD_OK(ee);
     ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(monitor, JVMTI_ERROR_INVALID_MONITOR);
 
-    while (CVMnamedSysMonitorTryEnter((CVMNamedSysMonitor *) monitor, ee) == CVM_FALSE) {
-	CVMSysMonitor mon;
-	if (CVMsysMonitorInit(&mon, NULL, 0)) {
-	    CVMsysMonitorEnter(ee, &mon);
-	    CVMsysMonitorWait(ee, &mon, 1);
-	    CVMsysMonitorExit(ee, &mon);
-	    CVMsysMonitorDestroy(&mon);
-	} else {
-	    CVMthreadYield();
-	}
+    if (((CVMNamedSysMonitor *) monitor)->_super.type !=
+	CVM_LOCKTYPE_NAMED_SYSMONITOR) {
+	return JVMTI_ERROR_INVALID_MONITOR;
     }
+    CVMnamedSysMonitorEnter((CVMNamedSysMonitor *) monitor, ee);
     return JVMTI_ERROR_NONE;
 }
 
@@ -6081,12 +6246,17 @@ jvmti_RawMonitorExit(jvmtiEnv* jvmtienv,
 
     CVMExecEnv *currentEE = CVMgetEE();
 
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     THREAD_OK(currentEE);
     ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(monitor, JVMTI_ERROR_INVALID_MONITOR);
 
-    if (CVMnamedSysMonitorGetOwner((CVMNamedSysMonitor*)monitor) != currentEE) {
+    if (CVMnamedSysMonitorGetType((CVMNamedSysMonitor *) monitor) !=
+	CVM_LOCKTYPE_NAMED_SYSMONITOR) {
+	return JVMTI_ERROR_INVALID_MONITOR;
+    }
+    if (CVMnamedSysMonitorGetOwner((CVMNamedSysMonitor*)monitor) !=
+	currentEE) {
 	return JVMTI_ERROR_NOT_MONITOR_OWNER;
     }
     CVMnamedSysMonitorExit((CVMNamedSysMonitor *) monitor, currentEE);
@@ -6109,16 +6279,21 @@ jvmti_RawMonitorWait(jvmtiEnv* jvmtienv,
     CVMWaitStatus error;
     CVMExecEnv *currentEE = CVMgetEE();
 
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     THREAD_OK(currentEE);
     ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(monitor, JVMTI_ERROR_INVALID_MONITOR);
 
+    if (CVMnamedSysMonitorGetType((CVMNamedSysMonitor *) monitor) !=
+	CVM_LOCKTYPE_NAMED_SYSMONITOR) {
+	return JVMTI_ERROR_INVALID_MONITOR;
+    }
     /* %comment l001 */
     if (CVMlongLt(millis, CVMlongConstZero()))  /* if (millis < 0) */
-	millis = CVMlongConstZero();			/*	   millis = 0; */
+	millis = CVMlongConstZero();		/*   millis = 0; */
 
-    error = CVMnamedSysMonitorWait((CVMNamedSysMonitor *) monitor, currentEE, millis);
+    error = CVMnamedSysMonitorWait((CVMNamedSysMonitor *) monitor, currentEE,
+				   millis);
     switch (error) {
     case CVM_WAIT_OK:			  result = JVMTI_ERROR_NONE; break;
     case CVM_WAIT_INTERRUPTED:  result = JVMTI_ERROR_INTERRUPT; break;
@@ -6139,12 +6314,17 @@ jvmti_RawMonitorNotify(jvmtiEnv* jvmtienv,
     CVMExecEnv *currentEE = CVMgetEE();
     CVMBool successful;
 
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     THREAD_OK(currentEE);
     ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(monitor, JVMTI_ERROR_INVALID_MONITOR);
 
-    successful = CVMnamedSysMonitorNotify((CVMNamedSysMonitor*) monitor, currentEE);
+    if (CVMnamedSysMonitorGetType((CVMNamedSysMonitor *) monitor) !=
+	CVM_LOCKTYPE_NAMED_SYSMONITOR) {
+	return JVMTI_ERROR_INVALID_MONITOR;
+    }
+    successful =
+	CVMnamedSysMonitorNotify((CVMNamedSysMonitor*) monitor, currentEE);
     return successful ? JVMTI_ERROR_NONE : JVMTI_ERROR_NOT_MONITOR_OWNER;
 }
 
@@ -6160,12 +6340,17 @@ jvmti_RawMonitorNotifyAll(jvmtiEnv* jvmtienv,
     CVMExecEnv *currentEE = CVMgetEE();
     CVMBool successful;
 
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     THREAD_OK(currentEE);
     ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(monitor, JVMTI_ERROR_INVALID_MONITOR);
 
-    successful = CVMnamedSysMonitorNotifyAll((CVMNamedSysMonitor*) monitor, currentEE);
+    if (CVMnamedSysMonitorGetType((CVMNamedSysMonitor *) monitor) !=
+	CVM_LOCKTYPE_NAMED_SYSMONITOR) {
+	return JVMTI_ERROR_INVALID_MONITOR;
+    }
+    successful =
+	CVMnamedSysMonitorNotifyAll((CVMNamedSysMonitor*) monitor, currentEE);
     return successful ? JVMTI_ERROR_NONE : JVMTI_ERROR_NOT_MONITOR_OWNER;
 }
 
@@ -6182,6 +6367,12 @@ jvmti_SetJNIFunctionTable(jvmtiEnv* jvmtienv,
 
     CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
+    ASSERT_NOT_NULL_ELSE_EXIT_WITH_ERROR(ee, JVMTI_ERROR_UNATTACHED_THREAD)
+    NOT_NULL(functionTable);
+    if (ee == NULL) {
+	return JVMTI_ERROR_UNATTACHED_THREAD;
+    }
+ 
     /* Need to do atomic copy */
     CVMassert(CVMD_isgcSafe(ee));
 #ifdef CVM_JIT
@@ -6190,7 +6381,6 @@ jvmti_SetJNIFunctionTable(jvmtiEnv* jvmtienv,
     CVM_THREAD_LOCK(ee);
     /* Roll all threads to safe points. */
     CVMD_gcBecomeSafeAll(ee);
-
     currentJNIPtr =
 	(jniNativeInterface*)CVMjniGetInstrumentableJNINativeInterface();
     memcpy(currentJNIPtr, functionTable, sizeof(jniNativeInterface));
@@ -6206,9 +6396,12 @@ jvmti_SetJNIFunctionTable(jvmtiEnv* jvmtienv,
 static jvmtiError JNICALL
 jvmti_GetJNIFunctionTable(jvmtiEnv* jvmtienv,
 			  jniNativeInterface** functionTable) {
+    CVMExecEnv* ee = CVMgetEE();
     CHECK_JVMTI_ENV;
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
-
+    if (ee == NULL) {
+	return JVMTI_ERROR_UNATTACHED_THREAD;
+    }
     ALLOC(jvmtienv, sizeof(jniNativeInterface), functionTable);
     memcpy(*functionTable, CVMjniGetInstrumentableJNINativeInterface(),
 	   sizeof(jniNativeInterface));
@@ -6349,6 +6542,7 @@ CVMjvmtiRecomputeThreadEnabled(CVMExecEnv *ee, JvmtiEnvEventEnable *eventp)
 	CVMjvmtiEventEnabled(ee).enabledBits = anyEnabled;
     }
     CVMjvmtiSingleStepping(ee) = ((anyEnabled & SINGLE_STEP_BIT) != 0);
+    CVMjvmtiSetProcessingCheck(ee);
 
     return anyEnabled;
 }
@@ -6409,7 +6603,7 @@ jvmti_SetEventCallbacks(jvmtiEnv* jvmtienv,
     size_t byteCnt = sizeof(jvmtiEventCallbacks);
     jlong enabledBits = 0;
     int ei;
-    GET_CHECK_JVMTI_ENV;
+    CHECK_JVMTI_ENV;
     JVMTI_ENABLED();
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_ONLOAD);
     THREAD_OK(CVMgetEE());
@@ -6453,7 +6647,7 @@ jvmti_SetEventNotificationMode(jvmtiEnv* jvmtienv,
     CVMBool enabled;
     jvmtiError err;
 
-    GET_CHECK_JVMTI_ENV;
+    CHECK_JVMTI_ENV;
 
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_ONLOAD);
     if (eventThread != NULL) {
@@ -6481,8 +6675,8 @@ jvmti_SetEventNotificationMode(jvmtiEnv* jvmtienv,
 	return JVMTI_ERROR_MUST_POSSESS_CAPABILITY;
     }
 
-    CVMtraceJVMTI(("JVMTI: SetEvtN: thrd: 0x%x, ee: 0x%x, ena: %d\n", 
-		   (int)eventThread, (int)ee, (int)enabled));
+    CVMtraceJVMTI(("JVMTI: SetEvtN: ee: 0x%x, evt: 0x%x, ena: %d\n", 
+		   (int)ee, (int)eventType, (int)enabled));
     if (eventThread != NULL) {
 	ThreadNode *node;
 	
@@ -6528,10 +6722,12 @@ jvmti_NotifyFramePop(jvmtiEnv* jvmtienv,
     CVMExecEnv* ee = CVMgetEE();
     CVMExecEnv *targetEE;
 
-    GET_CHECK_JVMTI_ENV;
+    CHECK_JVMTI_ENV;
     JVMTI_ENABLED();
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
-
+    if (depth < 0) {
+	return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+    }
     CVMextraAssert(CVMD_isgcSafe(ee));
 
     err = jthreadToExecEnv(ee, thread, &targetEE);
@@ -6591,6 +6787,7 @@ jvmti_NotifyFramePop(jvmtiEnv* jvmtienv,
 	   JVMDI checks for duplicate bag entries.  That has been removed here.
 	   Make sure that it is OK.
 	*/
+	CVMtraceJVMTI(("JVMTI: Notify Frame Pop: ee 0x%x\n", (int)ee));
 	/* check if one already exists */
 	if (CVMbagFind(CVMglobals.jvmtiStatics.framePops, frame) == NULL) {	   
 	    /* allocate space for it */
@@ -6636,8 +6833,8 @@ static jvmtiError JNICALL
 jvmti_GetExtensionFunctions(jvmtiEnv* jvmtienv,
 			    jint* extensionCountPtr,
 			    jvmtiExtensionFunctionInfo** extensions) {
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_ONLOAD);
     NOT_NULL(extensionCountPtr);
     NOT_NULL(extensions);
@@ -6652,8 +6849,8 @@ static jvmtiError JNICALL
 jvmti_GetExtensionEvents(jvmtiEnv* jvmtienv,
 			 jint* extensionCountPtr,
 			 jvmtiExtensionEventInfo** extensions) {
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_ONLOAD);
     NOT_NULL(extensionCountPtr);
     NOT_NULL(extensions);
@@ -6681,8 +6878,8 @@ static jvmtiError JNICALL
 jvmti_GetCurrentThreadCpuTimerInfo(jvmtiEnv* jvmtienv,
 				   jvmtiTimerInfo* infoPtr) {
 
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL(infoPtr);
 
@@ -6700,8 +6897,8 @@ jvmti_GetTime(jvmtiEnv* jvmtienv, jlong* nanosPtr);
 static jvmtiError JNICALL
 jvmti_GetCurrentThreadCpuTime(jvmtiEnv* jvmtienv,
 			      jlong* nanosPtr) {
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
     NOT_NULL(nanosPtr);
     *nanosPtr = CVMtimeCurrentThreadCpuTime(CVMthreadSelf());
@@ -6712,8 +6909,8 @@ jvmti_GetCurrentThreadCpuTime(jvmtiEnv* jvmtienv,
 static jvmtiError JNICALL
 jvmti_GetThreadCpuTimerInfo(jvmtiEnv* jvmtienv,
 			    jvmtiTimerInfo* infoPtr) {
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
     NOT_NULL(infoPtr);
 
@@ -6733,8 +6930,8 @@ jvmti_GetThreadCpuTime(jvmtiEnv* jvmtienv,
     CVMExecEnv *targetEE;
     jvmtiError err;
 
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     CVMJVMTI_CHECK_PHASE(JVMTI_PHASE_LIVE);
 
 #if 0
@@ -6757,8 +6954,8 @@ static jvmtiError JNICALL
 jvmti_GetTimerInfo(jvmtiEnv* jvmtienv,
 		   jvmtiTimerInfo* infoPtr) {
 
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     NOT_NULL(infoPtr);
 
     infoPtr->max_value = CONST64(0xFFFFFFFFFFFFFFFF); /* will not wrap in less than 64 bits */
@@ -6773,14 +6970,16 @@ static jvmtiError JNICALL
 jvmti_GetTime(jvmtiEnv* jvmtienv,
 	      jlong* nanosPtr) {
     jlong timeNs;
+    CHECK_JVMTI_ENV;
 #ifdef CVM_DEBUG_ASSERTS
-    CVMExecEnv *ee = CVMgetEE();
-    CVMassert (ee != NULL);
-    CVMassert(CVMD_isgcSafe(ee));
+    {
+	CVMExecEnv *ee = CVMgetEE();
+	CVMassert (ee != NULL);
+	CVMassert(CVMD_isgcSafe(ee));
+    }
 #endif
 
     JVMTI_ENABLED();
-    CHECK_JVMTI_ENV;
     NOT_NULL(nanosPtr);
 
     timeNs = CVMtimeNanosecs();
@@ -6791,11 +6990,12 @@ jvmti_GetTime(jvmtiEnv* jvmtienv,
 static jvmtiError JNICALL
 jvmti_GetAvailableProcessors(jvmtiEnv* jvmtienv,
 			     jint* processorCountPtr) {
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
-    CVMJVMTI_CHECK_PHASE2(JVMTI_PHASE_LIVE, JVMTI_PHASE_START);
+    JVMTI_ENABLED();
     NOT_NULL(processorCountPtr);
-
+    /* TODO: should add support to get proper count of processors when OS
+     * layer supports that 
+     */
     *processorCountPtr = 1;
     return JVMTI_ERROR_NONE;
 }
@@ -7016,8 +7216,8 @@ static jvmtiError JNICALL
 jvmti_GetPhase(jvmtiEnv* jvmtienv,
 	       jvmtiPhase* phasePtr) {
 
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     NOT_NULL(phasePtr);
 
     *phasePtr = CVMjvmtiGetPhase();
@@ -7029,7 +7229,7 @@ static jvmtiError JNICALL
 jvmti_DisposeEnvironment(jvmtiEnv* jvmtienv) {
 
     jvmtiCapabilities *cap;
-    GET_CHECK_JVMTI_ENV;
+    CHECK_JVMTI_ENV;
 
     cap = getCapabilities(jvmtiExtEnv);
     CVMjvmtiRelinquishCapabilities(cap, cap, cap);
@@ -7042,7 +7242,7 @@ static jvmtiError JNICALL
 jvmti_SetEnvironmentLocalStorage(jvmtiEnv* jvmtienv,
 				 const void* data) {
 
-    GET_CHECK_JVMTI_ENV;
+    CHECK_JVMTI_ENV;
 
     jvmtiExtEnv->envLocalStorage = data;
     return JVMTI_ERROR_NONE;
@@ -7053,7 +7253,7 @@ static jvmtiError JNICALL
 jvmti_GetEnvironmentLocalStorage(jvmtiEnv* jvmtienv,
 				 void** dataPtr) {
 
-    GET_CHECK_JVMTI_ENV;
+    CHECK_JVMTI_ENV;
 
     *dataPtr = (void *)jvmtiExtEnv->envLocalStorage;
     return JVMTI_ERROR_NONE;
@@ -7063,6 +7263,7 @@ jvmti_GetEnvironmentLocalStorage(jvmtiEnv* jvmtienv,
 static jvmtiError JNICALL
 jvmti_GetVersionNumber(jvmtiEnv* env,
 		       jint* versionPtr) {
+    NOT_NULL(versionPtr);
     *versionPtr = JVMTI_VERSION;
     return JVMTI_ERROR_NONE;
 }
@@ -7074,8 +7275,8 @@ jvmti_GetErrorName(jvmtiEnv* jvmtienv,
 		   char** namePtr)
 {
     const char *name;
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     NOT_NULL(namePtr);
 
     if (error < JVMTI_ERROR_NONE || error > JVMTI_ERROR_MAX) {
@@ -7093,6 +7294,13 @@ jvmti_SetVerboseFlag(jvmtiEnv* env,
 		     jvmtiVerboseFlag flag,
 		     jboolean value)
 {
+    if (flag != JVMTI_VERBOSE_OTHER &&
+	flag != JVMTI_VERBOSE_GC &&
+	flag != JVMTI_VERBOSE_CLASS &&
+	flag != JVMTI_VERBOSE_JNI) {
+	return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+    }
+
     return JVMTI_ERROR_NONE;
 }
 
@@ -7100,8 +7308,8 @@ jvmti_SetVerboseFlag(jvmtiEnv* env,
 static jvmtiError JNICALL
 jvmti_GetJLocationFormat(jvmtiEnv* jvmtienv,
 			 jvmtiJlocationFormat* formatPtr) {
-    JVMTI_ENABLED();
     CHECK_JVMTI_ENV;
+    JVMTI_ENABLED();
     NOT_NULL(formatPtr);
 
     *formatPtr = JVMTI_JLOCATION_JVMBCI;

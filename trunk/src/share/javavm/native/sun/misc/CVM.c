@@ -794,7 +794,9 @@ CNIsun_misc_CVM_setDebugEvents(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb)
 {
 #ifdef CVM_JVMTI
-    CVMjvmtiDebugEventsEnabled(ee) = arguments[0].j.i;
+    if (CVMjvmtiEnabled()) {
+	CVMjvmtiDebugEventsEnabled(ee) = arguments[0].j.i;
+    }
 #endif
     return CNI_VOID;
 }
@@ -1181,7 +1183,7 @@ CNIsun_misc_CVM_agentlibInitialize(CVMExecEnv* ee,
 #ifdef CVM_AGENTLIB
     CVMJavaInt numArgs = arguments[0].j.i;
     
-    if (CVMAgentInitTable(&CVMglobals.agentonUnloadTable, numArgs)) {
+    if (CVMAgentInitTable(&CVMglobals.agentTable, numArgs)) {
 	arguments[0].j.i = CVM_TRUE;
     } else {
 	arguments[0].j.i = CVM_FALSE;
@@ -1215,7 +1217,7 @@ CNIsun_misc_CVM_agentlibProcess(CVMExecEnv* ee, CVMStackVal32 *arguments,
 	}
 	CVMD_gcSafeExec(ee, {
 		if ((*env)->PushLocalFrame(env, 16) == JNI_OK) {
-		    result = CVMAgentHandleArgument(&CVMglobals.agentonUnloadTable,
+		    result = CVMAgentHandleArgument(&CVMglobals.agentTable,
 						    env,
 						    &agentlibArgument);
 		    (*env)->PopLocalFrame(env, NULL);

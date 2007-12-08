@@ -29,6 +29,7 @@
 #include <winbase.h>
 #else
 #include <sys/stat.h>
+#include <windows.h>
 #endif
 #include "javavm/include/winntUtil.h"
 
