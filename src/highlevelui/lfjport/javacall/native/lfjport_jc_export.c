@@ -155,3 +155,20 @@ jboolean lfjport_direct_flush(const java_graphics *g,
 
   return KNI_FALSE;
 }
+
+jboolean lfjport_is_softbutton_label_on_native_layer() {
+    return jcapp_is_softbutton_label_on_native_layer();
+}
+
+/**
+ * Request platform to draw a label in the soft button layer.
+ * @param label Label to draw (UTF16)
+ * @param len Length of the lable (0 will cause removal of current label)
+ * @param index Index of the soft button in the soft button bar.
+  */
+
+void lfjport_set_softbutton_label_on_native_layer (unsigned short *label, 
+                                                 int len, 
+                                                 int index) {
+    jcapp_set_softbutton_label_on_native_layer(label,len,index);
+}

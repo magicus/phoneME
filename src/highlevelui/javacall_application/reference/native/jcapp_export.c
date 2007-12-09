@@ -161,6 +161,14 @@ int jcapp_get_screen_height() {
 }
 
 /**
+ * Checks if soft button layer is supported
+ */
+
+jboolean jcapp_is_softbutton_label_on_native_layer() {
+    return javacall_lcd_is_native_softbutton_label();
+}
+
+/**
  * Paints the Soft Buttons when using a native layer
  * acts as intermidiate layer between kni and javacall 
  */

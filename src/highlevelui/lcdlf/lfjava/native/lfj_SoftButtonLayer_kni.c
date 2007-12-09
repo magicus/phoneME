@@ -9,9 +9,21 @@
 // this is needed once the platfrm uses its own native SoftButtonLayer
 
 #include <commonKNIMacros.h>
-#include <jcapp_export.h>
+#include <lcdlf_export.h>
 #include <midpError.h>
 #include <midpMalloc.h>
+
+/**
+ * KNI function to verify is native soft buttons are supported
+ * Function: public native void setNativeCommand0(String label, int softButtonIndex)
+ *
+ * Class: com.sun.midp.chameleon.layers.SoftButtonLayer
+ */
+ 
+KNI_RETURNTYPE_BOOLEAN
+Java_com_sun_midp_chameleon_layers_SoftButtonLayer_isNativeSoftButtonLabel0() {
+    KNI_ReturnBoolean(lcdlf_is_softbutton_label_on_native_layer());
+}
 
 /**
  * KNI function to set the SoftButton's label on the native layer.
@@ -39,11 +51,11 @@ Java_com_sun_midp_chameleon_layers_SoftButtonLayer_setNativeSoftButtonLabel0() {
 			KNI_ThrowNew(midpOutOfMemoryError, NULL);
 		} else {
 			KNI_GetStringRegion(stringHandle, 0, strLen, buffer);
-			jcapp_set_softbutton_label_on_native_layer(buffer, strLen, sfbIndex );
+			lcdlf_set_softbutton_label_on_native_layer(buffer, strLen, sfbIndex );
 			midpFree(buffer);
 		}
 	} else { //the label is a null or emprty string 
-		jcapp_set_softbutton_label_on_native_layer((jchar*)"\x0\x0", 0, sfbIndex );
+		lcdlf_set_softbutton_label_on_native_layer((jchar*)"\x0\x0", 0, sfbIndex );
 	} 
 	KNI_EndHandles();
 	KNI_ReturnVoid();

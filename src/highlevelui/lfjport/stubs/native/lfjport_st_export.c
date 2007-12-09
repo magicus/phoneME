@@ -164,3 +164,13 @@ jboolean lfjport_direct_flush(const java_graphics *g,
   // not implemented
   return KNI_FALSE;
 }
+
+jboolean lfjport_is_softbutton_label_on_native_layer() {
+    return KNI_FALSE;
+}
+
+void lfjport_set_softbutton_label_on_native_layer (unsigned short *label, 
+                                                 int len, 
+                                                 int index) {
+    // Not implemented
+}
