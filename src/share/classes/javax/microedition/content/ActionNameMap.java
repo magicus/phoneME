@@ -94,8 +94,8 @@ public final class ActionNameMap {
 	}
 
 	this.locale = locale;
-	this.actions = ContentHandlerImpl.copy(actions);
-	this.actionnames = ContentHandlerImpl.copy(actionnames);
+	this.actions = ContentHandlerImpl.copy(actions,false,false);
+	this.actionnames = ContentHandlerImpl.copy(actionnames,false,false);
 	if (findDuplicate(this.actions) >= 0) {
 	    throw new IllegalArgumentException("duplicate string");
 	}        

@@ -26,6 +26,9 @@
 
 package com.sun.j2me.content;
 
+import java.util.Enumeration;
+import java.util.Vector;
+
 import javax.microedition.content.ActionNameMap;
 import javax.microedition.content.ContentHandler;
 import javax.microedition.content.Invocation;
@@ -222,11 +225,12 @@ public class ContentHandlerImpl implements ContentHandler {
             }
             this.ID = ID;
         }
-        this.types = copy(types);
-        this.suffixes = copy(suffixes);
-        this.actions = copy(actions);
+        this.types = copy(types,false,true);
+        this.suffixes = copy(suffixes,false,true);
+        this.actions = copy(actions,true,false);
         this.actionnames = copy(actionnames);
-        this.accessRestricted = copy(accessRestricted);
+        // access restricted callers allows duplicates
+        this.accessRestricted = copy(accessRestricted,true,false);
         this.authority = auth;
     }
 
@@ -266,36 +270,54 @@ public class ContentHandlerImpl implements ContentHandler {
      * is an empty array the default ZERO length string array is used.
      *
      * @param strings array to check for null and length == 0
+     * @param caseSens assume case sensetivity when check for duplicates
+     * @param skipDuplicates chaeck for duplicates and skip them 
      * @return a non-null array of strings; an empty array replaces null
      * @exception NullPointerException if any string ref is null
      * @exception IllegalArgumentException if any string
      * has length == 0
      */
-    public static String[] copy(String[] strings) {
-        if (strings != null && strings.length > 0) {
-            String[] copy = new String[strings.length];
-            for (int i = 0; i < strings.length; i++) {
-                if (strings[i] == null) {
-                    throw new NullPointerException("argument is null");
+    public static String[] copy(String[] strings, boolean caseSens, boolean skipDuplicates) {
+		Vector copy = new Vector();    	
+		if (strings != null && strings.length > 0) {
+			for (int i = 0; i < strings.length; i++) {
+				if (strings[i] == null) {
+					throw new NullPointerException("argument is null");
+				}
+				String s = strings[i];
+				if (s.length() == 0) {
+					throw new IllegalArgumentException("string length is 0");
+				}
+				if (skipDuplicates){
+					Enumeration e = copy.elements();
+					while (e.hasMoreElements()){
+						String sprev = (String)e.nextElement();
+						if (caseSens) {
+							if (s.equals(sprev)) break;
+						} else {
+							if (s.equalsIgnoreCase(sprev)) break;
+						}
+					}
+					if (e.hasMoreElements()) continue;
+				}
+				copy.addElement(s);
+			}
 		}
-		if(strings[i].length() == 0) {
-                    throw new IllegalArgumentException("string length is 0");
-                }
-                copy[i] = new String(strings[i]);
-
-            }
-            return strings;
-        } else {
-            return ZERO_STRINGS;
-        }
-    }
+		if (copy.size()>0) {
+			String result[]=new String[copy.size()];
+			copy.copyInto(result);
+			return result;
+		} else {
+			return ZERO_STRINGS;
+		}
+	}
     /**
-     * Checks that all of the actionname references are non-null.
-     *
-     * @param actionnames array to check for null and length == 0
-     * @return a non-null array of actionnames; an empty array replaces null
-     * @exception NullPointerException if any string ref is null
-     */
+	 * Checks that all of the actionname references are non-null.
+	 * 
+	 * @param actionnames array to check for null and length == 0
+	 * @return a non-null array of actionnames; an empty array replaces null
+	 * @exception NullPointerException if any string ref is null
+	 */
     private static ActionNameMap[] copy(ActionNameMap[] actionnames) {
         if (actionnames != null && actionnames.length > 0) {
             ActionNameMap[] copy = new ActionNameMap[actionnames.length];

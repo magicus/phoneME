@@ -539,7 +539,7 @@ if (caller_id_ || (field == JSR211_FIELD_ID)){
 }
 
 if (field != JSR211_FIELD_ID){
-	value = JSR211_MALLOC(valuemaxlen);
+	value = JSR211_MALLOC(valuemaxlen*sizeof(*value));
 	if (!value) {
 		if(handler) JSR211_FREE(handler);
 		return JSR211_FAILED;
@@ -785,7 +785,7 @@ jsr211_result jsr211_get_handler_field(const pcsl_string* id_,
 	}
 
 	id = (javacall_utf16_string) pcsl_string_get_utf16_data(id_);	
-	buffer = (jchar*) JSR211_MALLOC(maxlen);
+	buffer = (jchar*) JSR211_MALLOC(maxlen * sizeof(*buffer));
 
 	pos=0;
 	while (buffer){
@@ -805,8 +805,11 @@ jsr211_result jsr211_get_handler_field(const pcsl_string* id_,
 
 		ASSURE_BUF(buffer,len, maxlen);
 		if (res) break;
-
-		res = jsr211_appendUniqueString(buffer,len - 1,field_id != JSR211_FIELD_SUFFIXES && field_id != JSR211_FIELD_TYPES,result);
+		if (field_id == JSR211_FIELD_ACCESSES){
+                  res = jsr211_appendString(buffer,len - 1, result);
+		} else {
+		   res = jsr211_appendUniqueString(buffer,len - 1,field_id != JSR211_FIELD_SUFFIXES && field_id != JSR211_FIELD_TYPES,result);
+		}
 		if (res != JAVACALL_OK) break;
 	}
 	javacall_chapi_enum_finish(pos);

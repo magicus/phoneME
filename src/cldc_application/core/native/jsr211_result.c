@@ -38,6 +38,7 @@
 #include <javacall_defs.h>
 #include "jsr211_registry.h"
 
+#include <pcsl_memory.h> 
 
 /**
  * The granularity of dynamically expanded size for result buffer.
@@ -50,9 +51,11 @@ static int GET_CH_SIZE(id_size, suit_size, clas_size) {
 	return id_size + 1 + suit_size + 1 + clas_size + 1 + 1;
 }
 
-#define JSR211_MALLOC(x) malloc(x)
-#define JSR211_FREE(x) free(x)
 
+#define JSR211_MALLOC(x) pcsl_mem_malloc(x)
+#define JSR211_CALLOC(x,s) pcsl_mem_calloc(x,s)
+#define JSR211_FREE(x) pcsl_mem_free(x)
+#define JSR211_REALLOC(x,s) pcsl_mem_realloc(x,s)
 
 /**
  * Internal structure.
@@ -107,7 +110,7 @@ static jsr211_result assureBufferCap(JSR211_CHAPI_INTERNAL_RESBUF* resbuf,
 	JSR211_CHAPI_INTERNAL_RESBUF* resbuf_ = (JSR211_CHAPI_INTERNAL_RESBUF*)resbuf;
     if (resbuf_->used + ext > resbuf_->bufsz) {
         int sz = (resbuf_->used + ext + RESBUF_GRAN) & (~RESBUF_GRAN);
-		javacall_utf16* tmp = (javacall_utf16*) realloc(resbuf_->buf, sz * sizeof(javacall_utf16));
+		javacall_utf16* tmp = (javacall_utf16*) JSR211_REALLOC(resbuf_->buf, sz * sizeof(javacall_utf16));
         if (!tmp) {
             return JSR211_FAILED;
         }
