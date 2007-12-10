@@ -409,8 +409,12 @@ static int copy_string(const short* str, /*OUT*/ short*  buffer, int* length){
 		*length = len;
 		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
 	}
-	memcpy(buffer,str,len*sizeof(*str));
-	buffer[len]=0;
+	if (len>1) {
+		memcpy(buffer,str,len*sizeof(*str));
+	} else {
+		buffer[0]=0;
+	}
+
 	*length = len;
 	return 0;
 }
@@ -725,13 +729,15 @@ static short** substringarray(const short* str_begin, const short* str_end, int*
 
 static int get_integer(const short* str_begin, const short* str_end){
 	int result = 0;
+	int minus = 0;
 	const short* buf = str_begin;
 	if (!buf) return 0;
-	while (*buf && buf < str_end) {
+	if (*buf=='-') {minus=1;++buf;}
+	while (*buf && buf <= str_end) {
 		if(*buf>='0' && *buf<='9')  result = result * 10 + (*buf - '0');
 		++buf;
 	}
-	return result;
+	return minus ? (-result) : result;
 }
 
 
@@ -1521,7 +1527,7 @@ javacall_result javacall_chapi_register_handler(
 			if (idQuoted) *b++ = '\'';
 			*b++ = '=';
 
-			for (iacc=0;iacc<nAccesses;++iacc){
+		for (iacc=0;iacc<nAccesses;++iacc){
 				*b++ = '\'';
 				b += append_string(b,access_allowed_ids[iacc]);
 				*b++ = '\'';
