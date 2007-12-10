@@ -252,11 +252,14 @@
                     Check the specification for the minimal allowed value."/>
   <constant Type="int"
             Name="MINIMUM_FLUSH_INTERVAL"
-            Value="40"
+            Value="0"
             Comment="The period in milliseconds after the first call to GameCanvas.flush()
                      when any subsequent call to the method will be ignored.
                      This is the performance optimization limiting too frequent
-                     calls to GameCanvas.flush()."/>
+                     calls to GameCanvas.flush(). 40 seems to be the optimum value.
+                     Be careful to enable the optimization as it may lead to the MIDP spec
+                     violation in some cases.
+                     The value set 0 disables the optimization. "/>
   <constant Type="int"
             Name="DELAYED_FLUSH_PERIOD"
             Value="80"
