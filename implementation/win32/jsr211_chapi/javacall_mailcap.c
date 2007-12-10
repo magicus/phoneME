@@ -409,8 +409,12 @@ static int copy_string(const short* str, /*OUT*/ short*  buffer, int* length){
 		*length = len;
 		return JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL;
 	}
-	memcpy(buffer,str,len*sizeof(*str));
-	buffer[len]=0;
+	if (len>1) {
+		memcpy(buffer,str,len*sizeof(*str));
+	} else {
+		buffer[0]=0;
+	}
+
 	*length = len;
 	return 0;
 }
@@ -1523,7 +1527,7 @@ javacall_result javacall_chapi_register_handler(
 			if (idQuoted) *b++ = '\'';
 			*b++ = '=';
 
-			for (iacc=0;iacc<nAccesses;++iacc){
+		for (iacc=0;iacc<nAccesses;++iacc){
 				*b++ = '\'';
 				b += append_string(b,access_allowed_ids[iacc]);
 				*b++ = '\'';
