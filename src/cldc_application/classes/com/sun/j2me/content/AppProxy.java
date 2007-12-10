@@ -29,6 +29,8 @@ package com.sun.j2me.content;
 import java.util.Vector;
 import java.util.Hashtable;
 
+import com.sun.j2me.security.Permission;
+import com.sun.j2me.security.Token;
 import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
@@ -155,14 +157,14 @@ class AppProxy {
      * The token may only be set once.
      * @param token a Security token
      */
-    static void setSecurityToken(SecurityToken token) {
+    static void setSecurityToken(Object token) {
         if (token == null) {
             throw new NullPointerException();
         }
         if (classSecurityToken != null) {
             throw new SecurityException();
         }
-        classSecurityToken = token;
+        classSecurityToken = (SecurityToken)token;
     }
 
     /**
@@ -408,8 +410,8 @@ class AppProxy {
      */
     final static void checkAPIPermission(Object securityToken) {
         if (securityToken != null) {
-            ((SecurityToken)securityToken).
-                checkIfPermissionAllowed(Permissions.MIDP);
+            ((Token)securityToken).
+                checkIfPermissionAllowed(new Permission(null, null, Permissions.MIDP));
         } else {
             MIDletSuite msuite =
                 MIDletStateHandler.getMidletStateHandler().getMIDletSuite();

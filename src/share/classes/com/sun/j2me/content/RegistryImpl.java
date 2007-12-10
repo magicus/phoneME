@@ -1,27 +1,27 @@
 /*
  *
  *
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
- * 2 only, as published by the Free Software Foundation. 
+ * 2 only, as published by the Free Software Foundation.
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
- * included at /legal/license.txt). 
+ * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA 
+ * 02110-1301 USA
  * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
- * information or have any questions. 
+ * information or have any questions.
  */
 
 package com.sun.j2me.content;
@@ -36,6 +36,10 @@ import javax.microedition.content.Invocation;
 import javax.microedition.content.Registry;
 import javax.microedition.content.ResponseListener;
 
+import com.sun.j2me.security.Token;
+import com.sun.j2me.security.TrustedClass;
+import com.sun.jsr211.security.SecurityInitializer;
+
 /**
  * Implementation of Content Handler registry.  It maintains
  * the set of currently registered handlers and updates to
@@ -45,42 +49,26 @@ import javax.microedition.content.ResponseListener;
  */
 public final class RegistryImpl {
 
+    /**
+     * Inner class to request security token from SecurityInitializer.
+     * SecurityInitializer should be able to check this inner class name.
+     */
+    static private class SecurityTrusted
+    	implements TrustedClass { };
+
+    /** This class has a different security domain than the App suite */
+    private static Token securityToken =
+    	SecurityInitializer.requestToken(new SecurityTrusted());
+    
+    static {
+	    RegistryStore.setSecurityToken(securityToken);
+    }
+    
     /** The set of active Invocations. */
     private final Hashtable activeInvocations = new Hashtable();
 
     /** The set of active RegistryImpls. */
     private static Hashtable registries = new Hashtable();
-
-
-    public static class RegistryFactory {
-        /**
-         * Internal constructor.
-         * @param registry blank (invalid) Registry protecting against
-         * illegal access.
-         */
-        public RegistryFactory(Registry registry) {
-            if (registry.getID() != null) {
-                throw new RuntimeException("Illegal access");
-            }
-        }
-
-        /**
-         * RegistryImpl access point. If RegistryImpl instance has ever created
-         * for given classname then cached value returned.
-         * The new RegistryImpl instance is created otherwise.
-         *
-         * @param classname discovered class name.
-         *
-         * @return cached or just created RegistryImpl instance
-         *
-         * @exception IllegalArgumentException if no class or
-         *                  class is not valid application.
-         */
-        public RegistryImpl getRegistryImpl(String classname) {
-            return getRegistryImpl0(classname);
-        }
-
-    }
 
     /** The mutex used to avoid corruption between threads. */
     private static final Object mutex = new Object();
@@ -99,6 +87,44 @@ public final class RegistryImpl {
 
     /** Count of responses received. */
     int responseCalls;
+
+    /**
+     * Gets the RegistryImpl for the application class.
+     * The SecurityToken is needed to call from the public API package.
+     * The application is identified by the classname that implements
+     * the lifecycle of the Java runtime environment.
+     * The classname must be the name of a registered application class
+     * or a registered content handler.
+     * <p>
+     * For a MIDP implementation,
+     * application classes must be registered with the
+     * <code>MIDlet-&lt;n&gt;</code> attribute; content handlers are
+     * registered with the <code>MicroEdition-Handler-&lt;n&gt</code>
+     * attribute or the {@link #register register} method.
+     * <p>
+     * When the RegistryImpl is created (the first time) all of the
+     * existing Invocations are marked.  They will be subject to
+     * {@link #cleanup} when the MIDlet exits.
+     *
+     * @param classname the application class
+     * @param token the security token needed to control access to the impl
+     *
+     * @return a RegistryImpl instance providing access to content handler
+     *  registrations and invocations; MUST NOT be <code>null</code>
+     * @exception ContentHandlerException is thrown with a reason of
+     *  <code>NO_REGISTERED_HANDLER</code> if there is no
+     *  content handler registered for the classname in the current
+     *  application
+     * @exception NullPointerException if <code>classname</code> is
+     *       <code>null</code>
+     */
+    public static RegistryImpl getRegistryImpl(String classname,
+                           Object token)
+    throws ContentHandlerException
+    {
+    AppProxy.checkAPIPermission(token);
+        return getRegistryImpl(classname);
+    }
 
     /**
      * Gets the RegistryImpl for the application class.
@@ -121,31 +147,36 @@ public final class RegistryImpl {
      *
      * @return a RegistryImpl instance providing access to content handler
      *  registrations and invocations; MUST NOT be <code>null</code>
-     * @exception IllegalArgumentException is thrown if there is no
-     *  MIDlet or content handler registered for the classname.
+     * @exception ContentHandlerException is thrown with a reason of
+     *  <code>NO_REGISTERED_HANDLER</code> if there is no
+     *  content handler registered for the classname in the current
+     *  application
      * @exception NullPointerException if <code>classname</code> is
      *       <code>null</code>
      */
-    static RegistryImpl getRegistryImpl0(String classname) {
+    static RegistryImpl getRegistryImpl(String classname)
+        throws ContentHandlerException
+    {
         // Synchronize between competing operations
         RegistryImpl curr = null;
         synchronized (mutex) {
             // Check if class already has a RegistryImpl
             curr = (RegistryImpl)registries.get(classname);
-            if (curr == null) {
-                // Create a new instance and insert it into the list
-                curr = new RegistryImpl(classname);
-                registries.put(classname, curr);
+            if (curr != null) {
+                // Check that it is still a CH or MIDlet
+                if (curr.handlerImpl == null &&
+                    (!curr.application.isRegistered())) {
+                    // Classname is not a registered MIDlet or ContentHandler
+                    throw new
+                        ContentHandlerException("not a registered MIDlet",
+                            ContentHandlerException.NO_REGISTERED_HANDLER);
+                }
+                return curr;
             }
-            
-            // Check that it is still a CH or MIDlet
-            if (curr.handlerImpl == null &&
-                                (!curr.application.isRegistered())) {
-                registries.remove(classname);
-                // Classname is not a registered MIDlet or ContentHandler
-                throw new
-                        IllegalArgumentException("not a registered MIDlet");
-            }
+
+            // Create a new instance and insert it into the list
+            curr = new RegistryImpl(classname);
+            registries.put(classname, curr);
         }
 
         /*
@@ -164,20 +195,36 @@ public final class RegistryImpl {
      *
      * @param classname the application class for this instance
      *
+     * @exception ContentHandlerException if
+     *  the <code>classname</code> is not registered either
+     *  as a MIDlet or a content handler
      * @exception NullPointerException if <code>classname</code>
      *  is <code>null</code>
+     * @exception SecurityException is thrown if the caller
+     *  does not have the correct permision
      */
-    private RegistryImpl(String classname) {
+    private RegistryImpl(String classname)
+        throws ContentHandlerException
+    {
         try {
             // Get the application for the class
             application = AppProxy.getCurrent().forClass(classname);
         } catch (ClassNotFoundException cnfe) {
-            throw new IllegalArgumentException("not an application");
+            throw new ContentHandlerException("not an application",
+                         ContentHandlerException.NO_REGISTERED_HANDLER);
+        } catch (IllegalArgumentException iae) {
+            throw new ContentHandlerException("not an application",
+                         ContentHandlerException.NO_REGISTERED_HANDLER);
         }
 
         /* Remember the ContentHandlerImpl, if there is one. */
-        handlerImpl = RegistryStore.getHandler(
-                                    application.getStorageId(), classname);
+        handlerImpl = getServer(application);
+
+        if (handlerImpl == null && (!application.isRegistered())) {
+            // Classname is not a registered MIDlet or ContentHandler; fail
+            throw new ContentHandlerException("not a registered MIDlet",
+                         ContentHandlerException.NO_REGISTERED_HANDLER);
+        }
     }
 
     /**
@@ -237,7 +284,7 @@ public final class RegistryImpl {
      * @param suiteId the MIDletSuite to cleanup after
      * @param classname the application class to cleanup
      */
-    public static void cleanup(int suiteId, String classname) {
+    static void cleanup(int suiteId, String classname) {
         InvocationImpl invoc = null;
         while ((invoc =
                 InvocationStore.getCleanup(suiteId, classname)) != null) {
@@ -480,9 +527,8 @@ public final class RegistryImpl {
                 throws ContentHandlerException
     {
         ContentHandlerImpl[] handlers = RegistryStore.findConflicted(handler.ID);
-    	
         ContentHandlerImpl existing = null;
-        
+
         if (handlers != null) {
             switch (handlers.length) {
                 case 0:
@@ -684,7 +730,7 @@ public final class RegistryImpl {
 
             // Fill in information about the invoking application
             invocation.invokingID = getID();
-            invocation.invokingStorageId = application.getStorageId();
+            invocation.invokingSuiteId = application.getStorageId();
             invocation.invokingClassname = application.getClassname();
             invocation.invokingAuthority = application.getAuthority();
             invocation.invokingAppName = application.getApplicationName();
@@ -869,11 +915,11 @@ public final class RegistryImpl {
             }
 
             // Make an attempt to gain the foreground
-            if (invoc.invokingStorageId != AppProxy.INVALID_STORAGE_ID &&
+            if (invoc.invokingSuiteId != AppProxy.INVALID_STORAGE_ID &&
                 invoc.invokingClassname != null) {
 
                 // Strong FG transition requested
-                AppProxy.requestForeground(invoc.invokingStorageId,
+            	AppProxy.requestForeground(invoc.invokingSuiteId,
                                               invoc.invokingClassname);
             }
 

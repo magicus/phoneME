@@ -565,13 +565,13 @@ Java_com_sun_j2me_content_RegistryStore_forSuite0(void) {
     if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(strObj, &suiteID)) {
         KNI_ThrowNew(midpOutOfMemoryError, NULL);
     } else {
-		jsr211_find_for_suite(&suiteID, result);
-		result2string(result, strObj);
+	jsr211_find_for_suite(&suiteID, result);
+	result2string(result, strObj);
+    	pcsl_string_free(&suiteID);
     }
-    pcsl_string_free(&suiteID);
 }
 #else
-    jsr211_find_for_suite((jsr211_field) KNI_GetParameterAsInt(1), &result);
+    jsr211_find_for_suite((jsr211_field) KNI_GetParameterAsInt(1), result);
     result2string(result, strObj);
 #endif
     KNI_EndHandlesAndReturnObject(strObj);

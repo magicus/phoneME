@@ -45,9 +45,9 @@ class ContentReader {
 
     private String url;
     private String username;
-    private char[] password;
+    private String password;
 
-    ContentReader(String url, String username, char[] password) {
+    ContentReader(String url, String username, String password) {
         this.url = url;
         this.username = username;
         this.password = password;
@@ -145,7 +145,7 @@ class ContentReader {
             boolean authorized = false;
             while (true) {
                 if (headsOnly) {
-                    httpc.setRequestMethod(httpc.HEAD);
+                    httpc.setRequestMethod(HttpConnection.HEAD);
                 }
 
                 // actual connection performed, some delay...
@@ -204,8 +204,8 @@ class ContentReader {
      * @return properly formated basic authentication credential
      */
     private static String formatAuthCredentials(String username,
-                                                char[] password) {
-        byte[] data = new byte[username.length() + password.length + 1];
+                                                String password) {
+        byte[] data = new byte[username.length() + password.length() + 1];
         int j = 0;
 
         for (int i = 0; i < username.length(); i++, j++) {
@@ -215,8 +215,8 @@ class ContentReader {
         data[j] = (byte)':';
         j++;
 
-        for (int i = 0; i < password.length; i++, j++) {
-            data[j] = (byte)password[i];
+        for (int i = 0; i < password.length(); i++, j++) {
+            data[j] = (byte)password.charAt(i);
         }
 
         return "Basic " + encode(data, 0, data.length);
