@@ -43,7 +43,7 @@ import com.sun.midp.midletsuite.MIDletInfo;
  * name and icon if any. When the user selects a MIDlet an instance
  * of the class indicated by MIDlet-&lt;n&gt; classname is created.
  */
-class SelectorBase extends MIDlet implements CommandListener, Runnable {
+abstract class SelectorBase extends MIDlet implements CommandListener, Runnable {
     /**
      * The List of all the MIDlets.
      */
@@ -51,15 +51,11 @@ class SelectorBase extends MIDlet implements CommandListener, Runnable {
     /**
      * The Display.
      */
-    private Display display;    
+    protected Display display;
     /**
      * Number of midlets in minfo.
      */
     private int mcount;
-    /**
-     * should this MIDlet exit after launching another MIDlet
-     */
-    private boolean exitAfterLaunch = true;
     /**
      * MIDlet information, class, name, icon; one per MIDlet.
      */
@@ -79,18 +75,14 @@ class SelectorBase extends MIDlet implements CommandListener, Runnable {
     /**
      * Index of the selected MIDlet, starts at -1 for non-selected.
      */
-    private int selectedMidlet = -1;
+    protected int selectedMidlet = -1;
 
     /**
      * Create and initialize a new Selector MIDlet.
      * The Display is retrieved and the list of MIDlets read
      * from the descriptor file.
-     *
-     * @param exitFlag set this to true if the selector should exit after
-     *        launching a MIDlet.
      */
-    protected SelectorBase(boolean exitFlag) {
-        exitAfterLaunch = exitFlag;
+    public SelectorBase() {
         display = Display.getDisplay(this);
         mcount = 0;
         minfo = new MIDletInfo[20];
@@ -151,6 +143,12 @@ class SelectorBase extends MIDlet implements CommandListener, Runnable {
     }
 
     /**
+     * Destroys this Selector midlet and exits after scheduling
+     * an execution of the next midlet in SVM, do nothing in MVM. 
+     */
+    protected abstract void yieldToNextMidlet();
+
+    /**
      * Launch a the select MIDlet.
      */
     public void run() {
@@ -162,23 +160,7 @@ class SelectorBase extends MIDlet implements CommandListener, Runnable {
         try {
             midletStateHandler.startMIDlet(classname,
                                            displayName);
-
-            if (exitAfterLaunch) {
-                // Give the create MIDlet notification 1 second to get to AMS.
-                Thread.sleep(1000);
-
-                // exit
-                destroyApp(false);
-                notifyDestroyed();
-                return;
-            }
-
-            // Give the new MIDlet the screen by setting current to null
-            display.setCurrent(null);
-
-            // let another MIDlet be selected after MIDlet ends
-            selectedMidlet = -1;
-            return;
+            yieldToNextMidlet();
         } catch (Exception ex) {
             ex.printStackTrace();
 
@@ -199,7 +181,6 @@ class SelectorBase extends MIDlet implements CommandListener, Runnable {
 
             // let another MIDlet be selected after the alert
             selectedMidlet = -1;
-            return;
         }
     }
 

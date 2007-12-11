@@ -32,10 +32,15 @@ package com.sun.midp.appmanager;
  */
 public class Selector extends SelectorBase {
     /**
-     * Create and initialize a new Selector MIDlet.
+     * Destroys this Selector midlet and exits after scheduling
+     * an execution of the next midlet in SVM, do nothing in MVM.
      */
-    public Selector() {
-        super(false);
+    protected void yieldToNextMidlet() {
+        // Give the new MIDlet the screen by setting current to null
+        display.setCurrent(null);
+
+        // let another MIDlet be selected after MIDlet ends
+        selectedMidlet = -1;
     }
 }
 

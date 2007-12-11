@@ -31,10 +31,22 @@ package com.sun.midp.appmanager;
  */
 public class Selector extends SelectorBase {
     /**
-     * Create and initialize a new Selector MIDlet.
+     * Destroys this Selector midlet and exits after scheduling
+     * an execution of the next midlet in SVM, do nothing in MVM.
      */
-    public Selector() {
-        super(true);
+    protected void yieldToNextMidlet() {
+        try {
+            // Give the create MIDlet notification 1 second to get to AMS.
+            Thread.sleep(1000);
+        } catch (InterruptedException ie) {
+            // ignore the exception
+        }
+
+        // exit
+        destroyApp(false);
+        notifyDestroyed();
+        
+        return;
     }
 }
 
