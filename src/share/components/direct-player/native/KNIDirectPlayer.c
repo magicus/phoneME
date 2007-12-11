@@ -170,10 +170,10 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nBuffering) {
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle && length > 0) {
         int ret;
-        jbyte *tmpArray = MMP_MALLOC(length);
+        jbyte *tmpArray = MMP_MALLOC((unsigned int)length);
         if (tmpArray != NULL) {
             MMP_DEBUG_STR2("+nBuffering length=%d offset=%d\n", length, pKniInfo->offset);
-            KNI_GetRawArrayRegion(bufferHandle, 0, length, (jbyte*)tmpArray);
+            KNI_GetRawArrayRegion(bufferHandle, 0, (int)length, (jbyte*)tmpArray);
             ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, 
                 (const char*)tmpArray, (int)length, pKniInfo->offset);
             MMP_FREE(tmpArray);

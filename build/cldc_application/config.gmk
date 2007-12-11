@@ -67,6 +67,10 @@ DIRECT_PLAYER = true
 #
 # If you want to support file:// protocol, turn on USE_FILE_CONNECTION option
 #
+ifeq ($(USE_JSR_75),true)
 USE_FILE_CONNECTION = true
+endif
 
 USE_STATIC_LIB = true
+
+USE_LCDUI = true

@@ -32,20 +32,30 @@
 #include <native/common/jni_util.h>
 
 /**
- * Returns true if audio mixing is supported.
+ * Returns current value for the dynamic property corresponding to the
+ * given key.
  *
- * This method is called when the <code>supports.mixing</code> system
- * property is retrieved.
+ * @param key key for the property being retrieved.
+ * @param fromCache indicates whether property value should be taken from
+ *        internal cache. It can be ignored if properties caching is not
+ *        supported by underlying implementation.
+ * @return current property value
  */
 JNIEXPORT jstring JNICALL
-Java_com_sun_jsr135_DynamicProperties_nSupportsMixing(JNIEnv *env, jobject this) {
-    jstring rv = NULL;
-    if( JAVACALL_TRUE == javacall_media_supports_mixing() )
-    {
-        rv = JNU_NewStringPlatform(env, "true");
-    } else {
-        rv = JNU_NewStringPlatform(env, "false");
+Java_com_sun_jsr135_DynamicProperties_nGetPropertyValue(
+    JNIEnv *env, jobject this, jstring key, jboolean fromCache)
+{
+    jstring rv;
+    const char *keyName;
+    const char *keyValue;
+    
+    keyName = (*env)->GetStringUTFChars(env, key, 0);
+    if (JAVACALL_SUCCEEDED(javacall_media_get_property(keyName, &keyValue))) {
+        if (NULL != keyValue)
+            rv = JNU_NewStringPlatform(env, keyValue);
     }
+    (*env)->ReleaseStringUTFChars(env, key, keyName);
+
     return rv;
 }
 
@@ -56,5 +66,5 @@ Java_com_sun_jsr135_DynamicProperties_nSupportsMixing(JNIEnv *env, jobject this)
  */
 JNIEXPORT jboolean JNICALL
 Java_com_sun_jsr135_DynamicProperties_cacheProperties(JNIEnv *env, jobject this) {
-    return JAVACALL_TRUE;
+    return JNI_TRUE;
 }
