@@ -225,7 +225,7 @@ SUBSYSTEM_JSR_120_CNI_CLASSES += com.sun.midp.wma.PushConnectionsPool
 # Specify romizer configuration file for the jsr
 # and path where the file is located
 #
-ROMGEN_INCLUDE_PATHS += $(JSR_120_DIR)/build/share/common
+ROMGEN_INCLUDE_PATHS += $(JSR_120_DIR)/build/share/config
 ROMGEN_CFG_FILES     += jsr120_rom.cfg
 
 # Platform
@@ -262,7 +262,7 @@ endif
 
 # Internal paths for jsr 120 module
 #
-INTERNAL_JSR_120_CONFIG_DIR= $(JSR_120_DIR)/build/share
+INTERNAL_JSR_120_CONFIG_DIR= $(JSR_120_DIR)/build/share/config
 
 ifneq ($(USE_JSR_205), true)
 # Include JSR 120 common properties in Configuration
@@ -270,7 +270,7 @@ ifneq ($(USE_JSR_205), true)
 # conflicting properties there
 #
 JSR_120_PROPERTY_FILES += \
-    $(INTERNAL_JSR_120_CONFIG_DIR)/common/properties_jsr120.xml
+    $(INTERNAL_JSR_120_CONFIG_DIR)/properties_jsr120.xml
 endif
 
 #################################################################
