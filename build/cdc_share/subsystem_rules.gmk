@@ -43,5 +43,5 @@ $(JSR_120_NATIVE_LIB): $(JSR_120_NATIVE_OBJS) $(ABSTRACTIONS_NATIVE_LIBRARY)
 
 # Copy and filter JSR 120 source in JSR_120_SOURCE_OUTPUT_DIR
 jsr_120_source_bundle:: $(JSR_120_DIR)
-	$(AT)$(call source_bundle_filter,$(JSR_120_DIR),$(JSR_120_SOURCE_OUTPUT_DIR),src/jump_application src/cdc_share build/cdc_share)
+	$(AT)$(call source_bundle_filter,$(JSR_120_DIR),$(JSR_120_SOURCE_OUTPUT_DIR),src/share src/cdc_share build/share build/cdc_share)
 

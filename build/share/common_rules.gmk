@@ -58,8 +58,4 @@ clean_tools::
 # Append JSR 120 source bundle creation to target
 source_bundle:: jsr_120_source_bundle
 
-# Copy and filter JSR 120 source in JSR_120_SOURCE_OUTPUT_DIR
-jsr_120_source_bundle:: $(JSR_120_DIR)
-	@echo " ... JSR 120 source bundle" $(LOG)
-	$(AT)$(call source_bundle_filter,$(JSR_120_DIR),$(JSR_120_SOURCE_OUTPUT_DIR),src/share build/config build/makefiles)
-	$(AT)cp $(JSR_120_DIR)/build/subsystem_defs.gmk $(JSR_120_DIR)/build/subsystem_rules.gmk $(JSR_120_SOURCE_OUTPUT_DIR)/build/
+

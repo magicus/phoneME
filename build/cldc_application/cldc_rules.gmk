@@ -30,4 +30,4 @@ $(MIDP_CLASSES_ZIP):: $(SUBSYSTEM_JSR_120_JAVA_FILES)
 
 # Copy and filter JSR120 source in JSR_120_SOURCE_OUTPUT_DIR
 jsr_120_source_bundle:: $(SOURCE_OUTPUT_DIR)
-	$(AT)$(call source_bundle_filter,$(JSR_120_DIR),$(JSR_120_SOURCE_OUTPUT_DIR),src/cldc_application build/cldc_application)
+	$(AT)$(call source_bundle_filter,$(JSR_120_DIR),$(JSR_120_SOURCE_OUTPUT_DIR),src/share src/cldc_application build/share build/cldc_application)
