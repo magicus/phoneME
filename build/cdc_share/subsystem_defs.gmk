@@ -34,6 +34,7 @@ JSR_120_ENABLE_JUMP   = true
 JSR_120_LIB_NAME      = jsr120
 JSR_120_BUILD_DIR     = $(JSROP_BUILD_DIR)/$(JSR_120_LIB_NAME)
 JSR_120_GENERATED_DIR = $(JSR_120_BUILD_DIR)/generated
+JSR_120_BINDIR        = $(JSR_120_BUILD_DIR)/bin
 
 vpath % $(JSR_120_DIR)/src/cdc_share/native
 

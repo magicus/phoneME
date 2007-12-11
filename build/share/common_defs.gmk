@@ -276,8 +276,6 @@ endif
 #################################################################
 
 JSR_120_TOOLS_CLASS_DIR = $(JSR_120_BUILD_DIR)/tools_classes
-#JSR_120_CLASSBINDIR = $(JSR_120_BUILD_DIR)/classes
-JSR_120_BINDIR = $(JSR_120_BUILD_DIR)/bin
 JSR_120_TOOLS_CLASSPATH = $(JSR_120_BUILD_DIR)/classes
 
 WMATOOL_MAIN_CLASS = com.sun.wma.TCKTest
