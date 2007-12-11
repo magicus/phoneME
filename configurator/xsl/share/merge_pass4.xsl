@@ -61,149 +61,11 @@
 <xsl:output method="xml" indent="yes" />
 
 
-<!-- 
-    Pass 1 templates
--->
-
 <!-- stylesheet parameter: space separated list of file names to merge -->
-<xsl:param name="filesList"></xsl:param>
 
 <xsl:template match="/">
-    <!-- -->
-    <xsl:variable name="pass1Results">
-        <xsl:element name="configuration">
-            <!-- process filesList if it isn't empty -->
-            <xsl:if test="boolean($filesList)">
-                <xsl:call-template name="processFiles">
-                    <xsl:with-param name="filesList" select="$filesList"/>
-                </xsl:call-template>
-            </xsl:if>
-        </xsl:element>
-    </xsl:variable>        
-
-    <xsl:variable name="pass2Results">
-        <xsl:apply-templates select="xalan:nodeset($pass1Results)" 
-            mode="joinClasses"/>
-    </xsl:variable>            
-
-    <xsl:variable name="pass3Results">
-        <xsl:apply-templates select="xalan:nodeset($pass2Results)/configuration" 
-            mode="generateAutoValues"/>
-    </xsl:variable>
-
-    <xsl:apply-templates select="xalan:nodeset($pass3Results)/configuration" 
-        mode="assignKeysValues"/>
-    
+    <xsl:apply-templates select="." mode="assignKeysValues"/>
 </xsl:template>
-
-<!-- process list of XML files names -->
-<xsl:template name="processFiles">
-<!-- template parameter: space separated list of file names -->
-<xsl:param name="filesList"/>
-    <!-- get first file name from the list -->
-    <xsl:variable name="fileName">
-        <xsl:choose>
-            <!-- when there is more than one element in the list -->
-            <xsl:when test="contains($filesList,' ')">
-                <xsl:value-of select="substring-before($filesList,' ')"/>
-            </xsl:when>
-            <xsl:otherwise>
-                <xsl:value-of select="$filesList"/>
-            </xsl:otherwise>
-        </xsl:choose>
-    </xsl:variable>
-    <!-- process it -->
-    <xsl:call-template name="processFile">
-        <xsl:with-param name="fileName" select="$fileName"/>
-    </xsl:call-template>
-    <!-- and call this template recursively to process rest of file names -->
-    <xsl:if test="contains($filesList,' ')">
-        <xsl:call-template name="processFiles">
-            <xsl:with-param name="filesList" select="substring-after($filesList,' ')"/>
-        </xsl:call-template>
-    </xsl:if>
-</xsl:template>
-
-<!-- process single file name -->
-<xsl:template name="processFile">
-<!-- template parameter: name of XML file to process -->
-<xsl:param name="fileName"/>
-    <!-- copy all children of /configuration node to the output -->
-    <xsl:copy-of select="document($fileName)/configuration/child::*"/>
-</xsl:template>
-
-
-
-<!-- 
-    Pass 2 templates
--->
-
-<!-- nodes which map to Java class indexed by class name -->
-<xsl:key name="classesNodes" 
-    match="/configuration/constants/constant_class | 
-           /configuration/localized_strings" 
-    use="concat(@Package,'.',@Name)"/>
-
-<!-- join nodes which map to same class to one node -->
-<xsl:template match="constant_class | localized_strings" mode="joinClasses">
-    <!-- name of the class to which this node maps to -->
-    <xsl:variable name="className" select="concat(@Package,'.',@Name)"/>
-    <!-- if we havent seen this class name yet -->
-    <xsl:if test="generate-id()=generate-id(key('classesNodes', $className)[1])">
-        <!-- output matched node -->
-        <xsl:copy>
-            <!-- output all matched node attributes -->
-            <xsl:copy-of select="@*"/>
-            <!-- for each child of nodes with same class name -->
-            <xsl:for-each select="key('classesNodes', $className)/child::*">
-                <!-- output child node -->
-                <xsl:apply-templates select="." mode="joinClasses"/>
-            </xsl:for-each>
-        </xsl:copy>
-    </xsl:if>        
-</xsl:template>
-
-<!-- copy all other nodes or attributes to the output -->
-<xsl:template match="@* | node()" mode="joinClasses">
-    <xsl:copy>
-        <xsl:apply-templates select="@* | node()" mode="joinClasses"/>
-    </xsl:copy>
-</xsl:template>
-
-
-
-<!-- 
-    Pass 3 templates
--->
-
-<!-- assign AutoValues -->
-<xsl:template match="constant_class[@AutoValue='true']" 
-    mode="generateAutoValues">
-    <xsl:copy>
-        <!-- output all attributes -->
-        <xsl:copy-of select="@*"/>
-        <xsl:for-each select="constant">
-            <xsl:copy>
-                <!-- output generated 'Value' attribute -->
-                    <xsl:attribute name="Value">
-                        <!-- the value is position of node -->
-                        <xsl:value-of select="position()-1"/>
-                    </xsl:attribute>
-                <!-- output all other attributes -->
-                <xsl:copy-of select="@*[local-name() != 'Value']" />
-            </xsl:copy>
-        </xsl:for-each>
-    </xsl:copy>
-</xsl:template>
-
-<!-- copy all other nodes or attributes to the output -->
-<xsl:template match="@* | node()" mode="generateAutoValues">
-    <xsl:copy>
-        <xsl:apply-templates select="@* | node()" mode="generateAutoValues"/>
-    </xsl:copy>
-</xsl:template>
-
-
 
 <!-- 
     Pass 4 templates
@@ -224,8 +86,7 @@
            /configuration/skin/skin_properties/child::*"
     use="concat(../@Package,'.',../@Name,':',../@KeysClass,'.',@Key)"/>
 
-<xsl:template match="node()[@KeysClass != '']" 
-    mode="assignKeysValues">
+<xsl:template match="node()[@KeysClass != '']" mode="assignKeysValues">
 
     <xsl:variable name="nodeName" select="name(.)"/>
     <xsl:variable name="nodePackage" select="./@Package"/>
@@ -324,4 +185,3 @@ corresponding to key '<xsl:value-of select="@Key"/>'
 
 
 </xsl:stylesheet>
-
