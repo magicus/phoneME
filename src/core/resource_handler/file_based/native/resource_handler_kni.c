@@ -32,7 +32,9 @@
 #include <midpUtilKni.h>
 #include <pcsl_string.h>
 
+#if !ENABLE_FILE_SYSTEM
 #include <resources_rom.h>
+#endif
 
 /**
  * Native method int lockMIDletSuite(int) of

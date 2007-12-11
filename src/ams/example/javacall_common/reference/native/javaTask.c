@@ -167,26 +167,34 @@ static javacall_result midpHandleSetHeapSize(midp_event_heap_size heap_size) {
  * 
  */
 static javacall_result midpHandleListMIDlets() {
-    char *argv[1];
+    char *argv[3];
     int argc = 0;
     javacall_result res;
 
+    argv[argc++] = "runMidlet";
     argv[argc++] = "internal";
+    argv[argc++] = "com.sun.midp.scriptutil.SuiteLister";
 
-    res = listMidlets(argc, argv);
+    res = JavaTaskImpl(argc, argv);
 }
 
 /**
  * 
  */
 static javacall_result midpHandleListStorageNames() {
-    char *argv[1];
+    char *argv[3];
     int argc = 0;
     javacall_result res;
 
+    argv[argc++] = "runMidlet";
     argv[argc++] = "internal";
+    /**
+     * IMPL_NOTE: introduce an argument for SuiteLister allowing to print
+     *            paths to jars only.
+     */
+    argv[argc++] = "com.sun.midp.scriptutil.SuiteLister";
 
-    res = listStorageNames(argc, argv);
+    res = JavaTaskImpl(argc, argv);
 }
 
 /**
@@ -194,13 +202,14 @@ static javacall_result midpHandleListStorageNames() {
  */
 static javacall_result
 midpHandleRemoveMIDlet(midp_event_remove_midlet	removeMidletEvent) {
-    char *argv[2];
+    char *argv[4];
     int argc = 0;
     javacall_result res;
 
+    argv[argc++] = "runMidlet";
     argv[argc++] = "internal";
+    argv[argc++] = "com.sun.midp.scriptutil.SuiteRemover";
     argv[argc++] = removeMidletEvent.suiteID;
 
-    res = removeMidlet(argc, argv);
+    res = JavaTaskImpl(argc, argv);
 }
-

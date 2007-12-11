@@ -511,7 +511,7 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
 
     /**
      * Get the classname of the initial MIDlet to run.
-     * Relevant when running fromthe commnad line with the JAD file as an argument
+     * Relevant when running from the commnad line with the JAD file as an argument
      * @return classname of a MIDlet
      */
     public String getMIDletClassName() {
@@ -524,7 +524,7 @@ public class InternalMIDletSuiteImpl implements MIDletSuite {
             initialMIDletClassName = new MIDletInfo(name).classname;
         } else {
             // Have the user select a MIDlet. The selector should not exit.
-            initialMIDletClassName = "com.sun.midp.appmanager.PersistentSelector";
+            initialMIDletClassName = "com.sun.midp.appmanager.Selector";
         }
 
         return initialMIDletClassName;

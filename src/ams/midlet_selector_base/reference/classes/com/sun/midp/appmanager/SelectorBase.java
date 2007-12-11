@@ -1,8 +1,27 @@
 /*
- * @(#)Selector.java	1.61 05/06/29 @(#)
  *
- * Copyright 2004 Sun Microsystems, Inc. All rights reserved.
- * SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ *
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ *
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ *
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
  */
 
 package com.sun.midp.appmanager;
@@ -15,16 +34,16 @@ import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midletsuite.MIDletInfo;
-import com.sun.midp.security.*;
 
 /**
- * Selector provides a simple user interface to select MIDlets to run.  
+ * A base class for the class Selector providing a simple user interface
+ * to select MIDlets to run.
  * It extracts the list of MIDlets from the attributes in the 
  * descriptor file and presents them to the user using the MIDlet-&lt;n&gt;
  * name and icon if any. When the user selects a MIDlet an instance
  * of the class indicated by MIDlet-&lt;n&gt; classname is created.
  */
-public class Selector extends MIDlet implements CommandListener, Runnable {
+class SelectorBase extends MIDlet implements CommandListener, Runnable {
     /**
      * The List of all the MIDlets.
      */
@@ -66,20 +85,11 @@ public class Selector extends MIDlet implements CommandListener, Runnable {
      * Create and initialize a new Selector MIDlet.
      * The Display is retrieved and the list of MIDlets read
      * from the descriptor file.
-     */
-    public Selector() {
-        this(true);
-    }
-
-    /**
-     * Create and initialize a new Selector MIDlet.
-     * The Display is retrieved and the list of MIDlets read
-     * from the descriptor file.
      *
      * @param exitFlag set this to true if the selector should exit after
      *        launching a MIDlet.
      */
-    protected Selector(boolean exitFlag) {
+    protected SelectorBase(boolean exitFlag) {
         exitAfterLaunch = exitFlag;
         display = Display.getDisplay(this);
         mcount = 0;
@@ -124,21 +134,20 @@ public class Selector extends MIDlet implements CommandListener, Runnable {
      * @param s the Displayable the command was on.
      */
     public void commandAction(Command c, Displayable s) {
-	if ((s == mlist && c == List.SELECT_COMMAND) || (c == launchCmd)) {
-            synchronized (this) {
-                if (selectedMidlet != -1) {
-                    // the previous selected MIDlet is being launched
-                    return;
+        if ((s == mlist && c == List.SELECT_COMMAND) || (c == launchCmd)) {
+                synchronized (this) {
+                    if (selectedMidlet != -1) {
+                        // the previous selected MIDlet is being launched
+                        return;
+                    }
+
+                    selectedMidlet = mlist.getSelectedIndex();
                 }
-
-                selectedMidlet = mlist.getSelectedIndex();
-            }
-            new Thread(this).start();
-
-	} else if (c == exitCmd) {
-	    destroyApp(false);
-	    notifyDestroyed();
-        } 
+                new Thread(this).start();
+        } else if (c == exitCmd) {
+            destroyApp(false);
+            notifyDestroyed();
+        }
     }
 
     /**
@@ -204,19 +213,19 @@ public class Selector extends MIDlet implements CommandListener, Runnable {
 			     (ResourceConstants.AMS_SELECTOR_SEL_TO_LAUNCH), 
                              Choice.IMPLICIT);
 
-	    // Add each midlet
-	    for (int i = 0; i < mcount; i++) {
-		Image icon = null;
-		if (minfo[i].icon != null) {
-		    try { 
-		        icon = Image.createImage(minfo[i].icon);
-		    } catch (java.io.IOException noImage) {
-			// TBD: use a default ICON if the app has none.
-		    }
-		}
-		mlist.append(minfo[i].name, icon);
-	    }
-	}
+            // Add each midlet
+            for (int i = 0; i < mcount; i++) {
+                Image icon = null;
+                if (minfo[i].icon != null) {
+                    try {
+                        icon = Image.createImage(minfo[i].icon);
+                    } catch (java.io.IOException noImage) {
+                    // TBD: use a default ICON if the app has none.
+                    }
+                }
+                mlist.append(minfo[i].name, icon);
+            }
+    	}
     }
         
     /**
@@ -226,8 +235,9 @@ public class Selector extends MIDlet implements CommandListener, Runnable {
         for (int n = 1; n < 100; n++) {
             String nth = "MIDlet-" + n;
             String attr = getAppProperty(nth);
-            if (attr == null || attr.length() == 0)
+            if (attr == null || attr.length() == 0) {
                 break;
+            }
 
             addMIDlet(new MIDletInfo(attr));
         }
@@ -246,6 +256,3 @@ public class Selector extends MIDlet implements CommandListener, Runnable {
         minfo[mcount++] = info;
     }
 }
-
-
-
