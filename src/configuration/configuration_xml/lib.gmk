@@ -64,6 +64,9 @@ PROJECT_INT_COMMON_XML_DIR = \
 	$(PROJECT_SUBSYSTEM_CONFIG_DIR)/$(INT_SUBSYSTEM_CONFIGURATION_NAME)/share
 
 # path to merged XML file, i.e. all XML files merged into one
+INT_MERGED_XML_FILE_PASS1 = $(GENERATED_DIR)/merged_pass1.xml
+INT_MERGED_XML_FILE_PASS2 = $(GENERATED_DIR)/merged_pass2.xml
+INT_MERGED_XML_FILE_PASS3 = $(GENERATED_DIR)/merged_pass3.xml
 INT_MERGED_XML_FILE = $(GENERATED_DIR)/merged.xml
 
 # path to file with list of packages to generate
@@ -195,8 +198,20 @@ define merge_configurations
 		-out '') \
 	\
 	-xml $(INT_COMMON_XML_DIR)/empty.xml \
-	-xsl $(INT_XSL_DIR)/share/merge.xsl \
+	-xsl $(INT_XSL_DIR)/share/merge_pass1.xsl \
 	-params filesList '$(INT_INPUT_FILES_FIXED)' \
+	-out `$(call fixcygpath, $(INT_MERGED_XML_FILE_PASS1))` \
+	\
+	-xml `$(call fixcygpath, $(INT_MERGED_XML_FILE_PASS1))` \
+	-xsl $(INT_XSL_DIR)/share/merge_pass2.xsl \
+	-out `$(call fixcygpath, $(INT_MERGED_XML_FILE_PASS2))` \
+	\
+	-xml `$(call fixcygpath, $(INT_MERGED_XML_FILE_PASS2))` \
+	-xsl $(INT_XSL_DIR)/share/merge_pass3.xsl \
+	-out `$(call fixcygpath, $(INT_MERGED_XML_FILE_PASS3))` \
+	\
+	-xml `$(call fixcygpath, $(INT_MERGED_XML_FILE_PASS3))` \
+	-xsl $(INT_XSL_DIR)/share/merge_pass4.xsl \
 	-out `$(call fixcygpath, $(INT_MERGED_XML_FILE))` \
 	\
 	-xml $(INT_MERGED_XML_FILE) \
@@ -212,6 +227,9 @@ define merge_configurations
 		-xsl $(INT_XSL_DIR)/cldc/override.xsl \
 		-params overrideFile `$(call fixcygpath, $(overrideFile))` \
 		-out `$(call fixcygpath, $(INT_MERGED_XML_FILE))`)
+		
+	@rm -f $(INT_MERGED_XML_FILE_PASS1) $(INT_MERGED_XML_FILE_PASS2) $(INT_MERGED_XML_FILE_PASS3)
+
 endef
 
 

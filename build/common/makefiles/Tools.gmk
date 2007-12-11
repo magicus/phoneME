@@ -296,7 +296,7 @@ jpp: $(JPP_CLASS_FILES)
 #
 ifeq ($(USE_CYGWIN),true)
 define fixcygpath
-echo $(1) | xargs -n1 cygpath -w
+echo $(1) | xargs -n1 cygpath -m
 endef
 else
 define fixcygpath
