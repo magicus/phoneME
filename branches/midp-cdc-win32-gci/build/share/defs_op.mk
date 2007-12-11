@@ -72,6 +72,7 @@ JSROP_AGENT_JARS =
 # Variable which is passed to MIDP and blocks JSRs building from MIDP; looks like:
 # USE_JSR_75=false USE_JSR_82=false USE_JSR_120=false ...
 MIDP_JSROP_USE_FLAGS = $(foreach jsr_number,$(JSROP_NUMBERS),USE_JSR_$(jsr_number)=false)
+MIDP_JSROP_USE_FLAGS += USE_ABSTRACTIONS=false
 
 # Hide all JSROPs from CDC by default
 HIDE_ALL_JSRS ?= true
