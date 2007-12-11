@@ -33,8 +33,15 @@ JSROP_NUMBERS = 75 82 120 135 172 177 179 180 184 205 211 226 229 234 238 239 25
 # Defintion for path separator used in JSRs
 PATHSEP        ?= $(PS)
 
-# Directory which JSRs *.jar and *.so files are put to
+# Directory which JSRs *.so files are put to
 JSROP_LIB_DIR   = $(CVM_LIBDIR)
+
+# Directory which JSRs *.jar files are put to
+ifeq ($(CVM_CREATE_RTJAR),true)
+JSROP_JAR_DIR	= $(CVM_RTJARS_DIR)
+else
+JSROP_JAR_DIR	= $(JSROP_LIB_DIR)
+endif
 
 # Directory where JSRs build subdirectories are created
 JSROP_BUILD_DIR = $(CVM_BUILD_TOP)
@@ -54,8 +61,8 @@ INCLUDED_JSROP_NUMBERS = $(patsubst USE_JSR_%=true,%,\
               $(filter %true, $(JSROP_OP_FLAGS)))
 
 # Create a list of a JSR jar files we want to build.
-JSROP_BUILD_JARS = $(filter-out $(JSROP_LIB_DIR)/jsr205.jar,$(foreach jsr_number,$(INCLUDED_JSROP_NUMBERS),\
-           $(JSROP_LIB_DIR)/jsr$(jsr_number).jar))
+JSROP_BUILD_JARS = $(filter-out $(JSROP_JAR_DIR)/jsr205.jar,$(foreach jsr_number,$(INCLUDED_JSROP_NUMBERS),\
+           $(JSROP_JAR_DIR)/jsr$(jsr_number).jar))
 
 # JSROP_AGENT_JARS - list (space sepd) of jars that should be romized with MIDP's class loader.
 # These jars contain "agent" classes which are used for access via reflection.
@@ -86,7 +93,7 @@ HIDE_JSROP_NUMBERS = $(patsubst HIDE_JSR_%=true,%,\
 endif
 
 # The list of JSR jar files we want to hide.
-JSROP_HIDE_JARS = $(subst $(space),$(PS),$(filter-out $(JSROP_LIB_DIR)/jsr205.jar,$(foreach jsr_number,$(HIDE_JSROP_NUMBERS),$(JSROP_LIB_DIR)/jsr$(jsr_number).jar)))
+JSROP_HIDE_JARS = $(subst $(space),$(PS),$(filter-out $(JSROP_JAR_DIR)/jsr205.jar,$(foreach jsr_number,$(HIDE_JSROP_NUMBERS),$(JSROP_JAR_DIR)/jsr$(jsr_number).jar)))
 
 # Generate constants classes list for the given xml file
 # generateConstantList(generatedDirectory, constantsXmlFile)
@@ -404,7 +411,11 @@ endif
 
 ifneq ($(CVM_PRELOAD_LIB),true)
 # Not romized, so add JSROP_JARS to the bootclasspath
-CVM_JARFILES += $(patsubst $(JSROP_LIB_DIR)/%,$(comma) "%",$(JSROP_JARS))
+ifneq ($(CVM_CREATE_RTJAR), true)
+CVM_JARFILES += $(patsubst $(JSROP_JAR_DIR)/%,$(comma) "%",$(JSROP_JARS))
+else
+CVM_RTJARS_LIST += $(JSROP_JARS)
+endif
 endif
 
 # Include JDBC, which can be downloaded using the following URL:

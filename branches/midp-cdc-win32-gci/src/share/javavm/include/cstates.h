@@ -78,7 +78,7 @@ typedef enum {
 struct CVMCState {
     volatile CVMBool request;
     CVMUint32 count;
-    CVMBool reached;
+    volatile CVMBool reached;
     CVMExecEnv *requester;
 
     volatile CVMUint32 inconsistentThreadCount;

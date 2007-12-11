@@ -622,19 +622,20 @@ public final class System {
             return provider.getValue(key, false);
         }
 
-        /* MIDP Property Support
+        /*
+         * MIDP Property Support
          * 
-         * If caller's classloader is sun.misc.MIDletClassLoader or
-         * sun.misc. MIDPImplementationClassLoader, then
-         * caller must be a midlet class or a midp class. We only 
-         * support CLDC/MIDP properties in that case, otherwise, the 
-         * full set of CDC system properties are supported.
+         * Allow MIDP properties to override base properties in a MIDP
+         * context.
          */
-        if (sun.misc.CVM.callerCLIsMIDCLs()) {
-            return midpProps.getProperty(key);
-        } else {
-            return props.getProperty(key);
+        if (sun.misc.CVM.isMIDPContext()) {
+            String prop = midpProps.getProperty(key);
+            if (prop != null) {
+                return prop;
+            }
         }
+
+        return props.getProperty(key);
     }
 
     /**

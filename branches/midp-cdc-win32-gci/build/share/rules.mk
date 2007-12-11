@@ -540,6 +540,9 @@ $(J2ME_CLASSLIB):: $(CVM_MIMEDATAFILE) $(CVM_PROPS_BUILD) $(CVM_POLICY_BUILD)
 ifeq ($(CVM_DUAL_STACK), true)
 $(J2ME_CLASSLIB):: $(CVM_MIDPFILTERCONFIG) $(CVM_MIDPCLASSLIST) $(JSR_CDCRESTRICTED_CLASSLIST)
 endif
+ifeq ($(CVM_CREATE_RTJAR), true)
+$(J2ME_CLASSLIB):: $(CVM_RT_JAR)
+endif
 endif
 
 #####################################
@@ -888,7 +891,7 @@ endif
 
 # Create resources jar file
 ifneq ($(CVM_RESOURCES_DEPS),)
-CVM_JARFILES += , "$(CVM_RESOURCES_JAR_FILENAME)"
+CVM_JARFILES := "$(CVM_RESOURCES_JAR_FILENAME)", $(CVM_JARFILES)
 $(CVM_RESOURCES_JAR): $(CVM_RESOURCES_DEPS)
 	@echo ... $@
 	$(AT)(cd $(CVM_RESOURCES_DIR); $(CVM_JAR) cf $(call POSIX2HOST, $@) *)
@@ -1001,6 +1004,21 @@ ifeq ($(CVM_MIDPFILTERINPUT),)
 else
 	@echo "generating dual-stack member filter ..."
 endif
+endif
+
+ifeq ($(CVM_CREATE_RTJAR), true)
+################################################
+# Rule for creating rt.jar
+################################################
+$(CVM_RT_JAR):: $(CVM_RTJARS_LIST)
+	@echo "Packaging $@ ..."; \
+	mkdir -p $(CVM_BUILD_TOP)/.rtclasses; \
+	cd $(CVM_BUILD_TOP)/.rtclasses; \
+	for j in $(CVM_RTJARS_LIST); do \
+		$(CVM_JAR) xf $$j;	\
+	done; \
+	$(CVM_JAR) cf $@ *
+	$(AT)rm -rf $(CVM_BUILD_TOP)/.rtclasses
 endif
 
 ################################################

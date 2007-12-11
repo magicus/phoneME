@@ -35,6 +35,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.ByteArrayOutputStream;
 
+import java.net.URL;
+import java.net.MalformedURLException;
+import java.net.Socket;
+
 import java.util.Hashtable;
 import java.util.Enumeration;
 
@@ -68,6 +72,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     protected String method;
     protected int opens;
     protected int mode;
+    protected Socket socket;
 
     protected boolean connected;
     /* there should be only one outputstream opened at any time */
@@ -98,7 +103,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
      */
     private StringBuffer stringbuffer;
 
-    private String http_proxy;
+    private String proxyHost = null;
+    private int proxyPort = 80;
 
     private String http_version = "HTTP/1.1";
 
@@ -115,19 +121,73 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         method = GET;
         responseCode = -1;
         protocol = "http";
+	socket = null;
 
         // Check for the HTTP proxy only if no security manager exists
         java.lang.SecurityManager sm = System.getSecurityManager();
         if (sm == null){
-            http_proxy = System.getProperty("com.sun.cdc.io.http.proxy");
+	    String http_proxy;
+	    String profileTemp = System.getProperty("microedition.profiles");
+	    if (profileTemp != null && profileTemp.indexOf("MIDP") != -1) {
+		// We want to look for a MIDP property specifying proxies.
+		http_proxy = System.getProperty("com.sun.midp.io.http.proxy");
+	    } else {
+		// Default to CDC
+		http_proxy = System.getProperty("com.sun.cdc.io.http.proxy");
+	    }
+	    parseProxy(http_proxy);
         }
     }
 
     /*
-     * throws SecurityException if MIDP permission check fails 
-     * nothing to do for CDC
-    */
-    protected void checkMIDPPermission(String url) {
+     * Check permission to connect to the indicated host.
+     * This should be overriden by the MIDP protocol handler
+     * to check the proper MIDP permission.
+     */
+    protected void checkPermission(String host, int port, String file) {
+        // Check for SecurityManager.checkConnect()
+        java.lang.SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkConnect(host, port);
+        }               
+        return;
+    }
+
+    /*
+     * Check permission when opening an OutputStream. MIDP
+     * versions of the protocol handler should override this
+     * with an empty method. Throw a SecurityException if
+     * the connection is not allowed.
+     */
+    protected void outputStreamPermissionCheck() {
+        // Check for SecurityManager.checkConnect()
+        java.lang.SecurityManager sm = System.getSecurityManager();
+        if (sm != null){
+            if (host != null) {
+                sm.checkConnect(host, port);
+            } else {
+                sm.checkConnect("localhost", port);
+            }
+        }
+        return;
+    }
+
+    /*
+     * Check permission when opening an InputStream. MIDP
+     * versions of the protocol handler should override this
+     * with an empty method. A SecurityException will be
+     * raised if the connection is not allowed.
+     */
+    protected void inputStreamPermissionCheck() {
+        // Check for SecurityManager.checkConnect()
+        java.lang.SecurityManager sm = System.getSecurityManager();
+        if (sm != null){
+            if (host != null) {
+                sm.checkConnect(host, port);
+            } else {
+                sm.checkConnect("localhost", port);
+            }
+        }
         return;
     }
 
@@ -144,14 +204,25 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             throw new IOException("illegal mode: " + mode);
         }
         
-        checkMIDPPermission("http:" + url);
         this.url = url;
         this.mode = mode;
         parseURL();
 
+	if ((host.indexOf('/') != -1) || 
+	    (host.indexOf('@') != -1) ||
+	    (host.indexOf('?') != -1) ||
+	    (host.indexOf(';') != -1)) {
+	    throw new IllegalArgumentException("hostname " + 
+  		         host +
+			 " cannot contain \"?\" , \"@\" , \";\", \":\", or \"/\" character.");
+	}
+
+	// Check permission. The permission method wants the URL
+	checkPermission(host, port, file);
+
         // Try to open connection to test for ConnectionNotFoundException
         try {
-            streamConnection=connectSocket();
+	    streamConnection=connectSocket();
             connectStream();
             // This is only a test of the connection, so close it again
         } catch (java.net.UnknownHostException e) {
@@ -159,15 +230,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
                 ("Could not find "+host+":"+port);
         }
 
-        // Check for SecurityManager.checkConnect()
-        java.lang.SecurityManager sm = System.getSecurityManager();
-        if (sm != null){
-            if (host != null) {
-                sm.checkConnect(host, port);
-            } else {
-                sm.checkConnect("localhost", port);
-            }
-        }               
     }
 
     public void close() throws IOException {
@@ -184,15 +246,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
      */
     public InputStream openInputStream() throws IOException {
          // DEBUG: System.out.println ("open input stream");
-         // Check for SecurityManager.checkConnect()
-        java.lang.SecurityManager sm = System.getSecurityManager();
-        if (sm != null){
-            if (host != null) {
-                sm.checkConnect(host, port);
-            } else {
-                sm.checkConnect("localhost", port);
-            }
-        }
+
+	inputStreamPermissionCheck();
 
         /* CR 6226615: opening another stream should not throw IOException
         if (in != null) {
@@ -245,15 +300,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     }
 
     public DataOutputStream openDataOutputStream() throws IOException {
-        // Check for SecurityManager.checkConnect()
-        java.lang.SecurityManager sm = System.getSecurityManager();
-        if (sm != null){
-            if (host != null) {
-                sm.checkConnect(host, port);
-            } else {
-                sm.checkConnect("localhost", port);
-            }
-        }               
+
+	outputStreamPermissionCheck();
 
          // DEBUG: System.out.println ("open data output stream");
         if (mode != Connector.WRITE && mode != Connector.READ_WRITE) {
@@ -766,41 +814,31 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         return def;
     }
 
+
     protected StreamConnection connectSocket() throws IOException {
-        com.sun.cdc.io.j2me.socket.Protocol conn = null;
         
         // Check for illegal empty string for host
         if (host.equals("")) {
             throw new IllegalArgumentException("Host not recognized."+host);
         }
 
-        // Try to catch ConnectException to convert to 
-        // ConnectionNotFoundException
-        try {
-
-            conn = new com.sun.cdc.io.j2me.socket.Protocol();
-            // Open socket connection
-            if (http_proxy == null) {
-                conn.openPrim("//" + host + ":" + port , Connector.READ_WRITE,false);
-            } else{
-                conn.openPrim("//" + http_proxy, Connector.READ_WRITE,false);
-            }
-        } catch (java.net.ConnectException e) {
-            // Convert ConnectException to ConnectionNotFoundException
-            throw new ConnectionNotFoundException("No such connection.");
+        // Open socket connection.
+        HttpStreamConnection hsc = null;
+        if (proxyHost == null) {
+            hsc = new HttpStreamConnection(host, port);
+        } else {
+            hsc = new HttpStreamConnection(proxyHost, proxyPort);
         }
-        
-        return conn;
+        return hsc;
     }
     
     protected void connectStream() throws IOException {
 
-        if (streamConnection==null) {
-            streamConnection=connectSocket();        
+	if (streamConnection==null) {
+	    streamConnection=connectSocket();        
         }
 
         streamOutput = streamConnection.openDataOutputStream();
-
 
         // HTTP 1.1 requests must contain content length for proxies
         if ((getRequestProperty("Content-Length") == null) ||
@@ -811,7 +849,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         String reqLine ;
 
-        if (http_proxy == null) {
+        if (proxyHost == null) {
             reqLine = method + " " + getFile()
                 + (getRef() == null ? "" : "#" + getRef())
                 + (getQuery() == null ? "" : "?" + getQuery())
@@ -828,7 +866,6 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         // DEBUG:  System.out.print("Request: " + reqLine);
         // we should not write to the streamoutput as we are in set up state and not connected
         //streamOutput.write((reqLine).getBytes());
-
 
         requested = true;
 
@@ -854,7 +891,7 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         String reqLine ;
         
-        if (http_proxy == null) {
+	if (proxyHost == null) {
             reqLine = method + " " + getFile()
                 + (getRef() == null ? "" : "#" + getRef())
                 + (getQuery() == null ? "" : "?" + getQuery())
@@ -879,12 +916,12 @@ public class Protocol extends ConnectionBase implements HttpConnection {
             String key = (String)reqKeys.nextElement();
             String reqPropLine = key + ": " + reqProperties.get(key) + "\r\n";
             // DEBUG: System.out.print("Request: " + reqPropLine);
-            streamOutput.write((reqPropLine).getBytes());
+	    streamOutput.write((reqPropLine).getBytes());
         }
-        streamOutput.write("\r\n".getBytes());
+	streamOutput.write("\r\n".getBytes());
 
         if (out != null) {
-            streamOutput.write(out.toByteArray());
+	    streamOutput.write(out.toByteArray());
             //***Bug 4485901*** streamOutput.write("\r\n".getBytes());
             // DEBUG: System.out.println("Request: " + new String(out.toByteArray()));  
         }
@@ -1064,10 +1101,8 @@ public class Protocol extends ConnectionBase implements HttpConnection {
         return address.substring(0, closing+1);
     }
 
-    private int parsePort() throws IOException {
-        int p;
-        if (protocol.equals("http")) p = 80;
-        else  p = 443;
+    private int parsePort(int defaultPort) throws IOException {
+        int p = defaultPort;
         String buf = url.substring(index);
         if (!buf.startsWith(":")) return p;
         buf = buf.substring(1);
@@ -1138,10 +1173,29 @@ public class Protocol extends ConnectionBase implements HttpConnection {
     protected synchronized void parseURL() throws IOException {
         index = 0;
         host = parseHostname();
-        port = parsePort();
+        if (protocol.equals("http")) {
+            port = parsePort(80);
+        } else {
+            port = parsePort(443);
+        }
         file = parseFile();
         query = parseQuery();
         ref = parseRef();
+    }
+
+    // The proxy value, if any, is specified as a host:port
+    // string. Use the convenience routines to parse it.
+    protected synchronized void parseProxy(String proxyVal) {
+	if (proxyVal != null) {
+	    index = 0;
+	    try {
+		proxyHost = parseHostname();
+		proxyPort = parsePort(80);
+	    } catch (IOException ioe) {
+		// We cannot interpret the proxy.
+	    }
+	}
+	return;
     }
 
     private String toLowerCase(String string) {

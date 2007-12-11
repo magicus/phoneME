@@ -415,7 +415,9 @@ Java_java_lang_Class_notifyClassLoaded(JNIEnv *env, jclass cls)
     }
 #endif /* CVM_JVMPI */
 #ifdef CVM_JVMTI
-    if (CVMjvmtiInitialized()) {
+    /* Note: May change CVMisArrayOfAnyBasicType to CVMisArrayClass */
+    if (CVMjvmtiEnabled() && !CVMisArrayOfAnyBasicType(cb) &&
+	!CVMjvmtiClassBeingRedefined(ee, cb)) {
 	CVMjvmtiPostClassLoadEvent(ee, CVMcbJavaInstance(cb));
     }
 #endif /* CVM_JVMTI */

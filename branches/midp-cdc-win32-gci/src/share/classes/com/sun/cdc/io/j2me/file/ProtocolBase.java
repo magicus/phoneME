@@ -80,12 +80,47 @@ public abstract class ProtocolBase extends ConnectionBase implements InputConnec
     }
 
     /*
-     * throws SecurityException if MIDP permission check fails 
-     * nothing to do for CDC
+     * Check permissions and throw a SecurityException if the
+     * permission check fails. The CDC prim_OpenProtocol method
+     * will be invoked directly and does the proper SecurityManager
+     * check, so the CDC version of this method can be empty.
+     * Override in the MIDP protocol handler to make the proper
+     * MIDP security check.
     */
-    protected void checkMIDPPermission(String name, String params, int mode) {
+    protected void checkPermission(String name, String params, int mode) {
         return;
     }    
+
+    /*
+     * Check permission when opening an OutputStream. MIDP
+     * versions of the protocol handler should override this
+     * with an empty method.
+     */
+    protected void outputStreamPermissionCheck() throws IOException {
+        // Check for SecurityManager permission
+        java.lang.SecurityManager sm = System.getSecurityManager();
+        String itemName = getItemName();
+        if (itemName != null){
+            String tmpName = protocolBaseDirectory+itemName;
+            String name = (new File(tmpName)).getAbsolutePath();
+            if (sm != null) {
+                sm.checkWrite(name);
+            }
+        }
+        return;
+    }
+
+    /*
+     * Check permission when opening an InputStream. MIDP
+     * versions of the protocol handler should override this
+     * with an empty method. A SecurityException will be
+     * raised if the connection is not allowed. Currently the
+     * file protocol handler does not make a permission
+     * check at this point so this method is empty.
+     */
+    protected void inputStreamPermissionCheck() {
+        return;
+    }
 
     /**
      * @param name the target of the connection
@@ -96,14 +131,14 @@ public abstract class ProtocolBase extends ConnectionBase implements InputConnec
         openMode = mode;
         int semi = name.indexOf(';');
         if(semi == -1) {
-            checkMIDPPermission(name, null, mode);
+            checkPermission(name, null, mode);
              return open0(name, "", mode);
         } else {
              if(name.endsWith(";")) {
                  throw new IllegalArgumentException("Bad options "+name);
              }
              String params = name.substring(semi+1);
-             checkMIDPPermission(name, params, mode);
+             checkPermission(name, params, mode);
              return open0(name.substring(0, semi), params, mode);
         }
     }
@@ -205,6 +240,7 @@ public abstract class ProtocolBase extends ConnectionBase implements InputConnec
      *                          input stream.
      */
     public InputStream openInputStream() throws IOException {
+	inputStreamPermissionCheck();
         ensureOpenForReadingAndSelected();
         ensureNotDirectory();
         opens++;
@@ -225,16 +261,7 @@ public abstract class ProtocolBase extends ConnectionBase implements InputConnec
      *                          output stream.
      */
     public OutputStream openOutputStream() throws IOException {
-        // Check for SecurityManager permission
-        java.lang.SecurityManager sm = System.getSecurityManager();
-        String itemName = getItemName();
-        if (itemName != null){
-            String tmpName = protocolBaseDirectory+itemName;
-            String name = (new File(tmpName)).getAbsolutePath();
-            if (sm != null) {
-                sm.checkWrite(name);
-            }
-        }
+	outputStreamPermissionCheck();
         ensureOpenForWritingAndSelected();
         ensureNotDirectory();
         opens++;

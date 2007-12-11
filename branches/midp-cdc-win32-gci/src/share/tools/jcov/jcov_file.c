@@ -326,14 +326,14 @@ static void read_and_merge_data(void) {
                 found_class->unloaded = 1;
                 break;
             case TAKE_FROM_MEM:
-                write_class(found_class, NULL);
+                write_class(&found_class, NULL);
                 found_class->unloaded = 1;
                 break;
             case TAKE_FROM_DISK:
                 write_class_header(&last_class, last_modifiers);
                 break;
             case TAKE_BOTH:
-                write_class(found_class, NULL);
+                write_class(&found_class, NULL);
                 found_class->unloaded = 1;
                 write_class_header(&last_class, last_modifiers);
                 break;

@@ -258,10 +258,10 @@ CVMjvmtiGetObjectsWithTag(JNIEnv *env, const jlong *tags, jint tagCount,
 	    for (j = 0; j < tagCount; j++) {
 		if (node->tag == tags[j]) {
 		    if (objPtr != NULL) {
-			*objPtr[count] = (*env)->NewLocalRef(env, node->ref);
+			(*objPtr)[count] = (*env)->NewLocalRef(env, node->ref);
 		    }
 		    if (tagPtr != NULL) {
-			*tagPtr[count] = node->tag;
+			(*tagPtr)[count] = node->tag;
 		    }
 		    count++;
 		}
@@ -363,11 +363,6 @@ CVMjvmtiTagSetTag(jvmtiEnv *jvmtienv, jobject object, jlong tag)
 	node = node->next;
     }
     if (node == NULL) {
-	if (tag == 0L) {
-	    /* clearing tag on non-existent object */
-	    JVMTI_UNLOCK(ee);
-	    return JVMTI_ERROR_INVALID_OBJECT;
-	}
 	if (CVMjvmtiAllocate(sizeof(JvmtiTagNode), (unsigned char **)&node) !=
 	    JVMTI_ERROR_NONE) {
 	    JVMTI_UNLOCK(ee);
@@ -375,7 +370,7 @@ CVMjvmtiTagSetTag(jvmtiEnv *jvmtienv, jobject object, jlong tag)
 	}
 	node->ref = NULL;
     }
-    if (tag == 0L) {
+    if (tag == 0L && node->ref != NULL) {
 	/* clearing tag, deallocate it */
 	if (prev == NULL) {
 	    objectsByRef[slot] = node->next;
@@ -505,7 +500,7 @@ static CVMBool
 jvmtiIsFilteredByKlassFilter(CVMClassBlock * objCb, jclass klass)
 {
     if (klass != NULL) {
-	if (objCb != CVMjvmtiObject2Class(CVMgetEE(), klass)) {
+	if (objCb != CVMjvmtiClassObject2CB(CVMgetEE(), klass)) {
 	    return CVM_TRUE;
 	}
     }

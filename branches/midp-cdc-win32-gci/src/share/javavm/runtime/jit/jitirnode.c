@@ -55,6 +55,27 @@ CVMJITirnodeSetTreeHasBeenEmitted(CVMJITCompilationContext *con,
 #undef MAX
 #define MAX(x, y) ((x > y) ? x : y)
 
+#define CVMJITirnodeInheritSideEffects0(node, operand) { \
+    (node)->flags |= ((operand)->flags & CVMJITIRNODE_SIDE_EFFECT_MASK); \
+}
+
+static void
+CVMJITirnodeInheritSideEffects(CVMJITIRNode *node, CVMJITIRNode *operand) {
+    if (!CVMJITirnodeHasBeenEvaluated(operand)) {
+	CVMJITirnodeInheritSideEffects0(node, operand);
+    }
+}
+
+static void
+CVMJITirnodeBinaryInheritSideEffects(CVMJITIRNode *node,
+    CVMJITIRNode *lhs, CVMJITIRNode *rhs)
+{
+    /* If we really wanted to get clever, we could do this all
+       with bit operations and no conditionals. */
+    CVMJITirnodeInheritSideEffects(node, lhs);
+    CVMJITirnodeInheritSideEffects(node, rhs);
+}
+
 static CVMJITIRNode*
 cloneExpressionNode(
     CVMJITCompilationContext* con,
@@ -141,7 +162,9 @@ CVMJITidentity(
 	node->tag = (node->tag & CVMJIT_TYPE_MASK) |
 			CVMJIT_ENCODE_IDENTITY(0);
 	unOpNode->operand = cloneNode;
-	unOpNode->flags   = 0;
+
+	/* Just in case we turn a null-check node into an identity node */
+	unOpNode->flags &= CVMJITIRNODE_PARENT_THROWS_EXCEPTIONS;
 
 	/* treat as a leaf */
 	CVMJITirnodeSetcurRootCnt(node, 1);
@@ -737,15 +760,6 @@ CVMJITirnodeSetTreeHasBeenEmitted(CVMJITCompilationContext *con,
 	    CVMassert(CVMJITirnodeHasBeenEmitted(n));
 	    goto leaf;
 	}
-
-	/*
-	   Clear inheritable attributes for emitted nodes and set as
-	   evaluated.  We assume that any attributes that would
-	   force early evaluation have now been handled by the
-	   root.  Preserve "parent throws" because it has
-	   meaning for future parents.
-        */
-        n->flags &= CVMJITIRNODE_PARENT_THROWS_EXCEPTIONS;
 
         CVMJITirnodeSetHasBeenEmitted(n);
         CVMJITirnodeSetHasBeenEvaluated(n);
