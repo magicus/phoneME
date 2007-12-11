@@ -244,6 +244,13 @@ int javacall_lcd_get_screen_width();
   */
 int javacall_lcd_get_screen_height();
 
+/**
+  * Query if native softbutton layer is supported by the implmentation
+  *
+  * @retval JAVACALL_TRUE if supported
+  * @retval JAVACALL_TRUE otherwise (java softbutton layer will be used)
+  */
+javacall_bool javacall_lcd_is_native_softbutton_label();
 
 /** 
  * Paints the native softbutton label. 
