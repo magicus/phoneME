@@ -231,7 +231,7 @@ ROMGEN_CFG_FILES     += jsr120_rom.cfg
 # Platform
 #
 #include $(JSR_120_DIR)/build/share/$(PLATFORM).gmk
-include $(JSR_120_DIR)/build/share/javacall.gmk
+include $(JSR_120_DIR)/build/share/platforms/javacall.gmk
 
 # Determines what option we have made and set it
 # to some variable that global makefile recognize
