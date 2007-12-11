@@ -76,28 +76,28 @@ enum {
     Imm,
     Port,
     PortV,
-    DSHIFT,			// for double shift that has an 8-bit immediate
+    DSHIFT,                     // for double shift that has an 8-bit immediate
     Discard,
     OVERRIDE,
     GO_ON,
-    IMUL,			// for 186 iimul instr` 
-    MvI,			// for 186 logicals
-    ENTER,			// for 186 enter instr 
-    RMw,			
-    Imm8,			// for push immediate byte
-    Float1,			// for 287 instructions
-    Float2,			// for 287 instructions
-    DM,				// 16-bit data
-    AM,				// 16-bit addr
-    MIb,			// for 386 logicals
-    PREFIX,			// an instruction prefix like REP, LOCK
-    INT3,			// The int 3 instruction
-    DSHIFTcl,			// for double shift that implicitly uses %cl
-    CWD,			// cwd and variants
+    IMUL,                       // for 186 iimul instr` 
+    MvI,                        // for 186 logicals
+    ENTER,                      // for 186 enter instr 
+    RMw,                        
+    Imm8,                       // for push immediate byte
+    Float1,                     // for 287 instructions
+    Float2,                     // for 287 instructions
+    DM,                         // 16-bit data
+    AM,                         // 16-bit addr
+    MIb,                        // for 386 logicals
+    PREFIX,                     // an instruction prefix like REP, LOCK
+    INT3,                       // The int 3 instruction
+    DSHIFTcl,                   // for double shift that implicitly uses %cl
+    CWD,                        // cwd and variants
     CBW,                        // cbw, etc
-    RET,			// single immediate 16-bit operand
-    MOVZ,			// for movs and movz, etc
-    XADDB,			// for xaddb
+    RET,                        // single immediate 16-bit operand
+    MOVZ,                       // for movs and movz, etc
+    XADDB,                      // for xaddb
 };
 
 
@@ -152,28 +152,28 @@ private:
     Imm,
     Port,
     PortV,
-    DSHIFT,			// for double shift that has an 8-bit immediate
+    DSHIFT,                     // for double shift that has an 8-bit immediate
     Discard,
     OVERRIDE,
     GO_ON,
-    IMUL,			// for 186 iimul instr` 
-    MvI,			// for 186 logicals
-    ENTER,			// for 186 enter instr 
-    RMw,			
-    Imm8,			// for push immediate byte
-    Float1,			// for 287 instructions
-    Float2,			// for 287 instructions
-    DM,				// 16-bit data
-    AM,				// 16-bit addr
-    MIb,			// for 386 logicals
-    PREFIX,			// an instruction prefix like REP, LOCK
-    INT3,			// The int 3 instruction
-    DSHIFTcl,			// for double shift that implicitly uses %cl
-    CWD,			// cwd and variants
+    IMUL,                       // for 186 iimul instr` 
+    MvI,                        // for 186 logicals
+    ENTER,                      // for 186 enter instr 
+    RMw,                        
+    Imm8,                       // for push immediate byte
+    Float1,                     // for 287 instructions
+    Float2,                     // for 287 instructions
+    DM,                         // 16-bit data
+    AM,                         // 16-bit addr
+    MIb,                        // for 386 logicals
+    PREFIX,                     // an instruction prefix like REP, LOCK
+    INT3,                       // The int 3 instruction
+    DSHIFTcl,                   // for double shift that implicitly uses %cl
+    CWD,                        // cwd and variants
     CBW,                        // cbw, etc
-    RET,			// single immediate 16-bit operand
-    MOVZ,			// for movs and movz, etc
-    XADDB,			// for xaddb
+    RET,                        // single immediate 16-bit operand
+    MOVZ,                       // for movs and movz, etc
+    XADDB,                      // for xaddb
   };
 
   char  operand[3][OPLEN];      // to store operands as they appear

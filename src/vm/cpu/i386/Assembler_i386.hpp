@@ -129,12 +129,12 @@ class Assembler: public GlobalObj {
   // Test that a given register is indeed valid.
   static bool is_valid_int_register(Register reg) {
     return (reg >= (Register)first_int_register  && 
-	    reg <= (Register)last_int_register);
+            reg <= (Register)last_int_register);
   }
   static bool is_valid_byte_register(Register reg) {
     return (reg >= (Register)eax && 
-	    reg <= (Register)ebx || reg >= (Register)first_byte_register && 
-	    reg <= (Register)last_byte_register);
+            reg <= (Register)ebx || reg >= (Register)first_byte_register && 
+            reg <= (Register)last_byte_register);
   }
   static bool is_valid_register(Register reg) {
     return reg >= first_register      && reg <= last_register;

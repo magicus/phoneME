@@ -512,6 +512,7 @@ class FarClassDesc;
 class Field;
 class FilePath;
 class FinalizerConsDesc;
+class FPURegisterMap;
 class Frame;
 class InstanceClass;
 class InstanceClassDesc;

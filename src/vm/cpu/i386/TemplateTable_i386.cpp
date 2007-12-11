@@ -162,7 +162,7 @@ void Template::fast_access_field(bool is_static, bool is_put, BasicType type,
 
     comment("Get class_id from constant pool");
     load_unsigned_word(ebx, Address(ecx, eax, times_4));
-	// moved loading of offset here to free up register ecx early [Laurent]
+        // moved loading of offset here to free up register ecx early [Laurent]
     comment("Get the field offset from constant pool entry");
     load_unsigned_word(eax, Address(ecx, eax, times_4, Constant(2)));
 
@@ -1286,14 +1286,14 @@ void bc_wide::generate() {
     // address of the wide bytecode implementation is right before the
     // entry point of the normal one
     movl(ebx, Address(no_reg, ebx, times_4,
-		      Constant("interpreter_dispatch_table")));
+                      Constant("interpreter_dispatch_table")));
     jmp(Address(ebx, Constant(-4)));
   } else {
     // for inline asm we cannot apply such a solution, so dispatch through
     // a centralized table that maps normal bytecodes to their wide
     // variants.
     movl(ebx, Address(no_reg, ebx, times_4,
-		      Constant("interpreter_wide_dispatch_table")));
+                      Constant("interpreter_wide_dispatch_table")));
     jmp(ebx);
   }
 }
@@ -1822,7 +1822,7 @@ bind(invoke_join);
 
   load_unsigned_byte(ecx, bcp_address(1));
   jmp(Address(no_reg, ecx, times_4,
-	      Constant("_bc_fast_invokenative_returns", -6 * BytesPerWord)));
+              Constant("_bc_fast_invokenative_returns", -6 * BytesPerWord)));
 
   entry_end(); // bc_fast_invokenative_internal
 
@@ -1863,7 +1863,7 @@ bind(invoke_join);
   entry_end();
 
   define_array_begin("void * const", "_bc_fast_invokenative_returns",
-		     14 - 6 + 1);
+                     14 - 6 + 1);
   for (int i = 6; i <= 14; i++) {
 #define RETURN_PATH(x) \
         define_long_element(Constant("_bc_fast_invokenative_return_" #x))

@@ -60,9 +60,10 @@ class RawLocation;
 
 class VirtualStackFrame: public CompilerObject {
  private:
+  int            _saved_stack_pointer;
+  // Fields to copy start here
   int            _real_stack_pointer;
   int            _virtual_stack_pointer;
-  int            _saved_stack_pointer;
   int            _flush_count;
 #if ENABLE_REMEMBER_ARRAY_LENGTH
   //bitmap of _bound_mask
@@ -79,7 +80,7 @@ class VirtualStackFrame: public CompilerObject {
 #endif
 
 #if USE_COMPILER_FPU_MAP
-  OopDesc* _fpu_register_map;
+  FPURegisterMap _fpu_register_map;
 #endif
 
 #if ENABLE_ARM_VFP  
@@ -311,18 +312,33 @@ class VirtualStackFrame: public CompilerObject {
  public: 
   void wipe_notation_for_osr_entry() {}
 #endif
+  // copy this virtual stack frame to dst
+  void copy_to(VirtualStackFrame* dst) const {
+    // Need to copy only the locations that are actually in use. I.e.,
+    //
+    //     virtual_stack_pointer()---+
+    //                               v
+    //     [literals_map_size][Y][Y][Y][n][n]
+    //
+    // Note that virtual_stack_pointer() is a "full stack": it points to
+    // the current top of stack, so the number of used stack elements are
+    // virtual_stack_pointer()+1
+    jvm_memcpy( &dst->_real_stack_pointer, &_real_stack_pointer,
+                DISTANCE(&_real_stack_pointer, raw_location_end() ) );
+  }
 
   // Allocate a new instance of VirtualStackFrame.
-  static VirtualStackFrame* allocate(JVM_SINGLE_ARG_TRAPS);
+  static VirtualStackFrame* allocate(JVM_SINGLE_ARG_TRAPS) {
+    return (VirtualStackFrame*)
+      CompilerObject::allocate( CompilerObject::VirtualStackFrame_type,
+        _location_map_size + sizeof(VirtualStackFrame) JVM_NO_CHECK );
+  }
 
   // Construct a new virtual stack frame for the given method.
   static VirtualStackFrame* create(Method* method JVM_TRAPS);
 
   // clone this virtual stack frame
   VirtualStackFrame* clone(JVM_SINGLE_ARG_TRAPS);
-
-  // copy this virtual stack frame to dst
-  void copy_to(VirtualStackFrame* dst) const;
 
   // clone this virtual stack frame, but adjust stack for exception
   VirtualStackFrame* clone_for_exception(int handler_bci JVM_TRAPS);
@@ -478,9 +494,6 @@ class VirtualStackFrame: public CompilerObject {
   jint* literals_map ( void ) { return _literals_map;  }
 #endif
 
-  static jint location_map_size( void ) {
-    return _location_map_size;
-  }
   static void set_location_map_size( const int value ) {
     _location_map_size = value;
   }
@@ -532,14 +545,11 @@ class VirtualStackFrame: public CompilerObject {
   }
 
 #if USE_COMPILER_FPU_MAP
-  ReturnOop fpu_register_map( void ) const { 
+  const FPURegisterMap& fpu_register_map( void ) const { 
     return _fpu_register_map;      
   }
-  void set_fpu_register_map(OopDesc* value) {
-    _fpu_register_map = value;
-  }
-  void set_fpu_register_map(TypeArray* value) {
-    _fpu_register_map = ((Oop*)value)->obj();
+  FPURegisterMap& fpu_register_map( void ) { 
+    return _fpu_register_map;      
   }
 #endif  // USE_COMPILER_FPU_MAP
 
@@ -818,9 +828,9 @@ class VirtualStackFrame: public CompilerObject {
 #endif
 
   // Debug dump the state of the virtual stack frame.
-  void dump_fp_registers(bool /*as_comment*/) PRODUCT_RETURN;
-  void dump(bool /*as_comment*/)              PRODUCT_RETURN;
-  void print()                                PRODUCT_RETURN;
+  void dump_fp_registers(bool /*as_comment*/) const PRODUCT_RETURN;
+  void dump(bool /*as_comment*/)                    PRODUCT_RETURN;
+  void print( void )                                PRODUCT_RETURN;
 
  private:
   void conform_to_reference_impl(VirtualStackFrame* other);
@@ -897,31 +907,22 @@ class VirtualStackFrame: public CompilerObject {
 // VM calls and to restore it before returning.
 class PreserveVirtualStackFrameState: public StackObj {
  public:
-  PreserveVirtualStackFrameState(VirtualStackFrame* vsf JVM_TRAPS) : _frame(vsf){ 
-     save(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);    
+  PreserveVirtualStackFrameState(VirtualStackFrame* vsf JVM_TRAPS): _frame(vsf){
+    save(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);    
   }
-  ~PreserveVirtualStackFrameState() { 
-     restore(); 
+  ~PreserveVirtualStackFrameState( void ) { 
+    restore(); 
   }
-
-  void save(JVM_SINGLE_ARG_TRAPS);
-  void restore();
 
  private:
+  void save( JVM_SINGLE_ARG_TRAPS );
+  void restore( void );
+
   VirtualStackFrame*  frame      ( void ) const { return _frame; }
   VirtualStackFrame*  saved_frame( void ) const { return _saved_frame; }
 
   VirtualStackFrame* _frame;
   VirtualStackFrame* _saved_frame;
-};
-
-class VirtualStackFrameContext: public StackObj {
- private:
-  VirtualStackFrame* _saved_frame;
- 
- public:
-  VirtualStackFrameContext( VirtualStackFrame* context );
- ~VirtualStackFrameContext( void );
 };
 
 #if USE_COMPILER_LITERALS_MAP

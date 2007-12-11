@@ -705,7 +705,6 @@ CodeGenerator_<carch>.cpp        Frame.hpp
 CodeGenerator_<carch>.cpp        Symbols.hpp
 CodeGenerator_<carch>.cpp        Signature.hpp
 CodeGenerator_<carch>.cpp        Instructions_<carch>.hpp
-CodeGenerator_<carch>.cpp        FPURegisterMap_<carch>.hpp
 CodeGenerator_<carch>.cpp        Location.hpp
 CodeGenerator_<carch>.cpp        ObjectHeap_<iarch>.hpp
 CodeGenerator_<carch>.cpp        TypeArrayClass.hpp
@@ -743,23 +742,20 @@ RegisterAllocator_<carch>.cpp    RegisterAllocator.hpp
 RegisterAllocator_<carch>.cpp    Compiler.hpp
 
 FPURegisterMap_<carch>.hpp       Assembler_<carch>.hpp
-FPURegisterMap_<carch>.hpp       TypeArray.hpp
-FPURegisterMap_<carch>.cpp       FPURegisterMap_<carch>.hpp
-FPURegisterMap_<carch>.cpp       RegisterAllocator.hpp
-FPURegisterMap_<carch>.cpp       Compiler.hpp
 FPURegisterMap_<carch>.cpp       CodeGenerator.hpp
+FPURegisterMap_<carch>.cpp       Compiler.hpp
+FPURegisterMap_<carch>.cpp       RegisterAllocator.hpp
 
 VirtualStackFrame.hpp            CompilerObject.hpp
+VirtualStackFrame.hpp            FPURegisterMap_<carch>.hpp
 VirtualStackFrame.hpp            Method.hpp
 VirtualStackFrame.hpp            Value.hpp
-VirtualStackFrame.cpp            VirtualStackFrame.hpp
 VirtualStackFrame.cpp            Location.hpp
 VirtualStackFrame.cpp            Signature.hpp
 VirtualStackFrame.cpp            Symbols.hpp
 VirtualStackFrame.cpp            ObjectHeap_<iarch>.hpp
 VirtualStackFrame.cpp            SystemDictionary.hpp
 VirtualStackFrame.cpp            Compiler.hpp
-VirtualStackFrame.cpp            FPURegisterMap_<carch>.hpp
 VirtualStackFrame.cpp            InstanceClass.hpp
 VirtualStackFrame.cpp            StackmapGenerator.hpp
 VirtualStackFrame.cpp            VSFMergeTest.hpp
@@ -775,7 +771,6 @@ VSFMergeTest.cpp                 Location.hpp
 VSFMergeTest.cpp                 VSFMergeTest.hpp
 
 VirtualStackFrame_<carch>.cpp    VirtualStackFrame.hpp
-VirtualStackFrame_<carch>.cpp    FPURegisterMap_<carch>.hpp
 VirtualStackFrame_<carch>.cpp    VirtualStackFrame.hpp
 VirtualStackFrame_<carch>.cpp    BinaryAssembler_<carch>.hpp
 VirtualStackFrame_<carch>.cpp    CodeGenerator.hpp
@@ -875,7 +870,6 @@ BytecodeCompileClosure.cpp       BytecodeCompileClosure.hpp
 BytecodeCompileClosure.cpp       Method.hpp
 BytecodeCompileClosure.cpp       Frame.hpp
 BytecodeCompileClosure.cpp       Compiler.hpp
-BytecodeCompileClosure.cpp       FPURegisterMap_<carch>.hpp
 BytecodeCompileClosure.cpp       JavaClassObj.hpp
 BytecodeCompileClosure.cpp       ConstantPool.hpp
 BytecodeCompileClosure.cpp       Signature.hpp
@@ -1286,7 +1280,6 @@ BinaryAssembler_<carch>.cpp      Universe.hpp
 BinaryAssembler_<carch>.cpp      BinaryAssembler_<carch>.hpp
 BinaryAssembler_<carch>.cpp      Thread.hpp
 BinaryAssembler_<carch>.cpp      Instructions_<carch>.hpp
-BinaryAssembler_<carch>.cpp      FPURegisterMap_<carch>.hpp
 BinaryAssembler_<carch>.cpp      Compiler.hpp
 
 Instructions_<carch>.hpp         Allocation.hpp
@@ -1751,7 +1744,6 @@ Debug.cpp                        Frame.hpp
 Debug.cpp                        Compiler.hpp
 Debug.cpp                        RegisterAllocator.hpp
 Debug.cpp                        JVM.hpp
-Debug.cpp                        FPURegisterMap_<carch>.hpp
 Debug.cpp                        Scheduler.hpp
 Debug.cpp                        ROM.hpp
 Debug.cpp                        Universe.hpp
@@ -1764,7 +1756,6 @@ Debug.cpp                        Signature.hpp
 
 Debug_<carch>.cpp                Debug.hpp
 Debug_<carch>.cpp                Compiler.hpp
-Debug_<carch>.cpp                FPURegisterMap_<carch>.hpp
 Debug_<carch>.cpp                ObjectHeap_<iarch>.hpp
 
 Globals.cpp                      Top.hpp

@@ -613,7 +613,7 @@ class Compiler: public StackObj {
   static void set_hint(int hint);
 
   static bool is_time_to_suspend( void ) {
-    return 0 && !is_inlining() &&
+    return !is_inlining() &&
            (ExcessiveSuspendCompilation || Os::check_compiler_timer());
   }
   static CompilerState* suspended_compiler_state( void ) {
@@ -901,6 +901,22 @@ inline VirtualStackFrame* CodeGenerator::frame ( void ) {
 inline VirtualStackFrame* GenericAddress::frame ( void ) {
   return Compiler::current()->frame();
 }
+
+class VirtualStackFrameContext: public StackObj {
+ private:
+  VirtualStackFrame* _saved_frame;
+ 
+ public:
+  VirtualStackFrameContext( VirtualStackFrame* context ) {
+    GUARANTEE(context != NULL, "Sanity");
+    _saved_frame = Compiler::frame();
+    Compiler::set_frame(context);
+  }
+ ~VirtualStackFrameContext( void ) {
+    Compiler::frame()->conform_to(_saved_frame);
+    Compiler::set_frame(_saved_frame);
+  }
+};
 
 #if ENABLE_PERFORMANCE_COUNTERS && ENABLE_DETAILED_PERFORMANCE_COUNTERS
 

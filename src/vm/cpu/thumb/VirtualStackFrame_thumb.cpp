@@ -35,7 +35,7 @@ bool VirtualStackFrame::flush_quick() {
 }
 
 #ifndef PRODUCT
-void VirtualStackFrame::dump_fp_registers(bool as_comment) {
+void VirtualStackFrame::dump_fp_registers(const bool as_comment) const {
   // no floating point registers to dump
   (void)as_comment;
 }

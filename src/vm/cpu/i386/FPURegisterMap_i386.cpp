@@ -29,46 +29,39 @@
 
 #if ENABLE_COMPILER
 
-void FPURegisterMap::reset() {
-  for (int i = Assembler::number_of_float_registers - 1; i > 0; i--) {
-    set_register_at(i, Assembler::no_reg);
-  }
-  set_top_of_stack(0);
-}
-
-void FPURegisterMap::clear() {
-  for (int i = top_of_stack(); i > 0; i--) {
-    Compiler::code_generator()->ffree(register_at(i));
+void FPURegisterMap::clear( void ) {
+  for( int i = top_of_stack(); i > 0; i-- ) {
+    Compiler::code_generator()->ffree( register_at(i) );
   }
   reset();
 }
 
-bool FPURegisterMap::is_on_stack(Assembler::Register reg) {
-  for (int i = top_of_stack(); i > 0; i--) {
-    if (register_at(i) == reg) return true;
+bool FPURegisterMap::is_on_stack( const Assembler::Register reg ) const {
+  for( int i = top_of_stack(); i > 0; i-- ) {
+    if( register_at(i) == reg ) return true;
   }
   return false;
 }
 
-bool FPURegisterMap::is_clearable() {
-  for (int i = top_of_stack(); i > 0; i--) {
-    if (RegisterAllocator::is_mapping_something(register_at(i))) return false;
+bool FPURegisterMap::is_clearable( void ) const {
+  for( int i = top_of_stack(); i > 0; i-- ) {
+    if( RegisterAllocator::is_mapping_something(register_at(i)) ) return false;
   }
   return true;
 }
 
-int FPURegisterMap::index_for(Assembler::Register reg) {
+int FPURegisterMap::index_for(const Assembler::Register reg) const {
   // Returns FPU stack index of reg (NOT index into _register_map[]!).
-  for (int i = top_of_stack(); i > 0; i--) {
-    if (register_at(i) == reg) return top_of_stack() - i;
+  for( int i = top_of_stack(); i > 0; i-- ) {
+    if( register_at(i) == reg ) return top_of_stack() - i;
   }
   SHOULD_NOT_REACH_HERE();
   return -1;
 }
 
-int FPURegisterMap::swap_with_top(Assembler::Register reg) {
+int FPURegisterMap::swap_with_top(const Assembler::Register reg ) {
   // Swaps reg with top of stack and returns index (before swap) of reg.
-  for (int i = top_of_stack(); i > 0; i--) {
+  for( int i = top_of_stack(); i > 0; i-- ) {
     if (register_at(i) == reg) {
       set_register_at(i, register_at(top_of_stack()));
       set_register_at(top_of_stack(), reg);
@@ -80,7 +73,7 @@ int FPURegisterMap::swap_with_top(Assembler::Register reg) {
 }
 
 #ifndef PRODUCT
-void FPURegisterMap::dump(bool as_comment) {
+void FPURegisterMap::dump( const bool as_comment ) const {
   char str[1024];
   sprintf(str, "FPU: [");
   for (int i = top_of_stack(); i > 0; i--) {

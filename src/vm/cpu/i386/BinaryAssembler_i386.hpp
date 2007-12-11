@@ -508,7 +508,8 @@ class BinaryAssembler: public Assembler {
     return free_space() >= bytes + /* slop */8;
   }
 
-  friend class RelocationWriter;
+  static FPURegisterMap& fpu_register_map( void );
 
+  friend class RelocationWriter;
 #endif
 };

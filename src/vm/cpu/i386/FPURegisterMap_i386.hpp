@@ -26,62 +26,84 @@
 
 #if ENABLE_COMPILER
 
-class FPURegisterMap: public TypeArray {
+class FPURegisterMap {
+ private:
+  enum { size = Assembler::number_of_float_registers };
+  signed char _stack[ size ];
+  signed char _top;
  public:
-  HANDLE_DEFINITION(FPURegisterMap, TypeArray);
+  typedef Assembler::Register Register;
 
-  void reset();
-  void clear();
-
-  bool is_empty()                             { return top_of_stack() == 0;         }
-  Assembler::Register top_of_stack_register() { return register_at(top_of_stack()); }
-
-  bool is_top_of_stack(Assembler::Register reg) {
-    return (top_of_stack_register() == reg);
+  void reset( void ) {
+    set_top_of_stack( 0 );
   }
 
-  bool is_unused(Assembler::Register reg) { return !is_on_stack(reg); }
-  bool is_on_stack(Assembler::Register reg);
-  bool is_clearable();
+  void clear( void );
 
-  void push(Assembler::Register reg) {
-    GUARANTEE(top_of_stack() < Assembler::number_of_float_registers, "FPU Register stack overflow");
-
-    set_top_of_stack(top_of_stack() + 1);
-    set_register_at(top_of_stack(), reg);
+  bool is_empty( void ) const {
+    return top_of_stack() == 0;
+  }
+  Register top_of_stack_register( void ) const {
+    return register_at( top_of_stack() );
+  }
+  bool is_top_of_stack(const Register reg) const {
+    return _top > 0 && top_of_stack_register() == reg;
   }
 
-  void pop() {
-    GUARANTEE(top_of_stack() > 0, "FPU Register stack underflow");
+  bool is_unused( const Assembler::Register reg) const {
+    return !is_on_stack(reg);
+  }
 
-    set_register_at(top_of_stack(), Assembler::no_reg);
+  bool is_on_stack(const Assembler::Register reg) const ;
+  bool is_clearable( void ) const;
+
+  void push( const Assembler::Register reg ) {
+    GUARANTEE(top_of_stack() < size, "FPU Register stack overflow");
+
+    set_top_of_stack( top_of_stack() + 1 );
+    set_register_at( top_of_stack(), reg );
+  }
+
+  void pop( void ) {
+    GUARANTEE( top_of_stack() > 0, "FPU Register stack underflow" );
     set_top_of_stack(top_of_stack() - 1);
   }
 
-  void pop(Assembler::Register reg) {
-    GUARANTEE(register_at(top_of_stack()) == reg, "Can only pop register at top of stack");
+  void pop( const Assembler::Register reg ) {
+    GUARANTEE(top_of_stack_register() == reg, "Can only pop register at top of stack");
     pop();
   }
 
-  int index_for(Assembler::Register reg);
+  int index_for( const Assembler::Register reg) const;
 
-  Assembler::Register register_for(int index) {
+  Assembler::Register register_for(int index) const {
     GUARANTEE(0 < index && index <= top_of_stack(), "Index out of bounds");
 
     return register_at(top_of_stack() - index);
   }
 
-  int swap_with_top(Assembler::Register reg);
+  int swap_with_top(const Assembler::Register reg);
 
 #ifndef PRODUCT
-  void dump(bool as_comment);
+  void dump( const bool as_comment) const;
 #endif
 
  private:
-  int top_of_stack() const                                 { return int_at(0);                          }
-  void set_top_of_stack(int index)                         { int_at_put(0, index);                      }
-  Assembler::Register register_at(int index) const         { return (Assembler::Register)int_at(index); }
-  void set_register_at(int index, Assembler::Register reg) { int_at_put(index, (jint)reg);              }
+  int top_of_stack( void ) const {
+    return _top;
+  }
+  void set_top_of_stack( const int index ) {
+    _top = index;
+  }
+  Register register_at ( const int index) const {
+    GUARANTEE( unsigned( index - 1 ) < size, "FPU stack index out of bounds" );
+    return Register(_stack[index-1]);
+  }
+  void set_register_at ( const int index, const Register reg ) {
+    GUARANTEE( unsigned(index - 1) < size, "FPU stack index out of bounds" );
+    GUARANTEE( Assembler::fp0 <= reg && reg <= Assembler::fp7, "Sanity" );
+    _stack[ index-1 ] = (signed char)reg;
+  }
 };
 
 #endif

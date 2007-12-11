@@ -1487,7 +1487,7 @@ void CodeGenerator::long_cmp(Value& result, Value& op1, Value& op2 JVM_TRAPS) {
 void CodeGenerator::fpu_cmp_helper(Value& result, Value& op1, Value& op2, bool cond_is_less) {
   { // This is a somewhat simplified version of fpu_prepare_binary(), as we won't be
     // destroying the first operand.
-    FPURegisterMap fpu_map = frame()->fpu_register_map();
+    const FPURegisterMap& fpu_map = frame()->fpu_register_map();
     Value b(op2.type());
 
     // Make sure the operands are in a register...
@@ -1576,7 +1576,7 @@ void CodeGenerator::fpu_clear(bool flush_stack) {
     frame()->flush_fpu();
   }
   // fpu_clear() doesn't check if fpu_map.is_clearable(), this should be done by the caller!
-  FPURegisterMap fpu_map = frame()->fpu_register_map();
+  FPURegisterMap& fpu_map = frame()->fpu_register_map();
   if (!fpu_map.is_empty()) {
     comment("Clear FPU stack");
     fpu_map.clear();
@@ -1585,7 +1585,7 @@ void CodeGenerator::fpu_clear(bool flush_stack) {
 
 void CodeGenerator::fpu_prepare_unary(Value& op) {
   GUARANTEE(op.type() == T_FLOAT || op.type() == T_DOUBLE, "T_FLOAT or T_DOUBLE expected");
-  FPURegisterMap fpu_map = frame()->fpu_register_map();
+  const FPURegisterMap& fpu_map = frame()->fpu_register_map();
 
   Value a(op.type());
   op.writable_copy(a);
@@ -1599,7 +1599,7 @@ void CodeGenerator::fpu_prepare_binary_arithmetic(Value& op1, Value& op2, bool& 
   GUARANTEE(op1.type() == op2.type(), "FPU type mismatch");
   GUARANTEE(op1.type() == T_FLOAT || op2.type() == T_DOUBLE, "T_FLOAT or T_DOUBLE expected");
 
-  FPURegisterMap fpu_map = frame()->fpu_register_map();
+  const FPURegisterMap& fpu_map = frame()->fpu_register_map();
   Value a(op1.type());
   Value b(op2.type());
 
@@ -1633,7 +1633,7 @@ void CodeGenerator::fpu_prepare_binary_fprem(Value& op1, Value& op2) {
   GUARANTEE(op1.type() == op2.type(), "type mismatch");
   GUARANTEE(op1.type() == T_FLOAT || op1.type() == T_DOUBLE, "T_FLOAT or T_DOUBLE expected");
 
-  FPURegisterMap fpu_map = frame()->fpu_register_map();
+  const FPURegisterMap& fpu_map = frame()->fpu_register_map();
 
   // Make sure the operands are in a register...
   if (op2.is_immediate()) op2.materialize();
@@ -2521,7 +2521,7 @@ void CodeGenerator::invoke_native(BasicType return_kind, address entry JVM_TRAPS
     case T_FLOAT:
     case T_DOUBLE:
       Assembler::Register freg = RegisterAllocator::allocate_float_register();
-      FPURegisterMap fpu_map = frame()->fpu_register_map();
+      FPURegisterMap& fpu_map = frame()->fpu_register_map();
 
       value.set_register(freg);
       fpu_map.push(freg);
@@ -2649,8 +2649,8 @@ CodeGenerator::convert_condition( const BytecodeClosure::cond_op condition) {
 
 void CodeGenerator::verify_fpu() {
 #if ENABLE_FLOAT
-  FPURegisterMap::Raw fpu_map = frame()->fpu_register_map();
-  GUARANTEE(fpu_map().is_empty(), "FPU stack must be empty");
+  GUARANTEE(Compiler::frame()->fpu_register_map().is_empty(),
+            "FPU stack must be empty");
 #endif
 }
 

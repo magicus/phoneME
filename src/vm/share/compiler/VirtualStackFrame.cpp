@@ -177,34 +177,17 @@ VirtualStackFrame::is_mapping_something(const Assembler::Register reg) const {
   return false;
 }
 
-VirtualStackFrame* VirtualStackFrame::allocate(JVM_SINGLE_ARG_TRAPS) {
-  VirtualStackFrame* frame = (VirtualStackFrame*)
-    CompilerObject::allocate( CompilerObject::VirtualStackFrame_type,
-      _location_map_size + sizeof(VirtualStackFrame)
-      JVM_ZCHECK_0( frame ) );
-
-#if USE_COMPILER_FPU_MAP
-  TypeArray::Raw fpu_map =
-      Universe::new_int_array_in_compiler_area(
-                              Assembler::number_of_float_registers + 1
-                              JVM_OZCHECK(fpu_map));
-  frame->set_fpu_register_map(&fpu_map);
-#endif
-
-  return frame;
-}
-
 bool VirtualStackFrame::fits_compiled_compact_format( void ) const {
   const RawLocation *raw_location = raw_location_at(0);
   const RawLocation *end  = raw_location_end(raw_location);
 
-  while( raw_location < end ) {
+  for( ; raw_location < end; raw_location++ ) {
     const BasicType t = raw_location->type();
-    raw_location ++;
-    if (   t != T_ILLEGAL
-        && t != T_OBJECT
-        && t != T_INT) {
-      return false;
+    switch( t ) {
+      case T_ILLEGAL:
+      case T_OBJECT :
+      case T_INT    : break;
+      default: return false;
     }
     // Only one-word items can fit in compiled compact format
     GUARANTEE(!is_two_word(t), "sanity");
@@ -367,55 +350,6 @@ VirtualStackFrame* VirtualStackFrame::create(Method* method JVM_TRAPS) {
   return frame;
 }
 
-void VirtualStackFrame::copy_to(VirtualStackFrame* dst) const {
-  AllocationDisabler allocation_not_allowed;
-
-  // Need to copy only the locations that are actually in use. I.e.,
-  //
-  //     virtual_stack_pointer()---+
-  //                               v
-  //     [literals_map_size][Y][Y][Y][n][n]
-  //
-  // Note that virtual_stack_pointer() is a "full stack": it points to
-  // the current top of stack, so the number of used stack elements are
-  // virtual_stack_pointer()+1
-#if ENABLE_ARM_VFP
-  address map_src = (address)literals_mask();
-  address map_dst = (address)dst->literals_mask();
-#elif USE_COMPILER_LITERALS_MAP
-  address map_src = (address)literals_map();
-  address map_dst = (address)dst->literals_map();
-#else
-  address map_src = (address)raw_location_base();
-  address map_dst = (address)dst->raw_location_base();
-#endif
-
-  const size_t copy_bytes = DISTANCE(map_src, raw_location_end());
-  jvm_memmove( map_dst, map_src, copy_bytes );
-
-#ifdef AZZERT
-  //size_t left_over_bytes = object_size() - (header_size() + copy_bytes);
-  //if (left_over_bytes > 0) {
-  //  map_dst += copy_bytes;
-  //  jvm_memset(map_dst, 0xab, left_over_bytes);
-  //}
-#endif
-#if USE_COMPILER_FPU_MAP
-  {
-    TypeArray::Raw my_fpu_map = fpu_register_map();
-    TypeArray::Raw new_fpu_map = dst->fpu_register_map();
-    TypeArray::array_copy(&my_fpu_map, 0, &new_fpu_map, 0,
-      my_fpu_map().length());
-  }
-#endif
-
-  dst->set_real_stack_pointer(stack_pointer());
-  dst->set_virtual_stack_pointer(virtual_stack_pointer());
-  dst->set_flush_count(flush_count());
-  //remember array length
-  dst->set_bound_mask(bound_mask());
-}
-
 VirtualStackFrame* VirtualStackFrame::clone(JVM_SINGLE_ARG_TRAPS) { 
   VirtualStackFrame* result =
     VirtualStackFrame::allocate(JVM_SINGLE_ARG_NO_CHECK);
@@ -457,9 +391,8 @@ VirtualStackFrame::clone_for_exception(int handler_bci JVM_TRAPS) {
 }
 
 void VirtualStackFrame::clear(int location) {
-  RawLocation *raw_location = raw_location_at(location);
-  Value value(T_ILLEGAL);
-  raw_location->write_value(value);
+  const Value value(T_ILLEGAL);
+  raw_location_at(location)->write_value(value);
 }
 
 void VirtualStackFrame::set_stack_pointer(int location) {
@@ -550,16 +483,13 @@ void VirtualStackFrame::flush(JVM_SINGLE_ARG_TRAPS) {
   set_stack_pointer(virtual_stack_pointer());
 
 #if USE_COMPILER_FPU_MAP && ENABLE_FLOAT
-  // ensure x86 FPU stack is cleared
-  FPURegisterMap::Raw fpu_map = fpu_register_map();
-  GUARANTEE(fpu_map().is_clearable(), "mapped registers exist on FPU stack");
+  GUARANTEE( fpu_register_map().is_clearable(),
+             "mapped registers exist on FPU stack" );
   code_generator()->fpu_clear();
 #endif
 
   set_flush_count(flush_count() + 1);
-
   ABORT_CSE_TRACKING;
-
 }
 
 void VirtualStackFrame::mark_as_flushed() {
@@ -693,8 +623,8 @@ void VirtualStackFrame::conformance_entry(bool merging) {
   }
 
 #if USE_COMPILER_FPU_MAP && ENABLE_FLOAT
-  FPURegisterMap::Raw fpu_map = fpu_register_map();
-  GUARANTEE(fpu_map().is_clearable(), "mapped registers exist on FPU stack");
+  GUARANTEE( fpu_register_map().is_clearable(),
+             "mapped registers exist on FPU stack" );
   code_generator()->fpu_clear();
 #endif //
 
@@ -766,11 +696,10 @@ inline void VirtualStackFrame::conform_to_prologue(VirtualStackFrame* other) {
 #if USE_COMPILER_FPU_MAP && ENABLE_FLOAT
   flush_fpu();
 
-  FPURegisterMap::Fast fpu_map = fpu_register_map();
-  FPURegisterMap::Fast other_fpu_map = other->fpu_register_map();
-  GUARANTEE(fpu_map().is_clearable(), "mapped registers exist on FPU stack");
+  GUARANTEE( fpu_register_map().is_clearable(),
+             "mapped registers exist on FPU stack" );
   code_generator()->fpu_clear();
-  GUARANTEE(other_fpu_map().is_empty(),
+  GUARANTEE( other->fpu_register_map().is_empty(),
             "destination x86 FPU stack should be empty");
 #endif
 
@@ -2885,7 +2814,7 @@ void VirtualStackFrame::dump(bool as_comment) {
           jvm_sprintf(p, "%s", Assembler::name_for_long_register(reg));
           p += jvm_strlen(p);
           if (value.type() == T_FLOAT || value.type() == T_DOUBLE) {
-            FPURegisterMap fpu_map = fpu_register_map();
+            const FPURegisterMap& fpu_map = fpu_register_map();
             jvm_sprintf(p, " ST(%d)", fpu_map.index_for(reg));
             p += jvm_strlen(p);
           }
@@ -3077,7 +3006,7 @@ void PreserveVirtualStackFrameState::save(JVM_SINGLE_ARG_TRAPS) {
   frame()->flush(JVM_SINGLE_ARG_CHECK);
 }
 
-void PreserveVirtualStackFrameState::restore() {
+void PreserveVirtualStackFrameState::restore( void ) {
   // If we got outofmemory above when calling clone() we don't have a
   // saved frame and we have a pending exception so we need to just return
   JVM_DELAYED_CHECK;
@@ -3091,30 +3020,14 @@ void PreserveVirtualStackFrameState::restore() {
 
 #if USE_COMPILER_FPU_MAP
   // remove the contents in the FPU
-  FPURegisterMap fpu_map = _saved_frame->fpu_register_map();
-  if (!fpu_map.is_empty()) {
-    fpu_map.reset();
-  }
+  frame()->fpu_register_map().reset();
 #endif
 
-
   frame()->conform_to(saved_frame());
-
   Compiler::current()->set_cached_preserved_frame(saved_frame());
 
   // Make sure we don't use it anymore
   AZZERT_ONLY(_saved_frame = NULL);
-}
-
-VirtualStackFrameContext::VirtualStackFrameContext(VirtualStackFrame* context) {
-  GUARANTEE(context != NULL, "Sanity");
-  _saved_frame = Compiler::frame();
-  Compiler::set_frame(context);
-}
-
-VirtualStackFrameContext::~VirtualStackFrameContext( void ) {
-  Compiler::frame()->conform_to(_saved_frame);
-  Compiler::set_frame(_saved_frame);
 }
 
 #if ENABLE_COMPRESSED_VSF

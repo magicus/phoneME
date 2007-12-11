@@ -101,17 +101,16 @@ address lookup_double_constant(jdouble value) {
   return NULL;
 }
 
-bool VirtualStackFrame::flush_quick() {
+bool VirtualStackFrame::flush_quick( void ) {
   // not supported on x86
   return false;
 }
 
 #ifndef PRODUCT
-void VirtualStackFrame::dump_fp_registers(bool as_comment) {
-  FPURegisterMap fpu_map = fpu_register_map();
-  if (!as_comment || !fpu_map.is_empty()) {
+void VirtualStackFrame::dump_fp_registers(bool as_comment) const {
+  if (!as_comment || !fpu_register_map().is_empty()) {
     // No need including a code comment when the FPU is empty
-    fpu_map.dump(as_comment);
+    fpu_register_map().dump( as_comment );
   }
 }
 

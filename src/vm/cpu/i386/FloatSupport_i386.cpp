@@ -55,12 +55,12 @@ jlong   jvm_f2l(jfloat x)                { return (jlong)x; }
 
 jint    jvm_fcmpl(jfloat x, jfloat y)    { return ((x > y) ? 1 : ( x == y) ? 0 : -1); }
 jint    jvm_fcmpg(jfloat x, jfloat y)    { return ((x > y)   ?  1   : 
-						   (x == y)  ?  0 : 
-						   (x < y)   ? -1 : 1); }
+                                                   (x == y)  ?  0 : 
+                                                   (x < y)   ? -1 : 1); }
 jint    jvm_dcmpl(jdouble x, jdouble y)  { return  ((x > y) ? 1 : ( x == y) ? 0 : -1); }
 jint    jvm_dcmpg(jdouble x, jdouble y)  { return ((x > y)   ?  1   : 
-						   (x == y)  ?  0 : 
-						   (x < y)   ? -1 : 1); }
+                                                   (x == y)  ?  0 : 
+                                                   (x < y)   ? -1 : 1); }
 
 jdouble jvm_dneg(jdouble x)              { return (-x); }
 
