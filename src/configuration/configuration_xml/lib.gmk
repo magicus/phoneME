@@ -358,7 +358,10 @@ SUBSYSTEM_CONFIGURATION_CONFIG_FILES = \
 	$(INT_CONFIGURATION_CONFIG_FILES)
 
 SUBSYSTEM_CONFIGURATION_DEP_FILES += \
-	$(INT_XSL_DIR)/share/merge.xsl \
+	$(INT_XSL_DIR)/share/merge_pass1.xsl \
+	$(INT_XSL_DIR)/share/merge_pass2.xsl \
+	$(INT_XSL_DIR)/share/merge_pass3.xsl \
+	$(INT_XSL_DIR)/share/merge_pass4.xsl \
 	$(INT_XSL_DIR)/cldc/constantsNative.xsl \
 	$(INT_XSL_DIR)/cldc/constantsJava.xsl \
 	$(INT_XSL_DIR)/cldc/propertiesNative.xsl \
