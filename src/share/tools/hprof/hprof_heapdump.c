@@ -587,6 +587,7 @@ static void hprof_process_dump_buffer(char *begin_roots,
             const char *class_name;
 	    unsigned int trace_serial_num = 0;
 	    int size = 0;
+	    char *saved_offset;
 	    
 	    if (objmap != NULL) {
 	        trace_serial_num = objmap->site->trace_serial_num;
@@ -605,6 +606,7 @@ static void hprof_process_dump_buffer(char *begin_roots,
 	        hprof_printf("OBJ %x (sz=%u, trace=%u, class=%s@%x)\n",
 			     objmap, size, trace_serial_num, class_name, classmap);
 	    }
+	    saved_offset = hprof_dump_cur();
 
 	    while (class != NULL) {
 	        int i;
@@ -663,7 +665,15 @@ static void hprof_process_dump_buffer(char *begin_roots,
 
 		class = class->super;
 	    }
-	    
+	    /* If the class is null for any reason then we must make sure
+	     * that the buffer pointer is updated to point to the next
+	     * record.  It shouldn't be null so we exit if so
+	     */
+	    if (hprof_dump_cur() != saved_offset + valbytes) {
+	        fprintf(stderr,
+			"HPROF ERROR: class info missing in heap dump.\n");
+		return;
+	    }
 	    break;
 	}
 	case HPROF_GC_OBJ_ARRAY_DUMP: {

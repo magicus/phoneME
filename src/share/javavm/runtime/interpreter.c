@@ -441,7 +441,6 @@ CVMinitExecEnv(CVMExecEnv* ee, CVMExecEnv* targetEE,
     CVMremoteExceptionICell(targetEE)   = CVMjniCreateLocalRef0(ee, targetEE);
 #endif
     CVMcurrentExceptionICell(targetEE)  = CVMjniCreateLocalRef0(ee, targetEE);
-
     /*
      * Clear flags and objects (which should already be null)
      */
@@ -1301,9 +1300,14 @@ CVMgcUnsafeHandleException(CVMExecEnv* ee, CVMFrame* frame,
 	    be done before the frame is popped, and that no
 	    local variable slots should have been overwritten
 	    by the return value. */
-	CVMD_gcSafeExec(ee, {
-	    CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_TRUE, (jlong)0);
-	});
+	if (CVMjvmtiEnabled()) {
+	    jvalue val;
+	    val.j = CVMlongConstZero();
+	    CVMD_gcSafeExec(ee, {
+		CVMjvmtiPostFramePopEvent(ee, CVM_FALSE,
+					  CVM_TRUE, &val);
+	    });
+	}
 #endif
 #ifdef CVM_JVMPI
         if (CVMjvmpiEventMethodExitIsEnabled()) {
@@ -1784,9 +1788,11 @@ again:
 	   topOfStack value if we ever support JVMPI or JVMTI with JITed
 	   code. */
 	/* NOTE: Test for debugging active before asserting */
+#ifdef CVM_DEBUG_ASSERTS
 	if (CVMjvmtiDebuggingFlag()) {
 	    CVMassert(CVM_FALSE);
 	}
+#endif
 #endif
     }
 #endif
@@ -3113,9 +3119,14 @@ CVMclassLoaderFindNative(CVMExecEnv* ee, CVMClassLoaderICell* loader,
     }
 #ifdef CVM_DUAL_STACK
     else {
-        CVMClassBlock* loaderCB = CVMobjectGetClass(
-                                  CVMID_icellDirect(ee, loader));
-        CVMClassTypeID loaderID = CVMcbClassName(loaderCB);
+        CVMClassBlock* loaderCB;
+        CVMClassTypeID loaderID;
+
+	CVMD_gcUnsafeExec(ee, {
+	    loaderCB = 
+	        CVMobjectGetClass(CVMID_icellDirect(ee, loader));
+	});
+        loaderID = CVMcbClassName(loaderCB);
         if (loaderID == CVMglobals.midpImplClassLoaderTid) {
             findBuiltin = CVM_TRUE;
         }
@@ -3158,6 +3169,28 @@ CVMclassLoaderFindNative(CVMExecEnv* ee, CVMClassLoaderICell* loader,
 	}
     
 	(*env)->PopLocalFrame(env, 0);
+#ifdef CVM_JVMTI
+	/* Need to look in loaded agentslibs */
+	if (nativeCode == NULL) {
+	    int i;
+	    CVMAgentItem *itemPtr;
+	    void *libHandle;
+	    CVMAgentTable *table = &CVMglobals.agentTable;
+	    if (table == NULL || table->elemCnt == 0) {
+		return nativeCode;
+	    }
+	    itemPtr = table->table;
+	    for (i = 0; i < table->elemCnt; i++) {
+		if ((libHandle = itemPtr[i].libHandle) != NULL) {
+		    nativeCode =
+			(CVMUint8 *)CVMdynlinkSym(libHandle, nativeMethodName);
+		    if (nativeCode != NULL) {
+			return nativeCode;
+		    }
+		}
+	    }
+	}
+#endif
 	return nativeCode;
     }
 }
@@ -3329,7 +3362,7 @@ CVMexit(int status)
     CVMExecEnv *ee = CVMgetEE();
     CVMpostThreadExitEvents(ee);
 #ifdef CVM_JVMTI
-    if (CVMjvmtiInitialized()) {
+    if (CVMjvmtiEnabled()) {
 	CVMjvmtiPostVmExitEvent(ee);
 	CVMjvmtiDebugEventsEnabled(ee) = CVM_FALSE;
     }
@@ -4066,7 +4099,7 @@ CVMsyncReturnHelper(CVMExecEnv *ee, CVMFrame *frame, CVMObjectICell *retICell,
 
 CVMUint32
 CVMregisterReturnEvent(CVMExecEnv *ee, CVMUint8 *pc, CVMUint32 return_opcode,
-		       CVMObjectICell* resultCell)
+		       jvalue *retValue)
 {
 #ifdef CVM_JVMPI
     CVMBool jvmpiEventMethodExitIsEnabled = CVMjvmpiEventMethodExitIsEnabled();
@@ -4084,8 +4117,8 @@ CVMregisterReturnEvent(CVMExecEnv *ee, CVMUint8 *pc, CVMUint32 return_opcode,
 #ifdef CVM_JVMTI
     if (return_opcode == opc_breakpoint) {
 	CVMD_gcSafeExec(ee, {
-		return_opcode = CVMjvmtiGetBreakpointOpcode(ee, pc, CVM_FALSE);
-	    });
+	    return_opcode = CVMjvmtiGetBreakpointOpcode(ee, pc, CVM_FALSE);
+	});
     }
 #endif
     /* 
@@ -4095,17 +4128,20 @@ CVMregisterReturnEvent(CVMExecEnv *ee, CVMUint8 *pc, CVMUint32 return_opcode,
     if (return_opcode == opc_areturn) {
 	CVMassert(CVMID_icellIsNull(CVMmiscICell(ee)));
 	CVMID_icellSetDirect(ee, CVMmiscICell(ee),
-                             CVMID_icellDirect(ee, resultCell));
+			     CVMID_icellDirect(ee, (jobject)&retValue->l));
     }
     	
 #ifdef CVM_JVMTI
-    CVMD_gcSafeExec(ee, {
-	    if (return_opcode == opc_areturn) {
-		CVMjvmtiPostFramePopEvent(ee, CVM_TRUE, CVM_FALSE, 0L);
-	    } else {
-		CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE, (jlong)*(jlong*)resultCell);
-	    }
+#ifdef CVM_JVMPI
+    if (CVMjvmtiEnabled())
+#endif
+    {
+	CVMD_gcSafeExec(ee, {
+	    CVMjvmtiPostFramePopEvent(ee,
+				      (return_opcode == opc_areturn),
+				      CVM_FALSE, retValue);
 	});
+    }
 #endif
 #ifdef CVM_JVMPI
     if (jvmpiEventMethodExitIsEnabled) {
@@ -4117,7 +4153,7 @@ CVMregisterReturnEvent(CVMExecEnv *ee, CVMUint8 *pc, CVMUint32 return_opcode,
 
     /* Restore the return result if it is a refrence type. */
     if (return_opcode == opc_areturn) {
-	CVMID_icellSetDirect(ee, resultCell,
+	CVMID_icellSetDirect(ee, (jobject)&retValue->l,
                              CVMID_icellDirect(ee, CVMmiscICell(ee)));
 	CVMID_icellSetNull(CVMmiscICell(ee));
     }
@@ -4126,10 +4162,10 @@ CVMregisterReturnEvent(CVMExecEnv *ee, CVMUint8 *pc, CVMUint32 return_opcode,
 
 CVMUint32
 CVMregisterReturnEventPC(CVMExecEnv *ee, CVMUint8* pc,
-		       CVMObjectICell* resultCell)
+		       jvalue *retValue)
 {
     CVMUint32 return_opcode = pc[0];
-    return CVMregisterReturnEvent(ee, pc, return_opcode, resultCell);
+    return CVMregisterReturnEvent(ee, pc, return_opcode, retValue);
 }
 
 #endif /* (defined(CVM_JVMTI) || defined(CVM_JVMPI)) */
@@ -4234,9 +4270,11 @@ CVMinvokeJNIHelper(CVMExecEnv *ee, CVMMethodBlock *mb)
 
 #ifdef CVM_JVMTI
     /* %comment k001 */
-    CVMD_gcSafeExec(ee, {
-	CVMjvmtiPostFramePushEvent(ee);
-    });
+    if (CVMjvmtiEnabled()) {
+	CVMD_gcSafeExec(ee, {
+	    CVMjvmtiPostFramePushEvent(ee);
+	});
+    }
 #endif
 
     /* Call the JNI method. topOfStack still points just below
@@ -4269,41 +4307,45 @@ CVMinvokeJNIHelper(CVMExecEnv *ee, CVMMethodBlock *mb)
 	be done before the frame is popped, and that no
 	local variable slots should have been overwritten
 	by the return value. */
-    switch (returnCode) {
-	jlong longValue;
-    case 0:
-	CVMD_gcSafeExec(ee, {
-		CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE,
-					  0L);
-	    });
-	break;
-    case 1:
-	CVMD_gcSafeExec(ee, {
-		CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE,
-					  (jlong)*(int*)&returnValue.i);
-	    });
-	break;
-    case 2:
-	CVMmemCopy64(&longValue, returnValue.jni.v64);
-	CVMD_gcSafeExec(ee, {
-		CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE,
-					  longValue);
-	    });
-	break;
-    case -1:
-	CVMassert(CVMID_icellIsNull(CVMmiscICell(ee)));
-	{
-	    CVMObjectICell *o = returnValue.o;
-	    if (o != NULL) {
-		CVMID_icellAssignDirect(ee, CVMmiscICell(ee), o);
-	    }
+    if (CVMjvmtiEnabled()) {
+	jvalue retValue;
+	retValue.j = CVMlongConstZero();
+	switch (returnCode) {
+	case 0:
 	    CVMD_gcSafeExec(ee, {
+		CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE,
+					  &retValue);
+	    });
+	    break;
+	case 1:
+	    retValue.i = returnValue.i.i;
+	    CVMD_gcSafeExec(ee, {
+		CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE,
+					  &retValue);
+	    });
+	    break;
+	case 2:
+	    CVMmemCopy64(&retValue.j, returnValue.jni.v64);
+	    CVMD_gcSafeExec(ee, {
+		CVMjvmtiPostFramePopEvent(ee, CVM_FALSE, CVM_FALSE,
+					  &retValue);
+	    });
+	    break;
+	case -1:
+	    CVMassert(CVMID_icellIsNull(CVMmiscICell(ee)));
+	    {
+		CVMObjectICell *o = returnValue.o;
+		if (o != NULL) {
+		    CVMID_icellAssignDirect(ee, CVMmiscICell(ee), o);
+		}
+		CVMD_gcSafeExec(ee, {
 		    CVMjvmtiPostFramePopEvent(ee, CVM_TRUE,
-					      CVM_FALSE, 0L);
+					      CVM_FALSE, &retValue);
 		});
-	    CVMID_icellSetNull(CVMmiscICell(ee));
+		CVMID_icellSetNull(CVMmiscICell(ee));
+	    }
+	    break;
 	}
-	break;
     }
 #endif
 #ifdef CVM_JVMPI
@@ -4658,7 +4700,7 @@ CVMpostThreadStartEvents(CVMExecEnv *ee)
        implementing RunDebugThread/CreateSystemThread to ensure the
        events get generated. */
 
-    if (CVMjvmtiInitialized()) {
+    if (CVMjvmtiEnabled()) {
 	CVMjvmtiPostThreadStartEvent(ee, CVMcurrentThreadICell(ee));
     }
 #endif
@@ -4674,7 +4716,7 @@ CVMpostThreadExitEvents(CVMExecEnv *ee)
 {
     if (!ee->hasPostedExitEvents) {
 #ifdef CVM_JVMTI
-	if (CVMjvmtiInitialized()) {
+	if (CVMjvmtiEnabled()) {
 	    CVMjvmtiPostThreadEndEvent(ee, CVMcurrentThreadICell(ee));
 	}
 #endif

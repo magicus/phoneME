@@ -217,7 +217,7 @@ CVMclassLink(CVMExecEnv* ee, CVMClassBlock* cb, CVMBool isRedefine)
     CVMcbSetRuntimeFlag(cb, ee, LINKED);
 
 #ifdef CVM_JVMTI
-    if (CVMjvmtiInitialized()) {
+    if (CVMjvmtiEnabled()) {
 	CVMjvmtiPostClassPrepareEvent(ee, CVMcbJavaInstance(cb));
     }
 #endif

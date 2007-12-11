@@ -231,7 +231,7 @@ static void conditionalPutstring(
  * Initialize the type Id system
  * Register some well-known typeID's 
  */
-void
+CVMBool
 CVMtypeidInit( CVMExecEnv *ee )
 {
     CVMglobals.typeIDscalarSegmentSize = INITIAL_SEGMENT_SIZE;
@@ -247,24 +247,28 @@ CVMtypeidInit( CVMExecEnv *ee )
     CVMglobals.cloneTid = 
 	CVMtypeidLookupMethodIDFromNameAndSig(ee, "clone", "()V");
 
-#ifdef CVM_DUAL_STACK
-    {
-        const char *midpImplLoaderName = 
-                 "sun/misc/MIDPImplementationClassLoader";
-        const char *midletLoaderName = 
-            "sun/misc/MIDletClassLoader";
-        CVMglobals.midpImplClassLoaderTid = CVMtypeidLookupClassID(
-            ee, midpImplLoaderName, strlen(midpImplLoaderName));
-        CVMglobals.midletClassLoaderTid = CVMtypeidLookupClassID(
-            ee, midletLoaderName, strlen(midletLoaderName));
-    }
-#endif
-
 #ifdef CVM_DEBUG_STACKTRACES
     CVMglobals.printlnTid =
 	CVMtypeidLookupMethodIDFromNameAndSig(ee, "println", 
 					   "(Ljava/lang/String;)V");
 #endif
+#ifdef CVM_DUAL_STACK
+    {
+        const char *midpImplLoaderName = 
+            "sun/misc/MIDPImplementationClassLoader";
+        const char *midletLoaderName = 
+            "sun/misc/MIDletClassLoader";
+        CVMglobals.midpImplClassLoaderTid = CVMtypeidNewClassID(
+            ee, midpImplLoaderName, strlen(midpImplLoaderName));
+        CVMglobals.midletClassLoaderTid = CVMtypeidNewClassID(
+            ee, midletLoaderName, strlen(midletLoaderName));
+        if (CVMglobals.midpImplClassLoaderTid == CVM_TYPEID_ERROR ||
+            CVMglobals.midletClassLoaderTid == CVM_TYPEID_ERROR) {
+            return CVM_FALSE;
+        }
+    }
+#endif
+    return CVM_TRUE;
 }
 
 /*

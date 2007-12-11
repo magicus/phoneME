@@ -408,8 +408,8 @@ include  ../share/defs.mk
 -include ../share/defs_midp.mk
 -include ../share/defs_jump.mk
 -include ../share/defs_gci.mk
-include $(PROFILE_DIR)/build/share/defs_$(J2ME_CLASSLIB).mk
 -include ../share/defs_op.mk
+include $(PROFILE_DIR)/build/share/defs_$(J2ME_CLASSLIB).mk
 ifneq ($(OPT_PKGS_DEFS_FILES),)
 include $(OPT_PKGS_DEFS_FILES)
 endif
@@ -456,3 +456,4 @@ ifeq ($(CVM_TOOLS_BUILD),true)
 -include  ../$(TARGET_OS)/cvmc.mk
 -include  ../share/cvmc.mk
 endif
+

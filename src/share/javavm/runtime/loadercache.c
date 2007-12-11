@@ -890,7 +890,8 @@ CVMloaderCacheAdd(CVMExecEnv* ee, CVMClassBlock* cb,
      * then we just ignore this attempt at adding the new
      * redefined class to the cache.
      */
-    if (CVMjvmtiClassBeingRedefined(ee, cb)) {
+    /* Note: make the following test a macro when we remove ThreadNode */
+    if (CVMjvmtiEnabled() && CVMjvmtiClassBeingRedefined(ee, cb)) {
 	CVM_LOADERCACHE_UNLOCK(ee);
 	return CVM_TRUE;
     }

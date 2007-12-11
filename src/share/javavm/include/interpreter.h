@@ -1496,10 +1496,10 @@ CVMsyncReturnHelper(CVMExecEnv *ee, CVMFrame *frame, CVMObjectICell *objICell,
  */
 CVMUint32
 CVMregisterReturnEvent(CVMExecEnv *ee, CVMUint8* pc, CVMUint32 ret_opcode,
-		       CVMObjectICell* resultCell);
+		       jvalue *retValue);
 CVMUint32
 CVMregisterReturnEventPC(CVMExecEnv *ee, CVMUint8* pc,
-		       CVMObjectICell* resultCell);
+			 jvalue *retValue);
 
 /*
  * Common code for invoking JNI methods.

@@ -206,10 +206,43 @@ public class Protocol extends BufferedConnectionAdapter
     }
 
     /*
-     * throws SecurityException if MIDP permission check fails 
-     * nothing to do for CDC
-    */
-    protected void checkMIDPPermission(String name) {
+     * Throws SecurityException if permission check fails.
+     * Will be overriden by MIDP version of the protocol
+     * handler.
+     */
+    protected void checkPermission(String name) {
+        java.lang.SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            if (mode == Connector.READ) {
+                sm.checkRead(name);
+            } else {
+                sm.checkWrite(name);
+            }
+        }
+        return;
+    }
+
+    /*
+     * Check permission when opening an OutputStream. MIDP
+     * versions of the protocol handler should override this
+     * with an empty method. Throw a SecurityException if
+     * the connection is not allowed. Currently the comm
+     * protocol handler does not make a permission check at
+     * this point so this method is empty.
+     */
+    protected void outputStreamPermissionCheck() {
+        return;
+    }
+
+    /*
+     * Check permission when opening an InputStream. MIDP
+     * versions of the protocol handler should override this
+     * with an empty method. A SecurityException will be
+     * raised if the connection is not allowed. Currently the
+     * comm protocol handler does not make a permission
+     * check at this point so this method is empty.
+     */
+    protected void inputStreamPermissionCheck() {
         return;
     }
 
@@ -309,7 +342,7 @@ public class Protocol extends BufferedConnectionAdapter
         // blocking is handled at the Java layer so other Java threads can run
 
         if (deviceName != null) {
-            checkMIDPPermission(deviceName);
+            checkPermission(deviceName);
 	    /* 6231661: before checking if port is already open, 
 	       check if no open Streams (ensureNoStreamsOpen).  This is 
 	       done to throw the correct exception: IOException when 
@@ -324,7 +357,7 @@ public class Protocol extends BufferedConnectionAdapter
 	    handle = native_openByName(deviceName, baud,
 				       bbc|stop|parity|rts|cts);
         } else {
-            checkMIDPPermission("comm:" + portNumber);
+            checkPermission("comm:" + portNumber);
 	    handle = native_openByNumber(portNumber, baud,
 					 bbc|stop|parity|rts|cts);
         }

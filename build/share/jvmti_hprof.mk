@@ -173,10 +173,14 @@ $(CVM_JVMTI_HPROF_LIBDIR)/$(CVM_JVMTI_HPROF_LIB): $(CVM_JVMTI_HPROF_OBJECTS)
 	$(SO_LINK_CMD)
 	@echo "Done Linking $@"
 
+ifeq ($(CVM_JVMTI), true)
+ifeq ($(CVM_JVMPI), false)
 $(CVM_JVMTI_HPROF_LIBDIR)/jvm.hprof.txt:
 	@echo "Copying $@"
 	@if [ ! -d $@ ]; then cp $(CVM_JVMTI_HPROF_SHAREROOT)/jvm.hprof.txt $@; fi
 	@echo "Done Copying $@"
+endif
+endif
 
 # The following are used to build the .o files needed for $(CVM_JVMTI_HPROF_OBJECTS):
 

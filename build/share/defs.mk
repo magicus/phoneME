@@ -205,6 +205,10 @@ ifeq ($(CVM_JVMPI), true)
         override CVM_THREAD_SUSPENSION = true
 endif
 
+ifeq ($(CVM_PRELOAD_LIB), true)
+	override CVM_CREATE_RTJAR = false
+endif
+
 # Set default options.
 # NOTE: These options are officially supported and are documented in
 #       docs/guide/build.html:
@@ -337,6 +341,8 @@ CVM_BUILD_SUBDIR  ?= false
 CVM_USE_MEM_MGR		?= false
 CVM_MP_SAFE		?= false
 
+CVM_CREATE_RTJAR	?= false
+
 # AOT is only supported for Romized build.
 ifeq ($(CVM_AOT), true)
 override CVM_PRELOAD_LIB = true
@@ -413,6 +419,12 @@ endif
 # This is for identifying binary products, like Personal Profile for Zaurus
 -include ../$(TARGET_OS)-$(TARGET_CPU_FAMILY)-$(TARGET_DEVICE)/id_$(J2ME_CLASSLIB).mk
 
+ifeq ($(CVM_CREATE_RTJAR),true)
+CVM_RT_JAR_NAME		= "rt.jar"
+CVM_RT_JAR		= $(CVM_LIBDIR_ABS)/rt.jar
+CVM_RTJARS_DIR		= $(CVM_BUILD_TOP_ABS)/rtjars
+endif
+
 #
 # The version values referenced here are setup in the profile id.mk files.
 #
@@ -470,7 +482,12 @@ CVM_CLASSLIB_JAR_NAME	       ?= "$(J2ME_CLASSLIB)$(OPT_PKGS_NAME).jar"
 
 #   used in src/share/javavm/runtime/utils.c
 ifneq ($(CVM_PRELOAD_LIB),true)
+ifneq ($(CVM_CREATE_RTJAR), true)
 CVM_JARFILES	+= CVM_CLASSLIB_JAR_NAME
+else
+CVM_JARFILES	+= $(CVM_RT_JAR_NAME)
+CVM_RTJARS_LIST += $(LIB_CLASSESJAR)
+endif
 else
 CVM_JARFILES	= NULL
 endif
@@ -510,7 +527,11 @@ CVM_BUILD_DEF_VARS += \
 # be put into. Add in the optional package name.
 #
 LIB_CLASSESDIR	= $(CVM_BUILD_TOP)/$(J2ME_CLASSLIB)$(OPT_PKGS_NAME)_classes
+ifneq ($(CVM_CREATE_RTJAR),true)
 LIB_CLASSESJAR ?= $(CVM_LIBDIR_ABS)/$(J2ME_CLASSLIB)$(OPT_PKGS_NAME).jar
+else
+LIB_CLASSESJAR = $(CVM_RTJARS_DIR)/$(J2ME_CLASSLIB)$(OPT_PKGS_NAME).jar
+endif
 
 CVM_RESOURCES_DIR ?= $(CVM_BUILD_TOP)/resources
 CVM_RESOURCES_JAR_FILENAME ?= resources.jar
@@ -828,7 +849,8 @@ CVM_FLAGS += \
 	CVM_MP_SAFE \
 	CVM_USE_NATIVE_TOOLS \
 	CVM_MTASK \
-	CVM_AOT
+	CVM_AOT \
+	CVM_CREATE_RTJAR
 
 # %begin lvm
 CVM_FLAGS += \
@@ -1001,8 +1023,9 @@ CVM_USE_NATIVE_TOOLS_CLEANUP_ACTION    = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_USE_CVM_MEMALIGN_CLEANUP_ACTION    = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_USE_MEM_MGR_CLEANUP_ACTION         = $(CVM_DEFAULT_CLEANUP_ACTION)
 CVM_MP_SAFE_CLEANUP_ACTION	       = $(CVM_DEFAULT_CLEANUP_ACTION)
-CVM_MTASK_CLEANUP_ACTION                = $(CVM_DEFAULT_CLEANUP_ACTION)
-CVM_AOT_CLEANUP_ACTION                = $(CVM_DEFAULT_CLEANUP_ACTION)
+CVM_MTASK_CLEANUP_ACTION               = $(CVM_DEFAULT_CLEANUP_ACTION)
+CVM_AOT_CLEANUP_ACTION                 = $(CVM_DEFAULT_CLEANUP_ACTION)
+CVM_CREATE_RTJAR_CLEANUP_ACTION	       = rm -rf $(CVM_RT_JAR)
 
 #
 # Wipe out objects and classes when J2ME_CLASSLIB changes.
@@ -1312,6 +1335,11 @@ CVM_BUILDDIRS  += \
 ifneq ($(CVM_PRELOAD_LIB), true)
 CVM_BUILDDIRS  += \
 	$(LIB_CLASSESDIR)
+endif
+
+ifeq ($(CVM_CREATE_RTJAR),true)
+CVM_BUILDDIRS  += \
+	$(CVM_RTJARS_DIR)
 endif
 
 ifeq ($(CVM_JIT), true)

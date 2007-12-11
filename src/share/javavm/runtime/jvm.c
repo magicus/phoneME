@@ -1621,7 +1621,7 @@ JVM_MonitorWait(JNIEnv *env, jobject obj, jlong millis)
     }
 #endif
 #ifdef CVM_JVMTI
-    ee->threadState = CVM_THREAD_WAITING;
+    ee->threadState = CVM_THREAD_WAITING | CVM_THREAD_OBJECT_WAIT;
     ee->threadState |= (millis == 0 ? CVM_THREAD_WAITING_INDEFINITE :
 		       CVM_THREAD_WAITING_TIMEOUT);
     if (CVMjvmtiShouldPostMonitorWait()) {
@@ -1898,6 +1898,11 @@ static void start_func(void *arg)
 	goto failed;
     }
 
+#ifdef CVM_JVMTI
+    if (CVMjvmtiEnabled()) {
+	CVMjvmtiDebugEventsEnabled(ee) = CVM_TRUE;
+    }
+#endif
     /* Should have startup() call this too... */
     CVMpostThreadStartEvents(ee);
 
@@ -1944,13 +1949,7 @@ JVM_RunNativeThread(JNIEnv *env, jobject thisObj)
 #endif
     ee->nativeRunInfo = NULL;
 
-#ifdef CVM_JVMTI
-    CVMjvmtiDebugEventsEnabled(ee) = CVM_TRUE;
-#endif
     (*nativeFunc)(arg);
-#ifdef CVM_JVMTI
-    CVMjvmtiDebugEventsEnabled(ee) = CVM_FALSE;
-#endif
 }
 
 /* Purpose: Native implementation of java.lang.Thread.start0(). */
@@ -2257,7 +2256,7 @@ JVM_SuspendThread(JNIEnv *env, jobject thread)
 	CVMlocksForThreadSuspendRelease(ee);
     } else {
 	/* %comment: rt034 */
-	ee->threadState = CVM_THREAD_SUSPENDED;
+	ee->threadState |= CVM_THREAD_SUSPENDED;
 	CVMthreadSuspend(&ee->threadInfo);
     }
 }
@@ -2436,7 +2435,7 @@ JVM_Interrupt(JNIEnv *env, jobject thread)
     if (targetEE != NULL) {
 	if (!targetEE->interruptsMasked) {
 #ifdef CVM_JVMTI
-	    targetEE->threadState = CVM_THREAD_INTERRUPTED;
+	    targetEE->threadState |= CVM_THREAD_INTERRUPTED;
 #endif
 	    CVMthreadInterruptWait(CVMexecEnv2threadID(targetEE));
 	} else {
@@ -2486,9 +2485,6 @@ JVM_IsInterrupted(JNIEnv *env, jobject thread, jboolean clearInterrupted)
 		CVMthreadIsInterrupted(CVMexecEnv2threadID(targetEE),
 		    clearInterrupted)
 		: targetEE->maskedInterrupt;
-#ifdef CVM_JVMTI
-	    targetEE->threadState &= ~CVM_THREAD_INTERRUPTED;
-#endif
 	}
 	CVMsysMutexUnlock(ee, &CVMglobals.threadLock);
     }

@@ -37,7 +37,7 @@
 
 static char *versionName = "Java Debug Wire Protocol";
 static int majorVersion = 1;  /* JDWP major version */
-static int minorVersion = 4;  /* JDWP minor version */
+static int minorVersion = 6;  /* JDWP minor version */
 
 static jboolean 
 version(PacketInputStream *in, PacketOutputStream *out)

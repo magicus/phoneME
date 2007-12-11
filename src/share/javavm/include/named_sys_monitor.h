@@ -82,7 +82,12 @@ struct CVMNamedSysMonitor {
 /* Purpose: Gets the name of this monitor. */
 /* inline const char *CVMnamedSysMonitorGetName(CVMNamedSysMonitor *self); */
 #define CVMnamedSysMonitorGetName(self) \
-    ((const char *)(self)->name)
+    ((char *)(self)->name)
+
+/* Purpose: Gets the type of this monitor. */
+/* inline const char *CVMnamedSysMonitorGettype(CVMNamedSysMonitor *self); */
+#define CVMnamedSysMonitorGetType(self) \
+    ((self)->_super.type)
 
 /* Purpose: Constructor. */
 extern CVMNamedSysMonitor *CVMnamedSysMonitorInit(const char *name);

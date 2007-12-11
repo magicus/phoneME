@@ -1276,15 +1276,6 @@ CVMJITirnodeDeleteBinaryOp(CVMJITCompilationContext *con, CVMJITIRNode *node);
 #define CVMJITirnodeHasSideEffects(node) \
     (((node)->flags & CVMJITIRNODE_SIDE_EFFECT_MASK) != 0)
 
-#define CVMJITirnodeInheritSideEffects(node, operand) { \
-    (node)->flags |= ((operand)->flags & CVMJITIRNODE_SIDE_EFFECT_MASK); \
-}
-
-#define CVMJITirnodeBinaryInheritSideEffects(node, lhs, rhs) { \
-    (node)->flags |= \
-     (((lhs)->flags | (rhs)->flags) & CVMJITIRNODE_SIDE_EFFECT_MASK); \
-}
-
 #define CVMJITirnodeSetParentThrowsExceptions(node) \
     ((node)->flags |= CVMJITIRNODE_PARENT_THROWS_EXCEPTIONS)
 #define CVMJITirnodeResolveParentThrowsExceptions(parent, child) {      \

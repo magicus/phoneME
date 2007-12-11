@@ -65,6 +65,7 @@ class WinCEDatagramSocketImpl extends PlainDatagramSocketImpl
 			 pd.getData(), pd.getOffset(), peeklen);
 	pd.setLength(peeklen);
 	pd.setAddress(peekPacket.getAddress());
+	pd.setPort(peekPacket.getPort());
 	return peekPacket.getPort();
     }
 

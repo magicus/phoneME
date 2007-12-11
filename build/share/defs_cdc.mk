@@ -24,6 +24,10 @@
 # @(#)defs_cdc.mk	1.66 06/10/10
 #
 
+# JSR-75 optional package (if present in the build) can set this to false
+# in order to use its own "file:" protocol handler
+USE_CDC_FILE_PROTOCOL ?= true
+
 CVM_BUILDTIME_CLASSES += \
    java.io.BufferedInputStream \
    java.io.BufferedOutputStream \
@@ -483,14 +487,18 @@ CLASSLIB_CLASSES += \
    com.sun.cdc.io.GeneralBase \
    com.sun.cdc.io.j2me.datagram.DatagramObject \
    com.sun.cdc.io.j2me.datagram.Protocol \
-   com.sun.cdc.io.j2me.file.Protocol \
-   com.sun.cdc.io.j2me.file.ProtocolBase \
-   com.sun.cdc.io.j2me.file.ProtocolNative \
    com.sun.cdc.io.j2me.UniversalOutputStream \
    com.sun.cdc.io.ConnectionBaseInterface \
    com.sun.cdc.i18n.Helper \
    com.sun.cdc.i18n.StreamReader \
    com.sun.cdc.i18n.StreamWriter
+
+ifeq ($(USE_CDC_FILE_PROTOCOL), true)
+CLASSLIB_CLASSES += \
+   com.sun.cdc.io.j2me.file.Protocol \
+   com.sun.cdc.io.j2me.file.ProtocolBase \
+   com.sun.cdc.io.j2me.file.ProtocolNative
+endif
 
 ifneq ($(USE_JUMP), true)
 CLASSLIB_CLASSES += \

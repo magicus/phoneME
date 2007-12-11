@@ -642,6 +642,47 @@ CNIsun_misc_CVM_callerCLIsMIDCLs(CVMExecEnv* ee,
     return CNI_SINGLE;
 }
 
+CNIResultCode
+CNIsun_misc_CVM_isMIDPContext(CVMExecEnv* ee,
+                              CVMStackVal32 *arguments,
+                              CVMMethodBlock **p_mb)
+{
+#ifndef CVM_DUAL_STACK
+   arguments[0].j.i = CVM_FALSE;
+#else
+    CVMBool result = CVM_FALSE;
+    int i;
+
+    /* 
+     * Check each caller on the stack to if it is was loaded by a MIDP class
+     * class loader. Note we start one frame up here because
+     * there is no frame pushed for the CNI method.
+     */
+    for (i = 1; ; i++) {
+        CVMClassBlock* cb;
+        CVMClassLoaderICell* loaderICell;
+ 
+        cb = CVMgetCallerClass(ee, i);
+        if (NULL == cb) {
+            break;
+        }
+
+        loaderICell = CVMcbClassLoader(cb);
+        if (NULL == loaderICell) {
+            continue;
+        }
+
+        result = CVMclassloaderIsMIDPClassLoader(ee, loaderICell, CVM_TRUE);
+        if (result) {
+            break;
+        }
+    }
+
+    arguments[0].j.i = result;
+#endif
+    return CNI_SINGLE;
+}
+
 /* %begin lvm */
 CNIResultCode
 CNIsun_misc_CVM_inMainLVM(CVMExecEnv* ee,
@@ -753,7 +794,9 @@ CNIsun_misc_CVM_setDebugEvents(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb)
 {
 #ifdef CVM_JVMTI
-    CVMjvmtiDebugEventsEnabled(ee) = arguments[0].j.i;
+    if (CVMjvmtiEnabled()) {
+	CVMjvmtiDebugEventsEnabled(ee) = arguments[0].j.i;
+    }
 #endif
     return CNI_VOID;
 }
@@ -1140,7 +1183,7 @@ CNIsun_misc_CVM_agentlibInitialize(CVMExecEnv* ee,
 #ifdef CVM_AGENTLIB
     CVMJavaInt numArgs = arguments[0].j.i;
     
-    if (CVMAgentInitTable(&CVMglobals.agentonUnloadTable, numArgs)) {
+    if (CVMAgentInitTable(&CVMglobals.agentTable, numArgs)) {
 	arguments[0].j.i = CVM_TRUE;
     } else {
 	arguments[0].j.i = CVM_FALSE;
@@ -1174,7 +1217,7 @@ CNIsun_misc_CVM_agentlibProcess(CVMExecEnv* ee, CVMStackVal32 *arguments,
 	}
 	CVMD_gcSafeExec(ee, {
 		if ((*env)->PushLocalFrame(env, 16) == JNI_OK) {
-		    result = CVMAgentHandleArgument(&CVMglobals.agentonUnloadTable,
+		    result = CVMAgentHandleArgument(&CVMglobals.agentTable,
 						    env,
 						    &agentlibArgument);
 		    (*env)->PopLocalFrame(env, NULL);
