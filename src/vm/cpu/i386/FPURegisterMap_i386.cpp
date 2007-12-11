@@ -30,55 +30,47 @@
 #if ENABLE_COMPILER
 
 void FPURegisterMap::clear( void ) {
-  for( int i = top_of_stack(); i > 0; i-- ) {
-    Compiler::code_generator()->ffree( register_at(i) );
+  unsigned x = _stack;
+  for( ; x != empty_stack; x >>= item_bits ) {
+    Compiler::code_generator()->ffree( decode( x ) );
   }
-  reset();
+  _stack = x;
 }
 
-bool FPURegisterMap::is_on_stack( const Assembler::Register reg ) const {
-  for( int i = top_of_stack(); i > 0; i-- ) {
-    if( register_at(i) == reg ) return true;
+unsigned FPURegisterMap::is_on_stack( const Assembler::Register reg ) const {
+  const unsigned encoded_reg = encode( reg );
+  unsigned x = _stack;
+  for( ; x != empty_stack; x >>= item_bits ) {
+    if( (x & item_mask) == encoded_reg ) break;
   }
-  return false;
+  return x;
 }
 
+int FPURegisterMap::index_for(const Assembler::Register reg) const {
+  const unsigned encoded_reg = encode( reg );
+  int i = 0;
+  for( unsigned x = _stack; (x & item_mask) != encoded_reg; x >>= item_bits ) {
+    GUARANTEE( x != empty_stack, "Sanity" );
+    i++;
+  }
+  return i;
+}
+
+#ifndef PRODUCT
 bool FPURegisterMap::is_clearable( void ) const {
-  for( int i = top_of_stack(); i > 0; i-- ) {
-    if( RegisterAllocator::is_mapping_something(register_at(i)) ) return false;
+  for( unsigned x = _stack; x != empty_stack; x >>= item_bits ) {
+    if( RegisterAllocator::is_mapping_something( decode( x ) ) ) return false;
   }
   return true;
 }
 
-int FPURegisterMap::index_for(const Assembler::Register reg) const {
-  // Returns FPU stack index of reg (NOT index into _register_map[]!).
-  for( int i = top_of_stack(); i > 0; i-- ) {
-    if( register_at(i) == reg ) return top_of_stack() - i;
-  }
-  SHOULD_NOT_REACH_HERE();
-  return -1;
-}
-
-int FPURegisterMap::swap_with_top(const Assembler::Register reg ) {
-  // Swaps reg with top of stack and returns index (before swap) of reg.
-  for( int i = top_of_stack(); i > 0; i-- ) {
-    if (register_at(i) == reg) {
-      set_register_at(i, register_at(top_of_stack()));
-      set_register_at(top_of_stack(), reg);
-      return top_of_stack() - i;
-    }
-  }
-  SHOULD_NOT_REACH_HERE();
-  return -1;
-}
-
-#ifndef PRODUCT
 void FPURegisterMap::dump( const bool as_comment ) const {
   char str[1024];
   sprintf(str, "FPU: [");
-  for (int i = top_of_stack(); i > 0; i--) {
-    sprintf(str, "%s%s%s, ", str, Assembler::name_for_long_register(register_at(i)),
-                             RegisterAllocator::is_referenced(register_at(i)) ? " (referenced)" : "");
+  for( unsigned x = _stack; x != empty_stack; x >>= item_bits ) {
+    const Register reg = decode( x );
+    sprintf(str, "%s%s%s, ", str, Assembler::name_for_long_register( reg ),
+                             RegisterAllocator::is_referenced( reg ) ? " (referenced)" : "");
   }
   sprintf(str, "%s]", str);
   if (as_comment) {
