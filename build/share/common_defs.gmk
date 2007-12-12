@@ -111,7 +111,6 @@ endif
 endif
 endif
 
-ifeq ($(ENABLE_MIDP),true)
 ifeq ($(DELETE_WMA_MSGS), true)
 #
 # If messages are to be deleted, include a WMACleanupMonitor implementation
@@ -127,7 +126,6 @@ else
 ifneq ($(JSR_120_ENABLE_JUMP), true)
 MODULE_JSR_120_COMMON_JAVA_FILES += \
     $(AMS_JSR_INTERFACE_DIR)/classes/com/sun/midp/wma/WMACleanupMonitor.java
-endif
 endif
 endif
 
