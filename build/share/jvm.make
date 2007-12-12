@@ -971,7 +971,7 @@ $(LOOP_GENERATOR): $(BUILD_PCH) $(Obj_Files) \
 	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ $(Obj_Files) \
 		   InterpreterSkeleton.obj OopMapsSkeleton.obj
 		   
-ifeq ($(USE_VISTA), true)
+ifeq ($(USE_VS2005), true)
 	$(A)$(VC_MANIFEST_EMBED_EXE)
 endif		   
 		   
@@ -1018,7 +1018,7 @@ $(ROM_GENERATOR): $(BUILD_PCH) $(Obj_Files) InterpreterSkeleton.obj \
 	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ \
 		$(Obj_Files) Interpreter_$(arch).obj OopMaps.obj
 		   
-ifeq ($(USE_VISTA), true)
+ifeq ($(USE_VS2005), true)
 		$(A)$(VC_MANIFEST_EMBED_EXE)
 endif		   
   		   
@@ -1128,7 +1128,7 @@ $(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVM_LIB) $(JVMTEST_LIB) \
 	$(A)$(LINK) $(LINK_FLAGS) /out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVM_LIB) \
 		$(JVMTEST_LIB) $(PCSL_LIBS)
 
-ifeq ($(USE_VISTA), true)
+ifeq ($USE_VS2005), true)
 		$(A)$(VC_MANIFEST_EMBED_EXE)
 endif		   
 
