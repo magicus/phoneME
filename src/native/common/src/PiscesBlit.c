@@ -2553,10 +2553,10 @@ blendSrc8888_pre(jint *intData,
     } else {
         jlong fa = raaval ;
         jlong fb = aval;
-        jint oalpha = denom >> 8;
-        jint ored = (jint)((fa * dred + fb * sred) >> 8);
-        jint ogreen = (jint)((fa * dgreen + fb * sgreen) >> 8);
-        jint oblue = (jint)((fa * dblue + fb * sblue) >> 8);
+        jint oalpha = (denom + 128) >> 8;
+        jint ored = (jint)((fa * dred + fb * sred + 128) >> 8);
+        jint ogreen = (jint)((fa * dgreen + fb * sgreen + 128) >> 8);
+        jint oblue = (jint)((fa * dblue + fb * sblue + 128) >> 8);
         
         ival = (oalpha << 24) | (ored << 16) | (ogreen << 8) | oblue;
         *intData = ival;
