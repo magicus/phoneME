@@ -156,7 +156,7 @@ listMidlets(int argc, char* argv[]) {
 
             if (SUITE_CORRUPTED_ERR_STATUS(info)) {
                 /*
-                 * Installinfo is not initialsed in case of an error
+                 * Installinfo is not initialized in case of an error
                  * so no need to free it
                  */
                 REPORT_ERROR1(LC_AMS, "Error : Suite %d is corrupted", (i+1));
