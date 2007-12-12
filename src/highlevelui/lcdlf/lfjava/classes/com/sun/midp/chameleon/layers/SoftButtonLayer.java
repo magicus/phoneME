@@ -172,12 +172,10 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
     public SoftButtonLayer(ChamDisplayTunnel tunnel) {
         super(SoftButtonSkin.IMAGE_BG, SoftButtonSkin.COLOR_BG);
 	super.setSupportsInput(true);
-        
-        isNativeLayer = isNativeSoftButtonLabel0();
-
+        super.setVisible(true);
         this.tunnel = tunnel;
 
-        super.setVisible(!isNativeLayer);
+        isNativeLayer = isNativeSoftButtonLabel0();
 
         labels = new String[SoftButtonSkin.NUM_BUTTONS];
     }
