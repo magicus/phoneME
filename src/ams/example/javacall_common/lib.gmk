@@ -55,6 +55,4 @@ SUBSYSTEM_AMS_EXTRA_INCLUDES += \
 # Native files for the ( javacall_common ) module
 #
 SUBSYSTEM_AMS_NATIVE_FILES += \
-    javaTask.c \
-    listMidlets.c \
-    removeMidlet.c
+    javaTask.c
