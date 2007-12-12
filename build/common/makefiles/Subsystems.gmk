@@ -270,7 +270,7 @@ endif
 #####################################################################
 
 ifeq ($(USE_JSR_120), true)
-include $(JSR_120_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_120_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
