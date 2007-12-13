@@ -65,8 +65,6 @@ SUBSYSTEM_JSR_135_NATIVE_FILES += \
 	jsr135_jumpdriver_stubs.c \
 	mm_driver.c 
 
-include $(JSR_135_DIR)/build/share/common.gmk
-
 # Copy and filter JSR 135 source in JSR_135_SOURCE_OUTPUT_DIR
 jsr_135_source_bundle: $(JSR_135_DIR)
 	@echo " ... JSR 135 source bundle" $(LOG)
