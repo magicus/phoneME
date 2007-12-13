@@ -112,7 +112,7 @@ class PPCScrollPanePeer extends PPCPanelPeer implements ScrollPanePeer {
      * native scrollbars themselves.  If the change was sourced by the
      * native scrollbars then ignore will be set to true.
      */
-    public void setValue(Adjustable adj, int v) {
+    public int setValue(Adjustable adj, int v) {
 	if (! ignore) {
 	    Component c = getScrollChild();
 	    Point p = c.getLocation();
@@ -124,7 +124,9 @@ class PPCScrollPanePeer extends PPCPanelPeer implements ScrollPanePeer {
 		setScrollPosition(v, -(p.y));
 		break;
 	    }
+	    return 0;
 	}
+	return -1;
     }
 	    
     private native Component getScrollChild();

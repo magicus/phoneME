@@ -69,6 +69,11 @@ class PPCWindowPeer extends PPCPanelPeer implements WindowPeer
         _setResizable(resizable);
         ((Component)target).invalidate();  // Insets were updated.
     }
+
+    /* Dummy method */
+    public void setActive() {
+    }
+ 
     public native void _setResizable(boolean resizable);
     
     // Toolkit & peer internals

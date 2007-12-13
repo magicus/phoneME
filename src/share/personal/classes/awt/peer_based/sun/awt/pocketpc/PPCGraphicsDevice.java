@@ -28,8 +28,15 @@ package sun.awt.pocketpc;
 
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsConfiguration;
+import java.awt.Window;
+import java.awt.Rectangle;
+import sun.awt.AppContext;
 
 class PPCGraphicsDevice extends GraphicsDevice {
+    private Window fullScreenWindow=null;
+    private AppContext fullScreenAppContext=null;
+    private Rectangle windowedModeBounds=null;
+
     public int getType() {
         return TYPE_RASTER_SCREEN;
     }
@@ -37,7 +44,46 @@ class PPCGraphicsDevice extends GraphicsDevice {
     public String getIDstring() {
         return "PPC Screen Device";
     }
+
+    public Window getFullScreenWindow() {
+        Window returnWindow = null;
+        synchronized (this) {
+            // Only return a handle to the current fs window if we are in the
+            // same AppContext that set the fs window
+            if (fullScreenAppContext == AppContext.getAppContext()) {
+                returnWindow = fullScreenWindow;
+            }
+        }
+        return returnWindow;
+    }
+
+    public void setFullScreenWindow(Window w) {
+        if (fullScreenWindow != null && windowedModeBounds != null) {
+            fullScreenWindow.setBounds(windowedModeBounds);
+        }
+        synchronized(this) {
+            fullScreenWindow = w;
+            if (fullScreenWindow == null)
+                fullScreenAppContext = null;
+            else
+                fullScreenAppContext = AppContext.getAppContext();
+        }
+        if (fullScreenWindow != null) {
+            windowedModeBounds = fullScreenWindow.getBounds();
+            fullScreenWindow.setBounds(getDefaultConfiguration().getBounds());
+            fullScreenWindow.setVisible(true);
+            fullScreenWindow.toFront();
+        }
+    }
 	
+    public int getAvailableAcceleratedMemory() {
+        return 0;
+    }
+	
+    public boolean isFullScreenSupported() {
+        return false;
+    }
+
     public GraphicsConfiguration getDefaultConfiguration() {
         return graphicsConfig;
     }
