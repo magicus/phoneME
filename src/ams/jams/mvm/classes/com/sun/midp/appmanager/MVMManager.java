@@ -42,6 +42,8 @@ import com.sun.midp.main.*;
 
 import com.sun.midp.configurator.Constants;
 
+import com.sun.midp.events.EventQueue;
+
 /**
  * This is an implementation of the ApplicationManager interface
  * for the MVM mode of the VM capable of running with
@@ -56,7 +58,8 @@ import com.sun.midp.configurator.Constants;
 public class MVMManager extends MIDlet
     implements MIDletProxyListListener,
                 DisplayControllerListener, 
-                ApplicationManager {
+                ApplicationManager,
+                ODTControllerEventConsumer {
 
     /** Constant for the discovery application class name. */
     private static final String DISCOVERY_APP =
@@ -67,6 +70,9 @@ public class MVMManager extends MIDlet
     /** Constant for the CA manager class name. */
     private static final String CA_MANAGER =
         "com.sun.midp.appmanager.CaManager";
+    /** Constant for the ODT Agent class name. */
+    private static final String ODT_AGENT =
+        "com.sun.midp.odd.ODTAgentMIDlet";
 
     /** True until constructed for the first time. */
     private static boolean first = true;
@@ -88,6 +94,9 @@ public class MVMManager extends MIDlet
      */
     public MVMManager() {
         MIDletProxy thisMidlet;
+
+        EventQueue eq = EventQueue.getEventQueue();
+        new ODTControllerEventListener(eq, this);
 
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
@@ -138,6 +147,14 @@ public class MVMManager extends MIDlet
         }
     }
 
+    /**
+     * Processes MIDP_ENABLE_ODD_EVENT
+     */
+    public void handleEnableODDEvent() {
+        System.out.println(">>> ODD Enabled!");
+        appManagerUI.showODTAgent();
+    }
+
     // =================================================================
     // ---------- Operations that can be performed on Midlets ----------
 
@@ -179,7 +196,7 @@ public class MVMManager extends MIDlet
      * Called when going to select midlet to
      * bring it to foreground.
      *
-     * @param onlyFromLaunched true if midlet should
+     * @param onlyFromLaunchedList true if midlet should
      *        be selected from the list of already launched midlets,
      *        if false then possibility to launch midlet is needed.
      */
@@ -259,6 +276,18 @@ public class MVMManager extends MIDlet
         } catch (Exception ex) {
             displayError.showErrorAlert(Resource.getString(
                 ResourceConstants.CA_MANAGER_APP), ex, null, null);
+        }
+    }
+
+    /** Launch the CA manager. */
+    public void launchODTAgent() {
+        try {
+            MIDletSuiteUtils.execute(MIDletSuite.INTERNAL_SUITE_ID,
+                ODT_AGENT,
+                Resource.getString(ResourceConstants.ODT_AGENT_MIDLET));
+        } catch (Exception ex) {
+            displayError.showErrorAlert(Resource.getString(
+                ResourceConstants.ODT_AGENT_MIDLET), ex, null, null);
         }
     }
 

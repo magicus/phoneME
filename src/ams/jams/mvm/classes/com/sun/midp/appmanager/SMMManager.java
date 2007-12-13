@@ -278,6 +278,10 @@ public class SMMManager extends MIDlet
         }
     }
 
+    /** Launch ODT Agent. */
+    public void launchODTAgent() {
+    }
+
     /**
      * Launches a suite.
      *

@@ -74,6 +74,10 @@ include $(SUBSYSTEM_AMS_DIR)/platform_request/lib.gmk
 include $(SUBSYSTEM_AMS_DIR)/suitestore/subsystem.gmk
 include $(SUBSYSTEM_AMS_DIR)/verifier/lib.gmk
 
+ifeq ($(USE_ON_DEVICE_DEBUG), true)
+include $(SUBSYSTEM_AMS_DIR)/on_device_debug/lib.gmk
+endif
+
 ifeq ($(USE_NATIVE_AMS), false)
     include $(SUBSYSTEM_AMS_DIR)/appmanager_ui_resources/lib.gmk
     include $(SUBSYSTEM_AMS_DIR)/appmanager_ui/lib.gmk

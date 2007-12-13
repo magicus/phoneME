@@ -198,6 +198,13 @@ public class Manager extends MIDlet implements ApplicationManager {
     }
 
     /**
+     * Launch ODT Agent.
+     */
+    public void launchODTAgent() {
+
+    }
+
+    /**
      * Launches a suite.
      *
      * @param suiteInfo information for suite to launch

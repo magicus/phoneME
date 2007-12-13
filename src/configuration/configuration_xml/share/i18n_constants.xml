@@ -120,7 +120,10 @@
   <constant Type="int"
             Name="INSTALL_APPLICATION"
             Comment="Abstract Commands and other general strings"/>
-<constant Type="int"
+  <constant Type="int"
+            Name="ODT_AGENT_MIDLET"
+            Comment="Abstract Commands and other general strings"/>
+  <constant Type="int"
             Name="CLASS_VERIFIER_APPLICATION"
             Comment="Abstract Commands and other general strings"/>
   <constant Type="int"

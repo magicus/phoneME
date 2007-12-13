@@ -111,6 +111,13 @@ class AppManagerUI extends Form
     private static final String INSTALLER =
         "com.sun.midp.installer.GraphicalInstaller";
 
+    /** Constant for the ODT Agent class name. */
+    private static final String ODT_AGENT =
+        "com.sun.midp.odd.ODTAgentMIDlet";
+
+    /** True if ODD is enabled. */
+    private static boolean oddEnabled = false;
+
     /**
      * The font used to paint midlet names in the AppSelector.
      * Inner class cannot have static variables thus it has to be here.
@@ -198,6 +205,11 @@ class AppManagerUI extends Form
 
     /** Command object for "Launch" CA manager app. */
     private Command launchCaManagerCmd =
+        new Command(Resource.getString(ResourceConstants.LAUNCH),
+                    Command.ITEM, 1);
+
+    /** Command object for "Launch" ODT Agent app. */
+    private Command launchODTAgentCmd =
         new Command(Resource.getString(ResourceConstants.LAUNCH),
                     Command.ITEM, 1);
 
@@ -369,6 +381,14 @@ class AppManagerUI extends Form
     }
 
     /**
+     * 
+     */
+    public void showODTAgent() {
+        oddEnabled = true;
+        updateContent();
+    }
+
+    /**
      * Called when midlet selector needed.
      *
      * @param onlyFromLaunchedList true if midlet should
@@ -480,7 +500,11 @@ class AppManagerUI extends Form
 
             manager.launchCaManager();
 
-        } else if (c == launchCmd) {
+        } else if (c == launchODTAgentCmd) {
+
+            manager.launchODTAgent();
+
+        } if (c == launchCmd) {
 
             launchMidlet(msi);
 
@@ -551,7 +575,8 @@ class AppManagerUI extends Form
         if (midlet.getSuiteId() == MIDletSuite.INTERNAL_SUITE_ID &&
                 !midletClassName.equals(DISCOVERY_APP) &&
                 !midletClassName.equals(INSTALLER) &&
-                !midletClassName.equals(CA_MANAGER)) {
+                !midletClassName.equals(CA_MANAGER) &&
+                !midletClassName.equals(ODT_AGENT)) {
             appManagerMidlet = midlet;
         } else {
             MidletCustomItem ci;
@@ -564,6 +589,10 @@ class AppManagerUI extends Form
 
                     if (caManagerIncluded) {
                         ci.removeCommand(launchCaManagerCmd);
+                    }
+
+                    if (oddEnabled) {
+                        ci.removeCommand(launchODTAgentCmd);
                     }
 
                     ci.setDefaultCommand(fgCmd);
@@ -606,7 +635,8 @@ class AppManagerUI extends Form
         if (midlet.getSuiteId() == MIDletSuite.INTERNAL_SUITE_ID &&
                 !midletClassName.equals(DISCOVERY_APP) &&
                 !midletClassName.equals(INSTALLER) &&
-                !midletClassName.equals(CA_MANAGER)) {
+                !midletClassName.equals(CA_MANAGER) &&
+                !midletClassName.equals(ODT_AGENT)) {
             appManagerMidlet = null;
         } else {
             MidletCustomItem ci;
@@ -625,6 +655,10 @@ class AppManagerUI extends Form
                         ci.msi.midletToRun != null &&
                         ci.msi.midletToRun.equals(CA_MANAGER)) {
                         ci.setDefaultCommand(launchCaManagerCmd);
+                    } else if (oddEnabled &&
+                        ci.msi.midletToRun != null &&
+                        ci.msi.midletToRun.equals(ODT_AGENT)) {
+                        ci.setDefaultCommand(launchODTAgentCmd);
                     } else {
                         if (ci.msi.enabled) {
                             ci.setDefaultCommand(launchCmd);
@@ -814,6 +848,21 @@ class AppManagerUI extends Form
             }
         }
 
+        if (oddEnabled) {
+            // Add the ODT Agent midlet as the third installed midlet
+            if (size() > 2) {
+                msi = ((MidletCustomItem)get(1)).msi;
+            }
+
+            if (msi == null || msi.midletToRun == null ||
+                !msi.midletToRun.equals(ODT_AGENT)) {
+                msi = new RunningMIDletSuiteInfo(MIDletSuite.INTERNAL_SUITE_ID,
+                  ODT_AGENT,
+                  Resource.getString(ResourceConstants.ODT_AGENT_MIDLET), true);
+                append(msi);
+            }
+        }
+
         // Add the rest of the installed midlets
         for (int lowest, i = 0; i < suiteIds.length; i++) {
 
@@ -907,9 +956,12 @@ class AppManagerUI extends Form
             // setDefaultCommand will add default command first
             ci.setDefaultCommand(launchInstallCmd);
         } else if (caManagerIncluded && suiteInfo.midletToRun != null &&
-            suiteInfo.midletToRun.equals(CA_MANAGER)) {
+                   suiteInfo.midletToRun.equals(CA_MANAGER)) {
             // setDefaultCommand will add default command first
             ci.setDefaultCommand(launchCaManagerCmd);
+        } else if (oddEnabled && suiteInfo.midletToRun != null &&
+                   suiteInfo.midletToRun.equals(ODT_AGENT)) {
+            ci.setDefaultCommand(launchODTAgentCmd);
         } else {
             ci.addCommand(infoCmd);
             ci.addCommand(removeCmd);
@@ -1624,31 +1676,31 @@ class AppManagerUI extends Form
         protected TextScrollPainter textScrollPainter;
 
         /**
-        * Width of the scroll area for text
-        */
+         * Width of the scroll area for text
+         */
         protected int scrollWidth;
 
         /**
-        * If text is truncated
-        */
+         * If text is truncated
+         */
         boolean truncated;
 
         /**
-        * pixel offset to the start of the text field  (for example,  if
-        * xScrollOffset is -60 it means means that the text in this
-        * text field is scrolled 60 pixels left of the left edge of the
-        * text field)
-        */
+         * pixel offset to the start of the text field  (for example,  if
+         * xScrollOffset is -60 it means means that the text in this
+         * text field is scrolled 60 pixels left of the left edge of the
+         * text field)
+         */
         protected int xScrollOffset;
 
         /**
-        * Helper class used to repaint scrolling text
-        * if needed.
-        */
+         * Helper class used to repaint scrolling text
+         * if needed.
+         */
         private class TextScrollPainter extends TimerTask {
             /**
-            * Repaint the item text
-            */
+             * Repaint the item text
+             */
             public final void run() {
                 repaintScrollText();
             }
