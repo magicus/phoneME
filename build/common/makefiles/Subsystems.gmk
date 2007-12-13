@@ -239,7 +239,7 @@ endif
 
 ifeq ($(USE_JSR_82), true)
 JPP_DEFS += -DENABLE_JSR_82
-include $(JSR_82_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_82_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
