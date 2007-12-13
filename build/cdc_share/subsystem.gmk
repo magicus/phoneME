@@ -29,15 +29,10 @@
 # other def. (like VPATH)
 ######################################################################
 
-JSROP_PLATFORM ?= jump_application
+JSROP_PLATFORM = jump_application
 
-ifeq ($(PROJECT_JSR_135_DIR),)
 JSR_135_PROJECT_SRC_DIR=$(JSR_135_DIR)/src/$(JSROP_PLATFORM)
 JSR_135_PROJECT_BUILD_DIR=$(JSR_135_DIR)/build/$(JSROP_PLATFORM)
-else
-JSR_135_PROJECT_SRC_DIR=$(PROJECT_JSR_135_DIR)/src/$(JSROP_PLATFORM)
-JSR_135_PROJECT_BUILD_DIR=$(PROJECT_JSR_135_DIR)/build/$(JSROP_PLATFORM)
-endif
 
 include $(JSR_135_PROJECT_BUILD_DIR)/config.gmk
 include $(JSR_135_PROJECT_BUILD_DIR)/features.defs

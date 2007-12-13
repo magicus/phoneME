@@ -78,3 +78,10 @@ include $(JSR_135_DIR)/build/share/common.gmk
 SUBSYSTEM_JSR234_JAVA_FILES = $(SUBSYSTEM_JSR_135_JAVA_FILES)
 SUBSYSTEM_JSR234_NATIVE_FILES = $(SUBSYSTEM_JSR_135_NATIVE_FILES)
 
+# Copy and filter JSR 135 source in JSR_135_SOURCE_OUTPUT_DIR
+jsr_135_source_bundle: $(JSR_135_DIR)
+	@echo " ... JSR 135 source bundle" $(LOG)
+	$(AT)$(call source_bundle_filter,$(JSR_135_DIR)/src,$(JSR_135_SHARE_OUTPUT_DIR)/src, share )
+	$(AT)$(call source_bundle_filter,$(JSR_135_DIR)/src,$(JSR_135_SOURCE_OUTPUT_DIR)/src, cldc_application )
+	$(AT)$(call source_bundle_filter,$(JSR_135_DIR)/build,$(JSR_135_SHARE_OUTPUT_DIR)/build, share )
+	$(AT)$(call source_bundle_filter,$(JSR_135_PROJECT_BUILD_DIR),$(JSR_135_SOURCE_OUTPUT_DIR)/build/$(JSROP_PLATFORM), . )
