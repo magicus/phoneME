@@ -32,7 +32,7 @@ package sun.awt;
 import java.awt.*;
 import java.awt.image.*;
 import java.awt.event.*;
-import sun.awt.qt.QtRobotHelper;
+import sun.awt.pocketpc.PPCRobotHelper;
 
 public abstract class RobotHelper {
   
@@ -44,7 +44,7 @@ public abstract class RobotHelper {
     static RobotHelper getRobotHelper(GraphicsDevice graphicsDevice) {
 	/* Construct an appropriate RobotHelper for this graphics device */
         try {
-	   return new QtRobotHelper(graphicsDevice);
+	   return new PPCRobotHelper(graphicsDevice);
         } catch (Exception ex) {
            System.out.println("Error in creating a helper: " + ex);
            return null;

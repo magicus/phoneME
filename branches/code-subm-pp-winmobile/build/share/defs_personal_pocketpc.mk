@@ -72,6 +72,7 @@ CLASSLIB_CLASSES += \
 	sun.awt.pocketpc.PPCGraphicsConfiguration \
 	sun.awt.pocketpc.PPCGraphicsDevice \
 	sun.awt.pocketpc.PPCGraphicsEnvironment \
+	sun.awt.pocketpc.PPCRobotHelper \
 	sun.awt.pocketpc.ShutdownHook \
 	sun.awt.image.ByteArrayImageSource \
     sun.awt.image.FileImageSource \
@@ -137,6 +138,8 @@ AWT_LIB_OBJS += \
 	PPCPopupMenuPeer.o \
 	PPCMenuPeer.o \
 	PPCMenuBarPeer.o \
+	PPCRobotHelper.o \
+	PPCKeyboardFocusManager.o \
         PPCFileDialogPeer.o
 
 # Define restrictions for this AWT implementation.

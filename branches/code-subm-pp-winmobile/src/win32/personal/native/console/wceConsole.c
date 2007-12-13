@@ -546,7 +546,7 @@ HFONT wceGetFont(HDC hdc)
     return CreateFontIndirect(&lFont);
 }
 
-int 
+void 
 writeStandardIO(CVMInt32 fd, const char* buf, CVMUint32 nbyte) {
     /* Console is unicode */
     /* string may be unicode */
@@ -587,7 +587,7 @@ writeStandardIO(CVMInt32 fd, const char* buf, CVMUint32 nbyte) {
         JavaConsolePutStr(wbuf);
         wc = 0;
     }
-    return nbyte;
+    // return nbyte;
 }
 
 int 
