@@ -43,12 +43,6 @@ SUBSYSTEM_JSR_135_NATIVE_FILES += \
 endif
 
 ifeq ($(INDIRECT_VIDEO_PLAYER), true)
-SUBSYSTEM_JSR_135_JAVA_FILES += \
-    $(JSR_135_DIR)/src/cdc_share/classes/com/sun/mmedia/ModelVideoRenderer.java
-ifeq ($(USE_AWT), true)
-SUBSYSTEM_JSR_135_JAVA_FILES += \
-    $(JSR_135_DIR)/src/cdc_share/classes/com/sun/mmedia/AWTVideoRenderer.java
-endif
 ifeq ($(USE_LCDUI), true)
     $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MIDPVideoRenderer.java
 endif
