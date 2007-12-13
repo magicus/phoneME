@@ -58,9 +58,9 @@ SUBSYSTEM_JSR_135_JAVA_FILES += $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedi
 
 ifeq ($(INDIRECT_VIDEO_PLAYER), true)
 SUBSYSTEM_JSR_135_JAVA_FILES += \
-    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/MIDPImageAccessor.java \
-    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/MMCustomItem.java \
-    $(JSR_135_DIR)/src/share/components/video-renderer/classes/com/sun/mmedia/MIDPVideoRenderer.java \
+    $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MIDPImageAccessor.java \
+    $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MMCustomItem.java \
+    $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MIDPVideoRenderer.java \
     $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/ModelVideoRenderer.java
 endif
 

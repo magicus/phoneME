@@ -354,8 +354,8 @@ public class DefaultConfiguration extends Configuration {
                                           int sourceHeight) {
     // #ifdef ENABLE_INDIRECT_VIDEO [
         // workaround for demo only
-        //return ModelVideoRenderer.getVideoRenderer(player, sourceWidth, sourceHeight);
-        return new MIDPVideoRenderer(player, sourceWidth, sourceWidth);
+        return ModelVideoRenderer.getVideoRenderer(player, sourceWidth, sourceHeight);
+        //return new MIDPVideoRenderer(player, sourceWidth, sourceWidth);
     // #else ][
         return null;
     // #endif ]

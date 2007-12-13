@@ -74,7 +74,8 @@ endif
 USE_STATIC_LIB = true
 
 ifeq ($(USE_MIDP), true)
-USE_LCDUI = true
+#USE_LCDUI = true
+USE_LCDUI = false
 USE_AWT = false
 else 
 USE_LCDUI = false
