@@ -243,6 +243,12 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->intParam1 = 0;
         break;
 #endif /* ENABLE_MULTIPLE_ISOLATES */
+#if ENABLE_JSR_256
+    case JSR256_JC_EVENT_SENSOR_OPEN_CLOSE:
+        pNewSignal->waitingFor = JSR256_SIGNAL;
+        pNewSignal->descriptor = (int)event->data.jsr256_jc_event_sensor.sensor;
+		break;
+#endif /* ENABLE_JSR_256 */
     default:
         REPORT_ERROR(LC_CORE,"Unknown event.\n");
         break;

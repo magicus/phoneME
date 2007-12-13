@@ -72,6 +72,9 @@ extern "C" {
 #include <javacall_multimedia_advanced.h>
 #endif /* ENABLE_JSR_234 */
 #include <javacall_security.h>
+#ifdef ENABLE_JSR_256
+#include "javacall_sensor.h"
+#endif /* ENABLE_JSR_256 */
 
 
 #define MIDP_RUNMIDLET_MAXIMUM_ARGS 10
@@ -123,6 +126,11 @@ typedef enum {
 #endif /*ENABLE_JSR_234*/
     JSR75_FC_JC_EVENT_ROOTCHANGED      , 
     MIDP_JC_EVENT_ROTATION
+#if ENABLE_JSR_256
+	                                   ,
+    JSR256_JC_EVENT_SENSOR_OPEN_CLOSE  ,
+    JSR256_JC_EVENT_SENSOR_DATA_READY
+#endif /*ENABLE_JSR_256*/
 } midp_jc_event_type;
 
 
@@ -219,6 +227,14 @@ typedef struct {
 } jsr179_jc_event_location;
 #endif /* ENABLE_JSR_179 */
 
+#ifdef ENABLE_JSR_256
+typedef struct {
+    javacall_sensor_type sensor;
+    javacall_bool isOpen;
+    int errCode;
+} jsr256_jc_event_sensor_t;
+#endif /* ENABLE_JSR_256 */
+
 typedef struct {
     javacall_penevent_type type;
     int x;
@@ -287,7 +303,10 @@ typedef struct {
         midp_jc_event_carddevice           carddeviceEvent;
 #endif /* ENABLE_JSR_177 */
         jsr75_jc_event_root_changed              jsr75RootchangedEvent;
-    } data;
+#ifdef ENABLE_JSR_256
+		jsr256_jc_event_sensor_t            jsr256_jc_event_sensor;
+#endif /* ENABLE_JSR_256 */
+	} data;
 
 } midp_jc_event_union;
 

@@ -312,6 +312,8 @@ endif
 # Description: JSR 256
 #####################################################################
 ifeq ($(USE_JSR_256), true)
+JPP_DEFS += -DENABLE_JSR_256
+EXTRA_CFLAGS += -DENABLE_JSR_256=1
 include $(JSR_256_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
