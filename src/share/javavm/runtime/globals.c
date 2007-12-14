@@ -832,7 +832,7 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
      * With JVMTI, we do the instrumentation when an agent connects
      */
 #ifdef CVM_JVMTI
-    gs->jvmtiDebuggingFlag = options->debugging;
+    CVMjvmtiSetIsInDebugMode(options->debugging);
 #endif    
 
 #ifdef CVM_LVM /* %begin lvm */
@@ -1153,7 +1153,7 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
 
 #ifdef CVM_JVMTI
     /* jvmti global variables initialization */
-    CVMjvmtiStaticsInit(&gs->jvmtiStatics);
+    CVMjvmtiInitializeGlobals(&gs->jvmti);
 #endif
 
 #ifdef CVM_JVMPI
@@ -1200,6 +1200,11 @@ void CVMdestroyVMGlobalState(CVMExecEnv *ee, CVMGlobalState *gs)
 
 #ifdef CVM_JVMPI
     CVMjvmpiDestroyGlobals(ee, &gs->jvmpiRecord);
+#endif
+
+#ifdef CVM_JVMTI
+    /* Free jvmti global variables */
+    CVMjvmtiDestroyGlobals(&gs->jvmti);
 #endif
 
     /* 
@@ -1303,11 +1308,6 @@ void CVMdestroyVMGlobalState(CVMExecEnv *ee, CVMGlobalState *gs)
     if (gs->appClassPath.pathString != NULL) {
         free(gs->appClassPath.pathString);
     }
-#endif
-
-#ifdef CVM_JVMTI
-    /* Free jvmti global variables */
-    CVMjvmtiStaticsDestroy(&gs->jvmtiStatics);
 #endif
 
     CVMdestroyJNIStatics();

@@ -794,7 +794,7 @@ CNIsun_misc_CVM_setDebugEvents(CVMExecEnv* ee, CVMStackVal32 *arguments,
 			       CVMMethodBlock **p_mb)
 {
 #ifdef CVM_JVMTI
-    if (CVMjvmtiEnabled()) {
+    if (CVMjvmtiIsEnabled()) {
 	CVMjvmtiDebugEventsEnabled(ee) = arguments[0].j.i;
     }
 #endif
@@ -1310,7 +1310,7 @@ CNIsun_misc_CVM_xdebugSet(CVMExecEnv* ee, CVMStackVal32 *arguments,
      * session vs. profiling.  This flag causes several jvmti 
      * capabilities to be turned off.  See jvmtiCapabilities.c
      */
-    CVMglobals.jvmtiDebuggingFlag = CVM_TRUE;
+    CVMjvmtiSetIsInDebugMode(CVM_TRUE);
     arguments[0].j.i = CVM_TRUE;
 #endif
 
