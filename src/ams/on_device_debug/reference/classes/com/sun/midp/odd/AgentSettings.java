@@ -26,6 +26,10 @@
 
 package com.sun.midp.odd;
 
+import javax.microedition.rms.RecordStore;
+import javax.microedition.rms.RecordStoreException;
+import java.io.*;
+
 /**
  * Data class encapsulating the user settings.
  * The SettingsScreen is the view.
@@ -33,11 +37,13 @@ package com.sun.midp.odd;
  * @author Roy Ben Hayun
  */
 public class AgentSettings {
-    
-    
+
     //
     // Members
     //
+
+    /** RMS holding ODT Agent settings */
+    private static final String ODT_SETTINGS_RMS = "oddsettings";
 
     /**
      * Indicates if installation should be silent, with no prompts
@@ -61,11 +67,17 @@ public class AgentSettings {
     /**
      * C'tor
      */
-    AgentSettings(){
-        try{
+    AgentSettings() {
+        try {
             load();
-        }
-        catch(Exception e){
+        } catch (Exception e) {
+            // probably the RMS is corrupted - delete it and use default settings
+            try {
+                RecordStore.deleteRecordStore(ODT_SETTINGS_RMS);
+            } catch (Exception ex) {
+                // ignore it
+            }
+
             e.printStackTrace();
         }
     }
@@ -76,18 +88,97 @@ public class AgentSettings {
     
     
     /**
-     *Load settings from persistant storage 
+     * Load settings from persistant storage 
      */
-    void load() throws Exception{
-        //TODO: Alexey Z - load from persistant storage e..g., file or RMS
-        //if loading fails, use default values
+    void load() throws RecordStoreException, IOException {
+        ByteArrayInputStream bas;
+        DataInputStream dis;
+        byte[] data;
+        RecordStore settings = null;
+        boolean tmp;
+
+        try {
+            settings = RecordStore.openRecordStore(ODT_SETTINGS_RMS, false);
+
+            for (int i = 1; i <= 3; i++) {
+                data = settings.getRecord(i);
+
+                if (data != null) {
+                    bas = new ByteArrayInputStream(data);
+                    dis = new DataInputStream(bas);
+                    tmp = dis.readBoolean();
+                } else {
+                    tmp = true; // apply defaults
+                }
+
+                switch (i) {
+                    case 1:
+                        silentInstallation = tmp;
+                        break;
+                    case 2:
+                        pinRequired = tmp;
+                        break;
+                    case 3:
+                        signedOnly = tmp;
+                        break;
+                }
+            }
+        } finally {
+            if (settings != null) {
+                try {
+                    settings.closeRecordStore();
+                } catch (RecordStoreException e) {
+                    // ignore
+                }
+            }
+        }
     }
     
     /**
-     *Save settings to persistant storage 
+     * Save settings to persistant storage
      */
-    void save() throws Exception{
-        //TODO: Alexey Z - save to persistant storage e..g., file or RMS
+    void save() throws RecordStoreException, IOException {
+        RecordStore settings;
+
+        settings = RecordStore.openRecordStore(ODT_SETTINGS_RMS, true);
+
+        try {
+            if (settings.getNumRecords() == 0) {
+                // add space for 3 records
+                settings.addRecord(null, 0, 0);
+                settings.addRecord(null, 0, 0);
+                settings.addRecord(null, 0, 0);
+            }
+
+            ByteArrayOutputStream bas = new ByteArrayOutputStream();
+            DataOutputStream dos = new DataOutputStream(bas);
+            boolean tmp = true;
+            byte[] data;
+
+            for (int i = 1; i <= 3; i++) {
+                switch (i) {
+                    case 1:
+                        tmp = silentInstallation;
+                        break;
+                    case 2:
+                        tmp = pinRequired;
+                        break;
+                    case 3:
+                        tmp = signedOnly;
+                        break;
+                }
+
+                dos.writeBoolean(tmp);
+                data = bas.toByteArray();
+                settings.setRecord(i, data, 0, data.length);
+                bas.reset();
+            }
+
+            settings.closeRecordStore();
+            dos.close();
+        } finally {
+            settings.closeRecordStore();
+        }
     }
     
 }

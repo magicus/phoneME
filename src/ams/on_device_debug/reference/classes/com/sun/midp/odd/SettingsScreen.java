@@ -35,7 +35,6 @@ import javax.microedition.lcdui.*;
  * @author Roy Ben Hayun
  */
 public class SettingsScreen extends Form implements CommandListener{
-    
     //
     // Constants
     //
@@ -99,7 +98,7 @@ public class SettingsScreen extends Form implements CommandListener{
         this.agent = agent;
         this.settings = settings;
         
-        //init check-boxes
+        //i nit check-boxes
         choices = new ChoiceGroup(TITLE, ChoiceGroup.MULTIPLE);
         choices.append(SILENT_INSTALLATION, null);
         choices.append(PIN_REQUIRED, null);
@@ -141,19 +140,24 @@ public class SettingsScreen extends Form implements CommandListener{
      * @param displayable displayable
      */
     public void commandAction(Command command, Displayable displayable) {
-        if(command.getCommandType() == Command.OK){
-            //update settings
+        if (command.getCommandType() == Command.OK) {
+            // update settings
             boolean[] flags = new boolean[3];
             choices.getSelectedFlags(flags);
             //TODO: if not all flags are 'true', display Alert to warn the user that the recommended option is true for all
             settings.silentInstallation = flags[0];
             settings.pinRequired = flags[1];
             settings.signedOnly = flags[2];
+            try {
+                settings.save();
+            } catch (Exception e) {
+                // warn the user
+            }
         }
         
-        //back to progress screen        
+        // back to progress screen
         agent.displayProgressScreen();
     }
-    
-    
+
+
 }

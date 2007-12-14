@@ -336,8 +336,7 @@ class AppManagerUI extends Form
 
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
 
-        setTitle(Resource.getString(
-                ResourceConstants.AMS_MGR_TITLE));
+        setTitle(Resource.getString(ResourceConstants.AMS_MGR_TITLE));
         updateContent();
 
         addCommand(exitCmd);
@@ -381,7 +380,7 @@ class AppManagerUI extends Form
     }
 
     /**
-     * 
+     * Shows ODT Agent midlet in the midlet list. 
      */
     public void showODTAgent() {
         oddEnabled = true;
@@ -851,7 +850,7 @@ class AppManagerUI extends Form
         if (oddEnabled) {
             // Add the ODT Agent midlet as the third installed midlet
             if (size() > 2) {
-                msi = ((MidletCustomItem)get(1)).msi;
+                msi = ((MidletCustomItem)get(2)).msi;
             }
 
             if (msi == null || msi.midletToRun == null ||

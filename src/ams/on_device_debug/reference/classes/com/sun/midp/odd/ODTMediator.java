@@ -88,8 +88,9 @@ public class ODTMediator implements CommandListener {
     //
     
     public void commandAction(Command command, Displayable displayable) {
-        if(command == exitCommand){
-            //TODO: shutdown running session, and exit
+        if (command == exitCommand){
+            // TODO: shutdown running session, and exit
+            agent.exit();
         } else if(command == startCommand){
             if(engine.isServerRunning()){
                 progressScreen.log("Server already started.");
@@ -107,11 +108,7 @@ public class ODTMediator implements CommandListener {
             progressScreen.clear();
         } else if(command == settingsCommand){
             agent.displaySettingsScreen();
-        } else if(command == exitCommand){
-            agent.exit();
         }
     }
-    
-    
-    
+
 }
