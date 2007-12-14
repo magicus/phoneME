@@ -78,7 +78,7 @@ public class AgentSettings {
                 // ignore it
             }
 
-            e.printStackTrace();
+            // e.printStackTrace();
         }
     }
     

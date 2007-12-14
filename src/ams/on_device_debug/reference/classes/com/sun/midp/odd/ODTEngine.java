@@ -28,6 +28,10 @@ package com.sun.midp.odd;
 
 import javax.microedition.lcdui.Alert;
 import com.sun.midp.odd.remoting.UEIProxyListener;
+import com.sun.midp.installer.*;
+import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.configurator.Constants;
+import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
 /**
  * Core functionality of ODD.
@@ -38,7 +42,7 @@ import com.sun.midp.odd.remoting.UEIProxyListener;
  */
 //TODO: Jan Sterba - UEIProxyListener support
 //TODO: Alexey Z - Usage of JAMS internal APIs according to incoming requests
-public class ODTEngine implements UEIProxyListener{
+public class ODTEngine implements UEIProxyListener {
     
     //
     // State machine constants
@@ -58,6 +62,16 @@ public class ODTEngine implements UEIProxyListener{
     //
     // Members
     //
+
+    /**
+     * Installer
+     */
+    private Installer installer = new HttpInstaller();
+
+    /**
+     * Suite ID of the midlet that the user is going to debug.
+     */
+    int idOfMidletUnderDebug = MIDletSuite.UNUSED_SUITE_ID;
     
     /**
      * Engine state index
@@ -93,7 +107,7 @@ public class ODTEngine implements UEIProxyListener{
     /**
      * Start the server 
      */
-    void startAcceptingConnections(){
+    void startAcceptingConnections() {
         stateIndex = 1;
         //TODO: Jan Sterba - start server, ready to accept single incoming connection at a time.
         //  (any subsequent connection, gets rejected)
@@ -102,7 +116,7 @@ public class ODTEngine implements UEIProxyListener{
     /**
      * Stop the server
      */
-    void stopAcceptingConnections(){
+    void stopAcceptingConnections() {
         stateIndex = 0;
         //TODO: Jan Sterba - stop server.        
     }
@@ -110,12 +124,12 @@ public class ODTEngine implements UEIProxyListener{
     /**
      * Perform controlled shutdown (e.g., terminate any running installations, sessions  etc)
      */
-    void shutdown(){
+    void shutdown() {
         stateIndex = 0;
         //TODO: Alexey Z, Jan Sterba - ensure proper shutdown
     }
 
-    boolean isServerRunning(){
+    boolean isServerRunning() {
         //TODO: Jan Sterba - return true or false according to server readiness.        
         return false;
     }
@@ -129,7 +143,7 @@ public class ODTEngine implements UEIProxyListener{
      * Ensure that the currently received request is as expected.
      * For example, "Run"  must come after "Install"
      */
-    private void validateEngineState(){
+    private void validateEngineState() {
         //TODO: Roy - ensure current request matches next state in line
         boolean valid = true;
         if(!valid){
@@ -144,7 +158,7 @@ public class ODTEngine implements UEIProxyListener{
      * Display Alert with pin.
      * User is required to type the pin in a dialog that pops on the PC screen, by the UEI-Proxy.
      */
-    private void displayPin(){
+    private void displayPin() {
             //TODO: 1. choose random number
             //TODO: 2. display pin on screen 
     }
@@ -159,7 +173,7 @@ public class ODTEngine implements UEIProxyListener{
         validateEngineState();
         progressScreen.clear();
         progressScreen.log("received incoming connection...");
-        if(settings.pinRequired){
+        if (settings.pinRequired) {
             displayPin();
             //TODO: Jan Sterba - send handshake response (with Pin required)
         }
@@ -175,12 +189,78 @@ public class ODTEngine implements UEIProxyListener{
         //TODO: Jan Sterba - compare to Pin and send PASS/FAIL response
     }
 
-    public void handleInstallationRequest() {
+    public void handleInstallationRequest(String url) {
         stateIndex = 4;
         validateEngineState();
         progressScreen.log("installing suite [name]...");
-        //TODO: Alexey Z - install suite (check settings.silentInstallation )
+
+        // install the suite
+
+        InvalidJadException exceptionThrown = null;
+        int len = url.length();
+        boolean jarOnly = (len >= 4 &&
+            ".jar".equalsIgnoreCase(url.substring(len - 4, len)));
+
+        // installation listener (can be moved from here)
+        final class ODTInstallListener implements InstallListener {
+            public boolean warnUser(InstallState state) {
+                if (settings.silentInstallation) {
+                    return true;
+                }
+                return false;
+            }
+
+            public boolean confirmJarDownload(InstallState state) {
+                //if (settings.silentInstallation) {
+                //    return true;
+                //}
+                return true;
+            }
+
+            public void updateStatus(int status, InstallState state) {
+            }
+
+            public boolean keepRMS(InstallState state) {
+                if (settings.silentInstallation) {
+                    return true;
+                }
+                return false;
+            }
+
+            public boolean confirmAuthPath(InstallState state) {
+                if (settings.silentInstallation) {
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        int storageId = Constants.INTERNAL_STORAGE_ID;
+        
+        try {
+            if (jarOnly) {
+                idOfMidletUnderDebug = installer.installJar(url, null,
+                    storageId, false, false, new ODTInstallListener());
+            } else {
+                idOfMidletUnderDebug = installer.installJad(url, storageId,
+                        false, false, new ODTInstallListener());
+            }
+        } catch (InvalidJadException ex) {
+            exceptionThrown = ex;
+        } catch (Throwable t) {
+            exceptionThrown = new InvalidJadException(
+                    InvalidJadException.JAD_NOT_FOUND,
+                    "Unknown error.");
+        }
+
         //TODO: Jan Sterba - send response according to installation result
+        //      exceptionThrown is null if the installation succeeded
+        //      otherwise an error code can be retrieved through
+        //      exceptionThrown.getReason() (see InvalidJadException class).
+
+        progressScreen.log("installation status: " +
+                ((exceptionThrown == null) ? "SUCCESS!" :
+                        "FAILURE, code " + exceptionThrown.getReason()));
     }
 
     public void handleRunRequest() {
@@ -203,7 +283,16 @@ public class ODTEngine implements UEIProxyListener{
         stateIndex = 6;
         validateEngineState();
         progressScreen.log("uninstalling suite [name]...");
-        //TODO: Alexey Z - uninstall suite
+
+        if (idOfMidletUnderDebug != MIDletSuite.UNUSED_SUITE_ID) {
+            try {
+                MIDletSuiteStorage.getMIDletSuiteStorage().remove(
+                        idOfMidletUnderDebug);
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+
         //TODO: Jan Sterba - send response (success/failure)
         //TODO: Jan Sterba - drop off the current connection (disconnect).
         progressScreen.log("waiting for connection...");

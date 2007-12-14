@@ -30,9 +30,12 @@ package com.sun.midp.odd.remoting;
 
 
 public class DummyUEIProxy {
-    
+    private final static String testUrl =
+            "http://localhost/midlets/HelloMIDlet.jad";
+
     public static void runSequence(final UEIProxyListener listener){
-        new Thread(){
+
+        new Thread() {
             public void run(){
                 System.out.println("+ dummy UEI proxy sequence");
                 waitInterval();
@@ -40,7 +43,7 @@ public class DummyUEIProxy {
                 waitInterval();
                 listener.handlePinAuthentication();
                 waitInterval();
-                listener.handleInstallationRequest();
+                listener.handleInstallationRequest(testUrl);
                 waitInterval();
                 listener.handleDebugRequest();
                 waitInterval();

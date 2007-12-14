@@ -40,7 +40,7 @@ public interface UEIProxyListener {
     
     public void handlePinAuthentication();
     
-    public void handleInstallationRequest();
+    public void handleInstallationRequest(String url);
     
     public void handleUninstallationRequest();
     
