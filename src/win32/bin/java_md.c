@@ -250,7 +250,13 @@ getpc(struct _EXCEPTION_POINTERS* ep, DWORD* addr)
 
 #include <EXCPT.H>
 
-#ifdef WINCE
+#ifndef WINCE
+
+#define parse_argv(argc, argv) argv
+#define free_parsed_argv(argc, argv)
+
+#else
+
 static char** parse_argv(int* argc, char** argv) {
     
     int argv_i, new_argv_i, new_argv_len, new_argc = *argc;
@@ -375,90 +381,62 @@ static void free_parsed_argv(int argc, char** argv) {
 }
 #endif
 
+/*
+ * Macro to handle differences between wince and win32 in the handling
+ * of GetProcAddress parameters. It would be useful to move this to a
+ * header file so it can be used elsewhere.
+ */
 #ifdef WINCE
+#define GET_PROC_ADDRESS(h, f) GetProcAddress(h, TEXT(f))
+#else
+#define GET_PROC_ADDRESS(h, f) GetProcAddress(h, f)
+#endif
 
 int main(int argc, char* argv[])
 {
+    int retCode;
     HMODULE h;
     JNI_CreateJavaVM_func* JNI_CreateJavaVMFunc;
-    SHOW_SPLASH();
-    h = loadCVM();
 
-    JNI_CreateJavaVMFunc =
-	(JNI_CreateJavaVM_func*)GetProcAddress(h, TEXT("JNI_CreateJavaVM"));
+    SHOW_SPLASH();
+
+    h = loadCVM();
+    JNI_CreateJavaVMFunc = (JNI_CreateJavaVM_func*)
+	GET_PROC_ADDRESS(h, "JNI_CreateJavaVM");
 
     if (JNI_CreateJavaVMFunc==NULL) {
-        fprintf(stdout, "GetProcAddress() %d\n", GetLastError());
-    }
-
-#if 0
-    NKDbgPrintfW(TEXT("exception hook %x\n"), __C_specific_handler);
-#endif
-    {
+	retCode = GetLastError();
+        fprintf(stderr, "GetProcAddress() failed for JNI_CreateJavaVM %d\n",
+		retCode);
+    } else {
 	char** parsed_argv = parse_argv(&argc, argv);
-	int retCode;
-#ifdef CVM_DEBUG
+#ifndef CVM_DEBUG
+	retCode = ansiJavaMain0(argc, parsed_argv, JNI_CreateJavaVMFunc);
+#else
 	{
 	    DWORD pc, addr;
 	    __try {
 		retCode =
 		    ansiJavaMain0(argc, parsed_argv, JNI_CreateJavaVMFunc);
-		free_parsed_argv(argc, parsed_argv);
-		HIDE_SPLASH();
-		return retCode;
 	    } __except (pc = getpc(_exception_info(), &addr),
 			EXCEPTION_EXECUTE_HANDLER) {
-		NKDbgPrintfW(
-		    TEXT("exception %x in main thread at pc %x addr %x\n"),
-		    _exception_code(), pc, addr);
-		HIDE_SPLASH();
-		return _exception_code();
+		retCode = _exception_code();
+		fprintf(stderr,
+			"exception %x in main thread at pc %x addr %x\n",
+		    retCode, pc, addr);
 	    }
 	}
-#else
-	retCode = ansiJavaMain0(argc, parsed_argv, JNI_CreateJavaVMFunc);
+#endif
 	free_parsed_argv(argc, parsed_argv);
-	HIDE_SPLASH();
-	return retCode;
-#endif
     }
+    HIDE_SPLASH();
+    return retCode;
 }
 
-#else /* !WINCE */
-
-int main(int argc, char* argv[])
-{
-    HMODULE h = loadCVM();
-    JNI_CreateJavaVM_func* JNI_CreateJavaVMFunc =
-	(JNI_CreateJavaVM_func*)GetProcAddress(h, "JNI_CreateJavaVM");
-
-    if (JNI_CreateJavaVMFunc==NULL) {
-	fprintf(stderr, "GetProcAddress() %d\n", GetLastError());
-    }
 #if 0
-    NKDbgPrintfW(TEXT("exception hook %x\n"), __C_specific_handler);
-#endif
-#ifdef CVM_DEBUG
-    {
-	DWORD pc, addr;
-	__try {
-	    return ansiJavaMain0(argc, argv, JNI_CreateJavaVMFunc);
-	    
-	} __except (pc = getpc(_exception_info(), &addr),
-		    EXCEPTION_EXECUTE_HANDLER) {
-	    fprintf(stderr,
-		    "exception %x in main thread at pc %x addr %x\n",
-		    _exception_code(), pc, addr);
-	    return _exception_code();
-	}
-    }
-#else
-    return ansiJavaMain0(argc, argv, JNI_CreateJavaVMFunc);
-#endif
-}
-
-#endif /* !WINCE */
-
+/*
+  This is old code for our main entry point that we no longer use.
+*/
 int WINAPI
 _tWinMain(HINSTANCE inst, HINSTANCE previnst, TCHAR* cmdline, int cmdshow) {
     int i = 0;
@@ -468,13 +446,8 @@ _tWinMain(HINSTANCE inst, HINSTANCE previnst, TCHAR* cmdline, int cmdshow) {
     TCHAR path[256];
     TCHAR *p0, *p1;
     h = loadCVM();
-#ifdef UNDER_CE
-    JNI_CreateJavaVMFunc =
-	(JNI_CreateJavaVM_func*)GetProcAddress(h, TEXT("JNI_CreateJavaVM"));
-#else
-    JNI_CreateJavaVMFunc =
-	(JNI_CreateJavaVM_func*)GetProcAddress(h, "_JNI_CreateJavaVM");
-#endif
+    JNI_CreateJavaVMFunc = (JNI_CreateJavaVM_func*)
+	GET_PROC_ADDRESS(h, "JNI_CreateJavaVM");
 
     printf("WinMain\n");
 
@@ -536,3 +509,4 @@ _tWinMain(HINSTANCE inst, HINSTANCE previnst, TCHAR* cmdline, int cmdshow) {
     }
     return ansiJavaMain(__argc, __argv, JNI_CreateJavaVMFunc);
 }
+#endif
