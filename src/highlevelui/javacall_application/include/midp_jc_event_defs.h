@@ -72,6 +72,9 @@ extern "C" {
 #include <javacall_multimedia_advanced.h>
 #endif /* ENABLE_JSR_234 */
 #include <javacall_security.h>
+#ifdef ENABLE_JSR_256
+#include "javacall_sensor.h"
+#endif /* ENABLE_JSR_256 */
 
 
 #define MIDP_RUNMIDLET_MAXIMUM_ARGS 10
@@ -128,6 +131,9 @@ typedef enum {
     MIDP_JC_EVENT_LIST_MIDLETS         ,
     MIDP_JC_EVENT_LIST_STORAGE_NAMES   ,
     MIDP_JC_EVENT_REMOVE_MIDLET
+#if ENABLE_JSR_256
+    ,JSR256_JC_EVENT_SENSOR_AVAILABLE
+#endif /*ENABLE_JSR_256*/
 } midp_jc_event_type;
 
 
@@ -232,6 +238,13 @@ typedef struct {
 } jsr179_jc_event_location;
 #endif /* ENABLE_JSR_179 */
 
+#ifdef ENABLE_JSR_256
+typedef struct {
+    javacall_sensor_type sensor_type;
+    javacall_bool is_available;
+} jsr256_jc_event_sensor_available;
+#endif /* ENABLE_JSR_256 */
+
 typedef struct {
     javacall_penevent_type type;
     int x;
@@ -303,6 +316,9 @@ typedef struct {
 
         midp_event_heap_size               heap_size;
         midp_event_remove_midlet           removeMidletEvent;
+#ifdef ENABLE_JSR_256
+        jsr256_jc_event_sensor_available   jsr256SensorAvailable;
+#endif /* ENABLE_JSR_256 */
     } data;
 
 } midp_jc_event_union;
