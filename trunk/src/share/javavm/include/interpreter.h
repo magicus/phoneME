@@ -287,6 +287,11 @@ struct CVMExecEnv {
     CVMInt32 priority;
     CVMUint32 tickCount;
 #endif
+
+#ifdef CVM_TRACE_ENABLED
+    CVMUint32 debugFlags;
+#endif
+
 };
 
 /* 

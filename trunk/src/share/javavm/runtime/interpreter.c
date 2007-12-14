@@ -460,9 +460,14 @@ CVMinitExecEnv(CVMExecEnv* ee, CVMExecEnv* targetEE,
 #endif /* %end lvm */
 
 #ifdef CVM_TRACE_ENABLED
+
 #if defined(CVM_PROFILE_METHOD)
     targetEE->cindx = -1;
 #endif
+
+    /* Inherit global flags */
+    targetEE->debugFlags = CVMglobals.debugFlags;
+
 #endif
 
     targetEE->threadState = CVM_THREAD_RUNNING;

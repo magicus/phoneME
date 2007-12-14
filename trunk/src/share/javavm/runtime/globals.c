@@ -871,6 +871,19 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
 	}
     }
 
+#ifdef CVM_TRACE_ENABLED
+    /*
+     * Turn off all debugging flags by default.
+     */
+
+    if (options->traceFlagsStr != NULL) {
+	gs->debugFlags = strtol(options->traceFlagsStr, NULL, 0);
+    } else {
+	gs->debugFlags = 0;
+    }
+    CVMtraceInit();
+#endif /* CVM_TRACE_ENABLED */
+
     if (!CVMinitExecEnv(ee, ee, NULL)) {
 	return CVM_FALSE;
     }
@@ -1078,19 +1091,6 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     }
 #endif /* CVM_DEBUG */
 #endif /* CVM_DEBUG_STACKTRACES */
-
-#ifdef CVM_TRACE_ENABLED
-    /*
-     * Turn off all debugging flags by default.
-     */
-
-    if (options->traceFlagsStr != NULL) {
-	gs->debugFlags = strtol(options->traceFlagsStr, NULL, 0);
-    } else {
-	gs->debugFlags = 0;
-    }
-    CVMtraceInit();
-#endif /* CVM_TRACE_ENABLED */
 
     /* For GC statistics */
     gs->measureGC = CVM_FALSE;
