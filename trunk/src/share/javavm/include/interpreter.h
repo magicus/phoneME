@@ -226,7 +226,7 @@ struct CVMExecEnv {
 
     CVMBool hasPostedExitEvents;
 #ifdef CVM_JVMTI
-    volatile CVMJVMTIExecEnv jvmtiEE;
+    volatile CVMJvmtiExecEnv jvmtiEE;
 #endif
 #ifdef CVM_JVMPI
     void *jvmpiProfilerData;    /* JVMPI Profiler thread-local data. */
@@ -639,7 +639,7 @@ struct CVMInterpreterFrame {
 struct CVMJavaFrame {
     CVMInterpreterFrame	frameX;
 #ifdef CVM_JVMTI
-    CVMjvmtiLockInfo *jvmtiLockInfo;
+    CVMJvmtiLockInfo *jvmtiLockInfo;
 #endif
     CVMObjectICell    receiverObjX; /* the object we are dispatching on or
 				     * the Class object for static calls */
@@ -1490,6 +1490,7 @@ CVMBool
 CVMsyncReturnHelper(CVMExecEnv *ee, CVMFrame *frame, CVMObjectICell *objICell,
 		    CVMBool areturn);
 
+#if defined(CVM_JVMPI) || defined(CVM_JVMTI)
 /*
  * Common code for handling jvmti and jvmpi events during method return.
  * Returns the return opcode (fixed up if it was an opc_breakpoint).
@@ -1500,6 +1501,7 @@ CVMregisterReturnEvent(CVMExecEnv *ee, CVMUint8* pc, CVMUint32 ret_opcode,
 CVMUint32
 CVMregisterReturnEventPC(CVMExecEnv *ee, CVMUint8* pc,
 			 jvalue *retValue);
+#endif /* CVM_JVMPI || CVM_JVMTI */
 
 /*
  * Common code for invoking JNI methods.

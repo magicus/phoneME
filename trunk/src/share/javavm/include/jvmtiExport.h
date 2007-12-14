@@ -42,8 +42,8 @@
 
 /* bits for standard events */
 /* TODO: This bit encoding assumes the availability of 64bit integers.  If 64bit
-   ints are implemented as structs in the porting layer, then this implementation
-   will need to be revised. */
+   ints are implemented as structs in the porting layer, then this
+   implementation will need to be revised. */
 
 #define CVMjvmtiEvent2EventBit(x)   ((x) - JVMTI_MIN_EVENT_TYPE_VAL)
 #define CVMjvmtiEventBit(x)   CVMjvmtiEvent2EventBit(JVMTI_EVENT_##x)
@@ -129,192 +129,544 @@
         NATIVE_METHOD_BIND_BIT | THREAD_START_BIT | THREAD_END_BIT | \
         DYNAMIC_CODE_GENERATED_BIT;)
 
+typedef struct CVMJvmtiThreadNode CVMJvmtiThreadNode;
+struct CVMJvmtiThreadNode {
+    CVMObjectICell* thread;        /* Global root; always allocated */
+    jobject lastDetectedException; /* JNI Global Ref; allocated in
+                                      CVMjvmtiPostExceptionEvent */
+    jvmtiStartFunction startFunction;  /* for debug threads only */
+    const void *startFunctionArg;      /* for debug threads only */
 
-typedef struct {
-    int             fieldAccessCount;
-    int             fieldModificationCount;
+    CVMJvmtiContext *context;
+    void *jvmtiPrivateData;    /* JVMTI thread-local data. */
+    CVMClassBlock *oldCb;       /* current class being redefined */
+    CVMClassBlock *redefineCb;  /* new classblock of redefined class */
+    CVMBool startEventSent;
+    CVMJvmtiThreadNode *next;
+};
 
-    jboolean        canGetSourceDebugExtension;
-    jboolean        canExamineOrDeoptAnywhere;
-    jboolean        canMaintainOriginalMethodOrder;
-    jboolean        canPostInterpreterEvents;
-    jboolean        canHotswapOrPostBreakpoint;
-    jboolean        canModifyAnyClass;
-    jboolean	    canWalkAnySpace;
-    jboolean        canAccessLocalVariables;
-    jboolean        canPostExceptions;
-    jboolean        canPostBreakpoint;
-    jboolean        canPostFieldAccess;
-    jboolean        canPostFieldModification;
-    jboolean        canPostMethodEntry;
-    jboolean        canPostMethodExit;
-    jboolean        canPopFrame;
-    jboolean        canForceEarlyReturn;
+typedef struct CVMJvmtiGlobals CVMJvmtiGlobals;
+struct CVMJvmtiGlobals {
 
-    jboolean        shouldPostSingleStep;
-    jboolean        shouldPostFieldAccess;
-    jboolean        shouldPostFieldModification;
-    jboolean        shouldPostClassLoad;
-    jboolean        shouldPostClassPrepare;
-    jboolean        shouldPostClassUnload;
-    jboolean        shouldPostClassFileLoadHook;
-    jboolean        shouldPostNativeMethodBind;
-    jboolean        shouldPostCompiledMethodLoad;
-    jboolean        shouldPostCompiledMethodUnload;
-    jboolean        shouldPostDynamicCodeGenerated;
-    jboolean        shouldPostMonitorContendedEnter;
-    jboolean        shouldPostMonitorContendedEntered;
-    jboolean        shouldPostMonitorWait;
-    jboolean        shouldPostMonitorWaited;
-    jboolean        shouldPostDataDump;
-    jboolean        shouldPostGarbageCollectionStart;
-    jboolean        shouldPostGarbageCollectionFinish;
-    jboolean        shouldPostThreadLife;
-    jboolean	    shouldPostObjectFree;
-    jboolean        shouldCleanUpHeapObjects;
-    jboolean        shouldPostVmObjectAlloc;    
-    jboolean        hasRedefinedAClass;
-    jboolean        allDependenciesAreRecorded;
-} _jvmtiExports;
+    /* The following struct is based on JDK HotSpot's _jvmtiExports struct: */
+    struct {
+	int             fieldAccessCount;
+	int             fieldModificationCount;
 
-extern _jvmtiExports jvmtiExports;
+	jboolean        canGetSourceDebugExtension;
+	jboolean        canExamineOrDeoptAnywhere;
+	jboolean        canMaintainOriginalMethodOrder;
+	jboolean        canPostInterpreterEvents;
+	jboolean        canHotswapOrPostBreakpoint;
+	jboolean        canModifyAnyClass;
+	jboolean        canWalkAnySpace;
+	jboolean        canAccessLocalVariables;
+	jboolean        canPostExceptions;
+	jboolean        canPostBreakpoint;
+	jboolean        canPostFieldAccess;
+	jboolean        canPostFieldModification;
+	jboolean        canPostMethodEntry;
+	jboolean        canPostMethodExit;
+	jboolean        canPopFrame;
+	jboolean        canForceEarlyReturn;
+
+	jboolean        shouldPostSingleStep;
+	jboolean        shouldPostFieldAccess;
+	jboolean        shouldPostFieldModification;
+	jboolean        shouldPostClassLoad;
+	jboolean        shouldPostClassPrepare;
+	jboolean        shouldPostClassUnload;
+	jboolean        shouldPostClassFileLoadHook;
+	jboolean        shouldPostNativeMethodBind;
+	jboolean        shouldPostCompiledMethodLoad;
+	jboolean        shouldPostCompiledMethodUnload;
+	jboolean        shouldPostDynamicCodeGenerated;
+	jboolean        shouldPostMonitorContendedEnter;
+	jboolean        shouldPostMonitorContendedEntered;
+	jboolean        shouldPostMonitorWait;
+	jboolean        shouldPostMonitorWaited;
+	jboolean        shouldPostDataDump;
+	jboolean        shouldPostGarbageCollectionStart;
+	jboolean        shouldPostGarbageCollectionFinish;
+	jboolean        shouldPostThreadLife;
+	jboolean        shouldPostObjectFree;
+	jboolean        shouldCleanUpHeapObjects;
+	jboolean        shouldPostVmObjectAlloc;    
+	jboolean        hasRedefinedAClass;
+	jboolean        allDependenciesAreRecorded;
+    } exports;
+
+    CVMBool dataDumpRequested;
+    CVMBool isEnabled;
+    CVMBool isInDebugMode;
+
+    /* Are one or more fields being watched?
+     * These flags are accessed by the interpreter to determine if
+     * jvmti should be notified.
+     */
+    CVMBool isWatchingFieldAccess;
+    CVMBool isWatchingFieldModification;
+
+    /* The following struct isfor storing statics used by the JVMTI
+       implementation: */
+    struct {
+	/* event hooks, etc */
+	JavaVM* vm;
+	/* Not used: 
+        jvmtiEventCallbacks *eventHook;
+	JVMTIAllocHook allocHook;
+	JVMTIDeallocHook deallocHook; 
+	*/
+	struct CVMBag* breakpoints;
+	struct CVMBag* framePops;
+	struct CVMBag* watchedFieldModifications;
+	struct CVMBag* watchedFieldAccesses;
+	volatile CVMJvmtiThreadNode *threadList;
+	CVMJvmtiContext *context;
+
+	/* From jvmtiExport.c */
+	jvmtiPhase currentPhase;
+
+	/* Not used:
+        jlong      clks_per_sec;
+        CVMBool    debuggerConnected = CVM_FALSE;
+	CVMUint32  uniqueId = 0x10000;
+	*/
+
+	CVMJvmtiMethodNode *nodeByMB[HASH_SLOT_COUNT];
+
+	/* From jvmtiEnv.c: */
+
+	/* Not used:
+	CVMJvmtiContext *RetransformableEnvironments;
+	CVMJvmtiContext *NonRetransformableEnvironments;
+	*/
+
+	/* Used in jvmti_GetThreadInfo(): */
+	jfieldID nameID;
+	jfieldID priorityID;
+	jfieldID daemonID;
+	jfieldID groupID;
+	jfieldID loaderID;
+
+	/* Used in jvmti_GetThreadGroupInfo(): */
+	jfieldID tgParentID;
+	jfieldID tgNameID;
+	jfieldID tgMaxPriorityID;
+	jfieldID tgDaemonID;
+
+	/* Used in jvmti_GetThreadGroupChildren(): */
+	jfieldID nthreadsID;
+	jfieldID threadsID;
+	jfieldID ngroupsID;
+	jfieldID groupsID;
+
+	/* For Heap functions in jvmtiEnv.c: */
+	CVMJvmtiVisitStack currentStack; /* for Heap functions. */
+	CVMJvmtiTagNode *romObjects[HASH_SLOT_COUNT];
+
+	/* From jvmtiDumper.c: */
+	CVMJvmtiTagNode *objectsByRef[HASH_SLOT_COUNT];
+
+    } statics;
+
+    /* From jvmtiCapabilities.c: */
+    struct {
+	/* capabilities which are always potentially available */
+	jvmtiCapabilities always;
+
+	/* capabilities which are potentially available during OnLoad */
+	jvmtiCapabilities onload;
+
+	/* capabilities which are always potentially available */
+	/* but to only one environment */
+	jvmtiCapabilities always_solo;
+
+	/* capabilities which are potentially available during OnLoad */
+	/* but to only one environment */
+	jvmtiCapabilities onload_solo;
+
+	/* remaining capabilities which are always potentially available */
+	/* but to only one environment */
+	jvmtiCapabilities always_solo_remaining;
+
+	/* remaining capabilities which are potentially available during
+	 * OnLoad but to only one environment */
+	jvmtiCapabilities onload_solo_remaining;
+
+	/* all capabilities ever acquired */
+	jvmtiCapabilities acquired;
+
+    } capabilities;
+};
+
+/* The following functions are implemented as macros so that they can be
+   inlined:
+
+   NOTE: can* conditions (below) are set at OnLoad and never changed.
+ */
 
 void CVMjvmtiSetCanGetSourceDebugExtension(jboolean on);
+#define CVMjvmtiSetCanGetSourceDebugExtension(on_) \
+    (CVMglobals.jvmti.exports.canGetSourceDebugExtension = (on_))
+
 void CVMjvmtiSetCanExamineOrDeoptAnywhere(jboolean on);
+#define CVMjvmtiSetCanExamineOrDeoptAnywhere(on_) \
+    (CVMglobals.jvmti.exports.canExamineOrDeoptAnywhere = (on_))
+
 void CVMjvmtiSetCanMaintainOriginalMethodOrder(jboolean on);
+#define CVMjvmtiSetCanMaintainOriginalMethodOrder(on_) \
+    (CVMglobals.jvmti.exports.canMaintainOriginalMethodOrder = (on_))
+
 void CVMjvmtiSetCanPostInterpreterEvents(jboolean on);
+#define CVMjvmtiSetCanPostInterpreterEvents(on_) \
+    (CVMglobals.jvmti.exports.canPostInterpreterEvents = (on_))
+
 void CVMjvmtiSetCanHotswapOrPostBreakpoint(jboolean on);
+#define CVMjvmtiSetCanHotswapOrPostBreakpoint(on_) \
+    (CVMglobals.jvmti.exports.canHotswapOrPostBreakpoint = (on_));
+
 void CVMjvmtiSetCanModifyAnyClass(jboolean on);
+#define CVMjvmtiSetCanModifyAnyClass(on_) \
+    (CVMglobals.jvmti.exports.canModifyAnyClass = (on_))
+
 void CVMjvmtiSetCanWalkAnySpace(jboolean on);
+#define CVMjvmtiSetCanWalkAnySpace(on_) \
+    (CVMglobals.jvmti.exports.canWalkAnySpace = (on_))
+
 void CVMjvmtiSetCanAccessLocalVariables(jboolean on);
+#define CVMjvmtiSetCanAccessLocalVariables(on_) \
+    (CVMglobals.jvmti.exports.canAccessLocalVariables = (on_))
+
 void CVMjvmtiSetCanPostExceptions(jboolean on);
+#define CVMjvmtiSetCanPostExceptions(on_) \
+    (CVMglobals.jvmti.exports.canPostExceptions = (on_))
+
 void CVMjvmtiSetCanPostBreakpoint(jboolean on);
+#define CVMjvmtiSetCanPostBreakpoint(on_) \
+    (CVMglobals.jvmti.exports.canPostBreakpoint = (on_))
+
 void CVMjvmtiSetCanPostFieldAccess(jboolean on);
+#define CVMjvmtiSetCanPostFieldAccess(on_) \
+    (CVMglobals.jvmti.exports.canPostFieldAccess = (on_))
+
 void CVMjvmtiSetCanPostFieldModification(jboolean on);
+#define CVMjvmtiSetCanPostFieldModification(on_) \
+    (CVMglobals.jvmti.exports.canPostFieldModification = (on_))
+
 void CVMjvmtiSetCanPostMethodEntry(jboolean on);
+#define CVMjvmtiSetCanPostMethodEntry(on_) \
+    (CVMglobals.jvmti.exports.canPostMethodEntry = (on_))
+
 void CVMjvmtiSetCanPostMethodExit(jboolean on);
+#define CVMjvmtiSetCanPostMethodExit(on_) \
+    (CVMglobals.jvmti.exports.canPostMethodExit = (on_))
+
 void CVMjvmtiSetCanPopFrame(jboolean on);
+#define CVMjvmtiSetCanPopFrame(on_) \
+    (CVMglobals.jvmti.exports.canPopFrame = (on_))
+
 void CVMjvmtiSetCanForceEarlyReturn(jboolean on);
+#define CVMjvmtiSetCanForceEarlyReturn(on_) \
+    (CVMglobals.jvmti.exports.canForceEarlyReturn = (on_))
+
 
 void CVMjvmtiSetShouldPostSingleStep(jboolean on);
+#define CVMjvmtiSetShouldPostSingleStep(on_) \
+    (CVMglobals.jvmti.exports.shouldPostSingleStep = (on_))
+
 void CVMjvmtiSetShouldPostFieldAccess(jboolean on);
+#define CVMjvmtiSetShouldPostFieldAccess(on_) \
+    (CVMglobals.jvmti.exports.shouldPostFieldAccess = (on_))
+
 void CVMjvmtiSetShouldPostFieldModification(jboolean on);
+#define CVMjvmtiSetShouldPostFieldModification(on_) \
+    (CVMglobals.jvmti.exports.shouldPostFieldModification = (on_))
+
 void CVMjvmtiSetShouldPostClassLoad(jboolean on);
+#define CVMjvmtiSetShouldPostClassLoad(on_) \
+    (CVMglobals.jvmti.exports.shouldPostClassLoad = (on_))
+
 void CVMjvmtiSetShouldPostClassPrepare(jboolean on);
+#define CVMjvmtiSetShouldPostClassPrepare(on_) \
+    (CVMglobals.jvmti.exports.shouldPostClassPrepare = (on_))
+
 void CVMjvmtiSetShouldPostClassUnload(jboolean on);
+#define CVMjvmtiSetShouldPostClassUnload(on_) \
+    (CVMglobals.jvmti.exports.shouldPostClassUnload = (on_))
+
 void CVMjvmtiSetShouldPostClassFileLoadHook(jboolean on);
+#define CVMjvmtiSetShouldPostClassFileLoadHook(on_) \
+    (CVMglobals.jvmti.exports.shouldPostClassFileLoadHook = (on_))
+
 void CVMjvmtiSetShouldPostNativeMethodBind(jboolean on);
+#define CVMjvmtiSetShouldPostNativeMethodBind(on_) \
+    (CVMglobals.jvmti.exports.shouldPostNativeMethodBind = (on_))
+
 void CVMjvmtiSetShouldPostCompiledMethodLoad(jboolean on);
+#define CVMjvmtiSetShouldPostCompiledMethodLoad(on_) \
+    (CVMglobals.jvmti.exports.shouldPostCompiledMethodLoad = (on_))
+
 void CVMjvmtiSetShouldPostCompiledMethodUnload(jboolean on);
+#define CVMjvmtiSetShouldPostCompiledMethodUnload(on_) \
+    (CVMglobals.jvmti.exports.shouldPostCompiledMethodUnload = (on_))
+
 void CVMjvmtiSetShouldPostDynamicCodeGenerated(jboolean on);
+#define CVMjvmtiSetShouldPostDynamicCodeGenerated(on_) \
+    (CVMglobals.jvmti.exports.shouldPostDynamicCodeGenerated = (on_))
+
 void CVMjvmtiSetShouldPostMonitorContendedEnter(jboolean on);
+#define CVMjvmtiSetShouldPostMonitorContendedEnter(on_) \
+    (CVMglobals.jvmti.exports.shouldPostMonitorContendedEnter = (on_))
+
 void CVMjvmtiSetShouldPostMonitorContendedEntered(jboolean on);
+#define CVMjvmtiSetShouldPostMonitorContendedEntered(on_) \
+    (CVMglobals.jvmti.exports.shouldPostMonitorContendedEntered = (on_))
+
 void CVMjvmtiSetShouldPostMonitorWait(jboolean on);
+#define CVMjvmtiSetShouldPostMonitorWait(on_) \
+    (CVMglobals.jvmti.exports.shouldPostMonitorWait = (on_))
+
 void CVMjvmtiSetShouldPostMonitorWaited(jboolean on);
+#define CVMjvmtiSetShouldPostMonitorWaited(on_) \
+    (CVMglobals.jvmti.exports.shouldPostMonitorWaited = (on_))
+
 void CVMjvmtiSetShouldPostGarbageCollectionStart(jboolean on);
+#define CVMjvmtiSetShouldPostGarbageCollectionStart(on_) \
+    (CVMglobals.jvmti.exports.shouldPostGarbageCollectionStart = (on_))
+
 void CVMjvmtiSetShouldPostGarbageCollectionFinish(jboolean on);
+#define CVMjvmtiSetShouldPostGarbageCollectionFinish(on_) \
+    (CVMglobals.jvmti.exports.shouldPostGarbageCollectionFinish = (on_))
+
 void CVMjvmtiSetShouldPostDataDump(jboolean on);
+#define CVMjvmtiSetShouldPostDataDump(on_) \
+    (CVMglobals.jvmti.exports.shouldPostDataDump = (on_))
+
 void CVMjvmtiSetShouldPostObjectFree(jboolean on);
+#define CVMjvmtiSetShouldPostObjectFree(on_) \
+    (CVMglobals.jvmti.exports.shouldPostObjectFree = (on_))
+
 void CVMjvmtiSetShouldPostVmObjectAlloc(jboolean on);
+#define CVMjvmtiSetShouldPostVmObjectAlloc(on_) \
+    (CVMglobals.jvmti.exports.shouldPostVmObjectAlloc = (on_))
 
 void CVMjvmtiSetShouldPostThreadLife(jboolean on);
+#define CVMjvmtiSetShouldPostThreadLife(on_) \
+    (CVMglobals.jvmti.exports.shouldPostThreadLife = (on_))
+
 void CVMjvmtiSetShouldCleanUpHeapObjects(jboolean on);
+#define CVMjvmtiSetShouldCleanUpHeapObjects(on_) \
+    (CVMglobals.jvmti.exports.shouldCleanUpHeapObjects = (on_))
+
 jlong CVMjvmtiGetThreadEventEnabled(CVMExecEnv *ee);
+#define CVMjvmtiGetThreadEventEnabled(ee_) \
+    (CVMjvmtiEventEnabled(ee_).enabledBits)
+
 void CVMjvmtiSetShouldPostAnyThreadEvent(CVMExecEnv *ee, jlong enabled);
+#define CVMjvmtiSetShouldPostAnyThreadEvent(ee_, enabled_) \
+    (CVMjvmtiEventEnabled(ee_).enabledBits = (enabled_))
 
 
 enum {
-  JVMTIVERSIONMASK   = 0x70000000,
-  JVMTIVERSIONVALUE  = 0x30000000,
-  JVMDIVERSIONVALUE  = 0x20000000
+    JVMTIVERSIONMASK   = 0x70000000,
+    JVMTIVERSIONVALUE  = 0x30000000,
+    JVMDIVERSIONVALUE  = 0x20000000
 };
 
 
 /* let JVMTI know that the VM isn't up yet (and JVMOnLoad code isn't running) */
 void CVMjvmtiEnterPrimordialPhase();
+#define CVMjvmtiEnterPrimordialPhase() \
+    (CVMglobals.jvmti.statics.currentPhase = JVMTI_PHASE_PRIMORDIAL)
 
 /* let JVMTI know that the JVMOnLoad code is running */
 void CVMjvmtiEnterOnloadPhase();
+#define CVMjvmtiEnterOnloadPhase() \
+    (CVMglobals.jvmti.statics.currentPhase = JVMTI_PHASE_ONLOAD)
 
 /* let JVMTI know that the VM isn't up yet but JNI is live */
 void CVMjvmtiEnterStartPhase();
+#define CVMjvmtiEnterStartPhase() \
+    (CVMglobals.jvmti.statics.currentPhase = JVMTI_PHASE_START)
 
 /* let JVMTI know that the VM is fully up and running now */
 void CVMjvmtiEnterLivePhase();
+#define  CVMjvmtiEnterLivePhase() \
+    (CVMglobals.jvmti.statics.currentPhase = JVMTI_PHASE_LIVE)
 
 /* let JVMTI know that the VM is dead, dead, dead.. */
 void CVMjvmtiEnterDeadPhase();
+#define CVMjvmtiEnterDeadPhase() \
+    (CVMglobals.jvmti.statics.currentPhase = JVMTI_PHASE_DEAD)
 
 jvmtiPhase CVMjvmtiGetPhase();
+#define CVMjvmtiGetPhase() \
+    (CVMglobals.jvmti.statics.currentPhase)
 
-/* ------ can_* conditions (below) are set at OnLoad and never changed ----------*/
+/* ------ can_* conditions (below) are set at OnLoad and never changed ------*/
 
-jboolean canGetSourceDebugExtension();
+jboolean CVMjvmtiCanGetSourceDebugExtension();
+#define CVMjvmtiCanGetSourceDebugExtension() \
+    (CVMglobals.jvmti.exports.canGetSourceDebugExtension)
 
 /* BP, expression stack, hotswap, interpOnly, localVar, monitor info */
-jboolean canExamineOrDeoptAnywhere();
+jboolean CVMjvmtiCanExamineOrDeoptAnywhere();
+#define CVMjvmtiCanExamineOrDeoptAnywhere() \
+    (CVMglobals.jvmti.exports.canExamineOrDeoptAnywhere)
 
 /* JVMDI spec requires this, does this matter for JVMTI? */
-jboolean canMaintainOriginalMethodOrder();
+jboolean CVMjvmtiCanMaintainOriginalMethodOrder();
+#define CVMjvmtiCanMaintainOriginalMethodOrder() \
+    (CVMglobals.jvmti.exports.canMaintainOriginalMethodOrder)
 
-/* any of single-step, method-entry/exit, frame-pop, and field-access/modification */
-jboolean jvmtiCanPostInterpreterEvents();
+/* any of single-step, method-entry/exit, frame-pop, and field-access /
+   modification */
+jboolean CVMjvmtiCanPostInterpreterEvents();
+#define CVMjvmtiCanPostInterpreterEvents() \
+    (CVMglobals.jvmti.exports.canPostInterpreterEvents)
 
-jboolean jvmtiCanHotswapOrPostBreakpoint();
+jboolean CVMjvmtiCanHotswapOrPostBreakpoint();
+#define CVMjvmtiCanHotswapOrPostBreakpoint() \
+    (CVMglobals.jvmti.exports.canHotswapOrPostBreakpoint)
 
-jboolean jvmtiCanModifyAnyClass();
+jboolean CVMjvmtiCanModifyAnyClass();
+#define CVMjvmtiCanModifyAnyClass() \
+    (CVMglobals.jvmti.exports.canModifyAnyClass)
 
-jboolean jvmtiCanWalkAnySpace();
+jboolean CVMjvmtiCanWalkAnySpace();
+#define CVMjvmtiCanWalkAnySpace() \
+    (CVMglobals.jvmti.exports.canWalkAnySpace)
 
 /* can retrieve frames, set/get local variables or hotswap */
-jboolean jvmtiCanAccessLocalVariables();
+jboolean CVMjvmtiCanAccessLocalVariables();
+#define CVMjvmtiCanAccessLocalVariables() \
+    (CVMglobals.jvmti.exports.canAccessLocalVariables)
 
 /* throw or catch */
-jboolean jvmtiCanPostExceptions();
+jboolean CVMjvmtiCanPostExceptions();
+#define CVMjvmtiCanPostExceptions() \
+    (CVMglobals.jvmti.exports.canPostExceptions)
 
-jboolean jvmtiCanPostBreakpoint();
-jboolean jvmtiCanPostFieldAccess();
-jboolean jvmtiCanPostFieldModification();
-jboolean jvmtiCanPostMethodEntry();
-jboolean jvmtiCanPostMethodExit();
-jboolean jvmtiCanPopFrame();
-jboolean jvmtiCanForceEarlyReturn();
+jboolean CVMjvmtiCanPostBreakpoint();
+#define CVMjvmtiCanPostBreakpoint() \
+    (CVMglobals.jvmti.exports.canPostBreakpoint)
+
+jboolean CVMjvmtiCanPostFieldAccess();
+#define CVMjvmtiCanPostFieldAccess() \
+    (CVMglobals.jvmti.exports.canPostFieldAccess)
+
+jboolean CVMjvmtiCanPostFieldModification();
+#define CVMjvmtiCanPostFieldModification() \
+    (CVMglobals.jvmti.exports.canPostFieldModification)
+
+jboolean CVMjvmtiCanPostMethodEntry();
+#define CVMjvmtiCanPostMethodEntry() \
+    (CVMglobals.jvmti.exports.canPostMethodEntry)
+
+jboolean CVMjvmtiCanPostMethodExit();
+#define CVMjvmtiCanPostMethodExit() \
+    (CVMglobals.jvmti.exports.canPostMethodExit)
+
+jboolean CVMjvmtiCanPopFrame();
+#define CVMjvmtiCanPopFrame() \
+    (CVMglobals.jvmti.exports.canPopFrame)
+
+jboolean CVMjvmtiCanForceEarlyReturn();
+#define CVMjvmtiCanForceEarlyReturn() \
+    (CVMglobals.jvmti.exports.canForceEarlyReturn)
 
 
-/* the below maybe don't have to be (but are for now) fixed conditions here ----*/
+/* the below maybe don't have to be (but are for now) fixed conditions here -*/
 /* any events can be enabled */
 jboolean CVMjvmtiShouldPostThreadLife();
-
+#define CVMjvmtiShouldPostThreadLife() \
+    (CVMglobals.jvmti.exports.shouldPostThreadLife)
 
 /* ------ DYNAMIC conditions here ------------ */
 
 jboolean CVMjvmtiShouldPostSingleStep();
+#define CVMjvmtiShouldPostSingleStep() \
+    (CVMglobals.jvmti.exports.shouldPostSingleStep)
+
 jboolean CVMjvmtiShouldPostFieldAccess();
+#define CVMjvmtiShouldPostFieldAccess() \
+    (CVMglobals.jvmti.exports.shouldPostFieldAccess)
+
 jboolean CVMjvmtiShouldPostFieldModification();
+#define CVMjvmtiShouldPostFieldModification() \
+    (CVMglobals.jvmti.exports.shouldPostFieldModification)
+
 jboolean CVMjvmtiShouldPostClassLoad();
+#define CVMjvmtiShouldPostClassLoad() \
+    (CVMglobals.jvmti.exports.shouldPostClassLoad)
+
 jboolean CVMjvmtiShouldPostClassPrepare();
+#define CVMjvmtiShouldPostClassPrepare() \
+    (CVMglobals.jvmti.exports.shouldPostClassPrepare)
+
 jboolean CVMjvmtiShouldPostClassUnload();
+#define CVMjvmtiShouldPostClassUnload() \
+    (CVMglobals.jvmti.exports.shouldPostClassUnload)
+
 jboolean CVMjvmtiShouldPostClassFileLoadHook();
+#define CVMjvmtiShouldPostClassFileLoadHook() \
+    (CVMglobals.jvmti.exports.shouldPostClassFileLoadHook)
+
 jboolean CVMjvmtiShouldPostNativeMethodBind();
+#define CVMjvmtiShouldPostNativeMethodBind() \
+    (CVMglobals.jvmti.exports.shouldPostNativeMethodBind)
+
 jboolean CVMjvmtiShouldPostCompiledMethodLoad();
+#define CVMjvmtiShouldPostCompiledMethodLoad() \
+    (CVMglobals.jvmti.exports.shouldPostCompiledMethodLoad)
+
 jboolean CVMjvmtiShouldPostCompiledMethodUnload();
+#define CVMjvmtiShouldPostCompiledMethodUnload() \
+    (CVMglobals.jvmti.exports.shouldPostCompiledMethodUnload)
+
 jboolean CVMjvmtiShouldPostDynamicCodeGenerated();
+#define CVMjvmtiShouldPostDynamicCodeGenerated() \
+    (CVMglobals.jvmti.exports.shouldPostDynamicCodeGenerated)
+
 jboolean CVMjvmtiShouldPostMonitorContendedEnter();
+#define CVMjvmtiShouldPostMonitorContendedEnter() \
+    (CVMglobals.jvmti.exports.shouldPostMonitorContendedEnter)
+
 jboolean CVMjvmtiShouldPostMonitorContendedEntered();
+#define CVMjvmtiShouldPostMonitorContendedEntered() \
+    (CVMglobals.jvmti.exports.shouldPostMonitorContendedEntered)
+
 jboolean CVMjvmtiShouldPostMonitorWait();
+#define CVMjvmtiShouldPostMonitorWait() \
+    (CVMglobals.jvmti.exports.shouldPostMonitorWait)
+
 jboolean CVMjvmtiShouldPostMonitorWaited();
+#define CVMjvmtiShouldPostMonitorWaited() \
+    (CVMglobals.jvmti.exports.shouldPostMonitorWaited)
+
 jboolean CVMjvmtiShouldPostDataDump();
+#define CVMjvmtiShouldPostDataDump() \
+    (CVMglobals.jvmti.exports.shouldPostDataDump)
+
 jboolean CVMjvmtiShouldPostGarbageCollectionStart();
+#define CVMjvmtiShouldPostGarbageCollectionStart() \
+    (CVMglobals.jvmti.exports.shouldPostGarbageCollectionStart)
+
 jboolean CVMjvmtiShouldPostGarbageCollectionFinish();
+#define CVMjvmtiShouldPostGarbageCollectionFinish() \
+    (CVMglobals.jvmti.exports.shouldPostGarbageCollectionFinish)
+
 jboolean CVMjvmtiShouldPostObjectFree();
+#define CVMjvmtiShouldPostObjectFree() \
+    (CVMglobals.jvmti.exports.shouldPostObjectFree)
+
 jboolean CVMjvmtiShouldPostVmObjectAlloc();
+#define CVMjvmtiShouldPostVmObjectAlloc() \
+    (CVMglobals.jvmti.exports.shouldPostVmObjectAlloc)
 
 /* ----------------- */
 
-jboolean isJvmtiVersion(jint version);
-jboolean isJvmdiVersion(jint version);
-jint getJvmtiInterface(JavaVM *jvm, void **penv, jint version);
-  
 /* SetNativeMethodPrefix support */
 char** getAllNativeMethodPrefixes(int* countPtr);
 
@@ -353,75 +705,62 @@ typedef struct AttachOperation_ {
 	   CVMsysMutexGetReentrantMutex(&CVMglobals.jvmtiLock))
 
 
-typedef struct ThreadNode_ {
-    CVMObjectICell* thread;        /* Global root; always allocated */
-    jobject lastDetectedException; /* JNI Global Ref; allocated in
-                                      CVMjvmtiPostExceptionEvent */
-    jvmtiStartFunction startFunction;  /* for debug threads only */
-    const void *startFunctionArg;      /* for debug threads only */
-    JvmtiEnv *env;
-    void *jvmtiPrivateData;    /* JVMTI thread-local data. */
-    CVMClassBlock *oldCb;       /* current class being redefined */
-    CVMClassBlock *redefineCb;  /* new classblock of redefined class */
-    CVMBool startEventSent;
-    struct ThreadNode_ *next;
-} ThreadNode;
+#define CVMjvmtiIsEnabled() \
+    (CVMglobals.jvmti.isEnabled)
+#define CVMjvmtiSetIsEnabled(isEnabled_) \
+    (CVMglobals.jvmti.isEnabled = (isEnabled_))
 
-typedef struct CVMjvmtiStatics {
-  /* event hooks, etc */
-  JavaVM* vm;
-  jvmtiEventCallbacks *eventHook;
-  /*  JVMTIAllocHook allocHook; */
-  /*  JVMTIDeallocHook deallocHook; */
-  struct CVMBag* breakpoints;
-  struct CVMBag* framePops;
-  struct CVMBag* watchedFieldModifications;
-  struct CVMBag* watchedFieldAccesses;
-  volatile ThreadNode *threadList;
-  JvmtiEnv *jvmtiEnv;
-} JVMTI_Static;
+#define CVMjvmtiIsInDebugMode() \
+    (CVMglobals.jvmti.isInDebugMode)
+#define CVMjvmtiSetIsInDebugMode(isInDebugMode_) \
+    (CVMglobals.jvmti.isInDebugMode = (isInDebugMode_))
 
-typedef struct CVMJvmtiRecord {
-    CVMBool dataDumpRequested;
-}CVMJvmtiRecord;
+#define CVMjvmtiIsWatchingFieldAccess() \
+    (CVMglobals.jvmti.isWatchingFieldAccess)
+#define CVMjvmtiSetIsWatchingFieldAccess(isWatching_) \
+    (CVMglobals.jvmti.isWatchingFieldAccess = (isWatching_))
 
-typedef enum {
+#define CVMjvmtiIsWatchingFieldModification() \
+    (CVMglobals.jvmti.isWatchingFieldModification)
+#define CVMjvmtiSetIsWatchingFieldModification(isWatching_) \
+    (CVMglobals.jvmti.isWatchingFieldModification = (isWatching_))
+
+
+typedef enum CVMJvmtiLoadKind CVMJvmtiLoadKind;
+enum CVMJvmtiLoadKind {
   JVMTICLASSLOADKINDNORMAL   = 0,
   JVMTICLASSLOADKINDREDEFINE,
   JVMDICLASSLOADKINDRETRANSFORM
-}jvmtiLoadKind;
+};
 
-typedef struct jvmtiLockInfo {
-    struct jvmtiLockInfo *next;
+typedef struct CVMJvmtiLockInfo CVMJvmtiLockInfo;
+struct CVMJvmtiLockInfo {
+    CVMJvmtiLockInfo *next;
     CVMOwnedMonitor *lock;
-} JvmtiLockInfo;
+};
 
-typedef JvmtiLockInfo CVMjvmtiLockInfo;
-
-typedef struct JvmtiExecEnv {
+typedef struct CVMJvmtiExecEnv CVMJvmtiExecEnv;
+struct CVMJvmtiExecEnv {
     CVMBool debugEventsEnabled;
     CVMBool jvmtiSingleStepping;
     CVMBool jvmtiNeedFramePop;
     CVMBool jvmtiNeedEarlyReturn;
     CVMBool jvmtiDataDumpRequested;
     CVMBool jvmtiNeedProcessing;
-    JvmtiEventEnabled jvmtiUserEventEnabled;
-    JvmtiEventEnabled jvmtiEventEnabled;
+    CVMJvmtiEventEnabled jvmtiUserEventEnabled;
+    CVMJvmtiEventEnabled jvmtiEventEnabled;
     jvalue jvmtiEarlyReturnValue;
     CVMUint32 jvmtiEarlyRetOpcode;
-    jvmtiLoadKind jvmtiClassLoadKind;
-    JvmtiLockInfo *jvmtiLockInfoFreelist;
+    CVMJvmtiLoadKind jvmtiClassLoadKind;
+    CVMJvmtiLockInfo *jvmtiLockInfoFreelist;
 
-    /* NOTE: first pass at JVMTI support has only one global environment */
-    /*   JvmtiEnv *JvmtiEnv; */
+    /* NOTE: The first pass at implementing JVMTI support will have only one
+       global environment i.e. CVMJvmtiContext.  Hence, we store the context
+       in CVMJvmtiExports instead of here in the thread jvmtiEE.
+    */
+    /* CVMJvmtiContext *context; */
     void *jvmtiProfilerData;    /* JVMTI Profiler thread-local data. */
-} CVMJVMTIExecEnv;
-
-#define CVMjvmtiEnabled()			\
-    (CVMglobals.jvmtiEnabled)
-
-#define CVMjvmtiDebuggingFlag()			\
-    CVMglobals.jvmtiDebuggingFlag
+};
 
 #define CVMjvmtiSetProcessingCheck(ee_)					\
     if (CVMjvmtiNeedFramePop(ee_) || CVMjvmtiNeedEarlyReturn(ee_) ||	\
@@ -469,36 +808,16 @@ typedef struct JvmtiExecEnv {
     ((ee_)->jvmtiEE.jvmtiNeedProcessing)
 
 #define CVMjvmtiEnvEventEnabled(ee_, eventType_)			\
-    (CVMjvmtiEnabled() && CVMjvmtiDebugEventsEnabled(ee_) &&		\
-     ((((CVMglobals.jvmtiStatics.jvmtiEnv)->envEventEnable.eventEnabled.enabledBits) & \
+    (CVMjvmtiIsEnabled() && CVMjvmtiDebugEventsEnabled(ee_) &&		\
+     ((CVMglobals.jvmti.statics.context->				\
+       envEventEnable.eventEnabled.enabledBits &			\
        (((jlong)1) << CVMjvmtiEvent2EventBit(eventType_))) != 0))
 
 #define CVMjvmtiThreadEventEnabled(ee_, eventType_)			\
-    ((ee_ != NULL) &&							\
-     ((CVMjvmtiEventEnabled(ee_).enabledBits &				\
+    (((ee_) != NULL) &&							\
+     ((CVMjvmtiEventEnabled(ee_).enabledBits &			\
        (((jlong)1) << CVMjvmtiEvent2EventBit(eventType_))) != 0))
 
-#define CVMjvmtiShouldPostObjectFree()		\
-    CVMjvmtiEnabled() && jvmtiExports.shouldPostObjectFree
-
-/* Purpose: Indicate that we have started a GC cycle (independent of whether
-            actual GC'ing has been blocked or not). */
-void CVMjvmtiSetGCWasStarted(void);
-#define CVMjvmtiSetGCWasStarted() \
-    (CVMjvmtiRec()->gcWasStarted = CVM_TRUE)
-
-/* Purpose: Indicate that we have ended a GC cycle which was started. */
-void CVMjvmtiResetGCWasStarted(void);
-#define CVMjvmtiResetGCWasStarted() \
-    (CVMjvmtiRec()->gcWasStarted = CVM_FALSE)
-
-/* Purpose: Check if we have started a GC cycle. */
-CVMBool CVMjvmtiGCWasStarted(void);
-#define CVMjvmtiGCWasStarted() \
-    (CVMjvmtiRec()->gcWasStarted)
-
-/* Purpose: Gets the global CVMJvmtiRecord. */
-#define CVMjvmtiRec()   (&CVMglobals.jvmtiRecord)
 
 #define CVMJVMTI_CHECK_PHASE(x) {	     \
 	if (CVMjvmtiGetPhase() != (x)) {     \
@@ -583,8 +902,6 @@ CVMUint8 CVMjvmtiGetBreakpointOpcode(CVMExecEnv* ee, CVMUint8* pc,
 				     CVMBool notify);
 CVMBool CVMjvmtiSetBreakpointOpcode(CVMExecEnv* ee, CVMUint8* pc,
 				    CVMUint8 opcode);
-void CVMjvmtiStaticsInit(struct CVMjvmtiStatics * statics);
-void CVMjvmtiStaticsDestroy(struct CVMjvmtiStatics * statics);
 
 void CVMjvmtiPostClassLoadHookEvent(jclass klass,
 				    CVMClassLoaderICell *loader,
@@ -617,36 +934,54 @@ void CVMjvmtiPostMonitorWaitedEvent(CVMExecEnv *ee,
 void CVMjvmtiPostObjectFreeEvent(CVMObject *obj);
 
 #define CVMjvmtiSetDataDumpRequested() \
-    (CVMjvmtiRec()->dataDumpRequested = CVM_TRUE)
+    (CVMglobals.jvmti.dataDumpRequested = CVM_TRUE)
 
 /* Purpose: Check if a data dump was requested. */
 CVMBool CVMjvmtiDataDumpWasRequested(void);
 #define CVMjvmtiDataDumpWasRequested() \
-    (CVMjvmtiRec()->dataDumpRequested)
+    (CVMglobals.jvmti.dataDumpRequested)
 
 /* Purpose: Clear the pending data dump event request. */
 void CVMjvmtiResetDataDumpRequested(void);
 #define CVMjvmtiResetDataDumpRequested() \
-    (CVMjvmtiRec()->dataDumpRequested = CVM_FALSE)
+    (CVMglobals.jvmti.dataDumpRequested = CVM_FALSE)
 
+/* TODO: The CVMjvmtiIsEnabled() check can be eliminated if an obsolete bit can
+   be stored in the mb itself. */
 #define CVMjvmtiMbIsObsolete(mb)  \
-    (CVMjvmtiEnabled() && CVMjvmtiMbIsObsoleteX(mb))
-/*
+    (CVMjvmtiIsEnabled() && CVMjvmtiMbIsObsoleteX(mb))
+
+/* Gets a jvmtiEnv * JVMTI environment pointer to enable JVMTI work.
  * This function is used by CVMjniGetEnv.
  */
-jvmtiInterface_1* CVMjvmtiGetInterface1(JavaVM* interfacesVm);
+jint CVMjvmtiGetInterface(JavaVM *interfacesVm, void **penv);
 
-jint        CVMcreateJvmti(JavaVM *interfacesVm, void **penv);
-jvmtiError  CVMinitializeJVMTI();
-ThreadNode *CVMjvmtiFindThread(CVMExecEnv* ee, CVMObjectICell* thread);
-ThreadNode *CVMjvmtiInsertThread(CVMExecEnv* ee, CVMObjectICell* thread);
-jboolean    CVMjvmtiRemoveThread(CVMObjectICell *thread);
+/* Initialized and destroys JVMTI global state at VM startu/shutdown: */
+void CVMjvmtiInitializeGlobals(CVMJvmtiGlobals *globals);
+void CVMjvmtiDestroyGlobals(CVMJvmtiGlobals *globals);
+
+/* Starts up or shuts down JVMTI: */
+jvmtiError CVMjvmtiInitialize(JavaVM *vm);
+void CVMjvmtiDestroy(CVMJvmtiGlobals *globals);
+
+CVMJvmtiThreadNode *
+CVMjvmtiFindThread(CVMExecEnv* ee, CVMObjectICell* thread);
+
+CVMJvmtiThreadNode *
+CVMjvmtiInsertThread(CVMExecEnv* ee, CVMObjectICell* thread);
+
+jboolean    CVMjvmtiRemoveThread(CVMExecEnv* ee, CVMObjectICell *thread);
 
 jvmtiError  CVMjvmtiAllocate(jlong size, unsigned char **mem);
 jvmtiError  CVMjvmtiDeallocate(unsigned char *mem);
 CVMBool     CVMjvmtiClassBeingRedefined(CVMExecEnv *ee, CVMClassBlock *cb);
-CVMClassBlock *CVMjvmtiClassInstance2ClassBlock(CVMExecEnv *ee,
-						CVMObject *obj);
+
+/* See also CVMjvmtiClassRef2ClassBlock() in jvmtiEnv.h.
+   CVMjvmtiClassObject2ClassBlock() takes a direct class object as input while
+   CVMjvmtiClassRef2ClassBlock() takes a class ref i.e.  jclass.
+*/
+CVMClassBlock *CVMjvmtiClassObject2ClassBlock(CVMExecEnv *ee, CVMObject *obj);
+
 void        CVMjvmtiRehash(void);
 CVMUint32   CVMjvmtiUniqueID();
 void        CVMjvmtiMarkAsObsolete(CVMMethodBlock *oldmb, CVMConstantPool *cp);
