@@ -23,11 +23,6 @@
  * information or have any questions.
  */
 
-/**
- * @file
- *
- * Interface for UTF8 string handling.
- */
 
 #ifndef _JAVAUTIL_STRING_H_
 #define _JAVAUTIL_STRING_H_
@@ -48,8 +43,8 @@
  * @param str string to search in
  * @param c character to look for
  * @param index index of the first occurence of <param>c</param>
- * @return <code>JAVACALL_OK</code> on success,
- *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
+ * @return JAVACALL_OK on success,
+ *         JAVACALL_FAIL or any other negative value otherwise.
  */
 javacall_result javautil_string_index_of(char* str, char c, /* OUT */ int* index);
 
@@ -59,8 +54,8 @@ javacall_result javautil_string_index_of(char* str, char c, /* OUT */ int* index
  * @param str string to search in
  * @param c character to look for
  * @param index index of the first occurence of <param>c</param>
- * @return <code>JAVACALL_OK</code> on success,
- *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
+ * @return JAVACALL_OK on success,
+ *         JAVACALL_FAIL or any other negative value otherwise.
  */
 javacall_result javautil_string_last_index_of(char* str, char c,
                                               /* OUT */ int* index);
@@ -71,8 +66,8 @@ javacall_result javautil_string_last_index_of(char* str, char c,
  * @param str1 first string
  * @param str2 second string
  *
- * @return <code>JAVACALL_TRUE</code> if equal,
- *         <code>JAVACALL_FALSE</code> otherwise.
+ * @return JAVACALL_TRUE if equal,
+ *         JAVACALL_FALSE otherwise.
  */
 javacall_bool javautil_string_equals(char* str1, char* str2);
 
@@ -86,8 +81,8 @@ javacall_bool javautil_string_equals(char* str1, char* str2);
  * @param begin the beginning index, inclusive.
  * @param end the ending index, exclusive.
  * @param dest the output string, will contain the specified substring
- * @return <code>JAVACALL_OK</code> on success,
- *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
+ * @return JAVACALL_OK on success,
+ *         JAVACALL_FAIL or any other negative value otherwise.
  */
 javacall_result javautil_string_substring(char* src, int begin, int end,
                                           /*OUT*/ char** dest);
@@ -96,8 +91,8 @@ javacall_result javautil_string_substring(char* src, int begin, int end,
  * Remove white spaces from the end of a string
  *
  * @param str string to trim
- * @return <code>JAVACALL_OK</code> on success,
- *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
+ * @return JAVACALL_OK on success,
+ *         JAVACALL_FAIL or any other negative value otherwise.
  */
 javacall_result javautil_string_trim(char* str);
 
@@ -106,8 +101,8 @@ javacall_result javautil_string_trim(char* str);
  *
  * @param str string representation of integer
  * @param number the integer value of str
- * @return <code>JAVACALL_OK</code> on success,
- *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
+ * @return JAVACALL_OK on success,
+ *         JAVACALL_FAIL or any other negative value otherwise.
  */
 javacall_result javautil_string_parse_int(char* str, int* number);
 
@@ -137,45 +132,40 @@ int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* strin
  *
  * @param prefix the beginning/prefix string
  * @param suffix the ending/suffix string
- * @return <code>Concantinated string</code> on success,
- *         <code>NULL</code> or any other negative value otherwise.
+ * @return Concantenated string on success,
+ *         NULL or any other negative value otherwise.
  */
-char* javautil_string_concatenate(const char* prefix, const char* suffix);
+char* javautil_string_strcat(const char* prefix, const char* suffix);
 
 /**
  * Convert a string to lower-case
  * 
- * @param s input string
- * @return pointer to statically allocated string holding the "s" string converted
- *		   to lower case.
+ * @param s string to be converted to lower-case
  */
-char* javautil_str_tolwc(char * s);
+void javautil_string_to_lower_case(char * s);
 
 /**
  * Convert a string to upper-case
  * 
- * @param s input string
- * @return pointer to statically allocated string holding the "s" string converted
- *		   to upper case.
+ * @param s string to be converted to upper-case
  */
-char* javautil_str_toupc(char * s);
+void javautil_string_to_upper_case(char * s);
 
 /**
  * Skip leading blanks
  * 
  * @param s input string
+ * 
  * @return a pointer to the first non blank character inside "s"
  */
-char* javautil_str_skip_leading_blanks(char * s);
+char* javautil_string_skip_leading_blanks(char* s);
 
 /**
  * Skip trailing blanks
  * 
  * @param s input string
- * @return a pointer to a STATICALLY ALLOCATED string containg the same string as "s"
- *			but without the trailing spaces.
  */
-char* javautil_str_skip_trailing_blanks(char * s);
+void javautil_string_skip_trailing_blanks(char * s);
 
 /**
  * Skip blanks in the beginning and at the end of the string
@@ -184,7 +174,7 @@ char* javautil_str_skip_trailing_blanks(char * s);
  * @return a pointer to a STATICALLY ALLOCATED string containg the same string as "s"
  *			but without the leading and trailing spaces.
  */
-char* javautil_str_strip(char * s) ;
+void javautil_string_strip(char * s);
 
 /**
  * Duplicates a string
@@ -192,7 +182,7 @@ char* javautil_str_strip(char * s) ;
  * @param s input string
  * @return a newly allocated string with the same content as s
  */
-char* javautil_str_duplicate(char *s);
+char* javautil_string_duplicate(char *s);
 
 
 #endif

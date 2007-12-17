@@ -1,8 +1,4 @@
 /*
- * $LastChangedDate: 2006-03-29 20:41:10 +0200 $  
- */
-
-/*
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -42,14 +38,14 @@
 
 
 typedef enum {
-	JAVACALL_APPLICATION_PROPERTY,
-	JAVACALL_INTERNAL_PROPERTY,
-	JAVACALL_NUM_OF_PROPERTIES
-} property_type;
+    JAVACALL_APPLICATION_PROPERTY,
+    JAVACALL_INTERNAL_PROPERTY,
+    JAVACALL_NUM_OF_PROPERTIES
+} javacall_property_type;
 
 
 /**
- * Gets the value of the specified property key in the specified
+ * Gets the value of the specified property in the specified
  * property set.
  *
  * @param key The key to search for
@@ -60,13 +56,14 @@ typedef enum {
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result javacall_get_property(const char* key, 
-									  property_type type,
-									  char** result);
+                                      javacall_property_type type,
+                                      char** result);
+
 
 
 
 /**
- * Sets a property key to the specified value in the application
+ * Sets a property value matching the key in the specified
  * property set.
  *
  * @param key The key to set
@@ -75,16 +72,16 @@ javacall_result javacall_get_property(const char* key,
  * existing key value if already defined <tt>replace_if_exist</tt>.
  * @param type The property type 
  * 
- * @return If found: <tt>JAVACALL_OK</tt>, otherwise
+ * @return Upon success <tt>JAVACALL_OK</tt>, otherwise
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result javacall_set_property(const char* key, const char* value, 
-                                       int replace_if_exist, property_type type);
+                                      int replace_if_exist, javacall_property_type type);
 
 /**
  * Initializes the configuration sub-system.
  *
- * @return <tt>JAVACALL_OK</tt> for success, JAVACALL_FAIL otherwise
+ * @return <tt>JAVACALL_OK</tt> for success, <tt>JAVACALL_FAIL</tt> otherwise
  */
 javacall_result javacall_initialize_configurations(void);
 

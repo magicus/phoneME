@@ -50,8 +50,8 @@ javacall_result javacall_initialize_configurations(void) {
     int file_name_len = sizeof(property_file_name)/sizeof(unsigned short);
     property_was_updated = 0;
 
-	handle = configdb_load(property_file_name, file_name_len);
-    if(handle == NULL) {
+    handle = configdb_load(property_file_name, file_name_len);
+    if (handle == NULL) {
         return JAVACALL_FAIL;
     }
     return JAVACALL_OK;
@@ -62,9 +62,9 @@ javacall_result javacall_initialize_configurations(void) {
  */
 void javacall_finalize_configurations(void) {
     int file_name_len = sizeof(property_file_name)/sizeof(unsigned short);
-    if(property_was_updated != 0) {
+    if (property_was_updated != 0) {
 #ifdef USE_PROPERTIES_FROM_FS
-		configdb_dump_ini(handle, property_file_name, file_name_len);
+        configdb_dump_ini(handle, property_file_name, file_name_len);
 #endif //USE_PROPERTIES_FROM_FS
     }
     configdb_free(handle);
@@ -72,7 +72,7 @@ void javacall_finalize_configurations(void) {
 }
 
 /**
- * Gets the value of the specified property key in the specified
+ * Gets the value of the specified property in the specified
  * property set.
  *
  * @param key The key to search for
@@ -83,35 +83,35 @@ void javacall_finalize_configurations(void) {
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result javacall_get_property(const char* key, 
-									  property_type type,
-									  char** result){
-	char* value = NULL;
+                                      javacall_property_type type,
+                                      char** result){
+    char* value = NULL;
     char* joined_key = NULL;
 
-	if (JAVACALL_APPLICATION_PROPERTY == type) {
-		joined_key = javautil_string_concatenate(application_prefix, key);
-	}
-	else if (JAVACALL_INTERNAL_PROPERTY == type) {
-		joined_key = javautil_string_concatenate(internal_prefix, key);
-	}
-
-	if (joined_key == NULL) {
-		*result = NULL;
-		return JAVACALL_FAIL;		
+    if (JAVACALL_APPLICATION_PROPERTY == type) {
+        joined_key = javautil_string_strcat(application_prefix, key);
+    } else if (JAVACALL_INTERNAL_PROPERTY == type) {
+        joined_key = javautil_string_strcat(internal_prefix, key);
     }
 
-	if (CONFIGDB_OK == configdb_getstring(handle, joined_key, NULL, result)) {		
-		return JAVACALL_OK;	
-	}
-	else {
-		*result = NULL;
-		return JAVACALL_FAIL;
-	}
+    if (joined_key == NULL) {
+        *result = NULL;
+        return JAVACALL_FAIL;       
+    }
+
+    if (CONFIGDB_OK == configdb_getstring(handle, joined_key, NULL, result)) {
+        javacall_free(joined_key);
+        return JAVACALL_OK; 
+    } else {
+        javacall_free(joined_key);
+        *result = NULL;
+        return JAVACALL_FAIL;
+    }
 }
 
 
 /**
- * Sets a property key to the specified value in the application
+ * Sets a property value matching the key in the specified
  * property set.
  *
  * @param key The key to set
@@ -120,32 +120,29 @@ javacall_result javacall_get_property(const char* key,
  * existing key value if already defined <tt>replace_if_exist</tt>.
  * @param type The property type 
  * 
- * @return If found: <tt>JAVACALL_OK</tt>, otherwise
+ * @return Upon success <tt>JAVACALL_OK</tt>, otherwise
  *         <tt>JAVACALL_FAIL</tt>
  */
 javacall_result javacall_set_property(const char* key, 
-                                    const char* value, 
-                                    int replace_if_exist,
-									property_type type) {
+                                      const char* value, 
+                                      int replace_if_exist,
+                                      javacall_property_type type) {
     configdb_result res;
     char* joined_key = NULL;
 
     if (JAVACALL_APPLICATION_PROPERTY == type) {
-		joined_key = javautil_string_concatenate(application_prefix, key);
-	}
-	else if (JAVACALL_INTERNAL_PROPERTY == type) {
-		joined_key = javautil_string_concatenate(internal_prefix, key);
-	}
+        joined_key = javautil_string_strcat(application_prefix, key);
+    } else if (JAVACALL_INTERNAL_PROPERTY == type) {
+        joined_key = javautil_string_strcat(internal_prefix, key);
+    }
 
-    /*
-      The default behaviour will be to replace the existing 
-      value of the key. 
-      If request is not to replace the value, than function should 
-      check if the key exist and if it is, not to set the value.
-    */
-    if(replace_if_exist == 0) { /* don't replace existing value */
-        if(CONFIGDB_FOUND == configdb_find_key(handle,joined_key)) {
-			/* key exist, don't set */
+    if (joined_key == NULL) {
+        return JAVACALL_FAIL;       
+    }
+
+    if (replace_if_exist == 0) { /* don't replace existing value */
+        if (CONFIGDB_FOUND == configdb_find_key(handle,joined_key)) {
+            /* key exist, don't set */
             javacall_free(joined_key);
         } else {/* key doesn't exist, set it */
             res = configdb_setstr(handle, joined_key, (char *)value);
@@ -154,9 +151,10 @@ javacall_result javacall_set_property(const char* key,
         }
     } else { /* replace existing value */
         res = configdb_setstr(handle, joined_key, (char *)value);
+        javacall_free(joined_key);
         property_was_updated=1;
     }
-	return JAVACALL_OK;
+    return JAVACALL_OK;
 }
 
 

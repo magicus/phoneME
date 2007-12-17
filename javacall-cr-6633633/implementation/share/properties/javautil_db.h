@@ -1,8 +1,4 @@
 /*
- * $LastChangedDate: 2006-03-29 20:41:10 +0200 $  
- */
- 
-/*
  *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -31,25 +27,25 @@
 #define _DB_H_
 
 /*---------------------------------------------------------------------------
-   								Includes
+                                Includes
  ---------------------------------------------------------------------------*/
 
 
 /*---------------------------------------------------------------------------
-  							Types
+                            Types
  ---------------------------------------------------------------------------*/
 
 typedef struct _string_db_ {
-	int				n ;		/** Number of entries in string_db */
-	int				size ;	/** Storage size */
-	char 		**	val ;	/** List of string values */
-	char 		**  key ;	/** List of string keys */
-	unsigned	 *	hash ;	/** List of hash values for keys */
+    int             n ;     /** Number of entries in string_db */
+    int             size ;  /** Storage size */
+    char        **  val ;   /** List of string values */
+    char        **  key ;   /** List of string keys */
+    unsigned     *  hash ;  /** List of hash values for keys */
 } string_db ;
 
 
 /*---------------------------------------------------------------------------
-  							Function prototypes
+                            Function prototypes
  ---------------------------------------------------------------------------*/
 
 /**
@@ -59,7 +55,7 @@ typedef struct _string_db_ {
  * @return the HASH value of the provided key. the return value should 
  *          be at least 32bit size
  */
-unsigned string_db_hash(char * key);
+javacall_int32 string_db_hash(char * key);
 
 /**
  * Creates a new database object
@@ -158,13 +154,14 @@ void string_db_setint(string_db * d, char * key, int val);
 void string_db_setdouble(string_db * d, char * key, double val);
 
 /**
- * Dump the content of the database to an open file
+ * Dump the content of the database to a file
  * 
  * @param d                database object allocated using string_db_new
  * @param unicodeFileName  output file name
  * @param fileNameLen      file name length
- * @return void
+ * @return  0 in case of success
+ *          -1 in case of some error
  */
-void string_db_dump(string_db * d, unsigned short* unicodeFileName, int fileNameLen);
+int string_db_dump(string_db * d, unsigned short* unicodeFileName, int fileNameLen);
 
 #endif

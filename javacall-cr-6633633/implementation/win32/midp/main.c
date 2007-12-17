@@ -69,7 +69,7 @@ static char controlLoopInfo[] = "\t To control:\n"
                                 "\t '4' to send Resume \n"
                                 "\t \n"
                                 "\t '0' to quit";
-                                
+
 unsigned char enable_java_debugger = 0;
 
 /* forward declaration */
@@ -80,12 +80,12 @@ LRESULT CALLBACK main_dlgproc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 HANDLE lifecycle_shutdown_event;
 
 DWORD WINAPI ThreadProc( LPVOID lpParam ) {
-     javacall_lcd_init();
-     CreateEmulatorWindow();
-     JavaTask();
-     SetEvent(lifecycle_shutdown_event);
-     javacall_print("Done JavaTask\n");
-     return 0; // Terminate the thread
+    javacall_lcd_init();
+    CreateEmulatorWindow();
+    JavaTask();
+    SetEvent(lifecycle_shutdown_event);
+    javacall_print("Done JavaTask\n");
+    return 0; // Terminate the thread
 }
 
 /*
@@ -101,56 +101,56 @@ javacall_bool mainArgumentsHandle(int argc, char *argv[]) {
         /* no arguments */
         javanotify_start_java_with_arbitrary_args(argc, argv);
 
-    } else if((argc == 2) && (strcmp(argv[1], "manager") == 0)) {
+    } else if ((argc == 2) && (strcmp(argv[1], "manager") == 0)) {
 
         /* appmanager.Manager */
         javacall_print("main() Starting Manager\n");
         javanotify_start();
 
-    } else if((argc == 2) && (strcmp(argv[1], "help") == 0)) {
+    } else if ((argc == 2) && (strcmp(argv[1], "help") == 0)) {
 
         javacall_print(usage);
         return JAVACALL_FAIL;
 
-    } else if((argc == 2) && (strcmp(argv[1], "loop") == 0)) {
+    } else if ((argc == 2) && (strcmp(argv[1], "loop") == 0)) {
         javacall_print("main() Device emulation mode. No UI will be displayed till start event arrives.\n");
-    } else if((argc == 2) && (strcmp(argv[1], "tck") == 0)) {
+    } else if ((argc == 2) && (strcmp(argv[1], "tck") == 0)) {
 
         /* installer.AutoTester */
         javacall_print("main() Starting AutoTester without url\n");
         javanotify_start_tck("none", JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX);
 
-    } else if(((argc == 3) || (argc == 4)) && (strcmp(argv[1], "tck") == 0)) {
+    } else if (((argc == 3) || (argc == 4)) && (strcmp(argv[1], "tck") == 0)) {
 
         /* installer.AutoTester */
 
-        if(argc == 3) {
+        if (argc == 3) {
             javacall_print("main() Starting AutoTester with url and default domain.\n");
             //javanotify_start_tck(argv[2], JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX);
 //## here is a stub.
 //## actually JAVACALL_LIFECYCLE_TCK_DOMAIN_IDENTIFIED should be added accordingly to com/sun/midp/security/Permissions.java
 //## None of trusted/untrusted/maximum/minimum permits midlet to use wma2.0 (MMS_SERVER permission)
             javanotify_start_tck(argv[2], -1);
-        } else if(argc == 4){
+        } else if (argc == 4) {
 
             javacall_print("main() Starting AutoTester with url and ");
 
-            if((strcmp(argv[3], "trusted")) == 0) {
+            if ((strcmp(argv[3], "trusted")) == 0) {
 
                 javacall_print("trusted domain.\n");
                 javanotify_start_tck(argv[2], JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED);
 
-            } else if((strcmp(argv[3], "untrusted")) == 0) {
+            } else if ((strcmp(argv[3], "untrusted")) == 0) {
 
                 javacall_print("untrusted domain.\n");
                 javanotify_start_tck(argv[2], JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED);
 
-            } else if((strcmp(argv[3], "maximum")) == 0) {
+            } else if ((strcmp(argv[3], "maximum")) == 0) {
 
                 javacall_print("maximum domain.\n");
                 javanotify_start_tck(argv[2], JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX);
 
-            } else if((strcmp(argv[3], "minimum")) == 0) {
+            } else if ((strcmp(argv[3], "minimum")) == 0) {
 
                 javacall_print("minimum domain.\n");
                 javanotify_start_tck(argv[2], JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN);
@@ -163,13 +163,13 @@ javacall_bool mainArgumentsHandle(int argc, char *argv[]) {
             }
         } /* end of else if */
 
-    } else if((argc == 3) && (strcmp(argv[1], "install_url") == 0)) {
+    } else if ((argc == 3) && (strcmp(argv[1], "install_url") == 0)) {
 
         /* installer.GraphicalInstaller URL */
         javacall_print("main() Starting Graphical Installer from URL\n");
         javanotify_install_midlet(argv[2]);
 
-    } else if((argc == 3) && (strcmp(argv[1], "install_file") == 0)) {
+    } else if ((argc == 3) && (strcmp(argv[1], "install_file") == 0)) {
 
         /* installer.GraphicalInstaller FILE */
         /*
@@ -258,17 +258,17 @@ javacall_bool mainArgumentsHandle(int argc, char *argv[]) {
     } else if (strcmp(argv[1], "invoke") == 0) {
         // runMidlet invoke <handlerID> <url> [action]
         char *handlerID, *url, *action = NULL;
-        switch(argc) {
-            case 5:
-                action = argv[4];
-            case 4:
-                url = argv[3];
-                handlerID = argv[2];
-                break;
-            default:
-                javacall_print("invoke: wrong number of arguments\n");
-                javacall_print(usage);
-                return JAVACALL_FAIL;
+        switch (argc) {
+        case 5:
+            action = argv[4];
+        case 4:
+            url = argv[3];
+            handlerID = argv[2];
+            break;
+        default:
+            javacall_print("invoke: wrong number of arguments\n");
+            javacall_print(usage);
+            return JAVACALL_FAIL;
         }
         javanotify_start_handler(handlerID, url, action);
     } else {
@@ -299,15 +299,13 @@ int main(int argc, char *main_argv[]) {
     if ((argc == 2) && (0 == strcmp(argv[1], "dlg"))) {
         /* show UI modal dialog box to request main arguments */
         if (DialogBox(
-                GetModuleHandle(NULL),
-                MAKEINTRESOURCE(IDD_DIALOG_MAIN_ARGS),
-                NULL, main_dlgproc))
-        {
+                     GetModuleHandle(NULL),
+                     MAKEINTRESOURCE(IDD_DIALOG_MAIN_ARGS),
+                     NULL, main_dlgproc)) {
             maindlg_argv[0] = argv[0];
             argv = maindlg_argv;
             argc = maindlg_argc;
-        }
-        else {
+        } else {
             argc = 1;
         }
     }
@@ -338,7 +336,7 @@ int main(int argc, char *main_argv[]) {
             continue;
         } else if (1 < argc && 0 == strcmp(argv[1], "phonenumber")) {
             _phonenum = argv[2];
-	     argc -= 2;
+            argc -= 2;
             argv += 2;
             continue;
         } else {
@@ -366,23 +364,22 @@ int main(int argc, char *main_argv[]) {
     */
 
     javacall_events_init();
-	javacall_initialize_configurations();
+    javacall_initialize_configurations();
 
 #if !ENABLE_MULTIPLE_INSTANCES
-    if (isSecondaryInstance())
-    {
+    if (isSecondaryInstance()) {
         enqueueInterprocessMessage(argc, argv);
         return 0;
     }
 #endif
 
     hJavaThread = CreateThread(
-                      NULL,              // default security attributes
-                      0,                 // use default stack size
-                      ThreadProc,        // thread function
-                      0,                 // argument to thread function
-                      0,                 // use default creation flags
-                      &dwJavaThreadId);   // returns the thread identifier
+                              NULL,              // default security attributes
+                              0,                 // use default stack size
+                              ThreadProc,        // thread function
+                              0,                 // argument to thread function
+                              0,                 // use default creation flags
+                              &dwJavaThreadId);   // returns the thread identifier
 
 
     lifecycle_shutdown_event = CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -394,8 +391,7 @@ int main(int argc, char *main_argv[]) {
 #if ENABLE_MULTIPLE_INSTANCES
     WaitForSingleObject(lifecycle_shutdown_event, INFINITE);
 #else
-    while (WaitForSingleObject(lifecycle_shutdown_event, 50) != WAIT_OBJECT_0)
-    {
+    while (WaitForSingleObject(lifecycle_shutdown_event, 50) != WAIT_OBJECT_0) {
         /* Check for Interprocess event */
         int iarvc, i;
         char** iargv;
@@ -403,7 +399,7 @@ int main(int argc, char *main_argv[]) {
         iarvc = dequeueInterprocessMessage(&iargv);
         if (iarvc) {
             javacall_print("main(): Secondary instance parameters:\n");
-            for(i = 0; i < iarvc; i++) {
+            for (i = 0; i < iarvc; i++) {
                 javacall_print("\t");javacall_print(iargv[i]);javacall_print("\n");
             }
 
@@ -423,16 +419,16 @@ void main_install_content(int argc, char *argv[])
     javacall_bool isJadFile, isSilent;
 
     MultiByteToWideChar(
-        CP_UTF8, 0,
-        argv[0], -1,
-        descFilePath, sizeof(descFilePath) / sizeof(javacall_utf16));
+                       CP_UTF8, 0,
+                       argv[0], -1,
+                       descFilePath, sizeof(descFilePath) / sizeof(javacall_utf16));
 
     descFilePathLen = (wcslen(descFilePath) + 1) * sizeof(javacall_utf16);
     isJadFile = (argc > 2) && (strcmp(argv[2], "mimejad") == 0);
     isSilent = JAVACALL_FALSE;
 
     javanotify_install_content(argv[1],
-        descFilePath, descFilePathLen, isJadFile, isSilent);
+                               descFilePath, descFilePathLen, isJadFile, isSilent);
 }
 
 /*
@@ -459,10 +455,10 @@ static const UINT maindlg_items[] = {
 #define INDX_TRUST      3
 
 static const int maindlg_enable[maindlg_course_cnt][maindlg_items_cnt] = {
-    { 1, 1, 1, 1, 0, 0, 0, 1 }, // tck
-    { 0, 0, 0, 0, 1, 1, 1, 1 }, // install_file
-    { 1, 1, 0, 0, 0, 0, 0, 1 }, // install_url
-    { 1, 1, 0, 0, 0, 0, 0, 1 }  // install_wap
+    { 1, 1, 1, 1, 0, 0, 0, 1}, // tck
+    { 0, 0, 0, 0, 1, 1, 1, 1}, // install_file
+    { 1, 1, 0, 0, 0, 0, 0, 1}, // install_url
+    { 1, 1, 0, 0, 0, 0, 0, 1}  // install_wap
 };
 
 static const char* maindlg_trustdmn[] = {
@@ -477,17 +473,16 @@ LRESULT CALLBACK main_dlgproc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 {
     int i, j, itemId = LOWORD(wParam), msgId = HIWORD(wParam);
 
-    switch (message)
-    {
+    switch (message) {
     case WM_INITDIALOG:
 
         for (i = 0; i < maindlg_course_cnt; i++) {
             SendDlgItemMessage(hDlg, IDC_LIST_MODE,
-                LB_ADDSTRING, 0, (LPARAM) maindlg_course[i]);
+                               LB_ADDSTRING, 0, (LPARAM) maindlg_course[i]);
         }
         for (i = 0; i < maindlg_trustdmn_cnt; i++) {
             SendDlgItemMessage(hDlg, IDC_COMBO_TRUST_HOST,
-                CB_ADDSTRING, 0, (LPARAM) maindlg_trustdmn[i]);
+                               CB_ADDSTRING, 0, (LPARAM) maindlg_trustdmn[i]);
         }
         SendDlgItemMessage(hDlg, IDC_LIST_MODE, LB_SETCURSEL, 0, 0);
         SendDlgItemMessage(hDlg, IDC_COMBO_TRUST_HOST, CB_SETCURSEL, 0, 0);
@@ -522,13 +517,13 @@ LRESULT CALLBACK main_dlgproc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
             }
 
             len = SendDlgItemMessage(hDlg, IDC_LIST_MODE, LB_GETTEXT,
-                i, (LPARAM) maindlg_args + lenbuf);
+                                     i, (LPARAM) maindlg_args + lenbuf);
             maindlg_argv[maindlg_argc++] = maindlg_args + lenbuf;
             lenbuf += len + 1;
 
             if (maindlg_enable[i][INDX_PATH]) {
                 len = SendDlgItemMessage(hDlg, IDC_EDIT_LOCAL_FILE, WM_GETTEXT,
-                    sizeof(maindlg_args) - lenbuf, (LPARAM) maindlg_args + lenbuf);
+                                         sizeof(maindlg_args) - lenbuf, (LPARAM) maindlg_args + lenbuf);
                 if (len) {
                     maindlg_argv[maindlg_argc++] = maindlg_args + lenbuf;
                     lenbuf += len + 1;
@@ -537,7 +532,7 @@ LRESULT CALLBACK main_dlgproc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 
             if (maindlg_enable[i][INDX_URL]) {
                 len = SendDlgItemMessage(hDlg, IDC_EDIT_URL, WM_GETTEXT,
-                    sizeof(maindlg_args) - lenbuf, (LPARAM) maindlg_args + lenbuf);
+                                         sizeof(maindlg_args) - lenbuf, (LPARAM) maindlg_args + lenbuf);
                 if (len) {
                     maindlg_argv[maindlg_argc++] = maindlg_args + lenbuf;
                     lenbuf += len + 1;
@@ -546,7 +541,7 @@ LRESULT CALLBACK main_dlgproc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 
             if (maindlg_enable[i][INDX_TRUST]) {
                 len = SendDlgItemMessage(hDlg, IDC_COMBO_TRUST_HOST, WM_GETTEXT,
-                    sizeof(maindlg_args) - lenbuf, (LPARAM) maindlg_args + lenbuf);
+                                         sizeof(maindlg_args) - lenbuf, (LPARAM) maindlg_args + lenbuf);
                 if (len) {
                     maindlg_argv[maindlg_argc++] = maindlg_args + lenbuf;
                     lenbuf += len + 1;
@@ -585,30 +580,30 @@ LRESULT CALLBACK main_dlgproc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
             length = SendMessage(wndPath, WM_GETTEXT, MAX_PATH, (LPARAM) path);
             if (length > 0) {
                 HANDLE hFile = CreateFile(path, FILE_READ_DATA, FILE_SHARE_READ, NULL,
-					OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
+                                          OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
                 if (hFile == INVALID_HANDLE_VALUE) {
                     path[0] = 0;
                 }
                 CloseHandle(hFile);
             }
-            
+
             if (GetOpenFileName(&ofn) && *path) {
                 SendMessage(wndPath, WM_SETTEXT, 0, (LPARAM) path);
             }
             break;
         }
 
-    
+
         if ((itemId == IDC_LIST_MODE) && (msgId == LBN_SELCHANGE)) {
- 
-                i = SendDlgItemMessage(hDlg, IDC_LIST_MODE, LB_GETCURSEL, 0, 0);
-                for (j = 0; j < maindlg_items_cnt; j++) {
-                    EnableWindow(GetDlgItem(hDlg, maindlg_items[j]),
-                        maindlg_enable[i][j]);
-                }
+
+            i = SendDlgItemMessage(hDlg, IDC_LIST_MODE, LB_GETCURSEL, 0, 0);
+            for (j = 0; j < maindlg_items_cnt; j++) {
+                EnableWindow(GetDlgItem(hDlg, maindlg_items[j]),
+                             maindlg_enable[i][j]);
+            }
         }
         // End of case WM_COMMAND
-    
+
     } // End of switch(message)
 
     return 0;

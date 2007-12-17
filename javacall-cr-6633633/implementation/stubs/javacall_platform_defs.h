@@ -34,25 +34,25 @@
 #ifdef __cplusplus
 extern "C" {
 #endif 
-    
+
 
 /**
  * @typedef javacall_utf16
  * @brief general unicode string type
  */
-typedef unsigned short javacall_utf16;
+    typedef unsigned short javacall_utf16;
 
 /**
  * @typedef javacall_int32
  * @brief 32 bit interger type
  */
-typedef signed int javacall_int32;
+    typedef signed int javacall_int32;
 
 /**
  * @typedef javacall_int64
  * @brief 64 bit interger type
  */
-typedef __int64 javacall_int64;  // This type shall be redefined for non MSC compiler!!
+    typedef __int64 javacall_int64;  // This type shall be redefined for non MSC compiler!!
 
 /**
  * @def JAVACALL_MAX_FILE_NAME_LENGTH
