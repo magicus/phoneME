@@ -1421,13 +1421,15 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	    // hard case.
 	    String myName = c.getNativeName()+"_gcBits";
 	    int    nWords = (nslots+31)/32;
-	    classOut.print( "STATIC const struct { CVMUint16 maplen; CVMUint32 map["+nWords+"]; } ");
+	    classOut.print( "STATIC const struct { " + 
+			    "CVMUint16 maplen; CVMUint32 map["+nWords+"]; } ");
 	    classOut.print( myName );
 	    classOut.print( " = { ");
 	    classOut.print( nWords );
 	    classOut.print( ",\n    {" );
 	    for ( int i = 0; i < nslots; i+= 32 ){
-		classOut.print( "0x"+Integer.toHexString(GCbits( ft, i, Math.min( i+32, nslots))) );
+		classOut.print("0x"+Integer.toHexString(GCbits(ft, i,
+						    Math.min( i+32, nslots))));
 		classOut.print(", ");
 	    }
 	    classOut.println("} };");
@@ -1451,7 +1453,7 @@ public class CVMWriter implements CoreImageWriter, Const, CVMConst {
 	int innerClassCount = (c.ci.innerClassAttr == null)
 			    ? (0)
 			    : (c.ci.innerClassAttr.getInnerClassCount());
-	String runtimeFlags = (c.hasStaticInitializer || c.nStaticWords > 0)
+	String runtimeFlags = (c.hasStaticInitializer)
 			    ? ("CVM_ROMCLASS_WCI_INIT")
 			    : ("CVM_ROMCLASS_INIT");
 	MethodInfo vtbl[]   = c.ci.methodtable;

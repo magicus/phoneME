@@ -29,6 +29,9 @@
 #define _INCLUDED_JVMTICAPABILITIES_H
 
 void CVMjvmtiInitializeCapabilities();
+void CVMjvmtiDestroyCapabilities();
+#define CVMjvmtiDestroyCapabilities() /* Nothing to do. */
+
 void CVMjvmtiGetPotentialCapabilities(const jvmtiCapabilities *current, 
                                 const jvmtiCapabilities *prohibited, 
                                 jvmtiCapabilities *result);
@@ -39,6 +42,7 @@ jvmtiError CVMjvmtiAddCapabilities(const jvmtiCapabilities *current,
 void CVMjvmtiRelinquishCapabilities(const jvmtiCapabilities *current,
                              const jvmtiCapabilities *unwanted, 
                              jvmtiCapabilities *result);
-void CVMjvmtiCopyCapabilities(const jvmtiCapabilities *from, jvmtiCapabilities *to);
+void CVMjvmtiCopyCapabilities(const jvmtiCapabilities *from,
+			      jvmtiCapabilities *to);
 
 #endif /* _INCLUDED_JVMTICAPABILITIES_H */

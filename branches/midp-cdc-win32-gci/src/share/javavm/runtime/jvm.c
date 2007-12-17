@@ -1899,7 +1899,7 @@ static void start_func(void *arg)
     }
 
 #ifdef CVM_JVMTI
-    if (CVMjvmtiEnabled()) {
+    if (CVMjvmtiIsEnabled()) {
 	CVMjvmtiDebugEventsEnabled(ee) = CVM_TRUE;
     }
 #endif

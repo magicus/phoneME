@@ -832,7 +832,7 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
      * With JVMTI, we do the instrumentation when an agent connects
      */
 #ifdef CVM_JVMTI
-    gs->jvmtiDebuggingFlag = options->debugging;
+    CVMjvmtiSetIsInDebugMode(options->debugging);
 #endif    
 
 #ifdef CVM_LVM /* %begin lvm */
@@ -870,6 +870,19 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
 	    return CVM_FALSE;
 	}
     }
+
+#ifdef CVM_TRACE_ENABLED
+    /*
+     * Turn off all debugging flags by default.
+     */
+
+    if (options->traceFlagsStr != NULL) {
+	gs->debugFlags = strtol(options->traceFlagsStr, NULL, 0);
+    } else {
+	gs->debugFlags = 0;
+    }
+    CVMtraceInit();
+#endif /* CVM_TRACE_ENABLED */
 
     if (!CVMinitExecEnv(ee, ee, NULL)) {
 	return CVM_FALSE;
@@ -1079,19 +1092,6 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
 #endif /* CVM_DEBUG */
 #endif /* CVM_DEBUG_STACKTRACES */
 
-#ifdef CVM_TRACE_ENABLED
-    /*
-     * Turn off all debugging flags by default.
-     */
-
-    if (options->traceFlagsStr != NULL) {
-	gs->debugFlags = strtol(options->traceFlagsStr, NULL, 0);
-    } else {
-	gs->debugFlags = 0;
-    }
-    CVMtraceInit();
-#endif /* CVM_TRACE_ENABLED */
-
     /* For GC statistics */
     gs->measureGC = CVM_FALSE;
     gs->totalGCTime = CVMint2Long(0);
@@ -1153,7 +1153,7 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
 
 #ifdef CVM_JVMTI
     /* jvmti global variables initialization */
-    CVMjvmtiStaticsInit(&gs->jvmtiStatics);
+    CVMjvmtiInitializeGlobals(&gs->jvmti);
 #endif
 
 #ifdef CVM_JVMPI
@@ -1200,6 +1200,11 @@ void CVMdestroyVMGlobalState(CVMExecEnv *ee, CVMGlobalState *gs)
 
 #ifdef CVM_JVMPI
     CVMjvmpiDestroyGlobals(ee, &gs->jvmpiRecord);
+#endif
+
+#ifdef CVM_JVMTI
+    /* Free jvmti global variables */
+    CVMjvmtiDestroyGlobals(&gs->jvmti);
 #endif
 
     /* 
@@ -1303,11 +1308,6 @@ void CVMdestroyVMGlobalState(CVMExecEnv *ee, CVMGlobalState *gs)
     if (gs->appClassPath.pathString != NULL) {
         free(gs->appClassPath.pathString);
     }
-#endif
-
-#ifdef CVM_JVMTI
-    /* Free jvmti global variables */
-    CVMjvmtiStaticsDestroy(&gs->jvmtiStatics);
 #endif
 
     CVMdestroyJNIStatics();

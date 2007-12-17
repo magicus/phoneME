@@ -125,6 +125,8 @@ CVMinitJNIJavaVM(CVMJNIJavaVM *);
 extern void 
 CVMdestroyJNIJavaVM(CVMJNIJavaVM *);
 
+#ifdef CVM_JVMTI
+
 /* NOTE: This function should ONLY be called by routines whose
    task it is to instrument the JNI vector somehow (currently only
    CVMjvmtiInstrumentJNINativeInterface, though if we incorporated the
@@ -134,6 +136,8 @@ CVMdestroyJNIJavaVM(CVMJNIJavaVM *);
    const in jni_impl.c. */
 extern struct JNINativeInterface *
 CVMjniGetInstrumentableJNINativeInterface();
+
+#endif /* CVM_JVMTI */
 
 /*
  * Prototypes for JNI routines. These are only for use by other parts

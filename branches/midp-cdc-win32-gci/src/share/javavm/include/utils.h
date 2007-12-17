@@ -99,16 +99,19 @@ CVMrestoreDebugFlags(CVMInt32 flags, CVMInt32 oldvalue);
     (CVMcheckDebugFlags(flags) != 0 ? CVMconsolePrintf x : (void)0)
 #define CVMtraceExec(flags, x) \
     if (CVMcheckDebugFlags(flags) != 0) x
+#define CVMeeTrace(flags, x)   \
+    (((ee)->debugFlags & (flags)) != 0 ? CVMconsolePrintf x : (void)0)
 #else
 #define CVMtrace(flags, x)
 #define CVMtraceExec(flags, x)
+#define CVMeeTrace(flags, x)
 #endif /* CVM_TRACE */
 
-#define CVMtraceOpcode(x) 	CVMtrace(CVM_DEBUGFLAG(TRACE_OPCODE), x)
+#define CVMtraceOpcode(x) 	CVMeeTrace(CVM_DEBUGFLAG(TRACE_OPCODE), x)
 #define CVMtraceStatus(x) 	CVMtrace(CVM_DEBUGFLAG(TRACE_STATUS), x)
-#define CVMtraceFastLock(x) 	CVMtrace(CVM_DEBUGFLAG(TRACE_FASTLOCK), x)
-#define CVMtraceDetLock(x)   	CVMtrace(CVM_DEBUGFLAG(TRACE_DETLOCK), x)
-#define CVMtraceSysMutex(x)    	CVMtrace(CVM_DEBUGFLAG(TRACE_MUTEX), x)
+#define CVMtraceFastLock(x) 	CVMeeTrace(CVM_DEBUGFLAG(TRACE_FASTLOCK), x)
+#define CVMtraceDetLock(x)   	CVMeeTrace(CVM_DEBUGFLAG(TRACE_DETLOCK), x)
+#define CVMtraceSysMutex(x)    	CVMeeTrace(CVM_DEBUGFLAG(TRACE_MUTEX), x)
 #define CVMtraceCS(x)        	CVMtrace(CVM_DEBUGFLAG(TRACE_CS), x)
 #define CVMtraceGcStartStop(x)  CVMtrace(CVM_DEBUGFLAG(TRACE_GCSTARTSTOP) | \
 					 CVM_DEBUGFLAG(TRACE_GCSCAN), x)
