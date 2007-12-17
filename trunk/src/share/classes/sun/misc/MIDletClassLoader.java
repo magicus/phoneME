@@ -175,6 +175,7 @@ public class MIDletClassLoader extends URLClassLoader {
     loadClass(String classname, boolean resolve) throws ClassNotFoundException
     {
         Class resultClass;
+        Throwable err = null;
         int i = classname.lastIndexOf('.');
 
         if (i != -1) {
@@ -201,9 +202,7 @@ public class MIDletClassLoader extends URLClassLoader {
                 resultClass = implementationClassLoader.loadClass(
                     classname, false, enableFilter);
             } catch (ClassNotFoundException e) {
-                resultClass = null;
             } catch (NoClassDefFoundError e) {
-                resultClass = null;
             }
         }
 
@@ -211,9 +210,9 @@ public class MIDletClassLoader extends URLClassLoader {
             try {
                 resultClass = loadFromUrl(classname);
             } catch (ClassNotFoundException e) {
-                resultClass = null;
+                err = e;
             } catch (NoClassDefFoundError e) {
-                resultClass = null;
+                err = e;
             }
         }
 
@@ -226,7 +225,15 @@ public class MIDletClassLoader extends URLClassLoader {
         }
 
         if (resultClass == null) {
-            throw new ClassNotFoundException(classname);
+            if (err == null) {
+                throw new ClassNotFoundException(classname);
+            } else {
+                if (err instanceof ClassNotFoundException) {
+                    throw (ClassNotFoundException)err;
+                } else {
+                    throw (NoClassDefFoundError)err;
+                }
+            }
         }
 
         if (resolve) {
