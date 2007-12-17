@@ -824,7 +824,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         // Open socket connection.
         HttpStreamConnection hsc = null;
-        if (proxyHost == null) {
+        if ((proxyHost == null)
+                || ("127.0.0.1".equals(host))
+                || ("localhost".equals(host))) {
             hsc = new HttpStreamConnection(host, port);
         } else {
             hsc = new HttpStreamConnection(proxyHost, proxyPort);
@@ -849,7 +851,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         String reqLine ;
 
-        if (proxyHost == null) {
+        if ((proxyHost == null)
+                || ("127.0.0.1".equals(host))
+                || ("localhost".equals(host))) {
             reqLine = method + " " + getFile()
                 + (getRef() == null ? "" : "#" + getRef())
                 + (getQuery() == null ? "" : "?" + getQuery())
@@ -891,7 +895,9 @@ public class Protocol extends ConnectionBase implements HttpConnection {
 
         String reqLine ;
         
-	if (proxyHost == null) {
+	if ((proxyHost == null)
+                || ("127.0.0.1".equals(host))
+                || ("localhost".equals(host))) {
             reqLine = method + " " + getFile()
                 + (getRef() == null ? "" : "#" + getRef())
                 + (getQuery() == null ? "" : "?" + getQuery())
