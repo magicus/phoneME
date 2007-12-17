@@ -42,34 +42,9 @@ extern "C" {
 #define MAX_STR_LEN	1024
 
 #ifndef min
-  #define min(x,y)        (x > y ? y : x)
+#define min(x,y)        (x > y ? y : x)
 #endif
 
-/** Horizontal Tab - Unicode character 0x09. */
-#define  HT   0x09
-
-/**
- * Looks for a white space (SPACE and TAB).
- */
-#define IS_CONTENT_A_WHITE_SPACE(c) ((*(c)==SP) || (*(c)==HT))
-
-/**
- * Looks for a white space (SPACE and TAB).
- */
-//#define IS_CHAR_A_WHITE_SPACE(c) (((c)==SP) || ((c)==HT))
-
-/** SPace - Unicode character 0x20. */
-#define  SP   0x20
-
-/**
- * Verify that pointer is not NULL
- */
-#define CONTENT_NOT_NULL(c) (*(c))
-
-/**
- * Check if pointer is a space
- */
-#define IS_SPACE(c)   (CONTENT_NOT_NULL(c) && (IS_CONTENT_A_WHITE_SPACE(c)))
 
 /**
  * looks for first occurrence of <param>c</param> within <param>str</param>
@@ -273,17 +248,15 @@ javacall_result javautil_string_parse_int(char* str, int* number) {
 int javautil_strnicmp(const char* string1, const char* string2, size_t nchars)
 {
     unsigned char ch1, ch2;
-    do
-    {
+    do {
         if (nchars-- == 0) {
             return 0;
         }
         ch1 = (unsigned char) *string1++;
         ch2 = (unsigned char) *string2++;
 
-        if (ch1 != ch2)
-        {
-            if (((ch1 ^ ch2) != 0x20) || !ISALFA(ch1))  {
+        if (ch1 != ch2) {
+            if (((ch1 ^ ch2) != 0x20) || !ISALFA(ch1)) {
                 break;
             }
         }
@@ -295,14 +268,12 @@ int javautil_strnicmp(const char* string1, const char* string2, size_t nchars)
 int javautil_stricmp(const char* string1, const char* string2)
 {
     unsigned char ch1, ch2;
-    do
-    {
+    do {
         ch1 = (unsigned char) *string1++;
         ch2 = (unsigned char) *string2++;
 
-        if (ch1 != ch2)
-        {
-            if (((ch1 ^ ch2) != 0x20) || !ISALFA(ch1))  {
+        if (ch1 != ch2) {
+            if (((ch1 ^ ch2) != 0x20) || !ISALFA(ch1)) {
                 break;
             }
         }
@@ -314,17 +285,15 @@ int javautil_stricmp(const char* string1, const char* string2)
 int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* string2, size_t nchars)
 {
     unsigned short ch1, ch2;
-    do
-    {
+    do {
         if (nchars-- == 0) {
             return 0;
         }
         ch1 = *string1++;
         ch2 = *string2++;
 
-        if (ch1 != ch2)
-        {
-            if (((ch1 ^ ch2) != 0x20) || !ISALFA(ch1))  {
+        if (ch1 != ch2) {
+            if (((ch1 ^ ch2) != 0x20) || !ISALFA(ch1)) {
                 break;
             }
         }
@@ -340,15 +309,14 @@ int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* strin
  *
  * @param prefix the beginning/prefix string
  * @param suffix the ending/suffix string
- * @return <code>Concantinated string</code> on success,
- *         <code>NULL</code> or any other negative value otherwise.
+ * @return concantenated string on success, NULL otherwise.
  */
-char* javautil_string_concatenate(const char* prefix, const char* suffix) {
+char* javautil_string_strcat(const char* prefix, const char* suffix) {
     char *joined_string = NULL;
     int len1 = 0;
     int len2 = 0;
 
-    if((prefix == NULL) || (suffix == NULL)) {
+    if ((prefix == NULL) || (suffix == NULL)) {
         return NULL;
     }
 
@@ -356,13 +324,14 @@ char* javautil_string_concatenate(const char* prefix, const char* suffix) {
     len2 = strlen(suffix);
 
     joined_string = javacall_malloc((len1+len2+1));
-    if(joined_string == NULL) {
+    if (joined_string == NULL) {
         return NULL;
     }
-    memset(joined_string, 0, (len1+len2+1));
+    
 
-    memcpy(joined_string,prefix,len1);
-    memcpy(joined_string+len1,suffix,len2);
+    memcpy(joined_string, prefix, len1);
+    memcpy(joined_string+len1, suffix, len2);
+    joined_string[len1+len2] = '\0';
 
     return joined_string;
 }
@@ -370,103 +339,74 @@ char* javautil_string_concatenate(const char* prefix, const char* suffix) {
 /**
  * Convert a string to lower-case
  * 
- * @param s input string
- * @return pointer to statically allocated string holding the "s" string converted
- *		   to lower case.
+ * @param s string to be converted to lower-case
  */
-char* javautil_str_tolwc(char * s) {
-    static char l[MAX_STR_LEN+1];
-    int i ;
-
-    if(s==NULL) return NULL ;
-    memset(l, 0, MAX_STR_LEN+1);
-    i=0 ;
-    while(s[i] && i<MAX_STR_LEN) {
-        l[i] = (char)tolower((int)s[i]);
-        i++ ;
+void javautil_string_to_lower_case(char * s) {
+    if (s == NULL) {
+        return;
     }
-    l[MAX_STR_LEN]=(char)0;
-    return l ;
+
+    while (*s != '\0') {
+        *s = tolower(*s);
+        s++;
+    }    
 }
-
-
 
 /**
  * Convert a string to upper-case
  * 
- * @param s input string
- * @return pointer to statically allocated string holding the "s" string converted
- *		   to upper case.
+ * @param s string to be converted to upper-case
  */
-char* javautil_str_toupc(char * s) {
-    static char l[MAX_STR_LEN+1];
-    int i ;
+void javautil_string_to_upper_case(char* s) {
 
-    if(s==NULL) return NULL ;
-    memset(l, 0, MAX_STR_LEN+1);
-    i=0 ;
-    while(s[i] && i<MAX_STR_LEN) {
-        l[i] = (char)toupper((int)s[i]);
-        i++ ;
+    if (s == NULL) {
+        return;
     }
-    l[MAX_STR_LEN]=(char)0;
-    return l ;
-}
 
+    while (*s != '\0') {
+        *s = toupper(*s);
+        s++;
+    }    
+}
 
 
 /**
  * Skip leading blanks
  * 
  * @param s input string
+ * 
  * @return a pointer to the first non blank character inside "s"
  */
-char* javautil_str_skip_leading_blanks(char * s) {
-    char * skip = s;
-    if(s==NULL) {
-        return NULL ;
+char* javautil_string_skip_leading_blanks(char* s) {
+
+    if (s == NULL) {
+        return NULL;
     }
 
-    //while(isspace((int)*skip) && *skip)
-    while(IS_SPACE(skip)) {
-        skip++;
+    while (*s == ' ' || *s == '\t') {
+        s++;
     }
-    return skip ;
-} 
 
-
+    return s;
+}
 
 /**
  * Skip trailing blanks
  * 
  * @param s input string
- * @return a pointer to a STATICALLY ALLOCATED string containg the same string as "s"
- *			but without the trailing spaces.
  */
-char* javautil_str_skip_trailing_blanks(char * s) {
-    static char l[MAX_STR_LEN+1];
-    char * last ;
-    int len, copy_len;
+void javautil_string_skip_trailing_blanks(char * s) {
 
-    if(s==NULL) return NULL ;
-    memset(l, 0, MAX_STR_LEN+1);
-    len = strlen(s);
-    copy_len = min(len,MAX_STR_LEN-1);
-    strncpy(l, s, copy_len+1);
-    l[copy_len] = '\0';
-    last = l + copy_len;
-    while(last > l) {
-        //if(!isspace((int)*(last-1)))
-        if(!IS_SPACE((last-1))) {
-            break ;
-        }
-        last -- ;
+    if (s == NULL) {
+        return;
     }
-    *last = (char)0;
-    return l ;
+
+    while (*s != '\0' && *s != ' ' && *s != '\t') {
+        s++;
+    }
+
+    *s = '\0';
 }
-
-
 
 /**
  * Skip blanks in the beginning and at the end of the string
@@ -475,47 +415,49 @@ char* javautil_str_skip_trailing_blanks(char * s) {
  * @return a pointer to a STATICALLY ALLOCATED string containg the same string as "s"
  *			but without the leading and trailing spaces.
  */
-char* javautil_str_strip(char * s) {
-    static char l[MAX_STR_LEN+1];
-    char * last ;
-    int len, copy_len;
+void javautil_string_strip(char* s) {
+    char* pf;   /*forward pointer*/
 
-    if(s==NULL) return NULL ;
-
-    /* skip leading blanks */
-    //while(isspace((int)*s) && *s) s++;
-    while(IS_SPACE(s)) {
-        s++;
+    /*check arguments*/
+    if (s == NULL) {
+        return;
     }
 
-    /* skip trailing blanks */
-    memset(l, 0, MAX_STR_LEN+1);
-    len = strlen(s);
-    copy_len = min(len,MAX_STR_LEN-1);
-    strncpy(l, s, copy_len+1);
-    last = l + copy_len;
-    while(last > l) {
-        //if(!isspace((int)*(last-1)))
-        if(!IS_SPACE((last-1))) {
-            break ;
-        }
-        last -- ;
-    }
-    *last = (char)0;
+    pf = s;
 
-    return(char*)l ;
+    /*skip leading blanks*/
+    while (*pf == ' ' || *pf == '\t') {
+        pf++;
+    }
+
+    while (*pf != '\0') {
+        /*don't copy blanks*/
+        if ((*pf != ' ') && (*pf != '\t')) {
+            *s++ = *pf++;
+        }        
+    }
 }
 
-char* javautil_str_duplicate(char *s) {
+/**
+ * Duplicates a string
+ * 
+ * @param s input string
+ * @return a newly allocated string with the same content as s
+ */
+char* javautil_string_duplicate(char *s) {
     int len;
     char *new_s;
 
-    if(NULL == s)
+    if (NULL == s){    
         return NULL;
+    }
+        
     len = strlen(s);
     new_s = javacall_malloc(len+1);
-    if(NULL==new_s)
+    if (NULL==new_s){
         return NULL;
+    }
+
     strcpy(new_s, s);
     return new_s;
 }
