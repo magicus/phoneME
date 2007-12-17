@@ -1,0 +1,67 @@
+#
+#   
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+#
+
+# needed in common_defs.gmk
+PATHSEP              ?= $(PS)
+ONESPACE             ?= $(space)
+
+# being used in common_defs.gmk
+JSR_120_ENABLE_JUMP   = true
+
+JSR_120_LIB_NAME      = jsr120
+JSR_120_BUILD_DIR     = $(JSROP_BUILD_DIR)/$(JSR_120_LIB_NAME)
+JSR_120_GENERATED_DIR = $(JSR_120_BUILD_DIR)/generated
+JSR_120_BINDIR        = $(JSR_120_BUILD_DIR)/bin
+
+vpath % $(JSR_120_DIR)/src/cdc_share/native
+
+SUBSYSTEM_JSR_120_NATIVE_FILES += \
+    jsr120_signals.c
+
+SUBSYSTEM_JSR_120_EXTRA_INCLUDES += \
+    $(JSR_120_DIR)/src/cdc_share/native/inc \
+
+include $(JSR_120_DIR)/build/share/common_defs.gmk
+
+CVM_DEFINES          += $(JSR_120_EXTRA_CFLAGS) -DENABLE_CDC=1 -DENABLE_JUMP=1
+
+JSR_120_JAR           = $(JSROP_LIB_DIR)/$(JSR_120_LIB_NAME).jar
+JSR_120_NATIVE_LIB    = $(JSROP_LIB_DIR)/$(LIB_PREFIX)$(JSR_120_LIB_NAME)$(LIB_POSTFIX)
+JSR_120_NATIVE_OBJS  += $(patsubst %.c,$(JSROP_OBJ_DIR)/%.o,$(SUBSYSTEM_JSR_120_NATIVE_FILES))
+
+JSR_120_INIT_PACKAGE  = $(JSR_INIT_PACKAGE).$(JSR_120_LIB_NAME)
+JSR_120_INITIALIZER   = $(JSR_120_GENERATED_DIR)/classes/$(subst .,/,$(JSR_120_INIT_PACKAGE))/$(JSR_INIT_CLASS).java
+
+JSROP_NATIVE_OBJS    += $(JSR_120_NATIVE_OBJS)
+JSROP_CNI_CLASSES    += $(SUBSYSTEM_JSR_120_CNI_CLASSES)
+JSROP_NATIVE_LIBS    += $(JSR_120_NATIVE_LIB)
+
+JSROP_INCLUDE_DIRS   += $(patsubst -I%,%,$(SUBSYSTEM_JSR_120_EXTRA_INCLUDES))
+
+CVM_INCLUDE_JAVACALL  = true
+
+JSR_INITIALIZER_LIST += $(JSR_120_INIT_PACKAGE).$(JSR_INIT_CLASS)
+SUBSYSTEM_JSR_120_JAVA_FILES += $(JSR_120_INITIALIZER)

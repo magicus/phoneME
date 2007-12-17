@@ -1,0 +1,87 @@
+<!--
+
+   Copyright  2007  Sun Microsystems, Inc. All rights reserved.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+  <head>
+
+  </head>
+  <body bgcolor="white">
+    <p>This is the optimized implementation for WMA 2.0, which provides
+      classes that allow Java applications to access SMS functionality
+      on a mobile device.</p>
+    <p>The classes in this package support the sending and receiving of SMS messages.
+       The classes in this package,
+      {@link com.sun.midp.io.j2me.sms.Protocol Protocol}, 
+      {@link com.sun.midp.io.j2me.sms.MessageObject MessageObject},
+      {@link com.sun.midp.io.j2me.sms.TextObject TextObject},
+      {@link com.sun.midp.io.j2me.sms.BinaryObject BinaryObject} and
+      {@link com.sun.midp.io.j2me.sms.TextEncoder TextEncoder} define
+      this implementation. <tt>MessageObject</tt> defines the
+      implementation of the SMS message. <tt>TextObject</tt> and <tt>BinaryObject</tt>
+      extend <tt>MessageObject</tt> and represent the two possible types of SMS
+      messages. Text messages can be enocded as GSM 7-bit text or UCS2 characters.
+      The <tt>TextEncoder</tt> class provides an encoder and decoder for these two
+      types of encodings. <tt>Protocol</tt> defines the
+      implementation of the SMS message connection. <tt>Protocol</tt> interfaces
+      with the platform provided SMS services. It makes native calls to
+      open, close and send messages.
+      This connection is to a
+      low-level transport mechanism which can be any of the following:
+    </p>
+    <ul>
+      <li>a datagram short message peer-to-peer (SMPP) protocol to a service
+	center to satisfy a network-based solution
+      </li>
+      <li>a <tt>comm</tt> connection to a mobile device that understands AT-commands</li>
+      <li>a native SMS stack for proprietary implementations</li>
+      <li>a loop back implementation; that is, anything that is sent will be
+	automatically received. This implementation is provided for
+	testing purposes.</li>
+    </ul>
+
+    <h3>Connection and Message Lifecycle</h3>
+    <p>Connections can be made in server mode or in client mode.
+      In server mode, messages can be sent or received. In client mode, messages
+      can be sent only. Applications can treat
+      sending and receiving independently. </p>
+
+    <p>To receive messages, the application can open the connection by passing
+      a string containing a local port to the <tt>Connector.open</tt> method. A
+      <tt>MessageConnection</tt> object is returned, on which the message can be
+      received. If there are no messages in the queue, the <tt>receive()</tt>
+      method will block until one arrives. When a message has been received,
+      methods are available in the <tt>MessageObject</tt> class for retrieving
+      its address and data parts. Calling the <tt>close()</tt> method closes the
+      connection.</p>
+
+
+    <p>To send messages, the application will either obtain an existing
+      <tt>Message</tt> object or use the <tt>newMessage</tt> factory method to
+      create one. If the application creates a <tt>Message</tt> object,
+      methods are available in the <tt>MessageObject</tt> class for setting
+      its address and data
+      parts. The application can open a connection by passing a string containing
+      a fully-qualified SMS URL address (phone number and port number) to the
+      <tt>Connector.open</tt> method. A <tt>MessageConnection</tt>
+      object is returned, on which the message can be sent. Calling the
+      <tt>close()</tt> method closes the connection.</p>
+
+
+
+    <h2>Package Specification</h2>
+    <p>The classes in this package need access to classes in the optional
+      <tt>javax.microedition.io</tt> package, the CLDC reference
+      implementation (<tt>com.sun.cldc.*</tt>), and the MIDP
+      reference implementation (<tt>com.sun.midp.*</tt>).
+      <p>This package is also dependent on <tt>javax.microedition.io</tt> for the
+	definition of <tt>Connector.open</tt> (the CLDC-definition of
+	the Generic Connection Framework).
+      </p>
+
+	<!-- Put @see and @since tags down here. -->
+	@since WMA 1.0
+      </p>
+  </body>
+</html>
