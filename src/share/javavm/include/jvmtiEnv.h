@@ -57,43 +57,49 @@ enum {
 
 /* Tag stuff */
 
-#define HASH_SLOT_COUNT 1531    /* Check size of RefNode.refSlot if you change this */
+#define HASH_SLOT_COUNT 1531    /* Check size of RefNode.refSlot if you
+				   change this */
 #define ALL_REFS -1
 
-typedef struct JvmtiMethodNode {
+typedef struct CVMJvmtiMethodNode CVMJvmtiMethodNode;
+struct CVMJvmtiMethodNode {
     CVMUint32 mid;              /* method ID */
     CVMMethodBlock *mb;
     CVMBool isObsolete;
     CVMConstantPool *cp;
-    struct JvmtiMethodNode *next;    /* next node* in bucket chain */
-} JvmtiMethodNode;
+    CVMJvmtiMethodNode *next;   /* next node* in bucket chain */
+};
 
-typedef struct JvmtiTagNode {
+typedef struct CVMJvmtiTagNode CVMJvmtiTagNode;
+struct CVMJvmtiTagNode {
     jlong tag;                  /* opaque tag */
     jobject      ref;           /* could be strong or weak */
-    struct JvmtiTagNode *next;       /* next RefNode* in bucket chain */
-} JvmtiTagNode;
+    CVMJvmtiTagNode *next;      /* next RefNode* in bucket chain */
+};
 
 enum {
     JVMTI_MAGIC = 0x71EE,
     BAD_MAGIC   = 0xDEAD
 };
 
-typedef struct {
+typedef struct CVMJvmtiEventEnabled CVMJvmtiEventEnabled;
+struct CVMJvmtiEventEnabled{
     jlong enabledBits;
-} JvmtiEventEnabled;
+};
 
-typedef struct visit_stack {
+typedef struct CVMJvmtiVisitStack CVMJvmtiVisitStack;
+struct CVMJvmtiVisitStack {
     CVMObject **stackBase;
     CVMObject **stackPtr;
-    jvmtiEnv *jvmtiEnv;
+    jvmtiEnv *env;
     int stackSize;
-} JvmtiVisitStack;
+};
 
 #define VISIT_STACK_INIT 4096
 #define VISIT_STACK_INCR 1024
 
-typedef struct JvmtidumpContext {
+typedef struct CVMJvmtiDumpContext CVMJvmtiDumpContext;
+struct CVMJvmtiDumpContext {
     jint heapFilter;
     jclass klass;
     const jvmtiHeapCallbacks *callbacks;
@@ -103,29 +109,44 @@ typedef struct JvmtidumpContext {
     CVMFrame  *frame;
     jint frameCount;
     CVMObjectICell *icell;
-} JvmtiDumpContext;
+};
 
-typedef struct _JvmtiEnvEventEnable{
+typedef struct CVMJvmtiEnvEventEnable CVMJvmtiEnvEventEnable;
+struct CVMJvmtiEnvEventEnable {
 
     /* user set global event enablement indexed by jvmtiEvent   */
-    JvmtiEventEnabled eventUserEnabled;
+    CVMJvmtiEventEnabled eventUserEnabled;
 
     /*
-     * this flag indicates the presence (true) or absence (false) of event callbacks
-     *   it is indexed by jvmtiEvent  
+     * this flag indicates the presence (true) or absence (false) of event
+     * callbacks.  it is indexed by jvmtiEvent  
      */
-    JvmtiEventEnabled eventCallbackEnabled;
+    CVMJvmtiEventEnabled eventCallbackEnabled;
 
     /*
      * indexed by jvmtiEvent true if enabled globally or on any thread.
      * True only if there is a callback for it.
      */
-    JvmtiEventEnabled eventEnabled;
+    CVMJvmtiEventEnabled eventEnabled;
+};
 
-} JvmtiEnvEventEnable;
+/* Note: CVMJvmtiContext is based on JDK HotSpot's JvmtiEnv class.  It is
+   renamed here to adhere to CVM coding conventions as well as to avoid
+   confusion with the jvmtiEnv struct/class which is defined in jvmti.h.
 
+   One CVMJvmtiContext object is created per jvmti/jvmdi agentLib attachment.
+   This is done via JNI's GetEnv() call.  Multiple attachments are allowed in
+   jvmti, and in the case of jvmdi, only one attachment works, so only one
+   object is created for jvmdi.
 
-typedef struct _JvmtiEnv {
+   NOTE: Currently, the CVM JVMTI implementation only supports the use of one
+   single agentLib per VM launch.
+
+   Note: there is a one to one correspondence between the CVMJvmtiContext and
+   the jvmtiEnv.  Hence, we can always get to one from the other.
+*/
+typedef struct CVMJvmtiContext CVMJvmtiContext;
+struct CVMJvmtiContext {
 
     jvmtiEnv jvmtiExternal;
     const void *envLocalStorage;     /* per env agent allocated data. */
@@ -136,7 +157,7 @@ typedef struct _JvmtiEnv {
     jint magic;
     jint index;
 
-    JvmtiEnvEventEnable envEventEnable;
+    CVMJvmtiEnvEventEnable envEventEnable;
 
     jvmtiCapabilities currentCapabilities;
     jvmtiCapabilities prohibitedCapabilities;
@@ -145,14 +166,22 @@ typedef struct _JvmtiEnv {
 
     char** nativeMethodPrefixes;
     int    nativeMethodPrefixCount;
-}JvmtiEnv;
+};
 
-jint CVMdestroyJvmti(JvmtiEnv *env);
+#define CVMjvmtiEnv2Context(jvmtienv_) \
+    ((CVMJvmtiContext*)((CVMUint8 *)(jvmtienv_) - \
+			CVMoffsetof(CVMJvmtiContext, jvmtiExternal)))
+
 jvmtiError CVMjvmtiVisitStackPush(CVMObject *obj);
 CVMBool CVMjvmtiVisitStackEmpty();
 void CVMjvmtiCleanupMarked();
-void CVMjvmtiRecomputeEnabled(JvmtiEnvEventEnable *);
-jlong CVMjvmtiRecomputeThreadEnabled(CVMExecEnv *ee, JvmtiEnvEventEnable *);
-CVMClassBlock* CVMjvmtiClassObject2CB(CVMExecEnv *ee, jclass clazz);
+void CVMjvmtiRecomputeEnabled(CVMJvmtiEnvEventEnable *);
+jlong CVMjvmtiRecomputeThreadEnabled(CVMExecEnv *ee, CVMJvmtiEnvEventEnable *);
+
+/* See also CVMjvmtiClassObject2ClassBlock() in jvmtiExport.h.
+   CVMjvmtiClassObject2ClassBlock() takes a direct class object as input while
+   CVMjvmtiClassRef2ClassBlock() takes a class ref i.e.  jclass.
+*/
+CVMClassBlock *CVMjvmtiClassRef2ClassBlock(CVMExecEnv *ee, jclass clazz);
 
 #endif /* _INCLUDED_JVMTIENV_H */

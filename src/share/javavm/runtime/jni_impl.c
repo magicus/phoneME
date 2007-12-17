@@ -3153,7 +3153,11 @@ CVMjniGetDirectBufferCapacity(JNIEnv *env, jobject buf)
    will instrument it if necessary, and the "checked" version of the
    JNI may do so also if we add that later. */
 
-static struct JNINativeInterface CVMmainJNIfuncs = {
+#ifndef CVM_JVMTI
+const
+#endif
+static struct JNINativeInterface CVMmainJNIfuncs =
+{
     NULL,
     NULL,
     NULL,
@@ -3725,7 +3729,7 @@ mtaskJvmtiInit(JNIEnv* env)
 {
 #ifdef CVM_JVMTI
     CVMExecEnv* ee = CVMjniEnv2ExecEnv(env);
-    if (CVMjvmtiEnabled()) {
+    if (CVMjvmtiIsEnabled()) {
 	CVMjvmtiPostVmInitEvent(ee);    
 
 	/*
@@ -4494,7 +4498,7 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 
 #ifdef CVM_JVMTI
     CVMjvmtiEnterPrimordialPhase();
-    if (CVMjvmtiEnabled()) {
+    if (CVMjvmtiIsEnabled()) {
 	/* This thread was not fully initialized */
 	jthread thread = CVMcurrentThreadICell(ee);
 	if (CVMjvmtiFindThread(ee, thread) == NULL) {
@@ -4516,7 +4520,7 @@ JNI_CreateJavaVM(JavaVM **p_jvm, void **p_env, void *args)
 	errorNo = JNI_ERR;
 	goto done;
     }
-    if (CVMjvmtiEnabled()) {
+    if (CVMjvmtiIsEnabled()) {
 	CVMjvmtiPostStartUpEvents(ee);
     }
     /*
@@ -4703,7 +4707,7 @@ CVMjniDestroyJavaVM(JavaVM *vm)
 
     CVMpostThreadExitEvents(ee);
 #ifdef CVM_JVMTI
-    if (CVMjvmtiEnabled()) {
+    if (CVMjvmtiIsEnabled()) {
 	CVMjvmtiPostVmExitEvent(ee);    
 	CVMjvmtiDebugEventsEnabled(ee) = CVM_FALSE;
     }
@@ -4959,7 +4963,7 @@ attachCurrentThread(JavaVM *vm, void **penv, void *_args, CVMBool isDaemon)
 	}
 
 #ifdef CVM_JVMTI
-	if (CVMjvmtiEnabled()) {
+	if (CVMjvmtiIsEnabled()) {
 	    CVMjvmtiDebugEventsEnabled(ee) = CVM_TRUE;
 	}
 #endif
@@ -5013,7 +5017,7 @@ CVMjniDetachCurrentThread(JavaVM *vm)
 
 	CVMpostThreadExitEvents(ee);
 #ifdef CVM_JVMTI
-	if (CVMjvmtiEnabled()) {
+	if (CVMjvmtiIsEnabled()) {
 	    CVMjvmtiDebugEventsEnabled(ee) = CVM_FALSE;
 	}
 #endif
@@ -5056,7 +5060,7 @@ CVMjniGetEnv(JavaVM *vm, void **penv, jint version)
 
 #ifdef CVM_JVMTI
         } else if (version == JVMTI_VERSION_1) {
-            return CVMcreateJvmti(vm, penv);
+            return CVMjvmtiGetInterface(vm, penv);
 #endif /* CVM_JVMTI */
         } else {
 	    *penv = NULL;
@@ -5098,11 +5102,15 @@ CVMdestroyJNIEnv(CVMJNIEnv *p_env)
 {
 }
 
+#ifdef CVM_JVMTI
+
 struct JNINativeInterface *
 CVMjniGetInstrumentableJNINativeInterface()
 {
     return &CVMmainJNIfuncs;
 }
+
+#endif /* CVM_JVMTI */
 
 void
 CVMinitJNIJavaVM(CVMJNIJavaVM *p_javaVM)

@@ -460,9 +460,14 @@ CVMinitExecEnv(CVMExecEnv* ee, CVMExecEnv* targetEE,
 #endif /* %end lvm */
 
 #ifdef CVM_TRACE_ENABLED
+
 #if defined(CVM_PROFILE_METHOD)
     targetEE->cindx = -1;
 #endif
+
+    /* Inherit global flags */
+    targetEE->debugFlags = CVMglobals.debugFlags;
+
 #endif
 
     targetEE->threadState = CVM_THREAD_RUNNING;
@@ -1300,7 +1305,7 @@ CVMgcUnsafeHandleException(CVMExecEnv* ee, CVMFrame* frame,
 	    be done before the frame is popped, and that no
 	    local variable slots should have been overwritten
 	    by the return value. */
-	if (CVMjvmtiEnabled()) {
+	if (CVMjvmtiIsEnabled()) {
 	    jvalue val;
 	    val.j = CVMlongConstZero();
 	    CVMD_gcSafeExec(ee, {
@@ -1785,14 +1790,12 @@ again:
 #ifdef CVM_JVMTI
 	/* NOTE: The default implementation below will result in junk
 	   appearing in the stack frame.  Need to set it to the proper
-	   topOfStack value if we ever support JVMPI or JVMTI with JITed
-	   code. */
-	/* NOTE: Test for debugging active before asserting */
-#ifdef CVM_DEBUG_ASSERTS
-	if (CVMjvmtiDebuggingFlag()) {
-	    CVMassert(CVM_FALSE);
-	}
-#endif
+	   frame value if we ever support JVMPI or JVMTI debug mode
+	   with JITed code.
+
+	   Hence, we better not be in debugging mode.
+	*/
+	CVMassert(!CVMjvmtiIsInDebugMode());
 #endif
     }
 #endif
@@ -3362,7 +3365,7 @@ CVMexit(int status)
     CVMExecEnv *ee = CVMgetEE();
     CVMpostThreadExitEvents(ee);
 #ifdef CVM_JVMTI
-    if (CVMjvmtiEnabled()) {
+    if (CVMjvmtiIsEnabled()) {
 	CVMjvmtiPostVmExitEvent(ee);
 	CVMjvmtiDebugEventsEnabled(ee) = CVM_FALSE;
     }
@@ -4133,7 +4136,7 @@ CVMregisterReturnEvent(CVMExecEnv *ee, CVMUint8 *pc, CVMUint32 return_opcode,
     	
 #ifdef CVM_JVMTI
 #ifdef CVM_JVMPI
-    if (CVMjvmtiEnabled())
+    if (CVMjvmtiIsEnabled())
 #endif
     {
 	CVMD_gcSafeExec(ee, {
@@ -4270,7 +4273,7 @@ CVMinvokeJNIHelper(CVMExecEnv *ee, CVMMethodBlock *mb)
 
 #ifdef CVM_JVMTI
     /* %comment k001 */
-    if (CVMjvmtiEnabled()) {
+    if (CVMjvmtiIsEnabled()) {
 	CVMD_gcSafeExec(ee, {
 	    CVMjvmtiPostFramePushEvent(ee);
 	});
@@ -4307,7 +4310,7 @@ CVMinvokeJNIHelper(CVMExecEnv *ee, CVMMethodBlock *mb)
 	be done before the frame is popped, and that no
 	local variable slots should have been overwritten
 	by the return value. */
-    if (CVMjvmtiEnabled()) {
+    if (CVMjvmtiIsEnabled()) {
 	jvalue retValue;
 	retValue.j = CVMlongConstZero();
 	switch (returnCode) {
@@ -4700,7 +4703,7 @@ CVMpostThreadStartEvents(CVMExecEnv *ee)
        implementing RunDebugThread/CreateSystemThread to ensure the
        events get generated. */
 
-    if (CVMjvmtiEnabled()) {
+    if (CVMjvmtiIsEnabled()) {
 	CVMjvmtiPostThreadStartEvent(ee, CVMcurrentThreadICell(ee));
     }
 #endif
@@ -4716,7 +4719,7 @@ CVMpostThreadExitEvents(CVMExecEnv *ee)
 {
     if (!ee->hasPostedExitEvents) {
 #ifdef CVM_JVMTI
-	if (CVMjvmtiEnabled()) {
+	if (CVMjvmtiIsEnabled()) {
 	    CVMjvmtiPostThreadEndEvent(ee, CVMcurrentThreadICell(ee));
 	}
 #endif
