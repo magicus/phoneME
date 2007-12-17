@@ -44,6 +44,7 @@ PATH    := $(PLATFORM_TOOLS_PATH):$(VS8_PATH)/Common7/IDE:$(PATH)
 export LIB
 export INCLUDE
 export PATH
+export USE_VS2005 = true
 
 LINK_CMD_POST += ; mt.exe -manifest $@.manifest "-outputresource:$@;\#2"
 SO_LINK_CMD += ; mt.exe -manifest $@.manifest "-outputresource:$@;\#2"
