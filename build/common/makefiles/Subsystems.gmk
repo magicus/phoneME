@@ -217,6 +217,15 @@ endif
 endif
 
 #####################################################################
+# (Extra) Abstractions Subsystem
+# Description: Abstractions for optional packages
+#####################################################################
+
+ifeq ($(USE_ABSTRACTIONS), true)
+include $(ABSTRACTIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
+endif
+
+#####################################################################
 # (Extra) JSR75 Subsystem
 # Description: JSR 75
 #####################################################################
@@ -423,15 +432,6 @@ endif
 ifeq ($(USE_JSR_239), true)
 JPP_DEFS += -DENABLE_JSR_239
 include $(JSR_239_DIR)/src/cldc-oi/config/$(SUBSYSTEM_MAKE_FILE)
-endif
-
-#####################################################################
-# (Extra) Abstractions Subsystem
-# Description: Abstractions for optional packages
-#####################################################################
-
-ifeq ($(USE_ABSTRACTIONS),true)
-include $(ABSTRACTIONS_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
