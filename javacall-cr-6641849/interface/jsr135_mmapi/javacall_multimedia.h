@@ -94,8 +94,8 @@ extern "C" {
 #define JAVACALL_VIDEO_3GPP_MIME     "video/3gpp"
 #define JAVACALL_VIDEO_3GPP_MIME_2   "video/3gpp2"
 #define JAVACALL_VIDEO_3GPP_MIME_3   "video/3gp"
-#define JAVACALL_VIDEO_3GPP_MIME_4   "video/H263"
-#define JAVACALL_VIDEO_3GPP_MIME_5   "video/H264"
+#define JAVACALL_VIDEO_3GPP_MIME_4   "video/h263"
+#define JAVACALL_VIDEO_3GPP_MIME_5   "video/h264"
 
 #define JAVACALL_AUDIO_MIDI_MIME     "audio/midi"
 #define JAVACALL_AUDIO_MIDI_MIME_2   "audio/mid"
@@ -314,7 +314,7 @@ javacall_result
  * This function is called at the first time to initialize native library.
  * You can do your own initialization job from this function.
  * 
- * @param isolateId     Unique isolate ID for this playing
+ * @param appId         Unique application ID for this playing
  * @param playerId      Unique player object ID for this playing
  * @param mime          Mime unicode string
  * @param mimeLength    String length of mimeType
@@ -326,7 +326,7 @@ javacall_result
  * 
  * @return              Handle of native library. if fail return NULL.
  */
-javacall_handle javacall_media_create(int isolateId,
+javacall_handle javacall_media_create(javacall_app_id appId,
                                       int playerId, 
                                       javacall_const_utf16_string mime, 
                                       long mimeLength,
@@ -574,23 +574,23 @@ javacall_result javacall_media_set_mute(javacall_handle handle, javacall_bool mu
  *                    SEMITONE_CONST = 17.31234049066755 = 1/(ln(2^(1/12)))
  *                    note = ln(freq/8.176)*SEMITONE_CONST
  *                    The musical note A = MIDI note 69 (0x45) = 440 Hz.
- * @param suiteId  ID of the suite playing the tone
+ * @param appID    ID of the application playing the tone
  * @param duration the duration of the note in ms 
  * @param volume   volume of this play. From 0 to 100 inclusive.
  * 
  * @retval JAVACALL_OK      Success
  * @retval JAVACALL_FAIL    Fail. JVM will raise the media exception.
  */
-javacall_result javacall_media_play_tone(int suiteId, long note, long duration, long volume);
+javacall_result javacall_media_play_tone(javacall_app_id appID, long note, long duration, long volume);
 
 /**
  * stop simple tone
  * 
- * @param suiteId  ID of the suite playing the tone
+ * @param appID             ID of the application playing the tone
  * @retval JAVACALL_OK      Success
  * @retval JAVACALL_FAIL    Fail. JVM will ignore this return value now.
  */
-javacall_result javacall_media_stop_tone(int suiteId);
+javacall_result javacall_media_stop_tone(javacall_app_id appID);
 
 /** @} */
 
@@ -1436,13 +1436,13 @@ javacall_result javacall_media_close_recording(javacall_handle handle);
  * Native poring layer can check about the player's foreground / background status from this invocation.
  *
  * @param handle    Handle to the native player
- * @param suiteID   ID of the suite to be foreground
+ * @param appID     ID of the application to be foreground
  *
  * @retval JAVACALL_OK      Somthing happened
  * @retval JAVACALL_FAIL    Nothing happened. JVM ignore this return value now.
  */
 javacall_result javacall_media_to_foreground(const javacall_handle handle,
-                                             const javacall_suiteID suiteID);
+                                             const javacall_app_id appID);
 
 /**
  * This function called by JVM when this player goes to background.
@@ -1455,13 +1455,13 @@ javacall_result javacall_media_to_foreground(const javacall_handle handle,
  * Native poring layer can check about the player's foreground / background status from this invocation.
  *
  * @param handle    Handle to the native player
- * @param suiteID   ID of the suite to be background
+ * @param appID     ID of the application to be background
  *
  * @retval JAVACALL_OK      Somthing happened
  * @retval JAVACALL_FAIL    Nothing happened. JVM ignore this return value now.
  */
 javacall_result javacall_media_to_background(const javacall_handle handle,
-                                             const javacall_suiteID suiteID);
+                                             const javacall_app_id appID);
 
 /** @} */ 
 
