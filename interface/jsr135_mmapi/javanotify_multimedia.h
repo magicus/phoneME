@@ -94,7 +94,7 @@ typedef enum {
  * Post native media event to Java event handler
  * 
  * @param type          Event type
- * @param isolateId     Isolate ID that came from javacall_media_create function
+ * @param appID         Application ID that came from javacall_media_create function
  * @param playerId      Player ID that came from javacall_media_create function
  * @param data          Data that will be carried with this notification
  *                      - JAVACALL_EVENT_MEDIA_END_OF_MEDIA
@@ -117,7 +117,7 @@ typedef enum {
  *                          data = None.
  */
 void javanotify_on_media_notification(javacall_media_notification_type type,
-                                      int isolateId,
+                                      javacall_app_id appID,
                                       int playerId, 
                                       void *data);
 
