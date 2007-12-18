@@ -61,7 +61,7 @@ static int registerMMSEntry(unsigned char *appID, AppIdType msid);
 static void unregisterMMSEntry(unsigned char *appID, int handle);
 #endif
 
-#ifndef NO_PUSH
+#ifndef JSR120_NO_PUSH
 /**
  * Unregister or close the given WMA entry
  *
