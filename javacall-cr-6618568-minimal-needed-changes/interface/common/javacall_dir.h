@@ -34,9 +34,6 @@
 
 #include "javacall_defs.h" 
 
-#define JAVACALL_MAX_ROOTS_LIST_LENGTH  512
-#define JAVACALL_MAX_ROOT_PATH_LENGTH   128
-
 #ifdef __cplusplus
 extern "C" {
 #endif
