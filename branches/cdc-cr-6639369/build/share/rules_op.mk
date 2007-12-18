@@ -49,11 +49,11 @@ endef
 # generateConstantClasses(constantsXmlFile, constantsClassList, generatedDirectory)
 define generateConstantClasses
 	$(foreach class, $(2), \
-	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE) \
+	$(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
 	-xml $(1) \
 	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantsJava.xsl \
 	-params fullClassName $(class) \
-	-out $(3)/classes/$(subst .,/,$(class)).java; )
+	-out $(3)/classes/$(subst .,/,$(class)).java; ))
 endef
 
 # Macro to pre-process Jpp file into Java file
