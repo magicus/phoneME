@@ -135,6 +135,62 @@ static void updateEditorForRotation();
  * command manager.
  */
 
+#if ENABLE_DIRECT_DRAW
+static BOOL DirectDrawEnabled = TRUE;
+static CRITICAL_SECTION DirectDrawCS;
+
+static HRESULT CreateDDSPrimary() {
+    HRESULT hRet;
+    DDSURFACEDESC ddsd;
+    ZeroMemory(&ddsd, sizeof(DDSURFACEDESC));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    EnterCriticalSection(&DirectDrawCS);
+    if(! DirectDrawEnabled) {
+        hRet = DDERR_PRIMARYSURFACEALREADYEXISTS;
+    }
+    else {
+        hRet = g_screen.pDD->CreateSurface(&ddsd, &g_screen.pDDSPrimary, NULL);
+    }
+
+    if(hRet != DD_OK) 
+	    g_screen.pDDSPrimary = NULL;
+
+    LeaveCriticalSection(&DirectDrawCS);
+    return hRet;
+}
+
+static void ReleaseDDSPrimary() {
+    if (NULL != g_screen.pDDSPrimary) {
+        g_screen.pDDSPrimary->Release();
+        g_screen.pDDSPrimary = NULL;
+    }
+
+    if (NULL != g_screen.pDDSMemory) {
+        g_screen.pDDSMemory->Release();
+        g_screen.pDDSMemory = NULL;
+    }
+}
+
+void EnableDirectDraw()
+{
+    DirectDrawEnabled = TRUE; 
+}
+
+void DisableDirectDraw()
+{
+    if(! DirectDrawEnabled)
+        return;
+
+    EnterCriticalSection(&DirectDrawCS);
+    DirectDrawEnabled = FALSE;
+    ReleaseDDSPrimary();
+    LeaveCriticalSection(&DirectDrawCS);
+}
+
+#endif
+
 static LRESULT CALLBACK
 myTextProc(HWND hwnd, WNDPROC oldproc, UINT msg, WPARAM wp, LPARAM lp,
            int isMultiLine) {
@@ -266,6 +322,7 @@ static void releasePutpixelSurface() {
 static void releaseDirectDraw();
 
 static void initDirectDraw() {
+
     /* Note: if DirectDraw fails to initialize, we will use GDI */
     if (DD_OK != DirectDrawCreate(NULL, &g_screen.pDD, NULL))
         return;
@@ -277,14 +334,8 @@ static void initDirectDraw() {
         return;
     }
 
-    // Create the primary surface with 0 back buffer
-    DDSURFACEDESC ddsd;
-    ZeroMemory(&ddsd, sizeof(DDSURFACEDESC));
-    ddsd.dwSize = sizeof(ddsd);
-    ddsd.dwFlags = DDSD_CAPS;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
-    if (/*DD_OK != g_screen.pDDClipper->SetHWnd(0, hwndMain) ||*/
-        DD_OK != g_screen.pDD->CreateSurface(&ddsd, &g_screen.pDDSPrimary, NULL)) {
+    InitializeCriticalSection(&DirectDrawCS);
+	if(CreateDDSPrimary() != DD_OK) {
         //g_screen.pDDClipper->Release();
         //g_screen.pDDClipper = NULL;
         g_screen.pDD->Release();
@@ -292,11 +343,15 @@ static void initDirectDraw() {
         return;
     }
 
+    DDSURFACEDESC ddsd;
+    ZeroMemory(&ddsd, sizeof(DDSURFACEDESC));
+    ddsd.dwSize = sizeof(ddsd);
     if (/*DD_OK != g_screen.pDDSPrimary->SetClipper(g_screen.pDDClipper) ||*/
         DD_OK != g_screen.pDDSPrimary->GetSurfaceDesc(&ddsd)) {
         releaseDirectDraw();
         return;
     }
+
     g_screen.width = ddsd.dwWidth;
     g_screen.height = ddsd.dwHeight;
 
@@ -311,15 +366,10 @@ static void releaseDirectDraw() {
         g_screen.pDDSDirect->Release();
         g_screen.pDDSDirect = NULL;
     }
-    if (NULL != g_screen.pDDSMemory) {
-        g_screen.pDDSMemory->Release();
-        g_screen.pDDSMemory = NULL;
-    }
-    if (NULL != g_screen.pDDSPrimary) {
-        //g_screen.pDDSPrimary->SetClipper(NULL);
-        g_screen.pDDSPrimary->Release();
-        g_screen.pDDSPrimary = NULL;
-    }
+
+	ReleaseDDSPrimary();
+    DeleteCriticalSection(&DirectDrawCS);
+    
     /*if (NULL != g_screen.pDDClipper) {
         g_screen.pDDClipper->Release();
         g_screen.pDDClipper = NULL;
@@ -472,7 +522,6 @@ DWORD WINAPI CreateWinCEWindow(LPVOID lpParam) {
     instanceMain = LoadLibrary(TEXT("libmidp.dll"));
 #endif
 #endif
-
 
     if (!initWindows(GetModuleHandle(NULL), SW_SHOW)) {
         REPORT_ERROR(LC_AMS, "init_gui() failed");
@@ -656,6 +705,7 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_ACTIVATE:
         if (LOWORD(wp)) { /* active */
             enablePaint();
+
             if (editBoxShown)
                 SetFocus(hwndTextActive);
         } else { /* inactive */
@@ -669,6 +719,7 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 
     case WM_EXITMENULOOP:
         enablePaint();
+
         return DefWindowProc(hwnd, msg, wp, lp);
 
     case WM_CANCELMODE:
@@ -683,6 +734,7 @@ LRESULT CALLBACK winceapp_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_PAINT:
         hdc = BeginPaint(hwnd, &ps);
         EndPaint(hwnd, &ps);
+
         enablePaint();
         if (editBoxShown)
             SetFocus(hwndTextActive);
@@ -806,6 +858,7 @@ static LRESULT processSystemKey(HWND hwnd, int key) {
  * Finalize the WINCE native resources.
  */
 void winceapp_finalize() {
+
 #if ENABLE_DIRECT_DRAW
     releaseDirectDraw();
 #else
@@ -850,7 +903,8 @@ int isScreenRotated() {
 
 static BOOL startDirectPaint() {
 #if ENABLE_DIRECT_DRAW
-    if (g_screen.pDD == NULL || isScreenRotated() || !isScreenFullyVisible() || editBoxShown)
+
+    if (g_screen.pDD == NULL || isScreenRotated() || !isScreenFullyVisible() || editBoxShown || (! DirectDrawEnabled))
         /* DDraw is not very reliable on a rotated screen. Use GDI instead. */
         return FALSE;
 
@@ -860,17 +914,13 @@ static BOOL startDirectPaint() {
         if (g_screen.pDDSMemory == NULL)
             return FALSE;
     }
-    
-    if (DD_OK != g_screen.pDDSPrimary->IsLost()) {
-        if (DD_OK != g_screen.pDDSPrimary->Restore())
+	
+    if(g_screen.pDDSPrimary == NULL) {
+        if(CreateDDSPrimary() != DD_OK) {
             return FALSE;
-
-        DDSURFACEDESC ddsd;
-        ddsd.dwSize = sizeof(ddsd);
-        g_screen.pDDSPrimary->GetSurfaceDesc(&ddsd);
-        g_screen.width = ddsd.dwWidth;
-        g_screen.height = ddsd.dwHeight;
+        } 
     }
+
 #else
     if (editBoxShown)
         return FALSE;
@@ -952,7 +1002,6 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
         GDIBitBlt(src, x1, x2, y1, y2);
         return;
     }
-
     int maxY = g_screen.height - titleHeight;
     if (y2 > maxY)
         y2 = maxY;
@@ -976,7 +1025,13 @@ void winceapp_refresh(int x1, int y1, int x2, int y2) {
     dstRect.bottom = y2 + rcVisibleDesktop.top;
     dstRect.right = x2;
 
-    g_screen.pDDSPrimary->Blt(&dstRect, g_screen.pDDSMemory, &srcRect, 0, NULL); 
+    EnterCriticalSection(&DirectDrawCS);
+
+    if(DirectDrawEnabled) {
+        g_screen.pDDSPrimary->Blt(&dstRect, g_screen.pDDSMemory, &srcRect, 0, NULL); 
+    }
+
+    LeaveCriticalSection(&DirectDrawCS);
 
 #else /* !ENABLE_DIRECT_DRAW */
     int srcWidth = x2 - x1;
@@ -1359,4 +1414,4 @@ int winceapp_get_screen_width() {
 int winceapp_get_screen_height() {
     return gxj_system_screen_buffer.height;
 }
-} /* extern "C" */
+} /* extern "C" */ 
