@@ -65,17 +65,16 @@ WIN_GET_HANDLE(HANDLE fdd)
 void WIN32ioInit()
 {
 #ifdef WINCE
-	int i;
+    int i;
 
-	InitializeCriticalSection(&fdTableLock);
+    InitializeCriticalSection(&fdTableLock);
 
-	for (i = 0; i < NUM_FDTABLE_ENTRIES; i++) {
-		fdTable[i] = INVALID_HANDLE_VALUE; 
-	}
+    for (i = 0; i < NUM_FDTABLE_ENTRIES; i++) {
+	fdTable[i] = INVALID_HANDLE_VALUE; 
+    }
 
     /* initialize stdio redirection */ 
     initializeStandardIO();
-
 #endif
 }
 
@@ -97,35 +96,34 @@ fileMode(HANDLE fd, int *mode)
 CVMInt32
 CVMioGetLastErrorString(char *buf, CVMInt32 len)
 {
-	DWORD err = GetLastError();
-	if (err == 0) {
-		return 0;
-	} else {
-		TCHAR* lpMsgBuf = 0;
-		int n;
-		int ret = FormatMessage( 
-					FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-					FORMAT_MESSAGE_FROM_SYSTEM | 
-					FORMAT_MESSAGE_IGNORE_INSERTS,
-					NULL,
-					err,
-			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-					(LPTSTR) &lpMsgBuf,
-					0,
-					NULL 
-				);
+    DWORD err = GetLastError();
+    if (err == 0) {
+	return 0;
+    } else {
+	TCHAR* lpMsgBuf = 0;
+	int n;
+	int ret = FormatMessage( 
+				FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+				FORMAT_MESSAGE_FROM_SYSTEM | 
+				FORMAT_MESSAGE_IGNORE_INSERTS,
+				NULL,
+				err,
+				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+				(LPTSTR) &lpMsgBuf,
+				0,
+				NULL);
  
-		if ((lpMsgBuf != NULL) && (ret != 0)) {
-			if (sizeof lpMsgBuf[0] == 1) {
-				n = _tcslen(lpMsgBuf);
-				if (n >= len) n = len - 1;
-				strncpy(buf, (char*)lpMsgBuf, n);
-				buf[n] = '\0';
-			} else {
-				wcstombs(buf, lpMsgBuf, len);
-			}
-			LocalFree( lpMsgBuf );
-		}
+	if ((lpMsgBuf != NULL) && (ret != 0)) {
+	    if (sizeof lpMsgBuf[0] == 1) {
+		n = _tcslen(lpMsgBuf);
+		if (n >= len) n = len - 1;
+		strncpy(buf, (char*)lpMsgBuf, n);
+		buf[n] = '\0';
+	    } else {
+		wcstombs(buf, lpMsgBuf, len);
+	    }
+	    LocalFree( lpMsgBuf );
+	}
 	return err;
     }
 }
@@ -245,30 +243,29 @@ CVMioFileType(const char *path)
     DWORD attr;
 
 #ifdef WINCE
-{
-  WCHAR *wc = createWCHAR(path);
-  attr = GetFileAttributes(wc); 
-  free(wc); 
-}
+    {
+	WCHAR *wc = createWCHAR(path);
+	attr = GetFileAttributes(wc); 
+	free(wc); 
+    }
 #else
     attr = GetFileAttributesA(path);
 #endif
 
-  if (attr == 0xFFFFFFFF) {
-    return -1;
-  }
-  if (attr & FILE_ATTRIBUTE_DIRECTORY) {
-    return CVM_IO_FILETYPE_DIRECTORY;
-        }
-  if ((attr == FILE_ATTRIBUTE_NORMAL) || (attr & FILE_ATTRIBUTE_ARCHIVE)
-      || attr & FILE_ATTRIBUTE_READONLY) {
-    return CVM_IO_FILETYPE_REGULAR;
-  }
-  if (attr == 0) {
-    return CVM_IO_FILETYPE_REGULAR;  /* maybe samba */
-  }
-  return CVM_IO_FILETYPE_OTHER;
-
+    if (attr == 0xFFFFFFFF) {
+	return -1;
+    }
+    if (attr & FILE_ATTRIBUTE_DIRECTORY) {
+	return CVM_IO_FILETYPE_DIRECTORY;
+    }
+    if ((attr == FILE_ATTRIBUTE_NORMAL) || (attr & FILE_ATTRIBUTE_ARCHIVE)
+	|| attr & FILE_ATTRIBUTE_READONLY) {
+	return CVM_IO_FILETYPE_REGULAR;
+    }
+    if (attr == 0) {
+	return CVM_IO_FILETYPE_REGULAR;  /* maybe samba */
+    }
+    return CVM_IO_FILETYPE_OTHER;
 }
 
 CVMInt32
@@ -287,8 +284,8 @@ CVMioOpen(const char *name, CVMInt32 openMode,
     }
 
     cFlag = OPEN_EXISTING;
-    if ((openMode & (_O_CREAT | _O_TRUNC)) ==  (_O_CREAT | _O_TRUNC) )
-		cFlag = CREATE_ALWAYS;
+    if ((openMode & (_O_CREAT | _O_TRUNC)) ==  (_O_CREAT | _O_TRUNC))
+	cFlag = CREATE_ALWAYS;
     else if (openMode & _O_CREAT) cFlag = OPEN_ALWAYS;
     else if (openMode & _O_TRUNC) cFlag = TRUNCATE_EXISTING;
     
@@ -296,7 +293,7 @@ CVMioOpen(const char *name, CVMInt32 openMode,
 	cFlag = CREATE_NEW;
 
 #ifdef WINCE
-{
+    {
 	WCHAR *wc;
 	int fdIndex = -1;
 	int i;
@@ -305,72 +302,70 @@ CVMioOpen(const char *name, CVMInt32 openMode,
 
         /* for (i = 0; i < NUM_FDTABLE_ENTRIES; i++) {  */
 	for (i = 3; i < NUM_FDTABLE_ENTRIES; i++) { 
-		if (fdTable[i] == INVALID_HANDLE_VALUE) {
-			fdIndex = i;
-			break;
-		}
+	    if (fdTable[i] == INVALID_HANDLE_VALUE) {
+		fdIndex = i;
+		break;
+	    }
 	} 
 
 	if (fdIndex == -1) {
-		LeaveCriticalSection(&fdTableLock);
-		return -1;
+	    LeaveCriticalSection(&fdTableLock);
+	    return -1;
 	}
 
 	wc = createWCHAR(name);
 	fdTable[fdIndex] = CreateFile(wc, mode, 
-							FILE_SHARE_READ | FILE_SHARE_WRITE,
-							0, cFlag, FILE_ATTRIBUTE_NORMAL, 0);
+				      FILE_SHARE_READ | FILE_SHARE_WRITE,
+				      0, cFlag, FILE_ATTRIBUTE_NORMAL, 0);
 	if (fdTable[fdIndex] == INVALID_HANDLE_VALUE) {
-		LeaveCriticalSection(&fdTableLock);
-		free(wc);
-		return -1;
+	    LeaveCriticalSection(&fdTableLock);
+	    free(wc);
+	    return -1;
 	}
 	fd = (HANDLE)(fdIndex + STD_FDS_BIAS);
 	LeaveCriticalSection(&fdTableLock);
-    free(wc);
-}
+	free(wc);
+    }
 #else
-	fd = CreateFileA(name, mode, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                             0, cFlag, FILE_ATTRIBUTE_NORMAL, 0);
-	if (fd == INVALID_HANDLE_VALUE)
-		return -1;
+    fd = CreateFileA(name, mode, FILE_SHARE_READ | FILE_SHARE_WRITE,
+		     0, cFlag, FILE_ATTRIBUTE_NORMAL, 0);
+    if (fd == INVALID_HANDLE_VALUE)
+	return -1;
 
 #endif
-	statres = fileMode(WIN_GET_HANDLE(fd), &mode);
-	if (statres == -1) {
-		CloseHandle(WIN_GET_HANDLE(fd));
-		return -1;
+    statres = fileMode(WIN_GET_HANDLE(fd), &mode);
+    if (statres == -1) {
+	CloseHandle(WIN_GET_HANDLE(fd));
+	return -1;
+    }
+    if (mode & FILE_ATTRIBUTE_DIRECTORY) {
+	CloseHandle(WIN_GET_HANDLE(fd));
+	return (CVMInt32)-1;
+    }
+    if (openMode & _O_APPEND) {
+	if (SetFilePointer(WIN_GET_HANDLE(fd), 0, 0, FILE_END) == 0xFFFFFFFF) {
+	    CloseHandle(WIN_GET_HANDLE(fd));
+	    return (CVMInt32)-1;
 	}
-	if (mode & FILE_ATTRIBUTE_DIRECTORY) {
-		CloseHandle(WIN_GET_HANDLE(fd));
-		return (CVMInt32)-1;
-	}
-	if (openMode & _O_APPEND) {
-		if (SetFilePointer(WIN_GET_HANDLE(fd), 0, 0, FILE_END) == 0xFFFFFFFF)
- 		{
-			CloseHandle(WIN_GET_HANDLE(fd));
- 			return (CVMInt32)-1;
-		}
-	}
-	return (CVMInt32)fd;
+    }
+    return (CVMInt32)fd;
 }
 
 CVMInt32
 CVMioClose(CVMInt32 fd)
 {
-
-	CVMInt32 ret;
-	if (fd < 0)
-		return -1;
-
-	if (0 <= fd && fd <=2)
-		return 0;
+    CVMInt32 ret;
+    if (fd < 0)
+	return -1;
+    
+    if (0 <= fd && fd <=2)
+	return 0;
     ret = (CloseHandle(WIN_GET_HANDLE((HANDLE)fd)) == 0) ? -1 : 0;
 
 #ifdef WINCE
-		fdTable[fd - STD_FDS_BIAS] = INVALID_HANDLE_VALUE; 
+    fdTable[fd - STD_FDS_BIAS] = INVALID_HANDLE_VALUE; 
 #endif
-	return ret;
+    return ret;
 }
 
 
@@ -381,8 +376,7 @@ CVMioSeek(CVMInt32 fd, CVMInt64 offset, CVMInt32 whence)
     LONG lo = (LONG)(offset & 0xffffffff);
     LONG hi = (LONG)((offset >> 32) & 0xffffffff);
     DWORD ret = SetFilePointer(WIN_GET_HANDLE((HANDLE)fd), lo, &hi, whence);
-    if (ret == 0xFFFFFFFF && GetLastError() != NO_ERROR )
-    {
+    if (ret == 0xFFFFFFFF && GetLastError() != NO_ERROR) {
         r = -1;
     }
     else {
@@ -390,7 +384,6 @@ CVMioSeek(CVMInt32 fd, CVMInt64 offset, CVMInt32 whence)
     }
 
     return r;
-
 }
 
 CVMInt32
@@ -458,7 +451,7 @@ stdinAvailable(int fd, long *pbytes) {
     /* Construct an array of input records in the console buffer */
     error = GetNumberOfConsoleInputEvents(han, &numEvents);
     if (error == 0) {
-      return nonSeekAvailable(han, pbytes);
+	return nonSeekAvailable(han, pbytes);
     }
 
     /* lpBuffer must fit into 64K or else PeekConsoleInput fails */
@@ -480,10 +473,10 @@ stdinAvailable(int fd, long *pbytes) {
     /* Examine input records for the number of bytes available */
     for(i=0; i<numEvents; i++) {
 	if (lpBuffer[i].EventType == KEY_EVENT) {
-            KEY_EVENT_RECORD *keyRecord = (KEY_EVENT_RECORD *)
-                                          &(lpBuffer[i].Event);
+            KEY_EVENT_RECORD *keyRecord =
+		(KEY_EVENT_RECORD*)&(lpBuffer[i].Event);
 	    if (keyRecord->bKeyDown == TRUE) {
-                CHAR *keyPressed = (CHAR *) &(keyRecord->uChar);
+                CHAR* keyPressed = (CHAR*) &(keyRecord->uChar);
 	       	curLength++;
 	       	if (*keyPressed == '\r')
                     actualLength = curLength;
@@ -507,29 +500,27 @@ CVMioAvailable(CVMInt32 fd, CVMInt64 *bytes)
 
 #ifndef WINCE
     if (fd == 0) {
-      if (stdinAvailable(fd, &stdbytes)) {
-        *bytes = (CVMInt64)stdbytes;
-        return 1;
-      }
-      else {
-        return 0;
-      }
+	if (stdinAvailable(fd, &stdbytes)) {
+	    *bytes = (CVMInt64)stdbytes;
+	    return 1;
+	} else {
+	    return 0;
+	}
     }
 #endif
 
     stat = fileMode(WIN_GET_HANDLE((HANDLE)fd), &mode);
-	if (stat == 0) {
-		if (!(mode & FILE_ATTRIBUTE_DIRECTORY)) {
-			cur = (DWORD)CVMioSeek(fd, 0, FILE_CURRENT);
-			end = (DWORD)CVMioSeek(fd, 0, FILE_END);
-			if (CVMioSeek(fd, cur, FILE_BEGIN) != -1) {
-				*bytes = CVMlongSub(end, cur);
-				return 1;
-			}
-		}
+    if (stat == 0) {
+	if (!(mode & FILE_ATTRIBUTE_DIRECTORY)) {
+	    cur = (DWORD)CVMioSeek(fd, 0, FILE_CURRENT);
+	    end = (DWORD)CVMioSeek(fd, 0, FILE_END);
+	    if (CVMioSeek(fd, cur, FILE_BEGIN) != -1) {
+		*bytes = CVMlongSub(end, cur);
+		return 1;
+	    }
 	}
+    }
     return 0;
-
 }
 
 CVMInt32
@@ -541,27 +532,27 @@ CVMioRead(CVMInt32 fd, void *buf, CVMUint32 nBytes)
 
 #ifdef WINCE
     if (fd == 0 && h == INVALID_HANDLE_VALUE) { /* stdin, no PocketConsole */ 
-      b = readStandardIO(fd, buf, nBytes);   
+	b = readStandardIO(fd, buf, nBytes);   
     } else
-#else 
-      switch (fd) {
-      case 0: h = GetStdHandle(STD_INPUT_HANDLE); break;
-      case 1: h = GetStdHandle(STD_OUTPUT_HANDLE); break;
-      case 2: h = GetStdHandle(STD_ERROR_HANDLE); break;
-      }
+#else
+    switch (fd) {
+        case 0: h = GetStdHandle(STD_INPUT_HANDLE); break;
+        case 1: h = GetStdHandle(STD_OUTPUT_HANDLE); break;
+        case 2: h = GetStdHandle(STD_ERROR_HANDLE); break;
+    }
 #endif
     { 
       b = ReadFile(h, buf, nBytes, &bytes, NULL);
     }
 
     if (b) {
-      return bytes;
+	return bytes;
     } else {
-      /* Behaviour similar to POSIX read( ) and ensures that 
-       * a parent process reading from a child's output and 
-       * error streams doesn't encounter an IOException when 
-       * the child exits. 
-       */
+	/* Behaviour similar to POSIX read( ) and ensures that 
+	 * a parent process reading from a child's output and 
+	 * error streams doesn't encounter an IOException when 
+	 * the child exits. 
+	 */
       if (GetLastError () == ERROR_BROKEN_PIPE) 
          return 0;
       else 
@@ -592,33 +583,33 @@ CVMioWrite(CVMInt32 fd, const void *buf, CVMUint32 nBytes)
 
 #ifndef WINCE
     switch (fd) {
-    case 0: h = GetStdHandle(STD_INPUT_HANDLE); break;
-    case 1: h = GetStdHandle(STD_OUTPUT_HANDLE); break;
-    case 2: h = GetStdHandle(STD_ERROR_HANDLE); break;
+        case 0: h = GetStdHandle(STD_INPUT_HANDLE); break;
+        case 1: h = GetStdHandle(STD_OUTPUT_HANDLE); break;
+        case 2: h = GetStdHandle(STD_ERROR_HANDLE); break;
     }
     b = WriteFile(h, buf, nBytes, &bytes, NULL);
 #else /* WINCE */
     if (fd >= 1 && fd <= 2) {
-		FILE *fp = NULL;
+	FILE *fp = NULL;
 #ifdef CVM_DEBUG
-		NKDbgPrintfW(TEXT("%.*hs"), nBytes, buf);
+	NKDbgPrintfW(TEXT("%.*hs"), nBytes, buf);
 #endif
-		switch (fd) {
-		case 1:
-		    fp = stdout;
-		    break;
-		case 2:
-		    fp = stderr;
-		    break;
-		}
-		fwrite(buf, sizeof (char), nBytes, fp);
+	switch (fd) {
+	    case 1:
+		fp = stdout;
+		break;
+	    case 2:
+		fp = stderr;
+		break;
+	}
+	fwrite(buf, sizeof (char), nBytes, fp);
 	
-		/* Silently ignore errors */
-		writeStandardIO(fd, buf, nBytes);
-		bytes = nBytes;
-		b = 1;
+	/* Silently ignore errors */
+	writeStandardIO(fd, buf, nBytes);
+	bytes = nBytes;
+	b = 1;
     } else {
-		b = WriteFile(h, buf, nBytes, &bytes, NULL);
+	b = WriteFile(h, buf, nBytes, &bytes, NULL);
     }
 
 #endif /* WINCE */
