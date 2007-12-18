@@ -30,43 +30,31 @@
 ######################################################################
 
 CC=cl
-AR=lib
+AR=lib /NOLOGO
 CPP=cl
 LD=link
 
 # Flag descriptions:
 #
-# /WX     ??
-# /c      ??
-# /W3     ??
-# -Zi     ??
-# -Od     ??
+# /WX     treats all compiler warnings as errors
+# /c      compile w/o linking
+# /W3     warnings level
+# -Zi     produces a program database (PDB)
+# -Od     disables optimization
 # -MDd    debug on
 #
 
-ifeq ($(USE_VS2005), true)
 
 ifeq ($(USE_DEBUG), true)
-CFLAGS= /WX /c /W2 -Zi -Od -MDd /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
-else
-CFLAGS= /WX /c /W2 /MD /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
-endif
-
-else
-
-ifeq ($(USE_DEBUG), true)
-CFLAGS= /WX /c /W3 -Zi -Od -MDd
-else
-CFLAGS= /WX /c /W3 /MD
-endif
-
-endif
-
-
-ifeq ($(USE_DEBUG), true)
+CFLAGS= /WX /c /W3 -Zi -Od -MDd /nologo
 LD_FLAGS= /debug
 else
+CFLAGS= /WX /c /W3 /MD /nologo
 LD_FLAGS=
+endif
+
+ifeq ($(USE_VS2005), true)
+CFLAGS += /D_CRT_SECURE_NO_DEPRECATE
 endif
 
 CC_OUTPUT=/Fo
