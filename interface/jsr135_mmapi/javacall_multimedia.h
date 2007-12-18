@@ -85,6 +85,7 @@ extern "C" {
  */
 
 /* */
+#define JAVACALL_VIDEO_MPEG_MIME     "video/mpeg"
 #define JAVACALL_VIDEO_MPEG4_MIME    "video/mp4v-es"
 #define JAVACALL_VIDEO_MPEG4_MIME_2  "video/mp4"
 #define JAVACALL_VIDEO_3GPP_MIME     "video/3gpp"
@@ -103,6 +104,7 @@ extern "C" {
 #define JAVACALL_AUDIO_TONE_MIME     "audio/x-tone-seq"
 #define JAVACALL_AUDIO_QCELP_MIME    "audio/qcelp"
 #define JAVACALL_AUDIO_QCELP_MIME_2  "audio/vnd.qcelp"
+#define JAVACALL_VIDEO_GIF_MIME      "image/gif"
 
 #define JAVACALL_IMAGE_JPEG_MIME     "image/jpeg"
 #define JAVACALL_IMAGE_PNG_MIME      "image/png"
@@ -180,6 +182,13 @@ typedef enum {
     JAVACALL_CAPTURE_VIDEO = 12,
     /** Interactive MIDI */
     JAVACALL_INTERACTIVE_MIDI = 13, 
+    /** MPEG video      */
+    JAVACALL_VIDEO_MPEG = 14,
+    /** MP3 audio      */
+    JAVACALL_AUDIO_MP3_2 = 15,         
+    
+    JAVACALL_VIDEO_GIF = 16,
+
     JAVACALL_END_OF_TYPE
 } javacall_media_type;
 
