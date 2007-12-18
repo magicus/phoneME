@@ -98,10 +98,10 @@ JSROP_HIDE_JARS = $(subst $(space),$(PS),$(filter-out $(JSROP_JAR_DIR)/jsr205.ja
 # Generate constants classes list for the given xml file
 # generateConstantList(generatedDirectory, constantsXmlFile)
 define generateConstantList
-	$(call runJarFile, $(CONFIGURATOR_JAR_FILE) \
+	$(shell $(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
 	-xml $(2) \
 	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantClasses.xsl \
-	-out $(1)/.constant.class.list; \
+	-out $(1)/.constant.class.list); \
     cat $(1)/.constant.class.list )
 endef
 

@@ -53,7 +53,7 @@ define generateConstantClasses
 	-xml $(1) \
 	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantsJava.xsl \
 	-params fullClassName $(class) \
-	-out $(3)/classes/$(subst .,/,$(class)).java; ))
+	-out $(3)/classes/$(subst .,/,$(class)).java); )
 endef
 
 # Macro to pre-process Jpp file into Java file
