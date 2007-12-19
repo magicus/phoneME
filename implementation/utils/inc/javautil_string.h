@@ -132,7 +132,7 @@ int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* strin
  *
  * @param prefix the beginning/prefix string
  * @param suffix the ending/suffix string
- * @return Concantenated string on success,
+ * @return concantenated string on success,
  *         NULL or any other negative value otherwise.
  */
 char* javautil_string_strcat(const char* prefix, const char* suffix);
@@ -170,9 +170,7 @@ void javautil_string_skip_trailing_blanks(char * s);
 /**
  * Skip blanks in the beginning and at the end of the string
  * 
- * @param s input string
- * @return a pointer to a STATICALLY ALLOCATED string containg the same string as "s"
- *			but without the leading and trailing spaces.
+ * @param s string to be stripped of whitespaces
  */
 void javautil_string_strip(char * s);
 

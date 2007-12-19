@@ -402,10 +402,10 @@ void string_db_setdouble(string_db * d, char * key, double val) {
  * @param d                database object allocated using string_db_new
  * @param unicodeFileName  output file name
  * @param fileNameLen      file name length
- * @return  0 in case of success
- *          -1 in case of some error
+ * @return  JAVACALL_OK in case of success
+ *          JAVACALL_FAIL in case of some error
  */
-int string_db_dump(string_db* d, unsigned short* unicodeFileName, int fileNameLen) {
+javacall_result string_db_dump(string_db* d, unsigned short* unicodeFileName, int fileNameLen) {
     int             i;
     javacall_handle file_handle;
     char            l[MAX_STR_LEN];
