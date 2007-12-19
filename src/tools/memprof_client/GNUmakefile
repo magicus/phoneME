@@ -29,7 +29,11 @@ all:    build
 lib:    clean
 	javac -classpath ./classes -d classes `find src/jdwp -name '*.java' -a ! -name 's.*' -a ! -name 'p.*' -print`
 	javac -classpath ./classes -d classes `find src/data -name '*.java' -a ! -name 's.*' -a ! -name 'p.*' -print`
-	$(JAR) -cfM0 memprof_lib.jar -C ./classes/ .    
+	$(JAR) -cfM0 memprof_lib.jar -C ./classes/ . 
+        
+client:    build
+	$(JAR) -cfm memprof_client.jar MANIFEST.MF -C ./classes/ . 
+          
 
 build:  lib
 	javac -classpath ./classes -d classes `find src/view -name '*.java' -a ! -name 's.*' -a ! -name 'p.*' -print`
