@@ -341,7 +341,7 @@ char* javautil_string_strcat(const char* prefix, const char* suffix) {
  * 
  * @param s string to be converted to lower-case
  */
-void javautil_string_to_lower_case(char * s) {
+void javautil_string_to_lower_case(char* s) {
     if (s == NULL) {
         return;
     }
@@ -396,27 +396,29 @@ char* javautil_string_skip_leading_blanks(char* s) {
  * @param s input string
  */
 void javautil_string_skip_trailing_blanks(char * s) {
+    int i;
 
     if (s == NULL) {
         return;
     }
 
-    while (*s != '\0' && *s != ' ' && *s != '\t') {
-        s++;
+    i = strlen(s) - 1;
+
+    while (i >= 0 && (s[i] == ' ' || s[i] == '\t')) {
+        i--;
     }
 
-    *s = '\0';
+    s[i+1] = '\0';
 }
 
 /**
  * Skip blanks in the beginning and at the end of the string
  * 
- * @param s input string
- * @return a pointer to a STATICALLY ALLOCATED string containg the same string as "s"
- *			but without the leading and trailing spaces.
+ * @param s string to be stripped of whitespaces
  */
 void javautil_string_strip(char* s) {
     char* pf;   /*forward pointer*/
+    int i, length;
 
     /*check arguments*/
     if (s == NULL) {
@@ -430,12 +432,20 @@ void javautil_string_strip(char* s) {
         pf++;
     }
 
-    while (*pf != '\0') {
-        /*don't copy blanks*/
-        if ((*pf != ' ') && (*pf != '\t')) {
-            *s++ = *pf++;
-        }        
+    /*skip trailing blanks*/
+	length = strlen(pf) - 1;
+
+    while (length >= 0 && (pf[length] == ' ' || pf[length] == '\t')) {
+        length--;
     }
+
+	length++;
+
+    for (i = 0; i < length; i++) {
+        s[i] = pf[i];
+    }
+
+	s[i] = '\0';
 }
 
 /**
