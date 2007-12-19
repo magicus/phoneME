@@ -212,10 +212,10 @@ KNIDECL(com_sun_midp_main_CDCInit_initMidpNativeStates) {
     KNI_StartHandles(2);    
     KNI_DeclareHandle(config);
     KNI_DeclareHandle(storage);
-    
+
     KNI_GetParameterAsObject(1, config);
     KNI_GetParameterAsObject(2, storage);
-	
+
     len = KNI_GetStringLength(config);
     if (len > max) {
         len = max;
@@ -239,7 +239,7 @@ KNIDECL(com_sun_midp_main_CDCInit_initMidpNativeStates) {
 
     midpSetHomeDir(store_buff);
     midpSetConfigDir(conf_buff);
-    
+
     if (midpInitialize() != 0) {
         printf("midpInitialize() failed\n");
 
@@ -262,7 +262,9 @@ static MSGQUEUEOPTIONS  writeEventQueueOptions;
 static void initCDCEvents() {
     DWORD err;
 
-    enum { MAX_MESSAGE_SIZE = 1024 };
+    enum {
+        MAX_MESSAGE_SIZE = 1024
+    };
 
     readEventQueueOptions.dwSize = sizeof(MSGQUEUEOPTIONS);
     readEventQueueOptions.dwFlags = MSGQUEUE_NOPRECOMMIT;
@@ -354,7 +356,7 @@ cacheEventFieldIDs(KNIDECLARGS jobject eventObj, jclass classObj) {
 }
 
 static void getControlStringField(KNIDECLARGS jobject objectHandle,
-                                   jfieldID fieldID, pcsl_string *str) {
+                                  jfieldID fieldID, pcsl_string *str) {
     KNI_StartHandles(1);
     KNI_DeclareHandle(stringObj);
 
@@ -367,7 +369,7 @@ static void getControlStringField(KNIDECLARGS jobject objectHandle,
 }
 
 static void setControlStringField(KNIDECLARGS jobject objectHandle,
-                                   jobject stringObj, jfieldID fieldID, pcsl_string *str) {
+                                  jobject stringObj, jfieldID fieldID, pcsl_string *str) {
 
     KNI_GetObjectField(objectHandle, fieldID, stringObj);
     str->length = KNI_GetStringLength(stringObj);
@@ -437,9 +439,9 @@ KNIDECL(com_sun_midp_events_NativeEventMonitor_waitForNativeEvent) {
     int done = 0;
 
     do {
-        CVMD_gcSafeExec(_ee, {
-            ready = WaitForSingleObject(controlPipe[0], 50);
-        });
+        CVMD_gcSafeExec(_ee,{
+                        ready = WaitForSingleObject(controlPipe[0], 50);
+                       });
 
         KNI_StartHandles(3);
         KNI_DeclareHandle(eventObj);
@@ -525,9 +527,9 @@ static const int numEvents = sizeof(eventNames) / sizeof(eventNames[0]);
 static const char*  getEventNameBasic(int eventId)
 {
     if (eventId >= numEvents) {
-  return "<illegal event id>";
+        return "<illegal event id>";
     } else {
-  return eventNames[eventId];
+        return eventNames[eventId];
     }
 }
 
@@ -578,22 +580,22 @@ KNIDECL(com_sun_midp_events_EventQueue_sendNativeEventToIsolate) {
 
 
     setControlStringField(KNIPASSARGS eventObj, stringObj,
-                           stringParam1FieldID, &event.stringParam1);
+                          stringParam1FieldID, &event.stringParam1);
 
     setControlStringField(KNIPASSARGS eventObj, stringObj,
-                           stringParam2FieldID, &event.stringParam2);
+                          stringParam2FieldID, &event.stringParam2);
 
     setControlStringField(KNIPASSARGS eventObj, stringObj,
-                           stringParam3FieldID, &event.stringParam3);
+                          stringParam3FieldID, &event.stringParam3);
 
     setControlStringField(KNIPASSARGS eventObj, stringObj,
-                           stringParam4FieldID, &event.stringParam4);
+                          stringParam4FieldID, &event.stringParam4);
 
     setControlStringField(KNIPASSARGS eventObj, stringObj,
-                           stringParam5FieldID, &event.stringParam5);
+                          stringParam5FieldID, &event.stringParam5);
 
     setControlStringField(KNIPASSARGS eventObj, stringObj,
-                           stringParam6FieldID, &event.stringParam6);
+                          stringParam6FieldID, &event.stringParam6);
 
     eventSize = sizeof(event);
 
@@ -612,9 +614,9 @@ KNIDECL(com_sun_midp_events_EventQueue_sendNativeEventToIsolate) {
 
 #ifdef CVM_DEBUG
 void dummy_called() {}
-#define DUMMY(x) void x() {printf("dummy: %s\n", #x); dummy_called();}
+    #define DUMMY(x) void x() {printf("dummy: %s\n", #x); dummy_called();}
 #else
-#define DUMMY(x) void x() {}
+    #define DUMMY(x) void x() {}
 #endif
 
 DUMMY(platformRequest)
@@ -642,7 +644,7 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_events_EventQueue_resetNativeEventQueue) {
     (void) _arguments;
     (void) _p_mb;
-     KNI_ReturnVoid();
+    KNI_ReturnVoid();
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT

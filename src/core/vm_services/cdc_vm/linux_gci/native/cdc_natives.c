@@ -140,9 +140,9 @@ midpInitializeUI(void) {
         int reserved = getInternalPropertyInt("AMS_MEMORY_RESERVED_MVM");
         int limit = getInternalPropertyInt("AMS_MEMORY_LIMIT_MVM");
 
-		if (0 == reserved) {
-			perror("property AMS_MEMORY_RESERVED_MVM not found!");
-		}
+        if (0 == reserved) {
+            perror("property AMS_MEMORY_RESERVED_MVM not found!");
+        }
 
         reserved = reserved * 1024;
         JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_RESERVED_MEMORY, reserved);
@@ -184,7 +184,7 @@ midpInitializeUI(void) {
  */
 static void
 midpFinalizeUI(void) {
-  //   lcdlf_ui_finalize();
+    //   lcdlf_ui_finalize();
 
     /*
        IMPL_NOTE: pushclose();
@@ -220,10 +220,10 @@ KNIDECL(com_sun_midp_main_CDCInit_initMidpNativeStates) {
     KNI_StartHandles(2);    
     KNI_DeclareHandle(config);
     KNI_DeclareHandle(storage);
-    
+
     KNI_GetParameterAsObject(1, config);
     KNI_GetParameterAsObject(2, storage);
-	
+
     len = KNI_GetStringLength(config);
     if (len > max) {
         len = max;
@@ -247,7 +247,7 @@ KNIDECL(com_sun_midp_main_CDCInit_initMidpNativeStates) {
 
     midpSetHomeDir(store_buff);
     midpSetConfigDir(conf_buff);
-    
+
     if (midpInitialize() != 0) {
         printf("midpInitialize() failed\n");
 
@@ -264,9 +264,9 @@ KNIDECL(com_sun_midp_main_CDCInit_initMidpNativeStates) {
 
 #ifdef CVM_DEBUG
 void dummy_called() {}
-#define DUMMY(x) void x() {printf("dummy: %s\n", #x); dummy_called();}
+    #define DUMMY(x) void x() {printf("dummy: %s\n", #x); dummy_called();}
 #else
-#define DUMMY(x) void x() {}
+    #define DUMMY(x) void x() {}
 #endif
 
 DUMMY(platformRequest)

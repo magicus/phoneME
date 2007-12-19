@@ -101,7 +101,7 @@ static char* doCallout(const char* key) {
     int i;
     for (i = 0; calloutKey[i] != NULL; ++i) {
         if (strcmp(key, calloutKey[i]) == 0) {
-            return (calloutFunction[i])();
+            return(calloutFunction[i])();
         }
     }
 
@@ -152,7 +152,7 @@ setProp(Property** propertySet, const char* key, const char* value,
 
     /* If the value is not defined, add it now */
     p = (Property*)midpMalloc(sizeof(Property));
-    if (NULL != p){
+    if (NULL != p) {
         p->next = *propertySet;
         CLEAR_FLAGS(p);
         if (useMalloc) {
@@ -199,7 +199,7 @@ getProp(Property** propertySet, const char* key) {
             if (NULL == p->value) {
                 return doCallout(p->key); 
             }
-            return (p->value);
+            return(p->value);
         }
         p = p->next;
     }
@@ -322,11 +322,11 @@ getInternalProperty(const char* key) {
  *         <tt>0</tt>
  */
 int getInternalPropertyInt(const char* key) {
-    const char *tmp;	
+    const char *tmp;    
 
-    tmp = getInternalProperty(key);	
+    tmp = getInternalProperty(key); 
 
-	return (NULL == tmp) ? 0 : atoi(tmp);
+    return(NULL == tmp) ? 0 : atoi(tmp);
 }
 
 

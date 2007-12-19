@@ -344,7 +344,7 @@ static void StoreMIDPEventInVmThreadImp(MidpEvent event, int isolateId) {
             /* This is a circular queue, so start back at zero. */
             pEventQueue->eventIn = 0;
         }
-      
+
         pEventQueue->numEvents++;
 
         if (pEventQueue->isMonitorBlocked) {
@@ -359,8 +359,8 @@ static void StoreMIDPEventInVmThreadImp(MidpEvent event, int isolateId) {
                 pEventQueue->isMonitorBlocked = KNI_FALSE;
             } else {
                 REPORT_CRIT(LC_CORE,
-                    "StoreMIDPEventInVmThread: cannot find "
-                    "native event monitor thread");
+                            "StoreMIDPEventInVmThread: cannot find "
+                            "native event monitor thread");
             }
         }
     } else {
@@ -392,14 +392,14 @@ static void StoreMIDPEventInVmThreadImp(MidpEvent event, int isolateId) {
 void
 StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
 
-	int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
+    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
 
-	if (0 == max_isolates) {
-		REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-		return;
-	}
+    if (0 == max_isolates) {
+        REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
+        return;
+    }
 
-	if( -1 != isolateId ) {
+    if ( -1 != isolateId ) {
         StoreMIDPEventInVmThreadImp(event, isolateId);
     } else {
         for (isolateId = 0; isolateId < max_isolates; ++isolateId)
@@ -429,8 +429,8 @@ void handleFatalError(void) {
 
     /* IMPL NOTE: Figure out what throwable class this is and log the error? */
     REPORT_CRIT1(LC_CORE, "handleFatalError: uncaught exception in "
-        "isolate %d event processing thread", getCurrentIsolateId());
-    
+                 "isolate %d event processing thread", getCurrentIsolateId());
+
     KNI_EndHandles();
 
     if (getCurrentIsolateId() == midpGetAmsIsolateId()) {
@@ -537,8 +537,8 @@ Java_com_sun_midp_events_NativeEventMonitor_waitForNativeEvent(void) {
          * that a monitor thread is already blocked.
          */
         REPORT_CRIT(LC_CORE,
-            "Assertion failed: NativeEventMonitor.waitForNativeEvent "
-            "called when Java thread already blocked");
+                    "Assertion failed: NativeEventMonitor.waitForNativeEvent "
+                    "called when Java thread already blocked");
     }
 
     /*
@@ -679,22 +679,22 @@ Java_com_sun_midp_events_EventQueue_getNativeEventQueueHandle(void) {
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
 Java_com_sun_midp_events_EventQueue_finalize(void) {
-   jint handle;
+    jint handle;
 
-   KNI_StartHandles(1);
-   KNI_DeclareHandle(thisObject);
-   KNI_GetThisPointer(thisObject);
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(thisObject);
+    KNI_GetThisPointer(thisObject);
 
-   SNI_BEGIN_RAW_POINTERS;
-   handle = getEventQueuePtr(thisObject)->nativeEventQueueHandle;
-   SNI_END_RAW_POINTERS;
+    SNI_BEGIN_RAW_POINTERS;
+    handle = getEventQueuePtr(thisObject)->nativeEventQueueHandle;
+    SNI_END_RAW_POINTERS;
 
-   KNI_EndHandles();
+    KNI_EndHandles();
 
-   if (handle >= 0) {
-       resetEventQueue(handle);
-   }
+    if (handle >= 0) {
+        resetEventQueue(handle);
+    }
 
-   KNI_ReturnVoid();
+    KNI_ReturnVoid();
 }
 

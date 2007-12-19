@@ -73,22 +73,22 @@ jboolean PlatformMScreen::r_orientation = false;
  * A frame-less widget that all Displayables are rendered on.
  */
 PlatformMScreen::PlatformMScreen(QWidget *parent, const char* name) :QScrollView(parent, name) {
-  vm_stopped = false;
+    vm_stopped = false;
 
-  // MainWindow already has frame, no frame for MScreen
-  setFrameStyle(QFrame::NoFrame);
+    // MainWindow already has frame, no frame for MScreen
+    setFrameStyle(QFrame::NoFrame);
 
-  // Graphics context
-  gc = new QPainter();
+    // Graphics context
+    gc = new QPainter();
 
-  force_refresh = true;
-  last_pen = -1;
-  last_brush = -1;
-  last_dotted = 0;
+    force_refresh = true;
+    last_pen = -1;
+    last_brush = -1;
+    last_dotted = 0;
 
-  TRACE_MSC(  PlatformMScreen::MScreen..);
-  connect(&vm_slicer, SIGNAL(timeout()), this, SLOT(slotTimeout()));
-  TRACE_MSC(..PlatformMScreen::MScreen);
+    TRACE_MSC(  PlatformMScreen::MScreen..);
+    connect(&vm_slicer, SIGNAL(timeout()), this, SLOT(slotTimeout()));
+    TRACE_MSC(..PlatformMScreen::MScreen);
 }
 
 
@@ -101,21 +101,21 @@ void PlatformMScreen::init() {
     TRACE_MSC(  PlatformMScreen::init..);
 
     setFocusPolicy(QWidget::ClickFocus);
-    
+
     // Always ...
     setHScrollBarMode(QScrollView::AlwaysOff);
 
-	DISPLAY_WIDTH = getInternalPropertyInt("NORMALWIDTH");
-	if (0 == reserved) {
-		REPORT_ERROR(LC_AMS, "NORMALWIDTH property not set");
-		return;
-	}
+    DISPLAY_WIDTH = getInternalPropertyInt("NORMALWIDTH");
+    if (0 == reserved) {
+        REPORT_ERROR(LC_AMS, "NORMALWIDTH property not set");
+        return;
+    }
 
-	DISPLAY_HEIGHT = getInternalPropertyInt("NORMALHEIGHT");	    
-	if (0 == DISPLAY_HEIGHT) {
-		REPORT_ERROR(LC_AMS, "NORMALWIDTH property not set");
-		return;
-	}
+    DISPLAY_HEIGHT = getInternalPropertyInt("NORMALHEIGHT");        
+    if (0 == DISPLAY_HEIGHT) {
+        REPORT_ERROR(LC_AMS, "NORMALWIDTH property not set");
+        return;
+    }
 
     SCREEN_WIDTH        = DISPLAY_WIDTH - VERT_SCROLLBAR_WIDTH;
     SCREEN_HEIGHT       = DISPLAY_HEIGHT;
@@ -327,7 +327,7 @@ void PlatformMScreen::keyPressEvent(QKeyEvent *key)
                 evt.type = MIDP_KEY_EVENT;
             }
             evt.ACTION = key->isAutoRepeat() ? 
-                KEYMAP_STATE_REPEATED : KEYMAP_STATE_PRESSED;
+                         KEYMAP_STATE_REPEATED : KEYMAP_STATE_PRESSED;
             handleKeyEvent(evt);
         }
     }
@@ -371,9 +371,9 @@ void PlatformMScreen::keyReleaseEvent(QKeyEvent *key)
  */
 void PlatformMScreen::handleKeyEvent(MidpEvent evt)
 {
-  if (evt.type != MIDP_INVALID_EVENT) {
-    midpStoreEventAndSignalForeground(evt);
-  }
+    if (evt.type != MIDP_INVALID_EVENT) {
+        midpStoreEventAndSignalForeground(evt);
+    }
 }
 
 /**
@@ -407,7 +407,7 @@ QColor PlatformMScreen::getColor(int pixel) {
  */
 bool
 PlatformMScreen::isCurrentPaintDevice(QPaintDevice *dst) {
-    return (gc->device() == dst) ? true : false;
+    return(gc->device() == dst) ? true : false;
 }
 
 /**
@@ -415,15 +415,15 @@ PlatformMScreen::isCurrentPaintDevice(QPaintDevice *dst) {
  */
 QPainter *
 PlatformMScreen::setupGC(int pixel_pen, int pixel_brush, const jshort *clip,
-                  QPaintDevice *dst, int dotted) {
+                         QPaintDevice *dst, int dotted) {
 
-  TRACE_MSC(PlatformMScreen::setupGC);
+    TRACE_MSC(PlatformMScreen::setupGC);
 
     QPaintDevice* dev = gc->device();
 
     // default destination is the back buffer
     if (dst == NULL) {
-      dst = (QPaintDevice*)&qpixmap;
+        dst = (QPaintDevice*)&qpixmap;
     }
 
     // finish operation on old device, if changed
@@ -524,15 +524,15 @@ void PlatformMScreen::refresh(int x1, int y1, int x2, int y2) {
     if ((MidpCurrentScreen != NULL)
         && (MidpCurrentScreen->component.type == MIDP_CANVAS_TYPE)) {
 
-      /* Finish last activity */
-      if (gc->isActive())
-          gc->end();
+        /* Finish last activity */
+        if (gc->isActive())
+            gc->end();
 
-      bitBlt((QPaintDevice*)viewport(), x1, y1,
-             &qpixmap,
-             x1, y1,
-             x2 - x1 + 1,
-             y2 - y1 + 1);
+        bitBlt((QPaintDevice*)viewport(), x1, y1,
+               &qpixmap,
+               x1, y1,
+               x2 - x1 + 1,
+               y2 - y1 + 1);
     }
 
     force_refresh = true;
@@ -542,7 +542,7 @@ void PlatformMScreen::refresh(int x1, int y1, int x2, int y2) {
 int
 PlatformMScreen::getScrollPosition()
 {
-  return (contentsY());
+    return(contentsY());
 }
 
 void PlatformMScreen::setScrollPosition(int pos)
@@ -555,14 +555,14 @@ void PlatformMScreen::setScrollPosition(int pos)
  * by a new Display.
  */
 void PlatformMScreen::gainedForeground() {
-  force_refresh  = KNI_TRUE;
-  key_press_count = 0;
+    force_refresh  = KNI_TRUE;
+    key_press_count = 0;
 }
 
 /**
  * Width of a normal screen.
  */
- int PlatformMScreen::getDisplayWidth() const { 
+int PlatformMScreen::getDisplayWidth() const { 
     if (r_orientation) {
         return DISPLAY_HEIGHT;
     } else {

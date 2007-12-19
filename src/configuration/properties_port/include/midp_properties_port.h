@@ -42,7 +42,7 @@ extern "C" {
  * @return The value associated with <tt>key<tt> if found, otherwise
  *         <tt>NULL<tt>
  */
-const char* getSystemProperty(const char*);
+const char* getSystemProperty(const char* key);
 
 /**
  * Gets the value of the specified property key in the internal
@@ -54,7 +54,7 @@ const char* getSystemProperty(const char*);
  * @return The value associated with <tt>key<tt> if found, otherwise
  *         <tt>NULL<tt>
  */
-const char* getInternalProperty(const char*);
+const char* getInternalProperty(const char* key);
 
 /**
  * Gets the integer value of the specified property key in the internal
@@ -76,7 +76,7 @@ int getInternalPropertyInt(const char* key);
  * @param key The key to set
  * @param value The value to set <tt>key<tt> to
  */
-void  setSystemProperty(const char*, const char*);
+void  setSystemProperty(const char* key, const char* value);
 
 /**
  * Sets a property key to the specified value in the internal
@@ -85,7 +85,7 @@ void  setSystemProperty(const char*, const char*);
  * @param key The key to set
  * @param value The value to set <tt>key<tt> to
  */
-void  setInternalProperty (const char*, const char*);
+void  setInternalProperty (const char* key, const char* value);
 
 /**
  * Finalize the configuration subsystem by releasing all the

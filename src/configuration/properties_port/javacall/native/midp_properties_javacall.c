@@ -37,42 +37,6 @@
 #include <midp_logging.h>
 #include <javacall_properties.h>
 
-/**
- * @file
- * MIDP native configuration property implementation.
- * <b>OVERVIEW:</b>
- * <p>
- * This file defines the functions that access runtime configuration
- * properties that are predefined in configuration files or
- * overridden on the command line or environmental variables.
- * <p>
- * <b>ASSUMPTIONS:</b>
- * <p>
- * The complete property mechanism will not be needed when
- * MIDP is ported to a physical device where there is no
- * need for command line arguments or environment variable
- * overrides. This module is intended to simplify the porting
- * effort in identifying runtime switches that can be
- * optimized when shrinking the complete system by hard
- * wiring specific components in the system.
- * <p>
- * <b>DATASTRUCTURE:</b>
- * <p>
- * Two configuration files are supported. First, the file
- * lib/system.config contains the properties visible to the
- * application code via the System.getProperty() interface.
- * Second, the lib/internal.config contains implementation
- * specific properties that are not intended to be exposed
- * to the MIDlet application.
- * <p>
- * A configuration file contains "key: value\n" lines. Carriage
- * returns are ignored, and lines beginning with the pound sign
- * are skipped as comment lines. White space after the colon are
- * trimmed before the key and value are recorded.
- * <p>
- * The system will continue to run even if the configuration files
- * can not be read or contain parsing errors in the data.
- */
 
 
 /** Configuration property name, as defined by the CLDC specification */
@@ -98,7 +62,7 @@
  */
 int
 initializeConfig(void) {
-     return 0;
+    return 0;
 }
 
 /**
@@ -119,7 +83,7 @@ finalizeConfig(void) {
  */
 void
 setInternalProperty(const char* key , const char* value) {
-	javacall_set_property(key, value, KNI_TRUE, JAVACALL_INTERNAL_PROPERTY);
+    javacall_set_property(key, value, KNI_TRUE, JAVACALL_INTERNAL_PROPERTY);
 }
 
 /**
@@ -134,16 +98,15 @@ setInternalProperty(const char* key , const char* value) {
  */
 const char*
 getInternalProperty(const char* key) {
-	char *str;
+    char *str;
 
-	if (JAVACALL_OK == javacall_get_property(key, JAVACALL_INTERNAL_PROPERTY, &str)) {
-		return str;
-	}
-	else if (JAVACALL_OK == javacall_get_property(key, JAVACALL_APPLICATION_PROPERTY, &str)) {
-		return str;
-	}
+    if (JAVACALL_OK == javacall_get_property(key, JAVACALL_INTERNAL_PROPERTY, &str)) {
+        return str;
+    } else if (JAVACALL_OK == javacall_get_property(key, JAVACALL_APPLICATION_PROPERTY, &str)) {
+        return str;
+    }
 
-	return NULL;
+    return NULL;
 }
 
 /**
@@ -156,11 +119,11 @@ getInternalProperty(const char* key) {
  *         <tt>0</tt>
  */
 int getInternalPropertyInt(const char* key) {
-    const char *tmp;	
+    const char *tmp;    
 
-    tmp = getInternalProperty(key);	
+    tmp = getInternalProperty(key); 
 
-	return (NULL == tmp) ? 0 : atoi(tmp);
+    return(NULL == tmp) ? 0 : atoi(tmp);
 }
 
 
@@ -174,7 +137,7 @@ int getInternalPropertyInt(const char* key) {
  */
 void
 setSystemProperty(const char* key , const char* value) {
-	javacall_set_property(key, value, KNI_TRUE, JAVACALL_APPLICATION_PROPERTY);	
+    javacall_set_property(key, value, KNI_TRUE, JAVACALL_APPLICATION_PROPERTY); 
 }
 
 /**
@@ -190,10 +153,10 @@ const char*
 getSystemProperty(const char* key) {
     char *str;
 
-	if (JAVACALL_OK == javacall_get_property(key, JAVACALL_APPLICATION_PROPERTY, &str)) {
-		return str;
-	}
+    if (JAVACALL_OK == javacall_get_property(key, JAVACALL_APPLICATION_PROPERTY, &str)) {
+        return str;
+    }
 
-	return NULL;
+    return NULL;
 }
 

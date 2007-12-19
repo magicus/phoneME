@@ -70,51 +70,51 @@
  * global and per suite limits for all resource types.
  */
 const int gGlobalResourceTable[5][RSC_TYPE_COUNT] = {
-  {
-    TCP_CLI_GLOBAL_LIMIT,     // RSC_TYPE_TCP_CLI
-    TCP_SER_GLOBAL_LIMIT,     // RSC_TYPE_TCP_SER
-    UDP_GLOBAL_LIMIT,         // RSC_TYPE_UDP
-    FILE_GLOBAL_LIMIT,        // RSC_TYPE_FILE
-    AUDIO_CHA_GLOBAL_LIMIT,   // RSC_TYPE_AUDIO_CHA
-    IMAGE_MUT_GLOBAL_LIMIT,   // RSC_TYPE_IMAGE_MUT
-    IMAGE_IMMUT_GLOBAL_LIMIT  // RSC_TYPE_IMAGE_IMMUT
-  },
-  {
-    TCP_CLI_AMS_RESERVED,     // RSC_TYPE_TCP_CLI
-    TCP_SER_AMS_RESERVED,     // RSC_TYPE_TCP_SER
-    UDP_AMS_RESERVED,         // RSC_TYPE_UDP
-    FILE_AMS_RESERVED,        // RSC_TYPE_FILE
-    AUDIO_CHA_AMS_RESERVED,   // RSC_TYPE_AUDIO_CHA
-    IMAGE_MUT_AMS_RESERVED,   // RSC_TYPE_IMAGE_MUT
-    IMAGE_IMMUT_AMS_RESERVED  // RSC_TYPE_IMAGE_IMMUT
-  },
-  {
-    TCP_CLI_AMS_LIMIT,      // RSC_TYPE_TCP_CLI
-    TCP_SER_AMS_LIMIT,      // RSC_TYPE_TCP_SER
-    UDP_AMS_LIMIT,          // RSC_TYPE_UDP
-    FILE_AMS_LIMIT,         // RSC_TYPE_FILE
-    AUDIO_CHA_AMS_LIMIT,    // RSC_TYPE_AUDIO_CHA
-    IMAGE_MUT_AMS_LIMIT,    // RSC_TYPE_IMAGE_MUT
-    IMAGE_IMMUT_AMS_LIMIT   // RSC_TYPE_IMAGE_IMMUT
-  },
-  {
-    TCP_CLI_SUITE_RESERVED,     // RSC_TYPE_TCP_CLI
-    TCP_SER_SUITE_RESERVED,     // RSC_TYPE_TCP_SER
-    UDP_SUITE_RESERVED,         // RSC_TYPE_UDP
-    FILE_SUITE_RESERVED,        // RSC_TYPE_FILE
-    AUDIO_CHA_SUITE_RESERVED,   // RSC_TYPE_AUDIO_CHA
-    IMAGE_MUT_SUITE_RESERVED,   // RSC_TYPE_IMAGE_MUT
-    IMAGE_IMMUT_SUITE_RESERVED  // RSC_TYPE_IMAGE_IMMUT
-  },
-  {
-    TCP_CLI_SUITE_LIMIT,      // RSC_TYPE_TCP_CLI
-    TCP_SER_SUITE_LIMIT,      // RSC_TYPE_TCP_SER
-    UDP_SUITE_LIMIT,          // RSC_TYPE_UDP
-    FILE_SUITE_LIMIT,         // RSC_TYPE_FILE
-    AUDIO_CHA_SUITE_LIMIT,    // RSC_TYPE_AUDIO_CHA
-    IMAGE_MUT_SUITE_LIMIT,    // RSC_TYPE_IMAGE_MUT
-    IMAGE_IMMUT_SUITE_LIMIT   // RSC_TYPE_IMAGE_IMMUT
-  }
+    {
+        TCP_CLI_GLOBAL_LIMIT,     // RSC_TYPE_TCP_CLI
+        TCP_SER_GLOBAL_LIMIT,     // RSC_TYPE_TCP_SER
+        UDP_GLOBAL_LIMIT,         // RSC_TYPE_UDP
+        FILE_GLOBAL_LIMIT,        // RSC_TYPE_FILE
+        AUDIO_CHA_GLOBAL_LIMIT,   // RSC_TYPE_AUDIO_CHA
+        IMAGE_MUT_GLOBAL_LIMIT,   // RSC_TYPE_IMAGE_MUT
+        IMAGE_IMMUT_GLOBAL_LIMIT  // RSC_TYPE_IMAGE_IMMUT
+    },
+    {
+        TCP_CLI_AMS_RESERVED,     // RSC_TYPE_TCP_CLI
+        TCP_SER_AMS_RESERVED,     // RSC_TYPE_TCP_SER
+        UDP_AMS_RESERVED,         // RSC_TYPE_UDP
+        FILE_AMS_RESERVED,        // RSC_TYPE_FILE
+        AUDIO_CHA_AMS_RESERVED,   // RSC_TYPE_AUDIO_CHA
+        IMAGE_MUT_AMS_RESERVED,   // RSC_TYPE_IMAGE_MUT
+        IMAGE_IMMUT_AMS_RESERVED  // RSC_TYPE_IMAGE_IMMUT
+    },
+    {
+        TCP_CLI_AMS_LIMIT,      // RSC_TYPE_TCP_CLI
+        TCP_SER_AMS_LIMIT,      // RSC_TYPE_TCP_SER
+        UDP_AMS_LIMIT,          // RSC_TYPE_UDP
+        FILE_AMS_LIMIT,         // RSC_TYPE_FILE
+        AUDIO_CHA_AMS_LIMIT,    // RSC_TYPE_AUDIO_CHA
+        IMAGE_MUT_AMS_LIMIT,    // RSC_TYPE_IMAGE_MUT
+        IMAGE_IMMUT_AMS_LIMIT   // RSC_TYPE_IMAGE_IMMUT
+    },
+    {
+        TCP_CLI_SUITE_RESERVED,     // RSC_TYPE_TCP_CLI
+        TCP_SER_SUITE_RESERVED,     // RSC_TYPE_TCP_SER
+        UDP_SUITE_RESERVED,         // RSC_TYPE_UDP
+        FILE_SUITE_RESERVED,        // RSC_TYPE_FILE
+        AUDIO_CHA_SUITE_RESERVED,   // RSC_TYPE_AUDIO_CHA
+        IMAGE_MUT_SUITE_RESERVED,   // RSC_TYPE_IMAGE_MUT
+        IMAGE_IMMUT_SUITE_RESERVED  // RSC_TYPE_IMAGE_IMMUT
+    },
+    {
+        TCP_CLI_SUITE_LIMIT,      // RSC_TYPE_TCP_CLI
+        TCP_SER_SUITE_LIMIT,      // RSC_TYPE_TCP_SER
+        UDP_SUITE_LIMIT,          // RSC_TYPE_UDP
+        FILE_SUITE_LIMIT,         // RSC_TYPE_FILE
+        AUDIO_CHA_SUITE_LIMIT,    // RSC_TYPE_AUDIO_CHA
+        IMAGE_MUT_SUITE_LIMIT,    // RSC_TYPE_IMAGE_MUT
+        IMAGE_IMMUT_SUITE_LIMIT   // RSC_TYPE_IMAGE_IMMUT
+    }
 };
 
 /**
@@ -151,27 +151,27 @@ static _IsolateResourceUsage* gIsolateResourceUsage;
  */
 static void initResourceLimit() {
     int i, j;
-	int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
+    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
 
-	if (0 == max_isolates) {
-		REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-		return;
-	}
+    if (0 == max_isolates) {
+        REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
+        return;
+    }
 
 
     REPORT_INFO(LC_CORE, "initialize resource limit\n");
 
-	gIsolateResourceUsage = (_IsolateResourceUsage*)midpMalloc(sizeof(_IsolateResourceUsage)*max_isolates);
+    gIsolateResourceUsage = (_IsolateResourceUsage*)midpMalloc(sizeof(_IsolateResourceUsage)*max_isolates);
 
     for (i = 0; i < max_isolates; i++) {
         gIsolateResourceUsage[i].isolateId = -1;
         gIsolateResourceUsage[i].inUse = 0;
 
         for (j = 0; j < RSC_TYPE_COUNT; j++) {
-          gIsolateResourceUsage[i].resourceUsage[j] = 0;
+            gIsolateResourceUsage[i].resourceUsage[j] = 0;
 
 #ifdef MEASURE_HIGHWATER_MARK
-          gIsolateResourceUsage[i].resourceMaxUsage[j] = 0;
+            gIsolateResourceUsage[i].resourceMaxUsage[j] = 0;
 #endif
         }
     }
@@ -193,13 +193,13 @@ static void initResourceLimit() {
  */
 static _IsolateResourceUsage *findIsolateResourceUsageStruct(int isolateId) {
     int i;
-	int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
+    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
 
-	if (0 == max_isolates) {
-		REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-		//Attempt to recover
-		max_isolates = 1;
-	}
+    if (0 == max_isolates) {
+        REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
+        //Attempt to recover
+        max_isolates = 1;
+    }
 
 
     if (!isInitialized) {
@@ -240,7 +240,7 @@ static int checkResourceLimit(_IsolateResourceUsage *entry,
         if (entry->resourceUsage[type] < SUITE_RESERVED(type)) {
             /* part or all of the needed resource is already reserved */
             fromGlobal = (entry->resourceUsage[type] + requestSize) - 
-                SUITE_RESERVED(type);
+                         SUITE_RESERVED(type);
             if (fromGlobal < 0) {
                 fromGlobal = 0;
             }
@@ -431,12 +431,12 @@ int midpAllocateReservedResources() {
     int isolateId = getCurrentIsolateId();
     int i = 0, idx;
     int status = KNI_TRUE;
-	int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
+    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
 
-	if (0 == max_isolates) {
-		REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-		return -1;
-	}
+    if (0 == max_isolates) {
+        REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
+        return -1;
+    }
 
 
     REPORT_INFO1(LC_CORE, "RESOURCES [%d] midpAllocateReservedResources()\n", 
@@ -507,11 +507,11 @@ void midpFreeReservedResources() {
     int isolateId = getCurrentIsolateId();
     int idx, i;
 
-	int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
-	if (0 == max_isolates) {
-		REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-		return;
-	}
+    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
+    if (0 == max_isolates) {
+        REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
+        return;
+    }
 
 
     REPORT_INFO1(LC_CORE, "RESOURCES [%d] midpFreeReservedResources()\n", 
@@ -565,7 +565,7 @@ void midpFreeReservedResources() {
             /* return unused reserved resources */
             for (i = 0; i < RSC_TYPE_COUNT; i++) {
                 int unusedResources = SUITE_RESERVED(i) - 
-                    gIsolateResourceUsage[idx].resourceUsage[i];
+                                      gIsolateResourceUsage[idx].resourceUsage[i];
 
                 if (unusedResources > 0) {
                     gResourcesAvailable[i] += unusedResources;

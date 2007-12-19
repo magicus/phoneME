@@ -40,7 +40,7 @@
 #include <fbapp_export.h>
 
 #ifdef DIRECTFB
-#include <directfbapp_export.h>
+    #include <directfbapp_export.h>
 #endif
 
 /* IMPL_NOTE - CDC declarations */
@@ -153,7 +153,7 @@ midpInitializeUI(void) {
         int reserved = getInternalPropertyInt("AMS_MEMORY_RESERVED_MVM");
         int limit = getInternalPropertyInt("AMS_MEMORY_LIMIT_MVM");
 
-		if (0 == reserved) {
+        if (0 == reserved) {
             REPORT_ERROR(LC_AMS, "AMS_MEMORY_RESERVED_MVM property not set");
             return -1;
         }
@@ -228,7 +228,7 @@ KNIDECL(com_sun_midp_main_CDCInit_initMidpNativeStates) {
     KNI_StartHandles(2);    
     KNI_DeclareHandle(config);
     KNI_DeclareHandle(storage);
-    
+
     KNI_GetParameterAsObject(1, config);
     KNI_GetParameterAsObject(2, storage);
 
@@ -455,10 +455,10 @@ KNIDECL(com_sun_midp_events_NativeEventMonitor_waitForNativeEvent) {
             }
         }
 
-        CVMD_gcSafeExec(_ee, {
-            num_ready= select(num_fds+1, &read_fds, &write_fds, &except_fds,
-                              NULL);
-        });
+        CVMD_gcSafeExec(_ee,{
+                        num_ready= select(num_fds+1, &read_fds, &write_fds, &except_fds,
+                                          NULL);
+                       });
 #else
         /* We should get events from two different sources:
          * from controlPipe and from DirectFB's event queue (keyboard events).
@@ -470,10 +470,10 @@ KNIDECL(com_sun_midp_events_NativeEventMonitor_waitForNativeEvent) {
             timeout.tv_sec = 0;
             timeout.tv_usec = 200000; /* wait 0.2 sec */
             /* When the timeout expires num_ready will contain 0 */
-            CVMD_gcSafeExec(_ee, {
-                num_ready= select(num_fds+1, &read_fds, &write_fds, &except_fds,
-                                  &timeout);
-            });
+            CVMD_gcSafeExec(_ee,{
+                            num_ready= select(num_fds+1, &read_fds, &write_fds, &except_fds,
+                                              &timeout);
+                           });
         } else {
             keyboard_has_event = 1;
             num_ready = 0;
@@ -482,7 +482,7 @@ KNIDECL(com_sun_midp_events_NativeEventMonitor_waitForNativeEvent) {
 
         KNI_StartHandles(3);
         KNI_DeclareHandle(eventObj);
-  /* IMPL_NOTE        KNI_DeclareHandle(stringObj); */
+        /* IMPL_NOTE        KNI_DeclareHandle(stringObj); */
         KNI_DeclareHandle(classObj);
 
         KNI_GetParameterAsObject(1, eventObj);
@@ -524,8 +524,7 @@ KNIDECL(com_sun_midp_events_NativeEventMonitor_waitForNativeEvent) {
 #endif
                     done = 1;
                 }
-            }
-            else if (FD_ISSET(controlPipe[0], &read_fds)) {
+            } else if (FD_ISSET(controlPipe[0], &read_fds)) {
                 readControlIntField(eventObj, typeFieldID);
                 readControlIntField(eventObj, intParam1FieldID);
                 readControlIntField(eventObj, intParam2FieldID);
@@ -607,14 +606,14 @@ static const int numEvents = sizeof(eventNames) / sizeof(eventNames[0]);
 static const char*  getEventNameBasic(int eventId)
 {
     if (eventId >= numEvents) {
-  return "<illegal event id>";
+        return "<illegal event id>";
     } else {
-  return eventNames[eventId];
+        return eventNames[eventId];
     }
 }
 
 static const char*  getEventName(KNIDECLARGS jobject objectHandle,
-         jfieldID fieldID)
+                                 jfieldID fieldID)
 {
     int eventId = KNI_GetIntField(objectHandle, fieldID);
     return getEventNameBasic(eventId);
@@ -683,9 +682,9 @@ KNIDECL(com_sun_midp_events_EventQueue_sendNativeEventToIsolate) {
 
 #ifdef CVM_DEBUG
 void dummy_called() {}
-#define DUMMY(x) void x() {printf("dummy: %s\n", #x); dummy_called();}
+    #define DUMMY(x) void x() {printf("dummy: %s\n", #x); dummy_called();}
 #else
-#define DUMMY(x) void x() {}
+    #define DUMMY(x) void x() {}
 #endif
 
 DUMMY(platformRequest)
@@ -713,7 +712,7 @@ KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_events_EventQueue_resetNativeEventQueue) {
     (void) _arguments;
     (void) _p_mb;
-     KNI_ReturnVoid();
+    KNI_ReturnVoid();
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT

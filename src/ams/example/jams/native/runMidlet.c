@@ -39,9 +39,9 @@
 #include <midp_properties_port.h>
 
 #if ENABLE_MULTIPLE_ISOLATES
-#define MIDP_HEAP_REQUIREMENT (MAX_ISOLATES * 1024 * 1024)
+    #define MIDP_HEAP_REQUIREMENT (MAX_ISOLATES * 1024 * 1024)
 #else
-#define MIDP_HEAP_REQUIREMENT (1280 * 1024)
+    #define MIDP_HEAP_REQUIREMENT (1280 * 1024)
 #endif
 
 /** Maximum number of command line arguments. */
@@ -75,12 +75,12 @@ static const char* const runUsageText =
  */
 int
 getHeapRequirement(){
-	int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
-	int midp_heap_requirement;
+    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
+    int midp_heap_requirement;
 
-	//calculate heap size
-	midp_heap_requirement = (max_isolates == 0) ? (1280 * 1024) : (max_isolates * 1024 * 1024);	
-	return midp_heap_requirement;
+    //calculate heap size
+    midp_heap_requirement = (max_isolates == 0) ? (1280 * 1024) : (max_isolates * 1280 * 1024); 
+    return midp_heap_requirement;
 }
 
 
@@ -116,12 +116,12 @@ runMidlet(int argc, char** commandlineArgs) {
     int numberOfSuites = 0;
     int ordinalSuiteNumber = -1;
     char* chSuiteNum = NULL;
-	int midp_heap_requirement;
+    int midp_heap_requirement;
 
-	JVM_Initialize(); /* It's OK to call this more than once */
+    JVM_Initialize(); /* It's OK to call this more than once */
 
 
-	midp_heap_requirement = getHeapRequirement();
+    midp_heap_requirement = getHeapRequirement();
 
 
     /*
@@ -205,7 +205,7 @@ runMidlet(int argc, char** commandlineArgs) {
     if (midpHome == NULL) {
         return -1;
     }
-    
+
     /* set up midpHome before calling initialize */
     midpSetHomeDir(midpHome);
 

@@ -91,12 +91,12 @@
 
 static JvmPathChar getCharPathSeparator();
 static MIDP_ERROR getClassPathPlus(SuiteIdType storageName,
-    JvmPathChar** userClassPath, char* classPathExt);
+                                   JvmPathChar** userClassPath, char* classPathExt);
 
 #if VERIFY_ONCE
 static MIDP_ERROR getClassPathForVerifyOnce(
-    JvmPathChar** classPath, SuiteIdType suiteId,
-    const pcsl_string* midletName, const pcsl_string* jarPath);
+                                           JvmPathChar** classPath, SuiteIdType suiteId,
+                                           const pcsl_string* midletName, const pcsl_string* jarPath);
 #endif
 
 #if (REPORT_LEVEL <= LOG_INFORMATION) && !ENABLE_CONTROL_ARGS_FROM_JAD
@@ -111,35 +111,35 @@ measureStack(int clearStack) {
     int   i;
 
     if (clearStack) {
-	for (i = 0; i < STACK_SIZE; i++) {
-	    stack[i] = tag;
-	}
+        for (i = 0; i < STACK_SIZE; i++) {
+            stack[i] = tag;
+        }
     } else {
-	for (i = 0; i < STACK_SIZE; i++) {
-	    if (stack[i] != tag) {
-    		reportToLog(LOG_INFORMATION, LC_CORE_STACK,
-                        "Max Native Stack Size:  %d",
-					    (STACK_SIZE - i));
-		break;
-	    }
-	}
+        for (i = 0; i < STACK_SIZE; i++) {
+            if (stack[i] != tag) {
+                reportToLog(LOG_INFORMATION, LC_CORE_STACK,
+                            "Max Native Stack Size:  %d",
+                            (STACK_SIZE - i));
+                break;
+            }
+        }
     }
 }
-#undef STACK_SIZE
+    #undef STACK_SIZE
 
 #else
 
-#define measureStack(x) ;
+    #define measureStack(x) ;
 
 #endif
 
 #if 0
 void monitorHeap() {
     static const int EXPECTED_HEAP_DELTA = 256; /* bytes */
-    /* Remember initial free heap size */
+/* Remember initial free heap size */
     static int firstHeap = 0;
 
-    /* Compare free memory before each VM run, to detect memory leak */
+/* Compare free memory before each VM run, to detect memory leak */
     int currentHeap = midpGetFreeHeap();
     if (firstHeap == 0) {
         firstHeap = currentHeap;
@@ -161,10 +161,10 @@ void monitorHeap() {
  */
 static void setMonetClassPath(JvmPathChar **userClassPath, int pathLen) {
     if (*userClassPath != NULL && pathLen > 0 &&
-            (*userClassPath)[pathLen - 4] == (JvmPathChar)'.' &&
-            (*userClassPath)[pathLen - 3] == (JvmPathChar)'j' &&
-            (*userClassPath)[pathLen - 2] == (JvmPathChar)'a' &&
-            (*userClassPath)[pathLen - 1] == (JvmPathChar)'r') {
+        (*userClassPath)[pathLen - 4] == (JvmPathChar)'.' &&
+        (*userClassPath)[pathLen - 3] == (JvmPathChar)'j' &&
+        (*userClassPath)[pathLen - 2] == (JvmPathChar)'a' &&
+        (*userClassPath)[pathLen - 1] == (JvmPathChar)'r') {
         int i;
         int j;
         pcsl_string uBinFile = PCSL_STRING_NULL;
@@ -180,7 +180,7 @@ static void setMonetClassPath(JvmPathChar **userClassPath, int pathLen) {
         /* add the new suffix, but don't include ".jar" */
         int binNameLen = pathLen - 4 + suffixLen;
         JvmPathChar *binFile = (JvmPathChar*)midpMalloc(
-                               (binNameLen + 1) * sizeof (JvmPathChar));
+                                                       (binNameLen + 1) * sizeof (JvmPathChar));
 
         /*
          * JvmPathChars can be either 16 bits or 8 bits so we can't
@@ -215,7 +215,7 @@ static void setMonetClassPath(JvmPathChar **userClassPath, int pathLen) {
         /* If Monet bundle file does not exist, convert now */
         if (storage_file_exists(&uBinFile) == 0) {
             errorcode = JVM_CreateAppImage(*userClassPath, binFile,
-                                      JVM_REMOVE_CLASSES_FROM_JAR);
+                                           JVM_REMOVE_CLASSES_FROM_JAR);
         } else {
             errorcode = 0;
         }
@@ -229,7 +229,7 @@ static void setMonetClassPath(JvmPathChar **userClassPath, int pathLen) {
             /* binary file + separator + jar file + terminator */
             int newPathLen = binNameLen + 1 + pathLen + 1;
             JvmPathChar *newPath =
-                (JvmPathChar*)midpMalloc(newPathLen * sizeof (JvmPathChar));
+            (JvmPathChar*)midpMalloc(newPathLen * sizeof (JvmPathChar));
             int j;
 
             for (i = 0; i < binNameLen; i++) {
@@ -277,15 +277,15 @@ JVMSPI_GetSystemProperty(char* prop_name) {
 
 void
 JVMSPI_SetSystemProperty(char* propName, char* value) {
-    /*
-     * override internal configuration parameters.
-     */
+/*
+ * override internal configuration parameters.
+ */
     setInternalProperty(propName, value);
 
-     /*
-      * Also override System.getProperty() for backward compatibility
-      * with CLDC uses of property vales.
-      */
+/*
+ * Also override System.getProperty() for backward compatibility
+ * with CLDC uses of property vales.
+ */
     setSystemProperty(propName, value);
 }
 
@@ -325,13 +325,13 @@ JVMSPI_Exit(int code) {
 void JVMSPI_CheckEvents(JVMSPI_BlockedThreadInfo *blocked_threads,
                         int blocked_threads_count,
                         jlong timeout) {
-  midp_check_events(blocked_threads, blocked_threads_count, timeout);
+    midp_check_events(blocked_threads, blocked_threads_count, timeout);
 }
 
 #if ENABLE_JAVA_DEBUGGER
 void
 JVMSPI_DebuggerNotification(jboolean is_active) {
-    /* Avoid a compiler warning. */
+/* Avoid a compiler warning. */
     (void)is_active;
     return;
 }
@@ -360,15 +360,15 @@ midpInitializeUI(void) {
         return -1;
     }
 
-    /*
-     * Porting consideration:
-     * Here is a good place to put I18N init.
-     * function. e.g. initLocaleMethod();
-     */
+/*
+ * Porting consideration:
+ * Here is a good place to put I18N init.
+ * function. e.g. initLocaleMethod();
+ */
 
-    /*
-     * Set AMS memory limits
-     */
+/*
+ * Set AMS memory limits
+ */
 #if ENABLE_MULTIPLE_ISOLATES
     {
         int reserved;
@@ -443,15 +443,15 @@ midpFinalizeUI(void) {
 
     FinalizeEvents();
 
-    /* Porting consideration:
-     * Here is a good place to put I18N finalization
-     * function. e.g. finalizeLocaleMethod(); */
+/* Porting consideration:
+ * Here is a good place to put I18N finalization
+ * function. e.g. finalizeLocaleMethod(); */
 
-    /*
-     * Note: the AMS isolate will have been registered by a native method
-     * call, so there is no corresponding midpRegisterAmsIsolateId in the
-     * midpInitializeUI() function.
-     */
+/*
+ * Note: the AMS isolate will have been registered by a native method
+ * call, so there is no corresponding midpRegisterAmsIsolateId in the
+ * midpInitializeUI() function.
+ */
     midpUnregisterAmsIsolateId();
 }
 
@@ -462,7 +462,7 @@ midpFinalizeUI(void) {
  */
 static void
 putClassPathExtToSysProperty(char* classPathExt) {
-    /* store class path as system variable for another isolates */
+/* store class path as system variable for another isolates */
     if (NULL != classPathExt) {
         char* argv[1];
         const char prefix[] = "-Dclasspathext=";
@@ -521,11 +521,11 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
     }
 
 #if (ENABLE_JSR_205 || ENABLE_JSR_120)
-    /*
-     * Start listening for wireless messages.
-     * Consider moving this as appropriate in course of pause/resume
-     * framework implementation
-     */
+/*
+ * Start listening for wireless messages.
+ * Consider moving this as appropriate in course of pause/resume
+ * framework implementation
+ */
     if (init_jsr120() != WMA_NET_SUCCESS) {
         REPORT_WARN(LC_CORE, "Cannot init WMA");
         return MIDP_ERROR_STATUS;
@@ -600,17 +600,17 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
 #if (VERIFY_ONCE)
         /* For cached suite verification we should add the suite classpath */
         status = getClassPathForVerifyOnce(&classPath,
-            commandState->suiteId, &commandState->midletClassName,
-            &commandState->arg1);
+                                           commandState->suiteId, &commandState->midletClassName,
+                                           &commandState->arg1);
 
         /* Since it is not suite verifier call follow the common way */
         if (status == MIDP_ERROR_UNSUPPORTED) {
             status = getClassPathPlus(commandState->suiteId,
-                &classPath, classPathExt);
+                                      &classPath, classPathExt);
         }
 #else
         status = getClassPathPlus(commandState->suiteId,
-                    &classPath, classPathExt);
+                                  &classPath, classPathExt);
 #endif
         switch (status) {
         case MIDP_ERROR_OUT_MEM:
@@ -706,9 +706,9 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
                 jsize profileNameLen;
 
                 if (pcsl_string_convert_to_utf8(&commandState->profileName,
-                        profileName,
-                        MAX_VM_PROFILE_LEN,
-                        &profileNameLen) != PCSL_STRING_OK) {
+                                                profileName,
+                                                MAX_VM_PROFILE_LEN,
+                                                &profileNameLen) != PCSL_STRING_OK) {
                     REPORT_WARN(LC_CORE, "Out of memory: "
                                 "could not set the VM profile.\n");
                     commandState->status = MIDP_ERROR_OUT_MEM;
@@ -744,7 +744,7 @@ midp_run_midlet_with_args_cp(SuiteIdType suiteId,
 }
 
 static JvmPathChar getCharPathSeparator() {
-    return (JvmPathChar)storageGetPathSeparator();
+    return(JvmPathChar)storageGetPathSeparator();
 }
 
 /**
@@ -774,7 +774,7 @@ midp_run_midlet_with_args(SuiteIdType suiteId,
                           const pcsl_string* arg2,
                           int debugOption) {
     return midp_run_midlet_with_args_cp(suiteId, midletClassName,
-        arg0, arg1, arg2, debugOption, NULL);
+                                        arg0, arg1, arg2, debugOption, NULL);
 }
 
 /**
@@ -800,7 +800,7 @@ static MIDP_ERROR getClassPathPlus(SuiteIdType suiteId,
     jsize jarPathLen;
     JvmPathChar* newPath;
     char* additionalPath =        /* replace NULL with empty string */
-            classPathExt!=NULL ? classPathExt : "";
+                                  classPathExt!=NULL ? classPathExt : "";
     int additionalPathLength = strlen(additionalPath);
     int i,j;
 
@@ -828,8 +828,8 @@ static MIDP_ERROR getClassPathPlus(SuiteIdType suiteId,
 
     jarPathLen = pcsl_string_utf16_length(&jarPath);
     newPath = (JvmPathChar*)midpMalloc(sizeof(JvmPathChar)
-                    /* generatedPath separator pathExt terminator */
-                    * (jarPathLen + 1 + additionalPathLength + 1));
+                                       /* generatedPath separator pathExt terminator */
+                                       * (jarPathLen + 1 + additionalPathLength + 1));
     if (NULL == newPath) {
         pcsl_string_free(&jarPath);
         return OUT_OF_MEM_LEN;
@@ -845,8 +845,7 @@ static MIDP_ERROR getClassPathPlus(SuiteIdType suiteId,
     }
     pcsl_string_release_utf16_data(jarPathData, &jarPath);
 
-    if (additionalPathLength!=0)
-    {
+    if (additionalPathLength!=0) {
         if (i != 0) {
             newPath[i++]=(JvmPathChar)getCharPathSeparator();
         }
@@ -884,14 +883,14 @@ static MIDP_ERROR getClassPathPlus(SuiteIdType suiteId,
  *   VM start
  */
 static MIDP_ERROR getClassPathForVerifyOnce(
-    JvmPathChar** pClassPath, SuiteIdType suiteId,
-    const pcsl_string* midletName, const pcsl_string* jarPath) {
+                                           JvmPathChar** pClassPath, SuiteIdType suiteId,
+                                           const pcsl_string* midletName, const pcsl_string* jarPath) {
 
     const jchar* jarPathData;
     jsize jarPathLen;
     int i;
 
-    /* Change classpath for suite verifier MIDlet only */
+/* Change classpath for suite verifier MIDlet only */
     if (pcsl_string_is_null(midletName) || pcsl_string_is_null(jarPath) ||
         suiteId != INTERNAL_SUITE_ID ||
         !pcsl_string_equals(midletName, &SUITE_VERIFIER_MIDLET) ) {
@@ -899,15 +898,15 @@ static MIDP_ERROR getClassPathForVerifyOnce(
         return MIDP_ERROR_UNSUPPORTED;
     }
 
-    /* Free previously allocated classpath */
+/* Free previously allocated classpath */
     if (*pClassPath != NULL) {
         midpFree(*pClassPath);
     }
 
-    /* Allcoate new classpath variable */
+/* Allcoate new classpath variable */
     jarPathLen = pcsl_string_utf16_length(jarPath);
     *pClassPath = (JvmPathChar*)midpMalloc(
-        sizeof(JvmPathChar) * (jarPathLen + 1));
+                                          sizeof(JvmPathChar) * (jarPathLen + 1));
     if (NULL == *pClassPath) {
         return OUT_OF_MEM_LEN;
     }
@@ -952,11 +951,11 @@ int midpRunMainClass(JvmPathChar *classPath,
         return MIDP_ERROR_STATUS;
     }
 
-    /*
-     * The VM can exit abruptly with a status of zero or -1.
-     * But our Java Main returns a specific positive code,
-     * so we can tell if the VM aborted.
-     */
+/*
+ * The VM can exit abruptly with a status of zero or -1.
+ * But our Java Main returns a specific positive code,
+ * so we can tell if the VM aborted.
+ */
     vmStatus = midpRunVm(classPath, mainClass, argc, argv);
 
     pushcheckinall();
