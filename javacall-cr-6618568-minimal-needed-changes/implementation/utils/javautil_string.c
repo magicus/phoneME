@@ -29,41 +29,9 @@
  * Implementation of UTF8 string handling.
  */
 
+#include <string.h>
 #include "javautil_string.h"
 #include "javacall_memory.h"
-#include <string.h>
-
-#define MAX_STR_LEN	1024
-
-#ifndef min
-  #define min(x,y)        (x > y ? y : x)
-#endif
-
-/** Horizontal Tab - Unicode character 0x09. */
-#define  HT   0x09
-
-/**
- * Looks for a white space (SPACE and TAB).
- */
-#define IS_CONTENT_A_WHITE_SPACE(c) ((*(c)==SP) || (*(c)==HT))
-
-/**
- * Looks for a white space (SPACE and TAB).
- */
-//#define IS_CHAR_A_WHITE_SPACE(c) (((c)==SP) || ((c)==HT))
-
-/** SPace - Unicode character 0x20. */
-#define  SP   0x20
-
-/**
- * Verify that pointer is not NULL
- */
-#define CONTENT_NOT_NULL(c) (*(c))
-
-/**
- * Check if pointer is a space
- */
-#define IS_SPACE(c)   (CONTENT_NOT_NULL(c) && (IS_CONTENT_A_WHITE_SPACE(c)))
 
 /**
  * looks for first occurrence of <param>c</param> within <param>str</param>
@@ -264,7 +232,7 @@ javacall_result javautil_string_parse_int(char* str, int* number) {
  *   0     string1 substring identical to string2 substring
  *   > 0   string1 substring greater than string2 substring
  */
-int javautil_strnicmp(const char* string1, const char* string2, unsigned int nchars)
+int javautil_strnicmp(const char* string1, const char* string2, size_t nchars)
 {
     unsigned char ch1, ch2;
     do
@@ -305,7 +273,7 @@ int javautil_stricmp(const char* string1, const char* string2)
     return ch1 - ch2;
 }
 
-int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* string2, unsigned int nchars)
+int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* string2, size_t nchars)
 {
     unsigned short ch1, ch2;
     do
@@ -326,195 +294,3 @@ int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* strin
     while (ch1 && ch2);
     return ch1 - ch2;
 }
-
-/**
- * Returns a new string that is a concantenation of two input strings.
- * Memory allocated within this function by javacall_malloc() and should be freed
- * by javacall_free()
- *
- * @param prefix the beginning/prefix string
- * @param suffix the ending/suffix string
- * @return <code>Concantinated string</code> on success,
- *         <code>NULL</code> or any other negative value otherwise.
- */
-char* javautil_string_concatenate(const char* prefix, const char* suffix) {
-    char *joined_string = NULL;
-    int len1 = 0;
-    int len2 = 0;
-
-    if((prefix == NULL) || (suffix == NULL)) {
-        return NULL;
-    }
-
-    len1 = strlen(prefix);
-    len2 = strlen(suffix);
-
-    joined_string = javacall_malloc((len1+len2+1));
-    if(joined_string == NULL) {
-        return NULL;
-    }
-    memset(joined_string, 0, (len1+len2+1));
-
-    memcpy(joined_string,prefix,len1);
-    memcpy(joined_string+len1,suffix,len2);
-
-    return joined_string;
-}
-
-/**
- * Convert a string to lower-case
- * 
- * @param s input string
- * @return pointer to statically allocated string holding the "s" string converted
- *		   to lower case.
- */
-char* javautil_str_tolwc(char * s) {
-    static char l[MAX_STR_LEN+1];
-    int i ;
-
-    if(s==NULL) return NULL ;
-    memset(l, 0, MAX_STR_LEN+1);
-    i=0 ;
-    while(s[i] && i<MAX_STR_LEN) {
-        l[i] = (char)tolower((int)s[i]);
-        i++ ;
-    }
-    l[MAX_STR_LEN]=(char)0;
-    return l ;
-}
-
-
-
-/**
- * Convert a string to upper-case
- * 
- * @param s input string
- * @return pointer to statically allocated string holding the "s" string converted
- *		   to upper case.
- */
-char* javautil_str_toupc(char * s) {
-    static char l[MAX_STR_LEN+1];
-    int i ;
-
-    if(s==NULL) return NULL ;
-    memset(l, 0, MAX_STR_LEN+1);
-    i=0 ;
-    while(s[i] && i<MAX_STR_LEN) {
-        l[i] = (char)toupper((int)s[i]);
-        i++ ;
-    }
-    l[MAX_STR_LEN]=(char)0;
-    return l ;
-}
-
-
-
-/**
- * Skip leading blanks
- * 
- * @param s input string
- * @return a pointer to the first non blank character inside "s"
- */
-char* javautil_str_skip_leading_blanks(char * s) {
-    char * skip = s;
-    if(s==NULL) {
-        return NULL ;
-    }
-
-    //while(isspace((int)*skip) && *skip)
-    while(IS_SPACE(skip)) {
-        skip++;
-    }
-    return skip ;
-} 
-
-
-
-/**
- * Skip trailing blanks
- * 
- * @param s input string
- * @return a pointer to a STATICALLY ALLOCATED string containg the same string as "s"
- *			but without the trailing spaces.
- */
-char* javautil_str_skip_trailing_blanks(char * s) {
-    static char l[MAX_STR_LEN+1];
-    char * last ;
-    int len, copy_len;
-
-    if(s==NULL) return NULL ;
-    memset(l, 0, MAX_STR_LEN+1);
-    len = strlen(s);
-    copy_len = min(len,MAX_STR_LEN-1);
-    strncpy(l, s, copy_len+1);
-    l[copy_len] = '\0';
-    last = l + copy_len;
-    while(last > l) {
-        //if(!isspace((int)*(last-1)))
-        if(!IS_SPACE((last-1))) {
-            break ;
-        }
-        last -- ;
-    }
-    *last = (char)0;
-    return l ;
-}
-
-
-
-/**
- * Skip blanks in the beginning and at the end of the string
- * 
- * @param s input string
- * @return a pointer to a STATICALLY ALLOCATED string containg the same string as "s"
- *			but without the leading and trailing spaces.
- */
-char* javautil_str_strip(char * s) {
-    static char l[MAX_STR_LEN+1];
-    char * last ;
-    int len, copy_len;
-
-    if(s==NULL) return NULL ;
-
-    /* skip leading blanks */
-    //while(isspace((int)*s) && *s) s++;
-    while(IS_SPACE(s)) {
-        s++;
-    }
-
-    /* skip trailing blanks */
-    memset(l, 0, MAX_STR_LEN+1);
-    len = strlen(s);
-    copy_len = min(len,MAX_STR_LEN-1);
-    strncpy(l, s, copy_len+1);
-    last = l + copy_len;
-    while(last > l) {
-        //if(!isspace((int)*(last-1)))
-        if(!IS_SPACE((last-1))) {
-            break ;
-        }
-        last -- ;
-    }
-    *last = (char)0;
-
-    return(char*)l ;
-}
-
-char* javautil_str_duplicate(char *s) {
-    int len;
-    char *new_s;
-
-    if(NULL == s)
-        return NULL;
-    len = strlen(s);
-    new_s = javacall_malloc(len+1);
-    if(NULL==new_s)
-        return NULL;
-    strcpy(new_s, s);
-    return new_s;
-}
-
-#ifdef __cplusplus
-}
-#endif
-
