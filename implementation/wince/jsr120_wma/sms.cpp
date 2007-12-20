@@ -242,7 +242,6 @@ static int cdma_sms_encode(javacall_sms_encoding   msgType,
 }
 
 static int static_reference_number = 0;
-static int sms_handle = 0;
 
 /**
  * Returns 0 on error
@@ -422,17 +421,17 @@ static void fillPhone(const unsigned char* javaDestAddress, wchar_t* lpcPhone) {
  *       completion of sending operation.
  *       The returned handle will be passed to javacall_callback_on_complete_sms_send( ) upon completion
  */
-int javacall_sms_send(  javacall_sms_encoding   msgType, 
+javacall_result javacall_sms_send(  javacall_sms_encoding   msgType, 
                         const unsigned char*    destAddress, 
                         const unsigned char*    msgBuffer, 
                         int                     msgBufferLen, 
                         unsigned short          sourcePort, 
-                        unsigned short          destPort){
+                        unsigned short          destPort,
+                        int handle){
 
     wchar_t lpcPhone[SMS_MAX_ADDRESS_LENGTH];
     fillPhone(destAddress, lpcPhone);
     //wchar_t* phone = L"79210951475";
-    sms_handle++;
     int send_ok = 0;
 
     if (destPort == 0) {
@@ -441,14 +440,14 @@ int javacall_sms_send(  javacall_sms_encoding   msgType,
         int total_segments = calc_segments_num(msgBufferLen);
 
         if (total_segments < 1 || total_segments > 3) {
-            return 0;
+            return JAVACALL_FAIL;
         } else if (total_segments == 1) {
             char smsData[SMS_MAX_PAYLOAD];
             int  smsDataLength;
             int ok = cdma_sms_encode(msgType, msgBuffer, msgBufferLen, sourcePort, destPort, 
                 smsData, &smsDataLength);
             if (!ok) {
-                return 0;
+                return JAVACALL_FAIL;
             }
             send_ok = SendSMS(lpcPhone, (const unsigned char*)smsData, smsDataLength);
         } else {
@@ -462,18 +461,18 @@ int javacall_sms_send(  javacall_sms_encoding   msgType,
                     reference_number, total_segments, segment_number, 
                     smsData, &smsDataLength);
                 if (!ok) {
-                    return 0;
+                    return JAVACALL_FAIL;
                 }
                 send_ok = SendSMS(lpcPhone, (const unsigned char*)smsData, smsDataLength);
 
                 if (!send_ok) {
-                    return 0;
+                    return JAVACALL_FAIL;
                 }
             }
         }
     }
 
-    return send_ok == 1 ? sms_handle : 0;
+    return send_ok == 1 ? JAVACALL_OK : JAVACALL_FAIL;
 }
 
 static int init_done = 0;
