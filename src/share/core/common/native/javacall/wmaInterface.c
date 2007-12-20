@@ -79,8 +79,8 @@ void javanotify_incoming_sms(
 }
 
 void javanotify_sms_send_completed(
-                        javacall_sms_sending_result result, 
-                        int                         handle) {
+                        javacall_result result, 
+                        int             handle) {
 }
 #endif
 
