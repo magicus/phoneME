@@ -46,14 +46,33 @@ define generateJSRInitializer
 endef
 
 # Generate constant classes
-# generateConstantClasses(constantsXmlFile, constantsClassList, generatedDirectory)
+# generateConstantClasses(generatedDirectory, constantsXmlFile)
 define generateConstantClasses
-	$(foreach class, $(2), \
-	$(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
-	-xml $(1) \
-	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantsJava.xsl \
-	-params fullClassName $(class) \
-	-out $(3)/classes/$(subst .,/,$(class)).java); )
+    $(foreach class, $(shell \
+        $(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
+            -xml $(2) \
+            -xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantClasses.xsl \
+            -out $(call constantClassesListFile, $(1));) \
+        cat $(call constantClassesListFile, $(1))), \
+	    $(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
+            -xml $(2) \
+            -xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantsJava.xsl \
+            -params fullClassName $(class) \
+            -out $(1)/classes/$(subst .,/,$(class)).java;))
+endef
+
+# Gets a list of Java files which have been generated from an XML constant file
+# getConstantClassFileList(generatedDirectory)
+define getConstantClassFileList
+    $(foreach class, $(shell \
+        cat $(call constantClassesListFile, $(1))), \
+        $(1)/classes/$(subst .,/,$(class)).java)
+endef
+
+# Returns the name of a file which contains a list of classes generated from an XML constant file
+# constantClassesListFile(generatedDirectory)
+define constantClassesListFile
+    $(1)/.constant.class.list
 endef
 
 # Macro to pre-process Jpp file into Java file
