@@ -1,0 +1,71 @@
+#  
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+#
+
+############################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+############################################################
+
+# Local module directory
+IMAGE_MODULE_DIR = $(SUBSYSTEM_LOWUI_DIR)/image/img_platform
+
+# Javadoc source path
+MIDP_JAVADOC_SOURCEPATH += $(IMAGE_MODULE_DIR)/classes
+
+# Java files for platform_graphics module
+#
+SUBSYSTEM_IMAGE_JAVA_FILES += \
+    $(IMAGE_MODULE_DIR)/classes/javax/microedition/lcdui/ImageData.java \
+    $(IMAGE_MODULE_DIR)/classes/javax/microedition/lcdui/ImageDataFactory.java 
+
+# Additional include path for highlevel ui subsystem
+# (IMPL_NOTE remove this dependency)
+
+SUBSYSTEM_IMAGE_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_LOWUI_DIR)/graphics/graphics_platform/include
+
+# vpath for platform_graphics module
+#
+vpath % \
+    $(IMAGE_MODULE_DIR)/native
+
+
+# Native files for platform_graphics module
+
+SUBSYSTEM_IMAGE_NATIVE_FILES += \
+    imgp_imagedata_kni.c \
+    imgp_imagedatafactory_kni.c
+
+
+# I3test files
+ifeq ($(USE_I3_TEST), true)
+
+    SUBSYSTEM_IMAGE_I3TEST_JAVA_FILES =
+
+endif
