@@ -406,7 +406,7 @@ endif
 ifneq ($(CVM_PRELOAD_LIB),true)
 # Not romized, so add JSROP_JARS to the bootclasspath
 ifneq ($(CVM_CREATE_RTJAR), true)
-CVM_JARFILES += $(patsubst $(JSROP_JAR_DIR)/%,$(comma) "%",$(JSROP_JARS))
+CVM_JARFILES += $(patsubst $(JSROP_JAR_DIR)/%,"%"$(comma),$(JSROP_JARS))
 else
 CVM_RTJARS_LIST += $(JSROP_JARS)
 endif
