@@ -48,6 +48,11 @@ HOST_TOOLS_DIR       = $(WorkSpace)/build/share/bin/$(host_os)_$(host_arch)
 NATIVES_TABLE        = $(GEN_DIR)/NativesTable.cpp
 BUILDTOOLS_DIR       = $(BuildSpace)/$(BUILD_DIR_NAME)/tools
 BUILDTOOL_JAR        = $(BUILDTOOLS_DIR)/buildtool.jar
+ifeq ($(USE_VS2005), true)
+VC_MANIFEST_EMBED_EXE = mt.exe -nologo -manifest $@.manifest "-outputresource:$@"
+else
+VC_MANIFEST_EMBED_EXE = true
+endif
 
 #----------------------------------------------------------------------
 #
@@ -436,7 +441,7 @@ endif
 ifeq ($(IsTarget)+$(ROMIZING)+$(ENABLE_SEGMENTED_ROM_TEXT_BLOCK), true+true+true)
   # by default separate ROMImage.cpp into smaller parts
   override SeparateROMImage := true
-  
+
   # by default compile ROMImage.cpp as one file
   CompileROMImageSeparately := false
 
@@ -803,7 +808,6 @@ else
 endif
 
 # /Ox (full optimization)
-# /GB (optimize for processor) blend
 # /Os (Favor small code)
 # /Gy (Enable function-level linking)
 # /GF (Enable read -only string pooling)
@@ -823,8 +827,8 @@ endif
 CPP_DBG_FLAGS          += $(CPP_DBG_FLAGS_$(BUILD))
 
 CPP_OPT_FLAGS_debug     =
-CPP_OPT_FLAGS_release   = /Ox /GB /Os /Gy /GF
-CPP_OPT_FLAGS_product   = /Ox /GB /Os /Gy /GF
+CPP_OPT_FLAGS_release   = /Ox /Os /Gy /GF
+CPP_OPT_FLAGS_product   = /Ox /Os /Gy /GF
 CPP_OPT_FLAGS          += $(CPP_OPT_FLAGS_$(BUILD))
 
 CPP_DEF_FLAGS_debug     = -D_DEBUG -DAZZERT
@@ -884,7 +888,7 @@ MAKE_EXPORT_EXTRA_LIBS += $(PCSL_LIBS)
 endif
 
 
-LIB_FLAGS_debug         = /DEBUGTYPE:CV
+LIB_FLAGS_debug         = 
 LIB_FLAGS_release       =
 LIB_FLAGS_product       =
 LIB_FLAGS               = /nologo $(LIB_FLAGS_$(BUILD))
@@ -963,6 +967,7 @@ $(LOOP_GENERATOR): $(BUILD_PCH) $(Obj_Files) \
 		   InterpreterSkeleton.obj OopMapsSkeleton.obj
 	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ $(Obj_Files) \
 		   InterpreterSkeleton.obj OopMapsSkeleton.obj
+	$(A)$(VC_MANIFEST_EMBED_EXE)
 	$(A)echo generated `pwd`/$@
 endif
 endif
@@ -1005,6 +1010,7 @@ $(ROM_GENERATOR): $(BUILD_PCH) $(Obj_Files) InterpreterSkeleton.obj \
 	$(A)$(MAKE) OopMaps.obj
 	$(A)$(LINK) $(PCSL_LIBS) $(LINK_FLAGS) /out:$@ \
 		$(Obj_Files) Interpreter_$(arch).obj OopMaps.obj
+	$(A)$(VC_MANIFEST_EMBED_EXE)
 	$(A)echo generated `pwd`/$@
 
 endif
@@ -1110,6 +1116,7 @@ $(JVM_EXE): $(BIN_DIR) $(BUILD_PCH) $(JVMX_LIB) $(JVM_LIB) $(JVMTEST_LIB) \
 	    $(EXE_OBJS)
 	$(A)$(LINK) $(LINK_FLAGS) /out:$@ $(EXE_OBJS) $(JVMX_LIB) $(JVM_LIB) \
 		$(JVMTEST_LIB) $(PCSL_LIBS)
+	$(A)$(VC_MANIFEST_EMBED_EXE)
 	$(A)echo generated `pwd`/$@
 
 ANI_OBJS  = ani.obj os_port.obj poolthread.obj
@@ -1373,7 +1380,7 @@ ROM_SEGMENTS_OBJS = ROMImage_00.obj \
 		            ROMImage_10.obj \
 		            ROMImage_11.obj \
 		            ROMImage_12.obj
-		            
+
 EXE_OBJS := $(subst ROMImage.obj,,$(EXE_OBJS))
 EXE_OBJS += $(ROM_SEGMENTS_OBJS)
 $(ROM_SEGMENTS_OBJS): $(GENERATED_ROM_FILE)
