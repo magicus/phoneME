@@ -133,9 +133,6 @@ extern "C" {
 #define JAVACALL_CAPTURE_VIDEO_MIME  "capture://video"
 #define JAVACALL_CAPTURE_AUDIO_MIME  "capture://audio"
 
-/* Java MMAPI JTS Values */
-#define JAVACALL_SET_VOLUME  -8
-#define JAVACALL_SILENCE     -1
 
 /**
  * @enum javacall_media_type
@@ -143,43 +140,70 @@ extern "C" {
  * @brief Multimedia contents type. If you want to add new media types, you have to consult with Sun Microsystems.
  */
 typedef enum {
-    /** MPEG4 video      */
-    JAVACALL_VIDEO_MPEG4 = 1,   
-    /** 3GPP video       */
-    JAVACALL_VIDEO_3GPP = 2,        
-    /** MIDI audio       */
-    JAVACALL_AUDIO_MIDI = 3,        
-    /** WAV audio        */
-    JAVACALL_AUDIO_WAV = 4,         
-    /** MP3 audio        */
-    JAVACALL_AUDIO_MP3 = 5,         
-    /** AMR audio        */
-    JAVACALL_AUDIO_AMR = 6,         
-    /** MPEG4 audio      */
-    JAVACALL_AUDIO_MPEG4 = 7,       
-    /** JTS tone         */
-    JAVACALL_AUDIO_TONE = 8,        
-    /** QCELP audio      */
-    JAVACALL_AUDIO_QCELP = 9,       
-    /** AAC audio        */
-    JAVACALL_AUDIO_AAC = 10,
-    /** Audio capture    */
-    JAVACALL_CAPTURE_AUDIO = 11,    
-    /** Video capture    */
-    JAVACALL_CAPTURE_VIDEO = 12,
-    /** Interactive MIDI */
-    JAVACALL_INTERACTIVE_MIDI = 13, 
-    /** WMV video      */
-    JAVACALL_VIDEO_WMV = 14,
-    /** WMA audio      */
-    JAVACALL_AUDIO_WMA = 15,
-    /** AVI video      */
-    JAVACALL_VIDEO_AVI = 16,
-    /** MPEG1 video      */
-    JAVACALL_VIDEO_MPEG1 = 17,
-    
+    JAVACALL_VIDEO_MP4V_ES,     // "video/mp4v-es"
+    JAVACALL_VIDEO_MP4,         // "video/mp4"
+    JAVACALL_VIDEO_X_MS_WMV,    // "video/x-ms-wmv"
+    JAVACALL_AUDIO_X_MS_WMA,    // "audio/x-ms-wma"
+    JAVACALL_VIDEO_AVI,         // "video/avi"
+    JAVACALL_VIDEO_MPEG,        // "video/mpeg"
+    JAVACALL_VIDEO_3GPP,        // "video/3gpp"
+    JAVACALL_VIDEO_3GPP2,       // "video/3gpp2"
+    JAVACALL_VIDEO_3GP,         // "video/3gp"
+    JAVACALL_VIDEO_H263,        // "video/h263"
+    JAVACALL_VIDEO_H264,        // "video/h264"
+    JAVACALL_AUDIO_MIDI,        // "audio/midi"
+    JAVACALL_AUDIO_MID,         // "audio/mid"
+    JAVACALL_AUDIO_SP_MIDI,     // "audio/sp-midi"
+    JAVACALL_AUDIO_X_MIDI,      // "audio/x-midi"
+    JAVACALL_AUDIO_X_WAV,       // "audio/x-wav"
+    JAVACALL_AUDIO_WAV,         // "audio/wav"
+    JAVACALL_AUDIO_MPEG,        // "audio/mpeg"
+    JAVACALL_AUDIO_MP3,         // "audio/mp3"
+    JAVACALL_AUDIO_X_MPEG,      // "audio/x-mpeg"
+    JAVACALL_AUDIO_MPG,         // "audio/mpg"
+    JAVACALL_AUDIO_AMR,         // "audio/amr"
+    JAVACALL_AUDIO_AMRNB,       // "audio/amrnb"
+    JAVACALL_AUDIO_AMR_WB,      // "audio/amr-wb"
+    JAVACALL_AUDIO_MP4A_LATM,   // "audio/mp4a-latm"
+    JAVACALL_AUDIO_MP4,         // "audio/mp4"
+    JAVACALL_AUDIO_AAC,         // "audio/aac"
+    JAVACALL_AUDIO_APL,         // "audio/apl"
+    JAVACALL_AUDIO_X_AAC,       // "audio/x-aac"
+    JAVACALL_AUDIO_ADPCM,       // "audio/adpcm"
+    JAVACALL_AUDIO_WMA,         // "audio/wma"
+    JAVACALL_AUDIO_X_MS_WMA,    // "audio/x-ms-wma"
+    JAVACALL_AUDIO_MMF,         // "audio/mmf"
+    JAVACALL_AUDIO_X_MMF,       // "audio/x-mmf"
+    JAVACALL_AUDIO_SMAF,        // "audio/smaf"
+    JAVACALL_AUDIO_X_TONE_SEQ,  // "audio/x-tone-seq"
+    JAVACALL_AUDIO_QCELP,       // "audio/qcelp"
+    JAVACALL_AUDIO_VNDQCELP,    // "audio/vnd.qcelp"
+    JAVACALL_IMAGE_JPEG,        // "image/jpeg"
+    JAVACALL_IMAGE_PNG,         // "image/png"
+    JAVACALL_IMAGE_GIF,         // "image/gif"
+    JAVACALL_DEVICE_TONE,       // "device://tone"
+    JAVACALL_DEVICE_MIDI,       // "device://midi"
+    JAVACALL_CAPTURE_VIDEO,     // "capture://video"
+    JAVACALL_CAPTURE_AUDIO,     // "capture://audio"
+    JAVACALL_CAPTURE_RADIO,     // "capture://radio"
+
+    JAVACALL_MIME_UNKNOWN,      // unknown mime type
     JAVACALL_END_OF_TYPE
-} javacall_media_type;
+} javacall_media_type
+
+/**
+ * @enum javacall_media_type
+ * 
+ * @brief Multimedia contents type. If you want to add new media types, you have to consult with Sun Microsystems.
+ */
+typedef enum {
+    JAVACALL_MEDIA_FILE_REMOTE_PROTOCOL = 0x01,   // "file://" via network
+    JAVACALL_MEDIA_FILE_LOCAL_PROTOCOL = 0x02,    // "file://" local content
+    JAVACALL_MEDIA_HTTP_PROTOCOL = 0x04,          // "http://"
+    JAVACALL_MEDIA_HTTPS_PROTOCOL = 0x08,         // "https://"
+    JAVACALL_MEDIA_RTP_PROTOCOL = 0x10,           // "rtp://"
+    JAVACALL_MEDIA_RTSP_PROTOCOL = 0x20           // "rtsp://"
+} javacall_media_protocol_type;
 
 /**
  * @enum javacall_control_type
@@ -187,45 +211,100 @@ typedef enum {
  * @brief Multimedia controls, supported by the Native implementation.
  */
 typedef enum {
-    JAVACALL_CONTROL_VOLUME = 1,
-    JAVACALL_CONTROL_TONE = 2,
-    JAVACALL_CONTROL_TEMPO = 3,
-    JAVACALL_CONTROL_PITCH = 4,
-    JAVACALL_CONTROL_RATE = 5,
-    JAVACALL_CONTROL_RECORD = 6,
-    JAVACALL_CONTROL_STOPTIME = 7,
-    JAVACALL_CONTROL_MIDI = 8,
-    JAVACALL_CONTROL_METADATA = 9,
-    JAVACALL_CONTROL_FRAME_POSITIONING = 10,
-    JAVACALL_CONTROL_VIDEO = 11,
-    JAVACALL_CONTROL_END_OF_TYPE
-} javacall_control_type;
+    JAVACALL_MEDIA_NCTRL_NONE               = 0x00,
+    /* Full screen is supported by native player */
+    JAVACALL_MEDIA_NCTRL_FULLSCREEN         = 0x01,
+    /* Stop Time is supported by native player */
+    JAVACALL_MEDIA_NCTRL_STOPTIME           = 0x02,
+    /* Meta Data can be retrieved from native player */
+    JAVACALL_MEDIA_NCTRL_METADATA           = 0x04,
+    /* Frame positionoing is managed by  native player */
+    JAVACALL_MEDIA_NCTRL_FRAME_POSITIONING  = 0x08
+} javacall_media_control_type;
 
 /** @} */
-
-/**
- * @defgroup MediaType Types
- * @ingroup JSR135
- * @{
- */
-
-#define JAVACALL_MEDIA_MAX_PROTOCOL_COUNT   5
-#define JAVACALL_MEDIA_MAX_CONTROLS_COUNT   20
 
 /**
  * struct javacall_media_caps
  * @brief Multimedia capability of device 
  */
 typedef struct {
-    /** Mime type string */
-    javacall_const_utf8_string mimeType;
-    /** Supported protocol count */
-    int         protocolCount;  
-    /** Supported protocol strings for this Mime type. Can't exceed JAVACALL_MEDIA_MAX_PROTOCOL_COUNT. */
-    javacall_const_utf8_string protocols[JAVACALL_MEDIA_MAX_PROTOCOL_COUNT];
-    /** Supported native controls */
-    javacall_control_type controls[JAVACALL_MEDIA_MAX_CONTROLS_COUNT];
+    /* Content mime type */
+    javacall_media_type             mimeType;
+    /* Supported remote protocols */
+    javacall_int32    rem_protocols;
+    /* Controls for remote protocols */
+    javacall_int32    rem_protocol_ctrls;
+    /* Supported local protocols */
+    javacall_int32    local_protocols;
+    /* Controls for local protocols */
+    javacall_int32    local_protocol_ctrls;
+    /* Supported streaming protocols */
+    javacall_int32    stream_protocols;
+    /* Controls for streaming protocols */
+    javacall_int32    stream_protocol_ctrls;
+
+    /* Controls for memory protocols */
+    javacall_int32    mem_protocol_ctrls;
+    /* Controls for memory_streaming protocols */
+    javacall_int32    mem_stream_protocol_ctrls;
 } javacall_media_caps;
+
+
+/**
+ * @enum javacall_media_extra_params_type
+ * 
+ * @brief Type of native player extra parameters 
+ */
+typedef enum {
+    JAVACALL_MEDIA_RTP_COMMON_PARAMS,
+    JAVACALL_MEDIA_RTP_STREAM_PARAMS,
+} javacall_media_extra_params_type;
+
+#define JAVACALL_MEDIA_MAX_ 
+/**
+ * @enum javacall_media_extra_rtp_common_params_type
+ * 
+ * @brief Type of rtp native player common parameters 
+ */
+typedef enum {
+    /* number of rtp streams */
+    int             num_streams;
+    /* Multicast/Unicast session */
+    javacall_bool   isMulticast;
+} javacall_media_extra_rtp_common_params_type;
+
+/**
+ * @enum javacall_media_extra_rtp_stream_params_type
+ * 
+ * @brief Type of rtp native player common parameters 
+ */
+typedef enum {
+    /* rtp stream Id */
+    int streamId;
+    /* IPv4 or IPv6 address (for multicast session) */
+    unsigned char *pAddress;
+    /* size of address */
+    int addrLen;
+    /* rtp stream port number */
+    int port_number;
+} javacall_media_extra_rtp_stream_params_type;
+
+/**
+ * struct javacall_media_extra_params
+ * @brief Extra pameters for native Player
+ */
+typedef struct {
+    javacall_media_extra_params_type type;
+    union {
+        javacall_media_extra_rtp_common_params_type rtp_common;
+        javacall_media_extra_rtp_stream_params_type rtp_stream;
+    } param;
+} javacall_media_extra_params;
+
+/* Java MMAPI JTS Values */
+#define JAVACALL_SET_VOLUME  -8
+#define JAVACALL_SILENCE     -1
 
 /** @} */
 
@@ -316,8 +395,7 @@ javacall_result
  * 
  * @param appId         Unique application ID for this playing
  * @param playerId      Unique player object ID for this playing
- * @param mime          Mime unicode string
- * @param mimeLength    String length of mimeType
+ * @param mime          Mime type
  * @param uri           URI unicode string to media data
  * @param uriLength     String length of URI
  * @param contentLength Content length in bytes
@@ -328,11 +406,26 @@ javacall_result
  */
 javacall_handle javacall_media_create(javacall_app_id appId,
                                       int playerId, 
-                                      javacall_const_utf16_string mime, 
-                                      long mimeLength,
+                                      javacall_media_type mime, 
                                       javacall_const_utf16_string uri, 
                                       long uriLength,
                                       long contentLength);
+
+/**
+ * Java MMAPI call this function to set player specific parameters.
+ * This function should be called after javacall_media_create and before
+ * first javacall_media_start. After javacall_media_start is called 
+ * any calls to this function would be ignored.
+ * 
+ * @param handle        Handle to the library.
+ * @param params        Extra parameters
+ * 
+ * @retval JAVACALL_OK
+ * @retval JAVACALL_FAIL   
+ * @retval JAVACALL_INVALID_ARGUMENT
+ */
+javacall_result javacall_media_set_param(javacall_handle handle,
+                                         javacall_media_extra_params *param);
 
 /**
  * Close native media player that created by creat or creat2 API call
@@ -1464,91 +1557,6 @@ javacall_result javacall_media_to_background(const javacall_handle handle,
                                              const javacall_app_id appID);
 
 /** @} */ 
-
-/**********************************************************************************/
-
-/**
- * @defgroup PCMAudioSupport      Optional Software Audio Mixing to PCM Audio
- * @ingroup JSR135
- * 
- * @brief PCM Audio support should be used for Software Audio Mixing 
- *        in MVM mode
- * 
- * @{
- */
-
-/**
- * Return true if player requires PCM Audio resources
- * 
- * @param handle    Handle to the library
- * 
- * @retval JAVACALL_TRUE      Player supports PCM Audio playback
- * @retval JAVACALL_FALSE     Player does not support PCM Audio playback
- */
-javacall_bool javacall_media_pcmaudio_device_required(javacall_handle handle);
-
-/**
- * Request to acquire PCM audio device resources used to play mixed 
- * media data from all applications.
- * 
- * @retval JAVACALL_OK      Java VM will proceed as if there is no problem
- * @retval JAVACALL_FAIL    Java VM will raise the media exception
- */
-javacall_result javacall_media_acquire_pcmaudio_device(void);
-
-/**
- * Release device PCM audio resource. 
- * 
- * @retval JAVACALL_OK      Java VM will proceed as if there is no problem
- * @retval JAVACALL_FAIL    Nothing happened now. Same as JAVACALL_OK.
- */
-javacall_result javacall_media_release_pcmaudio_device(void);
-
-/**
- * Get mixed PCM audio data from library
- * 
- * @param handle     Handle of native player
- * @param buffer     buffer for mixed audio data
- * @param length     length of the buffer
- * 
- * @return          If success return 'length of buffered data' else return -1
- */
-long javacall_media_get_pcmaudio(javacall_handle handle, void* buffer, long length);
-
-/**
- * Play PCM Audio in device
- * 
- * @param buffer     buffer for mixed audio data
- * @param length     length of the buffer
- * 
- * @retval expected playback time in ms or -1 if FAIL
- */
-long javacall_media_pcmaudio_playback(void* buffer, long length);
-
-/**
- * Get PCM ctrl data from library
- * 
- * @param channels  OUT data - number of channels, either 1 or 2.
- * @param bits      OUT data - sample size, which should be either 8 or 16 bits
- * @param rate      OUT data - sampling rate in bits per second
- * 
- * @retval JAVACALL_OK      Success
- * @retval JAVACALL_FAIL    Fail
- */
-javacall_result javacall_media_get_pcmctl(int *channels,
-                                        int* /*OUT*/ bits, int* /*OUT*/ rate);
-
-
-
-/**********************************************************************************/
-
-/** @} */ 
-
-
-
-
-
-
 
 #ifdef __cplusplus
 }
