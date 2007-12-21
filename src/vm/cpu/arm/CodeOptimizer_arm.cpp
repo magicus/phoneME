@@ -135,11 +135,11 @@ CodeOptimizer::CodeOptimizer() {}
 
 void  CodeOptimizer::update_shared_index_check_stub() {
   if( (_address_of_shared_emitted_index_check_stub == 
-  	  not_bound) &&
+          not_bound) &&
       (_address_of_last_emitted_branch_to_index_check_stub != 
          no_branch_to_index_check_stub)) {
     Compiler::current()->update_shared_index_check_stub(
-	_address_of_last_emitted_branch_to_index_check_stub - (int)method->entry());
+        _address_of_last_emitted_branch_to_index_check_stub - (int)method->entry());
   }
 }
 
@@ -164,18 +164,18 @@ void  CodeOptimizer::reset(CompiledMethod* cm, int* start, int* end) {
   }
   
   _gp_offset_of_index_check_handler = 
-  	(int) ((long) &gp_compiler_throw_ArrayIndexOutOfBoundsException_0_ptr -
+        (int) ((long) &gp_compiler_throw_ArrayIndexOutOfBoundsException_0_ptr -
                                 (long) &gp_base_label);
   
   _address_of_last_emitted_branch_to_index_check_stub = 
-  	no_branch_to_index_check_stub;
+        no_branch_to_index_check_stub;
   //get the offset, will convert to address later.
   _address_of_shared_emitted_index_check_stub = 
-  	Compiler::current()->index_check_stub_offset();
+        Compiler::current()->index_check_stub_offset();
   if (_address_of_shared_emitted_index_check_stub != 
-  	not_bound) {
+        not_bound) {
     _address_of_shared_emitted_index_check_stub = 
-		_address_of_shared_emitted_index_check_stub + (int) method->entry();
+                _address_of_shared_emitted_index_check_stub + (int) method->entry();
   }
   
 }
@@ -236,9 +236,9 @@ bool CodeOptimizer::is_end_of_block(OptimizerInstruction* ins, int offset) {
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
   if ( ExtendBasicBlock ) {
     if ( ins->_status & status_scheduable ) {
-	 //we needn't to check the _exception_handler here.
-	 //because the branch taken as schedulable only
-	 //when it target is a shared index check stub.
+         //we needn't to check the _exception_handler here.
+         //because the branch taken as schedulable only
+         //when it target is a shared index check stub.
         return false;
     }
   }
@@ -254,7 +254,7 @@ bool CodeOptimizer::is_end_of_block(OptimizerInstruction* ins, int offset) {
 #if  ENABLE_INTERNAL_CODE_OPTIMIZER
     if ( ExtendBasicBlock ) {
       unsigned int offset =(unsigned int) ((int) ins->_imm - 
-	  	_gp_offset_of_index_check_handler);
+                _gp_offset_of_index_check_handler);
       if (ins->_operands & REGISTER_GP && offset <= 10 * BytesPerWord ) {
         ins->_status |= status_scheduable;
         return false;
@@ -338,8 +338,8 @@ void CodeOptimizer::determine_pin_status( OptimizerInstruction* ins,
        (ins->_results & REGISTER_PC) && 
       (ins->_operands & REGISTER_GP) ) {
     unsigned int offset =(unsigned int)((int) ins->_imm - 
-		_gp_offset_of_index_check_handler);
-    //offset located in stub0 and stub9	
+                _gp_offset_of_index_check_handler);
+    //offset located in stub0 and stub9 
     if ( offset <= 10 * BytesPerWord ) {
       ins->_status |= status_scheduable;
       ins->put_result(Assembler::jsp);
@@ -423,17 +423,13 @@ int* CodeOptimizer::unpack_block(int* ins_start, int* ins_end,
   unpack_instruction(_ins_block_next);
   determine_pin_status(_ins_block_next, offset);
 
-
-
   if (is_end_of_block(_ins_block_next, offset)) {
     return ins_start;
-  } else {
-    ++_ins_block_next;
-    ++offset;
   }
 
   // Currently supports only basic blocks of max size 30 instructions
-  for (int* ins_curr = ins_start + 1; ins_curr <= ins_end; ins_curr++, offset++) {
+  for (int* ins_curr = ins_start; ++ins_curr <= ins_end; ) {
+   ++offset; ++_ins_block_next;
     _ins_block_next->init(ins_curr);
     unpack_instruction(_ins_block_next);
     determine_pin_status(_ins_block_next, offset);
@@ -465,9 +461,7 @@ int* CodeOptimizer::unpack_block(int* ins_start, int* ins_end,
     if (_ins_block_next+1 == _ins_block_top) {
       _ins_block_next++;
       return ins_curr;
-    }
-
-    ++_ins_block_next;
+    } 
   }
   return ins_end;
 }
@@ -498,7 +492,7 @@ void CodeOptimizer::update_branch_target(OptimizerInstruction* ins,
 #if ENABLE_INTERNAL_CODE_OPTIMIZER    
     //if the shared index check stub of current method has been compiled
     else if (_address_of_shared_emitted_index_check_stub != 
-		not_bound) {
+                not_bound) {
       //if target is index out of boundary stub,
       //we mark them as schedulable branch
       //for later extended basic block work
@@ -572,7 +566,7 @@ void CodeOptimizer::update_instruction_info_tables(int* ins_start,
 
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
 #define offset_to_index(offset, optimizer)   ((offset - \
-	optimizer->_start_code_offset)/4)
+        optimizer->_start_code_offset)/4)
 void CodeOptimizer::determine_osr_entry(int* ins_start, int* ins_end) {
   Compiler *current_compiler = Compiler::current();
   InternalCodeOptimizer* internal_optimizer = current_compiler->optimizer();
@@ -584,7 +578,7 @@ void CodeOptimizer::determine_osr_entry(int* ins_start, int* ins_end) {
   while (!label.is_unused()) {
     if (label.position() >= internal_optimizer->_start_code_offset ) {
       _pinned_entries.set(offset_to_index(label.position(), 
-	  	 internal_optimizer));
+                 internal_optimizer));
     }
     label = current_compiler->get_next_pinned_entry();
   }
@@ -627,8 +621,7 @@ void CodeOptimizer::determine_schedulable_branch(
       //since the target extract from those unpatched schedulable branch
       //pointed one by one by update_branch_info() are not 
       //real branch target.
-      _branch_targets.set(
-      (next -internal_optimizer->_start_code_offset)/4, false);
+      _branch_targets.clear( (next - internal_optimizer->_start_code_offset)/4 );
       prev = next;
     }
     //if next = -2 
@@ -642,7 +635,7 @@ void CodeOptimizer::determine_schedulable_branch(
 
 void CodeOptimizer::determine_literal_id(OptimizerInstruction* ins) {
   VERBOSE_SCHEDULING_AS_YOU_GO(("\t[BB Head]=0x%08x",
-  	(int)_ins_block_next->_raw));
+        (int)_ins_block_next->_raw));
   if ((ins->_type == OptimizerInstruction::ldr) &&
       (ins->_operands & REGISTER_PC) &&
       (ins->_internals._literal_id  == undetermined_literal) ) {
@@ -657,7 +650,7 @@ void CodeOptimizer::determine_literal_id(OptimizerInstruction* ins) {
 
     //we use id to identify the ldrs which access the same literal    
     int prev_offset = offset +  (ins->_imm + 8);
-	
+        
     int id = ico->index_of_unbound_literal_access_ins(prev_offset);
     ins->_internals._literal_id  = id;
     if (id != undetermined_literal) {
@@ -670,7 +663,7 @@ void CodeOptimizer::determine_literal_id(OptimizerInstruction* ins) {
         //this fixed offset(old_offset)
         //otherwise we need to tracker the link head
         //durning scheduling
-        if (ico->offset_of_scheduled_unbound_literal_access_ins(id) == 0) {			
+        if (ico->offset_of_scheduled_unbound_literal_access_ins(id) == 0) {                     
           ico->update_offset_of_scheduled_unbound_literal_access_ins(id, 
                                                         prev_offset);
         }
@@ -723,7 +716,7 @@ void CodeOptimizer::fix_memory_load(OptimizerInstruction* ins_to_fix,
 #if ENABLE_NPCE        
       int raw_index_of_load_length = raw_index - 3 ;
       if (  raw_index_of_load_length >= 0  && 
-	     !( _ins_block_base[raw_index_of_load_length]._status & status_emitted ) &&
+             !( _ins_block_base[raw_index_of_load_length]._status & status_emitted ) &&
             _ins_block_base[raw_index_of_load_length]._internals._abortable == abort_point) { 
         // ins of loading element is scheduled ahead of loading of array length ins.
         // For exmple:
@@ -743,7 +736,7 @@ void CodeOptimizer::fix_memory_load(OptimizerInstruction* ins_to_fix,
 
         index = ico->index_of_scheduled_npe_ins_with_stub( 
                    possible_abort_point);
-		
+                
         if (index != -1) {
           // in this case,
           // we need to use the offset of element loading ins to replace 
@@ -880,10 +873,10 @@ bool InternalCodeOptimizer::schedule_current_cc(CompiledMethod* cm,
 
   //should be GUARANTEE here too, if no method switch happens.
   //GUARANTEE(_start_method == _stop_method && 
-  //  	_stop_code_offset >= _start_code_offset  , "should be same compiled method");
+  //    _stop_code_offset >= _start_code_offset  , "should be same compiled method");
   if ( _start_method == _stop_method && 
-  	_stop_code_offset >= _start_code_offset ) {
-  	
+        _stop_code_offset >= _start_code_offset ) {
+        
     // begin the code optimizing
     //record value in byte.
     code_length = (_stop_code_offset - _start_code_offset) >> 2;
@@ -903,7 +896,7 @@ bool InternalCodeOptimizer::schedule_current_cc(CompiledMethod* cm,
 
     //we allocate more space than the num of npe ins with stub here
     init_npe_ins_with_stub_table(Compiler::current()->null_point_record_counter() 
-		JVM_CHECK_0);
+                JVM_CHECK_0);
 
     VERBOSE_SCHEDULING_AS_YOU_GO(("\tNPE ldr instructions"));
     //fill the npe_table
@@ -1003,11 +996,11 @@ CodeOptimizer::fix_pc_immediate( OptimizerInstruction* ins_to_fix,
                   old_code_offset<<2, new_code_offset<<2));
 
   if ( ins_to_fix->_internals._literal_id  > undetermined_literal) {
-    //get the prev node of the scheduled chain	
+    //get the prev node of the scheduled chain  
     int prev_emit_offset = 
          ico->offset_of_scheduled_unbound_literal_access_ins(
                                  ins_to_fix->_internals._literal_id );
-   //update the score board with the new_offset of current ins	
+   //update the score board with the new_offset of current ins  
     ico->update_offset_of_scheduled_unbound_literal_access_ins(
                 ins_to_fix->_internals._literal_id , new_code_offset<<2);     
    
@@ -1086,11 +1079,11 @@ CodeOptimizer::fix_pc_immediate_fast(
 
   if (ins_to_fix->_internals._literal_id  > undetermined_literal) {
 
-    //get the previous node of current ldr chain by the offset kept in score board	
+    //get the previous node of current ldr chain by the offset kept in score board      
     int prev_emit_offset = 
            ico->offset_of_scheduled_unbound_literal_access_ins(
               ins_to_fix->_internals._literal_id );
-    //update the score board	with the emitted offset of current ins
+    //update the score board    with the emitted offset of current ins
     ico->update_offset_of_scheduled_unbound_literal_access_ins(
               ins_to_fix->_internals._literal_id , old_code_offset<<2);     
     if (prev_emit_offset != 0) {
@@ -1098,7 +1091,7 @@ CodeOptimizer::fix_pc_immediate_fast(
     } else {
       
       if ( ins_to_fix->_imm == -8) {
-	 //current ins has alread been the head of the chain(pointed)	
+         //current ins has alread been the head of the chain(pointed)   
         return false;
       } else {
         //current ins becomes the head of the chain after scheduling
@@ -1157,23 +1150,23 @@ CodeOptimizer::fix_branch_immediate( OptimizerInstruction* ins_to_fix,
   int new_raw;
   
   if (_address_of_shared_emitted_index_check_stub != 
-  	        not_bound) {
-    //the stub is emitted. 	        
+                not_bound) {
+    //the stub is emitted.              
     imm24 = (_address_of_shared_emitted_index_check_stub 
-		     - new_position - 8) >> 2;
+                     - new_position - 8) >> 2;
   } else {
      if (_address_of_last_emitted_branch_to_index_check_stub == 
-	 	no_branch_to_index_check_stub) {
-	//we are the head of the chain 
+                no_branch_to_index_check_stub) {
+        //we are the head of the chain 
        imm24 = (-8)>> 2;
      } else {
        //we adjust the target to maintain the chain of un-patched branch 
        imm24 = ( _address_of_last_emitted_branch_to_index_check_stub
-	   	         - new_position - 8) >> 2;
+                         - new_position - 8) >> 2;
      }
        //update value of the latest emitted branch of that chain.
      _address_of_last_emitted_branch_to_index_check_stub
-	 	= new_position;
+                = new_position;
   }
 
   new_raw = *ins_to_fix->_raw;
@@ -1183,7 +1176,7 @@ CodeOptimizer::fix_branch_immediate( OptimizerInstruction* ins_to_fix,
 }
 
 void CodeOptimizer::fix_pc_immediate_for_ins_unscheduled(
-	int block_size) {
+        int block_size) {
   OptimizerInstruction* insBlockCurr;
   OptimizerInstruction *temp_p;
   int i;
@@ -1204,7 +1197,7 @@ void CodeOptimizer::fix_pc_immediate_for_ins_unscheduled(
 
 
 void CodeOptimizer::fix_pc_immediate_for_ins_outside_block(
-	int* ins_curr, int* ins_block_end) {
+        int* ins_curr, int* ins_block_end) {
       //fix for literal access
       ins_curr = ins_block_end + 1;
       if (ins_curr != (_ins_raw_end + 1)  && 

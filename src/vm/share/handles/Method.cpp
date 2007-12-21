@@ -2216,6 +2216,19 @@ inline void Method::add_entry( jubyte counts[], const int bci, const int inc ) {
   counts[ bci ] = count;
 }
 
+#if !(ENABLE_COMPILER && ENABLE_ROM_GENERATOR)
+inline
+#endif
+void Method::add_exception_table_entries( jubyte counts[] ) const {
+  TypeArray::Raw exception_table = this->exception_table();
+  GUARANTEE((exception_table().length() % 4) == 0, "Sanity check");
+  const int len = exception_table().length();
+  for( int i = 0; i < len; i += 4 ) {
+    const int handler_bci = exception_table().ushort_at(i + 2);
+    add_entry(counts, handler_bci, 2);
+  }
+}
+
 #define ADD_BRANCH_ENTRY(offset)                        \
   const int dest = bci + offset;                        \
   GUARANTEE(dest >= 0 && dest < codesize, "sanity");    \
@@ -2225,23 +2238,13 @@ inline void Method::add_entry( jubyte counts[], const int bci, const int inc ) {
   if(dest <= bci) { has_loops = true; }
 
 void Method::compute_attributes(Attributes& attributes JVM_TRAPS) const {
-  const int codesize = code_size();
+  GUARANTEE( Compiler::is_active(), "Sanity" );
 
-  UsingFastOops fast_oops;
-  TypeArray::Fast entry_count_array;
-  TypeArray::Fast bci_flags_array;
-#if ENABLE_COMPILER
-  if( Compiler::is_active() ) {
-    entry_count_array = 
-      Universe::new_byte_array_in_compiler_area(codesize JVM_CHECK);
-    bci_flags_array = 
-      Universe::new_byte_array_in_compiler_area(codesize JVM_CHECK);
-  } else 
-#endif
-  {
-    entry_count_array = Universe::new_byte_array(codesize JVM_CHECK);
-    bci_flags_array = Universe::new_byte_array(codesize JVM_CHECK);
-  }
+  const int codesize = code_size();
+  CompilerByteArray* entry_count_array =
+    CompilerByteArray::allocate( codesize JVM_ZCHECK( entry_count_array ) );
+  CompilerByteArray* bci_flags_array =
+    CompilerByteArray::allocate( codesize JVM_ZCHECK( bci_flags_array ) );
 
   {
     // This is a hot function during compilation. Since it only operates
@@ -2250,8 +2253,8 @@ void Method::compute_attributes(Attributes& attributes JVM_TRAPS) const {
     // saves footprint because we don't need a C++ vtable for BytecodeClosure.
     AllocationDisabler raw_pointers_used_in_this_function;
 
-    jubyte* entry_counts = entry_count_array().base_address();
-    jubyte* bci_flags = bci_flags_array().base_address();
+    jubyte* entry_counts = entry_count_array->base();
+    jubyte* bci_flags    = bci_flags_array  ->base();
 
     // Give the first bytecode an entry, and iterate over the bytecodes.
     entry_counts[0] = 1;
@@ -2349,6 +2352,7 @@ void Method::compute_attributes(Attributes& attributes JVM_TRAPS) const {
       }
 
       GUARANTEE(bci == codesize, "Sanity");
+      add_exception_table_entries( entry_counts );
 
       attributes.entry_counts = entry_count_array;
       attributes.bci_flags = bci_flags_array;
@@ -2358,18 +2362,101 @@ void Method::compute_attributes(Attributes& attributes JVM_TRAPS) const {
       attributes.num_locks = num_locks;
       attributes.num_bytecodes_can_throw_npe = exception_count;  
     }
-
-    { // Add entries for the exception handlers.
-      TypeArray::Raw exception_table = this->exception_table();
-      GUARANTEE((exception_table().length() % 4) == 0, "Sanity check");
-      const int len = exception_table().length();
-      for (int i = 0; i < len; i += 4 ) {
-        const int handler_bci = exception_table().ushort_at(i + 2);
-        add_entry(entry_counts, handler_bci, 2);
-      }
-    }
   }
 }
+
+#if ENABLE_ROM_GENERATOR
+
+#undef ADD_BACK_BRANCH_ENTRY
+#define ADD_BACK_BRANCH_ENTRY(offset) ADD_BRANCH_ENTRY(offset);
+
+OopDesc* Method::compute_entry_counts(JVM_SINGLE_ARG_TRAPS) const {
+  const int codesize = code_size();
+  TypeArray::Raw entry_count_array =
+    Universe::new_byte_array(codesize JVM_OZCHECK(entry_count_array));
+
+  AllocationDisabler raw_pointers_used_in_this_function;
+  jubyte* entry_counts = entry_count_array().base_address();
+
+  // Give the first bytecode an entry, and iterate over the bytecodes.
+  entry_counts[0] = 1;
+  {
+    const jubyte* codebase = (jubyte*)code_base();
+    int bci = 0;
+    int branch_bci = -1;
+
+    while( bci < codesize ) {
+      const jubyte* const bcptr = codebase + bci;
+      const Bytecodes::Code code = Bytecodes::Code(*bcptr);
+      GUARANTEE(code >= 0, "sanity: unsigned value");
+
+      const int length = bytecode_length_for(bci);
+
+      switch (code) {
+        case Bytecodes::_ifeq:
+        case Bytecodes::_ifne:
+        case Bytecodes::_iflt:
+        case Bytecodes::_ifge:
+        case Bytecodes::_ifgt:
+        case Bytecodes::_ifle:
+        case Bytecodes::_if_icmpeq:
+        case Bytecodes::_if_icmpne:
+        case Bytecodes::_if_icmplt:
+        case Bytecodes::_if_icmpge:
+        case Bytecodes::_if_icmpgt:
+        case Bytecodes::_if_icmple:
+        case Bytecodes::_if_acmpeq:
+        case Bytecodes::_if_acmpne:
+        case Bytecodes::_ifnull:
+        case Bytecodes::_ifnonnull:
+          GUARANTEE(Bytecodes::can_fall_through(code), 
+                    "Conditional branches can fall through");
+          branch_bci = bci;
+          // Fall through
+        case Bytecodes::_goto: {
+          ADD_BACK_BRANCH_ENTRY(jshort(Bytes::get_Java_u2(address(bcptr+1))));
+        } break;
+        case Bytecodes::_goto_w: {
+          ADD_BACK_BRANCH_ENTRY(int(Bytes::get_Java_u4(address(bcptr+1))));
+        } break;
+        case Bytecodes::_lookupswitch: {
+          const int table_index  = align_size_up(bci + 1, sizeof(jint));
+          ADD_BRANCH_ENTRY( get_java_switch_int(table_index + 0) );
+
+          const int num_of_pairs = get_java_switch_int(table_index + 4);
+          for( int i = 0; i < num_of_pairs; i++ ) {
+            ADD_BACK_BRANCH_ENTRY( get_java_switch_int(8 * i + table_index + 12) );
+          }
+        } break;
+        case Bytecodes::_tableswitch: {
+          const int table_index  = align_size_up(bci + 1, sizeof(jint));
+          ADD_BRANCH_ENTRY( get_java_switch_int(table_index + 0) );
+
+          const int size = get_java_switch_int(table_index + 8) -
+                           get_java_switch_int(table_index + 4);
+          for (int i = 0; i <= size; i++) {
+            ADD_BACK_BRANCH_ENTRY( get_java_switch_int(4 * i + table_index + 12) );
+          }
+        } break;
+      }
+
+      if( Bytecodes::can_fall_through_flags( Bytecodes::get_flags(code) ) ) {
+        ADD_BRANCH_ENTRY(length);
+      } else {
+        branch_bci = -1;
+      }
+
+      bci += length;
+    }
+
+    GUARANTEE(bci == codesize, "Sanity");
+  }
+  add_exception_table_entries( entry_counts );
+  return entry_count_array;
+}
+#endif
+
+
 
 #undef ADD_BRANCH_ENTRY
 #undef ADD_BACK_BRANCH_ENTRY

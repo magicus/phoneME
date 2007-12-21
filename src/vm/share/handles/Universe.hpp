@@ -224,12 +224,6 @@ private:
                                   JVM_TRAPS);
   static ReturnOop allocate_array(FarClass* klass, int length, int scale
                                   JVM_TRAPS);
-#if ENABLE_COMPILER
-  static ReturnOop allocate_array_in_compiler_area(FarClass* klass, 
-                                                   int length, int scale
-                                                   JVM_TRAPS);
-#endif
-
   // These are temporarily made public. Used by Method.cpp.
   static ReturnOop allocate_obj_near(FarClass* klass JVM_TRAPS);
 
@@ -724,23 +718,6 @@ private:
   }
 #endif
 
-#if ENABLE_COMPILER
-  static ReturnOop new_byte_array_in_compiler_area(int length JVM_TRAPS) {
-    return allocate_array_in_compiler_area(
-                          (FarClass *)((void*)byte_array_class()),
-                          length, sizeof(jbyte) JVM_NO_CHECK_AT_BOTTOM);
-  }
-  static ReturnOop new_int_array_in_compiler_area(int length JVM_TRAPS) {
-    return allocate_array_in_compiler_area(
-                          (FarClass *)((void*)int_array_class()),
-                          length, sizeof(jint) JVM_NO_CHECK_AT_BOTTOM);
-  }
-  static ReturnOop new_obj_array_in_compiler_area(int length JVM_TRAPS) {
-    return allocate_array_in_compiler_area(
-                          (FarClass*)((void*)object_array_class()),
-                          length, sizeof(OopDesc*) JVM_NO_CHECK_AT_BOTTOM);
-  }
-#endif
 #if ENABLE_ISOLATES
   // IMPL_NOTE: maybe create a special iterator for the functions below?
   static ReturnOop copy_strings_to_byte_arrays(OopDesc* string_array JVM_TRAPS);

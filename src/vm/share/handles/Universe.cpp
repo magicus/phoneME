@@ -1942,21 +1942,6 @@ ReturnOop Universe::generic_allocate_array(Allocator* allocate,
   }
 }
 
-#if ENABLE_COMPILER
-ReturnOop Universe::allocate_array_in_compiler_area(FarClass* klass, 
-                                                    int length, int scale
-                                                    JVM_TRAPS) {
-  // This function is called only by the compiler with "friendly parameters"
-  GUARANTEE(length >= 0 && length <= 0x08000000, "sanity");
-  const size_t size = ArrayDesc::allocation_size(length, scale);
-  ArrayDesc* p = (ArrayDesc*) ObjectHeap::allocate_temp(size JVM_NO_CHECK);
-  if (p) {
-    p->initialize(klass->prototypical_near(), length);
-  }
-  return p;
-}
-#endif
-
 ReturnOop Universe::allocate_method(int length JVM_TRAPS) {
   size_t size = MethodDesc::allocation_size(length);
   MethodDesc* result = (MethodDesc*) ObjectHeap::allocate(size 

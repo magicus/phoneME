@@ -129,8 +129,14 @@ class ConstantPoolRewriter {
   void update_methods_in_constants(InstanceClass *ic);
   void update_methods_in_original_info(int klass_index JVM_TRAPS);
 
-  void init_branch_targets(Method *method JVM_TRAPS);
-  bool is_branch_target(int old_bci);
+  void init_branch_targets(Method *method JVM_TRAPS) {
+    _branch_targets = method->compute_entry_counts( JVM_SINGLE_ARG_NO_CHECK );
+  }
+
+  bool is_branch_target(const int old_bci) const {
+    return _branch_targets.ubyte_at(old_bci) > 1;
+  }
+
   bool is_redundant_push_pop(Method *method, int bci);  
   bool shall_create_new_method(Method *method, int* p_new_size JVM_TRAPS);
   ReturnOop copy_method(Method *src, int new_size JVM_TRAPS);

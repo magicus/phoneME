@@ -154,13 +154,13 @@ void StackmapList::iterate(OopVisitor* visitor) {
   for (int i = 0; i < entries; i++){
     if (is_short_map(i)) {
       {
-	NamedField id("short_map", true);
-	visitor->do_int(&id, entry_stat_offset(i), true);
+        NamedField id("short_map", true);
+        visitor->do_int(&id, entry_stat_offset(i), true);
       }
     } else {
       {
-	NamedField id("long_map", true);
-	visitor->do_oop(&id, entry_stat_offset(i), true);
+        NamedField id("long_map", true);
+        visitor->do_oop(&id, entry_stat_offset(i), true);
       }
     }
   }

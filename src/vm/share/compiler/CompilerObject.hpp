@@ -28,6 +28,8 @@
 
 #define COMPILER_OBJECTS_DO(template) \
   template( PointerArray            ) \
+  template( ByteArray               ) \
+  template( IntArray                ) \
   template( Entry                   ) \
   template( CompilationQueueElement ) \
   template( VirtualStackFrame       )
@@ -132,46 +134,61 @@ public:
   CompilerObject::type##_type, sizeof(type) JVM_NO_CHECK)
 
 
-class CompilerPointerArray: public CompilerObject {
-  typedef void* element_type;
-  typedef CompilerPointerArray array_type;
-  element_type _data[ 1 ];
-
-  static int header_size( void ) { return FIELD_OFFSET(array_type, _data); }
-
 #if USE_COMPILER_OBJECT_HEADER
-  unsigned length( void ) const {
-    return (size() - header_size()) / sizeof(element_type);
+# define IMPLEMENT_COMPILER_ARRAY_BOUNDS_CHECK                \
+  unsigned length( void ) const {                             \
+    return (size() - header_size()) / sizeof(element_type);   \
+  }                                                           \
+  void check_bounds( const unsigned i ) const {               \
+    GUARANTEE( this != NULL, "NULL array" );                  \
+    GUARANTEE( i < length(), "Array index is out of bounds" );\
   }
-  void check_bounds( const unsigned i ) const {
-    GUARANTEE( this != NULL, "NULL array" );
-    GUARANTEE( i < length(), "Array index is out of bounds" );
-  }
-#else
+#else //!USE_COMPILER_OBJECT_HEADER
+# define IMPLEMENT_COMPILER_ARRAY_BOUNDS_CHECK                \
   static void check_bounds( const int ) {}
 #endif
 
-public:
-  const element_type* base( void ) const { return _data; }
-        element_type* base( void )       { return _data; }
+#define MAKE_COMPILER_ARRAY_NAME(ARRAY_TYPE) Compiler##ARRAY_TYPE##Array
 
-  const element_type& at ( const int i ) const {   
-    check_bounds( i );
-    return _data[ i ];
-  }
-  element_type& at ( const int i ) {   
-    check_bounds( i );
-    return _data[ i ];
-  }
-  void at_put ( const int i, const element_type val ) {   
-    at( i ) = val;
+#define DEFINE_COMPILER_ARRAY(ELEMENT_TYPE, ARRAY_TYPE) \
+  class MAKE_COMPILER_ARRAY_NAME(ARRAY_TYPE): public CompilerObject {         \
+    typedef ELEMENT_TYPE element_type;                                        \
+    typedef MAKE_COMPILER_ARRAY_NAME(ARRAY_TYPE) array_type;                  \
+    element_type _data[ 1 ];                                                  \
+                                                                              \
+    static int header_size( void ) { return FIELD_OFFSET(array_type, _data); }\
+                                                                              \
+    IMPLEMENT_COMPILER_ARRAY_BOUNDS_CHECK                                     \
+                                                                              \
+  public:                                                                     \
+    const element_type* base( void ) const { return _data; }                  \
+          element_type* base( void )       { return _data; }                  \
+                                                                              \
+    const element_type& at ( const int i ) const {                            \
+      check_bounds( i );                                                      \
+      return _data[ i ];                                                      \
+    }                                                                         \
+    element_type& at ( const int i ) {                                        \
+      check_bounds( i );                                                      \
+      return _data[ i ];                                                      \
+    }                                                                         \
+    void at_put ( const int i, const element_type val ) {                     \
+      at( i ) = val;                                                          \
+    }                                                                         \
+                                                                              \
+    static array_type* allocate( const int n JVM_TRAPS ) {                    \
+      const int size = header_size() + n * sizeof(element_type);              \
+      return (array_type*) CompilerObject::allocate(                          \
+        ARRAY_TYPE##Array_type, size JVM_NO_CHECK);                           \
+    }                                                                         \
   }
 
-  static array_type* allocate( const int n JVM_TRAPS ) {
-    const int size = header_size() + n * sizeof(element_type);
-    return (array_type*) CompilerObject::allocate(
-      PointerArray_type, size JVM_NO_CHECK);
-  }
-};
+DEFINE_COMPILER_ARRAY( jubyte, Byte   );
+DEFINE_COMPILER_ARRAY( jint,   Int    );
+DEFINE_COMPILER_ARRAY( void*,  Pointer);
+
+#undef MAKE_COMPILER_ARRAY_NAME
+#undef IMPLEMENT_COMPILER_ARRAY_BOUNDS_CHECK
+#undef DEFINE_COMPILER_ARRAY
 
 #endif

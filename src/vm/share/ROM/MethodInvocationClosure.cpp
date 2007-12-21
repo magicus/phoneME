@@ -51,8 +51,8 @@ public:
   
   virtual void invoke_static(int index JVM_TRAPS) {
     if (_code == Bytecodes::_invokestatic ||
-	_code == Bytecodes::_fast_invokestatic ||
-	_code == Bytecodes::_fast_init_invokestatic) {
+        _code == Bytecodes::_fast_invokestatic ||
+        _code == Bytecodes::_fast_init_invokestatic) {
       check_static(index JVM_CHECK);
     }
     BytecodeClosure::invoke_static(index JVM_CHECK);
@@ -159,8 +159,8 @@ public:
   void check_static(int index JVM_TRAPS) {
     ConstantPool::Raw cp = method()->constants();      
       if (cp().tag_at(index).is_resolved_static_method()) {
-	Method m = cp().resolved_static_method_at(index);	
-	_owner->add_method(&m JVM_NO_CHECK_AT_BOTTOM);
+        Method m = cp().resolved_static_method_at(index);       
+        _owner->add_method(&m JVM_NO_CHECK_AT_BOTTOM);
       } else {
         // This could be an element we failed to resolve 
         // when ROMizing an application.

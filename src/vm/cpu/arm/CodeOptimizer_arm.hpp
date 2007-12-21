@@ -132,81 +132,64 @@ class OptimizerInstruction : public StackObj {
 #endif 
  };
 
-#if ENABLE_INTERNAL_CODE_OPTIMIZER
 class Bitset : public GlobalObj {
-public:
-  Bitset() {
-    for(int i=0; i<32; i++) _lookup[i] = ~(1<<i);
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
+  CompilerIntArray* _bits;
+  int at( const int i ) const {
+    return _bits->at( i );
   }
-
-  void calculate(int size) {
-    size++;
-    _intReps = (int)(size/32);
-    _ext_size = size % 32;
-    if(0 != _ext_size) _intReps++;
-  }
-
-  int init(JVM_SINGLE_ARG_TRAPS) {
-    if (_intReps == 0) {
-      return 0;
-    }
-    OopDesc* oopBits = 
-             Universe::new_int_array_in_compiler_area(_intReps JVM_CHECK_0);
-    _bits.set_obj(oopBits);
-    return 0;
-  }
-
-  void set(int index, bool f = true) {
-    index++;
-    int block_pos = (index-1)/32;
-    int bit_pos = (index-1)%32;
-    unsigned int block = _bits.int_at(block_pos);
-    f ? _bits.int_at_put(block_pos, (1 << bit_pos | block)) :
-        _bits.int_at_put(block_pos, (_lookup[bit_pos] & block));
-  }
-  bool get(int index) { 
-    index++;
-    unsigned int block = _bits.int_at((index-1)/32);
-    return (block >> (index-1)%32) & true;
+  void at_put( const int i, const int value ) const {
+    return _bits->at_put( i, value );
   }
 #else
-class Bitset : public GlobalObj {
-public:
-  Bitset(int size) {
-    for (int i=0; i<32; i++) _lookup[i] = ~(1<<i);
-      _intReps = (int)(size/32);
-      _ext_size = size % 32;
-      if (0 != _ext_size) _intReps++;
+  TypeArray     _bits;
+  int at( const int i ) const {
+    return _bits.int_at( i );
   }
-
-  int init(JVM_SINGLE_ARG_TRAPS) {
-    OopDesc* oopBits = Universe::new_int_array(_intReps JVM_CHECK_0);
-    _bits.set_obj(oopBits);
-    return 0;
-  }
-
-  void set(int index, bool f = true) {
-    int block_pos = (index-1)/32;
-    int bit_pos = (index-1)%32;
-    unsigned int block = _bits.int_at(block_pos);
-    f ? _bits.int_at_put(block_pos, (1 << bit_pos | block)) :
-        _bits.int_at_put(block_pos, (_lookup[bit_pos] & block));
-  }
-  bool get(int index) { 
-    unsigned int block = _bits.int_at((index-1)/32);
-    return (block >> (index-1)%32) & true;
+  void at_put( const int i, const int value ) const {
+    return _bits.at_put( i, value );
   }
 #endif
+  unsigned int _size;
 
-  ~Bitset() { 
+  static int block_index( const unsigned i ) {
+    return i >> 5;
   }
-  int  size() { return (_intReps-1)*32 + _ext_size;}
+  static int bit_index( const unsigned i ) {
+    return i & 31;
+  }
+public:
+  Bitset( void ) {}
+ ~Bitset( void ) {}
 
-protected :
-  unsigned int  _intReps;
-  unsigned int  _lookup[32];
-  unsigned int  _ext_size;
-  TypeArray     _bits;
+  void calculate( const unsigned size ) {
+  //  _size = block_index( size+31 );
+    _size = block_index( size+32 );     // Workaround for the bug
+  }
+
+  void init(JVM_SINGLE_ARG_TRAPS) {   
+    if( _size ) {
+#if ENABLE_INTERNAL_CODE_OPTIMIZER
+      _bits = CompilerIntArray::allocate( _size JVM_ZCHECK( _bits ) );
+#else
+      _bits = Universe::new_int_array( _size JVM_NO_CHECK);
+#endif
+    }
+  }
+
+  int get( const int i ) const { 
+    return ( at(block_index(i)) >> bit_index(i) ) & 1;
+  }
+  void set( const int i ) const {
+    const int block_pos = block_index( i );
+    const unsigned block = at( block_pos ) | (1 << bit_index( i ));
+    at_put( block_pos, block );
+  }
+  void clear( const int i ) const {
+    const int block_pos = block_index( i );
+    const unsigned block = at( block_pos ) &~(1 << bit_index( i ));
+    at_put( block_pos, block );
+  }
 };
 
 class CodeOptimizer: public StackObj {
@@ -340,7 +323,7 @@ bool CodeOptimizer::depends_of_memory_on_ins(OptimizerInstruction* ins_first,
  
   //fix the immediate of instructions accessing litreal not included in a basic block
   void fix_pc_immediate_for_ins_outside_block(
-	int* ins_curr, int* ins_block_end);
+        int* ins_curr, int* ins_block_end);
 
   //fix the immediate of instructions accessing literal  in a basic block which can be optimized
   void fix_pc_immediate_for_ins_unscheduled(int block_size);
@@ -350,7 +333,7 @@ bool CodeOptimizer::depends_of_memory_on_ins(OptimizerInstruction* ins_first,
   void determine_bound_literal(int* ins_start, int* ins_end) {}
   void determine_literal_id(OptimizerInstruction* ins) {}
   void fix_pc_immediate_for_ins_outside_block(
-	int* ins_curr, int* ins_block_end){}
+        int* ins_curr, int* ins_block_end){}
   void fix_pc_immediate_for_ins_unscheduled(int block_size) {}
 #endif
 #ifndef PRODUCT
@@ -361,7 +344,7 @@ bool CodeOptimizer::depends_of_memory_on_ins(OptimizerInstruction* ins_first,
 
 
  protected :
-  OptimizerInstruction  _ins_block_base[MAX_INSTRUCTIONS_IN_BLOCK];
+  OptimizerInstruction _ins_block_base[MAX_INSTRUCTIONS_IN_BLOCK];
 
   int _schedule[MAX_INSTRUCTIONS_IN_BLOCK];
   int _schedule_index;
@@ -407,17 +390,17 @@ class InternalCodeOptimizer: public StackObj {
   static InternalCodeOptimizer* _current;//this
   int  _unbound_literal_count;
   //score board record the offset of latest ldr ins accessing each literal before scheduling.
-  TypeArray _score_board_of_unbound_literal_access_ins_before_scheduling;
+  CompilerIntArray* _score_board_of_unbound_literal_access_ins_before_scheduling;
   //score board record the offset of latest ldr ins accessing each literal after scheduling
   //current ins could calculate its offset_imm based on the value on the score board.
-  TypeArray _score_board_of_unbound_literal_access_ins_after_scheduling;
+  CompilerIntArray* _score_board_of_unbound_literal_access_ins_after_scheduling;
 
 #if ENABLE_NPCE
   //table record the position before and after scheduling of a 
   //LDR instruction pointed by a NullCheckStub.
   //
   //
-  TypeArray _npe_ins_with_stub_table;
+  CompilerIntArray* _npe_ins_with_stub_table;
   int _npe_ins_with_stub_counter;//table index  
 #endif    
  public:
@@ -428,13 +411,12 @@ class InternalCodeOptimizer: public StackObj {
   //throwing null point exception. But the scheduler will
   //only record the LDR associated with null check stub into 
   //the table later.
-  void init_npe_ins_with_stub_table(int size  JVM_TRAPS) {
-    if (size == 0 ) {
-      return ;
+  void init_npe_ins_with_stub_table(const int size JVM_TRAPS) {
+    CompilerIntArray* p = NULL;
+    if( size ) {
+      p = CompilerIntArray::allocate( size JVM_NO_CHECK );
     }
-    OopDesc* oop_npe = 
-             Universe::new_int_array_in_compiler_area(size JVM_CHECK);
-    _npe_ins_with_stub_table.set_obj(oop_npe);
+    _npe_ins_with_stub_table = p;
   }
 
   enum {
@@ -451,8 +433,8 @@ class InternalCodeOptimizer: public StackObj {
   void record_npe_ins_with_stub(unsigned int cur_offset,
                                unsigned int scheduled_offset) {
     cur_offset = (cur_offset << scheduled_offset_width) |
-		          scheduled_offset ;
-    _npe_ins_with_stub_table.int_at_put(_npe_ins_with_stub_counter++, cur_offset);
+                          scheduled_offset ;
+    _npe_ins_with_stub_table->at_put(_npe_ins_with_stub_counter++, cur_offset);
   }
 
   int record_count_of_npe_ins_with_stub() {
@@ -466,9 +448,9 @@ class InternalCodeOptimizer: public StackObj {
 
   //get the table index of the record whose scheduled offset equal 
   //offset param
-  int index_of_scheduled_npe_ins_with_stub(unsigned int offset ) {
-    for ( int i =0 ; i < _npe_ins_with_stub_counter ; i ++ ) {
-      if ((_npe_ins_with_stub_table.int_at(i)>>scheduled_offset_width) == offset ) {
+  int index_of_scheduled_npe_ins_with_stub(unsigned offset ) const {
+    for ( int i = 0 ; i < _npe_ins_with_stub_counter ; i ++ ) {
+      if ((_npe_ins_with_stub_table->at(i)>>scheduled_offset_width) == offset ) {
         return i;
       }
     }
@@ -476,92 +458,93 @@ class InternalCodeOptimizer: public StackObj {
   }
 
   //get the scheduled npe instr offset index by index param
-  int scheduled_offset_of_npe_ins_with_stub(int index) {
-    return _npe_ins_with_stub_table.int_at(index) & scheduled_offset_mask;
+  int scheduled_offset_of_npe_ins_with_stub(int index) const {
+    return _npe_ins_with_stub_table->at(index) & scheduled_offset_mask;
   }
 
   //get the offset of npe instrs before scheduling
-  int offset_of_npe_ins_with_stub(int index) {
-    return  _npe_ins_with_stub_table.int_at(index) >> scheduled_offset_width;
+  int offset_of_npe_ins_with_stub(int index) const {
+    return _npe_ins_with_stub_table->at(index) >> scheduled_offset_width;
   } 
    
-  void set_scheduled_offset_of_npe_ins_with_stub(int index , unsigned int offset) {
-    _npe_ins_with_stub_table.int_at_put(index, _npe_ins_with_stub_table.int_at(index) & cur_offset_mask | offset);
+  void set_scheduled_offset_of_npe_ins_with_stub(int index , unsigned int offset) const {
+    _npe_ins_with_stub_table->at_put(index, _npe_ins_with_stub_table->at(index) & cur_offset_mask | offset);
   }
 
 #ifndef PRODUCT
-  void dump_npe_related_ldrs() {
+  void dump_npe_related_ldrs( void ) const {
   for (int i = 0 ; i < _npe_ins_with_stub_counter ; i++) {
     VERBOSE_SCHEDULING_AS_YOU_GO(("[%d] npe old offset is %d, new offset is %d ",
-                    i, _npe_ins_with_stub_table.int_at( i) >> scheduled_offset_width,
-                    _npe_ins_with_stub_table.int_at(i) & scheduled_offset_mask));
+                    i, _npe_ins_with_stub_table->at(i) >> scheduled_offset_width,
+                    _npe_ins_with_stub_table->at(i) & scheduled_offset_mask));
     }
   }
 #endif
 #endif //ENABLE_NPCE
 
   //allocate a table to record the unbound literals
-  void init_unbound_literal_tables(int size  JVM_TRAPS) {
+  void init_unbound_literal_tables(const int size JVM_TRAPS) {
     VERBOSE_SCHEDULING_AS_YOU_GO(("[allocating unbound literal table]=%dWords", size));
     if (size == 0 ) {
       return ;
     }
 
-    OopDesc* oop_table = 
-             Universe::new_int_array_in_compiler_area(size JVM_CHECK);
-    _score_board_of_unbound_literal_access_ins_before_scheduling.set_obj(oop_table);
-	
-    oop_table = Universe::new_int_array_in_compiler_area(size JVM_CHECK);
-    _score_board_of_unbound_literal_access_ins_after_scheduling.set_obj(oop_table);
-	
+    {
+      CompilerIntArray* p = CompilerIntArray::allocate( size JVM_ZCHECK( p ) );
+      _score_board_of_unbound_literal_access_ins_before_scheduling = p;
+    }
+
+    {
+      CompilerIntArray* p = CompilerIntArray::allocate( size JVM_NO_CHECK );
+      _score_board_of_unbound_literal_access_ins_after_scheduling = p;
+    }
   }
 
-  int get_unbound_literal_count() {
+  int get_unbound_literal_count( void ) const  {
     return _unbound_literal_count;
   }
 
   //record the offset of instrs access literals.
   //for literal with multi-access, scheduler only records the earliest one
-  void record_offset_of_unbound_literal_access_ins( int offset) {
-    _score_board_of_unbound_literal_access_ins_before_scheduling.int_at_put(_unbound_literal_count++, offset);
+  void record_offset_of_unbound_literal_access_ins( int offset ) {
+    _score_board_of_unbound_literal_access_ins_before_scheduling->at_put(_unbound_literal_count++, offset);
   }
 
   //mark the latest position(before scheduling) of ldr 
   //acess the literal indexed by literal_id
-  void update_offset_of_unbound_literal_access_ins(int literal_id,  int offset) {
-      _score_board_of_unbound_literal_access_ins_before_scheduling.int_at_put(literal_id, offset);
+  void update_offset_of_unbound_literal_access_ins(int literal_id, int offset) const {
+      _score_board_of_unbound_literal_access_ins_before_scheduling->at_put(literal_id, offset);
   }
 
   //record the offset of latest emitted literal access ins associated with the 
   //literal indexed by literal_id
-  void update_offset_of_scheduled_unbound_literal_access_ins(
-  	                                                      int literal_id,
-                                                             int offset) {
-    _score_board_of_unbound_literal_access_ins_after_scheduling.int_at_put(literal_id, offset);
+  void update_offset_of_scheduled_unbound_literal_access_ins( int literal_id,
+                                                              int offset) const {
+    _score_board_of_unbound_literal_access_ins_after_scheduling->at_put(literal_id, offset);
   }
 
   //get the offset of latest emitted literal access ins associated with the 
   //literal indexed by literal_id
-  int offset_of_scheduled_unbound_literal_access_ins(int literal_id) {
-    return _score_board_of_unbound_literal_access_ins_after_scheduling.int_at(literal_id);
+  int offset_of_scheduled_unbound_literal_access_ins(int literal_id) const {
+    return _score_board_of_unbound_literal_access_ins_after_scheduling->at(literal_id);
   }
 
    //get the literal_id whose latest position(before scheduling) equal param 
    //offset
-  int index_of_unbound_literal_access_ins( int offset ) {
+  int index_of_unbound_literal_access_ins( int offset ) const {
     for (int i =0 ; i < _unbound_literal_count ; i ++) {
-      if (_score_board_of_unbound_literal_access_ins_before_scheduling.int_at(i) ==  offset) {
+      if (_score_board_of_unbound_literal_access_ins_before_scheduling->at(i) == offset) {
         return i;
       }
     }
     return -1;
   }
 
-  void dump_unbound_literal_table() {
+  void dump_unbound_literal_table( void ) const {
     for (int i = 0 ; i < _unbound_literal_count ; i++) {
-        VERBOSE_SCHEDULING_AS_YOU_GO(("[%d] literal offset is %d ",
-                     i, _score_board_of_unbound_literal_access_ins_before_scheduling.int_at( i)));
-      }
+      VERBOSE_SCHEDULING_AS_YOU_GO(("[%d] literal offset is %d ",
+        _score_board_of_unbound_literal_access_ins_before_scheduling->at( i )));
+    }
   }
   
   InternalCodeOptimizer() {

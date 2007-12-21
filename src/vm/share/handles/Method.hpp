@@ -612,12 +612,11 @@ public:
  public:
 
   struct Attributes : public StackObj {
-    FastOopInStackObj __must_appear_before_fast_objects__;
-    TypeArray::Fast entry_counts; // Number of incoming control flow edges for
-                                  // each bytecodes
-    TypeArray::Fast bci_flags; // Attribute flags for each bytecode
-    int num_locks; // Count of monitor enter bytecodes
-    int num_bytecodes_can_throw_npe; // Count of bytecodes that can throw NPE
+    CompilerByteArray* entry_counts;  // Number of incoming control flow edges
+                                      // for each bytecodes
+    CompilerByteArray* bci_flags;     // Attribute flags for each bytecode
+    int num_locks;                    // Count of monitor enter bytecodes
+    int num_bytecodes_can_throw_npe;  // Count of bytecodes that can throw NPE
     bool has_loops;
     bool can_throw_exceptions;
   };
@@ -630,6 +629,11 @@ public:
 
   // Computes method attributes used by compiler and romizer.
   void compute_attributes(Attributes& attributes JVM_TRAPS) const;
+  void add_exception_table_entries( jubyte counts[] ) const;
+#endif
+
+#if ENABLE_ROM_GENERATOR
+  OopDesc* compute_entry_counts(JVM_SINGLE_ARG_TRAPS) const;
 #endif
 
 #if ENABLE_COMPILER && ENABLE_INLINE

@@ -99,39 +99,20 @@ public:
   void oops_do( void do_oop(OopDesc**) );
 };
 
-#define COMPILER_INSTANCE_HANDLES  \
-  FIELD( Method,                  method                  ) \
-  ARRAY( TypeArray,               entry_counts_table      ) \
-  ARRAY( TypeArray,               bci_flags_table         ) 
 
-#if ENABLE_INTERNAL_CODE_OPTIMIZER && ENABLE_NPCE
-//address of all the null point related LDR(STR)
-//this will be used to update the abort_point bitmap during 
-//code scheduling
-#define  SCHEDULER_HANDLES \
-  ARRAY( TypeArray,               null_point_exception_ins_table )
-#else
-#define  SCHEDULER_HANDLES
-#endif
-
-#define COMPILER_CONTEXT_HANDLES \
-      COMPILER_INSTANCE_HANDLES \
-      SCHEDULER_HANDLES
+#define COMPILER_CONTEXT_HANDLES FIELD( Method, method )
 
 class CompilerContextPointers {
-  #define ARRAY( type, name ) DEF( Array, type, name )
-  #define FIELD( type, name ) DEF( type,  type, name )
-  #define DEF( repr, type, name ) \
-    repr##Desc* _##name;    \
+  #define FIELD( type, name ) \
+    type##Desc* _##name;    \
     type* name ( void ) const           { return (type*) &_##name;     }  \
     void clear_##name ( void )          { _##name = NULL;              }  \
-    void set_##name ( OopDesc* val )    { _##name = (repr##Desc*) val; }  \
+    void set_##name ( OopDesc* val )    { _##name = (type##Desc*) val; }  \
     void set_##name ( const type* val ) { set_##name( val->obj() );    }
 
 public:
   COMPILER_CONTEXT_HANDLES
 
-  #undef ARRAY
   #undef FIELD
   #undef DEF
 
@@ -140,13 +121,15 @@ public:
   }
 };
 
-#define GENERIC_COMPILER_CONTEXT_FIELDS_DO(template) \
-    template( Compiler*, parent                     ) \
-    template( bool,      in_loop                    ) \
-    template( bool,      has_loops                  ) \
-    template( int,       saved_bci                  ) \
-    template( int,       saved_num_stack_lock_words ) \
-    template( int,       local_base                 )
+#define GENERIC_COMPILER_CONTEXT_FIELDS_DO(template)\
+  template( Compiler*,          parent                      ) \
+  template( CompilerByteArray*, entry_counts_table          ) \
+  template( CompilerByteArray*, bci_flags_table             ) \
+  template( int,                saved_bci                   ) \
+  template( int,                saved_num_stack_lock_words  ) \
+  template( int,                local_base                  ) \
+  template( bool,               in_loop                     ) \
+  template( bool,               has_loops                   )
 
 #if ENABLE_INLINE
 #define INLINER_COMPILER_CONTEXT_FIELDS_DO(template)  \
@@ -157,8 +140,9 @@ public:
 
 #if ENABLE_CODE_OPTIMIZER && ENABLE_NPCE
 #define SCHEDULER_COMPILER_CONTEXT_FIELDS_DO(template) \
-        template( int, codes_can_throw_null_point_exception ) \
-        template( int, null_point_record_counter)
+  template( CompilerIntArray*,  null_point_exception_ins_table       ) \
+  template( int,                codes_can_throw_null_point_exception ) \
+  template( int,                null_point_record_counter            )
 #else
 #define SCHEDULER_COMPILER_CONTEXT_FIELDS_DO(template) 
 #endif
@@ -297,16 +281,13 @@ class Compiler: public StackObj {
 
   #undef DEFINE_ACCESSOR
 
-  #define ARRAY( type, name ) FIELD( type, name )
   #define FIELD( type, name ) \
     type* name       ( void ) const      { return _context.name();     } \
     void clear_##name( void )            { _context.clear_##name();    } \
     void set_##name  ( OopDesc* val )    { _context.set_##name( val ); } \
     void set_##name  ( const type* val ) { _context.set_##name( val ); } \
     static type* current_##name ( void ) { return current()->name();   }
-
   COMPILER_CONTEXT_HANDLES
-
   #undef FIELD
 
   typedef CompilerContext::EntryTableType EntryTableType;
@@ -423,14 +404,14 @@ class Compiler: public StackObj {
 #if ENABLE_INTERNAL_CODE_OPTIMIZER
   //Null pointer exception accessor
   void record_null_point_exception_inst( const int offset ) {
-    int index = null_point_record_counter();
-    null_point_exception_ins_table()->int_at_put( index++, offset); 
-    set_null_point_record_counter(index);     
+    const int index = null_point_record_counter();
+    null_point_exception_ins_table()->at_put( index, offset ); 
+    set_null_point_record_counter( index+1 );     
   }
 
   //return the null point related instr indexed by index parameter
   int null_point_exception_abort_point( const int index) const {
-    return null_point_exception_ins_table()->int_at( index);
+    return null_point_exception_ins_table()->at( index);
   }
 
   //record the instr offset of those null point stubs into a npe_table.
@@ -471,30 +452,25 @@ class Compiler: public StackObj {
   }
 
   // Entry counts accessor.
-  int entry_count_for(const jint bci) {
-    return entry_counts_table()->ubyte_at(bci);
+  jubyte entry_count_for(const jint bci) const {
+    return entry_counts_table()->at(bci);
   }
 
-  bool exception_has_osr_entry(const jint bci) {
-    return (bci_flags_table()->byte_at(bci) & 
+  bool exception_has_osr_entry(const jint bci) const {
+    return (bci_flags_table()->at(bci) &
             Method::bci_exception_has_osr_entry) != 0;
   }
 
-  void set_exception_has_osr_entry(const jint bci) {
-    bci_flags_table()->byte_at_put(bci,
-      (jbyte) (bci_flags_table()->byte_at(bci) | 
-               Method::bci_exception_has_osr_entry));
+  void set_exception_has_osr_entry(const jint bci) const {
+    bci_flags_table()->at(bci) |= Method::bci_exception_has_osr_entry;
   }
 
-  bool is_branch_taken(const jint bci) {
-    return (bci_flags_table()->byte_at(bci) & 
-            Method::bci_branch_taken) != 0;
+  bool is_branch_taken(const jint bci) const {
+    return (bci_flags_table()->at(bci) & Method::bci_branch_taken) != 0;
   }
 
-  void set_branch_taken(const jint bci) {
-    bci_flags_table()->byte_at_put(bci,
-      (jbyte) (bci_flags_table()->byte_at(bci) | 
-               Method::bci_branch_taken));
+  void set_branch_taken(const jint bci) const {
+    bci_flags_table()->at(bci) |= Method::bci_branch_taken;
   }
 
   // Entry accessor.
@@ -665,18 +641,17 @@ class Compiler: public StackObj {
   
   bool  schedule_current_cc(CompiledMethod* cm JVM_TRAPS) {
 #if ENABLE_NPCE
-       //should be GUARANTEE(Compiler::current()->null_point_record_counter() <= 
-       //                     Compiler::null_point_exception_ins_table()->length(), "there're more npe related ins");
-       //if the table is smaller than the real number of npe ins, we don't scheduling code
-       //since we have no enough information to maintain the npe relationship during scheduling.
-       //null_point_record_counter is the real number of npe ins appeared in current cc.
-        if (Compiler::current()->null_point_record_counter() > 
-                      Compiler::null_point_exception_ins_table()->length()) {
-          return false;
-        }             
+    //should be GUARANTEE(Compiler::current()->null_point_record_counter() <= 
+    //                     Compiler::null_point_exception_ins_table()->length(), "there're more npe related ins");
+    //if the table is smaller than the real number of npe ins, we don't scheduling code
+    //since we have no enough information to maintain the npe relationship during scheduling.
+    //null_point_record_counter is the real number of npe ins appeared in current cc.
+    if( null_point_record_counter() > codes_can_throw_null_point_exception() ) {
+      return false;
+    }             
 #endif
       
-    return  _internal_code_optimizer.schedule_current_cc(
+    return _internal_code_optimizer.schedule_current_cc(
       cm, code_generator()->code_size() JVM_NO_CHECK_AT_BOTTOM);
   }
 

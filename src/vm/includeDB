@@ -589,9 +589,6 @@ Generator.cpp                    GPTableGenerator_<iarch>.hpp
 Generator.hpp                    Stream.hpp
 Generator.hpp                    Globals.hpp
 Generator.cpp                    Generator.hpp
-Generator.cpp                    VirtualStackFrame.hpp
-Generator.cpp                    Entry.hpp
-Generator.cpp                    CompilationQueue.hpp
 Generator.cpp                    ArrayClass.hpp
 Generator.cpp                    EntryActivation.hpp
 Generator.cpp                    CompiledMethod.hpp
@@ -709,7 +706,6 @@ CodeGenerator_<carch>.cpp        Location.hpp
 CodeGenerator_<carch>.cpp        ObjectHeap_<iarch>.hpp
 CodeGenerator_<carch>.cpp        TypeArrayClass.hpp
 CodeGenerator_<carch>.cpp        ConstantPool.hpp
-CodeGenerator_<carch>.cpp        ObjArrayClass.hpp
 CodeGenerator_<carch>.cpp        Synchronizer.hpp
 CodeGenerator_<carch>.cpp        FloatNatives.hpp
 #if ENABLE_JAVA_DEBUGGER
@@ -737,12 +733,10 @@ BytecodePrintClosure.cpp         StackmapGenerator.hpp
 RegisterAllocator.hpp            Assembler_<carch>.hpp
 RegisterAllocator.cpp            RegisterAllocator.hpp
 RegisterAllocator.cpp            Compiler.hpp
-RegisterAllocator.cpp            VirtualStackFrame.hpp
 RegisterAllocator_<carch>.cpp    RegisterAllocator.hpp
 RegisterAllocator_<carch>.cpp    Compiler.hpp
 
 FPURegisterMap_<carch>.hpp       Assembler_<carch>.hpp
-FPURegisterMap_<carch>.cpp       CodeGenerator.hpp
 FPURegisterMap_<carch>.cpp       Compiler.hpp
 FPURegisterMap_<carch>.cpp       RegisterAllocator.hpp
 
@@ -761,7 +755,6 @@ VirtualStackFrame.cpp            StackmapGenerator.hpp
 VirtualStackFrame.cpp            VSFMergeTest.hpp
 VirtualStackFrame.cpp            StackUtils.hpp
 
-VSFMergeTest.hpp                 VirtualStackFrame.hpp
 VSFMergeTest.hpp                 CodeGenerator.hpp
 VSFMergeTest.hpp                 Location.hpp
 VSFMergeTest.cpp                 Arguments.hpp
@@ -770,10 +763,7 @@ VSFMergeTest.cpp                 CompilerTest.hpp
 VSFMergeTest.cpp                 Location.hpp
 VSFMergeTest.cpp                 VSFMergeTest.hpp
 
-VirtualStackFrame_<carch>.cpp    VirtualStackFrame.hpp
-VirtualStackFrame_<carch>.cpp    VirtualStackFrame.hpp
 VirtualStackFrame_<carch>.cpp    BinaryAssembler_<carch>.hpp
-VirtualStackFrame_<carch>.cpp    CodeGenerator.hpp
 VirtualStackFrame_<carch>.cpp    Location.hpp
 VirtualStackFrame_<carch>.cpp    Compiler.hpp
 
@@ -781,7 +771,6 @@ Location.hpp                     VirtualStackFrame.hpp
 Location.hpp                     Value.hpp
 Location.hpp                     TypeArray.hpp
 Location.cpp                     Location.hpp
-Location.cpp                     CodeGenerator.hpp
 Location.cpp                     Compiler.hpp
 
 Value.hpp                        GlobalDefinitions.hpp
@@ -801,10 +790,7 @@ Relocation.cpp                   Location.hpp
 
 Compiler.hpp                     CompilationQueue.hpp
 Compiler.hpp                     Method.hpp
-Compiler.hpp                     VirtualStackFrame.hpp
 Compiler.hpp                     CodeGenerator.hpp
-Compiler.hpp                     CompilationQueue.hpp
-Compiler.hpp                     BytecodeCompileClosure.hpp
 Compiler.hpp                     Entry.hpp
 Compiler.hpp                     MixedOop.hpp
 Compiler.hpp                     CodeOptimizer_<carch>.hpp
@@ -844,24 +830,19 @@ CompilationQueue.hpp             CompilerObject.hpp
 CompilationQueue.hpp             VirtualStackFrame.hpp
 CompilationQueue.hpp             BinaryAssembler_<carch>.hpp
 CompilationQueue.hpp             BytecodeCompileClosure.hpp
-CompilationQueue.cpp             CompilationQueue.hpp
 CompilationQueue.cpp             Universe.hpp
 CompilationQueue.cpp             SystemDictionary.hpp
 CompilationQueue.cpp             Compiler.hpp
 CompilationQueue.cpp             InstanceClass.hpp
 CompilationQueue.cpp             Symbols.hpp
 CompilationQueue.cpp             VMEvent.hpp
-CompilationQueue_<carch>.cpp     CompilationQueue.hpp
 CompilationQueue_<carch>.cpp     Universe.hpp
 CompilationQueue_<carch>.cpp     SystemDictionary.hpp
-CompilationQueue_<carch>.cpp     CodeGenerator.hpp
 CompilationQueue_<carch>.cpp     BytecodeCompileClosure.hpp
 CompilationQueue_<carch>.cpp     Compiler.hpp
-CompilationQueue_<carch>.cpp     Entry.hpp
 CompilationQueue_<carch>.cpp     Location.hpp
 CompilationQueue_<carch>.cpp     Synchronizer.hpp
 
-Entry.hpp                        CompilerObject.hpp
 Entry.hpp                        VirtualStackFrame.hpp
 
 BytecodeCompileClosure.hpp       BytecodeClosure.hpp
@@ -1267,6 +1248,7 @@ SourceAssembler_<iarch>.cpp      ObjectHeap_<iarch>.hpp
 SourceAssembler_<iarch>.cpp      GPTableGenerator_<iarch>.hpp
 #endif
 
+BinaryAssembler_<carch>.hpp      CompilerObject.hpp
 BinaryAssembler_<carch>.hpp      LiteralPoolElement.hpp
 BinaryAssembler_<carch>.hpp      Assembler_<carch>.hpp
 BinaryAssembler_<carch>.hpp      CompiledMethod.hpp
@@ -1931,7 +1913,6 @@ Oop.cpp                          StackmapList.hpp
 Oop.cpp                          Thread.hpp
 Oop.cpp                          Entry.hpp
 Oop.cpp                          CompilationQueue.hpp
-Oop.cpp                          VirtualStackFrame.hpp
 Oop.cpp                          MixedOop.hpp
 Oop.cpp                          Task.hpp
 #if ENABLE_ISOLATES
@@ -2099,6 +2080,7 @@ SymbolTable.cpp                  Task.hpp
 Method.hpp                       Oop.hpp
 Method.hpp                       OopCons.hpp
 Method.hpp                       ObjectHeap_<iarch>.hpp
+Method.hpp                       CompilerObject.hpp
 Method.hpp                       Universe.hpp
 Method.hpp                       ConstantPool.hpp
 Method.cpp                       BytecodeClosure.hpp
@@ -2847,6 +2829,7 @@ ConstantPoolRewriter.hpp        OopDesc.inline.hpp
 ConstantPoolRewriter.hpp        Top.hpp
 ConstantPoolRewriter.hpp        ConstantPool.hpp
 ConstantPoolRewriter.hpp        Bytecodes.hpp
+ConstantPoolRewriter.hpp        Method.hpp
 ConstantPoolRewriter.hpp        BytecodeOptimizer.hpp
 ConstantPoolRewriter.cpp        OopVisitor.hpp
 ConstantPoolRewriter.cpp        ConstantPoolRewriter.hpp
@@ -2856,7 +2839,6 @@ ConstantPoolRewriter.cpp        TypeArrayClass.hpp
 ConstantPoolRewriter.cpp        TypeArray.hpp
 ConstantPoolRewriter.cpp        ObjArray.hpp
 ConstantPoolRewriter.cpp        String.hpp
-ConstantPoolRewriter.cpp        Method.hpp
 ConstantPoolRewriter.cpp        Symbols.hpp
 ConstantPoolRewriter.cpp        SymbolTable.hpp
 ConstantPoolRewriter.cpp        ROMOptimizer.hpp
@@ -2919,10 +2901,8 @@ ROMInliner.cpp                  ObjectHeap_<iarch>.hpp
 
 
 HotRoutines.incl.hpp            Top.hpp
-HotRoutines.incl.hpp            VirtualStackFrame.hpp
 HotRoutines.incl.hpp            Location.hpp
 HotRoutines.incl.hpp            Compiler.hpp
-HotRoutines.incl.hpp            CodeGenerator.hpp
 HotRoutines.incl.hpp            OopDesc.inline.hpp
 HotRoutines.incl.hpp            Inflate.hpp
 HotRoutines.incl.hpp            ConstantPool.hpp
@@ -2975,7 +2955,6 @@ MixedOop.hpp                    Oop.hpp
 MixedOop.hpp                    MixedOopDesc.hpp
 MixedOop.cpp                    MixedOop.hpp
 MixedOop.cpp                    Universe.hpp
-MixedOop.cpp                    CompilationQueue.hpp
 MixedOop.cpp                    OopVisitor.hpp
 MixedOop.cpp                    Thread.hpp
 MixedOop.cpp                    BinaryAssembler_<carch>.hpp

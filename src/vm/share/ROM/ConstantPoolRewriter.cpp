@@ -1484,22 +1484,6 @@ void ConstantPoolRewriter::account_for_new_entry(ConstantTag new_entry_tag) {
   }
 }
 
-void ConstantPoolRewriter::init_branch_targets(Method *method JVM_TRAPS) {
-  // _branch_targets is an int array. For all bci's in the method that's
-  // a branch target, _branch_targets.int_at(bci) is non-zero.
-#if USE_COMPILER_STRUCTURES
-  Method::Attributes attributes;
-  method->compute_attributes(attributes JVM_CHECK);
-  _branch_targets = attributes.entry_counts;
-#else
-  _branch_targets = NULL;
-#endif
-}
-
-bool ConstantPoolRewriter::is_branch_target(int old_bci) {
-  return (_branch_targets.ubyte_at(old_bci) > 1);
-}
-
 // Detect bytecodes of the sequence:
 //    L0: aload_x
 //    L1: pop

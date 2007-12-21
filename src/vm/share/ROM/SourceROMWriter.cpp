@@ -1821,15 +1821,15 @@ bool SourceROMWriter::may_skip_constant_pool(Method *method) {
 
 void SourceROMWriter::fixup_image(JVM_SINGLE_ARG_TRAPS) {
   JarFileParser::flush_caches();
-  SymbolTable::current()			->set_null();
-  StringTable::current()			->set_null();
-  Universe::gc_block_stackmap()			->set_null();
-  Universe::verifier_stackmap_cache()		->set_null();
-  Universe::verifier_instruction_starts_cache()	->set_null();
-  Universe::verifier_vstack_tags_cache()	->set_null();
-  Universe::verifier_vstack_classes_cache()	->set_null();
-  Universe::verifier_vlocals_tags_cache()	->set_null();
-  Universe::verifier_vlocals_classes_cache()	->set_null();
+  SymbolTable::current()                        ->set_null();
+  StringTable::current()                        ->set_null();
+  Universe::gc_block_stackmap()                 ->set_null();
+  Universe::verifier_stackmap_cache()           ->set_null();
+  Universe::verifier_instruction_starts_cache() ->set_null();
+  Universe::verifier_vstack_tags_cache()        ->set_null();
+  Universe::verifier_vstack_classes_cache()     ->set_null();
+  Universe::verifier_vlocals_tags_cache()       ->set_null();
+  Universe::verifier_vlocals_classes_cache()    ->set_null();
 
   ROMWriter::fixup_image(JVM_SINGLE_ARG_CHECK);
 }

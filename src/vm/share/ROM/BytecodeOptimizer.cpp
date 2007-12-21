@@ -44,9 +44,9 @@ bool BytecodeOptimizer::has_static_arrays(Method *method, int& new_method_size) 
 
   int old_bci, new_bci = 0;  
   int start_bci = 0;  // bci of first instruction which could be transformed
-		      // into _init_static_array
+                      // into _init_static_array
   int old_bcis[4];    // bcis of instructions which could be transformed
-		      // into _init_static_array
+                      // into _init_static_array
   bool result = false;
 
   reset_parser();

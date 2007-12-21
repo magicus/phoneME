@@ -281,12 +281,12 @@ class VirtualStackFrame: public CompilerObject {
   //the offset of bci stack base in the VirtualStackFrame
   jint* bci_stack_base( void ) {
     return (jint*) DERIVED(address, this+1,
-            location_map_size() - method()->max_execution_stack_count() *
+            _location_map_size - method()->max_execution_stack_count() *
             sizeof(jint));
   }
   const jint* bci_stack_base( void ) const {
     return (const jint*) DERIVED(address, this+1,
-            location_map_size() - method()->max_execution_stack_count() *
+            _location_map_size - method()->max_execution_stack_count() *
             sizeof(jint));
   }
 

@@ -631,8 +631,8 @@ inline void Compiler::begin_compile( JVM_SINGLE_ARG_TRAPS ) {
    //LDR instr in current CC.
   {
     Compiler::current()->set_null_point_record_counter(0);
-    OopDesc* p = Universe::new_int_array_in_compiler_area(
-                              codes_can_throw_null_point_exception() JVM_CHECK);
+    CompilerIntArray* p =
+      CompilerIntArray::allocate( codes_can_throw_null_point_exception() JVM_ZCHECK(p));
     Compiler::current()->set_null_point_exception_ins_table(p);
   }
 #endif

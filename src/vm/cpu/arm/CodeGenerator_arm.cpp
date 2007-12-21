@@ -4177,7 +4177,7 @@ void CodeGenerator::invoke(const Method* method,
           ldr_imm_index(tmp, tmp);
         }
       weaver.start_alternate(JVM_SINGLE_ARG_CHECK);
-        flush_frame(JVM_SINGLE_ARG_CHECK);
+      flush_frame(JVM_SINGLE_ARG_CHECK);
       weaver.flush();
     }
     // invoke the method

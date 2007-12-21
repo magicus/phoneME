@@ -999,9 +999,7 @@ OopDesc* ObjectHeap::compiler_area_allocate_code(const int size JVM_TRAPS) {
   GUARANTEE( DISTANCE(result, end) >= (int)size, "sanity" );
 
   // [2] Set compiler temporary data boundaries
-  _compiler_area_temp_bottom = DERIVED(OopDesc**, result, size);
-  _compiler_area_temp_top = end;
-  _compiler_area_top = end;
+  compiler_area_initialize( DERIVED(OopDesc**, result, size), end );
 
   // [3] Clear the new CompiledMethod.
   return (OopDesc*) jvm_memset(result, 0, size);

@@ -452,17 +452,17 @@ void BinaryObjectWriter::count(Oop *object, int adjustment) {
     case InstanceSize::size_stackmap_list:
       {
         count(mc_stackmap, num_bytes);
-	StackmapList entry = object;
+        StackmapList entry = object;
         int entry_count = entry.entry_count();
         for (int i = 0; i < entry_count; i++) {
-	  if(!entry.is_short_map(i)) {
-	    TypeArray longmap = entry.get_long_map(i);
+          if(!entry.is_short_map(i)) {
+            TypeArray longmap = entry.get_long_map(i);
             SETUP_ERROR_CHECKER_ARG;
             int skip = writer()->skip_words_of(&longmap JVM_NO_CHECK);
             GUARANTEE(!CURRENT_HAS_PENDING_EXCEPTION, "sanity");
-	    count(mc_longmaps, longmap.object_size() - skip* sizeof(int));
-	  }
-	}
+            count(mc_longmaps, longmap.object_size() - skip* sizeof(int));
+          }
+        }
       }
       break;
 

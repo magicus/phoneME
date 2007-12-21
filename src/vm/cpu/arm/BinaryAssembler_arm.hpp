@@ -155,8 +155,7 @@ public:
     }
 
   private:
-    FastOopInStackObj __must_appear_before_fast_objects__;
-    TypeArray::Fast   _buffer;
+    CompilerIntArray* _buffer;
     BinaryAssembler*  _assembler;
     int               _saved_size;
     int               _current;

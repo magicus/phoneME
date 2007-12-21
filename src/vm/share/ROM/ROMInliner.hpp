@@ -70,7 +70,7 @@ private:
 
   // pop as much as needed
   bool pop_as_needed(Method* caller, Method* callee, 
-		     int bci_in_caller);
+                     int bci_in_caller);
 #if !USE_PRODUCT_BINARY_IMAGE_GENERATOR
   bool zero_bci_is_branch_target(Method* caller);
 #endif

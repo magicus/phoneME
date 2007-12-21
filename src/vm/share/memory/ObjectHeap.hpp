@@ -170,7 +170,20 @@ private:
 
 #if ENABLE_COMPILER
   static OopDesc* compiler_area_allocate_code (const int size JVM_TRAPS);
-  static OopDesc* compiler_area_allocate_temp (const int size JVM_TRAPS);
+  static OopDesc* compiler_area_allocate_temp (const int size JVM_TRAPS);  
+  static void compiler_area_initialize( OopDesc** start, OopDesc** end ) {
+    _compiler_area_temp_bottom = start;
+    _compiler_area_temp_top = end;
+    _compiler_area_top = end;
+  }
+  static void compiler_area_terminate( OopDesc** end ) {
+    _compiler_area_top = end;
+#ifndef PRODUCT
+    _compiler_area_temp_top = NULL;
+    _compiler_area_temp_bottom = NULL;
+#endif   
+  }
+
 #endif
 
 public:
@@ -441,10 +454,8 @@ public:
       compiler_area_top = DERIVED(OopDesc**, compiler_area_top,
                                    latest_compiled_method->object_size());
     }
-    _compiler_area_top = compiler_area_top;
+    compiler_area_terminate( compiler_area_top );
   #ifndef PRODUCT
-    _compiler_area_temp_top = NULL;
-    _compiler_area_temp_bottom = NULL;
     _saved_compiler_area_top = NULL;
   #endif
     if (VerifyGC >= 2) {

@@ -814,8 +814,8 @@ void SourceObjectWriter::put_c_function(Method *method, address addr,
         write_kvm_method_stub(method, name);
       } else {
         _declare_stream->print_cr("extern \"C\" %s %s();", 
-				  get_native_function_return_type(method),
-				  name);
+                                  get_native_function_return_type(method),
+                                  name);
       }
     }
   }
