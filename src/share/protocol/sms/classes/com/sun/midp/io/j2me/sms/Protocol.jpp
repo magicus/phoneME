@@ -961,7 +961,7 @@ System.out.println("sms.Protocol.newMessage, type = " + type);
     protected native void finalize();
     // #else
     private   native void finalize();
-    // #endif ENABLE_PROTECTED_FINALIZE
+    // #endif ENABLE_CDC
 
     /**
      * Native function to open sms connection
