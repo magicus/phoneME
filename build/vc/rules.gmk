@@ -1,4 +1,3 @@
-#   
 #
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
@@ -57,7 +56,7 @@ CC=cl.exe
 CXX=cl.exe
 RC=rc.exe
 
-LOCAL_CFLAGS_debug = -MDd -Gm -EHsc -Zi -Od -D_DEBUG -D_MBCS -D_LIB -FD -GZ -W3
+LOCAL_CFLAGS_debug = -MDd -Gm -EHsc -Zi -Od -D_DEBUG -D_MBCS -D_LIB -FD -W3
 LOCAL_CFLAGS_nodebug = -MD -EHsc -O2 -D_MBCS -D_LIB -W3
 
 ifneq ($(findstring CYGWIN, $(shell uname)), CYGWIN)
@@ -83,6 +82,12 @@ ifeq ($(TARGET_CPU),arm)
 ARFLAGS=-nologo -MACHINE:ARM
 else
 ARFLAGS=-nologo -MACHINE:X86
+ifeq ($(USE_VS2005), true)
+LOCAL_CFLAGS_$(BUILD) += /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
+LOCAL_CFLAGS_debug += -RTC1
+else
+LOCAL_CFLAGS_debug += -GZ
+endif
 endif
 
 LOCAL_CFLAGS_$(BUILD) += $(PLATFORM_FLAGS)
