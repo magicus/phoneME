@@ -44,7 +44,7 @@ SUBSYSTEM_JSR_120_NATIVE_FILES += \
 SUBSYSTEM_JSR_120_EXTRA_INCLUDES += \
     $(JSR_120_DIR)/src/cdc_share/native/inc \
 
-//JPP_DEFS             += -DENABLE_PRIVATE_FINALIZE
+JPP_DEFS             += -DENABLE_PROTECTED_FINALIZE
 
 include $(JSR_120_DIR)/build/share/common_defs.gmk
 
