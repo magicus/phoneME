@@ -127,11 +127,14 @@ extern "C" {
 
 #define JAVACALL_IMAGE_JPEG_MIME     "image/jpeg"
 #define JAVACALL_IMAGE_PNG_MIME      "image/png"
+#define JAVACALL_IMAGE_PNG_MIME      "image/png"
+#define JAVACALL_IMAGE_GIF_MIME      "image/gif"
 
 #define JAVACALL_DEVICE_TONE_MIME    "device://tone"
 #define JAVACALL_DEVICE_MIDI_MIME    "device://midi"
 #define JAVACALL_CAPTURE_VIDEO_MIME  "capture://video"
 #define JAVACALL_CAPTURE_AUDIO_MIME  "capture://audio"
+#define JAVACALL_CAPTURE_RADIO_MIME  "capture://audio"
 
 
 /**
@@ -218,7 +221,7 @@ typedef enum {
     JAVACALL_MEDIA_NCTRL_STOPTIME           = 0x02,
     /* Meta Data can be retrieved from native player */
     JAVACALL_MEDIA_NCTRL_METADATA           = 0x04,
-    /* Frame positionoing is managed by  native player */
+    /* Frame positioning is managed by  native player */
     JAVACALL_MEDIA_NCTRL_FRAME_POSITIONING  = 0x08
 } javacall_media_control_type;
 
@@ -231,22 +234,22 @@ typedef enum {
 typedef struct {
     /* Content mime type */
     javacall_media_type             mimeType;
-    /* Supported remote protocols */
+    /* bitmask of supported remote protocols */
     javacall_int32    rem_protocols;
-    /* Controls for remote protocols */
+    /* bitmask of Controls for remote protocols */
     javacall_int32    rem_protocol_ctrls;
-    /* Supported local protocols */
+    /* bitmask of supported local protocols */
     javacall_int32    local_protocols;
-    /* Controls for local protocols */
+    /* bitmask of Controls for local protocols */
     javacall_int32    local_protocol_ctrls;
-    /* Supported streaming protocols */
+    /* bitmask of supported streaming protocols */
     javacall_int32    stream_protocols;
-    /* Controls for streaming protocols */
+    /* bitmask of Controls for streaming protocols */
     javacall_int32    stream_protocol_ctrls;
 
-    /* Controls for memory protocols */
+    /* bitmask of Controls for memory protocols */
     javacall_int32    mem_protocol_ctrls;
-    /* Controls for memory_streaming protocols */
+    /* bitmask of Controls for memory_streaming protocols */
     javacall_int32    mem_stream_protocol_ctrls;
 } javacall_media_caps;
 
@@ -261,7 +264,6 @@ typedef enum {
     JAVACALL_MEDIA_RTP_STREAM_PARAMS,
 } javacall_media_extra_params_type;
 
-#define JAVACALL_MEDIA_MAX_ 
 /**
  * @enum javacall_media_extra_rtp_common_params_type
  * 
@@ -292,7 +294,7 @@ typedef enum {
 
 /**
  * struct javacall_media_extra_params
- * @brief Extra pameters for native Player
+ * @brief Extra parameters for native Player
  */
 typedef struct {
     javacall_media_extra_params_type type;
@@ -360,8 +362,8 @@ const javacall_media_caps* javacall_media_get_caps(void);
 
 /**
  * Query multimedia property. 
- * It must support most of properties descibed at JSR specification.
- * If there is no property with such name, the result is succeful and 
+ * It must support most of properties described at JSR specification.
+ * If there is no property with such name, the result is succesful and 
  *  propValue will contain NULL value.
  *
  * @param propName     property name
@@ -1390,7 +1392,7 @@ javacall_result javacall_media_start_recording(javacall_handle handle);
 /**
  * Pause the recording. this should enable a future call to javacall_media_start_recording. 
  * Another call to javacall_media_start_recording after pause has been called will result 
- * in recording the new data and concatanating it to the previously recorded data.
+ * in recording the new data and concatenating it to the previously recorded data.
  * 
  * @param handle  Handle to the library 
  * 
@@ -1531,7 +1533,7 @@ javacall_result javacall_media_close_recording(javacall_handle handle);
  * @param handle    Handle to the native player
  * @param appID     ID of the application to be foreground
  *
- * @retval JAVACALL_OK      Somthing happened
+ * @retval JAVACALL_OK      Something happened
  * @retval JAVACALL_FAIL    Nothing happened. JVM ignore this return value now.
  */
 javacall_result javacall_media_to_foreground(const javacall_handle handle,
@@ -1555,6 +1557,10 @@ javacall_result javacall_media_to_foreground(const javacall_handle handle,
  */
 javacall_result javacall_media_to_background(const javacall_handle handle,
                                              const javacall_app_id appID);
+
+/** @} */ 
+
+/**********************************************************************************/
 
 /** @} */ 
 
