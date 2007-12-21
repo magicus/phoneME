@@ -24,8 +24,6 @@
 
 SUBSYSTEM_RULES_FILE     = subsystem_rules.gmk
 
-.PHONY: javacall_lib
-
 ifneq ($(CVM_STATICLINK_LIBS), true)
 JSR_NATIVE_LIBS = "$(5)"
 else
@@ -149,12 +147,6 @@ define readClassList
 	$(foreach class,$(subst .,/,$(shell cat $(1) | grep -v "\#")),$(class).class)
 endef
 
-ifeq ($(CVM_INCLUDE_JAVACALL), true)
-javacall_lib: $(JAVACALL_LIBRARY)
-else
-javacall_lib:
-endif
-
 ifeq ($(CVM_DUAL_STACK), true)
 #
 # Run JavaAPILister to generate the list of classes that are 
@@ -231,4 +223,10 @@ ifeq ($(wildcard $(JSR_280_MAKE_FILE)),)
 $(error JSR_280_DIR must point to a directory containing JSR 280 sources)
 endif
 include $(JSR_280_MAKE_FILE)
+endif
+
+ifeq ($(CVM_INCLUDE_JAVACALL), true)
+ifneq ($(JSROP_JAVACALL_DEPENDENTS),)
+$(JSROP_JAVACALL_DEPENDENTS): $(JAVACALL_LIBRARY)
+endif
 endif
