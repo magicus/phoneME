@@ -167,7 +167,7 @@ clean::
 # Include JSR 120
 ifeq ($(USE_JSR_120), true)
 export JSR_120_DIR ?= $(COMPONENTS_DIR)/jsr120
-JSR_120_RULES_FILE = $(JSR_120_DIR)/build/$(SUBSYSTEM_RULES_FILE)
+JSR_120_RULES_FILE = $(JSR_120_DIR)/build/cdc_share/$(SUBSYSTEM_RULES_FILE)
 ifeq ($(wildcard $(JSR_120_RULES_FILE)),)
 $(error JSR_120_DIR must point to a directory containing JSR 120 sources)
 endif

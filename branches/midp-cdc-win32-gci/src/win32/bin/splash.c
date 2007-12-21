@@ -110,7 +110,7 @@ BOOL myInit()
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
         NULL, NULL, hInst, NULL);
     g_hWnd = hWnd;
-    g_hB = LoadBitmap(hInst, (LPCTSTR)IDB_BITMAP1);
+    g_hB = LoadBitmap(hInst, (LPCTSTR)IDB_SPLASH);
     SHFullScreen(hWnd, SHFS_HIDETASKBAR | SHFS_HIDESTARTICON | SHFS_HIDESIPBUTTON);
     ShowWindow(hWnd, SW_SHOW);
     UpdateWindow(hWnd);
