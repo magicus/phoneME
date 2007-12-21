@@ -161,7 +161,7 @@ endif
 # Include JSR 120
 ifeq ($(USE_JSR_120), true)
 export JSR_120_DIR ?= $(COMPONENTS_DIR)/jsr120
-JSR_120_DEFS_FILE = $(JSR_120_DIR)/build/$(SUBSYSTEM_DEFS_FILE)
+JSR_120_DEFS_FILE = $(JSR_120_DIR)/build/cdc_share/$(SUBSYSTEM_DEFS_FILE)
 ifeq ($(wildcard $(JSR_120_DEFS_FILE)),)
 $(error JSR_120_DIR must point to a directory containing JSR 120 sources)
 endif
@@ -413,7 +413,7 @@ endif
 ifneq ($(CVM_PRELOAD_LIB),true)
 # Not romized, so add JSROP_JARS to the bootclasspath
 ifneq ($(CVM_CREATE_RTJAR), true)
-CVM_JARFILES += $(patsubst $(JSROP_JAR_DIR)/%,$(comma) "%",$(JSROP_JARS))
+CVM_JARFILES += $(patsubst $(JSROP_JAR_DIR)/%,"%"$(comma),$(JSROP_JARS))
 else
 CVM_RTJARS_LIST += $(JSROP_JARS)
 endif

@@ -2048,7 +2048,7 @@ CVMinitPathValues(void *propsPtr, const char *basePath,
     int i;
     size_t size, len, libPathLen;
     CVMProperties *props = (CVMProperties *)propsPtr;
-    static const char *const jarNames[] = { CVM_JARFILES, NULL };
+    static const char *const jarNames[] = { CVM_JARFILES NULL };
     char *localBasePath;
 
     /* Sanity check */
