@@ -957,7 +957,11 @@ System.out.println("sms.Protocol.newMessage, type = " + type);
     /**
      * Native finalizer
      */
+    // #ifdef ENABLE_PROTECTED_FINALIZE
     protected native void finalize();
+    // #else
+    private   native void finalize();
+    // #endif ENABLE_PROTECTED_FINALIZE
 
     /**
      * Native function to open sms connection
