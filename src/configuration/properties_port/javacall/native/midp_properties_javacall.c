@@ -37,24 +37,6 @@
 #include <midp_logging.h>
 #include <javacall_properties.h>
 
-
-
-/** Configuration property name, as defined by the CLDC specification */
-#define DEFAULT_CONFIGURATION "microedition.configuration"
-/** Default configuration, as required by the MIDP specification */
-#define DEFAULT_CLDC "CLDC-1.0"
-
-/** Character encoding property name, as defined by the MIDP specification */
-#define ENCODING_PROP_NAME "microedition.encoding"
-/** Default character encoding, as required by the MIDP specification */
-#define DEFAULT_CHARACTER_ENCODING "ISO-8859-1"
-
-/** Profile property name, as defined by the MIDP specification */
-#define PROFILES_PROP_NAME "microedition.profiles"
-/** Default profile, as required by the MIDP specification */
-#define DEFAULT_PROFILE "MIDP-2.1"
-
-
 /**
  * Initializes the configuration sub-system.
  *

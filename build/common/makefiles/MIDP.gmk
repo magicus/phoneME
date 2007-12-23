@@ -223,6 +223,8 @@ ifeq ($(TARGET_VM), cdc_vm)
    endif
 endif
 
+MIDP_DEPS += copy_configuration_file
+
 # All object files
 #
 # Note: we need explicit rules for all generated C source files because they are
