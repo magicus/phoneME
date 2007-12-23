@@ -69,7 +69,7 @@ javacall_result javacall_get_property(const char* key,
  * @param key The key to set
  * @param value The value to set <tt>key</tt> to
  * @param replace_if_exist The value to decide if it's needed to replace
- * existing key value if already defined <tt>replace_if_exist</tt>.
+ * the existing value corresponding to the key if already defined
  * @param type The property type 
  * 
  * @return Upon success <tt>JAVACALL_OK</tt>, otherwise

@@ -31,6 +31,8 @@ ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
 endif
 
+PROPERTIES_SUFFIX=.obj
+
 include $(JAVACALL_DIR)/build/common.gmk
 
 TEMP=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
@@ -43,6 +45,8 @@ endif # ifneq ($(FILTER_OBJECTS)x,x)
 ifneq ($(UTILITIES)x, x)
 UTILITY_OBJECTS=$(addsuffix .obj,$(UTILITIES))
 endif
+
+PROPERTY_OBJECTS=$(addsuffix .obj,$(PROPERTY_FILES))
 
 local_vc: $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib
 

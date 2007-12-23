@@ -90,10 +90,10 @@ static void configdb_add_entry(
                               char * val) {
     char longkey[2*MAX_STR_LENGTH+1];
 
-    if (NULL==d){
+    if (NULL==d) {
         return;
     }
-        
+
 /* Make a key as section:keyword */
     if (key!=NULL) {
         sprintf(longkey, "%s:%s", sec, key);
@@ -102,7 +102,7 @@ static void configdb_add_entry(
     }
 
 /* Add (key,val) to string_db */
-    string_db_set(d, longkey, val);
+    javacall_string_db_set(d, longkey, val);
 }
 
 /*---------------------------------------------------------------------------
@@ -112,10 +112,10 @@ static void configdb_add_entry(
 /**
  * Get the number of sections in the database
  * 
- * @param d database object created by calling configdb_load
+ * @param config_handle database object created by calling javacall_configdb_load
  * @return number of sections in the database or -1 in case of error
  */
-int configdb_get_num_of_sections(javacall_handle config_handle) {
+int javacall_configdb_get_num_of_sections(javacall_handle config_handle) {
     int i ;
     int nsec ;
     string_db *d = (string_db *)config_handle;
@@ -136,12 +136,12 @@ int configdb_get_num_of_sections(javacall_handle config_handle) {
 /**
  * Get the name of the n'th section
  * 
- * @param d database object created by calling configdb_load
+ * @param config_handle database object created by calling javacall_configdb_load
  * @param n section number
  * @return the name of the n'th section or NULL in case of error
  *          the returned string was STATICALLY ALLOCATED. DO NOT FREE IT!!
  */
-char* configdb_get_section_name(javacall_handle config_handle, int n) {
+char* javacall_configdb_get_section_name(javacall_handle config_handle, int n) {
     int i;
     int foundsec;
     string_db *d = (string_db *)config_handle;
@@ -173,13 +173,13 @@ char* configdb_get_section_name(javacall_handle config_handle, int n) {
  * Dump the content of the parameter database to an open file pointer
  * The output format is pairs of [Key]=[Value]
  * 
- * @param config_handle    database object created by calling configdb_load
+ * @param config_handle    database object created by calling javacall_configdb_load
  * @param unicodeFileName  output file name
  * @param fileNameLen      file name length
  */
-void configdb_dump(javacall_handle config_handle, 
-                   unsigned short* unicodeFileName, 
-                   int fileNameLen) {
+void javacall_configdb_dump(javacall_handle config_handle, 
+                            javacall_utf16* unicodeFileName, 
+                            int fileNameLen) {
 
     int     i;
     string_db *d = (string_db *)config_handle;
@@ -196,7 +196,7 @@ void configdb_dump(javacall_handle config_handle,
                              JAVACALL_FILE_O_RDWR | JAVACALL_FILE_O_CREAT,
                              &file_handle);
     if (res != JAVACALL_OK) {
-        javacall_print("configdb_dump(): ERROR - Can't open the dump file!\n");
+        javacall_print("javacall_configdb_dump(): ERROR - Can't open the dump file!\n");
         return;
     }
 
@@ -219,13 +219,13 @@ void configdb_dump(javacall_handle config_handle,
  * Dump the content of the parameter database to an open file pointer
  * The output format is as a standard INI file
  * 
- * @param config_handle    database object created by calling configdb_load
+ * @param config_handle    database object created by calling javacall_configdb_load
  * @param unicodeFileName  output file name
  * @param fileNameLen      file name length
  */
-void configdb_dump_ini(javacall_handle config_handle, 
-                       unsigned short* unicodeFileName, 
-                       int fileNameLen) {
+void javacall_configdb_dump_ini(javacall_handle config_handle, 
+                                javacall_utf16* unicodeFileName, 
+                                int fileNameLen) {
     int     i, j;
     char    keym[MAX_STR_LENGTH+1];
     int     nsec;
@@ -246,11 +246,11 @@ void configdb_dump_ini(javacall_handle config_handle,
                              JAVACALL_FILE_O_RDWR | JAVACALL_FILE_O_CREAT,
                              &file_handle);
     if (res != JAVACALL_OK) {
-        javacall_print("configdb_dump_ini(): ERROR - Can't open the dump file!\n");
+        javacall_print("javacall_configdb_dump_ini(): ERROR - Can't open the dump file!\n");
         return;
     }
 
-    nsec = configdb_get_num_of_sections(d);
+    nsec = javacall_configdb_get_num_of_sections(d);
     if (nsec < 1) {
         /* No section in file: dump all keys as they are */
         for (i = 0; i < d->size; i++) {
@@ -263,14 +263,14 @@ void configdb_dump_ini(javacall_handle config_handle,
             } else {
                 sprintf(l, "[%s]=UNDEF\n", d->key[i]);
             }
-            
+
             javacall_file_write(file_handle, (unsigned char*)l, strlen(l)); 
         }
         javacall_file_close(file_handle);
         return ;
     }
     for (i=0 ; i<nsec ; i++) {
-        secname = configdb_get_section_name(d, i) ;
+        secname = javacall_configdb_get_section_name(d, i) ;
         seclen  = (int)strlen(secname);
         sprintf(l, "\n[%s]\n", secname);
         javacall_file_write(file_handle, (unsigned char*)l, strlen(l)); 
@@ -297,15 +297,15 @@ void configdb_dump_ini(javacall_handle config_handle,
 /**
  * Get a the key value as a string
  * 
- * @param config_handle   database object created by calling configdb_load
+ * @param config_handle   database object created by calling javacall_configdb_load
  * @param key             the key to get its value. the key is given as INI "section:key"
  * @param def             default parameter to return if key not found
  * @param result          where to store the result string
  * @return  CONFIGDB_FAIL   bad arguments are supplied
  *          CONFIGDB_OK     otherwise
  */
-configdb_result configdb_getstring(javacall_handle config_handle, char * key, 
-                                   char * def, char** result) {
+configdb_result javacall_configdb_getstring(javacall_handle config_handle, char * key, 
+                                            char * def, char** result) {
     char* lc_key;
     string_db *d = (string_db *)config_handle;
 
@@ -315,7 +315,7 @@ configdb_result configdb_getstring(javacall_handle config_handle, char * key,
     }
 
     lc_key = key;
-    *result = string_db_getstr(d, lc_key, def);    
+    *result = javacall_string_db_getstr(d, lc_key, def);    
     return CONFIGDB_OK;
 }
 
@@ -324,16 +324,16 @@ configdb_result configdb_getstring(javacall_handle config_handle, char * key,
 /**
  * Find a key in the database
  * 
- * @param d     database object created by calling configdb_load
- * @param key   the key to find
+ * @param config_handle     database object created by calling javacall_configdb_load
+ * @param key               the key to find
  * @return      CONFIGDB_FOUND if the key exists or CONFIGDB_NOT_FOUND
  *  if it does not exist
  */
-configdb_result configdb_find_key(javacall_handle config_handle, char * key) {
+configdb_result javacall_configdb_find_key(javacall_handle config_handle, char * key) {
     char* str;
     string_db *d = (string_db *)config_handle;
 
-    if (CONFIGDB_OK == configdb_getstring(d, key, INI_INVALID_KEY, &str)) {
+    if (CONFIGDB_OK == javacall_configdb_getstring(d, key, INI_INVALID_KEY, &str)) {
         return CONFIGDB_FOUND;
     } else {
         return CONFIGDB_NOT_FOUND;
@@ -345,32 +345,32 @@ configdb_result configdb_find_key(javacall_handle config_handle, char * key) {
 /**
  * Set new value for key. If key is not in the database, it will be added.
  * 
- * @param config_handle     database object created by calling configdb_load
+ * @param config_handle     database object created by calling javacall_configdb_load
  * @param key   the key to modify. the key is given as INI "section:key"
  * @param val   the new value for key
  * @return      CONFIGDB_OK in case of success,
  *              CONFIGDB_FAIL otherwise
  */
-configdb_result configdb_setstr(javacall_handle config_handle, char * key, char * val) {
+configdb_result javacall_configdb_setstr(javacall_handle config_handle, char * key, char * val) {
     string_db *d = (string_db *)config_handle;
 
     if (key == NULL || val == NULL) {
         return CONFIGDB_FAIL;
     }
 
-    string_db_set(d, key, val);
+    javacall_string_db_set(d, key, val);
     return CONFIGDB_OK;
 }
 
 /**
  * Delete a key from the database
  * 
- * @param config_handle     database object created by calling configdb_load
+ * @param config_handle     database object created by calling javacall_configdb_load
  * @param key   the key to delete
  */
-void configdb_unset(javacall_handle config_handle, char * key) {
+void javacall_configdb_unset(javacall_handle config_handle, char * key) {
     string_db *d = (string_db *)config_handle;
-    string_db_unset(d, key);
+    javacall_string_db_unset(d, key);
 }
 
 
@@ -389,7 +389,7 @@ javacall_handle configdb_load_no_fs () {
     int i, j;
     for (i = 0; javacall_static_properties_sections[i] != NULL; i++) {
         //add section
-        db = string_db_new(0);
+        db = javacall_string_db_new(0);
         if (NULL==db) {
             return NULL;
         }
@@ -405,16 +405,16 @@ javacall_handle configdb_load_no_fs () {
 }
 #endif	//USE_PROPERTIES_FROM_FS
 
-javacall_handle configdb_load_from_fs(unsigned short* unicodeFileName, int fileNameLen) {
-    string_db  *   d ;
-    char        line[MAX_LINE_LENGTH+1];
-    char        sec[MAX_STR_LENGTH+1];
-    char        key[MAX_STR_LENGTH+1];
-    char        val[MAX_STR_LENGTH+1];
-    char    *   where ;
-    int         lineno ;
-    javacall_handle    file_handle;
-    javacall_result    res;
+javacall_handle configdb_load_from_fs(javacall_utf16* unicodeFileName, int fileNameLen) {
+    string_db*   d ;
+    char    line[MAX_LINE_LENGTH+1];
+    char    sec[MAX_STR_LENGTH+1];
+    char    key[MAX_STR_LENGTH+1];
+    char    val[MAX_STR_LENGTH+1];
+    char*   where ;     
+    int lineno ;
+    javacall_handle file_handle;
+    javacall_result res;
 
 
     res = javacall_file_open(unicodeFileName,
@@ -422,7 +422,7 @@ javacall_handle configdb_load_from_fs(unsigned short* unicodeFileName, int fileN
                              JAVACALL_FILE_O_RDWR | JAVACALL_FILE_O_CREAT,
                              &file_handle);
     if (res != JAVACALL_OK) {
-        javacall_print("configdb_load(): ERROR - Can't open the dump file!\n");
+        javacall_print("javacall_configdb_load(): ERROR - Can't open the dump file!\n");
         return NULL;
     }
 
@@ -431,7 +431,7 @@ javacall_handle configdb_load_from_fs(unsigned short* unicodeFileName, int fileN
 /*
  * Initialize a new string_db entry
  */
-    d = string_db_new(0);
+    d = javacall_string_db_new(0);
     if (NULL==d)
         return NULL;
     lineno = 0 ;
@@ -466,7 +466,7 @@ javacall_handle configdb_load_from_fs(unsigned short* unicodeFileName, int fileN
     return(javacall_handle)d ;
 }
 
-javacall_handle configdb_load(unsigned short* unicodeFileName, int fileNameLen) {
+javacall_handle javacall_configdb_load(javacall_utf16* unicodeFileName, int fileNameLen) {
 #ifdef USE_PROPERTIES_FROM_FS
     return configdb_load_from_fs(unicodeFileName, fileNameLen);
 #else
@@ -478,10 +478,10 @@ javacall_handle configdb_load(unsigned short* unicodeFileName, int fileNameLen) 
 /**
  * Free a database
  * 
- * @param   config_handle database object created in a call to configdb_load
+ * @param   config_handle database object created in a call to javacall_configdb_load
  */
-void configdb_free(javacall_handle config_handle) {
+void javacall_configdb_free(javacall_handle config_handle) {
     string_db *d = (string_db *)config_handle;
-    string_db_del(d);
+    javacall_string_db_del(d);
 }
 

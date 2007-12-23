@@ -50,7 +50,7 @@ javacall_result javacall_initialize_configurations(void) {
     int file_name_len = sizeof(property_file_name)/sizeof(unsigned short);
     property_was_updated = 0;
 
-    handle = configdb_load(property_file_name, file_name_len);
+    handle = javacall_configdb_load(property_file_name, file_name_len);
     if (handle == NULL) {
         return JAVACALL_FAIL;
     }
@@ -64,10 +64,10 @@ void javacall_finalize_configurations(void) {
     int file_name_len = sizeof(property_file_name)/sizeof(unsigned short);
     if (property_was_updated != 0) {
 #ifdef USE_PROPERTIES_FROM_FS
-        configdb_dump_ini(handle, property_file_name, file_name_len);
+        javacall_configdb_dump_ini(handle, property_file_name, file_name_len);
 #endif //USE_PROPERTIES_FROM_FS
     }
-    configdb_free(handle);
+    javacall_configdb_free(handle);
     handle = NULL; 
 }
 
@@ -99,7 +99,7 @@ javacall_result javacall_get_property(const char* key,
         return JAVACALL_FAIL;       
     }
 
-    if (CONFIGDB_OK == configdb_getstring(handle, joined_key, NULL, result)) {
+    if (CONFIGDB_OK == javacall_configdb_getstring(handle, joined_key, NULL, result)) {
         javacall_free(joined_key);
         return JAVACALL_OK; 
     } else {
@@ -117,7 +117,7 @@ javacall_result javacall_get_property(const char* key,
  * @param key The key to set
  * @param value The value to set <tt>key</tt> to
  * @param replace_if_exist The value to decide if it's needed to replace
- * existing key value if already defined <tt>replace_if_exist</tt>.
+ * the existing value corresponding to the key if already defined
  * @param type The property type 
  * 
  * @return Upon success <tt>JAVACALL_OK</tt>, otherwise
@@ -127,7 +127,6 @@ javacall_result javacall_set_property(const char* key,
                                       const char* value, 
                                       int replace_if_exist,
                                       javacall_property_type type) {
-    configdb_result res;
     char* joined_key = NULL;
 
     if (JAVACALL_APPLICATION_PROPERTY == type) {
@@ -141,16 +140,16 @@ javacall_result javacall_set_property(const char* key,
     }
 
     if (replace_if_exist == 0) { /* don't replace existing value */
-        if (CONFIGDB_FOUND == configdb_find_key(handle,joined_key)) {
+        if (CONFIGDB_FOUND == javacall_configdb_find_key(handle,joined_key)) {
             /* key exist, don't set */
             javacall_free(joined_key);
         } else {/* key doesn't exist, set it */
-            res = configdb_setstr(handle, joined_key, (char *)value);
+            javacall_configdb_setstr(handle, joined_key, (char *)value);
             property_was_updated=1;
             javacall_free(joined_key);
         }
     } else { /* replace existing value */
-        res = configdb_setstr(handle, joined_key, (char *)value);
+        javacall_configdb_setstr(handle, joined_key, (char *)value);
         javacall_free(joined_key);
         property_was_updated=1;
     }
