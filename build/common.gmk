@@ -64,7 +64,6 @@ PROPERTY_FILES = javacall_properties \
 		 javautil_db \
 		 javacall_static_properties
 		 
-PROPERTY_OBJECTS=$(addsuffix .obj,$(PROPERTY_FILES))
 
 # In case using of the javacall functions wrappers, set the USE_JAVACALL_WRAPPERS variable
 ifeq ($(USE_JAVACALL_WRAPPERS),true)

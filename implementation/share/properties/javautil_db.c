@@ -83,7 +83,7 @@ static void * mem_double(void * ptr, int size) {
  * @param key the input key value
  * @return the HASH value of the provided key
  */
-javacall_int32 string_db_hash(char * key) {
+javacall_int32 javacall_string_db_hash(char * key) {
     int         len ;
     unsigned    hash ;
     int         i ;
@@ -94,9 +94,6 @@ javacall_int32 string_db_hash(char * key) {
         hash += (hash<<10);
         hash ^= (hash>>6) ;
     }
-    hash += (hash <<3);
-    hash ^= (hash >>11);
-    hash += (hash <<15);
     return hash ;
 }
 
@@ -104,10 +101,11 @@ javacall_int32 string_db_hash(char * key) {
 /**
  * Creates a new database object
  * 
- * @param size the size of the database (use MIN_NUMBER_OF_DB_ENTRIES for default size)
- * @return new database object
+ * @param 	size The size of the database. If the size is smaller than MIN_NUMBER_OF_DB_ENTRIES,
+ * MIN_NUMBER_OF_DB_ENTRIES will be used instead.
+ * @return 	new database object
  */
-string_db * string_db_new(int size) {
+string_db * javacall_string_db_new(int size) {
     string_db  *d;
 
     /* If no size was specified, allocate space for MIN_NUMBER_OF_DB_ENTRIES */
@@ -155,9 +153,9 @@ string_db * string_db_new(int size) {
 /**
  * Deletes a database object
  * 
- * @param d the database object created by calling string_db_new
+ * @param d the database object created by calling javacall_string_db_new
  */
-void string_db_del(string_db * d) {
+void javacall_string_db_del(string_db * d) {
     int     i ;
 
     if (d==NULL) return ;
@@ -178,12 +176,12 @@ void string_db_del(string_db * d) {
 /**
  * Get the value of the provided key as string. Id key not found, return def
  * 
- * @param d     database object allocated using string_db_new
+ * @param d     database object allocated using javacall_string_db_new
  * @param key   the key to search in the database
  * @param def   if key not found in the database, return def
- * @return the value of the key (or def if key not found)
+ * @return 		the value corresponding to the key (or def if key not found)
  */
-char* string_db_getstr(string_db* d, char* key, char* def) {
+char* javacall_string_db_getstr(string_db* d, char* key, char* def) {
     unsigned    hash ;
     int         i ;
 
@@ -191,7 +189,7 @@ char* string_db_getstr(string_db* d, char* key, char* def) {
         return def;
     }
 
-    hash = string_db_hash(key);
+    hash = javacall_string_db_hash(key);
 
     for (i = 0; i < d->size; i++) {
         if (d->key == NULL) {
@@ -212,15 +210,15 @@ char* string_db_getstr(string_db* d, char* key, char* def) {
 /**
  * Get the value of the provided key as char. Id key not found, return def
  * 
- * @param d     database object allocated using string_db_new
+ * @param d     database object allocated using javacall_string_db_new
  * @param key   the key to search in the database
  * @param def   if key not found in the database, return def
- * @return the value of the key (or def if key not found)
+ * @return 		the value corresponding to the key
  */
-char string_db_getchar(string_db * d, char * key, char def) {
+char javacall_string_db_getchar(string_db * d, char * key, char def) {
     char * v ;
 
-    if ((v=string_db_getstr(d,key,DB_INVALID_KEY))==DB_INVALID_KEY) {
+    if ((v=javacall_string_db_getstr(d,key,DB_INVALID_KEY))==DB_INVALID_KEY) {
         return def ;
     } else {
         return v[0] ;
@@ -228,51 +226,15 @@ char string_db_getchar(string_db * d, char * key, char def) {
 }
 
 
-/**
- * Get the value of the provided key as int. Id key not found, return def
- * 
- * @param d     database object allocated using string_db_new
- * @param key   the key to search in the database
- * @param def   if key not found in the database, return def
- * @return the value of the key (or def if key not found)
- */
-int string_db_getint(string_db * d, char * key, int def) {
-    char * v ;
-
-    if ((v=string_db_getstr(d,key,DB_INVALID_KEY))==DB_INVALID_KEY) {
-        return def ;
-    } else {
-        return atoi(v);
-    }
-}
-
-/**
- * Get the value of the provided key as double. Id key not found, return def
- * 
- * @param d     database object allocated using string_db_new
- * @param key   the key to search in the database
- * @param def   if key not found in the database, return def
- * @return the value of the key (or def if key not found)
- */
-double string_db_getdouble(string_db * d, char * key, double def) {
-    char * v ;
-
-    if ((v=string_db_getstr(d,key,DB_INVALID_KEY))==DB_INVALID_KEY) {
-        return def ;
-    } else {
-        return atof(v);
-    }
-}
-
 
 /**
  * Set new value for key as string. 
  * 
- * @param d     database object allocated using string_db_new
+ * @param d     database object allocated using javacall_string_db_new
  * @param key   the key to modify/add to the database
- * @param val   the value of the key to set
+ * @param val   the property value to set
  */
-void string_db_set(string_db * d, char * key, char * val) {
+void javacall_string_db_set(string_db * d, char * key, char * val) {
     int         i;
     unsigned    hash;
 
@@ -281,7 +243,7 @@ void string_db_set(string_db * d, char * key, char * val) {
     }
 
     /* Compute hash for this key */
-    hash = string_db_hash(key);
+    hash = javacall_string_db_hash(key);
     /* Find if value is already in database */
     if (d->n > 0) {
         for (i = 0; i < d->size; i++) {
@@ -318,24 +280,22 @@ void string_db_set(string_db * d, char * key, char * val) {
     for (i = 0; i < d->size; i++) {
         if (d->key[i] == NULL) {
             /* Add key here */
-            break ;
+            d->key[i]  = javautil_string_duplicate(key);
+            d->val[i]  = val ? javautil_string_duplicate(val) : NULL;
+            d->hash[i] = hash;
+            d->n++;
+            return;
         }
     }
-    /* Copy key */
-    d->key[i]  = javautil_string_duplicate(key);
-    d->val[i]  = val ? javautil_string_duplicate(val) : NULL;
-    d->hash[i] = hash;
-    d->n++;
-    return;
 }
 
 /**
  * Delete a key from the database
  * 
- * @param d     database object allocated using string_db_new
+ * @param d     database object allocated using javacall_string_db_new
  * @param key   the key to delete
  */
-void string_db_unset(string_db * d, char * key) {
+void javacall_string_db_unset(string_db * d, char * key) {
     unsigned    hash;
     int         i;
 
@@ -343,7 +303,7 @@ void string_db_unset(string_db * d, char * key) {
         /*return upon wrong arguments or if no entries in db*/
         return;
     }
-    hash = string_db_hash(key);
+    hash = javacall_string_db_hash(key);
     for (i = 0; i < d->size; i++) {
         if (d->key[i] == NULL){
             continue;
@@ -361,6 +321,7 @@ void string_db_unset(string_db * d, char * key) {
                     }
                     d->hash[i] = 0;
                     d->n--;
+                    return;
             }
         }
     }
@@ -368,56 +329,22 @@ void string_db_unset(string_db * d, char * key) {
 
 
 /**
- * Set new value for key as int. 
- * 
- * @param d     database object allocated using string_db_new
- * @param key   the key to modify/add to the database
- * @param val   the value of the key to set
- */
-void string_db_setint(string_db * d, char * key, int val) {
-    char    sval[MAX_NUM_SIZE];
-    sprintf(sval, "%d", val);
-    string_db_set(d, key, sval);
-}
-
-
-/**
- * Set new value for key as double. 
- * 
- * @param d     database object allocated using string_db_new
- * @param key   the key to modify/add to the database
- * @param val   the value of the key to set
- */
-void string_db_setdouble(string_db * d, char * key, double val) {
-    char    sval[MAX_NUM_SIZE];
-    sprintf(sval, "%g", val);
-    string_db_set(d, key, sval);
-}
-
-
-
-/**
  * Dump the content of the database to a file
  * 
- * @param d                database object allocated using string_db_new
+ * @param d                database object allocated using javacall_string_db_new
  * @param unicodeFileName  output file name
  * @param fileNameLen      file name length
  * @return  JAVACALL_OK in case of success
  *          JAVACALL_FAIL in case of some error
  */
-javacall_result string_db_dump(string_db* d, unsigned short* unicodeFileName, int fileNameLen) {
+javacall_result javacall_string_db_dump(string_db* d, const javacall_utf16* unicodeFileName, int fileNameLen) {
     int             i;
     javacall_handle file_handle;
     char            l[MAX_STR_LEN];
     javacall_result res;
 
     if (d == NULL || unicodeFileName == NULL || fileNameLen <= 0) {
-        return -1;
-    }
-
-    if (d->n < 1) {
-        javacall_file_delete(unicodeFileName, fileNameLen);
-        return - 1;
+        return JAVACALL_FAIL;
     }
 
     res = javacall_file_open(unicodeFileName, 
@@ -425,8 +352,8 @@ javacall_result string_db_dump(string_db* d, unsigned short* unicodeFileName, in
                              JAVACALL_FILE_O_WRONLY | JAVACALL_FILE_O_CREAT,
                              &file_handle);
     if (res != JAVACALL_OK) {
-        javacall_print("string_db_dump(): ERROR - Can't open the dump file!\n");
-        return -1;
+        javacall_print("javacall_string_db_dump(): ERROR - Can't open the dump file!\n");
+        return JAVACALL_FAIL;
     }
 
     for (i=0 ; i<d->size ; i++) {
@@ -439,7 +366,7 @@ javacall_result string_db_dump(string_db* d, unsigned short* unicodeFileName, in
     }
     javacall_file_close(file_handle);
 
-    return 0;
+    return JAVACALL_OK;
 }
 
 #ifdef __cplusplus

@@ -138,20 +138,6 @@ int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* strin
 char* javautil_string_strcat(const char* prefix, const char* suffix);
 
 /**
- * Convert a string to lower-case
- * 
- * @param s string to be converted to lower-case
- */
-void javautil_string_to_lower_case(char * s);
-
-/**
- * Convert a string to upper-case
- * 
- * @param s string to be converted to upper-case
- */
-void javautil_string_to_upper_case(char * s);
-
-/**
  * Skip leading blanks
  * 
  * @param s input string

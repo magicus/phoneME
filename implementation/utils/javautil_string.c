@@ -39,13 +39,6 @@ extern "C" {
 #include "javautil_string.h"
 #include "javacall_memory.h"
 
-#define MAX_STR_LEN	1024
-
-#ifndef min
-#define min(x,y)        (x > y ? y : x)
-#endif
-
-
 /**
  * looks for first occurrence of <param>c</param> within <param>str</param>
  *
@@ -303,13 +296,13 @@ int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* strin
 }
 
 /**
- * Returns a new string that is a concantenation of two input strings.
+ * Returns a new string that is a concatenation of two input strings.
  * Memory allocated within this function by javacall_malloc() and should be freed
  * by javacall_free()
  *
  * @param prefix the beginning/prefix string
  * @param suffix the ending/suffix string
- * @return concantenated string on success, NULL otherwise.
+ * @return concatenated string on success, NULL otherwise.
  */
 char* javautil_string_strcat(const char* prefix, const char* suffix) {
     char *joined_string = NULL;
@@ -335,40 +328,6 @@ char* javautil_string_strcat(const char* prefix, const char* suffix) {
 
     return joined_string;
 }
-
-/**
- * Convert a string to lower-case
- * 
- * @param s string to be converted to lower-case
- */
-void javautil_string_to_lower_case(char* s) {
-    if (s == NULL) {
-        return;
-    }
-
-    while (*s != '\0') {
-        *s = tolower(*s);
-        s++;
-    }    
-}
-
-/**
- * Convert a string to upper-case
- * 
- * @param s string to be converted to upper-case
- */
-void javautil_string_to_upper_case(char* s) {
-
-    if (s == NULL) {
-        return;
-    }
-
-    while (*s != '\0') {
-        *s = toupper(*s);
-        s++;
-    }    
-}
-
 
 /**
  * Skip leading blanks
