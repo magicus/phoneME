@@ -23,15 +23,11 @@
  * information or have any questions.
  */
 
-/**
- * @file
- *
- * Interface for UTF8 string handling.
- */
 
 #ifndef _JAVAUTIL_STRING_H_
 #define _JAVAUTIL_STRING_H_
 
+#include <string.h>
 #include "javacall_defs.h"
 
 #define COLON    0x3A    /* Colon ':' - Unicode character 0x3A */
@@ -47,8 +43,8 @@
  * @param str string to search in
  * @param c character to look for
  * @param index index of the first occurence of <param>c</param>
- * @return <code>JAVACALL_OK</code> on success,
- *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
+ * @return JAVACALL_OK on success,
+ *         JAVACALL_FAIL or any other negative value otherwise.
  */
 javacall_result javautil_string_index_of(char* str, char c, /* OUT */ int* index);
 
@@ -58,8 +54,8 @@ javacall_result javautil_string_index_of(char* str, char c, /* OUT */ int* index
  * @param str string to search in
  * @param c character to look for
  * @param index index of the first occurence of <param>c</param>
- * @return <code>JAVACALL_OK</code> on success,
- *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
+ * @return JAVACALL_OK on success,
+ *         JAVACALL_FAIL or any other negative value otherwise.
  */
 javacall_result javautil_string_last_index_of(char* str, char c,
                                               /* OUT */ int* index);
@@ -70,8 +66,8 @@ javacall_result javautil_string_last_index_of(char* str, char c,
  * @param str1 first string
  * @param str2 second string
  *
- * @return <code>JAVACALL_TRUE</code> if equal,
- *         <code>JAVACALL_FALSE</code> otherwise.
+ * @return JAVACALL_TRUE if equal,
+ *         JAVACALL_FALSE otherwise.
  */
 javacall_bool javautil_string_equals(char* str1, char* str2);
 
@@ -85,8 +81,8 @@ javacall_bool javautil_string_equals(char* str1, char* str2);
  * @param begin the beginning index, inclusive.
  * @param end the ending index, exclusive.
  * @param dest the output string, will contain the specified substring
- * @return <code>JAVACALL_OK</code> on success,
- *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
+ * @return JAVACALL_OK on success,
+ *         JAVACALL_FAIL or any other negative value otherwise.
  */
 javacall_result javautil_string_substring(char* src, int begin, int end,
                                           /*OUT*/ char** dest);
@@ -95,8 +91,8 @@ javacall_result javautil_string_substring(char* src, int begin, int end,
  * Remove white spaces from the end of a string
  *
  * @param str string to trim
- * @return <code>JAVACALL_OK</code> on success,
- *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
+ * @return JAVACALL_OK on success,
+ *         JAVACALL_FAIL or any other negative value otherwise.
  */
 javacall_result javautil_string_trim(char* str);
 
@@ -105,8 +101,8 @@ javacall_result javautil_string_trim(char* str);
  *
  * @param str string representation of integer
  * @param number the integer value of str
- * @return <code>JAVACALL_OK</code> on success,
- *         <code>JAVACALL_FAIL</code> or any other negative value otherwise.
+ * @return JAVACALL_OK on success,
+ *         JAVACALL_FAIL or any other negative value otherwise.
  */
 javacall_result javautil_string_parse_int(char* str, int* number);
 
@@ -128,5 +124,49 @@ javacall_result javautil_string_parse_int(char* str, int* number);
 int javautil_strnicmp(const char* string1, const char* string2, size_t nchars);
 int javautil_stricmp(const char* string1, const char* string2);
 int javautil_wcsnicmp(const unsigned short* string1, const unsigned short* string2, size_t nchars);
+
+/**
+ * Returns a new string that is a concatenation of two input strings.
+ * Memory allocated within this function by javacall_malloc() and should be freed
+ * by javacall_free()
+ *
+ * @param prefix the beginning/prefix string
+ * @param suffix the ending/suffix string
+ * @return concatenated string on success,
+ *         NULL or any other negative value otherwise.
+ */
+char* javautil_string_strcat(const char* prefix, const char* suffix);
+
+/**
+ * Skip leading blanks
+ * 
+ * @param s input string
+ * 
+ * @return a pointer to the first non blank character inside "s"
+ */
+char* javautil_string_skip_leading_blanks(char* s);
+
+/**
+ * Skip trailing blanks
+ * 
+ * @param s input string
+ */
+void javautil_string_skip_trailing_blanks(char * s);
+
+/**
+ * Skip blanks in the beginning and at the end of the string
+ * 
+ * @param s string to be stripped of whitespaces
+ */
+void javautil_string_strip(char * s);
+
+/**
+ * Duplicates a string
+ * 
+ * @param s input string
+ * @return a newly allocated string with the same content as s
+ */
+char* javautil_string_duplicate(char *s);
+
 
 #endif
