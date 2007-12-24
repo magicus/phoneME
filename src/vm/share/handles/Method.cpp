@@ -96,7 +96,7 @@ bool Method::compile(int active_bci, bool resume JVM_TRAPS) {
     return false;
   }
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   if (Arguments::must_check_CompileOnly()) {
     UsingFastOops internal;
     bool dummy;

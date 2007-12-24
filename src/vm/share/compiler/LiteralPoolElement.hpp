@@ -108,10 +108,11 @@ public:
 
 public:
   static ReturnOop allocate(const Oop* oop, int imm32 JVM_TRAPS);
-  void iterate(OopVisitor* /*visitor*/) PRODUCT_RETURN;
     
 #if !defined(PRODUCT) || USE_COMPILER_COMMENTS
   void print_value_on(Stream*s) const;
+
+  void iterate(OopVisitor* /*visitor*/);
 #endif
 };
 

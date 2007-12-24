@@ -27,7 +27,7 @@
 # include "incls/_precompiled.incl"
 # include "incls/_BinaryLabel.cpp.incl"
 
-#if ENABLE_COMPILER && !defined( PRODUCT )
+#if ENABLE_COMPILER && (!defined( PRODUCT ) || ENABLE_TTY_TRACE)
 void BinaryLabel::print_value_on(Stream* s) const {
   s->print("encoding = %d (0x%x)", _encoding, _encoding);
   if (is_unused()) {

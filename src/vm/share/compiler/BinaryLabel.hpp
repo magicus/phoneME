@@ -73,7 +73,7 @@ class BinaryLabel {
   BinaryLabel( const int value = 0 ): _encoding( value ) {}
  ~BinaryLabel( void ) { /* do nothing for now */ }
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   void print_value_on ( Stream* ) const;
   void p( void ) const;
 #endif

@@ -105,7 +105,7 @@ class NamedField : public VisitorField {
 
 #endif
 
-#if !defined(PRODUCT) || USE_DEBUG_PRINTING
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 class OopVisitor : public OopROMVisitor {
  public:
 
@@ -193,7 +193,7 @@ class SymbolField : public VisitorField {
 };
 #endif
 
-#if USE_DEBUG_PRINTING
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 class OopPrinter : public OopVisitor {
  public:

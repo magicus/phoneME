@@ -249,7 +249,7 @@ int Arguments::parse_one_arg(int argc, char** argv) {
   }
 #endif
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
   else if (jvm_strcmp(argv[0], "-verbose") == 0) {
 #if ENABLE_TTY_TRACE
     VerboseGC = true;
@@ -268,6 +268,8 @@ int Arguments::parse_one_arg(int argc, char** argv) {
                        STATIC_STRLEN(COMPILE_ONLY_CLASS)) == 0) {
     _class_CompileOnly = argv[0] + STATIC_STRLEN(COMPILE_ONLY_CLASS);
   }
+#endif
+#if !defined(PRODUCT)
   else if (jvm_strcmp(argv[0], "-compilertestconfig") == 0) {
     if (argc < 2) {
       JVMSPI_DisplayUsage((char*)"Compiler test config file not specified.");
@@ -431,7 +433,7 @@ bool Arguments::parse_method_trap_param(const char* arg) {
 //             CompileOnly helpers
 //--------------------------------------------------
 
-#ifndef PRODUCT
+#if !defined(PRODUCT) || ENABLE_TTY_TRACE
 
 char* Arguments::_method_CompileOnly;
 char* Arguments::_class_CompileOnly;
