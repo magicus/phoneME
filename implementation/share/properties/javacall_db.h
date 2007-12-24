@@ -49,11 +49,10 @@ typedef struct _string_db_ {
  ---------------------------------------------------------------------------*/
 
 /**
- * Calculate the HASH value of the key
+ * Calculate the hash value corresponding to the key
  * 
- * @param key the input key value
- * @return the HASH value of the provided key. The return value should 
- *          be at least 32bit size
+ * @param key the input key
+ * @return the hash value of the provided key
  */
 javacall_int32 javacall_string_db_hash(char* key);
 
@@ -73,7 +72,8 @@ string_db* javacall_string_db_new(int size);
 void javacall_string_db_del(string_db* d);
 
 /**
- * Get the value of the provided key as string. Id key not found, return def
+ * Get the value corresponding to the provided key as string. If the value has not 
+ * been found, return def
  * 
  * @param d     database object allocated using javacall_string_db_new
  * @param key   the key to search in the database
@@ -84,12 +84,13 @@ char* javacall_string_db_getstr(string_db* d, char* key, char* def);
 
 
 /**
- * Get the value of the provided key as char. Id key not found, return def
+ * Get the value corresponding to the provided key as a char. If the value has 
+ * not been found, return def
  * 
  * @param d     database object allocated using javacall_string_db_new
  * @param key   the key to search in the database
  * @param def   if key not found in the database, return def
- * @return 		the value corresponding to the key (or def if key not found)
+ * @return 		the value corresponding to the key (or def if value has not been found)
  */
 char javacall_string_db_getchar(string_db* d, char* key, char def) ;
 
@@ -100,7 +101,6 @@ char javacall_string_db_getchar(string_db* d, char* key, char def) ;
  * @param d     database object allocated using javacall_string_db_new
  * @param key   the key to modify/add to the database
  * @param val   the property value to set
- * @return void
  */
 void javacall_string_db_set(string_db* d, char* key, char* val);
 
@@ -109,7 +109,6 @@ void javacall_string_db_set(string_db* d, char* key, char* val);
  * 
  * @param d     database object allocated using javacall_string_db_new
  * @param key   the key to delete
- * @return void
  */
 void javacall_string_db_unset(string_db* d, char* key);
 

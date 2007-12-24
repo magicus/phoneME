@@ -392,19 +392,19 @@ void javautil_string_strip(char* s) {
     }
 
     /*skip trailing blanks*/
-	length = strlen(pf) - 1;
+    length = strlen(pf) - 1;
 
     while (length >= 0 && (pf[length] == ' ' || pf[length] == '\t')) {
         length--;
     }
 
-	length++;
+    length++;
 
     for (i = 0; i < length; i++) {
         s[i] = pf[i];
     }
 
-	s[i] = '\0';
+    s[i] = '\0';
 }
 
 /**

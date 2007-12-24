@@ -31,8 +31,6 @@ ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
 endif
 
-PROPERTIES_SUFFIX=.obj
-
 include $(JAVACALL_DIR)/build/common.gmk
 
 TEMP=$(patsubst %.c,%.obj,$(PORTING_SOURCE))

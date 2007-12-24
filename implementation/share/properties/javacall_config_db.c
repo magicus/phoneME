@@ -32,9 +32,9 @@
 #include "javacall_logging.h"
 #include "javacall_file.h"
 
-#include "javautil_db.h"
+#include "javacall_db.h"
 #include "javautil_string.h"
-#include "javautil_config_db.h"
+#include "javacall_config_db.h"
 
 /* Maximal expected line length from properties file */
 #define MAX_LINE_LENGTH	    1023
@@ -45,9 +45,6 @@
 /* Invalid key */
 #define INI_INVALID_KEY    ((char*)-1)
 
-#ifndef min
-#define min(x,y)        (x > y ? y : x)
-#endif
 
 /*---------------------------------------------------------------------------
                         Internal Functions
@@ -231,7 +228,7 @@ void javacall_configdb_dump_ini(javacall_handle config_handle,
     int     nsec;
     char*   secname;
     int     seclen;
-    string_db *d = (string_db *)config_handle;
+    string_db* d = (string_db *)config_handle;
     javacall_handle file_handle;
     char    l[MAX_STR_LENGTH];
     javacall_result res;
@@ -295,28 +292,28 @@ void javacall_configdb_dump_ini(javacall_handle config_handle,
 
 
 /**
- * Get a the key value as a string
+ * Get the value corresponding to the key as a string
  * 
  * @param config_handle   database object created by calling javacall_configdb_load
- * @param key             the key to get its value. the key is given as INI "section:key"
- * @param def             default parameter to return if key not found
+ * @param key             The key to get the corresponding value of
+ * @param def             default parameter to return if the value has not been found
  * @param result          where to store the result string
- * @return  CONFIGDB_FAIL   bad arguments are supplied
- *          CONFIGDB_OK     otherwise
+ * @return  JAVACALL_FAIL   bad arguments are supplied
+ *          JAVACALL_OK     otherwise
  */
-configdb_result javacall_configdb_getstring(javacall_handle config_handle, char * key, 
-                                            char * def, char** result) {
+javacall_result javacall_configdb_getstring(javacall_handle config_handle, char* key, 
+                                            char* def, char** result) {
     char* lc_key;
     string_db *d = (string_db *)config_handle;
 
     if (d == NULL || key == NULL) {
         *result = def;
-        return CONFIGDB_FAIL;
+        return JAVACALL_FAIL;
     }
 
     lc_key = key;
     *result = javacall_string_db_getstr(d, lc_key, def);    
-    return CONFIGDB_OK;
+    return JAVACALL_OK;
 }
 
 
@@ -324,19 +321,19 @@ configdb_result javacall_configdb_getstring(javacall_handle config_handle, char 
 /**
  * Find a key in the database
  * 
- * @param config_handle     database object created by calling javacall_configdb_load
- * @param key               the key to find
- * @return      CONFIGDB_FOUND if the key exists or CONFIGDB_NOT_FOUND
- *  if it does not exist
+ * @param config_handle database object created by calling javacall_configdb_load
+ * @param key   the key to find
+ * @return      JAVACALL_OK if the key exists 
+ *              JAVACALL_KEY_NOT_FOUND otherwise
  */
-configdb_result javacall_configdb_find_key(javacall_handle config_handle, char * key) {
+javacall_result javacall_configdb_find_key(javacall_handle config_handle, char* key) {
     char* str;
     string_db *d = (string_db *)config_handle;
 
-    if (CONFIGDB_OK == javacall_configdb_getstring(d, key, INI_INVALID_KEY, &str)) {
-        return CONFIGDB_FOUND;
+    if (JAVACALL_OK == javacall_configdb_getstring(d, key, INI_INVALID_KEY, &str)) {
+        return JAVACALL_OK;
     } else {
-        return CONFIGDB_NOT_FOUND;
+        return JAVACALL_KEY_NOT_FOUND;
     }
 }
 
@@ -345,21 +342,21 @@ configdb_result javacall_configdb_find_key(javacall_handle config_handle, char *
 /**
  * Set new value for key. If key is not in the database, it will be added.
  * 
- * @param config_handle     database object created by calling javacall_configdb_load
- * @param key   the key to modify. the key is given as INI "section:key"
+ * @param config_handle  database object created by calling javacall_configdb_load
+ * @param key   the key value corresponding to which to modify. the key is given as INI "section:key"
  * @param val   the new value for key
- * @return      CONFIGDB_OK in case of success,
- *              CONFIGDB_FAIL otherwise
+ * @return      JAVACALL_OK in case of success
+ *              JAVACALL_FAIL otherwise
  */
-configdb_result javacall_configdb_setstr(javacall_handle config_handle, char * key, char * val) {
-    string_db *d = (string_db *)config_handle;
+javacall_result javacall_configdb_setstr(javacall_handle config_handle, char* key, char* val) {
+    string_db* d = (string_db *)config_handle;
 
     if (key == NULL || val == NULL) {
-        return CONFIGDB_FAIL;
+        return JAVACALL_FAIL;
     }
 
     javacall_string_db_set(d, key, val);
-    return CONFIGDB_OK;
+    return JAVACALL_OK;
 }
 
 /**
@@ -368,8 +365,8 @@ configdb_result javacall_configdb_setstr(javacall_handle config_handle, char * k
  * @param config_handle     database object created by calling javacall_configdb_load
  * @param key   the key to delete
  */
-void javacall_configdb_unset(javacall_handle config_handle, char * key) {
-    string_db *d = (string_db *)config_handle;
+void javacall_configdb_unset(javacall_handle config_handle, char* key) {
+    string_db* d = (string_db *)config_handle;
     javacall_string_db_unset(d, key);
 }
 
@@ -377,13 +374,6 @@ void javacall_configdb_unset(javacall_handle config_handle, char * key) {
 #ifndef USE_PROPERTIES_FROM_FS
 #include "javacall_static_properties.h"
 
-/**
- * Creates a new database from an INI file
- * 
- * @param unicodeFileName  input INI file name
- * @param fileNameLen      file name length
- * @return  newly created database object
- */
 javacall_handle configdb_load_no_fs () {
     string_db* db;
     int i, j;
@@ -466,6 +456,13 @@ javacall_handle configdb_load_from_fs(javacall_utf16* unicodeFileName, int fileN
     return(javacall_handle)d ;
 }
 
+/**
+ * Loads a database from an INI file
+ * 
+ * @param unicodeFileName  input INI file name
+ * @param fileNameLen      file name length
+ * @return  newly created database object
+ */
 javacall_handle javacall_configdb_load(javacall_utf16* unicodeFileName, int fileNameLen) {
 #ifdef USE_PROPERTIES_FROM_FS
     return configdb_load_from_fs(unicodeFileName, fileNameLen);
@@ -481,7 +478,7 @@ javacall_handle javacall_configdb_load(javacall_utf16* unicodeFileName, int file
  * @param   config_handle database object created in a call to javacall_configdb_load
  */
 void javacall_configdb_free(javacall_handle config_handle) {
-    string_db *d = (string_db *)config_handle;
+    string_db* d = (string_db *)config_handle;
     javacall_string_db_del(d);
 }
 
