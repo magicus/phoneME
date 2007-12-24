@@ -113,7 +113,9 @@ typedef enum {
    /** bad properties in jad file, 
     * either a missing required property or
     * incorrectly formatted property */
-   JAVACALL_BAD_JAD_PROPERTIES = -13
+   JAVACALL_BAD_JAD_PROPERTIES = -13,
+    /** javacall properties db key not found */
+    JAVACALL_KEY_NOT_FOUND = -14
 } javacall_result;
 
 #define JAVACALL_SUCCEEDED(Status) ((javacall_result)(Status) >= 0) 

@@ -31,7 +31,7 @@ extern "C" {
 #include "javautil_string.h"
 #include "javacall_memory.h"
 #include "javacall_properties.h"
-#include "javautil_config_db.h"
+#include "javacall_config_db.h"
 
 static unsigned short property_file_name[] = {'j','w','c','_','p','r','o','p','e','r','t','i','e','s','.','i','n','i',0};
 
@@ -99,7 +99,7 @@ javacall_result javacall_get_property(const char* key,
         return JAVACALL_FAIL;       
     }
 
-    if (CONFIGDB_OK == javacall_configdb_getstring(handle, joined_key, NULL, result)) {
+    if (JAVACALL_OK == javacall_configdb_getstring(handle, joined_key, NULL, result)) {
         javacall_free(joined_key);
         return JAVACALL_OK; 
     } else {
@@ -140,7 +140,7 @@ javacall_result javacall_set_property(const char* key,
     }
 
     if (replace_if_exist == 0) { /* don't replace existing value */
-        if (CONFIGDB_FOUND == javacall_configdb_find_key(handle,joined_key)) {
+        if (JAVACALL_OK == javacall_configdb_find_key(handle,joined_key)) {
             /* key exist, don't set */
             javacall_free(joined_key);
         } else {/* key doesn't exist, set it */
