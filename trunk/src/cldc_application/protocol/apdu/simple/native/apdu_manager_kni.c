@@ -62,14 +62,14 @@ KNIDECL (com_sun_cdc_io_j2me_apdu_APDUManager_init0) {
     char *buffer;
     const char *prop_value;
 
-    prop_value = getInternalProp(hostsandports);
+    prop_value = getInternalProperty(hostsandports);
     if (prop_value != NULL) {
         status = javacall_carddevice_set_property(hostsandports, prop_value);
         if (status != JAVACALL_OK) {
             goto err;
         }
 
-        prop_value = getInternalProp(satselectapdu);
+        prop_value = getInternalProperty(satselectapdu);
         status = javacall_carddevice_set_property(satselectapdu, prop_value);
         if (status != JAVACALL_OK) {
             goto err;
