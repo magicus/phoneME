@@ -479,6 +479,7 @@ WTKProfiler.cpp                  MixedOop.hpp
 WTKProfiler.cpp                  MixedOopDesc.hpp
 WTKProfiler.cpp                  Universe.hpp
 WTKProfiler.cpp                  StackUtils.hpp
+WTKProfiler.cpp                  jvmspi.h
 
 #if ENABLE_XSCALE_WMMX_INSTRUCTIONS
 Disassembler_wmmx.cpp            Disassembler_<carch>.hpp
