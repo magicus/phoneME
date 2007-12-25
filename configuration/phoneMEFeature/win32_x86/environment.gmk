@@ -54,6 +54,11 @@ ifeq ($(USE_NATIVE_AMS_JC),)
 USE_NATIVE_AMS_JC=false
 endif
 
+ifeq ($(USE_PROPERTIES_FROM_FS),true)
+SPECIFIC_DEFINITIONS += -DUSE_PROPERTIES_FROM_FS
+endif
+
+
 # Switch native AMS function on/off
 ifeq ($(USE_NATIVE_AMS_JC), true)
 
