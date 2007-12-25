@@ -366,7 +366,7 @@ static void handle_other_signals(int sig) {
   // restored.
   DebugHandleMarker::restore();
 
-  char *name;
+  const char *name;
 
   switch (sig) {
   case SIGHUP:
