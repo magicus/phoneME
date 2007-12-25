@@ -388,25 +388,11 @@ javacall_result javacall_media_finalize(void);
  * This function should return pointer to static array of javacall_media_caps value
  * The last item of javacall_media_caps array should hold NULL mimeType value
  * Java layer will use this NULL value as a end of item mark
- */
-const javacall_media_configuration* javacall_media_get_configuration(void);
-
-/**
- * Query multimedia property. 
- * It must support most of properties described at JSR specification.
- * If there is no property with such name, the result is succesful and 
- *  propValue will contain NULL value.
  *
- * @param propName     property name
- * @param propValue    pointer to store property value
- * 
  * @retval JAVACALL_OK               success
- *         JAVACALL_INVALID_ARGUMENT if either of two arguments is NULL
- *         JAVACALL_OUT_MEMORY
- *         JAVACALL_FAIL
+ *         JAVACALL_INVALID_ARGUMENT if argument is NULL
  */
-javacall_result
-    javacall_media_get_property(const char* propName, const char** propValue);
+javacall_result javacall_media_get_configuration(const javacall_media_configuration* configuration);
 
 /** @} */ 
 
@@ -438,17 +424,21 @@ javacall_result
  * @param contentLength Content length in bytes
  *                      If Java MMAPI couldn't determine content length, 
  *                      this value should be -1
- * 
- * @return              Handle of native library. if fail return NULL.
+ * @param handle        Handle of native library. 
+ *
+ * @retval JAVACALL_OK               success
+ *         JAVACALL_FAIL
+ *         JAVACALL_INVALID_ARGUMENT
  */
-javacall_handle javacall_media_create(javacall_app_id appId,
+javacall_result javacall_media_create(javacall_app_id appId,
                                       int playerId,
                                       javacall_media_format_type mediaFormat,
                                       javacall_const_utf16_string mime,
                                       long mimeLength,
                                       javacall_const_utf16_string uri, 
                                       long uriLength,
-                                      long contentLength);
+                                      long contentLength
+                                      javacall_handle *handle);
 
 /**
  * Java MMAPI call this function to set player specific parameters.
@@ -541,10 +531,15 @@ javacall_result javacall_media_protocol_handled_by_device(javacall_handle handle
  *                  You can determine your internal buffer's writting position by using this value
  *                  Can be -1 at end of buffering
  * 
- * @return          If success return 'length of buffered data' else return -1
+ * @param len_buffered If success return 'length of buffered data' else return -1
+ *
+ * @retval JAVACALL_OK
+ * @retval JAVACALL_FAIL   
+ * @retval JAVACALL_INVALID_ARGUMENT
  */
-long javacall_media_do_buffering(javacall_handle handle, 
-                                 const void* buffer, long length, long offset);
+javacall_result javacall_media_do_buffering(javacall_handle handle, 
+                                 const void* buffer, long length, long offset,
+                                 /* OUT */ long *len_buffered);
 
 /**
  * MMAPI call this function to clear(delete) buffered media data
@@ -605,30 +600,36 @@ javacall_result javacall_media_resume(javacall_handle handle);
  * Get current media time (position) in ms unit
  * 
  * @param handle    Handle to the library
- * @return          If success return time in ms else return -1
+ * @param ms        current media time in ms
+ *
+ * @retval JAVACALL_OK      Success
+ * @retval JAVACALL_FAIL    Fail
  */
-long javacall_media_get_time(javacall_handle handle);
+javacall_result javacall_media_get_time(javacall_handle handle, /*OUT*/ long *ms );
 
 /**
  * Seek to specified time.
  * This function can be called during play status or stop status
  * 
  * @param handle    Handle to the library
- * @param ms        Seek position as ms time
+ * @param ms        Seek position as ms time, return actual time in ms
  * 
- * @return          If success return time in ms else return -1
+ * @retval JAVACALL_OK      Success
+ * @retval JAVACALL_FAIL    Fail
  */
-long javacall_media_set_time(javacall_handle handle, long ms);
+javacall_result javacall_media_set_time(javacall_handle handle, long *ms);
  
 /**
  * Get whole media time in ms.
  * This function can be called during play status or stop status.
  * 
  * @param handle    Handle to the library
- * 
- * @return          If success return time in ms else return -1
+ * @param ms        return time in ms
+ *
+ * @retval JAVACALL_OK      Success
+ * @retval JAVACALL_NO_DATA_AVAILABLE
  */
-long javacall_media_get_duration(javacall_handle handle);
+javacall_result javacall_media_get_duration(javacall_handle handle, long *ms);
 
 /** @} */
 
@@ -648,31 +649,36 @@ long javacall_media_get_duration(javacall_handle handle);
  * Audio volume range have to be in 0 to 100 inclusive
  * 
  * @param handle    Handle to the library 
+ * @param volume    Volume value
  *
- * @return          Volume value
+ * @retval JAVACALL_OK      Success
+ * @retval JAVACALL_NO_DATA_AVAILABLE
  */
-long javacall_media_get_volume(javacall_handle handle); 
+javacall_result javacall_media_get_volume(javacall_handle handle, /*OUT*/ long *volume); 
 
 /**
  * Set audio volume
  * Audio volume range have to be in 0 to 100 inclusive
  * 
  * @param handle    Handle to the library 
- * @param level     Volume value
+ * @param level     Volume value, return actual volume level
  * 
- * @return          if success return volume level else return -1
+ * @retval JAVACALL_OK      Success
+ * @retval JAVACALL_NO_DATA_AVAILABLE
  */
-long javacall_media_set_volume(javacall_handle handle, long level);
+javacall_result javacall_media_set_volume(javacall_handle handle, long* level);
 
 /**
  * Is audio muted now?
  * 
  * @param handle    Handle to the library 
+ * @param mute      JAVACALL_TRUE in mute state, 
+ *                  JAVACALL_FALSE in unmute state
  * 
- * @retval JAVACALL_TRUE    Now in mute state
- * @retval JAVACALL_FALSE   Now in un-mute state
+ * @retval JAVACALL_OK      Success
+ * @retval JAVACALL_NO_DATA_AVAILABLE
  */
-javacall_bool javacall_media_is_mute(javacall_handle handle);
+javacall_result javacall_media_is_mute(javacall_handle handle, /*OUT*/ javacall_bool* mute);
 
 /**
  * Mute, Unmute audio
@@ -1374,10 +1380,13 @@ javacall_result javacall_media_supports_recording(javacall_handle handle);
  * Is javacall_media_set_recordsize_limit function is working for this player?
  * In other words - set recording size limit function is working for this player?
  * 
- * @retval JAVACALL_TRUE    Yes. Supported.
- * @retval JAVACALL_FALSE   No. Not supported.
+ * @param handle    Handle to the library 
+ * @param supported JAVACALL_TRUE if supported, JAVACALL_FALSE if not supported.
+ * 
+ * @retval JAVACALL_OK          Success
  */
-javacall_bool javacall_media_set_recordsize_limit_supported(javacall_handle handle);
+javacall_bool javacall_media_set_recordsize_limit_supported(javacall_handle handle,
+                                                            javacall_bool *supported);
 
 /**
  * Specify the maximum size of the recording including any headers.<br>
@@ -1510,9 +1519,13 @@ javacall_result javacall_media_get_recorded_data(javacall_handle handle,
 /**
  * Get the current recording data content type mime string length
  *
- * @return  If success return length of string else return 0
+ * @param handle    Handle to the library 
+ * @param length    Length of string
+ * 
+ * @retval JAVACALL_OK          Success
+ * @retval JAVACALL_FAIL        Fail
  */
-int javacall_media_get_record_content_type_length(javacall_handle handle);
+int javacall_media_get_record_content_type_length(javacall_handle handle, int *length);
 
 /**
  * Get the current recording data content type mime string length
@@ -1521,12 +1534,15 @@ int javacall_media_get_record_content_type_length(javacall_handle handle);
  * @param handle                Handle of native player
  * @param contentTypeBuf        Buffer to return content type unicode string
  * @param contentTypeBufLength  Length of contentTypeBuf buffer (in unicode metrics)
+ * @param actualLength          Length of content type string stored in contentTypeBuf
  *
- * @return  Length of content type string stored in contentTypeBuf
+ * @retval JAVACALL_OK          Success
+ * @retval JAVACALL_FAIL        Fail
  */
-int javacall_media_get_record_content_type(javacall_handle handle, 
+javacall_result javacall_media_get_record_content_type(javacall_handle handle, 
                                            /*OUT*/ javacall_utf16* contentTypeBuf,
-                                           int contentTypeBufLength);
+                                           int contentTypeBufLength, 
+                                           /*OUT*/ int* actualLength);
 
 /**
  * Close the recording. OEM can delete all resources related with this recording.
