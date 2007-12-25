@@ -134,8 +134,7 @@ extern "C" {
 #define JAVACALL_DEVICE_MIDI_MIME    "device://midi"
 #define JAVACALL_CAPTURE_VIDEO_MIME  "capture://video"
 #define JAVACALL_CAPTURE_AUDIO_MIME  "capture://audio"
-#define JAVACALL_CAPTURE_RADIO_MIME  "capture://audio"
-
+#define JAVACALL_CAPTURE_RADIO_MIME  "capture://radio"
 
 /**
  * @enum javacall_media_type
@@ -143,56 +142,58 @@ extern "C" {
  * @brief Multimedia contents type. If you want to add new media types, you have to consult with Sun Microsystems.
  */
 typedef enum {
-    JAVACALL_VIDEO_MP4V_ES,     // "video/mp4v-es"
-    JAVACALL_VIDEO_MP4,         // "video/mp4"
-    JAVACALL_VIDEO_X_MS_WMV,    // "video/x-ms-wmv"
-    JAVACALL_AUDIO_X_MS_WMA,    // "audio/x-ms-wma"
-    JAVACALL_VIDEO_AVI,         // "video/avi"
-    JAVACALL_VIDEO_MPEG,        // "video/mpeg"
-    JAVACALL_VIDEO_3GPP,        // "video/3gpp"
-    JAVACALL_VIDEO_3GPP2,       // "video/3gpp2"
-    JAVACALL_VIDEO_3GP,         // "video/3gp"
-    JAVACALL_VIDEO_H263,        // "video/h263"
-    JAVACALL_VIDEO_H264,        // "video/h264"
-    JAVACALL_AUDIO_MIDI,        // "audio/midi"
-    JAVACALL_AUDIO_MID,         // "audio/mid"
-    JAVACALL_AUDIO_SP_MIDI,     // "audio/sp-midi"
-    JAVACALL_AUDIO_X_MIDI,      // "audio/x-midi"
-    JAVACALL_AUDIO_X_WAV,       // "audio/x-wav"
-    JAVACALL_AUDIO_WAV,         // "audio/wav"
-    JAVACALL_AUDIO_MPEG,        // "audio/mpeg"
-    JAVACALL_AUDIO_MP3,         // "audio/mp3"
-    JAVACALL_AUDIO_X_MPEG,      // "audio/x-mpeg"
-    JAVACALL_AUDIO_MPG,         // "audio/mpg"
-    JAVACALL_AUDIO_AMR,         // "audio/amr"
-    JAVACALL_AUDIO_AMRNB,       // "audio/amrnb"
-    JAVACALL_AUDIO_AMR_WB,      // "audio/amr-wb"
-    JAVACALL_AUDIO_MP4A_LATM,   // "audio/mp4a-latm"
-    JAVACALL_AUDIO_MP4,         // "audio/mp4"
-    JAVACALL_AUDIO_AAC,         // "audio/aac"
-    JAVACALL_AUDIO_APL,         // "audio/apl"
-    JAVACALL_AUDIO_X_AAC,       // "audio/x-aac"
-    JAVACALL_AUDIO_ADPCM,       // "audio/adpcm"
-    JAVACALL_AUDIO_WMA,         // "audio/wma"
-    JAVACALL_AUDIO_X_MS_WMA,    // "audio/x-ms-wma"
-    JAVACALL_AUDIO_MMF,         // "audio/mmf"
-    JAVACALL_AUDIO_X_MMF,       // "audio/x-mmf"
-    JAVACALL_AUDIO_SMAF,        // "audio/smaf"
-    JAVACALL_AUDIO_X_TONE_SEQ,  // "audio/x-tone-seq"
-    JAVACALL_AUDIO_QCELP,       // "audio/qcelp"
-    JAVACALL_AUDIO_VNDQCELP,    // "audio/vnd.qcelp"
-    JAVACALL_IMAGE_JPEG,        // "image/jpeg"
-    JAVACALL_IMAGE_PNG,         // "image/png"
-    JAVACALL_IMAGE_GIF,         // "image/gif"
-    JAVACALL_DEVICE_TONE,       // "device://tone"
-    JAVACALL_DEVICE_MIDI,       // "device://midi"
-    JAVACALL_CAPTURE_VIDEO,     // "capture://video"
-    JAVACALL_CAPTURE_AUDIO,     // "capture://audio"
-    JAVACALL_CAPTURE_RADIO,     // "capture://radio"
+    // Audio formats section
+    JAVACALL_MEDIA_FORMAT_MPEG1_LAYER2,         //MP2,      audio/mpeg
+    JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3,         //MP3,      audio/mpeg
+    JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3_PRO,     //MP3pro,   audio/mpeg
+    JAVACALL_MEDIA_FORMAT_MPEG2_AAC,            //AAC,      audio/mpeg
+    JAVACALL_MEDIA_FORMAT_MPEG4_HE_AAC,         //aacPlus,  audio/mpeg
+    JAVACALL_MEDIA_FORMAT_ENHANCED_AAC_PLUS,    //Enhanced aacPlus, audio/3gpp
+    JAVACALL_MEDIA_FORMAT_AMR,                  //AMR,      audio/amr
+    JAVACALL_MEDIA_FORMAT_AMR_WB,               //AMR-WB,   audio/amr-wb
+    JAVACALL_MEDIA_FORMAT_AMR_WB_PLUS,          //AMR-WB+,  audio/amr-wb+
+    JAVACALL_MEDIA_FORMAT_GSM,                  //GSM-FR,   audio/x-gsm 
+    JAVACALL_MEDIA_FORMAT_GSM_EFR,              //GSM_EFR,  audio/x-gsmefr
+    JAVACALL_MEDIA_FORMAT_QCELP,                //QCELP,    audio/qcelp
+    JAVACALL_MEDIA_FORMAT_MIDI,                 //MIDI,     audio/midi
+ 	JAVACALL_MEDIA_FORMAT_SP_MIDI,              //SP-MIDI,  audio/spmidi
+    JAVACALL_MEDIA_FORMAT_MS_PCM,               //MS-WAV,   audio/x-wav
+    JAVACALL_MEDIA_FORMAT_MS_ADPCM,             //MS-ADPCM, audio/x-wav
+    JAVACALL_MEDIA_FORMAT_YAMAHA_ADPCM,         //ADPCM,    audio/x-wav
+    JAVACALL_MEDIA_FORMAT_AU,                   //uLaw,     audio/basic
+    JAVACALL_MEDIA_FORMAT_OGG_VORBIS,           //OGG Vorbis, audio/x-vorbis
+    JAVACALL_MEDIA_FORMAT_REALAUDIO_8,          //RealAudio, audio/x-realaudio  
+    JAVACALL_MEDIA_FORMAT_AIFF,                 //AIFF,     audio/x-aiff
+    JAVACALL_MEDIA_FORMAT_WMA_9,                //WMA,      audio/x-ms-wma
+    // Video formats section
+    JAVACALL_MEDIA_FORMAT_MJPEG_DEFAULT,        //MJPEG,    video/mjpeg
+    JAVACALL_MEDIA_FORMAT_H263,                 //H.263,    video/h263
+    JAVACALL_MEDIA_FORMAT_H264,                 //H.264,    video/h264
+    JAVACALL_MEDIA_FORMAT_MPEG_1,               //MPEG-1,   video/mpeg
+    JAVACALL_MEDIA_FORMAT_MPEG_2,               //MPEG-2,   video/mpeg
+    JAVACALL_MEDIA_FORMAT_MPEG_4_SVP,           //MPEG-4,   video/mpeg
+    JAVACALL_MEDIA_FORMAT_MPEG_4_AVC,           //H.264,    video/mpeg
+    JAVACALL_MEDIA_FORMAT_REALVIDEO_8,          //RealVideo, video/vnd.rn-realvideo
+    JAVACALL_MEDIA_FORMAT_WMV_9,                //WMV,      video/x-ms-wm
+    // Container formats section
+    JAVACALL_MEDIA_FORMAT_AUDIO_3GPP,           //3GP,      audio/3gp
+    JAVACALL_MEDIA_FORMAT_VIDEO_3GPP,           //3GP,      video/3gp
+    JAVACALL_MEDIA_FORMAT_AVI,                  //AVI,      video/avi
+    JAVACALL_MEDIA_FORMAT_MOV,                  //Quicktime, video/quicktime
+    // Image formats section
+    JAVACALL_MEDIA_FORMAT_JPEG,                 //JPEG,     image/jpeg
+    JAVACALL_MEDIA_FORMAT_JPEG2000,             //JPEG 2000, image/jpeg
+    JAVACALL_MEDIA_FORMAT_TIFF,                 //TIFF,     image/tiff
+    JAVACALL_MEDIA_FORMAT_PNG,                  //PNG,      image/png
+    JAVACALL_MEDIA_FORMAT_GIF,                  //GIF,      image/gif
+    JAVACALL_MEDIA_FORMAT_RGB888,               //24b raw,  image/raw
+    JAVACALL_MEDIA_FORMAT_RGBA8888,             //32b+alfa, image/raw
+    JAVACALL_MEDIA_FORMAT_GRAY1,                //BW raw,   image/raw
+    JAVACALL_MEDIA_FORMAT_GRAY8,                //8b monochrome, image/raw
 
-    JAVACALL_MIME_UNKNOWN,      // unknown mime type
-    JAVACALL_END_OF_TYPE
-} javacall_media_type
+    JAVACALL_MEDIA_FORMAT_UNKNOWN,
+    JAVACALL_MEDIA_FORMAT_END_OF_TYPE
+} javacall_media_format_type;
 
 /**
  * @enum javacall_media_type
@@ -209,49 +210,79 @@ typedef enum {
 } javacall_media_protocol_type;
 
 /**
- * @enum javacall_control_type
  * 
- * @brief Multimedia controls, supported by the Native implementation.
+ * @brief Multimedia capabilities, supported by the native implementation.
  */
-typedef enum {
-    JAVACALL_MEDIA_NCTRL_NONE               = 0x00,
-    /* Full screen is supported by native player */
-    JAVACALL_MEDIA_NCTRL_FULLSCREEN         = 0x01,
-    /* Stop Time is supported by native player */
-    JAVACALL_MEDIA_NCTRL_STOPTIME           = 0x02,
-    /* Meta Data can be retrieved from native player */
-    JAVACALL_MEDIA_NCTRL_METADATA           = 0x04,
-    /* Frame positioning is managed by  native player */
-    JAVACALL_MEDIA_NCTRL_FRAME_POSITIONING  = 0x08
-} javacall_media_control_type;
+/** Full screen is supported by native player */
+#define JAVACALL_MEDIA_CAPS_FULLSCREEN          0x01
+/** Meta Data can be retrieved from native player */
+#define JAVACALL_MEDIA_CAPS_METADATA            0x02
+/** Frame positioning is managed by  native player */
+#define JAVACALL_MEDIA_CAPS_FRAME_POSITIONING   0x04
+
 
 /** @} */
 
 /**
  * struct javacall_media_caps
- * @brief Multimedia capability of device 
+ * @brief Multimedia capabilities of native platform
+ *        for particular media format
  */
 typedef struct {
-    /* Content mime type */
-    javacall_media_type             mimeType;
+    /* Media format */
+    javacall_media_format_type          mediaFormat;
     /* bitmask of supported remote protocols */
-    javacall_int32    rem_protocols;
-    /* bitmask of Controls for remote protocols */
-    javacall_int32    rem_protocol_ctrls;
+    javacall_int32                      rem_protocols;
+    /* bitmask of native capabilities for remote protocols */
+    javacall_int32                      rem_protocol_caps;
     /* bitmask of supported local protocols */
-    javacall_int32    local_protocols;
-    /* bitmask of Controls for local protocols */
-    javacall_int32    local_protocol_ctrls;
+    javacall_int32                      local_protocols;
+    /* bitmask of native capabilities for local protocols */
+    javacall_int32                      local_protocol_caps;
     /* bitmask of supported streaming protocols */
-    javacall_int32    stream_protocols;
-    /* bitmask of Controls for streaming protocols */
-    javacall_int32    stream_protocol_ctrls;
+    javacall_int32                      stream_protocols;
+    /* bitmask of native capabilities for streaming protocols */
+    javacall_int32                      stream_protocol_caps;
 
-    /* bitmask of Controls for memory protocols */
-    javacall_int32    mem_protocol_ctrls;
-    /* bitmask of Controls for memory_streaming protocols */
-    javacall_int32    mem_stream_protocol_ctrls;
+    /* bitmask of native capabilities for memory protocols */
+    javacall_int32                      mem_protocol_caps;
+    /* bitmask of native capabilities for memory_streaming protocols */
+    javacall_int32                      mem_stream_protocol_caps;
 } javacall_media_caps;
+
+/**
+ * struct javacall_media_configuration
+ * @brief Multimedia capabilities of native platform
+ */
+typedef struct {
+    /** Support Mixing */
+    javacall_bool                       supportMixing;
+    /** Supported capture audio formats and parameters */
+    /*  NULL if not supported */
+    javacall_const_utf16_string         audioEncoding;
+    /** Supported capture video formats and parameters */
+    /*  NULL if not supported */
+    javacall_const_utf16_string         videoEncoding;
+    /** Supported video snapshot formats and parameters */
+    /*  NULL if not supported */
+    javacall_const_utf16_string         videoSnapshotEncoding;
+    /** Supported radio capture formats and parameters */
+    /*  NULL if not supported */
+    javacall_const_utf16_string         radioEncoding;
+
+    /** Support Device Tone*/
+    javacall_bool                       supportDeviceTone;
+    /** Support Device MIDI*/
+    javacall_bool                       supportDeviceMIDI;
+    /** Support Capture Radio*/
+    javacall_bool                       supportCaptureRadio;
+
+    /** Media capabilities */
+    /* array of javacall_media_caps for each supported media format */
+    /* the last element in the array should contain                 */
+    /* JAVACALL_MEDIA_FORMAT_END_OF_TYPE in mediaFormat field       */
+    javacall_media_caps                 *mediaCaps;
+} javacall_media_configuration;
 
 
 /**
@@ -269,7 +300,7 @@ typedef enum {
  * 
  * @brief Type of rtp native player common parameters 
  */
-typedef enum {
+typedef struct {
     /* number of rtp streams */
     int             num_streams;
     /* Multicast/Unicast session */
@@ -281,7 +312,7 @@ typedef enum {
  * 
  * @brief Type of rtp native player common parameters 
  */
-typedef enum {
+typedef struct {
     /* rtp stream Id */
     int streamId;
     /* IPv4 or IPv6 address (for multicast session) */
@@ -358,7 +389,7 @@ javacall_result javacall_media_finalize(void);
  * The last item of javacall_media_caps array should hold NULL mimeType value
  * Java layer will use this NULL value as a end of item mark
  */
-const javacall_media_caps* javacall_media_get_caps(void);
+const javacall_media_configuration* javacall_media_get_configuration(void);
 
 /**
  * Query multimedia property. 
@@ -397,8 +428,12 @@ javacall_result
  * 
  * @param appId         Unique application ID for this playing
  * @param playerId      Unique player object ID for this playing
- * @param mime          Mime type
- * @param uri           URI unicode string to media data
+ * @param mediaFormat   Media format type. 
+ *                      JAVACALL_MEDIA_FORMAT_UNKNOWN if unknown
+ * @param mime          Mime type unicode string. 
+ *                      NULL if unknown
+ * @param mimeLength    String length of media MIME type. 
+ * @param uri           URI unicode string to media data.
  * @param uriLength     String length of URI
  * @param contentLength Content length in bytes
  *                      If Java MMAPI couldn't determine content length, 
@@ -407,8 +442,10 @@ javacall_result
  * @return              Handle of native library. if fail return NULL.
  */
 javacall_handle javacall_media_create(javacall_app_id appId,
-                                      int playerId, 
-                                      javacall_media_type mime, 
+                                      int playerId,
+                                      javacall_media_format_type mediaFormat,
+                                      javacall_const_utf16_string mime,
+                                      long mimeLength,
                                       javacall_const_utf16_string uri, 
                                       long uriLength,
                                       long contentLength);
