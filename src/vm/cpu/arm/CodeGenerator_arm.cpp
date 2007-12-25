@@ -6062,6 +6062,11 @@ CodeGenerator::verify_location_is_constant(jint index, const Value& constant) {
 void CodeGenerator::initialize_class(InstanceClass* klass JVM_TRAPS) {
   GUARANTEE(klass->not_null() && !klass->is_initialized(),
             "Should only be called for non-initialized classes");
+#ifdef AZZERT
+  InstanceClass holder = method()->holder();
+  GUARANTEE(!holder.is_subclass_of(klass),
+            "Superclass of the holder must be already initialized");
+#endif
   // initialize_class(Thread&, raw_class);
   COMPILER_COMMENT(("Initialize class if needed"));
   COMPILER_COMMENT(("Flush frame"));

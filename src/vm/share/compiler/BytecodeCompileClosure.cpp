@@ -1358,10 +1358,13 @@ void BytecodeCompileClosure::new_object(int index JVM_TRAPS) {
   if (GenerateROMImage) {
     // Retrieve the initialized class or generate an uncommon trap
     klass = get_klass_or_null(index, false JVM_CHECK);
-    if (klass.not_null() && klass.is_instance_class()) {
-      InstanceClass ic = klass.obj();
-      if (!ic.is_initialized()) {
-        __ initialize_class(&ic JVM_CHECK);
+    if (klass.not_null()) {
+      InstanceClass holder = method()->holder();
+      if (klass.is_instance_class() && !holder.is_subclass_of(&klass)) {
+        InstanceClass ic = klass.obj();
+        if (!ic.is_initialized()) {
+          __ initialize_class(&ic JVM_CHECK);
+        }
       }
     }
   } else
@@ -1460,7 +1463,8 @@ BytecodeCompileClosure::get_klass_from_id_and_initialize(int class_id
   GUARANTEE(GenerateROMImage, 
             "Should be called only for AOT compilation");
   JavaClass klass = Universe::class_from_id(class_id);
-  if (klass.is_instance_class()) {
+  InstanceClass holder = method()->holder();
+  if (klass.is_instance_class() && !holder.is_subclass_of(&klass)) {
     InstanceClass ic = klass.obj();
     if (!ic.is_initialized()) {
       __ initialize_class(&ic JVM_CHECK_(NULL));
@@ -1732,7 +1736,10 @@ void BytecodeCompileClosure::direct_invoke(int index, bool must_do_null_check
   if (!holder().is_initialized()) {
 #if USE_AOT_COMPILATION
     if (GenerateROMImage) {
-      __ initialize_class(&holder JVM_CHECK);
+      InstanceClass caller_holder = method()->holder();
+      if (!caller_holder.is_subclass_of(&holder)) {
+        __ initialize_class(&holder JVM_CHECK);
+      }
     } else
 #endif
     {
