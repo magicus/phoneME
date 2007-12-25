@@ -367,7 +367,7 @@ void RelocationReader::advance() {
 #if ENABLE_APPENDED_CALLINFO
 void RelocationReader::skip_callinfo() {
   if (kind() == callinfo_type) {
-    const size_t callinfo_table_size = bitfield(current(), 0, offset_width);
+    const size_t callinfo_table_size = CallInfoRecord::table_size(current());
     _current_relocation_offset -= align_size_up(callinfo_table_size, sizeof(jushort));
   }
 }

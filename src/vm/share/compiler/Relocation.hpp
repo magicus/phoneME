@@ -42,8 +42,8 @@
 //   }
 //
 // Relocation information is represented as a 0 terminated string of 16 bits:
-//   3 bits indicating the relocation type
-//  13 bits indicating the byte offset from the previous relocInfo address
+//   4 bits indicating the relocation type
+//  12 bits indicating the byte offset from the previous relocInfo address
 
 class Relocation: public StackObj {
  public:
@@ -70,8 +70,8 @@ class Relocation: public StackObj {
   }
 
   enum Constants {
-    type_width   = CallInfoRecord::type_width,
-    offset_width = CallInfoRecord::length_width
+    type_width   = 4,
+    offset_width = 12
   };
 
   enum VSFConstants {

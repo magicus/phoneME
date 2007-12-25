@@ -3796,12 +3796,6 @@ void CodeGenerator::table_switch(Value& index, jint table_index,
 
   int table_size = high - low + 1;
 
-  if (table_size >= MAX_TABLE_SWITCH_SIZE) {
-    // Need to avoid overflow loading literals that have been used in preceding
-    // bytecodes.
-    Compiler::abort_active_compilation(true JVM_THROW);
-  }
-
   int jump_table_bytes = table_size *sizeof(int);
   int total_bytes = jump_table_bytes  + 128; // be conservative and use 128 byte pad
   write_literals_if_desperate(total_bytes);

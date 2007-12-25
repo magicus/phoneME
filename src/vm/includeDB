@@ -645,6 +645,10 @@ BytecodeClosure.cpp              Symbol.hpp
 BytecodeClosure.cpp              Thread.hpp
 BytecodeClosure.cpp              ObjectHeap_<iarch>.hpp
 
+CallInfo.cpp                     CallInfo.hpp
+
+CallInfo.hpp                     Relocation.hpp
+
 CompiledMethod.cpp               OopVisitor.hpp
 CompiledMethod.cpp               CompiledMethod.hpp
 CompiledMethod.cpp               Relocation.hpp
@@ -654,6 +658,7 @@ CompiledMethod.cpp               OopDesc.inline.hpp
 CompiledMethod.cpp               OsMisc.hpp
 CompiledMethod.cpp               ObjectHeap_<iarch>.hpp
 CompiledMethod.cpp               BinaryAssembler_<carch>.hpp
+CompiledMethod.cpp               CallInfo.hpp
 
 CompiledMethod_<carch>.cpp       OsMisc.hpp
 CompiledMethod_<carch>.cpp       Disassembler_<carch>.hpp
