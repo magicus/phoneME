@@ -130,11 +130,7 @@ void javacall_chapi_finalize_registry(void);
 javacall_result javacall_chapi_register_handler(
         javacall_const_utf16_string content_handler_id,
         javacall_const_utf16_string content_handler_friendly_appname,
-#ifdef SUITE_ID_STRING
         javacall_const_utf16_string suite_id,
-#else
-       int suite_id,
-#endif
         javacall_const_utf16_string class_name,
         javacall_chapi_handler_registration_type flag,
         javacall_const_utf16_string* content_types,     int nTypes,
@@ -274,11 +270,7 @@ javacall_result javacall_chapi_enum_handlers_by_action(javacall_const_utf16_stri
  *         error code if failure occurs
  */
 javacall_result javacall_chapi_enum_handlers_by_suite_id(
-#ifdef SUITE_ID_STRING
         javacall_const_utf16_string suite_id,
-#else
-        int suite_id,
-#endif
         int* pos_id, 
         /*OUT*/ javacall_utf16*  handler_id_out,
         int* length);
@@ -528,12 +520,7 @@ javacall_result javacall_chapi_get_content_handler_friendly_appname(javacall_con
  */
 javacall_result javacall_chapi_get_handler_info(javacall_const_utf16_string content_handler_id,
 				   /*OUT*/
-#ifdef SUITE_ID_STRING
 				   javacall_utf16*  suite_id_out, int* suite_id_len,
-#else
-				   int*  suite_id_out,
-#endif
-
 				   javacall_utf16*  classname_out, int* classname_len,
 				   javacall_chapi_handler_registration_type *flag_out);
 
