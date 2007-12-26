@@ -51,6 +51,7 @@ JAVACALL_INCLUDE_SOURCE_FILES_SET+=$(foreach dir,$(JAVACALL_INCLUDE_DIR_SET),$(w
 JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_PLATFORM_DEFS_DIR)/javacall_platform_defs.h
 JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/interface/javacall_defs.h
 JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/implementation/share/properties/inc/javacall_properties.h
+JAVACALL_INCLUDE_SOURCE_FILES_SET+= $(JAVACALL_DIR)/implementation/share/log/inc/javautil_printf.h
 
 ifneq ($(UTILITIES)x, x)
 VPATH+=$(JAVACALL_DIR)/implementation/utils
@@ -61,11 +62,21 @@ endif
 # All the property stuff
 vpath %.c $(JAVACALL_DIR)/implementation/share/properties
 VPATH+=$(JAVACALL_DIR)/implementation/share/properties
+
+# Log util
+vpath %.c $(JAVACALL_DIR)/implementation/share/log
+VPATH+=$(JAVACALL_DIR)/implementation/share/log
+
 PROPERTY_FILES = javacall_properties \
 		 javacall_config_db \
 		 javacall_db \
 		 javacall_static_properties
+
+
+LOG_FILES = javautil_printf
 		 
+LOG_OBJECTS=$(addsuffix .obj,$(LOG_FILES))
+
 
 # In case using of the javacall functions wrappers, set the USE_JAVACALL_WRAPPERS variable
 ifeq ($(USE_JAVACALL_WRAPPERS),true)
