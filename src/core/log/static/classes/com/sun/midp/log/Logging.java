@@ -43,7 +43,7 @@ import com.sun.midp.configurator.Constants;
  * of the logging service.
  */
 public class Logging extends LoggingBase {
-
+          
     /**
      * Flag allowing client code with reporting levels less
      * than this to be compiled out of the build.  Callers

@@ -27,6 +27,7 @@
 #
 ######################################################################
 
+
 USE_JAVACALL=true
 
 JAVACALL_INCLUDE_DIR=$(JAVACALL_OUTPUT_DIR)/inc
@@ -49,6 +50,7 @@ include Options.gmk
 
 # All rules are defined in shared makefiles
 include $(MIDP_DIR)/build/common/Top.gmk
+
 
 # Including the part that should appear after Top.gmk
 include Platform_post.gmk

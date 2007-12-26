@@ -54,10 +54,6 @@ MIDP_JAVADOC_ALL += \
 # There are no modules for subsystem ( log_base )
 #
 
-# vpath for ( log_base ) subsystem
-#
-vpath % $(LOG_BASE_DIR)/reference/native
-
 # Java files for the ( log ) subsystem
 #
 SUBSYSTEM_LOG_JAVA_FILES += \
@@ -65,10 +61,19 @@ SUBSYSTEM_LOG_JAVA_FILES += \
 
 # Native files for the ( log_base ) subsystem
 #
+ifeq ($(BUILD_TARGET_PLATFORM), javacall)
+else  
+
+# vpath for ( log_base ) subsystem
+#
+vpath % $(LOG_BASE_DIR)/reference/native  
 
 INTERNAL_LOG_BASE_NATIVE_FILES += \
     midp_logging.c \
     midp_logging_kni.c
+
+endif
+
 
 ############################################################
 # Native files under LOG subsystem
@@ -76,5 +81,7 @@ INTERNAL_LOG_BASE_NATIVE_FILES += \
 SUBSYSTEM_LOG_NATIVE_FILES += \
     $(INTERNAL_LOG_BASE_NATIVE_FILES)
 
+ifneq ($(BUILD_TARGET_PLATFORM),javacall)
 SUBSYSTEM_LOG_EXTRA_INCLUDES += \
     -I$(LOG_BASE_DIR)/include
+endif    

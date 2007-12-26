@@ -33,4 +33,9 @@ ifeq ($(JAVACALL_PLATFORM),)
 $(error JAVACALL_PLATFORM is not set)
 endif
 
+#ifeq ($(BUILD_TARGET_PLATFORM),javacall)
+BUILD_TARGET_PLATFORM=javacall
+#endif
+
+
 include $(JAVACALL_PLATFORM).gmk

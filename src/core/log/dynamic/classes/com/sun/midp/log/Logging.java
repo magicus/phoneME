@@ -147,7 +147,7 @@ public class Logging extends LoggingBase {
             enableAsserts(loadAssertEnabled0());
         }
     }
-
+     hgljkhgkjuhgkuhj
     /**
      * Parses the value of MIDP_ARGS attribute set in the JAD file
      * of the given midlet suite.

@@ -36,10 +36,18 @@
 LOG_LIB = log
 LIB_SET += $(LOG_LIB)
 
-ifeq ($(USE_CONTROL_ARGS_FROM_JAD), true)
-    LOG_IMPL = dynamic
+
+
+ifeq ($(BUILD_TARGET_PLATFORM),javacall)
+	LOG_IMPL = javacall
 else
-    LOG_IMPL = static
+
+ifeq ($(USE_CONTROL_ARGS_FROM_JAD), true)
+	LOG_IMPL = dynamic
+else
+	LOG_IMPL = static
+endif
+
 endif
 
 LOG_DIR = $(SUBSYSTEM_CORE_DIR)/$(LOG_LIB)

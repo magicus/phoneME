@@ -162,10 +162,20 @@
                     calls will be compiled out of the build."/>
   <constant Type="int"
             Name="REPORT_LEVEL"
-            Value="LOG_ERROR"
+            Value="LOG_WARNING"
             Comment="Threshhold for the severity level below which
                     log messages will not be recorded. Severity levels less
                     than this value can be compiled out of the build."/>
+  <constant Type="boolean"
+            Name="TRACE_ENABLED"
+            Value="true"
+            Comment="Flag to indicate whether tracing is enabled in the 
+                     Logging service."/>
+  <constant Type="boolean"
+            Name="ASSERT_ENABLED"
+            Value="true"
+            Comment="Flag allowing client code with assert statements
+                     to be compiled out of a production build."/>      
   <constant Type="int"
             Name="AMS_MEMORY_RESERVED_MVM"
             Value="1024"
