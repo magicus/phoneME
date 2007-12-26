@@ -51,3 +51,7 @@ LD_FLAGS+=-nodefaultlib:libcmt.lib
 LIBS += $(JAVACALL_LIB_DIR)/javacall$(g).lib 
 LIBS += $(wildcard $(JAVACALL_LIB_DIR)/*.res)
 LIBS += Comdlg32.lib shell32.lib advapi32.lib 
+
+# Add support for dynamic properties file
+copy_configuration_file:
+	cp -u $(JAVACALL_OSS_SHARE_CONFIG_DIR)/jwc_properties.ini $(BINDIR)
