@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -21,21 +21,9 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-#ifndef __JSROP_MEMORY_MD_H
-#define __JSROP_MEMORY_MD_H
+#ifndef __JSROP_SUITESTORE_H
+#define __JSROP_SUITESTORE_H
 
-#if defined __cplusplus 
-    /* by C++98, C memory routines are placed at cstdlib */
-    #include <cstdlib>
-#else
-    /* by C90 and C99, memory routines are placed at stdlib.h */
-    #include <stdlib.h>
-#endif
+#include <jsrop_suitestore_md.h>
 
-#define MALLOC(size) malloc((size))
-#define FREE(addr)   free((addr))
-#define CALLOC(x, y) calloc(x, y)
-#define REALLOC(addr, size) realloc(addr, size)
-
-
-#endif /* __JSROP_MEMORY_H */
+#endif /* __JSROP_SUITESTORE_H */

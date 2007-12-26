@@ -32,6 +32,9 @@ extern "C" {
 
 #define MALLOC(size) midpMalloc(size)
 #define FREE(addr)   midpFree(addr)
+#define CALLOC(x, y) midpCalloc(x, y)
+#define REALLOC(addr, size)   midpRealloc(addr, size)
+
 
 #if defined __cplusplus 
 } 

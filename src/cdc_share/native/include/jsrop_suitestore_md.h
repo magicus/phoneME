@@ -1,5 +1,5 @@
 /*
- * Copyright  1990-2006 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -21,21 +21,29 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-#ifndef __JSROP_MEMORY_MD_H
-#define __JSROP_MEMORY_MD_H
-
-#if defined __cplusplus 
-    /* by C++98, C memory routines are placed at cstdlib */
-    #include <cstdlib>
-#else
-    /* by C90 and C99, memory routines are placed at stdlib.h */
-    #include <stdlib.h>
-#endif
-
-#define MALLOC(size) malloc((size))
-#define FREE(addr)   free((addr))
-#define CALLOC(x, y) calloc(x, y)
-#define REALLOC(addr, size) realloc(addr, size)
+#ifndef __JSROP_SUITESTORE_MD_H
+#define __JSROP_SUITESTORE_MD_H
 
 
-#endif /* __JSROP_MEMORY_H */
+/**
+* Type of the application suite ID.
+*/
+
+typedef int SuiteIdType;
+
+/**
+* Predefined suite IDs.
+*/
+
+#define UNUSED_SUITE_ID     0
+#define INTERNAL_SUITE_ID  -1
+#define MAX_SUITE_ID        2147483647
+
+/**
+* Length of string representation of the suite ID.
+* For example, "0000000F" for suiteId = 15.
+*/
+
+#define GET_SUITE_ID_LEN(suiteId) 8
+
+#endif /* __JSROP_SUITESTORE_MD_H */
