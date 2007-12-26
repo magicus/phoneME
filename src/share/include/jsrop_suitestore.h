@@ -26,4 +26,35 @@
 
 #include <jsrop_suitestore_md.h>
 
+#if defined __cplusplus 
+extern "C" { 
+#endif /* __cplusplus */
+
+/**
+ * @return maximum size in characters of suite_id in string representation
+ */
+int jsrop_suiteid_max_size();
+
+/**
+ * Convert suit_id to string representation
+ * @param suite_id original suite id
+ * @param suite_id_str_out buffer contatining space for atleast jsrop_suiteid_max_size() + 1 character 
+ *                         for receiving suite_id in string representation
+ * @return non zero in case of success zero in case of error
+ */
+int jsrop_suitid_to_string(SuiteIdType suite_id, /* OUT */ jchar* suite_id_str_out);
+
+
+/**
+ * Convert string representation of suit id to its original type
+ * @param suite_id suite id in string representation
+ * @param suite_id_out pointer on suit id of original type
+ * @return non zero in case of success zero in case of error
+ */
+int jsrop_string_to_suiteid(const jchar* suite_id_str, /* OUT */ SuiteIdType* suite_id_out);
+
+#if defined __cplusplus 
+}
+#endif /* __cplusplus */
+
 #endif /* __JSROP_SUITESTORE_H */
