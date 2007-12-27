@@ -33,32 +33,13 @@
 #include "javacall_chapi_registry.h"
 #include "javacall_chapi_invoke.h"
 #include "jsr211_registry.h"
-#include "jsr211_invoc.h"
 
-#include <pcsl_memory.h> 
-#include <pcsl_string.h>
+#include <jsrop_memory.h> 
 
 #include <string.h>
 #include <stdlib.h>
 
 #define MAX_BUFFER 128
-
-#define JSR211_MALLOC(x) pcsl_mem_malloc(x)
-#define JSR211_CALLOC(x,s) pcsl_mem_calloc(x,s)
-#define JSR211_FREE(x) pcsl_mem_free(x)
-#define JSR211_REALLOC(x,s) pcsl_mem_realloc(x,s)
-
-/** utility macros to fill string fields */
-#define GETSTR(jc_str, p_str) \
-    jc_str =  (javacall_utf16_string) (pcsl_string_is_null(p_str)? NULL: \
-               pcsl_string_get_utf16_data(p_str));
-
-/** utility macros to release string fields */
-#define RELSTR(jc_str, p_str) \
-    if (jc_str != NULL) { \
-        pcsl_string_release_utf16_data(jc_str, p_str); \
-    }
-
 
 /**
  * Status code [javacall_result -> jsr211_result] transformation.
@@ -70,53 +51,13 @@
  */
 #define ASSURE_BUF(buffer, len, maxlen) \
 	if (res == JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL){ \
-		JSR211_FREE(buffer); \
+		FREE(buffer); \
 		maxlen = len; \
-		buffer = (jchar*) JSR211_MALLOC(maxlen*sizeof(*buffer)); \
+		buffer = (jchar*) MALLOC(maxlen*sizeof(*buffer)); \
 		continue; \
 	}
 
 
-/**
- * Allocate memory and fill out destination array with given PCSL strings.
- */
-static jsr211_result alloc_strarray(const pcsl_string* src, int len, 
-                        javacall_utf16_string** dest) {
-    if (len > 0) {
-        javacall_utf16_string* arr;
-        const pcsl_string* ptr = src;
-
-        arr = (javacall_utf16_string*)
-                    JSR211_CALLOC(len, sizeof(javacall_utf16_string));
-        if (arr == NULL) {
-            return JAVACALL_OUT_OF_MEMORY;
-        }
-
-        for (*dest = arr; len--; arr++, ptr++) {
-            *arr = (javacall_utf16_string)pcsl_string_get_utf16_data(ptr);
-        }
-    } else {
-        *dest = NULL;
-    }
-
-    return JSR211_OK;
-}
-
-/**
- * Free memory allocated for string array.
- */
-static void free_strarray(const pcsl_string* src, int len, 
-                        javacall_utf16_string** array) {
-    if (len > 0 && *array != NULL) {
-        const javacall_utf16_string* arr;
-
-        for (arr = *array;len--; arr++, src++) {
-            pcsl_string_release_utf16_data(*arr, src);
-        }
-        JSR211_FREE((void*)*array);
-    }
-    *array = NULL;
-}
 
 /**
  * Append handler to single handler result buffer by handler ID
@@ -137,38 +78,25 @@ static int put_handler(const jchar* id, JSR211_RESULT_BUFFER result, int append)
 	jchar* classname = 0;
 	int classname_len = MAX_BUFFER;
 
-#ifdef SUITE_ID_STRING
 	jchar* suite_id = 0;
 	int suite_id_len = MAX_BUFFER;
-#else
-	int suite_id=0;
-#endif
 	javacall_chapi_handler_registration_type flag;
 	int res;
 
 	while (1) {
-		classname = JSR211_MALLOC(classname_len * sizeof(*classname));
+		classname = MALLOC(classname_len * sizeof(*classname));
 		if (!classname) break;
 
-#ifdef SUITE_ID_STRING
-		suite_id = JSR211_MALLOC(suite_id_len  * sizeof(*suite_id));
+		suite_id = MALLOC(suite_id_len  * sizeof(*suite_id));
 		if (!suite_id) break;
-#endif
 
 		res = javacall_chapi_get_handler_info(id, 
-
-#ifdef SUITE_ID_STRING
 				suite_id, &suite_id_len,
-#else
-				&suite_id, 
-#endif
 				classname,&classname_len,&flag);
 
 			if (res == JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL){
-				JSR211_FREE(classname); classname = 0;
-#ifdef SUITE_ID_STRING
-				JSR211_FREE(suite_id); suite_id = 0;
-#endif
+				FREE(classname); classname = 0;
+				FREE(suite_id); suite_id = 0;
 				continue;
 			}
 
@@ -176,28 +104,18 @@ static int put_handler(const jchar* id, JSR211_RESULT_BUFFER result, int append)
 
 			if (append) {
 				res = jsr211_appendHandler(id, id_sz, 
-#ifdef SUITE_ID_STRING
 				suite_id, suite_id_len - 1,
-#else
-				suite_id, 
-#endif
 				classname, classname_len - 1, flag,	(JSR211_RESULT_CHARRAY)result);
 			} else {
 				res = jsr211_fillHandler(id, id_sz, 
-#ifdef SUITE_ID_STRING
 				suite_id, suite_id_len - 1,
-#else
-				suite_id, 
-#endif
 				classname, classname_len - 1, flag,	(JSR211_RESULT_CH)result);
 			}
 			break;
 	}
 
-	if (classname) JSR211_FREE(classname); 
-#ifdef SUITE_ID_STRING
-	if (suite_id) JSR211_FREE(suite_id);
-#endif
+	if (classname) FREE(classname); 
+	if (suite_id) FREE(suite_id);
 	return res;
 }
 
@@ -230,7 +148,7 @@ jsr211_result jsr211_finalize(void){
  * retain pointed object
  * @return JSR211_OK if content handler registered successfully
  */
-jsr211_result jsr211_register_handler(const JSR211_content_handler* ch) {
+jsr211_result jsr211_register_handler(const jsr211_content_handler* ch) {
 
     jsr211_result status = JSR211_FAILED;
     javacall_utf16_string *types = NULL;
@@ -241,47 +159,18 @@ jsr211_result jsr211_register_handler(const JSR211_content_handler* ch) {
     javacall_utf16_string *accesses = NULL;
     int n = ch->act_num * ch->locale_num; // action_map length
 
-    javacall_const_utf16_string id = (javacall_utf16_string) pcsl_string_get_utf16_data(&ch->id);
-    javacall_const_utf16_string class_name = (javacall_utf16_string) pcsl_string_get_utf16_data(&ch->class_name);
-
-#ifdef SUITE_ID_STRING
-	javacall_const_utf16_string suite_id = (javacall_const_utf16_string) pcsl_string_get_utf16_data(&ch->suite_id);
-#else
-	int suite_id = ch->suite_id;
-#endif
-
-    if (JSR211_OK == alloc_strarray(ch->types, ch->type_num, &types)
-        && JSR211_OK == alloc_strarray(ch->suffixes, ch->suff_num, &suffixes)
-        && JSR211_OK == alloc_strarray(ch->actions, ch->act_num, &actions)
-        && JSR211_OK == alloc_strarray(ch->locales, ch->locale_num, &locales)
-        && JSR211_OK == alloc_strarray(ch->action_map, n, &action_map)
-        && JSR211_OK == alloc_strarray(ch->accesses, ch->access_num, &accesses))
-	{
-		status = javacall_chapi_register_handler(
-							(javacall_const_utf16_string)id,
-							(javacall_const_utf16_string)L"Java Appliation",
-							 suite_id, 
-							(javacall_const_utf16_string)class_name,
-							(javacall_chapi_handler_registration_type)ch->flag, 
-							(javacall_const_utf16_string*)types, ch->type_num, 
-							(javacall_const_utf16_string*)suffixes, ch->suff_num,
-							(javacall_const_utf16_string*)actions, ch->act_num, 
-							(javacall_const_utf16_string*)locales, ch->locale_num,
-							(javacall_const_utf16_string*)action_map, n, 
-							(javacall_const_utf16_string*)accesses, ch->access_num);
-    }
-
-    pcsl_string_release_utf16_data(id, &ch->id);
-    pcsl_string_release_utf16_data(class_name, &ch->class_name);
-#ifdef SUITE_ID_STRING
-	pcsl_string_release_utf16_data(suite_id, &ch->suite_id);
-#endif
-    free_strarray(ch->types, ch->type_num, &types);
-    free_strarray(ch->suffixes, ch->suff_num, &suffixes);
-    free_strarray(ch->actions, ch->act_num, &actions);
-    free_strarray(ch->locales, ch->locale_num, &locales);
-    free_strarray(ch->action_map, n, &action_map);
-    free_strarray(ch->accesses, ch->access_num, &accesses);
+	status = javacall_chapi_register_handler(
+						(javacall_const_utf16_string)ch->id,
+						(javacall_const_utf16_string)L"Java Appliation",
+						(javacall_const_utf16_string)ch->suite_id, 
+						(javacall_const_utf16_string)ch->class_name,
+						(javacall_chapi_handler_registration_type)ch->flag, 
+						(javacall_const_utf16_string*)ch->types, ch->type_num, 
+						(javacall_const_utf16_string*)ch->suffixes, ch->suff_num,
+						(javacall_const_utf16_string*)ch->actions, ch->act_num, 
+						(javacall_const_utf16_string*)ch->locales, ch->locale_num,
+						(javacall_const_utf16_string*)ch->action_map, n, 
+						(javacall_const_utf16_string*)ch->accesses, ch->access_num);
 
     return JSR211_STATUS(status);
 }
@@ -293,15 +182,11 @@ jsr211_result jsr211_register_handler(const JSR211_content_handler* ch) {
  * @param handler_id content handler ID
  * @return JSR211_OK if content handler unregistered successfully
  */
-jsr211_result jsr211_unregister_handler(const pcsl_string* handler_id) {
-    javacall_utf16_string id;
-    jsr211_result status;
+jsr211_result jsr211_unregister_handler(javacall_const_utf16_string handler_id) {
+	jsr211_result status = 
+		javacall_chapi_unregister_handler(handler_id);
 
-    id = (javacall_utf16_string) pcsl_string_get_utf16_data(handler_id);
-    status = JSR211_STATUS(javacall_chapi_unregister_handler(id));
-    pcsl_string_release_utf16_data(id, handler_id);
-
-    return status;
+	return JSR211_STATUS(status);
 }
 
 /**
@@ -317,8 +202,8 @@ jsr211_result jsr211_unregister_handler(const pcsl_string* handler_id) {
  *  <br>Use the @link jsr211_appendHandler() jsr211_appendHandler function to fill this structure.
  * @return status of the operation
  */
-jsr211_result jsr211_find_handler(const pcsl_string* caller_id_,
-                        jsr211_field key, const pcsl_string* value_,
+jsr211_result jsr211_find_handler(javacall_const_utf16_string caller_id,
+                        jsr211_field key, javacall_const_utf16_string value,
                         /*OUT*/ JSR211_RESULT_CHARRAY result) {
 
 	int pos = 0;
@@ -327,10 +212,8 @@ jsr211_result jsr211_find_handler(const pcsl_string* caller_id_,
 	int res = JSR211_OK;
 	int enum_by_id_prefix = -1/*TRUE*/;
 
-    javacall_utf16_string caller_id = caller_id_ ? (javacall_utf16_string) pcsl_string_get_utf16_data(caller_id_) : 0;
-    javacall_utf16_string value = (javacall_utf16_string) pcsl_string_get_utf16_data(value_);
 
-	buffer = (jchar*) JSR211_MALLOC(maxlen*sizeof(*buffer));
+	buffer = (jchar*) MALLOC(maxlen*sizeof(*buffer));
 
 	while (buffer){
 		len = maxlen;
@@ -372,11 +255,9 @@ jsr211_result jsr211_find_handler(const pcsl_string* caller_id_,
 	} 
 
 	javacall_chapi_enum_finish(pos);
-	pcsl_string_release_utf16_data(caller_id,caller_id_);
-	pcsl_string_release_utf16_data(value,value_);
 
 	if (!buffer) return JSR211_FAILED; //out of memory
-	JSR211_FREE(buffer);
+	FREE(buffer);
 
 	return (res==JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS)?JSR211_OK:JSR211_FAILED;
 }
@@ -391,23 +272,16 @@ jsr211_result jsr211_find_handler(const pcsl_string* caller_id_,
  * @return status of the operation
  */
 jsr211_result jsr211_find_for_suite(
-#ifdef SUITE_ID_STRING
-									const pcsl_string* suite_id_, 
-#else
-									int suite_id,
-#endif
+						javacall_const_utf16_string suite_id, 
                         /*OUT*/ JSR211_RESULT_CHARRAY result){
 	int pos = 0;
 	jchar* buffer = 0;
 	int len, maxlen = MAX_BUFFER;
 	int res;
 
-#ifdef SUITE_ID_STRING
-	javacall_const_utf16_string suite_id = (javacall_const_utf16_string) pcsl_string_get_utf16_data(suite_id_);
 	int suite_id_len = wcslen(suite_id);
-#endif
 
-	buffer = (jchar*) JSR211_MALLOC(maxlen*sizeof(*buffer));
+	buffer = (jchar*) MALLOC(maxlen*sizeof(*buffer));
 
 	pos=0;
 	while (buffer){
@@ -425,11 +299,8 @@ jsr211_result jsr211_find_for_suite(
 
 	javacall_chapi_enum_finish(pos);
 
-#ifdef SUITE_ID_STRING
-	pcsl_string_release_utf16_data(suite_id,suite_id_);
-#endif
 	if (!buffer) return JSR211_FAILED; //out of memory
-	JSR211_FREE(buffer);
+	FREE(buffer);
 
 	return (res==JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS)?JSR211_OK:JSR211_FAILED;
 }
@@ -448,9 +319,9 @@ jsr211_result jsr211_find_for_suite(
  * @return status of the operation
  */
 jsr211_result jsr211_handler_by_URL(
-        const pcsl_string* caller_id_,
-        const pcsl_string* url_,
-        const pcsl_string* action_,
+        javacall_const_utf16_string caller_id,
+        javacall_const_utf16_string url,
+        javacall_const_utf16_string action,
         /*OUT*/ JSR211_RESULT_CH result){
 	
 //find suffix
@@ -458,15 +329,10 @@ int pos = 0;
 jchar* buffer = 0;
 int len, maxlen = MAX_BUFFER;
 int res, found = 0;
+javacall_const_utf16_string suffix;
 
-javacall_const_utf16_string caller_id, url, action, suffix;
-
-buffer = (jchar*) JSR211_MALLOC(maxlen*sizeof(*buffer));
+buffer = (jchar*) MALLOC(maxlen*sizeof(*buffer));
 if (!buffer) return JSR211_FAILED;
-
-caller_id = caller_id_ ? (javacall_utf16_string) pcsl_string_get_utf16_data(caller_id_) : 0;
-url = (javacall_utf16_string) pcsl_string_get_utf16_data(url_);
-action = (javacall_utf16_string) pcsl_string_get_utf16_data(action_);
 
 suffix=(javacall_const_utf16_string)wcsrchr(url,'.');
 
@@ -492,11 +358,7 @@ while (buffer && suffix && !found){
 	} 
 	javacall_chapi_enum_finish(pos);
 
-	if (caller_id_) pcsl_string_release_utf16_data(caller_id,caller_id_);
-	pcsl_string_release_utf16_data(url,url_);
-	pcsl_string_release_utf16_data(action,action_);
-
-	if (buffer) JSR211_FREE(buffer);
+	if (buffer) FREE(buffer);
 
 	return (found)?JSR211_OK:JSR211_FAILED;
 
@@ -516,12 +378,11 @@ while (buffer && suffix && !found){
  * @return status of the operation
  */
 jsr211_result jsr211_get_all(
-        const pcsl_string* caller_id_,
+        javacall_const_utf16_string caller_id,
         jsr211_field field, 
         /*OUT*/ JSR211_RESULT_STRARRAY result){
 
 int res = JSR211_OK;
-javacall_const_utf16_string caller_id=0;
 
 int handlerlen, handlermaxlen = MAX_BUFFER;
 jchar* handler=0;
@@ -531,28 +392,24 @@ int valuelen, valuemaxlen = MAX_BUFFER;
 jchar* value=0;
 int vpos;
 
-if (caller_id_ || (field == JSR211_FIELD_ID)){
-	handler = (jchar*) JSR211_REALLOC(handler,handlermaxlen * sizeof(*handler));
+if (caller_id || (field == JSR211_FIELD_ID)){
+	handler = (jchar*) REALLOC(handler,handlermaxlen * sizeof(*handler));
 	if (!handler) {
 		return JSR211_FAILED;
 	}
 }
 
 if (field != JSR211_FIELD_ID){
-	value = JSR211_MALLOC(valuemaxlen*sizeof(*value));
+	value = MALLOC(valuemaxlen*sizeof(*value));
 	if (!value) {
-		if(handler) JSR211_FREE(handler);
+		if(handler) FREE(handler);
 		return JSR211_FAILED;
 	}
 }
 
-if (caller_id_){
-	caller_id = (javacall_utf16_string) pcsl_string_get_utf16_data(caller_id_);
-	if (!caller_id) res = JSR211_FAILED;
-}
 
 	while (1){
-		if (caller_id_ || (field == JSR211_FIELD_ID)){
+		if (caller_id || (field == JSR211_FIELD_ID)){
 
 			handlerlen = handlermaxlen;
 
@@ -601,9 +458,8 @@ if (caller_id_){
 	} 
 	javacall_chapi_enum_finish(hpos);
 
-	if(handler) JSR211_FREE(handler);
-	if(value) JSR211_FREE(value);
-	if(caller_id) pcsl_string_release_utf16_data(caller_id,caller_id_);
+	if(handler) FREE(handler);
+	if(value) FREE(value);
 
 	return (handler && value && (res==JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS))?JSR211_OK:JSR211_FAILED;
 }
@@ -624,16 +480,12 @@ if (caller_id_){
  * @return status of the operation
  */
 jsr211_result jsr211_get_handler(
-        const pcsl_string* caller_id_,
-        const pcsl_string* id_,
+        javacall_const_utf16_string caller_id,
+        javacall_const_utf16_string id,
         jsr211_search_flag search_flag,
         /*OUT*/ JSR211_RESULT_CH result){
 
 	int res = JAVACALL_CHAPI_ERROR_NOT_FOUND;
-	javacall_const_utf16_string caller_id, id;
-
-	caller_id = (javacall_utf16_string) pcsl_string_get_utf16_data(caller_id_);
-	id = (javacall_utf16_string) pcsl_string_get_utf16_data(id_);
 
 	if (search_flag==JSR211_SEARCH_EXACT){
 		if (javacall_chapi_is_access_allowed(id,caller_id)){
@@ -643,7 +495,7 @@ jsr211_result jsr211_get_handler(
 		int pos = 0;
 		jchar* buffer;
 		int len, maxlen = MAX_BUFFER;
-		buffer = (jchar*) JSR211_MALLOC(maxlen * sizeof(*buffer));
+		buffer = (jchar*) MALLOC(maxlen * sizeof(*buffer));
 		while (buffer){
 			len = maxlen;
             res = javacall_chapi_enum_handlers_prefixes_of(id, &pos, buffer, &len);
@@ -655,17 +507,14 @@ jsr211_result jsr211_get_handler(
 			break;
 		}
 		javacall_chapi_enum_finish(pos);
-		if (buffer) JSR211_FREE(buffer);
+		if (buffer) FREE(buffer);
 	}
-
-	pcsl_string_release_utf16_data(caller_id,caller_id_);
-	pcsl_string_release_utf16_data(id,id_);
 
 	return (res==JAVACALL_OK)?JSR211_OK:JSR211_FAILED;
 }
 
 
-static int get_action_map(const pcsl_string* id_,
+static int get_action_map(javacall_const_utf16_string id,
 						  /*OUT*/ JSR211_RESULT_STRARRAY result){
 	int apos = 0;
 
@@ -682,18 +531,12 @@ static int get_action_map(const pcsl_string* id_,
 
 	int res;
 
-	javacall_const_utf16_string id;
-
 	JSR211_RESULT_STRARRAY locales_array = (JSR211_RESULT_STRARRAY)jsr211_create_result_buffer();
 	JSR211_RESULT_STRARRAY actions_array;
 	
-	id = (javacall_utf16_string) pcsl_string_get_utf16_data(id_);
-
-	
-
-	abuffer = (jchar*) JSR211_MALLOC(alenmax * sizeof(*abuffer));
-	lbuffer = (jchar*) JSR211_MALLOC(llenmax * sizeof(*lbuffer));
-	lnbuffer = (jchar*) JSR211_MALLOC(lnlenmax * sizeof(*lnbuffer));
+	abuffer = (jchar*) MALLOC(alenmax * sizeof(*abuffer));
+	lbuffer = (jchar*) MALLOC(llenmax * sizeof(*lbuffer));
+	lnbuffer = (jchar*) MALLOC(lnlenmax * sizeof(*lnbuffer));
 
 	lpos=0;
 	while (locales_array && abuffer && lbuffer && lnbuffer){
@@ -747,10 +590,9 @@ static int get_action_map(const pcsl_string* id_,
 
 	javacall_chapi_enum_finish(lpos);
 
-	pcsl_string_release_utf16_data(id,id_);
-	if (abuffer) JSR211_FREE(abuffer);
-	if (lbuffer) JSR211_FREE(lbuffer);
-	if (lnbuffer) JSR211_FREE(lnbuffer);
+	if (abuffer) FREE(abuffer);
+	if (lbuffer) FREE(lbuffer);
+	if (lnbuffer) FREE(lnbuffer);
 
 	if (locales_array) jsr211_release_result_buffer(locales_array);
 
@@ -769,7 +611,7 @@ static int get_action_map(const pcsl_string* id_,
  *  <br>Use the @link jsr211_appendString() jsr211_appendString function to fill this structure.
  * @return status of the operation
  */
-jsr211_result jsr211_get_handler_field(const pcsl_string* id_,
+jsr211_result jsr211_get_handler_field(javacall_const_utf16_string id,
                              jsr211_field field_id,
                              /*OUT*/ JSR211_RESULT_STRARRAY result){
 
@@ -777,15 +619,13 @@ jsr211_result jsr211_get_handler_field(const pcsl_string* id_,
 	jchar* buffer;
 	int len, maxlen = MAX_BUFFER;
 	int res;
-	javacall_const_utf16_string id;
 
 
 	if (field_id == JSR211_FIELD_ACTION_MAP) {
-		return get_action_map(id_,result);
+		return get_action_map(id,result);
 	}
 
-	id = (javacall_utf16_string) pcsl_string_get_utf16_data(id_);	
-	buffer = (jchar*) JSR211_MALLOC(maxlen * sizeof(*buffer));
+	buffer = (jchar*) MALLOC(maxlen * sizeof(*buffer));
 
 	pos=0;
 	while (buffer){
@@ -814,10 +654,8 @@ jsr211_result jsr211_get_handler_field(const pcsl_string* id_,
 	}
 	javacall_chapi_enum_finish(pos);
 
-    pcsl_string_release_utf16_data(id,id_);
-
 	if (!buffer) return JSR211_FAILED;
-	JSR211_FREE(buffer);
+	FREE(buffer);
 
 	return (res==JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS)?JSR211_OK:JSR211_FAILED;
 }
@@ -835,7 +673,9 @@ jsr211_result jsr211_get_handler_field(const pcsl_string* id_,
  * <li> other code from the enum according to error codition
  * </ul>
  */
-jsr211_launch_result jsr211_execute_handler(const pcsl_string* _id) {
-	(void)_id;
+jsr211_launch_result jsr211_execute_handler(javacall_const_utf16_string id) {
+	(void)id;
     return JSR211_LAUNCH_ERR_NOTSUPPORTED;
 }
+
+

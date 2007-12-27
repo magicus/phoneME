@@ -32,13 +32,15 @@
  */
 
 
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 
 #include <javacall_defs.h>
-#include "jsr211_registry.h"
+#include "jsr211_result.h"
 
-#include <pcsl_memory.h> 
+#include <jsrop_memory.h> 
+#include <jsrop_suitestore.h> 
 
 /**
  * The granularity of dynamically expanded size for result buffer.
@@ -50,12 +52,6 @@
 static int GET_CH_SIZE(id_size, suit_size, clas_size) {
 	return id_size + 1 + suit_size + 1 + clas_size + 1 + 1;
 }
-
-
-#define JSR211_MALLOC(x) pcsl_mem_malloc(x)
-#define JSR211_CALLOC(x,s) pcsl_mem_calloc(x,s)
-#define JSR211_FREE(x) pcsl_mem_free(x)
-#define JSR211_REALLOC(x,s) pcsl_mem_realloc(x,s)
 
 /**
  * Internal structure.
@@ -70,7 +66,7 @@ typedef struct _JSR211_CHAPI_INTERNAL_RESBUF_{
 
 JSR211_RESULT_BUFFER jsr211_create_result_buffer(){
     JSR211_CHAPI_INTERNAL_RESBUF* res = (JSR211_CHAPI_INTERNAL_RESBUF*)
-		JSR211_MALLOC(sizeof(*res));
+		MALLOC(sizeof(*res));
 	if (!res) return 0;
 	res->buf = 0;
 	res->bufsz = 0;
@@ -81,7 +77,7 @@ JSR211_RESULT_BUFFER jsr211_create_result_buffer(){
 void jsr211_release_result_buffer(JSR211_RESULT_BUFFER resbuf){
     if (!resbuf) return;
     if (((JSR211_CHAPI_INTERNAL_RESBUF*)resbuf)->buf) {
-	JSR211_FREE(((JSR211_CHAPI_INTERNAL_RESBUF*)resbuf)->buf);
+	FREE(((JSR211_CHAPI_INTERNAL_RESBUF*)resbuf)->buf);
 	((JSR211_CHAPI_INTERNAL_RESBUF*)resbuf)->buf = 0;
     }
     ((JSR211_CHAPI_INTERNAL_RESBUF*)resbuf)->bufsz = 0;
@@ -110,7 +106,7 @@ static jsr211_result assureBufferCap(JSR211_CHAPI_INTERNAL_RESBUF* resbuf,
 	JSR211_CHAPI_INTERNAL_RESBUF* resbuf_ = (JSR211_CHAPI_INTERNAL_RESBUF*)resbuf;
     if (resbuf_->used + ext > resbuf_->bufsz) {
         int sz = (resbuf_->used + ext + RESBUF_GRAN) & (~RESBUF_GRAN);
-		javacall_utf16* tmp = (javacall_utf16*) JSR211_REALLOC(resbuf_->buf, sz * sizeof(javacall_utf16));
+		javacall_utf16* tmp = (javacall_utf16*) REALLOC(resbuf_->buf, sz * sizeof(javacall_utf16));
         if (!tmp) {
             return JSR211_FAILED;
         }
@@ -165,24 +161,16 @@ static void fill_ch_buf(const javacall_utf16* id, int id_size,
  */
 jsr211_result jsr211_fillHandler(
         const jchar* id, int id_size,
-#ifdef SUITE_ID_STRING
 		const jchar* suit, int suit_size, 
-#else
-        int suit_id,
-#endif
         const jchar* class_name, int class_name_size,
         int flag, /*OUT*/ JSR211_RESULT_CH result) {
     int sz;
     jchar *buf;
 	JSR211_CHAPI_INTERNAL_RESBUF* resbuf_ = (JSR211_CHAPI_INTERNAL_RESBUF*)result;	
-#ifndef SUITE_ID_STRING
-	jchar suit[12];
-	int suit_size = sprintf(suit,"%d",suit_id);
-#endif
 
     sz = GET_CH_SIZE(id_size, suit_size, class_name_size);
 
-    buf = (jchar*) JSR211_MALLOC(sz * sizeof(jchar));
+    buf = (jchar*) MALLOC(sz * sizeof(jchar));
     if (buf == NULL) {
         return JSR211_FAILED;
     }
@@ -318,18 +306,10 @@ jsr211_result jsr211_appendUniqueString(const jchar* str, int str_size, int case
  */
 jsr211_result jsr211_appendHandler(
         const jchar* id, int id_size,
-#ifdef SUITE_ID_STRING
         const jchar* suit, int suit_size,
-#else
-        int suit_id,
-#endif
         const jchar* class_name, int class_name_size,
         int flag, /*OUT*/ JSR211_RESULT_CHARRAY array) {
 
-#ifndef SUITE_ID_STRING
-	jchar suit[12];
-	int suit_size = sprintf(suit,"%d",suit_id);
-#endif
     int sz = GET_CH_SIZE(id_size, suit_size, class_name_size);
     int n;
 	JSR211_CHAPI_INTERNAL_RESBUF* array_ = (JSR211_CHAPI_INTERNAL_RESBUF*)array;	
@@ -351,4 +331,7 @@ jsr211_result jsr211_appendHandler(
     array_->buf[0] = n + 1;
     return JSR211_OK;
 }
+
+
+#define MAX_SUITE_ID_SIZE 12
 

@@ -129,11 +129,7 @@ int jsr211_get_result_data_length(JSR211_RESULT_BUFFER resbuf);
  */
 jsr211_result jsr211_fillHandler(
         const jchar* id, int id_size,
-#ifdef SUITE_ID_STRING
-        const jchar* suite_id, int suite_id_size,
-#else
-		int suite_id,
-#endif
+		const jchar* suit, int suit_size, 
         const jchar* class_name, int class_name_size,
         int flag, /*OUT*/ JSR211_RESULT_CH result);
 
@@ -193,15 +189,9 @@ jsr211_boolean jsr211_isUniqueHandler(const jchar *id, int id_sz,
  */
 jsr211_result jsr211_appendHandler(
         const jchar* id, int id_size,
-#ifdef SUITE_ID_STRING
-        const jchar* suite_id, int suite_id_size,
-#else
-		int suite_id,
-#endif
+		const jchar* suit, int suit_size,
         const jchar* class_name, int class_name_size,
         int flag, /*OUT*/ JSR211_RESULT_CHARRAY array);
-
-
 
 /** @} */
 
