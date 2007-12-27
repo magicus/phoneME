@@ -79,63 +79,6 @@ extern "C" {
 #include "javacall_defs.h" 
 #include "javacall_lcd.h"
 
-/** @defgroup Constant Constants
- *  Constant values
- *  @{
- */
-
-/* */
-#define JAVACALL_VIDEO_MPEG4_MIME    "video/mp4v-es"
-#define JAVACALL_VIDEO_MPEG4_MIME_2  "video/mp4"
-#define JAVACALL_VIDEO_WMV_MIME      "video/x-ms-wmv"
-#define JAVACALL_AUDIO_WMA_MIME      "audio/x-ms-wma"
-#define JAVACALL_VIDEO_AVI_MIME      "video/avi"
-#define JAVACALL_VIDEO_MPEG1_MIME    "video/mpeg"
-#define JAVACALL_VIDEO_3GPP_MIME     "video/3gpp"
-#define JAVACALL_VIDEO_3GPP_MIME_2   "video/3gpp2"
-#define JAVACALL_VIDEO_3GPP_MIME_3   "video/3gp"
-#define JAVACALL_VIDEO_3GPP_MIME_4   "video/h263"
-#define JAVACALL_VIDEO_3GPP_MIME_5   "video/h264"
-
-#define JAVACALL_AUDIO_MIDI_MIME     "audio/midi"
-#define JAVACALL_AUDIO_MIDI_MIME_2   "audio/mid"
-#define JAVACALL_AUDIO_SP_MIDI_MIME  "audio/sp-midi"
-#define JAVACALL_AUDIO_X_MIDI_MIME   "audio/x-midi"
-#define JAVACALL_AUDIO_WAV_MIME      "audio/x-wav"
-#define JAVACALL_AUDIO_WAV_MIME_2    "audio/wav"
-#define JAVACALL_AUDIO_MP3_MIME      "audio/mpeg"
-#define JAVACALL_AUDIO_MP3_MIME_2    "audio/mp3"
-#define JAVACALL_AUDIO_MP3_MIME_3    "audio/x-mpeg"
-#define JAVACALL_AUDIO_MP3_MIME_4    "audio/mpg"
-#define JAVACALL_AUDIO_AMR_MIME      "audio/amr"
-#define JAVACALL_AUDIO_AMRNB_MIME    "audio/amrnb"
-#define JAVACALL_AUDIO_AMR_WB_MIME   "audio/amr-wb"
-#define JAVACALL_AUDIO_MPEG4_MIME    "audio/mp4a-latm"
-#define JAVACALL_AUDIO_MPEG4_MIME_2  "audio/mp4"
-#define JAVACALL_AUDIO_AAC_MIME      "audio/aac"
-#define JAVACALL_AUDIO_AAC_MIME_2    "audio/apl"
-#define JAVACALL_AUDIO_AAC_MIME_3    "audio/x-aac"
-#define JAVACALL_AUDIO_ADPCM_MIME    "audio/adpcm"
-#define JAVACALL_AUDIO_WMA_MIME      "audio/wma"
-#define JAVACALL_AUDIO_WMA_MIME_2    "audio/x-ms-wma"
-#define JAVACALL_AUDIO_MMF_MIME      "audio/mmf"
-#define JAVACALL_AUDIO_MMF_MIME_2    "audio/x-mmf"
-#define JAVACALL_AUDIO_SMAF_MIME     "audio/smaf"
-#define JAVACALL_AUDIO_TONE_MIME     "audio/x-tone-seq"
-#define JAVACALL_AUDIO_QCELP_MIME    "audio/qcelp"
-#define JAVACALL_AUDIO_QCELP_MIME_2  "audio/vnd.qcelp"
-
-#define JAVACALL_IMAGE_JPEG_MIME     "image/jpeg"
-#define JAVACALL_IMAGE_PNG_MIME      "image/png"
-#define JAVACALL_IMAGE_PNG_MIME      "image/png"
-#define JAVACALL_IMAGE_GIF_MIME      "image/gif"
-
-#define JAVACALL_DEVICE_TONE_MIME    "device://tone"
-#define JAVACALL_DEVICE_MIDI_MIME    "device://midi"
-#define JAVACALL_CAPTURE_VIDEO_MIME  "capture://video"
-#define JAVACALL_CAPTURE_AUDIO_MIME  "capture://audio"
-#define JAVACALL_CAPTURE_RADIO_MIME  "capture://radio"
-
 /**
  * @enum javacall_media_type
  * 
@@ -192,22 +135,20 @@ typedef enum {
     JAVACALL_MEDIA_FORMAT_GRAY8,                //8b monochrome, image/raw
 
     JAVACALL_MEDIA_FORMAT_UNKNOWN,
+    JAVACALL_MEDIA_FORMAT_UNSUPPORTED,
     JAVACALL_MEDIA_FORMAT_END_OF_TYPE
 } javacall_media_format_type;
 
 /**
- * @enum javacall_media_type
  * 
- * @brief Multimedia contents type. If you want to add new media types, you have to consult with Sun Microsystems.
+ * Multimedia protocol types.
  */
-typedef enum {
-    JAVACALL_MEDIA_FILE_REMOTE_PROTOCOL = 0x01,   // "file://" via network
-    JAVACALL_MEDIA_FILE_LOCAL_PROTOCOL = 0x02,    // "file://" local content
-    JAVACALL_MEDIA_HTTP_PROTOCOL = 0x04,          // "http://"
-    JAVACALL_MEDIA_HTTPS_PROTOCOL = 0x08,         // "https://"
-    JAVACALL_MEDIA_RTP_PROTOCOL = 0x10,           // "rtp://"
-    JAVACALL_MEDIA_RTSP_PROTOCOL = 0x20           // "rtsp://"
-} javacall_media_protocol_type;
+#define JAVACALL_MEDIA_FILE_REMOTE_PROTOCOL     0x01    // "file://" via network
+#define JAVACALL_MEDIA_FILE_LOCAL_PROTOCOL      0x02    // "file://" local content
+#define JAVACALL_MEDIA_HTTP_PROTOCOL            0x04    // "http://"
+#define JAVACALL_MEDIA_HTTPS_PROTOCOL           0x08    // "https://"
+#define JAVACALL_MEDIA_RTP_PROTOCOL             0x10    // "rtp://"
+#define JAVACALL_MEDIA_RTSP_PROTOCOL            0x20    // "rtsp://"
 
 /**
  * 
@@ -231,10 +172,13 @@ typedef enum {
 typedef struct {
     /* Media format */
     javacall_media_format_type          mediaFormat;
+    /* Content types for the media format */
+    javacall_const_utf16_string         contentTypes;
+
     /* bitmask of supported remote protocols */
-    javacall_int32                      rem_protocols;
+    javacall_int32                      remote_protocols;
     /* bitmask of native capabilities for remote protocols */
-    javacall_int32                      rem_protocol_caps;
+    javacall_int32                      remote_protocol_caps;
     /* bitmask of supported local protocols */
     javacall_int32                      local_protocols;
     /* bitmask of native capabilities for local protocols */
@@ -266,9 +210,6 @@ typedef struct {
     /** Supported video snapshot formats and parameters */
     /*  NULL if not supported */
     javacall_const_utf16_string         videoSnapshotEncoding;
-    /** Supported radio capture formats and parameters */
-    /*  NULL if not supported */
-    javacall_const_utf16_string         radioEncoding;
 
     /** Support Device Tone*/
     javacall_bool                       supportDeviceTone;
@@ -392,7 +333,8 @@ javacall_result javacall_media_finalize(void);
  * @retval JAVACALL_OK               success
  *         JAVACALL_INVALID_ARGUMENT if argument is NULL
  */
-javacall_result javacall_media_get_configuration(const javacall_media_configuration* configuration);
+javacall_result javacall_media_get_configuration(
+                            const javacall_media_configuration /*OUT*/*configuration);
 
 /** @} */ 
 
@@ -418,13 +360,58 @@ javacall_result javacall_media_get_configuration(const javacall_media_configurat
  *                      JAVACALL_MEDIA_FORMAT_UNKNOWN if unknown
  * @param mime          Mime type unicode string. 
  *                      NULL if unknown
- * @param mimeLength    String length of media MIME type. 
+ * @param mimeLength    String length of media MIME type.
  * @param uri           URI unicode string to media data.
  * @param uriLength     String length of URI
  * @param contentLength Content length in bytes
  *                      If Java MMAPI couldn't determine content length, 
  *                      this value should be -1
- * @param handle        Handle of native library. 
+ * @param handle        Handle of native library.
+ *
+ * @retval JAVACALL_OK               success
+ *         JAVACALL_FAIL
+ *         JAVACALL_INVALID_ARGUMENT
+ */
+
+/**
+ * Ask platform if URL will be hadled by native or Java layer.
+ * If this function return JAVACALL_OK, Java do not call 
+ * javacall_media_do_buffering function
+ * In this case, native layer should handle all of data gathering by itself
+ * This function also should try to discover format of media by provided URL 
+ * (whithout downloading of media content)
+ *
+ * @param uri           URI unicode string to media data.
+ * @param uriLength     String length of URI
+ * @param mediaFormat   format of the media discovered by URL, 
+ *                      JAVACALL_MEDIA_FORMAT_UNKNOWN if can not be discovered
+ *                      JAVACALL_MEDIA_FORMAT_UNSUPPORTED if unsupported
+ * 
+ * @retval JAVACALL_OK      Yes, this protocol handled by device.
+ * @retval JAVACALL_FAIL    No, please handle this protocol from Java.
+ */
+javacall_result javacall_media_URL_handled_by_device(javacall_const_utf16_string uri, 
+                                                    long uriLength, 
+                                                    javacall_media_format_type /*OUT*/*mediaFormat);
+
+/**
+ * Java MMAPI call this function to create native media handler.
+ * This function is called at the first time to initialize native library.
+ * You can do your own initialization job from this function.
+ * 
+ * @param appId         Unique application ID for this playing
+ * @param playerId      Unique player object ID for this playing
+ * @param mediaFormat   Media format type. 
+ *                      JAVACALL_MEDIA_FORMAT_UNKNOWN if unknown
+ * @param mime          Mime type unicode string. 
+ *                      NULL if unknown
+ * @param mimeLength    String length of media MIME type.
+ * @param uri           URI unicode string to media data.
+ * @param uriLength     String length of URI
+ * @param contentLength Content length in bytes
+ *                      If Java MMAPI couldn't determine content length, 
+ *                      this value should be -1
+ * @param handle        Handle of native library.
  *
  * @retval JAVACALL_OK               success
  *         JAVACALL_FAIL
@@ -437,7 +424,7 @@ javacall_result javacall_media_create(javacall_app_id appId,
                                       long mimeLength,
                                       javacall_const_utf16_string uri, 
                                       long uriLength,
-                                      long contentLength
+                                      long contentLength,
                                       javacall_handle *handle);
 
 /**
@@ -455,6 +442,18 @@ javacall_result javacall_media_create(javacall_app_id appId,
  */
 javacall_result javacall_media_set_param(javacall_handle handle,
                                          javacall_media_extra_params *param);
+
+/**
+ * Get the format type of media content
+ *
+ * @param handle    Handle to the library 
+ * @param format    Format type
+ * 
+ * @retval JAVACALL_OK          Success
+ * @retval JAVACALL_FAIL        Fail
+ */
+javacall_result javacall_media_get_format(javacall_handle handle, 
+                              javacall_media_format_type /*OUT*/*format);
 
 /**
  * Close native media player that created by creat or creat2 API call
@@ -525,21 +524,20 @@ javacall_result javacall_media_protocol_handled_by_device(javacall_handle handle
  * 
  * @param handle    Handle to the library
  * @param buffer    Media data buffer pointer. Can be NULL at end of buffering
- * @param length    Length of media data. Can be -1 at end of buffering
  * @param offset    Offset. If offset value is 0, it means start of buffering
  *                  It'll be incremented as buffering progress
  *                  You can determine your internal buffer's writting position by using this value
  *                  Can be -1 at end of buffering
+ * @param length    Length of media data. Can be -1 at end of buffering,
+ *                  If success return 'length of buffered data' else return -1
  * 
- * @param len_buffered If success return 'length of buffered data' else return -1
- *
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL   
  * @retval JAVACALL_INVALID_ARGUMENT
  */
 javacall_result javacall_media_do_buffering(javacall_handle handle, 
-                                 const void* buffer, long length, long offset,
-                                 /* OUT */ long *len_buffered);
+                                 const void* buffer, long offset,
+                                 /* INOUT */ long *length);
 
 /**
  * MMAPI call this function to clear(delete) buffered media data
@@ -617,7 +615,7 @@ javacall_result javacall_media_get_time(javacall_handle handle, /*OUT*/ long *ms
  * @retval JAVACALL_OK      Success
  * @retval JAVACALL_FAIL    Fail
  */
-javacall_result javacall_media_set_time(javacall_handle handle, long *ms);
+javacall_result javacall_media_set_time(javacall_handle handle, /*INOUT*/long *ms);
  
 /**
  * Get whole media time in ms.
@@ -629,7 +627,7 @@ javacall_result javacall_media_set_time(javacall_handle handle, long *ms);
  * @retval JAVACALL_OK      Success
  * @retval JAVACALL_NO_DATA_AVAILABLE
  */
-javacall_result javacall_media_get_duration(javacall_handle handle, long *ms);
+javacall_result javacall_media_get_duration(javacall_handle handle, /*OUT*/long *ms);
 
 /** @} */
 
@@ -666,7 +664,7 @@ javacall_result javacall_media_get_volume(javacall_handle handle, /*OUT*/ long *
  * @retval JAVACALL_OK      Success
  * @retval JAVACALL_NO_DATA_AVAILABLE
  */
-javacall_result javacall_media_set_volume(javacall_handle handle, long* level);
+javacall_result javacall_media_set_volume(javacall_handle handle, /*INOUT*/ long* level);
 
 /**
  * Is audio muted now?
@@ -917,17 +915,16 @@ javacall_result javacall_media_seek_to_frame(javacall_handle handle,
  * Skip a given number of frames from the current position.
  * 
  * @param handle        Handle to the library 
- * @param framesToSkip  The number of frames to skip from the current position. 
+ * @param nFframes      The number of frames to skip from the current position. 
  *                      If framesToSkip is negative, it will seek backward 
  *                      by framesToSkip number of frames.
- * @param actualFramesSkipped Number of actual skipped frames
+ *                      Return number of actual skipped frames
  * 
  * @retval JAVACALL_OK      Success
  * @retval JAVACALL_FAIL    Fail
  */
 javacall_result javacall_media_skip_frames(javacall_handle handle, 
-                                           long framesToSkip, 
-                                           /*OUT*/long* actualFramesSkipped);
+                                           /* INOUT */ long *nFrames);
 
 /** @} */ 
 
@@ -1385,8 +1382,8 @@ javacall_result javacall_media_supports_recording(javacall_handle handle);
  * 
  * @retval JAVACALL_OK          Success
  */
-javacall_bool javacall_media_set_recordsize_limit_supported(javacall_handle handle,
-                                                            javacall_bool *supported);
+javacall_result javacall_media_set_recordsize_limit_supported(javacall_handle handle,
+                                                    /*OUT*/ javacall_bool *supported);
 
 /**
  * Specify the maximum size of the recording including any headers.<br>
@@ -1525,7 +1522,8 @@ javacall_result javacall_media_get_recorded_data(javacall_handle handle,
  * @retval JAVACALL_OK          Success
  * @retval JAVACALL_FAIL        Fail
  */
-int javacall_media_get_record_content_type_length(javacall_handle handle, int *length);
+javacall_result javacall_media_get_record_content_type_length(javacall_handle handle,
+                                                              /*OUT*/int *length);
 
 /**
  * Get the current recording data content type mime string length
