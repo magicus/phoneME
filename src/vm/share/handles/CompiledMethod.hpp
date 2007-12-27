@@ -122,9 +122,24 @@ public:
   bool expand_compiled_code_space(jint delta, jint relocation_size);
 
 #if ENABLE_APPENDED_CALLINFO
-  bool expand_callinfo_table(int delta);
-  void shrink_callinfo_table(int delta);
-#endif
+  inline bool expand_callinfo_table(const int delta) {
+    GUARANTEE(align_allocation_size(delta) == (size_t)delta, "must be aligned");
+    if( !ObjectHeap::expand_current_compiled_method(delta) ) {
+      return false;
+    }
+    ((CompiledMethodDesc*) obj())->set_size(size() + delta);
+    return true;
+  }
+
+  inline void shrink_callinfo_table(const int delta) {
+    // Shrink compiled method object
+    const size_t new_size = size() - delta;
+    const size_t new_allocation_size = CompiledMethodDesc::allocation_size(new_size);
+    Universe::shrink_object(this, new_allocation_size);
+    ((CompiledMethodDesc*) obj())->set_size(new_size);
+    GUARANTEE(object_size() == new_allocation_size, "invalid shrunk size");
+  }
+#endif // ENABLE_APPENDED_CALLINFO
 
   // Flushes the icache portion corresponding to the generated code
   void flush_icache();
