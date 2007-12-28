@@ -62,14 +62,14 @@ KNIDECL (com_sun_cardreader_PlatformCardDevice_init0) {
     char prop_buf[PROP_BUF_SIZE];
     const char *prop_value;
     
-    prop_value = getInternalProperty(hostsandports, prop_buf, PROP_BUF_SIZE);
+    prop_value = getInternalProp(hostsandports, prop_buf, PROP_BUF_SIZE);
     if (prop_value != NULL) {
         status = javacall_carddevice_set_property(hostsandports, prop_value);
         if (status != JAVACALL_OK) {
             goto err;
         }
 
-        prop_value = getInternalProperty(satselectapdu, prop_buf, PROP_BUF_SIZE);
+        prop_value = getInternalProp(satselectapdu, prop_buf, PROP_BUF_SIZE);
         status = javacall_carddevice_set_property(satselectapdu, prop_value);
         if (status != JAVACALL_OK) {
             goto err;
