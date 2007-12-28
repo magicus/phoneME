@@ -20,9 +20,12 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
 
-
 ifeq ($(JAVACALL_PLATFORM),)
 $(error JAVACALL_PLATFORM is not set)
 endif
+
+copy_configuration_file : $(BINDIR)
+	echo MIDP_DEPS $(MIDP_DEPS)
+	cp -u $(JAVACALL_OUTPUT_DIR)/jwc_properties.ini $(BINDIR)
 
 -include $(JAVACALL_PLATFORM)_post.gmk
