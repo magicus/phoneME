@@ -258,7 +258,7 @@ int pcsl_file_get_time(const pcsl_string * fileName, int type, long* result)
         return -1;
     }
 
-    *result = buf.st_mtime;
+    *result = (long)buf.st_mtime;
     return 0;
 }
 
