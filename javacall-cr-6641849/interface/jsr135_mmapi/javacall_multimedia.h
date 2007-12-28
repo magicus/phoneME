@@ -372,54 +372,8 @@ javacall_result javacall_media_get_configuration(
  *         JAVACALL_FAIL
  *         JAVACALL_INVALID_ARGUMENT
  */
-
-/**
- * Ask platform if URL will be hadled by native or Java layer.
- * If this function return JAVACALL_OK, Java do not call 
- * javacall_media_do_buffering function
- * In this case, native layer should handle all of data gathering by itself
- * This function also should try to discover format of media by provided URL 
- * (whithout downloading of media content)
- *
- * @param uri           URI unicode string to media data.
- * @param uriLength     String length of URI
- * @param mediaFormat   format of the media discovered by URL, 
- *                      JAVACALL_MEDIA_FORMAT_UNKNOWN if can not be discovered
- *                      JAVACALL_MEDIA_FORMAT_UNSUPPORTED if unsupported
- * 
- * @retval JAVACALL_OK      Yes, this protocol handled by device.
- * @retval JAVACALL_FAIL    No, please handle this protocol from Java.
- */
-javacall_result javacall_media_URL_handled_by_device(javacall_const_utf16_string uri, 
-                                                    long uriLength, 
-                                                    javacall_media_format_type /*OUT*/*mediaFormat);
-
-/**
- * Java MMAPI call this function to create native media handler.
- * This function is called at the first time to initialize native library.
- * You can do your own initialization job from this function.
- * 
- * @param appId         Unique application ID for this playing
- * @param playerId      Unique player object ID for this playing
- * @param mediaFormat   Media format type. 
- *                      JAVACALL_MEDIA_FORMAT_UNKNOWN if unknown
- * @param mime          Mime type unicode string. 
- *                      NULL if unknown
- * @param mimeLength    String length of media MIME type.
- * @param uri           URI unicode string to media data.
- * @param uriLength     String length of URI
- * @param contentLength Content length in bytes
- *                      If Java MMAPI couldn't determine content length, 
- *                      this value should be -1
- * @param handle        Handle of native library.
- *
- * @retval JAVACALL_OK               success
- *         JAVACALL_FAIL
- *         JAVACALL_INVALID_ARGUMENT
- */
 javacall_result javacall_media_create(javacall_app_id appId,
                                       int playerId,
-                                      javacall_media_format_type mediaFormat,
                                       javacall_const_utf16_string mime,
                                       long mimeLength,
                                       javacall_const_utf16_string uri, 
@@ -502,8 +456,9 @@ javacall_result javacall_media_acquire_device(javacall_handle handle);
 javacall_result javacall_media_release_device(javacall_handle handle);
 
 /**
- * Ask to the native layer.
- * Is this protocol handled by native layer or Java layer?
+ * Ask to the native layer if it will handle media download from specific URL.
+ * Is media download for specific URL (provided in javacall_media_create)
+ * will be handled by native layer or Java layer?
  * If this function return JAVACALL_OK, Java do not call 
  * javacall_media_do_buffering function
  * In this case, native layer should handle all of data gathering by itself
@@ -511,7 +466,7 @@ javacall_result javacall_media_release_device(javacall_handle handle);
  * @retval JAVACALL_OK      Yes, this protocol handled by device.
  * @retval JAVACALL_FAIL    No, please handle this protocol from Java.
  */
-javacall_result javacall_media_protocol_handled_by_device(javacall_handle handle);
+javacall_result javacall_media_download_handled_by_device(javacall_handle handle);
 
 /**
  * Java MMAPI call this function to send media data to this library
@@ -530,6 +485,8 @@ javacall_result javacall_media_protocol_handled_by_device(javacall_handle handle
  *                  Can be -1 at end of buffering
  * @param length    Length of media data. Can be -1 at end of buffering,
  *                  If success return 'length of buffered data' else return -1
+ * @param need_more_data returns JAVACALL_TRUE if native layer needs more media content to 
+ *                  discover midia format or needs whole media content.
  * 
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL   
@@ -537,7 +494,8 @@ javacall_result javacall_media_protocol_handled_by_device(javacall_handle handle
  */
 javacall_result javacall_media_do_buffering(javacall_handle handle, 
                                  const void* buffer, long offset,
-                                 /* INOUT */ long *length);
+                                 /* INOUT */ long *length,
+                                 javacall_bool /*OUT*/*need_more_data);
 
 /**
  * MMAPI call this function to clear(delete) buffered media data
