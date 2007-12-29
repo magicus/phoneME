@@ -92,10 +92,11 @@ static jchar* rowHandlers[] = {
  * @return 0 if failed.
  */
 static const jchar* getString(const jchar** ptr) {
-	const jchar* p, *p1 = p = *ptr;
-    while (*(*ptr)++);
+	const jchar* p; 
+	const jchar* pstart = p = *ptr;
+    while (*(p++));
 	*ptr = p;
-    return p;
+    return pstart;
 }
 
 /**
@@ -107,7 +108,7 @@ static const jchar* getString(const jchar** ptr) {
  */
 static int fillArray(const jchar **ptr, /*OUT*/int* len, const jchar*** arr) {
 	const jchar* p = *ptr;
-
+	const jchar** list;
 	//count array size
 	*len = 0;
 	while (*getString(&p)) ++(*len);
@@ -118,13 +119,13 @@ static int fillArray(const jchar **ptr, /*OUT*/int* len, const jchar*** arr) {
 	}
 
 	//alloc array list
-	*arr = (const jchar**)MALLOC((*len)*sizeof(jchar*));
+	list = *arr = (const jchar**)MALLOC((*len)*sizeof(jchar*));
 	if (!*arr) return 0;
 	
 	//asign elements
 	p = *ptr;
 	while (*p){
-		*(*arr)++ = getString(&p);
+		*(list++) = getString(&p);
 	} 
 
 	*ptr = p+1;

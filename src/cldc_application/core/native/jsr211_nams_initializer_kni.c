@@ -28,6 +28,7 @@
 #include <midpUtilKni.h>
 #include <suitestore_listeners.h>
 #include <jsr211_nams_installer.h>
+#include "jsr211_result.h"
 
 SUITESORE_DECLARE_LISTENER(jsr211_remove_listener);
 

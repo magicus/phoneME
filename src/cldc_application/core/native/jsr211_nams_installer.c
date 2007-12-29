@@ -37,7 +37,7 @@
 #include <jsr211_registry.h>
 #include <midpUtilKni.h>
 
-#include <pcsl_memory.h>
+#include <jsrop_memory.h>
 
 /**
  * @file
@@ -62,14 +62,14 @@ int jsr211_errCode;
 /**
  * Buffer for parsed handlers
  */
-JSR211_content_handler *handlers = NULL;
+jsr211_content_handler *handlers = NULL;
 int nHandlers = 0;
 
 
 /**
  * Defined in regstore.c
  */
-extern void jsr211_cleanHandlerData(JSR211_content_handler *handler);
+extern void jsr211_cleanHandlerData(jsr211_content_handler *handler);
 
 /**
  * Clean up whole array of handlers.
@@ -77,7 +77,7 @@ extern void jsr211_cleanHandlerData(JSR211_content_handler *handler);
 static void cleanup(void) {
 
     if (nHandlers > 0) {
-        JSR211_content_handler *ptr;
+        jsr211_content_handler *ptr;
         int n;
 
         for (n = nHandlers, ptr = handlers; n > 0; n--, ptr++) {
@@ -128,7 +128,7 @@ static int getFullClassPath(const pcsl_string* classname,
     jchar *ptr, *buf;
 
     sz = pcsl_string_utf16_length(classname) + sizeof(suff) / sizeof(jchar);
-    buf = (jchar*) pcsl_mem_malloc(sz * sizeof(jchar));
+    buf = (jchar*) MALLOC(sz * sizeof(jchar));
     if (buf == NULL) {
         return 0;
     }
@@ -145,7 +145,7 @@ static int getFullClassPath(const pcsl_string* classname,
         n = (PCSL_STRING_OK == pcsl_string_convert_from_utf16(buf, sz, path)?
             1: 0);
     }
-    pcsl_mem_free(buf);
+    FREE(buf);
 
     return n;
 }
@@ -160,7 +160,7 @@ static int getFullClassPath(const pcsl_string* classname,
  *
  * @return 0 if failed
  */
-static int getDefaultID(MidpProperties mp, const pcsl_string* classname,
+static int getDefaultID(MidpProperties mp, const jchar* clazzname,
                                             /*OUT*/pcsl_string* defaultID) {
     PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(defaultVendor)
     {'s', 'y', 's', 't', 'e', 'm', '\0'}
@@ -170,6 +170,9 @@ static int getDefaultID(MidpProperties mp, const pcsl_string* classname,
     PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(defaultApp);
     const pcsl_string* vendor = &PCSL_STRING_NULL;
     const pcsl_string* app = &PCSL_STRING_NULL;
+	pcsl_string classname;
+	int result;
+	if (PCSL_STRING_OK != pcsl_string_convert_from_utf16(clazzname, wcslen(clazzname), classname)) return 0;
 
     vendor = midp_find_property(&mp, &SUITE_VENDOR_PROP);
     if (vendor == NULL || pcsl_string_length(vendor) <= 0)
@@ -182,11 +185,14 @@ static int getDefaultID(MidpProperties mp, const pcsl_string* classname,
     pcsl_string_predict_size(defaultID, pcsl_string_length(vendor) +
             pcsl_string_length(app) + pcsl_string_length(classname) + 3);
 
-    return (PCSL_STRING_OK == pcsl_string_append(defaultID, vendor) &&
+    result = (PCSL_STRING_OK == pcsl_string_append(defaultID, vendor) &&
             PCSL_STRING_OK == pcsl_string_append_char(defaultID, '-') &&
             PCSL_STRING_OK == pcsl_string_append(defaultID, app) &&
             PCSL_STRING_OK == pcsl_string_append_char(defaultID, '-') &&
             PCSL_STRING_OK == pcsl_string_append(defaultID, classname)? 1: 0);
+
+	pcsl_string_free(&classname);
+	return result;
 }
 
 /**
@@ -195,7 +201,7 @@ static int getDefaultID(MidpProperties mp, const pcsl_string* classname,
  * @return 0 if failed
  */
 static int parseString(const pcsl_string* src,
-                       /*IN-OUT*/int* cur_idx, /*OUT*/pcsl_string* dest) {
+                       /*IN-OUT*/int* cur_idx, /*OUT*/const jchar** dest, jsize * lenOut) {
     pcsl_string temp = PCSL_STRING_NULL_INITIALIZER;
     int from = *cur_idx;
     int n = pcsl_string_index_of_from(src, ',', from);
@@ -208,13 +214,22 @@ static int parseString(const pcsl_string* src,
     }
     if (n > 0) {
         if (PCSL_STRING_OK == pcsl_string_substring(src, from, n, &temp)) {
-            if (PCSL_STRING_OK == pcsl_string_trim(&temp, dest)) {
-                n = 0;
+			pcsl_string dst = PCSL_STRING_NULL_INITIALIZER;
+            if (PCSL_STRING_OK == pcsl_string_trim(&temp, &dst)) {
+				jsize length = pcsl_string_length(&dst);
+				jchar* buf = (jchar*)MALLOC(length+1);
+				if (*dest) {
+					if (PCSL_STRING_OK == pcsl_string_convert_to_utf16(&dst,buf,length+1,NULL)){
+						*dest = buf;
+						if (lenOut) *lenOut=length;
+						n = 0;
+					}
+				}
+				pcsl_string_free(&dst);
             }
             pcsl_string_free(&temp);
         }
     }
-
     return n == 0;
 }
 
@@ -224,14 +239,14 @@ static int parseString(const pcsl_string* src,
  * @param arr if it is NULL the memory for array is allocated
  * @return 0 if failed
  */
-static int parseArray(const pcsl_string* src,
-                       /*OUT*/int* arr_len, /*OUT*/pcsl_string** arr) {
+static int parseArray(const jchar* src, int len,
+                       /*OUT*/int* arr_len, /*OUT*/const jchar*** arr, jchar** arrVar) {
     const jchar *buf, *end, *p0, *p1;
-    pcsl_string* str;
+	jchar** str;
     int n = *arr_len, wsp, wsp_mode;
 
-    buf = pcsl_string_get_utf16_data(src);
-    end = buf + pcsl_string_utf16_length(src);
+    buf = src;
+    end = buf + len;
 
     if (n == 0) {   // count array entries
         wsp_mode = 1; // start with 'white space' mode
@@ -248,14 +263,14 @@ static int parseArray(const pcsl_string* src,
     }
 
     while (n > 0) {
-        if (*arr == NULL) {
-            str = (pcsl_string*)pcsl_mem_calloc(n, sizeof(pcsl_string));
+		if (arrVar) {
+			str = arrVar;
+		} else {
+            str = (jchar**)CALLOC(n, sizeof(jchar*));
             if (str == NULL)
                 break;
             *arr_len = n;
-            *arr = str;
-        } else {
-            str = *arr;
+            *arr = (const jchar**) str;
         }
 
         // actual array filling
@@ -264,16 +279,14 @@ static int parseArray(const pcsl_string* src,
             while (*p0 <= ' ') p0++;
             p1 = p0 + 1;
             while (p1 < end  && *p1 > ' ') p1++;
-            if (PCSL_STRING_OK !=
-                pcsl_string_convert_from_utf16(p0, p1 - p0, str))
-                break;
-            p0 = p1 + 1;
+			*str = (jchar*)MALLOC((p1 - p0 + 1) * sizeof(jchar));
+			if (!str) break;
+			while (p0 <= p1) **str = *p0++;
             str++;
             n--;
         }
     }
 
-    pcsl_string_release_utf16_data(buf, src);
     return n == 0;
 }
 
@@ -286,7 +299,7 @@ static int parseArray(const pcsl_string* src,
  * for other searched attributes names
  * @return 1 - data is filled, 0 - no such handler, -1 - error on parsing
  */
-static int parseHandler(JSR211_content_handler* handler, MidpProperties mp,
+static int parseHandler(jsr211_content_handler* handler, MidpProperties mp,
                                                         pcsl_string* handlerN) {
     PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(id_suff)
     {'I', 'D', '\0'}
@@ -296,9 +309,9 @@ static int parseHandler(JSR211_content_handler* handler, MidpProperties mp,
     PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(access_suff);
 
     pcsl_string attrName = PCSL_STRING_NULL_INITIALIZER;
-    pcsl_string temp = PCSL_STRING_NULL_INITIALIZER;
+    jchar* temp = NULL;
     const pcsl_string* attr = &PCSL_STRING_NULL;
-    int n;
+    int n, len=0;
 
     // look up 'MicroEdition-Handler-<n>' attribute
     attr = midp_find_property(&mp, handlerN);
@@ -307,37 +320,40 @@ static int parseHandler(JSR211_content_handler* handler, MidpProperties mp,
 
     // Parse: <classname>[, <type(s)>[, <suffix(es)>[, <action(s)>[, <locale(s)>]]]]
     n = 0;
-    if (!parseString(attr, &n, &handler->class_name) ||
-        pcsl_string_length(&handler->class_name) <= 0)
-        return -1;
-
+    if (!parseString(attr, &n, &handler->class_name, &len) || !len) return -1;
     do {
         if (n <= 0)
             break;
-        if (!parseString(attr, &n, &temp) ||
-            !parseArray(&temp, &handler->type_num, &handler->types))
+
+        if (!parseString(attr, &n, &temp, &len)) return -1;
+        if (!parseArray(temp, len, &handler->type_num, &handler->types, NULL)){
+			FREE(temp);
             return -1;
-        pcsl_string_free(&temp);
+		}
+		FREE(temp);
 
         if (n < 0)
             break;
-        if (!parseString(attr, &n, &temp) ||
-            !parseArray(&temp, &handler->suff_num, &handler->suffixes))
+
+        if (!parseString(attr, &n, &temp, &len)) return -1;
+        if (!parseArray(temp, len, &handler->suff_num, &handler->suffixes, NULL)){
+			FREE(temp);
             return -1;
-        pcsl_string_free(&temp);
+        }
+		FREE(temp);
 
         if (n < 0)
             break;
-        if (!parseString(attr, &n, &temp) ||
-            !parseArray(&temp, &handler->act_num, &handler->actions))
+        if (!parseString(attr, &n, &temp, &len) ||
+            !parseArray(temp, len, &handler->act_num, &handler->actions, NULL))
             return -1;
-        pcsl_string_free(&temp);
+        FREE(temp);
 
         if (n > 0 && handler->act_num > 0) {
-            if (!parseString(attr, &n, &temp) ||
-                !parseArray(&temp, &handler->locale_num, &handler->locales))
+            if (!parseString(attr, &n, &temp, &len) ||
+                !parseArray(temp, len, &handler->locale_num, &handler->locales, NULL))
                 return -1;
-            pcsl_string_free(&temp);
+            FREE(temp);
         }
     } while (0);
 
@@ -350,11 +366,12 @@ static int parseHandler(JSR211_content_handler* handler, MidpProperties mp,
         return -1;
     attr = midp_find_property(&mp, &attrName);
     pcsl_string_free(&attrName);
-    if (attr != NULL && pcsl_string_length(attr) > 0) {
-        if (PCSL_STRING_OK != pcsl_string_dup(attr, &handler->id))
+    if (attr != NULL && (len=pcsl_string_length(attr)) > 0) {
+		if (!(handler->id = MALLOC(sizeof(jchar)*(len+1))) return -1;
+		if (PCSL_STRING_OK != pcsl_string_convert_to_utf16(&attr, handler->id, len+1, NULL))
             return -1;
     } else {
-        if (!getDefaultID(mp, &handler->class_name, &handler->id))
+        if (!getDefaultID(mp, handler->class_name, &handler->id))
             return -1;
     }
 
@@ -372,7 +389,7 @@ static int parseHandler(JSR211_content_handler* handler, MidpProperties mp,
         int act_num = handler->act_num;
         pcsl_string *map;
 
-        map = (pcsl_string*) pcsl_mem_calloc(
+        map = (pcsl_string*) CALLOC(
                         act_num * handler->locale_num, sizeof(pcsl_string));
         if (map == NULL)
             return -1;
@@ -471,7 +488,7 @@ int jsr211_verify_handlers(MidpProperties jadsmp, MidpProperties mfsmp,
     }
 
     handlers = (JSR211_content_handler*)
-                    pcsl_mem_calloc(count, sizeof(JSR211_content_handler));
+                    CALLOC(count, sizeof(JSR211_content_handler));
     if (handlers == NULL) {
         jsr211_errCode = OUT_OF_MEMORY;
         return -1; // No memory
@@ -506,7 +523,7 @@ int jsr211_verify_handlers(MidpProperties jadsmp, MidpProperties mfsmp,
         if (testHnd.buf != NULL) {
             // -- Content handler conflicts with other handlers
             jsr211_errCode = 938;
-            pcsl_mem_free(testHnd.buf);
+            FREE(testHnd.buf);
             testHnd.buf = NULL;
             testHnd.len = 0;
             res = -1;
@@ -572,6 +589,6 @@ void jsr211_remove_handlers(SuiteIdType suiteId) {
             pcsl_string_free(&id);
             buf += sz;
         }
-        pcsl_mem_free(handlers.buf);
+        FREE(handlers.buf);
     }
 }

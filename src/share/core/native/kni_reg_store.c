@@ -363,7 +363,6 @@ static int fillHandlerData(KNIDECLARGS jobject o, jsr211_content_handler* handle
             ret = KNI_ERR;
             break;
         }
-
         // suiteID
 #ifdef SUITE_ID_STRING
         KNI_GetObjectField(o, chImplSuiteID, fldObj);
@@ -372,11 +371,11 @@ static int fillHandlerData(KNIDECLARGS jobject o, jsr211_content_handler* handle
             break;
         }
 #else
-		{
+	{
 		SuiteIdType suite_id = KNI_GetIntField(o, chImplSuiteId);
 		handler->suite_id = MALLOC((jsrop_suiteid_string_size(suite_id+1) * sizeof(jchar)));
-        jsrop_suitid_to_string(suite_id, handler->suite_id);
-		}
+		jsrop_suiteid_to_string(suite_id, handler->suite_id);
+	}
 #endif
         // classname
         KNI_GetObjectField(o, chImplClassname, fldObj);
@@ -481,11 +480,9 @@ KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_j2me_content_RegistryStore_register0) {
     int res = KNI_OK;
     jsr211_content_handler handler = JSR211_CONTENT_HANDLER_INITIALIZER;
-
     KNI_StartHandles(1);
     KNI_DeclareHandle(chObj);   // content handler instance
     KNI_GetParameterAsObject(1, chObj);
-
     do {
         if (chImplId == 0) {
             res = initializeFields(KNIPASSARGS);
