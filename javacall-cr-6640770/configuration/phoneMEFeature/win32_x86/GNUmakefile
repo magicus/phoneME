@@ -36,3 +36,6 @@ include $(JAVACALL_DIR)/build/vc/rules.gmk
 #Specify these targets after including 'rules.gmk' file.
 pre_target:
 post_target: $(JAVACALL_OUTPUT_LIB_DIR)/emulator.res copy_configuration_file
+
+copy_configuration_file:
+	cp -u $(JAVACALL_DIR)/configuration/phoneMEFeature/share/jwc_properties.ini $(JAVACALL_OUTPUT_DIR)
