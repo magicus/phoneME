@@ -1,6 +1,4 @@
 /*
- *  
- *
  * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
@@ -37,7 +35,6 @@ import java.io.UnsupportedEncodingException;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.InputSource;
-import org.xml.sax.Attributes;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.SAXException;
 
@@ -73,14 +70,14 @@ public final class Parser
 
 	private DefaultHandler	mHand;		// a document handler
 	private Hashtable		mEnt;		// the entities look up table
-	private Hashtable		mPEnt;		// the parmeter entities look up table
+	private Hashtable		mPEnt;		// the parameter entities look up table
 
 	private boolean			mIsSAlone;	// xml decl standalone flag
 	private boolean			mIsNSAware;	// if true - to report QName
 
 	private short			mSt;		// global state of the parser
 	// mSt values:
-	// - 0 : the begining of the document
+	// - 0 : the beginning of the document
 	// - 1 : misc before DTD
 	// - 2 : DTD
 	// - 3 : misc after DTD
@@ -205,10 +202,10 @@ public final class Parser
 			nmttyp[i++] = (byte)2;	// digits
 		while (i < 'A')
 			nmttyp[i++] = (byte)0xff;
-		// skiped upper case alphabetical character are already 0
+		// skipped upper case alphabetical character are already 0
 		for (i = '['; i < 'a'; i++)
 			nmttyp[i]   = (byte)0xff;
-		// skiped lower case alphabetical character are already 0
+		// skipped lower case alphabetical character are already 0
 		for (i = '{'; i < 0x80; i++)
 			nmttyp[i]   = (byte)0xff;
 		nmttyp['_']  = 0;
@@ -482,11 +479,9 @@ public final class Parser
 		throws SAXException, IOException
 	{
 		char	ch;
-		String	str		= null;
-		String	name	= null;
 		Pair	psid	= null;
 		// read 'DOCTYPE'
-		if ("DOCTYPE".equals(name(false)) != true)
+		if (!((mSt == 0 || mSt == 1) && "DOCTYPE".equals(name(false))))
 			panic(FAULT);
 		mSt	= 2;	// DTD
 		for (short st = 0; st >= 0;) {
@@ -495,7 +490,7 @@ public final class Parser
 			case 0:		// read the document type name
 				if (chtyp(ch) != ' ') {
 					back();
-					name	= name(mIsNSAware);
+					/*String name =*/ name(mIsNSAware);
 					wsskip();
 					st		= 1;	// read 'PUPLIC' or 'SYSTEM'
 				}
@@ -872,39 +867,138 @@ public final class Parser
 			}
 		}
 	}
+	
+	/**
+	 * Parses (consumes) a 'choise' or 'seq' declaration without starting '('. 
+	 *
+	 * @exception SAXException 
+	 * @exception IOException 
+	 */
+	private void parseChoiseOrSeq() throws SAXException, IOException {
+//		[49] choice	::= '(' S? cp ( S? '|' S? cp )+ S? ')'
+//		[50] seq	::= '(' S? cp ( S? ',' S? cp )* S? ')'
+		boolean done = false;
+		parseCp();
+		char ch = wsskip();
+		switch( ch ){
+			case ')': 
+				done = true;
+				break;
+			case '|': case ',': 
+				break;
+			default:
+				panic(FAULT);
+		}
+		next(); // skip acceptable character 
+		final char delimiter = ch; 
+		while( !done ){
+			parseCp();
+			switch( ch = wsskip() ){
+				case ')': 
+					done = true;
+					break;
+				case '|': case ',': 
+					if( delimiter != ch )
+						panic(FAULT);
+					break;
+				default:
+					panic(FAULT);
+			}
+			next(); // skip acceptable character
+		}
+	}
+
+	/**
+	 * Parses a 'cp' declaration. + leading white spaces
+	 *
+	 * @exception SAXException 
+	 * @exception IOException 
+	 */
+	private void parseCp() throws SAXException, IOException
+//	[48] cp 	::= (Name | choice | seq) ('?' | '*' | '+')?
+	{
+		char ch = wsskip();
+		if( ch == '(' ){ // choice | seq
+			next();
+			parseChoiseOrSeq();
+		} else { // Name
+			//String name = 
+				name(mIsNSAware); 
+		}
+		// ('?' | '*' | '+')?
+		switch( next() ){
+			case '?': case '*': case '+':
+				break;
+			default:
+				back();
+		}
+	}
 
 	/**
 	 * Parses an element declaration. 
-	 *
-	 * This method parses the declaration up to the closing angle 
-	 * bracket.
 	 *
 	 * @exception SAXException 
 	 * @exception IOException 
 	 */
 	private void dtdelm()
 		throws SAXException, IOException
+//		[45]   	elementdecl	   ::=   	'<!ELEMENT' S  Name  S  contentspec  S? '>'
+//		[46]   	contentspec	   ::=   	'EMPTY' | 'ANY' | Mixed | children
+//		[47]   	children	   ::=   	(choice | seq) ('?' | '*' | '+')?
+//		[48]   	cp	   ::=   	(Name | choice | seq) ('?' | '*' | '+')?
+//		[49]   	choice	   ::=   	'(' S? cp ( S? '|' S? cp )+ S? ')'
+//		[50]   	seq	   ::=   	'(' S? cp ( S? ',' S? cp )* S? ')'
+//		[51]   	Mixed	   ::=   	'(' S? '#PCDATA' (S? '|' S? Name)* S? ')*'
+//										| '(' S? '#PCDATA' S? ')'
 	{
-		//		This is stub implementation which skips an element 
-		//		declaration.
 		wsskip();
-		name(mIsNSAware);
-
-		char	ch;
-		while (true) {
-			ch	= next();
-			switch (ch) {
-			case '>':
-				back();
-				return;
-
-			case EOS:
-				panic(FAULT);
-
-			default:
+		//String elementName = 
+			name(mIsNSAware);
+		// parse contentspec (it is used only in elementdecl)
+		char ch = wsskip();
+		switch( ch ){
+			case '(': // <Mixed> or <children>
+				next(); // skip '('
+				ch = wsskip();
+				if( ch == '#' ){ // Mixed
+					next(); // skip '#'
+					bntok();
+					if( bkeyword() != 'p' )
+						panic(FAULT); // "#PCDATA expected"
+					int namesCount = 0;
+					do {
+						if( wsskip() != '|' ) break;
+						next(); // skip '|'
+						wsskip();
+						//String name = 
+							name(mIsNSAware);
+						namesCount++;
+					} while(true);
+					if( next() != ')' )
+						panic(FAULT); // ')' or ')*' expected
+					if( next() != '*' ){
+						if( namesCount > 0 )
+							panic(FAULT); // '*' expected as a part of ')*'
+						back();
+					}
+				} else { // choice | seq
+					parseChoiseOrSeq();
+				}
 				break;
-			}
+				
+			default: // EMPTY or ANY
+				bntok();
+				switch( bkeyword() ){
+					case 'E': case 'A':
+						break;
+					default:
+						panic(FAULT);
+				}
 		}
+		// S? '>'
+		if( wsskip() != '>' )
+			panic(FAULT);
+		// do not consume '>' character
 	}
 
 	/**
@@ -927,6 +1021,9 @@ public final class Parser
 			switch (st) {
 			case 0:		// read the element name
 				switch (chtyp(ch)) {
+				case ' ':
+					break;
+
 				case 'a':
 				case 'A':
 				case '_':
@@ -942,9 +1039,6 @@ public final class Parser
 						mAttL     = elm;
 					}
 					st = 1;		// read an attribute declaration
-					break;
-
-				case ' ':
 					break;
 
 				case '%':
@@ -993,12 +1087,12 @@ public final class Parser
 	/**
 	 * Parses an attribute declaration.
 	 *
-	 * The attribut uses the following fields of Pair object:
+	 * The attribute uses the following fields of Pair object:
 	 * chars - characters of qualified name
 	 * id    - the type identifier of the attribute
 	 * list  - a pair which holds the default value (chars field)
 	 *
-	 * @param elm An object which reprecents all defined attributes on an element.
+	 * @param elm An object which represents all defined attributes on an element.
 	 * @exception SAXException 
 	 * @exception IOException 
 	 */
@@ -1019,7 +1113,7 @@ public final class Parser
 				case 'X':
 				case ':':
 					back();
-					//		Get the attribut from the list or add a new one.
+					//		Get the attribute from the list or add a new one.
 					attqn = qname(mIsNSAware);
 					att   = find(elm.list, attqn);
 					if (att == null) {
@@ -1046,7 +1140,6 @@ public final class Parser
 
 				default:
 					panic(FAULT);
-					break;
 				}
 				break;
 
@@ -1070,7 +1163,7 @@ public final class Parser
 					att.id = bkeyword();
 					switch (att.id) {
 					case 'o':		// NOTATION
-						if (wsskip() != '(')
+						if (chtyp(next()) != ' ' && wsskip() != '(')
 							panic(FAULT);
 						ch = next();
 						st = 2;		// read the first element of the list
@@ -1090,7 +1183,6 @@ public final class Parser
 
 					default:
 						panic(FAULT);
-						break;
 					}
 					break;
 				}
@@ -1119,7 +1211,6 @@ public final class Parser
 
 					default:
 						panic(FAULT);
-						break;
 					}
 					wsskip();
 					st = 3;		// read next element of the list
@@ -1134,7 +1225,6 @@ public final class Parser
 
 				default:
 					panic(FAULT);
-					break;
 				}
 				break;
 
@@ -1159,7 +1249,6 @@ public final class Parser
 
 					default:
 						panic(FAULT);
-						break;
 					}
 					wsskip();
 					break;
@@ -1180,16 +1269,8 @@ public final class Parser
 					bntok();
 					switch (bkeyword()) {
 					case 'F':	// FIXED
-						switch (wsskip()) {
-						case '\"':
-						case '\'':
-							st = 5;	// read the default value
-							break;
-
-						default:
-							st = -1;
-							break;
-						}
+						wsskip();
+						st = 5;	// read the default value
 						break;
 
 					case 'Q':	// REQUIRED
@@ -1220,9 +1301,7 @@ public final class Parser
 					break;
 
 				default:
-					back();
-					st = -1;
-					break;
+					panic(FAULT);
 				}
 				break;
 
@@ -1248,13 +1327,11 @@ public final class Parser
 
 				default:
 					panic(FAULT);
-					break;
 				}
 				break;
 
 			default:
 				panic(FAULT);
-				break;
 			}
 		}
 	}
@@ -1299,7 +1376,7 @@ public final class Parser
 		mElm		= pair(mElm);
 		mElm.chars	= qname(mIsNSAware);
 		mElm.name	= mElm.local();
-		//		Find the list of defined attributs of the current element 
+		//		Find the list of defined attributes of the current element 
 		Pair	elm	= find(mAttL, mElm.chars);
 		//		Read attributes till the end of the element tag
 		mAttrIdx	= 0;
@@ -1488,7 +1565,7 @@ public final class Parser
 	 * {@link DefaultHandler#startPrefixMapping startPrefixMapping} method 
 	 * is invoked instead.
 	 *
-	 * @param att An object which reprecents current attribute.
+	 * @param att An object which represents current attribute.
 	 * @exception SAXException 
 	 * @exception IOException 
 	 */
@@ -1507,7 +1584,7 @@ public final class Parser
 				//		find defaults
 				for (Pair def = att.list; def != null; def = def.next) {
 					if (def.list != null) {
-						//		Attribut definition with default value
+						//		Attribute definition with default value
 						Pair act = att.next;
 						while (act != null) {
 							if (act.eqname(def.chars) == true)
@@ -1587,7 +1664,6 @@ public final class Parser
 
 						default:
 							panic(FAULT);
-							break;
 						}
 					}
 				}
@@ -1597,7 +1673,7 @@ public final class Parser
 				bqstr(norm);		// read the value with normalization.
 				val = new String(mBuff, 1, mBuffIdx);
 				//		Put a namespace declaration on top of the prefix stack
-				if ((mIsNSAware == false) || (isdecl(att, val) == false)) {
+				if (!(mIsNSAware && isdecl(att, val))) {
 					//		An ordinary attribute
 					mAttrIdx++;
 					//		Recursive call to parse the next attribute
@@ -2204,7 +2280,6 @@ public final class Parser
 	private void pent(char flag)
 		throws SAXException, IOException
 	{
-		char	ch;
 		int		idx	= mBuffIdx + 1;
 		Input	inp = null;
 		String	str	= null;
@@ -2353,6 +2428,14 @@ public final class Parser
 	private void panic(String msg)
 		throws SAXException
 	{
+		final boolean debug_mode = false;
+		if( debug_mode ){
+			msg += "\n";
+			try {
+				char ch;
+				for( int i = 0; i < 30 && (ch=next()) != EOS; i++) msg += ch;
+			} catch(Exception x){}
+		}
 		SAXParseException spe = new SAXParseException(msg, this);
 		mHand.fatalError(spe);
 		throw spe;	// [#1.2] fatal error definition
@@ -2484,6 +2567,8 @@ public final class Parser
 
 			default:
 				back();
+				if( mBuffIdx == 0 ) // zero length nmtoken
+					panic(FAULT);
 				return;
 			}
 		}
@@ -2508,20 +2593,23 @@ public final class Parser
 	 *  REQUIRED - Q
 	 *  IMPLIED  - I
 	 *  FIXED    - F
+	 *  EMPTY	 - E
+	 *  ANY		 - A
+	 *  PCDATA	 - p
 	 *
 	 * @return an id of a keyword or '?'.
-	 * @exception SAXException  When incorrect character appear in the name.
-	 * @exception IOException 
 	 */
 	private char bkeyword()
-		throws SAXException, IOException
 	{
 		String str = new String(mBuff, 1, mBuffIdx);
 		switch (str.length()) {
 		case 2:	// ID
 			return ("ID".equals(str) == true)? 'i': '?';
 
-		case 5:	// IDREF, CDATA, FIXED
+		case 3: // ANY
+			return "ANY".equals(str)? 'A': '?';
+			
+		case 5:	// IDREF, CDATA, FIXED, EMPTY
 			switch (mBuff[1]) {
 			case 'I':
 				return ("IDREF".equals(str) == true)? 'r': '?';
@@ -2529,17 +2617,21 @@ public final class Parser
 				return ("CDATA".equals(str) == true)? 'c': '?';
 			case 'F':
 				return ("FIXED".equals(str) == true)? 'F': '?';
+			case 'E':
+				return "EMPTY".equals(str)? 'E': '?';
 			default:
 				break;
 			}
 			break;
 
-		case 6:	// IDREFS, ENTITY
+		case 6:	// IDREFS, ENTITY, PCDATA
 			switch (mBuff[1]) {
 			case 'I':
 				return ("IDREFS".equals(str) == true)? 'R': '?';
 			case 'E':
 				return ("ENTITY".equals(str) == true)? 'n': '?';
+			case 'P':
+				return "PCDATA".equals(str)? 'p': '?';
 			default:
 				break;
 			}
@@ -3307,10 +3399,8 @@ public final class Parser
 	 *
 	 * @param ch The character to map.
 	 * @return The type of character.
-	 * @exception SAXException When End Of Stream character typed.
 	 */
 	private char chtyp(char ch)
-		throws SAXException
 	{
 		if (ch < 0x80)
 			return (char)asctyp[ch];
@@ -3358,7 +3448,7 @@ public final class Parser
 		throws SAXException
 	{
 		if(mChIdx <= 0)
-			panic(FAULT);
+			panic(FAULT); // internal error
 		mChIdx--;
 	}
 
