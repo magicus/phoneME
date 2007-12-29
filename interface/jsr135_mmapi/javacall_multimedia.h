@@ -356,8 +356,6 @@ javacall_result javacall_media_get_configuration(
  * 
  * @param appId         Unique application ID for this playing
  * @param playerId      Unique player object ID for this playing
- * @param mediaFormat   Media format type. 
- *                      JAVACALL_MEDIA_FORMAT_UNKNOWN if unknown
  * @param mime          Mime type unicode string. 
  *                      NULL if unknown
  * @param mimeLength    String length of media MIME type.
@@ -388,7 +386,7 @@ javacall_result javacall_media_create(javacall_app_id appId,
  * any calls to this function would be ignored.
  * 
  * @param handle        Handle to the library.
- * @param params        Extra parameters
+ * @param param         Extra parameters
  * 
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL   
@@ -873,7 +871,7 @@ javacall_result javacall_media_seek_to_frame(javacall_handle handle,
  * Skip a given number of frames from the current position.
  * 
  * @param handle        Handle to the library 
- * @param nFframes      The number of frames to skip from the current position. 
+ * @param nFrames       The number of frames to skip from the current position. 
  *                      If framesToSkip is negative, it will seek backward 
  *                      by framesToSkip number of frames.
  *                      Return number of actual skipped frames
@@ -1523,8 +1521,6 @@ javacall_result javacall_media_close_recording(javacall_handle handle);
  * @ingroup JSR135
  * 
  * @brief MVM Support API used to control audio and video resources from MVM.
- * 
- * \image html mvmsupport.png
  * 
  * @{
  */
