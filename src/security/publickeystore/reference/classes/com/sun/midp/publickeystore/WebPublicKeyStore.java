@@ -85,7 +85,16 @@ public class WebPublicKeyStore extends PublicKeyStore
 
         try {
             storage = new RandomAccessStream(classSecurityToken);
-            storage.connect(File.getStorageRoot(Constants.INTERNAL_STORAGE_ID) +
+
+            // Try load certificate root from configuration
+            String certificate_root = System.getProperty("com.sun.midp.publickeystore.WebPublicKeyStore.path");
+
+            // Fallback to default storage root
+            if (certificate_root == null) {
+                certificate_root = File.getStorageRoot(Constants.INTERNAL_STORAGE_ID);
+            }
+
+            storage.connect( certificate_root +
                 "_main.ks", Connector.READ);
             tks = storage.openInputStream();
         } catch (Exception e) {
