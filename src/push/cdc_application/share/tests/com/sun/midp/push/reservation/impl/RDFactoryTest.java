@@ -36,31 +36,33 @@ import junit.framework.TestCase;
 
 public final class RDFactoryTest extends TestCase {
     private static final AccessControlContext NOOP_ACCESS_CONTROL_CONTEXT =
-        new AccessControlContextAdapter () {
+        new AccessControlContextAdapter() {
             /** {@inheritDoc} */
             public void checkPermissionImpl(
                 String name, String resource, String extraValue) {}
     };
 
     private void _testInvalidConnectionName(final String connectionName) {
-        final RDFactory factory = new RDFactory(new ProtocolRegistry () {
+
+        final RDFactory factory = new RDFactory(new ProtocolRegistry() {
             public ProtocolFactory get(final String protocol) {
                 // Shouldn't ever get here
                 throw new RuntimeException("Should fail earlier");
             }
         });
         try {
-            factory.getDescriptor(connectionName, "", NOOP_ACCESS_CONTROL_CONTEXT);
+            factory.getDescriptor(connectionName, "",
+				  NOOP_ACCESS_CONTROL_CONTEXT);
             fail("IAE should be thrown");
         } catch (IllegalArgumentException iae) {
-            ;
+            // Ignored
         } catch (ConnectionNotFoundException e) {
             fail("Unexpected CNFE");
         }
     }
 
     private void _testValidConnectionName(final String connectionName) {
-        final RDFactory factory = new RDFactory(new ProtocolRegistry () {
+        final RDFactory factory = new RDFactory(new ProtocolRegistry() {
             public ProtocolFactory get(final String protocol) {
                 return Common.STUB_PROTOCOL_FACTORY;
             }
@@ -236,10 +238,11 @@ public final class RDFactoryTest extends TestCase {
             }
         });
         try {
-            factory.getDescriptor(PROTOCOL + ":", "", NOOP_ACCESS_CONTROL_CONTEXT);
+            factory.getDescriptor(PROTOCOL + ":", "",
+				  NOOP_ACCESS_CONTROL_CONTEXT);
             fail("IAE should be thrown");
         } catch (IllegalArgumentException iae) {
-            ;
+            // Ignored
         } catch (ConnectionNotFoundException cnfe) {
             fail("Unexpected CNFE");
         }
@@ -264,7 +267,7 @@ public final class RDFactoryTest extends TestCase {
         });
         try {
             factory.getDescriptor("foo:", "",
-                    new AccessControlContextAdapter () {
+                    new AccessControlContextAdapter() {
                         public void checkPermissionImpl(
                                 final String permissionName,
                                 final String resource, final String extraValue)
@@ -274,7 +277,7 @@ public final class RDFactoryTest extends TestCase {
             });
             fail("SE should be thrown");
         } catch (SecurityException se) {
-            ;
+            // Ignored
         } catch (ConnectionNotFoundException cnfe) {
             fail("Unexpected CNFE");
         }
@@ -291,7 +294,7 @@ public final class RDFactoryTest extends TestCase {
             factory.getDescriptor("foo:", "", NOOP_ACCESS_CONTROL_CONTEXT);
             fail("CNFE should be thrown");
         } catch (ConnectionNotFoundException cnfe) {
-            ;
+            // Ignored
         }
     }
 }

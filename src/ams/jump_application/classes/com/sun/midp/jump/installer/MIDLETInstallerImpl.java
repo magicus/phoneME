@@ -75,120 +75,129 @@ public class MIDLETInstallerImpl implements JUMPInstallerModule {
      * Install content specified by the given descriptor and location.
      * @return the installed content
      */
-    public JUMPContent[] install(URL location, JUMPDownloadDescriptor desc){
-         return installOrUpdate(location, desc, false);
+    public JUMPContent[] install(URL location, JUMPDownloadDescriptor desc) {
+	return installOrUpdate(location, desc, false);
     }
-
+    
     /**
      * Update content from given location
      */
-    public void update(JUMPContent content, URL location, JUMPDownloadDescriptor desc) {
-         installOrUpdate(location, desc, true);
+    public void update(JUMPContent content, URL location,
+		       JUMPDownloadDescriptor desc) {
+	installOrUpdate(location, desc, true);
     }
     
-    private JUMPContent[] installOrUpdate(URL location, JUMPDownloadDescriptor desc, 
-         boolean isUpdate){
-
-       String path = location.getPath().toLowerCase();
-
-       // below for more details.
-       String bundleName = desc.getName();
-       if (bundleName != null) {
-           // We need to replace spaces because apparently java doesn't like
-           // jarfiles with spaces in the name. Any further string substitutions
-           // should be done here.
-           bundleName = bundleName.replace(' ', '_');
-       }
-
-       
-       String localJadFile = null;
-       String localJarFile = null;
-          
-       try {
-
-          Properties prop = desc.getApplications()[0];
-          localJadFile = prop.getProperty("JUMPApplication_localJadUrl");
-          localJarFile = location.getPath();
-
-          int suiteId = 0;
-
-          if (localJadFile != null) {
-              suiteId = installer.verifyAndStoreSuite(desc.getObjectURI(),
-                                            null,
-                                            localJadFile, localJarFile, isUpdate);
+    private JUMPContent[] installOrUpdate(URL location, 
+					  JUMPDownloadDescriptor desc, 
+					  boolean isUpdate) {
+	
+	String path = location.getPath().toLowerCase();
+	
+	// below for more details.
+	String bundleName = desc.getName();
+	if (bundleName != null) {
+	    // We need to replace spaces because apparently java doesn't like
+	    // jarfiles with spaces in the name. Any further string
+	    // substitutions should be done here.
+	    bundleName = bundleName.replace(' ', '_');
+	}
+	
+	
+	String localJadFile = null;
+	String localJarFile = null;
+	
+	try {
+	    
+	    Properties prop = desc.getApplications()[0];
+	    localJadFile = prop.getProperty("JUMPApplication_localJadUrl");
+	    localJarFile = location.getPath();
+	    
+	    int suiteId = 0;
+	    
+	    if (localJadFile != null) {
+		suiteId = installer.verifyAndStoreSuite(desc.getObjectURI(),
+							null,
+							localJadFile,
+							localJarFile, isUpdate);
                 
-          } else if (path.endsWith(".jar")) {
-              suiteId = installer.verifyAndStoreSuite(desc.getObjectURI(), 
-                                            localJarFile, bundleName, isUpdate);
-          } else {
-              System.err.println("install() failed, path not a jar file: " + location);
-              return null;
-          }
-
-          // Install succeeded. Gather the installed midlet suite's info 
+	    } else if (path.endsWith(".jar")) {
+		suiteId = installer
+		    .verifyAndStoreSuite(desc.getObjectURI(), 
+					 localJarFile, bundleName, isUpdate);
+	    } else {
+		System.err.println("install() failed, path not a jar file: "
+				   + location);
+		return null;
+	    }
+	    
+	    // Install succeeded. Gather the installed midlet suite's info 
 	  // from suitestore and convert them to a list of JUMPContents.
-
-          JUMPContent[] installed = suiteStore.convertToMIDletApplications(suiteId);
-
-          return installed;
-
-       } catch (Throwable ex) {
-          handleInstallerException(ex);   
-       } finally {
-//           File localJad = new File(localJadFile);
-//           if (localJad.exists()) {
-//               localJad.delete();
-//           }
-//           File localJar = new File(localJarFile);
-//           if (localJar.exists()) {
-//               localJar.delete();
-//           }           
-       }
-
-       return null;
-
+	    
+	    JUMPContent[] installed = suiteStore
+		.convertToMIDletApplications(suiteId);
+	    
+	    return installed;
+	    
+	} catch (Throwable ex) {
+	    handleInstallerException(ex);   
+	} finally {
+	    //           File localJad = new File(localJadFile);
+	    //           if (localJad.exists()) {
+	    //               localJad.delete();
+	    //           }
+	    //           File localJar = new File(localJarFile);
+	    //           if (localJar.exists()) {
+	    //               localJar.delete();
+	    //           }           
+	}
+	
+	return null;
+	
     }
-
+    
     /**
      * Uninstall content
      */
     public void uninstall(JUMPContent content) {
         MIDletApplication midlet = (MIDletApplication) content;
         
-        JUMPContent midlets[] = suiteStore.convertToMIDletApplications(midlet.getMIDletSuiteID());
+        JUMPContent midlets[] = suiteStore
+	    .convertToMIDletApplications(midlet.getMIDletSuiteID());
         if (midlets.length > 1) {
-                System.out.println( "MIDLET suite: " + midlet.getTitle() + " contains the following midlets." );
-                System.out.print("  ");
-                for (int i = 0; i < midlets.length; i++) {
-                    JUMPApplication app = (JUMPApplication)midlets[i];
-                    System.out.print(app.getTitle());
-                    if (i < (midlets.length - 1)) {
-                        System.out.print(", ");
-                    }
-                }
-                System.out.println("");
-                System.out.println("Deleting this suite will remove all of the midlets.");
-                
-//            while ( true ) {
-//                System.out.println("Do you wish to proceed: [y/n]");
-//                BufferedReader in =
-//                        new BufferedReader( new InputStreamReader( System.in ) );
-//                String answer;
-//                
-//                try {
-//                    answer = in.readLine();
-//                } catch ( java.io.IOException ioe ) {
-//                    continue;
-//                }
-//                
-//                if (answer.toLowerCase().equals("y")) {
-//                    break;
-//                } else if (answer.toLowerCase().equals("n")){
-//                    return;
-//                } else {
-//                    System.out.println("ERROR: Illegal response.");
-//                }
-//            }
+	    System.out.println("MIDLET suite: " + midlet.getTitle()
+				+ " contains the following midlets.");
+	    System.out.print("  ");
+	    for (int i = 0; i < midlets.length; i++) {
+		JUMPApplication app = (JUMPApplication)midlets[i];
+		System.out.print(app.getTitle());
+		if (i < (midlets.length - 1)) {
+		    System.out.print(", ");
+		}
+	    }
+	    System.out.println("");
+	    System.out.println("Deleting this suite will remove all" 
+			       + " of the midlets.");
+            
+	    // while ( true ) {
+	    //    System.out.println("Do you wish to proceed: [y/n]");
+	    //    BufferedReader in =
+	    //       new BufferedReader( new InputStreamReader( System.in ) );
+	    //    String answer;
+	    //                
+	    //    try {
+	    //         answer = in.readLine();
+	    //    } catch ( java.io.IOException ioe ) {
+	    //         continue;
+	    //    }
+	    //                
+	    //  if (answer.toLowerCase().equals("y")) {
+	    //       break;
+	    //  } else if (answer.toLowerCase().equals("n")){
+	    //       return;
+	    //  } else {
+	    //       System.out.println("ERROR: Illegal response.");
+	    //    }
+	    //  }
         }
         suiteStore.remove(midlet.getMIDletSuiteID());
     }
@@ -197,22 +206,22 @@ public class MIDLETInstallerImpl implements JUMPInstallerModule {
      * Get all installed content
      */
     public JUMPContent[] getInstalled() {
-
-         ArrayList appslist = new ArrayList();
-         JUMPContent[] apps;
-
-         int[] suiteIds = suiteStore.getInstalledMIDletSuiteIds();
-
-         for (int i = 0; i < suiteIds.length; i++) {
+	
+	ArrayList appslist = new ArrayList();
+	JUMPContent[] apps;
+	
+	int[] suiteIds = suiteStore.getInstalledMIDletSuiteIds();
+	
+	for (int i = 0; i < suiteIds.length; i++) {
             apps = suiteStore.convertToMIDletApplications(suiteIds[i]);
             for (int j = 0; j < apps.length; j++) {
                 appslist.add(apps[j]);
             }
-         }
-
-         return (JUMPContent[])appslist.toArray(new JUMPContent[]{});
+	}
+	
+	return (JUMPContent[])appslist.toArray(new JUMPContent[] {});
     }
-
+    
     /**
      * Converts a pair suite id and midlet class name into
      * <code>MIDletApplication</code>.
@@ -245,7 +254,7 @@ public class MIDLETInstallerImpl implements JUMPInstallerModule {
 
         String message = null;
 
-        //ex.printStackTrace();
+        // ex.printStackTrace();
 
         if (ex instanceof InvalidJadException) {
             InvalidJadException ije = (InvalidJadException)ex;

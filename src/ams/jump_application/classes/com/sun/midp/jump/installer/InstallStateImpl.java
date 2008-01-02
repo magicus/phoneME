@@ -163,7 +163,7 @@ public class InstallStateImpl implements InstallState, MIDletSuite {
     public InstallInfo previousInstallInfo;
 
     /** The ContentHandler installer state. */
-    //public CHManager chmanager;
+    // public CHManager chmanager;
 
     /** Constructor. */
     public InstallStateImpl() {

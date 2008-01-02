@@ -59,7 +59,8 @@ public final class AppSuiteDataStoreTest extends TestCase {
      *
      * @returns a handle
      */
-    private static StoreOperationManager createStoreManager() throws IOException {
+    private static StoreOperationManager createStoreManager()
+	throws IOException {
         return StoreUtils.createInMemoryManager(new String [] {DIR});
     }
 
@@ -189,7 +190,7 @@ public final class AppSuiteDataStoreTest extends TestCase {
 
     private void checkGetSuiteData(final AppSuiteDataStore store)
             throws IOException {
-        store.listData(new AppSuiteDataStore.DataConsumer () {
+        store.listData(new AppSuiteDataStore.DataConsumer() {
             public void consume(final int suiteId, final Object data) {
                 assertEquals(data, store.getSuiteData(suiteId));
             }

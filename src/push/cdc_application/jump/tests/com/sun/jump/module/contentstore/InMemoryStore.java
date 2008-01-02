@@ -333,7 +333,8 @@ public final class InMemoryStore extends JUMPStore {
         Node process(ListNode location, String name) throws IOException;
     }
 
-    /** Performs an operation.
+    /**
+     * Performs an operation.
      *
      * @param uri uri to perform operation at
      * @param processor processor which performs an operation
