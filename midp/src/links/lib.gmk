@@ -1,0 +1,70 @@
+#
+#
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt).
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions.
+
+SUBSYSTEMS += links
+
+SUBSYSTEM_LINKS_DIR = $(SUBSYSTEM_DIR)/links
+
+MIDP_JAVADOC_SOURCEPATH += $(SUBSYSTEM_LINKS_DIR)/common/classes
+MIDP_JAVADOC_PACKAGES += com.sun.midp.links
+
+vpath % $(SUBSYSTEM_DIR)/links/native/share
+
+SUBSYSTEM_LINKS_JAVA_FILES = \
+    $(SUBSYSTEM_DIR)/links/classes/com/sun/midp/links/ClosedLinkException.java \
+    $(SUBSYSTEM_DIR)/links/classes/com/sun/midp/links/Link.java \
+    $(SUBSYSTEM_DIR)/links/classes/com/sun/midp/links/LinkMessage.java \
+    $(SUBSYSTEM_DIR)/links/classes/com/sun/midp/links/LinkPortal.java
+
+ifeq ($(USE_I3_TEST), true)
+
+SUBSYSTEM_LINKS_I3TEST_JAVA_FILES = \
+    $(SUBSYSTEM_DIR)/links/i3test/com/sun/midp/links/Echo.java \
+    $(SUBSYSTEM_DIR)/links/i3test/com/sun/midp/links/Empty.java \
+    $(SUBSYSTEM_DIR)/links/i3test/com/sun/midp/links/Receiver.java \
+    $(SUBSYSTEM_DIR)/links/i3test/com/sun/midp/links/Sender.java \
+    $(SUBSYSTEM_DIR)/links/i3test/com/sun/midp/links/TestEcho.java \
+    $(SUBSYSTEM_DIR)/links/i3test/com/sun/midp/links/TestKill.java \
+    $(SUBSYSTEM_DIR)/links/i3test/com/sun/midp/links/TestLink.java \
+    $(SUBSYSTEM_DIR)/links/i3test/com/sun/midp/links/TestLinkMessage.java \
+    $(SUBSYSTEM_DIR)/links/i3test/com/sun/midp/links/TestLinkPortal.java \
+    $(SUBSYSTEM_DIR)/links/i3test/com/sun/midp/links/TestLinkTransfer.java \
+    $(SUBSYSTEM_DIR)/links/i3test/com/sun/midp/links/TestMultiple.java \
+    $(SUBSYSTEM_DIR)/links/i3test/com/sun/midp/links/TestRing.java \
+    $(SUBSYSTEM_DIR)/links/i3test/com/sun/midp/links/TestTransfer.java \
+    $(SUBSYSTEM_DIR)/links/i3test/com/sun/midp/links/Utils.java
+
+else
+
+SUBSYSTEM_LINKS_I3TEST_JAVA_FILES =
+
+endif # USE_I3_TEST
+
+SUBSYSTEM_LINKS_NATIVE_FILES = \
+    midp_link.c
+
+SUBSYSTEM_LINKS_EXTRA_INCLUDES += \
+    -I$(SUBSYSTEM_LINKS_DIR)/include    
+
