@@ -186,8 +186,14 @@ public class WebPublicKeyStore extends PublicKeyStore
         keystore = new PublicKeyStoreBuilderBase(sharedKeyList);
         try {
             storage = new RandomAccessStream(classSecurityToken);
-            storage.connect(File.getStorageRoot(Constants.INTERNAL_STORAGE_ID) +
-                "_main.ks", RandomAccessStream.READ_WRITE_TRUNCATE);
+            String keystore_filename = System.getProperty("com.sun.midp.publickeystore.WebPublicKeyStore");
+
+            // Fallback to default storage root
+            if (keystore_filename == null) {
+                keystore_filename = File.getStorageRoot(Constants.INTERNAL_STORAGE_ID)+
+                "_main.ks";
+            }
+            storage.connect( keystore_filename , RandomAccessStream.READ_WRITE_TRUNCATE);
             outputStream = storage.openOutputStream();
         } catch (Exception e) {
             if (Logging.TRACE_ENABLED) {
