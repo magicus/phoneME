@@ -161,11 +161,11 @@ storageInitialize(char *config_home, char *midp_home) {
     }
 
     /* performance hint: predict buffer capacity */
-    /*pcsl_string_predict_size(&sRoot[0], pcsl_string_length(&sRoot[0]) + 2
-                                    + PCSL_STRING_LITERAL_LENGTH(APP_DIR));*/
-    if (/*PCSL_STRING_OK != pcsl_string_append_char(&sRoot[0], fsep)
+    pcsl_string_predict_size(&sRoot[0], pcsl_string_length(&sRoot[0]) + 2
+                                    + PCSL_STRING_LITERAL_LENGTH(APP_DIR));
+    if (PCSL_STRING_OK != pcsl_string_append_char(&sRoot[0], fsep)
      || PCSL_STRING_OK != pcsl_string_append(&sRoot[0], &APP_DIR)
-     ||*/ PCSL_STRING_OK != pcsl_string_append_char(&sRoot[0], fsep)) {
+     || PCSL_STRING_OK != pcsl_string_append_char(&sRoot[0], fsep)) {
         REPORT_ERROR(LC_CORE, "Error: out of memory.\n");
         storageFinalize();
         return -1;
