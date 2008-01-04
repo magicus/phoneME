@@ -309,4 +309,10 @@ public final class EventTypes {
 
     /** The event to repaint entire screen*/
     public static final int SCREEN_REPAINT_EVENT = 47;
+
+    /**
+     * JSR-256 sensor notification event.
+     */
+    public static final int SENSOR_EVENT = 48;
+    
 }
