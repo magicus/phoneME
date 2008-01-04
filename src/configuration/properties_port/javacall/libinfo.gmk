@@ -1,4 +1,6 @@
 #
+#   
+#
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -21,34 +23,7 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
 #
-######################################################################
-#
-# Makefile for building and packaging.
-#
-######################################################################
 
-USE_JAVACALL=true
-
-JAVACALL_INCLUDE_DIR=$(JAVACALL_OUTPUT_DIR)/inc
-JAVACALL_LIB_DIR=$(JAVACALL_OUTPUT_DIR)/lib
-
-EXTRA_CFLAGS += -I$(JAVACALL_INCLUDE_DIR) 
-
-include Platform.gmk
-
-# Workspace directory
-MIDP_DIR               := $(shell dirname $(shell dirname $(CURDIR)))
-
-# Build output directory
-ifndef MIDP_OUTPUT_DIR
-MIDP_OUTPUT_DIR         = $(CURDIR)/output
-endif
-
-# Build options should be include before shared gmk
-include Options.gmk
-
-# All rules are defined in shared makefiles
-include $(MIDP_DIR)/build/common/Top.gmk
-
-# Including the part that should appear after Top.gmk
-include Platform_post.gmk
+LIB_PROPERTIES_PORT_DESCRIPTION=Implementation of the dynamic MIDP properties
+LIB_PROPERTIES_PORT_VERSION=1.0
+LIB_PROPERTIES_PORT_DEPENDENCY=configuration

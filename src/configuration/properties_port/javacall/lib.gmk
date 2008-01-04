@@ -1,4 +1,6 @@
 #
+#   
+#
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -21,34 +23,36 @@
 # Clara, CA 95054 or visit www.sun.com if you need additional
 # information or have any questions.
 #
+
 ######################################################################
 #
-# Makefile for building and packaging.
+# Properties port library
 #
 ######################################################################
 
-USE_JAVACALL=true
+# Add to global SUBSYSTEMS list
+#
+INT_SUBSYSTEM_PROPERTIES_PORT_NAME = properties_port
+SUBSYSTEMS += $(INT_SUBSYSTEM_PROPERTIES_PORT_NAME)
 
-JAVACALL_INCLUDE_DIR=$(JAVACALL_OUTPUT_DIR)/inc
-JAVACALL_LIB_DIR=$(JAVACALL_OUTPUT_DIR)/lib
+# vpath for native implementation of dynamic properties
+vpath % $(SUBSYSTEM_DIR)/configuration/properties_port/javacall/native
 
-EXTRA_CFLAGS += -I$(JAVACALL_INCLUDE_DIR) 
+# Native files 
+#
+JAVACALL_PROPERTIES_PORT_NATIVE_FILES = midp_properties_javacall.c
 
-include Platform.gmk
+# Include files
+# 
+INT_PROPERTIES_PORT_JAVA_FILES = 
 
-# Workspace directory
-MIDP_DIR               := $(shell dirname $(shell dirname $(CURDIR)))
+# Publish the variables to global Makefile
+#
+SUBSYSTEM_PROPERTIES_PORT_JAVA_FILES = \
+	$(INT_PROPERTIES_PORT_JAVA_FILES)
 
-# Build output directory
-ifndef MIDP_OUTPUT_DIR
-MIDP_OUTPUT_DIR         = $(CURDIR)/output
-endif
+SUBSYSTEM_PROPERTIES_PORT_NATIVE_FILES += \
+	$(JAVACALL_PROPERTIES_PORT_NATIVE_FILES)
 
-# Build options should be include before shared gmk
-include Options.gmk
-
-# All rules are defined in shared makefiles
-include $(MIDP_DIR)/build/common/Top.gmk
-
-# Including the part that should appear after Top.gmk
-include Platform_post.gmk
+SUBSYSTEM_CONFIGURATION_CONFIG_FILES = \
+        $(INT_CONFIGURATION_CONFIG_FILES)

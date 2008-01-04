@@ -40,7 +40,8 @@ public final class JUnitUtils {
      *
      * @return test suite to run
      */
-    public static Test createSuite(final Class allTestsClass, final Class [] tests) {
+    public static Test createSuite(final Class allTestsClass,
+				   final Class [] tests) {
         final String title = allTestsClass.getPackage().getName();
         final TestSuite suite = new TestSuite(title);
         for (int i = 0; i < tests.length; i++) {

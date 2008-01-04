@@ -134,6 +134,19 @@ MIDPError midp_remove_suite(SuiteIdType suiteId);
  */
 long midp_get_suite_storage_size(SuiteIdType suiteId);
 
+/**
+ * Checks the integrity of the suite storage database and of the
+ * installed suites.
+ *
+ * @param fullCheck 0 to check just an integrity of the database,
+ *                    other value for full check
+ * @param delCorruptedSuites != 0 to delete the corrupted suites,
+ *                           0 - to keep them (for re-installation).
+ *
+ * @return ALL_OK if no errors or an error code
+ */
+MIDPError midp_check_suites_integrity(int fullCheck, int delCorruptedSuites);
+
 #ifdef __cplusplus
 }
 #endif

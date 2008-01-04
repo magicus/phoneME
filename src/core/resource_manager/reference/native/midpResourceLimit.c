@@ -40,6 +40,8 @@
 #include <midpMidletSuiteUtils.h>
 #include <jvm.h>
 #include <midp_logging.h>
+#include <midpMalloc.h>
+#include <midp_properties_port.h>
 
 #if 0 /* for local debug */
 #include <stdio.h>
@@ -141,7 +143,7 @@ static int gResourcesAvailable[RSC_TYPE_COUNT] = {
 };
 
 static int isInitialized = KNI_FALSE;
-static _IsolateResourceUsage gIsolateResourceUsage[MAX_ISOLATES];
+static _IsolateResourceUsage* gIsolateResourceUsage;
 
 /**
  * Initialize the Resource limit structures.
@@ -149,10 +151,19 @@ static _IsolateResourceUsage gIsolateResourceUsage[MAX_ISOLATES];
  */
 static void initResourceLimit() {
     int i, j;
+    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
+
+    if (0 == max_isolates) {
+        REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
+        return;
+    }
+
 
     REPORT_INFO(LC_CORE, "initialize resource limit\n");
 
-    for (i = 0; i < MAX_ISOLATES; i++) {
+    gIsolateResourceUsage = (_IsolateResourceUsage*)midpMalloc(sizeof(_IsolateResourceUsage)*max_isolates);
+
+    for (i = 0; i < max_isolates; i++) {
         gIsolateResourceUsage[i].isolateId = -1;
         gIsolateResourceUsage[i].inUse = 0;
 
@@ -182,6 +193,14 @@ static void initResourceLimit() {
  */
 static _IsolateResourceUsage *findIsolateResourceUsageStruct(int isolateId) {
     int i;
+    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
+
+    if (0 == max_isolates) {
+        REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
+        //Attempt to recover
+        max_isolates = 1;
+    }
+
 
     if (!isInitialized) {
         initResourceLimit();
@@ -192,7 +211,7 @@ static _IsolateResourceUsage *findIsolateResourceUsageStruct(int isolateId) {
         return &(gIsolateResourceUsage[0]);
     }
 
-    for (i = 0; i < MAX_ISOLATES; i++) {
+    for (i = 0; i < max_isolates; i++) {
         if (isolateId == gIsolateResourceUsage[i].isolateId) {
             return &(gIsolateResourceUsage[i]);
         }
@@ -412,6 +431,13 @@ int midpAllocateReservedResources() {
     int isolateId = getCurrentIsolateId();
     int i = 0, idx;
     int status = KNI_TRUE;
+    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
+
+    if (0 == max_isolates) {
+        REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
+        return -1;
+    }
+
 
     REPORT_INFO1(LC_CORE, "RESOURCES [%d] midpAllocateReservedResources()\n", 
                  isolateId);
@@ -427,13 +453,13 @@ int midpAllocateReservedResources() {
     }
 
     /* find a free entry in the resource usage list */
-    for (idx = 0; idx < MAX_ISOLATES; idx++) {
+    for (idx = 0; idx < max_isolates; idx++) {
         if (!gIsolateResourceUsage[idx].inUse) {
             break;
         }
     }
 
-    if (idx < MAX_ISOLATES) {
+    if (idx < max_isolates) {
         /* check if the reserved resources are available 
            for each resource type */
         for (i = 0; i < RSC_TYPE_COUNT; i++) {
@@ -481,6 +507,13 @@ void midpFreeReservedResources() {
     int isolateId = getCurrentIsolateId();
     int idx, i;
 
+    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
+    if (0 == max_isolates) {
+        REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
+        return;
+    }
+
+
     REPORT_INFO1(LC_CORE, "RESOURCES [%d] midpFreeReservedResources()\n", 
                  isolateId);
 
@@ -508,7 +541,7 @@ void midpFreeReservedResources() {
     }
 
     /* find the entry for the isolate in the resource usage list */
-    for (idx = 0; idx < MAX_ISOLATES; idx++) {
+    for (idx = 0; idx < max_isolates; idx++) {
         if (gIsolateResourceUsage[idx].isolateId == isolateId) {
             REPORT_INFO2(LC_CORE, "RESOURCES [%d] found index %d\n", 
                          isolateId, idx);
