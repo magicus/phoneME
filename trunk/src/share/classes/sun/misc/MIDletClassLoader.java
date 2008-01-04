@@ -145,7 +145,8 @@ public class MIDletClassLoader extends URLClassLoader {
         if (idx != -1) {
             String pkg = classname.substring(0, idx);
             if (packageCheck(pkg)) {
-                throw new SecurityException("Prohibited package name: " + pkg);
+                throw new ClassNotFoundException(classname +
+                              ". Prohibited package name: " + pkg);
             }
         }
 
