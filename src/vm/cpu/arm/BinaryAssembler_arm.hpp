@@ -117,7 +117,9 @@ class BinaryAssembler: public Macros {
 #endif // ENABLE_EMBEDDED_CALLINFO
 
   NOT_PRODUCT(virtual) 
-  void ldr_big_integer(Register rd, int imm32, Condition cond = al);
+  void ldr_big_integer(Register rd, int imm32, Condition cond = al) {
+    ldr_literal(rd, NULL, imm32, cond);
+  }
 
 #if ENABLE_ARM_VFP
   void fld_literal(Register rd, int imm32, Condition cond = al);
@@ -349,8 +351,7 @@ public:
       access_literal_pool(rd, lpe, cond, true);
   }
 
-  void ldr_literal(Register rd, const Oop* oop, int offset, 
-                   Condition cond = al);
+  void ldr_literal(Register rd, OopDesc* obj, int offset, Condition cond = al);
   void ldr_oop (Register r, const Oop* obj, Condition cond = al);
 
   // miscellaneous helpers
@@ -417,14 +418,14 @@ public:
     }  
   }
 
-  ReturnOop find_literal(const Oop* oop, int imm32, int offset JVM_TRAPS);
-  void append_literal(LiteralPoolElement *literal);
-  void write_literal(LiteralPoolElement *literal);
+  LiteralPoolElement* find_literal(OopDesc* obj, const int imm32,
+                                   int offset JVM_TRAPS);
+  void append_literal(LiteralPoolElement* literal);
+  void write_literal(LiteralPoolElement* literal);
   void access_literal_pool(Register rd, LiteralPoolElement* literal,
                            Condition cond, bool is_store);
-
 public:
-  void write_literals(bool force = false);
+  void write_literals(const bool force = false);
   void write_literals_if_desperate(int extra_bytes = 0);
 
   // We should write out the literal pool at our first convenience
@@ -445,17 +446,16 @@ private:
   friend class CodeInterleaver;
   friend class Compiler;
 
-  FastOopInStackObj         __must_appear_before_fast_objects__;
-  CompiledMethod*           _compiled_method;
-  jint                      _code_offset;
-  RelocationWriter          _relocation;
-  LiteralPoolElement::Fast  _first_literal;
-  LiteralPoolElement::Fast  _first_unbound_literal;
-  LiteralPoolElement::Fast  _last_literal;
-  int                       _unbound_literal_count;
-  int                       _code_offset_to_force_literals;
-                            // and to boldly split infinitives
-  int                      _code_offset_to_desperately_force_literals;  
+  CompiledMethod*       _compiled_method;
+  jint                  _code_offset;
+  RelocationWriter      _relocation;
+  LiteralPoolElement*   _first_literal;
+  LiteralPoolElement*   _first_unbound_literal;
+  LiteralPoolElement*   _last_literal;
+  int                   _unbound_literal_count;
+  int                   _code_offset_to_force_literals;
+                        // and to boldly split infinitives
+  int                   _code_offset_to_desperately_force_literals;  
 };
 
 #if defined(PRODUCT) && !USE_COMPILER_COMMENTS

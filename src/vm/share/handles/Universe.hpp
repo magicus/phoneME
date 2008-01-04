@@ -117,10 +117,6 @@ class Universe: public AllStatic {
   }
   static ReturnOop new_mixed_oop(int type, size_t size, int pointer_count
                                  JVM_TRAPS);
-#if ENABLE_COMPILER
-  static ReturnOop new_mixed_oop_in_compiler_area(int type, size_t size, 
-                                                  int pointer_count JVM_TRAPS);
-#endif
   static ReturnOop new_execution_stack(jint length JVM_TRAPS);
 
   // Support for stackmaps
@@ -140,8 +136,10 @@ class Universe: public AllStatic {
   static void setup_isolate_list(JVM_SINGLE_ARG_TRAPS);
   static ReturnOop setup_mirror_list(int i JVM_TRAPS);
   static ReturnOop new_task(int id JVM_TRAPS);
-  static ReturnOop new_task_mirror(jint statics_size, 
-                                   jint vtable_length JVM_TRAPS);
+  static ReturnOop new_task_mirror( const jint statics_size, 
+                                    const jint vtable_length JVM_TRAPS) {
+    return allocate_task_mirror(statics_size, vtable_length JVM_NO_CHECK);
+  }
   static ReturnOop task_from_id(int task_id);
 
   static inline void set_task_list(ObjArray *tl);

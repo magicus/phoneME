@@ -79,7 +79,7 @@ void MixedOop::iterate(OopVisitor* visitor) {
   case MixedOopDesc::Type_CompilationQueueElement:
     ((CompilationQueueElement*)this)->iterate(visitor);
     break;    
-#if USE_COMPILER_LITERALS_MAP
+#if 0 && USE_COMPILER_LITERALS_MAP
   case MixedOopDesc::Type_LiteralPoolElement:
     ((LiteralPoolElement*)this)->iterate(visitor);
     break;

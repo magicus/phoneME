@@ -32,7 +32,8 @@
   template( IntArray                ) \
   template( Entry                   ) \
   template( CompilationQueueElement ) \
-  template( VirtualStackFrame       )
+  template( VirtualStackFrame       ) \
+  template( LiteralPoolElement      )
 
 #define USE_COMPILER_OBJECT_HEADER 1
 

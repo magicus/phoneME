@@ -495,7 +495,6 @@ Disassembler_<iarch>.cpp         Disassembler_<iarch>.hpp
 Disassembler_<carch>.hpp         Assembler_<carch>.hpp
 Disassembler_<carch>.hpp         Stream.hpp
 Disassembler_<carch>.hpp         Oop.hpp
-Disassembler_<carch>.cpp         Disassembler_<carch>.hpp
 Disassembler_<carch>.cpp         BinaryAssembler_<carch>.hpp
 
 #if ENABLE_INTERPRETER_GENERATOR
@@ -650,20 +649,14 @@ CallInfo.cpp                     CallInfo.hpp
 CallInfo.hpp                     Relocation.hpp
 
 CompiledMethod.cpp               OopVisitor.hpp
-CompiledMethod.cpp               CompiledMethod.hpp
-CompiledMethod.cpp               Relocation.hpp
 CompiledMethod.cpp               Method.hpp
 CompiledMethod.cpp               OS.hpp
 CompiledMethod.cpp               OopDesc.inline.hpp
 CompiledMethod.cpp               OsMisc.hpp
 CompiledMethod.cpp               ObjectHeap_<iarch>.hpp
 CompiledMethod.cpp               BinaryAssembler_<carch>.hpp
-CompiledMethod.cpp               CallInfo.hpp
 
 CompiledMethod_<carch>.cpp       OsMisc.hpp
-CompiledMethod_<carch>.cpp       Disassembler_<carch>.hpp
-CompiledMethod_<carch>.cpp       CompiledMethod.hpp
-CompiledMethod_<carch>.cpp       Relocation.hpp
 CompiledMethod_<carch>.cpp       Near.hpp
 CompiledMethod_<carch>.cpp       BinaryAssembler_<carch>.hpp
 #if ENABLE_CODE_PATCHING
@@ -696,7 +689,6 @@ CodeGenerator.hpp                Value.hpp
 CodeGenerator.hpp                BinaryAssembler_<carch>.hpp
 CodeGenerator.hpp                VirtualStackFrame.hpp
 CodeGenerator.hpp                BytecodeClosure.hpp
-CodeGenerator.hpp                CompiledMethodDesc.hpp
 CodeGenerator.cpp                Compiler.hpp
 CodeGenerator.cpp                Throw.hpp
 CodeGenerator.cpp                JVM.hpp
@@ -769,7 +761,6 @@ VSFMergeTest.cpp                 CompilerTest.hpp
 VSFMergeTest.cpp                 Location.hpp
 VSFMergeTest.cpp                 VSFMergeTest.hpp
 
-VirtualStackFrame_<carch>.cpp    BinaryAssembler_<carch>.hpp
 VirtualStackFrame_<carch>.cpp    Location.hpp
 VirtualStackFrame_<carch>.cpp    Compiler.hpp
 
@@ -790,7 +781,6 @@ Value.cpp                        InstanceClass.hpp
 
 Relocation.hpp                   CompiledMethod.hpp
 Relocation.cpp                   Relocation.hpp
-Relocation.cpp                   BinaryAssembler_<carch>.hpp
 Relocation.cpp                   Compiler.hpp
 Relocation.cpp                   Location.hpp
 
@@ -832,11 +822,9 @@ CompilerTest.cpp                 FilePath.hpp
 CompilerObject.hpp               ObjectHeap.hpp
 CompilerObject.cpp               CompilerObject.hpp
 
-CompilationQueue.hpp             CompilerObject.hpp
 CompilationQueue.hpp             VirtualStackFrame.hpp
 CompilationQueue.hpp             BinaryAssembler_<carch>.hpp
 CompilationQueue.hpp             BytecodeCompileClosure.hpp
-CompilationQueue.cpp             Universe.hpp
 CompilationQueue.cpp             SystemDictionary.hpp
 CompilationQueue.cpp             Compiler.hpp
 CompilationQueue.cpp             InstanceClass.hpp
@@ -868,12 +856,8 @@ CompiledMethodDesc.hpp           jvmpi.h
 #endif
 CompiledMethodDesc.hpp           MethodDesc.hpp
 CompiledMethodDesc.hpp           RemoteTracer.hpp
-CompiledMethodDesc.cpp           CompiledMethodDesc.hpp
-CompiledMethodDesc.cpp           Relocation.hpp
 CompiledMethodDesc.cpp           BinaryAssembler_<carch>.hpp
 
-CompiledMethodDesc_<carch>.cpp   CompiledMethodDesc.hpp
-CompiledMethodDesc_<carch>.cpp   Relocation.hpp
 CompiledMethodDesc_<carch>.cpp   BinaryAssembler_<carch>.hpp
 CompiledMethodDesc_<carch>.cpp   Instructions_<carch>.hpp
 CompiledMethodDesc_<carch>.cpp   ObjectHeap_<iarch>.hpp
@@ -956,10 +940,7 @@ Buffer.cpp                       Throw.hpp
 
 Frame_<iarch>.hpp                Top.hpp
 
-Frame.hpp                        CallInfo.hpp
-Frame.hpp                        CompiledMethodDesc.hpp
 Frame.hpp                        Frame_<iarch>.hpp
-Frame.hpp                        Assembler_<carch>.hpp
 Frame.hpp                        BinaryAssembler_<carch>.hpp
 Frame.hpp                        Thread.hpp
 Frame.hpp                        Synchronizer.hpp
@@ -1234,7 +1215,6 @@ Assembler_<carch>.hpp            Assembler_armthumb.hpp
 Assembler_<carch>.hpp            Allocation.hpp
 Assembler_<carch>.hpp            Bytecodes.hpp
 Assembler_<carch>.hpp            Globals.hpp
-Assembler_<carch>.cpp            Assembler_<carch>.hpp
 Assembler_<carch>.cpp            BinaryAssembler_<carch>.hpp
 Assembler_<carch>.cpp            RegisterAllocator.hpp
 
@@ -1254,18 +1234,13 @@ SourceAssembler_<iarch>.cpp      ObjectHeap_<iarch>.hpp
 SourceAssembler_<iarch>.cpp      GPTableGenerator_<iarch>.hpp
 #endif
 
-BinaryAssembler_<carch>.hpp      CompilerObject.hpp
 BinaryAssembler_<carch>.hpp      LiteralPoolElement.hpp
 BinaryAssembler_<carch>.hpp      Assembler_<carch>.hpp
 BinaryAssembler_<carch>.hpp      CompiledMethod.hpp
 BinaryAssembler_<carch>.hpp      Relocation.hpp
 BinaryAssembler_<carch>.hpp      CallInfo.hpp
 BinaryAssembler_<carch>.hpp      ObjectHeap_<iarch>.hpp
-BinaryAssembler_<carch>.hpp      ObjArray.hpp
-BinaryAssembler_<carch>.hpp      TypeArray.hpp
 BinaryAssembler_<carch>.hpp      Disassembler_<carch>.hpp
-BinaryAssembler_<carch>.cpp      Universe.hpp
-BinaryAssembler_<carch>.cpp      BinaryAssembler_<carch>.hpp
 BinaryAssembler_<carch>.cpp      Thread.hpp
 BinaryAssembler_<carch>.cpp      Instructions_<carch>.hpp
 BinaryAssembler_<carch>.cpp      Compiler.hpp
@@ -1276,10 +1251,7 @@ Instructions_<carch>.cpp         Instructions_<carch>.hpp
 
 BinaryLabel.cpp                  Compiler.hpp
 
-LiteralPoolElementDesc.hpp       GlobalDefinitions.hpp
-LiteralPoolElementDesc.hpp       MixedOopDesc.hpp
-LiteralPoolElement.hpp           LiteralPoolElementDesc.hpp
-LiteralPoolElement.hpp           MixedOop.hpp
+LiteralPoolElement.hpp           CompilerObject.hpp
 LiteralPoolElement.hpp           BinaryLabel.hpp
 LiteralPoolElement.cpp           Compiler.hpp
 

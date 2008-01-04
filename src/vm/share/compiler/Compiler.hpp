@@ -33,37 +33,23 @@
 
 // The compiler translates bytecodes into native instructions.
 
-class CompilerStatePointers {
-public:
-  #define FIELD( type, name ) \
-    type##Desc* _##name;              \
-    inline type* name ( void ) const { return (type*) &_##name; } \
-    inline void set_##name ( type* val ) { _##name = (type##Desc*) val->obj(); }
-
-#if USE_LITERAL_POOL
-  FIELD( Oop, first_literal             )
-  FIELD( Oop, first_unbound_literal     )
-  FIELD( Oop, last_literal              )
-#endif
-
-#if ENABLE_THUMB_COMPILER
-  FIELD( Oop, first_unbound_branch_literal  )
-  FIELD( Oop, last_unbound_branch_literal   )
-#endif
-
-#undef FIELD
-
-  static int pointer_count( void ) {
-    return sizeof(CompilerStatePointers) / sizeof(OopDesc*);
-  }
-};
-
-class CompilerState: public CompilerStatePointers  {
+class CompilerState  {
 public:
   #define FIELD( type, name ) \
     type _##name;             \
     inline type name ( void ) const { return _##name; } \
-    inline void set_##name ( const type val ) { _##name = val; }
+    inline void set_##name ( type val ) { _##name = val; }
+
+#if USE_LITERAL_POOL
+  FIELD( LiteralPoolElement*, first_literal             )
+  FIELD( LiteralPoolElement*, first_unbound_literal     )
+  FIELD( LiteralPoolElement*, last_literal              )
+#endif
+
+#if ENABLE_THUMB_COMPILER
+  FIELD( LiteralPoolElement*, first_unbound_branch_literal      )
+  FIELD( LiteralPoolElement*, last_unbound_branch_literal       )
+#endif
 
   FIELD( int,  code_size                 )
   FIELD( int,  current_relocation_offset )
@@ -95,8 +81,6 @@ public:
   bool valid ( void ) const { return _valid; }
   void allocate ( void ) { _valid = true;   }
   void dispose  ( void ) { _valid = false;  }
-
-  void oops_do( void do_oop(OopDesc**) );
 };
 
 

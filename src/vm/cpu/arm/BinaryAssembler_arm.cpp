@@ -55,9 +55,9 @@ BinaryAssembler::BinaryAssembler(CompilerState* compiler_state,
 
 void BinaryAssembler::save_state(CompilerState *compiler_state) {
   compiler_state->set_code_size(_code_offset);
-  compiler_state->set_first_literal(&_first_literal);
-  compiler_state->set_first_unbound_literal(&_first_unbound_literal);
-  compiler_state->set_last_literal(&_last_literal);
+  compiler_state->set_first_literal( _first_literal );
+  compiler_state->set_first_unbound_literal( _first_unbound_literal );
+  compiler_state->set_last_literal( _last_literal );
   compiler_state->set_unbound_literal_count(_unbound_literal_count);
   compiler_state->set_code_offset_to_force_literals(
                      _code_offset_to_force_literals);
@@ -238,18 +238,13 @@ void BinaryAssembler::access_literal_pool(Register rd,
   literal->set_label(L);
 }
     
-void BinaryAssembler::ldr_literal(Register rd, const Oop* oop, int imm32,
+void BinaryAssembler::ldr_literal(Register rd, OopDesc* obj, int imm32,
                                   Condition cond) {
   SETUP_ERROR_CHECKER_ARG;
-  enum {
-    max_ldr_offset = 1 << 12
-  };
-  LiteralPoolElement::Raw e = find_literal(oop, imm32, max_ldr_offset JVM_CHECK);
-  if (e.not_null()) {
-    AllocationDisabler allocation_not_allowed_in_this_block;
-    ldr_from(rd, &e, cond);
-  } else { 
-    GUARANTEE(has_overflown_compiled_method(), "Must have signalled overflow");
+  enum { max_ldr_offset = 1 << 12 };
+  LiteralPoolElement* e = find_literal(obj, imm32, max_ldr_offset JVM_NO_CHECK);
+  if( e ) {
+    ldr_from(rd, e, cond);
   }
 }
 
@@ -309,7 +304,7 @@ void BinaryAssembler::ldr_oop(Register rd, const Oop* oop, Condition cond) {
   }
 #endif
 
-  ldr_literal(rd, oop, 0, cond);
+  ldr_literal(rd, oop->obj(), 0, cond);
 }
 
 extern "C" { 
@@ -329,103 +324,82 @@ void BinaryAssembler::mov_imm(Register rd, address target, Condition cond) {
   }
   if (GenerateROMImage) { 
     GUARANTEE(target != 0, "Must not be null address");
-    ldr_literal(rd, compiled_method(), (int)target, cond);
+    ldr_literal(rd, compiled_method()->obj(), (int)target, cond);
   } else { 
-    Oop::Raw null_oop;          // ::Raw since don't need to tell GC about NULL
-    ldr_literal(rd, &null_oop, (int)target, cond);
+    ldr_literal(rd, NULL, (int)target, cond);
   }
 }
-
-void BinaryAssembler::ldr_big_integer(Register rd, int imm32, Condition cond){
-  Oop::Raw null_oop;            // ::Raw since don't need to tell GC about NULL
-  ldr_literal(rd, &null_oop, imm32, cond);
-}    
 
 #if ENABLE_ARM_VFP
 void BinaryAssembler::fld_literal(Register rd, int imm32, Condition cond) {
-  Oop::Raw null_oop;            // ::Raw since don't need to tell GC about NULL
-
   SETUP_ERROR_CHECKER_ARG;
-  enum {
-    max_fld_offset = 1 << 8
-  };
-  LiteralPoolElement::Raw e = find_literal(&null_oop, imm32, max_fld_offset JVM_CHECK);
-  if (e.not_null()) {
-    AllocationDisabler allocation_not_allowed_in_this_block;    
-    ldr_from(rd, &e, cond);
-  } else {
-    GUARANTEE(has_overflown_compiled_method(), "Must have signalled overflow");
+  enum { max_fld_offset = 1 << 8 };
+  LiteralPoolElement* e =
+    find_literal( NULL, imm32, max_fld_offset JVM_NO_CHECK );
+  if( e ) {
+    ldr_from(rd, e, cond);
   }
 }
-#endif
 
-#if ENABLE_ARM_VFP
-ReturnOop BinaryAssembler::find_literal(const Oop* oop, int imm32, 
-                                        int offset JVM_TRAPS){
-  AllocationDisabler allocation_not_allowed_in_this_block;
-
+LiteralPoolElement* BinaryAssembler::find_literal(OopDesc* obj, const int imm32, 
+                                                  int offset JVM_TRAPS)
+{
   enum { max_code_size_to_branch_around_literals = 8 };
   offset -= max_code_size_to_branch_around_literals;
 
-  {
-    const OopDesc *oopdesc = (OopDesc*)oop->obj();
-    LiteralPoolElementDesc* ptr = (LiteralPoolElementDesc*)_first_literal.obj();
+  LiteralPoolElement* literal = _first_literal;
 
-    // Search for a bound literal not too far from current instruction
-    {
-      const int min_offset = _code_offset - offset;
-      for( ; ptr && ptr->is_bound(); ptr = ptr->_next) {
-        if( ptr->_bci >= min_offset && ptr->matches(oopdesc, imm32)) {
-          return (ReturnOop)ptr;
-        }
+  // Search for a bound literal not too far from current instruction
+  {
+    const int min_offset = _code_offset - offset;
+    for( ; literal && literal->is_bound(); literal = literal->next() ) {
+      if( literal->_bci >= min_offset && literal->matches(obj, imm32)) {
+        return literal;
       }
     }
+  }
 
-    // Search for an unbound literal
-    {
-      int unbound_literal_offset = 0;
-      for( ; ptr; ptr = ptr->_next) {
-        if( ptr->matches(oopdesc, imm32)) {
-          if( unbound_literal_offset < offset ) {
-            set_delayed_literal_write_threshold(offset - unbound_literal_offset);
-          } else {
-            write_literals(true);
-          }
-          return (ReturnOop)ptr;
+  // Search for an unbound literal
+  {
+    int unbound_literal_offset = 0;
+    for( ; literal; literal = literal->next() ) {
+      if( literal->matches(obj, imm32)) {
+        if( unbound_literal_offset < offset ) {
+          set_delayed_literal_write_threshold(offset - unbound_literal_offset);
+        } else {
+          write_literals(true);
         }
-        unbound_literal_offset += 4; // literal size in bytes
+        return literal;
       }
+      unbound_literal_offset += 4; // literal size in bytes
     }
   }
 
   // We need to create a new literal.
-  LiteralPoolElement::Raw literal =
-    LiteralPoolElement::allocate(oop, imm32 JVM_CHECK_0);
+  literal = LiteralPoolElement::allocate(obj, imm32 JVM_ZCHECK_0(literal) );
+
   // Add this literal to the end of the literal pool list
-  if( literal.not_null() ) {
-    append_literal(&literal);
+  append_literal(literal);
 
-    enum {
-      max_unbound_literal_count = 0x100 - 64    // max size of literals per one bytecode
-    };
+  enum {
+    max_unbound_literal_count = 0x100 - 64    // max size of literals per one bytecode
+  };
 
-    _unbound_literal_count++;
-    if (_unbound_literal_count >= max_unbound_literal_count) {
-      // If we get too many literals, their size might not fit into an
-      // immediate.  So we force a cutoff.
-      _code_offset_to_force_literals = 0; // force at the next chance
-      _code_offset_to_desperately_force_literals = 0;
-    } else {
-      set_delayed_literal_write_threshold(offset);
-    }
+  _unbound_literal_count++;
+  if (_unbound_literal_count >= max_unbound_literal_count) {
+    // If we get too many literals, their size might not fit into an
+    // immediate.  So we force a cutoff.
+    _code_offset_to_force_literals = 0; // force at the next chance
+    _code_offset_to_desperately_force_literals = 0;
+  } else {
+    set_delayed_literal_write_threshold(offset);
   }
   return literal;
 }
 #else  // !ENABLE_ARM_VFP
-ReturnOop BinaryAssembler::find_literal(const Oop* oop, int imm32, 
-                                        int offset JVM_TRAPS){
-  AllocationDisabler allocation_not_allowed_in_this_block;
-
+LiteralPoolElement* BinaryAssembler::find_literal(OopDesc* obj,
+                                          const int imm32, int offset JVM_TRAPS)
+{
   enum { max_code_size_to_branch_around_literals = 8 };
 
   offset -= max_code_size_to_branch_around_literals;
@@ -433,76 +407,69 @@ ReturnOop BinaryAssembler::find_literal(const Oop* oop, int imm32,
   const int position = _code_offset - offset;
 
   {
-    LiteralPoolElementDesc *ptr;
-    OopDesc *oopdesc = (OopDesc*)oop->obj();
-    for (ptr = (LiteralPoolElementDesc*)_first_literal.obj();
-         ptr; ptr = ptr->_next) {
-      if (ptr->is_bound() && ptr->_bci <= position) {
+    for( LiteralPoolElement* ptr = _first_literal; ptr; ptr = ptr->_next) {
+      if( ptr->is_bound() && ptr->_bci <= position ) {
         // This literal is too far away to use.  We could discard it
         // but it's not really worth the effort.
         continue;
       }
-      if (ptr->matches(oopdesc, imm32)) {
-        return (ReturnOop)ptr;
+      if( ptr->matches(obj, imm32) ) {
+        return ptr;
       }
     }
   }
 
   // We need to create a new literal.
-  LiteralPoolElement::Raw literal =
-    LiteralPoolElement::allocate(oop, imm32 JVM_CHECK_0);
+  LiteralPoolElement* literal =
+    LiteralPoolElement::allocate(obj, imm32 JVM_ZCHECK_0( literal ) );
   // Add this literal to the end of the literal pool list
-  if( literal.not_null() ) {
-    append_literal(&literal);
+  append_literal( literal );
 
-    enum {
-      max_unbound_literal_count = 0x100 - 64    // max size of literals per one bytecode
-    };
+  enum {
+    max_unbound_literal_count = 0x100 - 64    // max size of literals per one bytecode
+  };
 
-    _unbound_literal_count++;
-    if (_unbound_literal_count >= max_unbound_literal_count) {
-      // If we get too many literals, their size might not fit into an
-      // immediate.  So we force a cutoff.
-      _code_offset_to_force_literals = 0; // force at the next chance
-      _code_offset_to_desperately_force_literals = 0;
-    } else {
-      set_delayed_literal_write_threshold(offset);
-    }
+  _unbound_literal_count++;
+  if (_unbound_literal_count >= max_unbound_literal_count) {
+    // If we get too many literals, their size might not fit into an
+    // immediate.  So we force a cutoff.
+    _code_offset_to_force_literals = 0; // force at the next chance
+    _code_offset_to_desperately_force_literals = 0;
+  } else {
+    set_delayed_literal_write_threshold(offset);
   }
   return literal;
 }
 #endif
 
-void BinaryAssembler::append_literal(LiteralPoolElement* literal) {
-  if (_first_literal.is_null()) {
-    GUARANTEE(_last_literal.is_null(), "No literals");
-    GUARANTEE(_first_unbound_literal.is_null(), "No unknown literals");
+void BinaryAssembler::append_literal( LiteralPoolElement* literal ) {
+  if( _first_literal == NULL ) {
+    GUARANTEE(_last_literal == NULL, "No literals");
+    GUARANTEE(_first_unbound_literal == NULL, "No unknown literals");
     _first_literal = literal;
   } else { 
-    _last_literal().set_next(literal);
+    _last_literal->set_next(literal);
 
   }
   _last_literal = literal;
-  if (_first_unbound_literal.is_null()) {
+  if( _first_unbound_literal == NULL ) {
     // This is the first literal that hasn't yet been written out.
     _first_unbound_literal = literal;
   }
 }
 
-void BinaryAssembler::write_literals(bool force) {
-  AllocationDisabler allocation_not_allowed_in_this_function;
-
+void BinaryAssembler::write_literals(const bool force) {
   if (force ||  need_to_force_literals()) { 
     // We generally only want to write out the literals at the end of the 
     // method (force = true).  But if our method is starting to get long, 
     // we need to write them out more often.
     // A literal must be written within 4K of its use.
-    LiteralPoolElement::Raw literal = _first_unbound_literal.obj(); 
-    for (; !literal.is_null(); literal = literal().next()) { 
-      write_literal(&literal);
+    LiteralPoolElement* literal = _first_unbound_literal;
+    for(; literal; literal = literal->next() ) { 
+      write_literal( literal );
     }
     // Indicate that there are no more not-yet-written literals
-    _first_unbound_literal = (OopDesc*)NULL;
+    _first_unbound_literal = literal;
     zero_literal_count();
   }
 }

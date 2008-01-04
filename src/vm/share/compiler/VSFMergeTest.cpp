@@ -398,16 +398,15 @@ void VSFMergeTest::verify_merge(VirtualStackFrame* src_frame,
 
   // Unlink unbound literals to prevent VSFMergeTester from writing literals.
   {
-    Oop null_oop;
 #if defined(ARM) || defined(HITACHI_SH) || ENABLE_THUMB_COMPILER
-    state.set_first_literal(&null_oop);
-    state.set_first_unbound_literal(&null_oop);
-    state.set_last_literal(&null_oop);
+    state.set_first_literal( NULL );
+    state.set_first_unbound_literal( NULL );
+    state.set_last_literal( NULL );
 #endif
 
 #if ENABLE_THUMB_COMPILER
-    state.set_first_unbound_branch_literal(&null_oop);
-    state.set_last_unbound_branch_literal(&null_oop);
+    state.set_first_unbound_branch_literal( NULL );
+    state.set_last_unbound_branch_literal( NULL );
 #endif
   }
 
@@ -770,11 +769,10 @@ void VSFMergeTester::verify_merge() {
 
 void VSFMergeTester::cleanup() {
 #if USE_COMPILER_LITERALS_MAP
-  LiteralPoolElement last_literal = _state->last_literal();
+  LiteralPoolElement* last_literal = _state->last_literal();
   // Discard all literals appended by the VSFMergeTester.
-  if (last_literal.not_null()) {
-    Oop null_oop;
-    last_literal.set_next(&null_oop);
+  if( last_literal ) {
+    last_literal->set_next( NULL );
   }
 #endif
 }

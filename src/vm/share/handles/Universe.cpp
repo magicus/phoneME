@@ -1699,29 +1699,15 @@ ReturnOop Universe::new_mixed_oop(int type, size_t size, int pointer_count
   return (ReturnOop)result;
 }
 
-#if ENABLE_COMPILER
-ReturnOop Universe::new_mixed_oop_in_compiler_area(int type, size_t size, 
-                                                   int pointer_count
-                                                   JVM_TRAPS) {
-  OopDesc* p = (OopDesc*) ObjectHeap::allocate_temp(size JVM_NO_CHECK);
-  if (p) {
-    p->initialize(mixed_oop_class()->prototypical_near());
-    ((MixedOopDesc*)p)->initialize(type, size, pointer_count);
-  }
-  return p;
-}
-#endif
-
 #if ENABLE_JAVA_DEBUGGER
-
-ReturnOop Universe::new_refnode(JVM_SINGLE_ARG_TRAPS)
-{
+ReturnOop Universe::new_refnode(JVM_SINGLE_ARG_TRAPS) {
   RefNodeDesc* result = (RefNodeDesc*)
-      ObjectHeap::allocate(RefNodeDesc::allocation_size() JVM_ZCHECK(result));
-  result->initialize(refnode_class()->prototypical_near());
+    ObjectHeap::allocate(RefNodeDesc::allocation_size() JVM_NO_CHECK);
+  if (result) {
+    result->initialize(refnode_class()->prototypical_near());
+  }
   return result;
 }
-
 #endif
 
 #if ENABLE_ISOLATES
@@ -1737,8 +1723,8 @@ void Universe::allocate_boundary_near_list(JVM_SINGLE_ARG_TRAPS) {
 
   *boundary_near_list() = new_obj_array(MAX_TASKS JVM_CHECK);
   for (int i=0; i<MAX_TASKS; i++) {
-    Near::Raw n = allocate_near(boundary_class() JVM_CHECK);
-    boundary_near_list()->obj_at_put(i, &n);
+    OopDesc* p = allocate_near(boundary_class() JVM_ZCHECK(p));
+    boundary_near_list()->obj_at_put(i, p);
   }
 }
 
@@ -1815,12 +1801,6 @@ ReturnOop Universe::new_task(int id JVM_TRAPS) {
 #endif // ENABLE_MULTIPLE_PROFILES_SUPPORT
   update_relative_pointers();
   return task;
-}
-
-ReturnOop Universe::new_task_mirror(int statics_size, 
-                                    int vtable_length JVM_TRAPS) {
-  return allocate_task_mirror(statics_size, 
-                              vtable_length JVM_NO_CHECK_AT_BOTTOM);
 }
 #endif
 

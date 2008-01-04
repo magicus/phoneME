@@ -30,84 +30,72 @@
  */
 
 #if USE_LITERAL_POOL
-
-class LiteralPoolElement: public MixedOop {
+class LiteralPoolElement: public CompilerObject {
 public:
-  HANDLE_DEFINITION(LiteralPoolElement, MixedOop);
+  // BCI indicating this literal is still unbound.
+  enum { not_yet_defined_bci = 0x7fffffff };
+        
+  OopDesc*              _literal_oop;
+  LiteralPoolElement*   _next;
+  jint                  _bci;
+  jint                  _label;
+  jint                  _literal_int;
 
-  enum { not_yet_defined_bci = LiteralPoolElementDesc::not_yet_defined_bci };
+  // Note that the bci() field is used as a convenience.
+  // If the label is unbound, then bci() == 0x7fffffff
+  // If the label is bound, then bci()  is the same as the label's position.
 
-  static size_t allocation_size( void ) {
-    return LiteralPoolElementDesc::allocation_size();
-  }
-  static size_t pointer_count( void ) {
-    return LiteralPoolElementDesc::pointer_count();
-  }        
-
-public:
-  // To avoid endless lists of friends the static offset computation
-  // routines are all public.
-  static jint literal_oop_offset() {
-    return FIELD_OFFSET(LiteralPoolElementDesc, _literal_oop);
-  }
-  static jint next_offset() {
-    return FIELD_OFFSET(LiteralPoolElementDesc, _next);
-  }
-  static jint bci_offset() {
-    return FIELD_OFFSET(LiteralPoolElementDesc, _bci);
-  }
-  static jint label_offset() {
-    return FIELD_OFFSET(LiteralPoolElementDesc, _label);
-  }
-  static jint literal_int_offset() {
-    return FIELD_OFFSET(LiteralPoolElementDesc, _literal_int);
+  bool is_bound( void ) const {
+    return _bci != not_yet_defined_bci;
   }
 
-  int bci( void ) const { return int_field(bci_offset()); }
-  void set_bci(const int i) { int_field_put(bci_offset(), i); }
+  bool matches(const OopDesc* oop, const jint imm32) const {
+    return oop == _literal_oop && imm32 == _literal_int;
+  }
 
-  int literal_int( void ) const { return int_field(literal_int_offset()); }
-  void set_literal_int(const int i) { int_field_put(literal_int_offset(), i); }
+  int bci( void ) const { return _bci; }
+  void set_bci( const int i ) { _bci = i; }
+
+  int literal_int( void ) const { return _literal_int; }
+  void set_literal_int(const int i) { _literal_int = i; }
 
   BinaryLabel label( void ) const {
-    const int label_value = int_field(label_offset());
-    const BinaryLabel l( label_value );
+    const BinaryLabel l( _label );
     return l;
   }
   int label_position( void ) const {
-    return BinaryLabel::position( int_field(label_offset()) );
+    return BinaryLabel::position( _label );
   }
-
   void set_label(const BinaryLabel value) {
-    int_field_put(label_offset(), value.encoding() );
+    _label = value.encoding();
   }
 
-  ReturnOop next( void ) const  {
-    return (ReturnOop)int_field(next_offset());
+  LiteralPoolElement* next( void ) const  {
+    return _next;
   }
-  void set_next(OopDesc* p) {
-    int_field_put(next_offset(), int(p));
-  }
-  void set_next(const Oop* oop) {
-    set_next( oop->obj() );
+  void set_next(LiteralPoolElement* p) {
+    _next = p;
   }
 
-  ReturnOop literal_oop() const {
-    return obj_field(literal_oop_offset());
+  ReturnOop literal_oop( void ) const {
+    return _literal_oop;
   }
   void set_literal_oop(OopDesc* p) {
-    obj_field_put(literal_oop_offset(), p);
+    _literal_oop = p;
   }
   void set_literal_oop(const Oop *oop) {
     set_literal_oop( oop->obj() );
   }
   
-  bool is_bound() const {
-    return ((LiteralPoolElementDesc*)obj())->is_bound();
+  static LiteralPoolElement* allocate(OopDesc* obj, int imm32 JVM_TRAPS) {
+    LiteralPoolElement* literal = COMPILER_OBJECT_ALLOCATE(LiteralPoolElement);
+    if( literal ) {
+      literal->set_literal_int(imm32);
+      literal->set_literal_oop(obj);
+      literal->set_bci(not_yet_defined_bci);
+    }
+    return literal;
   }
-
-public:
-  static ReturnOop allocate(const Oop* oop, int imm32 JVM_TRAPS);
     
 #if !defined(PRODUCT) || USE_COMPILER_COMMENTS
   void print_value_on(Stream*s) const;

@@ -236,9 +236,7 @@
 #define LinkedBasicOop  JVMLinkedBasicOop
 #define LiteralAccessor  JVMLiteralAccessor
 #define LiteralElementStream  JVMLiteralElementStream
-#define LiteralPoolElement      JVMLiteralPoolElement
-#define LiteralPoolElementDesc  JVMLiteralPoolElementDesc
-#define LiteralPoolElement      JVMLiteralPoolElement
+#define LiteralPoolElement  JVMLiteralPoolElement
 #define LiteralStream  JVMLiteralStream
 #define LiveRange  JVMLiveRange
 #define LoaderContext  JVMLoaderContext

@@ -60,25 +60,20 @@ BinaryAssembler::BinaryAssembler(CompilerState* compiler_state,
   CodeInterleaver::initialize(this);
 }
 
-void BinaryAssembler::save_state(CompilerState *compiler_state) {
-  compiler_state->set_code_size(_code_offset);
-  compiler_state->set_first_literal(&_first_literal);
-  compiler_state->set_first_unbound_literal(&_first_unbound_literal);
-  compiler_state->set_last_literal(&_last_literal);
-  compiler_state->set_first_unbound_branch_literal(
-                    &_first_unbound_branch_literal);
-  compiler_state->set_last_unbound_branch_literal(
-                    &_last_unbound_branch_literal);
+void BinaryAssembler::save_state(CompilerState* state) {
+  state->set_code_size(_code_offset);
+  state->set_first_literal( _first_literal );
+  state->set_first_unbound_literal( _first_unbound_literal );
+  state->set_last_literal( _last_literal );
+  state->set_first_unbound_branch_literal(_first_unbound_branch_literal);
+  state->set_last_unbound_branch_literal(_last_unbound_branch_literal);
 
-  compiler_state->set_unbound_literal_count(_unbound_literal_count);
-  compiler_state->set_unbound_branch_literal_count(
-                     _unbound_branch_literal_count);
-  compiler_state->set_code_offset_to_force_literals(
-                     _code_offset_to_force_literals);
-  compiler_state->set_code_offset_to_desperately_force_literals(
-                     _code_offset_to_desperately_force_literals);
+  state->set_unbound_literal_count(_unbound_literal_count);
+  state->set_unbound_branch_literal_count( _unbound_branch_literal_count);
+  state->set_code_offset_to_force_literals( _code_offset_to_force_literals);
+  state->set_code_offset_to_desperately_force_literals(_code_offset_to_desperately_force_literals);
 
-  _relocation.save_state(compiler_state);
+  _relocation.save_state(state);
 }
 
 // Usage of Labels
@@ -359,15 +354,12 @@ void BinaryAssembler::access_literal_pool(Register rd,
   literal->set_label(L);
 }
     
-void BinaryAssembler::ldr_literal(Register rd, const Oop* oop, int imm32,
+void BinaryAssembler::ldr_literal(Register rd, OopDesc* obj, int imm32,
                                   Condition cond) {
   SETUP_ERROR_CHECKER_ARG;
-  LiteralPoolElement::Raw e = find_literal(oop, imm32 JVM_CHECK);
-  if (e.not_null()) {
-    AllocationDisabler allocation_not_allowed_in_this_block;
-    ldr_from(rd, &e, cond);
-  } else { 
-    GUARANTEE(has_overflown_compiled_method(), "Must have signalled overflow");
+  LiteralPoolElement* e = find_literal(obj, imm32 JVM_NO_CHECK);
+  if( e ) {
+    ldr_from(rd, e, cond);
   }
 }
 
@@ -431,7 +423,7 @@ void BinaryAssembler::ldr_oop(Register rd, const Oop* oop, Condition cond) {
   }
 #endif
 
-  ldr_literal(rd, oop, 0, cond);
+  ldr_literal(rd, oop->obj(), 0, cond);
 }
 
 extern "C" { 
@@ -447,82 +439,69 @@ void BinaryAssembler::mov_imm(Register rd, address target, Condition cond) {
   }
   if (GenerateROMImage) { 
     GUARANTEE(target != 0, "Must not be null address");
-    ldr_literal(rd, compiled_method(), (int)target, cond);
+    ldr_literal(rd, compiled_method()->obj(), (int)target, cond);
   } else { 
-    Oop::Raw null_oop;            // ::Raw since don't need to tell GC about NULL
-    ldr_literal(rd, &null_oop, (int)target, cond);
+    ldr_literal(rd, NULL, (int)target, cond);
   }
 }
 
 void BinaryAssembler::ldr_big_integer(Register rd, int imm32, Condition cond){
-  Oop::Raw null_oop;            // ::Raw since don't need to tell GC about NULL
-  ldr_literal(rd, &null_oop, imm32, cond);
+  ldr_literal(rd, NULL, imm32, cond);
 }    
 
-ReturnOop BinaryAssembler::find_literal(const Oop* oop, int imm32 JVM_TRAPS){
-
-  {
-    AllocationDisabler allocation_not_allowed_in_this_block;
-    LiteralPoolElementDesc *ptr;
-    OopDesc *oopdesc = (OopDesc*)oop->obj();
-    for (ptr = (LiteralPoolElementDesc*)_first_literal.obj();
-         ptr; ptr = ptr->_next) {
-      if (ptr->is_bound()) { 
-        // This literal is too far away to use.  We could discard it
-        // but it's not really worth the effort.
-        continue;
-      }
-      if (ptr->matches(oopdesc, imm32)) { 
-        return (ReturnOop)ptr;
-      }
+LiteralPoolElement* BinaryAssembler::find_literal(OopDesc* obj, int imm32 JVM_TRAPS)
+{
+  LiteralPoolElement* literal = _first_literal;
+  for(; literal; literal = literal->next() ) {
+    if( literal->is_bound() ) { 
+      // This literal is too far away to use.  We could discard it
+      // but it's not really worth the effort.
+      continue;
+    }
+    if( literal->matches(obj, imm32)) { 
+      return literal;
     }
   }
 
-
-  GUARANTEE(oop->not_null() || imm32 != 0, "Invalid literal");
+  GUARANTEE( obj || imm32 != 0, "Invalid literal");
   
-  LiteralPoolElement::Raw literal =
-    LiteralPoolElement::allocate(oop, imm32 JVM_CHECK_0);
+  literal = LiteralPoolElement::allocate(obj, imm32 JVM_NO_CHECK);
   // Add this literal to the end of the literal pool list
-  if(literal.not_null()) {
-    AllocationDisabler allocation_not_allowed_in_this_block;
-    append_literal(&literal);
-  }
+
+  append_literal( literal );
   return literal;
 }
 
 void BinaryAssembler::append_branch_literal(int branch_pos JVM_TRAPS) {
-  Oop::Raw null_oop;
-  LiteralPoolElement::Raw literal = LiteralPoolElement::allocate(&null_oop, branch_pos
-                                                                  JVM_CHECK);
+  LiteralPoolElement* literal =
+    LiteralPoolElement::allocate(NULL, branch_pos JVM_ZCHECK(literal) );
   // Add this literal to the end of the literal pool list
-  if (_first_unbound_branch_literal.is_null()) {
+  if( _first_unbound_branch_literal == NULL ) {
     // This is the first branch bridge that hasn't yet been written out.
-    _first_unbound_branch_literal = &literal;
+    _first_unbound_branch_literal = literal;
   } else {
-    _last_unbound_branch_literal().set_next(&literal);    
+    _last_unbound_branch_literal->set_next(literal);    
   }
-  _last_unbound_branch_literal = &literal;
+  _last_unbound_branch_literal = literal;
   _unbound_branch_literal_count++;
   
-  Label L = literal().label();
+  Label L = literal->label();
   if (!L.is_bound()) { 
     L.link_to(branch_pos);    
   }
-  literal().set_label(L);
+  literal->set_label(L);
 }  
 
 void BinaryAssembler::append_literal(LiteralPoolElement* literal) {
-  if (_first_literal.is_null()) {
-    GUARANTEE(_last_literal.is_null(), "No literals");
-    GUARANTEE(_first_unbound_literal.is_null(), "No unknown literals");
+  if( !_first_literal ) {
+    GUARANTEE(_last_literal == NULL, "No literals");
+    GUARANTEE(_first_unbound_literal == NULL, "No unknown literals");
     _first_literal = literal;
   } else { 
-    _last_literal().set_next(literal);
-
+    _last_literal->set_next(literal);
   }
   _last_literal = literal;
-  if (_first_unbound_literal.is_null()) {
+  if( !_first_unbound_literal ) {
     // This is the first literal that hasn't yet been written out.
     _first_unbound_literal = literal;
   }
@@ -539,12 +518,12 @@ void BinaryAssembler::write_value_literals() {
     nop();
   }
     
-  LiteralPoolElement::Raw literal = _first_unbound_literal.obj(); 
-  for (; !literal.is_null(); literal = literal().next()) { 
-    write_literal(&literal);
+  LiteralPoolElement* literal = _first_unbound_literal; 
+  for(; literal; literal = literal->next()) { 
+    write_literal( literal );
   }
   // Indicate that there are no more not-yet-written literals
-  _first_unbound_literal = (OopDesc*)NULL;
+  _first_unbound_literal = literal;
   zero_literal_count();
 }
 
@@ -553,12 +532,12 @@ void BinaryAssembler::write_branch_literals() {
     nop(); // IMPL_NOTE: this doesn't seem necessary
   }
     
-  LiteralPoolElement::Raw literal = _first_unbound_branch_literal.obj(); 
-  for (; !literal.is_null(); literal = literal().next()) { 
+  LiteralPoolElement* literal = _first_unbound_branch_literal; 
+  for (; literal; literal = literal->next() ) { 
     // Emit a long branch to serve as a trampoline point
     // for another branch. This will patched to the right
     // target when the target code is emitted
-    Label branch_label = literal().label();
+    Label branch_label = literal->label();
     address branch_instr_addr = addr_at(branch_label.position());
     Branch b(branch_instr_addr);
     int position = _code_offset;
@@ -575,22 +554,22 @@ void BinaryAssembler::write_branch_literals() {
       nop(); // IMPL_NOTE: this doesn't seem necessary
 
       // Indicate that we know this literal's position in the code
-      literal().set_bci(position);
+      literal->set_bci(position);
 
       // Update all places in the code that point to this literal.  
       // This would make the conditional branch target the trampoline
       // branch that we just emitted above. The trampoline branch would
       // then later resolve to the right target
-      Label label = literal().label();
+      Label label = literal->label();
       bind_to(label, position);
       GUARANTEE(b.target() == addr_at(position), "Branch optimization failed");
       
-      literal().set_label(label);
+      literal->set_label(label);
     }
   }
 
   // Indicate that there are no more not-yet-written literals
-  _first_unbound_branch_literal = (OopDesc*)NULL;
+  _first_unbound_branch_literal = literal;
   _unbound_branch_literal_count = 0;
 }
 

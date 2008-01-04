@@ -252,8 +252,7 @@ public:
       access_literal_pool(rd, lpe, cond, true);
   }
 
-  void ldr_literal(Register rd, const Oop* oop, 
-                   int offset, Condition cond = al);
+  void ldr_literal(Register rd, OopDesc* obj, int offset, Condition cond = al);
   void ldr_oop (Register r, const Oop* obj, Condition cond = al);
 
   // miscellaneous helpers
@@ -317,7 +316,7 @@ public:
 
   GP_GLOBAL_SYMBOLS_DO(pointers_not_used, DEFINE_GP_FOR_BINARY)
 
-  ReturnOop find_literal(const Oop* oop, int offset JVM_TRAPS);
+  LiteralPoolElement* find_literal(OopDesc* obj, int offset JVM_TRAPS);
 
   void append_literal(LiteralPoolElement *literal);
   void append_branch_literal(int branch_pos JVM_TRAPS);
@@ -353,8 +352,8 @@ public:
       return true;
     }
     
-    if (_first_unbound_branch_literal.not_null()) {
-      const int branch_pos = _first_unbound_branch_literal().label_position();
+    if (_first_unbound_branch_literal ) {
+      const int branch_pos = _first_unbound_branch_literal->label_position();
       return ((_code_offset - branch_pos) >= 200);
     }
     return false;
@@ -382,25 +381,23 @@ private:
     }
   }
 
-private:
-  FastOopInStackObj         __must_appear_before_fast_objects__;
-  CompiledMethod*           _compiled_method;
-  jint                      _code_offset;
-  RelocationWriter          _relocation;
+  CompiledMethod*       _compiled_method;
+  jint                  _code_offset;
+  RelocationWriter      _relocation;
 
-  LiteralPoolElement::Fast  _first_literal;
-  LiteralPoolElement::Fast  _first_unbound_literal;
-  LiteralPoolElement::Fast  _last_literal;
-  int                       _unbound_literal_count;
-  int                       _unbound_branch_literal_count;
-  int                       _code_offset_to_force_literals;
-                            // and to boldly split infinitives
-  int                       _code_offset_to_desperately_force_literals;
-  LiteralPoolElement::Fast  _first_unbound_branch_literal;
-  LiteralPoolElement::Fast  _last_unbound_branch_literal;
+  LiteralPoolElement*   _first_literal;
+  LiteralPoolElement*   _first_unbound_literal;
+  LiteralPoolElement*   _last_literal;
+  int                   _unbound_literal_count;
+  int                   _unbound_branch_literal_count;
+  int                   _code_offset_to_force_literals;
+                        // and to boldly split infinitives
+  int                   _code_offset_to_desperately_force_literals;
+  LiteralPoolElement*   _first_unbound_branch_literal;
+  LiteralPoolElement*   _last_unbound_branch_literal;
 
-friend class RelocationWriter;
-friend class CodeInterleaver;
+  friend class RelocationWriter;
+  friend class CodeInterleaver;
   friend class Compiler;
 };
 

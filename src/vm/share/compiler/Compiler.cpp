@@ -53,15 +53,6 @@ CompilerStatic  Compiler::_state;
 CompilerState   Compiler::_suspended_compiler_state;
 CompilerContext Compiler::_suspended_compiler_context;
 
-inline void CompilerState::oops_do( void do_oop(OopDesc**) ) {
-  if( valid() ) {
-    OopDesc** p = (OopDesc**) this;
-    for( int i = pointer_count(); --i >= 0; p++ ) {
-      do_oop( p );
-    }
-  }
-}
-
 inline void CompilerStaticPointers::oops_do( void do_oop(OopDesc**) ) {
   if( valid() ) {
     OopDesc** p = (OopDesc**) this;
@@ -376,7 +367,6 @@ void Compiler::process_interpretation_log() {
 
 void Compiler::oops_do( void do_oop(OopDesc**) ) {
   _state.oops_do( do_oop );
-  _suspended_compiler_state.oops_do( do_oop );
   _suspended_compiler_context.oops_do( do_oop );
   if (is_active()) {
     current()->context()->oops_do( do_oop );
@@ -385,10 +375,9 @@ void Compiler::oops_do( void do_oop(OopDesc**) ) {
   {
     const CodeGenerator* gen = code_generator();
     if( gen || _suspended_compiler_state.valid() ) {
-      LiteralPoolElementDesc* p = (LiteralPoolElementDesc*)
-        _suspended_compiler_state.first_literal()->obj();
+      LiteralPoolElement* p = _suspended_compiler_state.first_literal();
       if( gen ) {
-        p = (LiteralPoolElementDesc*)(gen->_first_literal().obj());
+        p = gen->_first_literal;
       }
       for( ; p != NULL; p = p->_next ) {
         do_oop( &p->_literal_oop );

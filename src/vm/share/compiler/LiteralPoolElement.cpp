@@ -28,20 +28,6 @@
 #include "incls/_LiteralPoolElement.cpp.incl"
 
 #if USE_LITERAL_POOL
-ReturnOop LiteralPoolElement::allocate(const Oop* oop, int imm32 JVM_TRAPS) {
-  LiteralPoolElement::Raw result = Universe::new_mixed_oop_in_compiler_area(
-                              MixedOopDesc::Type_LiteralPoolElement,
-                              LiteralPoolElementDesc::allocation_size(),
-                              LiteralPoolElementDesc::pointer_count()
-                              JVM_NO_CHECK);
-  if( result.not_null() ) {
-    result().set_literal_int(imm32);
-    result().set_literal_oop(oop);
-    result().set_bci(not_yet_defined_bci);
-  }
-  return result;
-}
-
 #if !defined(PRODUCT) || USE_COMPILER_COMMENTS
 
 void LiteralPoolElement::print_value_on( Stream* s ) const {
@@ -71,6 +57,7 @@ void LiteralPoolElement::print_value_on( Stream* s ) const {
 // This method is called by MixedOop::iterate() after iterating the
 // header part of MixedOop
 void LiteralPoolElement::iterate(OopVisitor* visitor) {
+#if 0 // FIXME        
   if (literal_oop() != NULL) {
     NamedField id("oop", true);
     visitor->do_oop(&id, literal_oop_offset(), true);
@@ -93,6 +80,7 @@ void LiteralPoolElement::iterate(OopVisitor* visitor) {
     BinaryLabel lab = label();
     lab.print_value_on(tty);
   }
+#endif
 }
 
 #endif
