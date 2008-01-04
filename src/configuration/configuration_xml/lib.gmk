@@ -271,13 +271,14 @@ GENERATE_PROPERTIES_H =
 endif
 
 # transformation for generating additional permissions
+PERMISSIONS_XSL_FILE = $(INT_XSL_DIR)/cldc/permissions.xsl
 GENERATE_PERMISSIONS_TABLE = \
 	-xml $(INT_MERGED_XML_FILE) \
-	-xsl $(INT_XSL_DIR)/cldc/permissions.xsl \
+	-xsl $(PERMISSIONS_XSL_FILE) \
 	-params output java \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/classes/com/sun/midp/security/PermissionsTable.java)` \
 	-xml $(INT_MERGED_XML_FILE) \
-	-xsl $(INT_XSL_DIR)/cldc/permissions.xsl \
+	-xsl $(PERMISSIONS_XSL_FILE) \
 	-params output native \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/perm_number.h)`
 

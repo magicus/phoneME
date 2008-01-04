@@ -137,8 +137,12 @@ midpInitializeUI(void) {
      */
 #if ENABLE_MULTIPLE_ISOLATES
     {
-        int reserved = AMS_MEMORY_RESERVED_MVM;
-        int limit = AMS_MEMORY_LIMIT_MVM;
+        int reserved = getInternalPropertyInt("AMS_MEMORY_RESERVED_MVM");
+        int limit = getInternalPropertyInt("AMS_MEMORY_LIMIT_MVM");
+
+        if (0 == reserved) {
+            perror("property AMS_MEMORY_RESERVED_MVM not found!");
+        }
 
         reserved = reserved * 1024;
         JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_RESERVED_MEMORY, reserved);
@@ -157,7 +161,7 @@ midpInitializeUI(void) {
         char* argv[2];
 
         /* Get the VM debugger port property. */
-        argv[1] = (char *)getInternalProp("VmDebuggerPort");
+        argv[1] = (char *)getInternalProperty("VmDebuggerPort");
         if (argv[1] != NULL) {
             argv[0] = "-port";
             (void)JVM_ParseOneArg(2, argv);

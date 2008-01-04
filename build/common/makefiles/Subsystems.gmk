@@ -53,7 +53,13 @@ LIB_MAKE_FILE             = lib.gmk
 # Description: Config the whole system
 #####################################################################
 
-include $(SUBSYSTEM_DIR)/configuration/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(TARGET_VM), cldc_vm)
+  include $(SUBSYSTEM_DIR)/configuration/$(SUBSYSTEM_MAKE_FILE)
+else
+  ifeq ($(TARGET_VM), cdc_vm)
+    include $(SUBSYSTEM_DIR)/configuration/cdc_application/$(SUBSYSTEM_MAKE_FILE)
+  endif
+endif
 
 #####################################################################
 # AMS Subsystem
@@ -233,7 +239,7 @@ endif
 
 ifeq ($(USE_JSR_82), true)
 JPP_DEFS += -DENABLE_JSR_82
-include $(JSR_82_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_82_DIR)/build/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
@@ -270,7 +276,7 @@ endif
 #####################################################################
 
 ifeq ($(USE_JSR_120), true)
-include $(JSR_120_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_120_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
@@ -306,6 +312,8 @@ endif
 # Description: JSR 256
 #####################################################################
 ifeq ($(USE_JSR_256), true)
+JPP_DEFS += -DENABLE_JSR_256
+EXTRA_CFLAGS += -DENABLE_JSR_256=1
 include $(JSR_256_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 

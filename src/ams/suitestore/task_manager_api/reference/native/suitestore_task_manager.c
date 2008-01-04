@@ -301,6 +301,11 @@ midp_remove_suite(SuiteIdType suiteId) {
             break;
         }
 
+        status = begin_transaction(TRANSACTION_REMOVE, suiteId, NULL);
+        if (status != ALL_OK) {
+            break;
+        }
+
         /*
          * Remove the files
          * Call the native RMS method to remove the RMS data.
@@ -370,8 +375,10 @@ midp_remove_suite(SuiteIdType suiteId) {
     pcsl_string_free(&suiteRoot);
     storageCloseFileIterator(fileIteratorHandle);
 
+    (void)finish_transaction();
+
     /*
-     * Notify the listeners the we finished removing the suite.
+     * Notify the listeners the we've finished removing the suite.
      * It should be done before remove_from_suite_list_and_save()
      * call because it frees pData structure.
      */
@@ -462,6 +469,65 @@ midp_get_suite_storage_size(SuiteIdType suiteId) {
     return used + rms;
 }
 
+/**
+ * Checks the integrity of the suite storage database and of the
+ * installed suites.
+ *
+ * @param fullCheck 0 to check just an integrity of the database,
+ *                    other value for full check
+ * @param delCorruptedSuites != 0 to delete the corrupted suites,
+ *                           0 - to keep them (for re-installation).
+ *
+ * @return ALL_OK if no errors or an error code
+ */
+MIDPError
+midp_check_suites_integrity(int fullCheck, int delCorruptedSuites) {
+    MIDPError status;
+    char *pszError = NULL;
+
+    /* Check if there is a previously started transaction exist. */
+    if (unfinished_transaction_exists()) {
+        (void)rollback_transaction();
+    }
+
+    /* Check if the suite database is corrupted and repair it if needed. */
+    status = read_suites_data(&pszError);
+    if (status == SUITE_CORRUPTED_ERROR) {
+        status = repair_suite_db();
+    }
+    if (status != ALL_OK) {
+        /* give up, user interaction is needed */
+        return status;
+    }
+
+    /* if fullCheck is true, check all installed suites */
+    if (fullCheck) {
+        int i, numOfSuites;
+        SuiteIdType suiteId, *pSuiteIds = NULL;
+
+        status = midp_get_suite_ids(&pSuiteIds, &numOfSuites);
+
+        if (status == ALL_OK) {
+            for (i = 0; i < numOfSuites; i++) {
+                suiteId = pSuiteIds[i];
+
+                if (check_for_corrupted_suite(suiteId) ==
+                        SUITE_CORRUPTED_ERROR) {
+                    if (delCorruptedSuites) {
+                        midp_remove_suite(suiteId);
+                    }
+                }
+            }
+
+            if (pSuiteIds != NULL) {
+                midp_free_suite_ids(pSuiteIds, numOfSuites);
+            }
+        }
+    }
+
+    return ALL_OK;
+}
+
 /* ------------------------------------------------------------ */
 /*                          Implementation                      */
 /* ------------------------------------------------------------ */
@@ -518,10 +584,17 @@ change_enabled_state(SuiteIdType suiteId, jboolean enabled) {
         return status;
     }
 
+    status = begin_transaction(TRANSACTION_ENABLE_SUITE, suiteId, NULL);
+    if (status != ALL_OK) {
+        return status;
+    }
+
     status = write_settings(&pszError, suiteId, enabled, pushInterrupt,
                             pushOptions, pPermissions, numberOfPermissions);
     pcsl_mem_free(pPermissions);
     if (status != ALL_OK) {
+        /* nothing was written, so nothing to rollback, just finish */
+        (void)finish_transaction();
         return status;
     }
 
@@ -541,9 +614,12 @@ change_enabled_state(SuiteIdType suiteId, jboolean enabled) {
         status = write_suites_data(&pszError);
         storageFreeError(pszError);
         if (status != ALL_OK) {
+            (void)rollback_transaction();
             return IO_ERROR;
         }
     }
+
+    (void)finish_transaction();
 
     return ALL_OK;
 }

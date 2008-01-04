@@ -34,6 +34,7 @@
 #include <midpStorage.h>
 #include <gcf_export.h>
 #include <midp_logging.h>
+#include <midp_constants_data.h>
 
 /**
  * @file
@@ -383,12 +384,12 @@ initializeConfig(void) {
     }
 
     if (initProps(&implementationProperties, &IMPL_PROPERTY_FILE,
-                  storage_get_config_root()) != 0) {
+                  storage_get_config_root(INTERNAL_STORAGE_ID)) != 0) {
         return -1;
     }
 
     if (initProps(&applicationProperties, &APPL_PROPERTY_FILE,
-                  storage_get_config_root()) != 0) {
+                  storage_get_config_root(INTERNAL_STORAGE_ID)) != 0) {
         finalizeConfig();
         return -1;
     }
@@ -433,7 +434,7 @@ finalizeConfig(void) {
  * @param value The value to set <tt>key</tt> to
  */
 void
-setInternalProp(const char* key , const char* value) {
+setInternalProperty(const char* key , const char* value) {
     setProp(&implementationProperties, key, value);
 }
 
@@ -448,7 +449,7 @@ setInternalProp(const char* key , const char* value) {
  *         <tt>NULL</tt>
  */
 const char*
-getInternalProp(const char* key) {
+getInternalProperty(const char* key) {
     const char *result;
     
     result = findProp(implementationProperties, key);
@@ -472,7 +473,7 @@ getInternalProp(const char* key) {
  *         <tt>def</tt>
  */
 const char*
-getInternalPropDefault(const char* key, const char* def) {
+getInternalPropertyDefault(const char* key, const char* def) {
     const char *result;
 
     result = findProp(implementationProperties, key);

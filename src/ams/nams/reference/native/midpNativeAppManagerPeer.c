@@ -44,6 +44,7 @@
 #include <midpError.h>
 #include <midpUtilKni.h>
 #include <midp_runtime_info.h>
+#include <runMidlet.h>
 
 /** The name of the native application manager peer internal class. */
 #define APP_MANAGER_PEER "com.sun.midp.main.NativeAppManagerPeer"
@@ -85,13 +86,15 @@ nams_listeners_notify(NamsListenerType listenerType,
  * @return error code: (ALL_OK if successful)
  */
 MIDPError midp_system_initialize(void) {
+	int midp_heap_requirement = getHeapRequirement();
+
     JVM_Initialize();
 
     /*
      * Set Java heap capacity now so it can been overridden from command
      * line.
      */
-    JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, MIDP_HEAP_REQUIREMENT);
+    JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
 
     return init_listeners_impl();
 }

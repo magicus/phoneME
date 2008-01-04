@@ -165,12 +165,12 @@ public class JUMPFileInstaller extends JUMPInstaller
            return installJad(jadSourceUrl, tempJadFileName, tempJarFileName,
               encoding, Constants.INTERNAL_STORAGE_ID, isUpdate, false, null);
     }
-                                                                                          
+    
     public int verifyAndStoreSuite(String jarSourceUrl,
         String tempJarFileName, String suiteName, boolean isUpdate)
                    throws IOException, InvalidJadException,
                    MIDletSuiteLockedException, SecurityException {
-                                                                                          
+	
            return installJar(jarSourceUrl, tempJarFileName, suiteName,
                    Constants.INTERNAL_STORAGE_ID, isUpdate, false, null);
     }

@@ -279,14 +279,15 @@ final class ConnectionRegistry {
      * @throws ClassNotFoundException if the class cannot be located
      */
     static Class loadApplicationClass(final String className)
-            throws ClassNotFoundException {
+	throws ClassNotFoundException {
         final ClassLoader appClassLoader = MIDPConfig.getMIDletClassLoader();
         if (appClassLoader == null) {
-            /* IMPL_NOTE: that might happen if this method is invoked
-             * before the MIDlet app has started and class loader
-             * hasn't been created yet
-             */
-            logWarning("application class loader is null");
+	    /*
+	     * IMPL_NOTE: that might happen if this method is invoked
+	     * before the MIDlet app has started and class loader
+	     * hasn't been created yet
+	     */
+	    logWarning("application class loader is null");
         }
         return Class.forName(className, true, appClassLoader);
     }

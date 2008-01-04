@@ -461,6 +461,12 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
 
         pMsd->nextEntry = NULL;
 
+        status = begin_transaction(TRANSACTION_INSTALL, UNUSED_SUITE_ID,
+            &pSuiteData->varSuiteData.pathToJar);
+        if (status != ALL_OK) {
+            break;
+        }
+
         status = store_jar(&pszError, suiteId, pMsd->storageId,
             /* holds the temporary name of the file with the suite */
             &pSuiteData->varSuiteData.pathToJar,
@@ -517,6 +523,7 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
             suite_listeners_notify(SUITESTORE_LISTENER_TYPE_INSTALL,
                 SUITESTORE_OPERATION_END, status, pSuiteData);
             /* can't break here because midp_remove_suite must not be called */
+            (void)finish_transaction();
             return status;
         }
 
@@ -558,6 +565,8 @@ midp_store_suite(const MidpInstallInfo* pInstallInfo,
         }
 #endif
     } while (0);
+
+    (void)finish_transaction();
 
     if (status != ALL_OK) {
         midp_remove_suite(suiteId);

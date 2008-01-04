@@ -132,7 +132,7 @@ final class AppSuiteDataStore {
          * before
          */
         // assert dataDir != null : "application suite data dir is missing";
-        for (Iterator it = dataDir.getChildren(); it.hasNext();) {
+        for (Iterator it = dataDir.getChildren(); it.hasNext(); ) {
             final JUMPNode.Data elem = (JUMPNode.Data) it.next();
             final int suiteId = convertNameToId(elem.getName());
             final Object d =
@@ -161,7 +161,7 @@ final class AppSuiteDataStore {
      * @param dataLister data lister
      */
     void listData(final DataConsumer dataLister) {
-        for (Iterator it = data.entrySet().iterator(); it.hasNext();) {
+        for (Iterator it = data.entrySet().iterator(); it.hasNext(); ) {
             final Map.Entry entry = (Map.Entry) it.next();
             final int suiteId = ((Integer) entry.getKey()).intValue();
             final Object suiteData = entry.getValue();

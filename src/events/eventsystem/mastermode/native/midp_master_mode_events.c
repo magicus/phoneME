@@ -209,7 +209,16 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
                                 newSignal.status);
         break;
 #endif /* ENABLE_JSR_177 */
-
+#ifdef ENABLE_JSR_256
+    case JSR256_SIGNAL:
+        if (newMidpEvent.type == SENSOR_EVENT) {
+            StoreMIDPEventInVmThread(newMidpEvent, -1);
+        } else {
+            midp_thread_signal_list(blocked_threads, blocked_threads_count,
+                newSignal.waitingFor, newSignal.descriptor, newSignal.status);
+        }
+        break;
+#endif /* ENABLE_JSR_256 */
     default:
         break;
     } /* switch */
