@@ -3412,23 +3412,24 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim)
     CVMBool	   computedArrayClassID = CVM_FALSE;
     CVMObjectICell* classObj = (CVMObjectICell*) eltClass;
     CVMArrayOfIntICell* arrayObj = (CVMArrayOfIntICell*) dim;
-    CVMJavaInt arrLen;
+    CVMJavaInt nDimensions;
     jobject res;
     int i;
-    CVMJavaInt dimensionTmp;
+
     /* 
      * CVMmultiArrayAlloc() is called from java opcode multianewarray
      * and passes the top of stack as parameter dimensions.
      * Because the width of the array dimensions is obtained via
      * dimensions[i], dimensions has to be of the same type as 
      * the stack elements for proper access.
+     *
+     * CVMmultiArrayAlloc() expects that the dimensions array passed to it
+     * will not have a 0 dimension in the middle.  The interpreter loop
+     * filters out this case for the multianewarray bytecode before calling
+     * CVMmultiArrayAlloc().  We must also do the equivalent here.
      */
     CVMStackVal32* dimensionsTmp;
-    CVMInt32 effectiveDimension = -1; /* In case one of the entries is zero.
-					 Because the java.lang.reflect.Array
-					 package is so poorly specified,
-					 I'm going to make this work just
-					 like opc_multianewarray. */
+    CVMInt32 effectiveNDimensions;
     CVMInt32 elementDepth; /* For elements which are themselves arrays */
     
     if ((classObj == NULL) || (CVMID_icellIsNull(classObj))) {
@@ -3441,43 +3442,61 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim)
 	return NULL;
     }
     
-    CVMID_arrayGetLength(ee, arrayObj, arrLen);
-    if (arrLen == 0) {
+    /* The number of dimensions (nDimension) is effectively the length of the
+       dimensions array: */
+    CVMID_arrayGetLength(ee, arrayObj, nDimensions);
+    if (nDimensions == 0) {
 	CVMthrowIllegalArgumentException(ee,
 					 "zero-dimensional dimensions array");
 	return NULL;
     }
-    for (i = 0; i < arrLen; i++) {
-	CVMID_arrayReadInt(ee, arrayObj, i, dimensionTmp);
-	if (dimensionTmp < 0) {
+
+    /*
+     * Now go through the dimensions. Check for negative dimensions.
+     * Also check for whether there is a 0 in the dimensions array
+     * which would prevent the allocation from continuing for lower layers
+     * of the array dimensions.
+     *
+     * By default, we'll set effectiveNDimensions to nDimensions i.e. all
+     * the dimension values are valid and there are no zeros in the middle of
+     * the dimensions array.  If we see a 0 in the dimensions array, we'll set
+     * the effectiveNDimensions at the next index i.e. includes the current
+     * index.  If we don't see a 0, we'll leave it at the default i.e. the
+     * entire array is included.
+     */
+    effectiveNDimensions = nDimensions;
+    for (i = 0; i < nDimensions; i++) {
+	CVMJavaInt dim;
+	CVMID_arrayReadInt(ee, arrayObj, i, dim);
+	if (dim < 0) {
 	    CVMthrowNegativeArraySizeException(ee, NULL);
 	    return NULL;
-	} else if (dimensionTmp == 0) {
-	    /* Mark the first 0 in the dimensions array */
-	    if (effectiveDimension == -1) {
-		effectiveDimension = i + 1;
-	    }
+	} else if ((dim == 0) && (effectiveNDimensions == nDimensions)) {
+	    /* Remember the first 0 in the dimensions array */
+	    effectiveNDimensions = i + 1;
 	}
     }
 
-    /*
-     * If we have not seen a 0 in the dimensions array, we let
-     * effectiveDimension be the same as the length of the dims array 
+    /* CVMmultiArrayAlloc() expects a CB for the top-level multi-dimensional
+       array while java.lang.reflect.Array.newInstance() specifies the class
+       for an element.  So, we need to determine the appropriate array CB
+       before calling CVMmultiArrayAlloc() below.
      */
-    if (effectiveDimension == -1)
-	effectiveDimension = arrLen;
-
     CVMID_fieldReadAddr(ee, eltClass,
 			CVMoffsetOfjava_lang_Class_classBlockPointer,
 			cbAddr);
     cb = (CVMClassBlock*)cbAddr;
     CVMassert(cb != NULL);
 
+    /* The element CB provided by java.lang.reflect.Array.newInstance() may
+       itself be an array class.  We need to make sure that the deepest
+       dimension of the new multi array does not exceed the 255 limit.
+    */
     if (CVMisArrayClass(cb)) {
 	/* Check total number of dimensions against 255
            limit.  See also JVM_NewArray above. */
 	elementDepth = CVMarrayDepth(cb);
-	if ((elementDepth + arrLen) > 255) {
+	if ((elementDepth + nDimensions) > 255) {
  	    CVMassert(elementDepth <= 255); /* this should never happen because
 				       * arrays always have 255 or fewer
 				       * dimensions */
@@ -3489,17 +3508,17 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim)
     /* %comment: c021 */
     if (CVMcbIs(cb, PRIMITIVE)) {
 	cb = CVMclassGetArrayOf(ee, cb);
-	if (effectiveDimension > 1) {
+	if (nDimensions > 1) {
 	    arrayClassID = 
 		CVMtypeidIncrementArrayDepth(ee, CVMcbClassName(cb),
-					     arrLen - 1);
+					     nDimensions - 1);
 	    computedArrayClassID = CVM_TRUE;
 	} else {
 	    arrayClassID = CVMcbClassName(cb);
 	}
     } else {
         arrayClassID = CVMtypeidIncrementArrayDepth(ee, CVMcbClassName(cb),
-                                                    arrLen);
+                                                    nDimensions);
 	computedArrayClassID = CVM_TRUE;
     }
 
@@ -3523,22 +3542,39 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim)
      * Because the width of the array dimensions is obtained via
      * dimensions[i], dimensions has to be of the same type as 
      * the stack elements for proper access.
+     *
+     * Note: CVMmultiArrayAlloc() is expecting a dimensions array that will
+     * not be moving.  Since our dimensions array is a Java object, we will
+     * need to allocated a native array that doesn't move in order to pass
+     * the dimensions on.  Note that CVMmultiArrayAlloc() operates in a GC
+     * safe state.  Hence, Java objects may be moved by the GC.  Therefore
+     * this native dimensions array is needed.
+     *
+     * The needed size of the dimensions array is actually determined by
+     * the effectiveNDimensions which was computed earlier.
      */
+
+    /* Allocate the native dimensions array: */
     dimensionsTmp = 
-	(CVMStackVal32*) malloc(sizeof(CVMStackVal32) * effectiveDimension);
+	(CVMStackVal32*) malloc(sizeof(CVMStackVal32) * effectiveNDimensions);
     if (dimensionsTmp == NULL) {
 	CVMthrowOutOfMemoryError(ee, NULL);
 	return NULL;
     }
-    for (i = 0; i < effectiveDimension; i++) {
+
+    /* Copy the dimension values over to the native dimensions array: */
+    for (i = 0; i < effectiveNDimensions; i++) {
 	CVMID_arrayReadInt(ee, arrayObj, i, dimensionsTmp[i].j.i);
     }
     
+    /* Instantiate the multi dimensional array: */
     res = CVMjniCreateLocalRef(ee);
     if (res != NULL) {
-	CVMmultiArrayAlloc(ee, effectiveDimension, dimensionsTmp, cb,
+	CVMmultiArrayAlloc(ee, effectiveNDimensions, dimensionsTmp, cb,
 			   (CVMObjectICell*) res);
     }
+
+    /* Release the native dimensions array: */
     free(dimensionsTmp);
     if (CVMexceptionOccurred(ee)) {
 	(*env)->DeleteLocalRef(env, res);
