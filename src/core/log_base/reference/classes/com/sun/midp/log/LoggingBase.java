@@ -1,7 +1,6 @@
 /*
  *
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -23,6 +22,7 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
+
 
 package com.sun.midp.log;
 
@@ -175,6 +175,9 @@ public class LoggingBase {
      *                (when <code>condition</code> is false.
      */
     public static void assertTrue(boolean condition, String message) {
-        System.out.println("LoggingBase.assertTrue() called - use Logging.assertTrue()");
+        if(!condition) {
+            report(Logging.ERROR, LogChannels.LC_NONE, "ASSERT FAILED: "
+                   + message);
+        }
     }
 }

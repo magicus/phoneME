@@ -1,7 +1,6 @@
 /*
  *
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -147,8 +146,7 @@ public class Logging extends LoggingBase {
             enableAsserts(loadAssertEnabled0());
         }
     }
-     hgljkhgkjuhgkuhj
-    /**
+     /**
      * Parses the value of MIDP_ARGS attribute set in the JAD file
      * of the given midlet suite.
      *

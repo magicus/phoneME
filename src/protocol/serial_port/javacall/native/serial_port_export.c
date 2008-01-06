@@ -196,7 +196,6 @@ int writeToPortStart(int hPort, char* pBuffer,
     if (nNumberOfBytesToWrite == 0) {
         *pBytesWritten = 0;
         status = PCSL_NET_SUCCESS;
-        return status;
     } else {
         javacall_result ret;
         ret = javacall_serial_write_start((javacall_handle) hPort, 
@@ -238,7 +237,6 @@ int writeToPortFinish(int hPort, char* pBuffer,
     if (nNumberOfBytesToWrite == 0) {
         *pBytesWritten = 0;
         status = PCSL_NET_SUCCESS;
-        return status;
     } else {
         javacall_result ret;
         ret = javacall_serial_write_finish((javacall_handle) hPort, 
@@ -281,7 +279,6 @@ int readFromPortStart(int hPort, char* pBuffer,
     if (nNumberOfBytesToRead == 0) {
         *pBytesRead = 0;
         status = PCSL_NET_SUCCESS;
-        return status;
     } else {
 
 	    javacall_result ret;
@@ -325,7 +322,6 @@ int readFromPortFinish(int hPort, char* pBuffer,
     if (nNumberOfBytesToRead == 0) {
         *pBytesRead = 0;
         status = PCSL_NET_SUCCESS;
-        return status;
     } else {
 
 	    javacall_result ret;
