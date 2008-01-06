@@ -24,10 +24,21 @@
  */
 
 
-#ifndef __DEFS_H
-#define __DEFS_H
+#ifndef JAVACALL_PRINTF_INCLUDED
+#define JAVACALL_PRINTF_INCLUDED
 
-#include "porting_logging.h"
+#include <stdarg.h>
 
-#endif /* __DEFS_H */
+int javacall_printf_initialize(void);
+int javacall_printf_finalize(void);
+
+// to be used from javacall
+void javacall_printf(int severity, int channelID, char *message, ...);
+
+
+// To be used from midp
+void javacall_vsprintf(int severity, int channelID, int isolateID, char *szTypes, va_list vl);
+
+
+#endif /* of JAVACALL_PRINTF_INCLUDED */
 
