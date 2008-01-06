@@ -1,15 +1,39 @@
-#include <stdio.h>
-//#include "javacall_platform_defs.h"
-//#include "javacall_defs.h"
-#include "javacall_logging.h"
-#include "javautil_printf.h"
 
-void javautil_vsprintf(int severity, int channelID, int isolateID, char *szTypes, va_list vl);
-static int   midp_strlen(const char *str);
+/*
+ *
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License version
+ * 2 only, as published by the Free Software Foundation.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License version 2 for more details (a copy is
+ * included at /legal/license.txt).
+ * 
+ * You should have received a copy of the GNU General Public License
+ * version 2 along with this work; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ * 
+ * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+ * Clara, CA 95054 or visit www.sun.com if you need additional
+ * information or have any questions.
+ */
+
+#include <stdio.h>
+#include "javacall_logging.h"
+#include "javacall_printf.h"
+
+void javacall_vsprintf(int severity, int channelID, int isolateID, char *msg, va_list vl);
+static int   javacall_strlen(const char *str);
 static char* convertInt2String(int inputInt, char *buffer);
 static char* convertHexa2String(int inputHex, char *buffer);
-static void  midp_putstring(const char *outputString);
-static void  midp_putchar(const char outputChar);
+static void  javacall_putstring(const char *outputString);
+static void  javacall_putchar(const char outputChar);
 
 //#define USING_64_BIT_INTEGER
 
@@ -20,14 +44,14 @@ static void  midp_putchar(const char outputChar);
 /* The longest 64 bit integer could be 21 characters long including the '-' and '\0' */
 /* MAX_INT_64   0x7FFFFFFFFFFFFFFF = 9223372036854775807  */
 /* MAX_UINT_64  0xFFFFFFFFFFFFFFFF = 18446744073709551615 */
-/* MIN_INT_64   0x8000000000000000 = -9223372036854775808 */
+/* MIN_INT_64   0xFFFFFFFFFFFFFFFF = -9223372036854775807 */
 #define STRIP_SIGNIFICANT_BIT_MASK  0x0FFFFFFFFFFFFFFF
 #define CONVERSION_BUFFER_SIZE      21
 #else /* NOT USING_64_BIT_INTEGER */
-/* The longest 32 bit integer could be 21 characters long including the '-' and '\0' */
-/* MAX_INT_64   0x7FFFFFFF = 2147483647  */
-/* MAX_UINT_64  0xFFFFFFFF = 4294967295  */
-/* MIN_INT_64   0x80000000 = -2147483648 */
+/* The longest 32 bit integer could be 12 characters long including the '-' and '\0' */
+/* MAX_INT_32   0x7FFFFFFF = 2147483647  */
+/* MAX_UINT_32  0xFFFFFFFF = 4294967295  */
+/* MIN_INT_32   0xFFFFFFFF = -2147483647 */
 #define STRIP_SIGNIFICANT_BIT_MASK  0x0FFFFFFF
 #define CONVERSION_BUFFER_SIZE      12
 #endif /* USING_64_BIT_INTEGER */
@@ -39,19 +63,12 @@ void javacall_printf(int severity, int channelID, char *message, ...){
 
     va_list list;
     va_start(list, message);
-    javautil_vsprintf(severity, channelID, 1, message, list);
+    javacall_vsprintf(severity, channelID, 1, message, list);
     va_end(list);
 
 }
 
-void javautil_printf(int severity, int channelID, int isolateID, char *message, ...) {
-    va_list list;
-    va_start(list, message);
-    javautil_vsprintf(severity, channelID, isolateID, message, list);
-    va_end(list);
-}
-
-void javautil_vsprintf(int severity, int channelID, int isolateID, char *szTypes, va_list vl) {
+void javacall_vsprintf(int severity, int channelID, int isolateID, char *msg, va_list vl) {
 
     char *str = 0;
     char tempBuffer[CONVERSION_BUFFER_SIZE];
@@ -62,85 +79,85 @@ void javautil_vsprintf(int severity, int channelID, int isolateID, char *szTypes
         char   *s;
     } Printable;
 
-    if(szTypes == NULL) {
+    if(msg == NULL) {
         return;
     }
     /* 
-       szTypes is the last argument specified; all
+       msg is the last argument specified; all
        others must be accessed using the variable-
        argument macros.
     */
 
-    while(*szTypes) {
+    while(*msg) {
 
-        if((*szTypes == '\\') && (*(szTypes+1) == '%')) {
-            szTypes++;
-            midp_putchar(*szTypes);
-            szTypes++;
-        } else if(*szTypes != '%') {
-            midp_putchar(*szTypes);
-            szTypes++;
+        if((*msg == '\\') && (*(msg+1) == '%')) {
+            msg++;
+            javacall_putchar(*msg);
+            msg++;
+        } else if(*msg != '%') {
+            javacall_putchar(*msg);
+            msg++;
         } else {
 
-            szTypes++;
+            msg++;
 
-            switch(*szTypes) {    /* Type to expect.*/
+            switch(*msg) {    /* Type to expect.*/
             /*FIXME %ld and %lld ?*/
                 case 'u':
                 case 'i':
                 case 'd': /* integer */
                     Printable.i = va_arg( vl, int );
                     str = convertInt2String(Printable.i,tempBuffer);
-                    midp_putstring(str);
+                    javacall_putstring(str);
                     break;
 
                 case 'x': /* hexadecimal */
                     Printable.x = va_arg( vl, int );
                     str = convertHexa2String(Printable.x,tempBuffer);
-                    midp_putstring(str);
+                    javacall_putstring(str);
                     break;
 
                 case 'c': /* character */
                     Printable.c = (char)va_arg( vl, int );
-                    midp_putchar(Printable.c);
+                    javacall_putchar(Printable.c);
                     break;
 
                 case 's': /* string */
                     Printable.s = va_arg( vl, char * );
-                    midp_putstring(Printable.s);
+                    javacall_putstring(Printable.s);
                     break;
 
                 default:
                 /*FIXME I think we should call to va_arg here as well */
                 /*va_arg( vl, ???? );*/
-                    midp_putstring("\nUnsupported type. Cant print %");
-                    midp_putchar(*szTypes);
-                    midp_putstring(".\n");
+                    javacall_putstring("\nUnsupported type. Cant print %");
+                    javacall_putchar(*msg);
+                    javacall_putstring(".\n");
                     break;
             }/*end of switch*/
-            szTypes++;
+            msg++;
         }/*end of else*/
 
     }/*end of while*/
 
-}/* end of midp_printf */
+}/* end of javacall_printf */
 
-javacall_result javautil_printf_initialize(void) {
+javacall_result javacall_printf_initialize(void) {
     return JAVACALL_OK; 
 }
 
-javacall_result javautil_printf_finalize(void) {
+javacall_result javacall_printf_finalize(void) {
     return JAVACALL_OK;
 }
 
 
-static void midp_putchar(const char outputChar) {
+static void javacall_putchar(const char outputChar) {
     const char java_outputChar[2]= {outputChar, '\0'};
     javacall_print(java_outputChar);
 }
 
 
-static void midp_putstring(const char *outputString) {
+static void javacall_putstring(const char *outputString) {
     javacall_print(outputString);
 }
 
@@ -197,7 +214,7 @@ static char* convertInt2String(int inputInt, char *buffer) {
     return pstr;
 }
 
-static int midp_strlen(const char *str) {
+static int javacall_strlen(const char *str) {
     int i;
     if(str == NULL) {
         return -1;
