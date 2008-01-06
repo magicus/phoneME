@@ -166,8 +166,10 @@ public abstract class AbstractSubsystem implements Subsystem {
      * invokes suspend() methods for all registered subsytems.
      */
     protected void updateSuspendStatus() {
+        System.out.println("AbstractSubsystem.updateSuspendStatus()");
         synchronized (lock) {
             if (state == SUSPENDING && 0 == dependencies.size()) {
+                System.out.println("AbstractSubsystem: suspendImpl()");
                 suspendImpl();
 
                 Enumeration subs = subsystems.elements();
@@ -176,6 +178,7 @@ public abstract class AbstractSubsystem implements Subsystem {
                 }
 
                 state = SUSPENDED;
+                System.out.println("AbstractSubsystem: suspended()");
                 suspended();
             }
         }

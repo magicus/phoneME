@@ -99,6 +99,10 @@ class MIDletControllerEventListener implements EventListener {
         eventQueue.registerEventListener(
             EventTypes.PAUSE_ALL_EVENT, this);
         eventQueue.registerEventListener(
+            EventTypes.INTERNAL_ACTIVATE_ALL_EVENT, this);
+        eventQueue.registerEventListener(
+            EventTypes.INTERNAL_PAUSE_ALL_EVENT, this);
+        eventQueue.registerEventListener(
             EventTypes.FATAL_ERROR_NOTIFICATION, this);
     }
 
@@ -291,6 +295,14 @@ class MIDletControllerEventListener implements EventListener {
 
             case EventTypes.PAUSE_ALL_EVENT:
                 midletControllerEventConsumer.handlePauseAllEvent();
+                return;
+
+            case EventTypes.INTERNAL_ACTIVATE_ALL_EVENT:
+                midletControllerEventConsumer.handleInternalActivateAllEvent();
+                return;
+
+            case EventTypes.INTERNAL_PAUSE_ALL_EVENT:
+                midletControllerEventConsumer.handleInternalPauseAllEvent();
                 return;
 
             case EventTypes.FATAL_ERROR_NOTIFICATION:

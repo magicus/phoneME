@@ -83,6 +83,20 @@ KNIDECL(com_sun_midp_main_MIDletSuiteUtils_isAmsIsolate) {
 }
 
 /**
+ * Check if current configuration is MVM or SVM
+ * @return <code>true</code> if current configuration is MVM
+ *         <code>false</code> otherwise
+ */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_midp_main_MIDletSuiteUtils_isMVM) {
+#if ENABLE_MULTIPLE_ISOLATES
+    KNI_ReturnBoolean(KNI_TRUE);
+#else
+    KNI_ReturnBoolean(KNI_FALSE);
+#endif
+}
+
+/**
  * Registers the currently running isolate as the AMS isolate. This function 
  * must be called from within the context of a native method.
  */

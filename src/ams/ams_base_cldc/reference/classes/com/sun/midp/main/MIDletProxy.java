@@ -53,6 +53,9 @@ public class MIDletProxy implements SuspendDependency {
     /** Constant for destroyed state of a MIDlet. */
     public static final int MIDLET_DESTROYED = 2;
 
+    /** Constant for suspended state of a MIDlet. */
+    public static final int MIDLET_SUSPENDED = 3;
+
     /** Cached reference to the ForegroundEventProducer. */
     private static ForegroundEventProducer foregroundEventProducer;
 
@@ -85,6 +88,9 @@ public class MIDletProxy implements SuspendDependency {
 
     /** Indicates that the midlet was just created. */
     boolean wasNotActive;
+
+    /** true if MIDlet.startApp() has not been called yet */
+    private boolean notStarted;
 
     /** True if the MIDlet want's its Display in the foreground. */
     private boolean wantsForegroundState;
@@ -151,6 +157,7 @@ public class MIDletProxy implements SuspendDependency {
         displayName = theDisplayName;
         midletState = theMidletState;
         wasNotActive = true;
+        notStarted = true;
     }
 
     /**
@@ -226,6 +233,12 @@ public class MIDletProxy implements SuspendDependency {
      */
     void setMidletState(int newMidletState) {
         midletState = newMidletState;
+
+        /* this is called by the MIDlet proxy list after MIDlet.startApp()
+         * has already completed successfully */
+        if (newMidletState == MIDLET_ACTIVE) {
+            notStarted = false;
+        }
     }
 
     /**
@@ -359,9 +372,14 @@ public class MIDletProxy implements SuspendDependency {
      * a MIDlet activated event to the proxy list.
      */
     public void activateMidlet() {
-        if (midletState != MIDLET_DESTROYED) {
-            wasNotActive = false;
-            midletEventProducer.sendMIDletActivateEvent(isolateId, className);
+        System.out.println("MIDletProxy: activate midlet "+className+", midletState = " + midletState);
+        if (midletState != MIDLET_DESTROYED && midletState != MIDLET_ACTIVE) {
+            if (midletState == MIDLET_SUSPENDED) {
+                continueIsolate();
+            } else {
+                wasNotActive = false;
+                midletEventProducer.sendMIDletActivateEvent(isolateId, className);
+            }
         }
     }
 
@@ -372,11 +390,70 @@ public class MIDletProxy implements SuspendDependency {
      * sends a pause MIDlet event to the MIDlet's Display.
      * The state in the proxy is only update when the MIDlet sends
      * a MIDlet paused event to the proxy list.
+     * 
+     * @return <code>true</code> if the MIDlet.startApp() has not been
+     * called yet and the MIDlet has only been suspended.
+     * <code>false</code>, otherwise.
      */
-    public void pauseMidlet() {
+    public boolean pauseMidlet() {
         if (midletState != MIDLET_DESTROYED) {
-            midletEventProducer.sendMIDletPauseEvent(isolateId, className);
+
+            System.out.println("MIDletProxy: pause midlet " + className);
+
+            /* in MVM mode, don't pause the AMS isolate */
+            if (MIDletSuiteUtils.isMVM() &&
+                isolateId == MIDletSuiteUtils.getAmsIsolateId() &&
+                !("true".equals(System.getProperty("running_local")))) {
+                return false;
+            }
+
+            if (notStarted) {
+                suspendIsolate();
+                midletState = MIDLET_PAUSED;
+                return true;
+            }
+
+            if (midletState != MIDLET_PAUSED &&
+                midletState != MIDLET_SUSPENDED) {
+                midletEventProducer.sendMIDletPauseEvent(isolateId, className);
+
+                /* start a timer to kill the MIDlet
+                 * if the pause process takes too long */
+                if (getTimer() == null) {
+                    MIDletDestroyTimer.start(this, parent);
+                }
+            }
         }
+        return false;
+    }
+
+    /**
+     * Change the MIDlet's state to suspended
+     * 
+     * @return <code>true</code> if isolate is suspended successfully,
+     *         <code>false</code> otherwise
+     */
+    public boolean suspendIsolate() {
+        if (midletState != MIDLET_DESTROYED && midletState != MIDLET_SUSPENDED) {
+            if (MIDletProxyUtils.suspendIsolate(isolateId)) {
+                midletState = MIDLET_SUSPENDED;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Change the MIDlet's state to active
+     */
+    public boolean continueIsolate() {
+        if (midletState != MIDLET_DESTROYED && midletState != MIDLET_ACTIVE) {
+            if (MIDletProxyUtils.continueIsolate(isolateId)) {
+                midletState = MIDLET_ACTIVE;
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -409,10 +486,20 @@ public class MIDletProxy implements SuspendDependency {
         }
     }
 
-    /** Process a MIDlet destroyed notification. */
+    /** 
+     * Process a MIDlet destroyed notification.
+     */
     void destroyedNotification() {
         setTimer(null);
         setMidletState(MIDLET_DESTROYED);
+    }
+
+    /** 
+     * Process a MIDlet paused notification.
+     */
+    void pausedNotification() {
+        setTimer(null);
+        setMidletState(MIDLET_PAUSED);
     }
 
     /**
@@ -458,14 +545,14 @@ public class MIDletProxy implements SuspendDependency {
      */
     public String toString() {
         return "MIDletProxy: suite id = " + suiteId +
-            "\n    class name = " + className +
-            "\n    display name = " + displayName +
-            "\n    isolate id = " + isolateId +
+            ", class name = " + className +
+            ", display name = " + displayName +
+            ", isolate id = " + isolateId +
             ", display id = " + displayId +
             ", midlet state = " + midletState +
             ", wantsForeground = " + wantsForegroundState +
             ", requestedForeground = " + requestedForeground +
-            "\n    alertWaiting = " + alertWaiting;
+            ", alertWaiting = " + alertWaiting;
     }
 }
 

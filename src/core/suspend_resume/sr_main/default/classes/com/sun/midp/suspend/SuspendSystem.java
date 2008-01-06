@@ -90,6 +90,7 @@ public class SuspendSystem extends AbstractSubsystem {
          */
         public synchronized void suspend() {
             if (ACTIVE == state) {
+                System.out.println("SuspendSystem.suspendImpl: SuspendTimer.start()");
                 SuspendTimer.start(mpl);
                 lastForeground = mpl.getForegroundMIDlet();
                 SuspendResumeUI.showSuspendAlert(classSecurityToken);
@@ -101,6 +102,7 @@ public class SuspendSystem extends AbstractSubsystem {
          * Performs MIDPSystem-specific suspend operations.
          */
         protected synchronized void suspendImpl() {
+            System.out.println("SuspendSystem.suspendImpl: SuspendTimer.stop()");
             SuspendTimer.stop();
         }
 
@@ -256,6 +258,7 @@ public class SuspendSystem extends AbstractSubsystem {
      * Notifies listeners of system suspend.
      */
     protected void suspended() {
+        System.out.println("SuspendSystem.suspended: call listeners");
         synchronized (listeners) {
             for (int i = listeners.size() - 1; i >= 0; i-- ) {
                 SuspendSystemListener listener =

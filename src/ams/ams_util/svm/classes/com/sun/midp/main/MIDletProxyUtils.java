@@ -71,4 +71,26 @@ public class MIDletProxyUtils {
      * Requests VM to stop.
      */
     private static native void requestVMStop();
+
+    /**
+     * Change the MIDlet's state to suspended
+     * 
+     * @param isolateId the ID of the isolate to suspend
+     * @return <code>true</code> if isolate is suspended, 
+     *         <code>false</code> otherwise
+     */
+    public static boolean suspendIsolate(int isolateId) {
+        return false;
+    }
+
+    /**
+     * Change the MIDlet's state to active
+     * 
+     * @param isolateId the ID of the isolate to resume
+     * @return <code>true</code> if isolate is resumed, 
+     *         <code>false</code> otherwise
+     */
+    public static boolean continueIsolate(int isolateId) {
+        return false;
+    }
 }

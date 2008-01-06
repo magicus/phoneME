@@ -85,52 +85,57 @@ extern "C" {
 #define SHUTDOWN_EVENT                  15
 #define ACTIVATE_ALL_EVENT              16
 #define PAUSE_ALL_EVENT                 17
-#define MIDLET_CREATED_NOTIFICATION     18
-#define MIDLET_ACTIVE_NOTIFICATION      19
-#define MIDLET_PAUSED_NOTIFICATION      20
-#define MIDLET_DESTROYED_NOTIFICATION   21
-#define DISPLAY_CREATED_NOTIFICATION    22
-#define FOREGROUND_REQUEST_EVENT        23
-#define BACKGROUND_REQUEST_EVENT        24
-#define SELECT_FOREGROUND_EVENT         25
-#define PREEMPT_EVENT                   26
-#define MIDLET_START_ERROR_EVENT        27
-#define EXECUTE_MIDLET_EVENT            28
-#define MIDLET_DESTROY_REQUEST_EVENT    29
-#define FOREGROUND_TRANSFER_EVENT       30
-#define EVENT_QUEUE_SHUTDOWN            31
-#define FATAL_ERROR_NOTIFICATION        32
+#define INTERNAL_ACTIVATE_ALL_EVENT     18
+#define INTERNAL_PAUSE_ALL_EVENT        19
+#define MIDLET_CREATED_NOTIFICATION     20
+#define MIDLET_ACTIVE_NOTIFICATION      21
+#define MIDLET_PAUSED_NOTIFICATION      22
+#define MIDLET_DESTROYED_NOTIFICATION   23
+#define DISPLAY_CREATED_NOTIFICATION    24
+#define FOREGROUND_REQUEST_EVENT        25
+#define BACKGROUND_REQUEST_EVENT        26
+#define SELECT_FOREGROUND_EVENT         27
+#define PREEMPT_EVENT                   28
+#define MIDLET_START_ERROR_EVENT        29
+#define EXECUTE_MIDLET_EVENT            30
+#define MIDLET_DESTROY_REQUEST_EVENT    31
+#define FOREGROUND_TRANSFER_EVENT       32
+#define EVENT_QUEUE_SHUTDOWN            33
+#define FATAL_ERROR_NOTIFICATION        34
 
 /* JSR-75 events */
-#define FC_DISKS_CHANGED_EVENT          33
+#define FC_DISKS_CHANGED_EVENT          35
 
-#define TEST_EVENT                      34
+#define TEST_EVENT                      36
 
-#define MIDLET_RESUME_REQUEST           35
+#define MIDLET_RESUME_REQUEST           37
 
-#define NATIVE_MIDLET_EXECUTE_REQUEST   36
-#define NATIVE_MIDLET_RESUME_REQUEST    37
-#define NATIVE_MIDLET_PAUSE_REQUEST     38
-#define NATIVE_MIDLET_DESTROY_REQUEST   39
-#define NATIVE_MIDLET_GETINFO_REQUEST   40
-#define NATIVE_SET_FOREGROUND_REQUEST   41
+/* Native AMS events */
+#define NATIVE_MIDLET_EXECUTE_REQUEST   38
+#define NATIVE_MIDLET_RESUME_REQUEST    39
+#define NATIVE_MIDLET_PAUSE_REQUEST     40
+#define NATIVE_MIDLET_SUSPEND_REQUEST   41
+#define NATIVE_MIDLET_CONTINUE_REQUEST  42
+#define NATIVE_MIDLET_DESTROY_REQUEST   43
+#define NATIVE_MIDLET_GETINFO_REQUEST   44
+#define NATIVE_SET_FOREGROUND_REQUEST   45
 
 /* Automation API events */
-#define SET_FOREGROUND_BY_NAME_REQUEST  42
+#define SET_FOREGROUND_BY_NAME_REQUEST  46
 
-#define ROTATION_EVENT                  43
+#define ROTATION_EVENT                  47
 
 /* MIDlet resources paused notification */
-#define MIDLET_RS_PAUSED_NOTIFICATION   44
+#define MIDLET_RS_PAUSED_NOTIFICATION   48
 
 /* JSR-135 event */
-#define MMAPI_EVENT                     45
+#define MMAPI_EVENT                     49
 
-/** JSR-234 event */ 
-#define AMMS_EVENT                      46
+/** JSR-234 event */
+#define AMMS_EVENT                      50
 
 /** The event to repaint entire screen */
-#define SCREEN_REPAINT_EVENT            47
+#define SCREEN_REPAINT_EVENT            51
 
 /** JSR-256 event */
 #define SENSOR_EVENT                    48
@@ -199,16 +204,16 @@ void StoreMIDPEventInVmThread(MidpEvent event, int isolateId);
  * @return 0 for success, or non-zero if the MIDP implementation is
  * out of memory
  */
-int InitializeEvents();
+int InitializeEvents(void);
 
 /** Finalize event sub-system, not for general use. */
-void FinalizeEvents();
+void FinalizeEvents(void);
 
 /** Clear any pending events, not for general use. */
-void midp_resetEvents();
+void midp_resetEvents(void);
 
 /** Handles fatal error */
-void handleFatalError();
+void handleFatalError(void);
 
 #ifdef __cplusplus
 }

@@ -65,9 +65,12 @@ class SuspendTimer extends Timer {
      * @param midletList the MIDlet proxy list
      */
     static synchronized void start(final MIDletProxyList midletList) {
+        System.out.println("SuspendTimer.start()");
         if (null == task) {
+            System.out.println("SuspendTimer.start() task == null");
             task = new TimerTask() {
                 public void run() {
+                    System.out.println("SuspendTimer.start() run()");
                     SuspendSystem ss = SuspendSystem.getInstance();
 
                     // don't kill the midlets if the resume request is pending

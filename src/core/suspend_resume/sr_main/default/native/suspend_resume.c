@@ -157,6 +157,7 @@ void midp_suspend() {
 }
 
 void resume_java() {
+
     if (getMidpInitLevel() >= VM_LEVEL) {
         MidpEvent event;
         MIDP_EVENT_INITIALIZE(event);
@@ -199,9 +200,11 @@ KNIDECL(com_sun_midp_suspend_SuspendSystem_00024MIDPSystem_suspended0) {
      * of java side.
      */
     if (sr_state == SR_SUSPENDING) {
+        printf("\nsuspend resources\n\n");
         suspend_resources();
     } else {
-        /* the sate is SR_RESUMING - pending for safe resume. */
+        /* the state is SR_RESUMING - pending for safe resume. */
+        printf("\nresume java\n\n");
         resume_java();
     }
 

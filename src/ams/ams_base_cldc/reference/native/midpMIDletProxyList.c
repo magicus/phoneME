@@ -54,26 +54,53 @@ KNIDECL(com_sun_midp_main_MIDletProxyList_setForegroundInNativeState) {
 
 
 /**
- * Native implementation of Java function: notifySuspendAll0().
- * Class: com.sun.midp.lcdui.DefaultEventHandler.
+ * Native implementation of Java function: notifyPausedAll0().
+ * Class: com.sun.midp.main.MIDletProxyList.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_main_MIDletProxyList_notifySuspendAll0) {
+KNIDECL(com_sun_midp_main_MIDletProxyList_notifyPausedAll0) {
     /* Call the platform dependent code */
-    pdMidpNotifySuspendAll();
+    pdMidpNotifyPausedAll();
 
     KNI_ReturnVoid();
 }
 
 
 /**
- * Native implementation of Java function: notifyResumeAll0().
- * Class: com.sun.midp.lcdui.DefaultEventHandler.
+ * Native implementation of Java function: notifyResumedAll0().
+ * Class: com.sun.midp.main.MIDletProxyList.
  */
 KNIEXPORT KNI_RETURNTYPE_VOID
-KNIDECL(com_sun_midp_main_MIDletProxyList_notifyResumeAll0) {
+KNIDECL(com_sun_midp_main_MIDletProxyList_notifyResumedAll0) {
     /* Call the platform dependent code */
-    pdMidpNotifyResumeAll();
+    pdMidpNotifyResumedAll();
 
     KNI_ReturnVoid();
 }
+
+/**
+ * Native implementation of Java function: notifyInternalPausedAll0().
+ * Class: com.sun.midp.main.MIDletProxyList.
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_main_MIDletProxyList_notifyInternalPausedAll0) {
+
+    /* Call the platform dependent code */
+    pdMidpNotifyInternalPausedAll();
+
+    KNI_ReturnVoid();
+}
+
+/**
+ * Native implementation of Java function: notifyInternalResumedAll0().
+ * Class: com.sun.midp.main.MIDletProxyList.
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_main_MIDletProxyList_notifyInternalResumedAll0) {
+
+    /* Call the platform dependent code */
+    pdMidpNotifyInternalResumedAll();
+
+    KNI_ReturnVoid();
+}
+

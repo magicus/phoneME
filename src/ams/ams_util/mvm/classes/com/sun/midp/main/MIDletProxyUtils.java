@@ -95,12 +95,61 @@ public class MIDletProxyUtils {
      */
     static void terminateMIDletIsolate(MIDletProxy mp, MIDletProxyList mpl) {
         Isolate isolate = getIsolateFromId(mp.getIsolateId());
-         if (isolate != null) {
-            mp.setTimer(null);
+
+        /* could not find an isolate that matches the MIDletProxy isolate ID
+         * remove the MIDletProxy from the list as it is left over from 
+         * previous run and the isolate is already terminated */
+        mp.setTimer(null);
+        if (isolate != null) {
             isolate.exit(0);
             // IMPL_NOTE: waiting for termination completion may be useless.
             isolate.waitForExit();
-            mpl.removeIsolateProxies(mp.getIsolateId());
         }
+        mpl.removeIsolateProxies(mp.getIsolateId());
+    }
+
+    /**
+     * Change the MIDlet's state to suspended
+     * 
+     * @param isolateId the ID of the isolate to suspend
+     * @return <code>true</code> if isolate is suspended, 
+     *         <code>false</code> otherwise
+     */
+    public static boolean suspendIsolate(int isolateId) {
+        if (isolateId == MIDletSuiteUtils.getAmsIsolateId()) {
+            // AMS isolate must not be paused
+            return false;
+        }
+
+        Isolate[] isolates = Isolate.getIsolates();
+        int isolateNum = isolates.length;
+
+        while (isolateNum-- > 0) {
+            if (isolates[isolateNum].id() == isolateId) {
+                isolates[isolateNum].suspend();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Change the MIDlet's state to active
+     * 
+     * @param isolateId the ID of the isolate to resume
+     * @return <code>true</code> if isolate is resumed, 
+     *         <code>false</code> otherwise
+     */
+    public static boolean continueIsolate(int isolateId) {
+        Isolate[] isolates = Isolate.getIsolates();
+        int isolateNum = isolates.length;
+
+        while (isolateNum-- > 0) {
+            if (isolates[isolateNum].id() == isolateId) {
+                isolates[isolateNum].resume();
+                return true;
+            }
+        }
+        return false;
     }
 }

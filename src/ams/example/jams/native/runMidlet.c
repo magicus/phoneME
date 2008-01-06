@@ -120,6 +120,7 @@ runMidlet(int argc, char** commandlineArgs) {
 
     JVM_Initialize(); /* It's OK to call this more than once */
 
+    _asm int 3
 
     midp_heap_requirement = getHeapRequirement();
 

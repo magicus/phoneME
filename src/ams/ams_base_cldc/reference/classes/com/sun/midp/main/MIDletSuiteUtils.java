@@ -412,6 +412,13 @@ public class MIDletSuiteUtils {
     public static native boolean isAmsIsolate();
 
     /**
+     * Check if current configuration is MVM or SVM
+     * @return <code>true</code> if current configuration is MVM
+     *         <code>false</code> otherwise
+     */
+    public static native boolean isMVM();
+
+    /**
      * Register the Isolate ID of the AMS Isolate by making a native
      * method call that will call JVM_CurrentIsolateId and set
      * it in the proper native variable.
