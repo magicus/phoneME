@@ -37,6 +37,7 @@ public class CDCInit {
      * Performs CDC API initialization.
      *
      * @param midpHome root directory of the MIDP working files
+     * @param storageHome root directory for MIDP storage files
      * @param nativeLib name of the native shared library, only applies to
      * non-rommized build
      */
