@@ -280,7 +280,7 @@ public final class JUMPStoreImpl implements Store {
 
             final StringBuffer sb = new StringBuffer();
 
-            for (Iterator it = connections.iterator(); it.hasNext();) {
+            for (Iterator it = connections.iterator(); it.hasNext(); ) {
                 ConnectionInfo connection = (ConnectionInfo) it.next();
                 sb.append(connection.connection);   sb.append(SEPARATOR);
                 sb.append(connection.midlet);       sb.append(SEPARATOR);
@@ -360,7 +360,7 @@ public final class JUMPStoreImpl implements Store {
             final Map m = (Map) data;
 
             final StringBuffer sb = new StringBuffer();
-            for (Iterator it = m.entrySet().iterator(); it.hasNext();) {
+            for (Iterator it = m.entrySet().iterator(); it.hasNext(); ) {
                 final Map.Entry entry = (Map.Entry) it.next();
                 final String midlet = (String) entry.getKey();
                 final Long time = (Long) entry.getValue();

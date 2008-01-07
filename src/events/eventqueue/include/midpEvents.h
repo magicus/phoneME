@@ -132,6 +132,9 @@ extern "C" {
 /** The event to repaint entire screen */
 #define SCREEN_REPAINT_EVENT            47
 
+/** JSR-256 event */
+#define SENSOR_EVENT                    48
+
 /** @} */
 
 /**

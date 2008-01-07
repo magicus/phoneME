@@ -96,7 +96,8 @@ public final class AlarmControllerTest extends TestCase {
         final int DUMMY_SUITE_ID = 13;
         final String DUMMY_MIDLET = "foo.bar.Dummy";
 
-        final int ANOTHER_SUITE_ID = 17; // should be different from DUMMY_MIDLET
+	// should be different from DUMMY_MIDLET
+        final int ANOTHER_SUITE_ID = 17; 
         assert DUMMY_SUITE_ID != ANOTHER_SUITE_ID;
 
         final AlarmController alarmController = createAlarmController();
@@ -113,9 +114,12 @@ public final class AlarmControllerTest extends TestCase {
 
         final AlarmController alarmController = createAlarmController();
 
-        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET_1, 1001L);
-        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET_2, 2001L);
-        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET_3, 3001L);
+        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET_1,
+			       1001L);
+        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET_2,
+			       2001L);
+        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET_3,
+			       3001L);
         alarmController.removeSuiteAlarms(MIDLET_SUITE_ID);
         alarmController.dispose();
     }
@@ -127,15 +131,19 @@ public final class AlarmControllerTest extends TestCase {
         final int MIDLET_SUITE_ID = 17;
         final String MIDLET = "com.sun.Foo";
 
-        final ListingLifecycleAdapter lifecycleAdapter = new ListingLifecycleAdapter();
+        final ListingLifecycleAdapter lifecycleAdapter =
+	    new ListingLifecycleAdapter();
 
-        final AlarmController alarmController = createAlarmController(lifecycleAdapter);
+        final AlarmController alarmController =
+	    createAlarmController(lifecycleAdapter);
 
-        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET, ALARM_DELTA);
+        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET,
+			       ALARM_DELTA);
         Thread.sleep(WAIT_DELAY);
         alarmController.dispose();
 
-        assertTrue(lifecycleAdapter.hasBeenInvokedOnceFor(MIDLET_SUITE_ID, MIDLET));
+        assertTrue(lifecycleAdapter.hasBeenInvokedOnceFor(MIDLET_SUITE_ID,
+							  MIDLET));
     }
 
     private static class FiredChecker {
@@ -153,11 +161,13 @@ public final class AlarmControllerTest extends TestCase {
         }
 
         FiredChecker(final Store store,
-                final int midletSuiteID, final String midlet) throws IOException {
+                final int midletSuiteID, final String midlet)
+	    throws IOException {
             this.midletSuiteID = midletSuiteID;
             this.midlet = midlet;
             this.lifecycleAdapter = new ListingLifecycleAdapter();
-            this.alarmController = createAlarmController(store, lifecycleAdapter);
+            this.alarmController = createAlarmController(store,
+							 lifecycleAdapter);
         }
 
         long registerCheckedAlarm(final long delta)
@@ -167,7 +177,8 @@ public final class AlarmControllerTest extends TestCase {
         }
 
         boolean hasBeenFired() {
-            return lifecycleAdapter.hasBeenInvokedOnceFor(midletSuiteID, midlet);
+            return lifecycleAdapter.hasBeenInvokedOnceFor(midletSuiteID,
+							  midlet);
         }
     }
 
@@ -175,7 +186,8 @@ public final class AlarmControllerTest extends TestCase {
         final int MIDLET_SUITE_ID = 17;
         final String MIDLET = "com.sun.Foo";
 
-        final FiredChecker firedChecker = new FiredChecker(MIDLET_SUITE_ID, MIDLET);
+        final FiredChecker firedChecker = new FiredChecker(MIDLET_SUITE_ID,
+							   MIDLET);
 
         final AlarmController alarmController = firedChecker.alarmController;
 
@@ -186,9 +198,12 @@ public final class AlarmControllerTest extends TestCase {
         final long ALARM_TIME = System.currentTimeMillis() + 10239L;
         alarmController.registerAlarm(MIDLET_SUITE_ID, MIDLET, ALARM_TIME);
 
-        final long previous = alarmController.registerAlarm(MIDLET_SUITE_ID, MIDLET, 2*ALARM_TIME);
+        final long previous = alarmController
+	    .registerAlarm(MIDLET_SUITE_ID,
+			   MIDLET, 2*ALARM_TIME);
         if (firedChecker.hasBeenFired()) {
-            fail("Test is not reliable: the alarm has been fired.  Please, increase ALARM_TIME");
+            fail("Test is not reliable: the alarm has been fired." +
+		 "  Please, increase ALARM_TIME");
         }
         alarmController.dispose();
 
@@ -205,14 +220,17 @@ public final class AlarmControllerTest extends TestCase {
         final int MIDLET_SUITE_ID = 17;
         final String MIDLET = "com.sun.Foo";
 
-        final FiredChecker firedChecker = new FiredChecker(MIDLET_SUITE_ID, MIDLET);
+        final FiredChecker firedChecker = new FiredChecker(MIDLET_SUITE_ID,
+							   MIDLET);
 
         final AlarmController alarmController = firedChecker.alarmController;
 
-        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET, ALARM_DELTA);
+        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET,
+			       ALARM_DELTA);
         alarmController.removeSuiteAlarms(MIDLET_SUITE_ID);
         if (firedChecker.hasBeenFired()) {
-            fail("Test is not reliable: the alarm has been fired.  Please, increase ALARM_DELTA");
+            fail("Test is not reliable: the alarm has been fired." +
+		 "  Please, increase ALARM_DELTA");
         }
         Thread.sleep(WAIT_DELAY);
 
@@ -233,7 +251,8 @@ public final class AlarmControllerTest extends TestCase {
         }
     }
 
-    public void testResetAfterFiring() throws IOException, InterruptedException {
+    public void testResetAfterFiring() throws IOException,
+					      InterruptedException {
         final FiredChecker firedChecker = new FiredChecker(17, "com.sun.Foo");
 
         registerAndWait(firedChecker);
@@ -246,20 +265,22 @@ public final class AlarmControllerTest extends TestCase {
     private static boolean checkNoAlarms(final Store store) {
         final boolean noAlarms [] = { true };
         store.listAlarms(new Store.AlarmsConsumer() {
-           public void consume(final int suiteId, final Map alarms) {
-               /*
-                * NOTE: store shouldn't report suites without alarms
-                * (empty map)
-                */
-               noAlarms[0] = false;
-           }
-        });
+		public void consume(final int suiteId, final Map alarms) {
+		    /*
+		     * NOTE: store shouldn't report suites without alarms
+		     * (empty map)
+		     */
+		    noAlarms[0] = false;
+		}
+	    });
         return noAlarms[0];
     }
-
-    public void testNoRecordAfterFiring() throws IOException, InterruptedException {
+    
+    public void testNoRecordAfterFiring() throws IOException,
+						 InterruptedException {
         final Store store = createStore();
-        final FiredChecker firedChecker = new FiredChecker(store, 17, "com.sun.Foo");
+        final FiredChecker firedChecker = new FiredChecker(store, 17,
+							   "com.sun.Foo");
 
         registerAndWait(firedChecker);
         firedChecker.alarmController.dispose();
@@ -272,10 +293,13 @@ public final class AlarmControllerTest extends TestCase {
         final String MIDLET = "com.sun.Foo";
 
         final Store store = createStore();
-        final FiredChecker firedChecker = new FiredChecker(store, MIDLET_SUITE_ID, MIDLET);
+        final FiredChecker firedChecker = new FiredChecker(store,
+							   MIDLET_SUITE_ID,
+							   MIDLET);
 
         final long time = System.currentTimeMillis() + 1001L;
-        firedChecker.alarmController.registerAlarm(MIDLET_SUITE_ID, MIDLET, time);
+        firedChecker.alarmController.registerAlarm(MIDLET_SUITE_ID, MIDLET,
+						   time);
         firedChecker.alarmController.dispose();
         if (firedChecker.hasBeenFired()) {
             fail("Test is not reliable: the alarm has been fired");
@@ -313,14 +337,17 @@ public final class AlarmControllerTest extends TestCase {
         final long time = System.currentTimeMillis() + 501L;
         store.addAlarm(MIDLET_SUITE_ID, MIDLET, time);
 
-        final FiredChecker firedChecker = new FiredChecker(store, MIDLET_SUITE_ID, MIDLET);
+        final FiredChecker firedChecker = new FiredChecker(store, 
+							   MIDLET_SUITE_ID,
+							   MIDLET);
 
         Thread.sleep(3*(time - System.currentTimeMillis()));
         firedChecker.alarmController.dispose();
         assertTrue(firedChecker.hasBeenFired());
     }
 
-    public void testPassedAlarmImmediatelyScheduled() throws IOException, InterruptedException {
+    public void testPassedAlarmImmediatelyScheduled()
+	throws IOException, InterruptedException {
         final int MIDLET_SUITE_ID = 17;
         final String MIDLET = "com.sun.Foo";
 
@@ -328,7 +355,9 @@ public final class AlarmControllerTest extends TestCase {
         final long time = System.currentTimeMillis() - 501L;
         store.addAlarm(MIDLET_SUITE_ID, MIDLET, time);
 
-        final FiredChecker firedChecker = new FiredChecker(store, MIDLET_SUITE_ID, MIDLET);
+        final FiredChecker firedChecker = new FiredChecker(store,
+							   MIDLET_SUITE_ID,
+							   MIDLET);
 
         Thread.sleep(101L); // just a small delta
         firedChecker.alarmController.dispose();
@@ -343,15 +372,18 @@ public final class AlarmControllerTest extends TestCase {
         final Store store = createStore();
         final AlarmController alarmController = createAlarmController(store);
 
-        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET_1, 1001L);
-        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET_2, 2001L);
+        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET_1,
+			       1001L);
+        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET_2,
+			       2001L);
         alarmController.removeSuiteAlarms(MIDLET_SUITE_ID);
         alarmController.dispose();
 
         assertTrue(checkNoAlarms(store));
     }
 
-    public void testSuiteUninstallPersistentStore2() throws IOException, InterruptedException {
+    public void testSuiteUninstallPersistentStore2()
+	throws IOException, InterruptedException {
         final int MIDLET_SUITE_ID_1 = 17;
         final String MIDLET_11 = "com.sun.Foo";
         final long DELTA = 47L;
@@ -361,11 +393,16 @@ public final class AlarmControllerTest extends TestCase {
         final String MIDLET_21 = "com.sun.Qux";
 
         final Store store = createStore();
-        final FiredChecker firedChecker = new FiredChecker(store, MIDLET_SUITE_ID_1, MIDLET_11);
+        final FiredChecker firedChecker = new FiredChecker(store,
+							   MIDLET_SUITE_ID_1,
+							   MIDLET_11);
 
-        registerAlarmWithDelta(firedChecker.alarmController, MIDLET_SUITE_ID_1, MIDLET_11, DELTA);
-        registerAlarmWithDelta(firedChecker.alarmController, MIDLET_SUITE_ID_2, MIDLET_21, 3001L);
-        registerAlarmWithDelta(firedChecker.alarmController, MIDLET_SUITE_ID_1, MIDLET_12, 2001L);
+        registerAlarmWithDelta(firedChecker.alarmController,
+			       MIDLET_SUITE_ID_1, MIDLET_11, DELTA);
+        registerAlarmWithDelta(firedChecker.alarmController, 
+			       MIDLET_SUITE_ID_2, MIDLET_21, 3001L);
+        registerAlarmWithDelta(firedChecker.alarmController,
+			       MIDLET_SUITE_ID_1, MIDLET_12, 2001L);
         Thread.sleep(3*DELTA);
         firedChecker.alarmController.dispose();
         if (!firedChecker.hasBeenFired()) {
@@ -411,13 +448,18 @@ public final class AlarmControllerTest extends TestCase {
         final String MIDLET_1 = "com.sun.Foo";
         final String MIDLET_2 = "com.sun.Bar";
 
-        final FiredChecker firedChecker = new FiredChecker(MIDLET_SUITE_ID, MIDLET_1);
+        final FiredChecker firedChecker = new FiredChecker(MIDLET_SUITE_ID,
+							   MIDLET_1);
         final AlarmController alarmController = firedChecker.alarmController;
 
-        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET_1, ALARM_DELTA);
-        final long previous = registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET_2, 2*ALARM_DELTA);
+        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET_1,
+			       ALARM_DELTA);
+        final long previous = registerAlarmWithDelta(alarmController, 
+						     MIDLET_SUITE_ID,
+						     MIDLET_2, 2*ALARM_DELTA);
         if (firedChecker.hasBeenFired()) {
-            fail("Test is not reliable: the alarm has been fired.  Please, increase ALARM_DELTA");
+            fail("Test is not reliable: the alarm has been fired." +
+		 "  Please, increase ALARM_DELTA");
         }
 
         alarmController.dispose();
@@ -446,15 +488,20 @@ public final class AlarmControllerTest extends TestCase {
                 createAlarmController(lifecycleAdapter);
 
         lifecycleAdapter.setProxy(throwingLifecycleAdapter);
-        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET, ALARM_DELTA);
+        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID,
+			       MIDLET, ALARM_DELTA);
         Thread.sleep(WAIT_DELAY);
 
-        // And now check that everything is ok despite of previously thrown adapter
+        // And now check that everything is ok despite of previously 
+	// thrown adapter
         lifecycleAdapter.setProxy(listingLifecycleAdapter);
-        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID, MIDLET, ALARM_DELTA);
+        registerAlarmWithDelta(alarmController, MIDLET_SUITE_ID,
+			       MIDLET, ALARM_DELTA);
         Thread.sleep(WAIT_DELAY);
         alarmController.dispose();
 
-        assertTrue(listingLifecycleAdapter.hasBeenInvokedOnceFor(MIDLET_SUITE_ID, MIDLET));
+        assertTrue(listingLifecycleAdapter
+		   .hasBeenInvokedOnceFor(MIDLET_SUITE_ID,
+					  MIDLET));
     }
 }

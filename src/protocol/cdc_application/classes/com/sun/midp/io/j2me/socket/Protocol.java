@@ -69,12 +69,16 @@ public class Protocol extends com.sun.cdc.io.j2me.socket.Protocol {
         return new DataInputStream(openInputStream());
     }
 
-    /* This class overrides the setSocketOption() to allow 0 as a valid value for sendBufferSize
-     * and receiveBufferSize. The underlying CDC networking layer considers 0 as illegal 
+    /*
+     * This class overrides the setSocketOption() to allow 0 as a valid
+     * value for sendBufferSize and receiveBufferSize.
+     * The underlying CDC networking layer considers 0 as illegal 
      * value and throws IAE which causes the TCK test to fail.
      */
-    public void setSocketOption(byte option,  int value) throws IllegalArgumentException, IOException {
-        if (option == SocketConnection.SNDBUF || option == SocketConnection.RCVBUF ) {
+    public void setSocketOption(byte option,  int value)
+	throws IllegalArgumentException, IOException {
+        if (option == SocketConnection.SNDBUF 
+	    || option == SocketConnection.RCVBUF) {
             if (value == 0) {
                 value = 1;
                 super.setSocketOption(option, value);
@@ -83,7 +87,7 @@ public class Protocol extends com.sun.cdc.io.j2me.socket.Protocol {
         super.setSocketOption(option, value);
     }
 
-   /**
+    /**
      * Check to see if the application has permission to use
      * the given resource.
      *
@@ -97,7 +101,7 @@ public class Protocol extends com.sun.cdc.io.j2me.socket.Protocol {
      *            check fails.
      */
     protected void checkPermission(String host, int port)
-        throws SecurityException{
+        throws SecurityException {
 
         if (port < 0) {
             throw new IllegalArgumentException("bad port: " + port);

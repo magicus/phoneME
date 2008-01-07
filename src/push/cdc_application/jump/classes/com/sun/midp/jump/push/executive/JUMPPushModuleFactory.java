@@ -44,7 +44,7 @@ public abstract class JUMPPushModuleFactory extends JUMPModuleFactory {
      * To be used by subclasses only
      */
     protected JUMPPushModuleFactory() {
-        synchronized (JUMPPushModuleFactory.class){
+        synchronized (JUMPPushModuleFactory.class) {
             if (INSTANCE == null) {
                 INSTANCE = this;
             }

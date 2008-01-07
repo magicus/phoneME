@@ -66,7 +66,7 @@ public final class InMemoryStore implements Store {
 
     /** {@inheritDoc}. */
     public void listAlarms(final AlarmsConsumer alarmsConsumer) {
-        for (Iterator it = alarms.entrySet().iterator(); it.hasNext();) {
+        for (Iterator it = alarms.entrySet().iterator(); it.hasNext(); ) {
             final Map.Entry entry = (Map.Entry) it.next();
             final Integer id = (Integer) entry.getKey();
             final Map suiteInfo = (Map) entry.getValue();
@@ -142,7 +142,7 @@ public final class InMemoryStore implements Store {
     public void listConnections(
             final ConnectionsConsumer connectionsConsumer) {
         for (Iterator it = connections.entrySet().iterator();
-                it.hasNext();) {
+                it.hasNext(); ) {
             final Map.Entry entry = (Map.Entry) it.next();
             final Integer id = (Integer) entry.getKey();
             final Collection cns = (Collection) entry.getValue();

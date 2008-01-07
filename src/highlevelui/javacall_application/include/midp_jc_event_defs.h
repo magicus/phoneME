@@ -132,7 +132,7 @@ typedef enum {
     MIDP_JC_EVENT_LIST_STORAGE_NAMES   ,
     MIDP_JC_EVENT_REMOVE_MIDLET
 #if ENABLE_JSR_256
-	                                   ,
+    ,JSR256_JC_EVENT_SENSOR_AVAILABLE  ,
     JSR256_JC_EVENT_SENSOR_OPEN_CLOSE  ,
     JSR256_JC_EVENT_SENSOR_DATA_READY
 #endif /*ENABLE_JSR_256*/
@@ -242,6 +242,11 @@ typedef struct {
 
 #ifdef ENABLE_JSR_256
 typedef struct {
+    javacall_sensor_type sensor_type;
+    javacall_bool is_available;
+} jsr256_jc_event_sensor_available;
+
+typedef struct {
     javacall_sensor_type sensor;
     javacall_bool isOpen;
     int errCode;
@@ -320,9 +325,10 @@ typedef struct {
         midp_event_heap_size               heap_size;
         midp_event_remove_midlet           removeMidletEvent;
 #ifdef ENABLE_JSR_256
-		jsr256_jc_event_sensor_t            jsr256_jc_event_sensor;
+        jsr256_jc_event_sensor_available   jsr256SensorAvailable;
+        jsr256_jc_event_sensor_t           jsr256_jc_event_sensor;
 #endif /* ENABLE_JSR_256 */
-	} data;
+    } data;
 
 } midp_jc_event_union;
 

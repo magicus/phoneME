@@ -53,7 +53,7 @@ public class JumpInit {
         if (!initMidpStorage(midpHome)) {
            throw new RuntimeException("MIDP suite store initialization failed");
         }
-     }
+    }
   
     /**
      * Performs native midp suitestorage initialization.

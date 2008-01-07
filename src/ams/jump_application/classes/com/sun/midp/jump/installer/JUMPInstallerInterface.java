@@ -30,39 +30,47 @@ import com.sun.midp.midletsuite.MIDletSuiteLockedException;
 
 public interface JUMPInstallerInterface {
 
- /**
-  * Verifies and installs an MIDlet suite based on a jad.  
-  * It is expected that the .jad and .jar files are already downloaded from 
-  * the server to the local filesystem by the time this method is invoked.
-  *
-  * @param jadSourceUrl the original server location of the jad that got downloaded.
-  * @param encoding Character encoding of the jad.
-  * @param tempJadFileName The location of the jad file in the local filesystem
-  * @param tempJarFileName The location of the jar file in the local filesystem
-  * @param isUpdate true if this is an update, false if this is a fresh install.
-  *
-  * @return the installed midlet suite ID.
-  **/
- int verifyAndStoreSuite(String jadSourceUrl, String encoding,
-     String tempJadFileName, String tempJarFileName, boolean isUpdate)
-             throws IOException, SecurityException, 
-	            InvalidJadException, MIDletSuiteLockedException;
-  
- /**
-  * Verifies and installs an MIDlet suite based on a jar.  
-  * It is expected that the .jar file are already downloaded from 
-  * the server to the local filesystem by the time this method is invoked.
-  *
-  * @param jarSourceUrl the original server location of the jar that got downloaded.
-  * @param tempJarFileName The location of the jar file in the local filesystem
-  * @param suiteName The name of the midlet suite to install.
-  * @param isUpdate true if this is an update, false if this is a fresh install.
-  *
-  * @return the installed midlet suite ID.
-  **/
- int verifyAndStoreSuite(String jarSourceUrl, String tempJarFileName, 
-     String suiteName, boolean isUpdate)
-             throws IOException, SecurityException, 
-	            InvalidJadException, MIDletSuiteLockedException;
-  
+    /**
+     * Verifies and installs an MIDlet suite based on a jad.  
+     * It is expected that the .jad and .jar files are already downloaded from 
+     * the server to the local filesystem by the time this method is invoked.
+     *
+     * @param jadSourceUrl the original server location of the jad that got
+     * downloaded.
+     * @param encoding Character encoding of the jad.
+     * @param tempJadFileName The location of the jad file in the
+     * local filesystem
+     * @param tempJarFileName The location of the jar file in the
+     * local filesystem
+     * @param isUpdate true if this is an update, false if this is a fresh
+     * install.
+     *
+     * @return the installed midlet suite ID.
+     */
+    int verifyAndStoreSuite(String jadSourceUrl, String encoding,
+			    String tempJadFileName, String tempJarFileName,
+			    boolean isUpdate)
+	throws IOException, SecurityException, 
+	       InvalidJadException, MIDletSuiteLockedException;
+    
+    /**
+     * Verifies and installs an MIDlet suite based on a jar.  
+     * It is expected that the .jar file are already downloaded from 
+     * the server to the local filesystem by the time this method is invoked.
+     *
+     * @param jarSourceUrl the original server location of the jar that
+     * got downloaded.
+     * @param tempJarFileName The location of the jar file in the
+     * local filesystem
+     * @param suiteName The name of the midlet suite to install.
+     * @param isUpdate true if this is an update, false if this is a
+     * fresh install.
+     *
+     * @return the installed midlet suite ID.
+     */
+    int verifyAndStoreSuite(String jarSourceUrl, String tempJarFileName, 
+			    String suiteName, boolean isUpdate)
+	throws IOException, SecurityException, 
+	       InvalidJadException, MIDletSuiteLockedException;
+    
 }
