@@ -543,7 +543,7 @@ read_suites_data(char** ppszError) {
     ADJUST_POS_IN_BUF(pos, bufferLen, sizeof(unsigned long));
 
     /* parse its contents */
-    numOfSuites = *(int*)buffer;
+    numOfSuites = *(int*)&buffer[pos];
     ADJUST_POS_IN_BUF(pos, bufferLen, sizeof(int));
 
     for (i = 0; i < numOfSuites; i++) {
@@ -717,7 +717,7 @@ write_suites_data(char** ppszError) {
     pCrc = buffer;
     ADJUST_POS_IN_BUF(pos, bufferLen, sizeof(unsigned long));
 
-    *(int*)buffer = g_numberOfSuites;
+    *(int*)&buffer[pos] = g_numberOfSuites;
     ADJUST_POS_IN_BUF(pos, bufferLen, sizeof(int));
 
     while (pData != NULL) {
@@ -786,7 +786,7 @@ write_suites_data(char** ppszError) {
     if (status == ALL_OK) {
         /* calculate CRC of data in the buffer */
         unsigned long crcToStore = midpCRC32Init(
-            buffer + sizeof(unsigned long), bufferLen - sizeof(unsigned long));
+            buffer + sizeof(unsigned long), pos - sizeof(unsigned long));
         crcToStore = midpCRC32Finalize(crcToStore);
         *(unsigned long*)pCrc = crcToStore;
 
