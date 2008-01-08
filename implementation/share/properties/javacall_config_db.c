@@ -298,22 +298,27 @@ void javacall_configdb_dump_ini(javacall_handle config_handle,
  * @param key             The key to get the corresponding value of
  * @param def             default parameter to return if the value has not been found
  * @param result          where to store the result string
- * @return  JAVACALL_FAIL   bad arguments are supplied
- *          JAVACALL_OK     otherwise
+ * @return                JAVACALL_OK   The property has been found
+ *                        JAVACALL_VALUE_NOT_FOUND The value has not been found
+ *                        JAVACALL_FAIL   bad arguments are supplied
  */
 javacall_result javacall_configdb_getstring(javacall_handle config_handle, char* key, 
-                                            char* def, char** result) {
-    char* lc_key;
+                                            char* def, char** result) {    
     string_db *d = (string_db *)config_handle;
+    javacall_result status;
+
+    if (result == NULL) {
+        return JAVACALL_FAIL;
+    }
 
     if (d == NULL || key == NULL) {
         *result = def;
         return JAVACALL_FAIL;
-    }
+    }    
 
-    lc_key = key;
-    *result = javacall_string_db_getstr(d, lc_key, def);    
-    return JAVACALL_OK;
+    status = javacall_string_db_getstr(d, key, def, result);
+    
+    return status;
 }
 
 
@@ -323,8 +328,9 @@ javacall_result javacall_configdb_getstring(javacall_handle config_handle, char*
  * 
  * @param config_handle database object created by calling javacall_configdb_load
  * @param key   the key to find
- * @return      JAVACALL_OK if the key exists 
- *              JAVACALL_KEY_NOT_FOUND otherwise
+ * @return      JAVACALL_OK if the value corresponding to the key exists and 
+ *              is not empty string 
+ *              JAVACALL_VALUE_NOT_FOUND otherwise
  */
 javacall_result javacall_configdb_find_key(javacall_handle config_handle, char* key) {
     char* str;
@@ -333,7 +339,7 @@ javacall_result javacall_configdb_find_key(javacall_handle config_handle, char* 
     if (JAVACALL_OK == javacall_configdb_getstring(d, key, INI_INVALID_KEY, &str)) {
         return JAVACALL_OK;
     } else {
-        return JAVACALL_KEY_NOT_FOUND;
+        return JAVACALL_VALUE_NOT_FOUND;
     }
 }
 
@@ -409,7 +415,7 @@ javacall_handle configdb_load_from_fs(javacall_utf16* unicodeFileName, int fileN
 
     res = javacall_file_open(unicodeFileName,
                              fileNameLen,
-                             JAVACALL_FILE_O_RDWR | JAVACALL_FILE_O_CREAT,
+                             JAVACALL_FILE_O_RDWR,
                              &file_handle);
     if (res != JAVACALL_OK) {
         javacall_print("javacall_configdb_load(): ERROR - Can't open the dump file!\n");
