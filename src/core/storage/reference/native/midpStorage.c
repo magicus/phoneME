@@ -72,9 +72,6 @@ static const char* const STRING_CORRUPT_ERROR =
 /*
  * Name of the storage directory.
  */
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(APP_DIR)
-    {'a', 'p', 'p', 'd', 'b', '\0'}
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(APP_DIR);
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(CONFIG_SUBDIR)
     {'l', 'i', 'b', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(CONFIG_SUBDIR);
@@ -126,7 +123,7 @@ static int storageInitDone = 0;
 static char errorBuffer[MAX_ERROR_LEN + 1] = {0};
 
 /*
- * Prefixing the system directory for storage, APP_DIR, with midp_home.
+ * Set the system directory for storage
  *
  * @param config_home file system path to where MIDP is installed
  * @param midp_home file system path to where MIDP should store its
@@ -160,12 +157,7 @@ storageInitialize(char *config_home, char *midp_home) {
         return -1;
     }
 
-    /* performance hint: predict buffer capacity */
-    /*pcsl_string_predict_size(&sRoot[0], pcsl_string_length(&sRoot[0]) + 2
-                                    + PCSL_STRING_LITERAL_LENGTH(APP_DIR));*/
-    if (/*PCSL_STRING_OK != pcsl_string_append_char(&sRoot[0], fsep)
-       || PCSL_STRING_OK != pcsl_string_append(&sRoot[0], &APP_DIR)
-       ||*/ PCSL_STRING_OK != pcsl_string_append_char(&sRoot[0], fsep)) {
+    if (PCSL_STRING_OK != pcsl_string_append_char(&sRoot[0], fsep)) {
         REPORT_ERROR(LC_CORE, "Error: out of memory.\n");
         storageFinalize();
         return -1;
