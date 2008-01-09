@@ -149,17 +149,43 @@ typedef enum {
 #define JAVACALL_MEDIA_HTTPS_PROTOCOL           0x08    // "https://"
 #define JAVACALL_MEDIA_RTP_PROTOCOL             0x10    // "rtp://"
 #define JAVACALL_MEDIA_RTSP_PROTOCOL            0x20    // "rtsp://"
+#define JAVACALL_MEDIA_MEMORY_PROTOCOL          0x40    // playback from memory buffer or memory streaming
+
+/**
+ * @enum javacall_media_controls_type
+ * 
+ * @brief Multimedia Controls, supported by native layer
+ */
+typedef enum {
+    JAVACALL_MEDIA_CTRL_FRAME_POSITIONING = 0,
+    JAVACALL_MEDIA_CTRL_METADATA,
+    JAVACALL_MEDIA_CTRL_MIDI,
+    JAVACALL_MEDIA_CTRL_PITCH,
+    JAVACALL_MEDIA_CTRL_RATE,
+    JAVACALL_MEDIA_CTRL_RECORD,
+    JAVACALL_MEDIA_CTRL_STOPTIME,
+    JAVACALL_MEDIA_CTRL_TEMPO,
+    JAVACALL_MEDIA_CTRL_TONE,
+    JAVACALL_MEDIA_CTRL_VIDEO,
+    JAVACALL_MEDIA_CTRL_VOLUME,
+    JAVACALL_MEDIA_MAX_CTRLS
+}javacall_media_controls_type;
 
 /**
  * 
- * @brief Multimedia capabilities, supported by the native implementation.
+ * @brief Basic Multimedia capabilities, supported by the native implementation.
+ */
+/** Media Control is not supported by native player */
+#define JAVACALL_MEDIA_CTRL_NOT_SUPPORTED          0x00
+/** Media Control is supported by native player */
+#define JAVACALL_MEDIA_CTRL_SUPPORTED              0x01
+
+/**
+ * 
+ * @brief VideoControl Multimedia features, supported by the native implementation.
  */
 /** Full screen is supported by native player */
-#define JAVACALL_MEDIA_CAPS_FULLSCREEN          0x01
-/** Meta Data can be retrieved from native player */
-#define JAVACALL_MEDIA_CAPS_METADATA            0x02
-/** Frame positioning is managed by  native player */
-#define JAVACALL_MEDIA_CAPS_FRAME_POSITIONING   0x04
+#define JAVACALL_MEDIA_CAPS_FULLSCREEN          0x02
 
 
 /** @} */
@@ -175,23 +201,14 @@ typedef struct {
     /* Content types for the media format */
     javacall_const_utf16_string         contentTypes;
 
-    /* bitmask of supported remote protocols */
-    javacall_int32                      remote_protocols;
-    /* bitmask of native capabilities for remote protocols */
-    javacall_int32                      remote_protocol_caps;
-    /* bitmask of supported local protocols */
-    javacall_int32                      local_protocols;
-    /* bitmask of native capabilities for local protocols */
-    javacall_int32                      local_protocol_caps;
-    /* bitmask of supported streaming protocols */
-    javacall_int32                      stream_protocols;
-    /* bitmask of native capabilities for streaming protocols */
-    javacall_int32                      stream_protocol_caps;
-
-    /* bitmask of native capabilities for memory protocols */
-    javacall_int32                      mem_protocol_caps;
-    /* bitmask of native capabilities for memory_streaming protocols */
-    javacall_int32                      mem_stream_protocol_caps;
+    /**  bitmask of supported protocols if playback from 
+     *   whole downloaded content including memory buffer
+     */
+    javacall_int32                      whole_protocols;
+    /**  bitmask of supported streaming protocols 
+     *   including streaming from memory buffer
+     */
+    javacall_int32                      streaming_protocols;
 } javacall_media_caps;
 
 /**
@@ -224,57 +241,6 @@ typedef struct {
     /* JAVACALL_MEDIA_FORMAT_END_OF_TYPE in mediaFormat field       */
     javacall_media_caps                 *mediaCaps;
 } javacall_media_configuration;
-
-
-/**
- * @enum javacall_media_extra_params_type
- * 
- * @brief Type of native player extra parameters 
- */
-typedef enum {
-    JAVACALL_MEDIA_RTP_COMMON_PARAMS,
-    JAVACALL_MEDIA_RTP_STREAM_PARAMS,
-} javacall_media_extra_params_type;
-
-/**
- * @enum javacall_media_extra_rtp_common_params_type
- * 
- * @brief Type of rtp native player common parameters 
- */
-typedef struct {
-    /* number of rtp streams */
-    int             num_streams;
-    /* Multicast/Unicast session */
-    javacall_bool   isMulticast;
-} javacall_media_extra_rtp_common_params_type;
-
-/**
- * @enum javacall_media_extra_rtp_stream_params_type
- * 
- * @brief Type of rtp native player common parameters 
- */
-typedef struct {
-    /* rtp stream Id */
-    int streamId;
-    /* IPv4 or IPv6 address (for multicast session) */
-    unsigned char *pAddress;
-    /* size of address */
-    int addrLen;
-    /* rtp stream port number */
-    int port_number;
-} javacall_media_extra_rtp_stream_params_type;
-
-/**
- * struct javacall_media_extra_params
- * @brief Extra parameters for native Player
- */
-typedef struct {
-    javacall_media_extra_params_type type;
-    union {
-        javacall_media_extra_rtp_common_params_type rtp_common;
-        javacall_media_extra_rtp_stream_params_type rtp_stream;
-    } param;
-} javacall_media_extra_params;
 
 /* Java MMAPI JTS Values */
 #define JAVACALL_SET_VOLUME  -8
@@ -361,8 +327,8 @@ javacall_result javacall_media_get_configuration(
  * @param mimeLength    String length of media MIME type.
  * @param uri           URI unicode string to media data.
  * @param uriLength     String length of URI
- * @param contentLength Content length in bytes
- *                      If Java MMAPI couldn't determine content length, 
+ * @param contentSize   Size of content in bytes
+ *                      If Java MMAPI couldn't determine content size, 
  *                      this value should be -1
  * @param handle        Handle of native library.
  *
@@ -376,24 +342,8 @@ javacall_result javacall_media_create(javacall_app_id appId,
                                       long mimeLength,
                                       javacall_const_utf16_string uri, 
                                       long uriLength,
-                                      long contentLength,
+                                      long contentSize,
                                       javacall_handle *handle);
-
-/**
- * Java MMAPI call this function to set player specific parameters.
- * This function should be called after javacall_media_create and before
- * first javacall_media_start. After javacall_media_start is called 
- * any calls to this function would be ignored.
- * 
- * @param handle        Handle to the library.
- * @param param         Extra parameters
- * 
- * @retval JAVACALL_OK
- * @retval JAVACALL_FAIL   
- * @retval JAVACALL_INVALID_ARGUMENT
- */
-javacall_result javacall_media_set_param(javacall_handle handle,
-                                         javacall_media_extra_params *param);
 
 /**
  * Get the format type of media content
@@ -406,6 +356,25 @@ javacall_result javacall_media_set_param(javacall_handle handle,
  */
 javacall_result javacall_media_get_format(javacall_handle handle, 
                               javacall_media_format_type /*OUT*/*format);
+
+/**
+ * Return array of Media Controls supported by native player
+ *
+ * If particular Media Control is supported by player, corresponding element 
+ * in the array has JAVACALL_MEDIA_CTRL_SUPPORTED bit set to 1
+ * If particular Media Control is not supported by player, corresponding element
+ * in the array is equal to 0
+ * If there are additional info about supported features of the Media Control
+ * it can be added as bitmask to corresponding element in the array
+ *
+ * @param handle    Handle to the library 
+ * @param features  Array of bitmasks for each Media Control
+ * 
+ * @retval JAVACALL_OK          Success
+ * @retval JAVACALL_FAIL        Fail
+ */
+javacall_result javacall_media_get_player_features(javacall_handle handle,
+                              javacall_int32 features[JAVACALL_MEDIA_MAX_CTRLS]);
 
 /**
  * Close native media player that created by creat or creat2 API call
