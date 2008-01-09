@@ -40,7 +40,8 @@ public class CDCInit {
      * @param nativeLib name of the native shared library, only applies to
      * non-rommized build
      */
-    public static void init(String midpHome, String storageHome, String nativeLib) {
+    public static void init(String midpHome, String storageHome,
+			    String nativeLib) {
         if (initialized) {
             return;
         }
@@ -74,7 +75,7 @@ public class CDCInit {
          * the fallback is user.dir.
          */
         String userdir = System.getProperty("user.dir", ".");
-        userdir+= File.separator + "midp" + File.separator + "midp_linux_gci";
+        userdir += File.separator + "midp" + File.separator + "midp_linux_gci";
         String home = System.getProperty("sun.midp.home.path", userdir);
 
         init(home);
@@ -90,7 +91,8 @@ public class CDCInit {
     }
     
     public static void init(String midpHome, String storageHome) {
-        init(midpHome, storageHome, System.getProperty("sun.midp.library.name", "midp"));
+        init(midpHome, storageHome, 
+	     System.getProperty("sun.midp.library.name", "midp"));
     }
 
     /**

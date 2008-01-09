@@ -72,6 +72,9 @@ extern "C" {
 #include <javacall_multimedia_advanced.h>
 #endif /* ENABLE_JSR_234 */
 #include <javacall_security.h>
+#ifdef ENABLE_JSR_256
+#include "javacall_sensor.h"
+#endif /* ENABLE_JSR_256 */
 
 
 #define MIDP_RUNMIDLET_MAXIMUM_ARGS 10
@@ -122,7 +125,17 @@ typedef enum {
     MIDP_JC_EVENT_ADVANCED_MULTIMEDIA  ,
 #endif /*ENABLE_JSR_234*/
     JSR75_FC_JC_EVENT_ROOTCHANGED      , 
-    MIDP_JC_EVENT_ROTATION
+    MIDP_JC_EVENT_ROTATION             ,
+    MIDP_JC_EVENT_SET_VM_ARGS          ,
+    MIDP_JC_EVENT_SET_HEAP_SIZE        ,
+    MIDP_JC_EVENT_LIST_MIDLETS         ,
+    MIDP_JC_EVENT_LIST_STORAGE_NAMES   ,
+    MIDP_JC_EVENT_REMOVE_MIDLET
+#if ENABLE_JSR_256
+    ,JSR256_JC_EVENT_SENSOR_AVAILABLE  ,
+    JSR256_JC_EVENT_SENSOR_OPEN_CLOSE  ,
+    JSR256_JC_EVENT_SENSOR_DATA_READY
+#endif /*ENABLE_JSR_256*/
 } midp_jc_event_type;
 
 
@@ -147,6 +160,14 @@ typedef struct {
     int   argc;
     char* argv[MIDP_RUNMIDLET_MAXIMUM_ARGS];
 } midp_jc_event_start_arbitrary_arg;
+
+typedef struct {
+    int heap_size;
+} midp_event_heap_size;
+
+typedef struct {
+    char* suiteID;
+} midp_event_remove_midlet;
 
 typedef struct {
     javacall_handle   handle;
@@ -219,6 +240,19 @@ typedef struct {
 } jsr179_jc_event_location;
 #endif /* ENABLE_JSR_179 */
 
+#ifdef ENABLE_JSR_256
+typedef struct {
+    javacall_sensor_type sensor_type;
+    javacall_bool is_available;
+} jsr256_jc_event_sensor_available;
+
+typedef struct {
+    javacall_sensor_type sensor;
+    javacall_bool isOpen;
+    int errCode;
+} jsr256_jc_event_sensor_t;
+#endif /* ENABLE_JSR_256 */
+
 typedef struct {
     javacall_penevent_type type;
     int x;
@@ -277,7 +311,7 @@ typedef struct {
         midp_jc_event_textfield            textFieldEvent;
         midp_jc_event_image_decoder        imageDecoderEvent;
 #ifdef ENABLE_JSR_179
-        jsr179_jc_event_location                 jsr179LocationEvent;
+        jsr179_jc_event_location           jsr179LocationEvent;
 #endif /* ENABLE_JSR_179 */
         midp_jc_event_pen                  penEvent;
         midp_jc_event_permission_dialog    permissionDialog_event;
@@ -286,7 +320,14 @@ typedef struct {
 #ifdef ENABLE_JSR_177
         midp_jc_event_carddevice           carddeviceEvent;
 #endif /* ENABLE_JSR_177 */
-        jsr75_jc_event_root_changed              jsr75RootchangedEvent;
+        jsr75_jc_event_root_changed        jsr75RootchangedEvent;
+
+        midp_event_heap_size               heap_size;
+        midp_event_remove_midlet           removeMidletEvent;
+#ifdef ENABLE_JSR_256
+        jsr256_jc_event_sensor_available   jsr256SensorAvailable;
+        jsr256_jc_event_sensor_t           jsr256_jc_event_sensor;
+#endif /* ENABLE_JSR_256 */
     } data;
 
 } midp_jc_event_union;

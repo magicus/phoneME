@@ -92,7 +92,7 @@ final class AlarmController {
             public void consume(
                     final int midletSuiteID, final Map suiteAlarms) {
                 for (Iterator it = suiteAlarms.entrySet().iterator();
-                                                            it.hasNext();) {
+                                                            it.hasNext(); ) {
                     final Map.Entry entry = (Map.Entry) it.next();
                     final String midlet = (String) entry.getKey();
                     final Long time = (Long) entry.getValue();
@@ -164,7 +164,7 @@ final class AlarmController {
      * @param midletSuiteID ID of the suite to remove alarms for
      */
     public synchronized void removeSuiteAlarms(final int midletSuiteID) {
-        for (Iterator it = alarms.entrySet().iterator(); it.hasNext();) {
+        for (Iterator it = alarms.entrySet().iterator(); it.hasNext(); ) {
             final Map.Entry entry = (Map.Entry) it.next();
             final MIDPApp midpApp = (MIDPApp) entry.getKey();
             if (midpApp.midletSuiteID == midletSuiteID) {
@@ -191,7 +191,7 @@ final class AlarmController {
      */
     public synchronized void dispose() {
         timer.cancel();
-        for (Iterator it = alarms.values().iterator(); it.hasNext();) {
+        for (Iterator it = alarms.values().iterator(); it.hasNext(); ) {
             final AlarmTask task = (AlarmTask) it.next();
             task.cancel();
         }
@@ -249,12 +249,13 @@ final class AlarmController {
                      * as otherwise Timer thread gets stuck and alarms
                      * cannot be scheduled anymore.
                      */
-                    /* TBD: uncomment when logging can be disabled
+                    /*
+		     * TBD: uncomment when logging can be disabled
                      * (not to interfer with unittests)
-                    logError(
-                            "Failed to launch \"" + midpApp.midlet + "\"" +
-                            " (suite ID: " + midpApp.midletSuiteID + "): " +
-                            ex);
+		     * logError(
+                     *       "Failed to launch \"" + midpApp.midlet + "\"" +
+                     *       " (suite ID: " + midpApp.midletSuiteID + "): " +
+                     *       ex);
                      */
                 }
             }
@@ -279,7 +280,7 @@ final class AlarmController {
         alarms.put(midpApp, newTask);
         try {
             timer.schedule(newTask, date);
-        } catch(IllegalArgumentException e) {         
+        } catch (IllegalArgumentException e) {         
             // Timer javadoc: 
             //  throws IllegalArgumentException if time.getTime() is negative
 

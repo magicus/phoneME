@@ -75,6 +75,11 @@
             NativeOnly="true"
             Comment="Suite's JAR file extension."/>
  <constant Type="String"
+            Name="TRANSACTION_DATA_FILENAME"
+            Value="_trans.dat"
+            NativeOnly="true"
+            Comment="Name of the file containing information about the current transaction."/>
+ <constant Type="String"
             Name="SUITE_DATA_FILENAME"
             Value="_suites.dat"
             NativeOnly="true"

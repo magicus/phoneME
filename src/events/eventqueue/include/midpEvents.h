@@ -132,13 +132,15 @@ extern "C" {
 /** The event to repaint entire screen */
 #define SCREEN_REPAINT_EVENT            47
 
+/** JSR-256 event */
+#define SENSOR_EVENT                    48
+
 /**
  * If USE_ON_DEVICE_DEBUG=true build option was given, when a special
  * key sequence is detected, the system sends this event to AMS to
  * enable On Device Debugging.
  */
-#define MIDP_ENABLE_ODD_EVENT           48
-
+#define MIDP_ENABLE_ODD_EVENT           49
 /** @} */
 
 /**

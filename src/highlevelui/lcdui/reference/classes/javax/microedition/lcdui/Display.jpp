@@ -2624,6 +2624,53 @@ public class Display {
             }
         }
 
+        private long lastFlushTime = 0;
+
+        /**
+         * Timer to schedule delayed flushing
+         */
+        private FlushTimer flushTimer = new FlushTimer(LCDUILock);
+
+        /**
+         * FlushTimer is desined to perform delayed flushing.
+         */
+        class FlushTimer extends LFTimer {
+
+            private Displayable d;
+            private Image offscreenBuffer;
+            private int x;
+            private int y;
+            private int width;
+            private int height;
+
+            public FlushTimer(Object monitor) {
+                super(monitor);
+            }
+
+            protected void perform() {
+                // remember new flushing time
+                lastFlushTime = System.currentTimeMillis();
+                // perform flushing
+                doFlush(this.d, this.offscreenBuffer, this.x, this.y, this.width, this.height);
+
+                // release references
+                this.d = null;
+                this.offscreenBuffer = null;
+            }
+
+            void schedule(long time, Displayable d, Image offscreenBuffer,
+                          int x, int y, int width, int height) {
+                this.d = d;
+                this.offscreenBuffer = offscreenBuffer;
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+
+                super.schedule(time);
+            }
+        }
+
         /**
          * Flushes the entire off-screen buffer to the display.
          * DisplayAccess I/F method.
@@ -2636,6 +2683,33 @@ public class Display {
          * @param height The height of the region to be flushed
          */
         public void flush(Displayable d, Image offscreen_buffer,
+                          int x, int y, int width, int height) {
+            if (Constants.MINIMUM_FLUSH_INTERVAL > 0) {
+                long timePassed = System.currentTimeMillis() - lastFlushTime;
+                if (timePassed >= Constants.MINIMUM_FLUSH_INTERVAL) {
+                    flushTimer.cancel();
+                    doFlush(d, offscreen_buffer, x, y, width, height);
+                    lastFlushTime += timePassed;
+                } else {
+                    flushTimer.schedule(Constants.DELAYED_FLUSH_PERIOD - timePassed,
+                                        d, offscreen_buffer, x, y, width, height);
+                }
+            } else {
+                doFlush(d, offscreen_buffer, x, y, width, height);
+            }
+        }
+
+        /**
+         * Flushes the entire off-screen buffer to the display.
+         *
+         * @param d The Displayable
+         * @param offscreen_buffer The image buffer
+         * @param x The left edge of the region to be flushed
+         * @param y The top edge of the region to be flushed
+         * @param width The width of the region to be flushed
+         * @param height The height of the region to be flushed
+         */
+        private void doFlush(Displayable d, Image offscreen_buffer,
                    int x, int y, int width, int height) {
 
 	    try {

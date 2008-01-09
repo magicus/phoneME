@@ -44,8 +44,9 @@ public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
 	"javax.microedition.io.Connector.http";
     
     /**
-     * This class overrides the openXXputStream() methods to restrict the number of opened 
-     * input or output streams to 1 since the MIDP GCF Spec allows only 1 opened input/output stream.
+     * This class overrides the openXXputStream() methods to restrict
+     * the number of opened input or output streams to 1 since the 
+     * MIDP GCF Spec allows only 1 opened input/output stream.
      */
     
     /** Number of input streams that were opened. */
@@ -104,7 +105,7 @@ public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
         return new DataOutputStream(openOutputStream());
     }
 
-   /**
+    /**
      * Check to see if the application has permission to use
      * the given resource.
      *

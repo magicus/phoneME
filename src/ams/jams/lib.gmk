@@ -45,8 +45,13 @@ JAMS_DIR = $(SUBSYSTEM_AMS_DIR)/$(JAMS_NAME)
 # Javadoc source path
 MIDP_JAVADOC_SOURCEPATH += $(JAMS_DIR)/classes
 
+# Library interface
 SUBSYSTEM_AMS_JAVA_FILES += \
     $(JAMS_DIR)/classes/com/sun/midp/appmanager/ApplicationManager.java
+
+# Include suite_launcher implementation into the build
+SUBSYSTEM_AMS_JAVA_FILES += \
+    $(JAMS_DIR)/suite_launcher/classes/com/sun/midp/appmanager/MIDletSuiteLauncher.java
 
 ifeq ($(USE_MULTIPLE_ISOLATES), true)
 
@@ -79,18 +84,3 @@ SUBSYSTEM_AMS_JAVA_FILES += \
 MIDP_JAVADOC_SOURCEPATH += $(JAMS_DIR)/svm/classes
 
 endif
-
-# vpath for sub-system
-#
-vpath % \
-    $(JAMS_DIR)/native
-
-# Include path for the sub-system
-#
-#SUBSYSTEM_AMS_EXTRA_INCLUDES += \
-#    -I$(JAMS_DIR)/include
-
-# Native files for common module
-#
-#SUBSYSTEM_AMS_NATIVE_FILES += \
-#    midpMidletAppImageGenerator.c

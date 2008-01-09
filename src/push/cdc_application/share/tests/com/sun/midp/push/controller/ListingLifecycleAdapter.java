@@ -37,7 +37,8 @@ final class ListingLifecycleAdapter implements LifecycleAdapter {
         apps.add(new MIDPApp(midletSuiteID, midlet));
     }
 
-    boolean hasBeenInvokedOnceFor(final int midletSuiteID, final String midlet) {
+    boolean hasBeenInvokedOnceFor(final int midletSuiteID,
+				  final String midlet) {
         return (apps.size() == 1)
             && new MIDPApp(midletSuiteID, midlet).equals(apps.get(0));
     }

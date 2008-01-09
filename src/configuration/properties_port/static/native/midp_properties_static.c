@@ -285,7 +285,7 @@ finalizeConfig(void) {
  * @param value The value to set <tt>key<tt> to
  */
 void
-setInternalProp(const char* key , const char* value) {
+setInternalProperty(const char* key , const char* value) {
     setProp(&internalPropertySet, key, value, KNI_TRUE);
 }
 
@@ -300,7 +300,7 @@ setInternalProp(const char* key , const char* value) {
  *         <tt>NULL<tt>
  */
 const char*
-getInternalProp(const char* key) {
+getInternalProperty(const char* key) {
     const char* value;
 
     value = getProp(&internalPropertySet, key);
@@ -309,6 +309,26 @@ getInternalProp(const char* key) {
     }
     return value;
 }
+
+/**
+ * Gets the integer value of the specified property key in the internal
+ * property set. If the key is not found in the internal property
+ * set, the application and afterwards the dynamic property sets
+ * are searched.  
+ *
+ * @param key The key to search for
+ *
+ * @return The value associated with <tt>key</tt> if found, otherwise
+ *         <tt>0</tt>
+ */
+int getInternalPropertyInt(const char* key) {
+    const char *tmp;    
+
+    tmp = getInternalProperty(key); 
+
+    return(NULL == tmp) ? 0 : atoi(tmp);
+}
+
 
 /**
  * Gets the value of the specified property key in the internal
@@ -326,7 +346,7 @@ const char*
 getInternalPropDefault(const char* key, const char* defValue) {
     const char* value;
 
-    value = getInternalProp(key);
+    value = getInternalProperty(key);
     if (NULL == value) {
         return defValue;
     } else {

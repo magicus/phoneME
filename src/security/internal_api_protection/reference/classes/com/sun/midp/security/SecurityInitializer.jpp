@@ -230,6 +230,7 @@ public final class SecurityInitializer {
         // #endif ENABLE_JSR_226
 
         // #ifdef ENABLE_JSR211
+        "com.sun.jsr211.security.SecurityInitializer$SecurityTrusted",
         "com.sun.j2me.content.CHManagerImpl$SecurityTrusted",
         // #endif ENABLE_JSR211
 

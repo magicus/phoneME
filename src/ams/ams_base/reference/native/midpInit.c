@@ -231,7 +231,7 @@ int midpInitCallback(int level, int (*init)(void), void (*final)(void)) {
              * use it as the maximum space use limit for MIDP MIDlet
              * suites and their record stores.
              */
-            spaceProp = getInternalProp("system.jam_space");
+            spaceProp = getInternalProperty("system.jam_space");
             if (spaceProp != NULL) {
                 totalSpace = atoi(spaceProp);
                 storageSetTotalSpace(totalSpace);

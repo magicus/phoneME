@@ -311,9 +311,15 @@ public final class EventTypes {
     public static final int SCREEN_REPAINT_EVENT = 47;
 
     /**
+     * JSR-256 sensor notification event.
+     */
+    public static final int SENSOR_EVENT = 48;
+
+    /**
      * If USE_ON_DEVICE_DEBUG=true build option was given, when a special
      * key sequence is detected, the system sends this event to AMS to
      * enable On Device Debugging.
      */
-    public static final int MIDP_ENABLE_ODD_EVENT = 48;
+    public static final int MIDP_ENABLE_ODD_EVENT = 49;
+    
 }
