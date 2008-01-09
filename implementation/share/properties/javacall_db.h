@@ -72,18 +72,27 @@ string_db* javacall_string_db_new(int size);
 void javacall_string_db_del(string_db* d);
 
 /**
- * Search the value corresponding to the provided key. If the value has not 
- * been found, set default provided value.
+ * Get the value corresponding to the provided key as string. If the value has not 
+ * been found, return def
  * 
- * @param d      database object allocated using javacall_string_db_new
- * @param key    the key to search in the database
- * @param def    if key not found in the database, set the value
- * @param result where to store the result (shallow copy)
- * @return 		JAVACALL_OK value found
- *              JAVACALL_INVALID_ARGUMENT bad arguments are supplied
- *              JAVACALL_VALUE_NOT_FOUND value has not been found
+ * @param d     database object allocated using javacall_string_db_new
+ * @param key   the key to search in the database
+ * @param def   if key not found in the database, return def
+ * @return 		the value corresponding to the key (or def if key not found)
  */
-javacall_result javacall_string_db_getstr(string_db* d, char* key, char* def, char** result);
+char* javacall_string_db_getstr(string_db* d, char* key, char* def);
+
+
+/**
+ * Get the value corresponding to the provided key as a char. If the value has 
+ * not been found, return def
+ * 
+ * @param d     database object allocated using javacall_string_db_new
+ * @param key   the key to search in the database
+ * @param def   if key not found in the database, return def
+ * @return 		the value corresponding to the key (or def if value has not been found)
+ */
+char javacall_string_db_getchar(string_db* d, char* key, char def) ;
 
 
 /**

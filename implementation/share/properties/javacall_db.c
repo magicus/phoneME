@@ -46,6 +46,9 @@ extern "C" {
 /* Minimal allocated number of entries in a database */
 #define MIN_NUMBER_OF_DB_ENTRIES	128
 
+/* Invalid key */
+#define DB_INVALID_KEY  ((char*)-1)
+
 
 /*---------------------------------------------------------------------------
                             Internal functions
@@ -53,7 +56,7 @@ extern "C" {
 
 /* Doubles the allocated size associated to a pointer */
 /* 'size' is the current allocated size. */
-static void* mem_double(void * ptr, int size) {
+static void * mem_double(void * ptr, int size) {
     int    newsize = size*2;
     void*  newptr ;
     if (NULL==ptr) {
@@ -171,26 +174,20 @@ void javacall_string_db_del(string_db * d) {
 
 
 /**
- * Search the value corresponding to the provided key. If the value has not 
- * been found, set default provided value.
+ * Get the value corresponding to the provided key as string. If the value has not 
+ * been found, return def
  * 
- * @param d      database object allocated using javacall_string_db_new
- * @param key    the key to search in the database
- * @param def    if key not found in the database, set the value
- * @param result where to store the result (shallow copy)
- * @return 		JAVACALL_OK value found
- *              JAVACALL_INVALID_ARGUMENT bad arguments are supplied
- *              JAVACALL_VALUE_NOT_FOUND value has not been found
+ * @param d     database object allocated using javacall_string_db_new
+ * @param key   the key to search in the database
+ * @param def   if key not found in the database, return def
+ * @return 		the value corresponding to the key (or def if key not found)
  */
-javacall_result javacall_string_db_getstr(string_db* d, char* key, char* def, char** result) {
-    unsigned    hash;
-    int         i;
+char* javacall_string_db_getstr(string_db* d, char* key, char* def) {
+    unsigned    hash ;
+    int         i ;
 
-    /* Set the default value */
-    *result = def;
-
-    if (NULL == d || d->n == 0) {        
-        return JAVACALL_INVALID_ARGUMENT;
+    if (NULL == d || d->n == 0) {
+        return def;
     }
 
     hash = javacall_string_db_hash(key);
@@ -199,18 +196,38 @@ javacall_result javacall_string_db_getstr(string_db* d, char* key, char* def, ch
         if (d->key == NULL) {
             continue;
         }
+         
         /* Compare hash */
         if (hash == d->hash[i]) {
             /* Compare string, to avoid hash collisions */
             if (!strcmp(key, d->key[i])) {
-                *result = d->val[i];
-                return JAVACALL_OK;
+                return d->val[i] ;
             }
         }
     }
-    /* not found */
-    return JAVACALL_VALUE_NOT_FOUND;
+    return def ;
 }
+
+/**
+ * Get the value corresponding to the provided key as a char. If the value has 
+ * not been found, return def
+ * 
+ * @param d     database object allocated using javacall_string_db_new
+ * @param key   the key to search in the database
+ * @param def   if key not found in the database, return def
+ * @return 		the value corresponding to the key (or def if value has not been found)
+ */
+char javacall_string_db_getchar(string_db * d, char * key, char def) {
+    char * v ;
+
+    if ((v=javacall_string_db_getstr(d,key,DB_INVALID_KEY))==DB_INVALID_KEY) {
+        return def ;
+    } else {
+        return v[0] ;
+    }
+}
+
+
 
 /**
  * Set new value for key as string. 
