@@ -54,8 +54,9 @@ void javacall_configdb_free(javacall_handle config_handle);
  * @param key             The key to get the corresponding value of
  * @param def             default parameter to return if the value has not been found
  * @param result          where to store the result string
- * @return  JAVACALL_FAIL   bad arguments are supplied
- *          JAVACALL_OK     otherwise
+ * @return                JAVACALL_OK   The property has been found
+ *                        JAVACALL_VALUE_NOT_FOUND The value has not been found
+ *                        JAVACALL_FAIL   bad arguments are supplied
  */
 javacall_result javacall_configdb_getstring(javacall_handle config_handle, char * key, 
                                    char* def, char** result);
@@ -64,10 +65,11 @@ javacall_result javacall_configdb_getstring(javacall_handle config_handle, char 
 /**
  * Find a key in the database
  * 
- * @param config_handle    database object created by calling javacall_configdb_load
+ * @param config_handle database object created by calling javacall_configdb_load
  * @param key   the key to find
- * @return      JAVACALL_OK if the key exists 
- *              JAVACALL_KEY_NOT_FOUND otherwise
+ * @return      JAVACALL_OK if the value corresponding to the key exists and 
+ *              is not empty string 
+ *              JAVACALL_VALUE_NOT_FOUND otherwise
  */
 javacall_result javacall_configdb_find_key(javacall_handle config_handle, char* key);
 
