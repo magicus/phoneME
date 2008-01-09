@@ -178,7 +178,7 @@ typedef enum {
 /** Media Control is not supported by native player */
 #define JAVACALL_MEDIA_CTRL_NOT_SUPPORTED          0x00
 /** Media Control is supported by native player */
-#define JAVACALL_MEDIA_CTRL_SUPPORTED              0x01
+#define JAVACALL_MEDIA_CTRL_SUPPORTED_BASIC        0x01
 
 /**
  * 
@@ -361,9 +361,9 @@ javacall_result javacall_media_get_format(javacall_handle handle,
  * Return array of Media Controls supported by native player
  *
  * If particular Media Control is supported by player, corresponding element 
- * in the array has JAVACALL_MEDIA_CTRL_SUPPORTED bit set to 1
+ * in the features array has JAVACALL_MEDIA_CTRL_SUPPORTED_BASIC bit set to 1
  * If particular Media Control is not supported by player, corresponding element
- * in the array is equal to 0
+ * in the features array is equal to 0
  * If there are additional info about supported features of the Media Control
  * it can be added as bitmask to corresponding element in the array
  *
@@ -374,7 +374,7 @@ javacall_result javacall_media_get_format(javacall_handle handle,
  * @retval JAVACALL_FAIL        Fail
  */
 javacall_result javacall_media_get_player_features(javacall_handle handle,
-                              javacall_int32 features[JAVACALL_MEDIA_MAX_CTRLS]);
+                              javacall_int32 *features);
 
 /**
  * Close native media player that created by creat or creat2 API call
