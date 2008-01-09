@@ -815,11 +815,7 @@ CNIResultCode
 CNIsun_misc_CVM_setContextArtificial(CVMExecEnv* ee, CVMStackVal32 *arguments,
 				     CVMMethodBlock **p_mb)
 {
-    CVMFrameIterator iter;
-    CVMframeIterateInit(&iter, CVMeeGetCurrentFrame(ee));
-    CVMframeIterateSkipReflection(&iter, 0, CVM_FALSE, CVM_FALSE);
-    CVMframeIterateSetFlags(&iter, (CVMFrameFlags)
-	(CVMframeIterateGetFlags(&iter) | CVM_FRAMEFLAG_ARTIFICIAL));
+    CVMframeSetContextArtificial(ee);
     return CNI_VOID;
 }
 

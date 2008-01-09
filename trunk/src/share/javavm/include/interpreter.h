@@ -1094,6 +1094,8 @@ CVMframeIterateSyncObject(CVMFrameIterator *iter);
 CVMMethodBlock *
 CVMgetCallerMb(CVMFrame* frame, int skip);
 
+void
+CVMframeSetContextArtificial(CVMExecEnv *ee);
 
 /*
  * Check if type srcCb is assignable to type dstCb.  */
