@@ -1948,7 +1948,7 @@ JVM_RunNativeThread(JNIEnv *env, jobject thisObj)
     ee->nativeRunInfoType = NATIVERUNINFO_UNDEFINED;
 #endif
     ee->nativeRunInfo = NULL;
-
+    CVMframeSetContextArtificial(ee);
     (*nativeFunc)(arg);
 }
 

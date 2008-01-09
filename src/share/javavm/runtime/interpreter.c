@@ -1906,6 +1906,16 @@ CVMframeIterateCount(CVMFrameIterator *iter)
     return count;
 }
 
+void
+CVMframeSetContextArtificial(CVMExecEnv *ee)
+{
+    CVMFrameIterator iter;
+    CVMframeIterateInit(&iter, CVMeeGetCurrentFrame(ee));
+    CVMframeIterateSkipReflection(&iter, 0, CVM_FALSE, CVM_FALSE);
+    CVMframeIterateSetFlags(&iter, (CVMFrameFlags)
+	(CVMframeIterateGetFlags(&iter) | CVM_FRAMEFLAG_ARTIFICIAL));
+}
+
 CVMMethodBlock *
 CVMgetCallerMb(CVMFrame* frame, int skip)
 {
