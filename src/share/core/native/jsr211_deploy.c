@@ -144,7 +144,7 @@ static jsr211_result installHandler(int n) {
 	int anm_num;
 	jchar *intrenalSuiteID;
 
-	intrenalSuiteID = MALLOC(jsrop_suiteid_string_size((INTERNAL_SUITE_ID)+1) * sizeof(jchar));
+	intrenalSuiteID = MALLOC((jsrop_suiteid_string_size(INTERNAL_SUITE_ID)+1) * sizeof(jchar));
 
 	if (!jsrop_suiteid_to_string(INTERNAL_SUITE_ID, intrenalSuiteID)){
 		return JSR211_FAILED;

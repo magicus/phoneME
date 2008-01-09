@@ -593,14 +593,25 @@ KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_j2me_content_RegistryStore_forSuite0) {
     JSR211_RESULT_CHARRAY result = jsr211_create_result_buffer();
     jchar* suiteID = NULL;
+#ifndef SUITE_ID_STRING
+SuiteIdType suite_id_param;
+#endif
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(strObj);   // String object
-
+#ifdef SUITE_ID_STRING
     KNI_GetParameterAsObject(1, strObj);   // suiteID
     if (JAVACALL_OK != jsrop_jstring_to_utf16_string(strObj, (javacall_utf16_string*)&suiteID)) {
         KNI_ThrowNew(jsropOutOfMemoryError, NULL);
     } else {
+#else
+    suite_id_param = KNI_GetParameterAsInt(1);
+    suiteID = MALLOC((jsrop_suiteid_string_size(suite_id_param)+1) * sizeof(jchar));
+    if (!suiteID) {
+	KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+    } else {
+	jsrop_suiteid_to_string(suite_id_param, suiteID);
+#endif
 	jsr211_find_for_suite(suiteID, result);
 	result2string(KNIPASSARGS  result, strObj);
     	FREE(suiteID);

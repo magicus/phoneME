@@ -152,7 +152,7 @@ class RegistryStore {
      * @return found handlers array.
      */
     static ContentHandlerImpl[] forSuite(int suiteId) {
-        String res = store.forSuite0(Integer.toString(suiteId));
+        String res = store.forSuite0(suiteId);
         return deserializeCHArray(res);
     }
 
@@ -404,7 +404,7 @@ class RegistryStore {
      * @param suiteId explored suite Id
      * @return handlers registered for the given suite in serialized form.
      */
-    private native String forSuite0(String suiteId);
+    private native String forSuite0(int suiteId);
 
     /**
      * Native implementation of <code>getValues</code>.
