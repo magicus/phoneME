@@ -151,11 +151,12 @@ public final class PiscesGCISurface extends AbstractSurface {
             // we have already acquired the surface
             return;
         }
+        gciSurface.renderingBegin();
         gciSurfaceInfo = gciSurface.getSurfaceInfo();    
         if (gciSurfaceInfo == null) {
             throw new RuntimeException("Unable to get surface information");
         }
-
+        
         offset = gciSurfaceInfo.getBitOffset() >> bitsToPixelsShift;
         scanlineStride = 
                 gciSurfaceInfo.getYBitStride() >> bitsToPixelsShift;
@@ -201,6 +202,7 @@ public final class PiscesGCISurface extends AbstractSurface {
 
             gciSurfaceInfo.release();
             gciSurfaceInfo = null;
+            gciSurface.renderingEnd(null);    
         }
     }
     

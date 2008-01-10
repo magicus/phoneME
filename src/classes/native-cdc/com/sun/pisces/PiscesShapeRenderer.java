@@ -158,11 +158,13 @@ public class PiscesShapeRenderer implements GCIShapeRenderer {
     }
     
     void acquireSurface() {
+        // renderingBegin() - we call it from acquireSurface()
         ((PiscesGCISurface)piscesRenderer.surface).acquireSurface();       
     }
     
     void releaseSurface() {
        ((PiscesGCISurface)piscesRenderer.surface).releaseSurface();
+       // renderingEnd(this.clip) -- called from release()
     }
     
     public void drawPolyline(int xPoints[], int yPoints[],
