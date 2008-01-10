@@ -26,8 +26,6 @@
 
 package com.sun.midp.odd;
 
-import com.sun.midp.odd.remoting.DummyUEIProxy;
-
 import javax.microedition.midlet.*;
 import javax.microedition.lcdui.*;
 
@@ -100,7 +98,6 @@ public class ODTMediator implements CommandListener {
                 progressScreen.log("waiting for connection...");
                 //TODO: Jan Sterba - remove this line. it is for prototyping only
             }
-            DummyUEIProxy.runSequence(engine);
         } else if(command == stopCommand){
             engine.stopAcceptingConnections();
             progressScreen.log("Server stopped");

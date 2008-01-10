@@ -27,38 +27,40 @@
 package com.sun.midp.odd;
 
 import javax.microedition.lcdui.Alert;
-import com.sun.midp.odd.remoting.UEIProxyListener;
+
+import com.sun.jme.remoting.CommException;
+import com.sun.jme.remoting.DefaultNamedObjectRegistry;
+import com.sun.jme.remoting.NamedObjectRegistry;
+import com.sun.midp.odd.UEIProxyListener;
+import com.sun.midp.odd.remoting.RemotingThread;
 import com.sun.midp.installer.*;
 import com.sun.midp.midlet.MIDletSuite;
 import com.sun.midp.configurator.Constants;
 import com.sun.midp.midletsuite.MIDletSuiteStorage;
 
 /**
- * Core functionality of ODD.
- * 1. Receive requests from the UEI-Proxy (via the UEIProxyListener), and reply back.
- * 2. Execute the request using JAMS internal APIs
- *
+ * Core functionality of ODD. 1. Receive requests from the UEI-Proxy (via the
+ * UEIProxyListener), and reply back. 2. Execute the request using JAMS internal
+ * APIs
+ * 
  * @author Roy Ben Hayun
  */
-//TODO: Jan Sterba - UEIProxyListener support
-//TODO: Alexey Z - Usage of JAMS internal APIs according to incoming requests
+// TODO: Alexey Z - Usage of JAMS internal APIs according to incoming requests
 public class ODTEngine implements UEIProxyListener {
-    
+
     //
     // State machine constants
     //
 
-    /** 
-     * Engine states (by array items value):
-     * 0. No server running
-     * 1. Server started. waiting for connections. 
-     * 2. Hanshake
-     * 3. Pin authentication 
-     *
+    /**
+     * Engine states (by array items value): 0. No server running 1. Server
+     * started. waiting for connections. 2. Hanshake 3. Pin authentication
+     * 
      */
-    //TODO: Roy - to implement
-    private static final int[] ENGINE_STATES = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    
+    // TODO: Roy - to implement
+    private static final int[] ENGINE_STATES = new int[] { 0, 1, 2, 3, 4, 5, 6,
+            7, 8, 9 };
+
     //
     // Members
     //
@@ -69,137 +71,119 @@ public class ODTEngine implements UEIProxyListener {
     private Installer installer = new HttpInstaller();
 
     /**
-     * Suite ID of the midlet that the user is going to debug.
-     */
-    int idOfMidletUnderDebug = MIDletSuite.UNUSED_SUITE_ID;
-    
-    /**
      * Engine state index
      */
     private int stateIndex = 0;
-    
+
     /**
      * Agent settings
      */
     private final AgentSettings settings;
-    
-    /** 
+
+    /**
      * Progress screen
      */
     private final ProgressScreen progressScreen;
+
+    private final RemotingThread server;
     
+    private String generatedPin;
+
     //
     // Life cycle
     //
-    
+
     /**
      * Creates a new instance of ODTEngine
      */
     public ODTEngine(ProgressScreen progressScreen, AgentSettings settings) {
         this.settings = settings;
         this.progressScreen = progressScreen;
+        DefaultNamedObjectRegistry nor = new DefaultNamedObjectRegistry();
+        nor.registerRemotableObject("UEIProxyListener", this,
+                UEIProxyListener.class);
+        this.server = new RemotingThread(nor, progressScreen);
     }
-    
+
     //
     // UI triggered Operations
     //
-    
+
     /**
-     * Start the server 
+     * Start the server
      */
     void startAcceptingConnections() {
         stateIndex = 1;
-        //TODO: Jan Sterba - start server, ready to accept single incoming connection at a time.
-        //  (any subsequent connection, gets rejected)
+        server.start();
     }
-    
+
     /**
      * Stop the server
      */
     void stopAcceptingConnections() {
         stateIndex = 0;
-        //TODO: Jan Sterba - stop server.        
+        server.stop();
     }
-    
+
     /**
-     * Perform controlled shutdown (e.g., terminate any running installations, sessions  etc)
+     * Perform controlled shutdown (e.g., terminate any running installations,
+     * sessions etc)
      */
     void shutdown() {
         stateIndex = 0;
-        //TODO: Alexey Z, Jan Sterba - ensure proper shutdown
+        stopAcceptingConnections();
     }
 
     boolean isServerRunning() {
-        //TODO: Jan Sterba - return true or false according to server readiness.        
-        return false;
+        return server.isRunning();
     }
 
     //
     // Operations
     //
-    
-    
+
     /**
-     * Ensure that the currently received request is as expected.
-     * For example, "Run"  must come after "Install"
+     * Ensure that the currently received request is as expected. For example,
+     * "Run" must come after "Install"
      */
     private void validateEngineState() {
-        //TODO: Roy - ensure current request matches next state in line
+        // TODO: Roy - ensure current request matches next state in line
         boolean valid = true;
-        if(!valid){
+        if (!valid) {
             progressScreen.log("invalid request");
-            //TODO: Alexey Z - cleanup session resource (e.g., terminate MIDlet, uninstall etc)
-            //TODO: Jan Sterba - disconnect
+            // TODO: Alexey Z - cleanup session resource (e.g., terminate
+            // MIDlet, uninstall etc)
+            stopAcceptingConnections();
         }
     }
 
-    
     /**
-     * Display Alert with pin.
-     * User is required to type the pin in a dialog that pops on the PC screen, by the UEI-Proxy.
+     * Display Alert with pin. User is required to type the pin in a dialog that
+     * pops on the PC screen, by the UEI-Proxy.
      */
     private void displayPin() {
-            //TODO: 1. choose random number
-            //TODO: 2. display pin on screen 
+        long pin = System.currentTimeMillis() % 9999;
+        if (pin < 1000) {
+            pin += 1000; //make it 4 digits
+        }
+        generatedPin = String.valueOf(pin);
+        progressScreen.log("Enter pin "+generatedPin+" on PC side.");
     }
-    
+
     //
     // UEIProxyListener implementation
     //
-    
-    
-    public void handleHandshakeRequest() {
-        stateIndex = 2;
-        validateEngineState();
-        progressScreen.clear();
-        progressScreen.log("received incoming connection...");
-        if (settings.pinRequired) {
-            displayPin();
-            //TODO: Jan Sterba - send handshake response (with Pin required)
-        }
-        else{
-            //TODO: Jan Sterba - send handshake response  (without pin required)      
-        }
-    }
 
-    public void handlePinAuthentication() {
-        stateIndex = 3;
-        validateEngineState();
-        progressScreen.log("pin authenticated");
-        //TODO: Jan Sterba - compare to Pin and send PASS/FAIL response
-    }
-
-    public void handleInstallationRequest(String url) {
+    private int installApplication(String url) {
         stateIndex = 4;
         validateEngineState();
-        progressScreen.log("installing suite [name]...");
+        progressScreen.log("installing suite...");
 
         // install the suite
-
         InvalidJadException exceptionThrown = null;
         int len = url.length();
-        boolean jarOnly = (len >= 4 &&
-            ".jar".equalsIgnoreCase(url.substring(len - 4, len)));
+        boolean jarOnly = (len >= 4 && ".jar".equalsIgnoreCase(url.substring(
+                len - 4, len)));
 
         // installation listener (can be moved from here)
         final class ODTInstallListener implements InstallListener {
@@ -211,9 +195,9 @@ public class ODTEngine implements UEIProxyListener {
             }
 
             public boolean confirmJarDownload(InstallState state) {
-                //if (settings.silentInstallation) {
-                //    return true;
-                //}
+                // if (settings.silentInstallation) {
+                // return true;
+                // }
                 return true;
             }
 
@@ -236,66 +220,103 @@ public class ODTEngine implements UEIProxyListener {
         }
 
         int storageId = Constants.INTERNAL_STORAGE_ID;
-        
+        int midletId = -1;
+
         try {
             if (jarOnly) {
-                idOfMidletUnderDebug = installer.installJar(url, null,
-                    storageId, false, false, new ODTInstallListener());
+                midletId = installer.installJar(url, null, storageId, false,
+                        false, new ODTInstallListener());
             } else {
-                idOfMidletUnderDebug = installer.installJad(url, storageId,
-                        false, false, new ODTInstallListener());
+                midletId = installer.installJad(url, storageId, false, false,
+                        new ODTInstallListener());
             }
         } catch (InvalidJadException ex) {
+            ex.printStackTrace();
             exceptionThrown = ex;
         } catch (Throwable t) {
             exceptionThrown = new InvalidJadException(
-                    InvalidJadException.JAD_NOT_FOUND,
-                    "Unknown error.");
+                    InvalidJadException.JAD_NOT_FOUND, "Unknown error.");
         }
 
-        //TODO: Jan Sterba - send response according to installation result
-        //      exceptionThrown is null if the installation succeeded
-        //      otherwise an error code can be retrieved through
-        //      exceptionThrown.getReason() (see InvalidJadException class).
+        // TODO: Jan Sterba - send response according to installation result
+        // exceptionThrown is null if the installation succeeded
+        // otherwise an error code can be retrieved through
+        // exceptionThrown.getReason() (see InvalidJadException class).
 
-        progressScreen.log("installation status: " +
-                ((exceptionThrown == null) ? "SUCCESS!" :
-                        "FAILURE, code " + exceptionThrown.getReason()));
+        progressScreen.log("installation status: "
+                + ((exceptionThrown == null) ? "SUCCESS!" : "FAILURE, code "
+                        + exceptionThrown.getReason()));
+        return midletId;
     }
 
-    public void handleRunRequest() {
-        stateIndex = 5;
-        validateEngineState();
-        progressScreen.log("starting [midlet]");
-        //TODO: Alexey Z - run MIDlet in non-debug mode
-        //TODO: Jan Sterba - send response (success/failure)
-    }
-
-    public void handleDebugRequest() {
-        stateIndex = 5;
-        validateEngineState();
-        progressScreen.log("starting [midlet] in debug mode");
-        //TODO: Alexey Z - run MIDlet in debug mode
-        //TODO: Jan Sterba - send response (success/failure)
-    }
-
-    public void handleUninstallationRequest() {
+    public void uninstallApplication(int appId) {
         stateIndex = 6;
         validateEngineState();
-        progressScreen.log("uninstalling suite [name]...");
+        progressScreen.log("uninstalling suite...");
 
-        if (idOfMidletUnderDebug != MIDletSuite.UNUSED_SUITE_ID) {
+        if (appId != MIDletSuite.UNUSED_SUITE_ID) {
             try {
-                MIDletSuiteStorage.getMIDletSuiteStorage().remove(
-                        idOfMidletUnderDebug);
+                MIDletSuiteStorage.getMIDletSuiteStorage().remove(appId);
             } catch (Exception e) {
                 // ignore
             }
         }
 
-        //TODO: Jan Sterba - send response (success/failure)
-        //TODO: Jan Sterba - drop off the current connection (disconnect).
+        // TODO: Jan Sterba - send response (success/failure)
+        // TODO: Jan Sterba - drop off the current connection (disconnect).
         progressScreen.log("waiting for connection...");
     }
-    
+
+    public int getAPIVersion() throws CommException {
+        stateIndex = 2;
+        validateEngineState();
+        progressScreen.clear();
+        progressScreen.log("handshaking...");
+        return API_VERSION;
+    }
+
+    public boolean requiresPinAuthentication() throws CommException {
+        if (settings.pinRequired) {
+            displayPin();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean verifyPin(String pinNumber) throws CommException {
+        stateIndex = 3;
+        validateEngineState();
+        boolean result = false;
+        if (generatedPin == null) {
+            result = !settings.pinRequired;
+        } else {
+            result = generatedPin.equals(pinNumber.trim());
+        }
+        if (result) {
+            progressScreen.log("pin authenticated");            
+        } else {
+            progressScreen.log("pin authentication failed");
+        }
+        return result;
+    }
+
+    public void runApplication(String url) throws CommException {
+        stateIndex = 5;
+        validateEngineState();
+        progressScreen.log("starting midlet");
+        int appId = installApplication(url);
+        // TODO: Alexey Z - run MIDlet in debug mode
+        uninstallApplication(appId);
+    }
+
+    public void debugApplication(String url) throws CommException {
+        stateIndex = 5;
+        validateEngineState();
+        progressScreen.log("starting midlet in debug mode");
+        int appId = installApplication(url);
+        // TODO: Alexey Z - run MIDlet in non-debug mode
+        uninstallApplication(appId);
+    }
+
 }
