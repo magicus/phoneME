@@ -24,34 +24,36 @@
 
 package com.sun.j2me.security;
 
+import com.sun.midp.security.Permissions;
+
 /**
  * FileConnection access permissions.
  */
-public class FileConnectionPermission extends Permission {
+public class WMAPermission extends Permission {
 
-    static public FileConnectionPermission READ = new FileConnectionPermission(
-        "javax.microedition.io.Connector.file.read", null);
+    static public WMAPermission SMS_SERVER = new WMAPermission(
+        Permissions.getName(Permissions.SMS_SERVER), "sms:open");
 
-    static public FileConnectionPermission WRITE = new FileConnectionPermission(
-        "javax.microedition.io.Connector.file.write", null);
-
-    /** Creates a new instance of FileConnectionPermission. */
-    public FileConnectionPermission(String name, String resource) {
-        super(name, resource);
+    static public WMAPermission sms_send_permission(String host, int numSeg) {
+        return new WMAPermission(
+            Permissions.getName(Permissions.SMS_SEND), host);
     }
 
-    /** Checks for the corresponding CDC permission. */
-    public void checkCDCPermission() {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            if (READ.name.equals(name)) {
-                sm.checkRead(resource);
-            } else if (WRITE.name.equals(name)) {
-                sm.checkWrite(resource);
-            } else {
-                throw new SecurityException("Unknown FileConnection " +
-                    "permission: " + name + " for resource " + resource);
-            }
-        }
+    static public WMAPermission SMS_RECEIVE = new WMAPermission(
+        Permissions.getName(Permissions.SMS_RECEIVE), "sms:receive");
+
+    static public WMAPermission MMS_SERVER = new WMAPermission(
+        Permissions.getName(Permissions.MMS_SERVER), "mms:open");
+
+    static public WMAPermission mms_send_permission(String addresses, String numSeg) {
+        return new WMAPermission(
+            Permissions.getName(Permissions.MMS_SEND), addresses);
+    }
+
+    static public WMAPermission MMS_RECEIVE = new WMAPermission(
+        Permissions.getName(Permissions.MMS_RECEIVE), "mms:receive");
+
+    public WMAPermission(String name, String resource) {
+        super(name, resource);
     }
 }

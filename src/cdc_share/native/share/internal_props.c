@@ -43,7 +43,7 @@ static jmethodID methodID = NULL;
  * @return pointer to the filled buffer on success,
  *         <code>NULL</code> otherwise.
  */
-const char* getInternalProperty(const char* key, char* buffer, int length) {
+const char* getInternalProp(const char* key, char* buffer, int length) {
     JNIEnv *env;
     jstring propname;
     jstring prop;
