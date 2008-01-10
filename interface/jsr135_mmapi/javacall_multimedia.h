@@ -152,41 +152,20 @@ typedef enum {
 #define JAVACALL_MEDIA_MEMORY_PROTOCOL          0x40    // playback from memory buffer or memory streaming
 
 /**
- * @enum javacall_media_controls_type
  * 
  * @brief Multimedia Controls, supported by native layer
  */
-typedef enum {
-    JAVACALL_MEDIA_CTRL_FRAME_POSITIONING = 0,
-    JAVACALL_MEDIA_CTRL_METADATA,
-    JAVACALL_MEDIA_CTRL_MIDI,
-    JAVACALL_MEDIA_CTRL_PITCH,
-    JAVACALL_MEDIA_CTRL_RATE,
-    JAVACALL_MEDIA_CTRL_RECORD,
-    JAVACALL_MEDIA_CTRL_STOPTIME,
-    JAVACALL_MEDIA_CTRL_TEMPO,
-    JAVACALL_MEDIA_CTRL_TONE,
-    JAVACALL_MEDIA_CTRL_VIDEO,
-    JAVACALL_MEDIA_CTRL_VOLUME,
-    JAVACALL_MEDIA_MAX_CTRLS
-}javacall_media_controls_type;
-
-/**
- * 
- * @brief Basic Multimedia capabilities, supported by the native implementation.
- */
-/** Media Control is not supported by native player */
-#define JAVACALL_MEDIA_CTRL_NOT_SUPPORTED          0x00
-/** Media Control is supported by native player */
-#define JAVACALL_MEDIA_CTRL_SUPPORTED_BASIC        0x01
-
-/**
- * 
- * @brief VideoControl Multimedia features, supported by the native implementation.
- */
-/** Full screen is supported by native player */
-#define JAVACALL_MEDIA_CAPS_FULLSCREEN          0x02
-
+#define JAVACALL_MEDIA_CTRL_FRAME_POSITIONING   0x001
+#define JAVACALL_MEDIA_CTRL_METADATA            0x002
+#define JAVACALL_MEDIA_CTRL_MIDI                0x004
+#define JAVACALL_MEDIA_CTRL_PITCH               0x008
+#define JAVACALL_MEDIA_CTRL_RATE                0x010
+#define JAVACALL_MEDIA_CTRL_RECORD              0x020
+#define JAVACALL_MEDIA_CTRL_STOPTIME            0x040
+#define JAVACALL_MEDIA_CTRL_TEMPO               0x080
+#define JAVACALL_MEDIA_CTRL_TONE                0x100
+#define JAVACALL_MEDIA_CTRL_VIDEO               0x200
+#define JAVACALL_MEDIA_CTRL_VOLUME              0x400
 
 /** @} */
 
@@ -358,23 +337,18 @@ javacall_result javacall_media_get_format(javacall_handle handle,
                               javacall_media_format_type /*OUT*/*format);
 
 /**
- * Return array of Media Controls supported by native player
- *
- * If particular Media Control is supported by player, corresponding element 
- * in the features array has JAVACALL_MEDIA_CTRL_SUPPORTED_BASIC bit set to 1
- * If particular Media Control is not supported by player, corresponding element
- * in the features array is equal to 0
- * If there are additional info about supported features of the Media Control
- * it can be added as bitmask to corresponding element in the array
+ * Return bitmask of Media Controls supported by native player
+ * 
+ * Only Media Controls supported by native layer should be indicated
  *
  * @param handle    Handle to the library 
- * @param features  Array of bitmasks for each Media Control
+ * @param controls  bitmasks for Media Control implemented in native layer
  * 
  * @retval JAVACALL_OK          Success
  * @retval JAVACALL_FAIL        Fail
  */
-javacall_result javacall_media_get_player_features(javacall_handle handle,
-                              javacall_int32 *features);
+javacall_result javacall_media_get_player_controls(javacall_handle handle,
+                              int *controls);
 
 /**
  * Close native media player that created by creat or creat2 API call
@@ -452,8 +426,8 @@ javacall_result javacall_media_download_handled_by_device(javacall_handle handle
  *                  Can be -1 at end of buffering
  * @param length    Length of media data. Can be -1 at end of buffering,
  *                  If success return 'length of buffered data' else return -1
- * @param need_more_data returns JAVACALL_TRUE if native layer needs more media content to 
- *                  discover midia format or needs whole media content.
+ * @param need_more_data returns 0 if no more data is required, otherwise returns desired size of 
+ *                  required media content
  * 
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL   
@@ -462,7 +436,7 @@ javacall_result javacall_media_download_handled_by_device(javacall_handle handle
 javacall_result javacall_media_do_buffering(javacall_handle handle, 
                                  const void* buffer, long offset,
                                  /* INOUT */ long *length,
-                                 javacall_bool /*OUT*/*need_more_data);
+                                 long /*OUT*/*need_more_data);
 
 /**
  * MMAPI call this function to clear(delete) buffered media data
@@ -778,6 +752,7 @@ javacall_result javacall_media_get_video_snapshot_data(javacall_handle handle,
   * 
   * @retval JAVACALL_OK      Success
   * @retval JAVACALL_FAIL    Fail
+  * @retval JAVACALL_NOT_IMPLEMENTED    Native FullScreen mode not implemented
   */
  javacall_result javacall_media_set_video_fullscreenmode(javacall_handle handle, javacall_bool fullScreenMode);
 
