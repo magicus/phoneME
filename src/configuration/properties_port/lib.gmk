@@ -39,10 +39,15 @@ LIB_SET += $(PROP_PORT_NAME)
 SUBSYSTEM_PROPERTIES_PORT_EXTRA_INCLUDES += \
     -I$(SUBSYSTEM_CONFIG_DIR)/properties_port/include
  
-# Include implemenation specific module
-#
-ifeq ($(USE_STATIC_PROPERTIES), true)
-include $(SUBSYSTEM_CONFIG_DIR)/properties_port/static/$(LIB_MAKE_FILE)
+
+
+ifeq ($(USE_JAVACALL_PROPERTIES), true)
+	include $(SUBSYSTEM_CONFIG_DIR)/properties_port/javacall/$(LIB_MAKE_FILE)
 else
+	ifeq ($(USE_DYNAMIC_PROPERTIES), true)
 include $(SUBSYSTEM_CONFIG_DIR)/properties_port/dynamic/$(LIB_MAKE_FILE)
+	else 	
+#set default configuration mechanism to static
+		include $(SUBSYSTEM_CONFIG_DIR)/properties_port/static/$(LIB_MAKE_FILE)
+	endif
 endif

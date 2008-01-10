@@ -61,7 +61,8 @@ final class ConnectionName {
             throws javax.microedition.io.ConnectionNotFoundException {
         final int protocolPos = connectionName.indexOf(PROTOCOL_SEP);
         if (protocolPos == -1) {
-            throw new javax.microedition.io.ConnectionNotFoundException(connectionName);
+            throw new
+	    javax.microedition.io.ConnectionNotFoundException(connectionName);
         }
 
         final String protocol = connectionName

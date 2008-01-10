@@ -29,6 +29,7 @@
 #include <midpMalloc.h>
 #include <midpStorage.h> /* IMPL_NOTE: use PCSL File API */
 #include <midp_logging.h>
+#include <midp_properties_port.h>
 #include <string.h>
 
 #define CHECK_ERROR(pszError) \
@@ -300,8 +301,15 @@ void midp_file_cache_seek(char** ppszError, int handle, long position) {
 
 void midp_file_cache_write(char** ppszError, int handle,
                            char* buffer, long length) {
+
+	int rmsCacheLimit = getInternalPropertyInt("RMS_CACHE_LIMIT");
     MidpFileCacheBlock *p, *b;
     *ppszError = NULL;
+
+	if (0 == rmsCacheLimit) {
+		REPORT_ERROR(LC_AMS, "RMS_CACHE_LIMIT property not set");
+		return;
+	}
 
     if (length <= 0) {
         return;
@@ -348,13 +356,13 @@ void midp_file_cache_write(char** ppszError, int handle,
     /* This is a new write block that has not been cached */
 
     /* Never try to cache large write that is bigger than cache limit */
-    if (sizeof(MidpFileCacheBlock)+length > RMS_CACHE_LIMIT) {
+    if (sizeof(MidpFileCacheBlock)+length > (unsigned)rmsCacheLimit) {
         uncachedWrite(ppszError, handle, buffer, length);
         return;
     }
 
     /* If cache is full, flush it before caching new write */
-    if (mFileCache->size+sizeof(MidpFileCacheBlock)+length > RMS_CACHE_LIMIT) {
+    if (mFileCache->size+sizeof(MidpFileCacheBlock)+length > (unsigned)rmsCacheLimit) {
         midp_file_cache_flush(ppszError, handle);
         /* Reset previous block pointer after flush */
         p = NULL;

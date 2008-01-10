@@ -45,6 +45,12 @@
 #include <javaTask.h>
 #include <exe_entry_point.h>
 
+static javacall_result midpHandleSetVmArgs(int argc, char* argv);
+static javacall_result midpHandleSetHeapSize(midp_event_heap_size heap_size);
+static javacall_result midpHandleListMIDlets(void);
+static javacall_result midpHandleListStorageNames(void);
+static javacall_result midpHandleRemoveMIDlet(midp_event_remove_midletremoveMidletEvent);
+
 /**
  * An entry point of a thread devoted to run java
  */
@@ -80,7 +86,7 @@ void JavaTask(void) {
 
         switch (event->eventType) {
         case MIDP_JC_EVENT_START_ARBITRARY_ARG:
-            REPORT_INFO(LC_CORE,"JavaTask() MIDP_JC_EVENT_START_ARBITRARY_ARG>> \n");
+            REPORT_INFO(LC_CORE, "JavaTask() MIDP_JC_EVENT_START_ARBITRARY_ARG >>\n");
             javacall_lifecycle_state_changed(JAVACALL_LIFECYCLE_MIDLET_STARTED,
                                              JAVACALL_OK);
             JavaTaskImpl(event->data.startMidletArbitraryArgEvent.argc,
@@ -88,6 +94,36 @@ void JavaTask(void) {
 
             JavaTaskIsGoOn = JAVACALL_FALSE;
             break;
+
+        case MIDP_JC_EVENT_SET_VM_ARGS:
+            REPORT_INFO(LC_CORE, "JavaTask() MIDP_JC_EVENT_SET_VM_ARGS >>\n");
+            midpHandleSetVmArgs(event->data.startMidletArbitraryArgEvent.argc,
+                                event->data.startMidletArbitraryArgEvent.argv);
+            break;
+
+        case MIDP_JC_EVENT_SET_HEAP_SIZE:
+            REPORT_INFO(LC_CORE, "JavaTask() MIDP_JC_EVENT_SET_HEAP_SIZE >>\n");
+            midpHandleSetHeapSize(event->data.heap_size);
+            break;
+
+        case MIDP_JC_EVENT_LIST_MIDLETS:
+            REPORT_INFO(LC_CORE, "JavaTask() MIDP_JC_EVENT_LIST_MIDLETS >>\n");
+            midpHandleListMIDlets();
+            JavaTaskIsGoOn = JAVACALL_FALSE;
+            break;
+
+        case MIDP_JC_EVENT_LIST_STORAGE_NAMES:
+            REPORT_INFO(LC_CORE, "JavaTask() MIDP_JC_EVENT_LIST_STORAGE_NAMES >>\n");
+            midpHandleListStorageNames();
+            JavaTaskIsGoOn = JAVACALL_FALSE;
+            break;
+
+        case MIDP_JC_EVENT_REMOVE_MIDLET:
+            REPORT_INFO(LC_CORE, "JavaTask() MIDP_JC_EVENT_REMOVE_MIDLET >>\n");
+            midpHandleRemoveMIDlet(event->data.removeMidletEvent);
+            JavaTaskIsGoOn = JAVACALL_FALSE;
+            break;
+
 
         case MIDP_JC_EVENT_END:
             REPORT_INFO(LC_CORE,"JavaTask() >> MIDP_JC_EVENT_END\n");
@@ -106,3 +142,74 @@ void JavaTask(void) {
 
     REPORT_CRIT(LC_CORE,"JavaTask() <<\n");
 } /* end of JavaTask */
+
+/**
+ * 
+ */
+static javacall_result midpHandleSetVmArgs(int argc, char* argv) {
+    int used;
+
+    while ((used = JVM_ParseOneArg(argc, argv)) > 0) {
+        argc -= used;
+        argv += used;
+    }
+}
+
+/**
+ * 
+ */
+static javacall_result midpHandleSetHeapSize(midp_event_heap_size heap_size) {
+    JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, heap_size.heap_size);
+    JVM_SetConfig(JVM_CONFIG_HEAP_MINIMUM, heap_size.heap_size);
+}
+
+/**
+ * 
+ */
+static javacall_result midpHandleListMIDlets() {
+    char *argv[3];
+    int argc = 0;
+    javacall_result res;
+
+    argv[argc++] = "runMidlet";
+    argv[argc++] = "internal";
+    argv[argc++] = "com.sun.midp.scriptutil.SuiteLister";
+
+    res = JavaTaskImpl(argc, argv);
+}
+
+/**
+ * 
+ */
+static javacall_result midpHandleListStorageNames() {
+    char *argv[3];
+    int argc = 0;
+    javacall_result res;
+
+    argv[argc++] = "runMidlet";
+    argv[argc++] = "internal";
+    /**
+     * IMPL_NOTE: introduce an argument for SuiteLister allowing to print
+     *            paths to jars only.
+     */
+    argv[argc++] = "com.sun.midp.scriptutil.SuiteLister";
+
+    res = JavaTaskImpl(argc, argv);
+}
+
+/**
+ * 
+ */
+static javacall_result
+midpHandleRemoveMIDlet(midp_event_remove_midlet	removeMidletEvent) {
+    char *argv[4];
+    int argc = 0;
+    javacall_result res;
+
+    argv[argc++] = "runMidlet";
+    argv[argc++] = "internal";
+    argv[argc++] = "com.sun.midp.scriptutil.SuiteRemover";
+    argv[argc++] = removeMidletEvent.suiteID;
+
+    res = JavaTaskImpl(argc, argv);
+}

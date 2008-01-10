@@ -300,7 +300,8 @@ public abstract class JUMPInstaller {
         state.localJadUrl = jadLocal;
         state.jadEncoding = encoding;
 
-        return installJad(location, storageId, force, removeRMS, installListener);
+        return installJad(location, storageId, force, removeRMS,
+			  installListener);
     }
 
 
@@ -368,23 +369,27 @@ public abstract class JUMPInstaller {
         state.file = new File();
         state.nextStep = 5;
         state.listener = installListener;
-        //state.chmanager = CHManager.getManager(null);
+        // state.chmanager = CHManager.getManager(null);
         state.storageId = storageId;
 
         return performInstall();
     }
 
     /**
-     * @param local    the location in local filesystem where the JAR can be updated
-    **/
-    public int installJar(String location, String local, String name, int storageId, 
-                boolean force, boolean removeRMS, InstallListener installListener)
-                throws IOException, InvalidJadException,
-                    MIDletSuiteLockedException {
+     * @param local    the location in local filesystem where the JAR
+     * can be updated
+     */
+    public int installJar(String location, String local, String name,
+			  int storageId, 
+			  boolean force, boolean removeRMS,
+			  InstallListener installListener)
+	throws IOException, InvalidJadException,
+	       MIDletSuiteLockedException {
         state.localJarUrl = local;
-        return installJar(location, name, storageId, force, removeRMS, installListener);
+        return installJar(location, name, storageId, force,
+			  removeRMS, installListener);
     }
-
+    
     /**
      * Performs an install.
      *
@@ -401,20 +406,20 @@ public abstract class JUMPInstaller {
      * descriptor file is not specified
      */
     protected int performInstall()
-            throws IOException, InvalidJadException,
+	throws IOException, InvalidJadException,
                    MIDletSuiteLockedException {
-
+	
         state.midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
-
+	
         /* Disable push interruptions during install. */
         PushRegistryInternal.enablePushLaunch(false);
-
+	
         try {
             state.startTime = System.currentTimeMillis();
-
+	    
             while (state.nextStep < 9) {
-    
-		     
+		
+		
                 /*
                  * clear the previous warning, so we can tell if another has
                  * happened
@@ -423,10 +428,10 @@ public abstract class JUMPInstaller {
 
                 if (state.stopInstallation) {
                     postInstallMsgBackToProvider(
-                        OtaNotifier.USER_CANCELLED_MSG);
+		        OtaNotifier.USER_CANCELLED_MSG);
                     throw new IOException("stopped");
                 }
-
+		
                 switch (state.nextStep) {
                 case 1:
                     installStep1();
@@ -569,7 +574,7 @@ public abstract class JUMPInstaller {
             state.jad = null;
             postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
             throw ije;
-        } catch(java.io.UnsupportedEncodingException uee) {
+        } catch (java.io.UnsupportedEncodingException uee) {
             state.jad = null;
             postInstallMsgBackToProvider(OtaNotifier.INVALID_JAD_MSG);
             throw new InvalidJadException(
@@ -819,10 +824,12 @@ public abstract class JUMPInstaller {
             state.jarProps = new ManifestProperties();
 
             try {
-//                JarFile jarFile = new JarFile(new java.io.File(info.jarFilename));
-//                Manifest manifest = jarFile.getManifest();
+		//  JarFile jarFile = 
+		//    new JarFile(new java.io.File(info.jarFilename));
+		//  Manifest manifest = jarFile.getManifest();
 
-//                state.jarProps.readFromAttributes(manifest.getMainAttributes());
+		//  state.jarProps.readFromAttributes(
+		//    manifest.getMainAttributes());
 
                 state.jarProps.load(new ByteArrayInputStream(state.manifest));
                 state.manifest = null;
@@ -906,7 +913,9 @@ public abstract class JUMPInstaller {
                         OtaNotifier.ATTRIBUTE_MISMATCH_MSG);
                     throw new InvalidJadException(
                          InvalidJadException.VERSION_MISMATCH, 
-                             new String(info.suiteVersion + "," + state.jarProps.getProperty(MIDletSuite.VERSION_PROP)));
+                             new String(info.suiteVersion + ","
+					+ state.jarProps.getProperty(
+					    MIDletSuite.VERSION_PROP)));
                 }
 
                 if (!info.suiteVendor.equals(
@@ -1077,35 +1086,35 @@ public abstract class JUMPInstaller {
             checkConfiguration();
             matchProfile();
 
-        // IMPL_NOTE: sync with cldc installer for CHManager dependency
-         /**
-        *    try {
-        *         state.chmanager.preInstall(this,
-        *                (InstallState)state,
-        *                (MIDletSuite)state,
-        *                (info.authPath == null ?
-        *                    null : info.authPath[0]));
-        *     } catch (InvalidJadException jex) {
-        *         // Post the correct install notify msg back to the server
-        *         String msg = OtaNotifier.INVALID_CONTENT_HANDLER;
-        *         if (jex.getReason() ==
-        *             InvalidJadException.CONTENT_HANDLER_CONFLICT) {
-        *             msg = OtaNotifier.CONTENT_HANDLER_CONFLICT;
-        *         }
-
-        *         postInstallMsgBackToProvider(msg);
-        *         throw jex;
-        *     } catch (SecurityException se) {
-        *         postInstallMsgBackToProvider(
-        *             OtaNotifier.AUTHORIZATION_FAILURE_MSG);
-
-        *         // since our state object put the permission in message
-        *         throw new InvalidJadException(
-        *             InvalidJadException.AUTHORIZATION_FAILURE,
-        *             se.getMessage());
-        *     }
-        **/
-
+	    // IMPL_NOTE: sync with cldc installer for CHManager dependency
+	    /*
+	     *    try {
+	     *         state.chmanager.preInstall(this,
+	     *                (InstallState)state,
+	     *                (MIDletSuite)state,
+	     *                (info.authPath == null ?
+	     *                    null : info.authPath[0]));
+	     *     } catch (InvalidJadException jex) {
+	     *         // Post the correct install notify msg back to the server
+	     *         String msg = OtaNotifier.INVALID_CONTENT_HANDLER;
+	     *         if (jex.getReason() ==
+	     *             InvalidJadException.CONTENT_HANDLER_CONFLICT) {
+	     *             msg = OtaNotifier.CONTENT_HANDLER_CONFLICT;
+	     *         }
+	     *
+	     *         postInstallMsgBackToProvider(msg);
+	     *         throw jex;
+	     *     } catch (SecurityException se) {
+	     *         postInstallMsgBackToProvider(
+	     *             OtaNotifier.AUTHORIZATION_FAILURE_MSG);
+	     *
+	     *         // since our state object put the permission in message
+	     *         throw new InvalidJadException(
+	     *             InvalidJadException.AUTHORIZATION_FAILURE,
+	     *             se.getMessage());
+	     *     }
+	     */
+	    
             // make sure at least 1 second has passed
             try {
                 long waitTime = 1000 -

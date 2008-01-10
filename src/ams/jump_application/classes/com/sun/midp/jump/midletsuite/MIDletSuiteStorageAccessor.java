@@ -43,107 +43,120 @@ import com.sun.jump.common.JUMPContent;
 public class MIDletSuiteStorageAccessor 
     implements StorageAccessInterface {
 
-   private MIDletSuiteStorage storage; 
-
-   public MIDletSuiteStorageAccessor() {
-      this.storage = MIDletSuiteStorage.getMIDletSuiteStorage();
-   }
-
-   public int[] getInstalledMIDletSuiteIds() {  
-       return storage.getListOfSuites();
-   }
-
-   public JUMPContent[] convertToMIDletApplications(int suiteId) {
-       try { 
- 	  MIDletSuiteInfo suiteInfo = getMIDletSuiteInfo(suiteId);
-          MIDletInfo[] midletInfos  = getMIDletInfos(suiteInfo);
-
-          JUMPMIDletSuiteInfo currentMIDletSuiteInfo = 
-		  new JUMPMIDletSuiteInfo(suiteInfo, midletInfos);
-
-	  return currentMIDletSuiteInfo.getMIDletApplications();
-
-       } catch (IOException e) { 
-          System.err.println(e + " thrown while accessing the midlet suite " + suiteId);
-          return new JUMPContent[0];
-       } catch (MIDletSuiteLockedException e) { 
-          System.err.println(e + " thrown while accessing the midlet suite " + suiteId);
-          return new JUMPContent[0];
-       } catch (MIDletSuiteCorruptedException e) { 
-          System.err.println(e + " thrown while accessing the midlet suite " + suiteId);
-          return new JUMPContent[0];
-       }
-   }	    
-
-   private MIDletSuiteInfo getMIDletSuiteInfo(int id) throws IOException {
-       return storage.getMIDletSuiteInfo(id);
-   }
-
-   private MIDletInfo[] getMIDletInfos(MIDletSuiteInfo suiteInfo) 
-              throws MIDletSuiteLockedException, MIDletSuiteCorruptedException{
-       MIDletSuiteImpl midletSuite = storage.getMIDletSuite(suiteInfo.suiteId, false);
-
-       MIDletInfo[] midletInfos = new MIDletInfo[midletSuite.getNumberOfMIDlets()];
-       for (int i = 0; i < midletInfos.length; i++) {
-           midletInfos[i] = new MIDletInfo(
-                         midletSuite.getProperty("MIDlet-" + (i+1)));
-       }
-
-       // Need to unlock midletsuite.
-       midletSuite.close();
-
-       return midletInfos;
-   }
-      
-   public void remove(int id) { 
-       try {	    
-          storage.remove(id);
-       } catch (MIDletSuiteLockedException e) { 	   
-	  new RuntimeException(e);
-       }	   
-   }
-
-   class JUMPMIDletSuiteInfo {
-  
+    private MIDletSuiteStorage storage; 
+    
+    public MIDletSuiteStorageAccessor() {
+	this.storage = MIDletSuiteStorage.getMIDletSuiteStorage();
+    }
+    
+    public int[] getInstalledMIDletSuiteIds() {  
+	return storage.getListOfSuites();
+    }
+    
+    public JUMPContent[] convertToMIDletApplications(int suiteId) {
+	try { 
+	    MIDletSuiteInfo suiteInfo = getMIDletSuiteInfo(suiteId);
+	    MIDletInfo[] midletInfos  = getMIDletInfos(suiteInfo);
+	    
+	    JUMPMIDletSuiteInfo currentMIDletSuiteInfo = 
+		new JUMPMIDletSuiteInfo(suiteInfo, midletInfos);
+	    
+	    return currentMIDletSuiteInfo.getMIDletApplications();
+	    
+	} catch (IOException e) { 
+	    System.err.println(e + " thrown while accessing the midlet suite "
+			       + suiteId);
+	    return new JUMPContent[0];
+	} catch (MIDletSuiteLockedException e) { 
+	    System.err.println(e + " thrown while accessing the midlet suite "
+			       + suiteId);
+	    return new JUMPContent[0];
+	} catch (MIDletSuiteCorruptedException e) { 
+	    System.err.println(e + " thrown while accessing the midlet suite "
+			       + suiteId);
+	    return new JUMPContent[0];
+	}
+    }	    
+    
+    private MIDletSuiteInfo getMIDletSuiteInfo(int id) throws IOException {
+	return storage.getMIDletSuiteInfo(id);
+    }
+    
+    private MIDletInfo[] getMIDletInfos(MIDletSuiteInfo suiteInfo) 
+	throws MIDletSuiteLockedException, MIDletSuiteCorruptedException {
+	MIDletSuiteImpl midletSuite = storage.getMIDletSuite(suiteInfo.suiteId,
+							     false);
+	
+	MIDletInfo[] midletInfos =
+	    new MIDletInfo[midletSuite.getNumberOfMIDlets()];
+	for (int i = 0; i < midletInfos.length; i++) {
+	    midletInfos[i] =
+		new MIDletInfo(
+			       midletSuite.getProperty("MIDlet-" + (i+1)));
+	}
+	
+	// Need to unlock midletsuite.
+	midletSuite.close();
+	
+	return midletInfos;
+    }
+    
+    public void remove(int id) { 
+	try {	    
+	    storage.remove(id);
+	} catch (MIDletSuiteLockedException e) { 	   
+	    new RuntimeException(e);
+	}	   
+    }
+    
+    class JUMPMIDletSuiteInfo {
+	
         MIDletSuiteInfo suiteInfo; 
         ArrayList midletApplications;
-
-        public JUMPMIDletSuiteInfo(MIDletSuiteInfo suiteInfo, MIDletInfo[] midletInfos) {
-           this.suiteInfo = suiteInfo;
-
-           midletApplications = new ArrayList(midletInfos.length);
-           for (int i = 0; i < midletInfos.length; i++) {              
-               String jarfile[] = storage.getMidletSuiteClassPath(suiteInfo.suiteId);
-               URL iconURL = null;
-               if (jarfile[0] != null & midletInfos[i].icon != null) {
-                   String iconURLfile = null;
-                   if (midletInfos[i].icon.startsWith("/")) {
-                       iconURLfile = "jar:file://" + jarfile[0] + "!/" + midletInfos[i].icon.substring(1);
-                   } else {
-                       iconURLfile = "jar:file://" + jarfile[0] + "!/" + midletInfos[i].icon;
-                   }
-                   try {
-                       iconURL = new URL(iconURLfile);
-                   } catch (MalformedURLException ex) {
-                       ex.printStackTrace();
-                   }
-               }
-               MIDletApplication app = new MIDletApplication(midletInfos[i].name,
-                          iconURL, suiteInfo.suiteId, midletInfos[i].classname, (i+1)); 
-               midletApplications.add(i, app);
-           }
-
+	
+        public JUMPMIDletSuiteInfo(MIDletSuiteInfo suiteInfo,
+				   MIDletInfo[] midletInfos) {
+	    this.suiteInfo = suiteInfo;
+	    
+	    midletApplications = new ArrayList(midletInfos.length);
+	    for (int i = 0; i < midletInfos.length; i++) {              
+		String jarfile[] =
+		    storage.getMidletSuiteClassPath(suiteInfo.suiteId);
+		URL iconURL = null;
+		if (jarfile[0] != null & midletInfos[i].icon != null) {
+		    String iconURLfile = null;
+		    if (midletInfos[i].icon.startsWith("/")) {
+			iconURLfile = "jar:file://"
+			    + jarfile[0] + "!/"
+			    + midletInfos[i].icon.substring(1);
+		    } else {
+			iconURLfile = "jar:file://"
+			    + jarfile[0] + "!/" + midletInfos[i].icon;
+		    }
+		    try {
+			iconURL = new URL(iconURLfile);
+		    } catch (MalformedURLException ex) {
+			ex.printStackTrace();
+		    }
+		}
+		MIDletApplication app = 
+		    new MIDletApplication(midletInfos[i].name,
+					  iconURL, suiteInfo.suiteId,
+					  midletInfos[i].classname, (i+1)); 
+		midletApplications.add(i, app);
+	    }
+	    
         }
 
         public MIDletSuiteInfo getMIDletSuiteInfo() {
             return suiteInfo;
         }
- 
+	
         public MIDletApplication[] getMIDletApplications() {
             return (MIDletApplication[]) 
-               midletApplications.toArray(new MIDletApplication[]{});
+		midletApplications.toArray(new MIDletApplication[] {});
         }
-
+	
         public boolean contains(MIDletApplication midletApp) {
             return midletApplications.contains(midletApp);
         }

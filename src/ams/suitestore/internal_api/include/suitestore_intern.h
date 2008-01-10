@@ -50,6 +50,15 @@
 extern "C" {
 #endif
 
+/**
+ * Transaction types.
+ */
+typedef enum {
+    TRANSACTION_INSTALL,
+    TRANSACTION_REMOVE,
+    TRANSACTION_ENABLE_SUITE
+} MIDPTransactionType;
+
 /*
  * Macro to align the given value on 4-bytes boundary.
  */
@@ -75,14 +84,14 @@ extern MidletSuiteData* g_pSuitesData;
  * File contents is read as one piece.
  *
  * @param ppszError pointer to character string pointer to accept an error
- * @param fileName file to read
+ * @param pFileName file to read
  * @param outBuffer buffer where the file contents should be stored
  * @param outBufferLen length of the outBuffer
  *
  * @return status code (ALL_OK if there was no errors)
  */
 MIDPError
-read_file(char** ppszError, const pcsl_string* fileName,
+read_file(char** ppszError, const pcsl_string* pFileName,
           char** outBuffer, long* outBufferLen);
 
 /**
@@ -92,14 +101,14 @@ read_file(char** ppszError, const pcsl_string* fileName,
  * the file will be truncated.
  *
  * @param ppszError pointer to character string pointer to accept an error
- * @param fileName file to write
+ * @param pFileName file to write
  * @param inBuffer buffer with data that will be stored
  * @param inBufferLen length of the inBuffer
  *
  * @return status code (ALL_OK if there was no errors)
  */
 MIDPError
-write_file(char** ppszError, const pcsl_string* fileName,
+write_file(char** ppszError, const pcsl_string* pFileName,
            char* inBuffer, long inBufferLen);
 
 /**
@@ -157,7 +166,8 @@ MidletSuiteData* get_suite_data(SuiteIdType suiteId);
  *
  * @return status code: ALL_OK if no errors,
  *         OUT_OF_MEMORY if malloc failed
- *         IO_ERROR if an IO_ERROR
+ *         IO_ERROR if an IO_ERROR,
+ *         SUITE_CORRUPTED_ERROR if the suite database is corrupted
  */
 MIDPError read_suites_data(char** ppszError);
 
@@ -321,7 +331,7 @@ MIDPError get_secure_resource_file(SuiteIdType suiteId,
  *
  * @param suiteId    - The application suite ID string
  * @param checkSuiteExists - true if suite should be checked for existence or not
- * @param filename - The in/out parameter that contains returned filename
+ * @param pFilename - The in/out parameter that contains returned filename
  * @return  error code that should be one of the following:
  * <pre>
  *     ALL_OK, OUT_OF_MEMORY, NOT_FOUND
@@ -329,7 +339,7 @@ MIDPError get_secure_resource_file(SuiteIdType suiteId,
  */
 MIDPError get_property_file(SuiteIdType suiteId,
                             jboolean checkSuiteExists,
-                            pcsl_string *filename);
+                            pcsl_string *pFilename);
 
 /**
  * Check if the suite is corrupted
@@ -341,6 +351,52 @@ MIDPError get_property_file(SuiteIdType suiteId,
  *         IO_ERROR if I/O error
  */
 MIDPError check_for_corrupted_suite(SuiteIdType suiteId);
+
+/**
+ * Tries to repair the suite database.
+ *
+ * @return ALL_OK if succeeded, other value if failed
+ */
+MIDPError repair_suite_db();
+
+/**
+ * Starts a new transaction of the given type.
+ *
+ * @param transactionType type of the new transaction
+ * @param suiteId ID of the suite, may be UNUSED_SUITE_ID
+ * @param pFilename name of the midlet suite's file, may be NULL 
+ *
+ * @return ALL_OK if no errors,
+ *         IO_ERROR if I/O error
+ */
+MIDPError begin_transaction(MIDPTransactionType transactionType,
+                            SuiteIdType suiteId,
+                            const pcsl_string *pFilename);
+
+/**
+ * Rolls back the transaction being in progress.
+ *
+ * @return ALL_OK if the transaction was rolled back,
+ *         NOT_FOUND if the transaction has not been started,
+ *         IO_ERROR if I/O error
+ */
+MIDPError rollback_transaction();
+
+/**
+ * Finishes the previously started transaction.
+ *
+ * @return ALL_OK if the transaction was successfully finished,
+ *         NOT_FOUND if the transaction has not been started,
+ *         IO_ERROR if I/O error
+ */
+MIDPError finish_transaction();
+
+/**
+ * Checks if there is an unfinished transaction.
+ *
+ * @return 0 there is no unfinished transaction, != 0 otherwise 
+ */
+int unfinished_transaction_exists();
 
 #ifdef __cplusplus
 }
