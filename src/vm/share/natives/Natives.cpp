@@ -878,7 +878,8 @@ OopDesc* Java_java_lang_Class_getName(JVM_SINGLE_ARG_TRAPS) {
 
 #if ENABLE_REFLECTION
   if (receiver().is_primitive()) {
-    char* name = ParsedTypeSymbol::type_name_for(receiver().type_symbol());
+    const char * name = 
+      ParsedTypeSymbol::type_name_for(receiver().type_symbol());
     GUARANTEE(name != NULL, "sanity");
     return Universe::new_string(name, jvm_strlen(name) JVM_NO_CHECK_AT_BOTTOM);
   }
