@@ -943,11 +943,9 @@ void CodeGenerator::new_object(Value& result, JavaClass* klass JVM_TRAPS) {
     // Slow-case: Call InterpreterRuntime::newobject.
     call_vm((address)::newobject, T_OBJECT JVM_CHECK);
   } else {
-    UsingFastOops fast_oops;
-
     // Get the prototypical near object from the klass and put it into
     // register ebx
-    Oop::Fast near_object = klass->prototypical_near();
+    Oop::Raw near_object = klass->prototypical_near();
     movl(ebx, &near_object);
 
     // Setup edx to hold the instance size in bytes

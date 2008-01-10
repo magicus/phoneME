@@ -182,7 +182,11 @@ public:
           _relocation(compiled_method) {
     _relocation.set_assembler(this);
     _compiled_method = compiled_method;
-    _code_offset     = 0;
+    _code_offset           = 0;
+    _first_literal         = NULL;
+    _first_unbound_literal = NULL;
+    _last_literal          = NULL;
+
     zero_literal_count();
     CodeInterleaver::initialize(this);
   }

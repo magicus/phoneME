@@ -684,8 +684,6 @@ void VirtualStackFrame::flush_fpu() {
 
 inline void VirtualStackFrame::conform_to_prologue(VirtualStackFrame* other) {
   REGISTER_REFERENCES_CHECKER;
-
-  UsingFastOops fast_oops;
   GUARANTEE(virtual_stack_pointer() == other->virtual_stack_pointer(),
             "other must have same virtual stack pointer");
 

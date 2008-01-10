@@ -1041,7 +1041,6 @@ void BinaryAssembler::fremp(Register src, Register dst) {
 }
 
 void BinaryAssembler::fprem() {
-  UsingFastOops fast_oops;
   DisassemblerInfo print_me(this);
   emit_byte(0xD9);
   emit_byte(0xF8);
@@ -1103,7 +1102,6 @@ void BinaryAssembler::fucomip(Register dst, Register src) {
 }
 
 void BinaryAssembler::fwait() {
-  UsingFastOops fast_oops;
   DisassemblerInfo print_me(this);
   emit_byte(0x9B);
 }
@@ -1117,7 +1115,6 @@ void BinaryAssembler::finit() {
 }
 
 void BinaryAssembler::fstsw_ax() {
-  UsingFastOops fast_oops;
   DisassemblerInfo print_me(this);
   emit_byte(0x9B); // fwait
   emit_byte(0xDF); // fnstsw_ax

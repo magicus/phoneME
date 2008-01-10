@@ -3448,11 +3448,12 @@ void CodeGenerator::new_basic_array(Value& result, BasicType type,
 
 #else // !ENABLE_INLINE_COMPILER_STUBS
 
-  UsingFastOops fast_oops;
   // Do flushing, and remember to unmap.
   flush_frame(JVM_SINGLE_ARG_CHECK);
 
   TypeArrayClass* array_class = Universe::as_TypeArrayClass(type);
+
+  UsingFastOops fast_oops;
   JavaNear::Fast java_near = array_class->prototypical_near();
 
   Value actual_length(T_INT);
@@ -5443,7 +5444,6 @@ bool CodeGenerator::unchecked_arraycopy(BasicType array_element_type
 
   RegisterAllocator::guarantee_all_free();
 
-  UsingFastOops fast_oops;
   Label bailout, done;
   const int element_size = byte_size_for(array_element_type);
   const int log_element_size = exact_log2(element_size);
@@ -5829,10 +5829,6 @@ bool CodeGenerator::unchecked_arraycopy(BasicType array_element_type
     need_src_ne_dst_check || need_length_limit_check || is_above_length_limit;
 
   if (need_bailout) {
-    UsingFastOops fast_oops;
-    Method::Fast method = unchecked_arraycopy_method(array_element_type);
-    GUARANTEE(method.not_null(), "unchecked arraycopy() not found");
-
     /* If we know we are above the limit, we just fall through to invoke */
     if (!is_above_length_limit) {
       b(done);
@@ -5842,6 +5838,10 @@ bool CodeGenerator::unchecked_arraycopy(BasicType array_element_type
 
     comment("Bailout: invoke unchecked_XXX_arraycopy()");
     VirtualStackFrameContext compile_in_bailout_frame( bailout_frame );
+
+    UsingFastOops fast_oops;
+    Method::Fast method = unchecked_arraycopy_method(array_element_type);
+    GUARANTEE(method.not_null(), "unchecked arraycopy() not found");
     invoke(&method, false/*no null checks*/ JVM_CHECK_0);
   }
 

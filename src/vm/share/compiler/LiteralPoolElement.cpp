@@ -38,8 +38,7 @@ void LiteralPoolElement::print_value_on( Stream* s ) const {
   } else { 
     s->print("unbound, ", bci());
   }
-  UsingFastOops fast_oops;
-  Oop::Fast oop = literal_oop();
+  Oop::Raw oop = literal_oop();
   int imm32     = literal_int();
   if (oop.is_null()) { 
     s->print("imm32=%d >", imm32);
