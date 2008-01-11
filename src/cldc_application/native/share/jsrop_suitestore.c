@@ -27,10 +27,11 @@
 #include <jsrop_suitestore.h>
 
 /**
- * @return maximum size in characters of suite_id in string representation
+ * @param suite_id original suite id
+ * @return size in characters of suite_id in string representation
  */
-int jsrop_suiteid_max_size() {
-	return 8; // maximum length of integer in hexadecimal format
+int jsrop_suiteid_string_size(SuiteIdType suite_id){
+	return GET_SUITE_ID_LEN(suite_id); // maximum length of integer in hexadecimal format
 }
 
 
@@ -41,7 +42,7 @@ int jsrop_suiteid_max_size() {
  *                         for receiving suite_id in string representation
  * @return non zero in case of success zero in case of error
  */
-int jsrop_suitid_to_string(SuiteIdType suite_id, /* OUT */ jchar* suite_id_str_out);
+int jsrop_suiteid_to_string(SuiteIdType suite_id, /* OUT */ jchar* suite_id_str_out){
 	char* chrs= midp_suiteid2chars(suite_id);
 	if (!chrs) return 0;
 	while (*chrs) *suite_id_str_out++ = (jchar)*chrs++;
