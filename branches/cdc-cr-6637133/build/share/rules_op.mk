@@ -24,8 +24,6 @@
 
 SUBSYSTEM_RULES_FILE     = subsystem_rules.gmk
 
-.PHONY: javacall_lib
-
 ifneq ($(CVM_STATICLINK_LIBS), true)
 JSR_NATIVE_LIBS = "$(5)"
 else
@@ -46,14 +44,33 @@ define generateJSRInitializer
 endef
 
 # Generate constant classes
-# generateConstantClasses(constantsXmlFile, constantsClassList, generatedDirectory)
+# generateConstantClasses(generatedDirectory, constantsXmlFile)
 define generateConstantClasses
-	$(foreach class, $(2), \
-	$(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE) \
-	-xml $(1) \
-	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantsJava.xsl \
-	-params fullClassName $(class) \
-	-out $(3)/classes/$(subst .,/,$(class)).java; )
+    $(foreach class, $(shell \
+        $(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
+            -xml $(2) \
+            -xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantClasses.xsl \
+            -out $(call constantClassesListFile, $(1));) \
+        cat $(call constantClassesListFile, $(1))), \
+	    $(call runJarFile, $(CONFIGURATOR_JAR_FILE), \
+            -xml $(2) \
+            -xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantsJava.xsl \
+            -params fullClassName $(class) \
+            -out $(1)/classes/$(subst .,/,$(class)).java;))
+endef
+
+# Gets a list of Java files which have been generated from an XML constant file
+# getConstantClassFileList(generatedDirectory)
+define getConstantClassFileList
+    $(foreach class, $(shell \
+        cat $(call constantClassesListFile, $(1))), \
+        $(1)/classes/$(subst .,/,$(class)).java)
+endef
+
+# Returns the name of a file which contains a list of classes generated from an XML constant file
+# constantClassesListFile(generatedDirectory)
+define constantClassesListFile
+    $(1)/.constant.class.list
 endef
 
 # Macro to pre-process Jpp file into Java file
@@ -130,12 +147,6 @@ define readClassList
 	$(foreach class,$(subst .,/,$(shell cat $(1) | grep -v "\#")),$(class).class)
 endef
 
-ifeq ($(CVM_INCLUDE_JAVACALL), true)
-javacall_lib: $(JAVACALL_LIBRARY)
-else
-javacall_lib:
-endif
-
 ifeq ($(CVM_DUAL_STACK), true)
 #
 # Run JavaAPILister to generate the list of classes that are 
@@ -167,7 +178,7 @@ clean::
 # Include JSR 120
 ifeq ($(USE_JSR_120), true)
 export JSR_120_DIR ?= $(COMPONENTS_DIR)/jsr120
-JSR_120_RULES_FILE = $(JSR_120_DIR)/build/$(SUBSYSTEM_RULES_FILE)
+JSR_120_RULES_FILE = $(JSR_120_DIR)/build/cdc_share/$(SUBSYSTEM_RULES_FILE)
 ifeq ($(wildcard $(JSR_120_RULES_FILE)),)
 $(error JSR_120_DIR must point to a directory containing JSR 120 sources)
 endif
@@ -212,4 +223,10 @@ ifeq ($(wildcard $(JSR_280_MAKE_FILE)),)
 $(error JSR_280_DIR must point to a directory containing JSR 280 sources)
 endif
 include $(JSR_280_MAKE_FILE)
+endif
+
+ifeq ($(CVM_INCLUDE_JAVACALL), true)
+ifneq ($(JSROP_JAVACALL_DEPENDENTS),)
+$(JSROP_JAVACALL_DEPENDENTS): $(JAVACALL_LIBRARY)
+endif
 endif

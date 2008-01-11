@@ -44,7 +44,7 @@ jvmti_jni_Get##Result##Field(JNIEnv *env, jobject obj, jfieldID fieldID) \
 { \
     CVMFieldBlock* fb = fieldID; \
     ReturnType result; \
-    if (CVMglobals.jvmtiWatchingFieldAccess) { \
+    if (CVMjvmtiIsWatchingFieldAccess()) {		     \
         CVMjvmtiPostFieldAccessEvent(CVMjniEnv2ExecEnv(env), \
 				     obj, fb);		     \
     } \
@@ -52,7 +52,8 @@ jvmti_jni_Get##Result##Field(JNIEnv *env, jobject obj, jfieldID fieldID) \
     return result; \
 }
 
-WRAPPER_GETFIELD(jobject,Object,(fb->signature[0] == 'L' || fb->signature[0] == '['))
+WRAPPER_GETFIELD(jobject,Object,(fb->signature[0] == 'L' ||
+				 fb->signature[0] == '['))
 WRAPPER_GETFIELD(jboolean,Boolean,(fb->signature[0] == 'Z'))
 WRAPPER_GETFIELD(jbyte,Byte,(fb->signature[0] == 'B'))
 WRAPPER_GETFIELD(jshort,Short,(fb->signature[0] == 'S'))
@@ -68,7 +69,7 @@ jvmti_jni_Set##Result##Field(JNIEnv *env, jobject obj, jfieldID fieldID, \
 			  ValueType value) \
 { \
     CVMFieldBlock* fb = fieldID; \
-    if (CVMglobals.jvmtiWatchingFieldModification) { \
+    if (CVMjvmtiIsWatchingFieldModification()) { \
         jvalue jval; \
         jval.JValueField = value; \
         CVMjvmtiPostFieldModificationEvent(CVMjniEnv2ExecEnv(env), \
@@ -89,11 +90,12 @@ WRAPPER_SETFIELD(jdouble,Double,d)
 
 #define WRAPPER_GETSTATICFIELD(ReturnType,Result,ty) \
 static ReturnType JNICALL \
-jvmti_jni_GetStatic##Result##Field(JNIEnv *env, jclass clazz, jfieldID fieldID) \
+jvmti_jni_GetStatic##Result##Field(JNIEnv *env, jclass clazz, \
+				   jfieldID fieldID)	      \
 { \
     CVMFieldBlock* fb = fieldID; \
     ReturnType result; \
-    if (CVMglobals.jvmtiWatchingFieldAccess) {			\
+    if (CVMjvmtiIsWatchingFieldAccess()) {			\
         CVMjvmtiPostFieldAccessEvent(CVMjniEnv2ExecEnv(env),	\
 				     NULL, fb);			\
     }								\
@@ -101,7 +103,8 @@ jvmti_jni_GetStatic##Result##Field(JNIEnv *env, jclass clazz, jfieldID fieldID) 
     return result;						\
 }
 
-WRAPPER_GETSTATICFIELD(jobject,Object,(fb->signature[0] == 'L' || fb->signature[0] == '['))
+WRAPPER_GETSTATICFIELD(jobject,Object,(fb->signature[0] == 'L' ||
+				       fb->signature[0] == '['))
 WRAPPER_GETSTATICFIELD(jboolean,Boolean,(fb->signature[0] == 'Z'))
 WRAPPER_GETSTATICFIELD(jbyte,Byte,(fb->signature[0] == 'B'))
 WRAPPER_GETSTATICFIELD(jshort,Short,(fb->signature[0] == 'S'))
@@ -113,11 +116,12 @@ WRAPPER_GETSTATICFIELD(jdouble,Double,(fb->signature[0] == 'D'))
 
 #define WRAPPER_SETSTATICFIELD(ValueType,Result,JValueField) \
 static void JNICALL \
-jvmti_jni_SetStatic##Result##Field(JNIEnv *env, jclass clazz, jfieldID fieldID, \
-				ValueType value) \
+jvmti_jni_SetStatic##Result##Field(JNIEnv *env, jclass clazz, \
+				   jfieldID fieldID,	      \
+				   ValueType value)	      \
 { \
     CVMFieldBlock* fb = fieldID; \
-    if (CVMglobals.jvmtiWatchingFieldModification) { \
+    if (CVMjvmtiIsWatchingFieldModification()) { \
         jvalue jval; \
         jval.JValueField = value; \
         CVMjvmtiPostFieldModificationEvent(CVMjniEnv2ExecEnv(env), \
