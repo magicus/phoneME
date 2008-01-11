@@ -34,6 +34,10 @@
 
 extern void
 CVMjvmtiInstrumentJNINativeInterface();
+extern void
+CVMjvmtiUninstrumentJNINativeInterface();
+#define CVMjvmtiUninstrumentJNINativeInterface() \
+    /* Nothing to do currently because this is only called at VM shutdown. */
 
 #endif /* CVM_JVMTI */
 

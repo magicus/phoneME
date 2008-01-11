@@ -466,15 +466,7 @@ struct CVMGlobalState {
 #endif
 
 #ifdef CVM_JVMTI
-    CVMBool jvmtiEnabled;
-    CVMBool jvmtiDebuggingFlag;
-    /* are one or more fields being watched?
-     * these flags are accessed by the interpreter to determine if
-     * jvmti should be notified.
-     */
-    CVMBool jvmtiWatchingFieldAccess; /* set ONLY by jvmt */
-    CVMBool jvmtiWatchingFieldModification; /* set ONLY by jvmti */
-    CVMJvmtiRecord jvmtiRecord;
+    CVMJvmtiGlobals jvmti;
 #endif
 
 #ifdef CVM_JVMPI
@@ -590,11 +582,6 @@ struct CVMGlobalState {
        here. If we don't do an undo, we put these items in the pending
        queue. */
     CVMObject* deferredWeakrefsToAddToPending;
-
-#ifdef CVM_JVMTI
-    /* JVMTI-specific globally defined static variables */
-    JVMTI_Static jvmtiStatics;
-#endif
 
 #if defined(CVM_HAVE_DEPRECATED) || defined(CVM_THREAD_SUSPENSION)
     CVMBool suspendCheckerInitialized;

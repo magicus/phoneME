@@ -156,14 +156,12 @@ jvmtiFindFieldStartingIndex(const CVMClassBlock* fieldCb, int index,
     return retVal;
 }
 
-static JvmtiTagNode *objectsByRef[HASH_SLOT_COUNT];
-
-static JvmtiTagNode **jvmtiTagGetTopNode(CVMObject *obj)
+static CVMJvmtiTagNode **jvmtiTagGetTopNode(CVMObject *obj)
 {
 
     CVMExecEnv *ee = CVMgetEE();
     int hashCode;
-    JvmtiTagNode **result;
+    CVMJvmtiTagNode **result;
 
     CVMassert(CVMD_isgcSafe(ee));
 
@@ -181,15 +179,15 @@ static JvmtiTagNode **jvmtiTagGetTopNode(CVMObject *obj)
     if (hashCode < 0) {
 	hashCode = -hashCode;
     }
-    result = &objectsByRef[hashCode % HASH_SLOT_COUNT];
+    result = &CVMglobals.jvmti.statics.objectsByRef[hashCode % HASH_SLOT_COUNT];
     JVMTI_UNLOCK(ee);
     return result;
 }
 
-JvmtiTagNode * CVMjvmtiTagGetNode(CVMObject *obj)
+CVMJvmtiTagNode *CVMjvmtiTagGetNode(CVMObject *obj)
 {
-    JvmtiTagNode *node, *prev;
-    JvmtiTagNode **slot;
+    CVMJvmtiTagNode *node, *prev;
+    CVMJvmtiTagNode **slot;
     CVMExecEnv *ee = CVMgetEE();
 
     CVMassert(CVMD_isgcSafe(ee));
@@ -216,7 +214,7 @@ JvmtiTagNode * CVMjvmtiTagGetNode(CVMObject *obj)
 jvmtiError CVMjvmtiTagGetTagGC(CVMObject *obj, jlong *tagPtr)
 {
 
-    JvmtiTagNode *node;
+    CVMJvmtiTagNode *node;
     CVMExecEnv *ee = CVMgetEE();
     CVMassert(CVMD_isgcSafe(ee));
 
@@ -247,13 +245,13 @@ CVMjvmtiGetObjectsWithTag(JNIEnv *env, const jlong *tags, jint tagCount,
 			  jobject **objPtr, jlong **tagPtr)
 {
     int i, j;
-    JvmtiTagNode *node;
+    CVMJvmtiTagNode *node;
     int count = 0;
     CVMExecEnv *ee = CVMgetEE();
 
     JVMTI_LOCK(ee);
     for (i = 0; i < HASH_SLOT_COUNT; i++) {
-	node = objectsByRef[i];
+	node = CVMglobals.jvmti.statics.objectsByRef[i];
 	while (node != NULL) {
 	    for (j = 0; j < tagCount; j++) {
 		if (node->tag == tags[j]) {
@@ -275,19 +273,19 @@ CVMjvmtiGetObjectsWithTag(JNIEnv *env, const jlong *tags, jint tagCount,
 
 void CVMjvmtiTagRehash() {
 
-    JvmtiTagNode *node, *next, *prev;
+    CVMJvmtiTagNode *node, *next, *prev;
     int i;
     CVMExecEnv *ee = CVMgetEE();
 
     JVMTI_LOCK(ee);
     for (i = 0; i < HASH_SLOT_COUNT; i++) {
-	node = objectsByRef[i];
+	node = CVMglobals.jvmti.statics.objectsByRef[i];
 	prev = NULL;
 	while (node != NULL) {
 	    next = node->next;
 	    if (node->ref == NULL || CVMID_icellIsNull(node->ref)) {
 		if (prev == NULL) {
-		    objectsByRef[i] = node->next;
+		    CVMglobals.jvmti.statics.objectsByRef[i] = node->next;
 		} else {
 		    prev->next = node->next;
 		}
@@ -306,8 +304,8 @@ CVMjvmtiTagGetTag(jvmtiEnv* jvmtienv,
 	       jobject object,
 	       jlong* tagPtr) {
 
-    JvmtiTagNode *node;
-    JvmtiTagNode *prev;
+    CVMJvmtiTagNode *node;
+    CVMJvmtiTagNode *prev;
     JNIEnv *env;
     CVMExecEnv *ee = CVMgetEE();
     jint slot;
@@ -317,7 +315,7 @@ CVMjvmtiTagGetTag(jvmtiEnv* jvmtienv,
     slot = hashRef(object);
 
     env = CVMexecEnv2JniEnv(ee);
-    node = objectsByRef[slot];
+    node = CVMglobals.jvmti.statics.objectsByRef[slot];
     prev = NULL;
 
     *tagPtr = 0L;
@@ -342,7 +340,7 @@ CVMjvmtiTagSetTag(jvmtiEnv *jvmtienv, jobject object, jlong tag)
 {
     JNIEnv *env;
     jint slot;
-    JvmtiTagNode *node, *prev;
+    CVMJvmtiTagNode *node, *prev;
     CVMExecEnv *ee = CVMgetEE();
 
     /*
@@ -350,7 +348,7 @@ CVMjvmtiTagSetTag(jvmtiEnv *jvmtienv, jobject object, jlong tag)
      */
     JVMTI_LOCK(ee);
     slot = hashRef(object);
-    node = objectsByRef[slot];
+    node = CVMglobals.jvmti.statics.objectsByRef[slot];
     prev = NULL;
 
     env = CVMexecEnv2JniEnv(ee);
@@ -363,7 +361,8 @@ CVMjvmtiTagSetTag(jvmtiEnv *jvmtienv, jobject object, jlong tag)
 	node = node->next;
     }
     if (node == NULL) {
-	if (CVMjvmtiAllocate(sizeof(JvmtiTagNode), (unsigned char **)&node) !=
+	if (CVMjvmtiAllocate(sizeof(CVMJvmtiTagNode),
+			     (unsigned char **)&node) !=
 	    JVMTI_ERROR_NONE) {
 	    JVMTI_UNLOCK(ee);
 	    return JVMTI_ERROR_OUT_OF_MEMORY;
@@ -373,7 +372,7 @@ CVMjvmtiTagSetTag(jvmtiEnv *jvmtienv, jobject object, jlong tag)
     if (tag == 0L && node->ref != NULL) {
 	/* clearing tag, deallocate it */
 	if (prev == NULL) {
-	    objectsByRef[slot] = node->next;
+	    CVMglobals.jvmti.statics.objectsByRef[slot] = node->next;
 	} else {
 	    prev->next = node->next;
 	}
@@ -384,8 +383,8 @@ CVMjvmtiTagSetTag(jvmtiEnv *jvmtienv, jobject object, jlong tag)
 	if (node->ref != NULL) {
 	    (*env)->DeleteWeakGlobalRef(env, node->ref);
 	} else {
-	    node->next = objectsByRef[slot];
-	    objectsByRef[slot] = node;
+	    node->next = CVMglobals.jvmti.statics.objectsByRef[slot];
+	    CVMglobals.jvmti.statics.objectsByRef[slot] = node;
 	}
 	node->ref = objRef;
 	node->tag = tag;
@@ -395,9 +394,9 @@ CVMjvmtiTagSetTag(jvmtiEnv *jvmtienv, jobject object, jlong tag)
 }
 
 void
-CVMjvmtiPostCallbackUpdateTag(CVMObject *obj, JvmtiTagNode *node, jlong tag)
+CVMjvmtiPostCallbackUpdateTag(CVMObject *obj, CVMJvmtiTagNode *node, jlong tag)
 {
-    JvmtiTagNode **topNode;
+    CVMJvmtiTagNode **topNode;
     CVMObjectICell *icell;
     CVMExecEnv *ee = CVMgetEE();
     JNIEnv *env = CVMexecEnv2JniEnv(ee);
@@ -416,7 +415,7 @@ CVMjvmtiPostCallbackUpdateTag(CVMObject *obj, JvmtiTagNode *node, jlong tag)
 		JVMTI_UNLOCK(ee);
 		return ;
 	    }
-	    if (CVMjvmtiAllocate(sizeof(JvmtiTagNode),
+	    if (CVMjvmtiAllocate(sizeof(CVMJvmtiTagNode),
 			 (unsigned char **)&node) != JVMTI_ERROR_NONE) {
 		JVMTI_UNLOCK(ee);
 		return;
@@ -433,7 +432,7 @@ CVMjvmtiPostCallbackUpdateTag(CVMObject *obj, JvmtiTagNode *node, jlong tag)
     } else {
 	/* object was tagged, may have been cleared or tag changed */
 	if (tag == 0) {
-	    JvmtiTagNode *tmp;
+	    CVMJvmtiTagNode *tmp;
 	    (*env)->DeleteWeakGlobalRef(env, node->ref);
 	    topNode = jvmtiTagGetTopNode(obj);
 	    if (topNode == NULL) {
@@ -500,7 +499,7 @@ static CVMBool
 jvmtiIsFilteredByKlassFilter(CVMClassBlock * objCb, jclass klass)
 {
     if (klass != NULL) {
-	if (objCb != CVMjvmtiClassObject2CB(CVMgetEE(), klass)) {
+	if (objCb != CVMjvmtiClassRef2ClassBlock(CVMgetEE(), klass)) {
 	    return CVM_TRUE;
 	}
     }
@@ -513,7 +512,7 @@ jvmtiObjectRefCallback(jvmtiHeapReferenceKind refKind,
 		    CVMObject *referrer,
 		    const CVMClassBlock *referrerCb,
 		    CVMObject *obj, 
-		    JvmtiDumpContext *dc,
+		    CVMJvmtiDumpContext *dc,
 		    jint index,
 		    CVMBool isRoot) 
 {
@@ -526,7 +525,7 @@ jvmtiObjectRefCallback(jvmtiHeapReferenceKind refKind,
     /* field index is only valid field in reference_info */
     jvmtiHeapReferenceInfo refInfo, *refInfoPtr;
     CVMClassBlock *objCb;
-    JvmtiTagNode *objNode, *referrerNode = NULL;
+    CVMJvmtiTagNode *objNode, *referrerNode = NULL;
 
     refInfoPtr = &refInfo;
 
@@ -608,7 +607,7 @@ jvmtiObjectRefCallback(jvmtiHeapReferenceKind refKind,
 static CVMBool
 jvmtiStackRefCallback(jvmtiHeapReferenceKind refKind,
 		   CVMObject *obj, 
-		   JvmtiDumpContext *dc,
+		   CVMJvmtiDumpContext *dc,
 		   jint index)
 {
     jint len;
@@ -620,7 +619,7 @@ jvmtiStackRefCallback(jvmtiHeapReferenceKind refKind,
     jvmtiHeapReferenceInfo refInfo;
     CVMClassBlock *objCb;
     CVMExecEnv *ee = dc->ee; 
-    JvmtiTagNode *objNode;
+    CVMJvmtiTagNode *objNode;
 
     /* check that callback is provider */
     if (cb == NULL) {
@@ -706,7 +705,7 @@ static jvmtiPrimitiveType CVMtype2jvmtiPrimitiveType[]= {0,
 static CVMBool
 jvmtiPrimitiveRefCallback(jvmtiHeapReferenceKind refKind,
 		       CVMObject *obj, 
-		       JvmtiDumpContext *dc,
+		       CVMJvmtiDumpContext *dc,
 		       jint index,
 		       int CVMtype,
 		       jvalue v)
@@ -717,7 +716,7 @@ jvmtiPrimitiveRefCallback(jvmtiHeapReferenceKind refKind,
     /* field index is only valid field in reference_info */
     jvmtiHeapReferenceInfo refInfo;
     CVMClassBlock *objCb;
-    JvmtiTagNode *objNode;
+    CVMJvmtiTagNode *objNode;
 
     objCb = CVMobjectGetClass(obj);
     if (objCb == CVMsystemClass(java_lang_Class)) {
@@ -762,16 +761,18 @@ static CVMBool
 jvmtiArrayPrimCallback(CVMObject *obj, 
 		    CVMClassBlock *objCb,
 		    void *elements,
-		    JvmtiDumpContext *dc,
+		    CVMJvmtiDumpContext *dc,
 		    jint count,
 		    int jvmtiType)
 {
     int res;
     jlong objTag, objKlassTag;
-    jvmtiArrayPrimitiveValueCallback cb = dc->callbacks->array_primitive_value_callback;
+    jvmtiArrayPrimitiveValueCallback callback;
     /* field index is only valid field in reference_info */
-    JvmtiTagNode *objNode;
+    CVMJvmtiTagNode *objNode;
     jlong objSize;
+
+    callback = dc->callbacks->array_primitive_value_callback;
 
     if (objCb == CVMsystemClass(java_lang_Class)) {
 	objCb = CVMsystemClass(java_lang_Class);
@@ -794,13 +795,13 @@ jvmtiArrayPrimCallback(CVMObject *obj,
     objSize = CVMobjectSizeGivenClass(obj, objCb);
 
     /* invoke the callback */
-    res = (*cb)(objKlassTag,
-		objSize,
-		&objTag,
-		count,
-		jvmtiType,
-		elements,
-		(void*)dc->userData);
+    res = (*callback)(objKlassTag,
+		      objSize,
+		      &objTag,
+		      count,
+		      jvmtiType,
+		      elements,
+		      (void*)dc->userData);
 
     CVMjvmtiPostCallbackUpdateTag(obj, objNode, objTag);
     if (res & JVMTI_VISIT_ABORT) {
@@ -812,17 +813,20 @@ jvmtiArrayPrimCallback(CVMObject *obj,
 
 static CVMBool
 jvmtiStringPrimCallback(CVMObject *obj, 
-			JvmtiDumpContext *dc)
+			CVMJvmtiDumpContext *dc)
 {
     int res;
     jlong objTag, objKlassTag;
-    jvmtiStringPrimitiveValueCallback cb = dc->callbacks->string_primitive_value_callback;
+    jvmtiStringPrimitiveValueCallback callback;
     /* field index is only valid field in reference_info */
-    JvmtiTagNode *objNode;
+    CVMJvmtiTagNode *objNode;
     jlong objSize;
     CVMInt32 len, offset;
     CVMObject *value;
     CVMClassBlock *objCb;
+    const jchar *charValues;
+
+    callback = dc->callbacks->string_primitive_value_callback;
 
     objCb = CVMobjectGetClass(obj);
     CVMassert(objCb == CVMsystemClass(java_lang_String));
@@ -851,12 +855,14 @@ jvmtiStringPrimCallback(CVMObject *obj,
     objSize = CVMobjectSizeGivenClass(obj, objCb);
 
     /* invoke the callback */
-    res = (*cb)(objKlassTag,
-		objSize,
-		&objTag,
-		(CVMJavaChar*)CVMDprivate_arrayElemLoc(((CVMArrayOfChar *)value),0),
-		len,
-		(void*)dc->userData);
+    charValues =
+	(const jchar *)CVMDprivate_arrayElemLoc(((CVMArrayOfChar *)value),0);
+    res = (*callback)(objKlassTag,
+		      objSize,
+		      &objTag,
+		      charValues,
+		      len,
+		      (void*)dc->userData);
 
     CVMjvmtiPostCallbackUpdateTag(obj, objNode, objTag);
     if (res & JVMTI_VISIT_ABORT) {
@@ -868,7 +874,7 @@ jvmtiStringPrimCallback(CVMObject *obj,
 
 static CVMBool
 jvmtiDumpInstanceFields(CVMObject *obj, const CVMClassBlock *cb,
-			CVMClassBlock *referrerCb, JvmtiDumpContext *dc,
+			CVMClassBlock *referrerCb, CVMJvmtiDumpContext *dc,
 			CVMInt32 *fieldIndex, CVMBool doRefs)
 {
     CVMInt32 i;
@@ -938,7 +944,7 @@ static CVMBool
 jvmtiDumpSuperInstanceFields(CVMObject *obj,
 			     CVMClassBlock *cb,
 			     CVMClassBlock *referrerCb,
-			     JvmtiDumpContext *dc,
+			     CVMJvmtiDumpContext *dc,
 			     CVMInt32 *fieldIndex,
 			     CVMBool doRefs) 
 {
@@ -959,7 +965,7 @@ jvmtiDumpSuperInstanceFields(CVMObject *obj,
 /* Purpose: Dump an object instance for Level 1 or 2 dumps. */
 /* Returns: CVM_TRUE if successful. */
 static CVMBool
-jvmtiDumpInstance(CVMObject *obj, JvmtiDumpContext *dc)
+jvmtiDumpInstance(CVMObject *obj, CVMJvmtiDumpContext *dc)
 {
     CVMExecEnv *ee = CVMgetEE();
     CVMClassBlock *cb = CVMobjectGetClass(obj);
@@ -981,7 +987,7 @@ jvmtiDumpInstance(CVMObject *obj, JvmtiDumpContext *dc)
  
 static  CVMBool
 jvmtiDumpStaticFields(CVMObject *clazz, const CVMClassBlock *cb,
-		      JvmtiDumpContext *dc, CVMBool doRefs)
+		      CVMJvmtiDumpContext *dc, CVMBool doRefs)
 {
     CVMExecEnv *ee = CVMgetEE();
     jint fieldIndex;
@@ -1020,7 +1026,7 @@ jvmtiDumpStaticFields(CVMObject *clazz, const CVMClassBlock *cb,
 }
 
 #undef DUMP_VALUE2
-#define DUMP_VALUE2(type_, result_) {				   \
+#define DUMP_VALUE2(type_, result_) {			     \
     result_ = CVMjvm2##type_(&CVMfbStaticField(ee, fb).raw); \
 }
                 switch (fieldType) {
@@ -1036,12 +1042,13 @@ jvmtiDumpStaticFields(CVMObject *clazz, const CVMClassBlock *cb,
 #undef DUMP_VALUE
 #undef DUMP_VALUE2
 
-		result = jvmtiPrimitiveRefCallback(JVMTI_HEAP_REFERENCE_STATIC_FIELD,
-				       clazz, 
-				       dc,
-				       fieldIndex,
-				       fieldType,
-				       v);
+		result =
+		    jvmtiPrimitiveRefCallback(JVMTI_HEAP_REFERENCE_STATIC_FIELD,
+					      clazz, 
+					      dc,
+					      fieldIndex,
+					      fieldType,
+					      v);
 		if (result == CVM_FALSE) {
 		    return result;
 		}
@@ -1055,10 +1062,10 @@ jvmtiDumpStaticFields(CVMObject *clazz, const CVMClassBlock *cb,
 /* Returns: CVM_TRUE if successful. */
 
 static CVMBool
-jvmtiDumpClass(CVMObject *clazz, JvmtiDumpContext *dc)
+jvmtiDumpClass(CVMObject *clazz, CVMJvmtiDumpContext *dc)
 {
     CVMExecEnv *ee = CVMgetEE();
-    CVMClassBlock *cb = CVMjvmtiClassInstance2ClassBlock(ee, clazz);
+    CVMClassBlock *cb = CVMjvmtiClassObject2ClassBlock(ee, clazz);
     CVMObject *signer;
     CVMBool result;
 
@@ -1098,7 +1105,8 @@ jvmtiDumpClass(CVMObject *clazz, JvmtiDumpContext *dc)
     {
         CVMObjectICell *protectionDomain = CVMcbProtectionDomain(cb);
 	if (protectionDomain != NULL) {
-	    result = jvmtiObjectRefCallback(JVMTI_HEAP_REFERENCE_PROTECTION_DOMAIN,
+	    result = jvmtiObjectRefCallback(
+				JVMTI_HEAP_REFERENCE_PROTECTION_DOMAIN,
 				clazz, cb,
 			        CVMjvmtiGetICellDirect(ee, protectionDomain),
 				dc, -1, CVM_FALSE);
@@ -1130,7 +1138,8 @@ jvmtiDumpClass(CVMObject *clazz, JvmtiDumpContext *dc)
                 switch (entryType) {
 		case CVM_CONSTANT_String: {
 		    CVMStringICell *str = CVMcpGetStringICell(cp, i);
-		   result = jvmtiObjectRefCallback(JVMTI_HEAP_REFERENCE_CONSTANT_POOL,
+		   result = jvmtiObjectRefCallback(
+			        JVMTI_HEAP_REFERENCE_CONSTANT_POOL,
 				clazz, cb,
 				(void *)CVMjvmtiGetICellDirect(ee, str),
 					dc, i, CVM_FALSE);
@@ -1142,7 +1151,8 @@ jvmtiDumpClass(CVMObject *clazz, JvmtiDumpContext *dc)
 		case CVM_CONSTANT_Class: {
 		    CVMClassBlock *classblock = CVMcpGetCb(cp, i);
 		    CVMClassICell *clazzClazz = CVMcbJavaInstance(classblock);
-		    result = jvmtiObjectRefCallback(JVMTI_HEAP_REFERENCE_CONSTANT_POOL,
+		    result = jvmtiObjectRefCallback(
+			        JVMTI_HEAP_REFERENCE_CONSTANT_POOL,
 				clazz, cb,
 				(void *)CVMjvmtiGetICellDirect(ee, clazzClazz),
 					dc, i, CVM_FALSE);
@@ -1182,7 +1192,7 @@ jvmtiDumpClass(CVMObject *clazz, JvmtiDumpContext *dc)
 
 static CVMBool
 jvmtiDumpArrayPrimitives(CVMObject *arrObj, CVMClassBlock *cb, jint size,
-			 JvmtiDumpContext *dc)
+			 CVMJvmtiDumpContext *dc)
 {
     
     void *elements;
@@ -1208,7 +1218,7 @@ jvmtiDumpArrayPrimitives(CVMObject *arrObj, CVMClassBlock *cb, jint size,
     }									\
   }
     switch (CVMarrayBaseType(cb)) {
-    case CVM_T_INT:	    DUMP_ELEMENTS(Int, jint, INT);             break;
+    case CVM_T_INT:	DUMP_ELEMENTS(Int, jint, INT);             break;
     case CVM_T_LONG:    DUMP_ELEMENTS(Long, jlong, LONG);          break;
     case CVM_T_DOUBLE:  DUMP_ELEMENTS(Double, jdouble, DOUBLE);    break;
     case CVM_T_FLOAT:   DUMP_ELEMENTS(Float, jfloat, FLOAT);       break;
@@ -1232,7 +1242,7 @@ jvmtiDumpArrayPrimitives(CVMObject *arrObj, CVMClassBlock *cb, jint size,
 /* Returns: CVM_TRUE if successful. */
 
 static CVMBool
-jvmtiDumpArray(CVMObject *arrObj, JvmtiDumpContext *dc)
+jvmtiDumpArray(CVMObject *arrObj, CVMJvmtiDumpContext *dc)
 {
     CVMClassBlock *cb = CVMobjectGetClass(arrObj);
     jint size = CVMD_arrayGetLength((CVMArrayOfAnyType *) arrObj);
@@ -1270,7 +1280,7 @@ jvmtiDumpArray(CVMObject *arrObj, JvmtiDumpContext *dc)
 /* Returns: CVM_TRUE if successful. */
 
 CVMBool
-CVMjvmtiDumpObject(CVMObject *obj, JvmtiDumpContext *dc)
+CVMjvmtiDumpObject(CVMObject *obj, CVMJvmtiDumpContext *dc)
 {
     CVMBool result = CVM_TRUE;
     CVMClassBlock *cb = CVMobjectGetClass(obj);
@@ -1291,8 +1301,8 @@ CVMBool
 CVMjvmtiIterateDoObject(CVMObject *obj, CVMClassBlock *objCb,
 				CVMUint32 objSize, void *data)
 {
-    JvmtiDumpContext *dc = (JvmtiDumpContext*)data;
-    JvmtiTagNode *objNode;
+    CVMJvmtiDumpContext *dc = (CVMJvmtiDumpContext*)data;
+    CVMJvmtiTagNode *objNode;
     jlong objKlassTag, objTag;
     jint len = -1;
     int res;
@@ -1356,7 +1366,7 @@ CVMjvmtiIterateDoObject(CVMObject *obj, CVMClassBlock *objCb,
 static void
 jvmtiDumpGlobalRoot(CVMObject **ref, void *data)
 {
-    JvmtiDumpContext *dc = (JvmtiDumpContext*)data;
+    CVMJvmtiDumpContext *dc = (CVMJvmtiDumpContext*)data;
     CVMObjectICell *icell = (CVMObjectICell *) ref;
     CVMObject *obj;
 
@@ -1371,7 +1381,7 @@ jvmtiDumpGlobalRoot(CVMObject **ref, void *data)
 static void
 jvmtiDumpLocalRoot(CVMObject **ref, void *data)
 {
-    JvmtiDumpContext *dc = (JvmtiDumpContext*)data;
+    CVMJvmtiDumpContext *dc = (CVMJvmtiDumpContext*)data;
     CVMObjectICell *icell = (CVMObjectICell *) ref;
     CVMObject *obj;
 
@@ -1386,21 +1396,21 @@ jvmtiDumpLocalRoot(CVMObject **ref, void *data)
 static void
 jvmtiDumpGlobalClass(CVMExecEnv *ee, CVMClassBlock *cb, void *data)
 {
-    JvmtiDumpContext *dc = (JvmtiDumpContext*)data;
-     if (CVMcbClassLoader(cb) == NULL) {
-	 if (CVMcbJavaInstance(cb) != NULL) {
-	     CVMObject *obj =
-		 CVMjvmtiGetICellDirect(ee, CVMcbJavaInstance(cb));
-	     jvmtiObjectRefCallback(JVMTI_HEAP_REFERENCE_SYSTEM_CLASS,
-				    NULL, NULL, obj, dc, -1, CVM_TRUE);
-	 }
-     }
+    CVMJvmtiDumpContext *dc = (CVMJvmtiDumpContext*)data;
+    if (CVMcbClassLoader(cb) == NULL) {
+	if (CVMcbJavaInstance(cb) != NULL) {
+	    CVMObject *obj =
+		CVMjvmtiGetICellDirect(ee, CVMcbJavaInstance(cb));
+	    jvmtiObjectRefCallback(JVMTI_HEAP_REFERENCE_SYSTEM_CLASS,
+				   NULL, NULL, obj, dc, -1, CVM_TRUE);
+	}
+    }
 }
 
 static void
 jvmtiDumpJNILocal(CVMObject **ref, void *data)
 {
-    JvmtiDumpContext *dc = (JvmtiDumpContext*)data;
+    CVMJvmtiDumpContext *dc = (CVMJvmtiDumpContext*)data;
     CVMObjectICell *icell = (CVMObjectICell *) ref;
     CVMObject *obj;
 
@@ -1414,7 +1424,7 @@ jvmtiDumpJNILocal(CVMObject **ref, void *data)
 
 static CVMBool
 jvmtiScanJavaFrame(CVMExecEnv *frameEE, CVMFrame *frame,
-			    CVMStackChunk *chunk, JvmtiDumpContext *dc)
+		   CVMStackChunk *chunk, CVMJvmtiDumpContext *dc)
 {
 
     CVMMethodBlock* mb;
@@ -1495,7 +1505,7 @@ jvmtiScanJavaFrame(CVMExecEnv *frameEE, CVMFrame *frame,
 }
 
 CVMBool
-CVMjvmtiScanRoots(CVMExecEnv *ee, JvmtiDumpContext *dc)
+CVMjvmtiScanRoots(CVMExecEnv *ee, CVMJvmtiDumpContext *dc)
 {
     CVMObjectICell *icell;
     CVMObject *obj;
@@ -1581,7 +1591,7 @@ CVMjvmtiScanRoots(CVMExecEnv *ee, JvmtiDumpContext *dc)
 				((CVMFreelistFrame*)frame)->vals,
 				jvmtiDumpJNILocal, dc, CVM_TRUE);
 		    } else if (CVMframeIsJava(frame)) {
-			if (jvmtiScanJavaFrame(ee, frame, chunk, dc) == CVM_FALSE) {
+			if (!jvmtiScanJavaFrame(ee, frame, chunk, dc)) {
 			    return CVM_FALSE;
 			}
 		    }

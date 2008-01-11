@@ -519,7 +519,7 @@ CVMfastTryLock(CVMExecEnv* ee, CVMObject* obj)
 
 	o->next = ee->objLocksOwned;
 #if defined(CVM_JVMTI) && !defined(CVM_JIT)
-	if (CVMjvmtiEnabled()) {
+	if (CVMjvmtiIsEnabled()) {
 	    CVMjvmtiAddLock(ee, o);
 	}
 #endif
@@ -565,7 +565,7 @@ fast_reentry_failed:
             CVMmonitorAttachObjMonitor2OwnedMonitor(ee, mon);
 	}
 #if defined(CVM_JVMTI) && !defined(CVM_JIT)
-	if (CVMjvmtiEnabled()) {
+	if (CVMjvmtiIsEnabled()) {
 	    CVMjvmtiAddMon(ee, mon);
 	}
 #endif
@@ -667,7 +667,7 @@ CVMfastReentryTryLock(CVMExecEnv *ee, CVMObject *obj)
 #endif
     }
 #if defined(CVM_JVMTI) && !defined(CVM_JIT)
-    if (CVMjvmtiEnabled()) {
+    if (CVMjvmtiIsEnabled()) {
 	CVMjvmtiAddLock(ee, o);
     }
 #endif
@@ -1262,7 +1262,7 @@ CVMfastLock(CVMExecEnv* ee, CVMObjectICell* indirectObj)
         }
     }
 #if defined(CVM_JVMTI) && !defined(CVM_JIT)
-    if (CVMjvmtiEnabled()) {
+    if (CVMjvmtiIsEnabled()) {
 	CVMjvmtiAddMon(ee, mon);
     }
 #endif
@@ -1292,7 +1292,7 @@ CVMprivateUnlock(CVMExecEnv *ee, CVMObjMonitor *mon)
     if (count > 0 && CVMprofiledMonitorGetOwner(&mon->mon) == ee) {
 	CVMassert(mon->state == CVM_OBJMON_OWNED);
 #if defined(CVM_JVMTI) && !defined(CVM_JIT)
-	if (CVMjvmtiEnabled()) {
+	if (CVMjvmtiIsEnabled()) {
 	    CVMjvmtiRemoveMon(ee, mon);
 	}
 #endif
@@ -1555,7 +1555,7 @@ CVMfastTryUnlock(CVMExecEnv* ee, CVMObject* obj)
                    thread must be trying to inflate this monitor: */
                 if (oldCount == expectedOldCount) {
 #if defined(CVM_JVMTI) && !defined(CVM_JIT)
-		    if (CVMjvmtiEnabled()) {
+		    if (CVMjvmtiIsEnabled()) {
 			CVMjvmtiRemoveLock(ee, o);
 		    }
 #endif
@@ -1595,7 +1595,7 @@ CVMfastTryUnlock(CVMExecEnv* ee, CVMObject* obj)
 		} else {
 		    CVMobjectMicroUnlock(ee, obj);
 #if defined(CVM_JVMTI) && !defined(CVM_JIT)
-		    if (CVMjvmtiEnabled()) {
+		    if (CVMjvmtiIsEnabled()) {
 			CVMjvmtiRemoveLock(ee, o);
 		    }
 #endif
@@ -1669,7 +1669,7 @@ CVMfastTryUnlock(CVMExecEnv* ee, CVMObject* obj)
 	    o->object = NULL;
 #endif
 #if defined(CVM_JVMTI) && !defined(CVM_JIT)
-	    if (CVMjvmtiEnabled()) {
+	    if (CVMjvmtiIsEnabled()) {
 		CVMjvmtiRemoveLock(ee, o);
 	    }
 #endif
@@ -1956,7 +1956,7 @@ CVMdetTryLock(CVMExecEnv* ee, CVMObject* obj)
             CVMmonitorAttachObjMonitor2OwnedMonitor(ee, mon);
 	}
 #if defined(CVM_JVMTI) && !defined(CVM_JIT)
-	if (CVMjvmtiEnabled()) {
+	if (CVMjvmtiIsEnabled()) {
 	    CVMjvmtiAddMon(ee, mon);
 	}
 #endif
@@ -2034,7 +2034,7 @@ CVMdetLock(CVMExecEnv* ee, CVMObjectICell* indirectObj)
 	CVMassert(mon->state == CVM_OBJMON_OWNED);
     }
 #if defined(CVM_JVMTI) && !defined(CVM_JIT)
-    if (CVMjvmtiEnabled()) {
+    if (CVMjvmtiIsEnabled()) {
 	CVMjvmtiAddMon(ee, mon);
     }
 #endif
