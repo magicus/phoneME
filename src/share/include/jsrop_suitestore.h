@@ -31,9 +31,10 @@ extern "C" {
 #endif /* __cplusplus */
 
 /**
- * @return maximum size in characters of suite_id in string representation
+ * @param suite_id original suite id
+ * @return size in characters of suite_id in string representation
  */
-int jsrop_suiteid_max_size();
+int jsrop_suiteid_string_size(SuiteIdType suite_id);
 
 /**
  * Convert suit_id to string representation
@@ -42,7 +43,7 @@ int jsrop_suiteid_max_size();
  *                         for receiving suite_id in string representation
  * @return non zero in case of success zero in case of error
  */
-int jsrop_suitid_to_string(SuiteIdType suite_id, /* OUT */ jchar* suite_id_str_out);
+int jsrop_suiteid_to_string(SuiteIdType suite_id, /* OUT */ jchar* suite_id_str_out);
 
 
 /**

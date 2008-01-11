@@ -33,7 +33,8 @@ vpath % $(JSROP_ABSTRACTS_DIR)/src/cldc_application/native/$(TARGET_PLATFORM)
 
 # names of native source files (like 'file.c')
 ABSTRACTIONS_NATIVES += \
-	kni_utils.c
+	kni_utils.c \
+	jsrop_suitestore.c
 
 # extra libraries needed (like '-lpthread' or '-lm')
 JSROP_ABSTRACTS_LINKLIBS = 
