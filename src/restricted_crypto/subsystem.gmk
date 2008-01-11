@@ -1,6 +1,4 @@
 #
-#   
-#
 # Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -116,9 +114,9 @@ clean_crypto:
 # Append restricted crypto source bundle creation to target
 source_bundle:: restricted_crypto_source
 
-# Don't create a new bundle
+RESTRICTED_CRYPTO_SOURCE_OUTPUT_DIR=$(SOURCE_OUTPUT_DIR)/restricted_crypto
 
-# Copy and filter SSL source source in to the MIDP source dir
-restricted_crypto_source: $(MIDP_SOURCE_OUTPUT_DIR)
+# Copy and filter SSL source source in to RESTRICTED_CRYPTO_SOURCE_OUTPUT_DIR
+restricted_crypto_source: $(RESTRICTED_CRYPTO_DIR)
 	@echo " ... restricted source bundle" $(LOG)
-	@$(call re_src_filter,$(RESTRICTED_CRYPTO_DIR),$(MIDP_SOURCE_OUTPUT_DIR),src)
+	$(AT)$(call re_src_filter,$(RESTRICTED_CRYPTO_DIR),$(RESTRICTED_CRYPTO_SOURCE_OUTPUT_DIR),src)
