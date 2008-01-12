@@ -34,43 +34,6 @@
 
 #if ENABLE_COMPILER
 
-RelocationStream::RelocationStream(CompiledMethod* compiled_method) {
-  _compiled_method            = compiled_method;
-  _current_relocation_offset  = compiled_method->end_offset();
-  decrement();
-  _current_code_offset        = 0;
-  _current_oop_relocation_offset = _current_relocation_offset;
-  _current_oop_code_offset    = 0;
-}
-
-RelocationStream::RelocationStream(CompilerState* compiler_state, 
-                                   CompiledMethod* compiled_method) {
-  _compiled_method            = compiled_method;
-  _current_relocation_offset  = compiler_state->current_relocation_offset();
-  _current_code_offset        = compiler_state->current_code_offset();
-  _current_oop_relocation_offset  = compiler_state->current_oop_relocation_offset();
-  _current_oop_code_offset        = compiler_state->current_oop_code_offset();
-}
-
-void RelocationStream::save_state(CompilerState* compiler_state) {
-  compiler_state->set_current_relocation_offset(_current_relocation_offset);
-  compiler_state->set_current_code_offset      (_current_code_offset);
-  compiler_state->set_current_oop_relocation_offset(_current_oop_relocation_offset);
-  compiler_state->set_current_oop_code_offset      (_current_oop_code_offset);
-}
-
-#if ENABLE_INLINE
-void RelocationStream::restore_state(CompilerState* compiler_state) {
-    _current_relocation_offset  = compiler_state->current_relocation_offset();
-    _current_code_offset        = compiler_state->current_code_offset();
-    _current_oop_relocation_offset  = compiler_state->current_oop_relocation_offset();
-    _current_oop_code_offset        = compiler_state->current_oop_code_offset();
-}
-void RelocationStream::set_compiled_method(CompiledMethod* method) {
-   _compiled_method = method;
-}
-#endif
-
 jint RelocationWriter::compute_embedded_offset(jint code_offset) {
   const int max_embedded_offset = right_n_bits(offset_width - 1);
   const int min_embedded_offset = - max_embedded_offset - 1; 
@@ -87,10 +50,6 @@ jint RelocationWriter::compute_embedded_offset(jint code_offset) {
   }
   _current_code_offset = code_offset;
   return bitfield(offset, 0, offset_width);
-}
-
-void RelocationWriter::set_assembler(BinaryAssembler* value) {
-  _assembler = value;
 }
 
 #if ENABLE_CODE_PATCHING

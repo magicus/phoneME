@@ -780,9 +780,12 @@ Value.cpp                        Field.hpp
 Value.cpp                        InstanceClass.hpp
 
 Relocation.hpp                   CompiledMethod.hpp
+Relocation.hpp                   CompilerState.hpp
 Relocation.cpp                   Relocation.hpp
 Relocation.cpp                   Compiler.hpp
 Relocation.cpp                   Location.hpp
+
+CompilerState.hpp                LiteralPoolElement.hpp
 
 Compiler.hpp                     CompilationQueue.hpp
 Compiler.hpp                     Method.hpp
@@ -1234,10 +1237,12 @@ SourceAssembler_<iarch>.cpp      ObjectHeap_<iarch>.hpp
 SourceAssembler_<iarch>.cpp      GPTableGenerator_<iarch>.hpp
 #endif
 
-BinaryAssembler_<carch>.hpp      LiteralPoolElement.hpp
-BinaryAssembler_<carch>.hpp      Assembler_<carch>.hpp
-BinaryAssembler_<carch>.hpp      CompiledMethod.hpp
-BinaryAssembler_<carch>.hpp      Relocation.hpp
+BinaryAssemblerCommon.hpp        Assembler_<carch>.hpp
+BinaryAssemblerCommon.hpp        CompiledMethod.hpp
+BinaryAssemblerCommon.hpp        Relocation.hpp
+BinaryAssemblerCommon.cpp        BinaryAssemblerCommon.hpp
+
+BinaryAssembler_<carch>.hpp      BinaryAssemblerCommon.hpp
 BinaryAssembler_<carch>.hpp      CallInfo.hpp
 BinaryAssembler_<carch>.hpp      ObjectHeap_<iarch>.hpp
 BinaryAssembler_<carch>.hpp      Disassembler_<carch>.hpp

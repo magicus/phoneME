@@ -33,57 +33,6 @@
 
 // The compiler translates bytecodes into native instructions.
 
-class CompilerState  {
-public:
-  #define FIELD( type, name ) \
-    type _##name;             \
-    inline type name ( void ) const { return _##name; } \
-    inline void set_##name ( type val ) { _##name = val; }
-
-#if USE_LITERAL_POOL
-  FIELD( LiteralPoolElement*, first_literal             )
-  FIELD( LiteralPoolElement*, first_unbound_literal     )
-  FIELD( LiteralPoolElement*, last_literal              )
-#endif
-
-#if ENABLE_THUMB_COMPILER
-  FIELD( LiteralPoolElement*, first_unbound_branch_literal      )
-  FIELD( LiteralPoolElement*, last_unbound_branch_literal       )
-#endif
-
-  FIELD( int,  code_size                 )
-  FIELD( int,  current_relocation_offset )
-  FIELD( int,  current_code_offset       )
-  FIELD( int,  current_oop_relocation_offset )
-  FIELD( int,  current_oop_code_offset       )
-#if ENABLE_ISOLATES
-  // The ID of the task that started this compilation. Compilation uses
-  // information that are specific to a task's context -- for example, 
-  // class_ids. Hence, a compilation must be resumed under the correct 
-  // task context.
-  FIELD( int, task_id                   )
-#endif
-
-#if USE_LITERAL_POOL
-  FIELD( int, unbound_literal_count                     )
-  FIELD( int, code_offset_to_force_literals             )
-  FIELD( int, code_offset_to_desperately_force_literals )
-#endif
-
-#if ENABLE_THUMB_COMPILER
-  FIELD( int, unbound_branch_literal_count              )
-#endif
-
-#undef FIELD
-
-  bool _valid;
-
-  bool valid ( void ) const { return _valid; }
-  void allocate ( void ) { _valid = true;   }
-  void dispose  ( void ) { _valid = false;  }
-};
-
-
 #define COMPILER_CONTEXT_HANDLES FIELD( Method, method )
 
 class CompilerContextPointers {
@@ -487,14 +436,14 @@ class Compiler: public StackObj {
 #if ENABLE_INLINE
   void internal_compile_inlined( Method::Attributes& attributes JVM_TRAPS );
 
-  BinaryAssembler::Label inline_return_label() {
+  BinaryAssembler::Label inline_return_label( void ) const {
     BinaryAssembler::Label label;
     label._encoding = inline_return_label_encoding();
     return label;
   }
 
-  void set_inline_return_label(BinaryAssembler::Label& label) {
-    set_inline_return_label_encoding(label._encoding);
+  void set_inline_return_label(const BinaryAssembler::Label label) {
+    set_inline_return_label_encoding(label._encoding );
   }
 
  private:
@@ -608,9 +557,9 @@ class Compiler: public StackObj {
 #if ENABLE_INTERNAL_CODE_OPTIMIZER && ARM &&ENABLE_CODE_OPTIMIZER
   CompilationQueueElement* _next_element;
   CompilationQueueElement* _cur_element;
-  LiteralPoolElement::Fast _next_bound_literal;
+  LiteralPoolElement*      _next_bound_literal;
 
-  InternalCodeOptimizer* optimizer() {
+  InternalCodeOptimizer* optimizer( void ) {
     return &_internal_code_optimizer;
   }
 
@@ -696,16 +645,12 @@ class Compiler: public StackObj {
   // "Figure.3.8.2.2.2 algorithm for maintaining the literal accessing chain"
   //of optimization document.
   void get_first_literal_ldrs(int* begin_offset_of_block) {
-    AllocationDisabler allocation_not_allowed_in_this_function;
-      
-    BinaryAssembler::Label label;
-    int offset;
-    LiteralPoolElement::Raw literal = code_generator()->_first_unbound_literal().obj();
-    
-    for (; !literal.is_null(); literal = literal().next()) { 
-      label._encoding = literal().label()._encoding;
-      offset = this->code_generator()->first_instr_of_literal_loading(label, 
-               (address)begin_offset_of_block);
+    for( LiteralPoolElement* literal = code_generator()->_first_unbound_literal;
+         literal; literal = literal->next() ) { 
+      BinaryAssembler::Label label = literal->label();
+
+      const int offset = code_generator()->first_instr_of_literal_loading(
+                           label, (address)begin_offset_of_block);
       //if offset is -1, means the this literal is not used 
       //in current compilation continuals
       if (offset > BinaryAssembler::literal_not_used_in_current_cc) {
@@ -719,23 +664,18 @@ class Compiler: public StackObj {
   //modify the lables of literal pool element based on the scheduling result
   //of literal access instructions
   void patch_unbound_literal_elements(int begin_offset_of_block) {
-    AllocationDisabler allocation_not_allowed_in_this_function;
-      
-    BinaryAssembler::Label tmp;
     int index = 0; 
-    int new_offset;
-    
-    LiteralPoolElement::Raw literal = code_generator()->_first_unbound_literal.obj();
-    
-    for (; !literal.is_null(); literal = literal().next()) { 
-      tmp._encoding = literal().label()._encoding;
-      if(tmp.position() < begin_offset_of_block){
+    for( LiteralPoolElement* literal = code_generator()->_first_unbound_literal;
+         literal; literal = literal->next() ) { 
+      BinaryAssembler::Label tmp = literal->label();
+      if( tmp.position() < begin_offset_of_block ){
           continue;
       }
-      new_offset = _internal_code_optimizer.offset_of_scheduled_unbound_literal_access_ins(index); 
+      const int new_offset =
+        _internal_code_optimizer.offset_of_scheduled_unbound_literal_access_ins(index); 
       if(new_offset !=0 ){
         tmp.link_to( new_offset);
-        literal().set_label(tmp);
+        literal->set_label(tmp);
       }
       index++;   
     }

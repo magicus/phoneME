@@ -24,7 +24,7 @@
  * information or have any questions.
  */
 
-class BinaryAssembler: public Assembler {
+class BinaryAssembler: public BinaryAssemblerCommon {
  public:
   class InternalLabel {
    public:
@@ -64,10 +64,7 @@ class BinaryAssembler: public Assembler {
 
     int _encoding;  
    private:
-
-    friend class CodeGenerator;
     friend class Compiler;
-    friend class CompilationQueueElement;
     friend class Entry;
   };
 
@@ -369,30 +366,6 @@ class BinaryAssembler: public Assembler {
 
   void get_thread (Register dst);
 
-  int   offset_at(int position) const  { 
-    return position + CompiledMethod::base_offset();
-  }
-  address addr_at(jint pos) const {
-    return (address)(_compiled_method->field_base(offset_at(pos)));
-  }
-
-  jint  byte_at(int position) const  {
-    return _compiled_method->byte_field(offset_at(position));
-  }
-  jint  long_at(int position) const  {
-    return _compiled_method->int_field(offset_at(position));
-  }
-
-  void  byte_at_put(int position, jbyte value)  {
-    _compiled_method->byte_field_put(offset_at(position), value);
-  }
-  void  word_at_put(int position, jshort value) {
-    _compiled_method->short_field_put(offset_at(position), value);
-  }
-  void  long_at_put(int position, jint value) {
-    _compiled_method->int_field_put(offset_at(position), value);
-  }
-
   void signal_output_overflow();
 
   void emit_byte(jint value)  {
@@ -443,72 +416,30 @@ class BinaryAssembler: public Assembler {
 
   void emit_data(int data,
                  Relocation::Kind reloc = Relocation::no_relocation);
-  static bool is_signed_byte(int data) {
-     return (-0x80 <= data && data < 0x80);
-  }
-  static bool is_unsigned_byte(int data) {
-    return (0 <= data && data <= 0xff);
-  }
 
-  BinaryAssembler(CompiledMethod* compiled_method) :
-                   _relocation(compiled_method) {
-    _compiled_method = compiled_method;
-    _code_offset     = 0;
-    _relocation.set_assembler(this);
-  }
+  BinaryAssembler(CompiledMethod* compiled_method):
+    BinaryAssemblerCommon(compiled_method) {}
 
   BinaryAssembler(CompilerState* compiler_state, 
-                  CompiledMethod* compiled_method);
-
-  // Returns the compiled method we're working on.
-  CompiledMethod* compiled_method() { return _compiled_method; }
+                  CompiledMethod* compiled_method):
+    BinaryAssemblerCommon(compiler_state, compiled_method) {}
 
   // Returns the code size in bytes
-  jint code_size()       const { return _code_offset; }
-  jint code_end_offset() const { return offset_at(code_size()); }
-
-  jint relocation_size() const { return _relocation.size(); }
-
-  // Returns the remaining free space in the compiled method.
-  jint free_space() const {
-    return (_relocation.current_relocation_offset() + sizeof(jushort)) - 
-            offset_at(code_size());
-  }
 
   void generate_sentinel() {
      hlt();
      _relocation.emit_sentinel();     
   }
 
-  bool has_overflown_compiled_method() { 
-    // Using 8 instead of 0 as defensive programming
-    // The shrink operation at the end of compilation will regain the extra
-    // space 
-    // The extra space ensures that there is always a sentinel at the end of
-    // the relocation data and that there is always a null oop that the last
-    // relocation entry can address. 
-    return free_space() < 8; 
-  }
-
-  // If compiler_area is enabled, move the relocation data to higher
-  // address to make room for more compiled code.
-  void ensure_compiled_method_space(int delta = 0);
-
-  void comment(char* str, ...) PRODUCT_RETURN;
-
-  void save_state(CompilerState *compiler_state);
-
  private:
-  CompiledMethod*  _compiled_method;
-  jint             _code_offset;
-  RelocationWriter _relocation; 
-
-  // check if there's room for a few extra bytes in the compiled method
-  bool has_room_for(int bytes) { 
-    return free_space() >= bytes + /* slop */8;
-  }
-
   static FPURegisterMap& fpu_register_map( void );
+
+  jint  long_at    (const int position) const;
+  void  word_at_put(const int position, const jshort value) const;
+  void  long_at_put(const int position, const jint value) const;
+
+  static bool is_signed_byte  ( const int data );
+  static bool is_unsigned_byte( const int data );
 
   friend class RelocationWriter;
 #endif

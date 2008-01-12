@@ -35,37 +35,6 @@
 
 #include "incls/_BinaryAssembler_arm.cpp.incl"
 
-BinaryAssembler::BinaryAssembler(CompilerState* compiler_state, 
-                                 CompiledMethod* compiled_method) 
-  : _relocation(compiler_state, compiled_method)
-{
-  _compiled_method = compiled_method;
-  _code_offset           = compiler_state->code_size();
-  _first_literal         = compiler_state->first_literal();
-  _first_unbound_literal = compiler_state->first_unbound_literal();
-  _last_literal          = compiler_state->last_literal();
-  _unbound_literal_count = compiler_state->unbound_literal_count();
-  _code_offset_to_force_literals
-                         = compiler_state->code_offset_to_force_literals();
-  _code_offset_to_desperately_force_literals
-                 = compiler_state->code_offset_to_desperately_force_literals();
-  _relocation.set_assembler(this);
-  CodeInterleaver::initialize(this);
-}
-
-void BinaryAssembler::save_state(CompilerState *compiler_state) {
-  compiler_state->set_code_size(_code_offset);
-  compiler_state->set_first_literal( _first_literal );
-  compiler_state->set_first_unbound_literal( _first_unbound_literal );
-  compiler_state->set_last_literal( _last_literal );
-  compiler_state->set_unbound_literal_count(_unbound_literal_count);
-  compiler_state->set_code_offset_to_force_literals(
-                     _code_offset_to_force_literals);
-  compiler_state->set_code_offset_to_desperately_force_literals(
-                     _code_offset_to_desperately_force_literals);
-  _relocation.save_state(compiler_state);
-}
-
 // Usage of Labels
 //
 // free  : label has not been used yet
@@ -533,17 +502,6 @@ void BinaryAssembler::get_thread(Register reg) {
   get_current_thread(reg);
 }  
 
-void BinaryAssembler::ensure_compiled_method_space(int delta) {
-  delta += 256;
-  if (!has_room_for(delta)) {
-    delta = align_allocation_size(delta + (1024 - 256));
-    if (compiled_method()->expand_compiled_code_space(delta, 
-                                                      relocation_size())) {
-      _relocation.move(delta);
-    }
-  }
-}
-
 void
 BinaryAssembler::CodeInterleaver::init_instance(BinaryAssembler* assembler) {
   COMPILER_PRINT_AS_YOU_GO(("***START_CODE_TO_BE_INTERLEAVED***"));
@@ -593,19 +551,6 @@ void BinaryAssembler::CodeInterleaver::flush() {
   }
   _assembler->_interleaver = NULL;
 }
-
-#if !defined(PRODUCT) || USE_COMPILER_COMMENTS
-
-void BinaryAssembler::comment(const char* fmt, ...) {
-  JVM_VSNPRINTF_TO_BUFFER(fmt, buffer, 1024);
-
-  if (PrintCompiledCodeAsYouGo) {
-    tty->print_cr(";; %s", buffer);
-  } else if (GenerateCompilerComments) {
-    _relocation.emit_comment(_code_offset, buffer);
-  }
-}
-#endif // !defined(PRODUCT) || USE_COMPILER_COMMENTS
 
 #if ENABLE_NPCE
 bool BinaryAssembler::is_branch_instr(jint offset) {

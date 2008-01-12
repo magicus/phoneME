@@ -679,36 +679,35 @@ void  Compiler::begin_bound_literal_search() {
   _next_bound_literal  =  this->code_generator()->_first_literal;
 }
 
-BinaryAssembler::Label Compiler::get_next_bound_literal() {
-  BinaryAssembler::Label label;
-  for (; _next_bound_literal.obj();
-    _next_bound_literal.set_obj( _next_bound_literal().next())) {
-    if (_next_bound_literal().is_bound()) {
-      label =  _next_bound_literal().label();
-      _next_bound_literal.set_obj(_next_bound_literal().next());
-      break;
+BinaryAssembler::Label Compiler::get_next_bound_literal( void ) {
+  while( _next_bound_literal ) {
+    const LiteralPoolElement* literal = _next_bound_literal;
+    _next_bound_literal = _next_bound_literal->next();
+    if( literal->is_bound() ) {
+      return literal->label();
     }
   }
+  BinaryAssembler::Label label;
   return label;
 }
 
 
-void Compiler::begin_pinned_entry_search() {
+void Compiler::begin_pinned_entry_search( void ) {
   _next_element = compilation_queue();
 }
 
-BinaryAssembler::Label Compiler::get_next_pinned_entry() {
-  BinaryAssembler::Label label;
-  for (;_next_element; _next_element = _next_element->next() ) {
-    const CompilationQueueElement::CompilationQueueElementType type =
-      _next_element->type();
-    if( type == CompilationQueueElement::osr_stub ||
-        type == CompilationQueueElement::entry_stub ) {
-      label =_next_element->entry_label(); 
-      _next_element = _next_element->next();
-      break;
-    }    
+BinaryAssembler::Label Compiler::get_next_pinned_entry( void ) {
+  while( _next_element ) {
+    const CompilationQueueElement* e = _next_element;
+    _next_element = _next_element->next();
+
+    switch( e->type() ) {
+      case CompilationQueueElement::osr_stub:
+      case CompilationQueueElement::entry_stub:
+        return e->entry_label();
+    }
   }
+  BinaryAssembler::Label label;
   return label;
 }
   

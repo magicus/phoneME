@@ -291,7 +291,7 @@ friend struct OpcodeInfo;
  F(sub_regs, 1)
 #undef F
 
-#define F(mnemonic, a)	                                    \
+#define F(mnemonic, a)                                      \
   void mnemonic(Register rd, Register rn, int imm = 0) {    \
     GUARANTEE(has_room_for_imm(abs(imm), 3) &&              \
               rd < r8 && rn < r8, "Invalid immediate");     \
@@ -306,7 +306,7 @@ friend struct OpcodeInfo;
 #define F(mnemonic, a)                                      \
   void mnemonic(Register rd, Register rn, int imm = 0) {    \
     if (has_room_for_imm(abs(imm), 3) &&                    \
-        rd < r8 && rn < r8) {	                            \
+        rd < r8 && rn < r8) {                               \
       if (a == 0) {                                         \
         if(imm >= 0) add_3bit_imm(rd, rn, imm);             \
         else sub_3bit_imm(rd, rn, imm);                     \
@@ -634,16 +634,16 @@ friend struct OpcodeInfo;
       default:                                              \
         if (offset >= 0 && has_room_for_imm(offset/4, 5)) { \
           emit(3 << 13 | b << 12 | (offset/4) << 6 |        \
-               rn << 3 | rd);	                            \
-        } else {					    \
+               rn << 3 | rd);                               \
+        } else {                                            \
            if (has_room_for_imm(abs(offset), 8)) {          \
              if(offset < 0) {                               \
                sub_imm(rn, abs(offset));                    \
-               emit(3 << 13 | b << 12 | rn << 3 | rd);	    \
+               emit(3 << 13 | b << 12 | rn << 3 | rd);      \
                add_imm(rn, abs(offset));                    \
              } else {                                       \
                add_imm(rn, abs(offset));                    \
-               emit(3 << 13 | b << 12 | rn << 3 | rd);	    \
+               emit(3 << 13 | b << 12 | rn << 3 | rd);      \
                sub_imm(rn, abs(offset));                    \
              }                                              \
            } else {                                         \
@@ -744,7 +744,7 @@ friend struct OpcodeInfo;
     emit(0xdf << 8 | imm_8);
   }
 
-  void arith(Opcode opcode, Register rd, Register rm) {	            
+  void arith(Opcode opcode, Register rd, Register rm) {             
     if ((opcode == 0xA) && ((rd > r7) || (rm > r7))) {
       cmp_hi(rd, rm);
       return;

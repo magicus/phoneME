@@ -10,8 +10,7 @@
  * 
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License version 2 for more details (a copy is
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
  * 
  * You should have received a copy of the GNU General Public License
@@ -33,6 +32,24 @@ inline FPURegisterMap& BinaryAssembler::fpu_register_map( void ) {
   return Compiler::frame()->fpu_register_map();
 }
 
+inline jint BinaryAssembler::long_at(const int position) const {
+  return BinaryAssemblerCommon::int_at(position);
+}
+inline void BinaryAssembler::word_at_put(const int position,
+                                         const jshort value) const {
+  BinaryAssemblerCommon::short_at_put(position, value);
+}
+inline void BinaryAssembler::long_at_put(const int position,
+                                         const jint value) const {
+  BinaryAssemblerCommon::int_at_put(position, value);
+}
+
+bool BinaryAssembler::is_signed_byte(const int data) {
+  return -0x80 <= data && data < 0x80;
+}
+bool BinaryAssembler::is_unsigned_byte(const int data) {
+  return 0 <= data && data <= 0xff;
+}
 
 class DisassemblerInfo {
 private:
@@ -72,20 +89,6 @@ DisassemblerInfo::~DisassemblerInfo() {
 
 DisassemblerInfo* DisassemblerInfo::_current = NULL;
 #endif
-
-BinaryAssembler::BinaryAssembler(CompilerState* compiler_state, 
-                                 CompiledMethod* compiled_method) 
-  : _relocation(compiler_state, compiled_method)
-{
-  _compiled_method = compiled_method;
-  _code_offset     = compiler_state->code_size();
-  _relocation.set_assembler(this);
-}
-
-void BinaryAssembler::save_state(CompilerState *compiler_state) {
-  compiler_state->set_code_size(_code_offset);
-  _relocation.save_state(compiler_state);
-}
 
 void BinaryAssembler::signal_output_overflow() {
   Compiler::current()->closure()->signal_output_overflow();
@@ -1041,6 +1044,7 @@ void BinaryAssembler::fremp(Register src, Register dst) {
 }
 
 void BinaryAssembler::fprem() {
+  UsingFastOops fast_oops;
   DisassemblerInfo print_me(this);
   emit_byte(0xD9);
   emit_byte(0xF8);
@@ -1102,6 +1106,7 @@ void BinaryAssembler::fucomip(Register dst, Register src) {
 }
 
 void BinaryAssembler::fwait() {
+  UsingFastOops fast_oops;
   DisassemblerInfo print_me(this);
   emit_byte(0x9B);
 }
@@ -1115,6 +1120,7 @@ void BinaryAssembler::finit() {
 }
 
 void BinaryAssembler::fstsw_ax() {
+  UsingFastOops fast_oops;
   DisassemblerInfo print_me(this);
   emit_byte(0x9B); // fwait
   emit_byte(0xDF); // fnstsw_ax
@@ -1412,30 +1418,5 @@ void BinaryAssembler::emit_data(int data, Relocation::Kind reloc) {
   }
   emit_long(data);
 }
-
-void BinaryAssembler::ensure_compiled_method_space(int delta) {
-  delta += 256;
-  if (!has_room_for(delta)) {
-    delta = align_allocation_size(delta + (1024 - 256));
-    if (compiled_method()->expand_compiled_code_space(delta, 
-                                                      relocation_size())) {
-      _relocation.move(delta);
-    }
-  }
-}
-
-#ifndef PRODUCT
-
-void BinaryAssembler::comment(char* fmt, ...) {
-  JVM_VSNPRINTF_TO_BUFFER(fmt, buffer, 1024);
-
-  if (PrintCompiledCodeAsYouGo) {
-    tty->print_cr(";; %s", buffer);
-  } else if (GenerateCompilerComments) {
-    _relocation.emit_comment(_code_offset, buffer);
-  }
-}
-
-#endif
 
 #endif

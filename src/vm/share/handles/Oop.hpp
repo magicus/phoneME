@@ -381,7 +381,7 @@ public:
   friend class ObjectHeap;
   friend class CompiledMethodCache;
   friend class Thread; // Needs field_base()
-  friend class BinaryAssembler;
+  friend class BinaryAssemblerCommon;
   friend class FinalizerConsDesc;
 
 protected:

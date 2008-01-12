@@ -147,9 +147,9 @@ class Assembler: public GlobalObj {
 
 #ifndef PRODUCT
   // Name accessors.
-  static const char* name_for_byte_register(Register reg);
-  static const char* name_for_work_register(Register reg);
-  static const char* name_for_long_register(Register reg);
+  static const char* name_for_byte_register(const Register reg);
+  static const char* name_for_work_register(const Register reg);
+  static const char* name_for_long_register(const Register reg);
 #endif
 
   enum ScaleFactor {
@@ -159,4 +159,7 @@ class Assembler: public GlobalObj {
     times_4  =  2,
     times_8  =  3
   };
+};
+
+class Macros: public Assembler {
 };

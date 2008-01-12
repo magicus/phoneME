@@ -33,36 +33,10 @@
 
 extern "C" { extern address gp_base_label; }
 
-class BinaryAssembler: public Macros {
- private:
-  // helpers
-  jint offset_at(jint pos) const { 
-    return CompiledMethod::base_offset() + pos; 
-  }
-
+class BinaryAssembler: public BinaryAssemblerCommon {
  public:
-  jint code_size() const            { return _code_offset; }
-
-  jint relocation_size() const      { return _relocation.size(); }
-  jint free_space() const {
-    return (_relocation.current_relocation_offset() + sizeof(jushort)) -
-            offset_at(code_size());
-  }
-  jint code_end_offset() const       { return offset_at(code_size()); }
- 
-  // check if there's room for a few extra bytes in the compiled method
-  bool has_room_for(int bytes) { 
-    return free_space() >= bytes + /* slop */8;
-  }
-
   void signal_output_overflow();
   PRODUCT_STATIC void emit_raw(int instr);
-
-  void zero_literal_count() { 
-    _unbound_literal_count = 0;
-    _code_offset_to_force_literals = 0x7FFFFFFF; // never need to force
-    _code_offset_to_desperately_force_literals = 0x7FFFFFFF;
-  }
 
  public:
 #if defined(PRODUCT) && !USE_COMPILER_COMMENTS
@@ -179,44 +153,19 @@ public:
  public:
   // creation
   BinaryAssembler(CompiledMethod* compiled_method) : 
-          _relocation(compiled_method) {
-    _relocation.set_assembler(this);
-    _compiled_method = compiled_method;
-    _code_offset           = 0;
-    _first_literal         = NULL;
-    _first_unbound_literal = NULL;
-    _last_literal          = NULL;
-
-    zero_literal_count();
+    BinaryAssemblerCommon(compiled_method) {
     CodeInterleaver::initialize(this);
   }
 
-  BinaryAssembler(CompilerState* compiler_state, 
-                  CompiledMethod* compiled_method);
-  void save_state(CompilerState *compiler_state);
-  // accessors
-  CompiledMethod* compiled_method() { 
-      return _compiled_method; 
+  BinaryAssembler(const CompilerState* compiler_state, 
+                  CompiledMethod* compiled_method) 
+  : BinaryAssemblerCommon(compiler_state, compiled_method) {
+    CodeInterleaver::initialize(this);
   }
-  address addr_at(jint pos) const { 
-      return (address)(_compiled_method->field_base(offset_at(pos))); 
+
+  int instruction_at(const jint pos) const { 
+    return BinaryAssemblerCommon::int_at(pos); 
   }
-  int instruction_at(jint pos) const { 
-      return *(int*)(_compiled_method->field_base(offset_at(pos))); 
-  }
-  bool has_overflown_compiled_method() const {
-    // Using 8 instead of 0 as defensive programming
-    // The shrink operation at the end of compilation will regain the extra
-    // space.
-    // The extra space ensures that there is always a sentinel at the end of
-    // the relocation data and that there is always a null oop that the last
-    // relocation entry can address. 
-    return free_space() < 8; 
-  }
-  
-  // If compiler_area is enabled, move the relocation data to higher
-  // address to make room for more compiled code.
-  void ensure_compiled_method_space(int delta = 0);
 
   // branch support
   typedef BinaryLabel Label;
@@ -377,12 +326,6 @@ public:
     return 0; 
   } 
 
-#if !defined(PRODUCT) || USE_COMPILER_COMMENTS
-  NOT_PRODUCT(virtual) void comment(const char* /*str*/, ...);
-#else
-  NOT_PRODUCT(virtual) void comment(const char* /*str*/, ...) {}
-#endif
-
   void ldr_using_gp(Register reg, address target, Condition cond = al) { 
     int offset = target - (address)&gp_base_label;
     ldr(reg, imm_index(gp, offset), cond);
@@ -432,34 +375,10 @@ public:
   void write_literals(const bool force = false);
   void write_literals_if_desperate(int extra_bytes = 0);
 
-  // We should write out the literal pool at our first convenience
-  bool need_to_force_literals() {
-    return _code_offset >= _code_offset_to_force_literals;
-  }
-
-  // We should write out the literal pool very very soon, even if it
-  // generates bad code
-  bool desperately_need_to_force_literals(int extra_bytes = 0) {
-    return _code_offset + extra_bytes >= _code_offset_to_desperately_force_literals;
-  }
-
-  int unbound_literal_count() { return _unbound_literal_count; }
-
 private:
   friend class RelocationWriter;
   friend class CodeInterleaver;
   friend class Compiler;
-
-  CompiledMethod*       _compiled_method;
-  jint                  _code_offset;
-  RelocationWriter      _relocation;
-  LiteralPoolElement*   _first_literal;
-  LiteralPoolElement*   _first_unbound_literal;
-  LiteralPoolElement*   _last_literal;
-  int                   _unbound_literal_count;
-  int                   _code_offset_to_force_literals;
-                        // and to boldly split infinitives
-  int                   _code_offset_to_desperately_force_literals;  
 };
 
 #if defined(PRODUCT) && !USE_COMPILER_COMMENTS

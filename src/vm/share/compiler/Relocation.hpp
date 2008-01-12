@@ -91,25 +91,60 @@ class Relocation: public StackObj {
 
 class RelocationStream : public Relocation {
  public:
-  jint current_relocation_offset() const {
+  jint current_relocation_offset( void ) const {
     return _current_relocation_offset;
   }
 
-  jushort* current_address() const {
+  jushort* current_address( void ) const {
     return _compiled_method->obj()->
            ushort_field_addr(_current_relocation_offset);
   }
   
-  void save_state(CompilerState* compiler_state);
+  void save_state(CompilerState* compiler_state) const {
+    compiler_state->set_current_relocation_offset(_current_relocation_offset);
+    compiler_state->set_current_code_offset      (_current_code_offset);
+    compiler_state->set_current_oop_relocation_offset(_current_oop_relocation_offset);
+    compiler_state->set_current_oop_code_offset  (_current_oop_code_offset);
+  }
+
 #if ENABLE_INLINE
-  void restore_state(CompilerState* compiler_state);
-  void set_compiled_method(CompiledMethod* method);
+  void restore_state(const CompilerState* compiler_state) {
+    _current_relocation_offset      = compiler_state->current_relocation_offset();
+    _current_code_offset            = compiler_state->current_code_offset();
+    _current_oop_relocation_offset  = compiler_state->current_oop_relocation_offset();
+    _current_oop_code_offset        = compiler_state->current_oop_code_offset();
+  }
+
+  void set_compiled_method(CompiledMethod* method) {
+   _compiled_method = method;
+  }
 #endif
 
  protected:
-  RelocationStream(CompiledMethod* compiled_method);
-  RelocationStream(CompilerState* compiler_state,
-                   CompiledMethod* compiled_method);
+  RelocationStream(CompiledMethod* compiled_method) {
+    initialize(compiled_method);
+  }
+  RelocationStream(const CompilerState* compiler_state,
+                   CompiledMethod* compiled_method) {
+    initialize(compiler_state, compiled_method);    
+  }
+
+  void initialize(CompiledMethod* compiled_method) {
+    _compiled_method            = compiled_method;
+    _current_relocation_offset  = compiled_method->end_offset();
+    decrement();
+    _current_code_offset        = 0;
+    _current_oop_relocation_offset = _current_relocation_offset;
+    _current_oop_code_offset    = 0;
+  }
+  void initialize(const CompilerState* compiler_state,
+                  CompiledMethod* compiled_method) {
+    _compiled_method                = compiled_method;
+    _current_relocation_offset      = compiler_state->current_relocation_offset();
+    _current_code_offset            = compiler_state->current_code_offset();
+    _current_oop_relocation_offset  = compiler_state->current_oop_relocation_offset();
+    _current_oop_code_offset        = compiler_state->current_oop_code_offset();
+  }
 
   void decrement(const jint items = 1) {
     _current_relocation_offset -= items * sizeof(jushort);
@@ -209,15 +244,15 @@ class RelocationReader: public RelocationStream {
 class RelocationWriter: public RelocationStream {
  public:
    RelocationWriter(CompiledMethod* compiled_method)
-       : RelocationStream(compiled_method)
-   {}
+       : RelocationStream(compiled_method) {}
 
-   RelocationWriter(CompilerState* compiler_state,
+   RelocationWriter(const CompilerState* compiler_state,
                     CompiledMethod* compiled_method)
-       : RelocationStream(compiler_state, compiled_method)
-   {}
+       : RelocationStream(compiler_state, compiled_method) {}
 
-   void set_assembler(BinaryAssembler* value);
+   void set_assembler(BinaryAssembler* value) {
+     _assembler = value;
+   }
    
    void emit(Kind kind, jint code_offset);
    void emit(Kind kind, jint code_offset, jint param) {

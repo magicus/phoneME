@@ -33,7 +33,7 @@
 
 #ifndef PRODUCT
 
-const char* Assembler::name_for_byte_register(Register reg) {
+const char* Assembler::name_for_byte_register(const Register reg) {
   static const char* names[number_of_registers] = 
 //  { "al", "cl", "dl", "bl" };
   { "al", "cl", "dl", "bl", "noreg", "noreg", "noreg", "noreg", 
@@ -42,13 +42,13 @@ const char* Assembler::name_for_byte_register(Register reg) {
   return is_valid_byte_register(reg) ? names[reg] : "noreg";
 }
 
-const char* Assembler::name_for_work_register(Register reg) {
+const char* Assembler::name_for_work_register(const Register reg) {
   static const char* names[number_of_registers] = 
   { "ax", "cx", "dx", "bx", "sp", "bp", "si", "di" };
   return is_valid_int_register(reg) ? names[reg] : "noreg";
 }
 
-const char* Assembler::name_for_long_register(Register reg) {
+const char* Assembler::name_for_long_register(const Register reg) {
   static const char* names[number_of_registers] = 
   { "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", 
     "fp0", "fp1", "fp2", "fp3", "fp4", "fp5", "fp6", "fp7" };

@@ -31,6 +31,25 @@
 // If code-relative locations are used (e.g. offsets from the
 // start of the code, Labels are relocation-transparent, i.e.,
 // the code can be moved around even during code generation (GC).
+
+// Usage of Labels
+//
+// free  : label has not been used yet
+// bound : label location has been determined, label position is
+//          corresponding code offset 
+// linked: label location has not been determined yet, label position is code
+//          offset of last instruction referring to the label
+//
+// Label positions are always code offsets in order to be (code) relocation
+// transparent.  Linked labels point to a chain of (linked) instructions that
+// eventually need to be fixed up to point to the bound label position. Each
+// instruction refers to the previous instruction that also refers to the
+// same label. The last instruction in the chain (i.e., the first instruction
+// to refer to the label) refers to itself.  
+// 
+// These instructions use pc-relative addressing and thus are relocation
+// transparent.
+
 class BinaryLabel {
   int _encoding;
 
@@ -38,11 +57,6 @@ class BinaryLabel {
     (void)position;
     GUARANTEE(position >= 0, "illegal position"); 
   }
-  friend class CodeGenerator;
-  friend class CompilationQueueElement;
-  friend class Compiler;
-  friend class Entry;
-  friend class BinaryAssembler;
 
  public:
   int encoding ( void ) const { return _encoding; }
@@ -77,6 +91,10 @@ class BinaryLabel {
   void print_value_on ( Stream* ) const;
   void p( void ) const;
 #endif
+  
+  friend class CompilationQueueElement;
+  friend class Compiler;
+  friend class Entry;
 };
 
 #endif

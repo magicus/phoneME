@@ -308,27 +308,27 @@ void SourceAssembler::beg_segment(Segment *segment, SegmentType segment_type) {
       case code_segment:
         if (GenerateSDTCode) {
           stream()->print_cr("\tAREA |.text%d|, CODE", segment_number++);
-	} else {
+        } else {
           stream()->print_cr(GenerateGNUCode? ".text":"\tAREA |.text|, CODE");
-	}
+        }
         break;
 
       case data_segment:
         if (GenerateSDTCode) {
           stream()->print_cr("\tAREA |.data%d|, DATA", segment_number++);
-	} else if (GenerateGNUCode) {
+        } else if (GenerateGNUCode) {
           stream()->print_cr(".data");
         } else {
           stream()->print_cr("\tAREA |.data|, DATA");
-	}
+        }
         break;
 
       case bss_segment:
         if (GenerateSDTCode) {
           stream()->print_cr("\tAREA |.data%d|, DATA", segment_number++);
-	} else {
+        } else {
           stream()->print_cr(GenerateGNUCode ? ".bss":"\tAREA |.data|, DATA");
-	}
+        }
         break;
 
       case gp_segment:

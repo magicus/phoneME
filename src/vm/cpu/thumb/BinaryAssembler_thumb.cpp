@@ -35,65 +35,6 @@
 
 #include "incls/_BinaryAssembler_thumb.cpp.incl"
 
-BinaryAssembler::BinaryAssembler(CompilerState* compiler_state, 
-                                 CompiledMethod* compiled_method) 
-  : _relocation(compiler_state, compiled_method)
-{
-  _compiled_method = compiled_method;
-  _code_offset           = compiler_state->code_size();
-  _first_literal         = compiler_state->first_literal();
-  _first_unbound_literal = compiler_state->first_unbound_literal();
-  _last_literal          = compiler_state->last_literal();
-  _first_unbound_branch_literal
-                         = compiler_state->first_unbound_branch_literal();
-  _last_unbound_branch_literal
-                         = compiler_state->last_unbound_branch_literal();
-  _unbound_literal_count = compiler_state->unbound_literal_count();
-  _unbound_branch_literal_count
-                         = compiler_state->unbound_branch_literal_count();
-  _code_offset_to_force_literals
-                         = compiler_state->code_offset_to_force_literals();
-  _code_offset_to_desperately_force_literals
-                 = compiler_state->code_offset_to_desperately_force_literals();
-
-  _relocation.set_assembler(this);
-  CodeInterleaver::initialize(this);
-}
-
-void BinaryAssembler::save_state(CompilerState* state) {
-  state->set_code_size(_code_offset);
-  state->set_first_literal( _first_literal );
-  state->set_first_unbound_literal( _first_unbound_literal );
-  state->set_last_literal( _last_literal );
-  state->set_first_unbound_branch_literal(_first_unbound_branch_literal);
-  state->set_last_unbound_branch_literal(_last_unbound_branch_literal);
-
-  state->set_unbound_literal_count(_unbound_literal_count);
-  state->set_unbound_branch_literal_count( _unbound_branch_literal_count);
-  state->set_code_offset_to_force_literals( _code_offset_to_force_literals);
-  state->set_code_offset_to_desperately_force_literals(_code_offset_to_desperately_force_literals);
-
-  _relocation.save_state(state);
-}
-
-// Usage of Labels
-//
-// free  : label has not been used yet
-// bound : label location has been determined, label position is
-//          corresponding code offset 
-// linked: label location has not been determined yet, label position is code
-//          offset of last instruction referring to the label
-//
-// Label positions are always code offsets in order to be (code) relocation
-// transparent.  Linked labels point to a chain of (linked) instructions that
-// eventually need to be fixed up to point to the bound label position. Each
-// instruction refers to the previous instruction that also refers to the
-// same label. The last instruction in the chain (i.e., the first instruction
-// to refer to the label) refers to itself.  
-// 
-// These instructions use pc-relative addressing and thus are relocation
-// transparent.  
-
 void BinaryAssembler::branch_helper(Label& L, bool link, bool is_near,
                                     Condition cond) {
   (void)link; // IMPL_NOTE -- is this needed?
@@ -952,17 +893,6 @@ void BinaryAssembler::oop_write_barrier(Register dst, Register tmp1, Register tm
 
   if (range_check) {
     bind(skip_oop_barrier);
-  }
-}
-
-void BinaryAssembler::ensure_compiled_method_space(int delta) {
-  delta += 256;
-  if (!has_room_for(delta)) {
-    delta = align_allocation_size(delta + (1024 - 256));
-    if (compiled_method()->expand_compiled_code_space(delta, 
-                                                      relocation_size())) {
-      _relocation.move(delta);
-    }
   }
 }
 
