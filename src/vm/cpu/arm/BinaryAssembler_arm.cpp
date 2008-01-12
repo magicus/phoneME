@@ -105,7 +105,7 @@ void BinaryAssembler::emit_raw(int instr) {
 
   if (ba->has_room_for(BytesPerWord)) {
     jint offset = ba->_code_offset;
-    CompiledMethod *cm = ba->_compiled_method;
+    CompiledMethod *cm = ba->compiled_method();
     cm->int_field_put(ba->offset_at(offset), instr);
     offset += BytesPerWord;
 #if !ENABLE_CODE_OPTIMIZER

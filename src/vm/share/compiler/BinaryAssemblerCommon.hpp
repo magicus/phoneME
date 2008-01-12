@@ -28,7 +28,6 @@
 
 class BinaryAssemblerCommon: public Macros {
  protected:
-  CompiledMethod*  _compiled_method;
   jint             _code_offset;
   RelocationWriter _relocation;
 #if USE_LITERAL_POOL
@@ -54,7 +53,6 @@ class BinaryAssemblerCommon: public Macros {
 
   BinaryAssemblerCommon(CompiledMethod* compiled_method)
     : _relocation( compiled_method ) {
-    _compiled_method = compiled_method;
     _code_offset     = 0;
 #if USE_LITERAL_POOL
     _first_literal         = NULL;
@@ -73,7 +71,6 @@ class BinaryAssemblerCommon: public Macros {
   BinaryAssemblerCommon(const CompilerState* compiler_state,
                         CompiledMethod* compiled_method)
     : _relocation( compiler_state, compiled_method ) {
-    _compiled_method = compiled_method;
     _code_offset     = compiler_state->code_size();
 #if USE_LITERAL_POOL
     _first_literal         = compiler_state->first_literal();
@@ -113,7 +110,9 @@ class BinaryAssemblerCommon: public Macros {
 #endif
   }
         
-  CompiledMethod* compiled_method( void ) const { return _compiled_method; }
+  CompiledMethod* compiled_method( void ) const {
+    return _relocation.compiled_method();
+  }
 
   jint code_size      ( void ) const { return _code_offset; }
   jint code_end_offset( void ) const { return offset_at(code_size()); }
@@ -126,27 +125,27 @@ class BinaryAssemblerCommon: public Macros {
     return position + CompiledMethod::base_offset();
   }
   address addr_at(const jint pos) const {
-    return (address)(_compiled_method->field_base(offset_at(pos)));
+    return (address)(compiled_method()->field_base(offset_at(pos)));
   }
 
   jint  byte_at(const int position) const  {
-    return _compiled_method->byte_field(offset_at(position));
+    return compiled_method()->byte_field(offset_at(position));
   }
   jint  short_at(const int position) const  {
-    return _compiled_method->short_field(offset_at(position));
+    return compiled_method()->short_field(offset_at(position));
   }
   jint  int_at(const int position) const  {
-    return _compiled_method->int_field(offset_at(position));
+    return compiled_method()->int_field(offset_at(position));
   }
 
   void  byte_at_put(const int position, const jbyte value)  {
-    _compiled_method->byte_field_put(offset_at(position), value);
+    compiled_method()->byte_field_put(offset_at(position), value);
   }
   void  short_at_put(const int position, const jshort value) const {
-    _compiled_method->short_field_put(offset_at(position), value);
+    compiled_method()->short_field_put(offset_at(position), value);
   }
   void  int_at_put(const int position, const jint value) const {
-    _compiled_method->int_field_put(offset_at(position), value);
+    compiled_method()->int_field_put(offset_at(position), value);
   }
 
 #if USE_LITERAL_POOL

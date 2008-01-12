@@ -91,6 +91,9 @@ class Relocation: public StackObj {
 
 class RelocationStream : public Relocation {
  public:
+  CompiledMethod* compiled_method( void ) const {
+    return _compiled_method;
+  }
   jint current_relocation_offset( void ) const {
     return _current_relocation_offset;
   }
@@ -119,6 +122,19 @@ class RelocationStream : public Relocation {
    _compiled_method = method;
   }
 #endif
+
+  // This is called after the compiled method has been expanded in-place
+  // (by moving the relocation data to higher address)
+  void move(int delta) {
+    _current_relocation_offset += delta;
+    GUARANTEE(_current_relocation_offset >= 0, "sanity");
+    GUARANTEE(_current_relocation_offset < 
+              (int)_compiled_method->object_size(), "sanity");
+    _current_oop_relocation_offset += delta;
+    GUARANTEE(_current_oop_relocation_offset >= 0, "sanity");
+    GUARANTEE(_current_oop_relocation_offset < 
+              (int)_compiled_method->object_size(), "sanity");
+  }
 
  protected:
   RelocationStream(CompiledMethod* compiled_method) {
@@ -272,9 +288,9 @@ class RelocationWriter: public RelocationStream {
    void emit_vsf(jint code_offset, VirtualStackFrame* frame);
 
    // Returns the size of the relocation data in bytes.
-   jint size() const {
-     return _compiled_method->end_offset()
-          - _current_relocation_offset
+   jint size( void ) const {
+     return compiled_method()->end_offset()
+          - current_relocation_offset()
           - sizeof(jushort);
    }
 
@@ -284,18 +300,6 @@ class RelocationWriter: public RelocationStream {
                                     int stub_position);
 #endif 
 
-   // This is called after the compiled method has been expanded in-place
-   // (by moving the relocation data to higher address)
-   void move(int delta) {
-     _current_relocation_offset += delta;
-     GUARANTEE(_current_relocation_offset >= 0, "sanity");
-     GUARANTEE(_current_relocation_offset < 
-               (int)_compiled_method->object_size(), "sanity");
-     _current_oop_relocation_offset += delta;
-     GUARANTEE(_current_oop_relocation_offset >= 0, "sanity");
-     GUARANTEE(_current_oop_relocation_offset < 
-               (int)_compiled_method->object_size(), "sanity");
-   }
  private:
    void emit_ushort(jushort value);
    jint compute_embedded_offset(jint code_offset);

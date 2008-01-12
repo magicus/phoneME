@@ -53,7 +53,7 @@ void BinaryAssembler::branch_helper(Label& L, bool link, bool is_near,
         long_branch = false;
       }
     } else {
-      Method::Raw m = _compiled_method->method();
+      Method::Raw m = compiled_method()->method();
       if (m().code_size() < 50) {
         long_branch = false;
       }
@@ -125,7 +125,7 @@ void BinaryAssembler::branch_helper(CompilationQueueElement* cqe,
 void BinaryAssembler::emit_raw(int instr) {
   if (has_room_for(BytesPerInt)) {
     jint offset = _code_offset;
-    CompiledMethod *cm = _compiled_method;
+    CompiledMethod *cm = compiled_method();
     cm->int_field_put(offset_at(offset), instr);
     offset += BytesPerInt;
     CodeInterleaver *cil = _interleaver;
@@ -142,7 +142,7 @@ void BinaryAssembler::emit_raw(int instr) {
 void BinaryAssembler::emit_raw(short instr) {
   if (has_room_for(BytesPerShort)) {
     jint offset = _code_offset;
-    CompiledMethod *cm = _compiled_method;
+    CompiledMethod *cm = compiled_method();
     cm->short_field_put(offset_at(offset), instr);
     offset += BytesPerShort;
     CodeInterleaver *cil = _interleaver;
