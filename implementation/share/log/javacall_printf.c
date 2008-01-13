@@ -25,11 +25,11 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include "javacall_logging.h"
 #include "javacall_printf.h"
 
 void javacall_vsprintf(int severity, int channelID, int isolateID, char *msg, va_list vl);
-static int   javacall_strlen(const char *str);
 static char* convertInt2String(int inputInt, char *buffer);
 static char* convertHexa2String(int inputHex, char *buffer);
 static void  javacall_putstring(const char *outputString);
@@ -41,17 +41,23 @@ static void  javacall_putchar(const char outputChar);
 /* d,u,i = int,c = char, s = string (char *), x = int in hexadecimal format. */
 
 #ifdef USING_64_BIT_INTEGER
+
 /* The longest 64 bit integer could be 21 characters long including the '-' and '\0' */
 /* MAX_INT_64   0x7FFFFFFFFFFFFFFF = 9223372036854775807  */
 /* MAX_UINT_64  0xFFFFFFFFFFFFFFFF = 18446744073709551615 */
-/* MIN_INT_64   0xFFFFFFFFFFFFFFFF = -9223372036854775807 */
+/* MIN_INT_64   0x8000000000000000 = -9223372036854775808 */
 #define STRIP_SIGNIFICANT_BIT_MASK  0x0FFFFFFFFFFFFFFF
+#define MIN_NEGATIVE_INT (-9223372036854775808)
+
 #define CONVERSION_BUFFER_SIZE      21
 #else /* NOT USING_64_BIT_INTEGER */
+
 /* The longest 32 bit integer could be 12 characters long including the '-' and '\0' */
 /* MAX_INT_32   0x7FFFFFFF = 2147483647  */
 /* MAX_UINT_32  0xFFFFFFFF = 4294967295  */
-/* MIN_INT_32   0xFFFFFFFF = -2147483647 */
+/* MIN_INT_32   0x80000000 = -2147483648 */
+#define MIN_NEGATIVE_INT (-2147483648)
+
 #define STRIP_SIGNIFICANT_BIT_MASK  0x0FFFFFFF
 #define CONVERSION_BUFFER_SIZE      12
 #endif /* USING_64_BIT_INTEGER */
@@ -59,7 +65,7 @@ static void  javacall_putchar(const char outputChar);
 
 
 
-void javacall_printf(int severity, int channelID, char *message, ...){
+void javacall_printf(int severity, int channelID, char *message, ...) {
 
     va_list list;
     va_start(list, message);
@@ -191,21 +197,32 @@ static char* convertHexa2String(int inputHex, char *buffer) {
 static char* convertInt2String(int inputInt, char *buffer) {
     int base = 10;
     int neg = 0;
+    unsigned int conversion_unit = 0;
     char *pstr = buffer;
     pstr+=(CONVERSION_BUFFER_SIZE-1);
+
+    *pstr = 0;
 
     if(inputInt < 0) {
         neg = 1;
         inputInt*=(-1);
     }
 
-    *pstr = 0;
+    if(inputInt == MIN_NEGATIVE_INT) {
+        conversion_unit = (unsigned int)inputInt;
+        do {
+            pstr--;
+            *pstr = ((conversion_unit % base)+'0');
+            conversion_unit = conversion_unit/base;
+        }while(conversion_unit > 0);
 
-    do {
-        pstr--;
-        *pstr = ((inputInt % base)+'0');
-        inputInt = inputInt/base;
-    }while(inputInt > 0);
+    } else {
+        do {
+            pstr--;
+            *pstr = ((inputInt % base)+'0');
+            inputInt = inputInt/base;
+        }while(inputInt > 0);
+    }
 
     if(neg) {
         pstr--;
@@ -214,13 +231,3 @@ static char* convertInt2String(int inputInt, char *buffer) {
     return pstr;
 }
 
-static int javacall_strlen(const char *str) {
-    int i;
-    if(str == NULL) {
-        return -1;
-    }
-    for(i = 0; *str != 0; i++) {
-        str++;
-    }
-    return i;
-}
