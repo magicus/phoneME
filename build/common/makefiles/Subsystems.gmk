@@ -356,7 +356,7 @@ endif
 # Description: JSR 205
 #####################################################################
 ifeq ($(USE_JSR_205), true)
-include $(JSR_205_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_205_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
