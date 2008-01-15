@@ -376,14 +376,14 @@ midpInitializeUI(void) {
 
         reserved = getInternalPropertyInt("AMS_MEMORY_RESERVED_MVM");
         if (0 == reserved) {
-            REPORT_ERROR(LC_AMS, "AMS_MEMORY_RESERVED_MVM property not set");
-            return -1;
+            REPORT_ERROR(LC_AMS, "AMS_MEMORY_RESERVED_MVM property not set");            
+            reserved = AMS_MEMORY_RESERVED_MVM;
         }
 
         limit = getInternalPropertyInt("AMS_MEMORY_LIMIT_MVM");
         if (0 == limit) {
             REPORT_ERROR(LC_AMS, "AMS_MEMORY_LIMIT_MVM property not set");
-            return -1;
+            limit = AMS_MEMORY_LIMIT_MVM;
         }
 
         reserved = reserved * 1024;
