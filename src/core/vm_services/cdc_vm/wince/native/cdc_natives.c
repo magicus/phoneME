@@ -120,9 +120,9 @@ KNIDECL(com_sun_midp_main_MIDletSuiteLoader_vmEndStartUp) {
  */
 static int
 midpInitializeUI(void) {
-    //if (InitializeEvents() != 0) {
-    //    return -1;
-    //}
+    /*if (InitializeEvents() != 0) {*/
+    /*    return -1;*/
+    /*}*/
 
     /*
      * Porting consideration:
@@ -141,6 +141,11 @@ midpInitializeUI(void) {
         if (0 == reserved) {
             REPORT_ERROR(LC_AMS, "AMS_MEMORY_RESERVED_MVM property not set");
             reserved = AMS_MEMORY_RESERVED_MVM;
+        }
+
+        if (0 == limit) {
+            REPORT_ERROR(LC_AMS, "AMS_MEMORY_LIMIT_MVM property not set");
+            limit = AMS_MEMORY_LIMIT_MVM;
         }
 
         reserved = reserved * 1024;
@@ -168,9 +173,9 @@ midpInitializeUI(void) {
     }
 #endif
 
-    // IMPL_NOTE if (pushopen() != 0) {
-    //    return -1;
-    //}
+    /* IMPL_NOTE if (pushopen() != 0) {*/
+    /*    return -1;*/
+    /*}*/
 
     lcdlf_ui_init();
     return 0;
@@ -183,21 +188,21 @@ static void
 midpFinalizeUI(void) {
     lcdlf_ui_finalize();
 
-    //IMPL_NOTE: pushclose();
-    //finalizeCommandState();
+    /*IMPL_NOTE: pushclose();*/
+    /*finalizeCommandState();*/
 
-    //FinalizeEvents();
+    /*FinalizeEvents();*/
 
-    // Porting consideration:
-    // Here is a good place to put I18N finalization
-    // function. e.g. finalizeLocaleMethod();
+    /* Porting consideration:*/
+    /* Here is a good place to put I18N finalization*/
+    /*function. e.g. finalizeLocaleMethod();*/
 
     /*
      * Note: the AMS isolate will have been registered by a native method
      * call, so there is no corresponding midpRegisterAmsIsolateId in the
      * midpInitializeUI() function.
      */
-    //midpUnregisterAmsIsolateId();
+    /*midpUnregisterAmsIsolateId();*/
     CloseMsgQueue(controlPipe[0]);
     CloseMsgQueue(controlPipe[1]);
 }
@@ -271,7 +276,7 @@ static void initCDCEvents() {
     readEventQueueOptions.dwMaxMessages = 0;
     readEventQueueOptions.cbMaxMessage = MAX_MESSAGE_SIZE;
     readEventQueueOptions.bReadAccess = TRUE;
-    // Read
+    /* Read*/
     controlPipe[0] = CreateMsgQueue(TEXT("EventQueue"), &readEventQueueOptions);
     err = GetLastError();
     if (err != ERROR_SUCCESS) {
@@ -284,7 +289,7 @@ static void initCDCEvents() {
     writeEventQueueOptions.dwMaxMessages = 0;
     writeEventQueueOptions.cbMaxMessage = MAX_MESSAGE_SIZE;
     writeEventQueueOptions.bReadAccess = FALSE;
-    // Write
+    /* Write*/
     controlPipe[1] = OpenMsgQueue(GetCurrentProcess(), controlPipe[0], &writeEventQueueOptions);
     err = GetLastError();
     if (err != ERROR_SUCCESS) {

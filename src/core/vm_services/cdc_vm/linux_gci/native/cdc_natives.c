@@ -145,6 +145,11 @@ midpInitializeUI(void) {
             reserved = AMS_MEMORY_RESERVED_MVM;
         }
 
+        if (0 == limit) {
+            REPORT_ERROR(LC_AMS, "AMS_MEMORY_LIMIT_MVM property not set");
+            limit = AMS_MEMORY_LIMIT_MVM;
+        }
+
         reserved = reserved * 1024;
         JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_RESERVED_MEMORY, reserved);
 
@@ -176,7 +181,7 @@ midpInitializeUI(void) {
         }
     */
 
-    //    lcdlf_ui_init();
+    /*    lcdlf_ui_init();*/
     return 0;
 }
 
@@ -185,7 +190,7 @@ midpInitializeUI(void) {
  */
 static void
 midpFinalizeUI(void) {
-  //   lcdlf_ui_finalize();
+  /*   lcdlf_ui_finalize();*/
 
     /*
        IMPL_NOTE: pushclose();

@@ -82,7 +82,7 @@ getHeapRequirement(){
         max_isolates = MAX_ISOLATES;
     }
 
-    //calculate heap size
+    /*calculate heap size*/
     midp_heap_requirement = max_isolates * 1280 * 1024;
     return midp_heap_requirement;
 }
