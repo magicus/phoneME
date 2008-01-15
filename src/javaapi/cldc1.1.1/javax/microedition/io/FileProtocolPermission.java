@@ -29,139 +29,265 @@ package javax.microedition.io;
 import java.security.PermissionCollection;
 import java.security.Permission;
 import java.util.Enumeration;
-import java.util.Hashtable;
 import java.util.Vector;
+
 /**
- * This class represents access rights to connections via the "file" protocol. 
- * A FileProtocolPermission consists of a URI string indicating a pathname and 
- * a set of actions desired for that pathname.
- *
+ * This class represents access rights to connections via the "file"
+ * protocol.  A <code>FileProtocolPermission</code> consists of a
+ * URI string indicating a pathname and a set of actions desired for that
+ * pathname.
+ * <p>
  * The URI string takes the following form:
- *
+ * <pre>
  * file://{pathname}
- * 
+ * </pre>
+ * A pathname that ends in "/*" indicates
+ * all the files and directories contained in that directory.  A pathname
+ * that ends with "/-" indicates (recursively) all files
+ * and subdirectories contained in that directory.
+ * <p>
+ * The actions to be granted are passed to the constructor in a string
+ * containing a list of one or more comma-separated keywords. The possible
+ * keywords are "read" and "write".  The actions string is converted to
+ * lowercase before processing.
  *
- * A pathname that ends in "/*" indicates all the files and directories contained in that directory. 
- * A pathname that ends with "/-" indicates (recursively) all files and subdirectories contained in that directory.
- *
- * The actions to be granted are passed to the constructor in a string containing a list of one or more 
- * comma-separated keywords. The possible keywords are "read" and "write". The actions string is converted to lowercase before processing. 
+ * @see Connector#open
+ * @see "javax.microedition.io.file.FileConnection" in <a href="http://www.jcp.org/en/jsr/detail?id=75">FileConnection Optional Package Specification</a>
  */
-
 public final class FileProtocolPermission extends GCFPermission {
-
-  private String actions;
-  String path;
-  boolean has_wildcard;
-  boolean has_read_action = false;
-  boolean has_write_action = false;
   /**
-   * Creates a new FileProtocolPermission with the specified actions. 
-   * The specified URI becomes the name of the FileProtocolPermission. 
+   * Read from a file
+   */
+  private final static int READ	= 0x1;
+
+  /**
+   * Write to a file
+   */
+  private final static int WRITE	= 0x2;
+
+  /**
+   * No actions
+   */
+  private final static int NONE		= 0x0;
+
+  /**
+   * All actions
+   */ 
+  private final static int ALL	= READ|WRITE;
+
+  /**
+   * Action mask
+   */
+  private int action_mask = NONE;
+
+  /**
+   * Creates a new <code>FileProtocolPermission</code> with the specified
+   * actions.  The specified URI becomes the name of the
+   * <code>FileProtocolPermission</code>.
    * The URI string must conform to the specification given above.
-   * @param name - The name of the file.
-   * @param actions - The actions string.
    *
-   * @throws IllegalArgumentException - if uri or actions is malformed.
-   * @throws NullPointerException - if uri or actions is null.
+   * @param uri the URI string
+   * @param actions comma-separated list of desired actions
+   *
+   * @throws IllegalArgumentException if <code>uri</code> or
+   * <code>actions</code> is malformed.
+   * @throws NullPointerException if <code>uri</code> or
+   * <code>actions</code> is <code>null</code>.
+   *
+   * @see #getName
+   * @see #getActions
    */
   public FileProtocolPermission(String uri, String actions) {
     super(uri);
-    this.actions = actions.toLowerCase().trim();
-    parse_actions();
-    parse_uri(uri);
+
+    if (!"file".equals(getProtocol())) {
+      throw new IllegalArgumentException("Expected file protocol: " + uri);
+    }
+
+    checkHostPortPathOnly();
+
+    checkNoHostPort();
+
+    String path = getPath();
+
+    if (path == null || "".equals(path)) {
+      throw new IllegalArgumentException("No path specified: " + uri);
+    }
+
+    if (!uri.equals("file://" + path)) {
+      throw new IllegalArgumentException(
+        "Expected URI of the form file://{pathname}: " + uri);
+    }
+
+    action_mask = getMask(actions);
   }
 
-  private void parse_actions() {
-    String remained_actions = actions;
-    int idx = remained_actions.indexOf(',');
-    while (idx != -1) {
-      if (idx == 0) {
-        throw new IllegalArgumentException("action string is malformed:" + actions);
-      }
-      String action = remained_actions.substring(0, idx - 1).trim();
-      if (action.equals("read")) {
-        has_read_action = true;
-      } else if (action.equals("write")) {
-        has_read_action = true;
-      } else {
-        throw new IllegalArgumentException("action string has illegal keyword: " + action);
-      }
-
-      remained_actions = remained_actions.substring(idx + 1, remained_actions.length()).trim();
-      idx = remained_actions.indexOf(',');
-    }
-
-    //single keyword remained
-    if (remained_actions.equals("read")) {
-      has_read_action = true;
-    } else if (remained_actions.equals("write")) {
-      has_read_action = true;
-    } else if (remained_actions.equals("")) { // do nothing
-    } else {
-      throw new IllegalArgumentException("action string has illegal keyword: " + remained_actions);
-    }
+  int getActionMask() {
+    return action_mask;
   }
 
-  private void parse_uri(String uri) {
-    if (uri.startsWith("file://")) {
-      throw new IllegalArgumentException("uri must start with file://");
-    }
-    String full_path = uri.substring(7, uri.length());
-    int idx = path.indexOf('*');
-    if (idx == -1 ) {
-      path = full_path;
-    }
-    has_wildcard = true;
-    if (idx != full_path.length())  { //* is not last symbol
-      throw new IllegalArgumentException("uri is malformed. * could be only in the end of uri!"); 
-    }
-    if (idx == 0) { //path is *
-      path = "";
-    } else {
-      path = full_path.substring(0, full_path.length() - 2);
-    }
-  }
   /**
-   * Checks if this FileProtocolPermission object "implies" the specified permission.
+   * Convert an action string to an integer actions mask. 
    *
-   * More specifically, this method returns true if:
+   * @param action the action string
+   * @return the action mask
+   */
+  private static int getMask(String action) {
+
+    if (action == null) {
+      throw new NullPointerException("action can't be null");
+    }
+
+    if (action.equals("")) {
+      throw new IllegalArgumentException("action can't be empty");
+    }
+
+    int mask = NONE;
+    
+    char[] a = action.toCharArray();
+
+    int i = a.length - 1;
+    if (i < 0) {
+      return mask;
+    }
+
+    while (i != -1) {
+      char c;
+
+      // skip whitespace
+      while ((i!=-1) && ((c = a[i]) == ' ' ||
+                         c == '\r' ||
+                         c == '\n' ||
+                         c == '\f' ||
+                         c == '\t'))
+        i--;
+
+      // check for the known strings
+      int matchlen;
+
+      if (i >= 3 && 
+          (a[i-3] == 'r' || a[i-3] == 'R') &&
+          (a[i-2] == 'e' || a[i-2] == 'E') &&
+          (a[i-1] == 'a' || a[i-1] == 'A') &&
+          (a[i] == 'd' || a[i] == 'D')) {
+        matchlen = 4;
+        mask |= READ;
+
+      } else if (i >= 4 && 
+                 (a[i-4] == 'w' || a[i-4] == 'W') &&
+                 (a[i-3] == 'r' || a[i-3] == 'R') &&
+                 (a[i-2] == 'i' || a[i-2] == 'I') &&
+                 (a[i-1] == 't' || a[i-1] == 'T') &&
+                 (a[i] == 'e' || a[i] == 'E')) {
+        matchlen = 5;
+        mask |= WRITE;
+        
+      } else {
+        // parse error
+        throw new IllegalArgumentException(
+          "invalid permission: " + action);
+      }
+
+      // make sure we didn't just match the tail of a word
+      // like "ackbarfread".  Also, skip to the comma.
+      boolean seencomma = false;
+      while (i >= matchlen && !seencomma) {
+        switch(a[i-matchlen]) {
+        case ',':
+          seencomma = true;
+          /*FALLTHROUGH*/
+        case ' ': case '\r': case '\n':
+        case '\f': case '\t':
+          break;
+        default:
+          throw new IllegalArgumentException(
+            "invalid permission: " + action);
+        }
+        i--;
+      }
+
+      // point i at the location of the comma minus one (or -1).
+      i -= matchlen;
+    }
+
+    return mask;
+  }
+
+  /**
+   * Checks if this <code>FileProtocolPermission</code> object "implies"
+   * the specified permission.
+   * <p>
+   * More specifically, this method returns <code>true</code> if:
+   * <p>
+   * <ul>
+   * <li> <i>p</i> is an instanceof <code>FileProtocolPermission</code>,
+   * <p>
+   * <li> <i>p</i>'s actions are a proper subset of this
+   * object's actions, and
+   * <p>
+   * <li> <i>p</i>'s pathname is implied by this object's
+   *      pathname. For example, "/tmp/*" implies "/tmp/foo", since
+   *      "/tmp/*" encompasses the "/tmp" directory and all files in that
+   *      directory, including the one named "foo".
+   * </ul>
+   * <p>
+   * @param p the permission to check against
    *
-   *  * p is an instanceof FileProtocolPermission,
-   *
-   *  * p's actions are a proper subset of this object's actions, and
-   *
-   *  * p's pathname is implied by this object's pathname. For example, "/tmp/*" implies "/tmp/foo", 
-   * since "/tmp/*" encompasses the "/tmp" directory and all files in that directory, including the one named "foo". 
-   * @param p - the permission to check against
-   * @return true if the specified permission is implied by this object, false if not.
-   */ 
+   * @return true if the specified permission is implied by this object,
+   * false if not.
+   */
   public boolean implies(Permission p) {
     if (!(p instanceof FileProtocolPermission)) {
       return false;
     } 
 
-    FileProtocolPermission fp = (FileProtocolPermission)p;
+    FileProtocolPermission that = (FileProtocolPermission)p;
 
-    if (fp.has_read_action && !has_read_action) {
+    if ((this.action_mask & that.action_mask) != that.action_mask) {
       return false;
     }
 
-    if (fp.has_write_action && !has_write_action) {
-      return false;
+    return impliesByPath(that);
+  }
+
+  boolean impliesByPath(FileProtocolPermission that) {
+    String thisPath = this.getPath();
+    String thatPath = that.getPath();
+
+    if (thisPath.equals(thatPath)) {
+      return true;
     }
-    if (has_wildcard) {
-      return fp.path.startsWith(path);
-    } else {
-      return fp.path.equals(path);
+
+    // A pathname that ends in "/*" indicates all the files and directories
+    // contained in that directory.
+    if (thisPath.endsWith("/*")) {
+      int len = thisPath.length();
+      String s = thisPath.substring(0, len - 1);
+      return (thatPath.startsWith(s) && 
+              !thatPath.endsWith("/-") &&
+              thatPath.indexOf('/', len - 1) == -1);
     }
+
+    // A pathname that ends with "/-" indicates (recursively) all files
+    // and subdirectories contained in that directory.    
+    if (thisPath.endsWith("/-")) {
+      int len = thisPath.length();
+      String s = thisPath.substring(0, len - 1);
+      return thatPath.startsWith(s);
+    }
+
+    return false;
   }
 
   /**
-   * Checks two FileProtocolPermission objects for equality.
-   * @param obj - the object we are testing for equality with this object..
-   * @return true if obj is a ProtocolPermission and has the same URI string 
-   *              as this FileProtocolPermission object.
+   * Checks two <code>FileProtocolPermission</code> objects for equality.
+   * 
+   * @param obj the object we are testing for equality with this object.
+   *
+   * @return <code>true</code> if <code>obj</code> is a
+   * <code>FileProtocolPermission</code>,
+   * and has the same URI string and actions as
+   * this <code>FileProtocolPermission</code> object.
    */
   public boolean equals(Object obj) {
     if (!(obj instanceof FileProtocolPermission)) {
@@ -169,43 +295,45 @@ public final class FileProtocolPermission extends GCFPermission {
     }
     FileProtocolPermission other = (FileProtocolPermission)obj;
     return other.getURI().equals(getURI()) 
-           && has_read_action == other.has_read_action 
-           && has_write_action == other.has_write_action;
+           && action_mask == other.action_mask;
   }
 
   /**
    * Returns the hash code value for this object.
-   * @return  a hash code value for this object.
+   *
+   * @return a hash code value for this object.
    */
   public int hashCode() {
-    return getURI().hashCode() ^ actions.hashCode();
+    return getURI().hashCode() ^ action_mask;
   }
 
   /**
-   * Returns the canonical string representation of the actions. 
-   * Always returns present actions in the following order: read, write.
-   * @return the canonical string representation of the actions..
+   * Returns the canonical string representation of the actions.
+   * Always returns present actions in the following order: read, write. 
+   *
+   * @return the canonical string representation of the actions.
    */
   public String getActions() {
-    if (has_read_action && has_write_action) {
-      return "read, write";
-    } else if (has_read_action) {
-      return "read";
-    } else if (has_write_action) {
-      return "write";
+    switch (action_mask) {
+    case ALL:    return "read, write";
+    case READ:   return "read";
+    case WRITE:  return "write";
+    default:     return "";
     }
-
-    return "";
   }
 
   /**
-   * Returns a new PermissionCollection for storing FileProtocolPermission objects.
+   * Returns a new <code>PermissionCollection</code> for storing
+   * <code>FileProtocolPermission</code> objects.
+   * <p>
+   * <code>FileProtocolPermission</code> objects must be stored in a
+   * manner that allows
+   * them to be inserted into the collection in any order, but that also
+   * enables the <code>PermissionCollection</code> implies method to be
+   * implemented in an efficient (and consistent) manner.
    *
-   * FileProtocolPermission objects must be stored in a manner that allows them to be inserted 
-   * into the collection in any order, but that also enables the PermissionCollection implies 
-   * method to be implemented in an efficient (and consistent) manner.  
-   *
-   * @return a new PermissionCollection suitable for storing FileProtocolPermission objects.
+   * @return a new <code>PermissionCollection</code> suitable for storing
+   * <code>FileProtocolPermission</code> objects.
    */
   public PermissionCollection newPermissionCollection() {
     return new FileProtocolPermissionCollection();
@@ -229,116 +357,87 @@ public final class FileProtocolPermission extends GCFPermission {
  *
  */
 
-final class FileProtocolPermissionCollection extends PermissionCollection
-{
-    private Hashtable read_perms;
-    private Hashtable write_perms;
-    private Vector    perms;
+final class FileProtocolPermissionCollection extends PermissionCollection {
+  private final Vector permissions = new Vector(6);
 
-    /**
-     * Create an empty FileProtocolPermissionCollection object.
-     *
-     */
+  /**
+   * Create an empty FileProtocolPermissionCollection object.
+   *
+   */
+  public FileProtocolPermissionCollection() {}
 
-    public FileProtocolPermissionCollection() {
-      read_perms = new Hashtable(6);
-      write_perms = new Hashtable(6);
-      perms = new Vector(12);
+  /**
+   * Adds a permission to the GCFPermissions. The key for the hash is
+   * permission.uri.
+   *
+   * @param permission the Permission object to add.
+   *
+   * @exception IllegalArgumentException - if the permission is not a
+   *                                       GCFPermission, or if
+   *					     the permission is not of the
+   *					     same Class as the other
+   *					     permissions in this collection.
+   *
+   * @exception SecurityException - if this GCFPermissionCollection object
+   *                                has been marked readonly
+   */
+  public void add(Permission permission) {
+    if (! (permission instanceof FileProtocolPermission))
+      throw new IllegalArgumentException("invalid permission: "+
+                                         permission);
+    if (isReadOnly()) {
+      throw new SecurityException(
+        "Cannot add a Permission to a readonly PermissionCollection");
     }
 
-    /**
-     * Adds a permission to the GCFPermissions. The key for the hash is
-     * permission.uri.
-     *
-     * @param permission the Permission object to add.
-     *
-     * @exception IllegalArgumentException - if the permission is not a
-     *                                       GCFPermission, or if
-     *					     the permission is not of the
-     *					     same Class as the other
-     *					     permissions in this collection.
-     *
-     * @exception SecurityException - if this GCFPermissionCollection object
-     *                                has been marked readonly
-     */
+    FileProtocolPermission bp = (FileProtocolPermission) permission;
+    permissions.addElement(permission);
+  }
 
-    public void add(Permission permission)
-    {
-	if (! (permission instanceof FileProtocolPermission))
-	    throw new IllegalArgumentException("invalid permission: "+
-					       permission);
-	if (isReadOnly())
-	    throw new SecurityException("attempt to add a Permission to a readonly PermissionCollection");
-
-	FileProtocolPermission bp = (FileProtocolPermission) permission;
-        perms.addElement(permission);
-
-        if (bp.has_read_action) {
-          read_perms.put(bp.path, permission);
-        }
-        if (bp.has_write_action) {
-          read_perms.put(bp.path, permission);
-        } 
-    }
-
-    /**
-     * Check and see if this set of permissions implies the permissions
-     * expressed in "permission".
-     *
-     * @param p the Permission object to compare
-     *
-     * @return true if "permission" is a proper subset of a permission in
-     * the set, false if not.
-     */
-
-    public boolean implies(Permission permission)
-    {
-      if (! (permission instanceof FileProtocolPermission)) {
-        return false;
-      }
-
-      FileProtocolPermission bp = (FileProtocolPermission) permission;
-      if (bp.has_read_action) {
-        if (!check_permission(read_perms, bp)) {
-          return false;
-        }
-      }
-      if (bp.has_write_action) {
-        if (!check_permission(write_perms, bp)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    private boolean check_permission(Hashtable perms, FileProtocolPermission bp) {
-      String path_to_check = bp.path;
-      if (perms.get(path_to_check) != null) {
-        FileProtocolPermission perm = (FileProtocolPermission)perms.get(path_to_check);
-        if (perm.has_wildcard || !bp.has_wildcard) {
-          return true;
-        }
-      }
-      int idx;
-      while ((idx = path_to_check.lastIndexOf('/')) != -1) {
-        path_to_check = path_to_check.substring(0, idx - 1);
-        if (perms.get(path_to_check) != null) {
-          FileProtocolPermission perm = (FileProtocolPermission)perms.get(path_to_check);
-          if (perm.has_wildcard || !bp.has_wildcard) {
-            return true;
-          }
-        }        
-      }
+  /**
+   * Check and see if this set of permissions implies the permissions
+   * expressed in "permission".
+   *
+   * @param p the Permission object to compare
+   *
+   * @return true if "permission" is a proper subset of a permission in
+   * the set, false if not.
+   */
+  public boolean implies(Permission permission) {
+    if (! (permission instanceof FileProtocolPermission)) {
       return false;
     }
-    /**
-     * Returns an enumeration of all the GCFPermission objects in the
-     * container.
-     *
-     * @return an enumeration of all the GCFPermission objects.
-     */
 
-    public Enumeration elements() {
-      return perms.elements();
+    FileProtocolPermission fp = (FileProtocolPermission) permission;
+
+    int desired = fp.getActionMask();
+    int effective = 0;
+    int needed = desired;
+
+    Enumeration search = permissions.elements();
+    while (search.hasMoreElements()) {
+      FileProtocolPermission p = (FileProtocolPermission)search.nextElement();
+
+      int actions = p.getActionMask();
+      if ((actions & needed) != 0 && p.impliesByPath(fp)) {
+        effective |= actions;
+        if ((effective & desired) == desired) {
+          return true;
+        }
+        needed = (desired ^ effective);
+      } 
     }
+
+    return false;
+  }
+
+  /**
+   * Returns an enumeration of all the GCFPermission objects in the
+   * container.
+   *
+   * @return an enumeration of all the GCFPermission objects.
+   */
+  public Enumeration elements() {
+    return permissions.elements();
+  }
 }

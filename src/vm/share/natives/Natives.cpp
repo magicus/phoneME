@@ -635,7 +635,9 @@ ReturnOop Java_java_lang_System_getProperty0(JVM_SINGLE_ARG_TRAPS) {
     need_to_free = false;
 
     if (jvm_strcmp(name, "microedition.configuration") == 0) {
-#if ENABLE_CLDC_11
+#if ENABLE_CLDC_111
+      value = "CLDC-1.1.1";
+#elif ENABLE_CLDC_11
       value = "CLDC-1.1";
 #else
       value = "CLDC-1.0";
