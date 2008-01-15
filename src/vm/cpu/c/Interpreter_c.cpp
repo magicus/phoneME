@@ -562,7 +562,37 @@ enum {
     DOUBLE_PUSH(jvm_fplib_floor(x));
     ADVANCE_FOR_RETURN();
   }
-#endif
+
+#if ENABLE_CLDC_111
+
+  void native_math_asin_entry() {
+    jdouble x = DOUBLE_POP();
+    DOUBLE_PUSH(jvm_fplib_asin(x));
+    ADVANCE_FOR_RETURN();
+  }
+
+  void native_math_acos_entry() {
+    jdouble x = DOUBLE_POP();
+    DOUBLE_PUSH(jvm_fplib_acos(x));
+    ADVANCE_FOR_RETURN();
+  }
+
+  void native_math_atan_entry() {
+    jdouble x = DOUBLE_POP();
+    DOUBLE_PUSH(jvm_fplib_atan(x));
+    ADVANCE_FOR_RETURN();
+  }
+
+  void native_math_atan2_entry() {
+    jdouble y = DOUBLE_POP();
+    jdouble x = DOUBLE_POP();
+    DOUBLE_PUSH(jvm_fplib_atan2(x, y));
+    ADVANCE_FOR_RETURN();
+  }
+
+#endif // ENABLE_CLDC_111
+
+#endif // ENABLE_FLOAT
 
   void native_string_indexof_entry() {
     // we have no generic implementation, so do it here

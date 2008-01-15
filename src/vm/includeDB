@@ -2855,6 +2855,14 @@ JFP_lib_floor.cpp               FloatNatives.hpp
 
 JFP_lib_copysign.cpp            FloatNatives.hpp
 
+JFP_lib_asin.cpp                FloatNatives.hpp
+
+JFP_lib_acos.cpp                FloatNatives.hpp
+
+JFP_lib_atan.cpp                FloatNatives.hpp
+
+JFP_lib_atan2.cpp               FloatNatives.hpp
+
 IEEE754_fmod.cpp                FloatNatives.hpp
 
 IEEE754_rem_pio2.cpp            FloatNatives.hpp

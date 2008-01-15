@@ -72,7 +72,6 @@ void NativeGenerator::generate_native_math_entries() {
   Label label_floor("jvm_floor");     import(label_floor);
   Label label_ceil("jvm_ceil");       import(label_ceil);
 
-
   // Generate sine entry.
   bind_rom_linkable("native_math_sin_entry");
   pop(A); pop(B);
@@ -120,6 +119,49 @@ void NativeGenerator::generate_native_math_entries() {
   bl(label_floor);
   set_return_type(T_DOUBLE);
   jmpx(return_reg);
+
+#if ENABLE_CLDC_111
+
+  Label label_asin("jvm_asin");       import(label_asin);
+  Label label_acos("jvm_acos");       import(label_acos);
+  Label label_atan("jvm_atan");       import(label_atan);
+  Label label_atan2("jvm_atan2");     import(label_atan2);
+
+  // Generate asin entry.
+  bind_rom_linkable("native_math_asin_entry");
+  pop(A); pop(B);
+  mov(return_reg, reg(lr));
+  bl(label_asin);
+  set_return_type(T_DOUBLE);
+  jmpx(return_reg);
+
+  // Generate acos entry.
+  bind_rom_linkable("native_math_acos_entry");
+  pop(A); pop(B);
+  mov(return_reg, reg(lr));
+  bl(label_acos);
+  set_return_type(T_DOUBLE);
+  jmpx(return_reg);
+
+  // Generate atan entry.
+  bind_rom_linkable("native_math_atan_entry");
+  pop(A); pop(B);
+  mov(return_reg, reg(lr));
+  bl(label_atan);
+  set_return_type(T_DOUBLE);
+  jmpx(return_reg);
+
+  // Generate atan2 entry.
+  bind_rom_linkable("native_math_atan2_entry");
+  Address4 args = set(r0, r1, r2, r3);
+  pop(args);
+  mov(return_reg, reg(lr));
+  bl(label_atan2);
+  set_return_type(T_DOUBLE);
+  jmpx(return_reg);
+
+#endif // ENABLE_CLDC_111
+
 #endif // ENABLE_FLOAT
 }
 

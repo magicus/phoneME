@@ -1658,26 +1658,6 @@ jint Java_com_sun_cldchi_jvm_JVM_verifyNextChunk(JVM_SINGLE_ARG_TRAPS) {
 
 #endif
 }
-        
-#if ENABLE_CLDC_111
-jdouble Java_java_lang_Math_asin() {
-  double x = KNI_GetParameterAsDouble(0);
-  return asin(x);
-}
-jdouble Java_java_lang_Math_acos() {
-  double x = KNI_GetParameterAsDouble(0);
-  return acos(x);
-}
-jdouble Java_java_lang_Math_atan() {
-  double x = KNI_GetParameterAsDouble(0);
-  return atan(x);
-}
-jdouble Java_java_lang_Math_atan2() {
-  double x = KNI_GetParameterAsDouble(0);
-  double y = KNI_GetParameterAsDouble(1);
-  return atan2(x, y);
-}
-#endif 
 
 } // extern "C"
 

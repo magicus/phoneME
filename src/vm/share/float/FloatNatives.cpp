@@ -55,6 +55,26 @@ JVM_SOFTFP_LINKAGE jdouble jvm_floor(jdouble x) {
   return jvm_fplib_floor(x);
 }
 
+#if ENABLE_CLDC_111
+
+JVM_SOFTFP_LINKAGE jdouble jvm_asin(jdouble x) {
+  return jvm_fplib_asin(x);
+}
+
+JVM_SOFTFP_LINKAGE jdouble jvm_acos(jdouble x) {
+  return jvm_fplib_acos(x);
+}
+
+JVM_SOFTFP_LINKAGE jdouble jvm_atan(jdouble x) {
+  return jvm_fplib_atan(x);
+}
+
+JVM_SOFTFP_LINKAGE jdouble jvm_atan2(jdouble x, jdouble y) {
+  return jvm_fplib_atan2(x, y);
+}
+
+#endif
+
 // Note the name of this function follows the C library's fabs(), which
 // takes a *double*. Incidentally, the version that takes in a *float* is named
 // fabsf().

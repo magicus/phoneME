@@ -154,6 +154,15 @@ void native_math_sqrt_entry()                      {}
 void native_math_ceil_entry()                      {}
 void native_math_floor_entry()                     {}
 
+#if ENABLE_CLDC_111
+
+void native_math_asin_entry()                      {}
+void native_math_acos_entry()                      {}
+void native_math_atan_entry()                      {}
+void native_math_atan2_entry()                     {}
+
+#endif // ENABLE_CLDC_111
+
 void native_string_charAt_entry()                  {}
 void native_string_init_entry()                    {}
 void native_string_equals_entry()                  {}
