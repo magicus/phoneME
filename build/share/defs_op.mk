@@ -165,7 +165,7 @@ JSROP_JSR135_DIR = JSR_135_DIR
 else
 JSROP_JSR135_DIR = PROJECT_JSR_135_DIR
 endif
-JSR_135_MAKE_FILE = $($(JSROP_JSR135_DIR))/build/$(SUBSYSTEM_MAKE_FILE)
+JSR_135_MAKE_FILE = $($(JSROP_JSR135_DIR))/build/cdc_share/$(SUBSYSTEM_MAKE_FILE)
 ifeq ($(wildcard $(JSR_135_MAKE_FILE)),)
 $(error $(JSROP_JSR135_DIR) must point to a directory containing JSR 135 sources)
 endif
