@@ -84,6 +84,8 @@ public final class SSLProtocolPermission extends GCFPermission {
     }
     
     checkHostPortOnly();
+
+    checkPortRange();
   }
 
   /**

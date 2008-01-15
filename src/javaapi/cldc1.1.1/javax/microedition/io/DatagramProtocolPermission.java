@@ -62,6 +62,9 @@ import java.util.Vector;
  */
 public final class DatagramProtocolPermission extends GCFPermission {
 
+  private static final PortRangeNormalizer normalizer = 
+    new ServerModePortRangeNormalizer();
+
   /**
    * Creates a new <code>DatagramProtocolPermission</code> with the
    * specified URI as its name. The URI string must conform to the
@@ -75,7 +78,7 @@ public final class DatagramProtocolPermission extends GCFPermission {
    * @see #getName
    */
   public DatagramProtocolPermission(String uri) {
-    super(uri, true);
+    super(uri, true, normalizer);
 
     if (!"datagram".equals(getProtocol())) {
       throw new IllegalArgumentException("Expected datagram protocol: " + uri);

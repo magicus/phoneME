@@ -27,73 +27,81 @@
 package javax.microedition.io;
 
 class URIParser {
-  // Character-class masks, in reverse order from RFC2396 because
-  // initializers for static fields cannot make forward references.
+  // Character-class masks from RFC 3986 and RFC 2234, 
+  // in reverse order because initializers for static fields 
+  // cannot make forward references.
   
-  // digit    = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" |
-  //            "8" | "9"
+  // DIGIT    = %x30-39 ; 0-9
   private static final long L_DIGIT = lowMask('0', '9');
-  private static final long H_DIGIT = 0L;
+  private static final long H_DIGIT = highMask('0', '9');
 
-  // upalpha  = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" |
-  //            "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" |
-  //            "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
-  private static final long L_UPALPHA = 0L;
-  private static final long H_UPALPHA = highMask('A', 'Z');
+  // ALPHA    = %x41-5A / %x61-7A ; A-Z / a-z
+  private static final long L_ALPHA = 
+    lowMask('A', 'Z') | lowMask('a', 'z');
+  private static final long H_ALPHA = 
+    highMask('A', 'Z') | highMask('a', 'z');
 
-  // lowalpha = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" |
-  //            "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" |
-  //            "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
-  private static final long L_LOWALPHA = 0L;
-  private static final long H_LOWALPHA = highMask('a', 'z');
+  // HEXDIG   = digit | "A" | "B" | "C" | "D" | "E" | "F"
+  //                  | "a" | "b" | "c" | "d" | "e" | "f"
+  // Note: the grammar defined in RFC 3896 does not allow lowercase letters 
+  // here, but in the text it explicitly says that 'host' is case insensitive.
+  private static final long L_HEXDIG
+    = L_DIGIT | lowMask('A', 'F') | lowMask('a', 'f');
+  private static final long H_HEXDIG
+    = H_DIGIT | highMask('A', 'F') | highMask('a', 'f');
 
-  // alpha         = lowalpha | upalpha
-  private static final long L_ALPHA = L_LOWALPHA | L_UPALPHA;
-  private static final long H_ALPHA = H_LOWALPHA | H_UPALPHA;
+  // sub-delims = "!" / "$" / "&" / "'" / "(" / ")"
+  //            / "*" / "+" / "," / ";" / "="
+  private static final long L_SUB_DELIMS = lowMask("!$&'()*+,;=");
+  private static final long H_SUB_DELIMS = highMask("!$&'()*+,;=");
+
+  // gen-delims = ":" / "/" / "?" / "#" / "[" / "]" / "@"
+  private static final long L_GEN_DELIMS = lowMask(":/?#[]@");
+  private static final long H_GEN_DELIMS = highMask(":/?#[]@");
+
+  // reserved      = gen-delims / sub-delims
+  private static final long L_RESERVED = L_GEN_DELIMS | L_SUB_DELIMS;
+  private static final long H_RESERVED = H_GEN_DELIMS | H_SUB_DELIMS;
+
+  // The zero'th bit is used to indicate that pct-encoded string are allowed; 
+  // this is handled by the scanEscape method below.
+  private static final long L_PCT_ENCODED = 1L;
+  private static final long H_PCT_ENCODED = 0L;
+
+  // unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
+  private static final long L_UNRESERVED 
+    = L_ALPHA | L_DIGIT | lowMask("-._~");
+  private static final long H_UNRESERVED 
+    = H_ALPHA | H_DIGIT | highMask("-._~");
+
+  // pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
+  private static final long L_PCHAR
+    = L_UNRESERVED | L_PCT_ENCODED | L_SUB_DELIMS | lowMask(":@");
+  private static final long H_PCHAR
+    = H_UNRESERVED | H_PCT_ENCODED | H_SUB_DELIMS | highMask(":@");
+
+  // scheme        = alpha *( alpha | digit | "+" | "-" | "." )
+  private static final long L_SCHEME = L_ALPHA | L_DIGIT | lowMask("+-.");
+  private static final long H_SCHEME = H_ALPHA | H_DIGIT | highMask("+-.");
+
+  // query         = *( pchar / "/" / "?" )
+  // fragment      = *( pchar / "/" / "?" )
+  private static final long L_QUERY = L_PCHAR | lowMask("/?");
+  private static final long H_QUERY = H_PCHAR | highMask("/?");
+
+  // reg-name = *( unreserved / pct-encoded / sub-delims )
+  private static final long L_REGNAME 
+    = L_UNRESERVED | L_PCT_ENCODED | L_SUB_DELIMS;
+  private static final long H_REGNAME
+    = H_UNRESERVED | H_PCT_ENCODED | H_SUB_DELIMS;
+
+  // All valid path characters
+  private static final long L_PATH = L_PCHAR | lowMask("/");
+  private static final long H_PATH = H_PCHAR | highMask("/");
 
   // alphanum      = alpha | digit
   private static final long L_ALPHANUM = L_DIGIT | L_ALPHA;
   private static final long H_ALPHANUM = H_DIGIT | H_ALPHA;
-
-  // hex           = digit | "A" | "B" | "C" | "D" | "E" | "F" |
-  //                         "a" | "b" | "c" | "d" | "e" | "f"
-  private static final long L_HEX = L_DIGIT;
-  private static final long H_HEX = highMask('A', 'F') | highMask('a', 'f');
-
-  // mark          = "-" | "_" | "." | "!" | "~" | "*" | "'" |
-  //                 "(" | ")"
-  private static final long L_MARK = lowMask("-_.!~*'()");
-  private static final long H_MARK = highMask("-_.!~*'()");
-
-  // unreserved    = alphanum | mark
-  private static final long L_UNRESERVED = L_ALPHANUM | L_MARK;
-  private static final long H_UNRESERVED = H_ALPHANUM | H_MARK;
-
-  // reserved      = ";" | "/" | "?" | ":" | "@" | "&" | "=" | "+" |
-  //                 "$" | "," | "[" | "]"
-  // Added per RFC2732: "[", "]"
-  private static final long L_RESERVED = lowMask(";/?:@&=+$,[]");
-  private static final long H_RESERVED = highMask(";/?:@&=+$,[]");
-
-  // The zero'th bit is used to indicate that escape pairs and non-US-ASCII
-  // characters are allowed; this is handled by the scanEscape method below.
-  private static final long L_ESCAPED = 1L;
-  private static final long H_ESCAPED = 0L;
-
-  // uric          = reserved | unreserved | escaped
-  private static final long L_URIC = L_RESERVED | L_UNRESERVED | L_ESCAPED;
-  private static final long H_URIC = H_RESERVED | H_UNRESERVED | H_ESCAPED;
-  
-  // pchar         = unreserved | escaped |
-  //                 ":" | "@" | "&" | "=" | "+" | "$" | ","
-  private static final long L_PCHAR
-    = L_UNRESERVED | L_ESCAPED | lowMask(":@&=+$,");
-  private static final long H_PCHAR
-    = H_UNRESERVED | H_ESCAPED | highMask(":@&=+$,");
-
-  // All valid path characters
-  private static final long L_PATH = L_PCHAR | lowMask(";/");
-  private static final long H_PATH = H_PCHAR | highMask(";/");
 
   // Dash, for use in domainlabel and toplabel
   private static final long L_DASH = lowMask("-");
@@ -103,40 +111,19 @@ class URIParser {
   private static final long L_DOT = lowMask(".");
   private static final long H_DOT = highMask(".");
 
-  // Asterisk, for use in wildcard matches
-  private static final long L_ASTERISK = lowMask("*");
-  private static final long H_ASTERISK = highMask("*");
+  // All valid userinfo characters
+  // userinfo      = *( unreserved / pct-encoded / sub-delims / ":" )
+  private static final long L_USERINFO = 
+    L_UNRESERVED | L_PCT_ENCODED | L_SUB_DELIMS | lowMask(":");
+  private static final long H_USERINFO = 
+    H_UNRESERVED | H_PCT_ENCODED | H_SUB_DELIMS | highMask(":");
 
-  // userinfo      = *( unreserved | escaped |
-  //                    ";" | ":" | "&" | "=" | "+" | "$" | "," )
-  private static final long L_USERINFO
-    = L_UNRESERVED | L_ESCAPED | lowMask(";:&=+$,");
-  private static final long H_USERINFO
-    = H_UNRESERVED | H_ESCAPED | highMask(";:&=+$,");
-
-  // reg_name      = 1*( unreserved | escaped | "$" | "," |
-  //                     ";" | ":" | "@" | "&" | "=" | "+" )
-  private static final long L_REG_NAME
-    = L_UNRESERVED | L_ESCAPED | lowMask("$,;:@&=+");
-  private static final long H_REG_NAME
-    = H_UNRESERVED | H_ESCAPED | highMask("$,;:@&=+");
-
-  // All valid characters for server-based authorities
-  private static final long L_SERVER
-    = L_USERINFO | L_ALPHANUM | L_DASH | lowMask(".:@[]");
-  private static final long H_SERVER
-    = H_USERINFO | H_ALPHANUM | H_DASH | highMask(".:@[]");
-
-  // scheme        = alpha *( alpha | digit | "+" | "-" | "." )
-  private static final long L_SCHEME = L_ALPHA | L_DIGIT | lowMask("+-.");
-  private static final long H_SCHEME = H_ALPHA | H_DIGIT | highMask("+-.");
-
-  // uric_no_slash = unreserved | escaped | ";" | "?" | ":" | "@" |
-  //                 "&" | "=" | "+" | "$" | ","
-  private static final long L_URIC_NO_SLASH
-    = L_UNRESERVED | L_ESCAPED | lowMask(";?:@&=+$,");
-  private static final long H_URIC_NO_SLASH
-    = H_UNRESERVED | H_ESCAPED | highMask(";?:@&=+$,");
+  // All characters for IPvFuture address
+  // IPvFuture     = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
+  private static final long L_IPvFUTURE = 
+    L_UNRESERVED | L_SUB_DELIMS | lowMask(":");
+  private static final long H_IPvFUTURE = 
+    H_UNRESERVED | H_SUB_DELIMS | highMask(":");
 
   private static final int PORT_MIN = 0;
   private static final int PORT_MAX = 65535;
@@ -151,7 +138,6 @@ class URIParser {
 
   private String userInfo;
   private String host;		// null ==> registry-based
-  private String canonicalHost;
   private int[] portrange = ALL_PORTS;
   private String portrangeString;
 
@@ -161,15 +147,34 @@ class URIParser {
 
   private String schemeSpecificPart;
 
-  private String input;		// URI input string
-  private boolean requireServerAuthority = false;
+  private final String input; // URI input string
+  private final PortRangeNormalizer portRangeNormalizer; 
+      // Scheme-specific normalizer
+  private final PathNormalizer pathNormalizer; // Scheme-specific normalizer
+  private final boolean normalizeAuthority; 
+      // true if authority should be normalized
+  private String normalized;  // normalized URI
 
-  URIParser(String s, boolean rsa) {
+  URIParser(String s, 
+            PortRangeNormalizer portRangeNormalizer, 
+            PathNormalizer pathNormalizer,
+            boolean normalizeAuthority) {
+    if (s == null) {
+      throw new NullPointerException();
+    }
     input = s;
-    parse(rsa);
+    this.portRangeNormalizer = portRangeNormalizer;
+    this.pathNormalizer = pathNormalizer;
+    this.normalizeAuthority = normalizeAuthority;
+    normalized = "";
+    parse();
   }
 
   // -- Field accessor methods --
+
+  public String getURI() {
+    return normalized;
+  }
 
   public String getScheme() {
     return scheme;
@@ -192,10 +197,6 @@ class URIParser {
   // null ==> registry-based
   public String getHost() {
     return host;
-  }
-
-  public String getCanonicalHostName() {
-    return canonicalHost;
   }
 
   public int[] getPortRange() {
@@ -344,18 +345,11 @@ class URIParser {
     if (c == '%') {
       // Process escape pair
       if ((p + 3 <= n)
-          && match(charAt(p + 1), L_HEX, H_HEX)
-          && match(charAt(p + 2), L_HEX, H_HEX)) {
+          && match(charAt(p + 1), L_HEXDIG, H_HEXDIG)
+          && match(charAt(p + 2), L_HEXDIG, H_HEXDIG)) {
         return p + 3;
       }
-      fail("Malformed escape pair", p);
-/*
- *   } else if ((c > 128)
- *              && !Character.isSpaceChar(c)
- *              && !Character.isISOControl(c)) {
- *     // Allow unescaped but visible non-US-ASCII chars
- *     return p + 1;
- */
+      fail("Malformed pct-encoded string", p);
     }
     return p;
   }
@@ -371,7 +365,7 @@ class URIParser {
         p++;
         continue;
       }
-      if ((lowMask & L_ESCAPED) != 0) {
+      if ((lowMask & L_PCT_ENCODED) != 0) {
         int q = scanEscape(p, n, c);
         if (q > p) {
           p = q;
@@ -385,7 +379,7 @@ class URIParser {
   
   // Check that each of the chars in [start, end) matches the given mask
   //
-  private void checkChars(int start, int end, long lowMask, long highMask,
+  private void checkChars(int start, int end, long lowMask, long highMask, 
                           String what)
    throws IllegalArgumentException {
     int p = scan(start, end, lowMask, highMask);
@@ -400,196 +394,271 @@ class URIParser {
     checkChars(p, p + 1, lowMask, highMask, what);
   }
 
-  // -- Parsing --
-
-  // [<scheme>:]<scheme-specific-part>[#<fragment>]
-  //
-  private void parse(boolean rsa) throws IllegalArgumentException {
-    requireServerAuthority = rsa;
-    int ssp;			// Start of scheme-specific part
-    int n = input.length();
-    int p = scan(0, n, "/?#", ":");
-    if ((p >= 0) && at(p, n, ':')) {
-      if (p == 0)
-        failExpecting("scheme name", 0);
-      checkChar(0, L_ALPHA, H_ALPHA, "scheme name");
-      checkChars(1, p, L_SCHEME, H_SCHEME, "scheme name");
-      scheme = substring(0, p);
-      p++;			// Skip ':'
-      ssp = p;
-      if (at(p, n, '/')) {
-        p = parseHierarchical(p, n);
-      } else {
-        int q = scan(p, n, "", "#");
-        if (q <= p)
-          failExpecting("scheme-specific part", p);
-        checkChars(p, q, L_URIC, H_URIC, "opaque part");
-        p = q;
-      }
-    } else {
-      ssp = 0;
-      p = parseHierarchical(0, n);
-    }
-    schemeSpecificPart = substring(ssp, p);
-    if (at(p, n, '#')) {
-      checkChars(p + 1, n, L_URIC, H_URIC, "fragment");
-      fragment = substring(p + 1, n);
-      p = n;
-    }
-    if (p < n)
-      fail("end of URI", p);
+  private void append(String s) {
+    normalized = normalized + s;
   }
 
-  // [//authority]<path>[?<query>]
+  private String normalizedSubstring(int n) {
+    return normalized.substring(n);
+  }
+
+  // -- Parsing --
+
   //
-  // DEVIATION from RFC2396: We allow an empty authority component as
-  // long as it's followed by a non-empty path, query component, or
-  // fragment component.  This is so that URIs such as "file:///foo/bar"
-  // will parse.  This seems to be the intent of RFC2396, though the
-  // grammar does not permit it.  If the authority is empty then the
-  // userInfo, host, and port components are undefined.
+  // URI = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
   //
-  // DEVIATION from RFC2396: We allow empty relative paths.  This seems
-  // to be the intent of RFC2396, but the grammar does not permit it.
-  // The primary consequence of this deviation is that "#f" parses as a
-  // relative URI with an empty path.
+  private void parse() throws IllegalArgumentException {
+    int ssp;			// Start of scheme-specific part
+    int n = input.length();
+    int p = scan(0, n, "", ":");
+    if ((p > 0) && at(p, n, ':')) {
+      // scheme        = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+      checkChar(0, L_ALPHA, H_ALPHA, "scheme name");
+      checkChars(1, p, L_SCHEME, H_SCHEME, "scheme name");
+      scheme = substring(0, p).toLowerCase();
+      // normalize scheme to lowecase as prescribed by RFC 3986
+      append(scheme + ":");
+      p++;			// Skip ':'
+
+      ssp = p;
+
+      int q = scan(p, n, "", "?#");
+      p = parseHierarchical(p, q);
+
+      if ((p < n) && at(p, n, '?')) {
+        // Skip '?'
+        p++;
+        q = scan(p, n, "", "#");
+        p = parseQuery(p, q);
+      }
+
+      if ((p < n) && at(p, n, '#')) {
+        // Skip '#'
+        p++;
+
+        p = parseFragment(p, n);
+      }
+
+      schemeSpecificPart = normalizedSubstring(ssp);
+
+      normalizePercentEncoded();
+    } else {
+      failExpecting("scheme name", 0);
+    }
+  }
+
+  //
+  // RFC 3986 requires that hexadecimal digits in percent-encoding 
+  // triplets are normalized to use uppercase letters.
+  //
+  private void normalizePercentEncoded() {
+    int n = normalized.length();
+    int p = 0;
+    int q = p;
+    String s = "";
+    while (p + 2 < n) {
+      if (normalized.charAt(p) == '%' && 
+          match(normalized.charAt(p + 1), L_HEXDIG, H_HEXDIG)
+          && match(normalized.charAt(p + 2), L_HEXDIG, H_HEXDIG)) {
+        String triplet = normalized.substring(p, p + 3).toUpperCase();
+        s += normalized.substring(q, p) + triplet;
+        p += 2;
+        q = p + 1;
+      }
+      p++;
+    }
+    if (q < n) {
+      s += normalized.substring(q, n);
+    }
+    if (!normalized.toUpperCase().equals(s.toUpperCase())) {
+      fail("Internal parser error: normalization failed");
+    }
+    normalized = s;
+  }
+
+  // 
+  // hier-part     = "//" authority path-abempty
+  //            / path-absolute
+  //            / path-rootless
+  //            / path-empty
   //
   private int parseHierarchical(int start, int n)
    throws IllegalArgumentException {
     int p = start;
-    if (at(p, n, '/') && at(p + 1, n, '/')) {
-      p += 2;
-      int q = scan(p, n, "", "/?#");
+    boolean authorityPresent = at(p, n, '/') && at(p + 1, n, '/');
+    if (normalizeAuthority || authorityPresent) {
+      if (authorityPresent) {
+        p += 2;
+      }
+      int q = scan(p, n, "", "/");
+
+      append("//");
+
       p = parseAuthority(p, q);
+      if (p != q && !at(p, n, '/')) {
+        failExpecting("absolute or empty path", 0);
+      }
     }
-    int q = scan(p, n, "", "?#"); // DEVIATION: May be empty
-    checkChars(p, q, L_PATH, H_PATH, "path");
-    path = substring(p, q);
-    p = q;
-    if (at(p, n, '?')) {
-      p++;
-      q = scan(p, n, "", "#");
-      checkChars(p, q, L_URIC, H_URIC, "query");
-      query = substring(p, q);
-      p = q;
+
+    // path-abempty  = *( "/" segment )
+    // path-absolute = "/" [ segment-nz *( "/" segment ) ]
+    // path-rootless = segment-nz *( "/" segment )
+    // path-empty    = 0<pchar>
+    //
+    // segment       = *pchar
+    // segment-nz    = 1*pchar
+    //
+    // pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
+    checkChars(p, n, L_PATH, H_PATH, "path");
+    path = substring(p, n);
+    if (pathNormalizer != null) {
+      path = pathNormalizer.normalize(path);
     }
+    append(path);
+    p = n;
     return p;
   }
 
-  // authority     = server | reg_name
   //
-  // Ambiguity: An authority that is a registry name rather than a server
-  // might have a prefix that parses as a server.  We use the fact that
-  // the authority component is always followed by '/' or the end of the
-  // input string to resolve this: If the complete authority did not
-  // parse as a server then we try to parse it as a registry name.
+  // authority     = [ userinfo "@" ] host [ ":" portspec ]
   //
   private int parseAuthority(int start, int n)
    throws IllegalArgumentException {
     int p = start;
-    int q = p;
-    IllegalArgumentException ex = null;
-    
-    boolean serverChars = (scan(p, n, L_SERVER, H_SERVER) == n);
-    boolean regChars = (scan(p, n, L_REG_NAME, H_REG_NAME) == n);
-    
-    if (regChars && !serverChars) {
-      // Must be a registry-based authority
-      authority = substring(p, n);
-      return n;
-    }
-    
-    if (serverChars) {
-      // Might be (probably is) a server-based authority, so attempt
-      // to parse it as such.  If the attempt fails, try to treat it
-      // as a registry-based authority.
-      try {
-        q = parseServer(p, n);
-        if (q < n)
-          failExpecting("end of authority", q);
-        authority = substring(p, n);
-      } catch (IllegalArgumentException x) {
-        // Undo results of failed parse
-        userInfo = null;
-        host = null;
-        canonicalHost = null;
-        portrange = ALL_PORTS;
-        portrangeString = null;
-        if (requireServerAuthority) {
-          // If we're insisting upon a server-based authority,
-          // then just re-throw the exception
-          throw x;
-        } else {
-          // Save the exception in case it doesn't parse as a
-          // registry either
-          ex = x;
-          q = p;
-        }
-      }
-    }
-    
-    if (q < n) {
-      if (regChars) {
-        // Registry-based authority
-        authority = substring(p, n);
-      } else if (ex != null) {
-        // Re-throw exception; it was probably due to
-        // a malformed IPv6 address
-        throw ex;
-      } else {
-        fail("Illegal character in authority", q);
-      }
-    }
-    
-    return n;
-  }
-  
-  
-  // [<userinfo>@]<host>[:<portrange>]
-  //
-  private int parseServer(int start, int n) throws IllegalArgumentException {
-    int p = start;
-    int q;
-      
-    // userinfo
-    q = scan(p, n, "/?#", "@");
-    if ((q >= p) && at(q, n, '@')) {
-      checkChars(p, q, L_USERINFO, H_USERINFO, "user info");
+    int q = scan(p, n, L_USERINFO, H_USERINFO);
+
+    if (q > p && at(q, n, '@')) {
       userInfo = substring(p, q);
-      p = q + 1;		// Skip '@'
+      // skip '@'
+      p = q + 1;
+
+      append(userInfo + "@");
     }
-    
-    // hostname, IPv4 address, or IPv6 address
-    if (at(p, n, '[')) {
-      // DEVIATION from RFC2396: Support IPv6 addresses, per RFC2732
-      p++;
-      q = scan(p, n, "/?#", "]");
-      if ((q > p) && at(q, n, ']')) {
-        parseIPv6Reference(p, q);
-        p = q + 1;
-      } else {
-        failExpecting("closing bracket for IPv6 address", q);
-      }
-    } else {
-      q = parseIPv4Address(p, n);
-      if (q <= p)
-        q = parseHostname(p, n);
+
+    p = parseHost(p, n);
+
+    q = parsePortRange(p, n);
+    if (q > p) {
       p = q;
     }
 
-    // port
-    if (at(p, n, ':')) {
+    return p;
+  }
+
+  // 
+  // host          = IP-literal / IPv4address / reg-name
+  //
+  private int parseHost(int start, int n) {
+    int p = start;
+    int q = p;
+    // IP-literal    = "[" ( IPv6address / IPvFuture  ) "]"
+    if (at(p, n, '[')) {
+      // skip '['
       p++;
-      q = scan(p, n, "", "/");
-      if (q > p) {
-        p = parsePortRange(p, q);
+      q = scan(p, n, "", "]");
+      if (q > p && at(q, n, ']')) {
+        // IPvFuture     = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
+        if (at(p, n, 'v') || at(p, n, 'V')) {
+          p = parseIPvFuture(p, q);
+          if (p < q) {
+            fail("Malformed IPvFuture address", p);
+          }
+        } else {
+          p = parseIPv6Address(p, q);
+          if (p < q) {
+            fail("Malformed IPv6 address", p);
+          }
+        }
       } else {
-        failExpecting("port number", p);
+        failExpecting("closing bracket for IPv6 or IPvFuture address", q);
       }
+      // skip ']'
+      p++;
+    } else {
+      q = parseIPv4Address(p, n);
+      if (q <= p)
+        q = parseRegname(p, n);
+      p = q;
     }
-    if (p < n)
-      failExpecting("port number", p);
     
+    return p;
+  }
+
+  // 
+  // portspec = port / port "-" [ port ] / "-" port / "*" / ""
+  // port = 1*DIGIT
+  //
+  private int parsePortRange(int start, int n) {
+    int[] range = { -1, -1 };
+    int p = start;
+    int q = scan(p, n, "", "/");
+
+    String s = substring(p, q);
+    portrangeString = s;
+
+    String norm = null;
+
+    if (s.equals(":*")) {
+      range[0] = 0;
+      range[1] = 65535;
+      norm = ":0-65535";
+    } else if (portRangeNormalizer != null) {
+      norm = portRangeNormalizer.normalize(host, s, range);
+    }
+
+    if (norm != null) {
+      append(norm);
+    } else if (at(p, n, ':')) {
+      // skip ':'
+      p++;
+
+      int r = scan(p, n, "", "-");
+      int low = PORT_MIN;
+      int high = PORT_MAX;
+
+      try {
+        if (r > p) {
+          low = Integer.parseInt(substring(p, r));
+          if (r >= n) {
+            high = low;
+          }
+        } 
+          
+        if (r + 1 < n) {
+          high = Integer.parseInt(substring(r + 1, n));
+        }
+      } catch (NumberFormatException x) {
+        fail("Malformed port range", p);
+      }
+
+      if (low < 0 || high < 0 || high < low) { 
+        fail("Invalid port range", p);
+      }
+
+      range[0] = low;
+      range[1] = high;
+
+      if (portRangeNormalizer != null) {
+        norm = portRangeNormalizer.normalize(range);
+      } 
+
+      if (norm == null) {
+        if (range[0] == range[1]) {
+          norm = ":" + range[0];
+        } else {
+          norm = ":" + range[0] + "-" + range[1];
+        }
+      }
+       
+      append(norm);
+    } else if (!"".equals(s)) {
+      fail("Malformed port range", p);
+    }
+
+    p = q;
+
+    portrange = range;
+
     return p;
   }
 
@@ -599,7 +668,12 @@ class URIParser {
     int p = start;
     int q = scan(p, n, L_DIGIT, H_DIGIT);
     if (q <= p) return q;
-    if (Integer.parseInt(substring(p, q)) > 255) return p;
+    String s = substring(p, q);
+    int value = Integer.parseInt(s);
+    if (value > 255) return p;
+    // This check guarantees there are no leading zeroes
+    // and normalization not needed
+    if (!String.valueOf(value).equals(s)) return p;
     return q;
   }
 
@@ -653,15 +727,6 @@ class URIParser {
     return p;
   }
   
-  private String canonicalIPv4Name(String name) {
-    try {
-      byte[] address = textToNumericFormatIPv4(name);
-      return numericToTextFormatIPv4(address);
-    } catch (RuntimeException e) {
-      throw new IllegalArgumentException("Malformed IPv4 address");
-    }
-  }
-
   // Attempt to parse an IPv4 address, returning -1 on failure but
   // allowing the given interval to contain [:<characters>] after
   // the IPv4 address.
@@ -686,82 +751,29 @@ class URIParser {
     
     if (p > start) {
       host = substring(start, p);
-      canonicalHost = canonicalIPv4Name(host);
+      append(host);
     }
     
     return p;
   }
 
-  private String canonicalHostname(String name) {
-    String canonical = name.toLowerCase();
-
-    if (canonical.startsWith("*")) {
-      canonical = canonical.substring(1);
-    }
-
-    return canonical;
-  }
-
-
-  // The wildcard "*" may be included once in a DNS name host specification.
-  // If it is included, it must be in the left most position.
-  // The host name can be empty that indicates server connection.
   //
-  // whostname   = 
-  //      "" | hostname | "*" [ *( "." domainlabel ) "." toplabel ] [ "." ]
+  // reg-name = *( unreserved / pct-encoded / sub-delims )
   // 
-  // hostname    = domainlabel [ "." ] | 1*( domainlabel "." ) toplabel [ "." ]
-  // domainlabel = alphanum | alphanum *( alphanum | "-" ) alphanum
-  // toplabel    = alpha | alpha *( alphanum | "-" ) alphanum
-  private int parseHostname(int start, int n)
+  private int parseRegname(int start, int n)
    throws IllegalArgumentException {
-    int p = start;
-    int q;
-    int l = -1;			// Start of last parsed label
-    
-    // The leftmost label can be an asterisk
-    if (at(p, n, '*')) {
-      l = p;
-      p++;
-      q = scan(p, n, L_ALPHANUM | L_DASH, H_ALPHANUM | H_DASH);
-      if (q > p) {
-        fail("Illegal character in hostname", p);
-      }
-      p = scan(p, n, '.');
-    }
-
-    do {
-      // domainlabel = alphanum [ *( alphanum | "-" ) alphanum ]
-      q = scan(p, n, L_ALPHANUM, H_ALPHANUM);
-      if (q <= p)
-        break;
-      l = p;
-      if (q > p) {
-        p = q;
-        q = scan(p, n, L_ALPHANUM | L_DASH, H_ALPHANUM | H_DASH);
-        if (q > p) {
-          if (charAt(q - 1) == '-')
-            fail("Illegal character in hostname", q - 1);
-          p = q;
-        }
-      }
-      q = scan(p, n, '.');
-      if (q <= p)
-        break;
-      p = q;
-    } while (p < n);
+    int p = scan(start, n, L_REGNAME, H_REGNAME);
     
     if ((p < n) && !at(p, n, ':'))
       fail("Illegal character in hostname", p);
     
-    // for a fully qualified hostname check that the rightmost
-    // label starts with an alpha character.
-    if (l > start && !match(charAt(l), L_ALPHA, H_ALPHA)) {
-      fail("Illegal character in hostname", l);
+    // normalize hostname to lowercase as prescribed by RFC 3986
+    host = substring(start, p).toLowerCase();
+    if (normalizeAuthority && "localhost".equals(host)) {
+      host = "";
     }
-    
-    host = substring(start, p);
-    canonicalHost = canonicalHostname(host);
+    append(host);
+
     return p;
   }
   
@@ -779,51 +791,51 @@ class URIParser {
       throw new IllegalArgumentException("Malformed IPv6 address");
     }
   }
+
+  // IPvFuture     = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
+  private int parseIPvFuture(int start, int n)
+   throws IllegalArgumentException {
+    int p = start;
+    if (!at(p, n, 'v') && !at(p, n, 'V')) {
+      failExpecting("IPvFuture address", p);
+    }
+    // skip 'v'
+    p++;
+    int q = scan(p, n, L_HEXDIG, H_HEXDIG);
+    if (p >= q || !at(q, n, '.')) {
+      failExpecting("IPvFuture address", p);
+    }
+    // skip '.'
+    p = q + 1;
+    q = scan(p, n, L_IPvFUTURE, H_IPvFUTURE);
+    if (p >= q) {
+      failExpecting("IPvFuture address", p);
+    }
+
+    // Including braces
+    host = substring(start-1, q+1);
+    return q;
+  }
   
-  // IPv6 address parsing, from RFC2373: IPv6 Addressing Architecture
+  // IPv6 address parsing, from RFC 3986
   //
-  // Bug: The grammar in RFC2373 Appendix B does not allow addresses of
-  // the form ::12.34.56.78, which are clearly shown in the examples
-  // earlier in the document.  Here is the original grammar:
+  // IPv6address   =                            6( h16 ":" ) ls32
+  //               /                       "::" 5( h16 ":" ) ls32
+  //               / [               h16 ] "::" 4( h16 ":" ) ls32
+  //               / [ *1( h16 ":" ) h16 ] "::" 3( h16 ":" ) ls32
+  //               / [ *2( h16 ":" ) h16 ] "::" 2( h16 ":" ) ls32
+  //               / [ *3( h16 ":" ) h16 ] "::"    h16 ":"   ls32
+  //               / [ *4( h16 ":" ) h16 ] "::"              ls32
+  //               / [ *5( h16 ":" ) h16 ] "::"              h16
+  //               / [ *6( h16 ":" ) h16 ] "::"
   //
-  //   IPv6address = hexpart [ ":" IPv4address ]
-  //   hexpart     = hexseq | hexseq "::" [ hexseq ] | "::" [ hexseq ]
-  //   hexseq      = hex4 *( ":" hex4)
-  //   hex4        = 1*4HEXDIG
+  // h16           = 1*4HEXDIG
+  // ls32          = ( h16 ":" h16 ) / IPv4address
   //
-  // We therefore use the following revised grammar:
-  //
-  //   IPv6address = hexseq [ ":" IPv4address ]
-  //                 | hexseq [ "::" [ hexpost ] ]
-  //                 | "::" [ hexpost ]
-  //   hexpost     = hexseq | hexseq ":" IPv4address | IPv4address
-  //   hexseq      = hex4 *( ":" hex4)
-  //   hex4        = 1*4HEXDIG
-  //
-  // This covers all and only the following cases:
-  //
-  //   hexseq
-  //   hexseq : IPv4address
-  //   hexseq ::
-  //   hexseq :: hexseq
-  //   hexseq :: hexseq : IPv4address
-  //   hexseq :: IPv4address
-  //   :: hexseq
-  //   :: hexseq : IPv4address
-  //   :: IPv4address
-  //   ::
-  //
-  // Additionally we constrain the IPv6 address as follows :-
-  //
-  //  i.  IPv6 addresses without compressed zeros should contain
-  //      exactly 16 bytes.
-  //
-  //  ii. IPv6 addresses with compressed zeros should contain
-  //      less than 16 bytes.
   
   private int ipv6byteCount = 0;
   
-  private int parseIPv6Reference(int start, int n)
+  private int parseIPv6Address(int start, int n)
    throws IllegalArgumentException {
     int p = start;
     int q;
@@ -844,8 +856,6 @@ class URIParser {
       compressedZeros = true;
       p = scanHexPost(p + 2, n);
     }
-    if (p < n)
-      fail("Malformed IPv6 address", start);
     if (ipv6byteCount > 16)
       fail("IPv6 address too long", start);
     if (!compressedZeros && ipv6byteCount < 16) 
@@ -853,8 +863,12 @@ class URIParser {
     if (compressedZeros && ipv6byteCount == 16)
       fail("Malformed IPv6 address", start);
     
-    host = substring(start-1, p+1);
-    canonicalHost = canonicalIPv6Name(substring(start, p));
+    {
+      String hostComponent = substring(start, p);
+      host = "[" + canonicalIPv6Name(hostComponent) + "]";
+      // normalize scheme to lowecase as prescribed by RFC 3986
+      append(host);
+    }
     return p;
   }
   
@@ -887,7 +901,7 @@ class URIParser {
     int p = start;
     int q;
 
-    q = scan(p, n, L_HEX, H_HEX);
+    q = scan(p, n, L_HEXDIG, H_HEXDIG);
     if (q <= p)
       return -1;
     if (at(q, n, '.'))		// Beginning of IPv4 address
@@ -902,7 +916,7 @@ class URIParser {
       if (at(p + 1, n, ':'))
         break;		// "::"
       p++;
-      q = scan(p, n, L_HEX, H_HEX);
+      q = scan(p, n, L_HEXDIG, H_HEXDIG);
       if (q <= p)
         failExpecting("digits for an IPv6 address", p);
       if (at(q, n, '.')) {	// Beginning of IPv4 address
@@ -918,36 +932,21 @@ class URIParser {
     return p;
   }
 
-  // Parse port range:
-  // portrange = portnumber | -portnumber | portnumber-[portnumber]
-  private int parsePortRange(int start, int n) {
-    int p = start;
-    int q = scan(p, n, "", "-");
-    int low = PORT_MIN;
-    int high = PORT_MAX;
+  // Parse query:
+  // query         = *( pchar / "/" / "?" )
+  private int parseQuery(int start, int n) {
+    checkChars(start, n, L_QUERY, H_QUERY, "query component");
+    query = substring(start, n);
+    append("?" + query);
+    return n;
+  }
 
-    try {
-      if (q > p) {
-        low = Integer.parseInt(substring(p, q));
-        if (q >= n) {
-          high = low;
-        }
-      } 
-      
-      if (q + 1 < n) {
-        high = Integer.parseInt(substring(q + 1, n));
-      }
-    } catch (NumberFormatException x) {
-      fail("Malformed port range", p);
-    }
-
-    if (low < 0 || high < 0 || high < low) { 
-      fail("Invalid port range", p);
-    }
-
-    portrange = new int[] {low, high};
-    portrangeString = substring(start, n);
-
+  // Parse fragment:
+  // fragment      = *( pchar / "/" / "?" )
+  private int parseFragment(int start, int n) {
+    checkChars(start, n, L_QUERY, H_QUERY, "fragment component");
+    fragment = substring(start, n);
+    append("#" + fragment);
     return n;
   }
 
@@ -987,8 +986,15 @@ class URIParser {
     }
   }
   
+  void checkPortRange() {
+    if (!isPortRangeSpecified()) {
+      fail("Port range not specified");
+    }
+  }
+  
   boolean isPortRangeSpecified() {
-    return portrangeString != null && !"".equals(portrangeString);
+    return portrangeString != null && !"".equals(portrangeString) && 
+      !":".equals(portrangeString);
   }
 
   // Compute the low-order mask for the characters in the given string
@@ -1019,10 +1025,12 @@ class URIParser {
   // between first and last, inclusive
   private static long lowMask(char first, char last) {
     long m = 0;
-    int f = Math.max(Math.min(first, 63), 0);
-    int l = Math.max(Math.min(last, 63), 0);
-    for (int i = f; i <= l; i++)
-      m |= 1L << i;
+    if (first < 64) {
+      int f = Math.max(Math.min(first, 63), 0);
+      int l = Math.max(Math.min(last, 63), 0);
+      for (int i = f; i <= l; i++)
+        m |= 1L << i;
+    }
     return m;
   }
 
@@ -1030,10 +1038,12 @@ class URIParser {
   // between first and last, inclusive
   private static long highMask(char first, char last) {
     long m = 0;
-    int f = Math.max(Math.min(first, 127), 64) - 64;
-    int l = Math.max(Math.min(last, 127), 64) - 64;
-    for (int i = f; i <= l; i++)
-      m |= 1L << i;
+    if (last >= 64) {
+      int f = Math.max(Math.min(first, 127), 64) - 64;
+      int l = Math.max(Math.min(last, 127), 64) - 64;
+      for (int i = f; i <= l; i++)
+        m |= 1L << i;
+    }
     return m;
   }
 

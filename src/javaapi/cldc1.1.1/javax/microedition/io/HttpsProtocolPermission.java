@@ -57,6 +57,12 @@ import java.security.Permission;
  */
 public final class HttpsProtocolPermission extends GCFPermission {
 
+  private static final PortRangeNormalizer portRangeNormalizer = 
+    new DefaultPortRangeNormalizer(443);
+
+  private static final PathNormalizer pathNormalizer = 
+    new DefaultPathNormalizer();
+
   /**
    * Creates a new <code>HttpsProtocolPermission</code> with the
    * specified URI as its name. The URI string must conform to the
@@ -70,7 +76,8 @@ public final class HttpsProtocolPermission extends GCFPermission {
    * @see #getName
    */
   public HttpsProtocolPermission(String uri) {
-    super(uri, true);
+    super(uri, true /*require authority*/, 
+          portRangeNormalizer, pathNormalizer);
 
     if (!"https".equals(getProtocol())) {
       throw new IllegalArgumentException("Expected https protocol: " + uri);
@@ -81,8 +88,6 @@ public final class HttpsProtocolPermission extends GCFPermission {
     if (host == null || "".equals(host)) {
       throw new IllegalArgumentException("No host specified");
     }
-    
-    checkHostPortPathOnly();
   }
 
   /**

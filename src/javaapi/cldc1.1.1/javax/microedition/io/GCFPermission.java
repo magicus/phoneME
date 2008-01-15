@@ -30,6 +30,7 @@ import java.security.Permission;
 import java.security.PermissionCollection;
 
 import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.Vector;
 
 /*
@@ -44,6 +45,36 @@ public abstract class GCFPermission extends Permission {
 
   private URIParser parser;
 
+  // A trick to create an URI parser and normalize the URI before passing it 
+  // to the superclass constructor: we use kind of thread-local storage 
+  // for URI parser. It works unless the superclass constructor somehow 
+  // triggers construction of one more subclass instance.
+  private static final Hashtable map = new Hashtable();
+
+  private static String normalize(String uri, 
+                                  PortRangeNormalizer portRangeNormalizer,
+                                  PathNormalizer pathNormalizer,
+                                  boolean normalizeAuthority) {
+    URIParser p = new URIParser(uri, 
+                                portRangeNormalizer,
+                                pathNormalizer, 
+                                normalizeAuthority);
+    
+    Thread t = Thread.currentThread();
+    // NOTE: the mapping can be non-empty at this point if the previous
+    // ctor invocation was terminated abruptly with an exception thrown
+    // from superclass ctor. We override the existing mapping.
+    map.put(t, p);
+
+    return p.getURI();
+  }
+
+  private static URIParser getParser() {
+    Thread t = Thread.currentThread();
+    Object o = map.remove(t);
+    return (URIParser)o;
+  }
+
   /**
    * Constructs a <code>GCFPermission</code> with the specified URI.
    * The URI must begin with a string indicating the protocol
@@ -57,19 +88,41 @@ public abstract class GCFPermission extends Permission {
    * @see #getURI
    */ 
   public GCFPermission(String uri) {
-    this(uri, false);
+    this(uri, false, null, null, false);
   }
 
   GCFPermission(String uri, boolean requireAuthority) {
-    super(uri);
-    parser = new URIParser(uri, true /* require server authority */);
+    this(uri, requireAuthority, null, null, false);
+  }
+
+  GCFPermission(String uri, boolean requireAuthority, 
+                PortRangeNormalizer portRangeNormalizer) {
+    this(uri, requireAuthority, portRangeNormalizer, null, false);
+  }
+
+  GCFPermission(String uri, boolean requireAuthority, 
+                PortRangeNormalizer portRangeNormalizer, 
+                PathNormalizer pathNormalizer) {
+    this(uri, requireAuthority, portRangeNormalizer, pathNormalizer, false);
+  }
+
+  GCFPermission(String uri, boolean requireAuthority, 
+                PortRangeNormalizer portRangeNormalizer, 
+                PathNormalizer pathNormalizer, 
+                boolean normalizeAuthority) {
+    super(normalize(uri, 
+                    portRangeNormalizer, 
+                    pathNormalizer, 
+                    normalizeAuthority));
+
+    parser = getParser();
 
     String scheme = parser.getScheme();
     if (scheme == null || "".equals(scheme)) {
       throw new IllegalArgumentException("Expected protocol scheme: " + uri);
     }
 
-    if (requireAuthority && !uri.startsWith(scheme + "://")) {
+    if (requireAuthority && !getURI().startsWith(scheme + "://")) {
       throw new IllegalArgumentException("Invalid URI: " + uri);
     }      
   }
@@ -114,45 +167,28 @@ public abstract class GCFPermission extends Permission {
   }
 
   final boolean impliesByHost(GCFPermission that) {
-    URIParser thisParser = this.parser;
-    URIParser thatParser = that.parser;
+    String thisHost = this.parser.getHost();
+    String thatHost = that.parser.getHost();
 
-    String thisHost = thisParser.getHost();
-    String thatHost = thatParser.getHost();
+    boolean equal = thisHost.equals(thatHost);
 
-    // Handle empty host names - server connections
-    if ("".equals(thisHost) || "".equals(thatHost)) {
-      return thisHost.equals(thatHost);
-    }
-
-    String thisCanonicalHostName = thisParser.getCanonicalHostName();
-    String thatCanonicalHostName = thatParser.getCanonicalHostName();
-    if (thisCanonicalHostName != null &&
-      thisCanonicalHostName.equals(thatCanonicalHostName)) {
+    if (equal) {
       return true;
     }
 
-    if (thisHost.startsWith("*") && thatCanonicalHostName != null) {
-      return thatCanonicalHostName.endsWith(thisCanonicalHostName);
+    // Handle empty host names - server connections
+    if ("".equals(thisHost) || "".equals(thatHost)) {
+      return equal;
+    }
+
+    if (thisHost.startsWith("*")) {
+      return thatHost.endsWith(thisHost.substring(1));
     }
 
     return false;    
   }
 
   final boolean impliesByPorts(GCFPermission that) {
-    String host = getHost();
-
-    // Omitted host component indicates a server-mode connection.
-    // For server-mode connection, an absent port range indicates 
-    // a system-assigned port.
-    if (host == null || "".equals(host)) {
-      boolean thisPortRangeSpecified = this.parser.isPortRangeSpecified();
-      boolean thatPortRangeSpecified = that.parser.isPortRangeSpecified();
-      if (!thisPortRangeSpecified || !thatPortRangeSpecified) {
-        return !thatPortRangeSpecified;
-      }
-    }
-
     return (this.getMinPort() <= that.getMinPort()) && 
            (this.getMaxPort() >= that.getMaxPort());
   }
@@ -173,6 +209,14 @@ public abstract class GCFPermission extends Permission {
     parser.checkNoUserInfo();
     parser.checkNoPath();
     parser.checkNoQuery();
+  }
+
+  final void checkPortRange() {
+    parser.checkPortRange();
+  }
+
+  final void checkNoPortRange() {
+    parser.checkNoPortRange();
   }
 }
 

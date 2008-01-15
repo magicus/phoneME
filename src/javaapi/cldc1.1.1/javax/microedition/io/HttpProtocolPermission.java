@@ -56,7 +56,13 @@ import java.security.Permission;
  * @see "javax.microedition.io.HttpConnection" in <a href="http://www.jcp.org/en/jsr/detail?id=271">MIDP 3.0 Specification</a>
  */
 public final class HttpProtocolPermission extends GCFPermission {
-  
+
+  private static final PortRangeNormalizer portRangeNormalizer = 
+    new DefaultPortRangeNormalizer(80);
+
+  private static final PathNormalizer pathNormalizer = 
+    new DefaultPathNormalizer();
+
   /**
    * Creates a new <code>HttpProtocolPermission</code> with the
    * specified URI as its name. The URI string must conform to the
@@ -70,7 +76,8 @@ public final class HttpProtocolPermission extends GCFPermission {
    * @see #getName
    */
   public HttpProtocolPermission(String uri) {
-    super(uri, true);
+    super(uri, true /*require authority*/, 
+          portRangeNormalizer, pathNormalizer);
 
     if (!"http".equals(getProtocol())) {
       throw new IllegalArgumentException("Expected http protocol: " + uri);
@@ -81,8 +88,6 @@ public final class HttpProtocolPermission extends GCFPermission {
     if (host == null || "".equals(host)) {
       throw new IllegalArgumentException("No host specified");
     }
-    
-    checkHostPortPathOnly();
   }
 
   /**

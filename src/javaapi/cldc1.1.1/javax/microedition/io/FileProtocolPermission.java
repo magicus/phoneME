@@ -76,6 +76,12 @@ public final class FileProtocolPermission extends GCFPermission {
   private final static int ALL	= READ|WRITE;
 
   /**
+   * Path normalizer
+   */
+  private static final PathNormalizer pathNormalizer = 
+    new DefaultPathNormalizer();
+
+  /**
    * Action mask
    */
   private int action_mask = NONE;
@@ -98,7 +104,10 @@ public final class FileProtocolPermission extends GCFPermission {
    * @see #getActions
    */
   public FileProtocolPermission(String uri, String actions) {
-    super(uri, true);
+    super(uri, false /*require authority*/, 
+          null /*port range normalizer*/, 
+          pathNormalizer, 
+          true /*normalize authority*/);
 
     if (!"file".equals(getProtocol())) {
       throw new IllegalArgumentException("Expected file protocol: " + uri);
@@ -106,17 +115,31 @@ public final class FileProtocolPermission extends GCFPermission {
 
     checkHostPortPathOnly();
 
-    checkNoHostPort();
+    checkNoPortRange();
+
+    String host = getHost();
+
+    if (host != null && !"".equals(host) && !"localhost".equals(host)) {
+      throw new IllegalArgumentException("Invalid host component: " + uri);
+    }
+
+    if (!uri.toLowerCase().startsWith("file:")) {
+      throw new IllegalArgumentException(
+        "Expected URI of the form file:{pathname} or file://{pathname}: " + 
+        uri);
+    }
 
     String path = getPath();
 
-    if (path == null || "".equals(path)) {
-      throw new IllegalArgumentException("No path specified: " + uri);
+    if (path.charAt(0) != '/') {
+      throw new IllegalArgumentException(
+        "Path in the URI must be absolute: " + uri);
     }
 
-    if (!uri.equals("file://" + path)) {
-      throw new IllegalArgumentException(
-        "Expected URI of the form file://{pathname}: " + uri);
+    if (uri.equalsIgnoreCase("file:") || 
+        uri.equalsIgnoreCase("file://") || 
+        uri.equalsIgnoreCase("file://localhost")) {
+      throw new IllegalArgumentException("No path specified: " + uri);
     }
 
     action_mask = getMask(actions);

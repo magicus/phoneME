@@ -62,6 +62,9 @@ import java.util.Vector;
 
 public final class SocketProtocolPermission extends GCFPermission {
 
+  private static final PortRangeNormalizer normalizer = 
+    new ServerModePortRangeNormalizer();
+
   /**
    * Creates a new <code>SocketProtocolPermission</code> with the
    * specified URI as its name. The URI string must conform to the
@@ -75,7 +78,7 @@ public final class SocketProtocolPermission extends GCFPermission {
    * @see #getName
    */
   public SocketProtocolPermission(String uri) {
-    super(uri, true);
+    super(uri, true, normalizer);
 
     if (!"socket".equals(getProtocol())) {
       throw new IllegalArgumentException("Expected socket protocol: " + uri);
