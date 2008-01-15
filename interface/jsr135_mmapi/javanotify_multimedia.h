@@ -117,7 +117,7 @@ typedef enum {
  *                          data = None.
  */
 void javanotify_on_media_notification(javacall_media_notification_type type,
-                                      javacall_app_id appID,
+                                      int appID,
                                       int playerId, 
                                       void *data);
 
