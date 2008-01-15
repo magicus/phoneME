@@ -769,7 +769,12 @@ class URIParser {
   private String canonicalIPv6Name(String name) {
     try {
       byte[] address = textToNumericFormatIPv6(name);
-      return numericToTextFormatIPv6(address);
+      // IPv4-mapped IPv6 address is returned as a plain IPv4 address
+      if (address.length == IN4ADDRSZ) {
+        return numericToTextFormatIPv4(address);
+      } else {
+        return numericToTextFormatIPv6(address);
+      }
     } catch (RuntimeException e) {
       throw new IllegalArgumentException("Malformed IPv6 address");
     }
@@ -971,7 +976,7 @@ class URIParser {
   }
 
   void checkNoPortRange() {
-    if (portrangeString != null && !"".equals(portrangeString)) {
+    if (isPortRangeSpecified()) {
       fail("Port range component not allowed");
     }
   }
@@ -982,6 +987,10 @@ class URIParser {
     }
   }
   
+  boolean isPortRangeSpecified() {
+    return portrangeString != null && !"".equals(portrangeString);
+  }
+
   // Compute the low-order mask for the characters in the given string
   private static long lowMask(String chars) {
     int n = chars.length();

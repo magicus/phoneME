@@ -966,13 +966,17 @@ void VerifyMethodCodes::handle_invoker(int index, int /*num_of_args*/,
         if (!is_subclass_of((JavaClass*)&verifying_class, &method_klass_name)){
           VFY_ERROR(ve_invokespecial);
         }
+
+        // The type of the instance must be the same as or a subclass of the 
+        // current class.
+        // See instructionIsTypeSafe predicate in "CLDC 1.1 Appendix 1", p. 51
+        method_klass_name = verifying_class().name();
       }
       // Verification of access to protected methods is done here because
       // the superclass must be loaded at this time (other checks are
       // done at runtime in order to implement lazy class loading.)
       //
-      if (opcode == Bytecodes::_invokespecial
-              || opcode == Bytecodes::_invokevirtual) {
+      if (opcode == Bytecodes::_invokevirtual) {
         bool protected_method_access =
                    is_protected_access(method_index, true JVM_CHECK);
         if (protected_method_access) {

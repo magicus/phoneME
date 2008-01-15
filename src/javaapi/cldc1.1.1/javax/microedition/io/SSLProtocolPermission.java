@@ -71,7 +71,7 @@ public final class SSLProtocolPermission extends GCFPermission {
    * @see #getName
    */
   public SSLProtocolPermission(String uri) {
-    super(uri);
+    super(uri, true);
 
     if (!"ssl".equals(getProtocol())) {
       throw new IllegalArgumentException("Expected ssl protocol: " + uri);

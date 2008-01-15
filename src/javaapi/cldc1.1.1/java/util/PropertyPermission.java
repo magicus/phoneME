@@ -243,16 +243,6 @@ public final class PropertyPermission extends BasicPermission {
 	    return mask;
 
 	while (i != -1) {
-	    char c;
-
-	    // skip whitespace
-	    while ((i!=-1) && ((c = a[i]) == ' ' ||
-			       c == '\r' ||
-			       c == '\n' ||
-			       c == '\f' ||
-			       c == '\t'))
-		i--;
-
 	    // check for the known strings
 	    int matchlen;
 
@@ -276,25 +266,20 @@ public final class PropertyPermission extends BasicPermission {
 	    } else {
 		// parse error
 		throw new IllegalArgumentException(
-			"invalid permission: " + actions);
+			"invalid actions: " + actions);
 	    }
 
 	    // make sure we didn't just match the tail of a word
 	    // like "ackbarfaccept".  Also, skip to the comma.
-	    boolean seencomma = false;
-	    while (i >= matchlen && !seencomma) {
-		switch(a[i-matchlen]) {
-		case ',':
-		    seencomma = true;
-		    /*FALLTHROUGH*/
-		case ' ': case '\r': case '\n':
-		case '\f': case '\t':
-		    break;
-		default:
-		    throw new IllegalArgumentException(
-			    "invalid permission: " + actions);
-		}
-		i--;
+	    if (i >= matchlen) {
+	        // don't match the comma at the beginning of the string
+	        if (i > matchlen && a[i-matchlen] == ',') {
+	            i--;
+	        } else {
+	            // parse error
+	            throw new IllegalArgumentException(
+	              "invalid actions: " + actions);
+	        }
 	    }
 
 	    // point i at the location of the comma minus one (or -1).

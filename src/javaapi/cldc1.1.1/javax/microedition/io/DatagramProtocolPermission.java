@@ -75,7 +75,7 @@ public final class DatagramProtocolPermission extends GCFPermission {
    * @see #getName
    */
   public DatagramProtocolPermission(String uri) {
-    super(uri);
+    super(uri, true);
 
     if (!"datagram".equals(getProtocol())) {
       throw new IllegalArgumentException("Expected datagram protocol: " + uri);

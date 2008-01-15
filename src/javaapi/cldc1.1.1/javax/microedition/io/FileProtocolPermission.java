@@ -98,7 +98,7 @@ public final class FileProtocolPermission extends GCFPermission {
    * @see #getActions
    */
   public FileProtocolPermission(String uri, String actions) {
-    super(uri);
+    super(uri, true);
 
     if (!"file".equals(getProtocol())) {
       throw new IllegalArgumentException("Expected file protocol: " + uri);
@@ -152,16 +152,6 @@ public final class FileProtocolPermission extends GCFPermission {
     }
 
     while (i != -1) {
-      char c;
-
-      // skip whitespace
-      while ((i!=-1) && ((c = a[i]) == ' ' ||
-                         c == '\r' ||
-                         c == '\n' ||
-                         c == '\f' ||
-                         c == '\t'))
-        i--;
-
       // check for the known strings
       int matchlen;
 
@@ -185,25 +175,20 @@ public final class FileProtocolPermission extends GCFPermission {
       } else {
         // parse error
         throw new IllegalArgumentException(
-          "invalid permission: " + action);
+          "invalid actions: " + action);
       }
 
       // make sure we didn't just match the tail of a word
       // like "ackbarfread".  Also, skip to the comma.
-      boolean seencomma = false;
-      while (i >= matchlen && !seencomma) {
-        switch(a[i-matchlen]) {
-        case ',':
-          seencomma = true;
-          /*FALLTHROUGH*/
-        case ' ': case '\r': case '\n':
-        case '\f': case '\t':
-          break;
-        default:
+      if (i >= matchlen) {
+        // don't match the comma at the beginning of the string
+        if (i > matchlen && a[i-matchlen] == ',') {
+          i--;
+        } else {
+          // parse error
           throw new IllegalArgumentException(
-            "invalid permission: " + action);
+            "invalid actions: " + action);
         }
-        i--;
       }
 
       // point i at the location of the comma minus one (or -1).
@@ -309,13 +294,14 @@ public final class FileProtocolPermission extends GCFPermission {
 
   /**
    * Returns the canonical string representation of the actions.
-   * Always returns present actions in the following order: read, write. 
+   * If both read and write actions are allowed, this method returns
+   * the string <code>"read,write"</code>.
    *
    * @return the canonical string representation of the actions.
    */
   public String getActions() {
     switch (action_mask) {
-    case ALL:    return "read, write";
+    case ALL:    return "read,write";
     case READ:   return "read";
     case WRITE:  return "write";
     default:     return "";

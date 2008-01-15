@@ -75,7 +75,7 @@ public final class SocketProtocolPermission extends GCFPermission {
    * @see #getName
    */
   public SocketProtocolPermission(String uri) {
-    super(uri);
+    super(uri, true);
 
     if (!"socket".equals(getProtocol())) {
       throw new IllegalArgumentException("Expected socket protocol: " + uri);

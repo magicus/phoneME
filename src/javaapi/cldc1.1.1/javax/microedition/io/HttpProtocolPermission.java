@@ -70,7 +70,7 @@ public final class HttpProtocolPermission extends GCFPermission {
    * @see #getName
    */
   public HttpProtocolPermission(String uri) {
-    super(uri);
+    super(uri, true);
 
     if (!"http".equals(getProtocol())) {
       throw new IllegalArgumentException("Expected http protocol: " + uri);
@@ -118,6 +118,10 @@ public final class HttpProtocolPermission extends GCFPermission {
    * </ul>
    * 
    * If none of the above are true, <code>implies</code> returns false.
+   * <p>
+   * Note that the <code>{pathname}</code> component is not used when
+   * evaluating the 'implies' relation.
+   *
    * 
    * @param p the permission to check against.
    *
@@ -130,14 +134,6 @@ public final class HttpProtocolPermission extends GCFPermission {
     }
 
     HttpProtocolPermission perm = (HttpProtocolPermission)p;
-
-    String thisPath = getPath();
-    String thatPath = perm.getPath();
-    
-    if (thisPath != null && !"".equals(thisPath) && 
-        !thisPath.equals(thatPath)) {
-      return false;
-    }
 
     return impliesByHost(perm) && impliesByPorts(perm);
   }
