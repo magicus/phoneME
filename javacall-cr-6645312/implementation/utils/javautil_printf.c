@@ -72,7 +72,7 @@ void javautil_printf(int severity, int channelID, char *message, ...) {
 
 }
 
-void javautil_vsprintf(int severity, int channelID, int isolateID, char *msg, va_list vl) {
+void javautil_vprintf(int severity, int channelID, int isolateID, char *msg, va_list vl) {
 
     char *str = 0;
     char tempBuffer[CONVERSION_BUFFER_SIZE];
@@ -94,7 +94,7 @@ void javautil_vsprintf(int severity, int channelID, int isolateID, char *msg, va
 
     while(*msg) {
 
-        if((*msg == '\\') && (*(msg+1) == '%')) {
+        if((*msg == '%') && (*(msg+1) == '%')) {
             msg++;
             javautil_putchar(*msg);
             msg++;
