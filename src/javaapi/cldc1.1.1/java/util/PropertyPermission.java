@@ -381,6 +381,7 @@ final class PropertyPermissionCollection extends PermissionCollection
      * @see #serialPersistentFields
      */
     private boolean all_allowed;
+    Hashtable perms;
 
     /**
      * Create an empty PropertyPermissions object.
@@ -388,10 +389,8 @@ final class PropertyPermissionCollection extends PermissionCollection
      */
 
     public PropertyPermissionCollection() {
-      throw new RuntimeException("Not implemented yet!");
-/*
-	perms = new HashMap(32);     // Capacity for default policy
-	all_allowed = false;*/
+	perms = new Hashtable(32);     // Capacity for default policy
+	all_allowed = false;
     }
 
     /**
@@ -409,40 +408,37 @@ final class PropertyPermissionCollection extends PermissionCollection
 
     public void add(Permission permission)
     {
-      throw new RuntimeException("Not implemented yet!");
-/*
-	if (! (permission instanceof PropertyPermission))
-	    throw new IllegalArgumentException("invalid permission: "+
+      if (! (permission instanceof PropertyPermission))
+        throw new IllegalArgumentException("invalid permission: "+
 					       permission);
-	if (isReadOnly())
-	    throw new SecurityException("attempt to add a Permission to a readonly PermissionCollection");
+      if (isReadOnly())
+        throw new SecurityException("attempt to add a Permission to a readonly PermissionCollection");
 
-	PropertyPermission pp = (PropertyPermission) permission;
+      PropertyPermission pp = (PropertyPermission) permission;
 
-	PropertyPermission existing =
-	    (PropertyPermission) perms.get(pp.getName());
+      PropertyPermission existing =
+        (PropertyPermission) perms.get(pp.getName());
 
-        // No need to synchronize because all adds are done sequentially
-	// before any implies() calls
+      // No need to synchronize because all adds are done sequentially
+      // before any implies() calls
 
-	if (existing != null) {
-	    int oldMask = existing.getMask();
-	    int newMask = pp.getMask();
-	    if (oldMask != newMask) {
-		int effective = oldMask | newMask;
-		String actions = PropertyPermission.getActions(effective);
-		perms.put(pp.getName(),
-			new PropertyPermission(pp.getName(), actions));
+      if (existing != null) {
+        int oldMask = existing.getMask();
+        int newMask = pp.getMask();
+        if (oldMask != newMask) {
+          int effective = oldMask | newMask;
+	  String actions = PropertyPermission.getActions(effective);
+	  perms.put(pp.getName(),
+		new PropertyPermission(pp.getName(), actions));
+        }
+      } else {
+        perms.put(pp.getName(), permission);
+      }
 
-	    }
-	} else {
-	    perms.put(pp.getName(), permission);
-	}
-
-        if (!all_allowed) {
-	    if (pp.getName().equals("*"))
-		all_allowed = true;
-	}*/
+      if (!all_allowed) {
+        if (pp.getName().equals("*"))
+ 	all_allowed = true;
+      }
     }
 
     /**
@@ -457,65 +453,59 @@ final class PropertyPermissionCollection extends PermissionCollection
 
     public boolean implies(Permission permission)
     {
-      throw new RuntimeException("Not implemented yet!");
-/*
-	if (! (permission instanceof PropertyPermission))
-   		return false;
+     if (! (permission instanceof PropertyPermission))
+       return false;
 
-	PropertyPermission pp = (PropertyPermission) permission;
-	PropertyPermission x;
+     PropertyPermission pp = (PropertyPermission) permission;
+     PropertyPermission x;
 
-	int desired = pp.getMask();
-	int effective = 0;
+     int desired = pp.getMask();
+     int effective = 0;
 
-	// short circuit if the "*" Permission was added
-	if (all_allowed) {
-	    x = (PropertyPermission) perms.get("*");
-	    if (x != null) {
-		effective |= x.getMask();
-		if ((effective & desired) == desired)
-		    return true;
-	    }
-	}
+     // short circuit if the "*" Permission was added
+     if (all_allowed) {
+       x = (PropertyPermission) perms.get("*");
+       if (x != null) {
+         effective |= x.getMask();
+         if ((effective & desired) == desired)
+	   return true;
+	 }
+     }
 
-	// strategy:
-	// Check for full match first. Then work our way up the
-	// name looking for matches on a.b.*
+     // strategy:
+     // Check for full match first. Then work our way up the
+     // name looking for matches on a.b.*
 
-	String name = pp.getName();
-	//System.out.println("check "+name);
+     String name = pp.getName();
 
-	x = (PropertyPermission) perms.get(name);
+     x = (PropertyPermission) perms.get(name);
 
-	if (x != null) {
-	    // we have a direct hit!
-	    effective |= x.getMask();
-	    if ((effective & desired) == desired)
-		return true;
-	}
+     if (x != null) {
+       // we have a direct hit!
+       effective |= x.getMask();
+       if ((effective & desired) == desired)
+         return true;
+       }
 
-	// work our way up the tree...
-	int last, offset;
+     // work our way up the tree...
+     int last, offset;
+     offset = name.length()-1;
+     while ((last = name.lastIndexOf('.', offset)) != -1) {
+       name = name.substring(0, last+1) + "*";
+       x = (PropertyPermission) perms.get(name);
+    
+       if (x != null) {
+         effective |= x.getMask();
+	 if ((effective & desired) == desired) {
+	   return true;
+         }
+       }
+       offset = last -1;
+     }
 
-	offset = name.length()-1;
-
-	while ((last = name.lastIndexOf(".", offset)) != -1) {
-
-	    name = name.substring(0, last+1) + "*";
-	    //System.out.println("check "+name);
-	    x = (PropertyPermission) perms.get(name);
-
-	    if (x != null) {
-		effective |= x.getMask();
-		if ((effective & desired) == desired)
-		    return true;
-	    }
-	    offset = last -1;
-	}
-
-	// we don't have to check for "*" as it was already checked
-	// at the top (all_allowed), so we just return false
-	return false;*/
+      // we don't have to check for "*" as it was already checked
+      // at the top (all_allowed), so we just return false
+      return false;
     }
 
     /**
@@ -526,31 +516,10 @@ final class PropertyPermissionCollection extends PermissionCollection
      */
 
     public Enumeration elements() {
-      throw new RuntimeException("Not implemented yet!");
-/*
-        // Convert Iterator of Map values into an Enumeration
-	return Collections.enumeration(perms.values());*/
+      // Convert Iterator of Map values into an Enumeration
+      return perms.elements();
     }
 
     private static final long serialVersionUID = 7015263904581634791L;
 
-    // Need to maintain serialization interoperability with earlier releases,
-    // which had the serializable field:
-    //
-    // Table of permissions.
-    //
-    // @serial
-    //
-    // private Hashtable permissions;
-    /**
-     * @serialField permissions java.util.Hashtable
-     *     A table of the PropertyPermissions.
-     * @serialField all_allowed boolean
-     *     boolean saying if "*" is in the collection.
-     */
-/*    private static final ObjectStreamField[] serialPersistentFields = {
-
-        new ObjectStreamField("permissions", Hashtable.class),
-	new ObjectStreamField("all_allowed", Boolean.TYPE),
-    };*/
 }
