@@ -81,31 +81,6 @@ public abstract class Permission {
     }
 
     /**
-     * Implements the guard interface for a permission. The 
-     * <code>SecurityManager.checkPermission</code> method is called, 
-     * passing this permission object as the permission to check.
-     * Returns silently if access is granted. Otherwise, throws
-     * a SecurityException.
-     * 
-     * @param object the object being guarded (currently ignored).
-     *
-     * @throws SecurityException
-     *        if a security manager exists and its 
-     *        <code>checkPermission</code> method doesn't allow access.
-     * 
-     * @see Guard
-     * @see GuardedObject
-     * @see SecurityManager#checkPermission
-     * 
-     */
-    public void checkGuard(Object object) throws SecurityException {
-      throw new RuntimeException("Not implemented yet!");
-/*
-	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) sm.checkPermission(this);*/
-    }
-
-    /**
      * Checks if the specified permission's actions are "implied by" 
      * this object's actions.
      * <P>
