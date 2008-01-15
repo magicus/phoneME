@@ -1420,11 +1420,70 @@ void Java_java_lang_Throwable_fillInStackTrace() {
 }
 #endif
 
+#if ENABLE_CLDC_111
+jobject Java_java_lang_Throwable_obtainBackTrace() {
+  UsingFastOops fast;
+  Throwable::Fast throwable = GET_PARAMETER_AS_OOP(0);  
+  ObjArray::Fast backtrace;  
+#if ENABLE_STACK_TRACE
+  SETUP_ERROR_CHECKER_ARG;
+  ObjArray::Fast compr_backtrace = throwable().backtrace();
+  if (compr_backtrace.is_null()) {    
+    return NULL;
+  }
+  
+  TypeArray::Fast offsets = compr_backtrace().obj_at(1);      
+  if (offsets.is_null()) {
+    return NULL;
+  }
+  int length = offsets().length();
+  
+  backtrace = Universe::new_obj_array(3 JVM_CHECK_0);
+  ObjArray::Fast class_names = Universe::new_obj_array(length JVM_CHECK_0);
+  ObjArray::Fast method_names = Universe::new_obj_array(length JVM_CHECK_0);
+  //copy offsets to new backtrace
+  backtrace().obj_at_put(0, &class_names);
+  backtrace().obj_at_put(1, &method_names);
+  backtrace().obj_at_put(2, &offsets);
+  
+  ObjArray::Fast methods = compr_backtrace().obj_at(0);
+  Method::Fast m;
+  Symbol::Fast method_name;
+  Symbol::Fast class_name;
+  if (!methods.is_null() && !offsets.is_null()) {
+    int i;      
+    for (i=0; i<methods().length(); i++) {
+      m = methods().obj_at(i);
+      if (m.is_null()) {          break;        }
+       method_name = m().name();
+#ifndef PRODUCT        
+      // Non-public methods in a romized image may be renamed to
+      // .unknown. to save space. In non-product mode, to aid
+      // debugging, we retrieve the original name using
+      // ROM::get_original_method_name().
+      if (method_name().equals(Symbols::unknown())) {
+        method_name = ROM::get_original_method_name(&m);
+      }
+#endif
+      String::Raw method_name_str = Universe::new_string(&method_name JVM_CHECK_0);      
+      method_names().obj_at_put(i, &method_name_str);
+      
+      InstanceClass::Raw ic = m().holder();
+      class_name = ic().name();
+      String::Raw class_name_str = Universe::new_string(&class_name JVM_CHECK_0);      
+      class_names().obj_at_put(i, &class_name_str);      
+    }
+  }
+#endif
+  return (jobject)backtrace.obj();
+}
+#else
 // public void printStackTrace();
 void Java_java_lang_Throwable_printStackTrace() {
   Throwable::Raw throwable = GET_PARAMETER_AS_OOP(0);
   throwable().print_stack_trace();
 }
+#endif
 
 // static native Object open(String name);
 ReturnOop Java_com_sun_cldc_io_ResourceInputStream_open(JVM_SINGLE_ARG_TRAPS) {
