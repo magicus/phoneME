@@ -1299,6 +1299,7 @@ Natives.hpp                      InstanceClass.hpp
 Natives.hpp                      NativesTable.hpp
 Natives.hpp                      Frame.hpp
 Natives.cpp                      ROMWriter.hpp
+Natives.cpp                      FloatNatives.hpp
 Natives.cpp                      Stream.hpp
 Natives.cpp                      Natives.hpp
 Natives.cpp                      SystemDictionary.hpp

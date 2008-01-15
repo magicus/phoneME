@@ -409,4 +409,102 @@ public final strictfp class Math {
         }
         return (a <= b) ? a : b;
     }
+
+    /**
+     * Returns the arc sine of an angle, in the range of -<i>pi</i>/2 through
+     * <i>pi</i>/2. Special cases: 
+     * <ul><li>If the argument is NaN or its absolute value is greater 
+     * than 1, then the result is NaN.
+     * <li>If the argument is zero, then the result is a zero with the
+     * same sign as the argument.</ul>
+     * <p>
+     * A result must be within 1 ulp of the correctly rounded result.  Results
+     * must be semi-monotonic.
+     *
+     * @param   a   the value whose arc sine is to be returned.
+     * @return  the arc sine of the argument.
+     */
+    public static native double asin(double a);
+
+    /**
+     * Returns the arc cosine of an angle, in the range of 0.0 through
+     * <i>pi</i>.  Special case:
+     * <ul><li>If the argument is NaN or its absolute value is greater 
+     * than 1, then the result is NaN.</ul>
+     * <p>
+     * A result must be within 1 ulp of the correctly rounded result.  Results 
+     * must be semi-monotonic.
+     *
+     * @param   a   the value whose arc cosine is to be returned.
+     * @return  the arc cosine of the argument.
+     */
+    public static native double acos(double a);
+
+    /**
+     * Returns the arc tangent of an angle, in the range of -<i>pi</i>/2
+     * through <i>pi</i>/2.  Special cases: 
+     * <ul><li>If the argument is NaN, then the result is NaN.
+     * <li>If the argument is zero, then the result is a zero with the
+     * same sign as the argument.</ul>
+     * <p>
+     * A result must be within 1 ulp of the correctly rounded result.  Results
+     * must be semi-monotonic.
+     *
+     * @param   a   the value whose arc tangent is to be returned.
+     * @return  the arc tangent of the argument.
+     */
+    public static native double atan(double a);
+
+    /**
+     * Converts rectangular coordinates (<code>x</code>,&nbsp;<code>y</code>)
+     * to polar (r,&nbsp;<i>theta</i>).
+     * This method computes the phase <i>theta</i> by computing an arc tangent
+     * of <code>y/x</code> in the range of -<i>pi</i> to <i>pi</i>. Special 
+     * cases:
+     * <ul><li>If either argument is NaN, then the result is NaN. 
+     * <li>If the first argument is positive zero and the second argument 
+     * is positive, or the first argument is positive and finite and the 
+     * second argument is positive infinity, then the result is positive 
+     * zero. 
+     * <li>If the first argument is negative zero and the second argument 
+     * is positive, or the first argument is negative and finite and the 
+     * second argument is positive infinity, then the result is negative zero. 
+     * <li>If the first argument is positive zero and the second argument 
+     * is negative, or the first argument is positive and finite and the 
+     * second argument is negative infinity, then the result is the 
+     * <code>double</code> value closest to <i>pi</i>. 
+     * <li>If the first argument is negative zero and the second argument 
+     * is negative, or the first argument is negative and finite and the 
+     * second argument is negative infinity, then the result is the 
+     * <code>double</code> value closest to -<i>pi</i>. 
+     * <li>If the first argument is positive and the second argument is 
+     * positive zero or negative zero, or the first argument is positive 
+     * infinity and the second argument is finite, then the result is the 
+     * <code>double</code> value closest to <i>pi</i>/2. 
+     * <li>If the first argument is negative and the second argument is 
+     * positive zero or negative zero, or the first argument is negative 
+     * infinity and the second argument is finite, then the result is the 
+     * <code>double</code> value closest to -<i>pi</i>/2. 
+     * <li>If both arguments are positive infinity, then the result is the 
+     * <code>double</code> value closest to <i>pi</i>/4. 
+     * <li>If the first argument is positive infinity and the second argument 
+     * is negative infinity, then the result is the <code>double</code> 
+     * value closest to 3*<i>pi</i>/4. 
+     * <li>If the first argument is negative infinity and the second argument 
+     * is positive infinity, then the result is the <code>double</code> value 
+     * closest to -<i>pi</i>/4. 
+     * <li>If both arguments are negative infinity, then the result is the 
+     * <code>double</code> value closest to -3*<i>pi</i>/4.</ul>
+     * <p>
+     * A result must be within 2 ulps of the correctly rounded result.  Results
+     * must be semi-monotonic.
+     *
+     * @param   y   the ordinate coordinate
+     * @param   x   the abscissa coordinate
+     * @return  the <i>theta</i> component of the point
+     *          (<i>r</i>,&nbsp;<i>theta</i>)
+     *          in polar coordinates that corresponds to the point
+     *          (<i>x</i>,&nbsp;<i>y</i>) in Cartesian coordinates.
+     */
+    public static native double atan2(double y, double x);
 }

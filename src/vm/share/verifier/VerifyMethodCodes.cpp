@@ -484,39 +484,20 @@ void VerifyMethodCodes::store_array(BasicType kind JVM_TRAPS) {
         || (array_kind != ITEM_Null && array_kind != ITEM_Object)) {
       VFY_ERROR(ve_aastore_bad_type);
     }
-    if (element_kind != ITEM_Null && array_kind != ITEM_Null) {
+    /*
+     * According to the CLDC Byte Code Typechecker Specification,
+     * the only constraints on aastore are:
+     *  - the type of a value stored into an array by an aastore instruction
+     *    must be a reference type;
+     *  - the component type of the array being stored into must be
+     *    a reference type.
+     */
+    if (array_kind != ITEM_Null) {
+      GUARANTEE(array_name.not_null(), "Must not be null");
       array_element_name = reference_array_element_name(&array_name);
-      bool result;
-      /*
-       * This part of the verifier is far from obvious, but the logic
-       * appears to be as follows:
-       *
-       * 1, Because not all stores into a reference array can be
-       *    statically checked then they never are in the case
-       *    where the array is of one dimension and the object
-       *    being inserted is a non-array, The verifier will
-       *    ignore such errors and they will all be found at runtime.
-       *
-       * 2, However, if the array is of more than one dimension or
-       *    the object being inserted is some kind of an array then
-       *    a check is made by the verifier and errors found at
-       *    this time (statically) will cause the method to fail
-       *    verification. Presumable not all errors will will be found
-       *    here and so some runtime errors can occur in this case
-       *    as well.
-       */
-       if (array_element_name.is_null()) {
-         result = false;
-       } else if (!is_array_name(&array_element_name)
-                       && !is_array_name(&element_name)) {
-         result = true;
-       } else {
-         result = frame()->is_assignable_to(ITEM_Object, ITEM_Object,
-                                   &element_name, &array_element_name JVM_CHECK);
-       }
-       if (!result) {
-         VFY_ERROR(ve_aastore_bad_type);
-       }
+      if (array_element_name.is_null()) {
+        VFY_ERROR(ve_aastore_bad_type);
+      }
     }
   } else {
     pop(kind JVM_CHECK);
