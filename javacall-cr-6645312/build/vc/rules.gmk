@@ -51,7 +51,6 @@ EXTRA_LDFLAGS+=$(NOTIFIERS_LIB)
 endif
 
 PROPERTY_OBJECTS=$(addsuffix .obj,$(PROPERTY_FILES))
-LOG_OBJECTS=$(addsuffix .obj,$(LOG_FILES))
 
 local_vc: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib
 

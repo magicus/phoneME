@@ -27,13 +27,12 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "javacall_logging.h"
-#include "javacall_printf.h"
+#include "javautil_printf.h"
 
-void javacall_vsprintf(int severity, int channelID, int isolateID, char *msg, va_list vl);
 static char* convertInt2String(int inputInt, char *buffer);
 static char* convertHexa2String(int inputHex, char *buffer);
-static void  javacall_putstring(const char *outputString);
-static void  javacall_putchar(const char outputChar);
+static void  javautil_putstring(const char *outputString);
+static void  javautil_putchar(const char outputChar);
 
 //#define USING_64_BIT_INTEGER
 
@@ -65,16 +64,15 @@ static void  javacall_putchar(const char outputChar);
 
 
 
-void javacall_printf(int severity, int channelID, char *message, ...) {
-
+void javautil_printf(int severity, int channelID, char *message, ...) {
     va_list list;
     va_start(list, message);
-    javacall_vsprintf(severity, channelID, 1, message, list);
+    javautil_vsprintf(severity, channelID, 1, message, list);
     va_end(list);
 
 }
 
-void javacall_vsprintf(int severity, int channelID, int isolateID, char *msg, va_list vl) {
+void javautil_vsprintf(int severity, int channelID, int isolateID, char *msg, va_list vl) {
 
     char *str = 0;
     char tempBuffer[CONVERSION_BUFFER_SIZE];
@@ -98,10 +96,10 @@ void javacall_vsprintf(int severity, int channelID, int isolateID, char *msg, va
 
         if((*msg == '\\') && (*(msg+1) == '%')) {
             msg++;
-            javacall_putchar(*msg);
+            javautil_putchar(*msg);
             msg++;
         } else if(*msg != '%') {
-            javacall_putchar(*msg);
+            javautil_putchar(*msg);
             msg++;
         } else {
 
@@ -114,31 +112,31 @@ void javacall_vsprintf(int severity, int channelID, int isolateID, char *msg, va
                 case 'd': /* integer */
                     Printable.i = va_arg( vl, int );
                     str = convertInt2String(Printable.i,tempBuffer);
-                    javacall_putstring(str);
+                    javautil_putstring(str);
                     break;
 
                 case 'x': /* hexadecimal */
                     Printable.x = va_arg( vl, int );
                     str = convertHexa2String(Printable.x,tempBuffer);
-                    javacall_putstring(str);
+                    javautil_putstring(str);
                     break;
 
                 case 'c': /* character */
                     Printable.c = (char)va_arg( vl, int );
-                    javacall_putchar(Printable.c);
+                    javautil_putchar(Printable.c);
                     break;
 
                 case 's': /* string */
                     Printable.s = va_arg( vl, char * );
-                    javacall_putstring(Printable.s);
+                    javautil_putstring(Printable.s);
                     break;
 
                 default:
                 /*FIXME I think we should call to va_arg here as well */
                 /*va_arg( vl, ???? );*/
-                    javacall_putstring("\nUnsupported type. Cant print %");
-                    javacall_putchar(*msg);
-                    javacall_putstring(".\n");
+                    javautil_putstring("\nUnsupported type. Cant print %");
+                    javautil_putchar(*msg);
+                    javautil_putstring(".\n");
                     break;
             }/*end of switch*/
             msg++;
@@ -146,24 +144,16 @@ void javacall_vsprintf(int severity, int channelID, int isolateID, char *msg, va
 
     }/*end of while*/
 
-}/* end of javacall_printf */
-
-javacall_result javacall_printf_initialize(void) {
-    return JAVACALL_OK; 
-}
-
-javacall_result javacall_printf_finalize(void) {
-    return JAVACALL_OK;
-}
+}/* end of javautil_printf */
 
 
-static void javacall_putchar(const char outputChar) {
+static void javautil_putchar(const char outputChar) {
     const char java_outputChar[2]= {outputChar, '\0'};
     javacall_print(java_outputChar);
 }
 
 
-static void javacall_putstring(const char *outputString) {
+static void javautil_putstring(const char *outputString) {
     javacall_print(outputString);
 }
 
