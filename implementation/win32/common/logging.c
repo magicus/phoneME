@@ -48,8 +48,11 @@ char print_buffer[PRINT_BUFFER_SIZE];
 * @param s a NULL terminated character buffer to be printed
 */
 void javacall_print(const char *s) {
-    //OutputDebugString(s);
-    printf("%s", s);
+    if(s != NULL) {
+        puts(s);
+    } else {
+        puts("NULL\n");
+    }
 }
 
 

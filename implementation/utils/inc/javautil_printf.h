@@ -24,21 +24,17 @@
  */
 
 
-#ifndef JAVACALL_PRINTF_INCLUDED
-#define JAVACALL_PRINTF_INCLUDED
+#ifndef JAVAUTIL_PRINTF_INCLUDED
+#define JAVAUTIL_PRINTF_INCLUDED
 
 #include <stdarg.h>
 
-int javacall_printf_initialize(void);
-int javacall_printf_finalize(void);
-
 // to be used from javacall
-void javacall_printf(int severity, int channelID, char *message, ...);
-
+void javautil_printf(int severity, int channelID, char *message, ...);
 
 // To be used from midp
-void javacall_vsprintf(int severity, int channelID, int isolateID, char *szTypes, va_list vl);
+void javautil_vsprintf(int severity, int channelID, int isolateID, char *szTypes, va_list vl);
 
 
-#endif /* of JAVACALL_PRINTF_INCLUDED */
+#endif /* of JAVAUTIL_PRINTF_INCLUDED */
 
