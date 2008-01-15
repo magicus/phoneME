@@ -398,7 +398,12 @@ endif
 # Description: JSR 135
 #####################################################################
 ifeq ($(USE_JSR_135), true)
-include $(JSR_135_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+ifeq ($(PROJECT_JSR_135_DIR),)
+JSROP_JSR135_DIR = $(JSR_135_DIR)
+else
+JSROP_JSR135_DIR = $(PROJECT_JSR_135_DIR)
+endif
+include $(JSROP_JSR135_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
