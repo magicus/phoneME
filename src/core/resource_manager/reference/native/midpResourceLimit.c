@@ -155,7 +155,7 @@ static void initResourceLimit() {
 
     if (0 == max_isolates) {
         REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-        return;
+        max_isolates = MAX_ISOLATES;
     }
 
 
@@ -197,8 +197,8 @@ static _IsolateResourceUsage *findIsolateResourceUsageStruct(int isolateId) {
 
     if (0 == max_isolates) {
         REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-        //Attempt to recover
-        max_isolates = 1;
+        //get hard-coded property
+        max_isolates = MAX_ISOLATES;
     }
 
 
@@ -435,7 +435,7 @@ int midpAllocateReservedResources() {
 
     if (0 == max_isolates) {
         REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-        return -1;
+        max_isolates = MAX_ISOLATES;
     }
 
 
@@ -510,7 +510,7 @@ void midpFreeReservedResources() {
     int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
     if (0 == max_isolates) {
         REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-        return;
+        max_isolates = MAX_ISOLATES;
     }
 
 

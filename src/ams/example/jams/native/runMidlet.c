@@ -78,8 +78,12 @@ getHeapRequirement(){
     int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
     int midp_heap_requirement;
 
+    if (max_isolates == 0) {
+        max_isolates = MAX_ISOLATES;
+    }
+
     //calculate heap size
-    midp_heap_requirement = (max_isolates == 0) ? (1280 * 1024) : (max_isolates * 1280 * 1024); 
+    midp_heap_requirement = max_isolates * 1280 * 1024;
     return midp_heap_requirement;
 }
 

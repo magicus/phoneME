@@ -396,7 +396,7 @@ StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
 
     if (0 == max_isolates) {
         REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-        return;
+        max_isolates = MAX_ISOLATES;
     }
 
     if( -1 != isolateId ) {

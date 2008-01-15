@@ -142,6 +142,7 @@ midpInitializeUI(void) {
 
         if (0 == reserved) {
             perror("property AMS_MEMORY_RESERVED_MVM not found!");
+            reserved = AMS_MEMORY_RESERVED_MVM;
         }
 
         reserved = reserved * 1024;
