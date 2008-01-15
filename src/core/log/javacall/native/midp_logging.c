@@ -108,7 +108,7 @@ void reportToLog(int severity, int channelID, int isolateID, char* message, ...)
 
     if(get_allowed_severity_c(channelID) <= severity) {
         va_start(ap, message);
-        javautil_vsprintf(severity, channelID, isolateID, message, ap);
+        javautil_vprintf(severity, channelID, isolateID, message, ap);
         va_end(ap);
     }
 }
