@@ -27,7 +27,6 @@
 #ifndef __DEFS_H
 #define __DEFS_H
 
-#include "porting_logging.h"
 
 #endif /* __DEFS_H */
 
