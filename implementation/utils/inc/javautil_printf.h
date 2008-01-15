@@ -33,7 +33,7 @@
 void javautil_printf(int severity, int channelID, char *message, ...);
 
 // To be used from midp
-void javautil_vsprintf(int severity, int channelID, int isolateID, char *szTypes, va_list vl);
+void javautil_vprintf(int severity, int channelID, int isolateID, char *szTypes, va_list vl);
 
 
 #endif /* of JAVAUTIL_PRINTF_INCLUDED */
