@@ -50,6 +50,26 @@ javacall_bool javacall_media_supports_mixing()
 }
 
 /**
+ * Query multimedia property. 
+ * It must support most of properties descibed at JSR specification.
+ * If there is no property with such name, the result is succeful and 
+ *  propValue will contain NULL value.
+ *
+ * @param propName     property name
+ * @param propValue    pointer to store property value
+ * 
+ * @retval JAVACALL_OK               success
+ *         JAVACALL_INVALID_ARGUMENT if either of two arguments is NULL
+ *         JAVACALL_OUT_MEMORY
+ *         JAVACALL_FAIL
+ */
+javacall_result
+    javacall_media_get_property(const char* propName, const char** propValue) 
+{
+    return JAVACALL_FAIL;
+}
+
+/**
  * Call this function when VM starts
  * Perform global initialization operation
  * 
