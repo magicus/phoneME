@@ -2099,18 +2099,20 @@ int ClassFileParser::found_all_interfaces(OopDesc* local_interface_indices_obj,
   TypeArray::Raw all_interface_indices = all_interface_indices_obj;
   TypeArray::Raw bitmap = bitmap_obj;
   const int size = local_interface_indices().length();
-  TypeArray::array_copy(&local_interface_indices, 0, &all_interface_indices,
-                        already_in_table, size);
-  already_in_table += size;  
-  for (int i = 0; i < size; i++) {
-    const int id = local_interface_indices().ushort_at(i);
-    const int bitmap_offset = id / BitsPerWord;
-    const int bitmap_mask = 1 << (id % BitsPerWord);
-    if (bitmap().int_at(bitmap_offset) & bitmap_mask) continue; //were here
-    bitmap().int_at_put(bitmap_offset, bitmap().int_at(bitmap_offset) | bitmap_mask);
-    InstanceClass::Raw cls = Universe::class_from_id(id);    
-    already_in_table = found_all_interfaces(cls().local_interfaces(), all_interface_indices_obj, 
-                                            already_in_table, bitmap_obj);
+  if (size != 0) {
+    TypeArray::array_copy(&local_interface_indices, 0, &all_interface_indices,
+                          already_in_table, size);
+    already_in_table += size;  
+    for (int i = 0; i < size; i++) {
+      const int id = local_interface_indices().ushort_at(i);
+      const int bitmap_offset = id / BitsPerWord;
+      const int bitmap_mask = 1 << (id % BitsPerWord);
+      if (bitmap().int_at(bitmap_offset) & bitmap_mask) continue; //were here
+      bitmap().int_at_put(bitmap_offset, bitmap().int_at(bitmap_offset) | bitmap_mask);
+      InstanceClass::Raw cls = Universe::class_from_id(id);    
+      already_in_table = found_all_interfaces(cls().local_interfaces(), all_interface_indices_obj, 
+                                              already_in_table, bitmap_obj);
+    }
   }
   return already_in_table;
 }
