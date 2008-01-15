@@ -33,7 +33,7 @@
 #include <pcsl_print.h>
 #include <midp_libc_ext.h>
 #include <midpNativeThread.h>
-#include "javacall_printf.h"
+#include "javautil_printf.h"
 #include "jvm.h"
 
 /**
@@ -108,7 +108,7 @@ void reportToLog(int severity, int channelID, int isolateID, char* message, ...)
 
     if(get_allowed_severity_c(channelID) <= severity) {
         va_start(ap, message);
-        javacall_vsprintf(severity, channelID, isolateID, message, ap);
+        javautil_vsprintf(severity, channelID, isolateID, message, ap);
         va_end(ap);
     }
 }
