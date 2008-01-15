@@ -252,7 +252,7 @@ public abstract class BasicPermission extends Permission
      */
 
     public PermissionCollection newPermissionCollection() {
-	return new BasicPermissionCollection();
+	return new BasicPermissionCollection(getClass());
     }
 
 }
@@ -303,7 +303,8 @@ extends PermissionCollection
      *
      */
 
-    public BasicPermissionCollection() {
+    public BasicPermissionCollection(Class permClass) {
+      this.permClass = permClass;
       perms = new Hashtable(11);
       all_allowed = false;
     }
@@ -334,16 +335,11 @@ extends PermissionCollection
 
 	BasicPermission bp = (BasicPermission) permission;
 
-	if (perms.size() == 0) {
-	    // adding first permission
-	    permClass = bp.getClass();
-	} else {
-	    // make sure we only add new BasicPermissions of the same class
-	    if (bp.getClass() != permClass)
-		throw new IllegalArgumentException("invalid permission: " +
-						permission);
+        // make sure we only add new BasicPermissions of the same class
+	if (!permClass.isInstance(bp)) {
+          throw new IllegalArgumentException("invalid permission: " +
+	                                                       permission);
 	}
-
         // No need to synchronize because all adds are done sequentially
 	// before any implies() calls
 
@@ -373,7 +369,7 @@ extends PermissionCollection
 	BasicPermission bp = (BasicPermission) permission;
 
 	// random subclasses of BasicPermission do not imply each other
-	if (bp.getClass() != permClass) {
+	if (!permClass.isInstance(bp)) {
 	    return false;
         }
 
