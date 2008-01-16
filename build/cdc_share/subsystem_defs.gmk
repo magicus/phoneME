@@ -42,7 +42,15 @@ SUBSYSTEM_JSR_120_NATIVE_FILES += \
     jsr120_signals.c
 
 SUBSYSTEM_JSR_120_EXTRA_INCLUDES += \
-    $(JSR_120_DIR)/src/cdc_share/native/inc \
+    $(JSR_120_DIR)/src/cdc_share/native/inc 
+
+ifeq ($(USE_MIDP),true)
+MODULE_JSR_120_COMMON_JAVA_FILES += \
+    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ProtocolPushImpl.java \
+    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ReservationDescriptorImpl.java \
+    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ConnectionReservationImpl.java \
+    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/PushConnectionsPool.java
+endif
 
 include $(JSR_120_DIR)/build/share/common_defs.gmk
 

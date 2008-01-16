@@ -28,6 +28,11 @@ JSR_120_BUILD_DIR     = $(MIDP_OUTPUT_DIR)
 JSR_120_GENERATED_DIR = $(GENERATED_DIR)
 JSR_120_BINDIR        = $(BINDIR)
 
+ifneq ($(USE_NATIVE_PUSH), true)
+MODULE_JSR_120_COMMON_JAVA_FILES += \
+   $(JSR_120_DIR)/src/share/core/common/classes/com/sun/midp/wma/ProtocolPushImpl.java
+endif
+
 include $(JSR_120_DIR)/build/share/common_defs.gmk
 
 JTWI_I3TEST_JAVA_FILES              += $(SUBSYSTEM_JSR_120_I3TEST_JAVA_FILES)

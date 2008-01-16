@@ -87,7 +87,7 @@ $(JSR_120_GENERATED_DIR)/classes/com/sun/tck/wma/MessageConnector.java: \
 
 # Java files for the ( jsr_120 ) module
 #
-MODULE_JSR_120_COMMON_JAVA_FILES = \
+MODULE_JSR_120_COMMON_JAVA_FILES += \
     $(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/MessageListener.java \
     $(JSR_120_GENERATED_DIR)/classes/javax/wireless/messaging/MessageConnection.java \
     $(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/Message.java \
@@ -95,21 +95,6 @@ MODULE_JSR_120_COMMON_JAVA_FILES = \
     $(JSR_120_DIR)/src/share/core/common/classes/javax/wireless/messaging/TextMessage.java 
     
 vpath % $(JSR_120_DIR)/src/share/test/native
-
-ifneq ($(USE_NATIVE_PUSH), true)
-ifeq ($(USE_MIDP),true)
-ifeq ($(TARGET_VM), cldc_vm)
-MODULE_JSR_120_COMMON_JAVA_FILES += \
-    $(JSR_120_DIR)/src/share/core/common/classes/com/sun/midp/wma/ProtocolPushImpl.java
-else
-MODULE_JSR_120_COMMON_JAVA_FILES += \
-    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ProtocolPushImpl.java \
-    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ReservationDescriptorImpl.java \
-    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/ConnectionReservationImpl.java \
-    $(JSR_120_DIR)/src/cdc_share/classes/com/sun/midp/wma/PushConnectionsPool.java
-endif
-endif
-endif
 
 ifeq ($(DELETE_WMA_MSGS), true)
 #
