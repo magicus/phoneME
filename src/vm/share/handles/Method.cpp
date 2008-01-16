@@ -565,8 +565,11 @@ bool Method::bytecode_inline_prepass(Attributes& attributes
     return false;
   }
 
-  // IMPL_NOTE: for now inlining disabled for exception throwers.
-  if (attributes.can_throw_exceptions) {
+  if (!attributes.bytecodes_allow_inlining) {
+    return false;
+  }
+
+  if (!InlineIfExceptions && attributes.can_throw_exceptions) {
     return false;
   }
 
@@ -775,6 +778,14 @@ bool Method::try_resolve_field_access(int index, BasicType& type,
   InstanceClass::Fast sender_class = holder();
   ConstantPool::Fast cp = constants();
   InstanceClass::Fast dummy_declaring_class;
+
+#if ENABLE_INLINE
+  // When inlining, the callee may belong to not yet verified class,
+  // we should not resolve any fields in its constant pool.
+  if (!sender_class().is_verified()) {
+    return false;
+  }
+#endif
 
   ConstantPool::suspend_class_loading();
   {
@@ -2359,6 +2370,8 @@ void Method::compute_attributes(Attributes& attributes JVM_TRAPS) const {
       attributes.has_loops = has_loops;
       attributes.can_throw_exceptions = 
         Bytecodes::can_throw_exceptions_flags(accumulated_flags);
+      attributes.bytecodes_allow_inlining = 
+        Bytecodes::allow_inlining_flags(accumulated_flags);
       attributes.num_locks = num_locks;
       attributes.num_bytecodes_can_throw_npe = exception_count;  
     }

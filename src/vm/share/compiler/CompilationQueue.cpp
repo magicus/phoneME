@@ -164,19 +164,25 @@ void CheckCastStub::insert( const int bci, const int class_id,
   Compiler::current()->insert_compilation_queue_element(stub);
 }
 
-CompilationContinuation* CompilationContinuation::insert( const jint bci,
+CompilationContinuation* CompilationContinuation::insert( 
+    const jint bci, const BinaryAssembler::Label entry_label JVM_TRAPS) {
+  return insert(Compiler::current(), bci, entry_label JVM_NO_CHECK_AT_BOTTOM);
+}
+
+CompilationContinuation* CompilationContinuation::insert( Compiler * const compiler,
+                                                          const jint bci,
                            const BinaryAssembler::Label entry_label JVM_TRAPS) {
   CompilationContinuation* stub = (CompilationContinuation*)
     CompilationQueueElement::allocate( compilation_continuation, bci
                                        JVM_ZCHECK_0(stub));
   stub->set_entry_label(entry_label);
-  if( Compiler::bci() < bci ) {
+  if( compiler->compiler_bci() < bci ) {
     // Mark the continuation as a forward branch target to disable 
     // loop peeling for it.
     stub->set_forward_branch_target();
   }
 
-  Compiler::current()->insert_compilation_queue_element(stub);
+  compiler->insert_compilation_queue_element(stub);
 
   // We return the stub, since the caller may want to add some flags
   return stub;
@@ -679,10 +685,11 @@ ThrowExceptionStub* ThrowExceptionStub::allocate(const RuntimeException rte,
 
 ThrowExceptionStub*
 ThrowExceptionStub::allocate_or_share(const RuntimeException rte JVM_TRAPS) {
-  const jint bci = Compiler::bci();
+  Compiler * const compiler = Compiler::root();
+  const jint bci = compiler->compiler_bci();
   bool set_rte_handler = false;
   if( ShareExceptionStubs && 
-      Compiler::current()->method_aborted_for_exception_at(bci)) {
+      compiler->method_aborted_for_exception_at(bci)) {
     ThrowExceptionStub* stub = Compiler::rte_handler(rte);
     if( stub ) { 
       return stub;
@@ -693,7 +700,7 @@ ThrowExceptionStub::allocate_or_share(const RuntimeException rte JVM_TRAPS) {
 
   ThrowExceptionStub* stub = allocate(rte, bci JVM_NO_CHECK );
   if( stub ) {
-    stub->insert();
+    compiler->insert_compilation_queue_element(stub);
     if( set_rte_handler ) { 
       stub->set_is_persistent();
       Compiler::set_rte_handler( rte, stub );
@@ -730,7 +737,7 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
   // so only root method can have exception handlers
   UsingFastOops fast_oops;
   Method::Fast method = Compiler::root()->method();
-  const int current_bci = Compiler::root()->bci();
+  const int current_bci = Compiler::root()->compiler_bci();
 
   Value exception(T_OBJECT);
   const int handler_bci = method().exception_handler_bci_for(
@@ -810,6 +817,8 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
     }
     frame->push(exception);
 
+    // For now we don't support inlining of methods with exception handlers,
+    // so only root method can have a handler
     const Entry* entry = Compiler::root()->entry_for(handler_bci);
     if( entry && entry->frame()->is_conformant_to(frame) ) {
       // The exception handler has already been compiled and has the same
@@ -824,7 +833,8 @@ void ThrowExceptionStub::compile(JVM_SINGLE_ARG_TRAPS) {
       // Can we always be guaranteed that the compilation continuation gets
       // inserted at the front of the queue and immediately follows?
       gen->jmp(branch_label);
-      CompilationContinuation::insert(handler_bci, branch_label JVM_CHECK);
+      CompilationContinuation::insert(Compiler::root(), 
+                                      handler_bci, branch_label JVM_CHECK);
     }
   } else {
     const bool has_monitors = method().access_flags().is_synchronized() ||

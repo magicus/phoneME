@@ -134,6 +134,16 @@ void CodeGenerator::ensure_sufficient_stack_for(int index, BasicType kind) {
 void CodeGenerator::go_to_interpreter(JVM_SINGLE_ARG_TRAPS) {
   COMPILER_COMMENT(("Continue in the interpreter"));
 
+#if ENABLE_INLINE
+  if (Compiler::is_inlining()) {
+    // Cannot deoptimize when the frame is omitted.
+    // Must abort current compilation discarding any generated code.
+    // The current method is marked as impossible to compile to prevent  
+    // inlining on the next compilation attempt for the caller
+    Compiler::abort_active_compilation(true JVM_THROW);
+  }
+#endif
+
   if (Compiler::omit_stack_frame()) {
     // Cannot deoptimize when the frame is omitted.
     // Must abort current compilation discarding any generated code.
@@ -165,6 +175,21 @@ void CodeGenerator::uncommon_trap(JVM_SINGLE_ARG_TRAPS) {
     // Must abort current compilation discarding any generated code.
     Compiler::abort_active_compilation(false JVM_THROW);
   }
+
+#if ENABLE_INLINE
+  if (Compiler::is_inlining()) {
+    // Cannot deoptimize when the frame is omitted.
+    // Must abort current compilation discarding any generated code.
+    // 
+    // NOTE: if there is an inlinable callee that generates an 
+    // uncommon trap when compiled and this callee is never invoked, the
+    // caller will repeatedly be compiled.
+    // We mark the callee as impossible-to-compile to prevent further 
+    // attempts to inline it. This can degrade performance if the callee is 
+    // a hot method.
+    Compiler::abort_active_compilation(true JVM_THROW);
+  }
+#endif
 
 #if ENABLE_PERFORMANCE_COUNTERS
   jvm_perf_count.uncommon_traps_generated ++;
@@ -735,7 +760,10 @@ void CodeGenerator::append_callinfo_record(const int code_offset
 
   CallInfoWriter * const callinfo_writer = Compiler::callinfo_writer();
   
-  callinfo_writer->start_record(code_offset, bci(), number_of_tags JVM_CHECK);
+  const int root_bci = Compiler::root()->compiler_bci();
+
+  callinfo_writer->start_record(code_offset, root_bci, 
+                                number_of_tags JVM_CHECK);
 
   frame()->fill_callinfo_record(callinfo_writer);
   callinfo_writer->commit_record();
@@ -744,7 +772,7 @@ void CodeGenerator::append_callinfo_record(const int code_offset
   // Read back and verify this record.
   const CompiledMethod * const cm = Compiler::current_compiled_method();
   CallInfoRecord callinfo(cm, (address)cm->entry() + code_offset);
-  GUARANTEE(callinfo.bci() == bci(), "Sanity");
+  GUARANTEE(callinfo.bci() == root_bci, "Sanity");
 #endif
 }
 #endif // ENABLE_APPENDED_CALLINFO

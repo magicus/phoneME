@@ -2164,15 +2164,14 @@ void VirtualStackFrame::push(const Value& value) {
   value_at_put(virtual_stack_pointer() - (double_word ? 1 : 0), value);
 }
 
-// This function is used to determine whether invokevirtual_final needs to
-// load the receiver into a register in order to check for null.
-bool VirtualStackFrame::reveiver_must_be_nonnull(int size_of_parameters) const
-{
+// This function is used to determine whether the receiver needs a null check
+// without loading the receiver value into a register.
+jubyte VirtualStackFrame::receiver_flags(const int size_of_parameters) const {
   const int location = virtual_stack_pointer() - size_of_parameters + 1;
   const RawLocation* raw_location = raw_location_at( location );
   GUARANTEE(raw_location->stack_type() == T_OBJECT, "sanity");
 
-  return (raw_location->flags() & Value::F_MUST_BE_NONNULL) != 0;
+  return raw_location->flags();
 }
 
 void VirtualStackFrame::set_value_must_be_nonnull(Value &value) {

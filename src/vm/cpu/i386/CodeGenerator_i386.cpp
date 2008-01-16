@@ -499,12 +499,12 @@ void CodeGenerator::call_from_compiled_code(address target,
 }
 
 void CodeGenerator::write_call_info(int parameters_size JVM_TRAPS) {
-  GUARANTEE(!Compiler::is_inlining(),
-            "Call info should not be written during inlining");
   // The actual callinfo on the x86 starts >>after<< the bytecode which
   // encodes "testl eax, ..."
   const jint code_offset = code_size();
 #if ENABLE_EMBEDDED_CALLINFO
+  GUARANTEE(!Compiler::is_inlining(), 
+            "Not tested: need to write root bci in the callinfo");
   const jint callinfo_start = code_offset + 1;
   comment("Embedded call information");
   if (CallInfo::fits_compiled_compact_format(bci(),

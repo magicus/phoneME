@@ -502,6 +502,10 @@ class Compiler: public StackObj {
     return current() != root();
   }
 
+  int compiler_bci( void ) const {
+    return current() == this ? bci() : saved_bci();
+  }
+
   enum CompilationFailure {
     none,
     reservation_failed,

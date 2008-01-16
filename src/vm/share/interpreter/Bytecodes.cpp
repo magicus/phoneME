@@ -263,7 +263,7 @@ PRODUCT_CONST Bytecodes::BytecodeData Bytecodes::data[] = {
   def(newarray                  , 2, "bc"   , 0, ""      , Exceptions | NoPatching),
   def(anewarray                 , 3, "bii"  , 0, ""      , Exceptions | NoPatching),
   def(arraylength               , 1, "b"    , 0, ""      , NullCheck),
-  def(athrow                    , 1, "b"    , 0, ""      , NoFallThru | NullCheck),
+  def(athrow                    , 1, "b"    , 0, ""      , NoFallThru | NullCheck | NoInlining),
   def(checkcast                 , 3, "bii"  , 0, ""      , Exceptions | NoPatching),
   def(instanceof                , 3, "bii"  , 0, ""      , Exceptions | NoPatching),
   def(monitorenter              , 1, "b"    , 0, ""      , NoPatching),

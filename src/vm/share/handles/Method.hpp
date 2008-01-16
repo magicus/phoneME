@@ -619,6 +619,7 @@ public:
     int num_bytecodes_can_throw_npe;  // Count of bytecodes that can throw NPE
     bool has_loops;
     bool can_throw_exceptions;
+    bool bytecodes_allow_inlining;
   };
 
   // Bytecode attributes

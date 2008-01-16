@@ -218,6 +218,11 @@ class CompilationContinuation: public CompilationQueueElement {
   static CompilationContinuation* insert( const jint bci,
                     const BinaryAssembler::Label entry_label JVM_TRAPS);
 
+  static CompilationContinuation* insert( Compiler * const compiler,
+                                          const jint bci,
+                                          const BinaryAssembler::Label entry_label 
+                                          JVM_TRAPS);
+
   enum { 
     cc_flag_need_osr_entry        = 1,
     cc_flag_is_exception_handler  = 2,

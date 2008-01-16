@@ -170,13 +170,14 @@ void BytecodeCompileClosure::store_local(BasicType kind, int index JVM_TRAPS) {
 void BytecodeCompileClosure::increment_local_int(int index, jint offset JVM_TRAPS)
 {
   COMPILER_PERFORMANCE_COUNTER_IN_BLOCK(increment_local_int);
+  const int real_index = Compiler::current_local_base() + index;
 
   Value index_value(T_INT);
-  frame()->value_at(index_value, Compiler::current_local_base() + index);
+  frame()->value_at(index_value, real_index);
 
   // Clear the local to avoid unnecessary spilling. This would not be
   // necessary if we had dead store elimination.
-  frame()->clear(index);
+  frame()->clear(real_index);
 
   // Give the addend the offset as immediate value, and add it to the local
   // with the given index.
@@ -185,7 +186,7 @@ void BytecodeCompileClosure::increment_local_int(int index, jint offset JVM_TRAP
 
   Value result(T_INT);
   __ int_binary(result, index_value, offset_value, bin_add JVM_CHECK);
-  frame()->value_at_put(index, result);
+  frame()->value_at_put(real_index, result);
 }
 
 // Array operations.
@@ -1621,6 +1622,20 @@ void BytecodeCompileClosure::invoke_static(int index JVM_TRAPS) {
 void BytecodeCompileClosure::do_direct_invoke(Method * callee, 
                                               bool must_do_null_check
                                               JVM_TRAPS) {
+  const int size_of_parameters = callee->size_of_parameters();
+
+  if (!callee->is_static() && 
+      frame()->receiver_must_be_null(size_of_parameters)) {
+
+    throw_null_pointer_exception(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
+    return;
+  }
+
+  if (must_do_null_check && 
+      frame()->receiver_must_be_nonnull(size_of_parameters)) {
+    must_do_null_check = false;
+  }
+
   if (callee->is_fast_get_accessor()) {
     if (TraceMethodInlining) {
       tty->print("Method ");
@@ -1634,14 +1649,11 @@ void BytecodeCompileClosure::do_direct_invoke(Method * callee,
 
     // Load field
     Value result(callee->fast_accessor_type());
-    if (receiver.must_be_null()) {
-      throw_null_pointer_exception(JVM_SINGLE_ARG_NO_CHECK_AT_BOTTOM);
-    } else {
-      __ load_from_object(result, receiver, callee->fast_accessor_offset(),
-                          /* null check */ true JVM_CHECK);
-      // Push result
-      frame_push(result);
-    }
+
+    __ load_from_object(result, receiver, callee->fast_accessor_offset(),
+                        must_do_null_check JVM_CHECK);
+    // Push result
+    frame_push(result);
     return;
   }
   
@@ -1650,7 +1662,7 @@ void BytecodeCompileClosure::do_direct_invoke(Method * callee,
   //so we must prohibit method inlining in case TraceBytecodesCompiler
   if (!TraceBytecodesCompiler) { 
     Method::Attributes method_attributes;
-    bool can_be_inline = 
+    bool can_be_inline = !callee->is_impossible_to_compile() &&
       callee->bytecode_inline_prepass(method_attributes JVM_CHECK); 
     if (can_be_inline) {
       UsingFastOops fast_oops;
@@ -1660,7 +1672,7 @@ void BytecodeCompileClosure::do_direct_invoke(Method * callee,
       InstanceClass::Fast caller_holder = method()->holder();
       InstanceClass::Fast callee_holder = callee->holder();
       int needed_virtual_frame_space = callee->max_execution_stack_count() 
-          - callee->size_of_parameters();
+          - size_of_parameters;
       // 3 more locations is allocated 
       // please refer to VirtualStackFrame::create(Method* method JVM_TRAPS)
       // 5 + max_execution_stack_count should be
@@ -1683,8 +1695,10 @@ void BytecodeCompileClosure::do_direct_invoke(Method * callee,
         }
           
         if (must_do_null_check) {
+          GUARANTEE(!frame()->receiver_must_be_nonnull(size_of_parameters),
+                    "Null check not needed");
           Value receiver(T_OBJECT);
-          frame()->receiver(receiver, callee->size_of_parameters());
+          frame()->receiver(receiver, size_of_parameters);
           // IMPL_NOTE: use maybe_null_check_1/2 on ARM
           code_generator()->maybe_null_check(receiver JVM_CHECK);
         } else {

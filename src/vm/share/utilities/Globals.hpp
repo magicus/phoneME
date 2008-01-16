@@ -255,6 +255,9 @@ private:
   develop(bool, ShareExceptionStubs, true,                                  \
           "Share exception thrower stubs for compiled methods.")            \
                                                                             \
+  develop(bool, InlineIfExceptions, true,                                   \
+          "Inline methods that can throw exceptions.")                      \
+                                                                            \
   develop(bool, ResolveConstantPoolInCompiler, true,                        \
           "Try to resolve constant pool entries inside the compiler "       \
           "if possible")                                                    \

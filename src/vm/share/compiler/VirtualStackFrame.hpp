@@ -571,7 +571,20 @@ class VirtualStackFrame: public CompilerObject {
     set_flush_count( 0 );           
   }
 
-  bool reveiver_must_be_nonnull(int size_of_parameters) const;
+ private:
+  jubyte receiver_flags(const int size_of_parameters) const;
+
+ public:
+  // These two helper methods are used to determine if we need a null check for
+  // receiver without loading the receiver value into a register
+  bool receiver_must_be_nonnull(int size_of_parameters) const {
+    return (receiver_flags(size_of_parameters) & Value::F_MUST_BE_NONNULL) != 0;
+  }
+
+  bool receiver_must_be_null(int size_of_parameters) const {
+    return (receiver_flags(size_of_parameters) & Value::F_MUST_BE_NULL) != 0;
+  }
+
   void receiver(Value& value, int size_of_parameters) {
     value_at(value, virtual_stack_pointer() - size_of_parameters + 1);
   }

@@ -4040,11 +4040,6 @@ void CodeGenerator::invoke(const Method* method,
   const bool prefetch_entry_address = (!skip_lookup && entry_in_fixed_address);
   address entry_address = (address)method->variable_part();
 
-  if (must_do_null_check &&
-      frame()->reveiver_must_be_nonnull(size_of_parameters)) {
-    must_do_null_check = false;
-  }
-
   if (!must_do_null_check) {
     if (prefetch_entry_address) {
       mov_imm(tmp, entry_address);
@@ -4597,9 +4592,9 @@ void CodeGenerator::call_from_compiled_code(Register dst, int offset,
 }
 
 void CodeGenerator::write_call_info(int parameters_size JVM_TRAPS) {
-  GUARANTEE(!Compiler::is_inlining(),
-            "Call info should not be written during inlining");
 #if ENABLE_EMBEDDED_CALLINFO
+  GUARANTEE(!Compiler::is_inlining(), 
+            "Not tested: need to write root bci in the callinfo");
   if (CallInfo::fits_compiled_compact_format(bci(),
                                           code_size(),
                                           frame()->virtual_stack_pointer() + 1)
