@@ -96,6 +96,7 @@ typedef enum {
  * @param type          Event type
  * @param appID         Application ID that came from javacall_media_create function
  * @param playerId      Player ID that came from javacall_media_create function
+ * @param status        Status of completed operation
  * @param data          Data that will be carried with this notification
  *                      - JAVACALL_EVENT_MEDIA_END_OF_MEDIA
  *                          data = Media time when the Player reached end of media and stopped.
@@ -119,6 +120,7 @@ typedef enum {
 void javanotify_on_media_notification(javacall_media_notification_type type,
                                       int appID,
                                       int playerId, 
+                                      javacall_result status,
                                       void *data);
 
 /** @} */
