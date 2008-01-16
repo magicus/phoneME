@@ -127,15 +127,7 @@ void BinaryAssembler::movl(Register dst, const Oop* oop) {
   DisassemblerInfo print_me(this);
   emit_byte(0xB8 | dst);
   // write relocation information for the oop
-  if (ObjectHeap::contains_moveable(oop->obj())) {
-    // Do need to emit relocation info for ROM objects
-    _relocation.emit_oop(_code_offset);
-  } else { 
-#ifndef PRODUCT
-    // Let the disassembler know that this is an oop
-    _relocation.emit(Relocation::rom_oop_type, _code_offset);
-#endif
-  }
+  emit_oop( oop->obj() );
   emit_long((int) oop->obj());
 }
 
@@ -156,15 +148,7 @@ void BinaryAssembler::movl(const Address& dst, const Oop* oop) {
   DisassemblerInfo print_me(this);
   emit_byte(0xC7);
   emit_operand(eax, dst);
-  if (ObjectHeap::contains_moveable(oop->obj())) {
-    // Do need to emit relocation info for ROM objects
-    _relocation.emit_oop(_code_offset);
-  } else { 
-#ifndef PRODUCT
-    // Let the disassembler know that this is an oop
-    _relocation.emit(Relocation::rom_oop_type, _code_offset);
-#endif
-  }
+  emit_oop(oop->obj());
   emit_long((int) oop->obj());
 }
 
@@ -555,15 +539,7 @@ void BinaryAssembler::pushl(int imm32) {
 void BinaryAssembler::pushl(Oop* oop) {
   DisassemblerInfo print_me(this);
   emit_byte(0x68);
-  if (ObjectHeap::contains_moveable(oop->obj())) {
-    // Do need to emit relocation info for ROM objects
-    _relocation.emit_oop(_code_offset);
-  } else { 
-#ifndef PRODUCT
-    // Let the disassembler know that this is an oop
-    _relocation.emit(Relocation::rom_oop_type, _code_offset);
-#endif
-  }
+  emit_oop(oop->obj());
   emit_long((int) oop->obj());  
 }
 
@@ -817,7 +793,7 @@ void BinaryAssembler::call_jmp(address entry, int opcode) {
   emit_byte(opcode);
   int offs = (int) entry - 
           (_code_offset + sizeof(int) + (int) compiled_method()->entry());
-  _relocation.emit(Relocation::compiler_stub_type, _code_offset);
+  emit_relocation(Relocation::compiler_stub_type);
   emit_long(offs);
 }
 
@@ -1414,7 +1390,7 @@ void BinaryAssembler::emit_data(int data, Relocation::Kind reloc) {
   // We should add support for relocation here.
   if (reloc != Relocation::no_relocation) {
     // Emit relocation information
-    _relocation.emit(reloc, _code_offset);
+    emit_relocation(reloc);
   }
   emit_long(data);
 }

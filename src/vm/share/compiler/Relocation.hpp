@@ -277,7 +277,7 @@ class RelocationWriter: public RelocationStream {
      emit_ushort((jushort) param);
    }
    void emit_oop(jint code_offset);
-   void emit_sentinel() {
+   void emit_sentinel( void ) {
      emit_ushort(0);
    }
    void emit_comment(jint code_offset, const char* comment);

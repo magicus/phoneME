@@ -396,10 +396,6 @@ class BinaryAssembler: public BinaryAssemblerCommon {
   void emit_displacement(Label& L);
   void emit_displacement(NearLabel& L);
 
-  void emit_osr_entry(jint bci) {
-    _relocation.emit(Relocation::osr_stub_type, _code_offset, bci);
-  }
-
   // Helper functions for groups of instructions
 
   void emit_operand(Register reg, Register base, Register index,
@@ -427,8 +423,8 @@ class BinaryAssembler: public BinaryAssemblerCommon {
   // Returns the code size in bytes
 
   void generate_sentinel() {
-     hlt();
-     _relocation.emit_sentinel();     
+    hlt();
+    emit_sentinel();     
   }
 
  private:

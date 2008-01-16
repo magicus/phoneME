@@ -27,9 +27,10 @@
 #if ENABLE_COMPILER
 
 class BinaryAssemblerCommon: public Macros {
+ private:
+  RelocationWriter _relocation;
  protected:
   jint             _code_offset;
-  RelocationWriter _relocation;
 #if USE_LITERAL_POOL
   LiteralPoolElement* _first_literal;
   LiteralPoolElement* _first_unbound_literal;
@@ -49,7 +50,6 @@ class BinaryAssemblerCommon: public Macros {
 #endif
   friend class Compiler; // for oops_do only
 #endif
-
 
   BinaryAssemblerCommon(CompiledMethod* compiled_method)
     : _relocation( compiled_method ) {
@@ -89,7 +89,51 @@ class BinaryAssemblerCommon: public Macros {
     _relocation.set_assembler((BinaryAssembler*)this);
   }
 
+  void emit_relocation(const Relocation::Kind kind) {
+    _relocation.emit(kind, _code_offset);
+  }        
+  void emit_relocation(const Relocation::Kind kind, const jint code_offset) {
+    _relocation.emit(kind, code_offset);
+  }
+  void emit_relocation(const Relocation::Kind kind, const jint code_offset,
+                                                    const jint param) {
+    _relocation.emit(kind, code_offset, param);
+  }
+  void emit_oop( const OopDesc* obj ) {
+    if( ObjectHeap::contains_moveable( obj ) ) {
+      // GC needs to know about these
+      _relocation.emit_oop(_code_offset);
+    } else { 
+#ifndef PRODUCT
+      // Let the disassembler know that this is an oop
+      _relocation.emit(Relocation::rom_oop_type, _code_offset);
+#endif
+    }
+  }
+  void emit_sentinel( void ) {
+    _relocation.emit_sentinel();
+  }
+  void emit_dummy(const jint code_offset) {
+    _relocation.emit_dummy(code_offset);
+  }
+  void emit_vsf(VirtualStackFrame* frame) {
+    _relocation.emit_vsf(_code_offset, frame);
+  }
+
+#if ENABLE_CODE_PATCHING
+  void emit_checkpoint_info_record(const int code_offset, 
+                                   const unsigned int original_instruction,
+                                   const int stub_position) {
+    _relocation.emit_checkpoint_info_record( code_offset, original_instruction,
+                                             stub_position);
+  }
+#endif
+
  public:
+  void emit_osr_entry(const jint bci) { 
+    emit_relocation(Relocation::osr_stub_type, _code_offset, bci); 
+  }
+
   void save_state( CompilerState* compiler_state ) const {
     compiler_state->set_code_size(_code_offset);
     _relocation.save_state(compiler_state);

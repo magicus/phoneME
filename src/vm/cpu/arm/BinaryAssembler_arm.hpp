@@ -243,12 +243,12 @@ public:
   };
   //if we move a array load action ahead of the array boundary checking
   //we mark it into the relocation item.
-  void emit_pre_load_item(int ldr_offset, int stub_offset) {
-    _relocation.emit(Relocation::pre_load_type, ldr_offset, stub_offset);
+  void emit_pre_load_item(const int ldr_offset, const int stub_offset) {
+    emit_relocation(Relocation::pre_load_type, ldr_offset, stub_offset);
   }
 
-  void emit_pre_load_item(int ldr_offset) {
-    _relocation.emit(Relocation::pre_load_type, ldr_offset, _code_offset);
+  void emit_pre_load_item(const int ldr_offset) {
+    emit_pre_load_item(ldr_offset, _code_offset);
   }
 
   //begin_of_cc represent the start address of the Compilation Continuous
@@ -264,21 +264,12 @@ public:
 #endif
 
   void emit_long_branch() {
-    _relocation.emit(Relocation::long_branch_type, _code_offset);
+    emit_relocation(Relocation::long_branch_type);
   }
   
   void emit_compressed_vsf(VirtualStackFrame* frame) {
-    _relocation.emit_vsf(_code_offset, frame);
+    emit_vsf(frame);
   }
-
-#if ENABLE_CODE_PATCHING
-  void emit_checkpoint_info_record(int instruction_offset,
-                                   int stub_position) {
-    _relocation.emit_checkpoint_info_record(instruction_offset, 
-                                            instruction_at(instruction_offset),
-                                            stub_position);
-  }
-#endif // ENABLE_CODE_PATCHING
 
   void branch(Label& L, bool link, Condition cond);
     // alignment is not used on ARM, but is needed to make
@@ -315,12 +306,9 @@ public:
     if (GenerateCompilerAssertions) {
       breakpoint();
     }
-    _relocation.emit_sentinel(); 
+    emit_sentinel(); 
   }
 
-  void emit_osr_entry(jint bci) { 
-    _relocation.emit(Relocation::osr_stub_type, _code_offset, bci); 
-  }
   static int ic_check_code_size() { 
     // no inline caches for ARM (yet)
     return 0; 

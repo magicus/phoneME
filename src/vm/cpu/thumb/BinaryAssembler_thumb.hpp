@@ -211,19 +211,13 @@ protected:
 #ifdef AZZERT
     breakpoint();
 #endif
-    _relocation.emit_sentinel(); 
+    emit_sentinel(); 
   }
 
-  void emit_osr_entry(jint bci) { 
-    _relocation.emit(Relocation::osr_stub_type, _code_offset, bci); 
-  }
   static int ic_check_code_size() { 
     // no inline caches for ARM (yet)
     return 0; 
   } 
-
-  // debugging
-  NOT_PRODUCT(virtual) void comment(const char* /*str*/, ...) PRODUCT_RETURN;
 
   void ldr_using_gp(Register reg, address target, Condition cond = al) {
     int offset = target - (address)&gp_base_label;

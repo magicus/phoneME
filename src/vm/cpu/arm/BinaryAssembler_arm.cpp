@@ -463,7 +463,7 @@ void BinaryAssembler::write_literal(LiteralPoolElement* literal) {
     emit_int(literal->literal_int());
   } else if (GenerateROMImage && literal->literal_int() != 0) {
     GUARANTEE(oop.equals(compiled_method()), "Special flag");
-    _relocation.emit(Relocation::compiler_stub_type, _code_offset);
+    emit_relocation(Relocation::compiler_stub_type);
     emit_raw(literal->literal_int());
   } else {
 #if USE_COMPILER_COMMENTS
@@ -476,16 +476,8 @@ void BinaryAssembler::write_literal(LiteralPoolElement* literal) {
        tty->cr();
     }
 #endif
-    if (ObjectHeap::contains_moveable(oop.obj())) {
-      // GC needs to know about these
-      GUARANTEE(literal->literal_int() == 0, "Can't yet handle oop + offset");
-      _relocation.emit_oop(_code_offset);
-    } else { 
-#ifndef PRODUCT
-      // Let the disassembler know that this is an oop
-      _relocation.emit(Relocation::rom_oop_type, _code_offset);
-#endif
-    }
+    GUARANTEE(literal->literal_int() == 0, "Can't yet handle oop + offset");
+    emit_oop( oop.obj() );
     emit_raw(literal->literal_int() + (int)oop.obj()); // inline oop in code
   }
 
@@ -578,9 +570,9 @@ BinaryAssembler::emit_null_point_callback_record(Label& L,
       bind_to(L,stub_offset);
       return;
     }
-    _relocation.emit(Relocation::npe_item_type, stub_offset, L.position());
+    emit_relocation(Relocation::npe_item_type, stub_offset, L.position());
     if (offset_of_second_instr_in_words > 0) {
-      _relocation.emit(Relocation::npe_item_type, stub_offset,
+      emit_relocation(Relocation::npe_item_type, stub_offset,
         L.position() + (offset_of_second_instr_in_words << LogBytesPerWord));
       COMPILER_PRINT_AS_YOU_GO(("**Label address is  to %d",
                        (L.position() + (offset_of_second_instr_in_words<<LogBytesPerWord))));
@@ -588,7 +580,7 @@ BinaryAssembler::emit_null_point_callback_record(Label& L,
   }
   if (!L.is_linked() && !has_overflown_compiled_method()) {
     COMPILER_PRINT_AS_YOU_GO(("**Default stub is  to %d\n", stub_offset));
-    _relocation.emit(Relocation::npe_item_type, stub_offset, 0);
+    emit_relocation(Relocation::npe_item_type, stub_offset, 0);
   }
   L.bind_to(stub_offset);
 }
@@ -625,7 +617,7 @@ BinaryAssembler::record_npe_point(CompilationQueueElement* stub,
                             (instruction_offset)));
   } else {
     //stub has been generated
-    _relocation.emit(Relocation::npe_item_type, target.position(),
+    emit_relocation(Relocation::npe_item_type, target.position(),
                      instruction_offset);
   }
   stub->set_entry_label(target);

@@ -1239,6 +1239,7 @@ SourceAssembler_<iarch>.cpp      GPTableGenerator_<iarch>.hpp
 
 BinaryAssemblerCommon.hpp        Assembler_<carch>.hpp
 BinaryAssemblerCommon.hpp        CompiledMethod.hpp
+BinaryAssemblerCommon.hpp        ObjectHeap.hpp
 BinaryAssemblerCommon.hpp        Relocation.hpp
 BinaryAssemblerCommon.cpp        BinaryAssemblerCommon.hpp
 

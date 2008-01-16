@@ -558,7 +558,7 @@ void BinaryAssembler::write_literal(LiteralPoolElement* literal) {
     emit_int(literal->literal_int());
   } else if (GenerateROMImage && literal->literal_int() != 0) {
     GUARANTEE(oop.equals(compiled_method()), "Special flag");
-    _relocation.emit(Relocation::compiler_stub_type, _code_offset);
+    emit_relocation(Relocation::compiler_stub_type);
     emit_raw(literal->literal_int());
   } else {
 #ifndef PRODUCT
@@ -571,16 +571,8 @@ void BinaryAssembler::write_literal(LiteralPoolElement* literal) {
        tty->cr();
     }
 #endif
-    if (ObjectHeap::contains_moveable(oop.obj())) {
-      // GC needs to know about these
-      GUARANTEE(literal->literal_int() == 0, "Can't yet handle oop + offset");
-      _relocation.emit_oop(_code_offset);
-    } else { 
-#ifndef PRODUCT
-      // Let the disassembler know that this is an oop
-      _relocation.emit(Relocation::rom_oop_type, _code_offset);
-#endif
-    }
+    GUARANTEE(literal->literal_int() == 0, "Can't yet handle oop + offset");
+    emit_oop( oop.obj() );
     emit_raw((int)literal->literal_int() + (int)oop.obj()); // inline oop in code
   }
 
@@ -643,18 +635,6 @@ bool BinaryAssembler::CodeInterleaver::emit() {
   } 
   return false;
 }
-
-#ifndef PRODUCT
-void BinaryAssembler::comment(const char* fmt, ...) {
-  JVM_VSNPRINTF_TO_BUFFER(fmt, buffer, 1024);
-
-  if (PrintCompiledCodeAsYouGo) {
-    tty->print_cr(";; %s", buffer);
-  } else if (GenerateCompilerComments) {
-    _relocation.emit_comment(_code_offset, buffer);
-  }
-}
-#endif // PRODUCT
 
 void BinaryAssembler::ldr(Register rd, Register rn, int offset, Condition cond)
 {
