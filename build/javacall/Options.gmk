@@ -65,7 +65,6 @@ USE_MMAPI               = false
 # MIDP
 USE_MULTIPLE_ISOLATES   = false
 USE_STATIC_PROPERTIES   = false
-USE_DYNAMIC_PROPERTIES  = false
 USE_JAVACALL_PROPERTIES = true
 USE_IMAGE_CACHE         = true
 USE_ICON_CACHE          = true

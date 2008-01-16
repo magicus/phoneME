@@ -42,12 +42,12 @@ SUBSYSTEM_PROPERTIES_PORT_EXTRA_INCLUDES += \
 
 
 ifeq ($(USE_JAVACALL_PROPERTIES), true)
-	include $(SUBSYSTEM_CONFIG_DIR)/properties_port/javacall/$(LIB_MAKE_FILE)
+    include $(SUBSYSTEM_CONFIG_DIR)/properties_port/javacall/$(LIB_MAKE_FILE)
 else
-	ifeq ($(USE_DYNAMIC_PROPERTIES), true)
-include $(SUBSYSTEM_CONFIG_DIR)/properties_port/dynamic/$(LIB_MAKE_FILE)
-	else 	
-#set default configuration mechanism to static
-		include $(SUBSYSTEM_CONFIG_DIR)/properties_port/static/$(LIB_MAKE_FILE)
-	endif
+    ifeq ($(USE_STATIC_PROPERTIES), true)
+        #set default configuration mechanism to static
+        include $(SUBSYSTEM_CONFIG_DIR)/properties_port/static/$(LIB_MAKE_FILE)
+    else 	
+        include $(SUBSYSTEM_CONFIG_DIR)/properties_port/dynamic/$(LIB_MAKE_FILE)
+    endif
 endif
