@@ -768,6 +768,7 @@ class Thread implements Runnable {
 	    try {
 		if (!stillborn && ThreadRegistry.threadCreationAllowed()) {
 		    if (nativeOverride) {
+			CVM.setContextArtificial();
 			runNative();
 			CVM.postThreadExit();
 		    } else {
