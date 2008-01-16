@@ -36,6 +36,7 @@
 JSR_LIST = COMMON JSR_120 JSR_135 JSR_177
 
 USE_MIDP=false
+USE_COMMON=true
 
 COMMON_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/linux_x86_cdc
 
@@ -65,6 +66,10 @@ endif
 
 ifeq ($(USE_JSR_177),true)
 SOURCE_OUTPUT_LIST += $(JSR_177_JC_IMPL_PATH)/$(JSR_177_JC_DIR) javacall/implementation/linux_x86
+endif
+
+ifeq ($(USE_COMMON),true)
+SOURCE_OUTPUT_LIST += $(COMMON_JC_IMPL_PATH)/$(COMMON_JC_DIR) javacall/implementation/linux_x86_cdc
 endif
 
 UTILITIES += javautil_unicode
