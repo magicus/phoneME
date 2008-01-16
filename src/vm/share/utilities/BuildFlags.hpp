@@ -172,6 +172,9 @@
 // ENABLE_CLDC_11                1,1  Support CLDC 1.1 Specification instead
 //                                    of CLDC 1.0.
 //
+// ENABLE_CLDC_111               0,0  Support CLDC 1.1.1 Specification 
+//                                    instead of CLDC 1.0.
+//
 // ENABLE_CODE_OPTIMIZER         0,0  Enable optimization of code generated
 //                                    by dynamic compiler for a specific CPU.
 //

@@ -785,6 +785,15 @@ JVM_SOFTFP_LINKAGE jdouble jvm_ceil(jdouble x);
 JVM_SOFTFP_LINKAGE jdouble jvm_floor(jdouble x);
 JVM_SOFTFP_LINKAGE jdouble jvm_fabs(jdouble x);
 
+#if ENABLE_CLDC_111
+
+JVM_SOFTFP_LINKAGE jdouble jvm_asin(jdouble x);
+JVM_SOFTFP_LINKAGE jdouble jvm_acos(jdouble x);
+JVM_SOFTFP_LINKAGE jdouble jvm_atan(jdouble x);
+JVM_SOFTFP_LINKAGE jdouble jvm_atan2(jdouble x, jdouble y);
+
+#endif
+
 JVM_SOFTFP_LINKAGE jdouble jvm_double_from_msw_lsw(jint msw, jint lsw);
 JVM_SOFTFP_LINKAGE jint    jvm_double_msw(jdouble d);
 JVM_SOFTFP_LINKAGE jint    jvm_double_lsw(jdouble d);

@@ -136,6 +136,69 @@ void NativeGenerator::generate_native_math_entries() {
   jmp(edi);
   rom_linkable_entry_end(); // native_math_floor_entry
 
+#if ENABLE_CLDC_111
+
+  // Generate asin entry.
+  offset = 0;
+  rom_linkable_entry("native_math_asin_entry");
+  comment("store return address");
+  popl(edi);
+  pop_double(eax, ecx);
+  pushl(ecx);
+  pushl(eax);
+  call(Constant("jvm_asin"));
+  addl(esp, Constant(8));
+  push_from_fpu_stack(double_tag, offset, true);
+  jmp(edi);
+  rom_linkable_entry_end(); // native_math_asin_entry
+
+  // Generate acos entry.
+  offset = 0;
+  rom_linkable_entry("native_math_acos_entry");
+  comment("store return address");
+  popl(edi);
+  pop_double(eax, ecx);
+  pushl(ecx);
+  pushl(eax);
+  call(Constant("jvm_acos"));
+  addl(esp, Constant(8));
+  push_from_fpu_stack(double_tag, offset, true);
+  jmp(edi);
+  rom_linkable_entry_end(); // native_math_acos_entry
+
+  // Generate atan entry.
+  offset = 0;
+  rom_linkable_entry("native_math_atan_entry");
+  comment("store return address");
+  popl(edi);
+  pop_double(eax, ecx);
+  pushl(ecx);
+  pushl(eax);
+  call(Constant("jvm_atan"));
+  addl(esp, Constant(8));
+  push_from_fpu_stack(double_tag, offset, true);
+  jmp(edi);
+  rom_linkable_entry_end(); // native_math_atan_entry
+
+  // Generate atan2 entry.
+  offset = 0;
+  rom_linkable_entry("native_math_atan2_entry");
+  comment("store return address");
+  popl(edi);
+  pop_double(eax, ecx);
+  pop_double(ebx, edx);
+  pushl(edx);
+  pushl(ebx);
+  pushl(ecx);
+  pushl(eax);
+  call(Constant("jvm_atan2"));
+  addl(esp, Constant(8));
+  push_from_fpu_stack(double_tag, offset, true);
+  jmp(edi);
+  rom_linkable_entry_end(); // native_math_atan2_entry
+
+#endif /* ENABLE_CLDC_111 */
+
 #endif /* ENABLE_FLOAT */
 }
 

@@ -1300,6 +1300,7 @@ Natives.hpp                      InstanceClass.hpp
 Natives.hpp                      NativesTable.hpp
 Natives.hpp                      Frame.hpp
 Natives.cpp                      ROMWriter.hpp
+Natives.cpp                      FloatNatives.hpp
 Natives.cpp                      Stream.hpp
 Natives.cpp                      Natives.hpp
 Natives.cpp                      SystemDictionary.hpp
@@ -2854,6 +2855,14 @@ JFP_lib_ceil.cpp                FloatNatives.hpp
 JFP_lib_floor.cpp               FloatNatives.hpp
 
 JFP_lib_copysign.cpp            FloatNatives.hpp
+
+JFP_lib_asin.cpp                FloatNatives.hpp
+
+JFP_lib_acos.cpp                FloatNatives.hpp
+
+JFP_lib_atan.cpp                FloatNatives.hpp
+
+JFP_lib_atan2.cpp               FloatNatives.hpp
 
 IEEE754_fmod.cpp                FloatNatives.hpp
 

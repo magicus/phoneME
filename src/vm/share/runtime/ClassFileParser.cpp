@@ -1592,13 +1592,6 @@ inline bool ClassFileParser::parse_class_0(ClassParserState *stack JVM_TRAPS) {
   if (access_flags.is_interface()) {
     cpf_check_0(access_flags.is_abstract() && !access_flags.is_final(), 
             bad_class_flags);
-    //fix for CR6539771
-    //From JVM spec:
-    //if the ACC_INTERFACE flag of this class file is set, its ACC_ABSTRACT flag 
-    //must also be set (2.13.1) and its ACC_PUBLIC flag may be set. Such a class 
-    //file may not have any of the other flags in Table 4.1 set."
-    cpf_check_0(access_flags.is_abstract() && !access_flags.is_super(), 
-            bad_class_flags);
   } else {
     cpf_check_0(!(access_flags.is_final() && access_flags.is_abstract()), 
             bad_class_flags);

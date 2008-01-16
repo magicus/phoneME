@@ -37,6 +37,7 @@
 # include <stdarg.h>
 # include <stdlib.h>
 # include <stddef.h>// for offsetof
+# include <math.h>
 # include <io.h>    // for stream.cpp
 # include <float.h> // for _isnan
 # include <stdio.h> // for va_list

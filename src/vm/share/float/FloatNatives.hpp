@@ -90,6 +90,15 @@ double jvm_fplib_floor(double x);
 double jvm_fplib_ceil(double x);
 double jvm_fplib_sqrt(double x);
 
+#if ENABLE_CLDC_111
+
+double jvm_fplib_asin(double x);
+double jvm_fplib_acos(double x);
+double jvm_fplib_atan(double x);
+double jvm_fplib_atan2(double x, double y);
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif
