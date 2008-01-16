@@ -36,6 +36,7 @@
 JSR_LIST = COMMON JSR_120 JSR_135 JSR_177
 
 USE_MIDP=false
+USE_COMMON = true
 
 COMMON_JC_IMPL_PATH = $(JAVACALL_DIR)/implementation/linux_x86_cdc
 
