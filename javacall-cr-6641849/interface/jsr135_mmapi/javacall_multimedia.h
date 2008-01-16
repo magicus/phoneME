@@ -80,8 +80,11 @@ extern "C" {
 #include "javacall_lcd.h"
 
 /**
- * @brief Multimedia Format types.
- */
+* @defgroup jsr135MediaFormatDefs Multimedia Format types
+*
+* @ingroup jsr135MediaFormat
+* @{
+*/
 /** Audio formats section */
 /** MPEG-1 layer 2, audio/mpeg */
 #define JAVACALL_MEDIA_FORMAT_MPEG1_LAYER2      L"MPEG1_layer_2"
@@ -129,6 +132,8 @@ extern "C" {
 #define JAVACALL_MEDIA_FORMAT_AIFF              L"AIFF"
 /** Windows Media Audio, audio/x-ms-wma */
 #define JAVACALL_MEDIA_FORMAT_WMA_9             L"WMA_9"
+/** Audio tone, audio/x-tone-seq */
+#define JAVACALL_MEDIA_FORMAT_TONE              L"TONE" 
 
 /** Video formats section */
 /** Default MJPEG, video/mjpeg */
@@ -196,6 +201,8 @@ extern "C" {
  * Media format type definition.
  */
 typedef javacall_const_utf16_string javacall_media_format_type;
+
+/** @} */
 
 /**
  * 
