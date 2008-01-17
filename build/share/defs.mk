@@ -483,13 +483,11 @@ CVM_CLASSLIB_JAR_NAME	       ?= "$(J2ME_CLASSLIB)$(OPT_PKGS_NAME).jar"
 #   used in src/share/javavm/runtime/utils.c
 ifneq ($(CVM_PRELOAD_LIB),true)
 ifneq ($(CVM_CREATE_RTJAR), true)
-CVM_JARFILES	+= CVM_CLASSLIB_JAR_NAME
+CVM_JARFILES	+= CVM_CLASSLIB_JAR_NAME,
 else
-CVM_JARFILES	+= $(CVM_RT_JAR_NAME)
+CVM_JARFILES	+= $(CVM_RT_JAR_NAME),
 CVM_RTJARS_LIST += $(LIB_CLASSESJAR)
 endif
-else
-CVM_JARFILES	= NULL
 endif
 
 ifneq ($(OPT_PKGS_ID_FILES),)

@@ -30,16 +30,17 @@
 #define _INCLUDED_JVMTIDUMPER_H
 
 void CVMjvmtiTagRehash();
-CVMBool CVMjvmtiDumpObject(CVMObject *obj, JvmtiDumpContext *dc);
+CVMBool CVMjvmtiDumpObject(CVMObject *obj, CVMJvmtiDumpContext *dc);
 jvmtiError CVMjvmtiTagGetTagGC(CVMObject *obj, jlong *tagPtr);
-jvmtiError CVMjvmtiTagGetTag(jvmtiEnv* jvmtienv, jobject object, jlong* tagPtr);
+jvmtiError CVMjvmtiTagGetTag(jvmtiEnv *jvmtienv, jobject object, jlong *tagPtr);
 jvmtiError CVMjvmtiTagSetTag(jvmtiEnv *jvmtienv, jobject object, jlong tag);
-CVMBool CVMjvmtiScanRoots(CVMExecEnv *ee, JvmtiDumpContext *dc);
-void CVMjvmtiPostCallbackUpdateTag(CVMObject *obj, JvmtiTagNode *node, jlong tag);
-JvmtiTagNode * CVMjvmtiTagGetNode(CVMObject *obj);
+CVMBool CVMjvmtiScanRoots(CVMExecEnv *ee, CVMJvmtiDumpContext *dc);
+void CVMjvmtiPostCallbackUpdateTag(CVMObject *obj, CVMJvmtiTagNode *node,
+				   jlong tag);
+CVMJvmtiTagNode *CVMjvmtiTagGetNode(CVMObject *obj);
 
 CVMBool CVMjvmtiIterateDoObject(CVMObject* obj, CVMClassBlock* cb, 
-                                         CVMUint32  objSize, void* data);
+				CVMUint32  objSize, void* data);
 
 int CVMjvmtiGetObjectsWithTag(JNIEnv *env, const jlong *tags, jint tagCount,
 			      jobject **objPtr, jlong **tagPtr);

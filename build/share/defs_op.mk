@@ -95,16 +95,6 @@ endif
 # The list of JSR jar files we want to hide.
 JSROP_HIDE_JARS = $(subst $(space),$(PS),$(filter-out $(JSROP_JAR_DIR)/jsr205.jar,$(foreach jsr_number,$(HIDE_JSROP_NUMBERS),$(JSROP_JAR_DIR)/jsr$(jsr_number).jar)))
 
-# Generate constants classes list for the given xml file
-# generateConstantList(generatedDirectory, constantsXmlFile)
-define generateConstantList
-	$(shell $(CVM_JAVA) -jar $(CONFIGURATOR_JAR_FILE) \
-	-xml $(2) \
-	-xsl $(CONFIGURATOR_DIR)/xsl/cdc/constantClasses.xsl \
-	-out $(1)/.constant.class.list; \
-    cat $(1)/.constant.class.list )
-endef
-
 # Jump API classpath
 JSROP_JUMP_API = $(subst $(space),$(PS),$(JUMP_API_CLASSESZIP))
 
@@ -160,7 +150,7 @@ endif
 # Include JSR 120
 ifeq ($(USE_JSR_120), true)
 export JSR_120_DIR ?= $(COMPONENTS_DIR)/jsr120
-JSR_120_DEFS_FILE = $(JSR_120_DIR)/build/$(SUBSYSTEM_DEFS_FILE)
+JSR_120_DEFS_FILE = $(JSR_120_DIR)/build/cdc_share/$(SUBSYSTEM_DEFS_FILE)
 ifeq ($(wildcard $(JSR_120_DEFS_FILE)),)
 $(error JSR_120_DIR must point to a directory containing JSR 120 sources)
 endif
@@ -175,7 +165,7 @@ JSROP_JSR135_DIR = JSR_135_DIR
 else
 JSROP_JSR135_DIR = PROJECT_JSR_135_DIR
 endif
-JSR_135_MAKE_FILE = $($(JSROP_JSR135_DIR))/build/$(SUBSYSTEM_MAKE_FILE)
+JSR_135_MAKE_FILE = $($(JSROP_JSR135_DIR))/build/cdc_share/$(SUBSYSTEM_MAKE_FILE)
 ifeq ($(wildcard $(JSR_135_MAKE_FILE)),)
 $(error $(JSROP_JSR135_DIR) must point to a directory containing JSR 135 sources)
 endif
@@ -343,7 +333,7 @@ JUMP_SRCDIRS += \
 	$(JUMP_SRCDIR)/share/impl/eventqueue/native
 JUMP_OBJECTS += \
 	jump_eventqueue_impl.o
-JUMP_DEPENDENCIES += javacall_lib
+JUMP_DEPENDENCIES += $(JAVACALL_LIBRARY)
 endif
 endif
 # Check javacall makefile and include it
@@ -406,7 +396,7 @@ endif
 ifneq ($(CVM_PRELOAD_LIB),true)
 # Not romized, so add JSROP_JARS to the bootclasspath
 ifneq ($(CVM_CREATE_RTJAR), true)
-CVM_JARFILES += $(patsubst $(JSROP_JAR_DIR)/%,$(comma) "%",$(JSROP_JARS))
+CVM_JARFILES += $(patsubst $(JSROP_JAR_DIR)/%,"%"$(comma),$(JSROP_JARS))
 else
 CVM_RTJARS_LIST += $(JSROP_JARS)
 endif
