@@ -1,7 +1,5 @@
 #
-#   
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -40,7 +38,13 @@ vpath % $(SUBSYSTEM_DIR)/configuration/properties_port/javacall/native
 
 # Native files 
 #
-JAVACALL_PROPERTIES_PORT_NATIVE_FILES = midp_properties_javacall.c
+JAVACALL_PROPERTIES_PORT_NATIVE_FILES = \
+    midp_properties_javacall.c
+
+ifeq ($(USE_STATIC_PROPERTIES), true)
+JAVACALL_PROPERTIES_PORT_NATIVE_FILES += \
+    properties_static_data.c
+endif
 
 # Include files
 # 

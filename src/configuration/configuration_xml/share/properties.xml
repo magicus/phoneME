@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration SYSTEM "./configuration.dtd">
 <!--
-		  
-
-		Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+		Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 		DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 		
 		This program is free software; you can redistribute it and/or
@@ -151,6 +149,15 @@
   <property Key="mms"
 	    Value="com.sun.midp.io.j2me.mms.ProtocolPushImpl"
 	    Scope="internal"/>				
+
+  <property Key="AMS_MEMORY_RESERVED_MVM"
+            Value="1024"
+            Scope="internal"
+            Comment="Default AMS memory reserved in MVM mode"/>
+  <property Key="AMS_MEMORY_LIMIT_MVM"
+            Value="-1"
+            Scope="internal"
+            Comment="Default AMS memory limit in MVM mode"/>
 <!-- SYSTEM PROPERTIES -->
 <!-- Visible from System.getProperty() -->
 
