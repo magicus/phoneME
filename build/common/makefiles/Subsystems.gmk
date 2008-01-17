@@ -374,7 +374,7 @@ endif
 #####################################################################
 ifeq ($(USE_JSR_229), true)
 JPP_DEFS += -DENABLE_JSR_229
-include $(JSR_229_DIR)/src/config/$(SUBSYSTEM_MAKE_FILE)
+include $(JSR_229_DIR)/build/cldc_application/$(SUBSYSTEM_MAKE_FILE)
 endif
 
 #####################################################################
