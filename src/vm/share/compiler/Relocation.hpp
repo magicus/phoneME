@@ -171,6 +171,8 @@ class RelocationStream : public Relocation {
   jint            _current_code_offset;
   jint            _current_oop_relocation_offset;
   jint            _current_oop_code_offset;
+
+  friend class BinaryAssemblerCommon;
 };
 
 inline int sign_extend(int x, int field_length) {
@@ -255,56 +257,6 @@ class RelocationReader: public RelocationStream {
 #if !defined(PRODUCT) || ENABLE_ROM_GENERATOR || ENABLE_TTY_TRACE
   static int code_length(CompiledMethod* cm);
 #endif
-};
-
-class RelocationWriter: public RelocationStream {
- public:
-   RelocationWriter(CompiledMethod* compiled_method)
-       : RelocationStream(compiled_method) {}
-
-   RelocationWriter(const CompilerState* compiler_state,
-                    CompiledMethod* compiled_method)
-       : RelocationStream(compiler_state, compiled_method) {}
-
-   void set_assembler(BinaryAssembler* value) {
-     _assembler = value;
-   }
-   
-   void emit(Kind kind, jint code_offset);
-   void emit(Kind kind, jint code_offset, jint param) {
-     GUARANTEE(has_param(kind), "Sanity");
-     emit(kind, code_offset);
-     emit_ushort((jushort) param);
-   }
-   void emit_oop(jint code_offset);
-   void emit_sentinel( void ) {
-     emit_ushort(0);
-   }
-   void emit_comment(jint code_offset, const char* comment);
-   void emit_dummy(jint code_offset) {
-     emit(comment_type, code_offset);
-     emit_ushort(0);
-   }
-   void emit_vsf(jint code_offset, VirtualStackFrame* frame);
-
-   // Returns the size of the relocation data in bytes.
-   jint size( void ) const {
-     return compiled_method()->end_offset()
-          - current_relocation_offset()
-          - sizeof(jushort);
-   }
-
-#if ENABLE_CODE_PATCHING
-   void emit_checkpoint_info_record(int code_offset, 
-                                    unsigned int original_instruction,
-                                    int stub_position);
-#endif 
-
- private:
-   void emit_ushort(jushort value);
-   jint compute_embedded_offset(jint code_offset);
-
-   BinaryAssembler* _assembler;
 };
 
 #endif

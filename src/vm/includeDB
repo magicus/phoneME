@@ -782,8 +782,6 @@ Value.cpp                        InstanceClass.hpp
 Relocation.hpp                   CompiledMethod.hpp
 Relocation.hpp                   CompilerState.hpp
 Relocation.cpp                   Relocation.hpp
-Relocation.cpp                   Compiler.hpp
-Relocation.cpp                   Location.hpp
 
 CompilerState.hpp                LiteralPoolElement.hpp
 
@@ -1242,6 +1240,7 @@ BinaryAssemblerCommon.hpp        CompiledMethod.hpp
 BinaryAssemblerCommon.hpp        ObjectHeap.hpp
 BinaryAssemblerCommon.hpp        Relocation.hpp
 BinaryAssemblerCommon.cpp        BinaryAssemblerCommon.hpp
+BinaryAssemblerCommon.cpp        Location.hpp
 
 BinaryAssembler_<carch>.hpp      BinaryAssemblerCommon.hpp
 BinaryAssembler_<carch>.hpp      CallInfo.hpp

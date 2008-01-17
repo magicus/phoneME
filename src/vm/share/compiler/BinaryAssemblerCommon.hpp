@@ -28,7 +28,7 @@
 
 class BinaryAssemblerCommon: public Macros {
  private:
-  RelocationWriter _relocation;
+  RelocationStream _relocation;
  protected:
   jint             _code_offset;
 #if USE_LITERAL_POOL
@@ -66,7 +66,6 @@ class BinaryAssemblerCommon: public Macros {
 
     zero_literal_count();
 #endif
-    _relocation.set_assembler((BinaryAssembler*)this);
   }
   BinaryAssemblerCommon(const CompilerState* compiler_state,
                         CompiledMethod* compiled_method)
@@ -86,47 +85,38 @@ class BinaryAssemblerCommon: public Macros {
     _code_offset_to_force_literals             = compiler_state->code_offset_to_force_literals();
     _code_offset_to_desperately_force_literals = compiler_state->code_offset_to_desperately_force_literals();
 #endif
-    _relocation.set_assembler((BinaryAssembler*)this);
   }
 
   void emit_relocation(const Relocation::Kind kind) {
-    _relocation.emit(kind, _code_offset);
+    emit_relocation(kind, _code_offset);
   }        
-  void emit_relocation(const Relocation::Kind kind, const jint code_offset) {
-    _relocation.emit(kind, code_offset);
-  }
+  void emit_relocation(const Relocation::Kind kind, const jint code_offset);
   void emit_relocation(const Relocation::Kind kind, const jint code_offset,
                                                     const jint param) {
-    _relocation.emit(kind, code_offset, param);
+    GUARANTEE(Relocation::has_param(kind), "Sanity");
+    emit_relocation(kind, code_offset);
+    emit_ushort((jushort) param);
   }
   void emit_oop( const OopDesc* obj ) {
     if( ObjectHeap::contains_moveable( obj ) ) {
       // GC needs to know about these
-      _relocation.emit_oop(_code_offset);
+      emit_relocation_oop();
     } else { 
 #ifndef PRODUCT
       // Let the disassembler know that this is an oop
-      _relocation.emit(Relocation::rom_oop_type, _code_offset);
+      emit_relocation(Relocation::rom_oop_type, _code_offset);
 #endif
     }
   }
   void emit_sentinel( void ) {
-    _relocation.emit_sentinel();
+     emit_ushort(0);
   }
-  void emit_dummy(const jint code_offset) {
-    _relocation.emit_dummy(code_offset);
-  }
-  void emit_vsf(VirtualStackFrame* frame) {
-    _relocation.emit_vsf(_code_offset, frame);
-  }
+  void emit_vsf(const VirtualStackFrame* frame);
 
 #if ENABLE_CODE_PATCHING
   void emit_checkpoint_info_record(const int code_offset, 
                                    const unsigned int original_instruction,
-                                   const int stub_position) {
-    _relocation.emit_checkpoint_info_record( code_offset, original_instruction,
-                                             stub_position);
-  }
+                                   const int stub_position);
 #endif
 
  public:
@@ -153,6 +143,8 @@ class BinaryAssemblerCommon: public Macros {
     compiler_state->set_code_offset_to_desperately_force_literals( _code_offset_to_desperately_force_literals );
 #endif
   }
+
+  BinaryAssembler* assembler( void ) { return (BinaryAssembler*)this; }
         
   CompiledMethod* compiled_method( void ) const {
     return _relocation.compiled_method();
@@ -160,7 +152,14 @@ class BinaryAssemblerCommon: public Macros {
 
   jint code_size      ( void ) const { return _code_offset; }
   jint code_end_offset( void ) const { return offset_at(code_size()); }
-  jint relocation_size( void ) const { return _relocation.size(); }
+
+  // Returns the size of the relocation data in bytes.
+  jint relocation_size( void ) const {
+    return compiled_method()->end_offset()
+           - current_relocation_offset()
+           - sizeof(jushort);
+  }
+
 #if USE_LITERAL_POOL
   jint unbound_literal_count( void ) const { return _unbound_literal_count; }
 #endif
@@ -241,6 +240,45 @@ class BinaryAssemblerCommon: public Macros {
 #else
   void comment(const char* fmt, ...) { (void) fmt; }
 #endif // !defined(PRODUCT) || USE_COMPILER_COMMENTS
+
+ private:
+  enum {
+    type_width   = Relocation::type_width,
+    offset_width = Relocation::offset_width
+  };
+
+  jint current_code_offset( void ) const {
+    return _relocation._current_code_offset;
+  }
+  void set_current_code_offset( const jint code_offset ) {
+    _relocation._current_code_offset = code_offset;
+  }
+
+  jint current_relocation_offset( void ) const {
+    return _relocation._current_relocation_offset;
+  }
+  void set_current_relocation_offset( const jint relocation_offset ) {
+    _relocation._current_relocation_offset = relocation_offset;
+  }
+
+  jint current_oop_relocation_offset( void ) const {
+    return _relocation._current_oop_relocation_offset;
+  }
+  void set_current_oop_relocation_offset( const jint oop_relocation_offset ) {
+    _relocation._current_oop_relocation_offset = oop_relocation_offset;
+  }
+
+  jint current_oop_code_offset( void ) const {
+    return _relocation._current_oop_code_offset;
+  }
+  void set_current_oop_code_offset( const jint oop_code_offset ) {
+    _relocation._current_oop_code_offset = oop_code_offset;
+  }
+
+  jint compute_embedded_offset(const jint code_offset);
+  void emit_ushort(const jushort value );
+  void emit_dummy (const jint code_offset);
+  void emit_relocation_oop( void );
 };
 
 #endif
