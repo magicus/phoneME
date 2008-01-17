@@ -94,7 +94,7 @@ void CVMAgentAppendToTable(CVMAgentTable *table,
 /*
  * Call Agent_OnUnload function on each shared library.
  * Delete all nativeLibrary object refs. 
- * Free Agent_table in CVMglobals.
+ * Free agentTable in CVMglobals.
  */
 void CVMAgentProcessTableUnload(CVMAgentTable *agentTable,
 				JNIEnv *env, JavaVM *vm)
@@ -204,8 +204,9 @@ CVMAgentHandleArgument(CVMAgentTable* agentTable, JNIEnv* env,
      */
     onUnloadFunc = (Agent_OnUnload_t)CVMdynlinkSym(nativeLibrary,
 						   "Agent_OnUnload");
+
     CVMAgentAppendToTable(agentTable, nativeLibrary, onUnloadFunc);
-    
+
     /* Call Agent_OnLoad after the lookup and store away
      * of Agent_OnUnload so we won't call Agent_OnUnload 
      * at VM shutdown if Agent_OnLoad was never called.

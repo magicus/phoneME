@@ -420,7 +420,7 @@ CVMdumpStats()
     }
 
 #define JVMTI_WATCH_FIELD_READ(location)				\
-    if (CVMglobals.jvmtiWatchingFieldAccess) {				\
+    if (CVMjvmtiIsWatchingFieldAccess()) {				\
 	DECACHE_PC();							\
 	DECACHE_TOS();							\
 	CVMD_gcSafeExec(ee, {						\
@@ -429,7 +429,7 @@ CVMdumpStats()
     }
 
 #define JVMTI_WATCH_FIELD_WRITE(location, isDoubleWord, isRef)	\
-    if (CVMglobals.jvmtiWatchingFieldModification) {			\
+    if (CVMjvmtiIsWatchingFieldModification()) {			\
 	jvalue val;							\
 	DECACHE_PC();							\
 	DECACHE_TOS();							\
@@ -2496,7 +2496,7 @@ new_transition:
 		goto handle_pending_request;
 	    }
 #ifdef CVM_JVMTI
-	    if (CVMjvmtiEnabled()) {
+	    if (CVMjvmtiIsEnabled()) {
 		jvalue retValue;
 		CVMmemCopy64Helper((CVMAddr*)&retValue.j, &STACK_INFO(-2).raw);
 		/* We might gc, so flush state. */
@@ -2538,7 +2538,7 @@ new_transition:
 		goto handle_pending_request;
 	    }
 #ifdef CVM_JVMTI
-	    if (CVMjvmtiEnabled()) {
+	    if (CVMjvmtiIsEnabled()) {
 		jvalue retValue;
 		retValue.j = CVMlongConstZero();
 		/* We might gc, so flush state. */
@@ -2579,7 +2579,7 @@ new_transition:
 	    }
 
 #ifdef CVM_JVMTI
-	    if (CVMjvmtiEnabled()) {
+	    if (CVMjvmtiIsEnabled()) {
 		jvalue retValue;
 		/* We might gc, so flush state. */
 		DECACHE_PC();

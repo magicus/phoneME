@@ -57,8 +57,11 @@ class AccessibleObject {
      * has sufficient privilege to defeat Java language access
      * control checks.
      */
-    static final private java.security.Permission ACCESS_PERMISSION =
-	new ReflectPermission("suppressAccessChecks");
+    static private java.security.Permission ACCESS_PERMISSION;
+
+    static private void initAccessPermission() {
+	ACCESS_PERMISSION = new ReflectPermission("suppressAccessChecks");
+    }
 
     /**
      * Convenience method to set the <tt>accessible</tt> flag for an
@@ -88,7 +91,12 @@ class AccessibleObject {
     public static void setAccessible(AccessibleObject[] array, boolean flag)
 	throws SecurityException {
 	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
+	if (sm != null) {
+	    if (ACCESS_PERMISSION == null) {
+		initAccessPermission();
+	    }
+	    sm.checkPermission(ACCESS_PERMISSION);
+	}
 	for (int i = 0; i < array.length; i++) {
 	    setAccessible0(array[i], flag);
 	}
@@ -121,7 +129,12 @@ class AccessibleObject {
      */
     public void setAccessible(boolean flag) throws SecurityException {
 	SecurityManager sm = System.getSecurityManager();
-	if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
+	if (sm != null) {
+	    if (ACCESS_PERMISSION == null) {
+		initAccessPermission();
+	    }
+	    sm.checkPermission(ACCESS_PERMISSION);
+	}
 	setAccessible0(this, flag);
     }
 

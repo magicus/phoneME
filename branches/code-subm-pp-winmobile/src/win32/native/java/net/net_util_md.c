@@ -58,6 +58,12 @@ NET_ThrowCurrent(JNIEnv *env, char *msg)
 }
 
 /*
+  These initializations are now down as part of CVMnetStartup and 
+  CVMnetShutdown. Also, using DllMain won't work when cvm is built
+  as a standalone .exe instead of a dll.
+*/
+#if 0
+/*
  * Initialize Windows Sockets API support
  */
  BOOL WINAPI
@@ -81,6 +87,7 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
     }
     return TRUE;
 }
+#endif /* 0 */
 
 /*
  * Since winsock doesn't have the equivalent of strerror(errno)

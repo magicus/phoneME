@@ -500,7 +500,7 @@ CVMJITcompileMethod(CVMExecEnv *ee, CVMMethodBlock* mb)
 #endif
 
 #ifdef CVM_JVMTI
-    if (CVMjvmtiDebuggingFlag()) {
+    if (CVMjvmtiIsInDebugMode()) {
 	retVal = CVMJIT_CANNOT_COMPILE;
 	CVMJITsetErrorMessage(&con, "Debugger connected");
 	goto done;

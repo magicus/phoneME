@@ -42,11 +42,7 @@ static WSADATA WSAData;
 CVMInt32
 CVMnetStartup()
 {
-#ifndef WINCE
-    int err = WSAStartup (MAKEWORD(2,0), &WSAData);  
-#else
     int err = WSAStartup (MAKEWORD(1,1), &WSAData);
-#endif
     return err;
 }
 

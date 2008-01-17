@@ -157,7 +157,7 @@ CVM_CNI_CLASSES += $(MIDP_CNI_CLASSES)
 else
 # Not romized, so add MIDP_PRIV_CLASSES_ZIP to the bootclasspath
 ifneq ($(CVM_CREATE_RTJAR), true)
-CVM_JARFILES += $(patsubst $(CVM_LIBDIR_ABS)/%,$(comma) "%",$(MIDP_PRIV_CLASSES_ZIP))
+CVM_JARFILES += $(patsubst $(CVM_LIBDIR_ABS)/%,"%"$(comma),$(MIDP_PRIV_CLASSES_ZIP))
 else
 CVM_RTJARS_LIST += $(MIDP_PRIV_CLASSES_ZIP)
 endif
