@@ -1,0 +1,92 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "apr", "..\apr\apr.vcproj", "{9224BE84-DE52-4F18-AA85-266868528EF3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "apriconv", "..\apr-iconv\apriconv.vcproj", "{18DD1693-8AC9-459E-8F2F-718F013663AA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9224BE84-DE52-4F18-AA85-266868528EF3} = {9224BE84-DE52-4F18-AA85-266868528EF3}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aprutil", "aprutil.vcproj", "{B22AD7A8-E2BA-4932-812D-88D5691F0115}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9224BE84-DE52-4F18-AA85-266868528EF3} = {9224BE84-DE52-4F18-AA85-266868528EF3}
+		{886F63BF-9478-4D43-96D5-B86697543FBC} = {886F63BF-9478-4D43-96D5-B86697543FBC}
+		{18DD1693-8AC9-459E-8F2F-718F013663AA} = {18DD1693-8AC9-459E-8F2F-718F013663AA}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libapr", "..\apr\libapr.vcproj", "{0A976FC6-0685-4B31-8195-772EA0F8B106}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libapriconv", "..\apr-iconv\libapriconv.vcproj", "{479A3325-27CA-4B91-82F5-5040B5285BFF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0A976FC6-0685-4B31-8195-772EA0F8B106} = {0A976FC6-0685-4B31-8195-772EA0F8B106}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libapriconv_ccs_modules", "..\apr-iconv\ccs\libapriconv_ccs_modules.vcproj", "{A0D6C3C5-6DB9-40BC-B584-0AED1F9E8C29}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0A976FC6-0685-4B31-8195-772EA0F8B106} = {0A976FC6-0685-4B31-8195-772EA0F8B106}
+		{479A3325-27CA-4B91-82F5-5040B5285BFF} = {479A3325-27CA-4B91-82F5-5040B5285BFF}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libapriconv_ces_modules", "..\apr-iconv\ces\libapriconv_ces_modules.vcproj", "{35A2FBDB-782D-47F2-BF12-2B2485867C97}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0A976FC6-0685-4B31-8195-772EA0F8B106} = {0A976FC6-0685-4B31-8195-772EA0F8B106}
+		{479A3325-27CA-4B91-82F5-5040B5285BFF} = {479A3325-27CA-4B91-82F5-5040B5285BFF}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libaprutil", "libaprutil.vcproj", "{17FE4F44-0DF2-4A15-B749-999D12D7867F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0A976FC6-0685-4B31-8195-772EA0F8B106} = {0A976FC6-0685-4B31-8195-772EA0F8B106}
+		{886F63BF-9478-4D43-96D5-B86697543FBC} = {886F63BF-9478-4D43-96D5-B86697543FBC}
+		{479A3325-27CA-4B91-82F5-5040B5285BFF} = {479A3325-27CA-4B91-82F5-5040B5285BFF}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xml", "xml\expat\lib\xml.vcproj", "{886F63BF-9478-4D43-96D5-B86697543FBC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9224BE84-DE52-4F18-AA85-266868528EF3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9224BE84-DE52-4F18-AA85-266868528EF3}.Debug|Win32.Build.0 = Debug|Win32
+		{9224BE84-DE52-4F18-AA85-266868528EF3}.Release|Win32.ActiveCfg = Release|Win32
+		{9224BE84-DE52-4F18-AA85-266868528EF3}.Release|Win32.Build.0 = Release|Win32
+		{18DD1693-8AC9-459E-8F2F-718F013663AA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{18DD1693-8AC9-459E-8F2F-718F013663AA}.Debug|Win32.Build.0 = Debug|Win32
+		{18DD1693-8AC9-459E-8F2F-718F013663AA}.Release|Win32.ActiveCfg = Release|Win32
+		{18DD1693-8AC9-459E-8F2F-718F013663AA}.Release|Win32.Build.0 = Release|Win32
+		{B22AD7A8-E2BA-4932-812D-88D5691F0115}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B22AD7A8-E2BA-4932-812D-88D5691F0115}.Debug|Win32.Build.0 = Debug|Win32
+		{B22AD7A8-E2BA-4932-812D-88D5691F0115}.Release|Win32.ActiveCfg = Release|Win32
+		{B22AD7A8-E2BA-4932-812D-88D5691F0115}.Release|Win32.Build.0 = Release|Win32
+		{0A976FC6-0685-4B31-8195-772EA0F8B106}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0A976FC6-0685-4B31-8195-772EA0F8B106}.Debug|Win32.Build.0 = Debug|Win32
+		{0A976FC6-0685-4B31-8195-772EA0F8B106}.Release|Win32.ActiveCfg = Release|Win32
+		{0A976FC6-0685-4B31-8195-772EA0F8B106}.Release|Win32.Build.0 = Release|Win32
+		{479A3325-27CA-4B91-82F5-5040B5285BFF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{479A3325-27CA-4B91-82F5-5040B5285BFF}.Debug|Win32.Build.0 = Debug|Win32
+		{479A3325-27CA-4B91-82F5-5040B5285BFF}.Release|Win32.ActiveCfg = Release|Win32
+		{479A3325-27CA-4B91-82F5-5040B5285BFF}.Release|Win32.Build.0 = Release|Win32
+		{A0D6C3C5-6DB9-40BC-B584-0AED1F9E8C29}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A0D6C3C5-6DB9-40BC-B584-0AED1F9E8C29}.Debug|Win32.Build.0 = Debug|Win32
+		{A0D6C3C5-6DB9-40BC-B584-0AED1F9E8C29}.Release|Win32.ActiveCfg = Release|Win32
+		{A0D6C3C5-6DB9-40BC-B584-0AED1F9E8C29}.Release|Win32.Build.0 = Release|Win32
+		{35A2FBDB-782D-47F2-BF12-2B2485867C97}.Debug|Win32.ActiveCfg = Debug|Win32
+		{35A2FBDB-782D-47F2-BF12-2B2485867C97}.Debug|Win32.Build.0 = Debug|Win32
+		{35A2FBDB-782D-47F2-BF12-2B2485867C97}.Release|Win32.ActiveCfg = Release|Win32
+		{35A2FBDB-782D-47F2-BF12-2B2485867C97}.Release|Win32.Build.0 = Release|Win32
+		{17FE4F44-0DF2-4A15-B749-999D12D7867F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{17FE4F44-0DF2-4A15-B749-999D12D7867F}.Debug|Win32.Build.0 = Debug|Win32
+		{17FE4F44-0DF2-4A15-B749-999D12D7867F}.Release|Win32.ActiveCfg = Release|Win32
+		{17FE4F44-0DF2-4A15-B749-999D12D7867F}.Release|Win32.Build.0 = Release|Win32
+		{886F63BF-9478-4D43-96D5-B86697543FBC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{886F63BF-9478-4D43-96D5-B86697543FBC}.Debug|Win32.Build.0 = Debug|Win32
+		{886F63BF-9478-4D43-96D5-B86697543FBC}.Release|Win32.ActiveCfg = Release|Win32
+		{886F63BF-9478-4D43-96D5-B86697543FBC}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
