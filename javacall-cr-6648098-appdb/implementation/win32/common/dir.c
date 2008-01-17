@@ -236,7 +236,7 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
         }
     }
     rootPath[i] = L'\0'; /* null-terminated */
-    wcscat(rootPath, L"\\Java"); /* java-home dir is at jvm_exe_path/Java. */
+    wcscat(rootPath, L"\\Java\\appdb"); /* java-home dir is at jvm_exe_path/Java. */
     *rootPathLen = wcslen(rootPath);
 
     if (!bCreated) { 
@@ -271,7 +271,8 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
         }
 
         wcscpy(rootPath, midpHome);
-        * rootPathLen = len;
+        wcscat(rootPath, L"\\lib");
+        * rootPathLen = wcslen(rootPath);
         return JAVACALL_OK;
     }
 
@@ -337,11 +338,148 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
             return JAVACALL_FAIL;
         }
 
+        return JAVACALL_OK;
+    }
+}
+#endif /* UNDER_CE */
+
+/**
+ * Returns the root path of java's home directory.
+ *
+ * @param configPath returned value: pointer to unicode buffer, allocated
+ *        by the VM, to be filled with the root path.
+ * @param configPathLen IN  : lenght of max configPath buffer
+ *                    OUT : lenght of set configPath
+ * @return <tt>JAVACALL_OK</tt> if operation completed successfully
+ *         <tt>JAVACALL_FAIL</tt> if an error occured
+ */
+#ifdef UNDER_CE
+javacall_result javacall_dir_get_configuration_path(javacall_utf16* /* OUT */ configPath, 
+                                                    int* /* IN | OUT */ configPathLen)
+{
+    int i;
+    static BOOL bCreated = FALSE;
+    
+    DWORD res = GetModuleFileNameW(NULL, configPath, *configPathLen);
+    if (0 == res)
+        return JAVACALL_FAIL;
+
+    for (i= wcslen(configPath) -1 ; i>=0; i--) {
+        if (configPath[i] != '\\') {
+            configPath[i] = L'\0';
+        } else {
+            break;
+        }
+    }
+    configPath[i] = L'\0'; /* null-terminated */
+    wcscat(configPath, L"\\Java\\lib"); /* java-home dir is at jvm_exe_path/Java. */
+    *configPathLen = wcslen(configPath);
+
+    if (!bCreated) { 
+        /* at first time, we create jvm-exe-path/Java dir whether it is existed. */
+        CreateDirectoryW(configPath, NULL);
+        bCreated = TRUE;
+    }
+    return JAVACALL_OK;
+}
+#else /* !UNDER_CE */
+javacall_result javacall_dir_get_configuration_path(javacall_utf16* /* OUT */ configPath, 
+                                                    int* /* IN | OUT */ configPathLen)
+{
+    wchar_t dirBuffer[JAVACALL_MAX_ROOT_PATH_LENGTH + 1];
+    wchar_t currDir[JAVACALL_MAX_ROOT_PATH_LENGTH + 1];
+    wchar_t* midpHome;
+
+    if (configPath == NULL || configPathLen == NULL) {
+        return JAVACALL_FAIL;
+    }
+
+    /*
+     * If MIDP_HOME is set, just use it. Does not check if MIDP_HOME is
+     * pointing to a directory contain "appdb".
+     */
+    midpHome = _wgetenv(L"MIDP_HOME");
+    if (midpHome != NULL) {
+        int len = (int) wcslen(midpHome);
+        if (len >= *configPathLen) {
+            * configPathLen = 0;
+            return JAVACALL_FAIL;
+        }
+
+        wcscpy(configPath, midpHome);
+        wcscat(configPath, L"\\lib");
+        * configPathLen = wcslen(configPath);
+        return JAVACALL_OK;
+    }
+
+    /*
+     * Look for "appdb" until it is found in the following places:
+     * - current directory;
+     * - the parent directory of the midp executable;
+     * - the grandparent directory of the midp executable.
+     */
+    if ( _wgetcwd( currDir, sizeof(currDir)/sizeof(wchar_t) ) == NULL) {
+        * configPathLen = 0;
+        return JAVACALL_FAIL;
+    } else {
+        wchar_t* lastsep;
+        WIN32_FILE_ATTRIBUTE_DATA lpFileInformation;
+        int i, j = 1;
+        wchar_t chSep = javacall_get_file_separator();
+        wchar_t filesep[2] = {chSep, (wchar_t)0};
+
+        dirBuffer[sizeof(dirBuffer)/sizeof(wchar_t) - 1] = (wchar_t)0;
+        wcsncpy(dirBuffer, currDir, sizeof(dirBuffer)/sizeof(wchar_t) - 1);
+
+        while (j < 2) {
+            /* Look for the last slash in the pathname. */
+            lastsep = wcsrchr(dirBuffer, *filesep);
+            if (lastsep != NULL) {
+                *(lastsep + 1) = L'\0';
+            } else {
+                /* no file separator */
+                wcscpy(dirBuffer, L".");
+                wcscat(dirBuffer, filesep);
+            }
+
+            wcscat(dirBuffer, L"appdb");
+            i = 0;
+
+            /* try to search for "appdb" 3 times only (see above) */
+            while (i < 3) {
+                /* found it and it is a directory */
+                if ((GetFileAttributesExW(dirBuffer, GetFileExInfoStandard, &lpFileInformation) != 0) &&
+                    (lpFileInformation.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
+                    break;
+
+                /* strip off "appdb" to add 1 more level of ".." */
+                *(wcsrchr(dirBuffer, *filesep)) = L'\0';
+                wcscat(dirBuffer, filesep);
+                wcscat(dirBuffer, L"..");
+                wcscat(dirBuffer, filesep);
+                wcscat(dirBuffer, L"appdb");
+
+                i++;
+            } /* end while (i < 3) */
+
+            if (i < 3) {
+                break;
+            }
+
+            j++;
+        } /* end while (j < 2) */
+
+        if (j == 2) {
+            * configPathLen = 0;
+            return JAVACALL_FAIL;
+        }
+
         /* strip off "appdb" from the path */
         *(wcsrchr(dirBuffer, *filesep)) = L'\0';
 
-        wcscpy(rootPath, dirBuffer);
-        * rootPathLen = wcslen(rootPath);
+        wcscpy(configPath, dirBuffer);
+        * configPathLen = wcslen(configPath);
+        wcscat(dirBuffer, L"lib");
 
         return JAVACALL_OK;
     }
