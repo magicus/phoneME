@@ -107,11 +107,9 @@ CVMdynlinkOpen(const void *absolutePathName)
 #ifdef CVM_DEBUG
     /* Print an error message if we failed to open the dll. */
     if (hh == NULL) {
-        char buf[256];
-        int err = CVMioGetLastErrorString(buf, sizeof(buf));
-        fprintf(stderr, "CVMdynlinkOpen(%s) failed. err=0x%x: %s",
+        fprintf(stderr, "CVMdynlinkOpen(%s) failed. err=0x%x",
                 absolutePathName == NULL ? "NULL" : absolutePathName,
-                err, err == 0 ? "???" : buf);
+                GetLastError());
     }
 #endif
 
