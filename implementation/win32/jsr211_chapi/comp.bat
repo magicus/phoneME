@@ -1,1 +1,0 @@
-cl /GX /c javacall_chapi_registry.cpp /IC:\home\hui\pomoi\javacall\interface\jsr211_chapi /IC:\home\hui\pomoi\javacall\interface /IC:\home\hui\pomoi\build\win32_javacall_win32_min\javacall\inc /IC:\home\hui\pomoi\apr\apr-util\include /IC:\home\hui\pomoi\apr\apr\include /IC:\home\hui\pomoi\apr\apr-iconv\include /DAPU_DECLARE_IMPORT /DAPU_USE_SDBM /DWIN32 /D_WINDOWS 
