@@ -91,47 +91,53 @@ CVMdynlinkOpen(const void *absolutePathName)
     HANDLE hh;
 
     if (absolutePathName == NULL) {
-
-  hh = LoadLibrary(TEXT("cvmi.dll"));
-
+        hh = LoadLibrary(TEXT("cvmi.dll"));
     } else {
 #ifdef UNICODE
-  WCHAR *wc;
-  char *pathName = (char *)absolutePathName;
-
-  wc = createWCHAR(pathName);
-  hh = LoadLibrary(wc);
+        char *pathName = (char*)absolutePathName;
+        WCHAR *wc = createWCHAR(pathName);
+        hh = LoadLibrary(wc);
+        free(wc);
 #else
-  char *wc = (char *)absolutePathName;
-  hh = LoadLibraryA(wc);
-#endif
-#ifdef CVM_DEBUG
-  if (hh == NULL) {
-      LPVOID lpMsgBuf;
-      FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-        FORMAT_MESSAGE_FROM_SYSTEM |
-        FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL,
-        GetLastError(),
-        0, /* default language */
-        (LPTSTR) &lpMsgBuf,
-        0,
-        NULL);
-
-      MessageBox(NULL,
-           (LPCTSTR) lpMsgBuf,
-           TEXT("Error"),
-           MB_OK | MB_ICONINFORMATION);
-
-      LocalFree(lpMsgBuf);
-
-      /* DWORD err = GetLastError(); */
-  }
-#endif
-#ifdef UNICODE
-  free(wc);
+        char *wc = (char*)absolutePathName;
+        hh = LoadLibraryA(wc);
 #endif
     }
+
+#ifdef CVM_DEBUG
+    /* Print an error message if we failed to open the dll. */
+    if (hh == NULL) {
+        char buf[256];
+        int err = CVMioGetLastErrorString(buf, sizeof(buf));
+        fprintf(stderr, "CVMdynlinkOpen(%s) failed. err=0x%x: %s",
+                absolutePathName == NULL ? "NULL" : absolutePathName,
+                err, err == 0 ? "???" : buf);
+    }
+#endif
+
+#ifdef CVM_DEBUG
+    /* Put up an error dialog if we failed to open the dll. */
+    if (hh == NULL) {
+        LPVOID lpMsgBuf;
+        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                      FORMAT_MESSAGE_FROM_SYSTEM |
+                      FORMAT_MESSAGE_IGNORE_INSERTS,
+                      NULL,
+                      GetLastError(),
+                      0, /* default language */
+                      (LPTSTR) &lpMsgBuf,
+                      0,
+                      NULL);
+
+        MessageBox(NULL,
+                   (LPCTSTR) lpMsgBuf,
+                   TEXT("Error"),
+                   MB_OK | MB_ICONINFORMATION);
+
+        LocalFree(lpMsgBuf);
+    }
+#endif
+
     return hh;
 }
 
@@ -145,6 +151,16 @@ CVMdynlinkSym(void *dsoHandle, const void *name)
     v = GetProcAddressA((HANDLE)dsoHandle, name);
 #else
     v = GetProcAddress((HANDLE)dsoHandle, name);
+#endif
+
+    /* Enable this if you want to know why a symbol lookup is failing. */
+#if 0
+    if (v == NULL) {
+	char buf[256];
+	int err = CVMioGetLastErrorString(buf, sizeof(buf));
+	fprintf(stderr, "CVMdynlinkSym(%s) failed. err=0x%x (%s)\n",
+			 name, err, err == 0 ? "???" : buf);
+    }
 #endif
     return v;
 }
