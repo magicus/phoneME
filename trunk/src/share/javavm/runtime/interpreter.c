@@ -3107,15 +3107,7 @@ CVMthreadSuspendConsistentRelease(CVMExecEnv* ee)
 static void*
 CVMfindBuiltinEntry(const char* name)
 {
-    if (CVMglobals.cvmDynHandle == NULL) {
-	CVMglobals.cvmDynHandle = CVMdynlinkOpen(NULL);
-	if (CVMglobals.cvmDynHandle == NULL) {
-	    CVMconsolePrintf("Fatal Error: "
-			     "Could not open cvm as a shared library.\n");
-	    return NULL;
-	}
-    }
-
+    CVMassert(CVMglobals.cvmDynHandle != NULL);
     return CVMdynlinkSym(CVMglobals.cvmDynHandle, name);
 }
 
