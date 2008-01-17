@@ -86,7 +86,7 @@ javacall_int64 javacall_dir_get_free_space_for_java(void){
     
     
 /**
- * Returns the root path of java's home directory.
+ * Returns the root path of java's application directory.
  * 
  * @param rootPath returned value: pointer to unicode buffer, allocated 
  *        by the VM, to be filled with the root path.
@@ -99,6 +99,22 @@ javacall_result javacall_dir_get_root_path(javacall_utf16* /* OUT */ rootPath,
                                            int* /* IN | OUT */ rootPathLen) {
     return JAVACALL_FAIL;
 }  
+
+/**
+ * Returns the root path of java's configuration directory.
+ * 
+ * @param configPath returned value: pointer to unicode buffer, allocated 
+ *        by the VM, to be filled with the root path.
+ * @param configPathLen IN  : lenght of max rootPath buffer
+ *                    OUT : lenght of set rootPath
+ * @return <tt>JAVACALL_OK</tt> if operation completed successfully
+ *         <tt>JAVACALL_FAIL</tt> if an error occured
+ */
+javacall_result javacall_dir_get_configuration_path(javacall_utf16* /* OUT */ configPath,
+                                                    int* /* IN | OUT */ configPathLen) {
+    return JAVACALL_FAIL;
+}  
+
 
 /**
  *  Returns file separator character used by the underlying file system
