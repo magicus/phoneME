@@ -733,9 +733,9 @@ int runNams(int argc, char* argv[]) {
     }
 
     /* For development platforms MIDP_HOME is dynamic. */
-    midpHome = midpFixMidpHome(argv[0]);
+    midpHome = getApplicationDir(argv[0]);
     if (midpHome == NULL) {
-        /* midpFixMidpHome has already issued an error message */
+        /* getApplicationDir has already issued an error message */
         return -1;
     }
 

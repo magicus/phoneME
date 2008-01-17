@@ -33,7 +33,8 @@
 #include <midpStorage.h>
 #include <commandLineUtil.h>
 
-static char dirBuffer[MAX_FILENAME_LENGTH+1];
+static char appDirBuffer[MAX_FILENAME_LENGTH+1];
+static char confDirBuffer[MAX_FILENAME_LENGTH+1];
 
 /**
  * Generates a correct MIDP home directory based on several rules. If
@@ -59,7 +60,7 @@ static char dirBuffer[MAX_FILENAME_LENGTH+1];
  *         <tt>NULL</tt>, this will be a static buffer, so that it safe
  *       to call this function before midpInitialize, don't free it
  */
-char* midpFixMidpHome(char *cmd) {
+char* getApplicationDir(char *cmd) {
     int   i;
     char* filesep = NULL;
     char* lastsep;
@@ -78,22 +79,22 @@ char* midpFixMidpHome(char *cmd) {
 
     filesep = getCharFileSeparator();
 
-    dirBuffer[sizeof (dirBuffer) - 1] = 0;
-    strncpy(dirBuffer, cmd, sizeof (dirBuffer) - 1);
+    appDirBuffer[sizeof (appDirBuffer) - 1] = 0;
+    strncpy(appDirBuffer, cmd, sizeof (appDirBuffer) - 1);
 
     while (j < 2) {
 
         /* Look for the last slash in the pathanme. */
-        lastsep = strrchr(dirBuffer, (int) *filesep);
+        lastsep = strrchr(appDirBuffer, (int) *filesep);
         if (lastsep != 0) {
             *(lastsep + 1) = '\0';
         } else {
             /* no file separator */
-            strcpy(dirBuffer, ".");
-            strcat(dirBuffer, filesep);
+            strcpy(appDirBuffer, ".");
+            strcat(appDirBuffer, filesep);
         }
 
-        strcat(dirBuffer, "appdb");
+        strcat(appDirBuffer, "appdb");
 
         i = 0;
 
@@ -102,17 +103,93 @@ char* midpFixMidpHome(char *cmd) {
             memset(&statbuf, 0, sizeof(statbuf));
 
             /* found it and it is a directory */
-            if ((stat(dirBuffer, &statbuf) == 0) &&
+            if ((stat(appDirBuffer, &statbuf) == 0) &&
                 (statbuf.st_mode & S_IFDIR)) {
                 break;
             }
 
             /* strip off "lib" to add 1 more level of ".." */
-            *(strrchr(dirBuffer, (int) *filesep)) = '\0';
-            strcat(dirBuffer, filesep);
-            strcat(dirBuffer, "..");
-            strcat(dirBuffer, filesep);
-            strcat(dirBuffer, "appdb");
+            *(strrchr(appDirBuffer, (int) *filesep)) = '\0';
+            strcat(appDirBuffer, filesep);
+            strcat(appDirBuffer, "..");
+            strcat(appDirBuffer, filesep);
+            strcat(appDirBuffer, "appdb");
+
+            i++;
+        }
+
+        if (i < 3) {
+            break;
+        }
+
+        j++;
+    }
+
+    if (j == 2) {
+        fprintf(stderr, "Warning: cannot find appdb subdirectory.\n"
+                "Please specify MIDP_HOME environment variable such "
+                "that $MIDP_HOME%clib contains the proper configuration "
+                "files.\n", *filesep);
+        return NULL;
+    }
+
+    return appDirBuffer;
+}
+
+char* getConfigurationDir(char *cmd) {
+    int   i;
+    char* filesep = NULL;
+    char* lastsep;
+    char* midp_home;
+    struct stat statbuf;
+    int j = 1;
+
+    /*
+     * If MIDP_HOME is set, just use it. Does not check if MIDP_HOME is
+     * pointing to a directory contain "appdb".
+     */
+    midp_home = getenv("MIDP_HOME");
+    if (midp_home != NULL) {
+        return midp_home;
+    }
+
+    filesep = getCharFileSeparator();
+
+    confDirBuffer[sizeof (confDirBuffer) - 1] = 0;
+    strncpy(confDirBuffer, cmd, sizeof (confDirBuffer) - 1);
+
+    while (j < 2) {
+
+        /* Look for the last slash in the pathanme. */
+        lastsep = strrchr(confDirBuffer, (int) *filesep);
+        if (lastsep != 0) {
+            *(lastsep + 1) = '\0';
+        } else {
+            /* no file separator */
+            strcpy(confDirBuffer, ".");
+            strcat(confDirBuffer, filesep);
+        }
+
+        strcat(confDirBuffer, "appdb");
+
+        i = 0;
+
+        /* try to search for "appdb" 3 times only (see above) */
+        while (i < 3) {
+            memset(&statbuf, 0, sizeof(statbuf));
+
+            /* found it and it is a directory */
+            if ((stat(confDirBuffer, &statbuf) == 0) &&
+                (statbuf.st_mode & S_IFDIR)) {
+                break;
+            }
+
+            /* strip off "lib" to add 1 more level of ".." */
+            *(strrchr(confDirBuffer, (int) *filesep)) = '\0';
+            strcat(confDirBuffer, filesep);
+            strcat(confDirBuffer, "..");
+            strcat(confDirBuffer, filesep);
+            strcat(confDirBuffer, "appdb");
 
             i++;
         }
@@ -133,7 +210,9 @@ char* midpFixMidpHome(char *cmd) {
     }
 
     /* strip off "appdb" from the path */
-    *(strrchr(dirBuffer, (int) *filesep)) = '\0';
+    *(strrchr(confDirBuffer, (int) *filesep)) = '\0';
 
-    return dirBuffer;
+    strcat(confDirBuffer,"lib");
+
+    return confDirBuffer;
 }

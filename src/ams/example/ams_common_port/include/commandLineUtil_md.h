@@ -38,7 +38,7 @@ extern "C" {
  */
 
 /**
- * Generates a correct MIDP home directory based on several rules. If
+ * Generates a correct application directory based on several rules. If
  * the <tt>MIDP_HOME</tt> environment variable is set, its value is used
  * unmodified. Otherwise, this function will search for the <tt>appdb</tt>
  * directory in the following order:
@@ -61,7 +61,7 @@ extern "C" {
  *         <tt>NULL</tt>, this will be a static buffer, so that it safe
  *       to call this function before midpInitialize, don't free it
  */
-char* midpFixMidpHome(char *cmd);
+char* getApplicationDir(char *cmd);
 
 #ifdef __cplusplus
 }

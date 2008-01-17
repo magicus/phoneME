@@ -88,7 +88,7 @@ int register_a_bunch_of_tests() {
     return get_num_tests();
 }
 
-extern char* midpFixMidpHome(char *cmd);
+extern char* getApplicationDir(char *cmd);
 
 extern int registerFileInstallerTests();
 
@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
         char* midpHome;
 
         /* For development platforms MIDP_HOME is dynamic. */
-        midpHome = midpFixMidpHome(argv[0]);
+        midpHome = getApplicationDir(argv[0]);
         if (midpHome == NULL) {
             return -1;
         }

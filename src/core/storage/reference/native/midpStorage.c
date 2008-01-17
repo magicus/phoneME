@@ -68,14 +68,6 @@ static const char* const FILE_LIMIT_ERROR =
 static const char* const STRING_CORRUPT_ERROR =
     "string data corrupt or invalid, cannot perform i/o operation";
 
-
-/*
- * Name of the storage directory.
- */
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(CONFIG_SUBDIR)
-    {'l', 'i', 'b', '\0'}
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(CONFIG_SUBDIR);
-
 #if REPORT_LEVEL <= LOG_INFORMATION
 #define DEBUGP2F(x, y) { \
     const char* pszTemp = pcsl_string_get_utf8_data(y); \
@@ -173,21 +165,13 @@ storageInitialize(char *config_home, char *midp_home) {
 }
 
 static int
-initializeConfigRoot(char* midp_home) {
+initializeConfigRoot(char* config_home) {
     jchar fileSep = storageGetFileSeparator();
 
-    if (PCSL_STRING_OK != pcsl_string_from_chars(midp_home, &configRoot[0])) {
+    if (PCSL_STRING_OK != pcsl_string_from_chars(config_home, &configRoot[0])) {
         return -1;
     }
-
-    /* performance hint: predict buffer capacity */
-    pcsl_string_predict_size(&configRoot[0],
-                            pcsl_string_length(&configRoot[0])
-                            + 2 + PCSL_STRING_LITERAL_LENGTH(CONFIG_SUBDIR));
-
-    if (PCSL_STRING_OK != pcsl_string_append_char(&configRoot[0], fileSep)
-     || PCSL_STRING_OK != pcsl_string_append(&configRoot[0], &CONFIG_SUBDIR)
-     || PCSL_STRING_OK != pcsl_string_append_char(&configRoot[0], fileSep)) {
+    if (PCSL_STRING_OK != pcsl_string_append_char(&configRoot[0], fileSep)) {
         pcsl_string_free(&configRoot[0]);
         return -1;
     }

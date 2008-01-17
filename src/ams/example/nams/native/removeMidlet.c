@@ -87,7 +87,7 @@ int removeMidlet(int argc, char* argv[]) {
     }
 
     /* get midp home directory, set it */
-    midpHome = midpFixMidpHome(argv[0]);
+    midpHome = getApplicationDir(argv[0]);
     if (midpHome == NULL) {
         return -1;
     }
