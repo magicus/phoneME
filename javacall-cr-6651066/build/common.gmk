@@ -1,6 +1,5 @@
 #   
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -63,9 +62,7 @@ vpath %.c $(JAVACALL_DIR)/implementation/share/properties
 VPATH+=$(JAVACALL_DIR)/implementation/share/properties
 PROPERTY_FILES = javacall_properties \
 		 javacall_config_db \
-		 javacall_db \
-		 javacall_static_properties
-		 
+		 javacall_db
 
 # In case using of the javacall functions wrappers, set the USE_JAVACALL_WRAPPERS variable
 ifeq ($(USE_JAVACALL_WRAPPERS),true)

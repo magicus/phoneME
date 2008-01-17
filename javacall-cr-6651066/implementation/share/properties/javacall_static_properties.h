@@ -1,6 +1,5 @@
 /*
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -26,8 +25,8 @@
 #ifndef _JAVACALL_STATIC_PROPERTIES_H_
 #define _JAVACALL_STATIC_PROPERTIES_H_
 
-extern char* javacall_static_properties_sections[];
-extern char** javacall_static_properties_values[];
-extern char** javacall_static_properties_keys[];
+extern char* static_properties_sections[];
+extern char** static_properties_values[];
+extern char** static_properties_keys[];
 
 #endif //_JAVACALL_STATIC_PROPERTIES_H_
