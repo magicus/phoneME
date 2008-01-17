@@ -1,0 +1,14 @@
+# Microsoft Developer Studio Generated Dependency File, included by libapriconv.mak
+
+.\libapriconv.rc : \
+	"..\apr\include\apr.h"\
+	"..\apr\include\apr_allocator.h"\
+	"..\apr\include\apr_errno.h"\
+	"..\apr\include\apr_general.h"\
+	"..\apr\include\apr_pools.h"\
+	"..\apr\include\apr_thread_mutex.h"\
+	"..\apr\include\apr_version.h"\
+	"..\apr\include\apr_want.h"\
+	".\include\api_version.h"\
+	".\include\apr_iconv.h"\
+	

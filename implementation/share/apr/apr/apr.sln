@@ -1,0 +1,44 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "apr", "apr.vcproj", "{9224BE84-DE52-4F18-AA85-266868528EF3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "apr_app", "build\apr_app.vcproj", "{5393ED75-57EB-40BB-852D-B723DB03F6F3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9224BE84-DE52-4F18-AA85-266868528EF3} = {9224BE84-DE52-4F18-AA85-266868528EF3}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libapr", "libapr.vcproj", "{0A976FC6-0685-4B31-8195-772EA0F8B106}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libapr_app", "build\libapr_app.vcproj", "{0846A032-EF81-454C-BB89-BF1D70D4901D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0A976FC6-0685-4B31-8195-772EA0F8B106} = {0A976FC6-0685-4B31-8195-772EA0F8B106}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9224BE84-DE52-4F18-AA85-266868528EF3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9224BE84-DE52-4F18-AA85-266868528EF3}.Debug|Win32.Build.0 = Debug|Win32
+		{9224BE84-DE52-4F18-AA85-266868528EF3}.Release|Win32.ActiveCfg = Release|Win32
+		{9224BE84-DE52-4F18-AA85-266868528EF3}.Release|Win32.Build.0 = Release|Win32
+		{5393ED75-57EB-40BB-852D-B723DB03F6F3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5393ED75-57EB-40BB-852D-B723DB03F6F3}.Debug|Win32.Build.0 = Debug|Win32
+		{5393ED75-57EB-40BB-852D-B723DB03F6F3}.Release|Win32.ActiveCfg = Release|Win32
+		{5393ED75-57EB-40BB-852D-B723DB03F6F3}.Release|Win32.Build.0 = Release|Win32
+		{0A976FC6-0685-4B31-8195-772EA0F8B106}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0A976FC6-0685-4B31-8195-772EA0F8B106}.Debug|Win32.Build.0 = Debug|Win32
+		{0A976FC6-0685-4B31-8195-772EA0F8B106}.Release|Win32.ActiveCfg = Release|Win32
+		{0A976FC6-0685-4B31-8195-772EA0F8B106}.Release|Win32.Build.0 = Release|Win32
+		{0846A032-EF81-454C-BB89-BF1D70D4901D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0846A032-EF81-454C-BB89-BF1D70D4901D}.Debug|Win32.Build.0 = Debug|Win32
+		{0846A032-EF81-454C-BB89-BF1D70D4901D}.Release|Win32.ActiveCfg = Release|Win32
+		{0846A032-EF81-454C-BB89-BF1D70D4901D}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

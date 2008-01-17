@@ -1,0 +1,32 @@
+# Microsoft Developer Studio Generated Dependency File, included by aprutil.mak
+
+!IF  "$(CFG)" == "aprutil - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "aprutil - Win32 Debug"
+
+!ENDIF 
+
+!IF  "$(CFG)" == "aprutil - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "aprutil - Win32 Debug"
+
+!ENDIF 
+
+!IF  "$(CFG)" == "aprutil - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "aprutil - Win32 Debug"
+
+!ENDIF 
+
+!IF  "$(CFG)" == "aprutil - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "aprutil - Win32 Debug"
+
+!ENDIF 
+
+!IF  "$(CFG)" == "aprutil - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "aprutil - Win32 Debug"
+
+!ENDIF 
+

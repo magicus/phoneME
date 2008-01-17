@@ -1,0 +1,37 @@
+# Microsoft Developer Studio Generated Dependency File, included by libaprutil.mak
+
+!IF  "$(CFG)" == "libaprutil - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "libaprutil - Win32 Debug"
+
+!ENDIF 
+
+!IF  "$(CFG)" == "libaprutil - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "libaprutil - Win32 Debug"
+
+!ENDIF 
+
+!IF  "$(CFG)" == "libaprutil - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "libaprutil - Win32 Debug"
+
+!ENDIF 
+
+!IF  "$(CFG)" == "libaprutil - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "libaprutil - Win32 Debug"
+
+!ENDIF 
+
+!IF  "$(CFG)" == "libaprutil - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "libaprutil - Win32 Debug"
+
+!ENDIF 
+
+.\libaprutil.rc : \
+	"..\apr\include\apr.h"\
+	"..\apr\include\apr_version.h"\
+	".\include\apu_version.h"\
+	
