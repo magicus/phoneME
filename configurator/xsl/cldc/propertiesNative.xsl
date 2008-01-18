@@ -42,8 +42,7 @@
 <xsl:variable name="internalProps" select="$properties/property[@Scope = 'internal']"/>
 <!-- all properties with system scope -->
 <xsl:variable name="systemProps" select="$properties/property[@Scope = 'system' and not(@Callout)]"/>
-<xsl:text>
-/*
+<xsl:text>/*
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 

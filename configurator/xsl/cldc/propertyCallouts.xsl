@@ -40,8 +40,7 @@
 <xsl:param name="properties"/>
 <!-- all properties with Callout attribute -->
 <xsl:variable name="calloutProps" select="$properties/property[boolean(@Callout)]"/>
-<xsl:text>
-/*
+<xsl:text>/*
  * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
