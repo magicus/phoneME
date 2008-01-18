@@ -606,10 +606,7 @@ public:
   // but before any bytecodes in this method is quickened.
   bool may_convert_to_fast_get_accessor(BasicType& type, int& offset JVM_TRAPS);
 
-#if USE_COMPILER_STRUCTURES
- private:
-  static void add_entry(jubyte counts[], const int bci, const int inc=1);
- public:
+#if ENABLE_COMPILER
 
   struct Attributes : public StackObj {
     CompilerByteArray* entry_counts;  // Number of incoming control flow edges
@@ -630,6 +627,14 @@ public:
 
   // Computes method attributes used by compiler and romizer.
   void compute_attributes(Attributes& attributes JVM_TRAPS) const;
+
+#endif
+
+#if USE_COMPILER_STRUCTURES
+ private:
+  static void add_entry(jubyte counts[], const int bci, const int inc=1);
+ public:
+
   void add_exception_table_entries( jubyte counts[] ) const;
 #endif
 

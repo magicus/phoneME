@@ -2248,6 +2248,8 @@ void Method::add_exception_table_entries( jubyte counts[] ) const {
 #define ADD_BACK_BRANCH_ENTRY(offset) ADD_BRANCH_ENTRY(offset); \
   if(dest <= bci) { has_loops = true; }
 
+#if ENABLE_COMPILER
+
 void Method::compute_attributes(Attributes& attributes JVM_TRAPS) const {
   GUARANTEE( Compiler::is_active(), "Sanity" );
 
@@ -2377,6 +2379,8 @@ void Method::compute_attributes(Attributes& attributes JVM_TRAPS) const {
     }
   }
 }
+
+#endif // ENABLE_COMPILER
 
 #if ENABLE_ROM_GENERATOR
 

@@ -24,6 +24,8 @@
  * information or have any questions.
  */
 
+#if ENABLE_COMPILER
+
 class BinaryAssembler: public BinaryAssemblerCommon {
  public:
   class InternalLabel {
@@ -440,3 +442,5 @@ class BinaryAssembler: public BinaryAssemblerCommon {
   friend class RelocationWriter;
 #endif
 };
+
+#endif // ENABLE_COMPILER

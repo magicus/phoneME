@@ -2424,11 +2424,12 @@ void CodeGenerator::invoke(const Method* method,
   GUARANTEE(tmp != lr, "Must not have lr as temporary register");
 
   if (must_do_null_check) {
-    if(!(frame()->reveiver_must_be_nonnull(size_of_parameters))) {
-      Value receiver(T_OBJECT);
-      frame()->receiver(receiver, size_of_parameters);
-      maybe_null_check(receiver JVM_CHECK);
-    }
+    GUARANTEE(!frame()->receiver_must_be_nonnull(size_of_parameters),
+              "Null check not needed");
+
+    Value receiver(T_OBJECT);
+    frame()->receiver(receiver, size_of_parameters);
+    maybe_null_check(receiver JVM_CHECK);
     ldr_oop(r0, method);
   } else {
     ldr_oop(r0, method);

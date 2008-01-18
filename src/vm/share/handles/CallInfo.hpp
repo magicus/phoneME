@@ -29,7 +29,7 @@
  *!c>
  */
 
-#if ENABLE_APPENDED_CALLINFO
+#if ENABLE_COMPILER && ENABLE_APPENDED_CALLINFO
 class CallInfoWriter {
  private:
   CompiledMethod * _compiled_method;
@@ -184,4 +184,4 @@ class CallInfoRecord {
     table_header_size = 2
   };
 };
-#endif // ENABLE_APPENDED_CALLINFO
+#endif // ENABLE_COMPILER && ENABLE_APPENDED_CALLINFO
