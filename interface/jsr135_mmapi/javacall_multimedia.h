@@ -87,120 +87,120 @@ extern "C" {
 */
 /** Audio formats section */
 /** MPEG-1 layer 2, audio/mpeg */
-#define JAVACALL_MEDIA_FORMAT_MPEG1_LAYER2      L"MPEG1_layer_2"
+#define JAVACALL_MEDIA_FORMAT_MPEG1_LAYER2      "MPEG1_layer_2"
 /** MPEG-1 layer 3, audio/mpeg */
-#define JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3      L"MPEG1_layer_3"
+#define JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3      "MPEG1_layer_3"
 /** MP3pro, audio/mpeg */
-#define JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3_PRO  L"MPEG1_layer_3_pro"
+#define JAVACALL_MEDIA_FORMAT_MPEG1_LAYER3_PRO  "MPEG1_layer_3_pro"
 /** MPEG-2 Advanced_Audio_Coding, audio/mpeg */
-#define JAVACALL_MEDIA_FORMAT_MPEG2_AAC         L"MPEG2_AAC"
+#define JAVACALL_MEDIA_FORMAT_MPEG2_AAC         "MPEG2_AAC"
 /** MPEG-4 High Efficiency Advanced Audio Coding, audio/mpeg */
-#define JAVACALL_MEDIA_FORMAT_MPEG4_HE_AAC      L"MPEG4_HE_AAC"
+#define JAVACALL_MEDIA_FORMAT_MPEG4_HE_AAC      "MPEG4_HE_AAC"
 /** 3GPP Enhanced aacPlus, audio/3gpp */
-#define JAVACALL_MEDIA_FORMAT_ENHANCED_AAC_PLUS L"Enhanced_AAC_Plus"
+#define JAVACALL_MEDIA_FORMAT_ENHANCED_AAC_PLUS "Enhanced_AAC_Plus"
 /** 3GPP Adaptive Multi Rate audio/amr */
-#define JAVACALL_MEDIA_FORMAT_AMR               L"AMR"
+#define JAVACALL_MEDIA_FORMAT_AMR               "AMR"
 /** 3GPP Wide Band Adaptive Multi Rate, audio/amr-wb */
-#define JAVACALL_MEDIA_FORMAT_AMR_WB            L"AMR_WB"
+#define JAVACALL_MEDIA_FORMAT_AMR_WB            "AMR_WB"
 /** 3GPP Wide Band Adaptive Multi Rate plus, audio/amr-wb+ */
-#define JAVACALL_MEDIA_FORMAT_AMR_WB_PLUS       L"AMR_WB_Plus"
+#define JAVACALL_MEDIA_FORMAT_AMR_WB_PLUS       "AMR_WB_Plus"
 /** ETSI GSM full-rate speech codec, audio/x-gsm */
-#define JAVACALL_MEDIA_FORMAT_GSM               L"GSM"
+#define JAVACALL_MEDIA_FORMAT_GSM               "GSM"
 /** ETSI GSM enhanced full-rate speech codec, audio/x-gsmefr */
-#define JAVACALL_MEDIA_FORMAT_GSM_EFR           L"GSM_EFR"
+#define JAVACALL_MEDIA_FORMAT_GSM_EFR           "GSM_EFR"
 /** The Electronic Industries Association (EIA) & 
  * Telecommunications Industry Association (TIA) standard IS-733
  * audio/qcelp */
-#define JAVACALL_MEDIA_FORMAT_QCELP             L"QCELP"
+#define JAVACALL_MEDIA_FORMAT_QCELP             "QCELP"
 /** MIDI Manufacturers Association, audio/midi */
-#define JAVACALL_MEDIA_FORMAT_MIDI              L"MIDI"
+#define JAVACALL_MEDIA_FORMAT_MIDI              "MIDI"
 /** MIDI Manufacturers Association, audio/spmidi */
-#define JAVACALL_MEDIA_FORMAT_SP_MIDI           L"SP_MIDI"
+#define JAVACALL_MEDIA_FORMAT_SP_MIDI           "SP_MIDI"
 /** Microsoft, linear Pulse Coded Modulation, audio/x-wav */
-#define JAVACALL_MEDIA_FORMAT_MS_PCM            L"MS_PCM"
+#define JAVACALL_MEDIA_FORMAT_MS_PCM            "MS_PCM"
 /** Microsoft, Adaptive Delta Pulse Coded Modulation, audio/x-wav */
-#define JAVACALL_MEDIA_FORMAT_MS_ADPCM          L"MS_ADPCM"
+#define JAVACALL_MEDIA_FORMAT_MS_ADPCM          "MS_ADPCM"
 /** Yamaha, Adaptive Delta Pulse Coded Modulation, audio/x-wav */
-#define JAVACALL_MEDIA_FORMAT_YAMAHA_ADPCM      L"YAMAHA_ADPCM"
+#define JAVACALL_MEDIA_FORMAT_YAMAHA_ADPCM      "YAMAHA_ADPCM"
 /** Basic audio, audio/basic */
-#define JAVACALL_MEDIA_FORMAT_AU                L"AU"
+#define JAVACALL_MEDIA_FORMAT_AU                "AU"
 /** OGG Vorbis, audio/x-vorbis */
-#define JAVACALL_MEDIA_FORMAT_OGG_VORBIS        L"OGG_VORBIS"
+#define JAVACALL_MEDIA_FORMAT_OGG_VORBIS        "OGG_VORBIS"
 /** RealAudio ver 8, audio/x-realaudio */
-#define JAVACALL_MEDIA_FORMAT_REALAUDIO_8       L"REALAUDIO_8"
+#define JAVACALL_MEDIA_FORMAT_REALAUDIO_8       "REALAUDIO_8"
 /** AIFF uncompressed, audio/x-aiff */
-#define JAVACALL_MEDIA_FORMAT_AIFF              L"AIFF"
+#define JAVACALL_MEDIA_FORMAT_AIFF              "AIFF"
 /** Windows Media Audio, audio/x-ms-wma */
-#define JAVACALL_MEDIA_FORMAT_WMA_9             L"WMA_9"
+#define JAVACALL_MEDIA_FORMAT_WMA_9             "WMA_9"
 /** Audio tone, audio/x-tone-seq */
-#define JAVACALL_MEDIA_FORMAT_TONE              L"TONE" 
+#define JAVACALL_MEDIA_FORMAT_TONE              "TONE" 
 
 /** Video formats section */
 /** Default MJPEG, video/mjpeg */
-#define JAVACALL_MEDIA_FORMAT_MJPEG_DEFAULT     L"MJPEG_DEFAULT"
+#define JAVACALL_MEDIA_FORMAT_MJPEG_DEFAULT     "MJPEG_DEFAULT"
 /** ITU H.263, video/h263 */
-#define JAVACALL_MEDIA_FORMAT_H263              L"H263"
+#define JAVACALL_MEDIA_FORMAT_H263              "H263"
 /** ITU H.264, video/h264 */
-#define JAVACALL_MEDIA_FORMAT_H264              L"H264"
+#define JAVACALL_MEDIA_FORMAT_H264              "H264"
 /** MPEG-1, video/mpeg */
-#define JAVACALL_MEDIA_FORMAT_MPEG_1            L"MPEG_1"
+#define JAVACALL_MEDIA_FORMAT_MPEG_1            "MPEG_1"
 /** MPEG-2, video/mpeg */
-#define JAVACALL_MEDIA_FORMAT_MPEG_2            L"MPEG_2"
+#define JAVACALL_MEDIA_FORMAT_MPEG_2            "MPEG_2"
 /** MPEG-4 Simple Visual Profile, video/mpeg */
-#define JAVACALL_MEDIA_FORMAT_MPEG_4_SVP        L"MPEG_4_SVP"
+#define JAVACALL_MEDIA_FORMAT_MPEG_4_SVP        "MPEG_4_SVP"
 /** MPEG-4 Advanced Video Codec (ITU H.264), video/mpeg */
-#define JAVACALL_MEDIA_FORMAT_MPEG_4_AVC        L"MPEG_4_AVC"
+#define JAVACALL_MEDIA_FORMAT_MPEG_4_AVC        "MPEG_4_AVC"
 /** RealVideo ver 8, video/vnd.rn-realvideo */
-#define JAVACALL_MEDIA_FORMAT_REALVIDEO_8       L"REALVIDEO_8"
+#define JAVACALL_MEDIA_FORMAT_REALVIDEO_8       "REALVIDEO_8"
 /** Windows Media Video, video/x-ms-wm */
-#define JAVACALL_MEDIA_FORMAT_WMV_9             L"WMV_9"
+#define JAVACALL_MEDIA_FORMAT_WMV_9             "WMV_9"
 
 /** Container formats section */
 /** 3GPP format audio only, audio/3gp */
-#define JAVACALL_MEDIA_FORMAT_AUDIO_3GPP        L"AUDIO_3GPP"
+#define JAVACALL_MEDIA_FORMAT_AUDIO_3GPP        "AUDIO_3GPP"
 /** 3GPP format video, video/3gp */
-#define JAVACALL_MEDIA_FORMAT_VIDEO_3GPP        L"VIDEO_3GPP"
+#define JAVACALL_MEDIA_FORMAT_VIDEO_3GPP        "VIDEO_3GPP"
 /** Microsoft avi file format, video/avi */
-#define JAVACALL_MEDIA_FORMAT_AVI               L"AVI"
+#define JAVACALL_MEDIA_FORMAT_AVI               "AVI"
 /** Apple Quicktime, video/quicktime */
-#define JAVACALL_MEDIA_FORMAT_MOV               L"MOV"
+#define JAVACALL_MEDIA_FORMAT_MOV               "MOV"
 
 /** Image formats section */
 /** MPEG JPEG, image/jpeg */
-#define JAVACALL_MEDIA_FORMAT_JPEG              L"JPEG"
+#define JAVACALL_MEDIA_FORMAT_JPEG              "JPEG"
 /** MPEG JPEG 2000, image/jpeg */ 
-#define JAVACALL_MEDIA_FORMAT_JPEG2000          L"JPEG2000"
+#define JAVACALL_MEDIA_FORMAT_JPEG2000          "JPEG2000"
 /** TIFF Specification, image/tiff */
-#define JAVACALL_MEDIA_FORMAT_TIFF              L"TIFF"
+#define JAVACALL_MEDIA_FORMAT_TIFF              "TIFF"
 /** RFC2083 - PNG (Portable Network Graphics) Specification, image/png */
-#define JAVACALL_MEDIA_FORMAT_PNG               L"PNG"
+#define JAVACALL_MEDIA_FORMAT_PNG               "PNG"
 /** GIF Specification, image/gif */
-#define JAVACALL_MEDIA_FORMAT_GIF               L"GIF"
+#define JAVACALL_MEDIA_FORMAT_GIF               "GIF"
 /** 24b RGB format, image/raw */
-#define JAVACALL_MEDIA_FORMAT_RGB888            L"rgb888"
+#define JAVACALL_MEDIA_FORMAT_RGB888            "rgb888"
 /** 32b+alfa RGB format, image/raw */
-#define JAVACALL_MEDIA_FORMAT_RGBA8888          L"rgba8888"
+#define JAVACALL_MEDIA_FORMAT_RGBA8888          "rgba8888"
 /** BW raw format, image/raw */
-#define JAVACALL_MEDIA_FORMAT_GRAY1             L"gray1"
+#define JAVACALL_MEDIA_FORMAT_GRAY1             "gray1"
 /** 8b monochrome raw format, image/raw */
-#define JAVACALL_MEDIA_FORMAT_GRAY8             L"gray8"
+#define JAVACALL_MEDIA_FORMAT_GRAY8             "gray8"
 
 /** Device formats section */
 /** Interactive tone, device/tone */
-#define JAVACALL_MEDIA_FORMAT_DEVICE_TONE       L"DEVICE_TONE"
+#define JAVACALL_MEDIA_FORMAT_DEVICE_TONE       "DEVICE_TONE"
 /** Interactive midi, device/midi */
-#define JAVACALL_MEDIA_FORMAT_DEVICE_MIDI       L"DEVICE_MIDI"
+#define JAVACALL_MEDIA_FORMAT_DEVICE_MIDI       "DEVICE_MIDI"
 
 /** Unknown format */
-#define JAVACALL_MEDIA_FORMAT_UNKNOWN           L"UNKNOWN"
+#define JAVACALL_MEDIA_FORMAT_UNKNOWN           "UNKNOWN"
 /** Unsupported format */
-#define JAVACALL_MEDIA_FORMAT_UNSUPPORTED       L"UNSUPPORTED"
+#define JAVACALL_MEDIA_FORMAT_UNSUPPORTED       "UNSUPPORTED"
 
 /**
  * 
  * Media format type definition.
  */
-typedef javacall_const_utf16_string javacall_media_format_type;
+typedef javacall_const_utf8_string javacall_media_format_type;
 
 /** @} */
 
@@ -243,7 +243,7 @@ typedef struct {
     /** Media format */
     javacall_media_format_type          mediaFormat;
     /** Content types for the media format */
-    javacall_const_utf16_string         contentTypes;
+    javacall_const_utf8_string          contentTypes;
 
     /**  bitmask of supported protocols if playback from 
      *   whole downloaded content including memory buffer
@@ -262,15 +262,17 @@ typedef struct {
 typedef struct {
     /** Support Mixing */
     javacall_bool                       supportMixing;
+    /** Support Recording */
+    javacall_bool                       supportRecording;
     /** Supported capture audio formats and parameters */
     /*  NULL if not supported */
-    javacall_const_utf16_string         audioEncoding;
+    javacall_const_utf8_string          audioEncoding;
     /** Supported capture video formats and parameters */
     /*  NULL if not supported */
-    javacall_const_utf16_string         videoEncoding;
+    javacall_const_utf8_string          videoEncoding;
     /** Supported video snapshot formats and parameters */
     /*  NULL if not supported */
-    javacall_const_utf16_string         videoSnapshotEncoding;
+    javacall_const_utf8_string          videoSnapshotEncoding;
 
     /** Support Device Tone*/
     javacall_bool                       supportDeviceTone;
@@ -282,7 +284,7 @@ typedef struct {
     /** Media capabilities */
     /* array of javacall_media_caps for each supported media format */
     /* the last element in the array should contain                 */
-    /* JAVACALL_MEDIA_FORMAT_END_OF_TYPE in mediaFormat field       */
+    /* mediaFormat = NULL                                           */
     javacall_media_caps                 *mediaCaps;
 } javacall_media_configuration;
 
@@ -344,7 +346,7 @@ javacall_result javacall_media_finalize(void);
  *         JAVACALL_INVALID_ARGUMENT if argument is NULL
  */
 javacall_result javacall_media_get_configuration(
-                            const javacall_media_configuration /*OUT*/*configuration);
+                            javacall_media_configuration /*OUT*/*configuration);
 
 /** @} */ 
 
@@ -364,7 +366,7 @@ javacall_result javacall_media_get_configuration(
  * This function is called at the first time to initialize native library.
  * You can do your own initialization job from this function.
  * 
- * @param appId         Unique application ID for this playing
+ * @param appID         Unique application ID for this playing
  * @param playerId      Unique player object ID for this playing
  * @param mime          Mime type unicode string. 
  *                      NULL if unknown
@@ -380,7 +382,7 @@ javacall_result javacall_media_get_configuration(
  *         JAVACALL_FAIL
  *         JAVACALL_INVALID_ARGUMENT
  */
-javacall_result javacall_media_create(int appId,
+javacall_result javacall_media_create(int appID,
                                       int playerId,
                                       javacall_const_utf16_string mime,
                                       long mimeLength,
@@ -523,10 +525,6 @@ javacall_result javacall_media_get_buffer_address(javacall_handle handle,
  * 
  * @param handle    Handle to the library
  * @param buffer    Media data buffer pointer. Can be NULL at end of buffering
- * @param offset    Offset. If offset value is 0, it means start of buffering
- *                  It'll be incremented as buffering progress
- *                  You can determine your internal buffer's writting position by using this value
- *                  Can be -1 at end of buffering
  * @param length    Length of media data. Can be -1 at end of buffering,
  *                  If success return 'length of buffered data' else return -1
  * @param need_more_data returns JAVACALL_FALSE if no more data is required, 
@@ -538,7 +536,7 @@ javacall_result javacall_media_get_buffer_address(javacall_handle handle,
  * @retval JAVACALL_INVALID_ARGUMENT
  */
 javacall_result javacall_media_do_buffering(javacall_handle handle, 
-                                 const void* buffer, long offset,
+                                 const void* buffer,
                                  /* INOUT */ long *length,
                                  javacall_bool *need_more_data,
                                  long /*OUT*/*min_data_size);
