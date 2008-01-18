@@ -36,32 +36,37 @@
 #include <localeMethod.h>
 #include <midp_jc_event_defs.h>
 
+#include <javacall_datagram.h>
+#include <javacall_events.h>
+#include <javacall_input.h>
 #include <javacall_keypress.h>
-#include <javacall_penevent.h>
 #include <javacall_lifecycle.h>
+#include <javacall_network.h>
+#include <javacall_penevent.h>
+#include <javacall_security.h>
+#include <javacall_socket.h>
+#include <javacall_time.h>
+
 #ifdef ENABLE_JSR_120
 #include <javacall_sms.h>
 #include <javacall_cbs.h>
 #endif
+
 #ifdef ENABLE_JSR_205
 #include <javacall_mms.h>
 #endif
-#include <javacall_events.h>
-#include <javacall_time.h>
-#include <javacall_socket.h>
-#include <javacall_datagram.h>
+
 #ifdef ENABLE_JSR_177
 #include <javacall_carddevice.h>
-#endif /* ENABLE_JSR_177 */
+#endif
+
 #ifdef USE_VSCL
 #include <javacall_vscl.h>
 #endif
-#include <javacall_network.h>
-#include <javacall_security.h>
-#include <javacall_input.h>
+
 #ifdef ENABLE_JSR_179
 #include <javacall_location.h>
-#endif /* ENABLE_JSR_177 */
+#endif
 
 static char urlAddress[BINARY_BUFFER_MAX_LEN];
 
@@ -75,11 +80,8 @@ static char selectedNumber[MAX_PHONE_NUMBER_LENGTH];
  */
 static javacall_result
 midp_jc_event_send(midp_jc_event_union *event) {
-    return 
-        javacall_event_send(
-                            (unsigned char *)event,
-                            sizeof(midp_jc_event_union)
-        );
+    return javacall_event_send((unsigned char *)event,
+                               sizeof(midp_jc_event_union));
 }
 
 /**
@@ -137,7 +139,7 @@ void javanotify_start(void) {
     midp_jc_event_union e;
     midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
-    REPORT_INFO(LC_CORE,"javanotify_start() >>\n");
+    REPORT_INFO(LC_CORE, "javanotify_start() >>\n");
 
     e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
 
@@ -156,6 +158,76 @@ void javanotify_start(void) {
 
 /**
  * The platform should invoke this function in platform context to start
+ * a specified MIDlet suite.
+ * 
+ * @param suiteId the ID of the suite to start
+ */
+void javanotify_start_suite(char* suiteId) {
+    int length;
+    midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
+
+    REPORT_INFO(LC_CORE, "javanotify_start_suite() >>\n");
+
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.appmanager.MIDletSuiteLauncher";
+
+    length = strlen(suiteId);
+    if (length >= BINARY_BUFFER_MAX_LEN) {
+        return;
+    }
+    
+    memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
+    memcpy(urlAddress, suiteId, length);
+    data->argv[data->argc++] = urlAddress;
+
+    midp_jc_event_send(&e);
+}
+
+/**
+ * The platform should invoke this function in platform context to start
+ * Java in local context (not OTA).
+ */
+void javanotify_start_local(char* classname, char* descriptor,
+                            char* classpath, javacall_bool debug) {
+    midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
+    
+    REPORT_INFO2(LC_CORE,"javanotify_start_local() >> classname=%s, descriptor=%d \n",
+                 classname, descriptor);
+
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+
+    if (classname == NULL) {
+        data->argv[data->argc++] = "internal";
+    } else {
+        data->argv[data->argc++] = classname;
+    }
+
+    if (descriptor != NULL) {
+        data->argv[data->argc++] = descriptor;
+    } else {
+        data->argv[data->argc++] = classpath;
+    }
+
+    if (classpath != NULL) {
+        data->argv[data->argc++] = "-classpathext";
+        data->argv[data->argc++] = classpath;
+    }
+
+    midp_jc_event_send(&e);
+}
+
+/**
+ * The platform should invoke this function in platform context to start
  * the Java VM and run TCK.
  *
  * @param url the http location of the TCK server
@@ -163,7 +235,6 @@ void javanotify_start(void) {
  * @param domain the TCK execution domain
  */
 void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_type) {
-
     int length;
     midp_jc_event_union e;
     midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
@@ -183,20 +254,22 @@ void javanotify_start_tck(char *tckUrl, javacall_lifecycle_tck_domain domain_typ
     
     memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
     memcpy(urlAddress, tckUrl, length);
-    if(strcmp(urlAddress, "none") != 0)
+    if (strcmp(urlAddress, "none") != 0) {
         data->argv[data->argc++] = urlAddress;
+    }
 
 
-    if(domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED) {
+    if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED) {
         data->argv[data->argc++] = "untrusted";
-    } else if(domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED) {
+    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_TRUSTED) {
         data->argv[data->argc++] = "trusted";
-    } else if(domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN) {
+    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MIN) {
         data->argv[data->argc++] = "minimum";
-    } else if(domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX) {
+    } else if (domain_type == JAVACALL_LIFECYCLE_TCK_DOMAIN_UNTRUSTED_MAX) {
         data->argv[data->argc++] = "maximum";
-    } else
+    } else {
         return;
+    }
 
     midp_jc_event_send(&e);
 }
@@ -246,7 +319,7 @@ void javanotify_start_handler(char* handlerID, char* url, char* action) {
     midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
     REPORT_INFO3(LC_CORE,"javanotify_start_handler() >> %s %s %s\n", 
-		 handlerID, url, action);
+                 handlerID, url, action);
 
     e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
 
@@ -268,9 +341,8 @@ void javanotify_start_handler(char* handlerID, char* url, char* action) {
 
 /**
  * A notification function for telling Java to perform installation of
- * a MIDletl,
- * 
- * 
+ * a MIDlet
+ *  
  * If the given url is of the form http://www.sun.com/a/b/c/d.jad then
  * java will start a graphical installer will download the MIDlet
  * fom the internet.
@@ -284,14 +356,13 @@ void javanotify_start_handler(char* handlerID, char* url, char* action) {
  *   2. A full path to the JAD file, of the following form file:///a/b/c/d.jad
  *   3. An http url of jad file, of the following form,
  *      http://www.sun.com/a/b/c/d.jad
- * 
  */
 void javanotify_install_midlet(const char *httpUrl) {
     int length;
     midp_jc_event_union e;
     midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
-    REPORT_INFO1(LC_CORE,"javanotify_install_midlet() >> httpUrl=%s\n",httpUrl);
+    REPORT_INFO1(LC_CORE,"javanotify_install_midlet() >> httpUrl = %s\n", httpUrl);
 
     e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
 
@@ -331,12 +402,12 @@ void javanotify_install_midlet(const char *httpUrl) {
  *        the user for permission to download and install the application
  *        so there's no need to ask again and we can immediately install.
  */
-void javanotify_install_midlet_from_filesystem(const javacall_utf16 * jadFilePath,
+void javanotify_install_midlet_from_filesystem(const javacall_utf16* jadFilePath,
                                                int jadFilePathLen, int userWasAsked) {
     midp_jc_event_union e;
     midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
 
-    REPORT_INFO(LC_CORE,"javanotify_install_midlet_from_filesystem() >>\n");
+    REPORT_INFO(LC_CORE, "javanotify_install_midlet_from_filesystem() >>\n");
 
     e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
 
@@ -350,7 +421,68 @@ void javanotify_install_midlet_from_filesystem(const javacall_utf16 * jadFilePat
         return;
 
     memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
-    unicodeToNative(jadFilePath, jadFilePathLen, (unsigned char *) urlAddress, BINARY_BUFFER_MAX_LEN);
+    unicodeToNative(jadFilePath, jadFilePathLen,
+                    (unsigned char *)urlAddress, BINARY_BUFFER_MAX_LEN);
+    data->argv[data->argc++] = urlAddress;
+
+    midp_jc_event_send(&e);
+}
+
+/**
+ * A notification function for telling Java to perform installation of
+ * a MIDlet with parameters
+ *  
+ * If the given url is of the form http://www.sun.com/a/b/c/d.jad then
+ * java will start a graphical installer will download the MIDlet
+ * fom the internet.
+ * If the given url is a file url (see below, file:///a/b/c/d.jar or
+ * file:///a/b/c/d/jad) installation will be performed 
+ * in the backgroudn without launching the graphic installer application
+ * 
+ *
+ * @param url of MIDlet to install, can be either one of the following
+ *   1. A full path to the jar file, of the following form file:///a/b/c/d.jar
+ *   2. A full path to the JAD file, of the following form file:///a/b/c/d.jad
+ *   3. An http url of jad file, of the following form,
+ *      http://www.sun.com/a/b/c/d.jad
+ * @param silentInstall install the MIDlet without user interaction
+ * @param forceUpdate install the MIDlet even if it already exist regardless
+ *                    of version
+ */
+void javanotify_install_midlet_wparams(const char* httpUrl,
+                                       int silentInstall, int forceUpdate) {
+    int length;
+    midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
+
+    REPORT_INFO2(LC_CORE,"javanotify_install_midlet_wparams() >> "
+                         "httpUrl = %s, silentInstall = %d\n",
+                 httpUrl, silentInstall);
+
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.installer.GraphicalInstaller";
+
+    if (silentInstall == 1) {
+        if (forceUpdate == 1) {
+            data->argv[data->argc++] = "FU";
+        } else {
+            data->argv[data->argc++] = "FI";
+        }
+    } else {
+        data->argv[data->argc++] = "I";
+    }
+
+    length = strlen(httpUrl);
+    if (length >= BINARY_BUFFER_MAX_LEN) {
+        return;
+    }
+
+    memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
+    memcpy(urlAddress, httpUrl, length);
     data->argv[data->argc++] = urlAddress;
 
     midp_jc_event_send(&e);
@@ -367,17 +499,122 @@ void javanotify_install_midlet_from_filesystem(const javacall_utf16 * jadFilePat
  *       interface for debug purposes. Please DO NOT CALL this function without
  *       being EXPLICITLY INSTRUCTED to do so.
  */
-void javanotify_start_java_with_arbitrary_args(int argc, char* argv[])
-{
+void javanotify_start_java_with_arbitrary_args(int argc, char* argv[]) {
     midp_jc_event_union e;
     
-    REPORT_INFO(LC_CORE,"javanotify_start_java_with_arbitrary_args() >>\n");
+    REPORT_INFO(LC_CORE, "javanotify_start_java_with_arbitrary_args() >>\n");
 
     if (argc > MIDP_RUNMIDLET_MAXIMUM_ARGS)
         argc = MIDP_RUNMIDLET_MAXIMUM_ARGS;
     e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
     e.data.startMidletArbitraryArgEvent.argc = argc;
-    memcpy (e.data.startMidletArbitraryArgEvent.argv, argv, argc * sizeof(char*));
+    memcpy(e.data.startMidletArbitraryArgEvent.argv, argv, argc * sizeof(char*));
+
+    midp_jc_event_send(&e);
+}
+
+/**
+ * Parse options for the VM
+ * 
+ * @param argc number of command-line arguments
+ * @param argv array of command-line arguments
+ */
+void javanotify_set_vm_args(int argc, char* argv[]) {
+    midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_set_vm_args() >>\n");
+
+    if (argc > MIDP_RUNMIDLET_MAXIMUM_ARGS) {
+        argc = MIDP_RUNMIDLET_MAXIMUM_ARGS;
+    }
+
+    e.eventType = MIDP_JC_EVENT_SET_VM_ARGS;
+    e.data.startMidletArbitraryArgEvent.argc = argc;
+    memcpy(e.data.startMidletArbitraryArgEvent.argv, argv, argc * sizeof(char*));
+
+    midp_jc_event_send(&e);
+}
+
+/**
+ * Set VM heapsize
+ * @param heapsize the heap size in bytes
+ */
+void javanotify_set_heap_size(int heapsize) {
+    midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_set_heap_size() >>\n");
+
+    e.eventType = MIDP_JC_EVENT_SET_HEAP_SIZE;
+    e.data.heap_size.heap_size = heapsize;
+    midp_jc_event_send(&e);
+}
+
+/**
+ * list the MIDlet suites installed
+ */
+void javanotify_list_midlets(void) {
+    midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_list_midlets() >>\n");
+
+    e.eventType = MIDP_JC_EVENT_LIST_MIDLETS;
+    midp_jc_event_send(&e);
+}
+
+/**
+ * list the MIDlet suites installed
+ * Each line contains one storage name
+ */
+void javanotify_list_storageNames(void) {
+    midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_list_storageName() >>\n");
+
+    e.eventType = MIDP_JC_EVENT_LIST_STORAGE_NAMES;
+    midp_jc_event_send(&e);
+}
+
+/**
+ * Remove a MIDlet suite according to the given suite ID
+ */
+void javanotify_remove_suite(char* suite_id) {
+    midp_jc_event_union e;
+
+    REPORT_INFO(LC_CORE, "javanotify_remove_suite() >>\n");
+
+    e.eventType = MIDP_JC_EVENT_REMOVE_MIDLET;
+    e.data.removeMidletEvent.suiteID = suite_id;
+    midp_jc_event_send(&e);
+}
+
+/**
+ * Install, run, and remove the application with the specified JAD file
+ */
+void javanotify_transient(char* url) {
+    int length;
+    midp_jc_event_union e;
+    midp_jc_event_start_arbitrary_arg *data = &e.data.startMidletArbitraryArgEvent;
+
+    REPORT_INFO(LC_CORE,"javanotify_transient() >>\n");
+
+    e.eventType = MIDP_JC_EVENT_START_ARBITRARY_ARG;
+
+    data->argc = 0;
+    data->argv[data->argc++] = "runMidlet";
+    data->argv[data->argc++] = "-1";
+    data->argv[data->argc++] = "com.sun.midp.installer.AutoTester";
+
+    length = strlen(url);
+    if (length >= BINARY_BUFFER_MAX_LEN)
+        return;
+    
+    memset(urlAddress, 0, BINARY_BUFFER_MAX_LEN);
+    memcpy(urlAddress, url, length);
+    if (strcmp(urlAddress, "none") != 0) {
+        data->argv[data->argc++] = urlAddress;
+    }
+
+    data->argv[data->argc++] = "1"; /* loop count */
 
     midp_jc_event_send(&e);
 }
@@ -1241,6 +1478,6 @@ void /* OPTIONAL */ javanotify_rotation() {
      midp_jc_event_union e;
      int length;
   
-     e.eventType = MIDP_JC_EVENT_ROTATION;    
+     e.eventType = MIDP_JC_EVENT_ROTATION;
      midp_jc_event_send(&e);
 }

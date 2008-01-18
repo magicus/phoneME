@@ -39,19 +39,6 @@
 
 #if ENABLE_DIRECT_DRAW
 #include <ddraw.h>
-
-/*
- * This define turns on FPS limitation for GameCanvas:
- *   winceapp_direct_flush() performs actual flush to screen not more
- *   than once in FLUSH_REFRESH_TIME ms. If the flush has been skipped,
- *   it is delayed by FLUSH_REFRESH_TIMEOUT ms unless another flush call
- *   executed.
- * IMPL_NOTE: This is potentially dangerous, as flush buffer may become
- *   invalid (freed) when delayed flush is performed.
- * This define comes from wince-specific configuration properties.
- */
-//#define FLUSH_LIMIT_FPS 25
-
 #endif
 
 #ifdef ENABLE_JSR_184
@@ -128,16 +115,6 @@ struct ScreenAccess {
 };
 
 static ScreenAccess g_screen;
-
-#if FLUSH_LIMIT_FPS > 0
-#define   FLUSH_REFRESH_TIME      (1000 / FLUSH_LIMIT_FPS)
-#define   FLUSH_REFRESH_TIMEOUT   (FLUSH_REFRESH_TIME * 2)
-static HANDLE           flushThread;
-static CRITICAL_SECTION flushCS;
-static DWORD            lastFlushTime = 0;
-static int              flushHeight = 0;
-static DWORD Flusher(LPVOID); // Scheduler thread
-#endif
 
 /* IMPL_NOTE: need a better way for quitting.  */
 extern int _quit_now; /* defined in Scheduler.cpp */
@@ -323,10 +300,6 @@ static void initDirectDraw() {
     g_screen.width = ddsd.dwWidth;
     g_screen.height = ddsd.dwHeight;
 
-#if FLUSH_LIMIT_FPS > 0
-    flushThread = CreateThread(NULL, 0, Flusher, 0, CREATE_SUSPENDED, NULL);
-    InitializeCriticalSection(&flushCS);
-#endif
     wince_init_fonts();
 }
 
@@ -351,12 +324,6 @@ static void releaseDirectDraw() {
         g_screen.pDDClipper->Release();
         g_screen.pDDClipper = NULL;
     }*/
-#if FLUSH_LIMIT_FPS > 0
-    if (NULL != flushThread) {
-        CloseHandle(flushThread);
-        DeleteCriticalSection(&flushCS);
-    }
-#endif
     g_screen.pDD->Release();
     g_screen.pDD = NULL;
 }
@@ -389,33 +356,7 @@ static void doFlush(int height) {
 
     if (NULL != g_screen.pDDSDirect)
         g_screen.pDDSPrimary->Blt(&dstRect, g_screen.pDDSDirect, &srcRect, 0, NULL);
-
-#if FLUSH_LIMIT_FPS > 0
-    lastFlushTime = GetTickCount();
-#endif
 }
-
-#if FLUSH_LIMIT_FPS > 0
-/*
- * FPS limiting thread for direct_flush();
- */
-static DWORD Flusher(LPVOID) {
-    while (1) {
-        DWORD saveTime;
-        do {
-            saveTime = GetTickCount();
-            DWORD sleepTime = FLUSH_REFRESH_TIMEOUT + lastFlushTime - saveTime;
-            if (sleepTime > 0)
-                Sleep(sleepTime);
-        } while (lastFlushTime > saveTime);
-        EnterCriticalSection(&flushCS);
-        doFlush(flushHeight);
-        LeaveCriticalSection(&flushCS);
-        SuspendThread(flushThread); // direct_flush will wake up the thread
-    }
-    return 0;
-}
-#endif
 
 /**
  * Create memory based DD surface
@@ -1075,32 +1016,18 @@ jboolean winceapp_direct_flush(const java_graphics *g,
     if (g_screen.pDD == NULL)
         return KNI_FALSE;
 
-#if FLUSH_LIMIT_FPS > 0
-    EnterCriticalSection(&flushCS);
-#endif
-
-    static gxj_pixel_type * lastSrc = NULL; // last flush src    
+    static gxj_pixel_type * lastSrc = NULL; // last flush src
 
     if (lastSrc != src && g_screen.pDDSDirect != NULL) {
         g_screen.pDDSDirect->Release();
         g_screen.pDDSDirect = NULL;
-#if FLUSH_LIMIT_FPS > 0
-        lastFlushTime = 0;
-#endif
     }
 
     if (g_screen.pDDSDirect == NULL) {
-        /*
-         * IMPL_NOTE: This is potentially dangerous, when using FLUSH_LIMIT_FPS > 0,
-         * because src may become freed when delayed flush happens.
-         */
         g_screen.pDDSDirect = createMemorySurface(src,
             winceapp_get_screen_width(), winceapp_get_screen_height());
 
         if (g_screen.pDDSDirect == NULL) {
-#if FLUSH_LIMIT_FPS > 0
-            LeaveCriticalSection(&flushCS);
-#endif
             return KNI_FALSE;
         }
         lastSrc = src;
@@ -1109,17 +1036,7 @@ jboolean winceapp_direct_flush(const java_graphics *g,
     if (height > winceapp_get_screen_height())
         height = winceapp_get_screen_height();
 
-#if FLUSH_LIMIT_FPS > 0
-    DWORD diff = GetTickCount() - lastFlushTime; 
-    if (diff >= 0 && diff < FLUSH_REFRESH_TIME) {
-        flushHeight = height;
-        ResumeThread(flushThread);
-    } else
-        doFlush(height);
-    LeaveCriticalSection(&flushCS);
-#else
     doFlush(height);
-#endif
     return KNI_TRUE;
 #else  /* !ENABLE_DIRECT_DRAW */
     return KNI_FALSE; // No DirectDraw

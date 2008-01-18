@@ -43,6 +43,7 @@
 #include <midp_properties_port.h>
 #include <midpTimeZone.h>
 #include <midp_logging.h>
+#include <midp_properties_port.h>
 #include <midpMIDletProxyList.h>
 #include <midpEvents.h>
 #include <suitestore_task_manager.h>
@@ -279,7 +280,7 @@ JVMSPI_SetSystemProperty(char* propName, char* value) {
     /*
      * override internal configuration parameters.
      */
-    setInternalProp(propName, value);
+    setInternalProperty(propName, value);
 
      /*
       * Also override System.getProperty() for backward compatibility
@@ -370,8 +371,20 @@ midpInitializeUI(void) {
      */
 #if ENABLE_MULTIPLE_ISOLATES
     {
-        int reserved = AMS_MEMORY_RESERVED_MVM;
-        int limit = AMS_MEMORY_LIMIT_MVM;
+        int reserved;
+        int limit;
+
+        reserved = getInternalPropertyInt("AMS_MEMORY_RESERVED_MVM");
+        if (0 == reserved) {
+            REPORT_ERROR(LC_AMS, "AMS_MEMORY_RESERVED_MVM property not set");            
+            reserved = AMS_MEMORY_RESERVED_MVM;
+        }
+
+        limit = getInternalPropertyInt("AMS_MEMORY_LIMIT_MVM");
+        if (0 == limit) {
+            REPORT_ERROR(LC_AMS, "AMS_MEMORY_LIMIT_MVM property not set");
+            limit = AMS_MEMORY_LIMIT_MVM;
+        }
 
         reserved = reserved * 1024;
         JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_RESERVED_MEMORY, reserved);
@@ -390,7 +403,7 @@ midpInitializeUI(void) {
         char* argv[2];
 
         /* Get the VM debugger port property. */
-        argv[1] = (char *)getInternalProp("VmDebuggerPort");
+        argv[1] = (char *)getInternalProperty("VmDebuggerPort");
         if (argv[1] != NULL) {
             argv[0] = "-port";
             (void)JVM_ParseOneArg(2, argv);
@@ -832,8 +845,7 @@ static MIDP_ERROR getClassPathPlus(SuiteIdType suiteId,
     }
     pcsl_string_release_utf16_data(jarPathData, &jarPath);
 
-    if (additionalPathLength!=0)
-    {
+    if (additionalPathLength!=0) {
         if (i != 0) {
             newPath[i++]=(JvmPathChar)getCharPathSeparator();
         }

@@ -57,7 +57,8 @@ final class PushContentStore
         implements StoreOperationManager.ContentStore {
 
     protected JUMPStore getStore() {
-        return JUMPStoreFactory.getInstance().getModule(JUMPStoreFactory.TYPE_FILE);
+        return JUMPStoreFactory.getInstance()
+	    .getModule(JUMPStoreFactory.TYPE_FILE);
     }
 
     public JUMPStoreHandle open(final boolean accessExclusive) {
@@ -181,7 +182,8 @@ final class PushModule implements JUMPPushModule {
 
     /** {@inheritDoc} */
     public void load(final Map map) {
-        // assert pushSystem == null; // I hope we cannot get to load's without unload
+        // assert pushSystem == null;
+	// I hope we cannot get to load's without unload
         final PushContentStore contentStore = new PushContentStore();
         final StoreOperationManager storeOperationManager =
                 new StoreOperationManager(contentStore);

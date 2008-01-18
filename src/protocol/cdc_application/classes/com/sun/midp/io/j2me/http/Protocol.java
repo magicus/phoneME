@@ -33,11 +33,20 @@ import java.io.DataOutputStream;
 
 import java.io.IOException;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import com.sun.j2me.security.AccessController;
+
 public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
+
+    private static final String HTTP_PERMISSION_NAME =
+	"javax.microedition.io.Connector.http";
     
     /**
-     * This class overrides the openXXputStream() methods to restrict the number of opened 
-     * input or output streams to 1 since the MIDP GCF Spec allows only 1 opened input/output stream.
+     * This class overrides the openXXputStream() methods to restrict
+     * the number of opened input or output streams to 1 since the 
+     * MIDP GCF Spec allows only 1 opened input/output stream.
      */
     
     /** Number of input streams that were opened. */
@@ -96,10 +105,37 @@ public class Protocol extends com.sun.cdc.io.j2me.http.Protocol {
         return new DataOutputStream(openOutputStream());
     }
 
-    /*
-     * throws SecurityException if MIDP permission check fails 
-    */
-    protected void checkMIDPPermission(String url) {
-        //The actual MIDP permission check happens here
+    /**
+     * Check to see if the application has permission to use
+     * the given resource.
+     *
+     * @param url the URL to which to connect
+     *
+     * @exception SecurityException if the MIDP permission
+     *            check fails.
+     */
+    protected void checkPermission(String host, int port, String file) 
+        throws SecurityException {
+        AccessController.checkPermission(HTTP_PERMISSION_NAME,
+                                         host + ":" +
+                                         port + file);
+        return;
     }
+
+    /*
+     * For MIDP version of the protocol handler, only a single
+     * check on open is required.
+     */
+    protected void outputStreamPermissionCheck() {
+        return;
+    }
+
+    /*
+     * For MIDP version of the protocol handler, only a single
+     * check on open is required.
+     */
+    protected void inputStreamPermissionCheck() {
+        return;
+    }
+
 }

@@ -36,6 +36,7 @@
 #include <suitestore_task_manager.h>
 #include <commandLineUtil.h>
 #include <commandLineUtil_md.h>
+#include <midp_properties_port.h>
 
 #if ENABLE_MULTIPLE_ISOLATES
 #define MIDP_HEAP_REQUIREMENT (MAX_ISOLATES * 1024 * 1024)
@@ -63,6 +64,29 @@ static const char* const runUsageText =
 "  where <suite number> is the number of a suite as displayed by the\n"
 "  listMidlets command, and <suite ID> is the unique ID a suite is \n"
 "  referenced by\n\n";
+
+
+/**
+ * Reads MAX_ISOLATES property, calculates and returns size of the 
+ * required heap.  If the MAX_ISOLATES has not been found, default
+ * heap size is returned
+ *
+ * @return <tt>heap size</tt> 
+ */
+int
+getHeapRequirement(){
+    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
+    int midp_heap_requirement;
+
+    if (max_isolates == 0) {
+        max_isolates = MAX_ISOLATES;
+    }
+
+    /*calculate heap size*/
+    midp_heap_requirement = max_isolates * 1280 * 1024;
+    return midp_heap_requirement;
+}
+
 
 /**
  * Runs a MIDlet from an installed MIDlet suite. This is an example of
@@ -96,13 +120,18 @@ runMidlet(int argc, char** commandlineArgs) {
     int numberOfSuites = 0;
     int ordinalSuiteNumber = -1;
     char* chSuiteNum = NULL;
+    int midp_heap_requirement;
 
     JVM_Initialize(); /* It's OK to call this more than once */
+
+
+    midp_heap_requirement = getHeapRequirement();
+
 
     /*
      * Set Java heap capacity now so it can been overridden from command line.
      */
-    JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, MIDP_HEAP_REQUIREMENT);
+    JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
 
     /*
      * Parse options for the VM. This is desirable on a 'development' platform

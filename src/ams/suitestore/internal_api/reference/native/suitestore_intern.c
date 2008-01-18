@@ -115,6 +115,7 @@
 #include <string.h> /* for NULL */
 #include <midpInit.h>
 #include <midpStorage.h>
+#include <midpUtilCRC.h>
 #include <pcsl_memory.h>
 
 #include <suitestore_intern.h>
@@ -145,6 +146,17 @@ MidletSuiteData* g_pSuitesData = NULL;
 
 /** Indicates if the suite storage is already initialized. */
 static int g_suiteStorageInitDone = 0;
+
+/** Indicates if a transaction was started. */
+static int g_transactionStarted = 0;
+
+/**
+ * A string that will be added to a file name to
+ * make the name of the temporary file.
+ */
+PCSL_DEFINE_ASCII_STRING_LITERAL_START(TMP_FILE_EXTENSION)
+    {'.', 't', 'm', 'p', '\0'}
+PCSL_DEFINE_ASCII_STRING_LITERAL_END(TMP_FILE_EXTENSION);
 
 /**
  * Initializes the subsystem. This wrapper is used to hide
@@ -316,14 +328,14 @@ get_suite_data(SuiteIdType suiteId) {
  * File contents is read as one piece.
  *
  * @param ppszError pointer to character string pointer to accept an error
- * @param fileName file to read
+ * @param pFileName file to read
  * @param outBuffer buffer where the file contents should be stored
  * @param outBufferLen length of the outBuffer
  *
  * @return status code (ALL_OK if there was no errors)
  */
 MIDPError
-read_file(char** ppszError, const pcsl_string* fileName,
+read_file(char** ppszError, const pcsl_string* pFileName,
           char** outBuffer, long* outBufferLen) {
     int handle, status = ALL_OK;
     long fileSize, len;
@@ -335,9 +347,9 @@ read_file(char** ppszError, const pcsl_string* fileName,
     *outBufferLen = 0;
 
     /* open the file */
-    handle = storage_open(ppszError, fileName, OPEN_READ);
+    handle = storage_open(ppszError, pFileName, OPEN_READ);
     if (*ppszError != NULL) {
-        if (!storage_file_exists(fileName)) {
+        if (!storage_file_exists(pFileName)) {
             return NOT_FOUND;
         }
         return IO_ERROR;
@@ -387,23 +399,32 @@ read_file(char** ppszError, const pcsl_string* fileName,
  * the file will be truncated.
  *
  * @param ppszError pointer to character string pointer to accept an error
- * @param fileName file to write
+ * @param pFileName file to write
  * @param inBuffer buffer with data that will be stored
  * @param inBufferLen length of the inBuffer
  *
  * @return status code (ALL_OK if there was no errors)
  */
 MIDPError
-write_file(char** ppszError, const pcsl_string* fileName,
+write_file(char** ppszError, const pcsl_string* pFileName,
            char* inBuffer, long inBufferLen) {
     int handle, status = ALL_OK;
     char* pszTemp;
+    pcsl_string tmpFileName;
+    pcsl_string_status rc;
 
-    *ppszError  = NULL;
+    *ppszError = NULL;
+
+    /* get the name of the temporary file */
+    rc = pcsl_string_cat(pFileName, &TMP_FILE_EXTENSION, &tmpFileName);
+    if (rc != PCSL_STRING_OK) {
+        return OUT_OF_MEMORY;
+    }
 
     /* open the file */
-    handle = storage_open(ppszError, fileName, OPEN_READ_WRITE_TRUNCATE);
+    handle = storage_open(ppszError, &tmpFileName, OPEN_READ_WRITE_TRUNCATE);
     if (*ppszError != NULL) {
+        pcsl_string_free(&tmpFileName);
         return IO_ERROR;
     }
 
@@ -419,6 +440,21 @@ write_file(char** ppszError, const pcsl_string* fileName,
     /* close the file */
     storageClose(&pszTemp, handle);
     storageFreeError(pszTemp);
+
+    if (status == ALL_OK) {
+        /* rename the temporary file */
+        storage_rename_file(ppszError, &tmpFileName, pFileName);
+        if (*ppszError != NULL) {
+            status = IO_ERROR;
+            storage_delete_file(&pszTemp, &tmpFileName);
+            storageFreeError(pszTemp);
+        }
+    } else {
+        storage_delete_file(&pszTemp, &tmpFileName);
+        storageFreeError(pszTemp);
+    }
+
+    pcsl_string_free(&tmpFileName);
 
     return status;
 }
@@ -437,12 +473,14 @@ write_file(char** ppszError, const pcsl_string* fileName,
  *
  * @return status code: ALL_OK if no errors,
  *         OUT_OF_MEMORY if malloc failed
- *         IO_ERROR if an IO_ERROR
+ *         IO_ERROR if an IO_ERROR,
+ *         SUITE_CORRUPTED_ERROR if the suite database is corrupted
  */
 MIDPError
 read_suites_data(char** ppszError) {
     MIDPError status;
     int i;
+    unsigned long realCrc, storedCrc;
     long bufferLen, pos;
     char* buffer = NULL;
     pcsl_string_status rc;
@@ -480,16 +518,32 @@ read_suites_data(char** ppszError) {
         return ALL_OK;
     }
 
-    if (status == ALL_OK && bufferLen < (long)sizeof(int)) {
-        status = IO_ERROR; /* _suites.dat is corrupted */
+    if (status == ALL_OK && bufferLen <
+            (long) (sizeof(unsigned long) + sizeof(int))) {
+        pcsl_mem_free(buffer);
+        status = SUITE_CORRUPTED_ERROR; /* _suites.dat is corrupted */
     }
     if (status != ALL_OK) {
         return status;
     }
 
-    /* parse its contents */
+    /* check the integrity of the suite database */
     pos = 0;
-    numOfSuites = *(int*)buffer;
+
+    realCrc = midpCRC32Init(buffer + sizeof(unsigned long),
+                            bufferLen - sizeof(unsigned long));
+    realCrc = midpCRC32Finalize(realCrc);
+    storedCrc = *(unsigned long*)buffer;
+
+    if (realCrc != storedCrc) {
+        pcsl_mem_free(buffer);
+        return SUITE_CORRUPTED_ERROR;
+    }
+
+    ADJUST_POS_IN_BUF(pos, bufferLen, sizeof(unsigned long));
+
+    /* parse its contents */
+    numOfSuites = *(int*)&buffer[pos];
     ADJUST_POS_IN_BUF(pos, bufferLen, sizeof(int));
 
     for (i = 0; i < numOfSuites; i++) {
@@ -623,6 +677,7 @@ write_suites_data(char** ppszError) {
     MIDPError status = ALL_OK;
     long bufferLen, pos;
     char* buffer = NULL;
+    char* pCrc;
     pcsl_string_status rc;
     pcsl_string suitesDataFile;
     MidletSuiteData* pData;
@@ -646,6 +701,8 @@ write_suites_data(char** ppszError) {
     /* allocate a buffer where the information about all suites will be saved */
     bufferLen = g_numberOfSuites * (sizeof(MidletSuiteData) +
         MAX_VAR_SUITE_DATA_LEN);
+    /* space to store the number of suites and the crc */
+    bufferLen += sizeof(unsigned long) + sizeof(int);
     buffer = pcsl_mem_malloc(bufferLen);
     if (buffer == NULL) {
         pcsl_string_free(&suitesDataFile);
@@ -656,7 +713,11 @@ write_suites_data(char** ppszError) {
     pos = 0;
     pData = g_pSuitesData;
 
-    *(int*)buffer = g_numberOfSuites;
+    /* reserve space for CRC */
+    pCrc = buffer;
+    ADJUST_POS_IN_BUF(pos, bufferLen, sizeof(unsigned long));
+
+    *(int*)&buffer[pos] = g_numberOfSuites;
     ADJUST_POS_IN_BUF(pos, bufferLen, sizeof(int));
 
     while (pData != NULL) {
@@ -723,6 +784,12 @@ write_suites_data(char** ppszError) {
     }
 
     if (status == ALL_OK) {
+        /* calculate CRC of data in the buffer */
+        unsigned long crcToStore = midpCRC32Init(
+            buffer + sizeof(unsigned long), pos - sizeof(unsigned long));
+        crcToStore = midpCRC32Finalize(crcToStore);
+        *(unsigned long*)pCrc = crcToStore;
+
         /* write the buffer into the file */
         status = write_file(ppszError, &suitesDataFile, buffer, pos);
     }
@@ -858,7 +925,7 @@ get_suite_resource_file(SuiteIdType suiteId,
  *
  * @param suiteId The application suite ID
  * @param checkSuiteExists true if suite should be checked for existence or not
- * @param filename The in/out parameter that contains returned filename
+ * @param pFilename The in/out parameter that contains returned filename
  * @return error code that should be one of the following:
  * <pre>
  *     ALL_OK, OUT_OF_MEMORY, NOT_FOUND
@@ -866,9 +933,9 @@ get_suite_resource_file(SuiteIdType suiteId,
  */
 MIDPError get_property_file(SuiteIdType suiteId,
                             jboolean checkSuiteExists,
-                            pcsl_string *filename) {
+                            pcsl_string *pFilename) {
     return get_suite_resource_file(suiteId, &PROPS_FILENAME,
-            checkSuiteExists, filename);
+            checkSuiteExists, pFilename);
 }
 
 /**
@@ -1268,6 +1335,198 @@ check_for_corrupted_suite(SuiteIdType suiteId) {
 
     return status;
 }
+
+/**
+ * Tries to repair the suite database.
+ *
+ * @return ALL_OK if succeeded, other value if failed
+ */
+MIDPError repair_suite_db() {
+    /* IMPL_NOTE: should be replaced with more sophisticated routine. */
+    MIDPError status = ALL_OK;
+    pcsl_string_status rc;
+    pcsl_string suitesDataFile;
+    char* pszTemp = NULL;
+
+    /* get a full path to the _suites.dat */
+    rc = pcsl_string_cat(storage_get_root(INTERNAL_STORAGE_ID),
+                         &SUITE_DATA_FILENAME, &suitesDataFile);
+    if (rc != PCSL_STRING_OK) {
+        return OUT_OF_MEMORY;
+    }
+
+    storage_delete_file(&pszTemp, &suitesDataFile);
+    pcsl_string_free(&suitesDataFile);
+    if (pszTemp != NULL) {
+        storageFreeError(pszTemp);
+        status = IO_ERROR;
+    }
+
+    if (g_isSuitesDataLoaded) {
+        free_suites_data();
+        g_isSuitesDataLoaded = 0;
+    }
+
+    return status;
+}
+
+/**
+ * Starts a new transaction of the given type.
+ *
+ * @param transactionType type of the new transaction
+ * @param suiteId ID of the suite, may be UNUSED_SUITE_ID
+ * @param pFilename name of the midlet suite's file, may be NULL
+ *
+ * @return ALL_OK if no errors,
+ *         IO_ERROR if I/O error
+ */
+MIDPError begin_transaction(MIDPTransactionType transactionType,
+                            SuiteIdType suiteId,
+                            const pcsl_string *pFilename) {
+    pcsl_string_status rc;
+    pcsl_string transDataFile;
+    char *pszError = NULL;
+    MIDPError status = ALL_OK;
+    char pBuffer[MAX_FILENAME_LENGTH + sizeof(int) /* file name length */ + 
+                 sizeof(suiteId) + sizeof(transactionType)];
+    char *p = pBuffer;
+    int len = sizeof(suiteId) + sizeof(transactionType);
+
+    *(MIDPTransactionType*)p = transactionType;
+    p += sizeof(MIDPTransactionType);
+    *(SuiteIdType*)p = suiteId;
+    p += sizeof(SuiteIdType);
+
+    if (pFilename != NULL) {
+        int strLen;
+
+        rc = pcsl_string_convert_to_utf16(pFilename,
+                        (jchar*)(p + sizeof(int)),
+                        MAX_FILENAME_LENGTH / sizeof(jchar),
+                        &strLen);
+        if (rc != PCSL_STRING_OK) {
+            return OUT_OF_MEMORY;
+        }
+
+        *(int*)p = strLen;
+
+        len += strLen;
+    }
+
+    /* get a full path to the transaction data file */
+    rc = pcsl_string_cat(storage_get_root(INTERNAL_STORAGE_ID),
+                         &TRANSACTION_DATA_FILENAME, &transDataFile);
+    if (rc != PCSL_STRING_OK) {
+        return OUT_OF_MEMORY;
+    }
+
+    status = write_file(&pszError, &transDataFile, pBuffer, len);
+    storageFreeError(pszError);
+    pcsl_string_free(&transDataFile);
+
+    g_transactionStarted = 1;
+
+    return status;
+}
+
+/**
+ * Rolls back the transaction being in progress.
+ *
+ * @return ALL_OK if the transaction was rolled back,
+ *         NOT_FOUND if the transaction has not been started,
+ *         IO_ERROR if I/O error
+ */
+MIDPError rollback_transaction() {
+    MIDPError status = ALL_OK;
+    pcsl_string_status rc;
+    pcsl_string transDataFile;
+    char *pszTemp = NULL;
+
+    /* get a full path to the transaction data file */
+    rc = pcsl_string_cat(storage_get_root(INTERNAL_STORAGE_ID),
+                         &TRANSACTION_DATA_FILENAME, &transDataFile);
+    if (rc != PCSL_STRING_OK) {
+        return OUT_OF_MEMORY;
+    }
+
+    storage_delete_file(&pszTemp, &transDataFile);
+    pcsl_string_free(&transDataFile);
+    if (pszTemp != NULL) {
+        storageFreeError(pszTemp);
+        status = IO_ERROR;
+    } else {
+        g_transactionStarted = 0;
+    }
+
+    return ALL_OK;
+}
+
+/**
+ * Finishes the previously started transaction.
+ *
+ * @return ALL_OK if the transaction was successfully finished,
+ *         NOT_FOUND if the transaction has not been started,
+ *         IO_ERROR if I/O error
+ */
+MIDPError finish_transaction() {
+    pcsl_string_status rc;
+    pcsl_string transDataFile;
+    char* pszTemp = NULL;
+    MIDPError status = ALL_OK;
+
+    if (!g_transactionStarted) {
+        return NOT_FOUND;
+    }
+
+    /* transaction is finished, removed the transaction file */
+
+    /* get a full path to the transaction data file */
+    rc = pcsl_string_cat(storage_get_root(INTERNAL_STORAGE_ID),
+                         &TRANSACTION_DATA_FILENAME, &transDataFile);
+    if (rc != PCSL_STRING_OK) {
+        return OUT_OF_MEMORY;
+    }
+
+    storage_delete_file(&pszTemp, &transDataFile);
+    pcsl_string_free(&transDataFile);
+    if (pszTemp != NULL) {
+        storageFreeError(pszTemp);
+        status = IO_ERROR;
+    }
+
+    g_transactionStarted = 0;
+
+    return status;
+}
+
+/**
+ * Checks if there is an unfinished transaction.
+ *
+ * @return 0 there is no unfinished transaction, != 0 otherwise
+ */
+int unfinished_transaction_exists() {
+    pcsl_string_status rc;
+    pcsl_string transDataFile;
+    int res = 0;
+
+    if (g_transactionStarted) {
+        return 1;
+    }
+
+    /* get a full path to the transaction data file */
+    rc = pcsl_string_cat(storage_get_root(INTERNAL_STORAGE_ID),
+                         &TRANSACTION_DATA_FILENAME, &transDataFile);
+    if (rc != PCSL_STRING_OK) {
+        return 0;
+    }
+
+    res = storage_file_exists(&transDataFile);
+
+    pcsl_string_free(&transDataFile);
+
+    return res;
+}
+
 
 #if ENABLE_CONTROL_ARGS_FROM_JAD
 /**

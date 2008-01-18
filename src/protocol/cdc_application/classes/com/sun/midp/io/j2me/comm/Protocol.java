@@ -23,16 +23,43 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
  */
-
 package com.sun.midp.io.j2me.comm;
+
+import com.sun.j2me.security.AccessController;
 
 public class Protocol extends com.sun.cdc.io.j2me.comm.Protocol {
 
+    private static final String COMM_PERMISSION_NAME =
+	"javax.microedition.io.Connector.comm";
+
+    /**
+     * Check to see if the application has permission to use
+     * the given resource.
+     *
+     * @param name name of the comm port to show the user
+     *
+     * @exception SecurityException if the MIDP permission
+     *            check fails
+     */
+    protected void checkPermission(String name) throws SecurityException {
+        AccessController.checkPermission(COMM_PERMISSION_NAME, name);
+        return;
+    }
+
     /*
-     * throws SecurityException if MIDP permission check fails 
-    */
-    protected void checkMIDPPermission(String name) {
-        //The actual MIDP permission check happens here
+     * For MIDP version of the protocol handler, only a single
+     * check on open is required.
+     */
+    protected void outputStreamPermissionCheck() {
+        return;
+    }
+
+    /*
+     * For MIDP version of the protocol handler, only a single
+     * check on open is required.
+     */
+    protected void inputStreamPermissionCheck() {
+        return;
     }
 
 }

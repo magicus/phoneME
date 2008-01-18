@@ -153,7 +153,8 @@ public final class StoreTest extends TestCase {
         void removeConnection(
                 final int suiteId,
                 final int connectionIndex) throws IOException {
-            store.removeConnection(suiteId, createConnectionInfo(connectionIndex));
+            store.removeConnection(suiteId,
+				   createConnectionInfo(connectionIndex));
         }
 
         void addConnections(

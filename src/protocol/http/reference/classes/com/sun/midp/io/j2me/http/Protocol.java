@@ -1933,7 +1933,10 @@ public class Protocol extends ConnectionBaseAdapter
 
         conn = new com.sun.midp.io.j2me.socket.Protocol();
 
-        if (http_proxy == null) {
+        if (http_proxy == null || url.host.equals("localhost") ||
+            url.host.equals("127.0.0.1")) {
+            /* bypass proxy when trying to connect to the same computer
+             * and not using explicit IP or host name */
             conn.openPrim(classSecurityToken, "//" + hostAndPort);
 
             // Do not delay request since this delays the response.

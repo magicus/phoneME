@@ -120,9 +120,9 @@ KNIDECL(com_sun_midp_main_MIDletSuiteLoader_vmEndStartUp) {
  */
 static int
 midpInitializeUI(void) {
-    //if (InitializeEvents() != 0) {
-    //    return -1;
-    //}
+    /*if (InitializeEvents() != 0) {*/
+    /*    return -1;*/
+    /*}*/
 
     /*
      * Porting consideration:
@@ -135,8 +135,18 @@ midpInitializeUI(void) {
      */
 #if ENABLE_MULTIPLE_ISOLATES
     {
-        int reserved = AMS_MEMORY_RESERVED_MVM;
-        int limit = AMS_MEMORY_LIMIT_MVM;
+        int reserved = getInternalPropertyInt("AMS_MEMORY_RESERVED_MVM");
+        int limit = getInternalPropertyInt("AMS_MEMORY_LIMIT_MVM");
+
+        if (0 == reserved) {
+            REPORT_ERROR(LC_AMS, "AMS_MEMORY_RESERVED_MVM property not set");
+            reserved = AMS_MEMORY_RESERVED_MVM;
+        }
+
+        if (0 == limit) {
+            REPORT_ERROR(LC_AMS, "AMS_MEMORY_LIMIT_MVM property not set");
+            limit = AMS_MEMORY_LIMIT_MVM;
+        }
 
         reserved = reserved * 1024;
         JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_RESERVED_MEMORY, reserved);
@@ -155,7 +165,7 @@ midpInitializeUI(void) {
         char* argv[2];
 
         /* Get the VM debugger port property. */
-        argv[1] = (char *)getInternalProp("VmDebuggerPort");
+        argv[1] = (char *)getInternalProperty("VmDebuggerPort");
         if (argv[1] != NULL) {
             argv[0] = "-port";
             (void)JVM_ParseOneArg(2, argv);
@@ -163,9 +173,9 @@ midpInitializeUI(void) {
     }
 #endif
 
-    // IMPL_NOTE if (pushopen() != 0) {
-    //    return -1;
-    //}
+    /* IMPL_NOTE if (pushopen() != 0) {*/
+    /*    return -1;*/
+    /*}*/
 
     lcdlf_ui_init();
     return 0;
@@ -178,21 +188,21 @@ static void
 midpFinalizeUI(void) {
     lcdlf_ui_finalize();
 
-    //IMPL_NOTE: pushclose();
-    //finalizeCommandState();
+    /*IMPL_NOTE: pushclose();*/
+    /*finalizeCommandState();*/
 
-    //FinalizeEvents();
+    /*FinalizeEvents();*/
 
-    // Porting consideration:
-    // Here is a good place to put I18N finalization
-    // function. e.g. finalizeLocaleMethod();
+    /* Porting consideration:*/
+    /* Here is a good place to put I18N finalization*/
+    /*function. e.g. finalizeLocaleMethod();*/
 
     /*
      * Note: the AMS isolate will have been registered by a native method
      * call, so there is no corresponding midpRegisterAmsIsolateId in the
      * midpInitializeUI() function.
      */
-    //midpUnregisterAmsIsolateId();
+    /*midpUnregisterAmsIsolateId();*/
     CloseMsgQueue(controlPipe[0]);
     CloseMsgQueue(controlPipe[1]);
 }
@@ -257,14 +267,16 @@ static MSGQUEUEOPTIONS  writeEventQueueOptions;
 static void initCDCEvents() {
     DWORD err;
 
-    enum { MAX_MESSAGE_SIZE = 1024 };
+    enum {
+        MAX_MESSAGE_SIZE = 1024
+    };
 
     readEventQueueOptions.dwSize = sizeof(MSGQUEUEOPTIONS);
     readEventQueueOptions.dwFlags = MSGQUEUE_NOPRECOMMIT;
     readEventQueueOptions.dwMaxMessages = 0;
     readEventQueueOptions.cbMaxMessage = MAX_MESSAGE_SIZE;
     readEventQueueOptions.bReadAccess = TRUE;
-    // Read
+    /* Read*/
     controlPipe[0] = CreateMsgQueue(TEXT("EventQueue"), &readEventQueueOptions);
     err = GetLastError();
     if (err != ERROR_SUCCESS) {
@@ -277,7 +289,7 @@ static void initCDCEvents() {
     writeEventQueueOptions.dwMaxMessages = 0;
     writeEventQueueOptions.cbMaxMessage = MAX_MESSAGE_SIZE;
     writeEventQueueOptions.bReadAccess = FALSE;
-    // Write
+    /* Write*/
     controlPipe[1] = OpenMsgQueue(GetCurrentProcess(), controlPipe[0], &writeEventQueueOptions);
     err = GetLastError();
     if (err != ERROR_SUCCESS) {

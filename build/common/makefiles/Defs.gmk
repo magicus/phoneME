@@ -499,10 +499,16 @@ build_midp_priv_classes_zip = \
                zip -q $(MIDP_PRIV_CLASSES_ZIP) com)
 
 define split_midpclasses_zip_impl
-	$(AT)cp $@ $(MIDP_PUB_CLASSES_ZIP)
-	$(AT)(cd $(MIDP_OUTPUT_DIR)/classes && \
+	$(AT)if [ ! -f $(MIDP_PUB_CLASSES_ZIP) -o \
+                  ! -f $(MIDP_PRIV_CLASSES_ZIP) -o \
+                  $(MIDP_PUB_CLASSES_ZIP) -ot $@ -o \
+                  $(MIDP_PRIV_CLASSES_ZIP) -ot $@ ]; then \
+		echo splitting $@...; \
+		cp $@ $(MIDP_PUB_CLASSES_ZIP); \
+		(cd $(MIDP_OUTPUT_DIR)/classes && \
                 $(build_midp_pub_classes_zip) && \
-                $(build_midp_priv_classes_zip))
+                $(build_midp_priv_classes_zip)); \
+	fi
 endef
 split_midpclasses_zip = $(call split_midpclasses_zip_impl, $(bootclasspath_zip_entries))
 endif

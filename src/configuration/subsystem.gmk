@@ -34,6 +34,7 @@
 #
 ######################################################################
 
+include $(SUBSYSTEM_DIR)/configuration/configuration_common.gmk
 # Adds to global SUBSYSTEMS list
 #
 CONFIG_SUBSYSTEM = configuration

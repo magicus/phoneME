@@ -47,6 +47,7 @@
 #include <midpport_eventqueue.h>
 #include <pcsl_string.h>
 #include <midpUtilKni.h>
+#include <midp_properties_port.h>
 
 
 typedef struct Java_com_sun_midp_events_EventQueue _eventQueue;
@@ -136,7 +137,7 @@ static EventQueue* getIsolateEventQueue(int isolateId) {
                      "Assertion failed: Isolate ID (%d) out of bounds",
                      isolateId);
 
-        // avoid a SEGV;
+        /* avoid a SEGV;*/
         isolateId = 0;
     }
 
@@ -309,7 +310,7 @@ void
 midp_resetEvents(void) {
     int i;
 
-    // The Event ID may have changed for each VM startup
+    /* The Event ID may have changed for each VM startup*/
     eventFieldIDsObtained = KNI_FALSE;
 
     for (i = 0; i < maxIsolates; i++) {
@@ -390,10 +391,18 @@ static void StoreMIDPEventInVmThreadImp(MidpEvent event, int isolateId) {
  */
 void
 StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
+
+    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
+
+    if (0 == max_isolates) {
+        REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
+        max_isolates = MAX_ISOLATES;
+    }
+
     if( -1 != isolateId ) {
         StoreMIDPEventInVmThreadImp(event, isolateId);
     } else {
-        for (isolateId = 0; isolateId < MAX_ISOLATES; ++isolateId)
+        for (isolateId = 0; isolateId < max_isolates; ++isolateId)
             StoreMIDPEventInVmThreadImp(event, isolateId);
     }
 }
