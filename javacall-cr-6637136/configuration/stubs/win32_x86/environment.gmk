@@ -64,7 +64,8 @@ SOURCE_OUTPUT_LIST += $(JAVACALL_DIR)/configuration/stubs/win32_x86 javacall/con
 #Specify list of utility objects necessary for the build
 UTILITIES =                 \
         javautil_jad_parser \
-        javautil_string
+        javautil_string \
+        javautil_unicode
 
 #Porting objects that are added to PORTING_OBJECTS by default rules can be excluded
 #from the javacall library by setting FILTER_OBJECTS variable
