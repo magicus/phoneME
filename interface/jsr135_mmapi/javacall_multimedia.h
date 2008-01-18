@@ -770,20 +770,20 @@ javacall_result javacall_media_stop_tone(int appID);
  */
 
 /**
- * Turn on or off video rendering alpha channel.
- * If this is on OEM native layer video renderer SHOULD use this mask color
+ * Turn on or off video rendering destination color keying.
+ * If this is on OEM native layer video renderer SHOULD use this color key
  * and draw on only the region that is filled with this color value.
  * 
  * @image html setalpha.png
  * 
- * @param handle handle to the native player
- * @param on     Alpha channel is on?
- * @param color  Color of alpha channel
+ * @param handle Handle to the native player
+ * @param on     Is color keying on?
+ * @param color  Color key
  * 
  * @retval JAVACALL_OK      Success
  * @retval JAVACALL_FAIL    Fail
  */
-javacall_result javacall_media_set_video_alpha(javacall_handle handle,
+javacall_result javacall_media_set_video_color_key(javacall_handle handle,
     javacall_bool on, javacall_pixel color);
 
 /**
