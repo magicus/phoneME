@@ -49,11 +49,6 @@
         time is too short, the alert will not be not shown possibly. If set
         to 0 the alert will not be shown definitely."/>
 
-  <property Key="system.jam_space"
-	  Value="1000000"
-	  Scope="internal"
-	  Comment="Amount of space to reserve for JAM storage."/>
-
   <property Key="system.i18n.lang"
 	  Value="en"
 	  Scope="internal"

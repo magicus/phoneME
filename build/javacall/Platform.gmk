@@ -33,4 +33,7 @@ ifeq ($(JAVACALL_PLATFORM),)
 $(error JAVACALL_PLATFORM is not set)
 endif
 
+SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
+    $(JAVACALL_OUTPUT_DIR)/properties.xml
+
 include $(JAVACALL_PLATFORM).gmk

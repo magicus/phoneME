@@ -25,16 +25,4 @@ ifeq ($(JAVACALL_PLATFORM),)
 $(error JAVACALL_PLATFORM is not set)
 endif
 
-# Add support for dynamic properties file
-ifneq ($(USE_STATIC_PROPERTIES), true)
-MIDP_DEPS += $(BINDIR)/jwc_properties.ini
-
-$(BINDIR)/jwc_properties.ini : $(BINDIR) $(SUBSYSTEM_CONFIGURATION_CONFIG_FILES)
-	if [ -f $@ ];then \
-		rm -f $@; \
-	fi $(LOG)
-	-(cp $(GENERATED_DIR)/jwc_properties.ini $@) $(LOG)
-	-(chmod +w $@) $(LOG)
-endif
-
 -include $(JAVACALL_PLATFORM)_post.gmk

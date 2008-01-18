@@ -49,6 +49,11 @@
 		Scope="internal"
 		Comment="The datagram port number of a SMS emulator."/>
 
+  <property Key="system.jam_space"
+		Value="1000000"
+		Scope="internal"
+		Comment="Amount of space to reserve for JAM storage."/>
+
   <!-- Alternate SMS port for CBS emulation -->
   <property Key="com.sun.midp.io.j2me.sms.CBSPort" 
 		Value="24680" 

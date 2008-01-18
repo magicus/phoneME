@@ -41,5 +41,10 @@
 				Value="opera"
 				Scope="internal"/>				
 
+  <property Key="system.jam_space"
+		Value="1000000"
+		Scope="internal"
+		Comment="Amount of space to reserve for JAM storage."/>
+
 </properties>
 </configuration>

@@ -207,6 +207,18 @@ parallel_all:: $(VERIFY_BUILD_ENV) $(DISPLAY_BUILD_ENV) rom
 # copy the config files with properties for dynamic usage.
 #
 ifeq ($(USE_STATIC_PROPERTIES), false)
+ifeq ($(USE_JAVACALL_PROPERTIES), true)
+
+MIDP_DEPS += $(BINDIR)/jwc_properties.ini
+
+$(BINDIR)/jwc_properties.ini: $(BINDIR) $(SUBSYSTEM_CONFIGURATION_CONFIG_FILES)
+	if [ -f $@ ];then \
+		rm -f $@; \
+	fi $(LOG)
+	-(cp $(GENERATED_DIR)/jwc_properties.ini $@) $(LOG)
+	-(chmod +w $@) $(LOG)
+
+else
 MIDP_DEPS += $(LIBDIR)/internal.config $(LIBDIR)/system.config
 
 $(LIBDIR)/internal.config $(LIBDIR)/system.config: $(LIBDIR) $(SUBSYSTEM_CONFIGURATION_CONFIG_FILES)
@@ -215,6 +227,8 @@ $(LIBDIR)/internal.config $(LIBDIR)/system.config: $(LIBDIR) $(SUBSYSTEM_CONFIGU
 	fi $(LOG)
 	-(cp $(GENERATED_DIR)/$(subst $(MIDP_OUTPUT_DIR),,$@) $@) $(LOG)
 	-(chmod +w $@) $(LOG)
+
+endif
 endif
 
 ifeq ($(TARGET_VM), cdc_vm)
