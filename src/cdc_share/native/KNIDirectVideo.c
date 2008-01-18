@@ -38,7 +38,7 @@ KNIDECL(com_sun_mmedia_DirectVideo_nGetWidth) {
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
     if (pKniInfo && pKniInfo->pNativeHandle &&
-		JAVACALL_OK == javacall_media_get_video_size(pKniInfo->pNativeHandle, &width, &height)) {
+        JAVACALL_OK == javacall_media_get_video_size(pKniInfo->pNativeHandle, &width, &height)) {
         returnValue = width;
     }
 
@@ -58,7 +58,7 @@ KNIDECL(com_sun_mmedia_DirectVideo_nGetHeight) {
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
     if (pKniInfo && pKniInfo->pNativeHandle &&
-		JAVACALL_OK == javacall_media_get_video_size(pKniInfo->pNativeHandle, &width, &height)) {
+        JAVACALL_OK == javacall_media_get_video_size(pKniInfo->pNativeHandle, &width, &height)) {
         returnValue = height;
     }
 
@@ -83,7 +83,7 @@ KNIDECL(com_sun_mmedia_DirectVideo_nSetLocation) {
     MMP_DEBUG_STR4("[kni_video] +nSetLocation %d %d %d %d\n", x, y, w, h);
 
     if (pKniInfo && pKniInfo->pNativeHandle &&
-		JAVACALL_OK == javacall_media_set_video_location(pKniInfo->pNativeHandle, x, y, w, h)) {
+        JAVACALL_OK == javacall_media_set_video_location(pKniInfo->pNativeHandle, x, y, w, h)) {
         returnValue = KNI_TRUE;
     }
 
@@ -161,7 +161,6 @@ KNIDECL(com_sun_mmedia_DirectVideo_nSnapShot) {
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectVideo_nSetVisible) {
 
-    static jboolean oldVisible = KNI_FALSE;
     jint handle = KNI_GetParameterAsInt(1);
     jboolean visible = KNI_GetParameterAsBoolean(2);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
@@ -170,15 +169,10 @@ KNIDECL(com_sun_mmedia_DirectVideo_nSetVisible) {
 
     MMP_DEBUG_STR1("[kni_video] +nSetVisible %d\n", visible);
 
-    if (oldVisible != visible) {
-        if (pKniInfo && pKniInfo->pNativeHandle &&
-            JAVACALL_OK == javacall_media_set_video_visible(pKniInfo->pNativeHandle, 
-                               (KNI_TRUE == visible ? JAVACALL_TRUE : JAVACALL_FALSE))) 
-        {
-            oldVisible = visible;
-            returnValue = KNI_TRUE;
-        }
-    } else {
+    if (pKniInfo && pKniInfo->pNativeHandle &&
+        JAVACALL_OK == javacall_media_set_video_visible(pKniInfo->pNativeHandle, 
+                           (KNI_TRUE == visible ? JAVACALL_TRUE : JAVACALL_FALSE))) 
+    {
         returnValue = KNI_TRUE;
     }
 
@@ -196,7 +190,7 @@ KNIDECL(com_sun_mmedia_DirectVideo_nGetScreenHeight) {
 /*  private native int nGetScreenWidth ( ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectVideo_nGetScreenWidth) {
-    KNI_ReturnInt(0/* FIXME: should be: lcdlf_get_screen_width()*/);  
+    KNI_ReturnInt(0/* FIXME: shoud be: lcdlf_get_screen_width()*/);
 }
 
 /*  private native int nSetAlpha (boolean on, int color) ; */
@@ -209,7 +203,7 @@ KNIDECL(com_sun_mmedia_DirectVideo_nSetAlpha) {
 
     MMP_DEBUG_STR2("[kni_video] +nSetAlpha on=%d alpha=%d\n", isOn, color);
 
-    ret = javacall_media_set_video_alpha(KNI_TRUE == isOn ? JAVACALL_TRUE : JAVACALL_FALSE, 
+    ret = javacall_media_set_video_color_key(KNI_TRUE == isOn ? JAVACALL_TRUE : JAVACALL_FALSE, 
                                          (javacall_pixel)color);
 
     MMP_DEBUG_STR1("[kni_video] -nSetAlpha ret %d\n", ret);

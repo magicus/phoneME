@@ -224,6 +224,11 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nBuffering) {
     jlong length = KNI_GetParameterAsLong(3);
     jint returnValue = -1;
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    void *nBuffer;
+    long nBufferSize;
+    javacall_bool need_more_data;
+    long min_data_size;
+    javacall_result ret;
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(bufferHandle);
@@ -232,16 +237,19 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nBuffering) {
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle && length > 0) {
         int ret;
-        jbyte *tmpArray = MMP_MALLOC((unsigned int)length);
         if (tmpArray != NULL) {
-            MMP_DEBUG_STR2("+nBuffering length=%d offset=%d\n", length, pKniInfo->offset);
-            KNI_GetRawArrayRegion(bufferHandle, 0, (int)length, (jbyte*)tmpArray);
-            ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, 
-                (const char*)tmpArray, (int)length, pKniInfo->offset);
-            MMP_FREE(tmpArray);
-            if (ret > 0) {
-                pKniInfo->offset += ret;
-                returnValue = ret;
+            ret = javacall_media_get_buffer_address(pKniInfo->pNativeHandle, &nBuffer, &nBufferSize);
+            if ((ret == JAVACALL_OK) && (nBuffer != NULL)) {
+                if (nBufferSize < length) {
+                    length = nBufferSize;
+                }
+                MMP_DEBUG_STR2("+nBuffering length=%d\n", length);
+                KNI_GetRawArrayRegion(bufferHandle, 0, (int)length, (jbyte*)nBuffer);
+                ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, 
+                (const char*)nBuffer, (long)length, &need_more_data, &min_data_size);
+                if (ret == JAVACALL_OK) {
+                    returnValue = length;
+                }
             }
         } else {
             REPORT_ERROR(LC_MMAPI, "[kni_player] nBuffering allocation fail\n");                
@@ -249,7 +257,10 @@ LockAudioMutex();
         }
     } else if (pKniInfo && pKniInfo->pNativeHandle) {
         /* Indicate end of buffering by using NULL buffer */
-        returnValue = javacall_media_do_buffering(pKniInfo->pNativeHandle, NULL, -1, -1);
+        ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, NULL, 0, &need_more_data, &min_data_size);
+        if (ret == JAVACALL_OK) {
+            returnValue = 0;
+        }
     }
 UnlockAudioMutex();            
 
@@ -330,16 +341,20 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetMediaTime) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jint returnValue = -1;
+    javacall_result ret;
+    jlong ms = -1;
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        returnValue = javacall_media_get_time(pKniInfo->pNativeHandle);
+        ret = javacall_media_get_time(pKniInfo->pNativeHandle, &ms);
+        if (ret != JAVACALL_OK) {
+            ms = -1;
+        }
     }
 UnlockAudioMutex();            
 
-    MMP_DEBUG_STR1("-nGetMediaTime time=%d\n", returnValue);
+    MMP_DEBUG_STR1("-nGetMediaTime time=%d\n", ms);
 
-    KNI_ReturnInt(returnValue);
+    KNI_ReturnInt((jint)ms);
 }
 
 /*  protected native int nSetMediaTime ( int handle , long ms ) ; */
@@ -349,19 +364,22 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetMediaTime) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     jlong ms = KNI_GetParameterAsLong(2);
-    jint returnValue = -1;
+    javacall_result ret = JAVACALL_FAIL;
 
     MMP_DEBUG_STR("+nSetMediaTime\n");
 
 LockAudioMutex();            
     if (pKniInfo) {
-        returnValue = javacall_media_set_time(pKniInfo->pNativeHandle, (int)ms);
+        ret = javacall_media_set_time(pKniInfo->pNativeHandle, (long)&ms);
     } else {
         REPORT_ERROR(LC_MMAPI, "nSetMediaTime fail\n");
     }
 UnlockAudioMutex();            
+    if (ret != JAVACALL_OK) {
+        ms = -1;
+    }
 
-    KNI_ReturnInt(returnValue);
+    KNI_ReturnInt((jint)ms);
 }
 
 /*  protected native int nGetDuration ( int handle ) ; */
@@ -370,17 +388,21 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetDuration) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jint returnValue = -1;
+    jlong ms;
+    javacall_result ret = JAVACALL_FAIL;
 
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        returnValue = javacall_media_get_duration(pKniInfo->pNativeHandle);
+        ret = javacall_media_get_duration(pKniInfo->pNativeHandle, &ms);
     }
 UnlockAudioMutex();            
+    if (ret != JAVACALL_OK) {
+        ms = -1;
+    }
 
-    MMP_DEBUG_STR1("-nGetDuration duration=%d\n", returnValue);
+    MMP_DEBUG_STR1("-nGetDuration duration=%d\n", ms);
 
-    KNI_ReturnInt(returnValue);
+    KNI_ReturnInt((jint)ms);
 }
 
 /*  protected native boolean nPause ( int handle ) ; */
@@ -455,7 +477,6 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSwitchToForeground) {
     jboolean returnValue = KNI_FALSE;
 #if ENABLE_MULTIPLE_ISOLATES
     jint handle = KNI_GetParameterAsInt(1);
-    jint options = KNI_GetParameterAsInt(2);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
     MMP_DEBUG_STR2("nSwitchToForeground %d %d\n", pKniInfo, options);
@@ -465,7 +486,7 @@ LockAudioMutex();
         if (1 != pKniInfo->isForeground) {
             pKniInfo->isForeground = 1;
             if (JAVACALL_SUCCEEDED(javacall_media_to_foreground(
-                pKniInfo->pNativeHandle, options))) {
+                pKniInfo->pNativeHandle, KNIPlayerInfo->appId))) {
                 returnValue = KNI_TRUE;
             }
         } else {
@@ -483,7 +504,6 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSwitchToBackground) {
     jboolean returnValue = KNI_FALSE;
 #if ENABLE_MULTIPLE_ISOLATES
     jint handle = KNI_GetParameterAsInt(1);
-    jint options = KNI_GetParameterAsInt(2);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
     MMP_DEBUG_STR2("nSwitchToBackground %d %d\n", pKniInfo, options);
@@ -493,7 +513,7 @@ LockAudioMutex();
         if (0 != pKniInfo->isForeground) {
             pKniInfo->isForeground = 0;
             if (JAVACALL_SUCCEEDED(javacall_media_to_background(
-                pKniInfo->pNativeHandle, options))) {
+                pKniInfo->pNativeHandle, KNIPlayerInfo->appId))) {
                 returnValue = KNI_TRUE;
             }
         } else {

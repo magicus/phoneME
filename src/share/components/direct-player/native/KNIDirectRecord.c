@@ -230,18 +230,22 @@ KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectRecord_nSetSizeLimitIsSupported) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jboolean ret = KNI_FALSE;
+    jboolean retValue = KNI_FALSE;
+    javacall_result ret;
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        javacall_bool supported = javacall_media_set_recordsize_limit_supported(pKniInfo->pNativeHandle);
-        ret = JAVACALL_TRUE == supported ? KNI_TRUE : KNI_FALSE;
-        if (KNI_FALSE == ret) {
+        javacall_bool supported;
+        ret = javacall_media_set_recordsize_limit_supported(pKniInfo->pNativeHandle, &supported);
+        if (ret == JAVACALL_OK) {
+            retValue = supported == JAVACALL_TRUE == supported ? KNI_TRUE : KNI_FALSE;
+        }
+        if (KNI_FALSE == retValue) {
             REPORT_ERROR1(LC_MMAPI, "[kni_record] Set record size limit is not supported handle=%d\n",
                 pKniInfo->pNativeHandle);
         }        
     }
 
-    KNI_ReturnBoolean(ret);
+    KNI_ReturnBoolean(retValue);
 }
 
 /*  private native int nSetSizeLimit ( int handle , int size ) ; */
@@ -334,13 +338,16 @@ KNIDECL(com_sun_mmedia_DirectRecord_nGetRecordedType)
     KNI_DeclareHandle(contentType);
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        int length = javacall_media_get_record_content_type_length(pKniInfo->pNativeHandle);
-        if (length > 0) {
+        int length;
+        javacall_result ret;
+        ret = javacall_media_get_record_content_type_length(pKniInfo->pNativeHandle, &length);
+        if (ret == JAVACALL_OK && length > 0) {
             jchar* pString = MMP_MALLOC((length + 1) * sizeof(jchar));
             if (pString != NULL) {
-                int ret = javacall_media_get_record_content_type(pKniInfo->pNativeHandle, pString, length + 1);
-                if (ret > 0) {
-                    KNI_NewString(pString, ret, contentType);
+                length += 1;
+                ret = javacall_media_get_record_content_type(pKniInfo->pNativeHandle, pString, &length);
+                if (ret == JAVACALL_OK) {
+                    KNI_NewString(pString, length, contentType);
                 } else {
                     KNI_ReleaseHandle(contentType);
                     REPORT_ERROR1(LC_MMAPI, "[kni_record] Get record content type fail handle=%d\n",

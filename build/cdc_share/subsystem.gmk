@@ -54,6 +54,11 @@ SUBSYSTEM_JSR_135_NATIVE_FILES += \
 	jsr135_sync.c \
 	KNImmapiDynamicProperties.c
 
+ifeq ($(DIRECT_VIDEO_PLAYER), true)
+SUBSYSTEM_JSR_135_NATIVE_FILES += \
+    KNIDirectVideo.c
+endif
+
 JPP_DEFS += -DENABLE_CDC
 SUBSYSTEM_JSR_135_INCLUDE_DIRS += \
 	$(JSR_135_DIR)/src/cdc_share/native \

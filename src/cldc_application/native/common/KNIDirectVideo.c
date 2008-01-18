@@ -238,7 +238,7 @@ Java_com_sun_mmedia_DirectVideo_nSetAlpha() {
 
     MMP_DEBUG_STR2("[kni_video] +nSetAlpha on=%d alpha=%d\n", isOn, color);
 
-    ret = javacall_media_set_video_alpha(KNI_TRUE == isOn ? JAVACALL_TRUE : JAVACALL_FALSE, 
+    ret = javacall_media_set_video_color_key(KNI_TRUE == isOn ? JAVACALL_TRUE : JAVACALL_FALSE, 
                                          (javacall_pixel)color);
 
     MMP_DEBUG_STR1("[kni_video] -nSetAlpha ret %d\n", ret);
