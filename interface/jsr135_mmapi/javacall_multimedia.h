@@ -47,14 +47,14 @@ extern "C" {
  * 
  * Exact requirements can be found in the following specifications:
  * 
- * - MIDP 2.0 Specification (JSR-118)
- * - MMAPI 1.1 Specification (JSR-135)
- * - JTWI 1.0 Specification
+ * - MIDP 2.1 Specification (JSR-118)
+ * - MMAPI 1.2 Specification (JSR-135)
+ * - JTWI 1.0 Specification (JSR-185)
  * 
  * The specifications can be downloaded from http://www.jcp.org
  * 
  * <H2>MIDP 2.0 Specification Media Requirements</H2>
- * The MIDP 2.0 specification specifies the Audio Building Block which is a subset of the MMAPI specification. The requirements are as follows:
+ * The MIDP 2.0 (? TODO 2.1 ?) specification specifies the Audio Building Block which is a subset of the MMAPI specification. The requirements are as follows:
  * 
  * - MUST support Tone Generation in the media package.
  * - MUST support 8-bit, 8 KHz, mono linear PCM wav format IF any sampled sound support is provided.
@@ -208,29 +208,29 @@ typedef javacall_const_utf8_string javacall_media_format_type;
  * 
  * Multimedia protocol types.
  */
-#define JAVACALL_MEDIA_FILE_REMOTE_PROTOCOL     0x01    // "file://" via network
+#define JAVACALL_MEDIA_MEMORY_PROTOCOL          0x01    // playback from memory buffer or memory streaming
 #define JAVACALL_MEDIA_FILE_LOCAL_PROTOCOL      0x02    // "file://" local content
-#define JAVACALL_MEDIA_HTTP_PROTOCOL            0x04    // "http://"
-#define JAVACALL_MEDIA_HTTPS_PROTOCOL           0x08    // "https://"
-#define JAVACALL_MEDIA_RTP_PROTOCOL             0x10    // "rtp://"
-#define JAVACALL_MEDIA_RTSP_PROTOCOL            0x20    // "rtsp://"
-#define JAVACALL_MEDIA_MEMORY_PROTOCOL          0x40    // playback from memory buffer or memory streaming
+#define JAVACALL_MEDIA_FILE_REMOTE_PROTOCOL     0x04    // "file://" via network
+#define JAVACALL_MEDIA_HTTP_PROTOCOL            0x08    // "http://"
+#define JAVACALL_MEDIA_HTTPS_PROTOCOL           0x10    // "https://"
+#define JAVACALL_MEDIA_RTP_PROTOCOL             0x20    // "rtp://"
+#define JAVACALL_MEDIA_RTSP_PROTOCOL            0x40    // "rtsp://"
 
 /**
  * 
  * @brief Multimedia Controls, supported by native layer
  */
-#define JAVACALL_MEDIA_CTRL_FRAME_POSITIONING   0x001
-#define JAVACALL_MEDIA_CTRL_METADATA            0x002
-#define JAVACALL_MEDIA_CTRL_MIDI                0x004
-#define JAVACALL_MEDIA_CTRL_PITCH               0x008
-#define JAVACALL_MEDIA_CTRL_RATE                0x010
-#define JAVACALL_MEDIA_CTRL_RECORD              0x020
-#define JAVACALL_MEDIA_CTRL_STOPTIME            0x040
-#define JAVACALL_MEDIA_CTRL_TEMPO               0x080
-#define JAVACALL_MEDIA_CTRL_TONE                0x100
-#define JAVACALL_MEDIA_CTRL_VIDEO               0x200
-#define JAVACALL_MEDIA_CTRL_VOLUME              0x400
+#define JAVACALL_MEDIA_CTRL_VOLUME              0x001
+#define JAVACALL_MEDIA_CTRL_RECORD              0x002
+#define JAVACALL_MEDIA_CTRL_METADATA            0x004
+#define JAVACALL_MEDIA_CTRL_STOPTIME            0x008
+#define JAVACALL_MEDIA_CTRL_VIDEO               0x010
+#define JAVACALL_MEDIA_CTRL_FRAME_POSITIONING   0x020
+#define JAVACALL_MEDIA_CTRL_TONE                0x040
+#define JAVACALL_MEDIA_CTRL_MIDI                0x080
+#define JAVACALL_MEDIA_CTRL_PITCH               0x100
+#define JAVACALL_MEDIA_CTRL_RATE                0x200
+#define JAVACALL_MEDIA_CTRL_TEMPO               0x400
 
 /** @} */
 
@@ -242,17 +242,17 @@ typedef javacall_const_utf8_string javacall_media_format_type;
 typedef struct {
     /** Media format */
     javacall_media_format_type          mediaFormat;
-    /** Content types for the media format */
+    /** Content types for the media format, separated by space */
     javacall_const_utf8_string          contentTypes;
 
-    /**  bitmask of supported protocols if playback from 
+    /**  Bitmask of supported protocols for playback from 
      *   whole downloaded content including memory buffer
      */
-    javacall_int32                      whole_protocols;
-    /**  bitmask of supported streaming protocols 
+    javacall_int32                      wholeProtocols;
+    /**  Bitmask of supported streaming protocols 
      *   including streaming from memory buffer
      */
-    javacall_int32                      streaming_protocols;
+    javacall_int32                      streamingProtocols;
 } javacall_media_caps;
 
 /**
@@ -260,31 +260,34 @@ typedef struct {
  * @brief Multimedia capabilities of native platform
  */
 typedef struct {
-    /** Support Mixing */
+    /** Support mixing */
     javacall_bool                       supportMixing;
-    /** Support Recording */
+    /** Support recording */
     javacall_bool                       supportRecording;
-    /** Supported capture audio formats and parameters */
-    /*  NULL if not supported */
+    /** Supported capture audio formats and parameters;
+     *  NULL if not supported
+     */
     javacall_const_utf8_string          audioEncoding;
-    /** Supported capture video formats and parameters */
-    /*  NULL if not supported */
+    /** Supported capture video formats and parameters;
+     *  NULL if not supported 
+     */
     javacall_const_utf8_string          videoEncoding;
-    /** Supported video snapshot formats and parameters */
-    /*  NULL if not supported */
+    /** Supported video snapshot formats and parameters;
+     *  NULL if not supported
+     */
     javacall_const_utf8_string          videoSnapshotEncoding;
 
-    /** Support Device Tone*/
+    /** Support Device Tone */
     javacall_bool                       supportDeviceTone;
-    /** Support Device MIDI*/
+    /** Support Device MIDI */
     javacall_bool                       supportDeviceMIDI;
-    /** Support Capture Radio*/
+    /** Support Capture Radio */
     javacall_bool                       supportCaptureRadio;
 
-    /** Media capabilities */
-    /* array of javacall_media_caps for each supported media format */
-    /* the last element in the array should contain                 */
-    /* mediaFormat = NULL                                           */
+    /** Media capabilities.
+     *  An array of javacall_media_caps for each supported media format.
+     *  The last element in the array should have NULL mediaFormat field.
+     */
     javacall_media_caps                 *mediaCaps;
 } javacall_media_configuration;
 
