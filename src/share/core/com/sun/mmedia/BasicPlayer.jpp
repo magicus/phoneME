@@ -35,7 +35,6 @@ import com.sun.mmedia.protocol.*;
 // #ifndef ABB [
 import javax.microedition.media.protocol.*;
 // #endif ]
-import com.sun.j2me.app.AppIsolate;
 
 /**
  * BasicPlayer provides basic implementation for the Player methods.

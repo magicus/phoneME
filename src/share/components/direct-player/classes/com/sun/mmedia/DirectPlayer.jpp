@@ -254,14 +254,13 @@ public class DirectPlayer extends BasicPlayer
             remained = contentLength;
         }
         
-        // Get current isolate ID to support MVM
-        // in case of SVM it will return AMS isolate ID
-        int isolateId = AppIsolate.getIsolateId();
+        // Get current application ID to support MVM
+        int appId = AppPackage.getId();
 
         if (source != null) {
-            hNative = nInit(isolateId, pID, mimeType, source.getLocator(), contentLength);
+            hNative = nInit(appId, pID, mimeType, source.getLocator(), contentLength);
         } else {
-            hNative = nInit(isolateId, pID, mimeType, this.locator, contentLength);
+            hNative = nInit(appId, pID, mimeType, this.locator, contentLength);
         }
 
         if (0 == hNative) {

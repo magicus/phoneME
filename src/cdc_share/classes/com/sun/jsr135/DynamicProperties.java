@@ -27,6 +27,7 @@
 package com.sun.jsr135;
 
 import com.sun.cdc.config.PropertyProvider;
+import java.util.Hashtable;
 
 /**
  * This class provides values for the following dynamic properties:
@@ -35,6 +36,17 @@ import com.sun.cdc.config.PropertyProvider;
  * </ul>
  */
 public class DynamicProperties implements PropertyProvider {
+
+    final String propertySupportsMixing="supports.mixing";
+    final String propertySupportsAudioCapture="supports.audio.capture";
+    final String propertySupportsVideoCapture="supports.video.capture";
+    final String propertySupportsRecording="supports.recording";
+    final String propertyAudioEncodings="audio.encodings";
+    final String propertyVideoEncodings="video.encodings";
+    final String propertyVideoSnapshotEncodings="video.snapshot.encodings";
+    final String propertyStreamableContents="streamable.contents";
+    
+    private static HashTable properties = new Hashtable();
 
     /** The only instance of this class. */
     private static DynamicProperties instance = null;
@@ -70,20 +82,49 @@ public class DynamicProperties implements PropertyProvider {
      * @return current property value
      */
     public String getValue(String key, boolean fromCache) {
-        return nGetPropertyValue(key, fromCache);
+        String val;
+        if (fromCache) {
+            String val = (String)properties.get(key);
+            if ((val != NULL) && (val.length()>0)) {
+                return val;
+            }
+        }
+        if (key.equals(propertySupportsMixing)) {
+            val = nGetPropertyValueSupportsMixing();
+        } else if (key.equals(propertySupportsAudioCapture)) {
+            val = nGetPropertyValueSupportsAudioCapture();
+        } else if (key.equals(propertySupportsVideoCapture)) {
+            val = nGetPropertyValueSupportsVideoCapture();
+        } else if (key.equals(propertySupportsRecording)) {
+            val = nGetPropertyValueSupportsRecording();
+        } else if (key.equals(propertyAudioEncodings)) {
+            val = nGetPropertyValueAudioEncodings();
+        } else if (key.equals(propertyVideoEncodings)) {
+            val = nGetPropertyValueVideoEncodings();
+        } else if (key.equals(propertyVideoSnapshotEncodings)) {
+            val = nGetPropertyValueVideoSnapshotEncodings();
+        } else if (key.equals(propertyStreamableContents)) {
+            val = nGetPropertyValueStreamableContents();
+        }
+        if (!properties.containsKey(key) && val != NULL && val.length()>0) {
+            properties.put(key, val);
+        }
     }
 
     /**
-     * Returns current value for the dynamic property corresponding to the
-     * given key.
+     * Returns current value for the dynamic property
      *
-     * @param key key for the property being retrieved.
-     * @param fromCache indicates whether property value should be taken from
-     *        internal cache. It can be ignored if properties caching is not
-     *        supported by underlying implementation.
      * @return current property value
      */
-    private static native String nGetPropertyValue(String key, boolean fromCache);
+    private static native String nGetPropertyValueSupportsMixing();
+    private static native String nGetPropertyValueSupportsAudioCapture();
+    private static native String nGetPropertyValueSupportsVideoCapture();
+    private static native String nGetPropertyValueSupportsRecording();
+    private static native String nGetPropertyValueAudioEncodings();
+    private static native String nGetPropertyValueVideoEncodings();
+    private static native String nGetPropertyValueVideoSnapshotEncodings();
+    private static native String nGetPropertyValueStreamableContents();
+    
 
     /**
      * Tells underlying implementation to cache values of all the properties

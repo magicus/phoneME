@@ -31,8 +31,6 @@
 
 /* Global Variables ************************************************************************/
 
-javacall_int64 g_currentPlayer = -1;
-
 /* Externs **********************************************************************************/
 
 extern int unicodeToNative(const jchar *ustr, int ulen, unsigned char *bstr, int blen);
@@ -62,15 +60,6 @@ static javacall_bool jmmpCheckCondition(KNIPlayerInfo* pKniInfo, int conditions)
         }
     }
 
-#if 0
-    if ((conditions & CHECK_CURRENT_PLAYER) == CHECK_CURRENT_PLAYER) {
-        if (pKniInfo->uniqueId != g_currentPlayer) {
-            MMP_DEBUG_STR("[KNIDirectPlayer] CHECK_CURRENT_PLAYER fail\n");
-            return JAVACALL_FALSE;
-        }
-    }
-#endif
-
     if ((conditions & CHECK_ACQUIRE_RESOURCE) == CHECK_ACQUIRE_RESOURCE) {
         if (!pKniInfo->isAcquire) {
             MMP_DEBUG_STR("[KNIDirectPlayer] CHECK_ACQUIRE_RESOURCE fail: not acquire\n");
@@ -82,6 +71,79 @@ static javacall_bool jmmpCheckCondition(KNIPlayerInfo* pKniInfo, int conditions)
 }
 
 /* KNI Implementation **********************************************************************/
+
+/*  protected native int nInit (int appId, int playerId, String mimeType, String URI, long contentLength ) ; */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_mmedia_DirectPlayer_nInit) {
+    jint  appId = KNI_GetParameterAsInt(1);
+    jint  playerId = KNI_GetParameterAsInt(2);
+    jlong contentLength = KNI_GetParameterAsLong(5);
+    jint  returnValue = 0;
+    jint   mimeLength, URILength;
+    jchar* pszMimeType = NULL;
+    jchar* pszURI = NULL;
+    KNIPlayerInfo* pKniInfo;
+    javacall_result res;
+
+    MMP_DEBUG_STR2("+nInit isolate=%d, player=%d\n", isolateId, playerId);
+
+    KNI_StartHandles(2);
+    KNI_DeclareHandle(mimeType);
+    KNI_DeclareHandle(URI);
+    
+    /* Get mimeType and URI object parameter */
+    KNI_GetParameterAsObject(3, mimeType);
+    KNI_GetParameterAsObject(4, URI);
+
+    /* Get mime type java string */
+    mimeLength = KNI_GetStringLength(mimeType);
+    pszMimeType = MMP_MALLOC(mimeLength * sizeof(jchar));
+    if (pszMimeType) {
+        KNI_GetStringRegion(mimeType, 0, mimeLength, pszMimeType);
+    }
+
+    /* Get URI java string */
+    if (-1 == (URILength = KNI_GetStringLength(URI))) {
+        pszURI = NULL;
+    } else {
+        pszURI = MMP_MALLOC(URILength * sizeof(jchar));
+        if (pszURI) {
+            KNI_GetStringRegion(URI, 0, URILength, pszURI);
+        }
+    }
+
+    pKniInfo = (KNIPlayerInfo*)MMP_MALLOC(sizeof(KNIPlayerInfo));
+LockAudioMutex();
+    if (pKniInfo && pszMimeType /* && pszURI */) {
+        /* prepare kni internal information */
+        pKniInfo->contentLength = (long)contentLength;
+        pKniInfo->appId = appId;
+        pKniInfo->playerId = playerId;
+        pKniInfo->isAcquire = 0;
+        pKniInfo->offset = 0;
+        pKniInfo->hBuffer = 0;
+        pKniInfo->isDirectFile = JAVACALL_FALSE;
+        pKniInfo->isForeground = -1;
+        pKniInfo->recordState = RECORD_CLOSE;
+        res = javacall_media_create(appId, playerId, pszMimeType, mimeLength, pszURI, URILength, (long)contentLength, &pKniInfo->pNativeHandle); 
+        if (res == JAVACALL_FAIL) {
+            MMP_FREE(pKniInfo);
+        } else {
+            returnValue = (int)pKniInfo;
+        }
+    } else {
+        if (pKniInfo) { MMP_FREE(pKniInfo); }
+    }
+UnlockAudioMutex();            
+
+    if (pszMimeType) { MMP_FREE(pszMimeType); }
+    if (pszURI)      { MMP_FREE(pszURI); }
+    
+    MMP_DEBUG_STR1("-nInit return=%d\n", returnValue);
+
+    KNI_EndHandles();
+    KNI_ReturnInt(returnValue);
+}
 
 /*  protected native int nTerm ( int handle ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
@@ -232,7 +294,6 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nStart) {
     
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle && JAVACALL_OK == javacall_media_start(pKniInfo->pNativeHandle)) {
-        g_currentPlayer = pKniInfo->uniqueId;    /* set the current player */
         returnValue = KNI_TRUE;
     }
 UnlockAudioMutex();            
@@ -525,3 +586,8 @@ UnlockAudioMutex();
     KNI_ReturnVoid();
 }
 
+/*  protected native boolean nPcmAudioPlayback ( int handle ) ; */
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
+KNIDECL(com_sun_mmedia_DirectPlayer_nPcmAudioPlayback) {
+    KNI_ReturnBoolean(KNI_FALSE);
+}
