@@ -948,9 +948,7 @@ void SourceMacros::interpreter_call_native(const Register native,
   comment("Save bytecode pointer");
   movl(Address(ebp, Constant(JavaFrame::bcp_store_offset())), esi);
 
-  if (GenerateDebugAssembly) {
-    trace_native_call(native);
-  }
+  trace_native_call(native);
 
   comment("Call the shared call vm");
   call_shared_call_vm(return_value_type);

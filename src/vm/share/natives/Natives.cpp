@@ -1719,7 +1719,7 @@ void Natives::register_natives_for(InstanceClass* c JVM_TRAPS) {
 
 #endif /* !ROMIZING || !PRODUCT */
 
-#ifndef PRODUCT
+#if ENABLE_TTY_TRACE
 extern "C" {
 address _current_native_function;
 }

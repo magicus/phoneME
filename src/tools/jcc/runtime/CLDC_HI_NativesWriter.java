@@ -501,7 +501,8 @@ public class CLDC_HI_NativesWriter
         out.println(" */");
         out.println();
         out.println("#include \"jvmconfig.h\"");
-        out.println("#if !defined(ROMIZING) || !defined(PRODUCT)");
+        out.println("#if !defined(ROMIZING) || !defined(PRODUCT) || \\");
+        out.println("    ENABLE_TTY_TRACE");
         out.println("#include \"NativesTable.hpp\"");
 	out.println("#include \"kni.h\"");	
     out.println();

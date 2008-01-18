@@ -558,7 +558,7 @@ private:
        op(bool, TraceMethodInlining, false,                                 \
           "Trace method inlining (only for ENABLE_INLINE)")                 \
                                                                             \
-  develop(bool, TraceNativeCalls, false,                                    \
+       op(bool, TraceNativeCalls, false,                                    \
           "Trace native method calls")                                      \
                                                                             \
        op(bool, TraceCompiledMethodCache, false,                            \
