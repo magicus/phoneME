@@ -200,7 +200,7 @@ extern "C" {
  * 
  * Media format type definition.
  */
-typedef javacall_const_utf8_string javacall_media_format_type;
+typedef char* javacall_media_format_type;
 
 /** @} */
 
@@ -243,7 +243,7 @@ typedef struct {
     /** Media format */
     javacall_media_format_type          mediaFormat;
     /** Content types for the media format, separated by space */
-    javacall_const_utf8_string          contentTypes;
+    char *                              contentTypes;
 
     /**  Bitmask of supported protocols for playback from 
      *   whole downloaded content including memory buffer
@@ -267,15 +267,15 @@ typedef struct {
     /** Supported capture audio formats and parameters;
      *  NULL if not supported
      */
-    javacall_const_utf8_string          audioEncoding;
+    char *                              audioEncoding;
     /** Supported capture video formats and parameters;
      *  NULL if not supported 
      */
-    javacall_const_utf8_string          videoEncoding;
+    char *                              videoEncoding;
     /** Supported video snapshot formats and parameters;
      *  NULL if not supported
      */
-    javacall_const_utf8_string          videoSnapshotEncoding;
+    char *                              videoSnapshotEncoding;
 
     /** Support Device Tone */
     javacall_bool                       supportDeviceTone;
@@ -341,7 +341,7 @@ javacall_result javacall_media_finalize(void);
 
 /**
  * Get multimedia capabilities of the device.
- * This function should return pointer to static array of javacall_media_caps value
+ * This function should fill configuration table and array multimedia capabilities
  * The last item of javacall_media_caps array should hold NULL mimeType value
  * Java layer will use this NULL value as a end of item mark
  *
@@ -1559,16 +1559,15 @@ javacall_result javacall_media_get_record_content_type_length(javacall_handle ha
  *
  * @param handle                Handle of native player
  * @param contentTypeBuf        Buffer to return content type unicode string
- * @param contentTypeBufLength  Length of contentTypeBuf buffer (in unicode metrics)
- * @param actualLength          Length of content type string stored in contentTypeBuf
+ * @param length                Length of contentTypeBuf as input parameter and 
+ *                              length of content type string stored in contentTypeBuf
  *
  * @retval JAVACALL_OK          Success
  * @retval JAVACALL_FAIL        Fail
  */
 javacall_result javacall_media_get_record_content_type(javacall_handle handle, 
                                            /*OUT*/ javacall_utf16* contentTypeBuf,
-                                           int contentTypeBufLength, 
-                                           /*OUT*/ int* actualLength);
+                                           /*INOUT*/ int* length);
 
 /**
  * Close the recording. OEM can delete all resources related with this recording.
