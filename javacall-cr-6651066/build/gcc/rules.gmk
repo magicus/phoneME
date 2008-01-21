@@ -22,7 +22,7 @@
 # information or have any questions. 
 #
 
-.PHONY: all pre_target javacall_lib post_target JAVACALL_EXTRA_LIBS
+.PHONY: all pre_target javacall_lib post_target
 
 all: pre_target javacall_common javacall_lib post_target
 
@@ -58,27 +58,14 @@ endif
 AR_EXTRACT_VERBOSE = xv
 
 CFLAGS+= -I$(JAVACALL_OUTPUT_INCLUDE_DIR)
+CFLAGS+= $(SPECIFIC_DEFINITIONS)
 
 ifneq ($(NOTIFIER_OBJECTS)x,x)
 EXTRA_LDFLAGS+=-lnotifiers$(BUILD_EXT) -L$(JAVACALL_OUTPUT_LIB_DIR)
 NOTIFIERS_LIB=$(JAVACALL_OUTPUT_LIB_DIR)/libnotifiers$(BUILD_EXT).$(LIB_EXTENSION)
 endif
 
-ifeq ($(USE_STATIC_PROPERTIES), true)
-CFLAGS+= -I$(JAVACALL_OUTPUT_DIR)
-STATIC_PROPERTIES_OBJ = $(JAVACALL_OUTPUT_OBJ_DIR)/static_properties.obj
-
-JAVACALL_EXTRA_LIBS:: $(JAVACALL_OUTPUT_LIB_DIR)/javacall_static_properties.a
-
-$(JAVACALL_OUTPUT_LIB_DIR)/libjavacall_static_properties.a: $(STATIC_PROPERTIES_H) $(STATIC_PROPERTIES_OBJ)
-	@echo "...Generating Library: $@"
-	$(AR) $(ARFLAGS) $@ $(STATIC_PROPERTIES_OBJ)
-
-endif
-
-JAVACALL_EXTRA_LIBS::
-
-javacall_lib: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).$(LIB_EXTENSION) JAVACALL_EXTRA_LIBS
+javacall_lib: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).$(LIB_EXTENSION)
 
 $(JAVACALL_OUTPUT_OBJ_DIR)/%.o: %.c
 	@echo "...compiling: $@"

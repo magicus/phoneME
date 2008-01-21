@@ -396,7 +396,7 @@ javacall_handle configdb_load_no_fs () {
         return NULL;
     }
 
-    for (i = 0; static_properties_sections[i] != NULL; i++) {        
+    for (i = 0; static_properties_sections[i] != NULL; i++) {
         //add section to db
         configdb_add_entry(db, static_properties_sections[i], NULL, NULL);
         //add keys and values

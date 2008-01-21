@@ -112,19 +112,6 @@ $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
 	@echo -n "...compiling: "
 	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
 
-
-ifeq ($(USE_STATIC_PROPERTIES), true)
-CPPFLAGS+= -I$(JAVACALL_OUTPUT_DIR)
-STATIC_PROPERTIES_OBJ = $(JAVACALL_OUTPUT_OBJ_DIR)/static_properties.obj
-
-JAVACALL_EXTRA_LIBS:: $(JAVACALL_OUTPUT_LIB_DIR)/javacall_static_properties.lib
-
-$(JAVACALL_OUTPUT_LIB_DIR)/javacall_static_properties.lib: $(STATIC_PROPERTIES_H) $(STATIC_PROPERTIES_OBJ)
-	@echo "...Generating Library: $@"
-	@$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $(STATIC_PROPERTIES_OBJ))`
-
-endif
-
 JAVACALL_EXTRA_LIBS::
 
 $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
