@@ -229,8 +229,12 @@ ifeq ($(ENABLE_INLINEASM_INTERPRETER), true)
 LOOP_GEN_ARG        += +GenerateInlineAsm
 endif
 
+ifeq ($(ENABLE_TTY_TRACE), true)
+LOOP_GEN_ARG        += +TraceNativeCalls
+endif
+
 LOOP_GEN_ARG_debug   = $(DETERMINISTIC_FLAG) $(TRACE_BYTECODES_FLAG) \
-                       -generate +GenerateDebugAssembly
+                       -generate +GenerateDebugAssembly +TraceNativeCalls
 LOOP_GEN_ARG_release = $(DETERMINISTIC_FLAG) -generateoptimized
 LOOP_GEN_ARG_product = $(DETERMINISTIC_FLAG) -generateoptimized
 LOOP_GEN_ARG        += $(LOOP_GEN_ARG_$(BUILD)) $(LOOP_GEN_FLAGS)

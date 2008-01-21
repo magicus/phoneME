@@ -1926,7 +1926,7 @@ void bc_fast_invokenative::generate() {
 bind(redo);
 
 #if ENABLE_TTY_TRACE
-  {
+  if (TraceNativeCalls) {
     // This is ugly. We can't use shared_call_vm, not because there's
     // anything wrong with using it here, but because we can't use it
     // for quick_native entries. See generate_quick_native_method_entry()

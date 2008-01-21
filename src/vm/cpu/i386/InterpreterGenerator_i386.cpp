@@ -627,7 +627,9 @@ InterpreterGenerator::generate_quick_native_method_entry(BasicType return_type)
   comment("Get the quick native function entry and call it");
   movl(eax, Address(ebx, Constant(Method::quick_native_code_offset())));
 
-  trace_native_call(eax);
+  if (TraceNativeCalls) {
+    trace_native_call(eax);
+  }
 
   comment("Tell VM we're in quick native methods");
   movl(Address(Constant("_jvm_in_quick_native_method")), Constant(1));

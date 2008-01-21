@@ -591,7 +591,7 @@ InterpreterGenerator::generate_quick_native_method_entry(BasicType return_type)
   set_jvm_in_quick_native_method(tmp1);
 
 #if ENABLE_TTY_TRACE
-  {
+  if (TraceNativeCalls) {
     Label skip;
 
     comment("Trace native calls");
