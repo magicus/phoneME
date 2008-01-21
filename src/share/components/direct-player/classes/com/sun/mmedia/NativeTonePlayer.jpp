@@ -60,7 +60,7 @@ public class NativeTonePlayer implements TonePlayer {
 
 
         // Get current application ID to support MVM
-        int appId = AppPackage.getId();
+        int appId = AppPackage.getInstance().getId();
 
         if (false == nPlayTone(appId, note, duration, volume)) {
             throw new MediaException("can't play tone");
@@ -72,7 +72,7 @@ public class NativeTonePlayer implements TonePlayer {
      */
     public void stopTone() {
         // Get current application ID to support MVM
-        int appId = AppPackage.getId();
+        int appId = AppPackage.getInstance().getId();
 
         nStopTone(appId);
     }

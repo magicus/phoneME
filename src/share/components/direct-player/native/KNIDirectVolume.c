@@ -82,7 +82,7 @@ KNIDECL(com_sun_mmedia_DirectVolume_nIsMuted) {
 
     MMP_DEBUG_STR("[kni_volume] +nIsMuted\n");
 
-    if (pKniInfo && pKniInfo->pNativeHandle)
+    if (pKniInfo && pKniInfo->pNativeHandle) {
         ret= javacall_media_is_mute(pKniInfo->pNativeHandle, &isMuted);
     } else {
         MMP_DEBUG_STR("[nIsMuted] Invalid native handle");

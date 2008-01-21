@@ -237,23 +237,18 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nBuffering) {
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle && length > 0) {
         int ret;
-        if (tmpArray != NULL) {
-            ret = javacall_media_get_buffer_address(pKniInfo->pNativeHandle, &nBuffer, &nBufferSize);
-            if ((ret == JAVACALL_OK) && (nBuffer != NULL)) {
-                if (nBufferSize < length) {
-                    length = nBufferSize;
-                }
-                MMP_DEBUG_STR2("+nBuffering length=%d\n", length);
-                KNI_GetRawArrayRegion(bufferHandle, 0, (int)length, (jbyte*)nBuffer);
-                ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, 
-                (const char*)nBuffer, (long)length, &need_more_data, &min_data_size);
-                if (ret == JAVACALL_OK) {
-                    returnValue = length;
-                }
+        ret = javacall_media_get_buffer_address(pKniInfo->pNativeHandle, &nBuffer, &nBufferSize);
+        if ((ret == JAVACALL_OK) && (nBuffer != NULL)) {
+            if (nBufferSize < length) {
+                length = nBufferSize;
             }
-        } else {
-            REPORT_ERROR(LC_MMAPI, "[kni_player] nBuffering allocation fail\n");                
-            KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+            MMP_DEBUG_STR1("+nBuffering length=%d\n", length);
+            KNI_GetRawArrayRegion(bufferHandle, 0, (int)length, (jbyte*)nBuffer);
+            ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, 
+                    (const char*)nBuffer, (long)length, &need_more_data, &min_data_size);
+            if (ret == JAVACALL_OK) {
+                returnValue = length;
+            }
         }
     } else if (pKniInfo && pKniInfo->pNativeHandle) {
         /* Indicate end of buffering by using NULL buffer */
@@ -461,7 +456,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nIsNeedBuffering) {
 LockAudioMutex();            
     /* Is buffering handled by device side? */
     if (pKniInfo && pKniInfo->pNativeHandle &&
-		JAVACALL_OK == javacall_media_protocol_handled_by_device(pKniInfo->pNativeHandle)) {
+		JAVACALL_OK == javacall_media_download_handled_by_device(pKniInfo->pNativeHandle)) {
         returnValue = KNI_FALSE;
     }
 UnlockAudioMutex();            
@@ -486,7 +481,7 @@ LockAudioMutex();
         if (1 != pKniInfo->isForeground) {
             pKniInfo->isForeground = 1;
             if (JAVACALL_SUCCEEDED(javacall_media_to_foreground(
-                pKniInfo->pNativeHandle, KNIPlayerInfo->appId))) {
+                pKniInfo->pNativeHandle, pKniInfo->appId))) {
                 returnValue = KNI_TRUE;
             }
         } else {
@@ -513,7 +508,7 @@ LockAudioMutex();
         if (0 != pKniInfo->isForeground) {
             pKniInfo->isForeground = 0;
             if (JAVACALL_SUCCEEDED(javacall_media_to_background(
-                pKniInfo->pNativeHandle, KNIPlayerInfo->appId))) {
+                pKniInfo->pNativeHandle, pKniInfo->appId))) {
                 returnValue = KNI_TRUE;
             }
         } else {
