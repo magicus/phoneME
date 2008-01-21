@@ -73,49 +73,47 @@
 #ifndef __PROPERTIES_STATIC_DATA_H
 #define __PROPERTIES_STATIC_DATA_H
 
-char* static_properties_sections[] = {
+static char* static_properties_sections[] = {
     "application",
     "internal",
     NULL
-};
-
-</xsl:text>
+};</xsl:text>
 
 <!-- output array of properties with internal scope keys -->
-char* internalKey[] = {
+static char* internalKey[] = {
 <xsl:call-template name="outputKeys">
 <xsl:with-param name="nodes" select="$internalProps"/>
 </xsl:call-template>    NULL
 };
 
 <!-- output array of properties with internal scope values -->
-char* internalValue[] = {
+static char* internalValue[] = {
 <xsl:call-template name="outputValues">
 <xsl:with-param name="nodes" select="$internalProps"/>
 </xsl:call-template>    NULL
 };
 
 <!-- output array of properties with system scope keys -->
-char* systemKey[] = {
+static char* systemKey[] = {
 <xsl:call-template name="outputKeys">
 <xsl:with-param name="nodes" select="$systemProps"/>
 </xsl:call-template>    NULL
 };
 
 <!-- output array of properties with system scope values -->
-char* systemValue[] = {
+static char* systemValue[] = {
 <xsl:call-template name="outputValues">
 <xsl:with-param name="nodes" select="$systemProps"/>
 </xsl:call-template>    NULL
 };
 
-char** static_properties_keys[] = {
+static char** static_properties_keys[] = {
     systemKey,
     systemValue,
     NULL
 };
 
-char** static_properties_values[] = {
+static char** static_properties_values[] = {
     internalKey,
     internalValue,
     NULL
