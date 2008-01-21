@@ -175,7 +175,7 @@ getSystemProperty(const char* key) {
         return str;
     }
 
-    // Attempt to obtain the property from callout function
+    /* Attempt to obtain the property from callout function */
     return doCallout(key);
 }
 
