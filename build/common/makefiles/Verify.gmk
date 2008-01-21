@@ -387,6 +387,18 @@ USE_VERIFY_ONCE::
 	  fi; \
 	fi
 
+USE_ON_DEVICE_DEBUG::
+	@if [ "$(USE_ON_DEVICE_DEBUG)" = "true" ]; then \
+	  if [ -z "$(PROJECT_MIDP_DIR)" ]; then \
+	    echo "ERROR: PROJECT_MIDP_DIR must be set when USE_ON_DEVICE_DEBUG is true"; \
+	    exit -1; \
+	  fi; \
+	  if [ -z "$(SDK_ODD_DIR)" ]; then \
+	    echo "ERROR: SDK_ODD_DIR must be set when USE_ON_DEVICE_DEBUG is true"; \
+	    exit -1; \
+	  fi; \
+	fi
+
 USE_SERVER_SOCKET::
 	@$(call verify_pcsl_boolean,$(USE_SERVER_SOCKET),PCSL_SERVER_SOCKET)
 

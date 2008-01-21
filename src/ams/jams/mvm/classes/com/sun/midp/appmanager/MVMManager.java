@@ -279,7 +279,7 @@ public class MVMManager extends MIDlet
         }
     }
 
-    /** Launch the CA manager. */
+    /** Launch the ODT agent. */
     public void launchODTAgent() {
         try {
             MIDletSuiteUtils.execute(MIDletSuite.INTERNAL_SUITE_ID,

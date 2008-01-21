@@ -383,6 +383,14 @@ class AppManagerUI extends Form
      * Shows ODT Agent midlet in the midlet list. 
      */
     public void showODTAgent() {
+        try {
+            // check if the ODTAgent midlet is included into the build
+            Class.forName(ODT_AGENT);
+        } catch (ClassNotFoundException e) {
+            // return if the agent is not included
+            return;
+        }
+
         oddEnabled = true;
         updateContent();
     }
