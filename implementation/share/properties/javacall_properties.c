@@ -37,6 +37,7 @@ static unsigned short property_file_name[] = {'j','w','c','_','p','r','o','p','e
 
 static javacall_handle handle = NULL;
 static int property_was_updated = 0;
+static int init_done = 0;
 
 static const char application_prefix[] = "application:";
 static const char internal_prefix[] = "internal:";
@@ -48,12 +49,17 @@ static const char internal_prefix[] = "internal:";
  */
 javacall_result javacall_initialize_configurations(void) {
     int file_name_len = sizeof(property_file_name)/sizeof(unsigned short);
+    if (init_done) {
+        return JAVACALL_OK;
+    }
+
     property_was_updated = 0;
 
     handle = javacall_configdb_load(property_file_name, file_name_len);
     if (handle == NULL) {
         return JAVACALL_FAIL;
     }
+    init_done = 1;
     return JAVACALL_OK;
 }
 
