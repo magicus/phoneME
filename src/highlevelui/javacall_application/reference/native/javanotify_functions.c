@@ -1190,27 +1190,26 @@ void javanotify_datagram_event(javacall_datagram_callback_type type,
  * Post native media event to Java event handler
  * 
  * @param type          Event type
- * @param playerId      Player ID that came from javacall_media_create function
+ * @param appId         Application ID
+ * @param playerId      Player ID
+ * @param status        Event status
  * @param data          Data for this event type
  */
 void javanotify_on_media_notification(javacall_media_notification_type type,
-                                      javacall_int64 playerId,
+                                      int appId,
+                                      int playerId, 
+                                      javacall_result status,
                                       void *data) {
 #if ENABLE_JSR_135
-    extern int g_currentPlayer;
-
     midp_jc_event_union e;
 
-    if (-1 == playerId) {
-        playerId = g_currentPlayer;
-    }
-
-    REPORT_INFO2(LC_MMAPI, "javanotify_on_media_notification type=%d id=%d\n", type, (int)(playerId & 0xFFFFFFFF));
+    REPORT_INFO2(LC_MMAPI, "javanotify_on_media_notification type=%d appId=%d playerId%d status=%d\n", type, appId, playerId, status);
 
     e.eventType = MIDP_JC_EVENT_MULTIMEDIA;
     e.data.multimediaEvent.mediaType = type;
-    e.data.multimediaEvent.isolateId = (int)((playerId >> 32) & 0xFFFF);
-    e.data.multimediaEvent.playerId = (int)(playerId & 0xFFFF);
+    e.data.multimediaEvent.appId = appId;
+    e.data.multimediaEvent.playerId = playerId;
+    e.data.multimediaEvent.status = (int) status;
     e.data.multimediaEvent.data = (int) data;
 
     midp_jc_event_send(&e);
