@@ -340,16 +340,15 @@ javacall_result javacall_media_finalize(void);
  */
 
 /**
- * Get multimedia capabilities of the device.
- * This function should fill configuration table and array multimedia capabilities
- * The last item of javacall_media_caps array should hold NULL mimeType value
- * Java layer will use this NULL value as a end of item mark
+ * Get multimedia configuration of the device.
+ * This function should return pointer to static consfiguration structure with
+ * static array of javacall_media_caps values.
  *
  * @retval JAVACALL_OK               success
  *         JAVACALL_INVALID_ARGUMENT if argument is NULL
  */
 javacall_result javacall_media_get_configuration(
-                            javacall_media_configuration /*OUT*/*configuration);
+                    const javacall_media_configuration* /*OUT*/*configuration);
 
 /** @} */ 
 
@@ -392,7 +391,7 @@ javacall_result javacall_media_create(int appID,
                                       javacall_const_utf16_string uri, 
                                       long uriLength,
                                       long contentSize,
-                                      javacall_handle *handle);
+                                      /*OUT*/javacall_handle *handle);
 
 /**
  * Get the format type of media content
@@ -1610,7 +1609,7 @@ javacall_result javacall_media_close_recording(javacall_handle handle);
  * @param appID     ID of the application to be foreground
  *
  * @retval JAVACALL_OK      Something happened
- * @retval JAVACALL_FAIL    Nothing happened. JVM ignore this return value now.
+ * @retval JAVACALL_FAIL    Nothing happened. JVM ignores this return value now.
  */
 javacall_result javacall_media_to_foreground(const javacall_handle handle,
                                              const int appID);
@@ -1629,7 +1628,7 @@ javacall_result javacall_media_to_foreground(const javacall_handle handle,
  * @param appID     ID of the application to be background
  *
  * @retval JAVACALL_OK      Somthing happened
- * @retval JAVACALL_FAIL    Nothing happened. JVM ignore this return value now.
+ * @retval JAVACALL_FAIL    Nothing happened. JVM ignores this return value now.
  */
 javacall_result javacall_media_to_background(const javacall_handle handle,
                                              const int appID);
