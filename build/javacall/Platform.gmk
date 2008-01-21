@@ -33,7 +33,12 @@ ifeq ($(JAVACALL_PLATFORM),)
 $(error JAVACALL_PLATFORM is not set)
 endif
 
+ifneq ($(USE_STATIC_PROPERTIES), true)
+# JavaCall set of properties needs to be included only if a merged ini-file
+# is going to be generated. Otherwise, MIDP/JSRs properties will be added to
+# the JavaCall set at run-time.
 SUBSYSTEM_CONFIGURATION_INPUT_FILES += \
     $(JAVACALL_OUTPUT_DIR)/properties.xml
+endif
 
 include $(JAVACALL_PLATFORM).gmk

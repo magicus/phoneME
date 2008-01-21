@@ -41,11 +41,6 @@ vpath % $(SUBSYSTEM_DIR)/configuration/properties_port/javacall/native
 JAVACALL_PROPERTIES_PORT_NATIVE_FILES = \
     midp_properties_javacall.c
 
-ifeq ($(USE_STATIC_PROPERTIES), true)
-JAVACALL_PROPERTIES_PORT_NATIVE_FILES += \
-    properties_static_data.c
-endif
-
 # Include files
 # 
 INT_PROPERTIES_PORT_JAVA_FILES = 
