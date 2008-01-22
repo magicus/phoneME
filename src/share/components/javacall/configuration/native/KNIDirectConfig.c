@@ -449,7 +449,6 @@ static javacall_result simple_jcharString_to_asciiString(
                     char *asciiStringBuffer, 
                     jsize bufferSize) {
 
-    bufferSize--;
     while (bufferSize-- > 0 && jcharStringLen-- > 0) {
         if ((javacall_int32)*jcharString > 0x7F) {
             return JAVACALL_FAIL;
