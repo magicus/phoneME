@@ -39,8 +39,8 @@ CVM_CRW_OBJDIR        = $(CVM_CRW_BUILD_TOP)/obj
 CVM_CRW_FLAGSDIR      = $(CVM_CRW_BUILD_TOP)/flags
 CVM_CRW_CLASSES	      = $(CVM_CRW_BUILD_TOP)/classes
 
-CVM_CRW_LIBDIR        = $(CVM_LIBDIR)
-CVM_CRW_JARDIR        = $(CVM_LIBDIR)
+CVM_CRW_LIBDIR        ?= $(CVM_LIBDIR)
+CVM_CRW_JARDIR        ?= $(CVM_LIBDIR)
 
 CVM_CRW_SHAREROOT     = $(CVM_SHAREROOT)/tools/jvmti/crw
 CVM_CRW_SHARECLASSESROOT = $(CVM_SHAREDCLASSES_SRCDIR)/com/sun/demo/jvmti/hprof
@@ -160,10 +160,12 @@ ifneq ($(strip $(files)),)
 endif
 
 $(CVM_CRW_JARDIR)/$(CVM_CRW_JAR): $(CVM_CRW_TRACKER)
-	$(CVM_JAR) cf $@ -C $(CVM_CRW_CLASSES) com/
+	@echo "... $@"
+	$(AT)$(CVM_JAR) cf $@ -C $(CVM_CRW_CLASSES) com/
 
 $(CVM_CRW_CLASSES)/%.class: %.java
-	$(CVM_JAVAC) -d $(CVM_CRW_CLASSES) \
+	@echo "Compiling crw classes..."
+	$(AT)$(CVM_JAVAC) -d $(CVM_CRW_CLASSES) \
 		-sourcepath $(CVM_CRW_SHARECLASSESROOT) \
 		$<
 
