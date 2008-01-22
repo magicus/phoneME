@@ -49,9 +49,9 @@ char print_buffer[PRINT_BUFFER_SIZE];
 */
 void javacall_print(const char *s) {
     if(s != NULL) {
-        puts(s);
+        printf(s);
     } else {
-        puts("NULL\n");
+        printf("NULL\n");
     }
 }
 

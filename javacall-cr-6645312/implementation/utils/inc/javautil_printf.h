@@ -29,10 +29,21 @@
 
 #include <stdarg.h>
 
-// to be used from javacall
+
+/**
+ * Not all compilers provide printf function, so we have 
+ * to use workaround. This function is to be used from javacall.
+ */
+
 void javautil_printf(int severity, int channelID, char *message, ...);
 
-// To be used from midp
+/**
+ * Not all compilers provide vprintf function, so we have 
+ * to use workaround. This function is to be used from midp.
+ * Prints out thr DEBUG message in the following format:
+ *  elapsed time in milliseconds|severiry|channel ID|isolate ID|message
+ */
+
 void javautil_vprintf(int severity, int channelID, int isolateID, char *szTypes, va_list vl);
 
 
