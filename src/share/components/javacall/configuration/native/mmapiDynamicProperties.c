@@ -27,19 +27,19 @@
 #include <javacall_defs.h>
 #include <javacall_multimedia.h>
 
-static javacall_media_configuration configuration;
+static const javacall_media_configuration *configuration;
 static javacall_bool configuration_filled = JAVACALL_FALSE;
 
 javacall_media_configuration *get_configuration() {
     if (JAVACALL_FALSE == configuration_filled) {
         if (JAVACALL_OK == javacall_media_get_configuration(&configuration)) {
             configuration_filled = JAVACALL_TRUE;
-            return &configuration;
+            return configuration;
         } else {
             return NULL;
         }
     }
-    return &configuration;
+    return configuration;
 }
 
 

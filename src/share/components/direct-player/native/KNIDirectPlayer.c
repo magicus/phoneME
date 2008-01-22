@@ -125,7 +125,7 @@ LockAudioMutex();
         pKniInfo->isDirectFile = JAVACALL_FALSE;
         pKniInfo->isForeground = -1;
         pKniInfo->recordState = RECORD_CLOSE;
-        res = javacall_media_create(appId, playerId, pszMimeType, mimeLength, pszURI, URILength, (long)contentLength, &pKniInfo->pNativeHandle); 
+        res = javacall_media_create(appId, playerId, pszURI, URILength, (long)contentLength, &pKniInfo->pNativeHandle); 
         if (res == JAVACALL_FAIL) {
             MMP_FREE(pKniInfo);
         } else {
