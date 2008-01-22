@@ -1307,12 +1307,61 @@ void javanotify_location_event(
     midp_jc_event_union e;
 
     e.eventType = JSR179_LOCATION_JC_EVENT;
-    e.data.jsr179LocationEvent.event = event;
+
+    switch(event){
+    case JAVACALL_EVENT_LOCATION_ORIENTATION_COMPLETED:
+        e.data.jsr179LocationEvent.event = JSR179_ORIENTATION_SIGNAL;   
+        break;
+    default:
+        e.data.jsr179LocationEvent.event = JSR179_LOCATION_SIGNAL;
+        break;
+    }   
+    
     e.data.jsr179LocationEvent.provider = provider;
     e.data.jsr179LocationEvent.operation_result = operation_result;
 
     midp_jc_event_send(&e);
 }
+
+/**
+ * A callback function to be called for notification of proximity monitoring updates.
+ *
+ * This function will be called only once when the terminal enters the proximity of the registered coordinate. 
+ *
+ * @param provider handle of provider related to the notification
+ * @param latitude of registered coordinate.
+ * @param longitude of registered coordinate.
+ * @param proximityRadius of registered coordinate.
+ * @param pLocationInfo location info
+ * @param operation_result operation result: Either
+ *      - JAVACALL_OK if operation completed successfully, 
+ *      - JAVACALL_LOCATION_RESULT_CANCELED if operation is canceled 
+ *      - JAVACALL_LOCATION_RESULT_OUT_OF_SERVICE if provider is out of service
+ *      - JAVACALL_LOCATION_RESULT_TEMPORARILY_UNAVAILABLE if provider is temporarily unavailable
+ *      - otherwise, JAVACALL_FAIL
+ */
+void /*OPTIONAL*/javanotify_location_proximity(
+        javacall_handle provider,
+        double latitude,
+        double longitude,
+        float proximityRadius,
+        javacall_location_location* pLocationInfo,
+        javacall_location_result operation_result) {
+
+    midp_jc_event_union e;
+
+    e.eventType = JSR179_PROXIMITY_JC_EVENT;
+    e.data.jsr179ProximityEvent.provider = provider;
+    e.data.jsr179ProximityEvent.latitude = latitude;
+    e.data.jsr179ProximityEvent.longitude = longitude;
+    e.data.jsr179ProximityEvent.proximityRadius = proximityRadius;
+    e.data.jsr179ProximityEvent.operation_result = operation_result;
+    if (pLocationInfo)
+        memcpy(&(e.data.jsr179ProximityEvent.location), pLocationInfo , sizeof(javacall_location_location));
+
+    midp_jc_event_send(&e);
+}
+
 #endif /* ENABLE_JSR_179 */
 
 /**
