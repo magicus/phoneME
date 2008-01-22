@@ -587,26 +587,27 @@ KNIDECL(com_sun_midp_io_j2me_sms_Protocol_waitUntilMessageAvailable0) {
             if (pSMSData != NULL) {
                 messageLength = pSMSData->msgLen;
             } else {
+                /* Check needStopReceiver value to minimise deadlock risk */
+                jboolean needStopReceiver = KNI_GetBooleanField(this, KNI_GetFieldID(thisClass, "needStopReceiver", "Z"));
+                if (!needStopReceiver) {
 #if ENABLE_REENTRY
-                if (!info) {
-
-                     /* Block and wait for a message. */
-                    midp_thread_wait(WMA_SMS_READ_SIGNAL, handle, NULL);
+                    if (!info) {
+                        /* Block and wait for a message. */
+                        midp_thread_wait(WMA_SMS_READ_SIGNAL, handle, NULL);
+                    } else {
+                        /* May have been awakened due to interrupt. */
+                        messageLength = -1;
+                    }
 #else
-        CVMD_gcSafeExec(_ee, {
-            jsr120_wait_for_signal(handle, WMA_SMS_READ_SIGNAL);
-            pSMSData = jsr120_sms_pool_peek_next_msg1((jchar)port, 1);
-            if (pSMSData != NULL) {
-                messageLength = pSMSData->msgLen;
-            }
-        }); 
+                    CVMD_gcSafeExec(_ee, {
+                        jsr120_wait_for_signal(handle, WMA_SMS_READ_SIGNAL);
+                        pSMSData = jsr120_sms_pool_peek_next_msg1((jchar)port, 1);
+                        if (pSMSData != NULL) {
+                             messageLength = pSMSData->msgLen;
+                        }
+                    }); 
 #endif
-#if ENABLE_REENTRY
-                } else {
-                     /* May have been awakened due to interrupt. */
-                     messageLength = -1;
                 }
-#endif
             }
         }
     }
