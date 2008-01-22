@@ -77,7 +77,6 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectPlayer_nInit) {
     jint  appId = KNI_GetParameterAsInt(1);
     jint  playerId = KNI_GetParameterAsInt(2);
-    jlong contentLength = KNI_GetParameterAsLong(5);
     jint  returnValue = 0;
     jint   mimeLength, URILength;
     jchar* pszMimeType = NULL;
@@ -116,7 +115,6 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nInit) {
 LockAudioMutex();
     if (pKniInfo && pszMimeType /* && pszURI */) {
         /* prepare kni internal information */
-        pKniInfo->contentLength = (long)contentLength;
         pKniInfo->appId = appId;
         pKniInfo->playerId = playerId;
         pKniInfo->isAcquire = 0;
@@ -125,7 +123,7 @@ LockAudioMutex();
         pKniInfo->isDirectFile = JAVACALL_FALSE;
         pKniInfo->isForeground = -1;
         pKniInfo->recordState = RECORD_CLOSE;
-        res = javacall_media_create(appId, playerId, pszURI, URILength, (long)contentLength, &pKniInfo->pNativeHandle); 
+        res = javacall_media_create(appId, playerId, pszURI, URILength, &pKniInfo->pNativeHandle); 
         if (res == JAVACALL_FAIL) {
             MMP_FREE(pKniInfo);
         } else {
