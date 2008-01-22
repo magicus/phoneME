@@ -26,45 +26,437 @@
 #include "KNICommon.h"
 #include <jsrop_kni.h>
 #include <javautil_string.h>
-          
+
+#define MAX_PROTOCOLNAME_LEN 30
+#define MAX_MIMETYPENAME_LEN 50
+
+typedef struct {
+    char *current;
+    char list[0];
+} ListIterator;
+
+static struct _protocolNames {
+    int proto_mask;
+    char *proto_name;
+} protocolNames[] = {
+    JAVACALL_MEDIA_MEMORY_PROTOCOL,     "memory",
+    JAVACALL_MEDIA_FILE_LOCAL_PROTOCOL, "file",
+    JAVACALL_MEDIA_FILE_REMOTE_PROTOCOL,"file",
+    JAVACALL_MEDIA_HTTP_PROTOCOL,       "http",
+    JAVACALL_MEDIA_HTTPS_PROTOCOL,      "https",
+    JAVACALL_MEDIA_RTP_PROTOCOL,        "rtp",
+    JAVACALL_MEDIA_RTSP_PROTOCOL,       "rtsp"
+};
+
+static void delete_duplicates(char *p);
+static javacall_result simple_jcharString_to_asciiString(jchar *jcharString, jsize jcharStringLen, char *asciiStringBuffer, jsize bufferSize);
 
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
-    KNI_ReturnInt( 0 ); 
+    javacall_int32 proto_mask = 0;
+    javacall_media_configuration *cfg;
+    javacall_media_caps *caps;
+    int len;
+    ListIterator *iterator = NULL;
+    char *p;
+    jchar stack_string16_buffer[MAX_PROTOCOLNAME_LEN], *string16 = NULL;
+    char stack_string_buffer[MAX_PROTOCOLNAME_LEN], *proto = NULL;
+    
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(stringObj);
+    KNI_GetParameterAsObject(1, stringObj);
+
+    do {
+        if (KNI_IsNullHandle(stringObj)) {
+            proto = NULL;
+        } else {
+            len = KNI_GetStringLength(stringObj);
+            /* if the string is longer than the stack buffer try to malloc it */
+            if (len >= sizeof stack_string16_buffer / sizeof stack_string16_buffer[0]) {
+                string16 = MALLOC((len + 1) * sizeof *string16);
+                if (string16 == NULL) {
+                    KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+                    break;
+                }
+            } else {
+                string16 = stack_string16_buffer;
+            }
+            if (len >= sizeof stack_string_buffer) {
+                proto = MALLOC(len + 1);
+                if (proto == NULL) {
+                    KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+                    break;
+                }
+            } else {
+                proto = stack_string_buffer;
+            }
+            KNI_GetStringRegion(stringObj, 0, len, string16);
+            if (simple_jcharString_to_asciiString(string16, len, proto, len) != JAVACALL_OK) {
+                KNI_ThrowNew(jsropIllegalArgumentException, "Illegal character in protocol name");
+                break;
+            }
+        }
+        if (proto != NULL) {
+            int i;
+            
+            /* trying to find protocol by name */
+            for (i = 0; i < sizeof protocolNames / sizeof protocolNames[0]; i++) {
+                if (protocolNames[i].proto_name != NULL && !javautil_stricmp(protocolNames[i].proto_name, proto)) {
+                    proto_mask |= protocolNames[i].proto_mask;
+                }
+            }
+        }
+        if (proto_mask == 0 && proto != NULL) {
+            /* Requested protocol wasn't found. Return 0 */
+            break;
+        }
+        
+        if (javacall_media_get_configuration(&cfg) != JAVACALL_OK) {
+            KNI_ThrowNew(jsropRuntimeException, "Couldn't get MMAPI configuration");
+            break;
+        }
+        
+        /* how long will be list of content types */
+        len = 0;
+        for (caps = cfg->mediaCaps; caps != NULL && caps->mediaFormat != NULL; caps++) {
+            if (proto == NULL || (caps->wholeProtocols & proto_mask) != 0
+                    || (caps->streamingProtocols & proto_mask) != 0) {
+                len += strlen(caps->contentTypes) + 1; /* +1 for space char */
+            }
+        }
+     
+        if (len == 0) {
+            /* No MIME types were found for provided protocol. Return 0 */
+            break;
+        }
+     
+        iterator = (ListIterator*)MALLOC(sizeof *iterator + len); /* zero terminator instead of last space */
+        if (iterator == NULL) {
+            KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+            break;
+        }
+    
+        /* initialize the iterator */
+        iterator->current = iterator->list;
+    
+        /* filling the list of content types */
+        p = iterator->list;
+        for (caps = cfg->mediaCaps; caps != NULL && caps->mediaFormat != NULL; caps++) {
+            if (proto == NULL || (caps->wholeProtocols & proto_mask) != 0
+                    || (caps->streamingProtocols & proto_mask) != 0) {
+                int types_len = strlen(caps->contentTypes);
+                memcpy(p, caps->contentTypes, types_len);
+                p += types_len;
+                *p++ = ' ';
+            }
+        }
+        p--; *p = '\0'; /* replace last space with zero */
+        
+        delete_duplicates(iterator->list);
+    } while (0);
+
+    /* freeing buffers */
+    if (proto != NULL && proto != stack_string_buffer) {
+        FREE(proto);
+    }
+    if (string16 != NULL && string16 != stack_string16_buffer) {
+        FREE(string16);
+    }
+    KNI_EndHandles();
+    KNI_ReturnInt((jint)iterator); 
 };
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesNext) {
-
+    ListIterator *iterator;
+    char *p;
+    int len;
+    char stack_string_buffer[MAX_MIMETYPENAME_LEN], *mime = NULL;
+    
     KNI_StartHandles(1);
     KNI_DeclareHandle(stringObj);
+    iterator = (ListIterator *)KNI_GetParameterAsInt(1);
     KNI_ReleaseHandle(stringObj);
 
+    do {
+        if (iterator == NULL || iterator->current == NULL) { /* Wrong parameter */
+            KNI_ThrowNew(jsropIllegalArgumentException, "Illegal iterator");
+            break;
+        }
+        if ((p = strchr(iterator->current, ' ')) != NULL) {
+            len = (int)(p - iterator->current);
+        } else {
+            len = strlen(iterator->current);
+        }
+        if (len == 0) { /* End of list */
+            break;
+        }
+        if (len >= sizeof stack_string_buffer / sizeof stack_string_buffer[0]) {
+            mime = MALLOC(len + 1);
+            if (mime == NULL) {
+                KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+                break;
+            }
+        } else {
+            mime = stack_string_buffer;
+        }
 
+        memcpy(mime, iterator->current, len);
+        mime[len] = '\0';
+        iterator->current += len;
+        while (*iterator->current == ' ') {
+            iterator->current++;
+        }
+    } while (0);
+    
+    if (mime != NULL) {
+        KNI_NewStringUTF(mime, stringObj);
+        if (mime != stack_string_buffer) {
+            FREE(mime);
+        }
+    }
     KNI_EndHandlesAndReturnObject(stringObj);
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesClose) {
+    ListIterator *iterator;
+    if ((iterator = (ListIterator *)KNI_GetParameterAsInt(1)) != NULL) {
+        FREE(iterator);
+    }
     KNI_ReturnVoid();
 }
 
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
-    KNI_ReturnInt( 0 ); 
+    javacall_media_configuration *cfg;
+    javacall_media_caps *caps;
+    ListIterator *iterator = NULL;
+    javacall_int32 proto_mask = 0;
+    char *p;
+    jchar stack_string16_buffer[MAX_PROTOCOLNAME_LEN], *string16 = NULL;
+    char stack_string_buffer[MAX_PROTOCOLNAME_LEN], *mime = NULL;
+    
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(stringObj);
+    KNI_GetParameterAsObject(1, stringObj);
+
+    do {
+        if (KNI_IsNullHandle(stringObj)) {
+            mime = NULL;
+        } else {
+            int len = KNI_GetStringLength(stringObj);
+            if (len >= sizeof stack_string16_buffer / sizeof stack_string16_buffer[0]) {
+                string16 = MALLOC((len + 1) * sizeof *string16);
+                if (string16 == NULL) {
+                    KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+                    break;
+                }
+            } else {
+                string16 = stack_string16_buffer;
+            }
+            if (len >= sizeof stack_string_buffer / sizeof stack_string_buffer[0]) {
+                mime = MALLOC(len + 1);
+                if (mime == NULL) {
+                    KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+                    break;
+                }
+            } else {
+                mime = stack_string_buffer;
+            }
+            KNI_GetStringRegion(stringObj, 0, len, string16);
+            if (simple_jcharString_to_asciiString(string16, len, mime, len) != JAVACALL_OK) {
+                KNI_ThrowNew(jsropIllegalArgumentException, "Illegal character in MIME type name");
+                break;
+            }
+        }
+        if (javacall_media_get_configuration(&cfg) != JAVACALL_OK) {
+            KNI_ThrowNew(jsropRuntimeException, "Couldn't get MMAPI configuration");
+            break;
+        }
+        for (caps = cfg->mediaCaps; caps != NULL && caps->mediaFormat != NULL; caps++) {
+            if (caps->wholeProtocols != 0 || caps->streamingProtocols != 0) {
+                if (mime != NULL) {
+                    char *s;
+                    int m_len = strlen(mime);
+                    
+                    for (p = (char *)caps->contentTypes; p != NULL; p = s) {
+                        int p_len;
+                        
+                        while (*p == ' ') {
+                            p++;
+                        }
+                        if ((s = strchr(p, ' ')) != NULL) {
+                            p_len = (int)(s - p);
+                        } else {
+                            p_len = strlen(p);
+                        }
+                        if (p_len == m_len && !javautil_strnicmp(mime, p, p_len)) {
+                            break;
+                        }
+                    }
+                }
+                if (mime == NULL || p != NULL) {
+                    proto_mask |= caps->wholeProtocols;
+                    proto_mask |= caps->streamingProtocols;
+                }
+            }
+        }
+        if (proto_mask != 0) {
+            int i;
+            int len = 0;
+            
+            for (i = 0; i < sizeof protocolNames / sizeof protocolNames[0]; i++) {
+                if ((protocolNames[i].proto_mask & proto_mask) != 0 && protocolNames[i].proto_name != NULL) {
+                    len += strlen(protocolNames[i].proto_name) + 1; /* +1 for space char */
+                }
+            }
+            if (len == 0) {
+                iterator = NULL;
+                break;
+            }
+         
+            iterator = (ListIterator*)MALLOC(sizeof *iterator + len); /* zero terminator instead of last space */
+            if (iterator == NULL) {
+                KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+                break;
+            }
+        
+            iterator->current = iterator->list;
+        
+            p = iterator->list;
+            for (i = 0; i < sizeof protocolNames / sizeof protocolNames[0]; i++) {
+                if ((protocolNames[i].proto_mask & proto_mask) != 0 && protocolNames[i].proto_name != NULL) {
+                    int proto_len = strlen(protocolNames[i].proto_name);
+                    memcpy(p, protocolNames[i].proto_name, proto_len);
+                    p += proto_len;
+                    *p++ = ' ';
+                }
+            }
+            p--; *p = '\0'; /* replace last space with zero */
+        } else {
+            /* protocol wasn't found */
+            iterator = NULL;
+            break;
+        }
+        delete_duplicates(iterator->list);
+    } while (0);
+
+    if (mime != NULL && mime != stack_string_buffer) {
+        FREE(mime);
+    }
+    if (string16 != NULL && string16 != stack_string16_buffer) {
+        FREE(string16);
+    }
+    KNI_EndHandles();
+    KNI_ReturnInt((jint)iterator); 
 };
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsNext) {
-
+    ListIterator *iterator;
+    char *p;
+    int len;
+    char stack_string_buffer[MAX_PROTOCOLNAME_LEN], *proto = NULL;
+    
     KNI_StartHandles(1);
     KNI_DeclareHandle(stringObj);
+    iterator = (ListIterator *)KNI_GetParameterAsInt(1);
     KNI_ReleaseHandle(stringObj);
 
+    do {
+        if (iterator == NULL || iterator->current == NULL) { /* Wrong parameter */
+            KNI_ThrowNew(jsropIllegalArgumentException, "Illegal iterator");
+            break;
+        }
+        if ((p = strchr(iterator->current, ' ')) != NULL) {
+            len = (int)(p - iterator->current);
+        } else {
+            len = strlen(iterator->current);
+        }
+        if (len == 0) { /* End of list */
+            break;
+        }
+        if (len >= sizeof stack_string_buffer / sizeof stack_string_buffer[0]) {
+            proto = MALLOC(len + 1);
+            if (proto == NULL) {
+                KNI_ThrowNew(jsropOutOfMemoryError, NULL);
+                break;
+            }
+        } else {
+            proto = stack_string_buffer;
+        }
+
+        memcpy(proto, iterator->current, len);
+        proto[len] = '\0';
+        iterator->current += len;
+        while (*iterator->current == ' ') {
+            iterator->current++;
+        }
+    } while (0);
+    
+    if (proto != NULL) {
+        KNI_NewStringUTF(proto, stringObj);
+        if (proto != stack_string_buffer) {
+            FREE(proto);
+        }
+    }
     KNI_EndHandlesAndReturnObject(stringObj);
 }
 
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsClose) {
+    ListIterator *iterator;
+    if ((iterator = (ListIterator *)KNI_GetParameterAsInt(1)) != NULL) {
+        FREE(iterator);
+    }
     KNI_ReturnVoid();
 }
+
+/* Delete duplicates */
+static void delete_duplicates(char *p) {
+    do {
+        char *s, *s0;
+        int p_len, s_len;
+        
+        while (*p == ' ') {
+            p++;
+        }
+        if (*p == '\0' || (s = strchr(p, ' ')) == NULL || (p_len = (int)(s - p)) == 0) {
+            break;
+        }
+        do {
+            s0 = s;
+            if ((s = strchr(s0, ' ')) != NULL) {
+                s_len = (int)(s - s0);
+                while (*s == ' ') {
+                    s++;
+                }
+            } else {
+                s_len = strlen(s0);
+            }
+            if (s_len == p_len && !javautil_strnicmp(p, s0, s_len)) {
+                memset(s0, ' ', s_len);
+            }
+        } while (s != NULL && *s != '\0');
+        p += p_len;
+    } while (1);
+}
+
+static javacall_result simple_jcharString_to_asciiString(
+                    jchar *jcharString, 
+                    jsize jcharStringLen, 
+                    char *asciiStringBuffer, 
+                    jsize bufferSize) {
+
+    bufferSize--;
+    while (bufferSize-- > 0 && jcharStringLen-- > 0) {
+        if ((javacall_int32)*jcharString > 0x7F) {
+            return JAVACALL_FAIL;
+        }
+        *asciiStringBuffer++ = (char)*jcharString++;
+    }
+    *asciiStringBuffer++ = '\0';
+    return JAVACALL_OK;
+}
+
