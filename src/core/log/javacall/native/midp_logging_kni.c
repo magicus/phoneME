@@ -86,10 +86,3 @@ KNIDECL(com_sun_midp_log_Logging_getAllowedSeverity) {
 
     KNI_ReturnInt(severity);
 }
-
-KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_midp_log_Logging_getId) {
-    int channelID; 
-    channelID =  get_id_c();
-    KNI_ReturnInt(channelID);
-}

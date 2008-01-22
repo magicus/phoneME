@@ -1,7 +1,7 @@
 /*
  *
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,8 @@
  */
 
 package com.sun.midp.log;
-//import com.sun.cldc.isolate.Isolate;
+import com.sun.midp.main.MIDletSuiteUtils;
+import com.sun.cldc.isolate.Isolate;
 import com.sun.midp.configurator.Constants;
 
 /**
@@ -103,46 +104,41 @@ public class Logging extends LoggingBase {
     }
 
     /**
-     * Parses the value of MIDP_ARGS attribute set in the JAD file
-     * of the given midlet suite.
+     * Report a message to the Logging service. The message string should
+     * include enough description that someone reading the message will
+     * have enough context to diagnose and solve any problems if necessary.
+     * The severity level should be one of:
+     * <ul>
+     *  <li>INFORMATION</li>
+     *  <li>WARNING</li>
+     *  <li>ERROR</li>
+     *  <li>CRITICAL</li>
+     * </ul>
+     * and should properly reflect the severity of the message. The channel
+     * identifier should be one of the pre defined channels listed in
+     * the LogChannels.java file.
+     * <ul>
+     * </ul>
      *
-     * @param suiteId ID of the suite whose the settings must be parsed
-     * @return true if one or more logging setting must be changed,
-     * false otherwise
-     */
-    //private native static boolean parseMidpControlArg0(int suiteId);
-
-    /**
-     * Loads a report level.
+     * A use example:
+     * <pre><code>
+     *     if (Logging.REPORT_LEVEL &lt;= severity) {
+     *         Logging.report(Logging.&lt;severity&gt;,
+     *                        LogChannels.&lt;channel&gt;,
+     *                        "[meaningful message]");
+     *     }
+     * </code></pre>
      *
-     * @return report level that was loaded
-     */
-    //private native static int loadReportLevel0();
-
-    /**
-     * Loads a value defining if tracing is enabled.
+     * No output will occur if <code>message</code> is null.
      *
-     * @return > 0 - enable tracing, == 0 - disable it,
-     *      &lt; 0 - don't change the current setting
-     */
-    //private native static int loadTraceEnabled0();
-
-    /**
-     * Loads a value defining if assertions are enabled.
-     *
-     * @return > 0 - enable assertions, == 0 - disable it,
-     *      &lt; 0 - don't change the current setting
-     */
-    //private native static int loadAssertEnabled0();
-
-
-    //report function, first filters by channel, than calls the function
-    //report in the super class
+     * @param severity severity level of report
+     * @param channelID area report relates to, from LogChannels.java
+     * @param message message to go with the report
+       */
+   
     public static void report(int severity, int channelID, String message) {
 
-        //Isolate i = Isolate.currentIsolate();
-        //int isolateID = i.id();
-        int isolateID = getId();
+        int isolateID = MIDletSuiteUtils.getIsolateId();
 
         if(getAllowedSeverity(channelID) <= severity) {
             report0(severity, channelID, isolateID, message);
@@ -150,15 +146,63 @@ public class Logging extends LoggingBase {
 
     }
 
+    /**
+     * Report a message to the Logging service. The message string should
+     * include enough description that someone reading the message will
+     * have enough context to diagnose and solve any problems if necessary.
+     * The severity level should be one of:
+     * <ul>
+     *  <li>INFORMATION</li>
+     *  <li>WARNING</li>
+     *  <li>ERROR</li>
+     *  <li>CRITICAL</li>
+     * </ul>
+     * and should properly reflect the severity of the message. The channel
+     * identifier should be one of the pre defined channels listed in
+     * the LogChannels.java file.
+     * <ul>
+     * </ul>
+     *
+     *
+     * No output will occur if <code>message</code> is null.
+     *
+     * @param severity severity level of report
+     * @param channelID area report relates to, from LogChannels.java
+     * @param isolateID, isolase's id number
+     * @param message message to go with the report
+     */
+
     private static native void report0(int severity, 
                                        int channelID, 
                                        int isolateID, 
                                        String message);
 
-    private static native int getId();
 
-
+    /**
+    * Gets the severity per channel using the property mechanism.
+    */
     private native static int getAllowedSeverity(int channelID);
+        
+    /**
+     * Report a message to the Logging service in the event that
+     * <code>condition</code> is false. The message string should
+     * include enough description that someone reading the message will
+     * have enough context to find the failed assertion.
+     *
+     * A use example:
+     * <pre><code>
+     *     if (Logging.ASSERT_ENABLED){
+     *         Logging.assertTrue([(boolean)conditional], "useful message");
+     *     }
+     * </code></pre>
+     *
+     * This method reports nothing if <code>message</code> is null.
+     *
+     * @param condition asserted to be true by the caller.
+     *                  <code>message</code> is logged if false.
+     * @param message message to go with the report if the assert fails
+     *                (when <code>condition</code> is false.
+     */
 
     public static void assertTrue(boolean condition, String message) {
         if(!condition) {

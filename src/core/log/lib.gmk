@@ -38,15 +38,15 @@ LIB_SET += $(LOG_LIB)
 
 
 
-ifeq ($(BUILD_TARGET_PLATFORM),javacall)
+ifeq ($(USE_JAVAUTIL_LOG_IMPLEMENTATION),true)
 	LOG_IMPL = javacall
 else
 
-ifeq ($(USE_CONTROL_ARGS_FROM_JAD), true)
-	LOG_IMPL = dynamic
-else
-	LOG_IMPL = static
-endif
+	ifeq ($(USE_CONTROL_ARGS_FROM_JAD), true)
+		LOG_IMPL = dynamic
+	else
+		LOG_IMPL = static
+	endif
 
 endif
 

@@ -105,7 +105,7 @@ int get_id_c();
 #if ENABLE_ISOLATES
 #define GET_ISOLATE_ID  JVM_CurrentIsolateID() 
 #else 
-#define GET_ISOLATE_ID  1
+#define GET_ISOLATE_ID  0
 #endif 
 
 /**

@@ -49,9 +49,7 @@ printMidpStringWithMessageImpl(char* message, MidpString mstr) {
     char* tag;
 
     if ((mstr.len <= 0) && (!message)) {
-       // reportToLog(LOG_INFORMATION, LC_MIDPSTRING, 
-		 //   "printMidpString() No input");
-        REPORT_INFO(LC_MIDPSTRING, 
+              REPORT_INFO(LC_MIDPSTRING, 
 		    "printMidpString() No input");
         return;
     }
@@ -66,14 +64,10 @@ printMidpStringWithMessageImpl(char* message, MidpString mstr) {
         msg = midpJcharsToChars(mstr);
         if (msg) {
           REPORT_INFO2(LC_MIDPSTRING, "%s: %s", tag, msg);
-	    //reportToLog(LOG_INFORMATION, LC_MIDPSTRING, "%s: %s", tag, msg);
-	    midpFree(msg);
+	      midpFree(msg);
         } else {
             REPORT_INFO1(LC_MIDPSTRING, 
 	        "%s: printMidpString can't convert MidpString to char*",tag);
-           // reportToLog(LOG_INFORMATION, LC_MIDPSTRING, 
-	       // "%s: printMidpString can't convert MidpString to char*",
-	   // tag);
         }
     }
 }
@@ -83,8 +77,6 @@ printPcslStringWithMessageImpl(char* message, const pcsl_string* pstr) {
     char* tag;
 
     if ((pcsl_string_length(pstr) <= 0) && (!message)) {
-        //reportToLog(LOG_INFORMATION, LC_MIDPSTRING,
-		    //"printPcslStringWithMessage() No input");
         REPORT_INFO(LC_MIDPSTRING,
 		    "printPcslStringWithMessage() No input");
         return;
@@ -99,18 +91,13 @@ printPcslStringWithMessageImpl(char* message, const pcsl_string* pstr) {
     if (pcsl_string_length(pstr) > 0) {
         const char* msg = pcsl_string_get_utf8_data(pstr);
         if (msg) {
-            //reportToLog(LOG_INFORMATION, LC_MIDPSTRING, "%s: %s", tag, msg);
             REPORT_INFO2(LC_MIDPSTRING, "%s: %s", tag, msg);
             pcsl_string_release_utf8_data(msg, pstr);
         } else {
-            //reportToLog(LOG_INFORMATION, LC_MIDPSTRING,
-	        //"%s: printPcslStringWithMessage can't convert pcsl_string to char*", tag);
-            REPORT_INFO1(LC_MIDPSTRING,
+           REPORT_INFO1(LC_MIDPSTRING,
 	        "%s: printPcslStringWithMessage can't convert pcsl_string to char*", tag);
         }
     } else {
-        //reportToLog(LOG_INFORMATION, LC_MIDPSTRING, "%s: pcsl_string is %s", tag,
-         //   0 == pcsl_string_length(pstr) ? "empty" : "null" );
         REPORT_INFO2(LC_MIDPSTRING, "%s: pcsl_string is %s", tag,
             0 == pcsl_string_length(pstr) ? "empty" : "null" );
     }
@@ -127,8 +114,6 @@ void
 printMidpStringImpl(MidpString mstr) {
     char* msg = NULL;  
     if (mstr.len <= 0) {
-        //reportToLog(LOG_INFORMATION, LC_MIDPSTRING, 
-		    //"printMidpString: Bad Length.");
         REPORT_INFO(LC_MIDPSTRING, 
 		    "printMidpString: Bad Length.");
         return;
@@ -136,13 +121,10 @@ printMidpStringImpl(MidpString mstr) {
     if (mstr.len > 0) {
         msg = midpJcharsToChars(mstr);
         if (msg) {
-	    //reportToLog(LOG_INFORMATION, LC_MIDPSTRING, "%s", msg);
-            REPORT_INFO1(LC_MIDPSTRING, "%s", msg);
+	        REPORT_INFO1(LC_MIDPSTRING, "%s", msg);
             midpFree(msg);
         } else {
-            //reportToLog(LOG_INFORMATION, LC_MIDPSTRING, 
-	        //"printMidpString: can't convert from MidpString to char");
-            REPORT_INFO(LC_MIDPSTRING, 
+             REPORT_INFO(LC_MIDPSTRING, 
 	        "printMidpString: can't convert from MidpString to char");
 
         }
@@ -151,22 +133,17 @@ printMidpStringImpl(MidpString mstr) {
 void
 printPcslStringImpl(const pcsl_string* pstr) {
     if (pcsl_string_length(pstr) <= 0) {
-       // reportToLog(LOG_INFORMATION, LC_MIDPSTRING,
-		//    "printPcslString: Bad Length.");
-        REPORT_INFO(LC_MIDPSTRING,
+       REPORT_INFO(LC_MIDPSTRING,
 		    "printPcslString: Bad Length.");
         return;
     }
     if (pcsl_string_length(pstr) > 0) {
         const char* msg = pcsl_string_get_utf8_data(pstr);
         if (msg) {
-	        //reportToLog(LOG_INFORMATION, LC_MIDPSTRING, "%s", msg);
-            REPORT_INFO1(LC_MIDPSTRING, "%s", msg);
+	        REPORT_INFO1(LC_MIDPSTRING, "%s", msg);
             pcsl_string_release_utf8_data(msg, pstr);
         } else {
-            //reportToLog(LOG_INFORMATION, LC_MIDPSTRING,
-	       // "printPcslString: can't convert from pcsl_string to char");
-            REPORT_INFO(LC_MIDPSTRING,
+             REPORT_INFO(LC_MIDPSTRING,
 	        "printPcslString: can't convert from pcsl_string to char");
 
         }

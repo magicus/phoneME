@@ -112,14 +112,10 @@ void reportToLog(int severity, int channelID, int isolateID, char* message, ...)
         va_end(ap);
     }
 }
-
-int get_id_c(){
-    return GET_ISOLATE_ID;
-}
-
-
+    /**
+    * Gets the severity per channel using the property mechanism.
+    */
 int get_allowed_severity_c(int channelID) {
-
     
     switch(channelID) {
         case LC_NONE:
@@ -146,6 +142,8 @@ int get_allowed_severity_c(int channelID) {
             return(getInternalPropertyInt("PUSH"));
         case LC_MMAPI:
             return(getInternalPropertyInt("MMAPI"));
+        case LC_LIFECYCLE:
+            return(getInternalPropertyInt("LIFECYCLE"));
         case LC_MIDPSTRING:
             return(getInternalPropertyInt("MIDPSTRING"));
         case LC_MALLOC:

@@ -61,9 +61,7 @@ SUBSYSTEM_LOG_JAVA_FILES += \
 
 # Native files for the ( log_base ) subsystem
 #
-ifeq ($(BUILD_TARGET_PLATFORM), javacall)
-else  
-
+ifeq ($(USE_JAVAUTIL_LOG_IMPLEMENTATION), false)
 # vpath for ( log_base ) subsystem
 #
 vpath % $(LOG_BASE_DIR)/reference/native  
@@ -81,7 +79,7 @@ endif
 SUBSYSTEM_LOG_NATIVE_FILES += \
     $(INTERNAL_LOG_BASE_NATIVE_FILES)
 
-ifneq ($(BUILD_TARGET_PLATFORM),javacall)
+ifeq ($(USE_JAVAUTIL_LOG_IMPLEMENTATION),false)
 SUBSYSTEM_LOG_EXTRA_INCLUDES += \
     -I$(LOG_BASE_DIR)/include
 endif    
