@@ -73,7 +73,8 @@
 
 <xsl:text>
 
-[internal]</xsl:text>
+[internal]
+</xsl:text>
 <!-- for each non-callout property with internal scope -->
 <xsl:for-each select="/configuration/properties/property[@Scope = 'internal' and not(@Callout)]">
 <!-- add comment if specified -->
