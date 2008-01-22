@@ -47,8 +47,9 @@
 #include "skins.h"
 #include "local_defs.h"
 
-
-
+#if ENABLE_ON_DEVICE_DEBUG
+#include "javacall_odd.h"
+#endif
 
 #define UNTRANSLATED_SCREEN_BITMAP (void*)0xffffffff
 
