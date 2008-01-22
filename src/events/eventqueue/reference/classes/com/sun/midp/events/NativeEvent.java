@@ -66,6 +66,9 @@ public class NativeEvent extends Event {
     /** Fifth int parameter for the event. Event dependent. */
     public int intParam5;
 
+    /** Sixth int parameter for the event. Event dependent. */
+    public int intParam6;
+
     /** First string parameter for the event. Event dependent. */
     public String stringParam1;
 
@@ -95,6 +98,7 @@ public class NativeEvent extends Event {
         intParam3 = 0;
         intParam4 = 0;
         intParam5 = 0;
+        intParam6 = 0;
 
         stringParam1 = null;
         stringParam2 = null;
@@ -113,6 +117,7 @@ public class NativeEvent extends Event {
         return "Native Event: t  = " + type + ", i1 = " + intParam1 +
             ", i2 = " + intParam2 + ", i3 = " + intParam3 +
             ", i4 = " + intParam4 + ", i5 = " + intParam5 +
+            ", i6 = " + intParam6 +
             "\n    s1 = " + stringParam1 +
             "\n    s2 = " + stringParam2 +
             "\n    s3 = " + stringParam3 +

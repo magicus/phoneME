@@ -177,7 +177,8 @@ public class MVMManager extends MIDlet
         }
 
         try {
-            MIDletSuiteUtils.execute(suiteId, className, displayName);
+            MIDletSuiteUtils.execute(suiteId, className,
+                                     displayName, isDebugMode);
             suiteUnderDebugId = suiteId;
         } catch (Exception ex) {
             displayError.showErrorAlert(displayName, ex, null, null);

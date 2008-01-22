@@ -111,12 +111,12 @@ class ExecuteMIDletEventListener implements EventListener, Runnable {
             String midlet, String displayName, String arg0, String arg1,
             String arg2) {
         this.externalAppId = externalAppId;
-	this.id = id;
-	this.midlet = midlet;
-	this.displayName = displayName;
-	this.arg0 = arg0;
-	this.arg1 = arg1;
-	this.arg2 = arg2;
+        this.id = id;
+        this.midlet = midlet;
+        this.displayName = displayName;
+        this.arg0 = arg0;
+        this.arg1 = arg1;
+        this.arg2 = arg2;
     }
 
     /**
@@ -144,29 +144,29 @@ class ExecuteMIDletEventListener implements EventListener, Runnable {
      * @param genericEvent event to process
      */
     public void process(Event genericEvent) {
-	// Verify that the requested MIDlet is not already running
-	// (is not in the MIDletProxyList)
-	if (MIDletProxyList.getMIDletProxyList().isMidletInList(id, midlet)) {
-            if (Logging.REPORT_LEVEL <= Logging.WARNING) {
-                Logging.report(Logging.WARNING, LogChannels.LC_CORE,
-                               "MIDlet already running; execute ignored");
-            }
-	    return;
-	}
+        // Verify that the requested MIDlet is not already running
+        // (is not in the MIDletProxyList)
+        if (MIDletProxyList.getMIDletProxyList().isMidletInList(id, midlet)) {
+                if (Logging.REPORT_LEVEL <= Logging.WARNING) {
+                    Logging.report(Logging.WARNING, LogChannels.LC_CORE,
+                                   "MIDlet already running; execute ignored");
+                }
+            return;
+        }
 
         try {
             // The execute MIDlet method may block
-	    NativeEvent event = (NativeEvent)genericEvent;
-	    ExecuteMIDletEventListener runnable =
-		new ExecuteMIDletEventListener(event.intParam1,
-					       event.intParam2,
-					       event.stringParam1,
-					       event.stringParam2,
-					       event.stringParam3,
-					       event.stringParam4,
-					       event.stringParam5);
+            NativeEvent event = (NativeEvent)genericEvent;
+            ExecuteMIDletEventListener runnable =
+            new ExecuteMIDletEventListener(event.intParam1,
+                               event.intParam2,
+                               event.stringParam1,
+                               event.stringParam2,
+                               event.stringParam3,
+                               event.stringParam4,
+                               event.stringParam5);
             (new Thread(runnable)).start();
-	} catch (Throwable t) {
+        } catch (Throwable t) {
             Logging.trace(t, "Error creating a new Execute thread");
         }
     }
@@ -177,7 +177,7 @@ class ExecuteMIDletEventListener implements EventListener, Runnable {
     public void run() {
         try {
             MIDletSuiteUtils.executeWithArgs(classSecurityToken,
-                externalAppId, id, midlet, displayName, arg0, arg1, arg2);
+                externalAppId, id, midlet, displayName, arg0, arg1, arg2, false);
         } catch (Throwable t) {
             if (Logging.TRACE_ENABLED) {
                 Logging.trace(t,
