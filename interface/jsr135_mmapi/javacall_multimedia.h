@@ -372,9 +372,6 @@ javacall_result javacall_media_get_configuration(
  * @param playerId      Unique player object ID for this playing
  * @param uri           URI unicode string to media data.
  * @param uriLength     String length of URI
- * @param contentSize   Size of content in bytes
- *                      If Java MMAPI couldn't determine content size, 
- *                      this value should be -1
  * @param handle        Handle of native library.
  *
  * @retval JAVACALL_OK               success
@@ -385,7 +382,6 @@ javacall_result javacall_media_create(int appID,
                                       int playerId,
                                       javacall_const_utf16_string uri, 
                                       long uriLength,
-                                      long contentSize,
                                       /*OUT*/javacall_handle *handle);
 
 /**
