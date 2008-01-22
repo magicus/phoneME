@@ -27,7 +27,7 @@
 #include <javacall_defs.h>
 #include <javacall_multimedia.h>
 
-static const javacall_media_configuration *configuration;
+static javacall_media_configuration *configuration;
 static javacall_bool configuration_filled = JAVACALL_FALSE;
 
 javacall_media_configuration *get_configuration() {

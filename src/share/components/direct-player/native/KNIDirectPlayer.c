@@ -221,7 +221,7 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectPlayer_nBuffering) {
 
     jint handle = KNI_GetParameterAsInt(1);
-    jlong length = KNI_GetParameterAsLong(3);
+    long length = (long)KNI_GetParameterAsLong(3);
     jint returnValue = -1;
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     void *nBuffer;
@@ -245,9 +245,9 @@ LockAudioMutex();
             MMP_DEBUG_STR1("+nBuffering length=%d\n", length);
             KNI_GetRawArrayRegion(bufferHandle, 0, (int)length, (jbyte*)nBuffer);
             ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, 
-                    (const char*)nBuffer, (long)length, &need_more_data, &min_data_size);
+                    (const void*)nBuffer, &length, &need_more_data, &min_data_size);
             if (ret == JAVACALL_OK) {
-                returnValue = length;
+                returnValue = (jint)length;
             }
         }
     } else if (pKniInfo && pKniInfo->pNativeHandle) {
@@ -337,7 +337,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetMediaTime) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     javacall_result ret;
-    jlong ms = -1;
+    long ms = -1;
 LockAudioMutex();            
     if (pKniInfo && pKniInfo->pNativeHandle) {
         ret = javacall_media_get_time(pKniInfo->pNativeHandle, &ms);
@@ -358,14 +358,14 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nSetMediaTime) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jlong ms = KNI_GetParameterAsLong(2);
+    long ms = (long)KNI_GetParameterAsLong(2);
     javacall_result ret = JAVACALL_FAIL;
 
     MMP_DEBUG_STR("+nSetMediaTime\n");
 
 LockAudioMutex();            
     if (pKniInfo) {
-        ret = javacall_media_set_time(pKniInfo->pNativeHandle, (long)&ms);
+        ret = javacall_media_set_time(pKniInfo->pNativeHandle, &ms);
     } else {
         REPORT_ERROR(LC_MMAPI, "nSetMediaTime fail\n");
     }
@@ -383,7 +383,7 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nGetDuration) {
 
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jlong ms;
+    long ms;
     javacall_result ret = JAVACALL_FAIL;
 
 LockAudioMutex();            

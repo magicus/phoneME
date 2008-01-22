@@ -52,7 +52,7 @@ KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectVolume_nSetVolume) {
 
     jint handle = KNI_GetParameterAsInt(1);
-    jlong level = KNI_GetParameterAsInt(2);
+    long level = KNI_GetParameterAsInt(2);
     javacall_result ret = JAVACALL_FAIL;
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
@@ -102,20 +102,20 @@ KNIDECL(com_sun_mmedia_DirectVolume_nSetMute) {
     jboolean mute = KNI_GetParameterAsBoolean(2);
     jboolean returnValue = KNI_FALSE;
     javacall_result ret = JAVACALL_FAIL;
-    javacall_bool isMuted;
+    javacall_bool setMuted;
 
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
 
     MMP_DEBUG_STR1("[kni_volume] +nSetMute %d\n", mute);
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        isMuted = (mute == KNI_TRUE) ? JAVACALL_TRUE : JAVACALL_FALSE;
-        ret = javacall_media_set_mute(pKniInfo->pNativeHandle, &isMuted);
+        setMuted = (mute == KNI_TRUE) ? JAVACALL_TRUE : JAVACALL_FALSE;
+        ret = javacall_media_set_mute(pKniInfo->pNativeHandle, setMuted);
     } else {
         MMP_DEBUG_STR("[nSetMute] Invalid native handle");
     }
     if (ret == JAVACALL_OK) {
-        returnValue = (isMuted == JAVACALL_TRUE) ? KNI_TRUE : KNI_FALSE;
+        returnValue = (setMuted == JAVACALL_TRUE) ? KNI_TRUE : KNI_FALSE;
     }
 
     KNI_ReturnBoolean(returnValue);
