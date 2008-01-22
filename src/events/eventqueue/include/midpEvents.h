@@ -141,6 +141,17 @@ extern "C" {
  * enable On Device Debugging.
  */
 #define MIDP_ENABLE_ODD_EVENT           49
+
+/**
+ * Request to start a new midlet from the debug agent to AMS.
+ */
+#define MIDP_ODD_START_MIDLET_EVENT     50
+
+/**
+ * Notification sent by AMS to the debug agent.
+ */
+#define MIDP_ODD_MIDLET_EXITED_EVENT    51
+
 /** @} */
 
 /**

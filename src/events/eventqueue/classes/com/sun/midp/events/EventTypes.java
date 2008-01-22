@@ -321,5 +321,14 @@ public final class EventTypes {
      * enable On Device Debugging.
      */
     public static final int MIDP_ENABLE_ODD_EVENT = 49;
-    
+
+    /**
+     * Request to start a new midlet from the debug agent to AMS.
+     */
+    public static final int MIDP_ODD_START_MIDLET_EVENT = 50;
+
+    /**
+     * Notification sent by AMS to the debug agent.
+     */
+    public static final int MIDP_ODD_MIDLET_EXITED_EVENT = 51;
 }

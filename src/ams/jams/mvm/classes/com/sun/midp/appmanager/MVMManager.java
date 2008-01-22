@@ -43,6 +43,8 @@ import com.sun.midp.main.*;
 import com.sun.midp.configurator.Constants;
 
 import com.sun.midp.events.EventQueue;
+import com.sun.midp.events.NativeEvent;
+import com.sun.midp.events.EventTypes;
 
 /**
  * This is an implementation of the ApplicationManager interface
@@ -88,6 +90,9 @@ public class MVMManager extends MIDlet
 
     /** UI to display error alerts. */
     private DisplayError displayError;
+
+    /** If on device debug is active, ID of the suite under debug. */
+    private int suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
 
     /**
      * Create and initialize a new MVMManager MIDlet.
@@ -151,8 +156,32 @@ public class MVMManager extends MIDlet
      * Processes MIDP_ENABLE_ODD_EVENT
      */
     public void handleEnableODDEvent() {
-        System.out.println(">>> ODD Enabled!");
         appManagerUI.showODTAgent();
+    }
+
+    /**
+     * Processes MIDP_ODD_START_MIDLET_EVENT
+     *
+     * @param suiteId ID of the midlet suite
+     * @param className class name of the midlet to run
+     * @param displayName display name of the midlet to run
+     * @param isDebugMode true if the midlet must be started in debug mode,
+     *                    false otherwise
+     */
+    public void handleODDStartMidletEvent(int suiteId, String className,
+                                          String displayName,
+                                          boolean isDebugMode) {
+        if (suiteUnderDebugId != MIDletSuite.UNUSED_SUITE_ID) {
+            // suite is already under debug
+            return;
+        }
+
+        try {
+            MIDletSuiteUtils.execute(suiteId, className, displayName);
+            suiteUnderDebugId = suiteId;
+        } catch (Exception ex) {
+            displayError.showErrorAlert(displayName, ex, null, null);
+        }
     }
 
     // =================================================================
@@ -233,6 +262,23 @@ public class MVMManager extends MIDlet
      * @param midlet The proxy of the removed MIDlet
      */
     public void midletRemoved(MIDletProxy midlet) {
+        if (suiteUnderDebugId == midlet.getSuiteId()) {
+            MIDletProxy odtAgentMidlet = midletProxyList.findMIDletProxy(
+                MIDletSuite.INTERNAL_SUITE_ID, ODT_AGENT);
+
+            if (odtAgentMidlet != null) {
+                EventQueue eq = EventQueue.getEventQueue();
+                NativeEvent event = new NativeEvent(
+                        EventTypes.MIDP_ODD_MIDLET_EXITED_EVENT);
+                event.intParam1    = suiteUnderDebugId;
+                event.stringParam1 = odtAgentMidlet.getClassName();
+                eq.sendNativeEventToIsolate(event,
+                        odtAgentMidlet.getIsolateId());
+            }
+
+            suiteUnderDebugId = MIDletSuite.UNUSED_SUITE_ID;
+        }
+
         appManagerUI.notifyMidletExited(midlet);
     }
 
@@ -263,7 +309,7 @@ public class MVMManager extends MIDlet
         } catch (Exception ex) {
             displayError.showErrorAlert(Resource.getString(
                                   ResourceConstants.INSTALL_APPLICATION),
-                              ex, null, null);
+                                  ex, null, null);
         }
     }
 

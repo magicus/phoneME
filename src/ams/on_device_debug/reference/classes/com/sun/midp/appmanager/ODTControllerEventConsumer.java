@@ -31,7 +31,20 @@ package com.sun.midp.appmanager;
  */
 interface ODTControllerEventConsumer {
     /**
-     * Processes MIDP_ENABLE_ODD_EVENT
+     * Processes MIDP_ENABLE_ODD_EVENT.
      */
     public void handleEnableODDEvent();
+
+    /**
+     * Processes MIDP_ODD_START_MIDLET_EVENT.
+     *
+     * @param suiteId ID of the midlet suite
+     * @param className class name of the midlet to run
+     * @param displayName display name of the midlet to run
+     * @param isDebugMode true if the midlet must be started in debug mode,
+     *                    false otherwise
+     */
+    public void handleODDStartMidletEvent(int suiteId, String className,
+                                          String displayName,
+                                          boolean isDebugMode);
 }
