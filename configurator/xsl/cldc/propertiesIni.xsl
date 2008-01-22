@@ -31,7 +31,7 @@
 
 <xsl:template match="/">
 
-<text>#
+<xsl:text>#
 # Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
@@ -56,7 +56,7 @@
 #
 
 [application]
-</text>
+</xsl:text>
 <!-- for each non-callout property with system scope -->
 <xsl:for-each select="/configuration/properties/property[@Scope = 'system' and not(@Callout)]">
 <!-- add comment if specified -->
@@ -71,14 +71,14 @@
 </xsl:text>
 </xsl:for-each>
 
-<text>
+<xsl:text>
 
-[internal]</text>
+[internal]</xsl:text>
 <!-- for each non-callout property with internal scope -->
 <xsl:for-each select="/configuration/properties/property[@Scope = 'internal' and not(@Callout)]">
 <!-- add comment if specified -->
 <xsl:if test="@Comment != ''">
-# <xsl:value-of select="@Comment"/>
+<xsl:text># </xsl:text><xsl:value-of select="@Comment"/>
 </xsl:if>
 <xsl:text>
 </xsl:text>
