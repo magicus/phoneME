@@ -90,24 +90,33 @@ CVM_WIN32_CLEANUP_ACTION = \
 	rm -rf *.ipch
 
 #
-# cvm.exe - a little program to launch cvm.dll.
+# We can't support CVM_DLL=false CVM_PRELOAD_LIB=false on wince platforms
+# because symbolic lookup of JNI methods in cvm.exe won't work. It would
+# be nice to put this check in  build/win32/defs.mk, but WIN32_PLATFORM
+# is not always set in time.
 #
+ifneq ($(CVM_DLL),true)
+ifneq ($(CVM_PRELOAD_LIB),true)
+ifeq ($(WIN32_PLATFORM),wince)
+$(error Cannot set CVM_DLL=false CVM_PRELOAD_LIB=false for wince platforms)
+endif
+endif
+endif
+
+
+
+#
+# cvm.exe - a little program to launch cvmi.dll.
+#
+ifeq ($(CVM_DLL),true)
 CVM_EXE = $(CVM_BUILD_SUBDIR_NAME)/bin/cvm.exe
 $(J2ME_CLASSLIB) :: $(CVM_EXE)
 
 # Override MT_FLAGS for object file dependencies of cvm.exe
 $(CVM_EXE) : MT_FLAGS = $(MT_EXE_FLAGS)
 
-ifeq ($(USE_SPLASH_SCREEN),true)
-ifeq ($(WIN32_PLATFORM),wince)
-CVM_DEFINES += -DENABLE_SPLASH_SCREEN
-RESOURCES = $(call POSIX2HOST,$(CVM_TOP)/src/win32/bin/splash.res)
-LINKEXE_LIBS += aygshell.lib $(RESOURCES)
-
-$(CVM_EXE) : $(CVM_OBJDIR)/splash.o
-endif
-endif
-
-$(CVM_EXE) : $(CVM_OBJDIR)/ansi_java_md.o $(CVM_OBJDIR)/java_md.o
+$(CVM_EXE) : $(patsubst %,$(CVM_OBJDIR)/%,$(CVMEXE_OBJS))
 	@echo "Linking $@"
-	$(AT)$(LINKEXE_CMD)
+	$(AT)$(TARGET_LINK) $(LINKFLAGS) $(LINKEXE_FLAGS) /out:$@ $^ \
+		$(LINKEXE_LIBS) $(LINKCVMEXE_LIBS)
+endif

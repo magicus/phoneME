@@ -29,8 +29,8 @@
 CVM_DEFINES += -DWINCE -DWIN32_LEAN_AND_MEAN -DWIN32_PLATFORM_PSPC
 CVM_DEFINES += -DUNICODE -D_UNICODE
 CC_ARCH_FLAGS += -D__STDC__
-MT_DLL_FLAGS =
-MT_EXE_FLAGS =
+#M_DLL_FLAGS =
+#M_EXE_FLAGS =
 
 CVM_INCLUDE_DIRS  += \
         $(CVM_TARGETROOT)/javavm/include/ansi \
@@ -46,18 +46,25 @@ CVM_TARGETOBJS_SPACE += $(WCE_CONSOLE)
 CVM_TARGETOBJS_SPEED += \
         wceUtil.o
 
-WIN_LINKLIBS += commctrl.lib coredll.lib winsock.lib
+# libs to link just with cvm, whether it is an exe or dll
+WIN_LINKLIBS += commctrl.lib winsock.lib
 
-LINKLIBS += /nodefaultlib:libc.lib /nodefaultlib:libcd.lib \
+# libs to link with every dll and exe
+LINKALL_LIBS += \
+	/nodefaultlib:oldnames.lib \
 	/nodefaultlib:libcmt.lib /nodefaultlib:libcmtd.lib \
-	/nodefaultlib:msvcrt.lib /nodefaultlib:msvcrtd.lib \
-	/nodefaultlib:oldnames.lib
+	/nodefaultlib:libc.lib /nodefaultlib:libcd.lib \
+	coredll.lib /defaultlib:corelibc.lib
 
-LINKEXE_FLAGS += /entry:mainACRTStartup
+# libs to link with every dll
+LINKDLL_LIBS += \
+	/nodefaultlib:msvcrt.lib /nodefaultlib:msvcrtd.lib
 
-LINKEXE_LIBS += /nodefaultlib:oldnames.lib \
-	/nodefaultlib:libcmt.lib /nodefaultlib:libcmtd.lib \
-	coredll.lib
+# libs to link with every exe
+LINKEXE_LIBS += \
+
+# entry to every exe
+LINKEXE_ENTRY = /entry:mainACRTStartup
 
 ################################################
 # Setup INCLUDE, LIB, and PATH for the VC tools.

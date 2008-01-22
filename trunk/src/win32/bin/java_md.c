@@ -29,6 +29,11 @@
 #include <stdio.h>
 #include <errno.h>
 
+#ifndef CVM_DLL
+#define _JNI_IMPLEMENTATION_
+#include "jni.h" /* for JNI_CreateJavaVM */
+#endif
+
 #include "portlibs/ansi_c/java.h"
 
 #include <tchar.h>
@@ -189,6 +194,7 @@ ansiJavaMain0(int argc, const char** argv, JNI_CreateJavaVM_func* f)
     return ansiJavaMain(argc, argv, f);
 }
 
+#ifdef CVM_DLL
 static HMODULE
 loadCVM()
 {
@@ -213,6 +219,7 @@ loadCVM()
     }
     return h;
 }
+#endif /* CVM_DLL */
 
 #include <excpt.h>
 
@@ -380,11 +387,15 @@ int main(int argc, char* argv[])
 
     SHOW_SPLASH();
 
+#ifdef CVM_DLL
     {
         HMODULE h = loadCVM();
         JNI_CreateJavaVMFunc = (JNI_CreateJavaVM_func*)
             GET_PROC_ADDRESS(h, "JNI_CreateJavaVM");
     }
+#else
+    JNI_CreateJavaVMFunc = JNI_CreateJavaVM;
+#endif
 
     if (JNI_CreateJavaVMFunc == NULL) {
 	retCode = GetLastError();

@@ -86,58 +86,67 @@ endif
 
 ifeq ($(CVM_SYMBOLS), true)
 CCFLAGS += /Zi
-DEBUGINFO_LINKFLAG = /DEBUG
 endif
 
 ifeq ($(CVM_DEBUG), true)
-MT_DLL_FLAGS = /MDd
-MT_EXE_FLAGS = /MTd
 VC_DEBUG_POSTFIX = d
-else
-MT_DLL_FLAGS = /MD
-MT_EXE_FLAGS = /MT
-VC_DEBUG_POSTFIX = 
 endif
-MT_FLAGS = $(MT_DLL_FLAGS)
-CCFLAGS += $(MT_FLAGS)
+M_DLL_FLAGS = /MD$(VC_DEBUG_POSTFIX)
+M_EXE_FLAGS = /MT$(VC_DEBUG_POSTFIX)
 
 ifeq ($(CVM_DLL),true)
-CVM_IMPL_LIB	= $(CVM_BUILD_SUBDIR_NAME)/bin/cvmi.lib
-
-ifeq ($CVM_STATICLINK_LIBS,true)
-LINKFLAGS	= /implib:$(CVM_IMPL_LIB) /export:jio_snprintf $(SO_LINKFLAGS)
+M_FLAGS = $(M_DLL_FLAGS)
 else
-LINKFLAGS	= /implib:$(CVM_IMPL_LIB) $(SO_LINKFLAGS) /export:jio_snprintf \
-            /export:CVMexpandStack /export:CVMtimeMillis \
-            /export:CVMIDprivate_allocateLocalRootUnsafe /export:CVMglobals,DATA \
-            /export:CVMsystemPanic /export:CVMcsRendezvous /export:CVMconsolePrintf \
-            /export:CVMthrowOutOfMemoryError /export:CVMthrowNoSuchMethodError \
-            /export:CVMthrowIllegalArgumentException
+M_FLAGS = $(M_EXE_FLAGS)
+endif
+CCFLAGS += $(M_FLAGS)
 
+# Setup links flags used for everything we link
+LINKFLAGS = /incremental:no /nologo /map \
+	    $(LINK_ARCH_LIBS) $(LINK_ARCH_FLAGS) $(EXTRA_PROFILING_FLAGS)
+ifeq ($(CVM_SYMBOLS), true)
+LINKFLAGS += /DEBUG
+endif
+
+# Setup exports that other dlls may need.
+LINKCVM_EXPORTS	+= \
+	/export:jio_snprintf  /export:CVMexpandStack /export:CVMtimeMillis \
+	/export:CVMIDprivate_allocateLocalRootUnsafe /export:CVMglobals,DATA \
+	/export:CVMsystemPanic /export:CVMcsRendezvous \
+	/export:CVMconsolePrintf /export:CVMthrowOutOfMemoryError \
+	/export:CVMthrowNoSuchMethodError \
+	/export:CVMthrowIllegalArgumentException
 ifeq ($(CVM_DEBUG), true)
-LINKFLAGS	+= /export:CVMassertHook /export:CVMdumpStack
+LINKCVM_EXPORTS	+= /export:CVMassertHook /export:CVMdumpStack
 endif
 
-endif
-
-else
-LINKFLAGS	=
-endif
-LINKLIBS = $(sort $(WIN_LINKLIBS)) $(LINK_ARCH_LIBS) $(LIBPATH)
 LINKLIBS_JCS    =
 
-SO_LINKLIBS	= $(LINKLIBS) $(LIBPATH)
-SO_LINKFLAGS	= \
-	/nologo /map /dll /incremental:yes \
-	$(DEBUGINFO_LINKFLAG) $(LINK_ARCH_FLAGS) \
+LINKALL_LIBS 	+= $(LINK_ARCH_LIBS) $(LIBPATH)
 
-LINKEXE_LIBS = $(LINKEXE_ARCH_LIBS) $(LIBPATH)
+# setup flags and libs used to link every exe.
+LINKEXE_LIBS	+= $(LINKALL_LIBS)
+LINKEXE_FLAGS	+= $(LINKFLAGS) /fixed:no $(LINKEXE_ENTRY) $(LINKEXE_STACK)
 
-LINKEXE_FLAGS = /nologo $(DEBUGINFO_LINKFLAG) \
-		/incremental:no $(LINKEXE_ARCH_FLAGS)
+# setup flags used to link every dll
+LINKDLL_LIBS	+= $(LINKALL_LIBS)
+LINKDLL_FLAGS	+= $(LINKFLAGS) /dll 
 
-LINKEXE_CMD	= $(AT)$(TARGET_LINK) $(LINKEXE_FLAGS) /out:$@ $^ \
-			$(LINKEXE_LIBS)
+# setup libs flags and libs for linking cvm, whether it is cvm.exe or cvmi.dll
+LINKCVM_LIBS	+= $(sort $(WIN_LINKLIBS))
+CVM_IMPL_LIB	= $(CVM_BUILD_SUBDIR_NAME)/bin/cvmi.lib
+LINKCVM_FLAGS	= /implib:$(CVM_IMPL_LIB) $(LINKCVM_EXPORTS)
+ifeq ($(CVM_DLL),true)
+LINKCVM_FLAGS	+= $(LINKDLL_FLAGS) $(LINKDLL_BASE)
+LINKCVM_LIBS	+= $(LINKDLL_LIBS)
+else
+LINKCVM_FLAGS	+= $(LINKEXE_FLAGS)
+LINKCVM_LIBS	+= $(LINKEXE_LIBS) $(LINKCVMEXE_LIBS)
+endif
+
+# libs and flags that all shared libraries will want
+SO_LINKLIBS	= $(LINKALL_LIBS) $(CVM_IMPL_LIB)
+SO_LINKFLAGS	= $(LINKDLL_FLAGS)
 
 #
 # commands for running the tools
@@ -157,16 +166,29 @@ CC_CMD_SPACE	= $(call compileCC,$(CFLAGS_SPACE),$@,$<)
 CC_CMD_LOOP	= $(call compileCC,$(CFLAGS_LOOP), $@,$<)
 CC_CMD_FDLIB	= $(call compileCC,$(CFLAGS_FDLIB),$@,$<)
 
+LINK_MANIFEST = \
+	if [ -f $@.manifest ] ; then \
+	    echo "   Linking in manifest file $(notdir $@.manifest)"; \
+	    mt.exe -nologo -manifest $@.manifest "-outputresource:$@;\#2" ;\
+	fi;
+
+# LINK_CMD(extraLibs)
 LINK_CMD	= $(AT)\
 	$(eval OUT := $(call POSIX2HOST,$@)) \
 	$(call POSIX2HOST_CMD,$^) > $(OUT).lst; \
-	$(TARGET_LINK) $(LINKFLAGS) /out:$(OUT) @$(OUT).lst $(LINKLIBS)
+	$(TARGET_LINK) $(LINKCVM_FLAGS) /out:$(OUT) @$(OUT).lst \
+		$(LINKCVM_LIBS); \
+	$(LINK_MANIFEST)
 
 SO_CC_CMD	= $(AT)$(TARGET_CC) $(SO_CFLAGS) /Fo$(call POSIX2HOST,$@) $(call POSIX2HOST,$<)
+
+# SO_LINK_CMD(extraLibs)
 SO_LINK_CMD	= $(AT)\
 	$(eval OUT := $(call POSIX2HOST,$@)) \
 	$(call POSIX2HOST_CMD,$^) > $(OUT).lst; \
-	$(TARGET_LD) $(SO_LINKFLAGS) /out:$(OUT) @$(OUT).lst $(SO_LINKLIBS)
+	$(TARGET_LD) $(SO_LINKFLAGS) /out:$(OUT) @$(OUT).lst \
+		$(SO_LINKLIBS) $(1); \
+	$(LINK_MANIFEST)
 
 # Don't let the default compiler compatibility check be done
 # since we are not using gcc

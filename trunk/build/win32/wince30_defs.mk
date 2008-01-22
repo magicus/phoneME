@@ -29,3 +29,7 @@
 include ../win32/wince_defs.mk
 
 CVM_DEFINES +=  -DUNDER_CE=300 -D_WIN32_WCE=300
+
+# /MD and /MT are not supported for WinCE 3.0
+M_DLL_FLAGS =
+M_EXE_FLAGS =
