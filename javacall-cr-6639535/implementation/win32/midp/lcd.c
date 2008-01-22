@@ -697,6 +697,11 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
            */
         default:
 #if ENABLE_ON_DEVICE_DEBUG
+            if (lParam & 0xf0000000) {
+                // ignore if the key is repeated
+                break;
+            }
+
             /* assert(posInSequence == sizeof(pStartOddKeySequence) - 1) */
             if (pStartOddKeySequence[posInSequence] == key) {
                 posInSequence++;
