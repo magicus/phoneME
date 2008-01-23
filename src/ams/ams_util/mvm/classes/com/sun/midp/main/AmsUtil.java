@@ -234,7 +234,8 @@ public class AmsUtil {
             boolean isDebugMode) {
         Isolate isolate;
         String[] args = {Integer.toString(id), midlet, displayName, arg0,
-                         arg1, arg2, Integer.toString(externalAppId)};
+                         arg1, arg2, Integer.toString(externalAppId),
+                         isDebugMode ? "1" : "0"};
         String[] classpath = midletSuiteStorage.getMidletSuiteClassPath(id);
 
         if (classpath[0] == null) {
