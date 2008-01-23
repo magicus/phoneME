@@ -77,7 +77,6 @@ extern "C" {
  */
 
 #include "javacall_defs.h" 
-#include "javacall_lcd.h"
 
 /**
 * @defgroup jsr135MediaFormatDefs Multimedia Format types
@@ -200,7 +199,7 @@ extern "C" {
  * 
  * Media format type definition.
  */
-typedef char* javacall_media_format_type;
+typedef javacall_const_ascii_string javacall_media_format_type;
 
 /** @} */
 
@@ -243,7 +242,7 @@ typedef struct {
     /** Media format */
     javacall_media_format_type          mediaFormat;
     /** Content types for the media format, separated by space */
-    char *                              contentTypes;
+    javacall_const_ascii_string         contentTypes;
 
     /**  Bitmask of supported protocols for playback from 
      *   whole downloaded content including memory buffer
@@ -267,15 +266,15 @@ typedef struct {
     /** Supported capture audio formats and parameters;
      *  NULL if not supported
      */
-    char *                              audioEncoding;
+    javacall_const_ascii_string         audioEncoding;
     /** Supported capture video formats and parameters;
      *  NULL if not supported 
      */
-    char *                              videoEncoding;
+    javacall_const_ascii_string         videoEncoding;
     /** Supported video snapshot formats and parameters;
      *  NULL if not supported
      */
-    char *                              videoSnapshotEncoding;
+    javacall_const_ascii_string         videoSnapshotEncoding;
 
     /** Support Device Tone */
     javacall_bool                       supportDeviceTone;
@@ -1171,7 +1170,7 @@ javacall_result javacall_media_get_midibank_key_name(javacall_handle handle,
                                             long bank,
                                             long program,
                                             long key,
-                                            /*OUT*/char* keyname,
+                                            /*OUT*/javacall_ascii_string keyname,
                                             /*INOUT*/long* keynameLen);
 
 /**
@@ -1191,7 +1190,7 @@ javacall_result javacall_media_get_midibank_key_name(javacall_handle handle,
 javacall_result javacall_media_get_midibank_program_name(javacall_handle handle,
                                                 long bank,
                                                 long program,
-                                                /*OUT*/char* progname,
+                                                /*OUT*/javacall_ascii_string progname,
                                                 /*INOUT*/long* prognameLen);
 
 /**
@@ -1209,7 +1208,7 @@ javacall_result javacall_media_get_midibank_program_name(javacall_handle handle,
  */
 javacall_result javacall_media_get_midibank_program_list(javacall_handle handle,
                                                 long bank,
-                                                /*OUT*/char* proglist,
+                                                /*OUT*/javacall_ascii_string proglist,
                                                 /*INOUT*/long* proglistLen);
 
 /**
