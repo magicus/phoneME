@@ -30,15 +30,12 @@ ifeq ($(TOOLS_DIR),)
 $(error TOOLS_DIR is not set.)
 endif
 
-ifeq ($(JDK_DIR),)
-$(error JDK_DIR is not set.)
-endif
-
 include $(TOOLS_DIR)/tools.gmk
 
 include $(JAVACALL_DIR)/build/list.gmk
 
-.PHONY: javacall_common create_output_dirs copy_include_files output_properties_files clean doxygen
+.PHONY: javacall_common create_output_dirs copy_include_files \
+    output_properties_files clean doxygen
 
 javacall_common: create_output_dirs copy_include_files output_properties_files
 
@@ -75,22 +72,24 @@ SPECIFIC_DEFINITIONS += -I$(JAVACALL_OUTPUT_DIR)
 
 output_properties_files: $(STATIC_PROPERTIES_H)
 
-$(STATIC_PROPERTIES_H): $(CONFIGURATOR_JAR_FILE) $(JAVACALL_PROPERTIES_TARGET_FILE)
-	@$(JAVA_CMD) -jar $(CONFIGURATOR_JAR_FILE) \
+$(STATIC_PROPERTIES_H): $(CONFIGURATOR_JAR_FILE) \
+    $(JAVACALL_PROPERTIES_TARGET_FILE)
+	@$(call runJarFile,$(CONFIGURATOR_JAR_FILE),\
 		-xml $(JAVACALL_PROPERTIES_TARGET_FILE) \
 		-xsl $(CONFIGURATOR_DIR)/xsl/cldc/propertiesNative.xsl \
-		-out $@
+		-out $@)
 
 else
 DYNAMIC_PROPERTIES_INI = $(JAVACALL_OUTPUT_DIR)/jwc_properties.ini
 
 output_properties_files: $(DYNAMIC_PROPERTIES_INI)
 
-$(DYNAMIC_PROPERTIES_INI): $(CONFIGURATOR_JAR_FILE) $(JAVACALL_PROPERTIES_TARGET_FILE)
-	@$(JAVA_CMD) -jar $(CONFIGURATOR_JAR_FILE) \
+$(DYNAMIC_PROPERTIES_INI): $(CONFIGURATOR_JAR_FILE) \
+    $(JAVACALL_PROPERTIES_TARGET_FILE)
+	@$(call runJarFile,$(CONFIGURATOR_JAR_FILE)\
 		-xml $(JAVACALL_PROPERTIES_TARGET_FILE) \
 		-xsl $(CONFIGURATOR_DIR)/xsl/cldc/propertiesIni.xsl \
-		-out $@
+		-out $@)
 
 endif
 
@@ -138,9 +137,11 @@ JAVACALL_OUTPUT_EXT_LIB_DIR:=$(JAVACALL_OUTPUT_DIR)/ext_lib
 
 JAVACALL_INCLUDE_TARGET_FILES_SET:=$(foreach file,$(JAVACALL_INCLUDE_SOURCE_FILES_SET),$(JAVACALL_OUTPUT_INCLUDE_DIR)/$(notdir $(file)))
 
-$(JAVACALL_PROPERTIES_TARGET_FILE): $(CONFIGURATION_PROPERTIES_FILE) $(JAVACALL_DIR)/build/configuration.dtd
+$(JAVACALL_PROPERTIES_TARGET_FILE): $(CONFIGURATION_PROPERTIES_FILE) \
+    $(JAVACALL_DIR)/build/configuration.dtd
 	@echo Copying property definitions...
-	@cp -u $(CONFIGURATION_PROPERTIES_FILE) $(JAVACALL_PROPERTIES_TARGET_FILE)
+	@cp -u $(CONFIGURATION_PROPERTIES_FILE) \
+		$(JAVACALL_PROPERTIES_TARGET_FILE)
 	@cp -u $(JAVACALL_DIR)/build/configuration.dtd $(JAVACALL_OUTPUT_DIR)
 
 $(JAVACALL_INCLUDE_TARGET_FILES_SET): $(JAVACALL_INCLUDE_SOURCE_FILES_SET)
