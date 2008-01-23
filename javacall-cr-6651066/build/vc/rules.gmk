@@ -30,10 +30,6 @@ ifeq ($(JAVACALL_DIR),)
 $(error JAVACALL_DIR is not set.)
 endif
 
-JAR_CMD = $(JDK_DIR)/bin/jar.exe
-JAVA_CMD = $(JDK_DIR)/bin/java.exe
-JAVAC_CMD = $(JDK_DIR)/bin/javac.exe
-
 include $(JAVACALL_DIR)/build/common.gmk
 TEMP1=$(patsubst %.c,%.obj,$(PORTING_SOURCE))
 TEMP=$(patsubst %.cpp,%.obj,$(TEMP1))
