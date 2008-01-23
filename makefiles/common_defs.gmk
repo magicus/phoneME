@@ -24,6 +24,11 @@
 
 -include $(TOOLS_DIR)/makefiles/hostdefs_$(HOST_OS).gmk
 
+# Java tools
+JAR_CMD ?= $(JDK_DIR)/bin/jar
+JAVA_CMD ?= $(JDK_DIR)/bin/java
+JAVAC_CMD ?= $(JDK_DIR)/bin/javac
+
 # classpath separator for java and javac commands.
 PS ?= :
 
