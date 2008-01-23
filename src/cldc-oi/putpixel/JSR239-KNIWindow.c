@@ -36,6 +36,22 @@
 #endif
 
 /**
+ * Get a C structure representing the given <tt>ImageData</tt> class.
+ */
+#define GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(handle) \
+  GXAPI_GET_GRAPHICS_PTR(handle)->img != NULL ? \
+  GXAPI_GET_GRAPHICS_PTR(handle)->img->imageData : \
+  (java_imagedata*)NULL
+
+
+/**
+ * Convenient macro for getting screen buffer from a Graphics's target image.
+ */
+#define GXJ_GET_GRAPHICS_SCREEN_BUFFER(g,sbuf) \
+   gxj_get_image_screen_buffer_impl(GXAPI_GET_IMAGEDATA_PTR_FROM_GRAPHICS(g),sbuf,g)
+
+
+/**
  * Helper function.
  * Retrieve buffer for the specified graphics.
  *
