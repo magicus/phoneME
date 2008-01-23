@@ -394,6 +394,12 @@
             Name="AMS_SUITES_TO_BE_DISABLED"
             Comment="AMS: general"/>
   <constant Type="int"
+            Name="AMS_DEFAULT_STORAGE_NAME"
+            Comment="AMS: general"/>
+  <constant Type="int"
+            Name="AMS_EXTRENAL_STORAGE_NAME"
+            Comment="AMS: general"/>
+  <constant Type="int"
             Name="AMS_MGR_TITLE"
             Comment="AMS: com.sun.midp.appmanager.Manager"/>
   <constant Type="int"
@@ -618,6 +624,9 @@
   <constant Type="int"
             Name="AMS_DISC_APP_LOCKED"
             Comment="AMS: com.sun.midp.installer.DiscoveryApp"/>
+  <constant Type="int"
+            Name="AMS_GRA_INTLR_SELECT_STORAGE"
+            Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>
   <constant Type="int"
             Name="AMS_GRA_INTLR_UPD_CAN"
             Comment="AMS: com.sun.midp.installer.GraphicalInstaller"/>

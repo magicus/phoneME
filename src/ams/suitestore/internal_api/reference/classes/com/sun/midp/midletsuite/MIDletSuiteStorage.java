@@ -308,6 +308,16 @@ public class MIDletSuiteStorage {
     public synchronized native String getMidletSuiteJarPath(int id);
 
     /**
+     * Get the storage id for a suite.
+     *
+     * @param id unique ID of the suite
+     *
+     * @return storage id or null if the suite does not exist
+     */
+    public native static int getMidletSuiteStorageId(int id);
+
+
+    /**
      * Gets the unique identifier of MIDlet suite.
      *
      * @param vendor name of the vendor that created the application, as

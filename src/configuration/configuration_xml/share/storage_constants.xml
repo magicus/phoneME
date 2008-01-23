@@ -44,6 +44,12 @@
             Value="(-1)"
             NativeOnly="false"
             Comment="Unused storage ID."/>
+<constant Type="int"
+            Name="MAX_STORAGE_NUM"
+            Value="2"
+            NativeOnly="false"
+            Comment="Number of the supported storages: 2 for internal and only one external.
+ This value should be changed if more than one external storage is supported."/>
 </constant_class>
 
 </constants>

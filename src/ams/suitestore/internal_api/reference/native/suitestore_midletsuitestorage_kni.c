@@ -366,6 +366,33 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMidletSuiteJarPath) {
 }
 
 /**
+ * Get the storage id for a suite.
+ *
+ * @param suiteId unique ID of the suite
+ *
+ * @return storage id or UNUSED_STORAGE_ID if the suite does not exist
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_getMidletSuiteStorageId) {
+    SuiteIdType suiteId;
+    StorageIdType storageId;
+    MIDPError errorCode;
+
+    suiteId = KNI_GetParameterAsInt(1);
+
+    do {
+        errorCode = midp_suite_get_suite_storage(suiteId, &storageId);
+        if (errorCode != ALL_OK) {
+            /* the suite was not found */
+            storageId = UNUSED_STORAGE_ID;
+            break;
+        }
+    } while (0);
+
+    KNI_ReturnInt(storageId);
+}
+
+/**
  * Native method String getSuiteID(String, String) of
  * com.sun.midp.midletsuite.MIDletSuiteStorage.
  * <p>

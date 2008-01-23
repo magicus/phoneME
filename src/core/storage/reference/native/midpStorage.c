@@ -103,12 +103,6 @@ PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(CONFIG_SUBDIR);
  */
 #define DEFAULT_TOTAL_SPACE (4 * 1024 * 1024) /* 4 Meg. */
 
-/*
- * Number of the supported storages: 2 for internal and only one external.
- * This value should be changed if more than one external storage is supported.
- */
-#define MAX_STORAGE_NUM 2
-
 /* Local variables */
 static long totalSpace = DEFAULT_TOTAL_SPACE;
 
