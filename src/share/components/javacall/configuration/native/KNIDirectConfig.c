@@ -59,6 +59,8 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
     int len;
     ListIterator *iterator = NULL;
     char *p;
+    
+    /* stack buffers. Trying to avoid malloc if a string is not big */
     jchar stack_string16_buffer[MAX_PROTOCOLNAME_LEN], *string16 = NULL;
     char stack_string_buffer[MAX_PROTOCOLNAME_LEN], *proto = NULL;
     
@@ -91,7 +93,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
                 proto = stack_string_buffer;
             }
             KNI_GetStringRegion(stringObj, 0, len, string16);
-            if (simple_jcharString_to_asciiString(string16, len, proto, len) != JAVACALL_OK) {
+            if (simple_jcharString_to_asciiString(string16, len, proto, len + 1) != JAVACALL_OK) {
                 KNI_ThrowNew(jsropIllegalArgumentException, "Illegal character in protocol name");
                 break;
             }
@@ -116,7 +118,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
             break;
         }
         
-        /* how long will be list of content types */
+        /* how long will be list of content types? */
         len = 0;
         for (caps = cfg->mediaCaps; caps != NULL && caps->mediaFormat != NULL; caps++) {
             if (proto == NULL || (caps->wholeProtocols & proto_mask) != 0
@@ -183,6 +185,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesNext) {
             KNI_ThrowNew(jsropIllegalArgumentException, "Illegal iterator");
             break;
         }
+        /* finding next item in the list */
         if ((p = strchr(iterator->current, ' ')) != NULL) {
             len = (int)(p - iterator->current);
         } else {
@@ -191,6 +194,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesNext) {
         if (len == 0) { /* End of list */
             break;
         }
+        /* is the stack buffer enough for the item? */
         if (len >= sizeof stack_string_buffer / sizeof stack_string_buffer[0]) {
             mime = MALLOC(len + 1);
             if (mime == NULL) {
@@ -203,6 +207,8 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesNext) {
 
         memcpy(mime, iterator->current, len);
         mime[len] = '\0';
+        
+        /* shift to next item in the list */
         iterator->current += len;
         while (*iterator->current == ' ') {
             iterator->current++;
@@ -234,6 +240,8 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
     ListIterator *iterator = NULL;
     javacall_int32 proto_mask = 0;
     char *p;
+    
+    /* stack buffers. Trying to avoid malloc if a string is not big */
     jchar stack_string16_buffer[MAX_PROTOCOLNAME_LEN], *string16 = NULL;
     char stack_string_buffer[MAX_PROTOCOLNAME_LEN], *mime = NULL;
     
@@ -246,6 +254,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
             mime = NULL;
         } else {
             int len = KNI_GetStringLength(stringObj);
+            /* if the string is longer than the stack buffer try to malloc it */
             if (len >= sizeof stack_string16_buffer / sizeof stack_string16_buffer[0]) {
                 string16 = MALLOC((len + 1) * sizeof *string16);
                 if (string16 == NULL) {
@@ -265,7 +274,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
                 mime = stack_string_buffer;
             }
             KNI_GetStringRegion(stringObj, 0, len, string16);
-            if (simple_jcharString_to_asciiString(string16, len, mime, len) != JAVACALL_OK) {
+            if (simple_jcharString_to_asciiString(string16, len, mime, len + 1) != JAVACALL_OK) {
                 KNI_ThrowNew(jsropIllegalArgumentException, "Illegal character in MIME type name");
                 break;
             }
@@ -274,6 +283,8 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
             KNI_ThrowNew(jsropRuntimeException, "Couldn't get MMAPI configuration");
             break;
         }
+        
+        /* trying to find given MIME type among caps->contentTypes */
         for (caps = cfg->mediaCaps; caps != NULL && caps->mediaFormat != NULL; caps++) {
             if (caps->wholeProtocols != 0 || caps->streamingProtocols != 0) {
                 if (mime != NULL) {
@@ -302,17 +313,21 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
                 }
             }
         }
+        
         if (proto_mask != 0) {
+            /* some protocols were found */
             int i;
             int len = 0;
             
+            /* trying to resolve protocol names: calculating needed memory */
             for (i = 0; i < sizeof protocolNames / sizeof protocolNames[0]; i++) {
                 if ((protocolNames[i].proto_mask & proto_mask) != 0 && protocolNames[i].proto_name != NULL) {
                     len += strlen(protocolNames[i].proto_name) + 1; /* +1 for space char */
                 }
             }
             if (len == 0) {
-                iterator = NULL;
+                /* Protocol wasn't found in the protocol name table */
+                KNI_ThrowNew(jsropRuntimeException, "Incorrect MMAPI configuration: missing protocol name");
                 break;
             }
          
@@ -322,8 +337,10 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
                 break;
             }
         
+            /* initialize the iterator */
             iterator->current = iterator->list;
         
+            /* building the list of protocols */
             p = iterator->list;
             for (i = 0; i < sizeof protocolNames / sizeof protocolNames[0]; i++) {
                 if ((protocolNames[i].proto_mask & proto_mask) != 0 && protocolNames[i].proto_name != NULL) {
@@ -335,13 +352,13 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
             }
             p--; *p = '\0'; /* replace last space with zero */
         } else {
-            /* protocol wasn't found */
-            iterator = NULL;
+            /* No protocols were found for provided MIME type. Return 0 */
             break;
         }
         delete_duplicates(iterator->list);
     } while (0);
 
+    /* freeing buffers */
     if (mime != NULL && mime != stack_string_buffer) {
         FREE(mime);
     }
@@ -369,6 +386,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsNext) {
             KNI_ThrowNew(jsropIllegalArgumentException, "Illegal iterator");
             break;
         }
+        /* finding next item in the list */
         if ((p = strchr(iterator->current, ' ')) != NULL) {
             len = (int)(p - iterator->current);
         } else {
@@ -377,6 +395,8 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsNext) {
         if (len == 0) { /* End of list */
             break;
         }
+        
+        /* is the stack buffer enough for the item? */
         if (len >= sizeof stack_string_buffer / sizeof stack_string_buffer[0]) {
             proto = MALLOC(len + 1);
             if (proto == NULL) {
@@ -387,6 +407,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsNext) {
             proto = stack_string_buffer;
         }
 
+        /* shift to next item in the list */
         memcpy(proto, iterator->current, len);
         proto[len] = '\0';
         iterator->current += len;
@@ -443,12 +464,15 @@ static void delete_duplicates(char *p) {
     } while (1);
 }
 
+/* Convert 16-bit string into 8-bit string. 
+   Source string must contain only ASCII chars */
 static javacall_result simple_jcharString_to_asciiString(
                     jchar *jcharString, 
                     jsize jcharStringLen, 
                     char *asciiStringBuffer, 
                     jsize bufferSize) {
 
+    bufferSize--;
     while (bufferSize-- > 0 && jcharStringLen-- > 0) {
         if ((javacall_int32)*jcharString > 0x7F) {
             return JAVACALL_FAIL;
