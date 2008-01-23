@@ -30,6 +30,10 @@ ifeq ($(TOOLS_DIR),)
 $(error TOOLS_DIR is not set.)
 endif
 
+ifeq ($(JDK_DIR),)
+$(error JDK_DIR is not set.)
+endif
+
 include $(TOOLS_DIR)/tools.gmk
 
 include $(JAVACALL_DIR)/build/list.gmk
