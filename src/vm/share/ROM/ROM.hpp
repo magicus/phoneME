@@ -389,7 +389,8 @@ public:
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
   static bool class_is_hidden_in_profile(const JavaClass* const jc);
-  static bool is_restricted_package_in_profile(char *name, int name_len);
+  static bool is_restricted_package_in_profile(const char *name, 
+                                               int name_len);
   static int profiles_count() { return _rom_profiles_count; }
   static const char **profiles_names() { return _rom_profiles_names; }
 #endif

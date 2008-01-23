@@ -1242,7 +1242,7 @@ void ROM::ROM_print_hrticks(void print_hrticks(const char *name,
 #endif
 
 #if ENABLE_MULTIPLE_PROFILES_SUPPORT
-bool ROM::is_restricted_package_in_profile(char *name, int name_len) {
+bool ROM::is_restricted_package_in_profile(const char *name, int name_len) {
   const int current_profile_id = Universe::current_profile_id();  
   if (current_profile_id == Universe::DEFAULT_PROFILE_ID) {
     return false;
