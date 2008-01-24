@@ -30,14 +30,14 @@
 #include <stdarg.h>
 
 
-/**
+/*
  * Not all compilers provide printf function, so we have 
  * to use workaround. This function is to be used from javacall.
  */
 
 void javautil_printf(int severity, int channelID, char *message, ...);
 
-/**
+/*
  * Not all compilers provide vprintf function, so we have 
  * to use workaround. This function is to be used from midp.
  * Prints out thr DEBUG message in the following format:

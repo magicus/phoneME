@@ -49,7 +49,7 @@ char print_buffer[PRINT_BUFFER_SIZE];
 */
 void javacall_print(const char *s) {
     if(s != NULL) {
-        printf(s);
+        printf("%s",s);
     } else {
         printf("NULL\n");
     }
