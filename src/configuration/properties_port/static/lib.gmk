@@ -41,7 +41,8 @@ vpath % $(SUBSYSTEM_DIR)/configuration/properties_port/static/native
 # Native files 
 #
 INT_PROPERTIES_PORT_NATIVE_FILES = \
-	midp_properties_static.c
+	midp_properties_static.c \
+	properties_static_data.c
 
 # Include files
 # 
@@ -54,3 +55,9 @@ SUBSYSTEM_PROPERTIES_PORT_JAVA_FILES = \
 
 SUBSYSTEM_PROPERTIES_PORT_NATIVE_FILES = \
 	$(INT_PROPERTIES_PORT_NATIVE_FILES)
+
+$(OBJ_DIR)/properties_static_data.o: $(GENERATED_DIR)/properties_static_data.c
+	@echo " ... $@" $(LOG)
+	@echo +++ $(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` \
+		$(LOG_ONLY)
+	@$(CC) $(CFLAGS) -c $(CC_OUTPUT)$@ `$(call fixcygpath, $<)` $(LOG)

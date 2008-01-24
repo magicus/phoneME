@@ -252,18 +252,20 @@ GENERATE_PROPERTIES_CALLOUTS = \
 	-out `$(call fixcygpath, $(GENERATED_DIR)/midp_property_callouts.h)`
 
 ifeq ($(USE_STATIC_PROPERTIES), true)
-# transformation for generating .h file with properties 
+# transformation for generating .c file with properties 
 GENERATE_PROPERTIES_STATIC = \
 	-xml $(INT_MERGED_XML_FILE) \
 	-xsl $(INT_XSL_DIR)/cldc/propertiesNative.xsl \
-	-out `$(call fixcygpath, $(GENERATED_DIR)/properties_static_data.h)`
+	-params arrayNamePrefix midp \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/properties_static_data.c)`
 else
 ifeq ($(USE_JAVACALL_PROPERTIES), true)
-# transformation for generating stub .h file
+# transformation for generating stub .c file
 GENERATE_PROPERTIES_STATIC = \
 	-xml $(INT_COMMON_XML_DIR)/empty.xml \
 	-xsl $(INT_XSL_DIR)/cldc/propertiesNative.xsl \
-	-out `$(call fixcygpath, $(GENERATED_DIR)/properties_static_data.h)`
+	-params arrayNamePrefix midp \
+	-out `$(call fixcygpath, $(GENERATED_DIR)/properties_static_data.c)`
 
 # transformation for generating .ini file with properties
 GENERATE_PROPERTIES_DYNAMIC = \
