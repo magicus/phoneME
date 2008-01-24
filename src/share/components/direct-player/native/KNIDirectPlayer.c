@@ -450,12 +450,14 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nIsNeedBuffering) {
     jint handle = KNI_GetParameterAsInt(1);
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     jboolean returnValue = KNI_TRUE;
+    javacall_bool isHandled = JAVACALL_FALSE;
 
 LockAudioMutex();            
     /* Is buffering handled by device side? */
     if (pKniInfo && pKniInfo->pNativeHandle &&
-		JAVACALL_OK == javacall_media_download_handled_by_device(pKniInfo->pNativeHandle)) {
-        returnValue = KNI_FALSE;
+        JAVACALL_OK == javacall_media_download_handled_by_device(pKniInfo->pNativeHandle,
+                                                                            &isHandled)) {
+        returnValue = ((isHandled == JAVACALL_TRUE) ? KNI_FALSE : KNI_TRUE;
     }
 UnlockAudioMutex();            
 
