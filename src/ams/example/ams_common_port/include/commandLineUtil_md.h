@@ -38,30 +38,16 @@ extern "C" {
  */
 
 /**
- * Generates a correct application directory based on several rules. If
- * the <tt>MIDP_HOME</tt> environment variable is set, its value is used
- * unmodified. Otherwise, this function will search for the <tt>appdb</tt>
- * directory in the following order:
- * <ul>
- * <li>current directory (if the MIDP executable is in the <tt>PATH</tt>
- *     environment variable and the current directory is the right place)
- * <li>the parent directory of the midp executable
- * <li>the grandparent directory of the midp executable
- * </ul>
- * <p>
- * If <tt>cmd</tt> does not contain a directory (i.e. just the text
- * <tt>midp</tt>), the search starts from the current directory. Otherwise,
- * the search starts from the directory specified in <tt>cmd</tt> (i.e.
- * start in the directory <tt>bin</tt> if <tt>cmd</tt> is <tt>bin/midp</tt>).
- * <p>
- * <b>NOTE:</b> This is only applicable for development platforms.
- *
- * @param cmd A 'C' string containing the command used to start MIDP.
- * @return A 'C' string the found MIDP home directory, otherwise
- *         <tt>NULL</tt>, this will be a static buffer, so that it safe
- *       to call this function before midpInitialize, don't free it
+ * Generates a correct application directory
+ * rules differ between platforms
  */
 char* getApplicationDir(char *cmd);
+
+/**
+ * Generates a correct configuration directory,
+ * rules differ between platforms
+ */
+char* getConfigurationDir(char *cmd);
 
 #ifdef __cplusplus
 }
