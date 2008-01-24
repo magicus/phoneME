@@ -242,7 +242,7 @@ KNIDECL(com_sun_midp_main_CDCInit_initMidpNativeStates) {
 
     initCDCEvents();
 
-    midpSetHomeDir(store_buff);
+    midpSetAppDir(store_buff);
     midpSetConfigDir(conf_buff);
     
     if (midpInitialize() != 0) {
