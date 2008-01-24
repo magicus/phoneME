@@ -27,12 +27,14 @@
 #include <string.h>
 #include <kni.h>
 #include <sni.h>
+
 #ifdef ENABLE_MIDP
-//#include <commonKNIMacros.h>
-//#include <ROMStructs.h>
-  //#include <midp_thread.h>
+#if (ENABLE_CDC != 1) 
+  #include <midp_thread.h> // midp_thread_unblock
+  #include <push_server_resource_mgmt.h> // pushsetcachedflag, pushgetfilter
+#endif
   #include <midpServices.h>
-  #include <push_server_export.h>
+  #include <push_server_export.h>  // findPushBlockedHandle
 #else
   #include "wmaInterface.h"
 #endif
@@ -51,7 +53,6 @@
 #include <jsr120_sms_listeners.h>
 #include <jsr120_sms_protocol.h>
 #include <app_package.h>
-//#include <push_server_resource_mgmt.h> //pushgetfiltermms
 #include <wmaPushRegistry.h> // jsr120_check_filter
 
 /*
@@ -75,8 +76,8 @@ static WMA_STATUS jsr120_sms_push_listener(jint port, SmsMessage* wma_smsstruct,
                                               void* userData);
 static WMA_STATUS jsr120_invoke_sms_listeners(SmsMessage* sms, ListElement *listeners);
 #if (ENABLE_CDC != 1)
-static JVMSPI_ThreadID
-jsr120_get_blocked_thread_from_handle(long handle, jint waitingFor);
+static WMA_STATUS jsr120_unblock_midp_threads(long handle, jint waitingFor, WMA_STATUS status);
+static WMA_STATUS jsr120_unblock_sms_read_threads(long handle, jint waitingFor);
 #endif
 static WMA_STATUS jsr120_register_sms_listener(jchar smsPort,
                                                AppIdType msid,
@@ -106,11 +107,11 @@ static WMA_STATUS jsr120_invoke_sms_listeners(SmsMessage* sms, ListElement *list
     ListElement* callback;
     WMA_STATUS unblocked = WMA_ERR;
 
-    for(callback=jsr120_list_get_by_number(listeners, sms->destPortNum);
-	callback!=NULL;
-	callback=jsr120_list_get_by_number(callback->next,sms->destPortNum)) {
+    for(callback = jsr120_list_get_by_number(listeners, sms->destPortNum);
+	callback != NULL;
+	callback = jsr120_list_get_by_number(callback->next, sms->destPortNum)) {
 	sms_listener_t* listener=(sms_listener_t*)(callback->userDataCallback);
-	if (listener!=NULL) {
+	if (listener != NULL) {
             if((unblocked =
                 listener(sms->destPortNum, sms, callback->userData)) == WMA_OK) {
                 /*
@@ -177,29 +178,7 @@ WMA_STATUS jsr120_sms_is_message_expected(jchar port, char* addr) {
  */
 void jsr120_sms_message_sent_notifier(int handle, WMA_STATUS result) {
 #if (ENABLE_CDC != 1)
-    JVMSPI_BlockedThreadInfo *blocked_threads;
-    jint n;
-    jint i;
-
-    blocked_threads = SNI_GetBlockedThreads(&n);
-
-    for (i = 0; i < n; i++) {
-	MidpReentryData *p =
-            (MidpReentryData*)(blocked_threads[i].reentry_data);
-	if (p != NULL) {
-            if (p->waitingFor == WMA_SMS_WRITE_SIGNAL) {
-              if (handle == 0 || handle == p->descriptor) {
-                p->status = result;
-                midp_thread_unblock(blocked_threads[i].thread_id);
-		return;
-              }
-            }
-
-	}
-
-    }
-#else
-    /* IMPL NOTE implement this */
+    jsr120_unblock_midp_threads(handle, WMA_SMS_WRITE_SIGNAL, result);
 #endif
 }
 
@@ -297,11 +276,7 @@ WMA_STATUS jsr120_unregister_sms_push_listener(jchar port) {
  */
 WMA_STATUS jsr120_sms_unblock_thread(jint handle, jint waitingFor) {
 #if (ENABLE_CDC != 1)
-    JVMSPI_ThreadID id = jsr120_get_blocked_thread_from_handle((long)handle, waitingFor);
-    if (id != 0) {
-	midp_thread_unblock(id);
-	return WMA_OK;
-    }
+    return jsr120_unblock_sms_read_threads(handle, waitingFor);
 #else
 #ifdef JSR_120_ENABLE_JUMPDRIVER
     JUMPEvent evt = (JUMPEvent) handle;
@@ -318,49 +293,67 @@ WMA_STATUS jsr120_sms_unblock_thread(jint handle, jint waitingFor) {
 
 #if (ENABLE_CDC != 1)
 /**
- * Find a first thread that can be unblocked for  a given handle
- * and signal type
+ * Ublock midp threads that can be unblocked for a given handle
+ * and signal type.
+ *
+ * @param handle Platform specific handle
+ * @param signalType Enumerated signal type
+ * @param status Status to set to blocked thread reentry data
+ *
+ * @result returns <code>WMA_STATUS</code> if waiting threads was
+ *         successfully unblocked
+ */
+static WMA_STATUS jsr120_unblock_midp_threads(long handle, jint waitingFor, WMA_STATUS status) {
+
+    jint i, num_threads;
+    JVMSPI_BlockedThreadInfo *blocked_threads = SNI_GetBlockedThreads(&num_threads);
+    WMA_STATUS ok = WMA_ERR;
+
+    for (i = 0; i < num_threads; i++) {
+	MidpReentryData *p =
+            (MidpReentryData*)(blocked_threads[i].reentry_data);
+	if (p != NULL) {
+	    if ((waitingFor == (int)p->waitingFor) &&
+         	((p->descriptor == handle) || (handle == 0))) {
+                p->status = status;
+                midp_thread_unblock(blocked_threads[i].thread_id);
+                ok = WMA_OK;
+            }
+        }
+    }
+
+    return ok;
+}
+
+/**
+ * Ublock threads waiting for these signals:
+ *   WMA_SMS_READ_SIGNAL
+ *   PUSH_SIGNAL
  *
  * @param handle Platform specific handle
  * @param signalType Enumerated signal type
  *
- * @return JVMSPI_ThreadID Java thread id than can be unblocked
- *         0 if no matching thread can be found
- *
+ * @result returns <code>WMA_STATUS</code> if waiting threads was
+ *         successfully unblocked
  */
-static JVMSPI_ThreadID
-jsr120_get_blocked_thread_from_handle(long handle, jint waitingFor) {
-    JVMSPI_BlockedThreadInfo *blocked_threads;
-    jint n;
-    jint i;
+static WMA_STATUS jsr120_unblock_sms_read_threads(long handle, jint waitingFor) {
+    WMA_STATUS ok = WMA_ERR;
 
-    blocked_threads = SNI_GetBlockedThreads(&n);
-
-    for (i = 0; i < n; i++) {
-	MidpReentryData *p =
-            (MidpReentryData*)(blocked_threads[i].reentry_data);
-	if (p != NULL) {
-
-	    /* wait policy: 1. threads waiting for network reads
-                            2. threads waiting for network writes
-         	            3. threads waiting for network push event*/
-	    if ((waitingFor == WMA_SMS_READ_SIGNAL) &&
-                (waitingFor == (int)p->waitingFor) &&
-         	(p->descriptor == handle)) {
-		return blocked_threads[i].thread_id;
-            }
-
-            if ((waitingFor == PUSH_SIGNAL) &&
-                (waitingFor == (int)p->waitingFor) &&
-                (findPushBlockedHandle(handle) != 0)) {
-                return blocked_threads[i].thread_id;
-	    }
-
-	}
-
+    if (waitingFor == WMA_SMS_READ_SIGNAL) {
+        ok = jsr120_unblock_midp_threads(handle, waitingFor, WMA_OK);
     }
 
-    return 0;
+    if (ok == WMA_OK) {
+        return ok; 
+    }
+
+    if (waitingFor == PUSH_SIGNAL) {
+        if (findPushBlockedHandle(handle) != 0) {
+            ok = jsr120_unblock_midp_threads(0, waitingFor, WMA_OK);
+        }
+    }
+
+    return ok;
 }
 #endif
 
