@@ -178,7 +178,7 @@ public class Logging extends LoggingBase {
                                        String message);
 
 
-    /**
+    /*
     * Gets the severity per channel using the property mechanism.
     */
     private native static int getAllowedSeverity(int channelID);
