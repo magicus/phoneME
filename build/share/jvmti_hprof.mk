@@ -31,7 +31,7 @@
 ###############################################################################
 # Make definitions:
 
-CVM_JVMTI_HPROF_LIBDIR        = $(CVM_LIBDIR)
+CVM_JVMTI_HPROF_LIBDIR        ?= $(CVM_LIBDIR)
 CVM_JVMTI_HPROF_LIB           = \
 	$(CVM_JVMTI_HPROF_LIBDIR)/$(LIB_PREFIX)jvmtihprof$(LIB_POSTFIX)
 
@@ -175,7 +175,7 @@ $(CVM_JVMTI_HPROF_LIB): $(CVM_JVMTI_HPROF_OBJECTS)
 
 ifeq ($(CVM_JVMTI), true)
 ifeq ($(CVM_JVMPI), false)
-$(CVM_JVMTI_HPROF_LIBDIR)/jvm.hprof.txt:
+$(CVM_LIBDIR)/jvm.hprof.txt:
 	@echo "Copying $@"
 	@if [ ! -d $@ ]; then cp $(CVM_JVMTI_HPROF_SHAREROOT)/jvm.hprof.txt $@; fi
 	@echo "Done Copying $@"
