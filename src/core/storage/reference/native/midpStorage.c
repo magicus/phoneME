@@ -75,6 +75,9 @@ static const char* const STRING_CORRUPT_ERROR =
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(APP_DIR)
     {'a', 'p', 'p', 'd', 'b', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(APP_DIR);
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(EXT_STORAGE_DIR)
+    {'m', 'e', 'm', 'o', 'r', 'y', '_', 'c', 'a', 'r', 'd', '\0'}
+PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(EXT_STORAGE_DIR);
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(CONFIG_SUBDIR)
     {'l', 'i', 'b', '\0'}
 PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(CONFIG_SUBDIR);
@@ -154,12 +157,28 @@ storageInitialize(char *config_home, char *midp_home) {
         return -1;
     }
 
+    if (PCSL_STRING_OK != pcsl_string_from_chars(midp_home, &sRoot[1])) {
+        REPORT_ERROR(LC_CORE, "Error: out of memory.\n");
+        storageFinalize();
+        return -1;
+    }
+
     /* performance hint: predict buffer capacity */
     pcsl_string_predict_size(&sRoot[0], pcsl_string_length(&sRoot[0]) + 2
                                     + PCSL_STRING_LITERAL_LENGTH(APP_DIR));
     if (PCSL_STRING_OK != pcsl_string_append_char(&sRoot[0], fsep)
      || PCSL_STRING_OK != pcsl_string_append(&sRoot[0], &APP_DIR)
      || PCSL_STRING_OK != pcsl_string_append_char(&sRoot[0], fsep)) {
+        REPORT_ERROR(LC_CORE, "Error: out of memory.\n");
+        storageFinalize();
+        return -1;
+    }
+
+    pcsl_string_predict_size(&sRoot[1], pcsl_string_length(&sRoot[1]) + 2
+                                    + PCSL_STRING_LITERAL_LENGTH(EXT_STORAGE_DIR));
+    if (PCSL_STRING_OK != pcsl_string_append_char(&sRoot[1], fsep)
+     || PCSL_STRING_OK != pcsl_string_append(&sRoot[1], &EXT_STORAGE_DIR)
+     || PCSL_STRING_OK != pcsl_string_append_char(&sRoot[1], fsep)) {
         REPORT_ERROR(LC_CORE, "Error: out of memory.\n");
         storageFinalize();
         return -1;
@@ -191,6 +210,22 @@ initializeConfigRoot(char* midp_home) {
      || PCSL_STRING_OK != pcsl_string_append(&configRoot[0], &CONFIG_SUBDIR)
      || PCSL_STRING_OK != pcsl_string_append_char(&configRoot[0], fileSep)) {
         pcsl_string_free(&configRoot[0]);
+        return -1;
+    }
+
+    if (PCSL_STRING_OK != pcsl_string_from_chars(midp_home, &configRoot[1])) {
+        return -1;
+    }
+
+    /* performance hint: predict buffer capacity */
+    pcsl_string_predict_size(&configRoot[1],
+                            pcsl_string_length(&configRoot[1])
+                            + 2 + PCSL_STRING_LITERAL_LENGTH(EXT_STORAGE_DIR));
+
+    if (PCSL_STRING_OK != pcsl_string_append_char(&configRoot[1], fileSep)
+     || PCSL_STRING_OK != pcsl_string_append(&configRoot[1], &EXT_STORAGE_DIR)
+     || PCSL_STRING_OK != pcsl_string_append_char(&configRoot[1], fileSep)) {
+        pcsl_string_free(&configRoot[1]);
         return -1;
     }
 
@@ -878,5 +913,5 @@ storage_write_utf16_string(char** ppszError, int handle, const pcsl_string* str)
     }
   }
 }
-
+                        
 
