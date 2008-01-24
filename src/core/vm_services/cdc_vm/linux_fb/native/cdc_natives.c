@@ -258,7 +258,7 @@ KNIDECL(com_sun_midp_main_CDCInit_initMidpNativeStates) {
             store_buff[i] = (char)jbuff[i];
         }
         store_buff[len] = 0;
-        midpSetHomeDir(store_buff);
+        midpSetAppDir(store_buff);
     }
 
     if (midpInitialize() != 0) {
