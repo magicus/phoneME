@@ -1287,18 +1287,22 @@ void javanotify_fileconnection_root_changed(void) {
  * each provider related occurrence. 
  *
  * @param type type of indication: Either
+ * <pre>
  *          - <tt>JAVACALL_EVENT_LOCATION_OPEN_COMPLETED</tt>
  *          - <tt>JAVACALL_EVENT_LOCATION_ORIENTATION_COMPLETED</tt>
  *          - <tt>JAVACALL_EVENT_LOCATION_UPDATE_PERIODICALLY</tt>
  *          - <tt>JAVACALL_EVENT_LOCATION_UPDATE_ONCE</tt>
+ * </pre>
  * @param handle handle of provider related to the notification
  * @param operation_result operation result: Either
+ * <pre>
  *      - <tt>JAVACALL_OK</tt> if operation completed successfully, 
  *      - <tt>JAVACALL_LOCATION_RESULT_CANCELED</tt> if operation is canceled 
  *      - <tt>JAVACALL_LOCATION_RESULT_TIMEOUT</tt>  if operation is timeout 
  *      - <tt>JAVACALL_LOCATION_RESULT_OUT_OF_SERVICE</tt> if provider is out of service
  *      - <tt>JAVACALL_LOCATION_RESULT_TEMPORARILY_UNAVAILABLE</tt> if provider is temporarily unavailable
  *      - otherwise, <tt>JAVACALL_FAIL</tt>
+ * </pre>
  */
 void javanotify_location_event(
         javacall_location_callback_type event,
@@ -1334,11 +1338,13 @@ void javanotify_location_event(
  * @param proximityRadius of registered coordinate.
  * @param pLocationInfo location info
  * @param operation_result operation result: Either
+ * <pre>
  *      - <tt>JAVACALL_OK</tt> if operation completed successfully, 
  *      - <tt>JAVACALL_LOCATION_RESULT_CANCELED</tt> if operation is canceled 
  *      - <tt>JAVACALL_LOCATION_RESULT_OUT_OF_SERVICE</tt> if provider is out of service
  *      - <tt>JAVACALL_LOCATION_RESULT_TEMPORARILY_UNAVAILABLE</tt> if provider is temporarily unavailable
  *      - otherwise, <tt>JAVACALL_FAIL</tt>
+ * </pre>
  */
 void /*OPTIONAL*/javanotify_location_proximity(
         javacall_handle provider,
