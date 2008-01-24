@@ -133,6 +133,14 @@ runMidlet(int argc, char** commandlineArgs) {
      */
     JVM_SetConfig(JVM_CONFIG_HEAP_CAPACITY, midp_heap_requirement);
 
+    if (midpRemoveOptionFlag("-port", commandlineArgs, &argc) != NULL) {
+        char* pMsg = "WARNING: -port option has no effect, "
+                     "set VmDebuggerPort property instead.\n";
+        REPORT_ERROR(LC_AMS, pMsg);
+        fprintf(stderr, pMsg);
+        return -1;
+    }
+
     /*
      * Parse options for the VM. This is desirable on a 'development' platform
      * such as linux_qte. For actual device ports, copy this block of code only
@@ -170,6 +178,10 @@ runMidlet(int argc, char** commandlineArgs) {
         argv[i] = commandlineArgs[i];
     }
 
+    /*
+     * IMPL_NOTE: "-debug" option was already parsed by the VM, so
+     *            argv doesn't contain it at this point. Remove?
+     */
     if (midpRemoveOptionFlag("-debug", argv, &argc) != NULL) {
         debugOption = MIDP_DEBUG_SUSPEND;
     }

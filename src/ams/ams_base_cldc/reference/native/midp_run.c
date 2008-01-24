@@ -398,6 +398,22 @@ midpInitializeUI(void) {
     }
 #endif
 
+#if ENABLE_ON_DEVICE_DEBUG
+    {
+        char* argv[3] = { "-nosuspend", "-debugger", "-debug_isolate" };
+        int i, num = 3;
+
+        for (i = 0; i < num; i++) {
+            JVM_ParseOneArg(num, &argv[i]);
+        }
+        
+        /*
+         * Use the default port: 2800.
+         * To redefine it, "-port <n>" option can be used.
+         */
+     }
+#else
+
 #if ENABLE_JAVA_DEBUGGER
     {
         char* argv[2];
@@ -410,6 +426,8 @@ midpInitializeUI(void) {
         }
     }
 #endif
+
+#endif /* ENABLE_ON_DEVICE_DEBUG */
 
     if (pushopen() != 0) {
         return -1;
