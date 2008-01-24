@@ -459,14 +459,18 @@ javacall_result javacall_media_release_device(javacall_handle handle);
  * Ask to the native layer if it will handle media download from specific URL.
  * Is media download for specific URL (provided in javacall_media_create)
  * will be handled by native layer or Java layer?
- * If this function return JAVACALL_OK, Java do not call 
+ * If isHandled is JAVACALL_TRUE, Java do not call 
  * javacall_media_do_buffering function
  * In this case, native layer should handle all of data gathering by itself
  * 
- * @retval JAVACALL_OK      Yes, this protocol handled by device.
- * @retval JAVACALL_FAIL    No, please handle this protocol from Java.
+ * @param handle    Handle to the library
+ * @param isHandled JAVACALL_TRUE if native player will handle media download
+ * 
+ * @retval JAVACALL_OK      
+ * @retval JAVACALL_FAIL    
  */
-javacall_result javacall_media_download_handled_by_device(javacall_handle handle);
+javacall_result javacall_media_download_handled_by_device(javacall_handle handle,
+                                                  /*OUT*/javacall_bool* isHandled);
 
 /**
  * This function returns desired size of Java Layer buffer for downloaded media content
