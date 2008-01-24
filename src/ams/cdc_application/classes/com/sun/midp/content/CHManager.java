@@ -34,12 +34,11 @@ import com.sun.midp.installer.InstallState;
 
 import com.sun.midp.midlet.MIDletSuite;
 
-import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
 /**
  * Stub interface to handle ContentHandlers functions.
- * This version has no dependentcie to the CLDC AMS classes. It is needed by
+ * This version has no dependencies to the CLDC AMS classes. It is needed by
  * com.sun.midp.installer.Installer and com.sun.midp.midletsuite.MIDletStorage.
  * When these classes not longer reference this class, it can be removed.
  */
