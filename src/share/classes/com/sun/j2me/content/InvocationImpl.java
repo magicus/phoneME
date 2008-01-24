@@ -40,7 +40,7 @@ import javax.microedition.io.ConnectionNotFoundException;
  * Implementation of Invocation class.
  * <p>
  * This class MUST NOT have any public methods that are not also
- * public in Invocation (the superclass).  The sensistive methods
+ * public in Invocation (the superclass).  The sensitive methods
  * of the class MUST be package private.
  */
 public final class InvocationImpl {
@@ -403,15 +403,14 @@ public final class InvocationImpl {
      * @exception SecurityException if an invoke operation is not permitted
      */
     boolean invoke(InvocationImpl previous, ContentHandlerImpl handler)
-        throws IllegalArgumentException, IOException,
-               ContentHandlerException
+        				throws IllegalArgumentException, IOException
     {
         /*
          * Check all of the arguments for validity.
          */
         for (int i = 0; i < arguments.length; i++) {
             if (arguments[i] == null) {
-                throw new IllegalArgumentException("argument is null");
+                throw new IllegalArgumentException("argument[" + i + "] is null");
             }
         }
 
@@ -428,114 +427,34 @@ public final class InvocationImpl {
 
         // Queue this Invocation
         InvocationStore.put(this);
-
-        // Launch the target application if necessary.
-        boolean shouldExit = false;
-
-        try {
-            if (handler.registrationMethod ==
-                                ContentHandlerImpl.REGISTERED_NATIVE) {
-                shouldExit = RegistryStore.launch(handler);
-                finish(Invocation.INITIATED);
-            } else {
-                try {
-                    AppProxy appl = AppProxy.getCurrent().
-                        forApp(suiteId, classname);
-                    shouldExit = appl.launch(handler.getAppName());
-                    // Set the status of this Invocation to WAITING
-                    status = Invocation.WAITING;
-                } catch (ClassNotFoundException cnfe) {
-                    throw new ContentHandlerException(
-                                "Invoked handler has been removed",
-                                ContentHandlerException.NO_REGISTERED_HANDLER);
-                }
-            }
-        } catch (ContentHandlerException che) {
-            // remove this invocation from the queue before throwing
-            setStatus(DISPOSE);
-            throw che;
-        }
-
+        setStatus(Invocation.WAITING);
+        
         // Set the status of the previous invocation
         if (previous != null) {
             previous.setStatus(Invocation.HOLD);
         }
-        return shouldExit;
+        
+        return InvocationStoreProxy.launchInvocationTarget( this ) == 
+        					InvocationStoreProxy.LIT_MIDLET_START_FAILED;
     }
 
-    /**
-     * Execute the User Environment Policy to select the next
-     * application to run.
-     * Check for and select the next MIDlet suite to run
-     * based on the contents of the Invocation queue.
-     *
-     * From the most recently queued Invocation that is an Invocation
-     * in INIT.
-     * If none, find the most recently queued Invocation that is
-     * a response.
-     */
-    static void invokeNext() {
-        InvocationImpl invoc = null;
-        int tid;
+	void debugTo(java.io.PrintStream out) {
+    	out.print("{" + suiteId + ", " + classname + "} status = ");
+    	String s = "{" + status + "}";
+    	switch( status ){
+	    	case Invocation.ACTIVE: s = "ACTIVE"; break;
+	    	case Invocation.WAITING: s = "WAITING"; break;
+	    	case Invocation.ERROR: s = "ERROR"; break;
+	    	case Invocation.OK: s = "OK"; break;
+	    	case Invocation.CANCELLED: s = "CANCELLED"; break;
+	    	case Invocation.HOLD: s = "HOLD"; break;
+	    	case Invocation.INIT: s = "INIT"; break;
+	    	case Invocation.INITIATED: s = "INITIATED"; break;
+    	}
+    	out.print(s + ", handlerID = '" + ID + "'" );
+	}
 
-        // Look for a recently queued Invocation to launch
-        tid = 0;
-        while ((invoc = InvocationStore.getByTid(tid, -1)) != null) {
-            if (invoc.status == Invocation.INIT) {
-                AppProxy.getCurrent().logInfo("invokeNext has request: " +
-                                              invoc);
-                if (invoc.suiteId != AppProxy.INVALID_STORAGE_ID &&
-                        invoc.classname != null) {
-                    try {
-                        AppProxy appl = AppProxy.getCurrent().
-                            forApp(invoc.suiteId, invoc.classname);
-                        appl.launch("Application");
-                        return;
-                    } catch (ClassNotFoundException cnfe) {
-                        // Ignore
-                    }
-                } else if (invoc.ID != null) {
-                    // check if it is native handler
-                    ContentHandlerImpl handler = RegistryStore.getHandler(null, 
-                                        invoc.ID, RegistryStore.SEARCH_EXACT);
-                    if (handler != null && 
-                        handler.registrationMethod == 
-                                        ContentHandlerImpl.REGISTERED_NATIVE) {
-                        try {
-                            RegistryStore.launch(handler);
-                            invoc.finish(Invocation.INITIATED);
-                            continue;
-                        } catch (ContentHandlerException che) {
-                            // Ignore
-                        }
-                    }
-                }
-
-                // can't process this invocation - remove it
-                invoc.setStatus(DISPOSE);
-            } else if (invoc.status == Invocation.ERROR) {
-                AppProxy.getCurrent().logInfo("invokeNext has response: " +
-                                              invoc);
-                if (invoc.suiteId != AppProxy.INVALID_STORAGE_ID &&
-                        invoc.classname != null) {
-                    try {
-                        AppProxy appl = AppProxy.getCurrent().
-                            forApp(invoc.suiteId, invoc.classname);
-                        appl.launch("Application");
-                        return;
-                    } catch (ClassNotFoundException cnfe) {
-                        // Ignore
-                    }
-                }
-
-                // can't process this invocation - remove it
-                invoc.setStatus(DISPOSE);
-            }
-            tid = invoc.tid;
-        }
-    }
-
-    /**
+	/**
      * Finish this Invocation and set the status for the response.
      *
      * @param status the new status of the Invocation. This MUST be either
@@ -571,24 +490,17 @@ public final class InvocationImpl {
         setStatus(status);
 
         if (getResponseRequired()) {
-            // Launch the target application if necessary.
-            try {
-                AppProxy appl = AppProxy.getCurrent().
-                    forApp(suiteId, classname);
-                return appl.launch(invokingAppName);
-            } catch (ClassNotFoundException cnfe) {
-                AppProxy.getCurrent().logInfo(
-                        "Unable to launch invoking application "
-                        + invokingAppName + "; classname = "
-                        + classname + " from suite = "
-                        + suiteId);
+            if (AppProxy.INVALID_STORAGE_ID == suiteId) {
+                return InvocationStoreProxy.platformFinish(tid);
             }
+            return InvocationStoreProxy.launchInvocationTarget( this ) == 
+						InvocationStoreProxy.LIT_MIDLET_START_FAILED;
         }
         return false;
     }
 
     /**
-     * Creates and opens a Connection to the content accessable by
+     * Creates and opens a Connection to the content accessible by
      * using the URL. This method is
      * equivalent to
      * {@link javax.microedition.io.Connector#open Connector.open}
@@ -739,7 +651,7 @@ public final class InvocationImpl {
      * application that invoked this request.
      * This value MUST be <code>null</code> unless the device has been
      * able to authenticate this application.
-     * If <code>non-null</code>, it is the string identifiying the
+     * If <code>non-null</code>, it is the string identifying the
      * authority.  For example,
      * if the application was a signed MIDlet, then this is the
      * "subject" of the certificate used to sign the application.

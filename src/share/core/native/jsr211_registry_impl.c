@@ -30,14 +30,14 @@
  * @brief Content Handler Registry implementation based on POSIX file calls.
  */
 
-#include "javacall_chapi_registry.h"
-#include "javacall_chapi_invoke.h"
-#include "jsr211_registry.h"
+#include <string.h>
+#include <stdlib.h>
 
 #include <jsrop_memory.h> 
 
-#include <string.h>
-#include <stdlib.h>
+#include "javacall_chapi_registry.h"
+#include "javacall_chapi_invoke.h"
+#include "jsr211_registry.h"
 
 #define MAX_BUFFER 128
 
@@ -57,28 +57,24 @@
 		continue; \
 	}
 
-
-
 /**
  * Append handler to single handler result buffer by handler ID
  */
-#define fill_handler(id, result)  put_handler(id, (JSR211_RESULT_BUFFER) result, 0);
-
+#define fill_handler(id, result)  put_handler(id, result, 0);
 
 /**
  * Append handler to array of handlers result buffer by handler ID
  */
-#define append_handler(id, result)  put_handler(id, (JSR211_RESULT_BUFFER) result, 1);
+#define append_handler(id, result)  put_handler(id, result, 1);
 
-
-static int put_handler(const jchar* id, JSR211_RESULT_BUFFER result, int append) {
+static int put_handler(const jchar* id, JSR211_RESULT_BUFFER * result, int append) {
 
 	int id_sz = wcslen( id );
 
-	jchar* classname = 0;
+	jchar* classname = NULL;
 	int classname_len = MAX_BUFFER;
 
-	jchar* suite_id = 0;
+	jchar* suite_id = NULL;
 	int suite_id_len = MAX_BUFFER;
 	javacall_chapi_handler_registration_type flag;
 	int res;
@@ -90,28 +86,26 @@ static int put_handler(const jchar* id, JSR211_RESULT_BUFFER result, int append)
 		suite_id = MALLOC(suite_id_len  * sizeof(*suite_id));
 		if (!suite_id) break;
 
-		res = javacall_chapi_get_handler_info(id, 
-				suite_id, &suite_id_len,
-				classname,&classname_len,&flag);
+		res = javacall_chapi_get_handler_info(id, suite_id, &suite_id_len,
+				                            classname, &classname_len, &flag);
 
-			if (res == JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL){
-				FREE(classname); classname = 0;
-				FREE(suite_id); suite_id = 0;
-				continue;
-			}
+		if (res == JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL){
+			FREE(classname); classname = NULL;
+			FREE(suite_id); suite_id = NULL;
+			continue;
+		}
 
-			if (res) break;
+		if (res) break;
 
-			if (append) {
-				res = jsr211_appendHandler(id, id_sz, 
-				suite_id, suite_id_len - 1,
-				classname, classname_len - 1, flag,	(JSR211_RESULT_CHARRAY)result);
-			} else {
-				res = jsr211_fillHandler(id, id_sz, 
-				suite_id, suite_id_len - 1,
-				classname, classname_len - 1, flag,	(JSR211_RESULT_CH)result);
-			}
-			break;
+        // assert( flag != 0 );
+		if (append) {
+			res = jsr211_appendHandler(id, id_sz, suite_id, suite_id_len - 1,
+			        classname, classname_len - 1, flag,	(JSR211_RESULT_CHARRAY)result);
+		} else {
+			res = jsr211_fillHandler(id, id_sz, suite_id, suite_id_len - 1,
+			        classname, classname_len - 1, flag,	(JSR211_RESULT_CH)result);
+		}
+		break;
 	}
 
 	if (classname) FREE(classname); 
@@ -175,7 +169,6 @@ jsr211_result jsr211_register_handler(const jsr211_content_handler* ch) {
     return JSR211_STATUS(status);
 }
 
-
 /**
  * Deletes content handler information from a registry.
  *
@@ -183,10 +176,7 @@ jsr211_result jsr211_register_handler(const jsr211_content_handler* ch) {
  * @return JSR211_OK if content handler unregistered successfully
  */
 jsr211_result jsr211_unregister_handler(javacall_const_utf16_string handler_id) {
-	jsr211_result status = 
-		javacall_chapi_unregister_handler(handler_id);
-
-	return JSR211_STATUS(status);
+	return JSR211_STATUS(javacall_chapi_unregister_handler(handler_id));
 }
 
 /**
@@ -207,11 +197,10 @@ jsr211_result jsr211_find_handler(javacall_const_utf16_string caller_id,
                         /*OUT*/ JSR211_RESULT_CHARRAY result) {
 
 	int pos = 0;
-	jchar* buffer = 0;
+	jchar* buffer = NULL;
 	int len, maxlen = MAX_BUFFER;
 	int res = JSR211_OK;
 	int enum_by_id_prefix = -1/*TRUE*/;
-
 
 	buffer = (jchar*) MALLOC(maxlen*sizeof(*buffer));
 
@@ -223,7 +212,7 @@ jsr211_result jsr211_find_handler(javacall_const_utf16_string caller_id,
 			res = javacall_chapi_enum_handlers_by_suffix(value,&pos,buffer,&len);
 		} else if (key == JSR211_FIELD_ACTIONS) {
 			res = javacall_chapi_enum_handlers_by_action(value,&pos,buffer,&len);
-		} else if ( key == JSR211_FIELD_ID){
+		} else if (key == JSR211_FIELD_ID){
             /* a special case: we should find all handlers names conflicted with value parameter.
                caller_id parameter should be NULL in this case
             */
@@ -244,7 +233,7 @@ jsr211_result jsr211_find_handler(javacall_const_utf16_string caller_id,
 
 		if (res) break;
 
-		if (!jsr211_isUniqueHandler(buffer,len - 1,result)) continue;
+		if (!jsr211_isUniqueHandler(buffer,len - 1, result)) continue;
 
 		if (caller_id && *caller_id) {
 			if (!javacall_chapi_is_access_allowed(buffer,caller_id)) continue;
@@ -271,11 +260,10 @@ jsr211_result jsr211_find_handler(javacall_const_utf16_string caller_id,
  * @link jsr211_appendHandler function to fill this structure.
  * @return status of the operation
  */
-jsr211_result jsr211_find_for_suite(
-						javacall_const_utf16_string suite_id, 
-                        /*OUT*/ JSR211_RESULT_CHARRAY result){
+jsr211_result jsr211_find_for_suite( javacall_const_utf16_string suite_id, 
+                                            /*OUT*/ JSR211_RESULT_CHARRAY result){
 	int pos = 0;
-	jchar* buffer = 0;
+	jchar* buffer = NULL;
 	int len, maxlen = MAX_BUFFER;
 	int res;
 
@@ -286,12 +274,12 @@ jsr211_result jsr211_find_for_suite(
 	pos=0;
 	while (buffer){
 		len = maxlen;
-		res = javacall_chapi_enum_handlers_by_suite_id(suite_id,&pos,buffer,&len);
+		res = javacall_chapi_enum_handlers_by_suite_id( suite_id, &pos, buffer, &len );
 
-		ASSURE_BUF(buffer, len,maxlen);
+		ASSURE_BUF(buffer, len, maxlen);
 		if (res) break;
 
-		if (!jsr211_isUniqueHandler(buffer,len - 1,result)) continue;
+		if (!jsr211_isUniqueHandler(buffer,len - 1, result)) continue;
 
 		res = append_handler(buffer, result);
 		if (res) break;
@@ -326,7 +314,7 @@ jsr211_result jsr211_handler_by_URL(
 	
 //find suffix
 int pos = 0;
-jchar* buffer = 0;
+jchar* buffer = NULL;
 int len, maxlen = MAX_BUFFER;
 int res, found = 0;
 javacall_const_utf16_string suffix;
@@ -361,7 +349,6 @@ while (buffer && suffix && !found){
 	if (buffer) FREE(buffer);
 
 	return (found)?JSR211_OK:JSR211_FAILED;
-
 }
 
 
@@ -382,31 +369,30 @@ jsr211_result jsr211_get_all(
         jsr211_field field, 
         /*OUT*/ JSR211_RESULT_STRARRAY result){
 
-int res = JSR211_OK;
+    int res = JSR211_OK;
 
-int handlerlen, handlermaxlen = MAX_BUFFER;
-jchar* handler=0;
-int hpos = 0;
+    int handlerlen, handlermaxlen = MAX_BUFFER;
+    jchar* handler=NULL;
+    int hpos = 0;
 
-int valuelen, valuemaxlen = MAX_BUFFER;
-jchar* value=0;
-int vpos;
+    int valuelen, valuemaxlen = MAX_BUFFER;
+    jchar* value=NULL;
+    int vpos;
 
-if (caller_id || (field == JSR211_FIELD_ID)){
-	handler = (jchar*) REALLOC(handler,handlermaxlen * sizeof(*handler));
-	if (!handler) {
-		return JSR211_FAILED;
-	}
-}
+    if (caller_id || (field == JSR211_FIELD_ID)){
+	    handler = (jchar*) REALLOC(handler,handlermaxlen * sizeof(*handler));
+	    if (!handler) {
+		    return JSR211_FAILED;
+	    }
+    }
 
-if (field != JSR211_FIELD_ID){
-	value = MALLOC(valuemaxlen*sizeof(*value));
-	if (!value) {
-		if(handler) FREE(handler);
-		return JSR211_FAILED;
-	}
-}
-
+    if (field != JSR211_FIELD_ID){
+	    value = MALLOC(valuemaxlen*sizeof(*value));
+	    if (!value) {
+		    if(handler) FREE(handler);
+		    return JSR211_FAILED;
+	    }
+    }
 
 	while (1){
 		if (caller_id || (field == JSR211_FIELD_ID)){
@@ -429,7 +415,6 @@ if (field != JSR211_FIELD_ID){
 				continue;
 			}
 		}
-		
 
 		vpos = 0;
 		if (!res) while (1){
@@ -493,9 +478,8 @@ jsr211_result jsr211_get_handler(
 		}
 	} else {
 		int pos = 0;
-		jchar* buffer;
 		int len, maxlen = MAX_BUFFER;
-		buffer = (jchar*) MALLOC(maxlen * sizeof(*buffer));
+		jchar* buffer = (jchar*) MALLOC(maxlen * sizeof(*buffer));
 		while (buffer){
 			len = maxlen;
             res = javacall_chapi_enum_handlers_prefixes_of(id, &pos, buffer, &len);
@@ -514,25 +498,21 @@ jsr211_result jsr211_get_handler(
 }
 
 
-static int get_action_map(javacall_const_utf16_string id,
-						  /*OUT*/ JSR211_RESULT_STRARRAY result){
+static int get_action_map(javacall_const_utf16_string id, /*OUT*/ JSR211_RESULT_STRARRAY result){
 	int apos = 0;
-
-	jchar* abuffer = 0;
+	jchar* abuffer = NULL;
 	int alen, alenmax =MAX_BUFFER;
 
 	int lpos;
-	jchar* lbuffer = 0;
+	jchar* lbuffer = NULL;
 	int llen, llenmax = MAX_BUFFER;
 
-	
-	jchar* lnbuffer = 0;
+	jchar* lnbuffer = NULL;
 	int lnlen, lnlenmax = MAX_BUFFER;
 
 	int res;
 
-	JSR211_RESULT_STRARRAY locales_array = (JSR211_RESULT_STRARRAY)jsr211_create_result_buffer();
-	JSR211_RESULT_STRARRAY actions_array;
+	JSR211_RESULT_BUFFER locales_array = jsr211_create_result_buffer(), actions_array;
 	
 	abuffer = (jchar*) MALLOC(alenmax * sizeof(*abuffer));
 	lbuffer = (jchar*) MALLOC(llenmax * sizeof(*lbuffer));
@@ -544,12 +524,12 @@ static int get_action_map(javacall_const_utf16_string id,
 		res = javacall_chapi_enum_action_locales(id,&lpos,lbuffer,&llen);
 		ASSURE_BUF(lbuffer,llen,llenmax);
 		if (res) break;
-		if (!jsr211_isUniqueString(lbuffer,llen - 1,0,locales_array)){
+		if (!jsr211_isUniqueString(lbuffer,llen - 1,0, &locales_array)){
 			continue;
 		}
-		res = jsr211_appendString(lbuffer,llen - 1,locales_array);
+		res = jsr211_appendString(lbuffer,llen - 1, &locales_array);
 
-		actions_array = (JSR211_RESULT_STRARRAY)jsr211_create_result_buffer();
+		actions_array = jsr211_create_result_buffer();
 		if (!actions_array){
 			res = JAVACALL_CHAPI_ERROR_NO_MEMORY;
 			break;
@@ -563,10 +543,10 @@ static int get_action_map(javacall_const_utf16_string id,
 				if (res==JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS) res = JAVACALL_OK;
 				break;
 			}
-			if (!jsr211_isUniqueString(abuffer,alen - 1 ,0,actions_array)){
+			if (!jsr211_isUniqueString(abuffer,alen - 1 ,0, &actions_array)){
 				continue;
 			}
-			res = jsr211_appendString(abuffer,alen - 1,actions_array);
+			res = jsr211_appendString(abuffer,alen - 1, &actions_array);
 			if (res) break; 
 
 			while (lnbuffer){
@@ -577,10 +557,9 @@ static int get_action_map(javacall_const_utf16_string id,
 			}
 
 			if (!res) 
-				res = jsr211_appendString(lnbuffer,lnlen - 1,result);
+				res = jsr211_appendString(lnbuffer,lnlen - 1, result);
 			else 
-				res = jsr211_appendString(abuffer,alen - 1,result);
-
+				res = jsr211_appendString(abuffer,alen - 1, result);
 		}
 
 		javacall_chapi_enum_finish(apos);
@@ -614,12 +593,10 @@ static int get_action_map(javacall_const_utf16_string id,
 jsr211_result jsr211_get_handler_field(javacall_const_utf16_string id,
                              jsr211_field field_id,
                              /*OUT*/ JSR211_RESULT_STRARRAY result){
-
-	int pos = 0;
+    int pos = 0;
 	jchar* buffer;
 	int len, maxlen = MAX_BUFFER;
 	int res;
-
 
 	if (field_id == JSR211_FIELD_ACTION_MAP) {
 		return get_action_map(id,result);
@@ -629,7 +606,7 @@ jsr211_result jsr211_get_handler_field(javacall_const_utf16_string id,
 
 	pos=0;
 	while (buffer){
-		len = maxlen;
+	    len = maxlen;
 
 		if (field_id == JSR211_FIELD_TYPES){
 			res = javacall_chapi_enum_types(id,&pos,buffer,&len);
@@ -646,9 +623,9 @@ jsr211_result jsr211_get_handler_field(javacall_const_utf16_string id,
 		ASSURE_BUF(buffer,len, maxlen);
 		if (res) break;
 		if (field_id == JSR211_FIELD_ACCESSES){
-                  res = jsr211_appendString(buffer,len - 1, result);
+            res = jsr211_appendString(buffer,len - 1, result);
 		} else {
-		   res = jsr211_appendUniqueString(buffer,len - 1,field_id != JSR211_FIELD_SUFFIXES && field_id != JSR211_FIELD_TYPES,result);
+		    res = jsr211_appendUniqueString(buffer,len - 1,field_id != JSR211_FIELD_SUFFIXES && field_id != JSR211_FIELD_TYPES,result);
 		}
 		if (res != JAVACALL_OK) break;
 	}
@@ -677,5 +654,3 @@ jsr211_launch_result jsr211_execute_handler(javacall_const_utf16_string id) {
 	(void)id;
     return JSR211_LAUNCH_ERR_NOTSUPPORTED;
 }
-
-

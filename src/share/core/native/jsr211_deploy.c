@@ -205,15 +205,9 @@ static jsr211_result installHandler(int n) {
  * @return JSR211_OK or JSR211_FAILED - if registry corrupted or OUT_OF_MEMORY.
  */
 jsr211_result jsr211_check_internal_handlers(void) {
-    int i,found;
+    int i, found;
     for (i = 0; i < nHandlers; i++) {
-        JSR211_RESULT_CH handler = jsr211_create_result_buffer();
-
-        jsr211_get_handler(NULL, handlerIds[i], 
-                                            JSR211_SEARCH_EXACT, handler);
-		found = (jsr211_get_result_data(handler) != NULL);
-		jsr211_release_result_buffer(handler);
-
+		found = javacall_chapi_is_access_allowed(handlerIds[i], NULL);
         if (!found) {
             if (JSR211_OK != installHandler(i)) {
                 return JSR211_FAILED;

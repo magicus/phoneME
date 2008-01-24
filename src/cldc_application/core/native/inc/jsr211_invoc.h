@@ -54,15 +54,66 @@ typedef enum {
   JSR211_WAIT_NATIVE        = 0x20
 } jsr211_wait_status;
 
+/* invocation statuses: */
+/*
+ * This Invocation was just constructed and is being initialized.
+ */
+#define STATUS_INIT 1
+
+/*
+ * This Invocation is a new request and is being handled by the content handler.
+ */
+#define STATUS_ACTIVE 2
+
+/*
+ * This Invocation has been invoked and is waiting to be complete.
+ */
+#define STATUS_WAITING 3
+
+/*
+ * This Invocation is on hold until a chained Invocation is completed.
+ */
+#define STATUS_HOLD 4
+
+/*
+ * The content handler successfully completed processing the Invocation.
+ */
+#define STATUS_OK 5
+
+/*
+ * The processing of the Invocation was cancelled by the ContentHandler.
+ */
+#define STATUS_CANCELLED 6
+
+/*
+ * The content handler failed to correctly process the Invocation request.
+ */
+#define STATUS_ERROR 7
+
+/*
+ * The processing of the Invocation has been initiated and will
+ * continue. This status is only appropriate when the content
+ * handler can not provide a response when it is finished.
+ */
+#define STATUS_INITIATED 8
+
+/*
+ * The DISPOSE status is used with {@link #setStatus setStatus}
+ * to discard the native Invocation. It must not overlap with
+ * Status values defined in the Invocation class and must match
+ * STATUS_DISPOSE defined in invocStore.c and InvocationImpl.
+ */
+#define STATUS_DISPOSE 100
+
 /**
  * Stored InvocationImpl.
  */
 typedef struct _StoredInvoc {
-    jint     status;        /**< The current status */
+    jint        status;        /**< The current status */
     jboolean    notified;    /**< Invocation has been notified */
     jboolean    cleanup;    /**< true to cleanup on application exit */
     jboolean    responseRequired; /**< True if a response is required */
-    jint    tid;        /**< The assigned transaction id */
+    jint        tid;        /**< The assigned transaction id */
     jint        previousTid;    /**< The tid of a previous Invocation */
     pcsl_string url;        /**< The URL of the request */
     pcsl_string type;        /**< The type of the request */
@@ -101,7 +152,6 @@ typedef struct _StoredInvoc {
  * @return the found invocation, or NULL if no matched invocation.
  */
 StoredInvoc* jsr211_get_invocation(const pcsl_string* handlerID);
-
 
 #ifdef __cplusplus
 }

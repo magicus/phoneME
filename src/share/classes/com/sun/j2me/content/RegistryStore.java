@@ -26,7 +26,7 @@
 
 package com.sun.j2me.content;
 
-import javax.microedition.content.ContentHandlerException;
+import java.util.Vector;
 
 import com.sun.j2me.security.Token;
 
@@ -40,7 +40,9 @@ import com.sun.j2me.security.Token;
  */
 class RegistryStore {
 
-    /**
+	protected static final java.io.PrintStream DEBUG_OUT = System.out;
+	
+    /** 
      * Content Handler fields indexes.
      * <BR>Used with functions: @link findHandler(), @link getValues() and 
      * @link getArrayField().
@@ -57,37 +59,15 @@ class RegistryStore {
     static final int FIELD_ACTION_MAP = 5;  /** Handler action map */
     static final int FIELD_ACCESSES   = 6; /** Access list */
     static final int FIELD_COUNT      = 7; /** Total number of fields */
+    
+    static final Vector emptyVector = new Vector();
+    static final ContentHandlerImpl[] emptyHandlersArray = new ContentHandlerImpl[0]; 
 
     /**
      * Search flags for @link getHandler() method. 
      */
     static final int SEARCH_EXACT   = 0; /** Search by exact match with ID */
     static final int SEARCH_PREFIX  = 1; /** Search by prefix of given value */
-
-    /**
-     * Handler flags constants.
-     * <BR> They should match according enums in jsr211_registry.h
-     */
-    static final private int FLAG_ERROR    = -1; /* Indicates error during */
-                                                 /*    native call */
-
-    /**
-     * Result codes for launch0() native method.
-     * These values should correspond to enum type jsr211_launch_result
-     * in the 'jsr211_registry.h'.
-     */
-    /** OK, handler started */
-    static final private int LAUNCH_OK                = 0;
-    /** OK, handler started or is ready to start, invoking app should exit. */
-    static final private int LAUNCH_OK_SHOULD_EXIT    = 1;
-    /** ERROR, not supported */
-    static final private int LAUNCH_ERR_NOTSUPPORTED  = -1;
-    /** ERROR, no requested handler */
-    static final private int LAUNCH_ERR_NO_HANDLER    = -2;
-    /** ERROR, no invocation queued for requested handler */
-    static final private int LAUNCH_ERR_NO_INVOCATION = -3;
-    /** common error */
-    static final private int LAUNCH_ERROR             = -4;
 
     /** This class has a different security domain than the MIDlet suite */
     private static Token classSecurityToken;
@@ -121,11 +101,18 @@ class RegistryStore {
      * @return conflicted handlers array.
      */
     static ContentHandlerImpl[] findConflicted(String testID) {
-        return findHandler(null, FIELD_ID, testID);
+        ContentHandlerImpl[] result = findHandler(null, FIELD_ID, testID);
+        if(DEBUG_OUT != null){
+			DEBUG_OUT.println( "conflictedHandlersfor '" + testID + "' [" + result.length + "]:" );
+			for( int i = 0; i < result.length; i++){
+				DEBUG_OUT.println( "class = '" + result[i].storageId + "', ID = '" + result[i].ID + "'" );
+			}
+        }
+		return result;
     }
 
     /**
-     * Searchs coontent handlers by searchable fields values. As specified in
+     * Searches content handlers by searchable fields values. As specified in
      * JSR 211 API:
      * <BR><CITE> Only content handlers that this application is allowed to
      * access will be included. </CITE> (in result).
@@ -152,7 +139,10 @@ class RegistryStore {
      * @return found handlers array.
      */
     static ContentHandlerImpl[] forSuite(int suiteId) {
+        if(DEBUG_OUT != null) DEBUG_OUT.println( "RegistryStore.forSuite " + suiteId );
         String res = store.forSuite0(suiteId);
+        if(DEBUG_OUT != null) 
+        	DEBUG_OUT.println( "RegistryStore.forSuite res = '" + res + "'");
         return deserializeCHArray(res);
     }
 
@@ -166,7 +156,10 @@ class RegistryStore {
      */
     static String[] getValues(String callerId, int searchBy) {
         String res = store.getValues0(callerId, searchBy);
-        return deserializeStrArray(res);
+        Vector v = deserializeString(res);
+        String[] result = new String[ v.size() ];
+        v.copyInto(result);
+        return result;
     }
 
     /**
@@ -175,12 +168,15 @@ class RegistryStore {
      * @param fieldId index of field. Allowed: 
      *        @link FIELD_TYPES, @link FIELD_SUFFIXES, @link FIELD_ACTIONS
      *        @link FIELD_LOCALES, @link FIELD_ACTION_MAP, @link FIELD_ACCESSES
-     *        valiues.
+     *        values.
      * @return array of values
      */
     static String[] getArrayField(String handlerId, int fieldId) {
         String res = store.loadFieldValues0(handlerId, fieldId);
-        return deserializeStrArray(res);
+        Vector v = deserializeString(res);
+        String[] result = new String[ v.size() ];
+        v.copyInto(result);
+        return result;
     }
 
     /**
@@ -229,25 +225,6 @@ class RegistryStore {
     }
 
     /**
-     * Starts native content handler.
-     * @param handler Content handler to be executed.
-     * @return true if invoking app should exit.
-     * @exception ContentHandlerException if no such handler ID in the Registry
-     * or native handlers execution is not supported.
-     */
-    static boolean launch(ContentHandlerImpl handler)
-                                            throws ContentHandlerException {
-        int result = store.launch0(handler.getID());
-        if (result < 0) {
-            throw new ContentHandlerException(
-                        "Unable to launch platform handler",
-                        ContentHandlerException.NO_REGISTERED_HANDLER);
-        }
-
-        return (result == LAUNCH_OK_SHOULD_EXIT);
-    }
-
-    /**
      * Returns content handler suitable for URL.
      * @param callerId ID of calling application.
      * @param URL content URL.
@@ -267,26 +244,25 @@ class RegistryStore {
      * @return array of Strings. If input String is NULL 0-length array
      * returned. ... And we believe that input string is not misformed.
      */
-    private static String[] deserializeStrArray(String str) {
-        int n;          // array length
-        String[] arr;   // result array
-
-        n = (str == null || str.length() == 0)? 0: (int)str.charAt(0);
-
-        arr = new String[n];
-        if (n > 0) {
-            int len;    // String len
-            int pos;    // current position
-
-            pos = 1;
-            for (int i = 0; i < n; i++) {
-                len = (int)str.charAt(pos++);
-                arr[i] = str.substring(pos, pos+len);
-                pos += len;
-            }
-        }
-
-        return arr;
+    private static Vector/*<String>*/ deserializeString(String str) {
+    	if( str == null )
+    		return emptyVector;
+    	Vector result = new Vector();
+    	// all lengths in bytes
+    	int pos = 0;
+        if(DEBUG_OUT != null) 
+        	DEBUG_OUT.println( "deserializeString: string length = " + str.length() );
+    	while( pos < str.length() ){
+    		int elem_length = (int)str.charAt(pos++) / 2;
+            if(DEBUG_OUT != null) 
+            	DEBUG_OUT.println( "deserializeString: pos = " + pos + 
+            							", elem_length = " + elem_length );
+    		result.addElement(str.substring(pos, pos + elem_length));
+            if(DEBUG_OUT != null)
+            	DEBUG_OUT.println( "deserializeString: '" + str.substring(pos, pos + elem_length) + "'" );
+    		pos += elem_length;
+    	}
+        return result;
     }
 
     /**
@@ -296,46 +272,28 @@ class RegistryStore {
      * @return restored ContentHandlerImpl object or null
      */
     private static ContentHandlerImpl deserializeCH(String str) {
-        ContentHandlerImpl ch = null;
-        while (str != null && str.length() > 0) {
-            String id;
-            String class_name;
-	    String storageId;
-            int beg = 0, end, regMethod;
+        if(DEBUG_OUT != null) 
+        	DEBUG_OUT.println( "RegistryStore.deserializeCH '" + str + "'");
+        Vector components = deserializeString(str);
 
-            end = str.indexOf('\n', beg);
-            if (end == -1) {
-                break; // no 1-st delimiter
-            }
-            id = str.substring(beg, end);
+        if (components.size() < 1) return null;
+        String id = (String)components.elementAt(0);
+        if (id.length() == 0) return null; // ID is significant field
 
-            if (id.length() == 0) {
-                break; // ID is significant field
-            }
+        if (components.size() < 2) return null;
+        String storageId = (String)components.elementAt(1);
 
-            beg = end + 1;
-            end = str.indexOf('\n', beg);
-            if (end == -1) {
-                break; // no 2-nd delimiter 
-            }
-            storageId = str.substring(beg, end);
+        if (components.size() < 3) return null;
+        String class_name = (String)components.elementAt(2);
 
-	    beg = end + 1;
-            end = str.indexOf('\n', beg);
-            if (end == -1 || str.length() != end + 2) {
-                break; // no 3-d delimiter or wrong length of the string
-            }
-            class_name = str.substring(beg, end);
+        if (components.size() < 4) return null;
+        int regMethod = Integer.parseInt((String)components.elementAt(3), 16);
 
-	    regMethod =  (int)str.charAt(end + 1);
-
-            ch = new ContentHandlerImpl();
-            ch.ID = id;
-	    ch.storageId = Integer.parseInt(storageId);
-            ch.classname = class_name;
-            ch.registrationMethod = regMethod;
-            break;
-        }
+        ContentHandlerImpl ch = new ContentHandlerImpl();
+        ch.ID = id;
+        ch.storageId = Integer.parseInt(storageId);
+        ch.classname = class_name;
+        ch.registrationMethod = regMethod;
         return ch;
     }
 
@@ -345,20 +303,18 @@ class RegistryStore {
      * @return restored ContentHandlerImpl array
      */
     private static ContentHandlerImpl[] deserializeCHArray(String str) {
-        String[] strs;
-        ContentHandlerImpl[] arr;
-
-        strs = deserializeStrArray(str);
-        arr = new ContentHandlerImpl[strs.length];
-        for (int i = 0; i < strs.length; i++) {
-            arr[i] = deserializeCH(strs[i]);
+    	if( str == null )
+    		return emptyHandlersArray;
+        Vector strs = deserializeString(str);
+        ContentHandlerImpl[] arr = new ContentHandlerImpl[strs.size()];
+        for (int i = 0; i < arr.length; i++) {
+            arr[i] = deserializeCH( (String)strs.elementAt(i) );
         }
-
         return arr;
     }
 
     /**
-     * Sets the security token used for priveleged operations.
+     * Sets the security token used for privileged operations.
      * The token may only be set once.
      * @param token a Security token
      */
@@ -418,7 +374,7 @@ class RegistryStore {
      * Loads content handler data.
      * @param callerId ID value to check access.
      * @param id Id of required content handler.
-     * @param mode flag defined search mode aplied for the operation.
+     * @param mode flag defined search mode applied for the operation.
      * @return serialized content handler or null.
      */
     private native String getHandler0(String callerId, String id, int mode);
@@ -439,20 +395,7 @@ class RegistryStore {
      * @return ID of found handler if any or null.
      */
     private native String getByURL0(String callerId, String url, String action);
-
-    /**
-     * Starts native content handler.
-     * @param handlerId ID of the handler to be executed
-     * @return result status:
-     * <ul>
-     * <li> LAUNCH_OK or LAUNCH_OK_SHOULD_EXIT if content handler
-     *   started successfully
-     * <li> other code from the LAUNCH_ERR_* constants set
-     *   according to error codition
-     * </ul>
-     */
-    private native int launch0(String handlerId);
-
+    
     /**
      * Initialize persistence storage.
      * @return <code>true</code> or

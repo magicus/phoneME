@@ -37,7 +37,7 @@ import java.io.IOException;
  * The helper class extending GCF Connector functionality with demands
  * of the JSR 211 specification:
  * <ul>
- *  <li> the connetion may deliver the content from a cache.
+ *  <li> the connection may deliver the content from a cache.
  *  <li> the connection should use user credentials.
  * </ul>
  */

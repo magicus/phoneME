@@ -345,7 +345,8 @@ public class Registry {
     {
         synchronized (mutex) {
             RegistryImpl impl = 
-                RegistryImpl.getRegistryImpl(classname, classSecurityToken);
+                RegistryImpl.getRegistryImpl(classname, 
+                				classSecurityToken.getSecurityToken());
             // Make sure there is a Registry; 
             if (impl.getRegistry() == null) {
                 impl.setRegistry(new Registry(impl));

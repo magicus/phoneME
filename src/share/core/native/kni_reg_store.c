@@ -44,6 +44,11 @@
 
 #include <jsr211_registry.h>
 
+#ifdef _DEBUG
+#define TRACE_REGISTER
+#define TRACE_TRANSFER_DATA
+#endif
+
 
 /** Number init() calls. Every finalize() decreases this value. */
 static jint initialized = -1;
@@ -89,17 +94,44 @@ DECLARE_MSG(fcNoClassFields,   "Could not initialize JSR211 class fields")
 DECLARE_MSG(fcRegister,   "Could not register ContentHandler")
 
 static void result2string(KNIDECLARGS JSR211_RESULT_BUFFER buffer, jstring str){
-	if (jsr211_get_result_data_length(buffer) > 0 && jsr211_get_result_data(buffer) != NULL) {
-		if (JAVACALL_OK != jsrop_jstring_from_utf16_string(KNIPASSARGS (const javacall_utf16_string)jsr211_get_result_data(buffer), str)){
-                KNI_ThrowNew(jsropOutOfMemoryError,  
-                        "No memory to create result string!");
-				KNI_ReleaseHandle(str);
+    const void * data; size_t length;
+    jsr211_get_data( jsr211_get_result_data(buffer), &data, &length );
+#ifdef TRACE_TRANSFER_DATA
+    printf( "kni_reg_store: buffer = %p, length %d\n", buffer, length );
+#endif
+	KNI_ReleaseHandle(str);
+	if (length != 0) {
+        // check data on '\0' character
+        jchar * chars = (jchar *)data;
+        if( length & 0x1 ){
+#if REPORT_LEVEL <= LOG_ERROR
+		    REPORT_ERROR(LC_NONE, "kni_reg_store.c: data transfer internal problem (length is odd)");
+#endif
+        }
+        length /= 2;
+        while( length-- && *chars++ );
+        if( length + 1 != 0 ){
+            // we should get rid of zero chars inside data, but not now
+#if REPORT_LEVEL <= LOG_ERROR
+		    REPORT_ERROR(LC_NONE, "kni_reg_store.c: data transfer internal problem (zero char exists)");
+#endif
+        } else {
+            // data doesn't contain zero characters
+            // small work around (write termination zero character)
+            *chars = '\0';
+        }
+#ifdef TRACE_TRANSFER_DATA
+        printf( "kni_reg_store: data '" );
+        chars = (jchar *)data; 
+        while( *chars ) printf( "%04x", *chars++ );
+        printf( "'\n" );
+#endif
+		if (JAVACALL_OK != jsrop_jstring_from_utf16_string(
+                                KNIPASSARGS (const javacall_utf16_string)data, str)){
+            KNI_ThrowNew(jsropOutOfMemoryError, "No memory to create result string!");
 		}
-		jsr211_release_result_buffer(buffer);
-		return;
-	}  else {
-		KNI_ReleaseHandle(str);
 	}
+	jsr211_release_result_buffer(buffer);
 }
 
 static void cleanStringArray(const jchar** strings, int n) {
@@ -373,7 +405,7 @@ static int fillHandlerData(KNIDECLARGS jobject o, jsr211_content_handler* handle
 #else
 	{
 		SuiteIdType suite_id = KNI_GetIntField(o, chImplSuiteId);
-		handler->suite_id = MALLOC((jsrop_suiteid_string_size(suite_id+1) * sizeof(jchar)));
+		handler->suite_id = MALLOC((jsrop_suiteid_string_size(suite_id) + 1) * sizeof(jchar));
 		jsrop_suiteid_to_string(suite_id, handler->suite_id);
 	}
 #endif
@@ -502,7 +534,16 @@ KNIDECL(com_sun_j2me_content_RegistryStore_register0) {
             break;
         }
 
-        res = JSR211_OK == jsr211_register_handler(&handler)? KNI_OK: KNI_ERR;
+#ifdef TRACE_REGISTER
+        printf( "com_sun_j2me_content_RegistryStore_register0:\n"
+            "id = '%ls'\n"
+            "suite_id = '%ls'\n"
+            "class_name = '%ls'\n"
+            "type_num = %d, suff_num = %d, act_num = %d, locale_num = %d, acces_num = %d\n",
+            handler.id, handler.suite_id, handler.class_name,
+            handler.type_num, handler.suff_num, handler.act_num, handler.locale_num, handler.access_num );
+#endif
+        res = (JSR211_OK == jsr211_register_handler(&handler))? KNI_OK: KNI_ERR;
     } while (0);
     
 
@@ -556,7 +597,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_findHandler0) {
     jchar* callerId = NULL;
     jsr211_field searchBy;
     jchar* value = NULL;
-    JSR211_RESULT_CHARRAY result = jsr211_create_result_buffer();
+    JSR211_RESULT_BUFFER result = jsr211_create_result_buffer();
 
     KNI_StartHandles(2);
     KNI_DeclareHandle(callerObj);
@@ -573,7 +614,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_findHandler0) {
         }
 
         searchBy = (jsr211_field) KNI_GetParameterAsInt(2);
-        jsr211_find_handler(callerId, searchBy, value, result);
+        jsr211_find_handler(callerId, searchBy, value, &result);
 
     } while (0);
 
@@ -591,31 +632,30 @@ KNIDECL(com_sun_j2me_content_RegistryStore_findHandler0) {
  */
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_j2me_content_RegistryStore_forSuite0) {
-    JSR211_RESULT_CHARRAY result = jsr211_create_result_buffer();
-    jchar* suiteID = NULL;
-#ifndef SUITE_ID_STRING
-SuiteIdType suite_id_param;
-#endif
+    JSR211_RESULT_BUFFER result = jsr211_create_result_buffer();
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(strObj);   // String object
+
 #ifdef SUITE_ID_STRING
+    jchar* suiteID = NULL;
     KNI_GetParameterAsObject(1, strObj);   // suiteID
     if (JAVACALL_OK != jsrop_jstring_to_utf16_string(strObj, (javacall_utf16_string*)&suiteID)) {
+	    jsr211_release_result_buffer(result);
         KNI_ThrowNew(jsropOutOfMemoryError, NULL);
     } else {
-#else
-    suite_id_param = KNI_GetParameterAsInt(1);
-    suiteID = MALLOC((jsrop_suiteid_string_size(suite_id_param)+1) * sizeof(jchar));
-    if (!suiteID) {
-	KNI_ThrowNew(jsropOutOfMemoryError, NULL);
-    } else {
-	jsrop_suiteid_to_string(suite_id_param, suiteID);
-#endif
-	jsr211_find_for_suite(suiteID, result);
-	result2string(KNIPASSARGS  result, strObj);
+	    jsr211_find_for_suite(suiteID, &result);
+        result2string(KNIPASSARGS result, strObj);
     	FREE(suiteID);
     }
+#else
+    SuiteIdType suite_id_param = KNI_GetParameterAsInt(1);
+    jchar suiteID[ 0x20 ];  // enough
+    jsrop_suiteid_to_string(suite_id_param, suiteID);
+
+    jsr211_find_for_suite(suiteID, &result);
+    result2string(KNIPASSARGS result, strObj);
+#endif
 
     KNI_EndHandlesAndReturnObject(strObj);
 }
@@ -629,7 +669,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_getByURL0) {
     jchar* callerId = NULL;
     jchar* url = NULL;
     jchar* action = NULL;
-    JSR211_RESULT_CH result = jsr211_create_result_buffer();
+    JSR211_RESULT_BUFFER result = jsr211_create_result_buffer();
 
     KNI_StartHandles(4);
     KNI_DeclareHandle(callerObj);
@@ -649,7 +689,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_getByURL0) {
             break;
         }
 
-        jsr211_handler_by_URL(callerId, url, action, result);
+        jsr211_handler_by_URL(callerId, url, action, &result);
     } while (0);
 
     FREE(action);
@@ -669,21 +709,21 @@ KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_j2me_content_RegistryStore_getValues0) {
     jsr211_field searchBy;
     jchar* callerId = NULL;
-    JSR211_RESULT_STRARRAY result = jsr211_create_result_buffer();
+    JSR211_RESULT_BUFFER result = jsr211_create_result_buffer();
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(strObj);   // String object
 
     do {
         KNI_GetParameterAsObject(1, strObj);   // callerId
-        if (JAVACALL_OK != jsrop_jstring_to_utf16_string(strObj, (javacall_utf16_string*)callerId)) {
+        if (JAVACALL_OK != jsrop_jstring_to_utf16_string(strObj, (javacall_utf16_string*)&callerId)) {
             KNI_ThrowNew(jsropOutOfMemoryError, 
                    "RegistryStore_getValues0 no memory for string arguments");
             break;
         }
 
         searchBy = (jsr211_field) KNI_GetParameterAsInt(2);
-        jsr211_get_all(callerId, searchBy, result);
+        jsr211_get_all(callerId, searchBy, &result);
     } while (0);
 
     FREE(callerId);
@@ -702,7 +742,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_getHandler0) {
     int mode;
     jchar* callerId = NULL;
     jchar* id = NULL;
-    JSR211_RESULT_CH handler = jsr211_create_result_buffer();
+    JSR211_RESULT_BUFFER handler = jsr211_create_result_buffer();
     
     KNI_StartHandles(2);
     KNI_DeclareHandle(callerObj);
@@ -719,7 +759,7 @@ KNIDECL(com_sun_j2me_content_RegistryStore_getHandler0) {
         }
         mode = KNI_GetParameterAsInt(3);
 
-        jsr211_get_handler(callerId, id, mode, handler);
+        jsr211_get_handler(callerId, id, mode, &handler);
     } while (0);
 
     FREE(callerId);
@@ -738,7 +778,7 @@ KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_j2me_content_RegistryStore_loadFieldValues0) {
     int fieldId;
     jchar* id = NULL;
-    JSR211_RESULT_STRARRAY result = jsr211_create_result_buffer();
+    JSR211_RESULT_BUFFER result = jsr211_create_result_buffer();
 
     KNI_StartHandles(1);
     KNI_DeclareHandle(strObj);       /* string object */
@@ -746,40 +786,15 @@ KNIDECL(com_sun_j2me_content_RegistryStore_loadFieldValues0) {
     KNI_GetParameterAsObject(1, strObj); /* handlerId */
     if (JAVACALL_OK == jsrop_jstring_to_utf16_string(strObj, &id)) {
         fieldId = KNI_GetParameterAsInt(2);
-        jsr211_get_handler_field(id, fieldId, result);
+        jsr211_get_handler_field(id, fieldId, &result);
         FREE(id);
         result2string(KNIPASSARGS  result, strObj);
     } else {
+        jsr211_release_result_buffer(result);
         KNI_ReleaseHandle(strObj);
     }
 
     KNI_EndHandlesAndReturnObject(strObj);
-}
-
-/**
- * java call:
- * private native int launch0(String handlerId);
- */
-KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_j2me_content_RegistryStore_launch0) {
-    jchar* id = NULL;
-    jsr211_launch_result result;
-
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(idStr);           /* handlerId */
-
-    KNI_GetParameterAsObject(1, idStr); /* handlerId */
-    if (JAVACALL_OK == jsrop_jstring_to_utf16_string(idStr, &id)) {
-        result = jsr211_execute_handler(id);
-    } else {
-        KNI_ThrowNew(jsropOutOfMemoryError, 
-                   "RegistryStore_launch0 no memory for handler ID");
-        result = JSR211_LAUNCH_ERROR;
-    }
-
-    FREE(id);
-    KNI_EndHandles();    
-    KNI_ReturnInt(result);
 }
 
 /**
@@ -822,6 +837,43 @@ KNIDECL(com_sun_j2me_content_RegistryStore_finalize) {
 			initialized = -1;
 		}
 	}
+
+    KNI_ReturnVoid();
+}
+
+/**
+ * java call:
+ * private native int launchNativeHandler0(String handlerId);
+ */
+KNIEXPORT KNI_RETURNTYPE_INT
+KNIDECL(com_sun_j2me_content_InvocationStoreProxy_launchNativeHandler0) {
+    jchar* id = NULL;
+    jsr211_launch_result result;
+
+    KNI_StartHandles(1);
+    KNI_DeclareHandle(idStr);           /* handlerId */
+
+    KNI_GetParameterAsObject(1, idStr); /* handlerId */
+    if (JAVACALL_OK == jsrop_jstring_to_utf16_string(idStr, &id)) {
+        result = jsr211_execute_handler(id);
+    } else {
+        KNI_ThrowNew(jsropOutOfMemoryError, 
+                   "RegistryStore_launch0 no memory for handler ID");
+        result = JSR211_LAUNCH_ERROR;
+    }
+
+    FREE(id);
+    KNI_EndHandles();    
+    KNI_ReturnInt(result);
+}
+
+/**
+ * java call:
+ * private native int platformFinish0(String handlerId);
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_j2me_content_InvocationStoreProxy_platformFinish0) {
+    int tid = KNI_GetParameterAsInt(1);
 
     KNI_ReturnVoid();
 }

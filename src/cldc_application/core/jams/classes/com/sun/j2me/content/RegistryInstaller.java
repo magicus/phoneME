@@ -39,6 +39,9 @@ import com.sun.midp.installer.InvalidJadException;
  * manifest or application descriptors.
  */
 final class RegistryInstaller {
+	
+	protected static final java.io.PrintStream DEBUG_OUT = System.out;
+	
     /** Attribute prefix for ContentHandler attributes. */
     private static final String CH_PREFIX = "MicroEdition-Handler-";
 
@@ -48,11 +51,11 @@ final class RegistryInstaller {
     /** Attribute suffix for ContentHandler visibility attribute. */
     private static final String CH_ACCESS_SUFFIX = "-Access";
 
-    /** Parced handlers to be installed. */
-    private Vector instHandlers;
+    /** Parsed handlers to be installed. */
+    private Vector/*<ContentHandlerImpl>*/ instHandlers;
 
     /** Old handlers to be removed. */
-    private Vector remHandlers;
+    private Vector/*<ContentHandlerImpl>*/ remHandlers;
 
     /**
      * Parse the ContentHandler attributes and check for errors.
@@ -76,12 +79,14 @@ final class RegistryInstaller {
      * @exception ClassNotFoundException if an application class cannot be found
      * @exception SecurityException if not allowed to register
      */
-    int preInstall(AppProxy appl)
-        throws ContentHandlerException, ClassNotFoundException
+    int preInstall(AppProxy appl) throws ContentHandlerException, ClassNotFoundException
     {
         int i, j, sz;
         int suiteId = appl.getStorageId();
         ContentHandlerImpl[] chs;
+        
+        if( DEBUG_OUT != null ) 
+        	DEBUG_OUT.println( "RegistryInstaller.preInstall: appl = " + appl );        
 
         /*
          * Check for any CHAPI attributes;
@@ -90,17 +95,24 @@ final class RegistryInstaller {
         remHandlers = new Vector();
         instHandlers = parseAttributes(appl);
 
+        if( DEBUG_OUT != null ) 
+        	DEBUG_OUT.println( "RegistryInstaller.preInstall: instHandlers.size = " + instHandlers.size() );        
+
         /*
          * Remove all static registrations.
          */
         chs = RegistryStore.forSuite(suiteId);
         sz = (chs == null? 0: chs.length);
+        if( DEBUG_OUT != null ) 
+        	DEBUG_OUT.println( "RegistryInstaller.preInstall: suite handlers.size = " + sz );        
         for (i = 0; i < sz; i++) {
+            if( DEBUG_OUT != null ) 
+            	DEBUG_OUT.println( "RegistryInstaller.preInstall: chs[i] = " + chs[i] );        
             if (chs[i] == null)
                 continue;
-            if (chs[i].registrationMethod != 
-                                    ContentHandlerImpl.REGISTERED_STATIC) {
+            if (chs[i].registrationMethod != ContentHandlerImpl.REGISTERED_STATIC) {
                 // Verify dynamic handler.
+            	class ReplaceDynamicHandlerException extends Exception {};
                 try {
                     // is it a valid application?
                     appl.verifyApplication(chs[i].classname);
@@ -109,20 +121,24 @@ final class RegistryInstaller {
                         ContentHandlerImpl handler =
                             (ContentHandlerImpl)instHandlers.elementAt(j);
                         if (handler.classname.equals(chs[i].classname)) {
-                            throw new Throwable("Replace dynamic handler");
+                            throw new ReplaceDynamicHandlerException();
                         }
                     }
                     // The handler remains.
                     continue;
-                } catch(Throwable t) {
+                } catch(ReplaceDynamicHandlerException t) {
                     // Pass down to remove handler
                 }
             }
 
+            if( DEBUG_OUT != null ) 
+            	DEBUG_OUT.println( "RegistryInstaller.preInstall: mark " + i );        
             // Remove handler -- either [static] or [replaced] or [invalid]
             remHandlers.addElement(chs[i]);
             chs[i] = null;
         }
+        if( DEBUG_OUT != null ) 
+        	DEBUG_OUT.println( getClass().getName() + ".preInstall: remHandlers " + remHandlers.size() );        
 
         /* Verify new registrations */
         for (i = 0; i < instHandlers.size(); i++) {
@@ -136,28 +152,26 @@ final class RegistryInstaller {
                 	if (conf[j] == null) continue;
                     if (conf[j].storageId != suiteId || !willRemove(conf[j].ID))
                         throw new ContentHandlerException(
-                            "Content Handler ID: "+handler.ID,
-                          ContentHandlerException.AMBIGUOUS);
+		                            "Content Handler ID: " + handler.ID,
+		                            ContentHandlerException.AMBIGUOUS);
                 }
             }
 
             // ... look through newbies
             j = i;
             while (j-- > 0) {
-                ContentHandlerImpl other =
-                    (ContentHandlerImpl)instHandlers.elementAt(j);
-                if (handler.ID.startsWith(other.ID) ||
-                    other.ID.startsWith(handler.ID)) {
-                        throw new ContentHandlerException(
-                            "Content Handler ID: "+handler.ID,
-                          ContentHandlerException.AMBIGUOUS);
+                ContentHandlerImpl other = (ContentHandlerImpl)instHandlers.elementAt(j);
+                if (handler.ID.startsWith(other.ID) || other.ID.startsWith(handler.ID)) {
+                    throw new ContentHandlerException(
+                    			"Content Handler ID: "+handler.ID,
+                    			ContentHandlerException.AMBIGUOUS);
                 }
             }
 
             // Check permissions for each new handler
             appl.checkRegisterPermission("register");
         }
-
+System.out.println( getClass().getName() + ".preInstall: instHandlers " + instHandlers.size() ); 
         return instHandlers.size();
     }
 
@@ -193,9 +207,11 @@ final class RegistryInstaller {
             String sindex = Integer.toString(index);
             String handler_n = CH_PREFIX.concat(sindex);
             String value = appl.getProperty(handler_n);
-            if (value == null) {
+            if(DEBUG_OUT != null)
+            	DEBUG_OUT.println( "RegistryInstaller.parseAttributes: appl.getProperty(handler_n) = '" + 
+            				value + "'" );            
+            if (value == null)
                 break;
-            }
             String[] types = null;
             String[] suffixes = null;
             String[] actions = null;
@@ -226,13 +242,15 @@ final class RegistryInstaller {
                 // No classname, fall through to throw exception
             case 0: // no nothing; error
             default: // too many fields, error
-                throw
-                    new IllegalArgumentException("Too many or too few fields");
+                throw new IllegalArgumentException("Too many or too few fields");
             }
 
             // Get the application info for this new class;
             // Throws ClassNotFoundException or IllegalArgumentException
             AppProxy newAppl = appl.forClass(classname);
+            if(DEBUG_OUT != null)
+            	DEBUG_OUT.println( "RegistryInstaller.parseAttributes: newAppl = " + 
+            				newAppl );            
 
             ActionNameMap[] actionnames =
                 parseActionNames(actions, locales, handler_n, newAppl);
@@ -394,14 +412,15 @@ final class RegistryInstaller {
 
         // Remove static and conflicted handlers.
         sz = (remHandlers == null? 0: remHandlers.size());
+System.out.println( getClass().getName() + ".install: handlers to remove = " + sz );        
         for (i = 0; i < sz; i++) {
-            ContentHandlerImpl handler =
-                                 (ContentHandlerImpl)remHandlers.elementAt(i);
-            RegistryStore.unregister(handler.getID());
+            RegistryStore.unregister(
+            		((ContentHandlerImpl)remHandlers.elementAt(i)).getID());
         }
 
         // Install new handlers.
         sz = (instHandlers == null? 0: instHandlers.size());
+System.out.println( getClass().getName() + ".install: handlers to install = " + sz );        
         for (i = 0; i < sz; i++) {
             ContentHandlerImpl handler =
                                  (ContentHandlerImpl)instHandlers.elementAt(i);
