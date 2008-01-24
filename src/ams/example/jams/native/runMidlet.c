@@ -208,7 +208,7 @@ runMidlet(int argc, char** commandlineArgs) {
         return -1;
     }
 
-    midpSetHomeDir(appDir);
+    midpSetAppDir(appDir);
 
     /* get midp home directory, set it */
     confDir = getConfigurationDir(argv[0]);

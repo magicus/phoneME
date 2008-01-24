@@ -716,7 +716,7 @@ static MIDPError runMainClass(int argc, char* argv[]) {
  */
 int runNams(int argc, char* argv[]) {
     MIDPError status;
-    char* midpHome;
+    char* appDir;
     int used;
     int savedArgc;
     char **savedArgv;
@@ -733,14 +733,14 @@ int runNams(int argc, char* argv[]) {
     }
 
     /* For development platforms MIDP_HOME is dynamic. */
-    midpHome = getApplicationDir(argv[0]);
-    if (midpHome == NULL) {
+    appDir = getApplicationDir(argv[0]);
+    if (appDir == NULL) {
         /* getApplicationDir has already issued an error message */
         return -1;
     }
 
-    /* set up midpHome before calling midp_system_start */
-    midpSetHomeDir(midpHome);
+    /* set up appDir before calling midp_system_start */
+    midpSetAppDir(appDir);
 
     do {
         argc = savedArgc;

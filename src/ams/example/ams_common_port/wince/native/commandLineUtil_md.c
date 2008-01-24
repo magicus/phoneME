@@ -64,7 +64,6 @@ static char confDirBuffer[MAX_FILENAME_LENGTH+1];
  *       to call this function before midpInitialize, don't free it
  */
 char* getApplicationDir(char *cmd) {
-#if 1
     FILE *fp;
 
     if ((fp = fopen("\\Storage Card\\appdb\\_main.ks", "r")) != NULL) {
@@ -79,78 +78,11 @@ char* getApplicationDir(char *cmd) {
         return "\\jwc1.1.3\\appdb";
     } else if ((fp = fopen("\\My Documents\\java\\appdb\\_main.ks", "r")) != NULL) {
         fclose(fp);
-        return "\\My Documents\\java\\appdb\\";
+        return "\\My Documents\\java\\appdb";
     } else {
         /* This is usually the case when running on actual device. */
         return "\\Storage\\jwc1.1.3\\appdb";
     }
-#else
-    int   i;
-    char* filesep = NULL;
-    char* lastsep;
-    char* midp_home = NULL;
-    int j = 1;
-
-    filesep = getCharFileSeparator();
-
-    appDirBuffer[sizeof (appDirBuffer) - 1] = 0;
-    strncpy(appDirBuffer, cmd, sizeof (appDirBuffer) - 1);
-
-    while (j < 2) {
-
-        /* Look for the last slash in the pathanme. */
-        lastsep = strrchr(appDirBuffer, (int) *filesep);
-        if (lastsep != 0) {
-            *(lastsep + 1) = '\0';
-        } else {
-            /* no file separator */
-            strcpy(appDirBuffer, ".");
-            strcat(appDirBuffer, filesep);
-        }
-
-        strcat(appDirBuffer, "appdb");
-
-        i = 0;
-
-#if 0
-        /* try to search for "appdb" 3 times only (see above) */
-        while (i < 3) {
-            memset(&statbuf, 0, sizeof(statbuf));
-
-            /* found it and it is a directory */
-            if ((stat(appDirBuffer, &statbuf) == 0) &&
-                (statbuf.st_mode & S_IFDIR)) {
-                break;
-            }
-
-            /* strip off "lib" to add 1 more level of ".." */
-            *(strrchr(appDirBuffer, (int) *filesep)) = '\0';
-            strcat(appDirBuffer, filesep);
-            strcat(appDirBuffer, "..");
-            strcat(appDirBuffer, filesep);
-            strcat(appDirBuffer, "appdb");
-
-            i++;
-        }
-#endif
-
-        if (i < 3) {
-            break;
-        }
-
-        j++;
-    }
-
-    if (j == 2) {
-        fprintf(stderr, "Warning: cannot find appdb subdirectory.\n"
-                "Please specify MIDP_HOME environment variable such "
-                "that $MIDP_HOME%clib contains the proper configuration "
-                "files.\n", *filesep);
-        return NULL;
-    }
-
-    return appDirBuffer;
-#endif
 }
 
 /**
@@ -178,7 +110,6 @@ char* getApplicationDir(char *cmd) {
  *       to call this function before midpInitialize, don't free it
  */
 char* getConfigurationDir(char *cmd) {
-#if 1
     FILE *fp;
 
     if ((fp = fopen("\\Storage Card\\appdb\\_main.ks", "r")) != NULL) {
@@ -198,76 +129,4 @@ char* getConfigurationDir(char *cmd) {
         /* This is usually the case when running on actual device. */
         return "\\Storage\\jwc1.1.3\\lib";
     }
-#else
-    int   i;
-    char* filesep = NULL;
-    char* lastsep;
-    char* midp_home = NULL;
-    int j = 1;
-
-    filesep = getCharFileSeparator();
-
-    confDirBuffer[sizeof (confDirBuffer) - 1] = 0;
-    strncpy(confDirBuffer, cmd, sizeof (confDirBuffer) - 1);
-
-    while (j < 2) {
-
-        /* Look for the last slash in the pathanme. */
-        lastsep = strrchr(confDirBuffer, (int) *filesep);
-        if (lastsep != 0) {
-            *(lastsep + 1) = '\0';
-        } else {
-            /* no file separator */
-            strcpy(confDirBuffer, ".");
-            strcat(confDirBuffer, filesep);
-        }
-
-        strcat(confDirBuffer, "appdb");
-
-        i = 0;
-
-#if 0
-        /* try to search for "appdb" 3 times only (see above) */
-        while (i < 3) {
-            memset(&statbuf, 0, sizeof(statbuf));
-
-            /* found it and it is a directory */
-            if ((stat(confDirBuffer, &statbuf) == 0) &&
-                (statbuf.st_mode & S_IFDIR)) {
-                break;
-            }
-
-            /* strip off "lib" to add 1 more level of ".." */
-            *(strrchr(confDirBuffer, (int) *filesep)) = '\0';
-            strcat(confDirBuffer, filesep);
-            strcat(confDirBuffer, "..");
-            strcat(confDirBuffer, filesep);
-            strcat(confDirBuffer, "appdb");
-
-            i++;
-        }
-#endif
-
-        if (i < 3) {
-            break;
-        }
-
-        j++;
-    }
-
-    if (j == 2) {
-        fprintf(stderr, "Warning: cannot find appdb subdirectory.\n"
-                "Please specify MIDP_HOME environment variable such "
-                "that $MIDP_HOME%clib contains the proper configuration "
-                "files.\n", *filesep);
-        return NULL;
-    }
-
-    /* strip off "appdb" from the path */
-    *(strrchr(confDirBuffer, (int) *filesep)) = '\0';
-
-    strcat(confDirBuffer,"lib");
-
-    return confDirBuffer;
-#endif
 }

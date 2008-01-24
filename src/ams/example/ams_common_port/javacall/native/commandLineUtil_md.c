@@ -64,7 +64,7 @@
 char* getApplicationDir(char *cmd) {
 
     static javacall_utf16 path[MAX_PATH_LEN];
-    static char midpRealHome[MAX_PATH_LEN];
+    static char midpAppDir[MAX_PATH_LEN];
     javacall_result ret;
     int len = MAX_PATH_LEN - 1;
     pcsl_string str = PCSL_STRING_NULL_INITIALIZER;
@@ -89,7 +89,7 @@ char* getApplicationDir(char *cmd) {
     }
 
     if (PCSL_STRING_OK != pcsl_string_convert_to_utf8 (&str,
-                                                       (jbyte *)midpRealHome,
+                                                       (jbyte *)midpAppDir,
                                                        MAX_PATH_LEN-1,
                                                        &len)) {
         REPORT_ERROR(LC_AMS,"getApplicationDir() << pcsl_string conversion operation failed.");
@@ -98,14 +98,14 @@ char* getApplicationDir(char *cmd) {
     };
     pcsl_string_free (&str);
 
-    midpRealHome[len] = 0;
-    return midpRealHome;
+    midpAppDir[len] = 0;
+    return midpAppDir;
 }
 
 char* getConfigurationDir(char *cmd) {
 
     static javacall_utf16 path[MAX_PATH_LEN];
-    static char midpRealConfig[MAX_PATH_LEN];
+    static char midpConfigDir[MAX_PATH_LEN];
     javacall_result ret;
     int len = MAX_PATH_LEN - 1;
     pcsl_string str = PCSL_STRING_NULL_INITIALIZER;
@@ -130,7 +130,7 @@ char* getConfigurationDir(char *cmd) {
     }
 
     if (PCSL_STRING_OK != pcsl_string_convert_to_utf8 (&str,
-                                                       (jbyte *)midpRealConfig,
+                                                       (jbyte *)midpConfigDir,
                                                        MAX_PATH_LEN-1,
                                                        &len)) {
         REPORT_ERROR(LC_AMS,"getConfigurationDir() << pcsl_string conversion operation failed.");
@@ -139,6 +139,6 @@ char* getConfigurationDir(char *cmd) {
     };
     pcsl_string_free (&str);
 
-    midpRealConfig[len] = 0;
-    return midpRealConfig;
+    midpConfigDir[len] = 0;
+    return midpConfigDir;
 }
