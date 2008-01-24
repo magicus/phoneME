@@ -35,8 +35,6 @@
 static char* convertInt2String(int inputInt, char *buffer);
 /*Converts an hexadecimal number to string*/
 static char* convertHexa2String(int inputHex, char *buffer);
-/*Prints a string*/
-static void  javautil_putstring(const char *outputString);
 /*Prints one character*/
 static void  javautil_putchar(const char outputChar);
 /* Gets the channel name */
@@ -149,7 +147,7 @@ static char* get_severity_name(int severity){
     }
 }
 
-/**
+/*
  * Not all compilers provide printf function, so we have 
  * to use workaround. This function is to be used from javacall.
  */
@@ -162,7 +160,7 @@ void javautil_printf(int severity, int channelID, char *message, ...) {
 
 }
 
-/**
+/*
  * Not all compilers provide vprintf function, so we have 
  * to use workaround. This function is to be used from midp.
  * Prints out thr DEBUG message in the following format:
@@ -179,14 +177,10 @@ void javautil_vprintf(int severity, int channelID, int isolateID, char *msg, va_
         char    c;
         char   *s;
     } Printable;
-    char* separator = "|";
+    char* separator = " - ";
     javacall_time_milliseconds ms;
     ms = javacall_time_get_clock_milliseconds();
 
-    if(msg == NULL) {
-        javautil_putstring("NULL\n");
-        return;
-    }
     /* 
        msg is the last argument specified; all
        others must be accessed using the variable-
@@ -194,17 +188,23 @@ void javautil_vprintf(int severity, int channelID, int isolateID, char *msg, va_
     */
 
     str = convertInt2String(ms,tempBuffer);
-    javautil_putstring(str);
-    javautil_putstring(separator);
+    javacall_print(str);
+    javacall_print(separator);
     str = get_channel_name(channelID);
-    javautil_putstring(str);
-    javautil_putstring(separator);
+    javacall_print(str);
+    javacall_print(separator);
     str = get_severity_name(severity);
-    javautil_putstring(str);
-    javautil_putstring(separator);
+    javacall_print(str);
+    javacall_print(separator);
     str = convertInt2String(isolateID,tempBuffer);
-    javautil_putstring(str);
-    javautil_putstring(separator);
+    javacall_print(str);
+    javacall_print(separator);
+
+    if(msg == NULL) {
+       javacall_print("NULL\n");
+       return;
+    }
+
     
 
     while(*msg) {
@@ -227,13 +227,13 @@ void javautil_vprintf(int severity, int channelID, int isolateID, char *msg, va_
                 case 'd': /* integer */
                     Printable.i = va_arg( vl, int );
                     str = convertInt2String(Printable.i,tempBuffer);
-                    javautil_putstring(str);
+                    javacall_print(str);
                     break;
 
                 case 'x': /* hexadecimal */
                     Printable.x = va_arg( vl, int );
                     str = convertHexa2String(Printable.x,tempBuffer);
-                    javautil_putstring(str);
+                    javacall_print(str);
                     break;
 
                 case 'c': /* character */
@@ -243,13 +243,13 @@ void javautil_vprintf(int severity, int channelID, int isolateID, char *msg, va_
 
                 case 's': /* string */
                     Printable.s = va_arg( vl, char * );
-                    javautil_putstring(Printable.s);
+                    javacall_print(Printable.s);
                     break;
 
                 default:
-                    javautil_putstring("\nUnsupported type. Cant print %");
+                    javacall_print("\nUnsupported type. Cant print %");
                     javautil_putchar(*msg);
-                    javautil_putstring(".\n");
+                    javacall_print(".\n");
                     break;
             }/*end of switch*/
             msg++;
@@ -257,7 +257,7 @@ void javautil_vprintf(int severity, int channelID, int isolateID, char *msg, va_
 
     }/*end of while*/
 
-    javautil_putstring("\n");
+    javacall_print("\n");
 
 }/* end of javautil_printf */
 
@@ -266,12 +266,6 @@ void javautil_vprintf(int severity, int channelID, int isolateID, char *msg, va_
 static void javautil_putchar(const char outputChar) {
     const char java_outputChar[2]= {outputChar, '\0'};
     javacall_print(java_outputChar);
-}
-
-/*Prints a string*/
-
-static void javautil_putstring(const char *outputString) {
-    javacall_print(outputString);
 }
 
 /*Converts an hexadecimal number to string*/
