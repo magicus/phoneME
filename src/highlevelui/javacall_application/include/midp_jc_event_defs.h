@@ -108,6 +108,7 @@ typedef enum {
     MIDP_JC_EVENT_PERMISSION_DIALOG    ,
 #ifdef ENABLE_JSR_179
     JSR179_LOCATION_JC_EVENT           ,
+    JSR179_PROXIMITY_JC_EVENT          ,
 #endif /* ENABLE_JSR_179 */
     MIDP_JC_EVENT_SPRINT_MASTER_VOLUME ,
     MIDP_JC_EVENT_SPRINT_STATE_CHANGE  ,
@@ -238,6 +239,15 @@ typedef struct {
     javacall_handle provider;
     javacall_location_result operation_result;
 } jsr179_jc_event_location;
+
+typedef struct {
+    javacall_handle provider;
+    double latitude;
+    double longitude;
+    float proximityRadius;
+    javacall_location_location location;
+    javacall_location_result operation_result;
+} jsr179_jc_event_proximity;
 #endif /* ENABLE_JSR_179 */
 
 #ifdef ENABLE_JSR_256
@@ -312,6 +322,7 @@ typedef struct {
         midp_jc_event_image_decoder        imageDecoderEvent;
 #ifdef ENABLE_JSR_179
         jsr179_jc_event_location           jsr179LocationEvent;
+        jsr179_jc_event_proximity          jsr179ProximityEvent;
 #endif /* ENABLE_JSR_179 */
         midp_jc_event_pen                  penEvent;
         midp_jc_event_permission_dialog    permissionDialog_event;
