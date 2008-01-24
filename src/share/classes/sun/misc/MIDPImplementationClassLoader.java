@@ -36,7 +36,6 @@ import java.net.URLConnection;
 import java.net.URLClassLoader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
 import java.security.CodeSource;
 import java.security.PermissionCollection;
 import java.security.ProtectionDomain;
@@ -49,13 +48,11 @@ import java.security.cert.Certificate;
 public class MIDPImplementationClassLoader extends URLClassLoader{
 
     URL myBase[];
-    private HashSet allowedClasses; /* the classes we can lookup in system */
     private PermissionCollection perms;
     private ClassLoader parent;
 
     public MIDPImplementationClassLoader(
 	URL base[],
-	String allowedParentClasses[],
 	PermissionCollection pc,
 	ClassLoader parent)
     {
@@ -63,18 +60,8 @@ public class MIDPImplementationClassLoader extends URLClassLoader{
 	myBase = base;
 	perms = pc;
 	this.parent = parent;
-	hashAllowedParentClasses(allowedParentClasses);
 	// Register in case classes were preloaded
 	CVM.Preloader.registerClassLoader("midp", this);
-    }
-
-    private void
-    hashAllowedParentClasses(String allowedParentClasses[]){
-	HashSet classes = allowedClasses = new HashSet();
-	for (int i = 0; i<allowedParentClasses.length; i++){
-	    String classname = allowedParentClasses[i].intern();
-	    classes.add(classname);
-	}
     }
 
     protected PermissionCollection getPermissions(CodeSource cs){
@@ -89,14 +76,9 @@ public class MIDPImplementationClassLoader extends URLClassLoader{
 
 
     private Class
-    loadFromParent(String classname, boolean resolve, boolean restrict)
-					throws ClassNotFoundException
+    loadFromParent(String classname, boolean resolve)
+                            throws ClassNotFoundException
     {
-	// make sure classname is on the list.
-	if (restrict && !allowedClasses.contains(classname)) {
-	    return null;
-        }
-
         /* Call java.lang.ClassLoader(classname, resolve),
          * which uses the NULL classLoader to load
          * class if parent is null, or calls parent.loadClass()
@@ -104,22 +86,18 @@ public class MIDPImplementationClassLoader extends URLClassLoader{
         return super.loadClass(classname, resolve);
     }
 
-    public Class
-    loadClass(String classname, boolean resolve) throws ClassNotFoundException
-    {
-	return loadClass(classname, resolve, false);
-    }
-
     public synchronized Class
-    loadClass(String classname, boolean resolve, boolean restrict)
-						throws ClassNotFoundException
+    loadClass(String classname, boolean resolve)
+                            throws ClassNotFoundException
     {
 	Class resultClass;
 	classname = classname.intern();
+
 	resultClass = findLoadedClass(classname);
+
 	if (resultClass == null){
 	    try {
-		resultClass = loadFromParent(classname, resolve, restrict);
+		resultClass = loadFromParent(classname, resolve);
 	    }catch(Exception e){
 		/*DEBUG e.printStackTrace(); */
 		resultClass = null;
