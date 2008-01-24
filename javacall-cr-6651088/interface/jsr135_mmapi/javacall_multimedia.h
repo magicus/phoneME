@@ -287,7 +287,7 @@ typedef struct {
      *  An array of javacall_media_caps for each supported media format.
      *  The last element in the array should have NULL mediaFormat field.
      */
-    javacall_media_caps                 *mediaCaps;
+    javacall_media_caps*                mediaCaps;
 } javacall_media_configuration;
 
 /* Java MMAPI JTS Values */
@@ -347,7 +347,7 @@ javacall_result javacall_media_finalize(void);
  *         JAVACALL_INVALID_ARGUMENT if argument is NULL
  */
 javacall_result javacall_media_get_configuration(
-                    const javacall_media_configuration* /*OUT*/*configuration);
+                    /*OUT*/ const javacall_media_configuration** configuration);
 
 /** @} */ 
 
@@ -378,10 +378,10 @@ javacall_result javacall_media_get_configuration(
  *         JAVACALL_INVALID_ARGUMENT
  */
 javacall_result javacall_media_create(int appID,
-                                      int playerId,
+                                      int playerID,
                                       javacall_const_utf16_string uri, 
                                       long uriLength,
-                                      /*OUT*/javacall_handle *handle);
+                                      /*OUT*/ javacall_handle* handle);
 
 /**
  * Get the format type of media content
@@ -393,7 +393,7 @@ javacall_result javacall_media_create(int appID,
  * @retval JAVACALL_FAIL        Fail
  */
 javacall_result javacall_media_get_format(javacall_handle handle, 
-                              javacall_media_format_type /*OUT*/*format);
+                              /*OUT*/ javacall_media_format_type* format);
 
 /**
  * Return bitmask of Media Controls supported by native player
@@ -407,7 +407,7 @@ javacall_result javacall_media_get_format(javacall_handle handle,
  * @retval JAVACALL_FAIL        Fail
  */
 javacall_result javacall_media_get_player_controls(javacall_handle handle,
-                              int /*OUT*/*controls);
+                              /*OUT*/ int* controls);
 
 /**
  * Close native media player that created by creat or creat2 API call
@@ -470,7 +470,7 @@ javacall_result javacall_media_release_device(javacall_handle handle);
  * @retval JAVACALL_FAIL    
  */
 javacall_result javacall_media_download_handled_by_device(javacall_handle handle,
-                                                  /*OUT*/javacall_bool* isHandled);
+                                                  /*OUT*/ javacall_bool* isHandled);
 
 /**
  * This function returns desired size of Java Layer buffer for downloaded media content
@@ -491,13 +491,14 @@ javacall_result javacall_media_download_handled_by_device(javacall_handle handle
  * @retval JAVACALL_NOT_IMPLEMENTED
  */
 javacall_result javacall_media_get_java_buffer_size(javacall_handle handle,
-                                 long /*OUT*/*java_buffer_size, 
-                                 long /*OUT*/*first_data_size);
+                                 /*OUT*/ long* java_buffer_size, 
+                                 /*OUT*/ long* first_chunk_size);
 
 /**
  * This function is called by Java Layer to notify javacall implementation about 
  * whole size of media content. This function is called in prefetch stage if 
  * whole size of media content is known only.
+ *
  * @param handle    Handle to the library
  * @param whole_content_size  size of whole media content
  * 
@@ -514,32 +515,33 @@ javacall_result javacall_media_set_whole_content_size(javacall_handle handle,
  * @param buffer    Native layer provides address of data buffer for media content. 
  *                  Java layer will store downloaded media data to the provided buffer.
  *                  The size of data stored in the buffer should be equal or divisible 
- *                  to minimum media data chunk size and less or equal to max_size
+ *                  by minimum media data chunk size and less or equal to max_size
  * @param max_size  The maximum size of data can be stored in the buffer
  * 
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL   
  */
 javacall_result javacall_media_get_buffer_address(javacall_handle handle, 
-                                 const void** /*OUT*/buffer, 
-                                 long /*OUT*/*max_size);
+                                 /*OUT*/ const void** buffer, 
+                                 /*OUT*/ long* max_size);
 
 /**
- * Java MMAPI call this function to send media data to this library
- * This function can be called multiple time to send large media data
- * Native library could implement buffering by using any method (for example: file, heap and etc...)
- * And, buffering occurred in sequentially. not randomly.
+ * Java MMAPI call this function to send media data to this library.
+ * This function can be called multiple times to send large media data.
+ * Native library can implement buffering by using any method (file, heap, etc...)
+ * Buffering always occurs sequentially, not randomly.
  * 
- * When there is no more data, Java indicates end of buffering by setting buffer to NULL and length to -1.
+ * When there is no more data, the buffer is set to NULL and the length to -1.
  * OEM should care about this case.
  * 
- * @param handle    Handle to the library
- * @param buffer    Media data buffer pointer. Can be NULL at end of buffering
- * @param length    Length of media data. Can be -1 at end of buffering,
- *                  If success return 'length of buffered data' else return -1
- * @param need_more_data returns JAVACALL_FALSE if no more data is required, 
- *                       otherwise returns JAVACALL_TRUE
- * @param min_data_size minimum size of required media content
+ * @param handle    Handle to the library.
+ * @param buffer    Media data buffer pointer. Can be NULL at end of buffering.
+ * @param length    Length of media data. Can be -1 at end of buffering.
+ *                  If success returns length of data processed.
+ * @param need_more_data    returns JAVACALL_FALSE if no more data is required
+ *                          at the moment, otherwise returns JAVACALL_TRUE
+ * @param next_chunk_size   next expected buffering data size
+ *                          must be divisible by this value
  * 
  * @retval JAVACALL_OK
  * @retval JAVACALL_FAIL   
@@ -547,9 +549,9 @@ javacall_result javacall_media_get_buffer_address(javacall_handle handle,
  */
 javacall_result javacall_media_do_buffering(javacall_handle handle, 
                                  const void* buffer,
-                                 /* INOUT */ long *length,
-                                 javacall_bool *need_more_data,
-                                 long /*OUT*/*min_data_size);
+                                 /*INOUT*/ long* length,
+                                 /*OUT*/ javacall_bool* need_more_data,
+                                 /*OUT*/ long* next_chunk_size);
 
 /**
  * MMAPI call this function to clear(delete) buffered media data
@@ -642,7 +644,7 @@ javacall_result javacall_media_resume(javacall_handle handle);
  * @retval JAVACALL_OK      Success
  * @retval JAVACALL_FAIL    Fail
  */
-javacall_result javacall_media_get_time(javacall_handle handle, /*OUT*/ long *ms );
+javacall_result javacall_media_get_time(javacall_handle handle, /*OUT*/ long* ms );
 
 /**
  * Seek to specified time.
@@ -654,7 +656,7 @@ javacall_result javacall_media_get_time(javacall_handle handle, /*OUT*/ long *ms
  * @retval JAVACALL_OK      Success
  * @retval JAVACALL_FAIL    Fail
  */
-javacall_result javacall_media_set_time(javacall_handle handle, /*INOUT*/long *ms);
+javacall_result javacall_media_set_time(javacall_handle handle, /*INOUT*/ long* ms);
  
 /**
  * Get whole media time in ms.
@@ -666,7 +668,7 @@ javacall_result javacall_media_set_time(javacall_handle handle, /*INOUT*/long *m
  * @retval JAVACALL_OK      Success
  * @retval JAVACALL_NO_DATA_AVAILABLE
  */
-javacall_result javacall_media_get_duration(javacall_handle handle, /*OUT*/long *ms);
+javacall_result javacall_media_get_duration(javacall_handle handle, /*OUT*/ long* ms);
 
 /** @} */
 
@@ -691,7 +693,7 @@ javacall_result javacall_media_get_duration(javacall_handle handle, /*OUT*/long 
  * @retval JAVACALL_OK      Success
  * @retval JAVACALL_NO_DATA_AVAILABLE
  */
-javacall_result javacall_media_get_volume(javacall_handle handle, /*OUT*/ long *volume); 
+javacall_result javacall_media_get_volume(javacall_handle handle, /*OUT*/ long* volume); 
 
 /**
  * Set audio volume
@@ -742,7 +744,7 @@ javacall_result javacall_media_set_mute(javacall_handle handle, javacall_bool mu
  */
 
 /**
- * play simple tone
+ * Play simple tone
  *
  * @param note     the note to be played. From 0 to 127 inclusive.
  *                 The frequency of the note can be calculated from the following formula:
@@ -759,7 +761,7 @@ javacall_result javacall_media_set_mute(javacall_handle handle, javacall_bool mu
 javacall_result javacall_media_play_tone(int appID, long note, long duration, long volume);
 
 /**
- * stop simple tone
+ * Stop tone
  * 
  * @param appID             ID of the application playing the tone
  * @retval JAVACALL_OK      Success
@@ -767,6 +769,35 @@ javacall_result javacall_media_play_tone(int appID, long note, long duration, lo
  */
 javacall_result javacall_media_stop_tone(int appID);
 
+/**
+ * @defgroup MediaOptionalDualTone         Optional Dual tone play API
+ * @ingroup JSR135
+ *
+ * @brief Extended (optional) tone playing functions
+ * 
+ * @{
+ */
+
+/**
+ * play dual tone (2 tones at the same time)
+ *
+ * @param noteA    the note to be played together with noteB. From 0 to 127 inclusive.
+ * @param noteB    the note to be played together with noteA. From 0 to 127 inclusive.
+ *                 The frequency of the note can be calculated from the following formula:
+ *                    SEMITONE_CONST = 17.31234049066755 = 1/(ln(2^(1/12)))
+ *                    note = ln(freq/8.176)*SEMITONE_CONST
+ *                    The musical note A = MIDI note 69 (0x45) = 440 Hz.
+ * @param
+ * @param appID    ID of the application playing the tone
+ * @param duration the duration of the note in ms 
+ * @param volume   volume of this play. From 0 to 100 inclusive.
+ * 
+ * @retval JAVACALL_OK      Success
+ * @retval JAVACALL_FAIL    Fail. JVM will raise the media exception.
+ */
+javacall_result javacall_media_play_dualtone(int appID, long noteA, long noteB, long duration, long volume);
+
+/** @} */
 /** @} */
 
 /**********************************************************************************/
@@ -856,7 +887,7 @@ javacall_result javacall_media_set_video_visible(javacall_handle handle, javacal
  * @retval JAVACALL_FAIL        Fail. Invalid encodingFormat or some errors.
  */
 javacall_result javacall_media_start_video_snapshot(javacall_handle handle, 
-                                                    const javacall_utf16* imageType, long length);
+                                                    javacall_const_utf16_string imageType, long length);
 
 /**
  * Get snapshot data size
@@ -894,7 +925,7 @@ javacall_result javacall_media_get_video_snapshot_data(javacall_handle handle,
   * @retval JAVACALL_FAIL    Fail
   * @retval JAVACALL_NOT_IMPLEMENTED    Native FullScreen mode not implemented
   */
- javacall_result javacall_media_set_video_fullscreenmode(javacall_handle handle, javacall_bool fullScreenMode);
+ javacall_result javacall_media_set_video_full_screen_mode(javacall_handle handle, javacall_bool fullScreenMode);
 
 /** @} */
 
@@ -964,7 +995,7 @@ javacall_result javacall_media_seek_to_frame(javacall_handle handle,
  * @retval JAVACALL_FAIL    Fail
  */
 javacall_result javacall_media_skip_frames(javacall_handle handle, 
-                                           /* INOUT */ long *nFrames);
+                                           /*INOUT*/ long* nFrames);
 
 /** @} */ 
 
@@ -1023,7 +1054,7 @@ javacall_result javacall_media_get_metadata_key(javacall_handle handle,
  * @retval JAVACALL_FAIL            Fail
  */
 javacall_result javacall_media_get_metadata(javacall_handle handle, 
-                                            const javacall_utf16* key, 
+                                            javacall_const_utf16_string key, 
                                             long bufLength, 
                                             /*OUT*/ javacall_utf16* dataBuf);
 
@@ -1127,7 +1158,7 @@ javacall_result javacall_media_long_midi_event(javacall_handle handle,
  * @retval JAVACALL_FAIL    NO MIDI Bank Query support is available
  */
 javacall_result javacall_media_is_midibank_query_supported(javacall_handle handle,
-                                             long* supported);
+                                                           long* supported);
 
 /**
  * This function is used to get a list of installed banks. If the custom
@@ -1145,9 +1176,9 @@ javacall_result javacall_media_is_midibank_query_supported(javacall_handle handl
  * @retval JAVACALL_FAIL    Bank List is NOT available
  */
 javacall_result javacall_media_get_midibank_list(javacall_handle handle,
-                                             long custom,
-                                             /*OUT*/short* banklist,
-                                             /*INOUT*/long* numlist);
+                                                 long custom,
+                                                 /*OUT*/ short* banklist,
+                                                 /*INOUT*/ long* numlist);
 
 
 /**
@@ -1174,8 +1205,8 @@ javacall_result javacall_media_get_midibank_key_name(javacall_handle handle,
                                             long bank,
                                             long program,
                                             long key,
-                                            /*OUT*/javacall_ascii_string keyname,
-                                            /*INOUT*/long* keynameLen);
+                                            /*OUT*/ javacall_ascii_string keyname,
+                                            /*INOUT*/ long* keynameLen);
 
 /**
  * Given the bank and program, get name of program. For space-saving reasons
@@ -1194,8 +1225,8 @@ javacall_result javacall_media_get_midibank_key_name(javacall_handle handle,
 javacall_result javacall_media_get_midibank_program_name(javacall_handle handle,
                                                 long bank,
                                                 long program,
-                                                /*OUT*/javacall_ascii_string progname,
-                                                /*INOUT*/long* prognameLen);
+                                                /*OUT*/ javacall_ascii_string progname,
+                                                /*INOUT*/ long* prognameLen);
 
 /**
  * Given bank, get list of program numbers. If and only if this bank is not
@@ -1212,8 +1243,8 @@ javacall_result javacall_media_get_midibank_program_name(javacall_handle handle,
  */
 javacall_result javacall_media_get_midibank_program_list(javacall_handle handle,
                                                 long bank,
-                                                /*OUT*/javacall_ascii_string proglist,
-                                                /*INOUT*/long* proglistLen);
+                                                /*OUT*/ javacall_ascii_string proglist,
+                                                /*INOUT*/ long* proglistLen);
 
 /**
  * Returns the program assigned to the channel. It represents the current state
@@ -1230,7 +1261,7 @@ javacall_result javacall_media_get_midibank_program_list(javacall_handle handle,
  */
 javacall_result javacall_media_get_midibank_program(javacall_handle handle,
                                                 long channel,
-                                                /*OUT*/long* prog);
+                                                /*OUT*/ long* prog);
 
 
 /** @} */ 
@@ -1422,8 +1453,8 @@ javacall_result javacall_media_supports_recording(javacall_handle handle);
  * 
  * @retval JAVACALL_OK          Success
  */
-javacall_result javacall_media_set_recordsize_limit_supported(javacall_handle handle,
-                                                    /*OUT*/ javacall_bool *supported);
+javacall_result javacall_media_supports_set_recordsize_limit(javacall_handle handle,
+                                                    /*OUT*/ javacall_bool* supported);
 
 /**
  * Specify the maximum size of the recording including any headers.<br>
@@ -1455,7 +1486,7 @@ javacall_result javacall_media_set_recordsize_limit(javacall_handle handle, /*IN
  *                          The locator string is invalid format. Java will throw the exception.
  */
 javacall_result javacall_media_recording_handled_by_native(javacall_handle handle, 
-                                                           const javacall_utf16* locator,
+                                                           javacall_const_utf16_string locator,
                                                            long locatorLength);
 
 /**
@@ -1563,7 +1594,7 @@ javacall_result javacall_media_get_recorded_data(javacall_handle handle,
  * @retval JAVACALL_FAIL        Fail
  */
 javacall_result javacall_media_get_record_content_type_length(javacall_handle handle,
-                                                              /*OUT*/int *length);
+                                                              /*OUT*/ int* length);
 
 /**
  * Get the current recording data content type mime string length
