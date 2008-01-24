@@ -1,5 +1,6 @@
 /*
- * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
+ *
+ * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -396,13 +397,13 @@ javacall_handle configdb_load_no_fs () {
         return NULL;
     }
 
-    for (i = 0; static_properties_sections[i] != NULL; i++) {
+    for (i = 0; javacall_static_properties_sections[i] != NULL; i++) {        
         //add section to db
-        configdb_add_entry(db, static_properties_sections[i], NULL, NULL);
+        configdb_add_entry(db, javacall_static_properties_sections[i], NULL, NULL);
         //add keys and values
-        for (j = 0; static_properties_keys[i][j] != NULL; j++) {
-            configdb_add_entry(db, static_properties_sections[i], static_properties_keys[i][j], 
-                               static_properties_values[i][j]);
+        for (j = 0; javacall_static_properties_keys[i][j] != NULL; j++) {
+            configdb_add_entry(db, javacall_static_properties_sections[i], javacall_static_properties_keys[i][j], 
+                               javacall_static_properties_values[i][j]);
         }
     }
     return(javacall_handle)db;

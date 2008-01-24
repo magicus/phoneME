@@ -108,6 +108,10 @@ $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
 	@echo -n "...compiling: "
 	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
 
+$(JAVACALL_OUTPUT_OBJ_DIR)/javacall_static_properties.obj: $(STATIC_PROPERTIES_C)
+	@echo -n "...compiling: "
+	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
+
 JAVACALL_EXTRA_LIBS::
 
 $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
