@@ -74,14 +74,15 @@ extern "C" {
 
 /** Shows the way handler was registered in registry **/
 typedef enum {
+/* value of javacall_chapi_handler_registration_type MUST not be 0 (it is stored in zero-terminated strings) */
 /** Content handler statically registered during installation */
-	REGISTERED_STATIC = 0,
+	REGISTERED_STATIC = 1,
 
 /** Dynamically registered content handler via API */
-	REGISTERED_DYNAMIC = 1,
+	REGISTERED_DYNAMIC = 2,
 
 /** Native platform content handler  */
-	REGISTERED_NATIVE = 2
+	REGISTERED_NATIVE = 3
 } javacall_chapi_handler_registration_type;
 
 

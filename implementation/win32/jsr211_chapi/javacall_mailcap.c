@@ -30,8 +30,6 @@
  */
 
 
-// #define DEBUG_OUTPUT 1
-
 #include "javacall_chapi_registry.h"
 #include "javacall_chapi_invoke.h"
 #include "inc/javautil_str.h"
@@ -42,6 +40,9 @@
 #include <memory.h>
 #include <string.h>
 
+#ifdef _DEBUG
+#define DEBUG_OUTPUT 1
+#endif
 
 #define CHAPI_MALLOC(x) malloc(x)
 #define CHAPI_CALLOC(x,s) calloc(x,s)
@@ -2017,16 +2018,16 @@ javacall_result javacall_chapi_get_handler_info(javacall_const_utf16_string cont
 				   javacall_utf16*  suite_id_out, int* suite_id_len,
 				   javacall_utf16*  classname_out, int* classname_len,
 				   javacall_chapi_handler_registration_type *flag_out){
-handler_info* info;
-int i;
-int res;
+    handler_info* info;
+    int i;
+    int res;
 
 #ifdef DEBUG_OUTPUT
-wprintf(L"JAVACALL::javacall_chapi_get_handler_info(%s)\n",content_handler_id);
+    wprintf(L"JAVACALL::javacall_chapi_get_handler_info(%s)\n",content_handler_id);
 #endif
 
-res = update_registry();
-if (res) return res;
+    res = update_registry();
+    if (res) return res;
 
 	for (i=0;i<g_handler_infos_used;++i){
 		if (!javautil_str_wcscmp(g_handler_infos[i]->handler_id,content_handler_id)){
@@ -2040,15 +2041,14 @@ if (res) return res;
 				if (classname_out) {
 					res = copy_string(info->classname,classname_out,classname_len);
 				}
-				return res;
-			} else {
-				if (suite_id_out) *suite_id_out = 0;
-				if (flag_out) *flag_out = 0;
-				if (classname_out) {
-					res = copy_string(info->appname,classname_out,classname_len);
-				}
-				return res;
-			}
+            } else {
+			    if (suite_id_out) *suite_id_out = 0;
+			    if (flag_out) *flag_out = 0;
+			    if (classname_out) {
+				    res = copy_string(info->appname,classname_out,classname_len);
+			    }
+            }
+			return res;
 		}
 	}
 	return JAVACALL_CHAPI_ERROR_NOT_FOUND;
