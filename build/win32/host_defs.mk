@@ -176,8 +176,7 @@ LINK_MANIFEST = \
 LINK_CMD	= $(AT)\
 	$(eval OUT := $(call POSIX2HOST,$@)) \
 	$(call POSIX2HOST_CMD,$^) > $(OUT).lst; \
-	$(TARGET_LINK) $(LINKCVM_FLAGS) /out:$(OUT) @$(OUT).lst \
-		$(LINKCVM_LIBS); \
+	$(TARGET_LINK) $(LINKCVM_FLAGS) /out:$(OUT) @$(OUT).lst $(1); \
 	$(LINK_MANIFEST)
 
 SO_CC_CMD	= $(AT)$(TARGET_CC) $(SO_CFLAGS) /Fo$(call POSIX2HOST,$@) $(call POSIX2HOST,$<)
