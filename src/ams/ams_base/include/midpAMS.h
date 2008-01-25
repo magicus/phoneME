@@ -152,9 +152,9 @@ extern "C" {
 
 /**
  * The public MIDP initialization function. If not running from the MIDP
- * home directory, midpSetHomeDir should be called first with the
+ * home directory, midpSetAppDir should be called first with the
  * directory of the MIDP system. The functions must be called before any
- * other MIDP function except midpSetHomeDir.
+ * other MIDP function except midpSetAppDir.
  */
 int midpInitialize();
 
@@ -167,13 +167,13 @@ int midpInitialize();
  * be used.
  * @param dir home directory of MIDP
  */
-void midpSetHomeDir(const char* dir);
+void midpSetAppDir(const char* dir);
 
 /**
  * Sets the config directory for MIDP if needed.
  * In this directory static data as images and 
  * configuration files are located. If not called
- * directory specified by midpSetHomeDir will be used.
+ * directory specified by midpSetAppDir will be used.
  * Only had an effect when called before any
  * other method except midpInitialize is called.
  *

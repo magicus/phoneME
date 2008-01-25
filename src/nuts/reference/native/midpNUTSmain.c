@@ -108,16 +108,15 @@ int main(int argc, char* argv[]) {
 
 #ifndef ARM
     {
-        char* midpHome;
+        char* appDir;
 
         /* For development platforms MIDP_HOME is dynamic. */
-        midpHome = getApplicationDir(argv[0]);
-        if (midpHome == NULL) {
+        appDir = getApplicationDir(argv[0]);
+        if (appDir == NULL) {
             return -1;
         }
 
-        midpSetHomeDir(midpHome);
-        midpFree(midpHome);
+        midpSetAppDir(appDir);
     }
 #endif
 
