@@ -42,6 +42,14 @@ public class WMAPermission extends Permission {
     static public WMAPermission SMS_RECEIVE = new WMAPermission(
         Permissions.getName(Permissions.SMS_RECEIVE), "sms:receive");
 
+
+    static public WMAPermission CBS_SERVER = new WMAPermission(
+        Permissions.getName(Permissions.CBS_SERVER), "cbs:open");
+
+    static public WMAPermission CBS_RECEIVE = new WMAPermission(
+        Permissions.getName(Permissions.CBS_RECEIVE), "cbs:receive");
+
+
     static public WMAPermission MMS_SERVER = new WMAPermission(
         Permissions.getName(Permissions.MMS_SERVER), "mms:open");
 
