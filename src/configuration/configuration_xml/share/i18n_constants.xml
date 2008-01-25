@@ -394,7 +394,10 @@
             Name="AMS_SUITES_TO_BE_DISABLED"
             Comment="AMS: general"/>
   <constant Type="int"
-            Name="AMS_DEFAULT_STORAGE_NAME"
+            Name="AMS_INTERNAL_STORAGE_NAME"
+            Comment="AMS: general"/>
+  <constant Type="int"
+            Name="AMS_MOVE_TO_INTERNAL_STORAGE"
             Comment="AMS: general"/>
   <constant Type="int"
             Name="AMS_EXTRENAL_STORAGE_NAME"
@@ -599,6 +602,9 @@
             Comment="AMS: com.sun.midp.appmanager.AppManagerUI"/>
   <constant Type="int"
             Name="AMS_MGR_RUN_THE_NEW_SUITE"
+            Comment="AMS: com.sun.midp.appmanager.AppManagerUI"/>
+  <constant Type="int"
+            Name="AMS_MGR_SUCC_SUITE_STORAGE_CHANGED"
             Comment="AMS: com.sun.midp.appmanager.AppManagerUI"/>
   <constant Type="int"
             Name="AMS_DISC_APP_WEBSITE_INSTALL"

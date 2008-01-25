@@ -484,7 +484,7 @@ public class GraphicalInstaller extends MIDlet implements CommandListener {
         storageListBox = new List(Resource.getString(
                 ResourceConstants.AMS_GRA_INTLR_SELECT_STORAGE), Choice.IMPLICIT);
         storageListBox.append(Resource.getString(
-                ResourceConstants.AMS_DEFAULT_STORAGE_NAME), (Image)null);
+                ResourceConstants.AMS_INTERNAL_STORAGE_NAME), (Image)null);
 
         String storagePrefix = Resource.getString(ResourceConstants.AMS_EXTRENAL_STORAGE_NAME);
 

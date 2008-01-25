@@ -499,6 +499,20 @@ public class MIDletSuiteStorage {
     }
 
     /**
+     * Moves a software package with given suite ID to the specified storage.
+     *
+     * @param suiteId suite ID for the installed package
+     * @param newStorageId new storage ID
+     *
+     * @exception IllegalArgumentException if the suite cannot be found or
+     * invalid storage ID specified 
+     * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
+     * locked
+     */
+    public native void changeStorage(int suiteId, int newStorageId)
+            throws MIDletSuiteLockedException;
+
+    /**
      * Stores or updates a midlet suite.
      *
      * @param installInfo structure containing the following information:<br>

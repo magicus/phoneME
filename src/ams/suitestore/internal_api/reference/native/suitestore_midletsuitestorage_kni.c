@@ -1217,6 +1217,54 @@ KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_storeSuiteVerifyHash) {
 }
 
 /**
+ * Native method void changeStorage(...) of
+ * com.sun.midp.midletsuite.MIDletSuiteStorage.
+ * <p>
+ * Moves a software package with given suite ID to the specified storage.
+ *
+ * @param suiteId suite ID for the installed package
+ * @param storageId new storage ID
+ *
+ * @exception IllegalArgumentException if the suite cannot be found or
+ * invalid storage ID specified
+ * @exception MIDletSuiteLockedException is thrown, if the MIDletSuite is
+ * locked
+ */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_midp_midletsuite_MIDletSuiteStorage_changeStorage) {
+
+    MIDPError status;
+    SuiteIdType suiteId = KNI_GetParameterAsInt(1);
+    StorageIdType newStorageId = KNI_GetParameterAsInt(2);
+
+    status = midp_change_suite_storage(suiteId, newStorageId);
+
+    switch (status) {
+        case ALL_OK:
+            break;
+        case OUT_OF_MEMORY:
+            KNI_ThrowNew(midpOutOfMemoryError, NULL);
+            break;
+        case SUITE_LOCKED:
+            KNI_ThrowNew(midletsuiteLocked, NULL);
+            break;
+        case IO_ERROR:
+            KNI_ThrowNew(midpIOException, NULL);
+            break;
+        case NOT_FOUND:
+            KNI_ThrowNew(midpIllegalArgumentException, "bad suite ID");
+            break;
+        case BAD_PARAMS:
+            KNI_ThrowNew(midpIllegalArgumentException, "bad suite or storage ID");
+            break;
+        default:
+            KNI_ThrowNew(midpRuntimeException, NULL);
+    }
+
+    KNI_ReturnVoid();
+}
+
+/**
  * Native method void nativeStoreSuite(...) of
  * com.sun.midp.midletsuite.MIDletSuiteStorage.
  * <p>

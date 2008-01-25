@@ -397,6 +397,174 @@ midp_remove_suite(SuiteIdType suiteId) {
 }
 
 /**
+ * Moves a software package with given suite ID to the specified storage.
+ *
+ * @param suiteId suite ID for the installed package
+ * @param storageId new storage ID
+ *
+ * @return SUITE_LOCKED if the
+ * suite is locked, NOT_FOUND if the suite cannot be found or
+ * invalid storage ID specified
+ */
+MIDPError
+midp_change_suite_storage(SuiteIdType suiteId, StorageIdType newStorageId) {
+
+    pcsl_string suiteRoot;
+    MidletSuiteData* pData = NULL;
+    int status;
+    void* fileIteratorHandle = NULL;
+    lockStorageList *node = NULL;
+    
+    if ((UNUSED_STORAGE_ID == newStorageId) ||
+        (newStorageId >= MAX_STORAGE_NUM)) {
+        return BAD_PARAMS;
+    }
+
+    node = find_storage_lock(suiteId);
+    if (node != NULL) {
+        if (node->update != KNI_TRUE) {
+            return SUITE_LOCKED;
+        }
+    }
+
+     /*
+      * This is a public API which can be called without the VM running
+      * so we need automatically init anything needed, to make the
+      * caller's code less complex.
+      *
+      * Initialization is performed in steps so that we do use any
+      * extra resources such as the VM for the operation being performed.
+      */
+    if (midpInit(REMOVE_LEVEL) != 0) {
+        remove_storage_lock(suiteId);
+        return OUT_OF_MEMORY;
+    }
+
+    /* check that the suite exists and it is not a preloaded one */
+    pData = get_suite_data(suiteId);
+
+    if (pData == NULL) {
+        remove_storage_lock(suiteId);
+        return NOT_FOUND;
+    }
+
+    if (pData->storageId == newStorageId) {
+        remove_storage_lock(suiteId);
+        return BAD_PARAMS;
+    }
+
+    if (pData->isPreinstalled) {
+        remove_storage_lock(suiteId);
+        return BAD_PARAMS;
+    }
+
+    do {
+        int rc; /* return code for storage_get_next_file_in_iterator */
+        jsize oldRootLength;
+        jsize newRootLength;
+        const pcsl_string* newRoot;
+        const pcsl_string* oldRoot;
+        char* pszError = NULL;
+
+        status = begin_transaction(TRANSACTION_CHANGE_STORAGE, suiteId, NULL);
+        if (status != ALL_OK) {
+            break;
+        }
+
+        if ((status = get_suite_storage_root(suiteId, &suiteRoot)) != ALL_OK) {
+            break;
+        }
+
+        fileIteratorHandle = storage_open_file_iterator(&suiteRoot);
+        if (!fileIteratorHandle) {
+            status = IO_ERROR;
+            break;
+        }
+
+        #if ENABLE_ICON_CACHE
+        /* we don't have to move icons as they are always
+           stored in the internal storage.*/
+        #endif
+
+        newRoot = storage_get_root(newStorageId);
+        oldRoot = storage_get_root(pData->storageId);
+        newRootLength = pcsl_string_length(newRoot);
+        oldRootLength = pcsl_string_length(oldRoot);
+            
+        for (;;) {
+            pcsl_string filePath;
+            pcsl_string fileName;
+            pcsl_string newFilePath = PCSL_STRING_NULL;
+            jsize filePathLength;
+            rc = storage_get_next_file_in_iterator(&suiteRoot,
+                fileIteratorHandle, &filePath);
+            if (0 != rc) {
+                status = IO_ERROR;
+                break;
+            }
+            /* construct new file name. */
+            filePathLength = pcsl_string_length(&filePath);
+            pcsl_string_predict_size(&fileName, filePathLength - oldRootLength);
+            if (PCSL_STRING_OK != pcsl_string_substring(&filePath,
+                    oldRootLength, filePathLength, &fileName)) {
+                pcsl_string_free(&filePath);
+                status = OUT_OF_MEMORY;
+                break;
+            }
+            pcsl_string_predict_size(&newFilePath, newRootLength + pcsl_string_length(&fileName));
+            if (PCSL_STRING_OK != pcsl_string_append(&newFilePath, newRoot)) {
+                pcsl_string_free(&filePath);
+                pcsl_string_free(&fileName);
+                status = OUT_OF_MEMORY;
+                break;
+            }
+            if (PCSL_STRING_OK != pcsl_string_append(&newFilePath,
+                    (const pcsl_string*)&fileName)) {
+                pcsl_string_free(&filePath);
+                pcsl_string_free(&fileName);
+                pcsl_string_free(&newFilePath);
+                status = OUT_OF_MEMORY;
+                break;
+            }
+            /* rename file */
+            storage_rename_file(&pszError, &filePath, &newFilePath);
+            pcsl_string_free(&filePath);
+            pcsl_string_free(&fileName);
+            pcsl_string_free(&newFilePath);
+            if (pszError != NULL) {
+                status = IO_ERROR;
+                storageFreeError(pszError);
+                break;
+            }
+        }
+
+        if (status != ALL_OK) {
+            break;
+        }
+        
+        pData->storageId = newStorageId;
+
+        status = write_suites_data(&pszError);
+        storageFreeError(pszError);
+        
+    } while (0);
+
+    pcsl_string_free(&suiteRoot);
+    storageCloseFileIterator(fileIteratorHandle);
+
+    if (status != ALL_OK) {
+        (void)rollback_transaction();
+    } else {
+        (void)finish_transaction();
+    }
+
+    remove_storage_lock(suiteId);
+
+    return status;
+ }
+
+
+/**
  * Gets the amount of storage on the device that this suite is using.
  * This includes the JAD, JAR, management data, and RMS.
  *
