@@ -274,6 +274,8 @@ if (false) {
 
         try {
             init();
+        } catch (ConnectionNotFoundException cnfe) {
+            throw cnfe;
         } catch (IOException e) {
             throw new ConnectionNotFoundException(
                 "Invalid configuration");
@@ -322,9 +324,13 @@ if (false) {
         }
         try {
             SlotFactory.init();
-        }
-        catch (CardDeviceException e) {
-            throw new IOException("Config error: " + e.getMessage());
+        } catch (CardDeviceException e) {
+            if (e.getMessage().equals("stub")) {
+                throw new ConnectionNotFoundException("Null implementation: " +
+                        "J2ME device does not have the smart card slot");
+            } else {                
+                throw new IOException("Config error: " + e.getMessage());
+            }
         }
         int slots = SlotFactory.getCardSlotCount();
 
