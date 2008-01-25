@@ -47,7 +47,9 @@
 #define SURFACE_OFFSET 6
 #define SURFACE_SCANLINE_STRIDE 7
 #define SURFACE_PIXEL_STRIDE 8
-#define SURFACE_LAST SURFACE_PIXEL_STRIDE
+#define SURFACE_WIDTH 9
+#define SURFACE_HEIGHT 10
+#define SURFACE_LAST SURFACE_HEIGHT
 
 static jfieldID fieldIds[SURFACE_LAST + 1];
 static jboolean fieldIdsInitialized = JNI_FALSE;
@@ -107,6 +109,13 @@ Java_com_sun_pisces_PiscesGCISurface_initialize(JNIEnv* env,
                 surface->super.pixelStride =
                         (*env)->GetIntField(env, objectHandle, 
                                             fieldIds[SURFACE_PIXEL_STRIDE]);
+
+                surface->super.width =
+                        (*env)->GetIntField(env, objectHandle, 
+                                            fieldIds[SURFACE_WIDTH]);
+                surface->super.height =
+                        (*env)->GetIntField(env, objectHandle, 
+                                            fieldIds[SURFACE_HEIGHT]);
 
                 arrayType = 
                         (*env)->GetIntField(env, objectHandle, 
@@ -173,6 +182,8 @@ initializeSurfaceFieldIds(JNIEnv* env, jobject objectHandle) {
                 { "offset", "I" },
                 { "scanlineStride", "I" },
                 { "pixelStride", "I" },
+                { "width", "I" },
+                { "height", "I" },
                 { NULL, NULL }
             };
 
@@ -248,6 +259,12 @@ surface_acquire_dynamic(AbstractSurface* surface, JNIEnv* env,
     surface->super.pixelStride =
             (*env)->GetIntField(env, surfaceHandle, 
                                 fieldIds[SURFACE_PIXEL_STRIDE]);
+    surface->super.width =
+            (*env)->GetIntField(env, surfaceHandle, 
+                                fieldIds[SURFACE_WIDTH]);
+    surface->super.height =
+            (*env)->GetIntField(env, surfaceHandle, 
+                                fieldIds[SURFACE_HEIGHT]);
 
     arrayType = (*env)->GetIntField(env, surfaceHandle, 
                                     fieldIds[SURFACE_TYPE_OF_ARRAY]);
