@@ -75,14 +75,11 @@ extern "C" {
 /** Shows the way handler was registered in registry **/
 typedef enum {
 /* value of javacall_chapi_handler_registration_type MUST not be 0 (it is stored in zero-terminated strings) */
-/** Content handler statically registered during installation */
-	REGISTERED_STATIC = 1,
-
-/** Dynamically registered content handler via API */
-	REGISTERED_DYNAMIC = 2,
+/** Content handler statically/dynamically registered during installation */
+	REGISTERED_STATIC_FLAG = 0x0001,
 
 /** Native platform content handler  */
-	REGISTERED_NATIVE = 3
+	REGISTERED_NATIVE_FLAG = 0x0002
 } javacall_chapi_handler_registration_type;
 
 
@@ -513,7 +510,7 @@ javacall_result javacall_chapi_get_content_handler_friendly_appname(javacall_con
  *                      if classname_out is null class name is not retrieved 
  * @param classname_len pointer to integer initialized by caller to length of classname buffer
  * @param flag_out pointer to integer receiving handler registration type, can be null
- *                 for native handlers registration flag should be equal to REGISTERED_NATIVE
+ *                 for native handlers registration flag should contain REGISTERED_NATIVE_FLAG
  *                 if flag_out is null registration flag is not retrieved 
  * @return JAVACALL_OK if operation was successful, 
  *         JAVACALL_CHAPI_ERROR_BUFFER_TOO_SMALL if output buffer lenght is too small to keep result
