@@ -482,7 +482,8 @@ public final class RegistryImpl {
             ContentHandlerImpl handler =
                 newHandler(classname, types, suffixes, actions,
                            actionnames, id, accessRestricted, appl);
-            handler.registrationMethod = ContentHandlerImpl.REGISTERED_DYNAMIC;
+            handler.registrationMethod = // non-native, dynamically registered 
+            	~ContentHandlerImpl.REGISTERED_STATIC_FLAG & ContentHandlerImpl.REGISTERED_STATIC_FLAG;
 
             ContentHandlerImpl conflict = checkConflicts(handler);
             if (conflict != null) {

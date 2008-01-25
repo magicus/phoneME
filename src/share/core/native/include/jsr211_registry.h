@@ -113,9 +113,8 @@ typedef enum {
  * Content handlers flags enumeration
  */
 typedef enum {
-  JSR211_REGISTER_TYPE_STATIC = REGISTERED_STATIC,      /**< Empty flag */
-  JSR211_REGISTER_TYPE_DYNAMIC = REGISTERED_DYNAMIC,    /**< Indicates content handler is dynamic */
-  JSR211_REGISTER_TYPE_NATIVE = REGISTERED_NATIVE       /**< Indicates content handler is native */
+  JSR211_REGISTER_TYPE_STATIC_FLAG = REGISTERED_STATIC_FLAG,      /**< Empty flag */
+  JSR211_REGISTER_TYPE_NATIVE_FLAG = REGISTERED_NATIVE_FLAG       /**< Indicates content handler is native */
 } jsr211_register_type;
 
 /**

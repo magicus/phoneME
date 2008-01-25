@@ -135,12 +135,10 @@ public class ContentHandlerImpl implements ContentHandler {
      */
     int registrationMethod;
 
-    /** Content handler statically registered during installation */
-    final static int REGISTERED_STATIC = 1;
-    /** Dynamically registered content handler via API */
-    final static int REGISTERED_DYNAMIC = 2;
+    /** Content handler statically/dynamically registered during installation */
+    final static int REGISTERED_STATIC_FLAG = 0x0001; // if set => statically
     /** Native platform content handler  */
-    final static int REGISTERED_NATIVE  = 3;
+    final static int REGISTERED_NATIVE_FLAG = 0x0002; // if set => native 
 
     /** Count of requests retrieved via {@link #getRequest}. */
     int requestCalls;
@@ -262,6 +260,7 @@ public class ContentHandlerImpl implements ContentHandler {
      */
     ContentHandlerImpl() {
         seqno = nextSeqno++;
+        registrationMethod = REGISTERED_STATIC_FLAG; // non-native, statically registered 
     }
 
     /**

@@ -166,7 +166,7 @@ static jsr211_result installHandler(int n) {
 	ch.id = handlerIds[n];
 	ch.suite_id = intrenalSuiteID;
 	ch.class_name = getString(&ptr);
-	ch.flag = JSR211_REGISTER_TYPE_STATIC;
+	ch.flag = JSR211_REGISTER_TYPE_STATIC_FLAG; // non-native, statically registered
 
 	// allocate parameters
 	if (!(fillArray(&ptr, &ch.type_num, &ch.types) &&

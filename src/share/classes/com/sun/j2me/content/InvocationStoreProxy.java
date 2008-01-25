@@ -22,7 +22,8 @@ public final class InvocationStoreProxy {
 		if( DEBUG_OUT != null ) DEBUG_OUT.println( "handler: " + handler.toString() ); 
         	
         // check if it is native handler
-        if (handler != null && handler.registrationMethod == ContentHandlerImpl.REGISTERED_NATIVE){
+        if (handler != null && 
+        		(handler.registrationMethod & ContentHandlerImpl.REGISTERED_NATIVE_FLAG) != 0){
         	// call native handler only for unprocessed invocations
         	// status is returned without launching of a handler
         	if( invoc.getStatus() == Invocation.WAITING ) {

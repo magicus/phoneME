@@ -328,7 +328,7 @@ static int fillActionMap(KNIDECLARGS jobject o, jsr211_content_handler* handler)
             }
             handler->locale_num = len;
 
-            nams = handler->action_map = MALLOC(sizeof(jchar*) * len * n);
+            handler->action_map = MALLOC(sizeof(jchar*) * len * n);
             if (handler->action_map == NULL) {
                 ret = KNI_ENOMEM;
                 break;
@@ -476,11 +476,7 @@ static int fillHandlerData(KNIDECLARGS jobject o, jsr211_content_handler* handle
 void jsr211_cleanHandlerData(KNIDECLARGS jsr211_content_handler *handler) {
     // clean up handler structure 
     if (handler->id!=NULL) FREE(handler->id);
-    
-#ifdef SUITE_ID_STRING
 	if (handler->suite_id!=NULL) FREE(handler->suite_id);
-#endif
-
 	if (handler->class_name!=NULL) FREE(handler->class_name);
 
     if (handler->type_num > 0 && handler->types != NULL) {
@@ -539,9 +535,9 @@ KNIDECL(com_sun_j2me_content_RegistryStore_register0) {
             "id = '%ls'\n"
             "suite_id = '%ls'\n"
             "class_name = '%ls'\n"
-            "type_num = %d, suff_num = %d, act_num = %d, locale_num = %d, acces_num = %d\n",
+            "flag = %d, type_num = %d, suff_num = %d, act_num = %d, locale_num = %d, acces_num = %d\n",
             handler.id, handler.suite_id, handler.class_name,
-            handler.type_num, handler.suff_num, handler.act_num, handler.locale_num, handler.access_num );
+            handler.flag, handler.type_num, handler.suff_num, handler.act_num, handler.locale_num, handler.access_num );
 #endif
         res = (JSR211_OK == jsr211_register_handler(&handler))? KNI_OK: KNI_ERR;
     } while (0);

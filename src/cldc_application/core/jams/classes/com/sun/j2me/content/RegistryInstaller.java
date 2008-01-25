@@ -110,7 +110,7 @@ final class RegistryInstaller {
             	DEBUG_OUT.println( "RegistryInstaller.preInstall: chs[i] = " + chs[i] );        
             if (chs[i] == null)
                 continue;
-            if (chs[i].registrationMethod != ContentHandlerImpl.REGISTERED_STATIC) {
+            if ((chs[i].registrationMethod & ContentHandlerImpl.REGISTERED_STATIC_FLAG) == 0) {
                 // Verify dynamic handler.
             	class ReplaceDynamicHandlerException extends Exception {};
                 try {
@@ -443,8 +443,8 @@ System.out.println( getClass().getName() + ".install: handlers to install = " + 
     static void uninstallAll(int suiteId, boolean update) {
         ContentHandlerImpl[] chs = RegistryStore.forSuite(suiteId);
         for (int i = 0; i < chs.length; i++) {
-            if (!update || chs[i].registrationMethod == 
-                                    ContentHandlerImpl.REGISTERED_STATIC) {
+            if (!update || (chs[i].registrationMethod & 
+            						ContentHandlerImpl.REGISTERED_STATIC_FLAG) != 0) {
                 RegistryStore.unregister(chs[i].getID());
             }
         }
