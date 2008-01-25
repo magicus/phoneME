@@ -88,7 +88,7 @@ int register_a_bunch_of_tests() {
     return get_num_tests();
 }
 
-extern char* getApplicationDir(char *cmd);
+extern char* midpFixMidpHome(char *cmd);
 
 extern int registerFileInstallerTests();
 
@@ -108,15 +108,16 @@ int main(int argc, char* argv[]) {
 
 #ifndef ARM
     {
-        char* appDir;
+        char* midpHome;
 
         /* For development platforms MIDP_HOME is dynamic. */
-        appDir = getApplicationDir(argv[0]);
-        if (appDir == NULL) {
+        midpHome = midpFixMidpHome(argv[0]);
+        if (midpHome == NULL) {
             return -1;
         }
 
-        midpSetAppDir(appDir);
+        midpSetHomeDir(midpHome);
+        midpFree(midpHome);
     }
 #endif
 

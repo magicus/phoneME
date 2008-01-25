@@ -55,7 +55,7 @@
 
 static int initLevel = NO_INIT;
 
-static char* midpAppDir = NULL;
+static char* midpHome = NULL;
 
 static char* midpConfig = NULL;
 
@@ -69,18 +69,18 @@ static void (*vmFinalizer)(void) = NULL;
  * If not called directory specified by midpSetConfigDir will 
  * be used.
  * 
- * @param dir application directory of MIDP
+ * @param dir home directory of MIDP
  */
-void midpSetAppDir(const char* dir) {
+void midpSetHomeDir(const char* dir) {
 
-    midpAppDir = (char *)dir;
+    midpHome = (char *)dir;
 }
 
 /**
  * Sets the config directory for MIDP if needed.
  * In this directory static data as images and 
  * configuration files are located. If not called
- * directory specified by midpSetAppDir will be used.
+ * directory specified by midpSetHomeDir will be used.
  * Only had an effect when called before any
  * other method except midpInitialize is called.
  *
@@ -92,8 +92,8 @@ void midpSetConfigDir(const char* dir) {
 
 /**
  * The public MIDP initialization function. If not running for the MIDP
- * home directory, midpSetAppDir, midpSetConfigDir should the first calls 
- * after this with the directory of the MIDP system.
+ * home directory, midpSetHomeDir should the first call after this with the
+ * directory of the MIDP system.
  */
 int midpInitialize() {
 
@@ -169,18 +169,18 @@ int midpInitCallback(int level, int (*init)(void), void (*final)(void)) {
     }
 
     do {
-        if ((midpAppDir == NULL) && (midpConfig == NULL)) {
+        if ((midpHome == NULL) && (midpConfig == NULL)) {
             /*
-             * The caller has to set midpAppDir of midpConfig before 
+             * The caller has to set midpHome of midpConfig before 
              * calling midpInitialize().
              */
             break;
         }
         /* duplicate values if not set */
         if (midpConfig == NULL) {
-        	midpConfig = midpAppDir;
-        } else if (midpAppDir == NULL) {
-        	midpAppDir = midpConfig;
+        	midpConfig = midpHome;
+        } else if (midpHome == NULL) {
+        	midpHome = midpConfig;
         } 
 
         if (level >= MEM_LEVEL && initLevel < MEM_LEVEL) {
@@ -201,7 +201,7 @@ int midpInitCallback(int level, int (*init)(void), void (*final)(void)) {
 #if !ENABLE_CDC
             sr_initSystem();
 #endif
-            err = storageInitialize(midpConfig, midpAppDir);
+            err = storageInitialize(midpConfig, midpHome);
             if (err == 0) {
                 status = midp_suite_storage_init();
             } else {
@@ -305,7 +305,7 @@ void midpFinalize() {
     midp_links_shutdown();
 #endif    
 
-    midpAppDir = NULL;
+    midpHome = NULL;
     midpFinalizeMemory();
 
     initLevel = NO_INIT;
