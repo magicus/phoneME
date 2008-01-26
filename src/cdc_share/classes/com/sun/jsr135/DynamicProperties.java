@@ -89,9 +89,9 @@ public class DynamicProperties implements PropertyProvider {
      * @return current property value
      */
     public String getValue(String key, boolean fromCache) {
-        String val;
+        String val = null;
         if (fromCache) {
-            String val = (String)properties.get(key);
+            val = (String)properties.get(key);
             if ((val != null) && (val.length()>0)) {
                 return val;
             }
@@ -113,9 +113,10 @@ public class DynamicProperties implements PropertyProvider {
         } else if (key.equals(propertyStreamableContents)) {
             val = nGetPropertyValueStreamableContents();
         }
-        if (!properties.containsKey(key) && val != NULL && val.length()>0) {
+        if (!properties.containsKey(key) && val != null && val.length()>0) {
             properties.put(key, val);
         }
+        return val;
     }
 
     /**
