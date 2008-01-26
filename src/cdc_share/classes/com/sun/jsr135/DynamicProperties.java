@@ -33,6 +33,13 @@ import java.util.Hashtable;
  * This class provides values for the following dynamic properties:
  * <ul>
  *   <li>supports.mixing</li>
+ *   <li>supports.audio.capture</li>
+ *   <li>supports.video.capture</li>
+ *   <li>supports.recording</li>
+ *   <li>audio.encodings</li>
+ *   <li>video.encodings</li>
+ *   <li>video.snapshot.encodings</li>
+ *   <li>streamable.contents</li>
  * </ul>
  */
 public class DynamicProperties implements PropertyProvider {
@@ -46,7 +53,7 @@ public class DynamicProperties implements PropertyProvider {
     final String propertyVideoSnapshotEncodings="video.snapshot.encodings";
     final String propertyStreamableContents="streamable.contents";
     
-    private static HashTable properties = new Hashtable();
+    private static Hashtable properties = new Hashtable();
 
     /** The only instance of this class. */
     private static DynamicProperties instance = null;
@@ -85,7 +92,7 @@ public class DynamicProperties implements PropertyProvider {
         String val;
         if (fromCache) {
             String val = (String)properties.get(key);
-            if ((val != NULL) && (val.length()>0)) {
+            if ((val != null) && (val.length()>0)) {
                 return val;
             }
         }
