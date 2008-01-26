@@ -1,0 +1,78 @@
+#
+# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License version
+# 2 only, as published by the Free Software Foundation. 
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License version 2 for more details (a copy is
+# included at /legal/license.txt). 
+# 
+# You should have received a copy of the GNU General Public License
+# version 2 along with this work; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+# 02110-1301 USA 
+# 
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
+# Clara, CA 95054 or visit www.sun.com if you need additional
+# information or have any questions. 
+######################################################################
+# Module's Component Configuration file
+#
+# Remember: It is up to the module itself to impose rules of
+# how to compile the options. All the global Makefile needs
+# is the final def. of Java and native file lists and some
+# other def. (like VPATH)
+######################################################################
+
+#
+# Direct video player
+#
+ifeq ($(DIRECT_VIDEO_PLAYER), true)
+ifeq ($(USE_LCDUI), true)
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_DIR)/src/share/components/direct-player/classes/com/sun/mmedia/DirectVideo.java 
+endif
+SUBSYSTEM_JSR_135_NATIVE_FILES += \
+    KNIDirectVideo.c
+endif
+
+SUBSYSTEM_JSR_135_NATIVE_FILES += \
+    KNIMMEventListener.c
+
+ifeq ($(INDIRECT_VIDEO_PLAYER), true)
+ifeq ($(USE_LCDUI), true)
+    $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/mmedia/MIDPVideoRenderer.java
+endif
+endif
+
+SUBSYSTEM_JSR_135_JAVA_FILES += \
+    $(JSR_135_PROJECT_SRC_DIR)/classes/com/sun/jumpimpl/module/multimedia/MultimediaModuleImpl.java \
+    $(JSR_135_DIR)/src/cdc_share/classes/javax/microedition/media/PlayerPermission.java
+
+# JUMP Driver support
+vpath % $(JSR_135_PROJECT_SRC_DIR)/native/jump_driver
+SUBSYSTEM_JSR_135_INCLUDE_DIRS += \
+   $(JSR_135_PROJECT_SRC_DIR)/native/jump_driver
+
+SUBSYSTEM_JSR_135_NATIVE_FILES += \
+	KNIAudioTunnel.c \
+	jsr135_jumpdriver.c \
+	jsr135_jumpdriver_impl.c \
+	jsr135_jumpdriver_stubs.c \
+	mm_driver.c 
+
+# Copy and filter JSR 135 source in JSR_135_SOURCE_OUTPUT_DIR
+jsr_135_source_bundle: $(JSR_135_DIR)
+	@echo " ... JSR 135 source bundle" $(LOG)
+	$(AT)$(call source_bundle_filter,$(JSR_135_DIR)/src,$(JSR_135_SHARE_OUTPUT_DIR)/src, share )
+	$(AT)$(call source_bundle_filter,$(JSR_135_DIR)/src,$(JSR_135_SHARE_OUTPUT_DIR)/src, cdc_share )
+	$(AT)$(call source_bundle_filter,$(JSR_135_PROJECT_SRC_DIR),$(JSR_135_SOURCE_OUTPUT_DIR)/src/$(JSROP_PLATFORM), . )
+	$(AT)$(call source_bundle_filter,$(JSR_135_DIR)/build,$(JSR_135_SHARE_OUTPUT_DIR)/build, share )
+	$(AT)$(call source_bundle_filter,$(JSR_135_DIR)/build,$(JSR_135_SOURCE_OUTPUT_DIR)/build, cdc_share )
+	$(AT)$(call source_bundle_filter,$(JSR_135_PROJECT_BUILD_DIR),$(JSR_135_SOURCE_OUTPUT_DIR)/build/$(JSROP_PLATFORM), . )
+
