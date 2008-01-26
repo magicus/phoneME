@@ -596,6 +596,7 @@ BinaryAssembler::CodeInterleaver::CodeInterleaver(BinaryAssembler* assembler){
   GUARANTEE(assembler->_interleaver == NULL, "No interleaver active");
   _assembler = assembler;
   _saved_size = assembler->code_size();
+  _buffer = NULL;
   _current = _length = 0;
 }
 
@@ -611,10 +612,9 @@ void BinaryAssembler::CodeInterleaver::start_alternate(JVM_SINGLE_ARG_TRAPS) {
    
   _current = 0;
   _length = instructions;
-  _buffer = Universe::new_short_array(instructions JVM_CHECK);
+  _buffer = CompilerShortArray::allocate(instructions JVM_ZCHECK(_buffer));
 
-  jvm_memcpy(_buffer().base_address(), _assembler->addr_at(old_size), 
-                  new_size - old_size);
+  jvm_memcpy(_buffer->base(), _assembler->addr_at(old_size), new_size - old_size);
   _assembler->_code_offset = old_size; // Undo the code we've generated
   _assembler->_interleaver = this;
 }
@@ -624,7 +624,7 @@ bool BinaryAssembler::CodeInterleaver::emit() {
   // Emit one instruction
   _assembler->_interleaver = NULL; // prevent recursion from emit_raw above
   if (_current < _length) { 
-    _assembler->emit(_buffer().short_at(_current));
+    _assembler->emit(_buffer->at(_current));
     _assembler->_interleaver = this;
     _current++;
   } 

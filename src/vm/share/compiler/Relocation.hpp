@@ -45,7 +45,7 @@
 //   4 bits indicating the relocation type
 //  12 bits indicating the byte offset from the previous relocInfo address
 
-class Relocation: public StackObj {
+class Relocation {
  public:
   enum Kind {
     oop_type = 0,         // embedded oop
@@ -137,6 +137,7 @@ class RelocationStream : public Relocation {
   }
 
  protected:
+  RelocationStream(void) {}
   RelocationStream(CompiledMethod* compiled_method) {
     initialize(compiled_method);
   }

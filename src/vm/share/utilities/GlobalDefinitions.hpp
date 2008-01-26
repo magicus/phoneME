@@ -351,7 +351,6 @@
 #define Relocation  JVMRelocation
 #define RelocationReader  JVMRelocationReader
 #define RelocationStream  JVMRelocationStream
-#define RelocationWriter  JVMRelocationWriter
 #define RemoteTracer  JVMRemoteTracer
 #define RobocopInstruction  JVMRobocopInstruction
 #define RobocopTemplate  JVMRobocopTemplate

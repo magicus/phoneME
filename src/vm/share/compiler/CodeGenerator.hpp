@@ -44,8 +44,6 @@ class CodeGenerator: public BinaryAssembler {
   // construct a code generator for resuming a suspended compilation.
   CodeGenerator(Compiler* compiler, CompilerState* compiler_state);
 
-  // Save my state when suspending compilation
-  void save_state(CompilerState *compiler_state);
 #if ENABLE_INLINE
   void restore_state(CompilerState *compiler_state);
 #endif

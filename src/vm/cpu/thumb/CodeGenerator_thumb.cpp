@@ -224,10 +224,6 @@ bool CompilerLiteralAccessor::has_literal(int imm32,
   return false;
 }
 
-void CodeGenerator::save_state(CompilerState *compiler_state) {
-  BinaryAssembler::save_state(compiler_state);
-}
-
 void CodeGenerator::load_from_address(Value& result, BasicType type,
                                       MemoryAddress& address, Condition cond) {
 

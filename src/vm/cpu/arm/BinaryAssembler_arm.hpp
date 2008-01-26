@@ -152,9 +152,13 @@ public:
 
  public:
   // creation
-  BinaryAssembler(CompiledMethod* compiled_method) : 
-    BinaryAssemblerCommon(compiled_method) {
+  void initialize( CompiledMethod* compiled_method ) {
+    BinaryAssemblerCommon::initialize(compiled_method);
     CodeInterleaver::initialize(this);
+  }
+  BinaryAssembler( void ) {}
+  BinaryAssembler(CompiledMethod* compiled_method) {
+    initialize( compiled_method );
   }
 
   BinaryAssembler(const CompilerState* compiler_state, 
@@ -364,7 +368,6 @@ public:
   void write_literals_if_desperate(int extra_bytes = 0);
 
 private:
-  friend class RelocationWriter;
   friend class CodeInterleaver;
   friend class Compiler;
 };

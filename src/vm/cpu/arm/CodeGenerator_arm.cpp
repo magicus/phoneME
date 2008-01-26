@@ -280,10 +280,6 @@ Assembler::Register CompilerLiteralAccessor::has_vfp_literal(int imm32) {
 }
 #endif
 
-void CodeGenerator::save_state(CompilerState *compiler_state) {
-  BinaryAssembler::save_state(compiler_state);
-}
-
 void CodeGenerator::load_from_address(Value& result, BasicType type,
                                       MemoryAddress& address,
                                       Assembler::Condition cond) {

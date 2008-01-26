@@ -139,10 +139,6 @@ void CodeGenerator::bytecode_prolog() {
 void CodeGenerator::flush_epilogue(JVM_SINGLE_ARG_TRAPS) {
 }
 
-void CodeGenerator::save_state(CompilerState *compiler_state) {
-  BinaryAssembler::save_state(compiler_state);
-}
-
 void CodeGenerator::load_from_address(Value& result, BasicType type,
                                       MemoryAddress& address, Condition cond) {
   // illegal types do not require any loading

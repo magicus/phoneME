@@ -119,7 +119,7 @@ protected:
     CodeInterleaver(BinaryAssembler* assembler);
     ~CodeInterleaver() {}
     void flush() {
-      if (_buffer.not_null()) {
+      if (_buffer ) {
         while (emit()) {;}
       }
       _assembler->_interleaver = NULL;
@@ -132,30 +132,31 @@ protected:
     }
 
   private:
-    FastOopInStackObj __must_appear_before_fast_objects__;
-    TypeArray::Fast   _buffer;
-    BinaryAssembler*  _assembler;
-    int               _saved_size;
-    int               _current;
-    int               _length;
+    CompilerShortArray* _buffer;
+    BinaryAssembler*    _assembler;
+    int                 _saved_size;
+    int                 _current;
+    int                 _length;
   };
 
   CodeInterleaver*    _interleaver;
 
- public:
-  // creation
-  BinaryAssembler(CompiledMethod* compiled_method) : 
-    BinaryAssemblerCommon( compiled_method ) {
+ protected:
+  void initialize( CompiledMethod* compiled_method ) {
+    BinaryAssemblerCommon::initialize( compiled_method );
     CodeInterleaver::initialize(this);
+  }      
+  BinaryAssembler( void ) {}
+  BinaryAssembler(CompiledMethod* compiled_method) {
+    initialize( compiled_method );
   }
-
   // support for suspending compilation
   BinaryAssembler(const CompilerState* compiler_state, 
                   CompiledMethod* compiled_method):
     BinaryAssemblerCommon( compiler_state, compiled_method ) {
     CodeInterleaver::initialize(this);
   }      
-
+ public:
   // branch support
   typedef BinaryLabel Label;
   class NearLabel : public Label {};
@@ -309,7 +310,6 @@ private:
     }
   }
 
-  friend class RelocationWriter;
   friend class CodeInterleaver;
   friend class Compiler;
 };

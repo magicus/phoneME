@@ -29,6 +29,7 @@
 #define COMPILER_OBJECTS_DO(template) \
   template( PointerArray            ) \
   template( ByteArray               ) \
+  template( ShortArray              ) \
   template( IntArray                ) \
   template( Entry                   ) \
   template( CompilationQueueElement ) \
@@ -185,6 +186,7 @@ public:
   }
 
 DEFINE_COMPILER_ARRAY( jubyte, Byte   );
+DEFINE_COMPILER_ARRAY( jshort, Short  );
 DEFINE_COMPILER_ARRAY( jint,   Int    );
 DEFINE_COMPILER_ARRAY( void*,  Pointer);
 

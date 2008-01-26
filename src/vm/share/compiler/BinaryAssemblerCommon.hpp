@@ -51,8 +51,8 @@ class BinaryAssemblerCommon: public Macros {
   friend class Compiler; // for oops_do only
 #endif
 
-  BinaryAssemblerCommon(CompiledMethod* compiled_method)
-    : _relocation( compiled_method ) {
+  void initialize( CompiledMethod* compiled_method ) {
+    _relocation.initialize( compiled_method );
     _code_offset     = 0;
 #if USE_LITERAL_POOL
     _first_literal         = NULL;
@@ -63,9 +63,12 @@ class BinaryAssemblerCommon: public Macros {
     _last_unbound_branch_literal  = NULL;
     _unbound_branch_literal_count = 0;
 #endif
-
     zero_literal_count();
 #endif
+  }
+  BinaryAssemblerCommon( void ) {}
+  BinaryAssemblerCommon(CompiledMethod* compiled_method) {
+    initialize( compiled_method );
   }
   BinaryAssemblerCommon(const CompilerState* compiler_state,
                         CompiledMethod* compiled_method)
