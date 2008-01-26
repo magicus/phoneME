@@ -457,7 +457,7 @@ LockAudioMutex();
     if (pKniInfo && pKniInfo->pNativeHandle &&
         JAVACALL_OK == javacall_media_download_handled_by_device(pKniInfo->pNativeHandle,
                                                                             &isHandled)) {
-        returnValue = ((isHandled == JAVACALL_TRUE) ? KNI_FALSE : KNI_TRUE;
+        returnValue = (isHandled == JAVACALL_TRUE) ? KNI_FALSE : KNI_TRUE;
     }
 UnlockAudioMutex();            
 
