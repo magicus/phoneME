@@ -26,7 +26,6 @@
 
 package com.sun.midp.log;
 import com.sun.midp.main.MIDletSuiteUtils;
-import com.sun.cldc.isolate.Isolate;
 import com.sun.midp.configurator.Constants;
 
 /**
