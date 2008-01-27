@@ -1435,28 +1435,6 @@ javacall_result javacall_media_get_rate(javacall_handle handle, /*OUT*/ long* ra
  */
 
 /**
- * Query if recording is supported based on the player's content-type
- * 
- * @param handle  Handle to the library 
- * 
- * @retval JAVACALL_OK          Success
- * @retval JAVACALL_FAIL        Fail
- */
-javacall_result javacall_media_supports_recording(javacall_handle handle);
-
-/**
- * Is javacall_media_set_recordsize_limit function is working for this player?
- * In other words - set recording size limit function is working for this player?
- * 
- * @param handle    Handle to the library 
- * @param supported JAVACALL_TRUE if supported, JAVACALL_FALSE if not supported.
- * 
- * @retval JAVACALL_OK          Success
- */
-javacall_result javacall_media_supports_set_recordsize_limit(javacall_handle handle,
-                                                    /*OUT*/ javacall_bool* supported);
-
-/**
  * Specify the maximum size of the recording including any headers.<br>
  * If a size of -1 is passed then the record size limit should be removed.<br>
  * If device don't want to support this feature, just return JAVACALL_FAIL always.
@@ -1466,8 +1444,9 @@ javacall_result javacall_media_supports_set_recordsize_limit(javacall_handle han
  *                  The supported maximum size bytes of the recording which is less than or 
  *                  equal to the requested size as output parameter.
  * 
- * @retval JAVACALL_OK          Success
- * @retval JAVACALL_FAIL        Fail
+ * @retval JAVACALL_OK              Success
+ * @retval JAVACALL_FAIL            Fail
+ * @retval JAVACALL_NOT_IMPLEMENTED Unsupported
  */
 javacall_result javacall_media_set_recordsize_limit(javacall_handle handle, /*INOUT*/ long* size);
 
