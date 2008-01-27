@@ -155,6 +155,7 @@ public class DynamicProperties implements PropertyProvider {
                        nGetPropertyValueVideoSnapshotEncodings());
         properties.put(propertyStreamableContents,
                        nGetPropertyValueStreamableContents());
+        return true;
     };
 
 }
