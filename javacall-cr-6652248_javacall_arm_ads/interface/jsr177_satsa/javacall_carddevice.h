@@ -87,7 +87,7 @@ typedef enum JAVACALL_CARD_MOVEMENT_ENUM {
 /** 
  * Clears error state.
  */
-void javacall_carddevice_clear_error();
+void javacall_carddevice_clear_error(void);
 
 /** 
  * Sets error state and stores message (like printf).
@@ -113,7 +113,7 @@ javacall_bool javacall_carddevice_get_error(char *buf, javacall_int32 buf_size);
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_init();
+javacall_result javacall_carddevice_init(void);
 
 /** 
  * Finalizes the driver.
@@ -121,7 +121,7 @@ javacall_result javacall_carddevice_init();
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_finalize();
+javacall_result javacall_carddevice_finalize(void);
 
 /** 
  * Sets property value. If the property is used during the initialization
@@ -223,7 +223,7 @@ javacall_result javacall_carddevice_reset_finish(char *atr, javacall_int32 *atr_
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_lock();
+javacall_result javacall_carddevice_lock(void);
 
 /** 
  * Unlocks the device.
@@ -231,7 +231,7 @@ javacall_result javacall_carddevice_lock();
  *         JAVACALL_NOT_IMPLEMENTED when the stub was called
  *         JAVACALL_FAIL otherwise
  */
-javacall_result javacall_carddevice_unlock();
+javacall_result javacall_carddevice_unlock(void);
 
 /** 
  * Retrieves current slot's card movement events from driver.

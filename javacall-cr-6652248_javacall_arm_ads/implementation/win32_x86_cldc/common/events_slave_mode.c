@@ -62,9 +62,15 @@ static BOOL event_initialized = FALSE;
 HANDLE           events_mutex     =NULL;
 HANDLE           events_handle    =NULL;
 EventMessage*    head             =NULL;
+
+#if !ENABLE_MULTIPLE_INSTANCES
+/**
+ * Data objects used for interprocess communication
+ */
 HANDLE           events_sharefile =NULL;
 EventSharedList* events_shared    =NULL;
 javacall_bool    events_secondary =JAVACALL_FALSE;
+#endif
 
 #define EVENT_SHARED_NAME    "Meadlet_SharedSpacE"
 #define EVENT_MUTEX_NAME     "Meadlet_EventListMuteX"
@@ -73,9 +79,25 @@ javacall_bool    events_secondary =JAVACALL_FALSE;
 #define EVENT_QUEUE_ACQUIRE  (WaitForSingleObject(events_mutex, 300) == WAIT_OBJECT_0)
 #define EVENT_QUEUE_RELEASE  ReleaseMutex(events_mutex)
 
-javacall_bool javacall_events_init(void) {
+/**
+ * The function is called during Java VM startup, allowing the
+ * platform to perform specific initializations. It is called in the same
+ * process as javacall_event_receive() and javacall_events_finalize().
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ */
+javacall_result javacall_events_init(void) {
 
-    if (events_sharefile==NULL) {
+    javacall_result res;
+
+#if !ENABLE_MULTIPLE_INSTANCES
+    /*
+     * In single-instance mode external control is possible. I.e. any
+     * second instance of runMidlet will pass it's argument to instance already running
+     * and exit immediately. Arguments are passed through this shared memory
+     */
+    if (events_sharefile == NULL) {
         events_sharefile = CreateFileMapping(
             INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE,
             0, sizeof(EventSharedList), EVENT_SHARED_NAME);
@@ -94,9 +116,9 @@ javacall_bool javacall_events_init(void) {
             events_shared->data[0] = 0;
         }
     }
+#endif
 
-
-    if (events_mutex==NULL) {
+    if (events_mutex == NULL) {
         events_mutex=CreateMutex(
             NULL,       // default security attributes
             FALSE,      // initially not owned
@@ -114,27 +136,40 @@ javacall_bool javacall_events_init(void) {
 
     event_initialized = TRUE;
 
-    return (events_mutex != NULL) && (events_handle != NULL) &&
-        (events_sharefile != NULL) && (events_shared != NULL);
+    return (events_mutex != NULL) && (events_handle != NULL)
+#if !ENABLE_MULTIPLE_INSTANCES
+        && (events_sharefile != NULL) && (events_shared != NULL)
+#endif
+        ;
 }
 
-javacall_bool javacall_events_finalize(void) {
+/**
+ * The function is called during Java VM shutdown, allowing the platform to
+ * perform specific events-related shutdown operations. It is called in the same
+ * process as javacall_events_init() and javacall_event_receive().
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ */
+javacall_result javacall_events_finalize(void) {
 
-    if (events_shared!=NULL) {
+#if !ENABLE_MULTIPLE_INSTANCES
+    if (events_shared != NULL) {
         UnmapViewOfFile(events_shared);
-        events_shared=NULL;
+        events_shared = NULL;
     }
-    if (events_sharefile!=NULL) {
+    if (events_sharefile != NULL) {
         CloseHandle(events_sharefile);
-        events_sharefile=NULL;
+        events_sharefile = NULL;
     }
-    if (events_mutex!=NULL) {
+#endif
+    if (events_mutex != NULL) {
         CloseHandle(events_mutex);
-        events_mutex=NULL;
+        events_mutex = NULL;
     }
-    if (events_handle!=NULL) {
+    if (events_handle != NULL) {
         CloseHandle(events_handle);
-        events_handle=NULL;
+        events_handle = NULL;
     }
 
     event_initialized = FALSE;
@@ -142,19 +177,22 @@ javacall_bool javacall_events_finalize(void) {
 	return JAVACALL_OK;
 }
 
-javacall_bool isSecondaryInstance(void)
-{
+#if !ENABLE_MULTIPLE_INSTANCES
+javacall_bool isSecondaryInstance(void) {
     return events_secondary;
 }
 
-void enqueueInterprocessMessage(int argc, char *argv[])
-{
-    if (EVENT_QUEUE_ACQUIRE)
-    {
+/**
+ * The function move all arguments of the current instance
+ * (see the arguments of the function 'main')
+ * to the named interprocess shared space.
+ */
+void enqueueInterprocessMessage(int argc, char *argv[]) {
+    if (EVENT_QUEUE_ACQUIRE) {
         int i;
         char *dest = events_shared->data;
-        for(i = 0; (i < argc) && argv[i]; i++)
-        {
+
+        for(i = 0; (i < argc) && argv[i]; i++) {
             int length = strlen(argv[i]) + 1;
             memcpy(dest, argv[i], length);
             dest += length;
@@ -164,11 +202,16 @@ void enqueueInterprocessMessage(int argc, char *argv[])
     }
 }
 
-int dequeueInterprocessMessage(char*** argv)
-{
+/**
+ * The function allocates memory for the array of arguments
+ * (see the arguments of the function 'main')
+ * and gets this array from the named interprocess shared space.
+ * Returns the number of arguments.
+ */
+int dequeueInterprocessMessage(char*** argv) {
     int argc = 0;
-    if (EVENT_QUEUE_ACQUIRE)
-    {
+
+    if (EVENT_QUEUE_ACQUIRE) {
         int lengthTotal = 1;
         char *src = events_shared->data;
 
@@ -179,7 +222,7 @@ int dequeueInterprocessMessage(char*** argv)
         }
 
         if (argc) {
-            *argv = javacall_malloc(lengthTotal + argc * sizeof(char*));
+            *argv = (char **)javacall_malloc(lengthTotal + argc * sizeof(char*));
             src = (char*) ((*argv) + argc);
             memcpy(src, events_shared->data, lengthTotal);
             argc = 0;
@@ -194,33 +237,34 @@ int dequeueInterprocessMessage(char*** argv)
     }
     return argc;
 }
+#endif /* !ENABLE_MULTIPLE_INSTANCES */
 
-void enqueueEventMessage(unsigned char* data,int dataLen)
-{
+void enqueueEventMessage(unsigned char* data,int dataLen) {
     EventMessage** iter;
-    EventMessage* elem=(EventMessage*)javacall_malloc(sizeof(EventMessage));
-    elem->data      =javacall_malloc(dataLen);
-    elem->dataLen   =dataLen;
-    elem->next      =NULL;
+    EventMessage* elem = (EventMessage*)javacall_malloc(sizeof(EventMessage));
+    elem->data      = (unsigned char*)javacall_malloc(dataLen);
+    elem->dataLen   = dataLen;
+    elem->next      = NULL;
     memcpy(elem->data, data, dataLen);
 
-    for(iter=&head; *iter!=NULL; iter=&((*iter)->next) )
+    for (iter=&head; *iter != NULL; iter=&((*iter)->next) )
         ;
     *iter=elem;
 }
 
-int dequeueEventMessage(unsigned char* data,int dataLen)
-{
+int dequeueEventMessage(unsigned char* data,int dataLen) {
     EventMessage* root;
-    if (head==NULL) {
+
+    if (head == NULL) {
         return 0;
     }
-    dataLen=min(dataLen, head->dataLen);
+
+    dataLen = min(dataLen, head->dataLen);
     memcpy(data, head->data, dataLen);
-    root=head->next;
+    root = head->next;
     javacall_free(head->data);
     javacall_free(head);
-    head=root;
+    head = root;
 
     return dataLen;
 }
@@ -236,7 +280,7 @@ static javacall_bool checkForEvents(long timeout) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-    if (WaitForSingleObject(events_handle, 0)==WAIT_OBJECT_0) {
+    if (WaitForSingleObject(events_handle, 0) == WAIT_OBJECT_0) {
         /* We got signal to unblock a Java thread. */
         return JAVACALL_TRUE;
     }
@@ -277,10 +321,10 @@ javacall_result javacall_event_receive(
         javacall_events_init();
     }
 
-    ok=(binaryBuffer!=NULL) && (binaryBufferMaxLen>0);
+    ok = (binaryBuffer != NULL) && (binaryBufferMaxLen>0);
 
     if (ok) {
-        ok = WaitForSingleObject(events_mutex, 0)==WAIT_OBJECT_0;
+        ok = WaitForSingleObject(events_mutex, 0) == WAIT_OBJECT_0;
     }
     if (ok) {
         totalRead = dequeueEventMessage(binaryBuffer,binaryBufferMaxLen);
@@ -290,8 +334,8 @@ javacall_result javacall_event_receive(
         ok = ReleaseMutex(events_mutex);
     }
     
-    ok= ok && (totalRead!=0);
-    if (outEventLen!=NULL) {
+    ok= ok && (totalRead != 0);
+    if (outEventLen != NULL) {
         *outEventLen = ok ? totalRead : 0;
     }
     return ok ? JAVACALL_OK : JAVACALL_FAIL;
@@ -315,18 +359,18 @@ javacall_result javacall_event_send(unsigned char* binaryBuffer,
         javacall_events_init();
     }
 
-    ok=(binaryBuffer!=NULL) && (binaryBufferLen>0);
+    ok = (binaryBuffer != NULL) && (binaryBufferLen>0);
 
     if (ok) {
-        ok=WaitForSingleObject(events_mutex, 500)==WAIT_OBJECT_0;
+        ok = WaitForSingleObject(events_mutex, 500) == WAIT_OBJECT_0;
     }
     if (ok) {
-        ok=(binaryBuffer!=NULL) && (binaryBufferLen>0);
+        ok = (binaryBuffer != NULL) && (binaryBufferLen>0);
     }
     if (ok) {
         enqueueEventMessage(binaryBuffer,binaryBufferLen);
         SetEvent(events_handle);
-        ok=ReleaseMutex(events_mutex);
+        ok = ReleaseMutex(events_mutex);
     }
     return ok ? JAVACALL_OK : JAVACALL_FAIL;
 }

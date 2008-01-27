@@ -323,7 +323,8 @@ int /*OPTIONAL*/ javacall_network_error(javacall_handle handle);
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    if there is a network error
  */
-javacall_result /*OPTIONAL*/ javacall_network_get_local_host_name(/*OUT*/ char *pLocalHost);
+javacall_result /*OPTIONAL*/ javacall_network_get_local_host_name(
+    /*OUT*/ char *pLocalHost);
 
 /**
  * Gets the string representation of the local device's IP address.
@@ -336,7 +337,8 @@ javacall_result /*OPTIONAL*/ javacall_network_get_local_host_name(/*OUT*/ char *
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    if there is a network error
  */
-javacall_result /*OPTIONAL*/ javacall_network_get_local_ip_address_as_string(/*OUT*/ char *pLocalIPAddress);
+javacall_result /*OPTIONAL*/ javacall_network_get_local_ip_address_as_string(
+    /*OUT*/ char *pLocalIPAddress);
 
 /**
  * Gets the http / https proxy address. This method is
@@ -354,7 +356,8 @@ javacall_result /*OPTIONAL*/ javacall_network_get_local_ip_address_as_string(/*O
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    if there is a network error
  */
-javacall_result /*OPTIONAL*/ javacall_network_get_http_proxy(/*OUT*/ char *pHttpProxy, /*OUT*/ char *pHttpsProxy);
+javacall_result /*OPTIONAL*/ javacall_network_get_http_proxy(
+    /*OUT*/ char *pHttpProxy, /*OUT*/ char *pHttpsProxy);
 
 /**
  * Translates the given IP address into a host name.
@@ -370,7 +373,8 @@ javacall_result /*OPTIONAL*/ javacall_network_get_http_proxy(/*OUT*/ char *pHttp
  *
  * @retval JAVACALL_OK          success
  * @retval JAVACALL_FAIL        if there is a network error
- * @retval JAVACALL_WOULD_BLOCK if the caller must call the finish function to complete the operation
+ * @retval JAVACALL_WOULD_BLOCK if the caller must call the finish function
+ *                              to complete the operation
  */
 javacall_result /*OPTIONAL*/ javacall_network_gethostbyaddr_start(int ipn,
     char *hostname, /*OUT*/ javacall_handle* pHandle, void **pContext);
@@ -388,7 +392,8 @@ javacall_result /*OPTIONAL*/ javacall_network_gethostbyaddr_start(int ipn,
  *
  * @retval JAVACALL_OK          success
  * @retval JAVACALL_FAIL        if there is a network error
- * @retval JAVACALL_WOULD_BLOCK if the caller must call the finish function again to complete the operation
+ * @retval JAVACALL_WOULD_BLOCK if the caller must call the finish function
+ *                              again to complete the operation
  */
 javacall_result /*OPTIONAL*/ javacall_network_gethostbyaddr_finish(int ipn,
     char *hostname, /*OUT*/ javacall_handle* pHandle, void *context);
@@ -404,7 +409,8 @@ javacall_result /*OPTIONAL*/ javacall_network_gethostbyaddr_finish(int ipn,
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    if there is a network error
  */
-javacall_result /*OPTIONAL*/ javacall_network_getsockopt(javacall_handle handle,javacall_socket_option flag, /*OUT*/ int *pOptval);
+javacall_result /*OPTIONAL*/ javacall_network_getsockopt(
+    javacall_handle handle, javacall_socket_option flag, /*OUT*/ int *pOptval);
 
 /**
  * Sets an option's value for a platform-specific TCP socket or datagram
@@ -418,7 +424,8 @@ javacall_result /*OPTIONAL*/ javacall_network_getsockopt(javacall_handle handle,
  * @retval JAVACALL_FAIL                if there is a network error
  * @retval JAVACALL_INVALID_ARGUMENT   if the platform did not accept the value for the option changed
  */
-javacall_result /*OPTIONAL*/ javacall_network_setsockopt(javacall_handle handle, javacall_socket_option flag, int optval);
+javacall_result /*OPTIONAL*/ javacall_network_setsockopt(
+    javacall_handle handle, javacall_socket_option flag, int optval);
 
 /**
  * A javacall equivelent of BSD inet_ntoa () function.
@@ -441,7 +448,8 @@ char * javacall_inet_ntoa(void *address);
  * @retval JAVACALL_OK                  success
  * @retval JAVACALL_FAIL                if there is a network error
  */
-javacall_result javacall_server_socket_set_notifier(javacall_handle handle, javacall_bool set);
+javacall_result javacall_server_socket_set_notifier(javacall_handle handle,
+                                                    javacall_bool set);
 
 /** @} */
 
