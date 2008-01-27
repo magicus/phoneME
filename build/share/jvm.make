@@ -918,7 +918,7 @@ AsmStubs_$(target_arch).obj: \
 		$(JVMWorkSpace)/src/vm/cpu/c/AsmStubs_$(target_arch).asm
 	$(A) echo "generating CPU stubs $<"
 	$(A)$(ASM) /Zi $(ASM_FLAGS) /Fo$@ \
-		/Sc /FlAsmStubs_$(target_arch).lst $<
+		/Sc /FlAsmStubs_$(target_arch).lst `$(call fixcygpath, $<)`
 
 else
 ifeq ($(ENABLE_INLINEASM_INTERPRETER), true)
