@@ -77,6 +77,7 @@ USE_NATIVE_PTI          = false
 USE_GCI                 = false
 USE_DIRECTDRAW          = false
 USE_FILE_SYSTEM         = true
+USE_AMS_EXECUTABLE      = true
 
 # DEBUG
 USE_DEBUG               = false

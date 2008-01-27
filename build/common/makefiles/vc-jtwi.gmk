@@ -47,8 +47,11 @@ endif
 PCSL_TARGET_DIR ?= $(PCSL_OUTPUT_DIR)/$(TARGET_OS)_$(TARGET_CPU)
 LD_FLAGS	+= -libpath:$(PCSL_TARGET_DIR)/lib
 EXTRA_INCLUDES	+= -I$(PCSL_TARGET_DIR)/inc
-LIBS		+= libpcsl_file.lib libpcsl_memory.lib libpcsl_print.lib \
-                   libpcsl_string.lib libpcsl_network.lib
+LIBS            += $(PCSL_TARGET_DIR)/lib/libpcsl_file.lib \
+                   $(PCSL_TARGET_DIR)/lib/libpcsl_memory.lib \
+                   $(PCSL_TARGET_DIR)/lib/libpcsl_print.lib \
+                   $(PCSL_TARGET_DIR)/lib/libpcsl_string.lib \
+                   $(PCSL_TARGET_DIR)/lib/libpcsl_network.lib
 
 MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_file.lib
 MIDP_DEPS       += $(PCSL_TARGET_DIR)/lib/libpcsl_memory.lib

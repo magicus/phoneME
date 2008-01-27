@@ -111,25 +111,29 @@ measureStack(int clearStack) {
     int   i;
 
     if (clearStack) {
-	for (i = 0; i < STACK_SIZE; i++) {
-	    stack[i] = tag;
-	}
+        for (i = 0; i < STACK_SIZE; i++) {
+            stack[i] = tag;
+        }
     } else {
-	for (i = 0; i < STACK_SIZE; i++) {
-	    if (stack[i] != tag) {
-  	        reportToLog(LOG_INFORMATION, LC_CORE_STACK,
-			    "Max Native Stack Size:  %d",
-			    (STACK_SIZE - i));
-		break;
-	    }
-	}
+        for (i = 0; i < STACK_SIZE; i++) {
+            if (stack[i] != tag) {
+                reportToLog(LOG_INFORMATION, LC_CORE_STACK,
+                            "Max Native Stack Size:  %d",
+                            (STACK_SIZE - i));
+                break;
+            }
+        }
     }
 }
 #undef STACK_SIZE
 
 #else
 
-#define measureStack(x) ;
+static void
+measureStack(int clearStack) {
+    (void)clearStack;
+    return;
+}
 
 #endif
 
