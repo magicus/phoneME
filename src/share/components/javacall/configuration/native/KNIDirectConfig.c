@@ -92,7 +92,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesOpen) {
 
     KNI_EndHandles();
     KNI_ReturnInt( (jint)hdlr ); 
-};
+}
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListContentTypesNext) {
@@ -209,7 +209,7 @@ KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsOpen) {
 
     KNI_EndHandles();
     KNI_ReturnInt( (jint)hdlr ); 
-};
+}
 
 KNIEXPORT KNI_RETURNTYPE_OBJECT
 KNIDECL(com_sun_mmedia_DefaultConfiguration_nListProtocolsNext) {
