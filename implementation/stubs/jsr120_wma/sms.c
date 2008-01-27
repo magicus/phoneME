@@ -63,16 +63,16 @@ javacall_result javacall_sms_is_service_available(void) {
  *       completion of sending operation.
  *       The returned handle will be passed to javacall_callback_on_complete_sms_send( ) upon completion
  */
-int javacall_sms_send(  javacall_sms_encoding   msgType, 
-                        const unsigned char*    destAddress, 
-                        const unsigned char*    msgBuffer, 
-                        int                     msgBufferLen, 
-                        unsigned short          sourcePort, 
-                        unsigned short          destPort){
-    return 0;
+javacall_result javacall_sms_send(javacall_sms_encoding   msgType, 
+                                  const unsigned char*    destAddress, 
+                                  const unsigned char*    msgBuffer, 
+                                  int                     msgBufferLen, 
+                                  unsigned short          sourcePort, 
+                                  unsigned short          destPort,
+                                  int                     handle) {
+    return JAVACALL_FAIL;
 }
-    
-    
+
 /**
  * The platform must have the ability to identify the port number of incoming 
  * SMS messages, and deliver messages with port numbers registered to the WMA 

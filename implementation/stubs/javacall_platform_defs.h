@@ -22,19 +22,25 @@
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions. 
  */ 
-
 #ifndef __JAVACALL_PLATFORM_DEFINE_H_
 #define __JAVACALL_PLATFORM_DEFINE_H_
 
 /**
  * @file javacall_platform_defs.h
+ * @ingroup Common
  * @brief Platform-dependent definitions for javacall
+ */
+
+/**
+ * @defgroup Platform Platfrom specific Common Javacall API Definitions
+ * @ingroup Common
+ * The platform specific common javacall definitions are defined in this file
+ * @{
  */
 
 #ifdef __cplusplus
 extern "C" {
 #endif 
-    
 
 /**
  * @typedef javacall_utf16
@@ -43,16 +49,53 @@ extern "C" {
 typedef unsigned short javacall_utf16;
 
 /**
+ * @typedef javacall_uint8
+ * @brief 8 bit unsigned interger type
+ */
+typedef unsigned char javacall_uint8;
+
+/**
+ * @typedef javacall_uint16
+ * @brief 16 bit unsigned interger type
+ */
+typedef unsigned short javacall_uint16;
+
+/**
+ * @typedef javacall_uint32
+ * @brief 32 bit unsigned interger type
+ */
+typedef unsigned long javacall_uint32;
+
+/**
+ * @typedef javacall_uint64
+ * @brief 64 bit unsigned integer type
+ */
+typedef unsigned long long javacall_uint64;
+
+/**
  * @typedef javacall_int32
  * @brief 32 bit interger type
  */
-typedef signed int javacall_int32;
+typedef signed long javacall_int32;
 
 /**
  * @typedef javacall_int64
  * @brief 64 bit interger type
  */
-typedef __int64 javacall_int64;  // This type shall be redefined for non MSC compiler!!
+typedef long long javacall_int64;
+
+/**
+ * @typedef javacall_filename_string
+ * @brief general file name string type, this type is null terminated string
+ */
+typedef javacall_utf16* javacall_filename_string;
+
+/**
+ * @typedef javacall_const_filename_string
+ * @brief general constant file name string type, this type is constant null
+ * terminated string
+ */
+typedef const javacall_utf16* javacall_const_filename_string;
 
 /**
  * @def JAVACALL_MAX_FILE_NAME_LENGTH
@@ -90,6 +133,9 @@ typedef __int64 javacall_int64;  // This type shall be redefined for non MSC com
  */
 #define JAVACALL_MAX_LOCALIZED_DIR_NAME_LENGTH    512
 
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }

@@ -123,7 +123,7 @@ extern "C" {
  * @retval JAVACALL_WOULD_BLOCK  if the caller must call the finish function to complete the operation
  * @retval JAVACALL_CONNECTION_NOT_FOUND when there was some other error (Connection not found exception case)
  */
-javacall_result javacall_socket_open_start(unsigned char *ipBytes,int port,
+javacall_result javacall_socket_open_start(unsigned char *ipBytes, int port,
                                            javacall_handle* pHandle, void **pContext);
     
 /**
@@ -172,7 +172,10 @@ javacall_result javacall_socket_read_start(javacall_handle handle,unsigned char 
  * @retval JAVACALL_WOULD_BLOCK  if the caller must call the finish function again to complete the operation
  * @retval JAVACALL_INTERRUPTED for an Interrupted IO Exception
  */
-javacall_result javacall_socket_read_finish(javacall_handle handle,unsigned char *pData,int len,int *pBytesRead,void *context);
+javacall_result javacall_socket_read_finish(javacall_handle handle,
+                                            unsigned char *pData,
+                                            int len, int *pBytesRead,
+                                            void *context);
     
 /**
  * Initiates a write to a platform-specific TCP socket.
@@ -191,8 +194,11 @@ javacall_result javacall_socket_read_finish(javacall_handle handle,unsigned char
  * @retval JAVACALL_WOULD_BLOCK  if the operation would block
  * @retval JAVACALL_INTERRUPTED for an Interrupted IO Exception
  */
-javacall_result javacall_socket_write_start(javacall_handle handle,char *pData,int len,int *pBytesWritten,void **pContext); 
-    
+javacall_result javacall_socket_write_start(javacall_handle handle,
+                                            char *pData, int len,
+                                            int *pBytesWritten,
+                                            void **pContext);
+
 /**
  * Finishes a pending write operation.
  *
@@ -209,8 +215,11 @@ javacall_result javacall_socket_write_start(javacall_handle handle,char *pData,i
  * @retval JAVACALL_WOULD_BLOCK  if the caller must call the finish function again to complete the operation
  * @retval JAVACALL_INTERRUPTED for an Interrupted IO Exception
  */
-javacall_result javacall_socket_write_finish(javacall_handle handle,char *pData,int len,int *pBytesWritten,void *context); 
-    
+javacall_result javacall_socket_write_finish(javacall_handle handle,
+                                             char *pData, int len,
+                                             int *pBytesWritten,
+                                             void *context);
+
 /**
  * Initiates the closing of a platform-specific TCP socket.
  *
@@ -222,8 +231,8 @@ javacall_result javacall_socket_write_finish(javacall_handle handle,char *pData,
  * @retval JAVACALL_FAIL        if there was an error
  * @retval JAVACALL_WOULD_BLOCK  if the operation would block 
  */
-javacall_result javacall_socket_close_start(javacall_handle handle,void **pContext);
-    
+javacall_result javacall_socket_close_start(javacall_handle handle, void **pContext);
+
 /**
  * Initiates the closing of a platform-specific TCP socket.
  *
@@ -234,10 +243,9 @@ javacall_result javacall_socket_close_start(javacall_handle handle,void **pConte
  * @retval JAVACALL_FAIL        if there was an error   
  * @retval JAVACALL_WOULD_BLOCK  if the caller must call the finish function again to complete the operation
  */
-javacall_result javacall_socket_close_finish(javacall_handle handle,void *context);
+javacall_result javacall_socket_close_finish(javacall_handle handle, void *context);
 
 /** @} */
-    
 
 
 /******************************************************************************
@@ -334,9 +342,9 @@ void javanotify_socket_event(
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    if there was an error 
  */
-javacall_result /* OPTIONAL*/ javacall_socket_available(javacall_handle handle,int *pBytesAvailable);
-    
-    
+javacall_result /* OPTIONAL*/ javacall_socket_available(javacall_handle handle,
+                                                        int *pBytesAvailable);
+
 /**
  * Shuts down the output side of a platform-specific TCP socket.
  * Further writes to this socket are disallowed.
@@ -361,7 +369,8 @@ javacall_result /*OPTIONAL*/ javacall_socket_shutdown_output(javacall_handle han
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    if there was an error
  */
-javacall_result /*OPTIONAL*/ javacall_socket_getlocaladdr(javacall_handle handle,char *pAddress);
+javacall_result /*OPTIONAL*/ javacall_socket_getlocaladdr(javacall_handle handle,
+                                                          char *pAddress);
     
     
 /**
@@ -373,7 +382,8 @@ javacall_result /*OPTIONAL*/ javacall_socket_getlocaladdr(javacall_handle handle
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    if there was an error
  */
-javacall_result /*OPTIONAL*/ javacall_socket_getremoteaddr(javacall_handle handle,char *pAddress);
+javacall_result /*OPTIONAL*/ javacall_socket_getremoteaddr(javacall_handle handle,
+                                                           char *pAddress);
     
 /**
  * Gets the port number of the local socket endpoint.
@@ -384,7 +394,8 @@ javacall_result /*OPTIONAL*/ javacall_socket_getremoteaddr(javacall_handle handl
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    if there was an error
  */
-javacall_result /*OPTIONAL*/ javacall_socket_getlocalport(javacall_handle handle,int *pPortNumber);
+javacall_result /*OPTIONAL*/ javacall_socket_getlocalport(javacall_handle handle,
+                                                          int *pPortNumber);
     
 /** 
  * Gets the port number of the remote socket endpoint.
@@ -395,7 +406,8 @@ javacall_result /*OPTIONAL*/ javacall_socket_getlocalport(javacall_handle handle
  * @retval JAVACALL_OK      success
  * @retval JAVACALL_FAIL    if there was an error
  */
-javacall_result /*OPTIONAL*/ javacall_socket_getremoteport(javacall_handle handle,int *pPortNumber);
+javacall_result /*OPTIONAL*/ javacall_socket_getremoteport(javacall_handle handle,
+                                                           int *pPortNumber);
 
 
 /**

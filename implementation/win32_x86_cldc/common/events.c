@@ -70,8 +70,7 @@ EventMessage*    head             =NULL;
 #define EVENT_QUEUE_RELEASE  ReleaseMutex(events_mutex)
 
 #if !ENABLE_MULTIPLE_INSTANCES
-
-/*
+/**
  * Data objects used for interprocess communication
  */
 HANDLE           events_sharefile =NULL;
@@ -82,7 +81,7 @@ javacall_bool    events_secondary =JAVACALL_FALSE;
 
 #endif
 
-javacall_bool javacall_events_init(void) {
+javacall_result javacall_events_init(void) {
 
 #if !ENABLE_MULTIPLE_INSTANCES
     /*
@@ -90,7 +89,7 @@ javacall_bool javacall_events_init(void) {
      * second instance of runMidlet will pass it's argument to instance already running
      * and exit immediately. Arguments are passed through this shared memory
      */
-    if (events_sharefile==NULL) {
+    if (events_sharefile == NULL) {
         events_sharefile = CreateFileMapping(
             INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE,
             0, sizeof(EventSharedList), EVENT_SHARED_NAME);
@@ -123,8 +122,7 @@ javacall_bool javacall_events_init(void) {
             NULL,       // default security attributes
             TRUE,       // manual-reset event
             FALSE,      // initial state is signaled
-            EVENT_EVENT_NAME        // named object
-        );
+            EVENT_EVENT_NAME); // named object
     }
 
     event_initialized = TRUE;
@@ -136,6 +134,14 @@ javacall_bool javacall_events_init(void) {
         ;
 }
 
+/**
+ * The function is called during Java VM shutdown, allowing the platform to
+ * perform specific events-related shutdown operations. It is called in the same
+ * process as javacall_events_init() and javacall_event_receive().
+ *
+ * @return <tt>JAVACALL_OK</tt> on success,
+ *         <tt>JAVACALL_FAIL</tt> otherwise
+ */
 javacall_bool javacall_events_finalize(void) {
 
 #if !ENABLE_MULTIPLE_INSTANCES
@@ -164,19 +170,15 @@ javacall_bool javacall_events_finalize(void) {
 
 #if !ENABLE_MULTIPLE_INSTANCES
 
-javacall_bool isSecondaryInstance(void)
-{
+javacall_bool isSecondaryInstance(void) {
     return events_secondary;
 }
 
-void enqueueInterprocessMessage(int argc, char *argv[])
-{
-    if (EVENT_QUEUE_ACQUIRE)
-    {
+void enqueueInterprocessMessage(int argc, char *argv[]) {
+    if (EVENT_QUEUE_ACQUIRE) {
         int i;
         char *dest = events_shared->data;
-        for(i = 0; (i < argc) && argv[i]; i++)
-        {
+        for (i = 0; (i < argc) && argv[i]; i++) {
             int length = strlen(argv[i]) + 1;
             memcpy(dest, argv[i], length);
             dest += length;
@@ -186,11 +188,10 @@ void enqueueInterprocessMessage(int argc, char *argv[])
     }
 }
 
-int dequeueInterprocessMessage(char*** argv)
-{
+int dequeueInterprocessMessage(char*** argv) {
     int argc = 0;
-    if (EVENT_QUEUE_ACQUIRE)
-    {
+
+    if (EVENT_QUEUE_ACQUIRE) {
         int lengthTotal = 1;
         char *src = events_shared->data;
 
@@ -216,16 +217,14 @@ int dequeueInterprocessMessage(char*** argv)
     }
     return argc;
 }
-
 #endif
 
-void enqueueEventMessage(unsigned char* data,int dataLen)
-{
+void enqueueEventMessage(unsigned char* data,int dataLen) {
     EventMessage** iter;
-    EventMessage* elem=(EventMessage*)malloc(sizeof(EventMessage));
-    elem->data      =malloc(dataLen);
-    elem->dataLen   =dataLen;
-    elem->next      =NULL;
+    EventMessage* elem = (EventMessage*)malloc(sizeof(EventMessage));
+    elem->data      = malloc(dataLen);
+    elem->dataLen   = dataLen;
+    elem->next      = NULL;
     memcpy(elem->data, data, dataLen);
 
     for(iter=&head; *iter!=NULL; iter=&((*iter)->next) )
@@ -233,10 +232,10 @@ void enqueueEventMessage(unsigned char* data,int dataLen)
     *iter=elem;
 }
 
-int dequeueEventMessage(unsigned char* data,int dataLen)
-{
+int dequeueEventMessage(unsigned char* data,int dataLen) {
     EventMessage* root;
-    if (head==NULL) {
+
+    if (head == NULL) {
         return 0;
     }
     dataLen=min(dataLen, head->dataLen);

@@ -221,28 +221,28 @@ javacall_result javacall_lcd_flush_partial(int ystart, int yend);
 /**
   * Reverse flag of rotation
   */
-javacall_bool javacall_lcd_reverse_orientation();
+javacall_bool javacall_lcd_reverse_orientation(void);
  
 /**
   * Get flag of rotation
   */
-javacall_bool javacall_lcd_get_reverse_orientation();
+javacall_bool javacall_lcd_get_reverse_orientation(void);
   
 /**
   * Return width of screen
   */
-int javacall_lcd_get_screen_width();
+int javacall_lcd_get_screen_width(void);
  
 /**
   * Return height of screen
   */
-int javacall_lcd_get_screen_height();
+int javacall_lcd_get_screen_height(void);
 
 /**
  * The platform should invoke this function in platform context
  * to rotate the screen.
  */
-void javanotify_rotation();
+void javanotify_rotation(void);
 
 /** @} */
 

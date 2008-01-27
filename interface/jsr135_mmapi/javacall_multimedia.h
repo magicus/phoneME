@@ -293,7 +293,7 @@ const javacall_media_caps* javacall_media_get_caps(void);
  * @retval JAVACALL_FALSE   audio mixing is NOT supported
  * 
  */
-javacall_bool javacall_media_supports_mixing();
+javacall_bool javacall_media_supports_mixing(void);
 
 /** @} */ 
 
