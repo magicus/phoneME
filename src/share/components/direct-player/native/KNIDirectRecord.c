@@ -33,12 +33,14 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nIsSupportRecording) {
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     jboolean returnValue = KNI_FALSE;
 
+    int controls;
+
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        if (JAVACALL_OK == javacall_media_supports_recording(pKniInfo->pNativeHandle)) {
-            returnValue = KNI_TRUE;
-        } else {
-            REPORT_ERROR1(LC_MMAPI, "[kni_record] Not support recording handle=%d\n", pKniInfo->pNativeHandle);
-        }    
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_RECORD) {
+                returnValue = KNI_TRUE;
+            }
+        }
     }
 
     KNI_ReturnBoolean(returnValue);
@@ -226,28 +228,6 @@ KNIDECL(com_sun_mmedia_DirectRecord_nClose) {
     KNI_ReturnInt(returnValue);
 }
 
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_DirectRecord_nSetSizeLimitIsSupported) {
-    jint handle = KNI_GetParameterAsInt(1);
-    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jboolean retValue = KNI_FALSE;
-    javacall_result ret;
-
-    if (pKniInfo && pKniInfo->pNativeHandle) {
-        javacall_bool supported;
-        ret = javacall_media_set_recordsize_limit_supported(pKniInfo->pNativeHandle, &supported);
-        if (ret == JAVACALL_OK) {
-            retValue = supported == JAVACALL_TRUE == supported ? KNI_TRUE : KNI_FALSE;
-        }
-        if (KNI_FALSE == retValue) {
-            REPORT_ERROR1(LC_MMAPI, "[kni_record] Set record size limit is not supported handle=%d\n",
-                pKniInfo->pNativeHandle);
-        }        
-    }
-
-    KNI_ReturnBoolean(retValue);
-}
-
 /*  private native int nSetSizeLimit ( int handle , int size ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectRecord_nSetSizeLimit) {
@@ -261,6 +241,11 @@ KNIDECL(com_sun_mmedia_DirectRecord_nSetSizeLimit) {
         if (JAVACALL_FAIL == ret) {
             size = 0;
             REPORT_ERROR1(LC_MMAPI, "[kni_record] Set record size limit fail handle=%d\n", 
+                pKniInfo->pNativeHandle);
+        }
+        if (JAVACALL_NOT_IMPLEMENTED == ret) {
+            size = 0;
+            REPORT_ERROR1(LC_MMAPI, "[kni_record] Set record size unsupported handle=%d\n", 
                 pKniInfo->pNativeHandle);
         }
     }

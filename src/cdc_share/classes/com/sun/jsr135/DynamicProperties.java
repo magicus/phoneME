@@ -113,9 +113,6 @@ public class DynamicProperties implements PropertyProvider {
         } else if (key.equals(propertyStreamableContents)) {
             val = nGetPropertyValueStreamableContents();
         }
-        if (!properties.containsKey(key) && val != null && val.length()>0) {
-            properties.put(key, val);
-        }
         return val;
     }
 
@@ -141,6 +138,23 @@ public class DynamicProperties implements PropertyProvider {
      *
      * @return <code>true</code> on success, <code>false</code> otherwise
      */
-    public native boolean cacheProperties();
+    public boolean cacheProperties() {
+        properties.put(propertySupportsMixing, 
+                       nGetPropertyValueSupportsMixing());
+        properties.put(propertySupportsAudioCapture,
+                       nGetPropertyValueSupportsAudioCapture());
+        properties.put(propertySupportsVideoCapture,
+                       nGetPropertyValueSupportsVideoCapture());
+        properties.put(propertySupportsRecording,
+                       nGetPropertyValueSupportsRecording());
+        properties.put(propertyAudioEncodings,
+                       nGetPropertyValueAudioEncodings());
+        properties.put(propertyVideoEncodings,
+                       nGetPropertyValueVideoEncodings());
+        properties.put(propertyVideoSnapshotEncodings,
+                       nGetPropertyValueVideoSnapshotEncodings());
+        properties.put(propertyStreamableContents,
+                       nGetPropertyValueStreamableContents());
+    };
 
 }
