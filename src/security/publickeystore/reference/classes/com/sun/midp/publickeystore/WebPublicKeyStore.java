@@ -44,7 +44,7 @@ import com.sun.midp.configurator.Constants;
 import com.sun.midp.log.Logging;
 import com.sun.midp.log.LogChannels;
 import com.sun.midp.pki.*;
-
+import com.sun.midp.main.Configuration;
 /**
  * A public keystore that can used with SSL.
  * To work with SSL this class implements the SSL
@@ -87,7 +87,7 @@ public class WebPublicKeyStore extends PublicKeyStore
             storage = new RandomAccessStream(classSecurityToken);
 
             // Try load certificate root from configuration
-            String keystore_filename = System.getProperty("com.sun.midp.publickeystore.WebPublicKeyStore");
+            String keystore_filename =  Configuration.getProperty("com.sun.midp.publickeystore.WebPublicKeyStore");
 
             // Fallback to default storage root
             if (keystore_filename == null) {
