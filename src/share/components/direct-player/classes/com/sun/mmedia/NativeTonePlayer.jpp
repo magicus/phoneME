@@ -25,6 +25,7 @@ package com.sun.mmedia;
 
 import javax.microedition.media.MediaException;
 import com.sun.mmedia.TonePlayer;
+import com.sun.j2me.app.AppPackage;
 
 /**
  *  Tone Player to play a single note of specified duration
@@ -42,8 +43,8 @@ public class NativeTonePlayer implements TonePlayer {
      * @param  vol   Audio volume range from 0 to 100.
      * @return       the tone player handle, or 0 if it failed to play the tone
      */
-    private native boolean nPlayTone(int note, int dur, int vol);
-    private native boolean nStopTone();
+    private native boolean nPlayTone(int appId, int note, int dur, int vol);
+    private native boolean nStopTone(int appId);
     // native finalizer 
 // #ifdef ENABLE_CDC [    
     protected native void finalize();
@@ -57,7 +58,11 @@ public class NativeTonePlayer implements TonePlayer {
         // Set audioTunnel to Driver
         AudioTunnel.getInstance().start();
 
-        if (false == nPlayTone(note, duration, volume)) {
+
+        // Get current application ID to support MVM
+        int appId = AppPackage.getInstance().getId();
+
+        if (false == nPlayTone(appId, note, duration, volume)) {
             throw new MediaException("can't play tone");
         }
     }    
@@ -66,6 +71,9 @@ public class NativeTonePlayer implements TonePlayer {
      * Stop current tone playing
      */
     public void stopTone() {
-        nStopTone();
+        // Get current application ID to support MVM
+        int appId = AppPackage.getInstance().getId();
+
+        nStopTone(appId);
     }
 }

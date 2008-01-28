@@ -37,7 +37,7 @@ package com.sun.mmedia;
 
 import java.io.IOException;
 import java.util.*;
-import com.sun.j2me.app.AppIsolate;
+import com.sun.j2me.app.AppPackage;
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 
@@ -254,14 +254,13 @@ public class DirectPlayer extends BasicPlayer
             remained = contentLength;
         }
         
-        // Get current isolate ID to support MVM
-        // in case of SVM it will return AMS isolate ID
-        int isolateId = AppIsolate.getIsolateId();
+        // Get current application ID to support MVM
+        int appId = AppPackage.getInstance().getId();
 
         if (source != null) {
-            hNative = nInit(isolateId, pID, mimeType, source.getLocator(), contentLength);
+            hNative = nInit(appId, pID, mimeType, source.getLocator(), contentLength);
         } else {
-            hNative = nInit(isolateId, pID, mimeType, this.locator, contentLength);
+            hNative = nInit(appId, pID, mimeType, this.locator, contentLength);
         }
 
         if (0 == hNative) {

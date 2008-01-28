@@ -107,7 +107,7 @@ public class DirectVideo extends DirectPlayer implements
     // Get screen full height
     private native int nGetScreenHeight();
     // Turn on or off alpha channel
-    private native int nSetAlpha(boolean on, int color);
+    private native int nSetAlpha(int handle, boolean on, int color);
 
     // member functions /////////////////////////////////////////////
 
@@ -215,7 +215,7 @@ public class DirectVideo extends DirectPlayer implements
         }    
  
         // Turn off alpha channel
-        nSetAlpha(false, ALPHA_COLOR);
+        nSetAlpha(hNative, false, ALPHA_COLOR);
         setTranslatedVideoLocation(g, x, y, w, h);
 
         // set location and size of display region
@@ -228,7 +228,7 @@ public class DirectVideo extends DirectPlayer implements
      * Prepare clipped preview region by using alpha channel masking
      */
     private void prepareClippedPreview(Graphics g, int x, int y, int w, int h) {
-        if (1 == nSetAlpha(true, ALPHA_COLOR)) {
+        if (1 == nSetAlpha(hNative, true, ALPHA_COLOR)) {
             g.setColor(0, 0, 8);    // IMPL NOTE - Consider RGB565 conversion
             g.fillRect(x, y, w, h);
             setTranslatedVideoLocation(g, x, y, w, h);
@@ -543,7 +543,7 @@ public class DirectVideo extends DirectPlayer implements
                 "hideVideoPreview"); 
         }
         hidden = true;
-        nSetAlpha(true, ALPHA_COLOR);
+        nSetAlpha(hNative, true, ALPHA_COLOR);
         repaint();
     }
 
@@ -556,7 +556,7 @@ public class DirectVideo extends DirectPlayer implements
                 "showVideoPreview"); 
         }
         hidden = false;
-        nSetAlpha(false, ALPHA_COLOR);        
+        nSetAlpha(hNative, false, ALPHA_COLOR);        
         repaint();
     }
 

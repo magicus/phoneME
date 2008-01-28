@@ -26,7 +26,7 @@
 package com.sun.mmedia;
 
 import com.sun.mmedia.DefaultConfiguration;
-import com.sun.j2me.app.AppIsolate;
+import com.sun.j2me.app.AppPackage;
 
 import javax.microedition.media.*;
 import java.io.IOException;
@@ -62,13 +62,13 @@ public final class DirectTone extends DirectPlayer {
      */
     protected void doRealize() throws MediaException {
 
-        // Get current isolate ID to support MVM
-        int isolateId = AppIsolate.getIsolateId();        
+        // Get current application ID to support MVM
+        int appId = AppPackage.getInstance().getId();        
         // Init native library
         if (this.source == null) {
-            hNative = nInit(isolateId, pID, Manager.TONE_DEVICE_LOCATOR, Manager.TONE_DEVICE_LOCATOR, -1);
+            hNative = nInit(appId, pID, Manager.TONE_DEVICE_LOCATOR, Manager.TONE_DEVICE_LOCATOR, -1);
         } else {
-            hNative = nInit(isolateId, pID, DefaultConfiguration.MIME_AUDIO_TONE, source.getLocator(), -1);
+            hNative = nInit(appId, pID, DefaultConfiguration.MIME_AUDIO_TONE, source.getLocator(), -1);
         }
         
         if (hNative == 0) {

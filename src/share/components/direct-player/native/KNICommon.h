@@ -77,7 +77,8 @@
 #define AUDIO_TONE_MIME     "audio/x-tone-seq"
 
 typedef struct _KNIPlayerInfo {
-    javacall_int64 uniqueId;	/* Unique ID */
+    int appId;              /* Unique Application ID */
+    int playerId;           /* Unique player Id inside application */
     long contentLength;     /* Content length */
     long offset;            /* Current offset of buffer */
     int isAcquire;          /* Is this player acquire devices? */

@@ -33,12 +33,14 @@ KNIDECL(com_sun_mmedia_DirectPlayer_nIsSupportRecording) {
     KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
     jboolean returnValue = KNI_FALSE;
 
+    int controls;
+
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        if (JAVACALL_OK == javacall_media_supports_recording(pKniInfo->pNativeHandle)) {
-            returnValue = KNI_TRUE;
-        } else {
-            REPORT_ERROR1(LC_MMAPI, "[kni_record] Not support recording handle=%d\n", pKniInfo->pNativeHandle);
-        }    
+        if (JAVACALL_OK == javacall_media_get_player_controls(pKniInfo->pNativeHandle, &controls)) {
+            if (controls & JAVACALL_MEDIA_CTRL_RECORD) {
+                returnValue = KNI_TRUE;
+            }
+        }
     }
 
     KNI_ReturnBoolean(returnValue);
@@ -226,24 +228,6 @@ KNIDECL(com_sun_mmedia_DirectRecord_nClose) {
     KNI_ReturnInt(returnValue);
 }
 
-KNIEXPORT KNI_RETURNTYPE_BOOLEAN
-KNIDECL(com_sun_mmedia_DirectRecord_nSetSizeLimitIsSupported) {
-    jint handle = KNI_GetParameterAsInt(1);
-    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    jboolean ret = KNI_FALSE;
-
-    if (pKniInfo && pKniInfo->pNativeHandle) {
-        javacall_bool supported = javacall_media_set_recordsize_limit_supported(pKniInfo->pNativeHandle);
-        ret = JAVACALL_TRUE == supported ? KNI_TRUE : KNI_FALSE;
-        if (KNI_FALSE == ret) {
-            REPORT_ERROR1(LC_MMAPI, "[kni_record] Set record size limit is not supported handle=%d\n",
-                pKniInfo->pNativeHandle);
-        }        
-    }
-
-    KNI_ReturnBoolean(ret);
-}
-
 /*  private native int nSetSizeLimit ( int handle , int size ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectRecord_nSetSizeLimit) {
@@ -257,6 +241,11 @@ KNIDECL(com_sun_mmedia_DirectRecord_nSetSizeLimit) {
         if (JAVACALL_FAIL == ret) {
             size = 0;
             REPORT_ERROR1(LC_MMAPI, "[kni_record] Set record size limit fail handle=%d\n", 
+                pKniInfo->pNativeHandle);
+        }
+        if (JAVACALL_NOT_IMPLEMENTED == ret) {
+            size = 0;
+            REPORT_ERROR1(LC_MMAPI, "[kni_record] Set record size unsupported handle=%d\n", 
                 pKniInfo->pNativeHandle);
         }
     }
@@ -334,13 +323,16 @@ KNIDECL(com_sun_mmedia_DirectRecord_nGetRecordedType)
     KNI_DeclareHandle(contentType);
 
     if (pKniInfo && pKniInfo->pNativeHandle) {
-        int length = javacall_media_get_record_content_type_length(pKniInfo->pNativeHandle);
-        if (length > 0) {
+        int length;
+        javacall_result ret;
+        ret = javacall_media_get_record_content_type_length(pKniInfo->pNativeHandle, &length);
+        if (ret == JAVACALL_OK && length > 0) {
             jchar* pString = MMP_MALLOC((length + 1) * sizeof(jchar));
             if (pString != NULL) {
-                int ret = javacall_media_get_record_content_type(pKniInfo->pNativeHandle, pString, length + 1);
-                if (ret > 0) {
-                    KNI_NewString(pString, ret, contentType);
+                length += 1;
+                ret = javacall_media_get_record_content_type(pKniInfo->pNativeHandle, pString, &length);
+                if (ret == JAVACALL_OK) {
+                    KNI_NewString(pString, length, contentType);
                 } else {
                     KNI_ReleaseHandle(contentType);
                     REPORT_ERROR1(LC_MMAPI, "[kni_record] Get record content type fail handle=%d\n",

@@ -30,8 +30,6 @@ import com.sun.jump.common.*;
 import com.sun.jump.isolate.jvmprocess.*;
 import com.sun.jumpimpl.module.multimedia.*;
 
-import com.sun.j2me.app.AppIsolate;
-
 /**
  * Event listener for events delivered from native layer
  */
