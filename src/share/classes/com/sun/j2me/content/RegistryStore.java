@@ -250,16 +250,16 @@ class RegistryStore {
     	Vector result = new Vector();
     	// all lengths in bytes
     	int pos = 0;
-        if(DEBUG_OUT != null) 
-        	DEBUG_OUT.println( "deserializeString: string length = " + str.length() );
+//        if(DEBUG_OUT != null) 
+//        	DEBUG_OUT.println( "deserializeString: string length = " + str.length() );
     	while( pos < str.length() ){
     		int elem_length = (int)str.charAt(pos++) / 2;
-            if(DEBUG_OUT != null) 
-            	DEBUG_OUT.println( "deserializeString: pos = " + pos + 
-            							", elem_length = " + elem_length );
+//            if(DEBUG_OUT != null) 
+//            	DEBUG_OUT.println( "deserializeString: pos = " + pos + 
+//            							", elem_length = " + elem_length );
     		result.addElement(str.substring(pos, pos + elem_length));
-            if(DEBUG_OUT != null)
-            	DEBUG_OUT.println( "deserializeString: '" + str.substring(pos, pos + elem_length) + "'" );
+//            if(DEBUG_OUT != null)
+//            	DEBUG_OUT.println( "deserializeString: '" + str.substring(pos, pos + elem_length) + "'" );
     		pos += elem_length;
     	}
         return result;

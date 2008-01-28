@@ -167,7 +167,7 @@ public final class Invocation {
     public static final int OK = 5;
 
     /**
-     * The processing of the Invocation was cancelled by
+     * The processing of the Invocation was canceled by
      * the ContentHandler.
      * Invocations queued with
      * {@link ContentHandlerServer#finish ContentHandlerServer.finish}
@@ -195,7 +195,7 @@ public final class Invocation {
      * empty arrays, and initialized to require a response.
      */
     public Invocation() {
-	invocImpl = new InvocationImpl(this);
+    	invocImpl = new InvocationImpl(this);
     }
 
     /**
@@ -209,7 +209,7 @@ public final class Invocation {
      * @param ID the ID of the content handler; may be <code>null</code>
      */
     public Invocation(String url, String type, String ID) {
-	this(url, type, ID, true, null);
+    	this(url, type, ID, true, null);
     }
 
     /**
@@ -222,7 +222,7 @@ public final class Invocation {
      * @param type the content type; may be <code>null</code>
      */
     public Invocation(String url, String type) {
-	this(url, type, null, true, null);
+    	this(url, type, null, true, null);
     }
 
     /**
@@ -234,7 +234,7 @@ public final class Invocation {
      *	may be <code>null</code>
      */
     public Invocation(String url) {
-	this(url, null, null, true, null);
+    	this(url, null, null, true, null);
     }
 
     /**
@@ -259,12 +259,12 @@ public final class Invocation {
     public Invocation(String url, String type, String ID,
 		      boolean responseRequired, String action)
     {
-	this();
-	invocImpl.setURL(url);
-	invocImpl.setType(type);
-	invocImpl.setID(ID);
-	invocImpl.setResponseRequired(responseRequired);
-	invocImpl.setAction(action);
+		this();
+		invocImpl.setURL(url);
+		invocImpl.setType(type);
+		invocImpl.setID(ID);
+		invocImpl.setResponseRequired(responseRequired);
+		invocImpl.setAction(action);
     }
 
     /**
@@ -273,10 +273,10 @@ public final class Invocation {
      * @param impl and InvocationImpl to be associated with this Invocation
      */
     Invocation(InvocationImpl impl) {
-	invocImpl = impl;
-	if (impl != null) {
-	    impl.invocation = this;
-	}
+		invocImpl = impl;
+		if (impl != null) {
+		    impl.invocation = this;
+		}
     }
 
 
@@ -294,7 +294,7 @@ public final class Invocation {
      * @see #getArgs
      */
     public void setArgs(String[] args) {
-	invocImpl.setArgs(args);
+    	invocImpl.setArgs(args);
     }
 
     /**
@@ -307,7 +307,7 @@ public final class Invocation {
      * @see #setArgs
      */
     public String[] getArgs() {
-	return invocImpl.getArgs();
+    	return invocImpl.getArgs();
     }
 
     /**
@@ -323,7 +323,7 @@ public final class Invocation {
      * @see #getData
      */
     public void setData(byte[] data) {
-	invocImpl.setData(data);
+    	invocImpl.setData(data);
     }
 
     /**
@@ -336,7 +336,7 @@ public final class Invocation {
      * @see #setData
      */
     public byte[] getData() {
-	return invocImpl.getData();
+    	return invocImpl.getData();
     }
 
     /**
@@ -346,7 +346,7 @@ public final class Invocation {
      * @see #setURL
      */
     public String getURL() {
-	return invocImpl.getURL();
+    	return invocImpl.getURL();
     }
 
     /**
@@ -355,7 +355,7 @@ public final class Invocation {
      * @see #getURL
      */
     public void setURL(String url) {
-	invocImpl.setURL(url);
+    	invocImpl.setURL(url);
     }
 
     /**
@@ -372,7 +372,7 @@ public final class Invocation {
      * @see #findType
      */
     public String getType() {
-	return invocImpl.getType();
+    	return invocImpl.getType();
     }
 
     /**
@@ -382,7 +382,7 @@ public final class Invocation {
      * @see #findType
      */
     public void setType(String type) {
-	invocImpl.setType(type);
+    	invocImpl.setType(type);
     }
 
     /**
@@ -391,7 +391,7 @@ public final class Invocation {
      * @see #setAction
      */
     public String getAction() {
-	return invocImpl.getAction();
+    	return invocImpl.getAction();
     }
 
     /**
@@ -401,7 +401,7 @@ public final class Invocation {
      * @see #getAction
      */
     public void setAction(String action) {
-	invocImpl.setAction(action);
+    	invocImpl.setAction(action);
     }
 
 
@@ -417,7 +417,7 @@ public final class Invocation {
      * @see #setResponseRequired
      */
     public boolean getResponseRequired() {
-	return invocImpl.getResponseRequired();
+    	return invocImpl.getResponseRequired();
     }
 
     /**
@@ -435,7 +435,7 @@ public final class Invocation {
      * @see #getResponseRequired
      */
     public void setResponseRequired(boolean responseRequired) {
-	invocImpl.setResponseRequired(responseRequired);
+    	invocImpl.setResponseRequired(responseRequired);
     }
 
     /**
@@ -453,8 +453,8 @@ public final class Invocation {
      * @see ContentHandlerServer#finish
      */
     public int getStatus() {
-	// Delegated to the implementation class
-	return invocImpl.getStatus();
+    	// Delegated to the implementation class
+    	return invocImpl.getStatus();
     }
 
     /**
@@ -466,8 +466,8 @@ public final class Invocation {
      * @see #setID
      */
     public String getID() {
-	// Delegated to the implementation class
-	return invocImpl.getID();
+    	// Delegated to the implementation class
+    	return invocImpl.getID();
     }
 
     /**
@@ -476,8 +476,8 @@ public final class Invocation {
      * @see #getID
      */
     public void setID(String ID) {
-	// Delegated to the implementation class
-	invocImpl.setID(ID);
+    	// Delegated to the implementation class
+    	invocImpl.setID(ID);
     }
 
     /**
@@ -497,19 +497,18 @@ public final class Invocation {
      * @see Registry#getResponse
      */
     public Invocation getPrevious() {
-	InvocationImpl prev = invocImpl.getPrevious();
-	if (prev != null) {
-	    if (prev.invocation == null) {
-		/*
-		 * An InvocationImpl created by the implementation needs
-		 * a Invocation to return to the application.
-		 */
-		prev.invocation = new Invocation(prev);
-	    }
-	    return prev.invocation;
-	} else {
+		InvocationImpl prev = invocImpl.getPrevious();
+		if (prev != null) {
+		    if (prev.invocation == null) {
+				/*
+				 * An InvocationImpl created by the implementation needs
+				 * a Invocation to return to the application.
+				 */
+				prev.invocation = new Invocation(prev);
+		    }
+		    return prev.invocation;
+		}
 	    return null;
-	}
     }
 
     /**
@@ -528,8 +527,8 @@ public final class Invocation {
      * @see ContentHandler#getAuthority
      */
     public String getInvokingAuthority() {
-	// Delegated to the implementation class
-	return invocImpl.getInvokingAuthority();
+		// Delegated to the implementation class
+		return invocImpl.getInvokingAuthority();
     }
 
     /**
@@ -547,8 +546,8 @@ public final class Invocation {
      * @see Registry#getID
      */
     public String getInvokingID() {
-	// Delegated to the implementation class
-	return invocImpl.getInvokingID();
+		// Delegated to the implementation class
+		return invocImpl.getInvokingID();
     }
 
     /**
@@ -565,10 +564,9 @@ public final class Invocation {
      * @see ContentHandler#getID
      */
     public String getInvokingAppName() {
-	// Delegated to the implementation class
-	return invocImpl.getInvokingAppName();
+		// Delegated to the implementation class
+		return invocImpl.getInvokingAppName();
     }
-
 
     /**
      * Finds the type of the content in this Invocation.
@@ -605,10 +603,10 @@ public final class Invocation {
      * @see Invocation#getType
      */
     public String findType()
-	throws IOException, ContentHandlerException, SecurityException
+			throws IOException, ContentHandlerException, SecurityException
     {
-	// Delegated to the implementation class
-	return invocImpl.findType();
+		// Delegated to the implementation class
+		return invocImpl.findType();
     }
 
     /**
@@ -641,7 +639,7 @@ public final class Invocation {
      *   protocol handler is prohibited
      */
     public Connection open(boolean timeouts)
-        throws IOException, SecurityException
+        		throws IOException, SecurityException
     {
         return invocImpl.open(timeouts);
     }    
@@ -654,22 +652,22 @@ public final class Invocation {
      *   may be <code>null</code>
      */
     public void setCredentials(String username, char[] password) {
-	invocImpl.setCredentials(username, password);
+    	invocImpl.setCredentials(username, password);
     }
 
     /**
      * Gets the InvocationImpl for this Invocation.
-     * @return the InvocationImpl delgate.
+     * @return the InvocationImpl delegate.
      */
     InvocationImpl getInvocImpl() {
-	return invocImpl;
+    	return invocImpl;
     }
 
     /**
      * Sets the InvocationImpl for this Invocation.
-     * @param invocImpl the InvocationImpl delgate.
+     * @param invocImpl the InvocationImpl delegate.
      */
     void setInvocImpl(InvocationImpl invocImpl) {
-	this.invocImpl = invocImpl;
+    	this.invocImpl = invocImpl;
     }
 }

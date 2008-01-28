@@ -44,6 +44,8 @@ import javax.microedition.io.ConnectionNotFoundException;
  * of the class MUST be package private.
  */
 public final class InvocationImpl {
+	static public final java.io.PrintStream DEBUG_OUT = System.out; 
+	
     /**
      * The Invocation delegating to this instance.
      * This field is public to Invocation can set it.
@@ -149,6 +151,8 @@ public final class InvocationImpl {
      * Create a fresh InvocationImpl.
      */
     InvocationImpl() {
+    	if( DEBUG_OUT != null )
+    		DEBUG_OUT.println( getClass().getName() + " is created" );
         status = Invocation.INIT;
         responseRequired = true;
         arguments = ContentHandlerImpl.ZERO_STRINGS;
@@ -205,6 +209,8 @@ public final class InvocationImpl {
      * @see #getData
      */
     public void setData(byte[] data) {
+    	if( DEBUG_OUT != null )
+    		DEBUG_OUT.println( getClass().getName() + ".setData " + data );
         this.data = (data == null) ? ZERO_BYTES : data;
     }
 
@@ -238,6 +244,8 @@ public final class InvocationImpl {
      * @see #getURL
      */
     public void setURL(String url) {
+    	if( DEBUG_OUT != null )
+    		DEBUG_OUT.println( getClass().getName() + ".setURL " + url );
         this.url = url;
     }
 
@@ -258,6 +266,8 @@ public final class InvocationImpl {
      * @see #getType
      */
     public void setType(String type) {
+    	if( DEBUG_OUT != null )
+    		DEBUG_OUT.println( getClass().getName() + ".setType " + type );
         this.type = type;
     }
 
@@ -278,6 +288,8 @@ public final class InvocationImpl {
      * @see #getAction
      */
     public void setAction(String action) {
+    	if( DEBUG_OUT != null )
+    		DEBUG_OUT.println( getClass().getName() + ".setAction " + action );
         this.action = action;
     }
 
@@ -312,6 +324,8 @@ public final class InvocationImpl {
      * @see #getResponseRequired
      */
     public void setResponseRequired(boolean responseRequired) {
+    	if( DEBUG_OUT != null )
+    		DEBUG_OUT.println( getClass().getName() + ".setResponseRequired " + responseRequired );
         if (getStatus() != Invocation.INIT) {
             throw new IllegalStateException();
         }
@@ -335,9 +349,10 @@ public final class InvocationImpl {
      * @see #getID
      */
     public void setID(String ID) {
+    	if( DEBUG_OUT != null )
+    		DEBUG_OUT.println( getClass().getName() + ".setID " + ID );
         this.ID = ID;
     }
-
 
     /**
      * Checks this Invocation and uses the ID, type, URL, and action
@@ -405,6 +420,9 @@ public final class InvocationImpl {
     boolean invoke(InvocationImpl previous, ContentHandlerImpl handler)
         				throws IllegalArgumentException, IOException
     {
+    	if( DEBUG_OUT != null )
+    		DEBUG_OUT.println( getClass().getName() + ".invoke prev = " + 
+    				previous + ", handler = '" + handler + "'" );
         /*
          * Check all of the arguments for validity.
          */
@@ -469,10 +487,13 @@ public final class InvocationImpl {
      *    is not <code>OK</code> or <code>CANCELLED</code>
      */
     boolean finish(int status) {
-        if (status != Invocation.OK &&
-            status != Invocation.CANCELLED &&
-            status != Invocation.INITIATED) {
-            throw new IllegalArgumentException();
+        switch( status ){
+        	case Invocation.OK:
+        	case Invocation.CANCELLED:
+        	case Invocation.INITIATED: 
+        		break;
+        	default:
+        		throw new IllegalArgumentException();
         }
 
         /*
@@ -481,16 +502,15 @@ public final class InvocationImpl {
          * The application mutable parameters are saved to the
          * native invocation.
          */
-        if (getResponseRequired()) {
-            if (tid != 0) {
-                InvocationStore.setParams(this);
-            }
+        if (getResponseRequired() && tid != 0) {
+            InvocationStore.setParams(this);
         }
 
         setStatus(status);
 
         if (getResponseRequired()) {
             if (AppProxy.INVALID_STORAGE_ID == suiteId) {
+            	// 'native to java' invocation is finished
                 return InvocationStoreProxy.platformFinish(tid);
             }
             return InvocationStoreProxy.launchInvocationTarget( this ) == 
@@ -525,13 +545,9 @@ public final class InvocationImpl {
      * @exception SecurityException  may be thrown if access to the
      *   protocol handler is prohibited
      */
-    public Connection open(boolean timeouts)
-        throws IOException
+    public Connection open(boolean timeouts) throws IOException
     {
-        if (url == null) {
-            throw new NullPointerException();
-        }
-
+        url.length(); // null check
         ContentReader reader = new ContentReader(url, username, password);
         return reader.open(timeouts);
     }
@@ -545,7 +561,6 @@ public final class InvocationImpl {
     public void setCredentials(String username, char[] password) {
         this.username = username;
         this.password = (password == null) ? null : new String(password);
-
     }
 
     /**
@@ -609,8 +624,7 @@ public final class InvocationImpl {
      * @exception SecurityException is thrown if access to the content
      *  is required and is not permitted
      */
-    public String findType()
-        throws IOException, ContentHandlerException
+    public String findType() throws IOException, ContentHandlerException
     {
         if (type != null) {
             return type;
@@ -670,8 +684,7 @@ public final class InvocationImpl {
      * @see ContentHandler#getAuthority
      */
     public String getInvokingAuthority() {
-        if (status != Invocation.ACTIVE &&
-            status != Invocation.HOLD) {
+        if (status != Invocation.ACTIVE && status != Invocation.HOLD) {
             return null;
         }
         return invokingAuthority;
@@ -691,8 +704,7 @@ public final class InvocationImpl {
      * @see ContentHandler#getID
      */
     public String getInvokingAppName() {
-        if (status != Invocation.ACTIVE &&
-            status != Invocation.HOLD) {
+        if (status != Invocation.ACTIVE && status != Invocation.HOLD) {
             return null;
         }
         return invokingAppName;
@@ -715,8 +727,7 @@ public final class InvocationImpl {
      * @see ContentHandler#getID
      */
     public String getInvokingID() {
-        if (status != Invocation.ACTIVE &&
-            status != Invocation.HOLD) {
+        if (status != Invocation.ACTIVE && status != Invocation.HOLD) {
             return null;
         }
         return invokingID;

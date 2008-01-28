@@ -4,12 +4,13 @@ import javax.microedition.content.ContentHandlerException;
 import javax.microedition.content.Invocation;
 
 public final class InvocationStoreProxy {
-	protected static final java.io.PrintStream DEBUG_OUT = null;
+	protected static final java.io.PrintStream DEBUG_OUT = System.out;
 
 	static final public int LIT_MIDLET_START_FAILED = 0;
 	static final public int LIT_MIDLET_STARTED = 1;
 	static final public int LIT_NATIVE_STARTED = 2;
 	static final public int LIT_INVOCATION_REMOVED = 3;
+	
 	static public int launchInvocationTarget(InvocationImpl invoc){
 		if( DEBUG_OUT != null ) DEBUG_OUT.println( "launchInvocationTarget:" ); 
 		if( DEBUG_OUT != null && invoc != null ){
@@ -66,7 +67,7 @@ public final class InvocationStoreProxy {
      */
     static public boolean invokeNext() {
     	if(DEBUG_OUT!=null) {
-    		DEBUG_OUT.println( InvocationStore.class.getName() + ".invokeNext() called. Invocations count = " + InvocationStore.size());
+    		DEBUG_OUT.println( InvocationStoreProxy.class.getName() + ".invokeNext() called. Invocations count = " + InvocationStore.size());
     		int tid = 0;
     		InvocationImpl invoc;
     		while( (invoc = InvocationStore.getByTid(tid, 1)) != null ){

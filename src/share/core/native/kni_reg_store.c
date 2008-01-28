@@ -47,6 +47,7 @@
 #ifdef _DEBUG
 #define TRACE_REGISTER
 #define TRACE_TRANSFER_DATA
+//#define TRACE_MALLOC
 #endif
 
 
@@ -135,11 +136,9 @@ static void result2string(KNIDECLARGS JSR211_RESULT_BUFFER buffer, jstring str){
 }
 
 static void cleanStringArray(const jchar** strings, int n) {
-	if (strings){
-		const jchar** p = strings + n;
-		while(--p>strings){
-			FREE(*p);
-		}
+	if (strings != NULL){
+		const jchar** p = strings;
+		while(n--) FREE(*p++);
 		FREE((void*)strings);
 	}
 }
@@ -265,6 +264,9 @@ static int getStringArray(KNIDECLARGS jobjectArray arrObj, const jchar*** arrPtr
     n = KNI_IsNullHandle(arrObj)? 0: (int)KNI_GetArrayLength(arrObj);
 	if (!n) return 0;
 	
+#ifdef TRACE_MALLOC
+    printf( "kni_reg_store.getStringArray(%d): malloc( %d )", __LINE__, sizeof(jchar*) * n );
+#endif
     arr = MALLOC(sizeof(jchar*) * n);
     if (!arr) return KNI_ENOMEM;
 

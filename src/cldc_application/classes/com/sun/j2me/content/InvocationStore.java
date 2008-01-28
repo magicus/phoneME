@@ -40,6 +40,7 @@ package com.sun.j2me.content;
  * requests but blocks, if requested, until it is unblocked.
  */
 public class InvocationStore {
+	protected static final java.io.PrintStream DEBUG_OUT = System.out;
 
     /**
      * The count of cancel requests; access is not synchronized because
@@ -120,6 +121,9 @@ public class InvocationStore {
      */
     static InvocationImpl getRequest(int suiteId, String classname,
                                      boolean shouldBlock) {
+    	if( DEBUG_OUT != null )
+    		DEBUG_OUT.println( "InvocationStore.getRequest: suite = " + suiteId +
+    								", classname = '" + classname + "'" );
         InvocationImpl invoc = new InvocationImpl();
         if (suiteId == AppProxy.INVALID_STORAGE_ID || classname == null) {
             throw new NullPointerException();
@@ -147,10 +151,13 @@ public class InvocationStore {
      */
     static InvocationImpl getResponse(InvocationImpl invoc, int suiteId, 
                                         String classname, boolean shouldBlock) {
+    	if( DEBUG_OUT != null )
+    		DEBUG_OUT.println( "InvocationStore.getResponse: suite = " + suiteId +
+    								", classname = '" + classname + "'" );
         invoc.suiteId = suiteId;
         invoc.classname = classname;
 
-	   return get(invoc, MODE_RESPONSE, shouldBlock);
+        return get(invoc, MODE_RESPONSE, shouldBlock);
     }
 
     /**
@@ -166,7 +173,7 @@ public class InvocationStore {
      * <li>INIT Invocations are requeued to the invoking application
      *    with ERROR status. </li>
      * <li>OK, CANCELLED, ERROR, or INITIATED Invocations are
-     *    discrded.</li>
+     *    discarded.</li>
      * <li>HOLD status Invocations are retained pending
      *    completion of previous Invocation.  TBD: Chained HOLDs...</li>
      * </ul>
@@ -183,7 +190,7 @@ public class InvocationStore {
         invoc.suiteId = suiteId;
         invoc.classname = classname;
 
-	return get(invoc, MODE_CLEANUP, false);
+        return get(invoc, MODE_CLEANUP, false);
     }
 
     /**
@@ -254,9 +261,9 @@ public class InvocationStore {
     	    if (!shouldBlock) {
                 break;
     	    }
-    	    // No matching request; retry unless cancelled
+    	    // No matching request; retry unless canceled
     	    if (cancelCount - oldCancelCount > 0) {
-        		// Was cancelled; s == 0 -> no Invocation
+        		// Was canceled; s == 0 -> no Invocation
         		break;
     	    }
     	}
@@ -332,9 +339,9 @@ public class InvocationStore {
         int oldCancelCount = cancelCount;
         while ((pending = listen0(suiteId, classname,mode, shouldBlock)) == false &&
                     shouldBlock) {
-            // No pending request; retry unless cancelled
+            // No pending request; retry unless canceled
             if (cancelCount - oldCancelCount > 0) {
-                // Was cancelled; s == 0 -> no Invocation
+                // Was canceled; s == 0 -> no Invocation
                 break;
             }
         }

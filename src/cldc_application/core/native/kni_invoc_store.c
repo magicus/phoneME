@@ -58,6 +58,7 @@
 #ifdef _DEBUG
 #define DEBUG_211
 #define DEBUG_INVOCLC
+#define TRACE_INVOCFIND
 #endif
 
 /*
@@ -1187,7 +1188,7 @@ static StoredLink* invocFind(SuiteIdType suiteId,
     StoredLink* curr;
     StoredInvoc* invoc;
 
-#ifdef DEBUG_211
+#ifdef TRACE_INVOCFIND
     {
         char * m = "unknown";
         switch( mode ){
@@ -1206,27 +1207,36 @@ static StoredLink* invocFind(SuiteIdType suiteId,
      */
     for (curr = invocQueue; curr != NULL; ) {
         invoc = curr->invoc;
+#ifdef TRACE_INVOCFIND
+        printf( "invoc: tid = %d, status = %d, responseReq = %d, ID = '%ls', class = '%ls'\n",
+                invoc->tid, invoc->status, invoc->responseRequired, invoc->ID.data, invoc->classname.data );
+#endif
         /*
          * If the status matches the request
          * and the suite matches and the classname matches.
          */
-        if (modeCheck(invoc, mode) &&
-            suiteId == invoc->suiteId &&
-            pcsl_string_equals(classname, &invoc->classname)) {
-
-            if (mode == MODE_CLEANUP) {
-                /* An active or waiting Invocation needs a response */
-                if ((invoc->status != STATUS_WAITING && invoc->status != STATUS_ACTIVE) ||
-                        !invoc->responseRequired) {
-                    /* A regular response, discard and continue */
-                    StoredLink* next = curr->flink;
-                    removeEntry(curr);
-                    invocFree(invoc);
-                    curr = next;
-                    continue;
+        if (suiteId == invoc->suiteId && pcsl_string_equals(classname, &invoc->classname)){
+#ifdef TRACE_INVOCFIND
+            printf( "\ttid & classname are OK\n" );
+#endif
+            if(modeCheck(invoc, mode)) {
+#ifdef TRACE_INVOCFIND
+                printf( "\tmode OK\n" );
+#endif
+                if (mode == MODE_CLEANUP) {
+                    /* An active or waiting Invocation needs a response */
+                    if ((invoc->status != STATUS_WAITING && invoc->status != STATUS_ACTIVE) ||
+                            !invoc->responseRequired) {
+                        /* A regular response, discard and continue */
+                        StoredLink* next = curr->flink;
+                        removeEntry(curr);
+                        invocFree(invoc);
+                        curr = next;
+                        continue;
+                    }
                 }
+                return curr;
             }
-            return curr;
         }
         curr = curr->flink;
     }

@@ -44,7 +44,8 @@
 #include "jsr211_result.h"
 
 #ifdef _DEBUG
-#define TRACE_DATA_OPS
+//#define TRACE_DATA_OPS
+//#define TRACE_DATA_VERBOSE
 #endif
 
 #define BUFFER_GRANULARITY 0x100
@@ -142,6 +143,13 @@ jsr211_result jsr211_append_data(DATA_BUFFER** buffer, const void * data, size_t
         jsr211_inc( b, length );
 #ifdef TRACE_DATA_OPS
         printf( ", bytes_used = %d\n", b->bytes_used );
+#ifdef TRACE_DATA_VERBOSE
+        {
+            size_t length = b->bytes_used / 2; const jchar * chars = (jchar *)b->data;
+            while( length-- ) printf( "%04x", *chars++ );
+            printf("\n");
+        }
+#endif
 #endif
     }
     return rc;
@@ -158,6 +166,7 @@ jsr211_result jsr211_add_level( DATA_BUFFER ** buffer ) {
     CHECKRC( assureBufferCap(buffer, sizeof(size_type) ) );
     b = *buffer;
     b->size_offset[ b->level ] = b->bytes_used;
+    *(size_type *)(b->data + b->bytes_used) = (size_type)0;
     jsr211_inc( b, sizeof(size_type) );
     b->level++;
     return JSR211_OK;
