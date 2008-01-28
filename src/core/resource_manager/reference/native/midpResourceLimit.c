@@ -195,10 +195,10 @@ static _IsolateResourceUsage *findIsolateResourceUsageStruct(int isolateId) {
     int i;
     int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
     char max_isolates_str[5];
-        
+
     if (0 == max_isolates) {
         REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-        /*get hard-coded property*/
+        /*get XML-generated property*/
         max_isolates = MAX_ISOLATES;
         /*set the hard-coded property*/
         sprintf(max_isolates_str, "%d", max_isolates);
