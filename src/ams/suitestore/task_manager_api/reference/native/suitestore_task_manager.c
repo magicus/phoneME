@@ -490,6 +490,8 @@ midp_change_suite_storage(SuiteIdType suiteId, StorageIdType newStorageId) {
         oldRoot = storage_get_root(pData->storageId);
         newRootLength = pcsl_string_length(newRoot);
         oldRootLength = pcsl_string_length(oldRoot);
+
+        status = ALL_OK;
             
         for (;;) {
             pcsl_string filePath;
@@ -499,7 +501,6 @@ midp_change_suite_storage(SuiteIdType suiteId, StorageIdType newStorageId) {
             rc = storage_get_next_file_in_iterator(&suiteRoot,
                 fileIteratorHandle, &filePath);
             if (0 != rc) {
-                status = IO_ERROR;
                 break;
             }
             /* construct new file name. */

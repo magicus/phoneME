@@ -92,9 +92,16 @@ INT_XML_FILES += \
 	$(INT_COMMON_XML_DIR)/i18n_constants.xml \
 	$(INT_COMMON_XML_DIR)/l10n/en-US.xml \
 	$(INT_COMMON_XML_DIR)/chameleon/skin_constants.xml \
-	$(INT_COMMON_XML_DIR)/ams/suitestore_constants.xml \
-	$(INT_COMMON_XML_DIR)/storage_constants.xml \
+	$(INT_COMMON_XML_DIR)/suitestore_constants.xml \
 	$(INT_COMMON_XML_DIR)/alert_type_constants.xml
+
+ifeq ($(TARGET_VM), cdc_vm)
+INT_XML_FILES += \
+    $(INT_COMMON_XML_DIR)/ams_cdc/storage_constants.xml
+else
+INT_XML_FILES += \
+    $(INT_COMMON_XML_DIR)/ams_cldc/storage_constants.xml
+endif
 
 # Project specific xml files
 INT_XML_FILES += \
