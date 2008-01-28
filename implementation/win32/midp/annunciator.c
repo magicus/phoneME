@@ -273,6 +273,25 @@ javacall_result javacall_annunciator_display_network_icon(javacall_bool enableNe
 }
 
 /**
+ * Set the input mode.
+ * Notify the platform to show the current input mode
+ * @param mode equals the new mode just set values are one of the following :
+ *        - JAVACALL_INPUT_MODE_LATIN_CAPS      
+ *        - JAVACALL_INPUT_MODE_LATIN_LOWERCASE  
+ *        - JAVACALL_INPUT_MODE_NUMERIC         
+ *        - JAVACALL_INPUT_MODE_SYMBOL    
+ *        - JAVACALL_INPUT_MODE_T9
+ *        - JAVACALL_INPUT_MODE_OFF
+ *             
+ * @return <tt>JAVACALL_OK</tt> operation was supported by the device
+ *         <tt>JAVACALL_FAIL</tt> or negative value on failure, or if not 
+ *         supported on device
+ */
+javacall_result javacall_annunciator_display_input_mode_icon(javacall_input_mode_type mode) {
+    return JAVACALL_FAIL;
+}
+
+/**
  * Turning Home indicator off or on. 
  *
  * @param enableHomeIndicator boolean value indicating if home indicator
