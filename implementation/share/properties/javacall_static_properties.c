@@ -34,6 +34,7 @@ char* javacall_static_properties_sections[] = {
 static char* javacall_static_properties_application_keys[] = {
     "audio.encodings",
     "javax.microedition.io.Connector.protocolpath",
+    "microedition.chapi.version",
     "microedition.configuration",
     "microedition.jtwi.version",
     "microedition.locale",
@@ -78,6 +79,7 @@ static char* javacall_static_properties_application_keys[] = {
 static char* javacall_static_properties_application_values[] = {
     "encoding=pcm",
     "com.sun.midp.io",
+    "1.0",
     "CLDC-1.1",
     "1.0",
     "en-US",
