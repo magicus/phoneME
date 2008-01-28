@@ -156,6 +156,7 @@ extern "C" {
 #define MM_DATA         intParam2
 #define MM_ISOLATE      intParam3
 #define MM_EVT_TYPE     intParam4
+#define MM_EVT_STATUS   intParam5
 /** @} */
 
 /**

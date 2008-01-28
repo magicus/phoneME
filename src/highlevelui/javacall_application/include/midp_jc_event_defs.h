@@ -57,6 +57,7 @@ extern "C" {
 
 #ifdef ENABLE_JSR_135
 #include <javacall_multimedia.h>
+#include <javanotify_multimedia.h>
 #endif
 #include <javacall_keypress.h>
 #include <javacall_penevent.h>
@@ -218,8 +219,9 @@ typedef struct {
 #ifdef ENABLE_JSR_135
 typedef struct {
     javacall_media_notification_type mediaType;
-    int isolateId;
+    int appId;
     int playerId;
+    int status;
     long data;
 } midp_jc_event_multimedia;
 #endif
