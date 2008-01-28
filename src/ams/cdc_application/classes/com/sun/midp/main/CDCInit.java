@@ -63,7 +63,7 @@ public class CDCInit {
              */
         }
 
-        initMidpNativeStates(midpHome, storageHome);
+        initMidpNativeStates(midpHome+File.separator+"appdb", storageHome+File.separator+"lib");
     }
 
     /** Performs CDC API initialization. */

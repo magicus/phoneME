@@ -62,7 +62,7 @@ static char* midpConfig = NULL;
 static void (*vmFinalizer)(void) = NULL;
 
 /**
- * Sets the home directory for MIDP if needed.
+ * Sets the application directory for MIDP if needed.
  * So the suites and other MIDP persistent
  * state can be found. Only had an effect when called before 
  * any other method except midpInitialize is called.
