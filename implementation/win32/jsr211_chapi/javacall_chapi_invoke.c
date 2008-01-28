@@ -102,17 +102,17 @@ javacall_result javanotify_chapi_platform_finish(int invoc_id,
         javacall_utf16_string url,
         int argsLen, javacall_utf16_string* args,
         int dataLen, void* data, 
-        javacall_chapi_invocation_status status)
-{
-    (void)invoc_id;
-    (void)url;
-    (void)argsLen;
-    (void)args;
-    (void)dataLen;
-    (void)data;
-    (void)status;
-    return JAVACALL_NOT_IMPLEMENTED;
-}
+        javacall_chapi_invocation_status status);
+/* { */
+/*     (void)invoc_id; */
+/*     (void)url; */
+/*     (void)argsLen; */
+/*     (void)args; */
+/*     (void)dataLen; */
+/*     (void)data; */
+/*     (void)status; */
+/*     return JAVACALL_NOT_IMPLEMENTED; */
+/* } */
 
 
 
