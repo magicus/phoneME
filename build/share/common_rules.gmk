@@ -48,10 +48,6 @@ $(WMATOOL_MANIFEST_FILE): $(JSR_120_TOOLS_CLASS_DIR)
 	@echo " ... $@ " $(LOG)
 	@(echo "Main-Class: $(WMATOOL_MAIN_CLASS)" > $@) $(LOG)
 
-$(JSR_120_TOOLS_CLASS_DIR) $(JSR_120_CLASSBINDIR) $(JSR_120_BINDIR):
-	@echo " ... creating $@ " $(LOG)
-	@(mkdir -p $@) $(LOG)
-
 clean_tools::
 	-@(rm -fr $(WMATOOL_JAR_FILE)) $(LOG)
 
