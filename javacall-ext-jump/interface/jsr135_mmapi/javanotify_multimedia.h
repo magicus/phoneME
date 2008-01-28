@@ -72,6 +72,8 @@ typedef enum {
     /** Posted when the system or another higher priority application has temporarily 
         taken control of an exclusive device which was previously available to the Player. */
     JAVACALL_EVENT_MEDIA_DEVICE_UNAVAILABLE,    
+    /** Posted when the native player needs more media content from Java side. */
+    JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA,
     /** Posted when the Player enters into a buffering mode. */
     JAVACALL_EVENT_MEDIA_BUFFERING_STARTED,     
     /** Posted when the Player leaves the buffering mode. */
@@ -94,8 +96,9 @@ typedef enum {
  * Post native media event to Java event handler
  * 
  * @param type          Event type
- * @param isolateId     Isolate ID that came from javacall_media_create function
+ * @param appID         Application ID that came from javacall_media_create function
  * @param playerId      Player ID that came from javacall_media_create function
+ * @param status        Status of completed operation
  * @param data          Data that will be carried with this notification
  *                      - JAVACALL_EVENT_MEDIA_END_OF_MEDIA
  *                          data = Media time when the Player reached end of media and stopped.
@@ -107,6 +110,8 @@ typedef enum {
  *                          data = None.
  *                      - JAVACALL_EVENT_MEDIA_DEVICE_UNAVAILABLE   
  *                          data = None.
+ *                      - JAVACALL_EVENT_MEDIA_NEED_MORE_MEDIA_DATA
+ *                          data = None.
  *                      - JAVACALL_EVENT_MEDIA_BUFFERING_STARTED
  *                          data = Designating the media time when the buffering is started.
  *                      - JAVACALL_EVENT_MEDIA_BUFFERING_STOPPED
@@ -117,8 +122,9 @@ typedef enum {
  *                          data = None.
  */
 void javanotify_on_media_notification(javacall_media_notification_type type,
-                                      int isolateId,
+                                      int appID,
                                       int playerId, 
+                                      javacall_result status,
                                       void *data);
 
 /** @} */
