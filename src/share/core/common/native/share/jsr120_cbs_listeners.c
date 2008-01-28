@@ -89,9 +89,9 @@ static WMA_STATUS jsr120_cbs_invoke_listeners(CbsMessage* message,
     WMA_STATUS unblocked = WMA_ERR;
 
     /* Notify all listeners that match the given port (Message ID) */
-    for(callback=jsr120_list_get_by_number(listeners, message->msgID);
-	callback!=NULL;
-	callback=jsr120_list_get_by_number(callback->next, message->msgID)) {
+    for(callback = jsr120_list_get_by_number(listeners, message->msgID);
+	callback != NULL;
+	callback = jsr120_list_get_by_number(callback->next, message->msgID)) {
 
 	/* Pick up the listener */
 	cbs_listener_t* listener=(cbs_listener_t*)(callback->userDataCallback);
@@ -193,49 +193,41 @@ WMA_STATUS jsr120_cbs_is_listener_registered_by_msid(jchar msgID,
 }
 
 #if (ENABLE_CDC != 1)
+
 /**
- * Find a first thread that can be unblocked for a given handle and signal type.
- *
- * @param handle Platform-specific handle.
- * @param signalType Enumerated signal type.
- *
- * @return JVMSPI_ThreadID Java thread id than can be unblocked
- *         0 if no matching thread can be found
- *
+ * See implementation in jsr120_sms_listeners.c
  */
-static JVMSPI_ThreadID
-jsr120_cbs_get_blocked_thread_from_handle(long handle, jint waitingFor) {
-    JVMSPI_BlockedThreadInfo *blocked_threads;
-    int n;
-    int i;
+extern WMA_STATUS jsr120_unblock_midp_threads(long handle, jint waitingFor, WMA_STATUS status);
 
-    blocked_threads = SNI_GetBlockedThreads(&n);
+/**
+ * Ublock threads waiting for these signals:
+ *   WMA_CBS_READ_SIGNAL
+ *   PUSH_SIGNAL
+ *
+ * @param handle Platform specific handle
+ * @param signalType Enumerated signal type
+ *
+ * @result returns <code>WMA_STATUS</code> if waiting threads was
+ *         successfully unblocked
+ */
+static WMA_STATUS jsr120_unblock_cbs_read_threads(long handle, jint waitingFor) {
+    WMA_STATUS ok = WMA_ERR;
 
-    for (i = 0; i < n; i++) {
-	MidpReentryData *p =
-            (MidpReentryData*)(blocked_threads[i].reentry_data);
-	if (p != NULL) {
-
-	    /* wait policy: 1. threads waiting for network reads
-                            2. threads waiting for network writes
-         	            3. threads waiting for network push event*/
-	    if ((waitingFor == WMA_CBS_READ_SIGNAL) &&
-                (waitingFor == (int)p->waitingFor) &&
-         	(p->descriptor == handle)) {
-		return blocked_threads[i].thread_id;
-            }
-
-            if ((waitingFor == PUSH_SIGNAL) &&
-                (waitingFor == (int)p->waitingFor) &&
-                (findPushBlockedHandle(handle) != 0)) {
-                return blocked_threads[i].thread_id;
-	    }
-
-	}
-
+    if (waitingFor == WMA_CBS_READ_SIGNAL) {
+        ok = jsr120_unblock_midp_threads(handle, waitingFor, WMA_OK);
     }
 
-    return 0;
+    if (ok == WMA_OK) {
+        return ok; 
+    }
+
+    if (waitingFor == PUSH_SIGNAL) {
+        if (findPushBlockedHandle(handle) != 0) {
+            ok = jsr120_unblock_midp_threads(0, waitingFor, WMA_OK);
+        }
+    }
+
+    return ok;
 }
 #endif
 
@@ -244,14 +236,8 @@ jsr120_cbs_get_blocked_thread_from_handle(long handle, jint waitingFor) {
  */
 WMA_STATUS jsr120_cbs_unblock_thread(jint handle, jint waitingFor) {
 #if (ENABLE_CDC != 1)
-    JVMSPI_ThreadID id =
-        jsr120_cbs_get_blocked_thread_from_handle((long)handle, waitingFor);
-    if (id != 0) {
-	midp_thread_unblock(id);
-	return WMA_OK;
-    }
+    return jsr120_unblock_cbs_read_threads(handle, waitingFor);
 #else
-/* IMPL NOTE implement this */
 #ifdef JSR_120_ENABLE_JUMPDRIVER
     JUMPEvent evt = (JUMPEvent) handle;
     if (jumpEventHappens(evt) >= 0) {

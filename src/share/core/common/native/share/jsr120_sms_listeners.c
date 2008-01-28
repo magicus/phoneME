@@ -79,7 +79,7 @@ typedef WMA_STATUS sms_listener_t(jint port, SmsMessage* SmsMessage, void* userD
  * @result returns <code>WMA_STATUS</code> if waiting threads was
  *         successfully unblocked
  */
-static WMA_STATUS jsr120_unblock_midp_threads(long handle, jint waitingFor, WMA_STATUS status) {
+WMA_STATUS jsr120_unblock_midp_threads(long handle, jint waitingFor, WMA_STATUS status) {
 
     jint i, num_threads;
     JVMSPI_BlockedThreadInfo *blocked_threads = SNI_GetBlockedThreads(&num_threads);
