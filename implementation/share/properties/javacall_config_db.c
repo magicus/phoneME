@@ -1,23 +1,23 @@
 /*
  *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License version
  * 2 only, as published by the Free Software Foundation.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License version 2 for more details (a copy is
  * included at /legal/license.txt).
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * version 2 along with this work; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
- * 
+ *
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa
  * Clara, CA 95054 or visit www.sun.com if you need additional
  * information or have any questions.
@@ -55,7 +55,7 @@ static char *configdb_fgets(char *line, int length, javacall_handle file_handle)
     long actual_read = 1;
 
     while ((read_length < length-1) && (actual_read>0)) {
-        actual_read = javacall_file_read(file_handle, (unsigned char *)&line[read_length], 1); 
+        actual_read = javacall_file_read(file_handle, (unsigned char *)&line[read_length], 1);
         if (0 < actual_read) {
             if (read_length==0 && ((line[0]=='\n') || (line[0]=='\r'))) {
                 continue;
@@ -108,7 +108,7 @@ static void configdb_add_entry(
 
 /**
  * Get the number of sections in the database
- * 
+ *
  * @param config_handle database object created by calling javacall_configdb_load
  * @return number of sections in the database or -1 in case of error
  */
@@ -127,7 +127,7 @@ int javacall_configdb_get_num_of_sections(javacall_handle config_handle) {
         if (d->key[i] == NULL) {
             continue;
         }
-            
+
         if (strchr(d->key[i], ':')==NULL) {
             nsec++;
         }
@@ -139,7 +139,7 @@ int javacall_configdb_get_num_of_sections(javacall_handle config_handle) {
 
 /**
  * Get the name of the n'th section
- * 
+ *
  * @param config_handle database object created by calling javacall_configdb_load
  * @param n section number
  * @return the name of the n'th section or NULL in case of error
@@ -168,20 +168,20 @@ char* javacall_configdb_get_section_name(javacall_handle config_handle, int n) {
         }
     }
 
-    return NULL;    
+    return NULL;
 }
 
 
 /**
  * Dump the content of the parameter database to an open file pointer
  * The output format is pairs of [Key]=[Value]
- * 
+ *
  * @param config_handle    database object created by calling javacall_configdb_load
  * @param unicodeFileName  output file name
  * @param fileNameLen      file name length
  */
-void javacall_configdb_dump(javacall_handle config_handle, 
-                            javacall_utf16* unicodeFileName, 
+void javacall_configdb_dump(javacall_handle config_handle,
+                            javacall_utf16* unicodeFileName,
                             int fileNameLen) {
 
     int     i;
@@ -191,7 +191,7 @@ void javacall_configdb_dump(javacall_handle config_handle,
     javacall_result res;
 
     if (d == NULL || unicodeFileName == NULL || fileNameLen <= 0) {
-        return; 
+        return;
     }
 
     res = javacall_file_open(unicodeFileName,
@@ -213,7 +213,7 @@ void javacall_configdb_dump(javacall_handle config_handle,
         } else {
             sprintf(l, "[%s]=UNDEF\n", d->key[i]);
         }
-        javacall_file_write(file_handle, (unsigned char*)l, strlen(l)); 
+        javacall_file_write(file_handle, (unsigned char*)l, strlen(l));
     }
     javacall_file_close(file_handle);
 }
@@ -226,8 +226,8 @@ void javacall_configdb_dump(javacall_handle config_handle,
  * @param unicodeFileName  output file name
  * @param fileNameLen      file name length
  */
-void javacall_configdb_dump_ini(javacall_handle config_handle, 
-                                javacall_utf16* unicodeFileName, 
+void javacall_configdb_dump_ini(javacall_handle config_handle,
+                                javacall_utf16* unicodeFileName,
                                 int fileNameLen) {
     int     i, j;
     char    keym[MAX_STR_LENGTH+1];
@@ -240,7 +240,7 @@ void javacall_configdb_dump_ini(javacall_handle config_handle,
     javacall_result res;
 
     if (d == NULL || unicodeFileName == NULL || fileNameLen <= 0) {
-        return; 
+        return;
     }
 
 
@@ -267,7 +267,7 @@ void javacall_configdb_dump_ini(javacall_handle config_handle,
                 sprintf(l, "[%s]=UNDEF\n", d->key[i]);
             }
 
-            javacall_file_write(file_handle, (unsigned char*)l, strlen(l)); 
+            javacall_file_write(file_handle, (unsigned char*)l, strlen(l));
         }
         javacall_file_close(file_handle);
         return ;
@@ -276,23 +276,23 @@ void javacall_configdb_dump_ini(javacall_handle config_handle,
         secname = javacall_configdb_get_section_name(d, i) ;
         seclen  = (int)strlen(secname);
         sprintf(l, "\n[%s]\n", secname);
-        javacall_file_write(file_handle, (unsigned char*)l, strlen(l)); 
+        javacall_file_write(file_handle, (unsigned char*)l, strlen(l));
         sprintf(keym, "%s:", secname);
         for (j = 0; j < d->size; j++) {
             if (d->key[j] == NULL) {
                 continue;
-            }                
+            }
             if (!strncmp(d->key[j], keym, seclen+1)) {
                 sprintf(l,
                         "%-30s = %s\n",
                         d->key[j]+seclen+1,
                         d->val[j] ? d->val[j] : "");
-                javacall_file_write(file_handle, (unsigned char*)l, strlen(l)); 
+                javacall_file_write(file_handle, (unsigned char*)l, strlen(l));
             }
         }
     }
     sprintf(l, "\n");
-    javacall_file_write(file_handle, (unsigned char*)l, strlen(l)); 
+    javacall_file_write(file_handle, (unsigned char*)l, strlen(l));
 
     javacall_file_close(file_handle);
 }
@@ -300,7 +300,7 @@ void javacall_configdb_dump_ini(javacall_handle config_handle,
 
 /**
  * Get the value corresponding to the key as a string
- * 
+ *
  * @param config_handle   database object created by calling javacall_configdb_load
  * @param key             The key to get the corresponding value of
  * @param def             default parameter to return if the value has not been found
@@ -309,8 +309,8 @@ void javacall_configdb_dump_ini(javacall_handle config_handle,
  *                        JAVACALL_VALUE_NOT_FOUND The value has not been found
  *                        JAVACALL_FAIL   bad arguments are supplied
  */
-javacall_result javacall_configdb_getstring(javacall_handle config_handle, char* key, 
-                                            char* def, char** result) {    
+javacall_result javacall_configdb_getstring(javacall_handle config_handle, char* key,
+                                            char* def, char** result) {
     string_db *d = (string_db *)config_handle;
     javacall_result status;
 
@@ -321,7 +321,7 @@ javacall_result javacall_configdb_getstring(javacall_handle config_handle, char*
     if (d == NULL || key == NULL) {
         *result = def;
         return JAVACALL_FAIL;
-    }    
+    }
 
     status = javacall_string_db_getstr(d, key, def, result);
     
@@ -332,11 +332,11 @@ javacall_result javacall_configdb_getstring(javacall_handle config_handle, char*
 
 /**
  * Find a key in the database
- * 
+ *
  * @param config_handle database object created by calling javacall_configdb_load
  * @param key   the key to find
- * @return      JAVACALL_OK if the value corresponding to the key exists and 
- *              is not empty string 
+ * @return      JAVACALL_OK if the value corresponding to the key exists and
+ *              is not empty string
  *              JAVACALL_VALUE_NOT_FOUND otherwise
  */
 javacall_result javacall_configdb_find_key(javacall_handle config_handle, char* key) {
@@ -354,7 +354,7 @@ javacall_result javacall_configdb_find_key(javacall_handle config_handle, char* 
 
 /**
  * Set new value for key. If key is not in the database, it will be added.
- * 
+ *
  * @param config_handle  database object created by calling javacall_configdb_load
  * @param key   the key value corresponding to which to modify. the key is given as INI "section:key"
  * @param val   the new value for key
@@ -374,7 +374,7 @@ javacall_result javacall_configdb_setstr(javacall_handle config_handle, char* ke
 
 /**
  * Delete a key from the database
- * 
+ *
  * @param config_handle     database object created by calling javacall_configdb_load
  * @param key   the key to delete
  */
@@ -397,12 +397,12 @@ javacall_handle configdb_load_no_fs () {
         return NULL;
     }
 
-    for (i = 0; javacall_static_properties_sections[i] != NULL; i++) {        
+    for (i = 0; javacall_static_properties_sections[i] != NULL; i++) {
         //add section to db
         configdb_add_entry(db, javacall_static_properties_sections[i], NULL, NULL);
         //add keys and values
         for (j = 0; javacall_static_properties_keys[i][j] != NULL; j++) {
-            configdb_add_entry(db, javacall_static_properties_sections[i], javacall_static_properties_keys[i][j], 
+            configdb_add_entry(db, javacall_static_properties_sections[i], javacall_static_properties_keys[i][j],
                                javacall_static_properties_values[i][j]);
         }
     }
@@ -416,7 +416,7 @@ javacall_handle configdb_load_from_fs(javacall_utf16* unicodeFileName, int fileN
     char    sec[MAX_STR_LENGTH+1];
     char    key[MAX_STR_LENGTH+1];
     char    val[MAX_STR_LENGTH+1];
-    char*   where;     
+    char*   where;
     int lineno;
     javacall_handle file_handle;
     javacall_result res;
@@ -427,7 +427,7 @@ javacall_handle configdb_load_from_fs(javacall_utf16* unicodeFileName, int fileN
                              JAVACALL_FILE_O_RDWR,
                              &file_handle);
     if (res != JAVACALL_OK) {
-        javacall_print("javacall_configdb_load(): ERROR - Can't open the dump file!\n");
+        javacall_print("Error:  Unable to open the dynamic properties file.\n");
         return NULL;
     }
 
@@ -439,7 +439,7 @@ javacall_handle configdb_load_from_fs(javacall_utf16* unicodeFileName, int fileN
     d = javacall_string_db_new(0);
     if (NULL == d) {
         return NULL;
-    }        
+    }
     lineno = 0;
     while (configdb_fgets(line, MAX_LINE_LENGTH, file_handle) != NULL) {
         lineno++;
@@ -452,7 +452,7 @@ javacall_handle configdb_load_from_fs(javacall_utf16* unicodeFileName, int fileN
                 /* Valid section name */
                 strcpy(sec, sec);
                 configdb_add_entry(d, sec, NULL, NULL);
-            } 
+            }
             else if (sscanf (where, "%[^=] = \"%[^\"]\"", key, val) == 2
                        ||  sscanf (where, "%[^=] = '%[^\']'",   key, val) == 2
                        ||  sscanf (where, "%[^=] = %[^;#]",     key, val) == 2) {
@@ -492,7 +492,7 @@ javacall_handle javacall_configdb_load(javacall_utf16* unicodeFileName, int file
 
 /**
  * Free a database
- * 
+ *
  * @param   config_handle database object created in a call to javacall_configdb_load
  */
 void javacall_configdb_free(javacall_handle config_handle) {
