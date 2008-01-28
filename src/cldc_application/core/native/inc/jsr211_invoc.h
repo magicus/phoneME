@@ -38,6 +38,8 @@
 #define _JSR211_INVOCATION_H_
 
 #include <pcsl_string.h>
+#include "jsr211_result.h"
+#include "jsr211_registry.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -122,7 +124,7 @@ typedef struct _StoredInvoc {
 #ifdef SUITE_ID_STRING
     pcsl_string suiteID;    /**< The target MIDlet suiteID */
 #else
-    int suiteId;    /**< The target MIDlet suiteID */
+    javacall_suite_id suiteId;    /**< The target MIDlet suiteID */
 #endif
     pcsl_string classname;    /**< The target classname */
     pcsl_string invokingAuthority; /**< The invoking authority string */
@@ -130,7 +132,7 @@ typedef struct _StoredInvoc {
 #ifdef SUITE_ID_STRING
     pcsl_string invokingSuiteID;    /**< The target MIDlet suiteID */
 #else
-    int invokingSuiteId; /**< The invoking MIDlet suiteID */
+    javacall_suite_id invokingSuiteId; /**< The invoking MIDlet suiteID */
 #endif
     pcsl_string invokingClassname; /**< The invoking MIDlet classname */
     pcsl_string invokingID;    /**< The invoking Application ID */
@@ -151,7 +153,19 @@ typedef struct _StoredInvoc {
  *
  * @return the found invocation, or NULL if no matched invocation.
  */
-StoredInvoc* jsr211_get_invocation(const pcsl_string* handlerID);
+StoredInvoc* jsr211_get_invocation(javacall_const_utf16_string handlerID);
+
+/**
+ * Executes specified non-java content handler.
+ * @param handler_id content handler ID
+ * @return codes are following
+ * <ul>
+ * <li> JSR211_LAUNCH_OK or JSR211_LAUNCH_OK_SHOULD_EXIT if content handler 
+ *   started successfully
+ * <li> other code from the enum according to error codition
+ * </ul>
+ */
+jsr211_launch_result jsr211_execute_handler(javacall_const_utf16_string handler_id);
 
 #ifdef __cplusplus
 }

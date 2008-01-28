@@ -294,18 +294,6 @@ jsr211_result jsr211_get_handler_field(const jchar* id, jsr211_field field_id,
                         /*OUT*/ JSR211_RESULT_STRARRAY result);
 
 /**
- * Executes specified non-java content handler.
- * @param handler_id content handler ID
- * @return codes are following
- * <ul>
- * <li> JSR211_LAUNCH_OK or JSR211_LAUNCH_OK_SHOULD_EXIT if content handler 
- *   started successfully
- * <li> other code from the enum according to error codition
- * </ul>
- */
-jsr211_launch_result jsr211_execute_handler(const jchar* handler_id);
-
-/**
  * Checks whether the internal handlers, if any, are installed.
  * Implemented in jsr211_deploy.c accordingly to JAMS/NAMS mode.
  * @return JSR211_OK or JSR211_FAILED - if registry corrupted or OUT_OF_MEMORY.

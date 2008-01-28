@@ -636,21 +636,3 @@ jsr211_result jsr211_get_handler_field(javacall_const_utf16_string id,
 
 	return (res==JAVACALL_CHAPI_ERROR_NO_MORE_ELEMENTS)?JSR211_OK:JSR211_FAILED;
 }
-
-/**
- * Executes specified non-java content handler.
- * The current implementation provides executed handler 
- * only with URL and action invocation parameters.
- *
- * @param handler_id content handler ID
- * @return codes are following
- * <ul>
- * <li> JSR211_LAUNCH_OK or JSR211_LAUNCH_OK_SHOULD_EXIT if content handler 
- *   started successfully
- * <li> other code from the enum according to error codition
- * </ul>
- */
-jsr211_launch_result jsr211_execute_handler(javacall_const_utf16_string id) {
-	(void)id;
-    return JSR211_LAUNCH_ERR_NOTSUPPORTED;
-}
