@@ -67,6 +67,10 @@ javacall_result javacall_initialize_configurations(void) {
  */
 void javacall_finalize_configurations(void) {
     int file_name_len = sizeof(property_file_name)/sizeof(unsigned short);
+    if (!init_done) {
+        return;
+    }
+
     if (property_was_updated != 0) {
 #ifdef USE_PROPERTIES_FROM_FS
         javacall_configdb_dump_ini(handle, property_file_name, file_name_len);
