@@ -58,5 +58,5 @@ jdwp-dt: $(jdwp_dt_build_list)
 
 $(CVM_JDWP_LIBDIR)/$(CVM_JDWP_DT_LIB): $(CVM_JDWP_DT_OBJECTS)
 	@echo "Linking $@"
-	$(SO_LINK_CMD)
+	$(call SO_LINK_CMD,$(CVM_JDWP_DT_LINKLIBS))
 	@echo "Done Linking $@"

@@ -31,9 +31,9 @@
 ###############################################################################
 # Make definitions:
 
-CVM_JVMTI_HPROF_LIB           = $(LIB_PREFIX)jvmtihprof$(LIB_POSTFIX)
-
-CVM_JVMTI_HPROF_LIBDIR        = $(CVM_LIBDIR)
+CVM_JVMTI_HPROF_LIBDIR        ?= $(CVM_LIBDIR)
+CVM_JVMTI_HPROF_LIB           = \
+	$(CVM_JVMTI_HPROF_LIBDIR)/$(LIB_PREFIX)jvmtihprof$(LIB_POSTFIX)
 
 CVM_JVMTI_HPROF_BUILD_TOP     = $(CVM_BUILD_TOP)/jvmti/hprof
 CVM_JVMTI_HPROF_OBJDIR        = $(CVM_JVMTI_HPROF_BUILD_TOP)/obj
@@ -132,7 +132,7 @@ jvmti_hprof-clean:
 
 ifeq ($(CVM_JVMTI), true)
     jvmti_hprof_build_list = jvmti_hprof_initbuild \
-                       $(CVM_JVMTI_HPROF_LIBDIR)/$(CVM_JVMTI_HPROF_LIB) \
+                       $(CVM_JVMTI_HPROF_LIB) \
                        $(CVM_LIBDIR)/jvm.hprof.txt
 else
     jvmti_hprof_build_list =
@@ -168,14 +168,14 @@ $(CVM_JVMTI_HPROF_BUILDDIRS):
 	@echo ... mkdir $@
 	@if [ ! -d $@ ]; then mkdir -p $@; fi
 
-$(CVM_JVMTI_HPROF_LIBDIR)/$(CVM_JVMTI_HPROF_LIB): $(CVM_JVMTI_HPROF_OBJECTS)
+$(CVM_JVMTI_HPROF_LIB): $(CVM_JVMTI_HPROF_OBJECTS)
 	@echo "Linking $@"
-	$(SO_LINK_CMD)
+	$(call SO_LINK_CMD,$(CVM_JVMTI_LINKLIBS))
 	@echo "Done Linking $@"
 
 ifeq ($(CVM_JVMTI), true)
 ifeq ($(CVM_JVMPI), false)
-$(CVM_JVMTI_HPROF_LIBDIR)/jvm.hprof.txt:
+$(CVM_LIBDIR)/jvm.hprof.txt:
 	@echo "Copying $@"
 	@if [ ! -d $@ ]; then cp $(CVM_JVMTI_HPROF_SHAREROOT)/jvm.hprof.txt $@; fi
 	@echo "Done Copying $@"

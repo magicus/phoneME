@@ -30,3 +30,8 @@
 
 CVM_JVMTI_HPROF_LIBDIR        = $(CVM_BINDIR)
 
+ifeq ($(WIN32_PLATFORM),wince)
+CVM_JVMTI_LINKLIBS = winsock.lib
+else
+CVM_JVMTI_LINKLIBS = ws2_32.lib
+endif

@@ -91,7 +91,11 @@ CVMdynlinkOpen(const void *absolutePathName)
     HANDLE hh;
 
     if (absolutePathName == NULL) {
+#ifdef CVM_DLL
         hh = LoadLibrary(TEXT("cvmi.dll"));
+#else
+        hh = GetModuleHandle(NULL);
+#endif
     } else {
 #ifdef UNICODE
         char *pathName = (char*)absolutePathName;
@@ -107,11 +111,9 @@ CVMdynlinkOpen(const void *absolutePathName)
 #ifdef CVM_DEBUG
     /* Print an error message if we failed to open the dll. */
     if (hh == NULL) {
-        char buf[256];
-        int err = CVMioGetLastErrorString(buf, sizeof(buf));
-        fprintf(stderr, "CVMdynlinkOpen(%s) failed. err=0x%x: %s",
+        fprintf(stderr, "CVMdynlinkOpen(%s) failed. err=0x%x\n",
                 absolutePathName == NULL ? "NULL" : absolutePathName,
-                err, err == 0 ? "???" : buf);
+                GetLastError());
     }
 #endif
 

@@ -93,7 +93,6 @@ public class MIDletClassLoader extends URLClassLoader {
         this.auxClassLoader = auxClassLoader;
     }
 
-
     protected PermissionCollection getPermissions(CodeSource cs){
         URL srcLocation = cs.getLocation();
         for (int i=0; i<myBase.length; i++){
@@ -196,17 +195,27 @@ public class MIDletClassLoader extends URLClassLoader {
                         " contains illegal member reference"));
         }
 
+        /* First, check to see if the class has already been loaded. */
         resultClass = findLoadedClass(classname);
 
+        /* Class has not been loaded. Delegate to the parent classloader. */
         if (resultClass == null){
             try {
-                resultClass = implementationClassLoader.loadClass(
-                    classname, false, enableFilter);
+                /* Ask the parent to load the class for us. But first
+                 * make sure the class is allowed to be accessed by
+                 * midlet.
+                 */
+                if (!enableFilter ||
+                    MIDPConfig.isClassAllowed(classname)) {
+                    resultClass = implementationClassLoader.loadClass(
+                                      classname, false);
+                }
             } catch (ClassNotFoundException e) {
             } catch (NoClassDefFoundError e) {
             }
         }
 
+        /* Try loading the class ourselves. */
         if (resultClass == null) {
             try {
                 resultClass = loadFromUrl(classname);

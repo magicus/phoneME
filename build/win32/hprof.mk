@@ -28,9 +28,14 @@
 
 CVM_HPROF_LIBDIR        = $(CVM_BINDIR)
 
+ifeq ($(WIN32_PLATFORM),wince)
+CVM_HPROF_LINKLIBS = winsock.lib
+else
+CVM_HPROF_LINKLIBS = ws2_32.lib
+endif
+
 #
 # Platform specific build flags:
 #
 CVM_HPROF_FLAGS += \
 
-WIN_LINKLIBS += $(CVM_IMPL_LIB)
