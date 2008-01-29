@@ -88,7 +88,8 @@ public interface LifeCycleNotifier {
      * @param appProps the application properties.
      * @throws InvalidJadException if there is an error parsing the JAD.
      */
-    public void toBeInstalled(int id, String jarPathname, Properties appProps) throws InvalidJadException;
+    public void toBeInstalled(int id, String jarPathname, Properties appProps)
+	throws InvalidJadException;
 
     /**
      * Called when a MIDlet JAR is to be un-installed.
@@ -98,5 +99,6 @@ public interface LifeCycleNotifier {
      * @param appProps the application properties.
      * @throws InvalidJadException if there is an error parsing the JAD.
      */
-    public void toBeUninstalled(int id, String jarPathname, Properties appProps);
+    public void toBeUninstalled(int id, String jarPathname,
+				Properties appProps);
 }

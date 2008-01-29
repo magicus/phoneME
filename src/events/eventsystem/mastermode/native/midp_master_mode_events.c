@@ -191,6 +191,14 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
         midp_thread_signal_list(blocked_threads,
             blocked_threads_count, JSR179_LOCATION_SIGNAL, newSignal.descriptor, newSignal.status);
         break;
+    case JSR179_ORIENTATION_SIGNAL:
+        midp_thread_signal_list(blocked_threads,
+            blocked_threads_count, JSR179_ORIENTATION_SIGNAL, newSignal.descriptor, newSignal.status);
+        break;    
+    case JSR179_PROXIMITY_SIGNAL:
+        midp_thread_signal_list(blocked_threads,
+            blocked_threads_count, JSR179_PROXIMITY_SIGNAL, newSignal.descriptor, newSignal.status);
+        break;
 #endif /* ENABLE_JSR_179 */
 
 #if (ENABLE_JSR_120 || ENABLE_JSR_205)
@@ -211,8 +219,12 @@ void midp_check_events(JVMSPI_BlockedThreadInfo *blocked_threads,
 #endif /* ENABLE_JSR_177 */
 #ifdef ENABLE_JSR_256
     case JSR256_SIGNAL:
-		midp_thread_signal_list(blocked_threads, blocked_threads_count,
-			newSignal.waitingFor, newSignal.descriptor, newSignal.status);
+        if (newMidpEvent.type == SENSOR_EVENT) {
+            StoreMIDPEventInVmThread(newMidpEvent, -1);
+        } else {
+            midp_thread_signal_list(blocked_threads, blocked_threads_count,
+                newSignal.waitingFor, newSignal.descriptor, newSignal.status);
+        }
         break;
 #endif /* ENABLE_JSR_256 */
     default:

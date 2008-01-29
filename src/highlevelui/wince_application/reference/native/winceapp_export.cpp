@@ -424,7 +424,7 @@ static BOOL InitInstance(HINSTANCE hInstance, int CmdShow) {
     HWND _hwndMain = CreateWindowEx(WS_EX_CAPTIONOKBTN,
                                _szAppName,
                                _szTitle,
-                               WS_VISIBLE,
+                               WS_OVERLAPPED |WS_CAPTION |WS_SYSMENU |WS_THICKFRAME |WS_MINIMIZEBOX |WS_MAXIMIZEBOX | WS_VISIBLE,
                                CW_USEDEFAULT,
                                CW_USEDEFAULT,
                                CW_USEDEFAULT,

@@ -52,11 +52,11 @@ public final class ConnectionControllerTest extends TestCase {
     }
 
     /**
-      * Delayble thread.
-      *
-      * Instances of this class can be scheduled for executuion,
-      * but actual execution can be delayed with a lock.
-      */
+     * Delayble thread.
+     *
+     * Instances of this class can be scheduled for executuion,
+     * but actual execution can be delayed with a lock.
+     */
     private static abstract class DelayableThread extends Thread {
         private final Object lock = new Object();
 
@@ -170,7 +170,7 @@ public final class ConnectionControllerTest extends TestCase {
     }
 
     private final ReservationDescriptorFactory rdf =
-            new ReservationDescriptorFactory () {
+            new ReservationDescriptorFactory() {
         public ReservationDescriptor getDescriptor(
                 final String connectionName, final String filter,
                 final AccessControlContext context)
@@ -374,7 +374,8 @@ public final class ConnectionControllerTest extends TestCase {
                 reservations.queryBySuiteID(midletSuiteId1), h1);
         checkCollectionHasSingleHandler(
                 reservations.queryBySuiteID(midletSuiteId2), h2);
-        assertSetsEqual(new Object [] {h1, h2}, reservations.getAllReservations());
+        assertSetsEqual(new Object [] {h1, h2},
+			reservations.getAllReservations());
     }
 
     public void testClear() throws IOException {
@@ -826,7 +827,8 @@ public final class ConnectionControllerTest extends TestCase {
             fail("Unexpected InterruptedException: " + ie);
         }
 
-        assertTrue(lifecycleAdapter.hasBeenInvokedOnceFor(midletSuiteId, midlet));
+        assertTrue(lifecycleAdapter.hasBeenInvokedOnceFor(midletSuiteId,
+							  midlet));
     }
 
     public void testConcurrentCancellation() throws IOException {
@@ -943,8 +945,10 @@ public final class ConnectionControllerTest extends TestCase {
         cc.registerConnection(midletSuiteId, midlet1, descriptor1);
         cc.registerConnection(midletSuiteId, midlet2, descriptor2);
 
-        final DelayableThread t1 = descriptor1.connectionReservation.pingThread();
-        final DelayableThread t2 = descriptor2.connectionReservation.pingThread();
+        final DelayableThread t1 = descriptor1.connectionReservation
+	    .pingThread();
+        final DelayableThread t2 = descriptor2.connectionReservation
+	    .pingThread();
 
         synchronized (t1.lock) {
             synchronized (t2.lock) {
@@ -1089,9 +1093,12 @@ public final class ConnectionControllerTest extends TestCase {
         cc.registerConnection(midletSuiteId1, midlet2, descriptor2);
         cc.registerConnection(midletSuiteId2, midlet3, descriptor3);
 
-        final DelayableThread t1 = descriptor1.connectionReservation.pingThread();
-        final DelayableThread t2 = descriptor2.connectionReservation.pingThread();
-        final DelayableThread t3 = descriptor3.connectionReservation.pingThread();
+        final DelayableThread t1 = descriptor1.connectionReservation
+	    .pingThread();
+        final DelayableThread t2 = descriptor2.connectionReservation
+	    .pingThread();
+        final DelayableThread t3 = descriptor3.connectionReservation
+	    .pingThread();
 
         synchronized (t1.lock) {
             synchronized (t2.lock) {
@@ -1178,7 +1185,8 @@ public final class ConnectionControllerTest extends TestCase {
 
         final int midletSuiteId2 = 1001 - midletSuiteId;
 
-        final ConnectionController cc = createConnectionController(createStore());
+        final ConnectionController cc = 
+	    createConnectionController(createStore());
 
         cc.registerConnection(midletSuiteId, midlet,
                 new MockReservationDescriptor(connection, filter));
@@ -1191,7 +1199,8 @@ public final class ConnectionControllerTest extends TestCase {
         final int midletSuiteId = 123;
         final String connection = "foo://bar";
 
-        final ConnectionController cc = createConnectionController(createStore());
+        final ConnectionController cc = 
+	    createConnectionController(createStore());
 
         assertNull(cc.getMIDlet(midletSuiteId, connection));
         assertNull(cc.getFilter(midletSuiteId, connection));

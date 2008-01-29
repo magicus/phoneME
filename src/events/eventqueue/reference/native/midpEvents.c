@@ -137,7 +137,7 @@ static EventQueue* getIsolateEventQueue(int isolateId) {
                      "Assertion failed: Isolate ID (%d) out of bounds",
                      isolateId);
 
-        // avoid a SEGV;
+        /* avoid a SEGV;*/
         isolateId = 0;
     }
 
@@ -310,7 +310,7 @@ void
 midp_resetEvents(void) {
     int i;
 
-    // The Event ID may have changed for each VM startup
+    /* The Event ID may have changed for each VM startup*/
     eventFieldIDsObtained = KNI_FALSE;
 
     for (i = 0; i < maxIsolates; i++) {
@@ -396,7 +396,7 @@ StoreMIDPEventInVmThread(MidpEvent event, int isolateId) {
 
     if (0 == max_isolates) {
         REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
-        return;
+        max_isolates = MAX_ISOLATES;
     }
 
     if( -1 != isolateId ) {

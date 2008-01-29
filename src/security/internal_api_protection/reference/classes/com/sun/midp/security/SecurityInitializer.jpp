@@ -229,6 +229,10 @@ public final class SecurityInitializer {
         "com.sun.perseus.platform.ResourceHandler$SecurityTrusted",
         // #endif ENABLE_JSR_226
 
+        // #ifdef ENABLE_JSR_256
+        "com.sun.javame.sensor.NativeSensorRegistry$SecurityTrusted",
+        // #endif ENABLE_JSR_256
+
         // #ifdef ENABLE_JSR211
         "com.sun.jsr211.security.SecurityInitializer$SecurityTrusted",
         "com.sun.j2me.content.CHManagerImpl$SecurityTrusted",

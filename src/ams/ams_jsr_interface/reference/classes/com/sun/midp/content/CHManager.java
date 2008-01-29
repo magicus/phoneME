@@ -33,8 +33,6 @@ import com.sun.j2me.security.AccessController;
 import com.sun.midp.main.MIDletProxyList;
 
 import com.sun.midp.midlet.MIDletSuite;
-import com.sun.midp.midlet.MIDletStateHandler;
-
 import com.sun.midp.installer.InvalidJadException;
 import com.sun.midp.installer.Installer;
 import com.sun.midp.installer.InstallState;
@@ -77,7 +75,7 @@ import com.sun.midp.security.SecurityToken;
  */
 public class CHManager {
     /** The CHManager instance for this application context. */
-    private static CHManager manager;
+    private static CHManager manager = null;
     
     static final String implClass = "com.sun.j2me.content.CHManagerImpl";
     static {
@@ -122,10 +120,10 @@ public class CHManager {
             AccessController.checkPermission(Permissions.AMS_PERMISSION_NAME);
         }
 
-	if (manager == null) {
-		manager = new CHManager();
-	}
-	return manager;
+		if (manager == null) {
+			manager = new CHManager();
+		}
+		return manager;
     }
 
     /**
@@ -183,7 +181,7 @@ public class CHManager {
      * @see com.sun.midp.content.CHInstallerImpl
      */
     public String getInstallURL(MIDlet midlet) {
-	return null;
+    	return null;
     }
 
     /**
@@ -216,5 +214,4 @@ public class CHManager {
      */
     public void midletInit(int suiteId, String classname) {
     }
-
 }
