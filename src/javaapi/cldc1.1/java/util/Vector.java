@@ -143,8 +143,7 @@ class Vector {
         if (elementCount < oldCapacity) {
             Object oldData[] = elementData;
             elementData = new Object[elementCount];
-            JVM.unchecked_obj_arraycopy(oldData, 0, 
-                                        elementData, 0, elementCount);
+            System.arraycopy(oldData, 0, elementData, 0, elementCount);
         }
     }
 
@@ -179,8 +178,7 @@ class Vector {
             newCapacity = minCapacity;
         }
         elementData = new Object[newCapacity];
-        JVM.unchecked_obj_arraycopy(oldData, 0, 
-                                    elementData, 0, elementCount);
+        System.arraycopy(oldData, 0, elementData, 0, elementCount);
     }
 
     /**
@@ -452,8 +450,7 @@ class Vector {
         }
         int j = elementCount - index - 1;
         if (j > 0) {
-            JVM.unchecked_obj_arraycopy(elementData, index + 1, 
-                                        elementData, index, j);
+            System.arraycopy(elementData, index + 1, elementData, index, j);
         }
         elementCount--;
         elementData[elementCount] = null; /* to let gc do its work */
@@ -487,9 +484,8 @@ class Vector {
         if (newcount > elementData.length) {
             ensureCapacityHelper(newcount);
         }
-        JVM.unchecked_obj_arraycopy(elementData, index, 
-                                    elementData, index + 1, 
-                                    elementCount - index);
+        System.arraycopy(elementData, index, elementData, index + 1, 
+                         elementCount - index);
         elementData[index] = obj;
         elementCount++;
     }

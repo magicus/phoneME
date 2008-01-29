@@ -186,7 +186,7 @@ class ByteArrayInputStream extends InputStream {
         if (len <= 0) {
             return 0;
         }
-        JVM.unchecked_byte_arraycopy(buf, pos, b, off, len);
+        System.arraycopy(buf, pos, b, off, len);
         pos += len;
         return len;
     }
