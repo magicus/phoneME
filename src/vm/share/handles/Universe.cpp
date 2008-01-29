@@ -1106,12 +1106,14 @@ void Universe::load_jar_entry(char* name, int length, JarFileParser* jf_parser
         }
 #if ENABLE_ROM_GENERATOR
         if (GenerateROMImage) {
-          JavaOop::Raw exception = Thread::current_pending_exception();
-          InstanceClass::Raw klass = exception.blueprint();
-          if (klass().is_subtype_of(Universe::error_class())) {
-            Thread::clear_current_pending_exception();
-            ROMWriter::record_name_of_bad_class(&class_name JVM_CHECK);
-          }
+          Throwable::Raw exception = Thread::current_pending_exception();
+
+          Thread::clear_current_pending_exception();
+
+          InstanceClass::Raw exception_klass = exception.blueprint();
+          Symbol::Raw exception_klass_name = exception_klass().name();
+          ROMWriter::record_class_loading_failure(
+            &class_name, &exception_klass_name JVM_CHECK);
         }
 #endif
         Thread::clear_current_pending_exception();

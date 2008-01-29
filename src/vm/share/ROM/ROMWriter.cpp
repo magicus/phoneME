@@ -209,9 +209,13 @@ void ROMWriter::start(JVM_SINGLE_ARG_TRAPS) {
   _gc_stackmap_size = Universe::gc_block_stackmap()->length();
 }
 
-void ROMWriter::record_name_of_bad_class(Symbol *class_name JVM_TRAPS) {
-  _singleton->names_of_bad_classes_vector()->add_element(class_name 
-                                                      JVM_NO_CHECK_AT_BOTTOM);
+void ROMWriter::record_class_loading_failure(Symbol *class_name,
+                                             Symbol *exception_class_name
+                                             JVM_TRAPS) {
+  ROMVector * const bad_classes = _singleton->names_of_bad_classes_vector();
+
+  bad_classes->add_element(class_name JVM_CHECK);
+  bad_classes->add_element(exception_class_name JVM_NO_CHECK_AT_BOTTOM);
 }
 
 // IMPL_NOTE: why do we use int array? byte array is good enough.

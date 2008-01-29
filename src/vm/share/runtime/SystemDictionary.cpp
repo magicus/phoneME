@@ -151,15 +151,18 @@ ReturnOop SystemDictionary::fetch_buffer(LoaderContext *loader_ctx JVM_TRAPS) {
 #if USE_BINARY_IMAGE_LOADER
   ObjArray::Raw bad_classes = Task::current()->names_of_bad_classes();
   if (bad_classes.not_null()) {
-    for (int i=0; i<bad_classes().length(); i++) {
+    GUARANTEE((bad_classes().length() % 2) == 0, "Must be pairs");
+    for (int i = 0; i < bad_classes().length(); i += 2) {
       Symbol::Raw name = bad_classes().obj_at(i);
       if (name.equals(loader_ctx->class_name())) {
+        Symbol::Raw exception_class_name = bad_classes().obj_at(i + 1);
+        String::Raw message;
         /*
-         * This class had generate a ClassFormatError during Monet
-         * conversion. The TCK requires us to throw an Error, not
+         * This class had generate an error during Monet
+         * conversion. The TCK requires us to throw that Error, not
          * ClassNoDefFoundException. 
          */
-        loader_ctx->set_fail_mode(ErrorOnFailure);
+        Throw::allocate_and_throw(&exception_class_name, &message JVM_THROW_0);
       }
     }
   }

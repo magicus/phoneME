@@ -600,7 +600,9 @@ public:
   virtual void combine_output_files() {}
   void append_file_to(OsFile_Handle dst, const JvmPathChar *src_name);
 
-  static void record_name_of_bad_class(Symbol *class_name JVM_TRAPS);
+  static void record_class_loading_failure(Symbol *class_name,
+                                           Symbol *exception_class_name
+                                           JVM_TRAPS);
 
   // Count number of methods to be written into the image.
   int count_methods();
