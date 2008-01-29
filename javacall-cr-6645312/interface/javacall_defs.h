@@ -114,8 +114,8 @@ typedef enum {
     * either a missing required property or
     * incorrectly formatted property */
    JAVACALL_BAD_JAD_PROPERTIES = -13,
-    /** javacall properties db key not found */
-    JAVACALL_KEY_NOT_FOUND = -14
+    /** javacall properties db value not found */
+    JAVACALL_VALUE_NOT_FOUND = -14
 } javacall_result;
 
 #define JAVACALL_SUCCEEDED(Status) ((javacall_result)(Status) >= 0) 
@@ -174,6 +174,20 @@ typedef unsigned char* javacall_utf8_string;
  * terminated string
  */
 typedef const unsigned char* javacall_const_utf8_string;
+
+/**
+ * @typedef javacall_ascii_string
+ * @brief general eight-bit ASCII string type,
+ *        this type is null terminated string
+ */
+typedef char* javacall_ascii_string;
+
+/**
+ * @typedef javacall_const_ascii_string
+ * @brief general constant eight-bit ASCII string type,
+ *        this type is constant null terminated string
+ */
+typedef const char* javacall_const_ascii_string;
 
 /**
  * @typedef javacall_pixel
