@@ -1232,7 +1232,7 @@ void javanotify_on_amms_notification(javacall_amms_notification_type type,
 
     e.eventType = MIDP_JC_EVENT_ADVANCED_MULTIMEDIA;
     e.data.multimediaEvent.mediaType = type;
-    e.data.multimediaEvent.isolateId = (int)((processorId >> 32) & 0xFFFF);
+    e.data.multimediaEvent.appId = (int)((processorId >> 32) & 0xFFFF);
     e.data.multimediaEvent.playerId = (int)(processorId & 0xFFFF);
     e.data.multimediaEvent.data = (int) data;
 
