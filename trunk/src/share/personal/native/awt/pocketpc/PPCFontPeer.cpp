@@ -509,7 +509,7 @@ SIZE AwtFont::StringWidth(AwtFont* font, char* str)
 	    len=255;
 	}
 	//ASCII2UNICODE
-	MultiByteToWideChar(CP_ACP, 0, str, -1, wStr, len);
+	MultiByteToWideChar(CP_ACP, 0, str, -1, (LPWSTR)wStr, len);
 
 	VERIFY(::GetTextExtentPoint32(hDC, (LPWSTR)wStr, len, &size));
     }

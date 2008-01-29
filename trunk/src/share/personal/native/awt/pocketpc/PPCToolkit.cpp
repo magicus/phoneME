@@ -96,7 +96,6 @@ Java_sun_awt_pocketpc_ShutdownHook_winceMainQuit (JNIEnv *env, jobject thisObj)
 JNIEXPORT void JNICALL
 Java_sun_awt_pocketpc_PPCToolkit_initIDs (JNIEnv *env, jclass cls)
 {
-
     GET_FIELD_ID(PPCToolkit_dbgTraceFID, "dbgTrace", "Z");
     GET_FIELD_ID(PPCToolkit_dbgVerifyFID, "dbgVerify", "Z");
     GET_FIELD_ID(PPCToolkit_dbgBreakFID, "dbgBreak", "Z");
