@@ -1590,7 +1590,7 @@ jsr211_launch_result jsr211_execute_handler(javacall_const_utf16_string handler_
                                 &without_finish_notification, &should_exit);
                 if (JAVACALL_OK == jc_result) {
                     result = should_exit ? JSR211_LAUNCH_OK_SHOULD_EXIT : JSR211_LAUNCH_OK;
-                    invoc->status = without_finish_notification ? STATUS_OK : STATUS_ACTIVE;
+                    invoc->status = without_finish_notification ? STATUS_INITIALIZED : STATUS_ACTIVE;
                 }
             }
             for (i=0; i<invoc->argsLen; i++)
@@ -1670,18 +1670,17 @@ javacall_result javanotify_chapi_platform_finish(int invoc_id,
     }
 
     switch (status) {
-    case INVOCATION_STATUS_OK:
-        invoc->status = STATUS_OK;
-        break;
-    case INVOCATION_STATUS_CANCELLED:
-        invoc->status = STATUS_CANCELLED;
-        break;
-    case INVOCATION_STATUS_ERROR:
-        invoc->status = STATUS_ERROR;
-        break;
-    default:
-        result = JAVACALL_INVALID_ARGUMENT;
-        break;
+        case INVOCATION_STATUS_OK:
+            invoc->status = STATUS_OK;
+            break;
+        case INVOCATION_STATUS_CANCELLED:
+            invoc->status = STATUS_CANCELLED;
+            break;
+        case INVOCATION_STATUS_ERROR:
+            invoc->status = STATUS_ERROR;
+            break;
+        default:
+            result = JAVACALL_INVALID_ARGUMENT;
     }
         
     if (invoc->responseRequired) {

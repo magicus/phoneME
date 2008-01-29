@@ -624,7 +624,7 @@ public final class InvocationImpl {
      * @exception SecurityException is thrown if access to the content
      *  is required and is not permitted
      */
-    public String findType() throws IOException, ContentHandlerException
+    public String findType() throws IOException, ContentHandlerException, SecurityException
     {
         if (type != null) {
             return type;

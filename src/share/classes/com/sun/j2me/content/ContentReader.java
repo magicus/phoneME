@@ -101,7 +101,7 @@ class ContentReader {
         ContentConnection conn = (ContentConnection)openPrim(true, true);
 
         if (conn != null) {
-            type = (conn).getType();
+            type = conn.getType();
             conn.close();
 
             if (type != null) {
@@ -136,10 +136,8 @@ class ContentReader {
      *  is required and is not permitted
      */
     private Connection openPrim(boolean timeouts, boolean headsOnly)
-            throws IOException, SecurityException {
-        Connection conn;
-
-        conn = Connector.open(url, Connector.READ, timeouts);
+            						throws IOException, SecurityException {
+    	Connection conn = Connector.open(url, Connector.READ, timeouts);
         if (conn instanceof HttpConnection) {
             HttpConnection httpc = (HttpConnection)conn;
             boolean authorized = false;
@@ -171,6 +169,7 @@ class ContentReader {
                         throw new IOException("authorization fails");
                     }
 
+                    conn.close();
                     // reopen connection with authorization property set
                     conn = Connector.open(url, Connector.READ, timeouts);
                     httpc = (HttpConnection)conn;
@@ -185,7 +184,7 @@ class ContentReader {
                 throw new IOException("Connection failed: "+httpc.getResponseMessage());
             }
         } else if (headsOnly) {
-            // inly HTTP protocol is supported for type discovering.
+            // only HTTP protocol is supported for type discovering.
             conn.close();
             conn = null;
         }
