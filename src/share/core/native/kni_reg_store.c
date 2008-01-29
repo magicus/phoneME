@@ -839,6 +839,8 @@ KNIDECL(com_sun_j2me_content_RegistryStore_finalize) {
     KNI_ReturnVoid();
 }
 
+#include <jsr211_invoc.h>
+
 /**
  * java call:
  * private native int launchNativeHandler0(String handlerId);
@@ -867,11 +869,16 @@ KNIDECL(com_sun_j2me_content_InvocationStoreProxy_launchNativeHandler0) {
 
 /**
  * java call:
- * private native int platformFinish0(String handlerId);
+ * private native boolean platformFinish0(String handlerId);
  */
-KNIEXPORT KNI_RETURNTYPE_VOID
+KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_j2me_content_InvocationStoreProxy_platformFinish0) {
-    int tid = KNI_GetParameterAsInt(1);
+    jint tid;
+    jsr211_boolean should_exit;
 
-    KNI_ReturnVoid();
+    tid = KNI_GetParameterAsInt(1);
+    if (!jsr211_platform_finish(tid, &should_exit))
+        KNI_ThrowNew(jsropRuntimeException, "platform_finish failed");
+
+    KNI_ReturnBoolean(should_exit);
 }

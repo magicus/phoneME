@@ -167,6 +167,15 @@ StoredInvoc* jsr211_get_invocation(javacall_const_utf16_string handlerID);
  */
 jsr211_launch_result jsr211_execute_handler(javacall_const_utf16_string handler_id);
 
+/**
+ * informs platform about finishing platform's request
+ * returns should_exit flag for content handler that has processed request
+ * @param tid Invocation (transaction) identifier
+ * @should_exit flag for the invocation handler
+ * @return true in case of success, false otherwise
+ */
+jsr211_boolean jsr211_platform_finish(int tid, jsr211_boolean *should_exit);
+
 #ifdef __cplusplus
 }
 #endif/*__cplusplus*/

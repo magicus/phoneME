@@ -1523,6 +1523,10 @@ void jsr211_remove_invocation(StoredInvoc* invoc) {
     invocFree(invoc);
 }
 
+jsr211_boolean jsr211_enqueue_invocation(StoredInvoc *invoc) {
+    return invocPut(invoc);
+}
+
 
 #include <javacall_chapi_invoke.h>
 
@@ -1590,7 +1594,7 @@ jsr211_launch_result jsr211_execute_handler(javacall_const_utf16_string handler_
                                 &without_finish_notification, &should_exit);
                 if (JAVACALL_OK == jc_result) {
                     result = should_exit ? JSR211_LAUNCH_OK_SHOULD_EXIT : JSR211_LAUNCH_OK;
-                    invoc->status = without_finish_notification ? STATUS_INITIALIZED : STATUS_ACTIVE;
+                    invoc->status = without_finish_notification ? STATUS_INITIATED : STATUS_ACTIVE;
                 }
             }
             for (i=0; i<invoc->argsLen; i++)
@@ -1708,3 +1712,249 @@ javacall_result javanotify_chapi_platform_finish(int invoc_id,
 
     return result;
 } 
+
+#include <javacall_chapi_registry.h>
+
+/**
+ * Receives invocation request from platform. <BR>
+ * This is <code>Registry.invoke()</code> substitute for Platform->Java call.
+ * @param handler_id target Java handler Id
+ * @param invocation filled out structure with invocation params
+ * @param invoc_id assigned by JVM invocation Id for further references
+ * @return result of operation.
+ */
+javacall_result javanotify_chapi_java_invoke(
+        const javacall_utf16_string handler_id,
+        javacall_chapi_invocation* invocation,
+        /* OUT */ int* invoc_id) {
+    /* ToDo: this function should be implemented using javacall event queue */
+    javacall_utf16_string classname;
+    int classname_len = 512 /* ??? */;
+    javacall_utf16*  suite_id_out;
+    int suite_id_len;
+    int suite_id;
+    StoredInvoc* invoc;
+    javacall_chapi_handler_registration_type flag;
+    javacall_result res;
+/*     jsr211_boolean is_started; */
+    int i;
+
+    classname = CALLOC(classname_len, sizeof(javacall_utf16));
+    if (NULL == classname)
+        return JAVACALL_OUT_OF_MEMORY;
+
+    suite_id_out = CALLOC(classname_len, sizeof(javacall_utf16));
+    if (NULL == suite_id_out) {
+        FREE(classname);
+        return JAVACALL_OUT_OF_MEMORY;
+    }
+
+    res = javacall_chapi_get_handler_info(
+            handler_id, /*OUT*/
+            suite_id_out, &suite_id_len,
+            classname, &classname_len, &flag);
+
+    if (res != JAVACALL_OK) {
+        FREE(classname);
+        FREE(suite_id_out);
+        return res;
+    }
+
+    suite_id = 0;
+    for (i = 0; i < suite_id_len; i++){
+        suite_id = suite_id * 10 + (suite_id_out[i] - L'0');
+    }
+    FREE(suite_id_out);
+    
+    res = JAVACALL_OK;
+        
+    if (flag && REGISTERED_NATIVE_FLAG) {
+        FREE(classname);
+        return JAVACALL_INVALID_ARGUMENT;
+    }
+
+    invoc = (StoredInvoc*) CALLOC(1, sizeof (StoredInvoc));
+    if (invoc == NULL) {
+        FREE(classname);
+        return JAVACALL_OUT_OF_MEMORY;
+    }
+
+    memset (&invoc, '\0', sizeof(invoc));
+    /* Assign a new transaction id and set it */
+    invoc->tid = invocNextTid();
+    invoc->status = STATUS_INIT;
+    invoc->suiteId = suite_id;
+    invoc->invokingSuiteId = INVALID_SUITE_ID;
+
+    if (PCSL_STRING_OK != pcsl_string_convert_from_utf16(handler_id, javacall_string_len(handler_id), &invoc->ID))
+        res = JAVACALL_FAIL;
+    if (PCSL_STRING_OK != pcsl_string_convert_from_utf16(classname, classname_len, &invoc->classname))
+        res = JAVACALL_FAIL;
+    FREE(classname);
+
+    /* NOTE: ?null suite ID is an indication of platform request */
+    invoc->invokingClassname = PCSL_STRING_NULL;
+    invoc->invokingID        = PCSL_STRING_NULL;
+
+    invoc->responseRequired = (0 == invocation->responseRequired) ? JSR211_FALSE : JSR211_TRUE;
+    if (PCSL_STRING_OK != pcsl_string_convert_from_utf16(invocation->url, javacall_string_len(invocation->url), &invoc->url))
+        res = JAVACALL_FAIL;
+    if (invocation->type != NULL && 
+            PCSL_STRING_OK != pcsl_string_convert_from_utf16(invocation->type, javacall_string_len(invocation->type), &invoc->type))
+        res = JAVACALL_FAIL;
+    if (invocation->action != NULL && 
+            PCSL_STRING_OK != pcsl_string_convert_from_utf16(invocation->action, javacall_string_len(invocation->action), &invoc->action))
+        res = JAVACALL_FAIL;
+    if (invocation->invokingAppName != NULL && 
+            PCSL_STRING_OK != pcsl_string_convert_from_utf16(invocation->invokingAppName, javacall_string_len(invocation->invokingAppName), &invoc->invokingAppName))
+        res = JAVACALL_FAIL;
+    if (invocation->invokingAuthority != NULL && 
+            PCSL_STRING_OK != pcsl_string_convert_from_utf16(invocation->invokingAuthority, javacall_string_len(invocation->invokingAuthority), &invoc->invokingAuthority))
+        res = JAVACALL_FAIL;
+    if (invocation->username != NULL &&
+            PCSL_STRING_OK != pcsl_string_convert_from_utf16(invocation->username, javacall_string_len(invocation->username), &invoc->username))
+        res = JAVACALL_FAIL;
+    if (invocation->password != NULL &&
+            PCSL_STRING_OK != pcsl_string_convert_from_utf16(invocation->password, javacall_string_len(invocation->password), &invoc->password))
+        res = JAVACALL_FAIL;
+    
+    if (JAVACALL_OK == res) {
+	    invoc->argsLen = invocation->argsLen;
+        invoc->args = CALLOC(sizeof(pcsl_string), invoc->argsLen);
+        if (NULL != invoc->args) {
+            for (i = 0; i < invocation->argsLen; i++) {
+                invoc->args[i] = PCSL_STRING_NULL;
+                if (invocation->args[i] != NULL && 
+                        PCSL_STRING_OK != pcsl_string_convert_from_utf16(invocation->args[i], javacall_string_len(invocation->args[i]), &invoc->args[i]))
+                    res = JAVACALL_FAIL;
+            }
+            if (JAVACALL_OK == res) {
+                // ??? may be we should not allocate memory for the data field if invocation->data == NULL
+
+                invoc->dataLen = invocation->dataLen;
+                invoc->data = MALLOC(invoc->dataLen);
+                if (NULL != invoc->data) {
+                    invoc->dataLen = invocation->dataLen;
+                    memcpy (invoc->data, invocation->data, invoc->dataLen);
+                
+                    /* invocation is ready to be processed */
+                    invoc->status = STATUS_WAITING;
+                    /* Insert the new Invocation at the end of the queue */
+                    if (!jsr211_enqueue_invocation(invoc))
+                        res = JAVACALL_FAIL;
+                    
+                    unblockWaitingThreads(STATUS_OK);
+                    
+                    // ??? should we launch midlet if jsr211_enqueue_invocation(invoc) fails
+                    /* ToDo: launch the midlet */
+/*                     jsr211_launch_midlet ( */
+/*                         &invoc->suiteID, */
+/*                         &invoc->classname, */
+/*                         &is_started); */
+                    
+                    *invoc_id = (int)invoc;
+
+                    if (JAVACALL_OK != res)
+                        FREE(invoc->data);
+                } else
+                    res = JAVACALL_OUT_OF_MEMORY;
+            }
+            if (JAVACALL_OK != res){
+                for (i = 0; i < invocation->argsLen; i++)
+                    pcsl_string_free(&invoc->args[i]);
+                FREE(invoc->args);
+            }
+        } else
+            res = JAVACALL_OUT_OF_MEMORY;
+    }
+    if (JAVACALL_OK != res) {
+        pcsl_string_free(&invoc->ID);
+        pcsl_string_free(&invoc->classname);
+        pcsl_string_free(&invoc->url);
+        pcsl_string_free(&invoc->type);
+        pcsl_string_free(&invoc->action);
+        pcsl_string_free(&invoc->invokingAppName);
+        pcsl_string_free(&invoc->invokingAuthority);
+        pcsl_string_free(&invoc->username);
+        pcsl_string_free(&invoc->password);
+        FREE(invoc);
+    }
+
+    return res;
+}
+
+/**
+ * informs platform about finishing platform's request
+ * returns should_exit flag for content handler that has processed request
+ * @param tid Invocation (transaction) identifier
+ * @should_exit flag for the invocation handler
+ * @return true in case of success, false otherwise
+ */
+jsr211_boolean jsr211_platform_finish(int tid, jsr211_boolean *should_exit)
+{
+    javacall_const_utf16_string url;
+    javacall_const_utf16_string *args;
+    int i;
+    javacall_chapi_invocation_status status;
+    javacall_bool _should_exit;
+    jsr211_boolean success;
+    javacall_result res;
+    StoredLink *link;
+    StoredInvoc *invoc;
+
+    link = invocFindTid(tid);
+    if (NULL == link)
+        return JSR211_FALSE;
+    invoc = link->invoc;
+
+    url = pcsl_string_get_utf16_data(&invoc->url);
+    args = CALLOC(invoc->argsLen, sizeof(javacall_utf16_string));
+    if ( (NULL != url) && (NULL != args) ) {
+        success = JSR211_TRUE;
+        for (i = 0; i < invoc->argsLen; i++) {
+            args[i] = pcsl_string_get_utf16_data(&invoc->args[i]);
+            if (NULL == args[i])
+                success = JSR211_FALSE;
+        }
+        
+        if (JSR211_FALSE != success) {
+            switch (invoc->status) {
+                case STATUS_OK:
+                case STATUS_CANCELLED:
+                case STATUS_ERROR:
+                    status = invoc->status;
+                    break;
+                default:
+                    success = JSR211_FALSE;
+                    break;
+            }
+    
+            if (JSR211_FALSE != success) {
+                res = javacall_chapi_java_finish(invoc->tid,
+                                                 url,
+                                                 invoc->argsLen,
+                                                 args,
+                                                 invoc->dataLen,
+                                                 invoc->data,
+                                                 status,
+                                                 &_should_exit);
+                if (JAVACALL_OK == res) {
+                    if (_should_exit)
+                        *should_exit = JSR211_TRUE;
+                    else
+                        *should_exit = JSR211_FALSE;
+                } else
+                    success = JSR211_FALSE;
+            }
+        }
+
+        for (i = 0; i < invoc->argsLen; i++)
+            pcsl_string_release_utf16_data(args[i],&invoc->args[i]);
+    } else
+        success = JSR211_FALSE;
+
+    FREE(args);
+    pcsl_string_release_utf16_data(url, &invoc->url);
+
+    return success;
+}
