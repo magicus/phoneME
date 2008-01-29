@@ -35,6 +35,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.Component;
 import java.awt.Canvas;
+import java.awt.image.VolatileImage;
 
 class PPCGraphicsConfiguration extends GraphicsConfiguration {
     PPCGraphicsConfiguration (PPCGraphicsDevice device) {
@@ -57,6 +58,12 @@ class PPCGraphicsConfiguration extends GraphicsConfiguration {
     public ColorModel getColorModel() {
         return Toolkit.getDefaultToolkit().getColorModel();
     }
+
+    /* Dummy method */
+    public VolatileImage createCompatibleVolatileImage(int width, int height) {
+        return null;
+    }
+
     private PPCGraphicsDevice device;
     private static final Component IMAGE_COMPONENT = new Canvas();
 }

@@ -32,8 +32,12 @@ CVM_INCLUDE_DIRS  += $(WCECOMPAT_LIB_SRC_DIR) \
 	$(CVM_TOP)/src/win32/javavm/runtime
 
 # by default we don't want PocketPC menu style
-POCKETPC_MENUS = false
+POCKETPC_MENUS = true
 CVM_FLAGS += POCKETPC_MENUS
+
+# Replace *_SUFFIX with *_POSTFIX? See definition in host_defs.mk
+LIB_SUFFIX              = .dll
+LIB_LINK_SUFFIX         = .lib
 
 WCECOMPAT_LIB_NAME      = wcecompat
 WCECOMPAT_LIB_OBJS      = wceCompat.o

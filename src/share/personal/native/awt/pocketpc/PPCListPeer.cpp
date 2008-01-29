@@ -192,9 +192,9 @@ void AwtList::SetMultiSelect(BOOL ms) {
 
     SendMessage(WM_SETFONT, (WPARAM)hFont, (LPARAM)FALSE);
     SendMessage(LB_RESETCONTENT);  
-    for (i = 0; i < nCount; i++) {
-        InsertString(i, strings[i]);
-        delete strings[i];
+    for (int j = 0; j < nCount; j++) {
+        InsertString(j, strings[j]);
+        delete strings[j];
     }
     AdjustHorizontalScrollbar();
     SendMessage(LB_SETCURSEL, nCurSel);

@@ -202,7 +202,7 @@ Java_sun_awt_pocketpc_PPCClipboard_getClipboardText(JNIEnv *env,
     length = AwtTextComponent::RemoveCR(ucText);
     harr = new jchar[length];
     ASSERT(harr != NULL);
-    wcsncpy((unsigned short *) harr, ucText, length);
+    wcsncpy((wchar_t *) harr, ucText, length);
     delete[] ucText;
     jstring hStr = env->NewString(harr, length);
     ASSERT(!env->ExceptionCheck());
