@@ -215,7 +215,7 @@ $(CVM_JDWP_BUILDDIRS):
 
 $(CVM_JDWP_LIBDIR)/$(CVM_JDWP_LIB): $(CVM_JDWP_OBJECTS)
 	@echo "Linking $@"
-	$(SO_LINK_CMD)
+	$(call SO_LINK_CMD, $(CVM_JDWP_LINKLIBS))
 	@echo "Done Linking $@"
 
 # The following are used to build the .o files needed for $(CVM_JDWP_OBJECTS):

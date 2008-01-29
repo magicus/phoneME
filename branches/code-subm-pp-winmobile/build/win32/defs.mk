@@ -32,9 +32,20 @@
 # to override a lot of values.
 #
 
+# Is CVM a DLL (not an EXE)?
+CVM_DLL		?= true
+CVM_FLAGS	+= CVM_DLL
+CVM_DLL_CLEANUP_ACTION = rm -rf $(CVM_OBJDIR)/java_md.*
+ifeq ($(CVM_DLL),true)
+CVM_DEFINES += -DCVM_DLL
+endif
+
 # Miscellaneous options we override
+ifeq ($(CVM_DLL),true)
 CVM		= cvmi.dll
-CVMLIB		= cvm.o
+else
+CVM		= cvm.exe
+endif
 override GENERATEMAKEFILES = false  
 TARGET_CCC = $(TARGET_CC)
 
@@ -94,6 +105,15 @@ CVM_TARGETOBJS_SPACE += \
 	tchar.o \
         memory_md.o
 
+# objects that always link with cvm.exe, even if we build cvmi.dll
+CVMEXE_OBJS = ansi_java_md.o java_md.o
+
+# If we are not building a dll, then CVMEXE_OBJS need to be part of the
+# main cvm link command (the standalone cvm.exe).
+ifneq ($(CVM_DLL),true)
+CVM_TARGETOBJS_SPACE += $(CVMEXE_OBJS)
+endif
+
 ifeq ($(CVM_DYNAMIC_LINKING), true)
 	CVM_TARGETOBJS_SPACE += linker_md.o
 endif
@@ -112,6 +132,14 @@ CVM_TARGETOBJS_SPACE += \
         jit_md.o
 endif
 
-# Is CVM a DLL (not an EXE)?
-CVM_DLL = true
+# support for putting up a splash screen
+ifeq ($(USE_SPLASH_SCREEN),true)
+ifeq ($(WIN32_PLATFORM),wince)
+CVMEXE_OBJS += splash.o
+CVM_DEFINES += -DENABLE_SPLASH_SCREEN
+RESOURCES = $(call POSIX2HOST,$(CVM_TOP)/src/win32/bin/splash.res)
+LINKCVMEXE_LIBS += aygshell.lib $(RESOURCES)
+endif
+endif
+
 include ../win32/host_defs.mk

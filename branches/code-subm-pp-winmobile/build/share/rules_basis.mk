@@ -74,7 +74,7 @@ ifneq ($(CVM_STATICLINK_LIBS), true)
 JPEG_LIB_OBJECTS = $(patsubst %.o,$(CVM_OBJDIR)/%.o,$(JPEG_LIB_OBJS))
 $(JPEG_LIB_PATHNAME) :: $(JPEG_LIB_OBJECTS)
 	@echo "Linking $@"
-	$(SO_LINK_CMD) $(CVM_IMPL_LIB) $(JPEG_LIB_LIBS)
+	$(SO_LINK_CMD) $(JPEG_LIB_LIBS)
 endif
 
 #

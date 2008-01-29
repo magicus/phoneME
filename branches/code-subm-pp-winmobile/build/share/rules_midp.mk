@@ -103,6 +103,15 @@ $(CVM_DERIVEDROOT)/classes/sun/misc/$(MIDP_PKG_CHECKER):
 	$(AT)mv $(MIDP_PKG_CHECKER) $(CVM_DERIVEDROOT)/classes/sun/misc/
 
 #
+# Generate a list of MIDP classes. This list is added to
+# the $(CVM_MIDPCLASSLIST) to allow accessing from midlets.
+#
+$(MIDP_CLASSLIST): $(MIDP_PUB_CLASSES_ZIP)
+	$(AT)$(CVM_JAVA) -cp  $(CVM_BUILD_TOP)/classes.jcc JavaAPILister \
+	    -listapi:include=java/*,include=javax/*,input=$(MIDP_PUB_CLASSES_ZIP),cout=$(MIDP_CLASSLIST)
+
+
+#
 # Build the source bundle
 #
 source_bundle:: $(CVM_BUILD_DEFS_MK) 

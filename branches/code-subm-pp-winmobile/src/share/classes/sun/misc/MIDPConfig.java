@@ -42,6 +42,7 @@ import java.io.InputStream;
 import java.io.BufferedReader;
 import java.util.Vector;
 import java.net.MalformedURLException;
+import java.util.HashSet;
 
 public final
 class MIDPConfig{
@@ -51,6 +52,8 @@ class MIDPConfig{
     /*private static MIDletClassLoader midletCL;*/
     /* The MemberFilter */
     private static MemberFilter memberFilter;
+    /* The classes allowed for Midlet */
+    private static HashSet allowedClasses; 
 
     public static String MIDPVersion = "2.0";
     public static String CLDCVersion = "1.1";
@@ -67,11 +70,9 @@ class MIDPConfig{
     static {
         // Create the member filter.
         memberFilter = newMemberFilter();
+        // Get the permitted class list.
+        getPermittedClasses();
     }
-
-    static String permittedSystemClasses[];
-	// filled by reading a file.
-	// see getPermittedClasses() below
 
     private static File[] getDefaultPath() throws IOException {
         String libdir = System.getProperty("java.home") + 
@@ -121,11 +122,13 @@ class MIDPConfig{
 	}
     }
 
-    private static String[]
+    /* Read the permitted class list. */
+    private static HashSet
     getPermittedClasses(){
-	if (permittedSystemClasses != null){
-	    return permittedSystemClasses;
+	if (allowedClasses != null){
+	    return allowedClasses;
 	}
+
 	BufferedReader infile;
 	Vector classnames;
 	int    nnames = 0;
@@ -156,9 +159,14 @@ class MIDPConfig{
 	    /*DEBUG*/ System.err.println("Exception while reading "+filename);
 	    return null;
 	}
-	permittedSystemClasses = new String[nnames];
-	classnames.copyInto(permittedSystemClasses);
-	return permittedSystemClasses;
+
+	allowedClasses = new HashSet();
+	for (int i = 0; i<classnames.size(); i++){
+	    String classname = ((String)classnames.elementAt(i)).intern();
+	    allowedClasses.add(classname);
+	}
+
+	return allowedClasses;
     }
 
     public static MIDPImplementationClassLoader
@@ -176,7 +184,6 @@ class MIDPConfig{
                 "The MIDPImplementationClassLoader is already created");
         }
 
-	String permittedClasses[];
         PermissionCollection perms = new Permissions();
 
         if (files == null || files.length == 0) {
@@ -203,14 +210,8 @@ class MIDPConfig{
 	//DEBUG System.out.println(
         //  "Constructing MIDPImplementationClassLoader with permissions "
         //  +perms);
-	permittedClasses = getPermittedClasses();
-	if (permittedClasses == null){
-	    // there was some problem in reading the file
-	    return null;
-	}
 	midpImplCL = new MIDPImplementationClassLoader(
-				urls, permittedClasses, perms,
-				null);
+				urls, perms, null);
 
 	return midpImplCL;
     }
@@ -444,5 +445,10 @@ class MIDPConfig{
             i++; /* the next caller */
 	}
         return is;
+    }
+
+    /* Check if the class is allowed for midlet. */
+    public static boolean isClassAllowed(String classname) {
+        return allowedClasses.contains(classname);
     }
 }

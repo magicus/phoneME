@@ -26,4 +26,11 @@
 # Makefile for building the jdwp tool for windows target
 #
 
-CVM_JDWP_LIBDIR        = $(CVM_BINDIR)
+CVM_JDWP_LIBDIR		= $(CVM_BINDIR)
+
+ifeq ($(WIN32_PLATFORM),wince)
+CVM_JDWP_DT_LINKLIBS = winsock.lib
+else
+CVM_JDWP_DT_LINKLIBS = ws2_32.lib user32.lib
+CVM_JDWP_LINKLIBS = user32.lib
+endif
