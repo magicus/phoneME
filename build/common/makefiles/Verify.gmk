@@ -111,15 +111,6 @@ endef
 define verify_jsr_184_directory
     if [ "$(USE_JSR_184)" = "true" ]; then \
         $(verify_directory); \
-       if [ -z "$(SWERVE_DIR)" ]; then \
-	   echo "ERROR: SWERVE_DIR must be set"; \
-	   exit -1; \
-       else \
-	   if [ ! -d "$(SWERVE_DIR)" ]; then \
-	       echo "ERROR: JSR_184: $(SWERVE_DIR) does not point to a valid directory"; \
-	       exit -1; \
-	   fi \
-       fi \
     fi
 endef
 
