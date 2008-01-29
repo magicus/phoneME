@@ -37,10 +37,13 @@ public class CDCInit {
      * Performs CDC API initialization.
      *
      * @param midpHome root directory of the MIDP working files
+     * @param storageHome MIDP application database directory to be used
+     *                    instead of "midpHome/appdb", directory must be secure
      * @param nativeLib name of the native shared library, only applies to
-     * non-rommized build
+     *                  non-rommized build
      */
-    public static void init(String midpHome, String storageHome, String nativeLib) {
+    public static void init(String midpHome, String storageHome,
+            String nativeLib) {
         if (initialized) {
             return;
         }
@@ -63,39 +66,85 @@ public class CDCInit {
              */
         }
 
-        initMidpNativeStates(midpHome+File.separator+"appdb", storageHome+File.separator+"lib");
+        initMidpNativeStates(midpHome + File.separator + "lib", storageHome);
     }
 
-    /** Performs CDC API initialization. */
-    public static void init() {
-	/*
-         * Path to MIDP working directory. 
-         * Default is the property "sun.midp.home.path",
-         * the fallback is user.dir.
-         */
-        String userdir = System.getProperty("user.dir", ".");
-        userdir+= File.separator + "midp" + File.separator + "midp_linux_gci";
-        String home = System.getProperty("sun.midp.home.path", userdir);
+    /**
+     * Performs CDC API initialization.
+     * <p>
+     * Uses the sun.midp.library.name property for the native library name or
+     * "midp" if not found.
+     *
+     * @param midpHome root directory of the MIDP working files
+     * @param storageHome MIDP application database directory to be used
+     *                    instead of "midpHome/appdb", directory must be secure
+     */
+    public static void init(String midpHome, String storageHome) {
+        // Only System.getProperty(String) looks in the MIDP property list.
+        String nativeLib = System.getProperty("sun.midp.library.name");
 
-        init(home);
+        if (nativeLib == null) {
+            nativeLib = "midp";
+        }
+
+        init(midpHome, storageHome, nativeLib);
     }
 
+    /**
+     * Performs CDC API initialization.
+     * <p>
+     * Uses the sun.midp.library.name property for the native library name or
+     * "midp" if not found.
+     * <p>
+     * Uses the sun.midp.storage.path property for the storage directory or
+     * "midpHome/appdb" if not found.
+     *
+     * @param midpHome root directory of the MIDP working files
+     */
     public static void init(String midpHome) {
-        String storagePath = System.getProperty("sun.midp.storage.path", null);
+        // Only System.getProperty(String) looks in the MIDP property list.
+        String storagePath = System.getProperty("sun.midp.storage.path");
         if (storagePath == null) {
-            storagePath = midpHome;
+            storagePath = midpHome + File.separator + "appdb";
         } 
         
         init(midpHome, storagePath);
     }
+
     
-    public static void init(String midpHome, String storageHome) {
-        init(midpHome, storageHome, System.getProperty("sun.midp.library.name", "midp"));
+    /**
+     * Performs CDC API initialization.
+     * <p>
+     * Uses the sun.midp.library.name property for the native library name or
+     * "midp" if not found.
+     * <p>
+     * Uses the sun.midp.storage.path property for the storage directory or
+     * "midpHome/appdb" if not found.
+     * <p>
+     * Uses the sun.midp.home.path property for the MIDP home directory or
+     * the user.dir property if not found, and if user.dir is not found,
+     * "./midp/midp_linux_gci" is used.
+     */
+    public static void init() {
+        // Only System.getProperty(String) looks in the MIDP property list.
+        String home = System.getProperty("sun.midp.home.path");
+
+        if (home == null) {
+            home = System.getProperty("user.dir");
+            if (home == null) {
+                home = "." + File.separator + "midp" + File.separator +
+                    "midp_linux_gci";
+            }
+        }
+
+        init(home);
     }
 
     /**
      * Performs native subsystem initialization.
-     * @param home path to the MIDP working directory.
+     *
+     * @param config directory of the MIDP system resources and config files
+     * @param storage MIDlet storage directory
      */
     static native void initMidpNativeStates(String config, String storage);
 }

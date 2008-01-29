@@ -132,30 +132,6 @@ midpInitializeUI(void) {
      * function. e.g. initLocaleMethod();
      */
 
-    /*
-     * Set AMS memory limits
-     */
-#if ENABLE_MULTIPLE_ISOLATES
-    {
-        int reserved = getInternalPropertyInt("AMS_MEMORY_RESERVED_MVM");
-        int limit = getInternalPropertyInt("AMS_MEMORY_LIMIT_MVM");
-
-        if (0 == reserved) {
-            perror("property AMS_MEMORY_RESERVED_MVM not found!");
-        }
-
-        reserved = reserved * 1024;
-        JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_RESERVED_MEMORY, reserved);
-
-        if (limit <= 0) {
-            limit = 0x7FFFFFFF;  /* MAX_INT */
-        } else {
-            limit = limit * 1024;
-        }
-        JVM_SetConfig(JVM_CONFIG_FIRST_ISOLATE_TOTAL_MEMORY, limit);
-    }
-#endif
-
 #if ENABLE_JAVA_DEBUGGER
     {
         char* argv[2];
@@ -213,7 +189,7 @@ static void initCDCEvents() {
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_main_CDCInit_initMidpNativeStates) {
     jchar jbuff[1024];
-    char conf_buff[1024], store_buff[1024];
+    static char conf_buff[1024], store_buff[1024];
     int max = sizeof(conf_buff) - 1;
     int len, i;
 
