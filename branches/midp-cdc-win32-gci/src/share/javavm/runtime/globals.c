@@ -1160,6 +1160,16 @@ CVMBool CVMinitVMGlobalState(CVMGlobalState *gs, CVMOptions *options)
     CVMjvmpiInitializeGlobals(ee, &gs->jvmpiRecord);
 #endif
 
+    /* Open up the cvm binary as a shared library for locating JNI methods */
+    if (CVMglobals.cvmDynHandle == NULL) {
+        CVMglobals.cvmDynHandle = CVMdynlinkOpen(NULL);
+        if (CVMglobals.cvmDynHandle == NULL) {
+            CVMconsolePrintf("Cannot start VM "
+                             "(Could not open cvm as a shared library)\n");
+            return CVM_FALSE;
+        }
+    }
+
 #ifdef CVM_JIT
     if (!CVMjitInit(ee, &gs->jit, options->jitAttributesStr)) {
 	CVMconsolePrintf("Cannot start VM "
