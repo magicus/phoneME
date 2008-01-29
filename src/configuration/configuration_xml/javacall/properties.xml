@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
 <!--
-		Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+		Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 		DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 		
 		This program is free software; you can redistribute it and/or
@@ -69,5 +69,26 @@
 		Value="2808"
 		Scope="internal"
 		Comment="Default SMS Service Center address port number."/>
+
+  <property Key="MAX_ISOLATES"
+            Value="4"
+            Scope="internal"
+            Comment="MAX_ISOLATES"/>
+  <property Key="SUITE_MEMORY_LIMIT"
+            Value="-1"
+            Scope="internal"
+            Comment="Default MIDletSuite Memory Limit."/>
+  <property Key="MAIN_MEMORY_CHUNK_SIZE"
+            Value="8388608"
+            Scope="internal"
+            Comment=""/>
+  <property Key="JAVA_HEAP_SIZE"
+            Value="4194304"
+            Scope="internal"
+            Comment=""/>
+  <property Key="RMS_CACHE_LIMIT"
+            Value="3072"
+            Scope="internal"
+            Comment="Global memory limit (in Bytes) for RMS caching"/>
 </properties>
 </configuration>

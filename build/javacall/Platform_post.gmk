@@ -1,4 +1,5 @@
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+#
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -23,9 +24,5 @@
 ifeq ($(JAVACALL_PLATFORM),)
 $(error JAVACALL_PLATFORM is not set)
 endif
-
-copy_configuration_file : $(BINDIR)
-	echo MIDP_DEPS $(MIDP_DEPS)
-	cp -u $(JAVACALL_OUTPUT_DIR)/jwc_properties.ini $(BINDIR)
 
 -include $(JAVACALL_PLATFORM)_post.gmk
