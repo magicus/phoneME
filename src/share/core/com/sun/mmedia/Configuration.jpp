@@ -288,27 +288,6 @@ public abstract class Configuration {
      */
     public abstract TonePlayer getTonePlayer();
 
-    //public abstract MIDIRenderer getMIDIRenderer();
-
-    /**
-     * Convert from the name of a file to its corresponding Mime
-     * type based on the extension.
-     *
-     * @param  name  file's pathname
-     * @return       Mime type for this name or null, if couldn't be determined
-     */
-    public String ext2Mime(String name) {
-        int idx = name.lastIndexOf('.');
-        String ext;
-        if (idx != -1) {
-            ext = name.substring(idx + 1).toLowerCase();
-        } else {
-            ext = name.toLowerCase();
-        }
-        return (String) mimeTypes.get(ext);
-    }
-
-
     /**
      *  Gets the handler attribute of the Configuration object
      *

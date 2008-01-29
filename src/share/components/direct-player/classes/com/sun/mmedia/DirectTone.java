@@ -61,7 +61,9 @@ public final class DirectTone extends DirectPlayer {
      * @exception  MediaException  Description of the Exception
      */
     protected void doRealize() throws MediaException {
-
+/*
+This code is moved to PlayerImpl.
+Need verification
         // Get current application ID to support MVM
         int appId = AppPackage.getInstance().getId();        
         // Init native library
@@ -74,7 +76,7 @@ public final class DirectTone extends DirectPlayer {
         if (hNative == 0) {
             throw new MediaException("Unable to realize tone player");
         }
-
+*/
         // if no source stream, player is created from TONE_DEVICE_LOCATOR
         // simply return it.
         if (stream == null) {
@@ -167,9 +169,9 @@ public final class DirectTone extends DirectPlayer {
        
         nFlushBuffer(hNative);
 
-        nBuffering(hNative, sequence, sequence.length);
+        PlayerImpl.nBuffering(hNative, sequence, sequence.length);
         
-        if(-1 == nBuffering(hNative, sequence, -1))
+        if(-1 == PlayerImpl.nBuffering(hNative, sequence, -1))
             throw new IllegalArgumentException("invalid sequence");
 
         hasToneSequenceSet = true;

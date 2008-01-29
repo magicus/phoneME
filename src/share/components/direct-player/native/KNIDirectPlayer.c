@@ -72,77 +72,6 @@ static javacall_bool jmmpCheckCondition(KNIPlayerInfo* pKniInfo, int conditions)
 
 /* KNI Implementation **********************************************************************/
 
-/*  protected native int nInit (int appId, int playerId, String mimeType, String URI, long contentLength ) ; */
-KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_mmedia_DirectPlayer_nInit) {
-    jint  appId = KNI_GetParameterAsInt(1);
-    jint  playerId = KNI_GetParameterAsInt(2);
-    jint  returnValue = 0;
-    jint   mimeLength, URILength;
-    jchar* pszMimeType = NULL;
-    jchar* pszURI = NULL;
-    KNIPlayerInfo* pKniInfo;
-    javacall_result res;
-
-    MMP_DEBUG_STR2("+nInit isolate=%d, player=%d\n", isolateId, playerId);
-
-    KNI_StartHandles(2);
-    KNI_DeclareHandle(mimeType);
-    KNI_DeclareHandle(URI);
-    
-    /* Get mimeType and URI object parameter */
-    KNI_GetParameterAsObject(3, mimeType);
-    KNI_GetParameterAsObject(4, URI);
-
-    /* Get mime type java string */
-    mimeLength = KNI_GetStringLength(mimeType);
-    pszMimeType = MMP_MALLOC(mimeLength * sizeof(jchar));
-    if (pszMimeType) {
-        KNI_GetStringRegion(mimeType, 0, mimeLength, pszMimeType);
-    }
-
-    /* Get URI java string */
-    if (-1 == (URILength = KNI_GetStringLength(URI))) {
-        pszURI = NULL;
-    } else {
-        pszURI = MMP_MALLOC(URILength * sizeof(jchar));
-        if (pszURI) {
-            KNI_GetStringRegion(URI, 0, URILength, pszURI);
-        }
-    }
-
-    pKniInfo = (KNIPlayerInfo*)MMP_MALLOC(sizeof(KNIPlayerInfo));
-LockAudioMutex();
-    if (pKniInfo && pszMimeType /* && pszURI */) {
-        /* prepare kni internal information */
-        pKniInfo->appId = appId;
-        pKniInfo->playerId = playerId;
-        pKniInfo->isAcquire = 0;
-        pKniInfo->offset = 0;
-        pKniInfo->hBuffer = 0;
-        pKniInfo->isDirectFile = JAVACALL_FALSE;
-        pKniInfo->isForeground = -1;
-        pKniInfo->recordState = RECORD_CLOSE;
-        res = javacall_media_create(appId, playerId, pszURI, URILength, &pKniInfo->pNativeHandle); 
-        if (res == JAVACALL_FAIL) {
-            MMP_FREE(pKniInfo);
-        } else {
-            returnValue = (int)pKniInfo;
-        }
-    } else {
-        if (pKniInfo) { MMP_FREE(pKniInfo); }
-    }
-UnlockAudioMutex();            
-
-    if (pszMimeType) { MMP_FREE(pszMimeType); }
-    if (pszURI)      { MMP_FREE(pszURI); }
-    
-    MMP_DEBUG_STR1("-nInit return=%d\n", returnValue);
-
-    KNI_EndHandles();
-    KNI_ReturnInt(returnValue);
-}
-
 /*  protected native int nTerm ( int handle ) ; */
 KNIEXPORT KNI_RETURNTYPE_INT
 KNIDECL(com_sun_mmedia_DirectPlayer_nTerm) {
@@ -212,53 +141,6 @@ LockAudioMutex();
 UnlockAudioMutex();            
 
     KNI_ReturnVoid();
-}
-
-/*  protected native int nBuffering ( int handle , Object buffer, long length ) ; */
-KNIEXPORT KNI_RETURNTYPE_INT
-KNIDECL(com_sun_mmedia_DirectPlayer_nBuffering) {
-
-    jint handle = KNI_GetParameterAsInt(1);
-    long length = (long)KNI_GetParameterAsLong(3);
-    jint returnValue = -1;
-    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
-    void *nBuffer;
-    long nBufferSize;
-    javacall_bool need_more_data;
-    long min_data_size;
-    javacall_result ret;
-
-    KNI_StartHandles(1);
-    KNI_DeclareHandle(bufferHandle);
-    KNI_GetParameterAsObject(2, bufferHandle);
-    
-LockAudioMutex();            
-    if (pKniInfo && pKniInfo->pNativeHandle && length > 0) {
-        int ret;
-        ret = javacall_media_get_buffer_address(pKniInfo->pNativeHandle, &nBuffer, &nBufferSize);
-        if ((ret == JAVACALL_OK) && (nBuffer != NULL)) {
-            if (nBufferSize < length) {
-                length = nBufferSize;
-            }
-            MMP_DEBUG_STR1("+nBuffering length=%d\n", length);
-            KNI_GetRawArrayRegion(bufferHandle, 0, (int)length, (jbyte*)nBuffer);
-            ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, 
-                    (const void*)nBuffer, &length, &need_more_data, &min_data_size);
-            if (ret == JAVACALL_OK) {
-                returnValue = (jint)length;
-            }
-        }
-    } else if (pKniInfo && pKniInfo->pNativeHandle) {
-        /* Indicate end of buffering by using NULL buffer */
-        ret = javacall_media_do_buffering(pKniInfo->pNativeHandle, NULL, 0, &need_more_data, &min_data_size);
-        if (ret == JAVACALL_OK) {
-            returnValue = 0;
-        }
-    }
-UnlockAudioMutex();            
-
-    KNI_EndHandles();
-    KNI_ReturnInt(returnValue);
 }
 
 /*  protected native boolean nFlushBuffer ( int handle ) ; */
@@ -605,4 +487,34 @@ UnlockAudioMutex();
 KNIEXPORT KNI_RETURNTYPE_BOOLEAN
 KNIDECL(com_sun_mmedia_DirectPlayer_nPcmAudioPlayback) {
     KNI_ReturnBoolean(KNI_FALSE);
+}
+
+/*  private native void nPrefetch(int hNative); */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_DirectPlayer_nPrefetch) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+LockAudioMutex();
+        javacall_media_prefetch(pKniInfo->pNativeHandle);
+UnlockAudioMutex();            
+    }
+    KNI_ReturnVoid();
+}
+
+/*  private native void nSetWholeContentSize(int hNative, long contentSize) */
+KNIEXPORT KNI_RETURNTYPE_VOID
+KNIDECL(com_sun_mmedia_DirectPlayer_nSetWholeContentSize) {
+    jint handle = KNI_GetParameterAsInt(1);
+    KNIPlayerInfo* pKniInfo = (KNIPlayerInfo*)handle;
+    long contentSize = (long)KNI_GetParameterAsLong(2);
+
+    if (pKniInfo && pKniInfo->pNativeHandle) {
+LockAudioMutex();
+        javacall_media_set_whole_content_size(pKniInfo->pNativeHandle,
+                                                contentSize);
+UnlockAudioMutex();            
+    }
+    KNI_ReturnVoid();
 }

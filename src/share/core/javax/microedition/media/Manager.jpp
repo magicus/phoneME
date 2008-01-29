@@ -34,6 +34,7 @@ import java.util.Hashtable;
 import com.sun.j2me.log.Logging;
 import com.sun.j2me.log.LogChannels;
 import com.sun.mmedia.BasicPlayer;
+import com.sun.mmedia.PlayerImpl;
 import com.sun.mmedia.TonePlayer;
 import com.sun.mmedia.Configuration;
 import com.sun.mmedia.protocol.*;
@@ -505,7 +506,6 @@ public final class Manager {
     
     private static String DS_ERR = "Cannot create a DataSource for: ";
     private static String PL_ERR = "Cannot create a Player for: ";
-    private static String PL_ERR_SH = "Cannot create a Player: ";
 
     /**
      * This private constructor keeps anyone from actually
@@ -657,7 +657,7 @@ public final class Manager {
             // not in the list of predefined locators, 
             // find handler by extension
         String theProtocol = null;
-            int idx = locStr.indexOf(':');
+        int idx = locStr.indexOf(':');
 
         if (idx != -1) {
                 theProtocol = locStr.substring(0, idx);
@@ -665,7 +665,7 @@ public final class Manager {
                 throw new MediaException("Malformed locator");
         }
 
-            String[] supported = getSupportedProtocols(config.ext2Mime(locStr));
+        String[] supported = getSupportedProtocols(null);
         boolean found = false;
         for (int i = 0; i < supported.length; i++) {
             if (theProtocol.equals(supported[i])) {
@@ -813,41 +813,6 @@ public final class Manager {
         }
     }
 
-
-
-    /**
-     *  Gets the playerFromType attribute of the Manager class
-     *
-     * @param  type                Description of the Parameter
-     * @return                     The playerFromType value
-     * @exception  IOException     Description of the Exception
-     * @exception  MediaException  Description of the Exception
-     */
-    private static BasicPlayer getPlayerFromType(String type) throws IOException,
-        MediaException {
-        String className;
-
-        className = config.getHandler(type);
-               if ((type == null) || className == null) {
-            throw new MediaException(PL_ERR_SH + "Mime type " + type + " is not supported");
-        }
-
-        BasicPlayer p = null;
-
-        if (debug) System.out.println("getPlayerFromType " + className);
-
-        try {
-            // ... try and instantiate the handler ...
-            Class handlerClass = Class.forName(className);
-            p = (BasicPlayer) handlerClass.newInstance();
-        } catch (Exception e) {
-            if(debug) System.out.println("Class not found " + className);
-            throw new MediaException(PL_ERR + e.getMessage());
-        }
-        return p;
-    }
-
-
     /**
      * MMAPI full specific methods.
      *
@@ -878,44 +843,8 @@ public final class Manager {
             throw new IllegalArgumentException();
         }
 
-        source.connect();
+        PlayerImpl p = new PlayerImpl(source);
 
-        String locStr = source.getLocator();
-        String theProtocol = null;
-        if (locStr != null) {
-            locStr = locStr.toLowerCase();
-            int idx = locStr.indexOf(':');
-            if (idx != -1) {
-                theProtocol = locStr.substring(0, idx);
-            }
-        }
-        
-        BasicPlayer p = null;
-        
-        if( null != theProtocol && theProtocol.equals( "rtsp" ) )
-        {
-            // #ifdef USE_RTSP [
-			p = new RTSPPlayer();
-            // #endif ]
-        }
-        else if( null != theProtocol && theProtocol.equals( "rtp" ) )
-        {
-            // #ifdef RTP_PLAYER [
-			p = new DirectPlayer();
-            // #endif ]
-        }
-        else
-        {
-			String contentType = source.getContentType();
-        
-			if (contentType == null)
-				throw new MediaException(PL_ERR_SH + "Unknown or unsupported media type");
-
-			p = getPlayerFromType(contentType);
-		}
-        
-        p.setSource(source);
-        
         return p;
     }
 
@@ -967,41 +896,6 @@ public final class Manager {
         } catch (Exception e) {
             throw new MediaException(DS_ERR + e.getMessage());
         }
-    }
-
-    /**
-     * This method is used to split URI's media encoding string
-     * (everything that goes after '?') into separate tokens 
-     * (separated by '&').
-     * 
-     * @param encodings - string with URI's Media Encodings
-     *                    (without leading '?') 
-     *
-     * @return tokens in String[], 
-     *         if nothing parsed then Stnig[0] is returned
-     */
-    private static String[] parseMediaEncodings(String encodings) {
-        int start_index = 0;
-        int end_index = 0;
-        Vector parsed = new Vector(5);
-        
-        do {
-            end_index = encodings.indexOf('&', start_index);
-            if (end_index > 0) {
-                parsed.addElement(encodings.substring(start_index, end_index));
-                start_index = end_index + 1;
-            } else {
-                if (start_index + 1 < encodings.length())
-                    parsed.addElement(encodings.substring(start_index));
-                break;
-            }
-        } while (true);
-        
-        String[] result = new String[parsed.size()];
-        for (int i = 0; i < parsed.size(); ++i) {
-            result[i] = (String)parsed.elementAt(i);
-        }
-        return result;
     }
 
     // #ifndef ABB [
