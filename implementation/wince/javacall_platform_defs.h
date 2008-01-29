@@ -85,6 +85,12 @@ typedef __int32 javacall_int32;
 typedef __int64 javacall_int64;
 
 /**
+ * @typedef javacall_uint64
+ * @brief 64 bit unsigned integer type
+ */
+typedef unsigned __int64 javacall_uint64;
+
+/**
  * @def JAVACALL_MAX_FILE_NAME_LENGTH
  * Maximal length of filename supported 
  */
@@ -119,6 +125,22 @@ typedef __int64 javacall_int64;
  * Maximal length of a localized name of a special directory
  */
 #define JAVACALL_MAX_LOCALIZED_DIR_NAME_LENGTH    32
+
+/**
+ * @def JAVACALL_PIM_MAX_ARRAY_ELEMENTS
+ * 
+ */
+#define JAVACALL_PIM_MAX_ARRAY_ELEMENTS (10)   
+/**
+ * @def JAVACALL_PIM_MAX_ATTRIBUTES
+ * 
+ */
+#define JAVACALL_PIM_MAX_ATTRIBUTES     (15)
+/**
+ * @def JAVACALL_PIM_MAX_FIELDS
+ * 
+ */
+#define JAVACALL_PIM_MAX_FIELDS         (19)
 
 /**
  * @}
