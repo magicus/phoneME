@@ -1,6 +1,5 @@
 #   
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -55,6 +54,7 @@ endif
 AR_EXTRACT_VERBOSE = xv
 
 CFLAGS+= -I$(JAVACALL_OUTPUT_INCLUDE_DIR)
+CFLAGS+= $(SPECIFIC_DEFINITIONS)
 
 ifneq ($(NOTIFIER_OBJECTS)x,x)
 EXTRA_LDFLAGS+=-lnotifiers$(BUILD_EXT) -L$(JAVACALL_OUTPUT_LIB_DIR)
@@ -65,6 +65,10 @@ javacall_lib: $(NOTIFIERS_LIB) $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT
 
 $(JAVACALL_OUTPUT_OBJ_DIR)/%.o: %.c
 	@echo "...compiling: $@"
+	@$(COMPILE.c) $(OUTPUT_OPTION) $<
+
+$(JAVACALL_OUTPUT_OBJ_DIR)/javacall_static_properties.o: $(STATIC_PROPERTIES_C)
+	@echo -n "...compiling: $@"
 	@$(COMPILE.c) $(OUTPUT_OPTION) $<
 
 $(JAVACALL_OUTPUT_LIB_DIR)/libjavacall$(BUILD_EXT).so: \
