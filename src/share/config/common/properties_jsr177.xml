@@ -54,17 +54,17 @@
         Comment="Internal flag to identify certificate signing."/>
 
     <property Key="microedition.satsa.crypto.version"
-        Value="1.0"
+        Value="1.0.1"
         Scope="system"
         Comment="Version of SATSA-CRYPTO API supported by the device."/>
 
     <property Key="microedition.satsa.apdu.version"
-        Value="1.0"
+        Value="1.0.1"
         Scope="system"
         Comment="Version of SATSA-APDU API supported by the device."/>
 
     <property Key="microedition.satsa.pki.version"
-        Value="1.0"
+        Value="1.0.1"
         Scope="system"
         Comment="Version of SATSA-PKI API supported by the device."/>
 

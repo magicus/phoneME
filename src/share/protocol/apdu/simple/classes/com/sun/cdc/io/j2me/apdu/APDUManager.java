@@ -25,6 +25,7 @@
 package com.sun.cdc.io.j2me.apdu;
 
 import javax.microedition.io.*;
+import com.sun.cardreader.CardDeviceException;
 import com.sun.j2me.main.Configuration;
 
 import java.io.*;
@@ -160,6 +161,8 @@ public class APDUManager {
 
         try {
             init();
+        } catch (ConnectionNotFoundException cnfe) {
+            throw cnfe;
         } catch (IOException e) {
             throw new ConnectionNotFoundException(
                 "Invalid configuration: " + e);
@@ -356,11 +359,21 @@ public class APDUManager {
         if (slots != null) {
             return;
         }
-        int slotCount = init0();
-
-        slots = new Slot[slotCount];
-        for (int i = 0; i < slotCount; i++) {
-            slots[i] = new Slot(i);
+        
+        try {
+            int slotCount = init0();
+        
+            slots = new Slot[slotCount];
+            for (int i = 0; i < slotCount; i++) {
+                slots[i] = new Slot(i);
+            }
+        } catch (CardDeviceException e) {
+            if (e.getMessage().equals("stub")) {
+                throw new ConnectionNotFoundException("Null implementation: " +
+                        "J2ME device does not have the smart card slot");
+            } else {                
+                throw e;
+            }
         }
     }
 
@@ -521,7 +534,7 @@ public class APDUManager {
      * @exception CardDeviceException If configuration failed.
      * @exception IOException in case of I/O problems.
      */
-    private static native int init0() throws IOException;
+    private static native int init0() throws IOException, CardDeviceException;
 
     /**
      * Checks if this slot is SAT slot. This method is invoked once after 
