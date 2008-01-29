@@ -178,8 +178,8 @@ javacall_result javanotify_chapi_java_invoke(
  * @return result of operation.
  */
 javacall_result javacall_chapi_java_finish(int invoc_id, 
-        javacall_utf16_string url,
-        int argsLen, javacall_utf16_string* args,
+        javacall_const_utf16_string url,
+        int argsLen, javacall_const_utf16_string* args,
         int dataLen, void* data, javacall_chapi_invocation_status status,
         /* OUT */ javacall_bool* should_exit);
 
