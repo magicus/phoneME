@@ -380,7 +380,9 @@ J2ME_CLASSLIB		?= cdc
 # MIDP requires at least foundation
 ifeq ($(USE_MIDP),true)
 ifeq ($(J2ME_CLASSLIB), cdc)
+ifeq ($(MAKELEVEL), 0)
 $(warning Forcing J2ME_CLASSLIB=foundation because USE_MIDP=true requires foundation)
+endif
 J2ME_CLASSLIB = foundation
 endif
 endif

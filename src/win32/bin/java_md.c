@@ -43,12 +43,6 @@
 #define HIDE_SPLASH()
 #endif
 
-extern char** __argv;
-extern int  __argc;
-
-static char* cdcName = "cvm.exe";
-
-
 #define GET_NEXT0(p1, p2) \
     ((p1 == NULL) ? p2 : ((p2 == NULL) ? p1 : (min(p1, p2))))
 
@@ -198,7 +192,6 @@ ansiJavaMain0(int argc, const char** argv, JNI_CreateJavaVM_func* f)
 static HMODULE
 loadCVM()
 {
-#if 1
     TCHAR path[256];
     HMODULE h;
     TCHAR *p0, *p1;
@@ -206,30 +199,18 @@ loadCVM()
     GetModuleFileName(0, path, sizeof path);
 
     p0 = _tcsrchr(path, _T('\\'));
-    if (p0 == NULL) {
-	return NULL;
+    if (p0 != NULL) {
+        _tcscpy(&p0[1], TEXT("cvmi.dll"));
+        h = LoadLibrary(path);
+    } else {
+        h = NULL;
     }
-#if 0
-    p0[0] = _T('\0');
-    p1 = _tcsrchr(path, _T('\\'));
-    if (p1 == NULL) {
-	return NULL;
-    }
-    if (_tcsncicmp(p1, _T("\\bin"), 4) != 0) {
-	return NULL;
-    }
-    _tcscpy(&p1[1], TEXT("lib\\cvmi.dll"));
-#else
-    _tcscpy(&p0[1], TEXT("cvmi.dll"));
-#endif
 
-    h = LoadLibrary(path);
-#else
-    HMODULE h;
-#ifdef DLL_IN_EXE_DIR_AND_WCE_SEARCH_PATH_WORKS
-    h = LoadLibrary("cvmi");
-#endif
-#endif
+ done:
+    if (h == NULL) {
+        fprintf(stderr, "LoadLibrary failed for cvmi.dll (0x%x)\n",
+                GetLastError());
+    }
     return h;
 }
 
@@ -395,18 +376,19 @@ static void free_parsed_argv(int argc, char** argv) {
 int main(int argc, char* argv[])
 {
     int retCode;
-    HMODULE h;
     JNI_CreateJavaVM_func* JNI_CreateJavaVMFunc;
 
     SHOW_SPLASH();
 
-    h = loadCVM();
-    JNI_CreateJavaVMFunc = (JNI_CreateJavaVM_func*)
-	GET_PROC_ADDRESS(h, "JNI_CreateJavaVM");
+    {
+        HMODULE h = loadCVM();
+        JNI_CreateJavaVMFunc = (JNI_CreateJavaVM_func*)
+            GET_PROC_ADDRESS(h, "JNI_CreateJavaVM");
+    }
 
-    if (JNI_CreateJavaVMFunc==NULL) {
+    if (JNI_CreateJavaVMFunc == NULL) {
 	retCode = GetLastError();
-        fprintf(stderr, "GetProcAddress() failed for JNI_CreateJavaVM %d\n",
+        fprintf(stderr, "GetProcAddress(\"JNI_CreateJavaVM\") failed (0x%x)\n",
 		retCode);
     } else {
 	char** parsed_argv = parse_argv(&argc, argv);
@@ -435,8 +417,14 @@ int main(int argc, char* argv[])
 
 #if 0
 /*
-  This is old code for our main entry point that we no longer use.
+  This is old code for the main entry point that we no longer use.
 */
+
+extern char** __argv;
+extern int  __argc;
+
+static char* cdcName = "cvm.exe";
+
 int WINAPI
 _tWinMain(HINSTANCE inst, HINSTANCE previnst, TCHAR* cmdline, int cmdshow) {
     int i = 0;

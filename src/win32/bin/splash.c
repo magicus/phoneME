@@ -27,7 +27,7 @@
 #include "splash.h"
 #include "aygshell.h"
 
-// Forward declarations of functions included in this code module:
+/* Forward declarations of functions included in this code module: */
 ATOM            MyRegisterClass(HINSTANCE, LPTSTR);
 BOOL            InitInstance(HINSTANCE, int);
 BOOL            myInit();
@@ -43,12 +43,12 @@ DWORD WINAPI MessageLoop( LPVOID lpParam )
 {
 
     MSG msg;
-    // Perform application initialization:
+    /* Perform application initialization: */
     if (!myInit())
     {
         return 0;
     }
-    // Main message loop:
+    /* Main message loop: */
     while (GetMessage(&msg, NULL, 0, 0))
     {
         if (!TranslateAccelerator(msg.hwnd, NULL, &msg))
@@ -80,7 +80,11 @@ ATOM MyRegisterClass(HINSTANCE hInstance, LPTSTR szWindowClass)
     wc.lpszMenuName  = 0;
     wc.lpszClassName = szWindowClass;
 
-    return RegisterClass(&wc);
+    if (!RegisterClass(&wc)) {
+	fprintf(stderr, "RegisterClass failed. err=0x%x\n", GetLastError());
+	return FALSE;
+    }
+    return TRUE;
 }
 
 BOOL myInit()
@@ -90,9 +94,10 @@ BOOL myInit()
     HWND hWnd;
     int width;
     int height;
-    HINSTANCE hInst; // current instance
+    HINSTANCE hInst; /* current instance */
 
-    hInst = GetModuleHandle(NULL); // Store instance handle in our global variable
+    /* Store instance handle in our global variable */
+    hInst = GetModuleHandle(NULL);
 
     if (!MyRegisterClass(hInst, _T("JavaSplash")))
     {
@@ -111,6 +116,11 @@ BOOL myInit()
         NULL, NULL, hInst, NULL);
     g_hWnd = hWnd;
     g_hB = LoadBitmap(hInst, (LPCTSTR)IDB_SPLASH);
+    if (g_hB == NULL) {
+	fprintf(stderr,"LoadBitmap failed\n");
+        return FALSE;
+    }
+
     SHFullScreen(hWnd, SHFS_HIDETASKBAR | SHFS_HIDESTARTICON | SHFS_HIDESIPBUTTON);
     ShowWindow(hWnd, SW_SHOW);
     UpdateWindow(hWnd);
