@@ -94,7 +94,7 @@ listMidlets(int argc, char* argv[]) {
     int   status = -1;
     int   i;
     long  size;
-    char* midpHome = NULL;
+    char* appDir = NULL;
 
     (void)argv;                                   /* Avoid compiler warnings */
     if (argc > 1) {
@@ -103,13 +103,13 @@ listMidlets(int argc, char* argv[]) {
         return -1;
     }
 
-    /* get midp home directory, set it */
-    midpHome = midpFixMidpHome(argv[0]);
-    if (midpHome == NULL) {
+    /* get application directory, set it */
+    appDir = getApplicationDir(argv[0]);
+    if (appDir == NULL) {
         return -1;
     }
-    /* set up midpHome before calling initialize */
-    midpSetHomeDir(midpHome);
+    /* set up appDir before calling initialize */
+    midpSetAppDir(appDir);
 
     if (midpInitialize() != 0) {
         REPORT_ERROR(LC_AMS, "Not enough memory");

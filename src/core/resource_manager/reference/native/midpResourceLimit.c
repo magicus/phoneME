@@ -144,20 +144,26 @@ static int gResourcesAvailable[RSC_TYPE_COUNT] = {
 
 static int isInitialized = KNI_FALSE;
 static _IsolateResourceUsage* gIsolateResourceUsage;
+static int max_isolates = 0;
+
 
 /**
  * Initialize the Resource limit structures.
- *
+ * @return true on success
  */
 static void initResourceLimit() {
     int i, j;
-    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
+#if ENABLE_CDC
+    // CDC does not have isolates.
+    max_isolates = 1;
+#else
+    max_isolates = getInternalPropertyInt("MAX_ISOLATES");
 
     if (0 == max_isolates) {
         REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
         max_isolates = MAX_ISOLATES;
     }
-
+#endif
 
     REPORT_INFO(LC_CORE, "initialize resource limit\n");
 
@@ -193,7 +199,6 @@ static void initResourceLimit() {
  */
 static _IsolateResourceUsage *findIsolateResourceUsageStruct(int isolateId) {
     int i;
-    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
 
     if (0 == max_isolates) {
         REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
@@ -204,6 +209,9 @@ static _IsolateResourceUsage *findIsolateResourceUsageStruct(int isolateId) {
 
     if (!isInitialized) {
         initResourceLimit();
+        if (!isInitialized) {
+            return;
+    }
     }
 
     /* the first entry is the ams */
@@ -409,6 +417,9 @@ int midpCheckReservedResources() {
 
     if (!isInitialized) {
         initResourceLimit();
+        if (!isInitialized) {
+            return;
+    }
     }
 
     /* check if the reserved resources are available for each resource type */
@@ -431,7 +442,6 @@ int midpAllocateReservedResources() {
     int isolateId = getCurrentIsolateId();
     int i = 0, idx;
     int status = KNI_TRUE;
-    int max_isolates = getInternalPropertyInt("MAX_ISOLATES");
 
     if (0 == max_isolates) {
         REPORT_ERROR(LC_AMS, "MAX_ISOLATES property not set");
@@ -444,6 +454,9 @@ int midpAllocateReservedResources() {
 
     if (!isInitialized) {
         initResourceLimit();
+        if (!isInitialized) {
+            return;
+    }
     }
 
     /* do not allocate the ams again */
@@ -519,6 +532,9 @@ void midpFreeReservedResources() {
 
     if (!isInitialized) {
         initResourceLimit();
+        if (!isInitialized) {
+            return;
+    }
     }
 
     /* do not free the AMS entry */

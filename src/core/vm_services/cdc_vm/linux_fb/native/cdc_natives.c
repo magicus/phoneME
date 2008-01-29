@@ -226,7 +226,7 @@ midpFinalizeUI(void) {
 KNIEXPORT KNI_RETURNTYPE_VOID
 KNIDECL(com_sun_midp_main_CDCInit_initMidpNativeStates) {
     jchar jbuff[1024];
-    char conf_buff[1024], store_buff[1024];
+    static char conf_buff[1024], store_buff[1024];
     int max = sizeof(conf_buff) - 1;
     int len, i;
 
@@ -263,7 +263,7 @@ KNIDECL(com_sun_midp_main_CDCInit_initMidpNativeStates) {
             store_buff[i] = (char)jbuff[i];
         }
         store_buff[len] = 0;
-        midpSetHomeDir(store_buff);
+        midpSetAppDir(store_buff);
     }
 
     if (midpInitialize() != 0) {
