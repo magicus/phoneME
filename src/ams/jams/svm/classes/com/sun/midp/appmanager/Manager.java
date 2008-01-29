@@ -42,6 +42,7 @@ import com.sun.midp.midletsuite.*;
 import com.sun.midp.main.*;
 
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.events.EventQueue;
 
 /**
  * This is an implementation of the ApplicationManager interface
@@ -55,7 +56,8 @@ import com.sun.midp.configurator.Constants;
  *    - displays info about a midlet/midlet suite
  *    - shuts down the AMS system
  */
-public class Manager extends MIDlet implements ApplicationManager {
+public class Manager extends MIDlet implements ApplicationManager,
+        ODTControllerEventConsumer {
 
     /** Constant for the discovery application class name. */
     private static final String DISCOVERY_APP =
@@ -68,6 +70,10 @@ public class Manager extends MIDlet implements ApplicationManager {
     /** Constant for the CA manager class name. */
     private static final String CA_MANAGER =
         "com.sun.midp.appmanager.CaManager";
+
+    /** Constant for the ODT Agent class name. */
+    private static final String ODT_AGENT =
+        "com.sun.midp.odd.ODTAgentMIDlet";
 
     /** True until constructed for the first time. */
     private static boolean first = true;
@@ -86,6 +92,9 @@ public class Manager extends MIDlet implements ApplicationManager {
      */
     public Manager() {
         midletSuiteStorage = MIDletSuiteStorage.getMIDletSuiteStorage();
+
+        EventQueue eq = EventQueue.getEventQueue();
+        new ODTControllerEventListener(eq, this);
 
         GraphicalInstaller.initSettings();
 
@@ -159,6 +168,31 @@ public class Manager extends MIDlet implements ApplicationManager {
         }
     }
 
+    /**
+     * Processes MIDP_ENABLE_ODD_EVENT
+     */
+    public void handleEnableODDEvent() {
+        managerUI.showODTAgent();
+    }
+
+    /**
+     * Processes MIDP_ODD_START_MIDLET_EVENT
+     *
+     * @param suiteId ID of the midlet suite
+     * @param className class name of the midlet to run
+     * @param displayName display name of the midlet to run
+     * @param isDebugMode true if the midlet must be started in debug mode,
+     *                    false otherwise
+     */
+    public void handleODDStartMidletEvent(int suiteId, String className,
+                                          String displayName,
+                                          boolean isDebugMode) {
+        /*
+         * Not used in SVM: midlet is started directly instead of sending
+         * a message to AMS.
+         */
+    }
+
     // ===================================================================
     // ---- Implementation of the ApplicationManager interface ------------
 
@@ -172,8 +206,6 @@ public class Manager extends MIDlet implements ApplicationManager {
                 Resource.getString(ResourceConstants.INSTALL_APPLICATION));
 
             yieldForNextMidlet();
-
-
         } catch (Exception ex) {
             displayError.showErrorAlert(Resource.getString
 				    (ResourceConstants.INSTALL_APPLICATION),
@@ -189,8 +221,6 @@ public class Manager extends MIDlet implements ApplicationManager {
                 Resource.getString(ResourceConstants.CA_MANAGER_APP));
 
             yieldForNextMidlet();
-
-
         } catch (Exception ex) {
             displayError.showErrorAlert(Resource.getString(
                 ResourceConstants.CA_MANAGER_APP), ex, null, null);
@@ -201,7 +231,16 @@ public class Manager extends MIDlet implements ApplicationManager {
      * Launch ODT Agent.
      */
     public void launchODTAgent() {
+        try {
+            MIDletStateHandler.getMidletStateHandler().startMIDlet(
+                ODT_AGENT,
+                Resource.getString(ResourceConstants.ODT_AGENT_MIDLET));
 
+            yieldForNextMidlet();
+        } catch (Exception ex) {
+            displayError.showErrorAlert(Resource.getString(
+                ResourceConstants.ODT_AGENT_MIDLET), ex, null, null);
+        }
     }
 
     /**
@@ -222,7 +261,7 @@ public class Manager extends MIDlet implements ApplicationManager {
             // Create an instance of the MIDlet class
             // All other initialization happens in MIDlet constructor
             MIDletSuiteUtils.execute(suiteInfo.suiteId, midletToRun,
-                                      suiteInfo.displayName);
+                                     suiteInfo.displayName);
 
             /*
              * Give the new MIDlet the screen by destroy our self,
@@ -230,9 +269,6 @@ public class Manager extends MIDlet implements ApplicationManager {
              * restart the VM let the select suite run.
              */
             yieldForNextMidlet();
-
-
-
         } catch (Exception ex) {
             displayError.showErrorAlert(suiteInfo.displayName, ex, null, null);
         }

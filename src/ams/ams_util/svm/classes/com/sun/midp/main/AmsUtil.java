@@ -117,7 +117,7 @@ public class AmsUtil {
         MIDletSuiteUtils.priority    = priority;
         MIDletSuiteUtils.profileName = profileName;
         MIDletSuiteUtils.isDebugMode = isDebugMode;
-
+        
         return true;
     }
 

@@ -125,7 +125,7 @@ KNIDECL(com_sun_midp_main_CommandState_restoreCommandState) {
     KNI_RESTORE_INT_FIELD(commandState, clazz, "status",
                           MidpCommandState.status);
     KNI_RESTORE_BOOLEAN_FIELD(commandState, clazz, "logoDisplayed",
-                              (jboolean)MidpCommandState.logoDisplayed);
+                              MidpCommandState.logoDisplayed);
     KNI_RESTORE_PCSL_STRING_FIELD(commandState, clazz, "midletClassName",
                                   &MidpCommandState.midletClassName, string);
     KNI_RESTORE_INT_FIELD(commandState, clazz, "suiteId",
@@ -133,7 +133,7 @@ KNIDECL(com_sun_midp_main_CommandState_restoreCommandState) {
     KNI_RESTORE_INT_FIELD(commandState, clazz, "lastSuiteId",
                           MidpCommandState.lastSuiteId);
     KNI_RESTORE_BOOLEAN_FIELD(commandState, clazz, "isDebugMode",
-                              (jboolean)MidpCommandState.isDebugMode);
+                              MidpCommandState.isDebugMode);
 
     KNI_RESTORE_INT_FIELD(runtimeInfo, rtiClazz, "memoryReserved",
                           MidpCommandState.runtimeInfo.memoryReserved);

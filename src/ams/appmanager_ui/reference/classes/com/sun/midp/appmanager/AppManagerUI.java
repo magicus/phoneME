@@ -115,7 +115,7 @@ class AppManagerUI extends Form
     private static final String ODT_AGENT =
         "com.sun.midp.odd.ODTAgentMIDlet";
 
-    /** True if ODD is enabled. */
+    /** True if On Device Debug is enabled. */
     private static boolean oddEnabled = false;
 
     /**
