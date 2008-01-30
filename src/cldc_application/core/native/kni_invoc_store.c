@@ -846,7 +846,6 @@ Java_com_sun_j2me_content_InvocationStore_put0(void) {
         KNI_GetObjectField(invocObj, name##Fid, str); \
         if (PCSL_STRING_OK != midp_jstring_to_pcsl_string(str, &invoc->name)) \
             break; \
-        printf( "invoc %s value '%ls'\n", #name, invoc->name.data ); \
     
         GET_STRING(classname)
         GET_STRING(invokingAuthority)

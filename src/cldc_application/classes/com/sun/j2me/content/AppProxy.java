@@ -33,6 +33,7 @@ import com.sun.midp.security.Permissions;
 import com.sun.midp.security.SecurityToken;
 
 import com.sun.midp.midlet.MIDletSuite;
+import com.sun.midp.main.MIDletProxyList;
 import com.sun.midp.main.MIDletSuiteUtils;
 import com.sun.midp.midlet.MIDletStateHandler;
 import com.sun.midp.midletsuite.MIDletSuiteImpl;
@@ -465,11 +466,11 @@ class AppProxy {
      * @return <code>true</code> if the application is started.
      */
     boolean launch(String displayName) {
-        if( MIDletStateHandler.getMidletStateHandler().isRunning(classname) )
+    	if( MIDletProxyList.getMIDletProxyList(classSecurityToken).
+    								isMidletInList(storageId, classname) )
         	return true;
         return MIDletSuiteUtils.execute(classSecurityToken,
-                                          storageId,
-                                          classname, displayName);
+                                 	storageId, classname, displayName);
     }
 
 
