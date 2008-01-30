@@ -22,7 +22,7 @@
 # information or have any questions.
 #
 
-.PHONY: all pre_target local_vc post_target
+.PHONY: all pre_target local_vc post_target JAVACALL_EXTRA_LIBS
 
 all: pre_target javacall_common local_vc post_target 
 
@@ -109,6 +109,10 @@ $(JAVACALL_OUTPUT_OBJ_DIR)/%.obj: %.c
 	@echo -n "...compiling: "
 	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
 
+$(JAVACALL_OUTPUT_OBJ_DIR)/javacall_static_properties.obj: $(STATIC_PROPERTIES_C)
+	@echo -n "...compiling: "
+	@$(COMPILE.c) $(OUTPUT_OPTION) `$(call fixcygpath, $<)`	
+
 JAVACALL_EXTRA_LIBS::
 
 $(JAVACALL_OUTPUT_LIB_DIR)/javacall$(BUILD_EXT).lib: \
@@ -124,7 +128,3 @@ $(JAVACALL_OUTPUT_LIB_DIR)/notifiers$(BUILD_EXT).lib: \
     $(patsubst %,$(JAVACALL_OUTPUT_OBJ_DIR)/%,$(NOTIFIER_OBJECTS))
 	@echo "...Generating Library: $@"
 	@$(AR) -out:`$(call fixcygpath, $@)` $(ARFLAGS) `$(call fixcygpath, $^)`
-
-
-copy_javacall_configuration_file:
-	cp -u  $(JAVACALL_SHARE_CONFIG_DIR)/jwc_properties.ini $(JAVACALL_OUTPUT_DIR)
