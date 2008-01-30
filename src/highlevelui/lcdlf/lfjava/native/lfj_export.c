@@ -129,8 +129,8 @@ initMenus() {
   /* Do nothing. No native menus in Chameleon. */
 }
 
-jboolean lcdlf_is_softbutton_label_on_native_layer() {
-    return lfjport_is_softbutton_label_on_native_layer()?KNI_TRUE:KNI_FALSE;
+jboolean lcdlf_is_native_softbutton_label() {
+    return lfjport_is_native_softbutton_label();
 }
 
 void lcdlf_set_softbutton_label_on_native_layer (unsigned short *label, 

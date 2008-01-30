@@ -161,7 +161,7 @@ jboolean lfjport_direct_flush(const java_graphics *g,
   return winceapp_direct_flush(g, offscreen_buffer, h);
 }
 
-jboolean lfjport_is_softbutton_label_on_native_layer() {
+jboolean lfjport_is_native_softbutton_label() {
     return KNI_FALSE;
 }
 

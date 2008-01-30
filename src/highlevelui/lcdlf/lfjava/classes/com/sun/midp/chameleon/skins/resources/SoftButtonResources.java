@@ -51,7 +51,7 @@ public class SoftButtonResources {
             return;
         }
 
-        SoftButtonSkin.HEIGHT = (SoftButtonLayer.isNativeSoftButtonLabel0())?
+        SoftButtonSkin.HEIGHT = (SoftButtonLayer.isNativeSoftButtonLayerSupported0())?
                 0:SkinResources.getInt(SkinPropertiesIDs.SOFTBTN_HEIGHT);
 
         SoftButtonSkin.NUM_BUTTONS = SkinResources.getInt(

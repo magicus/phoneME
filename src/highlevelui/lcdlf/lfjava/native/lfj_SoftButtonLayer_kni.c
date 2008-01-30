@@ -37,14 +37,14 @@
 
 /**
  * KNI function to verify is native soft buttons are supported
- * Function: public native void setNativeCommand0(String label, int softButtonIndex)
- *
+ * Function: static public native boolean isNativeSoftButtonLayerSupported0();
+ * 
  * Class: com.sun.midp.chameleon.layers.SoftButtonLayer
  */
  
 KNI_RETURNTYPE_BOOLEAN
-Java_com_sun_midp_chameleon_layers_SoftButtonLayer_isNativeSoftButtonLabel0() {
-    KNI_ReturnBoolean(lcdlf_is_softbutton_label_on_native_layer());
+Java_com_sun_midp_chameleon_layers_SoftButtonLayer_isNativeSoftButtonLayerSupported0() {
+    KNI_ReturnBoolean(lcdlf_is_native_softbutton_label());
 }
 
 /**

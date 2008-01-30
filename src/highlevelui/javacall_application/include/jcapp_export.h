@@ -95,7 +95,9 @@ extern int jcapp_get_screen_height();
  * acts as intermidiate layer between kni and javacall 
  */
 
-extern void jcapp_set_softbutton_label_on_native_layer (unsigned short *label, int len, int index);
+extern void jcapp_set_softbutton_label_on_native_layer (unsigned short *label,
+                                                         int len,
+                                                         int index);
 
 
 

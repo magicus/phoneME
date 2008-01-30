@@ -164,7 +164,7 @@ int jcapp_get_screen_height() {
  * Checks if soft button layer is supported
  */
 
-jboolean jcapp_is_softbutton_label_on_native_layer() {
+jboolean jcapp_is_native_softbutton_label() {
     return javacall_lcd_is_native_softbutton_label();
 }
 

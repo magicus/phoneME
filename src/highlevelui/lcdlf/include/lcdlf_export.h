@@ -119,7 +119,7 @@ jboolean lcdlf_direct_flush(const java_graphics *g,
  * @return KNI_TRUE if native softbutton is supported, KNI_FALSE - otherwise
  */
 
-jboolean lcdlf_is_softbutton_label_on_native_layer();
+jboolean lcdlf_is_native_softbutton_label();
 
 /**
  * Request platform to draw a label in the soft button layer.

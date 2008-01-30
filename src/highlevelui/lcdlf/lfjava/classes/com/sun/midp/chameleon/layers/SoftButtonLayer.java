@@ -175,13 +175,13 @@ public class SoftButtonLayer extends CLayer implements CommandListener {
         super.setVisible(true);
         this.tunnel = tunnel;
 
-        isNativeLayer = isNativeSoftButtonLabel0();
+        isNativeLayer = isNativeSoftButtonLayerSupported0();
 
         labels = new String[SoftButtonSkin.NUM_BUTTONS];
     }
 
-    static public native boolean isNativeSoftButtonLabel0();
-    public native void setNativeSoftButtonLabel0(String label, int softButtonIndex);
+    static public native boolean isNativeSoftButtonLayerSupported0();
+    private native void setNativeSoftButtonLabel0(String label, int softButtonIndex);
 
 
     /**
