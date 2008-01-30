@@ -1,7 +1,5 @@
 /*
- *
- *
- * Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+ * Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
  * 
  * This program is free software; you can redistribute it and/or
@@ -32,6 +30,7 @@ import com.sun.midp.midletsuite.*;
 import com.sun.midp.i18n.Resource;
 import com.sun.midp.i18n.ResourceConstants;
 import com.sun.midp.configurator.Constants;
+import com.sun.midp.main.Configuration;
 
 /**
  * The Graphical MIDlet swicher.
@@ -81,7 +80,8 @@ class MIDletSwitcher extends javax.microedition.lcdui.List
         this.managerUI = managerUI;
         this.display = display;
         mcount = 0;
-        minfo = new RunningMIDletSuiteInfo[Constants.MAX_ISOLATES];
+        minfo = new RunningMIDletSuiteInfo[Configuration.
+            getPositiveIntProperty("MAX_ISOLATES", Constants.MAX_ISOLATES)];
 
         setSelectCommand(fgCmd);
         setFitPolicy(TEXT_WRAP_OFF);

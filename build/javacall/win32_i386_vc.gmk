@@ -1,7 +1,5 @@
 #
-#
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -51,6 +49,3 @@ LD_FLAGS+=-nodefaultlib:libcmt.lib
 LIBS += $(JAVACALL_LIB_DIR)/javacall$(g).lib 
 LIBS += $(wildcard $(JAVACALL_LIB_DIR)/*.res)
 LIBS += Comdlg32.lib shell32.lib advapi32.lib 
-
-# Add support for dynamic properties file
-MIDP_DEPS += copy_configuration_file 

@@ -185,12 +185,12 @@ void checkForSystemSignal(MidpReentryData* pNewSignal,
         pNewMidpEvent->type         = AMMS_EVENT;
         pNewMidpEvent->MM_PLAYER_ID = event->data.multimediaEvent.playerId;
         pNewMidpEvent->MM_DATA      = event->data.multimediaEvent.data;
-        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.isolateId;
+        pNewMidpEvent->MM_ISOLATE   = event->data.multimediaEvent.appId;
         pNewMidpEvent->MM_EVT_TYPE  = event->data.multimediaEvent.mediaType;
 
         REPORT_CALL_TRACE4(LC_NONE, "[jsr234 event] External event recevied %d %d %d %d\n",
             pNewMidpEvent->type, 
-            event->data.multimediaEvent.isolateId, 
+            event->data.multimediaEvent.appId, 
             pNewMidpEvent->MM_PLAYER_ID, 
             pNewMidpEvent->MM_DATA);
 

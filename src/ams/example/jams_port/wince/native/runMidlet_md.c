@@ -302,7 +302,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     int i, used;
     int debugOption = MIDP_NO_DEBUG;
     char *progName;
-    char* midpHome = NULL;
+    char* appDir = NULL;
+    char* confDir = NULL;
     char* additionalPath;
     MidpString* pSuites = NULL;
     int numberOfSuites = 0;
@@ -395,12 +396,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     }
 
     /* get midp home directory, set it */
-    midpHome = midpFixMidpHome(argv[0]);
-    if (midpHome == NULL) {
+    appDir = getApplicationDir(argv[0]);
+    if (appDir == NULL) {
         return -1;
     }
-    /* set up midpHome before calling initialize */
-    midpSetHomeDir(midpHome);
+    /* set up appDir before calling initialize */
+    midpSetAppDir(appDir);
+
+    /* get midp config directory, set it */
+    confDir = getConfigurationDir(argv[0]);
+    if (confDir == NULL) {
+        return -1;
+    }
+    /* set up confDir before calling initialize */
+    midpSetConfigDir(confDir);
 
     if (midpInitialize() != 0) {
         REPORT_ERROR(LC_AMS, "Not enough memory");

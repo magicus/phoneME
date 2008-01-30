@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration SYSTEM "../share/configuration.dtd">
 <!--
-
-		Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+		Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 		DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 		
 		This program is free software; you can redistribute it and/or
@@ -48,6 +47,11 @@
 		Value="12345" 
 		Scope="internal"
 		Comment="The datagram port number of a SMS emulator."/>
+
+  <property Key="system.jam_space"
+		Value="1000000"
+		Scope="internal"
+		Comment="Amount of space to reserve for JAM storage."/>
 
   <!-- Alternate SMS port for CBS emulation -->
   <property Key="com.sun.midp.io.j2me.sms.CBSPort" 

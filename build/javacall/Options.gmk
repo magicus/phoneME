@@ -1,7 +1,5 @@
 #
-#
-#
-# Copyright  1990-2007 Sun Microsystems, Inc. All Rights Reserved.
+# Copyright  1990-2008 Sun Microsystems, Inc. All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER
 # 
 # This program is free software; you can redistribute it and/or
@@ -65,7 +63,6 @@ USE_MMAPI               = false
 # MIDP
 USE_MULTIPLE_ISOLATES   = false
 USE_STATIC_PROPERTIES   = false
-USE_DYNAMIC_PROPERTIES  = false
 USE_JAVACALL_PROPERTIES = true
 USE_IMAGE_CACHE         = true
 USE_ICON_CACHE          = true

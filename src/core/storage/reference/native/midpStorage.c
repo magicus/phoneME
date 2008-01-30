@@ -68,17 +68,6 @@ static const char* const FILE_LIMIT_ERROR =
 static const char* const STRING_CORRUPT_ERROR =
     "string data corrupt or invalid, cannot perform i/o operation";
 
-
-/*
- * Name of the storage directory.
- */
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(APP_DIR)
-    {'a', 'p', 'p', 'd', 'b', '\0'}
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(APP_DIR);
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_START(CONFIG_SUBDIR)
-    {'l', 'i', 'b', '\0'}
-PCSL_DEFINE_STATIC_ASCII_STRING_LITERAL_END(CONFIG_SUBDIR);
-
 #if REPORT_LEVEL <= LOG_INFORMATION
 #define DEBUGP2F(x, y) { \
     const char* pszTemp = pcsl_string_get_utf8_data(y); \
@@ -126,7 +115,7 @@ static int storageInitDone = 0;
 static char errorBuffer[MAX_ERROR_LEN + 1] = {0};
 
 /*
- * Prefixing the system directory for storage, APP_DIR, with midp_home.
+ * Set the system directory for storage
  *
  * @param config_home file system path to where MIDP is installed
  * @param midp_home file system path to where MIDP should store its
@@ -160,12 +149,7 @@ storageInitialize(char *config_home, char *midp_home) {
         return -1;
     }
 
-    /* performance hint: predict buffer capacity */
-    pcsl_string_predict_size(&sRoot[0], pcsl_string_length(&sRoot[0]) + 2
-                                    + PCSL_STRING_LITERAL_LENGTH(APP_DIR));
-    if (PCSL_STRING_OK != pcsl_string_append_char(&sRoot[0], fsep)
-     || PCSL_STRING_OK != pcsl_string_append(&sRoot[0], &APP_DIR)
-     || PCSL_STRING_OK != pcsl_string_append_char(&sRoot[0], fsep)) {
+    if (PCSL_STRING_OK != pcsl_string_append_char(&sRoot[0], fsep)) {
         REPORT_ERROR(LC_CORE, "Error: out of memory.\n");
         storageFinalize();
         return -1;
@@ -181,21 +165,13 @@ storageInitialize(char *config_home, char *midp_home) {
 }
 
 static int
-initializeConfigRoot(char* midp_home) {
+initializeConfigRoot(char* config_home) {
     jchar fileSep = storageGetFileSeparator();
 
-    if (PCSL_STRING_OK != pcsl_string_from_chars(midp_home, &configRoot[0])) {
+    if (PCSL_STRING_OK != pcsl_string_from_chars(config_home, &configRoot[0])) {
         return -1;
     }
-
-    /* performance hint: predict buffer capacity */
-    pcsl_string_predict_size(&configRoot[0],
-                            pcsl_string_length(&configRoot[0])
-                            + 2 + PCSL_STRING_LITERAL_LENGTH(CONFIG_SUBDIR));
-
-    if (PCSL_STRING_OK != pcsl_string_append_char(&configRoot[0], fileSep)
-     || PCSL_STRING_OK != pcsl_string_append(&configRoot[0], &CONFIG_SUBDIR)
-     || PCSL_STRING_OK != pcsl_string_append_char(&configRoot[0], fileSep)) {
+    if (PCSL_STRING_OK != pcsl_string_append_char(&configRoot[0], fileSep)) {
         pcsl_string_free(&configRoot[0]);
         return -1;
     }
