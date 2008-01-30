@@ -156,8 +156,8 @@ jboolean lfjport_direct_flush(const java_graphics *g,
   return KNI_FALSE;
 }
 
-jboolean lfjport_is_native_softbutton_label() {
-    return jcapp_is_native_softbutton_label();
+jboolean lfjport_is_native_softbutton_layer_supported() {
+    return jcapp_is_native_softbutton_layer_supported();
 }
 
 /**

@@ -44,7 +44,7 @@
  
 KNI_RETURNTYPE_BOOLEAN
 Java_com_sun_midp_chameleon_layers_SoftButtonLayer_isNativeSoftButtonLayerSupported0() {
-    KNI_ReturnBoolean(lcdlf_is_native_softbutton_label());
+    KNI_ReturnBoolean(lcdlf_is_native_softbutton_layer_supported());
 }
 
 /**
