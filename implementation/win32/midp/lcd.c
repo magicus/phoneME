@@ -47,8 +47,9 @@
 #include "skins.h"
 #include "local_defs.h"
 
-
-
+#if ENABLE_ON_DEVICE_DEBUG
+#include "javacall_odd.h"
+#endif
 
 #define UNTRANSLATED_SCREEN_BITMAP (void*)0xffffffff
 
@@ -160,6 +161,10 @@ static javacall_bool topBarOn = JAVACALL_TRUE;
 /* current skin*/
 static ESkin* currentSkin;// = VSkin;
 
+#if ENABLE_ON_DEVICE_DEBUG
+static const char pStartOddKeySequence[] = "#1*2";
+static int posInSequence = 0;
+#endif
 
 /* global variables to record the midpScreen window inside the win32 main window */
 XRectangle midpScreen_bounds;
@@ -691,6 +696,24 @@ WndProc (HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
            return 0;
            */
         default:
+#if ENABLE_ON_DEVICE_DEBUG
+            if (lParam & 0xf0000000) {
+                /* ignore if the key is repeated */
+                break;
+            }
+
+            /* assert(posInSequence == sizeof(pStartOddKeySequence) - 1) */
+            if (pStartOddKeySequence[posInSequence] == key) {
+                posInSequence++;
+                if (posInSequence == sizeof(pStartOddKeySequence) - 1) {
+                    posInSequence = 0;
+                    javanotify_enable_odd();
+                    break;
+                }
+            } else {
+                posInSequence = 0;
+            }
+#endif
             break;
         }
 

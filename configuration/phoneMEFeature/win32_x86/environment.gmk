@@ -32,6 +32,7 @@
 #
 #For 'midp' USE_MIDP and MIDP_JC_IMPL_PATH variables are used
 #For 'nams' USE_NATIVE_AMS_JC and NATIVE_AMS_JC_IMPL_PATH variables are used
+#To enable on device debug, specify USE_ON_DEVICE_DEBUG
 
 JSR_LIST = COMMON MIDP JSR_120 JSR_135 JSR_177 JSR_211
 
@@ -48,6 +49,16 @@ JSR_135_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
 JSR_177_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
 
 JSR_211_JC_IMPL_PATH=$(JAVACALL_DIR)/implementation/win32
+
+ifeq ($(USE_ON_DEVICE_DEBUG),)
+USE_ON_DEVICE_DEBUG=false
+endif
+
+ifeq ($(USE_ON_DEVICE_DEBUG),true)
+SPECIFIC_DEFINITIONS += -DENABLE_ON_DEVICE_DEBUG=1
+else
+SPECIFIC_DEFINITIONS += -DENABLE_ON_DEVICE_DEBUG=0
+endif
 
 ifeq ($(USE_NATIVE_AMS_JC),)
 USE_NATIVE_AMS_JC=false
