@@ -47,17 +47,17 @@ midp_createEventQueueLock(void) {
 /** Destroy the event queue lock. */
 void
 midp_destroyEventQueueLock(void) {
-    REPORT_WARN(LC_EVENTS, "midp_destroyEventQueueLock: Stubbed out.\n"); 
+    REPORT_WARN(LC_EVENTS, "midp_destroyEventQueueLock: Stubbed out."); 
 }
 
 /** Wait to get the event queue lock and then lock it. */
 void
 midp_waitAndLockEventQueue(void) {
-    REPORT_WARN(LC_EVENTS, "midp_waitAndLockEventQueue: Stubbed out.\n"); 
+    REPORT_WARN(LC_EVENTS, "midp_waitAndLockEventQueue: Stubbed out."); 
 }
 
 /** Unlock the event queue. */
 void
 midp_unlockEventQueue(void) {
-    REPORT_WARN(LC_EVENTS, "midp_unlockEventQueue: Stubbed out.\n"); 
+    REPORT_WARN(LC_EVENTS, "midp_unlockEventQueue: Stubbed out."); 
 }
