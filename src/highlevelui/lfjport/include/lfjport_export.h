@@ -116,12 +116,14 @@ jboolean lfjport_direct_flush(const java_graphics *g,
 
 /**
  * Check if native softbutton is supported on platform
+ * 
  * @return KNI_TRUE if native softbutton is supported, KNI_FALSE - otherwise
  */
 jboolean lfjport_is_native_softbutton_layer_supported();
 
 /**
  * Request platform to draw a label in the soft button layer.
+ * 
  * @param label Label to draw (UTF16)
  * @param len Length of the lable (0 will cause removal of current label)
  * @param index Index of the soft button in the soft button bar.
